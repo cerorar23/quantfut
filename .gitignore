@@ -1,0 +1,31 @@
+# --- Secretos: NUNCA al repositorio -------------------------------------------
+# Claves de API, contraseñas y tokens. `.env.example` sí va: es la plantilla
+# sin valores. Revisado el 2026-09-25: ningún valor de estos ficheros aparece
+# en otro archivo del proyecto.
+.env
+.env.*
+!.env.example
+
+# --- Datos de producción -------------------------------------------------------
+# Volcado de la base (partidos, cuotas, predicciones). Es dato, no código, y
+# se regenera con `pg_dump`; las copias de seguridad van aparte.
+*.dump
+*.sql.gz
+
+# --- Entornos y cachés -----------------------------------------------------------
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Cachés de descargas (CSV de football-data, respuestas crudas de The Odds API):
+# se regeneran y pesan >100 MB.
+.local/
+node_modules/
+*.log
+
+# --- Configuración local del editor / Claude -------------------------------------
+.claude/settings.local.json
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

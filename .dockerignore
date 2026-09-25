@@ -1,0 +1,12 @@
+# La imagen solo copia src/ y frontend/, pero sin esto el contexto de build
+# incluía el entorno virtual, las cachés de cuotas y los secretos.
+.env
+.env.*
+!.env.example
+.venv/
+.local/
+.pytest_cache/
+**/__pycache__/
+tests/
+harness/
+*.dump

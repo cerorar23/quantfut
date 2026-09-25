@@ -1,0 +1,1112 @@
+import { loadPublicData, isPublicationActive } from './public-data.js?v=189b99a3fc36';
+
+// Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
+// Los precios de la demo se derivan de dos lambdas por partido (Poisson
+// independiente) para que la mesa, los picks y la ficha cuadren entre sí.
+const now = new Date();
+const today = new Date(now);
+today.setHours(0, 0, 0, 0);
+const HOUR = 3600e3;
+
+const addDays = (offset, hour = 20) => {
+  const date = new Date(today);
+  date.setDate(date.getDate() + offset);
+  date.setHours(hour, 0, 0, 0);
+  return date;
+};
+const inHours = hours => new Date(Math.floor((now.getTime() + hours * HOUR) / (15 * 60e3)) * 15 * 60e3);
+const dayOf = date => { const start = new Date(date); start.setHours(0, 0, 0, 0); return Math.round((start - today) / 864e5); };
+
+// Mismo criterio que publish/picks.py, con los valores por defecto de config.py.
+const SOFT_MIN_EDGE = 0.02;
+const MAX_SHARP_DEVIATION = 0.03;
+const SHARP_MARGIN = 0.025;
+const BOOKS = [
+  { id: 'bet365', name: 'Bet365', margin: 0.052, persistence: 0.62 },
+  { id: 'betano', name: 'Betano', margin: 0.061, persistence: 0.48 },
+  { id: '1xbet', name: '1xBet', margin: 0.047, persistence: 0.35 },
+  { id: 'william_hill', name: 'William Hill', margin: 0.068, persistence: 0.55 },
+  { id: '888sport', name: '888sport', margin: 0.064, persistence: 0.41 },
+  { id: 'betway', name: 'Betway', margin: 0.058, persistence: 0.44 },
+];
+const LEAGUES = ['Liga Atlántica · demo', 'Liga Continental · demo', 'Copa Europa · demo'];
+
+const fixtures = [
+  { id: 'qf-099', kickoff: addDays(-1, 20), league: 'Liga Continental · demo', home: 'Estrella Azul', away: 'Real Bahía', xg: [1.35, 1.22], note: 'Partido ya disputado: la mesa conserva el último snapshot antes del inicio, que es contra el que se mide el CLV.' },
+  { id: 'qf-098', kickoff: inHours(-2), league: 'Liga Atlántica · demo', home: 'Club Faro', away: 'Deportivo Vega', xg: [1.08, 1.41], note: 'El visitante llega con más goles esperados; el mercado ya se cerró al empezar el partido.' },
+  { id: 'qf-101', kickoff: inHours(1.5), league: 'Liga Atlántica · demo', home: 'Puerto Norte', away: 'Unión del Sur', xg: [1.64, 0.98], note: 'El modelo favorece al local, pero su opinión no elige picks: manda el precio justo de Pinnacle.' },
+  { id: 'qf-106', kickoff: inHours(3), league: 'Copa Europa · demo', home: 'Olímpico Brisa', away: 'Ciudad Alta', xg: [1.52, 1.26], sharpDistort: true, note: 'Pinnacle se aparta del consenso de las demás casas. El criterio trata ese precio como roto y descarta el partido.' },
+  { id: 'qf-102', kickoff: inHours(4.5), league: 'Liga Continental · demo', home: 'Real Bahía', away: 'Atlético Sierra', xg: [1.30, 1.11], note: 'Partido de márgenes estrechos: el empate conserva una probabilidad relevante.' },
+  { id: 'qf-103', kickoff: addDays(1, 19), league: 'Copa Europa · demo', home: 'Aurora FC', away: 'Sporting Prado', xg: [1.78, 0.91], note: 'La lectura dependerá de las alineaciones confirmadas y del precio disponible antes del inicio.' },
+  { id: 'qf-104', kickoff: addDays(1, 21), league: 'Liga Atlántica · demo', home: 'Deportivo Cumbre', away: 'Marina CF', xg: [1.21, 1.18], note: 'Las tres salidas son cercanas; una pantalla real debe comunicar esta incertidumbre.' },
+  { id: 'qf-105', kickoff: addDays(2, 18), league: 'Liga Continental · demo', home: 'Río Central', away: 'Estrella Azul', xg: [1.48, 1.07], note: 'Ejemplo de cómo se presentaría el desglose de un mercado de goles.' },
+  { id: 'qf-107', kickoff: addDays(2, 20), league: 'Liga Atlántica · demo', home: 'Deportivo Vega', away: 'Puerto Norte', xg: [1.12, 1.36], note: 'Con dos días de antelación los precios aún se moverán; el snapshot manda.' },
+];
+
+const archive = [
+  { date: addDays(-2, 19), publishedAt: addDays(-3, 13), league: 'Liga Atlántica · demo', match: 'Marina CF · Puerto Norte', market: '1X2', selection: 'Marina CF', book: 'Bet365', price: 2.10, minPrice: 2.04, closePrice: 2.06, result: 'Ganado' },
+  { date: addDays(-3, 21), publishedAt: addDays(-4, 14), league: 'Liga Continental · demo', match: 'Atlético Sierra · Río Central', market: '1X2', selection: 'Empate', book: 'Betano', price: 3.45, minPrice: 3.36, closePrice: 3.52, result: 'Perdido' },
+  { date: addDays(-4, 20), publishedAt: addDays(-5, 12), league: 'Copa Europa · demo', match: 'Sporting Prado · Aurora FC', market: '1X2', selection: 'Empate', book: 'William Hill', price: 3.30, minPrice: 3.22, closePrice: 3.27, result: 'Perdido' },
+  { date: addDays(-5, 18), publishedAt: addDays(-6, 11), league: 'Liga Atlántica · demo', match: 'Unión del Sur · Deportivo Cumbre', market: '1X2', selection: 'Unión del Sur', book: '1xBet', price: 2.05, minPrice: 2.00, closePrice: 2.04, result: 'Ganado' },
+  { date: addDays(-6, 20), publishedAt: addDays(-7, 15), league: 'Liga Continental · demo', match: 'Real Bahía · Estrella Azul', market: '1X2', selection: 'Estrella Azul', book: 'Bet365', price: 3.10, minPrice: 3.02, closePrice: 2.95, result: 'Perdido' },
+  { date: addDays(-7, 19), publishedAt: addDays(-8, 12), league: 'Copa Europa · demo', match: 'Ciudad Alta · Olímpico Brisa', market: '1X2', selection: 'Ciudad Alta', book: 'Betway', price: 2.62, minPrice: 2.55, closePrice: 2.66, result: 'Perdido' },
+  { date: addDays(-8, 21), publishedAt: addDays(-9, 14), league: 'Liga Atlántica · demo', match: 'Deportivo Vega · Club Faro', market: '1X2', selection: 'Deportivo Vega', book: 'Betano', price: 2.38, minPrice: 2.31, closePrice: 2.30, result: 'Ganado' },
+];
+
+// ---------------------------------------------------------------- precios
+
+// Generador determinista: la demo enseña los mismos números en cada visita.
+function seeded(key) {
+  let h = 2166136261;
+  for (const char of key) h = Math.imul(h ^ char.charCodeAt(0), 16777619);
+  return () => {
+    h += 0x6D2B79F5;
+    let t = h;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const sum = values => values.reduce((total, value) => total + value, 0);
+const round2 = value => Math.round(value * 100) / 100;
+
+function scoreGrid([lh, la], size = 11) {
+  const pmf = lambda => { const out = [Math.exp(-lambda)]; for (let k = 1; k < size; k++) out.push(out[k - 1] * lambda / k); return out; };
+  const home = pmf(lh);
+  const away = pmf(la);
+  return home.map(ph => away.map(pa => ph * pa));
+}
+const gridProb = (grid, test) => sum(grid.flatMap((row, i) => row.map((p, j) => (test(i, j) ? p : 0))));
+
+function marketGroups(fx, grid) {
+  const p = test => gridProb(grid, test);
+  const [h, d, a] = [p((i, j) => i > j), p((i, j) => i === j), p((i, j) => i < j)];
+  const groups = [
+    { family: '1X2', market: '1X2', total: 1, sels: [[fx.home, h], ['Empate', d], [fx.away, a]] },
+    { family: 'Doble oportunidad', market: 'Doble oportunidad', total: 2, derived: true, sels: [['1X', h + d], ['12', h + a], ['X2', d + a]] },
+  ];
+  for (const line of [1.5, 2.5, 3.5]) {
+    const over = p((i, j) => i + j > line);
+    groups.push({ family: 'Goles', market: `Total ${line}`, total: 1, sels: [[`Más de ${line}`, over], [`Menos de ${line}`, 1 - over]] });
+  }
+  const btts = p((i, j) => i > 0 && j > 0);
+  groups.push({ family: 'Ambos marcan', market: 'Ambos marcan', total: 1, sels: [['Sí', btts], ['No', 1 - btts]] });
+  [[fx.home, 0], [fx.away, 1]].forEach(([team, side]) => {
+    const line = fx.xg[side] >= 1.3 ? 1.5 : 0.5;
+    const over = p((i, j) => (side ? j : i) > line);
+    groups.push({ family: 'Por equipo', market: `Goles ${team} ${line}`, total: 1, sels: [[`Más de ${line}`, over], [`Menos de ${line}`, 1 - over]] });
+  });
+  // Hándicap asiático ±1: ganar por uno exacto devuelve la apuesta.
+  const fav = fx.xg[0] >= fx.xg[1] ? 0 : 1;
+  const margin = (i, j) => (fav ? j - i : i - j);
+  const win = p((i, j) => margin(i, j) >= 2);
+  const lose = p((i, j) => margin(i, j) <= 0);
+  const [favName, dogName] = fav ? [fx.away, fx.home] : [fx.home, fx.away];
+  groups.push({ family: 'Hándicap', market: 'Hándicap asiático ±1', total: 1, sels: [[`${favName} −1`, win / (win + lose)], [`${dogName} +1`, lose / (win + lose)]] });
+  return groups;
+}
+
+function buildFixture(fx) {
+  const rnd = seeded(fx.id);
+  fx.grid = scoreGrid(fx.xg);
+  fx.closed = fx.kickoff <= now;
+  fx.day = dayOf(fx.kickoff);
+  fx.snapshot = fx.closed ? new Date(fx.kickoff.getTime() - 5 * 60e3) : new Date(now.getTime() - (4 + Math.floor(rnd() * 30)) * 60e3);
+  const rows = [];
+  let sharp1x2;
+  for (const group of marketGroups(fx, fx.grid)) {
+    const model = group.sels.map(sel => sel[1]);
+    let truth;
+    if (group.derived) {
+      truth = [sharp1x2[0] + sharp1x2[1], sharp1x2[0] + sharp1x2[2], sharp1x2[1] + sharp1x2[2]];
+    } else {
+      const raw = model.map(q => q * Math.exp(0.16 * (rnd() - 0.5)));
+      truth = raw.map(q => q / sum(raw) * group.total);
+    }
+    if (group.market === '1X2') sharp1x2 = truth;
+    const pinnacle = truth.map((q, i) => round2(1 / (q * (1 + SHARP_MARGIN)) * (fx.sharpDistort && group.market === '1X2' && i === 0 ? 1.22 : 1)));
+    const implied = pinnacle.map(price => 1 / price);
+    const fair = implied.map(q => q / sum(implied) * group.total);
+    group.sels.forEach(([selection], i) => {
+      const quotes = BOOKS.map(book => {
+        if (rnd() < 0.14) return { book, price: null };
+        const lag = 0.14 * ((rnd() + rnd() + rnd()) / 3 - 0.5) * 2;
+        return { book, price: Math.max(1.01, round2(1 / (truth[i] * (1 + book.margin)) * (1 + lag))) };
+      });
+      rows.push({ key: `${fx.id}:${group.market}:${i}`, fx, family: group.family, market: group.market, selection, pModel: model[i], pFair: fair[i], pinnacle: pinnacle[i], quotes });
+    });
+  }
+
+  // Pinnacle contra el consenso de las demás casas del mismo snapshot.
+  const x12 = rows.filter(row => row.market === '1X2');
+  const complete = BOOKS.filter(book => x12.every(row => row.quotes.find(q => q.book === book).price));
+  const consensus = x12.map((row, i) => sum(complete.map(book => {
+    const inv = x12.map(r => 1 / r.quotes.find(q => q.book === book).price);
+    return inv[i] / sum(inv);
+  })) / complete.length);
+  fx.sharpDeviation = Math.max(...x12.map((row, i) => Math.abs(row.pFair - consensus[i])));
+  fx.excluded = fx.sharpDeviation > MAX_SHARP_DEVIATION;
+
+  for (const row of rows) {
+    row.best = row.quotes.filter(q => q.price).sort((a, b) => b.price - a.price)[0] || null;
+    row.edge = row.best ? row.best.price * row.pFair - 1 : null;
+    row.expectedEdge = row.best ? row.edge * row.best.book.persistence : null;
+    row.minPrice = (1 + SOFT_MIN_EDGE) / row.pFair;
+    row.history = [];
+    if (row.best) {
+      const start = row.best.price * (1 + 0.07 * (rnd() - 0.5));
+      for (let k = 0; k < 8; k++) row.history.push(k === 7 ? row.best.price : start + (row.best.price - start) * k / 7 + 0.012 * (rnd() - 0.5) * row.best.price);
+    }
+    row.status = fx.closed ? 'cerrado'
+      : fx.excluded ? 'excluido'
+        : !row.best ? 'sin-cuota'
+          : row.family !== '1X2' ? 'referencia'
+            : row.edge >= SOFT_MIN_EDGE ? 'candidata' : 'debajo';
+  }
+  const pct = values => { const out = values.map(v => Math.round(v * 100)); out[1] += 100 - sum(out); return out; };
+  fx.probs = pct(x12.map(row => row.pModel));
+  fx.marketProbs = pct(x12.map(row => row.pFair));
+  fx.rows = rows;
+  return rows;
+}
+
+const allRows = fixtures.flatMap(buildFixture);
+const rowByKey = new Map(allRows.map(row => [row.key, row]));
+const fixtureById = new Map(fixtures.map(fx => [fx.id, fx]));
+
+// Sombra del criterio: un pick por partido, la mejor candidata 1X2. El reparto
+// gratis/Plus es ilustrativo; el real lo decide picks.assign_tiers() en servidor.
+const shadowPicks = fixtures
+  .map(fx => fx.rows.filter(row => row.status === 'candidata').sort((a, b) => b.edge - a.edge)[0])
+  .filter(Boolean)
+  .sort((a, b) => a.fx.kickoff - b.fx.kickoff)
+  .map((row, index) => ({ row, tier: index % 2 ? 'plus' : 'free' }));
+const pickFor = fx => shadowPicks.find(pick => pick.row.fx === fx);
+
+// ---------------------------------------------------------------- estado
+
+const PREFS_KEY = 'quantfut-demo-prefs';
+function loadPrefs() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
+    return {
+      oddsFormat: raw.oddsFormat === 'us' ? 'us' : 'dec',
+      followed: Array.isArray(raw.followed) ? raw.followed.filter(league => LEAGUES.includes(league)) : [...LEAGUES],
+    };
+  } catch {
+    return { oddsFormat: 'dec', followed: [...LEAGUES] };
+  }
+}
+function savePrefs() {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ oddsFormat: state.oddsFormat, followed: state.followed })); } catch { /* sin almacenamiento: vale hasta recargar */ }
+}
+
+const nav = [
+  { route: 'inicio', label: 'Inicio', short: 'Inicio', icon: '⌂', group: 'EXPLORAR' },
+  { route: 'mercados', label: 'Mesa de mercados', short: 'Mesa', icon: '▦', group: 'EXPLORAR' },
+  { route: 'picks', label: 'Picks', short: 'Picks', icon: '◇', group: 'EXPLORAR' },
+  { route: 'partido', label: 'Ficha de partido', short: 'Partido', icon: '◫', group: 'EXPLORAR' },
+  { route: 'historial', label: 'Historial verificable', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
+  { route: 'planes', label: 'Planes', short: 'Planes', icon: '◈', group: 'ACCESO' },
+  { route: 'cuenta', label: 'Mi espacio', short: 'Mi espacio', icon: '◉', group: 'ACCESO' },
+];
+const MOBILE_PRIMARY = ['inicio', 'mercados', 'picks', 'historial'];
+const routeTitle = { inicio: 'Portada', mercados: 'Mesa de mercados', picks: 'Picks', partido: 'Ficha de partido', historial: 'Historial', planes: 'Planes', cuenta: 'Mi espacio' };
+const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
+// Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
+// por probabilidad justa, que no dice nada de si la cuota compensa.
+const DESK_MODES = [
+  { id: 'dia', icon: '★', label: 'Pick del día' },
+  { id: 'todas', icon: '▦', label: 'Todas' },
+  { id: 'ventaja', icon: '↗', label: 'Top ventaja' },
+  { id: 'probables', icon: '◎', label: 'Top probabilidad' },
+  { id: 'combinadas', icon: '⊕', label: 'Combinadas' },
+];
+// Combinadas armadas por cuota total, como las ~2X/~3X de la competencia,
+// pero cada una cotizada entera en una sola casa.
+const COMBO_TABS = [
+  { id: 'todas', label: 'Todas', min: 1.5, max: 3.6 },
+  { id: '2x', label: '~2X', min: 1.8, max: 2.6 },
+  { id: '3x', label: '~3X', min: 2.6, max: 3.6 },
+  { id: 'cortas', label: 'Cortas 1,50–2,30', min: 1.5, max: 2.3 },
+  { id: 'manual', label: 'Arma la tuya' },
+];
+const COMBOS_SHOWN = 6;
+const TOP_N = 10;
+const MAX_LEGS = 6;
+const MATCH_TABS = [['resumen', 'Resumen'], ['mercados', 'Mercados'], ['casas', 'Casas 1X2'], ['modelo', 'Modelo'], ['registro', 'Registro']];
+const DRAWER_TABS = [['resumen', 'Resumen'], ['casas', 'Casas'], ['modelo', 'Modelo'], ['registro', 'Registro']];
+
+const prefs = loadPrefs();
+const state = {
+  route: 'inicio',
+  selectedMatch: 'qf-101',
+  matchTab: 'resumen',
+  dayOffset: 0,
+  pickLeague: 'Todas',
+  recordFilter: 'Todos',
+  recordLeague: 'Todas',
+  deskDay: 0,
+  deskStatus: 'todos',
+  deskMatch: '',
+  deskFamily: 'Todos',
+  deskOnlyCandidates: false,
+  deskMine: false,
+  deskSearch: '',
+  deskSort: { key: 'edge', dir: 'desc' },
+  deskMode: 'todas',
+  comboTab: 'todas',
+  parlay: [],
+  drawer: null,
+  drawerTab: 'resumen',
+  oddsFormat: prefs.oddsFormat,
+  followed: prefs.followed,
+  mobileMenuOpen: false,
+  demoSession: false,
+  accessStep: 0,
+  modal: null,
+};
+let publicData = null;
+let publicRequest = 0;
+
+// ---------------------------------------------------------------- formato
+
+const app = document.getElementById('app');
+const esc = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const fold = text => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const dateFmt = (date, options = {}) => new Intl.DateTimeFormat('es-MX', options).format(date);
+const dayLabel = offset => offset === 0 ? 'Hoy' : offset === -1 ? 'Ayer' : offset === 1 ? 'Mañana' : dateFmt(addDays(offset), { weekday: 'short', day: 'numeric' });
+const timeLabel = date => dateFmt(date, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const stamp = date => `${dateFmt(date, { day: 'numeric', month: 'short' })} · ${timeLabel(date)}`;
+const kickoffLabel = fx => `${dayLabel(fx.day)} · ${timeLabel(fx.kickoff)}`;
+const fmtOdds = decimal => {
+  if (decimal == null) return '—';
+  if (state.oddsFormat === 'us') return decimal >= 2 ? `+${Math.round((decimal - 1) * 100)}` : `−${Math.round(100 / (decimal - 1))}`;
+  return decimal.toFixed(2);
+};
+const fmtPct = (p, digits = 1) => `${(p * 100).toFixed(digits)}%`;
+const fmtEdge = edge => edge == null ? '—' : `${edge >= 0 ? '+' : '−'}${Math.abs(edge * 100).toFixed(1)}%`;
+const edgeClass = edge => edge == null ? '' : edge >= SOFT_MIN_EDGE ? 'pos' : edge >= 0 ? 'near' : 'neg';
+const clvValue = item => item.price / item.closePrice - 1;
+const minutesAgo = date => Math.max(1, Math.round((now - date) / 60e3));
+const realNumber = (value, digits = 0) => value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString('es-MX', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+const realPercent = (value, digits = 1) => value == null || !Number.isFinite(Number(value)) ? '—' : `${Number(value) > 0 ? '+' : ''}${realNumber(value, digits)}%`;
+const realDate = value => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : dateFmt(date, { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const STATUS = {
+  candidata: { label: 'Candidata ≥ +2%', kind: 'good' },
+  debajo: { label: 'Bajo el umbral', kind: '' },
+  referencia: { label: 'Solo referencia', kind: 'muted' },
+  'sin-cuota': { label: 'Sin cuota blanda', kind: 'muted' },
+  excluido: { label: 'Excluido · Pinnacle', kind: 'warn' },
+  cerrado: { label: 'Mercado cerrado', kind: 'muted' },
+};
+
+function statusText(row) {
+  const fair = fmtOdds(1 / row.pFair);
+  switch (row.status) {
+    case 'candidata': return `${row.best.book.name} paga ${fmtOdds(row.best.price)} y el precio justo de Pinnacle en el mismo snapshot es ${fair}: ${fmtEdge(row.edge)} bruto. Pasaría el criterio si la publicación estuviera activa.`;
+    case 'debajo': return `La mejor casa de la lista paga ${fmtOdds(row.best.price)} frente a un justo de ${fair}. No supera el 2% exigido: no hay nada que recomendar.`;
+    case 'referencia': return 'El criterio en sombra solo evalúa 1X2. Este mercado se enseña como precio justo de referencia, no como candidata.';
+    case 'sin-cuota': return 'Ninguna casa de la lista cotiza esta selección en el snapshot.';
+    case 'excluido': return `Pinnacle se aparta ${fmtPct(row.fx.sharpDeviation)} del consenso de las demás casas (máximo ${fmtPct(MAX_SHARP_DEVIATION, 0)}). Un precio así se trata como roto y el partido entero queda fuera.`;
+    default: return 'El partido ya empezó. Se muestra el último snapshot antes del inicio: es el cierre contra el que se mide el CLV.';
+  }
+}
+
+function badge(text, kind = '') { return `<span class="badge ${kind}">${text}</span>`; }
+const statusBadge = status => badge(STATUS[status].label, STATUS[status].kind);
+const teamMark = (name, away = false, large = false) => `<span class="${large ? 'large-team-mark' : 'team-mark'} ${away ? 'away' : ''}" aria-hidden="true">${name.charAt(0)}</span>`;
+
+function spark(points, width = 64, height = 22) {
+  if (points.length < 2) return '<span class="spark-empty" aria-hidden="true">—</span>';
+  const min = Math.min(...points);
+  const span = Math.max(...points) - min || 1;
+  const coords = points.map((value, i) => `${(1 + i / (points.length - 1) * (width - 2)).toFixed(1)},${(height - 1 - (value - min) / span * (height - 2)).toFixed(1)}`).join(' ');
+  return `<svg class="spark ${points.at(-1) >= points[0] ? 'up' : 'down'}" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true" focusable="false"><polyline points="${coords}"/></svg>`;
+}
+
+function probBar(values, label) {
+  return `<div class="prob-bar" data-segments="${values.join(',')}" role="img" aria-label="${label}: local ${values[0]}%, empate ${values[1]}%, visita ${values[2]}%"><span></span><span></span><span></span></div>`;
+}
+
+// ---------------------------------------------------------------- navegación
+
+function navigate(route) {
+  state.route = nav.some(item => item.route === route) ? route : 'inicio';
+  state.modal = null;
+  state.drawer = null;
+  state.mobileMenuOpen = false;
+  location.hash = state.route;
+  render();
+  app.querySelector('#main-content')?.focus({ preventScroll: true });
+  window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+}
+
+function openMatch(id, tab = 'resumen') {
+  state.selectedMatch = id;
+  state.matchTab = tab;
+  navigate('partido');
+}
+
+function navMarkup() {
+  const groups = [...new Set(nav.map(item => item.group))];
+  return groups.map(group => `<div class="top-nav-group" role="group" aria-label="${group.charAt(0)}${group.slice(1).toLowerCase()}"><span class="top-nav-label" aria-hidden="true">${group}</span>${nav.filter(item => item.group === group).map(item => {
+    const active = state.route === item.route;
+    return `<button type="button" class="top-link ${active ? 'active' : ''}" data-route="${item.route}" ${active ? 'aria-current="page"' : ''}><span class="nav-icon" aria-hidden="true">${item.icon}</span><span>${item.label}</span></button>`;
+  }).join('')}</div>`).join('');
+}
+
+function mobileNavMarkup() {
+  const primary = nav.filter(item => MOBILE_PRIMARY.includes(item.route));
+  const extra = nav.filter(item => !MOBILE_PRIMARY.includes(item.route));
+  const link = item => `<button type="button" class="mobile-nav-link ${state.route === item.route ? 'active' : ''}" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><small>${item.short}</small></button>`;
+  const drawer = state.mobileMenuOpen ? `<div class="mobile-menu-layer"><button type="button" class="mobile-menu-backdrop" data-action="close-menu" aria-label="Cerrar menú adicional"></button><div id="mobile-extra-menu" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Más secciones"><div class="mobile-drawer-head"><div><p class="eyebrow">QUANTFUT / EXPLORAR</p><h2>Más secciones</h2></div><button type="button" class="mobile-drawer-close" data-action="close-menu" aria-label="Cerrar menú">×</button></div>${extra.map(item => `<button type="button" class="mobile-drawer-link" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><span>${item.label}</span><span aria-hidden="true">↗</span></button>`).join('')}<p>Planes y acceso son demostraciones. No hay pagos ni cuentas reales.</p></div></div>` : '';
+  return `<nav class="mobile-bottom-nav" aria-label="Navegación móvil">${primary.map(link).join('')}<button type="button" class="mobile-nav-link mobile-more ${extra.some(item => item.route === state.route) ? 'active' : ''}" data-action="toggle-menu" aria-expanded="${state.mobileMenuOpen}"><span aria-hidden="true">☰</span><small>Más</small></button></nav>${drawer}`;
+}
+
+function oddsToggle(extraClass = '') {
+  return `<div class="segmented odds-toggle ${extraClass}" role="group" aria-label="Formato de cuota">${[['dec', 'Decimal'], ['us', 'Americana']].map(([value, label]) => `<button type="button" data-odds="${value}" class="${state.oddsFormat === value ? 'selected' : ''}" aria-pressed="${state.oddsFormat === value}">${label}</button>`).join('')}</div>`;
+}
+
+function dayRail() {
+  return `<nav class="date-rail" aria-label="Seleccionar fecha de partidos">${[-1, 0, 1, 2, 3].map(offset => `<button type="button" class="date-button ${state.dayOffset === offset ? 'active' : ''}" data-day="${offset}" aria-label="${dateFmt(addDays(offset), { weekday: 'long', day: 'numeric', month: 'long' })}" aria-pressed="${state.dayOffset === offset}">${dayLabel(offset)}</button>`).join('')}</nav>`;
+}
+
+// ---------------------------------------------------------------- piezas compartidas
+
+function kpiStrip(dayFixtures) {
+  const rows = dayFixtures.flatMap(fx => fx.rows);
+  const candidates = rows.filter(row => row.status === 'candidata').length;
+  const open = dayFixtures.filter(fx => !fx.closed);
+  const latest = open.length ? new Date(Math.max(...open.map(fx => fx.snapshot))) : null;
+  return `<div class="kpi-strip">
+    <div><span>PARTIDOS</span><strong>${dayFixtures.length}</strong><small>${open.length} con mercado abierto</small></div>
+    <div><span>PRECIOS JUSTOS</span><strong>${rows.length}</strong><small>selecciones en ${new Set(rows.map(row => `${row.fx.id}${row.market}`)).size} mercados</small></div>
+    <div><span>CANDIDATAS 1X2</span><strong class="${candidates ? 'pos' : ''}">${candidates}</strong><small>≥ +2% sobre Pinnacle sin margen</small></div>
+    <div><span>ÚLTIMO SNAPSHOT</span><strong>${latest ? timeLabel(latest) : '—'}</strong><small>${latest ? `hace ${minutesAgo(latest)} min · demo` : 'sin mercados abiertos'}</small></div>
+  </div>`;
+}
+
+function shadowList(picks, { limit = 5, heading = true } = {}) {
+  const items = picks.slice(0, limit);
+  const list = items.length ? `<ol class="shadow-list">${items.map(({ row }, index) => `<li><button type="button" class="shadow-item" data-row="${row.key}"><span class="shadow-rank">${index + 1}</span><span class="shadow-body"><strong>${row.fx.home} × ${row.fx.away}</strong><span>${row.selection} · ${row.best.book.name} <b>${fmtOdds(row.best.price)}</b></span><small>mín. ${fmtOdds(row.minPrice)} · ${kickoffLabel(row.fx)}</small></span><span class="shadow-edge pos">${fmtEdge(row.edge)}</span></button></li>`).join('')}</ol>` : '<p class="rail-empty">Ninguna casa de la lista supera hoy el precio justo en un 2%. Es un resultado válido: el criterio no fuerza picks.</p>';
+  return `<section class="rail-panel">${heading ? `<div class="rail-head"><p class="eyebrow">SOMBRA DEL CRITERIO</p>${badge('Publicación pausada', 'warn')}</div><h2>Lo que se habría elegido</h2>` : ''}${list}<p class="rail-note">Una por partido, solo 1X2, precio de casa blanda contra Pinnacle en el mismo snapshot. Sin hash: la demo no escribe en la cadena.</p></section>`;
+}
+
+function sortedRows(rows) {
+  const { key, dir } = state.deskSort;
+  const value = {
+    edge: row => row.edge ?? -Infinity,
+    model: row => row.pModel,
+    fair: row => row.pFair,
+    best: row => row.best?.price ?? -Infinity,
+    kickoff: row => row.fx.kickoff.getTime(),
+  }[key];
+  const sign = dir === 'asc' ? 1 : -1;
+  // Al ordenar por diferencia, primero lo que el criterio aceptaría; un +10% de
+  // un partido excluido o cerrado no es comprable y va siempre al final.
+  const tier = row => (key !== 'edge' ? 0 : row.status === 'candidata' ? 0 : ['excluido', 'cerrado', 'sin-cuota'].includes(row.status) ? 2 : 1);
+  return [...rows].sort((a, b) => tier(a) - tier(b) || sign * (value(a) - value(b)) || a.key.localeCompare(b.key));
+}
+
+function marketTable(rows, { showMatch = true, caption }) {
+  const sortTh = (key, label, cls = '') => {
+    const active = state.deskSort.key === key;
+    return `<th scope="col" class="${cls}" aria-sort="${active ? (state.deskSort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}"><button type="button" class="sort-button" data-sort="${key}">${label}<span aria-hidden="true">${active ? (state.deskSort.dir === 'asc' ? '↑' : '↓') : '↕'}</span></button></th>`;
+  };
+  const body = rows.map(row => `<tr class="${row.status === 'candidata' ? 'is-candidate' : ''}">
+    <td class="cell-main"><button type="button" class="row-open" data-row="${row.key}"><strong>${showMatch ? `${row.fx.home} × ${row.fx.away}` : row.market}</strong><small>${showMatch ? `${row.market} · ${timeLabel(row.fx.kickoff)}` : row.family}</small></button></td>
+    <td><strong>${row.selection}</strong></td>
+    <td class="num">${fmtPct(row.pModel)}</td>
+    <td class="num"><strong>${fmtOdds(1 / row.pFair)}</strong><small>${fmtPct(row.pFair)}</small></td>
+    <td class="num">${row.best ? `<strong class="price">${fmtOdds(row.best.price)}</strong><small>${row.best.book.name}</small>` : '—'}</td>
+    <td class="num edge ${edgeClass(row.edge)}">${fmtEdge(row.edge)}</td>
+    <td class="num">${row.family === '1X2' ? fmtOdds(row.minPrice) : '—'}</td>
+    <td>${spark(row.history)}${row.history.length ? `<span class="sr-only">De ${fmtOdds(row.history[0])} a ${fmtOdds(row.best.price)}</span>` : ''}</td>
+    <td>${statusBadge(row.status)}</td>
+    <td class="slip-cell">${slipToggle(row)}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap market-wrap" tabindex="0" role="region" aria-label="Tabla de mercados, desplazable horizontalmente"><table class="market-table"><caption class="sr-only">${caption}</caption><thead><tr>
+    ${showMatch ? sortTh('kickoff', 'Partido · mercado', 'cell-main') : '<th scope="col" class="cell-main">Mercado</th>'}
+    <th scope="col">Selección</th>
+    ${sortTh('model', 'Modelo', 'num')}
+    ${sortTh('fair', 'Justo Pinnacle', 'num')}
+    ${sortTh('best', 'Mejor casa', 'num')}
+    ${sortTh('edge', 'vs justo', 'num')}
+    <th scope="col" class="num">Mínimo</th>
+    <th scope="col">Movimiento</th>
+    <th scope="col">Estado</th>
+    <th scope="col" class="slip-cell"><span class="sr-only">Combinada</span><span aria-hidden="true">⊕</span></th>
+  </tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+// ---------------------------------------------------------------- combinadas
+
+const tradable = row => Boolean(row.best) && !row.fx.closed && !row.fx.excluded;
+const product = values => values.reduce((total, value) => total * value, 1);
+
+function slipToggle(row) {
+  const on = state.parlay.includes(row.key);
+  const why = row.fx.closed ? 'mercado cerrado' : row.fx.excluded ? 'partido excluido' : 'sin cuota blanda';
+  return `<button type="button" class="slip-toggle ${on ? 'on' : ''}" data-parlay="${row.key}" aria-pressed="${on}" ${tradable(row) ? '' : `disabled title="No combinable: ${why}"`} aria-label="${on ? 'Quitar de' : 'Añadir a'} la combinada: ${row.selection} en ${row.fx.home} contra ${row.fx.away}">${on ? '✓' : '+'}</button>`;
+}
+
+// Una selección por partido: dos del mismo partido están correlacionadas y el
+// producto de sus probabilidades sería un precio justo falso.
+function toggleLeg(key) {
+  const row = rowByKey.get(key);
+  if (state.parlay.includes(key)) state.parlay = state.parlay.filter(item => item !== key);
+  else if (tradable(row)) state.parlay = [...state.parlay.filter(item => rowByKey.get(item).fx !== row.fx), key].slice(-MAX_LEGS);
+}
+
+function parlayLegs() { return state.parlay.map(key => rowByKey.get(key)).filter(row => row && tradable(row)); }
+
+function parlayPanel() {
+  const legs = parlayLegs();
+  const shadowToday = shadowPicks.filter(pick => pick.row.fx.day === state.deskDay && tradable(pick.row));
+  const loadButton = `<button type="button" class="secondary-button" data-action="load-shadow" ${shadowToday.length ? '' : 'disabled'}>Cargar candidatas del día (${shadowToday.length})</button>`;
+  if (!legs.length) {
+    return `<section class="panel slip-panel"><p class="eyebrow">COMBINADA</p><h2>Añade selecciones con <span class="slip-inline">+</span> en la tabla</h2><p class="body-copy muted">Una por partido, hasta ${MAX_LEGS}. Se calcula en cada casa por separado, porque una combinada se juega entera en la misma casa.</p><div class="slip-actions">${loadButton}</div></section>`;
+  }
+  const pAll = product(legs.map(row => row.pFair));
+  const books = BOOKS.map(book => {
+    const prices = legs.map(row => row.quotes.find(q => q.book === book).price);
+    const missing = prices.filter(price => !price).length;
+    const price = missing ? null : product(prices);
+    return { book, price, missing, edge: price ? price * pAll - 1 : null };
+  }).sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  const best = books.find(item => item.price);
+  const below = legs.filter(row => row.edge < 0).length;
+  const callout = below
+    ? `<strong>${below} de ${legs.length} selecciones pagan por debajo del justo incluso en su mejor casa.</strong> En una combinada esas desventajas se multiplican, no se compensan.`
+    : '<strong>Todas las selecciones pagan por encima del justo en su mejor casa,</strong> pero la combinada solo se puede jugar en una casa: mira abajo cuál la cotiza entera y a qué precio.';
+  return `<section class="panel slip-panel">
+    <div class="panel-heading"><div><p class="eyebrow">COMBINADA · ${legs.length} SELECCIÓN${legs.length > 1 ? 'ES' : ''}</p><h2>Tu combinada</h2></div><div class="slip-actions">${loadButton}<button type="button" class="text-link" data-action="clear-parlay">Vaciar</button></div></div>
+    <ol class="slip-legs">${legs.map(row => `<li><div><strong>${row.selection}</strong><small>${row.fx.home} × ${row.fx.away} · ${row.market}</small></div><span class="num">${fmtOdds(row.best.price)}<small>${row.best.book.name}</small></span><span class="num">${fmtOdds(1 / row.pFair)}<small>justo</small></span><span class="num edge ${edgeClass(row.edge)}">${fmtEdge(row.edge)}</span><button type="button" class="slip-remove" data-parlay="${row.key}" aria-label="Quitar ${row.selection} de la combinada">×</button></li>`).join('')}</ol>
+    <div class="slip-metrics">
+      <div><span>ACERTAR TODAS</span><strong>${fmtPct(pAll)}</strong><small>probabilidad justa conjunta</small></div>
+      <div><span>CUOTA JUSTA</span><strong>${fmtOdds(1 / pAll)}</strong><small>producto de los justos</small></div>
+      <div><span>MEJOR CASA</span><strong class="price">${best ? fmtOdds(best.price) : '—'}</strong><small>${best ? best.book.name : 'ninguna la cotiza entera'}</small></div>
+      <div><span>VS JUSTO</span><strong class="edge ${edgeClass(best ? best.edge : null)}">${fmtEdge(best ? best.edge : null)}</strong><small>en esa casa</small></div>
+    </div>
+    <div class="drawer-note ${best && best.edge >= 0 ? 'candidata' : 'excluido'}"><p>${callout}</p></div>
+    <div class="table-wrap"><table class="books-table"><caption class="sr-only">Cuota combinada por casa</caption><thead><tr><th scope="col">Casa</th><th scope="col" class="num">Cuota combinada</th><th scope="col" class="num">vs justo</th></tr></thead><tbody>${books.map(item => `<tr class="${item === best ? 'is-best' : ''}"><td><strong>${item.book.name}</strong>${item.price ? '' : `<small>no cotiza ${item.missing} selección${item.missing > 1 ? 'es' : ''}</small>`}</td><td class="num">${fmtOdds(item.price)}</td><td class="num edge ${edgeClass(item.edge)}">${fmtEdge(item.edge)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="panel-foot">Probabilidad conjunta = producto de las justas, válido porque son partidos distintos. El criterio publica selecciones sueltas; una combinada no crea ventaja, solo multiplica la que ya tenga cada selección.</p>
+  </section>`;
+}
+
+function deskRowsForMode() {
+  const rows = deskFilteredRows();
+  if (state.deskMode === 'ventaja') return sortedRows(rows.filter(row => tradable(row) && row.edge > 0).sort((a, b) => b.edge - a.edge).slice(0, TOP_N));
+  if (state.deskMode === 'probables') return sortedRows(rows.filter(tradable).sort((a, b) => b.pFair - a.pFair).slice(0, TOP_N));
+  return sortedRows(rows);
+}
+
+// Pick del día: la mejor candidata 1X2 del criterio, con ventana de venta que
+// se cierra al inicio del partido y su historial completo debajo.
+function pickOfDayPanel() {
+  const row = shadowPicks.map(pick => pick.row).filter(item => item.fx.day === state.deskDay).sort((a, b) => b.edge - a.edge)[0];
+  const won = archive.filter(item => item.result === 'Ganado').length;
+  const units = sum(archive.map(item => (item.result === 'Ganado' ? item.price - 1 : -1)));
+  const clv = sum(archive.map(clvValue)) / archive.length;
+  let body;
+  if (!row) {
+    body = `<div class="pod-closed"><span class="pod-lock" aria-hidden="true">◇</span><div><strong>Hoy no hay pick del día</strong><p>Ninguna casa de la lista paga un 2% por encima del precio justo en 1X2. No se fuerza uno: mañana a las 12:00 se vuelve a mirar.</p></div></div>`;
+  } else {
+    const minutes = Math.max(0, Math.round((row.fx.kickoff - now) / 60e3));
+    const left = minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
+    body = `<div class="pod-window"><span class="side-live-dot"></span><span>Disponible hasta el inicio, <strong>${stamp(row.fx.kickoff)}</strong> · faltan ${left}. Al empezar el partido se cierra: no se entra a última hora.</span></div>
+      <article class="pod-card">
+        <div class="pod-main"><p class="pod-league">${row.fx.league} · ${kickoffLabel(row.fx)}</p><h3>${row.fx.home} <span>vs</span> ${row.fx.away}</h3><p class="pod-selection"><span>${row.market}</span><strong>${row.selection}</strong></p></div>
+        <div class="pod-price"><strong>${fmtOdds(row.best.price)}</strong><small>${row.best.book.name}</small></div>
+      </article>
+      <div class="drawer-metrics pod-metrics">
+        <div><span>JUSTO PINNACLE</span><strong>${fmtOdds(1 / row.pFair)}</strong><small>${fmtPct(row.pFair)} sin margen</small></div>
+        <div><span>VS JUSTO</span><strong class="edge ${edgeClass(row.edge)}">${fmtEdge(row.edge)}</strong><small>bruto en ${row.best.book.name}</small></div>
+        <div><span>ESPERADO AL CIERRE</span><strong>${fmtEdge(row.expectedEdge)}</strong><small>persistencia ${Math.round(row.best.book.persistence * 100)}%</small></div>
+        <div><span>PRECIO MÍNIMO</span><strong>${fmtOdds(row.minPrice)}</strong><small>por debajo ya no vale</small></div>
+        <div><span>SNAPSHOT</span><strong>${timeLabel(row.fx.snapshot)}</strong><small>Pinnacle y casa en la misma respuesta</small></div>
+        <div><span>HASH</span><strong>—</strong><small>se sella antes del partido · demo</small></div>
+      </div>
+      <div class="slip-actions pod-actions"><button type="button" class="primary-button" data-row="${row.key}">Ver todas las casas</button><button type="button" class="secondary-button" data-match="${row.fx.id}">Ficha del partido</button></div>`;
+  }
+  const history = `<section class="pod-history"><div class="pod-history-head"><p class="eyebrow">PICK DEL DÍA — HISTORIAL</p><span>${won}G ${archive.length - won}P · ${units >= 0 ? '+' : '−'}${Math.abs(units).toFixed(2)}u · CLV medio ${fmtEdge(clv)}</span></div>
+    <ol class="pod-list">${archive.map(item => `<li class="${item.result === 'Ganado' ? 'won' : 'lost'}"><span class="pod-mark" aria-hidden="true">${item.result === 'Ganado' ? '✓' : '✗'}</span><div><strong>${item.selection} · ${item.market}</strong><small>${item.match} · ${dateFmt(item.date, { day: 'numeric', month: 'short' })} · ${item.book} · <span class="result ${item.result === 'Ganado' ? 'won' : 'lost'}">${item.result}</span></small></div><span class="num">@${fmtOdds(item.price)}<small>cierre ${fmtOdds(item.closePrice)}</small></span><span class="num edge ${clvValue(item) >= 0 ? 'pos' : 'neg'}">${fmtEdge(clvValue(item))}<small>CLV</small></span></li>`).join('')}</ol>
+    <p class="panel-foot">Muestra ficticia. En la versión real cada entrada se sella en la cadena de hashes antes del partido: ganados y perdidos a la vista, nada editado. <button type="button" class="text-link" data-route="historial">Ver historial completo ↗</button></p></section>`;
+  return `<section class="panel pod-panel"><div class="pod-head"><div><p class="eyebrow">PICK DEL DÍA</p><h2>Un pick, con su precio mínimo y su historial</h2></div>${badge('Demo · sin venta real', 'warn')}</div>${body}${history}</section>`;
+}
+
+const comboCache = new Map();
+// Todas las combinadas de 2 a 5 partidos distintos cuyas selecciones pagan el
+// justo o más en la MISMA casa; si varias casas la cotizan, se queda la mejor.
+function readyCombos(day) {
+  if (comboCache.has(day)) return comboCache.get(day);
+  const open = allRows.filter(row => row.fx.day === day && tradable(row));
+  const matches = [...new Set(open.map(row => row.fx.id))];
+  const bestByLegs = new Map();
+  for (const book of BOOKS) {
+    const legsByMatch = matches.map(id => open.filter(row => row.fx.id === id)
+      .map(row => ({ row, price: row.quotes.find(q => q.book === book).price }))
+      .filter(leg => leg.price && leg.price * leg.row.pFair >= 1));
+    const walk = (i, chosen) => {
+      if (i === legsByMatch.length) {
+        if (chosen.length < 2) return;
+        const price = product(chosen.map(leg => leg.price));
+        const p = product(chosen.map(leg => leg.row.pFair));
+        const id = chosen.map(leg => leg.row.key).join('|');
+        if (!bestByLegs.has(id) || bestByLegs.get(id).price < price) bestByLegs.set(id, { id, book, legs: chosen, price, p, edge: price * p - 1 });
+        return;
+      }
+      walk(i + 1, chosen);
+      if (chosen.length < 5) legsByMatch[i].forEach(leg => walk(i + 1, [...chosen, leg]));
+    };
+    walk(0, []);
+  }
+  const combos = [...bestByLegs.values()];
+  comboCache.set(day, combos);
+  return combos;
+}
+
+function comboCard(combo) {
+  const tag = combo.price < 1.8 ? 'Corta' : combo.price < 2.6 ? '~2X' : '~3X';
+  return `<article class="combo-card"><header><span class="combo-tag">${tag}</span><span>${combo.legs.length} partidos · ${combo.book.name}</span></header>
+    <ol class="combo-legs">${combo.legs.map(leg => { const edge = leg.price * leg.row.pFair - 1; return `<li><div><strong>${leg.row.selection}</strong><small>${leg.row.fx.home} × ${leg.row.fx.away} · ${leg.row.market}</small></div><span class="num">${fmtOdds(leg.price)}</span><span class="num">${fmtOdds(1 / leg.row.pFair)}<small>justo</small></span><span class="num edge ${edgeClass(edge)}">${fmtEdge(edge)}</span></li>`; }).join('')}</ol>
+    <footer><div><span>CUOTA TOTAL</span><strong class="price">${fmtOdds(combo.price)}</strong></div><div><span>PROB. JUSTA</span><strong>${fmtPct(combo.p)}</strong></div><div><span>VS JUSTO</span><strong class="edge ${edgeClass(combo.edge)}">${fmtEdge(combo.edge)}</strong></div><button type="button" class="secondary-button" data-load-combo="${esc(combo.id)}">Cargar en mi combinada</button></footer>
+  </article>`;
+}
+
+function comboPanel() {
+  const tab = COMBO_TABS.find(item => item.id === state.comboTab) || COMBO_TABS[0];
+  const bar = `<div class="tab-bar combo-tabs" role="tablist" aria-label="Tipo de combinada">${COMBO_TABS.map(item => `<button type="button" role="tab" aria-selected="${item.id === tab.id}" class="${item.id === tab.id ? 'selected' : ''}" data-combo-tab="${item.id}">${item.label}${item.id === 'manual' && state.parlay.length ? ` (${state.parlay.length})` : ''}</button>`).join('')}</div>`;
+  if (tab.id === 'manual') return bar + parlayPanel();
+  const combos = readyCombos(state.deskDay).filter(combo => combo.price >= tab.min && combo.price <= tab.max).sort((a, b) => b.edge - a.edge).slice(0, COMBOS_SHOWN);
+  const intro = '<p class="mode-note">Armadas solas con selecciones que pagan al menos el precio justo en la <strong>misma casa</strong>, una por partido. La probabilidad es la justa de Pinnacle, no una nota. El criterio publica selecciones sueltas: esto es referencia.</p>';
+  const list = combos.length
+    ? `<div class="combo-grid">${combos.map(comboCard).join('')}</div>`
+    : `<div class="empty-state"><span class="empty-symbol">⊕</span><h3>Sin combinadas ${tab.label} este día</h3><p>Solo entra una combinada si todas sus selecciones pagan el justo o más en la misma casa. Si no la hay, no se inventa.</p></div>`;
+  return bar + intro + list;
+}
+
+function quickBar() {
+  const note = {
+    ventaja: `Las ${TOP_N} selecciones abiertas que más pagan por encima del precio justo. Solo las 1X2 con ≥ +2% pasan el criterio; el resto es referencia.`,
+    probables: `Las ${TOP_N} selecciones abiertas con mayor probabilidad justa (Pinnacle sin margen). Más probable no significa mejor apuesta: la cuota ya lo descuenta, mira «vs justo».`,
+  }[state.deskMode];
+  return `<div class="quick-bar" role="group" aria-label="Vistas rápidas">${DESK_MODES.map(mode => `<button type="button" class="quick-btn ${state.deskMode === mode.id ? 'selected' : ''}" data-desk-mode="${mode.id}" aria-pressed="${state.deskMode === mode.id}"><span aria-hidden="true">${mode.icon}</span>${mode.label}${mode.id === 'combinadas' && state.parlay.length ? `<b>${state.parlay.length}</b>` : ''}</button>`).join('')}</div>${note ? `<p class="mode-note">${note}</p>` : ''}`;
+}
+
+function heatGrid(fx, size = 6) {
+  const cells = [];
+  for (let i = 0; i < size; i++) {
+    cells.push(`<th scope="row">${i}</th>`);
+    for (let j = 0; j < size; j++) {
+      const p = fx.grid[i][j];
+      cells.push(`<td class="heat-${Math.min(5, Math.floor(p * 100 / 2.5))}">${(p * 100).toFixed(1)}</td>`);
+    }
+  }
+  const rows = [];
+  for (let i = 0; i < size; i++) rows.push(`<tr>${cells.slice(i * (size + 1), (i + 1) * (size + 1)).join('')}</tr>`);
+  return `<div class="heat-wrap"><table class="heat-grid"><caption>Probabilidad del marcador exacto (%). Filas: goles de ${fx.home}; columnas: goles de ${fx.away}.</caption><thead><tr><th scope="col"><span class="sr-only">Local \\ Visita</span></th>${Array.from({ length: size }, (_, j) => `<th scope="col">${j}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+}
+
+function modelPanel(fx) {
+  const x12 = fx.rows.filter(row => row.market === '1X2');
+  return `<div class="model-grid">
+    <section class="panel"><p class="eyebrow">MODELO / DIAGNÓSTICO</p><h2>Dos lambdas, todos los mercados</h2>
+      <div class="lambda-pair"><div><span>${fx.home}</span><strong>${fx.xg[0].toFixed(2)}</strong><small>goles esperados</small></div><div><span>${fx.away}</span><strong>${fx.xg[1].toFixed(2)}</strong><small>goles esperados</small></div></div>
+      <div class="compare-list">${x12.map(row => `<div class="compare-row"><span>${row.selection}</span><div class="compare-bars"><span class="bar model" data-width="${(row.pModel * 100).toFixed(1)}"></span><span class="bar fair" data-width="${(row.pFair * 100).toFixed(1)}"></span></div><small>${fmtPct(row.pModel)} · ${fmtPct(row.pFair)}</small></div>`).join('')}</div>
+      <p class="legend"><span class="key model"></span>Modelo <span class="key fair"></span>Pinnacle sin margen</p>
+      <p class="panel-foot">El modelo es diagnóstico: la selección usa el precio justo de Pinnacle, no la opinión del modelo. Que discrepen no es, por sí solo, una ventaja.</p>
+    </section>
+    <section class="panel"><p class="eyebrow">MARCADOR EXACTO</p><h2>Dónde se reparte la probabilidad</h2>${heatGrid(fx)}</section>
+  </div>`;
+}
+
+function traceSteps(fx) {
+  const pick = pickFor(fx);
+  return `<ol class="trace-steps">
+    <li><span>01 / SNAPSHOT</span><strong>${stamp(fx.snapshot)}</strong><small>Pinnacle y casas blandas de la misma respuesta del proveedor.</small></li>
+    <li><span>02 / PUBLICACIÓN</span><strong>${pick ? 'En sombra' : 'Sin candidata'}</strong><small>${pick ? 'El criterio la registra, pero la publicación está pausada. Sin hash real.' : 'Nada supera el umbral; no se publica nada.'}</small></li>
+    <li><span>03 / INICIO</span><strong>${stamp(fx.kickoff)}</strong><small>Toda publicación debe preceder al partido.</small></li>
+    <li><span>04 / CIERRE Y CLV</span><strong>${fx.closed ? 'Cierre registrado' : 'Pendiente'}</strong><small>${fx.closed ? 'El último snapshot antes del inicio es la vara del CLV.' : 'Se liquida contra el cierre sin margen, no contra el resultado.'}</small></li>
+  </ol>`;
+}
+
+function booksTable(row) {
+  const quotes = [...row.quotes].sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  return `<div class="table-wrap"><table class="books-table"><caption class="sr-only">Cuotas por casa para ${row.selection}</caption><thead><tr><th scope="col">Casa</th><th scope="col" class="num">Cuota</th><th scope="col" class="num">vs justo</th><th scope="col" class="num">Persistencia · demo</th><th scope="col" class="num">Esperado al cierre</th></tr></thead><tbody>
+    <tr class="sharp-row"><td><strong>Pinnacle</strong><small>referencia sharp</small></td><td class="num">${fmtOdds(row.pinnacle)}</td><td class="num">justo ${fmtOdds(1 / row.pFair)}</td><td class="num">—</td><td class="num">—</td></tr>
+    ${quotes.map(q => { const edge = q.price ? q.price * row.pFair - 1 : null; return `<tr class="${q === row.best ? 'is-best' : ''}"><td><strong>${q.book.name}</strong>${q === row.best ? '<small>mejor precio</small>' : ''}</td><td class="num">${fmtOdds(q.price)}</td><td class="num edge ${edgeClass(edge)}">${fmtEdge(edge)}</td><td class="num">${q.price ? `${Math.round(q.book.persistence * 100)}%` : '—'}</td><td class="num">${edge == null ? '—' : fmtEdge(edge * q.book.persistence)}</td></tr>`; }).join('')}
+  </tbody></table></div><p class="panel-foot">Persistencia: la parte del margen sobre el justo que, históricamente, sigue ahí al cierre en esa casa. El stake real sale del esperado al cierre, no del bruto.</p>`;
+}
+
+function bookMatrix(fx) {
+  const x12 = fx.rows.filter(row => row.market === '1X2');
+  const cell = (row, price) => {
+    if (!price) return '<td class="num">—</td>';
+    const edge = price * row.pFair - 1;
+    return `<td class="num ${price === row.best?.price ? 'is-best' : ''}"><strong>${fmtOdds(price)}</strong><small class="edge ${edgeClass(edge)}">${fmtEdge(edge)}</small></td>`;
+  };
+  return `<section class="panel"><div class="panel-heading"><div><p class="eyebrow">CASAS / 1X2</p><h2>Precio por casa en el mismo snapshot</h2></div>${badge(`Snapshot ${timeLabel(fx.snapshot)}`, 'muted')}</div>
+    <div class="table-wrap"><table class="books-table"><caption class="sr-only">Cuotas 1X2 por casa</caption><thead><tr><th scope="col">Casa</th>${x12.map(row => `<th scope="col" class="num">${row.selection}</th>`).join('')}</tr></thead><tbody>
+      <tr class="sharp-row"><td><strong>Pinnacle</strong><small>con margen</small></td>${x12.map(row => `<td class="num">${fmtOdds(row.pinnacle)}</td>`).join('')}</tr>
+      <tr class="sharp-row"><td><strong>Justo</strong><small>Pinnacle sin margen</small></td>${x12.map(row => `<td class="num"><strong>${fmtOdds(1 / row.pFair)}</strong><small>${fmtPct(row.pFair)}</small></td>`).join('')}</tr>
+      ${BOOKS.map(book => `<tr><td><strong>${book.name}</strong></td>${x12.map(row => cell(row, row.quotes.find(q => q.book === book).price)).join('')}</tr>`).join('')}
+    </tbody></table></div>
+    <p class="panel-foot">${fx.excluded ? `Pinnacle se aparta ${fmtPct(fx.sharpDeviation)} del consenso (máximo ${fmtPct(MAX_SHARP_DEVIATION, 0)}): el partido queda fuera del criterio.` : `Desviación de Pinnacle frente al consenso: ${fmtPct(fx.sharpDeviation)} (máximo ${fmtPct(MAX_SHARP_DEVIATION, 0)}).`} El porcentaje bajo cada cuota es su diferencia con el justo.</p>
+  </section>`;
+}
+
+// ---------------------------------------------------------------- vistas
+
+function matchCard(fx) {
+  const candidates = fx.rows.filter(row => row.status === 'candidata').length;
+  const tag = fx.closed ? badge('Cerrado', 'muted') : fx.excluded ? badge('Excluido', 'warn') : candidates ? badge(`${candidates} candidata${candidates > 1 ? 's' : ''}`, 'good') : badge('Sin candidata', 'muted');
+  return `<article class="match-card">
+    <div class="match-card-top"><span>${fx.league}</span><span>${kickoffLabel(fx)}</span></div>
+    <div class="match-teams">${teamMark(fx.home)}<strong>${fx.home}</strong><span class="versus">VS</span><strong>${fx.away}</strong>${teamMark(fx.away, true)}</div>
+    <div class="dual-bars"><div><small>Modelo</small>${probBar(fx.probs, 'Modelo')}</div><div><small>Pinnacle sin margen</small>${probBar(fx.marketProbs, 'Pinnacle sin margen')}</div></div>
+    <div class="prob-labels"><span>L ${fx.probs[0]} · ${fx.marketProbs[0]}%</span><span>E ${fx.probs[1]} · ${fx.marketProbs[1]}%</span><span>V ${fx.probs[2]} · ${fx.marketProbs[2]}%</span></div>
+    <div class="match-card-bottom">${tag}<span class="card-links"><button type="button" class="text-link" data-desk-open="${fx.id}">Mercados</button><button type="button" class="text-link" data-match="${fx.id}">Ficha <span aria-hidden="true">↗</span></button></span></div>
+  </article>`;
+}
+
+// Evidencia real y maqueta viven en secciones distintas. Un error de red no
+// transforma ejemplos en resultados ni permite inferir que la puerta abrió.
+function liveStatus() {
+  const gate = publicData?.gate;
+  const status = gate?.status === 'ready' ? gate.data.puerta_comercial : null;
+  const active = isPublicationActive(gate);
+  const shadow = status?.sombra_criterio_sharp;
+  const reasons = Array.isArray(shadow?.motivos) ? shadow.motivos : [];
+  const measured = shadow?.publicables?.n_with_fair_close;
+  const candidates = shadow?.publicables?.n;
+  const captured = shadow?.ofertas_registradas;
+  return `<section class="live-panel" aria-label="Estado real de publicación"><div class="live-head"><div><p class="eyebrow">ESTADO REAL · API PÚBLICA</p><h2>${!gate ? 'Consultando el sistema…' : !status ? 'Estado no disponible' : active ? 'Publicación activa' : 'Publicación pausada'}</h2></div>${badge(active ? 'Verificado por servidor' : 'Sin venta activa', active ? 'good' : 'muted')}</div>
+    <p>${!gate ? 'Cargando la puerta comercial desde QuantFut.' : !status ? 'No se pudo verificar la puerta comercial. No se mostrarán picks como publicados.' : active ? 'El servidor confirma que la puerta está autorizada y la publicación activa.' : 'El servidor todavía no autoriza vender picks. Los partidos y precios que aparecen más abajo son solo una maqueta.'}</p>
+    ${status ? `<div class="live-facts"><div><span>CIERRES JUSTOS EN SOMBRA</span><strong>${realNumber(measured)}</strong><small>${realNumber(candidates)} candidatas · ${realNumber(captured)} ofertas capturadas</small></div><div><span>PUERTA DEL CRITERIO</span><strong>${shadow?.autorizada ? 'Autorizada' : 'Cerrada'}</strong><small>decisión calculada por el servidor</small></div><div><span>PUBLICACIÓN</span><strong>${active ? 'Activa' : 'Pausada'}</strong><small>sin cobros ni acceso premium</small></div></div>${reasons.length ? `<p class="live-reason"><strong>Motivo:</strong> ${esc(reasons.join(' · '))}</p>` : ''}` : ''}
+    <div class="live-links"><button type="button" class="text-link" data-route="historial">Ver evidencia pública ↗</button><button type="button" class="text-link" data-action="refresh-public">Actualizar estado ↻</button></div></section>`;
+}
+
+function livePicks() {
+  const gate = publicData?.gate;
+  const picks = publicData?.picks;
+  const active = isPublicationActive(gate);
+  let body;
+  if (!gate || !picks) body = '<p>Consultando picks públicos y autorización del servidor…</p>';
+  else if (gate.status !== 'ready') body = '<p>No se pudo verificar la puerta comercial. Por seguridad no se muestran recomendaciones.</p>';
+  else if (!active) body = '<p>La publicación real está pausada. No hay recomendaciones nuevas a la venta ni acceso premium habilitado.</p>';
+  else if (picks.status !== 'ready') body = '<p>No se pudieron consultar los picks públicos. Inténtalo de nuevo más tarde.</p>';
+  else if (!picks.data.length) body = '<p>No hay picks gratuitos publicados para los próximos partidos. Si el criterio no encuentra valor, la lista queda vacía.</p>';
+  else body = `<div class="live-pick-list">${picks.data.map(pick => `<article class="live-pick"><div><span>${esc(pick.league_id ?? 'Liga')} · ${realDate(pick.kickoff_utc)}</span><h3>${esc(pick.local ?? 'Local')} <small>vs</small> ${esc(pick.visitante ?? 'Visitante')}</h3><p>${esc(pick.market ?? '1X2')} · ${esc(pick.selection ?? 'Selección')}</p></div><div><span>${esc(pick.bookmaker ?? 'Casa')}</span><strong>${realNumber(pick.advised_price, 2)}</strong><small>Mínimo ${realNumber(pick.min_price, 2)}</small></div></article>`).join('')}</div>`;
+  return `<section class="live-panel" aria-label="Picks públicos reales"><div class="live-head"><div><p class="eyebrow">PUBLICACIÓN REAL · /PICKS/FREE</p><h2>Picks gratuitos publicados</h2></div>${badge(active ? 'Datos del servidor' : 'En pausa', active ? 'good' : 'muted')}</div>${body}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+}
+
+function liveEvidence() {
+  const record = publicData?.record;
+  const calibration = publicData?.calibration;
+  const chain = publicData?.chain;
+  const monthly = record?.status === 'ready' ? record.data.mensual : null;
+  const last30 = record?.status === 'ready' ? record.data.ultimos_30d : null;
+  const runs = calibration?.status === 'ready' ? calibration.data.runs : null;
+  const batches = chain?.status === 'ready' ? chain.data.lotes : null;
+  const settled = Number(last30?.n || 0);
+  return `<section class="live-panel" aria-label="Historial público real"><div class="live-head"><div><p class="eyebrow">EVIDENCIA REAL · SIN DATOS DE EJEMPLO</p><h2>Registro público de QuantFut</h2></div>${badge('Fuente: API pública', 'accent')}</div>
+    <div class="live-facts"><div><span>LIQUIDADOS · 30 DÍAS</span><strong>${last30 ? realNumber(settled) : '—'}</strong><small>${record ? record.status === 'error' ? 'No disponible' : 'picks publicados' : 'Cargando…'}</small></div><div><span>EV AL CIERRE JUSTO</span><strong>${settled ? realPercent(last30.avg_ev_close, 2) : '—'}</strong><small>${settled ? 'Pinnacle sin margen' : 'Sin muestra; no se estima'}</small></div><div><span>ROI · 30 DÍAS</span><strong>${settled ? realPercent(last30.roi, 2) : '—'}</strong><small>${settled && Array.isArray(last30.roi_ci95) ? `IC95 ${realPercent(last30.roi_ci95[0], 2)} a ${realPercent(last30.roi_ci95[1], 2)}` : 'Sin intervalo publicable'}</small></div></div>
+    <div class="live-evidence-grid"><div><h3>Historial mensual</h3>${monthly ? monthly.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Historial mensual real"><table><thead><tr><th>Mes</th><th>Picks</th><th>EV cierre</th><th>ROI</th></tr></thead><tbody>${monthly.map(row => `<tr><td>${realDate(row.month)}</td><td>${realNumber(row.n_picks)}</td><td>${realPercent(row.avg_ev_close_pct, 2)}</td><td>${realPercent(row.roi_pct, 2)}</td></tr>`).join('')}</tbody></table></div>` : '<p>Sin picks liquidados publicados todavía.</p>' : `<p>${record ? 'No se pudo consultar.' : 'Cargando…'}</p>`}<a href="/track-record" target="_blank" rel="noopener">Consultar JSON original ↗</a></div>
+    <div><h3>Calibración</h3>${runs ? runs.length ? `<p>Última ventana: ${realNumber(runs[0].n_obs)} partidos · RPS ${realNumber(runs[0].rps, 4)} · mercado ${realNumber(runs[0].rps_market, 4)}.</p><small>${realDate(runs[0].window_start)} – ${realDate(runs[0].window_end)}</small>` : '<p>No hay corridas de calibración públicas.</p>' : `<p>${calibration ? 'No se pudo consultar.' : 'Cargando…'}</p>`}<a href="/calibration" target="_blank" rel="noopener">Consultar JSON original ↗</a></div>
+    <div><h3>Cadena de hashes</h3>${batches ? batches.length ? `<p>${realNumber(batches.length)} lotes recientes. Último: ${realDate(batches[0].batch_date)}.</p><code>${esc(batches[0].chain_sha256 ?? 'Hash no disponible')}</code>` : '<p>Aún no hay lotes públicos para verificar.</p>' : `<p>${chain ? 'No se pudo consultar.' : 'Cargando…'}</p>`}<a href="/chain" target="_blank" rel="noopener">Consultar JSON original ↗</a></div></div>
+    <p class="live-reason">El historial de picks publicados es distinto de la muestra en sombra que evalúa la puerta comercial. El CLV con margen no sustituye al EV al cierre sin margen.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar evidencia ↻</button></section>`;
+}
+
+function homeView() {
+  const dayFixtures = fixtures.filter(fx => fx.day === state.dayOffset);
+  const featured = fixtureById.get('qf-101');
+  return `<div class="view-title"><div><p class="eyebrow">QUANTFUT / OBSERVAR ANTES DE DECIDIR</p><h1>El precio justo, a la vista.</h1><p class="lead">Probabilidades, precios de todas las casas y un historial auditable en un mismo lugar. Sin promesas de ganancias.</p></div>${badge('Prototipo en modo demo', 'accent')}</div>
+    ${liveStatus()}
+    <section class="hero-panel"><div class="hero-copy"><p class="eyebrow">ANÁLISIS SIN CAJA NEGRA · DEMO</p><h2>Cuánto vale cada cuota.<br>Quién paga de más.</h2><p>La mesa compara cada casa con el precio justo de Pinnacle en el mismo instante. Un pick solo existe si una casa paga al menos un 2% por encima; si ninguna lo hace, no se publica nada.</p><div class="hero-actions"><button type="button" class="primary-button" data-route="mercados">Abrir la mesa <span aria-hidden="true">↗</span></button><button type="button" class="secondary-button" data-route="historial">Ver la evidencia</button></div></div><aside class="hero-preview" aria-label="Vista previa de una ficha de partido ficticia"><div class="preview-top"><span>FICHA DE PARTIDO</span>${badge('Datos demo', 'muted')}</div><p class="preview-league">${featured.league} · ${kickoffLabel(featured)}</p><h3>${featured.home}<span>vs</span>${featured.away}</h3><p class="preview-caption">Modelo · Pinnacle sin margen</p><div class="preview-probs">${['LOCAL', 'EMPATE', 'VISITA'].map((label, i) => `<div><small>${label}</small><strong>${featured.probs[i]}%</strong><small>${featured.marketProbs[i]}%</small></div>`).join('')}</div><p class="preview-note">Estimaciones ficticias; no son pronósticos publicados ni apuestas disponibles.</p><button type="button" class="text-link" data-match="${featured.id}">Abrir análisis completo <span aria-hidden="true">↗</span></button></aside><div class="hero-pattern" aria-hidden="true"><div class="pitch-circle"></div><div class="pitch-line"></div><span class="pitch-dot one"></span><span class="pitch-dot two"></span><span class="pitch-dot three"></span></div></section>
+    ${kpiStrip(dayFixtures)}
+    <div class="home-split">
+      <section><div class="section-head"><div><p class="eyebrow">AGENDA DE EJEMPLO</p><h2>${dayLabel(state.dayOffset)} en la cancha</h2></div><span class="subtle">Datos ficticios para recorrer el diseño</span></div>
+        <div class="match-grid">${dayFixtures.length ? dayFixtures.map(matchCard).join('') : '<div class="empty-state"><span class="empty-symbol">◇</span><h3>No hay partidos de ejemplo este día</h3><p>Prueba Ayer, Hoy, Mañana o el día siguiente en la barra de fechas.</p></div>'}</div>
+      </section>
+      <aside class="home-rail">${shadowList(shadowPicks.filter(pick => pick.row.fx.day === state.dayOffset))}</aside>
+    </div>
+    <div class="proof-rail" aria-label="Cómo se presentará la evidencia"><div><span>01 / PRECIO JUSTO</span><strong>Pinnacle sin margen</strong><small>La vara con la que se mide cada casa.</small></div><div><span>02 / PUBLICACIÓN</span><strong>Hora, precio y mínimo</strong><small>Para saber hasta qué cuota sigue valiendo.</small></div><div><span>03 / RESULTADO</span><strong>CLV y historial abierto</strong><small>También cuando el pick pierde.</small></div></div>`;
+}
+
+function deskFilteredRows() {
+  const query = fold(state.deskSearch.trim());
+  return allRows.filter(row => row.fx.day === state.deskDay
+    && (state.deskStatus === 'todos' || (state.deskStatus === 'abiertos' ? !row.fx.closed : row.fx.closed))
+    && (!state.deskMatch || row.fx.id === state.deskMatch)
+    && (state.deskFamily === 'Todos' || row.family === state.deskFamily)
+    && (!state.deskOnlyCandidates || row.status === 'candidata')
+    && (!state.deskMine || state.followed.includes(row.fx.league))
+    && (!query || fold(`${row.fx.home} ${row.fx.away} ${row.fx.league} ${row.market} ${row.selection}`).includes(query)));
+}
+
+function deskView() {
+  const days = [...new Set(fixtures.map(fx => fx.day))].sort((a, b) => a - b);
+  const dayIndex = days.indexOf(state.deskDay);
+  const dayFixtures = fixtures.filter(fx => fx.day === state.deskDay).sort((a, b) => a.kickoff - b.kickoff);
+  const visibleFixtures = dayFixtures.filter(fx => state.deskStatus === 'todos' || (state.deskStatus === 'abiertos' ? !fx.closed : fx.closed));
+  const rows = deskRowsForMode();
+  const showTable = ['todas', 'ventaja', 'probables'].includes(state.deskMode) || (state.deskMode === 'combinadas' && state.comboTab === 'manual');
+  const statusChip = (value, label, count) => `<button type="button" class="chip ${state.deskStatus === value ? 'selected' : ''}" data-desk-status="${value}" aria-pressed="${state.deskStatus === value}">${label} <b>${count}</b></button>`;
+  const matchButton = fx => {
+    const candidates = fx.rows.filter(row => row.status === 'candidata').length;
+    const tag = fx.closed ? '<small class="tag muted">Cerrado</small>'
+      : fx.excluded ? '<small class="tag warn">Excluido</small>'
+        : candidates ? `<small class="tag good">${candidates} cand.</small>`
+          : `<small class="tag plain">${fx.rows.length} precios</small>`;
+    const team = (name, away) => `<span>${teamMark(name, away)}<span class="team-name">${name}</span></span>`;
+    return `<button type="button" class="desk-match ${state.deskMatch === fx.id ? 'active' : ''}" data-desk-match="${fx.id}" aria-pressed="${state.deskMatch === fx.id}"><span class="desk-when"><span class="desk-time">${timeLabel(fx.kickoff)}</span>${tag}</span><span class="desk-teams">${team(fx.home)}${team(fx.away, true)}</span></button>`;
+  };
+  const byLeague = LEAGUES.map(league => [league, visibleFixtures.filter(fx => fx.league === league)]).filter(([, list]) => list.length);
+  const matchLabel = state.deskMatch ? (fx => `${fx.home} × ${fx.away}`)(fixtureById.get(state.deskMatch)) : 'todos los partidos';
+  return `<div class="view-title compact"><div><p class="eyebrow">MESA DE MERCADOS / PRECIO JUSTO CONTRA CASAS</p><h1>Mesa de mercados</h1><p class="lead">Cada fila compara la mejor casa de la lista con el precio justo de Pinnacle en el mismo snapshot. El modelo aparece como diagnóstico; no ordena ni elige.</p></div>${badge('Precios ficticios', 'accent')}</div>
+    ${quickBar()}
+    <div class="desk">
+      <aside class="desk-side" aria-label="Partidos">
+        <div class="side-head"><span>PARTIDOS</span><b>${dayFixtures.length}</b></div>
+        <div class="day-stepper"><button type="button" data-desk-day="${days[dayIndex - 1] ?? ''}" aria-label="Día anterior" ${dayIndex <= 0 ? 'disabled' : ''}>‹</button><strong>${dayLabel(state.deskDay)} · ${dateFmt(addDays(state.deskDay), { day: 'numeric', month: 'short' })}</strong><button type="button" data-desk-day="${days[dayIndex + 1] ?? ''}" aria-label="Día siguiente" ${dayIndex >= days.length - 1 ? 'disabled' : ''}>›</button></div>
+        <div class="chip-row" role="group" aria-label="Estado de los partidos">${statusChip('todos', 'Todos', dayFixtures.length)}${statusChip('abiertos', 'Abiertos', dayFixtures.filter(fx => !fx.closed).length)}${statusChip('cerrados', 'Cerrados', dayFixtures.filter(fx => fx.closed).length)}</div>
+        <div class="desk-match-list"><button type="button" class="desk-match all ${state.deskMatch ? '' : 'active'}" data-desk-match="" aria-pressed="${!state.deskMatch}"><span>Todos los partidos</span><b>${visibleFixtures.length}</b></button>
+        ${byLeague.map(([league, list]) => `<p class="desk-league">${league}</p>${list.map(matchButton).join('')}`).join('') || '<p class="rail-empty">No hay partidos con este filtro.</p>'}</div>
+      </aside>
+      <section class="desk-main" aria-label="Mercados">
+        ${state.deskMode === 'dia' ? pickOfDayPanel() : state.deskMode === 'combinadas' ? comboPanel() : kpiStrip(dayFixtures)}
+        ${showTable ? `<div class="desk-toolbar">
+          <div class="chip-row scroll" role="group" aria-label="Familia de mercado">${FAMILIES.map(family => `<button type="button" class="chip ${state.deskFamily === family ? 'selected' : ''}" data-desk-family="${family}" aria-pressed="${state.deskFamily === family}">${family}</button>`).join('')}</div>
+          <div class="toolbar-line">
+            <label class="search"><span class="sr-only">Buscar equipo, liga o mercado</span><input id="desk-search" type="search" placeholder="Buscar equipo, liga o mercado" value="${esc(state.deskSearch)}" data-input="desk-search" autocomplete="off"></label>
+            <button type="button" class="chip ${state.deskOnlyCandidates ? 'selected' : ''}" data-desk-toggle="deskOnlyCandidates" aria-pressed="${state.deskOnlyCandidates}">Solo candidatas</button>
+            <button type="button" class="chip ${state.deskMine ? 'selected' : ''}" data-desk-toggle="deskMine" aria-pressed="${state.deskMine}">Mis ligas</button>
+            <span class="result-count" aria-live="polite">${rows.length} filas · ${matchLabel}</span>
+          </div>
+        </div>
+        ${rows.length ? marketTable(rows, { caption: 'Mercados del día: modelo, precio justo de Pinnacle, mejor casa, diferencia y estado.' }) : '<div class="empty-state"><span class="empty-symbol">◇</span><h3>Ninguna fila con estos filtros</h3><p>Quita «Solo candidatas» o cambia de día: que no haya candidatas es un resultado normal.</p></div>'}
+        <p class="bottom-note">Justo = Pinnacle sin margen. «vs justo» = mejor cuota × probabilidad justa − 1. Mínimo = cuota a partir de la cual el pick sigue superando el 2%. Solo el 1X2 entra en el criterio; el resto es referencia.</p>` : ''}
+      </section>
+      <aside class="desk-rail">${shadowList(shadowPicks.filter(pick => pick.row.fx.day === state.deskDay))}
+        <section class="rail-panel legend-panel"><p class="eyebrow">CÓMO LEER LA MESA</p><dl>
+          <div><dt>${badge('Candidata ≥ +2%', 'good')}</dt><dd>Casa de la lista que paga al menos un 2% sobre el justo. Solo 1X2.</dd></div>
+          <div><dt>${badge('Excluido · Pinnacle', 'warn')}</dt><dd>Pinnacle se aparta más de un 3% del consenso: precio roto, partido fuera.</dd></div>
+          <div><dt>${badge('Solo referencia', 'muted')}</dt><dd>Mercado con precio justo calculado, fuera del criterio de picks.</dd></div>
+        </dl></section>
+      </aside>
+    </div>`;
+}
+
+function picksView() {
+  const leagues = ['Todas', ...LEAGUES];
+  const visible = shadowPicks.filter(pick => state.pickLeague === 'Todas' || pick.row.fx.league === state.pickLeague);
+  const free = visible.filter(pick => pick.tier === 'free');
+  const plus = visible.filter(pick => pick.tier === 'plus');
+  const card = ({ row }) => `<article class="pick-card">
+    <div class="pick-main"><div class="pick-meta"><span>${row.fx.league}</span><span>Inicio ${stamp(row.fx.kickoff)}</span></div>
+      <h2>${row.fx.home} <span>vs</span> ${row.fx.away}</h2>
+      <div class="pick-tags">${badge(row.market)}${badge('Gratis · demo', 'accent')}${badge(row.fx.closed ? 'Pendiente de liquidar' : 'En sombra · no publicado', 'muted')}</div>
+      <p class="pick-published">Snapshot ${stamp(row.fx.snapshot)} · Pinnacle y ${row.best.book.name} en la misma respuesta</p></div>
+    <div class="pick-detail">
+      <div><span class="metric-label">SELECCIÓN</span><strong>${row.selection}</strong></div>
+      <div><span class="metric-label">${row.best.book.name.toUpperCase()}</span><strong>${fmtOdds(row.best.price)}</strong></div>
+      <div><span class="metric-label">PRECIO MÍNIMO</span><strong>${fmtOdds(row.minPrice)}</strong></div>
+      <div><span class="metric-label">VS JUSTO · AL CIERRE</span><strong class="pos">${fmtEdge(row.edge)}</strong><small>${fmtEdge(row.expectedEdge)} esperado</small></div>
+    </div>
+    <div class="pick-actions"><button type="button" class="pick-open" data-row="${row.key}">Ver precios <span aria-hidden="true">↗</span></button><button type="button" class="text-link" data-match="${row.fx.id}">Ficha</button></div>
+  </article>`;
+  return `<div class="view-title"><div><p class="eyebrow">PRONÓSTICOS / CRITERIO EN SOMBRA</p><h1>Picks</h1><p class="lead">Un pick nace cuando una casa de la lista paga al menos un 2% por encima del precio justo de Pinnacle. Cada uno lleva su cuota mínima: por debajo de ella, ya no vale.</p></div>${badge('API pública + demo señalada', 'accent')}</div>
+    ${livePicks()}
+    <div class="disclosure"><span class="disclosure-icon">ⓘ</span><div><strong>Maqueta ficticia bajo esta línea</strong><span>Estas tarjetas son lo que el criterio habría elegido sobre precios de demostración. No son recomendaciones reales ni se enviará ninguna apuesta.</span></div></div>
+    <div class="chip-row filter-chips" role="group" aria-label="Competición">${leagues.map(league => `<button type="button" class="chip ${state.pickLeague === league ? 'selected' : ''}" data-pick-league="${league}" aria-pressed="${state.pickLeague === league}">${league.replace(' · demo', '')}</button>`).join('')}<span class="result-count" aria-live="polite">${free.length} gratis · ${plus.length} Plus · solo demo</span></div>
+    <div class="picks-list">${free.map(card).join('') || '<div class="empty-state"><span class="empty-symbol">◇</span><h3>Sin picks abiertos en esta competición</h3><p>Si ninguna casa supera el umbral, no hay pick. El sistema no rellena huecos.</p></div>'}
+    ${plus.map(({ row }) => `<article class="pick-card locked"><div class="pick-main"><div class="pick-meta"><span>${row.fx.league}</span><span>Inicio ${stamp(row.fx.kickoff)}</span></div><h2>Pick Plus <span>·</span> ${row.fx.home} vs ${row.fx.away}</h2><p class="pick-published">Selección, casa y precio se entregarían solo tras autorizar la suscripción en el servidor.</p></div><button type="button" class="secondary-button" data-modal="premium">Cómo funcionaría</button></article>`).join('')}</div>
+    <div class="bottom-note">El bloque real consulta únicamente /picks/free y verifica la puerta comercial. Ningún pick privado ni token de servicio llega al navegador.</div>`;
+}
+
+function matchView() {
+  const fx = fixtureById.get(state.selectedMatch) || fixtures[0];
+  const outcomes = ['Local', 'Empate', 'Visita'];
+  const probabilityCells = values => values.map((value, index) => `<div><span>${outcomes[index]}</span><strong>${value}%</strong></div>`).join('');
+  const pick = pickFor(fx);
+  const tabs = `<div class="tab-bar" role="tablist" aria-label="Secciones de la ficha">${MATCH_TABS.map(([id, label]) => `<button type="button" role="tab" id="match-tab-${id}" aria-controls="match-panel" aria-selected="${state.matchTab === id}" class="${state.matchTab === id ? 'selected' : ''}" data-match-tab="${id}">${label}</button>`).join('')}</div>`;
+  const panels = {
+    resumen: () => `<div class="analysis-grid comparison-grid"><section class="panel"><div class="panel-heading"><div><p class="eyebrow">MODELO / 1X2</p><h2>Estimación deportiva</h2></div><span class="small-tag">Diagnóstico</span></div><div class="prob-matrix">${probabilityCells(fx.probs)}</div>${probBar(fx.probs, 'Modelo')}<p class="panel-foot">Goles esperados: ${fx.xg[0].toFixed(2)} local · ${fx.xg[1].toFixed(2)} visitante. Alineaciones: no confirmadas en esta simulación.</p></section><section class="panel"><div class="panel-heading"><div><p class="eyebrow">MERCADO / 1X2</p><h2>Pinnacle sin margen</h2></div><span class="small-tag">Demo</span></div><div class="prob-matrix">${probabilityCells(fx.marketProbs)}</div>${probBar(fx.marketProbs, 'Pinnacle sin margen')}<p class="panel-foot">Precio simulado, no procede de Pinnacle. Es la referencia con la que se miden las demás casas.</p></section></div>
+      <div class="analysis-grid below"><section class="panel"><p class="eyebrow">LECTURA / CONTEXTO</p><h2>Qué dicen los números</h2><p class="body-copy">${fx.note}</p><div class="context-tags">${badge('XI pendiente', 'muted')}${badge(fx.excluded ? 'Pinnacle fuera de consenso' : 'Pinnacle en consenso', fx.excluded ? 'warn' : 'muted')}</div></section>
+      <section class="panel"><p class="eyebrow">CRITERIO / SOMBRA</p><h2>${pick ? 'Candidata del partido' : 'Sin candidata'}</h2>${pick ? `<div class="detail-line"><span>Selección</span><strong>${pick.row.selection}</strong></div><div class="detail-line"><span>Mejor casa</span><strong>${pick.row.best.book.name} · ${fmtOdds(pick.row.best.price)}</strong></div><div class="detail-line"><span>Justo · mínimo</span><strong>${fmtOdds(1 / pick.row.pFair)} · ${fmtOdds(pick.row.minPrice)}</strong></div><div class="detail-line"><span>vs justo · esperado al cierre</span><strong class="pos">${fmtEdge(pick.row.edge)} · ${fmtEdge(pick.row.expectedEdge)}</strong></div><button type="button" class="secondary-button full" data-row="${pick.row.key}">Ver todas las casas</button>` : `<p class="body-copy muted">${fx.closed ? 'El mercado ya cerró.' : fx.excluded ? statusText(fx.rows[0]) : 'Ninguna casa de la lista paga un 2% sobre el justo en el 1X2. No se publica nada.'}</p><button type="button" class="secondary-button full" data-match-tab="casas">Ver precios por casa</button>`}</section></div>`,
+    mercados: () => `<section class="panel flush"><div class="panel-heading padded"><div><p class="eyebrow">MERCADOS / ${fx.rows.length} SELECCIONES</p><h2>Todo lo que sale de dos lambdas</h2></div><button type="button" class="text-link" data-desk-open="${fx.id}">Abrir en la mesa ↗</button></div>${marketTable(sortedRows(fx.rows), { showMatch: false, caption: `Mercados de ${fx.home} contra ${fx.away}` })}</section>`,
+    casas: () => bookMatrix(fx),
+    modelo: () => modelPanel(fx),
+    registro: () => `<section class="panel trace-panel"><div class="panel-heading"><div><p class="eyebrow">TRAZABILIDAD</p><h2>El orden de los hechos importa</h2></div>${badge('Cronología ficticia', 'muted')}</div>${traceSteps(fx)}</section>`,
+  };
+  return `<div class="view-title"><div><p class="eyebrow">FICHA DE PARTIDO / ${fx.league.toUpperCase()}</p><h1>Un encuentro, todas sus capas.</h1><p class="lead">Modelo, precio justo, casas y registro se muestran por separado. Ninguna diferencia representa una ventaja demostrada.</p></div>${badge('Datos ilustrativos', 'accent')}</div>
+    <div class="match-picker"><label for="match-select">Elegir partido de ejemplo</label><select id="match-select" data-filter="match">${fixtures.map(item => `<option value="${item.id}" ${item.id === fx.id ? 'selected' : ''}>${kickoffLabel(item)} · ${item.home} vs ${item.away}</option>`).join('')}</select></div>
+    <div class="fixture-hero"><div class="fixture-meta"><span>${fx.league}</span><span>${dateFmt(fx.kickoff, { weekday: 'long', day: 'numeric', month: 'long' })} · ${timeLabel(fx.kickoff)}</span></div><div class="fixture-teams"><div>${teamMark(fx.home, false, true)}<h2>${fx.home}</h2><small>Local</small></div><span class="fixture-vs">VS</span><div>${teamMark(fx.away, true, true)}<h2>${fx.away}</h2><small>Visitante</small></div></div><div class="fixture-bottom">${badge(fx.closed ? 'Mercado cerrado' : fx.excluded ? 'Excluido del criterio' : 'Programado', fx.excluded ? 'warn' : 'muted')}<span>Los datos no corresponden a un partido real.</span></div></div>
+    ${tabs}<div id="match-panel" role="tabpanel" aria-labelledby="match-tab-${state.matchTab}" class="tab-panel">${panels[state.matchTab]()}</div>`;
+}
+
+function clvChart(items) {
+  const chronological = [...items].sort((a, b) => a.publishedAt - b.publishedAt);
+  let running = 0;
+  const points = chronological.map(item => (running += clvValue(item) * 100));
+  const values = [0, ...points];
+  const min = Math.min(...values, 0);
+  const span = Math.max(...values, 0) - min || 1;
+  const x = i => 8 + i / (values.length - 1) * 284;
+  const y = v => 72 - (v - min) / span * 60;
+  return `<svg class="clv-chart" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="CLV acumulado de la muestra ficticia: ${points.at(-1).toFixed(1)} puntos tras ${points.length} registros"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+function historyView() {
+  const filtered = archive.filter(item => (state.recordFilter === 'Todos' || item.result === state.recordFilter) && (state.recordLeague === 'Todas' || item.league === state.recordLeague));
+  const averageClv = sum(archive.map(clvValue)) / archive.length;
+  const beatClose = archive.filter(item => clvValue(item) > 0).length;
+  const period = `${dateFmt(archive.at(-1).date, { day: 'numeric', month: 'short' })}–${dateFmt(archive[0].date, { day: 'numeric', month: 'short' })}`;
+  return `<div class="view-title"><div><p class="eyebrow">EVIDENCIA / REGISTRO REAL Y MAQUETA</p><h1>Historial verificable</h1><p class="lead">Arriba se muestra el estado real de la API; debajo, un ejemplo de cómo revisar aciertos, pérdidas y cierres. Ninguna fila de la maqueta pertenece al historial real.</p></div>${badge('API pública + demo señalada', 'accent')}</div>
+    ${liveEvidence()}
+    <div class="disclosure"><span class="disclosure-icon">ⓘ</span><div><strong>Maqueta ficticia bajo esta línea; no es prueba de rendimiento.</strong><span>Estas filas se pueden cambiar en el navegador y no tienen cadena de hashes. El historial real está en el panel anterior y procede del servidor.</span></div></div>
+    <div class="history-context"><div><span>PERIODO ILUSTRATIVO</span><strong>${period}</strong></div><div><span>COBERTURA</span><strong>${archive.length} registros inventados · todas las ligas de muestra</strong></div><div><span>ESTADO DE VERIFICACIÓN</span><strong>Sin publicación ni hash reales</strong></div></div>
+    <div class="stat-grid"><div class="stat-card"><span>CLV medio · demo</span><strong>${fmtEdge(averageClv)}</strong><small>${beatClose} de ${archive.length} batieron el cierre · no es evidencia</small>${clvChart(archive)}</div><div class="stat-card"><span>Resultados de ejemplo</span><strong>${archive.length}</strong><small>${archive.filter(item => item.result === 'Ganado').length} ganados · ${archive.filter(item => item.result === 'Perdido').length} perdidos · sin selección favorable</small></div><div class="stat-card"><span>Métricas reales</span><strong>↑</strong><small>Consulta el registro público anterior; nunca se calculan con estas filas ficticias</small></div></div>
+    <section class="panel record-panel"><div class="panel-heading"><div><p class="eyebrow">ARCHIVO DE MUESTRA</p><h2>Resultados, incluido lo que falla</h2><p class="record-count" aria-live="polite">${filtered.length} de ${archive.length} registros visibles</p></div><div class="record-filters"><div class="segmented" role="group" aria-label="Filtrar por competición">${['Todas', ...LEAGUES].map(league => `<button type="button" data-record-league="${league}" class="${state.recordLeague === league ? 'selected' : ''}" aria-pressed="${state.recordLeague === league}">${league.replace(' · demo', '')}</button>`).join('')}</div><div class="segmented" role="group" aria-label="Filtrar resultados">${['Todos', 'Ganado', 'Perdido'].map(filter => `<button type="button" data-record="${filter}" class="${state.recordFilter === filter ? 'selected' : ''}" aria-pressed="${state.recordFilter === filter}">${filter}</button>`).join('')}</div></div></div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Tabla de resultados de demostración, desplazable horizontalmente"><table><caption>Datos ficticios; CLV calculado como cuota registrada dividida por cuota de cierre, menos uno.</caption><thead><tr><th scope="col">Inicio</th><th scope="col">Publicado · demo</th><th scope="col">Partido</th><th scope="col">Selección</th><th scope="col">Casa</th><th scope="col">Cuota · mín.</th><th scope="col">Cierre</th><th scope="col">Resultado</th><th scope="col">CLV · demo</th></tr></thead><tbody>${filtered.map(item => `<tr><td>${stamp(item.date)}</td><td>${stamp(item.publishedAt)}</td><td><strong>${item.match}</strong><small>${item.league}</small></td><td><strong>${item.selection}</strong><small>${item.market}</small></td><td>${item.book}</td><td>${fmtOdds(item.price)}<small>mín. ${fmtOdds(item.minPrice)}</small></td><td>${fmtOdds(item.closePrice)}</td><td><span class="result ${item.result === 'Ganado' ? 'won' : 'lost'}">${item.result}</span></td><td class="edge ${clvValue(item) >= 0 ? 'pos' : 'neg'}">${fmtEdge(clvValue(item))}</td></tr>`).join('') || '<tr><td colspan="9">Ningún registro con estos filtros.</td></tr>'}</tbody></table></div></section>
+    <div class="evidence-grid"><div class="panel"><span class="evidence-icon">▥</span><h3>Calibración pública</h3><p>El panel real anterior consulta las corridas registradas por el servidor, con muestra y periodo.</p></div><div class="panel"><span class="evidence-icon">⌁</span><h3>Cadena de hashes</h3><p>Los lotes reales aparecen arriba cuando existan. Esta maqueta no genera huellas válidas.</p></div><div class="panel"><span class="evidence-icon">↗</span><h3>CLV con intervalo</h3><p>La cuota publicada se comparará con el cierre; el promedio deberá ir acompañado de tamaño de muestra e incertidumbre.</p></div></div>`;
+}
+
+function plansView() {
+  return `<div class="view-title"><div><p class="eyebrow">ACCESO / TODAVÍA NO A LA VENTA</p><h1>Información primero. Suscripción después.</h1><p class="lead">La estructura de planes está lista para evaluarse, pero el cobro permanece desactivado hasta superar la puerta de validación.</p></div>${badge('Sin pagos reales', 'accent')}</div>
+    <div class="plan-grid"><section class="plan-card"><span class="plan-kicker">ABIERTO</span><h2>Explorador</h2><p>Una forma de conocer el sistema y comprobarlo por tu cuenta.</p><div class="plan-price">Gratis</div><ul><li>Mesa de mercados con precios justos</li><li>Picks abiertos cuando se publiquen</li><li>Fichas de partido completas</li><li>Historial, CLV y cadena de verificación</li></ul><button type="button" class="secondary-button full" data-route="mercados">Abrir la mesa sin registro</button></section><section class="plan-card featured"><span class="plan-kicker">FUTURA FASE</span><h2>QuantFut Plus</h2><p>Mayor profundidad y acceso según el estado real del producto.</p><div class="plan-price">Próximamente</div><ul><li>Todos los picks del criterio, autorizados en servidor</li><li>Aviso cuando la cuota baja del mínimo</li><li>Filtros por casa y por tus ligas</li><li>Mismo historial público verificable</li></ul><button type="button" class="primary-button full" data-modal="plans">Recorrer el acceso demo</button></section></div>
+    <section class="panel access-map" aria-label="Recorrido previsto para una suscripción"><p class="eyebrow">CÓMO FUNCIONARÍA PLUS</p><div class="access-steps"><div><span>01 · IDENTIDAD</span><strong>Cuenta verificada</strong><small>La demo solo usa una identidad ficticia en esta pestaña.</small></div><div><span>02 · EVIDENCIA</span><strong>Puerta de CLV</strong><small>El servidor debe autorizar la publicación antes de ofrecer un plan.</small></div><div><span>03 · COBRO</span><strong>Proveedor confirmado</strong><small>Sin tarjeta ni cargo en esta demostración.</small></div><div><span>04 · ACCESO</span><strong>Autorización en servidor</strong><small>Una suscripción comprobada entregaría los picks; CSS nunca los protege.</small></div></div></section>
+    <div class="plain-callout"><strong>Sin apuestas dentro de QuantFut.</strong> No habrá boleto, depósitos ni ejecución de apuestas. Una suscripción futura pagaría por información, no garantizaría resultados.</div>`;
+}
+
+function accountView() {
+  const prefsPanel = `<section class="panel"><p class="eyebrow">PREFERENCIAS</p><h2>Cómo ves los precios</h2><p class="body-copy muted">Se guardan solo en este navegador y se aplican ya a toda la demo.</p><div class="pref-line"><span>Formato de cuota</span>${oddsToggle()}</div><fieldset class="choice-list"><legend>Mis ligas (filtro «Mis ligas» de la mesa)</legend>${LEAGUES.map(league => `<label><input type="checkbox" data-follow="${league}" ${state.followed.includes(league) ? 'checked' : ''}> ${league}</label>`).join('')}</fieldset></section>`;
+  return `<div class="view-title"><div><p class="eyebrow">ÁREA PERSONAL / DEMOSTRACIÓN</p><h1>Mi espacio</h1><p class="lead">Preferencias que ya funcionan en esta demo y una vista de cómo se organizaría el plan. El acceso aquí es solo una simulación local.</p></div>${badge(state.demoSession ? 'Sesión visual activa' : 'Sin cuenta real', 'accent')}</div>
+    ${state.demoSession ? `<div class="account-welcome"><div class="avatar">D</div><div><strong>Hola, visitante demo</strong><span>Esta sesión existe únicamente en esta pestaña. No hay usuario ni datos en servidor.</span></div><button type="button" class="secondary-button" data-action="logout">Salir de la demo</button></div><div class="account-grid"><section class="panel"><p class="eyebrow">MI PLAN</p><h2>Vista gratuita</h2><p class="body-copy muted">Cuando existan suscripciones reales, aquí aparecerá el estado validado por el servidor.</p><button type="button" class="text-link" data-route="planes">Ver planes ↗</button></section>${prefsPanel}</div><section class="panel access-state"><p class="eyebrow">ESTADO DE ACCESO · DEMO</p><h2>Así quedaría la autorización</h2><div class="detail-line"><span>Identidad</span><strong>Solo visual, no verificada</strong></div><div class="detail-line"><span>Cobro</span><strong>Desactivado</strong></div><div class="detail-line"><span>Derecho Plus</span><strong>No concedido</strong></div><div class="detail-line"><span>Picks privados recibidos</span><strong>0</strong></div><button type="button" class="secondary-button" data-modal="plans">Ver recorrido de acceso</button></section><section class="panel saved-panel"><p class="eyebrow">GUARDADOS</p><h2>Partidos para revisar</h2>${matchCard(fixtureById.get('qf-101'))}</section>` : `<div class="account-grid"><section class="login-preview"><div class="login-illustration">◉</div><p class="eyebrow">EXPLORA EL ESPACIO PERSONAL</p><h2>Así sería tu panel</h2><p>Activa una sesión visual para recorrer el panel sin correo ni contraseña. No es autenticación real y no desbloquea información privada.</p><button type="button" class="primary-button" data-action="login">Entrar en modo demo</button></section>${prefsPanel}</div>`}
+    <div class="bottom-note">Arquitectura prevista: el FastAPI modular gestionará las futuras cuentas y autorizaciones en servidor. Ningún token de servicio llegará al navegador.</div>`;
+}
+
+// ---------------------------------------------------------------- capas
+
+function modalMarkup() {
+  if (!state.modal) return '';
+  if (state.modal === 'plans') {
+    const gate = publicData?.gate?.status === 'ready' ? publicData.gate.data.puerta_comercial.sombra_criterio_sharp : null;
+    const reasons = gate?.motivos?.length ? gate.motivos.join(' · ') : 'Todavía no hay evidencia suficiente o la API no está disponible.';
+    const steps = [
+      { title: 'Identidad de ejemplo', text: 'Recorre una sesión ficticia local. No pedimos correo ni creamos una cuenta en el servidor.', action: 'Continuar con identidad ficticia' },
+      { title: 'La evidencia decide', text: `Puerta de CLV: ${gate?.autorizada ? 'autorizada' : 'cerrada'}. ${reasons} Una cuenta por sí sola nunca da acceso a picks.`, action: 'Ver checkout bloqueado' },
+      { title: 'Cobro y acceso bloqueados', text: 'No hay formulario de tarjeta, cargo, comprobante de compra ni contenido privado. El futuro servidor requerirá cuenta verificada, pago confirmado y puerta abierta.', action: 'Reiniciar recorrido' },
+    ];
+    const current = steps[state.accessStep];
+    return `<div class="modal-backdrop" data-action="close-modal"><div class="modal access-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button type="button" class="modal-close" data-action="close-modal" aria-label="Cerrar">×</button><span class="modal-mark">◈</span><p class="eyebrow">RECORRIDO DEMO · ${state.accessStep + 1} DE 3</p><h2 id="modal-title">${current.title}</h2><p>${esc(current.text)}</p><div class="access-progress" role="img" aria-label="Paso ${state.accessStep + 1} de 3">${steps.map((_, index) => `<span class="${index <= state.accessStep ? 'done' : ''}"></span>`).join('')}</div><button type="button" class="primary-button full" data-action="access-next">${current.action}</button><p class="access-footnote">Demostración sin pagos, cuentas ni picks premium reales.</p></div></div>`;
+  }
+  const isPremium = state.modal === 'premium';
+  return `<div class="modal-backdrop" data-action="close-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button type="button" class="modal-close" data-action="close-modal" aria-label="Cerrar">×</button><span class="modal-mark">◈</span><p class="eyebrow">${isPremium ? 'ACCESO PREMIUM DE EJEMPLO' : 'ESTADO DEL PRODUCTO'}</p><h2 id="modal-title">${isPremium ? 'El contenido privado no viaja antes de autorizarte.' : 'Los planes de pago aún no están disponibles.'}</h2><p>${isPremium ? 'En producción, FastAPI comprobará la suscripción en el servidor y solo entregará el contenido autorizado. Este prototipo no recibe picks privados.' : 'QuantFut necesita reunir un historial real de CLV y superar su puerta comercial antes de vender picks. Puedes explorar el diseño sin realizar pagos.'}</p><button type="button" class="primary-button full" data-action="close-modal">Entendido</button></div></div>`;
+}
+
+function drawerMarkup() {
+  const row = state.drawer && rowByKey.get(state.drawer);
+  if (!row) return '';
+  const fx = row.fx;
+  const siblings = fx.rows.filter(item => item.market === row.market);
+  const panels = {
+    resumen: () => `<div class="drawer-metrics">
+        <div><span>MODELO</span><strong>${fmtPct(row.pModel)}</strong><small>diagnóstico</small></div>
+        <div><span>JUSTO PINNACLE</span><strong>${fmtOdds(1 / row.pFair)}</strong><small>${fmtPct(row.pFair)} sin margen</small></div>
+        <div><span>VS JUSTO</span><strong class="edge ${edgeClass(row.edge)}">${fmtEdge(row.edge)}</strong><small>bruto, mejor casa</small></div>
+        <div><span>ESPERADO AL CIERRE</span><strong>${fmtEdge(row.expectedEdge)}</strong><small>${row.best ? `persistencia ${Math.round(row.best.book.persistence * 100)}%` : '—'}</small></div>
+        <div><span>PRECIO MÍNIMO</span><strong>${row.family === '1X2' ? fmtOdds(row.minPrice) : '—'}</strong><small>${row.family === '1X2' ? 'por debajo ya no vale' : 'fuera del criterio'}</small></div>
+        <div><span>SNAPSHOT</span><strong>${timeLabel(fx.snapshot)}</strong><small>${fx.closed ? 'último antes del inicio' : `hace ${minutesAgo(fx.snapshot)} min · demo`}</small></div>
+      </div>
+      <div class="drawer-note ${row.status}">${statusBadge(row.status)}<p>${statusText(row)}</p></div>
+      ${row.history.length ? `<div class="drawer-spark"><span>Mejor precio en las últimas horas · demo</span>${spark(row.history, 280, 56)}<small>${fmtOdds(row.history[0])} → ${fmtOdds(row.best.price)}</small></div>` : ''}
+      <div class="drawer-siblings"><p class="eyebrow">MISMO MERCADO</p>${siblings.map(item => `<button type="button" class="sibling ${item === row ? 'active' : ''}" data-row="${item.key}" ${item === row ? 'aria-current="true"' : ''}><span>${item.selection}</span><span>${fmtOdds(1 / item.pFair)}</span><span class="edge ${edgeClass(item.edge)}">${fmtEdge(item.edge)}</span></button>`).join('')}</div>`,
+    casas: () => booksTable(row),
+    modelo: () => modelPanel(fx),
+    registro: () => traceSteps(fx),
+  };
+  return `<div class="drawer-layer"><button type="button" class="drawer-backdrop" data-action="close-drawer" aria-label="Cerrar detalle" tabindex="-1"></button>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+      <header class="drawer-head"><button type="button" class="drawer-close" data-action="close-drawer" aria-label="Cerrar detalle">←</button><div><p class="eyebrow">${fx.league.toUpperCase()} · ${kickoffLabel(fx)}</p><h2 id="drawer-title">${fx.home} × ${fx.away}</h2></div></header>
+      <div class="drawer-hero"><div><span>${row.market}</span><strong>${row.selection}</strong></div><div class="drawer-price">${row.best ? `<strong>${fmtOdds(row.best.price)}</strong><small>${row.best.book.name}</small>` : '<strong>—</strong><small>sin cuota</small>'}</div></div>
+      <div class="tab-bar" role="tablist" aria-label="Detalle de la selección">${DRAWER_TABS.map(([id, label]) => `<button type="button" role="tab" id="drawer-tab-${id}" aria-controls="drawer-panel" aria-selected="${state.drawerTab === id}" class="${state.drawerTab === id ? 'selected' : ''}" data-drawer-tab="${id}">${label}</button>`).join('')}</div>
+      <div id="drawer-panel" class="drawer-body" role="tabpanel" aria-labelledby="drawer-tab-${state.drawerTab}">${panels[state.drawerTab]()}</div>
+      <footer class="drawer-foot"><button type="button" class="secondary-button" data-match="${fx.id}">Abrir ficha del partido</button><span>Datos ficticios · sin apuestas</span></footer>
+    </aside></div>`;
+}
+
+function closeDrawer() {
+  const key = state.drawer;
+  state.drawer = null;
+  render();
+  app.querySelector(`.row-open[data-row="${CSS.escape(key)}"], [data-row="${CSS.escape(key)}"]`)?.focus();
+}
+
+function closeModal() {
+  const trigger = state.modal;
+  state.modal = null;
+  render();
+  if (trigger) app.querySelector(`[data-modal="${trigger}"]`)?.focus();
+}
+
+// ---------------------------------------------------------------- render
+
+function render() {
+  const views = { inicio: homeView, mercados: deskView, picks: picksView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView };
+  const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
+  document.title = `${routeTitle[state.route]} · QuantFut`;
+  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="cuenta">${state.demoSession ? 'Cuenta demo' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell">${state.route === 'inicio' ? dayRail() : ''}<main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.querySelector('.app-shell').inert = overlay;
+  app.querySelector('.mobile-bottom-nav').inert = overlay;
+  app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {
+    const values = bar.dataset.segments.split(',');
+    bar.querySelectorAll('span').forEach((segment, index) => { segment.style.width = `${values[index]}%`; });
+  });
+  app.querySelectorAll('.bar[data-width]').forEach(bar => { bar.style.width = `${bar.dataset.width}%`; });
+  fitDeskSide();
+  if (state.modal) app.querySelector('.modal-close')?.focus();
+}
+
+// La lista de partidos solo queda fija si cabe entera bajo la cabecera.
+function fitDeskSide() {
+  const side = app.querySelector('.desk-side');
+  const header = app.querySelector('.site-header');
+  if (!side || !header) return;
+  side.classList.remove('is-tall');
+  side.classList.toggle('is-tall', side.offsetHeight > window.innerHeight - header.offsetHeight - 24);
+}
+window.addEventListener('resize', fitDeskSide);
+
+function rerenderKeepingFocus(selector) {
+  render();
+  app.querySelector(selector)?.focus();
+}
+
+function openDrawer(key, trigger) {
+  state.drawer = key;
+  if (!trigger?.closest('.drawer')) state.drawerTab = 'resumen';
+  render();
+  app.querySelector('.drawer-close')?.focus();
+}
+
+app.addEventListener('click', event => {
+  const button = event.target.closest('button');
+  if (!button) {
+    if (event.target.classList.contains('modal-backdrop')) closeModal();
+    return;
+  }
+  const data = button.dataset;
+  if (data.action === 'refresh-public') { refreshPublicData(); return; }
+  if (data.route) { navigate(data.route); return; }
+  if (data.match) { state.drawer = null; openMatch(data.match); return; }
+  if (data.parlay) { toggleLeg(data.parlay); rerenderKeepingFocus(button.classList.contains('slip-remove') ? '.slip-remove, [data-desk-mode="combinadas"]' : `.slip-toggle[data-parlay="${CSS.escape(data.parlay)}"]`); return; }
+  if (data.deskMode) { state.deskMode = data.deskMode; state.deskSort = { key: data.deskMode === 'probables' ? 'fair' : 'edge', dir: 'desc' }; rerenderKeepingFocus(`[data-desk-mode="${data.deskMode}"]`); return; }
+  if (data.action === 'load-shadow') { shadowPicks.filter(pick => pick.row.fx.day === state.deskDay && tradable(pick.row)).forEach(pick => { if (!state.parlay.includes(pick.row.key)) toggleLeg(pick.row.key); }); rerenderKeepingFocus('[data-action="load-shadow"]'); return; }
+  if (data.comboTab) { state.comboTab = data.comboTab; rerenderKeepingFocus(`[data-combo-tab="${data.comboTab}"]`); return; }
+  if (data.loadCombo) { state.parlay = data.loadCombo.split('|').filter(key => rowByKey.has(key)); state.comboTab = 'manual'; rerenderKeepingFocus('[data-combo-tab="manual"]'); return; }
+  if (data.action === 'clear-parlay') { state.parlay = []; rerenderKeepingFocus('[data-desk-mode="combinadas"]'); return; }
+  if (data.row) { openDrawer(data.row, button); return; }
+  if (data.deskOpen) { state.drawer = null; state.deskDay = fixtureById.get(data.deskOpen).day; state.deskMatch = data.deskOpen; state.deskStatus = 'todos'; navigate('mercados'); return; }
+  if (data.odds) { state.oddsFormat = data.odds; savePrefs(); rerenderKeepingFocus(`${button.closest('.top-odds') ? '.top-odds ' : ''}[data-odds="${data.odds}"]`); return; }
+  if (data.day !== undefined) { state.dayOffset = Number(data.day); rerenderKeepingFocus(`[data-day="${state.dayOffset}"]`); return; }
+  if (data.deskDay !== undefined && data.deskDay !== '') { state.deskDay = Number(data.deskDay); state.deskMatch = ''; rerenderKeepingFocus('.day-stepper strong'); return; }
+  if (data.deskStatus) { state.deskStatus = data.deskStatus; state.deskMatch = ''; rerenderKeepingFocus(`[data-desk-status="${data.deskStatus}"]`); return; }
+  if (data.deskMatch !== undefined) { state.deskMatch = data.deskMatch; rerenderKeepingFocus(`[data-desk-match="${data.deskMatch}"]`); return; }
+  if (data.deskFamily) { state.deskFamily = data.deskFamily; rerenderKeepingFocus(`[data-desk-family="${data.deskFamily}"]`); return; }
+  if (data.deskToggle) { state[data.deskToggle] = !state[data.deskToggle]; rerenderKeepingFocus(`[data-desk-toggle="${data.deskToggle}"]`); return; }
+  if (data.sort) { const same = state.deskSort.key === data.sort; state.deskSort = { key: data.sort, dir: same && state.deskSort.dir === 'desc' ? 'asc' : 'desc' }; rerenderKeepingFocus(`[data-sort="${data.sort}"]`); return; }
+  if (data.pickLeague) { state.pickLeague = data.pickLeague; rerenderKeepingFocus(`[data-pick-league="${data.pickLeague}"]`); return; }
+  if (data.matchTab) { state.matchTab = data.matchTab; rerenderKeepingFocus(`[data-match-tab="${data.matchTab}"][role="tab"]`); return; }
+  if (data.drawerTab) { state.drawerTab = data.drawerTab; rerenderKeepingFocus(`[data-drawer-tab="${data.drawerTab}"]`); return; }
+  if (data.record) { state.recordFilter = data.record; rerenderKeepingFocus(`[data-record="${data.record}"]`); return; }
+  if (data.recordLeague) { state.recordLeague = data.recordLeague; rerenderKeepingFocus(`[data-record-league="${data.recordLeague}"]`); return; }
+  if (data.modal) { state.modal = data.modal; state.accessStep = 0; render(); return; }
+  if (data.action === 'access-next') {
+    if (state.accessStep === 0) state.demoSession = true;
+    if (state.accessStep === 2) state.accessStep = 0;
+    else state.accessStep += 1;
+    render();
+    app.querySelector('.access-modal [data-action="access-next"]')?.focus();
+    return;
+  }
+  if (data.action === 'toggle-menu') { state.mobileMenuOpen = !state.mobileMenuOpen; render(); app.querySelector(state.mobileMenuOpen ? '.mobile-drawer [data-route]' : '.mobile-more')?.focus(); return; }
+  if (data.action === 'close-menu') { state.mobileMenuOpen = false; render(); app.querySelector('.mobile-more')?.focus(); return; }
+  if (data.action === 'close-modal') { closeModal(); return; }
+  if (data.action === 'close-drawer') { closeDrawer(); return; }
+  if (data.action === 'login') { state.demoSession = true; render(); return; }
+  if (data.action === 'logout') { state.demoSession = false; render(); }
+});
+
+app.addEventListener('change', event => {
+  const target = event.target;
+  if (target.dataset.filter === 'match') { state.selectedMatch = target.value; rerenderKeepingFocus('#match-select'); }
+  if (target.dataset.follow) {
+    const league = target.dataset.follow;
+    state.followed = target.checked ? [...new Set([...state.followed, league])] : state.followed.filter(item => item !== league);
+    savePrefs();
+    rerenderKeepingFocus(`[data-follow="${league}"]`);
+  }
+});
+
+app.addEventListener('input', event => {
+  if (event.target.dataset.input !== 'desk-search') return;
+  const caret = event.target.selectionStart;
+  state.deskSearch = event.target.value;
+  render();
+  const input = app.querySelector('#desk-search');
+  input.focus();
+  input.setSelectionRange(caret, caret);
+});
+
+window.addEventListener('hashchange', () => {
+  const route = location.hash.slice(1);
+  if (nav.some(item => item.route === route) && state.route !== route) { state.route = route; state.mobileMenuOpen = false; state.drawer = null; render(); app.querySelector('#main-content')?.focus({ preventScroll: true }); }
+});
+
+function trapFocus(event, container) {
+  const controls = [...app.querySelectorAll(`${container} button:not([disabled]):not([tabindex="-1"]), ${container} [tabindex="0"]`)];
+  if (!controls.length) return;
+  const first = controls[0];
+  const last = controls[controls.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
+window.addEventListener('keydown', event => {
+  if (state.modal) {
+    if (event.key === 'Escape') closeModal();
+    else if (event.key === 'Tab') trapFocus(event, '.modal');
+    return;
+  }
+  if (state.drawer) {
+    if (event.key === 'Escape') closeDrawer();
+    else if (event.key === 'Tab') trapFocus(event, '.drawer');
+    return;
+  }
+  if (state.mobileMenuOpen) {
+    if (event.key === 'Escape') { state.mobileMenuOpen = false; render(); app.querySelector('.mobile-more')?.focus(); }
+    else if (event.key === 'Tab') trapFocus(event, '.mobile-drawer');
+  }
+});
+
+const initial = location.hash.slice(1);
+if (nav.some(item => item.route === initial)) state.route = initial;
+render();
+async function refreshPublicData() {
+  const request = ++publicRequest;
+  publicData = null;
+  render();
+  const result = await loadPublicData();
+  if (request !== publicRequest) return;
+  publicData = result;
+  if (!state.modal && !state.drawer && !state.mobileMenuOpen) render();
+}
+refreshPublicData();

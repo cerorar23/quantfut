@@ -1,0 +1,19 @@
+psycopg[binary,pool]==3.2.3
+numpy==2.1.3
+scipy==1.14.1
+pandas==2.2.3
+httpx==0.28.1
+tenacity==9.0.0
+python-dotenv==1.0.1
+redis==5.2.1
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+scikit-learn==1.6.0
+pyarrow==18.1.0
+rapidfuzz==3.10.1
+# Lee los .rds (serialización de R) de worldfootballR_data. Es la ÚNICA forma
+# gratuita de tener el histórico de Champions y Europa League (ese release no
+# publica CSV) y, de regalo, el xG de Argentina, que tampoco tiene CSV.
+# Ver src/qf/ingest/uefa_cups.py.
+pyreadr==0.5.6
+python-multipart==0.0.20

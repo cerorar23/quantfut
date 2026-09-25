@@ -1,0 +1,16 @@
+apiVersion: 1
+datasources:
+  - name: QuantFut
+    type: postgres
+    uid: quantfut_pg
+    access: proxy
+    url: db:5432
+    database: quantfut
+    user: qf_readonly
+    secureJsonData:
+      password: ${GRAFANA_DB_PASSWORD}
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
+    editable: false

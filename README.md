@@ -1,0 +1,1042 @@
+# QuantFut
+
+Sistema cuantitativo de predicción de fútbol para **11 ligas y 2 copas
+europeas**. Publica picks en una web propia y corre entero en un VPS de
+Contabo por ~$60/mes.
+
+Sin MARL, sin tracking data, sin Transformer. El mercado como referencia y la
+infraestructura de credibilidad desde la primera línea.
+
+---
+
+## Estado de las fases
+
+| Fase | Qué es | Estado | Falta |
+|---|---|---|---|
+| **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | ✅ **100%** | — (11 ligas + 2 copas en el modelo; + LaLiga 2 y Serie B solo para el criterio sharp, `leagues.model_enabled = FALSE`, desde 2026-09-25) |
+| **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **85%** | Muestra: 300 apuestas en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); primer modelo activo (espera cierres de Pinnacle en vivo) |
+| **3** Publicación y web | Lo que vendes | 🟡 **55%** | Auth por email, frontend, cobros |
+| **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
+| **5** Movimiento de línea | Producto defendible | ❌ **0%** | Todo (necesita 12 meses de datos) |
+
+**Las fases 2, 4 y 5 ya no están bloqueadas por los datos: están esperando
+MUESTRA.** Con el plan Pro de API-Football contratado (2026-09-22) el
+calendario de la temporada en curso se ingiere sin problema —173 partidos
+programados en 12 competiciones en la primera pasada— y de ahí cuelgan la
+captura de cuotas, las alineaciones a T-60 y el CLV. Lo que falta ahora es
+tiempo corriendo: los challengers no se pueden promover hasta acumular
+histórico point-in-time, y la fase 5 necesita 12 meses de snapshots. Eso no se
+acelera con código.
+
+### El edge del modelo no es cero: es NEGATIVO (2026-09-22)
+
+Medido point-in-time sobre **12.183 filas y 4.061 partidos** (tres cortes
+temporales, ajuste solo con lo anterior a cada corte, cierre real como precio):
+
+| quintil de edge | edge medio | ROI realizado | IC95 |
+|---|---|---|---|
+| 1 | 2,10% | **+1,65%** | [−7,3, +11,3] |
+| 2 | 7,11% | −2,78% | [−12,8, +7,2] |
+| 3 | 14,08% | −5,04% | [−16,0, +5,4] |
+| 4 | 25,20% | −15,90% | [−25,8, −4,6] |
+| 5 | 57,26% | −14,43% | [−26,9, −1,8] |
+
+**Cuanto mayor dice el modelo que es su ventaja, peor va.** La correlación del
+edge con el acierto es **−0,123** sobre 4.880 candidatos: unas 8,6 desviaciones
+típicas de cero. Es selección adversa en estado puro — donde el modelo más
+discrepa del cierre, más se equivoca.
+
+Dos consecuencias que hay que tener presentes al leer el resto del README:
+
+1. **Cualquier filtro construido sobre esa cantidad hereda el signo.** Por eso
+   la zona de abstención no se pudo calibrar: no es que el mecanismo falle, es
+   que el insumo es una anti-señal.
+2. **`publish/picks.find_candidates` ordenaba por esa cantidad.** Publicar
+   picks con ese criterio era publicar pérdidas. **Sustituido el
+   2026-09-23:** el modelo ya no elige picks. Se eligen casas donde apuestan
+   los suscriptores (Bet365, Betano, 1xBet, William Hill…) cuando pagan al
+   menos un 2% por encima del precio justo de Pinnacle en el MISMO snapshot,
+   con Pinnacle verificado contra el consenso de las demás casas, y el stake
+   sale del edge esperado al cierre (edge × persistencia medida por casa).
+   Cada pick publica su cuota mínima aceptable (`min_price`) y la hora de su
+   precio. La publicación sigue pausada (`PUBLISH_PICKS_ENABLED=0`) hasta que
+   el criterio pase la puerta en sombra: `qf.publish.shadow_sharp` registra
+   cada hora lo que se habría recomendado, lo liquida contra el cierre sin
+   margen y publica el estado en `/model-card` (`sombra_criterio_sharp`),
+   con desglose por antelación, casa, fuente y liga. El informe incluye las
+   ofertas aún pendientes de resultado, pero solo las que tienen cierre justo
+   cuentan para las 300 de la puerta. El job diario vuelve a comprobar esa
+   puerta aunque `PUBLISH_PICKS_ENABLED` se active por error.
+
+Lo que NO falla es la probabilidad: el modelo está bien calibrado dentro de
+±0,02 en todos los tramos con muestra, y `p_model` correlaciona **+0,312** con
+el acierto. El modelo sabe de fútbol. Lo que no sabe es más que el cierre.
+
+### La medición que importa (2026-09-22)
+
+Sobre **30.457 partidos reales** (football-data.co.uk, 7 ligas, 2014-2026, con
+96.7% de cuotas de cierre de Pinnacle), evaluación secuencial fuera de muestra,
+**n = 28.128 predicciones**:
+
+| Liga | n | RPS modelo | RPS mercado | Delta |
+|---|---|---|---|---|
+| mx.liga_mx | 3.568 | 0.21280 | 0.20795 | −0.00485 |
+| gb.premier_league | 4.142 | 0.19934 | 0.19388 | −0.00546 |
+| ar.primera | 4.848 | 0.21482 | 0.20878 | −0.00604 |
+| es.laliga | 4.144 | 0.19561 | 0.18857 | −0.00704 |
+| br.serie_a | 4.077 | 0.20815 | 0.20103 | −0.00712 |
+| nl.eredivisie | 3.218 | 0.19304 | 0.18568 | −0.00736 |
+| it.serie_a | 4.131 | 0.19627 | 0.18837 | −0.00790 |
+| **TOTAL** | **28.128** | **0.20327** | **0.19674** | **−0.00653** |
+
+**El modelo pierde contra el mercado en las siete ligas, sin excepción.**
+
+Ampliar a 11 ligas **no cambió esto**, y era lo esperable. Remedido con el
+motor Kalman (mismo protocolo secuencial que el resto de comparaciones de este
+README), el delta por liga se mueve como mucho en la cuarta cifra decimal, y la
+MLS aterriza donde las demás:
+
+| liga | n | RPS modelo | RPS mercado | Delta |
+|---|---|---|---|---|
+| us.mls | 5.004 | 0.21454 | 0.20864 | −0.00590 |
+| *(las 7 anteriores)* | 28.718 | 0.20330 | 0.19680 | −0.00650 |
+
+Añadir competiciones **amplía el catálogo, no crea ventaja**. Es la misma
+conclusión que para los mercados derivados: los ~150 salen de las mismas dos
+lambdas, y más ligas son más partidos de la misma calidad de predicción.
+
+Y el número que lo resume: el peso óptimo modelo/mercado estimado sobre estos
+mismos datos es **w_model = 0.0001**. Cero. El mercado ya incorpora todo lo que
+el modelo sabe. (Solo Premier League sale a 0.065, y a esa escala es ruido.)
+
+Se descartaron por medición, no por intuición:
+
+- *"Gana en las ligas latinoamericanas, que son mercados más blandos."* Falso.
+  Liga MX tiene el hueco más pequeño pero sigue siendo negativo. No hay
+  ninguna liga donde apostar con ventaja.
+- *"Falta calibrar / ajustar hiperparámetros."* El barrido de `process_var`
+  mueve el RPS en la cuarta cifra decimal.
+- *"Falta xG."* Sí ayuda —RPS 0.20424 → 0.20336 al activarlo— pero cierra solo
+  el 12% del hueco.
+- *"Es cuestión de técnica de modelado."* Dos motores independientes
+  (Dixon-Coles con decaimiento y filtrado bayesiano) aterrizan en el mismo
+  sitio.
+- *"Dixon-Coles es de 1997; hay distribuciones mejores."* Medido el
+  2026-09-24 (`qf.model.structure`, 2.641 partidos fuera de muestra):
+  Poisson bivariante, Conway-Maxwell-Poisson, conteo Weibull con cópula y
+  probit ordenado no mejoran al `tau` de Dixon-Coles con ningún intervalo por
+  encima de cero, y CMP y Weibull empeoran el 1X2. Sus parámetros quedan
+  pegados a Poisson: no hay sobredispersión que corregir.
+
+**El diagnóstico es que falta INFORMACIÓN, no técnica.** El modelo sabe goles y
+xG. El mercado sabe además lesiones, alineaciones, rotación, motivación,
+clima, fichajes y cambios de entrenador. Ninguna sofisticación matemática sobre
+"goles marcados" fabrica información que no está ahí.
+
+**La puerta de la fase 2 NO se cumple**, y la fase 3 (vender) no debe
+arrancarse hasta que se cumpla. Esa puerta existe precisamente para este
+momento.
+
+#### Lo que esta medición NO puede responder
+
+Todo lo anterior compara contra el **cierre**, que es el precio más afilado que
+existe. Un modelo peor que el cierre todavía podría ser rentable si encuentra
+precios equivocados en casas blandas ANTES de que converjan — eso es el CLV, y
+es la métrica principal de este sistema.
+
+**Corrección (2026-09-23):** aquí se afirmaba que football-data.co.uk solo trae
+cuotas de cierre y que por eso el CLV histórico era inmedible. Es falso para
+las 7 ligas del formato PRINCIPAL (Premier, LaLiga, Serie A, Eredivisie,
+Bundesliga, Ligue 1, Primeira): sus CSV traen, además del cierre, cuotas
+**pre-cierre** (tomadas días antes del partido) de Pinnacle, Bet365, Bwin,
+William Hill, 1xBet, Betfair Exchange, máximo y media del mercado, para 1X2,
+over/under 2,5 y hándicap asiático. `history_fd.py` las descartaba: se queda
+con la primera familia de columnas y hace `break`. Sí es cierto para el formato
+"extra" (Liga MX, Argentina, Brasil, MLS), que solo trae cierre; para esas
+ligas el camino es el endpoint histórico de The Odds API (plan de pago, datos
+desde junio de 2020).
+
+**Backtest "casa blanda contra precio sharp"** (`python -m qf.eval.soft_vs_sharp`,
+dataset `d5cbc315…`: 42 CSV, 14.294 partidos, 7 ligas, 2019/20-2024/25). Se
+apuesta en la casa blanda cuando su cuota pre-cierre supera el precio justo de
+Pinnacle en ese momento; se mide contra el cierre de Pinnacle sin margen, la
+misma vara de la puerta comercial. IC por remuestreo de semanas.
+
+| estrategia (1X2, umbral 2%) | n | EV al cierre justo | IC95 | persistencia |
+|---|---|---|---|---|
+| mejor cuota entre casas reales* | 1.378 | **+2,09%** | [1,21, 2,91] | 0,42 |
+| 1xBet | 280 | +2,78% | [1,41, 3,95] | 0,68 |
+| Interwetten | 204 | +2,23% | [0,67, 3,82] | 0,55 |
+| Bet365 | 415 | +0,56% | [−0,70, 1,79] | 0,13 |
+| control: Pinnacle en todo, sin criterio | 42.882 | −3,90% | — | — |
+
+\* Bet365, Bwin, William Hill, 1xBet, Interwetten, BetVictor. Positivo en las 7
+ligas. *Persistencia* = qué fracción del edge visto antes del cierre sigue
+siendo valor en el cierre: menos de la mitad, y muy distinta por casa. El ROI
+realizado no es concluyente (IC95 [−10,2, +15,1]). Es lo contrario de lo que
+pasa seleccionando por el edge del modelo.
+
+**Over/under 2,5: sin oportunidades verificables en casas reales.** El "máximo
+del mercado" sale positivo, pero no es una casa donde se pueda apostar. Y en
+over/under hay precios de Pinnacle rotos (congelados, o de otra línea) que
+fabricaban "edges" del 10-13% que parecían persistir hasta el cierre, porque el
+cierre de referencia estaba igual de roto. La guarda `MAX_SHARP_DEVIATION`
+descarta el mercado cuando Pinnacle se aparta más de 3 puntos de la media de
+las casas, usando solo precios anteriores al cierre. Detalle en
+`harness/progreso.md`.
+
+**Liga MX, Brasil, Argentina y MLS con el histórico de The Odds API**
+(`python -m qf.ingest.odds_history`, 2025, 1.681 partidos con Pinnacle antes y
+al cierre, hasta 26 casas de la región `eu`; precio temprano 24-48 h antes,
+cierre 5 min antes; 16.560 créditos). Umbral 2%:
+
+| casas | n | valor esperado al cierre justo | IC95 |
+|---|---|---|---|
+| todas | 317 | +2,78% | [1,79, 3,78] |
+| accesibles a los suscriptores (1xBet, William Hill, 888sport) | 127 | +3,83% | [2,36, 5,20] |
+
+El valor accesible es **una sola casa** (126 de 127 apuestas son de 1xBet) y
+sobre todo **MLS** (85). En Liga MX, con esas casas, hay 7 apuestas en el año y
+salen negativas; su valor estaba en Coolbet y Unibet, casas europeas. Depender
+de una casa es frágil: es la primera que limita la cuenta de quien gana.
+
+**Qué casas hay en cada fuente.** The Odds API no tiene ninguna casa mexicana
+ni Bet365 (solo `bet365_au`); Betway solo en la región `uk`. API-Football, ya
+contratado, sí trae **Bet365, Betano, 1xBet y William Hill junto a Pinnacle**
+en 12 de nuestras 13 competiciones (consultado el 2026-09-23), pero refresca
+cada ~3 h y solo guarda 7 días de histórico.
+
+Para el CLV de los picks reales sigue haciendo falta `qf.ingest.odds_worker`
+capturando a lo largo del tiempo.
+
+### MLS, Champions, Europa League y las tres grandes que faltaban (2026-09-22)
+
+Se pasa de 7 ligas a **11 ligas + 2 copas**, de 31.041 a **50.079 partidos**.
+
+| competición | partidos | xG | cuotas de cierre | ¿apostable? |
+|---|---|---|---|---|
+| `us.mls` | 6.203 | 44,0% | sí, Pinnacle desde 2012 | sí |
+| `fr.ligue_1` | 4.282 | 61,9% | sí, Pinnacle | sí |
+| `pt.primeira` | 3.734 | 51,6% | sí, Pinnacle | sí |
+| `de.bundesliga` | 3.708 | 62,5% | sí, Pinnacle | sí |
+| `eu.ucl` | 722 | 75,2% | **ninguna** | todavía no |
+| `eu.uel` | 389 | 70,7% | **ninguna** | todavía no |
+
+**Las cuatro ligas entran completas** y sin sorpresas. Bundesliga, Ligue 1 y
+Primeira están en el formato PRINCIPAL de football-data.co.uk (columnas ricas:
+tiros, córners, tarjetas, faltas, árbitro) y la MLS en el "extra", el mismo que
+Brasil y Argentina. Las cuatro tienen fichero tiro a tiro en FBref.
+
+Bundesliga, Ligue 1 y Primeira **no se añadieron por sí mismas**, aunque
+también son apostables: se añadieron porque eran las que más partidos de copa
+estaban tirando a la basura (ver más abajo).
+
+**Las copas europeas entran a medias, y hay que decirlo claro.** No existe
+histórico gratuito de cuotas de Champions ni de Europa League en ninguna parte:
+football-data.co.uk solo cubre ligas domésticas y el release de copas de
+`worldfootballR_data` da resultado y xG pero ni un precio. Sin cuotas de cierre
+no hay baseline de mercado, así que esos partidos **no se pueden evaluar, ni
+calibrar, ni usar para medir CLV**. Entran como datos de ENTRENAMIENTO. Que la
+Champions sea apostable depende de que `odds_worker` acumule cierres propios
+(`soccer_uefa_champs_league`), no de la ingesta histórica.
+
+#### Competición y liga dejan de ser lo mismo
+
+Hasta aquí todos los partidos de una liga los jugaban equipos de esa liga.
+Meter la Champions rompe ese supuesto, y romperlo mal habría sido caro: dar de
+alta equipos bajo `league_id='eu.ucl'` crearía un Real Madrid de Champions
+distinto del de LaLiga, con una docena de partidos y ningún rival en común.
+
+La separación (`db/007_competiciones.sql`) es:
+
+- `matches.league_id` → la **competición** donde se juega el partido.
+- `teams.league_id` → la **liga doméstica** del equipo.
+
+`ingest/uefa_cups.py` NUNCA crea equipos: si no reconoce a los dos, descarta el
+partido. Y `ingest/fixtures.py`, en competiciones marcadas `cross_league`, solo
+acepta coincidencias **exactas**, nunca difusas: buscando a la vez en las once
+ligas, un difuso puede colocar un club europeo encima de uno latinoamericano de
+nombre parecido y contaminar dos historiales sin dar ningún error.
+
+#### Lo que las copas aportan de verdad: comparar ligas entre sí
+
+Es su valor real, y no tiene que ver con apostarlas. El modelo impone **suma
+cero de ataque y defensa dentro de cada liga**, así que un ataque de 0,3 en
+Eredivisie y uno de 0,3 en LaLiga no están en la misma escala: dentro de los
+datos domésticos no hay absolutamente nada que las conecte. Los cruces europeos
+son la **única** información que identifica esa diferencia.
+
+`model/dixon_coles.py` añade un término `strength` por liga que entra con signo
+opuesto en las dos intensidades:
+
+```
+log lam = base[comp] + ha[comp] + (atk[h] + str[lg_h]) - (dfn[a] + str[lg_a])
+log mu  = base[comp]            + (atk[a] + str[lg_a]) - (dfn[h] + str[lg_h])
+```
+
+En un partido doméstico `lg_h == lg_a` y el término **se cancela exactamente**.
+Esa propiedad es lo que permitió añadirlo sin volver a validar las ocho ligas, y
+está fijada por test (`tests/test_cross_league.py`): se recalcula la lambda a
+mano sin el término y tiene que salir idéntica a 1e-9.
+
+Verificado sobre datos simulados con dos ligas de nivel deliberadamente
+distinto: con 400 cruces recupera una diferencia de **0,32** frente a la 0,40
+sembrada. El encogimiento es a propósito (`POOL_STRENGTH = 300`), porque la
+muestra real de cruces es pequeña.
+
+#### Por qué se añadieron Bundesliga, Ligue 1 y Primeira
+
+De los partidos de copa desde 2015 **solo se aprovechan aquellos con los dos
+equipos en el catálogo**. Con 7 ligas eran **406 de 3.308**. Los países que más
+partidos tiraban:
+
+| país | partidos perdidos | ¿dado de alta? |
+|---|---|---|
+| Alemania | 633 | ✅ `de.bundesliga` |
+| Francia | 464 | ✅ `fr.ligue_1` |
+| Portugal | 380 | ✅ `pt.primeira` |
+| Bélgica | 264 | ❌ |
+| Rusia | 252 | ❌ |
+| Ucrania | 235 | ❌ |
+| Turquía | 230 | ❌ |
+| Grecia | 180 | ❌ |
+
+Añadirlas llevó los cruces utilizables de **406 a 1.111** (×2,7). Es el único
+motivo por el que se dieron de alta: son ligas apostables, sí, pero lo que se
+buscaba era muestra para identificar `strength`.
+
+El siguiente escalón es mucho más plano: Bélgica, Rusia, Ucrania, Turquía y
+Grecia sumarían ~1.160 partidos más, pero son cinco ligas en vez de tres, tres
+de ellas fuera del formato principal de football-data, y con clubes que rotan
+más en Europa. **Hay rendimientos decrecientes claros y aquí es donde conviene
+parar** salvo que se quieran esas ligas por sí mismas.
+
+### Huecos concretos que quedan
+
+**Fase 2 — Elo implementado y medido, puerta aún sin superar.** `model/elo.py`
+predice 1X2 secuencialmente con empate, localía y tratamiento de equipos
+nuevos. `eval/comparison.py` compara Elo, Dixon-Coles y Pinnacle sin margen
+sobre la misma intersección de partidos. En la ventana histórica con cuotas
+disponibles (1.907 observaciones, julio de 2025–enero de 2026), el RPS fue
+0,20245 para Dixon-Coles, 0,20533 para Elo y 0,19561 para Pinnacle. Dixon-Coles
+mejora Elo, pero **pierde contra el mercado**. La última cuota histórica sharp
+es del 14 de enero de 2026: faltan cuotas recientes y la puerta de promoción
+bloquea comparaciones con mercado de más de 30 días de antigüedad. El bootstrap
+por semanas estima una ventaja de RPS de Dixon-Coles sobre Elo de 0,00288
+(IC 95 %: 0,00053 a 0,00506), pero una desventaja frente a Pinnacle de
+0,00684 (IC 95 %: 0,00350 a 0,01061). La regresión deportiva mejora al modelo
+en su holdout; las ablaciones Elo/tiros sobre el cierre muestran diferencias
+pequeñas y diagnósticas, no una señal operable a T-60.
+
+**La puerta de la fase 2 cambió el 2026-09-22: ya no es batir al cierre.**
+Son dos afirmaciones distintas y solo una es alcanzable: *"mi probabilidad es
+mejor que el consenso de cierre"* no la consigue casi nadie, y además no es lo
+que se cobra; *"el precio que tomé era mejor que el cierre que vino"* sí es
+medible, y eso es el CLV. La autorización comercial
+(`promotion.evaluate_clv_gate`, publicada en `/model-card`) exige ahora las
+tres a la vez: 300 apuestas liquidadas, intervalo de confianza del 95% del CLV
+ENTERO por encima de cero, y al menos 3 ligas con muestra propia. La última no
+es adorno: un CLV que solo vive en una liga es un hallazgo sobre esa liga —o
+sobre una casa— y es lo primero que desaparece cuando esa casa limita la
+cuenta. Batir al cierre en RPS se sigue reportando; ya no veta.
+
+**Qué CLV (corregido el 2026-09-23).** La puerta mide el **valor esperado
+contra el cierre sin margen**: `ev_close_pct = cuota × p_cierre_justa − 1`, con
+la probabilidad sacada de un único snapshot de cierre de Pinnacle con el grupo
+de selecciones completo (en hándicap, local −0,5 se empareja con visitante
++0,5). Antes medía `clv_pct = cuota / cierre − 1` contra la cuota CON margen,
+que sale inflada por ese margen: apostar a Pinnacle en todo, sin criterio, da
+`clv_pct` −0,32% cuando su valor real es −3,90% (14.294 partidos). Con esa vara
+la puerta podía autorizar una estrategia perdedora. `clv_pct` se sigue
+guardando y publicando en `/track-record`; ya no decide. Las apuestas en
+mercados sin precio sharp (BTTS, doble oportunidad, totales por equipo) no
+cuentan para la puerta: no hay cierre justo contra el que medirlas.
+Migración `db/015_ev_cierre.sql`.
+
+El límite real del negocio que esto define no es el modelo: es que las casas
+blandas limitan cuentas. Conviene saberlo antes.
+
+**Fase 3 — la API no maneja usuarios, y es una decisión, no un hueco
+(2026-09-22).** No hay suscripciones, login ni cobros en este repo. Un único
+backend de confianza (el de tu frontend) llama a `/v1/*` con `SERVICE_TOKEN`
+y recibe TODOS los picks; ese backend es quien tiene la base de suscriptores,
+cobra, y decide qué le muestra a cada usuario final (además de armar los
+prompts del LLM con los números que le pidió a esta API). Ni la web ni la
+futura app Flutter le hablan a esta API directamente — un secreto embebido en
+un cliente que corre en el dispositivo del usuario siempre se puede extraer;
+uno que vive solo en un servidor, no. Detalle de diseño y de la reversión
+del intento anterior (auth de suscriptor por JWT) en `harness/progreso.md`.
+
+**Actualización de arquitectura (2026-09-23):** el prototipo web se entrega
+ahora desde este mismo FastAPI en `/`, y `/control` ofrece un panel interno
+de solo lectura con contraseña propia (salud, puerta comercial calculada con
+el mismo `shadow_sharp.report()` que decide reactivar la publicación, último
+entrenamiento con los motivos de su puerta, modelo activo y nombres sin
+resolver). Los paneles de CLV de Grafana leen `pick_results`, vacía mientras
+la publicación siga pausada: la muestra previa se sigue en `/control`. La propuesta anterior de un BFF como
+segundo servicio queda sustituida por módulos dentro de un único backend.
+Esto no activa cuentas de cliente, pagos ni contenido premium: siguen
+pospuestos hasta la validación de CLV. `SERVICE_TOKEN` y `ADMIN_TOKEN`
+permanecen solo en el servidor; el JavaScript de la demo no los utiliza.
+
+**Fase 3 — existe un prototipo visual con evidencia pública, no la web comercial.** `frontend/`
+contiene siete vistas navegables; inicio, picks e historial consultan los
+endpoints públicos y separan sus cifras reales de la maqueta ficticia. La
+interfaz no implementa login, pagos o acceso privado.
+El backend expone `/track-record`, `/calibration`, `/chain`, `/picks/free`,
+`/v1/picks`, `/leagues`, `/teams` y `/matches/{id}`. La integración de datos
+privados y suscripciones queda para después de la validación, en módulos del
+mismo FastAPI que conserven `SERVICE_TOKEN` fuera del navegador.
+
+**Fase 3 — faltan los cobros.** Webhook del procesador → alta en `subscribers`.
+El código es pequeño; lo lento es la aprobación del procesador, que conviene
+empezar a gestionar mucho antes (ver "Procesadores de pago").
+
+**Control operativo de la sombra.** `/control` incluye el recorrido por liga de
+las ofertas capturadas y las primeras candidatas: programadas, en juego,
+resultado atrasado, liquidación pendiente, liquidadas sin cierre sharp completo
+y liquidadas con cierre justo. La misma auditoría JSON está en
+`/admin/shadow-audit`, protegida con `ADMIN_TOKEN`. Es de solo lectura y no
+altera la puerta comercial; ayuda a distinguir falta de tiempo de fallos de
+ingesta o cierre. El recorrido ilustrativo de cuentas y cobros se documenta en
+`frontend/ACCESS_FLOW.md`; todavía no concede suscripciones ni cobra.
+
+**Fase 4 — las alineaciones se capturan y pueden evaluarse en sombra.**
+`qf.ingest.lineups` guarda el XI a T-60 y `availability()` expone cuántos
+titulares habituales faltan, por posición, y la continuidad del XI. El
+challenger de `model/lineup_challenger.py` ya estima ajustes separados sobre
+`log(lambda_home)` y `log(lambda_away)`, pero no entrena ni se ejecuta hasta
+acumular historial real de predicciones y XI. `model/shadow.py` guarda tanto
+la predicción base a T-60 como el ajuste de XI y sus CLV en tablas separadas,
+sin modificar picks publicados. Solo podrá promoverse si mejora RPS/log-loss,
+calibración y CLV frente a la base, con incertidumbre y varias ligas. También queda
+para esa etapa estimar una zona de abstención propia: si el edge está dentro de
+la variación del modelo entre reentrenamientos o remuestras, no se publica como
+señal aunque sea nominalmente positivo.
+
+### Lo que ya está resuelto y antes figuraba como hueco
+
+- **Calibración** (`model/calibration.py`): corrección afín sobre las lambdas
+  —no isotónica sobre el 1X2— para que los ~150 mercados sigan siendo
+  coherentes entre sí. Con puerta de validación que la descarta si no mejora.
+- **Peso modelo/mercado** (`model/meta.py`): estima `w_model` por log-loss
+  fuera de muestra, con pesos por liga encogidos hacia el global.
+- **Modelo por liga**: Dixon-Coles con ventaja de local e intercepto de goles
+  POR LIGA, con pooling parcial. Verificado recuperando ventajas de local
+  distintas sembradas a propósito.
+- **Riesgo de portafolio correlacionado** (`publish/picks.py`): sigma conjunta
+  con matriz de correlación en vez de sumar stakes como si fueran
+  independientes.
+- **GBM sobre el residuo del mercado** (`model/residual.py`), desactivado por
+  defecto: corrige solo el 1X2 y rompería la coherencia con el resto.
+- **Ancla de mercado** (`model/market_anchor.py`): invierte el 1X2 sin margen a
+  las intensidades que lo reproducen. Es la lectura útil de `w_model = 0.0001`
+  —el modelo sirve para la FORMA (la matriz de marcadores, de la que salen ~150
+  mercados coherentes), el mercado para el NIVEL— y es lo que permite aplicar
+  un ajuste por información nueva ENCIMA del precio vigente en vez de encima de
+  una estimación peor. Devuelve siempre el residuo: la familia no representa
+  cualquier terna 1X2 y cuando no llega hay que saberlo.
+- **Incertidumbre del edge** (`model/uncertainty.py`), desactivada por defecto:
+  el error estándar de cada parámetro sale del ajuste y se propaga por Monte
+  Carlo hasta el edge. De esa sola medida salen dos cosas que antes eran
+  constantes a ojo: la zona de abstención (si `media − Z·sd ≤ 0`, la ventaja no
+  se distingue de cero y no se apuesta) y el encogimiento del edge, que pasa a
+  ser `floor/media` por apuesta en vez del 0,55 fijo que encogía igual a un
+  equipo con veinte partidos recientes que a uno con tres. No crea ventaja:
+  elimina apuestas de EV negativo. Sube el ROI realizado y **no** el RPS.
+- **Ratings dinámicos** (`model/kalman.py`): la fuerza como estado latente.
+  96× más rápido de evaluar que el walk-forward.
+
+---
+
+## Arquitectura: dónde encaja cada cosa
+
+```
+  FUENTES                    VPS CONTABO                     TÚ Y TUS CLIENTES
+  ───────                    ───────────                     ─────────────────
+
+  football-data.co.uk ─┐
+  worldfootballR_data ─┤                                    ┌─ Web pública
+  API-Football        ─┼──▶ workers ──▶ Postgres ──▶ API ───┼─ Canal Telegram
+  The Odds API        ─┘      (cron)        │        (interna) └─ Bot
+                                            │
+                                            └──▶ Grafana ──────── Solo tú
+```
+
+**La API es interna y no gestiona usuarios.** No es un producto que vendas a
+terceros ni el lugar donde viven las cuentas de tus suscriptores: es el
+backend de datos que consume el backend de TU frontend (web y, más adelante,
+app Flutter), que a su vez es quien maneja usuarios, cobros y arma los
+prompts del LLM. Por eso no tiene claves por cliente ni planes por tier — pero
+sí rate limiting por IP en TODAS las rutas, porque "interna" no significa "sin
+defensas". Dos niveles y nada más:
+
+| Nivel | Auth | Para qué |
+|---|---|---|
+| **Público** | ninguna | Track record, calibración, cadena de hashes, picks gratis |
+| **Servicio** | `SERVICE_TOKEN` en `X-Service-Token`, solo lo conoce el backend de tu frontend | Todos los picks y probabilidades, sin recorte — el recorte por usuario lo decide tu frontend |
+| **Admin** | token en `.env` | Operación, disparo manual de jobs, alias |
+
+El nivel público **no lleva auth a propósito**. Un comprador escéptico tiene que
+poder auditar tu historial sin registrarse. Si le pides email para ver si eres
+de fiar, no vuelve.
+
+### Dos paneles, no uno
+
+Son cosas distintas y conviene no mezclarlas:
+
+**Grafana (`panel.tudominio.com`) — privado, solo tú.** Operación del sistema:
+salud de la ingesta, CLV rodante, calibración, crecimiento del histórico de
+cuotas, cadena de hashes. Se conecta directo a Postgres con un usuario de solo
+lectura. Gratis, ya provisionado en este repo.
+
+**Página pública de track record — tu argumento de venta.** No la hagas con
+Grafana: necesita tu marca, tu dominio, tu copy y estar embebida en tu web de
+ventas. Consume `/track-record`, `/calibration` y `/chain`.
+
+La regla: Grafana sirve para mirar tu sistema, no para vender tu producto.
+
+---
+
+## Arranque
+
+### Día 1 — antes que cualquier otra cosa
+
+El worker de cuotas. Cada día que no corre es un día de datos irrecuperable, y
+es el insumo del CLV, del backtest realista y del producto de fase 5.
+
+```bash
+git clone <tu-repo> && cd quantfut
+cp .env.example .env && nano .env
+export PG_PASSWORD='...' GRAFANA_PASSWORD='...' GRAFANA_DB_PASSWORD='...'
+./scripts/setup_fase1.sh
+docker compose up -d
+```
+
+`setup_fase1.sh` corre los 6 pasos en orden y **se detiene** en el paso 4 hasta
+que dejes vacía la lista de nombres sin emparejar. Esa parada es intencional:
+un equipo sin emparejar son partidos que el sistema nunca verá, sin dar ningún
+error.
+
+### Puertas de avance
+
+No pases de fase sin cumplir la puerta. Es la única defensa contra construir
+seis meses sobre un modelo que no funciona.
+
+| Fase | Puerta |
+|---|---|
+| 0 | 7 días seguidos capturando cuotas sin intervención |
+| 1 | 30 días publicando predicciones verificables sin tocar nada |
+| 2 | Calibración plana en todos los deciles y RPS cerca del cierre |
+| 3 | 90 días de track record público verificable |
+| 4 | CLV positivo en 300+ picks |
+
+En la fase 2, **si el backtest te da ROI de dos dígitos, hay una fuga**.
+`check_leakage()` busca las tres más comunes; no encontrar nada no garantiza que
+no las haya.
+
+---
+
+## Calendario de procesos
+
+| Proceso | Frecuencia | Módulo |
+|---|---|---|
+| Captura de cuotas | cada 10 min | `qf.ingest.odds_worker` |
+| Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | cada hora, :20 | `qf.ingest.af_odds` |
+| Sombra del criterio de picks: registra lo que se habría recomendado (no publica); se liquida con `qf.eval.clv` | cada hora, :25 | `qf.publish.shadow_sharp capture` |
+| Calendario de partidos | 05:15 y 17:15 | `qf.ingest.fixtures` |
+| Cierre de partidos + liquidación | cada 3 h | `qf.ingest.results` |
+| xG histórico | martes 04:00 | `qf.ingest.xg_worldfootball` |
+| Histórico de copas europeas | martes 04:30 | `qf.ingest.uefa_cups` |
+| Alineaciones a T-60 | cada 5 min | `qf.ingest.lineups` |
+| Challenger de XI en sombra | cada 5 min, después de la captura | `qf.model.shadow` |
+| Chequeo de salud | 07:00 | `qf.ingest.health` |
+| Predicciones, picks, sellado, publicación (picks apagados con `PUBLISH_PICKS_ENABLED=0`: solo predice y sella) | 08:00 | `qf.publish.daily` |
+| CLV de respaldo | 02:30, 10:30, 18:30 | `qf.eval.clv` |
+| Resumen semanal público | lunes 09:00 | `qf.publish.weekly` |
+| Verificación de la cadena | 06:00 | `qf.publish.hashchain verify` |
+| Reentrenamiento | día 1 del mes | `qf.model.train` |
+| Arranque sin modelo activo (sale en segundos si hay modelo o el mercado es viejo) | días 2-31, 01:05 | `qf.model.train --bootstrap` |
+
+El job diario tiene un orden estricto: predecir → seleccionar → **sellar** →
+publicar. Si el sellado falla no se publica nada ese día. Mejor no publicar que
+publicar sin prueba.
+
+### Evaluación de challengers
+
+`python scripts/evaluate_challengers.py --years 6 --validation-days 180 --compact`
+ejecuta en **solo lectura** el walk-forward de Dixon-Coles, Elo secuencial,
+comparación con Pinnacle, dos regresiones multinomiales y ablaciones de Elo,
+descanso, forma y tiros. Requiere `PYTHONPATH=src` y la configuración normal de
+Postgres. El resultado es JSON; ninguna métrica de un challenger lo activa.
+Si las cuotas sharp terminan antes que los resultados, el experimento usa la
+última ventana histórica con mercado completo y marca el resultado como no
+apto para promoción actual.
+La regresión anclada al mercado histórico usa cuotas de **cierre** y es solo
+diagnóstica: para operar a T-60 hará falta entrenar de nuevo con snapshots de
+cuotas disponibles en esa ventana.
+
+En una base ya creada, aplicar `db/012_shadow_challengers.sql` antes de arrancar
+el cron de sombra. `setup_fase1.sh` también lo aplica en una instalación nueva.
+Las tablas `shadow_predictions`, `shadow_picks` y `shadow_results` son
+independientes de las predicciones y picks publicados. El CLV de sombra solo se
+calcula entre una cuota `post_xi` (T-45..T-15, solo con ambos XI capturados)
+y una cuota de Pinnacle capturada en la ventana `close`; si no existe,
+el registro queda pendiente y no se inventa un cierre. La puerta de promoción
+exige al menos 300 selecciones liquidadas, un intervalo de CLV positivo, mejora
+frente al modelo base a T-60 y evidencia en varias ligas.
+
+---
+
+## Lo que hace distinto a este sistema
+
+| Pieza | Por qué está aquí |
+|---|---|
+| **Cadena de hashes SHA-256** | Prueba criptográfica de que no revisas predicciones. Es el producto, no un extra |
+| **Triggers de inmutabilidad** | La base de datos te impide "corregir" un pick fallido aunque quieras |
+| **CLV como métrica principal** | Converge en cientos de apuestas; el ROI necesita miles |
+| **Shrinkage del edge (0.55)** | El edge crudo está sesgado al alza por selección adversa |
+| **De-vig con Shin** | El reparto proporcional que usa todo el mundo calibra peor en underdogs |
+| **Pricing en forma cerrada** | ~150 mercados por partido en 0.3 ms, sin GPU |
+| **Trigger point-in-time** | La base rechaza cualquier feature con `as_of > kickoff` |
+| **Emparejamiento con revisión manual** | Prefiere fallar y avisar antes que fusionar dos equipos distintos |
+| **No degradar en silencio** | Un reentrenamiento peor que el activo no se despliega |
+
+---
+
+## La cadena de hashes en la práctica
+
+Crea un repo público separado (`quantfut-registro-publico`), móntalo en
+`CHAIN_DIR` y apunta `CHAIN_GIT_REMOTE` ahí. Cada día el sistema serializa
+predicciones y picks a JSON canónico, calcula `payload_sha256`, encadena con
+`chain_sha256 = sha256(prev_sha256 || payload_sha256)`, hace commit al repo
+público (el timestamp de GitHub es el testigo externo) y publica los primeros
+16 caracteres en Telegram.
+
+```bash
+python -m qf.publish.hashchain verify
+```
+
+Si alteras un carácter de una predicción pasada, todos los hashes posteriores
+dejan de cuadrar. Eso es exactamente lo que quieres poder demostrar.
+
+---
+
+## Despliegue en Contabo
+
+Desplegado el 2026-09-24 en `31.220.72.30` (Ubuntu 22.04, Docker ya
+preinstalado por Contabo), código en `/home/qf/quantfut`, dominio
+`pronosticosdeportivos.pro` detrás de Cloudflare (ver "Proxy con TLS").
+Contabo tiene E/S de disco más lenta que Hetzner y no hace backups.
+
+Lo aplicado en el host:
+
+- Usuario `qf` (grupos `sudo`, `docker`), swap de 4 GB, `fail2ban`.
+- `PermitRootLogin no` en `/etc/ssh/sshd_config.d/10-quantfut.conf` (se
+  activa cuando `qf` tenga contraseña). El login por contraseña se mantiene
+  para `qf` (decisión del usuario).
+- `ufw`: solo 22 entrante. **ufw no filtra los puertos que publica Docker**
+  (Docker inserta sus reglas antes), así que 80/443 se cierran aparte:
+  `/usr/local/sbin/qf-cf-firewall` rellena la cadena `QF-CF` y la engancha a
+  `DOCKER-USER` (IPv4 e IPv6) para que solo acepten conexiones nuevas desde
+  los rangos de Cloudflare. Lo ejecuta `qf-cf-firewall.service` al arrancar y
+  `cron.weekly` para refrescar los rangos; si la descarga falla, reutiliza la
+  última lista en `/etc/qf-cf-ips-v4|v6`.
+- `/etc/cron.daily/qf-backup`: `pg_dump -Fc` (el formato que lee
+  `restore_db.sh`) a `/var/backups/quantfut`, 14 días. **Todavía sin copia
+  fuera del servidor**: si el VPS se pierde, se pierden los backups.
+
+Ajustes de Postgres para el disco de Contabo (sin aplicar aún):
+`random_page_cost = 1.5`, `effective_io_concurrency = 100`,
+`shared_buffers = 2GB`, `work_mem = 32MB`.
+
+### Llevar la base local al servidor y arrancar (2026-09-23)
+
+En vez de rehacer el backfill en el servidor (`setup_fase1.sh`, horas y alias
+a mano), se restaura la base local, que ya tiene los partidos, las cuotas y
+los alias revisados.
+
+1. En local: `pg_dump -Fc --no-owner --no-privileges` → `quantfut.dump`, y un
+   `.env.server` con hosts de compose (`db`, `cache`), rutas `/srv/quantfut` y
+   secretos propios. Copiar el repo (sin `.venv`, `.local`, `pyton`), el
+   volcado y el `.env.server` (como `.env`) al servidor.
+2. En el servidor: `docker compose build`, luego
+   `./scripts/restore_db.sh ~/quantfut.dump`: arranca Postgres, se niega a
+   pisar una base con datos sin `--force`, restaura, aplica las migraciones
+   014-020 (idempotentes) y arregla el rol de Grafana (el `004` lo crea con una
+   contraseña por defecto que no es `GRAFANA_DB_PASSWORD`).
+3. `docker compose up -d`, entrenar el primer modelo
+   (`docker compose exec worker python -m qf.model.train`, ~3,5 h en el VPS
+   de 4 vCPU: sin modelo activo el job de las 08:00 falla) y cargar el
+   calendario (`python -m qf.ingest.fixtures`). Con una base restaurada cuyo
+   último cierre sharp tiene más de 30 días, ese primer modelo se guarda
+   **sin activar**: la puerta exige mercado reciente. No hay que forzarlo; el
+   job `train --bootstrap` (diario, 01:05 UTC) entrena solo cuando no hay
+   modelo activo y los cierres capturados en vivo ya pasarían esa
+   comprobación, y si no, sale en segundos.
+
+**Dos fallos del cron del contenedor corregidos antes del primer despliegue**,
+ambos mudos: el worker copiaba a `/etc/environment` solo ciertos prefijos y
+dejaba fuera `API_FOOTBALL_*` (calendario, resultados, alineaciones, lesiones
+y cuotas de API-Football habrían fallado siempre), y el crontab no fijaba
+`PATH`, con lo que cron no encontraba `python` en `/usr/local/bin`. Para
+comprobar que el cron funciona: `docker compose exec worker tail
+/var/log/af_odds.log` pasada la hora y 20.
+
+### Proxy con TLS
+
+Cloudflare hace de proxy (registros `A` de `@`, `www`, `api` y `panel` con
+nube naranja) con SSL **Full (strict)**. Caddy sirve el *Origin Certificate*
+de Cloudflare, montado desde `/etc/ssl/quantfut/` del host (fuera del repo,
+válido hasta 2041); no pide certificados a Let's Encrypt.
+
+Dos cosas que cambian por tener Cloudflare delante, ambas en el `Caddyfile`:
+
+- **IP del cliente.** Caddy ve siempre una IP de Cloudflare. Con
+  `trusted_proxies` (rangos de Cloudflare) y `client_ip_headers
+  CF-Connecting-IP` recupera la real, y la pasa a la API como
+  `X-Forwarded-For: {client_ip}`. Sin eso, el rate limit de `main.py`
+  contaría por nodo de Cloudflare y no por visitante.
+- **Acceso de operación.** Ya no se filtra por IP (`GRAFANA_ALLOWED_IP`
+  desaparece): `panel.`, `/control` y `/admin` los protege **Cloudflare
+  Access** (Zero Trust). Caddy responde 404 si la petición no trae
+  `Cf-Access-Jwt-Assertion`, es decir, si no pasó por Access. Solo se
+  comprueba que la cabecera exista, no su firma: es suficiente porque el
+  origen solo acepta tráfico de Cloudflare y la reescritura de `Host` hacia
+  un origen ajeno no está disponible fuera del plan Enterprise. `/control`
+  exige además su propio usuario y contraseña (`ADMIN_CONSOLE_USER` y el hash
+  de `python scripts/hash_admin_password.py`); sin ellos responde 503. El
+  hash lleva `$` (formato `pbkdf2_sha256$iteraciones$sal$digest`): en el
+  `.env` que lee `docker compose` hay que escribirlo con `$` doblado
+  (`$$`), o `docker compose` los interpreta como interpolación de variables
+  y corta el valor en el primer `$` sin más aviso que un "variable is not
+  set" que no señala dónde está el problema.
+
+`reverse_proxy` apunta a los nombres de servicio (`api`, `grafana`), no a
+`localhost`: Caddy los resuelve por la red interna de Docker Compose.
+
+---
+
+## APIs y costes
+
+| Servicio | Plan | Coste | Para qué |
+|---|---|---|---|
+| The Odds API | 20K créditos | $30/mes | Cuotas, Pinnacle, Betfair Exchange |
+| API-Football | Básico | $19/mes | Calendario y alineaciones a T-60 |
+| worldfootballR_data | — | gratis | xG histórico (datos de FBref ya raspados) |
+| football-data.co.uk | — | gratis | 12 años de resultados y cuotas de cierre |
+| VPS Contabo | 4 vCPU / 8 GB | ~$9/mes | Todo |
+| Dominio + backups | — | ~$2/mes | — |
+| **Total** | | **~$60/mes** | **~$720/año** |
+
+**The Odds API cobra en créditos, no en llamadas**: cada llamada cuesta
+`n_mercados × n_regiones`.
+
+**Recálculo con las 13 competiciones (2026-09-22, con clave real).** Ya no es
+una estimación: se leyó el calendario anunciado de las 13 competiciones con el
+endpoint `/events` (que cuesta 0 créditos) y se simuló `_pending_windows` sobre
+esos partidos reales. Una llamada por (competición, ventana, bucket de 10 min
+en que algún partido entra en esa ventana), que es exactamente lo que hace el
+worker con el cron `*/10`:
+
+| configuración | créditos/llamada | créditos/mes |
+|---|---|---|
+| `eu` × `h2h` | 1 | ~1.935 |
+| `eu` × `h2h,totals` | 2 | ~3.870 |
+| `eu` × `h2h,totals,spreads` | 3 | **~5.800** ← en uso desde 2026-09-23 |
+| `eu,us` × `h2h,totals,spreads` | 6 | ~11.610 |
+
+~1.935 llamadas/mes. La cifra de ~2.160 créditos que figuraba aquí para 7 ligas
+se quedaba corta por un factor de cinco: el coste no lo manda el número de
+partidos sino **cuántos huecos de 10 minutos distintos** hay, y repartir los
+mismos partidos entre más competiciones los dispersa. LaLiga y la Serie A, con
+20 partidos en 14 días, salen más caras que la MLS con 33, porque la MLS
+concentra kickoffs. Las copas son las más baratas: juegan todas a la vez.
+
+Consecuencias: el plan de $30/mes (20.000 créditos) **sí** cubre las 13
+competiciones con los tres mercados, pero con 1,7× de margen, no "de sobra"; y
+el plan gratuito de 500 no alcanza ni en la configuración más barata, así que
+con él el worker se ejecuta a mano para demostrar el motor, nunca desde el
+cron. La región `eu` es la que trae Pinnacle y Betfair
+Exchange, que son la referencia sharp de todo el sistema. Nunca la quites.
+
+**Configuración vigente (2026-09-23): plan de 20.000 créditos, solo `eu`.** La
+región `us` duplicaba el coste sin aportar casas que usen los suscriptores. Con
+`eu` × tres mercados el worker en vivo gasta ~5.800 créditos/mes y quedan
+~14.000 para el endpoint histórico (`/v4/historical/...`, solo en planes de
+pago, datos desde junio de 2020, snapshots cada 5 min desde septiembre de
+2022, **10 créditos** por mercado y región en cada llamada). Ese histórico es
+lo que permite validar el criterio de selección en Liga MX, Argentina, Brasil
+y MLS, donde football-data solo trae cierre.
+
+**El plan de API-Football decide si el sistema puede operar, y no por la
+cuota.** Lo que descarta el plan Free no son sus 100 peticiones diarias sino
+que solo da acceso a las temporadas **2022–2024**: pedir la temporada en curso
+devuelve `Free plans do not have access to this season`. Sin temporada en curso
+no hay calendario (`ingest/fixtures.py`), y sin calendario no hay ventanas de
+cuotas, ni alineaciones a T-60, ni CLV. Sirve para verificar IDs de competición
+y formas de respuesta, nada más.
+
+Contratado el plan **Pro** (2026-09-22): 300 req/min, 7.500/día y temporada en
+curso incluida. Los límites del plan viven en `API_FOOTBALL_RPM` y
+`API_FOOTBALL_DAILY` porque el cliente deriva de ellos su intervalo entre
+llamadas; con los valores del Free puestos contra un plan Pro el sistema
+funciona igual, solo que 30 veces más lento de lo que podría.
+
+Consumo real de la ingesta operativa, muy por debajo del plan: 13 llamadas por
+pasada de calendario (2/día), 1 por partido terminado y 1 por partido en la
+ventana de alineaciones.
+
+**No uses el xG de API-Football**: su cobertura es inconsistente entre ligas y
+planes, y una liga sin datos devuelve un array vacío con status 200 en vez de un
+error.
+
+**El endpoint `/injuries` tiene el mismo problema de cobertura silenciosa,
+verificado 2026-09-22 contra las 13 competiciones con clave real.** 10 de 13
+devuelven datos con normalidad (por `league`+`season` actual y por `fixture`).
+Tres NO: `mx.liga_mx`, `ar.primera` y `pt.primeira` devuelven 0 resultados
+para la temporada 2026 en curso —tanto agregado por liga como por partido
+concreto— a pesar de tener partidos terminados de sobra esa misma temporada
+(79, 400 y 62 respectivamente), así que no es que no haya lesionados: el
+proveedor simplemente no tiene el dato para esas tres ligas este ciclo. Con
+`season=2025` (temporada anterior, ya cerrada) sí hay datos, lo que descarta
+un parámetro mal puesto. `src/qf/ingest/injuries.py` sigue llamando al
+endpoint para las 13 —no hay forma de distinguir "liga sin cobertura" de
+"liga sana sin bajas" sin acumular ciclos y comparar—, pero cualquier feature
+de disponibilidad que se construya encima debe tratar esas tres ligas como
+dato ausente, no como "sin lesionados".
+
+**Y no raspes FBref directamente.** Está detrás de Cloudflare y devuelve 403
+("Just a moment...") incluso cuando `soccerdata` intenta evadirlo con un
+navegador automatizado. Como fuente operativa no es fiable (el módulo que lo
+intentaba, `xg_fbref.py`, y su dependencia `soccerdata` se retiraron el
+2026-09-24).
+
+El xG se toma de los datasets que `JaseZiv/worldfootballR_data` publica en sus
+releases de GitHub: son los mismos datos de FBref ya raspados, se descargan por
+HTTPS normal en segundos y sin clave (`qf.ingest.xg_worldfootball`). Hay **dos
+rutas, y son disjuntas a propósito**:
+
+| ruta | release | qué trae | ligas |
+|---|---|---|---|
+| tiro a tiro (`.csv`) | `fb_match_shooting` | xG, remates, a puerta, PSxG, distancia, minuto | las 7 con fichero de tiros |
+| partido (`.rds`) | `match_results` | solo el xG agregado | `ar.primera` |
+| copas (`.rds`) | `match_results_cups` | resultado + xG + árbitro | `eu.ucl`, `eu.uel` |
+
+Límites conocidos: no hay Parquet, los releases de resultados y de copas **no
+publican ni un CSV** (de ahí la dependencia `pyreadr`), y los datasets se
+publican por lotes, así que van por detrás del presente. Sirven para entrenar
+con histórico, no para cerrar el xG del partido de anoche.
+
+---
+
+## Expectativas realistas
+
+- Un ROI sostenido de **1-4% sobre el volumen** es un resultado profesional
+  fuerte en fútbol.
+- Para distinguir un ROI de 2% de cero hacen falta **miles de apuestas**. Por
+  eso `summary()` devuelve siempre el intervalo de confianza bootstrap, y por
+  eso el CLV va primero en todos los reportes.
+- Si tu CLV medio es negativo durante 300+ picks, el modelo no tiene edge.
+  Mejor saberlo en el mes 3 que en el año 2.
+- **Corregido (2026-09-22):** este README afirmaba que Liga MX, Brasileirão y
+  Argentina "no tienen xG en las fuentes gratuitas" y que eso estaba en el
+  `model-card` "a propósito, no es un error a arreglar". Era falso para las
+  tres: vía `worldfootballR_data` hay xG para todas (Argentina por otra ruta,
+  ver el punto siguiente).
+
+  Lo que de verdad limita la cobertura **no es la liga sino la fecha en que
+  FBref empezó a cubrirla**. Medido sobre el histórico cargado:
+
+  | liga | primer xG | cobertura total |
+  |---|---|---|
+  | gb.premier_league | ago 2017 | 64.4% |
+  | it.serie_a | ago 2017 | 63.0% |
+  | es.laliga | ago 2017 | 62.9% |
+  | de.bundesliga | ago 2017 | 62.5% |
+  | **ar.primera** | ene 2017 | **62.5%** |
+  | fr.ligue_1 | ago 2017 | 61.9% |
+  | pt.primeira | ago 2018 | 51.6% |
+  | nl.eredivisie | ago 2018 | 45.1% |
+  | mx.liga_mx | jul 2018 | 44.9% |
+  | us.mls | 2018 | 44.0% |
+  | br.serie_a | abr 2019 | 41.8% |
+
+  Que no es un asunto de continente lo demuestra la Eredivisie: es europea y
+  tiene la misma cobertura que Liga MX. El corte separa las tres grandes, que
+  FBref cubre desde 2017, del resto, que cubre desde 2018-19. Las columnas de
+  cobertura total salen bajas solo porque el histórico arranca en 2014, antes
+  de que existiera el dato.
+
+- **Corregido otra vez (2026-09-22): Argentina SÍ tiene xG.** La línea de
+  arriba decía 0%. Ahora está al 62,5%, por encima de las otras tres ligas
+  latinoamericanas.
+
+  El razonamiento anterior no era falso, era obsoleto: Argentina solo existe en
+  `.rds`, leerlo exige `pyreadr`, y no compensaba pagar esa dependencia por una
+  sola liga. Lo que cambió es el otro lado de la balanza. Champions y Europa
+  League **tampoco** tienen CSV en ese repositorio, así que añadirlas obligaba
+  a `pyreadr` de todos modos. Con la dependencia ya dentro, Argentina entró
+  gratis: 2.304 partidos con xG en una sola pasada.
+
+  La lección, que es general: una decisión de "no compensa" caduca en cuanto
+  cambia el coste de la alternativa. Merece la pena re-revisar las que están
+  escritas en los módulos cuando el alcance se amplía.
+
+  Lo que Argentina sigue sin tener es el fichero **tiro a tiro**: solo el xG ya
+  agregado del partido. Así que no tiene PSxG, ni distancia de remate, ni
+  ajuste por estado del partido (`ingest/game_state.py`). Sigue siendo la liga
+  con menos features, pero ya no la liga sin xG.
+
+  Para los partidos anteriores a esas fechas el modelo trabaja solo con goles,
+  que tienen más ruido, y **eso sí** está en el `model-card`.
+
+- Los datasets de `worldfootballR_data` se publican por lotes y cada liga va
+  con distinto retraso (a fecha de hoy, Premier llega a septiembre de 2025;
+  Liga MX y Brasileirão, a diciembre de 2024). Afecta solo al ENTRENAMIENTO:
+  el xG es el objetivo del modelo de fuerza, no una feature de predicción, así
+  que un partido futuro no necesita xG para ser predicho.
+
+- **El xG es el mejor objetivo disponible, y está comprobado.** Del mismo
+  fichero tiro a tiro se extraen también remates, remates a puerta, PSxG y
+  distancia media (`db/006_shot_stats.sql`). Probando cada variante como
+  objetivo del modelo de fuerza sobre n=28.718:
+
+  | objetivo | RPS |
+  |---|---|
+  | goles + xG (el actual) | **0.20330** |
+  | goles + media(xG, PSxG) | 0.20340 |
+  | goles + PSxG en vez de xG | 0.20368 |
+
+  El PSxG **empeora**. Es coherente: solo cubre los remates que van a puerta,
+  así que como medida de creación de ocasiones está sesgado, y además mezcla
+  la colocación del disparo, que es más ruidosa que la calidad de la ocasión.
+  No busques mejoras por ahí.
+
+  Lo que sí aportó exprimir ese fichero: Liga MX y Brasileirão pasaron de
+  **cero** datos de remates a tenerlos (el formato "extra" de
+  football-data.co.uk no los trae), y quedan disponibles para el modelo de
+  residuo y para trabajo futuro aunque el modelo de fuerza no los use.
+
+- **El ajuste por estado del partido tampoco mejora, y el motivo es
+  instructivo.** `ingest/game_state.py` reconstruye el marcador minuto a
+  minuto desde los remates y calcula el xG que cada equipo generó ganando,
+  empatando y perdiendo. La premisa habitual es que un equipo que va ganando
+  se repliega y su xG infravalora su calidad. **Los datos dicen lo contrario**
+  (12.928 partidos reconstruidos):
+
+  | estado | xG por minuto (empate = 1.0) |
+  |---|---|
+  | perdiendo | 1.135 |
+  | empatado | 1.000 |
+  | **ganando** | **1.177** |
+
+  Ir ganando está **correlacionado con ser mejor equipo**, así que el estado
+  "ganando" no mide repliegue: mide calidad. Normalizar por ese ratio elimina
+  justamente la señal de fuerza que el modelo busca, y el RPS empeora
+  (0.20330 → 0.20344 en total; 0.20075 → 0.20108 restringiendo a los partidos
+  con ajuste disponible). Hacerlo bien exigiría estimar el efecto de estado
+  DENTRO de estratos de calidad de equipo, o conjuntamente con el modelo de
+  fuerza; a la vista del tamaño del efecto no compensa.
+
+  El módulo se conserva porque la reconstrucción del marcador sí es útil como
+  *feature* del modelo de residuo (algo distinto de usarla para corregir el
+  objetivo) y porque su validación contra autogoles es infraestructura
+  reutilizable: el marcador se deriva de los remates que acabaron en gol, y un
+  autogol no es un remate del que anota. En el 7,8% de los partidos la
+  reconstrucción no cuadra, y ahí se devuelve `None` en vez de un estado
+  inventado.
+
+---
+
+## Estructura
+
+```
+db/              001 esquema · 002 ligas · 003 API-Football · 004 Grafana
+                 005 alias de FBref (revisados a mano, ver el propio archivo)
+                 006 estadísticas de remates
+                 007 MLS + copas europeas (competición != liga del equipo)
+                 008 alias de MLS · 009 alias de Argentina
+                 010 Bundesliga, Ligue 1, Primeira · 011 sus alias
+                 012 tablas de challengers en sombra
+grafana/         provisioning + dashboard de operación
+scripts/         setup_fase1.sh · bootstrap_aliases.py · crontab
+                 evaluate_challengers.py (evaluación de solo lectura)
+                 harness_check.sh  (sintaxis + tests + compose, antes de tocar nada)
+tests/           casos sobre datos simulados: recuperación de parámetros,
+                 ausencia de fugas point-in-time, unidades del stake
+src/qf/
+  ingest/        odds_worker · fixtures · results · history_fd · health
+                 lineups            XI a T-60 (ventana T-90..T-20)
+                 xg_worldfootball   xG vía releases de worldfootballR_data
+                 uefa_cups          histórico de Champions y Europa League (.rds)
+                 game_state         xG por estado del marcador (ver arriba)
+  model/         dixon_coles   efectos por liga + fuerza relativa entre ligas
+                 kalman        ratings dinámicos (estado latente)
+                 elo           baseline secuencial 1X2
+                 features      descanso, Elo, forma y tiros point-in-time
+                 multinomial   challengers deportivos y anclados a Pinnacle
+                 lineup_challenger · shadow · promotion
+                 structure     formas alternativas de la matriz (solo informe)
+                 calibration   corrección afín sobre las lambdas
+                 meta          peso óptimo modelo/mercado
+                 residual      GBM sobre el residuo (desactivado por defecto)
+                 pricing · devig · train
+  publish/       daily · picks · hashchain · telegram · weekly
+  eval/          clv · metrics · backtest · comparison
+  api/           main (público + suscriptor + admin)
+  normalize.py   emparejamiento de nombres entre fuentes
+```
+
+### Un equipo puede estar en el modelo sin estar MEDIDO
+
+Distinción que cuesta dinero si se pasa por alto, y que se destapó al precificar
+cuotas reales el 2026-09-22. Hay dos situaciones que parecen la misma y no lo
+son:
+
+- **Ascendido sin historia**: no está en el índice, así que `lambdas()` lo lleva
+  a la media de su liga. Es SEGURO.
+- **Club que vuelve tras años fuera**: sí está en el índice, así que NO cae a la
+  media. Carga los `attack`/`defence` que le dejaron el ridge y el centrado de
+  la liga —valores extremos— y el modelo los sostiene con total confianza.
+
+La magnitud que los separa no es el número de partidos sino la **muestra
+efectiva**: la suma de los pesos de decaimiento. Con media vida de 180 días, un
+equipo que dejó de jugar en 2017 tiene cientos de partidos en la base y una
+muestra efectiva de 0,0000. En el modelo entrenado, **95 de 362 equipos están
+por debajo de 1**.
+
+Sin esa medida el sistema producía su stake MÁXIMO justo donde menos sabía:
+Hull salió a 0,9061 contra un mercado de 0,4659, "edge" del 97%, tier `high`.
+Las tres guardas existentes miraban otra cosa —`knows()` comprobaba pertenencia
+al índice, `_confidence()` contaba partidos de toda la vida, y el encogimiento
+de edge recortaba el 97% a un 53% que seguía saturando el tope—. Ahora
+`DCParams.effective_n` la mide, `MIN_EFFECTIVE_MATCHES` (5 por defecto) la
+exige, y por debajo del umbral la predicción se guarda y se sirve con tier
+`low`, que es lo que `run()` ya excluye del universo de picks.
+
+### Dos motores de fuerza, no uno
+
+`dixon_coles` trata la fuerza como fija y compensa pesando menos lo viejo.
+`kalman` la trata como un estado latente que evoluciona, lo que captura
+parones, ascendidos y cambios bruscos de plantilla que el decaimiento no puede
+expresar. En la medición de arriba empatan en precisión; Kalman gana por
+velocidad (51 s frente a 4.888 s para la misma evaluación fuera de muestra),
+lo que convierte el ajuste de hiperparámetros en rutina.
+
+### Antes de tocar código
+
+```bash
+./scripts/harness_check.sh      # sintaxis, tests y validez del compose
+pip install -r requirements-dev.txt
+```
+
+En Windows, si `.venv` conserva los paquetes pero apunta a una instalación de
+Python 3.12 que ya no existe, `powershell -File scripts/test_local_windows.ps1`
+ejecuta la suite con otro Python 3.12 compatible sin modificar `.venv`. Acepta
+`-PythonPath` para indicar el intérprete; crea los temporales de pytest bajo
+`.local/pytest-runs`, fuera del contexto Docker.
+
+El contexto operativo para agentes está en `CLAUDE.md`; las decisiones ya
+tomadas y por qué, en `harness/progreso.md`.

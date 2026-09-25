@@ -1,0 +1,102 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: qf
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?define PG_PASSWORD}
+      POSTGRES_DB: quantfut
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qf -d quantfut"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  cache:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes: [redisdata:/data]
+    restart: unless-stopped
+
+  api:
+    build: .
+    env_file: .env
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: [chain:/srv/quantfut/chain, artifacts:/srv/quantfut/artifacts]
+    restart: unless-stopped
+
+  worker:
+    build: .
+    env_file: .env
+    depends_on:
+      db: {condition: service_healthy}
+    volumes:
+      - chain:/srv/quantfut/chain
+      - artifacts:/srv/quantfut/artifacts
+      - ./scripts/crontab:/etc/cron.d/quantfut:ro
+    # cron no hereda el entorno del contenedor: se lo pasa pam_env leyendo
+    # /etc/environment. Se vuelca ENTERO. La versión anterior filtraba por
+    # prefijos y dejaba fuera API_FOOTBALL_*, así que calendario, resultados,
+    # alineaciones, lesiones y cuotas de API-Football fallaban en cada pasada.
+    # `command: >` (folded) junta las líneas con espacios: la versión anterior
+    # tenía tres pasos separados solo por saltos de línea, así que sin `&&`
+    # entre ellos "cron -f" quedaba como argumento de `crontab` en vez de
+    # arrancar el demonio — el cron nunca corrió. `crontab <archivo>` solo
+    # necesita leer el archivo (root puede, aunque el volumen sea :ro); el
+    # `chmod` no hacía falta y encima fallaba contra el montaje de solo
+    # lectura, así que se quita.
+    command: >
+      sh -c "printenv | grep -v -E '^(HOSTNAME|HOME|PWD|SHLVL|_)=' > /etc/environment &&
+             crontab /etc/cron.d/quantfut &&
+             cron -f"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    env_file: .env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?define GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SERVER_ROOT_URL: https://panel.${DOMAIN:-localhost}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:?define GRAFANA_DB_PASSWORD}
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    env_file: .env
+    depends_on:
+      - api
+      - grafana
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Origin Certificate de Cloudflare, instalado en el host (fuera del repo).
+      - /etc/ssl/quantfut:/etc/ssl/quantfut:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  grafanadata:
+  chain:
+  artifacts:
+  caddydata:
+  caddyconfig:

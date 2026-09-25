@@ -1,0 +1,243 @@
+{
+  "uid": "quantfut-ops",
+  "title": "QuantFut · Operación",
+  "tags": ["quantfut"],
+  "timezone": "browser",
+  "refresh": "5m",
+  "time": { "from": "now-90d", "to": "now" },
+  "editable": true,
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Salud del sistema",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "table",
+      "title": "Estado de la ingesta",
+      "description": "Si una fuente lleva horas sin escribir, algo está roto y no va a dar ningún error.",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 7, "w": 10, "x": 0, "y": 1 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT source AS fuente, ran_at AS ultima_ejecucion, rows_written AS filas, ok, round(hours_since::numeric, 1) AS horas_desde FROM v_ingest_status ORDER BY hours_since DESC"
+      }],
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [{
+          "matcher": { "id": "byName", "options": "horas_desde" },
+          "properties": [{
+            "id": "thresholds",
+            "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 26 },
+              { "color": "red", "value": 50 }
+            ]}
+          }, { "id": "custom.cellOptions", "value": { "type": "color-background" } }]
+        }]
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Partidos huérfanos",
+      "description": "Terminaron hace más de 8h y siguen sin cerrar. Más de 3 es señal de ingesta rota.",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 7, "w": 4, "x": 10, "y": 1 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT count(*) AS valor FROM matches WHERE status IN ('scheduled','live') AND kickoff_utc < now() - interval '8 hours' AND kickoff_utc > now() - interval '30 days'"
+      }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null },
+        { "color": "orange", "value": 1 },
+        { "color": "red", "value": 4 }
+      ]}}},
+      "options": { "colorMode": "background", "graphMode": "none", "textMode": "value" }
+    },
+    {
+      "type": "stat",
+      "title": "Nombres sin emparejar",
+      "description": "Cada uno son partidos que el sistema nunca verá. Corre scripts/bootstrap_aliases.py",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 7, "w": 4, "x": 14, "y": 1 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT count(*) AS valor FROM unresolved_names WHERE NOT resolved"
+      }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null },
+        { "color": "red", "value": 1 }
+      ]}}},
+      "options": { "colorMode": "background", "graphMode": "none", "textMode": "value" }
+    },
+    {
+      "type": "stat",
+      "title": "Partidos próximos 10 días",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 1 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT count(*) AS valor FROM matches WHERE status='scheduled' AND kickoff_utc BETWEEN now() AND now() + interval '10 days'"
+      }],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [
+        { "color": "red", "value": null },
+        { "color": "orange", "value": 10 },
+        { "color": "green", "value": 30 }
+      ]}}},
+      "options": { "colorMode": "background", "graphMode": "none", "textMode": "value" }
+    },
+
+    {
+      "type": "row",
+      "title": "CLV — la métrica que decide si esto funciona",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Valor esperado al cierre sin margen, rodante (30 picks)",
+      "description": "La vara que decide la puerta: cuota tomada contra el cierre de Pinnacle SIN margen. Si vive por debajo de cero durante 300+ picks, no hay edge. El CLV con margen se muestra al lado pero está inflado por el margen. Vacío mientras la publicación siga pausada: la muestra previa está en /control (sombra del criterio sharp).",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "targets": [{
+        "format": "time_series",
+        "rawQuery": true,
+        "rawSql": "SELECT r.settled_at AS time, avg(r.ev_close_pct) OVER (ORDER BY r.settled_at ROWS BETWEEN 29 PRECEDING AND CURRENT ROW) AS \"EV cierre sin margen 30p\", avg(r.clv_pct) OVER (ORDER BY r.settled_at ROWS BETWEEN 29 PRECEDING AND CURRENT ROW) AS \"CLV con margen 30p\" FROM pick_results r WHERE r.ev_close_pct IS NOT NULL AND $__timeFilter(r.settled_at) ORDER BY 1"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": { "lineWidth": 2, "fillOpacity": 8, "spanNulls": true,
+                      "thresholdsStyle": { "mode": "line" } },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null }, { "color": "green", "value": 0 }
+          ]}
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "P&L acumulado (unidades)",
+      "description": "Secundario al CLV a propósito. A pocos cientos de picks esto es ruido.",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "targets": [{
+        "format": "time_series",
+        "rawQuery": true,
+        "rawSql": "SELECT settled_at AS time, sum(profit_units) OVER (ORDER BY settled_at) AS \"P&L acumulado\" FROM pick_results WHERE $__timeFilter(settled_at) ORDER BY 1"
+      }],
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 } } }
+    },
+    {
+      "type": "stat",
+      "title": "Resumen 30 días",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 18 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT count(*) AS \"Picks\", round(avg(r.ev_close_pct)::numeric,2) AS \"EV cierre sin margen %\", round(avg(r.clv_pct)::numeric,2) AS \"CLV con margen %\", round((avg(CASE WHEN r.beat_close THEN 1.0 ELSE 0.0 END)*100)::numeric,1) AS \"% batió cierre\", round(sum(r.profit_units)::numeric,2) AS \"P&L u\", round((sum(r.profit_units)/NULLIF(sum(p.stake_units),0)*100)::numeric,2) AS \"ROI %\" FROM pick_results r JOIN picks p USING (pick_id) WHERE r.settled_at > now() - interval '30 days'"
+      }],
+      "options": { "colorMode": "value", "graphMode": "none", "textMode": "value_and_name",
+                   "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+
+    {
+      "type": "row",
+      "title": "Calibración del modelo",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 }
+    },
+    {
+      "type": "table",
+      "title": "Predicho vs observado (último reentrenamiento)",
+      "description": "Un modelo bien calibrado tiene observado ≈ predicho en cada bucket. 'dentro_de_2se' compara contra el error estándar binomial: sin eso, un bucket con n=8 parece una señal.",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 24 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT bucket, n, round(predicho::numeric,3) AS predicho, round(observado::numeric,3) AS observado, round((observado-predicho)::numeric,3) AS desvio, dentro_de_2se FROM v_calibration_bins WHERE window_end = (SELECT max(window_end) FROM calibration_runs) ORDER BY bucket"
+      }],
+      "fieldConfig": { "defaults": {}, "overrides": [{
+        "matcher": { "id": "byName", "options": "dentro_de_2se" },
+        "properties": [{ "id": "custom.cellOptions", "value": { "type": "color-background" } },
+                       { "id": "mappings", "value": [
+                         { "type": "value", "options": { "false": { "color": "red", "index": 0 },
+                                                          "true": { "color": "green", "index": 1 } } }
+                       ]}]
+      }]}
+    },
+    {
+      "type": "timeseries",
+      "title": "RPS del modelo vs cierre del mercado",
+      "description": "Menor es mejor. Si tu línea vive por encima de la del mercado, el modelo no aporta información que el mercado no tenga ya.",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 24 },
+      "targets": [{
+        "format": "time_series",
+        "rawQuery": true,
+        "rawSql": "SELECT created_at AS time, rps AS \"Modelo\", rps_market AS \"Cierre de mercado\" FROM calibration_runs WHERE $__timeFilter(created_at) ORDER BY 1"
+      }],
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "pointSize": 6,
+                                                  "showPoints": "always" } } }
+    },
+
+    {
+      "type": "row",
+      "title": "El activo: histórico de cuotas",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Snapshots de cuotas capturados por día",
+      "description": "Este dato se acumula gratis y no se puede comprar barato. Cada hueco en esta serie es un día perdido para siempre.",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 35 },
+      "targets": [{
+        "format": "time_series",
+        "rawQuery": true,
+        "rawSql": "SELECT dia AS time, snapshots AS \"Snapshots\", partidos AS \"Partidos\" FROM v_odds_growth WHERE $__timeFilter(dia::timestamptz) ORDER BY 1"
+      }],
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "fillOpacity": 70 } } }
+    },
+    {
+      "type": "stat",
+      "title": "Días de histórico acumulados",
+      "description": "El producto de predicción de movimiento de línea necesita ~365.",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 35 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT count(DISTINCT captured_at::date) AS valor FROM odds_snapshots WHERE source = 'the_odds_api'"
+      }],
+      "fieldConfig": { "defaults": { "max": 365, "thresholds": { "mode": "absolute", "steps": [
+        { "color": "red", "value": null },
+        { "color": "orange", "value": 90 },
+        { "color": "green", "value": 365 }
+      ]}}},
+      "options": { "colorMode": "background", "graphMode": "area", "textMode": "value" }
+    },
+
+    {
+      "type": "row",
+      "title": "Cadena de hashes",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 }
+    },
+    {
+      "type": "table",
+      "title": "Últimos lotes sellados",
+      "datasource": { "type": "postgres", "uid": "quantfut_pg" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 44 },
+      "targets": [{
+        "format": "table",
+        "rawQuery": true,
+        "rawSql": "SELECT batch_date AS fecha, n_predictions AS predicciones, n_picks AS picks, left(chain_sha256, 20) AS chain_hash, published_ref AS publicado_en, created_at AS sellado FROM prediction_batches ORDER BY seq DESC LIMIT 30"
+      }]
+    }
+  ]
+}

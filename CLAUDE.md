@@ -1,0 +1,102 @@
+# QuantFut — contexto para el agente
+
+Sistema cuantitativo de predicción de fútbol (Dixon-Coles + de-vig de mercado
++ cadena de hashes para picks). Python 3.12, Postgres, Redis, Docker Compose,
+FastAPI. Ver [README.md](README.md) para la arquitectura completa; este
+archivo es el arnés operativo, no repite esa documentación.
+
+Actualización (2026-09-23): un único FastAPI sirve también la web demo en
+`/` y el panel interno de lectura en `/control`; el BFF separado que figura
+en decisiones históricas fue descartado. Las cuentas de clientes y cobros
+siguen fuera de alcance hasta la validación comercial. No exponer tokens de
+servicio o administración en JavaScript.
+
+## Protocolo de inicio (obligatorio antes de tocar código)
+
+1. Ejecuta `./scripts/harness_check.sh`. Si falla, tu única tarea es arreglar
+   eso antes de continuar con cualquier otra cosa.
+2. Lee [harness/tareas.md](harness/tareas.md) — backlog priorizado.
+3. Lee [harness/progreso.md](harness/progreso.md) — decisiones y estado de
+   sesiones anteriores, para no repetir trabajo ni deshacer decisiones ya
+   tomadas.
+
+## Alcance del negocio (decisión del usuario, 2026-09-21)
+
+El usuario **no usa Telegram**. Vende picks solo desde su propia web, que
+consume esta API. `src/qf/publish/telegram.py` sigue en el repo y sigue
+siendo llamado desde `daily.py`, pero es best-effort/no-op sin
+`TG_BOT_TOKEN` — **nunca** lo trates como la fuente de verdad de nada
+(el tier free/paid de un pick lo decide `picks.assign_tiers()`, no
+Telegram). No desarrolles el bot receptor de Telegram ni auth por Telegram
+a menos que el usuario lo pida explícitamente. Auth de suscriptor
+(no-Telegram) y cobros están fuera de alcance por ahora — ver
+`harness/tareas.md`.
+
+## Dónde vive cada cosa (no lo derives, ya está aquí)
+
+- `src/qf/ingest/` — captura de datos (cuotas, calendario, resultados, xG).
+  **Nunca** toques `api_football.py` para xG: ese proveedor no se usa para xG
+  a propósito, ver README.
+- `src/qf/model/` — Dixon-Coles, de-vig, pricing, entrenamiento, calibración
+  (`calibration.py`), peso modelo/mercado (`meta.py`), GBM de residuo
+  (`residual.py`) y ratings dinámicos (`kalman.py`). Todos existen.
+- `src/qf/publish/` — orden estricto predecir → seleccionar → sellar →
+  publicar (`daily.py`). No reordenes ese pipeline sin que te lo pidan
+  explícitamente: es la garantía anti-fraude del negocio.
+- `src/qf/eval/` — métricas, backtest, CLV. `check_leakage()` en
+  `backtest.py` se corre SIEMPRE antes de confiar en un resultado de backtest.
+- `db/*.sql` — el esquema tiene triggers de inmutabilidad (rechaza UPDATE/
+  DELETE en `predictions`, `picks`, `odds_snapshots`) y un trigger
+  point-in-time en `features_pit`. No los deshabilites para "hacer una
+  corrección rápida": ese es exactamente el escenario que bloquean.
+- `harness/archivo/` — código retirado pero conservado (no hay git): goles y
+  hándicap probados sin valor, y la instantánea de la versión inicial. No se
+  despliega nada de ahí. (La antigua carpeta `pyton/` se borró el 2026-09-25
+  con confirmación del usuario.)
+
+## Roles según la fase de la tarea
+
+- **Arquitecto:** para tareas grandes o ambiguas, primero escribe o actualiza
+  el plan en `harness/tareas.md` antes de escribir código.
+- **Implementador:** cambios pequeños y granulares, alineados con la
+  estructura de módulos existente (`ingest` / `model` / `publish` / `eval`).
+- **Revisor:** después de implementar, corre `./scripts/harness_check.sh` de
+  nuevo. Si hay tests relevantes, córrelos. Actualiza
+  `harness/progreso.md` con la decisión clave, no con un resumen de diff.
+
+## Competición y liga no son lo mismo (desde 2026-09-22)
+
+Con Champions y Europa League dentro, `matches.league_id` es la COMPETICIÓN y
+`teams.league_id` es la liga DOMÉSTICA del equipo. En las 11 ligas coinciden; en
+las 2 copas no.
+
+Consecuencias que hay que respetar:
+
+- Cualquier consulta que le dé equipos al modelo tiene que traer
+  `th.league_id AS home_league` y `ta.league_id AS away_league`, y pasarlos a
+  `lambdas()` / `predict()` / `knows()`. Sin eso, un partido de copa no
+  encuentra a sus equipos y se predice con ataque y defensa 0.
+- **Nunca** des de alta equipos bajo `eu.ucl` o `eu.uel`. Duplicaría clubes que
+  ya existen y partiría su historial en dos sin dar ningún error. Si no se
+  resuelve, se descarta el partido y se registra en `unresolved_names`.
+- En competiciones `cross_league`, el emparejamiento de nombres solo acepta
+  coincidencia EXACTA. El difuso busca en las 11 ligas a la vez y puede colocar
+  un club europeo encima de uno latinoamericano de nombre parecido.
+- El término `strength` de `dixon_coles.py` se cancela exactamente en los
+  partidos domésticos. Si tocas esa fórmula, `tests/test_cross_league.py` lo
+  comprueba a 1e-9: no lo relajes, es lo que garantiza que añadir las copas no
+  movió nada de lo ya medido en las ocho ligas.
+
+## Reglas estrictas
+
+- No inventes que existe un archivo o módulo sin verificarlo (`ls`, `grep`).
+  Este repo mezcla partes completas (Fase 0-1) con partes que no existen
+  todavía (Fase 4-5) — confundir eso rompe el plan.
+- No relajes ni quites triggers de la base de datos, validaciones de
+  point-in-time, ni el orden `predecir → sellar → publicar` sin pedir
+  confirmación explícita: son las garantías que hacen creíble el producto.
+- No añadas manejo de errores o fallback para escenarios de proveedor que el
+  README ya descarta (p. ej. xG de API-Football).
+- Sé directo, sin explicar código que ya es legible por sí mismo.
+- Al terminar una tarea: márcala en `harness/tareas.md` y añade la decisión
+  clave (el porqué, no el qué) a `harness/progreso.md`.

@@ -1,0 +1,19 @@
+# Finales de línea LF en la copia de trabajo, también en Windows.
+#
+# El despliegue copia los archivos tal cual al servidor Linux (scp). Con el
+# `core.autocrlf` de Windows, git reescribiría la copia local con CRLF y el
+# `crontab` y los `.sh` dejarían de funcionar en el servidor (un `\r` al final
+# de cada línea de cron rompe el comando sin avisar). Todo el proyecto se
+# escribió ya en LF.
+* text=auto eol=lf
+
+# Scripts de PowerShell: solo se ejecutan en Windows.
+*.ps1 text eol=crlf
+
+# Binarios: nunca tocar.
+*.tar.gz binary
+*.gz binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary

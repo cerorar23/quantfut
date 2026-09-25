@@ -1,0 +1,229 @@
+"""
+Cadena de hashes: prueba criptográfica de que no revisas predicciones.
+
+Es lo que te separa de los canales de Telegram que borran los fallos, y para
+un producto B2C de picks es literalmente el producto.
+
+Flujo diario, antes del primer kickoff:
+  1. Serializar todas las predicciones y picks del día a JSON canónico.
+  2. sha256(payload) -> payload_hash
+  3. chain_hash = sha256(prev_chain_hash || payload_hash)
+  4. Escribir a disco + commit al repo público.
+  5. Publicar el chain_hash en un canal con timestamp externo (GitHub, X).
+
+Cualquiera puede después descargar el JSON, recalcular el hash y comprobar
+que coincide con el que publicaste antes de los partidos.
+
+Verificación por terceros:  python -m qf.publish.hashchain verify
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import os
+import subprocess
+from datetime import date, datetime, timezone
+from pathlib import Path
+
+from ..config import settings
+from ..db import execute, query, query_one
+
+log = logging.getLogger(__name__)
+
+GENESIS = "0" * 64
+
+
+def canonical_json(obj) -> str:
+    """JSON determinista: claves ordenadas, sin espacios, floats estables."""
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, default=str)
+
+
+def sha256_hex(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _prev_chain_hash() -> str:
+    row = query_one(
+        "SELECT chain_sha256 FROM prediction_batches ORDER BY seq DESC LIMIT 1"
+    )
+    return row["chain_sha256"] if row else GENESIS
+
+
+def _collect(batch_date: date) -> dict:
+    preds = query(
+        """SELECT p.prediction_id, p.match_id, p.model_version, p.generated_at,
+                  p.home_lambda, p.away_lambda, p.rho, p.confidence_tier,
+                  p.markets -> '1x2'    AS m_1x2,
+                  p.markets -> 'totals' AS m_totals,
+                  p.market_consensus,
+                  m.kickoff_utc, m.league_id,
+                  th.canonical_name AS home_team, ta.canonical_name AS away_team
+           FROM predictions p
+           JOIN matches m USING (match_id)
+           JOIN teams th ON th.team_id = m.home_team_id
+           JOIN teams ta ON ta.team_id = m.away_team_id
+           -- El cast a fecha DEBE hacerse en UTC explícitamente. Un
+           -- `generated_at::date` a secas usa la zona horaria del servidor,
+           -- y `batch_date` se calcula en Python con UTC: si el servidor no
+           -- está en UTC las dos fechas discrepan varias horas al día, el
+           -- lote sale vacío, el sellado se salta y —por diseño— NO SE
+           -- PUBLICA NADA. Un fallo mudo, no un error.
+           WHERE (p.generated_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY p.generated_at, p.prediction_id""",
+        (batch_date,),
+    )
+    picks = query(
+        """SELECT pick_id, prediction_id, match_id, market, selection, line,
+                  model_prob, advised_price, bookmaker, edge_pct, raw_edge_pct,
+                  stake_units, tier, published_at,
+                  fair_prob, min_price, odds_source, odds_as_of
+           FROM picks
+           WHERE (published_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY published_at, pick_id""",
+        (batch_date,),
+    )
+    return {
+        "batch_date": batch_date.isoformat(),
+        "model_version": settings.model_version,
+        "fs_version": settings.fs_version,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "n_predictions": len(preds),
+        "n_picks": len(picks),
+        "predictions": preds,
+        "picks": picks,
+    }
+
+
+def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
+    """Sella el lote del día. Idempotente por fecha."""
+    batch_date = batch_date or datetime.now(timezone.utc).date()
+
+    existing = query_one(
+        "SELECT batch_id, chain_sha256 FROM prediction_batches WHERE batch_date = %s",
+        (batch_date,),
+    )
+    if existing:
+        log.warning("El lote de %s ya está sellado (%s). No se re-sella.",
+                    batch_date, existing["chain_sha256"][:16])
+        return existing
+
+    payload = _collect(batch_date)
+    if payload["n_predictions"] == 0:
+        log.info("Sin predicciones para %s, no se sella nada.", batch_date)
+        return {}
+
+    body = canonical_json(payload)
+    payload_hash = sha256_hex(body)
+    prev = _prev_chain_hash()
+    chain_hash = sha256_hex(prev + payload_hash)
+
+    out_dir = Path(settings.chain_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{batch_date.isoformat()}.json").write_text(body, encoding="utf-8")
+
+    receipt = {
+        "batch_date": batch_date.isoformat(),
+        "payload_sha256": payload_hash,
+        "prev_sha256": prev,
+        "chain_sha256": chain_hash,
+        "n_predictions": payload["n_predictions"],
+        "n_picks": payload["n_picks"],
+        "sealed_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    (out_dir / f"{batch_date.isoformat()}.receipt.json").write_text(
+        canonical_json(receipt), encoding="utf-8"
+    )
+    _append_ledger(out_dir / "LEDGER.md", receipt)
+
+    execute(
+        """INSERT INTO prediction_batches
+             (batch_date, n_predictions, n_picks, payload_sha256,
+              prev_sha256, chain_sha256)
+           VALUES (%s, %s, %s, %s, %s, %s)""",
+        (batch_date, payload["n_predictions"], payload["n_picks"],
+         payload_hash, prev, chain_hash),
+    )
+
+    if git_push and settings.chain_git_remote:
+        _git_publish(out_dir, batch_date, chain_hash)
+
+    log.info("Lote %s sellado. chain=%s", batch_date, chain_hash[:16])
+    return receipt
+
+
+def _append_ledger(path: Path, r: dict) -> None:
+    if not path.exists():
+        path.write_text(
+            "# Registro público de predicciones\n\n"
+            "Cada fila enlaza con la anterior mediante SHA-256. Alterar una "
+            "predicción pasada rompe todos los hashes posteriores.\n\n"
+            "Verificar: `python -m qf.publish.hashchain verify`\n\n"
+            "| Fecha | Preds | Picks | payload_sha256 | chain_sha256 |\n"
+            "|---|---|---|---|---|\n",
+            encoding="utf-8",
+        )
+    with path.open("a", encoding="utf-8") as f:
+        f.write(f"| {r['batch_date']} | {r['n_predictions']} | {r['n_picks']} "
+                f"| `{r['payload_sha256'][:16]}…` | `{r['chain_sha256'][:16]}…` |\n")
+
+
+def _git_publish(out_dir: Path, batch_date: date, chain_hash: str) -> None:
+    try:
+        env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+        for cmd in (
+            ["git", "add", "-A"],
+            ["git", "commit", "-m",
+             f"predicciones {batch_date.isoformat()} chain={chain_hash[:16]}"],
+            ["git", "push", "origin", "HEAD"],
+        ):
+            subprocess.run(cmd, cwd=out_dir, check=True, env=env,
+                           capture_output=True, timeout=120)
+        log.info("Cadena publicada en el repo público.")
+    except subprocess.CalledProcessError as exc:
+        log.error("Fallo al publicar la cadena: %s", exc.stderr.decode()[:400])
+
+
+def verify(chain_dir: str | None = None) -> tuple[bool, list[str]]:
+    """Recalcula toda la cadena desde los archivos en disco."""
+    d = Path(chain_dir or settings.chain_dir)
+    files = sorted(d.glob("????-??-??.json"))
+    prev, errors = GENESIS, []
+
+    for f in files:
+        body = f.read_text(encoding="utf-8")
+        payload_hash = sha256_hex(body)
+        chain_hash = sha256_hex(prev + payload_hash)
+
+        rf = f.with_suffix(".receipt.json")
+        if not rf.exists():
+            errors.append(f"{f.name}: falta el recibo")
+            prev = chain_hash
+            continue
+        r = json.loads(rf.read_text(encoding="utf-8"))
+
+        if r["payload_sha256"] != payload_hash:
+            errors.append(f"{f.name}: CONTENIDO ALTERADO "
+                          f"(esperado {r['payload_sha256'][:16]}, "
+                          f"obtenido {payload_hash[:16]})")
+        if r["prev_sha256"] != prev:
+            errors.append(f"{f.name}: CADENA ROTA en el enlace anterior")
+        if r["chain_sha256"] != chain_hash:
+            errors.append(f"{f.name}: hash de cadena inconsistente")
+        prev = r["chain_sha256"]
+
+    ok = not errors
+    print(f"{'OK' if ok else 'FALLO'}: {len(files)} lotes verificados")
+    for e in errors:
+        print("  !", e)
+    return ok, errors
+
+
+if __name__ == "__main__":
+    import sys
+    logging.basicConfig(level=logging.INFO)
+    if len(sys.argv) > 1 and sys.argv[1] == "verify":
+        ok, _ = verify()
+        sys.exit(0 if ok else 1)
+    print(canonical_json(seal()))

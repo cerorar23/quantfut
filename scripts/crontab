@@ -1,0 +1,79 @@
+SHELL=/bin/sh
+PYTHONPATH=/app/src
+# En python:3.12-slim el intérprete está en /usr/local/bin y el PATH por
+# defecto de cron es /usr/bin:/bin: sin esta línea cada job acababa en
+# "python: not found". Las claves y ajustes llegan por pam_env desde
+# /etc/environment (lo escribe el worker de docker-compose al arrancar).
+PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# --- FASE 0 ---
+# Captura de cuotas cada 10 min. EL PROCESO MAS IMPORTANTE DEL SISTEMA.
+*/10 * * * * cd /app && python -m qf.ingest.odds_worker >> /var/log/odds.log 2>&1
+
+# Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle).
+# Cada hora: el proveedor actualiza cada liga cuando le toca y solo guarda 7
+# días. Cada 3 h, una actualización de las 06:10 no llegaría al job de las
+# 08:00. Una petición por partido en las próximas 72 h (~50/h de 7.500/día).
+20 * * * * cd /app && python -m qf.ingest.af_odds >> /var/log/af_odds.log 2>&1
+# Sombra del criterio de picks: registra lo que se HABRÍA recomendado con las
+# cuotas recién capturadas. No publica. Se liquida desde qf.eval.clv.
+25 * * * * cd /app && python -m qf.publish.shadow_sharp capture >> /var/log/shadow_sharp.log 2>&1
+
+# --- FASE 1 ---
+# Calendario de partidos futuros. Dos veces al dia (capta reprogramaciones).
+15 5,17 * * * cd /app && python -m qf.ingest.fixtures >> /var/log/fixtures.log 2>&1
+
+# Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
+45 */3 * * * cd /app && python -m qf.ingest.results >> /var/log/results.log 2>&1
+
+# xG historico desde los releases de worldfootballR_data. Semanal: esos
+# datasets se publican por lotes, no cambian a diario.
+# No se raspa FBref en vivo: esta detras de Cloudflare y devuelve 403.
+0 4 * * 2 cd /app && python -m qf.ingest.xg_worldfootball >> /var/log/xg.log 2>&1
+
+# Historico de Champions y Europa League. Mismo release por lotes, misma
+# cadencia. Va DESPUES del xG y no antes: si algun dia se da de alta una liga
+# nueva, sus equipos tienen que existir ya cuando las copas intenten
+# resolverlos (uefa_cups nunca crea equipos, descarta el partido).
+30 4 * * 2 cd /app && python -m qf.ingest.uefa_cups >> /var/log/xg.log 2>&1
+
+# Chequeo de salud. Diario, alerta si algo falla.
+0 7 * * * cd /app && python -m qf.ingest.health >> /var/log/health.log 2>&1
+
+# --- FASE 4 ---
+# Alineaciones confirmadas. Cada 5 min: la ventana util es T-90..T-20 y el XI
+# se publica sin horario fijo, asi que hay que estar mirando. Solo llama a la
+# API por partidos DENTRO de la ventana y sin alineacion guardada, asi que el
+# coste de cuota es bajo aunque corra a menudo.
+*/5 * * * * cd /app && python -m qf.ingest.lineups >> /var/log/lineups.log 2>&1
+# Un minuto después, evalúa el ajuste de XI en sombra. No publica ni apuesta;
+# si todavía no hay muestra/artefacto validado termina como no-op.
+1-56/5 * * * * cd /app && python -m qf.model.shadow >> /var/log/shadow.log 2>&1
+
+# Bajas/lesiones. Cada 4h: a diferencia del XI, el estado se conoce con dias
+# de antelacion y cambia (duda -> confirmado), asi que hace falta releer, no
+# una sola captura por partido. El propio modulo evita reconsultar el mismo
+# partido antes de MIN_HOURS_BETWEEN_CHECKS.
+0 */4 * * * cd /app && python -m qf.ingest.injuries >> /var/log/injuries.log 2>&1
+
+# --- FASE 3 ---
+# Job diario: predecir, seleccionar picks, sellar cadena, publicar. 08:00 UTC.
+0 8 * * * cd /app && python -m qf.publish.daily >> /var/log/daily.log 2>&1
+
+# Liquidacion y CLV de respaldo (results.py ya la encadena).
+30 2,10,18 * * * cd /app && python -m qf.eval.clv >> /var/log/clv.log 2>&1
+
+# Resumen semanal publico, lunes 09:00 UTC. Se publica SIEMPRE.
+0 9 * * 1 cd /app && python -m qf.publish.weekly >> /var/log/weekly.log 2>&1
+
+# Verificacion de integridad de la cadena, diaria.
+0 6 * * * cd /app && python -m qf.publish.hashchain verify >> /var/log/chain.log 2>&1
+
+# --- FASE 2 ---
+# Reentrenamiento mensual (dia 1, 03:00 UTC). No despliega si empeora.
+0 3 1 * * cd /app && python -m qf.model.train >> /var/log/train.log 2>&1
+# Arranque: mientras NO haya modelo activo, el job de las 08:00 no sella nada.
+# Diario, pero solo entrena (~3,5 h) si el cierre sharp ya es reciente; si no,
+# sale en segundos. Misma puerta que el mensual. Se salta el dia 1 para no
+# pisarse con el mensual.
+5 1 2-31 * * cd /app && python -m qf.model.train --bootstrap >> /var/log/train.log 2>&1
