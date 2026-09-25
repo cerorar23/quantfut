@@ -2151,6 +2151,24 @@ Decisiones:
   duplicados no se copiaron. Sus parlays anuncian «62% prob» en una cuota
   2.30 (implícita 43%): nuestras combinadas enseñan la probabilidad justa.
 
+## 2026-09-25 — El proyecto pasa a git
+
+Petición del usuario tras el incidente de abajo. Rama `main`, primer commit
+`4bd73ee`. Decisiones:
+
+- Fuera del repo: `.env` y `.env.*` (menos `.env.example`), el volcado
+  `quantfut.dump` (dato de producción, no código), `.venv`, `.local` (cachés
+  de >100 MB) y `__pycache__`. Antes del primer commit se comprobó que ningún
+  valor secreto de los `.env` aparece en otro archivo (solo `REDIS_URL`, que
+  no lleva contraseña).
+- `.gitattributes` fija LF: el despliegue copia al servidor Linux tal cual, y
+  el `crontab` y los `.sh` se rompen con CRLF. 21 archivos Python tenían CRLF
+  en disco; normalizados.
+- Aún SIN remoto: el código solo está en este PC y en el VPS. Falta decidir
+  dónde vive la copia remota (GitHub privado o un repo en el propio VPS) y
+  convertir `~/quantfut` del servidor en copia de git, para que `git status`
+  allí delate cualquier archivo subido a mano.
+
 ## 2026-09-25 — Incidente: la sombra caída 2 h por un archivo subido a medias
 
 A las 17:56 UTC alguien (no esta sesión) subió al servidor el
