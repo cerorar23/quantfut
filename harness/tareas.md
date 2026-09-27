@@ -539,6 +539,25 @@ Lo que sí es matemática valiosa y NO está construido:
          quedan pendientes, cuáles se crean) ANTES de aplicar.
       Sin histórico de football-data para ellas: el criterio no lo necesita y
       cargarlo mezclaría nombres de dos fuentes en ligas nuevas.
+- [x] **HECHO (2026-09-27) — Fichas de partido reales en la web (estilo
+      PropsBR): estadísticas, forma y H2H con datos de API-Football.**
+      Desplegado: db/028 (`matches.stats`, `standings`), db/029
+      (`teams.display_name`), `ingest/standings.py` (cron 06:40 y 22:40),
+      `/web/partidos` y `/web/partidos/{id}` (`api/fichas.py`), vista
+      «Partidos y estadísticas» y franja «Hoy en las ligas» en la portada.
+      Sin probabilidades del mercado en la ficha (ver progreso).
+- [ ] **Propuesto al usuario (2026-09-27), pendiente de su sí: cargar los
+      partidos ya jugados de esta temporada de LaLiga 2 y Serie B.** Faltan
+      ~90 y ~50 (anteriores al alta del 25-sep). Sin ellos, la forma de un
+      descendido enseña sus partidos de mayo en Primera. Coste: 2 peticiones
+      de calendario + estadísticas por partido; el modelo no los lee (ligas
+      `model_enabled = false`). Vía: insertarlos como programados con su
+      `external_id` y dejar que `results.close_recent(hours_back=…)` los
+      cierre por el camino normal.
+- [ ] **Avisado al usuario (2026-09-27): `/fair-price/{id}` es público y
+      devuelve `best_price` y `gap_pct`,** es decir, qué casa paga por encima
+      del justo en cada partido: el criterio de picks en abierto. No se ha
+      tocado; decidir si pasa a `/v1` (SERVICE_TOKEN) o se recorta.
 - [ ] **Idea aparcada (2026-09-27, el usuario prefirió no hacerlo): medir más
       casas en sombra.** Con TODAS las casas del feed, los partidos con oferta
       desde el 24-sep pasarían de 8 a 25; las que más aportan: LeoVegas (22),

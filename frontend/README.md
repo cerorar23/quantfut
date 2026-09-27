@@ -32,8 +32,13 @@ anterior queda como vista previa local, no como un segundo backend.
 
 ## Qué funciona en la demo
 
-- Siete vistas: inicio, mesa de mercados, picks, ficha de partido, historial,
-  planes y espacio personal.
+- Ocho vistas: inicio, **partidos y estadísticas**, mesa de mercados, picks,
+  ficha de mercado (demo), historial, planes y espacio personal.
+- **Partidos y estadísticas** es la única vista con datos reales de partidos
+  (`fichas-data.js` → `/web/partidos`): agenda por día y liga a la izquierda,
+  ficha con pestañas Resumen / Forma / Cara a cara / Estadísticas /
+  Clasificación / Alineaciones. La portada enseña los partidos de hoy con su
+  racha. Si la API falla, la vista lo dice; nunca rellena con la maqueta.
 - **Mesa de mercados** (composición inspirada en propsbr.app, contenido
   propio): partidos por fecha y liga a la izquierda, tabla ordenable de ~20
   selecciones por partido (1X2, doble oportunidad, totales, ambos marcan,

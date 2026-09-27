@@ -2252,6 +2252,37 @@ Decisiones:
   encontrada y cubierta por test: API-Football etiqueta las dos patas del
   hándicap con la línea del local.
 
+## 2026-09-27 — Fichas de partido reales en la web: contenido, no criterio
+
+Pedido del usuario: que el sitio resulte atractivo con fichas al estilo
+PropsBR usando API-Football. Desplegado (db/028, db/029, `ingest/standings`,
+`/web/partidos`, vista «Partidos y estadísticas»).
+
+- La ficha NO lleva probabilidades de mercado ni precio justo, aunque el
+  plan las incluía. El producto es "una casa paga ≥2% sobre el justo de
+  Pinnacle"; publicar ese justo en cada partido deja a cualquiera hacer la
+  cuenta con la cuota de su casa. Tampoco el modelo (su edge es negativo).
+- Coste de API casi nulo: `results.py` ya pedía `/fixtures/statistics`;
+  ahora guarda la respuesta entera en `matches.stats`. Lo único nuevo es
+  `/standings`, 13 peticiones dos veces al día.
+- La forma y los promedios solo miran 270 días atrás. Sin tope, Valladolid
+  (en Segunda, sin histórico de football-data) enseñaba como "últimos 5"
+  partidos de Primera de mayo de 2025. Con tope, un descendido enseña sus
+  partidos de mayo de 2026 con fecha y competición: verdad, aunque no sea
+  su forma en Segunda. Lo correcto es cargar la temporada en curso de
+  LaLiga 2 y Serie B (propuesto al usuario; ver tareas).
+- `teams.display_name` (nombre de API-Football, solo si la coincidencia en
+  standings es EXACTA) en vez de tocar `canonical_name`, que es la identidad
+  de emparejamiento: "Manchester City" en la web, "Man City" en el sistema.
+- Argentina devuelve Apertura (cerrada) y Clausura con la MISMA fecha de
+  actualización en todas las filas: la fecha no distingue fases. Se usa el
+  orden del proveedor (calendario) y se conserva la última fase; los grupos
+  sin prefijo de fase (conferencias de la MLS) no se tocan.
+- Aviso sin tocar: `/fair-price/{id}` es público y devuelve `best_price` y
+  `gap_pct`: el criterio en abierto. Decisión del usuario pendiente.
+- Los logs de cron viven dentro del contenedor `worker`: al reconstruirlo se
+  pierden (se vio al buscar `/var/log/fixtures.log`). No se cambió.
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la

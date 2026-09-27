@@ -36,3 +36,8 @@ def public_data_script() -> FileResponse:
 @router.get("/console.css")
 def console_styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "console.css", media_type="text/css")
+
+
+@router.get("/fichas-data.js")
+def fichas_data_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "fichas-data.js", media_type="text/javascript")

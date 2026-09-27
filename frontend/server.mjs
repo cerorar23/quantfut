@@ -10,6 +10,7 @@ const files = new Map([
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/public-data.js', ['public-data.js', 'text/javascript; charset=utf-8']],
+  ['/fichas-data.js', ['fichas-data.js', 'text/javascript; charset=utf-8']],
 ]);
 const port = Number(process.env.PORT || 5173);
 

@@ -23,6 +23,11 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Calendario de partidos futuros. Dos veces al dia (capta reprogramaciones).
 15 5,17 * * * cd /app && python -m qf.ingest.fixtures >> /var/log/fixtures.log 2>&1
 
+# Clasificacion de cada liga para las fichas de la web. Contenido, no criterio.
+# Dos veces al dia (tras la madrugada americana y tras la tarde europea):
+# ~14 peticiones por pasada de 7.500/dia.
+40 6,22 * * * cd /app && python -m qf.ingest.standings >> /var/log/standings.log 2>&1
+
 # Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
 45 */3 * * * cd /app && python -m qf.ingest.results >> /var/log/results.log 2>&1
 

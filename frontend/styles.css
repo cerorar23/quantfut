@@ -580,3 +580,87 @@ fieldset.choice-list legend{float:left;width:100%;margin-bottom:10px;color:var(-
 .live-pick strong{display:block;font:700 22px ui-monospace,Consolas,monospace}
 @media(max-width:900px){.live-evidence-grid{grid-template-columns:1fr 1fr}.live-evidence-grid>div:first-child{grid-column:1/-1}}
 @media(max-width:570px){.live-panel{padding:16px}.live-facts,.live-evidence-grid{grid-template-columns:1fr}.live-evidence-grid>div:first-child{grid-column:auto}.live-pick{align-items:flex-start;flex-direction:column}.live-pick>div:last-child{text-align:left}}
+
+/* Partidos y estadísticas con datos reales (2026-09-27) */
+.desk.stats-desk{grid-template-columns:280px minmax(0,1fr)}
+.stats-desk .desk-side,.stats-desk .desk-main{grid-row:auto}
+.stats-desk .desk-teams>span{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center}
+.st-pos{color:var(--faint);font:600 10px 'IBM Plex Mono',monospace}
+.racha{display:inline-flex;gap:3px;align-items:center}
+.racha i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:4px;font:700 10px 'IBM Plex Mono',monospace;font-style:normal;color:#0f2016}
+.racha .r-G,.res.r-G{background:#75ba79}.racha .r-E,.res.r-E{background:#d8b874}.racha .r-P,.res.r-P{background:#d98b7e}
+.racha.empty{color:var(--faint);font-size:10px}
+.fixture-teams>div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fixture-teams .racha{margin-top:6px}
+.fixture-vs.score{font:700 30px 'IBM Plex Mono',monospace;color:var(--text);letter-spacing:.02em}
+.stack{display:grid;gap:12px}
+.analysis-grid.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cmp-head{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end;margin:4px 0 8px;font-size:13px}
+.cmp-head strong:last-child{text-align:right}
+.cmp-head small{color:var(--faint);font:500 10px 'IBM Plex Mono',monospace;text-align:center}
+.cmp-row{display:grid;grid-template-columns:58px minmax(0,1fr) minmax(120px,auto) minmax(0,1fr) 58px;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.cmp-val{font:700 13px 'IBM Plex Mono',monospace}
+.cmp-row .cmp-val:last-child{text-align:right}
+.cmp-label{text-align:center;color:var(--muted);font:500 11px 'IBM Plex Mono',monospace}
+.cmp-bar{display:flex;height:6px;border-radius:6px;background:#1c2d21;overflow:hidden}
+.cmp-bar.home{justify-content:flex-end}
+.cmp-bar i{display:block;height:100%;width:0;border-radius:6px}
+.cmp-bar.home i{background:var(--green)}.cmp-bar.away i{background:var(--cyan)}
+.form-strip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.form-strip-team{display:flex;align-items:center;gap:10px;min-width:0}
+.form-strip-team strong,.form-strip-team small{display:block}
+.form-strip-team small{color:var(--muted);font-size:11px}
+.form-strip-sum{grid-column:1/-1;color:var(--faint);font:500 10px 'IBM Plex Mono',monospace}
+.h2h-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.h2h-sum>div{background:#192b1e;border:1px solid #273f2e;border-radius:9px;padding:11px;text-align:center;min-width:0}
+.h2h-sum strong{display:block;font:700 22px 'IBM Plex Mono',monospace}
+.h2h-sum small{display:block;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h2h-sum>div:nth-child(1) strong{color:var(--green)}.h2h-sum>div:nth-child(2) strong{color:var(--yellow)}.h2h-sum>div:nth-child(3) strong{color:var(--cyan)}
+.h2h-facts{color:var(--muted);font-size:12px;margin:10px 0 6px}
+.form-list{list-style:none;margin:0;padding:0}
+.form-list li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.form-list strong,.form-list small{display:block}
+.form-list strong{font-size:13px}
+.form-list small{color:var(--muted);font-size:11px}
+.form-list .num{font:700 13px 'IBM Plex Mono',monospace;text-align:right}
+.form-list .num small{font-weight:500;font-size:10px}
+.res{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;font:700 11px 'IBM Plex Mono',monospace;color:#0f2016}
+table.standings{min-width:560px}
+table.standings td:first-child{width:34px;color:var(--muted)}
+table.standings td:last-child{text-align:left}
+.table-panel+.table-panel{margin-top:12px}
+.lineup-formation{font:700 13px 'IBM Plex Mono',monospace;color:var(--green);margin:0 0 8px}
+.lineup,.bajas{list-style:none;margin:0;padding:0}
+.lineup li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.lineup span{color:var(--faint);font:600 11px 'IBM Plex Mono',monospace}
+.lineup small{color:var(--muted);font:500 10px 'IBM Plex Mono',monospace}
+.bajas li{padding:7px 0;border-top:1px solid var(--line)}
+.bajas strong,.bajas small{display:block}.bajas small{color:#e0a99e;font-size:11px}
+.sub-h{font-size:13px;margin:18px 0 6px;color:var(--muted)}
+.loading-panel h2{color:var(--muted)}
+.real-strip{margin:0 0 18px}
+.real-strip .section-head{margin-top:0}
+.real-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.real-card{display:grid;gap:8px;text-align:left;border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:13px;padding:14px 15px;min-width:0}
+.real-card:hover{border-color:#47704d;background:var(--panel-hover)}
+.real-card-top{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font:500 10px 'IBM Plex Mono',monospace}
+.real-team{display:grid;grid-template-columns:24px minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.real-team .team-mark{width:24px;height:24px;font-size:11px;border-radius:6px}
+.real-team strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.real-team small{color:var(--faint);font:600 10px 'IBM Plex Mono',monospace}
+.real-team .racha i{width:14px;height:14px;font-size:8px}
+.real-card-link{color:#9cd6a3;font:600 11px 'IBM Plex Mono',monospace}
+@media(max-width:1180px){
+  .desk.stats-desk{grid-template-columns:minmax(0,1fr)}
+  .real-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .analysis-grid.even{grid-template-columns:1fr}
+  .cmp-row{grid-template-columns:44px minmax(0,1fr) minmax(88px,auto) minmax(0,1fr) 44px;gap:6px}
+  .cmp-label{font-size:10px}
+  .real-grid{grid-template-columns:1fr}
+  .fixture-vs.score{font-size:22px}
+}
+@media(max-width:570px){
+  .real-team .racha{display:none}
+}

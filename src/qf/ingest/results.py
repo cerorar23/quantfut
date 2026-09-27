@@ -16,11 +16,13 @@ Dos detalles que importan:
 """
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 
 from ..db import execute, query
 from . import api_football as af
+from .estadisticas import normalizar_estadisticas
 
 log = logging.getLogger(__name__)
 
@@ -108,16 +110,20 @@ def close_recent(hours_back: int = 72, with_stats: bool = True) -> dict:
             score = fx.get("score", {})
             ht = score.get("halftime", {}) or {}
 
-            stats = {}
+            home_af = fx["teams"]["home"]["id"]
+            away_af = fx["teams"]["away"]["id"]
+
+            stats, completas = {}, None
             if with_stats:
                 try:
                     sresp, smeta = af.get("fixtures/statistics", {"fixture": af_id})
                     stats = _stats_map(sresp)
+                    # La respuesta ENTERA para las fichas de la web (posesión,
+                    # faltas, tarjetas…): la misma petición, 0 llamadas más.
+                    completas = normalizar_estadisticas(sresp, home_af, away_af)
                 except Exception:  # noqa: BLE001
                     stats = {}
 
-            home_af = fx["teams"]["home"]["id"]
-            away_af = fx["teams"]["away"]["id"]
             hs, as_ = stats.get(home_af, {}), stats.get(away_af, {})
 
             execute(
@@ -131,6 +137,7 @@ def close_recent(hours_back: int = 72, with_stats: bool = True) -> dict:
                      away_shots_target = COALESCE(%s, away_shots_target),
                      home_corners = COALESCE(%s, home_corners),
                      away_corners = COALESCE(%s, away_corners),
+                     stats = COALESCE(%s::jsonb, stats),
                      result_recorded_at = now()
                    WHERE match_id = %s""",
                 (_num(goals.get("home")), _num(goals.get("away")),
@@ -138,6 +145,7 @@ def close_recent(hours_back: int = 72, with_stats: bool = True) -> dict:
                  _num(hs.get("Total Shots")), _num(as_.get("Total Shots")),
                  _num(hs.get("Shots on Goal")), _num(as_.get("Shots on Goal")),
                  _num(hs.get("Corner Kicks")), _num(as_.get("Corner Kicks")),
+                 json.dumps(completas) if completas and any(completas.values()) else None,
                  row["match_id"]),
             )
             closed += 1

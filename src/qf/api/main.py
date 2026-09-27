@@ -58,6 +58,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import ratelimit
 from .console import router as console_router
+from .fichas import router as fichas_router
 from .web import router as web_router
 from ..config import settings
 from ..db import query, query_one
@@ -715,6 +716,7 @@ app.include_router(privado)
 app.include_router(admin)
 app.include_router(console_router)
 app.include_router(web_router)
+app.include_router(fichas_router)
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

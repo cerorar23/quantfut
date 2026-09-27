@@ -381,11 +381,17 @@ pospuestos hasta la validación de CLV. `SERVICE_TOKEN` y `ADMIN_TOKEN`
 permanecen solo en el servidor; el JavaScript de la demo no los utiliza.
 
 **Fase 3 — existe un prototipo visual con evidencia pública, no la web comercial.** `frontend/`
-contiene siete vistas navegables; inicio, picks e historial consultan los
+contiene ocho vistas navegables; inicio, picks e historial consultan los
 endpoints públicos y separan sus cifras reales de la maqueta ficticia. La
 interfaz no implementa login, pagos o acceso privado.
+**Partidos y estadísticas** (2026-09-27) es contenido real: agenda del día y
+ficha con forma, cara a cara, promedios, estadísticas del partido,
+clasificación, alineaciones y bajas, servida por `/web/partidos` y
+`/web/partidos/{id}` (`api/fichas.py`). No lleva cuotas, precio justo ni la
+opinión del modelo: publicar el precio justo de Pinnacle de cada partido
+dejaría a cualquiera reproducir el criterio de picks.
 El backend expone `/track-record`, `/calibration`, `/chain`, `/picks/free`,
-`/v1/picks`, `/leagues`, `/teams` y `/matches/{id}`. La integración de datos
+`/v1/picks`, `/leagues`, `/teams`, `/matches/{id}` y las rutas `/web/*`. La integración de datos
 privados y suscripciones queda para después de la validación, en módulos del
 mismo FastAPI que conserven `SERVICE_TOKEN` fuera del navegador.
 
@@ -546,7 +552,8 @@ no las haya.
 | Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | cada hora, :20 | `qf.ingest.af_odds` |
 | Sombra del criterio de picks: registra lo que se habría recomendado (no publica); se liquida con `qf.eval.clv` | cada hora, :25 | `qf.publish.shadow_sharp capture` |
 | Calendario de partidos | 05:15 y 17:15 | `qf.ingest.fixtures` |
-| Cierre de partidos + liquidación | cada 3 h | `qf.ingest.results` |
+| Cierre de partidos + liquidación (guarda también `matches.stats` completo para las fichas, misma petición) | cada 3 h | `qf.ingest.results` |
+| Clasificación de cada liga para las fichas de la web (1 petición por liga) | 06:40 y 22:40 | `qf.ingest.standings` |
 | xG histórico | martes 04:00 | `qf.ingest.xg_worldfootball` |
 | Histórico de copas europeas | martes 04:30 | `qf.ingest.uefa_cups` |
 | Alineaciones a T-60 | cada 5 min | `qf.ingest.lineups` |

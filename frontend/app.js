@@ -1,4 +1,5 @@
 import { loadPublicData, isPublicationActive } from './public-data.js?v=189b99a3fc36';
+import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -204,15 +205,16 @@ function savePrefs() {
 
 const nav = [
   { route: 'inicio', label: 'Inicio', short: 'Inicio', icon: '⌂', group: 'EXPLORAR' },
+  { route: 'partidos', label: 'Partidos y estadísticas', short: 'Partidos', icon: '◷', group: 'EXPLORAR' },
   { route: 'mercados', label: 'Mesa de mercados', short: 'Mesa', icon: '▦', group: 'EXPLORAR' },
   { route: 'picks', label: 'Picks', short: 'Picks', icon: '◇', group: 'EXPLORAR' },
-  { route: 'partido', label: 'Ficha de partido', short: 'Partido', icon: '◫', group: 'EXPLORAR' },
+  { route: 'partido', label: 'Ficha de mercado · demo', short: 'Demo', icon: '◫', group: 'EXPLORAR' },
   { route: 'historial', label: 'Historial verificable', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
   { route: 'planes', label: 'Planes', short: 'Planes', icon: '◈', group: 'ACCESO' },
   { route: 'cuenta', label: 'Mi espacio', short: 'Mi espacio', icon: '◉', group: 'ACCESO' },
 ];
-const MOBILE_PRIMARY = ['inicio', 'mercados', 'picks', 'historial'];
-const routeTitle = { inicio: 'Portada', mercados: 'Mesa de mercados', picks: 'Picks', partido: 'Ficha de partido', historial: 'Historial', planes: 'Planes', cuenta: 'Mi espacio' };
+const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
+const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Planes', cuenta: 'Mi espacio' };
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
 // por probabilidad justa, que no dice nada de si la cuota compensa.
@@ -242,6 +244,11 @@ const prefs = loadPrefs();
 const state = {
   route: 'inicio',
   selectedMatch: 'qf-101',
+  statsDay: 0,
+  statsLeague: 'Todas',
+  statsMatch: null,
+  statsTab: 'resumen',
+  statsSplit: 'todos',
   matchTab: 'resumen',
   dayOffset: 0,
   pickLeague: 'Todas',
@@ -729,6 +736,7 @@ function homeView() {
   const featured = fixtureById.get('qf-101');
   return `<div class="view-title"><div><p class="eyebrow">QUANTFUT / OBSERVAR ANTES DE DECIDIR</p><h1>El precio justo, a la vista.</h1><p class="lead">Probabilidades, precios de todas las casas y un historial auditable en un mismo lugar. Sin promesas de ganancias.</p></div>${badge('Prototipo en modo demo', 'accent')}</div>
     ${liveStatus()}
+    ${homeRealStrip()}
     <section class="hero-panel"><div class="hero-copy"><p class="eyebrow">ANÁLISIS SIN CAJA NEGRA · DEMO</p><h2>Cuánto vale cada cuota.<br>Quién paga de más.</h2><p>La mesa compara cada casa con el precio justo de Pinnacle en el mismo instante. Un pick solo existe si una casa paga al menos un 2% por encima; si ninguna lo hace, no se publica nada.</p><div class="hero-actions"><button type="button" class="primary-button" data-route="mercados">Abrir la mesa <span aria-hidden="true">↗</span></button><button type="button" class="secondary-button" data-route="historial">Ver la evidencia</button></div></div><aside class="hero-preview" aria-label="Vista previa de una ficha de partido ficticia"><div class="preview-top"><span>FICHA DE PARTIDO</span>${badge('Datos demo', 'muted')}</div><p class="preview-league">${featured.league} · ${kickoffLabel(featured)}</p><h3>${featured.home}<span>vs</span>${featured.away}</h3><p class="preview-caption">Modelo · Pinnacle sin margen</p><div class="preview-probs">${['LOCAL', 'EMPATE', 'VISITA'].map((label, i) => `<div><small>${label}</small><strong>${featured.probs[i]}%</strong><small>${featured.marketProbs[i]}%</small></div>`).join('')}</div><p class="preview-note">Estimaciones ficticias; no son pronósticos publicados ni apuestas disponibles.</p><button type="button" class="text-link" data-match="${featured.id}">Abrir análisis completo <span aria-hidden="true">↗</span></button></aside><div class="hero-pattern" aria-hidden="true"><div class="pitch-circle"></div><div class="pitch-line"></div><span class="pitch-dot one"></span><span class="pitch-dot two"></span><span class="pitch-dot three"></span></div></section>
     ${kpiStrip(dayFixtures)}
     <div class="home-split">
@@ -893,6 +901,265 @@ function accountView() {
     <div class="bottom-note">Arquitectura prevista: el FastAPI modular gestionará las futuras cuentas y autorizaciones en servidor. Ningún token de servicio llegará al navegador.</div>`;
 }
 
+// ---------------------------------------------------------------- partidos reales
+// Agenda y fichas con datos del servidor (/web/partidos). Es contenido: forma,
+// cara a cara, promedios y tabla. No lleva cuotas, picks ni la opinión del
+// modelo, y nada de aquí sale de los datos ficticios de arriba.
+
+const STATS_TABS = [['resumen', 'Resumen'], ['forma', 'Forma'], ['h2h', 'Cara a cara'], ['estadisticas', 'Estadísticas'], ['tabla', 'Clasificación'], ['alineaciones', 'Alineaciones']];
+const STATS_DAYS = [-1, 0, 1, 2, 3];
+const RES_LABEL = { G: 'Ganado', E: 'Empate', P: 'Perdido' };
+const BAJA_LABEL = { 'Missing Fixture': 'Baja', Questionable: 'Duda', Injured: 'Lesión', Suspended: 'Sanción' };
+const STAT_ROWS = [
+  ['posesion', 'Posesión', v => `${realNumber(v)}%`],
+  ['xg', 'Goles esperados (xG)', v => realNumber(v, 2)],
+  ['tiros', 'Tiros', realNumber],
+  ['tiros_puerta', 'Tiros a puerta', realNumber],
+  ['tiros_dentro_area', 'Tiros dentro del área', realNumber],
+  ['corners', 'Córners', realNumber],
+  ['paradas', 'Paradas', realNumber],
+  ['faltas', 'Faltas', realNumber],
+  ['fueras_de_juego', 'Fueras de juego', realNumber],
+  ['amarillas', 'Amarillas', realNumber],
+  ['rojas', 'Rojas', realNumber],
+  ['pases', 'Pases', realNumber],
+  ['pct_pases', 'Precisión de pase', v => `${realNumber(v)}%`],
+];
+const AVG_ROWS = [
+  ['goles_favor', 'Goles a favor', 2], ['goles_contra', 'Goles en contra', 2],
+  ['xg_favor', 'xG a favor', 2], ['xg_contra', 'xG en contra', 2],
+  ['tiros_favor', 'Tiros', 1], ['tiros_puerta_favor', 'Tiros a puerta', 1],
+  ['corners_favor', 'Córners', 1],
+  ['pct_ambos_marcan', 'Ambos marcan', 0, '%'], ['pct_mas_2_5', 'Más de 2,5 goles', 0, '%'],
+  ['pct_porteria_cero', 'Portería a cero', 0, '%'],
+];
+
+const agendaCache = new Map();
+const fichaCache = new Map();
+
+function rerenderIfIdle() {
+  if (!state.modal && !state.drawer && !state.mobileMenuOpen) render();
+}
+
+function ensureAgenda(offset) {
+  if (agendaCache.has(offset)) return agendaCache.get(offset);
+  const entry = { status: 'loading', data: null };
+  agendaCache.set(offset, entry);
+  loadAgenda(addDays(offset, 12)).then(result => {
+    agendaCache.set(offset, result);
+    if (['partidos', 'inicio'].includes(state.route)) rerenderIfIdle();
+  });
+  return entry;
+}
+
+function ensureFicha(id) {
+  if (fichaCache.has(id)) return fichaCache.get(id);
+  const entry = { status: 'loading', data: null };
+  fichaCache.set(id, entry);
+  loadFicha(id).then(result => {
+    fichaCache.set(id, result);
+    if (state.route === 'partidos' && state.statsMatch === id) rerenderIfIdle();
+  });
+  return entry;
+}
+
+const realMark = (name, away = false, large = false) => `<span class="${large ? 'large-team-mark' : 'team-mark'} ${away ? 'away' : ''}" aria-hidden="true">${esc(String(name || '?').charAt(0))}</span>`;
+const rachaDots = (racha, title = 'Del más reciente al más antiguo') => racha
+  ? `<span class="racha" title="${title}">${[...racha].map(r => `<i class="r-${esc(r)}" aria-label="${RES_LABEL[r] || r}">${esc(r)}</i>`).join('')}</span>`
+  : '<span class="racha empty">sin partidos previos</span>';
+const posLabel = pos => (pos ? `${pos}º` : '');
+const kickoffOf = p => new Date(p.kickoff_utc);
+
+function estadoPartido(p) {
+  if (p.estado === 'finished' && p.marcador) return { main: `${p.marcador[0]} – ${p.marcador[1]}`, tag: 'Final', kind: 'muted' };
+  if (p.estado === 'live') return { main: timeLabel(kickoffOf(p)), tag: 'En juego', kind: 'good' };
+  if (p.estado === 'postponed') return { main: '—', tag: 'Aplazado', kind: 'warn' };
+  return { main: timeLabel(kickoffOf(p)), tag: '', kind: '' };
+}
+
+function selectedAgendaMatch(list) {
+  if (list.some(p => p.match_id === state.statsMatch)) return state.statsMatch;
+  const next = list.find(p => p.estado === 'scheduled' && kickoffOf(p) > now) || list[0];
+  return next ? next.match_id : null;
+}
+
+function realDayLabel(offset) {
+  return `${dayLabel(offset)} · ${dateFmt(addDays(offset), { day: 'numeric', month: 'short' })}`;
+}
+
+function agendaItem(p) {
+  const st = estadoPartido(p);
+  const team = (t, away) => `<span>${realMark(t.nombre, away)}<span class="team-name">${esc(t.nombre)}</span>${t.posicion ? `<small class="st-pos">${posLabel(t.posicion)}</small>` : ''}</span>`;
+  const active = state.statsMatch === p.match_id;
+  return `<button type="button" class="desk-match ${active ? 'active' : ''}" data-stats-match="${esc(p.match_id)}" aria-pressed="${active}"><span class="desk-when"><span class="desk-time">${esc(st.main)}</span>${st.tag ? `<small class="tag ${st.kind}">${st.tag}</small>` : ''}</span><span class="desk-teams">${team(p.local)}${team(p.visitante, true)}</span></button>`;
+}
+
+// ---- pestañas de la ficha
+
+function compareRows(a, b, rows) {
+  return rows.map(([key, label, digits, suffix = '']) => {
+    const va = a?.[key];
+    const vb = b?.[key];
+    if (va == null && vb == null) return '';
+    const top = Math.max(Number(va) || 0, Number(vb) || 0) || 1;
+    const fmt = v => (v == null ? '—' : `${realNumber(v, digits)}${suffix}`);
+    return `<div class="cmp-row"><span class="cmp-val">${fmt(va)}</span><span class="cmp-bar home"><i data-width="${((Number(va) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-label">${label}</span><span class="cmp-bar away"><i data-width="${((Number(vb) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-val">${fmt(vb)}</span></div>`;
+  }).join('');
+}
+
+function averagesPanel(f) {
+  const split = state.statsSplit === 'lado';
+  const a = split ? f.local.promedios.casa : f.local.promedios.todos;
+  const b = split ? f.visitante.promedios.fuera : f.visitante.promedios.todos;
+  const toggle = `<div class="segmented" role="group" aria-label="Qué partidos promediar">${[['todos', 'Todos'], ['lado', 'Local en casa · visitante fuera']].map(([id, label]) => `<button type="button" data-stats-split="${id}" class="${(state.statsSplit || 'todos') === id ? 'selected' : ''}" aria-pressed="${(state.statsSplit || 'todos') === id}">${label}</button>`).join('')}</div>`;
+  const body = a?.n || b?.n
+    ? `<div class="cmp-head"><strong>${esc(f.local.nombre)}</strong><small>${a?.n || 0} partidos · ${b?.n || 0} partidos</small><strong>${esc(f.visitante.nombre)}</strong></div>${compareRows(a, b, AVG_ROWS)}`
+    : '<p class="body-copy muted">No hay partidos de estos equipos en los últimos 9 meses en la base.</p>';
+  return `<section class="panel"><div class="panel-heading"><div><p class="eyebrow">PROMEDIOS · ÚLTIMOS PARTIDOS</p><h2>Cómo llegan</h2></div>${toggle}</div>${body}<p class="panel-foot">Media por partido de los últimos ${Math.max(a?.n || 0, b?.n || 0) || 10} encuentros terminados antes de este (hasta 9 meses atrás), en cualquier competición. El xG solo cuenta los partidos que lo tienen.</p></section>`;
+}
+
+function formStrip(team, away = false) {
+  const r = team.forma.resumen;
+  const pos = team.clasificacion;
+  return `<div class="form-strip"><div class="form-strip-team">${realMark(team.nombre, away)}<div><strong>${esc(team.nombre)}</strong><small>${pos ? `${posLabel(pos.posicion)} en ${esc(pos.liga)}${pos.grupo ? ` · ${esc(pos.grupo)}` : ''} · ${realNumber(pos.puntos)} pts` : 'Sin clasificación cargada'}</small></div></div>${rachaDots(r.racha)}<small class="form-strip-sum">${r.n ? `${r.G}G ${r.E}E ${r.P}P · ${r.gf}-${r.gc} goles` : ''}</small></div>`;
+}
+
+function h2hSummary(h, f) {
+  const r = h.resumen;
+  if (!r.n) return '<p class="body-copy muted">No hay cruces entre estos equipos en la base.</p>';
+  const pct = v => Math.round(v / r.n * 100);
+  const bar = [pct(r.victorias_local), 0, pct(r.victorias_visitante)];
+  bar[1] = 100 - bar[0] - bar[2];
+  return `<div class="h2h-sum"><div><strong>${r.victorias_local}</strong><small>${esc(f.local.nombre)}</small></div><div><strong>${r.empates}</strong><small>Empates</small></div><div><strong>${r.victorias_visitante}</strong><small>${esc(f.visitante.nombre)}</small></div></div>${probBar(bar, 'Cara a cara')}<p class="h2h-facts">${r.n} cruces · ${realNumber(r.goles_media, 1)} goles por partido · ambos marcan ${realNumber(r.pct_ambos_marcan)}% · más de 2,5 en ${realNumber(r.pct_mas_2_5)}%</p>`;
+}
+
+function formList(team) {
+  const games = team.forma.partidos;
+  if (!games.length) return '<p class="body-copy muted">Sin partidos previos en la base.</p>';
+  return `<ol class="form-list">${games.map(g => `<li><span class="res r-${esc(g.res)}" aria-label="${RES_LABEL[g.res]}">${esc(g.res)}</span><div><strong>${g.local ? 'vs' : 'en'} ${esc(g.rival)}</strong><small>${realDate(g.fecha)} · ${esc(g.competicion)} · ${g.local ? 'Casa' : 'Fuera'}</small></div><span class="num">${g.gf}-${g.gc}${g.xg?.[0] != null ? `<small>xG ${realNumber(g.xg[0], 1)}-${realNumber(g.xg[1], 1)}</small>` : ''}</span></li>`).join('')}</ol>`;
+}
+
+function h2hList(h, f) {
+  if (!h.partidos.length) return '';
+  return `<ol class="form-list">${h.partidos.map(g => {
+    const [casa, fuera] = g.local ? [f.local.nombre, f.visitante.nombre] : [f.visitante.nombre, f.local.nombre];
+    return `<li><span class="res r-${esc(g.res)}" aria-label="${RES_LABEL[g.res]} para ${esc(f.local.nombre)}">${esc(g.res)}</span><div><strong>${esc(casa)} ${esc(g.marcador)} ${esc(fuera)}</strong><small>${realDate(g.fecha)} · ${esc(g.competicion)}</small></div></li>`;
+  }).join('')}</ol><p class="panel-foot">La letra es el resultado para ${esc(f.local.nombre)}, local en este partido.</p>`;
+}
+
+function statsPanel(f) {
+  const s = f.partido.estadisticas;
+  if (!s || !s.home || !Object.keys(s.home).length) {
+    return `<section class="panel"><p class="eyebrow">ESTADÍSTICAS DEL PARTIDO</p><h2>${f.partido.estado === 'finished' ? 'Sin estadísticas para este partido' : 'Se publican al terminar'}</h2><p class="body-copy muted">Posesión, tiros, córners, tarjetas y xG se guardan al cerrar el partido. Mientras tanto, mira los promedios de la pestaña Resumen.</p></section>`;
+  }
+  const rows = STAT_ROWS.map(([key, label, fmt]) => {
+    const a = s.home[key];
+    const b = s.away[key];
+    if (a == null && b == null) return '';
+    const top = Math.max(Number(a) || 0, Number(b) || 0) || 1;
+    return `<div class="cmp-row"><span class="cmp-val">${a == null ? '—' : fmt(a)}</span><span class="cmp-bar home"><i data-width="${((Number(a) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-label">${label}</span><span class="cmp-bar away"><i data-width="${((Number(b) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-val">${b == null ? '—' : fmt(b)}</span></div>`;
+  }).join('');
+  return `<section class="panel"><p class="eyebrow">ESTADÍSTICAS DEL PARTIDO</p><h2>${esc(f.local.nombre)} ${f.partido.marcador ? `${f.partido.marcador[0]}–${f.partido.marcador[1]}` : 'vs'} ${esc(f.visitante.nombre)}</h2><div class="cmp-head"><strong>${esc(f.local.nombre)}</strong><small>${f.partido.descanso ? `Descanso ${f.partido.descanso[0]}–${f.partido.descanso[1]}` : ''}</small><strong>${esc(f.visitante.nombre)}</strong></div>${rows}</section>`;
+}
+
+// El proveedor describe la zona en inglés ('Promotion - Champions League (League phase)').
+const zonaTabla = text => text
+  .replace(/^Promotion\s*-\s*/i, '')
+  .replace(/^Relegation\s*-?\s*/i, 'Descenso · ')
+  .replace(/\s*\((League phase|Group Stage|Qualification)\)/i, '')
+  .replace(/Play Offs?/i, 'Promoción')
+  .replace(/ · $/, '');
+
+function tablePanel(f) {
+  const rows = f.tabla;
+  if (!rows) return `<section class="panel"><p class="eyebrow">CLASIFICACIÓN</p><h2>Competición de eliminatorias</h2><p class="body-copy muted">En copas se muestra el puesto de cada equipo en su liga.</p>${formStrip(f.local)}${formStrip(f.visitante, true)}</section>`;
+  if (!rows.length) return '<section class="panel"><p class="eyebrow">CLASIFICACIÓN</p><h2>Tabla no disponible todavía</h2><p class="body-copy muted">La clasificación se actualiza dos veces al día.</p></section>';
+  const ids = new Set([f.local.id, f.visitante.id]);
+  const groups = [...new Set(rows.map(r => r.grupo))];
+  return groups.map(g => `<section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">CLASIFICACIÓN${g ? ` · ${esc(g.toUpperCase())}` : ''}</p><h2>${esc(f.partido.liga.nombre)}</h2></div>${badge(`Actualizada ${realDate(rows[0].updated_at)}`, 'muted')}</div><div class="table-wrap" tabindex="0" role="region" aria-label="Clasificación, desplazable horizontalmente"><table class="standings"><thead><tr><th scope="col">#</th><th scope="col">Equipo</th><th scope="col" class="num">PJ</th><th scope="col" class="num">G</th><th scope="col" class="num">E</th><th scope="col" class="num">P</th><th scope="col" class="num">Goles</th><th scope="col" class="num">DG</th><th scope="col" class="num">Pts</th><th scope="col">Forma</th></tr></thead><tbody>${rows.filter(r => r.grupo === g).map(r => `<tr class="${ids.has(r.team_id) ? 'is-best' : ''}"><td>${r.posicion}</td><td><strong>${esc(r.equipo)}</strong>${r.descripcion ? `<small>${esc(zonaTabla(r.descripcion))}</small>` : ''}</td><td class="num">${r.jugados}</td><td class="num">${r.ganados}</td><td class="num">${r.empatados}</td><td class="num">${r.perdidos}</td><td class="num">${r.goles_favor}:${r.goles_contra}</td><td class="num">${r.goles_favor - r.goles_contra > 0 ? '+' : ''}${r.goles_favor - r.goles_contra}</td><td class="num"><strong>${r.puntos}</strong></td><td>${r.forma ? rachaDots(r.forma.replace(/W/g, 'G').replace(/D/g, 'E').replace(/L/g, 'P'), 'Últimos partidos de liga') : ''}</td></tr>`).join('')}</tbody></table></div></section>`).join('');
+}
+
+function lineupsPanel(f) {
+  const side = (key, team) => {
+    const l = f.alineaciones[key];
+    const out = f.bajas?.[key] || [];
+    const xi = l ? `<p class="lineup-formation">${esc(l.formacion || 'Formación sin datos')}</p><ol class="lineup">${(l.titulares || []).map(p => `<li><span>${esc(p.number ?? '')}</span><strong>${esc(p.name ?? '')}</strong><small>${esc(p.pos ?? '')}</small></li>`).join('')}</ol>` : '<p class="body-copy muted">XI sin confirmar. Se publica entre 60 y 20 minutos antes del inicio.</p>';
+    const bajas = f.bajas ? (out.length ? `<ul class="bajas">${out.map(b => `<li><strong>${esc(b.jugador)}</strong><small>${esc(BAJA_LABEL[b.tipo] || b.tipo)}${b.motivo ? ` · ${esc(b.motivo)}` : ''}</small></li>`).join('')}</ul>` : '<p class="body-copy muted">Sin bajas reportadas.</p>') : '<p class="body-copy muted">Bajas aún no comprobadas.</p>';
+    return `<section class="panel"><p class="eyebrow">${esc(team.nombre.toUpperCase())}</p><h2>Alineación</h2>${xi}<h3 class="sub-h">Bajas y dudas</h3>${bajas}</section>`;
+  };
+  return `<div class="analysis-grid even">${side('home', f.local)}${side('away', f.visitante)}</div>`;
+}
+
+function fichaMarkup(entry) {
+  if (!entry || entry.status === 'loading') return '<div class="panel loading-panel"><p class="eyebrow">FICHA</p><h2>Cargando datos del partido…</h2></div>';
+  if (entry.status !== 'ready') return `<div class="empty-state"><span class="empty-symbol">◇</span><h3>No se pudo cargar la ficha</h3><p>El servidor no respondió. <button type="button" class="text-link" data-action="retry-ficha">Reintentar ↻</button></p></div>`;
+  const f = entry.data;
+  const p = f.partido;
+  const st = estadoPartido(p);
+  const ko = kickoffOf(p);
+  const tab = STATS_TABS.some(([id]) => id === state.statsTab) ? state.statsTab : 'resumen';
+  const sideHero = (team, away) => `<div>${realMark(team.nombre, away, true)}<h2>${esc(team.nombre)}</h2><small>${team.clasificacion ? `${posLabel(team.clasificacion.posicion)} · ${realNumber(team.clasificacion.puntos)} pts` : away ? 'Visitante' : 'Local'}</small>${rachaDots(team.forma.resumen.racha)}</div>`;
+  const panels = {
+    resumen: () => `<div class="stack">${averagesPanel(f)}<div class="analysis-grid even"><section class="panel"><p class="eyebrow">RACHA · ÚLTIMOS 5</p><h2>Momento de forma</h2>${formStrip(f.local)}${formStrip(f.visitante, true)}</section><section class="panel"><p class="eyebrow">CARA A CARA</p><h2>Historial directo</h2>${h2hSummary(f.cara_a_cara, f)}<button type="button" class="text-link" data-stats-tab="h2h">Ver los cruces ↗</button></section></div></div>`,
+    forma: () => `<div class="analysis-grid even"><section class="panel"><p class="eyebrow">${esc(f.local.nombre.toUpperCase())}</p><h2>Últimos partidos</h2>${formList(f.local)}</section><section class="panel"><p class="eyebrow">${esc(f.visitante.nombre.toUpperCase())}</p><h2>Últimos partidos</h2>${formList(f.visitante)}</section></div>`,
+    h2h: () => `<section class="panel"><p class="eyebrow">CARA A CARA</p><h2>${esc(f.local.nombre)} vs ${esc(f.visitante.nombre)}</h2>${h2hSummary(f.cara_a_cara, f)}${h2hList(f.cara_a_cara, f)}</section>`,
+    estadisticas: () => statsPanel(f),
+    tabla: () => tablePanel(f),
+    alineaciones: () => lineupsPanel(f),
+  };
+  return `<div class="fixture-hero"><div class="fixture-meta"><span>${esc(p.liga.nombre)} · ${esc(p.liga.pais)}</span><span>${dateFmt(ko, { weekday: 'long', day: 'numeric', month: 'long' })} · ${timeLabel(ko)}</span></div>
+    <div class="fixture-teams">${sideHero(f.local)}<span class="fixture-vs ${p.marcador ? 'score' : ''}">${p.marcador ? `${p.marcador[0]} – ${p.marcador[1]}` : 'VS'}</span>${sideHero(f.visitante, true)}</div>
+    <div class="fixture-bottom">${badge(st.tag || 'Programado', st.kind || 'muted')}<span>Datos de partidos reales. Es información, no un pronóstico.</span></div></div>
+    <div class="tab-bar" role="tablist" aria-label="Secciones de la ficha">${STATS_TABS.map(([id, label]) => `<button type="button" role="tab" id="stats-tab-${id}" aria-controls="stats-panel" aria-selected="${tab === id}" class="${tab === id ? 'selected' : ''}" data-stats-tab="${id}">${label}</button>`).join('')}</div>
+    <div id="stats-panel" role="tabpanel" aria-labelledby="stats-tab-${tab}" class="tab-panel">${panels[tab]()}</div>`;
+}
+
+function statsView() {
+  const agenda = ensureAgenda(state.statsDay);
+  const all = agenda.status === 'ready' ? agenda.data.partidos : [];
+  const leagues = [...new Map(all.map(p => [p.liga.id, p.liga.nombre])).entries()];
+  if (state.statsLeague !== 'Todas' && !leagues.some(([id]) => id === state.statsLeague)) state.statsLeague = 'Todas';
+  const list = all.filter(p => state.statsLeague === 'Todas' || p.liga.id === state.statsLeague);
+  state.statsMatch = selectedAgendaMatch(list);
+  const dayIndex = STATS_DAYS.indexOf(state.statsDay);
+  const byLeague = leagues.filter(([id]) => state.statsLeague === 'Todas' || id === state.statsLeague)
+    .map(([id, name]) => [name, list.filter(p => p.liga.id === id)]);
+  let side;
+  if (agenda.status === 'loading') side = '<p class="rail-empty">Cargando partidos…</p>';
+  else if (agenda.status !== 'ready') side = '<p class="rail-empty">No se pudo cargar la agenda. <button type="button" class="text-link" data-action="retry-agenda">Reintentar ↻</button></p>';
+  else if (!list.length) side = '<p class="rail-empty">No hay partidos de las ligas seguidas este día.</p>';
+  else side = byLeague.map(([name, games]) => `<p class="desk-league">${esc(name)}</p>${games.map(agendaItem).join('')}`).join('');
+  const main = state.statsMatch ? fichaMarkup(ensureFicha(state.statsMatch))
+    : agenda.status === 'loading' ? '' : '<div class="empty-state"><span class="empty-symbol">◷</span><h3>Sin partidos este día</h3><p>Prueba con otro día en el selector de la izquierda.</p></div>';
+  return `<div class="view-title compact"><div><p class="eyebrow">PARTIDOS / DATOS REALES</p><h1>Partidos y estadísticas</h1><p class="lead">Forma, cara a cara, promedios, clasificación y alineaciones de las ligas que sigue QuantFut. Información para analizar, no pronósticos.</p></div>${badge('Datos reales', 'accent')}</div>
+    <div class="chip-row filter-chips scroll" role="group" aria-label="Competición"><button type="button" class="chip ${state.statsLeague === 'Todas' ? 'selected' : ''}" data-stats-league="Todas" aria-pressed="${state.statsLeague === 'Todas'}">Todas <b>${all.length}</b></button>${leagues.map(([id, name]) => `<button type="button" class="chip ${state.statsLeague === id ? 'selected' : ''}" data-stats-league="${esc(id)}" aria-pressed="${state.statsLeague === id}">${esc(name)} <b>${all.filter(p => p.liga.id === id).length}</b></button>`).join('')}</div>
+    <div class="desk stats-desk">
+      <aside class="desk-side" aria-label="Partidos del día">
+        <div class="side-head"><span>PARTIDOS</span><b>${list.length}</b></div>
+        <div class="day-stepper"><button type="button" data-stats-day="${STATS_DAYS[dayIndex - 1] ?? ''}" aria-label="Día anterior" ${dayIndex <= 0 ? 'disabled' : ''}>‹</button><strong>${realDayLabel(state.statsDay)}</strong><button type="button" data-stats-day="${STATS_DAYS[dayIndex + 1] ?? ''}" aria-label="Día siguiente" ${dayIndex >= STATS_DAYS.length - 1 ? 'disabled' : ''}>›</button></div>
+        <div class="desk-match-list">${side}</div>
+      </aside>
+      <section class="desk-main" aria-label="Ficha del partido">${main}</section>
+    </div>
+    <p class="bottom-note">Horarios en tu zona horaria. Resultados, estadísticas, alineaciones y bajas: API-Football; histórico: football-data y bases públicas. La clasificación se actualiza dos veces al día.</p>`;
+}
+
+// Portada: lo real primero, con enlace a la ficha.
+function homeRealStrip() {
+  const agenda = ensureAgenda(0);
+  if (agenda.status === 'error') return '';
+  const games = agenda.status === 'ready' ? agenda.data.partidos : [];
+  const upcoming = [...games.filter(p => p.estado !== 'finished'), ...games.filter(p => p.estado === 'finished')].slice(0, 6);
+  const card = p => {
+    const st = estadoPartido(p);
+    const team = (t, away) => `<div class="real-team">${realMark(t.nombre, away)}<strong>${esc(t.nombre)}</strong>${t.posicion ? `<small>${posLabel(t.posicion)}</small>` : ''}${rachaDots(t.racha)}</div>`;
+    return `<button type="button" class="real-card" data-open-ficha="${esc(p.match_id)}"><span class="real-card-top"><span>${esc(p.liga.nombre)}</span><span>${st.tag ? `${st.tag} · ` : ''}${esc(st.main)}</span></span>${team(p.local)}${team(p.visitante, true)}<span class="real-card-link">Ver ficha ↗</span></button>`;
+  };
+  const body = agenda.status === 'loading' ? '<p class="rail-empty">Cargando partidos de hoy…</p>'
+    : upcoming.length ? `<div class="real-grid">${upcoming.map(card).join('')}</div>` : '<p class="rail-empty">Hoy no juega ninguna de las ligas seguidas.</p>';
+  return `<section class="real-strip"><div class="section-head"><div><p class="eyebrow">HOY EN LAS LIGAS · DATOS REALES</p><h2>${games.length ? `${games.length} partidos hoy` : 'Partidos de hoy'}</h2></div><button type="button" class="text-link" data-route="partidos">Todos los partidos y estadísticas ↗</button></div>${body}</section>`;
+}
+
 // ---------------------------------------------------------------- capas
 
 function modalMarkup() {
@@ -960,7 +1227,7 @@ function closeModal() {
 // ---------------------------------------------------------------- render
 
 function render() {
-  const views = { inicio: homeView, mercados: deskView, picks: picksView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView };
+  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="cuenta">${state.demoSession ? 'Cuenta demo' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell">${state.route === 'inicio' ? dayRail() : ''}<main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
@@ -970,7 +1237,7 @@ function render() {
     const values = bar.dataset.segments.split(',');
     bar.querySelectorAll('span').forEach((segment, index) => { segment.style.width = `${values[index]}%`; });
   });
-  app.querySelectorAll('.bar[data-width]').forEach(bar => { bar.style.width = `${bar.dataset.width}%`; });
+  app.querySelectorAll('.bar[data-width], .cmp-bar i[data-width]').forEach(bar => { bar.style.width = `${bar.dataset.width}%`; });
   fitDeskSide();
   if (state.modal) app.querySelector('.modal-close')?.focus();
 }
@@ -1006,6 +1273,14 @@ app.addEventListener('click', event => {
   const data = button.dataset;
   if (data.action === 'refresh-public') { refreshPublicData(); return; }
   if (data.route) { navigate(data.route); return; }
+  if (data.openFicha) { state.statsDay = 0; state.statsLeague = 'Todas'; state.statsMatch = data.openFicha; state.statsTab = 'resumen'; navigate('partidos'); return; }
+  if (data.statsMatch) { state.statsMatch = data.statsMatch; rerenderKeepingFocus(`[data-stats-match="${CSS.escape(data.statsMatch)}"]`); return; }
+  if (data.statsDay !== undefined && data.statsDay !== '') { state.statsDay = Number(data.statsDay); state.statsMatch = null; rerenderKeepingFocus('.stats-desk .day-stepper strong'); return; }
+  if (data.statsLeague) { state.statsLeague = data.statsLeague; state.statsMatch = null; rerenderKeepingFocus(`[data-stats-league="${CSS.escape(data.statsLeague)}"]`); return; }
+  if (data.statsTab) { state.statsTab = data.statsTab; rerenderKeepingFocus(`[data-stats-tab="${data.statsTab}"][role="tab"]`); return; }
+  if (data.statsSplit) { state.statsSplit = data.statsSplit; rerenderKeepingFocus(`[data-stats-split="${data.statsSplit}"]`); return; }
+  if (data.action === 'retry-agenda') { agendaCache.delete(state.statsDay); render(); return; }
+  if (data.action === 'retry-ficha') { fichaCache.delete(state.statsMatch); render(); return; }
   if (data.match) { state.drawer = null; openMatch(data.match); return; }
   if (data.parlay) { toggleLeg(data.parlay); rerenderKeepingFocus(button.classList.contains('slip-remove') ? '.slip-remove, [data-desk-mode="combinadas"]' : `.slip-toggle[data-parlay="${CSS.escape(data.parlay)}"]`); return; }
   if (data.deskMode) { state.deskMode = data.deskMode; state.deskSort = { key: data.deskMode === 'probables' ? 'fair' : 'edge', dir: 'desc' }; rerenderKeepingFocus(`[data-desk-mode="${data.deskMode}"]`); return; }
