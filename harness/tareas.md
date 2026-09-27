@@ -539,6 +539,17 @@ Lo que sí es matemática valiosa y NO está construido:
          quedan pendientes, cuáles se crean) ANTES de aplicar.
       Sin histórico de football-data para ellas: el criterio no lo necesita y
       cargarlo mezclaría nombres de dos fuentes en ligas nuevas.
+- [ ] **Idea aparcada (2026-09-27, el usuario prefirió no hacerlo): medir más
+      casas en sombra.** Con TODAS las casas del feed, los partidos con oferta
+      desde el 24-sep pasarían de 8 a 25; las que más aportan: LeoVegas (22),
+      BetVictor (14), Unibet (13), Coolbet (7; +4,4% al cierre en el histórico
+      de Liga MX). Más casas dan más picks y mejor precio, NO más acierto (sus
+      cuotas medias eran 3,6-4,5). Suscriptores en Latinoamérica y España.
+      Ojo si se retoma: el feed da LeoVegas/Unibet de Suecia y Países Bajos,
+      no el precio de la web española o latinoamericana; Codere, Caliente,
+      Sportium, Luckia, Kirolbet, Strendus y Playdoit no los da ningún
+      proveedor. Propuesta que quedó sin hacer: registrar esas ofertas en la
+      sombra marcadas "en medición", fuera de la puerta y sin publicar.
 - [ ] **PLAN (2026-09-25) — Más ligas en 1X2 para tener picks a diario.**
       Sondeo real (API-Football `odds?date=`, 1X2, 26-28 sep, parón de
       selecciones en Europa, una foto por partido): 823 partidos con cuotas
