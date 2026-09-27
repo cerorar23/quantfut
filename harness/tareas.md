@@ -579,10 +579,13 @@ Lo que sí es matemática valiosa y NO está construido:
       partidos en el horizonte (1 petición por partido y hora); con Europa de
       vuelta serán ~3.000-3.500/día y con 6 ligas más ~5.000 de 7.500. Cabe,
       pero la captura por fecha lo dejaría en ~2.200 fijo. The Odds API: le
-      quedan 3.205 créditos de 20.000 tras el histórico (16.560); con 1X2 +
-      goles + hándicap el vivo gasta ~190/día con Europa: no llega a la
-      renovación. Pasar el vivo a solo `h2h` (goles y hándicap no dieron
-      valor) lo divide por 3 y deja sitio para ligas nuevas.
+      quedan 3.205 créditos de 20.000 tras el histórico (16.560).
+      **Corregido el 2026-09-27: NO es urgente.** El plan se renueva el día 1
+      de cada mes (dato del usuario); el 27-sep quedaban 3.006 con un gasto
+      medido de 70-100/día, así que llegan al reset con ~2.600 de sobra. Con
+      Europa activa se estiman ~6.000-9.000 al mes: caben en 20.000. Pasar el
+      vivo a solo `h2h` (goles y hándicap no dieron valor) queda como palanca
+      para crecer en ligas sin subir de plan, no como arreglo urgente.
       Cobertura REAL de Pinnacle en The Odds API (una llamada h2h por liga,
       2026-09-25; eventos con Pinnacle / eventos): League One 4/4, League
       Two 10/10, Bundesliga 2 9/9, Ligue 2 9/9, LaLiga 2 11/12, Serie B
