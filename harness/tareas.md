@@ -13,6 +13,31 @@ no ahora.
 
 ## Pendientes 🔴
 
+## Más picks sin relajar la puerta comercial (2026-09-25)
+
+Orden experimental solicitado; ningún resultado cambia `publish/picks.py`,
+`SOFT_MIN_EDGE_PCT` ni activa `PUBLISH_PICKS_ENABLED` por sí solo.
+
+- [x] Instrumentar en solo lectura primera cuota observada, edad conocida y
+      cobertura por fuente, casa y liga (`eval/quote_coverage.py`).
+      `first_seen` no equivale a apertura real; The Odds API no conserva aquí
+      la hora propia del bookmaker, y se reporta desconocida, nunca cero.
+- [ ] Ejecutar esa auditoría en el Postgres operativo y decidir con esos
+      datos si merece ampliar la captura más allá de T−72.
+- [x] Comparar Shin/Power y umbrales 1–3% sobre las mismas cuotas pre-cierre
+      1X2; cierre justo fijo, hash del dataset, muestra por casa e IC agrupado
+      por semana (`eval/sharp_challengers.py`). Resultado exploratorio en
+      `progreso.md`; no demuestra que las cuotas sigan disponibles.
+- [ ] Ensayar un consenso multifuente solo cuando haya snapshots
+      sincronizados, horquilla y liquidez verificables.
+- [ ] Validar prospectivamente cualquier variante contra el 2% actual en
+      sombra: CLV justo, cuota alcanzable, ligas/casas y riesgo. No optimizar
+      y certificar sobre los mismos partidos.
+- [ ] Reabrir un mercado derivado solo si una nueva muestra con la misma
+      línea y cierre sharp contradice el ensayo negativo archivado.
+- [ ] Ensayar filtro de acuerdo Dixon-Coles/mercado solo como ablación
+      condicional; no subir stakes antes de evidencia incremental.
+
 ## Plan de integración web + administración en un solo FastAPI (2026-09-23)
 
 Decisión del usuario posterior al prototipo: avanzar hacia **un backend
@@ -647,7 +672,11 @@ Lo que sí es matemática valiosa y NO está construido:
             entrenamiento corrido: NO activó modelo, correctamente —
             `market_age_days=250` en la base restaurada (cierre sharp más
             reciente de enero 2026), y la puerta exige <30 días. No es un
-            fallo, es la puerta funcionando. Reentrenar cuando
+            fallo, es la puerta funcionando. **Resuelto el 2026-09-27:** el
+            `--bootstrap` de las 01:05 entrenó con los cierres de Pinnacle
+            del fin de semana y activó `2026.09.27-010508` (RPS 0,1991 frente a
+            0,19345 del mercado: sigue detrás, como se esperaba); el job de
+            las 08:00 selló las primeras 4 predicciones. Reentrenar cuando
             `odds_worker`/`af_odds`/`shadow_sharp` acumulen cierres frescos
             (ya corriendo desde el fix del cron).
       - [ ] Backup fuera del servidor (sin destino rclone todavía).

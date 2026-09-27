@@ -15,7 +15,7 @@ infraestructura de credibilidad desde la primera línea.
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
 | **1** Ingesta y modelo base | Datos + Dixon-Coles | ✅ **100%** | — (11 ligas + 2 copas en el modelo; + LaLiga 2 y Serie B solo para el criterio sharp, `leagues.model_enabled = FALSE`, desde 2026-09-25) |
-| **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **85%** | Muestra: 300 apuestas en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); primer modelo activo (espera cierres de Pinnacle en vivo) |
+| **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-09-27, 3 de 300. Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **55%** | Auth por email, frontend, cobros |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
 | **5** Movimiento de línea | Producto defendible | ❌ **0%** | Todo (necesita 12 meses de datos) |
@@ -564,6 +564,21 @@ publicar. Si el sellado falla no se publica nada ese día. Mejor no publicar que
 publicar sin prueba.
 
 ### Evaluación de challengers
+
+Para investigar **más picks sin cambiar el criterio publicado**:
+
+```bash
+PYTHONPATH=src python -m qf.eval.quote_coverage --days 30
+PYTHONPATH=src python -m qf.eval.sharp_challengers
+```
+
+El primer comando lee el Postgres operativo y mide la primera cuota 1X2
+completa *observada*, no la apertura real del mercado. El segundo usa solo
+los CSV ya guardados en `.local/fd_cache`: compara Shin/Power y varios
+umbrales sobre los mismos partidos; todos se miden contra el cierre justo de
+Pinnacle calculado con Shin. Es un análisis histórico exploratorio, sin
+disponibilidad de cuota al cliente ni autorización de publicación. Las
+decisiones y los límites de la muestra están en `harness/progreso.md`.
 
 `python scripts/evaluate_challengers.py --years 6 --validation-days 180 --compact`
 ejecuta en **solo lectura** el walk-forward de Dixon-Coles, Elo secuencial,
