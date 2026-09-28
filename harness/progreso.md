@@ -2312,10 +2312,10 @@ por nombre y sin mirar la liga. Ya había metido al brasileño en el
 Benfica–Guimarães del 11-oct: se habría sellado una predicción inmutable con
 los ratings de otro club.
 
-- : un alias puede ser de varios equipos y solo vale
+- `normalize.match_team`: un alias puede ser de varios equipos y solo vale
   el que juega en la liga o en otra división del MISMO país. En copas (sin
   liga) un alias ambiguo no se adivina: se descarta como cualquier nombre
-  sin resolver. Colisiones hoy en : ninguna dentro de una
+  sin resolver. Colisiones hoy en `team_aliases`: ninguna dentro de una
   fuente; la de Vitória entraba por el nombre nuevo del proveedor.
 - db/031 corrige el partido (sin predicciones, cuotas ni sombra), añade el
   alias propio de Guimarães y limpia nombre, id y fila de clasificación que
@@ -2323,7 +2323,7 @@ los ratings de otro club.
   domésticos con un equipo de otro país; las copas siguen con los mismos
   9 + 16 nombres sin emparejar de siempre.
 - db/032: escudos de 47 equipos que ya no están en ninguna tabla actual,
-  con ids de  2023-2025 revisados a mano ('Atletico GO' puntuaba más
+  con ids de `/teams` 2023-2025 revisados a mano ('Atletico GO' puntuaba más
   con Atlético-MG). 0 equipos sin escudo entre los que jugaron en 3 años.
 
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
