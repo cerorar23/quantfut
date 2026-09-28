@@ -55,13 +55,51 @@ def slugify(name: str) -> str:
 
 
 @lru_cache(maxsize=32)
-def _alias_map(source: str) -> dict[str, int]:
+def _alias_map(source: str) -> dict[str, set[int]]:
+    """
+    {slug: {team_id, ...}}. Un slug puede ser de dos clubes: 'Vitoria'
+    (Brasil) y 'Vitória SC' (Guimarães) dan el mismo. Con un id por slug
+    ganaba el que hubiera y el Guimarães acabó en un partido de la Primeira
+    como el Vitória brasileño (27-sep).
+    """
     rows = query(
         """SELECT alias, team_id FROM team_aliases
            WHERE source = %s AND team_id IS NOT NULL""",
         (source,),
     )
-    return {slugify(r["alias"]): r["team_id"] for r in rows}
+    out: dict[str, set[int]] = {}
+    for r in rows:
+        out.setdefault(slugify(r["alias"]), set()).add(r["team_id"])
+    return out
+
+
+@lru_cache(maxsize=1)
+def _paises() -> tuple[dict[int, tuple[str, str]], dict[str, str]]:
+    """({team_id: (liga, país)}, {liga: país})."""
+    ligas = {r["league_id"]: r["country"]
+             for r in query("SELECT league_id, country FROM leagues")}
+    equipos = {r["team_id"]: (r["league_id"], ligas.get(r["league_id"]))
+               for r in query("SELECT team_id, league_id FROM teams")}
+    return equipos, ligas
+
+
+def _alias_valido(ids: set[int], league_id: str | None) -> int | None:
+    """
+    El único equipo del alias que puede jugar en `league_id`: su liga o una
+    división del mismo país. Sin liga (copas) el alias tiene que ser de un
+    solo club; si hay dos, no se adivina.
+    """
+    if not ids:
+        return None
+    if league_id is None:
+        return next(iter(ids)) if len(ids) == 1 else None
+    equipos, ligas = _paises()
+    pais = ligas.get(league_id)
+    validos = [t for t in ids
+               if t not in equipos            # alta posterior a la caché
+               or equipos[t][0] == league_id
+               or (pais is not None and equipos[t][1] == pais)]
+    return validos[0] if len(validos) == 1 else None
 
 
 @lru_cache(maxsize=32)
@@ -121,6 +159,7 @@ def _match_sibling(raw: str, league_id: str) -> tuple[int | None, str | None, fl
 
 def clear_cache() -> None:
     _alias_map.cache_clear()
+    _paises.cache_clear()
     _league_teams.cache_clear()
     _sibling_teams.cache_clear()
 
@@ -132,7 +171,7 @@ def match_team(raw: str, source: str, league_id: str | None = None
         return None, None, 0.0
     key = slugify(raw)
 
-    tid = _alias_map(source).get(key)
+    tid = _alias_valido(_alias_map(source).get(key, set()), league_id)
     if tid:
         return tid, key, 100.0
 
