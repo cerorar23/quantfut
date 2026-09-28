@@ -564,6 +564,39 @@ Lo que sí es matemática valiosa y NO está construido:
       devuelve `best_price` y `gap_pct`,** es decir, qué casa paga por encima
       del justo en cada partido: el criterio de picks en abierto. No se ha
       tocado; decidir si pasa a `/v1` (SERVICE_TOKEN) o se recorta.
+- [x] **HECHO (2026-09-28, pedido del usuario: "ejecuta todas las
+      palancas") — Acelerar la muestra de la puerta sin rebajarla.**
+      Desplegado: sombra con todas las casas y puerta con `SOFT_BOOKS`
+      ampliada (.env del servidor actualizado), guarda de 15 min, persistencia
+      recalibrada, db/033 (10 ligas, 127 equipos nuevos, 43 reutilizados) y
+      guardas en daily/train para equipos de ligas sin modelo en copas.
+      PENDIENTE del usuario: confirmar que sus suscriptores usan Betsson,
+      Coolbet, LeoVegas y Unibet; si no, quitarlas de `SOFT_BOOKS` (la sombra
+      las sigue midiendo igual).
+      Diagnóstico previo (solo lectura): desde el 24-sep, 36 partidos; con la
+      lista actual 8 con oferta, con todas las casas del feed 23. Cierre de
+      Pinnacle: 10 de 10 partidos en sombra lo tienen (el "3 de 4" era un
+      pick aún sin jugar). El Pinnacle de API-Football nunca baja de 2,5 h
+      antes del partido: el cierre solo puede venir de The Odds API.
+      1. [x] Casas: la sombra mide TODAS las casas no exchange del snapshot;
+         la puerta (publicables) cuenta solo `SOFT_BOOKS`, filtrado al
+         informar (sin columna nueva: se puede recalcular para cualquier
+         lista). `SOFT_BOOKS` += betsson, coolbet, leovegas_se, unibet_se,
+         unibet_nl, a confirmar por el usuario (el feed da precios de
+         Suecia/Países Bajos para LeoVegas/Unibet).
+      2. [x] Cierre: ninguna oferta de la sombra puede salir de un snapshot
+         de la ventana de cierre (se liquidaría contra sí misma: EV = edge
+         bruto). Se exige antelación ≥ 15 min.
+      3. [x] Ligas "solo sharp" con Pinnacle en The Odds API y sin
+         divisiones hermanas en la base (no duplican clubes): Chile, Turquía,
+         Suiza, Dinamarca; Colombia/Perú/Ecuador si hay cobertura. Antes:
+         el job diario deja de predecir partidos de copa con equipos de ligas
+         sin modelo (hoy se sellarían con `both_teams_known=false`).
+      4. [x] Persistencia por casa: regla fijada AHORA, antes de ver la
+         muestra: media ponderada previa/medida con peso n/(n+100) partidos,
+         medida = EV al cierre / edge bruto de la primera oferta por partido
+         y casa, suelo 0. Solo afecta a capturas futuras (cada oferta guarda
+         la persistencia con la que se decidió).
 - [ ] **Idea aparcada (2026-09-27, el usuario prefirió no hacerlo): medir más
       casas en sombra.** Con TODAS las casas del feed, los partidos con oferta
       desde el 24-sep pasarían de 8 a 25; las que más aportan: LeoVegas (22),

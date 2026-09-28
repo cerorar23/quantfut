@@ -68,8 +68,46 @@ MIN_CONSENSUS_BOOKS = 2
 # sustituye en cuanto la sombra (paso 5) tenga muestra propia.
 PERSISTENCE = {"1xbet": 0.72, "bet365": 0.13, "william_hill": 0.0}
 UNMEASURED_PERSISTENCE = 0.42
+# Recalibración con la sombra (regla fijada el 2026-09-28, ANTES de tener
+# muestra, para no ajustarla a lo que salga): media ponderada entre la previa
+# de arriba y la medida en la sombra, con la previa valiendo como
+# PRIOR_WEIGHT partidos. Medida = EV al cierre / edge bruto de la PRIMERA
+# oferta de cada casa en cada partido (las siguientes del mismo partido no
+# son independientes), acotada a [0, 1]. Con pocos partidos casi no se mueve.
+PRIOR_WEIGHT = 100
 # Stake mínimo publicable, en unidades (1 u = 1% de banca).
 MIN_STAKE_UNITS = 0.05
+
+
+def mezclar(previa: float, n: int, ev_medio: float | None,
+            edge_medio: float | None, peso: int = PRIOR_WEIGHT) -> float:
+    """Persistencia recalibrada. Sin partidos medidos, la previa tal cual."""
+    if not n or ev_medio is None or not edge_medio or edge_medio <= 0:
+        return previa
+    medida = min(max(ev_medio / edge_medio, 0.0), 1.0)
+    return (n * medida + peso * previa) / (n + peso)
+
+
+def persistencias() -> dict[str, float]:
+    """Persistencia vigente por casa: previa + lo medido en la sombra."""
+    rows = query(
+        """WITH primera AS (
+               SELECT DISTINCT ON (o.match_id, o.book)
+                      o.book, o.raw_edge_pct, r.ev_close_pct
+               FROM sharp_shadow_offers o
+               JOIN sharp_shadow_results r USING (offer_id)
+               WHERE r.ev_close_pct IS NOT NULL
+               ORDER BY o.match_id, o.book, o.decided_at, o.offer_id)
+           SELECT book, count(*) AS n, avg(ev_close_pct) AS ev,
+                  avg(raw_edge_pct) AS edge
+           FROM primera GROUP BY book"""
+    )
+    out = dict(PERSISTENCE)
+    for r in rows:
+        previa = PERSISTENCE.get(r["book"], UNMEASURED_PERSISTENCE)
+        out[r["book"]] = round(mezclar(previa, int(r["n"]), float(r["ev"]),
+                                       float(r["edge"])), 4)
+    return out
 
 
 def canonical_book(key: str) -> str:
@@ -207,13 +245,15 @@ class Offer:
 
 
 def offers(snap: Snapshot, now: datetime,
-           books: tuple[str, ...] | None = None) -> list[Offer]:
+           books: tuple[str, ...] | None = None,
+           persistencia: dict[str, float] | None = None) -> list[Offer]:
     """
     El criterio entero, sin base de datos. Devuelve [] (no hay nada que
     apostar) si el snapshot es viejo, si falta Pinnacle o si Pinnacle no cuadra
     con el consenso de las demás casas.
     """
     books = settings.soft_books if books is None else books
+    persistencia = PERSISTENCE if persistencia is None else persistencia
     if now - snap.as_of > timedelta(hours=settings.soft_quote_max_age_hours):
         return []
     full = {b: q for b, q in snap.books.items()
@@ -239,7 +279,7 @@ def offers(snap: Snapshot, now: datetime,
             edge = (q[s] * float(fair[j]) - 1.0) * 100.0
             if edge >= settings.soft_min_edge_pct:
                 out.append(Offer(book, s, q[s], float(fair[j]), edge,
-                                 PERSISTENCE.get(book, UNMEASURED_PERSISTENCE),
+                                 persistencia.get(book, UNMEASURED_PERSISTENCE),
                                  snap.source, snap.as_of))
     return out
 
@@ -255,10 +295,11 @@ def find_candidates(prediction: dict, now: datetime | None = None) -> list[Candi
     model_1x2 = (prediction.get("markets") or {}).get("1x2") or {}
     pid = prediction.get("prediction_id")
     out = []
+    vigente = persistencias()
     for snap in (_af_snapshot(match_id, now), _odds_api_snapshot(match_id, now)):
         if snap is None:
             continue
-        for o in offers(snap, now):
+        for o in offers(snap, now, persistencia=vigente):
             p_exp = (1.0 + o.expected_edge / 100.0) / o.price
             out.append(Candidate(
                 match_id=match_id,

@@ -35,12 +35,19 @@ def _sql_de(monkeypatch, modulo, funcion, *args, attr="query"):
 
 def test_la_prediccion_diaria_solo_ve_ligas_del_modelo(monkeypatch):
     from qf.publish import daily
-    assert "model_enabled" in _sql_de(monkeypatch, daily, daily._upcoming)
+    sql = _sql_de(monkeypatch, daily, daily._upcoming)
+    assert "model_enabled" in sql
+    # Y en copa, la liga DOMÉSTICA de cada equipo también tiene que tener modelo.
+    assert "lh.league_id = th.league_id AND lh.model_enabled" in sql
+    assert "la.league_id = ta.league_id AND la.model_enabled" in sql
 
 
 def test_el_entrenamiento_solo_ve_ligas_del_modelo(monkeypatch):
     from qf.model import train
-    assert "model_enabled" in _sql_de(monkeypatch, train, train.load_training_data)
+    sql = _sql_de(monkeypatch, train, train.load_training_data)
+    assert "model_enabled" in sql
+    assert "lh.league_id = th.league_id AND lh.model_enabled" in sql
+    assert "la.league_id = ta.league_id AND la.model_enabled" in sql
 
 
 def test_la_frescura_del_bootstrap_mira_lo_mismo_que_el_entrenamiento(monkeypatch):

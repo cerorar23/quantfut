@@ -73,8 +73,13 @@ def load_training_data(league_id: str | None = None,
            FROM matches m
            JOIN teams th ON th.team_id = m.home_team_id
            JOIN teams ta ON ta.team_id = m.away_team_id
-           -- Ligas "solo sharp" (db/023): fuera del modelo.
+           -- Ligas "solo sharp" (db/023): fuera del modelo. También sus
+           -- equipos cuando juegan una copa (2026-09-28: al añadir ligas solo
+           -- sharp, `uefa_cups` empezaría a cargar sus partidos europeos).
+           -- Comprobado al introducirlo: no excluía ningún partido.
            JOIN leagues lg ON lg.league_id = m.league_id AND lg.model_enabled
+           JOIN leagues lh ON lh.league_id = th.league_id AND lh.model_enabled
+           JOIN leagues la ON la.league_id = ta.league_id AND la.model_enabled
            LEFT JOIN sharp_close oh ON oh.match_id = m.match_id
                 AND oh.selection='home'
            LEFT JOIN sharp_close od ON od.match_id = m.match_id
@@ -413,6 +418,10 @@ def bootstrap_status() -> tuple[bool, str]:
            -- Lo mismo que ve `load_training_data`: un cierre de una liga
            -- "solo sharp" no hace fresco un mercado que el modelo no usa.
            JOIN leagues lg ON lg.league_id = m.league_id AND lg.model_enabled
+           JOIN teams th ON th.team_id = m.home_team_id
+           JOIN teams ta ON ta.team_id = m.away_team_id
+           JOIN leagues lh ON lh.league_id = th.league_id AND lh.model_enabled
+           JOIN leagues la ON la.league_id = ta.league_id AND la.model_enabled
            WHERE m.status='finished' AND m.home_goals IS NOT NULL""",
         (settings.sharp_book,),
     )

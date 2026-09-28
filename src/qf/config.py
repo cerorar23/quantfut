@@ -86,9 +86,14 @@ class Settings:
     # Casas donde apuestan los suscriptores (decisión del usuario 2026-09-23),
     # con los nombres canónicos de picks.canonical_book. Betway y 888sport no
     # los da hoy ninguna fuente capturada, pero forman parte de la lista.
+    # 2026-09-28: + Betsson, Coolbet, LeoVegas y Unibet (casas con operación
+    # en España o Latinoamérica), pendientes de que el usuario confirme que
+    # sus suscriptores las usan; LeoVegas y Unibet llegan con el precio de
+    # Suecia / Países Bajos de The Odds API, no el de su web local.
     soft_books: tuple[str, ...] = tuple(
         b.strip() for b in os.getenv(
-            "SOFT_BOOKS", "bet365,betano,1xbet,william_hill,888sport,betway"
+            "SOFT_BOOKS", "bet365,betano,1xbet,william_hill,888sport,betway,"
+            "betsson,coolbet,leovegas_se,unibet_se,unibet_nl"
         ).split(",") if b.strip())
     # Edge BRUTO mínimo contra el precio justo de Pinnacle. 2% es el umbral
     # validado en los dos backtests (eval/soft_vs_sharp, ingest/odds_history).

@@ -195,3 +195,43 @@ def test_auditoria_consulta_cierre_sharp_y_no_modifica_datos(monkeypatch):
     assert "window_tag = 'close'" in statements[0][0]
     assert statements[0][1] == (settings.sharp_book, settings.sharp_book)
     assert statements[0][0].lstrip().startswith("WITH latest_close")
+
+
+def test_la_sombra_mide_todas_las_casas_pero_la_puerta_solo_las_de_la_lista():
+    snap = pk.Snapshot("the_odds_api", T0, {
+        "pinnacle": {"home": 2.0, "draw": 3.5, "away": 4.0},
+        "nordicbet": {"home": 2.3, "draw": 3.4, "away": 3.6},
+        "coolbet": {"home": 2.3, "draw": 3.4, "away": 3.6},
+        "betfair_ex_eu": {"home": 2.5, "draw": 3.4, "away": 3.6},
+        "unibet_se": {"home": 2.0, "draw": 3.4, "away": 3.9},
+    })
+    assert set(ss.casas_medibles(snap)) == {"nordicbet", "coolbet", "unibet_se"}
+    filas = [{"match_id": "m1", "book": "nordicbet", "stake_units": 1.0,
+              "decided_at": T0, "expected_edge_pct": 9.0},
+             {"match_id": "m1", "book": "coolbet", "stake_units": 0.5,
+              "decided_at": T0 + timedelta(hours=1), "expected_edge_pct": 2.0},
+             {"match_id": "m2", "book": "nordicbet", "stake_units": 1.0,
+              "decided_at": T0, "expected_edge_pct": 9.0}]
+    pub = ss.publishable(pd.DataFrame(filas))
+    assert list(pub["book"]) == ["coolbet"], "una casa fuera de la lista no abre la puerta"
+
+
+def test_nunca_se_toma_una_oferta_del_snapshot_de_cierre(monkeypatch):
+    ko = T0 + timedelta(minutes=10)
+    snap = pk.Snapshot("the_odds_api", T0, {
+        "pinnacle": {"home": 2.0, "draw": 3.5, "away": 4.0},
+        "coolbet": {"home": 2.4, "draw": 3.4, "away": 3.6},
+        "unibet_se": {"home": 2.0, "draw": 3.4, "away": 3.9},
+        "leovegas_se": {"home": 2.0, "draw": 3.4, "away": 3.9}})
+    insertadas = []
+    monkeypatch.setattr(ss, "query", lambda *a, **k: [
+        {"match_id": "m1", "league_id": "us.mls", "kickoff_utc": ko}])
+    monkeypatch.setattr(ss.pk, "_af_snapshot", lambda *a: None)
+    monkeypatch.setattr(ss.pk, "persistencias", lambda: dict(ss.pk.PERSISTENCE))
+    monkeypatch.setattr(ss.pk, "_odds_api_snapshot", lambda *a: snap)
+    monkeypatch.setattr(ss, "executemany", lambda sql, rows: insertadas.extend(rows) or len(rows))
+    assert ss.capture(T0)["snapshots"] == 0 and insertadas == []
+    ko = T0 + timedelta(hours=3)
+    monkeypatch.setattr(ss, "query", lambda *a, **k: [
+        {"match_id": "m1", "league_id": "us.mls", "kickoff_utc": ko}])
+    assert ss.capture(T0)["snapshots"] == 1 and insertadas

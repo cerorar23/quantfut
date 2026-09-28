@@ -65,6 +65,10 @@ def _upcoming(hours: int = 36) -> list[dict]:
            -- Las ligas "solo sharp" (db/023) no se predicen: el modelo no
            -- conoce a sus equipos y lo sellado aquí es público e inmutable.
            JOIN leagues lg ON lg.league_id = m.league_id AND lg.model_enabled
+           -- Tampoco un partido de copa con un equipo de esas ligas (un turco
+           -- o un suizo en Champions): se sellaría con ataque y defensa 0.
+           JOIN leagues lh ON lh.league_id = th.league_id AND lh.model_enabled
+           JOIN leagues la ON la.league_id = ta.league_id AND la.model_enabled
            WHERE m.status = 'scheduled'
              AND m.kickoff_utc BETWEEN now() AND now() + make_interval(hours => %s)
            ORDER BY m.kickoff_utc""",

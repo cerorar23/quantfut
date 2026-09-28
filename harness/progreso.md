@@ -2334,6 +2334,46 @@ suscribirse. Ahora es `/v1/fair-price/{id}` con `SERVICE_TOKEN`; la ruta
 pública desaparece (404, igual que una ruta privada sin token, para no
 confirmar que existe). No lo consumía nada: ni el frontend ni otro módulo.
 
+## 2026-09-28 — Palancas para acelerar la puerta, sin rebajarla
+
+Pedido del usuario ("ejecuta todas las palancas"). La puerta NO cambia (300
+publicables con cierre justo, IC95 > 0, 3 ligas); cambia cuántas
+oportunidades se miden por día.
+
+- **Casas.** Simulado antes sobre 36 partidos desde el 24-sep: con la lista
+  de entonces, 8 partidos con oferta; con todas las casas del feed, 23. La
+  sombra mide ahora TODAS las casas no exchange, pero la puerta filtra por
+  `SOFT_BOOKS` AL INFORMAR (no se guarda columna): así la muestra se puede
+  recalcular para otra lista sin volver a capturar. Lista ampliada con
+  Betsson, Coolbet, LeoVegas y Unibet por operar en España o Latinoamérica,
+  pendiente de que el usuario lo confirme; LeoVegas/Unibet llegan con precio
+  de Suecia/Países Bajos. Casas offshore de EE. UU. y francesas/alemanas se
+  miden pero no cuentan.
+- **Cierre.** El "3 de 4 con cierre" era un pick aún sin jugar: 10 de 10
+  partidos en sombra lo tienen. El Pinnacle de API-Football nunca baja de
+  2,5 h antes del inicio, así que el cierre solo sirve de The Odds API.
+  Riesgo encontrado y cerrado: la captura de :25 podía tomar como oferta el
+  snapshot de la ventana de cierre, que es contra el que se liquida (EV =
+  edge bruto por construcción). No había pasado; ahora se exige ≥ 15 min.
+- **Persistencia.** Regla fijada ANTES de tener muestra: la previa pesa como
+  100 partidos frente a lo medido (primera oferta por casa y partido,
+  acotado a [0, 1]). Cada oferta guarda la persistencia con la que se
+  decidió, así que recalibrar no reescribe el pasado.
+- **Ligas (db/033).** Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia,
+  Championship, Ligue 2, 2. Bundesliga y Brasil B, todas con Pinnacle en The
+  Odds API (sondeo de 21 créditos). Colombia, Perú y Ecuador no existen en
+  The Odds API; Bélgica, Australia y Superettan no tienen Pinnacle. Equipos
+  preparados de antemano como en 024: el calendario, creando de uno en uno,
+  descartaba el segundo club que se pareciera al primero. 43 reutilizados
+  (25 confirmados por id de API-Football) y 127 nuevos; el calendario no
+  creó ninguno más. Coste estimado: ~100 créditos/mes por liga (solo 1X2) y
+  ~800 peticiones/día de API-Football.
+- **Copas.** Con clubes turcos, suizos o daneses en el catálogo, sus partidos
+  de Champions/Europa League empiezan a resolverse. `daily._upcoming` y el
+  entrenamiento exigen ahora que la liga DOMÉSTICA de ambos equipos tenga
+  modelo: si no, se sellaría una predicción con ataque y defensa 0. Al
+  introducir la guarda no excluía ningún partido del entrenamiento.
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la

@@ -49,6 +49,7 @@ def _solo_sharp():
 def test_un_pick_sin_prediccion_no_inventa_datos_del_modelo(monkeypatch):
     monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: _snap())
     monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: None)
+    monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     (c,) = pk.find_candidates(_solo_sharp(), NOW)
     assert c.prediction_id is None
     assert c.model_prob is None, "0 se leería como 'el modelo da 0%'"
@@ -58,6 +59,7 @@ def test_un_pick_sin_prediccion_no_inventa_datos_del_modelo(monkeypatch):
 def test_con_prediccion_todo_sigue_igual(monkeypatch):
     monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: _snap())
     monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: None)
+    monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     pred = {"prediction_id": "p1", "match_id": "m1", "league_id": "es.laliga",
             "kickoff_utc": NOW + timedelta(hours=20),
             "markets": {"1x2": {"home": 0.61, "draw": 0.22, "away": 0.17}}}

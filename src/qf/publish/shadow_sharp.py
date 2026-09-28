@@ -11,7 +11,10 @@ TRES PIEZAS
 - `capture`: cada hora, tras la captura de API-Football. Todas las ofertas de
   `picks.offers` para partidos de las próximas 72 h, incluidas las de stake 0
   (casa con persistencia medida nula): justo esas son las que hay que medir
-  para saber si la persistencia está bien.
+  para saber si la persistencia está bien. Desde 2026-09-28 se miden TODAS
+  las casas no exchange del snapshot, no solo las de `SOFT_BOOKS`: la puerta
+  sigue contando solo las de la lista (filtro al informar, así se puede
+  recalcular para otra lista sin volver a capturar).
 - `settle_pending`: al terminar el partido, encadenada desde
   `eval/clv.settle_pending`. Sin cierre de Pinnacle (`window_tag='close'` de
   The Odds API) la oferta se liquida sin `ev_close_pct` y no cuenta.
@@ -48,6 +51,10 @@ from . import picks as pk
 log = logging.getLogger(__name__)
 
 HORIZON = timedelta(hours=72)
+# Un snapshot tomado en la ventana de cierre (3-12 min antes) es el mismo
+# contra el que se liquida: una oferta sacada de él tendría EV = edge bruto
+# por construcción. Tampoco sería publicable a tiempo.
+MIN_LEAD = timedelta(minutes=15)
 LEAD_BUCKETS = ((0, 6), (6, 24), (24, 48), (48, 72))
 
 
@@ -62,6 +69,16 @@ def lead_bucket(lead_minutes: int) -> str:
 # --------------------------------------------------------------------------
 # Captura
 # --------------------------------------------------------------------------
+
+def en_lista(book: str | None) -> bool:
+    """¿Cuenta para la puerta? Solo las casas de los suscriptores."""
+    return book is None or book in settings.soft_books
+
+
+def casas_medibles(snap: pk.Snapshot) -> tuple[str, ...]:
+    """Todas las casas del snapshot salvo la referencia y los exchanges."""
+    return tuple(b for b in snap.books
+                 if b != settings.sharp_book and b not in pk.EXCHANGES)
 
 def offer_rows(offers: list[pk.Offer], match: dict) -> list[tuple]:
     rows = []
@@ -88,13 +105,15 @@ def capture(now: datetime | None = None) -> dict:
         (now, now + HORIZON),
     )
     rows, snaps = [], 0
+    vigente = pk.persistencias()
     for m in matches:
         for snap in (pk._af_snapshot(m["match_id"], now),
                      pk._odds_api_snapshot(m["match_id"], now)):
-            if snap is None:
+            if snap is None or m["kickoff_utc"] - snap.as_of < MIN_LEAD:
                 continue
             snaps += 1
-            rows += offer_rows(pk.offers(snap, now), m)
+            rows += offer_rows(pk.offers(snap, now, books=casas_medibles(snap),
+                                          persistencia=vigente), m)
     new = executemany(
         """INSERT INTO sharp_shadow_offers
              (match_id, league_id, kickoff_utc, book, market, selection, price,
@@ -167,6 +186,8 @@ def publishable(frame: pd.DataFrame) -> pd.DataFrame:
     esa pasada la de mayor edge esperado. Una fila por partido.
     """
     f = frame[frame["stake_units"] > pk.MIN_STAKE_UNITS]
+    if "book" in f:
+        f = f[f["book"].map(en_lista)]
     if f.empty:
         return f
     first = f.groupby("match_id")["decided_at"].transform("min")
@@ -245,7 +266,7 @@ def audit_summary(rows: list[dict], now: datetime | None = None) -> dict:
     candidates: set[int] = set()
     first_by_match: dict[str, dict] = {}
     for row in rows:
-        if float(row["stake_units"]) <= pk.MIN_STAKE_UNITS:
+        if float(row["stake_units"]) <= pk.MIN_STAKE_UNITS or not en_lista(row.get("book")):
             continue
         previous = first_by_match.get(row["match_id"])
         order = (row["decided_at"], -float(row["expected_edge_pct"]),
@@ -271,7 +292,7 @@ def audit_summary(rows: list[dict], now: datetime | None = None) -> dict:
         counts = by_league.setdefault(league, empty_counts())
         for target in (total, counts):
             target["captured"] += 1
-            if float(row["stake_units"]) > pk.MIN_STAKE_UNITS:
+            if float(row["stake_units"]) > pk.MIN_STAKE_UNITS and en_lista(row.get("book")):
                 target["with_stake"] += 1
             if int(row["offer_id"]) in candidates:
                 target["candidates"] += 1
@@ -302,7 +323,7 @@ def audit_summary(rows: list[dict], now: datetime | None = None) -> dict:
             "by_league": dict(sorted(by_league.items())),
             "definitions": {
                 "captured": "Ofertas únicas guardadas, incluidas las de stake cero.",
-                "with_stake": "Ofertas que superan el stake mínimo, no picks distintos.",
+                "with_stake": "Ofertas de casas de la lista que superan el stake mínimo, no picks distintos.",
                 "candidates": "Una primera selección con stake por partido; base de la puerta.",
                 "result_overdue": "El inicio fue hace más de tres horas y aún no hay resultado.",
                 "awaiting_settlement": "El marcador final existe, falta liquidar la oferta.",
@@ -336,7 +357,7 @@ def audit(now: datetime | None = None) -> dict:
                GROUP BY lc.match_id
            )
            SELECT o.offer_id, o.match_id, o.league_id, o.kickoff_utc,
-                  o.stake_units, o.expected_edge_pct, o.decided_at,
+                  o.book, o.stake_units, o.expected_edge_pct, o.decided_at,
                   m.status AS match_status, m.home_goals, m.away_goals,
                   res.offer_id AS result_offer_id, res.ev_close_pct,
                   coalesce(cq.complete_sharp_close, false) AS complete_sharp_close

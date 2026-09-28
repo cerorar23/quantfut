@@ -50,8 +50,8 @@ def test_casa_de_la_lista_por_encima_del_justo_es_oferta():
 
 
 def test_casa_fuera_de_la_lista_no_cuenta():
-    ofs = pk.offers(_snap(coolbet={"home": 2.30, "draw": 3.20, "away": 3.70}), NOW)
-    assert ofs == [], "Coolbet paga más, pero los suscriptores no apuestan ahí"
+    ofs = pk.offers(_snap(nordicbet={"home": 2.30, "draw": 3.20, "away": 3.70}), NOW)
+    assert ofs == [], "NordicBet paga más, pero los suscriptores no apuestan ahí"
 
 
 def test_por_debajo_del_umbral_no_es_oferta():
@@ -117,6 +117,7 @@ def test_find_candidates_une_fuentes_y_el_modelo_solo_es_diagnostico(monkeypatch
                       {"pinnacle": PIN, "unibet_eu": NORMAL, "betsson": NORMAL,
                        "1xbet": {"home": 2.15, "draw": 3.2, "away": 3.7}})
     monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: af)
+    monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: toa)
     cands = pk.find_candidates(_pred(), NOW)
     assert {(c.best_book, c.odds_source) for c in cands} == {
@@ -132,9 +133,46 @@ def test_select_daily_descarta_stake_nulo_y_deja_uno_por_partido(monkeypatch):
     af = _snap(**{"1xbet": {"home": 2.20, "draw": 3.2, "away": 3.7},
                   "william_hill": {"home": 2.25, "draw": 3.2, "away": 3.7}})
     monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: af)
+    monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: None)
     picks = pk.select_daily([_pred()], NOW)
     assert len(picks) == 1
     p = picks[0]
     assert p.best_book == "1xbet" and p.stake_units > pk.MIN_STAKE_UNITS
     assert p.min_price is not None and p.odds_as_of == af.as_of
+
+
+# ---------------------------------------------------------------------------
+# Persistencia recalibrada con la sombra (regla fijada 2026-09-28)
+# ---------------------------------------------------------------------------
+
+def test_sin_muestra_la_persistencia_es_la_previa():
+    assert pk.mezclar(0.13, 0, None, None) == 0.13
+    assert pk.mezclar(0.13, 5, 3.0, 0.0) == 0.13     # edge nulo: no se divide
+
+
+def test_pocos_partidos_casi_no_la_mueven_y_muchos_si():
+    # Bet365: previa 0,13; la sombra mide EV 1,0 sobre edge 3,0 -> 0,333.
+    poco = pk.mezclar(0.13, 5, 1.0, 3.0)
+    mucho = pk.mezclar(0.13, 400, 1.0, 3.0)
+    assert 0.13 < poco < 0.145
+    assert 0.29 < mucho < 1 / 3
+
+
+def test_la_medida_se_acota_entre_cero_y_uno():
+    assert pk.mezclar(0.5, 100, -4.0, 3.0) == 0.25        # EV negativo -> 0
+    assert pk.mezclar(0.5, 100, 9.0, 3.0) == 0.75         # >1 -> 1
+
+
+def test_la_persistencia_mide_la_primera_oferta_por_partido(monkeypatch):
+    sqls = []
+
+    def q(sql, params=()):
+        sqls.append(sql)
+        return [{"book": "coolbet", "n": 100, "ev": 3.0, "edge": 6.0}]
+
+    monkeypatch.setattr(pk, "query", q)
+    vigente = pk.persistencias()
+    assert "DISTINCT ON (o.match_id, o.book)" in sqls[0]
+    assert vigente["coolbet"] == round((100 * 0.5 + 100 * pk.UNMEASURED_PERSISTENCE) / 200, 4)
+    assert vigente["bet365"] == pk.PERSISTENCE["bet365"]

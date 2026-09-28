@@ -14,7 +14,7 @@ infraestructura de credibilidad desde la primera línea.
 | Fase | Qué es | Estado | Falta |
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | ✅ **100%** | — (11 ligas + 2 copas en el modelo; + LaLiga 2 y Serie B solo para el criterio sharp, `leagues.model_enabled = FALSE`, desde 2026-09-25) |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | ✅ **100%** | — (11 ligas + 2 copas en el modelo; + 12 ligas solo para el criterio sharp, `leagues.model_enabled = FALSE`: LaLiga 2 y Serie B desde 2026-09-25; Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia, Championship, Ligue 2, 2. Bundesliga y Brasil B desde 2026-09-28) |
 | **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-09-27, 3 de 300. Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **55%** | Auth por email, frontend, cobros |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
@@ -68,6 +68,13 @@ Dos consecuencias que hay que tener presentes al leer el resto del README:
    ofertas aún pendientes de resultado, pero solo las que tienen cierre justo
    cuentan para las 300 de la puerta. El job diario vuelve a comprobar esa
    puerta aunque `PUBLISH_PICKS_ENABLED` se active por error.
+   **Desde 2026-09-28** (para acelerar la muestra sin rebajar la puerta): la
+   sombra mide TODAS las casas no exchange del snapshot, pero la puerta solo
+   cuenta las de `SOFT_BOOKS` (ampliada con Betsson, Coolbet, LeoVegas y
+   Unibet); ninguna oferta sale de un snapshot a menos de 15 min del inicio
+   (se liquidaría contra sí misma); la persistencia por casa se recalibra con
+   la sombra con una regla fijada de antemano (`picks.mezclar`: la previa
+   pesa como 100 partidos); y diez ligas más alimentan la sombra (db/033).
 
 Lo que NO falla es la probabilidad: el modelo está bien calibrado dentro de
 ±0,02 en todos los tramos con muestra, y `p_model` correlaciona **+0,312** con
