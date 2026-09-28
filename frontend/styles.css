@@ -664,3 +664,11 @@ table.standings td:last-child{text-align:left}
 @media(max-width:570px){
   .real-team .racha{display:none}
 }
+
+/* Escudos (2026-09-27) */
+.crest{width:18px;height:18px;object-fit:contain;flex:none}
+.large-crest{width:60px;height:60px;object-fit:contain;margin-bottom:10px;filter:drop-shadow(0 4px 10px #0008)}
+.real-team .crest{width:24px;height:24px}
+.form-strip-team .crest{width:32px;height:32px}
+.with-crest{display:flex!important;align-items:center;gap:7px}
+.with-crest .crest{width:16px;height:16px}

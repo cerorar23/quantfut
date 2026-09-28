@@ -553,7 +553,7 @@ no las haya.
 | Sombra del criterio de picks: registra lo que se habría recomendado (no publica); se liquida con `qf.eval.clv` | cada hora, :25 | `qf.publish.shadow_sharp capture` |
 | Calendario de partidos | 05:15 y 17:15 | `qf.ingest.fixtures` |
 | Cierre de partidos + liquidación (guarda también `matches.stats` completo para las fichas, misma petición) | cada 3 h | `qf.ingest.results` |
-| Clasificación de cada liga para las fichas de la web (1 petición por liga) | 06:40 y 22:40 | `qf.ingest.standings` |
+| Clasificación de cada liga para las fichas de la web (1 petición por liga) y escudos nuevos (una vez por equipo, volumen `escudos`, servidos en `/web/escudos/{team_id}.png`) | 06:40 y 22:40 | `qf.ingest.standings` |
 | xG histórico | martes 04:00 | `qf.ingest.xg_worldfootball` |
 | Histórico de copas europeas | martes 04:30 | `qf.ingest.uefa_cups` |
 | Alineaciones a T-60 | cada 5 min | `qf.ingest.lineups` |

@@ -206,3 +206,22 @@ def test_la_forma_no_mira_mas_alla_de_la_ventana(monkeypatch):
     fichas._ultimos(A, T0, 10)
     assert capturado["params"][3] == T0 - timedelta(days=fichas.VENTANA_FORMA_DIAS)
     assert "m.kickoff_utc > %s" in capturado["sql"]
+
+
+def test_el_escudo_solo_se_anuncia_si_existe(monkeypatch, tmp_path):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from dataclasses import replace
+    monkeypatch.setattr(fichas, "settings", replace(fichas.settings, escudos_dir=str(tmp_path)))
+    (tmp_path / "7.png").write_bytes(b"\x89PNG\r\n\x1a\nresto")
+    assert fichas.escudo(7) == "/web/escudos/7.png"
+    assert fichas.escudo(8) is None
+    app = FastAPI()
+    app.include_router(fichas.router)
+    cliente = TestClient(app)
+    r = cliente.get("/web/escudos/7.png")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+    assert "max-age" in r.headers["cache-control"]
+    assert cliente.get("/web/escudos/8.png").status_code == 404
+    assert cliente.get("/web/escudos/..%2F..%2Fetc.png").status_code in (404, 422)

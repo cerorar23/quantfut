@@ -64,3 +64,64 @@ def test_las_conferencias_no_son_fases():
     filas = parse(_resp([_fila(1, "Inter Miami", 50, "Eastern Conference")],
                         [_fila(1, "LA Galaxy", 48, "Western Conference")]))
     assert len(vigentes(filas)) == 2
+
+
+def test_escudos_se_bajan_una_vez_y_solo_si_son_png(monkeypatch, tmp_path):
+    from qf.ingest import standings
+
+    (tmp_path / "1.png").write_bytes(b"ya estaba")
+    pedidos = []
+
+    class Resp:
+        def __init__(self, contenido):
+            self.content = contenido
+
+        def raise_for_status(self):
+            pass
+
+    class Cliente:
+        def __init__(self, **_):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def get(self, url):
+            pedidos.append(url)
+            return Resp(b"\x89PNG..." if url.endswith("/20.png") else b"<html>")
+
+    monkeypatch.setattr(standings.httpx, "Client", Cliente)
+    monkeypatch.setattr(standings, "query", lambda sql: [
+        {"team_id": 1, "af_team_id": 10}, {"team_id": 2, "af_team_id": 20},
+        {"team_id": 3, "af_team_id": 30}])
+    assert standings.descargar_escudos(str(tmp_path)) == 1
+    assert pedidos == [standings.ESCUDO_URL.format(20), standings.ESCUDO_URL.format(30)]
+    assert (tmp_path / "2.png").read_bytes().startswith(b"\x89PNG")
+    assert not (tmp_path / "3.png").exists()
+
+
+
+def test_un_id_nulo_se_completa_con_teams(monkeypatch):
+    from qf.ingest import standings
+    pedidos = []
+
+    def get(endpoint, params):
+        pedidos.append(endpoint)
+        return [{"team": {"id": 2289, "name": "Leon"}},
+                {"team": {"id": 2290, "name": "Pachuca"}}], {}
+
+    # 'Club Leon' (clasificación) y 'Leon' (/teams) son el mismo equipo 7.
+    ids = {"Club Leon": (7, None, 100.0), "Leon": (7, None, 100.0),
+           "Pachuca": (8, None, 100.0)}
+    monkeypatch.setattr(standings.af, "get", get)
+    monkeypatch.setattr(standings, "match_team", lambda n, s, l: ids.get(n, (None, None, 0.0)))
+    filas = [{"nombre": "Club Leon", "af_id": None}, {"nombre": "Pachuca", "af_id": None},
+             {"nombre": "America", "af_id": 2287}]
+    assert [f["af_id"] for f in standings.completar_ids(filas, 262, 2026, "mx.liga_mx")] == [
+        2289, 2290, 2287]
+    completas = [{"nombre": "America", "af_id": 2287}]
+    assert standings.completar_ids(completas, 262, 2026, "mx.liga_mx") == completas
+    assert pedidos == ["teams"]          # solo cuando falta alguno

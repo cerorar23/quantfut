@@ -2283,6 +2283,26 @@ PropsBR usando API-Football. Desplegado (db/028, db/029, `ingest/standings`,
 - Los logs de cron viven dentro del contenedor `worker`: al reconstruirlo se
   pierden (se vio al buscar `/var/log/fixtures.log`). No se cambió.
 
+## 2026-09-27 — Escudos, temporada de LaLiga 2 / Serie B y un ir y venir del calendario
+
+- Escudos descargados UNA vez al volumen `escudos` y servidos desde el
+  propio dominio, en vez de enlazar `media.api-sports.io`: la web no depende
+  del CDN del proveedor ni le pasa la IP de cada visitante. 271 archivos,
+  12 MB, caché de navegador de 7 días.
+- `/standings` devolvió `team.id` nulo para Club León y `/teams` lo llama
+  'Leon'. Se completa con `/teams` (1 petición, solo si falta alguno) por
+  nombre y, si difiere, por el MISMO equipo resuelto exacto. Un id nulo no
+  borra uno guardado (`COALESCE`).
+- Temporada de LaLiga 2 y Serie B cargada por el camino normal (insertar
+  como programados + `results.close_recent`) en vez de un INSERT a mano:
+  mismas reglas de resolución, marcador y estadísticas que cualquier
+  partido. El modelo no los lee (`model_enabled = false`).
+- Fallo previo encontrado al preparar la carga: `fixtures` pide el día
+  entero y los partidos de hoy ya terminados llegan como FT; se mapeaban a
+  'scheduled', se reabrían y se borraba su `odds_capture_log` hasta que
+  `results` los cerraba otra vez. Ahora un partido `finished` no se toca
+  desde el calendario (test en `test_calendario_terminados.py`).
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la

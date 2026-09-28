@@ -17,9 +17,12 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
 
+from ..config import settings
 from ..db import query, query_one
 from ..ingest.estadisticas import normalizar_estadisticas  # noqa: F401  (re-export)
 
@@ -33,6 +36,12 @@ H2H_N = 10           # cruces directos
 # histórico de football-data) enseñaba como "forma" partidos de hace más
 # de un año en otra categoría. El cara a cara no lleva tope: es historia.
 VENTANA_FORMA_DIAS = 270
+
+
+def escudo(team_id: int) -> str | None:
+    """URL del escudo si ya se descargó (`ingest/standings.py`); si no, None."""
+    ruta = Path(settings.escudos_dir) / f"{int(team_id)}.png"
+    return f"/web/escudos/{int(team_id)}.png" if ruta.is_file() else None
 
 
 # --------------------------------------------------------------------------
@@ -51,7 +60,8 @@ def _desde(team_id: int, r: dict) -> dict:
 
     return {"match_id": r["match_id"], "fecha": r["kickoff_utc"],
             "competicion": r.get("league_name") or r.get("league_id"),
-            "local": local, "rival": r[f"{otro}_team"], "gf": gf, "gc": gc,
+            "local": local, "rival": r[f"{otro}_team"],
+            "rival_escudo": escudo(r[f"{otro}_team_id"]), "gf": gf, "gc": gc,
             "res": res, "marcador": f"{r['home_goals']}-{r['away_goals']}",
             "xg": par("xg"), "tiros": par("shots"),
             "tiros_puerta": par("shots_target"), "corners": par("corners")}
@@ -307,9 +317,11 @@ def _agenda(inicio: datetime, fin: datetime, liga: str | None) -> list[dict]:
             "liga": {"id": p["league_id"], "nombre": p["liga"], "pais": p["pais"]},
             "marcador": [p["home_goals"], p["away_goals"]] if terminado else None,
             "local": {"id": p["home_team_id"], "nombre": p["local"],
+                      "escudo": escudo(p["home_team_id"]),
                       "posicion": p["pos_local"],
                       "racha": rachas.get((p["match_id"], "home"), "")},
             "visitante": {"id": p["away_team_id"], "nombre": p["visitante"],
+                          "escudo": escudo(p["away_team_id"]),
                           "posicion": p["pos_visitante"],
                           "racha": rachas.get((p["match_id"], "away"), "")},
         })
@@ -332,6 +344,7 @@ def _ficha(match_id: str) -> dict | None:
         tid = m[f"{lado}_team_id"]
         filas = _ultimos(tid, ko, PROMEDIOS_N)
         equipos[lado] = {"id": tid, "nombre": m[f"{lado}_team"],
+                         "escudo": escudo(tid),
                          "forma": forma(tid, filas),
                          "promedios": promedios(tid, filas),
                          "clasificacion": _posicion(tid, m["league_id"])}
@@ -353,7 +366,8 @@ def _ficha(match_id: str) -> dict | None:
         "cara_a_cara": cara_a_cara(m["home_team_id"], m["away_team_id"],
                                    _cruces(m["home_team_id"], m["away_team_id"],
                                            ko, H2H_N)),
-        "tabla": None if m["cross_league"] else _tabla(m["league_id"]),
+        "tabla": None if m["cross_league"] else [
+            {**f, "escudo": escudo(f["team_id"])} for f in _tabla(m["league_id"])],
         "alineaciones": _alineaciones(match_id),
         "bajas": _bajas(match_id),
     }
@@ -390,6 +404,15 @@ def partidos(fecha: str | None = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$",
     lista = _cacheado(("agenda", inicio, dias, liga), 120,
                       lambda: _agenda(inicio, fin, liga))
     return {"desde": inicio, "hasta": fin, "partidos": lista}
+
+
+@router.get("/escudos/{team_id}.png", include_in_schema=False)
+def escudo_png(team_id: int):
+    ruta = Path(settings.escudos_dir) / f"{team_id}.png"
+    if not ruta.is_file():
+        raise HTTPException(404, "Sin escudo")
+    return FileResponse(ruta, media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=604800"})
 
 
 @router.get("/partidos/{match_id}")

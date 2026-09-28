@@ -98,14 +98,16 @@ def _resolve(league: dict, raw_name: str) -> int | None:
     return None
 
 
-def ingest_league(league: dict, days_ahead: int = 21) -> dict:
+def ingest_league(league: dict, days_ahead: int = 21,
+                  desde: datetime | None = None) -> dict:
+    """`desde` (por defecto hoy) solo lo usa `cargar_temporada()`."""
     now = datetime.now(timezone.utc)
     season = current_season(league["season_style"], now)
 
     resp, meta = af.get("fixtures", {
         "league": league["api_football_id"],
         "season": season,
-        "from": now.strftime("%Y-%m-%d"),
+        "from": (desde or now).strftime("%Y-%m-%d"),
         "to": (now + timedelta(days=days_ahead)).strftime("%Y-%m-%d"),
         "timezone": "UTC",
     })
@@ -148,6 +150,12 @@ def ingest_league(league: dict, days_ahead: int = 21) -> dict:
         )
 
         if existing:
+            # El calendario pide el día entero: los partidos de hoy ya
+            # terminados llegan como FT. Sin esta guarda volvían a
+            # 'scheduled' y perdían su registro de captura hasta que
+            # results.py los cerraba otra vez.
+            if existing["status"] == "finished":
+                continue
             if (abs((existing["kickoff_utc"] - ko).total_seconds()) > 300
                     or existing["status"] != db_status):
                 execute(
@@ -220,7 +228,35 @@ def run(days_ahead: int = 21) -> dict:
     return summary
 
 
+def cargar_temporada(league_ids: list[str], dias_atras: int = 120) -> dict:
+    """
+    Partidos ya jugados de la temporada en curso para ligas dadas de alta con
+    ella empezada (LaLiga 2 y Serie B, 25-sep). Sin ellos, la forma de sus
+    equipos en la web salía de otra categoría. Se insertan como programados
+    y los cierra `results.close_recent()` por el camino normal (marcador y
+    estadísticas); `model_enabled = false` los deja fuera del modelo.
+    """
+    from .results import close_recent
+
+    leagues = query(
+        """SELECT league_id, name, country, api_football_id, season_style,
+                  cross_league
+           FROM leagues WHERE active AND api_football_id IS NOT NULL
+             AND NOT cross_league AND league_id = ANY(%s)""",
+        (league_ids,),
+    )
+    desde = datetime.now(timezone.utc) - timedelta(days=dias_atras)
+    calendario = [ingest_league(lg, days_ahead=0, desde=desde) for lg in leagues]
+    cierre = close_recent(hours_back=24 * dias_atras, leagues=league_ids)
+    return {"calendario": calendario, "cierre": cierre}
+
+
 if __name__ == "__main__":
+    import sys
+
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s %(message)s")
-    print(run())
+    if len(sys.argv) > 2 and sys.argv[1] == "--temporada":
+        print(cargar_temporada(sys.argv[2:]))
+    else:
+        print(run())

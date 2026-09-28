@@ -53,7 +53,8 @@ def _num(v):
         return None
 
 
-def close_recent(hours_back: int = 72, with_stats: bool = True) -> dict:
+def close_recent(hours_back: int = 72, with_stats: bool = True,
+                 leagues: list[str] | None = None) -> dict:
     """
     Cierra los partidos cuyo kickoff ya pasó y que siguen marcados como
     scheduled. Se ejecuta varias veces al día.
@@ -66,8 +67,9 @@ def close_recent(hours_back: int = 72, with_stats: bool = True) -> dict:
            WHERE status IN ('scheduled', 'live', 'postponed')
              AND kickoff_utc < now() - interval '105 minutes'
              AND kickoff_utc > %s
-             AND external_ids ? 'api_football'""",
-        (since,),
+             AND external_ids ? 'api_football'
+             AND (%s::text[] IS NULL OR league_id = ANY(%s))""",
+        (since, leagues, leagues),
     )
     if not pending:
         af.record_health("results", 0, True, {"note": "nada pendiente"})

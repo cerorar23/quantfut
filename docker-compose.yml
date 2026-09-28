@@ -26,7 +26,10 @@ services:
     depends_on:
       db: {condition: service_healthy}
     ports: ["127.0.0.1:8000:8000"]
-    volumes: [chain:/srv/quantfut/chain, artifacts:/srv/quantfut/artifacts]
+    volumes:
+      - chain:/srv/quantfut/chain
+      - artifacts:/srv/quantfut/artifacts
+      - escudos:/srv/quantfut/escudos:ro
     restart: unless-stopped
 
   worker:
@@ -37,6 +40,7 @@ services:
     volumes:
       - chain:/srv/quantfut/chain
       - artifacts:/srv/quantfut/artifacts
+      - escudos:/srv/quantfut/escudos
       - ./scripts/crontab:/etc/cron.d/quantfut:ro
     # cron no hereda el entorno del contenedor: se lo pasa pam_env leyendo
     # /etc/environment. Se vuelca ENTERO. La versión anterior filtraba por
@@ -98,5 +102,6 @@ volumes:
   grafanadata:
   chain:
   artifacts:
+  escudos:
   caddydata:
   caddyconfig:

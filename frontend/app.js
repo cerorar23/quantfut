@@ -963,7 +963,10 @@ function ensureFicha(id) {
   return entry;
 }
 
-const realMark = (name, away = false, large = false) => `<span class="${large ? 'large-team-mark' : 'team-mark'} ${away ? 'away' : ''}" aria-hidden="true">${esc(String(name || '?').charAt(0))}</span>`;
+// Escudo servido desde /web/escudos cuando ya se descargó; si no, la inicial.
+const realMark = (name, away = false, large = false, src = null) => (src
+  ? `<img class="${large ? 'large-crest' : 'crest'}" src="${esc(src)}" alt="" loading="lazy" decoding="async">`
+  : `<span class="${large ? 'large-team-mark' : 'team-mark'} ${away ? 'away' : ''}" aria-hidden="true">${esc(String(name || '?').charAt(0))}</span>`);
 const rachaDots = (racha, title = 'Del más reciente al más antiguo') => racha
   ? `<span class="racha" title="${title}">${[...racha].map(r => `<i class="r-${esc(r)}" aria-label="${RES_LABEL[r] || r}">${esc(r)}</i>`).join('')}</span>`
   : '<span class="racha empty">sin partidos previos</span>';
@@ -989,7 +992,7 @@ function realDayLabel(offset) {
 
 function agendaItem(p) {
   const st = estadoPartido(p);
-  const team = (t, away) => `<span>${realMark(t.nombre, away)}<span class="team-name">${esc(t.nombre)}</span>${t.posicion ? `<small class="st-pos">${posLabel(t.posicion)}</small>` : ''}</span>`;
+  const team = (t, away) => `<span>${realMark(t.nombre, away, false, t.escudo)}<span class="team-name">${esc(t.nombre)}</span>${t.posicion ? `<small class="st-pos">${posLabel(t.posicion)}</small>` : ''}</span>`;
   const active = state.statsMatch === p.match_id;
   return `<button type="button" class="desk-match ${active ? 'active' : ''}" data-stats-match="${esc(p.match_id)}" aria-pressed="${active}"><span class="desk-when"><span class="desk-time">${esc(st.main)}</span>${st.tag ? `<small class="tag ${st.kind}">${st.tag}</small>` : ''}</span><span class="desk-teams">${team(p.local)}${team(p.visitante, true)}</span></button>`;
 }
@@ -1021,7 +1024,7 @@ function averagesPanel(f) {
 function formStrip(team, away = false) {
   const r = team.forma.resumen;
   const pos = team.clasificacion;
-  return `<div class="form-strip"><div class="form-strip-team">${realMark(team.nombre, away)}<div><strong>${esc(team.nombre)}</strong><small>${pos ? `${posLabel(pos.posicion)} en ${esc(pos.liga)}${pos.grupo ? ` · ${esc(pos.grupo)}` : ''} · ${realNumber(pos.puntos)} pts` : 'Sin clasificación cargada'}</small></div></div>${rachaDots(r.racha)}<small class="form-strip-sum">${r.n ? `${r.G}G ${r.E}E ${r.P}P · ${r.gf}-${r.gc} goles` : ''}</small></div>`;
+  return `<div class="form-strip"><div class="form-strip-team">${realMark(team.nombre, away, false, team.escudo)}<div><strong>${esc(team.nombre)}</strong><small>${pos ? `${posLabel(pos.posicion)} en ${esc(pos.liga)}${pos.grupo ? ` · ${esc(pos.grupo)}` : ''} · ${realNumber(pos.puntos)} pts` : 'Sin clasificación cargada'}</small></div></div>${rachaDots(r.racha)}<small class="form-strip-sum">${r.n ? `${r.G}G ${r.E}E ${r.P}P · ${r.gf}-${r.gc} goles` : ''}</small></div>`;
 }
 
 function h2hSummary(h, f) {
@@ -1036,7 +1039,7 @@ function h2hSummary(h, f) {
 function formList(team) {
   const games = team.forma.partidos;
   if (!games.length) return '<p class="body-copy muted">Sin partidos previos en la base.</p>';
-  return `<ol class="form-list">${games.map(g => `<li><span class="res r-${esc(g.res)}" aria-label="${RES_LABEL[g.res]}">${esc(g.res)}</span><div><strong>${g.local ? 'vs' : 'en'} ${esc(g.rival)}</strong><small>${realDate(g.fecha)} · ${esc(g.competicion)} · ${g.local ? 'Casa' : 'Fuera'}</small></div><span class="num">${g.gf}-${g.gc}${g.xg?.[0] != null ? `<small>xG ${realNumber(g.xg[0], 1)}-${realNumber(g.xg[1], 1)}</small>` : ''}</span></li>`).join('')}</ol>`;
+  return `<ol class="form-list">${games.map(g => `<li><span class="res r-${esc(g.res)}" aria-label="${RES_LABEL[g.res]}">${esc(g.res)}</span><div><strong class="with-crest">${g.local ? 'vs' : 'en'} ${g.rival_escudo ? realMark(g.rival, false, false, g.rival_escudo) : ''}${esc(g.rival)}</strong><small>${realDate(g.fecha)} · ${esc(g.competicion)} · ${g.local ? 'Casa' : 'Fuera'}</small></div><span class="num">${g.gf}-${g.gc}${g.xg?.[0] != null ? `<small>xG ${realNumber(g.xg[0], 1)}-${realNumber(g.xg[1], 1)}</small>` : ''}</span></li>`).join('')}</ol>`;
 }
 
 function h2hList(h, f) {
@@ -1076,7 +1079,7 @@ function tablePanel(f) {
   if (!rows.length) return '<section class="panel"><p class="eyebrow">CLASIFICACIÓN</p><h2>Tabla no disponible todavía</h2><p class="body-copy muted">La clasificación se actualiza dos veces al día.</p></section>';
   const ids = new Set([f.local.id, f.visitante.id]);
   const groups = [...new Set(rows.map(r => r.grupo))];
-  return groups.map(g => `<section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">CLASIFICACIÓN${g ? ` · ${esc(g.toUpperCase())}` : ''}</p><h2>${esc(f.partido.liga.nombre)}</h2></div>${badge(`Actualizada ${realDate(rows[0].updated_at)}`, 'muted')}</div><div class="table-wrap" tabindex="0" role="region" aria-label="Clasificación, desplazable horizontalmente"><table class="standings"><thead><tr><th scope="col">#</th><th scope="col">Equipo</th><th scope="col" class="num">PJ</th><th scope="col" class="num">G</th><th scope="col" class="num">E</th><th scope="col" class="num">P</th><th scope="col" class="num">Goles</th><th scope="col" class="num">DG</th><th scope="col" class="num">Pts</th><th scope="col">Forma</th></tr></thead><tbody>${rows.filter(r => r.grupo === g).map(r => `<tr class="${ids.has(r.team_id) ? 'is-best' : ''}"><td>${r.posicion}</td><td><strong>${esc(r.equipo)}</strong>${r.descripcion ? `<small>${esc(zonaTabla(r.descripcion))}</small>` : ''}</td><td class="num">${r.jugados}</td><td class="num">${r.ganados}</td><td class="num">${r.empatados}</td><td class="num">${r.perdidos}</td><td class="num">${r.goles_favor}:${r.goles_contra}</td><td class="num">${r.goles_favor - r.goles_contra > 0 ? '+' : ''}${r.goles_favor - r.goles_contra}</td><td class="num"><strong>${r.puntos}</strong></td><td>${r.forma ? rachaDots(r.forma.replace(/W/g, 'G').replace(/D/g, 'E').replace(/L/g, 'P'), 'Últimos partidos de liga') : ''}</td></tr>`).join('')}</tbody></table></div></section>`).join('');
+  return groups.map(g => `<section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">CLASIFICACIÓN${g ? ` · ${esc(g.toUpperCase())}` : ''}</p><h2>${esc(f.partido.liga.nombre)}</h2></div>${badge(`Actualizada ${realDate(rows[0].updated_at)}`, 'muted')}</div><div class="table-wrap" tabindex="0" role="region" aria-label="Clasificación, desplazable horizontalmente"><table class="standings"><thead><tr><th scope="col">#</th><th scope="col">Equipo</th><th scope="col" class="num">PJ</th><th scope="col" class="num">G</th><th scope="col" class="num">E</th><th scope="col" class="num">P</th><th scope="col" class="num">Goles</th><th scope="col" class="num">DG</th><th scope="col" class="num">Pts</th><th scope="col">Forma</th></tr></thead><tbody>${rows.filter(r => r.grupo === g).map(r => `<tr class="${ids.has(r.team_id) ? 'is-best' : ''}"><td>${r.posicion}</td><td><strong class="with-crest">${r.escudo ? realMark(r.equipo, false, false, r.escudo) : ''}${esc(r.equipo)}</strong>${r.descripcion ? `<small>${esc(zonaTabla(r.descripcion))}</small>` : ''}</td><td class="num">${r.jugados}</td><td class="num">${r.ganados}</td><td class="num">${r.empatados}</td><td class="num">${r.perdidos}</td><td class="num">${r.goles_favor}:${r.goles_contra}</td><td class="num">${r.goles_favor - r.goles_contra > 0 ? '+' : ''}${r.goles_favor - r.goles_contra}</td><td class="num"><strong>${r.puntos}</strong></td><td>${r.forma ? rachaDots(r.forma.replace(/W/g, 'G').replace(/D/g, 'E').replace(/L/g, 'P'), 'Últimos partidos de liga') : ''}</td></tr>`).join('')}</tbody></table></div></section>`).join('');
 }
 
 function lineupsPanel(f) {
@@ -1098,7 +1101,7 @@ function fichaMarkup(entry) {
   const st = estadoPartido(p);
   const ko = kickoffOf(p);
   const tab = STATS_TABS.some(([id]) => id === state.statsTab) ? state.statsTab : 'resumen';
-  const sideHero = (team, away) => `<div>${realMark(team.nombre, away, true)}<h2>${esc(team.nombre)}</h2><small>${team.clasificacion ? `${posLabel(team.clasificacion.posicion)} · ${realNumber(team.clasificacion.puntos)} pts` : away ? 'Visitante' : 'Local'}</small>${rachaDots(team.forma.resumen.racha)}</div>`;
+  const sideHero = (team, away) => `<div>${realMark(team.nombre, away, true, team.escudo)}<h2>${esc(team.nombre)}</h2><small>${team.clasificacion ? `${posLabel(team.clasificacion.posicion)} · ${realNumber(team.clasificacion.puntos)} pts` : away ? 'Visitante' : 'Local'}</small>${rachaDots(team.forma.resumen.racha)}</div>`;
   const panels = {
     resumen: () => `<div class="stack">${averagesPanel(f)}<div class="analysis-grid even"><section class="panel"><p class="eyebrow">RACHA · ÚLTIMOS 5</p><h2>Momento de forma</h2>${formStrip(f.local)}${formStrip(f.visitante, true)}</section><section class="panel"><p class="eyebrow">CARA A CARA</p><h2>Historial directo</h2>${h2hSummary(f.cara_a_cara, f)}<button type="button" class="text-link" data-stats-tab="h2h">Ver los cruces ↗</button></section></div></div>`,
     forma: () => `<div class="analysis-grid even"><section class="panel"><p class="eyebrow">${esc(f.local.nombre.toUpperCase())}</p><h2>Últimos partidos</h2>${formList(f.local)}</section><section class="panel"><p class="eyebrow">${esc(f.visitante.nombre.toUpperCase())}</p><h2>Últimos partidos</h2>${formList(f.visitante)}</section></div>`,
@@ -1152,7 +1155,7 @@ function homeRealStrip() {
   const upcoming = [...games.filter(p => p.estado !== 'finished'), ...games.filter(p => p.estado === 'finished')].slice(0, 6);
   const card = p => {
     const st = estadoPartido(p);
-    const team = (t, away) => `<div class="real-team">${realMark(t.nombre, away)}<strong>${esc(t.nombre)}</strong>${t.posicion ? `<small>${posLabel(t.posicion)}</small>` : ''}${rachaDots(t.racha)}</div>`;
+    const team = (t, away) => `<div class="real-team">${realMark(t.nombre, away, false, t.escudo)}<strong>${esc(t.nombre)}</strong>${t.posicion ? `<small>${posLabel(t.posicion)}</small>` : ''}${rachaDots(t.racha)}</div>`;
     return `<button type="button" class="real-card" data-open-ficha="${esc(p.match_id)}"><span class="real-card-top"><span>${esc(p.liga.nombre)}</span><span>${st.tag ? `${st.tag} · ` : ''}${esc(st.main)}</span></span>${team(p.local)}${team(p.visitante, true)}<span class="real-card-link">Ver ficha ↗</span></button>`;
   };
   const body = agenda.status === 'loading' ? '<p class="rail-empty">Cargando partidos de hoy…</p>'

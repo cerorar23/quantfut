@@ -546,8 +546,11 @@ Lo que sí es matemática valiosa y NO está construido:
       `/web/partidos` y `/web/partidos/{id}` (`api/fichas.py`), vista
       «Partidos y estadísticas» y franja «Hoy en las ligas» en la portada.
       Sin probabilidades del mercado en la ficha (ver progreso).
-- [ ] **Propuesto al usuario (2026-09-27), pendiente de su sí: cargar los
-      partidos ya jugados de esta temporada de LaLiga 2 y Serie B.** Faltan
+- [x] **HECHO (2026-09-27, con el sí del usuario): cargados los partidos
+      ya jugados de esta temporada de LaLiga 2 (66) y Serie B (50)** con
+      `python -m qf.ingest.fixtures --temporada es.laliga2 it.serie_b`.
+      0 equipos nuevos, 0 duplicados. Y escudos: db/030, 271 descargados.
+      Texto original de la propuesta: Faltan
       ~90 y ~50 (anteriores al alta del 25-sep). Sin ellos, la forma de un
       descendido enseña sus partidos de mayo en Primera. Coste: 2 peticiones
       de calendario + estadísticas por partido; el modelo no los lee (ligas

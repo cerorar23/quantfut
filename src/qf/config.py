@@ -53,6 +53,9 @@ class Settings:
     model_version: str = os.getenv("MODEL_VERSION", "0.1.0")
     fs_version: str = os.getenv("FS_VERSION", "fs-0.1.0")
     artifact_dir: str = os.getenv("ARTIFACT_DIR", "/srv/quantfut/artifacts")
+    # Escudos descargados una vez de API-Football (ingest/standings.py) y
+    # servidos desde el propio dominio: la web no enlaza al proveedor.
+    escudos_dir: str = os.getenv("ESCUDOS_DIR", "/srv/quantfut/escudos")
 
     # Media vida del decaimiento temporal, en días.
     # 180 = un partido de hace 6 meses pesa la mitad que uno de hoy.
