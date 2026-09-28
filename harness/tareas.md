@@ -557,7 +557,10 @@ Lo que sí es matemática valiosa y NO está construido:
       `model_enabled = false`). Vía: insertarlos como programados con su
       `external_id` y dejar que `results.close_recent(hours_back=…)` los
       cierre por el camino normal.
-- [ ] **Avisado al usuario (2026-09-27): `/fair-price/{id}` es público y
+- [x] **HECHO (2026-09-28, lo pidió el usuario): `/fair-price` pasa a
+      `/v1/fair-price/{id}` con `SERVICE_TOKEN`.** Nadie lo consumía (ni
+      frontend ni tests); sin token responde 404. Aviso original:
+      `/fair-price/{id}` era público y
       devuelve `best_price` y `gap_pct`,** es decir, qué casa paga por encima
       del justo en cada partido: el criterio de picks en abierto. No se ha
       tocado; decidir si pasa a `/v1` (SERVICE_TOKEN) o se recorta.

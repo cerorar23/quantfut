@@ -2326,6 +2326,14 @@ los ratings de otro club.
   con ids de `/teams` 2023-2025 revisados a mano ('Atletico GO' puntuaba más
   con Atlético-MG). 0 equipos sin escudo entre los que jugaron en 3 años.
 
+## 2026-09-28 — `/fair-price` pasa a privado
+
+Decisión del usuario. `best_price` + `gap_pct` por partido es el criterio de
+picks entero: con él cualquiera ve qué casa paga ≥2% sobre el justo sin
+suscribirse. Ahora es `/v1/fair-price/{id}` con `SERVICE_TOKEN`; la ruta
+pública desaparece (404, igual que una ruta privada sin token, para no
+confirmar que existe). No lo consumía nada: ni el frontend ni otro módulo.
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la

@@ -391,7 +391,9 @@ clasificación, alineaciones y bajas, servida por `/web/partidos` y
 opinión del modelo: publicar el precio justo de Pinnacle de cada partido
 dejaría a cualquiera reproducir el criterio de picks.
 El backend expone `/track-record`, `/calibration`, `/chain`, `/picks/free`,
-`/v1/picks`, `/leagues`, `/teams`, `/matches/{id}` y las rutas `/web/*`. La integración de datos
+`/v1/picks`, `/v1/fair-price/{id}` (privado desde 2026-09-28: dice qué casa
+paga por encima del justo, que es el criterio), `/leagues`, `/teams`,
+`/matches/{id}` y las rutas `/web/*`. La integración de datos
 privados y suscripciones queda para después de la validación, en módulos del
 mismo FastAPI que conserven `SERVICE_TOKEN` fuera del navegador.
 

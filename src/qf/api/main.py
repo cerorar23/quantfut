@@ -466,10 +466,14 @@ def match_public(match_id: str):
     return {"match": m, "prediction": pred, "pick": pick}
 
 
-@publico.get("/fair-price/{match_id}")
+@privado.get("/fair-price/{match_id}", dependencies=[Depends(require_service)])
 def fair_price(match_id: str):
     """
     Precio JUSTO derivado del mercado sharp, y dónde las casas se apartan de él.
+
+    PRIVADO desde 2026-09-28 (antes era público en `/fair-price`): `best_price`
+    y `gap_pct` dicen qué casa paga por encima del justo en cada partido, que
+    es el criterio de picks entero. Con `SERVICE_TOKEN`, como `/v1/picks`.
 
     Es una salida distinta de `/matches/{id}`, y la diferencia es el producto
     entero. Esa devuelve lo que opina el modelo. Esta devuelve:
