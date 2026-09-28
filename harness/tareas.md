@@ -570,9 +570,8 @@ Lo que sí es matemática valiosa y NO está construido:
       ampliada (.env del servidor actualizado), guarda de 15 min, persistencia
       recalibrada, db/033 (10 ligas, 127 equipos nuevos, 43 reutilizados) y
       guardas en daily/train para equipos de ligas sin modelo en copas.
-      PENDIENTE del usuario: confirmar que sus suscriptores usan Betsson,
-      Coolbet, LeoVegas y Unibet; si no, quitarlas de `SOFT_BOOKS` (la sombra
-      las sigue midiendo igual).
+      El usuario confirmó (2026-09-28) Betsson y Coolbet; LeoVegas y Unibet
+      fuera de `SOFT_BOOKS` (la sombra las sigue midiendo igual).
       Diagnóstico previo (solo lectura): desde el 24-sep, 36 partidos; con la
       lista actual 8 con oferta, con todas las casas del feed 23. Cierre de
       Pinnacle: 10 de 10 partidos en sombra lo tienen (el "3 de 4" era un

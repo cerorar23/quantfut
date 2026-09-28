@@ -70,8 +70,8 @@ Dos consecuencias que hay que tener presentes al leer el resto del README:
    puerta aunque `PUBLISH_PICKS_ENABLED` se active por error.
    **Desde 2026-09-28** (para acelerar la muestra sin rebajar la puerta): la
    sombra mide TODAS las casas no exchange del snapshot, pero la puerta solo
-   cuenta las de `SOFT_BOOKS` (ampliada con Betsson, Coolbet, LeoVegas y
-   Unibet); ninguna oferta sale de un snapshot a menos de 15 min del inicio
+   cuenta las de `SOFT_BOOKS` (ampliada con Betsson y Coolbet, confirmadas
+   por el usuario); ninguna oferta sale de un snapshot a menos de 15 min del inicio
    (se liquidaría contra sí misma); la persistencia por casa se recalibra con
    la sombra con una regla fijada de antemano (`picks.mezclar`: la previa
    pesa como 100 partidos); y diez ligas más alimentan la sombra (db/033).

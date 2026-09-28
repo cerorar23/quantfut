@@ -2374,6 +2374,9 @@ oportunidades se miden por día.
   modelo: si no, se sellaría una predicción con ataque y defensa 0. Al
   introducir la guarda no excluía ningún partido del entrenamiento.
 
+- **Lista confirmada por el usuario:** sus clientes usan Betsson y Coolbet;
+  LeoVegas y Unibet salen de `SOFT_BOOKS` y se siguen midiendo sin contar.
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la
