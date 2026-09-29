@@ -2404,6 +2404,12 @@ tabla. La promoción sigue exigiendo CLV en sombra.
 - La cuota restante de API-Football llega como TEXTO en la cabecera; la
   primera pasada murió comparándola con un número (46 peticiones perdidas).
 
+- Resultado de la descarga: 4.555 partidos con XI (0 vacíos), 3.988 con 3
+  XI previos por equipo dentro del último año, entre 288 y 508 por liga. Las
+  copas no emparejaron (sus rivales no están en el catálogo); no hacen falta.
+  No se fuerza el entrenamiento: el mensual del 1-oct lo incluye y no hay
+  partidos de estas ligas hasta el 9-oct (parón de selecciones).
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la
