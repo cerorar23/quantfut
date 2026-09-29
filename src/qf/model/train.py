@@ -291,12 +291,14 @@ def train_and_register(new_version: str | None = None,
         val["ablations"] = {"ok": False,
                             "reason": f"No se pudieron ejecutar: {exc}"}
 
-    # El challenger de XI se entrena únicamente con predicciones realmente
-    # generadas antes del kickoff y alineaciones capturadas a tiempo. Si aún no
-    # hay muestra, el informe dice "collecting" y no se crea artefacto.
+    # El challenger de XI se entrena con predicciones generadas antes del
+    # kickoff (selladas, o fuera de muestra en este mismo walk-forward) y XI
+    # capturados a tiempo o, con autorización del usuario (2026-09-29),
+    # descargados después del partido (`lineups_historicas`). Si aún no hay
+    # muestra, el informe dice "collecting" y no se crea artefacto.
     lineup_uri = None
     try:
-        lineup_frame, lineup_readiness = load_lineup_training_frame()
+        lineup_frame, lineup_readiness = load_lineup_training_frame(oos)
         if lineup_frame.empty:
             lineup_report = {"ok": False, "status": "collecting",
                              "reason": "Aún no hay predicciones y XI históricos unidos"}

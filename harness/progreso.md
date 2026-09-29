@@ -2377,6 +2377,33 @@ oportunidades se miden por día.
 - **Lista confirmada por el usuario:** sus clientes usan Betsson y Coolbet;
   LeoVegas y Unibet salen de `SOFT_BOOKS` y se siguen midiendo sin contar.
 
+## 2026-09-29 — Fase 4: el ajuste por XI deja de esperar a diciembre
+
+Diagnóstico: todo estaba construido (captura de XI cada 5 min, challenger,
+cuatro brazos en sombra) pero el challenger nunca se había entrenado. Exige
+700 partidos con predicción sellada + XI capturado antes del inicio, y había
+4 y 21 (modelo activo desde el 27-sep, XI desde el 26-sep). En vivo llegaría
+hacia diciembre.
+
+Decisión del USUARIO (única excepción al punto en el tiempo, y acotada):
+alineaciones descargadas después del partido, en `lineups_historicas`
+(db/034), que SOLO lee el entrenamiento/validación del challenger. La
+predicción diaria, la sombra y `availability()` siguen con XI capturados
+antes del partido; hay un test que falla si alguno de esos módulos nombra la
+tabla. La promoción sigue exigiendo CLV en sombra.
+
+- Base: las predicciones fuera de muestra que `train.py` YA calcula (walk-
+  forward del último año, sin coste extra), ahora con la rho de su paso.
+- Una fila sellada con UN lado histórico no cuenta como sellada: su hora de
+  XI queda vacía y la regla estricta la descarta.
+- Encontrado de paso: si nadie tenía 3 XI previos, las features salían sin
+  columnas y el cruce reventaba; `train.py` lo tapaba como "no se pudo
+  preparar". Ahora devuelve "collecting" con su motivo real.
+- Un reentreno no promovido guardaba el challenger con otra versión y el
+  brazo de la sombra se quedaba sin artefacto: ahora usa el último validado.
+- La cuota restante de API-Football llega como TEXTO en la cabecera; la
+  primera pasada murió comparándola con un número (46 peticiones perdidas).
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la

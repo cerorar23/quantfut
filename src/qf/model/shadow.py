@@ -159,17 +159,31 @@ def _insert_shadow(match: dict, version: str, lam: float, mu: float,
     return shadow_id
 
 
+def _challenger_validado(version: str):
+    """
+    El challenger del modelo activo; si no existe (un reentreno no promovido
+    guarda el suyo con otra versión), el último validado fuera de muestra.
+    Sus coeficientes ajustan log(lambda) sobre cualquier base, así que siguen
+    valiendo con el modelo activo.
+    """
+    carpeta = Path(settings.artifact_dir)
+    propio = carpeta / f"lineup_{version}.pkl"
+    candidatos = ([propio] if propio.exists() else []) + sorted(
+        carpeta.glob("lineup_*.pkl"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for ruta in candidatos:
+        challenger = LineupLambdaChallenger.load(str(ruta))
+        if challenger.params and challenger.params.offline_validated:
+            return challenger
+    return None
+
+
 def capture_lineup_shadows() -> dict:
     """Registra base y, si existe, XI sobre las mismas cuotas posteriores al XI."""
     active = query_one("SELECT model_version FROM model_artifacts WHERE is_active LIMIT 1")
     if not active:
         return {"captured": 0, "reason": "sin modelo activo"}
     version = active["model_version"]
-    path = Path(settings.artifact_dir) / f"lineup_{version}.pkl"
-    challenger = LineupLambdaChallenger.load(str(path)) if path.exists() else None
-    if challenger and (not challenger.params
-                       or not challenger.params.offline_validated):
-        challenger = None
+    challenger = _challenger_validado(version)
 
     matches = query(
         """SELECT DISTINCT ON (m.match_id)

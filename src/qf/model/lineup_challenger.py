@@ -87,7 +87,11 @@ def build_lineup_features(matches: pd.DataFrame, lineups: pd.DataFrame,
                     values[f"{side}_missing_{pos.lower()}"] = float(
                         sum(positions.get(pid) == pos for pid in missing))
             if complete:
-                values["feature_as_of"] = max(captured_times)
+                # Un lado sin hora de captura (XI histórico, db/034) deja la
+                # fila sin hora: así nunca pasa por predicción sellada.
+                values["feature_as_of"] = (
+                    pd.NaT if any(pd.isna(t) for t in captured_times)
+                    else max(captured_times))
                 values["missing_diff"] = (values["home_missing_regulars"]
                                           - values["away_missing_regulars"])
                 values["continuity_diff"] = (values["home_lineup_continuity"]
@@ -269,8 +273,49 @@ def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
     return model, report
 
 
-def load_training_frame() -> tuple[pd.DataFrame, dict]:
-    """Une predicciones pre-kickoff, resultados y XI capturados a tiempo."""
+def _historical_matches(oos: pd.DataFrame) -> pd.DataFrame:
+    """
+    Partidos del walk-forward de `train.py` como base: sus lambdas son fuera
+    de muestra (modelo ajustado solo con partidos anteriores), igual de
+    honestas que una predicción sellada.
+    """
+    if oos is None or oos.empty:
+        return pd.DataFrame()
+    teams = pd.DataFrame(query(
+        """SELECT match_id, home_team_id, away_team_id FROM matches
+           WHERE match_id = ANY(%s)""", (list(oos["match_id"].dropna()),)))
+    if teams.empty:
+        return pd.DataFrame()
+    cols = ["match_id", "league_id", "kickoff_utc", "home_goals", "away_goals",
+            "lam", "mu"] + (["rho"] if "rho" in oos.columns else [])
+    out = oos[cols].rename(columns={"lam": "base_lam", "mu": "base_mu"})
+    out = out.merge(teams, on="match_id", how="inner")
+    out["base_generated_at"] = pd.NaT
+    out["fuente"] = "walk_forward"
+    return out
+
+
+def _historical_lineups() -> pd.DataFrame:
+    """XI de `lineups_historicas` (db/034). Sin hora de captura: no la tienen."""
+    rows = pd.DataFrame(query(
+        """SELECT match_id, side, starters FROM lineups_historicas
+           WHERE jsonb_array_length(starters) >= 11"""))
+    if not rows.empty:
+        rows["captured_at"] = pd.NaT
+        rows["fuente"] = "historico"
+    return rows
+
+
+def load_training_frame(oos: pd.DataFrame | None = None) -> tuple[pd.DataFrame, dict]:
+    """
+    Une predicciones pre-kickoff, resultados y XI.
+
+    En vivo: predicción sellada y XI capturado ANTES del inicio (punto en el
+    tiempo estricto). Desde 2026-09-29, con autorización del usuario, también
+    las predicciones fuera de muestra del walk-forward (`oos`) con los XI de
+    `lineups_historicas`, descargados después del partido. Solo aquí: esos XI
+    no llegan nunca a la predicción diaria ni a la sombra.
+    """
     matches = pd.DataFrame(query(
         """SELECT DISTINCT ON (m.match_id)
                   m.match_id, m.league_id, m.kickoff_utc,
@@ -289,12 +334,40 @@ def load_training_frame() -> tuple[pd.DataFrame, dict]:
            WHERE l.captured_at <= m.kickoff_utc
            ORDER BY l.match_id, l.side, l.captured_at DESC"""
     ))
+    if not matches.empty:
+        matches["fuente"] = "sellada"
+    if not lineups.empty:
+        lineups["fuente"] = "en_vivo"
+    hist_m, hist_l = _historical_matches(oos), _historical_lineups()
+    if not hist_m.empty:
+        # Si un partido tiene predicción sellada, manda la sellada.
+        hist_m = hist_m[~hist_m["match_id"].isin(
+            set(matches["match_id"]) if not matches.empty else set())]
+        matches = pd.concat([matches, hist_m], ignore_index=True)
+    if not hist_l.empty:
+        vivos = (set(zip(lineups["match_id"], lineups["side"]))
+                 if not lineups.empty else set())
+        hist_l = hist_l[[(m, s) not in vivos
+                         for m, s in zip(hist_l["match_id"], hist_l["side"])]]
+        lineups = pd.concat([lineups, hist_l], ignore_index=True)
     if matches.empty or lineups.empty:
         return pd.DataFrame(), readiness_report(matches, lineups)
+    matches["kickoff_utc"] = pd.to_datetime(matches["kickoff_utc"], utc=True)
     features = build_lineup_features(matches, lineups)
+    if features.empty:
+        # Nadie tiene aún 3 XI previos: sin columnas, el cruce revienta.
+        return pd.DataFrame(), readiness_report(matches, lineups)
     frame = matches.merge(features, on=["match_id", "league_id"], how="inner")
     if not frame.empty:
         frame["base_generated_at"] = pd.to_datetime(
             frame["base_generated_at"], utc=True)
-        frame = frame[frame["base_generated_at"] < frame["feature_as_of"]]
-    return frame, readiness_report(matches, lineups)
+        # Las filas históricas no tienen hora de captura (NaT): sin forzar el
+        # tipo, la columna queda como objeto y la comparación revienta.
+        frame["feature_as_of"] = pd.to_datetime(frame["feature_as_of"], utc=True)
+        # El punto en el tiempo se sigue exigiendo a todo lo sellado en vivo.
+        frame = frame[(frame["fuente"] == "walk_forward")
+                      | (frame["base_generated_at"] < frame["feature_as_of"])]
+    report = readiness_report(matches, lineups)
+    report["por_fuente"] = (frame["fuente"].value_counts().astype(int).to_dict()
+                            if not frame.empty else {})
+    return frame, report

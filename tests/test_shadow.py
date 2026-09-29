@@ -28,3 +28,26 @@ def test_shadow_espera_cuota_posterior_al_xi(monkeypatch):
     assert shadow._insert_shadow(match, "v1", 1.4, 1.1, 0.0,
                                  {"home": 0.5, "draw": 0.3, "away": 0.2},
                                  {}) is None
+
+
+def test_sin_challenger_propio_usa_el_ultimo_validado(monkeypatch, tmp_path):
+    import os
+    from dataclasses import replace
+
+    from qf.model import shadow
+    from qf.model.lineup_challenger import LineupLambdaChallenger, LineupParams
+
+    def guardar(nombre, validado, mtime):
+        c = LineupLambdaChallenger(LineupParams([0.0], [1.0], [0.0, 0.0], [0.0, 0.0],
+                                                -0.05, 0.5, 700, validado))
+        ruta = tmp_path / nombre
+        c.save(str(ruta))
+        os.utime(ruta, (mtime, mtime))
+
+    guardar("lineup_viejo.pkl", True, 1_000)
+    guardar("lineup_nuevo_sin_validar.pkl", False, 2_000)
+    monkeypatch.setattr(shadow, "settings", replace(shadow.settings, artifact_dir=str(tmp_path)))
+    elegido = shadow._challenger_validado("version_activa_sin_artefacto")
+    assert elegido is not None and elegido.params.offline_validated
+    guardar("lineup_version_activa.pkl", False, 3_000)
+    assert shadow._challenger_validado("version_activa").params.offline_validated

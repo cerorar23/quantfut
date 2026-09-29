@@ -117,6 +117,28 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       xG. `mx.liga_mx`/`ar.primera`/`pt.primeira` ya confirmadas
       (`KNOWN_INJURY_COVERAGE_GAPS`) no vuelven a alertar cada día; una liga
       NUEVA con el mismo patrón sí dispara el chequeo diario.
+- [ ] **EN CURSO (2026-09-29, decisión del usuario: "sí, con límites") —
+      Entrenar YA el ajuste por XI con alineaciones históricas.** Bloqueo
+      medido: el challenger exige 700 partidos con predicción sellada + XI
+      capturado antes del inicio; había 4 y 21 (modelo activo desde el
+      27-sep, XI desde el 26-sep): llegaría hacia diciembre. Plan:
+      1. [ ] db/034 `lineups_historicas`, tabla APARTE: ni la sombra ni la
+         predicción diaria la leen; solo el entrenamiento/validación del
+         challenger. El XI se descarga tras el partido (el publicado a T-60
+         casi siempre coincide): esa es la excepción al punto en el tiempo
+         que el usuario autorizó, y no va más allá.
+      2. [ ] `ingest/lineups_historicas.py`: empareja los partidos del último
+         año de las ligas con modelo con su fixture de API-Football (por
+         `af_team_id` o alias exacto, ±36 h) y baja su XI. Reanudable, con
+         reserva de cuota para la operación diaria.
+      3. [ ] El challenger se entrena con las predicciones fuera de muestra
+         que `train.py` YA calcula (walk-forward del último año, ahora con su
+         rho) + esos XI, además de los partidos en vivo. Mismas exigencias de
+         validación (RPS, log-loss, ECE, ≥2 ligas) y promoción solo con CLV
+         en sombra.
+      4. [ ] La sombra usa el último challenger validado si el del modelo
+         activo no existe (un reentreno no promovido dejaba el brazo sin
+         artefacto).
 - [ ] **Validar el ajuste de XI con datos nuevos.** El challenger que estima
       ajustes separados sobre `log(lambda_home)` y `log(lambda_away)` y su
       ejecución en sombra ya existen, pero las tablas de predicciones y XI

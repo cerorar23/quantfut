@@ -98,6 +98,9 @@ def walk_forward_oos(df: pd.DataFrame, start_date, step_days: int = 30,
                 # los ~150 mercados sigan siendo coherentes entre sí.
                 "lam": pred["_meta"]["home_lambda"],
                 "mu": pred["_meta"]["away_lambda"],
+                # La rho de ESTE paso: el challenger de XI la necesita para no
+                # usar la estimada después del partido.
+                "rho": m.params.rho,
                 "mk_home": mk[0], "mk_draw": mk[1], "mk_away": mk[2],
                 "outcome": 0 if hg > ag else 1 if hg == ag else 2,
                 "both_known": pred["_meta"]["both_teams_known"],
