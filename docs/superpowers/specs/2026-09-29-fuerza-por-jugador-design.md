@@ -58,8 +58,11 @@ Antes de cada partido, dos valores por jugador, calculados SOLO con partidos
 anteriores:
 
 - Ofensivo por 90: combinación de tiros, tiros a puerta, pases clave, goles y
-  asistencias. Pesos estimados con los datos (cuánto predice cada
-  estadística los goles futuros del equipo), no puestos a mano.
+  asistencias. Pesos estimados con los datos, no puestos a mano: regresión
+  de Poisson de los goles del equipo en un partido sobre la suma, en su XI,
+  de cada estadística por 90 (calculada con partidos PREVIOS). Se ajusta solo
+  con el 70 % de entrenamiento; el 30 % de validación nunca toca los pesos.
+  El defensivo, igual con los goles encajados.
 - Defensivo por 90: entradas, intercepciones, duelos ganados y, en porteros,
   paradas. Se espera que pese poco: las estadísticas defensivas son débiles.
 
