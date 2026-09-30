@@ -23,6 +23,7 @@ from datetime import datetime, timedelta, timezone
 from ..db import execute, query
 from . import api_football as af
 from .estadisticas import normalizar_estadisticas
+from .estadisticas_jugador import capturar as capturar_jugadores
 
 log = logging.getLogger(__name__)
 
@@ -61,14 +62,19 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
     """
     since = datetime.now(timezone.utc) - timedelta(hours=hours_back)
     pending = query(
-        """SELECT match_id, league_id, kickoff_utc,
-                  external_ids ->> 'api_football' AS af_id
-           FROM matches
-           WHERE status IN ('scheduled', 'live', 'postponed')
-             AND kickoff_utc < now() - interval '105 minutes'
-             AND kickoff_utc > %s
-             AND external_ids ? 'api_football'
-             AND (%s::text[] IS NULL OR league_id = ANY(%s))""",
+        """SELECT m.match_id, m.league_id, m.kickoff_utc,
+                  m.external_ids ->> 'api_football' AS af_id,
+                  l.model_enabled,
+                  th.af_team_id AS home_af, ta.af_team_id AS away_af
+           FROM matches m
+           JOIN leagues l ON l.league_id = m.league_id
+           JOIN teams th ON th.team_id = m.home_team_id
+           JOIN teams ta ON ta.team_id = m.away_team_id
+           WHERE m.status IN ('scheduled', 'live', 'postponed')
+             AND m.kickoff_utc < now() - interval '105 minutes'
+             AND m.kickoff_utc > %s
+             AND m.external_ids ? 'api_football'
+             AND (%s::text[] IS NULL OR m.league_id = ANY(%s))""",
         (since, leagues, leagues),
     )
     if not pending:
@@ -77,7 +83,7 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
 
     by_id = {r["af_id"]: r for r in pending}
     ids = list(by_id.keys())
-    closed = voided = still_open = 0
+    closed = voided = still_open = jugadores = 0
 
     # API-Football acepta hasta 20 ids por llamada
     for chunk_start in range(0, len(ids), 20):
@@ -151,6 +157,16 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
                  row["match_id"]),
             )
             closed += 1
+            # Fuerza por jugador (db/035): una petición más, solo en ligas con
+            # modelo. Un fallo aquí no debe dejar el partido sin cerrar.
+            if row["model_enabled"]:
+                try:
+                    capturar_jugadores(row["match_id"], int(af_id),
+                                       row["home_af"], row["away_af"])
+                    jugadores += 1
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("Estadísticas por jugador de %s: %s",
+                                row["match_id"], exc)
 
     # Encadenar la liquidación: cerrar un partido sin liquidar sus picks deja
     # el track record desactualizado hasta el siguiente cron.
@@ -160,7 +176,7 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
         settled = settle_pending()
 
     result = {"closed": closed, "voided": voided, "still_open": still_open,
-              "settled": settled}
+              "jugadores": jugadores, "settled": settled}
     af.record_health("results", closed, True, result)
     log.info("Cierre de partidos: %s", result)
     return result

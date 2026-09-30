@@ -93,3 +93,35 @@ def test_el_historico_para_en_la_reserva(monkeypatch):
     monkeypatch.setattr(ej.af, "record_health", lambda *a, **k: None)
     r = ej.run_historico(reserva=2500)
     assert hechos == ["m0", "m1"] and r["partidos"] == 2 and r["pendientes"] == 5
+
+
+def test_al_cerrar_se_capturan_solo_ligas_con_modelo(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from qf.ingest import results
+    ko = datetime.now(timezone.utc) - timedelta(hours=3)
+    pendientes = [
+        {"match_id": "con", "league_id": "es.laliga", "kickoff_utc": ko, "af_id": "10",
+         "model_enabled": True, "home_af": 538, "away_af": 542},
+        {"match_id": "sin", "league_id": "cl.primera", "kickoff_utc": ko, "af_id": "11",
+         "model_enabled": False, "home_af": 1, "away_af": 2}]
+
+    def fx(fid):
+        return {"fixture": {"id": fid, "status": {"short": "FT"}},
+                "goals": {"home": 1, "away": 0}, "score": {"halftime": {}},
+                "teams": {"home": {"id": 538}, "away": {"id": 542}}}
+
+    monkeypatch.setattr(results, "query", lambda sql, params=(): pendientes)
+    monkeypatch.setattr(results, "execute", lambda sql, params=(): 1)
+    monkeypatch.setattr(results.af, "get", lambda ep, p: ([fx(10), fx(11)], {})
+                        if ep == "fixtures" else ([], {}))
+    monkeypatch.setattr(results.af, "check_quota", lambda meta: None)
+    monkeypatch.setattr(results.af, "record_health", lambda *a, **k: None)
+    capturados = []
+    monkeypatch.setattr(results, "capturar_jugadores",
+                        lambda m, f, h, a: capturados.append((m, f, h, a)) or (11, {}))
+    import qf.eval.clv as clv
+    monkeypatch.setattr(clv, "settle_pending", lambda: {})
+    r = results.close_recent(with_stats=False)
+    assert capturados == [("con", 10, 538, 542)]
+    assert r["closed"] == 2 and r["jugadores"] == 1
