@@ -47,6 +47,17 @@ from .structure import evaluate as structure_evaluate
 log = logging.getLogger(__name__)
 
 
+
+def guardar_oos(oos: pd.DataFrame, version: str, carpeta: str | None = None) -> str:
+    """
+    Guarda las predicciones fuera de muestra del walk-forward. La Fase B de
+    la fuerza por jugador compara brazos del XI sobre ellas sin repetir un
+    entrenamiento (docs/superpowers/specs/2026-09-29-fuerza-por-jugador-design.md).
+    """
+    ruta = f"{carpeta or settings.artifact_dir}/oos_{version}.pkl"
+    oos.to_pickle(ruta)
+    return ruta
+
 def load_training_data(league_id: str | None = None,
                        years: int = 12) -> pd.DataFrame:
     since = datetime.now(timezone.utc) - timedelta(days=365 * years)
@@ -214,6 +225,7 @@ def train_and_register(new_version: str | None = None,
     Path(settings.artifact_dir).mkdir(parents=True, exist_ok=True)
     path = f"{settings.artifact_dir}/dc_{version}.pkl"
     model.save(path)
+    guardar_oos(oos, version)
 
     # Calibración: se ajusta sobre las predicciones FUERA DE MUESTRA y solo se
     # guarda si supera su propia puerta de validación. Si no la supera, el
