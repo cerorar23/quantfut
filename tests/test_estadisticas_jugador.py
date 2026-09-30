@@ -55,3 +55,41 @@ def test_sin_ids_de_equipo_usa_el_orden_del_proveedor():
 
 def test_respuesta_vacia():
     assert parse_jugadores([], 538, 542) == []
+
+
+def test_capturar_guarda_filas_y_registra_el_intento(monkeypatch):
+    from qf.ingest import estadisticas_jugador as ej
+    llamadas, sqls = [], []
+    monkeypatch.setattr(ej.af, "get", lambda ep, p: (llamadas.append((ep, p)) or
+                                                      (_resp(), {"quota_remaining": "5000"})))
+    monkeypatch.setattr(ej, "executemany", lambda sql, filas: sqls.append(("many", len(filas))))
+    monkeypatch.setattr(ej, "execute", lambda sql, params: sqls.append(("log", params)))
+    n, meta = ej.capturar("m1", 777, 538, 542)
+    assert llamadas == [("fixtures/players", {"fixture": 777})]
+    assert n == 3 and ("many", 3) in sqls and ("log", ("m1", 3)) in sqls
+
+
+def test_sin_datos_se_registra_para_no_repetir(monkeypatch):
+    from qf.ingest import estadisticas_jugador as ej
+    sqls = []
+    monkeypatch.setattr(ej.af, "get", lambda ep, p: ([], {"quota_remaining": "5000"}))
+    monkeypatch.setattr(ej, "executemany", lambda sql, filas: sqls.append("many"))
+    monkeypatch.setattr(ej, "execute", lambda sql, params: sqls.append(params))
+    assert ej.capturar("m1", 777, 538, 542)[0] == 0
+    assert sqls == [("m1", 0)]
+
+
+def test_el_historico_para_en_la_reserva(monkeypatch):
+    from qf.ingest import estadisticas_jugador as ej
+    pendientes = [{"match_id": f"m{i}", "af_fixture_id": i, "home_af": 538,
+                   "away_af": 542} for i in range(5)]
+    monkeypatch.setattr(ej, "query", lambda sql, params=(): pendientes)
+    hechos = []
+
+    def capturar(match_id, fixture, h, a):
+        hechos.append(match_id)
+        return 20, {"quota_remaining": "2400" if match_id == "m1" else "3000"}
+    monkeypatch.setattr(ej, "capturar", capturar)
+    monkeypatch.setattr(ej.af, "record_health", lambda *a, **k: None)
+    r = ej.run_historico(reserva=2500)
+    assert hechos == ["m0", "m1"] and r["partidos"] == 2 and r["pendientes"] == 5
