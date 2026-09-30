@@ -2410,6 +2410,26 @@ tabla. La promoción sigue exigiendo CLV en sombra.
   No se fuerza el entrenamiento: el mensual del 1-oct lo incluye y no hay
   partidos de estas ligas hasta el 9-oct (parón de selecciones).
 
+## 2026-09-30 — Fuerza por jugador, Fase A: los datos
+
+Diseño aprobado por el usuario sección a sección (valor por contribución por
+90 min con decaimiento, encogimiento por posición y pesos estimados solo con
+el tramo de entrenamiento; la nota del proveedor solo como comparación;
+plus-minus descartado por coste y ruido con esta muestra). Calendario del
+usuario: datos ahora, modelo después del reentreno del 1-oct, para poder
+compararlo con el XI simple.
+
+- No necesita excepción al punto en el tiempo: son estadísticas de partidos
+  ya jugados; la Fase B solo usará, para el día D, partidos anteriores a D.
+- `estadisticas_jugador_log` registra también los intentos vacíos: sin él,
+  cada pasada reintentaría para siempre los partidos que el proveedor no
+  cubre (hubo 11).
+- El lado de cada bloque se decide por el id de equipo de API-Football, no
+  por el orden (en `/fixtures/players` no está garantizado).
+- Descubierto en los datos: el campo `substitute` del proveedor no es fiable,
+  hay lados con 16 "titulares". La Fase B tomará el once de las alineaciones.
+- Coste diario nuevo: 1 petición por partido cerrado en ligas con modelo.
+
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
 Síntoma: el `--bootstrap` rechazaba cada noche ("mercado de 252 días") y la

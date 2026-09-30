@@ -144,6 +144,17 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       4. [x] La sombra usa el último challenger validado si el del modelo
          activo no existe (un reentreno no promovido dejaba el brazo sin
          artefacto).
+- [ ] **Fuerza por jugador (diseño aprobado 2026-09-29,
+      `docs/superpowers/specs/2026-09-29-fuerza-por-jugador-design.md`).**
+      - [x] Fase A, datos (plan `docs/superpowers/plans/2026-09-29-fuerza-por-jugador-fase-a-datos.md`):
+        db/035, `ingest/estadisticas_jugador.py`, captura al cerrar en
+        `results.py`. Histórico descargado el 30-sep: 4.556 partidos, 141.458
+        filas de jugador, 11 partidos sin datos.
+      - [ ] Fase B, tras el reentreno del 1-oct: plan propio con
+        `model/player_ratings.py`, brazos "XI con valor" y "XI con nota",
+        validación contra el XI simple y sombra. OJO: el once se toma de las
+        alineaciones, no del campo `titular` (el proveedor marca hasta 16
+        "titulares" por lado).
 - [ ] **Validar el ajuste de XI con datos nuevos.** El challenger que estima
       ajustes separados sobre `log(lambda_home)` y `log(lambda_away)` y su
       ejecución en sombra ya existen, pero las tablas de predicciones y XI
