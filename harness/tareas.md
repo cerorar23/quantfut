@@ -158,12 +158,12 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
         cambia la lectura.
       - [ ] ~~Fase B2, sombra en vivo~~ DESCARTADA mientras el reentreno
         mensual no muestre `player_value.valor.gana_al_simple = true`.
-- [ ] **DECISIÓN DEL USUARIO PENDIENTE — criterio de ECE del XI.** El
-      reentreno del 1-oct dejó el XI simple en sombra solo por el ECE
-      (0,03041 → 0,03096) con RPS, log-loss y 8 de 11 ligas mejorando. En
-      simulación (1-oct), comparar el ECE de dos brazos con 300-1.100 filas
-      de validación se ordena casi al azar: una señal real fuerte pasa la
-      puerta 2-6 de cada 8 veces. No se toca el criterio sin el usuario.
+- [x] **HECHO (1-oct, decisión del usuario: opción B) — criterio de ECE
+      del XI.** Ahora la calibración no puede empeorar más allá de su propio
+      ruido (remuestreo pareado). El XI simple del reentreno del 1-oct queda
+      validado y la sombra lo usa desde el 9-oct (vuelta de las ligas).
+      Comprobar entonces `lineup_challenger_available: true` y que se
+      registren los cuatro brazos; nada se publica sin CLV en sombra.
 - [ ] **Validar el ajuste de XI con datos nuevos.** El challenger que estima
       ajustes separados sobre `log(lambda_home)` y `log(lambda_away)` y su
       ejecución en sombra ya existen, pero las tablas de predicciones y XI

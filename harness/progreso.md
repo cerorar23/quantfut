@@ -2410,6 +2410,30 @@ tabla. La promoción sigue exigiendo CLV en sombra.
   No se fuerza el entrenamiento: el mensual del 1-oct lo incluye y no hay
   partidos de estas ligas hasta el 9-oct (parón de selecciones).
 
+## 2026-10-01 — Criterio de ECE del XI: ruido, no orden (decisión del usuario)
+
+Opción B elegida por el usuario. Antes: el XI se validaba solo si
+`ECE_después <= ECE_antes`. Ahora: remuestreo pareado por partido (1.000,
+semilla 0) de ECE_después − ECE_antes; solo "empeora" si el percentil 2,5 %
+es > 0. Se informa `ece_delta_ic95` y `ece_empeora`. RPS, log-loss y ≥2 ligas
+no cambian.
+
+- Por qué: simulado con base variable y 3.600 filas, una señal real pasaba la
+  puerta antigua 2-6 de 8 veces; con la nueva, 8-10 de 10 (efecto 0,1-0,4).
+  Ruido puro: 0 de 10 con 1 señal, 1 de 10 con 14 (frenan RPS, log-loss y
+  ligas; y la sombra todavía exige CLV antes de publicar nada).
+- Transparencia: el criterio se cambió después de ver que el XI simple
+  fallaba solo por el ECE (+0,00055). La regla es la estándar (no
+  significativo al 95 %), no un umbral ajustado a ese número, y aplica igual
+  a los brazos de la fuerza por jugador (XI con valor sigue sin validar:
+  falla por RPS y log-loss).
+- Reevaluado con `python -m qf.model.lineup_challenger` sobre
+  `oos_2026.10.01-030007.pkl` (mismos números que el reentreno: el ajuste es
+  determinista): IC95 del cambio de ECE [−0,00741, +0,00582], `ok: true`.
+  `lineup_2026.10.01-030007.pkl` reescrito; el anterior, en
+  `~/respaldo_20261002_b1/`. `model_artifacts.val_metrics` no se reescribe:
+  conserva lo que dijo el reentreno con el criterio de entonces.
+
 ## 2026-10-01 — Reentreno mensual y fuerza por jugador (Fase B1)
 
 Reentreno 2026.10.01-030007: NO se activa ("No mejora el baseline Elo sobre

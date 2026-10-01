@@ -432,8 +432,11 @@ señal aunque sea nominalmente positivo.
 
 Resultado del 1-oct-2026 (3.650 partidos con XI, alineaciones históricas solo
 para entrenar): el XI simple mejora RPS (0,21817 → 0,21678), log-loss y 8 de 11
-ligas, pero no la calibración (ECE 0,03041 → 0,03096), así que sigue en sombra
-sin validar. La fuerza por jugador (`model/player_ratings.py`,
+ligas, y la calibración solo empeora dentro de su ruido (ECE 0,03041 →
+0,03096; IC95 del cambio [−0,0074, +0,0058]). Desde el 1-oct la puerta de ECE
+del XI usa ese remuestreo en vez de comparar dos números sueltos (decisión del
+usuario), así que el XI simple queda validado offline y entra en la sombra; sigue
+sin publicarse hasta demostrar CLV. La fuerza por jugador (`model/player_ratings.py`,
 `model/player_value.py`) se midió sobre las mismas filas: "XI con valor"
 empeora incluso a la base (RPS 0,21912) y no se usa; la comparación se repite
 en cada reentreno mensual.
