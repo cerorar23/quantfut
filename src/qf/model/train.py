@@ -38,6 +38,7 @@ from .lineup_challenger import (
 )
 from .meta import fit_and_validate as meta_fit_and_validate
 from .multinomial import fit_and_validate as multinomial_fit_and_validate
+from .player_value import evaluar as player_value_evaluar
 from .multinomial import run_ablations
 from ..eval.clv import clv_report
 from .promotion import MARKET_MAX_AGE_DAYS, evaluate_base_promotion
@@ -325,6 +326,15 @@ def train_and_register(new_version: str | None = None,
         lineup_report = {"ok": False, "status": "collecting",
                          "reason": f"No se pudo preparar: {exc}"}
     val["lineup_challenger"] = lineup_report
+
+    # Fuerza por jugador (Fase B1): XI con valor y XI con nota contra el XI
+    # simple, sobre las mismas filas. Solo informe y artefactos; nunca bloquea
+    # el despliegue del modelo.
+    try:
+        player_value_report = player_value_evaluar(oos, float(model.params.rho), version)
+    except Exception as exc:  # noqa: BLE001
+        player_value_report = {"ok": False, "status": "error", "reason": str(exc)}
+    val["player_value"] = player_value_report
 
     # Puerta final. Las métricas antiguas solo se comparan si su firma de
     # observaciones coincide; comparar ventanas diferentes sería falsa

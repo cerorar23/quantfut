@@ -82,3 +82,11 @@ def test_filas_incompletas_quedan_fuera_de_los_tres():
     d.loc[:9, "home_d_tiros"] = np.nan
     informe, _ = comparar(d, rho=-0.05)
     assert informe["n_filas"] == 990
+
+
+def test_train_llama_a_la_comparacion_y_no_se_cae_si_falla():
+    from pathlib import Path
+    fuente = (Path(__file__).resolve().parents[1] / "src/qf/model/train.py").read_text(encoding="utf-8")
+    assert 'val["player_value"]' in fuente
+    bloque = fuente[fuente.index('val["player_value"]') - 600:fuente.index('val["player_value"]')]
+    assert "player_value_evaluar(oos" in bloque and "except Exception" in bloque
