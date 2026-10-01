@@ -172,7 +172,10 @@ def _challenger_validado(version: str):
         carpeta.glob("lineup_*.pkl"), key=lambda p: p.stat().st_mtime, reverse=True)
     for ruta in candidatos:
         challenger = LineupLambdaChallenger.load(str(ruta))
-        if challenger.params and challenger.params.offline_validated:
+        # Los brazos de la fuerza por jugador (lineup_valor_, lineup_nota_)
+        # comparten prefijo pero usan otras señales: no son el XI simple.
+        if (challenger.params and challenger.params.offline_validated
+                and challenger.params.features == LINEUP_FEATURES):
             return challenger
     return None
 

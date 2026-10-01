@@ -51,3 +51,25 @@ def test_sin_challenger_propio_usa_el_ultimo_validado(monkeypatch, tmp_path):
     assert elegido is not None and elegido.params.offline_validated
     guardar("lineup_version_activa.pkl", False, 3_000)
     assert shadow._challenger_validado("version_activa").params.offline_validated
+
+
+def test_la_sombra_no_toma_un_brazo_de_valor_por_el_xi_simple(monkeypatch, tmp_path):
+    import os
+    from dataclasses import replace
+
+    from qf.model import shadow
+    from qf.model.lineup_challenger import LINEUP_FEATURES, LineupLambdaChallenger, LineupParams
+
+    def guardar(nombre, features, mtime):
+        n = len(features)
+        c = LineupLambdaChallenger(LineupParams([0.0] * n, [1.0] * n, [0.0] * (n + 1),
+                                                [0.0] * (n + 1), -0.05, 0.5, 700, True,
+                                                list(features)))
+        ruta = tmp_path / nombre
+        c.save(str(ruta))
+        os.utime(ruta, (mtime, mtime))
+
+    guardar("lineup_v1.pkl", LINEUP_FEATURES, 1_000)
+    guardar("lineup_valor_v2.pkl", ["home_d_tiros"], 2_000)
+    monkeypatch.setattr(shadow, "settings", replace(shadow.settings, artifact_dir=str(tmp_path)))
+    assert shadow._challenger_validado("v2").params.features == LINEUP_FEATURES
