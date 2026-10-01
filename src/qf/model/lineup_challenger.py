@@ -201,6 +201,27 @@ def _probabilities(lam: np.ndarray, mu: np.ndarray,
     return np.asarray(rows, dtype=float)
 
 
+def _ece_empeora(antes: np.ndarray, despues: np.ndarray, onehot: np.ndarray,
+                 n_boot: int = 1000, semilla: int = 0) -> tuple[bool, list[float]]:
+    """
+    Decisión del usuario (1-oct-2026): la calibración no puede empeorar más
+    allá de su propio ruido. Remuestreo pareado por partido de
+    ECE_después − ECE_antes; empeora solo si el percentil 2,5 % es > 0. Con
+    300-1.100 filas de validación, comparar dos ECE sin más se ordenaba casi
+    al azar.
+    """
+    rng = np.random.default_rng(semilla)
+    n = len(onehot)
+    difs = np.empty(n_boot)
+    for b in range(n_boot):
+        i = rng.integers(0, n, n)
+        difs[b] = (ece(despues[i].ravel(), onehot[i].ravel())
+                   - ece(antes[i].ravel(), onehot[i].ravel()))
+    ic = [round(float(np.percentile(difs, 2.5)), 5),
+          round(float(np.percentile(difs, 97.5)), 5)]
+    return bool(ic[0] > 0), ic
+
+
 def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
                      holdout_frac: float = 0.30, min_fit: int = 500,
                      min_val: int = 200, l2: float = 10.0,
@@ -253,6 +274,9 @@ def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
         "ece_after": round(ece(after.ravel(), onehot.ravel()), 5),
         "promotion_blocked_until_clv": True,
     }
+    ece_peor, ece_ic = _ece_empeora(before, after, onehot)
+    report["ece_delta_ic95"] = ece_ic
+    report["ece_empeora"] = ece_peor
     league_report = {}
     improved_leagues = 0
     for league, group in val.groupby("league_id"):
@@ -269,7 +293,7 @@ def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
     report["leagues_improved"] = improved_leagues
     improved = (report["rps_after"] < report["rps_before"]
                 and report["log_loss_after"] < report["log_loss_before"]
-                and report["ece_after"] <= report["ece_before"]
+                and not ece_peor
                 and improved_leagues >= 2)
     report["ok"] = bool(improved)
     model.params.offline_validated = bool(improved)
@@ -374,3 +398,27 @@ def load_training_frame(oos: pd.DataFrame | None = None) -> tuple[pd.DataFrame, 
     report["por_fuente"] = (frame["fuente"].value_counts().astype(int).to_dict()
                             if not frame.empty else {})
     return frame, report
+
+
+if __name__ == "__main__":
+    # Reevalúa el XI con el walk-forward guardado por el último reentreno
+    # (`oos_<version>.pkl`) y guarda `lineup_<version>.pkl`, sin repetir el
+    # entrenamiento completo. Lo mismo que hace `train.py` en ese paso.
+    import glob
+    import json
+    import os
+
+    from ..config import settings
+    from ..db import query_one
+
+    ruta = max(glob.glob(f"{settings.artifact_dir}/oos_*.pkl"), key=os.path.getmtime)
+    version = os.path.basename(ruta)[len("oos_"):-len(".pkl")]
+    fila = query_one("SELECT params->>'rho' AS rho FROM model_artifacts "
+                     "WHERE model_version = %s", (version,))
+    frame, readiness = load_training_frame(pd.read_pickle(ruta))
+    modelo, informe = fit_and_validate(frame, rho=float(fila["rho"]))
+    if modelo is not None:
+        modelo.save(f"{settings.artifact_dir}/lineup_{version}.pkl")
+    informe["readiness"] = readiness
+    print(json.dumps({"version": version, **informe}, indent=2, ensure_ascii=False,
+                     default=str))

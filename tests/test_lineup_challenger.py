@@ -138,3 +138,22 @@ def test_fit_and_validate_usa_las_senales_que_se_le_pasan():
     assert modelo.params.features == ["home_d_tiros"]
     assert modelo.params.beta_home[1] > 0
     assert informe["n_fit"] == 560
+
+
+def test_ece_solo_empeora_si_el_ruido_no_lo_explica():
+    """Decisión del usuario (1-oct-2026, opción B): la calibración no puede
+    empeorar más allá de su propio ruido, medido por remuestreo pareado."""
+    import numpy as np
+
+    from qf.model.lineup_challenger import _ece_empeora
+    rng = np.random.default_rng(3)
+    n = 1000
+    antes = rng.dirichlet([4, 3, 3], size=n)
+    resultados = np.array([rng.choice(3, p=p) for p in antes])
+    onehot = np.eye(3)[resultados]
+    igual, ic = _ece_empeora(antes, antes.copy(), onehot)
+    assert igual is False and ic[0] <= 0 <= ic[1]
+    sesgado = antes * np.array([1.6, 0.7, 0.7])
+    sesgado /= sesgado.sum(axis=1, keepdims=True)
+    peor, ic = _ece_empeora(antes, sesgado, onehot)
+    assert peor is True and ic[0] > 0
