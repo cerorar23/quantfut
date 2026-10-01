@@ -9,6 +9,8 @@ valores y solo después AÑADE las estadísticas de ese partido.
 """
 from __future__ import annotations
 
+from collections import defaultdict, deque
+
 import numpy as np
 import pandas as pd
 
@@ -87,3 +89,92 @@ class Acumulador:
             return float("nan")
         previa = p[_N + 2] / p[_N + 1] if p[_N + 1] > 0 else v[_N + 2] / v[_N + 1]
         return float((v[_N + 2] + MINUTOS_PREVIA * previa) / (v[_N + 1] + MINUTOS_PREVIA))
+
+
+LADOS = ("home", "away")
+VALOR_FEATURES = [f"{lado}_d_{e}" for lado in LADOS for e in ESTADISTICAS]
+NOTA_FEATURES = ["home_d_nota", "away_d_nota"]
+
+
+def _xi(starters) -> dict[int, str | None]:
+    out = {}
+    for p in starters or []:
+        if p.get("player_id"):
+            out[int(p["player_id"])] = (str(p.get("pos") or "").upper()[:1] or None)
+    return out
+
+
+def _habitual(historia: deque) -> dict[int, str | None]:
+    """Los 11 más frecuentes en los últimos XI; a igualdad, el más reciente."""
+    cuenta: dict[int, int] = defaultdict(int)
+    ultimo: dict[int, int] = {}
+    pos: dict[int, str | None] = {}
+    for i, xi in enumerate(historia):
+        for pid, p in xi.items():
+            cuenta[pid] += 1
+            ultimo[pid] = i
+            pos[pid] = p or pos.get(pid)
+    orden = sorted(cuenta, key=lambda pid: (-cuenta[pid], -ultimo[pid]))[:11]
+    return {pid: pos[pid] for pid in orden}
+
+
+def _suma(acc: Acumulador, xi: dict[int, str | None]) -> tuple[np.ndarray, float]:
+    tasas = [acc.tasas(pid, pos) for pid, pos in xi.items()]
+    notas = [acc.nota(pid, pos) for pid, pos in xi.items()]
+    notas = [n for n in notas if not np.isnan(n)]
+    return (np.sum(tasas, axis=0) if tasas else np.zeros(len(ESTADISTICAS)),
+            float(np.mean(notas)) if notas else float("nan"))
+
+
+def build_value_features(matches: pd.DataFrame, lineups: pd.DataFrame,
+                         stats: pd.DataFrame, vida_media_dias: float = 180.0,
+                         lookback: int = 5, max_desconocidos: int = 3) -> pd.DataFrame:
+    """
+    Por partido y lado: valor del XI de hoy menos el del XI habitual, por
+    estadística, más la diferencia de nota media. Recorre el calendario en
+    orden: LEE a la hora de inicio y AÑADE el partido después, así un
+    partido nunca ve estadísticas ni alineaciones suyas ni posteriores.
+    """
+    cols = ["match_id", *VALOR_FEATURES, *NOTA_FEATURES]
+    if matches.empty or lineups.empty:
+        return pd.DataFrame(columns=cols)
+    ms = matches.copy()
+    ms["kickoff_utc"] = pd.to_datetime(ms["kickoff_utc"], utc=True)
+    xi_de = {(r["match_id"], r["side"]): _xi(r["starters"]) for _, r in lineups.iterrows()}
+    stats_de = ({mid: g.to_dict("records") for mid, g in stats.groupby("match_id")}
+                if not stats.empty else {})
+    historias: dict[object, deque] = defaultdict(lambda: deque(maxlen=lookback))
+    acc = Acumulador(vida_media_dias)
+    filas = []
+    for ko, grupo in ms.sort_values(["kickoff_utc", "match_id"]).groupby("kickoff_utc", sort=True):
+        acc.avanzar(ko)
+        pendientes = []
+        for _, m in grupo.iterrows():
+            valores, completo = {"match_id": m["match_id"]}, True
+            for lado in LADOS:
+                hoy = xi_de.get((m["match_id"], lado))
+                equipo = m[f"{lado}_team_id"]
+                if not hoy:
+                    completo = False
+                    continue
+                pendientes.append((equipo, hoy))
+                historia = historias[equipo]
+                if len(historia) < 3:
+                    completo = False
+                    continue
+                if sum(not acc.conocido(pid) for pid in hoy) > max_desconocidos:
+                    completo = False
+                    continue
+                t_hoy, n_hoy = _suma(acc, hoy)
+                t_hab, n_hab = _suma(acc, _habitual(historia))
+                for e, d in zip(ESTADISTICAS, t_hoy - t_hab):
+                    valores[f"{lado}_d_{e}"] = float(d)
+                valores[f"{lado}_d_nota"] = n_hoy - n_hab
+            if completo:
+                filas.append(valores)
+        for equipo, hoy in pendientes:
+            historias[equipo].append(hoy)
+        for _, m in grupo.iterrows():
+            for fila in stats_de.get(m["match_id"], []):
+                acc.anadir(fila)
+    return pd.DataFrame(filas, columns=cols)
