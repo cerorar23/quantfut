@@ -430,6 +430,14 @@ para esa etapa estimar una zona de abstención propia: si el edge está dentro d
 la variación del modelo entre reentrenamientos o remuestras, no se publica como
 señal aunque sea nominalmente positivo.
 
+Resultado del 1-oct-2026 (3.650 partidos con XI, alineaciones históricas solo
+para entrenar): el XI simple mejora RPS (0,21817 → 0,21678), log-loss y 8 de 11
+ligas, pero no la calibración (ECE 0,03041 → 0,03096), así que sigue en sombra
+sin validar. La fuerza por jugador (`model/player_ratings.py`,
+`model/player_value.py`) se midió sobre las mismas filas: "XI con valor"
+empeora incluso a la base (RPS 0,21912) y no se usa; la comparación se repite
+en cada reentreno mensual.
+
 ### Lo que ya está resuelto y antes figuraba como hueco
 
 - **Calibración** (`model/calibration.py`): corrección afín sobre las lambdas

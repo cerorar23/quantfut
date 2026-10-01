@@ -2410,6 +2410,43 @@ tabla. La promoción sigue exigiendo CLV en sombra.
   No se fuerza el entrenamiento: el mensual del 1-oct lo incluye y no hay
   partidos de estas ligas hasta el 9-oct (parón de selecciones).
 
+## 2026-10-01 — Reentreno mensual y fuerza por jugador (Fase B1)
+
+Reentreno 2026.10.01-030007: NO se activa ("No mejora el baseline Elo sobre
+las mismas filas"; RPS 0,20074 en 1.107 filas). Sigue activo 2026.09.27.
+El walk-forward se guardó (`oos_2026.10.01-030007.pkl`) y sirvió para la B1
+sin repetir 3,5 h de entrenamiento.
+
+XI simple (3.650 filas, 2.555 ajuste / 1.095 validación): RPS 0,21817 →
+0,21678, log-loss 1,05235 → 1,0479, 8 de 11 ligas mejoran, pero ECE 0,03041 →
+0,03096: queda `shadow_only`. La sombra no tiene ningún XI validado.
+
+Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
+
+| brazo | RPS | log-loss | ECE | ligas |
+|---|---|---|---|---|
+| base | 0,21818 | 1,05317 | 0,03125 | - |
+| XI simple | 0,21677 | 1,04868 | 0,03182 | 8 |
+| XI con valor | 0,21912 | 1,05654 | 0,03705 | 1 |
+| XI con nota | 0,21801 | 1,05274 | 0,03175 | 8 |
+
+- "XI con valor" empeora a la base: 18 señales (9 estadísticas por lado)
+  sobreajustan con 2.551 partidos. Saber QUIÉN falta, medido por sus
+  estadísticas, no añade nada a saber CUÁNTOS habituales faltan. Según el
+  plan, no se escribe la B2. No se probaron variantes sobre la misma
+  validación: elegir la que salga mejor sería ajustar al 30 % de prueba.
+- La nota del proveedor (solo comparación) tampoco supera al XI simple.
+- El test de "valor gana" de la B1 se reescribió con informes controlados:
+  con validación de 300 filas el ECE de dos brazos se ordena casi al azar
+  (simulado: señal real fuerte pasa 2-6 de 8 veces; sin señal llegó a pasar
+  1 de 6 con 1.000 filas). Eso mismo afecta al XI simple real: decisión
+  del criterio pendiente del usuario (ver tareas).
+- `shadow._challenger_validado` ahora exige `features == LINEUP_FEATURES`:
+  los artefactos `lineup_valor_` / `lineup_nota_` comparten el patrón
+  `lineup_*.pkl` y uno validado en el futuro se habría cargado como XI simple.
+- La revisión programada del 1-oct quedó colgada en "running" sin actividad;
+  esta revisión se hizo a mano.
+
 ## 2026-09-30 — Fuerza por jugador, Fase A: los datos
 
 Diseño aprobado por el usuario sección a sección (valor por contribución por

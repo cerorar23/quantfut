@@ -150,11 +150,20 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
         db/035, `ingest/estadisticas_jugador.py`, captura al cerrar en
         `results.py`. Histórico descargado el 30-sep: 4.556 partidos, 141.458
         filas de jugador, 11 partidos sin datos.
-      - [ ] Fase B, tras el reentreno del 1-oct: plan propio con
-        `model/player_ratings.py`, brazos "XI con valor" y "XI con nota",
-        validación contra el XI simple y sombra. OJO: el once se toma de las
-        alineaciones, no del campo `titular` (el proveedor marca hasta 16
-        "titulares" por lado).
+      - [x] Fase B1, valores y comparación offline (plan
+        `docs/superpowers/plans/2026-09-30-fuerza-por-jugador-fase-b1-valores.md`),
+        hecha el 1-oct. "XI con valor" EMPEORA a la base (RPS 0,21818 →
+        0,21912) y no gana al XI simple: no se valida. La comparación queda
+        en el reentreno mensual (`val["player_value"]`) por si la muestra
+        cambia la lectura.
+      - [ ] ~~Fase B2, sombra en vivo~~ DESCARTADA mientras el reentreno
+        mensual no muestre `player_value.valor.gana_al_simple = true`.
+- [ ] **DECISIÓN DEL USUARIO PENDIENTE — criterio de ECE del XI.** El
+      reentreno del 1-oct dejó el XI simple en sombra solo por el ECE
+      (0,03041 → 0,03096) con RPS, log-loss y 8 de 11 ligas mejorando. En
+      simulación (1-oct), comparar el ECE de dos brazos con 300-1.100 filas
+      de validación se ordena casi al azar: una señal real fuerte pasa la
+      puerta 2-6 de cada 8 veces. No se toca el criterio sin el usuario.
 - [ ] **Validar el ajuste de XI con datos nuevos.** El challenger que estima
       ajustes separados sobre `log(lambda_home)` y `log(lambda_away)` y su
       ejecución en sombra ya existen, pero las tablas de predicciones y XI
