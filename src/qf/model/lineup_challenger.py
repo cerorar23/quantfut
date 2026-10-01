@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pickle
 from collections import defaultdict, deque
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 
 import numpy as np
@@ -137,6 +137,7 @@ class LineupParams:
     shrink: float
     n_fit: int
     offline_validated: bool = False
+    features: list[str] = field(default_factory=lambda: list(LINEUP_FEATURES))
 
 
 class LineupLambdaChallenger:
@@ -150,7 +151,7 @@ class LineupLambdaChallenger:
     def _matrix(self, frame: pd.DataFrame) -> np.ndarray:
         if not self.params:
             raise RuntimeError("Challenger de XI no ajustado")
-        x = frame[LINEUP_FEATURES].to_numpy(dtype=float)
+        x = frame[self.params.features].to_numpy(dtype=float)
         med = np.asarray(self.params.medians)
         x = np.where(np.isnan(x), med, x)
         x = (x - med) / np.asarray(self.params.scales)
@@ -202,7 +203,9 @@ def _probabilities(lam: np.ndarray, mu: np.ndarray,
 
 def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
                      holdout_frac: float = 0.30, min_fit: int = 500,
-                     min_val: int = 200, l2: float = 10.0):
+                     min_val: int = 200, l2: float = 10.0,
+                     features: list[str] | None = None):
+    features = list(features or LINEUP_FEATURES)
     ordered = frame.sort_values(["kickoff_utc", "match_id"]).dropna(
         subset=["base_lam", "base_mu", "home_goals", "away_goals"]
     ).reset_index(drop=True)
@@ -213,7 +216,7 @@ def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
             f"se exigen {min_fit}/{min_val}."), "n": int(len(ordered))}
 
     train, val = ordered.iloc[:cut], ordered.iloc[cut:]
-    raw = train[LINEUP_FEATURES].to_numpy(dtype=float)
+    raw = train[features].to_numpy(dtype=float)
     medians = np.nanmedian(raw, axis=0)
     medians = np.where(np.isnan(medians), 0.0, medians)
     filled = np.where(np.isnan(raw), medians, raw)
@@ -226,7 +229,7 @@ def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
                              train["away_goals"].to_numpy(dtype=float), l2)
     model = LineupLambdaChallenger(LineupParams(
         medians.tolist(), scales.tolist(), bh.tolist(), ba.tolist(), float(rho),
-        float(shrink), int(cut), False))
+        float(shrink), int(cut), False, features))
 
     # La rho de cada predicción fue estimada antes de ESE partido. Usar la rho
     # del artefacto entrenado hoy introduciría conocimiento del futuro.

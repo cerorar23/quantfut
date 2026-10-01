@@ -108,3 +108,33 @@ def test_un_lado_historico_no_se_cuela_como_sellado(monkeypatch):
     assert {"m3", "m4", "m5", "m6"} <= set(frame["match_id"])
     assert "m7" not in set(frame["match_id"]), "XI visitante histórico: no es sellada"
     assert ko7 is not None
+
+
+def test_un_artefacto_antiguo_carga_con_las_senales_de_siempre(tmp_path):
+    import pickle
+
+    from qf.model.lineup_challenger import LINEUP_FEATURES, LineupLambdaChallenger
+    antiguo = {"medians": [0.0] * 14, "scales": [1.0] * 14, "beta_home": [0.0] * 15,
+               "beta_away": [0.0] * 15, "rho": -0.05, "shrink": 0.5, "n_fit": 700,
+               "offline_validated": True}
+    ruta = tmp_path / "lineup_viejo.pkl"
+    ruta.write_bytes(pickle.dumps(antiguo))
+    assert LineupLambdaChallenger.load(str(ruta)).params.features == LINEUP_FEATURES
+
+
+def test_fit_and_validate_usa_las_senales_que_se_le_pasan():
+    import numpy as np
+
+    from qf.model.lineup_challenger import fit_and_validate
+    rng = np.random.default_rng(0)
+    n = 800
+    x = rng.normal(size=n)
+    frame = pd.DataFrame({
+        "match_id": [f"m{i}" for i in range(n)], "league_id": ["A", "B"] * (n // 2),
+        "kickoff_utc": pd.date_range("2025-01-01", periods=n, freq="D", tz="UTC"),
+        "base_lam": 1.4, "base_mu": 1.1, "rho": -0.05, "home_d_tiros": x,
+        "home_goals": rng.poisson(1.4 * np.exp(0.3 * x)), "away_goals": rng.poisson(1.1, n)})
+    modelo, informe = fit_and_validate(frame, rho=-0.05, features=["home_d_tiros"])
+    assert modelo.params.features == ["home_d_tiros"]
+    assert modelo.params.beta_home[1] > 0
+    assert informe["n_fit"] == 560
