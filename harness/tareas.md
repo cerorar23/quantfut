@@ -251,7 +251,24 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
         autorización en módulos del mismo FastAPI; condicionada a la puerta
         de validación del producto. El BFF separado de la decisión anterior
         queda sustituido por el plan 2026-09-23 de esta página.
-- [ ] **Fase 5 — movimiento de línea.** Requiere 12 meses de snapshots.
+- [ ] **Fase 5 — movimiento de línea.** Requiere 12 meses de snapshots
+      PROPIOS para validar (captura en vivo desde el 24-sep-2026).
+  - [ ] **Estudio exploratorio con histórico ya disponible (añadido
+        2026-10-02, pedido del usuario).** Pregunta: ¿se puede predecir la
+        dirección del movimiento de Pinnacle 1X2 entre el precio temprano y
+        el cierre? No espera a los 12 meses porque ya hay datos:
+        1. football-data.co.uk: 14.294 partidos, 7 ligas, 2019/20-2024/25,
+           Pinnacle pre-cierre (`PSH/PSD/PSA`) y cierre (`PSCH/PSCD/PSCA`),
+           ya cacheados para `soft_vs_sharp.py`. Límite: el precio temprano
+           no tiene hora exacta.
+        2. Histórico de The Odds API (desde jun-2020; cada 5 min desde
+           sep-2022) con hora exacta: solo con créditos sobrantes del mes y
+           fijando antes cuántos se gastan.
+        Reglas: solo lectura, sin tocar producción ni picks; partición
+        temporal fijada antes de mirar resultados; la base a batir es "no
+        se mueve" y la media del mercado. Es descubrimiento, NO
+        certificación: lo que salga se valida después en sombra con la
+        captura propia, igual que la puerta de la fase 2.
 - [x] **`soccerdata` retirado (2026-09-24, decisión del usuario).** Borrado
       `src/qf/ingest/xg_fbref.py` (nadie lo importaba) y quitados de
       `requirements.txt` `soccerdata`, `lxml` y `html5lib` (ningún código
