@@ -55,8 +55,12 @@ def pending_matches() -> list[dict]:
     """
     return query(
         """SELECT m.match_id, m.league_id, m.home_team_id, m.away_team_id,
+                  th.af_team_id AS home_af_team_id,
+                  ta.af_team_id AS away_af_team_id,
                   m.kickoff_utc, m.external_ids ->> 'api_football' AS af_id
            FROM matches m
+           JOIN teams th ON th.team_id = m.home_team_id
+           JOIN teams ta ON ta.team_id = m.away_team_id
            -- Las bajas solo alimentan al modelo: fuera las ligas "solo sharp".
            JOIN leagues lg ON lg.league_id = m.league_id AND lg.model_enabled
            WHERE m.status = 'scheduled'
@@ -73,10 +77,15 @@ def pending_matches() -> list[dict]:
     )
 
 
-def _side_of(team_id: int, match: dict) -> str | None:
-    if team_id == match["home_team_id"]:
+def _side_of(af_team_id: int | None, match: dict) -> str | None:
+    # La respuesta trae el id de API-Football, no nuestro team_id interno.
+    # Compararlo con `home_team_id` descartó todas las bajas del 22-sep al
+    # 2-oct-2026 sin ningún error.
+    if af_team_id is None:
+        return None
+    if af_team_id == match["home_af_team_id"]:
         return "home"
-    if team_id == match["away_team_id"]:
+    if af_team_id == match["away_af_team_id"]:
         return "away"
     return None
 
@@ -90,11 +99,16 @@ def ingest_match(match: dict) -> dict:
     af.check_quota(meta)
 
     stored = 0
+    discarded = 0
     for entry in resp:
         player = entry.get("player") or {}
         team = entry.get("team") or {}
         side = _side_of(team.get("id"), match)
         if side is None or not player.get("id"):
+            discarded += 1
+            log.warning("Baja descartada en %s: equipo %s no es ninguno de los "
+                        "dos (af_team_id %s/%s)", match["match_id"], team.get("id"),
+                        match["home_af_team_id"], match["away_af_team_id"])
             continue
         stored += execute(
             """INSERT INTO injuries
@@ -110,7 +124,7 @@ def ingest_match(match: dict) -> dict:
            VALUES (%s, %s)""",
         (match["match_id"], stored),
     )
-    return {"match_id": match["match_id"], "stored": stored}
+    return {"match_id": match["match_id"], "stored": stored, "discarded": discarded}
 
 
 def run() -> dict:
@@ -121,6 +135,7 @@ def run() -> dict:
         return {"checked": 0, "stored": 0}
 
     stored = 0
+    discarded = 0
     problems = []
 
     for m in matches:
@@ -131,12 +146,15 @@ def run() -> dict:
             problems.append(f"{m['match_id']}: {exc}")
             continue
         stored += r["stored"]
+        discarded += r["discarded"]
 
     ok = not problems
     af.record_health("injuries", stored, ok,
-                     {"checked": len(matches), "problems": problems})
+                     {"checked": len(matches), "discarded": discarded,
+                      "problems": problems})
 
-    summary = {"checked": len(matches), "stored": stored, "problems": problems}
+    summary = {"checked": len(matches), "stored": stored,
+               "discarded": discarded, "problems": problems}
     log.info("Bajas: %s", summary)
     return summary
 
