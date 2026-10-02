@@ -105,11 +105,18 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       plan Pro), no un LLM leyendo prensa — dato ya estructurado, coste
       incremental $0. Implementado en `src/qf/ingest/injuries.py` +
       `db/014_injuries.sql`, en crontab cada 4h. Ver harness/progreso.md.
+      **Corregido y desplegado el 2-oct-2026:** hasta entonces no guardó
+      NINGUNA baja (comparaba el id de API-Football con el `team_id`
+      interno). La muestra point-in-time empieza el 2-oct.
 - [ ] **Feature de disponibilidad a partir de bajas.** `injuries.py` solo
       ingiere y almacena, igual que hizo `lineups.py` en su fase inicial.
       Falta un equivalente a `lineups.availability()` que combine bajas +
       XI confirmado en una feature de `residual.py`. Requiere haber
-      acumulado datos primero.
+      acumulado datos primero (desde el 2-oct; antes la tabla está vacía).
+- [ ] **Revisar por qué `check_injuries_coverage()` no frenó el fallo de
+      bajas.** `us.mls` llegó a 17 partidos comprobados con 0 bajas, por
+      encima de `INJURIES_MIN_MATCHES`: o la alerta saltó y nadie la vio, o
+      no se evalúa donde se cree.
 - [x] **Vigilancia del hueco de cobertura de `/injuries`.**
       `health.check_injuries_coverage()` detecta si alguna liga acumula
       `INJURIES_MIN_MATCHES` (15) partidos comprobados en 30 días sin NINGUNA
@@ -164,6 +171,17 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       validado y la sombra lo usa desde el 9-oct (vuelta de las ligas).
       Comprobar entonces `lineup_challenger_available: true` y que se
       registren los cuatro brazos; nada se publica sin CLV en sombra.
+- [ ] **El XI llega tarde: medir antes de comprar otra fuente (2026-10-01).**
+      API-Football publica el once a T-25 (22 de 22 partidos de MLS/Liga MX;
+      su propia guía dice 20-40 min). Los clubes lo anuncian ~T-60 y
+      Pinnacle se mueve en minutos: la ventaja de "reaccionar antes que las
+      casas blandas" casi no existe con esta fuente. Desde el 9-oct, medir la
+      antelación del XI en las ligas europeas (`lineups.mins_to_kickoff`). Si
+      sigue en ~T-25, evaluar una fuente más temprana, con prueba gratuita y
+      midiendo su antelación real antes de pagar. Ojo con el brazo
+      `lineup_lambda_market`: aplica el ajuste de XI sobre cuotas de T-20 que
+      ya incorporan el XI, así que mide doble efecto por diseño; leerlo
+      como cota inferior, no como el valor del XI.
 - [ ] **Validar el ajuste de XI con datos nuevos.** El challenger que estima
       ajustes separados sobre `log(lambda_home)` y `log(lambda_away)` y su
       ejecución en sombra ya existen, pero las tablas de predicciones y XI
