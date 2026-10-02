@@ -172,8 +172,8 @@ def _winner_index(df: pd.DataFrame, market: str) -> np.ndarray:
     return np.where(hg + ag > 2.5, 0, 1)
 
 
-def _devig_rows(prices: np.ndarray) -> np.ndarray:
-    return np.vstack([devig(r, settings.devig_method) for r in prices])
+def _devig_rows(prices: np.ndarray, method: str | None = None) -> np.ndarray:
+    return np.vstack([devig(r, method or settings.devig_method) for r in prices])
 
 
 def _with_sharp(df: pd.DataFrame, early: list[str], close: list[str]) -> pd.DataFrame:
@@ -186,7 +186,8 @@ def _with_sharp(df: pd.DataFrame, early: list[str], close: list[str]) -> pd.Data
     return base[(base[early + close] > 1.0).all(axis=1)]
 
 
-def _sharp_deviation(base: pd.DataFrame, spec: dict, p_sharp: np.ndarray) -> np.ndarray:
+def _sharp_deviation(base: pd.DataFrame, spec: dict, p_sharp: np.ndarray,
+                     method: str | None = None) -> np.ndarray:
     """
     Máxima diferencia, entre selecciones, de la probabilidad justa de Pinnacle
     frente a la de la media de las casas, ambas PRE-CIERRE. NaN si no hay
@@ -199,11 +200,11 @@ def _sharp_deviation(base: pd.DataFrame, spec: dict, p_sharp: np.ndarray) -> np.
     a = base[avg].apply(pd.to_numeric, errors="coerce").to_numpy(float)
     ok = np.isfinite(a).all(axis=1) & (a > 1.0).all(axis=1)
     if ok.any():
-        out[ok] = np.abs(_devig_rows(a[ok]) - p_sharp[ok]).max(axis=1)
+        out[ok] = np.abs(_devig_rows(a[ok], method) - p_sharp[ok]).max(axis=1)
     return out
 
 
-def build_quotes(df: pd.DataFrame) -> pd.DataFrame:
+def build_quotes(df: pd.DataFrame, method: str | None = None) -> pd.DataFrame:
     """
     Formato largo: una fila por (partido, mercado, selección, casa) con la
     cuota PRE-CIERRE de la casa, la probabilidad justa de Pinnacle antes y al
@@ -220,10 +221,10 @@ def build_quotes(df: pd.DataFrame) -> pd.DataFrame:
         base = _with_sharp(df, early, close)
         if base.empty:
             continue
-        p_early = _devig_rows(base[early].to_numpy(float))
-        p_close = _devig_rows(base[close].to_numpy(float))
+        p_early = _devig_rows(base[early].to_numpy(float), method)
+        p_close = _devig_rows(base[close].to_numpy(float), method)
         winner = _winner_index(base, market)
-        sharp_dev = _sharp_deviation(base, spec, p_early)
+        sharp_dev = _sharp_deviation(base, spec, p_early, method)
         for j, sel in enumerate(spec["selections"]):
             for prefix, book in spec["books"].items():
                 col = spec["cols"](prefix, False)[j]
