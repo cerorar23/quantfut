@@ -2500,6 +2500,27 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-02 — Las bajas nunca se guardaron: id de API-Football contra id interno
+
+`injuries` estaba vacía tras 521 comprobaciones en 51 partidos (22-sep a
+2-oct), sin un solo error. `_side_of()` comparaba `team.id` de la respuesta
+(API-Football, p. ej. Seattle = 1595) con `matches.home_team_id` (interno,
+49060): nunca coincidía y cada baja se descartaba con `continue`. Comprobado
+con una llamada real: 26 bajas en el Seattle–Sporting KC, las 26 perdidas.
+
+- Arreglo: `pending_matches()` trae `teams.af_team_id` de ambos lados y se
+  compara contra eso (`tests/test_injuries.py`). Ningún equipo de las ligas
+  con modelo con partido en 14 días tiene `af_team_id` nulo.
+- Lo que se descarte a partir de ahora deja un WARNING y cuenta en
+  `discarded`, también en el `record_health` de la pasada: un descarte
+  masivo ya no puede volver a pasar mudo.
+- Lo perdido no se recupera como dato point-in-time: pedir hoy las bajas de
+  un partido pasado da la foto de hoy, no la que se conocía antes del
+  partido. No se rellena; la muestra válida empieza el 2-oct.
+- Desplegado (solo `worker`; respaldo del archivo anterior en
+  `~/respaldo_20261002_injuries/`). Verificado en producción: el
+  Seattle–Sporting KC guarda 26 bajas, 0 descartadas.
+
 ## 2026-09-30 — Fuerza por jugador, Fase A: los datos
 
 Diseño aprobado por el usuario sección a sección (valor por contribución por
@@ -2519,6 +2540,34 @@ compararlo con el XI simple.
 - Descubierto en los datos: el campo `substitute` del proveedor no es fiable,
   hay lados con 16 "titulares". La Fase B tomará el once de las alineaciones.
 - Coste diario nuevo: 1 petición por partido cerrado en ligas con modelo.
+
+## 2026-09-25 — Más volumen: medir antes de cambiar el criterio
+
+Decisión: el umbral del 2%, un pick por partido, la referencia Pinnacle/Shin
+y la publicación pausada NO cambian. El histórico puede descubrir variantes,
+pero ya se utilizó para diseñar la estrategia: no sirve para certificarla.
+
+- `eval/quote_coverage.py` informa la primera terna 1X2 completa observada
+  por casa/fuente/liga, antelación y edad del precio cuando se conoce.
+  The Odds API no conserva aún `last_update` del bookmaker: edad desconocida
+  se deja nula, no se inventa cero. Hace falta ejecutarlo contra Postgres
+  operativo antes de gastar más cuota en capturar antes de T−72.
+- `eval/sharp_challengers.py` usa los 42 CSV ya cacheados, 7 ligas y seis
+  temporadas, hash `59586239a2169a51b9a864f3655c6e5cdc4c8d68f18a1ccdcc2b69b2408f6118`.
+  Compara Shin y Power sobre los mismos 14.294 partidos 1X2 y mide TODOS
+  los brazos contra el MISMO cierre Pinnacle/Shin. Power apenas mejora el
+  log-loss temprano (0,960347 frente a 0,960392) y el RPS (0,193120 frente
+  a 0,193131): magnitud insuficiente para cambiar la referencia.
+- Con la lista blanca actual y un pick potencial por partido, Shin al 2%
+  deja 286 partidos, EV al cierre justo +3,788%; al 1% deja 530, con 244
+  partidos nuevos cuyo EV histórico es +2,499% (IC95 por semanas
+  [1,915, 3,071]). 502 de los 530 candidatos al 1% dependen de 1xBet.
+  El umbral dinámico predefinido (1,5% <1,80; 2% 1,80–3,49; 3% ≥3,50)
+  deja solo 233 partidos: no cumple ni el objetivo de más volumen.
+- Esto es un proxy offline: no hay timestamp exacto de decisión, acceso
+  regional, límite de stake, cuota todavía disponible ni tope diario en los
+  CSV. La persistencia por casa se estimó al 2% y no se recalibró para el
+  1%. La puerta en sombra, con precio verificable al cierre, sigue mandando.
 
 ## 2026-09-24 — La temporada 2026/27 no existía en siete ligas
 
