@@ -418,11 +418,17 @@ ingesta o cierre. El recorrido ilustrativo de cuentas y cobros se documenta en
 `frontend/ACCESS_FLOW.md`; todavía no concede suscripciones ni cobra.
 
 **Fase 4 — las alineaciones se capturan y pueden evaluarse en sombra.**
-`qf.ingest.lineups` guarda el XI a T-60 y `availability()` expone cuántos
-titulares habituales faltan, por posición, y la continuidad del XI. El
-challenger de `model/lineup_challenger.py` ya estima ajustes separados sobre
-`log(lambda_home)` y `log(lambda_away)`, pero no entrena ni se ejecuta hasta
-acumular historial real de predicciones y XI. `model/shadow.py` guarda tanto
+`qf.ingest.lineups` consulta el XI desde T-90 y `availability()` expone cuántos
+titulares habituales faltan, por posición, y la continuidad del XI. En la
+práctica API-Football lo publica hacia **T-25** (22 de 22 partidos de MLS y
+Liga MX, oct-2026), cuando Pinnacle ya ha ajustado. El XI de hoy sale solo de
+lo capturado antes del inicio; la historia de cada equipo (sus últimos XI)
+sale además de `lineups_historicas` desde el 2-oct-2026 (db/036, decisión del
+usuario), igual que en el entrenamiento: sin eso, las ligas europeas no
+tendrían 3 XI previos hasta finales de octubre. El
+challenger de `model/lineup_challenger.py` estima ajustes separados sobre
+`log(lambda_home)` y `log(lambda_away)` y se entrena en el reentreno mensual
+con esas alineaciones históricas. `model/shadow.py` guarda tanto
 la predicción base a T-60 como el ajuste de XI y sus CLV en tablas separadas,
 sin modificar picks publicados. Solo podrá promoverse si mejora RPS/log-loss,
 calibración y CLV frente a la base, con incertidumbre y varias ligas. También queda

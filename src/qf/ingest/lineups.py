@@ -170,19 +170,33 @@ def availability(match_id: str, lookback: int = 5) -> dict | None:
         team_id = r["home_team_id"] if r["side"] == "home" else r["away_team_id"]
         today = {p["player_id"] for p in r["starters"] if p.get("player_id")}
 
+        # La historia (XI de partidos ANTERIORES) sale también de
+        # `lineups_historicas`, como en el entrenamiento del challenger
+        # (decisión del usuario, 2026-10-02). El XI de un partido ya jugado
+        # era público antes del de hoy; lo que sigue exigiendo captura previa
+        # al inicio es el XI de hoy, que solo se lee de `lineups`. Si un
+        # partido está en las dos tablas, manda el capturado en vivo.
         hist = query(
-            """SELECT history.starters
+            """SELECT history.starters, history.historico
                FROM (
                    SELECT DISTINCT ON (m.match_id)
-                          l.starters, m.kickoff_utc
-                   FROM lineups l
-                   JOIN matches m ON m.match_id = l.match_id
-                   WHERE ((l.side = 'home' AND m.home_team_id = %s)
-                       OR (l.side = 'away' AND m.away_team_id = %s))
+                          x.starters, m.kickoff_utc, x.prioridad = 1 AS historico
+                   FROM (
+                       SELECT l.match_id, l.side, l.starters, l.captured_at,
+                              0 AS prioridad
+                       FROM lineups l
+                       UNION ALL
+                       SELECT h.match_id, h.side, h.starters, NULL, 1
+                       FROM lineups_historicas h
+                       WHERE jsonb_array_length(h.starters) >= 11
+                   ) AS x
+                   JOIN matches m ON m.match_id = x.match_id
+                   WHERE ((x.side = 'home' AND m.home_team_id = %s)
+                       OR (x.side = 'away' AND m.away_team_id = %s))
                      AND m.match_id <> %s
                      AND m.kickoff_utc < (SELECT kickoff_utc FROM matches
                                           WHERE match_id = %s)
-                   ORDER BY m.match_id, l.captured_at DESC
+                   ORDER BY m.match_id, x.prioridad, x.captured_at DESC NULLS LAST
                ) AS history
                ORDER BY history.kickoff_utc DESC
                LIMIT %s""",
@@ -218,6 +232,7 @@ def availability(match_id: str, lookback: int = 5) -> dict | None:
             "lineup_continuity": round(len(today & previous) / max(len(today), 1), 4),
             "n_regulars": len(regulars),
             "n_history": len(hist),
+            "n_history_historico": sum(bool(h.get("historico")) for h in hist),
         }
     return out
 

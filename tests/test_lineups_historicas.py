@@ -44,9 +44,23 @@ def test_no_adivina():
 
 def test_ni_la_sombra_ni_la_prediccion_leen_la_tabla():
     raiz = Path(__file__).resolve().parents[1] / "src" / "qf"
-    for modulo in ("model/shadow.py", "publish/daily.py", "ingest/lineups.py",
+    for modulo in ("model/shadow.py", "publish/daily.py",
                    "publish/shadow_sharp.py"):
         assert "lineups_historicas" not in (raiz / modulo).read_text(encoding="utf-8"), modulo
+
+
+def test_en_lineups_solo_la_historia_de_availability_lee_la_tabla():
+    # db/036 (decisión del usuario, 2-oct-2026): la HISTORIA de cada equipo
+    # puede salir de lineups_historicas; nada más del módulo la toca. Que el
+    # XI de hoy no la lea lo comprueba tests/test_lineups.py.
+    import ast
+    raiz = Path(__file__).resolve().parents[1] / "src" / "qf"
+    fuente = (raiz / "ingest/lineups.py").read_text(encoding="utf-8")
+    for nodo in ast.parse(fuente).body:
+        texto = ast.get_source_segment(fuente, nodo) or ""
+        nombre = getattr(nodo, "name", None)
+        if nombre != "availability":
+            assert "lineups_historicas" not in texto, nombre
 
 
 def test_para_en_la_reserva_de_cuota_aunque_llegue_como_texto(monkeypatch):

@@ -2500,6 +2500,28 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-02 — La historia del XI en vivo sale también de lineups_historicas
+
+Decisión del usuario, ampliando la excepción de db/034. `availability()`
+exige 3 XI previos por equipo y solo miraba `lineups` (en vivo desde el
+26-sep): el brazo de XI no habría medido nada en las europeas hasta finales
+de octubre.
+
+- Por qué no rompe el punto en el tiempo: lo que se toma de la tabla es el
+  XI de partidos YA JUGADOS antes del de hoy, que era público antes del
+  partido que se predice. Lo que sigue exigiendo captura previa al inicio es
+  el XI de HOY, que solo sale de `lineups`. La predicción diaria y lo
+  sellado no leen la tabla (test por AST en `test_lineups_historicas.py`).
+- Coherencia: el entrenamiento del challenger ya construía la historia con
+  las dos tablas; la sombra ahora calcula la variable igual.
+- Si un partido está en las dos tablas manda el capturado en vivo; solo XI
+  completos (≥11), como en el entrenamiento. `n_history_historico` dice
+  cuántos XI de la historia salieron de la tabla histórica.
+- Desplegado (worker + db/036, que solo cambia el COMMENT de la tabla;
+  respaldo en `~/respaldo_20261002_historia/`). Verificado: el
+  Seattle–Sporting KC pasa de "historia insuficiente" a 5 XI previos por
+  lado (4 históricos); 257 de 262 equipos con partido en 14 días tienen ≥3.
+
 ## 2026-10-02 — Las bajas nunca se guardaron: id de API-Football contra id interno
 
 `injuries` estaba vacía tras 521 comprobaciones en 51 partidos (22-sep a

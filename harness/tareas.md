@@ -171,6 +171,12 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       validado y la sombra lo usa desde el 9-oct (vuelta de las ligas).
       Comprobar entonces `lineup_challenger_available: true` y que se
       registren los cuatro brazos; nada se publica sin CLV en sombra.
+- [x] **HECHO (2-oct, decisión del usuario) — historia del XI desde
+      `lineups_historicas` (db/036).** `availability()` toma los XI previos
+      de cada equipo también de esa tabla; el XI de hoy, solo de `lineups`.
+      257 de 262 equipos con partido en 14 días ya tienen ≥3 XI previos
+      (faltan 5 de copas), así que los brazos de XI miden desde el 9-oct y
+      no desde finales de octubre.
 - [ ] **El XI llega tarde: medir antes de comprar otra fuente (2026-10-01).**
       API-Football publica el once a T-25 (22 de 22 partidos de MLS/Liga MX;
       su propia guía dice 20-40 min). Los clubes lo anuncian ~T-60 y
