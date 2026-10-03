@@ -16,23 +16,23 @@ no ahora.
 ## Fase 1 — fuentes paradas (encontrado 2026-10-02)
 
 `worldfootballR_data` no actualiza ningún fichero que usamos desde el
-18-sep-2025 (ver README, "Corrección (2026-10-02)"). Pendiente de decisión
-del usuario; nada de esto se ha tocado:
+18-sep-2025 (ver README, "Corrección (2026-10-02)").
 
-- [ ] **Resultados de copas que faltan (dic-2024 → hoy).** Champions y
-      Europa League 2024/25 (eliminatorias) y 2025/26 enteras no están en la
-      base. API-Football (plan Pro) tiene esas temporadas: cargar solo
-      resultados, por el mismo camino que `fixtures --temporada`, sin dar de
-      alta equipos bajo `eu.*` (CLAUDE.md). Afecta al término de fuerza
-      entre ligas.
-- [ ] **Fuente de xG reciente.** Opciones a medir antes de elegir: Understat
+- [x] **HECHO (2-oct, decisión del usuario) — Resultados de copas que
+      faltaban (dic-2024 → hoy).** `fixtures --copas-ensayo` y luego
+      `--copas 2024-12-13 2024 2025 2026`: 351 partidos (215 UCL, 136 UEL)
+      cerrados con marcador y estadísticas, 0 duplicados, 726 peticiones.
+      Todo lo no resuelto son clubes de ligas fuera del catálogo; ningún
+      equipo dado de alta en copa. Entran en el reentreno del 1-nov.
+- [x] **HECHO (2-oct) — Chequeo de frescura del xG** (`check_xg_freshness`).
+      Mira el dato, no el job. Las 13 competiciones paradas quedan
+      reconocidas hasta el 1-nov-2026; desde entonces alertan cada día.
+- [ ] **Fuente de xG reciente — decidir ANTES del 1-nov-2026** (el chequeo
+      vuelve a fallar ese día). Opciones a medir antes de elegir: Understat
       (6 ligas europeas), FotMob/Sofascore (más ligas, raspado), o aceptar
       goles solos y quitar el xG del modelo. NUNCA el xG de API-Football
       (README). Primero medir cuánto aporta el xG hoy: si no mejora RPS
       fuera de muestra, no merece una fuente nueva.
-- [ ] **Chequeo de frescura del xG en `health.py`.** El job semanal da
-      `ok` con 0 filas: alertar si el último xG de una liga con partidos
-      jugados tiene más de N semanas.
 
 ## Más picks sin relajar la puerta comercial (2026-09-25)
 

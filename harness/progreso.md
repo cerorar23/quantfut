@@ -2500,6 +2500,25 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-02 — Copas recuperadas y chequeo de xG que mira el dato
+
+`worldfootballR_data` lleva parado desde sep-2025 (dic-2024 en copas): el
+modelo entrenaba solo con goles en los últimos meses y sin ningún partido de
+copa de 2025/26. Decisión del usuario: recuperar copas y vigilar el xG; la
+fuente de xG nueva queda pendiente.
+
+- Copas desde API-Football, por el camino ya probado (insertar como
+  programado, cerrar con `close_recent`). Ensayo en seco primero; la carga
+  real coincidió partido a partido (351, 0 duplicados, 0 errores). Guarda de
+  duplicados nueva en las cargas hacia atrás (misma competición y equipos,
+  ±36 h): `matches` no tiene clave natural y lo que cuelga de un partido no
+  se borra. Rangers→Angers (92) o Wolfsberger→Wolfsburg (80) confirman por
+  qué en copa solo vale la coincidencia exacta.
+- `check_xg_freshness` con reconocimiento CON CADUCIDAD (1-nov): sin ella
+  el chequeo alertaría a diario por algo ya sabido —y se aprende a ignorar
+  las alertas, que es como se perdió la de bajas—; sin caducar, escondería
+  el problema para siempre como hizo el `ok` con 0 filas del job.
+
 ## 2026-10-02 — La alerta de bajas saltó cuatro días y no la vio nadie
 
 Reconstruido con los datos de cada mañana: `check_injuries_coverage()` falló

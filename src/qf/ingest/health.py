@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import date, datetime, timezone
 
 from ..db import execute, query
 
@@ -196,6 +197,61 @@ def check_injuries_coverage() -> tuple[bool, str]:
     return True, msg
 
 
+# Una liga con partidos jugados en los últimos XG_RECENT_DAYS cuyo último xG
+# es más viejo que XG_MAX_GAP_DAYS está "parada". La fuente publica por lotes
+# semanales, así que tres semanas ya no son un retraso normal.
+XG_RECENT_DAYS = 30
+XG_MAX_GAP_DAYS = 21
+
+# Paradas ya el 2-oct-2026 (worldfootballR_data sin actualizar desde el
+# 18-sep-2025; ver README). Reconocidas, no olvidadas: dejan de fallar solo
+# hasta esta fecha, para que la decisión sobre la fuente de xG (tareas.md) no
+# se quede sin tomar. Una liga que se pare DESPUÉS falla en el acto.
+XG_PARADO_CONOCIDO = {
+    "ar.primera", "br.serie_a", "de.bundesliga", "es.laliga", "eu.ucl",
+    "eu.uel", "fr.ligue_1", "gb.premier_league", "it.serie_a", "mx.liga_mx",
+    "nl.eredivisie", "pt.primeira", "us.mls",
+}
+XG_PARADO_RECONOCIDO_HASTA = date(2026, 11, 1)
+
+
+def check_xg_freshness(now: datetime | None = None) -> tuple[bool, str]:
+    """
+    El job semanal del xG respondía `ok` con 0 filas mientras su fuente
+    llevaba un año sin publicar. Esto mira el dato, no el job.
+    """
+    now = now or datetime.now(timezone.utc)
+    rows = query(
+        """SELECT m.league_id,
+                  max(m.kickoff_utc) FILTER (WHERE m.status = 'finished')
+                      AS ult_jugado,
+                  max(m.kickoff_utc) FILTER (WHERE m.home_xg IS NOT NULL)
+                      AS ult_xg
+           FROM matches m
+           JOIN leagues l ON l.league_id = m.league_id AND l.model_enabled
+           GROUP BY m.league_id"""
+    )
+    parados = []
+    for r in rows:
+        jugado, xg = r["ult_jugado"], r["ult_xg"]
+        if jugado is None or (now - jugado).days > XG_RECENT_DAYS:
+            continue
+        if xg is None or (jugado - xg).days > XG_MAX_GAP_DAYS:
+            parados.append(r["league_id"])
+    reconocidos = sorted(set(parados) & XG_PARADO_CONOCIDO)
+    nuevos = sorted(set(parados) - XG_PARADO_CONOCIDO)
+    vigente = now.date() <= XG_PARADO_RECONOCIDO_HASTA
+    if nuevos or (reconocidos and not vigente):
+        malos = nuevos + ([] if vigente else reconocidos)
+        return False, (f"xG parado (>{XG_MAX_GAP_DAYS} días sin xG con partidos "
+                       f"jugados) en: {', '.join(malos)}")
+    if reconocidos:
+        return True, (f"xG parado en {len(reconocidos)} liga(s) reconocida(s) "
+                      f"hasta {XG_PARADO_RECONOCIDO_HASTA:%d-%m-%Y}, pendiente de "
+                      f"decidir fuente: {', '.join(reconocidos)}")
+    return True, "xG al día"
+
+
 def check_model_freshness() -> tuple[bool, str]:
     row = query(
         """SELECT model_version,
@@ -216,6 +272,7 @@ CHECKS = [
     ("frescura de cuotas", check_odds_freshness),
     ("nombres sin emparejar", check_unresolved_names),
     ("cobertura de bajas", check_injuries_coverage),
+    ("frescura del xG", check_xg_freshness),
     ("liquidación", check_settlement_lag),
     ("modelo activo", check_model_freshness),
 ]

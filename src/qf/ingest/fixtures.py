@@ -98,17 +98,38 @@ def _resolve(league: dict, raw_name: str) -> int | None:
     return None
 
 
+def _ya_existe(league_id: str, home_id: int, away_id: int, ko: datetime) -> bool:
+    """
+    Mismo partido cargado por otra fuente (sin el id de API-Football): misma
+    competición, mismos equipos, ±36 h. `matches` no tiene clave natural y no
+    admite borrar en cascada lo que cuelga de un partido, así que un duplicado
+    se queda para siempre.
+    """
+    return query_one(
+        """SELECT match_id FROM matches
+           WHERE league_id = %s AND home_team_id = %s AND away_team_id = %s
+             AND kickoff_utc BETWEEN %s AND %s""",
+        (league_id, home_id, away_id, ko - timedelta(hours=36),
+         ko + timedelta(hours=36)),
+    ) is not None
+
+
 def ingest_league(league: dict, days_ahead: int = 21,
-                  desde: datetime | None = None) -> dict:
-    """`desde` (por defecto hoy) solo lo usa `cargar_temporada()`."""
+                  desde: datetime | None = None, season: int | None = None,
+                  hasta: datetime | None = None) -> dict:
+    """
+    `desde`, `season` y `hasta` solo los usan las cargas hacia atrás
+    (`cargar_temporada()`, `cargar_copas()`); con `desde` se activa además la
+    guarda de duplicados de otras fuentes.
+    """
     now = datetime.now(timezone.utc)
-    season = current_season(league["season_style"], now)
+    season = season or current_season(league["season_style"], now)
 
     resp, meta = af.get("fixtures", {
         "league": league["api_football_id"],
         "season": season,
         "from": (desde or now).strftime("%Y-%m-%d"),
-        "to": (now + timedelta(days=days_ahead)).strftime("%Y-%m-%d"),
+        "to": (hasta or now + timedelta(days=days_ahead)).strftime("%Y-%m-%d"),
         "timezone": "UTC",
     })
     af.check_quota(meta)
@@ -119,9 +140,9 @@ def ingest_league(league: dict, days_ahead: int = 21,
                     "Verifica si es parón o si el api_football_id cambió.",
                     league["league_id"], days_ahead, season)
         return {"league": league["league_id"], "inserted": 0, "updated": 0,
-                "unresolved": 0, "empty": True}
+                "unresolved": 0, "duplicated": 0, "empty": True}
 
-    inserted = updated = unresolved = 0
+    inserted = updated = unresolved = duplicated = 0
 
     for fx in resp:
         fixture, teams = fx["fixture"], fx["teams"]
@@ -170,6 +191,10 @@ def ingest_league(league: dict, days_ahead: int = 21,
                 log.info("Reprogramado %s -> %s", existing["match_id"], ko)
             continue
 
+        if desde is not None and _ya_existe(league["league_id"], home_id, away_id, ko):
+            duplicated += 1
+            continue
+
         home_name = query_one("SELECT canonical_name FROM teams WHERE team_id=%s",
                               (home_id,))["canonical_name"]
         away_name = query_one("SELECT canonical_name FROM teams WHERE team_id=%s",
@@ -193,7 +218,8 @@ def ingest_league(league: dict, days_ahead: int = 21,
         inserted += n
 
     return {"league": league["league_id"], "inserted": inserted,
-            "updated": updated, "unresolved": unresolved, "empty": False}
+            "updated": updated, "unresolved": unresolved,
+            "duplicated": duplicated, "empty": False}
 
 
 def run(days_ahead: int = 21) -> dict:
@@ -251,6 +277,85 @@ def cargar_temporada(league_ids: list[str], dias_atras: int = 120) -> dict:
     return {"calendario": calendario, "cierre": cierre}
 
 
+TERMINADOS = {"FT", "AET", "PEN"}
+
+
+def _copas() -> list[dict]:
+    return query(
+        """SELECT league_id, name, country, api_football_id, season_style,
+                  cross_league
+           FROM leagues WHERE active AND cross_league
+             AND api_football_id IS NOT NULL ORDER BY league_id"""
+    )
+
+
+def ensayo_copas(desde: datetime, temporadas: list[int],
+                 hasta: datetime | None = None) -> dict:
+    """
+    Qué entraría con `cargar_copas()`, SIN escribir nada (ni partidos ni
+    `unresolved_names`). En copa solo vale la coincidencia exacta; un nombre
+    con candidato alto en `sin_resolver` suele ser un club nuestro al que le
+    falta un alias, y su partido se perdería en silencio.
+    """
+    hasta = hasta or datetime.now(timezone.utc)
+    out: dict = {}
+    for lg in _copas():
+        out[lg["league_id"]] = {}
+        for temporada in temporadas:
+            resp, meta = af.get("fixtures", {
+                "league": lg["api_football_id"], "season": temporada,
+                "from": desde.strftime("%Y-%m-%d"),
+                "to": hasta.strftime("%Y-%m-%d"), "timezone": "UTC"})
+            af.check_quota(meta)
+            fila = {"terminados": 0, "entrarian": 0, "ya_estaban": 0,
+                    "con_equipo_fuera": 0, "sin_resolver": {}}
+            for fx in resp:
+                if fx["fixture"]["status"]["short"] not in TERMINADOS:
+                    continue
+                fila["terminados"] += 1
+                ids = []
+                for lado in ("home", "away"):
+                    nombre = fx["teams"][lado]["name"]
+                    tid, cand, score = match_team(nombre, "api_football", None)
+                    if tid and score >= 100.0:
+                        ids.append(tid)
+                    else:
+                        fila["sin_resolver"][nombre] = [cand, round(score, 1)]
+                if len(ids) < 2:
+                    fila["con_equipo_fuera"] += 1
+                    continue
+                ko = datetime.fromisoformat(fx["fixture"]["date"].replace("Z", "+00:00"))
+                ya = query_one(
+                    """SELECT 1 FROM matches WHERE league_id = %s
+                       AND external_ids ->> 'api_football' = %s""",
+                    (lg["league_id"], str(fx["fixture"]["id"])))
+                if ya or _ya_existe(lg["league_id"], ids[0], ids[1], ko):
+                    fila["ya_estaban"] += 1
+                else:
+                    fila["entrarian"] += 1
+            out[lg["league_id"]][temporada] = fila
+    return out
+
+
+def cargar_copas(desde: datetime, temporadas: list[int]) -> dict:
+    """
+    Resultados de Champions y Europa League que faltan desde que
+    `worldfootballR_data` dejó de publicarlas (dic-2024). Mismo camino que
+    `cargar_temporada()`: se insertan como programados y los cierra
+    `results.close_recent()` con marcador y estadísticas. Nunca da de alta
+    equipos: lo que no case EXACTO queda en `unresolved_names` (CLAUDE.md).
+    """
+    from .results import close_recent
+
+    hasta = datetime.now(timezone.utc)
+    calendario = [ingest_league(lg, desde=desde, season=t, hasta=hasta)
+                  for lg in _copas() for t in temporadas]
+    horas = int((hasta - desde).total_seconds() // 3600) + 24
+    cierre = close_recent(hours_back=horas,
+                          leagues=[lg["league_id"] for lg in _copas()])
+    return {"calendario": calendario, "cierre": cierre}
+
+
 if __name__ == "__main__":
     import sys
 
@@ -258,5 +363,13 @@ if __name__ == "__main__":
                         format="%(asctime)s %(levelname)s %(name)s %(message)s")
     if len(sys.argv) > 2 and sys.argv[1] == "--temporada":
         print(cargar_temporada(sys.argv[2:]))
+    elif len(sys.argv) > 3 and sys.argv[1] in ("--copas-ensayo", "--copas"):
+        # python -m qf.ingest.fixtures --copas-ensayo 2024-12-13 2024 2025 2026
+        import json
+        inicio = datetime.fromisoformat(sys.argv[2]).replace(tzinfo=timezone.utc)
+        temporadas = [int(t) for t in sys.argv[3:]]
+        f = ensayo_copas if sys.argv[1] == "--copas-ensayo" else cargar_copas
+        print(json.dumps(f(inicio, temporadas), ensure_ascii=False, indent=1,
+                         default=str))
     else:
         print(run())

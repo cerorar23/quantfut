@@ -14,7 +14,7 @@ infraestructura de credibilidad desde la primera línea.
 | Fase | Qué es | Estado | Falta |
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **90%** | xG parado desde 2024-25 y copas sin resultados desde dic-2024 (ver "Corrección (2026-10-02)" en la sección de xG) (11 ligas + 2 copas en el modelo; + 12 ligas solo para el criterio sharp, `leagues.model_enabled = FALSE`: LaLiga 2 y Serie B desde 2026-09-25; Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia, Championship, Ligue 2, 2. Bundesliga y Brasil B desde 2026-09-28) |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | Fuente de xG reciente: la actual está parada desde 2024-25 (ver "Corrección (2026-10-02)" en la sección de xG; copas ya recuperadas) (11 ligas + 2 copas en el modelo; + 12 ligas solo para el criterio sharp, `leagues.model_enabled = FALSE`: LaLiga 2 y Serie B desde 2026-09-25; Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia, Championship, Ligue 2, 2. Bundesliga y Brasil B desde 2026-09-28) |
 | **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-09-27, 3 de 300. Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **55%** | Auth por email, frontend, cobros |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
@@ -887,7 +887,17 @@ Champions y Europa League: en la base no hay ni un partido de copa entre
 dic-2024 y los programados de oct-2026. El job semanal responde `ok` con 0
 filas, así que nada lo detectaba. Consecuencias: desde esas fechas el modelo
 entrena solo con goles (Dixon-Coles cae a goles cuando el xG es NaN), y el
-término de fuerza entre ligas no ve ningún partido de copa de 2025/26.
+término de fuerza entre ligas no veía ningún partido de copa de 2025/26.
+
+**Copas recuperadas (2-oct-2026)** desde API-Football:
+`python -m qf.ingest.fixtures --copas-ensayo 2024-12-13 2024 2025 2026`
+(no escribe) y luego `--copas` con los mismos argumentos. 351 partidos (215 de
+Champions, 136 de Europa League), cerrados por `results.close_recent()` con
+marcador y estadísticas, sin xG. Solo entran partidos con los DOS equipos en
+el catálogo por coincidencia exacta; ningún equipo se da de alta en copa. Y
+`health.check_xg_freshness()` mira ahora el dato y no el job: las 13
+competiciones paradas quedan reconocidas hasta el 1-nov-2026, y desde
+entonces vuelven a alertar si no se ha decidido la fuente de xG.
 
 ---
 
