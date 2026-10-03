@@ -15,14 +15,14 @@ no ahora.
 
 ## Auditoría 2026-10-03 — mejoras propuestas (pendientes de decisión)
 
-- [ ] **Sombra: exigir también la hora de DECISIÓN ≥15 min antes del
-      inicio.** Hoy la guarda mira la hora del precio; una oferta de casa de
-      la lista decidida a T-5 contaría para la puerta aunque el suscriptor no
-      pudiera apostarla y aunque el cierre se capture antes de decidirla.
-- [ ] **Cierre con una sola oportunidad.** La ventana `close` (3-12 min)
-      cae en una pasada del cron */10. Opciones: ensanchar la ventana o
-      reintentar en la pasada siguiente si falta; y no desplegar el worker
-      en los minutos :x0.
+- [x] **HECHO (3-oct, decisión del usuario) — Antelación de la DECISIÓN.**
+      `picks.MIN_LEAD` (15 min) la usan la sombra y la publicación real, para
+      el precio y para la decisión. La publicación (`find_candidates`) no
+      tenía ninguna guarda: el job de las 08:00 habría publicado a T-5 un
+      partido de las 08:05.
+- [x] **HECHO (3-oct) — Segunda oportunidad del cierre.** Pasada de rescate
+      `odds_worker --solo-cierre` a los minutos 5,15,…: dos intentos dentro
+      de la ventana 3-12 min, misma vara, 0 créditos si el primero funcionó.
 - [ ] **Vigilar 1xBet en la sombra.** Era la casa del valor histórico
       (+2,78% en el backtest, persistencia 0,72); en vivo va −0,2% en 28
       ofertas con cierre. Muestra pequeña: revisar con las europeas.

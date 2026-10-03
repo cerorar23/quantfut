@@ -76,10 +76,12 @@ def _fetch(sport_key: str, markets: str | None = None) -> tuple[list[dict], dict
         return r.json(), quota
 
 
-def _pending_windows(now: datetime) -> dict[str, list[tuple[str, str]]]:
+def _pending_windows(now: datetime, solo: tuple[str, ...] | None = None
+                     ) -> dict[str, list[tuple[str, str]]]:
     """
     Devuelve {sport_key: [(match_id, window_tag), ...]} de partidos que están
     dentro de una ventana objetivo y aún no tienen captura para esa ventana.
+    `solo` restringe las ventanas (la pasada de rescate del cierre).
     """
     rows = query(
         """
@@ -107,6 +109,8 @@ def _pending_windows(now: datetime) -> dict[str, list[tuple[str, str]]]:
     for r in rows:
         mins = float(r["mins"])
         for tag, hi, lo in settings.odds_windows:
+            if solo is not None and tag not in solo:
+                continue
             # Solo pagar otra captura cuando ambos XI ya son conocidos. La
             # cuota debe ser posterior al último XI y anterior al cierre.
             if tag == "post_xi" and (
@@ -153,10 +157,16 @@ def _parse_event(ev: dict, match_id: str, window_tag: str,
     return rows
 
 
-def run_once() -> dict:
-    """Una pasada. Pensado para correr cada 10 minutos desde cron."""
+def run_once(solo: tuple[str, ...] | None = None) -> dict:
+    """
+    Una pasada. Corre cada 10 minutos desde cron, y además una pasada de
+    rescate SOLO del cierre desfasada 5 minutos (`--solo-cierre`): la ventana
+    `close` (3-12 min) caía en una única pasada, y si fallaba la oferta se
+    quedaba sin cierre justo para siempre. Con el rescate hay dos intentos;
+    si el primero funcionó, el registro de captura hace que no gaste nada.
+    """
     now = datetime.now(timezone.utc)
-    pending = _pending_windows(now)
+    pending = _pending_windows(now, solo)
     if not pending:
         return {"calls": 0, "rows": 0, "matches": 0}
 
@@ -254,4 +264,5 @@ def run_once() -> dict:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s %(message)s")
-    print(run_once())
+    import sys
+    print(run_once(("close",) if "--solo-cierre" in sys.argv[1:] else None))

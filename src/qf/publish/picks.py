@@ -78,6 +78,14 @@ PRIOR_WEIGHT = 100
 # Stake mínimo publicable, en unidades (1 u = 1% de banca).
 MIN_STAKE_UNITS = 0.05
 
+# Antelación mínima, tanto del PRECIO como de la DECISIÓN, respecto al inicio.
+# Un snapshot de la ventana de cierre (3-12 min) es el mismo contra el que se
+# liquida: su oferta tendría EV = edge bruto por construcción. Y una decisión
+# a T-5 no se puede apostar a tiempo, aunque el precio fuera de T-55. La usan
+# la publicación y la sombra (que certifica "lo que se habría publicado"):
+# una sola constante para que no puedan divergir.
+MIN_LEAD = timedelta(minutes=15)
+
 
 def mezclar(previa: float, n: int, ev_medio: float | None,
             edge_medio: float | None, peso: int = PRIOR_WEIGHT) -> float:
@@ -292,12 +300,17 @@ def find_candidates(prediction: dict, now: datetime | None = None) -> list[Candi
     """
     now = now or datetime.now(timezone.utc)
     match_id = prediction["match_id"]
+    kickoff = prediction.get("kickoff_utc")
+    if kickoff is not None and kickoff - now < MIN_LEAD:
+        return []
     model_1x2 = (prediction.get("markets") or {}).get("1x2") or {}
     pid = prediction.get("prediction_id")
     out = []
     vigente = persistencias()
     for snap in (_af_snapshot(match_id, now), _odds_api_snapshot(match_id, now)):
         if snap is None:
+            continue
+        if kickoff is not None and kickoff - snap.as_of < MIN_LEAD:
             continue
         for o in offers(snap, now, persistencia=vigente):
             p_exp = (1.0 + o.expected_edge / 100.0) / o.price

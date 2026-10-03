@@ -2500,6 +2500,23 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-03 — Antelación de la decisión y rescate del cierre
+
+Las dos primeras mejoras de la auditoría, con el sí del usuario.
+
+- **Una sola `MIN_LEAD` para sombra y publicación, aplicada al precio Y a
+  la decisión.** Al leer el código apareció algo peor que lo auditado: la
+  publicación real no tenía ninguna guarda de antelación. La puerta
+  certifica "lo que se habría publicado", así que la regla tiene que ser la
+  misma en los dos lados; la constante vive en `picks.py` y la sombra la
+  importa, para que no puedan divergir.
+- **Rescate del cierre desfasado 5 min, solo `close`.** Se descartó mover la
+  ventana o tomar un "precierre" de respaldo: cualquiera de las dos cambia
+  la vara de la puerta. Con el rescate la vara es la misma (último precio a
+  3-12 min) y hay dos intentos; el registro de captura evita pagar dos veces.
+- Desplegado sin reiniciar el worker (`docker compose cp` + recargar el
+  crontab montado) para no cortar la medición del xG; API reconstruida.
+
 ## 2026-10-03 — Auditoría de las fases 0, 1 y 2 (solo lectura)
 
 Recalculado de forma independiente contra la base de producción, no leído de

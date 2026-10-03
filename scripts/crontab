@@ -9,6 +9,10 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # --- FASE 0 ---
 # Captura de cuotas cada 10 min. EL PROCESO MAS IMPORTANTE DEL SISTEMA.
 */10 * * * * cd /app && python -m qf.ingest.odds_worker >> /var/log/odds.log 2>&1
+# Rescate del cierre, desfasado 5 min: la ventana `close` (3-12 min antes)
+# caía en UNA sola pasada; si fallaba, la oferta quedaba sin cierre justo. Solo
+# mira `close` y no gasta créditos si la pasada principal ya lo capturó.
+5-59/10 * * * * cd /app && python -m qf.ingest.odds_worker --solo-cierre >> /var/log/odds.log 2>&1
 
 # Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle).
 # Cada hora: el proveedor actualiza cada liga cuando le toca y solo guarda 7

@@ -51,10 +51,9 @@ from . import picks as pk
 log = logging.getLogger(__name__)
 
 HORIZON = timedelta(hours=72)
-# Un snapshot tomado en la ventana de cierre (3-12 min antes) es el mismo
-# contra el que se liquida: una oferta sacada de él tendría EV = edge bruto
-# por construcción. Tampoco sería publicable a tiempo.
-MIN_LEAD = timedelta(minutes=15)
+# La misma antelación mínima que la publicación, para el precio y para la
+# decisión (ver `picks.MIN_LEAD`).
+MIN_LEAD = pk.MIN_LEAD
 LEAD_BUCKETS = ((0, 6), (6, 24), (24, 48), (48, 72))
 
 
@@ -107,6 +106,10 @@ def capture(now: datetime | None = None) -> dict:
     rows, snaps = [], 0
     vigente = pk.persistencias()
     for m in matches:
+        # Decidir a T-5 con un precio de T-55 no se puede publicar a tiempo,
+        # y el cierre se capturaría antes de la decisión (auditoría 3-oct).
+        if m["kickoff_utc"] - now < MIN_LEAD:
+            continue
         for snap in (pk._af_snapshot(m["match_id"], now),
                      pk._odds_api_snapshot(m["match_id"], now)):
             if snap is None or m["kickoff_utc"] - snap.as_of < MIN_LEAD:
