@@ -118,9 +118,12 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       Telegram sin token y el log del cron se borraba en cada despliegue.
       Ahora: `health_runs` (db/037), `/var/log` del worker en volumen, alerta
       sin canal como ERROR, HTML escapado y fallo de envío que no tumba el job.
-- [ ] **Configurar el bot de alertas de Telegram (usuario).** Solo
-      `TG_BOT_TOKEN` + `TG_ALERT_CHAT` (chat privado); los canales de picks
-      siguen vacíos. Hasta entonces ningún chequeo avisa a nadie.
+- [x] **HECHO (2-oct) — Bot de alertas de Telegram configurado.** El
+      usuario puso `TG_BOT_TOKEN` (@NavyAnalista_bot) en el `.env` del
+      servidor; `TG_ALERT_CHAT` es su chat privado. Alerta de prueba enviada
+      desde el worker. `TG_CHANNEL_FREE/PAID` siguen vacíos: por Telegram
+      solo salen alertas, nunca picks. Si se rota el token, revisar que el
+      bot siga teniendo el chat (`getUpdates` tras un `/start`).
 - [x] **Vigilancia del hueco de cobertura de `/injuries`.**
       `health.check_injuries_coverage()` detecta si alguna liga acumula
       `INJURIES_MIN_MATCHES` (15) partidos comprobados en 30 días sin NINGUNA
