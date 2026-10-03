@@ -1,5 +1,30 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-03 — Decorrelación con el mercado: tampoco
+
+Idea 4. Hubáček y Šír (IJF 2023) entrenan con `Σ(t−y)² − γΣ(t−m)²` y ganan
+en la NBA contra el cierre de Pinnacle con un modelo peor que el mercado.
+Leído el artículo antes de diseñar: con apuesta uniforme ellos también
+pierden para todo γ; solo ganan con cartera de Sharpe. Regla fijada antes
+en tareas.md. `eval/decorrelacion.py`: segunda etapa softmax sobre la
+información de Kalman, `m` = justo temprano de Pinnacle, walk-forward por
+temporadas (prueba 2021/22-2024/25), γ elegido en la temporada anterior.
+
+- Con el γ elegido: EV contra el cierre −3,51 % [−3,78, −3,25], 0/7 ligas,
+  8.802 apuestas. γ fijo 0 → 0,8: −3,78 % → −3,46 %. Apartarse del mercado
+  mejora 0,3 puntos y no se acerca a cubrir el margen de Pinnacle (~3,9 %).
+- Por qué no se probó la cartera de Sharpe: solo repondera las mismas
+  apuestas según la ventaja estimada, y esa ventaja correlaciona −0,10 con
+  el EV real (el quintil de más ventaja estimada da −5,1 %). Pesaría más lo
+  peor. Es la misma selección adversa que el README midió en 2026-09-22.
+- La correlación con el mercado se queda en 0,95 para todo γ: las variables
+  son las probabilidades del propio modelo, que ya se parecen al mercado.
+  Decorrelar de verdad exigiría información que el mercado no tenga, que es
+  justo lo que falta (diagnóstico del README).
+
+Balance de las 5 ideas: 1, 2 y 4 descartadas con datos; 3 y 5 desplegadas,
+las dos sobre el criterio de casas blandas, que es donde está la ventaja.
+
 ## 2026-10-03 — Stake encogido por la incertidumbre de la persistencia
 
 Idea 5 (Baker y McHale 2013; Uhrín y otros 2021). El stake era Kelly 0,20

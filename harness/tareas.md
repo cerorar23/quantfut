@@ -111,8 +111,39 @@ Cruzadas con lo ya medido (2.D, 2.E): solo entra lo que no se ha probado.
       de esa casa y esa casa no debería contar para la puerta; si la mitad o
       más, sí. Las censuradas ≥60 cuentan como largas; las censuradas <60 se
       excluyen.
+- [x] **HECHO (3-oct) — SIN SEÑAL. 4.** Con γ elegido en validación: EV
+      contra el cierre −3,51 % [−3,78, −3,25], 0/7 ligas; γ fijo de 0 a
+      0,8: −3,78 % → −3,46 %, todos con el IC entero bajo cero. La ventaja
+      estimada correlaciona −0,10 con el EV real (peor quintil, el de más
+      ventaja): la cartera de Sharpe pesaría más lo peor, no se prueba.
+      Ver progreso.md. Planteamiento:
 - [ ] **4. Decorrelación con el mercado** (Hubáček y Šír, IJF 2023):
       entrenar para discrepar donde el mercado se equivoca. Investigación.
+      **Método del artículo (leído el 3-oct, arXiv 2010.12508 §4.5 y §5):**
+      pérdida `Σ (t−y)² − γ·Σ (t−m)²`, `y` el resultado, `m` la probabilidad
+      del bookmaker; γ ∈ {0, 0,2, …, 1}; NBA 2006-2014 contra el cierre de
+      Pinnacle, walk-forward por temporadas; con apuesta uniforme siguen en
+      pérdidas para todo γ, con cartera de Sharpe ganan con γ 0,2-0,8.
+      **Diseño fijado ANTES de ver resultados** (`eval/decorrelacion.py`,
+      solo lectura, local):
+      - Mismos 14.110 partidos y Kalman sin futuro del punto 1. `m` = justo
+        de Pinnacle TEMPRANO (es contra quien se apuesta).
+      - Segunda etapa: softmax lineal sobre la información del modelo (log
+        de sus tres probabilidades y log de las dos lambdas), pérdida del
+        artículo + L2 1e-3. Sin cuotas como variable (su caso principal).
+      - Walk-forward por temporadas: prueba 2021/22-2024/25, entrenando con
+        todas las anteriores. γ ∈ {0, 0,2, 0,4, 0,6, 0,8}, elegido para cada
+        temporada con la anterior como validación (entrenando con las de
+        antes): nunca se elige mirando la prueba.
+      - Apuesta uniforme: por partido, la selección de mayor `t·cuota − 1`
+        si es > 0, al precio temprano de Pinnacle.
+      - "Hay señal" si con el γ elegido el EV contra el cierre justo tiene
+        el IC95 por semanas ENTERO por encima de cero y es positivo en ≥4 de
+        7 ligas. Con el cierre insesgado, el EV contra el cierre es la misma
+        esperanza que el ROI con mucho menos ruido; el ROI se informa.
+        Informativo: la tabla de todos los γ y la correlación con el
+        mercado. La cartera de Sharpe solo se prueba si lo uniforme apunta
+        algo.
 - [x] **HECHO y DESPLEGADO (3-oct) — 5.** db/039, `picks.factores()`,
       sombra con `stake_publicado_units` y `factor_incertidumbre`. Factores
       vigentes al desplegar: 1xBet 0,94, Betano 0,71, Betsson 0,65,
@@ -1116,7 +1147,10 @@ Ajuste por estado del partido, PSxG como objetivo, más ligas, mercados
 derivados como fuente de edge, Elo como sustituto, y barridos de
 hiperparámetros. Todos medidos, todos negativos o en la cuarta decimal.
 También (2026-10-03): el modelo contra la cuota TEMPRANA de Pinnacle; no
-anticipa el movimiento (`eval/early_vs_close.py`).
+anticipa el movimiento (`eval/early_vs_close.py`). El más-menos por jugador
+(`model/masmenos.py`). Y entrenar para apartarse del mercado (Hubáček y Šír,
+`eval/decorrelacion.py`): con la información de goles y xG no hay nada de lo
+que apartarse con provecho.
 
 ## Verificación pendiente CON DATOS REALES 🔬
 

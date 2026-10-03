@@ -129,8 +129,9 @@ class _KalmanSinFuturo(DynamicRatings):
 
 def unir(oos: pd.DataFrame, mk: pd.DataFrame) -> pd.DataFrame:
     """Partidos con modelo y mercado, y la guarda de Pinnacle de soft_vs_sharp."""
-    d = oos[["match_id", "kickoff_utc", "p_home", "p_draw", "p_away"]].merge(
-        mk, on="match_id", how="inner")
+    cols = ["match_id", "kickoff_utc", "p_home", "p_draw", "p_away"]
+    cols += [c for c in ("lam", "mu") if c in oos.columns]
+    d = oos[cols].merge(mk, on="match_id", how="inner")
     d = d[d["sharp_dev_early"] <= MAX_SHARP_DEVIATION]
     return d.sort_values("kickoff_utc").reset_index(drop=True)
 

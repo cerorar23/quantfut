@@ -133,6 +133,14 @@ contra el cierre justo, peor que apostar a todo sin criterio (−3,9 %). No hay
 ventana temporal en la que la información del modelo llegue antes que el
 mercado.
 
+**Ni entrenándolo para apartarse del mercado (2026-10-03).** El método de
+Hubáček y Šír (IJF 2023), que gana en la NBA con un modelo peor que el
+mercado, aplicado a los mismos partidos con walk-forward por temporadas
+(`python -m qf.eval.decorrelacion`): EV contra el cierre −3,5 % [−3,8, −3,2]
+en 0 de 7 ligas. Apartarse del mercado gana 0,3 puntos y no cubre el margen,
+y la ventaja que el modelo cree ver sigue correlacionando en negativo con el
+valor real.
+
 Se descartaron por medición, no por intuición:
 
 - *"Gana en las ligas latinoamericanas, que son mercados más blandos."* Falso.
