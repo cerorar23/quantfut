@@ -2500,6 +2500,36 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-03 — Auditoría de las fases 0, 1 y 2 (solo lectura)
+
+Recalculado de forma independiente contra la base de producción, no leído de
+los informes del propio sistema.
+
+- **Fase 0, limpia.** 0 precios fuera de rango, 0 ternas 1X2 incompletas (de
+  5.129), 0 duplicados, 0 snapshots posteriores al inicio; Pinnacle dentro
+  del consenso en los 49 cierres; cierre a 4-9 min. Toda ventana que falta es
+  de partidos dados de alta con <72 h (LaLiga 2 el 25-sep, Brasil B el
+  28-sep) o reprogramados. Riesgo anotado, no fallo: la ventana `close`
+  (3-12 min) cae en UNA pasada del cron */10; si esa pasada falla, el
+  cierre se pierde y la oferta no cuenta para la puerta.
+- **Fase 1, limpia salvo lo ya sabido** (xG parado). 0 clubes duplicados
+  por `af_team_id`, 0 equipos bajo `eu.*`, 0 partidos duplicados, 0 equipos
+  en dos partidos a <40 h; 10 de 10 partidos con predicción sellada antes del
+  inicio; cadena de hashes verificada (4 lotes). Arreglado: `fixtures.run()`
+  contaba los clubes de copa fuera del catálogo como incidencia; con
+  Telegram activo habría avisado dos veces al día por algo esperado (mismo
+  criterio que `check_unresolved_names`). Desplegado con `docker compose cp`
+  para no matar la medición del xG en curso; el próximo build lo incluye.
+- **Fase 2, los números de la sombra son correctos.** 165 de 165 precios
+  justos de entrada reproducidos (Shin sobre el snapshot de Pinnacle del
+  mismo instante; en API-Football el snapshot es `provider_updated_at`, no
+  `fetched_at`); 89 de 89 EV al cierre idénticos; 0 resultados o
+  beneficios mal liquidados; publicables una por partido, solo SOFT_BOOKS,
+  decididas 8-71 h antes con precios de ≤5,2 h. Matiz: la guarda de 15 min
+  mira la hora del PRECIO, no la de la decisión; 3 ofertas se decidieron a
+  <15 min (ninguna de SOFT_BOOKS, no cuentan). Publicación pausada
+  (`PUBLISH_PICKS_ENABLED=0`, `picks` vacía).
+
 ## 2026-10-02 — Copas recuperadas y chequeo de xG que mira el dato
 
 `worldfootballR_data` lleva parado desde sep-2025 (dic-2024 en copas): el

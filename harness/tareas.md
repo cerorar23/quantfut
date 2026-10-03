@@ -13,6 +13,20 @@ no ahora.
 
 ## Pendientes 🔴
 
+## Auditoría 2026-10-03 — mejoras propuestas (pendientes de decisión)
+
+- [ ] **Sombra: exigir también la hora de DECISIÓN ≥15 min antes del
+      inicio.** Hoy la guarda mira la hora del precio; una oferta de casa de
+      la lista decidida a T-5 contaría para la puerta aunque el suscriptor no
+      pudiera apostarla y aunque el cierre se capture antes de decidirla.
+- [ ] **Cierre con una sola oportunidad.** La ventana `close` (3-12 min)
+      cae en una pasada del cron */10. Opciones: ensanchar la ventana o
+      reintentar en la pasada siguiente si falta; y no desplegar el worker
+      en los minutos :x0.
+- [ ] **Vigilar 1xBet en la sombra.** Era la casa del valor histórico
+      (+2,78% en el backtest, persistencia 0,72); en vivo va −0,2% en 28
+      ofertas con cierre. Muestra pequeña: revisar con las europeas.
+
 ## Fase 1 — fuentes paradas (encontrado 2026-10-02)
 
 `worldfootballR_data` no actualiza ningún fichero que usamos desde el

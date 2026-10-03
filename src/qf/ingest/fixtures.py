@@ -228,7 +228,7 @@ def run(days_ahead: int = 21) -> dict:
                   cross_league
            FROM leagues WHERE active AND api_football_id IS NOT NULL"""
     )
-    results, total, problems = [], 0, []
+    results, total, problems, notes = [], 0, [], []
 
     for lg in leagues:
         try:
@@ -240,16 +240,23 @@ def run(days_ahead: int = 21) -> dict:
         results.append(r)
         total += r["inserted"] + r["updated"]
         if r["unresolved"]:
-            problems.append(f"{r['league']}: {r['unresolved']} equipos sin emparejar")
+            msg = f"{r['league']}: {r['unresolved']} equipos sin emparejar"
+            # En copa, un club fuera del catálogo es irresoluble por diseño
+            # (nunca se da de alta bajo `eu.*`), igual que en
+            # `health.check_unresolved_names`. Alertar por ello dos veces al
+            # día enseñaría a ignorar las alertas.
+            (notes if lg.get("cross_league") else problems).append(msg)
 
     ok = not problems
-    af.record_health("fixtures", total, ok, {"results": results, "problems": problems})
+    af.record_health("fixtures", total, ok,
+                     {"results": results, "problems": problems, "notes": notes})
 
     if problems:
         from ..publish.telegram import alert
         alert("Ingesta de calendario con incidencias:\n" + "\n".join(problems[:8]))
 
-    summary = {"total": total, "leagues": len(results), "problems": problems}
+    summary = {"total": total, "leagues": len(results), "problems": problems,
+               "notes": notes}
     log.info("Calendario: %s", summary)
     return summary
 
