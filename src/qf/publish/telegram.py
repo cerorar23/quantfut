@@ -12,6 +12,7 @@ que demuestra que no lo hiciste.
 """
 from __future__ import annotations
 
+import html
 import logging
 from datetime import datetime, timezone
 
@@ -55,7 +56,18 @@ def _send(chat_id: str, text: str, disable_preview: bool = True) -> dict:
 
 def alert(text: str) -> None:
     """Alerta operativa (fallo de cron, scraper roto, cuota de API agotada)."""
-    _send(settings.tg_alert_chat, f"⚠️ <b>QUANTFUT</b>\n{text}")
+    if not settings.tg_bot_token or not settings.tg_alert_chat:
+        # Un WARNING genérico ("mensaje omitido") escondió del 28-sep al
+        # 1-oct-2026 la alerta de bajas: sin canal, el texto queda al menos
+        # como ERROR en el log.
+        log.error("ALERTA sin canal (Telegram no configurado): %s", text)
+        return
+    try:
+        # parse_mode HTML: un "5 < 300" sin escapar hace que Telegram rechace
+        # el mensaje entero.
+        _send(settings.tg_alert_chat, f"⚠️ <b>QUANTFUT</b>\n{html.escape(text)}")
+    except Exception as exc:  # noqa: BLE001 — avisar no puede tumbar el job
+        log.error("ALERTA no enviada (%s): %s", exc, text)
 
 
 def format_pick(c: Candidate, teams: tuple[str, str], show_stake: bool = True) -> str:

@@ -2500,6 +2500,33 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-02 — La alerta de bajas saltó cuatro días y no la vio nadie
+
+Reconstruido con los datos de cada mañana: `check_injuries_coverage()` falló
+el 28, 29 y 30-sep y el 1-oct (`us.mls` 16-17 partidos, 0 bajas). Tres
+agujeros en cadena:
+
+- **Ningún canal.** `health.run()` llama a `telegram.alert()`; sin
+  `TG_BOT_TOKEN` eso era un WARNING genérico "mensaje omitido". Afecta a los
+  7 chequeos diarios y a las 8 llamadas a `alert()` del código, no solo a
+  las bajas. Decisión del usuario: configurar Telegram SOLO para alertas a su
+  chat privado (`TG_ALERT_CHAT`); los canales de picks siguen vacíos, así que
+  no se publica nada por ahí. Sin canal, `alert()` deja ahora el texto
+  completo como ERROR.
+- **Log efímero.** El cron escribía en `/var/log` del contenedor, que se
+  borra en cada despliegue (dos ese mismo día). `/var/log` del worker es ahora
+  el volumen `workerlogs`, y cada pasada del cron queda en `health_runs`
+  (db/037). El panel y `/admin/health` no escriben historial.
+- **Mensaje que invitaba a archivarlo.** Decía "mismo patrón de cobertura
+  silenciosa que mx.liga_mx…", es decir, culpaba al proveedor. Ahora pide
+  descartar antes un error nuestro.
+
+Al activar Telegram aparecían dos riesgos nuevos, cerrados antes: el envío
+es HTML y un "5 < 300" sin escapar hacía rechazar el mensaje; y un fallo de
+Telegram propagaba la excepción al job que avisaba. Comprobado de paso: los
+tres huecos conocidos de `/injuries` (Liga MX, Argentina, Primeira) son
+reales (la API devuelve 0 por partido); Brasil sí trae datos.
+
 ## 2026-10-02 — La historia del XI en vivo sale también de lineups_historicas
 
 Decisión del usuario, ampliando la excepción de db/034. `availability()`

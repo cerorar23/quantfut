@@ -42,6 +42,9 @@ services:
       - artifacts:/srv/quantfut/artifacts
       - escudos:/srv/quantfut/escudos
       - ./scripts/crontab:/etc/cron.d/quantfut:ro
+      # Los logs del cron (>> /var/log/*.log) se perdían en cada
+      # despliegue: así se borró la salida del chequeo diario (oct-2026).
+      - workerlogs:/var/log
     # cron no hereda el entorno del contenedor: se lo pasa pam_env leyendo
     # /etc/environment. Se vuelca ENTERO. La versión anterior filtraba por
     # prefijos y dejaba fuera API_FOOTBALL_*, así que calendario, resultados,
@@ -103,5 +106,6 @@ volumes:
   chain:
   artifacts:
   escudos:
+  workerlogs:
   caddydata:
   caddyconfig:

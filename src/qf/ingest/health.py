@@ -6,13 +6,16 @@ ID de liga, tu scraper devuelve 0 filas con status 200, el modelo sigue
 entrenando con datos congelados y te enteras tres meses después mirando por
 qué el CLV se hundió.
 
-Cada chequeo devuelve (ok, mensaje). Si alguno falla, va a Telegram.
+Cada chequeo devuelve (ok, mensaje). Si alguno falla, va al chat privado de
+alertas de Telegram (`TG_ALERT_CHAT`); el cron guarda además cada pasada en
+`health_runs`.
 """
 from __future__ import annotations
 
+import json
 import logging
 
-from ..db import query
+from ..db import execute, query
 
 log = logging.getLogger(__name__)
 
@@ -177,10 +180,14 @@ def check_injuries_coverage() -> tuple[bool, str]:
               if r["checked"] >= INJURIES_MIN_MATCHES and r["total_reported"] == 0
               and r["league_id"] not in KNOWN_INJURY_COVERAGE_GAPS]
     if nuevos:
-        return False, (f"Sin NINGUNA baja reportada en {INJURIES_MIN_MATCHES}+ "
+        # Del 22-sep al 2-oct-2026 esta alerta saltó por un error nuestro
+        # (las bajas se descartaban al asignarlas a un lado), no del
+        # proveedor: el mensaje no debe dar por hecho ninguna de las dos.
+        return False, (f"Sin NINGUNA baja guardada en {INJURIES_MIN_MATCHES}+ "
                        "partidos comprobados de: " + ", ".join(nuevos)
-                       + " (mismo patrón de cobertura silenciosa que ya tienen "
-                       "mx.liga_mx/ar.primera/pt.primeira, ver README.md)")
+                       + ". Antes de darlo por hueco del proveedor, descartar "
+                       "un error nuestro: pedir /injuries de un partido y "
+                       "comparar con lo guardado en `injuries`")
     activos = {r["league_id"] for r in rows}
     conocidos = KNOWN_INJURY_COVERAGE_GAPS & activos
     msg = "Cobertura de bajas OK"
@@ -214,7 +221,16 @@ CHECKS = [
 ]
 
 
-def run(alert_on_fail: bool = True) -> dict:
+def _persist(ok: bool, results: list[dict]) -> None:
+    execute("INSERT INTO health_runs (ok, results) VALUES (%s, %s)",
+            (ok, json.dumps(results, ensure_ascii=False)))
+
+
+def run(alert_on_fail: bool = True, persist: bool = False) -> dict:
+    """
+    `persist` solo desde el cron diario: el panel y /admin/health calculan la
+    salud al vuelo y no deben llenar el historial.
+    """
     results, failures = [], []
     for name, fn in CHECKS:
         try:
@@ -225,6 +241,15 @@ def run(alert_on_fail: bool = True) -> dict:
         if not ok:
             failures.append(f"• {name}: {msg}")
 
+    if persist:
+        # El log del cron vive dentro del contenedor y se pierde en cada
+        # despliegue: el historial va a la base (db/037).
+        try:
+            _persist(not failures, results)
+        except Exception as exc:  # noqa: BLE001 — que no tape la alerta
+            log.error("No se pudo guardar el chequeo diario: %s", exc)
+            failures.append(f"• historial de salud: no se pudo guardar ({exc})")
+
     if failures and alert_on_fail:
         from ..publish.telegram import alert
         alert("Chequeo diario con fallos:\n" + "\n".join(failures))
@@ -234,7 +259,7 @@ def run(alert_on_fail: bool = True) -> dict:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    res = run()
+    res = run(persist=True)
     for r in res["results"]:
         print(f"{'OK   ' if r['ok'] else 'FALLO'} {r['check']:24s} {r['message']}")
     raise SystemExit(0 if res["ok"] else 1)

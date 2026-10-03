@@ -113,10 +113,14 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       Falta un equivalente a `lineups.availability()` que combine bajas +
       XI confirmado en una feature de `residual.py`. Requiere haber
       acumulado datos primero (desde el 2-oct; antes la tabla está vacía).
-- [ ] **Revisar por qué `check_injuries_coverage()` no frenó el fallo de
-      bajas.** `us.mls` llegó a 17 partidos comprobados con 0 bajas, por
-      encima de `INJURIES_MIN_MATCHES`: o la alerta saltó y nadie la vio, o
-      no se evalúa donde se cree.
+- [x] **HECHO (2-oct) — Por qué `check_injuries_coverage()` no frenó el
+      fallo de bajas.** Saltó cada mañana del 28-sep al 1-oct; el aviso iba a
+      Telegram sin token y el log del cron se borraba en cada despliegue.
+      Ahora: `health_runs` (db/037), `/var/log` del worker en volumen, alerta
+      sin canal como ERROR, HTML escapado y fallo de envío que no tumba el job.
+- [ ] **Configurar el bot de alertas de Telegram (usuario).** Solo
+      `TG_BOT_TOKEN` + `TG_ALERT_CHAT` (chat privado); los canales de picks
+      siguen vacíos. Hasta entonces ningún chequeo avisa a nadie.
 - [x] **Vigilancia del hueco de cobertura de `/injuries`.**
       `health.check_injuries_coverage()` detecta si alguna liga acumula
       `INJURIES_MIN_MATCHES` (15) partidos comprobados en 30 días sin NINGUNA

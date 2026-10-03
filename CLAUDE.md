@@ -32,6 +32,11 @@ a menos que el usuario lo pida explícitamente. Auth de suscriptor
 (no-Telegram) y cobros están fuera de alcance por ahora — ver
 `harness/tareas.md`.
 
+Excepción (2026-10-02, decisión del usuario): Telegram SÍ es el canal de
+**alertas operativas** (`telegram.alert()` → chat privado `TG_ALERT_CHAT`).
+Los canales de picks (`TG_CHANNEL_FREE/PAID`) siguen vacíos a propósito. Cada
+pasada del chequeo diario queda además en `health_runs` (db/037).
+
 ## Dónde vive cada cosa (no lo derives, ya está aquí)
 
 - `src/qf/ingest/` — captura de datos (cuotas, calendario, resultados, xG).
