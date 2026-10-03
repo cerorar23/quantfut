@@ -1,5 +1,114 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-03 — Stake encogido por la incertidumbre de la persistencia
+
+Idea 5 (Baker y McHale 2013; Uhrín y otros 2021). El stake era Kelly 0,20
+sobre `edge × persistencia`, con la persistencia tratada como conocida.
+Medida con bootstrap por semanas en football-data (2 %, primera oferta por
+partido): 1xBet 0,72 [0,37, 1,06], Bet365 0,13 [−0,15, 0,41], William Hill
+−0,15; dispersión entre casas 0,31. La de Bet365 no se distingue de cero.
+
+- Factor `ρ²/(ρ²+SE²)` por casa, multiplicado al Kelly fraccional, que se
+  queda en 0,20: el 0,20 es preferencia de riesgo; el factor, estimación.
+  Lo que cambia es el reparto entre casas, no el nivel general.
+- SE en vivo por el método delta sobre la sombra (coincide con el bootstrap:
+  Bet365 0,140 frente a 0,146), mezclado con la previa con los mismos pesos
+  que `mezclar` (la previa vale 100 partidos).
+- "Stake sí, muestra no" (decisión del usuario): `stake_units` de la sombra
+  y `stake_kelly_units` del candidato siguen SIN factor y deciden qué es
+  publicable; el factor va en columnas nuevas (db/039). La puerta mide lo
+  mismo que antes del cambio.
+- Desplegado 18:03 UTC (respaldo `~/respaldo_20261003_stake/`). Factores
+  vigentes: 1xBet 0,94, Betano 0,71, Betsson 0,65, Bet365 0,54 (la sombra
+  ya la sube desde 0,43), William Hill 0. En la misma comprobación: las 258
+  filas de The Odds API desde el despliegue de 3A traen `book_updated_at`.
+
+## 2026-10-03 — Latencia de las casas blandas: empezar a medirla
+
+Idea 3. Hoy no se podía medir: API-Football refresca cada competición de
+golpe cada varias horas con una sola hora para todas las casas, y
+`odds_worker` descartaba el `last_update` por casa de The Odds API. Además
+solo hay 6 capturas por partido y la sombra lleva 184 ofertas.
+
+- 3A (gratis): db/038 `odds_snapshots.book_updated_at` + `odds_worker` la
+  guarda. ADD COLUMN: el trigger de inmutabilidad sigue igual.
+- 3B: `ingest/rafagas.py` cada 5 min, T-6 h a T-15 min, 1X2 con
+  `bookmakers=` (10 casas → 1 crédito), Premier, LaLiga y Liga MX, a
+  `odds_rafagas` (tabla aparte: ventanas, sombra y cierre no la ven), una
+  fila por CAMBIO de precio. Tope 3.000 créditos/mes, contado en
+  `rafagas_log` (decisión del usuario).
+- Por qué 5 min bastan: `last_update` fecha cada cambio al segundo; la
+  consulta solo tiene que verlo antes de que vuelva a cambiar.
+- Vara fijada con el usuario: su cliente tarda UNA HORA O MÁS en apostar.
+  `eval/latencia.py` mide la fracción de ofertas que duran ≥60 min por casa
+  (regla en tareas.md). Si una casa no llega a la mitad, sus ofertas no son
+  aprovechables con el formato actual y no deberían contar para la puerta.
+- Para no duplicar el emparejamiento evento→partido, `odds_worker` expone
+  `match_meta` y `match_events`; las ráfagas los reutilizan.
+- Despliegue: respaldo en `~/respaldo_20261003_latencia/`, migración
+  aplicada, worker reconstruido y reiniciado después del cierre de los dos
+  partidos de LaLiga 2 de las 16:30 UTC. Primera lectura posible tras 2-3
+  fines de semana desde el 9-oct.
+
+## 2026-10-03 — Más-menos por jugador: tampoco aporta sobre el XI simple
+
+Idea 2 de la literatura (Kharrat, McHale y Peña 2020; Hvattum): valorar al
+jugador por cómo le va al equipo con él en el campo, no por sus estadísticas.
+Versión aproximada por minutos (decisión del usuario; el diseño del 29-sep la
+dejaba fuera por no tener el minuto de cada cambio). Diseño y regla fijados
+antes de ver resultados en tareas.md. Mismas 3.646 filas y misma base
+(`oos_2026.10.01-030007.pkl`) para los cuatro brazos:
+
+| brazo | RPS | log-loss | ECE | ligas | valida |
+|---|---|---|---|---|---|
+| base | 0,21826 | 1,0516 | 0,03029 | - | - |
+| XI simple | 0,21686 | 1,0471 | 0,03086 | 8 | sí |
+| XI con valor | 0,21907 | 1,05448 | 0,03581 | 2 | no |
+| XI con nota | 0,21808 | 1,05115 | 0,03034 | 8 | (comparación) |
+| más-menos | 0,21838 | 1,05212 | 0,03324 | 4 | no |
+
+- El más-menos queda en la base o un pelo peor. Con dos señales no
+  sobreajusta como "XI con valor" (18), así que el problema no es la forma de
+  medir al jugador sino que, con un año de datos, quién falta no añade nada a
+  cuántos habituales faltan.
+- Límite conocido de la aproximación (el test lo documenta): un jugador que
+  juega siempre es inseparable de su equipo; el más-menos solo lo mide por
+  los partidos que se pierde, que son justo los raros.
+- La versión exacta (`/fixtures/events`, ~4.600 peticiones) NO se hace: era
+  condicional a que esta apuntara algo.
+- Ejecución: copia aparte del código en `/tmp` del worker, sin reconstruir,
+  reiniciar ni guardar artefactos; borrada al terminar. En el servidor sigue
+  el `player_value.py` anterior: el brazo entrará en el reentreno mensual
+  cuando se despliegue, como "XI con valor", por si la muestra cambia.
+
+## 2026-10-03 — El modelo tampoco llega antes que la cuota temprana
+
+Pregunta: `w_model = 0,0001` se midió contra el cierre; ¿y contra la cuota de
+Pinnacle de 1-3 días antes, que es la que se puede tomar? Regla fijada antes
+de correr (tareas.md, "Ideas de la literatura" 1). `qf.eval.early_vs_close`,
+Kalman secuencial con xG, 14.110 partidos de 7 ligas (2019/20-2024/25).
+
+- Prueba principal: el movimiento temprana→cierre no va hacia el modelo.
+  Pendiente 0,0028, IC95 por semanas [−0,0078, +0,0137], corr 0,006.
+- Se eligió el MOVIMIENTO y no el RPS porque no depende del resultado: con
+  42.000 filas detecta pendientes de ~0,01. Control positivo para comprobar
+  que la prueba no es ciega: la media de casas como "modelo" da 0,38 [0,29,
+  0,46] en 7/7 ligas; Bet365, 0,16 [0,13, 0,19]. Las casas sí anticipan a
+  Pinnacle; el modelo no.
+- Apostar a Pinnacle temprano con ≥2 % de ventaja del modelo: −4,87 %
+  [−5,15, −4,59] contra el cierre justo, peor que sin criterio (−3,9 %): la
+  misma selección adversa del README. `w_model` contra la temprana: 0,0001.
+- Fuga cerrada al implementar: `predict_sequential` estima nivel de goles y
+  localía por liga con TODO el histórico. Aquí se fijan con lo anterior al
+  primer partido evaluado (`_KalmanSinFuturo`); sin eso, una pendiente
+  positiva habría sido sospechosa.
+- La base local no tenía db/023 (`model_enabled`) y `load_training_data`
+  fallaba: se aplicó la migración del repo en LOCAL. El servidor ya la tenía.
+
+Consecuencia: la información del modelo (goles + xG) no llega antes que el
+mercado en ninguna ventana medible. Lo que queda de la lista son fuentes de
+información nueva (punto 2, más-menos) o del criterio sharp (3 y 5).
+
 ## 2026-09-24 — Fase 2.D medida: la forma de la matriz no es el problema
 
 Implementados como challengers (a petición del usuario, sabiendo que el

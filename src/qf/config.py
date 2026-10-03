@@ -102,6 +102,24 @@ class Settings:
     # suscriptor y hace trampa en el track record.
     soft_quote_max_age_hours: float = _f("SOFT_QUOTE_MAX_AGE_HOURS", 6.0)
 
+    # --- Ráfagas para medir la latencia de las casas blandas (db/038) ---
+    # Tope de créditos de The Odds API al mes (decisión del usuario,
+    # 2026-10-03: 3.000 de 20.000). 0 las desactiva.
+    rafagas_max_creditos_mes: int = int(_f("RAFAGAS_MAX_CREDITOS_MES", 3000))
+    # ≤10 casas: así cada consulta cuesta 1 crédito. Pinnacle y Betfair como
+    # referencia; Betsson, Coolbet, William Hill y 1xBet son de los clientes.
+    rafagas_casas: tuple[str, ...] = tuple(
+        b.strip() for b in os.getenv(
+            "RAFAGAS_CASAS", "pinnacle,betfair_ex_eu,betsson,coolbet,williamhill,"
+            "onexbet,marathonbet,unibet_se,leovegas_se,nordicbet"
+        ).split(",") if b.strip())
+    # Pocas ligas a propósito: cada liga con partidos cuesta ~1 crédito cada
+    # 5 min durante todo su día de partidos.
+    rafagas_ligas: tuple[str, ...] = tuple(
+        b.strip() for b in os.getenv(
+            "RAFAGAS_LIGAS", "gb.premier_league,es.laliga,mx.liga_mx"
+        ).split(",") if b.strip())
+
     # --- Gestión de riesgo ---
     # El edge estimado está sesgado al alza por selección adversa:
     # solo apuestas donde el modelo discrepa, que es donde suele equivocarse.

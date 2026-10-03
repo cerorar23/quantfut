@@ -13,6 +13,135 @@ no ahora.
 
 ## Pendientes 🔴
 
+## Ideas de la literatura (2026-10-03, aprobadas por el usuario) — en orden
+
+Cruzadas con lo ya medido (2.D, 2.E): solo entra lo que no se ha probado.
+
+- [x] **HECHO (3-oct) — SIN SEÑAL. 1. ¿Aporta el modelo frente a la cuota
+      TEMPRANA de Pinnacle?** Pendiente 0,003 [−0,008, +0,014], 4/7 ligas,
+      EV −4,9 % [−5,2, −4,6], `w_model` 0,0001 también contra la temprana.
+      Control positivo (media de casas): 0,38 [0,29, 0,46]. Ver progreso.md.
+      Planteamiento original:
+      `w_model = 0,0001` se midió contra el CIERRE. `history_fd.py` ya lee
+      `PSH` (cuota de viernes/martes) pero solo como respaldo del cierre. Se
+      mide con los 42 CSV de `.local/fd_cache` (7 ligas, 2019/20-2024/25) y
+      las predicciones secuenciales de Kalman (xG incluido), sin tocar
+      producción: `python -m qf.eval.early_vs_close`.
+      **Regla fijada ANTES de ver resultados.** Prueba principal: pendiente
+      de la regresión del movimiento `logit p_cierre − logit p_temprana`
+      sobre el desacuerdo `logit p_modelo − logit p_temprana` (no necesita
+      resultados, mucho menos ruido que el RPS). "Hay señal" si el IC95 por
+      semanas de la pendiente está ENTERO por encima de cero, es positiva en
+      ≥4 de 7 ligas y el EV contra el cierre justo de apostar al precio
+      temprano de Pinnacle cuando el modelo ve ≥2 % de ventaja tiene el IC95
+      entero por encima de cero. Informativas: `w_model` contra la temprana
+      (estimado en el 70 % antiguo, RPS en el 30 % reciente) y lo mismo
+      contra el cierre como control (debe salir ≈0, como en el README).
+- [x] **HECHO (3-oct) — NO SE VALIDA. 2.** RPS 0,21826 → 0,21838 (peor),
+      log-loss 1,0516 → 1,0521, 4/11 ligas; el XI simple sobre las mismas
+      3.646 filas: 0,21686. Ver progreso.md. Código en el repo
+      (`model/masmenos.py`, brazo en `player_value.comparar`); en el servidor
+      solo se ejecutó una copia aparte, sin desplegar. La versión exacta con
+      `/fixtures/events` NO se hace: dependía de que esta apuntara algo.
+      Planteamiento original:
+- [ ] **2. Valor del XI por "más-menos" regularizado** (Kharrat, McHale y
+      Peña 2020; Hvattum): una sola señal por equipo en vez de las 18 de
+      "XI con valor". Con `minutos` de db/035. Brazo más del reentreno
+      mensual, nada en producción.
+      **Decisiones del usuario (3-oct):** versión APROXIMADA por minutos (el
+      diseño del 29-sep la dejaba fuera por no tener el minuto de cada
+      cambio; la exacta con `/fixtures/events` queda para después si esta
+      apunta algo) y ejecución en el VPS en solo lectura.
+      **Diseño fijado ANTES de ver resultados** (`model/masmenos.py`):
+      - Por partido, `y` = diferencia de goles local−visitante mezclada con
+        la de xG (`xg_blend`, como el modelo) y centrada; fila de diseño
+        `+minutos/90` por jugador local y `−minutos/90` por visitante.
+        Ridge ponderado por decaimiento (vida media 180 días) con λ = 10
+        (un jugador pesa como 10 partidos completos a rating 0). Un solo
+        λ: no se prueban variantes sobre la validación.
+      - Punto en el tiempo: reajuste cada 7 días solo con partidos
+        anteriores; la semana siguiente usa esos ratings.
+      - Señal: `{lado}_d_pm` = suma de ratings del XI de hoy − la del XI
+        habitual (mismos 5 XI previos y mismo descarte por >3 titulares
+        sin minutos que "XI con valor"). Dos señales en total.
+      - Brazo `masmenos` en `player_value.comparar`, mismas filas que los
+        demás. Se valida solo si pasa las exigencias de siempre Y mejora
+        RPS y log-loss del XI simple, como "XI con valor".
+- [~] **EN MARCHA (3-oct) — 3A y 3B desplegados; falta la LECTURA.**
+      Tras 2-3 fines de semana desde el 9-oct: `python -m qf.eval.latencia`
+      en el worker y aplicar la regla de abajo. Vigilar el gasto en
+      `rafagas_log`.
+- [ ] **3. Latencia de las casas blandas tras moverse Pinnacle** (fase 5):
+      qué casa tarda más y si el cliente llega a tiempo. Choca con los
+      créditos de The Odds API: elegir partidos.
+      **Diagnóstico (3-oct):** hoy no se puede medir. API-Football (Bet365,
+      Betano) refresca cada competición de golpe cada varias horas con UNA
+      hora para todas las casas: no distingue quién reacciona. The Odds API
+      sí da `last_update` por casa y mercado, pero `odds_worker` lo descarta
+      y solo captura 6 ventanas por partido. Muestra de la sombra: 184
+      ofertas en 28 partidos (Europa vuelve el 9-oct). Casas de los
+      clientes medibles por The Odds API: Betsson, Coolbet, William Hill,
+      1xBet (no Bet365 ni Betano).
+      **Plan propuesto (pendiente de decisión del usuario):**
+      - 3A, gratis: db/038 añade `book_updated_at` (nullable) a
+        `odds_snapshots` y `odds_worker` guarda el `last_update` del mercado
+        (si falta, el de la casa). Con eso, en cada captura se sabe si una
+        oferta existe porque la casa blanda no ha reaccionado a un cambio de
+        Pinnacle (precio blando más viejo que el último cambio de Pinnacle).
+        No toca triggers: es ADD COLUMN, no UPDATE.
+      - 3B, con créditos: `ingest/rafagas.py`, solo 1X2 y `bookmakers=`
+        (Pinnacle + casas blandas, ≤10 → 1 crédito por llamada y liga),
+        cada 5 min entre T-6h y T-15min en las ligas elegidas, a una tabla
+        APARTE (`odds_rafagas`) para no tocar ventanas ni sombra, con tope de
+        créditos al mes que la detiene. `last_update` da el segundo exacto de
+        cada cambio, así que 5 min bastan. ~72 créditos por liga y día de
+        partidos.
+      - Medida fijada antes: duración de cada oferta (cuota blanda ≥2 % sobre
+        el justo de Pinnacle en muestras seguidas) y minutos que tarda cada
+        casa en cambiar tras un movimiento de Pinnacle ≥2 puntos de
+        probabilidad justa. Se compara con el tiempo que necesita un cliente
+        para apostar (dato del usuario).
+      **Decisiones del usuario (3-oct):** desplegar 3A; 3B con tope de 3.000
+      créditos/mes (`RAFAGAS_MAX_CREDITOS_MES`), ligas Premier, LaLiga y Liga
+      MX (`RAFAGAS_LIGAS`); el cliente tarda UNA HORA O MÁS en apostar.
+      **Regla de lectura fijada antes** (`python -m qf.eval.latencia`): no se
+      lee antes de 200 ofertas clasificables en ≥3 casas. Si menos de la
+      mitad de las ofertas de una casa dura ≥60 min, el formato actual
+      (pick publicado que el cliente apuesta al rato) no captura la ventaja
+      de esa casa y esa casa no debería contar para la puerta; si la mitad o
+      más, sí. Las censuradas ≥60 cuentan como largas; las censuradas <60 se
+      excluyen.
+- [ ] **4. Decorrelación con el mercado** (Hubáček y Šír, IJF 2023):
+      entrenar para discrepar donde el mercado se equivoca. Investigación.
+- [x] **HECHO y DESPLEGADO (3-oct) — 5.** db/039, `picks.factores()`,
+      sombra con `stake_publicado_units` y `factor_incertidumbre`. Factores
+      vigentes al desplegar: 1xBet 0,94, Betano 0,71, Betsson 0,65,
+      Bet365 0,54, William Hill 0. Planteamiento:
+- [ ] **5. Encoger el stake del criterio sharp por la incertidumbre de la
+      persistencia** (Baker y McHale 2013; Uhrín y otros 2021). No es lo
+      superado en 2.D: aquí la incertidumbre es la del criterio, no la del
+      modelo.
+      **Medido (3-oct, fd_cache, 2 %, primera oferta por partido):**
+      persistencia e IC95 por semanas: 1xBet 0,72 [0,37, 1,06], Interwetten
+      0,55, bwin 0,31, BetVictor 0,20, Bet365 0,13 [−0,15, 0,41] (no se
+      distingue de cero), William Hill −0,15. Dispersión entre casas 0,31.
+      **Decisión del usuario:** "stake sí, muestra no".
+      **Diseño fijado antes de implementar:**
+      - Factor por casa `k = ρ² / (ρ² + SE²)` (0 si ρ ≤ 0): la aproximación
+        de Baker y McHale con la persistencia como única fuente de
+        incertidumbre. Se multiplica al Kelly fraccional, que se queda en
+        0,20 (es preferencia de riesgo, no estimación).
+      - SE previa: 1xBet 0,17, Bet365 0,15, William Hill 0,25 (bootstrap
+        por semanas de football-data); casas sin medir 0,31 (dispersión
+        entre casas). En vivo, SE de la sombra por el método delta
+        (`sd(ev)/(√n·media(edge))`, coincide con el bootstrap) y se mezcla
+        con la previa con los MISMOS pesos que `picks.mezclar`.
+      - El stake con factor es el que se publica y el que guarda la sombra
+        en una columna nueva; qué oferta es publicable se sigue decidiendo
+        con el stake SIN factor (`stake_units` de la sombra y
+        `stake_kelly_units` del candidato): la muestra de la puerta no
+        cambia.
+
 ## Auditoría fase 3 (2026-10-03) — pendientes de decisión
 
 - [x] **HECHO (3-oct) — `/matches/{id}` ya no publica `market_consensus`**
@@ -986,6 +1115,8 @@ Lo que sí es matemática valiosa y NO está construido:
 Ajuste por estado del partido, PSxG como objetivo, más ligas, mercados
 derivados como fuente de edge, Elo como sustituto, y barridos de
 hiperparámetros. Todos medidos, todos negativos o en la cuarta decimal.
+También (2026-10-03): el modelo contra la cuota TEMPRANA de Pinnacle; no
+anticipa el movimiento (`eval/early_vs_close.py`).
 
 ## Verificación pendiente CON DATOS REALES 🔬
 

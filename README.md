@@ -59,6 +59,11 @@ Dos consecuencias que hay que tener presentes al leer el resto del README:
    menos un 2% por encima del precio justo de Pinnacle en el MISMO snapshot,
    con Pinnacle verificado contra el consenso de las demás casas, y el stake
    sale del edge esperado al cierre (edge × persistencia medida por casa).
+   **Desde 2026-10-03** ese stake se multiplica además por `ρ²/(ρ²+SE²)`
+   (Baker y McHale, 2013): la persistencia es una estimación, y la de Bet365
+   (0,13, IC95 [−0,15, 0,41]) no se distingue de cero. Solo cambia cuánto se
+   recomienda apostar: qué oferta es publicable se sigue decidiendo sin el
+   factor, así que la muestra de la puerta no cambia (decisión del usuario).
    Cada pick publica su cuota mínima aceptable (`min_price`) y la hora de su
    precio. La publicación sigue pausada (`PUBLISH_PICKS_ENABLED=0`) hasta que
    el criterio pase la puerta en sombra: `qf.publish.shadow_sharp` registra
@@ -116,6 +121,17 @@ lambdas, y más ligas son más partidos de la misma calidad de predicción.
 Y el número que lo resume: el peso óptimo modelo/mercado estimado sobre estos
 mismos datos es **w_model = 0.0001**. Cero. El mercado ya incorpora todo lo que
 el modelo sabe. (Solo Premier League sale a 0.065, y a esa escala es ruido.)
+
+**Tampoco frente a la cuota temprana (2026-10-03).** Medido contra la cuota de
+Pinnacle de uno a tres días antes (`PSH`, 14.110 partidos, 7 ligas, 2019/20-
+2024/25, `python -m qf.eval.early_vs_close`): `w_model` sale otra vez 0,0001, y
+el mercado no se mueve hacia el modelo entre esa cuota y el cierre (pendiente
+0,003, IC95 [−0,008, +0,014]). La prueba sí detecta señal cuando la hay: con la
+media de las casas como "modelo" la pendiente es 0,38 [0,29, 0,46] en las 7
+ligas. Apostar al precio temprano cuando el modelo ve ≥2 % de ventaja da −4,9 %
+contra el cierre justo, peor que apostar a todo sin criterio (−3,9 %). No hay
+ventana temporal en la que la información del modelo llegue antes que el
+mercado.
 
 Se descartaron por medición, no por intuición:
 
@@ -445,7 +461,11 @@ usuario), así que el XI simple queda validado offline y entra en la sombra; sig
 sin publicarse hasta demostrar CLV. La fuerza por jugador (`model/player_ratings.py`,
 `model/player_value.py`) se midió sobre las mismas filas: "XI con valor"
 empeora incluso a la base (RPS 0,21912) y no se usa; la comparación se repite
-en cada reentreno mensual.
+en cada reentreno mensual. El más-menos regularizado (`model/masmenos.py`,
+2026-10-03), que valora al jugador por cómo le va al equipo con él en el campo
+en vez de por sus estadísticas, tampoco: RPS 0,21838 frente a 0,21826 de la
+base y 0,21686 del XI simple. Con un año de datos, saber QUIÉN falta no añade
+nada a saber CUÁNTOS habituales faltan, se mida como se mida.
 
 ### Lo que ya está resuelto y antes figuraba como hueco
 
@@ -574,7 +594,8 @@ no las haya.
 
 | Proceso | Frecuencia | Módulo |
 |---|---|---|
-| Captura de cuotas | cada 10 min | `qf.ingest.odds_worker` |
+| Captura de cuotas (desde 2026-10-03 guarda también `book_updated_at`, cuándo cambió cada casa su precio) | cada 10 min | `qf.ingest.odds_worker` |
+| Ráfagas 1X2 para medir la latencia de las casas blandas: T-6 h a T-15 min, ligas de `RAFAGAS_LIGAS`, tabla aparte `odds_rafagas`, tope `RAFAGAS_MAX_CREDITOS_MES` (3.000); se leen con `python -m qf.eval.latencia` | cada 5 min | `qf.ingest.rafagas` |
 | Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | cada hora, :20 | `qf.ingest.af_odds` |
 | Sombra del criterio de picks: registra lo que se habría recomendado (no publica); se liquida con `qf.eval.clv` | cada hora, :25 | `qf.publish.shadow_sharp capture` |
 | Calendario de partidos | 05:15 y 17:15 | `qf.ingest.fixtures` |

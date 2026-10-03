@@ -79,18 +79,24 @@ def casas_medibles(snap: pk.Snapshot) -> tuple[str, ...]:
     return tuple(b for b in snap.books
                  if b != settings.sharp_book and b not in pk.EXCHANGES)
 
-def offer_rows(offers: list[pk.Offer], match: dict) -> list[tuple]:
+def offer_rows(offers: list[pk.Offer], match: dict,
+               factores: dict[str, float] | None = None) -> list[tuple]:
+    """
+    `stake` sin factor (decide si es publicable, como siempre) y, aparte, el
+    que se publicaría: × factor de incertidumbre de la casa (db/039).
+    """
+    factores = {} if factores is None else factores
     rows = []
     for o in offers:
         p_exp = (1.0 + o.expected_edge / 100.0) / o.price
-        stake = round(pk.kelly(p_exp, o.price, settings.kelly_fraction,
-                               settings.max_stake_units), 2)
+        stake = pk.kelly(p_exp, o.price, settings.kelly_fraction, settings.max_stake_units)
+        k = factores.get(o.book, pk.factor_sin_medir())
         lead = int((match["kickoff_utc"] - o.as_of).total_seconds() // 60)
         rows.append((match["match_id"], match["league_id"], match["kickoff_utc"],
                      o.book, "h2h", o.selection, o.price, o.fair_prob,
                      round(o.raw_edge, 4), round(o.expected_edge, 4),
-                     o.persistence, stake, round(o.min_price, 4),
-                     o.source, o.as_of, lead))
+                     o.persistence, round(stake, 2), round(o.min_price, 4),
+                     o.source, o.as_of, lead, round(stake * k, 2), round(k, 4)))
     return rows
 
 
@@ -105,6 +111,7 @@ def capture(now: datetime | None = None) -> dict:
     )
     rows, snaps = [], 0
     vigente = pk.persistencias()
+    k_vigente = pk.factores()
     for m in matches:
         # Decidir a T-5 con un precio de T-55 no se puede publicar a tiempo,
         # y el cierre se capturaría antes de la decisión (auditoría 3-oct).
@@ -116,13 +123,14 @@ def capture(now: datetime | None = None) -> dict:
                 continue
             snaps += 1
             rows += offer_rows(pk.offers(snap, now, books=casas_medibles(snap),
-                                          persistencia=vigente), m)
+                                          persistencia=vigente), m, k_vigente)
     new = executemany(
         """INSERT INTO sharp_shadow_offers
              (match_id, league_id, kickoff_utc, book, market, selection, price,
               fair_prob, raw_edge_pct, expected_edge_pct, persistence,
-              stake_units, min_price, odds_source, odds_as_of, lead_minutes)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+              stake_units, min_price, odds_source, odds_as_of, lead_minutes,
+              stake_publicado_units, factor_incertidumbre)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
            ON CONFLICT (match_id, book, market, selection, odds_source,
                         odds_as_of) DO NOTHING""",
         rows,

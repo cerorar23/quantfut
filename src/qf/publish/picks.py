@@ -23,7 +23,8 @@ EL CRITERIO
 3. Candidata: casa de la lista blanca de los suscriptores con edge bruto
    ≥ SOFT_MIN_EDGE_PCT. Solo 1X2.
 4. Stake: Kelly sobre el edge ESPERADO AL CIERRE = edge bruto × persistencia
-   medida de esa casa, no sobre el bruto.
+   medida de esa casa, no sobre el bruto, y encogido por la incertidumbre de
+   esa persistencia (Baker y McHale, 2013; desde 2026-10-03).
 
 Y las protecciones de siempre: Kelly fraccional con tope, un pick por partido
 y riesgo de portafolio con correlación.
@@ -75,6 +76,15 @@ UNMEASURED_PERSISTENCE = 0.42
 # oferta de cada casa en cada partido (las siguientes del mismo partido no
 # son independientes), acotada a [0, 1]. Con pocos partidos casi no se mueve.
 PRIOR_WEIGHT = 100
+
+# Incertidumbre de la persistencia (Baker y McHale, 2013): con la ventaja
+# estimada y no conocida, el stake óptimo es Kelly × ρ²/(ρ² + SE²). Error
+# típico de la previa por bootstrap de semanas en football-data 2019-2025 a
+# umbral 2 % (medido el 2026-10-03): Bet365 0,13 ± 0,15 no se distingue de
+# cero. Casas sin medir: la dispersión de la persistencia entre casas (0,31).
+# El de 1xBet es el de football-data (0,72 ± 0,17), no el de su previa LatAm.
+PERSISTENCE_SE = {"1xbet": 0.17, "bet365": 0.15, "william_hill": 0.25}
+UNMEASURED_PERSISTENCE_SE = 0.31
 # Stake mínimo publicable, en unidades (1 u = 1% de banca).
 MIN_STAKE_UNITS = 0.05
 
@@ -96,9 +106,28 @@ def mezclar(previa: float, n: int, ev_medio: float | None,
     return (n * medida + peso * previa) / (n + peso)
 
 
-def persistencias() -> dict[str, float]:
-    """Persistencia vigente por casa: previa + lo medido en la sombra."""
-    rows = query(
+def mezclar_se(se_previa: float, n: int, sd_ev: float | None,
+               edge_medio: float | None, peso: int = PRIOR_WEIGHT) -> float:
+    """
+    Error típico de `mezclar`, con sus mismos pesos. El de la sombra sale del
+    método delta, sd(ev) / (√n · media(edge)): coincide con el bootstrap por
+    semanas en football-data (Bet365 0,140 frente a 0,146).
+    """
+    if not n or sd_ev is None or not edge_medio or edge_medio <= 0:
+        return se_previa
+    se_medida = sd_ev / (math.sqrt(n) * edge_medio)
+    return math.sqrt((n * se_medida) ** 2 + (peso * se_previa) ** 2) / (n + peso)
+
+
+def factor_incertidumbre(persistencia: float, se: float) -> float:
+    """Baker y McHale: fracción de Kelly que conviene con ρ estimada, no conocida."""
+    if persistencia <= 0:
+        return 0.0
+    return persistencia ** 2 / (persistencia ** 2 + se ** 2)
+
+
+def _medido_en_sombra() -> list[dict]:
+    return query(
         """WITH primera AS (
                SELECT DISTINCT ON (o.match_id, o.book)
                       o.book, o.raw_edge_pct, r.ev_close_pct
@@ -107,15 +136,38 @@ def persistencias() -> dict[str, float]:
                WHERE r.ev_close_pct IS NOT NULL
                ORDER BY o.match_id, o.book, o.decided_at, o.offer_id)
            SELECT book, count(*) AS n, avg(ev_close_pct) AS ev,
-                  avg(raw_edge_pct) AS edge
+                  stddev_samp(ev_close_pct) AS sd_ev, avg(raw_edge_pct) AS edge
            FROM primera GROUP BY book"""
     )
+
+
+def _num(x) -> float | None:
+    return None if x is None else float(x)
+
+
+def persistencias() -> dict[str, float]:
+    """Persistencia vigente por casa: previa + lo medido en la sombra."""
     out = dict(PERSISTENCE)
-    for r in rows:
+    for r in _medido_en_sombra():
         previa = PERSISTENCE.get(r["book"], UNMEASURED_PERSISTENCE)
-        out[r["book"]] = round(mezclar(previa, int(r["n"]), float(r["ev"]),
-                                       float(r["edge"])), 4)
+        out[r["book"]] = round(mezclar(previa, int(r["n"]), _num(r["ev"]),
+                                       _num(r["edge"])), 4)
     return out
+
+
+def factores() -> dict[str, float]:
+    """Factor de incertidumbre vigente por casa; las no listadas, `factor_sin_medir()`."""
+    rho = persistencias()
+    se = dict(PERSISTENCE_SE)
+    for r in _medido_en_sombra():
+        previa = PERSISTENCE_SE.get(r["book"], UNMEASURED_PERSISTENCE_SE)
+        se[r["book"]] = mezclar_se(previa, int(r["n"]), _num(r["sd_ev"]), _num(r["edge"]))
+    return {b: round(factor_incertidumbre(rho[b], se.get(b, UNMEASURED_PERSISTENCE_SE)), 4)
+            for b in rho}
+
+
+def factor_sin_medir() -> float:
+    return factor_incertidumbre(UNMEASURED_PERSISTENCE, UNMEASURED_PERSISTENCE_SE)
 
 
 def canonical_book(key: str) -> str:
@@ -148,7 +200,7 @@ class Candidate:
     market_prob: float           # probabilidad justa de Pinnacle
     raw_edge: float              # % contra el precio justo, en el snapshot
     shrunk_edge: float           # % esperado al cierre = raw × persistencia
-    stake_units: float
+    stake_units: float           # el que se publica: Kelly × factor de incertidumbre
     kickoff_utc: object
     label: str
     league_id: str | None = None
@@ -157,6 +209,11 @@ class Candidate:
     min_price: float | None = None
     odds_source: str | None = None
     odds_as_of: datetime | None = None
+    # Kelly SIN el factor de incertidumbre. Decide si el candidato es
+    # publicable, como antes del 2026-10-03: el factor cambia cuánto se
+    # apuesta, no qué entra en la muestra de la puerta (decisión del usuario).
+    stake_kelly_units: float = 0.0
+    uncertainty_factor: float = 1.0
 
 
 def kelly(prob: float, price: float, fraction: float, cap: float) -> float:
@@ -307,6 +364,7 @@ def find_candidates(prediction: dict, now: datetime | None = None) -> list[Candi
     pid = prediction.get("prediction_id")
     out = []
     vigente = persistencias()
+    k_vigente = factores()
     for snap in (_af_snapshot(match_id, now), _odds_api_snapshot(match_id, now)):
         if snap is None:
             continue
@@ -314,6 +372,8 @@ def find_candidates(prediction: dict, now: datetime | None = None) -> list[Candi
             continue
         for o in offers(snap, now, persistencia=vigente):
             p_exp = (1.0 + o.expected_edge / 100.0) / o.price
+            stake = kelly(p_exp, o.price, settings.kelly_fraction, settings.max_stake_units)
+            k = k_vigente.get(o.book, factor_sin_medir())
             out.append(Candidate(
                 match_id=match_id,
                 prediction_id=None if pid is None else str(pid),
@@ -323,8 +383,8 @@ def find_candidates(prediction: dict, now: datetime | None = None) -> list[Candi
                             if o.selection in model_1x2 else None),
                 best_price=o.price, best_book=o.book, market_prob=o.fair_prob,
                 raw_edge=o.raw_edge, shrunk_edge=o.expected_edge,
-                stake_units=round(kelly(p_exp, o.price, settings.kelly_fraction,
-                                        settings.max_stake_units), 2),
+                stake_units=round(stake * k, 2),
+                stake_kelly_units=round(stake, 2), uncertainty_factor=k,
                 kickoff_utc=prediction.get("kickoff_utc"),
                 label=f"h2h {o.selection}",
                 league_id=prediction.get("league_id"),
@@ -447,7 +507,7 @@ def select_daily(predictions: list[dict], now: datetime | None = None) -> list[C
     per_match: dict[str, Candidate] = {}
     for pred in predictions:
         for c in find_candidates(pred, now):
-            if c.stake_units <= MIN_STAKE_UNITS:
+            if c.stake_kelly_units <= MIN_STAKE_UNITS:
                 continue
             cur = per_match.get(c.match_id)
             if cur is None or c.shrunk_edge > cur.shrunk_edge:

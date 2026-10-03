@@ -47,10 +47,20 @@ def test_filas_de_oferta_llevan_antelacion_y_stake():
     o = pk.Offer("1xbet", "home", 2.20, 0.48, 5.6, 0.72, "api_football",
                  T0 - timedelta(hours=1))
     m = {"match_id": "m1", "league_id": "us.mls", "kickoff_utc": T0 + timedelta(hours=29)}
-    (row,) = ss.offer_rows([o], m)
-    assert row[3] == "1xbet" and row[-3] == "api_football"
-    assert row[-1] == 30 * 60
+    (row,) = ss.offer_rows([o], m, {"1xbet": 0.5})
+    assert row[3] == "1xbet" and row[13] == "api_football"
+    assert row[15] == 30 * 60
     assert row[11] > 0, "1xBet con edge esperado positivo tiene stake"
+    assert row[-1] == 0.5 and row[-2] == round(row[11] * 0.5, 2), \
+        "el publicado lleva el factor; stake_units (el de la puerta) no"
+
+
+def test_casa_sin_factor_usa_el_de_las_no_medidas():
+    o = pk.Offer("betano", "home", 2.20, 0.48, 5.6, 0.42, "api_football",
+                 T0 - timedelta(hours=1))
+    m = {"match_id": "m1", "league_id": "us.mls", "kickoff_utc": T0 + timedelta(hours=29)}
+    (row,) = ss.offer_rows([o], m, {})
+    assert row[-1] == round(pk.factor_sin_medir(), 4)
 
 
 def _f(rows):

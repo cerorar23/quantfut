@@ -125,6 +125,21 @@ def _pending_windows(now: datetime, solo: tuple[str, ...] | None = None
     return out
 
 
+def last_update(mk: dict, bk: dict) -> datetime | None:
+    """
+    Cuándo cambió por última vez el precio de esa casa en ese mercado. Es lo
+    que permite medir la latencia de las casas blandas (db/038). Si el
+    mercado no la trae se usa la de la casa, que es igual o más reciente.
+    """
+    raw = mk.get("last_update") or bk.get("last_update")
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def _parse_event(ev: dict, match_id: str, window_tag: str,
                  now: datetime, kickoff: datetime) -> list[tuple]:
     mins_to_ko = int((kickoff - now).total_seconds() // 60)
@@ -137,6 +152,7 @@ def _parse_event(ev: dict, match_id: str, window_tag: str,
             mkey = MARKET_MAP.get(mk["key"])
             if not mkey:
                 continue
+            updated = last_update(mk, bk)
             for oc in mk.get("outcomes", []):
                 name, price = oc.get("name"), oc.get("price")
                 point = oc.get("point")
@@ -153,8 +169,54 @@ def _parse_event(ev: dict, match_id: str, window_tag: str,
                     sel = "home" if name == home_name else "away"
 
                 rows.append((match_id, book, mkey, sel, point, float(price),
-                             now, mins_to_ko, window_tag, "the_odds_api"))
+                             now, mins_to_ko, window_tag, "the_odds_api", updated))
     return rows
+
+
+def match_meta(match_ids: list[str]) -> dict[str, dict]:
+    return {
+        r["match_id"]: r
+        for r in query(
+            """SELECT m.match_id, m.kickoff_utc, m.league_id,
+                      th.canonical_name AS home, ta.canonical_name AS away
+               FROM matches m
+               JOIN teams th ON th.team_id = m.home_team_id
+               JOIN teams ta ON ta.team_id = m.away_team_id
+               WHERE m.match_id = ANY(%s)""",
+            (list(match_ids),),
+        )
+    }
+
+
+def match_events(events: list[dict], meta: dict[str, dict]) -> list[tuple[dict, str]]:
+    """Empareja cada evento del feed con su partido de `meta` (nombres resueltos, ±2 h)."""
+    # Un sport_key es una sola competición: la de cualquiera de sus partidos.
+    seen_in = next(iter(meta.values()))["league_id"] if meta else None
+    out = []
+    for ev in events:
+        ko = datetime.fromisoformat(ev["commence_time"].replace("Z", "+00:00"))
+        home = resolve_team(ev.get("home_team", ""), "odds_api", seen_in=seen_in)
+        away = resolve_team(ev.get("away_team", ""), "odds_api", seen_in=seen_in)
+        if not home or not away:
+            continue  # ya quedó registrado en unresolved_names
+
+        match_id = None
+        for mid, m in meta.items():
+            if (m["home"] == home and m["away"] == away
+                    and abs((m["kickoff_utc"] - ko).total_seconds()) < 7200):
+                match_id = mid
+                break
+        if match_id is None:
+            # No es un fallo: el feed trae TODOS los partidos de la
+            # competición y `meta` solo los que tocan en esta ventana.
+            # Como WARNING llenaba el log de ruido que nadie debe mirar.
+            # Un nombre sin resolver sí es un problema y ya se registra
+            # arriba en `unresolved_names`.
+            log.debug("Evento fuera de ventana: %s vs %s",
+                      ev.get("home_team"), ev.get("away_team"))
+            continue
+        out.append((ev, match_id))
+    return out
 
 
 def run_once(solo: tuple[str, ...] | None = None) -> dict:
@@ -182,44 +244,8 @@ def run_once(solo: tuple[str, ...] | None = None) -> dict:
             continue
 
         by_match = {mid: tag for mid, tag in targets}
-        meta = {
-            r["match_id"]: r
-            for r in query(
-                """SELECT m.match_id, m.kickoff_utc, m.league_id,
-                          th.canonical_name AS home, ta.canonical_name AS away
-                   FROM matches m
-                   JOIN teams th ON th.team_id = m.home_team_id
-                   JOIN teams ta ON ta.team_id = m.away_team_id
-                   WHERE m.match_id = ANY(%s)""",
-                (list(by_match.keys()),),
-            )
-        }
-
-        # Un sport_key es una sola competición: la de cualquiera de sus partidos.
-        seen_in = next(iter(meta.values()))["league_id"] if meta else None
-        for ev in events:
-            ko = datetime.fromisoformat(ev["commence_time"].replace("Z", "+00:00"))
-            home = resolve_team(ev.get("home_team", ""), "odds_api", seen_in=seen_in)
-            away = resolve_team(ev.get("away_team", ""), "odds_api", seen_in=seen_in)
-            if not home or not away:
-                continue  # ya quedó registrado en unresolved_names
-
-            match_id = None
-            for mid, m in meta.items():
-                if (m["home"] == home and m["away"] == away
-                        and abs((m["kickoff_utc"] - ko).total_seconds()) < 7200):
-                    match_id = mid
-                    break
-            if match_id is None:
-                # No es un fallo: el feed trae TODOS los partidos de la
-                # competición y `meta` solo los que tocan en esta ventana.
-                # Como WARNING llenaba el log de ruido que nadie debe mirar.
-                # Un nombre sin resolver sí es un problema y ya se registra
-                # arriba en `unresolved_names`.
-                log.debug("Evento fuera de ventana: %s vs %s (%s)",
-                          ev.get("home_team"), ev.get("away_team"), sport_key)
-                continue
-
+        meta = match_meta(list(by_match))
+        for ev, match_id in match_events(events, meta):
             tag = by_match[match_id]
             rows = _parse_event(ev, match_id, tag, now, meta[match_id]["kickoff_utc"])
             if not rows:
@@ -228,7 +254,8 @@ def run_once(solo: tuple[str, ...] | None = None) -> dict:
             copy_rows(
                 "odds_snapshots",
                 ["match_id", "bookmaker", "market", "selection", "line", "price",
-                 "captured_at", "mins_to_kickoff", "window_tag", "source"],
+                 "captured_at", "mins_to_kickoff", "window_tag", "source",
+                 "book_updated_at"],
                 rows,
             )
             execute(
