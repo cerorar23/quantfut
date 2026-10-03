@@ -13,6 +13,19 @@ no ahora.
 
 ## Pendientes 🔴
 
+## Histórico FotMob (2026-10-03, alcance del usuario)
+
+- [ ] Descargar a archivos locales el histórico del 1-ene-2024 al 3-oct-2026
+      de las 23 ligas y Champions/Europa League. Inventariar temporadas reales,
+      filtrar partidos terminados y deduplicar por ID de FotMob. Conservar JSON
+      comprimido y hora de captura, exportar xG/estadísticas y cobertura por
+      competición. Descarga reanudable; detenerse ante denegación de acceso o
+      límite del proveedor. Sin escrituras en Postgres ni jobs recurrentes:
+      los partidos futuros vendrán de otra API por decisión del usuario.
+      **En curso:** inventario completo de 22.461 partidos en 96 temporadas;
+      detalles descargándose a `.local/fotmob-history/2024-01-01_2026-10-03/`.
+      `coverage.json` indica cuándo termina; no marcar HECHO hasta entonces.
+
 ## Ideas de la literatura (2026-10-03, aprobadas por el usuario) — en orden
 
 Cruzadas con lo ya medido (2.D, 2.E): solo entra lo que no se ha probado.

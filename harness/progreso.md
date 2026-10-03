@@ -134,6 +134,38 @@ Consecuencia: la información del modelo (goles + xG) no llega antes que el
 mercado en ninguna ventana medible. Lo que queda de la lista son fuentes de
 información nueva (punto 2, más-menos) o del criterio sharp (3 y 5).
 
+## 2026-10-03 — FotMob para histórico puntual, futuros de otra API
+
+Alcance explícito del usuario: 23 ligas y 2 copas, desde 2024 hasta hoy.
+Se interpreta 1-ene-2024 a 3-oct-2026 inclusive en America/Mexico_City.
+Se aprovechan las rutas JSON documentadas en Public-FotMob-API mediante un
+descargador independiente de biblioteca estándar; no se despliega su proxy
+Django ni se añade una fuente recurrente. Sin escritura en Postgres.
+
+La consulta real de allLeagues confirmó los 25 IDs, y matchDetails respondió
+200 con xG, eventos, alineaciones y tiros para Liverpool-Newcastle (1-ene-2024).
+Inventario completo: 22.461 partidos terminados, 96 temporadas/torneos, 0
+errores de calendario. La descarga de detalles queda EN CURSO, reanudable,
+en `.local/fotmob-history/2024-01-01_2026-10-03/`; `coverage.json` expresa
+la terminación real y no el éxito de arranque. Captura JSON comprimido con
+SHA-256/hora real, y CSV con xG ausente separado de pendiente/error. Ante
+401/403/429 se detiene sin evasión. No se presume cobertura de xG total.
+
+Validación: 573 pruebas pasan (13 nuevas sobre fechas locales, identidad,
+xG total frente al del descanso, ceros/datos ausentes, caché y denegaciones).
+Se ejecutó el arnés Windows real: el shell Git mínimo omite Python y no
+dispone de dirname, así que su salida OK no valida las pruebas.
+
+Corrección durante la descarga: ediciones de Liga MX, Brasil y Argentina
+usan IDs de torneo propios con `general.parentLeagueId` explícito. La guarda
+original rechazaba esos detalles aun guardando el JSON. Se valida ahora la
+liga principal declarada, manteniendo las guardas de ID, equipos y fecha.
+Reanudada en segundo plano con logs y PID en `process.json`, recuperando los
+detalles desde caché: Liga MX completa, 923/923 con xG. Dos respuestas de
+Brasil tienen fecha distinta de su calendario y siguen como error; no se
+relaja esa guarda ni se inventa la fecha. Validación actual: 584 tests pasan,
+14 específicos de FotMob (hay otros cambios simultáneos en el workspace).
+
 ## 2026-09-24 — Fase 2.D medida: la forma de la matriz no es el problema
 
 Implementados como challengers (a petición del usuario, sabiendo que el
