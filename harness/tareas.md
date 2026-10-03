@@ -15,20 +15,20 @@ no ahora.
 
 ## Auditoría fase 3 (2026-10-03) — pendientes de decisión
 
-- [ ] **ALTA — `/matches/{id}` público publica `market_consensus`**, la
-      probabilidad justa del mercado sin margen, en cada partido con
-      predicción. Con ella y la cuota de cualquier casa se reconstruye el
-      criterio entero: es la misma fuga que cerró pasar `/fair-price` a `/v1`
-      (2026-09-28). Quitarlo de la respuesta pública (queda en `/v1`).
-- [ ] **ALTA antes de publicar la cadena — los lotes sellados llevan
-      `market_consensus`.** `/chain` solo expone hashes y `published_ref` está
-      vacío, pero el día que los JSON se suban a un repo público la fuga se
-      repetiría cada mañana a las 08:00. Decidir: publicar cada lote después
-      del último inicio del día, o sacar `market_consensus` del payload a
-      partir de una fecha (los lotes pasados no se tocan).
-- [ ] **MEDIA — `/openapi.json` es público** y lista todas las rutas de
-      `/admin` y `/v1`, aunque devuelven 404 "para no confirmar que existen".
-      `openapi_url=None` (las docs ya están desactivadas).
+- [x] **HECHO (3-oct) — `/matches/{id}` ya no publica `market_consensus`**
+      (sigue en `/v1/matches/{id}/predictions`).
+- [x] **HECHO (3-oct, opción b del usuario) — los lotes sellados dejan de
+      llevar `market_consensus` desde el 3-oct** (`LOTE_SIN_CONSENSO_DESDE`).
+      Los anteriores conservan su formato: el del 2-oct regenerado desde la
+      base da el mismo JSON que el sellado.
+- [x] **HECHO (3-oct) — `/openapi.json` ya no se sirve** (`openapi_url=None`).
+- [ ] **ALTA antes de publicar la cadena — el lote lleva también los PICKS,
+      de pago incluidos** (`advised_price`, `bookmaker`, `min_price`,
+      `fair_prob`). El flujo documentado en `hashchain.py` hace commit del
+      JSON a un repo público "antes del primer kickoff": eso regalaría cada
+      mañana los picks de pago. Lo habitual es comprometer-revelar: publicar
+      solo el `chain_sha256` antes de los partidos y el JSON después del
+      último inicio del día. Hoy no pasa (`CHAIN_GIT_REMOTE` vacío).
 - [ ] **BAJA — `/model-card` publica rutas internas** (`*_uri` con rutas de
       archivos del servidor). Quitarlas de la respuesta pública.
 - [ ] **BAJA — sin `Content-Security-Policy`.** El resto de cabeceras está.

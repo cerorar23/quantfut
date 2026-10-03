@@ -2500,6 +2500,22 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-03 — Cerradas las fugas del criterio de la fase 3
+
+Con el sí del usuario: `/matches/{id}` sin `market_consensus`, sin
+`/openapi.json`, y opción (b) para la cadena: el lote deja de llevar el
+precio justo desde el 3-oct. Se descartó reescribir el formato hacia atrás:
+un lote pasado regenerado desde la base tiene que dar el hash sellado, y es
+lo que hace verificable la cadena; por eso la fecha de corte vive en el
+código (`LOTE_SIN_CONSENSO_DESDE`). Comprobado en producción con el lote del
+2-oct.
+
+Al tocar `hashchain.py` apareció el problema mayor: el lote lleva también
+los picks, de pago incluidos, y el flujo documentado lo sube a un repo
+público ANTES de los partidos. (b) no lo resuelve; lo resolvería publicar
+solo el hash antes y el JSON después (comprometer-revelar). Queda como
+decisión del usuario en tareas; hoy no ocurre porque no hay remoto.
+
 ## 2026-10-03 — Auditoría de la fase 3 (solo lectura, contra producción)
 
 - **Bien:** Cloudflare Access cierra `/control`, `/admin` y Grafana en los

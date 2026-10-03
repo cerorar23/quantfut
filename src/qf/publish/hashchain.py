@@ -51,13 +51,23 @@ def _prev_chain_hash() -> str:
     return row["chain_sha256"] if row else GENESIS
 
 
+# Desde esta fecha el lote no lleva `market_consensus` (decisión del usuario,
+# auditoría 2026-10-03): es el precio justo sin margen y, si el JSON se
+# publica antes de los partidos, deja reconstruir el criterio de picks. Los
+# lotes anteriores conservan su formato: regenerarlos desde la base tiene que
+# dar el mismo hash que el día que se sellaron.
+LOTE_SIN_CONSENSO_DESDE = date(2026, 10, 3)
+
+
 def _collect(batch_date: date) -> dict:
+    consenso = ("p.market_consensus,"
+                if batch_date < LOTE_SIN_CONSENSO_DESDE else "")
     preds = query(
-        """SELECT p.prediction_id, p.match_id, p.model_version, p.generated_at,
+        f"""SELECT p.prediction_id, p.match_id, p.model_version, p.generated_at,
                   p.home_lambda, p.away_lambda, p.rho, p.confidence_tier,
                   p.markets -> '1x2'    AS m_1x2,
                   p.markets -> 'totals' AS m_totals,
-                  p.market_consensus,
+                  {consenso}
                   m.kickoff_utc, m.league_id,
                   th.canonical_name AS home_team, ta.canonical_name AS away_team
            FROM predictions p

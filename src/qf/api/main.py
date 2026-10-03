@@ -77,6 +77,9 @@ app = FastAPI(
     version=settings.model_version,
     description="Probabilidades calibradas de fútbol. No es asesoría financiera.",
     docs_url=None, redoc_url=None,   # sin docs públicas: es una API interna
+    # Tampoco el esquema: listaba las rutas de /admin y /v1, que responden 404
+    # precisamente para no confirmar que existen (auditoría 2026-10-03).
+    openapi_url=None,
 )
 
 _cors_origins = [f"https://{DOMAIN}", f"https://www.{DOMAIN}"]
@@ -442,9 +445,12 @@ def match_public(match_id: str):
     if not m:
         raise HTTPException(404, "Partido no encontrado")
 
+    # Sin `market_consensus` (auditoría 2026-10-03): es el precio justo sin
+    # margen, y con él se reconstruye el criterio de picks, igual que con
+    # `/fair-price` antes de pasar a `/v1`. Sigue en `/v1/.../predictions`.
     pred = query_one(
         """SELECT prediction_id, model_version, generated_at, markets,
-                  market_consensus, confidence_tier, data_completeness
+                  confidence_tier, data_completeness
            FROM predictions WHERE match_id = %s
            ORDER BY generated_at DESC LIMIT 1""",
         (match_id,),
