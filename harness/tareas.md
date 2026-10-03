@@ -13,6 +13,29 @@ no ahora.
 
 ## Pendientes 🔴
 
+## Auditoría fase 3 (2026-10-03) — pendientes de decisión
+
+- [ ] **ALTA — `/matches/{id}` público publica `market_consensus`**, la
+      probabilidad justa del mercado sin margen, en cada partido con
+      predicción. Con ella y la cuota de cualquier casa se reconstruye el
+      criterio entero: es la misma fuga que cerró pasar `/fair-price` a `/v1`
+      (2026-09-28). Quitarlo de la respuesta pública (queda en `/v1`).
+- [ ] **ALTA antes de publicar la cadena — los lotes sellados llevan
+      `market_consensus`.** `/chain` solo expone hashes y `published_ref` está
+      vacío, pero el día que los JSON se suban a un repo público la fuga se
+      repetiría cada mañana a las 08:00. Decidir: publicar cada lote después
+      del último inicio del día, o sacar `market_consensus` del payload a
+      partir de una fecha (los lotes pasados no se tocan).
+- [ ] **MEDIA — `/openapi.json` es público** y lista todas las rutas de
+      `/admin` y `/v1`, aunque devuelven 404 "para no confirmar que existen".
+      `openapi_url=None` (las docs ya están desactivadas).
+- [ ] **BAJA — `/model-card` publica rutas internas** (`*_uri` con rutas de
+      archivos del servidor). Quitarlas de la respuesta pública.
+- [ ] **BAJA — sin `Content-Security-Policy`.** El resto de cabeceras está.
+- [ ] **ANTES DE VENDER — avisos legales en la web:** +18, juego
+      responsable, privacidad/cookies y términos; no hay ninguno. Y el README
+      remite a una sección "Procesadores de pago" que no existe.
+
 ## Auditoría 2026-10-03 — mejoras propuestas (pendientes de decisión)
 
 - [x] **HECHO (3-oct, decisión del usuario) — Antelación de la DECISIÓN.**

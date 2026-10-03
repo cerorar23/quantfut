@@ -2500,6 +2500,24 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-03 — Auditoría de la fase 3 (solo lectura, contra producción)
+
+- **Bien:** Cloudflare Access cierra `/control`, `/admin` y Grafana en los
+  tres dominios, y una cabecera `Cf-Access-Jwt-Assertion` falsa no lo salta
+  (Access valida en el borde; Caddy solo comprueba que exista). `/v1/*` sin
+  token da 404; el panel exige PBKDF2 600k y token de 64. Puertos: solo 22,
+  80 y 443 públicos; 8000 y 3000 en 127.0.0.1. CORS rechaza orígenes
+  ajenos. El limitador corta en 60/min por IP (ventana fija: hasta 2x en el
+  cambio de minuto). El JavaScript solo llama a rutas públicas. La ficha
+  `/web/partidos/{id}` no lleva cuotas ni probabilidades.
+- **Fuga del criterio:** `/matches/{id}` devuelve `market_consensus` (justo
+  sin margen) y los lotes sellados también lo llevan. No hace daño hoy (no
+  se vende ni se publica la cadena), pero es exactamente lo que se quiso
+  cerrar el 28-sep. Pendiente de decisión del usuario (tareas.md).
+- Menores: `/openapi.json` público con las rutas privadas, rutas internas en
+  `/model-card`, sin CSP, y ningún aviso legal (+18, juego responsable,
+  privacidad, términos) en la web.
+
 ## 2026-10-03 — Antelación de la decisión y rescate del cierre
 
 Las dos primeras mejoras de la auditoría, con el sí del usuario.
