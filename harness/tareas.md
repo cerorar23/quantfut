@@ -65,11 +65,16 @@ no ahora.
       Mira el dato, no el job. Las 13 competiciones paradas quedan
       reconocidas hasta el 1-nov-2026; desde entonces alertan cada día.
 - [ ] **Fuente de xG reciente — decidir ANTES del 1-nov-2026** (el chequeo
-      vuelve a fallar ese día). Opciones a medir antes de elegir: Understat
-      (6 ligas europeas), FotMob/Sofascore (más ligas, raspado), o aceptar
-      goles solos y quitar el xG del modelo. NUNCA el xG de API-Football
-      (README). Primero medir cuánto aporta el xG hoy: si no mejora RPS
-      fuera de muestra, no merece una fuente nueva.
+      vuelve a fallar ese día). **Medido el 3-oct: el xG APORTA** (regla
+      fijada antes: IC95 entero bajo cero y ≥ mitad de ligas). Ventana
+      jul-2023→ene-2025: RPS 0,20154 con xG frente a 0,20440 solo goles,
+      delta −0,00287 [−0,00376, −0,00200], 12 de 13 ligas. Es del orden de
+      lo que Dixon-Coles saca a Elo y ~40% del hueco con Pinnacle. Hoy
+      (xG viejo) aún aporta −0,00055 [−0,00100, −0,00018] y se irá
+      apagando con la media vida de 180 días. Siguiente paso: elegir fuente.
+      FotMob usa xG de Opta, como FBref: medir antes la coherencia con el xG
+      guardado en el solape 2024-25 (correlación y sesgo por liga). NUNCA
+      el xG de API-Football (README).
 
 ## Más picks sin relajar la puerta comercial (2026-09-25)
 

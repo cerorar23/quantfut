@@ -2500,6 +2500,24 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-03 — El xG aporta: merece una fuente nueva
+
+`eval/xg_value.py`, regla fijada antes de ver nada. Mismo walk-forward
+(reajuste cada 30 días, solo pasado) con `xg_blend` 0,65 frente a 0; cada
+reajuste tardó ~18 min, así que se lanzaron los cuatro brazos en procesos
+aparte (6 h). `check_leakage`: solo el aviso genérico de que las cuotas son
+cierre, y aquí no se usan como variable.
+
+- Ventana A (xG existía, 6.785 partidos, 84 semanas): RPS 0,20154 frente a
+  0,20440; delta −0,00287, IC95 [−0,00376, −0,00200]; mejora en 12 de 13
+  ligas (solo la Europa League, n=66, empeora). Veredicto: `xg_aporta`.
+- Ventana B (hoy, 3% de partidos de test con xG): −0,00055 [−0,00100,
+  −0,00018], 8 de 13 ligas. Lo que queda es la historia vieja con xG en el
+  entrenamiento, que se diluye con la media vida.
+- Lectura: 0,0029 de RPS es lo mismo que Dixon-Coles saca a Elo y ~40% del
+  hueco con Pinnacle (0,0068). Perderlo para siempre no es neutral. Pero el
+  modelo no elige los picks: esto mejora el modelo, no la puerta comercial.
+
 ## 2026-10-03 — Cerradas las fugas del criterio de la fase 3
 
 Con el sí del usuario: `/matches/{id}` sin `market_consensus`, sin
