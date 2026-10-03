@@ -2500,6 +2500,17 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-03 — FotMob: mismo xG que Opta, disponible en horas y con LatAm
+
+Pregunta del usuario: ¿llega antes por FotMob? Comprobado en su JSON
+público (solo lectura, desde el navegador): los 6 partidos recientes sin xG
+en API-Football lo tienen en FotMob, incluido Boca–Unión jugado horas
+antes; y cubre Liga MX y Argentina, que en API-Football casi nunca lo
+traen. Contra el xG de FBref guardado (17 partidos de 2024, 6 ligas):
+diferencias de 0,00-0,05 en 32 de 34 valores; dos de 0,2 y 0,6 (Premier y
+LaLiga), probablemente el valor de un penalti. Sin retraso, además, no hay
+la fuga de backtest que traería el xG tardío de API-Football.
+
 ## 2026-10-03 — El xG de API-Football: fiable cuando está, irregular en cuándo
 
 Pregunta del usuario: ¿no sirve el proveedor ya contratado? El README lo
