@@ -2500,6 +2500,29 @@ Fuerza por jugador B1, mismas 3.645 filas para los tres brazos:
 - La revisión programada del 1-oct quedó colgada en "running" sin actividad;
   esta revisión se hizo a mano.
 
+## 2026-10-03 — El xG de API-Football: fiable cuando está, irregular en cuándo
+
+Pregunta del usuario: ¿no sirve el proveedor ya contratado? El README lo
+prohibía (22-sep) por cobertura irregular y vacíos mudos. Medido, solo
+lectura, ~350 peticiones:
+
+- **Valores: los mismos que FBref/Opta.** 2024, 15 partidos por liga
+  emparejados con el xG guardado: correlación 0,963 (Argentina) a 1,000
+  (Serie A), medias casi idénticas, diferencia media 0,01-0,09 por equipo.
+  Muy probablemente el mismo proveedor (Opta): se puede empalmar sin
+  romper la serie.
+- **Cobertura: irregular por liga, temporada y fecha.** 2024: completa en 8
+  ligas europeas, Brasil y MLS; Argentina 5/15; Liga MX 0/15. Temporada en
+  curso, muestra al azar: casi todo con xG salvo Argentina (1/6). Pero los
+  partidos RECIENTES no lo tienen: MLS 0 en los últimos 6,6 días, Liga MX 1
+  de 14 en dos semanas, Argentina 0 de 14; LaLiga y Premier sí a 13 días.
+  Llega con retraso de días o semanas, y en las americanas puede no llegar.
+- Consecuencia de diseño si se adopta: no basta con leerlo al cerrar el
+  partido (`results.py` lo pide a +105 min y por eso no lo tenía); hay que
+  volver a pedirlo durante semanas. Y en backtests el xG de las últimas
+  ~2 semanas no existía en el momento de predecir (`check_leakage` avisa de
+  xG registrado >6 h tarde): fuga pequeña, pero real.
+
 ## 2026-10-03 — El xG aporta: merece una fuente nueva
 
 `eval/xg_value.py`, regla fijada antes de ver nada. Mismo walk-forward

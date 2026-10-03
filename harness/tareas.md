@@ -73,8 +73,11 @@ no ahora.
       (xG viejo) aún aporta −0,00055 [−0,00100, −0,00018] y se irá
       apagando con la media vida de 180 días. Siguiente paso: elegir fuente.
       FotMob usa xG de Opta, como FBref: medir antes la coherencia con el xG
-      guardado en el solape 2024-25 (correlación y sesgo por liga). NUNCA
-      el xG de API-Football (README).
+      guardado en el solape 2024-25 (correlación y sesgo por liga).
+      **3-oct: medido el xG de API-Football** (progreso): mismos valores que
+      FBref (corr. 0,96-1,00) pero llega con días/semanas de retraso e
+      irregular en Argentina/Liga MX. Usarlo exige revertir la regla del
+      README y CLAUDE.md: DECISIÓN DEL USUARIO pendiente.
 
 ## Más picks sin relajar la puerta comercial (2026-09-25)
 
