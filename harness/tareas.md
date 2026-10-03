@@ -13,6 +13,27 @@ no ahora.
 
 ## Pendientes 🔴
 
+## Fase 1 — fuentes paradas (encontrado 2026-10-02)
+
+`worldfootballR_data` no actualiza ningún fichero que usamos desde el
+18-sep-2025 (ver README, "Corrección (2026-10-02)"). Pendiente de decisión
+del usuario; nada de esto se ha tocado:
+
+- [ ] **Resultados de copas que faltan (dic-2024 → hoy).** Champions y
+      Europa League 2024/25 (eliminatorias) y 2025/26 enteras no están en la
+      base. API-Football (plan Pro) tiene esas temporadas: cargar solo
+      resultados, por el mismo camino que `fixtures --temporada`, sin dar de
+      alta equipos bajo `eu.*` (CLAUDE.md). Afecta al término de fuerza
+      entre ligas.
+- [ ] **Fuente de xG reciente.** Opciones a medir antes de elegir: Understat
+      (6 ligas europeas), FotMob/Sofascore (más ligas, raspado), o aceptar
+      goles solos y quitar el xG del modelo. NUNCA el xG de API-Football
+      (README). Primero medir cuánto aporta el xG hoy: si no mejora RPS
+      fuera de muestra, no merece una fuente nueva.
+- [ ] **Chequeo de frescura del xG en `health.py`.** El job semanal da
+      `ok` con 0 filas: alertar si el último xG de una liga con partidos
+      jugados tiene más de N semanas.
+
 ## Más picks sin relajar la puerta comercial (2026-09-25)
 
 Orden experimental solicitado; ningún resultado cambia `publish/picks.py`,

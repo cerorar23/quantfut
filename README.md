@@ -14,7 +14,7 @@ infraestructura de credibilidad desde la primera línea.
 | Fase | Qué es | Estado | Falta |
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | ✅ **100%** | — (11 ligas + 2 copas en el modelo; + 12 ligas solo para el criterio sharp, `leagues.model_enabled = FALSE`: LaLiga 2 y Serie B desde 2026-09-25; Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia, Championship, Ligue 2, 2. Bundesliga y Brasil B desde 2026-09-28) |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **90%** | xG parado desde 2024-25 y copas sin resultados desde dic-2024 (ver "Corrección (2026-10-02)" en la sección de xG) (11 ligas + 2 copas en el modelo; + 12 ligas solo para el criterio sharp, `leagues.model_enabled = FALSE`: LaLiga 2 y Serie B desde 2026-09-25; Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia, Championship, Ligue 2, 2. Bundesliga y Brasil B desde 2026-09-28) |
 | **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-09-27, 3 de 300. Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **55%** | Auth por email, frontend, cobros |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
@@ -876,6 +876,18 @@ Límites conocidos: no hay Parquet, los releases de resultados y de copas **no
 publican ni un CSV** (de ahí la dependencia `pyreadr`), y los datasets se
 publican por lotes, así que van por detrás del presente. Sirven para entrenar
 con histórico, no para cerrar el xG del partido de anoche.
+
+**Corrección (2026-10-02): no van "por detrás", están PARADOS.** Ningún
+fichero que usamos se ha actualizado después del 18-sep-2025 (fecha de
+`updated_at` de los assets en GitHub). Último xG guardado por liga: Premier y
+Argentina sep-2025; LaLiga, Serie A, Bundesliga y Ligue 1 feb-2025;
+Eredivisie y Primeira ene-2025; Brasil, Liga MX y MLS dic-2024. Las copas
+(`match_results_cups`) acaban en dic-2024 y con ellas los RESULTADOS de
+Champions y Europa League: en la base no hay ni un partido de copa entre
+dic-2024 y los programados de oct-2026. El job semanal responde `ok` con 0
+filas, así que nada lo detectaba. Consecuencias: desde esas fechas el modelo
+entrena solo con goles (Dixon-Coles cae a goles cuando el xG es NaN), y el
+término de fuerza entre ligas no ve ningún partido de copa de 2025/26.
 
 ---
 
