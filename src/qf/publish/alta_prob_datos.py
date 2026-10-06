@@ -185,6 +185,12 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     est = estado()
     out = {"elegidos": 0, "sin_precio": 0, "sin_candidato": 0,
            "estado": est["estado"], "motivos": est["motivos"], "decisiones": []}
+    if dry_run:
+        # Cuántas decisiones salen de cada fuente y de cada mercado. A las 08:00
+        # UTC, con el límite de MAX_EDAD_PRECIO, muchos partidos europeos de la
+        # tarde solo tienen precio de API-Football, que no trae goles: hay que
+        # verlo ANTES de activar, porque lo publicado es inmutable.
+        out["resumen"] = {"por_fuente": {}, "por_mercado": {}}
     if est["estado"] != "activa":
         return out
     # Lo que se guarda tiene que entrar en el payload del lote del día. Si ese
@@ -229,6 +235,10 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
                   ref_price, ref_book, odds_source, odds_as_of, fit)
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                ON CONFLICT (match_id) DO NOTHING""", fila) or 0
+    if dry_run:
+        for d in out["decisiones"]:
+            for clave, valor in (("por_fuente", d["odds_source"]), ("por_mercado", d["market"])):
+                out["resumen"][clave][valor] = out["resumen"][clave].get(valor, 0) + 1
     log.info("Alta probabilidad: %s", {k: v for k, v in out.items() if k != "decisiones"})
     return out
 

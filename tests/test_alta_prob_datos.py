@@ -181,6 +181,36 @@ def test_dry_run_no_guarda(monkeypatch):
     assert inserts == [] and out["decisiones"][0]["market"] == "h2h"
 
 
+def test_vista_previa_resume_por_fuente_y_mercado(monkeypatch):
+    # Con el límite de 6 h, a las 08:00 muchos partidos europeos de la tarde solo
+    # tienen precio de API-Football (sin goles): la vista previa lo cuenta.
+    partidos = [{"match_id": f"m{i}", "kickoff_utc": NOW + timedelta(hours=8 + i)}
+                for i in range(1, 7)]
+    inserts = _db(monkeypatch, partidos, None)
+    _, snap_goles, filas_goles = _mercado_pinnacle(1.25, 1.0)
+    the_odds = {"m1": _snap((1.18, 7.5, 15.0)),            # 1X2: gana el local
+                "m2": snap_goles,                          # goles (línea 2,75)
+                "m6": _snap((2.6, 3.2, 2.9))}              # igualado: sin candidato
+    api_football = {"m3": _snap((1.30, 5.5, 10.0), source="api_football"),   # doble oportunidad
+                    "m4": _snap((1.18, 7.5, 15.0), source="api_football")}   # 1X2
+    monkeypatch.setattr(ad.pk, "_odds_api_snapshot", lambda m, now: the_odds.get(m))
+    monkeypatch.setattr(ad.pk, "_af_snapshot", lambda m, now: api_football.get(m))
+    monkeypatch.setattr(ad, "_totales", lambda m, as_of: filas_goles if m == "m2" else [])
+    out = ad.select_and_persist(NOW, dry_run=True)
+    assert inserts == []
+    assert out["sin_precio"] == 1 and out["sin_candidato"] == 1 and len(out["decisiones"]) == 4
+    assert out["resumen"] == {"por_fuente": {"the_odds_api": 2, "api_football": 2},
+                              "por_mercado": {"h2h": 2, "totals": 1, "double_chance": 1}}
+    # Solo la vista previa lleva el resumen: lo que se guarda no cambia.
+    assert "resumen" not in ad.select_and_persist(NOW)
+
+
+def test_vista_previa_sin_decisiones_lleva_el_resumen_vacio(monkeypatch):
+    _db(monkeypatch, [], None)
+    out = ad.select_and_persist(NOW, dry_run=True)
+    assert out["resumen"] == {"por_fuente": {}, "por_mercado": {}}
+
+
 def test_precio_viejo_o_tardio_no_cuenta(monkeypatch):
     viejo = _snap((1.18, 7.5, 15.0), edad=timedelta(hours=7))
     inserts = _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}], viejo)
