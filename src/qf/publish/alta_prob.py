@@ -44,7 +44,12 @@ MAX_RESIDUO_AJUSTE = 0.01
 # MERCADOS_GOLES_HABILITADOS, que pasaron la prueba histórica
 # (eval/alta_prob_calibracion.py). Cambiar esa lista exige repetir la prueba.
 LINEAS_GOLES: tuple[tuple[str, float], ...] = (("over", 1.5), ("under", 3.5), ("under", 4.5))
-MERCADOS_GOLES_HABILITADOS: tuple[tuple[str, float], ...] = ()
+# Pasaron la prueba histórica el 2026-10-05 (eval/alta_prob_calibracion.py,
+# firma d5cbc3151164dcc19e7304bba45ad2445d1e99a2ce97ddd5e92ea05c2f8ca79d,
+# rho −0,0613): h2h 84,46→84,82, double_chance 85,83→86,36, totals over 1.5
+# 84,2→84,09, totals under 3.5 82,56→83,36, totals under 4.5 86,95→87,4.
+MERCADOS_GOLES_HABILITADOS: tuple[tuple[str, float], ...] = (
+    ("over", 1.5), ("under", 3.5), ("under", 4.5))
 # Liquidados mínimos antes de que el control pueda pausar la línea.
 MIN_N_CONTROL = 50
 # Desempate exacto entre candidatos de la misma probabilidad.
