@@ -82,6 +82,14 @@ class Settings:
     # difundir picks.
     publish_picks_enabled: bool = os.getenv("PUBLISH_PICKS_ENABLED", "0") in ("1", "true", "True")
 
+    # --- Línea de alta probabilidad (publish/alta_prob.py, 2026-10-05) ---
+    # Pronósticos ≥ 80 % de Pinnacle sin margen, aparte de los picks de valor.
+    # Apagada hasta desplegar y verificar el primer lote sellado.
+    alta_prob_enabled: bool = os.getenv("ALTA_PROB_ENABLED", "0") in ("1", "true", "True")
+    # Fecha (AAAA-MM-DD) desde la que el control de calidad mide. Reanudar
+    # tras una pausa es decisión del usuario: se mueve esta fecha.
+    alta_prob_control_desde: str = os.getenv("ALTA_PROB_CONTROL_DESDE", "")
+
     # --- Criterio "casa blanda contra precio sharp" (publish/picks.py) ---
     # Casas donde apuestan los suscriptores (decisión del usuario 2026-09-23),
     # con los nombres canónicos de picks.canonical_book. Betway y 888sport no
