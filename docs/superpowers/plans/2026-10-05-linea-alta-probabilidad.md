@@ -1981,19 +1981,44 @@ ssh quantfut 'cd ~/quantfut && docker compose build api worker && docker compose
 
 Expected: `CREATE TABLE`, `CREATE TRIGGER` ×2, `COMMIT`; contenedores `Up`.
 
-- [ ] **Step 4: Comprobar inmutabilidad en producción (transacción que se deshace)**
+- [ ] **Step 4: Comprobar el esquema en producción (transacción que se deshace; decisión del usuario 2026-10-06)**
+
+Los tests de `db/040` solo miran el texto del SQL; la comprobación real es esta. Volver a aplicar la migración (debe ser idempotente) y, en una transacción que termina en `ROLLBACK`, probar bordes, unicidad e inmutabilidad. Cada caso usa un `SAVEPOINT` para que un error esperado no aborte el resto:
 
 ```bash
+ssh quantfut 'cd ~/quantfut && docker compose exec -T db sh -c "psql -v ON_ERROR_STOP=1 -U \$POSTGRES_USER -d \$POSTGRES_DB -f /docker-entrypoint-initdb.d/040_alta_probabilidad.sql"'
 ssh quantfut 'cd ~/quantfut && docker compose exec -T db sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB"' <<'SQL'
 BEGIN;
+CREATE TEMP TABLE m2 AS SELECT match_id FROM matches WHERE status = 'scheduled' ORDER BY match_id LIMIT 4;
+-- 0,80 y 0,95 entran
 INSERT INTO alta_prob_picks (match_id, market, selection, prob, fair_price, odds_source, odds_as_of)
-  SELECT match_id, 'h2h', 'home', 0.85, 1.18, 'the_odds_api', now() FROM matches WHERE status='scheduled' LIMIT 1;
-UPDATE alta_prob_picks SET prob = 0.9;
+  SELECT match_id, 'h2h', 'home', 0.80, 1.25, 'the_odds_api', now() FROM m2 ORDER BY match_id LIMIT 1;
+INSERT INTO alta_prob_picks (match_id, market, selection, prob, fair_price, odds_source, odds_as_of)
+  SELECT match_id, 'double_chance', '1X', 0.95, 1.053, 'the_odds_api', now() FROM m2 ORDER BY match_id OFFSET 1 LIMIT 1;
+-- 0,79 y 0,96 se rechazan (CHECK)
+SAVEPOINT a; INSERT INTO alta_prob_picks (match_id, market, selection, prob, fair_price, odds_source, odds_as_of)
+  SELECT match_id, 'h2h', 'home', 0.79, 1.27, 'the_odds_api', now() FROM m2 ORDER BY match_id OFFSET 2 LIMIT 1; ROLLBACK TO a;
+SAVEPOINT b; INSERT INTO alta_prob_picks (match_id, market, selection, prob, fair_price, odds_source, odds_as_of)
+  SELECT match_id, 'h2h', 'home', 0.96, 1.04, 'the_odds_api', now() FROM m2 ORDER BY match_id OFFSET 3 LIMIT 1; ROLLBACK TO b;
+-- mercado desconocido se rechaza
+SAVEPOINT c; INSERT INTO alta_prob_picks (match_id, market, selection, prob, fair_price, odds_source, odds_as_of)
+  SELECT match_id, 'btts', 'no', 0.85, 1.18, 'the_odds_api', now() FROM m2 ORDER BY match_id OFFSET 3 LIMIT 1; ROLLBACK TO c;
+-- segundo pronóstico del mismo partido se rechaza (UNIQUE)
+SAVEPOINT d; INSERT INTO alta_prob_picks (match_id, market, selection, prob, fair_price, odds_source, odds_as_of)
+  SELECT match_id, 'double_chance', '1X', 0.90, 1.11, 'the_odds_api', now() FROM m2 ORDER BY match_id LIMIT 1; ROLLBACK TO d;
+-- UPDATE y DELETE fallan en las dos tablas
+SAVEPOINT e; UPDATE alta_prob_picks SET prob = 0.9; ROLLBACK TO e;
+SAVEPOINT f; DELETE FROM alta_prob_picks; ROLLBACK TO f;
+INSERT INTO alta_prob_results (alta_id, outcome, home_goals, away_goals) SELECT alta_id, 'win', 1, 0 FROM alta_prob_picks LIMIT 1;
+SAVEPOINT g; UPDATE alta_prob_results SET outcome = 'loss'; ROLLBACK TO g;
+SAVEPOINT h; DELETE FROM alta_prob_results; ROLLBACK TO h;
+SELECT count(*) AS deben_ser_2 FROM alta_prob_picks;
 ROLLBACK;
+SELECT count(*) AS deben_ser_0 FROM alta_prob_picks;
 SQL
 ```
 
-Expected: el `UPDATE` falla con `REGISTRO INMUTABLE: alta_prob_picks no admite UPDATE`.
+Expected: la segunda aplicación solo da NOTICEs (`already exists, skipping`) y `COMMIT`; los dos primeros INSERT dan `INSERT 0 1`; los savepoints `a`, `b`, `c` fallan por CHECK, `d` por UNIQUE, `e`-`h` con `REGISTRO INMUTABLE`; `deben_ser_2` = 2 y, tras el ROLLBACK, `deben_ser_0` = 0.
 
 - [ ] **Step 5: Vista previa sin guardar (con la línea encendida solo para este proceso)**
 
