@@ -65,6 +65,15 @@ LOTE_SIN_CONSENSO_DESDE = date(2026, 10, 3)
 LOTE_ALTA_PROB_DESDE: date | None = None
 
 
+def lote_lleva_alta(dia: date) -> bool:
+    """
+    ¿El lote de `dia` lleva el bloque de alta probabilidad? Única fuente de
+    verdad: el escritor (elegir), el lote (`_collect`) y el lector (informe
+    público) la usan. Lee la constante en cada llamada.
+    """
+    return LOTE_ALTA_PROB_DESDE is not None and dia >= LOTE_ALTA_PROB_DESDE
+
+
 def _collect(batch_date: date) -> dict:
     consenso = ("p.market_consensus,"
                 if batch_date < LOTE_SIN_CONSENSO_DESDE else "")
@@ -100,7 +109,7 @@ def _collect(batch_date: date) -> dict:
            ORDER BY published_at, pick_id""",
         (batch_date,),
     )
-    con_alta = LOTE_ALTA_PROB_DESDE is not None and batch_date >= LOTE_ALTA_PROB_DESDE
+    con_alta = lote_lleva_alta(batch_date)
     alta = query(
         """SELECT alta_id, match_id, market, selection, line, prob, fair_price,
                   ref_price, ref_book, odds_source, odds_as_of, fit, decided_at

@@ -507,7 +507,8 @@ def _alta() -> dict:
         log.exception("Fallo en la línea de alta probabilidad")
         tg.alert(f"Fallo en la línea de alta probabilidad: {exc}")
         return {"elegidos": 0, "error": str(exc)}
-    if out.get("estado") == "pausada" or any("por debajo" in m for m in out.get("motivos", [])):
+    if (out.get("estado") in ("pausada", "sin_corte")
+            or any("por debajo" in m for m in out.get("motivos", []))):
         tg.alert("ALTA PROBABILIDAD: " + "; ".join(out.get("motivos", [])))
     return out
 

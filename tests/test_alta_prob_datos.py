@@ -1,6 +1,6 @@
 """E/S de la línea de alta probabilidad, con la base de datos simulada."""
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -54,6 +54,9 @@ def test_decidir_respeta_bloqueo():
 
 def _db(monkeypatch, partidos, snap, batch_sellado=False, rho=-0.06):
     inserts = []
+    # El lote de hoy lleva el bloque de alta probabilidad: sin corte, la línea
+    # no elige nada (ver test_sin_corte_no_elige_pero_la_vista_previa_si).
+    monkeypatch.setattr(ad.hashchain, "LOTE_ALTA_PROB_DESDE", NOW.date())
     # soft_books fijas: el .env local puede redefinir SOFT_BOOKS.
     monkeypatch.setattr(ad, "settings", replace(
         settings, alta_prob_enabled=True,
@@ -141,3 +144,75 @@ def test_informe_solo_sellados_y_con_texto(monkeypatch):
     assert out["estado"] == "activa"
     assert out["proximos"][0]["texto"] == "Cruzeiro o empate"
     assert all("a.decided_at <= b.created_at" in s for s in sqls if "alta_prob_picks a" in s)
+
+
+# --- Fecha de corte del lote: una sola fuente de verdad (hashchain) ---------
+
+PARTIDO = {"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}
+
+
+@pytest.mark.parametrize("corte", [None, NOW.date() + timedelta(days=1)])
+def test_sin_corte_no_elige_pero_la_vista_previa_si(monkeypatch, corte):
+    inserts = _db(monkeypatch, [PARTIDO], _snap((1.18, 7.5, 15.0)))
+    monkeypatch.setattr(ad.hashchain, "LOTE_ALTA_PROB_DESDE", corte)
+    out = ad.select_and_persist(NOW)
+    assert inserts == []
+    assert out["estado"] == "sin_corte" and out["elegidos"] == 0
+    assert "LOTE_ALTA_PROB_DESDE" in " ".join(out["motivos"])
+    vista = ad.select_and_persist(NOW, dry_run=True)
+    assert inserts == [] and vista["decisiones"][0]["market"] == "h2h"
+
+
+def test_el_corte_se_mide_en_utc(monkeypatch):
+    # 22:00 en UTC-5 del 6 de octubre = 03:00 UTC del 7: el lote ya lleva el bloque.
+    ahora = datetime(2026, 10, 6, 22, 0, tzinfo=timezone(timedelta(hours=-5)))
+    snap = pk.Snapshot("the_odds_api", ahora - timedelta(hours=1),
+                       {"pinnacle": dict(zip(("home", "draw", "away"), (1.18, 7.5, 15.0)))})
+    inserts = _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": ahora + timedelta(hours=10)}], snap)
+    monkeypatch.setattr(ad.hashchain, "LOTE_ALTA_PROB_DESDE", date(2026, 10, 7))
+    assert ad.select_and_persist(ahora)["elegidos"] == 1 and len(inserts) == 1
+    monkeypatch.setattr(ad.hashchain, "LOTE_ALTA_PROB_DESDE", date(2026, 10, 8))
+    assert ad.select_and_persist(ahora)["estado"] == "sin_corte"
+
+
+def _q_solo_si_cubierto(sqls):
+    """Devuelve filas solo si la SQL deja pasar al lector (no lleva `AND FALSE`)."""
+    def q(sql, params=()):
+        sqls.append(sql)
+        if "AND FALSE" in sql:
+            return []
+        if "m.kickoff_utc > now()" in sql:
+            return [{"match_id": "m1", "league_id": "br.serie_a", "kickoff_utc": NOW,
+                     "local": "Cruzeiro", "visitante": "Sao Paulo", "market": "double_chance",
+                     "selection": "1X", "line": None, "prob": 0.87, "fair_price": 1.149,
+                     "ref_price": None, "ref_book": None, "batch_date": "2026-10-06",
+                     "chain_sha256": "ab" * 32}]
+        if "alta_prob_results" in sql:
+            return [{"market": "double_chance", "prob": 0.87, "ref_price": None,
+                     "outcome": "win", "kickoff_utc": NOW}]
+        return []
+    return q
+
+
+def test_lector_sin_corte_no_ensena_nada(monkeypatch):
+    sqls = []
+    monkeypatch.setattr(ad, "query", _q_solo_si_cubierto(sqls))
+    monkeypatch.setattr(ad, "settings", replace(settings, alta_prob_enabled=True))
+    monkeypatch.setattr(ad.hashchain, "LOTE_ALTA_PROB_DESDE", None)
+    out = ad.informe_publico()
+    assert out["proximos"] == []
+    assert ad._liquidados(None) == []
+    assert all("AND FALSE" in s for s in sqls if "alta_prob_picks a" in s)
+
+
+def test_lector_con_corte_solo_cuenta_lotes_desde_esa_fecha(monkeypatch):
+    sqls = []
+    monkeypatch.setattr(ad, "query", _q_solo_si_cubierto(sqls))
+    monkeypatch.setattr(ad, "settings", replace(settings, alta_prob_enabled=True))
+    monkeypatch.setattr(ad.hashchain, "LOTE_ALTA_PROB_DESDE", date(2026, 10, 6))
+    out = ad.informe_publico()
+    assert out["proximos"][0]["texto"] == "Cruzeiro o empate"
+    assert len(ad._liquidados(None)) == 1
+    filas = [s for s in sqls if "alta_prob_picks a" in s]
+    assert filas and all("b.batch_date >= DATE '2026-10-06'" in s for s in filas)
+    assert not any("AND FALSE" in s for s in filas)

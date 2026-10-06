@@ -81,3 +81,27 @@ def test_elegidos_sin_sellar_avisan(monkeypatch, job):
     monkeypatch.setattr(daily, "seal", lambda: orden.append("seal") or {})
     daily.run()
     assert any("SIN SELLAR" in a for a in alerts)
+
+
+def test_lote_lleva_alta_es_la_unica_fuente_de_verdad(monkeypatch):
+    corte = date(2026, 10, 7)
+    monkeypatch.setattr(hashchain, "LOTE_ALTA_PROB_DESDE", None)
+    assert hashchain.lote_lleva_alta(date(2026, 10, 7)) is False
+    assert hashchain.lote_lleva_alta(date(2030, 1, 1)) is False
+    monkeypatch.setattr(hashchain, "LOTE_ALTA_PROB_DESDE", corte)
+    assert hashchain.lote_lleva_alta(date(2026, 10, 6)) is False   # antes
+    assert hashchain.lote_lleva_alta(corte) is True                # el mismo día
+    assert hashchain.lote_lleva_alta(date(2026, 10, 8)) is True    # después
+
+
+def test_sin_corte_se_sella_igual_y_avisa(monkeypatch, job):
+    orden, alerts = job
+    monkeypatch.setattr(daily, "settings", replace(settings, alta_prob_enabled=True))
+    monkeypatch.setattr(daily.alta_prob_datos, "select_and_persist",
+                        lambda: orden.append("alta") or
+                        {"elegidos": 0, "estado": "sin_corte",
+                         "motivos": ["El lote de hoy no lleva bloque de alta probabilidad"]})
+    out = daily.run()
+    assert orden == ["alta", "seal"] and out["sealed"] is True
+    assert out["alta_prob"]["estado"] == "sin_corte"
+    assert any("ALTA PROBABILIDAD" in a for a in alerts)

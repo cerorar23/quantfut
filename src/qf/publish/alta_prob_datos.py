@@ -21,6 +21,7 @@ from ..db import execute, query, query_one
 from ..eval.clv import _settle_outcome
 from ..model.devig import devig, two_way_devig
 from . import alta_prob as ap
+from . import hashchain
 from . import picks as pk
 
 log = logging.getLogger(__name__)
@@ -28,9 +29,23 @@ log = logging.getLogger(__name__)
 SEL = ("home", "draw", "away")
 _MEDIO_GOL = (2.5, 3.5)
 
-_SQL_SELLADO = """JOIN prediction_batches b
+
+def _sql_sellado() -> str:
+    """
+    JOIN con el lote que cubre cada fila: existe, se selló DESPUÉS de decidirla
+    y es de un día cuyo payload LLEVA el bloque (`hashchain.lote_lleva_alta`).
+    Sin esto último, una fila guardada en un día sin bloque se daría por sellada
+    con un hash que no la cubre. Sin fecha de corte no hay lote que cubra nada:
+    `AND FALSE`. El literal de fecha es seguro de incrustar: sale de una
+    constante `date` del código (`LOTE_ALTA_PROB_DESDE`), no de entrada de usuario.
+    """
+    desde = hashchain.LOTE_ALTA_PROB_DESDE
+    corte = (f"AND b.batch_date >= DATE '{desde.isoformat()}'"
+             if desde is not None else "AND FALSE")
+    return f"""JOIN prediction_batches b
              ON b.batch_date = (a.decided_at AT TIME ZONE 'UTC')::date
-            AND a.decided_at <= b.created_at"""
+            AND a.decided_at <= b.created_at
+            {corte}"""
 
 
 # --------------------------------------------------------------------------
@@ -81,7 +96,7 @@ def _liquidados(desde: str | None = "control") -> list[dict]:
             FROM alta_prob_picks a
             JOIN alta_prob_results r ON r.alta_id = a.alta_id
             JOIN matches m ON m.match_id = a.match_id
-            {_SQL_SELLADO}
+            {_sql_sellado()}
             WHERE %s::date IS NULL OR a.decided_at >= %s::date""",
         (desde, desde))
 
@@ -166,12 +181,22 @@ def estado() -> dict:
 
 def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> dict:
     now = now or datetime.now(timezone.utc)
+    hoy = now.astimezone(timezone.utc).date()      # batch_date se calcula en UTC
     est = estado()
     out = {"elegidos": 0, "sin_precio": 0, "sin_candidato": 0,
            "estado": est["estado"], "motivos": est["motivos"], "decisiones": []}
     if est["estado"] != "activa":
         return out
-    if not dry_run and _lote_sellado(now.date()):
+    # Lo que se guarda tiene que entrar en el payload del lote del día. Si ese
+    # lote no lleva el bloque, la fila quedaría fuera de la cadena: no se
+    # elige nada. La vista previa (`dry_run`) no guarda, así que sigue valiendo.
+    if not dry_run and not hashchain.lote_lleva_alta(hoy):
+        out["estado"] = "sin_corte"
+        out["motivos"] = [*out["motivos"],
+                          "El lote de hoy no lleva bloque de alta probabilidad "
+                          "(LOTE_ALTA_PROB_DESDE no fijada o posterior a hoy): no se elige nada"]
+        return out
+    if not dry_run and _lote_sellado(hoy):
         out["motivos"] = [*out["motivos"], "Lote del día ya sellado: no se elige nada"]
         return out
     excluir = set(est["bloqueados"])
@@ -237,7 +262,7 @@ def informe_publico() -> dict:
             JOIN matches m ON m.match_id = a.match_id
             JOIN teams th ON th.team_id = m.home_team_id
             JOIN teams ta ON ta.team_id = m.away_team_id
-            {_SQL_SELLADO}
+            {_sql_sellado()}
             WHERE m.kickoff_utc > now()
             ORDER BY m.kickoff_utc""")
     for p in proximos:
