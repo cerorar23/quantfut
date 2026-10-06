@@ -1954,7 +1954,7 @@ Expected: todo en verde.
 
 - [ ] **Step 2: Fijar la fecha de corte del sellado = fecha UTC del primer job diario tras el despliegue**
 
-Si se despliega antes de las 07:50 UTC, es hoy; si no, mañana. En `src/qf/publish/hashchain.py`:
+`LOTE_ALTA_PROB_DESDE` es el PRIMER día cuyo sellado aún no ha ocurrido: si se despliega antes de las 07:50 UTC y el job de hoy todavía no ha sellado, es hoy; si el job de hoy ya selló (o está en marcha), es mañana. Un lote ya sellado no lleva el bloque y no se regenera nunca: fijar como corte un día ya sellado dejaría ese día con un hash que no cubre sus filas. En `src/qf/publish/hashchain.py`:
 
 ```python
 LOTE_ALTA_PROB_DESDE: date | None = date(2026, 10, DD)   # primer lote tras desplegar
@@ -1974,7 +1974,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```bash
 ssh quantfut 'cd ~ && tar --exclude=quantfut/.git -czf respaldo_$(date +%Y%m%d)_alta_prob.tgz quantfut'
 git archive --format=tar HEAD src frontend db scripts README.md harness | ssh quantfut 'cd ~/quantfut && tar -xf -'
-ssh quantfut 'cd ~/quantfut && grep -q "^ALTA_PROB_ENABLED=" .env || echo "ALTA_PROB_ENABLED=0" >> .env'
+ssh quantfut 'cd ~/quantfut && grep -q "^ALTA_PROB_ENABLED=" .env || printf "\nALTA_PROB_ENABLED=0\n" >> .env'
 ssh quantfut 'cd ~/quantfut && docker compose exec -T db sh -c "psql -v ON_ERROR_STOP=1 -U \$POSTGRES_USER -d \$POSTGRES_DB -f /docker-entrypoint-initdb.d/040_alta_probabilidad.sql"'
 ssh quantfut 'cd ~/quantfut && docker compose build api worker && docker compose up -d api worker'
 ```
@@ -2018,17 +2018,43 @@ SELECT count(*) AS deben_ser_0 FROM alta_prob_picks;
 SQL
 ```
 
-Expected: la segunda aplicación solo da NOTICEs (`already exists, skipping`) y `COMMIT`; los dos primeros INSERT dan `INSERT 0 1`; los savepoints `a`, `b`, `c` fallan por CHECK, `d` por UNIQUE, `e`-`h` con `REGISTRO INMUTABLE`; `deben_ser_2` = 2 y, tras el ROLLBACK, `deben_ser_0` = 0.
+Expected: la segunda aplicación imprime NOTICEs (`already exists, skipping`), `DROP TRIGGER` y `CREATE TRIGGER` ×2 (la migración recrea los triggers cada vez) y `COMMIT`; los dos primeros INSERT dan `INSERT 0 1`; los savepoints `a`, `b`, `c` fallan por CHECK, `d` por UNIQUE, `e`-`h` con `REGISTRO INMUTABLE`; `deben_ser_2` = 2 y, tras el ROLLBACK, `deben_ser_0` = 0.
 
-- [ ] **Step 5: Vista previa sin guardar (con la línea encendida solo para este proceso)**
+- [ ] **Step 5: Ensayo de solo lectura en producción con la imagen nueva (antes de la vista previa y del primer sellado real)**
+
+Los tests simulan la base de datos: el SQL nuevo (`_collect` con el bloque, `informe_publico`, `settle_pending`, la lectura de las tablas) no se ha ejecutado nunca contra Postgres de verdad. Esto lo ejecuta todo con la línea APAGADA y sin escribir nada (`_collect` solo lee; la fecha de corte se fuerza únicamente dentro de ese proceso):
+
+```bash
+ssh quantfut 'cd ~/quantfut && docker compose exec -T worker python -c "from datetime import date; from qf.publish import hashchain as h; h.LOTE_ALTA_PROB_DESDE = date.today(); p = h._collect(date.today()); print(p.get(\"n_alta_prob\"), p[\"n_predictions\"])"'
+ssh quantfut 'cd ~/quantfut && docker compose exec -T worker python -m qf.publish.alta_prob_datos informe'
+ssh quantfut 'cd ~/quantfut && docker compose exec -T worker python -m qf.publish.alta_prob_datos settle'
+ssh quantfut 'cd ~/quantfut && docker compose exec -T api python -c "import urllib.request as u; print(u.urlopen(\"http://localhost:8000/alta-probabilidad\").read()[:300])"'
+ssh quantfut 'cd ~/quantfut && docker compose exec -T db sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB"' <<'SQL'
+\dp alta_prob_picks
+\dp alta_prob_results
+SQL
+```
+
+Expected:
+- `_collect`: `0 <n>` (cero pronósticos de alta probabilidad y `n` predicciones del día) y ningún error de SQL.
+- `informe`: JSON con `"estado": "desactivada"`, `"motivos": ["Línea desactivada"]`, `"proximos": []` e `historial` con `"n": 0`.
+- `settle`: `{"settled": 0}`.
+- `/alta-probabilidad` desde el contenedor `api`: los primeros 300 bytes del mismo JSON (`b'{"estado":"desactivada",...`).
+- `\dp`: la columna de privilegios de las dos tablas incluye `qf_readonly=r/...` (SELECT para el rol de solo lectura; `ALTER DEFAULT PRIVILEGES` de `db/004` se lo da a las tablas que crea el mismo rol). Si falta, aplicar `GRANT SELECT ON alta_prob_picks, alta_prob_results TO qf_readonly;` y anotarlo en `harness/progreso.md`.
+
+Cualquier error aquí se arregla ANTES de seguir: el primer sellado real es inmutable.
+
+- [ ] **Step 6: Vista previa sin guardar (con la línea encendida solo para este proceso)**
 
 ```bash
 ssh quantfut 'cd ~/quantfut && docker compose exec -T -e ALTA_PROB_ENABLED=1 worker python -m qf.publish.alta_prob_datos preview' | head -60
 ```
 
-Expected: `estado: activa`, contadores `sin_precio`/`sin_candidato` y una lista `decisiones` coherente (probabilidades entre 0,80 y 0,95; mayoría `double_chance`). Enseñar al usuario 5-10 decisiones con los nombres de los partidos (`informe` aún vacío) y pedir su visto bueno para activar.
+Expected: `estado: activa`, contadores `sin_precio`/`sin_candidato`, un `resumen` y una lista `decisiones` coherente (probabilidades entre 0,80 y 0,95; mayoría `double_chance`).
 
-- [ ] **Step 6: Esperar al job de las 08:00 UTC con la línea apagada y verificar el lote**
+Revisar el `resumen` por fuente y por mercado (`resumen.por_fuente`, `resumen.por_mercado`): con el límite de 6 h, a las 08:00 UTC muchos partidos europeos de la tarde solo tienen precio de API-Football, que no trae goles; si `por_fuente` está casi todo en `api_football` o `por_mercado` no trae ningún `totals`, los goles apenas aportarán y hay que decidirlo con el usuario antes de activar (lo publicado es inmutable). Enseñar al usuario ese resumen y 5-10 decisiones con los nombres de los partidos (`informe` aún vacío) y pedir su visto bueno para activar.
+
+- [ ] **Step 7: Esperar al job de las 08:00 UTC con la línea apagada y verificar el lote**
 
 ```bash
 ssh quantfut 'cd ~/quantfut && docker compose exec -T worker tail -5 /var/log/daily.log'
@@ -2038,15 +2064,15 @@ ssh quantfut 'cd ~/quantfut && docker compose exec -T worker sh -c "ls -t \$(pyt
 
 Expected: el job selló (`sealed: true`), `verify` OK, y si la fecha es ≥ `LOTE_ALTA_PROB_DESDE`, el recibo lleva `"n_alta_prob":0`.
 
-- [ ] **Step 7: Activar** (con el visto bueno del paso 5)
+- [ ] **Step 8: Activar** (con el visto bueno del paso 6)
 
 ```bash
-ssh quantfut 'cd ~/quantfut && sed -i "s/^ALTA_PROB_ENABLED=0$/ALTA_PROB_ENABLED=1/" .env && grep ^ALTA_PROB_ENABLED .env && docker compose up -d api worker'
+ssh quantfut 'cd ~/quantfut && sed -i -E "s/^ALTA_PROB_ENABLED=0\r?$/ALTA_PROB_ENABLED=1/" .env && grep ^ALTA_PROB_ENABLED .env && docker compose up -d api worker'
 ```
 
-Al día siguiente, tras las 08:00 UTC: repetir el paso 6 (ahora `n_alta_prob > 0`), comprobar `GET /alta-probabilidad` (lista sellada con `chain_sha256` igual al del recibo) y la web `https://api.pronosticosdeportivos.pro/#alta` en escritorio y móvil.
+Al día siguiente, tras las 08:00 UTC: repetir el paso 7 (ahora `n_alta_prob > 0`), comprobar `GET /alta-probabilidad` (lista sellada con `chain_sha256` igual al del recibo) y la web `https://api.pronosticosdeportivos.pro/#alta` en escritorio y móvil.
 
-- [ ] **Step 8: Documentación**
+- [ ] **Step 9: Documentación**
 
 - `README.md`: sección "Línea de alta probabilidad" (qué es, que es de acierto y no de valor con las cifras del diseño, fuente Pinnacle sin margen, regla del 80-95 % y el de menor probabilidad, sellado, control y su reanudación con `ALTA_PROB_CONTROL_DESDE`, endpoint `/alta-probabilidad`).
 - `harness/tareas.md`: marcar las casillas de "Línea de alta probabilidad".
