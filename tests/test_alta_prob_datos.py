@@ -156,7 +156,7 @@ def _db(monkeypatch, partidos, snap, batch_sellado=False, rho=-0.06):
     monkeypatch.setattr(ad, "_lote_sellado", lambda dia: batch_sellado)
     monkeypatch.setattr(ad, "_partidos", lambda now: partidos)
     monkeypatch.setattr(ad, "_totales", lambda match_id, as_of: [])
-    monkeypatch.setattr(ad, "_totales_af", lambda match_id, as_of: [])
+    monkeypatch.setattr(ad, "_totales_af", lambda match_id, as_of, now: [])
     monkeypatch.setattr(ad.pk, "_odds_api_snapshot", lambda m, now: snap)
     monkeypatch.setattr(ad.pk, "_af_snapshot", lambda m, now: None)
     monkeypatch.setattr(ad, "execute", lambda sql, params=(): inserts.append(params) or 1)
@@ -188,8 +188,8 @@ def test_goles_de_api_football_salen_de_la_misma_respuesta_que_el_1x2(monkeypatc
     inserts = _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}], None)
     consultas = []
 
-    def totales_af(match_id, as_of):
-        consultas.append((match_id, as_of))
+    def totales_af(match_id, as_of, now):
+        consultas.append((match_id, as_of, now))
         return filas
 
     def totales_the_odds(match_id, as_of):
@@ -201,7 +201,7 @@ def test_goles_de_api_football_salen_de_la_misma_respuesta_que_el_1x2(monkeypatc
     monkeypatch.setattr(ad, "_totales_af", totales_af)
     monkeypatch.setattr(ad, "_totales", totales_the_odds)
     out = ad.select_and_persist(NOW, dry_run=True)
-    assert consultas == [("m1", snap.as_of)] and inserts == []
+    assert consultas == [("m1", snap.as_of, NOW)] and inserts == []
     d = out["decisiones"][0]
     assert (d["market"], d["selection"], d["line"]) == ("totals", "under", 3.5)
     assert d["odds_source"] == "api_football"
@@ -217,7 +217,7 @@ def test_goles_de_api_football_salen_de_la_misma_respuesta_que_el_1x2(monkeypatc
 
 
 def test_snapshot_de_the_odds_api_no_consulta_los_totales_de_api_football(monkeypatch):
-    def totales_af(match_id, as_of):
+    def totales_af(match_id, as_of, now):
         raise AssertionError("un snapshot de The Odds API no mezcla totales de API-Football")
 
     _, snap, filas = _mercado_pinnacle(1.25, 1.0)
@@ -237,11 +237,30 @@ def test_totales_af_lee_la_misma_respuesta_por_su_marca_de_proveedor(monkeypatch
         llamadas.append((" ".join(sql.split()), params))
         return filas
     monkeypatch.setattr(ad, "query", q)
-    assert ad._totales_af("m1", NOW) == filas
+    as_of = NOW - timedelta(hours=1)
+    assert ad._totales_af("m1", as_of, NOW) == filas
     sql, params = llamadas[0]
     assert "FROM af_odds_snapshots" in sql and "market = 'totals'" in sql
     assert "provider_updated_at = %s" in sql
-    assert params == ("m1", NOW)
+    # Misma regla que `picks._af_snapshot`: solo lo que ya TENÍAMOS en `now`.
+    assert "fetched_at <= %s" in sql
+    assert params == ("m1", as_of, NOW)
+
+
+def test_fuente_desconocida_no_consulta_ningun_total(monkeypatch):
+    # Solo hay dos fuentes conocidas: cualquier otra no mezcla totales de nadie.
+    def ninguna(*a, **k):
+        raise AssertionError("una fuente desconocida no consulta totales")
+
+    snap = pk.Snapshot("otra_fuente", NOW - timedelta(hours=1), _snap((1.18, 7.5, 15.0)).books)
+    inserts = _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}], snap)
+    monkeypatch.setattr(ad, "_totales", ninguna)
+    monkeypatch.setattr(ad, "_totales_af", ninguna)
+    monkeypatch.setattr(ad.ap, "MERCADOS_GOLES_HABILITADOS", GOLES)
+    out = ad.select_and_persist(NOW, dry_run=True)
+    assert inserts == []
+    d = out["decisiones"][0]
+    assert (d["market"], d["odds_source"]) == ("h2h", "otra_fuente")
 
 
 def test_dry_run_no_guarda(monkeypatch):

@@ -84,12 +84,17 @@ def _totales(match_id: str, as_of: datetime) -> list[dict]:
         (match_id, as_of))
 
 
-def _totales_af(match_id: str, as_of: datetime) -> list[dict]:
-    """Totales de la MISMA respuesta de API-Football que el 1X2 (misma marca `update`)."""
+def _totales_af(match_id: str, as_of: datetime, now: datetime) -> list[dict]:
+    """
+    Totales de la MISMA respuesta de API-Football que el 1X2 (misma marca
+    `update`), y solo los que ya TENÍAMOS en `now` (`fetched_at`): la misma regla
+    que `picks._af_snapshot`.
+    """
     return query(
         """SELECT bookmaker, selection, line, price FROM af_odds_snapshots
-           WHERE match_id = %s AND market = 'totals' AND provider_updated_at = %s""",
-        (match_id, as_of))
+           WHERE match_id = %s AND market = 'totals' AND provider_updated_at = %s
+             AND fetched_at <= %s""",
+        (match_id, as_of, now))
 
 
 def _liquidados(desde: str | None = "control") -> list[dict]:
@@ -226,8 +231,13 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         if snap is None:
             out["sin_precio"] += 1
             continue
-        totales = (_totales(m["match_id"], snap.as_of) if snap.source == "the_odds_api"
-                   else _totales_af(m["match_id"], snap.as_of))
+        # Solo dos fuentes conocidas; cualquier otra no mezcla totales de nadie.
+        if snap.source == "the_odds_api":
+            totales = _totales(m["match_id"], snap.as_of)
+        elif snap.source == "api_football":
+            totales = _totales_af(m["match_id"], snap.as_of, now)
+        else:
+            totales = []
         res = decidir(snap, totales, rho, habilitados, excluir)
         if res is None:
             out["sin_candidato"] += 1
