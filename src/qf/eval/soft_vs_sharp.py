@@ -288,11 +288,13 @@ def select_best_of(quotes: pd.DataFrame, books: list[str],
 # --------------------------------------------------------------------------
 
 def _weekly_ci(values: np.ndarray, weeks: np.ndarray,
-               iterations: int = 1000) -> list[float] | None:
+               iterations: int = 1000, level: float = 0.95) -> list[float] | None:
     """
-    IC95 de la media remuestreando SEMANAS enteras. Las apuestas de una misma
-    jornada comparten noticias y movimientos de mercado: tratarlas como
-    independientes estrecharía el intervalo sin motivo.
+    IC de la media (95 % por defecto; `level` lo cambia) remuestreando SEMANAS
+    enteras. Las apuestas de una misma jornada comparten noticias y
+    movimientos de mercado: tratarlas como independientes estrecharía el
+    intervalo sin motivo. Con el valor por defecto el resultado es idéntico al
+    de siempre: la puerta de valor no cambia.
     """
     groups = list(pd.Series(values).groupby(weeks).indices.values())
     if len(groups) < MIN_WEEKS:
@@ -303,7 +305,9 @@ def _weekly_ci(values: np.ndarray, weeks: np.ndarray,
         draw = rng.integers(0, len(groups), size=len(groups))
         idx = np.concatenate([groups[i] for i in draw])
         est.append(float(values[idx].mean()))
-    lo, hi = np.percentile(est, [2.5, 97.5])
+    # El redondeo quita el ruido de coma flotante ((1 − 0,95)/2·100 da
+    # 2,5000000000000022): con level=0,95 los percentiles son exactamente 2,5 y 97,5.
+    lo, hi = np.percentile(est, [round(50 * (1 - level), 6), round(50 * (1 + level), 6)])
     return [round(float(lo), 3), round(float(hi), 3)]
 
 

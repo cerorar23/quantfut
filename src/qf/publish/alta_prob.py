@@ -56,6 +56,24 @@ MERCADOS_GOLES_HABILITADOS: tuple[tuple[str, float], ...] = (
     ("over", 1.5), ("under", 3.5), ("under", 4.5))
 # Liquidados mínimos antes de que el control pueda pausar la línea.
 MIN_N_CONTROL = 50
+# Semanas distintas mínimas antes de que el IC pueda pausar, y nivel del IC.
+# Medido (Monte Carlo del 2026-10-06: 300 líneas de 26 semanas, ~50
+# pronósticos por semana, mezcla 70 % doble oportunidad / 20 % 1X2 / 10 %
+# goles, evaluadas cada semana): con una línea PERFECTAMENTE calibrada, el
+# control anterior (IC95 desde 8 semanas) pausaba algo en el 27 % de las líneas
+# (la línea entera en el 10,7 %), casi todo al llegar a las 8-9 semanas: un IC
+# que remuestrea pocas semanas queda corto y hay cuatro contrastes (todo + 3
+# mercados) repetidos cada semana. Con IC99, 10 semanas y la red z: 9,7 % y
+# 3,0 %; y un déficit real de 3 puntos se detecta en el 88 % (81,7 %) de las
+# líneas en 26 semanas, con mediana en la semana 11 (12). Decisión del usuario.
+MIN_SEMANAS_CONTROL = 10
+NIVEL_IC_CONTROL = 0.99
+# Red temprana para fallos groseros, sin esperar a las semanas del IC:
+# z = Σ(acertado − prob) / sqrt(Σ prob·(1 − prob)). Con n ≥ MIN_N_CONTROL, un
+# z ≤ −4 es un acierto que una línea calibrada casi nunca da (en el mismo Monte
+# Carlo, 2 de 300 líneas sanas en 26 semanas: el binomial tiene la cola
+# izquierda más gorda que la normal y se mira cada semana).
+Z_GROSERO = -4.0
 # Desempate exacto entre candidatos de la misma probabilidad.
 _PRIORIDAD = {"h2h": 0, "totals": 1, "double_chance": 2}
 _SEL = ("home", "draw", "away")
@@ -146,12 +164,20 @@ def _marco(liquidados: list[dict]) -> pd.DataFrame:
     return f
 
 
+def _z(g: pd.DataFrame) -> float:
+    """Acertado frente a prometido, en desviaciones típicas de un acierto calibrado."""
+    var = float((g["prob"] * (1.0 - g["prob"])).sum())
+    return float(g["diff"].sum()) / var ** 0.5 if var > 0 else 0.0
+
+
 def control(liquidados: list[dict], min_n: int = MIN_N_CONTROL) -> dict:
     """
-    ¿Promete de más? En conjunto ("todo") y por mercado: con n ≥ min_n y el
-    IC95 de (acertado − prob) entero bajo cero, se bloquea. El IC remuestrea
-    semanas enteras, como la puerta de valor; sin MIN_WEEKS semanas no hay IC
-    y no se bloquea (se informa).
+    ¿Promete de más? En conjunto ("todo") y por mercado, con n ≥ min_n:
+      1. z ≤ Z_GROSERO (fallo grosero) bloquea ya, aunque haya pocas semanas.
+      2. Con ≥ MIN_SEMANAS_CONTROL semanas distintas, si el límite superior del
+         IC99 de (acertado − prob) es < 0, se bloquea. El IC remuestrea semanas
+         enteras, como la puerta de valor.
+    Con menos semanas y sin fallo grosero no se bloquea: se informa.
     """
     if not liquidados:
         return {"bloqueados": [], "motivos": ["Sin pronósticos liquidados todavía"]}
@@ -161,14 +187,25 @@ def control(liquidados: list[dict], min_n: int = MIN_N_CONTROL) -> dict:
         if len(g) < min_n:
             motivos.append(f"{nombre}: muestra insuficiente ({len(g)} < {min_n})")
             continue
-        ic = _weekly_ci(g["diff"].to_numpy(float), g["week"].to_numpy())
+        z = _z(g)
+        if z <= Z_GROSERO:
+            bloqueados.append(str(nombre))
+            motivos.append(f"{nombre}: fallo grosero, acierto real muy por debajo del "
+                           f"prometido (z {z:.1f} ≤ {Z_GROSERO:.0f}, {len(g)} pronósticos)")
+            continue
+        if g["week"].nunique() < MIN_SEMANAS_CONTROL:
+            motivos.append(f"{nombre}: muestra insuficiente "
+                           f"(menos de {MIN_SEMANAS_CONTROL} semanas)")
+            continue
+        ic = _weekly_ci(g["diff"].to_numpy(float), g["week"].to_numpy(),
+                        level=NIVEL_IC_CONTROL)
         if ic is None:
             motivos.append(f"{nombre}: muestra insuficiente (menos de {MIN_WEEKS} semanas)")
             continue
         if ic[1] < 0:
             bloqueados.append(str(nombre))
             motivos.append(f"{nombre}: acierto real por debajo del prometido "
-                           f"(IC95 {ic[0] * 100:+.1f} a {ic[1] * 100:+.1f} puntos)")
+                           f"(IC99 {ic[0] * 100:+.1f} a {ic[1] * 100:+.1f} puntos)")
     return {"bloqueados": bloqueados, "motivos": motivos}
 
 
