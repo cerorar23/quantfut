@@ -25,4 +25,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS af_odds_snapshots_uq_linea
 ALTER TABLE af_odds_snapshots
     DROP CONSTRAINT IF EXISTS af_odds_snapshots_match_id_bookmaker_market_selection_provi_key;
 
+-- Guardia: el DROP de arriba va por nombre. Si el nombre autogenerado por
+-- PostgreSQL no coincidiera, el UNIQUE viejo (sin línea) seguiría vivo, la
+-- migración pasaría en silencio y el primer INSERT con dos líneas del mismo
+-- lado tumbaría toda la pasada de af_odds (también el 1X2). Por eso se exige
+-- que no quede NINGUNA restricción UNIQUE en la tabla; el índice nuevo es un
+-- índice, no una restricción (contype = 'u'), así que no dispara la guardia.
+-- Si salta, el COMMIT no llega y la migración entera se revierte.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint
+             WHERE conrelid = 'af_odds_snapshots'::regclass AND contype = 'u') THEN
+    RAISE EXCEPTION 'af_odds_snapshots conserva un UNIQUE sin line: revisar db/041';
+  END IF;
+END $$;
+
 COMMIT;
