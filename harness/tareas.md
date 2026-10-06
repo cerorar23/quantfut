@@ -11,7 +11,105 @@ borran, pero no se desarrollan más). Prioridad actual: la API que sirve
 predicciones a la web. Auth de suscriptor no-Telegram y cobros son "después",
 no ahora.
 
+**Ampliación NBA (2026-10-03, indicación nueva del usuario):** las señales NBA
+se prevén por notificación inmediata de Telegram. Esta excepción corresponde
+al diseño de NBA; no activa publicación de fútbol ni reutiliza el canal
+operativo como canal de clientes.
+
 ## Pendientes 🔴
+
+## NBA 2026-27 — investigación y experimentos (2026-10-03)
+
+- [x] Revisar arquitectura y contrastar literatura académica, doctorados,
+      maestrías y el texto aportado. Plan integrado con fuentes, modelos,
+      datos, presupuesto y 27 experimentos propuestos E0–E26:
+      `docs/nba_2026_27_investigacion_y_plan.md`.
+- [x] Contrastar el segundo texto y ampliar el plan con calibración,
+      incertidumbre, SBC, conformal online/control de riesgo y Kelly robusto.
+      Separar cobertura predictiva, acierto, retorno y ejecución. E21–E26
+      son diseños pendientes de ejecución, no estrategias validadas.
+- [x] Documentar aislamiento recomendado a petición del usuario:
+      `docs/nba_arquitectura_aislada.md`. Aplicación/dependencias/despliegue,
+      Postgres/Redis, credenciales, presupuestos y Telegram NBA propios;
+      sin imports entre deportes ni refactor inicial de fútbol.
+- [x] Revisar crítica operativa de props/Telegram/noticias y acotar MVP:
+      `docs/nba_mvp_ejecucion_y_capacidad.md`. Rangos de límites/reacción no
+      corroborados se tratan como hipótesis; 27 experimentos siguen como backlog.
+- [x] Consolidar plan maestro por fases F0–F9 y registro estructurado:
+      `docs/nba_plan_fases_auditable.md` y
+      `docs/nba_plan_fases_auditoria.json`. Plan documentado; ninguna fase
+      de implementación ni puerta G0–G9 se considera aprobada por escribirlo.
+- [x] Revisar viabilidad antes del inicio (4-oct): quedan 16 días al 20-oct.
+      Aplicación NBA inexistente y cero ejecuciones registradas. Objetivo
+      condicionado: MVP estadístico acotado; priorizar histórico deportivo
+      reciente y datos actuales. Sin prometer históricos completos, modelo
+      avanzado ni validación comercial para la fecha de apertura.
+- [x] Incorporar pretemporada al arranque y revisar preparación del plan:
+      `docs/nba_pretemporada_arranque.md`. Captura actual, históricos recientes,
+      separación de regímenes y métricas; pruebas no sustituyen F7 regular.
+      Plan preparado para iniciar trabajo local; implementación pendiente.
+- [x] Contrastar texto adicional sobre CLV, sharp/soft, lesiones y QNN:
+      `docs/nba_revision_critica_clv_fuentes.md`. CLV complementario con cierre
+      comparable; liderazgo por mercado/latencia observada; minutos separados
+      de USG%. Sin garantizar ventaja de props o modelos cuánticos.
+- [x] Integrar correcciones en plan maestro NBA 1.1 y registro: CLV complementario, cierre comparable, latencia/linaje, USG y pretemporada. Versiones previas preservadas; fases de implementacion pendientes.
+- [ ] **F0 / G0:** alcance, decisiones y protocolo preregistrado. Presupuesto,
+      operadores/proveedor y canal de pruebas pendientes de definición.
+- [ ] **F1 / G1:** aplicación `apps/nba/`, dependencias/despliegue, Postgres/
+      Redis, configuración y recuperación propios. Aplicación/entorno/config
+      locales implementados; Postgres/Redis y recuperación aún pendientes.
+      Arnés resuelto y verificado; no importar `qf`.
+- [ ] **F2 / G2:** cobertura E0, identidad, contratos/reglas, gasto y familia
+      prepartido inicial elegida por datos. Puede avanzar con F1 después de F0.
+- [ ] **F3 / G3:** ingesta versionada, raw, cuarentena, reconciliación y PIT.
+      E18 continúa en todas las fases; referencias/hash y anclaje de evidencia.
+- [ ] **F4 / G4:** baselines y distribución de minutos E1, priors encogidos,
+      roles/carga y coherencia deportiva; no usar minutos reales como feature.
+- [ ] **F5 / G5:** tasa/distribución de estadística, E8 básico, E21 cuando
+      proceda y E22/E23 básicos. Candidato y criterios congelados antes del test.
+- [ ] **F6 / G6:** Telegram de pruebas, sellado/outbox, caducidad, revalidación,
+      disponibilidad E5/E17 y resiliencia E19. Resolución y demoras explícitas.
+- [ ] **F7 / G7:** confirmación prospectiva E26 y revisión de promoción propia.
+      300 partidos/60 días/3 bloques son piso propuesto, no prueba suficiente
+      de ROI. Separar métricas deportivas, simulación y datos informados.
+- [ ] **F8 / G8:** challengers de lesiones/rol/oportunidades E2/E3/E7/E8/
+      E9/E13. Núcleo F6 y datos suficientes; cada candidato nuevo vuelve a F7.
+- [ ] **F9 / G9:** operación evaluada, capacidad/utilidad del producto y
+      extensiones a periodos/live/modelos avanzados con validación específica.
+      No heredar puertas de fútbol ni operar apuestas/cuentas de clientes.
+
+- [x] **Primer incremento NBA autorizado (4-oct):** entorno independiente,
+      fuentes gratuitas, box scores auditados, baseline de minutos/rebotes,
+      replay temporal y ledger local. 22 pruebas NBA y 606 de fútbol correctas.
+      `docs/nba_arranque_resultados.md`; no aprueba G0–G9 ni activa Telegram.
+- [x] **Buscar y descargar repositorios GitHub NBA:** shufinskiy PBP/tiros
+      (30 temporadas disponibles, 124 archivos) y hoopR box scores/calendario
+      (66 archivos) como complemento a llimllib. Inventario/cobertura en
+      `docs/nba_fuentes_github.md`; ausencia de huecos requiere auditoría propia.
+- [x] **Auditar fuentes para huecos NBA (5-oct):** 30 Parquet individuales
+      SportsDataverse (1996-97 a 2025-26), lesiones con snapshots y muestras
+      de props descargados con hashes. Resultados y límites en
+      `docs/nba_fuentes_github_huecos_20261005.md`; candidatos no integrados.
+- [x] **Integrar históricos NBA (5-oct):** importador SportsDataverse
+      2021-22 a 2025-26, fechas/IDs/tipos conciliados, 154.058 registros en
+      snapshot propio; minutos dudosos en cuarentena. Replay congelado y
+      referencia anterior preservados. `docs/nba_avance_fases_20261005.md`.
+- [x] **Captura experimental actual (5-oct):** 30 plantillas ESPN 2026-27,
+      606 jugadores, recepción UTC/namespace propios. Lesiones incluidas
+      conservadas raw, con auditoría de fechas; no disponibilidad verificada.
+- [x] **Experimento de arranque (5-oct):** priors del año anterior para
+      primeras diez apariciones observadas, protocolo separado, 8.264 casos
+      históricos y escenario 2026-27; abstiene sin prior suficiente. Resultado
+      exploratorio, condicional a participación, sin promoción ni publicación.
+- [ ] Verificar correspondencias ESPN/NBA y disponibilidad actual; incorporar
+      rol/rotación, calibración/abstención y coherencia conjunta de minutos al
+      arranque. Rookies y ausencia de datos no se convierten en ceros.
+- [ ] Validar lesiones históricas contra PDFs, IDs y corte temporal; muestras
+      de props siguen sin contratos/PIT suficientes para ROI o CLV.
+- [ ] Recuperar registros en cuarentena contrastando otra fuente; unir IDs
+      ESPN→NBA con evidencia y cubrir 2023-24 individual incompleto.
+- [ ] Captura gratuita actual con rosters, calendario y disponibilidad PIT;
+      contratos/cuotas y destino NBA privado de pruebas siguen pendientes.
 
 ## Histórico FotMob (2026-10-03, alcance del usuario)
 
@@ -252,6 +350,31 @@ Cruzadas con lo ya medido (2.D, 2.E): solo entra lo que no se ha probado.
       irregular en Argentina/Liga MX. Usarlo exige revertir la regla del
       README y CLAUDE.md: DECISIÓN DEL USUARIO pendiente.
 
+## Línea de alta probabilidad (2026-10-05, decisión del usuario)
+
+Diseño aprobado: `docs/superpowers/specs/2026-10-05-linea-alta-probabilidad-design.md`.
+Pronósticos ≥ 80 % de probabilidad real (Pinnacle sin margen), aparte de los
+picks de valor y sin tocar su puerta. Es una línea de acierto, no de valor.
+
+- [x] Paso previo: sincronizar servidor con HEAD (lista de cambios al usuario
+      antes de reconstruir).
+- [x] Prueba histórica de goles (`eval/alta_prob_calibracion.py`) y fijar
+      `MERCADOS_GOLES_HABILITADOS`.
+- [x] `db/040`, `publish/alta_prob.py`, sellado en `hashchain`, liquidación.
+- [x] `GET /alta-probabilidad`, sección web y estado en `/control`.
+- [x] Despliegue con `ALTA_PROB_ENABLED=0` (2026-10-06 18:12 UTC): db/040 aplicada y
+      verificada (bordes, UNIQUE, inmutabilidad), ensayo de SQL, verify 8 lotes.
+- [ ] Tras el sellado del 7-oct (08:00 UTC): verify y recibo con `n_alta_prob: 0`;
+      luego activar `ALTA_PROB_ENABLED=1` con visto bueno del usuario.
+- [x] Más goles (2026-10-06): `af_odds` guarda las líneas de goles de la misma
+      petición (db/041) y la línea las lee de la misma respuesta. Desplegado
+      19:58 UTC; vista previa 9 de 15 partidos (7 de goles, antes 0).
+- [ ] Vigilar a las 24 h: filas/día de `af_odds_snapshots` y duración de la
+      pasada (hoy 15 s, ~40 filas por partido). Chequeo de frescura de
+      `af_odds` en `health.py` (hoy un fallo de escritura solo queda en el log).
+- [ ] Antes de configurar `CHAIN_GIT_REMOTE`: el lote lleva `prob` exacta y el
+      ajuste de goles (anula el redondeo público). Decidir.
+
 ## Más picks sin relajar la puerta comercial (2026-09-25)
 
 Orden experimental solicitado; ningún resultado cambia `publish/picks.py`,
@@ -290,6 +413,10 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       humana independiente del token de API y sin credenciales predeterminadas.
 - [x] Restringir `/admin` y el panel también en Caddy por IP, como Grafana.
 - [x] Probar el aislamiento de rutas y actualizar despliegue/documentación.
+- [x] (2026-10-05, pedido del usuario) Tabla en `/control` con los picks que
+      se habrían publicado en la sombra sharp (`shadow_sharp.publishable_list`).
+- [x] (2026-10-05, pedido del usuario) Probabilidad real de cada pick en la
+      web (`fair_prob`, Pinnacle sin margen) y acierto esperado de la lista.
 - [ ] Fase comercial posterior: cuentas, sesiones, suscripciones y cobros
       dentro de este mismo backend, solo tras superar la puerta de CLV.
 
@@ -1361,3 +1488,127 @@ en `src/`, `scripts/` o `db/`; `xg_fbref.py` era el módulo retirado a
 propósito el 2026-09-24. Lo único sin copia, `quantfut.tar.gz` (la versión
 inicial del proyecto, sin secretos), se conserva en
 `harness/archivo/quantfut_version_inicial.tar.gz` porque no hay git.
+
+### Continuación NBA autorizada 2026-10-05
+- [x] F2: cruce conservador ESPN→NBA: 596/606 identidades y equipos comprobados, diez conflictos separados; capturas públicas con hash.
+- [x] F3/F4: calendario y validador de disponibilidad por partido/PIT; 436 escenarios condicionales y proyección acotada de minutos implementados. Disponibilidad y rol reales siguen pendientes.
+- [x] F5: diagnóstico discreto del replay comprobado, sin ajustar ni promover parámetros.
+- [x] F6: contrato/revalidación de cuotas y outbox NBA; prueba local y rechazo de picks insuficientes. Enlace explícito al bot y chat de alertas de fútbol elegido por el usuario.
+- [x] Evidencia NBA-EV-035–050, ejecuciones NBA-RUN-011–015, código congelado; 79 NBA/606 fútbol aprobadas, puertas pendientes.
+- [ ] Configuración activa del bot/chat de fútbol disponible en el entorno/ruta autorizados; ejecutar prueba técnica real y medir entrega.
+- [ ] Disponibilidad por partido y rol/minutos validados; diez identidades no resueltas y rookies sin historial conservan abstención.
+- [ ] Fuente de props, contratos y frescura utilizables; supervivencia de precio, límites compartidos del bot y confirmación prospectiva antes de promover/publicar.
+
+### Scrapers y datos adicionales NBA — 2026-10-05
+- [x] Inventariar repos públicos, fijar commits y revisar código/datos reales sin ejecutar proyectos de terceros: diez repos y 52 archivos verificados.
+- [x] Auditar horarios históricos y muestras de reportes de lesiones: calendarios sin horas; PDF actual 403. No se acredita PIT histórico.
+- [x] Integrar observaciones con namespace/captura explícitos y auditoría: alineaciones previstas RotoWire y piloto de quintetos PBP Stats; ninguna promoción médica o comercial.
+- [x] Ejecutar pruebas relevantes, conservar evidencia y actualizar registro de fases: 100 NBA y 606 fútbol pasan.
+- [ ] Ampliar quintetos en lotes auditados y obtener sustituciones cronológicas del PBP; validar reloj/IDs de alineaciones y publicación médica por partido antes de usar contexto en pronósticos.
+
+### NBA — The Odds API existente, revisión 2026-10-05
+
+- [x] Comprobar con la clave existente deportes NBA/pretemporada, eventos y muestra real de cuotas; cuatro créditos usados, sin guardar clave o activar polling.
+- [x] Documentar mercados, latencia efectiva, acceso histórico todavía no probado y presupuesto compartido con fútbol.
+- [ ] Implementar cliente NBA persistente con reserva coordinada de créditos y evaluación específica de props alternativos; verificar reglas, reloj e identidades antes de promover contratos.
+- [x] Verificar acceso histórico tras confirmar el usuario su plan de pago: muestra NBA `player_rebounds`, 242 cuotas, ocho casas; once créditos. Conservar discrepancias del reloj de snapshot.
+
+### NBA — austin-pesina/nba_scrapes, 2026-10-05
+
+- [x] Descargar rama principal completa con commit y hashes: seis archivos, 15,023 bytes.
+- [x] Comprobar datasets/releases/Actions: cero archivos de datos, cero releases y cero artefactos disponibles; no ejecutar los scripts o conectar Snowflake.
+- [x] Documentar cobertura real: herramientas Basketball Reference 2025–26, sin cuotas o lesiones; cero filas importadas y cero créditos The Odds API.
+- [x] Sellar descarga y revisión en NBA-RUN-021 y registro de evidencias; integridad de archivos comprobada.
+
+### NBA — EdgarParra565/player-performance-forecaster, 2026-10-05
+
+- [x] Inventariar 365 archivos del commit y descargar 14 referencias verificadas; CSV vacío, base no publicada en main.
+- [x] Revisar descarga masiva nba_api y límites de temporada/caché/PIT; separar cuotas reales de backfill con precios supuestos.
+- [x] Registrar NBA-RUN-022, informe y documento; 80 evidencias verificadas, 33 archivos propios sin cambios, puertas pendientes.
+- [ ] Completar huecos estadísticos con consultas por temporada y competición, sin importar el proyecto externo o sus precios supuestos.
+- [x] Auditar ahorro/cobertura: 320 partidos regulares pendientes en cinco temporadas; prueba oficial gratuita terminó en ReadTimeout, cero filas o créditos nuevos.
+- [x] Documentar uso de fuentes gratuitas y presupuesto separado para precios reales; sin activar descarga masiva de cuotas.
+
+### NBA — recuperación gratuita de históricos, autorizada 2026-10-05
+
+- [x] Crear lista exacta de pendientes por ID/temporada y diagnóstico reproducible: 395 partidos conocidos pendientes, incluidos 320 regulares; 299 regulares contienen minutos inválidos en la fuente.
+- [x] Implementar captura NBA acotada y reanudable de boxscores/rotaciones; guardar originales, hashes y errores, detener lote ante acceso fallido.
+- [x] Probar boxscores y GameRotation en muestra real: API oficial ReadTimeout y CDN 403; cero partidos o stints importados. Validadores conservan las restricciones existentes.
+- [x] Probar lesiones históricas: tres PDF oficiales, ocho páginas verificadas, 84 observaciones de 30 jugadores; usar hora de cabecera, no nombre del archivo. Identidades y disponibilidad original siguen sin acreditar.
+- [x] Validar con 136 pruebas NBA y 609 de harness; congelar 37 archivos propios y registrar NBA-RUN-024–026, 100 evidencias verificadas y 60 eventos de ledger; puertas pendientes.
+- [ ] Recuperar físicamente los 395 pendientes con una fuente accesible y validar cada partido antes de importar; certificar calendarios de playoffs anteriores.
+- [ ] Obtener rotaciones reales y conciliar tiempos, quintetos y minutos; los validadores probados con fixtures no acreditan cobertura real.
+- [ ] Resolver IDs y horarios oficiales de las lesiones; ampliar archivo histórico y capturar disponibilidad prospectiva antes de habilitar señales médicas en picks.
+
+### NBA — contraste de alternativas propuesto por el usuario, 2026-10-05
+
+- [x] Fijar siete repositorios y comprobar interfaz, fuentes, actualización real y límites; no ejecutar proyectos externos.
+- [x] Descargar archivo de transacciones JaseZiv y release ESPN 2025–26, comprobar hashes y cobertura. Mantener separados del dataset principal.
+- [x] Probar fuente independiente Basketball Reference y conciliar un partido pendiente: 20 participantes, 240 minutos por equipo y estadísticas concordantes, sin errores del validador.
+- [x] Documentar candidatos ESPN para 88 pendientes recientes, ausencia de pretemporada y límites de precisión/IDs/PIT; sin cuotas de apuestas o créditos The Odds API.
+- [x] Formalizar adaptador Basketball Reference y cruce de IDs con caché/validación: ampliación de 159 partidos y 3,317 filas a versión nueva, linaje conservado; recuperación completa sigue pendiente.
+- [ ] Recuperar pretemporada por separado; no equiparar tipo de temporada ESPN a prefijos NBA sin contraste del calendario.
+
+### NBA — ampliación Basketball Reference autorizada 2026-10-05
+
+- [x] Formalizar parser diario y cruce por fecha/localía/equipos/identidad: nombres exactos con acentos y variantes únicas de sufijos/puntos; sin apodos, generaciones contradictorias o candidatos múltiples. No reparar minutos o inferir DNP.
+- [x] Capturar con caché, lotes de hasta 20 y seis segundos entre solicitudes: 140 páginas válidas, parada y respuesta conservada ante 403 del 2024-03-11; fechas posteriores no solicitadas.
+- [x] Probar identidad/estadística/reloj/caché/integridad: 172 NBA y 609 harness aprobadas. Nueva versión con 159 partidos/3,317 filas; código propio congelado en 39 archivos.
+- [x] Verificar todos los nuevos valores contra páginas raw y volver a conciliar los 159 partidos; 597 identidades consistentes, 154,058 filas previas conservadas; dataset ampliado 157,375 filas, modelo/fútbol/puertas preservados.
+- [ ] Corroborar los nueve casos recibidos separados (siete diferencias de REB/AST, una referencia parcial y un estado desconocido) sin forzar aceptación.
+- [ ] Recuperar los 152 regulares sin página válida tras el 403 y pendientes de otras competiciones: total restante 161 regulares, 71 pretemporada, tres playoffs y un play-in.
+
+### NBA — Black Falcon / Apify, autorizado 2026-10-05
+
+- [x] Preparar piloto de diez pendientes con IDs ESPN candidatos y referencias NBA; seis regulares, dos playoffs, un play-in y uno de pretemporada.
+- [x] Ejecutar desde la sesión Apify existente: 282 filas descargadas, US$0.142 mostrado, máximo US$0.25; entrada/log/recibo/screenshot/JSON íntegro y hashes conservados, cero créditos The Odds API.
+- [x] Validar identidad, estadística, DNP y precisión temporal: 247 candidatos NBA, cero diferencias P/R/A entre participantes; 53 diferencias null/cero DNP preservadas. Enteros de minutos no importados, pretemporada sin localía/IDs corroborados; dataset aceptado preservado.
+- [ ] Recuperar segundos de minutos y referencias faltantes mediante fuente adecuada: Black Falcon repite los nueve partidos del ESPN previo; no ampliar ese flujo para solucionar precisión que no ofrece.
+
+### NBA — servicios auxiliares para completar datos, autorizado 2026-10-05
+
+- [x] Verificar cobertura real y precisión de servicios Apify; promedios de temporada/minutos enteros descartados; Flashscore decimal condicionado a concordancia individual y calendario NBA contrastado.
+- [x] Ejecutar tres capturas Flashscore y dos de calendario NBA con límites: 6,631 registros Flashscore y 100 de calendario; US$2.064 mostrado, cero créditos Odds API; originales/entradas/logs/recibos conservados.
+- [x] Ampliar fuentes útiles y conciliar íntegramente: 67 partidos/1,713 filas agregados, 157,375 filas previas conservadas; 6,052/6,150 regulares, 98 regulares y 71 pretemporada aún pendientes.
+- [ ] Resolver identidades y discrepancias de los 169 boxscores restantes; 62 candidatos de pretemporada y calendario de sus 71 IDs ya capturados. No repetir descarga masiva para corregir problemas de conciliación.
+
+### NBA — continuación de pendientes autorizada 2026-10-05
+
+- [x] Auditar los169 candidatos:166 resúmenes ESPN;16 partidos/515 filas adicionales (3regular,13pretemporada),159603 filas finales. Mantener separados95regular y58pretemporada pendientes; no forzar IDs ni discrepancias.
+- [x] Ampliar reportes médicos:486PDFs/36300 registros nominales; timestamp de cabecera y recibo actual;43675 filas enlazadas a partido,36063 a jugador. Segundo motor verifica todos; HTTP403 conservado y descarga detenida.
+- [x] Recuperar rotaciones cronológicas:5161partidos/217334tramos; cinco jugadores, períodos/prórrogas, continuidad y minutos con cuantización por intervalo continuo del jugador;891partidos separados.
+- [x] Ampliar props históricos acotados:20partidos/40snapshots de rebotes/2961pares válidos,420créditos de límite500; originales/temporalidad/cortes preservados, sin picks ni ROI.
+- [x] Verificar datasets y preservación:19controles,6replaysPBP,40replayscuotas,486PDFs con segundo motor;609pruebas antes/después,39archivos NBA congelados y152evidencias previas verificados; NBA-RUN-033.
+- [ ] Completar95regular/58pretemporada,330fechas médicas/cortes intradía y13nombres sin ID,891rotaciones separadas; ampliar puntos/asistencias/temporadas de props tras definir próximo presupuesto y reglas de liquidación. Informe:docs/nba_pendientes_recuperacion_20261005.md.
+
+### NBA — fuentes Apify adicionales, autorizado 2026-10-06
+
+- [x] Verificar cobertura y saldo; seis capturas de dos actores, US$2.341 del crédito gratuito. PBP sin acreditación de quintetos; cuotas sin timestamp original. Sin suscripciones/recargas ni créditos Odds API.
+- [x] Conservar JSON completos, entradas, recibos, IDs y hashes; agregar Clippers–Nuggets 0012500052, 40 filas/30 participantes y diez DNP explícitos. Segundos exactos por equipo y PRA corroborados; 13 etiquetas de equipo contradictorias conservadas sin uso.
+- [x] Sellar NBA-RUN-034: 159643 filas, 95 regulares/57 pretemporada pendientes; 71 calendarios/68 cruces exactos, 385 precios sin tiempo y 19 lesiones no históricas excluidos. 181 evidencias verificadas, 39 archivos NBA intactos, 609 pruebas antes/después. Informe: docs/nba_apify_fuentes_adicionales_20261006.md.
+- [ ] Ampliar boxscores después de definir saldo/límite: diez partidos de 30 filas cuestan aproximadamente US$5 al precio observado, tope propuesto US$6; saldo disponible aproximado US$0.45. Resolver identidades y conflictos antes de importar. Props con timestamps, lesiones archivadas y rotaciones siguen requiriendo fuentes adecuadas.
+
+### NBA — recuperación API-NBA autorizada 2026-10-06
+
+- [x] Configurar la clave local excluida de Git; comprobar autenticación, plan y cuota sin conservar datos personales o secretos en evidencias. Plan NBA real Free; estado final declara70/100usadas.
+- [x] Descubrir temporadas y calendario del proveedor; cruzar sus IDs con los 95 regulares y 57 de pretemporada pendientes. 72cruces únicos;80pendientes2025-26rechazados por plan. Sin contratación o exceso del límite local95.
+- [x] Recuperar candidatos mediante consultas acotadas/reanudables; conservar originales, fechas y hashes.72boxscores/1543filas con minutos enteros;0partidos nuevos aceptados.159643filas previas preservadas. No inventar segundos ni resolver discrepancias por votación de fuentes.
+- [x] Verificar el lote, documentar recuperación y bloqueos reales, ejecutar harness posterior y registrar evidencia NBA aislada sin modificar el modelo, fútbol, puertas o publicación.693pruebas antes/después;10controles;194evidencias,81eventos deledger; NBA-RUN-035.
+- [ ] Obtener segundos individuales verificables y resolver discrepancias estadísticas/IDs para los72candidatos; acceso2025bloqueado para23regulares/57pretemporadas. Ampliar un plan no garantiza precisión ni recuperación; informe docs/nba_api_nba_recuperacion_20261006.md.
+
+### NBA — auditoría de lineups Ramiro / pbpstats autorizada 2026-10-06
+
+- [x] Fijar commit y descargar los CSV de lineups 2022–2026 con hashes y recibos; preservar boxscores y rotaciones aceptadas.
+- [x] Contrastar cobertura, identidades, localía, períodos, continuidad, quintetos y minutos contra boxscores y PBP locales; separar discrepancias por partido.
+- [x] Probar pbpstats sin consultas NBA automáticas; registrar formatos soportados y resultado real del contraste.
+- [x] Conservar resultados reproducibles, pruebas e informe; registrar el incremento únicamente si satisface los controles existentes.
+
+### NBA — ejecución de repositorios y scrapers históricos, autorizada 2026-10-06
+
+- [x] Revisar y fijar código de las fuentes propuestas; ejecutar componentes de adquisición o parseo aislados y conservar resultados por repositorio.
+- [x] Examinar el archivo corregido de pbpstats y contrastar PBP/quintetos de los partidos pendientes con las referencias existentes.
+- [x] Procesar boxscores y PDFs disponibles, descubrir archivos médicos históricos y probar acceso público acotado; conservar bloqueos y no forzar aceptación.
+- [x] Verificar preservación, cobertura incremental, pruebas e informe final; registrar lo ejecutado y las dependencias/accesos que impidan completar una fuente.
+
+- [x] Instalar Java portátil y toolkit/MCP ZenRows solicitado para Claude Code; handshake stdio/44 herramientas, cero llamadas de proveedor.
+- [ ] Completar95regulares/4pretemporadas,562rotaciones entre boxscores aceptados y330fechas médicas/13nombres; props y otros repos no ejecutados se detallan en docs/nba_github_scrapers_recuperacion_20261006.md.
