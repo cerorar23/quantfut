@@ -1,7 +1,8 @@
 # Línea de alta probabilidad — diseño
 
-Fecha: 2026-10-05 · Estado: aprobado por el usuario sección a sección, pendiente
-de revisión del documento.
+Fecha: 2026-10-05 · Estado: aprobado por el usuario sección a sección y como
+documento. Ajustes de implementación tras leer el código, al final
+("Ajustes al escribir el plan").
 
 ## Por qué
 
@@ -285,3 +286,31 @@ liquidado:
    (`hashchain verify`), la API y la web.
 5. Actualizar `README.md` (sección de la línea y su naturaleza: acierto, no
    valor), `harness/tareas.md` y `harness/progreso.md`.
+
+## Ajustes al escribir el plan (2026-10-05)
+
+Encontrados al revisar el código y los datos reales; no cambian el alcance:
+
+1. **Líneas de goles de Pinnacle.** En los últimos 30 días, de 53 partidos
+   con totales de Pinnacle solo 16 tuvieron una línea de medio gol; el resto
+   viene en cuarto o gol entero (2,75; 3; 3,25). Limitarse a 2,5/3,5 dejaba
+   fuera dos tercios. El ajuste usa la línea que haya (medio gol primero) con
+   el objetivo correcto para push total o parcial:
+   `p_justa = E[gana] / (1 − E[push])`, repartiendo las de cuarto entre sus
+   dos vecinas. En medio gol es exactamente P(over), así que lo existente no
+   cambia. Se implementa en `model/pricing.py` y lo usa
+   `market_anchor.market_lambdas`, que ya hacía este ajuste (no se duplica).
+   La prueba histórica solo puede validar la 2,5 (football-data no trae
+   otras); el control en vivo por mercado cubre el resto.
+2. **Nombres de mercado** `h2h` / `double_chance` / `totals`, los que ya
+   liquida `eval/clv._settle_outcome`, en lugar de `1x2` / `doble` / `goles`.
+3. **Dos módulos:** `publish/alta_prob.py` (reglas puras: candidatos,
+   elección, texto, control, historial) y `publish/alta_prob_datos.py`
+   (base de datos: elegir y guardar, liquidar, informe). `prob` es
+   `DOUBLE PRECISION` para que el CHECK [0,80; 0,95] no falle por redondeo
+   de `REAL`.
+4. **Sellado estricto.** Un pronóstico solo cuenta como sellado si existe el
+   lote de su fecha y `decided_at <= prediction_batches.created_at`. Si el
+   lote del día ya está sellado (job relanzado a mano), no se elige nada:
+   quedaría fuera del lote para siempre. `select_and_persist(dry_run=True)`
+   enseña lo que se elegiría sin guardar, para verificar antes de activar.
