@@ -243,9 +243,17 @@ def settle_pending(lookback_hours: int = 96) -> dict:
         log.warning("No se pudo liquidar la sombra del criterio sharp: %s", exc)
         sharp = {"settled": 0, "error": str(exc)}
 
+    try:
+        from ..publish.alta_prob_datos import settle_pending as settle_alta
+        alta = settle_alta()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("No se pudo liquidar la línea de alta probabilidad: %s", exc)
+        alta = {"settled": 0, "error": str(exc)}
+
     result = {"settled": settled,
               "avg_clv": round(float(np.mean(clvs)), 3) if clvs else None,
-              "n_with_clv": len(clvs), "shadow": shadow, "sharp_shadow": sharp}
+              "n_with_clv": len(clvs), "shadow": shadow, "sharp_shadow": sharp,
+              "alta_prob": alta}
     log.info("Liquidación: %s", result)
     return result
 

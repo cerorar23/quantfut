@@ -24,6 +24,7 @@ from ..config import settings
 from ..db import query, query_one
 from ..model.dixon_coles import DixonColes
 from ..model.devig import consensus_devig
+from . import alta_prob_datos
 from . import picks as pk
 from . import telegram as tg
 from .hashchain import seal
@@ -492,6 +493,31 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
     return out
 
 
+def _alta() -> dict:
+    """
+    Línea de alta probabilidad: se elige y guarda ANTES de sellar, para que el
+    lote del día la incluya. Nunca rompe el job: un fallo aquí no puede dejar
+    sin sellar las predicciones.
+    """
+    if not settings.alta_prob_enabled:
+        return {"elegidos": 0, "estado": "desactivada"}
+    try:
+        out = alta_prob_datos.select_and_persist()
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Fallo en la línea de alta probabilidad")
+        tg.alert(f"Fallo en la línea de alta probabilidad: {exc}")
+        return {"elegidos": 0, "error": str(exc)}
+    if out.get("estado") == "pausada" or any("por debajo" in m for m in out.get("motivos", [])):
+        tg.alert("ALTA PROBABILIDAD: " + "; ".join(out.get("motivos", [])))
+    return out
+
+
+def _alerta_sin_sellar(alta: dict, receipt: dict) -> None:
+    if not receipt and alta.get("elegidos"):
+        tg.alert(f"{alta['elegidos']} pronósticos de alta probabilidad SIN SELLAR: "
+                 "no se mostrarán nunca.")
+
+
 def run() -> dict:
     preds = generate_predictions()
     sharp_only = _sharp_only_upcoming()
@@ -514,7 +540,9 @@ def run() -> dict:
         # Se sella igual: las predicciones del día quedan probadas aunque no
         # se publique ningún pick. El interruptor por sí solo no abre la
         # puerta: también debe aprobar la muestra en sombra del criterio.
+        alta = _alta()
         receipt = seal()
+        _alerta_sin_sellar(alta, receipt)
         if not receipt:
             tg.alert("FALLO AL SELLAR LA CADENA (predicciones sin picks).")
         if settings.publish_picks_enabled:
@@ -524,6 +552,7 @@ def run() -> dict:
                   "picks_publishing": ("gate_blocked" if settings.publish_picks_enabled
                                        else "disabled"),
                   "gate_reasons": gate_reasons,
+                  "alta_prob": alta,
                   "sealed": bool(receipt),
                   "chain": receipt["chain_sha256"][:16] if receipt else None}
         log.info("Job diario sin picks: %s", result)
@@ -537,10 +566,13 @@ def run() -> dict:
     tiered = pk.assign_tiers(selected)
     pk.persist(tiered)
 
+    alta = _alta()
     receipt = seal()
+    _alerta_sin_sellar(alta, receipt)
     if not receipt:
         tg.alert("FALLO AL SELLAR LA CADENA. No se publicó nada hoy.")
-        return {"predictions": len(preds), "picks": len(selected), "sealed": False}
+        return {"predictions": len(preds), "picks": len(selected), "sealed": False,
+                "alta_prob": alta}
 
     # Telegram es opcional (best-effort): si no hay TG_BOT_TOKEN configurado,
     # _send() lo omite en silencio. La API (picks.tier, ya asignado arriba)
@@ -554,7 +586,8 @@ def run() -> dict:
     n_free = sum(1 for _, t in tiered if t == "free")
     result = {"predictions": len(preds),
               "picks": len(selected), "free": n_free, "paid": len(selected) - n_free,
-              "chain": receipt["chain_sha256"][:16], **published}
+              "chain": receipt["chain_sha256"][:16], "alta_prob": alta,
+              **published}
     log.info("Job diario: %s", result)
     return result
 

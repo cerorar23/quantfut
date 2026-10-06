@@ -58,6 +58,12 @@ def _prev_chain_hash() -> str:
 # dar el mismo hash que el día que se sellaron.
 LOTE_SIN_CONSENSO_DESDE = date(2026, 10, 3)
 
+# Desde esta fecha el lote lleva la línea de alta probabilidad
+# (publish/alta_prob.py). None = todavía no desplegada: los lotes no cambian.
+# Se fija a la fecha del despliegue en ese mismo commit; los lotes anteriores
+# se regeneran igual que se sellaron.
+LOTE_ALTA_PROB_DESDE: date | None = None
+
 
 def _collect(batch_date: date) -> dict:
     consenso = ("p.market_consensus,"
@@ -94,7 +100,16 @@ def _collect(batch_date: date) -> dict:
            ORDER BY published_at, pick_id""",
         (batch_date,),
     )
-    return {
+    con_alta = LOTE_ALTA_PROB_DESDE is not None and batch_date >= LOTE_ALTA_PROB_DESDE
+    alta = query(
+        """SELECT alta_id, match_id, market, selection, line, prob, fair_price,
+                  ref_price, ref_book, odds_source, odds_as_of, fit, decided_at
+           FROM alta_prob_picks
+           WHERE (decided_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY decided_at, alta_id""",
+        (batch_date,),
+    ) if con_alta else []
+    payload = {
         "batch_date": batch_date.isoformat(),
         "model_version": settings.model_version,
         "fs_version": settings.fs_version,
@@ -104,6 +119,10 @@ def _collect(batch_date: date) -> dict:
         "predictions": preds,
         "picks": picks,
     }
+    if con_alta:
+        payload["n_alta_prob"] = len(alta)
+        payload["alta_probabilidad"] = alta
+    return payload
 
 
 def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
@@ -140,6 +159,7 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
         "chain_sha256": chain_hash,
         "n_predictions": payload["n_predictions"],
         "n_picks": payload["n_picks"],
+        **({"n_alta_prob": payload["n_alta_prob"]} if "n_alta_prob" in payload else {}),
         "sealed_at_utc": datetime.now(timezone.utc).isoformat(),
     }
     (out_dir / f"{batch_date.isoformat()}.receipt.json").write_text(
