@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isPublicationActive, loadPublicData } from './public-data.js';
+import { expectedHitRate, isPublicationActive, loadPublicData, probabilityLabel } from './public-data.js';
 
 const responses = {
   '/model-card': { puerta_comercial: { autorizada: false,
@@ -44,4 +44,17 @@ test('la puerta exige autorización y publicación activas a la vez', () => {
   assert.equal(isPublicationActive(gate), false);
   gate.status = 'error';
   assert.equal(isPublicationActive(gate), false);
+});
+
+test('la probabilidad real se muestra en porcentaje y en frecuencia', () => {
+  assert.deepEqual(probabilityLabel(0.2941), { pct: '29%', frequency: '1 de cada 3.4', text: '29% · sale 1 de cada 3.4' });
+  assert.equal(probabilityLabel(0.71).frequency, '7 de cada 10');
+  assert.equal(probabilityLabel(0.08).frequency, '1 de cada 13');
+  for (const bad of [null, undefined, 0, 1, -0.2, 'x', NaN]) assert.equal(probabilityLabel(bad), null);
+});
+
+test('el acierto esperado no se estima si falta alguna probabilidad', () => {
+  assert.equal(expectedHitRate([{ fair_prob: 0.2 }, { fair_prob: 0.4 }]).toFixed(2), '0.30');
+  assert.equal(expectedHitRate([{ fair_prob: 0.2 }, { fair_prob: null }]), null);
+  assert.equal(expectedHitRate([]), null);
 });

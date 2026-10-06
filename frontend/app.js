@@ -1,4 +1,4 @@
-import { loadPublicData, isPublicationActive } from './public-data.js?v=189b99a3fc36';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=55cb83f58eea';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
@@ -293,6 +293,7 @@ const fmtOdds = decimal => {
   return decimal.toFixed(2);
 };
 const fmtPct = (p, digits = 1) => `${(p * 100).toFixed(digits)}%`;
+const probText = p => probabilityLabel(p)?.text ?? '—';
 const fmtEdge = edge => edge == null ? '—' : `${edge >= 0 ? '+' : '−'}${Math.abs(edge * 100).toFixed(1)}%`;
 const edgeClass = edge => edge == null ? '' : edge >= SOFT_MIN_EDGE ? 'pos' : edge >= 0 ? 'near' : 'neg';
 const clvValue = item => item.price / item.closePrice - 1;
@@ -401,7 +402,7 @@ function kpiStrip(dayFixtures) {
 
 function shadowList(picks, { limit = 5, heading = true } = {}) {
   const items = picks.slice(0, limit);
-  const list = items.length ? `<ol class="shadow-list">${items.map(({ row }, index) => `<li><button type="button" class="shadow-item" data-row="${row.key}"><span class="shadow-rank">${index + 1}</span><span class="shadow-body"><strong>${row.fx.home} × ${row.fx.away}</strong><span>${row.selection} · ${row.best.book.name} <b>${fmtOdds(row.best.price)}</b></span><small>mín. ${fmtOdds(row.minPrice)} · ${kickoffLabel(row.fx)}</small></span><span class="shadow-edge pos">${fmtEdge(row.edge)}</span></button></li>`).join('')}</ol>` : '<p class="rail-empty">Ninguna casa de la lista supera hoy el precio justo en un 2%. Es un resultado válido: el criterio no fuerza picks.</p>';
+  const list = items.length ? `<ol class="shadow-list">${items.map(({ row }, index) => `<li><button type="button" class="shadow-item" data-row="${row.key}"><span class="shadow-rank">${index + 1}</span><span class="shadow-body"><strong>${row.fx.home} × ${row.fx.away}</strong><span>${row.selection} · ${row.best.book.name} <b>${fmtOdds(row.best.price)}</b></span><small>prob. real ${fmtPct(row.pFair, 0)} · mín. ${fmtOdds(row.minPrice)} · ${kickoffLabel(row.fx)}</small></span><span class="shadow-edge pos">${fmtEdge(row.edge)}</span></button></li>`).join('')}</ol>` : '<p class="rail-empty">Ninguna casa de la lista supera hoy el precio justo en un 2%. Es un resultado válido: el criterio no fuerza picks.</p>';
   return `<section class="rail-panel">${heading ? `<div class="rail-head"><p class="eyebrow">SOMBRA DEL CRITERIO</p>${badge('Publicación pausada', 'warn')}</div><h2>Lo que se habría elegido</h2>` : ''}${list}<p class="rail-note">Una por partido, solo 1X2, precio de casa blanda contra Pinnacle en el mismo snapshot. Sin hash: la demo no escribe en la cadena.</p></section>`;
 }
 
@@ -533,7 +534,7 @@ function pickOfDayPanel() {
         <div class="pod-price"><strong>${fmtOdds(row.best.price)}</strong><small>${row.best.book.name}</small></div>
       </article>
       <div class="drawer-metrics pod-metrics">
-        <div><span>JUSTO PINNACLE</span><strong>${fmtOdds(1 / row.pFair)}</strong><small>${fmtPct(row.pFair)} sin margen</small></div>
+        <div><span>JUSTO PINNACLE</span><strong>${fmtOdds(1 / row.pFair)}</strong><small>prob. real ${probText(row.pFair)}</small></div>
         <div><span>VS JUSTO</span><strong class="edge ${edgeClass(row.edge)}">${fmtEdge(row.edge)}</strong><small>bruto en ${row.best.book.name}</small></div>
         <div><span>ESPERADO AL CIERRE</span><strong>${fmtEdge(row.expectedEdge)}</strong><small>persistencia ${Math.round(row.best.book.persistence * 100)}%</small></div>
         <div><span>PRECIO MÍNIMO</span><strong>${fmtOdds(row.minPrice)}</strong><small>por debajo ya no vale</small></div>
@@ -710,7 +711,11 @@ function livePicks() {
   else if (!active) body = '<p>La publicación real está pausada. No hay recomendaciones nuevas a la venta ni acceso premium habilitado.</p>';
   else if (picks.status !== 'ready') body = '<p>No se pudieron consultar los picks públicos. Inténtalo de nuevo más tarde.</p>';
   else if (!picks.data.length) body = '<p>No hay picks gratuitos publicados para los próximos partidos. Si el criterio no encuentra valor, la lista queda vacía.</p>';
-  else body = `<div class="live-pick-list">${picks.data.map(pick => `<article class="live-pick"><div><span>${esc(pick.league_id ?? 'Liga')} · ${realDate(pick.kickoff_utc)}</span><h3>${esc(pick.local ?? 'Local')} <small>vs</small> ${esc(pick.visitante ?? 'Visitante')}</h3><p>${esc(pick.market ?? '1X2')} · ${esc(pick.selection ?? 'Selección')}</p></div><div><span>${esc(pick.bookmaker ?? 'Casa')}</span><strong>${realNumber(pick.advised_price, 2)}</strong><small>Mínimo ${realNumber(pick.min_price, 2)}</small></div></article>`).join('')}</div>`;
+  else {
+    const hit = expectedHitRate(picks.data);
+    const hitNote = hit == null ? '' : `<p class="live-reason">Acierto esperado de esta lista: <strong>${realNumber(hit * 100)}%</strong>, con la probabilidad real de cada pick (Pinnacle sin margen). Con cuotas altas se pierde a menudo aunque el pick tenga valor: lo que cuenta es cobrar más de lo que vale el resultado.</p>`;
+    body = `${hitNote}<div class="live-pick-list">${picks.data.map(pick => `<article class="live-pick"><div><span>${esc(pick.league_id ?? 'Liga')} · ${realDate(pick.kickoff_utc)}</span><h3>${esc(pick.local ?? 'Local')} <small>vs</small> ${esc(pick.visitante ?? 'Visitante')}</h3><p>${esc(pick.market ?? '1X2')} · ${esc(pick.selection ?? 'Selección')}</p><small class="live-prob">Probabilidad real: ${esc(probabilityLabel(pick.fair_prob)?.text ?? 'sin dato')}</small></div><div><span>${esc(pick.bookmaker ?? 'Casa')}</span><strong>${realNumber(pick.advised_price, 2)}</strong><small>Mínimo ${realNumber(pick.min_price, 2)}</small></div></article>`).join('')}</div>`;
+  }
   return `<section class="live-panel" aria-label="Picks públicos reales"><div class="live-head"><div><p class="eyebrow">PUBLICACIÓN REAL · /PICKS/FREE</p><h2>Picks gratuitos publicados</h2></div>${badge(active ? 'Datos del servidor' : 'En pausa', active ? 'good' : 'muted')}</div>${body}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
 }
 
@@ -825,6 +830,7 @@ function picksView() {
     <div class="pick-detail">
       <div><span class="metric-label">SELECCIÓN</span><strong>${row.selection}</strong></div>
       <div><span class="metric-label">${row.best.book.name.toUpperCase()}</span><strong>${fmtOdds(row.best.price)}</strong></div>
+      <div><span class="metric-label">PROBABILIDAD REAL</span><strong>${fmtPct(row.pFair, 0)}</strong><small>sale ${probabilityLabel(row.pFair)?.frequency ?? '—'}</small></div>
       <div><span class="metric-label">PRECIO MÍNIMO</span><strong>${fmtOdds(row.minPrice)}</strong></div>
       <div><span class="metric-label">VS JUSTO · AL CIERRE</span><strong class="pos">${fmtEdge(row.edge)}</strong><small>${fmtEdge(row.expectedEdge)} esperado</small></div>
     </div>
@@ -848,7 +854,7 @@ function matchView() {
   const panels = {
     resumen: () => `<div class="analysis-grid comparison-grid"><section class="panel"><div class="panel-heading"><div><p class="eyebrow">MODELO / 1X2</p><h2>Estimación deportiva</h2></div><span class="small-tag">Diagnóstico</span></div><div class="prob-matrix">${probabilityCells(fx.probs)}</div>${probBar(fx.probs, 'Modelo')}<p class="panel-foot">Goles esperados: ${fx.xg[0].toFixed(2)} local · ${fx.xg[1].toFixed(2)} visitante. Alineaciones: no confirmadas en esta simulación.</p></section><section class="panel"><div class="panel-heading"><div><p class="eyebrow">MERCADO / 1X2</p><h2>Pinnacle sin margen</h2></div><span class="small-tag">Demo</span></div><div class="prob-matrix">${probabilityCells(fx.marketProbs)}</div>${probBar(fx.marketProbs, 'Pinnacle sin margen')}<p class="panel-foot">Precio simulado, no procede de Pinnacle. Es la referencia con la que se miden las demás casas.</p></section></div>
       <div class="analysis-grid below"><section class="panel"><p class="eyebrow">LECTURA / CONTEXTO</p><h2>Qué dicen los números</h2><p class="body-copy">${fx.note}</p><div class="context-tags">${badge('XI pendiente', 'muted')}${badge(fx.excluded ? 'Pinnacle fuera de consenso' : 'Pinnacle en consenso', fx.excluded ? 'warn' : 'muted')}</div></section>
-      <section class="panel"><p class="eyebrow">CRITERIO / SOMBRA</p><h2>${pick ? 'Candidata del partido' : 'Sin candidata'}</h2>${pick ? `<div class="detail-line"><span>Selección</span><strong>${pick.row.selection}</strong></div><div class="detail-line"><span>Mejor casa</span><strong>${pick.row.best.book.name} · ${fmtOdds(pick.row.best.price)}</strong></div><div class="detail-line"><span>Justo · mínimo</span><strong>${fmtOdds(1 / pick.row.pFair)} · ${fmtOdds(pick.row.minPrice)}</strong></div><div class="detail-line"><span>vs justo · esperado al cierre</span><strong class="pos">${fmtEdge(pick.row.edge)} · ${fmtEdge(pick.row.expectedEdge)}</strong></div><button type="button" class="secondary-button full" data-row="${pick.row.key}">Ver todas las casas</button>` : `<p class="body-copy muted">${fx.closed ? 'El mercado ya cerró.' : fx.excluded ? statusText(fx.rows[0]) : 'Ninguna casa de la lista paga un 2% sobre el justo en el 1X2. No se publica nada.'}</p><button type="button" class="secondary-button full" data-match-tab="casas">Ver precios por casa</button>`}</section></div>`,
+      <section class="panel"><p class="eyebrow">CRITERIO / SOMBRA</p><h2>${pick ? 'Candidata del partido' : 'Sin candidata'}</h2>${pick ? `<div class="detail-line"><span>Selección</span><strong>${pick.row.selection}</strong></div><div class="detail-line"><span>Mejor casa</span><strong>${pick.row.best.book.name} · ${fmtOdds(pick.row.best.price)}</strong></div><div class="detail-line"><span>Probabilidad real</span><strong>${probText(pick.row.pFair)}</strong></div><div class="detail-line"><span>Justo · mínimo</span><strong>${fmtOdds(1 / pick.row.pFair)} · ${fmtOdds(pick.row.minPrice)}</strong></div><div class="detail-line"><span>vs justo · esperado al cierre</span><strong class="pos">${fmtEdge(pick.row.edge)} · ${fmtEdge(pick.row.expectedEdge)}</strong></div><button type="button" class="secondary-button full" data-row="${pick.row.key}">Ver todas las casas</button>` : `<p class="body-copy muted">${fx.closed ? 'El mercado ya cerró.' : fx.excluded ? statusText(fx.rows[0]) : 'Ninguna casa de la lista paga un 2% sobre el justo en el 1X2. No se publica nada.'}</p><button type="button" class="secondary-button full" data-match-tab="casas">Ver precios por casa</button>`}</section></div>`,
     mercados: () => `<section class="panel flush"><div class="panel-heading padded"><div><p class="eyebrow">MERCADOS / ${fx.rows.length} SELECCIONES</p><h2>Todo lo que sale de dos lambdas</h2></div><button type="button" class="text-link" data-desk-open="${fx.id}">Abrir en la mesa ↗</button></div>${marketTable(sortedRows(fx.rows), { showMatch: false, caption: `Mercados de ${fx.home} contra ${fx.away}` })}</section>`,
     casas: () => bookMatrix(fx),
     modelo: () => modelPanel(fx),
@@ -1190,7 +1196,7 @@ function drawerMarkup() {
   const panels = {
     resumen: () => `<div class="drawer-metrics">
         <div><span>MODELO</span><strong>${fmtPct(row.pModel)}</strong><small>diagnóstico</small></div>
-        <div><span>JUSTO PINNACLE</span><strong>${fmtOdds(1 / row.pFair)}</strong><small>${fmtPct(row.pFair)} sin margen</small></div>
+        <div><span>JUSTO PINNACLE</span><strong>${fmtOdds(1 / row.pFair)}</strong><small>prob. real ${probText(row.pFair)}</small></div>
         <div><span>VS JUSTO</span><strong class="edge ${edgeClass(row.edge)}">${fmtEdge(row.edge)}</strong><small>bruto, mejor casa</small></div>
         <div><span>ESPERADO AL CIERRE</span><strong>${fmtEdge(row.expectedEdge)}</strong><small>${row.best ? `persistencia ${Math.round(row.best.book.persistence * 100)}%` : '—'}</small></div>
         <div><span>PRECIO MÍNIMO</span><strong>${row.family === '1X2' ? fmtOdds(row.minPrice) : '—'}</strong><small>${row.family === '1X2' ? 'por debajo ya no vale' : 'fuera del criterio'}</small></div>

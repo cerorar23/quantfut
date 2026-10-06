@@ -14,6 +14,7 @@ def _client(monkeypatch):
     app.include_router(console.router)
     app.include_router(web.router)
     monkeypatch.setattr(console, "_snapshot", lambda: {"Estado": {"ok": True}})
+    monkeypatch.setattr(console, "_shadow_picks", lambda: [])
     return TestClient(app)
 
 
@@ -141,3 +142,30 @@ def test_ultimo_entrenamiento_muestra_motivos_legibles(monkeypatch):
         "model_version": "v", "is_active": False,
         "notes": '{"promote": false, "reasons": ["Mercado sharp demasiado antiguo"]}'})
     assert console._last_training()["notes"]["reasons"] == ["Mercado sharp demasiado antiguo"]
+
+
+def _fila_sombra(**changes):
+    from datetime import datetime, timezone
+    base = {"kickoff_utc": datetime(2026, 10, 3, 21, 30, tzinfo=timezone.utc),
+            "league_id": "br.serie_b", "partido": "Avai - Ceara", "selection": "draw",
+            "book": "1xbet", "price": 3.38, "min_price": 3.3, "closing_price": 3.11,
+            "expected_edge_pct": 1.96, "stake_units": 0.17, "lead_minutes": 4320,
+            "ev_close_pct": 4.33, "outcome": "loss", "profit_units": -1.0, "marcador": "0-1"}
+    return {**base, **changes}
+
+
+def test_tabla_de_sombra_escapa_y_marca_pendientes():
+    html_ = console._shadow_table([
+        _fila_sombra(partido="<script>alert(1)</script> - X"),
+        _fila_sombra(closing_price=None, ev_close_pct=None, outcome=None,
+                     profit_units=None, marcador=None)])
+    assert "<script>alert" not in html_ and "&lt;script&gt;" in html_
+    assert "Empate" in html_ and "Perdida (0-1)" in html_ and "Pendiente" in html_
+    assert '<td class="pos">+4,33 %</td>' in html_
+    assert '<td class="neg">-1,00</td>' in html_
+    assert "72,0 h" in html_
+
+
+def test_tabla_de_sombra_falla_cerrada():
+    assert "No disponible" in console._shadow_table({"estado": "No disponible"})
+    assert "Todavía no hay ninguna" in console._shadow_table([])

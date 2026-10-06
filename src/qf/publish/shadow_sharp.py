@@ -266,6 +266,61 @@ def report() -> dict:
     return summarize(frame)
 
 
+_NUMERIC = ("price", "min_price", "raw_edge_pct", "expected_edge_pct", "stake_units",
+            "stake_publicado", "closing_price", "ev_close_pct", "profit_units")
+
+
+def listado(frame: pd.DataFrame) -> list[dict]:
+    """
+    Una fila por pick que se habría publicado, la más reciente primero. Sale
+    de `publishable`, no de una consulta aparte: el panel tiene que enseñar
+    exactamente la muestra que cuenta la puerta.
+    """
+    if frame.empty:
+        return []
+    frame = frame.copy()
+    for c in _NUMERIC:
+        if c in frame:
+            frame[c] = pd.to_numeric(frame[c], errors="coerce")
+    pub = publishable(frame).sort_values(["kickoff_utc", "match_id"], ascending=False)
+    pub = pub.astype(object).where(pd.notna(pub), None)
+    out = []
+    for r in pub.to_dict("records"):
+        jugado = r.get("home_goals") is not None and r.get("away_goals") is not None
+        out.append({
+            "kickoff_utc": r["kickoff_utc"], "league_id": r["league_id"],
+            "partido": f"{r['local']} - {r['visita']}", "selection": r["selection"],
+            "book": r["book"], "price": r["price"], "min_price": r.get("min_price"),
+            "closing_price": r.get("closing_price"),
+            "expected_edge_pct": r["expected_edge_pct"],
+            "stake_units": r.get("stake_publicado"),
+            "lead_minutes": r["lead_minutes"], "ev_close_pct": r.get("ev_close_pct"),
+            "outcome": r.get("outcome"), "profit_units": r.get("profit_units"),
+            "marcador": f"{int(r['home_goals'])}-{int(r['away_goals'])}" if jugado else None,
+        })
+    return out
+
+
+def publishable_list() -> list[dict]:
+    rows = query(
+        """SELECT o.match_id, o.league_id, o.kickoff_utc, o.book, o.selection,
+                  o.price, o.min_price, o.raw_edge_pct, o.expected_edge_pct,
+                  o.stake_units,
+                  coalesce(o.stake_publicado_units, o.stake_units) AS stake_publicado,
+                  o.lead_minutes, o.decided_at,
+                  r.closing_price, r.ev_close_pct, r.outcome, r.profit_units,
+                  coalesce(th.display_name, th.canonical_name) AS local,
+                  coalesce(ta.display_name, ta.canonical_name) AS visita,
+                  m.home_goals, m.away_goals
+           FROM sharp_shadow_offers o
+           LEFT JOIN sharp_shadow_results r USING (offer_id)
+           JOIN matches m USING (match_id)
+           JOIN teams th ON th.team_id = m.home_team_id
+           JOIN teams ta ON ta.team_id = m.away_team_id"""
+    )
+    return listado(pd.DataFrame(rows))
+
+
 def audit_summary(rows: list[dict], now: datetime | None = None) -> dict:
     """Traza oferta → partido → liquidación → cierre, sin cambiar la puerta.
 

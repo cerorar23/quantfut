@@ -438,7 +438,11 @@ resultado atrasado, liquidación pendiente, liquidadas sin cierre sharp completo
 y liquidadas con cierre justo. La misma auditoría JSON está en
 `/admin/shadow-audit`, protegida con `ADMIN_TOKEN`. Es de solo lectura y no
 altera la puerta comercial; ayuda a distinguir falta de tiempo de fallos de
-ingesta o cierre. El recorrido ilustrativo de cuentas y cobros se documenta en
+ingesta o cierre. Encima, la tabla de los picks que se habrían publicado
+(uno por partido, el más reciente primero) con cuota, cierre de Pinnacle, EV
+al cierre y resultado: sale de `shadow_sharp.publishable`, la misma selección
+que cuenta la puerta, y solo vive tras el login del panel porque enseña el
+criterio de selección. El recorrido ilustrativo de cuentas y cobros se documenta en
 `frontend/ACCESS_FLOW.md`; todavía no concede suscripciones ni cobra.
 
 **Fase 4 — las alineaciones se capturan y pueden evaluarse en sombra.**

@@ -111,13 +111,76 @@ def _snapshot() -> dict:
     }
 
 
-def _page(data: dict) -> str:
+_SELECCION = {"home": "Local", "draw": "Empate", "away": "Visita"}
+_RESULTADO = {"win": "Ganada", "loss": "Perdida", "push": "Nula"}
+
+
+def _num(x, dec: int = 2, signo: bool = False) -> str:
+    if x is None:
+        return "—"
+    return f"{x:{'+' if signo else ''}.{dec}f}".replace(".", ",")
+
+
+def _clase(x) -> str:
+    return "" if x is None or x == 0 else (' class="pos"' if x > 0 else ' class="neg"')
+
+
+def _shadow_table(rows: list[dict] | dict) -> str:
+    """Las que se habrían publicado. Aquí y no en la web: enseña el criterio."""
+    title = '<h2>Picks que se habrían publicado (sombra del criterio sharp)</h2>'
+    if isinstance(rows, dict):  # la tarjeta falló cerrada en `_read`
+        body = f"<pre>{html.escape(json.dumps(rows, ensure_ascii=False))}</pre>"
+    elif not rows:
+        body = "<p>Todavía no hay ninguna.</p>"
+    else:
+        head = ("Inicio (UTC)", "Liga", "Partido", "Apuesta", "Casa", "Cuota",
+                "Cuota mín.", "Cierre Pinnacle", "Edge esperado", "Stake",
+                "Antelación", "EV al cierre", "Resultado", "P/L (1 u)")
+        trs = []
+        for r in rows:
+            ko = r["kickoff_utc"]
+            ko = ko.strftime("%d-%m-%Y %H:%M") if hasattr(ko, "strftime") else str(ko)
+            res = _RESULTADO.get(r["outcome"], r["outcome"]) if r["outcome"] else "Pendiente"
+            if r["marcador"]:
+                res = f"{res} ({r['marcador']})"
+            celdas = (
+                (ko, ""), (r["league_id"], ""), (r["partido"], ""),
+                (_SELECCION.get(r["selection"], r["selection"]), ""), (r["book"], ""),
+                (_num(r["price"]), ""), (_num(r["min_price"]), ""),
+                (_num(r["closing_price"]), ""),
+                (_num(r["expected_edge_pct"], signo=True) + " %", ""),
+                (_num(r["stake_units"]), ""),
+                (_num(r["lead_minutes"] / 60, 1) + " h", ""),
+                (_num(r["ev_close_pct"], signo=True) + (" %" if r["ev_close_pct"] is not None else ""),
+                 _clase(r["ev_close_pct"])),
+                (res, ""),
+                (_num(r["profit_units"], signo=True), _clase(r["profit_units"])),
+            )
+            trs.append("<tr>" + "".join(f"<td{c}>{html.escape(str(v))}</td>" for v, c in celdas)
+                       + "</tr>")
+        body = ('<p class="nota">Una por partido: la primera pasada con stake y, de ella, '
+                'la de mayor edge esperado. Es la muestra que cuenta la puerta; solo las que '
+                'tienen cierre de Pinnacle entran en el CLV.</p><div class="tabla"><table><thead><tr>'
+                + "".join(f"<th>{h}</th>" for h in head) + "</tr></thead><tbody>"
+                + "".join(trs) + "</tbody></table></div>")
+    return f'<section class="card wide">{title}{body}</section>'
+
+
+def _shadow_picks() -> list[dict]:
+    from ..publish.shadow_sharp import publishable_list
+
+    return publishable_list()
+
+
+def _page(data: dict, sombra: list[dict] | dict | None = None) -> str:
     cards = "".join(
         f'<section class="card"><h2>{html.escape(title)}</h2>'
         f'<pre>{html.escape(json.dumps(value, ensure_ascii=False, indent=2, default=str))}</pre>'
         "</section>"
         for title, value in data.items()
     )
+    if sombra is not None:
+        cards = _shadow_table(sombra) + cards
     return (
         '<!doctype html><html lang="es"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -133,7 +196,7 @@ def _page(data: dict) -> str:
 @router.get("", dependencies=[Depends(require_console)])
 @router.get("/", dependencies=[Depends(require_console)])
 def dashboard() -> HTMLResponse:
-    return HTMLResponse(_page(_snapshot()), headers={
+    return HTMLResponse(_page(_snapshot(), _read(_shadow_picks)), headers={
         "Cache-Control": "no-store",
         "Content-Security-Policy": "default-src 'none'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'",
     })

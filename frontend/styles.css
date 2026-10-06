@@ -672,3 +672,4 @@ table.standings td:last-child{text-align:left}
 .form-strip-team .crest{width:32px;height:32px}
 .with-crest{display:flex!important;align-items:center;gap:7px}
 .with-crest .crest{width:16px;height:16px}
+.live-pick .live-prob{display:block;margin-top:6px;color:var(--green);font-size:11px}

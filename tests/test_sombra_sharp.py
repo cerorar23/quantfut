@@ -146,6 +146,32 @@ def test_report_incluye_ofertas_antes_de_liquidarlas(monkeypatch):
     assert rep["gate"]["authorized"] is False
 
 
+def test_listado_es_la_misma_seleccion_que_cuenta_la_puerta():
+    nombres = {"local": "A", "visita": "B", "selection": "home", "price": 2.0,
+               "min_price": 1.9, "closing_price": None, "outcome": None,
+               "home_goals": None, "away_goals": None}
+    f = _f([
+        {**nombres, "match_id": "m1", "book": "william_hill", "stake_units": 0.0,
+         "stake_publicado": 0.0, "expected_edge_pct": 0.0, "decided_at": T0,
+         "ev_close_pct": None},
+        {**nombres, "match_id": "m1", "book": "betano", "stake_units": 1.0,
+         "stake_publicado": 0.4, "expected_edge_pct": 3.0,
+         "decided_at": T0 + timedelta(hours=1), "ev_close_pct": None, "profit_units": None},
+        {**nombres, "match_id": "m2", "book": "1xbet", "stake_units": 0.8,
+         "stake_publicado": 0.3, "expected_edge_pct": 2.0, "decided_at": T0,
+         "kickoff_utc": T0 + timedelta(days=3), "ev_close_pct": 4.0,
+         "outcome": "win", "profit_units": 1.0, "home_goals": 2, "away_goals": 0},
+    ])
+    filas = ss.listado(f)
+    assert [r["partido"] for r in filas] == ["A - B", "A - B"]
+    assert [r["book"] for r in filas] == ["1xbet", "betano"], "más reciente primero"
+    assert len(filas) == ss.summarize(f)["publishable"]["n"]
+    assert filas[0]["marcador"] == "2-0" and filas[1]["marcador"] is None
+    assert filas[1]["ev_close_pct"] is None, "pendiente: None, nunca NaN"
+    assert filas[1]["stake_units"] == 0.4, "el stake que se publicaría"
+    assert ss.listado(pd.DataFrame()) == []
+
+
 def _audit_row(offer_id, match_id, league="us.mls", **changes):
     row = {"offer_id": offer_id, "match_id": match_id, "league_id": league,
            "kickoff_utc": T0 + timedelta(hours=24), "stake_units": 0.8,
