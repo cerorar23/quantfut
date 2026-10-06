@@ -5,11 +5,24 @@ con una clave estable.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timezone
 
+import pytest
+
+from qf.config import settings
+from qf.ingest import af_odds
 from qf.ingest.af_odds import bookmaker_key, parse
 
 KO = datetime(2026, 9, 26, 1, 0, tzinfo=timezone.utc)
+
+
+@pytest.fixture
+def casas(monkeypatch):
+    """Casas fijas: el .env local puede redefinir SHARP_BOOK o SOFT_BOOKS."""
+    monkeypatch.setattr(af_odds, "settings", replace(
+        settings, sharp_book="pinnacle",
+        soft_books=("bet365", "betano", "1xbet", "william_hill")))
 
 
 def _resp(bookmakers, update="2026-09-23T20:00:00+00:00"):
@@ -60,7 +73,7 @@ def _ou(name, lineas):
     return {"name": name, "bets": [{"id": 5, "name": "Goals Over/Under", "values": vals}]}
 
 
-def test_goles_de_pinnacle_todas_las_lineas_y_de_blandas_solo_las_de_la_linea():
+def test_goles_de_pinnacle_todas_las_lineas_y_de_blandas_solo_las_de_la_linea(casas):
     rows = parse(_resp([
         _ou("Pinnacle", {1.5: ("1.24", "4.11"), 2.75: ("1.96", "1.89"), 5.5: ("15.0", "1.01")}),
         _ou("Bet365", {1.5: ("1.22", "4.00"), 2.25: ("1.60", "2.30"), 4.5: ("5.00", "1.15")}),
@@ -71,7 +84,7 @@ def test_goles_de_pinnacle_todas_las_lineas_y_de_blandas_solo_las_de_la_linea():
                   {("bet365", s, ln) for ln in (1.5, 4.5) for s in ("over", "under")}
 
 
-def test_goles_solo_pares_completos_y_cuotas_validas():
+def test_goles_solo_pares_completos_y_cuotas_validas(casas):
     bk = {"name": "Pinnacle", "bets": [{"id": 5, "values": [
         {"value": "Over 2.5", "odd": "1.90"},                       # sin under
         {"value": "Over 3.5", "odd": "2.90"}, {"value": "Under 3.5", "odd": "1.00"},
@@ -80,3 +93,42 @@ def test_goles_solo_pares_completos_y_cuotas_validas():
     ]}]}
     tot = [(r[4], r[8]) for r in parse(_resp([bk]), "m1", KO) if r[3] == "totals"]
     assert sorted(tot) == [("over", 1.5), ("under", 1.5)]
+
+
+def test_un_lado_repetido_invalida_la_linea_entera(casas):
+    # Dos "Over 2.5" en el mismo bet: no se sabe cuál es el bueno y el último
+    # sobrescribiría al primero dejando un par incoherente. Se descarta la
+    # línea 2.5 entera; las demás líneas del mismo bet siguen entrando.
+    bk = {"name": "Pinnacle", "bets": [{"id": 5, "values": [
+        {"value": "Over 2.5", "odd": "1.90"}, {"value": "Under 2.5", "odd": "1.95"},
+        {"value": "Over 2.5", "odd": "2.40"},
+        {"value": "Over 1.5", "odd": "1.25"}, {"value": "Under 1.5", "odd": "4.10"},
+        {"value": "Over 3.5", "odd": "2.90"}, {"value": "Under 3.5", "odd": "1.40"},
+        {"value": "Under 3.5", "odd": "1.45"},
+    ]}]}
+    tot = sorted((r[8], r[4], r[5]) for r in parse(_resp([bk]), "m1", KO) if r[3] == "totals")
+    assert tot == [(1.5, "over", 1.25), (1.5, "under", 4.10)]
+
+
+def test_el_1x2_y_los_totales_entran_y_la_primera_mitad_no(casas):
+    # Misma casa con bets 1 (1X2), 5 (goles) y 6 ("Goals Over/Under First Half",
+    # mismo formato "Over 1.5"): solo el bet 5 produce totales, aunque comparta
+    # línea con el 6 y este traiga precios distintos.
+    bk = {"name": "Pinnacle", "bets": [
+        {"id": 1, "name": "Match Winner", "values": [
+            {"value": "Home", "odd": "2.10"}, {"value": "Draw", "odd": "3.30"},
+            {"value": "Away", "odd": "3.60"}]},
+        {"id": 6, "name": "Goals Over/Under First Half", "values": [
+            {"value": "Over 0.5", "odd": "1.35"}, {"value": "Under 0.5", "odd": "3.10"},
+            {"value": "Over 1.5", "odd": "2.40"}, {"value": "Under 1.5", "odd": "1.55"}]},
+        {"id": 5, "name": "Goals Over/Under", "values": [
+            {"value": "Over 1.5", "odd": "1.30"}, {"value": "Under 1.5", "odd": "3.50"},
+            {"value": "Over 2.5", "odd": "1.95"}, {"value": "Under 2.5", "odd": "1.90"}]},
+    ]}
+    rows = parse(_resp([bk]), "m1", KO)
+    assert {(r[3], r[4]) for r in rows if r[3] == "h2h"} == {
+        ("h2h", "home"), ("h2h", "draw"), ("h2h", "away")}
+    tot = sorted((r[8], r[4], r[5]) for r in rows if r[3] == "totals")
+    assert tot == [(1.5, "over", 1.30), (1.5, "under", 3.50),
+                   (2.5, "over", 1.95), (2.5, "under", 1.90)]
+    assert len(rows) == 3 + 4

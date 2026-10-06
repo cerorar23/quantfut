@@ -65,8 +65,15 @@ def _precio(v: dict) -> float | None:
 
 
 def _totales(bet: dict) -> dict[float, dict[str, float]]:
-    """{línea: {'over': cuota, 'under': cuota}}, solo pares completos y válidos."""
+    """
+    {línea: {'over': cuota, 'under': cuota}}, solo pares completos y válidos.
+    Un mismo (línea, lado) repetido invalida la línea entera: no se sabe cuál
+    de las dos cuotas es la buena, y quedarse con la última dejaría un par
+    incoherente (un over de una cotización con el under de otra).
+    """
     out: dict[float, dict[str, float]] = {}
+    vistos: set[tuple[float, str]] = set()
+    repetidas: set[float] = set()
     for v in bet.get("values", []):
         partes = str(v.get("value", "")).split()
         if len(partes) != 2 or partes[0] not in ("Over", "Under"):
@@ -75,10 +82,15 @@ def _totales(bet: dict) -> dict[float, dict[str, float]]:
             linea = float(partes[1])
         except ValueError:
             continue
+        lado = partes[0].lower()
+        if (linea, lado) in vistos:
+            repetidas.add(linea)
+        vistos.add((linea, lado))
         p = _precio(v)
         if p is not None:
-            out.setdefault(linea, {})[partes[0].lower()] = p
-    return {ln: q for ln, q in out.items() if set(q) == {"over", "under"}}
+            out.setdefault(linea, {})[lado] = p
+    return {ln: q for ln, q in out.items()
+            if ln not in repetidas and set(q) == {"over", "under"}}
 
 
 def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]:
