@@ -174,7 +174,7 @@ def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato) -> tuple[float
 
 def estado() -> dict:
     if not settings.alta_prob_enabled:
-        return {"estado": "desactivada", "bloqueados": [], "motivos": ["Línea todavía no activada"]}
+        return {"estado": "desactivada", "bloqueados": [], "motivos": ["Línea desactivada"]}
     ctl = ap.control(_liquidados())
     return {"estado": "pausada" if "todo" in ctl["bloqueados"] else "activa", **ctl}
 

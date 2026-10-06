@@ -9,7 +9,7 @@ const responses = {
   '/track-record': { mensual: [], ultimos_30d: { n: 0 } },
   '/calibration': { runs: [] },
   '/chain?limit=20': { lotes: [] },
-  '/alta-probabilidad': { estado: 'desactivada', motivos: ['Línea todavía no activada'], proximos: [], historial: { n: 0 } },
+  '/alta-probabilidad': { estado: 'desactivada', motivos: ['Línea desactivada'], proximos: [], historial: { n: 0 } },
 };
 
 test('consulta solo rutas públicas y conserva los estados vacíos', async () => {

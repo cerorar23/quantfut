@@ -231,7 +231,10 @@ def test_apagada_no_hace_nada(monkeypatch):
     inserts = _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}],
                   _snap((1.18, 7.5, 15.0)))
     monkeypatch.setattr(ad, "settings", replace(settings, alta_prob_enabled=False))
-    assert ad.select_and_persist(NOW)["estado"] == "desactivada" and inserts == []
+    out = ad.select_and_persist(NOW)
+    assert out["estado"] == "desactivada" and inserts == []
+    # El motivo vale antes y después de activar (el servidor no sabe en qué momento está).
+    assert out["motivos"] == ["Línea desactivada"]
 
 
 def test_liquidacion(monkeypatch):
