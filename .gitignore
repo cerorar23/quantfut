@@ -29,3 +29,13 @@ node_modules/
 .idea/
 .DS_Store
 Thumbs.db
+
+# MCP credentials provided for local scraping tools
+.mcp.json
+# Zenrows CLI (do not commit secrets or run artifacts)
+.zenrows/secrets.json
+.zenrows/config.json
+.zenrows/account.json
+.zenrows/runs/
+.zenrows/traces/
+.zenrows/logs/
