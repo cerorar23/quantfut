@@ -89,6 +89,17 @@ def test_deficit_claro_con_diez_semanas_bloquea_por_ic99():
     assert any("IC99" in m for m in out["motivos"])
 
 
+def test_todo_motivo_de_bloqueo_dice_por_debajo():
+    # `daily._alta` avisa por Telegram de un bloqueo de MERCADO buscando
+    # "por debajo" en los motivos: tanto el fallo grosero como el IC99 tienen
+    # que seguir diciéndolo, o la alerta se queda muda.
+    grosero = ap.control(_filas(120, 0.87, 0.40, semanas=3))
+    por_ic = ap.control(_filas(300, 0.87, 0.80, semanas=10))
+    for out in (grosero, por_ic):
+        assert out["bloqueados"]
+        assert all("por debajo" in m for m in out["motivos"] if "muestra" not in m)
+
+
 def test_el_nivel_del_ic_se_puede_elegir_y_el_defecto_no_cambia():
     valores = np.array([(-1.0) ** i * 0.1 + 0.02 for i in range(120)])
     semanas = np.array([f"s{i % 12}" for i in range(120)])
