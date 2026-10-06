@@ -156,6 +156,7 @@ def _db(monkeypatch, partidos, snap, batch_sellado=False, rho=-0.06):
     monkeypatch.setattr(ad, "_lote_sellado", lambda dia: batch_sellado)
     monkeypatch.setattr(ad, "_partidos", lambda now: partidos)
     monkeypatch.setattr(ad, "_totales", lambda match_id, as_of: [])
+    monkeypatch.setattr(ad, "_totales_af", lambda match_id, as_of: [])
     monkeypatch.setattr(ad.pk, "_odds_api_snapshot", lambda m, now: snap)
     monkeypatch.setattr(ad.pk, "_af_snapshot", lambda m, now: None)
     monkeypatch.setattr(ad, "execute", lambda sql, params=(): inserts.append(params) or 1)
@@ -174,6 +175,75 @@ def test_guarda_uno_con_su_cuota_de_referencia(monkeypatch):
     assert p[8] == "the_odds_api"
 
 
+def test_goles_de_api_football_salen_de_la_misma_respuesta_que_el_1x2(monkeypatch):
+    # A las 08:00 UTC el snapshot vigente suele ser de API-Football: sus totales
+    # (misma marca `update`) sustituyen a los de The Odds API, que no se consulta.
+    m, snap_pin, filas_pin = _mercado_pinnacle(1.25, 1.0, linea=2.5)
+    books = {**snap_pin.books, "bet365": {"home": 2.2, "draw": 3.4, "away": 3.6}}
+    snap = pk.Snapshot("api_football", snap_pin.as_of, books)
+    filas = filas_pin + _filas_ref(
+        ("bet365", "over", 1.5, 1.28), ("bet365", "under", 1.5, 3.40),
+        ("bet365", "over", 3.5, 3.60), ("bet365", "under", 3.5, 1.27),
+        ("bet365", "over", 4.5, 8.00), ("bet365", "under", 4.5, 1.08))
+    inserts = _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}], None)
+    consultas = []
+
+    def totales_af(match_id, as_of):
+        consultas.append((match_id, as_of))
+        return filas
+
+    def totales_the_odds(match_id, as_of):
+        raise AssertionError("un snapshot de API-Football no mezcla totales de The Odds API")
+
+    monkeypatch.setattr(ad.ap, "MERCADOS_GOLES_HABILITADOS", GOLES)
+    monkeypatch.setattr(ad.pk, "_odds_api_snapshot", lambda m, now: None)
+    monkeypatch.setattr(ad.pk, "_af_snapshot", lambda m, now: snap)
+    monkeypatch.setattr(ad, "_totales_af", totales_af)
+    monkeypatch.setattr(ad, "_totales", totales_the_odds)
+    out = ad.select_and_persist(NOW, dry_run=True)
+    assert consultas == [("m1", snap.as_of)] and inserts == []
+    d = out["decisiones"][0]
+    assert (d["market"], d["selection"], d["line"]) == ("totals", "under", 3.5)
+    assert d["odds_source"] == "api_football"
+    # La referencia es la cuota de bet365 de la misma línea y lado, no otra.
+    assert (d["ref_book"], d["ref_price"]) == ("bet365", 1.27)
+    assert out["resumen"]["por_fuente"] == {"api_football": 1}
+    # Y al guardar, la fila lleva el ajuste de la línea de Pinnacle y la fuente.
+    out = ad.select_and_persist(NOW)
+    assert out["elegidos"] == 1 and len(inserts) == 1
+    f = inserts[0]
+    assert f[1:4] == ("totals", "under", 3.5) and f[6:9] == (1.27, "bet365", "api_football")
+    assert f[9] == snap.as_of and '"linea": 2.5' in f[10]
+
+
+def test_snapshot_de_the_odds_api_no_consulta_los_totales_de_api_football(monkeypatch):
+    def totales_af(match_id, as_of):
+        raise AssertionError("un snapshot de The Odds API no mezcla totales de API-Football")
+
+    _, snap, filas = _mercado_pinnacle(1.25, 1.0)
+    _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}], snap)
+    monkeypatch.setattr(ad, "_totales_af", totales_af)
+    monkeypatch.setattr(ad, "_totales", lambda match_id, as_of: filas)
+    d = ad.select_and_persist(NOW, dry_run=True)["decisiones"][0]
+    assert (d["market"], d["selection"], d["line"]) == ("totals", "under", 3.5)
+    assert d["odds_source"] == "the_odds_api"
+
+
+def test_totales_af_lee_la_misma_respuesta_por_su_marca_de_proveedor(monkeypatch):
+    llamadas = []
+    filas = [{"bookmaker": "pinnacle", "selection": "over", "line": 2.5, "price": 1.9}]
+
+    def q(sql, params=()):
+        llamadas.append((" ".join(sql.split()), params))
+        return filas
+    monkeypatch.setattr(ad, "query", q)
+    assert ad._totales_af("m1", NOW) == filas
+    sql, params = llamadas[0]
+    assert "FROM af_odds_snapshots" in sql and "market = 'totals'" in sql
+    assert "provider_updated_at = %s" in sql
+    assert params == ("m1", NOW)
+
+
 def test_dry_run_no_guarda(monkeypatch):
     inserts = _db(monkeypatch, [{"match_id": "m1", "kickoff_utc": NOW + timedelta(hours=10)}],
                   _snap((1.18, 7.5, 15.0)))
@@ -183,7 +253,8 @@ def test_dry_run_no_guarda(monkeypatch):
 
 def test_vista_previa_resume_por_fuente_y_mercado(monkeypatch):
     # Con el límite de 6 h, a las 08:00 muchos partidos europeos de la tarde solo
-    # tienen precio de API-Football (sin goles): la vista previa lo cuenta.
+    # tienen precio de API-Football: la vista previa cuenta cuántas decisiones
+    # salen de cada fuente (aquí sin líneas de goles: `_totales_af` vacío).
     partidos = [{"match_id": f"m{i}", "kickoff_utc": NOW + timedelta(hours=8 + i)}
                 for i in range(1, 7)]
     inserts = _db(monkeypatch, partidos, None)

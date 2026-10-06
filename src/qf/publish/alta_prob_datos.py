@@ -84,6 +84,14 @@ def _totales(match_id: str, as_of: datetime) -> list[dict]:
         (match_id, as_of))
 
 
+def _totales_af(match_id: str, as_of: datetime) -> list[dict]:
+    """Totales de la MISMA respuesta de API-Football que el 1X2 (misma marca `update`)."""
+    return query(
+        """SELECT bookmaker, selection, line, price FROM af_odds_snapshots
+           WHERE match_id = %s AND market = 'totals' AND provider_updated_at = %s""",
+        (match_id, as_of))
+
+
 def _liquidados(desde: str | None = "control") -> list[dict]:
     """
     Liquidados y sellados. Por defecto, desde ALTA_PROB_CONTROL_DESDE (lo que
@@ -106,7 +114,11 @@ def _liquidados(desde: str | None = "control") -> list[dict]:
 # --------------------------------------------------------------------------
 
 def _snapshot(match_id: str, kickoff: datetime, now: datetime) -> pk.Snapshot | None:
-    """Vigente y con el 1X2 de Pinnacle completo; The Odds API primero (trae goles)."""
+    """
+    Vigente y con el 1X2 de Pinnacle completo; The Odds API primero. Los totales
+    se leen de la MISMA fuente y respuesta que el 1X2 (`_totales` / `_totales_af`):
+    nunca se mezclan fuentes.
+    """
     for snap in (pk._odds_api_snapshot(match_id, now), pk._af_snapshot(match_id, now)):
         if snap is None:
             continue
@@ -188,8 +200,9 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     if dry_run:
         # Cuántas decisiones salen de cada fuente y de cada mercado. A las 08:00
         # UTC, con el límite de MAX_EDAD_PRECIO, muchos partidos europeos de la
-        # tarde solo tienen precio de API-Football, que no trae goles: hay que
-        # verlo ANTES de activar, porque lo publicado es inmutable.
+        # tarde solo tienen precio de API-Football: sus goles (db/041) son los
+        # que cuentan en ese caso. Hay que verlo ANTES de activar, porque lo
+        # publicado es inmutable.
         out["resumen"] = {"por_fuente": {}, "por_mercado": {}}
     if est["estado"] != "activa":
         return out
@@ -213,7 +226,8 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         if snap is None:
             out["sin_precio"] += 1
             continue
-        totales = _totales(m["match_id"], snap.as_of) if snap.source == "the_odds_api" else []
+        totales = (_totales(m["match_id"], snap.as_of) if snap.source == "the_odds_api"
+                   else _totales_af(m["match_id"], snap.as_of))
         res = decidir(snap, totales, rho, habilitados, excluir)
         if res is None:
             out["sin_candidato"] += 1
