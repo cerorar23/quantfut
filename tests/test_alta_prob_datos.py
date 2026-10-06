@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from qf.config import settings
+from qf.model.pricing import market_1x2, market_totals, score_matrix, totals_fair_over
 from qf.publish import alta_prob as ap
 from qf.publish import alta_prob_datos as ad
 from qf.publish import picks as pk
@@ -50,6 +51,95 @@ def test_decidir_partido_igualado_no_da_nada():
 def test_decidir_respeta_bloqueo():
     c, _ = ad.decidir(_snap((1.18, 7.5, 15.0)), [], None, (), {"h2h"})
     assert (c.market, c.selection) == ("double_chance", "12")
+
+
+# --- Rama de goles de la capa de datos ----------------------------------------
+#
+# Pinnacle da casi siempre una línea de CUARTO de gol (2,75): es la que ajusta
+# las lambdas. Lo publicado es inmutable, así que la rama se ejercita entera
+# antes de activar: precios de Pinnacle fabricados sin margen desde un partido
+# con lambdas conocidas, y el ajuste tiene que recuperarlas.
+
+RHO = -0.06
+GOLES = (("over", 1.5), ("under", 3.5), ("under", 4.5))
+
+
+def _mercado_pinnacle(lam, mu, linea=2.75):
+    """(snapshot, filas de totales) de Pinnacle SIN margen para un partido (lam, mu)."""
+    m = score_matrix(lam, mu, RHO)
+    p = market_1x2(m)
+    p_over = totals_fair_over(m, linea)
+    snap = _snap((1 / p["home"], 1 / p["draw"], 1 / p["away"]))
+    filas = [{"bookmaker": "pinnacle", "selection": "over", "line": linea, "price": 1 / p_over},
+             {"bookmaker": "pinnacle", "selection": "under", "line": linea, "price": 1 / (1 - p_over)}]
+    return m, snap, filas
+
+
+@pytest.mark.parametrize("lam, mu, esperado", [
+    (1.25, 1.0, ("under", 3.5)),     # partido igualado: solo los goles llegan al 80 %
+    (2.0, 1.5, ("over", 1.5)),       # partido abierto: idem, y por el otro lado
+])
+def test_decidir_elige_un_mercado_de_goles_con_el_ajuste_de_la_linea_2_75(lam, mu, esperado):
+    m, snap, filas = _mercado_pinnacle(lam, mu)
+    # Sin la rama de goles este partido no tiene pronóstico (ni 1X2 ni doble llegan a 0,80).
+    assert ad.decidir(snap, [], RHO, GOLES, set()) is None
+    assert ad.decidir(snap, filas, RHO, (), set()) is None
+    out = ad.decidir(snap, filas, RHO, GOLES, set())
+    assert out is not None
+    c, fit = out
+    assert (c.market, c.selection, c.line) == ("totals", *esperado)
+    verdad = market_totals(m, c.line)[c.selection]
+    assert 0.80 <= c.prob <= 0.95 and c.prob == pytest.approx(verdad, abs=0.003)
+    # El ajuste que se guarda en `fit` es el de la línea de cuarto de gol.
+    assert fit["linea"] == 2.75 and fit["rho"] == RHO
+    assert fit["lambda"] == pytest.approx(lam, abs=0.05) and fit["mu"] == pytest.approx(mu, abs=0.05)
+    assert fit["residuo"] < ap.MAX_RESIDUO_AJUSTE
+
+
+def test_decidir_goles_respeta_el_bloqueo_y_los_mercados_habilitados():
+    _, snap, filas = _mercado_pinnacle(1.25, 1.0)
+    assert ad.decidir(snap, filas, RHO, GOLES, {"totals"}) is None
+    # Solo una línea habilitada: se elige esa (0,92), no la de 3,5.
+    c, fit = ad.decidir(snap, filas, RHO, (("under", 4.5),), set())
+    assert (c.market, c.selection, c.line) == ("totals", "under", 4.5) and fit["linea"] == 2.75
+    # Sin rho del artefacto no hay ajuste: el partido se queda sin pronóstico.
+    assert ad.decidir(snap, filas, None, GOLES, set()) is None
+
+
+def test_decidir_no_mete_goles_de_otras_casas():
+    _, snap, filas = _mercado_pinnacle(1.25, 1.0)
+    de_bet365 = [{**f, "bookmaker": "bet365"} for f in filas]
+    assert ad.decidir(snap, de_bet365, RHO, GOLES, set()) is None
+
+
+def _filas_ref(*filas):
+    return [{"bookmaker": b, "selection": sel, "line": ln, "price": pr} for b, sel, ln, pr in filas]
+
+
+def test_ref_de_goles_toma_la_mejor_cuota_de_soft_books_de_la_misma_linea_y_lado(monkeypatch):
+    monkeypatch.setattr(ad, "settings", replace(
+        settings, soft_books=("bet365", "william_hill", "1xbet", "betano")))
+    totales = _filas_ref(
+        ("bet365", "under", 3.5, 1.22), ("1xbet", "under", 3.5, 1.25),
+        ("william_hill", "under", 3.5, 1.20),
+        ("betano", "under", 4.5, 1.40),       # otra línea
+        ("bet365", "over", 3.5, 3.10),        # otro lado
+        ("pinnacle", "under", 3.5, 1.30),     # no es de la lista de suscriptores
+        ("unibet", "under", 3.5, 1.45),       # tampoco
+        ("1xbet", "under", None, 9.0))        # fila sin línea
+    snap = _snap((1.18, 7.5, 15.0))
+    c = ap.Candidato("totals", "under", 3.5, 0.83)
+    assert ad._ref(snap, totales, c) == (1.25, "1xbet")
+    assert ad._ref(snap, totales, ap.Candidato("totals", "over", 3.5, 0.2)) == (3.10, "bet365")
+    # Sin cuota de ninguna casa de la lista para esa selección: nada.
+    assert ad._ref(snap, totales, ap.Candidato("totals", "over", 1.5, 0.84)) == (None, None)
+    # Los alias de casa se normalizan antes de compararlos.
+    alias = _filas_ref(("WilliamHill", "under", 3.5, 1.30), ("onexbet", "under", 3.5, 1.28))
+    assert ad._ref(snap, alias, c) == (1.30, "william_hill")
+
+
+def test_ref_de_doble_oportunidad_es_vacia():
+    assert ad._ref(_snap((1.18, 7.5, 15.0)), [], ap.Candidato("double_chance", "1X", None, 0.9)) == (None, None)
 
 
 def _db(monkeypatch, partidos, snap, batch_sellado=False, rho=-0.06):
