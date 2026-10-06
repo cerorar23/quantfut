@@ -267,6 +267,17 @@ def informe_publico() -> dict:
             ORDER BY m.kickoff_utc""")
     for p in proximos:
         p["texto"] = ap.texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"])
+        # Precisión PÚBLICA reducida (decisión del usuario, 2026-10-06). La
+        # probabilidad exacta es la de Pinnacle sin margen, y en doble
+        # oportunidad `1 − prob` es la probabilidad justa del resultado
+        # EXCLUIDO, donde viven los picks de valor: con cualquier cuota blanda
+        # se reconstruiría su edge (`cuota × p − 1`, umbral 2 %). A punto
+        # porcentual entero el error de `1 − prob` es ±0,5 puntos sobre un 13 %,
+        # es decir ±3,8 % en precio: más que el umbral, no sirve para recalcular
+        # el criterio. El lote sellado y la tabla conservan el valor exacto
+        # (el hash no cambia): esto solo recorta lo que sale por la API.
+        p["prob"] = round(float(p["prob"]), 2)
+        p["fair_price"] = round(1.0 / p["prob"], 2)
     return {"estado": est["estado"], "motivos": est["motivos"],
             "proximos": proximos, "historial": ap.historial(_liquidados(None))}
 

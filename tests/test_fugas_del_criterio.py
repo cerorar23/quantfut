@@ -76,3 +76,52 @@ def test_los_lotes_nuevos_no_llevan_el_precio_justo(monkeypatch):
 
 def test_los_lotes_anteriores_se_regeneran_igual(monkeypatch):
     assert "market_consensus" in _sql_del_lote(monkeypatch, date(2026, 10, 2))
+
+
+# --- Línea de alta probabilidad (revisión final, 2026-10-06) ------------------
+#
+# En doble oportunidad, `1 − prob` es la probabilidad justa de Pinnacle del
+# resultado EXCLUIDO, justo donde viven los picks de valor. Con 6 decimales y
+# cualquier cuota blanda se recalcula el edge del criterio. La respuesta pública
+# da la probabilidad a punto porcentual entero; el lote sellado y la tabla
+# conservan el valor exacto.
+
+def _decimales(x: float) -> int:
+    from decimal import Decimal
+    return -Decimal(repr(x)).as_tuple().exponent
+
+
+def test_alta_probabilidad_publica_la_probabilidad_a_punto_entero(monkeypatch):
+    from dataclasses import replace
+
+    from qf.config import settings
+    from qf.publish import alta_prob_datos as ad
+
+    def fila(match_id, prob, fair_price):
+        return {"match_id": match_id, "league_id": "br.serie_a",
+                "kickoff_utc": datetime(2026, 10, 7, 20, tzinfo=timezone.utc),
+                "local": "Cruzeiro", "visitante": "Sao Paulo", "market": "double_chance",
+                "selection": "1X", "line": None, "prob": prob, "fair_price": fair_price,
+                "ref_price": None, "ref_book": None, "batch_date": "2026-10-06",
+                "chain_sha256": "ab" * 32}
+
+    exactas = [(0.874312, 1.1437), (0.8049, 1.2424), (0.9449, 1.0583), (0.95, 1.0526)]
+
+    def q(sql, params=()):
+        if "m.kickoff_utc > now()" in sql:
+            return [fila(f"m{i}", p, fp) for i, (p, fp) in enumerate(exactas)]
+        return []
+
+    monkeypatch.setattr(ad, "query", q)
+    monkeypatch.setattr(ad, "settings", replace(settings, alta_prob_enabled=True))
+    proximos = ad.informe_publico()["proximos"]
+
+    assert proximos[0]["prob"] == 0.87
+    assert proximos[0]["fair_price"] == round(1 / 0.87, 2)
+    for p in proximos:
+        assert _decimales(p["prob"]) <= 2
+        assert p["fair_price"] == round(1 / p["prob"], 2)
+        # Con la cuota justa y la probabilidad públicas ya no se recupera el
+        # valor exacto: el 1 − prob queda a ±0,5 puntos del real.
+        assert p["prob"] not in {e[0] for e in exactas[:3]}
+    assert [p["prob"] for p in proximos] == [0.87, 0.80, 0.94, 0.95]
