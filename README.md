@@ -725,8 +725,11 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   de pausas en falso por mercado (3 % de la línea entera) en 26 semanas y
   ~88 % de detección de un déficit de 3 puntos. Reanudar es decisión del
   usuario: `ALTA_PROB_CONTROL_DESDE`. Interruptor general `ALTA_PROB_ENABLED`.
-- **Limitación conocida:** a las 08:00 UTC el precio de ≤ 6 h suele venir de
-  API-Football, que no trae goles; los mercados de goles saldrán poco.
+- **Goles desde API-Football (2026-10-06):** a las 08:00 UTC el precio de
+  ≤ 6 h suele venir de API-Football; `ingest/af_odds` guarda, con la misma
+  petición, sus líneas de goles (todas las de Pinnacle; 1,5/2,5/3,5/4,5 de
+  las casas de la lista; `db/041`), y la línea las lee de la MISMA respuesta
+  que el 1X2. Prueba en vivo: goles en 15 de 22 partidos (antes 0).
 
 ## La cadena de hashes en la práctica
 
