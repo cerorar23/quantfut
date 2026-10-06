@@ -34,3 +34,19 @@ def test_deficit_de_un_punto_es_el_limite():
     r = cal.evaluar(_f("double_chance", 0.87, 860, 1000))   # −1,0 pts exacto
     assert r["double_chance"]["diferencia_pts"] == -1.0
     assert r["double_chance"]["pasa"] is True
+
+
+def test_criterio_a_falla_aunque_criterio_b_pase():
+    # Un mercado con dos tramos: el 80-85 falla (a), el 85-90 pasa, pero
+    # global pasa (b). Por tanto pasa = False (porque (a) falló).
+    # Tramo 1: n=200, prometido 82%, real 70% (70 < 82-2*SE=76.6%) → falla (a)
+    # Tramo 2: n=2000, prometido 87%, real 90% (90 > 87-2*SE=82.2%) → pasa (a)
+    # Global: prometido 86.55%, real 88.18%, dif +1.63 → pasa (b)
+    f1 = _f("totals under 5.5", 0.82, 140, 200)
+    f2 = _f("totals under 5.5", 0.87, 1800, 2000)
+    f = pd.concat([f1, f2], ignore_index=True)
+    r = cal.evaluar(f)
+    assert r["totals under 5.5"]["pasa"] is False
+    assert r["totals under 5.5"]["diferencia_pts"] > -1.0  # Criterio (b) pasa
+    assert r["totals under 5.5"]["tramos"][0]["decide"] is True
+    assert r["totals under 5.5"]["tramos"][0]["pasa"] is False  # Tramo (a) falla
