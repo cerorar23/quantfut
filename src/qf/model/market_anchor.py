@@ -42,7 +42,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import minimize
 
-from .pricing import market_1x2, market_totals, score_matrix
+from .pricing import market_1x2, score_matrix, totals_fair_over
 
 # Por debajo de esto el ajuste reproduce el precio de mercado a efectos
 # prácticos: 0,002 de error absoluto máximo es medio punto de cuota en una
@@ -77,9 +77,11 @@ def _targets(p_home: float, p_draw: float, p_away: float,
     # Los totales sobre-identifican el sistema: con 1X2 solo hay exactamente
     # dos ecuaciones libres para dos incógnitas, así que el over/under no
     # cambia la solución cuando el mercado es coherente, pero cuando NO lo es
-    # el residuo lo delata en vez de esconderlo.
+    # el residuo lo delata en vez de esconderlo. `p_over` es la del mercado
+    # de dos vías sin margen: en gol entero y cuarto de gol lleva el push
+    # descontado, por eso se compara con `totals_fair_over` y no con P(over).
     for line, p_over in (totals or {}).items():
-        out.append((lambda m, ln=float(line): market_totals(m, ln)["over"],
+        out.append((lambda m, ln=float(line): totals_fair_over(m, ln),
                     float(p_over), 0.5))
     return out
 

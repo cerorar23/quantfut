@@ -80,6 +80,23 @@ def market_totals(m: np.ndarray, line: float) -> dict[str, float]:
     return {"over": over, "under": under, "push": push}
 
 
+def totals_fair_over(m: np.ndarray, line: float) -> float:
+    """
+    Probabilidad del over tal como la da un mercado de dos vías sin margen:
+    1 / cuota justa. En medio gol es P(over). En gol entero el push devuelve
+    la apuesta y en cuarto de gol (2,75 = mitad a 2,5 y mitad a 3) se reparte
+    entre las dos líneas vecinas; resolviendo EV = 0 queda
+    E[gana] / (1 − E[push]).
+    """
+    n = m.shape[0]
+    hg, ag = np.meshgrid(np.arange(n), np.arange(n), indexing="ij")
+    tot = hg + ag
+    partes = (line - 0.25, line + 0.25) if round(line * 4) % 2 else (line, line)
+    gana = np.mean([float(m[tot > c].sum()) for c in partes])
+    push = np.mean([float(m[tot == c].sum()) for c in partes])
+    return float(gana / (1.0 - push))
+
+
 def market_team_total(m: np.ndarray, line: float, side: str) -> dict[str, float]:
     n = m.shape[0]
     goals = np.arange(n)
