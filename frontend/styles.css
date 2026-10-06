@@ -673,3 +673,6 @@ table.standings td:last-child{text-align:left}
 .with-crest{display:flex!important;align-items:center;gap:7px}
 .with-crest .crest{width:16px;height:16px}
 .live-pick .live-prob{display:block;margin-top:6px;color:var(--green);font-size:11px}
+.live-panel+.live-panel{margin-top:16px}
+.live-pick.alta-pick h3{font-size:19px;letter-spacing:-.02em}
+.live-pick.alta-pick>div:last-child small+small{margin-top:4px}

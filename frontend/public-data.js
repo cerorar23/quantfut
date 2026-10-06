@@ -6,6 +6,7 @@ const SOURCES = {
   record: ['/track-record', value => value && Array.isArray(value.mensual) && typeof value.ultimos_30d === 'object'],
   calibration: ['/calibration', value => value && Array.isArray(value.runs)],
   chain: ['/chain?limit=20', value => value && Array.isArray(value.lotes)],
+  alta: ['/alta-probabilidad', value => value && Array.isArray(value.proximos) && typeof value.historial === 'object' && typeof value.estado === 'string'],
 };
 
 export async function loadPublicData(fetcher = fetch) {

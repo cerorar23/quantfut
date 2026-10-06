@@ -1,4 +1,4 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=55cb83f58eea';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=8e03f4c4af52';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
@@ -208,13 +208,14 @@ const nav = [
   { route: 'partidos', label: 'Partidos y estadísticas', short: 'Partidos', icon: '◷', group: 'EXPLORAR' },
   { route: 'mercados', label: 'Mesa de mercados', short: 'Mesa', icon: '▦', group: 'EXPLORAR' },
   { route: 'picks', label: 'Picks', short: 'Picks', icon: '◇', group: 'EXPLORAR' },
+  { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: '◎', group: 'EXPLORAR' },
   { route: 'partido', label: 'Ficha de mercado · demo', short: 'Demo', icon: '◫', group: 'EXPLORAR' },
   { route: 'historial', label: 'Historial verificable', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
   { route: 'planes', label: 'Planes', short: 'Planes', icon: '◈', group: 'ACCESO' },
   { route: 'cuenta', label: 'Mi espacio', short: 'Mi espacio', icon: '◉', group: 'ACCESO' },
 ];
 const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
-const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Planes', cuenta: 'Mi espacio' };
+const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Planes', cuenta: 'Mi espacio' };
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
 // por probabilidad justa, que no dice nada de si la cuota compensa.
@@ -303,6 +304,10 @@ const realPercent = (value, digits = 1) => value == null || !Number.isFinite(Num
 const realDate = value => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : dateFmt(date, { day: '2-digit', month: 'short', year: 'numeric' });
+};
+const realTime = value => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : timeLabel(date);
 };
 
 const STATUS = {
@@ -845,6 +850,29 @@ function picksView() {
     <div class="bottom-note">El bloque real consulta únicamente /picks/free y verifica la puerta comercial. Ningún pick privado ni token de servicio llega al navegador.</div>`;
 }
 
+// Línea de alta probabilidad (diseño 2026-10-05). Solo datos reales de
+// /alta-probabilidad: es una línea de acierto, no de valor, y se dice.
+const ALTA_MERCADO = { h2h: 'Ganador (1X2)', double_chance: 'Doble oportunidad', totals: 'Goles' };
+function altaView() {
+  const head = `<div class="view-title"><div><p class="eyebrow">PRONÓSTICOS / ALTA PROBABILIDAD</p><h1>Alta probabilidad</h1><p class="lead">Un pronóstico por partido, solo si su probabilidad real (Pinnacle sin margen) está entre el 80% y el 95%. Cada uno se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
+  const source = publicData?.alta;
+  if (!source) return `${head}<section class="live-panel"><p>Consultando pronósticos de alta probabilidad…</p></section>`;
+  if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudieron consultar los pronósticos. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+  const { estado, motivos, proximos, historial: h } = source.data;
+  const ic = Array.isArray(h.diferencia_ic95) ? h.diferencia_ic95 : null;
+  const record = h.n ? `<div class="live-facts"><div><span>PROMETIDO</span><strong>${realNumber(h.acierto_prometido, 1)}%</strong><small>media de las probabilidades</small></div><div><span>REAL</span><strong>${realNumber(h.acierto_real, 1)}%</strong><small>${realNumber(h.aciertos)} de ${realNumber(h.n)} acertados</small></div><div><span>DIFERENCIA · IC95</span><strong>${ic ? `${realNumber(ic[0], 1)} a ${realNumber(ic[1], 1)}` : '—'}</strong><small>${ic ? 'puntos, real − prometido' : 'Sin intervalo todavía'}</small></div></div>` : '<p>Todavía no hay pronósticos liquidados.</p>';
+  const byMarket = Object.entries(h.por_mercado ?? {});
+  const marketTable = byMarket.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Acierto por mercado"><table><thead><tr><th>Mercado</th><th>Pronósticos</th><th>Prometido</th><th>Real</th></tr></thead><tbody>${byMarket.map(([market, row]) => `<tr><td>${esc(ALTA_MERCADO[market] ?? market)}</td><td>${realNumber(row.n)}</td><td>${realNumber(row.acierto_prometido, 1)}%</td><td>${realNumber(row.acierto_real, 1)}%</td></tr>`).join('')}</tbody></table></div>` : '';
+  const roi = h.rendimiento_ref?.n ? `<p class="live-reason">A la cuota de referencia de tu casa (${realNumber(h.rendimiento_ref.n)} pronósticos con cuota): rendimiento ${realPercent(h.rendimiento_ref.roi, 2)}.</p>` : '';
+  const note = '<p class="live-reason">Es una línea de acierto, no de valor: por un resultado al 85% la casa paga tan poco que, a la larga, suele dejar poco o nada. Por eso se publican las dos cosas.</p>';
+  const paused = estado !== 'activa' ? `<p class="live-reason">Línea ${estado === 'pausada' ? 'pausada' : 'desactivada'}: ${esc((motivos ?? []).join(' · ') || 'sin motivo informado')}</p>` : '';
+  const cards = proximos.length ? `<div class="live-pick-list">${proximos.map(p => `<article class="live-pick alta-pick"><div><span>${esc(p.league_id ?? 'Liga')} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}</p><small class="live-prob">Probabilidad real: ${esc(probabilityLabel(p.prob)?.text ?? 'sin dato')}</small></div><div><span>Cuota justa</span><strong>${realNumber(p.fair_price, 2)}</strong><small>${p.ref_price ? `${esc(p.ref_book ?? 'Casa')} ${realNumber(p.ref_price, 2)}` : 'Sin cuota de referencia'}</small><small>Lote ${esc(p.batch_date ?? '—')} · ${esc(String(p.chain_sha256 ?? '').slice(0, 12))}</small></div></article>`).join('')}</div>` : '<p>No hay pronósticos de alta probabilidad para los próximos partidos. Si ningún resultado llega al 80%, no se fuerza uno.</p>';
+  const badgeText = estado === 'activa' ? 'Activa' : estado === 'pausada' ? 'Pausada' : 'Desactivada';
+  return `${head}
+    <section class="live-panel" aria-label="Historial de alta probabilidad"><div class="live-head"><div><p class="eyebrow">HISTORIAL PÚBLICO · /ALTA-PROBABILIDAD</p><h2>Prometido frente a real</h2></div>${badge(badgeText, estado === 'activa' ? 'good' : 'muted')}</div>${record}${marketTable}${roi}${note}</section>
+    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+}
+
 function matchView() {
   const fx = fixtureById.get(state.selectedMatch) || fixtures[0];
   const outcomes = ['Local', 'Empate', 'Visita'];
@@ -1236,7 +1264,7 @@ function closeModal() {
 // ---------------------------------------------------------------- render
 
 function render() {
-  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView };
+  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="cuenta">${state.demoSession ? 'Cuenta demo' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell">${state.route === 'inicio' ? dayRail() : ''}<main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;

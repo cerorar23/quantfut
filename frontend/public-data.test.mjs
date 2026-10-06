@@ -9,6 +9,7 @@ const responses = {
   '/track-record': { mensual: [], ultimos_30d: { n: 0 } },
   '/calibration': { runs: [] },
   '/chain?limit=20': { lotes: [] },
+  '/alta-probabilidad': { estado: 'desactivada', motivos: ['Línea todavía no activada'], proximos: [], historial: { n: 0 } },
 };
 
 test('consulta solo rutas públicas y conserva los estados vacíos', async () => {
@@ -57,4 +58,12 @@ test('el acierto esperado no se estima si falta alguna probabilidad', () => {
   assert.equal(expectedHitRate([{ fair_prob: 0.2 }, { fair_prob: 0.4 }]).toFixed(2), '0.30');
   assert.equal(expectedHitRate([{ fair_prob: 0.2 }, { fair_prob: null }]), null);
   assert.equal(expectedHitRate([]), null);
+});
+
+test('la línea de alta probabilidad se carga de su ruta pública', async () => {
+  const data = await loadPublicData(async path => ({ ok: true, json: async () => responses[path] }));
+  assert.equal(data.alta.status, 'ready');
+  assert.equal(data.alta.data.estado, 'desactivada');
+  const roto = await loadPublicData(async path => ({ ok: true, json: async () => (path === '/alta-probabilidad' ? { proximos: 'x' } : responses[path]) }));
+  assert.equal(roto.alta.status, 'error');
 });
