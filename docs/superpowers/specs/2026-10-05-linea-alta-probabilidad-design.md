@@ -314,3 +314,40 @@ Encontrados al revisar el código y los datos reales; no cambian el alcance:
    lote del día ya está sellado (job relanzado a mano), no se elige nada:
    quedaría fuera del lote para siempre. `select_and_persist(dry_run=True)`
    enseña lo que se elegiría sin guardar, para verificar antes de activar.
+
+## Ajustes de la revisión final (2026-10-06)
+
+Sustituyen lo dicho arriba donde se contradice:
+
+1. **Precisión pública de `prob` (sección 3).** En doble oportunidad, `1 − prob`
+   es la probabilidad justa de Pinnacle del resultado excluido, donde viven los
+   picks de valor: con `prob` a 6 decimales y cualquier cuota blanda se
+   recalcula el edge del criterio. `/alta-probabilidad` da `prob` a punto
+   porcentual entero (`round(prob, 2)`) y `fair_price = round(1 / prob, 2)`
+   con esa `prob` redondeada: ±0,5 puntos sobre un 13 % es ±3,8 % en precio,
+   más que el umbral del 2 %. La tabla y el lote sellado conservan el valor
+   exacto; el hash no cambia.
+2. **Control más prudente (sección 4.2).** Una línea PERFECTAMENTE calibrada,
+   con ~50 pronósticos por semana y cuatro contrastes (todo + 3 mercados)
+   evaluados cada semana, se pausaba en el ~27 % de los casos con IC95 desde 8
+   semanas (Monte Carlo, 300 líneas de 26 semanas). Ahora: IC99 y al menos
+   `MIN_SEMANAS_CONTROL = 10` semanas distintas antes de que el IC pueda
+   pausar; y una red temprana para fallos groseros, con n ≥ 50 en el grupo,
+   `z = Σ(acertado − prob) / sqrt(Σ prob·(1 − prob)) ≤ −4` bloquea aunque haya
+   pocas semanas. `historial()` sigue con el IC95 (es informativo). Mismo
+   Monte Carlo con las reglas nuevas: pausa falsa en el 9,7 % de las líneas
+   sanas en 26 semanas (3,0 % la línea entera; 27 % y 10,7 % antes), y un
+   déficit real de 3 puntos se detecta en el 88 % (81,7 % la línea entera),
+   con mediana en la semana 11 (12).
+3. **Vista previa (sección 6).** `select_and_persist(dry_run=True)` añade
+   `resumen` con el recuento de decisiones por fuente y por mercado: a las
+   08:00 UTC, con el límite de 6 h, muchos partidos europeos de la tarde solo
+   tienen precio de API-Football (sin goles), y hay que verlo antes de activar.
+4. **Textos (sección 3, nota fija).** La nota de la web dice lo medido, no "suele
+   dejar poco o nada": a la mejor cuota de bet365/1xBet, los favoritos ≥ 80 %
+   dejaron −2,4 % en el histórico. La cuota de referencia se describe como "la
+   mejor cuota entre las casas de la lista". Sin la línea activa, `motivos` dice
+   "Línea desactivada" (vale antes y después de activar).
+5. **Puesta en marcha (sección 6).** La Tarea 10 del plan añade un ensayo de
+   solo lectura en producción (`_collect`, `informe`, `settle`, la API y los
+   permisos de `qf_readonly`) antes de la vista previa y del primer sellado real.
