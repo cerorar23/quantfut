@@ -211,6 +211,17 @@ def track_record():
     }
 
 
+@publico.get("/alta-probabilidad")
+def alta_probabilidad():
+    """
+    Línea de alta probabilidad: pronósticos sellados con probabilidad real
+    (Pinnacle sin margen) entre el 80 y el 95 %, y su historial de acierto
+    prometido frente a real, entero. Es una línea de acierto, no de valor.
+    """
+    from ..publish import alta_prob_datos
+    return alta_prob_datos.informe_publico()
+
+
 @publico.get("/calibration")
 def calibration():
     return {"runs": query(

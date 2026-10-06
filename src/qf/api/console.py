@@ -77,6 +77,16 @@ def _commercial_gate() -> dict:
             "publicables_por_liga": pub.get("by_league")}
 
 
+def _alta_card() -> dict:
+    """Estado de la línea de alta probabilidad: lo mismo que ve la web, sin la lista."""
+    from ..publish import alta_prob_datos
+
+    informe = alta_prob_datos.informe_publico()
+    return {"estado": informe["estado"], "motivos": informe["motivos"],
+            "proximos_sellados": len(informe["proximos"]),
+            "historial": informe["historial"]}
+
+
 def _last_training() -> dict | None:
     row = query_one(
         """SELECT model_version, trained_at, is_active, notes
@@ -96,6 +106,7 @@ def _snapshot() -> dict:
 
     return {
         "Puerta comercial (sombra del criterio sharp)": _read(_commercial_gate),
+        "Línea de alta probabilidad": _read(_alta_card),
         "Recorrido de la sombra por liga": _read(shadow_audit),
         "Último entrenamiento": _read(_last_training),
         "Salud del sistema": _read(lambda: health_run(alert_on_fail=False)),
