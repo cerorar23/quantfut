@@ -686,6 +686,48 @@ frente al modelo base a T-60 y evidencia en varias ligas.
 
 ---
 
+## Línea de alta probabilidad (desde 2026-10-06)
+
+Una línea aparte de los picks de valor, pedida por el usuario: los clientes
+valoran acertar más que batir a la casa. Un pronóstico por partido, solo si
+su probabilidad real está entre el 80 % y el 95 %. **Es una línea de acierto,
+no de valor**: con las casas de los suscriptores estos resultados no tienen
+valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
+−2,4 %, EV al cierre −2,6 %). La web y `/alta-probabilidad` lo dicen.
+
+- **Probabilidad:** siempre Pinnacle sin margen (Shin), nunca el modelo
+  propio. 1X2 y doble oportunidad salen directos del 1X2; los goles (más de
+  1,5, menos de 3,5, menos de 4,5) de un ajuste Dixon-Coles que reproduce el
+  1X2 y la línea de goles de Pinnacle (`model/market_anchor`, con push en
+  líneas enteras y de cuarto). Es decir, la de goles es una probabilidad
+  derivada, no la cuota de Pinnacle de ese mercado.
+- **Regla:** de los candidatos en [80 %, 95 %], el de MENOR probabilidad (el
+  más informativo); el tope evita obviedades. Precio de Pinnacle de ≤ 6 h y
+  ≥ 15 min antes del inicio; horizonte 36 h; un pronóstico por partido para
+  siempre (`UNIQUE`).
+- **Prueba histórica** (`eval/alta_prob_calibracion.py`, 14.305 partidos,
+  firma `d5cbc3151164`): prometido 84,45 %, real 84,60 %; todos los mercados
+  y tramos pasan. Solo valida la línea 2,5 de goles (football-data no trae
+  otras).
+- **Sellado:** `daily` elige y guarda ANTES de `seal()`; el lote del día lleva
+  el bloque `alta_probabilidad` desde `LOTE_ALTA_PROB_DESDE` (7-oct-2026).
+  Una sola fuente de verdad, `hashchain.lote_lleva_alta`, la usan el lote,
+  el job y la API: lo que no está en un lote sellado no se publica.
+  Tablas inmutables `alta_prob_picks` / `alta_prob_results` (`db/040`).
+- **Público:** `/alta-probabilidad` da la probabilidad a punto porcentual
+  entero (con decimales permitía reconstruir el precio justo que usan los
+  picks de valor); el lote conserva el valor exacto. Ojo si algún día se
+  configura `CHAIN_GIT_REMOTE`: el lote publicado lleva la probabilidad
+  exacta y el ajuste de goles.
+- **Pausa automática:** con ≥ 50 liquidados, IC99 por semanas (mínimo 10
+  semanas) de `acertado − prometido` entero bajo cero, o z ≤ −4 (fallo
+  grosero, desde el principio). En conjunto y por mercado. Simulado: ~10 %
+  de pausas en falso por mercado (3 % de la línea entera) en 26 semanas y
+  ~88 % de detección de un déficit de 3 puntos. Reanudar es decisión del
+  usuario: `ALTA_PROB_CONTROL_DESDE`. Interruptor general `ALTA_PROB_ENABLED`.
+- **Limitación conocida:** a las 08:00 UTC el precio de ≤ 6 h suele venir de
+  API-Football, que no trae goles; los mercados de goles saldrán poco.
+
 ## La cadena de hashes en la práctica
 
 Crea un repo público separado (`quantfut-registro-publico`), móntalo en
