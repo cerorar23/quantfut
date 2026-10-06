@@ -29,6 +29,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 
+import numpy as np
+import pandas as pd
+
+from ..eval.soft_vs_sharp import MIN_WEEKS, _weekly_ci
 from ..model.market_anchor import market_lambdas
 from ..model.pricing import market_totals, score_matrix
 
@@ -125,3 +129,70 @@ def texto(market: str, selection: str, line: float | None,
     if market == "totals":
         return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} goles"
     raise ValueError(f"Mercado desconocido: {market}")
+
+
+# --------------------------------------------------------------------------
+# Control de calidad e historial
+# --------------------------------------------------------------------------
+
+def _marco(liquidados: list[dict]) -> pd.DataFrame:
+    f = pd.DataFrame(liquidados)
+    f["prob"] = f["prob"].astype(float)
+    f["won"] = f["outcome"] == "win"
+    f["diff"] = f["won"].astype(float) - f["prob"]
+    ko = pd.to_datetime(f["kickoff_utc"], utc=True).dt.tz_convert(None)
+    f["week"] = ko.dt.to_period("W").astype(str)
+    f["mes"] = ko.dt.strftime("%Y-%m")
+    return f
+
+
+def control(liquidados: list[dict], min_n: int = MIN_N_CONTROL) -> dict:
+    """
+    ¿Promete de más? En conjunto ("todo") y por mercado: con n ≥ min_n y el
+    IC95 de (acertado − prob) entero bajo cero, se bloquea. El IC remuestrea
+    semanas enteras, como la puerta de valor; sin MIN_WEEKS semanas no hay IC
+    y no se bloquea (se informa).
+    """
+    if not liquidados:
+        return {"bloqueados": [], "motivos": ["Sin pronósticos liquidados todavía"]}
+    f = _marco(liquidados)
+    bloqueados, motivos = [], []
+    for nombre, g in [("todo", f), *f.groupby("market")]:
+        if len(g) < min_n:
+            motivos.append(f"{nombre}: muestra insuficiente ({len(g)} < {min_n})")
+            continue
+        ic = _weekly_ci(g["diff"].to_numpy(float), g["week"].to_numpy())
+        if ic is None:
+            motivos.append(f"{nombre}: muestra insuficiente (menos de {MIN_WEEKS} semanas)")
+            continue
+        if ic[1] < 0:
+            bloqueados.append(str(nombre))
+            motivos.append(f"{nombre}: acierto real por debajo del prometido "
+                           f"(IC95 {ic[0] * 100:+.1f} a {ic[1] * 100:+.1f} puntos)")
+    return {"bloqueados": bloqueados, "motivos": motivos}
+
+
+def _bloque(g: pd.DataFrame) -> dict:
+    return {"n": int(len(g)), "aciertos": int(g["won"].sum()),
+            "acierto_prometido": round(float(g["prob"].mean()) * 100, 1),
+            "acierto_real": round(float(g["won"].mean()) * 100, 1)}
+
+
+def historial(liquidados: list[dict]) -> dict:
+    """Lo prometido frente a lo ocurrido, entero y sin filtrar. En %."""
+    if not liquidados:
+        return {"n": 0, "aciertos": 0, "acierto_prometido": None, "acierto_real": None,
+                "diferencia_ic95": None, "por_mercado": {}, "por_mes": [],
+                "rendimiento_ref": {"n": 0, "roi": None}}
+    f = _marco(liquidados)
+    ic = _weekly_ci(f["diff"].to_numpy(float), f["week"].to_numpy())
+    con_ref = f[f["ref_price"].notna()] if "ref_price" in f else f.iloc[0:0]
+    roi = (np.where(con_ref["won"], con_ref["ref_price"].astype(float) - 1.0, -1.0).mean() * 100
+           if len(con_ref) else None)
+    return {**_bloque(f),
+            "diferencia_ic95": None if ic is None else [round(ic[0] * 100, 1), round(ic[1] * 100, 1)],
+            "por_mercado": {str(k): _bloque(g) for k, g in f.groupby("market")},
+            "por_mes": [{"mes": k, **_bloque(g)}
+                        for k, g in sorted(f.groupby("mes"), key=lambda kg: kg[0], reverse=True)],
+            "rendimiento_ref": {"n": int(len(con_ref)),
+                                "roi": None if roi is None else round(float(roi), 2)}}
