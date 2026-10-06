@@ -62,7 +62,7 @@ LOTE_SIN_CONSENSO_DESDE = date(2026, 10, 3)
 # (publish/alta_prob.py). None = todavía no desplegada: los lotes no cambian.
 # Se fija a la fecha del despliegue en ese mismo commit; los lotes anteriores
 # se regeneran igual que se sellaron.
-LOTE_ALTA_PROB_DESDE: date | None = None
+LOTE_ALTA_PROB_DESDE: date | None = date(2026, 10, 7)   # primer lote sin sellar al desplegar (06-oct ya selló a las 08:00 UTC)
 
 
 def lote_lleva_alta(dia: date) -> bool:
