@@ -3801,3 +3801,45 @@ columnas). Dos pasadas manuales de `af_odds`: 1.622 filas nuevas en 41
 partidos (15 s) y luego 0 (el 1X2 se sigue deduplicando). Vista previa con
 la línea encendida solo para ese proceso: 9 pronósticos de 15 partidos, 7 de
 goles (casi todos "menos de 4,5", con referencia de Betano), antes 2.
+
+## 2026-10-07 — web: portada inspirada en TennisPredictions y paleta del usuario
+
+Se conserva la jerarquía editorial/calendario/filtros/filas por competición de
+la referencia pública, adaptada al criterio de QuantFut. SingleFile CLI 2.18.0
+capturó el HTML con manifiesto en `.local/design-reference/`; no es dependencia
+de la web ni reproduce el backend ajeno. El usuario aportó azul noche #0b132b,
+pizarra #1c2541 y esmeralda #10b981: superficies y cabecera se armonizan con
+esa paleta. El tablero continúa siendo demo identificada; agenda real y puerta
+comercial permanecen separadas, con error de API visible. No se activó ninguna
+publicación, cuenta ni pago ni se desplegó. Nueve pruebas del frontend pasan;
+732 pruebas Python pasaron antes de las ediciones de presentación. El script
+shell no encontró utilidades dentro del entorno restringido y su OK no se
+consideró válido; se ejecutó la suite con el Python del proyecto. Revisión en
+navegador de filtros, fechas, fichas, Pick del día y combinadas. Propuesta y
+siguiente fase: `docs/web_diseno_tennispredictions_20261007.md`.
+
+## 2026-10-07 — web: cuenta y modelo de paquetes/suscripciones
+
+El usuario aclaró que «su modelo» significa paquetes y suscripciones. Se
+adaptaron las vistas de acceso, recuperación, registro, cuenta, catálogo de
+picks y planes de 1/3/6 meses más Club de TennisPredictions. SingleFile guardó
+las páginas públicas; el acceso se capturó sin sesión. El panel de referencia
+se inspeccionó sin guardar ni incorporar su información personal.
+
+La selección de modalidad y el perfil son estado visual de la pestaña, no
+autorización de servidor. Identidad y contraseña son sintéticas, de solo
+lectura; no se envían correos ni se crea una orden. Mi cuenta mantiene «Sin
+suscripción activa» incluso después de revisar el pedido. Preferencias de
+cuotas/ligas conservan la persistencia local existente; favoritos demo se
+añaden y quitan durante la sesión. El resumen conserva el cobro deshabilitado.
+Los importes de referencia usan centavos enteros: equivalentes mensuales y
+ahorros derivados del total, corrigiendo discrepancias visibles en la referencia.
+
+13 pruebas frontend y 11 del servidor web aprobadas. Validación en navegador
+del recorrido de acceso → pedido, recuperación sin correo, preferencias,
+favoritos, ausencia de activación y vistas 320/390/768/1024/1440 px. Se corrigió
+un desbordamiento de 4 px del catálogo a 320 px. El chequeo shell final volvió
+a omitir utilidades/Python en este entorno: su «OK» no cuenta como validación;
+las pruebas directas son la evidencia. Sin despliegue ni cambio de gates.
+Propuesta: docs/modelo_paquetes_suscripciones_20261007.md; capturas propias en
+la carpeta local ignorada `.local/design-reference/quantfut-{acceso,cuenta,suscripciones}.jpg`.

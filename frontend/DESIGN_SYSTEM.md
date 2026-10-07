@@ -18,16 +18,17 @@ premium son vistas ilustrativas, sin cobro ni autenticación real.
 
 | Papel | Token / valor | Uso |
 | --- | --- | --- |
-| Fondo | `--bg: #0b130f` | Lienzo oscuro, no negro puro |
-| Navegación | `--sidebar: #101c15` | Menú lateral de escritorio |
-| Superficie | `--panel: #101d15` | Tarjetas y paneles de datos |
-| Separador | `--border: #294132` | Bordes de baja intensidad |
-| Texto | `--text: #ecf4ed` | Titulares y cifras principales |
-| Texto secundario | `--muted: #a4b4a8` | Metadatos y explicación |
-| Acción | `--green: #75ba79` | Botones, foco y estado activo |
-| Comparación | `--yellow: #d8b874`, `--cyan: #5cc5b2` | Empate y visitante; siempre con etiqueta |
+| Fondo | `--bg-main: #0b132b` | Azul noche de la paleta aportada por el usuario |
+| Navegación | `--sidebar: #101b35` | Cabecera y tablero |
+| Superficie | `--bg-surface: #1c2541` | Tarjetas y paneles azul pizarra |
+| Separador | `--border-color: #3a506b` | Bordes de baja intensidad |
+| Texto | `--text-primary: #f8fafc` | Titulares y cifras principales |
+| Texto secundario | `--text-muted: #94a3b8` | Metadatos y explicación |
+| Acción | `--accent-cta: #10b981`, hover `#059669` | Verde esmeralda en acciones y estados activos |
+| Comparación | `--accent-data: #38bdf8`, `--yellow: #d8b874` | Datos comparables y empate; siempre con etiqueta |
+| Riesgo | `--status-loss: #ef4444` | Token de pérdidas/riesgo; texto claro para legibilidad |
 
-Tipografía: sans del sistema para lectura y títulos; monoespaciada del sistema
+Tipografía: serif Georgia en titulares editoriales de portada, paquetes, suscripciones y cuenta; sans del sistema para lectura y títulos de datos; monoespaciada del sistema
 solo en porcentajes, fechas y etiquetas cortas. Escala: título de página
 `clamp(30px, 3vw, 44px)`, título de panel 18–22px, texto 14–16px y metadatos
 11–12px. Evitar párrafos completos en monoespaciada o texto esencial de 9px.
@@ -36,8 +37,15 @@ Las líneas de cancha son una textura sutil, nunca decoración sobre datos.
 
 ## Componentes y jerarquía
 
-1. **Portada:** propuesta de valor breve, ficha 1X2 de demostración visible
-   desde el primer pantallazo y dos acciones: ver análisis y ver evidencia.
+1. **Portada (2026-10-07):** propuesta de valor breve, resumen de agenda demo,
+   estado de publicación visible, accesos rápidos y tablero con calendario de
+   siete días, búsqueda, filtros por liga/estado y orden por hora o diferencia
+   de precio. Filas agrupadas por competición con probabilidad 1X2, mejor cuota
+   para la selección mostrada, casa, precio justo y estado. La fecha y los
+   filtros afectan solo a la agenda demo. Debajo se conserva la agenda real de
+   hoy y el detalle desplegable de la puerta comercial; los fallos de API se
+   muestran explícitamente. No se etiqueta como finalizado un partido solo por
+   haber empezado.
 2. **Ficha de partido:** identidad del encuentro → probabilidades 1X2 del
    modelo y referencia de mercado en paneles separados → contexto y goles
    esperados → precio y cronología de captura/publicación/inicio. La
@@ -49,8 +57,12 @@ Las líneas de cancha son una textura sutil, nunca decoración sobre datos.
    precio de cierre, muestra y periodo identificables. La demo indica que no
    tiene hashes reales; no es una prueba de rendimiento. No esconder pérdidas
    ni convertir un promedio aislado en promesa de rentabilidad.
-5. **Planes y espacio personal:** enseñar el recorrido futuro sin simular un
-   pago exitoso, una cuenta real ni contenido premium recibido en el cliente.
+5. **Suscripciones y Mi cuenta:** tarjetas seleccionables de 1/3/6 meses,
+   opción Club y resumen de pedido lateral, apilado en móvil. Acceso en dos
+   columnas con pestañas de login/registro y recuperación. Panel con cinco
+   secciones, navegación horizontal en móvil y preferencias existentes.
+   Los campos de identidad son ficticios y de solo lectura; la selección
+   nunca se presenta como pago o suscripción activa.
 6. **Mesa de mercados:** lista de partidos → tabla densa → detalle lateral.
    Se ordena por defecto por diferencia con el precio justo, con las
    candidatas primero y lo excluido o cerrado siempre al final. El modelo

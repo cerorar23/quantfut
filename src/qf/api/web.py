@@ -41,3 +41,13 @@ def console_styles() -> FileResponse:
 @router.get("/fichas-data.js")
 def fichas_data_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "fichas-data.js", media_type="text/javascript")
+
+
+@router.get("/membership.js")
+def membership_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "membership.js", media_type="text/javascript")
+
+
+@router.get("/membership.css")
+def membership_styles() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "membership.css", media_type="text/css")

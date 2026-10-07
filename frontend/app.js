@@ -1,5 +1,6 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=8e03f4c4af52';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
+import { createMembershipUI } from './membership.js?v=7a7094880ba2';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -205,17 +206,19 @@ function savePrefs() {
 
 const nav = [
   { route: 'inicio', label: 'Inicio', short: 'Inicio', icon: '⌂', group: 'EXPLORAR' },
-  { route: 'partidos', label: 'Partidos y estadísticas', short: 'Partidos', icon: '◷', group: 'EXPLORAR' },
-  { route: 'mercados', label: 'Mesa de mercados', short: 'Mesa', icon: '▦', group: 'EXPLORAR' },
+  { route: 'partidos', label: 'Partidos', short: 'Partidos', icon: '◷', group: 'EXPLORAR' },
+  { route: 'mercados', label: 'Mercados', short: 'Mesa', icon: '▦', group: 'EXPLORAR' },
   { route: 'picks', label: 'Picks', short: 'Picks', icon: '◇', group: 'EXPLORAR' },
   { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: '◎', group: 'EXPLORAR' },
-  { route: 'partido', label: 'Ficha de mercado · demo', short: 'Demo', icon: '◫', group: 'EXPLORAR' },
-  { route: 'historial', label: 'Historial verificable', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
-  { route: 'planes', label: 'Planes', short: 'Planes', icon: '◈', group: 'ACCESO' },
-  { route: 'cuenta', label: 'Mi espacio', short: 'Mi espacio', icon: '◉', group: 'ACCESO' },
+  { route: 'partido', label: 'Ficha demo', short: 'Demo', icon: '◫', group: 'EXPLORAR' },
+  { route: 'historial', label: 'Historial', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
+  { route: 'paquetes', label: 'Paquetes de picks', short: 'Paquetes', icon: '◇', group: 'ACCESO' },
+  { route: 'planes', label: 'Suscripciones', short: 'Planes', icon: '◈', group: 'ACCESO' },
+  { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: '◉', group: 'ACCESO' },
 ];
 const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
-const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Planes', cuenta: 'Mi espacio' };
+const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
+const validRoute = route => Object.hasOwn(routeTitle, route);
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
 // por probabilidad justa, que no dice nada de si la cuota compensa.
@@ -252,6 +255,10 @@ const state = {
   statsSplit: 'todos',
   matchTab: 'resumen',
   dayOffset: 0,
+  homeSearch: '',
+  homeStatus: 'todos',
+  homeLeague: 'Todas',
+  homeSort: 'hora',
   pickLeague: 'Todas',
   recordFilter: 'Todos',
   recordLeague: 'Todas',
@@ -272,6 +279,15 @@ const state = {
   followed: prefs.followed,
   mobileMenuOpen: false,
   demoSession: false,
+  membershipPlan: 'standard',
+  authMode: 'login',
+  authReturn: 'cuenta',
+  authMessage: '',
+  showDemoPassword: false,
+  accountSection: 'overview',
+  savedDemoMatches: [],
+  couponOpen: false,
+  couponMessage: '',
   accessStep: 0,
   modal: null,
 };
@@ -350,7 +366,7 @@ function probBar(values, label) {
 // ---------------------------------------------------------------- navegación
 
 function navigate(route) {
-  state.route = nav.some(item => item.route === route) ? route : 'inicio';
+  state.route = validRoute(route) ? route : 'inicio';
   state.modal = null;
   state.drawer = null;
   state.mobileMenuOpen = false;
@@ -387,7 +403,7 @@ function oddsToggle(extraClass = '') {
 }
 
 function dayRail() {
-  return `<nav class="date-rail" aria-label="Seleccionar fecha de partidos">${[-1, 0, 1, 2, 3].map(offset => `<button type="button" class="date-button ${state.dayOffset === offset ? 'active' : ''}" data-day="${offset}" aria-label="${dateFmt(addDays(offset), { weekday: 'long', day: 'numeric', month: 'long' })}" aria-pressed="${state.dayOffset === offset}">${dayLabel(offset)}</button>`).join('')}</nav>`;
+  return `<nav class="date-rail" aria-label="Seleccionar fecha de partidos">${[-3, -2, -1, 0, 1, 2, 3].map(offset => `<button type="button" class="date-button ${state.dayOffset === offset ? 'active' : ''}" data-day="${offset}" aria-label="${dateFmt(addDays(offset), { weekday: 'long', day: 'numeric', month: 'long' })}" aria-pressed="${state.dayOffset === offset}"><small>${offset === 0 ? 'HOY' : dateFmt(addDays(offset), { weekday: 'short' }).replace('.', '').toUpperCase()}</small><strong>${dateFmt(addDays(offset), { day: 'numeric' })}</strong></button>`).join('')}</nav>`;
 }
 
 // ---------------------------------------------------------------- piezas compartidas
@@ -742,20 +758,51 @@ function liveEvidence() {
 }
 
 function homeView() {
+  return redesignedHome();
+}
+
+// Agenda editorial: adapta la jerarquía de TennisPredictions al criterio propio.
+function redesignedHome() {
   const dayFixtures = fixtures.filter(fx => fx.day === state.dayOffset);
-  const featured = fixtureById.get('qf-101');
-  return `<div class="view-title"><div><p class="eyebrow">QUANTFUT / OBSERVAR ANTES DE DECIDIR</p><h1>El precio justo, a la vista.</h1><p class="lead">Probabilidades, precios de todas las casas y un historial auditable en un mismo lugar. Sin promesas de ganancias.</p></div>${badge('Prototipo en modo demo', 'accent')}</div>
-    ${liveStatus()}
-    ${homeRealStrip()}
-    <section class="hero-panel"><div class="hero-copy"><p class="eyebrow">ANÁLISIS SIN CAJA NEGRA · DEMO</p><h2>Cuánto vale cada cuota.<br>Quién paga de más.</h2><p>La mesa compara cada casa con el precio justo de Pinnacle en el mismo instante. Un pick solo existe si una casa paga al menos un 2% por encima; si ninguna lo hace, no se publica nada.</p><div class="hero-actions"><button type="button" class="primary-button" data-route="mercados">Abrir la mesa <span aria-hidden="true">↗</span></button><button type="button" class="secondary-button" data-route="historial">Ver la evidencia</button></div></div><aside class="hero-preview" aria-label="Vista previa de una ficha de partido ficticia"><div class="preview-top"><span>FICHA DE PARTIDO</span>${badge('Datos demo', 'muted')}</div><p class="preview-league">${featured.league} · ${kickoffLabel(featured)}</p><h3>${featured.home}<span>vs</span>${featured.away}</h3><p class="preview-caption">Modelo · Pinnacle sin margen</p><div class="preview-probs">${['LOCAL', 'EMPATE', 'VISITA'].map((label, i) => `<div><small>${label}</small><strong>${featured.probs[i]}%</strong><small>${featured.marketProbs[i]}%</small></div>`).join('')}</div><p class="preview-note">Estimaciones ficticias; no son pronósticos publicados ni apuestas disponibles.</p><button type="button" class="text-link" data-match="${featured.id}">Abrir análisis completo <span aria-hidden="true">↗</span></button></aside><div class="hero-pattern" aria-hidden="true"><div class="pitch-circle"></div><div class="pitch-line"></div><span class="pitch-dot one"></span><span class="pitch-dot two"></span><span class="pitch-dot three"></span></div></section>
-    ${kpiStrip(dayFixtures)}
-    <div class="home-split">
-      <section><div class="section-head"><div><p class="eyebrow">AGENDA DE EJEMPLO</p><h2>${dayLabel(state.dayOffset)} en la cancha</h2></div><span class="subtle">Datos ficticios para recorrer el diseño</span></div>
-        <div class="match-grid">${dayFixtures.length ? dayFixtures.map(matchCard).join('') : '<div class="empty-state"><span class="empty-symbol">◇</span><h3>No hay partidos de ejemplo este día</h3><p>Prueba Ayer, Hoy, Mañana o el día siguiente en la barra de fechas.</p></div>'}</div>
-      </section>
-      <aside class="home-rail">${shadowList(shadowPicks.filter(pick => pick.row.fx.day === state.dayOffset))}</aside>
-    </div>
-    <div class="proof-rail" aria-label="Cómo se presentará la evidencia"><div><span>01 / PRECIO JUSTO</span><strong>Pinnacle sin margen</strong><small>La vara con la que se mide cada casa.</small></div><div><span>02 / PUBLICACIÓN</span><strong>Hora, precio y mínimo</strong><small>Para saber hasta qué cuota sigue valiendo.</small></div><div><span>03 / RESULTADO</span><strong>CLV y historial abierto</strong><small>También cuando el pick pierde.</small></div></div>`;
+  const query = fold(state.homeSearch.trim());
+  const visible = dayFixtures.filter(fx =>
+    (state.homeLeague === 'Todas' || fx.league === state.homeLeague)
+    && (state.homeStatus === 'todos' || (state.homeStatus === 'proximos' ? !fx.closed : fx.closed))
+    && (!query || fold(`${fx.home} ${fx.away} ${fx.league}`).includes(query)));
+  const bestRow = fx => [...fx.rows.filter(row => row.family === '1X2')].sort((a, b) => (b.edge ?? -Infinity) - (a.edge ?? -Infinity))[0];
+  visible.sort((a, b) => state.homeSort === 'precio'
+    ? (bestRow(b)?.edge ?? -Infinity) - (bestRow(a)?.edge ?? -Infinity)
+    : a.kickoff - b.kickoff);
+  const open = dayFixtures.filter(fx => !fx.closed).length;
+  const count = status => status === 'todos' ? dayFixtures.length : status === 'proximos' ? open : dayFixtures.length - open;
+  const rowMarkup = fx => {
+    const row = bestRow(fx);
+    return `<article class="schedule-row"><div class="schedule-time"><strong>${timeLabel(fx.kickoff)}</strong><small>${fx.closed ? 'Cerrado' : 'Próximo'}</small></div>
+      <button type="button" class="schedule-teams" data-match="${fx.id}" aria-label="Ver análisis de ${esc(fx.home)} contra ${esc(fx.away)}"><span>${teamMark(fx.home)}<strong>${esc(fx.home)}</strong></span><span>${teamMark(fx.away, true)}<strong>${esc(fx.away)}</strong></span></button>
+      <div class="schedule-prob"><span>1 <b>${fx.probs[0]}%</b></span><span>X <b>${fx.probs[1]}%</b></span><span>2 <b>${fx.probs[2]}%</b></span><small>Probabilidad del modelo</small></div>
+      <div class="schedule-price"><strong>${fmtOdds(row.best?.price)}</strong><small>${esc(row.best?.book.name ?? 'Sin cuota')}</small></div>
+      <div class="schedule-selection"><strong>${esc(row.selection)}</strong><small>Justo ${fmtOdds(1 / row.pFair)} · ${fmtEdge(row.edge)} bruto</small></div>
+      <div class="schedule-state">${statusBadge(row.status)}</div><button type="button" class="schedule-arrow" data-match="${fx.id}" aria-label="Abrir ficha de ${esc(fx.home)} contra ${esc(fx.away)}">↗</button></article>`;
+  };
+  const leagues = [...new Set(visible.map(fx => fx.league))];
+  const matchCountLabel = n => `${n} ${n === 1 ? 'partido' : 'partidos'}`;
+  const latest = dayFixtures.length ? new Date(Math.max(...dayFixtures.map(fx => fx.snapshot))) : null;
+  const gate = publicData?.gate;
+  const active = isPublicationActive(gate);
+  const systemLabel = !gate ? 'Consultando publicación' : gate.status !== 'ready' ? 'Publicación sin verificar' : active ? 'Publicación activa' : 'Publicación pausada';
+  return `<section class="forecast-hero" aria-labelledby="forecast-title"><div class="forecast-copy"><p class="eyebrow">FÚTBOL / ANÁLISIS Y PRECIO JUSTO</p><h1 id="forecast-title">Lee el partido.<br><em>Entiende la cuota.</em></h1><p>El contexto del encuentro, la probabilidad del modelo y el precio de mercado. Todo a la vista, antes de decidir.</p><div class="hero-actions"><button type="button" class="primary-button" data-route="partidos">Explorar partidos <span aria-hidden="true">↗</span></button><button type="button" class="text-link" data-route="historial">Ver historial verificable ↗</button></div></div>
+    <aside class="forecast-summary" aria-label="Resumen de la agenda ficticia"><span class="summary-icon" aria-hidden="true">Q.</span><div><span class="eyebrow">AGENDA DE DEMOSTRACIÓN</span><strong>${dayFixtures.length}<small> partidos · ${dayLabel(state.dayOffset).toLowerCase()}</small></strong><p>Ejemplos ficticios para explorar la nueva interfaz.</p></div><div class="summary-bottom"><span>${open} mercados abiertos</span><span>${latest ? `Captura ${timeLabel(latest)}` : 'Sin captura'} · demo</span></div></aside></section>
+    <div class="publication-strip"><span class="publication-dot ${active ? 'active' : ''}" aria-hidden="true"></span><strong>${systemLabel}</strong><span>Los ejemplos de esta agenda no son picks publicados.</span><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></div>
+    <div class="forecast-shortcuts" aria-label="Accesos rápidos"><button type="button" class="active" data-route="inicio" aria-current="page">Todos los partidos <span>↗</span></button><button type="button" data-route="mercados" data-home-market-mode="dia">Pick del día <span>↗</span></button><button type="button" data-route="mercados" data-home-market-mode="ventaja">Comparar cuotas <span>↗</span></button><button type="button" data-route="mercados" data-home-market-mode="combinadas">Combinadas <span>↗</span></button></div>
+    <section class="forecast-board" aria-labelledby="forecast-board-title"><div class="board-heading"><div><p class="eyebrow">EL TABLERO / DATOS FICTICIOS</p><h2 id="forecast-board-title">Agenda de partidos</h2></div><span>${dateFmt(addDays(state.dayOffset), { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+      ${dayRail()}
+      <div class="board-toolbar"><div class="board-status" aria-label="Estado de los partidos">${[['todos', 'Todos'], ['proximos', 'Próximos'], ['cerrados', 'Cerrados']].map(([key, label]) => `<button type="button" data-home-status="${key}" aria-pressed="${state.homeStatus === key}" class="${state.homeStatus === key ? 'active' : ''}">${label}<span>${count(key)}</span></button>`).join('')}</div><label class="board-search"><span aria-hidden="true">⌕</span><input id="home-search" type="search" data-input="home-search" aria-label="Buscar equipo o liga en la agenda demo" placeholder="Buscar equipo o liga…" value="${esc(state.homeSearch)}" /></label><label class="sr-only" for="home-sort">Ordenar partidos</label><select id="home-sort"><option value="hora" ${state.homeSort === 'hora' ? 'selected' : ''}>Por hora</option><option value="precio" ${state.homeSort === 'precio' ? 'selected' : ''}>Por diferencia de precio</option></select></div>
+      <div class="board-layout"><aside class="board-leagues" aria-label="Filtrar agenda por liga"><p class="eyebrow">COMPETICIONES</p>${['Todas', ...LEAGUES].map((league, i) => `<button type="button" data-home-league="${esc(league)}" aria-pressed="${state.homeLeague === league}" class="${state.homeLeague === league ? 'active' : ''}"><span class="league-symbol" aria-hidden="true">${i === 0 ? '◎' : '◇'}</span><span>${i === 0 ? 'Todas las ligas' : esc(league.replace(' · demo', ''))}</span><b>${i === 0 ? dayFixtures.length : dayFixtures.filter(fx => fx.league === league).length}</b></button>`).join('')}<div class="league-note"><strong>Tu evidencia, abierta.</strong><p>Revisa resultados, precio de cierre y validación desde el historial público.</p><button type="button" class="text-link" data-route="historial">Consultar historial ↗</button></div></aside>
+      <div class="board-matches"><div class="schedule-columns" aria-hidden="true"><span>HORA</span><span>PARTIDO</span><span>MODELO · 1X2</span><span>MEJOR CUOTA¹</span><span>SELECCIÓN · REFERENCIA</span><span>ESTADO</span><span></span></div>
+      ${visible.length ? leagues.map(league => `<section class="schedule-group" aria-label="${esc(league)}"><h3><span aria-hidden="true">◇</span>${esc(league)}<small>${matchCountLabel(visible.filter(fx => fx.league === league).length)}</small></h3>${visible.filter(fx => fx.league === league).map(rowMarkup).join('')}</section>`).join('') : '<div class="empty-state"><h3>No hay partidos con estos filtros</h3><p>Cambia la fecha o limpia los filtros para seguir explorando.</p></div>'}
+      <div class="board-foot"><span role="status">${visible.length} de ${dayFixtures.length} partidos de ejemplo</span><button type="button" class="text-link" data-action="clear-home">Limpiar filtros ↻</button></div></div></div><p class="board-disclaimer">¹ Mejor cuota entre las casas de la demo para la selección mostrada. Modelo, precio justo y diferencia de precio son medidas distintas. «Cerrado» significa que el partido ya empezó; no acredita su resultado.</p></section>
+    <div class="home-public-data">${homeRealStrip()}<details class="publication-details"><summary>Ver el estado de publicación y su evidencia</summary>${liveStatus()}</details></div>
+    <div class="proof-rail" aria-label="Cómo se presentará la evidencia"><div><span>01 / CONTEXTO</span><strong>El partido completo</strong><small>Forma, cara a cara, estadísticas y alineaciones.</small></div><div><span>02 / PRECIO</span><strong>Una referencia comparable</strong><small>Cuota, justo y mínimo del mismo instante.</small></div><div><span>03 / EVIDENCIA</span><strong>Resultados a la vista</strong><small>Historial, muestra y validación del servidor.</small></div></div>`;
 }
 
 function deskFilteredRows() {
@@ -922,19 +969,9 @@ function historyView() {
     <div class="evidence-grid"><div class="panel"><span class="evidence-icon">▥</span><h3>Calibración pública</h3><p>El panel real anterior consulta las corridas registradas por el servidor, con muestra y periodo.</p></div><div class="panel"><span class="evidence-icon">⌁</span><h3>Cadena de hashes</h3><p>Los lotes reales aparecen arriba cuando existan. Esta maqueta no genera huellas válidas.</p></div><div class="panel"><span class="evidence-icon">↗</span><h3>CLV con intervalo</h3><p>La cuota publicada se comparará con el cierre; el promedio deberá ir acompañado de tamaño de muestra e incertidumbre.</p></div></div>`;
 }
 
-function plansView() {
-  return `<div class="view-title"><div><p class="eyebrow">ACCESO / TODAVÍA NO A LA VENTA</p><h1>Información primero. Suscripción después.</h1><p class="lead">La estructura de planes está lista para evaluarse, pero el cobro permanece desactivado hasta superar la puerta de validación.</p></div>${badge('Sin pagos reales', 'accent')}</div>
-    <div class="plan-grid"><section class="plan-card"><span class="plan-kicker">ABIERTO</span><h2>Explorador</h2><p>Una forma de conocer el sistema y comprobarlo por tu cuenta.</p><div class="plan-price">Gratis</div><ul><li>Mesa de mercados con precios justos</li><li>Picks abiertos cuando se publiquen</li><li>Fichas de partido completas</li><li>Historial, CLV y cadena de verificación</li></ul><button type="button" class="secondary-button full" data-route="mercados">Abrir la mesa sin registro</button></section><section class="plan-card featured"><span class="plan-kicker">FUTURA FASE</span><h2>QuantFut Plus</h2><p>Mayor profundidad y acceso según el estado real del producto.</p><div class="plan-price">Próximamente</div><ul><li>Todos los picks del criterio, autorizados en servidor</li><li>Aviso cuando la cuota baja del mínimo</li><li>Filtros por casa y por tus ligas</li><li>Mismo historial público verificable</li></ul><button type="button" class="primary-button full" data-modal="plans">Recorrer el acceso demo</button></section></div>
-    <section class="panel access-map" aria-label="Recorrido previsto para una suscripción"><p class="eyebrow">CÓMO FUNCIONARÍA PLUS</p><div class="access-steps"><div><span>01 · IDENTIDAD</span><strong>Cuenta verificada</strong><small>La demo solo usa una identidad ficticia en esta pestaña.</small></div><div><span>02 · EVIDENCIA</span><strong>Puerta de CLV</strong><small>El servidor debe autorizar la publicación antes de ofrecer un plan.</small></div><div><span>03 · COBRO</span><strong>Proveedor confirmado</strong><small>Sin tarjeta ni cargo en esta demostración.</small></div><div><span>04 · ACCESO</span><strong>Autorización en servidor</strong><small>Una suscripción comprobada entregaría los picks; CSS nunca los protege.</small></div></div></section>
-    <div class="plain-callout"><strong>Sin apuestas dentro de QuantFut.</strong> No habrá boleto, depósitos ni ejecución de apuestas. Una suscripción futura pagaría por información, no garantizaría resultados.</div>`;
-}
+function plansView() { return membershipUI.plansView(); }
 
-function accountView() {
-  const prefsPanel = `<section class="panel"><p class="eyebrow">PREFERENCIAS</p><h2>Cómo ves los precios</h2><p class="body-copy muted">Se guardan solo en este navegador y se aplican ya a toda la demo.</p><div class="pref-line"><span>Formato de cuota</span>${oddsToggle()}</div><fieldset class="choice-list"><legend>Mis ligas (filtro «Mis ligas» de la mesa)</legend>${LEAGUES.map(league => `<label><input type="checkbox" data-follow="${league}" ${state.followed.includes(league) ? 'checked' : ''}> ${league}</label>`).join('')}</fieldset></section>`;
-  return `<div class="view-title"><div><p class="eyebrow">ÁREA PERSONAL / DEMOSTRACIÓN</p><h1>Mi espacio</h1><p class="lead">Preferencias que ya funcionan en esta demo y una vista de cómo se organizaría el plan. El acceso aquí es solo una simulación local.</p></div>${badge(state.demoSession ? 'Sesión visual activa' : 'Sin cuenta real', 'accent')}</div>
-    ${state.demoSession ? `<div class="account-welcome"><div class="avatar">D</div><div><strong>Hola, visitante demo</strong><span>Esta sesión existe únicamente en esta pestaña. No hay usuario ni datos en servidor.</span></div><button type="button" class="secondary-button" data-action="logout">Salir de la demo</button></div><div class="account-grid"><section class="panel"><p class="eyebrow">MI PLAN</p><h2>Vista gratuita</h2><p class="body-copy muted">Cuando existan suscripciones reales, aquí aparecerá el estado validado por el servidor.</p><button type="button" class="text-link" data-route="planes">Ver planes ↗</button></section>${prefsPanel}</div><section class="panel access-state"><p class="eyebrow">ESTADO DE ACCESO · DEMO</p><h2>Así quedaría la autorización</h2><div class="detail-line"><span>Identidad</span><strong>Solo visual, no verificada</strong></div><div class="detail-line"><span>Cobro</span><strong>Desactivado</strong></div><div class="detail-line"><span>Derecho Plus</span><strong>No concedido</strong></div><div class="detail-line"><span>Picks privados recibidos</span><strong>0</strong></div><button type="button" class="secondary-button" data-modal="plans">Ver recorrido de acceso</button></section><section class="panel saved-panel"><p class="eyebrow">GUARDADOS</p><h2>Partidos para revisar</h2>${matchCard(fixtureById.get('qf-101'))}</section>` : `<div class="account-grid"><section class="login-preview"><div class="login-illustration">◉</div><p class="eyebrow">EXPLORA EL ESPACIO PERSONAL</p><h2>Así sería tu panel</h2><p>Activa una sesión visual para recorrer el panel sin correo ni contraseña. No es autenticación real y no desbloquea información privada.</p><button type="button" class="primary-button" data-action="login">Entrar en modo demo</button></section>${prefsPanel}</div>`}
-    <div class="bottom-note">Arquitectura prevista: el FastAPI modular gestionará las futuras cuentas y autorizaciones en servidor. Ningún token de servicio llegará al navegador.</div>`;
-}
+function accountView() { return membershipUI.accountView(); }
 
 // ---------------------------------------------------------------- partidos reales
 // Agenda y fichas con datos del servidor (/web/partidos). Es contenido: forma,
@@ -1185,7 +1222,7 @@ function statsView() {
 // Portada: lo real primero, con enlace a la ficha.
 function homeRealStrip() {
   const agenda = ensureAgenda(0);
-  if (agenda.status === 'error') return '';
+  if (agenda.status === 'error') return `<section class="real-strip real-unavailable"><div><p class="eyebrow">PARTIDOS REALES · API PÚBLICA</p><h2>Agenda real no disponible</h2><p>No se pudo consultar el servidor. Los partidos del tablero superior son ejemplos ficticios.</p></div><button type="button" class="secondary-button" data-route="partidos">Reintentar en Partidos ↗</button></section>`;
   const games = agenda.status === 'ready' ? agenda.data.partidos : [];
   const upcoming = [...games.filter(p => p.estado !== 'finished'), ...games.filter(p => p.estado === 'finished')].slice(0, 6);
   const card = p => {
@@ -1199,6 +1236,15 @@ function homeRealStrip() {
 }
 
 // ---------------------------------------------------------------- capas
+
+const membershipUI = createMembershipUI({
+  state, esc, badge, oddsToggle, leagues: LEAGUES, fixtures, matchCard, navigate, render,
+  publicStatus: () => {
+    const gate = publicData?.gate;
+    const active = isPublicationActive(gate);
+    return `<strong>${!gate ? 'Consultando publicación…' : gate.status !== 'ready' ? 'Estado de publicación no disponible' : active ? 'Publicación autorizada por el servidor' : 'Publicación pausada'}</strong><p>La selección de un plan no cambia el estado del servidor. Esta demo no entrega picks privados ni habilita cobros.</p>`;
+  },
+});
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1265,10 +1311,10 @@ function closeModal() {
 // ---------------------------------------------------------------- render
 
 function render() {
-  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView };
+  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="cuenta">${state.demoSession ? 'Cuenta demo' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell">${state.route === 'inicio' ? dayRail() : ''}<main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.demoSession ? 'cuenta' : 'acceso'}">${state.demoSession ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   app.querySelector('.app-shell').inert = overlay;
   app.querySelector('.mobile-bottom-nav').inert = overlay;
   app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {
@@ -1309,8 +1355,12 @@ app.addEventListener('click', event => {
     return;
   }
   const data = button.dataset;
+  if (membershipUI.handleClick(button)) return;
   if (data.action === 'refresh-public') { refreshPublicData(); return; }
-  if (data.route) { navigate(data.route); return; }
+  if (data.route) { if (data.homeMarketMode) { state.deskMode = data.homeMarketMode; state.deskDay = state.dayOffset; state.deskSort = { key: 'edge', dir: 'desc' }; } if (data.route === 'acceso') { state.authReturn = 'cuenta'; state.authMode = 'login'; state.authMessage = ''; } navigate(data.route); return; }
+  if (data.homeStatus) { state.homeStatus = data.homeStatus; rerenderKeepingFocus(`[data-home-status="${data.homeStatus}"]`); return; }
+  if (data.homeLeague) { state.homeLeague = data.homeLeague; rerenderKeepingFocus(`[data-home-league="${CSS.escape(data.homeLeague)}"]`); return; }
+  if (data.action === 'clear-home') { state.homeSearch = ''; state.homeStatus = 'todos'; state.homeLeague = 'Todas'; state.homeSort = 'hora'; rerenderKeepingFocus('[data-action="clear-home"]'); return; }
   if (data.openFicha) { state.statsDay = 0; state.statsLeague = 'Todas'; state.statsMatch = data.openFicha; state.statsTab = 'resumen'; navigate('partidos'); return; }
   if (data.statsMatch) { state.statsMatch = data.statsMatch; rerenderKeepingFocus(`[data-stats-match="${CSS.escape(data.statsMatch)}"]`); return; }
   if (data.statsDay !== undefined && data.statsDay !== '') { state.statsDay = Number(data.statsDay); state.statsMatch = null; rerenderKeepingFocus('.stats-desk .day-stepper strong'); return; }
@@ -1328,7 +1378,7 @@ app.addEventListener('click', event => {
   if (data.action === 'clear-parlay') { state.parlay = []; rerenderKeepingFocus('[data-desk-mode="combinadas"]'); return; }
   if (data.row) { openDrawer(data.row, button); return; }
   if (data.deskOpen) { state.drawer = null; state.deskDay = fixtureById.get(data.deskOpen).day; state.deskMatch = data.deskOpen; state.deskStatus = 'todos'; navigate('mercados'); return; }
-  if (data.odds) { state.oddsFormat = data.odds; savePrefs(); rerenderKeepingFocus(`${button.closest('.top-odds') ? '.top-odds ' : ''}[data-odds="${data.odds}"]`); return; }
+  if (data.odds) { state.oddsFormat = data.odds; savePrefs(); const scope = button.closest('.top-odds') ? '.top-odds ' : button.closest('.account-content') ? '.account-content ' : ''; rerenderKeepingFocus(`${scope}[data-odds="${data.odds}"]`); return; }
   if (data.day !== undefined) { state.dayOffset = Number(data.day); rerenderKeepingFocus(`[data-day="${state.dayOffset}"]`); return; }
   if (data.deskDay !== undefined && data.deskDay !== '') { state.deskDay = Number(data.deskDay); state.deskMatch = ''; rerenderKeepingFocus('.day-stepper strong'); return; }
   if (data.deskStatus) { state.deskStatus = data.deskStatus; state.deskMatch = ''; rerenderKeepingFocus(`[data-desk-status="${data.deskStatus}"]`); return; }
@@ -1360,6 +1410,7 @@ app.addEventListener('click', event => {
 
 app.addEventListener('change', event => {
   const target = event.target;
+  if (target.id === 'home-sort') { state.homeSort = target.value; rerenderKeepingFocus('#home-sort'); return; }
   if (target.dataset.filter === 'match') { state.selectedMatch = target.value; rerenderKeepingFocus('#match-select'); }
   if (target.dataset.follow) {
     const league = target.dataset.follow;
@@ -1370,18 +1421,26 @@ app.addEventListener('change', event => {
 });
 
 app.addEventListener('input', event => {
-  if (event.target.dataset.input !== 'desk-search') return;
+  const home = event.target.dataset.input === 'home-search';
+  if (!home && event.target.dataset.input !== 'desk-search') return;
   const caret = event.target.selectionStart;
-  state.deskSearch = event.target.value;
+  if (home) state.homeSearch = event.target.value;
+  else state.deskSearch = event.target.value;
   render();
-  const input = app.querySelector('#desk-search');
+  const input = app.querySelector(home ? '#home-search' : '#desk-search');
   input.focus();
   input.setSelectionRange(caret, caret);
 });
 
+app.addEventListener('submit', event => {
+  if (!event.target.dataset.membershipForm) return;
+  event.preventDefault();
+  membershipUI.handleSubmit(event.target);
+});
+
 window.addEventListener('hashchange', () => {
   const route = location.hash.slice(1);
-  if (nav.some(item => item.route === route) && state.route !== route) { state.route = route; state.mobileMenuOpen = false; state.drawer = null; render(); app.querySelector('#main-content')?.focus({ preventScroll: true }); }
+  if (validRoute(route) && state.route !== route) { state.route = route; state.mobileMenuOpen = false; state.drawer = null; render(); app.querySelector('#main-content')?.focus({ preventScroll: true }); }
 });
 
 function trapFocus(event, container) {
@@ -1411,7 +1470,7 @@ window.addEventListener('keydown', event => {
 });
 
 const initial = location.hash.slice(1);
-if (nav.some(item => item.route === initial)) state.route = initial;
+if (validRoute(initial)) state.route = initial;
 render();
 async function refreshPublicData() {
   const request = ++publicRequest;

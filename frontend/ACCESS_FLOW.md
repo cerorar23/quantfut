@@ -1,10 +1,32 @@
 # Fase 3 · contrato de acceso y cobro
 
-El recorrido de `Planes` y `Mi espacio` es una demostración: no solicita correo,
-contraseña ni tarjeta; no crea usuarios, órdenes, sesiones de servidor o derechos
-Plus. El botón de checkout enseña por qué está bloqueado y no envía ninguna
-petición de pago. La muestra del criterio sharp debe aprobar su puerta antes
-de vender pronósticos.
+El recorrido de Suscripciones, Acceso y Mi cuenta es una demostración local.
+Login, registro y recuperación muestran una identidad ficticia en campos de
+solo lectura; no reciben credenciales reales ni envían correos. No se crean
+usuarios, órdenes, sesiones de servidor o derechos Plus. La revisión del pedido
+termina con un botón de cobro deshabilitado. La muestra del criterio sharp debe
+aprobar su puerta antes de vender pronósticos.
+
+## Modelo de paquetes implementado en la interfaz (7-oct-2026)
+
+- Explorador: acceso público gratuito. QuantFut Plus: paquete completo propuesto.
+- El mismo contenido Plus en periodos de 1, 3 y 6 meses; Club como propuesta
+  de acceso de por vida. Importes ilustrativos en USD, tomados de la referencia
+  pública, con mensualidad y ahorro calculados desde centavos enteros.
+- Seleccionar un plan modifica únicamente el resumen visual. No activa la
+  suscripción, aunque exista un perfil demo. Los cupones no alteran el importe.
+- `#acceso` permite recorrer login/registro/recuperación. `#checkout` exige el
+  perfil ficticio para mostrar el resumen; esto no constituye autenticación.
+- Mi cuenta ofrece resumen, preferencias, favoritos demo, facturación vacía
+  y detalles de seguridad. Cuotas y ligas mantienen la persistencia local
+  existente; perfil, favoritos y plan elegido se pierden al recargar.
+- Renovación, cancelación, impuestos, devoluciones y alcance de Club requieren
+  definición comercial. La referencia visual no determina esas políticas.
+- El código público de membresía no consulta `/v1/*` ni contiene tokens o
+  picks privados. El servidor conserva la autorización existente.
+
+La propuesta detallada está en
+[modelo_paquetes_suscripciones_20261007.md](../docs/modelo_paquetes_suscripciones_20261007.md).
 
 ## Recorrido previsto cuando exista evidencia
 

@@ -4,9 +4,11 @@ Prototipo navegable para revisar la dirección visual de la futura web. Usa
 HTML, CSS y JavaScript nativos; no requiere instalación. Al servirlo desde
 FastAPI, los paneles señalados como reales consultan únicamente endpoints
 públicos del mismo origen; el servidor Node local no simula la API.
-Se inspira en la distribución de Pitchverse (menú lateral, navegación clara,
-tarjetas sobrias y verde sobre fondo oscuro), pero emplea marca, textos y
-componentes propios de QuantFut.
+La portada adapta la jerarquía de TennisPredictions (2026-10-07): titular
+editorial, resumen, calendario de siete días y partidos agrupados por liga.
+Usa la paleta azul noche/pizarra con verde esmeralda aportada por el usuario,
+y componentes, textos y criterio de QuantFut. El análisis y la propuesta de
+adaptación están en `../docs/web_diseno_tennispredictions_20261007.md`.
 
 La guía de colores, tipografía, componentes, comportamiento móvil y
 accesibilidad está en [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). Se consultó el
@@ -31,6 +33,12 @@ qf.api.main:app` o el servicio `api` de Docker Compose. El servidor Node
 anterior queda como vista previa local, no como un segundo backend.
 
 ## Qué funciona en la demo
+
+- Portada con búsqueda de equipo/liga, filtros por estado y competición,
+  calendario de siete días, orden por hora o diferencia de precio y accesos a
+  Pick del día, comparación de cuotas y combinadas. El tablero conserva datos
+  ficticios identificados; la agenda real de hoy se presenta por separado y
+  los errores de consulta son visibles.
 
 - Ocho vistas: inicio, **partidos y estadísticas**, mesa de mercados, picks,
   ficha de mercado (demo), historial, planes y espacio personal.
@@ -78,10 +86,14 @@ anterior queda como vista previa local, no como un segundo backend.
   ocultar, cuotas registradas y de cierre y CLV calculado sobre esos ejemplos.
   RPS, calibración y hashes reales figuran como pendientes, no simulados.
 - Diálogo explicativo del futuro acceso premium y sesión visual de invitado.
-- Recorrido interactivo de identidad ficticia, evidencia y checkout bloqueado
-  en Planes; muestra el estado de acceso en Mi espacio sin pedir correo o
-  tarjeta ni entregar picks privados. El contrato para las futuras cuentas,
-  sesiones y webhook está en [ACCESS_FLOW.md](ACCESS_FLOW.md).
+- Paquetes Explorador y QuantFut Plus; Suscripciones con periodos de 1/3/6
+  meses y Club, selección de modalidad y resumen del pedido. Importes de
+  referencia en USD; mensualidad y ahorro calculados desde el total.
+- Acceso con login, registro y recuperación de ejemplo, campos ficticios de
+  solo lectura y sesión visual que dura hasta recargar. Mi cuenta incluye
+  preferencias, favoritos demo, facturación vacía y seguridad. No se envían
+  correos ni se activan planes al seleccionar uno. El resumen de contratación
+  conserva el cobro deshabilitado. Contrato de integración: [ACCESS_FLOW.md](ACCESS_FLOW.md).
 
 Las cifras de los paneles marcados «API pública» vienen del servidor. Todos
 los equipos, porcentajes, picks y resultados de las demás secciones siguen

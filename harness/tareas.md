@@ -1612,3 +1612,26 @@ inicial del proyecto, sin secretos), se conserva en
 
 - [x] Instalar Java portátil y toolkit/MCP ZenRows solicitado para Claude Code; handshake stdio/44 herramientas, cero llamadas de proveedor.
 - [ ] Completar95regulares/4pretemporadas,562rotaciones entre boxscores aceptados y330fechas médicas/13nombres; props y otros repos no ejecutados se detallan en docs/nba_github_scrapers_recuperacion_20261006.md.
+
+## Web — adaptación visual de TennisPredictions (2026-10-07)
+
+- [x] Analizar la portada pública y conservar copia local con SingleFile CLI.
+- [x] Adaptar portada, calendario semanal, búsqueda, filtros y filas por liga.
+- [x] Aplicar la paleta azul noche/pizarra y verde esmeralda aportada por el usuario.
+- [x] Conservar datos demo separados, fichas existentes y estados de error reales.
+- [x] Revisar móvil/escritorio e integración pública; propuesta documentada en
+      `docs/web_diseno_tennispredictions_20261007.md`.
+- [ ] Fase posterior propuesta: alimentar el nuevo tablero con la agenda real,
+      sin cambiar el criterio de publicación. No se desplegó esta versión.
+
+## Web — acceso, cuenta y suscripciones (2026-10-07)
+
+Alcance confirmado por el usuario: copiar el recorrido visual y el modelo de
+paquetes/suscripciones de TennisPredictions; no su algoritmo predictivo.
+- [x] Capturar las páginas públicas de planes y acceso; analizar panel visible.
+- [x] Adaptar login/registro/recuperación, cuenta/preferencias y catálogo de picks.
+- [x] Implementar planes 1/3/6 meses y club, selección y resumen del pedido.
+- [x] Mantener precios de referencia y cobro/autenticación reales sin habilitar.
+- [x] Validar importes, ausencia de derechos por UI y recorrido móvil/escritorio.
+      13 pruebas frontend y 11 del servidor web; revisión 320/390/768/1024/1440.
+      Modelo comercial documentado en docs/modelo_paquetes_suscripciones_20261007.md.
