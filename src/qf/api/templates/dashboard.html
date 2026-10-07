@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat, estado_cuenta %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block actions %}
+<a class="btn btn-primary" href="/control/usuarios?filtro=sin_plus">{{ icon('crown') }} Conceder Plus</a>
+{% endblock %}
+{% block content %}
+<h3 class="qf-section">Clientes</h3>
+<div class="row row-cards">
+  {{ stat('Cuentas totales', cuentas.total, 'users', 'primary', '/control/usuarios',
+          (cuentas.nuevas_7d ~ ' nuevas en 7 días') if cuentas.nuevas_7d is defined else None) }}
+  {{ stat('Activas (login 30 días)', cuentas.activas_30d, 'user-check', 'green', '/control/usuarios?filtro=activas') }}
+  {{ stat('Correo sin verificar', cuentas.sin_verificar, 'mail-off', 'orange', '/control/usuarios?filtro=sin_verificar') }}
+  {{ stat('Suspendidas', cuentas.suspendidas, 'user-off', 'red', '/control/usuarios?filtro=suspendidas') }}
+</div>
+
+<h3 class="qf-section">Suscripciones</h3>
+<div class="row row-cards">
+  {{ stat('Con Plus vigente', subs.con_plus, 'crown', 'purple', '/control/usuarios?filtro=plus',
+          (subs.de_por_vida ~ ' de por vida') if subs.de_por_vida else None) }}
+  {{ stat('Vencen en 7 días', subs.vencen_7d, 'calendar-due', 'yellow', '/control/suscripciones?filtro=vencen_7d') }}
+  {{ stat('Altas de plan (30 días)', subs.concedidas_30d, 'receipt', 'azure', '/control/suscripciones?filtro=todas') }}
+  {{ stat('Sesiones abiertas', subs.sesiones_abiertas, 'device-desktop-analytics', 'teal') }}
+</div>
+
+<h3 class="qf-section">Operación del modelo</h3>
+<div class="row row-cards">
+  {{ stat('Picks próximos', op.picks_proximos, 'ball-football', 'green', None,
+          'publicación ' ~ ('activa' if publicacion_activa else 'pausada')) }}
+  {{ stat('Picks sin liquidar', op.picks_sin_liquidar, 'clock', 'orange', '/control/sistema') }}
+  {{ stat('Nombres sin resolver', op.nombres_sin_resolver, 'alert-triangle', 'red', '/control/sistema') }}
+  {% set salud = op.ultima_salud %}
+  {{ stat('Última salud', ('OK' if salud.ok else 'FALLO') if salud else None, 'heartbeat',
+          ('green' if salud.ok else 'red') if salud else 'secondary', '/control/sistema',
+          salud.run_at[:16]|replace('T', ' ') if salud else 'sin pasadas registradas') }}
+</div>
+
+<div class="row row-cards mt-1">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Altas de cuentas y planes · 30 días</h3></div>
+      <div class="card-body">
+        <div class="qf-chart"><canvas id="grafico-serie" aria-label="Altas diarias de cuentas y planes" role="img"></canvas></div>
+        <script type="application/json" id="serie-datos">{{ serie|tojson }}</script>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Ingresos cobrados · 30 días</h3></div>
+      <div class="card-body">
+        {% for i in ingresos %}
+        <div class="d-flex justify-content-between mb-2">
+          <span class="h2 m-0">{{ i.cents|dinero(i.currency) }}</span>
+          <span class="text-secondary">{{ i.n }} pagos</span>
+        </div>
+        {% else %}
+        <p class="text-secondary m-0">Aún no hay cobros: falta conectar el procesador de pago.
+          Las concesiones manuales no cuentan como ingreso.</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Modelo</h3></div>
+      <div class="card-body">
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Activo</div>
+            <div class="datagrid-content">{{ op.modelo_activo or '—' }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Partidos 48 h</div>
+            <div class="datagrid-content">{{ op.partidos_48h if op.partidos_48h is not none else '—' }}</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row row-cards mt-1">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Últimas cuentas</h3></div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Correo</th><th>Estado</th><th>Alta (UTC)</th></tr></thead>
+          <tbody>
+          {% for a in ultimas %}
+            <tr><td><a href="/control/usuarios/{{ a.account_id }}">{{ a.email }}</a></td>
+                <td>{{ estado_cuenta(a.status) }}</td><td>{{ a.created_at|fecha }}</td></tr>
+          {% else %}
+            <tr><td colspan="3" class="text-secondary">Todavía no hay cuentas.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Últimas acciones del panel</h3></div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Cuándo (UTC)</th><th>Acción</th><th>Cliente</th></tr></thead>
+          <tbody>
+          {% for x in acciones %}
+            <tr><td>{{ x.at|fecha }}</td><td><code>{{ x.action }}</code></td>
+                <td>{% if x.account_id %}<a href="/control/usuarios/{{ x.account_id }}">{{ x.email }}</a>{% else %}—{% endif %}</td></tr>
+          {% else %}
+            <tr><td colspan="3" class="text-secondary">Sin acciones registradas.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/vendor/chart.umd.min.js"></script>{% endblock %}

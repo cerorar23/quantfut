@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado_cuenta, plus, paginas %}
+{% block title %}Clientes{% endblock %}
+{% block pretitle %}Clientes{% endblock %}
+{% block heading %}Cuentas{% endblock %}
+{% block content %}
+{% set filtros = [('todas','Todas'),('activas','Activas'),('plus','Con Plus'),('sin_plus','Sin Plus'),
+                  ('sin_verificar','Correo sin verificar'),('suspendidas','Suspendidas')] %}
+<div class="card">
+  <div class="card-header flex-wrap gap-2">
+    <ul class="nav nav-pills card-header-pills flex-wrap">
+      {% for key, label in filtros %}
+      <li class="nav-item"><a class="nav-link{% if filtro == key %} active{% endif %}"
+          href="/control/usuarios?filtro={{ key }}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ label }}</a></li>
+      {% endfor %}
+    </ul>
+    <form class="ms-auto d-flex gap-2" method="get" action="/control/usuarios">
+      <input type="hidden" name="filtro" value="{{ filtro }}">
+      <input type="search" class="form-control" name="q" value="{{ q }}" placeholder="Correo o nombre" maxlength="120">
+      <button class="btn" type="submit">Buscar</button>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>ID</th><th>Correo</th><th>Nombre</th><th>Estado</th><th>Correo</th>
+                 <th>Acceso</th><th>Alta (UTC)</th><th>Último login</th><th></th></tr></thead>
+      <tbody>
+      {% for a in lista.rows %}
+        <tr>
+          <td class="text-secondary">{{ a.account_id }}</td>
+          <td><a href="/control/usuarios/{{ a.account_id }}">{{ a.email }}</a></td>
+          <td>{{ a.display_name or '—' }}</td>
+          <td>{{ estado_cuenta(a.status) }}</td>
+          <td>{% if a.email_verified_at %}<span class="text-green">{{ icon('circle-check') }}</span>
+              {% else %}<span class="text-orange" title="Sin verificar">{{ icon('mail-off') }}</span>{% endif %}</td>
+          <td>{{ plus(a) }}</td>
+          <td>{{ a.created_at|fecha }}</td>
+          <td>{{ a.last_login_at|fecha }}</td>
+          <td><a class="btn btn-sm" href="/control/usuarios/{{ a.account_id }}">Ver</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="9" class="text-secondary">No hay cuentas con ese filtro.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ paginas(lista, '/control/usuarios?filtro=' ~ filtro ~ ('&q=' ~ q|urlencode if q else '') ~ '&') }}
+</div>
+{% endblock %}

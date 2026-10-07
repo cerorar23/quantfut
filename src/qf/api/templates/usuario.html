@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado_cuenta, plus, csrf_input %}
+{% block title %}{{ acc.email }}{% endblock %}
+{% block pretitle %}<a href="/control/usuarios">Clientes</a> · #{{ acc.account_id }}{% endblock %}
+{% block heading %}{{ acc.email }}{% endblock %}
+{% block content %}
+<div class="row row-cards">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Cuenta</h3></div>
+      <div class="card-body">
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Nombre</div>
+            <div class="datagrid-content">{{ acc.display_name or '—' }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Estado</div>
+            <div class="datagrid-content">{{ estado_cuenta(acc.status) }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Acceso</div>
+            <div class="datagrid-content">{{ plus(acc) }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Correo verificado</div>
+            <div class="datagrid-content">{{ acc.email_verified_at|fecha if acc.email_verified_at else 'No' }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Alta (UTC)</div>
+            <div class="datagrid-content">{{ acc.created_at|fecha }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Último login</div>
+            <div class="datagrid-content">{{ acc.last_login_at|fecha }}</div></div>
+        </div>
+      </div>
+      <div class="card-footer d-flex flex-wrap gap-2">
+        {% if acc.status == 'active' %}
+        <form method="post" action="/control/usuarios/{{ acc.account_id }}/estado"
+              data-confirm="¿Suspender la cuenta? Se cierran todas sus sesiones.">
+          {{ csrf_input(csrf) }}<input type="hidden" name="status" value="suspended">
+          <button class="btn btn-outline-danger btn-sm" type="submit">{{ icon('ban') }} Suspender</button>
+        </form>
+        {% else %}
+        <form method="post" action="/control/usuarios/{{ acc.account_id }}/estado">
+          {{ csrf_input(csrf) }}<input type="hidden" name="status" value="active">
+          <button class="btn btn-outline-success btn-sm" type="submit">{{ icon('circle-check') }} Reactivar</button>
+        </form>
+        {% endif %}
+        {% if not acc.email_verified_at %}
+        <form method="post" action="/control/usuarios/{{ acc.account_id }}/verificar"
+              data-confirm="¿Marcar el correo como verificado sin enlace de confirmación?">
+          {{ csrf_input(csrf) }}
+          <button class="btn btn-sm" type="submit">{{ icon('circle-check') }} Verificar correo</button>
+        </form>
+        {% endif %}
+        {% if not acc.email_verified_at %}
+        <form method="post" action="/control/usuarios/{{ acc.account_id }}/correo">
+          {{ csrf_input(csrf) }}<input type="hidden" name="tipo" value="verificar">
+          <button class="btn btn-sm" type="submit"{% if not correo_ok %} disabled title="Correo sin configurar"{% endif %}>
+            {{ icon('mail-off') }} Reenviar verificación</button>
+        </form>
+        {% endif %}
+        {% if acc.status == 'active' %}
+        <form method="post" action="/control/usuarios/{{ acc.account_id }}/correo"
+              data-confirm="¿Enviar al cliente un enlace para restablecer su contraseña?">
+          {{ csrf_input(csrf) }}<input type="hidden" name="tipo" value="restablecer">
+          <button class="btn btn-sm" type="submit"{% if not correo_ok %} disabled title="Correo sin configurar"{% endif %}>
+            {{ icon('key') }} Enlace de contraseña</button>
+        </form>
+        {% endif %}
+        <form method="post" action="/control/usuarios/{{ acc.account_id }}/cerrar-sesiones"
+              data-confirm="¿Cerrar todas las sesiones de esta cuenta?">
+          {{ csrf_input(csrf) }}
+          <button class="btn btn-sm" type="submit">{{ icon('logout') }} Cerrar sesiones</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Conceder plan</h3></div>
+      <form class="card-body" method="post" action="/control/usuarios/{{ acc.account_id }}/suscripcion"
+            data-confirm="¿Conceder este plan sin cobro?">
+        {{ csrf_input(csrf) }}
+        <div class="mb-3">
+          <label class="form-label" for="plan_code">Plan</label>
+          <select class="form-select" id="plan_code" name="plan_code" required>
+            {% for p in planes %}
+            <option value="{{ p.plan_code }}">{{ p.name }}{% if not p.active %} (no a la venta){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="nota">Nota interna</label>
+          <input class="form-control" id="nota" name="nota" maxlength="300" placeholder="Cortesía, compensación, pago fuera de línea…">
+        </div>
+        <p class="small text-secondary">Si ya tiene acceso, el nuevo periodo empieza cuando termina el actual.
+          Una concesión manual no cuenta como ingreso.</p>
+        <button class="btn btn-primary w-100" type="submit">{{ icon('crown') }} Conceder</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Suscripciones</h3></div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Plan</th><th>Desde</th><th>Hasta</th><th>Origen</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+          {% for s in historial %}
+            <tr>
+              <td>{{ s.plan_name }}{% if s.note %}<div class="small text-secondary">{{ s.note }}</div>{% endif %}</td>
+              <td>{{ s.starts_at|fecha }}</td>
+              <td>{{ s.ends_at|fecha if s.ends_at else 'De por vida' }}</td>
+              <td>{{ 'Pago' if s.source == 'payment' else 'Manual' }}
+                  <div class="small text-secondary">{{ s.created_by }}</div></td>
+              <td>
+                {% if s.revoked_at %}<span class="badge bg-red-lt">Revocada</span>
+                  <div class="small text-secondary">{{ s.revoke_reason }}</div>
+                {% elif s.vigente %}<span class="badge bg-green-lt">Vigente</span>
+                {% elif s.starts_at > now %}<span class="badge bg-azure-lt">Programada</span>
+                {% else %}<span class="badge bg-secondary-lt">Vencida</span>{% endif %}
+              </td>
+              <td>
+                {% if not s.revoked_at and (s.ends_at is none or s.ends_at > now) %}
+                <form class="d-flex gap-1" method="post" action="/control/suscripciones/{{ s.subscription_id }}/revocar"
+                      data-confirm="¿Revocar esta suscripción? No se puede deshacer.">
+                  {{ csrf_input(csrf) }}<input type="hidden" name="volver" value="{{ acc.account_id }}">
+                  <input class="form-control form-control-sm" name="motivo" required maxlength="300" placeholder="Motivo">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Revocar</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-secondary">Sin suscripciones.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Sesiones (dispositivos)</h3></div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Último uso</th><th>Dispositivo</th><th>IP</th><th>Estado</th></tr></thead>
+          <tbody>
+          {% for s in sesiones %}
+            <tr><td>{{ s.last_used_at|fecha }}</td>
+                <td class="text-truncate qf-ua">{{ s.user_agent or '—' }}</td><td>{{ s.ip or '—' }}</td>
+                <td>{% if s.abierta %}<span class="badge bg-green-lt">Abierta</span>
+                    {% else %}<span class="badge bg-secondary-lt">{{ s.revoke_reason or 'Caducada' }}</span>{% endif %}</td></tr>
+          {% else %}
+            <tr><td colspan="4" class="text-secondary">Nunca ha iniciado sesión.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Historial del panel</h3></div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Cuándo (UTC)</th><th>Quién</th><th>Acción</th><th>Detalle</th></tr></thead>
+          <tbody>
+          {% for x in acciones %}
+            <tr><td>{{ x.at|fecha }}</td><td class="small">{{ x.actor }}</td><td><code>{{ x.action }}</code></td>
+                <td class="small text-secondary">{{ x.detail|detalle }}</td></tr>
+          {% else %}
+            <tr><td colspan="4" class="text-secondary">Sin acciones.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

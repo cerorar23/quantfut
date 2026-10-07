@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_input %}
+{% block title %}Planes{% endblock %}
+{% block pretitle %}Catálogo{% endblock %}
+{% block heading %}Planes y precios{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Código</th><th>Plan</th><th>Duración</th><th>Precio</th><th>A la venta</th><th></th></tr></thead>
+      <tbody>
+      {% for p in planes %}
+        <tr>
+          <td><code>{{ p.plan_code }}</code></td>
+          <td>{{ p.name }}</td>
+          <td>{{ (p.duration_days ~ ' días') if p.duration_days else 'De por vida' }}</td>
+          <td colspan="3">
+            <form class="d-flex flex-wrap align-items-center gap-3" method="post" action="/control/planes/{{ p.plan_code }}"
+                  data-confirm="¿Guardar el precio y la disponibilidad de {{ p.name }}?">
+              {{ csrf_input(csrf) }}
+              <div class="input-group input-group-sm qf-precio">
+                <input class="form-control" name="precio" inputmode="decimal" required
+                       value="{{ '%.2f'|format(p.price_cents / 100) }}" aria-label="Precio de {{ p.name }}">
+                <span class="input-group-text">{{ p.currency }}</span>
+              </div>
+              <label class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" name="activo" value="1"{% if p.active %} checked{% endif %}>
+                <span class="form-check-label">{{ 'Sí' if p.active else 'No' }}</span>
+              </label>
+              <button class="btn btn-sm" type="submit">Guardar</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="text-secondary small mt-2">Los importes de partida son ilustrativos
+  (docs/modelo_paquetes_suscripciones_20261007.md). Cambiar un precio no altera las suscripciones ya concedidas.</p>
+{% endblock %}

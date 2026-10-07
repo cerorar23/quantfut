@@ -1,0 +1,10 @@
+{% extends "cuenta/base.html" %}
+{% block title %}Confirmar correo{% endblock %}
+{% block content %}
+<h2 class="h2 text-center mb-3">Confirma tu correo</h2>
+<p class="text-secondary text-center">Pulsa el botón para terminar de verificar tu cuenta.</p>
+<form method="post" action="/cuenta/verificar">
+  <input type="hidden" name="token" value="{{ token }}">
+  <button class="btn btn-primary w-100" type="submit">{{ icon('circle-check') }} Confirmar correo</button>
+</form>
+{% endblock %}

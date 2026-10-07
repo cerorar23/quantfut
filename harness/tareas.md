@@ -18,6 +18,38 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Fase comercial desbloqueada (2026-10-07, decisión del usuario)
+
+El usuario desbloquea cuentas, suscripciones y panel de administración ya,
+sin esperar a la puerta de CLV. La puerta sigue decidiendo si hay picks que
+vender (`PUBLISH_PICKS_ENABLED`); las cuentas existen aunque esté cerrada.
+Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
+
+- [x] `db/043_cuentas.sql`: `accounts`, `plans` (1/3/6 meses + Club),
+      `subscriptions` (solo se revocan, nunca se borran), `sessions` con
+      rotación de refresh y detección de reuso, `admin_audit` inmutable.
+- [x] `/app/v1/*` (`src/qf/api/cuentas.py`): registro, login, refresh,
+      logout, `me`, planes y picks según derecho. Bearer opaco de 15 min en
+      Redis + refresh de 30 días hasheado en Postgres. Argon2id. OpenAPI
+      propio en `/app/v1/openapi.json` para generar el cliente Dart.
+      Interruptor `ACCOUNTS_ENABLED` (apagado por defecto: falla cerrado).
+- [x] Panel `/control` tipo dashboard (Tabler + Tabler Icons + Chart.js,
+      servidos desde el propio dominio): KPIs, usuarios, suscripciones,
+      planes, auditoría y la vista de sistema anterior. Acciones
+      comerciales con CSRF y auditadas; el pipeline sigue siendo de solo
+      lectura desde el panel (no lanza jobs ni publica).
+- [ ] Elegir procesador de pago (decisión del usuario) → checkout + webhook
+      firmado e idempotente (contrato en `frontend/ACCESS_FLOW.md`).
+- [x] Envío de correo con Proton Mail (decisión del usuario, 2026-10-07):
+      `comercial/correo.py` por SMTP, `db/044` (enlaces de un solo uso,
+      solo su sha256), verificación y restablecimiento en `/app/v1` y
+      páginas `/cuenta/*`, botones en el panel. Bridge opcional en Compose.
+- [ ] Configurar Proton en producción: plan de pago, dominio propio con
+      SPF/DKIM/DMARC y token SMTP (o login del Bridge) → `SMTP_*` en `.env`.
+- [ ] Conectar la web (`frontend/membership.js`) y la app Flutter a `/app/v1`.
+- [ ] Desplegar: aplicar `db/043` y `db/044`, `ACCOUNTS_ENABLED=1`, pip con
+      las nuevas dependencias.
+
 ## NBA 2026-27 — investigación y experimentos (2026-10-03)
 
 - [x] Revisar arquitectura y contrastar literatura académica, doctorados,

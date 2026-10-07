@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Auditoría{% endblock %}
+{% block pretitle %}Registro inmutable{% endblock %}
+{% block heading %}Auditoría del panel{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Cuándo (UTC)</th><th>Quién</th><th>Acción</th><th>Cliente</th><th>Detalle</th></tr></thead>
+      <tbody>
+      {% for x in filas %}
+        <tr>
+          <td>{{ x.at|fecha }}</td>
+          <td class="small">{{ x.actor }}</td>
+          <td><code>{{ x.action }}</code></td>
+          <td>{% if x.account_id %}<a href="/control/usuarios/{{ x.account_id }}">{{ x.email }}</a>{% else %}—{% endif %}</td>
+          <td class="small text-secondary">{{ x.detail|detalle }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-secondary">Sin acciones registradas.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="text-secondary small mt-2">Las 200 más recientes. La base de datos rechaza editar o borrar estas filas.</p>
+{% endblock %}

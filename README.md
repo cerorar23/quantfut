@@ -528,19 +528,30 @@ nada a saber CUÁNTOS habituales faltan, se mida como se mida.
                                             └──▶ Grafana ──────── Solo tú
 ```
 
-**La API es interna y no gestiona usuarios.** No es un producto que vendas a
-terceros ni el lugar donde viven las cuentas de tus suscriptores: es el
-backend de datos que consume el backend de TU frontend (web y, más adelante,
-app Flutter), que a su vez es quien maneja usuarios, cobros y arma los
-prompts del LLM. Por eso no tiene claves por cliente ni planes por tier — pero
-sí rate limiting por IP en TODAS las rutas, porque "interna" no significa "sin
-defensas". Dos niveles y nada más:
+**Un solo FastAPI, cuatro niveles (fase comercial desde 2026-10-07).** Las
+cuentas de clientes viven en este mismo backend y las consumen la web y la
+app Flutter. Ningún cliente que corre en el dispositivo del usuario lleva
+secretos: cada persona se autentica con su cuenta y el servidor decide qué
+picks ve. Rate limiting por IP en TODAS las rutas.
 
 | Nivel | Auth | Para qué |
 |---|---|---|
 | **Público** | ninguna | Track record, calibración, cadena de hashes, picks gratis |
-| **Servicio** | `SERVICE_TOKEN` en `X-Service-Token`, solo lo conoce el backend de tu frontend | Todos los picks y probabilidades, sin recorte — el recorte por usuario lo decide tu frontend |
-| **Admin** | token en `.env` | Operación, disparo manual de jobs, alias |
+| **Clientes** `/app/v1` | cuenta propia: bearer opaco de 15 min + refresh rotatorio de 30 días | Registro, login, perfil, planes y picks según suscripción (web y app Flutter). Esquema: `/app/v1/openapi.json` |
+| **Servicio** `/v1` | `SERVICE_TOKEN` en `X-Service-Token`, solo servidor a servidor | Todos los picks y probabilidades, sin recorte |
+| **Admin** `/admin`, `/control` | Cloudflare Access + token / usuario del panel | Operación y administración comercial |
+
+`ACCOUNTS_ENABLED=1` abre `/app/v1`; sin él responde 503 (un despliegue sin
+decidirlo no abre altas). El derecho Plus sale SIEMPRE de `subscriptions` en
+el servidor; una suscripción no se borra ni se edita, solo se revoca una vez
+(trigger de `db/043`). El refresh se rota en cada uso y, si un refresh ya
+usado reaparece, se revoca la sesión entera. Correo transaccional
+(verificación y restablecimiento) con Proton Mail por SMTP: envío SMTP
+oficial (`smtp.protonmail.ch`, token SMTP, dominio propio) o Proton Mail
+Bridge (servicio opcional `protonmail-bridge`, perfil `proton-bridge`, de
+[shenxn/protonmail-bridge-docker](https://github.com/shenxn/protonmail-bridge-docker)).
+Guía para la app:
+[docs/app_api_flutter.md](docs/app_api_flutter.md).
 
 El nivel público **no lleva auth a propósito**. Un comprador escéptico tiene que
 poder auditar tu historial sin registrarse. Si le pides email para ver si eres
@@ -560,6 +571,16 @@ Grafana: necesita tu marca, tu dominio, tu copy y estar embebida en tu web de
 ventas. Consume `/track-record`, `/calibration` y `/chain`.
 
 La regla: Grafana sirve para mirar tu sistema, no para vender tu producto.
+
+**Panel `/control` — administración del negocio.** Dashboard con KPIs de
+clientes, suscripciones y operación; fichas de cliente (conceder o revocar
+planes, suspender, cerrar sesiones), planes y precios, auditoría inmutable
+(`admin_audit`) y la vista de sistema de solo lectura. Hecho con
+[Tabler](https://github.com/tabler/tabler), [Tabler Icons](https://github.com/tabler/tabler-icons)
+y [Chart.js](https://github.com/chartjs/Chart.js), servidos desde el propio
+dominio (`src/qf/api/static/vendor/`) con CSP `'self'`. Cada formulario lleva
+token CSRF (Basic auth viaja sola en cada petición). El pipeline sigue siendo
+intocable desde aquí: el panel no lanza jobs ni publica picks.
 
 ---
 
@@ -1147,7 +1168,9 @@ src/qf/
                  pricing · devig · train
   publish/       daily · picks · hashchain · telegram · weekly
   eval/          clv · metrics · backtest · comparison
-  api/           main (público + suscriptor + admin)
+  api/           main (público + servicio + admin) · cuentas (/app/v1, clientes)
+                 panel (/control, Jinja2 + Tabler) · console (auth y vista de sistema)
+  comercial/     cuentas y sesiones · suscripciones · métricas del panel · entrega de picks
   normalize.py   emparejamiento de nombres entre fuentes
 ```
 

@@ -1,5 +1,10 @@
 """
-API interna. NO es un producto que vendas a terceros, y NO gestiona usuarios.
+API interna. NO es un producto que vendas a terceros.
+
+Actualización 2026-10-07 (fase comercial desbloqueada por el usuario): las
+cuentas de clientes viven en `/app/v1` (`cuentas.py`, web y app Flutter, sin
+secretos en el cliente) y la administración en `/control` (`panel.py`). Lo
+que sigue sobre "sin cuentas" describe `/v1`, que no cambia.
 
 Actualización 2026-09-23: este mismo proceso sirve la web demo pública en
 `/` y el panel de lectura `/control`. El BFF separado descrito en la decisión
@@ -46,7 +51,6 @@ o generado en caliente.
 from __future__ import annotations
 
 import hmac
-import ipaddress
 import json
 import os
 
@@ -57,9 +61,13 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import ratelimit
-from .console import router as console_router
+from .cuenta_web import router as cuenta_web_router
+from .cuentas import openapi_router as cuentas_openapi_router
+from .cuentas import router as cuentas_router
 from .fichas import router as fichas_router
+from .panel import router as panel_router
 from .web import router as web_router
+from ..comercial.entrega import picks_for_tiers
 from ..config import settings
 from ..db import query, query_one
 from ..eval.clv import clv_report, summary
@@ -105,36 +113,18 @@ admin = APIRouter(prefix="/admin", tags=["admin"])
 # Rate limiting global (todas las rutas) + cabeceras de seguridad
 # ---------------------------------------------------------------------------
 
-def _client_ip(request: Request) -> str:
-    # Detrás de Caddy en la misma red de Compose: confiar en X-Forwarded-For
-    # es correcto porque el proxy lo escribe él, el cliente no puede falsearlo
-    # sin pasar por Caddy primero.
-    fwd = request.headers.get("x-forwarded-for", "")
-    return fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "desconocida")
-
-
-def _client_key(request: Request) -> str:
-    """IP del cliente; en IPv6, su /64. Un cliente IPv6 suele controlar un /64
-    entero, y rotar direcciones dentro de él anulaba el límite por IP."""
-    ip = _client_ip(request)
-    try:
-        addr = ipaddress.ip_address(ip)
-    except ValueError:
-        return ip
-    if addr.version == 4:
-        return str(addr)
-    if addr.ipv4_mapped:
-        return str(addr.ipv4_mapped)
-    return str(ipaddress.ip_network(f"{ip}/64", strict=False))
+_client_key = ratelimit.client_key
 
 
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
-    # /control lleva contador propio: con el global compartido, su tope de 10
-    # se comparaba contra las visitas a la web y a sus estáticos del mismo
-    # minuto, y el panel devolvía 429 al operador.
-    if request.url.path.startswith("/control"):
-        scope, limit = "control", min(settings.rate_limit_default_per_minute, 10)
+    # /control lleva contador propio: con el global compartido, su tope se
+    # comparaba contra las visitas a la web y a sus estáticos del mismo
+    # minuto, y el panel devolvía 429 al operador. Desde 2026-10-07 el panel
+    # tiene varias páginas y carga sus librerías de /static: el tope de 10
+    # que bastaba para una sola página cortaba la navegación normal.
+    if request.url.path.startswith(("/control", "/static")):
+        scope, limit = "control", settings.rate_limit_default_per_minute * 2
     else:
         scope, limit = "ip", settings.rate_limit_default_per_minute
     if ratelimit.rate_limited(r, f"{scope}:{_client_key(request)}", limit):
@@ -410,7 +400,7 @@ def model_card():
 @publico.get("/picks/free")
 def picks_gratis(limit: int = Query(20, le=100), offset: int = Query(0, ge=0)):
     """Los picks del escaparate gratuito. Es lo que se muestra sin login en la web."""
-    return _picks(("free",), limit=limit, offset=offset)
+    return picks_for_tiers(("free",), limit=limit, offset=offset)
 
 
 @publico.get("/leagues")
@@ -572,7 +562,7 @@ def fair_price(match_id: str):
 
 @privado.get("/picks", dependencies=[Depends(require_service)])
 def picks(limit: int = Query(20, le=100), offset: int = Query(0, ge=0)):
-    return _picks(("free", "paid"), limit=limit, offset=offset)
+    return picks_for_tiers(("free", "paid"), limit=limit, offset=offset)
 
 
 @privado.get("/matches/{match_id}/predictions", dependencies=[Depends(require_service)])
@@ -611,25 +601,6 @@ def fixtures(league: str | None = None, hours: int = Query(72, le=240)):
              AND m.kickoff_utc BETWEEN now() AND now() + make_interval(hours => %s)
            ORDER BY m.kickoff_utc""",
         (league, league, hours),
-    )
-
-
-def _picks(tiers: tuple[str, ...], limit: int = 20, offset: int = 0) -> list[dict]:
-    return query(
-        """SELECT p.pick_id, p.match_id, p.market, p.selection, p.line,
-                  p.model_prob, p.advised_price, p.bookmaker, p.edge_pct,
-                  p.stake_units, p.tier, p.published_at,
-                  p.fair_prob, p.min_price, p.odds_source, p.odds_as_of,
-                  m.kickoff_utc, m.league_id,
-                  th.canonical_name AS local, ta.canonical_name AS visitante
-           FROM picks p
-           JOIN matches m USING (match_id)
-           JOIN teams th ON th.team_id = m.home_team_id
-           JOIN teams ta ON ta.team_id = m.away_team_id
-           WHERE m.kickoff_utc > now() AND p.tier = ANY(%s)
-           ORDER BY p.edge_pct DESC
-           LIMIT %s OFFSET %s""",
-        (list(tiers), limit, offset),
     )
 
 
@@ -735,7 +706,10 @@ def admin_challengers():
 app.include_router(publico)
 app.include_router(privado)
 app.include_router(admin)
-app.include_router(console_router)
+app.include_router(panel_router)
+app.include_router(cuentas_router)
+app.include_router(cuentas_openapi_router)
+app.include_router(cuenta_web_router)
 app.include_router(web_router)
 app.include_router(fichas_router)
 

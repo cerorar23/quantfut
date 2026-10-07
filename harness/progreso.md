@@ -3859,3 +3859,58 @@ aprobadas, una advertencia; frontend 13 aprobadas. Salud origen/HTTPS status ok,
 archivos cotejados por SHA-256; el HTML público solo incorpora el beacon existente
 de Cloudflare. Navegador público comprobó acceso demo → pedido bloqueado y cuenta
 sin suscripción activa. Registro: docs/web_despliegue_20261007.md.
+
+## 2026-10-07 — Fase comercial desbloqueada: cuentas, API de clientes y panel
+
+Decisión del usuario: avanzar ya con cuentas y panel de administración sin
+esperar a la puerta de CLV. La puerta sigue decidiendo si hay picks que
+vender (`PUBLISH_PICKS_ENABLED`); las cuentas existen aunque esté cerrada.
+
+- Un solo FastAPI para web, app Flutter y panel (se mantiene la decisión
+  2026-09-23). `/app/v1` sin secretos en el cliente: bearer opaco de 15 min
+  en Redis + refresh de 30 días hasheado en Postgres y rotado en cada uso;
+  el reuso de un refresh revoca la sesión (robo de token). Opaco y no JWT:
+  suspender o cerrar sesiones corta en el acto y no hace falta PyJWT.
+- `ACCOUNTS_ENABLED` apagado por defecto: desplegar no abre altas solo.
+- `subscriptions` solo admite revocar una vez (trigger); `admin_audit`
+  inmutable con `deny_mutation()`. Una concesión manual no es ingreso: los
+  ingresos del dashboard solo cuentan `source='payment'`.
+- Panel: Tabler + Tabler Icons + Chart.js vendorizados (MIT, versiones y
+  SHA en `static/vendor/README.md`) para mantener CSP `'self'` sin
+  `unsafe-inline`. Se descartaron SQLAdmin/starlette-admin (exigen ORM y
+  chocan con los triggers) y react-admin/refine (build de Node y tokens en
+  JS). El pipeline sigue siendo de solo lectura desde el panel.
+- Trampa encontrada: `main.py` manda `Referrer-Policy: no-referrer`, y con
+  eso Chrome envía `Origin: null` en los POST propios; la defensa CSRF se
+  apoya en `Sec-Fetch-Site` + token HMAC, no en `Origin`.
+- El tope de 10/min de `/control` se subió a 2× el general y cubre también
+  `/static`: con varias páginas daba 429 navegando normalmente.
+- Verificado: 753 tests + 6 de integración contra un Postgres 16 desechable
+  con todo `db/*.sql` (rotación/reuso, suspensión, renovación sin perder
+  días, de por vida, revocación única); flujo HTTP completo y panel en
+  navegador. Sin despliegue: falta aplicar `db/043`, `pip install` y
+  `ACCOUNTS_ENABLED=1` en el VPS.
+- Pendiente de decisión del usuario: procesador de pago y proveedor de
+  correo. Guía de la app: `docs/app_api_flutter.md`.
+
+## 2026-10-07 — Correo transaccional con Proton Mail
+
+Decisión del usuario: Proton Mail. Hay dos formas y el código es el mismo
+(SMTP genérico en `comercial/correo.py`); solo cambia `.env`:
+- Recomendada: envío SMTP oficial de Proton (`smtp.protonmail.ch:587`,
+  STARTTLS, token SMTP). Exige plan de pago y dominio propio en Proton; no
+  añade servicios que mantener.
+- Alternativa: Proton Mail Bridge en Compose (perfil `proton-bridge`) con
+  shenxn/protonmail-bridge-docker. Su imagen de Docker Hub está parada en la
+  3.19 (abr-2025) aunque el repo sigue (v3.27): se compila desde un commit
+  fijo con el bridge v3.27.1. El login es interactivo (2FA): lo hace el
+  usuario en el VPS.
+- Proton no es para envíos masivos y limita por reputación: aquí solo
+  salen correos uno a uno disparados por el cliente.
+- Los enlaces solo guardan sha256; GET nunca consume el token (los filtros
+  de correo visitan enlaces), solo el POST del botón. `forgot` responde 202
+  siempre y envía en segundo plano. Restablecer cierra todas las sesiones.
+- Verificado con un servidor SMTP real en local (aiosmtpd con STARTTLS y
+  certificado autofirmado): llega autenticado y cifrado, con verificación
+  estricta se rechaza el autofirmado y una contraseña mala no envía.
+  Flujo completo en navegador: enlace → nueva contraseña → login.

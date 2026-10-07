@@ -1,0 +1,22 @@
+{% extends "cuenta/base.html" %}
+{% block title %}Nueva contraseña{% endblock %}
+{% block content %}
+<h2 class="h2 text-center mb-3">Elige una contraseña nueva</h2>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="/cuenta/restablecer" autocomplete="off">
+  <input type="hidden" name="token" value="{{ token }}">
+  <div class="mb-3">
+    <label class="form-label" for="password">Nueva contraseña</label>
+    <input class="form-control" type="password" id="password" name="password" required
+           minlength="{{ minimo }}" maxlength="128" autocomplete="new-password">
+    <div class="form-hint">Al menos {{ minimo }} caracteres.</div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="password2">Repítela</label>
+    <input class="form-control" type="password" id="password2" name="password2" required
+           minlength="{{ minimo }}" maxlength="128" autocomplete="new-password">
+  </div>
+  <button class="btn btn-primary w-100" type="submit">{{ icon('key') }} Guardar contraseña</button>
+</form>
+<p class="small text-secondary mt-3 mb-0">Al cambiarla se cierran todas tus sesiones abiertas.</p>
+{% endblock %}

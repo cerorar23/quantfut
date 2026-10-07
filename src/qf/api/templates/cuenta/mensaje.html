@@ -1,0 +1,11 @@
+{% extends "cuenta/base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="text-center">
+  <div class="mb-3 {{ 'text-green' if ok else 'text-orange' }} qf-cuenta-icono">
+    {{ icon('circle-check' if ok else 'alert-triangle') }}
+  </div>
+  <h2 class="h2 mb-2">{{ titulo }}</h2>
+  <p class="text-secondary mb-0">{{ texto }}</p>
+</div>
+{% endblock %}

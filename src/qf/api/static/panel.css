@@ -1,0 +1,71 @@
+/* Ajustes de QuantFut sobre Tabler. Paleta del usuario (2026-10-07):
+   azul noche #0b132b, pizarra #1c2541, esmeralda #10b981. */
+:root {
+  --qf-noche: #0b132b;
+  --qf-pizarra: #1c2541;
+  --qf-esmeralda: #10b981;
+  --tblr-primary: #10b981;
+  --tblr-primary-rgb: 16, 185, 129;
+  --tblr-primary-text: #047857;
+  --tblr-primary-lt: rgba(16, 185, 129, .12);
+}
+body { background: #f3f5fa; }
+
+.qf-sidebar { background: var(--qf-noche) !important; }
+.qf-sidebar .nav-link { border-radius: 8px; margin: 2px 8px; }
+.qf-sidebar.navbar .navbar-nav .nav-item.active > .nav-link {
+  background: var(--qf-esmeralda); color: #fff;
+}
+.qf-sidebar .nav-link-icon svg { width: 20px; height: 20px; }
+.qf-brand { display: flex; align-items: center; gap: .5rem; color: #fff; font-size: 1.35rem;
+            font-weight: 600; text-decoration: none; padding: .75rem 0; }
+.qf-brand b { color: var(--qf-esmeralda); }
+.qf-brand-mark svg { width: 30px; height: 30px; color: var(--qf-esmeralda); }
+.qf-sidebar-foot { position: absolute; bottom: 1rem; left: 0; right: 0; text-align: center;
+                   color: rgba(255,255,255,.45); font-size: .75rem; }
+
+.qf-topbar { background: var(--qf-pizarra) !important; min-height: 4rem; }
+.qf-search { position: relative; flex: 0 1 26rem; }
+.qf-search input { padding-left: 2.25rem; background: rgba(255,255,255,.06);
+                   border-color: rgba(255,255,255,.15); color: #fff; }
+.qf-search input::placeholder { color: rgba(255,255,255,.55); }
+.qf-search-icon { position: absolute; left: .65rem; top: 50%; transform: translateY(-50%);
+                  color: rgba(255,255,255,.6); }
+.qf-search-icon svg { width: 18px; height: 18px; }
+.qf-user { display: inline-flex; align-items: center; gap: .5rem; color: #fff; font-weight: 600; }
+.qf-user .avatar { background: var(--qf-esmeralda); color: #fff; }
+
+.qf-section { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em;
+              color: var(--tblr-secondary); margin: 1.5rem 0 .75rem; }
+.qf-section:first-child { margin-top: 0; }
+.qf-stat { height: 100%; }
+.qf-stat .avatar svg { width: 24px; height: 24px; }
+.qf-stat-value { font-variant-numeric: tabular-nums; }
+.btn svg, .badge svg { width: 18px; height: 18px; }
+.qf-chart { position: relative; height: 300px; }
+.qf-ua { max-width: 22rem; }
+.qf-precio { width: 9rem; }
+
+/* Vista de sistema: HTML de console.py (tabla de sombra y tarjetas JSON). */
+.qf-sistema { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.qf-sistema .card { padding: 1.25rem; min-width: 0; }
+.qf-sistema .card h2 { font-size: 1rem; margin: 0 0 1rem; }
+.qf-sistema .card-sombra { grid-column: 1 / -1; }
+.qf-sistema pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .78rem; margin: 0;
+                  max-height: 28rem; overflow-y: auto; }
+.qf-sistema .nota { color: var(--tblr-secondary); font-size: .8rem; }
+.qf-sistema .tabla { overflow-x: auto; }
+.qf-sistema table { border-collapse: collapse; width: 100%; font-size: .78rem; white-space: nowrap; }
+.qf-sistema th, .qf-sistema td { padding: .4rem .6rem; border-bottom: 1px solid var(--tblr-border-color); }
+.qf-sistema td.pos { color: var(--tblr-green); }
+.qf-sistema td.neg { color: var(--tblr-red); }
+
+@media (max-width: 991.98px) {
+  .qf-sistema { grid-template-columns: 1fr; }
+  .qf-sidebar-foot { position: static; padding: 1rem; }
+}
+
+/* Páginas de /cuenta (enlaces de los correos). */
+.qf-cuenta { background: var(--qf-noche); }
+.qf-brand-claro { color: #fff; }
+.qf-cuenta-icono svg { width: 48px; height: 48px; }

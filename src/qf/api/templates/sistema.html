@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Sistema{% endblock %}
+{% block pretitle %}Operación · solo lectura{% endblock %}
+{% block heading %}Sistema y modelo{% endblock %}
+{% block content %}
+<p class="text-secondary">Datos en vivo del servidor. Esta vista no ejecuta jobs, no publica picks ni modifica modelos.</p>
+<div class="qf-sistema">{{ contenido }}</div>
+{% endblock %}

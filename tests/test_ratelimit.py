@@ -60,10 +60,14 @@ def test_visitar_la_web_no_agota_el_cupo_del_panel(monkeypatch):
 
 def test_el_panel_tiene_su_propio_tope(monkeypatch):
     main, client = _app(monkeypatch)
-    tope = min(main.settings.rate_limit_default_per_minute, 10)
-    codes = [client.get("/control", headers={"X-Forwarded-For": "1.2.3.4"}).status_code
-             for _ in range(tope + 1)]
+    tope = main.settings.rate_limit_default_per_minute * 2
+    # Las librerías del panel (/static) cuentan contra el mismo cupo, no
+    # contra el de la web pública.
+    codes = [client.get("/control" if i % 2 else "/static/panel.css",
+                        headers={"X-Forwarded-For": "1.2.3.4"}).status_code
+             for i in range(tope + 1)]
     assert codes[-1] == 429 and 429 not in codes[:-1]
+    assert client.get("/", headers={"X-Forwarded-For": "1.2.3.4"}).status_code == 200
 
 
 def test_ipv6_se_agrupa_por_64_e_ipv4_no_cambia(monkeypatch):

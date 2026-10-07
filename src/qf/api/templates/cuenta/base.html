@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Cuenta{% endblock %} · QuantFut</title>
+  <link rel="stylesheet" href="/static/vendor/tabler.min.css">
+  <link rel="stylesheet" href="/static/panel.css">
+</head>
+<body class="d-flex flex-column qf-cuenta">
+<div class="page page-center">
+  <div class="container container-tight py-4">
+    <div class="text-center mb-4">
+      <a href="/" class="qf-brand qf-brand-claro justify-content-center">
+        <span class="qf-brand-mark">{{ icon('ball-football') }}</span>
+        <span>Quant<b>Fut</b></span>
+      </a>
+    </div>
+    <div class="card card-md">
+      <div class="card-body">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

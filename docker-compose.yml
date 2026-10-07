@@ -99,6 +99,26 @@ services:
       - caddyconfig:/config
     restart: unless-stopped
 
+  # Correo con Proton Mail Bridge (opcional). Solo hace falta si NO usas el
+  # envío SMTP oficial de Proton (smtp.protonmail.ch con token SMTP y dominio
+  # propio), que no necesita ningún contenedor. Ver src/qf/comercial/correo.py.
+  # Imagen: github.com/shenxn/protonmail-bridge-docker (GPL-3.0) compilada
+  # desde un commit fijo: la de Docker Hub se quedó en la 3.19 (abr-2025).
+  # Login (una vez, interactivo, admite 2FA):
+  #   docker compose --profile proton-bridge run --rm protonmail-bridge init
+  #   (dentro: login, después info para ver usuario/contraseña SMTP, exit)
+  #   docker compose --profile proton-bridge up -d protonmail-bridge
+  # Sin puertos publicados: la API le habla por la red interna de Compose.
+  protonmail-bridge:
+    profiles: ["proton-bridge"]
+    build:
+      context: https://github.com/shenxn/protonmail-bridge-docker.git#a5d3dd2f4af4cfa895aad401655a50f7c956b3d7:build
+      args:
+        version: v3.27.1
+    volumes:
+      - protonmail:/root
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redisdata:
@@ -109,3 +129,4 @@ volumes:
   workerlogs:
   caddydata:
   caddyconfig:
+  protonmail:

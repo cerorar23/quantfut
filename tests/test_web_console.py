@@ -6,15 +6,21 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from qf.api import console, web
+from qf.api import console, panel, web
+from qf.comercial import metricas
 
 
 def _client(monkeypatch):
     app = FastAPI()
-    app.include_router(console.router)
+    app.include_router(panel.router)
     app.include_router(web.router)
     monkeypatch.setattr(console, "_snapshot", lambda: {"Estado": {"ok": True}})
     monkeypatch.setattr(console, "_shadow_picks", lambda: [])
+    for name in ("cuentas", "suscripciones", "operacion"):
+        monkeypatch.setattr(metricas, name, lambda: {})
+    for name in ("ingresos_30d", "serie_diaria", "ultimas_cuentas"):
+        monkeypatch.setattr(metricas, name, lambda: [])
+    monkeypatch.setattr(metricas, "auditoria", lambda **_kw: [])
     return TestClient(app)
 
 
@@ -58,7 +64,8 @@ def test_panel_exige_credenciales_y_escapa_datos(monkeypatch):
     assert unauth.headers["www-authenticate"].startswith("Basic")
     assert client.get("/control", auth=("operador", "incorrecta")).status_code == 401
 
-    response = client.get("/control", auth=("operador", password))
+    assert client.get("/control", auth=("operador", password)).status_code == 200
+    response = client.get("/control/sistema", auth=("operador", password))
     assert response.status_code == 200
     assert response.headers["cache-control"] == "no-store"
     assert "default-src 'none'" in response.headers["content-security-policy"]
@@ -87,7 +94,7 @@ def test_montaje_real_no_abre_rutas_privadas(monkeypatch):
     client = TestClient(main.app)
     assert client.get("/").status_code == 200
     assert client.get("/control").status_code == 503
-    assert limits[-1] == min(main.settings.rate_limit_default_per_minute, 10)
+    assert limits[-1] == main.settings.rate_limit_default_per_minute * 2
     assert client.get("/v1/picks").status_code == 404
     assert client.get("/admin/health").status_code == 404
     assert client.get("/admin/shadow-audit").status_code == 404

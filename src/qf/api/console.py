@@ -1,4 +1,8 @@
-"""Panel interno de lectura. Nunca ejecuta jobs ni publica picks."""
+"""Autenticación del panel `/control` y su vista de sistema.
+
+Las rutas viven en `panel.py`. Lo de aquí es de solo lectura: nunca ejecuta
+jobs ni publica picks.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -8,14 +12,12 @@ import json
 import logging
 import os
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from ..db import query, query_one
 
 
-router = APIRouter(prefix="/control", include_in_schema=False)
 _basic = HTTPBasic(auto_error=False)
 _log = logging.getLogger(__name__)
 _ITERATIONS = 600_000
@@ -36,7 +38,8 @@ def verify_password(password: str, encoded: str) -> bool:
         return False
 
 
-def require_console(credentials: HTTPBasicCredentials | None = Depends(_basic)) -> None:
+def require_console(credentials: HTTPBasicCredentials | None = Depends(_basic)) -> str:
+    """Devuelve el usuario del panel: es el autor que queda en `admin_audit`."""
     username = os.getenv("ADMIN_CONSOLE_USER", "")
     password_hash = os.getenv("ADMIN_CONSOLE_PASSWORD_HASH", "")
     if not username or not password_hash:
@@ -49,6 +52,7 @@ def require_console(credentials: HTTPBasicCredentials | None = Depends(_basic)) 
     if not (user_ok and pass_ok):
         raise HTTPException(401, "Credenciales incorrectas",
                             headers={"WWW-Authenticate": 'Basic realm="QuantFut control"'})
+    return username
 
 
 def _read(check):
@@ -174,7 +178,7 @@ def _shadow_table(rows: list[dict] | dict) -> str:
                 'tienen cierre de Pinnacle entran en el CLV.</p><div class="tabla"><table><thead><tr>'
                 + "".join(f"<th>{h}</th>" for h in head) + "</tr></thead><tbody>"
                 + "".join(trs) + "</tbody></table></div>")
-    return f'<section class="card wide">{title}{body}</section>'
+    return f'<section class="card card-sombra">{title}{body}</section>'
 
 
 def _shadow_picks() -> list[dict]:
@@ -183,31 +187,10 @@ def _shadow_picks() -> list[dict]:
     return publishable_list()
 
 
-def _page(data: dict, sombra: list[dict] | dict | None = None) -> str:
-    cards = "".join(
-        f'<section class="card"><h2>{html.escape(title)}</h2>'
+def snapshot_cards(data: dict) -> str:
+    return "".join(
+        f'<section class="card card-json"><h2>{html.escape(title)}</h2>'
         f'<pre>{html.escape(json.dumps(value, ensure_ascii=False, indent=2, default=str))}</pre>'
         "</section>"
         for title, value in data.items()
     )
-    if sombra is not None:
-        cards = _shadow_table(sombra) + cards
-    return (
-        '<!doctype html><html lang="es"><head><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>QuantFut · Control</title><link rel="stylesheet" href="/console.css">'
-        '</head><body><header><a href="/">QuantFut</a><span>Control interno · solo lectura</span>'
-        '</header><main><div class="intro"><p class="eyebrow">OPERACIÓN</p>'
-        '<h1>Estado del sistema</h1><p>Datos en vivo del servidor. Esta vista no ejecuta jobs, '
-        'no publica picks ni modifica modelos.</p></div><div class="grid">'
-        + cards + '</div></main></body></html>'
-    )
-
-
-@router.get("", dependencies=[Depends(require_console)])
-@router.get("/", dependencies=[Depends(require_console)])
-def dashboard() -> HTMLResponse:
-    return HTMLResponse(_page(_snapshot(), _read(_shadow_picks)), headers={
-        "Cache-Control": "no-store",
-        "Content-Security-Policy": "default-src 'none'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'",
-    })

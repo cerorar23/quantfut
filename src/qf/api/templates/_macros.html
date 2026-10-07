@@ -1,0 +1,45 @@
+{% macro stat(label, value, ico, color, href=None, hint=None) %}
+<div class="col-sm-6 col-xl-3">
+  {% if href %}<a class="card card-sm qf-stat card-link" href="{{ href }}">{% else %}<div class="card card-sm qf-stat">{% endif %}
+    <div class="card-status-start bg-{{ color }}"></div>
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-auto"><span class="avatar avatar-md bg-{{ color }}-lt">{{ icon(ico) }}</span></div>
+        <div class="col">
+          <div class="text-secondary">{{ label }}</div>
+          <div class="h1 m-0 qf-stat-value">{{ value if value is defined and value is not none else '—' }}</div>
+          {% if hint %}<div class="small text-secondary">{{ hint }}</div>{% endif %}
+        </div>
+        {% if href %}<div class="col-auto text-secondary">{{ icon('chevron-right') }}</div>{% endif %}
+      </div>
+    </div>
+  {% if href %}</a>{% else %}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro estado_cuenta(status) %}
+{% if status == 'active' %}<span class="badge bg-green-lt">Activa</span>
+{% else %}<span class="badge bg-red-lt">Suspendida</span>{% endif %}
+{% endmacro %}
+
+{% macro plus(acc) %}
+{% if acc.de_por_vida %}<span class="badge bg-purple-lt">Plus · de por vida</span>
+{% elif acc.plus_hasta %}<span class="badge bg-primary-lt">Plus hasta {{ acc.plus_hasta|fecha('%d-%m-%Y') }}</span>
+{% else %}<span class="text-secondary">Explorador</span>{% endif %}
+{% endmacro %}
+
+{% macro paginas(lista, base) %}
+{% if lista.pages > 1 %}
+<div class="card-footer d-flex align-items-center">
+  <p class="m-0 text-secondary">{{ lista.total }} en total · página {{ lista.page }} de {{ lista.pages }}</p>
+  <ul class="pagination m-0 ms-auto">
+    <li class="page-item{% if lista.page <= 1 %} disabled{% endif %}">
+      <a class="page-link" href="{{ base }}page={{ lista.page - 1 }}">Anterior</a></li>
+    <li class="page-item{% if lista.page >= lista.pages %} disabled{% endif %}">
+      <a class="page-link" href="{{ base }}page={{ lista.page + 1 }}">Siguiente</a></li>
+  </ul>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro csrf_input(csrf) %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}

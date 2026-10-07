@@ -6,10 +6,16 @@ FastAPI. Ver [README.md](README.md) para la arquitectura completa; este
 archivo es el arnés operativo, no repite esa documentación.
 
 Actualización (2026-09-23): un único FastAPI sirve también la web demo en
-`/` y el panel interno de lectura en `/control`; el BFF separado que figura
-en decisiones históricas fue descartado. Las cuentas de clientes y cobros
-siguen fuera de alcance hasta la validación comercial. No exponer tokens de
-servicio o administración en JavaScript.
+`/` y el panel interno en `/control`; el BFF separado que figura en
+decisiones históricas fue descartado. No exponer tokens de servicio o
+administración en JavaScript ni en la app Flutter.
+
+Fase comercial desbloqueada (2026-10-07, decisión del usuario): cuentas en
+`/app/v1` (`api/cuentas.py`, web + Flutter), lógica en `src/qf/comercial/`,
+panel de administración en `/control` (`api/panel.py`, Tabler). `db/043`:
+`subscriptions` solo se revoca, `admin_audit` es inmutable. Correo: Proton
+Mail por SMTP (`comercial/correo.py`, `db/044`). Falta elegir procesador de
+pago (ver `harness/tareas.md`).
 
 ## Protocolo de inicio (obligatorio antes de tocar código)
 
@@ -29,8 +35,8 @@ siendo llamado desde `daily.py`, pero es best-effort/no-op sin
 (el tier free/paid de un pick lo decide `picks.assign_tiers()`, no
 Telegram). No desarrolles el bot receptor de Telegram ni auth por Telegram
 a menos que el usuario lo pida explícitamente. Auth de suscriptor
-(no-Telegram) y cobros están fuera de alcance por ahora — ver
-`harness/tareas.md`.
+(no-Telegram) ya existe (`/app/v1`); los cobros esperan a que el usuario
+elija procesador — ver `harness/tareas.md`.
 
 Excepción (2026-10-02, decisión del usuario): Telegram SÍ es el canal de
 **alertas operativas** (`telegram.alert()` → chat privado `TG_ALERT_CHAT`).

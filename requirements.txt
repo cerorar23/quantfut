@@ -17,3 +17,7 @@ rapidfuzz==3.10.1
 # Ver src/qf/ingest/uefa_cups.py.
 pyreadr==0.5.6
 python-multipart==0.0.20
+# Fase comercial (2026-10-07): contraseñas de clientes (argon2id) y
+# plantillas del panel /control (autoescape de HTML).
+argon2-cffi==23.1.0
+jinja2==3.1.6

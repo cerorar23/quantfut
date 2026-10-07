@@ -51,6 +51,15 @@ La propuesta detallada está en
 
 ## Estado de implementación
 
+**Actualización 2026-10-07 (fase comercial desbloqueada por el usuario):**
+existen en el servidor las cuentas, sesiones, planes y suscripciones
+(`db/043`, `/app/v1`, ver `docs/app_api_flutter.md`) y el panel `/control`
+para administrarlas. El recorrido de abajo cambia en dos puntos: el acceso
+es con contraseña (argon2id) hasta que haya proveedor de correo para el
+enlace de un solo uso, y la app usa bearer + refresh en vez de cookie. La
+web pública (`membership.js`) sigue en demo hasta conectarla a `/app/v1`.
+Pago y webhook siguen pendientes de elegir procesador.
+
 - Hecho: vistas de demo, puerta de publicación, `SERVICE_TOKEN` exclusivo de
   servidor, `/v1/picks` protegido para el futuro backend web, y auditoría
   interna por liga en `/control` y `/admin/shadow-audit`.

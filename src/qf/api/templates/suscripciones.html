@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import paginas, csrf_input %}
+{% block title %}Suscripciones{% endblock %}
+{% block pretitle %}Suscripciones{% endblock %}
+{% block heading %}Periodos concedidos y pagados{% endblock %}
+{% block content %}
+{% set filtros = [('vigentes','Vigentes'),('vencen_7d','Vencen en 7 días'),('futuras','Programadas'),
+                  ('revocadas','Revocadas'),('todas','Todas')] %}
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-pills card-header-pills flex-wrap">
+      {% for key, label in filtros %}
+      <li class="nav-item"><a class="nav-link{% if filtro == key %} active{% endif %}"
+          href="/control/suscripciones?filtro={{ key }}">{{ label }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>#</th><th>Cliente</th><th>Plan</th><th>Desde</th><th>Hasta</th><th>Origen</th>
+                 <th>Importe</th><th>Concedida por</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for s in lista.rows %}
+        <tr>
+          <td class="text-secondary">{{ s.subscription_id }}</td>
+          <td><a href="/control/usuarios/{{ s.account_id }}">{{ s.email }}</a></td>
+          <td>{{ s.plan_name }}</td>
+          <td>{{ s.starts_at|fecha }}</td>
+          <td>{{ s.ends_at|fecha if s.ends_at else 'De por vida' }}</td>
+          <td>{{ 'Pago' if s.source == 'payment' else 'Manual' }}</td>
+          <td>{{ s.price_cents|dinero(s.currency) if s.source == 'payment' else '—' }}</td>
+          <td class="small">{{ s.created_by }}</td>
+          <td>{% if s.revoked_at %}<span class="badge bg-red-lt">Revocada</span>
+                <div class="small text-secondary">{{ s.revoke_reason }}</div>
+              {% elif s.starts_at > now %}<span class="badge bg-azure-lt">Programada</span>
+              {% elif s.ends_at is none or s.ends_at > now %}<span class="badge bg-green-lt">Vigente</span>
+              {% else %}<span class="badge bg-secondary-lt">Vencida</span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="9" class="text-secondary">No hay suscripciones con ese filtro.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ paginas(lista, '/control/suscripciones?filtro=' ~ filtro ~ '&') }}
+</div>
+<p class="text-secondary small mt-2">Para revocar una suscripción, ábrela desde la ficha del cliente.</p>
+{% endblock %}
