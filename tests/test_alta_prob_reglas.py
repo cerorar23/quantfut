@@ -124,3 +124,16 @@ def test_desempate_con_goles_de_un_equipo():
 def test_texto_marca_un_equipo():
     assert ap.texto("team_totals_home", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Cruzeiro"
     assert ap.texto("team_totals_away", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Sao Paulo"
+
+
+def test_bloquear_el_grupo_team_totals_excluye_los_dos_lados():
+    # `control` devuelve el grupo "team_totals"; `elegir` tiene que dejar fuera
+    # tanto "marca el local" como "marca el visitante" y seguir con otro mercado.
+    local = ap.Candidato("team_totals_home", "over", 0.5, 0.82)
+    visitante = ap.Candidato("team_totals_away", "over", 0.5, 0.83)
+    doble = ap.Candidato("double_chance", "1X", None, 0.90)
+    assert ap.elegir([local, visitante, doble]) == local
+    assert ap.elegir([local, visitante, doble], excluir={"team_totals"}) == doble
+    assert ap.elegir([local, visitante], excluir={"team_totals"}) is None
+    # El nombre exacto de un lado sigue valiendo, y no arrastra al otro.
+    assert ap.elegir([local, visitante, doble], excluir={"team_totals_home"}) == visitante

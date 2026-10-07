@@ -698,11 +698,15 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
 - **Probabilidad:** siempre Pinnacle sin margen (Shin), nunca el modelo
   propio. 1X2 y doble oportunidad salen directos del 1X2; los goles (más de
   1,5 y menos de 3,5; "menos de 4,5" pasó la prueba pero se excluye por
-  decisión del usuario, 2026-10-06, por pagarse a 1,09-1,17) de un ajuste
-  Dixon-Coles que reproduce el
+  decisión del usuario, 2026-10-06, por pagarse a 1,09-1,17) y "marca el
+  local / el visitante" (más de 0,5 goles de un equipo, 2026-10-07; prueba
+  histórica 2026-10-07: local 86,97→88,52, visitante 86,10→87,45) salen de un
+  ajuste Dixon-Coles que reproduce el
   1X2 y la línea de goles de Pinnacle (`model/market_anchor`, con push en
-  líneas enteras y de cuarto). Es decir, la de goles es una probabilidad
-  derivada, no la cuota de Pinnacle de ese mercado.
+  líneas enteras y de cuarto). Es decir, la de goles y la de un equipo son
+  probabilidades derivadas, no la cuota de Pinnacle de ese mercado. La cuota
+  de referencia de "marca un equipo" sale de las casas blandas de
+  API-Football (bets 16/17, misma respuesta que el 1X2).
 - **Regla:** de los candidatos en [80 %, 95 %], el de MENOR probabilidad (el
   más informativo); el tope evita obviedades. Precio de Pinnacle de ≤ 6 h y
   ≥ 15 min antes del inicio; horizonte 36 h; un pronóstico por partido para
@@ -723,9 +727,15 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   exacta y el ajuste de goles.
 - **Pausa automática:** con ≥ 50 liquidados, IC99 por semanas (mínimo 10
   semanas) de `acertado − prometido` entero bajo cero, o z ≤ −4 (fallo
-  grosero, desde el principio). En conjunto y por mercado. Simulado: ~10 %
-  de pausas en falso por mercado (3 % de la línea entera) en 26 semanas y
-  ~88 % de detección de un déficit de 3 puntos. Reanudar es decisión del
+  grosero, desde el principio). En conjunto y por grupo de mercado:
+  "marca el local" y "marca el visitante" se vigilan como UN solo grupo
+  (`team_totals`, decisión del usuario 2026-10-07) y, si se pausa, se
+  excluyen los dos lados. Simulado (revisión final 2026-10-07, mezcla
+  realista de mercados elegidos, 26 semanas): ~16 % de líneas con alguna
+  pausa de grupo en falso y ~5 % con la línea entera pausada en falso; un
+  déficit real de 3 puntos se detecta en ~82 % de las líneas (algún grupo) y
+  ~73 % (la línea entera). Las cifras anteriores (9,7 % / 3 % / 88 %)
+  suponían probabilidades uniformes y 4 grupos. Reanudar es decisión del
   usuario: `ALTA_PROB_CONTROL_DESDE`. Interruptor general `ALTA_PROB_ENABLED`.
 - **Goles desde API-Football (2026-10-06):** a las 08:00 UTC el precio de
   ≤ 6 h suele venir de API-Football; `ingest/af_odds` guarda, con la misma

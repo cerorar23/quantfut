@@ -124,3 +124,29 @@ def test_historial():
 def test_historial_vacio():
     h = ap.historial([])
     assert h["n"] == 0 and h["acierto_real"] is None and h["por_mercado"] == {}
+
+
+def test_marca_local_y_visitante_se_vigilan_como_un_grupo():
+    # Decisión del usuario (2026-10-07): los dos lados son UN grupo de control.
+    # Cada lado tiene solo 30 pronósticos (< MIN_N_CONTROL) y por separado no
+    # se pausaría; juntos suman 60, prometen 0,86 y aciertan 0,55 (z ≈ −7), y el
+    # resto de la línea cumple, así que "todo" no se bloquea.
+    assert ap.grupo_control("team_totals_home") == ap.grupo_control("team_totals_away") == "team_totals"
+    assert ap.grupo_control("totals") == "totals" and ap.grupo_control("h2h") == "h2h"
+    filas = (_filas(400, 0.87, 0.92)
+             + _filas(30, 0.86, 0.55, market="team_totals_home")
+             + _filas(30, 0.86, 0.55, market="team_totals_away"))
+    out = ap.control(filas)
+    assert out["bloqueados"] == ["team_totals"]
+    assert any(m.startswith("team_totals: fallo grosero") and "60 pronósticos" in m
+               for m in out["motivos"])
+    assert not any(m.startswith("team_totals_") for m in out["motivos"])
+
+
+def test_un_lado_suelto_sin_muestra_no_pausa_el_grupo():
+    # Un solo lado con 30 pronósticos: el grupo no llega a la muestra mínima.
+    filas = _filas(400, 0.87, 0.92) + _filas(30, 0.86, 0.55, market="team_totals_home")
+    out = ap.control(filas)
+    assert out["bloqueados"] == []
+    assert any(m.startswith("team_totals: muestra insuficiente (30 < 50)")
+               for m in out["motivos"])

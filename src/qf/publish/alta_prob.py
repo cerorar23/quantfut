@@ -73,10 +73,15 @@ MIN_N_CONTROL = 50
 # goles, evaluadas cada semana): con una línea PERFECTAMENTE calibrada, el
 # control anterior (IC95 desde 8 semanas) pausaba algo en el 27 % de las líneas
 # (la línea entera en el 10,7 %), casi todo al llegar a las 8-9 semanas: un IC
-# que remuestrea pocas semanas queda corto y hay cuatro contrastes (todo + 3
-# mercados) repetidos cada semana. Con IC99, 10 semanas y la red z: 9,7 % y
-# 3,0 %; y un déficit real de 3 puntos se detecta en el 88 % (81,7 %) de las
-# líneas en 26 semanas, con mediana en la semana 11 (12). Decisión del usuario.
+# que remuestrea pocas semanas queda corto y hay varios contrastes (todo + un
+# grupo por mercado) repetidos cada semana. Con IC99, 10 semanas y la red z se
+# bajó a 9,7 % y 3,0 %, con 88 % de detección, pero esa medición suponía
+# probabilidades uniformes y 4 grupos. Revisión final del 2026-10-07, con la
+# mezcla realista de mercados elegidos y "marca el local / el visitante"
+# fusionados en un grupo (`grupo_control`), en 26 semanas: ~16 % de líneas con
+# alguna pausa de grupo en falso y ~5 % con la línea entera pausada en falso; un
+# déficit real de 3 puntos se detecta en ~82 % de las líneas (algún grupo) y
+# ~73 % (la línea entera). Decisión del usuario.
 MIN_SEMANAS_CONTROL = 10
 NIVEL_IC_CONTROL = 0.99
 # Red temprana para fallos groseros, sin esperar a las semanas del IC:
@@ -145,10 +150,24 @@ def candidatos_equipo(ajuste: dict | None,
                       market_team_total(m, 0.5, lado)["over"]) for lado in lados]
 
 
+def grupo_control(market: str) -> str:
+    """
+    Grupo en el que el control vigila un mercado. "Marca el local" y "marca el
+    visitante" se vigilan como UN solo grupo, `team_totals` (decisión del
+    usuario, 2026-10-07): son la misma apuesta vista desde cada lado y, por
+    separado, la muestra de cada uno es corta. En el Monte Carlo del revisor,
+    fusionados dan menos pausas en falso y más detección. El resto de mercados
+    es su propio grupo.
+    """
+    return "team_totals" if market in ("team_totals_home", "team_totals_away") else market
+
+
 def elegir(cands: list[Candidato], excluir: set[str] | frozenset = frozenset()
            ) -> Candidato | None:
+    """`excluir` admite mercados sueltos o grupos del control (`grupo_control`)."""
     dentro = [c for c in cands
-              if c.market not in excluir and PROB_MIN <= c.prob <= PROB_MAX]
+              if c.market not in excluir and grupo_control(c.market) not in excluir
+              and PROB_MIN <= c.prob <= PROB_MAX]
     if not dentro:
         return None
     return min(dentro, key=lambda c: (c.prob, _PRIORIDAD[c.market]))
@@ -197,7 +216,8 @@ def _z(g: pd.DataFrame) -> float:
 
 def control(liquidados: list[dict], min_n: int = MIN_N_CONTROL) -> dict:
     """
-    ¿Promete de más? En conjunto ("todo") y por mercado, con n ≥ min_n:
+    ¿Promete de más? En conjunto ("todo") y por grupo de mercado
+    (`grupo_control`: "marca el local" y "marca el visitante" juntos), con n ≥ min_n:
       1. z ≤ Z_GROSERO (fallo grosero) bloquea ya, aunque haya pocas semanas.
       2. Con ≥ MIN_SEMANAS_CONTROL semanas distintas, si el límite superior del
          IC99 de (acertado − prob) es < 0, se bloquea. El IC remuestrea semanas
@@ -208,7 +228,7 @@ def control(liquidados: list[dict], min_n: int = MIN_N_CONTROL) -> dict:
         return {"bloqueados": [], "motivos": ["Sin pronósticos liquidados todavía"]}
     f = _marco(liquidados)
     bloqueados, motivos = [], []
-    for nombre, g in [("todo", f), *f.groupby("market")]:
+    for nombre, g in [("todo", f), *f.groupby(f["market"].map(grupo_control))]:
         if len(g) < min_n:
             motivos.append(f"{nombre}: muestra insuficiente ({len(g)} < {min_n})")
             continue

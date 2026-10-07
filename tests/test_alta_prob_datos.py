@@ -166,6 +166,15 @@ def test_decidir_marca_un_equipo_respeta_el_bloqueo():
     assert c.market == "team_totals_home" and fit["linea"] == 2.5
 
 
+def test_decidir_con_el_grupo_de_control_team_totals_excluye_los_dos_lados():
+    # `control` devuelve el grupo "team_totals" (no cada lado): bloquearlo deja
+    # fuera "marca el local" y "marca el visitante".
+    _, snap, filas = _mercado_pinnacle(1.8, 0.6, linea=2.5)
+    c, fit = ad.decidir(snap, filas, RHO, (), {"team_totals"}, EQUIPO)
+    assert (c.market, c.selection) == ("double_chance", "1X") and fit is None
+    assert ad.decidir(snap, filas, RHO, (), {"team_totals", "double_chance"}, EQUIPO) is None
+
+
 def test_decidir_convive_con_los_goles_y_guarda_el_ajuste_solo_si_gana_un_mercado_con_ajuste():
     # Lambdas 1,25 / 1,0: "marca el local" (0,71) no llega; sigue ganando "menos de 3,5".
     _, snap, filas = _mercado_pinnacle(1.25, 1.0)
