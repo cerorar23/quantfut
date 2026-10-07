@@ -97,6 +97,19 @@ def _totales_af(match_id: str, as_of: datetime, now: datetime) -> list[dict]:
         (match_id, as_of, now))
 
 
+def _equipos_af(match_id: str, as_of: datetime, now: datetime) -> list[dict]:
+    """
+    "Más de 0,5" de cada equipo de las casas blandas, de la MISMA respuesta de
+    API-Football que el 1X2. Solo da la cuota de referencia: la probabilidad
+    sale del ajuste de goles.
+    """
+    return query(
+        """SELECT bookmaker, market, selection, line, price FROM af_odds_snapshots
+           WHERE match_id = %s AND market IN ('team_totals_home', 'team_totals_away')
+             AND provider_updated_at = %s AND fetched_at <= %s""",
+        (match_id, as_of, now))
+
+
 def _liquidados(desde: str | None = "control") -> list[dict]:
     """
     Liquidados y sellados. Por defecto, desde ALTA_PROB_CONTROL_DESDE (lo que
@@ -153,24 +166,28 @@ def linea_pinnacle(rows: list[dict]) -> tuple[float, float] | None:
 
 
 def decidir(snap: pk.Snapshot, totales: list[dict], rho: float | None,
-            habilitados: tuple, excluir: set[str]) -> tuple[ap.Candidato, dict | None] | None:
+            habilitados: tuple, excluir: set[str],
+            equipo: tuple[str, ...] = ()) -> tuple[ap.Candidato, dict | None] | None:
     q = snap.books[settings.sharp_book]
     fair = devig([q[s] for s in SEL], settings.devig_method)
     p = {s: float(fair[i]) for i, s in enumerate(SEL)}
     cands = ap.candidatos_1x2(p) + ap.candidatos_doble(p)
     ajuste = None
-    if rho is not None and habilitados and "totals" not in excluir:
+    if rho is not None and (habilitados or equipo):
         linea = linea_pinnacle(totales)
         if linea is not None:
             ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho)
-            cands += ap.candidatos_goles(ajuste, habilitados)
+    if habilitados and "totals" not in excluir:
+        cands += ap.candidatos_goles(ajuste, habilitados)
+    cands += ap.candidatos_equipo(ajuste, equipo)    # `elegir` aplica `excluir`
     elegido = ap.elegir(cands, excluir)
     if elegido is None:
         return None
-    return elegido, (ajuste if elegido.market == "totals" else None)
+    return elegido, (ajuste if elegido.market in ap.MERCADOS_CON_AJUSTE else None)
 
 
-def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato) -> tuple[float | None, str | None]:
+def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato,
+         equipos: list[dict] = ()) -> tuple[float | None, str | None]:
     """Mejor cuota de las casas de los suscriptores en el mismo snapshot."""
     if c.market == "h2h":
         precios = [(q[c.selection], b) for b, q in snap.books.items()
@@ -178,6 +195,12 @@ def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato) -> tuple[float
     elif c.market == "totals":
         precios = [(float(r["price"]), pk.canonical_book(r["bookmaker"])) for r in totales
                    if pk.canonical_book(r["bookmaker"]) in settings.soft_books
+                   and r["selection"] == c.selection and r["line"] is not None
+                   and float(r["line"]) == c.line]
+    elif c.market in ("team_totals_home", "team_totals_away"):
+        precios = [(float(r["price"]), pk.canonical_book(r["bookmaker"])) for r in equipos
+                   if r["market"] == c.market
+                   and pk.canonical_book(r["bookmaker"]) in settings.soft_books
                    and r["selection"] == c.selection and r["line"] is not None
                    and float(r["line"]) == c.line]
     else:   # doble oportunidad: ningún proveedor capturado la cotiza
@@ -232,18 +255,23 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             out["sin_precio"] += 1
             continue
         # Solo dos fuentes conocidas; cualquier otra no mezcla totales de nadie.
+        # Las cuotas de "marca un equipo" solo existen en API-Football, y de la
+        # MISMA respuesta que el 1X2: con The Odds API no hay referencia.
+        equipos = []
         if snap.source == "the_odds_api":
             totales = _totales(m["match_id"], snap.as_of)
         elif snap.source == "api_football":
             totales = _totales_af(m["match_id"], snap.as_of, now)
+            equipos = _equipos_af(m["match_id"], snap.as_of, now)
         else:
             totales = []
-        res = decidir(snap, totales, rho, habilitados, excluir)
+        res = decidir(snap, totales, rho, habilitados, excluir,
+                      ap.MERCADOS_EQUIPO_HABILITADOS)
         if res is None:
             out["sin_candidato"] += 1
             continue
         c, ajuste = res
-        ref_price, ref_book = _ref(snap, totales, c)
+        ref_price, ref_book = _ref(snap, totales, c, equipos)
         fila = (m["match_id"], c.market, c.selection, c.line, round(c.prob, 6),
                 round(1.0 / c.prob, 4), ref_price, ref_book, snap.source, snap.as_of,
                 json.dumps(ajuste) if ajuste else None)
