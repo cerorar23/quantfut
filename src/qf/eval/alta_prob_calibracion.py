@@ -13,6 +13,8 @@ Solo los mercados de goles que pasan entran en
 miden igual para dejar constancia. "Marca el local / el visitante" (más de 0,5
 goles de cada equipo, `team_totals_home` / `team_totals_away`) se mide con el
 mismo criterio y entra en `alta_prob.MERCADOS_EQUIPO_HABILITADOS`.
+"Regla completa" mide la regla DESPLEGADA (solo con los mercados habilitados),
+no todo lo que se mide.
 
 LÍMITE: football-data solo trae la línea 2,5. Las de cuarto y gol entero que
 Pinnacle cotiza en vivo no se pueden validar aquí; las cubre el control en
@@ -55,7 +57,16 @@ def _nombre(c: ap.Candidato) -> str:
 
 
 def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
-    """Una fila por candidato dentro del rango, con si acertó y si era el elegido."""
+    """
+    Una fila por candidato dentro del rango, con si acertó y si era el elegido.
+
+    Los candidatos son TODAS las líneas (`LINEAS_GOLES` y los dos lados de
+    equipo): cada mercado se mide aunque no esté habilitado. Pero `elegido`
+    sigue la regla DESPLEGADA: se calcula solo con los mercados habilitados
+    (`MERCADOS_GOLES_HABILITADOS`, `MERCADOS_EQUIPO_HABILITADOS`), de modo que
+    "regla completa" mide lo que se publica y una línea medida pero excluida
+    (p. ej. "menos de 4,5") nunca es la elegida.
+    """
     df = sv._prepare(raw)
     if not set(COLS) <= set(df.columns):
         return pd.DataFrame()
@@ -71,7 +82,9 @@ def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
         cands = (ap.candidatos_1x2(p) + ap.candidatos_doble(p)
                  + ap.candidatos_goles(ajuste, ap.LINEAS_GOLES)
                  + ap.candidatos_equipo(ajuste, ("home", "away")))
-        elegido = ap.elegir(cands)
+        elegido = ap.elegir(ap.candidatos_1x2(p) + ap.candidatos_doble(p)
+                            + ap.candidatos_goles(ajuste, ap.MERCADOS_GOLES_HABILITADOS)
+                            + ap.candidatos_equipo(ajuste, ap.MERCADOS_EQUIPO_HABILITADOS))
         hg, ag = int(r["FTHG"]), int(r["FTAG"])
         for c in cands:
             if not ap.PROB_MIN <= c.prob <= ap.PROB_MAX:

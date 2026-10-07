@@ -50,3 +50,43 @@ def test_criterio_a_falla_aunque_criterio_b_pase():
     assert r["totals under 5.5"]["diferencia_pts"] > -1.0  # Criterio (b) pasa
     assert r["totals under 5.5"]["tramos"][0]["decide"] is True
     assert r["totals under 5.5"]["tramos"][0]["pasa"] is False  # Tramo (a) falla
+
+
+def _raw(*partidos):
+    """football-data sintético: (local, visitante, PSH, PSD, PSA, P>2.5, P<2.5, goles)."""
+    return pd.DataFrame([
+        {"Date": "10/08/2024", "HomeTeam": h, "AwayTeam": a, "FTHG": hg, "FTAG": ag,
+         "league_id": "gb.premier_league", "season": "2024-25",
+         "PSH": psh, "PSD": psd, "PSA": psa, "P>2.5": po, "P<2.5": pu}
+        for h, a, psh, psd, psa, po, pu, hg, ag in partidos])
+
+
+def test_regla_completa_mide_la_regla_desplegada_no_las_lineas_excluidas():
+    # Partido igualado de ~2,6 goles esperados: el 1X2, la doble oportunidad,
+    # "más de 1,5", "menos de 3,5" y "marca un equipo" quedan bajo el 80 %; solo
+    # "menos de 4,5" (~87 %) está en rango. Se MIDE (aparece en `filas`), pero
+    # no está habilitado: no puede ser el elegido. Con la regla anterior (elegir
+    # entre todas las líneas medidas) sí lo habría sido.
+    raw = _raw(("A", "B", 2.60, 3.60, 2.90, 1.95, 1.95, 1, 0))
+    f = cal.filas(raw, cal.RHO_POR_DEFECTO)
+    assert list(f["mercado"]) == ["totals under 4.5"]
+    assert ("under", 4.5) not in cal.ap.MERCADOS_GOLES_HABILITADOS
+    assert not f["elegido"].any()
+    # `regla_completa` se calcula sobre los elegidos: aquí no hay ninguno.
+    assert f[f["elegido"]].empty
+
+
+def test_regla_completa_elige_entre_los_habilitados():
+    # Favorito claro: la doble 1X (~0,88), "marca el local" (~0,87) y "menos de
+    # 4,5" (~0,85) entran en rango. Con la regla anterior el elegido era "menos
+    # de 4,5" (la menor probabilidad); ahora es el de menor probabilidad ENTRE
+    # LOS HABILITADOS ("marca el local"), y la línea excluida sigue medida.
+    raw = _raw(("A", "B", 1.45, 4.40, 7.50, 1.80, 2.05, 2, 0))
+    f = cal.filas(raw, cal.RHO_POR_DEFECTO)
+    assert set(f["mercado"]) == {"double_chance", "totals under 4.5", "team_totals_home"}
+    excluida = f[f["mercado"] == "totals under 4.5"].iloc[0]
+    habilitados = f[f["mercado"] != "totals under 4.5"]
+    assert excluida["prob"] < habilitados["prob"].min()      # con la regla vieja ganaba ella
+    elegidos = f[f["elegido"]]
+    assert list(elegidos["mercado"]) == ["team_totals_home"]
+    assert elegidos.iloc[0]["prob"] == habilitados["prob"].min()
