@@ -16,11 +16,11 @@ es un porcentaje: tiene que salir de la referencia mejor calibrada.
 
 LA REGLA
 --------
-Candidatos de 1X2, doble oportunidad (suma exacta del 1X2) y goles (desde
-los goles esperados que reproducen el 1X2 y la línea de Pinnacle,
-`market_anchor.market_lambdas`). Se publica el de MENOR probabilidad dentro
-de [PROB_MIN, PROB_MAX]: el más informativo sin bajar del 80 %. El tope evita
-obviedades ("menos de 5,5 goles" al 98 %).
+Candidatos de 1X2, doble oportunidad (suma exacta del 1X2), goles y "marca
+un equipo" (los dos últimos, desde los goles esperados que reproducen el 1X2 y
+la línea de Pinnacle, `market_anchor.market_lambdas`). Se publica el de MENOR
+probabilidad dentro de [PROB_MIN, PROB_MAX]: el más informativo sin bajar del
+80 %. El tope evita obviedades ("menos de 5,5 goles" al 98 %).
 
 Este módulo es la parte pura. La base de datos está en `alta_prob_datos.py`.
 """
@@ -34,7 +34,7 @@ import pandas as pd
 
 from ..eval.soft_vs_sharp import MIN_WEEKS, _weekly_ci
 from ..model.market_anchor import market_lambdas
-from ..model.pricing import market_totals, score_matrix
+from ..model.pricing import market_team_total, market_totals, score_matrix
 
 PROB_MIN = 0.80
 PROB_MAX = 0.95
@@ -58,6 +58,13 @@ LINEAS_GOLES: tuple[tuple[str, float], ...] = (("over", 1.5), ("under", 3.5), ("
 # prueba; añadirla, sí.
 MERCADOS_GOLES_HABILITADOS: tuple[tuple[str, float], ...] = (
     ("over", 1.5), ("under", 3.5))
+# "Marca el local / el visitante" (más de 0,5 goles de ese equipo), del mismo
+# ajuste que los goles. Prueba histórica 2026-10-07 (firma d5cbc3151164…, rho
+# −0,0613, 14.216 partidos, criterio de eval/alta_prob_calibracion.py): local
+# n=4.470 86,97→88,52; visitante n=2.447 86,10→87,45; los tres tramos pasan.
+MERCADOS_EQUIPO_HABILITADOS: tuple[str, ...] = ("home", "away")
+# Mercados que guardan el ajuste de goles en `fit`.
+MERCADOS_CON_AJUSTE = ("totals", "team_totals_home", "team_totals_away")
 # Liquidados mínimos antes de que el control pueda pausar la línea.
 MIN_N_CONTROL = 50
 # Semanas distintas mínimas antes de que el IC pueda pausar, y nivel del IC.
@@ -79,13 +86,14 @@ NIVEL_IC_CONTROL = 0.99
 # izquierda más gorda que la normal y se mira cada semana).
 Z_GROSERO = -4.0
 # Desempate exacto entre candidatos de la misma probabilidad.
-_PRIORIDAD = {"h2h": 0, "totals": 1, "double_chance": 2}
+_PRIORIDAD = {"h2h": 0, "totals": 1, "team_totals_home": 2, "team_totals_away": 2,
+              "double_chance": 3}
 _SEL = ("home", "draw", "away")
 
 
 @dataclass(frozen=True)
 class Candidato:
-    market: str              # 'h2h' | 'double_chance' | 'totals' (los de clv._settle_outcome)
+    market: str              # 'h2h' | 'double_chance' | 'totals' | 'team_totals_home' | 'team_totals_away' (los de clv._settle_outcome)
     selection: str           # home/draw/away · 1X/X2/12 · over/under
     line: float | None
     prob: float
@@ -126,6 +134,17 @@ def candidatos_goles(ajuste: dict | None,
             for sel, linea in habilitados]
 
 
+def candidatos_equipo(ajuste: dict | None,
+                      lados: tuple[str, ...] | None = None) -> list[Candidato]:
+    """Más de 0,5 goles de cada equipo, del mismo ajuste que los goles."""
+    lados = MERCADOS_EQUIPO_HABILITADOS if lados is None else lados
+    if ajuste is None or not lados:
+        return []
+    m = score_matrix(ajuste["lambda"], ajuste["mu"], ajuste["rho"])
+    return [Candidato(f"team_totals_{lado}", "over", 0.5,
+                      market_team_total(m, 0.5, lado)["over"]) for lado in lados]
+
+
 def elegir(cands: list[Candidato], excluir: set[str] | frozenset = frozenset()
            ) -> Candidato | None:
     dentro = [c for c in cands
@@ -150,6 +169,8 @@ def texto(market: str, selection: str, line: float | None,
                 "12": f"{local} o {visitante} (sin empate)"}[selection]
     if market == "totals":
         return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} goles"
+    if market in ("team_totals_home", "team_totals_away"):
+        return f"Marca {local if market.endswith('home') else visitante}"
     raise ValueError(f"Mercado desconocido: {market}")
 
 

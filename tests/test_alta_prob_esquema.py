@@ -21,3 +21,12 @@ def test_un_pronostico_por_partido_y_rango_en_la_base():
 def test_apagada_por_defecto():
     assert settings.alta_prob_enabled is False
     assert settings.alta_prob_control_desde == ""
+
+
+SQL42 = (Path(__file__).resolve().parents[1] / "db" / "042_alta_prob_equipo.sql").read_text(encoding="utf-8")
+
+
+def test_042_amplia_los_mercados_y_comprueba_que_no_queda_el_check_viejo():
+    assert "'team_totals_home'" in SQL42 and "'team_totals_away'" in SQL42
+    assert "DROP CONSTRAINT IF EXISTS alta_prob_picks_market_check" in SQL42
+    assert "RAISE EXCEPTION" in SQL42

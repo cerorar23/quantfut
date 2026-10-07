@@ -10,7 +10,9 @@ CRITERIO, fijado ANTES de ver los resultados: un mercado pasa si
   (b) en conjunto, real − prometido ≥ −MAX_DEFICIT_PTS puntos.
 Solo los mercados de goles que pasan entran en
 `alta_prob.MERCADOS_GOLES_HABILITADOS`. El 1X2 y la doble oportunidad se
-miden igual para dejar constancia.
+miden igual para dejar constancia. "Marca el local / el visitante" (más de 0,5
+goles de cada equipo, `team_totals_home` / `team_totals_away`) se mide con el
+mismo criterio y entra en `alta_prob.MERCADOS_EQUIPO_HABILITADOS`.
 
 LÍMITE: football-data solo trae la línea 2,5. Las de cuarto y gol entero que
 Pinnacle cotiza en vivo no se pueden validar aquí; las cubre el control en
@@ -67,7 +69,8 @@ def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
         p_over, _ = two_way_devig(r["P>2.5"], r["P<2.5"], settings.devig_method)
         ajuste = ap.ajuste_goles(p, 2.5, p_over, rho)
         cands = (ap.candidatos_1x2(p) + ap.candidatos_doble(p)
-                 + ap.candidatos_goles(ajuste, ap.LINEAS_GOLES))
+                 + ap.candidatos_goles(ajuste, ap.LINEAS_GOLES)
+                 + ap.candidatos_equipo(ajuste, ("home", "away")))
         elegido = ap.elegir(cands)
         hg, ag = int(r["FTHG"]), int(r["FTAG"])
         for c in cands:

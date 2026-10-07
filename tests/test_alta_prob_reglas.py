@@ -99,3 +99,28 @@ def test_menos_de_4_5_goles_excluido_por_decision_del_usuario():
     m = score_matrix(1.0, 0.8, -0.06)
     ajuste = ap.ajuste_goles(market_1x2(m), 2.5, totals_fair_over(m, 2.5), -0.06)
     assert all(c.line != 4.5 for c in ap.candidatos_goles(ajuste))
+
+
+def test_marca_cada_equipo_desde_el_ajuste():
+    m = score_matrix(1.6, 0.9, -0.06)
+    aj = ap.ajuste_goles(market_1x2(m), 2.5, totals_fair_over(m, 2.5), -0.06)
+    c = {x.market: x for x in ap.candidatos_equipo(aj)}
+    assert set(c) == {"team_totals_home", "team_totals_away"}
+    ma = score_matrix(aj["lambda"], aj["mu"], aj["rho"])
+    assert c["team_totals_home"].prob == pytest.approx(1 - float(ma[0, :].sum()), abs=1e-12)
+    assert c["team_totals_away"].prob == pytest.approx(1 - float(ma[:, 0].sum()), abs=1e-12)
+    assert all(x.selection == "over" and x.line == 0.5 for x in c.values())
+    assert ap.candidatos_equipo(None) == [] and ap.candidatos_equipo(aj, ()) == []
+
+
+def test_desempate_con_goles_de_un_equipo():
+    cands = [ap.Candidato("double_chance", "1X", None, 0.85),
+             ap.Candidato("team_totals_home", "over", 0.5, 0.85),
+             ap.Candidato("totals", "over", 1.5, 0.85)]
+    assert ap.elegir(cands).market == "totals"
+    assert ap.elegir([cands[0], cands[1]]).market == "team_totals_home"
+
+
+def test_texto_marca_un_equipo():
+    assert ap.texto("team_totals_home", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Cruzeiro"
+    assert ap.texto("team_totals_away", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Sao Paulo"

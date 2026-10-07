@@ -852,7 +852,7 @@ function picksView() {
 
 // Línea de alta probabilidad (diseño 2026-10-05). Solo datos reales de
 // /alta-probabilidad: es una línea de acierto, no de valor, y se dice.
-const ALTA_MERCADO = { h2h: 'Ganador (1X2)', double_chance: 'Doble oportunidad', totals: 'Goles' };
+const ALTA_MERCADO = { h2h: 'Ganador (1X2)', double_chance: 'Doble oportunidad', totals: 'Goles', team_totals_home: 'Marca el local', team_totals_away: 'Marca el visitante' };
 function altaView() {
   const head = `<div class="view-title"><div><p class="eyebrow">PRONÓSTICOS / ALTA PROBABILIDAD</p><h1>Alta probabilidad</h1><p class="lead">Un pronóstico por partido, solo si su probabilidad real (Pinnacle sin margen) está entre el 80% y el 95%. Cada uno se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
   const source = publicData?.alta;
