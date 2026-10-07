@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from collections.abc import Sequence
 from datetime import date, datetime, timezone
 
 from ..config import settings
@@ -187,7 +188,7 @@ def decidir(snap: pk.Snapshot, totales: list[dict], rho: float | None,
 
 
 def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato,
-         equipos: list[dict] = ()) -> tuple[float | None, str | None]:
+         equipos: Sequence[dict] = ()) -> tuple[float | None, str | None]:
     """Mejor cuota de las casas de los suscriptores en el mismo snapshot."""
     if c.market == "h2h":
         precios = [(q[c.selection], b) for b, q in snap.books.items()

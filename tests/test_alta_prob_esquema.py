@@ -30,3 +30,12 @@ def test_042_amplia_los_mercados_y_comprueba_que_no_queda_el_check_viejo():
     assert "'team_totals_home'" in SQL42 and "'team_totals_away'" in SQL42
     assert "DROP CONSTRAINT IF EXISTS alta_prob_picks_market_check" in SQL42
     assert "RAISE EXCEPTION" in SQL42
+
+
+def test_042_documenta_la_columna_line_dentro_de_la_transaccion():
+    # `line` ya no es solo la línea de goles del partido: también los goles de un
+    # equipo. Los COMMENT son idempotentes y van antes de la guardia y del COMMIT.
+    for tabla in ("af_odds_snapshots", "alta_prob_picks"):
+        i = SQL42.index(f"COMMENT ON COLUMN {tabla}.line IS")
+        assert SQL42.index("BEGIN;") < i < SQL42.index("DO $$") < SQL42.index("COMMIT;")
+    assert "goles de un equipo" in SQL42 and "de un equipo (0,5)" in SQL42

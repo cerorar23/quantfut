@@ -87,6 +87,11 @@ def test_el_stake_escala_el_beneficio():
     ("totals", "over", 2.0, 1, 1, "push", 0.0),
     ("totals", "under", 2.5, 1, 1, "win", 0.90),
     ("team_totals_home", "over", 1.0, 1, 0, "push", 0.0),
+    # "Marca el visitante" (más de 0,5 del equipo visitante): cuenta SUS goles.
+    ("team_totals_away", "over", 0.5, 0, 1, "win", 0.90),    # marca solo el visitante
+    ("team_totals_away", "over", 0.5, 2, 1, "win", 0.90),    # marcan los dos
+    ("team_totals_away", "over", 0.5, 1, 0, "loss", -1.00),  # no marca el visitante
+    ("team_totals_away", "over", 0.5, 0, 0, "loss", -1.00),
     ("btts", "yes", None, 1, 1, "win", 0.90),
     ("double_chance", "X2", None, 2, 1, "loss", -1.00),
 ])
