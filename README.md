@@ -712,8 +712,10 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   ≥ 15 min antes del inicio; horizonte 36 h; un pronóstico por partido para
   siempre (`UNIQUE`).
 - **Prueba histórica** (`eval/alta_prob_calibracion.py`, 14.305 partidos,
-  firma `d5cbc3151164`): prometido 84,45 %, real 84,60 %; todos los mercados
-  y tramos pasan. Solo valida la línea 2,5 de goles (football-data no trae
+  firma `d5cbc3151164`), con la regla desplegada el 2026-10-07 (sin "menos
+  de 4,5", con "marca un equipo"): pronóstico en 9.021 de 14.216 partidos
+  (63 %), prometido 82,62 %, real 83,23 %; todos los mercados y tramos pasan
+  (la regla del 6-oct daba 84,45 / 84,60). Solo valida la línea 2,5 de goles (football-data no trae
   otras).
 - **Sellado:** `daily` elige y guarda ANTES de `seal()`; el lote del día lleva
   el bloque `alta_probabilidad` desde `LOTE_ALTA_PROB_DESDE` (7-oct-2026).
