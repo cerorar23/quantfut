@@ -1635,3 +1635,11 @@ paquetes/suscripciones de TennisPredictions; no su algoritmo predictivo.
 - [x] Validar importes, ausencia de derechos por UI y recorrido móvil/escritorio.
       13 pruebas frontend y 11 del servidor web; revisión 320/390/768/1024/1440.
       Modelo comercial documentado en docs/modelo_paquetes_suscripciones_20261007.md.
+
+## Web — publicación autorizada (2026-10-07)
+
+- [x] Ejecutar el arnés completo y las pruebas frontend antes de publicar.
+- [x] Crear commit de producto 2266311, incluyendo solo el rediseño y sus registros.
+- [x] Respaldar y publicar seis archivos de runtime en la API del servidor.
+- [x] Comprobar hashes, salud y recorrido desde el dominio público; mantener
+      los demás servicios sin recrear. Evidencia en docs/web_despliegue_20261007.md.

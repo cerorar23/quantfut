@@ -3843,3 +3843,19 @@ a omitir utilidades/Python en este entorno: su «OK» no cuenta como validación
 las pruebas directas son la evidencia. Sin despliegue ni cambio de gates.
 Propuesta: docs/modelo_paquetes_suscripciones_20261007.md; capturas propias en
 la carpeta local ignorada `.local/design-reference/quantfut-{acceso,cuenta,suscripciones}.jpg`.
+
+## 2026-10-07 — web: despliegue autorizado
+
+Por petición explícita del usuario, commit de producto 2266311 creado localmente
+y desplegado en pronosticosdeportivos.pro. Sin remoto Git configurado: transferencia
+SSH de paquete generado desde el commit. Base de archivos cotejada antes de sustituir;
+imagen derivada de la API ejecutándose, solo seis archivos de presentación/rutas.
+Respaldo en /home/qf/web-release-2266311/backup e imagen previa conservada.
+Solo API recreada; worker, DB, caché, proxy y Grafana conservan sus identificadores.
+Gate, variables, modelo y base intactos; cuentas y cobros siguen en demo.
+
+El arnés completo se ejecutó correctamente al fijar PATH de Git Bash: 732 pruebas
+aprobadas, una advertencia; frontend 13 aprobadas. Salud origen/HTTPS status ok,
+archivos cotejados por SHA-256; el HTML público solo incorpora el beacon existente
+de Cloudflare. Navegador público comprobó acceso demo → pedido bloqueado y cuenta
+sin suscripción activa. Registro: docs/web_despliegue_20261007.md.
