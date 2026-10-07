@@ -1,6 +1,6 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=8e03f4c4af52';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=7a7094880ba2';
+import { createMembershipUI } from './membership.js?v=0978b3da97e9';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -278,12 +278,17 @@ const state = {
   oddsFormat: prefs.oddsFormat,
   followed: prefs.followed,
   mobileMenuOpen: false,
-  demoSession: false,
+  session: null,
   membershipPlan: 'standard',
   authMode: 'login',
   authReturn: 'cuenta',
   authMessage: '',
-  showDemoPassword: false,
+  authError: false,
+  authBusy: false,
+  authEmail: '',
+  authName: '',
+  accountMessage: '',
+  accountError: false,
   accountSection: 'overview',
   savedDemoMatches: [],
   couponOpen: false,
@@ -1314,7 +1319,7 @@ function render() {
   const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.demoSession ? 'cuenta' : 'acceso'}">${state.demoSession ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   app.querySelector('.app-shell').inert = overlay;
   app.querySelector('.mobile-bottom-nav').inert = overlay;
   app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {
@@ -1393,7 +1398,6 @@ app.addEventListener('click', event => {
   if (data.recordLeague) { state.recordLeague = data.recordLeague; rerenderKeepingFocus(`[data-record-league="${data.recordLeague}"]`); return; }
   if (data.modal) { state.modal = data.modal; state.accessStep = 0; render(); return; }
   if (data.action === 'access-next') {
-    if (state.accessStep === 0) state.demoSession = true;
     if (state.accessStep === 2) state.accessStep = 0;
     else state.accessStep += 1;
     render();
@@ -1404,8 +1408,6 @@ app.addEventListener('click', event => {
   if (data.action === 'close-menu') { state.mobileMenuOpen = false; render(); app.querySelector('.mobile-more')?.focus(); return; }
   if (data.action === 'close-modal') { closeModal(); return; }
   if (data.action === 'close-drawer') { closeDrawer(); return; }
-  if (data.action === 'login') { state.demoSession = true; render(); return; }
-  if (data.action === 'logout') { state.demoSession = false; render(); }
 });
 
 app.addEventListener('change', event => {
@@ -1472,6 +1474,7 @@ window.addEventListener('keydown', event => {
 const initial = location.hash.slice(1);
 if (validRoute(initial)) state.route = initial;
 render();
+membershipUI.restoreSession();
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;

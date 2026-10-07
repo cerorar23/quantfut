@@ -193,3 +193,49 @@ def test_precio_invalido(texto):
     with pytest.raises(CuentaError):
         panel.parse_price(texto)
 
+
+
+# --- Modo web: refresh en cookie HttpOnly ------------------------------------
+
+def test_web_recibe_el_refresh_solo_en_cookie_httponly(monkeypatch, client):
+    monkeypatch.setattr(cuentas, "authenticate", lambda e, p: {"account_id": 3, "status": "active"})
+    monkeypatch.setattr(cuentas, "open_session", lambda *a: {
+        "access_token": "acc", "refresh_token": "ref-secreto", "token_type": "bearer", "expires_in": 900})
+    r = client.post("/app/v1/auth/login", headers={"X-QF-Client": "web"},
+                    json={"email": "a@b.com", "password": "una-clave-larga"})
+    assert r.status_code == 200 and r.json()["refresh_token"] is None
+    cookie = r.headers["set-cookie"]
+    assert "qf_refresh=ref-secreto" in cookie and "HttpOnly" in cookie
+    assert "Path=/app/v1/auth" in cookie and "SameSite=strict" in cookie and "Secure" in cookie
+    pista = [c for c in r.headers.get_list("set-cookie") if c.startswith("qf_hay_sesion=1")]
+    assert pista and "HttpOnly" not in pista[0] and "ref-secreto" not in pista[0]
+    # La app (sin cabecera) sigue recibiendo el refresh en el cuerpo y sin cookie.
+    r = client.post("/app/v1/auth/login", json={"email": "a@b.com", "password": "una-clave-larga"})
+    assert r.json()["refresh_token"] == "ref-secreto" and "set-cookie" not in r.headers
+
+
+def test_refresh_web_usa_la_cookie_con_gracia_y_la_app_no(monkeypatch, client):
+    vistos = []
+    def rotate(_r, token, grace_seconds=0):
+        vistos.append((token, grace_seconds))
+        return {"access_token": "acc2", "refresh_token": "ref2", "token_type": "bearer", "expires_in": 900}
+    monkeypatch.setattr(cuentas, "rotate_refresh", rotate)
+    client.cookies.set("qf_refresh", "ref1", path="/app/v1/auth")
+    r = client.post("/app/v1/auth/refresh", headers={"X-QF-Client": "web"})
+    assert r.status_code == 200 and r.json()["refresh_token"] is None
+    assert "qf_refresh=ref2" in r.headers["set-cookie"]
+    # Sin la cabecera la cookie no cuenta: otra web no puede añadir X-QF-Client sin preflight.
+    client.post("/app/v1/auth/refresh")
+    assert vistos == [("ref1", api.WEB_GRACE_SECONDS), ("", 0)]
+
+
+def test_refresh_web_invalido_borra_la_cookie(monkeypatch, client):
+    def rotate(*_a, **_k):
+        raise CuentaError("refresh_invalido", "Sesión no válida")
+    monkeypatch.setattr(cuentas, "rotate_refresh", rotate)
+    client.cookies.set("qf_refresh", "muerto", path="/app/v1/auth")
+    r = client.post("/app/v1/auth/refresh", headers={"X-QF-Client": "web"})
+    borradas = r.headers.get_list("set-cookie")
+    assert r.status_code == 401 and r.json()["detail"]["code"] == "refresh_invalido"
+    assert any(c.startswith('qf_refresh=""') and "Max-Age=0" in c for c in borradas)
+    assert any(c.startswith('qf_hay_sesion=""') and "Max-Age=0" in c for c in borradas)

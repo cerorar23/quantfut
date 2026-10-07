@@ -43,6 +43,11 @@ def membership_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "membership.js", media_type="text/javascript")
 
 
+@router.get("/cuenta-api.js")
+def cuenta_api_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "cuenta-api.js", media_type="text/javascript")
+
+
 @router.get("/membership.css")
 def membership_styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "membership.css", media_type="text/css")

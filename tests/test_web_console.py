@@ -1,5 +1,6 @@
 """El prototipo y el panel no convierten el navegador en cliente privilegiado."""
 import hashlib
+import re
 from dataclasses import replace
 from pathlib import Path
 
@@ -41,6 +42,13 @@ def test_web_demo_se_sirve_sin_secreto(monkeypatch):
     membership = Path(web.FRONTEND_DIR / "membership.js").read_text(encoding="utf-8")
     assert "/v1/" not in membership
     assert "X-Service-Token" not in membership
+    # El cliente de cuentas solo habla con /app/v1 (cuenta propia del
+    # visitante), nunca con /v1 ni /admin, y no lleva secretos de servidor.
+    assert client.get("/cuenta-api.js").status_code == 200
+    cuenta_api = Path(web.FRONTEND_DIR / "cuenta-api.js").read_text(encoding="utf-8")
+    assert re.findall(r"['\"`](/[a-z]+)?/v1", cuenta_api) == ["/app"]
+    for secreto in ("X-Service-Token", "X-Admin-Token", "localStorage", "sessionStorage"):
+        assert secreto not in cuenta_api
 
 
 def test_panel_falla_cerrado_sin_configuracion(monkeypatch):

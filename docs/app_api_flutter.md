@@ -41,6 +41,13 @@ igual desde la app; abrirlos no gasta el token, solo el botón de la página.
 Si más adelante la app usa deep links, puede leer el `token` del enlace y
 llamar a `/auth/verify/confirm` o `/auth/password/reset`.
 
+## Web (mismo backend)
+
+La web manda `X-QF-Client: web`: el refresh llega en la cookie HttpOnly
+`qf_refresh` en vez de en el cuerpo (`refresh_token: null`) y `/auth/refresh`
+la lee sin cuerpo. Solo en ese modo hay 20 s de gracia para dos pestañas que
+refrescan a la vez. La app Flutter no manda esa cabecera y no cambia nada.
+
 ## Tokens
 
 - `access_token`: opaco, 15 minutos (`expires_in` en segundos). Va en

@@ -13,6 +13,7 @@ const files = new Map([
   ['/fichas-data.js', ['fichas-data.js', 'text/javascript; charset=utf-8']],
   ['/membership.js', ['membership.js', 'text/javascript; charset=utf-8']],
   ['/membership.css', ['membership.css', 'text/css; charset=utf-8']],
+  ['/cuenta-api.js', ['cuenta-api.js', 'text/javascript; charset=utf-8']],
 ]);
 const port = Number(process.env.PORT || 5173);
 

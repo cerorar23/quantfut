@@ -44,11 +44,21 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       `comercial/correo.py` por SMTP, `db/044` (enlaces de un solo uso,
       solo su sha256), verificación y restablecimiento en `/app/v1` y
       páginas `/cuenta/*`, botones en el panel. Bridge opcional en Compose.
-- [ ] Configurar Proton en producción: plan de pago, dominio propio con
-      SPF/DKIM/DMARC y token SMTP (o login del Bridge) → `SMTP_*` en `.env`.
-- [ ] Conectar la web (`frontend/membership.js`) y la app Flutter a `/app/v1`.
-- [ ] Desplegar: aplicar `db/043` y `db/044`, `ACCOUNTS_ENABLED=1`, pip con
-      las nuevas dependencias.
+- [x] Configurar Proton en producción (2026-10-07): DNS completo (SPF,
+      DKIM x3, DMARC, MX), token SMTP de `no-responder@` en `.env`, login
+      STARTTLS verificado desde el contenedor.
+- [x] Conectar la web a `/app/v1` (2026-10-07): `frontend/cuenta-api.js`,
+      refresh en cookie HttpOnly, acceso en memoria, sesión recuperada al
+      recargar, Mi cuenta con el plan real.
+- [ ] Conectar la app Flutter a `/app/v1` (cliente Dart desde el OpenAPI).
+- [ ] Web: leer precios de `/app/v1/plans` en vez de `MEMBERSHIP_PLANS` fijos
+      (hoy coinciden; si se editan en el panel, la web quedaría desfasada).
+- [x] Desplegar commit 3d40e05 (2026-10-07): `db/043` y `db/044` aplicados,
+      imagen `quantfut-api:3d40e05`, solo `api` recreado.
+- [x] Altas abiertas en producción (`ACCOUNTS_ENABLED=1`, 2026-10-07, decisión del usuario).
+- [x] `/control` daba 503: `ADMIN_CONSOLE_PASSWORD_HASH` había quedado vacío
+      en el `.env` del VPS. Restaurado desde `.env.bak-2026-10-07` con
+      permiso del usuario; vuelve a pedir credenciales tras Access.
 
 ## NBA 2026-27 — investigación y experimentos (2026-10-03)
 

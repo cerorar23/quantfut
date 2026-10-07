@@ -12,8 +12,9 @@ import os
 from datetime import datetime
 
 import redis
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
@@ -58,7 +59,7 @@ class LoginIn(BaseModel):
 
 
 class RefreshIn(BaseModel):
-    refresh_token: str = Field(max_length=200)
+    refresh_token: str | None = Field(default=None, max_length=200)
 
 
 class TokenIn(BaseModel):
@@ -76,7 +77,8 @@ class ResetIn(BaseModel):
 
 class TokensOut(BaseModel):
     access_token: str
-    refresh_token: str
+    # None en la web: allí el refresh viaja solo en la cookie HttpOnly.
+    refresh_token: str | None
     token_type: str = "bearer"
     expires_in: int
 
@@ -135,6 +137,39 @@ class PicksOut(BaseModel):
     picks: list[PickOut]
 
 
+# --- Web: el refresh vive en una cookie HttpOnly que el JavaScript no puede
+# leer; el acceso, solo en memoria. La cabecera X-QF-Client obliga a un
+# preflight CORS desde otro origen (y no está permitida), así que otra web no
+# puede usar la cookie aunque el navegador la mande.
+WEB_COOKIE = "qf_refresh"
+# Indicador sin secreto y legible por JS: la página solo intenta recuperar la
+# sesión si existe, en vez de lanzar un refresh 401 por cada visitante.
+WEB_HINT = "qf_hay_sesion"
+WEB_GRACE_SECONDS = 20
+
+
+def _clear_web(response: Response) -> None:
+    response.delete_cookie(WEB_COOKIE, path="/app/v1/auth")
+    response.delete_cookie(WEB_HINT, path="/")
+
+
+def _is_web(request: Request) -> bool:
+    return request.headers.get("x-qf-client") == "web"
+
+
+def _deliver(tokens: dict, request: Request, response: Response) -> dict:
+    if not _is_web(request):
+        return tokens
+    if tokens["refresh_token"]:
+        response.set_cookie(WEB_COOKIE, tokens["refresh_token"],
+                            max_age=cuentas.REFRESH_TTL_DAYS * 86400, path="/app/v1/auth",
+                            httponly=True, secure=settings.app_env != "development",
+                            samesite="strict")
+        response.set_cookie(WEB_HINT, "1", max_age=cuentas.REFRESH_TTL_DAYS * 86400, path="/",
+                            secure=settings.app_env != "development", samesite="strict")
+    return {**tokens, "refresh_token": None}
+
+
 def _fail(status: int, err: CuentaError):
     raise HTTPException(status, {"code": err.code, "message": err.message})
 
@@ -163,19 +198,20 @@ def _account_out(acc: dict) -> AccountOut:
 
 
 @router.post("/auth/register", response_model=TokensOut, status_code=201)
-def register(body: RegisterIn, request: Request, tasks: BackgroundTasks):
+def register(body: RegisterIn, request: Request, response: Response, tasks: BackgroundTasks):
     _limit(request, "registro", 5, 3600)
     try:
         acc = cuentas.create_account(body.email, body.password, body.display_name)
     except CuentaError as e:
         _fail(409 if e.code == "email_en_uso" else 422, e)
     tasks.add_task(correo.enviar_verificacion, acc["account_id"], acc["email"])
-    return cuentas.open_session(redis_client(), acc["account_id"],
-                                request.headers.get("user-agent"), ratelimit.client_ip(request))
+    return _deliver(cuentas.open_session(redis_client(), acc["account_id"],
+                                         request.headers.get("user-agent"),
+                                         ratelimit.client_ip(request)), request, response)
 
 
 @router.post("/auth/login", response_model=TokensOut)
-def login(body: LoginIn, request: Request):
+def login(body: LoginIn, request: Request, response: Response):
     _limit(request, "login", 10, 60)
     # Por correo además de por IP: frena el ataque repartido entre muchas IPs.
     email_key = body.email.strip().lower()[:254]
@@ -187,22 +223,34 @@ def login(body: LoginIn, request: Request):
         raise HTTPException(401, {"code": "credenciales", "message": "Correo o contraseña incorrectos"})
     if acc["status"] != "active":
         raise HTTPException(403, {"code": "cuenta_suspendida", "message": "Cuenta suspendida"})
-    return cuentas.open_session(redis_client(), acc["account_id"],
-                                request.headers.get("user-agent"), ratelimit.client_ip(request))
+    return _deliver(cuentas.open_session(redis_client(), acc["account_id"],
+                                         request.headers.get("user-agent"),
+                                         ratelimit.client_ip(request)), request, response)
 
 
 @router.post("/auth/refresh", response_model=TokensOut)
-def refresh(body: RefreshIn, request: Request):
+def refresh(request: Request, response: Response, body: RefreshIn | None = None):
     _limit(request, "refresh", 30, 60)
+    web = _is_web(request)
+    token = (body.refresh_token if body else None) or (request.cookies.get(WEB_COOKIE) if web else None)
     try:
-        return cuentas.rotate_refresh(redis_client(), body.refresh_token)
+        tokens = cuentas.rotate_refresh(redis_client(), token or "",
+                                        grace_seconds=WEB_GRACE_SECONDS if web else 0)
     except CuentaError as e:
+        # En la web, una cookie que ya no vale se borra: la página deja de
+        # intentar restaurar una sesión muerta en cada carga.
+        if web:
+            out = JSONResponse({"detail": {"code": e.code, "message": e.message}}, status_code=401)
+            _clear_web(out)
+            return out
         _fail(401, e)
+    return _deliver(tokens, request, response)
 
 
 @router.post("/auth/logout", status_code=204)
-def logout(acc: dict = Depends(current_account)):
+def logout(response: Response, acc: dict = Depends(current_account)):
     cuentas.logout(redis_client(), acc["_token"], acc["session_id"])
+    _clear_web(response)
 
 
 @router.post("/auth/verify/resend", status_code=202)

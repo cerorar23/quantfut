@@ -139,3 +139,20 @@ def test_suspendida_no_recibe_enlace_de_acceso():
     assert cuentas.account_for_reset(email.upper())["account_id"] == acc["account_id"]
     cuentas.set_status(acc["account_id"], "suspended", "pytest")
     assert cuentas.account_for_reset(email) is None
+
+
+def test_gracia_web_no_revoca_dos_pestanas_que_refrescan_a_la_vez():
+    r = FakeRedis()
+    acc = cuentas.create_account(_email(), "clave-de-prueba-1")
+    t1 = cuentas.open_session(r, acc["account_id"], None, None)
+    t2 = cuentas.rotate_refresh(r, t1["refresh_token"], grace_seconds=20)
+    # La segunda pestaña llega con la cookie vieja dentro de la ventana.
+    t3 = cuentas.rotate_refresh(r, t1["refresh_token"], grace_seconds=20)
+    assert t3["refresh_token"] is None and t3["access_token"]
+    assert cuentas.account_from_access(r, t3["access_token"]) is not None
+    # El refresh vigente sigue valiendo: la sesión no se revocó.
+    assert cuentas.rotate_refresh(r, t2["refresh_token"])["refresh_token"]
+    # Sin gracia (la app), el mismo reuso revoca la sesión entera.
+    with pytest.raises(CuentaError) as e:
+        cuentas.rotate_refresh(r, t1["refresh_token"])
+    assert e.value.code == "refresh_reusado"

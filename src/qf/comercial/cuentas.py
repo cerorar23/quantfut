@@ -106,7 +106,7 @@ def _issue_access(redis_client, session_id: int) -> str:
     return token
 
 
-def _tokens(access: str, refresh: str) -> dict:
+def _tokens(access: str, refresh: str | None) -> dict:
     return {"access_token": access, "refresh_token": refresh, "token_type": "bearer",
             "expires_in": ACCESS_TTL_SECONDS}
 
@@ -123,7 +123,11 @@ def open_session(redis_client, account_id: int, user_agent: str | None, ip: str 
     return _tokens(_issue_access(redis_client, sid), refresh)
 
 
-def rotate_refresh(redis_client, refresh: str) -> dict:
+def rotate_refresh(redis_client, refresh: str, grace_seconds: int = 0) -> dict:
+    """`grace_seconds` > 0 solo para la web: dos pestañas que arrancan a la vez
+    mandan la misma cookie, y la segunda llega con el refresh que la primera
+    acaba de rotar. Dentro de esa ventana se le da un acceso nuevo sin rotar
+    (el navegador ya guarda la cookie nueva); fuera de ella, es reuso."""
     old = _hash(refresh or "")
     new = secrets.token_urlsafe(32)
     reused = False
@@ -134,8 +138,14 @@ def rotate_refresh(redis_client, refresh: str) -> dict:
                WHERE s.refresh_hash = %s FOR UPDATE OF s""", (old,)).fetchone()
         if row is None:
             retired = c.execute(
-                "SELECT session_id FROM session_retired_tokens WHERE token_hash = %s",
-                (old,)).fetchone()
+                """SELECT t.session_id,
+                          t.retired_at > now() - make_interval(secs => %s) AS en_gracia,
+                          s.revoked_at IS NULL AND s.expires_at > now() AND a.status = 'active' AS viva
+                   FROM session_retired_tokens t JOIN sessions s USING (session_id)
+                   JOIN accounts a USING (account_id)
+                   WHERE t.token_hash = %s""", (grace_seconds, old)).fetchone()
+            if retired and retired["en_gracia"] and retired["viva"]:
+                return _tokens(_issue_access(redis_client, retired["session_id"]), None)
             if retired:
                 # El revocado tiene que confirmarse: por eso no se lanza aquí dentro.
                 c.execute("""UPDATE sessions SET revoked_at = now(), revoke_reason = 'reuso_refresh'

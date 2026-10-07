@@ -3914,3 +3914,48 @@ Decisión del usuario: Proton Mail. Hay dos formas y el código es el mismo
   certificado autofirmado): llega autenticado y cifrado, con verificación
   estricta se rechaza el autofirmado y una contraseña mala no envía.
   Flujo completo en navegador: enlace → nueva contraseña → login.
+
+## 2026-10-07 — Despliegue de la fase comercial (commit 3d40e05)
+
+Autorizado por el usuario. Paquete `git archive` verificado por SHA-256;
+base del servidor cotejada con HEAD antes de sustituir. Respaldo en
+`~/release-3d40e05/backup.tgz`, imagen previa `quantfut-api:before-3d40e05`.
+Imagen nueva derivada de la que corría (+argon2-cffi, jinja2, src/), solo
+`api` recreado con `--no-deps --no-build`; worker, db, caché y proxy
+intactos. `ACCOUNTS_ENABLED=0`: `/app/v1` responde 503 hasta abrir altas.
+El token SMTP lo escribió el usuario con un script de entrada oculta
+(`~/release-3d40e05/poner_token.sh`): nunca pasó por el agente. Login SMTP
+con Proton verificado sin enviar correo.
+Hallazgo: `ADMIN_CONSOLE_PASSWORD_HASH` ya estaba vacío en `.env` antes del
+despliegue (en `.env.bak-2026-10-07` de las 19:45 sí estaba): `/control`
+devuelve 503. No se restauró sin permiso del usuario.
+Reversión: retag `quantfut-api:before-3d40e05` → `latest`, restaurar
+`backup.tgz` y recrear `api`; las tablas nuevas no afectan al código previo.
+Con permiso del usuario se restauró la línea del hash desde
+`.env.bak-2026-10-07` (idéntica byte a byte; resto del `.env` sin cambios,
+copia previa en `~/release-3d40e05/env.antes-restaurar-hash`). `/control`:
+401 en origen sin credenciales y 302 a Cloudflare Access desde fuera.
+Lección: al reescribir `.env` en un despliegue, comparar después las claves
+contra la copia previa; un valor vacío no da error, solo un 503 del panel.
+Altas abiertas (`ACCOUNTS_ENABLED=1`) por decisión del usuario. Verificado
+en producción sin crear cuentas ni enviar correos: planes 200 (también
+desde el dominio público), login inexistente 401, olvido 202, picks sin
+sesión 401, `/cuenta` con token falso 400, panel 401. Trampa del script de
+despliegue: `diff` sale con 1 si hay cambios y `set -e` cortó antes de
+recrear la API; comprobar siempre que el servicio se recreó.
+
+## 2026-10-07 — Web conectada a las cuentas reales
+
+La web deja la sesión demo y usa `/app/v1` con `frontend/cuenta-api.js`.
+Decisiones: en el navegador el refresh vive en una cookie HttpOnly
+(SameSite=Strict, `Path=/app/v1/auth`) y el acceso solo en memoria; nada en
+localStorage, para que un XSS no se lleve una sesión de 30 días. La cabecera
+`X-QF-Client: web` activa ese modo y fuerza preflight CORS desde otro origen,
+así que la cookie no sirve fuera del dominio. Dos pestañas que arrancan a la
+vez mandan la misma cookie: la segunda tenía el refresh recién rotado y la
+detección de reuso habría revocado la sesión; se da una gracia de 20 s solo
+en modo web (la app serializa sus refresh y no la necesita). Un indicador
+`qf_hay_sesion=1` sin secreto evita un refresh 401 por cada visitante.
+Verificado en navegador contra el FastAPI completo en local: registro, error
+de login, login, recarga con sesión recuperada, plan concedido visible como
+Plus y cierre de sesión que borra ambas cookies.

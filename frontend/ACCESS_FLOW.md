@@ -57,8 +57,12 @@ existen en el servidor las cuentas, sesiones, planes y suscripciones
 para administrarlas. El recorrido de abajo cambia en dos puntos: el acceso
 es con contraseña (argon2id) hasta que haya proveedor de correo para el
 enlace de un solo uso, y la app usa bearer + refresh en vez de cookie. La
-web pública (`membership.js`) sigue en demo hasta conectarla a `/app/v1`.
-Pago y webhook siguen pendientes de elegir procesador.
+web pública usa ya `/app/v1` (`cuenta-api.js`, 2026-10-07): registro, login,
+recuperación, Mi cuenta con el plan real, reenviar verificación y cerrar
+sesión. En la web el refresh viaja en la cookie `qf_refresh` (HttpOnly,
+Secure, SameSite=Strict, `Path=/app/v1/auth`) y el acceso solo en memoria;
+`qf_hay_sesion=1` es un indicador sin secreto para no lanzar un refresh por
+cada visitante. Pago y webhook siguen pendientes de elegir procesador.
 
 - Hecho: vistas de demo, puerta de publicación, `SERVICE_TOKEN` exclusivo de
   servidor, `/v1/picks` protegido para el futuro backend web, y auditoría
