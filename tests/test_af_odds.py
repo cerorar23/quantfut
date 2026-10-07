@@ -132,3 +132,22 @@ def test_el_1x2_y_los_totales_entran_y_la_primera_mitad_no(casas):
     assert tot == [(1.5, "over", 1.30), (1.5, "under", 3.50),
                    (2.5, "over", 1.95), (2.5, "under", 1.90)]
     assert len(rows) == 3 + 4
+
+
+def _equipo(name, bet_id, lineas):
+    vals = []
+    for ln, (o, u) in lineas.items():
+        vals += [{"value": f"Over {ln}", "odd": o}, {"value": f"Under {ln}", "odd": u}]
+    return {"name": name, "bets": [{"id": bet_id, "name": "Total", "values": vals}]}
+
+
+def test_goles_de_cada_equipo_solo_blandas_y_linea_0_5(casas):
+    rows = parse(_resp([
+        _equipo("Bet365", 16, {0.5: ("1.14", "5.50"), 1.5: ("1.73", "2.00")}),
+        _equipo("Betano", 17, {0.5: ("1.44", "2.67")}),
+        _equipo("Pinnacle", 17, {0.5: ("1.42", "2.90")}),
+        _equipo("Marathonbet", 16, {0.5: ("1.15", "5.00")}),
+    ]), "m1", KO)
+    eq = {(r[2], r[3], r[4], r[8]) for r in rows if r[3].startswith("team_totals")}
+    assert eq == {("bet365", "team_totals_home", s, 0.5) for s in ("over", "under")} | \
+                 {("betano", "team_totals_away", s, 0.5) for s in ("over", "under")}

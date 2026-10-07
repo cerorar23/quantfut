@@ -1,7 +1,7 @@
 """
-Captura de cuotas 1X2 y de goles de API-Football: la fuente de las casas donde apuestan
-los suscriptores (Bet365, Betano, 1xBet, William Hill), con Pinnacle en la
-misma respuesta.
+Captura de cuotas 1X2, goles y goles de cada equipo de API-Football: la fuente
+de las casas donde apuestan los suscriptores (Bet365, Betano, 1xBet, William Hill),
+con Pinnacle en la misma respuesta.
 
 Consultado el 2026-09-23 (`/odds/bookmakers` y `/odds` por competición): de 33
 casas del catálogo solo 9 cotizan nuestras competiciones, y esas 9 aparecen en
@@ -27,6 +27,9 @@ probabilidad elige la que haya) y, de las casas de SOFT_BOOKS, solo
 LINEAS_BLANDAS (cuota de referencia de los pronósticos de goles). Sin coste
 extra: sigue siendo una petición por partido.
 
+GOLES DE CADA EQUIPO (2026-10-07): bets 16 y 17 ("Total - Home" y "Total - Away"),
+línea 0,5 de SOFT_BOOKS, para la cuota de referencia de la línea de alta probabilidad.
+
 Se guarda en `af_odds_snapshots`, no en `odds_snapshots` (ver db/016).
 Una petición por partido dentro del horizonte.
 """
@@ -49,6 +52,9 @@ GOALS_OU = 5
 # De las casas blandas solo se guardan las líneas de la línea de alta
 # probabilidad y la 2,5; de Pinnacle, todas.
 LINEAS_BLANDAS = (1.5, 2.5, 3.5, 4.5)
+# "Total - Home" (16) y "Total - Away" (17): solo para la cuota de referencia
+# de "marca el local / el visitante" de la línea de alta probabilidad.
+TEAM_TOTALS = {16: "team_totals_home", 17: "team_totals_away"}
 
 
 def bookmaker_key(name: str) -> str:
@@ -97,8 +103,10 @@ def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]
     """
     Filas para `af_odds_snapshots`. 1X2: solo casas con el grupo completo y
     cuotas válidas (un grupo incompleto no se puede de-vigar ni comparar).
-    Goles: pares over/under completos, todas las líneas de Pinnacle y
-    LINEAS_BLANDAS de las casas de SOFT_BOOKS.
+    Goles (bet 5): pares over/under completos, todas las líneas de Pinnacle y
+    LINEAS_BLANDAS de las casas de SOFT_BOOKS. Goles de cada equipo (bets 16/17):
+    línea 0,5 de SOFT_BOOKS, para la cuota de referencia de la línea de alta
+    probabilidad.
     """
     rows = []
     for item in response:
@@ -130,6 +138,11 @@ def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]
                         if lineas is None or ln in lineas:
                             rows += [(match_id, fid, book, "totals", s, p, updated, mins, ln)
                                      for s, p in q.items()]
+                elif bet.get("id") in TEAM_TOTALS and book in settings.soft_books:
+                    q = _totales(bet).get(0.5)
+                    if q:
+                        rows += [(match_id, fid, book, TEAM_TOTALS[bet["id"]], s, p,
+                                  updated, mins, 0.5) for s, p in q.items()]
     return rows
 
 
