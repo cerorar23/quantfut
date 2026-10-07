@@ -90,3 +90,12 @@ def test_las_lineas_de_goles_se_guardan_tambien_de_las_casas_blandas():
     lineas = {ln for _, ln in ap.LINEAS_GOLES}
     assert lineas <= set(af_odds.LINEAS_BLANDAS)
     assert {ln for _, ln in ap.MERCADOS_GOLES_HABILITADOS} <= set(af_odds.LINEAS_BLANDAS)
+
+
+def test_menos_de_4_5_goles_excluido_por_decision_del_usuario():
+    # 2026-10-06: el usuario lo excluye de la regla (se paga a 1,09-1,17).
+    assert ("under", 4.5) not in ap.MERCADOS_GOLES_HABILITADOS
+    assert set(ap.MERCADOS_GOLES_HABILITADOS) == {("over", 1.5), ("under", 3.5)}
+    m = score_matrix(1.0, 0.8, -0.06)
+    ajuste = ap.ajuste_goles(market_1x2(m), 2.5, totals_fair_over(m, 2.5), -0.06)
+    assert all(c.line != 4.5 for c in ap.candidatos_goles(ajuste))

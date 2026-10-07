@@ -52,8 +52,12 @@ LINEAS_GOLES: tuple[tuple[str, float], ...] = (("over", 1.5), ("under", 3.5), ("
 # firma d5cbc3151164dcc19e7304bba45ad2445d1e99a2ce97ddd5e92ea05c2f8ca79d,
 # rho −0,0613): h2h 84,46→84,82, double_chance 85,83→86,36, totals over 1.5
 # 84,2→84,09, totals under 3.5 82,56→83,36, totals under 4.5 86,95→87,4.
+# "Menos de 4,5" pasó la prueba pero se excluye por decisión del usuario
+# (2026-10-06): era el pronóstico de goles más frecuente y se paga a
+# 1,09-1,17, poco útil para el cliente. Quitar una línea no exige repetir la
+# prueba; añadirla, sí.
 MERCADOS_GOLES_HABILITADOS: tuple[tuple[str, float], ...] = (
-    ("over", 1.5), ("under", 3.5), ("under", 4.5))
+    ("over", 1.5), ("under", 3.5))
 # Liquidados mínimos antes de que el control pueda pausar la línea.
 MIN_N_CONTROL = 50
 # Semanas distintas mínimas antes de que el IC pueda pausar, y nivel del IC.

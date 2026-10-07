@@ -697,7 +697,9 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
 
 - **Probabilidad:** siempre Pinnacle sin margen (Shin), nunca el modelo
   propio. 1X2 y doble oportunidad salen directos del 1X2; los goles (más de
-  1,5, menos de 3,5, menos de 4,5) de un ajuste Dixon-Coles que reproduce el
+  1,5 y menos de 3,5; "menos de 4,5" pasó la prueba pero se excluye por
+  decisión del usuario, 2026-10-06, por pagarse a 1,09-1,17) de un ajuste
+  Dixon-Coles que reproduce el
   1X2 y la línea de goles de Pinnacle (`model/market_anchor`, con push en
   líneas enteras y de cuarto). Es decir, la de goles es una probabilidad
   derivada, no la cuota de Pinnacle de ese mercado.
