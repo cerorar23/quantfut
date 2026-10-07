@@ -53,8 +53,11 @@ GOALS_OU = 5
 # probabilidad y la 2,5; de Pinnacle, todas.
 LINEAS_BLANDAS = (1.5, 2.5, 3.5, 4.5)
 # "Total - Home" (16) y "Total - Away" (17): solo para la cuota de referencia
-# de "marca el local / el visitante" de la línea de alta probabilidad.
-TEAM_TOTALS = {16: "team_totals_home", 17: "team_totals_away"}
+# de "marca el local / el visitante" de la línea de alta probabilidad. El id
+# solo no garantiza la semántica (el proveedor puede reasignar o añadir bets
+# parecidos): se exige además el nombre esperado y, con otro, no se guarda nada.
+TEAM_TOTALS = {16: ("Total - Home", "team_totals_home"),
+               17: ("Total - Away", "team_totals_away")}
 
 
 def bookmaker_key(name: str) -> str:
@@ -139,9 +142,10 @@ def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]
                             rows += [(match_id, fid, book, "totals", s, p, updated, mins, ln)
                                      for s, p in q.items()]
                 elif bet.get("id") in TEAM_TOTALS and book in settings.soft_books:
-                    q = _totales(bet).get(0.5)
+                    nombre, mercado = TEAM_TOTALS[bet["id"]]
+                    q = _totales(bet).get(0.5) if bet.get("name") == nombre else None
                     if q:
-                        rows += [(match_id, fid, book, TEAM_TOTALS[bet["id"]], s, p,
+                        rows += [(match_id, fid, book, mercado, s, p,
                                   updated, mins, 0.5) for s, p in q.items()]
     return rows
 

@@ -134,11 +134,15 @@ def test_el_1x2_y_los_totales_entran_y_la_primera_mitad_no(casas):
     assert len(rows) == 3 + 4
 
 
-def _equipo(name, bet_id, lineas):
+_NOMBRE_EQUIPO = {16: "Total - Home", 17: "Total - Away"}
+
+
+def _equipo(name, bet_id, lineas, bet_name=None):
     vals = []
     for ln, (o, u) in lineas.items():
         vals += [{"value": f"Over {ln}", "odd": o}, {"value": f"Under {ln}", "odd": u}]
-    return {"name": name, "bets": [{"id": bet_id, "name": "Total", "values": vals}]}
+    return {"name": name, "bets": [{"id": bet_id, "name": bet_name or _NOMBRE_EQUIPO[bet_id],
+                                    "values": vals}]}
 
 
 def test_goles_de_cada_equipo_solo_blandas_y_linea_0_5(casas):
@@ -151,3 +155,14 @@ def test_goles_de_cada_equipo_solo_blandas_y_linea_0_5(casas):
     eq = {(r[2], r[3], r[4], r[8]) for r in rows if r[3].startswith("team_totals")}
     assert eq == {("bet365", "team_totals_home", s, 0.5) for s in ("over", "under")} | \
                  {("betano", "team_totals_away", s, 0.5) for s in ("over", "under")}
+
+
+def test_goles_de_cada_equipo_exige_el_nombre_del_bet(casas):
+    # El id solo no basta: un bet 16/17 con otro nombre (otra mitad, otro
+    # mercado) no guarda nada, y con el nombre esperado sí.
+    rows = parse(_resp([
+        _equipo("Bet365", 16, {0.5: ("1.14", "5.50")}, bet_name="Total - Home First Half"),
+        _equipo("Betano", 17, {0.5: ("1.44", "2.67")}, bet_name="Total - Home"),   # lado cruzado
+        _equipo("1xBet", 17, {0.5: ("1.40", "2.80")}),
+    ]), "m1", KO)
+    assert {(r[2], r[3]) for r in rows} == {("1xbet", "team_totals_away")}
