@@ -4064,3 +4064,19 @@ Cuotas de bets 8/45/80 de la respuesta de API-Football ya pedida; árbitro y
 tarjetas de football-data (`history_fd tarjetas`) y de results/fixtures.
 Pendiente: resultado de ambos anotan, harness completo, desplegar (db/046,
 `history_fd tarjetas` en el VPS, api + worker).
+
+## 2026-10-08 — Despliegue de la escalera por probabilidad (commit abe3da4)
+
+Pedido del usuario ("termina lo pendiente"). Desplegado a las 23:10-23:22 UTC,
+ANTES del primer job con escalera (09-oct 08:00), así que el primer reto nace
+con la regla nueva. Base cotejada contra 37aa902, paquete por SHA-256, respaldo
+en `~/release-abe3da4/backup.tgz`, imágenes previas `*:before-abe3da4`;
+`db/046` aplicado; api y worker recreados. `history_fd tarjetas` cargó
+amarillas/rojas de 27.398 partidos de las 7 ligas principales y árbitro de
+4.610 de la Premier. Cadena: 10 lotes OK. Vista previa: abriría 4 retos (3, 6,
+4 y 5) con PSV @1,26, Unión-Defensa menos de 3,5 @1,27, Galatasaray @1,30 y
+Dortmund @1,36. Córners/tarjetas/ambos marcan entran cuando af_odds capture
+sus cuotas (desde las 00:20 UTC). Trampa repetida: la comprobación de jobs en
+marcha vía /proc se contaba a sí misma (su línea contiene "python -m qf");
+el worker se recreó a las 23:21:40 tras agotar la espera. Para la próxima,
+excluir el propio proceso (`grep -v` del PID o patrón con corchetes).

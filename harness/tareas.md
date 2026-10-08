@@ -70,7 +70,8 @@ pasos y −26 % a 6. Se publica igual que antes, con su historial entero.
 - [x] Cuotas de bets 8/45/80 de la respuesta de API-Football ya pedida.
 - [x] Escalera: el más probable en 1,25-1,40; liquidación de córners/tarjetas.
 - [x] Web: textos y regla nueva.
-- [ ] Desplegar y ejecutar `history_fd tarjetas` en el VPS.
+- [x] Desplegado 2026-10-08 23:20 UTC (commit abe3da4) y `history_fd tarjetas`
+      ejecutado (27.398 partidos con tarjetas; árbitro en 4.610 de la Premier).
 
 ## Fase comercial desbloqueada (2026-10-07, decisión del usuario)
 
