@@ -24,6 +24,7 @@ from ..normalize import (
     slugify,
 )
 from . import api_football as af
+from .estadisticas import arbitro
 
 log = logging.getLogger(__name__)
 
@@ -177,6 +178,11 @@ def ingest_league(league: dict, days_ahead: int = 21,
             # results.py los cerraba otra vez.
             if existing["status"] == "finished":
                 continue
+            # El árbitro se designa días antes: se guarda en cuanto llega,
+            # para el modelo de tarjetas (sin pisar uno ya guardado por nada).
+            if arbitro(fixture.get("referee")):
+                execute("UPDATE matches SET referee = %s WHERE match_id = %s",
+                        (arbitro(fixture.get("referee")), existing["match_id"]))
             if (abs((existing["kickoff_utc"] - ko).total_seconds()) > 300
                     or existing["status"] != db_status):
                 execute(
@@ -205,15 +211,17 @@ def ingest_league(league: dict, days_ahead: int = 21,
         n = execute(
             """INSERT INTO matches
                  (match_id, league_id, season, kickoff_utc, home_team_id,
-                  away_team_id, status, external_ids)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                  away_team_id, status, external_ids, referee)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                ON CONFLICT (match_id) DO UPDATE
                  SET kickoff_utc = EXCLUDED.kickoff_utc,
                      status = EXCLUDED.status,
-                     external_ids = matches.external_ids || EXCLUDED.external_ids
+                     external_ids = matches.external_ids || EXCLUDED.external_ids,
+                     referee = COALESCE(EXCLUDED.referee, matches.referee)
                """,
             (match_id, league["league_id"], season_lbl, ko, home_id, away_id,
-             db_status, f'{{"api_football": "{fixture["id"]}"}}'),
+             db_status, f'{{"api_football": "{fixture["id"]}"}}',
+             arbitro(fixture.get("referee"))),
         )
         inserted += n
 

@@ -1,0 +1,136 @@
+"""Córners, tarjetas y ambos anotan en la escalera: modelo, cuotas y liquidación."""
+from datetime import datetime, timedelta, timezone
+
+import pytest
+
+from qf.ingest import af_odds
+from qf.ingest.estadisticas import arbitro
+from qf.model import estadisticas_mercado as em
+from qf.publish import escalera_datos as ed
+from qf.publish.alta_prob import Candidato
+
+T0 = datetime(2024, 8, 1, tzinfo=timezone.utc)
+
+
+def _liga(acc, n_jornadas=40, extra=None):
+    """Seis equipos; 'A' saca siempre 7 córners en casa y 6 fuera, el resto 4."""
+    equipos = list("ABCDEF")
+    t = T0
+    for j in range(n_jornadas):
+        for i in range(0, 6, 2):
+            l, v = equipos[(i + j) % 6], equipos[(i + 1 + j) % 6]
+            acc.agregar(t, l, v, 7 if l == "A" else 4, 6 if v == "A" else 4, extra)
+        t += timedelta(days=4)
+    return t
+
+
+def test_el_equipo_que_saca_mas_corners_sube_la_media_y_se_encoge_a_la_liga():
+    acc = em.Acumulador(prior=6.0, media_vida=365.0)
+    t = _liga(acc)
+    con_a = sum(acc.lambdas(t, "A", "B"))
+    sin_a = sum(acc.lambdas(t, "C", "B"))
+    assert con_a > sin_a
+    fuerte = em.Acumulador(prior=200.0, media_vida=365.0)
+    _liga(fuerte)
+    # Con mucho encogimiento, A se parece más a la media de la liga.
+    assert sum(fuerte.lambdas(t, "A", "B")) < con_a
+
+
+def test_sin_partidos_suficientes_no_hay_probabilidad():
+    acc = em.Acumulador()
+    acc.agregar(T0, "A", "B", 5, 4)
+    assert acc.lambdas(T0, "A", "B") is None
+
+
+def test_preguntar_no_mira_partidos_que_aun_no_se_anadieron():
+    acc = em.Acumulador(prior=6.0, media_vida=365.0)
+    t = _liga(acc)
+    antes = acc.lambdas(t, "A", "B")
+    acc.agregar(t, "A", "B", 20, 20)
+    assert acc.lambdas(t, "A", "B") != antes             # solo cambia al añadirlo
+
+
+def test_arbitro_tarjetero_sube_las_tarjetas():
+    acc = em.Acumulador(usar_arbitro=True, prior=6.0, media_vida=365.0)
+    t = _liga(acc, extra="J Normal")
+    for _ in range(15):
+        acc.agregar(t, "C", "D", 7, 7, "M Duro")          # 14 frente a ~8 de media
+        t += timedelta(days=1)
+    assert sum(acc.lambdas(t, "E", "F", "M Duro")) > sum(acc.lambdas(t, "E", "F", "J Normal"))
+
+
+def test_probabilidades_de_linea_suman_uno_y_solo_lineas_medias():
+    for phi in (1.0, 1.2):
+        pr = em.prob_total(9.8, phi, 9.5)
+        assert pr["over"] + pr["under"] == pytest.approx(1.0)
+    assert em.prob_total(9.8, 1.2, 7.5)["over"] > em.prob_total(9.8, 1.2, 10.5)["over"]
+    with pytest.raises(ValueError):
+        em.prob_total(9.8, 1.2, 9.0)
+
+
+def test_nombre_del_arbitro_igual_en_las_dos_fuentes():
+    assert arbitro("Michael Oliver, England") == arbitro("M Oliver") == "M Oliver"
+
+
+def test_cuotas_de_corners_tarjetas_y_ambos_anotan_de_la_misma_respuesta():
+    resp = [{"update": "2026-10-08T07:20:00+00:00", "fixture": {"id": 1}, "bookmakers": [
+        {"name": "Betano", "bets": [
+            {"id": 8, "name": "Both Teams Score", "values": [{"value": "Yes", "odd": "1.65"},
+                                                              {"value": "No", "odd": "2.15"}]},
+            {"id": 45, "name": "Corners Over Under", "values": [
+                {"value": "Over 8.5", "odd": "1.55"}, {"value": "Under 8.5", "odd": "2.35"}]},
+            {"id": 80, "name": "Cards Over/Under", "values": [
+                {"value": "Over 3.5", "odd": "1.80"}, {"value": "Under 3.5", "odd": "2.00"}]},
+            {"id": 45, "name": "Otro nombre", "values": [{"value": "Over 9.5", "odd": "1.9"},
+                                                          {"value": "Under 9.5", "odd": "1.9"}]}]},
+        {"name": "Casa Ajena", "bets": [
+            {"id": 45, "name": "Corners Over Under", "values": [
+                {"value": "Over 8.5", "odd": "1.60"}, {"value": "Under 8.5", "odd": "2.30"}]}]}]}]
+    filas = af_odds.parse(resp, "m1", datetime(2026, 10, 8, 18, tzinfo=timezone.utc))
+    mercados = sorted({(r[2], r[3], r[8]) for r in filas})
+    assert mercados == [("betano", "btts", None), ("betano", "cards", 3.5),
+                        ("betano", "corners", 8.5)]               # ni el nombre raro ni la casa ajena
+
+
+def test_mejor_cuota_de_la_lista_para_cada_linea():
+    t = datetime(2026, 10, 8, 7, tzinfo=timezone.utc)
+    filas = [{"bookmaker": "betano", "market": "corners", "selection": "over", "line": 8.5,
+              "price": 1.33, "provider_updated_at": t},
+             {"bookmaker": "onexbet", "market": "corners", "selection": "over", "line": 8.5,
+              "price": 1.36, "provider_updated_at": t},
+             {"bookmaker": "casa_ajena", "market": "corners", "selection": "over", "line": 8.5,
+              "price": 1.50, "provider_updated_at": t},
+             {"bookmaker": "betano", "market": "corners", "selection": "over", "line": 9.5,
+              "price": 1.60, "provider_updated_at": t}]
+    price, book, _ = ed._ref_af(filas, Candidato("corners", "over", 8.5, 0.8))
+    assert (price, book) == (1.36, "1xbet")
+
+
+def _fila(market, selection, line, **kw):
+    base = {"status": "finished", "kickoff_utc": datetime(2026, 10, 9, 18, tzinfo=timezone.utc),
+            "home_goals": 2, "away_goals": 1, "home_corners": 6, "away_corners": 4,
+            "home_yellow": 2, "away_yellow": 1, "home_red": 1, "away_red": 0,
+            "market": market, "selection": selection, "line": line}
+    return {**base, **kw}
+
+
+def test_liquidacion_de_corners_tarjetas_y_ambos_anotan():
+    ahora = datetime(2026, 10, 10, tzinfo=timezone.utc)
+    assert ed.resultado(_fila("corners", "over", 8.5), ahora) == ("win", 2, 1, 10)
+    assert ed.resultado(_fila("corners", "under", 9.5), ahora)[0] == "loss"
+    # Tarjetas: 2 + 1 amarillas + 1 roja = 4, una por tarjeta.
+    assert ed.resultado(_fila("cards", "under", 4.5), ahora) == ("win", 2, 1, 4)
+    assert ed.resultado(_fila("btts", "yes", None), ahora) == ("win", 2, 1, None)
+    assert ed.resultado(_fila("btts", "no", None), ahora)[0] == "loss"
+
+
+def test_sin_estadisticas_se_espera_y_luego_es_nulo():
+    fila = _fila("corners", "over", 8.5, home_corners=None)
+    assert ed.resultado(fila, datetime(2026, 10, 10, tzinfo=timezone.utc)) is None
+    assert ed.resultado(fila, datetime(2026, 10, 13, tzinfo=timezone.utc)) == ("void", None, None, None)
+
+
+def test_textos_en_la_web():
+    assert ed.texto("corners", "over", 8.5, "A", "B") == "Más de 8,5 córners"
+    assert ed.texto("btts", "no", None, "A", "B") == "No marcan los dos"
+    assert ed.texto("h2h", "home", None, "Dortmund", "Werder") == "Gana Dortmund"

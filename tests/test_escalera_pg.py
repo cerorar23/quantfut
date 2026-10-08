@@ -136,3 +136,22 @@ def test_handicap_entero_devuelto_queda_push_con_marcador():
     (p,) = r["pasos"]
     assert p["outcome"] == "push" and p["marcador"] == "0-2" and r["saldo"] == "10.00"
     assert p["texto"].endswith("+2 (hándicap asiático)")
+
+
+def test_reto_sin_filtro_de_valor_y_escalon_de_corners_se_liquida_con_el_total():
+    dia = _dia()
+    reto = db.query_one("""INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min,
+                                                       cuota_max, ev_min)
+                           VALUES (10, 3, 1.25, 1.40, NULL) RETURNING reto_id""")["reto_id"]
+    mid, *_ = _partido(hg=1, ag=1)
+    db.execute("UPDATE matches SET home_corners = 6, away_corners = 5 WHERE match_id = %s", (mid,))
+    db.execute("""INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, line, prob,
+                                              fair_price, price, book, odds_source, odds_as_of, decided_at)
+                  VALUES (%s, 1, %s, 'corners', 'over', 8.5, 0.74, 1.351, 1.33, 'betano',
+                          'api_football', %s, %s)""", (reto, mid, dia - timedelta(hours=1), dia))
+    _sellar(dia)
+    ed.settle_pending()
+    r = _reto_publico(reto)
+    (p,) = r["pasos"]
+    assert (p["outcome"], p["valor"], p["texto"]) == ("win", 11, "Más de 8,5 córners")
+    assert r["saldo"] == "13.30"

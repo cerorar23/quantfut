@@ -16,20 +16,19 @@ def _o(prob, price, market="h2h", match="m1"):
 
 # --- Elección ------------------------------------------------------------------
 
-def test_solo_entra_lo_que_esta_en_rango_y_paga_al_menos_el_justo():
-    assert es.elegir([_o(0.75, 1.30)]) is None            # 0,975: margen en contra
+def test_entra_lo_que_esta_en_rango_aunque_el_margen_vaya_en_contra():
+    assert es.elegir([_o(0.75, 1.30)]).price == 1.30       # 0,975: con la regla nueva entra
     assert es.elegir([_o(0.80, 1.20)]) is None            # fuera de rango por abajo
     assert es.elegir([_o(0.70, 1.45)]) is None            # fuera de rango por arriba
-    assert es.elegir([_o(0.75, 1.34)]).price == 1.34      # 1,005
-    assert es.elegir([_o(0.80, 1.25)]).price == 1.25      # justo exacto vale
+    # El filtro de valor sigue disponible si se vuelve a poner EV_MIN.
+    assert es.elegir([_o(0.75, 1.30)], ev_min=0.0) is None
+    assert es.elegir([_o(0.75, 1.34)], ev_min=0.0).price == 1.34
 
 
-def test_elige_el_de_mas_valor_y_desempata_por_probabilidad():
+def test_elige_el_mas_probable_y_desempata_por_valor():
     a, b, c = _o(0.74, 1.36, match="a"), _o(0.77, 1.32, match="b"), _o(0.76, 1.34, match="c")
-    # a: 0,74 × 1,36 = 1,0064 · b: 0,77 × 1,32 = 1,0164 · c: 0,76 × 1,34 = 1,0184
-    assert es.elegir([a, b, c]).match_id == "c"
-    assert es.elegir([a, b]).match_id == "b"
-    d, e = _o(0.75, 1.36, match="d"), _o(0.80, 1.275, match="e")   # mismo EV: 1,02
+    assert es.elegir([a, b, c]).match_id == "b"
+    d, e = _o(0.77, 1.30, match="d"), _o(0.77, 1.33, match="e")    # misma probabilidad
     assert es.elegir([d, e]).match_id == "e"
 
 
@@ -134,11 +133,14 @@ def test_longitud_del_reto_nuevo():
 def test_plan_sirve_primero_a_los_retos_abiertos_y_no_repite_partido():
     ops = [_o(0.76, 1.34, match="a"), _o(0.75, 1.36, match="b"), _o(0.80, 1.26, match="c"),
            _o(0.77, 1.35, match="a"),                         # otro mercado del mismo partido
-           _o(0.70, 1.30, match="d")]                         # sin valor: no entra
+           _o(0.70, 1.30, match="d"), _o(0.90, 1.10, match="e")]   # e: fuera de rango
     plan = es.planificar(en_curso=[(7, 1), (9, 3)], abiertos=[3, 6], seis_en_mes=1,
                          opciones=ops, ocupados={"c"})
-    # El más avanzado (reto 9) recibe la mejor opción; c está ocupado por un escalón pendiente.
-    assert [(r, n, o.match_id) for r, n, o in plan] == [(9, None, "a"), (7, None, "b")]
+    # El más avanzado (reto 9) recibe la opción más probable; c está ocupado por
+    # un escalón pendiente; lo que sobra abre un reto de 4.
+    assert [(r, n, o.match_id) for r, n, o in plan] == [(9, None, "a"), (7, None, "b"),
+                                                         (None, 4, "d")]
+    assert plan[0][2].cand.prob == 0.77
 
 
 def test_plan_abre_retos_nuevos_con_lo_que_sobra():
@@ -170,3 +172,9 @@ def test_handicap_desde_la_matriz_es_coherente():
     assert visit_15 == pytest.approx(1 - local_m15)           # las dos caras de la misma línea
     assert es.texto_handicap("away", 1.5, "Dortmund", "Werder") == "Werder +1,5 (hándicap asiático)"
     assert es.texto_handicap("home", 0.0, "Dortmund", "Werder") == "Dortmund gana (empate devuelve)"
+
+
+def test_textos_de_los_mercados_nuevos():
+    assert es.texto_total("corners", "over", 8.5) == "Más de 8,5 córners"
+    assert es.texto_total("cards", "under", 6.5) == "Menos de 6,5 tarjetas"
+    assert es.texto_btts("yes") == "Ambos equipos marcan"

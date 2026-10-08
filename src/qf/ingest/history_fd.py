@@ -22,6 +22,7 @@ import pandas as pd
 
 from ..db import execute, query_one
 from ..normalize import register_alias, resolve_team, slugify
+from .estadisticas import arbitro
 
 log = logging.getLogger(__name__)
 
@@ -81,11 +82,13 @@ def _parse_date(row) -> datetime | None:
 # liga entera se carga vacía sin dar ningún error.
 COLS_MAIN = {"home": "HomeTeam", "away": "AwayTeam", "hg": "FTHG", "ag": "FTAG",
              "hg_ht": "HTHG", "ag_ht": "HTAG", "hs": "HS", "as": "AS",
-             "hst": "HST", "ast": "AST", "hc": "HC", "ac": "AC"}
+             "hst": "HST", "ast": "AST", "hc": "HC", "ac": "AC",
+             "hy": "HY", "ay": "AY", "hr": "HR", "ar": "AR", "referee": "Referee"}
 # El extra solo trae resultado y cuotas: ni tiros, ni córners, ni descanso.
 COLS_EXTRA = {"home": "Home", "away": "Away", "hg": "HG", "ag": "AG",
               "hg_ht": None, "ag_ht": None, "hs": None, "as": None,
-              "hst": None, "ast": None, "hc": None, "ac": None}
+              "hst": None, "ast": None, "hc": None, "ac": None,
+              "hy": None, "ay": None, "hr": None, "ar": None, "referee": None}
 
 
 def season_labels_extra(season: str) -> tuple[str, str]:
@@ -166,6 +169,7 @@ def _ingest_rows(league_id: str, season: str, df, cols: dict) -> int:
 
         if _n("hg") is None or _n("ag") is None:
             continue    # partido futuro o sin resultado en el CSV
+        referee = arbitro(row.get(cols["referee"])) if cols.get("referee") else None
 
         # ¿Ya existe este partido? Cubre dos casos con la misma consulta:
         #  - lo creó el calendario de API-Football, con otra etiqueta de
@@ -190,13 +194,13 @@ def _ingest_rows(league_id: str, season: str, df, cols: dict) -> int:
                   away_team_id, status, home_goals, away_goals,
                   home_goals_ht, away_goals_ht, home_shots, away_shots,
                   home_shots_target, away_shots_target, home_corners, away_corners,
-                  result_recorded_at)
-               VALUES (%s,%s,%s,%s,%s,%s,'finished',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                  home_yellow, away_yellow, home_red, away_red, referee, result_recorded_at)
+               VALUES (%s,%s,%s,%s,%s,%s,'finished',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                ON CONFLICT (match_id) DO NOTHING""",
             (match_id, league_id, season, ko, hid, aid,
              _n("hg"), _n("ag"), _n("hg_ht"), _n("ag_ht"),
              _n("hs"), _n("as"), _n("hst"), _n("ast"),
-             _n("hc"), _n("ac"), ko),
+             _n("hc"), _n("ac"), _n("hy"), _n("ay"), _n("hr"), _n("ar"), referee, ko),
         )
 
         # Cuotas históricas -> snapshots marcados como cierre
@@ -221,6 +225,64 @@ def _ingest_rows(league_id: str, season: str, df, cols: dict) -> int:
         inserted += 1
 
     return inserted
+
+
+def completar_tarjetas(seasons: list[str] | None = None) -> dict:
+    """
+    Rellena amarillas, árbitro y córners de partidos YA cargados, desde los
+    CSV principales (gratis; los extra no traen ni tarjetas ni árbitro). Solo
+    toca columnas vacías: lo que trajo API-Football no se pisa. Mismo
+    emparejamiento que la carga (equipos y ±36 h), sin dar de alta equipos.
+    """
+    from ..db import query
+
+    seasons = seasons or default_seasons()
+    leagues = query("SELECT league_id, fd_code FROM leagues "
+                    "WHERE fd_code IS NOT NULL AND NOT fd_extra AND active")
+    out = {}
+    for lg in leagues:
+        n = 0
+        for season in seasons:
+            df = _fetch_csv(BASE_MAIN.format(season=season, code=lg["fd_code"]))
+            if df is None or df.empty or not {"HY", "AY"} <= set(df.columns):
+                continue
+            for _, row in df.iterrows():
+                ko = _parse_date(row)
+                home, away = row.get("HomeTeam"), row.get("AwayTeam")
+                if ko is None or not isinstance(home, str) or not isinstance(away, str):
+                    continue
+                hn = resolve_team(home, "football_data", league_id=lg["league_id"])
+                an = resolve_team(away, "football_data", league_id=lg["league_id"])
+                if hn is None or an is None:
+                    continue
+                vals = []
+                for col in ("HY", "AY", "HR", "AR", "HC", "AC"):
+                    v = row.get(col)
+                    vals.append(int(v) if pd.notna(v) else None)
+                n += execute(
+                    """UPDATE matches m SET
+                         home_yellow = COALESCE(m.home_yellow, %s),
+                         away_yellow = COALESCE(m.away_yellow, %s),
+                         home_red = COALESCE(m.home_red, %s),
+                         away_red = COALESCE(m.away_red, %s),
+                         home_corners = COALESCE(m.home_corners, %s),
+                         away_corners = COALESCE(m.away_corners, %s),
+                         referee = COALESCE(m.referee, %s)
+                       FROM teams th, teams ta
+                       WHERE m.league_id = %s AND th.team_id = m.home_team_id
+                         AND ta.team_id = m.away_team_id
+                         AND th.league_id = %s AND th.canonical_name = %s
+                         AND ta.league_id = %s AND ta.canonical_name = %s
+                         AND m.kickoff_utc BETWEEN %s AND %s
+                         AND m.status = 'finished'
+                         AND (m.home_yellow IS NULL OR m.referee IS NULL
+                              OR m.home_corners IS NULL)""",
+                    (*vals, arbitro(row.get("Referee")), lg["league_id"],
+                     lg["league_id"], hn, lg["league_id"], an,
+                     ko - timedelta(hours=36), ko + timedelta(hours=36))) or 0
+        out[lg["league_id"]] = n
+        log.info("Tarjetas %s: %d partidos completados", lg["league_id"], n)
+    return out
 
 
 def ingest_season(league_id: str, fd_code: str, season: str) -> int:
@@ -300,5 +362,8 @@ def backfill(seasons: list[str] | None = None) -> dict:
 
 
 if __name__ == "__main__":
+    import sys
+
     logging.basicConfig(level=logging.INFO)
-    print(backfill())
+    # `tarjetas`: solo rellena amarillas, árbitro y córners de lo ya cargado.
+    print(completar_tarjetas() if sys.argv[1:] == ["tarjetas"] else backfill())

@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, timezone
 
 from ..db import execute, query
 from . import api_football as af
-from .estadisticas import normalizar_estadisticas
+from .estadisticas import arbitro, normalizar_estadisticas
 from .estadisticas_jugador import capturar as capturar_jugadores
 
 log = logging.getLogger(__name__)
@@ -145,6 +145,11 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
                      away_shots_target = COALESCE(%s, away_shots_target),
                      home_corners = COALESCE(%s, home_corners),
                      away_corners = COALESCE(%s, away_corners),
+                     home_yellow = COALESCE(%s, home_yellow),
+                     away_yellow = COALESCE(%s, away_yellow),
+                     home_red = COALESCE(%s, home_red),
+                     away_red = COALESCE(%s, away_red),
+                     referee = COALESCE(%s, referee),
                      stats = COALESCE(%s::jsonb, stats),
                      result_recorded_at = now()
                    WHERE match_id = %s""",
@@ -153,6 +158,12 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
                  _num(hs.get("Total Shots")), _num(as_.get("Total Shots")),
                  _num(hs.get("Shots on Goal")), _num(as_.get("Shots on Goal")),
                  _num(hs.get("Corner Kicks")), _num(as_.get("Corner Kicks")),
+                 # El proveedor manda null por cero tarjetas: con estadísticas, es 0.
+                 (_num(hs.get("Yellow Cards")) or 0) if hs else None,
+                 (_num(as_.get("Yellow Cards")) or 0) if as_ else None,
+                 (_num(hs.get("Red Cards")) or 0) if hs else None,
+                 (_num(as_.get("Red Cards")) or 0) if as_ else None,
+                 arbitro(fx["fixture"].get("referee")),
                  json.dumps(completas) if completas and any(completas.values()) else None,
                  row["match_id"]),
             )

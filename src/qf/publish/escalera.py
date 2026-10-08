@@ -16,11 +16,20 @@ sin margen) es 72,6 % y se acierta el 74,3 %, pero cada escalón pierde un
 −3,4 % de valor esperado, y la escalera lo multiplica: 6 pasos se completan el
 15,7 % de las veces y dejan −23,7 % por reto (−19,2 % retirando a ×2,5).
 
-LA MEJORA
----------
-1. Probabilidad real de Pinnacle sin margen, no la implícita en la cuota.
-2. Solo escalones con cuota ≥ precio justo (`EV_MIN`): la escalera multiplica
-   el valor de cada paso, así que un paso con margen en contra no se da.
+LA REGLA DESDE EL 2026-10-08 (decisión del usuario)
+--------------------------------------------------
+Se elige el escalón MÁS PROBABLE con cuota 1,25-1,40, sin filtro de valor:
+con el filtro (cuota ≥ precio justo) salían muy pocos. Medido antes de
+cambiarlo (`eval/escalera_prueba.py`, regla "rango_mas_probable"): −11,5 %
+por reto a 3 pasos y −26 % a 6, porque el margen de la casa se queda en cada
+escalón. Se publica igual, con su historial entero, y el valor esperado de
+cada escalón se guarda y se enseña.
+
+1. Probabilidad real: de Pinnacle sin margen (1X2, goles, ambos anotan,
+   hándicap) o, en córners y tarjetas, del modelo estadístico
+   `model/estadisticas_mercado.py` (equipos, liga y árbitro, sin cuotas).
+   Solo líneas que pasaron la prueba de calibración.
+2. `EV_MIN` = None: sin filtro de valor (se puede volver a poner un número).
 3. La cuota es la mejor de las casas de la lista (`SOFT_BOOKS`) en el mismo
    instante: es la que se puede tomar y la que sube el saldo.
 4. Un escalón al día como máximo por reto y solo cuando el anterior está
@@ -34,8 +43,8 @@ LA MEJORA
 7. Hándicap asiático protector (+1, +1,5, +2...) solo en las líneas que
    pasaron la prueba de calibración (`eval/escalera_handicap.py`).
 
-Lo que NO promete: con EV ≥ 0 el valor medido es casi nulo (+0,3 % en vivo),
-no un beneficio garantizado. Lo que quita es el −3,4 % por escalón.
+Lo que NO promete: elegir por probabilidad sube el acierto por escalón, no
+el valor esperado; con el margen de la casa, la escalera pierde de media.
 
 Este módulo es la parte pura. La base de datos está en `escalera_datos.py`.
 """
@@ -55,7 +64,9 @@ LONGITUDES = (3, 4, 5, 6)
 MAX_SEIS_MES = 3
 STAKE = Decimal("10.00")
 FREEROLL_X = 2.5
-EV_MIN = 0.0
+# None: sin filtro de valor (regla del 2026-10-08). Con 0.0 se vuelve a exigir
+# cuota ≥ precio justo.
+EV_MIN: float | None = None
 MAX_EDAD_PRECIO = timedelta(hours=6)
 HORIZONTE = timedelta(hours=36)
 # Líneas de goles candidatas: las validadas para alta probabilidad más la 2,5,
@@ -70,7 +81,11 @@ LINEAS_GOLES: tuple[tuple[str, float], ...] = (
 # +2 81,87→82,97). −1,5 no pasa (66,69→64,21) y queda fuera. Añadir una
 # línea exige repetir la prueba.
 LINEAS_HANDICAP: tuple[float, ...] = (-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0)
-MERCADOS = ("h2h", "totals", "team_totals_home", "team_totals_away", "spreads")
+MERCADOS = ("h2h", "totals", "team_totals_home", "team_totals_away", "spreads",
+            "btts", "corners", "cards")
+# Ambos anotan desde el ajuste de goles de Pinnacle: se activa solo si pasa la
+# prueba de calibración (eval/escalera_estadistica.py --goles).
+BTTS_HABILITADO = False
 _CENT = Decimal("0.01")
 
 
@@ -148,17 +163,18 @@ def longitud_nuevo(abiertos: list[int], seis_en_mes: int) -> int | None:
 
 
 def valida(o: Opcion, cuota_min: float = CUOTA_MIN, cuota_max: float = CUOTA_MAX,
-           ev_min: float = EV_MIN) -> bool:
+           ev_min: float | None = EV_MIN) -> bool:
     return (o.cand.market in MERCADOS and cuota_min <= o.price <= cuota_max
-            and o.ev >= ev_min)
+            and (ev_min is None or o.ev >= ev_min))
 
 
 def _orden(o: Opcion) -> tuple:
-    return (round(o.ev, 6), o.cand.prob, -o.price)
+    """El más probable; a igualdad, el de más valor y la cuota más alta."""
+    return (round(o.cand.prob, 6), round(o.ev, 6), o.price)
 
 
 def elegir(opciones: list[Opcion], **limites) -> Opcion | None:
-    """El de mayor valor esperado; a igualdad, el más probable."""
+    """El más probable dentro del rango; a igualdad, el de más valor."""
     dentro = [o for o in opciones if valida(o, **limites)]
     if not dentro:
         return None
@@ -265,3 +281,12 @@ def resumen(retos: list[dict]) -> dict:
             "tasa_completados": round(completados / len(cerrados) * 100, 1),
             "invertido": str(_q(invertido)), "ganancia": str(_q(ganancia)),
             "roi": round(float(ganancia / invertido) * 100, 1)}
+
+
+def texto_total(market: str, selection: str, line: float) -> str:
+    cosa = {"corners": "córners", "cards": "tarjetas"}[market]
+    return f"{'Más' if selection == 'over' else 'Menos'} de {f'{line:g}'.replace('.', ',')} {cosa}"
+
+
+def texto_btts(selection: str) -> str:
+    return "Ambos equipos marcan" if selection == "yes" else "No marcan los dos"

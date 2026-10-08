@@ -30,6 +30,11 @@ extra: sigue siendo una petición por partido.
 GOLES DE CADA EQUIPO (2026-10-07): bets 16 y 17 ("Total - Home" y "Total - Away"),
 línea 0,5 de SOFT_BOOKS, para la cuota de referencia de la línea de alta probabilidad.
 
+AMBOS ANOTAN, CÓRNERS Y TARJETAS (2026-10-08, escalera por probabilidad):
+bets 8 ("Both Teams Score"), 45 ("Corners Over Under") y 80 ("Cards
+Over/Under"), de SOFT_BOOKS y de Pinnacle (referencia). Mismo cuidado que en
+16/17: id y nombre esperado, o no se guarda.
+
 Se guarda en `af_odds_snapshots`, no en `odds_snapshots` (ver db/016).
 Una petición por partido dentro del horizonte.
 """
@@ -58,6 +63,10 @@ LINEAS_BLANDAS = (1.5, 2.5, 3.5, 4.5)
 # parecidos): se exige además el nombre esperado y, con otro, no se guarda nada.
 TEAM_TOTALS = {16: ("Total - Home", "team_totals_home"),
                17: ("Total - Away", "team_totals_away")}
+BTTS = (8, "Both Teams Score")
+# Totales de córners y de tarjetas: id -> (nombre esperado, mercado).
+OTROS_TOTALES = {45: ("Corners Over Under", "corners"),
+                 80: ("Cards Over/Under", "cards")}
 
 
 def bookmaker_key(name: str) -> str:
@@ -141,6 +150,24 @@ def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]
                         if lineas is None or ln in lineas:
                             rows += [(match_id, fid, book, "totals", s, p, updated, mins, ln)
                                      for s, p in q.items()]
+                elif (bet.get("id"), bet.get("name")) == BTTS and (
+                        book in settings.soft_books or book == settings.sharp_book):
+                    q = {}
+                    for v in bet.get("values", []):
+                        sel, pr = {"Yes": "yes", "No": "no"}.get(v.get("value")), _precio(v)
+                        if sel and pr is not None:
+                            q[sel] = pr
+                    if set(q) == {"yes", "no"}:
+                        rows += [(match_id, fid, book, "btts", s, pr, updated, mins, None)
+                                 for s, pr in q.items()]
+                elif bet.get("id") in OTROS_TOTALES and (
+                        book in settings.soft_books or book == settings.sharp_book):
+                    nombre, mercado = OTROS_TOTALES[bet["id"]]
+                    if bet.get("name") != nombre:
+                        continue
+                    for ln, q in _totales(bet).items():
+                        rows += [(match_id, fid, book, mercado, s, pr, updated, mins, ln)
+                                 for s, pr in q.items()]
                 elif bet.get("id") in TEAM_TOTALS and book in settings.soft_books:
                     nombre, mercado = TEAM_TOTALS[bet["id"]]
                     q = _totales(bet).get(0.5) if bet.get("name") == nombre else None

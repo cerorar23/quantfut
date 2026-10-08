@@ -57,3 +57,20 @@ def normalizar_estadisticas(crudo: list[dict], home_af_id: int, away_af_id: int)
                 valor = 0
             out[lado][clave] = valor
     return out
+
+
+def arbitro(v) -> str | None:
+    """
+    Nombre del árbitro en una sola forma para las dos fuentes, porque es la
+    clave de su promedio de tarjetas: API-Football manda "Michael Oliver,
+    England" y football-data "M Oliver". Ambas quedan "M Oliver": inicial del
+    nombre y último apellido.
+    """
+    if not isinstance(v, str) or not v.strip():
+        return None
+    partes = v.split(",")[0].replace(".", " ").split()
+    if not partes:
+        return None
+    if len(partes) == 1:
+        return partes[0]
+    return f"{partes[0][0].upper()} {partes[-1]}"
