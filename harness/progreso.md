@@ -4015,3 +4015,20 @@ patrón que alta probabilidad. Doble oportunidad fuera: no hay cuota que
 tomar en las fuentes. Primer escalón según la vista previa en producción
 (8-oct, sin escribir): Dortmund gana a Werder Bremen @1,36 (1xBet), prob.
 74,1 %, EV +0,8 %.
+
+## 2026-10-08 — Escalera: retos de 3 a 6 a la vez y hándicap asiático
+
+Decisión del usuario: varios retos a la vez, 3 escalones por defecto, de 6 como
+mucho 3 al mes, 4 y 5 cuando ya hay otro abierto. Medido antes
+(`escalera_prueba`, 3-6 pasos): acortar sube los completados (39,9 % a 3
+pasos frente a 15,3 % a 6) y reduce la pérdida de la regla sin filtro (−11,5 %
+frente a −26,2 % por reto), pero ninguna longitud gana sin el filtro de valor:
+el valor esperado de un reto es el producto del de sus escalones. Reparto:
+primero los retos abiertos (el más avanzado antes), después retos nuevos; un
+partido nunca se repite entre retos ni coincide con un escalón sin liquidar.
+Hándicap: Pinnacle solo da su línea principal en nuestras fuentes, así que la
+probabilidad sale del ajuste de goles; se validó la calibración sin cuotas
+históricas de esas líneas (firma d5cbc3151164): pasan −1 a +2 salvo −1,5. Solo
+enteras y medias (las de cuarto liquidan medias y la escalera no las trata);
+'push' no cuenta ni mueve el saldo. En vivo las protectoras llevan mucho margen
+(Santos +1,5 a 1,36: −8 %). La prueba tarda ~40 min: el ajuste por partido.

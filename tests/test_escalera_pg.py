@@ -69,8 +69,8 @@ def _sellar(dia: datetime) -> None:
 
 
 def _reto_publico(reto_id):
-    return next(r for r in [ed.informe_publico()["actual"], *ed.informe_publico()["historial"]]
-                if r and r["reto_id"] == reto_id)
+    inf = ed.informe_publico()
+    return next(r for r in [*inf["actuales"], *inf["historial"]] if r["reto_id"] == reto_id)
 
 
 def test_escalon_sellado_se_liquida_y_mueve_el_saldo():
@@ -120,3 +120,19 @@ def test_perder_cierra_el_reto_y_las_filas_no_se_pueden_tocar():
         db.execute("UPDATE escalera_pasos SET price = 9 WHERE reto_id = %s", (reto,))
     with pytest.raises(psycopg.errors.RaiseException):
         db.execute("DELETE FROM escalera_retos WHERE reto_id = %s", (reto,))
+
+
+def test_handicap_entero_devuelto_queda_push_con_marcador():
+    dia = _dia()
+    reto = _reto(objetivo=3)
+    mid, *_ = _partido(hg=0, ag=2)          # visitante gana por 2: el local +2 se devuelve
+    db.execute("""INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, line, prob,
+                                              fair_price, price, book, odds_source, odds_as_of, decided_at)
+                  VALUES (%s, 1, %s, 'spreads', 'home', 2.0, 0.78, 1.282, 1.30, '1xbet',
+                          'the_odds_api', %s, %s)""", (reto, mid, dia - timedelta(hours=1), dia))
+    _sellar(dia)
+    ed.settle_pending()
+    r = _reto_publico(reto)
+    (p,) = r["pasos"]
+    assert p["outcome"] == "push" and p["marcador"] == "0-2" and r["saldo"] == "10.00"
+    assert p["texto"].endswith("+2 (hándicap asiático)")

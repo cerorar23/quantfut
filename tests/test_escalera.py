@@ -114,6 +114,59 @@ def test_apagada_no_elige_nada(monkeypatch):
 
     monkeypatch.setattr(escalera_datos, "settings",
                         replace(escalera_datos.settings, escalera_enabled=False))
-    monkeypatch.setattr(escalera_datos, "_ultimo_reto",
+    monkeypatch.setattr(escalera_datos, "_retos",
                         lambda: pytest.fail("apagada no debe ni leer retos"))
     assert escalera_datos.select_and_persist()["estado"] == "desactivado"
+
+
+# --- Retos de 3 a 6, varios a la vez ------------------------------------------
+
+def test_longitud_del_reto_nuevo():
+    assert es.longitud_nuevo([], 0) == 3
+    assert es.longitud_nuevo([3], 0) == 6
+    assert es.longitud_nuevo([3], es.MAX_SEIS_MES) == 4      # tope de 6 en el mes
+    assert es.longitud_nuevo([3, 6], 0) == 4
+    assert es.longitud_nuevo([3, 6, 4], 0) == 5
+    assert es.longitud_nuevo([3, 4, 5, 6], 0) is None         # uno de cada longitud
+    assert es.longitud_nuevo([6, 4], 0) == 3                  # el de 3 vuelve primero
+
+
+def test_plan_sirve_primero_a_los_retos_abiertos_y_no_repite_partido():
+    ops = [_o(0.76, 1.34, match="a"), _o(0.75, 1.36, match="b"), _o(0.80, 1.26, match="c"),
+           _o(0.77, 1.35, match="a"),                         # otro mercado del mismo partido
+           _o(0.70, 1.30, match="d")]                         # sin valor: no entra
+    plan = es.planificar(en_curso=[(7, 1), (9, 3)], abiertos=[3, 6], seis_en_mes=1,
+                         opciones=ops, ocupados={"c"})
+    # El más avanzado (reto 9) recibe la mejor opción; c está ocupado por un escalón pendiente.
+    assert [(r, n, o.match_id) for r, n, o in plan] == [(9, None, "a"), (7, None, "b")]
+
+
+def test_plan_abre_retos_nuevos_con_lo_que_sobra():
+    ops = [_o(0.76, 1.34, match=m) for m in "abcdef"]
+    plan = es.planificar(en_curso=[], abiertos=[], seis_en_mes=es.MAX_SEIS_MES, opciones=ops)
+    assert [n for _, n, _ in plan] == [3, 4, 5]               # sin hueco para otro de 6
+    plan = es.planificar(en_curso=[], abiertos=[], seis_en_mes=0, opciones=ops)
+    assert [n for _, n, _ in plan] == [3, 6, 4, 5]
+
+
+def test_push_del_handicap_no_cuenta_ni_mueve_el_saldo():
+    st = es.estado(Decimal("10"), 3, None, _pasos((1.30, "win"), (1.33, "push"), (1.30, "win")))
+    assert st["estado"] == "en_curso" and st["ganados"] == 2 and st["saldo"] == Decimal("16.90")
+
+
+def test_handicap_exacto_desde_el_1x2():
+    p = {"home": 0.60, "draw": 0.25, "away": 0.15}
+    assert es.prob_handicap(p, None, "home", 0.0) == pytest.approx(0.60 / 0.75)
+    assert es.prob_handicap(p, None, "away", 0.5) == pytest.approx(0.40)
+    assert es.prob_handicap(p, None, "home", -0.5) == pytest.approx(0.60)
+    assert es.prob_handicap(p, None, "away", 1.5) is None       # necesita el ajuste de goles
+
+
+def test_handicap_desde_la_matriz_es_coherente():
+    from qf.model.pricing import score_matrix
+    m = score_matrix(1.8, 0.9, -0.06)
+    visit_15 = es.prob_handicap({"home": 0, "draw": 0, "away": 0}, m, "away", 1.5)
+    local_m15 = es.prob_handicap({"home": 0, "draw": 0, "away": 0}, m, "home", -1.5)
+    assert visit_15 == pytest.approx(1 - local_m15)           # las dos caras de la misma línea
+    assert es.texto_handicap("away", 1.5, "Dortmund", "Werder") == "Werder +1,5 (hándicap asiático)"
+    assert es.texto_handicap("home", 0.0, "Dortmund", "Werder") == "Dortmund gana (empate devuelve)"

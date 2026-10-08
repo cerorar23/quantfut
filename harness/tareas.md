@@ -41,7 +41,13 @@ del usuario (cuota 1,25-1,40, 5-7 pasos, retirar la inversión al llegar a
       `daily` antes de `seal()`, liquidación en `clv.settle_pending`.
 - [x] `GET /escalera` y pestaña «Reto escalera» en la web.
 - [x] `eval/escalera_prueba.py`: la comparación histórica, reproducible.
-- [ ] Desplegar (decisión del usuario) y fijar `LOTE_ESCALERA_DESDE`.
+- [x] Retos de 3 a 6 escalones, varios a la vez: 3 por defecto, 6 como
+      mucho 3 al mes, 4 y 5 si ya hay uno abierto (decisión del usuario,
+      2026-10-08). `escalera.planificar` / `longitud_nuevo`.
+- [x] Hándicap asiático (−1 a +2, enteras y medias) tras pasar la prueba
+      `eval/escalera_handicap.py`; −1,5 fuera.
+- [ ] Desplegar (decisión del usuario): `db/045`, `LOTE_ESCALERA_DESDE`,
+      `ESCALERA_ENABLED=1` y recrear también el WORKER (corre el job diario).
 
 ## Fase comercial desbloqueada (2026-10-07, decisión del usuario)
 

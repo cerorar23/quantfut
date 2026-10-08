@@ -709,26 +709,39 @@ frente al modelo base a T-60 y evidencia en varias ligas.
 
 ## Reto escalera (desde 2026-10-08)
 
-Pestaña propia en la web (`/escalera`): se empieza con 10 unidades y cada
-escalón apuesta todo el saldo; 6 escalones ganados completan el reto y uno
-fallado lo cierra. Reglas y motivos en `src/qf/publish/escalera.py`; cada
-escalón se sella en el lote del día antes del partido (`LOTE_ESCALERA_DESDE`)
-y las tablas (`db/045`) son inmutables: el saldo se deriva, no se guarda.
+Pestaña propia en la web (`/escalera`): retos de 3 a 6 escalones que empiezan
+con 10 unidades; cada escalón apuesta todo el saldo, ganarlos todos completa
+el reto y fallar uno lo cierra. Puede haber varios abiertos a la vez (uno de
+cada longitud): 3 por defecto, 6 como mucho 3 veces al mes, 4 y 5 cuando ya
+hay otro abierto (decisión del usuario). Reglas en
+`src/qf/publish/escalera.py`; cada escalón se sella en el lote del día antes
+del partido (`LOTE_ESCALERA_DESDE`) y las tablas (`db/045`) son inmutables:
+el saldo se deriva, no se guarda.
 
-La regla de partida (cuota 1,25-1,40, 5-7 pasos, retirar la inversión a ×2,5)
-se midió antes de construir nada (`python -m qf.eval.escalera_prueba`,
-football-data, 7 ligas, 2019-2025, firma `d5cbc3151164`):
+La regla de partida (cuota 1,25-1,40, retirar la inversión a ×2,5) se midió
+antes de construir nada (`python -m qf.eval.escalera_prueba`, football-data,
+7 ligas, 2019-2025, firma `d5cbc3151164`, mejor de bet365 y 1xBet):
 
-| | Escalones | Acierto (prometido) | EV por escalón | Retos de 6 | Completados | Por reto |
-|---|---|---|---|---|---|---|
-| Rango 1,25-1,40 | 2.708 | 72,6 % (72,1 %) | **−3,6 %** | 244 | 15,6 % | **−24,1 %** |
-| Además cuota ≥ justa | 73 | 80,8 % (76,2 %) | +0,7 % | 16 | 31,2 % | +59 % (ruido) |
+| Escalones | Rango 1,25-1,40: completados · por reto | + cuota ≥ justa: completados · por reto (n) |
+|---|---|---|
+| 3 | 39,9 % · **−11,5 %** | 56 % · +29 % (25) |
+| 4 | 31,0 % · −10,2 % | 48 % · +43 % (21) |
+| 5 | 21,6 % · −19,0 % | 31 % · +21 % (16) |
+| 6 | 15,3 % · **−26,2 %** | 31 % · +62 % (16) |
 
-La probabilidad está bien medida; lo que hunde la escalera es el margen de
-la casa, que se multiplica en cada escalón. Por eso solo se dan escalones
-con cuota ≥ precio justo de Pinnacle sin margen. Son pocos (en vivo, 4 de 20
-candidatos en dos semanas): un reto puede durar semanas, y la muestra con
-filtro no demuestra beneficio.
+En el rango, la probabilidad está calibrada (72,3 % prometido, 72,5 % real)
+pero cada escalón pierde −3,3 % por el margen, y la escalera lo multiplica.
+Acortar sube los completados y no la ganancia esperada. Por eso solo se dan
+escalones con cuota ≥ precio justo de Pinnacle sin margen; son pocos y la
+muestra con filtro (75 escalones) no demuestra beneficio.
+
+Hándicap asiático (protector incluido) como mercado de escalón, con la
+probabilidad sacada del ajuste de goles de Pinnacle
+(`python -m qf.eval.escalera_handicap`, mismo criterio que alta
+probabilidad): pasan −1, −0,5, 0, +0,5, +1, +1,5 y +2; −1,5 no (66,7 %
+prometido, 64,2 % real). Las cuotas de las casas en las líneas protectoras
+llevan mucho margen (Santos +1,5 a 1,36 el 8-oct: −8 %): el filtro de valor
+las descarta casi siempre.
 
 ## Línea de alta probabilidad (desde 2026-10-06)
 

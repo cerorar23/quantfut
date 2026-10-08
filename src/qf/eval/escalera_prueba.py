@@ -85,7 +85,7 @@ REGLAS = {
 }
 
 
-def simular(c: pd.DataFrame, regla: str, pasos: int = es.PASOS,
+def simular(c: pd.DataFrame, regla: str, pasos: int = 3,
             freeroll_x: float | None = es.FREEROLL_X) -> dict:
     stake = es.STAKE
     retos, actual = [], []
@@ -125,7 +125,7 @@ def run(cache_dir: Path = Path(".local/fd_cache")) -> dict:
         "rango": [es.CUOTA_MIN, es.CUOTA_MAX],
         "escalones": {"todos": bloque(c), "con_valor": bloque(c[c["ev"] >= es.EV_MIN])},
         "escaleras": {f"{regla}_{n}_pasos{'_freeroll' if fr else ''}": simular(c, regla, n, fr)
-                      for regla in REGLAS for n in (5, 6, 7) for fr in (None, es.FREEROLL_X)},
+                      for regla in REGLAS for n in es.LONGITUDES for fr in (None, es.FREEROLL_X)},
     }
 
 

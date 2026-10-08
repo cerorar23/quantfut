@@ -20,6 +20,7 @@ from ..config import settings
 from ..db import execute, query, query_one
 from ..eval.clv import _settle_outcome
 from ..model.devig import devig
+from ..model.pricing import score_matrix
 from . import alta_prob as ap
 from . import alta_prob_datos as ad
 from . import escalera as es
@@ -44,8 +45,8 @@ def _sql_sellado() -> str:
             {corte}"""
 
 
-def _ultimo_reto() -> dict | None:
-    return query_one("SELECT * FROM escalera_retos ORDER BY reto_id DESC LIMIT 1")
+def _retos() -> list[dict]:
+    return query("SELECT * FROM escalera_retos ORDER BY reto_id")
 
 
 def _pasos(reto_id: int, solo_sellados: bool = False) -> list[dict]:
@@ -111,12 +112,46 @@ def opciones(match_id: str, kickoff: datetime, now: datetime,
     ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho) if linea else None
     cands += ap.candidatos_goles(ajuste, es.LINEAS_GOLES)
     cands += ap.candidatos_equipo(ajuste, ("home", "away"))
+    # Hándicap: solo hay cuotas de las casas en The Odds API.
+    lineas_ah: list[dict] = []
+    if es.LINEAS_HANDICAP and snap.source == "the_odds_api":
+        m = (score_matrix(ajuste["lambda"], ajuste["mu"], ajuste["rho"])
+             if ajuste is not None else None)
+        cands += es.candidatos_handicap(p, m)
+        lineas_ah = _handicaps(match_id, snap.as_of)
     out = []
     for c in cands:
-        price, book = ad._ref(snap, totales, c, equipos)
+        price, book = (_ref_handicap(lineas_ah, c) if c.market == "spreads"
+                       else ad._ref(snap, totales, c, equipos))
         if price is not None:
             out.append(es.Opcion(match_id, c, float(price), book, snap.source, snap.as_of))
     return out
+
+
+def _handicaps(match_id: str, as_of: datetime) -> list[dict]:
+    """Hándicaps de la MISMA respuesta de The Odds API que el 1X2."""
+    return query(
+        """SELECT bookmaker, selection, line, price FROM odds_snapshots
+           WHERE match_id = %s AND market = 'spreads' AND source = 'the_odds_api'
+             AND captured_at = %s""",
+        (match_id, as_of))
+
+
+def _ref_handicap(rows: list[dict], c) -> tuple[float | None, str | None]:
+    """Mejor cuota de la lista para ese lado y esa línea (la del propio lado)."""
+    precios = [(float(r["price"]), pk.canonical_book(r["bookmaker"])) for r in rows
+               if pk.canonical_book(r["bookmaker"]) in settings.soft_books
+               and r["selection"] == c.selection and r["line"] is not None
+               and abs(float(r["line"]) - c.line) < 1e-9]
+    return max(precios) if precios else (None, None)
+
+
+def _seis_en_mes(now: datetime) -> int:
+    return query_one(
+        """SELECT count(*) AS n FROM escalera_retos
+           WHERE pasos_objetivo = 6
+             AND date_trunc('month', created_at AT TIME ZONE 'UTC')
+               = date_trunc('month', %s AT TIME ZONE 'UTC')""", (now,))["n"]
 
 
 def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> dict:
@@ -130,11 +165,17 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     if not dry_run and ad._lote_sellado(hoy):
         return {"estado": "lote_sellado", "motivo": "Lote del día ya sellado: no se elige nada"}
 
-    reto = _ultimo_reto()
-    st = estado_reto(reto, _pasos(reto["reto_id"])) if reto else None
-    if st is not None and st["estado"] == "esperando":
-        return {"estado": "esperando", "reto_id": reto["reto_id"], "en_juego": str(st["en_juego"])}
-    nuevo = reto is None or st["estado"] in ("completado", "fallido")
+    # Retos abiertos: los que esperan resultado y los que necesitan escalón.
+    abiertos, en_curso, ocupados = [], [], set()
+    for reto in _retos():
+        pasos = _pasos(reto["reto_id"])
+        st = estado_reto(reto, pasos)
+        if st["estado"] in ("completado", "fallido"):
+            continue
+        abiertos.append(int(reto["pasos_objetivo"]))
+        if st["estado"] == "en_curso":
+            en_curso.append((reto["reto_id"], st["ganados"]))
+        ocupados |= {p["match_id"] for p in pasos if p["outcome"] is None}
 
     rho = ad._rho_activo()
     todas, sin_precio = [], 0
@@ -144,38 +185,35 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             sin_precio += 1
             continue
         todas.extend(res)
-    elegido = es.elegir(todas)
-    out = {"estado": "sin_candidato" if elegido is None else "elegido",
-           "nuevo_reto": nuevo, "evaluados": len(todas), "sin_precio": sin_precio,
-           "en_rango": sum(1 for o in todas if es.CUOTA_MIN <= o.price <= es.CUOTA_MAX)}
+    plan = es.planificar(en_curso, abiertos, _seis_en_mes(now), todas, ocupados)
+    out = {"estado": "elegido" if plan else "sin_candidato",
+           "retos_abiertos": len(abiertos), "necesitan_escalon": len(en_curso),
+           "evaluados": len(todas), "sin_precio": sin_precio,
+           "en_rango": sum(1 for o in todas if es.CUOTA_MIN <= o.price <= es.CUOTA_MAX),
+           "plan": [{"reto_id": r, "nuevo_de": n, **_opcion_json(o)} for r, n, o in plan]}
     if dry_run:
         mejores = sorted((o for o in todas if es.CUOTA_MIN <= o.price <= es.CUOTA_MAX),
-                         key=lambda o: o.ev, reverse=True)[:10]
+                         key=lambda o: o.ev, reverse=True)[:12]
         out["mejores_en_rango"] = [_opcion_json(o) for o in mejores]
-        out["elegido"] = _opcion_json(elegido) if elegido else None
         return out
 
-    if nuevo:
-        reto = query_one(
-            """INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
-                                           ev_min, freeroll_x)
-               VALUES (%s, %s, %s, %s, %s, %s) RETURNING *""",
-            (es.STAKE, es.PASOS, es.CUOTA_MIN, es.CUOTA_MAX, es.EV_MIN, es.FREEROLL_X))
-    out["reto_id"] = reto["reto_id"]
-    if elegido is None:
-        log.info("Escalera: %s", out)
-        return out
-    siguiente = (query_one("SELECT coalesce(max(paso), 0) + 1 AS n FROM escalera_pasos "
-                           "WHERE reto_id = %s", (reto["reto_id"],)))["n"]
-    execute(
-        """INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, line, prob,
-                                       fair_price, price, book, odds_source, odds_as_of)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-        (reto["reto_id"], siguiente, elegido.match_id, elegido.cand.market,
-         elegido.cand.selection, elegido.cand.line, round(elegido.cand.prob, 6),
-         round(1.0 / elegido.cand.prob, 4), elegido.price, elegido.book,
-         elegido.odds_source, elegido.odds_as_of))
-    out.update(paso=siguiente, elegido=_opcion_json(elegido))
+    for reto_id, nuevo_de, o in plan:
+        if reto_id is None:
+            reto_id = query_one(
+                """INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
+                                               ev_min, freeroll_x)
+                   VALUES (%s, %s, %s, %s, %s, %s) RETURNING reto_id""",
+                (es.STAKE, nuevo_de, es.CUOTA_MIN, es.CUOTA_MAX, es.EV_MIN, es.FREEROLL_X)
+            )["reto_id"]
+        siguiente = query_one("SELECT coalesce(max(paso), 0) + 1 AS n FROM escalera_pasos "
+                              "WHERE reto_id = %s", (reto_id,))["n"]
+        execute(
+            """INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, line, prob,
+                                           fair_price, price, book, odds_source, odds_as_of)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (reto_id, siguiente, o.match_id, o.cand.market, o.cand.selection, o.cand.line,
+             round(o.cand.prob, 6), round(1.0 / o.cand.prob, 4), o.price, o.book,
+             o.odds_source, o.odds_as_of))
     log.info("Escalera: %s", out)
     return out
 
@@ -209,8 +247,9 @@ def settle_pending(now: datetime | None = None) -> dict:
         else:
             outcome, _, _ = _settle_outcome(r["market"], r["selection"], r["line"],
                                             int(r["home_goals"]), int(r["away_goals"]))
+            # Las líneas de la escalera son enteras o medias: no hay medias ganadas.
             fila = ((r["paso_id"], outcome, int(r["home_goals"]), int(r["away_goals"]))
-                    if outcome in ("win", "loss") else (r["paso_id"], "void", None, None))
+                    if outcome in ("win", "loss", "push") else (r["paso_id"], "void", None, None))
         n += execute(
             """INSERT INTO escalera_resultados (paso_id, outcome, home_goals, away_goals)
                VALUES (%s,%s,%s,%s) ON CONFLICT (paso_id) DO NOTHING""", fila) or 0
@@ -220,7 +259,9 @@ def settle_pending(now: datetime | None = None) -> dict:
 def _paso_publico(p: dict) -> dict:
     return {"paso": p["paso"], "match_id": p["match_id"], "league_id": p["league_id"],
             "kickoff_utc": p["kickoff_utc"], "local": p["local"], "visitante": p["visitante"],
-            "texto": ap.texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"]),
+            "texto": (es.texto_handicap(p["selection"], float(p["line"]), p["local"], p["visitante"])
+                      if p["market"] == "spreads"
+                      else ap.texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"])),
             "market": p["market"],
             # Misma precisión pública reducida que la línea de alta probabilidad.
             "prob": round(float(p["prob"]), 2), "price": float(p["price"]), "book": p["book"],
@@ -248,19 +289,23 @@ def informe_publico() -> dict:
                        "freeroll_x": reto["freeroll_x"],
                        **_json_estado(st),
                        "pasos": [_paso_publico(p) for p in pasos]})
-    actual = salida[-1] if salida and salida[-1]["estado"] not in ("completado", "fallido") else None
     cerrados = [r for r in salida if r["estado"] in ("completado", "fallido")]
+    actuales = [r for r in salida if r["estado"] not in ("completado", "fallido")]
     acumulado, serie = Decimal("0"), []
     for r in cerrados:
         acumulado += Decimal(r["ganancia"])
         serie.append({"reto_id": r["reto_id"], "ganancia": r["ganancia"], "acumulado": str(acumulado)})
     return {
         "activo": settings.escalera_enabled,
-        "reglas": {"cuota_min": es.CUOTA_MIN, "cuota_max": es.CUOTA_MAX, "pasos": es.PASOS,
-                   "stake": str(es.STAKE), "freeroll_x": es.FREEROLL_X, "ev_min": es.EV_MIN},
-        "actual": actual,
+        "reglas": {"cuota_min": es.CUOTA_MIN, "cuota_max": es.CUOTA_MAX,
+                   "longitudes": list(es.LONGITUDES), "max_seis_mes": es.MAX_SEIS_MES,
+                   "stake": str(es.STAKE), "freeroll_x": es.FREEROLL_X, "ev_min": es.EV_MIN,
+                   "lineas_handicap": list(es.LINEAS_HANDICAP)},
+        "actuales": actuales,
         "historial": list(reversed(cerrados)),
         "resumen": es.resumen(cerrados),
+        "por_longitud": {str(n): es.resumen([r for r in cerrados if r["pasos_objetivo"] == n])
+                         for n in es.LONGITUDES},
         "serie": serie,
         "escalones": {"n": len(escalones),
                       "aciertos": sum(1 for p in escalones if p["outcome"] == "win"),

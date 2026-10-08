@@ -2,7 +2,8 @@
 -- 045 - Reto escalera (pedido del usuario, 2026-10-08)
 --
 -- Un reto encadena escalones: todo el saldo va al siguiente pronóstico y el
--- reto acaba al ganar `pasos_objetivo` escalones o al perder uno. Las reglas
+-- reto acaba al ganar `pasos_objetivo` escalones (3 a 6) o al perder uno.
+-- Puede haber varios retos abiertos a la vez. Las reglas
 -- y su justificación están en `src/qf/publish/escalera.py`.
 --
 -- Las tres tablas son inmutables, como `picks`: el estado de un reto (en
@@ -27,10 +28,10 @@ CREATE TABLE IF NOT EXISTS escalera_pasos (
     reto_id      BIGINT NOT NULL REFERENCES escalera_retos(reto_id),
     paso         SMALLINT NOT NULL CHECK (paso >= 1),
     match_id     TEXT NOT NULL REFERENCES matches(match_id),
-    market       TEXT NOT NULL CHECK (market IN ('h2h', 'totals',
-                                                 'team_totals_home', 'team_totals_away')),
+    market       TEXT NOT NULL CHECK (market IN ('h2h', 'totals', 'team_totals_home',
+                                                 'team_totals_away', 'spreads')),
     selection    TEXT NOT NULL,
-    line         REAL,
+    line         REAL,                      -- hándicap: el del lado elegido (+1,5 = recibe 1,5)
     prob         DOUBLE PRECISION NOT NULL CHECK (prob > 0 AND prob < 1),  -- Pinnacle sin margen
     fair_price   REAL NOT NULL,             -- 1 / prob
     price        REAL NOT NULL CHECK (price > 1),   -- mejor cuota de SOFT_BOOKS: a la que sube el saldo
@@ -44,8 +45,9 @@ CREATE INDEX IF NOT EXISTS idx_escalera_pasos_decided ON escalera_pasos(decided_
 
 CREATE TABLE IF NOT EXISTS escalera_resultados (
     paso_id     UUID PRIMARY KEY REFERENCES escalera_pasos(paso_id),
-    -- 'void': partido aplazado o suspendido. El escalón no cuenta y el saldo no cambia.
-    outcome     TEXT NOT NULL CHECK (outcome IN ('win', 'loss', 'void')),
+    -- 'void': partido aplazado. 'push': hándicap entero devuelto. En los dos
+    -- el escalón no cuenta y el saldo no cambia.
+    outcome     TEXT NOT NULL CHECK (outcome IN ('win', 'loss', 'push', 'void')),
     home_goals  SMALLINT,
     away_goals  SMALLINT,
     settled_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
