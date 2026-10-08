@@ -3984,3 +3984,14 @@ pública y la web no debe romperse si se cierran las altas. Sin precios
 cargados la web dice «Cargando»/«Reintentar» en vez de enseñar importes
 viejos. Verificado en local: cambiar 3 meses a 29,99 en el panel se ve en
 la web al recargar ($10.00/mes, ahorro $14.98) y Club, desactivado, no sale.
+
+## 2026-10-07 — Despliegue de precios desde el panel (commit f94a5bc)
+
+Autorizado por el usuario. 6 archivos de ejecución, base cotejada contra
+9b9d180, paquete verificado por SHA-256, respaldo en
+`~/release-f94a5bc/backup.tgz`, imagen previa `quantfut-api:before-f94a5bc`;
+solo `api` recreado. En producción `#planes` muestra los 3 planes activos
+del panel (14,99 / 33,99 / 53,99 USD) sin errores de consola. Ojo: Cloudflare
+sigue sirviendo `/app.js` sin versión desde caché; la portada pide
+`app.js?v=…` y esa URL sí es la nueva: por eso las versiones `?v=` deben
+recalcularse siempre que cambie un archivo.
