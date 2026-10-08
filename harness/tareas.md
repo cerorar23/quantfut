@@ -50,6 +50,7 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
 - [x] Conectar la web a `/app/v1` (2026-10-07): `frontend/cuenta-api.js`,
       refresh en cookie HttpOnly, acceso en memoria, sesión recuperada al
       recargar, Mi cuenta con el plan real.
+      Desplegado en producción (commit 9b9d180).
 - [ ] Conectar la app Flutter a `/app/v1` (cliente Dart desde el OpenAPI).
 - [ ] Web: leer precios de `/app/v1/plans` en vez de `MEMBERSHIP_PLANS` fijos
       (hoy coinciden; si se editan en el panel, la web quedaría desfasada).

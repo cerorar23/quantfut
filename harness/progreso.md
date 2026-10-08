@@ -3959,3 +3959,15 @@ en modo web (la app serializa sus refresh y no la necesita). Un indicador
 Verificado en navegador contra el FastAPI completo en local: registro, error
 de login, login, recarga con sesión recuperada, plan concedido visible como
 Plus y cierre de sesión que borra ambas cookies.
+
+## 2026-10-07 — Despliegue de la web con cuentas reales (commit 9b9d180)
+
+Autorizado por el usuario. Solo los 8 archivos de ejecución (5 del frontend,
+3 de la API); `ACCESS_FLOW.md`, `package.json` y `server.mjs` del servidor
+difieren del repo pero no se sirven y no se tocaron. Base cotejada contra
+3d40e05, paquete verificado por SHA-256, respaldo en
+`~/release-9b9d180/backup.tgz`, imagen previa `quantfut-api:before-9b9d180`;
+solo `api` recreado. Los archivos públicos (también a través de Cloudflare)
+coinciden byte a byte con el commit. En producción el acceso muestra el
+formulario real, sin aviso demo, sin errores de consola y sin refresh para
+visitantes anónimos. No se creó ninguna cuenta en producción.
