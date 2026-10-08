@@ -4032,3 +4032,20 @@ históricas de esas líneas (firma d5cbc3151164): pasan −1 a +2 salvo −1,5. 
 enteras y medias (las de cuarto liquidan medias y la escalera no las trata);
 'push' no cuenta ni mueve el saldo. En vivo las protectoras llevan mucho margen
 (Santos +1,5 a 1,36: −8 %). La prueba tarda ~40 min: el ajuste por partido.
+
+## 2026-10-08 — Despliegue del reto escalera (commit 37aa902)
+
+Autorizado por el usuario a las 21:06 UTC. `LOTE_ESCALERA_DESDE = 2026-10-09`
+(el lote del 08 ya estaba sellado). Base del servidor cotejada contra f94a5bc
+y el árbol `src` del worker contra el servidor (solo difería lo de cuentas y
+panel, desplegado antes solo en la API). Paquete por SHA-256, respaldo en
+`~/release-37aa902/backup.tgz`, imágenes previas `quantfut-api:before-37aa902`
+y `quantfut-worker:before-37aa902`; `db/045` aplicado; `ESCALERA_ENABLED=1`.
+Primera vez que se recrea el WORKER en esta fase: es quien corre el job
+diario. Trampa: el contenedor no tiene `ps` ni `pgrep`, así que la comprobación
+de "ningún job en marcha" no midió nada; se recreó a las 21:08:27 (minuto
+tranquilo, sin jobs de :08) y a las 21:10 cron ya ejecutaba odds y ráfagas. Para
+la próxima, listar `/proc/*/cmdline`. Verificado: cadena (10 lotes OK),
+vista previa en el worker (reto nuevo de 3, escalón Dortmund @1,36 1xBet,
+EV +0,8 %), `/escalera` 200 también desde el dominio y `app.js` público igual
+al del commit.

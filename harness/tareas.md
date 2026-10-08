@@ -46,8 +46,10 @@ del usuario (cuota 1,25-1,40, 5-7 pasos, retirar la inversión al llegar a
       2026-10-08). `escalera.planificar` / `longitud_nuevo`.
 - [x] Hándicap asiático (−1 a +2, enteras y medias) tras pasar la prueba
       `eval/escalera_handicap.py`; −1,5 fuera.
-- [ ] Desplegar (decisión del usuario): `db/045`, `LOTE_ESCALERA_DESDE`,
-      `ESCALERA_ENABLED=1` y recrear también el WORKER (corre el job diario).
+- [x] Desplegado 2026-10-08 21:08 UTC (commit 37aa902): `db/045`,
+      `LOTE_ESCALERA_DESDE = 2026-10-09`, `ESCALERA_ENABLED=1`, api y worker.
+- [ ] Revisar el primer sellado con escalera (09-oct, 08:00 UTC): reto creado,
+      escalón en el lote y visible en `/escalera`.
 
 ## Fase comercial desbloqueada (2026-10-07, decisión del usuario)
 
