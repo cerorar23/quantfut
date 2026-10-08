@@ -65,6 +65,16 @@ LOTE_SIN_CONSENSO_DESDE = date(2026, 10, 3)
 LOTE_ALTA_PROB_DESDE: date | None = date(2026, 10, 7)   # primer lote sin sellar al desplegar (06-oct ya selló a las 08:00 UTC)
 
 
+# Desde esta fecha el lote lleva el reto escalera (publish/escalera.py): los
+# retos creados y los escalones decididos ese día. Misma regla que la de alta
+# probabilidad: None hasta desplegar, y luego la fecha del primer lote sin sellar.
+LOTE_ESCALERA_DESDE: date | None = None
+
+
+def lote_lleva_escalera(dia: date) -> bool:
+    return LOTE_ESCALERA_DESDE is not None and dia >= LOTE_ESCALERA_DESDE
+
+
 def lote_lleva_alta(dia: date) -> bool:
     """
     ¿El lote de `dia` lleva el bloque de alta probabilidad? Única fuente de
@@ -118,6 +128,23 @@ def _collect(batch_date: date) -> dict:
            ORDER BY decided_at, alta_id""",
         (batch_date,),
     ) if con_alta else []
+    con_escalera = lote_lleva_escalera(batch_date)
+    retos = query(
+        """SELECT reto_id, stake_inicial, pasos_objetivo, cuota_min, cuota_max, ev_min,
+                  freeroll_x, created_at
+           FROM escalera_retos
+           WHERE (created_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY reto_id""",
+        (batch_date,),
+    ) if con_escalera else []
+    escalones = query(
+        """SELECT paso_id, reto_id, paso, match_id, market, selection, line, prob,
+                  fair_price, price, book, odds_source, odds_as_of, decided_at
+           FROM escalera_pasos
+           WHERE (decided_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY decided_at, paso_id""",
+        (batch_date,),
+    ) if con_escalera else []
     payload = {
         "batch_date": batch_date.isoformat(),
         "model_version": settings.model_version,
@@ -131,6 +158,8 @@ def _collect(batch_date: date) -> dict:
     if con_alta:
         payload["n_alta_prob"] = len(alta)
         payload["alta_probabilidad"] = alta
+    if con_escalera:
+        payload["escalera"] = {"retos": retos, "pasos": escalones}
     return payload
 
 

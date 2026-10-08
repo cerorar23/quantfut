@@ -202,6 +202,16 @@ def track_record():
     }
 
 
+@publico.get("/escalera")
+def escalera():
+    """
+    Reto escalera: el reto en curso con sus escalones sellados, el historial
+    de retos cerrados (también los fallidos) y la ganancia acumulada.
+    """
+    from ..publish import escalera_datos
+    return escalera_datos.informe_publico()
+
+
 @publico.get("/alta-probabilidad")
 def alta_probabilidad():
     """

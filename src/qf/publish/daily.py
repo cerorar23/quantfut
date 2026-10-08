@@ -25,6 +25,7 @@ from ..db import query, query_one
 from ..model.dixon_coles import DixonColes
 from ..model.devig import consensus_devig
 from . import alta_prob_datos
+from . import escalera_datos
 from . import picks as pk
 from . import telegram as tg
 from .hashchain import seal
@@ -513,10 +514,25 @@ def _alta() -> dict:
     return out
 
 
-def _alerta_sin_sellar(alta: dict, receipt: dict) -> None:
+def _alerta_sin_sellar(alta: dict, receipt: dict, escalera: dict | None = None) -> None:
     if not receipt and alta.get("elegidos"):
         tg.alert(f"{alta['elegidos']} pronósticos de alta probabilidad SIN SELLAR: "
                  "no se mostrarán nunca.")
+    if not receipt and (escalera or {}).get("paso"):
+        tg.alert("Escalón de la escalera SIN SELLAR: no se mostrará nunca y el reto "
+                 "seguirá esperando su resultado.")
+
+
+def _escalera() -> dict:
+    """Reto escalera: el escalón del día se elige ANTES de sellar. Nunca rompe el job."""
+    if not settings.escalera_enabled:
+        return {"estado": "desactivado"}
+    try:
+        return escalera_datos.select_and_persist()
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Fallo en el reto escalera")
+        tg.alert(f"Fallo en el reto escalera: {exc}")
+        return {"estado": "error", "error": str(exc)}
 
 
 def run() -> dict:
@@ -542,8 +558,9 @@ def run() -> dict:
         # se publique ningún pick. El interruptor por sí solo no abre la
         # puerta: también debe aprobar la muestra en sombra del criterio.
         alta = _alta()
+        escalera = _escalera()
         receipt = seal()
-        _alerta_sin_sellar(alta, receipt)
+        _alerta_sin_sellar(alta, receipt, escalera)
         if not receipt:
             tg.alert("FALLO AL SELLAR LA CADENA (predicciones sin picks).")
         if settings.publish_picks_enabled:
@@ -554,6 +571,7 @@ def run() -> dict:
                                        else "disabled"),
                   "gate_reasons": gate_reasons,
                   "alta_prob": alta,
+                  "escalera": escalera,
                   "sealed": bool(receipt),
                   "chain": receipt["chain_sha256"][:16] if receipt else None}
         log.info("Job diario sin picks: %s", result)
@@ -568,8 +586,9 @@ def run() -> dict:
     pk.persist(tiered)
 
     alta = _alta()
+    escalera = _escalera()
     receipt = seal()
-    _alerta_sin_sellar(alta, receipt)
+    _alerta_sin_sellar(alta, receipt, escalera)
     if not receipt:
         tg.alert("FALLO AL SELLAR LA CADENA. No se publicó nada hoy.")
         return {"predictions": len(preds), "picks": len(selected), "sealed": False,
@@ -587,7 +606,7 @@ def run() -> dict:
     n_free = sum(1 for _, t in tiered if t == "free")
     result = {"predictions": len(preds),
               "picks": len(selected), "free": n_free, "paid": len(selected) - n_free,
-              "chain": receipt["chain_sha256"][:16], "alta_prob": alta,
+              "chain": receipt["chain_sha256"][:16], "alta_prob": alta, "escalera": escalera,
               **published}
     log.info("Job diario: %s", result)
     return result

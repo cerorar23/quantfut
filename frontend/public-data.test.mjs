@@ -10,6 +10,7 @@ const responses = {
   '/calibration': { runs: [] },
   '/chain?limit=20': { lotes: [] },
   '/alta-probabilidad': { estado: 'desactivada', motivos: ['Línea desactivada'], proximos: [], historial: { n: 0 } },
+  '/escalera': { activo: false, reglas: { cuota_min: 1.25, cuota_max: 1.4, pasos: 6 }, actual: null, historial: [], serie: [], resumen: { cerrados: 0 } },
 };
 
 test('consulta solo rutas públicas y conserva los estados vacíos', async () => {
@@ -66,4 +67,12 @@ test('la línea de alta probabilidad se carga de su ruta pública', async () => 
   assert.equal(data.alta.data.estado, 'desactivada');
   const roto = await loadPublicData(async path => ({ ok: true, json: async () => (path === '/alta-probabilidad' ? { proximos: 'x' } : responses[path]) }));
   assert.equal(roto.alta.status, 'error');
+});
+
+test('el reto escalera se carga de su ruta pública y un formato roto no se enseña', async () => {
+  const data = await loadPublicData(async path => ({ ok: true, json: async () => responses[path] }));
+  assert.equal(data.escalera.status, 'ready');
+  assert.equal(data.escalera.data.reglas.pasos, 6);
+  const roto = await loadPublicData(async path => ({ ok: true, json: async () => (path === '/escalera' ? { reglas: {}, historial: 'x' } : responses[path]) }));
+  assert.equal(roto.escalera.status, 'error');
 });

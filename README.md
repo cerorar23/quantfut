@@ -15,8 +15,8 @@ infraestructura de credibilidad desde la primera línea.
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
 | **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | Fuente de xG reciente: la actual está parada desde 2024-25 (ver "Corrección (2026-10-02)" en la sección de xG; copas ya recuperadas) (11 ligas + 2 copas en el modelo; + 12 ligas solo para el criterio sharp, `leagues.model_enabled = FALSE`: LaLiga 2 y Serie B desde 2026-09-25; Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia, Championship, Ligue 2, 2. Bundesliga y Brasil B desde 2026-09-28) |
-| **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-09-27, 3 de 300. Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
-| **3** Publicación y web | Lo que vendes | 🟡 **55%** | Auth por email, frontend, cobros |
+| **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-10-08, 24 de 300 (IC [−0,11, +6,03] %, 0 de 3 ligas con muestra propia). Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
+| **3** Publicación y web | Lo que vendes | 🟡 **80%** | Cobros (elegir procesador). Hecho el 7-oct: cuentas, web conectada, correo Proton, panel `/control` |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
 | **5** Movimiento de línea | Producto defendible | ❌ **0%** | Todo (necesita 12 meses de datos) |
 
@@ -706,6 +706,29 @@ frente al modelo base a T-60 y evidencia en varias ligas.
 | **No degradar en silencio** | Un reentrenamiento peor que el activo no se despliega |
 
 ---
+
+## Reto escalera (desde 2026-10-08)
+
+Pestaña propia en la web (`/escalera`): se empieza con 10 unidades y cada
+escalón apuesta todo el saldo; 6 escalones ganados completan el reto y uno
+fallado lo cierra. Reglas y motivos en `src/qf/publish/escalera.py`; cada
+escalón se sella en el lote del día antes del partido (`LOTE_ESCALERA_DESDE`)
+y las tablas (`db/045`) son inmutables: el saldo se deriva, no se guarda.
+
+La regla de partida (cuota 1,25-1,40, 5-7 pasos, retirar la inversión a ×2,5)
+se midió antes de construir nada (`python -m qf.eval.escalera_prueba`,
+football-data, 7 ligas, 2019-2025, firma `d5cbc3151164`):
+
+| | Escalones | Acierto (prometido) | EV por escalón | Retos de 6 | Completados | Por reto |
+|---|---|---|---|---|---|---|
+| Rango 1,25-1,40 | 2.708 | 72,6 % (72,1 %) | **−3,6 %** | 244 | 15,6 % | **−24,1 %** |
+| Además cuota ≥ justa | 73 | 80,8 % (76,2 %) | +0,7 % | 16 | 31,2 % | +59 % (ruido) |
+
+La probabilidad está bien medida; lo que hunde la escalera es el margen de
+la casa, que se multiplica en cada escalón. Por eso solo se dan escalones
+con cuota ≥ precio justo de Pinnacle sin margen. Son pocos (en vivo, 4 de 20
+candidatos en dos semanas): un reto puede durar semanas, y la muestra con
+filtro no demuestra beneficio.
 
 ## Línea de alta probabilidad (desde 2026-10-06)
 

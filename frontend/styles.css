@@ -769,3 +769,13 @@ table.standings td:last-child{text-align:left}
 @media(max-width:360px){.forecast-copy h1{font-size:41px}.forecast-copy .hero-actions{gap:15px;flex-wrap:wrap}.schedule-row{grid-template-columns:40px minmax(0,1fr) 78px 22px;gap:12px 6px}.schedule-prob{gap:3px}.schedule-prob>span{padding:5px 3px;font-size:9px}.schedule-prob b{font-size:9px}.board-status>button{padding:8px}.board-toolbar select{max-width:100%;width:100%}.forecast-board .date-button small{font-size:8px}.forecast-board .date-button strong{font-size:15px}}
 .live-pick.alta-pick h3{font-size:19px;letter-spacing:-.02em}
 .live-pick.alta-pick>div:last-child small+small{margin-top:4px}
+/* Reto escalera */
+.ladder{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:8px;margin:14px 0;padding:0}
+.ladder-step{border:1px solid #3a506b;border-radius:10px;background:#0b132b;padding:10px 6px;text-align:center}
+.ladder-step span{display:block;font:700 18px ui-monospace,Consolas,monospace;color:var(--muted)}
+.ladder-step small{display:block;min-height:14px;font-size:10px;color:var(--muted)}
+.ladder-step.won{border-color:var(--green);background:#10b98114}.ladder-step.won span,.ladder-step.won small{color:#34d399}
+.ladder-step.pending{border-color:var(--yellow)}.ladder-step.pending span,.ladder-step.pending small{color:var(--yellow)}
+.ladder-pick.won{border-color:#10b98166}.ladder-pick.lost{border-color:#e0a99e66}.ladder-pick.pending{border-color:#d8b87466}
+.ladder-rules{margin:12px 0;padding-left:18px;display:grid;gap:8px;font-size:13px;line-height:1.5;color:var(--muted)}.ladder-rules strong{color:var(--text)}
+.clv-chart.neg polyline{stroke:#e0a99e}

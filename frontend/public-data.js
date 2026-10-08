@@ -7,6 +7,7 @@ const SOURCES = {
   calibration: ['/calibration', value => value && Array.isArray(value.runs)],
   chain: ['/chain?limit=20', value => value && Array.isArray(value.lotes)],
   alta: ['/alta-probabilidad', value => value && Array.isArray(value.proximos) && typeof value.historial === 'object' && typeof value.estado === 'string'],
+  escalera: ['/escalera', value => value && typeof value.reglas === 'object' && Array.isArray(value.historial) && Array.isArray(value.serie)],
 };
 
 export async function loadPublicData(fetcher = fetch) {

@@ -1,4 +1,4 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=8e03f4c4af52';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=70d0387949bc';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
 import { createMembershipUI } from './membership.js?v=6d8c9cd2cacf';
 
@@ -210,6 +210,7 @@ const nav = [
   { route: 'mercados', label: 'Mercados', short: 'Mesa', icon: '▦', group: 'EXPLORAR' },
   { route: 'picks', label: 'Picks', short: 'Picks', icon: '◇', group: 'EXPLORAR' },
   { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: '◎', group: 'EXPLORAR' },
+  { route: 'escalera', label: 'Reto escalera', short: 'Escalera', icon: '⇧', group: 'EXPLORAR' },
   { route: 'partido', label: 'Ficha demo', short: 'Demo', icon: '◫', group: 'EXPLORAR' },
   { route: 'historial', label: 'Historial', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
   { route: 'paquetes', label: 'Paquetes de picks', short: 'Paquetes', icon: '◇', group: 'ACCESO' },
@@ -217,7 +218,7 @@ const nav = [
   { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: '◉', group: 'ACCESO' },
 ];
 const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
-const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
+const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
 const validRoute = route => Object.hasOwn(routeTitle, route);
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
@@ -927,6 +928,50 @@ function altaView() {
     <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
 }
 
+// Reto escalera (2026-10-08). Solo datos reales de /escalera: cada escalón
+// se sella antes del partido y el historial enseña también los retos fallidos.
+const ESCALERA_ESTADO = { en_curso: 'En curso', esperando: 'Esperando resultado', completado: 'Completado', fallido: 'Fallido' };
+const unidades = value => `${realNumber(value, 2)} u`;
+function escaleraSerie(serie) {
+  if (!serie.length) return '';
+  const values = [0, ...serie.map(r => Number(r.acumulado))];
+  const min = Math.min(...values, 0);
+  const span = Math.max(...values, 0) - min || 1;
+  const x = i => 8 + i / Math.max(values.length - 1, 1) * 284;
+  const y = v => 72 - (v - min) / span * 60;
+  const last = values.at(-1);
+  return `<svg class="clv-chart ${last < 0 ? 'neg' : ''}" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Ganancia acumulada: ${realNumber(last, 2)} unidades tras ${serie.length} retos"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function escaleraPaso(p) {
+  const estado = p.outcome === 'win' ? ['won', 'Ganado'] : p.outcome === 'loss' ? ['lost', 'Perdido'] : p.outcome === 'void' ? ['void', 'Nulo (aplazado)'] : ['pending', 'Pendiente'];
+  return `<article class="live-pick ladder-pick ${estado[0]}"><div><span>Escalón ${realNumber(p.paso)} · ${esc(p.league_id ?? 'Liga')} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}</p><small class="live-prob">Probabilidad real: ${esc(probabilityLabel(p.prob)?.text ?? 'sin dato')}</small></div><div><span>Cuota</span><strong>${realNumber(p.price, 2)}</strong><small>${esc(p.book ?? 'Casa')}</small><small class="result ${estado[0] === 'won' ? 'won' : estado[0] === 'lost' ? 'lost' : ''}">${estado[1]}</small><small>Lote ${esc(p.batch_date ?? '—')} · ${esc(String(p.chain_sha256 ?? '').slice(0, 12))}</small></div></article>`;
+}
+function escaleraView() {
+  const head = `<div class="view-title"><div><p class="eyebrow">RETOS / ESCALERA</p><h1>Reto escalera</h1><p class="lead">Se empieza con 10 unidades y cada escalón apuesta todo el saldo a un pronóstico de cuota 1,25-1,40. Ganar 6 escalones completa el reto; fallar uno lo cierra. Cada escalón se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
+  const source = publicData?.escalera;
+  if (!source) return `${head}<section class="live-panel"><p>Consultando el reto escalera…</p></section>`;
+  if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudo consultar el reto escalera. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+  const { activo, reglas, actual, historial, resumen, serie, escalones } = source.data;
+  const objetivo = actual?.pasos_objetivo ?? reglas.pasos;
+  const ganados = actual?.ganados ?? 0;
+  const pasosActual = actual?.pasos ?? [];
+  const peldaños = Array.from({ length: objetivo }, (_, i) => {
+    const n = i + 1;
+    const cls = n <= ganados ? 'won' : n === ganados + 1 && actual?.estado === 'esperando' ? 'pending' : '';
+    return `<li class="ladder-step ${cls}"><span>${n}</span><small>${n <= ganados ? '✓' : cls === 'pending' ? 'en juego' : ''}</small></li>`;
+  }).join('');
+  const potencial = actual?.estado === 'esperando' && pasosActual.length ? Number(actual.en_juego) * Number(pasosActual.at(-1).price) : null;
+  const actualHtml = actual ? `<div class="live-facts"><div><span>SALDO</span><strong>${unidades(actual.saldo)}</strong><small>empezó con ${unidades(actual.stake_inicial)}</small></div><div><span>${actual.estado === 'esperando' ? 'EN JUEGO' : 'ESCALONES'}</span><strong>${actual.estado === 'esperando' ? unidades(actual.en_juego) : `${realNumber(ganados)} de ${realNumber(objetivo)}`}</strong><small>${potencial ? `si se acierta: ${unidades(potencial)}` : ESCALERA_ESTADO[actual.estado] ?? actual.estado}</small></div><div><span>RETIRADO</span><strong>${unidades(actual.retirado)}</strong><small>${Number(actual.retirado) > 0 ? 'inversión asegurada: el resto va sin riesgo propio' : (actual.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(actual.freeroll_x, 1)}` : 'reto sin freeroll')}</small></div></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(actual.reto_id)}">${peldaños}</ol>${pasosActual.length ? `<div class="live-pick-list">${[...pasosActual].reverse().map(escaleraPaso).join('')}</div>` : '<p>Todavía no hay escalón: se elige uno cuando algún partido cumple la regla. Si ninguno la cumple, se espera.</p>'}` : `<p>${activo ? 'El próximo reto empezará en el siguiente sellado diario.' : 'El reto escalera todavía no está activo.'}</p>`;
+  const r = resumen ?? {};
+  const stats = `<div class="live-facts"><div><span>RETOS CERRADOS</span><strong>${realNumber(r.cerrados ?? 0)}</strong><small>${r.cerrados ? `${realNumber(r.completados)} completados · ${realNumber(r.tasa_completados, 1)}%` : 'Aún no se cerró ninguno'}</small></div><div><span>GANANCIA ACUMULADA</span><strong>${unidades(r.ganancia ?? 0)}</strong><small>${r.cerrados ? `sobre ${unidades(r.invertido)} invertidas · ${realPercent(r.roi, 1)}` : 'contando también los fallidos'}</small></div><div><span>ESCALONES ACERTADOS</span><strong>${escalones?.n ? `${realNumber(escalones.aciertos)} de ${realNumber(escalones.n)}` : '—'}</strong><small>${escalones?.n ? `probabilidad media prometida ${realNumber(escalones.prob_media, 1)}%` : 'sin escalones liquidados'}</small></div></div>${escaleraSerie(serie ?? [])}`;
+  const tabla = historial?.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Historial de retos"><table><thead><tr><th>Reto</th><th>Inicio</th><th>Escalones</th><th>Retirado</th><th>Estado</th><th>Ganancia</th></tr></thead><tbody>${historial.map(h => `<tr><td>#${realNumber(h.reto_id)}</td><td>${realDate(h.inicio)}</td><td>${realNumber(h.ganados)} de ${realNumber(h.pasos_objetivo)}</td><td>${unidades(h.retirado)}</td><td><span class="result ${h.estado === 'completado' ? 'won' : 'lost'}">${ESCALERA_ESTADO[h.estado] ?? h.estado}</span></td><td class="edge ${Number(h.ganancia) >= 0 ? 'pos' : 'neg'}">${Number(h.ganancia) > 0 ? '+' : ''}${unidades(h.ganancia)}</td></tr>`).join('')}</tbody></table></div>` : '<p>El historial aparecerá cuando se cierre el primer reto. Los fallidos se quedan, igual que los completados.</p>';
+  const regla = `<ul class="ladder-rules"><li><strong>Cuota ${realNumber(reglas.cuota_min, 2)}-${realNumber(reglas.cuota_max, 2)}</strong> en las casas de la lista, la mejor del momento.</li><li><strong>Solo si la cuota paga al menos el precio justo</strong> (probabilidad real de Pinnacle sin margen): un escalón con el margen en contra no se da.</li><li><strong>${realNumber(reglas.pasos)} escalones</strong>, uno al día como máximo, y el siguiente solo cuando el anterior terminó.</li><li><strong>Freeroll a ×${realNumber(reglas.freeroll_x, 1)}</strong>: se retiran las ${realNumber(reglas.stake, 0)} unidades iniciales y se sigue con la ganancia.</li></ul><p class="live-reason">Por qué el filtro de valor: en el histórico (football-data, 7 ligas, 2019-2025) los pronósticos de cuota 1,25-1,40 se aciertan lo que dice su probabilidad, pero cada escalón pierde un 3,6% por el margen de la casa. Encadenando 6, la regla sin filtro completó el 15,6% de los retos y perdió un 24% por reto. Con el filtro hay pocos escalones posibles y un reto puede durar semanas. Las muestras con filtro todavía son pequeñas: no es una ganancia garantizada.</p>`;
+  return `${head}
+    <section class="live-panel" aria-label="Reto en curso"><div class="live-head"><div><p class="eyebrow">${actual ? `RETO #${realNumber(actual.reto_id)}` : 'RETO EN CURSO'}</p><h2>${actual ? ESCALERA_ESTADO[actual.estado] ?? actual.estado : 'Sin reto en curso'}</h2></div>${badge(activo ? 'Activo' : 'Inactivo', activo ? 'good' : 'muted')}</div>${actualHtml}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>
+    <section class="live-panel" aria-label="Seguimiento de ganancias"><div class="live-head"><div><p class="eyebrow">SEGUIMIENTO · /ESCALERA</p><h2>Historial y ganancias</h2></div></div>${stats}${tabla}</section>
+    <section class="live-panel" aria-label="La regla del reto"><div class="live-head"><div><p class="eyebrow">LA REGLA</p><h2>Cómo se elige cada escalón</h2></div></div>${regla}</section>`;
+}
+
 function matchView() {
   const fx = fixtureById.get(state.selectedMatch) || fixtures[0];
   const outcomes = ['Local', 'Empate', 'Visita'];
@@ -1317,7 +1362,7 @@ function closeModal() {
 // ---------------------------------------------------------------- render
 
 function render() {
-  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
+  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, escalera: escaleraView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button><span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;

@@ -3995,3 +3995,23 @@ del panel (14,99 / 33,99 / 53,99 USD) sin errores de consola. Ojo: Cloudflare
 sigue sirviendo `/app.js` sin versión desde caché; la portada pide
 `app.js?v=…` y esa URL sí es la nueva: por eso las versiones `?v=` deben
 recalcularse siempre que cambie un archivo.
+
+## 2026-10-08 — Reto escalera
+
+Pedido del usuario con una regla de partida (cuota 1,25-1,40, 5-7 pasos,
+freeroll a ×2,5). Antes de construir se midió (`eval/escalera_prueba.py`,
+firma d5cbc3151164): la probabilidad en ese rango está calibrada (72,1 %
+prometido, 72,6 % real) pero cada escalón pierde −3,6 % de EV a la mejor de
+bet365/1xBet, y la escalera lo multiplica: 6 pasos se completan el 15,6 % y
+dejan −24,1 % por reto (−19,7 % con freeroll). Decisión: solo escalones con
+cuota ≥ precio justo de Pinnacle sin margen, en las casas de la lista; sin
+candidato no se apuesta. En vivo (24-sep → 8-oct) eso deja 4 de 20
+candidatos: un reto puede tardar semanas. La muestra con filtro (73
+escalones, 16 retos históricos) no demuestra beneficio y la web lo dice.
+Diseño: tablas inmutables y estado DERIVADO (`escalera.estado`) en vez de
+columnas que se actualizan; aplazado → nulo a las 48 h; bloque `escalera`
+en el lote sellado con `LOTE_ESCALERA_DESDE` (None hasta desplegar), mismo
+patrón que alta probabilidad. Doble oportunidad fuera: no hay cuota que
+tomar en las fuentes. Primer escalón según la vista previa en producción
+(8-oct, sin escribir): Dortmund gana a Werder Bremen @1,36 (1xBet), prob.
+74,1 %, EV +0,8 %.

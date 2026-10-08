@@ -90,6 +90,11 @@ class Settings:
     # tras una pausa es decisión del usuario: se mueve esta fecha.
     alta_prob_control_desde: str = os.getenv("ALTA_PROB_CONTROL_DESDE", "")
 
+    # --- Reto escalera (publish/escalera.py, 2026-10-08) ---
+    # Apagado hasta desplegar con LOTE_ESCALERA_DESDE fijado: sin bloque en el
+    # lote, un escalón no quedaría sellado.
+    escalera_enabled: bool = os.getenv("ESCALERA_ENABLED", "0") in ("1", "true", "True")
+
     # --- Criterio "casa blanda contra precio sharp" (publish/picks.py) ---
     # Casas donde apuestan los suscriptores (decisión del usuario 2026-09-23),
     # con los nombres canónicos de picks.canonical_book. Betway y 888sport no

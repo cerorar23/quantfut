@@ -18,6 +18,31 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Reto escalera (2026-10-08, pedido del usuario)
+
+Sección nueva de la web con historial y ganancias propios. Regla del texto
+del usuario (cuota 1,25-1,40, 5-7 pasos, retirar la inversión al llegar a
+×2,5, sin prisa), mejorada con lo medido:
+- Histórico (football-data, 7 ligas, 2019-2025, bet365/1xBet): en 1,25-1,40
+  la probabilidad real es 72,6 % y se acierta 74,3 % (calibrado), pero cada
+  escalón pierde −3,4 % de EV. La escalera de 6 de la regla del texto se
+  completa el 15,7 % y pierde −23,7 % por reto (−19,2 % con freeroll).
+- En vivo desde el 24-sep: 20 candidatos en rango, EV medio −2,0 %; 4 con
+  cuota ≥ precio justo (Betano/1xBet, 1X2).
+- Mejora: probabilidad real de Pinnacle sin margen (no la implícita), solo
+  escalones con cuota ≥ justa (EV ≥ 0) en las casas de la lista, 6 pasos,
+  freeroll a ×2,5, un escalón al día y ninguno si no hay candidato.
+
+- [x] `db/045_escalera.sql`: retos, pasos y resultados inmutables; el estado
+      se deriva, no se actualiza.
+- [x] `publish/escalera.py` (regla y máquina de estados) +
+      `publish/escalera_datos.py` (elegir antes de sellar, liquidar, informe).
+- [x] Bloque `escalera` en el lote sellado (`LOTE_ESCALERA_DESDE`), paso en
+      `daily` antes de `seal()`, liquidación en `clv.settle_pending`.
+- [x] `GET /escalera` y pestaña «Reto escalera» en la web.
+- [x] `eval/escalera_prueba.py`: la comparación histórica, reproducible.
+- [ ] Desplegar (decisión del usuario) y fijar `LOTE_ESCALERA_DESDE`.
+
 ## Fase comercial desbloqueada (2026-10-07, decisión del usuario)
 
 El usuario desbloquea cuentas, suscripciones y panel de administración ya,
