@@ -25,7 +25,7 @@
 | POST | `/auth/password/forgot` | — | `{email}` → 202 siempre (no revela si existe la cuenta) |
 | POST | `/auth/password/reset` | — | `{token, password}` → 204, cierra todas las sesiones; 400 `token_invalido` |
 | GET | `/me` | Bearer | cuenta, `plus` y suscripción vigente |
-| GET | `/plans` | — | planes a la venta (precio en céntimos) |
+| GET | `/plans` | — | planes a la venta (precio en céntimos). Público: responde aunque `ACCOUNTS_ENABLED=0`. Úsalo en vez de fijar precios en la app |
 | GET | `/picks?limit&offset` | Bearer | `plus`, `publicacion_activa` y picks (solo `free` sin Plus) |
 | GET | `/openapi.json` | — | esquema OpenAPI solo de estas rutas |
 

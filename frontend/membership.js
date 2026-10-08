@@ -1,49 +1,87 @@
 // Planes, cuenta y pedido de la web. Las cuentas son reales (/app/v1, ver
 // cuenta-api.js); el pago todavía no existe y ningún botón crea una orden.
-// Los importes son centavos de USD de referencia, los mismos que db/043.
-import * as cuenta from './cuenta-api.js?v=67130d3ba6e2';
+// Importes, duración y qué planes están a la venta salen del servidor
+// (catálogo público de cuenta-api.js, editable en el panel /control): aquí solo viven los textos.
+import * as cuenta from './cuenta-api.js?v=87d3e9428389';
 
-export const MEMBERSHIP_PLANS = Object.freeze([
-  Object.freeze({ id: 'basic', name: 'Básico', months: 1, totalCents: 1499, tag: 'Empieza por un mes' }),
-  Object.freeze({ id: 'standard', name: 'Estándar', months: 3, totalCents: 3399, tag: 'Plan destacado' }),
-  Object.freeze({ id: 'premium', name: 'Premium', months: 6, totalCents: 5399, tag: 'Mayor ahorro mensual' }),
-  Object.freeze({ id: 'club', name: 'Club QuantFut', months: null, totalCents: 17999, tag: 'Opción de por vida · propuesta' }),
-]);
+// Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
+const PLAN_COPY = Object.freeze({
+  plus_1m: Object.freeze({ name: 'Básico', tag: 'Empieza por un mes' }),
+  plus_3m: Object.freeze({ name: 'Estándar', tag: 'Plan destacado' }),
+  plus_6m: Object.freeze({ name: 'Premium', tag: 'Mayor ahorro mensual' }),
+  club: Object.freeze({ name: 'Club QuantFut', tag: 'Acceso de por vida' }),
+});
+export const DEFAULT_PLAN = 'plus_3m';
 
-export function membershipQuote(id) {
-  const plan = MEMBERSHIP_PLANS.find(item => item.id === id);
+const monthsOf = days => days == null ? null : Math.max(1, Math.round(days / 30));
+
+export function membershipQuote(plans, code) {
+  const items = Array.isArray(plans) ? plans : [];
+  const plan = items.find(item => item.plan_code === code);
   if (!plan) throw new RangeError('Plan desconocido');
+  const months = monthsOf(plan.duration_days);
+  // El ahorro se mide contra el plan mensual de la misma lista, si está a la venta.
+  const monthly = items.find(item => monthsOf(item.duration_days) === 1 && item.currency === plan.currency);
   return {
-    ...plan,
-    monthlyCents: plan.months == null ? null : Math.round(plan.totalCents / plan.months),
-    savingsCents: plan.months == null ? null : MEMBERSHIP_PLANS[0].totalCents * plan.months - plan.totalCents,
-    period: plan.months == null ? 'De por vida · propuesta' : `${plan.months} ${plan.months === 1 ? 'mes' : 'meses'}`,
+    id: plan.plan_code,
+    name: PLAN_COPY[plan.plan_code]?.name || plan.name,
+    tag: PLAN_COPY[plan.plan_code]?.tag || '',
+    months,
+    totalCents: plan.price_cents,
+    currency: plan.currency,
+    monthlyCents: months == null ? null : Math.round(plan.price_cents / months),
+    savingsCents: months == null || !monthly ? null : monthly.price_cents * months - plan.price_cents,
+    period: months == null ? 'De por vida' : `${months} ${months === 1 ? 'mes' : 'meses'}`,
   };
 }
 
-export const membershipMoney = cents => `$${(cents / 100).toFixed(2)}`;
+export const membershipMoney = (cents, currency = 'USD') =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
 
 export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fixtures, matchCard, navigate, render, publicStatus }) {
-  const selected = () => membershipQuote(state.membershipPlan);
-  const demoNote = '<p class="membership-note">Vista previa del producto. Precios de referencia en USD; no hay cargos ni suscripciones activas.</p>';
+  const plans = () => state.plans?.status === 'ready' ? state.plans.items : [];
+  const selectedCode = () => {
+    const items = plans();
+    if (items.some(plan => plan.plan_code === state.membershipPlan)) return state.membershipPlan;
+    return (items.find(plan => plan.plan_code === DEFAULT_PLAN) || items[0])?.plan_code;
+  };
+  const selected = () => { const code = selectedCode(); return code ? membershipQuote(plans(), code) : null; };
+  const money = q => membershipMoney(q.totalCents, q.currency);
+  const plansStatus = () => state.plans?.status === 'error'
+    ? '<div class="membership-empty" role="alert"><strong>No se pudieron cargar los precios.</strong><p>Comprueba tu conexión e inténtalo de nuevo.</p><button type="button" class="secondary-button" data-membership-action="reload-plans">Reintentar</button></div>'
+    : state.plans?.status === 'ready' ? '<div class="membership-empty"><strong>No hay planes a la venta en este momento.</strong></div>'
+    : '<p class="membership-note" role="status">Cargando precios…</p>';
+  const demoNote = '<p class="membership-note">Precios vigentes. El pago en línea todavía no está habilitado: no hay cargos ni renovaciones automáticas.</p>';
   const includes = () => '<ul class="membership-includes"><li>Acceso completo al paquete QuantFut Plus</li><li>Pick del día y detalle de mercados</li><li>Cuota registrada, precio justo y mínimo</li><li>Fichas de partido y combinadas</li><li>Historial público y evidencia de publicación</li></ul>';
   const planButton = plan => {
-    const q = membershipQuote(plan.id);
-    const active = state.membershipPlan === plan.id;
-    return `<button type="button" class="membership-plan ${active ? 'selected' : ''}" data-membership-plan="${plan.id}" aria-pressed="${active}"><span class="plan-ribbon">${plan.tag}</span><span class="plan-name">${plan.name}<i class="plan-radio" aria-hidden="true"></i></span><strong class="plan-period">${q.period}</strong><span class="membership-price">${membershipMoney(q.monthlyCents)}<small>/ mes</small></span><span class="plan-total">${membershipMoney(q.totalCents)} USD por ${q.period.toLowerCase()}</span><span class="plan-saving">${q.savingsCents ? `Ahorro de ${membershipMoney(q.savingsCents)} frente a meses sueltos` : 'Acceso completo por un mes'}</span><span class="plan-mini-features">✓ Mismo paquete de picks<br>✓ Análisis y herramientas<br>✓ Historial verificable</span><span class="plan-select">${active ? '✓ Seleccionado' : 'Elegir plan'}</span></button>`;
+    const q = membershipQuote(plans(), plan.plan_code);
+    const active = selectedCode() === q.id;
+    const saving = q.savingsCents > 0 ? `Ahorro de ${membershipMoney(q.savingsCents, q.currency)} frente a meses sueltos` : q.months === 1 ? 'Acceso completo por un mes' : 'Mismo paquete, más tiempo';
+    return `<button type="button" class="membership-plan ${active ? 'selected' : ''}" data-membership-plan="${esc(q.id)}" aria-pressed="${active}">${q.tag ? `<span class="plan-ribbon">${esc(q.tag)}</span>` : ''}<span class="plan-name">${esc(q.name)}<i class="plan-radio" aria-hidden="true"></i></span><strong class="plan-period">${q.period}</strong><span class="membership-price">${membershipMoney(q.monthlyCents, q.currency)}<small>/ mes</small></span><span class="plan-total">${money(q)} ${esc(q.currency)} por ${q.period.toLowerCase()}</span><span class="plan-saving">${saving}</span><span class="plan-mini-features">✓ Mismo paquete de picks<br>✓ Análisis y herramientas<br>✓ Historial verificable</span><span class="plan-select">${active ? '✓ Seleccionado' : 'Elegir plan'}</span></button>`;
+  };
+  const lifetimeButton = plan => {
+    const q = membershipQuote(plans(), plan.plan_code);
+    const active = selectedCode() === q.id;
+    return `<button type="button" class="membership-club ${active ? 'selected' : ''}" data-membership-plan="${esc(q.id)}" aria-pressed="${active}"><div><span class="eyebrow">${esc(q.tag)}</span><h2>${esc(q.name)}</h2><p>Pago único y acceso de por vida al paquete.</p></div><div><strong>${money(q)}<small> ${esc(q.currency)}</small></strong><span>Pago único</span><b>${active ? '✓ Seleccionado' : 'Elegir modalidad ↗'}</b></div></button>`;
   };
   const summary = (checkout = false) => {
     const q = selected();
-    return `<aside class="order-summary" aria-labelledby="order-title"><p class="eyebrow">${checkout ? 'REVISIÓN / DEMO' : 'TU SELECCIÓN'}</p><h2 id="order-title">Resumen del pedido</h2><div class="order-product"><span class="order-mark" aria-hidden="true">Q.</span><div><strong>QuantFut Plus</strong><small>Paquete de picks y análisis</small></div></div><dl class="order-details"><div><dt>Modalidad</dt><dd>${q.name}</dd></div><div><dt>Periodo</dt><dd>${q.period}</dd></div><div><dt>Acceso</dt><dd>Completo · propuesto</dd></div><div><dt>Moneda</dt><dd>USD</dd></div></dl><details class="coupon-details" ${state.couponOpen ? 'open' : ''}><summary>¿Tienes un cupón?</summary><form data-membership-form="coupon"><label for="coupon-code">Código promocional de ejemplo</label><div><input id="coupon-code" name="coupon" placeholder="Código de cupón" maxlength="32" autocomplete="off" /><button type="submit" class="secondary-button">Aplicar</button></div>${state.couponMessage ? `<p role="status">${esc(state.couponMessage)}</p>` : ''}</form></details><div class="order-total"><span>Total de referencia</span><strong>${membershipMoney(q.totalCents)}<small> USD</small></strong></div><p class="order-period">${q.months == null ? 'Pago único · propuesta de por vida' : `${q.period} de acceso · equivalente aprox. ${membershipMoney(q.monthlyCents)} / mes`}</p>${checkout ? '<button type="button" class="primary-button full" disabled>Cobro todavía no habilitado</button>' : `<button type="button" class="primary-button full" data-membership-action="review-order">${state.session ? 'Revisar pedido' : 'Entrar o crear cuenta'} <span aria-hidden="true">↗</span></button>`}<p class="order-footnote">Esta selección no genera una orden ni concede acceso privado.</p><button type="button" class="text-link" data-route="paquetes">Ver qué incluye el paquete ↗</button></aside>`;
+    if (!q) return `<aside class="order-summary" aria-labelledby="order-title"><p class="eyebrow">TU SELECCIÓN</p><h2 id="order-title">Resumen del pedido</h2>${plansStatus()}</aside>`;
+    return `<aside class="order-summary" aria-labelledby="order-title"><p class="eyebrow">${checkout ? 'REVISIÓN' : 'TU SELECCIÓN'}</p><h2 id="order-title">Resumen del pedido</h2><div class="order-product"><span class="order-mark" aria-hidden="true">Q.</span><div><strong>QuantFut Plus</strong><small>Paquete de picks y análisis</small></div></div><dl class="order-details"><div><dt>Modalidad</dt><dd>${esc(q.name)}</dd></div><div><dt>Periodo</dt><dd>${q.period}</dd></div><div><dt>Acceso</dt><dd>Completo</dd></div><div><dt>Moneda</dt><dd>${esc(q.currency)}</dd></div></dl><details class="coupon-details" ${state.couponOpen ? 'open' : ''}><summary>¿Tienes un cupón?</summary><form data-membership-form="coupon"><label for="coupon-code">Código promocional</label><div><input id="coupon-code" name="coupon" placeholder="Código de cupón" maxlength="32" autocomplete="off" /><button type="submit" class="secondary-button">Aplicar</button></div>${state.couponMessage ? `<p role="status">${esc(state.couponMessage)}</p>` : ''}</form></details><div class="order-total"><span>Total</span><strong>${money(q)}<small> ${esc(q.currency)}</small></strong></div><p class="order-period">${q.months == null ? 'Pago único · acceso de por vida' : `${q.period} de acceso · equivalente aprox. ${membershipMoney(q.monthlyCents, q.currency)} / mes`}</p>${checkout ? '<button type="button" class="primary-button full" disabled>Cobro todavía no habilitado</button>' : `<button type="button" class="primary-button full" data-membership-action="review-order">${state.session ? 'Revisar pedido' : 'Entrar o crear cuenta'} <span aria-hidden="true">↗</span></button>`}<p class="order-footnote">Esta selección no genera una orden ni concede acceso privado.</p><button type="button" class="text-link" data-route="paquetes">Ver qué incluye el paquete ↗</button></aside>`;
   };
 
   function plansView() {
-    const club = MEMBERSHIP_PLANS[3];
-    return `<section class="membership-heading"><p class="eyebrow">SUSCRIPCIONES / QUANTFUT PLUS</p><h1>Elige tu <em>plan.</em></h1><p>Un mismo paquete de picks, análisis y herramientas. Elige cuánto tiempo quieres explorar el servicio.</p><div class="membership-benefits"><span>✓ Acceso completo propuesto</span><span>✓ Historial abierto</span><span>✓ Precio y mínimo visibles</span></div>${demoNote}</section><div class="membership-layout"><div><div class="membership-plan-grid">${MEMBERSHIP_PLANS.slice(0, 3).map(planButton).join('')}</div><button type="button" class="membership-club ${state.membershipPlan === 'club' ? 'selected' : ''}" data-membership-plan="club" aria-pressed="${state.membershipPlan === 'club'}"><div><span class="eyebrow">${club.tag}</span><h2>${club.name}</h2><p>Pago único y acceso de por vida al paquete.<br>Condiciones y alcance pendientes de definición.</p></div><div><strong>${membershipMoney(club.totalCents)}<small> USD</small></strong><span>Pago único · referencia</span><b>${state.membershipPlan === 'club' ? '✓ Seleccionado' : 'Elegir modalidad ↗'}</b></div></button><section class="membership-comparison"><p class="eyebrow">EL MISMO CONTENIDO / DISTINTO PERIODO</p><h2>Todos los planes incluyen</h2>${includes()}<p>El historial y los partidos públicos seguirán disponibles sin contratar. Los pronósticos dependen del criterio de publicación: un plan no implica un número garantizado de picks.</p></section></div>${summary()}</div><section class="membership-faq"><h2>Antes de elegir</h2><details><summary>¿Qué cambia entre Básico, Estándar y Premium?</summary><p>El periodo de acceso y su precio de referencia. El paquete de contenido es el mismo en las tres modalidades.</p></details><details><summary>¿Puedo contratarlo ahora?</summary><p>Ya puedes crear tu cuenta. El pago en línea todavía no está habilitado: ningún botón realiza cargos.</p></details><details><summary>¿Se renueva automáticamente?</summary><p>La política de renovación y cancelación aún no está definida para QuantFut. El diseño muestra periodos de acceso; no se ha autorizado ningún cobro recurrente.</p></details><details><summary>¿Qué pasa si no hay picks que cumplan el criterio?</summary><p>El sistema debe dejar la lista vacía. La suscripción no cambia el criterio de publicación ni obliga a recomendar un partido.</p></details><details><summary>¿Incluye una garantía de resultados?</summary><p>No. Las probabilidades y los precios no garantizan un resultado. Cualquier política comercial de devolución deberá definirse por separado antes de habilitar la venta.</p></details></section>`;
+    const periodic = plans().filter(plan => plan.duration_days != null);
+    const lifetime = plans().filter(plan => plan.duration_days == null);
+    const grid = periodic.length ? `<div class="membership-plan-grid">${periodic.map(planButton).join('')}</div>${lifetime.map(lifetimeButton).join('')}` : plansStatus();
+    return `<section class="membership-heading"><p class="eyebrow">SUSCRIPCIONES / QUANTFUT PLUS</p><h1>Elige tu <em>plan.</em></h1><p>Un mismo paquete de picks, análisis y herramientas. Elige cuánto tiempo quieres explorar el servicio.</p><div class="membership-benefits"><span>✓ Acceso completo</span><span>✓ Historial abierto</span><span>✓ Precio y mínimo visibles</span></div>${demoNote}</section><div class="membership-layout"><div>${grid}<section class="membership-comparison"><p class="eyebrow">EL MISMO CONTENIDO / DISTINTO PERIODO</p><h2>Todos los planes incluyen</h2>${includes()}<p>El historial y los partidos públicos seguirán disponibles sin contratar. Los pronósticos dependen del criterio de publicación: un plan no implica un número garantizado de picks.</p></section></div>${summary()}</div><section class="membership-faq"><h2>Antes de elegir</h2><details><summary>¿Qué cambia entre Básico, Estándar y Premium?</summary><p>El periodo de acceso y su precio. El paquete de contenido es el mismo en todas las modalidades.</p></details><details><summary>¿Puedo contratarlo ahora?</summary><p>Ya puedes crear tu cuenta. El pago en línea todavía no está habilitado: ningún botón realiza cargos.</p></details><details><summary>¿Se renueva automáticamente?</summary><p>No. Cada plan es un periodo de acceso: no hay cobros recurrentes.</p></details><details><summary>¿Qué pasa si no hay picks que cumplan el criterio?</summary><p>El sistema debe dejar la lista vacía. La suscripción no cambia el criterio de publicación ni obliga a recomendar un partido.</p></details><details><summary>¿Incluye una garantía de resultados?</summary><p>No. Las probabilidades y los precios no garantizan un resultado.</p></details></section>`;
   }
 
   function packagesView() {
-    return `<section class="membership-heading"><p class="eyebrow">EL PRODUCTO / PAQUETES DE PICKS</p><h1>Todo el análisis.<br><em>En un mismo lugar.</em></h1><p>Consulta lo que ofrece el acceso público y cómo se organizaría QuantFut Plus. La suscripción amplía el acceso; el criterio conserva la última palabra.</p></section><div class="pick-package-grid"><section class="pick-package"><p class="eyebrow">ACCESO ABIERTO</p><h2>Explorador</h2><p class="package-description">Conoce los partidos y comprueba la evidencia antes de elegir un plan.</p><strong class="package-price">Gratis</strong><ul class="membership-includes"><li>Partidos y fichas disponibles</li><li>Picks públicos cuando se publiquen</li><li>Historial, calibración y verificación</li><li>Lectura del estado de publicación</li></ul><button type="button" class="secondary-button full" data-route="picks">Ver picks públicos ↗</button></section><section class="pick-package highlighted"><p class="eyebrow">PAQUETE COMPLETO / PROPUESTA</p><h2>QuantFut Plus</h2><p class="package-description">Selecciones del criterio con cuota, mínimo y análisis del partido.</p><strong class="package-price">Desde ${membershipMoney(membershipQuote('premium').monthlyCents)}<small> USD / mes equivalente</small></strong>${includes()}<button type="button" class="primary-button full" data-route="planes">Elegir periodo de acceso ↗</button><p class="membership-note">Precio de referencia. Acceso privado no habilitado.</p></section></div><section class="package-delivery"><div><p class="eyebrow">ASÍ SE LEERÍA CADA PICK</p><h2>Lo esencial, sin perder el contexto.</h2><p>Partido y selección, hora de publicación, casa, cuota registrada, precio mínimo y estado. Los resultados conservarán su registro, también cuando fallen.</p><button type="button" class="text-link" data-route="mercados" data-home-market-mode="dia">Ver Pick del día de ejemplo ↗</button></div><div class="delivery-card"><span class="badge muted">Ejemplo de estructura · sin pick privado</span><h3>Partido → selección → precio</h3><dl><div><dt>Selección y mercado</dt><dd>Según publicación autorizada</dd></div><div><dt>Cuota y mínimo</dt><dd>Registrados en el mismo instante</dd></div><div><dt>Inicio y cierre</dt><dd>Fechas visibles</dd></div><div><dt>Resultado</dt><dd>Registro posterior al partido</dd></div></dl></div></section><div class="membership-public-status">${publicStatus()}</div>`;
+    const monthly = plans().filter(plan => plan.duration_days != null).map(plan => membershipQuote(plans(), plan.plan_code))
+      .sort((a, b) => a.monthlyCents - b.monthlyCents)[0];
+    const price = monthly ? `Desde ${membershipMoney(monthly.monthlyCents, monthly.currency)}<small> ${esc(monthly.currency)} / mes equivalente</small>` : '<small>Consulta los planes</small>';
+    return `<section class="membership-heading"><p class="eyebrow">EL PRODUCTO / PAQUETES DE PICKS</p><h1>Todo el análisis.<br><em>En un mismo lugar.</em></h1><p>Consulta lo que ofrece el acceso público y lo que incluye QuantFut Plus. La suscripción amplía el acceso; el criterio conserva la última palabra.</p></section><div class="pick-package-grid"><section class="pick-package"><p class="eyebrow">ACCESO ABIERTO</p><h2>Explorador</h2><p class="package-description">Conoce los partidos y comprueba la evidencia antes de elegir un plan.</p><strong class="package-price">Gratis</strong><ul class="membership-includes"><li>Partidos y fichas disponibles</li><li>Picks públicos cuando se publiquen</li><li>Historial, calibración y verificación</li><li>Lectura del estado de publicación</li></ul><button type="button" class="secondary-button full" data-route="picks">Ver picks públicos ↗</button></section><section class="pick-package highlighted"><p class="eyebrow">PAQUETE COMPLETO</p><h2>QuantFut Plus</h2><p class="package-description">Selecciones del criterio con cuota, mínimo y análisis del partido.</p><strong class="package-price">${price}</strong>${includes()}<button type="button" class="primary-button full" data-route="planes">Elegir periodo de acceso ↗</button><p class="membership-note">El pago en línea todavía no está habilitado.</p></section></div><section class="package-delivery"><div><p class="eyebrow">ASÍ SE LEERÍA CADA PICK</p><h2>Lo esencial, sin perder el contexto.</h2><p>Partido y selección, hora de publicación, casa, cuota registrada, precio mínimo y estado. Los resultados conservarán su registro, también cuando fallen.</p><button type="button" class="text-link" data-route="mercados" data-home-market-mode="dia">Ver Pick del día de ejemplo ↗</button></div><div class="delivery-card"><span class="badge muted">Ejemplo de estructura · sin pick privado</span><h3>Partido → selección → precio</h3><dl><div><dt>Selección y mercado</dt><dd>Según publicación autorizada</dd></div><div><dt>Cuota y mínimo</dt><dd>Registrados en el mismo instante</dd></div><div><dt>Inicio y cierre</dt><dd>Fechas visibles</dd></div><div><dt>Resultado</dt><dd>Registro posterior al partido</dd></div></dl></div></section><div class="membership-public-status">${publicStatus()}</div>`;
   }
 
   const fecha = iso => new Date(iso).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -83,7 +121,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     const { plus, subscription } = state.session;
     const status = plus
       ? `<span class="badge">Plus activo</span><h3>${esc(subscription.plan_name)}</h3><p>${subscription.ends_at ? `Acceso hasta el ${esc(fecha(subscription.ends_at))}.` : 'Acceso de por vida.'}</p>`
-      : `<span class="badge muted">Sin suscripción activa</span><h3>Acceso público</h3><p>Selección en revisión: ${q.name} · ${q.period} · ${membershipMoney(q.totalCents)} USD. El pago en línea todavía no está habilitado.</p><button type="button" class="primary-button" data-membership-action="review-order">Revisar selección ↗</button>`;
+      : `<span class="badge muted">Sin suscripción activa</span><h3>Acceso público</h3><p>${q ? `Selección en revisión: ${esc(q.name)} · ${q.period} · ${money(q)} ${esc(q.currency)}. ` : ''}El pago en línea todavía no está habilitado.</p>${q ? '<button type="button" class="primary-button" data-membership-action="review-order">Revisar selección ↗</button>' : '<button type="button" class="primary-button" data-route="planes">Ver planes ↗</button>'}`;
     return `<section class="account-section"><p class="eyebrow">SUSCRIPCIÓN Y PAGOS</p><h2>Tu suscripción y tus movimientos.</h2><div class="account-plan-status">${status}</div><details class="account-accordion" open><summary>Historial de transacciones <span>0 movimientos</span></summary><div class="membership-empty"><strong>Aún no hay transacciones.</strong><p>Los comprobantes aparecerán después de un pago confirmado.</p></div></details><details class="account-accordion"><summary>Renovación y cancelación <span>${plus ? 'Sin renovación automática' : 'Sin plan activo'}</span></summary><div><p>Los planes son periodos de acceso: no hay cobros recurrentes.</p><button type="button" class="text-link" data-route="planes">Ver planes ↗</button></div></details></section>`;
   }
 
@@ -123,7 +161,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     const data = button.dataset;
     const keepFocus = selector => { render(); document.querySelector(selector)?.focus(); };
     if (data.membershipPlan) {
-      if (!MEMBERSHIP_PLANS.some(plan => plan.id === data.membershipPlan)) return true;
+      if (!plans().some(plan => plan.plan_code === data.membershipPlan)) return true;
       state.membershipPlan = data.membershipPlan;
       keepFocus(`[data-membership-plan="${data.membershipPlan}"]`);
       return true;
@@ -134,6 +172,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     if (data.removeDemoMatch) { state.savedDemoMatches = state.savedDemoMatches.filter(id => id !== data.removeDemoMatch); keepFocus('[data-save-demo-match]'); return true; }
     if (!data.membershipAction) return false;
     switch (data.membershipAction) {
+      case 'reload-plans': loadPlans(); break;
       case 'review-order': state.authReturn = 'checkout'; state.authMode = 'login'; state.authMessage = ''; navigate(state.session ? 'checkout' : 'acceso'); break;
       case 'show-password': {
         // Sin volver a pintar: se perdería lo que ya está escrito.
@@ -208,11 +247,23 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     return false;
   }
 
+  // Solo repinta donde se ven precios: en el formulario de acceso un repintado
+  // borraría lo que la persona ya está escribiendo.
+  async function loadPlans() {
+    state.plans = { status: 'loading' };
+    try {
+      state.plans = { status: 'ready', items: await cuenta.plans() };
+    } catch {
+      state.plans = { status: 'error' };
+    }
+    if (['planes', 'paquetes', 'checkout', 'cuenta'].includes(state.route)) render();
+  }
+
   /** Al cargar la página: si la cookie de sesión sigue viva, entra sin pedir contraseña. */
   async function restoreSession() {
     const session = await cuenta.restore();
     if (session) { state.session = session; render(); }
   }
 
-  return { plansView, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession };
+  return { plansView, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession, loadPlans };
 }

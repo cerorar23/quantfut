@@ -63,6 +63,7 @@ from fastapi.staticfiles import StaticFiles
 from . import ratelimit
 from .cuenta_web import router as cuenta_web_router
 from .cuentas import openapi_router as cuentas_openapi_router
+from .cuentas import public_router as cuentas_public_router
 from .cuentas import router as cuentas_router
 from .fichas import router as fichas_router
 from .panel import router as panel_router
@@ -709,6 +710,7 @@ app.include_router(admin)
 app.include_router(panel_router)
 app.include_router(cuentas_router)
 app.include_router(cuentas_openapi_router)
+app.include_router(cuentas_public_router)
 app.include_router(cuenta_web_router)
 app.include_router(web_router)
 app.include_router(fichas_router)

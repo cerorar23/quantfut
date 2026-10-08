@@ -304,11 +304,6 @@ def me(acc: dict = Depends(current_account)):
                  subscription=SubscriptionOut(**sub) if sub else None)
 
 
-@router.get("/plans", response_model=list[PlanOut])
-def plans():
-    return suscripciones.plans(only_active=True)
-
-
 @router.get("/picks", response_model=PicksOut)
 def picks(acc: dict = Depends(current_account),
           limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)):
@@ -319,6 +314,16 @@ def picks(acc: dict = Depends(current_account),
     return PicksOut(plus=plus, publicacion_activa=settings.publish_picks_enabled, picks=rows)
 
 
+# Catálogo público: los precios se leen aunque las altas estén cerradas. La
+# web los toma de aquí, así que un cambio en el panel se ve sin desplegar.
+public_router = APIRouter(prefix="/app/v1", tags=["app"])
+
+
+@public_router.get("/plans", response_model=list[PlanOut])
+def plans():
+    return suscripciones.plans(only_active=True)
+
+
 openapi_router = APIRouter(include_in_schema=False)
 
 
@@ -327,4 +332,4 @@ def app_openapi():
     """Solo las rutas de clientes: el esquema global sigue apagado."""
     return get_openapi(title="QuantFut App API", version="1.0.0",
                        description="Cuentas, planes y picks para la web y la app.",
-                       routes=router.routes)
+                       routes=router.routes + public_router.routes)

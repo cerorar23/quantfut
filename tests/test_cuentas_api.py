@@ -38,6 +38,7 @@ def client(monkeypatch):
     monkeypatch.setattr(api, "_redis", fake)
     app = FastAPI()
     app.include_router(api.router)
+    app.include_router(api.public_router)
     app.include_router(api.openapi_router)
     c = TestClient(app)
     c.redis = fake
@@ -60,6 +61,17 @@ def test_apagado_por_defecto_no_abre_altas(monkeypatch, client):
     r = client.post("/app/v1/auth/register", json={"email": "a@b.com", "password": "x" * 12})
     assert r.status_code == 503
     assert r.json()["detail"]["code"] == "cuentas_deshabilitadas"
+
+
+def test_precios_publicos_aunque_las_altas_esten_cerradas(monkeypatch, client):
+    monkeypatch.delenv("ACCOUNTS_ENABLED")
+    monkeypatch.setattr(suscripciones, "plans", lambda only_active=False: [
+        {"plan_code": "plus_1m", "name": "Plus · 1 mes", "duration_days": 30, "price_cents": 1299,
+         "currency": "USD", "active": True, "sort_order": 10}] if only_active else pytest.fail("solo activos"))
+    r = client.get("/app/v1/plans")
+    assert r.status_code == 200 and r.json()[0]["price_cents"] == 1299
+    assert "active" not in r.json()[0]
+    assert "/app/v1/plans" in client.get("/app/v1/openapi.json").json()["paths"]
 
 
 def test_sin_token_no_hay_picks_ni_perfil(client):

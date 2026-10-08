@@ -3971,3 +3971,16 @@ solo `api` recreado. Los archivos públicos (también a través de Cloudflare)
 coinciden byte a byte con el commit. En producción el acceso muestra el
 formulario real, sin aviso demo, sin errores de consola y sin refresh para
 visitantes anónimos. No se creó ninguna cuenta en producción.
+
+## 2026-10-07 — La web lee los precios del panel
+
+`MEMBERSHIP_PLANS` (precios fijos en JS) desaparece: importes, duración,
+moneda y qué planes se venden salen de `/app/v1/plans`, que es lo que edita
+el panel. En el código solo quedan los textos por `plan_code`; un plan nuevo
+sin texto usa el nombre del panel. El ahorro se calcula contra el plan
+mensual de la misma lista y, si no se vende, no se inventa. `/plans` pasa a
+un router público sin `ACCOUNTS_ENABLED`: los precios son información
+pública y la web no debe romperse si se cierran las altas. Sin precios
+cargados la web dice «Cargando»/«Reintentar» en vez de enseñar importes
+viejos. Verificado en local: cambiar 3 meses a 29,99 en el panel se ve en
+la web al recargar ($10.00/mes, ahorro $14.98) y Club, desactivado, no sale.

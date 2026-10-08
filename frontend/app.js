@@ -1,6 +1,6 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=8e03f4c4af52';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=0978b3da97e9';
+import { createMembershipUI } from './membership.js?v=6d8c9cd2cacf';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -279,7 +279,8 @@ const state = {
   followed: prefs.followed,
   mobileMenuOpen: false,
   session: null,
-  membershipPlan: 'standard',
+  membershipPlan: 'plus_3m',
+  plans: { status: 'loading' },
   authMode: 'login',
   authReturn: 'cuenta',
   authMessage: '',
@@ -1475,6 +1476,7 @@ const initial = location.hash.slice(1);
 if (validRoute(initial)) state.route = initial;
 render();
 membershipUI.restoreSession();
+membershipUI.loadPlans();
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;

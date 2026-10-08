@@ -52,8 +52,8 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       recargar, Mi cuenta con el plan real.
       Desplegado en producción (commit 9b9d180).
 - [ ] Conectar la app Flutter a `/app/v1` (cliente Dart desde el OpenAPI).
-- [ ] Web: leer precios de `/app/v1/plans` en vez de `MEMBERSHIP_PLANS` fijos
-      (hoy coinciden; si se editan en el panel, la web quedaría desfasada).
+- [x] Web: precios desde `/app/v1/plans` (2026-10-07). El panel decide
+      importe, duración y qué se vende; la web solo guarda los textos.
 - [x] Desplegar commit 3d40e05 (2026-10-07): `db/043` y `db/044` aplicados,
       imagen `quantfut-api:3d40e05`, solo `api` recreado.
 - [x] Altas abiertas en producción (`ACCOUNTS_ENABLED=1`, 2026-10-07, decisión del usuario).

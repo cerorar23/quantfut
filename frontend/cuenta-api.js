@@ -95,3 +95,4 @@ export async function logout() {
 
 export const forgotPassword = email => call('/auth/password/forgot', { method: 'POST', body: { email } });
 export const resendVerification = () => authed('/auth/verify/resend', { method: 'POST' });
+export const plans = () => call('/plans');
