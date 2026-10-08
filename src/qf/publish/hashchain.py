@@ -68,7 +68,7 @@ LOTE_ALTA_PROB_DESDE: date | None = date(2026, 10, 7)   # primer lote sin sellar
 # Desde esta fecha el lote lleva el reto escalera (publish/escalera.py): los
 # retos creados y los escalones decididos ese día. Misma regla que la de alta
 # probabilidad: None hasta desplegar, y luego la fecha del primer lote sin sellar.
-LOTE_ESCALERA_DESDE: date | None = None
+LOTE_ESCALERA_DESDE: date | None = date(2026, 10, 9)   # primer lote sin sellar al desplegar (08-oct ya selló a las 08:00 UTC)
 
 
 def lote_lleva_escalera(dia: date) -> bool:
