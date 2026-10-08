@@ -4049,3 +4049,18 @@ la próxima, listar `/proc/*/cmdline`. Verificado: cadena (10 lotes OK),
 vista previa en el worker (reto nuevo de 3, escalón Dortmund @1,36 1xBet,
 EV +0,8 %), `/escalera` 200 también desde el dominio y `app.js` público igual
 al del commit.
+
+## 2026-10-08 — Escalera por probabilidad: córners, tarjetas, goles, ambos anotan (sin desplegar)
+
+Decisión del usuario: la escalera elige el MÁS PROBABLE en 1,25-1,40, sin filtro
+de valor (`EV_MIN = None`, `db/046` permite NULL). Córners y tarjetas
+(amarillas + rojas) con `model/estadisticas_mercado.py` (equipos, liga,
+árbitro; sin cuotas). Prueba `eval/escalera_estadistica.py`: con encogimiento
+6 prometía de más en los extremos; φ en 2019-21, encogimiento elegido en
+2021/22, criterio en 2022-25. Córners pasan (más de 7,5/8,5/9,5; menos de
+9,5/10,5/11,5); tarjetas no (−1 a −3 pts; solo menos de 6,5). Ambos anotan:
+prueba en curso al cortar la sesión; `BTTS_HABILITADO = False` hasta verla.
+Cuotas de bets 8/45/80 de la respuesta de API-Football ya pedida; árbitro y
+tarjetas de football-data (`history_fd tarjetas`) y de results/fixtures.
+Pendiente: resultado de ambos anotan, harness completo, desplegar (db/046,
+`history_fd tarjetas` en el VPS, api + worker).

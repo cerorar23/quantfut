@@ -201,10 +201,10 @@ def opciones(m: dict, now: datetime, rho: float | None,
         cands += ap.candidatos_equipo(ajuste, ("home", "away"))
         mat = (score_matrix(ajuste["lambda"], ajuste["mu"], ajuste["rho"])
                if ajuste is not None else None)
-        if mat is not None and es.BTTS_HABILITADO:
+        if mat is not None and es.BTTS_LADOS:
             si = float(1.0 - mat[0, :].sum() - mat[:, 0].sum() + mat[0, 0])
-            cands += [ap.Candidato("btts", "yes", None, si),
-                      ap.Candidato("btts", "no", None, 1.0 - si)]
+            cands += [ap.Candidato("btts", lado, None, si if lado == "yes" else 1.0 - si)
+                      for lado in es.BTTS_LADOS]
         # Hándicap: solo hay cuotas de las casas en The Odds API.
         lineas_ah: list[dict] = []
         if es.LINEAS_HANDICAP and snap.source == "the_odds_api":

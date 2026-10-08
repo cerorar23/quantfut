@@ -83,9 +83,11 @@ LINEAS_GOLES: tuple[tuple[str, float], ...] = (
 LINEAS_HANDICAP: tuple[float, ...] = (-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0)
 MERCADOS = ("h2h", "totals", "team_totals_home", "team_totals_away", "spreads",
             "btts", "corners", "cards")
-# Ambos anotan desde el ajuste de goles de Pinnacle: se activa solo si pasa la
-# prueba de calibración (eval/escalera_estadistica.py --goles).
-BTTS_HABILITADO = False
+# Ambos anotan desde el ajuste de goles de Pinnacle. Prueba histórica del
+# 2026-10-08 (eval/escalera_estadistica.py --goles, firma d5cbc3151164,
+# criterio de alta probabilidad): "sí" pasa (n=1.220, 62,82 % prometido,
+# 65,33 % real); "no" no pasa (n=468, 62,71 → 58,12) y queda fuera.
+BTTS_LADOS: tuple[str, ...] = ("yes",)
 _CENT = Decimal("0.01")
 
 

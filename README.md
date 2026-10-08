@@ -743,6 +743,26 @@ prometido, 64,2 % real). Las cuotas de las casas en las líneas protectoras
 llevan mucho margen (Santos +1,5 a 1,36 el 8-oct: −8 %): el filtro de valor
 las descarta casi siempre.
 
+### Escalera por probabilidad (desde 2026-10-08, decisión del usuario)
+
+La escalera deja el filtro de valor: elige el pronóstico MÁS PROBABLE con
+cuota 1,25-1,40 (con el filtro salían muy pocos). Con esa forma de elegir, el
+histórico da −11,5 % por reto a 3 escalones y −26 % a 6: la web lo dice.
+Mercados nuevos, cada uno solo en las líneas que pasaron la prueba de
+calibración (`python -m qf.eval.escalera_estadistica [--goles]`, φ en
+2019-21, encogimiento elegido en 2021/22, criterio solo en 2022-25):
+
+- **Córners** (modelo estadístico de equipos y liga, `model/estadisticas_mercado.py`):
+  pasan más de 7,5 / 8,5 / 9,5 y menos de 9,5 / 10,5 / 11,5.
+- **Tarjetas** (amarillas + rojas, con árbitro): prometen 1-3 puntos de más;
+  solo pasa menos de 6,5. El árbitro solo existe en la Premier en el
+  histórico; desde el 8-oct se guarda de API-Football para todas las ligas.
+- **Ambos marcan**: "sí" pasa (62,8 % prometido, 65,3 % real); "no" no
+  (62,7 → 58,1).
+
+Cuotas de esos mercados: bets 8, 45 y 80 de la respuesta de API-Football que
+ya se pedía. Tarjetas y árbitro históricos: `python -m qf.ingest.history_fd tarjetas`.
+
 ## Línea de alta probabilidad (desde 2026-10-06)
 
 Una línea aparte de los picks de valor, pedida por el usuario: los clientes

@@ -51,6 +51,27 @@ del usuario (cuota 1,25-1,40, 5-7 pasos, retirar la inversión al llegar a
 - [ ] Revisar el primer sellado con escalera (09-oct, 08:00 UTC): reto creado,
       escalón en el lote y visible en `/escalera`.
 
+## Escalera por probabilidad con córners, tarjetas, goles y ambos anotan (2026-10-08, decisión del usuario)
+
+El usuario cambia la regla: la escalera elige el pronóstico MÁS PROBABLE entre
+cuotas 1,25-1,40, sin filtro de valor ("saldrían pocas"), y suma córners,
+tarjetas amarillas (con el árbitro), goles y ambos anotan. Sin peticiones
+nuevas para árbitros/tarjetas históricas: football-data y lo que ya llega.
+Medido antes (escalera_prueba, regla "más probable"): −11,5 % por reto a 3
+pasos y −26 % a 6. Se publica igual que antes, con su historial entero.
+
+- [x] `db/046`: amarillas, rojas y árbitro en `matches`; mercados nuevos en
+      `escalera_pasos`; `ev_min` NULL (sin filtro).
+- [x] Datos: tarjetas y árbitro de football-data (`history_fd tarjetas`) y,
+      desde ya, de API-Football en `results`/`fixtures`.
+- [x] Modelo estadístico de córners y tarjetas con prueba de calibración:
+      córners pasan en 6 líneas; tarjetas solo menos de 6,5.
+- [x] Ambos marcan desde el ajuste de goles: "sí" pasa, "no" no.
+- [x] Cuotas de bets 8/45/80 de la respuesta de API-Football ya pedida.
+- [x] Escalera: el más probable en 1,25-1,40; liquidación de córners/tarjetas.
+- [x] Web: textos y regla nueva.
+- [ ] Desplegar y ejecutar `history_fd tarjetas` en el VPS.
+
 ## Fase comercial desbloqueada (2026-10-07, decisión del usuario)
 
 El usuario desbloquea cuentas, suscripciones y panel de administración ya,
