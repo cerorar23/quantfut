@@ -4417,3 +4417,21 @@ Entrenamiento2021–22, calibración2022–23, evaluación exploratoria2023–26
 42unidades nuevas selladas para los mismos tres eventos y cinco jugadores;15originales intactas. Web con nueve filtros y tabla conprobabilidadmedia/acierto/cobertura/referencia/intervalos. La extensión reutiliza recibos oficiales verificados del piloto sólo para lectura: conteos reconciliados, ausencia en revisión y DNP separado. Prueba integral verifica conteo adicional real y rechaza cuerpo modificado, sin escribir diario. No agrega consultas deportivas ni créditos.
 
 Imagennba-dashboard-run71 reemplaza sólo el servicio NBA manteniendo su nombre interno; anterior detenido recuperable. Fútbol/proxy/captura/piloto/alertas conservan identidad, configuración y estado; reinicio/HTTPS y diezaccionesfiltroverificadas. 1280×720, consola sinerrores; revisiónmóvil390px sigue pendiente porlimitación previa.577/18NBA más3pruebasintegrales y800/16arnés. Nuevascopiasperiódicas/apuestas desactivadas, puertas científicas y cuatrobloquesde decisiones conservados; resultados y disponibilidad de20oct siguen futuros. docs/nba_nueve_mercados_estadistica_20261009.md.
+
+## 2026-10-09 — Alta probabilidad: más de 2,5, hándicap asiático y córners (commit 27e8a7f)
+
+Pedido del usuario (ambos marcan, córners, más/menos 2,5 y hándicap). Regla de
+la línea: solo entra lo que pasa la prueba histórica, así que se midió todo
+(firma d5cbc3151164) y se habilitó lo que pasa. Ambos marcan NO se publica no
+por fallar sino porque nunca llega al 80 % en las 7 ligas: no hay nada que
+validar. Córners rompe el "siempre Pinnacle": se acepta solo recortado a la
+probabilidad sin margen de la casa (misma regla que la escalera desde hoy) y
+sin los dos lados cotizados no entra. Con todo habilitado la regla da
+pronóstico en el 85 % de los partidos (antes 63 %) y sigue cumpliendo
+(82,35 → 82,89); dentro de lo elegido, 1X2 y menos de 3,5 quedan ~2 puntos
+por debajo: no es criterio, lo vigila el control por grupo. Ojo: el hándicap
+casi nunca trae cuota de referencia (solo The Odds API lo cotiza) y los
+córners elegidos se pagan a 1,10-1,16. Desplegado 23:32 UTC; la API usa la
+imagen fijada en compose (`quantfut-api-menu70:20261009`), así que se
+retagueó ese nombre; respaldo `~/release-27e8a7f/`, imágenes `*:before-27e8a7f`.
+Vista previa: 61 decisiones, 29 de hándicap y 8 de córners.
