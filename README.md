@@ -761,7 +761,18 @@ calibración (`python -m qf.eval.escalera_estadistica [--goles]`, φ en
   (62,7 → 58,1).
 
 Cuotas de esos mercados: bets 8, 45 y 80 de la respuesta de API-Football que
-ya se pedía. Tarjetas y árbitro históricos: `python -m qf.ingest.history_fd tarjetas`.
+ya se pedía.
+
+**Probabilidad prudente en córners y tarjetas (2026-10-09, decisión del
+usuario).** La primera vista previa con cuotas reales (madrugada del 9-oct)
+habría abierto los 4 retos con «menos de 6,5 tarjetas» y «más de 7,5
+córners», con el modelo 11-13 puntos por encima de la propia casa sin margen
+(p. ej. 82 % frente a 69 %). Elegir el máximo entre cientos de candidatos
+premia los errores del modelo hacia arriba, y la prueba histórica no puede
+verlo: football-data no trae cuotas de esos mercados. Desde entonces cuenta
+`min(modelo, mercado sin margen)` (`escalera_datos.prudente`; Pinnacle si
+cotiza los dos lados, si no la media de las casas de la lista) y sin los dos
+lados cotizados el candidato no entra. Tarjetas y árbitro históricos: `python -m qf.ingest.history_fd tarjetas`.
 
 ## Línea de alta probabilidad (desde 2026-10-06)
 

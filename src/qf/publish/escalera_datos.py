@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -20,7 +21,7 @@ from ..config import settings
 from ..db import execute, query, query_one
 from ..eval.clv import _settle_outcome
 from ..model import estadisticas_mercado as em
-from ..model.devig import devig
+from ..model.devig import devig, two_way_devig
 from ..model.pricing import score_matrix
 from . import alta_prob as ap
 from . import alta_prob_datos as ad
@@ -155,6 +156,47 @@ def _ref_af(rows: list[dict], c) -> tuple:
     return max(precios) if precios else (None, None, None)
 
 
+_CONTRARIO = {"over": "under", "under": "over", "yes": "no", "no": "yes"}
+
+
+def prob_mercado(rows: list[dict], c) -> float | None:
+    """
+    Probabilidad sin margen que da el mercado a ese lado y línea: la de
+    Pinnacle si cotiza los dos lados; si no, la media de las casas de la lista
+    que los cotizan. None si nadie cotiza los dos lados.
+    """
+    otro = _CONTRARIO[c.selection]
+    por_casa: dict[str, dict[str, float]] = {}
+    for r in rows:
+        if r["market"] != c.market or r["selection"] not in (c.selection, otro):
+            continue
+        if c.line is not None and (r["line"] is None or abs(float(r["line"]) - c.line) >= 1e-9):
+            continue
+        por_casa.setdefault(pk.canonical_book(r["bookmaker"]), {})[r["selection"]] = float(r["price"])
+    pares = {b: q for b, q in por_casa.items() if c.selection in q and otro in q}
+    usar = ([pares[settings.sharp_book]] if settings.sharp_book in pares
+            else [q for b, q in pares.items() if b in settings.soft_books])
+    if not usar:
+        return None
+    return sum(two_way_devig(q[c.selection], q[otro], settings.devig_method)[0]
+               for q in usar) / len(usar)
+
+
+def prudente(c, rows: list[dict]):
+    """
+    Córners y tarjetas con la MENOR probabilidad entre el modelo y el mercado
+    (decisión del usuario, 2026-10-09). La primera vista previa con cuotas
+    reales elegía «menos de 6,5 tarjetas» y «más de 7,5 córners» con el
+    modelo ~11 puntos por encima de la propia casa sin margen: elegir el
+    máximo entre cientos de candidatos premia justo los errores del modelo
+    hacia arriba, y la prueba histórica no pudo medir eso (football-data no
+    trae cuotas de córners ni tarjetas). Sin los dos lados cotizados no se
+    puede contrastar: el candidato no entra.
+    """
+    pm = prob_mercado(rows, c)
+    return None if pm is None else replace(c, prob=min(c.prob, pm))
+
+
 def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
     out = []
     for mercado, lineas in em.LINEAS_HABILITADAS.items():
@@ -175,8 +217,9 @@ def opciones(m: dict, now: datetime, rho: float | None,
     """
     Todos los candidatos de un partido con la mejor cuota de la lista. Los de
     Pinnacle (1X2, goles, ambos anotan, hándicap) necesitan su precio vigente;
-    córners y tarjetas salen del modelo estadístico y de las cuotas de
-    API-Football. None si no hay ni precio de Pinnacle ni nada con cuota.
+    córners y tarjetas salen del modelo estadístico, recortado a lo que da el
+    mercado (`prudente`), y de las cuotas de API-Football. None si no hay ni
+    precio de Pinnacle ni nada con cuota.
     """
     match_id, kickoff = m["match_id"], m["kickoff_utc"]
     out = []
@@ -221,6 +264,9 @@ def opciones(m: dict, now: datetime, rho: float | None,
                 out.append(es.Opcion(match_id, c, float(price), book, snap.source, snap.as_of))
     if modelos is not None and filas_af:
         for c in _candidatos_estadisticos(m, modelos):
+            c = prudente(c, filas_af)
+            if c is None:
+                continue
             price, book, as_of = _ref_af(filas_af, c)
             if price is not None:
                 out.append(es.Opcion(match_id, c, float(price), book, "api_football", as_of))

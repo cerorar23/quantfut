@@ -106,6 +106,34 @@ def test_mejor_cuota_de_la_lista_para_cada_linea():
     assert (price, book) == (1.36, "1xbet")
 
 
+def _cuota(book, market, selection, line, price):
+    return {"bookmaker": book, "market": market, "selection": selection, "line": line,
+            "price": price, "provider_updated_at": datetime(2026, 10, 8, 21, tzinfo=timezone.utc)}
+
+
+def test_probabilidad_prudente_se_queda_con_la_menor():
+    filas = [_cuota("betano", "cards", "under", 6.5, 1.35),
+             _cuota("betano", "cards", "over", 6.5, 3.05)]
+    c = Candidato("cards", "under", 6.5, 0.82)
+    pm = ed.prob_mercado(filas, c)
+    assert 0.68 < pm < 0.71                                  # casa sin margen
+    assert ed.prudente(c, filas).prob == pytest.approx(pm)
+    # Si el modelo es el más prudente, manda el modelo.
+    assert ed.prudente(Candidato("cards", "under", 6.5, 0.60), filas).prob == 0.60
+
+
+def test_pinnacle_manda_sobre_las_casas_y_sin_dos_lados_no_entra():
+    filas = [_cuota("betano", "corners", "over", 7.5, 1.50),
+             _cuota("betano", "corners", "under", 7.5, 2.50),
+             _cuota("pinnacle", "corners", "over", 7.5, 1.47),
+             _cuota("pinnacle", "corners", "under", 7.5, 2.52),
+             _cuota("onexbet", "corners", "over", 8.5, 1.80)]
+    sola_pinnacle = ed.prob_mercado([f for f in filas if f["bookmaker"] == "pinnacle"],
+                                    Candidato("corners", "over", 7.5, 0.9))
+    assert ed.prob_mercado(filas, Candidato("corners", "over", 7.5, 0.9)) == sola_pinnacle
+    assert ed.prudente(Candidato("corners", "over", 8.5, 0.9), filas) is None
+
+
 def _fila(market, selection, line, **kw):
     base = {"status": "finished", "kickoff_utc": datetime(2026, 10, 9, 18, tzinfo=timezone.utc),
             "home_goals": 2, "away_goals": 1, "home_corners": 6, "away_corners": 4,
