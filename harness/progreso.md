@@ -4080,3 +4080,19 @@ sus cuotas (desde las 00:20 UTC). Trampa repetida: la comprobación de jobs en
 marcha vía /proc se contaba a sí misma (su línea contiene "python -m qf");
 el worker se recreó a las 23:21:40 tras agotar la espera. Para la próxima,
 excluir el propio proceso (`grep -v` del PID o patrón con corchetes).
+
+## 2026-10-09 — Escalera: probabilidad prudente en córners y tarjetas (commit ed7ac99)
+
+Con las primeras cuotas reales de córners/tarjetas (00:20 UTC), la vista
+previa abría los 4 retos con «menos de 6,5 tarjetas» y «más de 7,5 córners»:
+modelo 81-82 % frente a 69-72 % de la propia Betano sin margen. No es que la
+casa regale 11 puntos: al elegir el MÁXIMO entre ~580 candidatos gana quien
+más se equivoca hacia arriba, y la prueba histórica no lo podía ver porque
+football-data no trae cuotas de esos mercados. El usuario eligió la
+probabilidad prudente: `min(modelo, mercado sin margen)` (Pinnacle si cotiza
+los dos lados; si no, media de las casas de la lista); sin los dos lados el
+candidato no entra. Desplegado a las 02:07 UTC del 9-oct, antes del primer
+job con escalera (08:00): respaldo `~/release-ed7ac99/backup.tgz`, imágenes
+`*:before-ed7ac99`. Vista previa nueva: 4 retos sin córners ni tarjetas
+(Moreirense menos de 3,5 @1,25, Red Star marca @1,25, PSV @1,27, Dunkerque-
+Annecy más de 1,5 @1,27). El chequeo de jobs en marcha usa ya `[p]ython -m qf`.
