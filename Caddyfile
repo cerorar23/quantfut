@@ -23,10 +23,18 @@
 		path /admin /admin/* /control /control/*
 		not header Cf-Access-Jwt-Assertion *
 	}
-	respond @sin_access 404
-	# main.py limita por el primer elemento de X-Forwarded-For.
-	reverse_proxy api:8000 {
-		header_up X-Forwarded-For {client_ip}
+	@nba path /nba /nba/*
+	route {
+		respond @sin_access 404
+		handle @nba {
+			reverse_proxy nba-dashboard-run69:8080
+		}
+		handle {
+			# main.py limita por el primer elemento de X-Forwarded-For.
+			reverse_proxy api:8000 {
+				header_up X-Forwarded-For {client_ip}
+			}
+		}
 	}
 }
 

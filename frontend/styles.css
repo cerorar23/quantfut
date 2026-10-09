@@ -784,3 +784,13 @@ table.standings td:last-child{text-align:left}
 .ladder-card h3{margin:2px 0 0;font-size:16px}.ladder-card .ladder{margin:10px 0}
 .ladder-balance{font:700 20px ui-monospace,Consolas,monospace;color:#34d399}
 .ladder-meta{font-size:12px;color:var(--muted);margin:6px 0}
+
+
+/* Cambio de deporte: enlaces públicos, visibles también en la cabecera móvil. */
+.sport-nav{display:flex;align-items:center;gap:4px;flex:none;padding:3px;border:1px solid var(--border);border-radius:10px;background:#101b35}
+.sport-nav a{display:flex;align-items:center;justify-content:center;min-height:34px;padding:7px 12px;border-radius:7px;color:var(--muted);font:600 12px 'IBM Plex Mono',monospace;text-decoration:none;white-space:nowrap}
+.sport-nav a:hover{background:#24364c;color:var(--text)}
+.sport-nav a.active{background:#24364c;color:var(--green)}
+.sport-nav a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+@media(max-width:1180px){.header-status{display:none}}
+@media(max-width:760px){.header-main{height:auto;min-height:57px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}.header-main .sport-nav{order:3;flex-basis:100%;justify-content:flex-start;border:0;background:transparent;padding:3px 0 0}.sport-nav a{min-height:38px;padding:8px 16px;border:1px solid var(--border)}}

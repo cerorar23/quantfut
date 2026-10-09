@@ -829,7 +829,8 @@
       ],
       "execution_run_ids": [
         "NBA-RUN-051",
-        "NBA-RUN-052"
+        "NBA-RUN-052",
+        "NBA-RUN-071"
       ]
     },
     {
@@ -952,7 +953,10 @@
         "NBA-RUN-065",
         "NBA-RUN-066",
         "NBA-RUN-067",
-        "NBA-RUN-068"
+        "NBA-RUN-068",
+        "NBA-RUN-069",
+        "NBA-RUN-070",
+        "NBA-RUN-071"
       ]
     },
     {
@@ -149553,6 +149557,1014 @@
       "sha256": "f56aae158d869832b81974d79d3b7be180302d0bbbf72b128f60f9726ce6a3f2",
       "recorded_at_utc": "2026-10-09T13:34:46.050809+00:00",
       "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21161",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/Caddyfile",
+      "sha256": "d12135829b21012074c5efbebf73b458aae24918b5802c3cabd6524778085752",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21162",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/Dockerfile.dashboard",
+      "sha256": "7468dda7e2dcf055ad80d1ee091a0eb41c27c9a744fb4c45d14ba9e25a2e5fe8",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21163",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/README.md",
+      "sha256": "c8b4ac10633c63fa30405c74d528a78be86e9ced555431655ca20206850929e7",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21164",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/app.js",
+      "sha256": "29d5bf1f07f6017845f0648f4c7dd7f0a2ed54fbb91dae868c661399f85f1499",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21165",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/dashboard.py",
+      "sha256": "41212c6ff554737fab06e6205bbdedf1309991d047d57371359c9903497a2260",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21166",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/docker-compose.yml",
+      "sha256": "cf3a5acfef3ea6893003bb4a4be4751a132dccdb897c8c3b09981060f0712eeb",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21167",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/index.html",
+      "sha256": "1100a26daf4311c4dbcf9dd3c7ed17ede14149eb0aa67afe53cf814226ac9b5c",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21168",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/make_run69_live_v2.py",
+      "sha256": "34016e3c3ebf91731b30c44983c6a4a4189c23c1e406ef4d087e1df66e7c7aa1",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21169",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/make_run69_v4.py",
+      "sha256": "01a8098e09b566e080ef1ebb51abae5e92d8b8dada7a989b0e10f5c50994ac6c",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21170",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/manifest.json",
+      "sha256": "6c3870660f40d0015956925e3251b8e618c5d663db0acc4bbbec21a58e4216b8",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21171",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_pagina_pronosticos_resultados_20261009.md",
+      "sha256": "2bb436c348f835ab13a163c5745eca31c6cb9adaa1c627d2892ef3f2ee36b0de",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21172",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_deploy_20261009.py",
+      "sha256": "167a4662e4eb1e79e1132427b5f281bd8d85c999782357df148c95f9d34b88e1",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21173",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_live_20261009.py",
+      "sha256": "25e62774fa0719a44a0646b8bff202688d43236f8d583a9e873d98163f852b7c",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21174",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_live_v2_20261009.py",
+      "sha256": "0b0582c666ff5823d6081e63a56479216c2e7df1a2087fa9f3d90ccfaede0241",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21175",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_preview.py",
+      "sha256": "1316d61b5c380738da1e08a86cf7ff45f3e2d25de8d9f757d20a76527fa86779",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21176",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_recover_20261009.py",
+      "sha256": "b378d1cd4cf87fb3e40d109ddc816a6ef989772e5d127a8340f8915bd79ca859",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21177",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_recover_v3_20261009.py",
+      "sha256": "7af9774afa5fe760e4dd71a626eac9963f373a60f52963539a3ac20226fd300c",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21178",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_recover_v4_20261009.py",
+      "sha256": "78a45a2413859c89f7b068f2ec1373b9cda41862cb7838f197984de84455e691",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21179",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/progreso.md",
+      "sha256": "fc059379c3fb5d8111817ff3a0e5c895a6fa2d81756e7e1fb72c1472f056b1b5",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21180",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/seal_nba_run69_20261009.py",
+      "sha256": "170c64bf2f996bc307ae5f8a86409c868610cc46e5dce2f382c10d1b8f5f0473",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21181",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/styles.css",
+      "sha256": "00271c831d70d7186f7cf3be8cbecbe65a852d8fc246bb584e0efd094dceee5d",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21182",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/tareas.md",
+      "sha256": "bfe1601bac0a993ca01d3d38238b06f5906a1c9f735dd787c4c72c3d0c8724b1",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21183",
+      "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/test_dashboard.py",
+      "sha256": "ed6e62bf552e9395172589077bc64e1a9c6d70cdc180351ac6a384a029b9145a",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21184",
+      "path": "apps/nba/.local/normalized/nba_f6_run68_20261009/postseal_verification.json",
+      "sha256": "9e0416910d94171c48947552a6812f0e868ad439a112510e8b8ba9d3a576cd48",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21185",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/Caddyfile.before",
+      "sha256": "79fbeffbfe76c0b4d03de8d8afc659e58a335ac84b205a7dcf7c1278460e7693",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21186",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/browser_snapshot.txt",
+      "sha256": "347e3e78526f4c43a94adbe4f739608a5da3197e1fe1eed247c92e5e8c0cec2a",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21187",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/browser_verification.json",
+      "sha256": "1ea4c4feb2eda9fc4ab0230103d0a775e7acce89af787585e3b499ddc71c6526",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21188",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/build.tar.gz",
+      "sha256": "d17f7ccc2e700c193431d351b4ce63706c383d9c58301d3860f25720aa4eb621",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21189",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_protocol.json",
+      "sha256": "469f216f59de85ade667c2a950daf6495cec5fef0db6d88c1e595bc8b565d902",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21190",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result.json",
+      "sha256": "ec5b0cd20cfdd32e21d6cf1e0cdf24244a99d76929efdebe65cc1adc06c46cf4",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21191",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result_v2.json",
+      "sha256": "24c44d1b396d5a74f805f2d409cb0b788b2b9c72646f7c7f2c65abab078ed999",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21192",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result_v3.json",
+      "sha256": "ed697c96820ce39d2e8f7a39bf192ff39202e4bf54645cbe965c3c34f892b5e4",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21193",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result_v4.json",
+      "sha256": "1229bd5ee43c0411f25bcdaf717187946373d83a6718eeb8c0e68dbf184ed28f",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21194",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/desktop.jpg",
+      "sha256": "6baea04b968ee68c108cfef24ce54edfa44e73a169074927144b93a49d0b6ea3",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21195",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/live_public_snapshot.json",
+      "sha256": "3ac1f65ce8617de74e7dc77928465c771a749f0fca862fc8b7f50fe35c66b381",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21196",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/live_verification_v2.json",
+      "sha256": "cd88dab6a72da1fed6cf9f29012db5c906554a903ead373b1615fe6513fad74d",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21197",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/pagina_publicada.jpg",
+      "sha256": "03e94408887d55f1f809432726c1af5f994b85b8c6093f5da965c715c54c340b",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21198",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/prior_ledger.json",
+      "sha256": "66e4f18b666c6c988913f2746e2e171cf211c0ddeb4c11e4ef53fe791226c620",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21199",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/prior_registry.json",
+      "sha256": "f1a47afdbf79e16dc10445e51cc4759d7dbddc1518e68af4bdd715c4c4555fac",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21200",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/public_html_received.html",
+      "sha256": "b2ffeae4cc6bdb4ee1f72a1b01b259060b97682dd412ba63478b3a55d07134d9",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21201",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/public_snapshot.json",
+      "sha256": "714564256e59ec591e92a28e9cd30c9e75cc3e4a2da778dcbe7d85ae93b69f52",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21202",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/public_snapshot_v4.json",
+      "sha256": "7fd41d5e6f37e18510a2e877d267fca62baf6dd661c6bfb77ef19cffb2ed23f6",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21203",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/recovery_protocol.json",
+      "sha256": "5067d0d61e070163b0eaa3ccd68aa5b600d5d52e08261c4775e3bfc4ab48092f",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21204",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/recovery_protocol_v3.json",
+      "sha256": "416bebd9cced07c0a32de25c50b8fa5df989c0a2f83b6eadd99338acec1ea4f2",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21205",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/recovery_protocol_v4.json",
+      "sha256": "9cea1582bb9c4ef94cf6eb8b019ac591b545cbfaafa4e14469288cfdc37c84b8",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21206",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/verification.json",
+      "sha256": "b3351e3fe23d7a9ed64a23ce44685e07fbd460380843c5d6ea3b999346d5f85f",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21207",
+      "path": "apps/nba/.local/reports/nba_run69_all_20261009.log",
+      "sha256": "ccd0caad8cd611abce917efeb906b1abc4bbde6875b9941d610e88f9b9a24995",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21208",
+      "path": "apps/nba/.local/reports/nba_run69_deploy_20261009.log",
+      "sha256": "5ccf4d818d7eefb1585391eae6cf931939f8f43974ea4c0a2867102ba422ac08",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21209",
+      "path": "apps/nba/.local/reports/nba_run69_live_20261009.log",
+      "sha256": "dbdec5878163589d894926bee2c0c4cebcab171281066e8cd5031c301b3cc67a",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21210",
+      "path": "apps/nba/.local/reports/nba_run69_live_v2_20261009.log",
+      "sha256": "78640a55217dd72f9168f43e577e78d7a75c4b5711e7644ac31a47afe5f1bda1",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21211",
+      "path": "apps/nba/.local/reports/nba_run69_post_20261009.log",
+      "sha256": "bea0344546137b3f17920f15f6d405f50463c6d222fb2dee00f84e0bd9275e42",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21212",
+      "path": "apps/nba/.local/reports/nba_run69_pre_20261009.log",
+      "sha256": "fd6ed4641fb800e3672a6a75a1bb62bcceaf922d05ebc2bdf8a46a0d5f95b8aa",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21213",
+      "path": "apps/nba/.local/reports/nba_run69_recover_20261009.log",
+      "sha256": "35020fda7113fbf92956d0b9aa2bed0184aa636860ff8d8de495bfd05fabce71",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21214",
+      "path": "apps/nba/.local/reports/nba_run69_recover_v3_20261009.log",
+      "sha256": "f7911a1e7002091748f3e139059e57729b5509aa859f3919a19db8db234a1963",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21215",
+      "path": "apps/nba/.local/reports/nba_run69_recover_v4_20261009.log",
+      "sha256": "79cc94a82558ced57317e489e05b681d0ee4fe27ffdb08ec62d820a4ef581331",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21216",
+      "path": "apps/nba/.local/reports/nba_run69_target_20261009.log",
+      "sha256": "eac4c236a1bd9cf1eb38b12e8cbf548eeab160134eaf8d1b37ae715c2e90a1e4",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21217",
+      "path": "apps/nba/.local/reports/nba_run69_target_v2_20261009.log",
+      "sha256": "9d898f63144fd1835926404c35b2b9e05edf3679179423f65241edcb904643d4",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21218",
+      "path": "apps/nba/.local/reports/nba_run69_target_v3_20261009.log",
+      "sha256": "4f8c6462fe97e13e5583084ec906a0bd877e939986dcc0218c02755bfc092159",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21219",
+      "path": "docs/nba_pagina_pronosticos_resultados_20261009.md",
+      "sha256": "2bb436c348f835ab13a163c5745eca31c6cb9adaa1c627d2892ef3f2ee36b0de",
+      "recorded_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21220",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/app.js",
+      "sha256": "ad3d300ce144b898b46fe74566e89197d704153f6edc2f7cf44a91ad12f23b6b",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21221",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/docker-compose.yml",
+      "sha256": "9fb4c73f1648f72696be1aea088a8d8e1ce76b00b5004bc6a502a3805203e525",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21222",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/index.html",
+      "sha256": "ff477e8dfaf351653f1294aab5637b5e3e79c3e7df8cc9950af0be074b41b974",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21223",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/manifest.json",
+      "sha256": "034357f014dd99728f27ac5b5b26a4407b3455ba6ef970bf8fd0dcc8bd7107e2",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21224",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_menu_e_historico_20261009.md",
+      "sha256": "753c5e20880663eb132d45ee11cb54e5b284c479202ade91ef39a2c09b247b3e",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21225",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_deploy_20261009.py",
+      "sha256": "f8e24775bcc8ba342d2bca33c14f70785606ed5f24581774fbacd487c0df0e02",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21226",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_menu_edit_20261009.py",
+      "sha256": "de1950fddb9759907a350d7f014efba953c5deb24daa9774f9f0c85bbe1f978b",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21227",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_prepare_20261009.py",
+      "sha256": "f606fac4d80a974144b1ed4e9f4b4a8f0f9447627e8c8027e9f7f2f9b5640f68",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21228",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_recover_20261009.py",
+      "sha256": "0eaf4700a294f0d7e2c3a453db3af226491037a9fe86dc032c82aa0c51b6c18f",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21229",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/progreso.md",
+      "sha256": "63fc524ee5d2c618c5e1dc1636d7de7dcc37ae5b668cda477a6e88ccd7da566a",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21230",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/seal_nba_run70_20261009.py",
+      "sha256": "8fb1c6411f357f802990b13b7e17698edc551db90af664ad901893b5203d3f73",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21231",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/styles.css",
+      "sha256": "387c3ae173c266e14a5ef66634659d80b4fb8ea30e0d8c977c95dd6388e9a7d4",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21232",
+      "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/tareas.md",
+      "sha256": "0d82ef464cd111fe79bd27a49e622596f44a0295162db94a434f89e9908c2db5",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21233",
+      "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/postseal_verification.json",
+      "sha256": "18b98703368a3cfaff08e2d28b2466293e37f7f16b8d7c7d9f4f1be5fbfb882b",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21234",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/browser_snapshot.txt",
+      "sha256": "e7cfb1f830607382fb414ab58412bcb383326db3f92a55ac92b4cabc95ec7b4c",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21235",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/browser_verification.json",
+      "sha256": "858b123171123b419b95c733c7af33896f36c8e03bf4ed1c3a518da81c9fd6bf",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21236",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/deployment_protocol.json",
+      "sha256": "31e5c22d6e4b81724c7a76e3800071b23344599c596a2311d5af5a07f167b1f0",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21237",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/deployment_result.json",
+      "sha256": "f49fc403eef9d7aa452e5ccee8b56566cd9db89fcb509bc2f90c3363880f801b",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21238",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/deployment_result_v2.json",
+      "sha256": "548a692ae2173ea318c81e5516d34d1fede4b80e07bfff4563510beccea65f2f",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21239",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/historical_inventory.json",
+      "sha256": "5a28a33f45ae01493976d8723e0d3a7c1e1ed81c670776c9263dc8b30dbe06d8",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21240",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/menu_futbol_nba.jpg",
+      "sha256": "bf9185b4b8e0ea580a9e7951b5a60a69882a12d2003ed814b74ec07daac7f712",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21241",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_frontend/app.js",
+      "sha256": "c9d63c3a0d05208f6b4549e8bbe4c574879f5881c3d03e458748b7086c7438f4",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21242",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_frontend/index.html",
+      "sha256": "f685eb2aa287023ed121cbff6271dfa11491f6fbf65be09d9b5a5ab15e2d3624",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21243",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_frontend/styles.css",
+      "sha256": "c57be112cf10f74a1353a85260f1a14b3df8bc1814220e26faf9cc9887a25ea3",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21244",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_ledger.json",
+      "sha256": "a43b060f1db3bd3043dfe066a188a462d230f738b5e40b644826a7de1f0b4a20",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21245",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_registry.json",
+      "sha256": "eb877d5dcee36d1020e564bb9715ada6185f27856c77a3ea2a66218d184f2e39",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21246",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_web_hashes.json",
+      "sha256": "0a1ab8cbbf4f4550faf860df08042d0d9af919bd946e0f8a84700536307e1155",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21247",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/recovery_protocol.json",
+      "sha256": "d9097cf050183889593ec4f54ce0dff945066c459b598999e4ac39ba682cbba7",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21248",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/verification.json",
+      "sha256": "ea3c60ddf5edb64e6ef5cecfb8be8344acb05ea5b871e4b18b5a94c5f02e9891",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21249",
+      "path": "apps/nba/.local/reports/nba_run70_deploy_20261009.log",
+      "sha256": "e48111a76e28fe95370d4cdbc64c3a9f00f415824dc2bdd79d75fb4facd450de",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21250",
+      "path": "apps/nba/.local/reports/nba_run70_frontend_20261009.log",
+      "sha256": "ddad8ca633a19bf8eb3f4e3b796a5f6986cefafea9ce6d13562e937ce27280dd",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21251",
+      "path": "apps/nba/.local/reports/nba_run70_post_20261009.log",
+      "sha256": "e0a3b7ad294906886c6b161ceb9fd9c666cd2ad1cad7f8027ba0c1e608c4f412",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21252",
+      "path": "apps/nba/.local/reports/nba_run70_pre_20261009.log",
+      "sha256": "e1149643bfeb3871368e4a95f2f6b993cb4235fa257c592cb971fef4067a858a",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21253",
+      "path": "apps/nba/.local/reports/nba_run70_prepare_20261009.log",
+      "sha256": "577901f88c609fd8b6529d2311822f969dbbccf52e8d3a0375587fce0982c907",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21254",
+      "path": "apps/nba/.local/reports/nba_run70_recover_20261009.log",
+      "sha256": "dfd6b12cd579bd340fcabb3b18fa88992152f9ec1a9c2223d3d4f914b0e48be9",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21255",
+      "path": "docs/nba_menu_e_historico_20261009.md",
+      "sha256": "753c5e20880663eb132d45ee11cb54e5b284c479202ade91ef39a2c09b247b3e",
+      "recorded_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21256",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/Dockerfile.multimarket",
+      "sha256": "860511eb5a37c188ff7a778d0473c87a6c28264d3f92d14fbd55b86314c1d0be",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21257",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/README.md",
+      "sha256": "658a43fcd9eca1ecc337ce0e9508cc207378af229157cf4674531ecf63676171",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21258",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/app.js",
+      "sha256": "95bcf9cf90952aeaf850db4078da10e45dab7fbe5fa3b3308932bb576a5c07d9",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21259",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/index.html",
+      "sha256": "f55902aa66ee5acbda1a06fe9fc450fd2546ebd930398147cebfe15538307a1c",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21260",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/manifest.json",
+      "sha256": "dff54cf390c52bb64b62601b21ffc849107427c5ed026c61a1b83997c88c893b",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21261",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/multimarket.py",
+      "sha256": "4e274c966f4ee09dcbb0986091b3bcfefbf9ba3ee9c7a2fe8e71d62d369fdd82",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21262",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/multimarket_dashboard.py",
+      "sha256": "8d1f19fc50809e5d1bc0c13258a643673522ef521e5ef1bc3dec48b46fc1d46a",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21263",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/nba_nueve_mercados_estadistica_20261009.md",
+      "sha256": "ad07209842968a8fc8658023d888dc6a38bd33d50c50387162f0725ea0d270ae",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21264",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/nba_run71_deploy_20261009.py",
+      "sha256": "a2bc4bc7717788c1d7294a97f058df92c045253dcd6e8b0a7d634183bf7ac09e",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21265",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/progreso.md",
+      "sha256": "41a981d2208527ba91c225ad9fedb90247c4db9208deb159b7b39c34e61e338d",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21266",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/seal_nba_run71_20261009.py",
+      "sha256": "d7c87d836d3b0ba1a6711588b382efd20fa42ff4ae42d001d2bbebdfcd7ea7c2",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21267",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/styles.css",
+      "sha256": "0b715e6f3e26a6ae8209892d018d6b56f5abe52a66b4950971bffdbacd7d76dc",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21268",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/tareas.md",
+      "sha256": "7406f98fb1d1ef7f118135346d2886834e0534c1d0d21393aed6a689c63d6eb6",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21269",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/test_dashboard.py",
+      "sha256": "5d09ea4d9854ae4f70b68a3505f9267291abcbba43544ae2628d27d659ea30d0",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21270",
+      "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/test_multimarket.py",
+      "sha256": "091b90f66e262e1a69125f7ef784fbce10a8384ce4d6be1d3b7fddf9c4ea7f7b",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21271",
+      "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/checkpoint.json",
+      "sha256": "557ff1cee537e4196a0d3280c15e050697e13a455d1195b6fe23201713a038af",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21272",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/browser_verification.json",
+      "sha256": "e6e9fde1e10ae43b82e7fed387d1787b7814dd71db095c43044af38fa39ba887",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21273",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/build.tar.gz",
+      "sha256": "59dc008bb31ce19b0767c650772cd3daadfe7d03f856292d9bc11e2dfbd33934",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21274",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/bundle.json",
+      "sha256": "9938597f0c6eec29cb2a77381d71422d49ca4e7a118d5cbafcf66b6c7b944325",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21275",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/bundle.seal.json",
+      "sha256": "4ac3757c0d6ea77455bffffc73f6051d41495302625e9b3f2cd2733aae96090f",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21276",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/comparison.json",
+      "sha256": "ad889ddb1f1c6bf8605558e1613417fccc405d246983e8343b027a96b8ee2f5b",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21277",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/data/coverage.json",
+      "sha256": "2bc135bf2ada755b17353cdbcc28080387c520a24e1f9337e8683965363638a7",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21278",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/data/games.json",
+      "sha256": "e4415b7bec432adbf39f10348fb47e6a04652387b29c934750c2530451823213",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21279",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/data/players.jsonl.gz",
+      "sha256": "3c37c3d0171e892c6d76f5a85075322001eccfa3fd4735141335c5a23e369965",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21280",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/deployment_protocol.json",
+      "sha256": "eb40c16b829338cbab3364da597c6488960465fc71718ae38b9c8f6a3f1a8486",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21281",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/deployment_result.json",
+      "sha256": "7a16b0a4e0e5b8d8a089bb595b1fba68929069d0f4f071169ae8671ed7db1afa",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21282",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/evaluation_protocol.json",
+      "sha256": "c45dd832067cd663ea6a95d295e706f32f9c52b455e5c8e9060919b3806cfcda",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21283",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/excluded_regular_games.json",
+      "sha256": "28e16cc2c5f539af2313df58a75578fb76e5ff824090c9fc4360f4a1a0597b37",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21284",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/model.json",
+      "sha256": "ce7608f511b2a5097660a0d0b8fdba0cfdcc087b0213515f95e2a2cd805dd50c",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21285",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/preliminary_uncalibrated_baseline/comparison.json",
+      "sha256": "01459294eac2290ad1b1dd27c1556a3c2e440d846b46a8aaeb10e8e5ef87b8e8",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21286",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/preliminary_uncalibrated_baseline/model.json",
+      "sha256": "6aed2f058fa0828ed3306033960d4cc903d44024c107dbe149978e75af30b441",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21287",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/prior_evidence_verification.json",
+      "sha256": "6794e541f64ef8326c1155b835fcf6ef30f07396f08acecbe7c7de5c0d808693",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21288",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/prior_ledger.json",
+      "sha256": "785c22f5e248486d1a7c73d0d7d1ee2cb6acd65f9f6ab1632d29144e4aa5e0a6",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21289",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/prior_registry.json",
+      "sha256": "dec021f494f2e265d73d5da6c9bad9da19b3c24576d9257165b7339a6390939b",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21290",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/protocol.json",
+      "sha256": "702e7346f993852c7ec9240b47ffa6f7398b25c2c4c8e0e5f5a50d1ebba20bc0",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21291",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/public_models.jpg",
+      "sha256": "f63829f9cd58b43b2f6c98a152cbd79b1117a462ee147cd3b7f82af098be9aa6",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21292",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/suite_counts.json",
+      "sha256": "819995ea6d4b34839f9618526ca29f316e720f47565e9a53747acc372911f87b",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21293",
+      "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/verification.json",
+      "sha256": "1c407681e1bfa61a31e443f07e667531c564aabb4a2169dcb409e75dea2d269f",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21294",
+      "path": "apps/nba/.local/reports/nba_run71_deploy_20261009.log",
+      "sha256": "5c141dcd4c15b4f580201737bab19725e542593e661cb6a712f0321f48bf168e",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21295",
+      "path": "apps/nba/.local/reports/nba_run71_evaluate_20261009.log",
+      "sha256": "a482ceba5f59fe895e5ac98709e7e1657f8128c742248efe1f629af8dae9be25",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21296",
+      "path": "apps/nba/.local/reports/nba_run71_evaluate_v2_20261009.log",
+      "sha256": "772c79316a7366891bb15722c7fdf41a9563ca1d242c59874e81298c7b985764",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21297",
+      "path": "apps/nba/.local/reports/nba_run71_integration_20261009.log",
+      "sha256": "4c90a46f3db300c27de83a1e8cc25b77221e7637ab5dc5eb63904962dbea01db",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21298",
+      "path": "apps/nba/.local/reports/nba_run71_models_test_20261009.log",
+      "sha256": "b64869d26f20212968b173ee365233c7ba45d9e7864a63c7e405567d43a344c0",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21299",
+      "path": "apps/nba/.local/reports/nba_run71_models_test_v2_20261009.log",
+      "sha256": "68b55ed0f7e9703cc60f37829538f7c811015786888242e668239afe3c7268c7",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21300",
+      "path": "apps/nba/.local/reports/nba_run71_models_test_v3_20261009.log",
+      "sha256": "6e47bf78d974bec9b434a69c91eb9b1876b9292cd027f4ff4da14a1cf0a5c12e",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21301",
+      "path": "apps/nba/.local/reports/nba_run71_post_20261009.log",
+      "sha256": "edddfcfeaec087cf65374ff2735101876cae502afb5d2b674c6726cb18d597ec",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21302",
+      "path": "apps/nba/.local/reports/nba_run71_pre_20261009.log",
+      "sha256": "f9978f414e7b5edee940f7cbc46bc4dde4d5fbba12824516f64018c63b7b5533",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21303",
+      "path": "apps/nba/.local/reports/nba_run71_suite_20261009.log",
+      "sha256": "077bc9d94b7740d13975894776abe5ee14e15c439962d202418b8da414c68c84",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
+    },
+    {
+      "evidence_id": "NBA-EV-21304",
+      "path": "docs/nba_nueve_mercados_estadistica_20261009.md",
+      "sha256": "ad07209842968a8fc8658023d888dc6a38bd33d50c50387162f0725ea0d270ae",
+      "recorded_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "external_anchor": false
     }
   ],
   "run_records": [
@@ -294488,6 +295500,2022 @@
         "NBA-EV-21159",
         "NBA-EV-21160"
       ]
+    },
+    {
+      "run_id": "NBA-RUN-069",
+      "phase_or_experiment": [
+        "F6 public readonly pilot dashboard and verified official result projection"
+      ],
+      "responsible": "Isolated NBA research",
+      "reviewer_or_self_review_disclosure": "self review; no independent reviewer",
+      "created_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "git_commit": "b841ba2c1ae5c994e7653ce89f07dd1ed58bad30",
+      "working_tree_state": " M Caddyfile\n M apps/nba/README.md\n M docker-compose.yml\n M harness/progreso.md\n M harness/tareas.md\n?? apps/nba/ops/Dockerfile.dashboard\n?? apps/nba/src/nba/dashboard.py\n?? apps/nba/tests/test_dashboard.py\n?? apps/nba/web/\n?? docs/nba_pagina_pronosticos_resultados_20261009.md\n",
+      "source_hashes": [
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/Caddyfile",
+          "sha256": "d12135829b21012074c5efbebf73b458aae24918b5802c3cabd6524778085752"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/Dockerfile.dashboard",
+          "sha256": "7468dda7e2dcf055ad80d1ee091a0eb41c27c9a744fb4c45d14ba9e25a2e5fe8"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/README.md",
+          "sha256": "c8b4ac10633c63fa30405c74d528a78be86e9ced555431655ca20206850929e7"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/app.js",
+          "sha256": "29d5bf1f07f6017845f0648f4c7dd7f0a2ed54fbb91dae868c661399f85f1499"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/dashboard.py",
+          "sha256": "41212c6ff554737fab06e6205bbdedf1309991d047d57371359c9903497a2260"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/docker-compose.yml",
+          "sha256": "cf3a5acfef3ea6893003bb4a4be4751a132dccdb897c8c3b09981060f0712eeb"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/index.html",
+          "sha256": "1100a26daf4311c4dbcf9dd3c7ed17ede14149eb0aa67afe53cf814226ac9b5c"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/make_run69_live_v2.py",
+          "sha256": "34016e3c3ebf91731b30c44983c6a4a4189c23c1e406ef4d087e1df66e7c7aa1"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/make_run69_v4.py",
+          "sha256": "01a8098e09b566e080ef1ebb51abae5e92d8b8dada7a989b0e10f5c50994ac6c"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/manifest.json",
+          "sha256": "6c3870660f40d0015956925e3251b8e618c5d663db0acc4bbbec21a58e4216b8"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_pagina_pronosticos_resultados_20261009.md",
+          "sha256": "2bb436c348f835ab13a163c5745eca31c6cb9adaa1c627d2892ef3f2ee36b0de"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_deploy_20261009.py",
+          "sha256": "167a4662e4eb1e79e1132427b5f281bd8d85c999782357df148c95f9d34b88e1"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_live_20261009.py",
+          "sha256": "25e62774fa0719a44a0646b8bff202688d43236f8d583a9e873d98163f852b7c"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_live_v2_20261009.py",
+          "sha256": "0b0582c666ff5823d6081e63a56479216c2e7df1a2087fa9f3d90ccfaede0241"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_preview.py",
+          "sha256": "1316d61b5c380738da1e08a86cf7ff45f3e2d25de8d9f757d20a76527fa86779"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_recover_20261009.py",
+          "sha256": "b378d1cd4cf87fb3e40d109ddc816a6ef989772e5d127a8340f8915bd79ca859"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_recover_v3_20261009.py",
+          "sha256": "7af9774afa5fe760e4dd71a626eac9963f373a60f52963539a3ac20226fd300c"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/nba_run69_recover_v4_20261009.py",
+          "sha256": "78a45a2413859c89f7b068f2ec1373b9cda41862cb7838f197984de84455e691"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/progreso.md",
+          "sha256": "fc059379c3fb5d8111817ff3a0e5c895a6fa2d81756e7e1fb72c1472f056b1b5"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/seal_nba_run69_20261009.py",
+          "sha256": "170c64bf2f996bc307ae5f8a86409c868610cc46e5dce2f382c10d1b8f5f0473"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/styles.css",
+          "sha256": "00271c831d70d7186f7cf3be8cbecbe65a852d8fc246bb584e0efd094dceee5d"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/tareas.md",
+          "sha256": "bfe1601bac0a993ca01d3d38238b06f5906a1c9f735dd787c4c72c3d0c8724b1"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run69_final_20261009/test_dashboard.py",
+          "sha256": "ed6e62bf552e9395172589077bc64e1a9c6d70cdc180351ac6a384a029b9145a"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run68_20261009/postseal_verification.json",
+          "sha256": "9e0416910d94171c48947552a6812f0e868ad439a112510e8b8ba9d3a576cd48"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/Caddyfile.before",
+          "sha256": "79fbeffbfe76c0b4d03de8d8afc659e58a335ac84b205a7dcf7c1278460e7693"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/browser_snapshot.txt",
+          "sha256": "347e3e78526f4c43a94adbe4f739608a5da3197e1fe1eed247c92e5e8c0cec2a"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/browser_verification.json",
+          "sha256": "1ea4c4feb2eda9fc4ab0230103d0a775e7acce89af787585e3b499ddc71c6526"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/build.tar.gz",
+          "sha256": "d17f7ccc2e700c193431d351b4ce63706c383d9c58301d3860f25720aa4eb621"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_protocol.json",
+          "sha256": "469f216f59de85ade667c2a950daf6495cec5fef0db6d88c1e595bc8b565d902"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result.json",
+          "sha256": "ec5b0cd20cfdd32e21d6cf1e0cdf24244a99d76929efdebe65cc1adc06c46cf4"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result_v2.json",
+          "sha256": "24c44d1b396d5a74f805f2d409cb0b788b2b9c72646f7c7f2c65abab078ed999"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result_v3.json",
+          "sha256": "ed697c96820ce39d2e8f7a39bf192ff39202e4bf54645cbe965c3c34f892b5e4"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/deployment_result_v4.json",
+          "sha256": "1229bd5ee43c0411f25bcdaf717187946373d83a6718eeb8c0e68dbf184ed28f"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/desktop.jpg",
+          "sha256": "6baea04b968ee68c108cfef24ce54edfa44e73a169074927144b93a49d0b6ea3"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/live_public_snapshot.json",
+          "sha256": "3ac1f65ce8617de74e7dc77928465c771a749f0fca862fc8b7f50fe35c66b381"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/live_verification_v2.json",
+          "sha256": "cd88dab6a72da1fed6cf9f29012db5c906554a903ead373b1615fe6513fad74d"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/pagina_publicada.jpg",
+          "sha256": "03e94408887d55f1f809432726c1af5f994b85b8c6093f5da965c715c54c340b"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/prior_ledger.json",
+          "sha256": "66e4f18b666c6c988913f2746e2e171cf211c0ddeb4c11e4ef53fe791226c620"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/prior_registry.json",
+          "sha256": "f1a47afdbf79e16dc10445e51cc4759d7dbddc1518e68af4bdd715c4c4555fac"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/public_html_received.html",
+          "sha256": "b2ffeae4cc6bdb4ee1f72a1b01b259060b97682dd412ba63478b3a55d07134d9"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/public_snapshot.json",
+          "sha256": "714564256e59ec591e92a28e9cd30c9e75cc3e4a2da778dcbe7d85ae93b69f52"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/public_snapshot_v4.json",
+          "sha256": "7fd41d5e6f37e18510a2e877d267fca62baf6dd661c6bfb77ef19cffb2ed23f6"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/recovery_protocol.json",
+          "sha256": "5067d0d61e070163b0eaa3ccd68aa5b600d5d52e08261c4775e3bfc4ab48092f"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/recovery_protocol_v3.json",
+          "sha256": "416bebd9cced07c0a32de25c50b8fa5df989c0a2f83b6eadd99338acec1ea4f2"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/recovery_protocol_v4.json",
+          "sha256": "9cea1582bb9c4ef94cf6eb8b019ac591b545cbfaafa4e14469288cfdc37c84b8"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/verification.json",
+          "sha256": "b3351e3fe23d7a9ed64a23ce44685e07fbd460380843c5d6ea3b999346d5f85f"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_all_20261009.log",
+          "sha256": "ccd0caad8cd611abce917efeb906b1abc4bbde6875b9941d610e88f9b9a24995"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_deploy_20261009.log",
+          "sha256": "5ccf4d818d7eefb1585391eae6cf931939f8f43974ea4c0a2867102ba422ac08"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_live_20261009.log",
+          "sha256": "dbdec5878163589d894926bee2c0c4cebcab171281066e8cd5031c301b3cc67a"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_live_v2_20261009.log",
+          "sha256": "78640a55217dd72f9168f43e577e78d7a75c4b5711e7644ac31a47afe5f1bda1"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_post_20261009.log",
+          "sha256": "bea0344546137b3f17920f15f6d405f50463c6d222fb2dee00f84e0bd9275e42"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_pre_20261009.log",
+          "sha256": "fd6ed4641fb800e3672a6a75a1bb62bcceaf922d05ebc2bdf8a46a0d5f95b8aa"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_recover_20261009.log",
+          "sha256": "35020fda7113fbf92956d0b9aa2bed0184aa636860ff8d8de495bfd05fabce71"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_recover_v3_20261009.log",
+          "sha256": "f7911a1e7002091748f3e139059e57729b5509aa859f3919a19db8db234a1963"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_recover_v4_20261009.log",
+          "sha256": "79cc94a82558ced57317e489e05b681d0ee4fe27ffdb08ec62d820a4ef581331"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_target_20261009.log",
+          "sha256": "eac4c236a1bd9cf1eb38b12e8cbf548eeab160134eaf8d1b37ae715c2e90a1e4"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_target_v2_20261009.log",
+          "sha256": "9d898f63144fd1835926404c35b2b9e05edf3679179423f65241edcb904643d4"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run69_target_v3_20261009.log",
+          "sha256": "4f8c6462fe97e13e5583084ec906a0bd877e939986dcc0218c02755bfc092159"
+        },
+        {
+          "path": "docs/nba_pagina_pronosticos_resultados_20261009.md",
+          "sha256": "2bb436c348f835ab13a163c5745eca31c6cb9adaa1c627d2892ef3f2ee36b0de"
+        }
+      ],
+      "configuration_hash": "9cea1582bb9c4ef94cf6eb8b019ac591b545cbfaafa4e14469288cfdc37c84b8",
+      "model_hash": "41212c6ff554737fab06e6205bbdedf1309991d047d57371359c9903497a2260",
+      "as_of": "2026-10-09T15:09:30.948756+00:00",
+      "dataset_range": {
+        "paper": "original15futureunits, threeOct20NBAevents",
+        "results": "zero official results available today"
+      },
+      "seed": 20261009,
+      "command": "pre harness; dashboard tests; all558NBA; four authorized deploy attempts with rollback; actualHTTPS/restart/browser; post800root; checkpoint190",
+      "runtime_version": {
+        "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "platform": "win32",
+        "VPS_dashboard": "Python3.12 Docker stdlib HTTP"
+      },
+      "assumptions": [
+        "Human explicitly requested publication of prediction/result page on existing VPS.",
+        "Only preregistered sealed15forecasts exposed; historical quote timestamps retained, no contemporary quotes invented.",
+        "Future results appear only after journal/seal/receipt/raw body verification, DNP separate from zero.",
+        "No sportnetwork requests/models initiated by the page; original finite pilot lifecycle controls remain.",
+        "Readonly source mounts, no private credentials, exact public schema/routes, admin barriers retained.",
+        "Browser page/filters tested at actual700px; requested390px ignored and visual QA pending.",
+        "All attempts and rollback proofs preserved; same-container proxy restarts briefly interrupted proxy traffic.",
+        "No new periodic copies or actual bets; scientific/account gates unchanged."
+      ],
+      "metrics_with_intervals": {
+        "result": "passed",
+        "reviewer": "self review; no independent reviewer",
+        "prior_runs_preserved": 68,
+        "prior_evidence_preserved": 21160,
+        "prior_ledger_prefix_preserved": 185,
+        "public_URL": "https://pronosticosdeportivos.pro/nba",
+        "public_totals": {
+          "predictions": 15,
+          "players": 5,
+          "events": 3,
+          "evaluated": 0,
+          "dnp": 0,
+          "validation_holds": 0
+        },
+        "sealed_forecasts_preserved": true,
+        "verified_results_replayed_from_original_official_body": true,
+        "explicit_DNP_separate_from_zero": true,
+        "read_only_source_mounts": true,
+        "readonly_ledger_verification": true,
+        "private_credentials_not_mounted": true,
+        "whitelist_public_schema": true,
+        "exact_route_whitelist": true,
+        "public_page_loaded_in_browser": true,
+        "browser_filters_verified": [
+          "market",
+          "player",
+          "event",
+          "results"
+        ],
+        "historical_quote_details_verified": true,
+        "observed_viewport": {
+          "width": 700,
+          "height": 572
+        },
+        "mobile_visual_validation": false,
+        "remaining_UI_validation": "browser ignored viewport override; actual390px visual inspection still pending",
+        "proxy_route_and_network_persist_after_restart": true,
+        "dashboard_restart_verified": true,
+        "football_preserved": true,
+        "root_tests_passed": 800,
+        "root_tests_skipped": 16,
+        "NBA_tests_passed": 558,
+        "NBA_tests_skipped": 2,
+        "paid_API_calls_now": 0,
+        "additional_sports_provider_calls_from_web": 0,
+        "operational_bets": 0,
+        "periodic_copies": false,
+        "production_ready": false,
+        "scientific_confirmation_started": false,
+        "gates_promoted": false,
+        "failures_preserved": [
+          "missing test fixture import",
+          "Windows TCP reset on rejected POST; fixed body drain",
+          "stale proxy bind inode; first deployment rolled back",
+          "premature initial/restart readiness checks; rolled back",
+          "initial browser domain block and unavailable localhost preview; public page subsequently loaded",
+          "ignored viewport override; mobile visual QA pending",
+          "HTML exact match failed on existing CDN analytics injection; corrected comparison"
+        ],
+        "deployment_failures_resolved": true
+      },
+      "missingness": {
+        "future_official_results": true,
+        "final_player_availability": true,
+        "mobile_visual_QA": true,
+        "scientific_confirmation": true,
+        "real_account_contracts": true,
+        "historical_original_receipt": true
+      },
+      "failures": {
+        "three_deployments_rolled_back": true,
+        "fourth_deployment_passed": true,
+        "CDN_comparison_corrected": true,
+        "mobile_viewport_ignored": true
+      },
+      "result": "Public pilot page liveHTTPS with15sealedforecasts and verifiedfutureoutcomeprojection; filters/restart/originalstate/admin/football verified.",
+      "reason": "Provide user a working public URL for NBA predictions and official results without inventing unreceived outcomes or altering research gates.",
+      "evidence_ids": [
+        "NBA-EV-21161",
+        "NBA-EV-21162",
+        "NBA-EV-21163",
+        "NBA-EV-21164",
+        "NBA-EV-21165",
+        "NBA-EV-21166",
+        "NBA-EV-21167",
+        "NBA-EV-21168",
+        "NBA-EV-21169",
+        "NBA-EV-21170",
+        "NBA-EV-21171",
+        "NBA-EV-21172",
+        "NBA-EV-21173",
+        "NBA-EV-21174",
+        "NBA-EV-21175",
+        "NBA-EV-21176",
+        "NBA-EV-21177",
+        "NBA-EV-21178",
+        "NBA-EV-21179",
+        "NBA-EV-21180",
+        "NBA-EV-21181",
+        "NBA-EV-21182",
+        "NBA-EV-21183",
+        "NBA-EV-21184",
+        "NBA-EV-21185",
+        "NBA-EV-21186",
+        "NBA-EV-21187",
+        "NBA-EV-21188",
+        "NBA-EV-21189",
+        "NBA-EV-21190",
+        "NBA-EV-21191",
+        "NBA-EV-21192",
+        "NBA-EV-21193",
+        "NBA-EV-21194",
+        "NBA-EV-21195",
+        "NBA-EV-21196",
+        "NBA-EV-21197",
+        "NBA-EV-21198",
+        "NBA-EV-21199",
+        "NBA-EV-21200",
+        "NBA-EV-21201",
+        "NBA-EV-21202",
+        "NBA-EV-21203",
+        "NBA-EV-21204",
+        "NBA-EV-21205",
+        "NBA-EV-21206",
+        "NBA-EV-21207",
+        "NBA-EV-21208",
+        "NBA-EV-21209",
+        "NBA-EV-21210",
+        "NBA-EV-21211",
+        "NBA-EV-21212",
+        "NBA-EV-21213",
+        "NBA-EV-21214",
+        "NBA-EV-21215",
+        "NBA-EV-21216",
+        "NBA-EV-21217",
+        "NBA-EV-21218",
+        "NBA-EV-21219"
+      ]
+    },
+    {
+      "run_id": "NBA-RUN-070",
+      "phase_or_experiment": [
+        "F6 public football to NBA navigation and existing retrospective dataset inventory"
+      ],
+      "responsible": "Isolated NBA research and public frontend",
+      "reviewer_or_self_review_disclosure": "self review; no independent reviewer",
+      "created_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "git_commit": "eb15f54e3c527764da6fb4e48d8f9e8fc347fdff",
+      "working_tree_state": " M Caddyfile\n M apps/nba/README.md\n M docker-compose.yml\n M docs/nba_plan_fases_auditoria.json\n M frontend/app.js\n M frontend/index.html\n M frontend/styles.css\n M harness/progreso.md\n M harness/tareas.md\n?? apps/nba/ops/Dockerfile.dashboard\n?? apps/nba/src/nba/dashboard.py\n?? apps/nba/tests/test_dashboard.py\n?? apps/nba/web/\n?? docs/nba_menu_e_historico_20261009.md\n?? docs/nba_pagina_pronosticos_resultados_20261009.md\n",
+      "source_hashes": [
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/app.js",
+          "sha256": "ad3d300ce144b898b46fe74566e89197d704153f6edc2f7cf44a91ad12f23b6b"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/docker-compose.yml",
+          "sha256": "9fb4c73f1648f72696be1aea088a8d8e1ce76b00b5004bc6a502a3805203e525"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/index.html",
+          "sha256": "ff477e8dfaf351653f1294aab5637b5e3e79c3e7df8cc9950af0be074b41b974"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/manifest.json",
+          "sha256": "034357f014dd99728f27ac5b5b26a4407b3455ba6ef970bf8fd0dcc8bd7107e2"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_menu_e_historico_20261009.md",
+          "sha256": "753c5e20880663eb132d45ee11cb54e5b284c479202ade91ef39a2c09b247b3e"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_deploy_20261009.py",
+          "sha256": "f8e24775bcc8ba342d2bca33c14f70785606ed5f24581774fbacd487c0df0e02"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_menu_edit_20261009.py",
+          "sha256": "de1950fddb9759907a350d7f014efba953c5deb24daa9774f9f0c85bbe1f978b"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_prepare_20261009.py",
+          "sha256": "f606fac4d80a974144b1ed4e9f4b4a8f0f9447627e8c8027e9f7f2f9b5640f68"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/nba_run70_recover_20261009.py",
+          "sha256": "0eaf4700a294f0d7e2c3a453db3af226491037a9fe86dc032c82aa0c51b6c18f"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/progreso.md",
+          "sha256": "63fc524ee5d2c618c5e1dc1636d7de7dcc37ae5b668cda477a6e88ccd7da566a"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/seal_nba_run70_20261009.py",
+          "sha256": "8fb1c6411f357f802990b13b7e17698edc551db90af664ad901893b5203d3f73"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/styles.css",
+          "sha256": "387c3ae173c266e14a5ef66634659d80b4fb8ea30e0d8c977c95dd6388e9a7d4"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run70_final_20261009/tareas.md",
+          "sha256": "0d82ef464cd111fe79bd27a49e622596f44a0295162db94a434f89e9908c2db5"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run69_20261009/postseal_verification.json",
+          "sha256": "18b98703368a3cfaff08e2d28b2466293e37f7f16b8d7c7d9f4f1be5fbfb882b"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/browser_snapshot.txt",
+          "sha256": "e7cfb1f830607382fb414ab58412bcb383326db3f92a55ac92b4cabc95ec7b4c"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/browser_verification.json",
+          "sha256": "858b123171123b419b95c733c7af33896f36c8e03bf4ed1c3a518da81c9fd6bf"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/deployment_protocol.json",
+          "sha256": "31e5c22d6e4b81724c7a76e3800071b23344599c596a2311d5af5a07f167b1f0"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/deployment_result.json",
+          "sha256": "f49fc403eef9d7aa452e5ccee8b56566cd9db89fcb509bc2f90c3363880f801b"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/deployment_result_v2.json",
+          "sha256": "548a692ae2173ea318c81e5516d34d1fede4b80e07bfff4563510beccea65f2f"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/historical_inventory.json",
+          "sha256": "5a28a33f45ae01493976d8723e0d3a7c1e1ed81c670776c9263dc8b30dbe06d8"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/menu_futbol_nba.jpg",
+          "sha256": "bf9185b4b8e0ea580a9e7951b5a60a69882a12d2003ed814b74ec07daac7f712"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_frontend/app.js",
+          "sha256": "c9d63c3a0d05208f6b4549e8bbe4c574879f5881c3d03e458748b7086c7438f4"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_frontend/index.html",
+          "sha256": "f685eb2aa287023ed121cbff6271dfa11491f6fbf65be09d9b5a5ab15e2d3624"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_frontend/styles.css",
+          "sha256": "c57be112cf10f74a1353a85260f1a14b3df8bc1814220e26faf9cc9887a25ea3"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_ledger.json",
+          "sha256": "a43b060f1db3bd3043dfe066a188a462d230f738b5e40b644826a7de1f0b4a20"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_registry.json",
+          "sha256": "eb877d5dcee36d1020e564bb9715ada6185f27856c77a3ea2a66218d184f2e39"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/prior_web_hashes.json",
+          "sha256": "0a1ab8cbbf4f4550faf860df08042d0d9af919bd946e0f8a84700536307e1155"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/recovery_protocol.json",
+          "sha256": "d9097cf050183889593ec4f54ce0dff945066c459b598999e4ac39ba682cbba7"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/verification.json",
+          "sha256": "ea3c60ddf5edb64e6ef5cecfb8be8344acb05ea5b871e4b18b5a94c5f02e9891"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run70_deploy_20261009.log",
+          "sha256": "e48111a76e28fe95370d4cdbc64c3a9f00f415824dc2bdd79d75fb4facd450de"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run70_frontend_20261009.log",
+          "sha256": "ddad8ca633a19bf8eb3f4e3b796a5f6986cefafea9ce6d13562e937ce27280dd"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run70_post_20261009.log",
+          "sha256": "e0a3b7ad294906886c6b161ceb9fd9c666cd2ad1cad7f8027ba0c1e608c4f412"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run70_pre_20261009.log",
+          "sha256": "e1149643bfeb3871368e4a95f2f6b993cb4235fa257c592cb971fef4067a858a"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run70_prepare_20261009.log",
+          "sha256": "577901f88c609fd8b6529d2311822f969dbbccf52e8d3a0375587fce0982c907"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run70_recover_20261009.log",
+          "sha256": "dfd6b12cd579bd340fcabb3b18fa88992152f9ec1a9c2223d3d4f914b0e48be9"
+        },
+        {
+          "path": "docs/nba_menu_e_historico_20261009.md",
+          "sha256": "753c5e20880663eb132d45ee11cb54e5b284c479202ade91ef39a2c09b247b3e"
+        }
+      ],
+      "configuration_hash": "d9097cf050183889593ec4f54ce0dff945066c459b598999e4ac39ba682cbba7",
+      "model_hash": "41212c6ff554737fab06e6205bbdedf1309991d047d57371359c9903497a2260",
+      "as_of": "2026-10-09T15:59:54.797Z",
+      "dataset_range": {
+        "first_date": "2021-10-19",
+        "last_date": "2026-06-13",
+        "pilot": "original15futureunits, no outcomes today"
+      },
+      "seed": 20261009,
+      "command": "pre800root; hash/count historical file; menu/CSS/version edits; first deployment rollback; readiness recovery; browser roundtrip;24frontend;post800root;checkpoint193",
+      "runtime_version": {
+        "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "platform": "win32",
+        "frontend": "JavaScript ES modules; existing FastAPI deployment"
+      },
+      "assumptions": [
+        "User requested public sport selector on existing football page.",
+        "Historical game data is not a preregistered historical prediction performance record.",
+        "Same sealedNBA15forecasts and finite followup lifecycle preserved; no new models/results.",
+        "Derivative image contains exactly current backend layers and one layer with3publicassets, no private files.",
+        "Only footballAPI recreated; worker/database/proxy/NBA unchanged and admin barriers retained.",
+        "Browser roundtrip verified1280x720; actual390px visual QA remains pending after override ignored.",
+        "No direct NBA odds provider calls, wagers, scientific gate changes or new periodic copies."
+      ],
+      "metrics_with_intervals": {
+        "result": "passed",
+        "reviewer": "self review; no independent reviewer",
+        "prior_runs_preserved": 69,
+        "prior_evidence_preserved": 21219,
+        "prior_ledger_prefix_preserved": 190,
+        "football_URL": "https://pronosticosdeportivos.pro/",
+        "NBA_URL": "https://pronosticosdeportivos.pro/nba",
+        "historical_player_game_rows": 164218,
+        "historical_unique_game_ids": 6313,
+        "historical_first_date": "2021-10-19",
+        "historical_last_date": "2026-06-13",
+        "retrospective_data_not_preregistered_forecast_performance": true,
+        "pilot_forecasts_preserved": 15,
+        "pilot_results_today": 0,
+        "frontend_only_image_layer": true,
+        "original_backend_layers_preserved": true,
+        "worker_database_NBA_preserved": true,
+        "football_to_NBA_verified": true,
+        "NBA_to_football_verified": true,
+        "desktop_viewport": {
+          "height": 720,
+          "width": 1280
+        },
+        "mobile_rules_implemented": true,
+        "mobile_visual_QA_verified": false,
+        "viewport_override_ignored": true,
+        "frontend_tests_passed": 24,
+        "frontend_tests_failed": 0,
+        "root_tests_passed": 800,
+        "root_tests_skipped": 16,
+        "failure_and_rollback_preserved": true,
+        "readiness_recovery_verified": true,
+        "paid_NBA_API_calls": 0,
+        "operational_bets": 0,
+        "periodic_copies": false,
+        "production_ready": false,
+        "scientific_confirmation_started": false,
+        "gates_promoted": false,
+        "statistical_performance_metrics_computed": false
+      },
+      "missingness": {
+        "preregistered_historical_forecast_performance": true,
+        "future_official_results": true,
+        "mobile_visual_QA": true
+      },
+      "failures": {
+        "first_startup_connection_reset": true,
+        "rollback_preserved": true,
+        "recovery_passed": true,
+        "mobile_viewport_ignored": true
+      },
+      "result": "Public footballheader provides NBA route and return;164218historicalplayergame rows verified;15pilotforecasts/0results preserved.",
+      "reason": "Make deployed NBA page discoverable from football and accurately describe existing historical record.",
+      "evidence_ids": [
+        "NBA-EV-21220",
+        "NBA-EV-21221",
+        "NBA-EV-21222",
+        "NBA-EV-21223",
+        "NBA-EV-21224",
+        "NBA-EV-21225",
+        "NBA-EV-21226",
+        "NBA-EV-21227",
+        "NBA-EV-21228",
+        "NBA-EV-21229",
+        "NBA-EV-21230",
+        "NBA-EV-21231",
+        "NBA-EV-21232",
+        "NBA-EV-21233",
+        "NBA-EV-21234",
+        "NBA-EV-21235",
+        "NBA-EV-21236",
+        "NBA-EV-21237",
+        "NBA-EV-21238",
+        "NBA-EV-21239",
+        "NBA-EV-21240",
+        "NBA-EV-21241",
+        "NBA-EV-21242",
+        "NBA-EV-21243",
+        "NBA-EV-21244",
+        "NBA-EV-21245",
+        "NBA-EV-21246",
+        "NBA-EV-21247",
+        "NBA-EV-21248",
+        "NBA-EV-21249",
+        "NBA-EV-21250",
+        "NBA-EV-21251",
+        "NBA-EV-21252",
+        "NBA-EV-21253",
+        "NBA-EV-21254",
+        "NBA-EV-21255"
+      ]
+    },
+    {
+      "run_id": "NBA-RUN-071",
+      "phase_or_experiment": [
+        "F5 exploratory statistics-first nine NBA markets",
+        "F6 independent sealed public42unit extension"
+      ],
+      "responsible": "Isolated NBA research and public dashboard",
+      "reviewer_or_self_review_disclosure": "self review; no independent reviewer",
+      "created_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "git_commit": "eb15f54e3c527764da6fb4e48d8f9e8fc347fdff",
+      "working_tree_state": " M Caddyfile\n M apps/nba/README.md\n M docker-compose.yml\n M docs/nba_plan_fases_auditoria.json\n M frontend/app.js\n M frontend/index.html\n M frontend/styles.css\n M harness/progreso.md\n M harness/tareas.md\n?? apps/nba/ops/Dockerfile.dashboard\n?? apps/nba/ops/Dockerfile.multimarket\n?? apps/nba/src/nba/dashboard.py\n?? apps/nba/src/nba/multimarket.py\n?? apps/nba/src/nba/multimarket_dashboard.py\n?? apps/nba/tests/test_dashboard.py\n?? apps/nba/tests/test_multimarket.py\n?? apps/nba/web/\n?? docs/nba_menu_e_historico_20261009.md\n?? docs/nba_nueve_mercados_estadistica_20261009.md\n?? docs/nba_pagina_pronosticos_resultados_20261009.md\n",
+      "source_hashes": [
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/Dockerfile.multimarket",
+          "sha256": "860511eb5a37c188ff7a778d0473c87a6c28264d3f92d14fbd55b86314c1d0be"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/README.md",
+          "sha256": "658a43fcd9eca1ecc337ce0e9508cc207378af229157cf4674531ecf63676171"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/app.js",
+          "sha256": "95bcf9cf90952aeaf850db4078da10e45dab7fbe5fa3b3308932bb576a5c07d9"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/index.html",
+          "sha256": "f55902aa66ee5acbda1a06fe9fc450fd2546ebd930398147cebfe15538307a1c"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/manifest.json",
+          "sha256": "dff54cf390c52bb64b62601b21ffc849107427c5ed026c61a1b83997c88c893b"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/multimarket.py",
+          "sha256": "4e274c966f4ee09dcbb0986091b3bcfefbf9ba3ee9c7a2fe8e71d62d369fdd82"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/multimarket_dashboard.py",
+          "sha256": "8d1f19fc50809e5d1bc0c13258a643673522ef521e5ef1bc3dec48b46fc1d46a"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/nba_nueve_mercados_estadistica_20261009.md",
+          "sha256": "ad07209842968a8fc8658023d888dc6a38bd33d50c50387162f0725ea0d270ae"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/nba_run71_deploy_20261009.py",
+          "sha256": "a2bc4bc7717788c1d7294a97f058df92c045253dcd6e8b0a7d634183bf7ac09e"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/progreso.md",
+          "sha256": "41a981d2208527ba91c225ad9fedb90247c4db9208deb159b7b39c34e61e338d"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/seal_nba_run71_20261009.py",
+          "sha256": "d7c87d836d3b0ba1a6711588b382efd20fa42ff4ae42d001d2bbebdfcd7ea7c2"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/styles.css",
+          "sha256": "0b715e6f3e26a6ae8209892d018d6b56f5abe52a66b4950971bffdbacd7d76dc"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/tareas.md",
+          "sha256": "7406f98fb1d1ef7f118135346d2886834e0534c1d0d21393aed6a689c63d6eb6"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/test_dashboard.py",
+          "sha256": "5d09ea4d9854ae4f70b68a3505f9267291abcbba43544ae2628d27d659ea30d0"
+        },
+        {
+          "path": "apps/nba/.local/code_snapshots/nba_run71_final_20261009/test_multimarket.py",
+          "sha256": "091b90f66e262e1a69125f7ef784fbce10a8384ce4d6be1d3b7fddf9c4ea7f7b"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run70_20261009/checkpoint.json",
+          "sha256": "557ff1cee537e4196a0d3280c15e050697e13a455d1195b6fe23201713a038af"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/browser_verification.json",
+          "sha256": "e6e9fde1e10ae43b82e7fed387d1787b7814dd71db095c43044af38fa39ba887"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/build.tar.gz",
+          "sha256": "59dc008bb31ce19b0767c650772cd3daadfe7d03f856292d9bc11e2dfbd33934"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/bundle.json",
+          "sha256": "9938597f0c6eec29cb2a77381d71422d49ca4e7a118d5cbafcf66b6c7b944325"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/bundle.seal.json",
+          "sha256": "4ac3757c0d6ea77455bffffc73f6051d41495302625e9b3f2cd2733aae96090f"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/comparison.json",
+          "sha256": "ad889ddb1f1c6bf8605558e1613417fccc405d246983e8343b027a96b8ee2f5b"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/data/coverage.json",
+          "sha256": "2bc135bf2ada755b17353cdbcc28080387c520a24e1f9337e8683965363638a7"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/data/games.json",
+          "sha256": "e4415b7bec432adbf39f10348fb47e6a04652387b29c934750c2530451823213"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/data/players.jsonl.gz",
+          "sha256": "3c37c3d0171e892c6d76f5a85075322001eccfa3fd4735141335c5a23e369965"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/deployment_protocol.json",
+          "sha256": "eb40c16b829338cbab3364da597c6488960465fc71718ae38b9c8f6a3f1a8486"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/deployment_result.json",
+          "sha256": "7a16b0a4e0e5b8d8a089bb595b1fba68929069d0f4f071169ae8671ed7db1afa"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/evaluation_protocol.json",
+          "sha256": "c45dd832067cd663ea6a95d295e706f32f9c52b455e5c8e9060919b3806cfcda"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/excluded_regular_games.json",
+          "sha256": "28e16cc2c5f539af2313df58a75578fb76e5ff824090c9fc4360f4a1a0597b37"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/model.json",
+          "sha256": "ce7608f511b2a5097660a0d0b8fdba0cfdcc087b0213515f95e2a2cd805dd50c"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/preliminary_uncalibrated_baseline/comparison.json",
+          "sha256": "01459294eac2290ad1b1dd27c1556a3c2e440d846b46a8aaeb10e8e5ef87b8e8"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/preliminary_uncalibrated_baseline/model.json",
+          "sha256": "6aed2f058fa0828ed3306033960d4cc903d44024c107dbe149978e75af30b441"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/prior_evidence_verification.json",
+          "sha256": "6794e541f64ef8326c1155b835fcf6ef30f07396f08acecbe7c7de5c0d808693"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/prior_ledger.json",
+          "sha256": "785c22f5e248486d1a7c73d0d7d1ee2cb6acd65f9f6ab1632d29144e4aa5e0a6"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/prior_registry.json",
+          "sha256": "dec021f494f2e265d73d5da6c9bad9da19b3c24576d9257165b7339a6390939b"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/protocol.json",
+          "sha256": "702e7346f993852c7ec9240b47ffa6f7398b25c2c4c8e0e5f5a50d1ebba20bc0"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/public_models.jpg",
+          "sha256": "f63829f9cd58b43b2f6c98a152cbd79b1117a462ee147cd3b7f82af098be9aa6"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/suite_counts.json",
+          "sha256": "819995ea6d4b34839f9618526ca29f316e720f47565e9a53747acc372911f87b"
+        },
+        {
+          "path": "apps/nba/.local/normalized/nba_f6_run71_20261009/verification.json",
+          "sha256": "1c407681e1bfa61a31e443f07e667531c564aabb4a2169dcb409e75dea2d269f"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_deploy_20261009.log",
+          "sha256": "5c141dcd4c15b4f580201737bab19725e542593e661cb6a712f0321f48bf168e"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_evaluate_20261009.log",
+          "sha256": "a482ceba5f59fe895e5ac98709e7e1657f8128c742248efe1f629af8dae9be25"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_evaluate_v2_20261009.log",
+          "sha256": "772c79316a7366891bb15722c7fdf41a9563ca1d242c59874e81298c7b985764"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_integration_20261009.log",
+          "sha256": "4c90a46f3db300c27de83a1e8cc25b77221e7637ab5dc5eb63904962dbea01db"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_models_test_20261009.log",
+          "sha256": "b64869d26f20212968b173ee365233c7ba45d9e7864a63c7e405567d43a344c0"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_models_test_v2_20261009.log",
+          "sha256": "68b55ed0f7e9703cc60f37829538f7c811015786888242e668239afe3c7268c7"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_models_test_v3_20261009.log",
+          "sha256": "6e47bf78d974bec9b434a69c91eb9b1876b9292cd027f4ff4da14a1cf0a5c12e"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_post_20261009.log",
+          "sha256": "edddfcfeaec087cf65374ff2735101876cae502afb5d2b674c6726cb18d597ec"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_pre_20261009.log",
+          "sha256": "f9978f414e7b5edee940f7cbc46bc4dde4d5fbba12824516f64018c63b7b5533"
+        },
+        {
+          "path": "apps/nba/.local/reports/nba_run71_suite_20261009.log",
+          "sha256": "077bc9d94b7740d13975894776abe5ee14e15c439962d202418b8da414c68c84"
+        },
+        {
+          "path": "docs/nba_nueve_mercados_estadistica_20261009.md",
+          "sha256": "ad07209842968a8fc8658023d888dc6a38bd33d50c50387162f0725ea0d270ae"
+        }
+      ],
+      "configuration_hash": "c45dd832067cd663ea6a95d295e706f32f9c52b455e5c8e9060919b3806cfcda",
+      "model_hash": "ce7608f511b2a5097660a0d0b8fdba0cfdcc087b0213515f95e2a2cd805dd50c",
+      "as_of": "2026-10-09T16:54:48.031083+00:00",
+      "dataset_range": {
+        "first_date": "2021-10-19",
+        "last_date": "2026-04-12",
+        "train": "2021-22",
+        "validation": "2022-23",
+        "exploratory_evaluation": "2023-24..2025-26",
+        "future_events": "2026-10-20..2026-10-21"
+      },
+      "seed": 20261009,
+      "command": "pre800root; recover strict157962rows; preliminary retained; fair calibrated evaluation; seal42;577NBA; isolateddeploy/restart;10filter browserQA;3integration;post800root;checkpoint197",
+      "runtime_version": {
+        "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "platform": "win32",
+        "frontend": "JavaScript; read-only Python service"
+      },
+      "assumptions": [
+        "User requested all NBA market models with statistics first and odds secondary.",
+        "Nine independent research markets; six player marginals are conditional on positive participation.",
+        "Historical original pregame receipt remains unknown; chronological retrospective evaluation is not prospective confirmation.",
+        "Only previously accepted exact NBA IDs/counts extend with original rawfields;42discrepantgames wholly quarantined.",
+        "Train2021-22 and equal calibration2022-23 precede exploratory2023-26; no target-day outcomes/features.",
+        "Lines are statistics-only reference thresholds, not real sportsbook offers.",
+        "Count distributions, normal team-score approximation and Elo winner are not one coherent jointdistribution.",
+        "Bootstrapgame clusters/descriptive intervals do not correct serialdependence, historicalmodelsearch or multiplecomparisons.",
+        "Points/rebounds70%selection calibration insufficient; rareblockaccuracy similar tosimplebaseline.",
+        "Original15seals/state/finite followup unchanged; new42read-only scoring reuses originalofficialreceipts.",
+        "Only ownedNBAwebreplaced; football/proxy unchanged, no credentials or paidAPIcalls.",
+        "Future availability/finals and scientific/commercial requirements remain unproven; allactionable=false.",
+        "MobilevisualQA remains pending; desktop1280x720 verified; no bets/newperiodiccopies."
+      ],
+      "metrics_with_intervals": {
+        "result": "passed",
+        "reviewer": "self review; no independent reviewer",
+        "prior_runs_preserved": 70,
+        "prior_evidence_preserved": 21255,
+        "prior_ledger_prefix_preserved": 193,
+        "NBA_URL": "https://pronosticosdeportivos.pro/nba",
+        "regular_player_rows": 157962,
+        "regular_games": 6108,
+        "quarantined_games": 42,
+        "markets": [
+          "game_total",
+          "player_assists",
+          "player_blocks",
+          "player_points",
+          "player_rebounds",
+          "player_steals",
+          "player_threes",
+          "team_points",
+          "winner"
+        ],
+        "independent_new_forecasts": 42,
+        "original_pilot_forecasts_preserved": 15,
+        "original_official_results_today": 0,
+        "original_state_and_football_preserved": true,
+        "fair_baseline_calibration": true,
+        "chronological_separation": true,
+        "statistical_probabilities_without_odds": true,
+        "comparison_metrics_and_intervals": {
+          "player_points": {
+            "observations": 74623,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.24444488636240835,
+            "baseline_brier": 0.24763188019569027,
+            "paired_brier_difference": -0.0031869938332818666,
+            "paired_brier_difference_95_ci": [
+              -0.0036058531040293108,
+              -0.002792531622805696
+            ],
+            "logloss": 0.6819379975572868,
+            "baseline_logloss": 0.6885089129477514,
+            "accuracy": 0.5624941371963068,
+            "baseline_accuracy": 0.5458102729721399,
+            "mae": 4.801391342892334,
+            "baseline_mae": 4.734081985446846,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 83,
+                "coverage": 0.001112257614944454,
+                "accuracy": 0.6506024096385542,
+                "baseline_accuracy_same_units": 0.6506024096385542,
+                "mean_probability": 0.7088088445836331
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 0,
+                "coverage": 0.0,
+                "accuracy": null,
+                "baseline_accuracy_same_units": null,
+                "mean_probability": null
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.1,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.2,
+                "count": 83,
+                "probability": 0.2911911554163669,
+                "observed": 0.3493975903614458
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 14894,
+                "probability": 0.37143543115333694,
+                "observed": 0.37478179132536593
+              },
+              {
+                "low": 0.4,
+                "count": 44377,
+                "probability": 0.44918531767109926,
+                "observed": 0.45124726772877843
+              },
+              {
+                "low": 0.5,
+                "count": 14704,
+                "probability": 0.5324180077825383,
+                "observed": 0.5374047878128401
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 565,
+                "probability": 0.6190677529811914,
+                "observed": 0.6283185840707964
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.8,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.9,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 0.24573479627349595,
+              "bias": -0.1588639061215182,
+              "observations": 24779,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "player_rebounds": {
+            "observations": 74623,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.24134313785659148,
+            "baseline_brier": 0.24477165311033178,
+            "paired_brier_difference": -0.0034285152537403417,
+            "paired_brier_difference_95_ci": [
+              -0.003936703985708474,
+              -0.0029140182101467854
+            ],
+            "logloss": 0.6756949472872181,
+            "baseline_logloss": 0.6836780528291291,
+            "accuracy": 0.5806654784717848,
+            "baseline_accuracy": 0.564289830213205,
+            "mae": 1.9554037467850156,
+            "baseline_mae": 1.9550366508985166,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 2474,
+                "coverage": 0.03315331734183831,
+                "accuracy": 0.65642683912692,
+                "baseline_accuracy_same_units": 0.6572352465642683,
+                "mean_probability": 0.7224515768626818
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 1,
+                "coverage": 1.3400694155957279e-05,
+                "accuracy": 1.0,
+                "baseline_accuracy_same_units": 1.0,
+                "mean_probability": 0.803431630851389
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.1,
+                "count": 1,
+                "probability": 0.196568369148611,
+                "observed": 0.0
+              },
+              {
+                "low": 0.2,
+                "count": 2424,
+                "probability": 0.27748636494493484,
+                "observed": 0.34282178217821785
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 21507,
+                "probability": 0.36046871814728276,
+                "observed": 0.36722927418979867
+              },
+              {
+                "low": 0.4,
+                "count": 34018,
+                "probability": 0.44821387853471795,
+                "observed": 0.4460285731083544
+              },
+              {
+                "low": 0.5,
+                "count": 14761,
+                "probability": 0.5376787634181148,
+                "observed": 0.5453560056906713
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 1863,
+                "probability": 0.6280081274679722,
+                "observed": 0.6457326892109501
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 49,
+                "probability": 0.7177289419172548,
+                "observed": 0.6122448979591837
+              },
+              {
+                "low": 0.8,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.9,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 0.6533272947542097,
+              "bias": -0.10056902126136588,
+              "observations": 24779,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "player_assists": {
+            "observations": 74623,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.2372029767526153,
+            "baseline_brier": 0.2420732458782869,
+            "paired_brier_difference": -0.004870269125671634,
+            "paired_brier_difference_95_ci": [
+              -0.005365756651017631,
+              -0.00425799054651044
+            ],
+            "logloss": 0.6670442217099944,
+            "baseline_logloss": 0.6790434538744133,
+            "accuracy": 0.5945217962290447,
+            "baseline_accuracy": 0.5719416265762567,
+            "mae": 1.4025867254375783,
+            "baseline_mae": 1.3890717339158167,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 6470,
+                "coverage": 0.08670249118904359,
+                "accuracy": 0.7149922720247295,
+                "baseline_accuracy_same_units": 0.7030911901081917,
+                "mean_probability": 0.7310318533844783
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 70,
+                "coverage": 0.0009380485909170095,
+                "accuracy": 0.7428571428571429,
+                "baseline_accuracy_same_units": 0.7428571428571429,
+                "mean_probability": 0.8123081188389383
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.1,
+                "count": 70,
+                "probability": 0.1876918811610616,
+                "observed": 0.2571428571428571
+              },
+              {
+                "low": 0.2,
+                "count": 6263,
+                "probability": 0.26966070853271057,
+                "observed": 0.2867635318537442
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 25462,
+                "probability": 0.3555998060422906,
+                "observed": 0.3626188044929699
+              },
+              {
+                "low": 0.4,
+                "count": 27623,
+                "probability": 0.44692811430623247,
+                "observed": 0.4507475654346016
+              },
+              {
+                "low": 0.5,
+                "count": 12551,
+                "probability": 0.539654404440396,
+                "observed": 0.5392399012030914
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 2517,
+                "probability": 0.6330191167424444,
+                "observed": 0.6237584425903854
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 137,
+                "probability": 0.721164530067257,
+                "observed": 0.781021897810219
+              },
+              {
+                "low": 0.8,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.9,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 0.32197440285603907,
+              "bias": -0.18169337122964882,
+              "observations": 24779,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "player_threes": {
+            "observations": 74623,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.21005878257461483,
+            "baseline_brier": 0.2139736872887849,
+            "paired_brier_difference": -0.003914904714170065,
+            "paired_brier_difference_95_ci": [
+              -0.004733280837289742,
+              -0.003132153676936556
+            ],
+            "logloss": 0.6050887243113894,
+            "baseline_logloss": 0.6105010545429638,
+            "accuracy": 0.6596089677445292,
+            "baseline_accuracy": 0.6412902188333356,
+            "mae": 0.9253767189982618,
+            "baseline_mae": 0.9078059043458451,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 30629,
+                "coverage": 0.41044986130281547,
+                "accuracy": 0.7789676450422802,
+                "baseline_accuracy_same_units": 0.7711319337882399,
+                "mean_probability": 0.7960799843484918
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 13935,
+                "coverage": 0.18673867306326467,
+                "accuracy": 0.878005023322569,
+                "baseline_accuracy_same_units": 0.876210979547901,
+                "mean_probability": 0.8560688094181089
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 906,
+                "probability": 0.0857189258184996,
+                "observed": 0.0673289183222958
+              },
+              {
+                "low": 0.1,
+                "count": 12992,
+                "probability": 0.14789592866951426,
+                "observed": 0.12569273399014777
+              },
+              {
+                "low": 0.2,
+                "count": 15963,
+                "probability": 0.25337708207143833,
+                "observed": 0.30144709641044914
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 17842,
+                "probability": 0.34913420428855774,
+                "observed": 0.37899338639166014
+              },
+              {
+                "low": 0.4,
+                "count": 14265,
+                "probability": 0.4466171082032365,
+                "observed": 0.45488958990536277
+              },
+              {
+                "low": 0.5,
+                "count": 8380,
+                "probability": 0.5444501345545648,
+                "observed": 0.523747016706444
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 3507,
+                "probability": 0.6400925279164529,
+                "observed": 0.6039349871685201
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 731,
+                "probability": 0.7325216723323952,
+                "observed": 0.6470588235294118
+              },
+              {
+                "low": 0.8,
+                "count": 37,
+                "probability": 0.8228138191145588,
+                "observed": 0.8378378378378378
+              },
+              {
+                "low": 0.9,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 0.25650629397685837,
+              "bias": -0.3189566599813208,
+              "observations": 24779,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "player_steals": {
+            "observations": 74623,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.22217716604239307,
+            "baseline_brier": 0.23211691007569438,
+            "paired_brier_difference": -0.009939744033301282,
+            "paired_brier_difference_95_ci": [
+              -0.010606796049358595,
+              -0.009262734806535129
+            ],
+            "logloss": 0.6353200528648594,
+            "baseline_logloss": 0.6595237004823673,
+            "accuracy": 0.6384626723664286,
+            "baseline_accuracy": 0.6185090387682082,
+            "mae": 0.7172204061888902,
+            "baseline_mae": 0.7263966873484046,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 21795,
+                "coverage": 0.29206812912908886,
+                "accuracy": 0.7559073181922459,
+                "baseline_accuracy_same_units": 0.7556320256939665,
+                "mean_probability": 0.7638387688731426
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 4545,
+                "coverage": 0.060906154938825834,
+                "accuracy": 0.8050605060506051,
+                "baseline_accuracy_same_units": 0.8050605060506051,
+                "mean_probability": 0.8365710350788658
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 232,
+                "probability": 0.08725797128163033,
+                "observed": 0.1810344827586207
+              },
+              {
+                "low": 0.1,
+                "count": 4313,
+                "probability": 0.1675262685437553,
+                "observed": 0.1956874565267795
+              },
+              {
+                "low": 0.2,
+                "count": 17234,
+                "probability": 0.2553002592560061,
+                "observed": 0.2569919925728212
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 22457,
+                "probability": 0.3495850881465224,
+                "observed": 0.351471701473928
+              },
+              {
+                "low": 0.4,
+                "count": 19096,
+                "probability": 0.4480018681848408,
+                "observed": 0.4644951822371177
+              },
+              {
+                "low": 0.5,
+                "count": 9920,
+                "probability": 0.5395246675987875,
+                "observed": 0.5554435483870968
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 1355,
+                "probability": 0.6266426811011204,
+                "observed": 0.6413284132841328
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 16,
+                "probability": 0.7184550734191141,
+                "observed": 0.6875
+              },
+              {
+                "low": 0.8,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.9,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 0.2,
+              "bias": -0.3645335872236355,
+              "observations": 24779,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "player_blocks": {
+            "observations": 74623,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.18674948265040234,
+            "baseline_brier": 0.19458246307598273,
+            "paired_brier_difference": -0.00783298042558042,
+            "paired_brier_difference_95_ci": [
+              -0.008362001377382097,
+              -0.0072772268369164115
+            ],
+            "logloss": 0.5561869730266169,
+            "baseline_logloss": 0.5825768345123729,
+            "accuracy": 0.7263176232528845,
+            "baseline_accuracy": 0.7223242163944092,
+            "mae": 0.5343720455694865,
+            "baseline_mae": 0.5246197553033247,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 45100,
+                "coverage": 0.6043713064336733,
+                "accuracy": 0.8031929046563193,
+                "baseline_accuracy_same_units": 0.8031929046563193,
+                "mean_probability": 0.7997105309370394
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 21838,
+                "coverage": 0.29264435897779506,
+                "accuracy": 0.8534664346551882,
+                "baseline_accuracy_same_units": 0.8534664346551882,
+                "mean_probability": 0.8529997103431151
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 3159,
+                "probability": 0.08011267192531636,
+                "observed": 0.10351377018043685
+              },
+              {
+                "low": 0.1,
+                "count": 18679,
+                "probability": 0.1583123504960104,
+                "observed": 0.15380909042239949
+              },
+              {
+                "low": 0.2,
+                "count": 23262,
+                "probability": 0.2503165131636348,
+                "observed": 0.244003095176683
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 18382,
+                "probability": 0.34632157675751946,
+                "observed": 0.3563268414753563
+              },
+              {
+                "low": 0.4,
+                "count": 9003,
+                "probability": 0.4410083679049959,
+                "observed": 0.45284905031656114
+              },
+              {
+                "low": 0.5,
+                "count": 2005,
+                "probability": 0.5333616249784645,
+                "observed": 0.5625935162094763
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 133,
+                "probability": 0.6227667196029906,
+                "observed": 0.6766917293233082
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.8,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.9,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 0.2,
+              "bias": -0.6423447114399258,
+              "observations": 24779,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "winner": {
+            "observations": 3649,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.21375998742060862,
+            "baseline_brier": 0.24860836102056974,
+            "paired_brier_difference": -0.03484837359996109,
+            "paired_brier_difference_95_ci": [
+              -0.03884689282515077,
+              -0.030282273427227023
+            ],
+            "logloss": 0.6158113247834314,
+            "baseline_logloss": 0.6903952306778147,
+            "accuracy": 0.6546999177856947,
+            "baseline_accuracy": 0.5486434639627296,
+            "mae": 0.42308576630619843,
+            "baseline_mae": 0.4957288665788823,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 1071,
+                "coverage": 0.2935050698821595,
+                "accuracy": 0.803921568627451,
+                "baseline_accuracy_same_units": 0.6946778711484594,
+                "mean_probability": 0.7703478322244353
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 300,
+                "coverage": 0.08221430528912031,
+                "accuracy": 0.8666666666666667,
+                "baseline_accuracy_same_units": 0.79,
+                "mean_probability": 0.8395476971713879
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.1,
+                "count": 25,
+                "probability": 0.17094714592732563,
+                "observed": 0.04
+              },
+              {
+                "low": 0.2,
+                "count": 138,
+                "probability": 0.2650591086433002,
+                "observed": 0.15942028985507245
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 384,
+                "probability": 0.3547173844271329,
+                "observed": 0.2916666666666667
+              },
+              {
+                "low": 0.4,
+                "count": 570,
+                "probability": 0.4542588125059211,
+                "observed": 0.40350877192982454
+              },
+              {
+                "low": 0.5,
+                "count": 793,
+                "probability": 0.5518678689738303,
+                "observed": 0.510718789407314
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 831,
+                "probability": 0.6465556077606587,
+                "observed": 0.614921780986763
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 633,
+                "probability": 0.7452707364197934,
+                "observed": 0.7661927330173776
+              },
+              {
+                "low": 0.8,
+                "count": 263,
+                "probability": 0.8372094659884122,
+                "observed": 0.8517110266159695
+              },
+              {
+                "low": 0.9,
+                "count": 12,
+                "probability": 0.9126581870539257,
+                "observed": 1.0
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 1.0249561465362655,
+              "bias": 0.1417466562431743,
+              "observations": 1229,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "team_points": {
+            "observations": 7298,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.2297413788066702,
+            "baseline_brier": 0.24992240152967043,
+            "paired_brier_difference": -0.02018102272300026,
+            "paired_brier_difference_95_ci": [
+              -0.023293898191793637,
+              -0.016967421457165337
+            ],
+            "logloss": 0.651029946596236,
+            "baseline_logloss": 0.692991982195698,
+            "accuracy": 0.6171553850369964,
+            "baseline_accuracy": 0.508221430528912,
+            "mae": 9.494252963836846,
+            "baseline_mae": 10.15282269114826,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 1721,
+                "coverage": 0.23581803233762674,
+                "accuracy": 0.7425915165601394,
+                "baseline_accuracy_same_units": 0.5328297501452643,
+                "mean_probability": 0.7640804165320396
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 371,
+                "coverage": 0.05083584543710606,
+                "accuracy": 0.8005390835579514,
+                "baseline_accuracy_same_units": 0.5606469002695418,
+                "mean_probability": 0.8365383180746998
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 5,
+                "probability": 0.08595012639926568,
+                "observed": 0.0
+              },
+              {
+                "low": 0.1,
+                "count": 160,
+                "probability": 0.16771935373544145,
+                "observed": 0.1875
+              },
+              {
+                "low": 0.2,
+                "count": 662,
+                "probability": 0.25622302270144454,
+                "observed": 0.25226586102719034
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 1239,
+                "probability": 0.35341544340673575,
+                "observed": 0.36642453591606133
+              },
+              {
+                "low": 0.4,
+                "count": 1605,
+                "probability": 0.4519884298817724,
+                "observed": 0.44922118380062304
+              },
+              {
+                "low": 0.5,
+                "count": 1542,
+                "probability": 0.5505243859926882,
+                "observed": 0.543450064850843
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 1191,
+                "probability": 0.6450365038157759,
+                "observed": 0.6036943744752309
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 688,
+                "probability": 0.7445440724916904,
+                "observed": 0.7063953488372093
+              },
+              {
+                "low": 0.8,
+                "count": 200,
+                "probability": 0.8354346247859448,
+                "observed": 0.78
+              },
+              {
+                "low": 0.9,
+                "count": 6,
+                "probability": 0.9222730463652772,
+                "observed": 1.0
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 1.1755102066832517,
+              "bias": 0.004370953959725254,
+              "observations": 2458,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          },
+          "game_total": {
+            "observations": 3649,
+            "games": 3649,
+            "first_date": "2023-10-24",
+            "last_date": "2026-04-12",
+            "brier": 0.23830613586477223,
+            "baseline_brier": 0.24974458591295634,
+            "paired_brier_difference": -0.01143845004818413,
+            "paired_brier_difference_95_ci": [
+              -0.015137636347095569,
+              -0.007052737596782759
+            ],
+            "logloss": 0.6692775327173531,
+            "baseline_logloss": 0.6926362994445678,
+            "accuracy": 0.591120855028775,
+            "baseline_accuracy": 0.5146615511098931,
+            "mae": 15.010564538229653,
+            "baseline_mae": 15.602877500685118,
+            "selections": [
+              {
+                "min_probability": 0.7,
+                "selected": 583,
+                "coverage": 0.15976979994519047,
+                "accuracy": 0.7049742710120068,
+                "baseline_accuracy_same_units": 0.5214408233276158,
+                "mean_probability": 0.748730729654952
+              },
+              {
+                "min_probability": 0.8,
+                "selected": 61,
+                "coverage": 0.016716908742121128,
+                "accuracy": 0.8360655737704918,
+                "baseline_accuracy_same_units": 0.47540983606557374,
+                "mean_probability": 0.8274690873734127
+              }
+            ],
+            "calibration_bins": [
+              {
+                "low": 0.0,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              },
+              {
+                "low": 0.1,
+                "count": 27,
+                "probability": 0.17477163845236154,
+                "observed": 0.18518518518518517
+              },
+              {
+                "low": 0.2,
+                "count": 293,
+                "probability": 0.2599330661620666,
+                "observed": 0.3037542662116041
+              },
+              {
+                "low": 0.30000000000000004,
+                "count": 616,
+                "probability": 0.35719772869280575,
+                "observed": 0.3685064935064935
+              },
+              {
+                "low": 0.4,
+                "count": 919,
+                "probability": 0.45008507876158044,
+                "observed": 0.44831338411316646
+              },
+              {
+                "low": 0.5,
+                "count": 969,
+                "probability": 0.5485784913850988,
+                "observed": 0.5304437564499485
+              },
+              {
+                "low": 0.6000000000000001,
+                "count": 562,
+                "probability": 0.6442460124858029,
+                "observed": 0.597864768683274
+              },
+              {
+                "low": 0.7000000000000001,
+                "count": 229,
+                "probability": 0.7388418753036872,
+                "observed": 0.6812227074235808
+              },
+              {
+                "low": 0.8,
+                "count": 34,
+                "probability": 0.8292484872938806,
+                "observed": 0.8529411764705882
+              },
+              {
+                "low": 0.9,
+                "count": 0,
+                "probability": null,
+                "observed": null
+              }
+            ],
+            "calibrated_on_previous_season_only": true,
+            "baseline_calibration": {
+              "slope": 1.0686071518824962,
+              "bias": -0.03303362348238003,
+              "observations": 1229,
+              "first_date": "2022-10-18",
+              "last_date": "2023-04-09"
+            }
+          }
+        },
+        "probability_ranges_not_joint_or_confirmed": true,
+        "source_and_receipt_integrity": true,
+        "missing_extra_counts_not_zero": true,
+        "DNP_not_zero": true,
+        "future_results_available": false,
+        "player_final_availability_verified": false,
+        "original_historical_receipt_known": false,
+        "NBA_full_suite_passed": 577,
+        "NBA_full_suite_skipped": 18,
+        "additional_integration_tests_passed": 3,
+        "new_unique_integration_tests": 1,
+        "root_tests_passed": 800,
+        "root_tests_skipped": 16,
+        "nine_filters_verified": true,
+        "desktop_viewport": {
+          "height": 720,
+          "width": 1280
+        },
+        "mobile_visual_QA_verified": false,
+        "restart_verified": true,
+        "paid_API_calls": 0,
+        "operational_bets": 0,
+        "periodic_copies": false,
+        "preliminary_unfair_baseline_preserved": true,
+        "production_ready": false,
+        "scientific_confirmation_started": false,
+        "gates_promoted": false
+      },
+      "missingness": {
+        "original_historical_receipt": true,
+        "final_future_availability": true,
+        "future_results": true,
+        "mobile_visual_QA": true,
+        "quarantined_regular_games": 42
+      },
+      "failures": {
+        "preliminary_baseline_calibration_corrected_before_inspection": true,
+        "initial_pytest_temporary_permission": true,
+        "initial_test_future_clock_fixed": true,
+        "deployment": false,
+        "high_confidence_points_rebounds_calibration": true
+      },
+      "result": "Nine NBA statistical markets developed/chronologically evaluated;42independentfutureunits public,15originalpilot intact,0officialresults today.",
+      "reason": "Implement all requested market families from statistics and expose real comparative coverage without odds-driven rankings or scientific gate promotion.",
+      "evidence_ids": [
+        "NBA-EV-21256",
+        "NBA-EV-21257",
+        "NBA-EV-21258",
+        "NBA-EV-21259",
+        "NBA-EV-21260",
+        "NBA-EV-21261",
+        "NBA-EV-21262",
+        "NBA-EV-21263",
+        "NBA-EV-21264",
+        "NBA-EV-21265",
+        "NBA-EV-21266",
+        "NBA-EV-21267",
+        "NBA-EV-21268",
+        "NBA-EV-21269",
+        "NBA-EV-21270",
+        "NBA-EV-21271",
+        "NBA-EV-21272",
+        "NBA-EV-21273",
+        "NBA-EV-21274",
+        "NBA-EV-21275",
+        "NBA-EV-21276",
+        "NBA-EV-21277",
+        "NBA-EV-21278",
+        "NBA-EV-21279",
+        "NBA-EV-21280",
+        "NBA-EV-21281",
+        "NBA-EV-21282",
+        "NBA-EV-21283",
+        "NBA-EV-21284",
+        "NBA-EV-21285",
+        "NBA-EV-21286",
+        "NBA-EV-21287",
+        "NBA-EV-21288",
+        "NBA-EV-21289",
+        "NBA-EV-21290",
+        "NBA-EV-21291",
+        "NBA-EV-21292",
+        "NBA-EV-21293",
+        "NBA-EV-21294",
+        "NBA-EV-21295",
+        "NBA-EV-21296",
+        "NBA-EV-21297",
+        "NBA-EV-21298",
+        "NBA-EV-21299",
+        "NBA-EV-21300",
+        "NBA-EV-21301",
+        "NBA-EV-21302",
+        "NBA-EV-21303",
+        "NBA-EV-21304"
+      ]
     }
   ],
   "gate_decisions": [],
@@ -294780,6 +297808,21 @@
       "client_date": "2026-10-09",
       "created_at_utc": "2026-10-09T13:34:46.050809+00:00",
       "description": "NBA-RUN-068:isolatedpubliccollectoranddurableoperationalalertslive;copiesdisabled;Calienteblockerseparate;source/state/claim/restartchecked;gatesunchanged."
+    },
+    {
+      "client_date": "2026-10-09",
+      "created_at_utc": "2026-10-09T15:12:47.806122+00:00",
+      "description": "NBA-RUN-069: publicreadonlypilotpage liveHTTPS; results authenticated against originalbody; restart/admin/football verified; mobilevisualQA pending; gatesunchanged."
+    },
+    {
+      "client_date": "2026-10-09",
+      "created_at_utc": "2026-10-09T16:03:00.347418+00:00",
+      "description": "NBA-RUN-070:footballheader NBA navigation deployed/roundtrip checked; retrospective164218rows inventory distinct from15prospectivepilot; backend/NBA/gates unchanged; mobilevisualQA pending."
+    },
+    {
+      "client_date": "2026-10-09",
+      "created_at_utc": "2026-10-09T17:07:00.504556+00:00",
+      "description": "NBA-RUN-071:nine statistics-first markets developed/fair calibrated retrospective comparison;strict6108regular games/42quarantined;42newforecasts public and15original preserved;scientific gates unchanged."
     }
   ],
   "document_addenda": [
@@ -295032,6 +298075,49 @@
       "paid_API_calls_now": 0,
       "periodic_copies_excluded": true,
       "production_ready": false
+    },
+    "nba_public_dashboard_run69_20261009": {
+      "public_URL": "https://pronosticosdeportivos.pro/nba",
+      "container": "nba-dashboard-run69",
+      "VPS_root": "/home/qf/nba-isolated/dashboard/run69-20261009",
+      "read_only_sources": true,
+      "additional_sport_API_calls": 0,
+      "paid_API_calls": 0,
+      "periodic_copies": false,
+      "production_ready": false
+    },
+    "nba_sport_navigation_run70_20261009": {
+      "football_URL": "https://pronosticosdeportivos.pro/",
+      "NBA_URL": "https://pronosticosdeportivos.pro/nba",
+      "football_API_image": "quantfut-api-menu70:20261009",
+      "only_public_frontend_changed": true,
+      "paid_NBA_API_calls": 0,
+      "periodic_copies": false,
+      "production_ready": false,
+      "mobile_visual_QA_pending": true
+    },
+    "nba_multimarket_run71_20261009": {
+      "NBA_URL": "https://pronosticosdeportivos.pro/nba",
+      "markets": [
+        "game_total",
+        "player_assists",
+        "player_blocks",
+        "player_points",
+        "player_rebounds",
+        "player_steals",
+        "player_threes",
+        "team_points",
+        "winner"
+      ],
+      "original_pilot": 15,
+      "independent_extension": 42,
+      "image": "nba-dashboard-run71:20261009",
+      "statistical_thresholds_not_booklines": true,
+      "actionable": false,
+      "paid_API_calls": 0,
+      "periodic_copies": false,
+      "production_ready": false,
+      "scientific_confirmation_started": false
     }
   },
   "execution_document_hashes": [
@@ -295250,6 +298336,18 @@
     {
       "path": "docs/nba_activacion_y_alertas_vps_20261009.md",
       "sha256": "f56aae158d869832b81974d79d3b7be180302d0bbbf72b128f60f9726ce6a3f2"
+    },
+    {
+      "path": "docs/nba_pagina_pronosticos_resultados_20261009.md",
+      "sha256": "2bb436c348f835ab13a163c5745eca31c6cb9adaa1c627d2892ef3f2ee36b0de"
+    },
+    {
+      "path": "docs/nba_menu_e_historico_20261009.md",
+      "sha256": "753c5e20880663eb132d45ee11cb54e5b284c479202ade91ef39a2c09b247b3e"
+    },
+    {
+      "path": "docs/nba_nueve_mercados_estadistica_20261009.md",
+      "sha256": "ad07209842968a8fc8658023d888dc6a38bd33d50c50387162f0725ea0d270ae"
     }
   ],
   "user_decisions": [
@@ -295321,6 +298419,13 @@
     "periodic_copies": "disabled, oldcopiespreserved",
     "scientific_confirmation": "notactivated; exactdesignprepared/reviewandsourcevalidationpending",
     "real_account_settlement": "preparationonly;notickets/noapplicablerulesverified",
+    "production_ready": false
+  },
+  "operational_status_by_scope_run69": {
+    "public_page": "active HTTPS VPS, original15sealedforecasts; official outcomes pending",
+    "browser_QA": "public page/filters verified700px; true390px visual QA pending",
+    "scientific_confirmation": "unchanged; not activated",
+    "original_pilot": "unchanged finite lifecycle and closing cap2",
     "production_ready": false
   }
 }

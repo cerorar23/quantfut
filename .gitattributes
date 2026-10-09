@@ -42,3 +42,6 @@ docs/nba_reglas_archivadas_y_liquidacion_v2_20261007.md -text
 docs/nba_resultados_validados_20261007.md -text
 docs/nba_segundos_y_rotaciones_20261006.md -text
 docs/nba_zenrows_recuperacion_20261006.md -text
+apps/nba/web/app.js -text
+apps/nba/web/index.html -text
+apps/nba/web/styles.css -text

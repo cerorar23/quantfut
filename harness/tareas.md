@@ -2014,3 +2014,32 @@ NBA-RUN-067: mismo piloto15casos en VPS,3fuentesNBA200, exclusión/reinicio/esta
 - [x] Ejecutar pruebas y arnés, documentar servicios activos y límites, registrar NBA-RUN-068.
 
 NBA-RUN-068: captura NBA, piloto y alertas operativas activos en VPS. ESPNválido/Caliente403en cuarentena explícita; nuevas copias periódicas desactivadas, originales conservados. MensajeTGconfirmado/sin reenvío; Type=notify corrige carrera inicial, exclusión y reinicio reales verificados. DosGET/0créditosactuales/futurocap2; 542/1NBA y800/16arnés. Fútbol intacto; confirmación y liquidación comercial conservan requisitos de evidencia. docs/nba_activacion_y_alertas_vps_20261009.md.
+
+### NBA — publicar página de predicciones y resultados, 2026-10-09
+
+- [x] Crear vista pública /nba con la cohorte sellada real, filtros y estados de resultados pendientes/evaluados; sin cuotas actuales inventadas ni acceso a secretos.
+- [x] Incorporar lectura verificable de resultados oficiales y estados operativos sin ejecutar modelos ni consultas deportivas desde la web; fuentes del piloto montadas sólo para lectura.
+- [x] Desplegar servicio NBA aislado y ruta en el proxy existente, validar HTTPS, conservación de fútbol y protecciones /admin y /control; comprobar página y filtros en el navegador disponible.
+- [x] Ejecutar pruebas y arnés, documentar URL/operación y registrar NBA-RUN-069, conservando RUN068 y exclusión de copias periódicas.
+
+- [ ] Completar revisión visual a 390 píxeles: el navegador mantuvo 700×572 pese a la solicitud de tamaño móvil. Reglas adaptativas implementadas; publicación y filtros verificados en el tamaño real disponible.
+
+NBA-RUN-069: https://pronosticosdeportivos.pro/nba activa en VPS. 15 registros sellados, cinco jugadores, tres partidos; cero resultados oficiales todavía. Servicio de lectura aislado, resultados contrastados con cuerpos oficiales originales, sin claves ni nuevas consultas deportivas. Reinicio conserva proyección y estado original; fútbol y administración preservados. 558/2 NBA y 800/16 arnés. docs/nba_pagina_pronosticos_resultados_20261009.md.
+
+### Web — menú superior Fútbol/NBA e histórico disponible, 2026-10-09
+
+- [x] Comprobar el histórico NBA guardado y distinguir datos retrospectivos de pronósticos publicados antes de partidos.
+- [x] Añadir enlaces superiores Fútbol/NBA en fútbol, conservarlos visibles en móvil y actualizar huellas de recursos públicos.
+- [x] Publicar únicamente recursos web sobre la imagen actual de fútbol, con reversión, sin alterar trabajador, base ni piloto NBA; comprobar navegación de ida y vuelta.
+- [x] Ejecutar comprobaciones y arnés final, documentar publicación y conservar registros sellados anteriores en NBA-RUN-070.
+
+NBA-RUN-070: menú Fútbol/NBA publicado y navegación de ida/vuelta verificada. Histórico confirmado:164.218filas, 2021-10-19..2026-06-13; separado del piloto15casos/0resultados. Imagen derivada con tres recursos públicos, código original de backend conservado, trabajador/base/NBA sin recrear. Primer intento revertido; recuperación de arranque real pasó. 24pruebasUI y800/16arnés. Revisión visual móvil continúa pendiente por tamaño ignorado; reglas móviles implementadas. docs/nba_menu_e_historico_20261009.md.
+
+### NBA — desarrollar todos los mercados con estadística primero, 2026-10-09
+
+- [x] Recuperar seis estadísticas individuales y referencias oficiales de equipos mediante uniones exactas y reconciliación.
+- [x] Desarrollar nueve mercados, calibrar sólo con validación anterior y comparar contra referencias con cobertura e intervalos.
+- [x] Sellar extensión prospectiva separada, integrar web y lectura de resultados oficiales sin cambiar el piloto original.
+- [x] Ejecutar pruebas, publicar en VPS aislado, verificar página y registrar NBA-RUN-071; conservar puertas y exclusión de copias periódicas.
+
+NBA-RUN-071: nueve mercados desarrollados/calibrados con estadísticas sin cuotas. 157.962filas/6.108partidos regulares;42partidos discrepantes excluidos. 42pronósticos nuevos sellados y publicados,15originales conservados. Comparación2023–26 con referencias igualmente calibradas y coberturas;≥70% puntos/rebotes sobreestima acierto, no aptos como selecciones fiables70%. Lectura oficial con reconciliación/DNP separado,577/18suiteNBA+3integración y800/16arnés. Fútbol/proxy/piloto intactos;0cuotasAPI/0apuestas/sin nuevascopiasperiódicas. Puertas/confirmación y disponibilidad futura pendientes. docs/nba_nueve_mercados_estadistica_20261009.md.

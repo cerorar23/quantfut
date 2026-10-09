@@ -412,3 +412,22 @@ copias periódicas. Un reinicio conserva las reclamaciones de consultas y
 mensajes. La confirmación científica y las cuentas comerciales mantienen sus
 requisitos de evidencia; no hay apuestas reales habilitadas. Detalles:
 docs/nba_activacion_y_alertas_vps_20261009.md.
+
+RUN069 publica https://pronosticosdeportivos.pro/nba con los 15 pronósticos
+registrados del piloto y sus resultados oficiales verificables cuando lleguen.
+Filtros por jugador/equipo, mercado, partido y estado; cuotas históricas y
+participación condicional explícitas. Servicio aislado en VPS, sin consultas
+deportivas desde la web ni credenciales expuestas. La vista lee fuentes
+originales para lectura y rechaza resultados que no coincidan con el cuerpo
+oficial recibido. Detalles y límites de verificación visual móvil:
+docs/nba_pagina_pronosticos_resultados_20261009.md.
+
+RUN071 añade los nueve mercados estadísticos: ganador, puntos de equipo,
+total del partido y puntos/rebotes/asistencias/triples/robos/tapones de
+jugadores. La extensión de 42 pronósticos mantiene el piloto original de15.
+`python -m nba.multimarket` permite recuperar, evaluar y registrar;
+`nba.multimarket_dashboard` proyecta la extensión y sus resultados oficiales.
+Cuotas fuera del modelo, calibración cronológica de candidato/referencia,
+cobertura visible y recepción histórica desconocida explícita. Todo sigue
+clasificado como investigación, sin promoción de puertas científicas.
+Detalles y resultados: docs/nba_nueve_mercados_estadistica_20261009.md.

@@ -1,0 +1,7 @@
+ARG NBA_DASHBOARD_BASE
+FROM ${NBA_DASHBOARD_BASE}
+COPY src/nba /app/src/nba
+COPY web /app/web
+ENV PYTHONPATH=/app/src:/pilot/apps/nba/src PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+WORKDIR /pilot
+CMD ["python", "-m", "nba.dashboard"]

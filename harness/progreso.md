@@ -4386,3 +4386,34 @@ Nuevo supervisor host aislado usaúnicamente token/destino operativo yaautorizad
 Primer despliegue detectócarrera Type=simple alcomprobar bloqueoantesinicialización; rollback automático conservado. RecuperaciónType=notify anunciaREADYdespuéslock/ciclodurable; segundoejecutor rechazado, reinicio conservaúnica reclamación/mensaje. ArranqueVPS habilitado, independientedelPC/Codex. Piloto/sellos15casos/cap2intactos ycontenedoresfútbolsin cambios.
 
 DosGETpúblicos actuales, ceroAPIcuotas; futurocierremax2. Diseñocientífico yficha decuenta copiados una vez; F7confirmatoria/G7no promovidos. Falta revisar/validaruniversoprospectivo yrecibirpartidos futuros; cero tickets reales, disponibilidad yrecepciónhistóricaoriginal no inventadas. Fallossintaxislocal/directoriotemporal/fixture preservados ycorregidos; suiteNBA542/1 yarnés800/16. docs/nba_activacion_y_alertas_vps_20261009.md.
+
+
+## 2026-10-09 — NBA: página pública de pronósticos y resultados (NBA-RUN-069)
+
+Se publicó https://pronosticosdeportivos.pro/nba con la cohorte sellada de 15 registros, cinco jugadores y tres partidos. La página filtra jugador/equipo, mercado, partido y estado. Presenta estimación, rango, probabilidades condicionales a participación y cuotas históricas con recepción/sello; cero resultados evaluados hoy, partidos registrados el 20 de octubre. No son apuestas ni cotizaciones actuales.
+
+Servicio aislado con recursos limitados y fuentes originales montadas solo para lectura. Verifica diario, plan, sellos y recepción; reconstruye conteos desde el boxscore oficial antes de publicar un resultado. DNP explícito separado de cero, ausencia exige revisión. No ejecuta modelos ni captura desde solicitudes web, no monta credenciales ni datos de fútbol. La configuración del proxy y su segunda red quedan persistentes. Fútbol y protección de administración comprobados por HTTPS.
+
+Se conservaron tres intentos fallidos con reversión automática: archivo anterior retenido por el montaje del proxy y comprobaciones de disponibilidad demasiado tempranas. Cuarto intento espera HTTP real antes y después de reiniciar; pasó conservando diario del piloto y contenedores originales. La comparación pública contempla solo la etiqueta de analítica inyectada por el CDN existente y exige igualdad de los bytes propios.
+
+La página pública se abrió en navegador y los filtros/detalles de cuotas se comprobaron sin errores de consola. Captura guardada. El navegador ignoró los tamaños solicitados y mantuvo 700×572; revisión visual móvil pendiente explícita, no declarada como probada. Pruebas NBA 558/2, arnés antes y después 800/16. Se preservaron las 68 ejecuciones y todas sus evidencias, sin promover puertas científicas, apuestas ni copias periódicas. docs/nba_pagina_pronosticos_resultados_20261009.md.
+
+
+## 2026-10-09 — Menú Fútbol/NBA e histórico (NBA-RUN-070)
+
+El usuario preguntó por el histórico y pidió acceso NBA desde la cabecera de fútbol. El archivo aceptado conserva su huella NBA-EV-2204:164.218 filas y6.313 IDs, fechas2021-10-19..2026-06-13. Son datos retrospectivos; no un historial de aciertos emitidos antes del partido. El piloto conserva15pronósticos y0resultados recibidos.
+
+Selector superior Fútbol/NBA con enlaces accesibles, activo marcado y reglas móviles fuera del menú que se oculta. Nuevas huellas JS/CSS enHTML. Publicación deriva de la imagen exacta de fútbol ya ejecutada y añade solamente tres recursos públicos. Se recreó únicamente laAPI; las otras identidades, trabajador/base/proxy/NBA y códigos de backend se conservaron. Configuración de imagen y fuentes persistida enVPS.
+
+Primera comprobación recibió conexión cortada al arrancar y revirtió automáticamente. Recuperación conservada tolera esa lectura transitoria de salud propia y exige200antes de comprobarHTTPS; pasó. Navegación real Fútbol→NBA→Fútbol,15filasNBA y captura de pantalla; consola sinerrores a1280×720. La solicitud390×844 volvió a ignorarse, también en pestaña nueva: revisión visual móvil pendiente explícita.24pruebasfrontend y800/16arnés; registrosprevios/gates intactos, sinapuestas/copiasperiódicas nuevas. docs/nba_menu_e_historico_20261009.md.
+
+
+## 2026-10-09 — Nueve mercados NBA desde estadísticas (NBA-RUN-071)
+
+El usuario pidió desarrollar todos los mercados discutidos, priorizando probabilidad/estadística sobre cuotas. Se recuperaron triples/robos/tapones de los originales ya recibidos, con uniones exactas y reconciliación de equipos:157.962filas/6.108partidos regulares;42discrepantes excluidos sin alterar el histórico anterior. Se desarrollaron seis modelos de conteo y Elo/medias ataque-defensa/covarianza para ganador/equipos/total, con características anteriores a cada fecha.
+
+Entrenamiento2021–22, calibración2022–23, evaluación exploratoria2023–26. Candidato y referencia calibrados igual; cálculo preliminar sin esa equidad conservado y protocolo corregido antes de inspeccionar métricas. Ganador≥70% acierta80.4%/1.071casos frente69.5%referencia; equipos74.3%/1.721 frente53.3%. Los conteos raros pueden dar mucho acierto por baja frecuencia; tapones80.3% coincide con referencia. Puntos/rebotes≥70% logran65.1%/65.6%, por debajo de sus probabilidades medias: no se anuncian selecciones fiables70%. Todos los modelos continúan experimentales y no accionables; no se alteró el candidato confirmatorio de rebotes RUN067.
+
+42unidades nuevas selladas para los mismos tres eventos y cinco jugadores;15originales intactas. Web con nueve filtros y tabla conprobabilidadmedia/acierto/cobertura/referencia/intervalos. La extensión reutiliza recibos oficiales verificados del piloto sólo para lectura: conteos reconciliados, ausencia en revisión y DNP separado. Prueba integral verifica conteo adicional real y rechaza cuerpo modificado, sin escribir diario. No agrega consultas deportivas ni créditos.
+
+Imagennba-dashboard-run71 reemplaza sólo el servicio NBA manteniendo su nombre interno; anterior detenido recuperable. Fútbol/proxy/captura/piloto/alertas conservan identidad, configuración y estado; reinicio/HTTPS y diezaccionesfiltroverificadas. 1280×720, consola sinerrores; revisiónmóvil390px sigue pendiente porlimitación previa.577/18NBA más3pruebasintegrales y800/16arnés. Nuevascopiasperiódicas/apuestas desactivadas, puertas científicas y cuatrobloquesde decisiones conservados; resultados y disponibilidad de20oct siguen futuros. docs/nba_nueve_mercados_estadistica_20261009.md.
