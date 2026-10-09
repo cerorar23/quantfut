@@ -1,0 +1,18 @@
+{
+  "provider": "the_odds_api",
+  "catalog_checked_client_date": "2026-10-08",
+  "catalog_url": "https://the-odds-api.com/sports-odds-data/bookmaker-apis.html",
+  "api_documentation_url": "https://the-odds-api.com/liveapi/guides/v4/",
+  "nba_documentation_url": "https://the-odds-api.com/sports-odds-data/nba-odds.html",
+  "automatic_capture": false,
+  "research_only": true,
+  "nba_player_props_documented_for_selected_regions": false,
+  "current_quotes_verified": false,
+  "mexican_contract_equivalence_verified": false,
+  "sources": [
+    {"bookmaker_key": "onexbet", "label": "1xBet Europa", "provider_region": "eu", "country": null},
+    {"bookmaker_key": "betsson", "label": "Betsson Europa", "provider_region": "eu", "country": null},
+    {"bookmaker_key": "codere_it", "label": "Codere Italia", "provider_region": "eu", "country": "IT"},
+    {"bookmaker_key": "betano_uk", "label": "Betano Reino Unido", "provider_region": "uk", "country": "GB"}
+  ]
+}

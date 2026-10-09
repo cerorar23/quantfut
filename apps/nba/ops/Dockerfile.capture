@@ -1,0 +1,10 @@
+ARG NBA_CAPTURE_BASE
+FROM ${NBA_CAPTURE_BASE}
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tzdata && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY src/nba /app/src/nba
+COPY ops/capture_worker.py /app/capture_worker.py
+COPY ops/capture_config.json /app/config.json
+ENV PYTHONPATH=/app/src PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+USER 1000:1000
+CMD ["python", "/app/capture_worker.py"]

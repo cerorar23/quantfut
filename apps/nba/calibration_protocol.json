@@ -1,0 +1,12 @@
+{
+  "version": "startup-calibration-diagnostic-v1",
+  "scope": "fixed_startup_replay_only",
+  "lines": [4.5, 7.5, 10.5],
+  "pit_bins": 10,
+  "randomization": "SHA256 of seed and game/player, stable across order",
+  "seed": 20261005,
+  "bootstrap": "500 replicates clustered by game",
+  "interval_check": "actual coverage minus expected discrete central80 probability mass",
+  "selection": "no fitting, hyperparameter sweep or promotion",
+  "limits": ["Historical seasons already inspected", "No market odds", "Conditional on observed participation"]
+}

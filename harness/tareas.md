@@ -1709,7 +1709,60 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Verificar preservación, cobertura incremental, pruebas e informe final; registrar lo ejecutado y las dependencias/accesos que impidan completar una fuente.
 
 - [x] Instalar Java portátil y toolkit/MCP ZenRows solicitado para Claude Code; handshake stdio/44 herramientas, cero llamadas de proveedor.
-- [ ] Completar95regulares/4pretemporadas,562rotaciones entre boxscores aceptados y330fechas médicas/13nombres; props y otros repos no ejecutados se detallan en docs/nba_github_scrapers_recuperacion_20261006.md.
+- [ ] Pendientes actualizados en NBA-RUN-039: una excepción de boxscore regular, 37 rotaciones del censo y props históricos; pretemporada y censo médico diario completados. Véase docs/nba_completar_validar_20261006.md.
+
+
+### NBA — transporte ZenRows para fuentes públicas bloqueadas, autorizado 2026-10-06
+
+- [x] Comprobar autenticación/cuota y dirigir una muestra de solicitudes de los scrapers a ZenRows, con máximo100créditos, sin compras o suscripciones.
+- [x] Conservar HTML/JSON/PDF originales y recibos, probar los componentes upstream y validar semántica; no interpretar HTTP200 como recuperación.
+- [x] Integrar solo datos que pasan los controles existentes, registrar el alcance real de desbloqueo y verificar preservación/pruebas.
+
+### NBA — completar y validar históricos, autorizado 2026-10-06
+
+- [x] Ampliar capturas Basketball Reference por fecha para94regulares, con ZenRows y límite preventivo2500créditos; conciliar NBAStats/BRef y conservar originales, plantillas completas y overlays explícitos.
+- [x] Recuperar4pretemporadas y ampliar rotaciones con PBP explícito; integrar únicamente quintetos/tiempos/estadísticas corroborados.
+- [x] Revisar330fechas médicas y13identidades pendientes mediante archivos verificables y timestamps originales.
+- [x] Ampliar puntos/asistencias con los80créditos restantes del límite500 de TheOddsAPI, sujeto a captura/validación; documentar presupuesto adicional que requiera el histórico completo.
+- [x] Verificar preservación, cobertura, controles adversariales y harness posterior; sellar nueva corrida e informe sin promover datos rechazados.
+
+- [ ] Pendientes verificados de NBA-RUN-039: excepción MM:SS subsegundo 0022400942; 37 rotaciones; intradía médico/PIT original; props multitemporada y reglas de liquidación. Véase docs/nba_completar_validar_20261006.md.
+
+### NBA — segundos oficiales y rotaciones pendientes, autorizado 2026-10-06
+
+- [x] Añadir al normalizador soporte optativo de segundos subsegundo acreditados por intervalos oficiales completos; conservar MM:SS original y rechazar DNP, fuentes alteradas, IDs contradictorios y gaps.
+- [x] Reimportar el roster completo de Tony Bradley en una nueva versión; preservar las 164190 filas anteriores y los originales sellados.
+- [x] Diagnosticar las 37 rotaciones mediante PBP CDN/V2 e intervalos locales; recuperar únicamente casos corroborados y conservar conflictos por evento.
+- [x] Buscar fuentes alternativas acotadas para las capturas aún ausentes dentro de los límites vigentes, sin compras ni llamadas a props.
+- [x] Ejecutar pruebas NBA, arnés posterior y verificación de las 2105 evidencias anteriores; registrar nueva corrida, informe y pendientes reales.
+
+- [ ] Pendientes de NBA-RUN-040: nueve rotaciones con eventos/titulares sin corroborar; intradía médico/PIT original; props multitemporada y reglas de liquidación antes del backtest. Véase docs/nba_segundos_y_rotaciones_20261006.md.
+
+### NBA — continuar pendientes de RUN-040, autorizado 2026-10-06
+
+- [x] Obtener pruebas oficiales de titulares de prórroga y auditar eventos sin tiempo positivo de nueve rotaciones, sin inventar alineaciones ni modificar evidencias selladas.
+- [x] Descubrir índices médicos intradía, capturar reportes anteriores al inicio y comparar encabezados, entidades y cambios de estado; conservar recepción actual y límites PIT.
+- [x] Revisar históricos de props públicos fijando commits y contratos de datos; conservar límite local500 agotado y preparar una ampliación concreta si las fuentes gratuitas no contienen precios/cortes históricos.
+- [x] Verificar preservación, controles, pruebas y arnés posterior; registrar nueva corrida y pendientes con cobertura real.
+
+- [ ] Estado histórico de NBA-RUN-041 (sustituido por RUN-042): tres rotaciones; corte médico24-oct-2023, intradía completo/recepción original; autorización720créditos para piloto de props y reglas históricas. Véase docs/nba_pendientes_intradia_20261006.md.
+
+
+### NBA — continuar pendientes de RUN-041, autorizado 2026-10-06
+
+- [x] Fijar y recuperar el archivo público de props con timestamps, verificar blobs y cruzar eventos/identidades/cronología sin gastar nuevos créditos OddsAPI.
+- [x] Revisar las rutas oficiales de actas de las tres rotaciones con transporte acotado y conservar conflictos sin inventar intervalos.
+- [x] Inventariar cortes del primer día2023-24 y versiones intradía de fechas de muestra; distinguir ausencia de publicación/acceso de un bloqueo deIP y conservar límites de recepción histórica.
+- [x] Verificar evidencias4939,41corridas y89eventos previos, presupuestos/pruebas/arnés posterior; sellar nuevas versiones y pendientes reales.
+
+- [ ] Pendientes de NBA-RUN-042: props de rebotes/asistencias e historia/cortes faltantes; intradía de otras fechas, recepción original y reglas de liquidación. Rotaciones regulares6150/6150. Véase docs/nba_props_y_rotaciones_20261007.md.
+
+### NBA — continuar pendientes de RUN-042, autorizado 2026-10-07
+
+- [x] Fijar y revisar archivos públicos adicionales de props; aceptar solo cuotas con procedencia, identidad y cronología acreditadas, conservando cuarentena y cero créditos nuevos OddsAPI.
+- [x] Corroborar horarios del censo regular con calendarios independientes y recuperar los PDFs elegibles a T−60 que falten; conservar encabezados y límites de recepción original.
+- [x] Revisar archivos médicos públicos y uniones exactas de identidad/evento para resolver huecos con nuevas pruebas, sin modificar registros sellados ni inferir tiempos.
+- [x] Verificar las 9.641 evidencias, 42 corridas y 91 eventos anteriores, presupuestos, controles y arnés posterior; registrar nuevas versiones y pendientes reales.
 
 ## Web — adaptación visual de TennisPredictions (2026-10-07)
 
@@ -1741,3 +1794,223 @@ paquetes/suscripciones de TennisPredictions; no su algoritmo predictivo.
 - [x] Respaldar y publicar seis archivos de runtime en la API del servidor.
 - [x] Comprobar hashes, salud y recorrido desde el dominio público; mantener
       los demás servicios sin recrear. Evidencia en docs/web_despliegue_20261007.md.
+
+- [ ] NBA-RUN-043: 21 juegos sin selección médica T−60 concordante; versiones intradía adicionales, props/cortes faltantes, relojes de 27.151 candidatos, recepción histórica y liquidación. Informe: docs/nba_recuperacion_medica_y_props_20261007.md.
+
+### NBA — continuar pendientes de RUN-043, autorizado 2026-10-07
+
+- [x] Diagnosticar los 21 contextos médicos pendientes con relojes literales y fuentes independientes; conservar toda discrepancia sin corregir horarios por suposición.
+- [x] Recuperar pruebas oficiales adicionales con llamadas acotadas y reservas dentro del techo ZenRows ya autorizado de 3.200; cero llamadas OddsAPI nuevas.
+- [x] Validar selecciones retrospectivas nuevas y controles adversariales, preservando versiones selladas, recepción histórica y gates.
+- [x] Verificar evidencias, cadena y arnés real antes/después; sellar NBA-RUN-044 y documentar pendientes reales.
+
+- [ ] NBA-RUN-044: contexto médico BOS@NYK ausente en diez PDFs; versiones intradía, props/cortes, relojes de candidatos, recepción original y liquidación. Informe: docs/nba_horarios_medicos_corroborados_20261007.md.
+
+### NBA — props, recepción y liquidación tras RUN-044, autorizado 2026-10-07
+
+- [x] Recuperar archivos públicos adicionales de props con commits y blobs verificados; adoptar solo identidad/evento/precios/relojes acreditados y conservar candidatos separados.
+- [x] Auditar recibos históricos, distinguir snapshot del proveedor de recepción original y registrar pruebas o faltantes sin retrofechar capturas.
+- [x] Recuperar reglas primarias versionadas por casa/jurisdicción; documentar participación, prórroga, push, abandono, correcciones y vigencia, conservando aplicabilidad desconocida.
+- [x] Verificar los datos y evidencias previos, controles y arnés posterior; sellar NBA-RUN-045 y el informe con presupuestos actuales sin compras.
+
+- [ ] NBA-RUN-045: rebotes/asistencias y cortes faltantes; cuotas de casas LATAM, otros países/casas, recepción original/vigencia por ticket, relojes de candidatos y pendientes médicos. Informe: docs/nba_props_y_reglas_latam_20261007.md.
+
+### NBA — aplicación de reglas y recepción tras RUN-045, autorizado 2026-10-07
+
+- [x] Preservar y verificar las 45 corridas, 19.165 evidencias y 94 eventos anteriores; inventariar archivos de tickets/recibos en el alcance local.
+- [x] Recuperar reglas oficiales adicionales de México y pruebas archivadas de versiones anteriores, con solicitudes acotadas y cero créditos pagados nuevos.
+- [x] Preparar evaluación reproducible por ticket/mercado/periodo con estados desconocidos explícitos; probar participación, prórroga, push, integridad y jurisdicción sin atribuir contratos históricos inexistentes.
+- [x] Validar datasets/gates y arnés posterior; sellar NBA-RUN-046 y documentar las entradas que todavía falten.
+
+- [ ] NBA-RUN-046: aplicar únicamente con tickets/contratos reales; recepción histórica original ausente según usuario; cuotas LATAM, otras casas/países, rebotes/asistencias/cortes y pendientes médicos. Informe: docs/nba_reglas_archivadas_y_liquidacion_20261007.md.
+
+- [x] NBA — corregir en una versión documental nueva el total final de pruebas RUN-046 usando el log y verificación sellados; conservar informe y corridas originales.
+
+Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion_v2_20261007.md; corrección documental NBA-RUN-047.
+
+### NBA — todas las casas de la lista hispanohablante, autorizado 2026-10-07
+
+- [x] Verificar el baseline RUN-047 y registrar las 22 combinaciones casa/país de México, Colombia, Perú y España; preservar los cinco perfiles anteriores.
+- [x] Recuperar fuentes oficiales y revisar reglas NBA por mercado: participación, prórroga, push, suspensión y correcciones; separar páginas generales, contenido educativo, bloqueo y documentos con jurisdicción distinta.
+- [x] Consultar historia archivada de forma acotada; verificar replays recuperables y no inferir recepción original ni vigencia contractual de tickets.
+- [x] Crear catálogo y matriz completa con procedencia, hashes y desconocidos; validar preservación, arnés posterior y checkpoint NBA-RUN-048 sin liquidaciones ni créditos pagados nuevos.
+
+- [ ] NBA-RUN-048: recuperar reglamentos NBA pendientes (BetPlay, Apuesta Total, BetMéxico, DoradoBet, Betsson Perú, Inkabet, Sportium Colombia), validar Te Apuesto online/Luckia y push/correcciones; obtener tickets/contratos y ampliar props LATAM/REB/AST. Matriz: docs/nba_casas_hispanohablantes_reglas_20261007.md.
+
+### NBA — recuperación acotada con MCP tras RUN-048, autorizado 2026-10-07
+
+- [x] Verificar las 48 corridas, 19.636 evidencias y 97 eventos previos antes de recuperar nuevas fuentes.
+- [x] Probar seis reglamentos oficiales mediante ZenRows MCP con país explícito, reserva inicial de 150 y seguimiento explícito de 100 créditos; cota final 2.232/3.200; registrar contenido, gastos y fallos sin reintentos automáticos.
+- [x] Auditar dos repositorios adicionales fijando commits y blobs; separar recomendaciones y líneas sintéticas de cuotas históricas verificables, sin llamadas OddsAPI.
+- [x] Validar nuevas pruebas y preservación, ejecutar arnés posterior y sellar NBA-RUN-049 con los pendientes reales.
+
+- [ ] NBA-RUN-049: Apuesta Total/BetMéxico/DoradoBet/Betsson Perú/Inkabet específicos NBA; Te Apuesto online/Luckia, ambigüedades BetPlay/Sportium CO y push/correcciones; contratos por ticket, cuotas LATAM/REB/AST/cortes, relojes de candidatos y contexto médico BOS–NYK. BetPlay y Sportium Colombia avanzaron con18 cláusulas. Informe: docs/nba_reglas_colombia_y_props_candidatos_20261007.md.
+
+### NBA — consolidación deportiva y validación F4, autorizado 2026-10-07
+
+- [x] Verificar RUN-049, 19.744 evidencias y cadena de 98 eventos; fijar fuentes y protocolo antes de calcular resultados nuevos.
+- [x] Consolidar minutos de regulación desde rotaciones aceptadas y rosters con IDs NBA, conservando DNP, prórrogas, integridad y límites de recepción original.
+- [x] Comparar distribución histórica de diez apariciones con referencia reciente de cinco encogida hacia veinte; evaluar tres temporadas/tres bloques, intervalos por fecha, abstenciones y estratos definidos por historial.
+- [x] Probar exclusión de resultados del día/futuro e invariantes; ejecutar suite NBA/arnés, sellar RUN-050 y documentar avances y requisitos pendientes de F4.
+
+- [ ] NBA-RUN-050: completar F4.1 por rol/contexto, F4.2 disponibilidad y minutos jerárquicos con variables as-of, F4.3 escenarios y conservación conjunta; calibrar/confirmar en cortes separados. G0–G9 pendientes. Informe: docs/nba_f4_minutos_regulacion_20261007.md.
+
+### NBA — corregir calibración y coherencia F4, autorizado 2026-10-07
+
+- [x] Verificar RUN-050 y fijar un protocolo antes de ajustar: train 2021-22, validación 2022-23, evaluación exploratoria 2023-24–2025-26; conservar la advertencia de histórico ya inspeccionado.
+- [x] Ajustar amplitud por historial de minutos exclusivamente en train, con soporte 0–48 y estado explícito de validación; congelar parámetros antes de evaluar temporadas posteriores.
+- [x] Implementar distribuciones conjuntas de minutos que sumen 240 por equipo y respeten activo/DNP, con abstención ante escenarios inviables; separar escenario de disponibilidad acreditada.
+- [x] Probar separación temporal y restricciones, evaluar datos y escenarios completos sin atribuir información prepartido inexistente, ejecutar arnés posterior y sellar RUN-051 con límites y siguiente fase.
+
+- [ ] NBA-RUN-051: continuar F5 en investigación con protocolo de tasa por minuto y splits congelados; excluir OT sin estadísticas por periodo. Conservar RUN-050 como referencia CRPS. Disponibilidad/rol y dependencia de rotación prospectiva de F4 siguen pendientes; G0–G9 no aprobados. Informe: docs/nba_f4_calibracion_y_coherencia_20261007.md.
+
+### NBA — distribución de rebotes F5, autorizado 2026-10-07
+
+- [x] Verificar RUN-051, traspaso y fuentes; fijar protocolo de rebotes sin OT, prior heredado, train2021-22/validación2022-23/evaluación2023-26 y métricas antes de ajustar.
+- [x] Construir tasas con historia previa noOT y combinar con minutos RUN-050; ajustar dispersión NB solo en train, comparar Poisson de media reciente/mezcla Poisson/Gamma-Poisson/NB en validación y congelar elección antes de evaluación.
+- [x] Evaluar CRPS/NLL/Brier/PIT discreto y masa central por fecha/temporada/bloques; separar diagnóstico de minutos ampliados y push/void sin contratos ni disponibilidad inventados.
+- [x] Probar probabilidades, colas, temporalidad y contaminación; ejecutar suite NBA/arnés posterior, verificar evidencias y sellar RUN-052 con la referencia elegida y pendientes reales de F5/F6.
+
+- [ ] NBA-RUN-052: F6 auditoría PIT/fugas/contexto y protocolo de confirmación futura; F5 calibración completa/rol/ritmo y OT con estadísticas por periodo. Disponibilidad/recepción/contratos y G0–G9 siguen pendientes. Informe: docs/nba_f5_distribucion_rebotes_20261007.md.
+
+### NBA — ensayos locales de entrega y observación F6, autorizado 2026-10-07
+
+- [x] Verificar RUN-052 y preservar sus 52 corridas, 19.873 evidencias y cadena de 109 eventos; fijar protocolo antes de los ensayos.
+- [x] Probar reinicios, exclusión de duplicados, expiración, 429 y timeout del outbox local; conservar incertidumbre sin reintentos ciegos y registrar relojes de envío reales.
+- [x] Evaluar demoras 0/15/30/60/120/300 segundos con snapshots de contrato/versionado; excluir revisiones recibidas después del corte y reportar observaciones censuradas sin interpolar cuotas.
+- [x] Ejecutar suite NBA y arnés, revisar/sellar NBA-RUN-053 y documentar requisitos reales de Postgres, canal, recepción/contratos y confirmación F7. Ensayos sintéticos locales, cero mensajes externos y cero APIs pagadas; G6 pendiente.
+
+- [ ] NBA-RUN-053: integrar outbox/ledger NBA aislados en Postgres, ensayar canal con configuración privada y medir contratos/acuse reales; completar F6 antes de activar F7. Propuesta F7 sin iniciar; disponibilidad/OT/recepción externa y G0–G9 pendientes. Informe: docs/nba_f6_entrega_y_observaciones_20261007.md.
+
+### NBA — outbox Postgres aislado F6, autorizado 2026-10-08
+
+- [x] Verificar RUN-053 y conservar 53 corridas/19.920 evidencias/111 eventos; usar PostgreSQL16 instalado fuera de PATH para clúster temporal NBA, autenticación privada y solo loopback.
+- [x] Implementar esquema y adaptador NBA con sellado+cola y reclamación+intento atómicos, inmutabilidad, deduplicación y ausencia de reintentos ante incertidumbre.
+- [x] Probar transacciones reales, concurrencia, rollback, interrupción, caducidad y reinicio del servidor; exportar evidencia sin credenciales y detener el clúster de ensayo.
+- [x] Ejecutar suite NBA/arnés posterior, revisar y sellar RUN-054; conservar G6 pendiente hasta canal y cuotas reales, sin cambios en fútbol ni mensajes externos.
+
+- [ ] NBA-RUN-054: configurar canal operativo privado y medir acuses/contratos reales para cerrar F6; operación/backup/rendimiento Postgres por validar antes de desplegar. F7 no iniciado, disponibilidad/OT/recepción anclada y gates pendientes. Informe: docs/nba_f6_postgres_durable_20261008.md.
+
+### NBA — restauración y métricas de entrega F6, autorizado 2026-10-08
+
+- [x] Verificar RUN-054: 54 corridas/19.962 evidencias/113 eventos; conservar código y datos fuente, sin valores privados en logs.
+- [x] Probar pg_dump/pg_restore reales sobre una segunda base NBA; verificar igualdad de ledger/cola y permisos, sin modificar la base de fútbol ni la fuente del backup.
+- [x] Preparar métricas comunes de ledger con acuses faltantes y anomalías temporales explícitas; usar credenciales de fútbol en el VPS según respuesta directa, con un único mensaje operativo NBA y sin copiar secretos al equipo local.
+- [x] Ejecutar suite NBA en la base restaurada y arnés posterior, detener servidor, revisar/sellar RUN-055; canal/cuotas reales y F7 permanecen pendientes si no llegan credenciales.
+
+- [ ] NBA-RUN-055: mejorar recorrido de entrega desde VPS y reunir muestra de acuses; capturar disponibilidad/contratos reales y anclar recepción. Backup en otro servidor/roles/retención y operación continua pendientes. Un mensaje aceptado no aprueba G6; F7 sin iniciar. Informe: docs/nba_f6_backup_y_canal_vps_20261008.md.
+
+### NBA — entrega reutilizable, recuperación fuera del equipo y captura F6, autorizado 2026-10-08
+
+- [x] Verificar RUN-055, congelar protocolo y preservar 55 corridas/20.038 evidencias/116 eventos; cero APIs de datos pagadas nuevas.
+- [x] Probar transporte SSH reutilizable con máximo tres mensajes técnicos, relojes separados, caducidad y ausencia de reintentos; conservar muestras pequeñas sin aprobar p95.
+- [x] Restaurar backup NBA en contenedor nuevo aislado del VPS, reconstruir roles sin contraseñas previas, comparar datos/permisos y conservar copia con hashes fuera del equipo.
+- [x] Preparar captura propia de respuestas/contratos/contexto con procedencia, desconocidos y operación prospectiva; recuperar contexto NBA público si disponible sin retrofechar históricos.
+- [x] Probar controles, verificar evidencias, ejecutar arnés posterior y sellar RUN-056; documentar entradas reales pendientes sin iniciar F7 por suposición.
+
+- [ ] NBA-RUN-056: fuente funcional de cuotas/contratos LATAM y disponibilidad/rol previos, prórroga compatible, anclaje independiente, control de relojes, muestra operativa completa y backups periódicos/retención. Dos acuses calientes0,42/0,48s no aprueban p95. Copia/restauración VPS del ledger de ensayo verificadas; no respaldo integral histórico. Tres capturasNBA403. F7 draft_not_started. Informe: docs/nba_f6_transporte_y_recuperacion_vps_20261008.md.
+
+### NBA — fuentes accesibles, anclaje y operación de captura, autorizado 2026-10-08
+
+- [x] Verificar RUN056 y preservar56 corridas/20.143 evidencias/123eventos; fijar protocolo de recuperación gratuito antes de nuevas capturas.
+- [x] Recuperar fuentes públicas NBA/ESPN y catálogos de cuotas LATAM, distinguir temporada/competición/roster/lesiones/estado y obtener datos originales accesibles sin APIs pagadas nuevas.
+- [x] Implementar y probar anclaje RFC3161 externo con hash/nonce/cadena de certificados; acreditar existencia nueva sin retrofechar recibos históricos.
+- [x] Preparar operación de captura NBA aislada y respaldos verificables con retención explícita; corregir controles de reloj/prórroga según evidencia disponible.
+- [x] Validar controles y preservación, ejecutar arnés final, sellar RUN057 y señalar únicamente los requisitos reales aún no satisfechos.
+
+- [ ] NBA-RUN-057: props individuales LATAM con contratos/reglas completos; disponibilidad/rol por partido y membresía oficial actual; modelo compatible con prórroga; muestra operativa completa/p95 y caducidad entre relojes; respaldo integral y copia periódica fuera del VPS. Captura de investigación activa cada 15 minutos, siete archivos diarios configurados, dos manifiestos RFC3161 verificados; Caliente VPS403. F7 draft_not_started. Informe: docs/nba_f6_captura_anclada_y_operacion_20261008.md.
+
+### NBA — partido completo, contexto oficial y contratos, autorizado 2026-10-08
+
+- [x] Preservar RUN057 y fijar fuentes/protocolo antes de consultar o ajustar modelos; excluir trabajo de copias periódicas por petición explícita del usuario.
+- [x] Recuperar contexto oficial de equipos/partidos y mercados públicos disponibles, verificar IDs actuales y separar pertenencia, diagnóstico y disponibilidad por evento.
+- [x] Construir una referencia causal de rebotes de partido completo que conserve juegos con prórroga, con protocolo retrospectivo fijado y evaluación de todos los partidos elegibles sin exclusión por OT posterior.
+- [x] Revisar contratos/reglas aplicables y controles de reloj/caducidad; mantener desconocidos y límites de fuente, sin habilitar compras, apuestas o publicación comercial.
+- [x] Validar cambios, verificar preservación y arnés final, actualizar propuesta F7 y sellar RUN058; dejar fuera nuevas copias periódicas.
+
+- [ ] NBA-RUN-058: contratos reales de props LATAM, disponibilidad/rol y universo previo, dos identidades actuales, confirmación F7/revisión independiente, muestra operativa p95 y prueba real de caducidad. Referencia fullgame conserva OT y mejora CRPS retrospectivo; no promoción. Copias periódicas excluidas por el usuario. Nuevo manifiesto local preparado; envío de hash a DigiCert rechazado por revisión automática, requiere autorización específica. Informe: docs/nba_f6_partido_completo_y_contexto_oficial_20261008.md.
+
+### NBA — sello externo autorizado del manifiesto RUN058, 2026-10-08
+
+- [x] Verificar RUN058 y sus evidencias; preservar el manifiesto exacto y registrar la autorización del usuario antes del envío.
+- [x] Enviar una solicitud RFC3161 con SHA256 y nonce a DigiCert, verificar contenido/cadena/nonce y rechazar controles alterados.
+- [x] Documentar la prueba, ejecutar arnés posterior y sellar RUN059 sin modificar artefactos históricos ni iniciar F7 o copias periódicas.
+
+NBA-RUN-059: el sello externo del manifiesto RUN058 queda verificado tras autorización expresa, a19:24:17UTC; el resto de pendientes F6/F7 permanece, nuevas copias periódicas excluidas. docs/nba_sello_externo_autorizado_20261008.md.
+
+### NBA — piloto de props y contexto autorizado «ejecutalo», 2026-10-08
+
+- [x] Preservar RUN059 y fijar diez históricos antes de consultar; reutilizar rebotes y añadir puntos/asistencias T−60 con tope incremental250 créditos, cuenta compartida y reserva conservadora.
+- [x] Implementar captura acotada sin credenciales en archivos/logs ni reintentos; probar cuotas, fallos inciertos, presupuestos y cronología de pares.
+- [x] Consultar máximo diez eventos actuales, contexto público y precios mexicanos disponibles; conservar ausencias, reglas/identidad/recepción desconocidas y bloquear promoción.
+- [x] Verificar evidencias, controles y arnés posterior; sellar RUN060 e informar cobertura real. Sin apuestas, publicación, cambios VPS ni nuevas copias periódicas.
+
+NBA-RUN-060: diez históricos con tres mercados al corte común y62observaciones médicas oficiales;2617pares identificados,21actuales;219/250créditos nuevos. Caliente navegador accesible, cero props individuales en dos eventos revisados. Contratos/recepción original/disponibilidad final y F6/F7 pendientes; copias periódicas excluidas. docs/nba_piloto_props_y_contexto_20261008.md.
+
+### NBA — resolver fuentes y admisión por partido tras RUN060, 2026-10-08
+
+- [x] Preservar las 60 corridas y evidencias previas; registrar protocolo de consultas públicas gratuitas, sin nuevos créditos pagados ni copias periódicas.
+- [x] Recuperar reglas mexicanas pendientes, comprobar Betsson México y, por petición del usuario, 1xBet/Novibet México; verificar fuentes oficiales de convocatoria/estado por partido y distinguir acceso, publicación ausente y disponibilidad explícita.
+- [x] Implementar admisión reproducible por evento que explique bloqueos concretos y próxima captura necesaria, sin deducir aptitud de Active ni sustituir cuotas mexicanas por estadounidenses.
+- [x] Probar controles temporales, identidad y evidencia; verificar archivos y arnés posterior, registrar NBA-RUN-061 con avances y límites comprobados.
+
+NBA-RUN-061: revisión 1xBet/Novibet México; normativa recuperada/legible y42jugadores listados por NBA. Cero pares individuales mexicanos verificados; disponibilidad final desconocida.19GETgratuitos,61pruebas. F6abierta/F7sin iniciar; nuevas copias periódicas excluidas. docs/nba_fuentes_1xbet_novibet_y_disponibilidad_20261008.md.
+
+### NBA — selección europea solicitada, 2026-10-08
+
+- [x] Incorporar 1xBet Europa, Betsson Europa, Codere Italia y Betano Reino Unido con sus claves oficiales y versiones diferenciadas de México.
+- [x] Conectar la selección al cliente acotado y ofrecer un plan offline de descubrimiento/consulta por evento, sin nuevas consultas pagadas ni activación periódica.
+- [x] Validar filtros, reservas de créditos y conservación de límites; documentar que catálogo de casas no acredita props, contratos ni disponibilidad y registrar NBA-RUN-062.
+
+NBA-RUN-062: cuatro versiones europeas seleccionadas y conectadas al cliente acotado; plan offline,33pruebas pertinentes,0consultas API/0créditos. Cobertura de props y contratos por versión sin acreditar. F6abierta/F7sin iniciar; nuevas copias periódicas excluidas. docs/nba_casas_europeas_seleccionadas_20261008.md.
+
+### NBA — comprobar cuotas de las cuatro versiones europeas, 2026-10-08
+
+- [x] Preservar RUN062 y fijar un lote actual de hasta ocho eventos y56créditos antes de consultar; cuenta existente, sin reintentos ni captura periódica.
+- [x] Consultar descubrimiento, mercados de equipos y PTS/REB/AST con filtro explícito; conservar precios reales, recepción, ausencias y límites por versión/evento.
+- [x] Verificar recibos, presupuesto y controles; ejecutar arnés posterior y registrar NBA-RUN-063 sin convertir ausencia de muestra en ausencia universal ni habilitar operación.
+
+NBA-RUN-063: ocho eventos/27consultas;72precios de equipos de1xBetEU,BetssonEU yBetanoUK;CodereITsin datos en muestra. Cero props PTS/REB/AST;29/56créditos. Ausencia acotada a muestra, cuatro pretemporada con inicio pasado y cuatro regulares lejanos. F6abierta/F7sin iniciar; copias periódicas excluidas. docs/nba_cuotas_europeas_comprobadas_20261008.md.
+
+### NBA — cerrar suministro reutilizable de props, 2026-10-08
+
+- [x] Preservar RUN063 y fijar captura nueva de props US/AU, máximo ocho eventos futuros y 32 créditos; mantener fuentes europeas como selección independiente.
+- [x] Implementar captura reutilizable y exportación de pares reales PTS/REB/AST con recibos, líneas, precios y cobertura; distinguir captura funcional de admisión comercial.
+- [x] Probar límites, selección exclusivamente futura, fallos y conservación; ejecutar captura real, verificar precios e identidades disponibles, registrar NBA-RUN-064.
+
+NBA-RUN-064: suministro de props funcional y reutilizable. 36 pares nuevos (12 por mercado) de FanDuel/Sportsbet/Fanatics; 36 identidades verificadas, 2617 históricos conservados; 17/32 créditos. Captura de datos resuelta; contratos aplicables, disponibilidad final y validación operativa separados. F6 abierta/F7 sin iniciar; copias periódicas excluidas. docs/nba_props_fuente_funcional_20261008.md.
+
+### NBA — conectar props y seguimiento prospectivo en simulación, 2026-10-08
+
+- [x] Fijar protocolo exploratorio, conservar RUN064 y sellar predicciones antes de partidos; usar historia causal de partido completo y separar disponibilidad desconocida.
+- [x] Implementar registro reproducible, selecciones hipotéticas con precios frescos y evaluación posterior contra boxscores oficiales, sin duplicar jugadores por casa ni promover modelos.
+- [x] Ejecutar lote regular acotado a tres eventos/12 créditos, verificar predicciones reales pendientes y controles; arnés posterior y registro NBA-RUN-065. Sin apuestas ni nuevas copias periódicas.
+
+NBA-RUN-065: piloto exploratorio prospectivo ejecutado. 51pares/12consultas/16créditos (12iniciales+4integrados prefijados);21versiones/15casos únicos,6frescos/2entradas hipotéticas,0apuestas. 499/17suiteNBA;800/16arnésgeneral. Evaluación oficial y resumen implementados; formato NBAweb comprobado con final2OT. IDsNBA de eventos, resultados futuros, disponibilidad final y confirmaciónF7/G7 pendientes; sin recolector ni nuevas copias periódicas. docs/nba_seguimiento_prospectivo_20261008.md.
+
+### NBA — resolver pendientes del seguimiento y preparar su cierre verificable, 2026-10-08
+
+- [x] Preservar RUN065 y resolver los tres vínculos NBA mediante páginas oficiales, equipos y hora exactos, sin cambiar registros sellados ni consumir nuevas cuotas.
+- [x] Completar controles de disponibilidad y recepción de resultados: estado por evento, plazos de captura, vínculo de fuentes, evaluación de cohorte automática e informe de condiciones pendientes de partidos futuros.
+- [x] Fijar metodología de lectura y CLV para investigación, probar flujos completos y rechazos; conservar separación entre piloto, confirmación y reglas de cuentas.
+- [x] Ejecutar comprobaciones actuales, arnés final y registrar NBA-RUN-066; dejar fuera nuevas copias periódicas, apuestas y publicación.
+
+NBA-RUN-066: tresIDsNBA resueltos con equipos/hora exactos y recibos200; cohorte15 intacta. Seguimiento local activado20–21octubre (equipo/Codex abiertos), ventanas previas, cierre mismo contrato y evaluación oficial idempotente. Cero créditos actuales/tresGETgratuitos; futurocierre máximo2créditos. Lectura/CLV congelados y borradorpotencia112días/300partidos; confirmación aún no abierta. 523/17suiteNBA;800/16arnés. Disponibilidad/finales futuros, contratos reales y recepción histórica original siguen sin acreditarse. Sin apuestas/copias periódicas. docs/nba_pendientes_resueltos_y_cierre_programado_20261008.md.
+
+### NBA — cerrar dependencia local y consolidar pendientes por alcance, 2026-10-08
+
+- [x] Preservar RUN066 y preparar traslado verificable de la misma cohorte a un servicio NBA aislado del VPS, sin modificar sellos ni ampliar créditos.
+- [x] Probar paquete portable, identidad del ejecutor, exclusión concurrente, ventana/fin, recuperación de estado y no duplicación de consultas.
+- [x] Desplegar y ejecutar un ciclo real sin tareas futuras debidas; retirar ejecución local duplicada y conservar seguimiento de salud/resultados del VPS.
+- [x] Fijar requisitos científicos y comerciales por alcance, separar espera de evidencia de fallos técnicos; validación final y registro NBA-RUN-067. Sin apuestas, nuevas copias periódicas ni cambios de fútbol.
+
+NBA-RUN-067: mismo piloto15casos en VPS,3fuentesNBA200, exclusión/reinicio/estado verificados; executorlocalretirado y protegido. Cero créditos actuales/futurocierremax2. Codex sóloobserva; captura sinPCencendido. Diseño científico/cuenta preparados; finales/estados futuros, muestra científica y contrato real requieren evidencia nueva. 531/17suiteNBA;800/16arnés. Sin apuestas/copiasperiódicas/cambiosfútbol. docs/nba_seguimiento_vps_y_pendientes_por_alcance_20261008.md.
+
+### NBA — completar activación y alertas autónomas, 2026-10-09
+
+- [x] Preservar RUN067, separar fuentes necesarias y cobertura opcional bloqueada; detener generación de nuevas copias periódicas sin borrar evidencia anterior.
+- [x] Activar alertas operativas en el VPS con credenciales ya autorizadas, reclamación durable antes de enviar, límites y control exclusivo del contenedor piloto al terminar.
+- [x] Validar ciclos reales, reinicio y conservación del estado/fútbol; dejar preparación científica y liquidación sujetas a evidencia real, sin promover puertas ni inventar disponibilidad.
+- [x] Ejecutar pruebas y arnés, documentar servicios activos y límites, registrar NBA-RUN-068.
+
+NBA-RUN-068: captura NBA, piloto y alertas operativas activos en VPS. ESPNválido/Caliente403en cuarentena explícita; nuevas copias periódicas desactivadas, originales conservados. MensajeTGconfirmado/sin reenvío; Type=notify corrige carrera inicial, exclusión y reinicio reales verificados. DosGET/0créditosactuales/futurocap2; 542/1NBA y800/16arnés. Fútbol intacto; confirmación y liquidación comercial conservan requisitos de evidencia. docs/nba_activacion_y_alertas_vps_20261009.md.

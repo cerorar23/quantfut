@@ -1,0 +1,12 @@
+{
+  "provider": "the_odds_api",
+  "purpose": "NBA individual player prop data acquisition",
+  "documentation_url": "https://the-odds-api.com/sports-odds-data/nba-odds.html",
+  "bookmakers": ["fanduel", "fanatics", "draftkings", "betmgm", "bovada", "betrivers", "betonlineag", "williamhill_us", "sportsbet", "tab"],
+  "provider_regions": ["us", "au"],
+  "markets": ["player_points", "player_rebounds", "player_assists"],
+  "maximum_events": 8,
+  "automatic_capture": false,
+  "research_only": true,
+  "mexican_contract_equivalence_verified": false
+}

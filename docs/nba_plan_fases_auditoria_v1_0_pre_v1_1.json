@@ -1,0 +1,1003 @@
+{
+  "schema_version": "1.0",
+  "plan_version": "1.0",
+  "created_client_date": "2026-10-03",
+  "display_timezone": "America/Mexico_City",
+  "event_timestamp_timezone": "UTC",
+  "objective": "Pronóstico estadístico NBA, validación reproducible y notificaciones auditables, aislado del fútbol.",
+  "document": "docs/nba_plan_fases_auditable.md",
+  "documentation_status": "completed",
+  "implementation_status": "not_started",
+  "baseline": {
+    "git_commit": "ed9205582db2a534b8c61b17f6f0ec16cc495eb3",
+    "workspace_had_uncommitted_changes": true,
+    "algorithm": "SHA256",
+    "document_hashes": [
+      {
+        "path": "docs/nba_plan_fases_auditable.md",
+        "sha256": "ab230ddb558e72203457c63c3b59a15f059dc9f58f8ab1eb589af9d9b54ec51c"
+      },
+      {
+        "path": "docs/nba_2026_27_investigacion_y_plan.md",
+        "sha256": "4d4d321cede634dad3d8cd9eb7ed63cc3972a05fbd394db5c9e37d0035572766"
+      },
+      {
+        "path": "docs/nba_arquitectura_aislada.md",
+        "sha256": "08b5802d53ebc41ccde7d890701b005eb315b5ac1a94537b5a73871902561d8f"
+      },
+      {
+        "path": "docs/nba_mvp_ejecucion_y_capacidad.md",
+        "sha256": "b8cbd50d351a9661392ecc61f068eb45d05d3b5c72904d89bdb310d5ed66908d"
+      }
+    ],
+    "meaning": "Integridad de documentos de planificación; no evidencia de ejecución ni anclaje temporal externo."
+  },
+  "phase_status_values": [
+    "planned",
+    "in_progress",
+    "ready_for_review",
+    "passed",
+    "failed",
+    "deferred"
+  ],
+  "scope": {
+    "initial_family_count": 1,
+    "initial_family_choice": "pending_coverage_audit",
+    "provisional_family": "rebotes",
+    "operators_target_range": [
+      2,
+      3
+    ],
+    "nba_application_exists": false,
+    "forecasts_implemented": false,
+    "nba_telegram_active": false,
+    "paid_capture_active": false,
+    "automatic_bet_placement": false,
+    "customer_account_operation": false
+  },
+  "pending_decisions": [
+    {
+      "id": "D01",
+      "description": "Familia inicial definitiva elegida por cobertura",
+      "phase": "F2",
+      "status": "pending",
+      "value": null
+    },
+    {
+      "id": "D02",
+      "description": "Operadores accesibles y reglas por jurisdicción",
+      "phase": "F2",
+      "status": "pending",
+      "value": null
+    },
+    {
+      "id": "D03",
+      "description": "Fuentes e histórico con cobertura y condiciones verificadas",
+      "phase": "F2",
+      "status": "pending",
+      "value": null
+    },
+    {
+      "id": "D04",
+      "description": "Presupuesto NBA separado y ámbito real de cuota del proveedor",
+      "phase": "F0",
+      "status": "pending",
+      "value": null
+    },
+    {
+      "id": "D05",
+      "description": "Recursos disponibles, retención y mecanismo de anclaje",
+      "phase": "F1",
+      "status": "pending",
+      "value": null
+    },
+    {
+      "id": "D06",
+      "description": "Destino NBA de pruebas y provisión privada de credenciales",
+      "phase": "F0",
+      "status": "pending",
+      "value": null
+    },
+    {
+      "id": "D07",
+      "description": "Métrica primaria, efecto mínimo, potencia, tolerancias y fechas de lectura",
+      "phase": "F0",
+      "status": "pending",
+      "finalize_before": "test_block_opened",
+      "value": null
+    }
+  ],
+  "proposed_validation_floor": {
+    "distinct_games": 300,
+    "days": 60,
+    "chronological_blocks": 3,
+    "status": "proposal_not_sufficient_proof",
+    "definitive_sample_size": null,
+    "scope_coverage_required": true,
+    "planning_section": "11"
+  },
+  "technical_targets": {
+    "seal_to_telegram_ack_p95_seconds": 2,
+    "status": "proposed_not_measured",
+    "does_not_measure_device_delivery_or_bet_acceptance": true
+  },
+  "phases": [
+    {
+      "id": "F0",
+      "title": "Alcance, decisiones y protocolo",
+      "dependencies": [],
+      "responsible_role": "Producto y metodología",
+      "status": "planned",
+      "gate": {
+        "id": "G0",
+        "status": "pending",
+        "criteria": [
+          "Alcance y objetivos medibles versionados",
+          "Decisiones pendientes con impacto identificado",
+          "Ningún presupuesto o destino externo inferido"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F0.1",
+          "title": "Definir usuarios, familia candidata, salidas y cortes",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F0.2",
+          "title": "Registrar decisiones de recursos, proveedores y canal pendientes",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F0.3",
+          "title": "Preregistrar universo, baselines, métricas, lecturas y muestra",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "alcance_versionado",
+        "inventario_decisiones",
+        "protocolo_preliminar"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F1",
+      "title": "Aislamiento técnico y recuperación",
+      "dependencies": [
+        "F0"
+      ],
+      "responsible_role": "Ingeniería",
+      "status": "planned",
+      "gate": {
+        "id": "G1",
+        "status": "pending",
+        "criteria": [
+          "Runtime sin imports ni acceso a recursos de fútbol",
+          "Migraciones y restauración afectan solo NBA",
+          "Ensayos de fallo y capacidad documentados",
+          "Arnés local resuelto antes de implementación"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F1.1",
+          "title": "Crear aplicación y dependencias NBA sin imports qf",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F1.2",
+          "title": "Separar despliegue, persistencia, volúmenes y roles",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F1.3",
+          "title": "Configuración NBA explícita y salidas pagadas/publicación apagadas",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F1.4",
+          "title": "Ensayar aislamiento, carga limitada y recuperación en pruebas",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "build_reproducible",
+        "mapa_recursos_permisos",
+        "informe_aislamiento_recuperacion"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F2",
+      "title": "Fuentes, contratos y presupuesto",
+      "dependencies": [
+        "F0"
+      ],
+      "responsible_role": "Datos y producto",
+      "status": "planned",
+      "gate": {
+        "id": "G2",
+        "status": "pending",
+        "criteria": [
+          "Cobertura del universo acotado documentada",
+          "Contratos aceptados con reglas verificables",
+          "Frescura y coste medibles",
+          "Captura pagada requiere tope definido"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F2.1",
+          "title": "Auditar cobertura y tiempos por fuente, temporada y mercado",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F2.2",
+          "title": "Versionar contratos, reglas e identidad",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F2.3",
+          "title": "Definir presupuesto NBA y contabilidad global cuando comparta cuota",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F2.4",
+          "title": "Congelar familia/operadores antes de analizar rendimiento",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "matriz_cobertura",
+        "diccionario_contratos",
+        "mapa_identidades",
+        "presupuesto_propuesto"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F3",
+      "title": "Ingesta e información point-in-time",
+      "dependencies": [
+        "F1",
+        "F2"
+      ],
+      "responsible_role": "Ingeniería de datos",
+      "status": "planned",
+      "gate": {
+        "id": "G3",
+        "status": "pending",
+        "criteria": [
+          "Sin violaciones PIT o identidad ambigua en datos aceptados",
+          "Cuarentena y faltantes informados",
+          "Invariantes deportivos reconciliados con tolerancias previas",
+          "Integridad y temporalidad de evidencia distinguibles"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F3.1",
+          "title": "Captura raw versionada, reanudable e histórica según cobertura",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F3.2",
+          "title": "IDs con namespace, vigencia y cuarentena",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F3.3",
+          "title": "As-of basado en primera recepción y versiones",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F3.4",
+          "title": "Reconciliación, deduplicación, replay y anclaje prospectivo",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "manifiesto_datos",
+        "informe_reconciliacion",
+        "informe_pit",
+        "protocolo_anclaje"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F4",
+      "title": "Baselines y distribución de minutos",
+      "dependencies": [
+        "F3"
+      ],
+      "responsible_role": "Modelado estadístico",
+      "status": "planned",
+      "gate": {
+        "id": "G4",
+        "status": "pending",
+        "criteria": [
+          "Resultados reproducibles posteriores al entrenamiento",
+          "Sin minutos reales futuros como features",
+          "Coherencia deportiva y cobertura evaluadas",
+          "Conservar baseline si candidato no mejora"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F4.1",
+          "title": "Baselines de minutos y splits temporales",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F4.2",
+          "title": "Modelo jerárquico con disponibilidad, rol y carga",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F4.3",
+          "title": "Escenarios y coherencia conjunta de minutos",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "pronosticos_minutos",
+        "comparacion_baselines",
+        "model_card_minutos"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F5",
+      "title": "Distribución de estadística y calibración",
+      "dependencies": [
+        "F4"
+      ],
+      "responsible_role": "Modelado y revisión metodológica",
+      "status": "planned",
+      "gate": {
+        "id": "G5",
+        "status": "pending",
+        "criteria": [
+          "Distribución y probabilidades coherentes",
+          "Inferencia verificable y error numérico informado",
+          "Sin ajustes basados en test final",
+          "Candidato y protocolo congelables; ventaja no asumida"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F5.1",
+          "title": "Integrar minutos, ritmo, tasa y dispersión",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F5.2",
+          "title": "Modelar tiros u oportunidades solo con datos disponibles",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F5.3",
+          "title": "Validar distribución, categorías del contrato y error numérico",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F5.4",
+          "title": "Calibración fuera de muestra, abstención y SBC cuando proceda",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "model_card_candidato",
+        "resultados_temporales",
+        "protocolo_final",
+        "configuracion_congelada"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F6",
+      "title": "Alertas de pruebas y disponibilidad",
+      "dependencies": [
+        "F5"
+      ],
+      "responsible_role": "Entrega y evaluación",
+      "status": "planned",
+      "gate": {
+        "id": "G6",
+        "status": "pending",
+        "criteria": [
+          "Todas las salidas del ensayo tienen sellado previo",
+          "Contrato/versionado y caducidad correctos",
+          "Estados inciertos de entrega reconciliados",
+          "Disponibilidad no presentada como apuesta confirmada"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F6.1",
+          "title": "Ledger y outbox durables enlazados a sellado",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F6.2",
+          "title": "Configurar destino NBA de pruebas y etiquetar experimental",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F6.3",
+          "title": "Medir tiempos, antigüedad y revalidación antes de notificar",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F6.4",
+          "title": "Replay de fallos, incertidumbre y demoras con resolución real",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "ledger_alertas_prueba",
+        "informe_transporte",
+        "informe_latencia_disponibilidad"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F7",
+      "title": "Confirmación prospectiva y promoción",
+      "dependencies": [
+        "F6"
+      ],
+      "responsible_role": "Evaluación y revisión de producto",
+      "status": "planned",
+      "gate": {
+        "id": "G7",
+        "status": "pending",
+        "criteria": [
+          "Promoción exige criterio científico preregistrado satisfecho; un resultado inconcluso/fallido se registra sin habilitar promoción",
+          "Sin fuga y con muestra/cobertura pertinente",
+          "Estabilidad, incertidumbre y concentración informadas",
+          "Promoción comercial requiere evidencia adicional de utilidad/disponibilidad"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F7.1",
+          "title": "Congelar candidato, universo y criterios antes del bloque",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F7.2",
+          "title": "Lecturas programadas y métricas por bloques correlacionados",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F7.3",
+          "title": "Separar evidencia deportiva, precios y análisis simulado/informado",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F7.4",
+          "title": "Emitir revisión mantener, reformular o promover alcance respaldado",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "manifiesto_prospectivo",
+        "metricas_confirmacion",
+        "informe_evidencia",
+        "acta_promocion"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F8",
+      "title": "Challengers de lesiones, rol y oportunidades",
+      "dependencies": [
+        "F6"
+      ],
+      "responsible_role": "Modelado y datos",
+      "status": "planned",
+      "gate": {
+        "id": "G8",
+        "status": "pending",
+        "criteria": [
+          "Datos oportunos y cobertura suficiente",
+          "Información adicional replicable",
+          "No alterar candidato bajo confirmación",
+          "Challenger nuevo requiere nueva versión y bloque F7"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F8.1",
+          "title": "Comparar noticias capturadas frente a modelo congelado",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F8.2",
+          "title": "Ablación minutos, tasa y ambos con beneficiarios definidos antes",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F8.3",
+          "title": "Evaluar oportunidades compartidas y regímenes de partido",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "estudio_anuncios",
+        "informe_ablaciones",
+        "registro_challengers"
+      ],
+      "run_ids": []
+    },
+    {
+      "id": "F9",
+      "title": "Operación y extensiones evaluadas",
+      "dependencies": [
+        "F7"
+      ],
+      "responsible_role": "Operación, metodología y producto",
+      "status": "planned",
+      "gate": {
+        "id": "G9",
+        "status": "pending",
+        "criteria": [
+          "Alcance divulgado coincide con evidencia",
+          "Recursos, recuperación y monitorización probados",
+          "Sin certificación heredada entre familias/periodos",
+          "Sin operación automática de apuestas o cuentas"
+        ],
+        "thresholds_version": null,
+        "evidence_ids": [],
+        "reviewer": null,
+        "decision_at_utc": null,
+        "decision_reason": null
+      },
+      "tasks": [
+        {
+          "id": "F9.1",
+          "title": "Model card, estados de evidencia y dashboard de publicación",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F9.2",
+          "title": "Monitorizar deriva, costes, incidentes y recuperación",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F9.3",
+          "title": "Evaluar capacidad y utilidad con observaciones voluntarias y sesgo",
+          "status": "planned",
+          "evidence_ids": []
+        },
+        {
+          "id": "F9.4",
+          "title": "Extender periodos/live/challengers con validación específica",
+          "status": "planned",
+          "evidence_ids": []
+        }
+      ],
+      "expected_evidence": [
+        "dashboard_auditoria",
+        "registro_incidentes",
+        "informe_capacidad_utilidad",
+        "protocolo_extensiones"
+      ],
+      "run_ids": []
+    }
+  ],
+  "experiments": [
+    {
+      "id": "E0",
+      "title": "Cobertura, contratos y captura",
+      "primary_phase": "F2",
+      "priority": "mvp",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E1",
+      "title": "Minutos y rotaciones",
+      "primary_phase": "F4",
+      "priority": "mvp",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E2",
+      "title": "Disponibilidad y lesiones",
+      "primary_phase": "F8",
+      "priority": "posterior",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E3",
+      "title": "Oportunidades productivas",
+      "primary_phase": "F8",
+      "priority": "segun_cobertura",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E4",
+      "title": "Periodos",
+      "primary_phase": "F9",
+      "priority": "extension",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E5",
+      "title": "Demora y disponibilidad tras alerta",
+      "primary_phase": "F6",
+      "priority": "mvp_continuo",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E6",
+      "title": "Modelos modernos",
+      "primary_phase": "F9",
+      "priority": "challenger",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E7",
+      "title": "Reacción a noticias",
+      "primary_phase": "F8",
+      "priority": "posterior",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E8",
+      "title": "Minutos frente a tasa y rol",
+      "primary_phase": "F5",
+      "priority": "basico_mvp_completo_f8",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E9",
+      "title": "Regímenes competitivo y paliza",
+      "primary_phase": "F8",
+      "priority": "escenario_basico_f4",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E10",
+      "title": "Calidad espacial de tiro",
+      "primary_phase": "F9",
+      "priority": "segun_cobertura",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E11",
+      "title": "Rachas y sesgo de selección",
+      "primary_phase": "F9",
+      "priority": "exploratorio",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E12",
+      "title": "Rotaciones Q1 y H1",
+      "primary_phase": "F9",
+      "priority": "extension",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E13",
+      "title": "Competencia por oportunidades",
+      "primary_phase": "F8",
+      "priority": "challenger",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E14",
+      "title": "Faltas y sustituciones",
+      "primary_phase": "F9",
+      "priority": "segun_cobertura",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E15",
+      "title": "Interacciones de quintetos",
+      "primary_phase": "F9",
+      "priority": "diferido",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E16",
+      "title": "Viaje, descanso y carga",
+      "primary_phase": "F9",
+      "priority": "posterior",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E17",
+      "title": "Liderazgo y duplicación de feeds",
+      "primary_phase": "F6",
+      "priority": "basico_mvp",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E18",
+      "title": "PIT y controles negativos",
+      "primary_phase": "F3",
+      "priority": "transversal",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E19",
+      "title": "Resiliencia de entrega",
+      "primary_phase": "F6",
+      "priority": "mvp_continuo",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E20",
+      "title": "Comparación clásica y cuántica",
+      "primary_phase": "F9",
+      "priority": "offline_diferido",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E21",
+      "title": "SBC y cálculo bayesiano",
+      "primary_phase": "F5",
+      "priority": "si_inferencia_lo_requiere",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E22",
+      "title": "Combinación y calibración temporal",
+      "primary_phase": "F5",
+      "priority": "basico_mvp",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E23",
+      "title": "Abstención e incertidumbre",
+      "primary_phase": "F5",
+      "priority": "basico_mvp",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E24",
+      "title": "Conformal online",
+      "primary_phase": "F9",
+      "priority": "posterior",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E25",
+      "title": "Riesgo bajo modelos inciertos",
+      "primary_phase": "F9",
+      "priority": "investigacion_offline",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    },
+    {
+      "id": "E26",
+      "title": "Réplica prospectiva y stress",
+      "primary_phase": "F7",
+      "priority": "confirmacion",
+      "status": "planned",
+      "run_ids": [],
+      "results": null
+    }
+  ],
+  "required_run_fields": [
+    "run_id",
+    "phase_or_experiment",
+    "responsible",
+    "reviewer_or_self_review_disclosure",
+    "created_at_utc",
+    "git_commit",
+    "working_tree_state",
+    "source_hashes",
+    "configuration_hash",
+    "model_hash",
+    "as_of",
+    "dataset_range",
+    "seed",
+    "command",
+    "runtime_version",
+    "assumptions",
+    "metrics_with_intervals",
+    "missingness",
+    "failures",
+    "result",
+    "reason"
+  ],
+  "required_forecast_fields": [
+    "forecast_id",
+    "game_id",
+    "player_id_if_applicable",
+    "contract_or_context_id",
+    "as_of",
+    "source_version_ids",
+    "model_hash",
+    "training_manifest",
+    "calibrator_hash",
+    "features_hash",
+    "distribution",
+    "intervals",
+    "approximation_error",
+    "quality_flags",
+    "abstention_reason",
+    "seal_id",
+    "anchor_reference",
+    "delivery_event_ids",
+    "result_version_ids"
+  ],
+  "evidence_records": [],
+  "run_records": [],
+  "gate_decisions": [],
+  "change_history": [
+    {
+      "client_date": "2026-10-03",
+      "type": "plan_creation",
+      "description": "Consolidación F0–F9 y E0–E26. Registro inicial; ningún gate aprobado ni experimento ejecutado."
+    },
+    {
+      "client_date": "2026-10-04",
+      "type": "plan_addendum",
+      "description": "Arranque con pretemporada, históricos recientes y separación de regímenes. Base original conservada; puertas y ejecuciones sin cambios.",
+      "document_addendum_id": "preseason_startup_v1"
+    },
+    {
+      "client_date": "2026-10-04",
+      "type": "plan_addendum",
+      "description": "CLV complementario, contratos/cierre, liderazgo medido, precisión temporal y límites QNN. Fases y puertas conservadas.",
+      "document_addendum_id": "clv_sources_critical_review_v1"
+    }
+  ],
+  "document_addenda": [
+    {
+      "id": "preseason_startup_v1",
+      "version": "1.0",
+      "client_date": "2026-10-04",
+      "path": "docs/nba_pretemporada_arranque.md",
+      "sha256": "338aec872cad6decefd1e3410c81dbbe60308ac7615dfaa52e1d37fca32f8614",
+      "status": "documented",
+      "meaning": "Complemento del plan; no evidencia de implementación o validación."
+    },
+    {
+      "id": "clv_sources_critical_review_v1",
+      "version": "1.0",
+      "client_date": "2026-10-04",
+      "path": "docs/nba_revision_critica_clv_fuentes.md",
+      "sha256": "f46ee2bce6b30d5662b901119132da5432a0c11a965440066beb5e6b3dec7f73",
+      "status": "documented",
+      "source_attachment_sha256": "4798c87e92d51b434be979c308463ce198cee8d7acbab3d124cffa723f1d5839",
+      "meaning": "Revisión y especificaciones complementarias; no evidencia de implementación o validación."
+    }
+  ]
+}

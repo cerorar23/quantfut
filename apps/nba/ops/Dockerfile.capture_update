@@ -1,0 +1,7 @@
+ARG NBA_CAPTURE_BASE
+FROM ${NBA_CAPTURE_BASE}
+COPY src/nba /app/src/nba
+COPY ops/capture_worker.py /app/capture_worker.py
+COPY ops/capture_config.json /app/config.json
+ENV PYTHONPATH=/app/src PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+CMD ["python", "/app/capture_worker.py"]

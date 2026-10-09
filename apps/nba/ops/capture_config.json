@@ -1,0 +1,11 @@
+{
+  "cycle_seconds": 900,
+  "backup_keep": 7,
+  "periodic_copies": false,
+  "quarantined_public_sources": ["https://sports.caliente.mx/es_MX/Basquetbol"],
+  "max_total_bytes": 17179869184,
+  "min_free_host_bytes": 10737418240,
+  "research_only": true,
+  "paid_API_calls": false,
+  "pick_publication": false
+}

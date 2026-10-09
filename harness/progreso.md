@@ -3802,6 +3802,69 @@ partidos (15 s) y luego 0 (el 1X2 se sigue deduplicando). Vista previa con
 la línea encendida solo para ese proceso: 9 pronósticos de 15 partidos, 7 de
 goles (casi todos "menos de 4,5", con referencia de Betano), antes 2.
 
+
+## 2026-10-06 — NBA: ZenRows usado en tráfico real de fuentes
+
+La instalación del MCP no redirigía los scrapers. Se autenticó account_usage y se probaron cuatro targets con máximo100créditos: BasketballReference.cgi devuelveHTML válido/152filas y pasa parser upstream; CDN yPDF dan ZenRows422/RESP001,CDX agota110segundos. Consumo observado1de5000créditos, sin compras. El adaptador nuevo enruta GET del scraper BRef a scrape del MCP y conserva HTML/recibo/hash; no se declara desbloqueo universal.
+
+Memphis–OKC0022200443 añade23filas/22participantes/1DNP explícito,161569combinadas;6056regulares aceptados y94pendientes. Overlay declarado OKCreb54→53 corroborado por NBAStats actual y BRef, conservando el Parquet antiguo y umbrales.152acuerdos entre parsers,6controles adversariales,161546filas previas intactas,39archivos propios intactos,304evidencias previas verificadas; harness706antes/después. No se atribuye nueva ejecución a la suiteNBA172 anterior. NBA-RUN-038; docs/nba_zenrows_recuperacion_20261006.md.
+
+## 2026-10-06 — Línea de alta probabilidad: fuera "menos de 4,5 goles"
+
+Decisión del usuario tras la vista previa con goles de API-Football: casi
+todos los pronósticos de goles eran "menos de 4,5" (se paga a 1,09-1,17),
+poco útil para el cliente. `MERCADOS_GOLES_HABILITADOS` queda en más de 1,5
+y menos de 3,5 (commit 396af2c). Pasó la prueba histórica: quitarla no exige
+repetirla; volver a añadirla, sí. API-Football sigue guardando la 4,5 de las
+casas blandas (no cuesta peticiones) por si se reabre.
+
+
+## 2026-10-06 — NBA: completar y validar históricos (NBA-RUN-039)
+
+BRef: 83 fechas por ZenRows recuperan 93 regulares; actas/calendario/ESPN completan cuatro pretemporadas. Resultado: 6149/6150 regulares, 71/71 pretemporadas, 164190 filas. Las fuentes de los 6150 regulares están capturadas. Tony Bradley (0:00 / 1 REB) está corroborado por PBP de 0,2 segundos y se conserva fuera del normalizador congelado, sin inventar segundos. Rotaciones: 6113/6150, 258137 tramos y 37 pendientes. Los 330 PDFs de 17:30 completan 816 fechas, 80932 filas y 70941 filas nominales con ID; 13 nombres originales y 19 nuevos resueltos con fuentes oficiales. No se acredita intradía total o recepción pregame original. Props: +795 pares P/A (603/192), 3756 con rebotes; 500 créditos locales agotados, cobertura de dos juegos P/A y veinte de rebotes. Se preservan 161569 filas y 5493 rotaciones previas, 39 archivos NBA y 340 evidencias. Harness: 706 antes/después; 21 controles adversariales. Los timeouts mantienen reserva por coste incierto; sin compras. Modelo y gates intactos. Informe: docs/nba_completar_validar_20261006.md.
+
+
+## 2026-10-06 — NBA: segundos oficiales y rotaciones (NBA-RUN-040)
+
+Se amplió el contrato de minutos solo con fuentes GameRotation completas y hash externo, para permitir <=1s con reloj cero/estado vacío; PRA no infiere participación. Tony Bradley conserva 0:00 y 1REB, acredita0,2s y añade su roster completo28filas:6150regulares/71pretemporadas/164218filas. La ruta por defecto coincide con el normalizador archivado en164190filas. Rotaciones:+28,6141/6150 y259416tramos; nueve casos mantienen contradicciones administrativas o titulares de OT sin prueba. V3actual17capturas requirió adaptar el esquema nestedgame y reconocer actionId único; actionNumber duplicado permanece. Alias de sustitución solo mediante IDs explícitos V2/V3 corroborados; sin override de titulares.245créditos nuevos confirmados;riesgo1612/3200 con reservasinciertas, cero props/sincompras.189NBA/707harness; primerWinError5temporal preservado y repetición completa exitosa.2105evidencias previas verificadas,38archivos antiguos intactos e ingest original archivado; modelo/gates intactos. Intradía médico/PIT y props multitemporada pendientes. Informe:docs/nba_segundos_y_rotaciones_20261006.md.
+
+
+## 2026-10-06 — NBA: pendientes e intradía (NBA-RUN-041)
+
+Se aceptaron seis rotaciones adicionales mediante intervalos administrativos de tiempo cero y exposición oficial de OT:6147/6150,259687tramos; tres contradicciones persisten. Descarga médica:815/816cortes nuevos;1631versiones/165729filas,75451jugadores nuevos con ID. Se preservan continuaciones NOTYETSUBMITTED/filas nombradas, razones literales y diferencias upstream; once identidades exactas CuiYongxi se resuelven en una versión separada.3859cambios de estado/motivo y1215selecciones retrospectivasT60;1216horarios únicos corroborados,40búsquedas vacías separadas. Recepción original/PIT no acreditados. Props3756previos/44snapshots revalidados,cero llamadas; repos fijados sin nuevas cuotas; plan36solicitudes/720créditos sigue pendiente de autorización por límite500agotado.140ZenRowsconfirmados nuevos;riesgo1752/3200,sincompras.189NBA/707harness y controles auxiliares;2280evidencias/40corridas/gates/producción previos preservados. Informe:docs/nba_pendientes_intradia_20261006.md.
+
+Corrección de checklist NBA-RUN-041: el reintento del auxiliar de sellado marcó por error la línea de pendientes como completada. Se restituyó la casilla abierta para las tres rotaciones, intradía/PIT y props; el informe, datasets y evidencias del checkpoint permanecen intactos. La instantánea incorrecta se conserva y esta corrección se registra aparte.
+
+## 2026-10-07 — Línea de alta probabilidad activada y "marca el local / el visitante" desplegado
+
+- Sellado del 7-oct (08:00 UTC) correcto con el bloque vacío (`n_alta_prob: 0`).
+  La tarea programada de activación (08:30 UTC) se quedó esperando el
+  permiso de su primer `Bash` (nadie lo aprobó): se detuvo y la activación se
+  hizo a mano tras repetir sus comprobaciones (verify 9 lotes, salud, tablas
+  vacías, log del job). Lección: una tarea programada que usa `ssh` necesita
+  sus permisos aprobados de antemano ("Run now" en una prueba inocua).
+- "Marca el local / el visitante" (más de 0,5 goles de un equipo), decisión
+  del usuario: probabilidad del mismo ajuste de goles (prueba histórica:
+  local 86,97→88,52, visitante 86,10→87,45); cuota de referencia de las casas
+  blandas desde API-Football bets 16/17 (con guarda por nombre); `db/042`
+  amplía el CHECK con guardia. El control vigila los dos lados como UN grupo
+  (`team_totals`), decisión del usuario: en el Monte Carlo del revisor da
+  menos pausas en falso y más detección que por separado.
+- Tasas del control con mezcla realista y grupo fusionado: ~16 % de líneas
+  con alguna pausa de grupo en falso, ~5 % de la línea entera; detección de
+  un déficit de 3 pts ~82 % / ~73 %. Las cifras del 6-oct (9,7 % / 3 % /
+  88 %) suponían probabilidades uniformes y 4 grupos.
+- Despliegue 17:02 UTC: `db/042` + `ALTA_PROB_ENABLED=1` + reinicio en un
+  minuto seguro. Vista previa: 10 pronósticos de 17 partidos (5 de equipo).
+  Primeros pronósticos reales: sellado del 8-oct, 08:00 UTC.
+
+
+## 2026-10-07 — NBA: archivo público y rotaciones (NBA-RUN-042)
+
+Las tres actas completas acreditan entrada/salida al mismo reloj detenido;6150/6150rotaciones y259826tramos, sin segundos positivos para actores administrativos. ArchivoKamran fijado/verificado:3662JSON,228324pares nuevos de puntos/3429partidos,232080pares combinados; horizontes6,07–16,79horas, noT60/T15. Calendarios ESPN2024/25verificados porasset/hash más2026sellado, roster/nombres/cronología estrictos; rechazosconservados. Médico:223PDFs disponibles en240rutas/7fechas,13previos y210nuevos;1841versiones/186634filas,18750nominales nuevas conID,22CuiYongxi exactos. Control de motivo final limitado a página deuna fila; diferencias literales de páginas normales conservadas. Primerdía2023–24disponible desde17:30, compatible conconstanteupstream;16:30noacreditado, no se concluye bloqueoIP. Recepciónoriginal/reglas de liquidación siguenpendientes.4939evidencias/41corridas/89eventosprevios preservados;189NBA,707harnessantes/732después portrabajo concurrente preservado.30ZenRowsnuevos,riesgo1782/3200,OddsAPI0nuevo/500agotado,sincompras;producción/modelo/gatesintactos. Informe:docs/nba_props_y_rotaciones_20261007.md.
+
+Presentación legible de NBA-RUN-042: docs/nba_resultados_validados_20261007.md. El informe técnico/datasets sellados no se modifican; la casilla RUN-041 queda identificada como estado histórico, con pendientes actuales en RUN-042. Revisión documental registrada aparte.
+
 ## 2026-10-07 — web: portada inspirada en TennisPredictions y paleta del usuario
 
 Se conserva la jerarquía editorial/calendario/filtros/filas por competición de
@@ -3817,6 +3880,9 @@ shell no encontró utilidades dentro del entorno restringido y su OK no se
 consideró válido; se ejecutó la suite con el Python del proyecto. Revisión en
 navegador de filtros, fechas, fichas, Pick del día y combinadas. Propuesta y
 siguiente fase: `docs/web_diseno_tennispredictions_20261007.md`.
+- Prueba histórica con la regla desplegada (firma d5cbc3151164): 9.021 de
+  14.216 partidos (63 %), prometido 82,62 %, real 83,23 %; todos los mercados
+  pasan (equipo local 86,97→88,52, visitante 86,10→87,45).
 
 ## 2026-10-07 — web: cuenta y modelo de paquetes/suscripciones
 
@@ -3893,6 +3959,11 @@ vender (`PUBLISH_PICKS_ENABLED`); las cuentas existen aunque esté cerrada.
 - Pendiente de decisión del usuario: procesador de pago y proveedor de
   correo. Guía de la app: `docs/app_api_flutter.md`.
 
+
+## 2026-10-07 — NBA: calendario completo y recuperación médica (NBA-RUN-043)
+
+Horarios corroborados para 6150 regulares, incluidos diez neutrales con ambas referencias NBA @ y designación ESPN conservada. +2784 reportes/368902 filas; 6129/6150 selecciones médicas retrospectivas con reloj/contexto literal concordante, 6037 ambos equipos enviados. +1350 puntos mediante seis alias oficiales exactos/308 partidos, total233430; 27151 candidatos multimerkado/34 partidos separados por relojes libro/mercado y vecinos ausentes. Cinco repos públicos fijados/blobs verificados,97 PDFs archivados, cero llamadas pagadas nuevas; presupuesto previo sin aumento. 9641 evidencias/42 corridas/91 eventos conservados; arnés732/732; producciónNBA/modelo/gates sin cambios, trabajo concurrente preservado. Recepción original/settlement y demás huecos siguen pendientes. Informe:docs/nba_recuperacion_medica_y_props_20261007.md.
+
 ## 2026-10-07 — Correo transaccional con Proton Mail
 
 Decisión del usuario: Proton Mail. Hay dos formas y el código es el mismo
@@ -3914,6 +3985,11 @@ Decisión del usuario: Proton Mail. Hay dos formas y el código es el mismo
   certificado autofirmado): llega autenticado y cifrado, con verificación
   estricta se rechaza el autofirmado y una contraseña mala no envía.
   Flujo completo en navegador: enlace → nueva contraseña → login.
+
+
+## 2026-10-07 — NBA: veinte relojes corroborados (NBA-RUN-044)
+
++20 selecciones retrospectivas con PDF ET y metadata BRef de fecha/equipos/reloj exactos; corte60min antes del reloj más temprano; ESPN12–50min más tarde se conserva sin atribuir causa. Total6149/6150, ambos enviados6056, algún equipo ausente93. BOS@NYK25oct2023 ausente en diez PDFs inspeccionados; no se infiere sano/enviado. +3 reportes/167 filas, total4628/555703; dos parsers y todos los nombres conID. 22tareasZenRows/200créditos, riesgo1982/3200;3GETPDFsinpago;OddsAPI0. 18952evidencias/43corridas/92eventos previos preservados; arnés753/764; producción/modelos/gates intactos. Corrección v2 de atribución de zona: ET lo declara PDF, no metadataBRef. docs/nba_horarios_medicos_corroborados_20261007.md.
 
 ## 2026-10-07 — Despliegue de la fase comercial (commit 3d40e05)
 
@@ -3943,6 +4019,19 @@ desde el dominio público), login inexistente 401, olvido 202, picks sin
 sesión 401, `/cuenta` con token falso 400, panel 401. Trampa del script de
 despliegue: `diff` sale con 1 si hay cambios y `set -e` cortó antes de
 recrear la API; comprobar siempre que el servicio se recreó.
+
+## 2026-10-07 — NBA: props y reglas México/LATAM (NBA-RUN-045)
+
++9702pares de puntos/145partidos por unión única fecha/equipos con calendario NBA/ESPN y box canónico; mapas originales erróneos conservados,21eventos sin resolver. Total243132 (239979PTS/2961REB/192AST);233430previos exactos,27151candidatos aparte. 14blobs de dos repos extra;78tarjetas sin relojes completos,0pares adoptados de esos dos. Cinco documentos oficiales/cuatrocasas/MX-CO-PE; vigencia histórica desconocida y sin coincidencia con11books de cuotas. Recepción243132cuotas/4628PDFs todaOct2026,0pruebas originales; estructuraycontratocandidate confixtures explícitos sintéticos,ninguna liquidación automática.31GETintentados,0OddsAPI/0ZenRows/cero compras;riesgo1982/3200.19062evidencias/44corridas/93eventos previos preservados,21controles y arnés764/764;producción/modelos/gates sin cambios. docs/nba_props_y_reglas_latam_20261007.md.
+
+## 2026-10-07 — NBA: versiones archivadas y mecánica de liquidación (NBA-RUN-046)
+
+Seis capturas realesCaliente2025/Betway2021–2024 con SHA1CDXbase32exacto y Memento concordante; cinco secciones históricas Betway y secciónCaliente iguales a actuales, sin inferir vigencia continua. +perfilBetwayMX,total5perfiles;8documentosreglas nuevos/1ayuda. CodereARredirigeMéxico, cuarentena. Usuario confirma sinlogs originales;4978artefactos pornombre no prueban recepción antigua. Evaluador localv3 con38controles sintéticos yrecibosactuales exclusivos;243132pares todos pendientes,0liquidacionesreales/0ROI.19165evidencias/45corridas/94eventos previos verificados; arnés764/764.28intentosGET,0Odds/0ZenRows,riesgo1982/3200;sin compras. Producción/gates/modelos intactos;intermediosfallidos conservados. docs/nba_reglas_archivadas_y_liquidacion_20261007.md.
+
+
+## 2026-10-07 — NBA: corrección documental del arnés (NBA-RUN-047)
+
+El informe RUN-046 y su nota de progreso conservaban el recuento anterior764/764. Log final y verificación sellados acreditan764antes/767después,9omisionesantes/10después. Versiónv2 del informe corrige el texto; documentos/evidencias/corridas previos íntegros.0capturas/0créditos/0cambiosdataset oproducción/gates. docs/nba_reglas_archivadas_y_liquidacion_v2_20261007.md.
 
 ## 2026-10-07 — Web conectada a las cuentas reales
 
@@ -3995,6 +4084,120 @@ del panel (14,99 / 33,99 / 53,99 USD) sin errores de consola. Ojo: Cloudflare
 sigue sirviendo `/app.js` sin versión desde caché; la portada pide
 `app.js?v=…` y esa URL sí es la nueva: por eso las versiones `?v=` deben
 recalcularse siempre que cambie un archivo.
+
+
+## 2026-10-07 — NBA: todas las casas solicitadas (NBA-RUN-048)
+
+Revisión de 22 combinaciones casa/país más Rushbet México: 25 perfiles, cinco anteriores preservados y veinte nuevos, 72 cláusulas (49 nuevas). La matriz distingue cláusulas recuperadas/observadas de páginas vacías, redirecciones, contenido educativo, PDF físico de Te Apuesto y proveedor Kambi sin vínculo contractual probado por Luckia. Sportium España exige un segundo; bwin separa simples/Build a Bet; Winamax tiene excepción limitada de logros para titular con menos de doce minutos. Son perfiles de investigación, no liquidaciones reales.
+
+21 índices consultados, cinco JSON válidos y nueve entradas históricas; nueve replays fallaron por conexión, cero contenido archivado nuevo validado. Se preservan los seis replays RUN-046. 87 GET del colector, 98 transacciones registradas y un diagnóstico adicional; cero créditos pagados/purchases. 19.260 evidencias y 47 corridas previas verificadas; seis controles negativos de procedencia. Arnés 767 antes/768 después, diez omisiones ambas; incremento concurrente sin atribuirlo al catálogo. Producción NBA/datasets/gates intactos. Recibos originales y contratos por ticket ausentes; las 243.132 parejas siguen sin liquidación real. docs/nba_casas_hispanohablantes_reglas_20261007.md.
+
+
+## 2026-10-07 — NBA: reglas Colombia y props públicos (NBA-RUN-049)
+
+BetPlay recuperado mediante desplegables DOM; Sportium Colombia mediante ZenRows MCP.18 cláusulas en dos revisiones;25 perfiles/72 cláusulas anteriores íntegros. Participación BetPlay con frase imprecisa y suspensión con ancla ambigua, Sportium43 minutos/abandono sin precedencia resuelta. No transferir mínimo español de un segundo ni push de totales a jugador. Inkabet/Betsson Perú tienen enlaces oficiales/footer peruano, pero rutas devolvieron landings; Apuesta Total sin cuerpo de reglamento y Dorado general.
+
+Dos repos fijados,19 blobs verificados y26 GET GitHub:77 filas PTS30/REB29/AST18 en cuarentena separada,17 cruzan casas y faltan relojes del proveedor; commits del archivo constan en febrero12. Otro repo publica agregados/sintéticos, no cuotas.0 parejas nuevas,0 liquidaciones,0 contratos/recibos históricos acreditados. Diez scrapes MCP; reserva250, cota2232/3200; cuenta1674→1804, delta130 sin atribución exclusiva por petición. Salto35 activa parada; sin compras ni OddsAPI nuevo.48 corridas/19636 evidencias/97 eventos previos íntegros; ocho controles negativos; arnés768/10 antes y después. Producción NBA y gates intactos. docs/nba_reglas_colombia_y_props_candidatos_20261007.md.
+
+
+## 2026-10-07 — NBA: minutos de regulación y F4 (NBA-RUN-050)
+
+Continuar F4 como investigación: el candidato reciente mejora CRPS3,6638→3,5479 y MAE4,9654→4,8694 minutos en63155 casos/3256 juegos/433 fechas, tres temporadas y nueve bloques. La cobertura nominal80 solo llega70,663%, no hay disponibilidad previa ni coherencia conjunta de equipo; no promover ni aprobar G4. Historial mínimo10 positivo de la misma temporada, exclusión estricta de toda fecha objetivo. Intervalos exploratorios por fecha, sin test confirmatorio intacto.
+
+159075 etiquetas desde6150 partidos/259826 tramos,12300 totales equipo de240 minutos. Periodos1–4 separados de OT, ceros/DNP y archivos originales intactos. Primer intento rechazado por28 namespaces vacíos de0022400942 antes de métricas; capa derivada acredita roster/persona/equipo/estadísticas/estado completos contra NBA V3 archivado. Protocolos99/100 y fuentes previas preservados.
+
+213 pruebas NBA,24 nuevas; arnés768/10 antes/después. Revisión independiente de fórmula de126310 CRPS e historiales63155, resúmenes/bootstrap reproducidos; revisión humana propia.49 corridas/19744 evidencias anteriores íntegras, prefijo98 eventos conservado, checkpoint101. Cero llamadas/purchases nuevas; ZenRows2232/3200 y243132 parejas de cuotas preservados. Sin recibos originales, liquidaciones, despliegue ni promoción de gates. Seguir disponibilidad/rol jerárquico y rotaciones conjuntas antes de F5; pendientes LATAM/REB/AST/reglas por ticket continúan. docs/nba_f4_minutos_regulacion_20261007.md.
+
+
+## 2026-10-07 — NBA: cobertura y escenarios, continuidad F5 (NBA-RUN-051)
+
+Se corrige cobertura nominal80:70,663%→80,537% posterior y80,534% validación. Ajuste1,25 global/1,30 historial<12, entrenado exclusivamente en20630 casos2021-22 y congelado antes de validar2022-23/evaluar2023-26. CRPS empeora3,5479→3,5782 y MAE4,8694→4,8873; conservar RUN050 como referencia principal, no promover el ajuste por cobertura secundaria. Histórico ya inspeccionado, sin confirmación intacta.
+
+3246 escenarios completos de equipo/415488 realizaciones conservan240 minutos, soporte0–48 y DNP0.4134 equipos excluidos por historial incompleto. Disponibilidad observada después del evento solo como diagnóstico oracle, no como predicción. Restricciones inviables/IDs/equipos cruzados se rechazan.234 pruebas NBA,21 nuevas; arnés768/10 antes y después.84002 pronósticos revisados,168004 CRPS independientes, nueve matrices regeneradas con hash exacto.
+
+50 corridas/19786 evidencias y prefijo101 eventos intactos; protocolos102/103, checkpoint104.0 APIs/compras; ZenRows2232/3200, cuotas/contratos/recepción original y gates preservados. Traspaso F5 de investigación con rutas/hashes y referencia anterior; noOT mientras las estadísticas por periodo no estén verificadas. F4 de disponibilidad/rol y dependencia conjunta sigue pendiente; no producción. docs/nba_f4_calibracion_y_coherencia_20261007.md.
+
+
+## 2026-10-07 — NBA: distribución de rebotes F5 (NBA-RUN-052)
+
+negative_binomial elegida solo en19315 casos de validación2022-23 tras ajustar dispersión con19513 de2021-22. Parámetros/elección congelados antes de59816 casos2023-26. CRPS1.376733→1.332904, MAE1.944846→1.911748. Candidato de investigación favorable al baseline en este replay; sin promoción ni confirmación intacta.
+
+6150 juegos/159075 etiquetas preservadas,5840 sinOT,310 OT excluidos por falta de estadísticas de regulación;98644 features causales, sin resultados del día objetivo. Prior30 minutos a0,18 heredado; historia20/min10 positiva sinOT para tasa, minutos RUN050 para distribución. Diagnóstico ampliado RUN051 separado; no escenarios oracle en métricas predictivas. Probabilidades under/push/over son categorías matemáticas sin contrato ni void conocido. PIT aleatorizado y masa discreta evitan confundir cobertura central con80 exacto.
+
+Primer intento105 falló al serializar bool NumPy antes de validación; fuentes conservadas, entradas reutilizadas con hashes y AST iguales. Canon106/ajuste107/selección108/checkpoint109.265 pruebas NBA,31 nuevas; arnés768/10 antes/después.98644 historias,179448 PMFs/CRPS independientes y27 distribuciones regeneradas.51 corridas/19819 evidencias previas intactas.0 APIs/compras, ZenRows2232/3200; recepción/contratos/cuotas/gates sin cambios. F6 de investigación preparado con hashes, no producción. docs/nba_f5_distribucion_rebotes_20261007.md.
+
+
+## 2026-10-07 — NBA: ensayos de entrega F6 (NBA-RUN-053)
+
+El plan define F6 como entrega/observación, no solo auditoría temporal. Recuperar reclamaciones interrumpidas únicamente tras caducar a unknown, sin volver a cola; conservar sending fresco y reclamar antes del transporte. Hora real de intento separada del as_of solicitado y nueva comprobación de caducidad antes del remitente. Reinicios, concurrencia, auditoría fallida, 429 y timeout verificados sin duplicados.
+
+Diez fixtures/60 cortes a0/15/30/60/120/300s, cinco outboxes y26 pruebas nuevas;291NBA y768general/10omisiones. Revisiones se seleccionan por recepción propia, otro operador no sustituye contrato y error/suspensión no reutiliza cuota anterior; diferencias son brackets de observaciones, no duración exacta ni ejecución real. Solo remitentes inyectados;0mensajes/APIs/compras. Latencia local simulada no demuestra p95 del canal.
+
+52corridas/19873evidencias/109eventos previos íntegros; protocolo110/checkpoint111. Sin credenciales NBA ni campos del puente operativo, herramientas Postgres/Docker ausentes en PATH y ninguna integración DB probada. SQLite local no apruebaF6.1. PropuestaF7 draft_not_started: selección histórica participante positivo/noOT no es universo previo. Postgres/canal/recepción anclada/contratos/OT y disponibilidad reales pendientes. Gates/cuotas/reglas/budget2232/3200 y producción sin cambios. docs/nba_f6_entrega_y_observaciones_20261007.md.
+
+
+## 2026-10-08 — NBA: Postgres durable local (NBA-RUN-054)
+
+PostgreSQL16.15 existía fuera del PATH. Clúster NBA propio127.0.0.1:55434/base nba_delivery_run54, SCRAM/secretos privados y trabajador limitado; fútbol intacto. Sellado+cola, reclamación+intento y resultado+evento atómicos. Concurrencia/rollback/inmutabilidad/expiración/resultado incierto verificados.39eventos/19mensajes exportados; parada inmediata real y recuperación WAL preservaron queued/sent/sending y cadena; ninguna repetición ciega. Clúster detenido.
+
+309NBA/18nuevas,768general/10omisiones;11controles adicionales propietario. Pipe Windows inicial corregido antes del protocolo112; expectativa de QA sobre TRUNCATE corregida y primer intento conservado, sin cambiar código/protocolo congelados.53corridas/19920evidencias/111eventos íntegros, checkpoint113.0APIs de datos/compras/mensajes; transporte en memoria. Implementación Postgres local probada, no canal/latencia/cuotas/backup/rendimiento productivo. G6/F7 y gates pendientes, ZenRows2232/3200 intacto. docs/nba_f6_postgres_durable_20261008.md.
+
+
+## 2026-10-08 — NBA: backup y canal VPS (NBA-RUN-055)
+
+Usuario indicó credenciales en VPS y usar las de fútbol. Solo TG_BOT_TOKEN/TG_ALERT_CHAT se leen allí, sin copia local ni cambios del entorno/servicios de fútbol. Un mensaje PRUEBA TÉCNICA NBA aceptado por Telegram: message_id6 y chat configurado coincide; repetición del mismo ID bloqueada.14.625006s sellado→acuse local incluyendo SSH, n1; no cumple ni demuestra p95<2s y recepción en dispositivo desconocida.
+
+pg_dump/pg_restore reales en base nueva:39eventos/19mensajes idénticos a fuente; fuente intacta después, restaurada75eventos/36mensajes tras tests/envío.330NBA/21nuevas,768general/10omisiones. Métricas conservan faltantes/anomalías y ledger válido. Roles preexistentes; no recuperación integral en otro servidor ni retención automática. Servidor de ensayo detenido.
+
+Protocolo114/primer intento conservado: Python3.10 del VPS no importa datetime.UTC; falla antes de credenciales/HTTP, estado unknown sin reintento automático. Diagnóstico de solo lectura acreditó causa; timezone.utc compatible y nuevo protocolo115 antes del único POST.54corridas/19962evidencias/113eventos íntegros, checkpoint116.1mensaje real autorizado,0APIs de datos pagadas/compras; cota2232/3200 intacta. G6/cuotas/recepción externa/OT/disponibilidad/F7 y producción pendientes. docs/nba_f6_backup_y_canal_vps_20261008.md.
+
+
+## 2026-10-08 — NBA: transporte y recuperación VPS (NBA-RUN-056)
+
+Reutilizar SSH solo no bastó: tres acuses7,75–10,75s. Diagnóstico públicoHTTPS0,262/0,016s precedió transporte HTTPSConnection reutilizable; dos acuses locales desde sellado0,421309/0,484205s, arranque separado4,312s. Cinco mensajes técnicos totalesIDs7–11, destino autorizado coincide y cada repetición bloqueada. Muestras diagnósticasn3/n2, no p95 operativo ni recepción en dispositivo. Credenciales solo enVPS, fútbol intacto.
+
+Respaldo congeladoRUN055 del ledger/outbox39eventos19mensajes restaurado en contenedor propioVPSPostgres16.15/rednone/sinpuertos; roles recreados sin contraseñas previas, seis mutaciones rechazadas y reinicio idéntico. TrabajadorNOLOGIN para SET ROLE, no pruebaSCRAMremota. Contenedor eliminado tras verificar etiqueta/imagen; copia600/carpeta700 retenida fuera del equipo. No backup integral histórico ni últimasalertas ni automatización/retención periódica.
+
+Colector de cuerpo/hash/recibo propio y controles de contrato preparado. MarcadorNBA403local, marcador/calendario403VPS; tres cuerpos conservados, cero datos/contratos nuevos. Ecosacotan relojVPS−local−0,902…−0,725s pese aNTPVPSyes, sin cambios de reloj; métricaslocales no restan UTCentrehosts. F7propuesta actualizada, no iniciada: universo/lesiones/rol/OT/contratos/anclaje/relojes/operación pendientes.
+
+Primerintento117:352pasan/1PermissionErrorenmanifiestotemporal antes de accionesexternas; pruebaaislada pasa sincambiocódigo. Versión118base/carpeta nuevas353pasan; diagnóstico119,HTTPS120 con356pasan, capturas121/relojes122,checkpoint123. Arnés768/10antes/final.55corridas/20038evidencias/116eventos anteriores conservados; revisiónmismaautor con scriptseparado.0APIsdatos pagadas/compras,5POSTTelegram técnicos, cota2232/3200 y todosgates/producción intactos. docs/nba_f6_transporte_y_recuperacion_vps_20261008.md.
+
+
+## 2026-10-08 — NBA: captura anclada y operación de investigación (NBA-RUN-057)
+
+Se recuperaron seis eventos de pretemporada, doce rosters con 247 jugadores/240 IDs NBA estables, 101 observaciones de lesiones y 14 precios públicos de Caliente México. Cruce previo de nombre/DOB acredita identidad estable, no equipo actual. Lesiones genéricas/Active no acreditan disponibilidad por partido; precios de equipo sin props individuales, reloj de proveedor o reglas completas. NBA jugadores403; páginas NBA200 sin calendario/quintetos en datos incrustados; Codere redirección detenida; ruta candidata BetPlay URLError, cero contratos aceptados.
+
+DigiCert RFC3161 verificó nonce, contenido y cadena para manifiesto de 25 recibos nuevos/prefijo130 a17:39:29UTC y primer manifiesto VPS15recibos a17:52:14UTC. Contenido alterado/nonce distinto rechazados; prueba VPS revalidada localmente. Existencia nueva, no recibos históricos ni exactitud del proveedor ni revocación OCSP/CRL. Consulta BetPlay posterior no anclada; checkpoint final tampoco.
+
+Colector público nuevo en VPS, usuario1001/red propia/raíz read-only/sinpuertos/cap-dropALL/no-new-privileges, CPU0,25/128MiB/64pids; imagen base fijada por digest. Ciclo15min; lesiones/rosters por hora; sello máximo diario sin reintento inmediato. Primer intento de activación se detuvo ante Caliente403: catorce ESPN200 válidos. Segundo protocolo activó mismo código con salud source_degraded explícita; reinicio preservó capturas y seis servicios existentes conservan identidad. Sin secretos de fútbol, mensajes o picks.
+
+Respaldo consistente de ledger/cuerpos diario y máximo siete archivos generados verificados; no borra cuerpos originales. Pausa a16GiBpropios o menos de10GiB libres. Primer archivo restaurado localmente con15eventos y cuerpos idénticos; 12archivos copiados incluyendo pruebas temporales. Copia fuera del VPS puntual, no periódica; archivos diarios aún no incluyen sellos/modelos/cola completa.
+
+Dos fallos de normalización preservados, luego corregidos por IDs desde enlaces y alias de etiquetas sin aceptar precios contradictorios. Tres pruebas de respaldo fallaron por handles SQLite abiertos enWindows, corregidos con cierre explícito:31casos pasan y tres controles operativos adicionales pasan. Dos reconstrucciones iniciales fallaron por suponer orden de respuestas paralelas; revisión correcta usa hashes de evento y pasa sin modificar los datos. Suite completa390sinomisiones conPostgresNBA nuevo; source39eventos/19mensajes intacto y clúster detenido. Arnés768/10antes/final.56corridas/20143evidencias/123eventos anteriores preservados; revisión misma autoría/scriptseparado.
+
+Protocolos124–133, checkpoint134; 26intentos públicos locales y15primerVPS, dos solicitudes TSA gratuitas, cero APIdeportiva pagada/mensajes/compras, cota2232/3200sin cambios. Captura de investigación continua activa; G0–G9/alcance/decisiones y producción comercial intactos. F7 sin iniciar por contratos/universo/rol/OT y criterios finales. docs/nba_f6_captura_anclada_y_operacion_20261008.md.
+
+
+## 2026-10-08 — NBA: partido completo y contexto oficial (NBA-RUN-058)
+
+Nuevas copias periódicas excluidas por instrucción expresa; servicio anterior sin cambios.35capturas gratuitas:12perfiles oficiales NBA2026-27 con249listados y245/247identidades ESPN corroboradas por nombre/team/DOB, cincoIDsNBA nuevos. Tres alias generacionales únicos aceptados; MaliqBrown/SteveSettleIII desconocidos. Listado no acredita contrato/convocatoria.34lesiones en contexto de seis eventos, cero disponibilidad final/rol; cruce oficial BOS-CLE0012600011/401898392 a23UTC. Ruta candidata reporte404 y redirección de roster detenida no prueban ausencia global.
+
+Protocolo fullgame previo a métricas:159075etiquetas/6150partidos/310OT;104645antecedentes causales;84015casos evaluados/4343partidos/3842observaciones OT. Gamma-Poisson con minutos históricos completos, prior heredado fijo y familia sin selección actual. CRPS1,361001 contra1,390279;delta-0,029277/IC95porfecha[-0,032610;-0,026288]. IncluyeOTsinfiltrarobjetivo; cohorteparticipaciónpositiva posterior, temporadas previamente inspeccionadas, sin disponibilidad/DNP ni OTduración/rotación/jointminutes. Resultado exploratorio; RUN052preservado, F7noiniciado.
+
+Caliente10preciosdeequipos/0props/0contratos, dos páginas reglas actuales sin vigencia/ticket histórico acreditado. Revalidación fija fuente de liquidación/horario ademásDNP/push/payout. TresSSHclockechoes:offsetremoto-local[-0,010387;2,711583]s, no sincronización ni prueba en vivo. Transportes requieren límites frescos y usan vencimiento conservador remoto; falta/antigüedad rechaza antesSSH/stdin. Fallo inicial425pass/1WindowsPermissionErrorpreservado; guardado único/fsync/reemplazocon6reintentoslocalesWindows5/32, nunca llamadas externas. ImportError previo y dos lanzadores sinpsycopg previos a acciones preservados.
+
+Suite final435sinomisiones conPostgresNBA nuevo, fuente39eventos/19mensajesintacta,clústerdetenido; arnés768/10antes/después. Revisión separada mismaautoría reconstruyó allCRPS/ICporfechas,104645historias,332distribucionesmuestreadas,245IDs/34lesiones/35recibos.57corridas/20328evidencias/134eventos preservados.
+
+Protocolo cierre144read-only:colector activo19:15UTC/38recibos/mismaimagen/cero reinicios/source_degradedCalienteVPS403;serviciosanteriorespreservados, módulos nuevos no desplegados. Revisión automática rechazó envío SHA256manifiesto aDigiCert sin autorización explícita del payload/destino:ningúnPOST/GETTSA nuevo ejecutado, alternativa local completa. Manifiesto d2bc63fcf6a0bbcf130a2116c4688f2f4fe80f6afc4017a199449b0291ffa57e preparado, sello nuevo pendiente; pruebas anteriores RUN057 conservan propioalcance.
+
+Protocolos135–144; checkpoint145.0APIdatosdeportivospagadas/0mensajes/0apuestas/0nuevascopiasperiódicas. Cota2232/3200sin cambios. G0–G9/alcance/decisiones/produccióncomercial preservados, F6abierta/F7draft_not_started. docs/nba_f6_partido_completo_y_contexto_oficial_20261008.md.
+
+
+## 2026-10-08 — NBA: sello autorizado del manifiesto RUN058 (NBA-RUN-059)
+
+El usuario respondió «si autorizo» al envío exclusivo SHA256/nonce aDigiCert. Protocolo146 fijó exactamente d2bc63fcf6a0bbcf130a2116c4688f2f4fe80f6afc4017a199449b0291ffa57e. Una descarga de cadena y un POSTTSA gratuitos, sin documentos/credenciales ni reintentos. Granted firmado2026-10-08T19:24:17Z; firma/cadena/hash/nonce verificados dos veces, contenido alterado/nonce distinto rechazados. Sin nuevaOCSP/CRL. Prueba existencia nueva del manifiesto y sus hashes; no recepción original histórica, predicción previa a partidos retrospectivos, exactitud ni checkpoint posterior.
+
+58corridas/20535evidencias/145eventos preservados; artefactos RUN058 se mantienen intactos, incluido rechazo histórico. Asociación externa posterior registrada separadamente. Revisión separada mismaautoría, arnés768/10antes/después; módulos NBA intactos y suite435anterior no repetida.0APIsdeportivaspagadas/0mensajes/0apuestas/0nuevascopiasperiódicas/0cambiosVPS. Protocolo146/checkpoint147, F6abierta/F7noiniciado. docs/nba_sello_externo_autorizado_20261008.md.
 
 ## 2026-10-08 — Reto escalera
 
@@ -4065,6 +4268,24 @@ tarjetas de football-data (`history_fd tarjetas`) y de results/fixtures.
 Pendiente: resultado de ambos anotan, harness completo, desplegar (db/046,
 `history_fd tarjetas` en el VPS, api + worker).
 
+
+## 2026-10-08 — NBA: piloto de precios y contexto (NBA-RUN-060)
+
+El usuario autorizó ejecutar el piloto de diez partidos tras conocer costos y falta de presupuesto adicional. Techo conservador incremental250 comunicado antes de consultas; cuenta existente, ninguna contratación. Once consultas históricas cobradas210 y tres actuales9, total219;28rutas totales incluidas gratuitas y un422sin cargo. Saldo18.419al último recibo21:43UTC, sin saldo futuro garantizado. Los500anteriores se conservan como histórico, sin retroeditar. Cliente NBA aislado con reserva persistida, cuota/corte/URLs/credenciales y cero reintentos automáticos.
+
+Diez históricos con puntos/rebotes/asistencias al corte60min previo al horario más temprano,2617pares identificados:1957nuevos+660previos.43rebotes excluidos por snapshot tardío, Dallas recuperado al corte correcto por10créditos.13pares anteriores con Jimmy Butler/III quedan separados por política de nombre completo exacto; fuentes/IDs anteriores intactos.41mercados nuevos con relojes incompatibles y91pares históricos sin identidad quedan sin promover.62observaciones oficiales previas al corte,10PDFs enlazados, recepción2026nooriginal2025.
+
+Diez actuales (6pretemporada/4regular):21pares en3regular,15frescos al recibo, sin identidades/contratos/estadofinal acreditados.6eventos/96lesionesESPN,5RotoWire/6tarjetasquintetos. CalienteHTTP403pero navegador público legible; dos eventos solo cuotas de equipos. Observaciones DOM son transcripción, no bytes HTTP ni recibo exacto; sin sesión/boletos.
+
+Fallos locales y422preservados; correcciones de fechaZ/reloj opcional de casa actual se prueban, reproceso offline sin pagar nuevamente. Verificación separada mismaautoría reconstruye2069pares nuevos y archivo2617, hash/cadena/identidades/consumo/ausencia de claves.69pruebas pertinentes,786/15arnés inicial y798/16final en árbol compartido con fútbol concurrente. Modelos/gates/F7/VPS/mensajes/apuestas/copiasperiódicas sin cambio por este piloto. docs/nba_piloto_props_y_contexto_20261008.md.
+
+
+## 2026-10-08 — NBA: casas mexicanas y admisión por evento (NBA-RUN-061)
+
+Ante la petición de solucionar fuentes y revisar1xBet/Novibet, se verificó navegación pública sin cuentas/apuestas. Novibet muestra mercados de equipo enBOS-CLE; reglas de jugador explícitas (entrada en cancha mantiene apuesta, DNPanula, OTsalvo excepción, push), pero captura directa403y sin pares PTS/REB/AST verificados.1xBet tiene PDFmexicano recibido200y regla estadísticaOT; sus conteos de mercados no prueban cuotas individuales, selecciones ilegibles en dos eventos. No se adopta como fuente operativa por anuncio comercial. Betsson también solo mercados de equipos en la vista revisada.
+
+NBApágina oficial recibida22:04:25UTC contiene42listados para0012600011; pertenencia al listado no prueba convocatoria efectiva ni salud. Un nombre corrupto marcado; inactivos vacíos no prueban disponibilidad. Comando offline rechaza hash/partido/equipos/IDs/cortes incompatibles y conserva salidas. Al documentar la revisión el partido ya comenzó: ninguna observación nueva se retrofecha.61pruebas, arnés798/16,19GETgratis/0créditos nuevos.60corridas/20675evidencias anteriores intactas y prefijo155eventos conservado; reparación transparente del logpostsealRUN060preservada. Sin cambioVPS/mensajes/modelos/gates/F7 ni copias periódicas. docs/nba_fuentes_1xbet_novibet_y_disponibilidad_20261008.md.
+
 ## 2026-10-08 — Despliegue de la escalera por probabilidad (commit abe3da4)
 
 Pedido del usuario ("termina lo pendiente"). Desplegado a las 23:10-23:22 UTC,
@@ -4081,6 +4302,29 @@ marcha vía /proc se contaba a sí misma (su línea contiene "python -m qf");
 el worker se recreó a las 23:21:40 tras agotar la espera. Para la próxima,
 excluir el propio proceso (`grep -v` del PID o patrón con corchetes).
 
+
+## 2026-10-08 — NBA: selección europea explícita (NBA-RUN-062)
+
+El usuario solicitó incluir1xBetEuropa,BetssonEuropa,CodereItalia yBetanoReinoUnido. Se usan claves oficiales onexbet,betsson,codere_it,betano_uk y filtro de casas explícitas, en lugar de ampliar a todos los proveedores de cada región. Europa no identifica el país contractual de1xBet/Betsson; no se acredita equivalencia mexicana ni cobertura de props por presencia en catálogo.
+
+Selección distribuida con paquete, planCLIoffline y método del cliente acotado mantienen presupuestos/recibos y no activan consultas periódicas. Descubrimiento actual reserva1crédito; tres mercados reservan3actuales o30históricos. Solo transporte simulado y consolaoffline:33pruebas, arnés798/16,0consultasTheOddsAPI/0créditos.61corridas/20756evidencias y prefijo160eventos preservados. F6abierta,F7sin iniciar; captura real y contratos aún pendientes. Sin cambioVPS/mensajes/apuestas ni nuevas copias periódicas. docs/nba_casas_europeas_seleccionadas_20261008.md.
+
+
+## 2026-10-08 — NBA: cuotas europeas comprobadas (NBA-RUN-063)
+
+El usuario autorizó la consulta real con «hazlo». Se fijó protocolo antes de solicitudes pagadas: cuatro versiones explícitas, ocho eventos, máximo56créditos, cuenta existente/reserva compartida y sin reintentos. Se recibieron27respuestas200,16con cargo,29créditos; cero fallos/reservas pendientes.
+
+1xBet EU aportó 24 precios en 4 eventos; Betsson EU, 36 en 8; Betano UK, 12 en 3; Codere IT, ninguno. Total 72 selecciones de equipos, no pares de props. Ocho consultas directas PTS/REB/AST y descubrimiento sin esos mercados. Ausencia específica del recibo: cuatro eventos de pretemporada tenían horario ya pasado y cuatro regulares estaban lejos del inicio; no se prueba ausencia universal. Se verificaron recibos y 33 pruebas pertinentes. Arnés 798/16. 62 corridas/20.777 evidencias y prefijo de 161 eventos preservados. F6 abierta/F7 sin iniciar; contratos, recepción histórica y disponibilidad aún pendientes. Sin VPS, mensajes, apuestas ni copias periódicas. docs/nba_cuotas_europeas_comprobadas_20261008.md.
+
+
+## 2026-10-08 — NBA: suministro reutilizable de props resuelto (NBA-RUN-064)
+
+El usuario pidió solucionar el atasco de props. La causa era tratar la captura de datos y la admisión comercial como el mismo requisito, además de conservar precios US en muestras aisladas. Se implementó capture-props con perfil US/AU propio, presupuesto explícito, diez casas y selección exclusivamente futura, conservando la selección europea. La fuente de precios tiene estado funcional separado de production_ready/actionable, sin relajar validadores.
+
+Captura real: 19 respuestas API, 17/32 créditos, 36 pares (12 PTS/12 REB/12 AST) de FanDuel15, Sportsbet15 y Fanatics6 para cinco jugadores/tres eventos. 33 frescos al recibo, sin garantía de frescura futura. Identidades oficiales completas: 23 pruebas previas y 13 enriquecidas posteriormente, sin retrofechar el corte. 2617 pares históricos reutilizados con recepción original desconocida. Ocho GET públicos: dos perfiles y seis páginas de reglas; FanDuel directo403 conservado, las otras200. Sportsbet tiene guía explícita de participación/prórroga/resultados; Fanatics conserva excepción por lesión, contratos de cuentas no acreditados.
+
+40 pruebas pertinentes; arnés 798/16. Reproducción offline de precios, recibos, créditos e identidades. 63 corridas/20.831 evidencias y prefijo164 eventos preservados. El pendiente de suministro queda resuelto; F6 global abierta por contrato, disponibilidad cerca del inicio y validación prospectiva; F7 sin iniciar. Sin apuestas, publicación, cambios VPS ni nuevas copias periódicas. docs/nba_props_fuente_funcional_20261008.md.
+
 ## 2026-10-09 — Escalera: probabilidad prudente en córners y tarjetas (commit ed7ac99)
 
 Con las primeras cuotas reales de córners/tarjetas (00:20 UTC), la vista
@@ -4096,3 +4340,49 @@ job con escalera (08:00): respaldo `~/release-ed7ac99/backup.tgz`, imágenes
 `*:before-ed7ac99`. Vista previa nueva: 4 retos sin córners ni tarjetas
 (Moreirense menos de 3,5 @1,25, Red Star marca @1,25, PSV @1,27, Dunkerque-
 Annecy más de 1,5 @1,27). El chequeo de jobs en marcha usa ya `[p]ython -m qf`.
+
+
+## 2026-10-08 — NBA: seguimiento prospectivo en simulación (NBA-RUN-065)
+
+El usuario autorizó conectar props al modelo y el seguimiento prospectivo, aceptando referencias US/AU. Protocolo exploratorio congelado antes de capturar: PTS/REB/AST, regular/fullgame/OT incluido,20apariciones/min10, prior temporada anterior, baselinePoisson, precios<=60s al sello, una unidad hipotética. No se promueven candidatos de puntos/asistencias ni la extensión de apertura de rebotes; probabilidades condicionadas a participación y disponibilidad final desconocida.
+
+Lote inicial12créditos/3eventos/36pares; adaptación detectó namespace omitido en parte del archivo corregido. Reparación por cruce exacto con etiquetas NBA verificadas, registrada antes de pronósticos; fallo original conservado. Quince predicciones selladas después, con cuotas vencidas y cero entradas. Tras66pruebas se anunció/fijó máximo adicional4créditos para un partido: paper-run prevalidó antes de cobrar y selló seis versiones/15pares recientes; precios53,75–53,98s. Dos entradas hipotéticas AST/PTS Cade; tres Tatum excluidas por candidato nominal de feedESPN (no estado de evento verificado), un mercado bajoEV. Cohorte congelada15casosúnicos,21versiones conservadas; total51pares/12consultas/16créditos.
+
+Se implementaron recepción de final NBA, evaluación y resumen con sellos, identidad/equipos/hora/finalización, DNP separados y rechazo de duplicados. CDN403; webNBA200 comprobada HOU–OKC0022500001/final2OT con20participantes y sumasPTS/REB/AST reconciliadas. SeisGETpúblicos: ESPN200, CDNcalendario403, NBAcalendario200sin eventos y dos páginas futuras403. Los IDsNBA de eventos aún necesitan enlace oficial; futuros resultados y disponibilidad no acreditados. Ningún resultado pasado sustituyó un futuro.
+
+Reproducción causal exacta21pronósticos y51pares;159075filas históricas cruzadas. SuiteNBA499/17 y arnésgeneral800/16. Se preservan64corridas,20900evidencias y prefijo167eventos. F6 sigue abierta; preparaciónF7/piloto exploratorio activo, confirmacióncientífica/G7sin iniciar, D07/D08pendientes. Sin mensajes/apuestas/publicación/VPS/suscripciones/recolector nuevo ni nuevas copias periódicas. docs/nba_seguimiento_prospectivo_20261008.md.
+
+
+## 2026-10-08 — NBA: enlace oficial y seguimiento acotado (NBA-RUN-066)
+
+El usuario pidió resolver todos los pendientes. Se conservaron RUN065,21versiones/15unidades y2entradas hipotéticas. Tres páginas NBA HTTP200 cruzadas con proveedor por equipos y hora exactos:0022600001,0022600002,0022600003; inicio20oct13:00/17:00/19:30CiudadMéxico. Conocimiento de IDs posterior al sello explícito. Plantillas actuales vacías, no disponibilidad. Cero créditos nuevos y3GETpúblicos.
+
+Nuevo trabajador acotado paper-followup-plan/paper-advance: sello de inputs, reclamación previa inmutable, máximo3tareasred por ejecución, sin reintentos, estado vivo fuera de evidencia de hashfijo. Observación previaT-2min; cierre Sportsbet mismoevento/jugador/mercado/línea, últimos5min/frescura60s/max2créditos futuros; finalesoficialesT+4/+6/+12/+24h con ventanas2h. Score/summary sólo registrosoriginales/finalesverificados, DNP separados. Prueba actual sobrecohortereal cero tareasdebidas/cero consultas. Automatización local cierre-del-piloto-nba-octubre-20-y-21 ACTIVE para20–21oct en estechat; necesitaequipoencendido/Codexabierto, avisos sólocambios/fallos/acción. Fin22oct12UTC; ninguna ventana nirespuesta garantizada.
+
+Lectura/CLV investigación prefijados y borradorpotencia usando sólo20853unidades/145días/1087partidos de entrenamiento2022-23: CRPSprimarioREB/efectomínimo.05/alfa.025/potencia.8/mínimo112días y300partidos. Proxydeplanificación, no confirmación. Candidato/exposiciónexactos, revisiónexterna, calendariofinal y cobertura aún pendientes antesdeabrir otrobloque. D08investigación definido; reglasporcuenta/jurisdicción pendientes. Recepciónhistóricaoriginal imposibledeacreditarcon descarganueva.
+
+24pruebas de ciclo cubren cruce/hash/hora, roster≠salud, CLVcontrato/frescura, fallo403, duplicados, límites/claims y cierre2mercadosrealmock. Prueba integral detectó dictmarketduplicado; corregido antesdevalidaciónfinal. Planificaciónhistoricalectura necesitó adaptar metrics anidados; fallo preservado. Primer arnéspost falló porWinError5caché pese800pruebas; repetición con cachénueva conserva las mismas comprobaciones y pasa. SuiteNBA523/17; arnés800/16. Se preservan65corridas/21016evidencias/prefijo173eventos. F6/F7/G7sinpromoción, futuroseventos/resultadosnoinventados;0apuestas/copiasperiódicas/publicación/VPS/mensajesexternos. docs/nba_pendientes_resueltos_y_cierre_programado_20261008.md.
+
+
+## 2026-10-08 — NBA: seguimiento autónomo en VPS (NBA-RUN-067)
+
+El usuario pidió resolver pendientes. Se cerró dependenciaPC/Codex de captura mediante servicioNBA aislado enVPS, mismo plan/15casos/sellos RUN065/066. Primer despliegue rechazó FROMconID; segundo detectó rutasWindows enJSON. Ambos0cuotas/0probes deportivos; informesconservados. Readerinterpreta separadores sin cambiarbytes sellados; tercera versiónverificó fuente/modelo y arrancó. TrespáginasNBA200 desdeVPS, exactosIDs/equipos/hora;3recibospúblicos nuevos,0créditosactuales,2máximocierre futuro.
+
+Servicio nba-paper-pilot-run67, root /home/qf/nba-isolated/paper-pilot/run67-v3-20261008. Fuente/carpetasRO, redpropia/sinpuertos/0.5CPU/512MiB/64pids, sincapacidades/no-new-privileges, restartunless-stopped. ODDS_API_KEY existenteVPS comparada con cuentalocal, leída sinexportación; dos clavesdeintentosfallidos retiradas tras comprobarningúnmontaje; activa600conservada. NTPsincronizado. Primer cicloespera/cerojobs, segundoejecutorbloqueado antesdered, reinicio conservaexactostate;7serviciospreviosIDsiguales.
+
+Estado/claims persisten; ventanas/fin/lectura max3tareas porinvocación y cap2originales. Automatización delchat ahoraobservaVPS, noejecuta capturas; tombstone state.owner.json y guardCLI rechazanexecutorlocalretirado. Avisos delobservador siguen locales, captura no. Terminal bloqueanuevasconsultas; observador detiene exclusivamentecontenedorNBA validandoetiqueta, sinborrar. No se garantizan fuentes futuras/p95.
+
+Criterios/diseñocientífico exactos congelados para revisión:REB fullgmOT,GammaPoisson/Poisson10,hist20/min10; ventana propuestaNov1-Mar31/lecturaApr2/3bloques,112días/300partidos,deltaCRPS.05/alfa.025/potencia.8,bootstrapdías5000/seed20261009/calibmasa realdiscreta5pp. No activado porfaltarrevisión,F6scopedy presupuesto; nosepromueveG7. Ficha vacía decontratocuenta separada delpaper. Recepciónhistóricaoriginalnoaportada, no reconstruiblehoy.
+
+SuiteNBA531/17 y arnés800/16; paquete/worker7controles nuevos másguardCLI, flujosciclo24 conservados.66corridas/21056evidencias/prefijo176eventos preservados. Esperadatos20oct y confirmación nueva no se etiqueta como fallo técnico. Sinapuestas/publicación/mensajesexternos/nuevascopiasperiódicas ni cambiosfútbol. docs/nba_seguimiento_vps_y_pendientes_por_alcance_20261008.md.
+
+
+## 2026-10-09 — NBA: activación operativa y alertas autónomas (NBA-RUN-068)
+
+El usuario pidió solucionar y activar todo. La salud degradada tenía origen enCaliente403 opcional; ESPNrespondía200. Se separó salud de fuentes necesarias de cobertura de casa, manteniendo403/cuerpo/hash y deteniendo consultas repetitivas. La misma carpeta RUN057 y todo su prefijo344eventos se conservaron; nuevo recolector conflock, imagenverificada yreinicio retieneestado. Nuevas copias periódicas desactivadas y archivosanteriores sin cambios.
+
+Nuevo supervisor host aislado usaúnicamente token/destino operativo yaautorizados, extraídos enVPS yprivados600. ReclamaantesPOST, diariocontriggers/hash, cap20intentos porUTCdía, sinretryincierto niavisosrepetidos porreinicio. UnTelegramconfirmado condestinoverificado; no acredita lecturadesuscriptores. Detención terminal exclusiva decontenedorpiloto con etiquetaexacta; noDocker general niapuestas.
+
+Primer despliegue detectócarrera Type=simple alcomprobar bloqueoantesinicialización; rollback automático conservado. RecuperaciónType=notify anunciaREADYdespuéslock/ciclodurable; segundoejecutor rechazado, reinicio conservaúnica reclamación/mensaje. ArranqueVPS habilitado, independientedelPC/Codex. Piloto/sellos15casos/cap2intactos ycontenedoresfútbolsin cambios.
+
+DosGETpúblicos actuales, ceroAPIcuotas; futurocierremax2. Diseñocientífico yficha decuenta copiados una vez; F7confirmatoria/G7no promovidos. Falta revisar/validaruniversoprospectivo yrecibirpartidos futuros; cero tickets reales, disponibilidad yrecepciónhistóricaoriginal no inventadas. Fallossintaxislocal/directoriotemporal/fixture preservados ycorregidos; suiteNBA542/1 yarnés800/16. docs/nba_activacion_y_alertas_vps_20261009.md.

@@ -26,7 +26,7 @@ OBSERVATIONS = ROOT / ".local" / "oddsharvester_observations"
 BOOKMAKER_REGIONS = {
     "mexico": "mexico-liga-mx",
     "brasil": "brazil-serie-a",
-    "argentina": "football/argentina/superliga",
+    "argentina": "football/argentina/liga-profesional",
 }
 REGIONAL_DOMAIN = "https://www.cuotasahora.com"
 
@@ -202,9 +202,11 @@ def main() -> int:
     (run_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    latest_temp = OBSERVATIONS / "latest.tmp"
-    latest_temp.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    latest_temp.replace(OBSERVATIONS / "latest.json")
+    # Una prueba de una sola liga no debe ocultar la cobertura de las demás.
+    if set(args.leagues) == set(BOOKMAKER_REGIONS):
+        latest_temp = OBSERVATIONS / "latest.tmp"
+        latest_temp.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+        latest_temp.replace(OBSERVATIONS / "latest.json")
     print(json.dumps({"run_id": run_id, "status": summary["status"],
                       "quotes": len(all_quotes), "run_dir": str(run_dir)}, ensure_ascii=False))
     return 1 if summary["status"] == "failure" else 0

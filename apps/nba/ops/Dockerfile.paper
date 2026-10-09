@@ -1,0 +1,9 @@
+ARG NBA_PAPER_BASE
+FROM ${NBA_PAPER_BASE}
+USER root
+COPY apps/nba/pyproject.toml /build/pyproject.toml
+COPY apps/nba/src /build/src
+RUN python -m pip install --no-cache-dir /build && rm -rf /build
+WORKDIR /workspace
+ENV PYTHONPATH=/workspace/apps/nba/src PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+CMD ["python", "/workspace/apps/nba/ops/paper_worker.py"]
