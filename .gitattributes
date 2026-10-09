@@ -17,3 +17,28 @@
 *.jpg binary
 *.ico binary
 *.woff2 binary
+
+# Archivos NBA con CRLF cuyo hash está en las auditorías del plan de fases:
+# git guarda sus bytes exactos (sin normalizar) para que un checkout no
+# cambie el hash. No convertir a LF.
+apps/nba/README.md -text
+apps/nba/requirements.lock.txt -text
+apps/nba/tests/test_vps_session.py -text
+apps/nba/tests/test_vps_telegram.py -text
+docs/nba_completar_validar_20261006.md -text
+docs/nba_github_scrapers_recuperacion_20261006.md -text
+docs/nba_horarios_medicos_corroborados_20261007.md -text
+docs/nba_pendientes_intradia_20261006.md -text
+docs/nba_piloto_props_y_contexto_20261008.md -text
+docs/nba_plan_fases_auditable.md -text
+docs/nba_plan_fases_auditoria.json -text
+docs/nba_plan_fases_auditoria_v1_0_pre_v1_1.json -text
+docs/nba_props_y_reglas_latam_20261007.md -text
+docs/nba_props_y_rotaciones_20261007.md -text
+docs/nba_ramiro_pbpstats_auditoria_20261006.md -text
+docs/nba_recuperacion_medica_y_props_20261007.md -text
+docs/nba_reglas_archivadas_y_liquidacion_20261007.md -text
+docs/nba_reglas_archivadas_y_liquidacion_v2_20261007.md -text
+docs/nba_resultados_validados_20261007.md -text
+docs/nba_segundos_y_rotaciones_20261006.md -text
+docs/nba_zenrows_recuperacion_20261006.md -text
