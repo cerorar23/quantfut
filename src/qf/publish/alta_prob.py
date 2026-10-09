@@ -13,12 +13,17 @@ POR QUÉ PINNACLE Y NO EL MODELO
 -------------------------------
 El modelo no bate al cierre sin margen (README, model-card). Aquí la promesa
 es un porcentaje: tiene que salir de la referencia mejor calibrada.
+Excepción, córners (2026-10-09, pedido del usuario): Pinnacle no da una línea
+que ajustar, así que salen del modelo estadístico de córners, pero recortados
+a la probabilidad sin margen de la propia casa (`alta_prob_datos._corners`):
+lo publicado nunca promete más que el mercado.
 
 LA REGLA
 --------
-Candidatos de 1X2, doble oportunidad (suma exacta del 1X2), goles y "marca
-un equipo" (los dos últimos, desde los goles esperados que reproducen el 1X2 y
-la línea de Pinnacle, `market_anchor.market_lambdas`). Se publica el de MENOR
+Candidatos de 1X2, doble oportunidad (suma exacta del 1X2), goles, "marca
+un equipo", ambos marcan y hándicap asiático (los cuatro últimos, desde los
+goles esperados que reproducen el 1X2 y la línea de Pinnacle,
+`market_anchor.market_lambdas`) y córners (ver arriba). Se publica el de MENOR
 probabilidad dentro de [PROB_MIN, PROB_MAX]: el más informativo sin bajar del
 80 %. El tope evita obviedades ("menos de 5,5 goles" al 98 %).
 
@@ -34,7 +39,8 @@ import pandas as pd
 
 from ..eval.soft_vs_sharp import MIN_WEEKS, _weekly_ci
 from ..model.market_anchor import market_lambdas
-from ..model.pricing import market_team_total, market_totals, score_matrix
+from ..model.pricing import (market_asian_handicap, market_team_total, market_totals,
+                             score_matrix)
 
 PROB_MIN = 0.80
 PROB_MAX = 0.95
@@ -47,7 +53,8 @@ MAX_RESIDUO_AJUSTE = 0.01
 # Las líneas que se calculan. Solo se publican las de
 # MERCADOS_GOLES_HABILITADOS, que pasaron la prueba histórica
 # (eval/alta_prob_calibracion.py). Cambiar esa lista exige repetir la prueba.
-LINEAS_GOLES: tuple[tuple[str, float], ...] = (("over", 1.5), ("under", 3.5), ("under", 4.5))
+LINEAS_GOLES: tuple[tuple[str, float], ...] = (("over", 1.5), ("under", 3.5), ("under", 4.5),
+                                               ("over", 2.5), ("under", 2.5))
 # Pasaron la prueba histórica el 2026-10-05 (eval/alta_prob_calibracion.py,
 # firma d5cbc3151164dcc19e7304bba45ad2445d1e99a2ce97ddd5e92ea05c2f8ca79d,
 # rho −0,0613): h2h 84,46→84,82, double_chance 85,83→86,36, totals over 1.5
@@ -57,14 +64,39 @@ LINEAS_GOLES: tuple[tuple[str, float], ...] = (("over", 1.5), ("under", 3.5), ("
 # 1,09-1,17, poco útil para el cliente. Quitar una línea no exige repetir la
 # prueba; añadirla, sí.
 MERCADOS_GOLES_HABILITADOS: tuple[tuple[str, float], ...] = (
-    ("over", 1.5), ("under", 3.5))
+    ("over", 1.5), ("under", 3.5), ("over", 2.5))
 # "Marca el local / el visitante" (más de 0,5 goles de ese equipo), del mismo
 # ajuste que los goles. Prueba histórica 2026-10-07 (firma d5cbc3151164…, rho
 # −0,0613, 14.216 partidos, criterio de eval/alta_prob_calibracion.py): local
 # n=4.470 86,97→88,52; visitante n=2.447 86,10→87,45; los tres tramos pasan.
 MERCADOS_EQUIPO_HABILITADOS: tuple[str, ...] = ("home", "away")
+# Ampliación pedida por el usuario el 2026-10-09: ambos marcan, más/menos 2,5,
+# hándicap asiático y córners. Se MIDEN todos (eval/alta_prob_calibracion.py);
+# solo se publican los que pasan la prueba (listas *_HABILITADOS). Prueba del
+# 2026-10-09 (firma d5cbc3151164, rho −0,0613, mismo criterio): más de 2,5
+# n=51 82,33→90,20 (ningún tramo decide; menos de 2,5 nunca llega al 80 %);
+# hándicap −1 84,52→86,22, 0 87,03→88,24, +1 88,27→89,54, +1,5 88,19→89,15,
+# +2 89,50→90,37; córners (2022-2025) menos de 12,5 82,64→83,07, menos de
+# 11,5 n=20 80,63→95,00; más de 7,5 NO pasa (81,41→80,30). Regla completa con
+# todo lo habilitado: pronóstico en 12.128 de 14.216 partidos (antes 9.021),
+# 82,35→82,89; en 2022-2025, 82,09→82,36. Dentro de lo ELEGIDO, el 1X2
+# (n=303, 82,10→79,87) y menos de 3,5 (n=573, 81,49→79,76) quedan por debajo:
+# no es parte del criterio, pero el control en vivo vigila cada grupo.
+# Ambos marcan: del mismo ajuste de goles que los goles.
+# Prueba del 2026-10-09: ni "sí" ni "no" llegan nunca al 80 % en las 7 ligas
+# (2019-2025): no hay nada que validar, así que no se publica.
+BTTS_HABILITADOS: tuple[str, ...] = ()
+# Hándicap asiático, del mismo ajuste. ±0,5 no se mide aparte: es el 1X2 y la
+# doble oportunidad con otro nombre. Las líneas enteras pueden devolverse
+# (push): la probabilidad es la de ganar CONDICIONADA a que no haya devolución,
+# y una devolución no cuenta ni en el historial ni en el control.
+LINEAS_HANDICAP: tuple[float, ...] = (-1.0, 0.0, 1.0, 1.5, 2.0)
+HANDICAP_HABILITADOS: tuple[float, ...] = (-1.0, 0.0, 1.0, 1.5, 2.0)
+# Córners: modelo estadístico (model/estadisticas_mercado.py), recortado a la
+# probabilidad sin margen del mercado (`alta_prob_datos._corners`).
+CORNERS_HABILITADOS: tuple[tuple[str, float], ...] = (("under", 11.5), ("under", 12.5))
 # Mercados que guardan el ajuste de goles en `fit`.
-MERCADOS_CON_AJUSTE = ("totals", "team_totals_home", "team_totals_away")
+MERCADOS_CON_AJUSTE = ("totals", "team_totals_home", "team_totals_away", "btts", "spreads")
 # Liquidados mínimos antes de que el control pueda pausar la línea.
 MIN_N_CONTROL = 50
 # Semanas distintas mínimas antes de que el IC pueda pausar, y nivel del IC.
@@ -92,14 +124,14 @@ NIVEL_IC_CONTROL = 0.99
 Z_GROSERO = -4.0
 # Desempate exacto entre candidatos de la misma probabilidad.
 _PRIORIDAD = {"h2h": 0, "totals": 1, "team_totals_home": 2, "team_totals_away": 2,
-              "double_chance": 3}
+              "double_chance": 3, "btts": 4, "spreads": 5, "corners": 6}
 _SEL = ("home", "draw", "away")
 
 
 @dataclass(frozen=True)
 class Candidato:
-    market: str              # 'h2h' | 'double_chance' | 'totals' | 'team_totals_home' | 'team_totals_away' (los de clv._settle_outcome)
-    selection: str           # home/draw/away · 1X/X2/12 · over/under
+    market: str              # 'h2h' | 'double_chance' | 'totals' | 'team_totals_home' | 'team_totals_away' | 'btts' | 'spreads' | 'corners'
+    selection: str           # home/draw/away · 1X/X2/12 · over/under · yes/no
     line: float | None
     prob: float
 
@@ -150,6 +182,37 @@ def candidatos_equipo(ajuste: dict | None,
                       market_team_total(m, 0.5, lado)["over"]) for lado in lados]
 
 
+def candidatos_btts(ajuste: dict | None,
+                    lados: tuple[str, ...] | None = None) -> list[Candidato]:
+    lados = BTTS_HABILITADOS if lados is None else lados
+    if ajuste is None or not lados:
+        return []
+    m = score_matrix(ajuste["lambda"], ajuste["mu"], ajuste["rho"])
+    si = float(1.0 - m[0, :].sum() - m[:, 0].sum() + m[0, 0])
+    return [Candidato("btts", lado, None, si if lado == "yes" else 1.0 - si) for lado in lados]
+
+
+def candidatos_handicap(p: dict[str, float], ajuste: dict | None,
+                        lineas: tuple[float, ...] | None = None) -> list[Candidato]:
+    """Ganar con hándicap, condicionado a que no haya devolución."""
+    lineas = HANDICAP_HABILITADOS if lineas is None else lineas
+    if not lineas:
+        return []
+    m = (score_matrix(ajuste["lambda"], ajuste["mu"], ajuste["rho"])
+         if ajuste is not None else None)
+    out = []
+    for lado in ("home", "away"):
+        for linea in lineas:
+            if linea == 0.0:
+                prob = p[lado] / (p["home"] + p["away"])
+            elif m is None:
+                continue
+            else:
+                prob = market_asian_handicap(m, linea if lado == "home" else -linea)[lado]
+            out.append(Candidato("spreads", lado, linea, float(prob)))
+    return out
+
+
 def grupo_control(market: str) -> str:
     """
     Grupo en el que el control vigila un mercado. "Marca el local" y "marca el
@@ -190,6 +253,15 @@ def texto(market: str, selection: str, line: float | None,
         return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} goles"
     if market in ("team_totals_home", "team_totals_away"):
         return f"Marca {local if market.endswith('home') else visitante}"
+    if market == "btts":
+        return "Marcan los dos" if selection == "yes" else "No marcan los dos"
+    if market == "spreads":
+        equipo = local if selection == "home" else visitante
+        if line == 0:
+            return f"{equipo} gana (empate devuelve)"
+        return f"{equipo} {'+' if line > 0 else ''}{_goles(line)} (hándicap asiático)"
+    if market == "corners":
+        return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} córners"
     raise ValueError(f"Mercado desconocido: {market}")
 
 

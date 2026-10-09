@@ -39,3 +39,16 @@ def test_042_documenta_la_columna_line_dentro_de_la_transaccion():
         i = SQL42.index(f"COMMENT ON COLUMN {tabla}.line IS")
         assert SQL42.index("BEGIN;") < i < SQL42.index("DO $$") < SQL42.index("COMMIT;")
     assert "goles de un equipo" in SQL42 and "de un equipo (0,5)" in SQL42
+
+
+SQL47 = (Path(__file__).resolve().parents[1] / "db" / "047_alta_prob_ampliacion.sql").read_text(encoding="utf-8")
+
+
+def test_047_admite_los_mercados_y_resultados_nuevos():
+    from qf.publish import alta_prob as ap
+    for mercado in ap._PRIORIDAD:                    # todo mercado que se puede elegir
+        assert f"'{mercado}'" in SQL47
+    assert "CHECK (outcome IN ('win', 'loss', 'push', 'void'))" in SQL47
+    assert "DROP CONSTRAINT IF EXISTS alta_prob_results_outcome_check" in SQL47
+    assert SQL47.count("RAISE EXCEPTION") == 2
+    assert SQL47.index("BEGIN;") < SQL47.index("DO $$") < SQL47.index("COMMIT;")

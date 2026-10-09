@@ -61,6 +61,12 @@ def _raw(*partidos):
         for h, a, psh, psd, psa, po, pu, hg, ag in partidos])
 
 
+# Los mercados de antes de la ampliación del 2026-10-09; los nuevos (ambos
+# marcan, 2,5, hándicap, córners) se miden aparte.
+ANTIGUOS = {"h2h", "double_chance", "totals over 1.5", "totals under 3.5",
+            "totals under 4.5", "team_totals_home", "team_totals_away"}
+
+
 def test_regla_completa_mide_la_regla_desplegada_no_las_lineas_excluidas():
     # Partido igualado de ~2,6 goles esperados: el 1X2, la doble oportunidad,
     # "más de 1,5", "menos de 3,5" y "marca un equipo" quedan bajo el 80 %; solo
@@ -69,11 +75,12 @@ def test_regla_completa_mide_la_regla_desplegada_no_las_lineas_excluidas():
     # entre todas las líneas medidas) sí lo habría sido.
     raw = _raw(("A", "B", 2.60, 3.60, 2.90, 1.95, 1.95, 1, 0))
     f = cal.filas(raw, cal.RHO_POR_DEFECTO)
-    assert list(f["mercado"]) == ["totals under 4.5"]
+    base = f[f["mercado"].isin(ANTIGUOS)]
+    assert list(base["mercado"]) == ["totals under 4.5"]
     assert ("under", 4.5) not in cal.ap.MERCADOS_GOLES_HABILITADOS
-    assert not f["elegido"].any()
-    # `regla_completa` se calcula sobre los elegidos: aquí no hay ninguno.
-    assert f[f["elegido"]].empty
+    assert not base["elegido"].any()
+    # La línea excluida se mide pero nunca es la elegida.
+    assert f["elegido"].sum() <= 1
 
 
 def test_regla_completa_elige_entre_los_habilitados():
@@ -83,10 +90,22 @@ def test_regla_completa_elige_entre_los_habilitados():
     # LOS HABILITADOS ("marca el local"), y la línea excluida sigue medida.
     raw = _raw(("A", "B", 1.45, 4.40, 7.50, 1.80, 2.05, 2, 0))
     f = cal.filas(raw, cal.RHO_POR_DEFECTO)
-    assert set(f["mercado"]) == {"double_chance", "totals under 4.5", "team_totals_home"}
-    excluida = f[f["mercado"] == "totals under 4.5"].iloc[0]
-    habilitados = f[f["mercado"] != "totals under 4.5"]
+    base = f[f["mercado"].isin(ANTIGUOS)]
+    assert set(base["mercado"]) == {"double_chance", "totals under 4.5", "team_totals_home"}
+    excluida = base[base["mercado"] == "totals under 4.5"].iloc[0]
+    habilitados = base[base["mercado"] != "totals under 4.5"]
     assert excluida["prob"] < habilitados["prob"].min()      # con la regla vieja ganaba ella
     elegidos = f[f["elegido"]]
-    assert list(elegidos["mercado"]) == ["team_totals_home"]
-    assert elegidos.iloc[0]["prob"] == habilitados["prob"].min()
+    assert len(elegidos) == 1 and elegidos.iloc[0]["mercado"] != "totals under 4.5"
+    assert elegidos.iloc[0]["prob"] <= habilitados["prob"].min()
+
+
+def test_mide_los_mercados_nuevos_y_descarta_devoluciones():
+    # Favorito claro 2-0: hándicap, ambos marcan "no" y "más/menos 2,5" se
+    # miden. Con +1 / −1 y un 2-1 habría devolución: esas filas no aparecen.
+    raw = _raw(("A", "B", 1.25, 6.50, 12.0, 1.55, 2.45, 2, 1))
+    f = cal.filas(raw, cal.RHO_POR_DEFECTO)
+    nuevos = set(f["mercado"]) - ANTIGUOS
+    assert any(m.startswith("spreads") for m in nuevos)
+    assert "spreads -1" not in set(f["mercado"])              # 2-1 con −1: devolución
+    assert (f["prob"].between(cal.ap.PROB_MIN, cal.ap.PROB_MAX)).all()

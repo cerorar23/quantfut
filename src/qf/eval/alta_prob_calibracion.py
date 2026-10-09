@@ -16,6 +16,16 @@ mismo criterio y entra en `alta_prob.MERCADOS_EQUIPO_HABILITADOS`.
 "Regla completa" mide la regla DESPLEGADA (solo con los mercados habilitados),
 no todo lo que se mide.
 
+AMPLIACIÓN 2026-10-09 (pedida por el usuario): se miden también ambos marcan
+(sí/no), más/menos 2,5, hándicap asiático (`ap.LINEAS_HANDICAP`, del mismo
+ajuste; las devoluciones no cuentan, la probabilidad es condicionada) y
+córners (modelo de `model/estadisticas_mercado.py`). Córners SOLO en las
+temporadas que el modelo no vio al fijar sus parámetros (φ en 2019-21,
+encogimiento en 2021/22: ver eval/escalera_estadistica.py), así que la regla
+con córners se mide aparte en 2022-2025. El recorte de córners a la
+probabilidad del mercado (`alta_prob_datos`) no se puede medir aquí:
+football-data no trae cuotas de córners.
+
 LÍMITE: football-data solo trae la línea 2,5. Las de cuarto y gol entero que
 Pinnacle cotiza en vivo no se pueden validar aquí; las cubre el control en
 vivo por mercado (`alta_prob.control`).
@@ -35,6 +45,7 @@ import numpy as np
 import pandas as pd
 
 from ..config import settings
+from ..model import estadisticas_mercado as em
 from ..model.devig import devig, two_way_devig
 from ..publish import alta_prob as ap
 from . import soft_vs_sharp as sv
@@ -52,8 +63,56 @@ MAX_DEFICIT_PTS = 1.0
 RHO_POR_DEFECTO = -0.0613
 
 
+def temporadas_corners() -> tuple[str, ...]:
+    """Temporadas en las que el modelo de córners no fijó nada (sin fugas)."""
+    from . import escalera_estadistica as ee     # importa este módulo: aquí no
+    return tuple(t for t in sv.DEFAULT_SEASONS
+                 if t not in ee.TEMPORADAS_PHI + ee.TEMPORADA_AJUSTE)
+
+
 def _nombre(c: ap.Candidato) -> str:
-    return c.market if c.market != "totals" else f"totals {c.selection} {c.line:g}"
+    if c.market in ("totals", "corners"):
+        return f"{c.market} {c.selection} {c.line:g}"
+    if c.market == "btts":
+        return f"btts {c.selection}"
+    if c.market == "spreads":
+        return f"spreads {c.line:+g}"
+    return c.market
+
+
+def habilitado(c: ap.Candidato) -> bool:
+    """¿Lo publica la regla DESPLEGADA?"""
+    if c.market == "totals":
+        return (c.selection, c.line) in ap.MERCADOS_GOLES_HABILITADOS
+    if c.market.startswith("team_totals"):
+        return c.market.removeprefix("team_totals_") in ap.MERCADOS_EQUIPO_HABILITADOS
+    if c.market == "btts":
+        return c.selection in ap.BTTS_HABILITADOS
+    if c.market == "spreads":
+        return c.line in ap.HANDICAP_HABILITADOS
+    if c.market == "corners":
+        return (c.selection, c.line) in ap.CORNERS_HABILITADOS
+    return True
+
+
+def medias_corners(df: pd.DataFrame) -> dict[str, float]:
+    """
+    Córners esperados de cada partido (clave `match` de `sv._prepare`), con el
+    acumulador PREGUNTADO antes de añadir el partido: sin fugas.
+    """
+    out: dict[str, float] = {}
+    if not {"HC", "AC"} <= set(df.columns):
+        return out
+    for _, liga in df.sort_values("date").groupby("league_id"):
+        acc = em.acumulador("corners")
+        for r in liga.to_dict("records"):
+            if pd.isna(r["HC"]) or pd.isna(r["AC"]):
+                continue
+            lam = acc.lambdas(r["date"], r["HomeTeam"], r["AwayTeam"])
+            if lam is not None:
+                out[r["match"]] = lam[0] + lam[1]
+            acc.agregar(r["date"], r["HomeTeam"], r["AwayTeam"], int(r["HC"]), int(r["AC"]))
+    return out
 
 
 def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
@@ -73,6 +132,8 @@ def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
     df[COLS] = df[COLS].apply(pd.to_numeric, errors="coerce")
     df = df.dropna(subset=COLS)
     df = df[(df[COLS] > 1.0).all(axis=1)]
+    from . import escalera_estadistica as ee
+    corners, de_prueba = medias_corners(df), temporadas_corners()
     out = []
     for r in df.to_dict("records"):
         p1x2 = devig([r["PSH"], r["PSD"], r["PSA"]], settings.devig_method)
@@ -81,17 +142,31 @@ def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
         ajuste = ap.ajuste_goles(p, 2.5, p_over, rho)
         cands = (ap.candidatos_1x2(p) + ap.candidatos_doble(p)
                  + ap.candidatos_goles(ajuste, ap.LINEAS_GOLES)
-                 + ap.candidatos_equipo(ajuste, ("home", "away")))
-        elegido = ap.elegir(ap.candidatos_1x2(p) + ap.candidatos_doble(p)
-                            + ap.candidatos_goles(ajuste, ap.MERCADOS_GOLES_HABILITADOS)
-                            + ap.candidatos_equipo(ajuste, ap.MERCADOS_EQUIPO_HABILITADOS))
+                 + ap.candidatos_equipo(ajuste, ("home", "away"))
+                 + ap.candidatos_btts(ajuste, ("yes", "no"))
+                 + ap.candidatos_handicap(p, ajuste, ap.LINEAS_HANDICAP))
         hg, ag = int(r["FTHG"]), int(r["FTAG"])
+        total_c = None
+        if r["match"] in corners and r.get("season") in de_prueba:
+            media = corners[r["match"]]
+            total_c = int(r["HC"]) + int(r["AC"])
+            for lado in ("over", "under"):
+                for linea in ee.LINEAS["corners"]:
+                    prob = em.prob_total(media, em.PARAMETROS["corners"]["phi"], linea)[lado]
+                    cands.append(ap.Candidato("corners", lado, linea, prob))
+        elegido = ap.elegir([c for c in cands if habilitado(c)])
         for c in cands:
             if not ap.PROB_MIN <= c.prob <= ap.PROB_MAX:
                 continue
-            out.append({"mercado": _nombre(c), "prob": c.prob,
-                        "won": _settle_outcome(c.market, c.selection, c.line, hg, ag)[0] == "win",
-                        "elegido": c == elegido, "week": r["week"]})
+            if c.market == "corners":
+                outcome = "win" if (total_c > c.line) == (c.selection == "over") else "loss"
+            else:
+                outcome = _settle_outcome(c.market, c.selection, c.line, hg, ag)[0]
+            if outcome not in ("win", "loss"):
+                continue            # devolución: no cuenta (probabilidad condicionada)
+            out.append({"mercado": _nombre(c), "prob": c.prob, "won": outcome == "win",
+                        "elegido": c == elegido, "week": r["week"],
+                        "con_corners": total_c is not None})
     return pd.DataFrame(out)
 
 
@@ -123,11 +198,16 @@ def run(rho: float = RHO_POR_DEFECTO, cache_dir: Path = Path(".local/fd_cache"))
     raw, dataset = sv.load_csvs(LIGAS, sv.DEFAULT_SEASONS, cache_dir)
     f = filas(raw, rho)
     elegidos = f[f["elegido"]].assign(mercado="regla completa")
+    por_mercado = evaluar(f)
     return {"dataset_sha256": dataset["sha256"], "partidos": dataset["rows"], "rho": rho,
-            "por_mercado": evaluar(f),
+            "por_mercado": por_mercado,
             "regla_completa": evaluar(elegidos).get("regla completa"),
-            "goles_que_pasan": sorted(k for k, v in evaluar(f).items()
-                                      if k.startswith("totals") and v["pasa"])}
+            # Córners solo tiene candidatos en 2022-2025: la regla se mide ahí también.
+            "regla_completa_2022_25": evaluar(elegidos[elegidos["con_corners"]]).get("regla completa"),
+            "elegidos_por_mercado": {str(k): int(v) for k, v in
+                                     f[f["elegido"]]["mercado"].value_counts().items()},
+            "que_pasan": sorted(k for k, v in por_mercado.items() if v["pasa"]),
+            "que_no_pasan": sorted(k for k, v in por_mercado.items() if not v["pasa"])}
 
 
 if __name__ == "__main__":

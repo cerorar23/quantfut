@@ -14,6 +14,18 @@ from qf.publish import picks as pk
 NOW = datetime(2026, 10, 6, 8, 0, tzinfo=timezone.utc)
 
 
+@pytest.fixture(autouse=True)
+def _solo_mercados_de_pinnacle(monkeypatch):
+    """
+    Las pruebas de E/S de antes de la ampliación (2026-10-09) simulan solo las
+    consultas de Pinnacle. Hándicap y córners leen otras tablas: se apagan
+    aquí y se prueban aparte, con sus propias consultas simuladas.
+    """
+    monkeypatch.setattr(ap, "HANDICAP_HABILITADOS", ())
+    monkeypatch.setattr(ap, "CORNERS_HABILITADOS", ())
+    monkeypatch.setattr(ap, "BTTS_HABILITADOS", ())
+
+
 def _snap(pin, otros=None, source="the_odds_api", edad=timedelta(hours=1)):
     books = {"pinnacle": dict(zip(("home", "draw", "away"), pin))}
     books.update(otros or {})
@@ -614,3 +626,85 @@ def test_lector_con_corte_solo_cuenta_lotes_desde_esa_fecha(monkeypatch):
     filas = [s for s in sqls if "alta_prob_picks a" in s]
     assert filas and all("b.batch_date >= DATE '2026-10-06'" in s for s in filas)
     assert not any("AND FALSE" in s for s in filas)
+
+
+# --- Ampliación 2026-10-09: ambos marcan, hándicap y córners -----------------
+
+def test_decidir_ambos_marcan_y_handicap_salen_del_mismo_ajuste():
+    m, snap, filas = _mercado_pinnacle(1.25, 1.0)
+    out = ad.decidir(snap, filas, RHO, (), set(), btts=("yes", "no"), handicap=(1.0, 1.5, 2.0))
+    assert out is not None
+    c, fit = out
+    assert c.market in ("btts", "spreads") and fit is not None   # el ajuste se guarda
+    assert ap.PROB_MIN <= c.prob <= ap.PROB_MAX
+    # Sin ajuste de goles (sin rho) no hay ni ambos marcan ni hándicap.
+    assert ad.decidir(snap, filas, None, (), set(), btts=("yes", "no"),
+                      handicap=(1.0, 1.5, 2.0)) is None
+    # Bloqueado por el control: no se elige.
+    assert ad.decidir(snap, filas, RHO, (), {"btts", "spreads"}, btts=("yes", "no"),
+                      handicap=(1.0, 1.5, 2.0)) is None
+
+
+def test_decidir_acepta_corners_ya_recortados():
+    snap = _snap((2.6, 3.2, 2.9))                       # nada de Pinnacle en rango
+    corner = ap.Candidato("corners", "over", 7.5, 0.83)
+    c, fit = ad.decidir(snap, [], None, (), set(), extra=[corner])
+    assert c == corner and fit is None
+    assert ad.decidir(snap, [], None, (), {"corners"}, extra=[corner]) is None
+
+
+def _fila_res(market, selection, line, hg=2, ag=1, hc=6, ac=4, horas=3):
+    return {"market": market, "selection": selection, "line": line,
+            "home_goals": hg, "away_goals": ag, "home_corners": hc, "away_corners": ac,
+            "kickoff_utc": NOW - timedelta(hours=horas)}
+
+
+def test_resultado_de_los_mercados_nuevos():
+    assert ad.resultado(_fila_res("corners", "over", 8.5), NOW) == ("win", 10)
+    assert ad.resultado(_fila_res("corners", "under", 9.5), NOW) == ("loss", 10)
+    assert ad.resultado(_fila_res("btts", "yes", None), NOW) == ("win", None)
+    assert ad.resultado(_fila_res("spreads", "away", 1.0), NOW) == ("push", None)   # 2-1
+    assert ad.resultado(_fila_res("spreads", "away", 1.5), NOW) == ("win", None)
+
+
+def test_corners_sin_estadistica_esperan_y_luego_son_nulos():
+    assert ad.resultado(_fila_res("corners", "over", 8.5, hc=None), NOW) is None
+    assert ad.resultado(_fila_res("corners", "over", 8.5, hc=None, horas=80), NOW) == ("void", None)
+
+
+def test_textos_nuevos():
+    assert ap.texto("btts", "no", None, "A", "B") == "No marcan los dos"
+    assert ap.texto("spreads", "away", 1.5, "A", "B") == "B +1,5 (hándicap asiático)"
+    assert ap.texto("spreads", "home", 0.0, "A", "B") == "A gana (empate devuelve)"
+    assert ap.texto("corners", "under", 10.5, "A", "B") == "Menos de 10,5 córners"
+
+
+class _Acc:
+    def __init__(self, media):
+        self.media = media
+
+    def lambdas(self, now, local, visitante, arbitro=None):
+        return (self.media / 2, self.media / 2)
+
+
+class _Modelos:
+    def __init__(self, media):
+        self.acc = _Acc(media)
+
+    def de(self, liga, mercado):
+        return self.acc
+
+
+def test_corners_se_recortan_al_mercado_y_guardan_modelo_y_mercado(monkeypatch):
+    monkeypatch.setattr(ap, "CORNERS_HABILITADOS", (("under", 12.5),))
+    m = {"league_id": "es.laliga", "home_team_id": "a", "away_team_id": "b"}
+    filas = [{"bookmaker": "betano", "market": "corners", "selection": s, "line": 12.5,
+              "price": p, "provider_updated_at": NOW} for s, p in (("under", 1.30), ("over", 3.30))]
+    cands, fits = ad._corners(m, NOW, _Modelos(8.0), filas)
+    assert len(cands) == 1
+    c = cands[0]
+    fit = fits[("under", 12.5)]
+    assert fit["modelo"] > fit["mercado"]                  # el modelo es más optimista…
+    assert c.prob == pytest.approx(fit["mercado"], abs=1e-6)   # …y manda la casa
+    # Sin los dos lados cotizados, no entra.
+    assert ad._corners(m, NOW, _Modelos(8.0), filas[:1]) == ([], {})

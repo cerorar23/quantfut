@@ -833,6 +833,18 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   las casas de la lista; `db/041`), y la línea las lee de la MISMA respuesta
   que el 1X2. Prueba en vivo: goles en 15 de 22 partidos (antes 0).
 
+- **Ampliación del 2026-10-09 (pedida por el usuario):** más de 2,5 goles,
+  hándicap asiático (−1, 0, +1, +1,5, +2, del mismo ajuste de goles; una
+  devolución no cuenta, la probabilidad es la de ganar sin devolución) y
+  córners (menos de 11,5 y 12,5). Córners es la única excepción a "siempre
+  Pinnacle": sale del modelo de córners recortado a la probabilidad sin
+  margen de la propia casa (`min(modelo, mercado)`, como la escalera), y sin
+  los dos lados cotizados no entra; si no hay estadística 72 h después, nulo.
+  Ambos marcan se midió pero nunca llega al 80 % en las 7 ligas: no se publica.
+  Más de 7,5 córners no pasó. Regla completa: pronóstico en 12.128 de 14.216
+  partidos (antes 9.021), prometido 82,35 %, real 82,89 %. Migración `db/047`
+  (mercados nuevos, resultados `push`/`void`, `valor` = córners).
+
 ## La cadena de hashes en la práctica
 
 Crea un repo público separado (`quantfut-registro-publico`), móntalo en

@@ -15,11 +15,12 @@ import argparse
 import json
 import logging
 from collections.abc import Sequence
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from ..config import settings
 from ..db import execute, query, query_one
 from ..eval.clv import _settle_outcome
+from ..model import estadisticas_mercado as em
 from ..model.devig import devig, two_way_devig
 from . import alta_prob as ap
 from . import hashchain
@@ -66,7 +67,8 @@ def _lote_sellado(dia: date) -> bool:
 
 def _partidos(now: datetime) -> list[dict]:
     return query(
-        """SELECT m.match_id, m.kickoff_utc
+        """SELECT m.match_id, m.kickoff_utc, m.league_id, m.home_team_id,
+                  m.away_team_id, m.referee
            FROM matches m
            JOIN leagues l ON l.league_id = m.league_id
            LEFT JOIN alta_prob_picks a ON a.match_id = m.match_id
@@ -124,7 +126,8 @@ def _liquidados(desde: str | None = "control") -> list[dict]:
             JOIN alta_prob_results r ON r.alta_id = a.alta_id
             JOIN matches m ON m.match_id = a.match_id
             {_sql_sellado()}
-            WHERE %s::date IS NULL OR a.decided_at >= %s::date""",
+            WHERE r.outcome IN ('win', 'loss')
+              AND (%s::date IS NULL OR a.decided_at >= %s::date)""",
         (desde, desde))
 
 
@@ -168,23 +171,73 @@ def linea_pinnacle(rows: list[dict]) -> tuple[float, float] | None:
 
 def decidir(snap: pk.Snapshot, totales: list[dict], rho: float | None,
             habilitados: tuple, excluir: set[str],
-            equipo: tuple[str, ...] = ()) -> tuple[ap.Candidato, dict | None] | None:
+            equipo: tuple[str, ...] = (), btts: tuple[str, ...] = (),
+            handicap: tuple[float, ...] = (), extra: Sequence[ap.Candidato] = ()
+            ) -> tuple[ap.Candidato, dict | None] | None:
+    """`extra`: candidatos que no salen de Pinnacle (córners, ya recortados)."""
     q = snap.books[settings.sharp_book]
     fair = devig([q[s] for s in SEL], settings.devig_method)
     p = {s: float(fair[i]) for i, s in enumerate(SEL)}
     cands = ap.candidatos_1x2(p) + ap.candidatos_doble(p)
     ajuste = None
-    if rho is not None and (habilitados or equipo):
+    if rho is not None and (habilitados or equipo or btts or handicap):
         linea = linea_pinnacle(totales)
         if linea is not None:
             ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho)
     if habilitados and "totals" not in excluir:
         cands += ap.candidatos_goles(ajuste, habilitados)
-    cands += ap.candidatos_equipo(ajuste, equipo)    # `elegir` aplica `excluir`
+    # `elegir` aplica `excluir` a todo lo demás.
+    cands += ap.candidatos_equipo(ajuste, equipo)
+    cands += ap.candidatos_btts(ajuste, btts)
+    cands += ap.candidatos_handicap(p, ajuste, handicap)
+    cands += list(extra)
     elegido = ap.elegir(cands, excluir)
     if elegido is None:
         return None
     return elegido, (ajuste if elegido.market in ap.MERCADOS_CON_AJUSTE else None)
+
+
+def _corners(m: dict, now: datetime, modelos, filas_af: list[dict]
+             ) -> tuple[list[ap.Candidato], dict]:
+    """
+    Córners del modelo estadístico, recortados a la probabilidad sin margen del
+    mercado (`escalera_datos.prudente`, la misma regla de la escalera desde el
+    2026-10-09): la probabilidad que se publica nunca supera la de la casa.
+    Sin los dos lados cotizados, la línea no entra. Devuelve los candidatos y,
+    por línea, lo que se guarda en `fit` (modelo, mercado, media).
+    """
+    from . import escalera_datos as ed            # importa este módulo
+    if not ap.CORNERS_HABILITADOS or modelos is None:
+        return [], {}
+    acc = modelos.de(m["league_id"], "corners")
+    lam = (acc.lambdas(now, m["home_team_id"], m["away_team_id"])
+           if acc is not None else None)
+    if lam is None:
+        return [], {}
+    media = lam[0] + lam[1]
+    cands, fits = [], {}
+    for lado, linea in ap.CORNERS_HABILITADOS:
+        modelo = em.prob_total(media, em.PARAMETROS["corners"]["phi"], linea)[lado]
+        c = ed.prudente(ap.Candidato("corners", lado, linea, modelo), filas_af)
+        if c is None:
+            continue
+        cands.append(c)
+        fits[(lado, linea)] = {"modelo": round(modelo, 6), "media": round(media, 4),
+                               "mercado": round(ed.prob_mercado(filas_af, c), 6)}
+    return cands, fits
+
+
+def _ref_nuevos(c: ap.Candidato, match_id: str, snap: pk.Snapshot, filas_af: list[dict]
+                ) -> tuple[float | None, str | None]:
+    """Cuota de referencia de ambos marcan, hándicap y córners."""
+    from . import escalera_datos as ed
+    if c.market in ("btts", "corners"):
+        price, book, _ = ed._ref_af(filas_af, c)
+        return price, book
+    # Hándicap: solo hay cuotas de las casas en The Odds API.
+    if snap.source != "the_odds_api":
+        return None, None
+    return ed._ref_handicap(ed._handicaps(match_id, snap.as_of), c)
 
 
 def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato,
@@ -250,6 +303,11 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     excluir = set(est["bloqueados"])
     habilitados = ap.MERCADOS_GOLES_HABILITADOS
     rho = _rho_activo()
+    nuevos = bool(ap.BTTS_HABILITADOS or ap.CORNERS_HABILITADOS)
+    modelos = None
+    if ap.CORNERS_HABILITADOS:
+        from . import escalera_datos as ed
+        modelos = ed.Modelos(now)
     for m in _partidos(now):
         snap = _snapshot(m["match_id"], m["kickoff_utc"], now)
         if snap is None:
@@ -266,13 +324,24 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             equipos = _equipos_af(m["match_id"], snap.as_of, now)
         else:
             totales = []
+        filas_af: list[dict] = []
+        if nuevos:
+            from . import escalera_datos as ed
+            filas_af = ed._cuotas_af(m["match_id"], now)
+        corners, fits_corners = _corners(m, now, modelos, filas_af)
         res = decidir(snap, totales, rho, habilitados, excluir,
-                      ap.MERCADOS_EQUIPO_HABILITADOS)
+                      ap.MERCADOS_EQUIPO_HABILITADOS, ap.BTTS_HABILITADOS,
+                      ap.HANDICAP_HABILITADOS, corners)
         if res is None:
             out["sin_candidato"] += 1
             continue
         c, ajuste = res
-        ref_price, ref_book = _ref(snap, totales, c, equipos)
+        if c.market == "corners":
+            ajuste = fits_corners[(c.selection, c.line)]
+        if c.market in ("btts", "spreads", "corners"):
+            ref_price, ref_book = _ref_nuevos(c, m["match_id"], snap, filas_af)
+        else:
+            ref_price, ref_book = _ref(snap, totales, c, equipos)
         fila = (m["match_id"], c.market, c.selection, c.line, round(c.prob, 6),
                 round(1.0 / c.prob, 4), ref_price, ref_book, snap.source, snap.as_of,
                 json.dumps(ajuste) if ajuste else None)
@@ -296,22 +365,45 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     return out
 
 
-def settle_pending() -> dict:
+# Córners: si 72 h después del partido siguen sin estadística, nulo.
+MARGEN_SIN_CORNERS = timedelta(hours=72)
+
+
+def resultado(r: dict, now: datetime) -> tuple[str, int | None] | None:
+    """(outcome, córners) o None si todavía no se puede liquidar."""
+    hg, ag = int(r["home_goals"]), int(r["away_goals"])
+    if r["market"] == "corners":
+        if r["home_corners"] is None or r["away_corners"] is None:
+            return ("void", None) if r["kickoff_utc"] < now - MARGEN_SIN_CORNERS else None
+        total = int(r["home_corners"]) + int(r["away_corners"])
+        gana = total > float(r["line"]) if r["selection"] == "over" else total < float(r["line"])
+        return ("win" if gana else "loss"), total
+    outcome, _, _ = _settle_outcome(r["market"], r["selection"], r["line"], hg, ag)
+    # Hándicap entero devuelto: 'push'. Las líneas de alta probabilidad son
+    # enteras o medias: no hay medias ganadas.
+    return (outcome if outcome in ("win", "loss", "push") else "void"), None
+
+
+def settle_pending(now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
     rows = query(
-        """SELECT a.alta_id, a.market, a.selection, a.line, m.home_goals, m.away_goals
+        """SELECT a.alta_id, a.market, a.selection, a.line, m.home_goals, m.away_goals,
+                  m.home_corners, m.away_corners, m.kickoff_utc
            FROM alta_prob_picks a
            JOIN matches m ON m.match_id = a.match_id
            LEFT JOIN alta_prob_results r ON r.alta_id = a.alta_id
            WHERE r.alta_id IS NULL AND m.status = 'finished'
              AND m.home_goals IS NOT NULL""")
+    n = 0
     for r in rows:
-        outcome, _, _ = _settle_outcome(r["market"], r["selection"], r["line"],
-                                        int(r["home_goals"]), int(r["away_goals"]))
-        execute(
-            """INSERT INTO alta_prob_results (alta_id, outcome, home_goals, away_goals)
-               VALUES (%s,%s,%s,%s) ON CONFLICT (alta_id) DO NOTHING""",
-            (r["alta_id"], outcome, int(r["home_goals"]), int(r["away_goals"])))
-    return {"settled": len(rows)}
+        res = resultado(r, now)
+        if res is None:
+            continue
+        n += execute(
+            """INSERT INTO alta_prob_results (alta_id, outcome, home_goals, away_goals, valor)
+               VALUES (%s,%s,%s,%s,%s) ON CONFLICT (alta_id) DO NOTHING""",
+            (r["alta_id"], res[0], int(r["home_goals"]), int(r["away_goals"]), res[1])) or 0
+    return {"settled": n}
 
 
 def informe_publico() -> dict:
