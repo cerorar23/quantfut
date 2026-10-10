@@ -696,15 +696,28 @@ class _Modelos:
 
 
 def test_corners_se_recortan_al_mercado_y_guardan_modelo_y_mercado(monkeypatch):
-    monkeypatch.setattr(ap, "CORNERS_HABILITADOS", (("under", 12.5),))
+    monkeypatch.setattr(ap, "CORNERS_HABILITADOS", (("corners", "under", 12.5),))
     m = {"league_id": "es.laliga", "home_team_id": "a", "away_team_id": "b"}
     filas = [{"bookmaker": "betano", "market": "corners", "selection": s, "line": 12.5,
               "price": p, "provider_updated_at": NOW} for s, p in (("under", 1.30), ("over", 3.30))]
     cands, fits = ad._corners(m, NOW, _Modelos(8.0), filas)
     assert len(cands) == 1
     c = cands[0]
-    fit = fits[("under", 12.5)]
+    fit = fits[("corners", "under", 12.5)]
     assert fit["modelo"] > fit["mercado"]                  # el modelo es más optimista…
     assert c.prob == pytest.approx(fit["mercado"], abs=1e-6)   # …y manda la casa
     # Sin los dos lados cotizados, no entra.
     assert ad._corners(m, NOW, _Modelos(8.0), filas[:1]) == ([], {})
+
+
+def test_corners_de_un_equipo_usan_su_lambda_y_se_liquidan_con_sus_corners(monkeypatch):
+    monkeypatch.setattr(ap, "CORNERS_HABILITADOS", (("corners_home", "over", 2.5),))
+    m = {"league_id": "es.laliga", "home_team_id": "a", "away_team_id": "b"}
+    filas = [{"bookmaker": "betano", "market": "corners_home", "selection": s, "line": 2.5,
+              "price": p, "provider_updated_at": NOW} for s, p in (("over", 1.20), ("under", 4.20))]
+    cands, fits = ad._corners(m, NOW, _Modelos(12.0), filas)
+    assert [c.market for c in cands] == ["corners_home"]
+    assert fits[("corners_home", "over", 2.5)]["lambdas"] == [6.0, 6.0]
+    assert ad.resultado(_fila_res("corners_home", "over", 2.5, hc=6, ac=None), NOW) == ("win", 6)
+    assert ad.resultado(_fila_res("corners_away", "over", 2.5, hc=6, ac=None), NOW) is None
+    assert ap.texto("corners_home", "over", 3.5, "Real Madrid", "B") == "Más de 3,5 córners de Real Madrid"

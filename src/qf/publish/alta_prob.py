@@ -94,7 +94,22 @@ LINEAS_HANDICAP: tuple[float, ...] = (-1.0, 0.0, 1.0, 1.5, 2.0)
 HANDICAP_HABILITADOS: tuple[float, ...] = (-1.0, 0.0, 1.0, 1.5, 2.0)
 # Córners: modelo estadístico (model/estadisticas_mercado.py), recortado a la
 # probabilidad sin margen del mercado (`alta_prob_datos._corners`).
-CORNERS_HABILITADOS: tuple[tuple[str, float], ...] = (("under", 11.5), ("under", 12.5))
+# (mercado, lado, línea): córners totales y, desde el 2026-10-09 (segunda
+# ampliación), córners de cada equipo.
+# Segunda prueba (2026-10-09, mismos datos): más de 6,5 84,24→85,13; local más
+# de 2,5 84,97→85,20, más de 3,5 81,89→88,14, menos de 7,5 82,47→87,07;
+# visitante más de 2,5 82,09→88,64, menos de 6,5 82,90→86,93. No pasan: local
+# más de 1,5 (93,06→91,99), visitante menos de 5,5 (n=17, −4,2), más de 1,5 y
+# menos de 7,5; más de 7,5 totales queda en el límite (−0,96 aquí, −1,11 en la
+# primera prueba) y sigue fuera. Regla completa: 12.557 de 14.216 partidos,
+# 81,89→82,64 (2022-2025: 81,26→81,93); dentro de lo elegido, local más de
+# 2,5 queda por debajo
+# (n=680, 82,08→78,97): lo vigila el control por grupo.
+CORNERS_HABILITADOS: tuple[tuple[str, str, float], ...] = (
+    ("corners", "under", 11.5), ("corners", "under", 12.5), ("corners", "over", 6.5),
+    ("corners_home", "over", 2.5), ("corners_home", "over", 3.5),
+    ("corners_home", "under", 7.5),
+    ("corners_away", "over", 2.5), ("corners_away", "under", 6.5))
 # Mercados que guardan el ajuste de goles en `fit`.
 MERCADOS_CON_AJUSTE = ("totals", "team_totals_home", "team_totals_away", "btts", "spreads")
 # Liquidados mínimos antes de que el control pueda pausar la línea.
@@ -124,7 +139,8 @@ NIVEL_IC_CONTROL = 0.99
 Z_GROSERO = -4.0
 # Desempate exacto entre candidatos de la misma probabilidad.
 _PRIORIDAD = {"h2h": 0, "totals": 1, "team_totals_home": 2, "team_totals_away": 2,
-              "double_chance": 3, "btts": 4, "spreads": 5, "corners": 6}
+              "double_chance": 3, "btts": 4, "spreads": 5, "corners": 6,
+              "corners_home": 7, "corners_away": 7}
 _SEL = ("home", "draw", "away")
 
 
@@ -260,8 +276,10 @@ def texto(market: str, selection: str, line: float | None,
         if line == 0:
             return f"{equipo} gana (empate devuelve)"
         return f"{equipo} {'+' if line > 0 else ''}{_goles(line)} (hándicap asiático)"
-    if market == "corners":
-        return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} córners"
+    if market in ("corners", "corners_home", "corners_away"):
+        cosa = {"corners": "córners", "corners_home": f"córners de {local}",
+                "corners_away": f"córners de {visitante}"}[market]
+        return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} {cosa}"
     raise ValueError(f"Mercado desconocido: {market}")
 
 

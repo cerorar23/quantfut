@@ -214,16 +214,16 @@ def _corners(m: dict, now: datetime, modelos, filas_af: list[dict]
            if acc is not None else None)
     if lam is None:
         return [], {}
-    media = lam[0] + lam[1]
     cands, fits = [], {}
-    for lado, linea in ap.CORNERS_HABILITADOS:
-        modelo = em.prob_total(media, em.PARAMETROS["corners"]["phi"], linea)[lado]
-        c = ed.prudente(ap.Candidato("corners", lado, linea, modelo), filas_af)
+    for mercado, lado, linea in ap.CORNERS_HABILITADOS:
+        modelo = em.prob(mercado, lam, lado, linea)
+        c = ed.prudente(ap.Candidato(mercado, lado, linea, modelo), filas_af)
         if c is None:
             continue
         cands.append(c)
-        fits[(lado, linea)] = {"modelo": round(modelo, 6), "media": round(media, 4),
-                               "mercado": round(ed.prob_mercado(filas_af, c), 6)}
+        fits[(mercado, lado, linea)] = {
+            "modelo": round(modelo, 6), "lambdas": [round(lam[0], 4), round(lam[1], 4)],
+            "mercado": round(ed.prob_mercado(filas_af, c), 6)}
     return cands, fits
 
 
@@ -336,9 +336,9 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             out["sin_candidato"] += 1
             continue
         c, ajuste = res
-        if c.market == "corners":
-            ajuste = fits_corners[(c.selection, c.line)]
-        if c.market in ("btts", "spreads", "corners"):
+        if c.market in CORNERS:
+            ajuste = fits_corners[(c.market, c.selection, c.line)]
+        if c.market in ("btts", "spreads", *CORNERS):
             ref_price, ref_book = _ref_nuevos(c, m["match_id"], snap, filas_af)
         else:
             ref_price, ref_book = _ref(snap, totales, c, equipos)
@@ -367,15 +367,19 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
 
 # Córners: si 72 h después del partido siguen sin estadística, nulo.
 MARGEN_SIN_CORNERS = timedelta(hours=72)
+CORNERS = ("corners", "corners_home", "corners_away")
 
 
 def resultado(r: dict, now: datetime) -> tuple[str, int | None] | None:
     """(outcome, córners) o None si todavía no se puede liquidar."""
     hg, ag = int(r["home_goals"]), int(r["away_goals"])
-    if r["market"] == "corners":
-        if r["home_corners"] is None or r["away_corners"] is None:
+    if r["market"] in CORNERS:
+        hace_falta = {"corners": ("home_corners", "away_corners"),
+                      "corners_home": ("home_corners",),
+                      "corners_away": ("away_corners",)}[r["market"]]
+        if any(r[k] is None for k in hace_falta):
             return ("void", None) if r["kickoff_utc"] < now - MARGEN_SIN_CORNERS else None
-        total = int(r["home_corners"]) + int(r["away_corners"])
+        total = sum(int(r[k]) for k in hace_falta)
         gana = total > float(r["line"]) if r["selection"] == "over" else total < float(r["line"])
         return ("win" if gana else "loss"), total
     outcome, _, _ = _settle_outcome(r["market"], r["selection"], r["line"], hg, ag)

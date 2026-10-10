@@ -762,6 +762,11 @@ calibración (`python -m qf.eval.escalera_estadistica [--goles]`, φ en
 
 Cuotas de esos mercados: bets 8, 45 y 80 de la respuesta de API-Football que
 ya se pedía.
+Desde el 2026-10-09 también más de 6,5 córners y córners de cada equipo
+(local más de 1,5 / 4,5 / 5,5 y menos de 5,5; visitante más de 3,5 / 4,5 y
+menos de 4,5 / 7,5), las líneas que pasan con el criterio de la escalera
+(`python -m qf.eval.escalera_estadistica --fijos`). El modelo por equipo está
+peor calibrado que el de totales (varias líneas fallan en el tramo 60-80 %).
 
 **Probabilidad prudente en córners y tarjetas (2026-10-09, decisión del
 usuario).** La primera vista previa con cuotas reales (madrugada del 9-oct)
@@ -844,6 +849,13 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   Más de 7,5 córners no pasó. Regla completa: pronóstico en 12.128 de 14.216
   partidos (antes 9.021), prometido 82,35 %, real 82,89 %. Migración `db/047`
   (mercados nuevos, resultados `push`/`void`, `valor` = córners).
+- **Córners de cada equipo y más de 6,5 (2026-10-09, segunda ampliación):**
+  mismo acumulador de córners, con un φ propio por equipo (1,5455, 2019-21);
+  cuotas de API-Football bets 57/58 en la respuesta que ya se pedía (`db/048`).
+  En alta probabilidad entran más de 6,5 totales, local más de 2,5 / 3,5 y
+  menos de 7,5, visitante más de 2,5 y menos de 6,5. Regla completa: 12.557
+  partidos, 81,89 % → 82,64 %. Ojo: dentro de lo elegido, "local más de 2,5"
+  queda 3 puntos por debajo (n=680); lo vigila el control por grupo.
 
 ## La cadena de hashes en la práctica
 

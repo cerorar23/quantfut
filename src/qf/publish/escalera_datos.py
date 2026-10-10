@@ -139,7 +139,8 @@ def _cuotas_af(match_id: str, now: datetime) -> list[dict]:
         """SELECT DISTINCT ON (bookmaker, market, selection, line)
                   bookmaker, market, selection, line, price, provider_updated_at
            FROM af_odds_snapshots
-           WHERE match_id = %s AND market IN ('btts', 'corners', 'cards')
+           WHERE match_id = %s
+             AND market IN ('btts', 'corners', 'cards', 'corners_home', 'corners_away')
              AND fetched_at <= %s AND provider_updated_at >= %s
            ORDER BY bookmaker, market, selection, line, provider_updated_at DESC""",
         (match_id, now, now - es.MAX_EDAD_PRECIO))
@@ -200,14 +201,14 @@ def prudente(c, rows: list[dict]):
 def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
     out = []
     for mercado, lineas in em.LINEAS_HABILITADAS.items():
-        acc = modelos.de(m["league_id"], mercado)
+        acc = modelos.de(m["league_id"], em.FUENTE[mercado])
         if acc is None:
             continue
         lam = acc.lambdas(modelos.now, m["home_team_id"], m["away_team_id"], m.get("referee"))
         if lam is None:
             continue
         for lado, linea in lineas:
-            pr = em.prob_total(lam[0] + lam[1], em.PARAMETROS[mercado]["phi"], linea)[lado]
+            pr = em.prob(mercado, lam, lado, linea)
             out.append(ap.Candidato(mercado, lado, linea, pr))
     return out
 
@@ -381,6 +382,10 @@ MARGEN_SIN_ESTADISTICAS = timedelta(hours=72)
 
 def total_estadistico(market: str, r: dict) -> int | None:
     """Córners, o tarjetas = amarillas + rojas, una por tarjeta (db/046)."""
+    if market == "corners_home":
+        return None if r["home_corners"] is None else int(r["home_corners"])
+    if market == "corners_away":
+        return None if r["away_corners"] is None else int(r["away_corners"])
     if market == "corners":
         vals = (r["home_corners"], r["away_corners"])
     else:
@@ -396,7 +401,7 @@ def resultado(r: dict, now: datetime) -> tuple | None:
     if r["status"] == "postponed":
         return ("void", None, None, None) if r["kickoff_utc"] < now - MARGEN_APLAZADO else None
     hg, ag = int(r["home_goals"]), int(r["away_goals"])
-    if r["market"] in ("corners", "cards"):
+    if r["market"] in es.ESTADISTICOS:
         total = total_estadistico(r["market"], r)
         if total is None:
             if r["kickoff_utc"] < now - MARGEN_SIN_ESTADISTICAS:
@@ -440,8 +445,8 @@ def settle_pending(now: datetime | None = None) -> dict:
 def texto(market: str, selection: str, line, local: str, visitante: str) -> str:
     if market == "spreads":
         return es.texto_handicap(selection, float(line), local, visitante)
-    if market in ("corners", "cards"):
-        return es.texto_total(market, selection, float(line))
+    if market in es.ESTADISTICOS:
+        return es.texto_total(market, selection, float(line), local, visitante)
     if market == "btts":
         return es.texto_btts(selection)
     return ap.texto(market, selection, line, local, visitante)

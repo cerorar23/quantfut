@@ -82,7 +82,9 @@ LINEAS_GOLES: tuple[tuple[str, float], ...] = (
 # línea exige repetir la prueba.
 LINEAS_HANDICAP: tuple[float, ...] = (-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0)
 MERCADOS = ("h2h", "totals", "team_totals_home", "team_totals_away", "spreads",
-            "btts", "corners", "cards")
+            "btts", "corners", "cards", "corners_home", "corners_away")
+# Mercados del modelo estadístico (se liquidan con la estadística del partido).
+ESTADISTICOS = ("corners", "cards", "corners_home", "corners_away")
 # Ambos anotan desde el ajuste de goles de Pinnacle. Prueba histórica del
 # 2026-10-08 (eval/escalera_estadistica.py --goles, firma d5cbc3151164,
 # criterio de alta probabilidad): "sí" pasa (n=1.220, 62,82 % prometido,
@@ -285,8 +287,11 @@ def resumen(retos: list[dict]) -> dict:
             "roi": round(float(ganancia / invertido) * 100, 1)}
 
 
-def texto_total(market: str, selection: str, line: float) -> str:
-    cosa = {"corners": "córners", "cards": "tarjetas"}[market]
+def texto_total(market: str, selection: str, line: float,
+                local: str = "", visitante: str = "") -> str:
+    cosa = {"corners": "córners", "cards": "tarjetas",
+            "corners_home": f"córners de {local}",
+            "corners_away": f"córners de {visitante}"}[market]
     return f"{'Más' if selection == 'over' else 'Menos'} de {f'{line:g}'.replace('.', ',')} {cosa}"
 
 

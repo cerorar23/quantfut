@@ -148,13 +148,37 @@ def prob_total(media: float, phi: float, linea: float) -> dict[str, float]:
 # −1,9 puntos). Tarjetas (amarillas + rojas): prometen de 1 a 3 puntos de más
 # en casi todas las líneas (sin árbitro fuera de la Premier); solo pasa menos
 # de 6,5. Cambiar parámetros o líneas exige repetir la prueba.
+#
+# Ampliación 2026-10-09 (pedido del usuario; `--fijos`, mismos parámetros):
+# más de 6,5 córners pasa (83,36→84,47). Córners de CADA equipo, del mismo
+# acumulador y con su propio φ (1,5455, con 2019-21): calibración irregular,
+# pasan local más de 1,5 (93,60→93,30), 4,5 (63,92→70,68), 5,5 (n=25) y menos
+# de 5,5 (62,88→70,85); visitante más de 3,5 (63,72→69,88), 4,5 (n=7), menos de
+# 4,5 (62,51→74,64) y 7,5 (87,43→88,07). No pasan (tramo 60-70 o 70-80 por
+# debajo): local más de 2,5 y 3,5, menos de 6,5 y 7,5; visitante más de 1,5 y
+# 2,5, menos de 5,5 y 6,5.
 PARAMETROS = {"corners": {"prior": 120.0, "media_vida": 365.0, "phi": 1.175},
-              "cards": {"prior": 50.0, "media_vida": 180.0, "phi": 1.0956}}
+              "cards": {"prior": 50.0, "media_vida": 180.0, "phi": 1.0956},
+              "corners_equipo": {"phi": 1.5455}}
 LINEAS_HABILITADAS: dict[str, tuple[tuple[str, float], ...]] = {
-    "corners": (("over", 7.5), ("over", 8.5), ("over", 9.5),
+    "corners": (("over", 6.5), ("over", 7.5), ("over", 8.5), ("over", 9.5),
                 ("under", 9.5), ("under", 10.5), ("under", 11.5)),
     "cards": (("under", 6.5),),
+    "corners_home": (("over", 1.5), ("over", 4.5), ("over", 5.5), ("under", 5.5)),
+    "corners_away": (("over", 3.5), ("over", 4.5), ("under", 4.5), ("under", 7.5)),
 }
+# De qué acumulador sale cada mercado.
+FUENTE = {"corners": "corners", "cards": "cards",
+          "corners_home": "corners", "corners_away": "corners"}
+
+
+def prob(mercado: str, lam: tuple[float, float], lado: str, linea: float) -> float:
+    """Probabilidad de `lado` en `linea` desde las lambdas (local, visitante)."""
+    if mercado == "corners_home":
+        return prob_total(lam[0], PARAMETROS["corners_equipo"]["phi"], linea)[lado]
+    if mercado == "corners_away":
+        return prob_total(lam[1], PARAMETROS["corners_equipo"]["phi"], linea)[lado]
+    return prob_total(lam[0] + lam[1], PARAMETROS[mercado]["phi"], linea)[lado]
 
 
 def acumulador(mercado: str) -> Acumulador:

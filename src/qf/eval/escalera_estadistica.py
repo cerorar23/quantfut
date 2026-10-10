@@ -21,8 +21,14 @@ mercado, línea y lado:
   (a) en cada tramo con n ≥ MIN_N_TRAMO, real ≥ prometido − 2·SE, y
   (b) en conjunto, real − prometido ≥ −MAX_DEFICIT_PTS puntos.
 
-Uso: python -m qf.eval.escalera_estadistica [--goles] [--out ...]
-(--goles añade ambos anotan y goles: ~40 min por el ajuste de cada partido).
+CÓRNERS DE CADA EQUIPO y "más de 6,5" (2026-10-09, pedido del usuario): el
+mismo acumulador da los córners esperados de cada lado; su φ se estima aparte
+con 2019-21 (la dispersión de un equipo no es la del total). Se evalúan con
+los tramos de la escalera y con los de alta probabilidad (80-95 %).
+
+Uso: python -m qf.eval.escalera_estadistica [--goles] [--fijos] [--out ...]
+(--goles añade ambos anotan y goles: ~40 min por el ajuste de cada partido;
+--fijos usa `em.PARAMETROS` en vez de volver a elegirlos).
 """
 from __future__ import annotations
 
@@ -45,10 +51,12 @@ TEMPORADAS_PHI = ("1920", "2021")
 TEMPORADA_AJUSTE = ("2122",)
 REJILLA = [(prior, vida) for prior in (6.0, 12.0, 20.0, 30.0, 50.0, 80.0, 120.0, 200.0)
            for vida in (180.0, 365.0)]
-LINEAS = {"corners": (7.5, 8.5, 9.5, 10.5, 11.5, 12.5),
+LINEAS = {"corners": (6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5),
           "cards": (1.5, 2.5, 3.5, 4.5, 5.5, 6.5)}
 COLUMNAS = {"corners": ("HC", "AC"), "cards": None}
 TRAMOS = ((0.60, 0.70), (0.70, 0.80), (0.80, 0.90), (0.90, 0.97))
+TRAMOS_ALTA = ((0.80, 0.85), (0.85, 0.90), (0.90, 0.95 + 1e-9))
+LINEAS_EQUIPO = (1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5)
 MIN_N_TRAMO = apc.MIN_N_TRAMO
 MAX_DEFICIT_PTS = apc.MAX_DEFICIT_PTS
 
@@ -90,7 +98,8 @@ def medias(raw: pd.DataFrame, prior: float = em.PRIOR_PARTIDOS,
                 if lam is not None:
                     out.append({"div": div, "temporada": d["temporada"], "mercado": mercado,
                                 "media": lam[0] + lam[1], "total": c[0] + c[1],
-                                "arbitro": arb is not None})
+                                "arbitro": arb is not None,
+                                "lam_l": lam[0], "lam_v": lam[1], "c_l": c[0], "c_v": c[1]})
                 a.agregar(d["fecha"], d["HomeTeam"], d["AwayTeam"], c[0], c[1], arb)
     return pd.DataFrame(out)
 
@@ -100,6 +109,30 @@ def phi(m: pd.DataFrame) -> dict[str, float]:
     f = m[m["temporada"].isin(TEMPORADAS_PHI)]
     return {k: round(float(((g["total"] - g["media"]) ** 2).sum() / g["media"].sum()), 4)
             for k, g in f.groupby("mercado")}
+
+
+def phi_equipo(m: pd.DataFrame) -> float:
+    """φ de los córners de UN equipo, con los dos lados, en las temporadas de φ."""
+    f = m[m["temporada"].isin(TEMPORADAS_PHI) & (m["mercado"] == "corners")]
+    y = pd.concat([f["c_l"], f["c_v"]]).to_numpy(float)
+    mu = pd.concat([f["lam_l"], f["lam_v"]]).to_numpy(float)
+    return round(float(((y - mu) ** 2).sum() / mu.sum()), 4)
+
+
+def filas_equipo(m: pd.DataFrame, phi_e: float, tramos=TRAMOS) -> pd.DataFrame:
+    """Córners de cada equipo ("corners_home over 3.5"), solo temporadas de prueba."""
+    f = m[~m["temporada"].isin(TEMPORADAS_PHI + TEMPORADA_AJUSTE) & (m["mercado"] == "corners")]
+    out = []
+    for r in f.to_dict("records"):
+        for lado, lam, real in (("home", r["lam_l"], r["c_l"]), ("away", r["lam_v"], r["c_v"])):
+            for linea in LINEAS_EQUIPO:
+                pr = em.prob_total(lam, phi_e, linea)
+                for sel in ("over", "under"):
+                    p = pr[sel]
+                    if tramos[0][0] <= p < tramos[-1][1]:
+                        won = real > linea if sel == "over" else real < linea
+                        out.append({"grupo": f"corners_{lado} {sel} {linea:g}", "prob": p, "won": won})
+    return pd.DataFrame(out)
 
 
 def perdida(m: pd.DataFrame, phis: dict[str, float], mercado: str) -> float:
@@ -129,7 +162,7 @@ def elegir_parametros(raw: pd.DataFrame) -> dict[str, dict]:
     return elegidos
 
 
-def filas(m: pd.DataFrame, phis: dict[str, float]) -> pd.DataFrame:
+def filas(m: pd.DataFrame, phis: dict[str, float], tramos=TRAMOS) -> pd.DataFrame:
     f = m[~m["temporada"].isin(TEMPORADAS_PHI + TEMPORADA_AJUSTE)]
     out = []
     for r in f.to_dict("records"):
@@ -137,7 +170,7 @@ def filas(m: pd.DataFrame, phis: dict[str, float]) -> pd.DataFrame:
             pr = em.prob_total(r["media"], phis[r["mercado"]], linea)
             for lado in ("over", "under"):
                 p = pr[lado]
-                if TRAMOS[0][0] <= p < TRAMOS[-1][1]:
+                if tramos[0][0] <= p < tramos[-1][1]:
                     won = r["total"] > linea if lado == "over" else r["total"] < linea
                     out.append({"grupo": f"{r['mercado']} {lado} {linea:g}", "prob": p, "won": won})
     return pd.DataFrame(out)
@@ -167,11 +200,11 @@ def filas_goles(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
     return pd.DataFrame(out)
 
 
-def evaluar(f: pd.DataFrame) -> dict[str, dict]:
+def evaluar(f: pd.DataFrame, tramos_eval=TRAMOS) -> dict[str, dict]:
     res = {}
     for nombre, g in f.groupby("grupo"):
         tramos, ok = [], True
-        for lo, hi in TRAMOS:
+        for lo, hi in tramos_eval:
             t = g[(g["prob"] >= lo) & (g["prob"] < hi)]
             if t.empty:
                 continue
@@ -192,11 +225,12 @@ def evaluar(f: pd.DataFrame) -> dict[str, dict]:
 
 
 def run(goles: bool = False, rho: float = apc.RHO_POR_DEFECTO,
-        cache_dir: Path = Path(".local/fd_cache")) -> dict:
+        cache_dir: Path = Path(".local/fd_cache"), fijos: bool = False) -> dict:
     raw, dataset = sv.load_csvs(apc.LIGAS, sv.DEFAULT_SEASONS, cache_dir)
     raw = raw.copy()
     raw["temporada"] = raw["season"] if "season" in raw.columns else raw.get("Season")
-    params = elegir_parametros(raw)
+    params = ({k: dict(v) for k, v in em.PARAMETROS.items()} if fijos
+              else elegir_parametros(raw))
     filas_test = []
     for mercado, pm in params.items():
         m = medias(raw, pm["prior"], pm["media_vida"])
@@ -205,7 +239,18 @@ def run(goles: bool = False, rho: float = apc.RHO_POR_DEFECTO,
     phis = {k: v["phi"] for k, v in params.items()}
     if goles:
         res.update(evaluar(filas_goles(raw, rho)))
+    # Córners de cada equipo y la misma prueba en el rango de alta probabilidad.
+    mc = medias(raw, params["corners"]["prior"], params["corners"]["media_vida"])
+    phi_e = phi_equipo(mc)
+    res.update(evaluar(filas_equipo(mc, phi_e)))
+    alta = evaluar(pd.concat([filas(mc[mc["mercado"] == "corners"],
+                                    {"corners": params["corners"]["phi"]}, TRAMOS_ALTA),
+                              filas_equipo(mc, phi_e, TRAMOS_ALTA)], ignore_index=True),
+                   TRAMOS_ALTA)
     return {"dataset_sha256": dataset["sha256"], "phi": phis, "parametros": params,
+            "phi_corners_equipo": phi_e,
+            "alta_probabilidad": alta,
+            "alta_que_pasan": sorted(k for k, v in alta.items() if v["pasa"]),
             "partidos_con_media": {k: int(v) for k, v in m["mercado"].value_counts().items()},
             "con_arbitro": int(m[(m["mercado"] == "cards") & m["arbitro"]].shape[0]),
             "por_grupo": res,
@@ -215,11 +260,13 @@ def run(goles: bool = False, rho: float = apc.RHO_POR_DEFECTO,
 if __name__ == "__main__":
     a = argparse.ArgumentParser(description="Prueba histórica de córners, tarjetas y ambos anotan")
     a.add_argument("--goles", action="store_true")
+    a.add_argument("--fijos", action="store_true")
     a.add_argument("--rho", type=float, default=apc.RHO_POR_DEFECTO)
     a.add_argument("--cache", type=Path, default=Path(".local/fd_cache"))
     a.add_argument("--out", type=Path)
     args = a.parse_args()
-    txt = json.dumps(run(args.goles, args.rho, args.cache), indent=2, ensure_ascii=False)
+    txt = json.dumps(run(args.goles, args.rho, args.cache, args.fijos), indent=2,
+                     ensure_ascii=False)
     if args.out:
         args.out.write_text(txt, encoding="utf-8")
     print(txt)

@@ -64,9 +64,12 @@ LINEAS_BLANDAS = (1.5, 2.5, 3.5, 4.5)
 TEAM_TOTALS = {16: ("Total - Home", "team_totals_home"),
                17: ("Total - Away", "team_totals_away")}
 BTTS = (8, "Both Teams Score")
-# Totales de córners y de tarjetas: id -> (nombre esperado, mercado).
+# Totales de córners y de tarjetas: id -> (nombre esperado, mercado). Córners
+# de cada equipo (57/58) desde el 2026-10-09; ids comprobados en /odds/bets.
 OTROS_TOTALES = {45: ("Corners Over Under", "corners"),
-                 80: ("Cards Over/Under", "cards")}
+                 80: ("Cards Over/Under", "cards"),
+                 57: ("Home Corners Over/Under", "corners_home"),
+                 58: ("Away Corners Over/Under", "corners_away")}
 
 
 def bookmaker_key(name: str) -> str:

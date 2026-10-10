@@ -162,3 +162,20 @@ def test_textos_en_la_web():
     assert ed.texto("corners", "over", 8.5, "A", "B") == "Más de 8,5 córners"
     assert ed.texto("btts", "no", None, "A", "B") == "No marcan los dos"
     assert ed.texto("h2h", "home", None, "Dortmund", "Werder") == "Gana Dortmund"
+
+
+def test_corners_de_cada_equipo_cuotas_modelo_y_liquidacion():
+    resp = [{"update": "2026-10-08T07:20:00+00:00", "fixture": {"id": 1}, "bookmakers": [
+        {"name": "Betano", "bets": [
+            {"id": 57, "name": "Home Corners Over/Under", "values": [
+                {"value": "Over 3.5", "odd": "1.30"}, {"value": "Under 3.5", "odd": "3.20"}]},
+            {"id": 58, "name": "Away Corners Over/Under", "values": [
+                {"value": "Over 2.5", "odd": "1.50"}, {"value": "Under 2.5", "odd": "2.40"}]}]}]}]
+    filas = af_odds.parse(resp, "m1", datetime(2026, 10, 8, 18, tzinfo=timezone.utc))
+    assert sorted({(r[3], r[8]) for r in filas}) == [("corners_away", 2.5), ("corners_home", 3.5)]
+    # El local con 7 córners esperados frente al visitante con 3.
+    assert em.prob("corners_home", (7.0, 3.0), "over", 3.5) > em.prob("corners_away", (7.0, 3.0), "over", 3.5)
+    ahora = datetime(2026, 10, 10, tzinfo=timezone.utc)
+    assert ed.resultado(_fila("corners_home", "over", 3.5), ahora) == ("win", 2, 1, 6)
+    assert ed.resultado(_fila("corners_away", "over", 4.5), ahora) == ("loss", 2, 1, 4)
+    assert ed.texto("corners_away", "under", 7.5, "A", "Betis") == "Menos de 7,5 córners de Betis"

@@ -910,7 +910,7 @@ function picksView() {
 
 // Línea de alta probabilidad (diseño 2026-10-05). Solo datos reales de
 // /alta-probabilidad: es una línea de acierto, no de valor, y se dice.
-const ALTA_MERCADO = { h2h: 'Ganador (1X2)', double_chance: 'Doble oportunidad', totals: 'Goles', team_totals_home: 'Marca el local', team_totals_away: 'Marca el visitante', btts: 'Ambos marcan', spreads: 'Hándicap asiático', corners: 'Córners' };
+const ALTA_MERCADO = { h2h: 'Ganador (1X2)', double_chance: 'Doble oportunidad', totals: 'Goles', team_totals_home: 'Marca el local', team_totals_away: 'Marca el visitante', btts: 'Ambos marcan', spreads: 'Hándicap asiático', corners: 'Córners', corners_home: 'Córners del local', corners_away: 'Córners del visitante' };
 function altaView() {
   const head = `<div class="view-title"><div><p class="eyebrow">PRONÓSTICOS / ALTA PROBABILIDAD</p><h1>Alta probabilidad</h1><p class="lead">Un pronóstico por partido, solo si su probabilidad real está entre el 80% y el 95%: Pinnacle sin margen o, en córners, el modelo de córners sin pasar nunca de lo que da la casa. Cada uno se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
   const source = publicData?.alta;
@@ -949,7 +949,7 @@ function escaleraSerie(serie) {
 }
 function escaleraPaso(p) {
   const estado = p.outcome === 'win' ? ['won', 'Ganado'] : p.outcome === 'loss' ? ['lost', 'Perdido'] : p.outcome === 'push' ? ['void', 'Devuelto (no cuenta)'] : p.outcome === 'void' ? ['void', 'Nulo (aplazado)'] : ['pending', 'Pendiente'];
-  return `<article class="live-pick ladder-pick ${estado[0]}"><div><span>Escalón ${realNumber(p.paso)} · ${esc(p.league_id ?? 'Liga')} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${p.market === 'corners' ? 'córners' : 'tarjetas'}` : ''}</p><small class="live-prob">Probabilidad real: ${esc(probabilityLabel(p.prob)?.text ?? 'sin dato')}</small></div><div><span>Cuota</span><strong>${realNumber(p.price, 2)}</strong><small>${esc(p.book ?? 'Casa')}</small><small class="result ${estado[0] === 'won' ? 'won' : estado[0] === 'lost' ? 'lost' : ''}">${estado[1]}</small><small>Lote ${esc(p.batch_date ?? '—')} · ${esc(String(p.chain_sha256 ?? '').slice(0, 12))}</small></div></article>`;
+  return `<article class="live-pick ladder-pick ${estado[0]}"><div><span>Escalón ${realNumber(p.paso)} · ${esc(p.league_id ?? 'Liga')} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''}</p><small class="live-prob">Probabilidad real: ${esc(probabilityLabel(p.prob)?.text ?? 'sin dato')}</small></div><div><span>Cuota</span><strong>${realNumber(p.price, 2)}</strong><small>${esc(p.book ?? 'Casa')}</small><small class="result ${estado[0] === 'won' ? 'won' : estado[0] === 'lost' ? 'lost' : ''}">${estado[1]}</small><small>Lote ${esc(p.batch_date ?? '—')} · ${esc(String(p.chain_sha256 ?? '').slice(0, 12))}</small></div></article>`;
 }
 function escaleraReto(r) {
   const objetivo = r.pasos_objetivo;

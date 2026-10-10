@@ -71,7 +71,7 @@ def temporadas_corners() -> tuple[str, ...]:
 
 
 def _nombre(c: ap.Candidato) -> str:
-    if c.market in ("totals", "corners"):
+    if c.market in ("totals", "corners", "corners_home", "corners_away"):
         return f"{c.market} {c.selection} {c.line:g}"
     if c.market == "btts":
         return f"btts {c.selection}"
@@ -90,17 +90,17 @@ def habilitado(c: ap.Candidato) -> bool:
         return c.selection in ap.BTTS_HABILITADOS
     if c.market == "spreads":
         return c.line in ap.HANDICAP_HABILITADOS
-    if c.market == "corners":
-        return (c.selection, c.line) in ap.CORNERS_HABILITADOS
+    if c.market.startswith("corners"):
+        return (c.market, c.selection, c.line) in ap.CORNERS_HABILITADOS
     return True
 
 
-def medias_corners(df: pd.DataFrame) -> dict[str, float]:
+def medias_corners(df: pd.DataFrame) -> dict[str, tuple[float, float]]:
     """
     Córners esperados de cada partido (clave `match` de `sv._prepare`), con el
     acumulador PREGUNTADO antes de añadir el partido: sin fugas.
     """
-    out: dict[str, float] = {}
+    out: dict[str, tuple[float, float]] = {}
     if not {"HC", "AC"} <= set(df.columns):
         return out
     for _, liga in df.sort_values("date").groupby("league_id"):
@@ -110,7 +110,7 @@ def medias_corners(df: pd.DataFrame) -> dict[str, float]:
                 continue
             lam = acc.lambdas(r["date"], r["HomeTeam"], r["AwayTeam"])
             if lam is not None:
-                out[r["match"]] = lam[0] + lam[1]
+                out[r["match"]] = lam
             acc.agregar(r["date"], r["HomeTeam"], r["AwayTeam"], int(r["HC"]), int(r["AC"]))
     return out
 
@@ -147,26 +147,35 @@ def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
                  + ap.candidatos_handicap(p, ajuste, ap.LINEAS_HANDICAP))
         hg, ag = int(r["FTHG"]), int(r["FTAG"])
         total_c = None
+        reales = {}
         if r["match"] in corners and r.get("season") in de_prueba:
-            media = corners[r["match"]]
+            lam = corners[r["match"]]
             total_c = int(r["HC"]) + int(r["AC"])
+            reales = {"corners": total_c, "corners_home": int(r["HC"]),
+                      "corners_away": int(r["AC"])}
             for lado in ("over", "under"):
                 for linea in ee.LINEAS["corners"]:
-                    prob = em.prob_total(media, em.PARAMETROS["corners"]["phi"], linea)[lado]
-                    cands.append(ap.Candidato("corners", lado, linea, prob))
+                    cands.append(ap.Candidato("corners", lado, linea,
+                                              em.prob("corners", lam, lado, linea)))
+                for mercado in ("corners_home", "corners_away"):
+                    for linea in ee.LINEAS_EQUIPO:
+                        cands.append(ap.Candidato(mercado, lado, linea,
+                                                  em.prob(mercado, lam, lado, linea)))
         elegido = ap.elegir([c for c in cands if habilitado(c)])
         for c in cands:
             if not ap.PROB_MIN <= c.prob <= ap.PROB_MAX:
                 continue
-            if c.market == "corners":
-                outcome = "win" if (total_c > c.line) == (c.selection == "over") else "loss"
+            if c.market in reales:
+                real = reales[c.market]
+                outcome = "win" if (real > c.line) == (c.selection == "over") else "loss"
             else:
                 outcome = _settle_outcome(c.market, c.selection, c.line, hg, ag)[0]
             if outcome not in ("win", "loss"):
                 continue            # devolución: no cuenta (probabilidad condicionada)
             out.append({"mercado": _nombre(c), "prob": c.prob, "won": outcome == "win",
                         "elegido": c == elegido, "week": r["week"],
-                        "con_corners": total_c is not None})
+                        "con_corners": total_c is not None, "match": r["match"],
+                        "prioridad": ap._PRIORIDAD[c.market]})
     return pd.DataFrame(out)
 
 

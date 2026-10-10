@@ -46,9 +46,23 @@ SQL47 = (Path(__file__).resolve().parents[1] / "db" / "047_alta_prob_ampliacion.
 
 def test_047_admite_los_mercados_y_resultados_nuevos():
     from qf.publish import alta_prob as ap
-    for mercado in ap._PRIORIDAD:                    # todo mercado que se puede elegir
+    for mercado in ("btts", "spreads", "corners"):
         assert f"'{mercado}'" in SQL47
     assert "CHECK (outcome IN ('win', 'loss', 'push', 'void'))" in SQL47
     assert "DROP CONSTRAINT IF EXISTS alta_prob_results_outcome_check" in SQL47
     assert SQL47.count("RAISE EXCEPTION") == 2
     assert SQL47.index("BEGIN;") < SQL47.index("DO $$") < SQL47.index("COMMIT;")
+
+
+SQL48 = (Path(__file__).resolve().parents[1] / "db" / "048_corners_equipo.sql").read_text(encoding="utf-8")
+
+
+def test_048_admite_todos_los_mercados_que_se_pueden_elegir():
+    from qf.publish import alta_prob as ap
+    from qf.publish import escalera as es
+    alta, escalera = SQL48.split("ALTER TABLE alta_prob_picks DROP", 1)[1], SQL48.split("ALTER TABLE alta_prob_picks DROP", 1)[0]
+    for mercado in ap._PRIORIDAD:
+        assert f"'{mercado}'" in alta.split("COMMENT ON")[0]
+    for mercado in es.MERCADOS:
+        assert f"'{mercado}'" in escalera
+    assert SQL48.count("RAISE EXCEPTION") == 2
