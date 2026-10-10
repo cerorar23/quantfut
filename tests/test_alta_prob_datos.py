@@ -721,3 +721,11 @@ def test_corners_de_un_equipo_usan_su_lambda_y_se_liquidan_con_sus_corners(monke
     assert ad.resultado(_fila_res("corners_home", "over", 2.5, hc=6, ac=None), NOW) == ("win", 6)
     assert ad.resultado(_fila_res("corners_away", "over", 2.5, hc=6, ac=None), NOW) is None
     assert ap.texto("corners_home", "over", 3.5, "Real Madrid", "B") == "Más de 3,5 córners de Real Madrid"
+
+
+@pytest.mark.parametrize("market", ["corners", "corners_home", "corners_away"])
+def test_cuota_de_referencia_de_todos_los_corners(market):
+    filas = [{"bookmaker": "betano", "market": market, "selection": "under", "line": 7.5,
+              "price": 1.08, "provider_updated_at": NOW}]
+    c = ap.Candidato(market, "under", 7.5, 0.80)
+    assert ad._ref_nuevos(c, "m1", _snap((2.0, 3.4, 3.8)), filas) == (1.08, "betano")

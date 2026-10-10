@@ -231,7 +231,7 @@ def _ref_nuevos(c: ap.Candidato, match_id: str, snap: pk.Snapshot, filas_af: lis
                 ) -> tuple[float | None, str | None]:
     """Cuota de referencia de ambos marcan, hándicap y córners."""
     from . import escalera_datos as ed
-    if c.market in ("btts", "corners"):
+    if c.market in ("btts", *CORNERS):
         price, book, _ = ed._ref_af(filas_af, c)
         return price, book
     # Hándicap: solo hay cuotas de las casas en The Odds API.
