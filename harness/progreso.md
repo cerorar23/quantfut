@@ -4435,3 +4435,20 @@ córners elegidos se pagan a 1,10-1,16. Desplegado 23:32 UTC; la API usa la
 imagen fijada en compose (`quantfut-api-menu70:20261009`), así que se
 retagueó ese nombre; respaldo `~/release-27e8a7f/`, imágenes `*:before-27e8a7f`.
 Vista previa: 61 decisiones, 29 de hándicap y 8 de córners.
+
+## 2026-10-10 — Córners de cada equipo y más de 6,5 (commits 3ce62c4 y 583d432)
+
+Pedido del usuario a partir de un texto de "mercados de más del 70 %". De ese
+texto casi todo ya estaba publicado; lo nuevo eran más de 6,5 córners y los
+córners del favorito. Se miden con el mismo acumulador y un φ propio por
+equipo (1,5455): el modelo por equipo calibra peor que el de totales (varias
+líneas fallan en 60-80 %), así que solo entran las líneas que pasan, por
+separado en la escalera y en alta probabilidad. "El favorito saca más de 3,5"
+pasa en alta probabilidad para el local, no en la escalera. Cuotas: bets 57/58
+de la misma respuesta de API-Football (ids comprobados con 1 consulta a
+/odds/bets). Desplegado 00:52 UTC (db/048); la primera captura (01:20) trajo
+~8.700 filas de 194 partidos. Fallo encontrado en la vista previa: los
+córners por equipo salían sin cuota de referencia (`_ref_nuevos` solo miraba
+'corners'); corregido y redesplegado 01:27 (583d432). Vista previa: 81
+pronósticos de alta probabilidad, 22 de córners; la escalera sigue eligiendo
+sobre todo goles.
