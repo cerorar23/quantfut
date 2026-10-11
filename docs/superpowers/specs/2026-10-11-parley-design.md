@@ -69,9 +69,9 @@ marcan, hándicap asiático, córners totales y por equipo y tarjetas, con:
   prueba histórica), recortadas a la probabilidad del mercado (`prudente`);
 - la mejor cuota de las casas de la lista (`settings.soft_books`) y su hora.
 
-Se añade la doble oportunidad cuando haya cuota de la lista para ella
-(`alta_prob.candidatos_doble` + `alta_prob_datos._ref`); si no hay cuota, no
-entra. Cuotas de más de 6 h (`MAX_EDAD_PRECIO`) no entran.
+La doble oportunidad NO entra: ningún proveedor capturado la cotiza
+(`alta_prob_datos._ref` lo documenta) y sin cuota no hay parlay que tomar.
+Cuotas de más de 6 h (`MAX_EDAD_PRECIO`) no entran.
 
 Filtros por pata:
 
@@ -89,9 +89,12 @@ Por cada escalón, en orden ascendente:
 - Problema: elegir como mucho una pata por partido, entre **2 y 6 patas**,
   con `lo <= Π cuota < hi`, maximizando `Π p`.
 - Resolución: mochila de elección múltiple sobre `ln(cuota)`. Estado
-  `dp[k][b]` = máxima `Σ ln p` con `k` patas y `Σ ln cuota` en el cubo `b`
-  (ancho 0,001 en ln, ~1.610 cubos hasta ln 5). Se recorre partido a partido;
-  cada partido aporta "ninguna pata" o una de sus patas.
+  `(k, b)` = las 2 mejores `Σ ln p` con `k` patas y `Σ ln cuota` en el cubo
+  `b` (ancho 0,002 en ln, ~805 cubos hasta ln 5), guardando la suma EXACTA de
+  cada una. Se recorre partido a partido; cada partido aporta "ninguna pata" o
+  una de sus patas no dominadas (se quita la que tiene otra del mismo partido
+  con probabilidad y cuota mayores o iguales). Es exacta salvo combinaciones
+  a menos de 0,2 % de cuota de un borde del escalón.
 - Reconstrucción: entre los estados con `k ≥ 2` cuyo cubo cae en el rango, se
   toman en orden de probabilidad y se **verifica la cuota exacta**; el primero
   que cumple gana. Así el redondeo del cubo nunca saca un parlay fuera de rango.
@@ -114,10 +117,10 @@ Migración `db/053_parley.sql`:
 - `parley_patas`: `pata_id uuid`, `ticket_id` → tickets, `match_id` →
   matches, `market`, `selection`, `line`, `prob`, `fair_price`, `price`,
   `book`, `odds_source`, `odds_as_of`. Único `(ticket_id, match_id)`. Mismo
-  `CHECK` de mercados que `escalera_pasos` más `double_chance`.
+  `CHECK` de mercados que `escalera.MERCADOS`.
 - `parley_resultados_pata` y `parley_resultados`: resultado de cada pata
-  (`outcome`, fracciones ganada/devuelta) y del ticket (`outcome`,
-  `factor_pago`, `settled_at`).
+  (`outcome`, marcador, valor estadístico) y del ticket (`outcome`,
+  `factor_pago`, `prob_efectiva`, `settled_at`).
 - Triggers `deny_mutation()` en tickets, patas y resultados (inmutables, como
   `alta_prob_picks`).
 
@@ -137,18 +140,20 @@ Migración `db/053_parley.sql`:
 
 Enganche en `clv.settle_pending()` (ya se dispara con cada resultado).
 
-- Cada pata se liquida con la lógica existente: `escalera_datos.resultado`
-  para córners/tarjetas/goles por equipo y `clv._settle_outcome` para el resto
-  (incluye cuartos de hándicap).
-- Factor de la pata: ganada = cuota; perdida = 0; nula/devuelta = 1;
-  medio ganada = (cuota + 1) / 2; medio perdida = 0,5.
+- Cada pata se liquida con `escalera_datos.resultado` (córners, tarjetas,
+  goles, hándicap): `win`, `loss`, `push` (hándicap entero devuelto) o `void`.
+  Las líneas de hándicap validadas son enteras o medias: no hay medias
+  ganadas ni perdidas.
+- Factor de la pata: ganada = cuota; perdida = 0; push o nula = 1.
 - Partido aplazado más de 48 h desde su hora original: pata nula
   (`MARGEN_APLAZADO`, como la escalera).
 - Ticket: se liquida cuando todas sus patas lo están. `factor_pago = Π
-  factores`. `outcome`: `ganado` si ninguna pata perdió (ni entera ni media) y
-  alguna se ganó; `perdido` si alguna pata perdió entera; `parcial` si solo
-  hubo medias pérdidas; `nulo` si todas fueron nulas.
-- **Acierto** (para comparar con lo prometido) = `outcome = ganado`.
+  factores`. `outcome`: `perdido` si alguna pata perdió; `ganado` si ninguna
+  perdió y alguna se ganó; `nulo` si todas fueron push o nulas.
+- **Acierto** (para comparar con lo prometido) = `outcome = ganado`, frente a
+  la probabilidad EFECTIVA: producto de las patas que contaron (ganadas o
+  perdidas). Una pata nula no puede hacer parecer peor el escalón. Los tickets
+  nulos no cuentan.
 
 ## API
 
@@ -190,8 +195,8 @@ debajo de la muestra: "muestra insuficiente".
   determinista; escalón sin solución se salta.
 - Sin fuga: ninguna pata con `odds_as_of` posterior a `decided_at` ni partido
   empezado.
-- Liquidación: ganado, perdido, nulo, aplazado, cuartos de hándicap (medio
-  ganado / medio perdido) y factor de pago.
+- Liquidación: ganado, perdido, nulo, aplazado, push de hándicap, factor de
+  pago y probabilidad efectiva.
 - Triggers: UPDATE y DELETE rechazados en las cuatro tablas.
 - Lote: los tickets entran en `_collect` solo desde `LOTE_PARLEY_DESDE`.
 - Frontend: render de hoy, historial vacío y error de consulta
