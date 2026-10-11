@@ -26,6 +26,7 @@ from ..model.dixon_coles import DixonColes
 from ..model.devig import consensus_devig
 from . import alta_prob_datos
 from . import escalera_datos
+from . import parley_datos
 from . import picks as pk
 from . import telegram as tg
 from .hashchain import seal
@@ -514,13 +515,16 @@ def _alta() -> dict:
     return out
 
 
-def _alerta_sin_sellar(alta: dict, receipt: dict, escalera: dict | None = None) -> None:
+def _alerta_sin_sellar(alta: dict, receipt: dict, escalera: dict | None = None,
+                       parley: dict | None = None) -> None:
     if not receipt and alta.get("elegidos"):
         tg.alert(f"{alta['elegidos']} pronósticos de alta probabilidad SIN SELLAR: "
                  "no se mostrarán nunca.")
     if not receipt and (escalera or {}).get("paso"):
         tg.alert("Escalón de la escalera SIN SELLAR: no se mostrará nunca y el reto "
                  "seguirá esperando su resultado.")
+    if not receipt and (parley or {}).get("tickets"):
+        tg.alert(f"{len(parley['tickets'])} parlays SIN SELLAR: no se mostrarán nunca.")
 
 
 def _escalera() -> dict:
@@ -532,6 +536,18 @@ def _escalera() -> dict:
     except Exception as exc:  # noqa: BLE001
         log.exception("Fallo en el reto escalera")
         tg.alert(f"Fallo en el reto escalera: {exc}")
+        return {"estado": "error", "error": str(exc)}
+
+
+def _parley() -> dict:
+    """Parley del día: se elige ANTES de sellar. Nunca rompe el job."""
+    if not settings.parley_enabled:
+        return {"estado": "desactivado"}
+    try:
+        return parley_datos.select_and_persist()
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Fallo en el parley del día")
+        tg.alert(f"Fallo en el parley del día: {exc}")
         return {"estado": "error", "error": str(exc)}
 
 
@@ -559,8 +575,9 @@ def run() -> dict:
         # puerta: también debe aprobar la muestra en sombra del criterio.
         alta = _alta()
         escalera = _escalera()
+        parley = _parley()
         receipt = seal()
-        _alerta_sin_sellar(alta, receipt, escalera)
+        _alerta_sin_sellar(alta, receipt, escalera, parley)
         if not receipt:
             tg.alert("FALLO AL SELLAR LA CADENA (predicciones sin picks).")
         if settings.publish_picks_enabled:
@@ -572,6 +589,7 @@ def run() -> dict:
                   "gate_reasons": gate_reasons,
                   "alta_prob": alta,
                   "escalera": escalera,
+                  "parley": parley,
                   "sealed": bool(receipt),
                   "chain": receipt["chain_sha256"][:16] if receipt else None}
         log.info("Job diario sin picks: %s", result)
@@ -587,12 +605,13 @@ def run() -> dict:
 
     alta = _alta()
     escalera = _escalera()
+    parley = _parley()
     receipt = seal()
-    _alerta_sin_sellar(alta, receipt, escalera)
+    _alerta_sin_sellar(alta, receipt, escalera, parley)
     if not receipt:
         tg.alert("FALLO AL SELLAR LA CADENA. No se publicó nada hoy.")
         return {"predictions": len(preds), "picks": len(selected), "sealed": False,
-                "alta_prob": alta}
+                "alta_prob": alta, "parley": parley}
 
     # Telegram es opcional (best-effort): si no hay TG_BOT_TOKEN configurado,
     # _send() lo omite en silencio. La API (picks.tier, ya asignado arriba)
@@ -607,6 +626,7 @@ def run() -> dict:
     result = {"predictions": len(preds),
               "picks": len(selected), "free": n_free, "paid": len(selected) - n_free,
               "chain": receipt["chain_sha256"][:16], "alta_prob": alta, "escalera": escalera,
+              "parley": parley,
               **published}
     log.info("Job diario: %s", result)
     return result

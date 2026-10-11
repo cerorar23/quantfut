@@ -154,6 +154,23 @@ def _collect(batch_date: date) -> dict:
            ORDER BY decided_at, paso_id""",
         (batch_date,),
     ) if con_escalera else []
+    con_parley = lote_lleva_parley(batch_date)
+    parley_tickets = query(
+        """SELECT ticket_id, dia, escalon, cuota_total, prob_total, n_patas, decided_at
+           FROM parley_tickets
+           WHERE (decided_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY decided_at, ticket_id""",
+        (batch_date,),
+    ) if con_parley else []
+    parley_patas = query(
+        """SELECT p.pata_id, p.ticket_id, p.match_id, p.market, p.selection, p.line, p.prob,
+                  p.fair_price, p.price, p.book, p.odds_source, p.odds_as_of
+           FROM parley_patas p
+           JOIN parley_tickets t ON t.ticket_id = p.ticket_id
+           WHERE (t.decided_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY t.decided_at, p.ticket_id, p.pata_id""",
+        (batch_date,),
+    ) if con_parley else []
     payload = {
         "batch_date": batch_date.isoformat(),
         "model_version": settings.model_version,
@@ -169,6 +186,8 @@ def _collect(batch_date: date) -> dict:
         payload["alta_probabilidad"] = alta
     if con_escalera:
         payload["escalera"] = {"retos": retos, "pasos": escalones}
+    if con_parley:
+        payload["parley"] = {"tickets": parley_tickets, "patas": parley_patas}
     return payload
 
 

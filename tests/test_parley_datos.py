@@ -155,3 +155,61 @@ def test_informe_sin_corte_no_enseña_nada(monkeypatch):
     monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", None)
     assert pd_.informe_publico()["dias"] == []
     assert all("AND FALSE" in s for s in sqls)
+
+
+# --- Enganches: lote, job diario, liquidación --------------------------------
+
+def test_el_lote_solo_lleva_el_parley_desde_su_fecha(monkeypatch):
+    llamadas = []
+    monkeypatch.setattr(hashchain, "query", lambda sql, params=(): llamadas.append(sql) or [])
+    monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", None)
+    assert "parley" not in hashchain._collect(date(2026, 10, 12))
+    assert not any("parley_tickets" in s for s in llamadas)
+    monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", date(2026, 10, 12))
+    assert "parley" not in hashchain._collect(date(2026, 10, 11))
+    assert hashchain._collect(date(2026, 10, 12))["parley"] == {"tickets": [], "patas": []}
+
+
+def test_job_diario_elige_parley_antes_de_sellar(monkeypatch):
+    from qf.publish import daily
+    orden = []
+    monkeypatch.setattr(daily, "generate_predictions", lambda: [{"match_id": "m"}])
+    monkeypatch.setattr(daily, "_sharp_only_upcoming", lambda: [])
+    monkeypatch.setattr(daily, "settings", replace(daily.settings, publish_picks_enabled=False,
+                                                    parley_enabled=True))
+    monkeypatch.setattr(daily, "_alta", lambda: orden.append("alta") or {})
+    monkeypatch.setattr(daily, "_escalera", lambda: orden.append("escalera") or {})
+    monkeypatch.setattr(daily.parley_datos, "select_and_persist",
+                        lambda: orden.append("parley") or {"tickets": [{}]})
+    monkeypatch.setattr(daily, "seal", lambda: orden.append("seal") or {"chain_sha256": "x" * 64})
+    out = daily.run()
+    assert orden == ["alta", "escalera", "parley", "seal"] and "parley" in out
+
+
+def test_fallo_del_parley_no_rompe_el_job(monkeypatch):
+    from qf.publish import daily
+    alertas = []
+    monkeypatch.setattr(daily, "settings", replace(daily.settings, parley_enabled=True))
+    monkeypatch.setattr(daily.parley_datos, "select_and_persist",
+                        lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(daily.tg, "alert", alertas.append)
+    assert daily._parley()["estado"] == "error" and "boom" in alertas[0]
+
+
+def test_parley_sin_sellar_avisa(monkeypatch):
+    from qf.publish import daily
+    alertas = []
+    monkeypatch.setattr(daily.tg, "alert", alertas.append)
+    daily._alerta_sin_sellar({}, {}, None, {"tickets": [{}, {}]})
+    assert any("parlays SIN SELLAR" in a for a in alertas)
+
+
+def test_liquidacion_general_llama_al_parley(monkeypatch):
+    from qf.eval import clv
+    from qf.model import shadow
+    from qf.publish import alta_prob_datos, escalera_datos, shadow_sharp
+    monkeypatch.setattr(clv, "query", lambda *a, **k: [])
+    for mod in (shadow, shadow_sharp, alta_prob_datos, escalera_datos):
+        monkeypatch.setattr(mod, "settle_pending", lambda *a, **k: {"settled": 0})
+    monkeypatch.setattr(pd_, "settle_pending", lambda: {"patas": 0, "tickets": 0})
+    assert clv.settle_pending()["parley"] == {"patas": 0, "tickets": 0}

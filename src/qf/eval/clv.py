@@ -257,10 +257,17 @@ def settle_pending(lookback_hours: int = 96) -> dict:
         log.warning("No se pudo liquidar el reto escalera: %s", exc)
         escalera = {"settled": 0, "error": str(exc)}
 
+    try:
+        from ..publish.parley_datos import settle_pending as settle_parley
+        parley = settle_parley()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("No se pudo liquidar el parley del día: %s", exc)
+        parley = {"patas": 0, "tickets": 0, "error": str(exc)}
+
     result = {"settled": settled,
               "avg_clv": round(float(np.mean(clvs)), 3) if clvs else None,
               "n_with_clv": len(clvs), "shadow": shadow, "sharp_shadow": sharp,
-              "alta_prob": alta, "escalera": escalera}
+              "alta_prob": alta, "escalera": escalera, "parley": parley}
     log.info("Liquidación: %s", result)
     return result
 
