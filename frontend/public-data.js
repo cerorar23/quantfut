@@ -8,6 +8,7 @@ const SOURCES = {
   chain: ['/chain?limit=20', value => value && Array.isArray(value.lotes)],
   alta: ['/alta-probabilidad', value => value && Array.isArray(value.proximos) && typeof value.historial === 'object' && typeof value.estado === 'string'],
   escalera: ['/escalera', value => value && typeof value.reglas === 'object' && Array.isArray(value.actuales) && Array.isArray(value.historial) && Array.isArray(value.serie)],
+  parley: ['/parley', value => value && typeof value.reglas === 'object' && Array.isArray(value.dias) && typeof value.resumen === 'object'],
 };
 
 export async function loadPublicData(fetcher = fetch) {

@@ -213,3 +213,13 @@ def test_liquidacion_general_llama_al_parley(monkeypatch):
         monkeypatch.setattr(mod, "settle_pending", lambda *a, **k: {"settled": 0})
     monkeypatch.setattr(pd_, "settle_pending", lambda: {"patas": 0, "tickets": 0})
     assert clv.settle_pending()["parley"] == {"patas": 0, "tickets": 0}
+
+
+def test_ruta_publica_del_parley(monkeypatch):
+    from fastapi.testclient import TestClient
+    from qf.api import main
+
+    monkeypatch.setattr(main.ratelimit, "rate_limited", lambda *_a: False)
+    monkeypatch.setattr(pd_, "informe_publico", lambda: {"dias": [], "activo": False})
+    r = TestClient(main.app).get("/parley")
+    assert r.status_code == 200 and r.json() == {"dias": [], "activo": False}

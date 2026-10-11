@@ -223,6 +223,17 @@ def alta_probabilidad():
     return alta_prob_datos.informe_publico()
 
 
+@publico.get("/parley")
+def parley():
+    """
+    Parley del día: 1 a 5 parlays sellados de cuota 1,90-5,00, el más probable
+    de cada escalón, y su historial prometido frente a real. Se elige por
+    probabilidad, no por valor.
+    """
+    from ..publish import parley_datos
+    return parley_datos.informe_publico()
+
+
 @publico.get("/calibration")
 def calibration():
     return {"runs": query(

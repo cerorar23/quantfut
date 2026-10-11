@@ -11,6 +11,7 @@ const responses = {
   '/chain?limit=20': { lotes: [] },
   '/alta-probabilidad': { estado: 'desactivada', motivos: ['Línea desactivada'], proximos: [], historial: { n: 0 } },
   '/escalera': { activo: false, reglas: { cuota_min: 1.25, cuota_max: 1.4, longitudes: [3, 4, 5, 6] }, actuales: [], historial: [], serie: [], resumen: { cerrados: 0 } },
+  '/parley': { activo: false, reglas: { escalones: [] }, control: { pausados: [], motivos: [] }, resumen: { total: { n: 0 }, por_escalon: {} }, dias: [] },
 };
 
 test('consulta solo rutas públicas y conserva los estados vacíos', async () => {
@@ -75,4 +76,12 @@ test('el reto escalera se carga de su ruta pública y un formato roto no se ense
   assert.deepEqual(data.escalera.data.reglas.longitudes, [3, 4, 5, 6]);
   const roto = await loadPublicData(async path => ({ ok: true, json: async () => (path === '/escalera' ? { reglas: {}, historial: 'x' } : responses[path]) }));
   assert.equal(roto.escalera.status, 'error');
+});
+
+test('el parley se carga de su ruta pública y un formato roto no se enseña', async () => {
+  const data = await loadPublicData(async path => ({ ok: true, json: async () => responses[path] }));
+  assert.equal(data.parley.status, 'ready');
+  assert.deepEqual(data.parley.data.dias, []);
+  const roto = await loadPublicData(async path => ({ ok: true, json: async () => (path === '/parley' ? { dias: 'x' } : responses[path]) }));
+  assert.equal(roto.parley.status, 'error');
 });

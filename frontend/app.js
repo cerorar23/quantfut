@@ -211,6 +211,7 @@ const nav = [
   { route: 'picks', label: 'Picks', short: 'Picks', icon: '◇', group: 'EXPLORAR' },
   { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: '◎', group: 'EXPLORAR' },
   { route: 'escalera', label: 'Reto escalera', short: 'Escalera', icon: '⇧', group: 'EXPLORAR' },
+  { route: 'parley', label: 'Parley del día', short: 'Parley', icon: '✚', group: 'EXPLORAR' },
   { route: 'partido', label: 'Ficha demo', short: 'Demo', icon: '◫', group: 'EXPLORAR' },
   { route: 'historial', label: 'Historial', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
   { route: 'paquetes', label: 'Paquetes de picks', short: 'Paquetes', icon: '◇', group: 'ACCESO' },
@@ -218,7 +219,7 @@ const nav = [
   { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: '◉', group: 'ACCESO' },
 ];
 const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
-const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
+const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
 const validRoute = route => Object.hasOwn(routeTitle, route);
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
@@ -932,6 +933,34 @@ function altaView() {
     <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
 }
 
+// Parley del día (2026-10-11). Solo datos reales de /parley: cada parlay se
+// sella en la cadena antes de los partidos; el historial incluye los perdidos.
+const PARLEY_ESTADO = { ganado: 'Ganado', perdido: 'Perdido', nulo: 'Nulo' };
+const PATA_ESTADO = { win: '✓', loss: '✗', push: '↺', void: '—' };
+
+function parleyPata(p) {
+  return `<div class="live-pick"><div><strong>${esc(p.texto)}</strong><small>${esc(p.local)} – ${esc(p.visitante)} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</small></div><div><strong>${realNumber(p.price, 2)}</strong><small>${realNumber(p.prob * 100, 0)}% · ${esc(p.book)} ${p.outcome ? PATA_ESTADO[p.outcome] ?? '' : ''}${p.marcador ? ` · ${esc(p.marcador)}` : ''}</small></div></div>`;
+}
+
+function parleyTicket(t) {
+  const estado = t.outcome ? PARLEY_ESTADO[t.outcome] ?? t.outcome : 'En juego';
+  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${realNumber(t.escalon)} · ${realNumber(t.n_patas)} PATAS</p><h3>${esc(estado)}</h3></div><strong class="ladder-balance">${realNumber(t.cuota_total, 2)}</strong></div><p class="ladder-meta">Probabilidad ${realNumber(t.prob_total * 100, 1)}% · 1 de cada ${realNumber(1 / t.prob_total, 1)}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><div class="live-pick-list">${t.patas.map(parleyPata).join('')}</div></article>`;
+}
+
+function parleyView() {
+  const head = `<div class="view-title"><div><p class="eyebrow">COMBINADAS / PARLEY</p><h1>Parley del día</h1><p class="lead">De 1 a 5 parlays al día, uno por escalón de cuota (≈2,0 · 2,5 · 3,0 · 4,0 · 5,0), con la combinación más probable de todos los mercados. Se elige por probabilidad, no por valor: el margen de la casa se paga en cada pata. Cada parlay se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
+  const source = publicData?.parley;
+  if (!source) return `${head}<section class="live-panel"><p>Consultando el parley del día…</p></section>`;
+  if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudo consultar el parley. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+  const { activo, dias, resumen, control } = source.data;
+  const [ultimo, ...anteriores] = dias;
+  const hoy = ultimo ? `<p class="eyebrow">${esc(String(ultimo.dia))} · lote ${esc(String(ultimo.chain_sha256 ?? '').slice(0, 12))}</p><div class="ladder-grid">${ultimo.tickets.map(parleyTicket).join('')}</div>` : `<p>${activo ? 'Hoy no hay combinación que cumpla la regla.' : 'El parley del día todavía no está activo.'}</p>`;
+  const filas = Object.entries(resumen?.por_escalon ?? {}).map(([e, b]) => `<div><span>ESCALÓN ${esc(e)}</span><strong>${realNumber(b.aciertos)} de ${realNumber(b.n)}</strong><small>prometido ${realNumber(b.prob_media, 1)}% · real ${realNumber(b.acierto_real, 1)}% · ${realNumber(b.unidades, 2)} u</small></div>`).join('');
+  const stats = `<div class="live-facts">${filas || '<div><span>HISTORIAL</span><strong>—</strong><small>Sin parlays liquidados todavía</small></div>'}</div><p class="ladder-meta">${(control?.motivos ?? []).map(esc).join(' · ')}</p>`;
+  const historial = anteriores.length ? anteriores.map(d => `<details class="live-panel"><summary>${esc(String(d.dia))} · ${d.tickets.map(t => `${realNumber(t.cuota_total, 2)} ${t.outcome ? PARLEY_ESTADO[t.outcome] ?? '' : '…'}`).join(' · ')}</summary><div class="ladder-grid">${d.tickets.map(parleyTicket).join('')}</div></details>`).join('') : '<p>El historial empieza con el primer día sellado.</p>';
+  return `${head}<section class="live-panel">${hoy}</section><section class="live-panel"><h2>Prometido frente a real</h2>${stats}</section><section><h2>Historial</h2>${historial}</section>`;
+}
+
 // Reto escalera (2026-10-08). Solo datos reales de /escalera: cada escalón
 // se sella antes del partido y el historial enseña también los retos fallidos.
 // Puede haber varios retos abiertos a la vez, de 3 a 6 escalones.
@@ -1375,7 +1404,7 @@ function closeModal() {
 // ---------------------------------------------------------------- render
 
 function render() {
-  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, escalera: escaleraView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
+  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, escalera: escaleraView, parley: parleyView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
