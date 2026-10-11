@@ -75,6 +75,15 @@ def lote_lleva_escalera(dia: date) -> bool:
     return LOTE_ESCALERA_DESDE is not None and dia >= LOTE_ESCALERA_DESDE
 
 
+# Desde esta fecha el lote lleva el parley del día (publish/parley.py). Misma
+# regla: None hasta desplegar, y luego la fecha del primer lote sin sellar.
+LOTE_PARLEY_DESDE: date | None = None
+
+
+def lote_lleva_parley(dia: date) -> bool:
+    return LOTE_PARLEY_DESDE is not None and dia >= LOTE_PARLEY_DESDE
+
+
 def lote_lleva_alta(dia: date) -> bool:
     """
     ¿El lote de `dia` lleva el bloque de alta probabilidad? Única fuente de

@@ -1,8 +1,17 @@
 """Parley del día: migración, base de datos, liquidación e informe."""
 import re
+from dataclasses import replace
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
+
 from qf.publish import escalera as es
+from qf.publish import hashchain
+from qf.publish import parley as pl
+from qf.publish import parley_datos as pd_
+from qf.publish.alta_prob import Candidato
+from qf.publish.escalera import Opcion
 
 SQL = Path(__file__).resolve().parents[1] / "db" / "053_parley.sql"
 
@@ -16,3 +25,133 @@ def test_migracion_inmutable_y_con_los_mercados_de_la_escalera():
         assert f"'{m}'" in t
     assert "double_chance" not in t
     assert "UNIQUE (dia, escalon)" in t and "UNIQUE (ticket_id, match_id)" in t
+
+
+AHORA = datetime(2026, 10, 12, 8, 0, tzinfo=timezone.utc)
+
+
+def _o(match, prob=0.7, price=1.4):
+    return Opcion(match, Candidato("totals", "over", 1.5, prob), price, "betano", "the_odds_api", AHORA)
+
+
+@pytest.fixture
+def encendido(monkeypatch):
+    monkeypatch.setattr(pd_, "settings", replace(pd_.settings, parley_enabled=True))
+    monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", date(2026, 10, 12))
+    monkeypatch.setattr(pd_.ad, "_lote_sellado", lambda dia: False)
+    monkeypatch.setattr(pd_, "_liquidados", lambda: [])
+
+
+def test_apagado_no_elige_nada(monkeypatch):
+    monkeypatch.setattr(pd_, "settings", replace(pd_.settings, parley_enabled=False))
+    monkeypatch.setattr(pd_, "candidatas", lambda now: pytest.fail("apagado no lee partidos"))
+    assert pd_.select_and_persist(AHORA)["estado"] == "desactivado"
+
+
+def test_sin_corte_de_lote_no_elige(monkeypatch, encendido):
+    monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", None)
+    assert pd_.select_and_persist(AHORA)["estado"] == "sin_corte"
+
+
+def test_no_elige_dos_veces_el_mismo_dia(monkeypatch, encendido):
+    monkeypatch.setattr(pd_, "query_one", lambda sql, params=(): {"x": 1})
+    monkeypatch.setattr(pd_, "candidatas", lambda now: pytest.fail("ya elegido: no se vuelve a buscar"))
+    assert pd_.select_and_persist(AHORA)["estado"] == "ya_elegido"
+
+
+def test_sin_partidos_no_rompe(monkeypatch, encendido):
+    monkeypatch.setattr(pd_, "query_one", lambda sql, params=(): None)
+    monkeypatch.setattr(pd_, "candidatas", lambda now: ([], 0))
+    out = pd_.select_and_persist(AHORA)
+    assert out["estado"] == "sin_combinacion" and out["tickets"] == []
+
+
+def test_elige_y_guarda_ticket_y_patas(monkeypatch, encendido):
+    escritos = []
+    def query_one(sql, params=()):
+        if "INSERT INTO parley_tickets" in sql:
+            escritos.append(("ticket", params))
+            return {"ticket_id": f"t{len(escritos)}"}
+        return None
+    monkeypatch.setattr(pd_, "query_one", query_one)
+    monkeypatch.setattr(pd_, "execute", lambda sql, params=(): escritos.append(("pata", params)) or 1)
+    # a, b: 1,40² = 1,96 (escalón 1) · c, d: 1,60² = 2,56 (escalón 2)
+    monkeypatch.setattr(pd_, "candidatas", lambda now: ([_o("a"), _o("b"), _o("c", 0.6, 1.6),
+                                                         _o("d", 0.6, 1.6)], 0))
+    out = pd_.select_and_persist(AHORA)
+    assert out["estado"] == "elegido" and [t["escalon"] for t in out["tickets"]] == [1, 2]
+    tickets = [p for k, p in escritos if k == "ticket"]
+    assert tickets[0][0] == date(2026, 10, 12) and tickets[0][1] == 1
+    assert sum(1 for k, _ in escritos if k == "pata") == 4
+
+
+def test_ensayo_no_escribe(monkeypatch):
+    monkeypatch.setattr(pd_, "_liquidados", lambda: [])
+    monkeypatch.setattr(pd_, "candidatas", lambda now: ([_o("a"), _o("b")], 1))
+    monkeypatch.setattr(pd_, "execute", lambda *a: pytest.fail("el ensayo no escribe"))
+    monkeypatch.setattr(pd_, "query_one", lambda *a: pytest.fail("el ensayo no escribe"))
+    out = pd_.select_and_persist(AHORA, dry_run=True)
+    assert out["estado"] == "elegido" and out["sin_precio"] == 1
+
+
+def _fila_pata(outcome_partido="finished", ko=AHORA, hg=2, ag=1):
+    return {"pata_id": "p1", "market": "totals", "selection": "over", "line": 1.5,
+            "status": outcome_partido, "kickoff_utc": ko, "home_goals": hg, "away_goals": ag,
+            "home_corners": None, "away_corners": None, "home_yellow": None,
+            "away_yellow": None, "home_red": None, "away_red": None}
+
+
+def test_aplazado_deja_la_pata_nula_y_liquida_el_ticket(monkeypatch):
+    ahora = AHORA + timedelta(days=3)
+    escritos = []
+    def query(sql, params=()):
+        if "r.pata_id IS NULL" in sql:
+            return [_fila_pata("postponed", AHORA, None, None)]
+        return [{"ticket_id": "t1", "price": 1.4, "prob": 0.7, "outcome": "void"},
+                {"ticket_id": "t1", "price": 1.5, "prob": 0.6, "outcome": "win"}]
+    monkeypatch.setattr(pd_, "query", query)
+    monkeypatch.setattr(pd_, "execute", lambda sql, params=(): escritos.append((sql, params)) or 1)
+    out = pd_.settle_pending(ahora)
+    assert out == {"patas": 1, "tickets": 1}
+    assert escritos[0][1][1] == "void"
+    ticket = escritos[1][1]
+    assert ticket[0] == "t1" and ticket[1] == "ganado" and abs(ticket[2] - 1.5) < 1e-6
+
+
+def test_ticket_con_pata_pendiente_no_se_liquida(monkeypatch):
+    escritos = []
+    monkeypatch.setattr(pd_, "query", lambda sql, params=(): [] if "r.pata_id IS NULL" in sql else
+                        [{"ticket_id": "t1", "price": 1.4, "prob": 0.7, "outcome": "win"},
+                         {"ticket_id": "t1", "price": 1.5, "prob": 0.6, "outcome": None}])
+    monkeypatch.setattr(pd_, "execute", lambda sql, params=(): escritos.append(sql) or 1)
+    assert pd_.settle_pending(AHORA) == {"patas": 0, "tickets": 0} and escritos == []
+
+
+def test_informe_agrupa_por_dia_y_solo_sellados(monkeypatch):
+    t = {"ticket_id": "t1", "dia": date(2026, 10, 12), "escalon": 1, "cuota_total": 1.96,
+         "prob_total": 0.49, "n_patas": 2, "decided_at": AHORA, "chain_sha256": "abc",
+         "outcome": None, "factor_pago": None, "prob_efectiva": None}
+    pata = {"ticket_id": "t1", "match_id": "m1", "market": "totals", "selection": "over",
+            "line": 1.5, "prob": 0.7, "price": 1.4, "book": "betano", "kickoff_utc": AHORA,
+            "league_id": "mx.liga_mx", "local": "Pachuca", "visitante": "Necaxa",
+            "outcome": None, "home_goals": None, "away_goals": None, "valor": None}
+    sqls = []
+    def query(sql, params=()):
+        sqls.append(sql)
+        return [t] if "FROM parley_tickets t" in sql and "parley_patas p" not in sql else [pata]
+    monkeypatch.setattr(pd_, "query", query)
+    monkeypatch.setattr(pd_, "_liquidados", lambda: [])
+    monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", date(2026, 10, 12))
+    inf = pd_.informe_publico()
+    assert inf["dias"][0]["dia"] == date(2026, 10, 12) and inf["dias"][0]["chain_sha256"] == "abc"
+    assert inf["dias"][0]["tickets"][0]["patas"][0]["texto"] == "Más de 1,5 goles"
+    assert all("prediction_batches" in s for s in sqls)
+
+
+def test_informe_sin_corte_no_enseña_nada(monkeypatch):
+    sqls = []
+    monkeypatch.setattr(pd_, "query", lambda sql, params=(): sqls.append(sql) or [])
+    monkeypatch.setattr(pd_, "_liquidados", lambda: [])
+    monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", None)
+    assert pd_.informe_publico()["dias"] == []
+    assert all("AND FALSE" in s for s in sqls)

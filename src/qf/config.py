@@ -95,6 +95,11 @@ class Settings:
     # lote, un escalón no quedaría sellado.
     escalera_enabled: bool = os.getenv("ESCALERA_ENABLED", "0") in ("1", "true", "True")
 
+    # --- Parley del día (publish/parley.py, 2026-10-11) ---
+    # Apagado hasta desplegar con LOTE_PARLEY_DESDE fijado y el visto bueno
+    # del usuario tras el ensayo en seco.
+    parley_enabled: bool = os.getenv("PARLEY_ENABLED", "0") in ("1", "true", "True")
+
     # --- Criterio "casa blanda contra precio sharp" (publish/picks.py) ---
     # Casas donde apuestan los suscriptores (decisión del usuario 2026-09-23),
     # con los nombres canónicos de picks.canonical_book. Betway y 888sport no
