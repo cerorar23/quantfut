@@ -97,7 +97,9 @@ vínculo seguro con cuentas existentes forman parte de esta integración.
   autorizados. Prueba de entrega y activación de eventos pendientes.
 - [x] Fase 4 implementada: consentimiento, Analytics, Crashlytics y rendimiento.
 - [ ] Validar Google con usuario real, entrega FCM y fallo controlado en cuenta
-  de prueba después de publicar los documentos y activar el acceso.
+  de prueba. Acceso ya activo (2026-10-12); falta que el titular inicie sesión con
+  su cuenta Google en un dispositivo (el emulador no tiene cuenta y no se
+  introducen credenciales) y pruebe un aviso FCM.
 
 Ampliación del 2026-10-12: el usuario pidió «termina los pendientes» y corrigió
 el contacto a admin@pronosticosdeportivos.pro (buzón existente); ubicación del
@@ -115,8 +117,10 @@ VPS declarada por el titular: Berlín, Alemania.
   privado con rotación acotada, separado de los registros deportivos inmutables.
   Programado en el VPS el 2026-10-12 (03:40 UTC), probado y con alerta Telegram;
   detalle en `docs/legal/OPERACION_PRIVACIDAD.md`.
-- [ ] Publicar documentos y activar el acceso Google coordinadamente; comprobar
+- [x] Publicar documentos y activar el acceso Google coordinadamente; comprobar
   Android y pruebas reales que no requieran credenciales personales del usuario.
+  Hecho 2026-10-12: servidor `FIREBASE_AUTH_ENABLED=1`, Remote Config con
+  `qf_google_auth_enabled=true` y URLs legales. Ver `harness/progreso.md`.
 - [x] Preparar clave/firma Android de distribución y comprobar APK firmado.
   Verificado el 2026-10-12; ver `apps/mobile/docs/FIRMA_ANDROID.md` (falta respaldo
   externo del almacén y Play App Signing al publicar).
@@ -736,20 +740,24 @@ Cruzadas con lo ya medido (2.D, 2.E): solo entra lo que no se ha probado.
 - [x] **HECHO (2-oct) — Chequeo de frescura del xG** (`check_xg_freshness`).
       Mira el dato, no el job. Las 13 competiciones paradas quedan
       reconocidas hasta el 1-nov-2026; desde entonces alertan cada día.
-- [ ] **Fuente de xG reciente — decidir ANTES del 1-nov-2026** (el chequeo
-      vuelve a fallar ese día). **Medido el 3-oct: el xG APORTA** (regla
+- [x] **Fuente de xG reciente — API-Football conectada el 12-oct-2026**
+      por decisión explícita del usuario. Primera pareja válida congelada,
+      timestamp real y protección temporal en entrenamiento; reconsulta diaria
+      acotada de partidos sin dato. Cobertura sostenida y nuevo entrenamiento
+      siguen pendientes; ver docs/xg_api_football_20261012.md.
+      **Antecedente, medido el 3-oct: el xG APORTA** (regla
       fijada antes: IC95 entero bajo cero y ≥ mitad de ligas). Ventana
       jul-2023→ene-2025: RPS 0,20154 con xG frente a 0,20440 solo goles,
       delta −0,00287 [−0,00376, −0,00200], 12 de 13 ligas. Es del orden de
       lo que Dixon-Coles saca a Elo y ~40% del hueco con Pinnacle. Hoy
       (xG viejo) aún aporta −0,00055 [−0,00100, −0,00018] y se irá
-      apagando con la media vida de 180 días. Siguiente paso: elegir fuente.
+      apagando con la media vida de 180 días. La elección quedó resuelta el 12-oct.
       FotMob usa xG de Opta, como FBref: medir antes la coherencia con el xG
       guardado en el solape 2024-25 (correlación y sesgo por liga).
       **3-oct: medido el xG de API-Football** (progreso): mismos valores que
       FBref (corr. 0,96-1,00) pero llega con días/semanas de retraso e
       irregular en Argentina/Liga MX. Usarlo exige revertir la regla del
-      README y CLAUDE.md: DECISIÓN DEL USUARIO pendiente.
+      README y CLAUDE.md: decisión tomada y documentos actualizados el 12-oct.
 
 ## Línea de alta probabilidad (2026-10-05, decisión del usuario)
 

@@ -5087,3 +5087,52 @@ vuelta atrás = imagen `quantfut-api-tapjoy:pre-legal-backup` en el compose y
 desde el dominio. NO se activó Google ni se registran aceptaciones: eso sigue siendo del titular.
 `REVISION_Y_PUBLICACION.md` estaba obsoleto (decía `.com` y «borrador») y se reescribió; los
 `*_BORRADOR.md` quedan como historial. Los textos legales siguen solo en español.
+
+## 2026-10-12 — xG de API-Football conectado al entrenamiento
+
+Decisión explícita del usuario: usar el xG actual de API-Football en el modelo.
+La exclusión histórica del proveedor queda revocada y documentada. La respuesta
+ya llegaba a matches.stats, pero el entrenamiento leía home_xg/away_xg vacíos.
+Se conserva la primera pareja válida con origen y recepción real, sin sobrescribir
+histórico ni revisiones posteriores. Reconsulta diaria 12:10 UTC (06:10 CDMX),
+35 días, tope 100, espera 20 h y reserva del 15% de cuota. db/061 aditiva.
+
+Punto clave: cargar xG hoy no lo vuelve disponible en una predicción antigua.
+Dixon-Coles y más-menos lo usan solo desde su captura; el replay secuencial de
+Kalman conserva goles para esta fuente hasta soportar llegadas tardías. La
+recepción original del xG previo sigue sin acreditarse. Hash de dataset/código
+incluye las nuevas entradas y protección. No se relajan puertas.
+
+Desplegado solo en worker, sobre archivos cotejados con la versión real, sin
+reiniciar servicios. Imagen quantfut-worker:latest verificada; respaldo
+quantfut-worker:xg-before-20261012 y paquete completo en
+/home/qf/quantfut/deployments/xg-api-20261012. El checkout viejo del VPS no se
+usa como base de reconstrucción. API y NBA conservados.
+
+Primera captura: 182 consultas, 149 parejas, 33 ausentes, cero errores; 13
+competiciones. Entrenamiento: 49.505 filas, 148 parejas de la nueva fuente;
+Sporting-Galatasaray se excluye por Turquía fuera del modelo, regla previa.
+Comprobado que todas se ocultan antes de su recepción y entran después.
+Modelo activo 2026.09.27-010508 intacto; no se lanzó otro entrenamiento.
+Cadena: 14 lotes OK; HTTPS config/home/model-card 200.
+
+Validación: 970 aprobadas, 22 omitidas y 2 advertencias; 79 pruebas dirigidas,
+8 escenarios PostgreSQL temporal con rollback, 117 módulos compilables.
+Las pruebas de API necesitaron sockets locales fuera del aislamiento Windows;
+la primera ejecución aislada se atascaba en socketpair, no en código del proyecto.
+Detalle y cobertura: docs/xg_api_football_20261012.md; evidencia ignorada en
+.local/xg_api_20261012/. Pendiente cobertura sostenida y próximo entrenamiento.
+
+## 2026-10-12 — Acceso con Google activado
+
+Orden del titular. Tres piezas, en este orden: (1) servidor `FIREBASE_AUTH_ENABLED=1` en
+`~/quantfut/docker-compose.yml` (copia previa en `~/backups/legal-20261012/docker-compose.pre-google.yml`);
+(2) Remote Config `qf_google_auth_enabled=true`, `qf_terms_url` y `qf_privacy_url` apuntando a
+`/legal/terminos` y `/legal/privacidad` (la app solo acepta esas dos rutas en pronosticosdeportivos.pro);
+(3) el proveedor Google ya estaba habilitado en Firebase Auth.
+Pruebas: `/app/v1/firebase/connect` con token falso pasó de 503 `firebase_deshabilitado` a 401
+`firebase_token_invalido` (el servidor verifica contra Firebase); en el emulador la app muestra la
+pantalla de acceso, el botón queda desactivado hasta aceptar y, al pulsarlo, abre el flujo de Google.
+NO probado: sesión completa con una cuenta real (el emulador no tiene cuenta y no se introducen credenciales
+de Google) ni FCM. Vuelta atrás: Remote Config `qf_google_auth_enabled=false` (apaga la pantalla al instante,
+plantilla anterior en el historial de Firebase) y/o compose con `FIREBASE_AUTH_ENABLED: '0'` + `up -d --no-deps api`.

@@ -38,12 +38,12 @@ solas: el texto público lo dice así y no promete lo contrario.
   atiende de verdad a esos mercados.
 - Condiciones de cobro, cancelación y devoluciones cuando se elija procesador.
 
-## Antes de activar Google
+## Acceso con Google
 
 - Mantener alineadas la versión de los textos y `CONSENT_VERSION`
   (`src/qf/comercial/firebase.py`); la prueba `tests/test_legal.py` lo exige.
-- No registrar aceptaciones ni activar Google (`FIREBASE_AUTH_ENABLED`,
-  `qf_google_auth_enabled`) hasta que el titular apruebe la versión.
+- Google quedó activado el 2026-10-12 por orden del titular (`FIREBASE_AUTH_ENABLED=1`
+  y `qf_google_auth_enabled=true`). Para apagarlo: ver `harness/progreso.md`.
 - Los textos legales siguen solo en español; traducirlos exige revisión jurídica.
 
 ## Fuentes primarias consultadas
