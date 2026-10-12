@@ -77,7 +77,7 @@ def lote_lleva_escalera(dia: date) -> bool:
 
 # Desde esta fecha el lote lleva el parley del día (publish/parley.py). Misma
 # regla: None hasta desplegar, y luego la fecha del primer lote sin sellar.
-LOTE_PARLEY_DESDE: date | None = None
+LOTE_PARLEY_DESDE: date | None = date(2026, 10, 12)   # primer lote sin sellar al desplegar (11-oct ya selló a las 08:00 UTC)
 
 
 def lote_lleva_parley(dia: date) -> bool:
