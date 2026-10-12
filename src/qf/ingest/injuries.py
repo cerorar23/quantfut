@@ -61,8 +61,10 @@ def pending_matches() -> list[dict]:
            FROM matches m
            JOIN teams th ON th.team_id = m.home_team_id
            JOIN teams ta ON ta.team_id = m.away_team_id
-           -- Las bajas solo alimentan al modelo: fuera las ligas "solo sharp".
+           -- Las bajas solo alimentan al modelo: fuera las ligas "solo sharp"
+           -- y las de captura reducida (db/052).
            JOIN leagues lg ON lg.league_id = m.league_id AND lg.model_enabled
+                          AND lg.captura_completa
            WHERE m.status = 'scheduled'
              AND m.external_ids ->> 'api_football' IS NOT NULL
              AND m.kickoff_utc BETWEEN now()

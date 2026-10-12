@@ -64,7 +64,8 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
     pending = query(
         """SELECT m.match_id, m.league_id, m.kickoff_utc,
                   m.external_ids ->> 'api_football' AS af_id,
-                  l.model_enabled,
+                  -- Jugadores solo con modelo y captura completa (db/052).
+                  (l.model_enabled AND l.captura_completa) AS captura_jugadores,
                   th.af_team_id AS home_af, ta.af_team_id AS away_af
            FROM matches m
            JOIN leagues l ON l.league_id = m.league_id
@@ -169,8 +170,9 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
             )
             closed += 1
             # Fuerza por jugador (db/035): una petición más, solo en ligas con
-            # modelo. Un fallo aquí no debe dejar el partido sin cerrar.
-            if row["model_enabled"]:
+            # modelo y captura completa. Un fallo aquí no debe dejar el
+            # partido sin cerrar.
+            if row["captura_jugadores"]:
                 try:
                     capturar_jugadores(row["match_id"], int(af_id),
                                        row["home_af"], row["away_af"])

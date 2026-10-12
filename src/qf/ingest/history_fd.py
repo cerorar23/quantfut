@@ -21,7 +21,14 @@ import httpx
 import pandas as pd
 
 from ..db import execute, query_one
-from ..normalize import register_alias, resolve_team, slugify
+from ..normalize import (
+    _record_unresolved,
+    clasificar_historial,
+    clear_cache,
+    register_alias,
+    resolve_team,
+    slugify,
+)
 from .estadisticas import arbitro
 
 log = logging.getLogger(__name__)
@@ -42,12 +49,22 @@ CLOSING_COLS = [
 
 
 def _fetch_csv(url: str) -> pd.DataFrame | None:
+    """
+    UTF-8 si el archivo lo es y latin-1 si no. Los CSV antiguos son latin-1,
+    pero algunos recientes vienen en UTF-8 y leídos como latin-1 daban
+    'PreuÃ\x9fen MÃ¼nster' como nombre de equipo nuevo (ensayo del 2026-10-11).
+    Ningún alias guardado tenía ese texto roto: el cambio no afecta a lo cargado.
+    """
     try:
         with httpx.Client(timeout=60, follow_redirects=True) as c:
             r = c.get(url)
             r.raise_for_status()
-        return pd.read_csv(io.BytesIO(r.content), encoding="latin-1",
-                           on_bad_lines="skip")
+        try:
+            return pd.read_csv(io.StringIO(r.content.decode("utf-8-sig")),
+                               on_bad_lines="skip")
+        except UnicodeDecodeError:
+            return pd.read_csv(io.BytesIO(r.content), encoding="latin-1",
+                               on_bad_lines="skip")
     except Exception as exc:  # noqa: BLE001
         log.warning("No se pudo descargar %s: %s", url, exc)
         return None
@@ -107,7 +124,11 @@ def season_labels_extra(season: str) -> tuple[str, str]:
 def _ensure_team(league_id: str, raw_name: str) -> int | None:
     """
     football-data.co.uk es la fuente CANÓNICA: un nombre que no reconoce es un
-    equipo nuevo legítimo y se da de alta.
+    equipo nuevo legítimo y se da de alta. Pero "no lo reconoce" se decide en
+    TODO el país, no solo en la liga que se carga (2026-10-11): al cargar
+    Segunda, el Racing o el Leeds ya existen en Primera y crearlos otra vez
+    partiría su historial. Un parecido dudoso no se crea: queda pendiente en
+    `unresolved_names` y el partido se salta (ver `normalize.clasificar_historial`).
 
     El alta se cierra con `register_alias` y no con un INSERT a mano. Da lo
     mismo para la tabla de alias, pero no para `unresolved_names`: cada nombre
@@ -119,21 +140,30 @@ def _ensure_team(league_id: str, raw_name: str) -> int | None:
     `bootstrap_aliases.py`, que ni siquiera toca la fuente football_data.
     Una alarma permanentemente en rojo es una alarma que nadie lee.
     """
-    canonical = resolve_team(raw_name, "football_data")
-    if canonical is None:
-        canonical = raw_name.strip()
-        execute(
-            """INSERT INTO teams (league_id, canonical_name) VALUES (%s, %s)
-               ON CONFLICT (league_id, canonical_name) DO NOTHING""",
-            (league_id, canonical),
-        )
+    raw = raw_name.strip()
+    c = clasificar_historial(raw, "football_data", league_id)
+    if c["decision"] == "existe":
+        if c["via"] != "alias":
+            register_alias(raw, "football_data", c["team_id"])
+        return c["team_id"]
+    if c["decision"] == "dudoso":
+        _record_unresolved(raw, "football_data", league_id, c["candidato"], c["score"])
+        return None
+
+    execute(
+        """INSERT INTO teams (league_id, canonical_name) VALUES (%s, %s)
+           ON CONFLICT (league_id, canonical_name) DO NOTHING""",
+        (league_id, raw),
+    )
     row = query_one(
         "SELECT team_id FROM teams WHERE league_id = %s AND canonical_name = %s",
-        (league_id, canonical),
+        (league_id, raw),
     )
-    if row:
-        register_alias(raw_name.strip(), "football_data", row["team_id"])
-    return row["team_id"] if row else None
+    if not row:
+        return None
+    clear_cache()
+    register_alias(raw, "football_data", row["team_id"])
+    return row["team_id"]
 
 
 def _ingest_rows(league_id: str, season: str, df, cols: dict) -> int:
@@ -361,9 +391,130 @@ def backfill(seasons: list[str] | None = None) -> dict:
     return total
 
 
+def csv_ajeno(df: pd.DataFrame, lg: dict) -> str | None:
+    """
+    Motivo si el CSV descargado NO es de esa liga, o None.
+
+    football-data responde 200 a un código inexistente redirigiendo a OTRO
+    archivo: `new/CHL.csv` sirve la Superliga china (`CHN.csv`). Sin esta
+    comprobación la Primera chilena se habría cargado con 44 clubes chinos,
+    sin un solo error. El extra trae la columna Country (con el BOM pegado al
+    nombre al leerlo en latin-1) y el principal la columna Div.
+    """
+    pais = next((c for c in df.columns if str(c).endswith("Country")), None)
+    if pais is not None:
+        vistos = set(df[pais].dropna().astype(str).str.strip())
+        if vistos and vistos != {lg["country"]}:
+            return f"Country={sorted(vistos)[:3]} y la liga es de {lg['country']}"
+    if "Div" in df.columns:
+        vistos = set(df["Div"].dropna().astype(str).str.strip())
+        if vistos and vistos != {lg["fd_code"]}:
+            return f"Div={sorted(vistos)[:3]} y el código es {lg['fd_code']}"
+    return None
+
+
+def _ligas(league_ids: list[str]) -> list[dict]:
+    from ..db import query
+
+    rows = query("SELECT league_id, fd_code, fd_extra, country FROM leagues "
+                 "WHERE league_id = ANY(%s) AND fd_code IS NOT NULL", (league_ids,))
+    faltan = set(league_ids) - {r["league_id"] for r in rows}
+    if faltan:
+        raise ValueError(f"Sin fd_code en el catálogo: {sorted(faltan)}")
+    return rows
+
+
+def _temporadas_csv(lg: dict, seasons: list[str]):
+    """(temporada, DataFrame, columnas) de cada temporada con datos."""
+    if lg["fd_extra"]:
+        df = _fetch_csv(BASE_EXTRA.format(code=lg["fd_code"]))
+        if df is None or df.empty or "Season" not in df.columns:
+            return
+        motivo = csv_ajeno(df, lg)
+        if motivo:
+            raise ValueError(f"{lg['league_id']}: el CSV {lg['fd_code']} es de otra liga ({motivo})")
+        etiquetas = df["Season"].astype(str)
+        for s in seasons:
+            sub = df[etiquetas.isin(season_labels_extra(s))]
+            if not sub.empty:
+                yield s, sub, COLS_EXTRA
+    else:
+        for s in seasons:
+            df = _fetch_csv(BASE_MAIN.format(season=s, code=lg["fd_code"]))
+            if df is None or df.empty:
+                continue
+            motivo = csv_ajeno(df, lg)
+            if motivo:
+                raise ValueError(f"{lg['league_id']} {s}: el CSV es de otra liga ({motivo})")
+            yield s, df, COLS_MAIN
+
+
+def ensayo(league_ids: list[str], seasons: list[str] | None = None) -> dict:
+    """
+    Qué haría `cargar()` con cada nombre de equipo, SIN escribir nada: cuáles
+    se reutilizan (y de qué liga son hoy), cuáles se crearían y cuáles quedan
+    dudosos. Se corre en el servidor ANTES de cargar; los dudosos se resuelven
+    a mano como alias y el ensayo se repite hasta que no quede ninguno.
+    """
+    from ..db import query
+
+    seasons = seasons or default_seasons()
+    nombres_equipo = {r["team_id"]: (r["canonical_name"], r["league_id"])
+                      for r in query("SELECT team_id, canonical_name, league_id FROM teams")}
+    out = {}
+    for lg in _ligas(league_ids):
+        vistos: dict[str, list[str]] = {}
+        filas = 0
+        for s, df, cols in _temporadas_csv(lg, seasons):
+            for _, row in df.iterrows():
+                h, a = row.get(cols["home"]), row.get(cols["away"])
+                if not isinstance(h, str) or not isinstance(a, str):
+                    continue
+                filas += 1
+                for n in (h.strip(), a.strip()):
+                    vistos.setdefault(n, [])
+                    if s not in vistos[n]:
+                        vistos[n].append(s)
+        res = {"filas": filas, "existe": [], "nuevo": [], "dudoso": []}
+        for n, temps in sorted(vistos.items()):
+            c = clasificar_historial(n, "football_data", lg["league_id"])
+            item = {"nombre": n, "temporadas": f"{temps[0]}-{temps[-1]}", "n_temp": len(temps)}
+            if c["decision"] == "existe":
+                item["equipo"], item["liga"] = nombres_equipo.get(c["team_id"], ("?", "?"))
+                item["via"] = c["via"]
+            elif c["decision"] == "dudoso":
+                item["parecido"] = [nombres_equipo.get(t, ("?", "?")) for t in c["candidatos"]]
+                item["score"] = c["score"]
+            res[c["decision"]].append(item)
+        out[lg["league_id"]] = res
+    return out
+
+
+def cargar(league_ids: list[str], seasons: list[str] | None = None) -> dict:
+    """Carga el histórico de las ligas dadas (las demás no se tocan)."""
+    seasons = seasons or default_seasons()
+    out = {}
+    for lg in _ligas(league_ids):
+        n = sum(_ingest_rows(lg["league_id"], s, df, cols)
+                for s, df, cols in _temporadas_csv(lg, seasons))
+        log.info("%s: %d partidos", lg["league_id"], n)
+        out[lg["league_id"]] = n
+    return out
+
+
 if __name__ == "__main__":
+    import json
     import sys
 
     logging.basicConfig(level=logging.INFO)
     # `tarjetas`: solo rellena amarillas, árbitro y córners de lo ya cargado.
-    print(completar_tarjetas() if sys.argv[1:] == ["tarjetas"] else backfill())
+    # `ensayo <ligas>`: qué se reutiliza, crea o queda dudoso, sin escribir.
+    # `cargar <ligas>`: carga solo esas ligas.
+    if sys.argv[1:] == ["tarjetas"]:
+        print(completar_tarjetas())
+    elif sys.argv[1:2] == ["ensayo"]:
+        print(json.dumps(ensayo(sys.argv[2:]), ensure_ascii=False, indent=1))
+    elif sys.argv[1:2] == ["cargar"]:
+        print(cargar(sys.argv[2:]))
+    else:
+        print(backfill())

@@ -102,9 +102,9 @@ def test_al_cerrar_se_capturan_solo_ligas_con_modelo(monkeypatch):
     ko = datetime.now(timezone.utc) - timedelta(hours=3)
     pendientes = [
         {"match_id": "con", "league_id": "es.laliga", "kickoff_utc": ko, "af_id": "10",
-         "model_enabled": True, "home_af": 538, "away_af": 542},
+         "captura_jugadores": True, "home_af": 538, "away_af": 542},
         {"match_id": "sin", "league_id": "cl.primera", "kickoff_utc": ko, "af_id": "11",
-         "model_enabled": False, "home_af": 1, "away_af": 2}]
+         "captura_jugadores": False, "home_af": 1, "away_af": 2}]
 
     def fx(fid):
         return {"fixture": {"id": fid, "status": {"short": "FT"}},

@@ -61,8 +61,10 @@ def pending_matches() -> list[dict]:
                   m.external_ids ->> 'api_football' AS af_id,
                   EXTRACT(EPOCH FROM (m.kickoff_utc - now())) / 60 AS mins_to_ko
            FROM matches m
-           -- El XI solo lo usa el modelo: nada de cuota en ligas "solo sharp".
+           -- El XI solo lo usa el modelo: nada de cuota en ligas "solo sharp"
+           -- ni en las de captura reducida (db/052).
            JOIN leagues lg ON lg.league_id = m.league_id AND lg.model_enabled
+                          AND lg.captura_completa
            WHERE m.status = 'scheduled'
              AND m.external_ids ->> 'api_football' IS NOT NULL
              AND m.kickoff_utc BETWEEN now() + make_interval(mins => %s)

@@ -231,10 +231,16 @@ def check_xg_freshness(now: datetime | None = None) -> tuple[bool, str]:
            JOIN leagues l ON l.league_id = m.league_id AND l.model_enabled
            GROUP BY m.league_id"""
     )
+    # Una liga que nunca tuvo xG y no tiene fuente no se ha "parado": no hay
+    # nada que vigilar (las 10 activadas el 2026-10-11 se entrenan con goles).
+    from .xg_worldfootball import ASSETS, RDS_ASSETS
+    con_fuente = set(ASSETS) | set(RDS_ASSETS) | XG_PARADO_CONOCIDO
     parados = []
     for r in rows:
         jugado, xg = r["ult_jugado"], r["ult_xg"]
         if jugado is None or (now - jugado).days > XG_RECENT_DAYS:
+            continue
+        if xg is None and r["league_id"] not in con_fuente:
             continue
         if xg is None or (jugado - xg).days > XG_MAX_GAP_DAYS:
             parados.append(r["league_id"])

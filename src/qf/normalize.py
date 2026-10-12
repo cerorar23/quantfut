@@ -157,11 +157,71 @@ def _match_sibling(raw: str, league_id: str) -> tuple[int | None, str | None, fl
     return None, best[0], float(best[1])
 
 
+@lru_cache(maxsize=32)
+def _pais_teams(league_id: str) -> dict[str, set[int]]:
+    """
+    Como `_sibling_teams` pero INCLUYENDO la propia liga: todos los equipos de
+    las ligas domésticas del país, por nombre canónico y por cualquier alias de
+    cualquier fuente.
+    """
+    rows = query(
+        """WITH pais AS (
+               SELECT l.league_id FROM leagues l JOIN leagues me ON me.league_id = %s
+               WHERE l.country = me.country AND NOT l.cross_league)
+           SELECT t.team_id, t.canonical_name AS name
+           FROM teams t JOIN pais USING (league_id)
+           UNION
+           SELECT a.team_id, a.alias
+           FROM team_aliases a JOIN teams t ON t.team_id = a.team_id
+           JOIN pais p ON p.league_id = t.league_id""",
+        (league_id,),
+    )
+    out: dict[str, set[int]] = {}
+    for r in rows:
+        out.setdefault(slugify(r["name"]), set()).add(r["team_id"])
+    return out
+
+
+def clasificar_historial(raw: str, source: str, league_id: str) -> dict:
+    """
+    Qué haría la carga de un histórico con un nombre, SIN escribir nada:
+
+      - 'existe': un único club del país lo tiene por alias de esa fuente o
+        por nombre/alias exacto de cualquier fuente. Se reutiliza aunque hoy
+        juegue en otra división: el historial de Segunda de un ascendido es
+        SU historial, y crear otro equipo lo partiría en dos sin dar error.
+      - 'dudoso': hay un parecido (difuso >= SUGGEST_FLOOR) o el nombre exacto
+        es de dos clubes. No se adivina ni se crea: a revisión.
+      - 'nuevo': nadie se le parece; es legítimo crearlo.
+
+    Más estricto que `resolve_or_register`: aquí no hay aceptación difusa
+    automática, porque un histórico trae cientos de nombres antiguos de una
+    sola vez y nadie revisa los que entran por el difuso.
+    """
+    key = slugify(raw)
+    tid = _alias_valido(_alias_map(source).get(key, set()), league_id)
+    if tid:
+        return {"decision": "existe", "team_id": tid, "via": "alias"}
+    pool = _pais_teams(league_id)
+    ids = pool.get(key)
+    if ids:
+        if len(ids) == 1:
+            return {"decision": "existe", "team_id": next(iter(ids)), "via": "exacto"}
+        return {"decision": "dudoso", "candidato": key, "score": 100.0,
+                "candidatos": sorted(ids)}
+    best = process.extractOne(key, list(pool.keys()), scorer=fuzz.token_sort_ratio) if pool else None
+    if best is not None and best[1] >= SUGGEST_FLOOR:
+        return {"decision": "dudoso", "candidato": best[0], "score": float(best[1]),
+                "candidatos": sorted(pool[best[0]])}
+    return {"decision": "nuevo"}
+
+
 def clear_cache() -> None:
     _alias_map.cache_clear()
     _paises.cache_clear()
     _league_teams.cache_clear()
     _sibling_teams.cache_clear()
+    _pais_teams.cache_clear()
 
 
 def match_team(raw: str, source: str, league_id: str | None = None

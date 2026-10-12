@@ -36,9 +36,20 @@ def test_liga_nueva_parada_falla_aunque_haya_reconocidas(monkeypatch):
     assert not ok and "xx.nueva" in msg
 
 
-def test_liga_sin_ningun_xg_cuenta_como_parada(monkeypatch):
+def test_liga_con_fuente_sin_ningun_xg_cuenta_como_parada(monkeypatch):
+    from qf.ingest import xg_worldfootball
+    monkeypatch.setitem(xg_worldfootball.ASSETS, "xx.nueva", "XXX_M_1st_match_shooting.csv")
     ok, msg = _chequeo(monkeypatch, [_fila("xx.nueva", 2, None)])
     assert not ok
+
+
+def test_liga_sin_fuente_de_xg_no_alarma(monkeypatch):
+    """
+    Las 10 ligas activadas el 2026-10-11 se entrenan solo con goles: no hay
+    fuente de xG que se haya parado. Alarmar ahí sería un rojo permanente.
+    """
+    ok, msg = _chequeo(monkeypatch, [_fila("xx.nueva", 2, None)])
+    assert ok
 
 
 def test_las_reconocidas_no_fallan_antes_de_la_fecha(monkeypatch):

@@ -47,11 +47,13 @@ def _markets_for(sport_key: str) -> str:
     Mercados que se pagan para esa competición. Cada mercado cuesta un crédito
     por llamada. En las ligas "solo sharp" (db/023) solo se paga el 1X2: es el
     único mercado del criterio, y el ensayo del 2026-09-25 no encontró valor
-    en goles ni hándicap (0 de 1.448 precios).
+    en goles ni hándicap (0 de 1.448 precios). Desde db/052 lo decide
+    `captura_completa`, no `model_enabled`: activar el modelo en una liga no
+    triplica su gasto.
     """
-    row = query_one("SELECT model_enabled FROM leagues WHERE odds_api_key = %s LIMIT 1",
-                    (sport_key,))
-    if row is not None and not row["model_enabled"]:
+    row = query_one("SELECT model_enabled, captura_completa FROM leagues "
+                    "WHERE odds_api_key = %s LIMIT 1", (sport_key,))
+    if row is not None and not (row["model_enabled"] and row["captura_completa"]):
         return "h2h"
     return settings.odds_api_markets
 

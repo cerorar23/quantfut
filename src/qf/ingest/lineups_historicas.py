@@ -77,7 +77,8 @@ def pares(dias: int = 400) -> list[tuple[str, int]]:
     desde = datetime.now(timezone.utc) - timedelta(days=dias)
     ligas = query(
         """SELECT league_id, api_football_id, season_style, cross_league FROM leagues
-           WHERE active AND model_enabled AND api_football_id IS NOT NULL""")
+           WHERE active AND model_enabled AND captura_completa
+             AND api_football_id IS NOT NULL""")
     hechos = {r["match_id"] for r in query("SELECT DISTINCT match_id FROM lineups_historicas")}
     out: dict[str, int] = {}
     for lg in ligas:

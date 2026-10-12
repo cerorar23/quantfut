@@ -60,8 +60,16 @@ def guardar_oos(oos: pd.DataFrame, version: str, carpeta: str | None = None) -> 
     return ruta
 
 def load_training_data(league_id: str | None = None,
-                       years: int = 12) -> pd.DataFrame:
+                       years: int = 12,
+                       incluir: tuple[str, ...] | list[str] = ()) -> pd.DataFrame:
+    """
+    `incluir`: ligas que entran aunque tengan `model_enabled = FALSE`. Sirve
+    para entrenar el modelo que va a activarlas ANTES de encender el
+    interruptor (2026-10-11): con el interruptor encendido y el modelo viejo
+    activo, el job diario sellaría predicciones de equipos que no conoce.
+    """
     since = datetime.now(timezone.utc) - timedelta(days=365 * years)
+    incluir = list(incluir)
     rows = query(
         """WITH sharp_close AS (
                SELECT DISTINCT ON (match_id, selection)
@@ -89,9 +97,12 @@ def load_training_data(league_id: str | None = None,
            -- equipos cuando juegan una copa (2026-09-28: al añadir ligas solo
            -- sharp, `uefa_cups` empezaría a cargar sus partidos europeos).
            -- Comprobado al introducirlo: no excluía ningún partido.
-           JOIN leagues lg ON lg.league_id = m.league_id AND lg.model_enabled
-           JOIN leagues lh ON lh.league_id = th.league_id AND lh.model_enabled
-           JOIN leagues la ON la.league_id = ta.league_id AND la.model_enabled
+           JOIN leagues lg ON lg.league_id = m.league_id
+                AND (lg.model_enabled OR lg.league_id = ANY(%s::text[]))
+           JOIN leagues lh ON lh.league_id = th.league_id
+                AND (lh.model_enabled OR lh.league_id = ANY(%s::text[]))
+           JOIN leagues la ON la.league_id = ta.league_id
+                AND (la.model_enabled OR la.league_id = ANY(%s::text[]))
            LEFT JOIN sharp_close oh ON oh.match_id = m.match_id
                 AND oh.selection='home'
            LEFT JOIN sharp_close od ON od.match_id = m.match_id
@@ -105,7 +116,7 @@ def load_training_data(league_id: str | None = None,
              -- y aborta con IndeterminateDatatype en TODAS las llamadas.
              AND (%s::text IS NULL OR m.league_id = %s::text)
            ORDER BY m.kickoff_utc""",
-        (settings.sharp_book, since, league_id, league_id),
+        (settings.sharp_book, incluir, incluir, incluir, since, league_id, league_id),
     )
     df = pd.DataFrame(rows)
     if not df.empty:
@@ -161,8 +172,9 @@ def source_hash() -> str:
 
 
 def train_and_register(new_version: str | None = None,
-                       validation_days: int = 365) -> dict:
-    df = load_training_data()
+                       validation_days: int = 365,
+                       incluir: tuple[str, ...] | list[str] = ()) -> dict:
+    df = load_training_data(incluir=incluir)
     if df.empty:
         raise RuntimeError("Sin datos de entrenamiento. Ejecuta la ingesta histórica.")
 
@@ -175,6 +187,8 @@ def train_and_register(new_version: str | None = None,
         "fs_version": settings.fs_version,
         "source_sha256": source_hash(),
     }
+    if incluir:
+        hash_config["incluir"] = sorted(incluir)
     ds_hash = dataset_hash(df, hash_config)
     leakage_diagnostics = check_leakage(df)
 
@@ -467,6 +481,9 @@ if __name__ == "__main__":
     parser.add_argument("--bootstrap", action="store_true",
                         help="entrenar solo si no hay modelo activo y el "
                              "mercado sharp ya es lo bastante reciente")
+    parser.add_argument("--incluir", nargs="*", default=[],
+                        help="ligas con model_enabled = FALSE que entran en "
+                             "este entrenamiento (para activarlas después)")
     args = parser.parse_args()
     if args.bootstrap:
         go, why = bootstrap_status()
@@ -474,4 +491,4 @@ if __name__ == "__main__":
         if not go:
             print(json.dumps({"trained": False, "reason": why}))
             raise SystemExit(0)
-    print(json.dumps(train_and_register(), indent=2, default=str))
+    print(json.dumps(train_and_register(incluir=args.incluir), indent=2, default=str))
