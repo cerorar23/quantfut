@@ -18,6 +18,7 @@ class FixtureApi extends QuantFutApi {
   bool fail = false;
   bool richDetail = false;
   List<JsonMap> detailPicks = [];
+  JsonMap? modelo, mercados;
   int homes = 0;
   final flags = {
     for (final k in [
@@ -105,6 +106,19 @@ class FixtureApi extends QuantFutApi {
           ),
           'config': config,
           'picks': detailPicks,
+          if (modelo != null || mercados != null)
+            'ficha': {
+              ...jsonMap(
+                jsonMap(
+                  jsonDecode(
+                    File('test/fixtures/match_statistics_real.json')
+                        .readAsStringSync(),
+                  ),
+                )['ficha'],
+              ),
+              if (modelo != null) 'modelo': modelo,
+              if (mercados != null) 'mercados': mercados,
+            },
         }
       : {
           'config': config,
@@ -335,6 +349,40 @@ void main() {
   ) async {
     final api = FixtureApi()
       ..richDetail = true
+      ..modelo = {
+        'fuente': 'mercado',
+        'mas_2_5': .61,
+        'ambos': .63,
+        'mas_1_5': .8,
+        'local': .43,
+        'empate': .27,
+        'visita': .3,
+        'goles_local': [.77, .44, .2],
+        'goles_visita': [.67, .32, null],
+      }
+      ..mercados = {
+        'abiertas': 1,
+        'total': 3,
+        'filas': [
+          {
+            'id': 'totals:over:1.5',
+            'grupo': 'GOLES',
+            'titulo': 'Goles totales',
+            'seleccion': 'Más de 1,5 goles',
+            'prob': .83,
+            'nivel': 'alta',
+            'cuota': 1.2,
+            'cuota_tipo': 'justa',
+            'nota': 'Goles esperados: 3,06',
+            'locked': false,
+          },
+          {'id': 'corners:over:8.5', 'grupo': 'CÓRNERS', 'locked': true},
+        ],
+        'marcadores': [
+          {'marcador': '2-0', 'prob': .11},
+          {'marcador': '1-0', 'prob': .1},
+        ],
+      }
       ..detailPicks = [
         {
           'match_id': 'real-match',
@@ -361,9 +409,24 @@ void main() {
     );
     expect(find.text('Más de 2,5 goles'), findsOneWidget);
     expect(find.text('@1,45'), findsOneWidget);
-    expect(find.text('3,06'), findsOneWidget);
-    expect(find.text('2,20 local / 0,86 visita'), findsOneWidget);
-    expect(find.text('Disponible en mercados de goles'), findsOneWidget);
+    // Tarjeta «Análisis estadístico» (una por pronóstico) con los 4 indicadores.
+    expect(find.text('ANÁLISIS ESTADÍSTICO'), findsNWidgets(2));
+    expect(find.text('CUOTAS DEL MERCADO'), findsNWidgets(2));
+    expect(find.text('61 %'), findsNWidgets(2)); // tendencia: más de 2,5 según el modelo
+    expect(find.text('43 %'), findsNWidgets(2)); // favorito 1X2
+    expect(find.textContaining('esta liga no tiene modelo propio'), findsNWidgets(2));
+    expect(find.textContaining('3,06 goles esperados'), findsOneWidget);
+    // Lista de mercados del partido: el abierto con su nivel y cuota justa, el otro con candado.
+    expect(find.text('Mercados del partido'), findsOneWidget);
+    expect(find.text('1 abiertos · 1 con candado'), findsOneWidget);
+    expect(find.text('Más de 1,5 goles'), findsOneWidget);
+    expect(find.text('@1,20'), findsOneWidget);
+    expect(find.text('cuota justa'), findsOneWidget);
+    expect(find.text('ALTA PROB.'), findsWidgets);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    expect(find.textContaining('CÓRNERS · 1 mercado'), findsOneWidget); // candados agrupados por categoría
+    expect(find.text('Marcadores más probables'), findsOneWidget);
+    expect(find.text('2-0'), findsOneWidget);
     expect(find.textContaining('DICTAMEN DEL MODELO'), findsNWidgets(2));
     await capture(tester, 'forecast_panel');
     await tester.tap(find.text('Goles').first);

@@ -6,6 +6,7 @@ batch so refreshing as matches start cannot expose a rotating premium catalog.
 from __future__ import annotations
 
 import copy
+import logging
 import math
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -14,7 +15,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Query, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from psycopg.errors import UndefinedTable
 
-from . import console, cuentas, fichas, panel, rewards
+from . import console, cuentas, fichas, panel, partido_mercados, rewards
 from ..comercial import suscripciones
 from ..comercial.auditoria import audit
 from ..db import conn, query, query_one
@@ -287,6 +288,40 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
             'plans': suscripciones.plans(only_active=True) if flags['vip']['enabled'] else []}
 
 
+def market_card(match_id: str) -> dict | None:
+    """Tarjeta para ligas sin modelo propio: probabilidades del ajuste de goles a las
+    cuotas sin margen de Pinnacle (lambda, mu, rho del pick), con la misma matriz de
+    marcadores del modelo. Se etiqueta `fuente: mercado`: no es una predicción propia."""
+    row = query_one('SELECT fit FROM alta_prob_picks WHERE match_id=%s AND fit IS NOT NULL '
+                    'ORDER BY decided_at DESC LIMIT 1', (match_id,))
+    fit = row['fit'] if row else None
+    try:
+        lam, mu = float(fit['lambda']), float(fit['mu'])
+        rho = float(fit.get('rho') or 0)
+    except (TypeError, KeyError, ValueError, AttributeError):
+        return None
+    if not all(math.isfinite(x) and abs(x) < 10 for x in (lam, mu, rho)) or lam <= 0 or mu <= 0:
+        return None
+    from ..model import pricing
+    return model_card(pricing.price_all_markets(lam, mu, rho), fuente='mercado')
+
+
+def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool) -> dict | None:
+    """Lista de mercados del partido con el acceso aplicado (ver partido_mercados)."""
+    abiertas = {partido_mercados.clave(p.get('market'), p.get('selection'), p.get('line')): p
+                for p in picks if p.get('market')}
+    try:
+        return partido_mercados.construir(match_id, jsonable_name(ficha, 'local', 'Local'),
+                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus)
+    except Exception:  # noqa: BLE001 - la lista es un extra: si falla, el detalle sigue
+        logging.getLogger(__name__).exception('mercados del partido %s', match_id)
+        return None
+
+
+def jsonable_name(ficha: dict, lado: str, defecto: str) -> str:
+    return str((ficha.get(lado) or {}).get('nombre') or defecto)
+
+
 def live_score(match_id: str) -> dict | None:
     """Marcador en juego (db/056). Fuera de la ficha cacheada: debe ser fresco."""
     row = query_one('SELECT live_home_goals, live_away_goals, live_minute, live_status, live_updated_at '
@@ -329,6 +364,32 @@ def markets_history(response: Response,
     return {'items': rows}
 
 
+def model_card(markets, fuente: str = 'modelo') -> dict | None:
+    """Probabilidades del modelo para la tarjeta del pronóstico, a 2 decimales.
+
+    Solo sale junto a un pronóstico que el usuario puede ver: son las probabilidades
+    de las que se deriva el pronóstico y no se regalan para todos los partidos.
+    """
+    def p(*path):
+        value = markets
+        for key in path:
+            value = value.get(key) if isinstance(value, dict) else None
+        try:
+            x = float(value)
+        except (TypeError, ValueError):
+            return None
+        return round(x, 2) if math.isfinite(x) and 0 <= x <= 1 else None
+
+    lines = ('0.5', '1.5', '2.5')
+    card = {'fuente': fuente, 'mas_1_5': p('totals', '1.5', 'over'), 'mas_2_5': p('totals', '2.5', 'over'),
+            'ambos': p('btts', 'yes'),
+            'local': p('1x2', 'home'), 'empate': p('1x2', 'draw'), 'visita': p('1x2', 'away'),
+            'goles_local': [p('team_totals', 'home', n, 'over') for n in lines],
+            'goles_visita': [p('team_totals', 'away', n, 'over') for n in lines]}
+    flat = [v for k, v in card.items() if k != 'fuente' and not k.startswith('goles_')] + card['goles_local'] + card['goles_visita']
+    return card if any(v is not None for v in flat) else None
+
+
 @router.get('/mobile/v1/matches/{match_id}')
 def detail(match_id: str, response: Response, plus: bool = Depends(member),
            account: dict | None = Depends(rewards.optional_account)):
@@ -353,9 +414,12 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
         ficha['partido']['estadisticas'] = None
         ficha['partido']['xg'] = None
     else:
-        prediction = query_one("SELECT markets->'1x2' AS probabilities FROM predictions "
+        prediction = query_one("SELECT markets FROM predictions "
                                "WHERE match_id=%s ORDER BY generated_at DESC LIMIT 1", (match_id,))
-        ficha['probabilities'] = prediction['probabilities'] if prediction else None
+        markets = prediction['markets'] if prediction else None
+        ficha['probabilities'] = markets.get('1x2') if isinstance(markets, dict) else None
+        ficha['modelo'] = ((model_card(markets) or market_card(match_id)) if picks else None)
+        ficha['mercados'] = mercados_partido(match_id, ficha, picks, plus)
     if not flags['h2h']['enabled']:
         for key in ('cara_a_cara','alineaciones','bajas'):
             ficha[key] = None

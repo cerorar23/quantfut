@@ -175,3 +175,54 @@ def test_markets_history_filters_and_rounds(monkeypatch):
     assert item['prob'] == 0.81 and item['texto']
     monkeypatch.setattr(mobile, 'features', lambda: {'alta_probabilidad': {'enabled': False}})
     assert mobile.markets_history(Response(), market=None, limit=10) == {'items': []}
+
+
+SAMPLE_MARKETS = {'1x2': {'home': .5410917, 'draw': .28, 'away': .1769},
+                  'btts': {'yes': .4004, 'no': .5995},
+                  'totals': {'1.5': {'over': .6467}, '2.5': {'over': .3707}},
+                  'team_totals': {'home': {'0.5': {'over': .767}, '1.5': {'over': .4277}, '2.5': {'over': .1805}},
+                                  'away': {'0.5': {'over': .5125}, '1.5': {'over': .1623}}}}
+
+
+def test_model_card_rounds_and_tolerates_missing_parts():
+    card = mobile.model_card(SAMPLE_MARKETS)
+    assert card['mas_2_5'] == .37 and card['ambos'] == .4 and card['local'] == .54
+    assert card['goles_local'] == [.77, .43, .18]
+    assert card['goles_visita'] == [.51, .16, None]  # lo que falta es None, no 0
+    assert card['fuente'] == 'modelo'
+    assert mobile.model_card({}) is None and mobile.model_card(None) is None
+    assert mobile.model_card({'btts': {'yes': 7}}) is None  # fuera de [0, 1]
+
+
+def test_model_card_only_with_a_visible_pick(delivery, monkeypatch):
+    ficha = lambda: {'partido': {}, 'local': {'id': 1, 'nombre': 'A'}, 'visitante': {'id': 2, 'nombre': 'B'},
+                     'cara_a_cara': None, 'alineaciones': None, 'bajas': None, 'tabla': None}
+    monkeypatch.setattr(mobile.fichas, '_ficha', lambda mid: ficha())
+    monkeypatch.setattr(mobile.rewards, 'entitlements', lambda account: set())
+    monkeypatch.setattr(mobile, 'ladder', lambda *a, **k: {'actuales': []})
+    monkeypatch.setattr(mobile, 'live_score', lambda mid: None)
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: {'markets': SAMPLE_MARKETS})
+    monkeypatch.setattr(mobile, 'high_probability',
+                        lambda *a, **k: {'proximos': [{'match_id': 'm1'}], 'vip': []})
+    out = mobile.detail('m1', Response(), plus=False, account=None)
+    assert out['ficha']['modelo']['mas_1_5'] == .65 and out['ficha']['probabilities']['home'] == .5410917
+    monkeypatch.setattr(mobile, 'high_probability',
+                        lambda *a, **k: {'proximos': [], 'vip': [{'match_id': 'm1'}]})
+    out = mobile.detail('m1', Response(), plus=False, account=None)
+    assert out['ficha']['modelo'] is None and out['locked'] is True
+
+
+def test_market_card_for_sharp_leagues_is_labelled_and_coherent(monkeypatch):
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: {'fit': {'lambda': 2.41, 'mu': .76, 'rho': -.06}})
+    card = mobile.market_card('m1')
+    assert card['fuente'] == 'mercado'
+    assert card['mas_1_5'] > card['mas_2_5'] > 0
+    assert card['goles_local'][0] > card['goles_local'][1] > card['goles_local'][2]
+    assert card['goles_local'][0] > card['goles_visita'][0]  # el local esperado es más goleador
+    assert abs(card['local'] + card['empate'] + card['visita'] - 1) < .02
+    for bad in ({'fit': None}, {'fit': {'lambda': 0, 'mu': 1}}, {'fit': {'lambda': 'x', 'mu': 1}},
+                {'fit': {'lambda': float('nan'), 'mu': 1}}):
+        monkeypatch.setattr(mobile, 'query_one', lambda *a, _b=bad, **k: _b)
+        assert mobile.market_card('m1') is None
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: None)
+    assert mobile.market_card('m1') is None

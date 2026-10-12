@@ -21,75 +21,6 @@ const marketNames = {
 
 String marketName(dynamic key) => marketNames['$key'] ?? '${key ?? 'Mercado'}';
 
-double? _share(dynamic value) =>
-    value is num && value.isFinite && value >= 0 && value <= 100
-    ? value.toDouble()
-    : null;
-
-/// Porcentaje de los últimos partidos de un equipo con más de 2,5 goles.
-double? _over25(JsonMap team) =>
-    _share(jsonMap(jsonMap(team['promedios'])['todos'])['pct_mas_2_5']);
-
-class ForecastTile extends StatelessWidget {
-  const ForecastTile({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    this.caption,
-  });
-  final String icon, label, value;
-  final String? caption;
-  final Color color;
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: statsPanel,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: Colors.white.withValues(alpha: .06)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '$icon  ${label.toUpperCase()}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 9,
-            letterSpacing: .4,
-            fontWeight: FontWeight.w700,
-            color: liveMuted,
-          ),
-        ),
-        const SizedBox(height: 10),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          caption ?? ' ',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 10, color: liveMuted),
-        ),
-      ],
-    ),
-  );
-}
-
 /// Marcador real mientras el partido se juega (`partido.vivo`). Si el servidor
 /// no lo manda, no se dibuja nada. Muestra cuánto hace de la última lectura:
 /// el dato se refresca por ciclos, no es un directo.
@@ -248,40 +179,50 @@ class ForecastPanel extends StatelessWidget {
     return _chip(label, color);
   }
 
+  /// Porcentaje de partidos recientes con más de 2,5 goles (promedio de ambos equipos).
+  double? get _trend {
+    double? share(JsonMap team) {
+      final v = jsonMap(jsonMap(team['promedios'])['todos'])['pct_mas_2_5'];
+      return v is num && v.isFinite && v >= 0 && v <= 100 ? v.toDouble() : null;
+    }
+
+    final a = share(jsonMap(ficha['local'])), b = share(jsonMap(ficha['visitante']));
+    return a != null && b != null ? (a + b) / 2 : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final prob = pick['prob'];
     final price = pick['ref_price'] ?? pick['price'];
     final xg = jsonMap(pick['xg']);
+    final modelo = jsonMap(ficha['modelo']);
     final probs = jsonMap(ficha['probabilities']);
     final local = jsonMap(ficha['local']), away = jsonMap(ficha['visitante']);
-    final ranked = [
-      if (probs['home'] is num)
-        (jsonMap(ficha['local'])['nombre'] ?? 'Local', probs['home'] as num),
-      if (probs['away'] is num)
-        (
-          jsonMap(ficha['visitante'])['nombre'] ?? 'Visita',
-          probs['away'] as num,
-        ),
-    ]..sort((a, b) => b.$2.compareTo(a.$2));
-    final over = (_over25(local), _over25(away));
-    final overAvg = over.$1 != null && over.$2 != null
-        ? (over.$1! + over.$2!) / 2
-        : null;
     final free = pick['free'] == true;
     final book = pick['ref_book'] ?? pick['book'];
+    // Favorito 1X2: del modelo (o del 1X2 guardado), el lado con más probabilidad.
+    final side = <(String, num)>[
+      if ((modelo['local'] ?? probs['home']) is num)
+        ('${local['nombre'] ?? 'Local'}', (modelo['local'] ?? probs['home']) as num),
+      if ((modelo['visita'] ?? probs['away']) is num)
+        ('${away['nombre'] ?? 'Visitante'}', (modelo['visita'] ?? probs['away']) as num),
+    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    final over25 = modelo['mas_2_5'] is num ? (modelo['mas_2_5'] as num) * 100 : _trend;
+    final level = prob is num
+        ? (prob >= .75 ? 'ALTA PROB.' : prob >= .6 ? 'SÓLIDA' : 'MODERADA')
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: liveGreen.withValues(alpha: .35)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: liveGreen.withValues(alpha: .45)),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [liveGreen.withValues(alpha: .14), statsPanel],
+              colors: [liveGreen.withValues(alpha: .08), const Color(0xff0c1520)],
             ),
           ),
           child: Column(
@@ -289,152 +230,209 @@ class ForecastPanel extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Flexible(child: _chip('★ DESTACADO', liveGreen)),
-                  const Spacer(),
-                  _chip(free ? 'GRATUITO' : 'DESBLOQUEADO', liveGold),
+                  Expanded(
+                    child: liveText(
+                      'ANÁLISIS ESTADÍSTICO',
+                      size: 12,
+                      color: liveGreen,
+                      bold: true,
+                    ),
+                  ),
+                  _chip(
+                    modelo['fuente'] == 'mercado'
+                        ? 'CUOTAS DEL MERCADO'
+                        : 'MODELO PROPIO',
+                    liveCyan,
+                  ),
                 ],
               ),
-              if (pick['started'] == true) ...[
-                const SizedBox(height: 10),
-                _resultBanner(pick),
-              ],
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: liveGreen.withValues(alpha: .07),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: liveGreen.withValues(alpha: .3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Text(
-                          '${pick['texto'] ?? '—'}',
-                          style: const TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w800,
-                            height: 1.15,
+                        Flexible(
+                          child: _chip('DESTACADO', liveGreen),
+                        ),
+                        const Spacer(),
+                        if (level != null) ...[
+                          _chip(level, liveGold),
+                          const SizedBox(width: 6),
+                        ],
+                        _chip(free ? 'GRATUITO' : 'DESBLOQUEADO', liveGold),
+                      ],
+                    ),
+                    if (pick['started'] == true) ...[
+                      const SizedBox(height: 10),
+                      _resultBanner(pick),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${pick['texto'] ?? '—'}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.15,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              liveText(
+                                marketName(pick['market']),
+                                size: 12,
+                                color: liveGreen,
+                                bold: true,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        liveText(
-                          marketName(pick['market']),
-                          size: 12,
-                          color: liveGreen,
-                          bold: true,
+                        const SizedBox(width: 12),
+                        Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                color: liveGreen.withValues(alpha: .18),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: liveText(
+                                '@${decimalText(price)}',
+                                size: 20,
+                                color: liveGreen,
+                                bold: true,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            liveText(
+                              '${realPercent(prob)} prob. calculada',
+                              size: 10,
+                              color: liveGreen,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: liveGreen.withValues(alpha: .18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: liveText(
-                          '@${decimalText(price)}',
-                          size: 22,
-                          color: liveGreen,
-                          bold: true,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
+                    if (book != null || pick['odds_as_of'] != null) ...[
+                      const SizedBox(height: 10),
                       liveText(
-                        '${realPercent(prob)} Prob. calculada',
+                        'Cuota al publicar${book != null ? ' · $book' : ''}${pick['odds_as_of'] != null ? ' · ${kickoffText(pick['odds_as_of'])}' : ''}',
                         size: 10,
-                        color: liveGreen,
+                        color: liveMuted,
                       ),
                     ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Tile(
+                      icon: '🎯',
+                      label: 'Probabilidad',
+                      value: realPercent(prob),
+                      color: liveCyan,
+                      caption:
+                          'Cuota justa ${decimalText(prob is num && prob > 0 ? 1 / prob : null)}',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Tile(
+                      icon: '⚽',
+                      label: 'xG proyectado',
+                      value: decimalText(xg['total']),
+                      color: liveGold,
+                      caption: xg['total'] is num
+                          ? '${decimalText(xg['local'])} local · ${decimalText(xg['visita'])} visita'
+                          : 'Disponible en mercados de goles',
+                    ),
                   ),
                 ],
               ),
-              if (book != null || pick['odds_as_of'] != null) ...[
-                const SizedBox(height: 10),
-                liveText(
-                  'Cuota al publicar${book != null ? ' · $book' : ''}${pick['odds_as_of'] != null ? ' · ${kickoffText(pick['odds_as_of'])}' : ''}',
-                  size: 10,
-                  color: liveMuted,
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.3,
-          children: [
-            ForecastTile(
-              icon: '🎯',
-              label: 'Probabilidad',
-              value: realPercent(prob),
-              color: liveCyan,
-              caption:
-                  'Cuota justa ${decimalText(prob is num && prob > 0 ? 1 / prob : null)}',
-            ),
-            ForecastTile(
-              icon: '⚽',
-              label: 'xG proyectado',
-              value: decimalText(xg['total']),
-              color: liveGold,
-              caption: xg['total'] is num
-                  ? '${decimalText(xg['local'])} local / ${decimalText(xg['visita'])} visita'
-                  : 'Disponible en mercados de goles',
-            ),
-            ForecastTile(
-              icon: '⚔',
-              label: 'Favorito 1X2',
-              value: ranked.isEmpty ? '—' : realPercent(ranked.first.$2),
-              color: statsPurple,
-              caption: ranked.isEmpty
-                  ? 'Probabilidades no disponibles'
-                  : '${ranked.first.$1}${ranked.length > 1 ? ' · +${((ranked.first.$2 - ranked.last.$2) * 100).round()} pts sobre ${ranked.last.$1}' : ''}',
-            ),
-            ForecastTile(
-              icon: '📊',
-              label: 'Tendencia goles',
-              value: overAvg == null ? '—' : '${overAvg.round()} %',
-              color: statsLime,
-              caption: overAvg == null
-                  ? 'Historial insuficiente'
-                  : 'Más de 2,5 en sus últimos partidos',
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: statsPanel,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: .06)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              liveText(
-                '💡  DICTAMEN DEL MODELO',
-                size: 11,
-                color: liveCyan,
-                bold: true,
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Tile(
+                      icon: '⚔',
+                      label: 'Favorito 1X2',
+                      value: side.isEmpty ? '—' : realPercent(side.first.$2),
+                      color: statsPurple,
+                      caption: side.isEmpty
+                          ? 'Probabilidades no disponibles'
+                          : '${side.first.$1}${side.length > 1 ? ' · +${((side.first.$2 - side.last.$2) * 100).round()} pts' : ''}',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Tile(
+                      icon: '📊',
+                      label: 'Tendencia goles',
+                      value: over25 == null ? '—' : '${over25.round()} %',
+                      color: statsLime,
+                      caption: over25 == null
+                          ? 'Historial insuficiente'
+                          : modelo['mas_2_5'] is num
+                          ? 'Más de 2,5 según el modelo'
+                          : 'Más de 2,5 en sus últimos partidos',
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              liveText(dictamen, size: 13, color: Colors.white70),
-              const SizedBox(height: 10),
-              liveText(
-                'Un pronóstico puede fallar; la probabilidad no garantiza el resultado.',
-                size: 10,
-                color: liveMuted,
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: .25),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    liveText(
+                      '💡  DICTAMEN DEL MODELO',
+                      size: 11,
+                      color: liveCyan,
+                      bold: true,
+                    ),
+                    const SizedBox(height: 8),
+                    liveText(dictamen, size: 13, color: Colors.white70),
+                    if (modelo['fuente'] == 'mercado') ...[
+                      const SizedBox(height: 8),
+                      liveText(
+                        'Probabilidades calculadas con las cuotas del mercado sin margen: esta liga no tiene modelo propio.',
+                        size: 10,
+                        color: liveMuted,
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    liveText(
+                      'Un pronóstico puede fallar; la probabilidad no garantiza el resultado.',
+                      size: 10,
+                      color: liveMuted,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -458,6 +456,66 @@ class ForecastPanel extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: color),
+    ),
+  );
+}
+
+/// Recuadro de un indicador: icono + etiqueta, valor grande y una línea de contexto.
+class _Tile extends StatelessWidget {
+  const _Tile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.caption,
+  });
+  final String icon, label, value, caption;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .04),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: Colors.white.withValues(alpha: .07)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$icon  ${label.toUpperCase()}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 9,
+            letterSpacing: .4,
+            fontWeight: FontWeight.w700,
+            color: liveMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          caption,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 10, color: liveMuted),
+        ),
+      ],
     ),
   );
 }

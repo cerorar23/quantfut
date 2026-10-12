@@ -2269,3 +2269,21 @@ Clave existente verificada: Free activo, 100/día, temporadas 2025 y 2026 rechaz
   (`live_markets.dart`). Pendiente: NBA (experimental, sin tarjeta) y recompilar el APK.
 
 - [x] Pantalla por mercado (Hoy / Anteriores) y endpoint de historial. Desplegado el 2026-10-12 (respaldo `quantfut-api-mobile-rewards:before-history`).
+
+## Pestaña Pronósticos con todos los mercados del partido (2026-10-12)
+
+Pedido del usuario: la pestaña Pronósticos del partido queda como su referencia (tarjeta «Análisis
+estadístico» + lista de mercados con nivel + «Marcadores más probables») y los mercados se despliegan
+también en el VPS. Decisiones (tomadas con el usuario): lista visible para todos con los gratis abiertos y
+el resto con candado que solo dice la categoría; 1ª mitad solo si un modelo propio sale calibrado; cuota
+justa (1/prob) etiquetada donde no hay cuota publicada.
+
+- [x] Backend `api/partido_mercados.py`: filas desde (lambda, mu, rho) — mismos cálculos que `predictions.markets`
+  (verificado: diferencia 0,0 en 40 predicciones) — resultado, doble oportunidad, empate no acción, goles,
+  goles por equipo, ambos marcan, hándicap, gana a cero, marcadores; córners y tarjetas con
+  `estadisticas_mercado`. Nivel por probabilidad (alta >=75, sólida >=60, moderada).
+- [x] Acceso: abiertas = las del usuario (gratis/desbloqueadas) o todas con VIP; el resto candado sin línea,
+  selección, probabilidad ni cuota, y sin orden por probabilidad (no filtra).
+- [x] Flutter: pestaña Pronósticos nueva (análisis + lista + marcadores).
+- [ ] 1ª mitad: modelo con los 59.752 partidos con goles al descanso + prueba de calibración. No publicar si no calibra.
+- [x] Desplegado en el VPS y comprobado en el emulador (2026-10-12).

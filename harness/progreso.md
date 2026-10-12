@@ -4801,3 +4801,50 @@ cuota de cada mercado que no tenga ya uno abierto. Solo añade (no quita lo que 
 es idempotente y queda auditado (`mobile:allocation_topup`). Desplegado (respaldo `before-automatico`):
 tres lecturas seguidas dejaron free_count en 6, sin cambios. Ya no hacen falta ampliaciones manuales.
 La Escalera conserva su regla de un solo pendiente gratuito.
+
+### Tarjeta del pronóstico nueva (2026-10-12)
+
+Sustituye al destacado + 4 recuadros por: 4 anillos (Más 2,5, Ambos marcan, Más 1,5, Gana local),
+caja del pronóstico y tabla «¿Cuántos goles?» (al menos 1/2/3 por equipo = team_totals 0,5/1,5/2,5).
+El «1T >0,5» de la referencia NO existe: no hay modelo de primer tiempo, se usa «Más 1,5».
+Backend: `ficha.modelo` (model_card, 2 decimales) sale en /mobile/v1/matches/{id} SOLO si el usuario
+tiene un pronóstico visible de ese partido; las probabilidades de las que se deriva el pronóstico no
+se regalan para todos los partidos. Sin datos del modelo, la tarjeta no dibuja anillos ni tabla.
+
+Ligas solo sharp (sin predicción propia): `market_card()` calcula la misma tarjeta desde el ajuste a
+Pinnacle del pick (lambda, mu, rho) con `pricing.price_all_markets`, y la marca `fuente: mercado`; la app
+lo dice debajo de los anillos. Solo para picks con `fit` (goles, hándicap y córners); doble oportunidad y
+1X2 no guardan `fit` y siguen sin anillos. Sin desplegar al escribir esto.
+
+## 2026-10-11 — Alta probabilidad: medición 62–95 % (paso previo a ampliar el rango)
+
+- Pedido del usuario: abrir el rango de alta probabilidad a 62–95 % en todos los
+  mercados, ordenando por mayor cuota. Decisión: medir ANTES de publicar (el 80 %
+  se validó; los tramos 62–80 % nunca se midieron).
+- `eval/alta_prob_calibracion.py --amplio` (`run_amplio`): todos los candidatos de
+  62–95 %, tramos 62-67/67-72/72-76/76-80 + los de siempre, mismo criterio
+  (tramo con n≥100: real ≥ prometido−2·SE; global ≥ −1 punto). 14.305 partidos.
+  Resultado en `.local/alta_prob_amplio_20261011.json`: pasan 27 de 40 líneas
+  (1X2, doble oportunidad, hándicap −1/0/+1/+1,5/+2, marca local/visitante, más
+  de 1,5/2,5, menos de 3,5/4,5, ambos marcan «sí», córners más 6,5/8,5 y menos
+  11,5/12,5 totales). No pasan: ambos marcan «no», menos de 2,5, y la mayoría de
+  córners por equipo (déficits de 0,1–1,2 puntos o un tramo bajo).
+- Aún NO se publica nada: falta decidir la tabla sellada nueva (`alta_prob_picks`
+  tiene `match_id UNIQUE`, un pick por partido) y la cadena de hashes.
+
+### Pestaña Pronósticos con todos los mercados (2026-10-12)
+
+Pedido del usuario: la pestaña queda como su referencia (tarjeta «Análisis estadístico» + lista de mercados
+con nivel + marcadores). `api/partido_mercados.py` deriva la lista de (lambda, mu, rho): la predicción propia
+o, en ligas solo sharp, el ajuste a Pinnacle del pick; los cálculos son los de `pricing` (comprobado: diferencia
+0,0 frente a `predictions.markets` en 40 predicciones). Córners y tarjetas salen de `estadisticas_mercado` y
+SOLO con sus `LINEAS_HABILITADAS`. Nivel por probabilidad (alta >= 75, sólida >= 60, moderada); «oportunidad»
+solo con cuota publicada y prob x cuota > 1,02; sin cuota publicada se muestra la cuota justa etiquetada.
+Acceso: abiertas = las del usuario (gratis/desbloqueadas) o todas con VIP; el resto va con candado que solo
+dice la categoría y SIN orden por probabilidad (el orden la filtraría). La app agrupa los candados por categoría.
+Desplegado (respaldo `before-mercados`): 24 mercados en un partido real, 0,58 s la primera vez y 15 ms con caché.
+
+AVISO de despliegue: el VPS corre el módulo VIEJO de córners/tarjetas (líneas anteriores a la revisión del
+10-oct, que se dejó «sin desplegar» a propósito: más de 6,5 y 9,5 córners siguen apareciendo). La lista sigue lo
+que está desplegado y se alineará sola cuando esa revisión se despliegue (decisión sobre los picks del worker).
+La tarjeta anterior de anillos/«¿Cuántos goles?» se retiró de la pestaña (la sustituye la lista).

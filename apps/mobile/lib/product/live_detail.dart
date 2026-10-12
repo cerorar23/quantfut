@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'live_api.dart';
 import 'live_forecast.dart';
+import 'live_match_markets.dart';
 import 'live_widgets.dart';
 import 'live_statistics.dart';
 
@@ -315,6 +316,10 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                 onStats: () => setState(() => tab = 1),
                               ),
                             ),
+                        MatchMarkets(
+                          data: jsonMap(ficha['mercados']),
+                          onVip: widget.onVip,
+                        ),
                       ],
                     )
                   else if (tab == 1)
