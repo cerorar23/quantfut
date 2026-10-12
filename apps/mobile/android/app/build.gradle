@@ -1,0 +1,34 @@
+plugins {
+    id 'com.android.application'
+    id 'dev.flutter.flutter-gradle-plugin'
+}
+android {
+    namespace 'com.example.gobet'
+    compileSdk 37
+    ndkVersion '30.0.16248370'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    defaultConfig {
+        applicationId 'com.example.gobet'
+        minSdk flutter.minSdkVersion
+        targetSdk 37
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+    }
+    buildTypes {
+        release {
+            // Replace with a private release keystore before distributing the app.
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+flutter {
+    source '../..'
+}

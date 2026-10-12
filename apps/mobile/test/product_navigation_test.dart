@@ -1,0 +1,371 @@
+import 'dart:io';
+import 'dart:convert';
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:gobet/product/live_api.dart';
+import 'package:gobet/product/live_shell.dart';
+import 'package:gobet/product/live_detail.dart';
+import 'package:gobet/product/live_rewards.dart';
+import 'package:gobet/product/live_widgets.dart';
+
+class FixtureApi extends QuantFutApi {
+  bool fail = false;
+  bool richDetail = false;
+  int homes = 0;
+  final flags = {
+    for (final k in [
+      'agenda',
+      'alta_probabilidad',
+      'escalera',
+      'estadisticas',
+      'h2h',
+      'vip',
+    ])
+      k: {'enabled': true, 'message': 'Modelo en entrenamiento'},
+  };
+  JsonMap get config => {'features': flags};
+  @override
+  Future<JsonMap> home(DateTime date) async {
+    homes++;
+    if (fail) throw const ApiFailure('Sin conexión');
+    return {
+      'config': config,
+      'rewards': {'enabled': true, 'unlock_cost': 100},
+      'plans': [
+        {
+          'name': 'Plus 1 mes',
+          'price_cents': 1499,
+          'currency': 'USD',
+          'duration_days': 30,
+        },
+      ],
+      'agenda': [
+        {
+          'match_id': 'test-1',
+          'kickoff_utc': DateTime.now()
+              .add(const Duration(hours: 2))
+              .toUtc()
+              .toIso8601String(),
+          'local': {'nombre': 'Equipo A'},
+          'visitante': {'nombre': 'Equipo B'},
+          'liga': {'nombre': 'Liga de prueba'},
+          'probabilities': {'home': .6, 'draw': .25, 'away': .15},
+        },
+      ],
+      'alta_probabilidad': {
+        'estado': 'activa',
+        'historial': {
+          'n': 20,
+          'aciertos': 16,
+          'acierto_real': 80,
+          'por_mercado': {},
+        },
+        'proximos': [
+          {
+            'match_id': 'test-1',
+            'pick_key': 'test-1',
+            'local': 'Equipo A',
+            'visitante': 'Equipo B',
+            'texto': 'Más de 1,5 goles',
+            'prob': .8,
+            'ref_price': 1.5,
+            'ref_book': 'Fuente de prueba',
+            'free': true,
+          },
+        ],
+        'vip': [
+          {
+            'match_id': 'test-2',
+            'pick_key': 'test-2',
+            'local': 'Equipo C',
+            'visitante': 'Equipo D',
+            'locked': true,
+          },
+        ],
+      },
+      'escalera': {'activo': true, 'actuales': []},
+    };
+  }
+
+  @override
+  Future<JsonMap> detail(String id) async => richDetail
+      ? {
+          ...jsonMap(
+            jsonDecode(
+              File('test/fixtures/match_statistics_real.json')
+                  .readAsStringSync(),
+            ),
+          ),
+          'config': config,
+        }
+      : {
+          'config': config,
+          'locked': id == 'test-2',
+          'picks': [],
+          'ficha': {
+            'partido': {
+              'liga': {'nombre': 'Liga de prueba'},
+            },
+            'local': {
+              'nombre': 'Equipo A',
+              'promedios': {
+                'todos': {'n': 0},
+              },
+            },
+            'visitante': {
+              'nombre': 'Equipo B',
+              'promedios': {
+                'todos': {'n': 0},
+              },
+            },
+            'cara_a_cara': {'partidos': []},
+          },
+        };
+  @override
+  Future<dynamic> request(
+    String path, {
+    JsonMap? query,
+    JsonMap? body,
+    bool retry = true,
+  }) async => {
+    'settings': {
+      'enabled': true,
+      'unlock_cost': 100,
+      'attendance_coins': [30, 35, 35, 40, 40, 45, 50],
+      'referrer_coins': 200,
+      'invitee_coins': 100,
+      'referral_min_coins': 100,
+    },
+    'signed_in': false,
+    'providers': [
+      {'name': 'BitLabs', 'provider': 'bitlabs', 'available': false},
+    ],
+    'ledger': [],
+    'terms': 'Monedas sin valor monetario.',
+  };
+}
+
+void main() {
+  setUpAll(() async {
+    for (final f in {
+      'Gilroy Medium': 'fonts/Gilroy-Medium.ttf',
+      'Gilroy Bold': 'fonts/Gilroy-Bold.otf',
+      'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
+    }.entries) {
+      await (FontLoader(f.key)..addFont(rootBundle.load(f.value))).load();
+    }
+  });
+  final boundary = GlobalKey();
+  Future<void> open(
+    WidgetTester tester,
+    Widget child, {
+    double scale = 1,
+  }) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      RepaintBoundary(
+        key: boundary,
+        child: MaterialApp(
+          theme: liveTheme(),
+          debugShowCheckedModeBanner: false,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              disableAnimations: true,
+              textScaler: TextScaler.linear(scale),
+            ),
+            child: child!,
+          ),
+          home: child,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> capture(WidgetTester tester, String name) async {
+    const destination = String.fromEnvironment('UI_CAPTURE_DIR');
+    if (destination.isEmpty) return;
+    await tester.runAsync(() async {
+      final img =
+          await (boundary.currentContext!.findRenderObject()!
+                  as RenderRepaintBoundary)
+              .toImage(pixelRatio: 1);
+      final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+      await Directory(destination).create(recursive: true);
+      await File('$destination/$name.png')
+          .writeAsBytes(bytes!.buffer.asUint8List());
+      img.dispose();
+    });
+  }
+
+  Future<void> navigate(WidgetTester tester, String label) async {
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BottomNavigationBar),
+        matching: find.text(label),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('home uses API calendar and all five tabs including Coins', (
+    tester,
+  ) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api));
+    expect(api.homes, 1);
+    expect(find.text('Equipo A'), findsOneWidget);
+    expect(find.text('Liga de prueba'), findsNothing);
+    expect(find.textContaining('Liga de prueba'), findsOneWidget);
+    await capture(tester, 'home');
+    for (final label in [
+      'Predicciones',
+      'Mercados',
+      'Coins',
+      'Perfil',
+      'Inicio',
+    ]) {
+      await navigate(tester, label);
+      expect(tester.takeException(), isNull);
+    }
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('VIP card opens actual plans; no sample prices', (tester) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api));
+    await navigate(tester, 'Predicciones');
+    expect(find.text('Más de 1,5 goles'), findsOneWidget);
+    expect(find.text('Desbloquear pronóstico VIP'), findsOneWidget);
+    await capture(tester, 'predictions');
+    await tester.tap(find.text('Desbloquear pronóstico VIP'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('14,99 USD'), findsOneWidget);
+    expect(find.text('999.00 MXN'), findsNothing);
+    await capture(tester, 'vip');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('real details distinguish unavailable statistics and lineups', (
+    tester,
+  ) async {
+    final api = FixtureApi();
+    await open(tester, LiveMatchDetail(api: api, id: 'test-2', onVip: () {}));
+    expect(find.text('Este partido tiene un pronóstico VIP'), findsOneWidget);
+    await tester.tap(find.text('Estadísticas'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Promedios de 0'), findsOneWidget);
+    expect(find.byType(RadarChart), findsNothing);
+    expect(find.text('0 %'), findsNothing);
+    await capture(tester, 'stats');
+    await tester.tap(find.text('H2H'));
+    await tester.pumpAndSettle();
+    expect(find.text('Alineaciones todavía no confirmadas.'), findsOneWidget);
+    expect(
+      find.text('No hay una comprobación de bajas disponible.'),
+      findsOneWidget,
+    );
+    await capture(tester, 'h2h');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('disabled section shows backend legend', (tester) async {
+    final api = FixtureApi();
+    api.flags['alta_probabilidad'] = {
+      'enabled': false,
+      'message': 'Modelo calibrándose',
+    };
+    await open(tester, ProductShell(api: api));
+    await navigate(tester, 'Predicciones');
+    expect(find.text('Modelo calibrándose'), findsOneWidget);
+    expect(find.text('Más de 1,5 goles'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('statistics plots real response without requiring missing xG', (
+    tester,
+  ) async {
+    final api = FixtureApi()..richDetail = true;
+    await open(
+      tester,
+      LiveMatchDetail(api: api, id: 'real-match', onVip: () {}),
+    );
+    await tester.tap(find.text('Estadísticas'));
+    await tester.pumpAndSettle();
+    expect(find.text('RESUMEN DE PREDICCIÓN'), findsOneWidget);
+    expect(find.text('37 %'), findsOneWidget);
+    expect(find.byType(RadarChart), findsOneWidget);
+    final radar = tester.widget<RadarChart>(find.byType(RadarChart));
+    expect(radar.data.titleCount, 6);
+    expect(radar.data.dataSets.first.dataEntries.first.value, 100);
+    expect(
+      radar.data.dataSets.last.dataEntries.first.value,
+      closeTo(.9 / 1.1 * 100, .001),
+    );
+    await capture(tester, 'stats_real_summary');
+    await tester.ensureVisible(find.text('ESTADÍSTICAS DEL EQUIPO'));
+    await tester.pumpAndSettle();
+    await capture(tester, 'stats_real_radar');
+    await tester.ensureVisible(find.text('COMPARACIÓN DE EQUIPOS'));
+    await tester.pumpAndSettle();
+    await capture(tester, 'stats_real_comparison');
+    await tester.ensureVisible(find.text('CARA A CARA'));
+    await tester.pumpAndSettle();
+    await capture(tester, 'stats_real_h2h');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('network failure never falls back to demo', (tester) async {
+    final api = FixtureApi()..fail = true;
+    await open(tester, ProductShell(api: api));
+    expect(find.text('Sin conexión'), findsOneWidget);
+    expect(find.text('Equipo A'), findsNothing);
+    api.fail = false;
+    await tester.tap(find.text('Reintentar'));
+    await tester.pumpAndSettle();
+    expect(api.homes, 2);
+    expect(find.text('Equipo A'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('coins shows guest state and seven configured rewards', (
+    tester,
+  ) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api));
+    await navigate(tester, 'Coins');
+    expect(find.byType(RewardsScreen), findsOneWidget);
+    expect(find.text('Menú'), findsNothing);
+    expect(find.text('Monedas'), findsNothing);
+    expect(find.text('Coins'), findsNWidgets(2));
+    expect(find.text('Inicia sesión'), findsOneWidget);
+    expect(find.text('Día 7'), findsOneWidget);
+    await capture(tester, 'coins');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('navigation tolerates larger text', (tester) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api), scale: 1.3);
+    await navigate(tester, 'Predicciones');
+    expect(tester.takeException(), isNull);
+    await navigate(tester, 'Coins');
+    expect(find.text('Mis monedas'), findsOneWidget);
+    await capture(tester, 'coins_large_text');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+}

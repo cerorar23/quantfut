@@ -10,6 +10,11 @@ def _client(monkeypatch):
     from qf.publish import alta_prob_datos
     monkeypatch.setattr(main.ratelimit, "rate_limited", lambda *_a: False)
     monkeypatch.setattr(alta_prob_datos, "informe_publico", lambda: INFORME)
+    from qf.api import mobile
+    from datetime import datetime, timedelta, timezone
+    monkeypatch.setattr(mobile, 'features', lambda: {key: {'enabled': True} for key in mobile.SECTIONS})
+    monkeypatch.setattr(mobile, 'high_rows', lambda: [{**INFORME['proximos'][0], 'kickoff_utc': datetime.now(timezone.utc)+timedelta(days=1), 'ref_price':1.4, 'batch_date':'2026-10-11'}])
+    monkeypatch.setattr(mobile, 'allocations', lambda rows, stream: {'m1'})
     return TestClient(main.app)
 
 

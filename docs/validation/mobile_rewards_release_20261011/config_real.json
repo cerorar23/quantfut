@@ -1,0 +1,87 @@
+{
+  "features": {
+    "agenda": {
+      "section": "agenda",
+      "enabled": true,
+      "message": "Agenda temporalmente no disponible",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "alta_probabilidad": {
+      "section": "alta_probabilidad",
+      "enabled": true,
+      "message": "Modelo en entrenamiento",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "escalera": {
+      "section": "escalera",
+      "enabled": true,
+      "message": "Modelo en entrenamiento",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "estadisticas": {
+      "section": "estadisticas",
+      "enabled": true,
+      "message": "Estadísticas temporalmente no disponibles",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "h2h": {
+      "section": "h2h",
+      "enabled": true,
+      "message": "Datos del partido temporalmente no disponibles",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "vip": {
+      "section": "vip",
+      "enabled": true,
+      "message": "Acceso VIP temporalmente no disponible",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "nba": {
+      "section": "nba",
+      "enabled": false,
+      "message": "Modelo NBA en entrenamiento",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "comunidad": {
+      "section": "comunidad",
+      "enabled": false,
+      "message": "Comunidad en preparación",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "notificaciones": {
+      "section": "notificaciones",
+      "enabled": false,
+      "message": "Notificaciones en preparación",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "balance": {
+      "section": "balance",
+      "enabled": false,
+      "message": "Seguimiento en preparación",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "medicion": {
+      "section": "medicion",
+      "enabled": false,
+      "message": "Medición en preparación",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "idiomas": {
+      "section": "idiomas",
+      "enabled": false,
+      "message": "Traducciones en preparación",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    },
+    "compras": {
+      "section": "compras",
+      "enabled": false,
+      "message": "Compras en preparación",
+      "updated_at": "2026-10-11T22:41:32.200664+00:00"
+    }
+  },
+  "probability_min": 0.75,
+  "probability_max": 0.9,
+  "high_probability_free_fraction": 0.1,
+  "ladder_free_count": 1,
+  "server_time": "2026-10-11T22:57:22.515614+00:00"
+}

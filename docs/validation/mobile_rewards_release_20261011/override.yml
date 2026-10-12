@@ -1,0 +1,3 @@
+services:
+  api:
+    image: quantfut-api-mobile-rewards:20261011

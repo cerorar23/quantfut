@@ -1,0 +1,540 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-10-11T21:25:26.0211085Z",
+  "selection_min_cases": 500,
+  "sources": [
+    {
+      "path": ".local/alta_prob_ampliacion_20261009.json",
+      "sha256": "415330607639a1d1ddf509fcb00716695b28b87587aa7671ef74a84bfe529d87"
+    },
+    {
+      "path": ".local/escalera_estadistica_20261010_fijos.json",
+      "sha256": "15d3dc100806fe1739ab3a44a2dfdcfe47d08cddfce4e25e9f5fd55092116fc0"
+    },
+    {
+      "path": "apps/mobile/docs/evidence/public_history_20261011.json",
+      "sha256": "9d4fabd62749ba2ca40e1ca1b983988d259a0f4a2bb25b99c27b6a4899433d22"
+    }
+  ],
+  "overall": {
+    "n": 96,
+    "aciertos": 75,
+    "acierto_prometido": 82.6,
+    "acierto_real": 78.1,
+    "diferencia_ic95": null,
+    "por_mercado": {
+      "corners": {
+        "n": 4,
+        "aciertos": 4,
+        "acierto_prometido": 85.8,
+        "acierto_real": 100.0
+      },
+      "corners_away": {
+        "n": 3,
+        "aciertos": 3,
+        "acierto_prometido": 82.2,
+        "acierto_real": 100.0
+      },
+      "corners_home": {
+        "n": 7,
+        "aciertos": 6,
+        "acierto_prometido": 83.1,
+        "acierto_real": 85.7
+      },
+      "double_chance": {
+        "n": 20,
+        "aciertos": 15,
+        "acierto_prometido": 82.0,
+        "acierto_real": 75.0
+      },
+      "h2h": {
+        "n": 4,
+        "aciertos": 3,
+        "acierto_prometido": 87.9,
+        "acierto_real": 75.0
+      },
+      "spreads": {
+        "n": 21,
+        "aciertos": 14,
+        "acierto_prometido": 82.3,
+        "acierto_real": 66.7
+      },
+      "team_totals_away": {
+        "n": 6,
+        "aciertos": 5,
+        "acierto_prometido": 82.5,
+        "acierto_real": 83.3
+      },
+      "team_totals_home": {
+        "n": 10,
+        "aciertos": 10,
+        "acierto_prometido": 81.5,
+        "acierto_real": 100.0
+      },
+      "totals": {
+        "n": 21,
+        "aciertos": 15,
+        "acierto_prometido": 82.2,
+        "acierto_real": 71.4
+      }
+    },
+    "por_mes": [
+      {
+        "mes": "2026-10",
+        "n": 96,
+        "aciertos": 75,
+        "acierto_prometido": 82.6,
+        "acierto_real": 78.1
+      }
+    ],
+    "rendimiento_ref": {
+      "n": 54,
+      "roi": -2.96
+    }
+  },
+  "families": [
+    {
+      "id": "corners_team",
+      "title": "Córners por equipo",
+      "subtitle": "Local y visitante, con su propia línea",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Modelo estadístico de córners por equipo; la publicación de alta probabilidad limita la estimación con la referencia de mercado.",
+      "published": {
+        "n": 10,
+        "won": 9
+      },
+      "lines": [
+        {
+          "key": "corners_home over 1.5",
+          "label": "Local: más de 1,5 córners",
+          "n": 6934,
+          "observed": 93.06,
+          "expected": 93.64,
+          "passed": true,
+          "deployed": true,
+          "band": "60–97 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "corners_away over 2.5",
+          "label": "Visitante: más de 2,5 córners",
+          "n": 842,
+          "observed": 88.95,
+          "expected": 82.08,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "corners_home under 7.5",
+          "label": "Local: menos de 7,5 córners",
+          "n": 2924,
+          "observed": 87.35,
+          "expected": 82.49,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "corners_away under 6.5",
+          "label": "Visitante: menos de 6,5 córners",
+          "n": 3947,
+          "observed": 86.95,
+          "expected": 82.97,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "corners_home over 3.5",
+          "label": "Local: más de 3,5 córners",
+          "n": 402,
+          "observed": 87.81,
+          "expected": 81.93,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        }
+      ]
+    },
+    {
+      "id": "handicap",
+      "title": "Hándicap asiático",
+      "subtitle": "Líneas de protección y empate con devolución",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Ajuste de goles a la referencia de Pinnacle sin margen. Las devoluciones quedan fuera del acierto y de la probabilidad condicionada.",
+      "published": {
+        "n": 21,
+        "won": 14
+      },
+      "lines": [
+        {
+          "key": "spreads +2",
+          "label": "Hándicap +2",
+          "n": 7764,
+          "observed": 90.37,
+          "expected": 89.5,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        },
+        {
+          "key": "spreads +1",
+          "label": "Hándicap +1",
+          "n": 7635,
+          "observed": 89.54,
+          "expected": 88.27,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        },
+        {
+          "key": "spreads +1.5",
+          "label": "Hándicap +1,5",
+          "n": 10765,
+          "observed": 89.15,
+          "expected": 88.19,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        },
+        {
+          "key": "spreads +0",
+          "label": "Hándicap 0",
+          "n": 2858,
+          "observed": 88.24,
+          "expected": 87.03,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        },
+        {
+          "key": "spreads -1",
+          "label": "Hándicap −1",
+          "n": 254,
+          "observed": 86.22,
+          "expected": 84.52,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        }
+      ]
+    },
+    {
+      "id": "team_goals",
+      "title": "Marca un equipo",
+      "subtitle": "Al menos un gol del local o del visitante",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Probabilidades de goles por equipo derivadas del ajuste de goles a Pinnacle sin margen. No es una señal de primer tiempo.",
+      "published": {
+        "n": 16,
+        "won": 15
+      },
+      "lines": [
+        {
+          "key": "team_totals_home",
+          "label": "Marca el local · más de 0,5 goles",
+          "n": 4470,
+          "observed": 88.52,
+          "expected": 86.97,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        },
+        {
+          "key": "team_totals_away",
+          "label": "Marca el visitante · más de 0,5 goles",
+          "n": 2447,
+          "observed": 87.45,
+          "expected": 86.1,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        }
+      ]
+    },
+    {
+      "id": "double_chance",
+      "title": "Doble oportunidad",
+      "subtitle": "Dos resultados posibles en una selección",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Suma de probabilidades del 1X2 de Pinnacle sin margen, según la regla de alta probabilidad.",
+      "published": {
+        "n": 20,
+        "won": 15
+      },
+      "lines": [
+        {
+          "key": "double_chance",
+          "label": "Doble oportunidad · 1X / X2 / 12",
+          "n": 8201,
+          "observed": 86.36,
+          "expected": 85.83,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        }
+      ]
+    },
+    {
+      "id": "corners",
+      "title": "Córners totales",
+      "subtitle": "Más y menos córners del partido completo",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Modelo estadístico de equipos y liga. En alta probabilidad se limita con la probabilidad sin margen de la casa; no mide ritmo en vivo.",
+      "published": {
+        "n": 4,
+        "won": 4
+      },
+      "lines": [
+        {
+          "key": "corners over 6.5",
+          "label": "Más de 6,5 córners",
+          "n": 5865,
+          "observed": 85.27,
+          "expected": 84.28,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "corners under 12.5",
+          "label": "Menos de 12,5 córners",
+          "n": 3619,
+          "observed": 83.06,
+          "expected": 82.65,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "corners under 11.5",
+          "label": "Menos de 11,5 córners",
+          "n": 19,
+          "observed": 100.0,
+          "expected": 80.64,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        }
+      ]
+    },
+    {
+      "id": "goals",
+      "title": "Goles del partido",
+      "subtitle": "Totales con líneas históricamente evaluadas",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Totales derivados del ajuste de goles a Pinnacle sin margen. La prueba valida probabilidades previas al partido, no alertas en vivo.",
+      "published": {
+        "n": 21,
+        "won": 15
+      },
+      "lines": [
+        {
+          "key": "totals over 1.5",
+          "label": "Más de 1,5 goles",
+          "n": 4355,
+          "observed": 84.09,
+          "expected": 84.2,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        },
+        {
+          "key": "totals under 3.5",
+          "label": "Menos de 3,5 goles",
+          "n": 1118,
+          "observed": 83.36,
+          "expected": 82.56,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        },
+        {
+          "key": "totals over 2.5",
+          "label": "Más de 2,5 goles",
+          "n": 51,
+          "observed": 90.2,
+          "expected": 82.33,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        }
+      ]
+    },
+    {
+      "id": "cards",
+      "title": "Tarjetas",
+      "subtitle": "Líneas de menos tarjetas con respaldo histórico",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Modelo estadístico de tarjetas para la escalera. Las líneas 4,5 y 5,5 pasan la revisión local del 10 de octubre, pero aún no están desplegadas. No hay evidencia de una mejora consistente al añadir árbitro.",
+      "published": {
+        "n": 0,
+        "won": 0
+      },
+      "lines": [
+        {
+          "key": "cards under 6.5",
+          "label": "Menos de 6,5 tarjetas",
+          "n": 6725,
+          "observed": 83.84,
+          "expected": 83.1,
+          "passed": true,
+          "deployed": true,
+          "band": "60–97 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "cards under 5.5",
+          "label": "Menos de 5,5 tarjetas",
+          "n": 5653,
+          "observed": 76.7,
+          "expected": 75.59,
+          "passed": true,
+          "deployed": false,
+          "band": "60–97 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        },
+        {
+          "key": "cards under 4.5",
+          "label": "Menos de 4,5 tarjetas",
+          "n": 2712,
+          "observed": 70.61,
+          "expected": 70.6,
+          "passed": true,
+          "deployed": false,
+          "band": "60–97 %",
+          "source": ".local/escalera_estadistica_20261010_fijos.json"
+        }
+      ]
+    },
+    {
+      "id": "winner",
+      "title": "Ganador del partido",
+      "subtitle": "Resultado 1X2 de alta probabilidad",
+      "sport": "Fútbol",
+      "experimental": false,
+      "origin": "Probabilidad de referencia de Pinnacle sin margen. Este acierto no acredita que el modelo propio supere al mercado.",
+      "published": {
+        "n": 4,
+        "won": 3
+      },
+      "lines": [
+        {
+          "key": "h2h",
+          "label": "Ganador · selección de alta probabilidad",
+          "n": 685,
+          "observed": 84.82,
+          "expected": 84.46,
+          "passed": true,
+          "deployed": true,
+          "band": "80–95 %",
+          "source": ".local/alta_prob_ampliacion_20261009.json"
+        }
+      ]
+    },
+    {
+      "id": "nba_winner",
+      "title": "NBA · Ganador",
+      "subtitle": "Evaluación exploratoria · pendiente de confirmación",
+      "sport": "NBA",
+      "experimental": true,
+      "origin": "Modelo NBA propio. Objetivos estadísticos de evaluación, no líneas de una casa; evaluación 2023–26 con selección ≥70 %. Sigue experimental y no accionable.",
+      "published": {
+        "n": 0,
+        "won": 0
+      },
+      "lines": [
+        {
+          "key": "nba_winner",
+          "label": "NBA · Ganador",
+          "n": 1071,
+          "observed": 80.4,
+          "expected": null,
+          "baseline": 69.5,
+          "passed": false,
+          "deployed": true,
+          "band": "Selecciones ≥70 %",
+          "source": "docs/nba_nueve_mercados_estadistica_20261009.md"
+        }
+      ]
+    },
+    {
+      "id": "nba_team",
+      "title": "NBA · Puntos de equipo",
+      "subtitle": "Evaluación exploratoria · pendiente de confirmación",
+      "sport": "NBA",
+      "experimental": true,
+      "origin": "Modelo NBA propio. Objetivos estadísticos de evaluación, no líneas de una casa; evaluación 2023–26 con selección ≥70 %. Sigue experimental y no accionable.",
+      "published": {
+        "n": 0,
+        "won": 0
+      },
+      "lines": [
+        {
+          "key": "nba_team",
+          "label": "NBA · Puntos de equipo",
+          "n": 1721,
+          "observed": 74.3,
+          "expected": null,
+          "baseline": 53.3,
+          "passed": false,
+          "deployed": true,
+          "band": "Selecciones ≥70 %",
+          "source": "docs/nba_nueve_mercados_estadistica_20261009.md"
+        }
+      ]
+    },
+    {
+      "id": "nba_total",
+      "title": "NBA · Total del partido",
+      "subtitle": "Evaluación exploratoria · pendiente de confirmación",
+      "sport": "NBA",
+      "experimental": true,
+      "origin": "Modelo NBA propio. Objetivos estadísticos de evaluación, no líneas de una casa; evaluación 2023–26 con selección ≥70 %. Sigue experimental y no accionable.",
+      "published": {
+        "n": 0,
+        "won": 0
+      },
+      "lines": [
+        {
+          "key": "nba_total",
+          "label": "NBA · Total del partido",
+          "n": 583,
+          "observed": 70.5,
+          "expected": null,
+          "baseline": 52.1,
+          "passed": false,
+          "deployed": true,
+          "band": "Selecciones ≥70 %",
+          "source": "docs/nba_nueve_mercados_estadistica_20261009.md"
+        }
+      ]
+    }
+  ]
+}

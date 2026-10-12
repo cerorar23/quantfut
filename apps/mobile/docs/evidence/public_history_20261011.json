@@ -1,0 +1,92 @@
+{
+  "captured_at_utc": "2026-10-11T21:25:26.0211085Z",
+  "source": "API pública /alta-probabilidad del VPS",
+  "state": "activa",
+  "reasons": [
+    "todo: muestra insuficiente (menos de 10 semanas)",
+    "corners: muestra insuficiente (4 < 50)",
+    "corners_away: muestra insuficiente (3 < 50)",
+    "corners_home: muestra insuficiente (7 < 50)",
+    "double_chance: muestra insuficiente (20 < 50)",
+    "h2h: muestra insuficiente (4 < 50)",
+    "spreads: muestra insuficiente (21 < 50)",
+    "team_totals: muestra insuficiente (16 < 50)",
+    "totals: muestra insuficiente (21 < 50)"
+  ],
+  "history": {
+    "n": 96,
+    "aciertos": 75,
+    "acierto_prometido": 82.6,
+    "acierto_real": 78.1,
+    "diferencia_ic95": null,
+    "por_mercado": {
+      "corners": {
+        "n": 4,
+        "aciertos": 4,
+        "acierto_prometido": 85.8,
+        "acierto_real": 100.0
+      },
+      "corners_away": {
+        "n": 3,
+        "aciertos": 3,
+        "acierto_prometido": 82.2,
+        "acierto_real": 100.0
+      },
+      "corners_home": {
+        "n": 7,
+        "aciertos": 6,
+        "acierto_prometido": 83.1,
+        "acierto_real": 85.7
+      },
+      "double_chance": {
+        "n": 20,
+        "aciertos": 15,
+        "acierto_prometido": 82.0,
+        "acierto_real": 75.0
+      },
+      "h2h": {
+        "n": 4,
+        "aciertos": 3,
+        "acierto_prometido": 87.9,
+        "acierto_real": 75.0
+      },
+      "spreads": {
+        "n": 21,
+        "aciertos": 14,
+        "acierto_prometido": 82.3,
+        "acierto_real": 66.7
+      },
+      "team_totals_away": {
+        "n": 6,
+        "aciertos": 5,
+        "acierto_prometido": 82.5,
+        "acierto_real": 83.3
+      },
+      "team_totals_home": {
+        "n": 10,
+        "aciertos": 10,
+        "acierto_prometido": 81.5,
+        "acierto_real": 100.0
+      },
+      "totals": {
+        "n": 21,
+        "aciertos": 15,
+        "acierto_prometido": 82.2,
+        "acierto_real": 71.4
+      }
+    },
+    "por_mes": [
+      {
+        "mes": "2026-10",
+        "n": 96,
+        "aciertos": 75,
+        "acierto_prometido": 82.6,
+        "acierto_real": 78.1
+      }
+    ],
+    "rendimiento_ref": {
+      "n": 54,
+      "roi": -2.96
+    }
+  }
+}

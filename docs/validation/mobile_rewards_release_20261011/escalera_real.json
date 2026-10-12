@@ -1,0 +1,289 @@
+{
+  "activo": true,
+  "reglas": {
+    "cuota_min": 1.25,
+    "cuota_max": 1.4,
+    "longitudes": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "max_seis_mes": 3,
+    "stake": "10.00",
+    "freeroll_x": 2.5,
+    "ev_min": null,
+    "lineas_handicap": [
+      -1.0,
+      -0.5,
+      0.0,
+      0.5,
+      1.0,
+      1.5,
+      2.0
+    ]
+  },
+  "actuales": [
+    {
+      "reto_id": 1,
+      "inicio": "2026-10-09T08:00:32.219057+00:00",
+      "stake_inicial": "10.00",
+      "pasos_objetivo": 3,
+      "cuota_min": 1.25,
+      "cuota_max": 1.4,
+      "freeroll_x": 2.5,
+      "estado": "esperando",
+      "saldo": "12.60",
+      "retirado": "0.00",
+      "ganados": 1,
+      "en_juego": "12.60",
+      "ganancia": null,
+      "pasos": [
+        {
+          "paso": 1,
+          "match_id": "cl.primera:2627:cobresal-universidad:20261010",
+          "league_id": "cl.primera",
+          "kickoff_utc": "2026-10-10T18:00:00+00:00",
+          "local": "Cobresal",
+          "visitante": "Universidad de Concepcion",
+          "texto": "Más de 1,5 goles",
+          "market": "totals",
+          "prob": 0.79,
+          "price": 1.26,
+          "book": "betano",
+          "outcome": "win",
+          "marcador": "1-1",
+          "valor": null,
+          "batch_date": "2026-10-09",
+          "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+        },
+        {
+          "paso": 2,
+          "match_id": "fr.ligue_2:2627:dijon-metz:20261012",
+          "league_id": "fr.ligue_2",
+          "kickoff_utc": "2026-10-12T18:45:00+00:00",
+          "local": "Dijon",
+          "visitante": "Metz",
+          "texto": "Más de 1,5 goles",
+          "market": "totals",
+          "prob": 0.79,
+          "price": 1.25,
+          "book": "betano",
+          "outcome": null,
+          "marcador": null,
+          "valor": null,
+          "batch_date": "2026-10-11",
+          "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e",
+          "pick_key": "1:2",
+          "locked": false,
+          "free": true
+        }
+      ],
+      "vip": []
+    },
+    {
+      "reto_id": 2,
+      "inicio": "2026-10-09T08:00:32.242213+00:00",
+      "stake_inicial": "10.00",
+      "pasos_objetivo": 6,
+      "cuota_min": 1.25,
+      "cuota_max": 1.4,
+      "freeroll_x": 2.5,
+      "estado": "en_curso",
+      "saldo": "15.75",
+      "retirado": "0.00",
+      "ganados": 2,
+      "en_juego": null,
+      "ganancia": null,
+      "pasos": [
+        {
+          "paso": 1,
+          "match_id": "nl.eredivisie:2627:psveindhove-heerenveen:20261009",
+          "league_id": "nl.eredivisie",
+          "kickoff_utc": "2026-10-09T18:00:00+00:00",
+          "local": "PSV Eindhoven",
+          "visitante": "Heerenveen",
+          "texto": "Gana PSV Eindhoven",
+          "market": "h2h",
+          "prob": 0.79,
+          "price": 1.26,
+          "book": "betano",
+          "outcome": "win",
+          "marcador": "2-0",
+          "valor": null,
+          "batch_date": "2026-10-09",
+          "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+        },
+        {
+          "paso": 2,
+          "match_id": "fr.ligue_1:2627:nice-strasbourg:20261011",
+          "league_id": "fr.ligue_1",
+          "kickoff_utc": "2026-10-11T13:00:00+00:00",
+          "local": "Nice",
+          "visitante": "Strasbourg",
+          "texto": "Más de 1,5 goles",
+          "market": "totals",
+          "prob": 0.8,
+          "price": 1.25,
+          "book": "betano",
+          "outcome": "win",
+          "marcador": "2-1",
+          "valor": null,
+          "batch_date": "2026-10-10",
+          "chain_sha256": "0bb7428ba5991d8b87f31592540c63ef71e21e15bf4058ed9ea143aeb48b0339"
+        }
+      ],
+      "vip": []
+    },
+    {
+      "reto_id": 3,
+      "inicio": "2026-10-09T08:00:32.258936+00:00",
+      "stake_inicial": "10.00",
+      "pasos_objetivo": 4,
+      "cuota_min": 1.25,
+      "cuota_max": 1.4,
+      "freeroll_x": 2.5,
+      "estado": "en_curso",
+      "saldo": "15.63",
+      "retirado": "0.00",
+      "ganados": 2,
+      "en_juego": null,
+      "ganancia": null,
+      "pasos": [
+        {
+          "paso": 1,
+          "match_id": "fr.ligue_2:2627:clermont-redstar93:20261010",
+          "league_id": "fr.ligue_2",
+          "kickoff_utc": "2026-10-10T12:00:00+00:00",
+          "local": "Clermont",
+          "visitante": "RED Star FC 93",
+          "texto": "Marca RED Star FC 93",
+          "market": "team_totals_away",
+          "prob": 0.79,
+          "price": 1.25,
+          "book": "bet365",
+          "outcome": "win",
+          "marcador": "2-3",
+          "valor": null,
+          "batch_date": "2026-10-09",
+          "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+        },
+        {
+          "paso": 2,
+          "match_id": "it.serie_a:2627:sassuolo-milan:20261011",
+          "league_id": "it.serie_a",
+          "kickoff_utc": "2026-10-11T16:00:00+00:00",
+          "local": "Sassuolo",
+          "visitante": "Milan",
+          "texto": "Más de 1,5 goles",
+          "market": "totals",
+          "prob": 0.79,
+          "price": 1.25,
+          "book": "betano",
+          "outcome": "win",
+          "marcador": "1-1",
+          "valor": null,
+          "batch_date": "2026-10-11",
+          "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e"
+        }
+      ],
+      "vip": []
+    },
+    {
+      "reto_id": 4,
+      "inicio": "2026-10-09T08:00:32.266347+00:00",
+      "stake_inicial": "10.00",
+      "pasos_objetivo": 5,
+      "cuota_min": 1.25,
+      "cuota_max": 1.4,
+      "freeroll_x": 2.5,
+      "estado": "esperando",
+      "saldo": "12.50",
+      "retirado": "0.00",
+      "ganados": 1,
+      "en_juego": "12.50",
+      "ganancia": null,
+      "pasos": [
+        {
+          "paso": 1,
+          "match_id": "fr.ligue_1:2627:brest-angers:20261010",
+          "league_id": "fr.ligue_1",
+          "kickoff_utc": "2026-10-10T18:45:00+00:00",
+          "local": "Brest",
+          "visitante": "Angers",
+          "texto": "Más de 1,5 goles",
+          "market": "totals",
+          "prob": 0.79,
+          "price": 1.25,
+          "book": "betano",
+          "outcome": "win",
+          "marcador": "5-1",
+          "valor": null,
+          "batch_date": "2026-10-09",
+          "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+        }
+      ],
+      "vip": [
+        {
+          "match_id": "br.serie_a:2026:coritiba-botafogorj:20261011",
+          "league_id": "br.serie_a",
+          "kickoff_utc": "2026-10-12T19:00:00+00:00",
+          "local": "Coritiba",
+          "visitante": "Botafogo RJ",
+          "batch_date": "2026-10-11",
+          "locked": true,
+          "pick_key": "4:2"
+        }
+      ]
+    }
+  ],
+  "historial": [],
+  "resumen": {
+    "cerrados": 0,
+    "completados": 0,
+    "tasa_completados": null,
+    "invertido": "0.00",
+    "ganancia": "0.00",
+    "roi": null
+  },
+  "por_longitud": {
+    "3": {
+      "cerrados": 0,
+      "completados": 0,
+      "tasa_completados": null,
+      "invertido": "0.00",
+      "ganancia": "0.00",
+      "roi": null
+    },
+    "4": {
+      "cerrados": 0,
+      "completados": 0,
+      "tasa_completados": null,
+      "invertido": "0.00",
+      "ganancia": "0.00",
+      "roi": null
+    },
+    "5": {
+      "cerrados": 0,
+      "completados": 0,
+      "tasa_completados": null,
+      "invertido": "0.00",
+      "ganancia": "0.00",
+      "roi": null
+    },
+    "6": {
+      "cerrados": 0,
+      "completados": 0,
+      "tasa_completados": null,
+      "invertido": "0.00",
+      "ganancia": "0.00",
+      "roi": null
+    }
+  },
+  "serie": [],
+  "escalones": {
+    "n": 6,
+    "aciertos": 6,
+    "prob_media": 79.1
+  }
+}

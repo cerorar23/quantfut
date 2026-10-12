@@ -102,9 +102,13 @@ def test_ruta_publica_de_la_escalera(monkeypatch):
     from qf.publish import escalera_datos
 
     monkeypatch.setattr(main.ratelimit, "rate_limited", lambda *_a: False)
-    monkeypatch.setattr(escalera_datos, "informe_publico", lambda: {"actual": None, "historial": []})
+    from qf.api import mobile
+    monkeypatch.setattr(mobile, 'features', lambda: {key: {'enabled': True} for key in mobile.SECTIONS})
+    monkeypatch.setattr(mobile, 'allocations', lambda rows, stream: set())
+    monkeypatch.setattr(escalera_datos, "informe_publico", lambda: {"activo": True, "actuales": [], "historial": []})
     r = TestClient(main.app).get("/escalera")
-    assert r.status_code == 200 and r.json() == {"actual": None, "historial": []}
+    assert r.status_code == 200 and r.json() == {"activo": True, "actuales": [], "historial": []}
+    assert r.headers['cache-control'] == 'no-store'
 
 
 def test_apagada_no_elige_nada(monkeypatch):

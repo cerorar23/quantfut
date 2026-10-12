@@ -1,0 +1,35 @@
+{
+  "health": {
+    "status": 200,
+    "cache_control": null
+  },
+  "web": {
+    "status": 200,
+    "cache_control": null
+  },
+  "config": {
+    "status": 200,
+    "cache_control": "no-store"
+  },
+  "home": {
+    "status": 200,
+    "cache_control": "no-store",
+    "agenda": 99,
+    "public_picks": 2,
+    "vip_picks": 15,
+    "free_ladder_steps": 1
+  },
+  "rewards": {
+    "status": 200,
+    "cache_control": "no-store",
+    "providers_pending": 6
+  },
+  "alta": {
+    "status": 200,
+    "cache_control": "no-store"
+  },
+  "escalera": {
+    "status": 200,
+    "cache_control": "no-store"
+  }
+}

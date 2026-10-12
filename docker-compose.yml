@@ -22,7 +22,7 @@ services:
 
   api:
     build: .
-    image: quantfut-api-menu70:20261009
+    image: quantfut-api-mobile-rewards:20261011
     env_file: .env
     depends_on:
       db: {condition: service_healthy}

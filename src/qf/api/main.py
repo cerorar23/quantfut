@@ -55,7 +55,7 @@ import json
 import os
 
 import redis
-from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -68,6 +68,8 @@ from .cuentas import router as cuentas_router
 from .fichas import router as fichas_router
 from .panel import router as panel_router
 from .web import router as web_router
+from .mobile import router as mobile_router
+from .rewards import router as rewards_router
 from ..comercial.entrega import picks_for_tiers
 from ..config import settings
 from ..db import query, query_one
@@ -203,25 +205,27 @@ def track_record():
 
 
 @publico.get("/escalera")
-def escalera():
+def escalera(response: Response):
     """
     Reto escalera: el reto en curso con sus escalones sellados, el historial
     de retos cerrados (también los fallidos) y la ganancia acumulada.
     """
-    from ..publish import escalera_datos
-    return escalera_datos.informe_publico()
+    from .mobile import ladder
+    response.headers['Cache-Control'] = 'no-store'
+    return ladder()
 
 
 @publico.get("/alta-probabilidad")
-def alta_probabilidad():
+def alta_probabilidad(response: Response):
     """
     Línea de alta probabilidad: pronósticos sellados con probabilidad real
-    (Pinnacle sin margen) entre el 80 y el 95 %, y su historial de acierto
-    prometido frente a real, entero. Es una línea de acierto, no de valor.
+    (Pinnacle sin margen) filtrados al 75–90 %, 10 % gratuito por lote.
+    El historial de acierto se conserva entero. Las puertas de publicación
+    y su rango original se mantienen en el pipeline.
     """
-    from ..publish import alta_prob_datos
-    return alta_prob_datos.informe_publico()
-
+    from .mobile import high_probability
+    response.headers['Cache-Control'] = 'no-store'
+    return high_probability()
 
 @publico.get("/parley")
 def parley():
@@ -735,6 +739,8 @@ app.include_router(cuentas_public_router)
 app.include_router(cuenta_web_router)
 app.include_router(web_router)
 app.include_router(fichas_router)
+app.include_router(mobile_router)
+app.include_router(rewards_router)
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

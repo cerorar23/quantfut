@@ -1,0 +1,1389 @@
+{
+  "config": {
+    "features": {
+      "agenda": {
+        "section": "agenda",
+        "enabled": true,
+        "message": "Agenda temporalmente no disponible",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "alta_probabilidad": {
+        "section": "alta_probabilidad",
+        "enabled": true,
+        "message": "Modelo en entrenamiento",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "escalera": {
+        "section": "escalera",
+        "enabled": true,
+        "message": "Modelo en entrenamiento",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "estadisticas": {
+        "section": "estadisticas",
+        "enabled": true,
+        "message": "Estadísticas temporalmente no disponibles",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "h2h": {
+        "section": "h2h",
+        "enabled": true,
+        "message": "Datos del partido temporalmente no disponibles",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "vip": {
+        "section": "vip",
+        "enabled": true,
+        "message": "Acceso VIP temporalmente no disponible",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "nba": {
+        "section": "nba",
+        "enabled": false,
+        "message": "Modelo NBA en entrenamiento",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "comunidad": {
+        "section": "comunidad",
+        "enabled": false,
+        "message": "Comunidad en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "notificaciones": {
+        "section": "notificaciones",
+        "enabled": false,
+        "message": "Notificaciones en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "balance": {
+        "section": "balance",
+        "enabled": false,
+        "message": "Seguimiento en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "medicion": {
+        "section": "medicion",
+        "enabled": false,
+        "message": "Medición en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "idiomas": {
+        "section": "idiomas",
+        "enabled": false,
+        "message": "Traducciones en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "compras": {
+        "section": "compras",
+        "enabled": false,
+        "message": "Compras en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      }
+    },
+    "probability_min": 0.75,
+    "probability_max": 0.9,
+    "high_probability_free_fraction": 0.1,
+    "ladder_free_count": 1,
+    "server_time": "2026-10-11T22:43:00.174007+00:00"
+  },
+  "ficha": {
+    "partido": {
+      "match_id": "ar.primera:2026:tallerescor-independient:20261011",
+      "kickoff_utc": "2026-10-12T00:30:00+00:00",
+      "estado": "scheduled",
+      "temporada": "2627",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina",
+        "copa": false
+      },
+      "marcador": null,
+      "descanso": null,
+      "xg": null,
+      "estadisticas": null
+    },
+    "local": {
+      "id": 28410,
+      "nombre": "Talleres Cordoba",
+      "escudo": "/web/escudos/28410.png",
+      "forma": {
+        "partidos": [
+          {
+            "match_id": "ar.primera:2026:tallerescor-belgrano:20261004",
+            "fecha": "2026-10-04T20:00:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": true,
+            "rival": "Belgrano Cordoba",
+            "rival_escudo": "/web/escudos/28419.png",
+            "gf": 0,
+            "gc": 1,
+            "res": "P",
+            "marcador": "0-1",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              15,
+              11
+            ],
+            "tiros_puerta": [
+              6,
+              2
+            ],
+            "corners": [
+              4,
+              5
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:instituto-tallerescor:20260920",
+            "fecha": "2026-09-20T01:15:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": false,
+            "rival": "Instituto Cordoba",
+            "rival_escudo": "/web/escudos/39412.png",
+            "gf": 1,
+            "gc": 3,
+            "res": "P",
+            "marcador": "3-1",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:tallerescor-uniondesan:20260913",
+            "fecha": "2026-09-13T00:00:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": true,
+            "rival": "Union Santa Fe",
+            "rival_escudo": "/web/escudos/28421.png",
+            "gf": 2,
+            "gc": 1,
+            "res": "G",
+            "marcador": "2-1",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:sanlorenzo-tallerescor:20260905",
+            "fecha": "2026-09-05T23:00:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": false,
+            "rival": "San Lorenzo",
+            "rival_escudo": "/web/escudos/28413.png",
+            "gf": 0,
+            "gc": 1,
+            "res": "P",
+            "marcador": "1-0",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:tallerescor-centralcord:20260830",
+            "fecha": "2026-08-30T01:30:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": true,
+            "rival": "Central Cordoba de Santiago",
+            "rival_escudo": "/web/escudos/30718.png",
+            "gf": 0,
+            "gc": 0,
+            "res": "E",
+            "marcador": "0-0",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          }
+        ],
+        "resumen": {
+          "G": 1,
+          "E": 1,
+          "P": 3,
+          "gf": 3,
+          "gc": 6,
+          "puntos": 4,
+          "racha": "PPGPE",
+          "n": 5
+        }
+      },
+      "promedios": {
+        "todos": {
+          "n": 10,
+          "goles_favor": 1.1,
+          "goles_contra": 1.7,
+          "xg_favor": null,
+          "xg_contra": null,
+          "tiros_favor": 15.0,
+          "tiros_contra": 11.0,
+          "tiros_puerta_favor": 6.0,
+          "corners_favor": 4.0,
+          "corners_contra": 5.0,
+          "pct_ambos_marcan": 50.0,
+          "pct_mas_2_5": 70.0,
+          "pct_porteria_cero": 20.0
+        },
+        "casa": {
+          "n": 6,
+          "goles_favor": 0.8333333333333334,
+          "goles_contra": 1.6666666666666667,
+          "xg_favor": null,
+          "xg_contra": null,
+          "tiros_favor": 15.0,
+          "tiros_contra": 11.0,
+          "tiros_puerta_favor": 6.0,
+          "corners_favor": 4.0,
+          "corners_contra": 5.0,
+          "pct_ambos_marcan": 50.0,
+          "pct_mas_2_5": 66.66666666666667,
+          "pct_porteria_cero": 16.666666666666668
+        },
+        "fuera": {
+          "n": 4,
+          "goles_favor": 1.5,
+          "goles_contra": 1.75,
+          "xg_favor": null,
+          "xg_contra": null,
+          "tiros_favor": null,
+          "tiros_contra": null,
+          "tiros_puerta_favor": null,
+          "corners_favor": null,
+          "corners_contra": null,
+          "pct_ambos_marcan": 50.0,
+          "pct_mas_2_5": 75.0,
+          "pct_porteria_cero": 25.0
+        }
+      },
+      "clasificacion": {
+        "league_id": "ar.primera",
+        "liga": "Liga Profesional",
+        "grupo": "Clausura - Group A",
+        "posicion": 15,
+        "puntos": 8,
+        "jugados": 11,
+        "ganados": 2,
+        "empatados": 2,
+        "perdidos": 7,
+        "goles_favor": 11,
+        "goles_contra": 18,
+        "forma": "LLWLD",
+        "descripcion": null
+      }
+    },
+    "visitante": {
+      "id": 28420,
+      "nombre": "Independiente",
+      "escudo": "/web/escudos/28420.png",
+      "forma": {
+        "partidos": [
+          {
+            "match_id": "ar.primera:2026:independient-instituto:20261002",
+            "fecha": "2026-10-02T22:15:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": true,
+            "rival": "Instituto Cordoba",
+            "rival_escudo": "/web/escudos/39412.png",
+            "gf": 1,
+            "gc": 4,
+            "res": "P",
+            "marcador": "1-4",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              8,
+              13
+            ],
+            "tiros_puerta": [
+              2,
+              6
+            ],
+            "corners": [
+              3,
+              7
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:uniondesan-independient:20260919",
+            "fecha": "2026-09-19T20:45:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": false,
+            "rival": "Union Santa Fe",
+            "rival_escudo": "/web/escudos/28421.png",
+            "gf": 2,
+            "gc": 1,
+            "res": "G",
+            "marcador": "1-2",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:independient-sanlorenzo:20260913",
+            "fecha": "2026-09-13T23:15:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": true,
+            "rival": "San Lorenzo",
+            "rival_escudo": "/web/escudos/28413.png",
+            "gf": 1,
+            "gc": 1,
+            "res": "E",
+            "marcador": "1-1",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:centralcord-independient:20260906",
+            "fecha": "2026-09-06T21:00:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": false,
+            "rival": "Central Cordoba de Santiago",
+            "rival_escudo": "/web/escudos/30718.png",
+            "gf": 1,
+            "gc": 0,
+            "res": "G",
+            "marcador": "0-1",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          },
+          {
+            "match_id": "ar.primera:2627:independient-gimnasiamen:20260830",
+            "fecha": "2026-08-30T23:15:00+00:00",
+            "competicion": "Liga Profesional",
+            "local": true,
+            "rival": "Gimnasia M.",
+            "rival_escudo": "/web/escudos/84891.png",
+            "gf": 0,
+            "gc": 3,
+            "res": "P",
+            "marcador": "0-3",
+            "xg": [
+              null,
+              null
+            ],
+            "tiros": [
+              null,
+              null
+            ],
+            "tiros_puerta": [
+              null,
+              null
+            ],
+            "corners": [
+              null,
+              null
+            ]
+          }
+        ],
+        "resumen": {
+          "G": 2,
+          "E": 1,
+          "P": 2,
+          "gf": 5,
+          "gc": 9,
+          "puntos": 7,
+          "racha": "PGEGP",
+          "n": 5
+        }
+      },
+      "promedios": {
+        "todos": {
+          "n": 10,
+          "goles_favor": 0.9,
+          "goles_contra": 1.2,
+          "xg_favor": null,
+          "xg_contra": null,
+          "tiros_favor": 8.0,
+          "tiros_contra": 13.0,
+          "tiros_puerta_favor": 2.0,
+          "corners_favor": 3.0,
+          "corners_contra": 7.0,
+          "pct_ambos_marcan": 40.0,
+          "pct_mas_2_5": 40.0,
+          "pct_porteria_cero": 30.0
+        },
+        "casa": {
+          "n": 6,
+          "goles_favor": 0.5,
+          "goles_contra": 1.5,
+          "xg_favor": null,
+          "xg_contra": null,
+          "tiros_favor": 8.0,
+          "tiros_contra": 13.0,
+          "tiros_puerta_favor": 2.0,
+          "corners_favor": 3.0,
+          "corners_contra": 7.0,
+          "pct_ambos_marcan": 33.333333333333336,
+          "pct_mas_2_5": 33.333333333333336,
+          "pct_porteria_cero": 33.333333333333336
+        },
+        "fuera": {
+          "n": 4,
+          "goles_favor": 1.5,
+          "goles_contra": 0.75,
+          "xg_favor": null,
+          "xg_contra": null,
+          "tiros_favor": null,
+          "tiros_contra": null,
+          "tiros_puerta_favor": null,
+          "corners_favor": null,
+          "corners_contra": null,
+          "pct_ambos_marcan": 50.0,
+          "pct_mas_2_5": 50.0,
+          "pct_porteria_cero": 25.0
+        }
+      },
+      "clasificacion": {
+        "league_id": "ar.primera",
+        "liga": "Liga Profesional",
+        "grupo": "Clausura - Group A",
+        "posicion": 8,
+        "puntos": 17,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 2,
+        "perdidos": 4,
+        "goles_favor": 11,
+        "goles_contra": 12,
+        "forma": "LWDWL",
+        "descripcion": "Knockout Phase"
+      }
+    },
+    "cara_a_cara": {
+      "partidos": [
+        {
+          "match_id": "ar.primera:2627:independient-tallerescor:20260321",
+          "fecha": "2026-03-21T23:00:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": false,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 2,
+          "gc": 1,
+          "res": "G",
+          "marcador": "1-2",
+          "xg": [
+            null,
+            null
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2526:independient-tallerescor:20250721",
+          "fecha": "2025-07-21T01:00:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": false,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 2,
+          "gc": 1,
+          "res": "G",
+          "marcador": "1-2",
+          "xg": [
+            1.0,
+            1.0
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2526:tallerescor-independient:20250129",
+          "fecha": "2025-01-29T20:00:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": true,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 2,
+          "gc": 3,
+          "res": "P",
+          "marcador": "2-3",
+          "xg": [
+            1.8,
+            1.0
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2425:independient-tallerescor:20240511",
+          "fecha": "2024-05-11T21:30:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": false,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 3,
+          "gc": 1,
+          "res": "G",
+          "marcador": "1-3",
+          "xg": [
+            1.3,
+            0.4
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2425:independient-tallerescor:20240416",
+          "fecha": "2024-04-16T00:00:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": false,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 2,
+          "gc": 2,
+          "res": "E",
+          "marcador": "2-2",
+          "xg": [
+            null,
+            null
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2324:tallerescor-independient:20231126",
+          "fecha": "2023-11-26T21:00:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": true,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 3,
+          "gc": 2,
+          "res": "G",
+          "marcador": "3-2",
+          "xg": [
+            null,
+            null
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2324:tallerescor-independient:20230128",
+          "fecha": "2023-01-28T22:15:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": true,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 0,
+          "gc": 1,
+          "res": "P",
+          "marcador": "0-1",
+          "xg": [
+            0.5,
+            0.8
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2223:independient-tallerescor:20220611",
+          "fecha": "2022-06-11T01:30:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": false,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 0,
+          "gc": 1,
+          "res": "P",
+          "marcador": "1-0",
+          "xg": [
+            1.0,
+            0.7
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2122:tallerescor-independient:20211213",
+          "fecha": "2021-12-13T00:30:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": true,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 1,
+          "gc": 2,
+          "res": "P",
+          "marcador": "1-2",
+          "xg": [
+            1.2,
+            1.3
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        },
+        {
+          "match_id": "ar.primera:2122:tallerescor-independient:20210403",
+          "fecha": "2021-04-03T18:00:00+00:00",
+          "competicion": "Liga Profesional",
+          "local": true,
+          "rival": "Independiente",
+          "rival_escudo": "/web/escudos/28420.png",
+          "gf": 3,
+          "gc": 1,
+          "res": "G",
+          "marcador": "3-1",
+          "xg": [
+            null,
+            null
+          ],
+          "tiros": [
+            null,
+            null
+          ],
+          "tiros_puerta": [
+            null,
+            null
+          ],
+          "corners": [
+            null,
+            null
+          ]
+        }
+      ],
+      "resumen": {
+        "n": 10,
+        "victorias_local": 5,
+        "empates": 1,
+        "victorias_visitante": 4,
+        "goles_media": 3.3,
+        "pct_ambos_marcan": 80.0,
+        "pct_mas_2_5": 80.0
+      }
+    },
+    "tabla": [
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 1,
+        "team_id": 39412,
+        "equipo": "Instituto Cordoba",
+        "puntos": 26,
+        "jugados": 12,
+        "ganados": 8,
+        "empatados": 2,
+        "perdidos": 2,
+        "goles_favor": 19,
+        "goles_contra": 10,
+        "forma": "DWWWL",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/39412.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 2,
+        "team_id": 28408,
+        "equipo": "Defensa Y Justicia",
+        "puntos": 24,
+        "jugados": 12,
+        "ganados": 7,
+        "empatados": 3,
+        "perdidos": 2,
+        "goles_favor": 18,
+        "goles_contra": 11,
+        "forma": "WWDWL",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28408.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 3,
+        "team_id": 28426,
+        "equipo": "Boca Juniors",
+        "puntos": 21,
+        "jugados": 12,
+        "ganados": 5,
+        "empatados": 6,
+        "perdidos": 1,
+        "goles_favor": 19,
+        "goles_contra": 13,
+        "forma": "DWWWD",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28426.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 4,
+        "team_id": 28406,
+        "equipo": "Velez Sarsfield",
+        "puntos": 21,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 6,
+        "perdidos": 0,
+        "goles_favor": 17,
+        "goles_contra": 11,
+        "forma": "DWDWD",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28406.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 5,
+        "team_id": 28425,
+        "equipo": "Lanus",
+        "puntos": 17,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 2,
+        "perdidos": 4,
+        "goles_favor": 13,
+        "goles_contra": 9,
+        "forma": "DWWWL",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28425.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 6,
+        "team_id": 28418,
+        "equipo": "Newells Old Boys",
+        "puntos": 17,
+        "jugados": 11,
+        "ganados": 4,
+        "empatados": 5,
+        "perdidos": 2,
+        "goles_favor": 11,
+        "goles_contra": 8,
+        "forma": "DWDDD",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28418.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 7,
+        "team_id": 84891,
+        "equipo": "Gimnasia M.",
+        "puntos": 17,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 2,
+        "perdidos": 4,
+        "goles_favor": 14,
+        "goles_contra": 12,
+        "forma": "LDLDW",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/84891.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 8,
+        "team_id": 28420,
+        "equipo": "Independiente",
+        "puntos": 17,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 2,
+        "perdidos": 4,
+        "goles_favor": 11,
+        "goles_contra": 12,
+        "forma": "LWDWL",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28420.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 9,
+        "team_id": 28416,
+        "equipo": "Estudiantes L.P.",
+        "puntos": 14,
+        "jugados": 12,
+        "ganados": 4,
+        "empatados": 2,
+        "perdidos": 6,
+        "goles_favor": 15,
+        "goles_contra": 13,
+        "forma": "DWLWL",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28416.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 10,
+        "team_id": 28413,
+        "equipo": "San Lorenzo",
+        "puntos": 14,
+        "jugados": 12,
+        "ganados": 4,
+        "empatados": 2,
+        "perdidos": 6,
+        "goles_favor": 5,
+        "goles_contra": 11,
+        "forma": "WLLDW",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28413.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 11,
+        "team_id": 28421,
+        "equipo": "Union Santa Fe",
+        "puntos": 13,
+        "jugados": 12,
+        "ganados": 4,
+        "empatados": 1,
+        "perdidos": 7,
+        "goles_favor": 17,
+        "goles_contra": 21,
+        "forma": "LLLLW",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28421.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 12,
+        "team_id": 39538,
+        "equipo": "Deportivo Riestra",
+        "puntos": 11,
+        "jugados": 12,
+        "ganados": 2,
+        "empatados": 5,
+        "perdidos": 5,
+        "goles_favor": 9,
+        "goles_contra": 12,
+        "forma": "LDDLD",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/39538.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 13,
+        "team_id": 39291,
+        "equipo": "Platense",
+        "puntos": 10,
+        "jugados": 11,
+        "ganados": 2,
+        "empatados": 4,
+        "perdidos": 5,
+        "goles_favor": 11,
+        "goles_contra": 17,
+        "forma": "DLLDL",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/39291.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 14,
+        "team_id": 30718,
+        "equipo": "Central Cordoba de Santiago",
+        "puntos": 10,
+        "jugados": 12,
+        "ganados": 2,
+        "empatados": 4,
+        "perdidos": 6,
+        "goles_favor": 10,
+        "goles_contra": 16,
+        "forma": "DDDLL",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/30718.png"
+      },
+      {
+        "grupo": "Clausura - Group A",
+        "posicion": 15,
+        "team_id": 28410,
+        "equipo": "Talleres Cordoba",
+        "puntos": 8,
+        "jugados": 11,
+        "ganados": 2,
+        "empatados": 2,
+        "perdidos": 7,
+        "goles_favor": 11,
+        "goles_contra": 18,
+        "forma": "LLWLD",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28410.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 1,
+        "team_id": 29338,
+        "equipo": "Argentinos JRS",
+        "puntos": 21,
+        "jugados": 11,
+        "ganados": 6,
+        "empatados": 3,
+        "perdidos": 2,
+        "goles_favor": 15,
+        "goles_contra": 10,
+        "forma": "WLDDW",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/29338.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 2,
+        "team_id": 28419,
+        "equipo": "Belgrano Cordoba",
+        "puntos": 19,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 4,
+        "perdidos": 2,
+        "goles_favor": 12,
+        "goles_contra": 7,
+        "forma": "WWDDD",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28419.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 3,
+        "team_id": 28401,
+        "equipo": "Sarmiento Junin",
+        "puntos": 19,
+        "jugados": 11,
+        "ganados": 6,
+        "empatados": 1,
+        "perdidos": 4,
+        "goles_favor": 20,
+        "goles_contra": 17,
+        "forma": "WLDWL",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28401.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 4,
+        "team_id": 28407,
+        "equipo": "Rosario Central",
+        "puntos": 19,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 4,
+        "perdidos": 2,
+        "goles_favor": 12,
+        "goles_contra": 9,
+        "forma": "DWWDL",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28407.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 5,
+        "team_id": 28404,
+        "equipo": "Huracan",
+        "puntos": 19,
+        "jugados": 12,
+        "ganados": 5,
+        "empatados": 4,
+        "perdidos": 3,
+        "goles_favor": 11,
+        "goles_contra": 10,
+        "forma": "LWWWD",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28404.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 6,
+        "team_id": 28405,
+        "equipo": "Gimnasia L.P.",
+        "puntos": 19,
+        "jugados": 12,
+        "ganados": 5,
+        "empatados": 4,
+        "perdidos": 3,
+        "goles_favor": 17,
+        "goles_contra": 17,
+        "forma": "DDDDW",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28405.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 7,
+        "team_id": 39540,
+        "equipo": "Independ. Rivadavia",
+        "puntos": 18,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 3,
+        "perdidos": 3,
+        "goles_favor": 15,
+        "goles_contra": 14,
+        "forma": "DWWLW",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/39540.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 8,
+        "team_id": 39329,
+        "equipo": "Barracas Central",
+        "puntos": 18,
+        "jugados": 12,
+        "ganados": 5,
+        "empatados": 3,
+        "perdidos": 4,
+        "goles_favor": 10,
+        "goles_contra": 9,
+        "forma": "WWLDD",
+        "descripcion": "Knockout Phase",
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/39329.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 9,
+        "team_id": 28423,
+        "equipo": "River Plate",
+        "puntos": 16,
+        "jugados": 11,
+        "ganados": 5,
+        "empatados": 1,
+        "perdidos": 5,
+        "goles_favor": 14,
+        "goles_contra": 12,
+        "forma": "WLWWW",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28423.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 10,
+        "team_id": 28411,
+        "equipo": "Atletico Tucuman",
+        "puntos": 14,
+        "jugados": 12,
+        "ganados": 3,
+        "empatados": 5,
+        "perdidos": 4,
+        "goles_favor": 10,
+        "goles_contra": 10,
+        "forma": "DLLLW",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28411.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 11,
+        "team_id": 28424,
+        "equipo": "Banfield",
+        "puntos": 13,
+        "jugados": 12,
+        "ganados": 3,
+        "empatados": 4,
+        "perdidos": 5,
+        "goles_favor": 14,
+        "goles_contra": 18,
+        "forma": "WDDDL",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28424.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 12,
+        "team_id": 28415,
+        "equipo": "Tigre",
+        "puntos": 12,
+        "jugados": 12,
+        "ganados": 3,
+        "empatados": 3,
+        "perdidos": 6,
+        "goles_favor": 11,
+        "goles_contra": 13,
+        "forma": "LLLLL",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28415.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 13,
+        "team_id": 28409,
+        "equipo": "Racing Club",
+        "puntos": 11,
+        "jugados": 11,
+        "ganados": 3,
+        "empatados": 2,
+        "perdidos": 6,
+        "goles_favor": 13,
+        "goles_contra": 17,
+        "forma": "WWLLL",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28409.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 14,
+        "team_id": 28427,
+        "equipo": "Aldosivi",
+        "puntos": 8,
+        "jugados": 12,
+        "ganados": 2,
+        "empatados": 2,
+        "perdidos": 8,
+        "goles_favor": 13,
+        "goles_contra": 20,
+        "forma": "LLWLW",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/28427.png"
+      },
+      {
+        "grupo": "Clausura - Group B",
+        "posicion": 15,
+        "team_id": 84892,
+        "equipo": "Estudiantes de Rio Cuarto",
+        "puntos": 6,
+        "jugados": 12,
+        "ganados": 1,
+        "empatados": 3,
+        "perdidos": 8,
+        "goles_favor": 6,
+        "goles_contra": 16,
+        "forma": "LLLLL",
+        "descripcion": null,
+        "updated_at": "2026-10-11T22:40:03.695392+00:00",
+        "escudo": "/web/escudos/84892.png"
+      }
+    ],
+    "alineaciones": {},
+    "bajas": {
+      "comprobada": "2026-10-11T20:00:07.305756+00:00",
+      "home": [],
+      "away": []
+    },
+    "probabilities": {
+      "away": 0.3219640380564185,
+      "draw": 0.3115581133597174,
+      "home": 0.3664778485838642
+    }
+  },
+  "picks": [
+    {
+      "match_id": "ar.primera:2026:tallerescor-independient:20261011",
+      "league_id": "ar.primera",
+      "kickoff_utc": "2026-10-12T00:30:00+00:00",
+      "local": "Talleres Cordoba",
+      "visitante": "Independiente",
+      "market": "totals",
+      "selection": "under",
+      "line": 3.5,
+      "prob": 0.81,
+      "ref_price": 1.22,
+      "ref_book": "betano",
+      "odds_as_of": "2026-10-11T04:03:22+00:00",
+      "batch_date": "2026-10-11",
+      "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e",
+      "texto": "Menos de 3,5 goles",
+      "locked": false,
+      "free": true,
+      "pick_key": "ar.primera:2026:tallerescor-independient:20261011",
+      "fair_price": 1.23
+    }
+  ],
+  "locked": false
+}

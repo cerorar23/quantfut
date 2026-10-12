@@ -1,0 +1,286 @@
+{
+  "estado": "activa",
+  "motivos": [
+    "todo: muestra insuficiente (menos de 10 semanas)",
+    "corners: muestra insuficiente (5 < 50)",
+    "corners_away: muestra insuficiente (3 < 50)",
+    "corners_home: muestra insuficiente (9 < 50)",
+    "double_chance: muestra insuficiente (20 < 50)",
+    "h2h: muestra insuficiente (4 < 50)",
+    "spreads: muestra insuficiente (23 < 50)",
+    "team_totals: muestra insuficiente (18 < 50)",
+    "totals: muestra insuficiente (21 < 50)"
+  ],
+  "proximos": [
+    {
+      "match_id": "ar.primera:2026:tallerescor-independient:20261011",
+      "league_id": "ar.primera",
+      "kickoff_utc": "2026-10-12T00:30:00+00:00",
+      "local": "Talleres Cordoba",
+      "visitante": "Independiente",
+      "market": "totals",
+      "selection": "under",
+      "line": 3.5,
+      "prob": 0.81,
+      "ref_price": 1.22,
+      "ref_book": "betano",
+      "odds_as_of": "2026-10-11T04:03:22+00:00",
+      "batch_date": "2026-10-11",
+      "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e",
+      "texto": "Menos de 3,5 goles",
+      "locked": false,
+      "free": true,
+      "pick_key": "ar.primera:2026:tallerescor-independient:20261011",
+      "fair_price": 1.23
+    },
+    {
+      "match_id": "mx.liga_mx:2026A:unampumas-cruzazul:20261012",
+      "league_id": "mx.liga_mx",
+      "kickoff_utc": "2026-10-12T01:15:00+00:00",
+      "local": "U.N.A.M. - Pumas",
+      "visitante": "Cruz Azul",
+      "market": "totals",
+      "selection": "over",
+      "line": 1.5,
+      "prob": 0.81,
+      "ref_price": 1.22,
+      "ref_book": "betano",
+      "odds_as_of": "2026-10-11T03:45:17+00:00",
+      "batch_date": "2026-10-11",
+      "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e",
+      "texto": "Más de 1,5 goles",
+      "locked": false,
+      "free": true,
+      "pick_key": "mx.liga_mx:2026A:unampumas-cruzazul:20261012",
+      "fair_price": 1.23
+    }
+  ],
+  "historial": {
+    "n": 103,
+    "aciertos": 81,
+    "acierto_prometido": 82.6,
+    "acierto_real": 78.6,
+    "diferencia_ic95": null,
+    "por_mercado": {
+      "corners": {
+        "n": 5,
+        "aciertos": 5,
+        "acierto_prometido": 84.6,
+        "acierto_real": 100.0
+      },
+      "corners_away": {
+        "n": 3,
+        "aciertos": 3,
+        "acierto_prometido": 82.2,
+        "acierto_real": 100.0
+      },
+      "corners_home": {
+        "n": 9,
+        "aciertos": 8,
+        "acierto_prometido": 82.8,
+        "acierto_real": 88.9
+      },
+      "double_chance": {
+        "n": 20,
+        "aciertos": 15,
+        "acierto_prometido": 82.0,
+        "acierto_real": 75.0
+      },
+      "h2h": {
+        "n": 4,
+        "aciertos": 3,
+        "acierto_prometido": 87.9,
+        "acierto_real": 75.0
+      },
+      "spreads": {
+        "n": 23,
+        "aciertos": 15,
+        "acierto_prometido": 82.7,
+        "acierto_real": 65.2
+      },
+      "team_totals_away": {
+        "n": 6,
+        "aciertos": 5,
+        "acierto_prometido": 82.5,
+        "acierto_real": 83.3
+      },
+      "team_totals_home": {
+        "n": 12,
+        "aciertos": 12,
+        "acierto_prometido": 81.5,
+        "acierto_real": 100.0
+      },
+      "totals": {
+        "n": 21,
+        "aciertos": 15,
+        "acierto_prometido": 82.2,
+        "acierto_real": 71.4
+      }
+    },
+    "por_mes": [
+      {
+        "mes": "2026-10",
+        "n": 103,
+        "aciertos": 81,
+        "acierto_prometido": 82.6,
+        "acierto_real": 78.6
+      }
+    ],
+    "rendimiento_ref": {
+      "n": 59,
+      "roi": -1.64
+    }
+  },
+  "vip": [
+    {
+      "match_id": "cl.primera:2627:deporteslim-palestino:20261011",
+      "league_id": "cl.primera",
+      "kickoff_utc": "2026-10-11T23:00:00+00:00",
+      "local": "Deportes Limache",
+      "visitante": "Palestino",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "cl.primera:2627:deporteslim-palestino:20261011"
+    },
+    {
+      "match_id": "mx.liga_mx:2026A:atleticosan-santoslagun:20261011",
+      "league_id": "mx.liga_mx",
+      "kickoff_utc": "2026-10-11T23:00:00+00:00",
+      "local": "Atletico San Luis",
+      "visitante": "Santos Laguna",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "mx.liga_mx:2026A:atleticosan-santoslagun:20261011"
+    },
+    {
+      "match_id": "us.mls:2026:stlouiscit-losangeles:20261011",
+      "league_id": "us.mls",
+      "kickoff_utc": "2026-10-11T23:00:00+00:00",
+      "local": "St. Louis City",
+      "visitante": "Los Angeles Galaxy",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "us.mls:2026:stlouiscit-losangeles:20261011"
+    },
+    {
+      "match_id": "mx.liga_mx:2026A:pachuca-necaxa:20261011",
+      "league_id": "mx.liga_mx",
+      "kickoff_utc": "2026-10-11T23:10:00+00:00",
+      "local": "CF Pachuca",
+      "visitante": "Necaxa",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "mx.liga_mx:2026A:pachuca-necaxa:20261011"
+    },
+    {
+      "match_id": "it.serie_a:2627:atalanta-venezia:20261012",
+      "league_id": "it.serie_a",
+      "kickoff_utc": "2026-10-12T16:30:00+00:00",
+      "local": "Atalanta",
+      "visitante": "Venezia",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "it.serie_a:2627:atalanta-venezia:20261012"
+    },
+    {
+      "match_id": "dk.superliga:2627:aarhus-sonderjyske:20261012",
+      "league_id": "dk.superliga",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "local": "Aarhus",
+      "visitante": "Sonderjyske",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "dk.superliga:2627:aarhus-sonderjyske:20261012"
+    },
+    {
+      "match_id": "no.eliteserien:2627:kfumoslo-valerenga:20261012",
+      "league_id": "no.eliteserien",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "local": "KFUM Oslo",
+      "visitante": "Valerenga",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "no.eliteserien:2627:kfumoslo-valerenga:20261012"
+    },
+    {
+      "match_id": "se.allsvenskan:2627:elfsborg-halmstad:20261012",
+      "league_id": "se.allsvenskan",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "local": "IF Elfsborg",
+      "visitante": "Halmstad",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "se.allsvenskan:2627:elfsborg-halmstad:20261012"
+    },
+    {
+      "match_id": "se.allsvenskan:2627:malmoff-kalmarff:20261012",
+      "league_id": "se.allsvenskan",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "local": "Malmo FF",
+      "visitante": "Kalmar FF",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "se.allsvenskan:2627:malmoff-kalmarff:20261012"
+    },
+    {
+      "match_id": "fr.ligue_2:2627:dijon-metz:20261012",
+      "league_id": "fr.ligue_2",
+      "kickoff_utc": "2026-10-12T18:45:00+00:00",
+      "local": "Dijon",
+      "visitante": "Metz",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "fr.ligue_2:2627:dijon-metz:20261012"
+    },
+    {
+      "match_id": "it.serie_a:2627:torino-udinese:20261012",
+      "league_id": "it.serie_a",
+      "kickoff_utc": "2026-10-12T18:45:00+00:00",
+      "local": "Torino",
+      "visitante": "Udinese",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "it.serie_a:2627:torino-udinese:20261012"
+    },
+    {
+      "match_id": "ar.primera:2026:lanus-velezsarsfi:20261011",
+      "league_id": "ar.primera",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "local": "Lanus",
+      "visitante": "Velez Sarsfield",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "ar.primera:2026:lanus-velezsarsfi:20261011"
+    },
+    {
+      "match_id": "br.serie_a:2026:coritiba-botafogorj:20261011",
+      "league_id": "br.serie_a",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "local": "Coritiba",
+      "visitante": "Botafogo",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "br.serie_a:2026:coritiba-botafogorj:20261011"
+    },
+    {
+      "match_id": "br.serie_b:2627:fortaleza-crb:20261012",
+      "league_id": "br.serie_b",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "local": "Fortaleza EC",
+      "visitante": "CRB",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "br.serie_b:2627:fortaleza-crb:20261012"
+    },
+    {
+      "match_id": "cl.primera:2627:universidad-nublense:20261012",
+      "league_id": "cl.primera",
+      "kickoff_utc": "2026-10-12T20:00:00+00:00",
+      "local": "Universidad de Chile",
+      "visitante": "Nublense",
+      "batch_date": "2026-10-11",
+      "locked": true,
+      "pick_key": "cl.primera:2627:universidad-nublense:20261012"
+    }
+  ]
+}

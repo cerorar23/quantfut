@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Monedas y referidos{% endblock %}
+{% block heading %}Recompensas, monedas y referidos{% endblock %}
+{% block content %}
+<p>Las monedas desbloquean un pronóstico concreto; no representan dinero ni admiten retiros. El servidor confirma cada operación. Desactivar nuevas ofertas no impide recibir confirmaciones de tareas iniciadas antes.</p>
+<form class="card mb-4" action="/control/recompensas/config" method="post"><div class="card-body">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{% for key,label in [('enabled','Monedas activas'),('attendance_enabled','Asistencia diaria'),('referrals_enabled','Referidos activos')] %}
+<label class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="{{ key }}" value="1" {% if cfg[key] %}checked{% endif %}><span class="form-check-label">{{ label }}</span></label>
+{% endfor %}
+{% for key,label in [('unlock_cost','Costo en monedas por pronóstico'),('referrer_coins','Premio para quien invita'),('invitee_coins','Premio para el invitado'),('referral_min_coins','Mínimo de monedas de ofertas confirmadas para validar un referido')] %}
+<label class="form-label">{{ label }}<input class="form-control" type="number" name="{{ key }}" min="{% if key in ['unlock_cost','referral_min_coins'] %}1{% else %}0{% endif %}" max="1000000" value="{{ cfg[key] }}" required></label>
+{% endfor %}
+<label class="form-label">Premios de asistencia, días 1–7 (coma entre valores)<input class="form-control" name="attendance_coins" value="{{ cfg.attendance_coins|join(',') }}" maxlength="100" required></label>
+<label class="form-label">Leyenda cuando se desactiva<input class="form-control" name="message" value="{{ cfg.message }}" maxlength="180"></label>
+<p class="text-muted">Asistencia por día UTC, sin duplicados. La racha vuelve al día 1 si falta un día. Los referidos deben tener correo verificado, registrar un código durante sus primeros 7 días y completar ofertas confirmadas. Un código por cuenta, sin autorreferidos. Una reversión puede dejar una deuda e impedir nuevos canjes.</p>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Guardar reglas</button></div></form>
+<h2>Proveedores de ofertas</h2>
+<p>RevU y BitLabs tienen adaptadores preparados. Los demás quedan registrados para futuras integraciones. No se puede activar un proveedor sin configuración válida. Las claves privadas se guardan en el entorno del servidor, nunca en la app.</p>
+<div class="row row-cards">{% for p in providers %}<div class="col-md-6"><form class="card" action="/control/recompensas/proveedores/{{ p.provider }}" method="post"><div class="card-body">
+<input type="hidden" name="csrf" value="{{ csrf }}"><h3>{{ p.name }}</h3>
+<p>{% if p.ready %}Configuración disponible{% else %}Pendiente de credenciales o integración{% endif %}</p>
+<label class="form-check form-switch"><input class="form-check-input" type="checkbox" name="enabled" value="1" {% if p.enabled %}checked{% endif %}><span class="form-check-label">Ofertas activas</span></label>
+<label class="form-label">ID público del muro / token público<input class="form-control" name="public_id" value="{{ p.public_id }}" maxlength="120"></label>
+<label class="form-label">IP autorizadas del proveedor (RevU, separadas por coma)<input class="form-control" name="approved_ips" value="{{ p.approved_ips }}" maxlength="1000"></label>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Guardar proveedor</button></div></form></div>{% endfor %}</div>
+<h2 class="mt-4">Últimos movimientos</h2><div class="table-responsive"><table class="table"><thead><tr><th>Fecha UTC</th><th>Cuenta</th><th>Tipo</th><th>Monedas</th><th>Saldo</th></tr></thead><tbody>{% for r in ledger %}<tr><td>{{ r.created_at|fecha }}</td><td>{{ r.account_id }}</td><td>{{ r.kind }}</td><td>{{ r.delta }}</td><td>{{ r.balance_after }}</td></tr>{% else %}<tr><td colspan="5">Todavía no hay movimientos.</td></tr>{% endfor %}</tbody></table></div>
+<h2>Referidos</h2><div class="table-responsive"><table class="table"><thead><tr><th>Invitado</th><th>Invitador</th><th>Registro</th><th>Validación</th><th>Reversión</th></tr></thead><tbody>{% for r in referrals %}<tr><td>{{ r.invitee_id }}</td><td>{{ r.referrer_id }}</td><td>{{ r.created_at|fecha }}</td><td>{{ r.qualified_at|fecha }}</td><td>{{ r.reversed_at|fecha }}</td></tr>{% else %}<tr><td colspan="5">Todavía no hay referidos.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

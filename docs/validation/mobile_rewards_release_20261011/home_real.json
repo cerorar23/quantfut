@@ -1,0 +1,3640 @@
+{
+  "config": {
+    "features": {
+      "agenda": {
+        "section": "agenda",
+        "enabled": true,
+        "message": "Agenda temporalmente no disponible",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "alta_probabilidad": {
+        "section": "alta_probabilidad",
+        "enabled": true,
+        "message": "Modelo en entrenamiento",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "escalera": {
+        "section": "escalera",
+        "enabled": true,
+        "message": "Modelo en entrenamiento",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "estadisticas": {
+        "section": "estadisticas",
+        "enabled": true,
+        "message": "Estadísticas temporalmente no disponibles",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "h2h": {
+        "section": "h2h",
+        "enabled": true,
+        "message": "Datos del partido temporalmente no disponibles",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "vip": {
+        "section": "vip",
+        "enabled": true,
+        "message": "Acceso VIP temporalmente no disponible",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "nba": {
+        "section": "nba",
+        "enabled": false,
+        "message": "Modelo NBA en entrenamiento",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "comunidad": {
+        "section": "comunidad",
+        "enabled": false,
+        "message": "Comunidad en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "notificaciones": {
+        "section": "notificaciones",
+        "enabled": false,
+        "message": "Notificaciones en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "balance": {
+        "section": "balance",
+        "enabled": false,
+        "message": "Seguimiento en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "medicion": {
+        "section": "medicion",
+        "enabled": false,
+        "message": "Medición en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "idiomas": {
+        "section": "idiomas",
+        "enabled": false,
+        "message": "Traducciones en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      },
+      "compras": {
+        "section": "compras",
+        "enabled": false,
+        "message": "Compras en preparación",
+        "updated_at": "2026-10-11T22:41:32.200664+00:00"
+      }
+    },
+    "probability_min": 0.75,
+    "probability_max": 0.9,
+    "high_probability_free_fraction": 0.1,
+    "ladder_free_count": 1,
+    "server_time": "2026-10-11T22:57:23.254583+00:00"
+  },
+  "plus": false,
+  "agenda": [
+    {
+      "match_id": "nl.eredivisie:2627:utrecht-willemii:20261011",
+      "kickoff_utc": "2026-10-11T10:15:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "nl.eredivisie",
+        "nombre": "Eredivisie",
+        "pais": "Netherlands"
+      },
+      "marcador": [
+        3,
+        1
+      ],
+      "local": {
+        "id": 21206,
+        "nombre": "Utrecht",
+        "escudo": "/web/escudos/21206.png",
+        "posicion": 13,
+        "racha": "PGEPE"
+      },
+      "visitante": {
+        "id": 21221,
+        "nombre": "Willem II",
+        "escudo": "/web/escudos/21221.png",
+        "posicion": 18,
+        "racha": "PPEPE"
+      },
+      "probabilities": {
+        "away": 0.0978440860015569,
+        "draw": 0.1693797014052493,
+        "home": 0.7327762125931938
+      }
+    },
+    {
+      "match_id": "it.serie_a:2627:como-roma:20261011",
+      "kickoff_utc": "2026-10-11T10:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_a",
+        "nombre": "Serie A",
+        "pais": "Italy"
+      },
+      "marcador": [
+        0,
+        0
+      ],
+      "local": {
+        "id": 19704,
+        "nombre": "Como",
+        "escudo": "/web/escudos/19704.png",
+        "posicion": 7,
+        "racha": "PGGGG"
+      },
+      "visitante": {
+        "id": 12087,
+        "nombre": "AS Roma",
+        "escudo": "/web/escudos/12087.png",
+        "posicion": 3,
+        "racha": "EGEGG"
+      },
+      "probabilities": {
+        "away": 0.3486352644278443,
+        "draw": 0.29073300058613843,
+        "home": 0.3606317349860172
+      }
+    },
+    {
+      "match_id": "tr.super_lig:2627:konyaspor-basaksehir:20261011",
+      "kickoff_utc": "2026-10-11T10:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "tr.super_lig",
+        "nombre": "Süper Lig",
+        "pais": "Turkey"
+      },
+      "marcador": [
+        0,
+        0
+      ],
+      "local": {
+        "id": 85072,
+        "nombre": "Konyaspor",
+        "escudo": "/web/escudos/85072.png",
+        "posicion": 15,
+        "racha": "EGPPP"
+      },
+      "visitante": {
+        "id": 85061,
+        "nombre": "Başakşehir",
+        "escudo": "/web/escudos/85061.png",
+        "posicion": 11,
+        "racha": "GPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "gb.championship:2627:southampton-portsmouth:20261011",
+      "kickoff_utc": "2026-10-11T11:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "gb.championship",
+        "nombre": "Championship",
+        "pais": "England"
+      },
+      "marcador": [
+        1,
+        0
+      ],
+      "local": {
+        "id": 768,
+        "nombre": "Southampton",
+        "escudo": "/web/escudos/768.png",
+        "posicion": 11,
+        "racha": "PGGEE"
+      },
+      "visitante": {
+        "id": 85141,
+        "nombre": "Portsmouth",
+        "escudo": "/web/escudos/85141.png",
+        "posicion": 19,
+        "racha": "EEGPP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "de.bundesliga2:2627:bochum-arminiabiel:20261010",
+      "kickoff_utc": "2026-10-11T11:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "de.bundesliga2",
+        "nombre": "2. Bundesliga",
+        "pais": "Germany"
+      },
+      "marcador": [
+        0,
+        1
+      ],
+      "local": {
+        "id": 65735,
+        "nombre": "VfL Bochum",
+        "escudo": "/web/escudos/65735.png",
+        "posicion": 12,
+        "racha": "PEGPG"
+      },
+      "visitante": {
+        "id": 65115,
+        "nombre": "Arminia Bielefeld",
+        "escudo": "/web/escudos/65115.png",
+        "posicion": 9,
+        "racha": "EPEPG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "de.bundesliga2:2627:hertha-greutherfur:20261010",
+      "kickoff_utc": "2026-10-11T11:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "de.bundesliga2",
+        "nombre": "2. Bundesliga",
+        "pais": "Germany"
+      },
+      "marcador": [
+        2,
+        1
+      ],
+      "local": {
+        "id": 61450,
+        "nombre": "Hertha BSC",
+        "escudo": "/web/escudos/61450.png",
+        "posicion": 1,
+        "racha": "GGGGG"
+      },
+      "visitante": {
+        "id": 65731,
+        "nombre": "SpVgg Greuther Fürth",
+        "escudo": "/web/escudos/65731.png",
+        "posicion": 15,
+        "racha": "EEPGP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "de.bundesliga2:2627:stpauli-karlsruher:20261010",
+      "kickoff_utc": "2026-10-11T11:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "de.bundesliga2",
+        "nombre": "2. Bundesliga",
+        "pais": "Germany"
+      },
+      "marcador": [
+        2,
+        0
+      ],
+      "local": {
+        "id": 67576,
+        "nombre": "FC St. Pauli",
+        "escudo": "/web/escudos/67576.png",
+        "posicion": 7,
+        "racha": "EGEPE"
+      },
+      "visitante": {
+        "id": 85159,
+        "nombre": "Karlsruher SC",
+        "escudo": "/web/escudos/85159.png",
+        "posicion": 17,
+        "racha": "PPEPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "se.allsvenskan:2627:hammarbyff-djurgardens:20261011",
+      "kickoff_utc": "2026-10-11T12:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "se.allsvenskan",
+        "nombre": "Allsvenskan",
+        "pais": "Sweden"
+      },
+      "marcador": [
+        0,
+        1
+      ],
+      "local": {
+        "id": 85123,
+        "nombre": "Hammarby FF",
+        "escudo": "/web/escudos/85123.png",
+        "posicion": 3,
+        "racha": "GGEPG"
+      },
+      "visitante": {
+        "id": 85120,
+        "nombre": "Djurgardens IF",
+        "escudo": "/web/escudos/85120.png",
+        "posicion": 2,
+        "racha": "PGGGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "es.laliga:2627:elche-celta:20261011",
+      "kickoff_utc": "2026-10-11T12:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga",
+        "nombre": "LaLiga",
+        "pais": "Spain"
+      },
+      "marcador": [
+        0,
+        0
+      ],
+      "local": {
+        "id": 2974,
+        "nombre": "Elche",
+        "escudo": "/web/escudos/2974.png",
+        "posicion": 17,
+        "racha": "GPEPP"
+      },
+      "visitante": {
+        "id": 2975,
+        "nombre": "Celta Vigo",
+        "escudo": "/web/escudos/2975.png",
+        "posicion": 9,
+        "racha": "GEEEP"
+      },
+      "probabilities": {
+        "away": 0.3281195468668579,
+        "draw": 0.26879625913371635,
+        "home": 0.4030841939994259
+      }
+    },
+    {
+      "match_id": "es.laliga2:2627:andorra-castellon:20261011",
+      "kickoff_utc": "2026-10-11T12:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": [
+        1,
+        0
+      ],
+      "local": {
+        "id": 84900,
+        "nombre": "FC Andorra",
+        "escudo": "/web/escudos/84900.png",
+        "posicion": 16,
+        "racha": "EGPPP"
+      },
+      "visitante": {
+        "id": 84897,
+        "nombre": "Castellón",
+        "escudo": "/web/escudos/84897.png",
+        "posicion": 3,
+        "racha": "EGGGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "ch.super_league:2627:grasshoppers-bscyoungbo:20261011",
+      "kickoff_utc": "2026-10-11T12:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "ch.super_league",
+        "nombre": "Super League (Suiza)",
+        "pais": "Switzerland"
+      },
+      "marcador": [
+        0,
+        2
+      ],
+      "local": {
+        "id": 85086,
+        "nombre": "Grasshoppers",
+        "escudo": "/web/escudos/85086.png",
+        "posicion": 11,
+        "racha": "PPGEG"
+      },
+      "visitante": {
+        "id": 85077,
+        "nombre": "BSC Young Boys",
+        "escudo": "/web/escudos/85077.png",
+        "posicion": 2,
+        "racha": "GEEGE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "dk.superliga:2627:randers-viborg:20261011",
+      "kickoff_utc": "2026-10-11T12:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "dk.superliga",
+        "nombre": "Superliga (Dinamarca)",
+        "pais": "Denmark"
+      },
+      "marcador": [
+        0,
+        2
+      ],
+      "local": {
+        "id": 85097,
+        "nombre": "Randers FC",
+        "escudo": "/web/escudos/85097.png",
+        "posicion": 8,
+        "racha": "PPGGP"
+      },
+      "visitante": {
+        "id": 85100,
+        "nombre": "Viborg",
+        "escudo": "/web/escudos/85100.png",
+        "posicion": 3,
+        "racha": "GEPGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "dk.superliga:2627:silkeborg-horsens:20261011",
+      "kickoff_utc": "2026-10-11T12:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "dk.superliga",
+        "nombre": "Superliga (Dinamarca)",
+        "pais": "Denmark"
+      },
+      "marcador": [
+        3,
+        3
+      ],
+      "local": {
+        "id": 85098,
+        "nombre": "Silkeborg",
+        "escudo": "/web/escudos/85098.png",
+        "posicion": 7,
+        "racha": "GEEEP"
+      },
+      "visitante": {
+        "id": 85089,
+        "nombre": "AC Horsens",
+        "escudo": "/web/escudos/85089.png",
+        "posicion": 6,
+        "racha": "EPGPG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "no.eliteserien:2627:fredrikstad-tromso:20261011",
+      "kickoff_utc": "2026-10-11T12:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "no.eliteserien",
+        "nombre": "Eliteserien",
+        "pais": "Norway"
+      },
+      "marcador": [
+        1,
+        1
+      ],
+      "local": {
+        "id": 85104,
+        "nombre": "Fredrikstad",
+        "escudo": "/web/escudos/85104.png",
+        "posicion": 8,
+        "racha": "EEPGG"
+      },
+      "visitante": {
+        "id": 85114,
+        "nombre": "Tromso",
+        "escudo": "/web/escudos/85114.png",
+        "posicion": 3,
+        "racha": "GPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "nl.eredivisie:2627:telstar-denhaag:20261011",
+      "kickoff_utc": "2026-10-11T12:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "nl.eredivisie",
+        "nombre": "Eredivisie",
+        "pais": "Netherlands"
+      },
+      "marcador": [
+        2,
+        2
+      ],
+      "local": {
+        "id": 27802,
+        "nombre": "Telstar",
+        "escudo": "/web/escudos/27802.png",
+        "posicion": 15,
+        "racha": "PEPEP"
+      },
+      "visitante": {
+        "id": 21217,
+        "nombre": "ADO Den Haag",
+        "escudo": "/web/escudos/21217.png",
+        "posicion": 17,
+        "racha": "EPPEP"
+      },
+      "probabilities": {
+        "away": 0.16895016451782466,
+        "draw": 0.24278514483663657,
+        "home": 0.5882646906455389
+      }
+    },
+    {
+      "match_id": "nl.eredivisie:2627:zwolle-cambuur:20261011",
+      "kickoff_utc": "2026-10-11T12:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "nl.eredivisie",
+        "nombre": "Eredivisie",
+        "pais": "Netherlands"
+      },
+      "marcador": [
+        0,
+        1
+      ],
+      "local": {
+        "id": 21205,
+        "nombre": "PEC Zwolle",
+        "escudo": "/web/escudos/21205.png",
+        "posicion": 16,
+        "racha": "PPEPG"
+      },
+      "visitante": {
+        "id": 21207,
+        "nombre": "Cambuur",
+        "escudo": "/web/escudos/21207.png",
+        "posicion": 12,
+        "racha": "EGEPP"
+      },
+      "probabilities": {
+        "away": 0.30844978848132604,
+        "draw": 0.21793505408014346,
+        "home": 0.47361515743853033
+      }
+    },
+    {
+      "match_id": "fr.ligue_1:2627:nice-strasbourg:20261011",
+      "kickoff_utc": "2026-10-11T13:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "fr.ligue_1",
+        "nombre": "Ligue 1",
+        "pais": "France"
+      },
+      "marcador": [
+        2,
+        1
+      ],
+      "local": {
+        "id": 68870,
+        "nombre": "Nice",
+        "escudo": "/web/escudos/68870.png",
+        "posicion": 9,
+        "racha": "GPEPE"
+      },
+      "visitante": {
+        "id": 71139,
+        "nombre": "Strasbourg",
+        "escudo": "/web/escudos/71139.png",
+        "posicion": 11,
+        "racha": "PEGGP"
+      },
+      "probabilities": {
+        "away": 0.41853727814825176,
+        "draw": 0.26097310126798035,
+        "home": 0.3204896205837678
+      }
+    },
+    {
+      "match_id": "gb.premier_league:2627:crystalpala-nottmfores:20261011",
+      "kickoff_utc": "2026-10-11T13:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "gb.premier_league",
+        "nombre": "Premier League",
+        "pais": "England"
+      },
+      "marcador": [
+        3,
+        1
+      ],
+      "local": {
+        "id": 12,
+        "nombre": "Crystal Palace",
+        "escudo": "/web/escudos/12.png",
+        "posicion": 12,
+        "racha": "EPGPP"
+      },
+      "visitante": {
+        "id": 4,
+        "nombre": "Nottingham Forest",
+        "escudo": "/web/escudos/4.png",
+        "posicion": 14,
+        "racha": "PGEEP"
+      },
+      "probabilities": {
+        "away": 0.3536767157369611,
+        "draw": 0.29198747448274737,
+        "home": 0.3543358097802916
+      }
+    },
+    {
+      "match_id": "gb.premier_league:2627:hull-everton:20261011",
+      "kickoff_utc": "2026-10-11T13:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "gb.premier_league",
+        "nombre": "Premier League",
+        "pais": "England"
+      },
+      "marcador": [
+        2,
+        2
+      ],
+      "local": {
+        "id": 764,
+        "nombre": "Hull City",
+        "escudo": "/web/escudos/764.png",
+        "posicion": 8,
+        "racha": "PEEGG"
+      },
+      "visitante": {
+        "id": 9,
+        "nombre": "Everton",
+        "escudo": "/web/escudos/9.png",
+        "posicion": 5,
+        "racha": "GEEEG"
+      },
+      "probabilities": {
+        "away": 0.20307034891976464,
+        "draw": 0.3342917954884521,
+        "home": 0.46263785559178316
+      }
+    },
+    {
+      "match_id": "it.serie_a:2627:lazio-monza:20261011",
+      "kickoff_utc": "2026-10-11T13:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_a",
+        "nombre": "Serie A",
+        "pais": "Italy"
+      },
+      "marcador": [
+        3,
+        1
+      ],
+      "local": {
+        "id": 12096,
+        "nombre": "Lazio",
+        "escudo": "/web/escudos/12096.png",
+        "posicion": 2,
+        "racha": "GEGGG"
+      },
+      "visitante": {
+        "id": 18171,
+        "nombre": "Monza",
+        "escudo": "/web/escudos/18171.png",
+        "posicion": 16,
+        "racha": "GPEPP"
+      },
+      "probabilities": {
+        "away": 0.15149685827048792,
+        "draw": 0.2197246240105625,
+        "home": 0.6287785177189495
+      }
+    },
+    {
+      "match_id": "it.serie_a:2627:lecce-bologna:20261011",
+      "kickoff_utc": "2026-10-11T13:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_a",
+        "nombre": "Serie A",
+        "pais": "Italy"
+      },
+      "marcador": [
+        1,
+        2
+      ],
+      "local": {
+        "id": 15904,
+        "nombre": "Lecce",
+        "escudo": "/web/escudos/15904.png",
+        "posicion": 12,
+        "racha": "PGPPG"
+      },
+      "visitante": {
+        "id": 12846,
+        "nombre": "Bologna",
+        "escudo": "/web/escudos/12846.png",
+        "posicion": 13,
+        "racha": "EPEPP"
+      },
+      "probabilities": {
+        "away": 0.422645769128994,
+        "draw": 0.3158085058992534,
+        "home": 0.26154572497175266
+      }
+    },
+    {
+      "match_id": "it.serie_b:2627:catanzaro-mantova:20261010",
+      "kickoff_utc": "2026-10-11T13:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_b",
+        "nombre": "Serie B",
+        "pais": "Italy"
+      },
+      "marcador": [
+        1,
+        3
+      ],
+      "local": {
+        "id": 84908,
+        "nombre": "Catanzaro",
+        "escudo": "/web/escudos/84908.png",
+        "posicion": 19,
+        "racha": "PGPPP"
+      },
+      "visitante": {
+        "id": 84910,
+        "nombre": "Mantova",
+        "escudo": "/web/escudos/84910.png",
+        "posicion": 2,
+        "racha": "EGEGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "tr.super_lig:2627:gaziantepfk-corumfk:20261011",
+      "kickoff_utc": "2026-10-11T13:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "tr.super_lig",
+        "nombre": "Süper Lig",
+        "pais": "Turkey"
+      },
+      "marcador": [
+        0,
+        3
+      ],
+      "local": {
+        "id": 85067,
+        "nombre": "Gaziantep FK",
+        "escudo": "/web/escudos/85067.png",
+        "posicion": 12,
+        "racha": "PEGPG"
+      },
+      "visitante": {
+        "id": 85076,
+        "nombre": "Çorum FK",
+        "escudo": "/web/escudos/85076.png",
+        "posicion": 8,
+        "racha": "PGGPP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "de.bundesliga:2627:koln-mgladbach:20261011",
+      "kickoff_utc": "2026-10-11T13:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "de.bundesliga",
+        "nombre": "Bundesliga",
+        "pais": "Germany"
+      },
+      "marcador": [
+        2,
+        1
+      ],
+      "local": {
+        "id": 61446,
+        "nombre": "1. FC Köln",
+        "escudo": "/web/escudos/61446.png",
+        "posicion": 10,
+        "racha": "PEPGP"
+      },
+      "visitante": {
+        "id": 61454,
+        "nombre": "Borussia Mönchengladbach",
+        "escudo": "/web/escudos/61454.png",
+        "posicion": 18,
+        "racha": "PPPPG"
+      },
+      "probabilities": {
+        "away": 0.2913698989977227,
+        "draw": 0.24206011917905432,
+        "home": 0.46656998182322296
+      }
+    },
+    {
+      "match_id": "dk.superliga:2627:brondby-lyngby:20261011",
+      "kickoff_utc": "2026-10-11T14:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "dk.superliga",
+        "nombre": "Superliga (Dinamarca)",
+        "pais": "Denmark"
+      },
+      "marcador": [
+        5,
+        2
+      ],
+      "local": {
+        "id": 85091,
+        "nombre": "Brondby",
+        "escudo": "/web/escudos/85091.png",
+        "posicion": 5,
+        "racha": "PPPPG"
+      },
+      "visitante": {
+        "id": 85095,
+        "nombre": "Lyngby",
+        "escudo": "/web/escudos/85095.png",
+        "posicion": 10,
+        "racha": "PEGEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "es.laliga:2627:sociedad-lacoruna:20261011",
+      "kickoff_utc": "2026-10-11T14:15:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga",
+        "nombre": "LaLiga",
+        "pais": "Spain"
+      },
+      "marcador": [
+        3,
+        2
+      ],
+      "local": {
+        "id": 2978,
+        "nombre": "Real Sociedad",
+        "escudo": "/web/escudos/2978.png",
+        "posicion": 6,
+        "racha": "GPPGE"
+      },
+      "visitante": {
+        "id": 2968,
+        "nombre": "Deportivo La Coruna",
+        "escudo": "/web/escudos/2968.png",
+        "posicion": 8,
+        "racha": "EPEGG"
+      },
+      "probabilities": {
+        "away": 0.27961135745295745,
+        "draw": 0.2539608853944929,
+        "home": 0.46642775715254975
+      }
+    },
+    {
+      "match_id": "es.laliga2:2627:almeria-leganes:20261011",
+      "kickoff_utc": "2026-10-11T14:15:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": [
+        3,
+        0
+      ],
+      "local": {
+        "id": 2965,
+        "nombre": "Almeria",
+        "escudo": "/web/escudos/2965.png",
+        "posicion": 2,
+        "racha": "GGGGG"
+      },
+      "visitante": {
+        "id": 4502,
+        "nombre": "Leganes",
+        "escudo": "/web/escudos/4502.png",
+        "posicion": 15,
+        "racha": "PPGPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "se.allsvenskan:2627:hacken-orgryteis:20261011",
+      "kickoff_utc": "2026-10-11T14:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "se.allsvenskan",
+        "nombre": "Allsvenskan",
+        "pais": "Sweden"
+      },
+      "marcador": [
+        3,
+        0
+      ],
+      "local": {
+        "id": 85118,
+        "nombre": "BK Hacken",
+        "escudo": "/web/escudos/85118.png",
+        "posicion": 4,
+        "racha": "GEEPG"
+      },
+      "visitante": {
+        "id": 85130,
+        "nombre": "Orgryte IS",
+        "escudo": "/web/escudos/85130.png",
+        "posicion": 15,
+        "racha": "PPEPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "pt.primeira:2627:rioave-nacional:20261011",
+      "kickoff_utc": "2026-10-11T14:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "pt.primeira",
+        "nombre": "Primeira Liga",
+        "pais": "Portugal"
+      },
+      "marcador": [
+        3,
+        2
+      ],
+      "local": {
+        "id": 77432,
+        "nombre": "Rio Ave",
+        "escudo": "/web/escudos/77432.png",
+        "posicion": 14,
+        "racha": "PEPPG"
+      },
+      "visitante": {
+        "id": 77428,
+        "nombre": "Nacional",
+        "escudo": "/web/escudos/77428.png",
+        "posicion": 16,
+        "racha": "PPPPP"
+      },
+      "probabilities": {
+        "away": 0.331282481548655,
+        "draw": 0.2899558070434337,
+        "home": 0.3787617114079113
+      }
+    },
+    {
+      "match_id": "ch.super_league:2627:stgallen-lausanne:20261011",
+      "kickoff_utc": "2026-10-11T14:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "ch.super_league",
+        "nombre": "Super League (Suiza)",
+        "pais": "Switzerland"
+      },
+      "marcador": [
+        1,
+        0
+      ],
+      "local": {
+        "id": 85081,
+        "nombre": "FC ST. Gallen",
+        "escudo": "/web/escudos/85081.png",
+        "posicion": 4,
+        "racha": "GPPGP"
+      },
+      "visitante": {
+        "id": 85087,
+        "nombre": "Lausanne",
+        "escudo": "/web/escudos/85087.png",
+        "posicion": 12,
+        "racha": "PPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "ch.super_league:2627:vaduz-basel1893:20261011",
+      "kickoff_utc": "2026-10-11T14:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "ch.super_league",
+        "nombre": "Super League (Suiza)",
+        "pais": "Switzerland"
+      },
+      "marcador": [
+        3,
+        0
+      ],
+      "local": {
+        "id": 85084,
+        "nombre": "FC Vaduz",
+        "escudo": "/web/escudos/85084.png",
+        "posicion": 10,
+        "racha": "PPGPG"
+      },
+      "visitante": {
+        "id": 85078,
+        "nombre": "FC Basel 1893",
+        "escudo": "/web/escudos/85078.png",
+        "posicion": 7,
+        "racha": "PGPPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "nl.eredivisie:2627:excelsior-groningen:20261011",
+      "kickoff_utc": "2026-10-11T14:45:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "nl.eredivisie",
+        "nombre": "Eredivisie",
+        "pais": "Netherlands"
+      },
+      "marcador": [
+        1,
+        5
+      ],
+      "local": {
+        "id": 21214,
+        "nombre": "Excelsior",
+        "escudo": "/web/escudos/21214.png",
+        "posicion": 9,
+        "racha": "EPEGG"
+      },
+      "visitante": {
+        "id": 21220,
+        "nombre": "Groningen",
+        "escudo": "/web/escudos/21220.png",
+        "posicion": 6,
+        "racha": "GEEPP"
+      },
+      "probabilities": {
+        "away": 0.3050660152292093,
+        "draw": 0.26419557054811077,
+        "home": 0.43073841422267994
+      }
+    },
+    {
+      "match_id": "no.eliteserien:2627:aalesund-sarpsborg08:20261011",
+      "kickoff_utc": "2026-10-11T15:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "no.eliteserien",
+        "nombre": "Eliteserien",
+        "pais": "Norway"
+      },
+      "marcador": [
+        2,
+        4
+      ],
+      "local": {
+        "id": 85101,
+        "nombre": "Aalesund",
+        "escudo": "/web/escudos/85101.png",
+        "posicion": 14,
+        "racha": "GPGPE"
+      },
+      "visitante": {
+        "id": 85112,
+        "nombre": "Sarpsborg 08 FF",
+        "escudo": "/web/escudos/85112.png",
+        "posicion": 9,
+        "racha": "PEEEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "no.eliteserien:2627:start-hamkam:20261011",
+      "kickoff_utc": "2026-10-11T15:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "no.eliteserien",
+        "nombre": "Eliteserien",
+        "pais": "Norway"
+      },
+      "marcador": [
+        2,
+        4
+      ],
+      "local": {
+        "id": 85113,
+        "nombre": "Start",
+        "escudo": "/web/escudos/85113.png",
+        "posicion": 16,
+        "racha": "PGPGP"
+      },
+      "visitante": {
+        "id": 85105,
+        "nombre": "Ham-Kam",
+        "escudo": "/web/escudos/85105.png",
+        "posicion": 10,
+        "racha": "PPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "fr.ligue_1:2627:rennes-auxerre:20261011",
+      "kickoff_utc": "2026-10-11T15:15:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "fr.ligue_1",
+        "nombre": "Ligue 1",
+        "pais": "France"
+      },
+      "marcador": [
+        4,
+        1
+      ],
+      "local": {
+        "id": 68873,
+        "nombre": "Rennes",
+        "escudo": "/web/escudos/68873.png",
+        "posicion": 3,
+        "racha": "PGGGE"
+      },
+      "visitante": {
+        "id": 74747,
+        "nombre": "Auxerre",
+        "escudo": "/web/escudos/74747.png",
+        "posicion": 16,
+        "racha": "GGPPP"
+      },
+      "probabilities": {
+        "away": 0.20230554953589724,
+        "draw": 0.2283077113386646,
+        "home": 0.5693867391254381
+      }
+    },
+    {
+      "match_id": "it.serie_b:2627:padova-carrarese:20261010",
+      "kickoff_utc": "2026-10-11T15:15:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_b",
+        "nombre": "Serie B",
+        "pais": "Italy"
+      },
+      "marcador": [
+        0,
+        2
+      ],
+      "local": {
+        "id": 84912,
+        "nombre": "Padova",
+        "escudo": "/web/escudos/84912.png",
+        "posicion": 10,
+        "racha": "PGPEG"
+      },
+      "visitante": {
+        "id": 84907,
+        "nombre": "Carrarese",
+        "escudo": "/web/escudos/84907.png",
+        "posicion": 17,
+        "racha": "PPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "de.bundesliga:2627:freiburg-schalke04:20261011",
+      "kickoff_utc": "2026-10-11T15:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "de.bundesliga",
+        "nombre": "Bundesliga",
+        "pais": "Germany"
+      },
+      "marcador": [
+        2,
+        1
+      ],
+      "local": {
+        "id": 61445,
+        "nombre": "SC Freiburg",
+        "escudo": "/web/escudos/61445.png",
+        "posicion": 1,
+        "racha": "EGGGP"
+      },
+      "visitante": {
+        "id": 61449,
+        "nombre": "FC Schalke 04",
+        "escudo": "/web/escudos/61449.png",
+        "posicion": 13,
+        "racha": "EGEPG"
+      },
+      "probabilities": {
+        "away": 0.22352773276691354,
+        "draw": 0.347455969869287,
+        "home": 0.42901629736379954
+      }
+    },
+    {
+      "match_id": "gb.premier_league:2627:liverpool-manchesterc:20261011",
+      "kickoff_utc": "2026-10-11T15:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "gb.premier_league",
+        "nombre": "Premier League",
+        "pais": "England"
+      },
+      "marcador": [
+        0,
+        3
+      ],
+      "local": {
+        "id": 18,
+        "nombre": "Liverpool",
+        "escudo": "/web/escudos/18.png",
+        "posicion": 9,
+        "racha": "GEGGE"
+      },
+      "visitante": {
+        "id": 2,
+        "nombre": "Manchester City",
+        "escudo": "/web/escudos/2.png",
+        "posicion": 1,
+        "racha": "GGGGG"
+      },
+      "probabilities": {
+        "away": 0.40999429599196796,
+        "draw": 0.2608257349048391,
+        "home": 0.32917996910319286
+      }
+    },
+    {
+      "match_id": "cl.primera:2627:evertondev-dlaserena:20261011",
+      "kickoff_utc": "2026-10-11T15:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "cl.primera",
+        "nombre": "Primera División (Chile)",
+        "pais": "Chile"
+      },
+      "marcador": [
+        3,
+        2
+      ],
+      "local": {
+        "id": 85050,
+        "nombre": "Everton de Vina",
+        "escudo": "/web/escudos/85050.png",
+        "posicion": 4,
+        "racha": "GPGGE"
+      },
+      "visitante": {
+        "id": 85048,
+        "nombre": "D. La Serena",
+        "escudo": "/web/escudos/85048.png",
+        "posicion": 11,
+        "racha": "PGGEG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "it.serie_a:2627:sassuolo-milan:20261011",
+      "kickoff_utc": "2026-10-11T16:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_a",
+        "nombre": "Serie A",
+        "pais": "Italy"
+      },
+      "marcador": [
+        1,
+        1
+      ],
+      "local": {
+        "id": 12099,
+        "nombre": "Sassuolo",
+        "escudo": "/web/escudos/12099.png",
+        "posicion": 10,
+        "racha": "PGEGP"
+      },
+      "visitante": {
+        "id": 12095,
+        "nombre": "AC Milan",
+        "escudo": "/web/escudos/12095.png",
+        "posicion": 5,
+        "racha": "GPEEG"
+      },
+      "probabilities": {
+        "away": 0.45028026137841715,
+        "draw": 0.26786908048934277,
+        "home": 0.28185065813224003
+      }
+    },
+    {
+      "match_id": "dk.superliga:2627:midtjylland-copenhagen:20261011",
+      "kickoff_utc": "2026-10-11T16:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "dk.superliga",
+        "nombre": "Superliga (Dinamarca)",
+        "pais": "Denmark"
+      },
+      "marcador": [
+        2,
+        1
+      ],
+      "local": {
+        "id": 85093,
+        "nombre": "FC Midtjylland",
+        "escudo": "/web/escudos/85093.png",
+        "posicion": 2,
+        "racha": "EGEGE"
+      },
+      "visitante": {
+        "id": 85092,
+        "nombre": "FC Copenhagen",
+        "escudo": "/web/escudos/85092.png",
+        "posicion": 1,
+        "racha": "GGGGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "tr.super_lig:2627:besiktas-kocaelispor:20261011",
+      "kickoff_utc": "2026-10-11T16:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "tr.super_lig",
+        "nombre": "Süper Lig",
+        "pais": "Turkey"
+      },
+      "marcador": [
+        2,
+        1
+      ],
+      "local": {
+        "id": 85062,
+        "nombre": "Beşiktaş",
+        "escudo": "/web/escudos/85062.png",
+        "posicion": 2,
+        "racha": "PGGGG"
+      },
+      "visitante": {
+        "id": 85071,
+        "nombre": "Kocaelispor",
+        "escudo": "/web/escudos/85071.png",
+        "posicion": 7,
+        "racha": "GPGGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "es.laliga:2627:betis-osasuna:20261011",
+      "kickoff_utc": "2026-10-11T16:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga",
+        "nombre": "LaLiga",
+        "pais": "Spain"
+      },
+      "marcador": [
+        5,
+        2
+      ],
+      "local": {
+        "id": 3737,
+        "nombre": "Real Betis",
+        "escudo": "/web/escudos/3737.png",
+        "posicion": 3,
+        "racha": "EGGGG"
+      },
+      "visitante": {
+        "id": 4488,
+        "nombre": "Osasuna",
+        "escudo": "/web/escudos/4488.png",
+        "posicion": 16,
+        "racha": "EPPPG"
+      },
+      "probabilities": {
+        "away": 0.14597521556408752,
+        "draw": 0.2307780126360346,
+        "home": 0.6232467717998779
+      }
+    },
+    {
+      "match_id": "es.laliga2:2627:mallorca-laspalmas:20261011",
+      "kickoff_utc": "2026-10-11T16:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": [
+        3,
+        1
+      ],
+      "local": {
+        "id": 6771,
+        "nombre": "Mallorca",
+        "escudo": "/web/escudos/6771.png",
+        "posicion": 4,
+        "racha": "EPGGE"
+      },
+      "visitante": {
+        "id": 3728,
+        "nombre": "Las Palmas",
+        "escudo": "/web/escudos/3728.png",
+        "posicion": 14,
+        "racha": "EPPGE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "pt.primeira:2627:benfica-vitoria:20261011",
+      "kickoff_utc": "2026-10-11T17:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "pt.primeira",
+        "nombre": "Primeira Liga",
+        "pais": "Portugal"
+      },
+      "marcador": [
+        2,
+        0
+      ],
+      "local": {
+        "id": 77426,
+        "nombre": "Benfica",
+        "escudo": "/web/escudos/77426.png",
+        "posicion": 2,
+        "racha": "PGGGG"
+      },
+      "visitante": {
+        "id": 77425,
+        "nombre": "Vitória SC",
+        "escudo": "/web/escudos/77425.png",
+        "posicion": 15,
+        "racha": "EPEPG"
+      },
+      "probabilities": {
+        "away": 0.07161313651136585,
+        "draw": 0.15849345594361802,
+        "home": 0.7698934075450161
+      }
+    },
+    {
+      "match_id": "no.eliteserien:2627:lillestrom-molde:20261011",
+      "kickoff_utc": "2026-10-11T17:15:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "no.eliteserien",
+        "nombre": "Eliteserien",
+        "pais": "Norway"
+      },
+      "marcador": [
+        2,
+        2
+      ],
+      "local": {
+        "id": 85108,
+        "nombre": "Lillestrom",
+        "escudo": "/web/escudos/85108.png",
+        "posicion": 6,
+        "racha": "PGGPE"
+      },
+      "visitante": {
+        "id": 85109,
+        "nombre": "Molde",
+        "escudo": "/web/escudos/85109.png",
+        "posicion": 4,
+        "racha": "PGGGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "it.serie_b:2627:modena-verona:20261010",
+      "kickoff_utc": "2026-10-11T17:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_b",
+        "nombre": "Serie B",
+        "pais": "Italy"
+      },
+      "marcador": [
+        3,
+        2
+      ],
+      "local": {
+        "id": 84911,
+        "nombre": "Modena",
+        "escudo": "/web/escudos/84911.png",
+        "posicion": 3,
+        "racha": "GEPGG"
+      },
+      "visitante": {
+        "id": 12090,
+        "nombre": "Hellas Verona",
+        "escudo": "/web/escudos/12090.png",
+        "posicion": 9,
+        "racha": "GPGEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "ar.primera:2026:sanlorenzo-depriestra:20261011",
+      "kickoff_utc": "2026-10-11T17:45:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina"
+      },
+      "marcador": [
+        1,
+        0
+      ],
+      "local": {
+        "id": 28413,
+        "nombre": "San Lorenzo",
+        "escudo": "/web/escudos/28413.png",
+        "posicion": 10,
+        "racha": "PPEGP"
+      },
+      "visitante": {
+        "id": 39538,
+        "nombre": "Deportivo Riestra",
+        "escudo": "/web/escudos/39538.png",
+        "posicion": 12,
+        "racha": "EEPEE"
+      },
+      "probabilities": {
+        "away": 0.20239273738964494,
+        "draw": 0.42015977607000027,
+        "home": 0.37744748654035487
+      }
+    },
+    {
+      "match_id": "cl.primera:2627:coquimbouni-colocolo:20261011",
+      "kickoff_utc": "2026-10-11T18:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "cl.primera",
+        "nombre": "Primera División (Chile)",
+        "pais": "Chile"
+      },
+      "marcador": [
+        5,
+        2
+      ],
+      "local": {
+        "id": 85047,
+        "nombre": "Coquimbo Unido",
+        "escudo": "/web/escudos/85047.png",
+        "posicion": 7,
+        "racha": "PPPGP"
+      },
+      "visitante": {
+        "id": 85045,
+        "nombre": "Colo Colo",
+        "escudo": "/web/escudos/85045.png",
+        "posicion": 1,
+        "racha": "EEGGE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "fr.ligue_1:2627:troyes-marseille:20261011",
+      "kickoff_utc": "2026-10-11T18:45:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "fr.ligue_1",
+        "nombre": "Ligue 1",
+        "pais": "France"
+      },
+      "marcador": [
+        0,
+        2
+      ],
+      "local": {
+        "id": 69628,
+        "nombre": "Estac Troyes",
+        "escudo": "/web/escudos/69628.png",
+        "posicion": 17,
+        "racha": "PPPGE"
+      },
+      "visitante": {
+        "id": 68859,
+        "nombre": "Marseille",
+        "escudo": "/web/escudos/68859.png",
+        "posicion": 13,
+        "racha": "PPPPP"
+      },
+      "probabilities": {
+        "away": 0.6515535352668901,
+        "draw": 0.1977638853335367,
+        "home": 0.1506825793995732
+      }
+    },
+    {
+      "match_id": "it.serie_a:2627:cagliari-juventus:20261011",
+      "kickoff_utc": "2026-10-11T18:45:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "it.serie_a",
+        "nombre": "Serie A",
+        "pais": "Italy"
+      },
+      "marcador": [
+        1,
+        1
+      ],
+      "local": {
+        "id": 12100,
+        "nombre": "Cagliari",
+        "escudo": "/web/escudos/12100.png",
+        "posicion": 4,
+        "racha": "GGGPG"
+      },
+      "visitante": {
+        "id": 12086,
+        "nombre": "Juventus",
+        "escudo": "/web/escudos/12086.png",
+        "posicion": 6,
+        "racha": "GGPEG"
+      },
+      "probabilities": {
+        "away": 0.46468663267379867,
+        "draw": 0.2993395349234227,
+        "home": 0.23597383240277853
+      }
+    },
+    {
+      "match_id": "br.serie_a:2026:atleticomg-santos:20261011",
+      "kickoff_utc": "2026-10-11T19:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": [
+        2,
+        1
+      ],
+      "local": {
+        "id": 39920,
+        "nombre": "Atletico-MG",
+        "escudo": "/web/escudos/39920.png",
+        "posicion": 7,
+        "racha": "EGEGP"
+      },
+      "visitante": {
+        "id": 39932,
+        "nombre": "Santos",
+        "escudo": "/web/escudos/39932.png",
+        "posicion": 8,
+        "racha": "EGGGG"
+      },
+      "probabilities": {
+        "away": 0.2418299384665836,
+        "draw": 0.2690799193813835,
+        "home": 0.489090142152033
+      }
+    },
+    {
+      "match_id": "es.laliga:2627:racingsanta-valencia:20261011",
+      "kickoff_utc": "2026-10-11T19:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga",
+        "nombre": "LaLiga",
+        "pais": "Spain"
+      },
+      "marcador": [
+        2,
+        2
+      ],
+      "local": {
+        "id": 84889,
+        "nombre": "Racing Santander",
+        "escudo": "/web/escudos/84889.png",
+        "posicion": 15,
+        "racha": "PPGPG"
+      },
+      "visitante": {
+        "id": 2972,
+        "nombre": "Valencia",
+        "escudo": "/web/escudos/2972.png",
+        "posicion": 19,
+        "racha": "PGPPP"
+      },
+      "probabilities": {
+        "away": 0.34416215770212083,
+        "draw": 0.22566841676471264,
+        "home": 0.43016942553316667
+      }
+    },
+    {
+      "match_id": "es.laliga2:2627:cadiz-spgijon:20261011",
+      "kickoff_utc": "2026-10-11T19:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": [
+        0,
+        1
+      ],
+      "local": {
+        "id": 7529,
+        "nombre": "Cadiz",
+        "escudo": "/web/escudos/7529.png",
+        "posicion": 20,
+        "racha": "GEPPP"
+      },
+      "visitante": {
+        "id": 3741,
+        "nombre": "Sporting Gijon",
+        "escudo": "/web/escudos/3741.png",
+        "posicion": 8,
+        "racha": "GPGPP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:juventude-saobernardo:20261011",
+      "kickoff_utc": "2026-10-11T19:00:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": [
+        2,
+        2
+      ],
+      "local": {
+        "id": 45235,
+        "nombre": "Juventude",
+        "escudo": "/web/escudos/45235.png",
+        "posicion": 1,
+        "racha": "GGGPP"
+      },
+      "visitante": {
+        "id": 85168,
+        "nombre": "São Bernardo",
+        "escudo": "/web/escudos/85168.png",
+        "posicion": 12,
+        "racha": "PGEGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:atleticogo-sportrecife:20261011",
+      "kickoff_utc": "2026-10-11T19:10:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": [
+        1,
+        1
+      ],
+      "local": {
+        "id": 42213,
+        "nombre": "Atletico Goianiense",
+        "escudo": "/web/escudos/42213.png",
+        "posicion": 6,
+        "racha": "PGGPG"
+      },
+      "visitante": {
+        "id": 39933,
+        "nombre": "Sport Recife",
+        "escudo": "/web/escudos/39933.png",
+        "posicion": 8,
+        "racha": "GGPGP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "pt.primeira:2627:arouca-estrela:20261011",
+      "kickoff_utc": "2026-10-11T19:30:00+00:00",
+      "estado": "finished",
+      "liga": {
+        "id": "pt.primeira",
+        "nombre": "Primeira Liga",
+        "pais": "Portugal"
+      },
+      "marcador": [
+        1,
+        0
+      ],
+      "local": {
+        "id": 77436,
+        "nombre": "Arouca",
+        "escudo": "/web/escudos/77436.png",
+        "posicion": 6,
+        "racha": "EPEGP"
+      },
+      "visitante": {
+        "id": 82938,
+        "nombre": "Estrela",
+        "escudo": "/web/escudos/82938.png",
+        "posicion": 9,
+        "racha": "PEGEG"
+      },
+      "probabilities": {
+        "away": 0.23569670272222806,
+        "draw": 0.23318097529426438,
+        "home": 0.5311223219835076
+      }
+    },
+    {
+      "match_id": "ar.primera:2026:platense-argentinosj:20261011",
+      "kickoff_utc": "2026-10-11T20:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39291,
+        "nombre": "Platense",
+        "escudo": "/web/escudos/39291.png",
+        "posicion": 13,
+        "racha": "EPPEP"
+      },
+      "visitante": {
+        "id": 29338,
+        "nombre": "Argentinos JRS",
+        "escudo": "/web/escudos/29338.png",
+        "posicion": 1,
+        "racha": "GPEEG"
+      },
+      "probabilities": {
+        "away": 0.4254457956289006,
+        "draw": 0.3293733361208857,
+        "home": 0.24518086825021373
+      }
+    },
+    {
+      "match_id": "ar.primera:2026:rosariocent-indrivadavi:20261011",
+      "kickoff_utc": "2026-10-11T20:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina"
+      },
+      "marcador": null,
+      "local": {
+        "id": 28407,
+        "nombre": "Rosario Central",
+        "escudo": "/web/escudos/28407.png",
+        "posicion": 4,
+        "racha": "EGGEP"
+      },
+      "visitante": {
+        "id": 39540,
+        "nombre": "Independ. Rivadavia",
+        "escudo": "/web/escudos/39540.png",
+        "posicion": 7,
+        "racha": "EGGPG"
+      },
+      "probabilities": {
+        "away": 0.23468236219284289,
+        "draw": 0.279635252670391,
+        "home": 0.48568238513676587
+      }
+    },
+    {
+      "match_id": "br.serie_a:2026:flamengorj-fluminense:20261011",
+      "kickoff_utc": "2026-10-11T20:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39930,
+        "nombre": "Flamengo",
+        "escudo": "/web/escudos/39930.png",
+        "posicion": 1,
+        "racha": "EGGGG"
+      },
+      "visitante": {
+        "id": 39914,
+        "nombre": "Fluminense",
+        "escudo": "/web/escudos/39914.png",
+        "posicion": 3,
+        "racha": "GGPGE"
+      },
+      "probabilities": {
+        "away": 0.13469387889472437,
+        "draw": 0.22117846928485854,
+        "home": 0.6441276518204172
+      }
+    },
+    {
+      "match_id": "br.serie_a:2026:gremio-internaciona:20261011",
+      "kickoff_utc": "2026-10-11T20:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39923,
+        "nombre": "Gremio",
+        "escudo": "/web/escudos/39923.png",
+        "posicion": 18,
+        "racha": "EEPPP"
+      },
+      "visitante": {
+        "id": 39916,
+        "nombre": "Internacional",
+        "escudo": "/web/escudos/39916.png",
+        "posicion": 17,
+        "racha": "GPGPP"
+      },
+      "probabilities": {
+        "away": 0.25545193636047386,
+        "draw": 0.2912287484662157,
+        "home": 0.4533193151733105
+      }
+    },
+    {
+      "match_id": "br.serie_a:2026:palmeiras-corinthians:20261011",
+      "kickoff_utc": "2026-10-11T20:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39929,
+        "nombre": "Palmeiras",
+        "escudo": "/web/escudos/39929.png",
+        "posicion": 2,
+        "racha": "GEGEE"
+      },
+      "visitante": {
+        "id": 39921,
+        "nombre": "Corinthians",
+        "escudo": "/web/escudos/39921.png",
+        "posicion": 16,
+        "racha": "PPPPP"
+      },
+      "probabilities": {
+        "away": 0.10522699358610557,
+        "draw": 0.23616497268918124,
+        "home": 0.6586080337247132
+      }
+    },
+    {
+      "match_id": "cl.primera:2627:concepcion-unionlacal:20261011",
+      "kickoff_utc": "2026-10-11T20:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "cl.primera",
+        "nombre": "Primera División (Chile)",
+        "pais": "Chile"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85046,
+        "nombre": "Concepción",
+        "escudo": "/web/escudos/85046.png",
+        "posicion": 9,
+        "racha": "EPGEG"
+      },
+      "visitante": {
+        "id": 85056,
+        "nombre": "Union La Calera",
+        "escudo": "/web/escudos/85056.png",
+        "posicion": 16,
+        "racha": "GPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:nauticoreci-vilanova:20261011",
+      "kickoff_utc": "2026-10-11T20:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85165,
+        "nombre": "Nautico Recife",
+        "escudo": "/web/escudos/85165.png",
+        "posicion": 13,
+        "racha": "PEGPE"
+      },
+      "visitante": {
+        "id": 85169,
+        "nombre": "Vila Nova",
+        "escudo": "/web/escudos/85169.png",
+        "posicion": 2,
+        "racha": "EGGGE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:cuiaba-avai:20261011",
+      "kickoff_utc": "2026-10-11T21:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 45234,
+        "nombre": "Cuiaba",
+        "escudo": "/web/escudos/45234.png",
+        "posicion": 10,
+        "racha": "EGPGE"
+      },
+      "visitante": {
+        "id": 40690,
+        "nombre": "Avai",
+        "escudo": "/web/escudos/40690.png",
+        "posicion": 17,
+        "racha": "GPPPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:operariopr-goias:20261011",
+      "kickoff_utc": "2026-10-11T21:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85167,
+        "nombre": "Operario-PR",
+        "escudo": "/web/escudos/85167.png",
+        "posicion": 9,
+        "racha": "PPEGE"
+      },
+      "visitante": {
+        "id": 39931,
+        "nombre": "Goias",
+        "escudo": "/web/escudos/39931.png",
+        "posicion": 11,
+        "racha": "GPPGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "ar.primera:2026:racing-belgrano:20261011",
+      "kickoff_utc": "2026-10-11T22:15:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina"
+      },
+      "marcador": null,
+      "local": {
+        "id": 28409,
+        "nombre": "Racing Club",
+        "escudo": "/web/escudos/28409.png",
+        "posicion": 13,
+        "racha": "GGPPP"
+      },
+      "visitante": {
+        "id": 28419,
+        "nombre": "Belgrano Cordoba",
+        "escudo": "/web/escudos/28419.png",
+        "posicion": 2,
+        "racha": "GGEEE"
+      },
+      "probabilities": {
+        "away": 0.2970872992220476,
+        "draw": 0.32965109670682674,
+        "home": 0.37326160407112574
+      }
+    },
+    {
+      "match_id": "br.serie_a:2026:bahia-mirassol:20261011",
+      "kickoff_utc": "2026-10-11T22:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39924,
+        "nombre": "Bahia",
+        "escudo": "/web/escudos/39924.png",
+        "posicion": 6,
+        "racha": "PPGGG"
+      },
+      "visitante": {
+        "id": 48275,
+        "nombre": "Mirassol",
+        "escudo": "/web/escudos/48275.png",
+        "posicion": 15,
+        "racha": "EGEGP"
+      },
+      "probabilities": {
+        "away": 0.23030910333016558,
+        "draw": 0.2571316923117537,
+        "home": 0.5125592043580806
+      }
+    },
+    {
+      "match_id": "mx.liga_mx:2026A:atleticosan-santoslagun:20261011",
+      "kickoff_utc": "2026-10-11T23:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "mx.liga_mx",
+        "nombre": "Liga MX",
+        "pais": "Mexico"
+      },
+      "marcador": null,
+      "local": {
+        "id": 34601,
+        "nombre": "Atletico San Luis",
+        "escudo": "/web/escudos/34601.png",
+        "posicion": 14,
+        "racha": "GGPPG"
+      },
+      "visitante": {
+        "id": 31264,
+        "nombre": "Santos Laguna",
+        "escudo": "/web/escudos/31264.png",
+        "posicion": 16,
+        "racha": "GGGPE"
+      },
+      "probabilities": {
+        "away": 0.2081148312323152,
+        "draw": 0.23711630007306345,
+        "home": 0.5547688686946214
+      }
+    },
+    {
+      "match_id": "us.mls:2026:stlouiscit-losangeles:20261011",
+      "kickoff_utc": "2026-10-11T23:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "us.mls",
+        "nombre": "Major League Soccer",
+        "pais": "USA"
+      },
+      "marcador": null,
+      "local": {
+        "id": 57517,
+        "nombre": "St. Louis City",
+        "escudo": "/web/escudos/57517.png",
+        "posicion": 2,
+        "racha": "GGGEG"
+      },
+      "visitante": {
+        "id": 49040,
+        "nombre": "Los Angeles Galaxy",
+        "escudo": "/web/escudos/49040.png",
+        "posicion": 9,
+        "racha": "GGEPG"
+      },
+      "probabilities": {
+        "away": 0.20615595832245934,
+        "draw": 0.22804109300819034,
+        "home": 0.5658029486693504
+      }
+    },
+    {
+      "match_id": "cl.primera:2627:deporteslim-palestino:20261011",
+      "kickoff_utc": "2026-10-11T23:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "cl.primera",
+        "nombre": "Primera División (Chile)",
+        "pais": "Chile"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85049,
+        "nombre": "Deportes Limache",
+        "escudo": "/web/escudos/85049.png",
+        "posicion": 6,
+        "racha": "PGGPG"
+      },
+      "visitante": {
+        "id": 85054,
+        "nombre": "Palestino",
+        "escudo": "/web/escudos/85054.png",
+        "posicion": 5,
+        "racha": "PGPGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "mx.liga_mx:2026A:pachuca-necaxa:20261011",
+      "kickoff_utc": "2026-10-11T23:10:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "mx.liga_mx",
+        "nombre": "Liga MX",
+        "pais": "Mexico"
+      },
+      "marcador": null,
+      "local": {
+        "id": 31262,
+        "nombre": "CF Pachuca",
+        "escudo": "/web/escudos/31262.png",
+        "posicion": 12,
+        "racha": "PEGGE"
+      },
+      "visitante": {
+        "id": 32605,
+        "nombre": "Necaxa",
+        "escudo": "/web/escudos/32605.png",
+        "posicion": 17,
+        "racha": "PPPEP"
+      },
+      "probabilities": {
+        "away": 0.14551151391755757,
+        "draw": 0.2286457242350183,
+        "home": 0.6258427618474242
+      }
+    },
+    {
+      "match_id": "ar.primera:2026:tallerescor-independient:20261011",
+      "kickoff_utc": "2026-10-12T00:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina"
+      },
+      "marcador": null,
+      "local": {
+        "id": 28410,
+        "nombre": "Talleres Cordoba",
+        "escudo": "/web/escudos/28410.png",
+        "posicion": 15,
+        "racha": "PPGPE"
+      },
+      "visitante": {
+        "id": 28420,
+        "nombre": "Independiente",
+        "escudo": "/web/escudos/28420.png",
+        "posicion": 8,
+        "racha": "PGEGP"
+      },
+      "probabilities": {
+        "away": 0.3219640380564185,
+        "draw": 0.3115581133597174,
+        "home": 0.3664778485838642
+      }
+    },
+    {
+      "match_id": "mx.liga_mx:2026A:unampumas-cruzazul:20261012",
+      "kickoff_utc": "2026-10-12T01:15:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "mx.liga_mx",
+        "nombre": "Liga MX",
+        "pais": "Mexico"
+      },
+      "marcador": null,
+      "local": {
+        "id": 31258,
+        "nombre": "U.N.A.M. - Pumas",
+        "escudo": "/web/escudos/31258.png",
+        "posicion": 13,
+        "racha": "PEPGP"
+      },
+      "visitante": {
+        "id": 31261,
+        "nombre": "Cruz Azul",
+        "escudo": "/web/escudos/31261.png",
+        "posicion": 7,
+        "racha": "EPGGG"
+      },
+      "probabilities": {
+        "away": 0.30864284006532344,
+        "draw": 0.26559371278235955,
+        "home": 0.4257634471523171
+      }
+    },
+    {
+      "match_id": "es.laliga2:2627:valladolid-albacete:20261012",
+      "kickoff_utc": "2026-10-12T12:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": null,
+      "local": {
+        "id": 6008,
+        "nombre": "Valladolid",
+        "escudo": "/web/escudos/6008.png",
+        "posicion": 17,
+        "racha": "EGEPG"
+      },
+      "visitante": {
+        "id": 84895,
+        "nombre": "Albacete",
+        "escudo": "/web/escudos/84895.png",
+        "posicion": 22,
+        "racha": "PPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "es.laliga2:2627:burgos-granada:20261012",
+      "kickoff_utc": "2026-10-12T14:15:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": null,
+      "local": {
+        "id": 84896,
+        "nombre": "Burgos",
+        "escudo": "/web/escudos/84896.png",
+        "posicion": 7,
+        "racha": "PGGGE"
+      },
+      "visitante": {
+        "id": 2967,
+        "nombre": "Granada CF",
+        "escudo": "/web/escudos/2967.png",
+        "posicion": 9,
+        "racha": "GPPEP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "es.laliga2:2627:oviedo-eibar:20261012",
+      "kickoff_utc": "2026-10-12T16:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": null,
+      "local": {
+        "id": 11328,
+        "nombre": "Oviedo",
+        "escudo": "/web/escudos/11328.png",
+        "posicion": 10,
+        "racha": "PGPGE"
+      },
+      "visitante": {
+        "id": 2977,
+        "nombre": "Eibar",
+        "escudo": "/web/escudos/2977.png",
+        "posicion": 1,
+        "racha": "GGGGG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "it.serie_a:2627:atalanta-venezia:20261012",
+      "kickoff_utc": "2026-10-12T16:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "it.serie_a",
+        "nombre": "Serie A",
+        "pais": "Italy"
+      },
+      "marcador": null,
+      "local": {
+        "id": 12089,
+        "nombre": "Atalanta",
+        "escudo": "/web/escudos/12089.png",
+        "posicion": 11,
+        "racha": "PPPGG"
+      },
+      "visitante": {
+        "id": 17418,
+        "nombre": "Venezia",
+        "escudo": "/web/escudos/17418.png",
+        "posicion": 20,
+        "racha": "PPPPP"
+      },
+      "probabilities": {
+        "away": 0.08198190100632234,
+        "draw": 0.17410526708191218,
+        "home": 0.7439128319117653
+      }
+    },
+    {
+      "match_id": "se.allsvenskan:2627:elfsborg-halmstad:20261012",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "se.allsvenskan",
+        "nombre": "Allsvenskan",
+        "pais": "Sweden"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85125,
+        "nombre": "IF Elfsborg",
+        "escudo": "/web/escudos/85125.png",
+        "posicion": 5,
+        "racha": "GGPGE"
+      },
+      "visitante": {
+        "id": 85122,
+        "nombre": "Halmstad",
+        "escudo": "/web/escudos/85122.png",
+        "posicion": 16,
+        "racha": "GPPGE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "se.allsvenskan:2627:malmoff-kalmarff:20261012",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "se.allsvenskan",
+        "nombre": "Allsvenskan",
+        "pais": "Sweden"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85128,
+        "nombre": "Malmo FF",
+        "escudo": "/web/escudos/85128.png",
+        "posicion": 8,
+        "racha": "PGEGP"
+      },
+      "visitante": {
+        "id": 85127,
+        "nombre": "Kalmar FF",
+        "escudo": "/web/escudos/85127.png",
+        "posicion": 14,
+        "racha": "PPPPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "no.eliteserien:2627:kfumoslo-valerenga:20261012",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "no.eliteserien",
+        "nombre": "Eliteserien",
+        "pais": "Norway"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85106,
+        "nombre": "KFUM Oslo",
+        "escudo": "/web/escudos/85106.png",
+        "posicion": 11,
+        "racha": "GGPPE"
+      },
+      "visitante": {
+        "id": 85115,
+        "nombre": "Valerenga",
+        "escudo": "/web/escudos/85115.png",
+        "posicion": 13,
+        "racha": "EPEPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "dk.superliga:2627:aarhus-sonderjyske:20261012",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "dk.superliga",
+        "nombre": "Superliga (Dinamarca)",
+        "pais": "Denmark"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85090,
+        "nombre": "Aarhus",
+        "escudo": "/web/escudos/85090.png",
+        "posicion": 11,
+        "racha": "EPEPP"
+      },
+      "visitante": {
+        "id": 85099,
+        "nombre": "Sonderjyske",
+        "escudo": "/web/escudos/85099.png",
+        "posicion": 12,
+        "racha": "GEPPP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "tr.super_lig:2627:eyupspor-goztepe:20261012",
+      "kickoff_utc": "2026-10-12T17:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "tr.super_lig",
+        "nombre": "Süper Lig",
+        "pais": "Turkey"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85064,
+        "nombre": "Eyüpspor",
+        "escudo": null,
+        "posicion": 18,
+        "racha": "PPPGP"
+      },
+      "visitante": {
+        "id": 85069,
+        "nombre": "Göztepe",
+        "escudo": "/web/escudos/85069.png",
+        "posicion": 17,
+        "racha": "EEPPP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "fr.ligue_2:2627:dijon-metz:20261012",
+      "kickoff_utc": "2026-10-12T18:45:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "fr.ligue_2",
+        "nombre": "Ligue 2",
+        "pais": "France"
+      },
+      "marcador": null,
+      "local": {
+        "id": 70384,
+        "nombre": "Dijon",
+        "escudo": "/web/escudos/70384.png",
+        "posicion": 10,
+        "racha": "GGEPE"
+      },
+      "visitante": {
+        "id": 68865,
+        "nombre": "Metz",
+        "escudo": "/web/escudos/68865.png",
+        "posicion": 9,
+        "racha": "EPGEE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "it.serie_a:2627:torino-udinese:20261012",
+      "kickoff_utc": "2026-10-12T18:45:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "it.serie_a",
+        "nombre": "Serie A",
+        "pais": "Italy"
+      },
+      "marcador": null,
+      "local": {
+        "id": 12101,
+        "nombre": "Torino",
+        "escudo": "/web/escudos/12101.png",
+        "posicion": 15,
+        "racha": "EPGPP"
+      },
+      "visitante": {
+        "id": 12103,
+        "nombre": "Udinese",
+        "escudo": "/web/escudos/12103.png",
+        "posicion": 14,
+        "racha": "PPPGE"
+      },
+      "probabilities": {
+        "away": 0.3570122381698524,
+        "draw": 0.27695969242662494,
+        "home": 0.36602806940352284
+      }
+    },
+    {
+      "match_id": "br.serie_a:2026:coritiba-botafogorj:20261011",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39919,
+        "nombre": "Coritiba",
+        "escudo": "/web/escudos/39919.png",
+        "posicion": 10,
+        "racha": "PPEPG"
+      },
+      "visitante": {
+        "id": 39927,
+        "nombre": "Botafogo",
+        "escudo": "/web/escudos/39927.png",
+        "posicion": 13,
+        "racha": "PPGEE"
+      },
+      "probabilities": {
+        "away": 0.3463532674476191,
+        "draw": 0.25529364633360285,
+        "home": 0.398353086218778
+      }
+    },
+    {
+      "match_id": "es.laliga:2627:levante-sevilla:20261012",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "es.laliga",
+        "nombre": "LaLiga",
+        "pais": "Spain"
+      },
+      "marcador": null,
+      "local": {
+        "id": 2979,
+        "nombre": "Levante",
+        "escudo": "/web/escudos/2979.png",
+        "posicion": 18,
+        "racha": "PPEGE"
+      },
+      "visitante": {
+        "id": 2971,
+        "nombre": "Sevilla",
+        "escudo": "/web/escudos/2971.png",
+        "posicion": 5,
+        "racha": "PGGEP"
+      },
+      "probabilities": {
+        "away": 0.274252112185117,
+        "draw": 0.262621310202729,
+        "home": 0.46312657761215387
+      }
+    },
+    {
+      "match_id": "es.laliga2:2627:tenerife-girona:20261012",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "es.laliga2",
+        "nombre": "LaLiga 2",
+        "pais": "Spain"
+      },
+      "marcador": null,
+      "local": {
+        "id": 84903,
+        "nombre": "Tenerife",
+        "escudo": "/web/escudos/84903.png",
+        "posicion": 13,
+        "racha": "PEPGE"
+      },
+      "visitante": {
+        "id": 5251,
+        "nombre": "Girona",
+        "escudo": "/web/escudos/5251.png",
+        "posicion": 6,
+        "racha": "EGGPG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "ar.primera:2026:lanus-velezsarsfi:20261011",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina"
+      },
+      "marcador": null,
+      "local": {
+        "id": 28425,
+        "nombre": "Lanus",
+        "escudo": "/web/escudos/28425.png",
+        "posicion": 5,
+        "racha": "EGGGP"
+      },
+      "visitante": {
+        "id": 28406,
+        "nombre": "Velez Sarsfield",
+        "escudo": "/web/escudos/28406.png",
+        "posicion": 4,
+        "racha": "EGEGE"
+      },
+      "probabilities": {
+        "away": 0.28048517899537184,
+        "draw": 0.31803239014289797,
+        "home": 0.4014824308617302
+      }
+    },
+    {
+      "match_id": "gb.premier_league:2627:coventry-newcastle:20261012",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "gb.premier_league",
+        "nombre": "Premier League",
+        "pais": "England"
+      },
+      "marcador": null,
+      "local": {
+        "id": 84888,
+        "nombre": "Coventry",
+        "escudo": "/web/escudos/84888.png",
+        "posicion": 19,
+        "racha": "GPPPP"
+      },
+      "visitante": {
+        "id": 13,
+        "nombre": "Newcastle",
+        "escudo": "/web/escudos/13.png",
+        "posicion": 11,
+        "racha": "GPEGE"
+      },
+      "probabilities": {
+        "away": 0.6866993672717677,
+        "draw": 0.23582762997094425,
+        "home": 0.07747300275728801
+      }
+    },
+    {
+      "match_id": "br.serie_b:2627:fortaleza-crb:20261012",
+      "kickoff_utc": "2026-10-12T19:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 43733,
+        "nombre": "Fortaleza EC",
+        "escudo": "/web/escudos/43733.png",
+        "posicion": 4,
+        "racha": "GEEGE"
+      },
+      "visitante": {
+        "id": 85163,
+        "nombre": "CRB",
+        "escudo": "/web/escudos/85163.png",
+        "posicion": 7,
+        "racha": "GPGPG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "pt.primeira:2627:famalicao-alverca:20261012",
+      "kickoff_utc": "2026-10-12T19:15:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "pt.primeira",
+        "nombre": "Primeira Liga",
+        "pais": "Portugal"
+      },
+      "marcador": null,
+      "local": {
+        "id": 80483,
+        "nombre": "Famalicao",
+        "escudo": "/web/escudos/80483.png",
+        "posicion": 13,
+        "racha": "GEEEP"
+      },
+      "visitante": {
+        "id": 84161,
+        "nombre": "Alverca",
+        "escudo": "/web/escudos/84161.png",
+        "posicion": 10,
+        "racha": "GGPEP"
+      },
+      "probabilities": {
+        "away": 0.1769490163220066,
+        "draw": 0.2819592426726227,
+        "home": 0.5410917410053707
+      }
+    },
+    {
+      "match_id": "cl.primera:2627:universidad-nublense:20261012",
+      "kickoff_utc": "2026-10-12T20:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "cl.primera",
+        "nombre": "Primera División (Chile)",
+        "pais": "Chile"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85057,
+        "nombre": "Universidad de Chile",
+        "escudo": "/web/escudos/85057.png",
+        "posicion": 3,
+        "racha": "GGPPG"
+      },
+      "visitante": {
+        "id": 85052,
+        "nombre": "Nublense",
+        "escudo": "/web/escudos/85052.png",
+        "posicion": 8,
+        "racha": "PPPPG"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "ar.primera:2026:gimnasiamen-newellsold:20261011",
+      "kickoff_utc": "2026-10-12T21:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "ar.primera",
+        "nombre": "Liga Profesional",
+        "pais": "Argentina"
+      },
+      "marcador": null,
+      "local": {
+        "id": 84891,
+        "nombre": "Gimnasia M.",
+        "escudo": "/web/escudos/84891.png",
+        "posicion": 7,
+        "racha": "PEPEG"
+      },
+      "visitante": {
+        "id": 28418,
+        "nombre": "Newells Old Boys",
+        "escudo": "/web/escudos/28418.png",
+        "posicion": 6,
+        "racha": "EGEEE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:novorizontin-pontepreta:20261012",
+      "kickoff_utc": "2026-10-12T22:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85166,
+        "nombre": "Novorizontino",
+        "escudo": "/web/escudos/85166.png",
+        "posicion": 3,
+        "racha": "GGEPE"
+      },
+      "visitante": {
+        "id": 40681,
+        "nombre": "Ponte Preta",
+        "escudo": "/web/escudos/40681.png",
+        "posicion": 20,
+        "racha": "PPPGP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_a:2026:chapecoense-athleticopr:20261012",
+      "kickoff_utc": "2026-10-12T22:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39918,
+        "nombre": "Chapecoense-sc",
+        "escudo": "/web/escudos/39918.png",
+        "posicion": 20,
+        "racha": "PEPGP"
+      },
+      "visitante": {
+        "id": 39922,
+        "nombre": "Atletico Paranaense",
+        "escudo": "/web/escudos/39922.png",
+        "posicion": 4,
+        "racha": "EGEPE"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:criciuma-americamg:20261012",
+      "kickoff_utc": "2026-10-12T22:30:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 39928,
+        "nombre": "Criciuma",
+        "escudo": "/web/escudos/39928.png",
+        "posicion": 5,
+        "racha": "PGGPP"
+      },
+      "visitante": {
+        "id": 41446,
+        "nombre": "America Mineiro",
+        "escudo": "/web/escudos/41446.png",
+        "posicion": 19,
+        "racha": "PPPPP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_a:2026:bragantino-cruzeiro:20261013",
+      "kickoff_utc": "2026-10-13T00:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_a",
+        "nombre": "Brasileirão Série A",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 44483,
+        "nombre": "RB Bragantino",
+        "escudo": "/web/escudos/44483.png",
+        "posicion": 11,
+        "racha": "EPPEP"
+      },
+      "visitante": {
+        "id": 39925,
+        "nombre": "Cruzeiro",
+        "escudo": "/web/escudos/39925.png",
+        "posicion": 5,
+        "racha": "GGPGP"
+      },
+      "probabilities": null
+    },
+    {
+      "match_id": "br.serie_b:2627:botafogosp-ceara:20261013",
+      "kickoff_utc": "2026-10-13T00:00:00+00:00",
+      "estado": "scheduled",
+      "liga": {
+        "id": "br.serie_b",
+        "nombre": "Série B",
+        "pais": "Brazil"
+      },
+      "marcador": null,
+      "local": {
+        "id": 85162,
+        "nombre": "Botafogo SP",
+        "escudo": "/web/escudos/85162.png",
+        "posicion": 16,
+        "racha": "GPGEP"
+      },
+      "visitante": {
+        "id": 42959,
+        "nombre": "Ceara",
+        "escudo": "/web/escudos/42959.png",
+        "posicion": 14,
+        "racha": "GGEGE"
+      },
+      "probabilities": null
+    }
+  ],
+  "alta_probabilidad": {
+    "estado": "activa",
+    "motivos": [
+      "todo: muestra insuficiente (menos de 10 semanas)",
+      "corners: muestra insuficiente (5 < 50)",
+      "corners_away: muestra insuficiente (3 < 50)",
+      "corners_home: muestra insuficiente (9 < 50)",
+      "double_chance: muestra insuficiente (20 < 50)",
+      "h2h: muestra insuficiente (4 < 50)",
+      "spreads: muestra insuficiente (23 < 50)",
+      "team_totals: muestra insuficiente (18 < 50)",
+      "totals: muestra insuficiente (21 < 50)"
+    ],
+    "proximos": [
+      {
+        "match_id": "ar.primera:2026:tallerescor-independient:20261011",
+        "league_id": "ar.primera",
+        "kickoff_utc": "2026-10-12T00:30:00+00:00",
+        "local": "Talleres Cordoba",
+        "visitante": "Independiente",
+        "market": "totals",
+        "selection": "under",
+        "line": 3.5,
+        "prob": 0.81,
+        "ref_price": 1.22,
+        "ref_book": "betano",
+        "odds_as_of": "2026-10-11T04:03:22+00:00",
+        "batch_date": "2026-10-11",
+        "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e",
+        "texto": "Menos de 3,5 goles",
+        "locked": false,
+        "free": true,
+        "pick_key": "ar.primera:2026:tallerescor-independient:20261011",
+        "fair_price": 1.23
+      },
+      {
+        "match_id": "mx.liga_mx:2026A:unampumas-cruzazul:20261012",
+        "league_id": "mx.liga_mx",
+        "kickoff_utc": "2026-10-12T01:15:00+00:00",
+        "local": "U.N.A.M. - Pumas",
+        "visitante": "Cruz Azul",
+        "market": "totals",
+        "selection": "over",
+        "line": 1.5,
+        "prob": 0.81,
+        "ref_price": 1.22,
+        "ref_book": "betano",
+        "odds_as_of": "2026-10-11T03:45:17+00:00",
+        "batch_date": "2026-10-11",
+        "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e",
+        "texto": "Más de 1,5 goles",
+        "locked": false,
+        "free": true,
+        "pick_key": "mx.liga_mx:2026A:unampumas-cruzazul:20261012",
+        "fair_price": 1.23
+      }
+    ],
+    "historial": {
+      "n": 103,
+      "aciertos": 81,
+      "acierto_prometido": 82.6,
+      "acierto_real": 78.6,
+      "diferencia_ic95": null,
+      "por_mercado": {
+        "corners": {
+          "n": 5,
+          "aciertos": 5,
+          "acierto_prometido": 84.6,
+          "acierto_real": 100.0
+        },
+        "corners_away": {
+          "n": 3,
+          "aciertos": 3,
+          "acierto_prometido": 82.2,
+          "acierto_real": 100.0
+        },
+        "corners_home": {
+          "n": 9,
+          "aciertos": 8,
+          "acierto_prometido": 82.8,
+          "acierto_real": 88.9
+        },
+        "double_chance": {
+          "n": 20,
+          "aciertos": 15,
+          "acierto_prometido": 82.0,
+          "acierto_real": 75.0
+        },
+        "h2h": {
+          "n": 4,
+          "aciertos": 3,
+          "acierto_prometido": 87.9,
+          "acierto_real": 75.0
+        },
+        "spreads": {
+          "n": 23,
+          "aciertos": 15,
+          "acierto_prometido": 82.7,
+          "acierto_real": 65.2
+        },
+        "team_totals_away": {
+          "n": 6,
+          "aciertos": 5,
+          "acierto_prometido": 82.5,
+          "acierto_real": 83.3
+        },
+        "team_totals_home": {
+          "n": 12,
+          "aciertos": 12,
+          "acierto_prometido": 81.5,
+          "acierto_real": 100.0
+        },
+        "totals": {
+          "n": 21,
+          "aciertos": 15,
+          "acierto_prometido": 82.2,
+          "acierto_real": 71.4
+        }
+      },
+      "por_mes": [
+        {
+          "mes": "2026-10",
+          "n": 103,
+          "aciertos": 81,
+          "acierto_prometido": 82.6,
+          "acierto_real": 78.6
+        }
+      ],
+      "rendimiento_ref": {
+        "n": 59,
+        "roi": -1.64
+      }
+    },
+    "vip": [
+      {
+        "match_id": "cl.primera:2627:deporteslim-palestino:20261011",
+        "league_id": "cl.primera",
+        "kickoff_utc": "2026-10-11T23:00:00+00:00",
+        "local": "Deportes Limache",
+        "visitante": "Palestino",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "cl.primera:2627:deporteslim-palestino:20261011"
+      },
+      {
+        "match_id": "mx.liga_mx:2026A:atleticosan-santoslagun:20261011",
+        "league_id": "mx.liga_mx",
+        "kickoff_utc": "2026-10-11T23:00:00+00:00",
+        "local": "Atletico San Luis",
+        "visitante": "Santos Laguna",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "mx.liga_mx:2026A:atleticosan-santoslagun:20261011"
+      },
+      {
+        "match_id": "us.mls:2026:stlouiscit-losangeles:20261011",
+        "league_id": "us.mls",
+        "kickoff_utc": "2026-10-11T23:00:00+00:00",
+        "local": "St. Louis City",
+        "visitante": "Los Angeles Galaxy",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "us.mls:2026:stlouiscit-losangeles:20261011"
+      },
+      {
+        "match_id": "mx.liga_mx:2026A:pachuca-necaxa:20261011",
+        "league_id": "mx.liga_mx",
+        "kickoff_utc": "2026-10-11T23:10:00+00:00",
+        "local": "CF Pachuca",
+        "visitante": "Necaxa",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "mx.liga_mx:2026A:pachuca-necaxa:20261011"
+      },
+      {
+        "match_id": "it.serie_a:2627:atalanta-venezia:20261012",
+        "league_id": "it.serie_a",
+        "kickoff_utc": "2026-10-12T16:30:00+00:00",
+        "local": "Atalanta",
+        "visitante": "Venezia",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "it.serie_a:2627:atalanta-venezia:20261012"
+      },
+      {
+        "match_id": "dk.superliga:2627:aarhus-sonderjyske:20261012",
+        "league_id": "dk.superliga",
+        "kickoff_utc": "2026-10-12T17:00:00+00:00",
+        "local": "Aarhus",
+        "visitante": "Sonderjyske",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "dk.superliga:2627:aarhus-sonderjyske:20261012"
+      },
+      {
+        "match_id": "no.eliteserien:2627:kfumoslo-valerenga:20261012",
+        "league_id": "no.eliteserien",
+        "kickoff_utc": "2026-10-12T17:00:00+00:00",
+        "local": "KFUM Oslo",
+        "visitante": "Valerenga",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "no.eliteserien:2627:kfumoslo-valerenga:20261012"
+      },
+      {
+        "match_id": "se.allsvenskan:2627:elfsborg-halmstad:20261012",
+        "league_id": "se.allsvenskan",
+        "kickoff_utc": "2026-10-12T17:00:00+00:00",
+        "local": "IF Elfsborg",
+        "visitante": "Halmstad",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "se.allsvenskan:2627:elfsborg-halmstad:20261012"
+      },
+      {
+        "match_id": "se.allsvenskan:2627:malmoff-kalmarff:20261012",
+        "league_id": "se.allsvenskan",
+        "kickoff_utc": "2026-10-12T17:00:00+00:00",
+        "local": "Malmo FF",
+        "visitante": "Kalmar FF",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "se.allsvenskan:2627:malmoff-kalmarff:20261012"
+      },
+      {
+        "match_id": "fr.ligue_2:2627:dijon-metz:20261012",
+        "league_id": "fr.ligue_2",
+        "kickoff_utc": "2026-10-12T18:45:00+00:00",
+        "local": "Dijon",
+        "visitante": "Metz",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "fr.ligue_2:2627:dijon-metz:20261012"
+      },
+      {
+        "match_id": "it.serie_a:2627:torino-udinese:20261012",
+        "league_id": "it.serie_a",
+        "kickoff_utc": "2026-10-12T18:45:00+00:00",
+        "local": "Torino",
+        "visitante": "Udinese",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "it.serie_a:2627:torino-udinese:20261012"
+      },
+      {
+        "match_id": "ar.primera:2026:lanus-velezsarsfi:20261011",
+        "league_id": "ar.primera",
+        "kickoff_utc": "2026-10-12T19:00:00+00:00",
+        "local": "Lanus",
+        "visitante": "Velez Sarsfield",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "ar.primera:2026:lanus-velezsarsfi:20261011"
+      },
+      {
+        "match_id": "br.serie_a:2026:coritiba-botafogorj:20261011",
+        "league_id": "br.serie_a",
+        "kickoff_utc": "2026-10-12T19:00:00+00:00",
+        "local": "Coritiba",
+        "visitante": "Botafogo",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "br.serie_a:2026:coritiba-botafogorj:20261011"
+      },
+      {
+        "match_id": "br.serie_b:2627:fortaleza-crb:20261012",
+        "league_id": "br.serie_b",
+        "kickoff_utc": "2026-10-12T19:00:00+00:00",
+        "local": "Fortaleza EC",
+        "visitante": "CRB",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "br.serie_b:2627:fortaleza-crb:20261012"
+      },
+      {
+        "match_id": "cl.primera:2627:universidad-nublense:20261012",
+        "league_id": "cl.primera",
+        "kickoff_utc": "2026-10-12T20:00:00+00:00",
+        "local": "Universidad de Chile",
+        "visitante": "Nublense",
+        "batch_date": "2026-10-11",
+        "locked": true,
+        "pick_key": "cl.primera:2627:universidad-nublense:20261012"
+      }
+    ]
+  },
+  "escalera": {
+    "activo": true,
+    "reglas": {
+      "cuota_min": 1.25,
+      "cuota_max": 1.4,
+      "longitudes": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "max_seis_mes": 3,
+      "stake": "10.00",
+      "freeroll_x": 2.5,
+      "ev_min": null,
+      "lineas_handicap": [
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0,
+        1.5,
+        2.0
+      ]
+    },
+    "actuales": [
+      {
+        "reto_id": 1,
+        "inicio": "2026-10-09T08:00:32.219057+00:00",
+        "stake_inicial": "10.00",
+        "pasos_objetivo": 3,
+        "cuota_min": 1.25,
+        "cuota_max": 1.4,
+        "freeroll_x": 2.5,
+        "estado": "esperando",
+        "saldo": "12.60",
+        "retirado": "0.00",
+        "ganados": 1,
+        "en_juego": "12.60",
+        "ganancia": null,
+        "pasos": [
+          {
+            "paso": 1,
+            "match_id": "cl.primera:2627:cobresal-universidad:20261010",
+            "league_id": "cl.primera",
+            "kickoff_utc": "2026-10-10T18:00:00+00:00",
+            "local": "Cobresal",
+            "visitante": "Universidad de Concepcion",
+            "texto": "Más de 1,5 goles",
+            "market": "totals",
+            "prob": 0.79,
+            "price": 1.26,
+            "book": "betano",
+            "outcome": "win",
+            "marcador": "1-1",
+            "valor": null,
+            "batch_date": "2026-10-09",
+            "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+          },
+          {
+            "paso": 2,
+            "match_id": "fr.ligue_2:2627:dijon-metz:20261012",
+            "league_id": "fr.ligue_2",
+            "kickoff_utc": "2026-10-12T18:45:00+00:00",
+            "local": "Dijon",
+            "visitante": "Metz",
+            "texto": "Más de 1,5 goles",
+            "market": "totals",
+            "prob": 0.79,
+            "price": 1.25,
+            "book": "betano",
+            "outcome": null,
+            "marcador": null,
+            "valor": null,
+            "batch_date": "2026-10-11",
+            "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e",
+            "pick_key": "1:2",
+            "locked": false,
+            "free": true
+          }
+        ],
+        "vip": []
+      },
+      {
+        "reto_id": 2,
+        "inicio": "2026-10-09T08:00:32.242213+00:00",
+        "stake_inicial": "10.00",
+        "pasos_objetivo": 6,
+        "cuota_min": 1.25,
+        "cuota_max": 1.4,
+        "freeroll_x": 2.5,
+        "estado": "en_curso",
+        "saldo": "15.75",
+        "retirado": "0.00",
+        "ganados": 2,
+        "en_juego": null,
+        "ganancia": null,
+        "pasos": [
+          {
+            "paso": 1,
+            "match_id": "nl.eredivisie:2627:psveindhove-heerenveen:20261009",
+            "league_id": "nl.eredivisie",
+            "kickoff_utc": "2026-10-09T18:00:00+00:00",
+            "local": "PSV Eindhoven",
+            "visitante": "Heerenveen",
+            "texto": "Gana PSV Eindhoven",
+            "market": "h2h",
+            "prob": 0.79,
+            "price": 1.26,
+            "book": "betano",
+            "outcome": "win",
+            "marcador": "2-0",
+            "valor": null,
+            "batch_date": "2026-10-09",
+            "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+          },
+          {
+            "paso": 2,
+            "match_id": "fr.ligue_1:2627:nice-strasbourg:20261011",
+            "league_id": "fr.ligue_1",
+            "kickoff_utc": "2026-10-11T13:00:00+00:00",
+            "local": "Nice",
+            "visitante": "Strasbourg",
+            "texto": "Más de 1,5 goles",
+            "market": "totals",
+            "prob": 0.8,
+            "price": 1.25,
+            "book": "betano",
+            "outcome": "win",
+            "marcador": "2-1",
+            "valor": null,
+            "batch_date": "2026-10-10",
+            "chain_sha256": "0bb7428ba5991d8b87f31592540c63ef71e21e15bf4058ed9ea143aeb48b0339"
+          }
+        ],
+        "vip": []
+      },
+      {
+        "reto_id": 3,
+        "inicio": "2026-10-09T08:00:32.258936+00:00",
+        "stake_inicial": "10.00",
+        "pasos_objetivo": 4,
+        "cuota_min": 1.25,
+        "cuota_max": 1.4,
+        "freeroll_x": 2.5,
+        "estado": "en_curso",
+        "saldo": "15.63",
+        "retirado": "0.00",
+        "ganados": 2,
+        "en_juego": null,
+        "ganancia": null,
+        "pasos": [
+          {
+            "paso": 1,
+            "match_id": "fr.ligue_2:2627:clermont-redstar93:20261010",
+            "league_id": "fr.ligue_2",
+            "kickoff_utc": "2026-10-10T12:00:00+00:00",
+            "local": "Clermont",
+            "visitante": "RED Star FC 93",
+            "texto": "Marca RED Star FC 93",
+            "market": "team_totals_away",
+            "prob": 0.79,
+            "price": 1.25,
+            "book": "bet365",
+            "outcome": "win",
+            "marcador": "2-3",
+            "valor": null,
+            "batch_date": "2026-10-09",
+            "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+          },
+          {
+            "paso": 2,
+            "match_id": "it.serie_a:2627:sassuolo-milan:20261011",
+            "league_id": "it.serie_a",
+            "kickoff_utc": "2026-10-11T16:00:00+00:00",
+            "local": "Sassuolo",
+            "visitante": "Milan",
+            "texto": "Más de 1,5 goles",
+            "market": "totals",
+            "prob": 0.79,
+            "price": 1.25,
+            "book": "betano",
+            "outcome": "win",
+            "marcador": "1-1",
+            "valor": null,
+            "batch_date": "2026-10-11",
+            "chain_sha256": "73a61a770e976c3049e8140d075d69c3def9b1acdacc5f335f2ca0f67690729e"
+          }
+        ],
+        "vip": []
+      },
+      {
+        "reto_id": 4,
+        "inicio": "2026-10-09T08:00:32.266347+00:00",
+        "stake_inicial": "10.00",
+        "pasos_objetivo": 5,
+        "cuota_min": 1.25,
+        "cuota_max": 1.4,
+        "freeroll_x": 2.5,
+        "estado": "esperando",
+        "saldo": "12.50",
+        "retirado": "0.00",
+        "ganados": 1,
+        "en_juego": "12.50",
+        "ganancia": null,
+        "pasos": [
+          {
+            "paso": 1,
+            "match_id": "fr.ligue_1:2627:brest-angers:20261010",
+            "league_id": "fr.ligue_1",
+            "kickoff_utc": "2026-10-10T18:45:00+00:00",
+            "local": "Brest",
+            "visitante": "Angers",
+            "texto": "Más de 1,5 goles",
+            "market": "totals",
+            "prob": 0.79,
+            "price": 1.25,
+            "book": "betano",
+            "outcome": "win",
+            "marcador": "5-1",
+            "valor": null,
+            "batch_date": "2026-10-09",
+            "chain_sha256": "a8d917baebf5268960841703f5ec5c35384c68a89781e172e92410da25c37266"
+          }
+        ],
+        "vip": [
+          {
+            "match_id": "br.serie_a:2026:coritiba-botafogorj:20261011",
+            "league_id": "br.serie_a",
+            "kickoff_utc": "2026-10-12T19:00:00+00:00",
+            "local": "Coritiba",
+            "visitante": "Botafogo RJ",
+            "batch_date": "2026-10-11",
+            "locked": true,
+            "pick_key": "4:2"
+          }
+        ]
+      }
+    ],
+    "historial": [],
+    "resumen": {
+      "cerrados": 0,
+      "completados": 0,
+      "tasa_completados": null,
+      "invertido": "0.00",
+      "ganancia": "0.00",
+      "roi": null
+    },
+    "por_longitud": {
+      "3": {
+        "cerrados": 0,
+        "completados": 0,
+        "tasa_completados": null,
+        "invertido": "0.00",
+        "ganancia": "0.00",
+        "roi": null
+      },
+      "4": {
+        "cerrados": 0,
+        "completados": 0,
+        "tasa_completados": null,
+        "invertido": "0.00",
+        "ganancia": "0.00",
+        "roi": null
+      },
+      "5": {
+        "cerrados": 0,
+        "completados": 0,
+        "tasa_completados": null,
+        "invertido": "0.00",
+        "ganancia": "0.00",
+        "roi": null
+      },
+      "6": {
+        "cerrados": 0,
+        "completados": 0,
+        "tasa_completados": null,
+        "invertido": "0.00",
+        "ganancia": "0.00",
+        "roi": null
+      }
+    },
+    "serie": [],
+    "escalones": {
+      "n": 6,
+      "aciertos": 6,
+      "prob_media": 79.1
+    }
+  },
+  "rewards": {
+    "enabled": true,
+    "unlock_cost": 100,
+    "attendance_enabled": true,
+    "attendance_coins": [
+      30,
+      35,
+      35,
+      40,
+      40,
+      45,
+      50
+    ],
+    "referrals_enabled": true,
+    "referrer_coins": 200,
+    "invitee_coins": 100,
+    "referral_min_coins": 100,
+    "message": "Recompensas temporalmente no disponibles"
+  },
+  "plans": [
+    {
+      "plan_code": "plus_1m",
+      "name": "Plus · 1 mes",
+      "duration_days": 30,
+      "price_cents": 1499,
+      "currency": "USD",
+      "active": true,
+      "sort_order": 10
+    },
+    {
+      "plan_code": "plus_3m",
+      "name": "Plus · 3 meses",
+      "duration_days": 90,
+      "price_cents": 3399,
+      "currency": "USD",
+      "active": true,
+      "sort_order": 20
+    },
+    {
+      "plan_code": "plus_6m",
+      "name": "Plus · 6 meses",
+      "duration_days": 180,
+      "price_cents": 5399,
+      "currency": "USD",
+      "active": true,
+      "sort_order": 30
+    }
+  ]
+}

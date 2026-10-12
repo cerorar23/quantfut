@@ -88,6 +88,7 @@ _MENSAJES = {
     "sesiones": ("success", "Sesiones cerradas."),
     "plan": ("success", "Plan actualizado."),
     "sin_cambios": ("info", "No había nada que cambiar."),
+    "mobile_guardado": ("success", "Configuración guardada."),
     "precio_invalido": ("danger", "Precio no válido."),
     "motivo_requerido": ("danger", "Indica el motivo de la revocación."),
     "ya_de_por_vida": ("danger", "La cuenta ya tiene acceso de por vida."),

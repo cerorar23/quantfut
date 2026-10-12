@@ -1,0 +1,14 @@
+{
+  "original_image": "quantfut-api-menu70:20261009",
+  "original_image_id": "sha256:ce96d147f8ce4c2919b59faa8710d7798f6eaddd0509aed7bf75215cdd9c9f5d",
+  "image": "quantfut-api-mobile-rewards:20261011",
+  "files": {
+    "main.py": "448619bf858498ffca0a194ecb3e5db7e4d92f3987030b8498ea4314aaa52bd6",
+    "panel.py": "b94558f4672878d354aa8ed072887b03811b5f64ac39699b5c4c20ae6788673a",
+    "templates/base.html": "4a607ff150ce69a94844fdb8451bc205d79ffe785c51a790a302ed6dd26dd66b",
+    "mobile.py": "e3c0502b305be9a4b817b1b8ce34a270d728b9c18925d123e9ba4e6557b49e91",
+    "rewards.py": "59145cfbd400846fffd05b7648490b64cb2bfb41b12a58fd371f961619b7770d",
+    "templates/mobile_config.html": "bac9055c528dad6fe39b7bc0508794231f6ce2c51645687a738b0bac0fe6a3a3",
+    "templates/rewards.html": "1d57ab7159397219df44e0b76dd9d52daff37e8969fb69390fc742263f1fc7fa"
+  }
+}

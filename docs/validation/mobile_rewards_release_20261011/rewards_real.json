@@ -1,0 +1,58 @@
+{
+  "settings": {
+    "enabled": true,
+    "unlock_cost": 100,
+    "attendance_enabled": true,
+    "attendance_coins": [
+      30,
+      35,
+      35,
+      40,
+      40,
+      45,
+      50
+    ],
+    "referrals_enabled": true,
+    "referrer_coins": 200,
+    "invitee_coins": 100,
+    "referral_min_coins": 100,
+    "message": "Recompensas temporalmente no disponibles"
+  },
+  "signed_in": false,
+  "providers": [
+    {
+      "provider": "adjoe",
+      "name": "adjoe Playtime",
+      "available": false
+    },
+    {
+      "provider": "ayet",
+      "name": "ayeT-Studios",
+      "available": false
+    },
+    {
+      "provider": "bitlabs",
+      "name": "BitLabs",
+      "available": false
+    },
+    {
+      "provider": "revu",
+      "name": "RevU",
+      "available": false
+    },
+    {
+      "provider": "tapjoy",
+      "name": "Tapjoy / Unity Offerwall",
+      "available": false
+    },
+    {
+      "provider": "torox",
+      "name": "Torox",
+      "available": false
+    }
+  ],
+  "wallet": null,
+  "ledger": [],
+  "referrals": null,
+  "terms": "Monedas sin valor monetario: canjeables solo por pronósticos. Las ofertas dependen del país y se acreditan tras la confirmación del proveedor. Una oferta anulada revierte sus monedas. La asistencia usa días UTC. Los referidos se premian una vez, después de verificar el correo y completar ofertas confirmadas por el mínimo indicado. No se premian reseñas."
+}

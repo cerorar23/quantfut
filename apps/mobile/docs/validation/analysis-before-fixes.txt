@@ -1,0 +1,412 @@
+Analyzing Gobet V1.1...                                         
+
+   info - Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor - lib\bottombar.dart:9:7 - use_key_in_widget_constructors
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\bottombar.dart:11:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\bottombar.dart:25:54 - deprecated_member_use
+   info - The type name 'Create_accout' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\create_account.dart:9:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\create_account.dart:10:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\create_account.dart:13:3 - library_private_types_in_public_api
+   info - The type name '_Create_accoutState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\create_account.dart:16:7 - camel_case_types
+   info - The type name 'Forgot_password' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\forgot_password.dart:10:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\forgot_password.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\forgot_password.dart:14:3 - library_private_types_in_public_api
+   info - The type name '_Forgot_passwordState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\forgot_password.dart:17:7 - camel_case_types
+   info - The type name 'Password_success' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\password_succesfully.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\password_succesfully.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\password_succesfully.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_Password_successState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\password_succesfully.dart:14:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\deposit.dart:10:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\deposit.dart:13:3 - library_private_types_in_public_api
+   info - The type name 'Chat_history' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\exchange_history\chat_history.dart:5:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\exchange_history\chat_history.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\exchange_history\chat_history.dart:9:3 - library_private_types_in_public_api
+   info - The type name '_Chat_historyState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\exchange_history\chat_history.dart:12:7 - camel_case_types
+   info - The type name 'Exchange_history' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\exchange_history\exchange_history.dart:8:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\exchange_history\exchange_history.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\exchange_history\exchange_history.dart:12:3 - library_private_types_in_public_api
+   info - The type name '_Exchange_historyState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\exchange_history\exchange_history.dart:15:7 - camel_case_types
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\exchange_history\exchange_history.dart:48:18 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\exchange_history\exchange_history.dart:48:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\exchange_history\exchange_history.dart:48:28 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\exchange_history\exchange_history.dart:48:34 - strict_top_level_inference
+   info - The type name 'History_details' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\exchange_history\history_details.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\exchange_history\history_details.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\exchange_history\history_details.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_History_detailsState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\exchange_history\history_details.dart:14:7 - camel_case_types
+   info - The type name 'No_result' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\invites_friends\no_result.dart:5:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\invites_friends\no_result.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\invites_friends\no_result.dart:9:3 - library_private_types_in_public_api
+   info - The type name '_No_resultState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\invites_friends\no_result.dart:12:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\message\message.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\message\message.dart:9:3 - library_private_types_in_public_api
+   info - The variable name 'Chat' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\forget_password\profile\message\message.dart:150:10 - non_constant_identifier_names
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\profile.dart:21:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\profile.dart:24:3 - library_private_types_in_public_api
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile.dart:345:14 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile.dart:345:21 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile.dart:384:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile.dart:384:21 - strict_top_level_inference
+   info - The type name 'Invite_screen' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\invite_friends\invite_friend_screen.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\profile_settings\invite_friends\invite_friend_screen.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\profile_settings\invite_friends\invite_friend_screen.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_Invite_screenState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\invite_friends\invite_friend_screen.dart:14:7 - camel_case_types
+   info - The type name 'Profile_setting' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\profile_setting.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\profile_settings\profile_setting.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\profile_settings\profile_setting.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_Profile_settingState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\profile_setting.dart:14:7 - camel_case_types
+   info - The variable name 'Text3' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\forget_password\profile\profile_settings\profile_setting.dart:142:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile_settings\profile_setting.dart:142:16 - strict_top_level_inference
+   info - The variable name 'Text4' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\forget_password\profile\profile_settings\profile_setting.dart:171:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile_settings\profile_setting.dart:171:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile_settings\profile_setting.dart:171:21 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile_settings\profile_setting.dart:171:25 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification.dart:12:3 - library_private_types_in_public_api
+   info - The type name 'Notification_list' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification_list.dart:5:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification_list.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification_list.dart:9:3 - library_private_types_in_public_api
+   info - The type name '_Notification_listState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification_list.dart:12:7 - camel_case_types
+   info - The variable name 'Not_list' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification_list.dart:110:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile_settings\user_profile_setting\notification\notification_list.dart:110:19 - strict_top_level_inference
+   info - The type name 'Term_of_use' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\user_profile_setting\term_policy\term_use.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\profile_settings\user_profile_setting\term_policy\term_use.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\profile_settings\user_profile_setting\term_policy\term_use.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_Term_of_useState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\user_profile_setting\term_policy\term_use.dart:14:7 - camel_case_types
+   info - The type name 'User_profile' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\user_profile_setting\user_profile.dart:11:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\profile_settings\user_profile_setting\user_profile.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\profile_settings\user_profile_setting\user_profile.dart:15:3 - library_private_types_in_public_api
+   info - The type name '_User_profileState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\profile_settings\user_profile_setting\user_profile.dart:18:7 - camel_case_types
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile_settings\user_profile_setting\user_profile.dart:274:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\profile_settings\user_profile_setting\user_profile.dart:274:22 - strict_top_level_inference
+   info - The type name 'Add_bank' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\add_bank.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\add_bank.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\add_bank.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_Add_bankState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\add_bank.dart:14:7 - camel_case_types
+   info - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' - lib\forget_password\profile\wallet\add_bank.dart:49:18 - sized_box_for_whitespace
+   info - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' - lib\forget_password\profile\wallet\add_bank.dart:72:17 - sized_box_for_whitespace
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\wallet\add_bank.dart:161:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\forget_password\profile\wallet\add_bank.dart:161:20 - strict_top_level_inference
+   info - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' - lib\forget_password\profile\wallet\add_bank.dart:164:14 - sized_box_for_whitespace
+   info - The type name 'Add_payment' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\add_card.dart:9:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\add_card.dart:10:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\add_card.dart:13:3 - library_private_types_in_public_api
+   info - The type name '_Add_paymentState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\add_card.dart:16:7 - camel_case_types
+   info - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' - lib\forget_password\profile\wallet\add_card.dart:88:17 - sized_box_for_whitespace
+   info - The type name 'Card_detail' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\card_details.dart:6:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\card_details.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\card_details.dart:10:3 - library_private_types_in_public_api
+   info - The type name '_Card_detailState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\card_details.dart:13:7 - camel_case_types
+   info - The type name 'Deposit_success' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\deposit_success.dart:6:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\deposit_success.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\deposit_success.dart:10:3 - library_private_types_in_public_api
+   info - The type name '_Deposit_successState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\deposit_success.dart:13:7 - camel_case_types
+   info - The type name 'Gift_code' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\gift_code.dart:6:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\gift_code.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\gift_code.dart:10:3 - library_private_types_in_public_api
+   info - The type name '_Gift_codeState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\gift_code.dart:13:7 - camel_case_types
+   info - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' - lib\forget_password\profile\wallet\gift_code.dart:58:22 - sized_box_for_whitespace
+   info - The type name 'Payment_success' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\payment_success.dart:6:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\payment_success.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\payment_success.dart:10:3 - library_private_types_in_public_api
+   info - The type name '_Payment_successState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\payment_success.dart:13:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\wallet.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\wallet.dart:14:3 - library_private_types_in_public_api
+   info - The type name 'Wallet_empty' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\wallet_empty.dart:5:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\wallet_empty.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\wallet_empty.dart:9:3 - library_private_types_in_public_api
+   info - The type name '_Wallet_emptyState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\wallet_empty.dart:12:7 - camel_case_types
+   info - The type name 'Refill_balance' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\wallet_refill_balance.dart:8:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\wallet_refill_balance.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\wallet_refill_balance.dart:12:3 - library_private_types_in_public_api
+   info - The type name '_Refill_balanceState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\wallet_refill_balance.dart:15:7 - camel_case_types
+   info - The variable name 'Checked' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\forget_password\profile\wallet\wallet_refill_balance.dart:17:8 - non_constant_identifier_names
+   info - The type name 'Withdraw_failed' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\withdraw_failed.dart:6:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\withdraw_failed.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\withdraw_failed.dart:10:3 - library_private_types_in_public_api
+   info - The type name '_Withdraw_failedState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\withdraw_failed.dart:13:7 - camel_case_types
+   info - The type name 'Withdraw_success' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\withdraw_success.dart:8:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\wallet\withdraw_success.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\wallet\withdraw_success.dart:12:3 - library_private_types_in_public_api
+   info - The type name '_Withdraw_successState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\profile\wallet\withdraw_success.dart:15:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\profile\withdraw.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\profile\withdraw.dart:11:3 - library_private_types_in_public_api
+   info - The type name 'Reset_password' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\reset_password.dart:10:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\reset_password.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\reset_password.dart:14:3 - library_private_types_in_public_api
+   info - The type name '_Reset_passwordState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\reset_password.dart:17:7 - camel_case_types
+   info - The type name 'Set_password' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\set_password.dart:8:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\forget_password\set_password.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\forget_password\set_password.dart:12:3 - library_private_types_in_public_api
+   info - The type name '_Set_passwordState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\forget_password\set_password.dart:15:7 - camel_case_types
+   info - The type name 'Log_in' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\log_in\login\login.dart:10:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\log_in\login\login.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\log_in\login\login.dart:14:3 - library_private_types_in_public_api
+   info - The type name '_Log_inState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\log_in\login\login.dart:17:7 - camel_case_types
+   info - Missing type annotation. Try adding a type annotation - lib\log_in\login\login.dart:296:14 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\log_in\login\login.dart:296:21 - strict_top_level_inference
+   info - Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor - lib\onbonding_screen\second_screen.dart:10:7 - use_key_in_widget_constructors
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\onbonding_screen\second_screen.dart:12:3 - library_private_types_in_public_api
+   info - The type name 'Splesh_Screen' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\onbonding_screen\splesh_screen.dart:11:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\onbonding_screen\splesh_screen.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\onbonding_screen\splesh_screen.dart:15:3 - library_private_types_in_public_api
+   info - The type name '_Splesh_ScreenState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\onbonding_screen\splesh_screen.dart:18:7 - camel_case_types
+   info - The file name 'Inplay.dart' isn't a lower_case_with_underscores identifier. Try changing the name to follow the lower_case_with_underscores style - lib\sign_in\home_screen\inplay\Inplay.dart:1:1 - file_names
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\inplay\Inplay.dart:13:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\inplay\Inplay.dart:16:3 - library_private_types_in_public_api
+   info - The type name 'Congratulation_page' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\inplay\congratulation_page.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\inplay\congratulation_page.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\inplay\congratulation_page.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_Congratulation_pageState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\inplay\congratulation_page.dart:14:7 - camel_case_types
+   info - The type name 'Live_bets' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\inplay\live_my_bets.dart:7:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\inplay\live_my_bets.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\inplay\live_my_bets.dart:11:3 - library_private_types_in_public_api
+   info - The type name '_Live_betsState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\inplay\live_my_bets.dart:14:7 - camel_case_types
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\sign_in\home_screen\inplay\live_my_bets.dart:21:5 - avoid_print
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\inplay\live_my_bets.dart:59:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\live_my_bets.dart:59:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\live_my_bets.dart:59:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\live_my_bets.dart:59:31 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\live_my_bets.dart:59:38 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\live_my_bets.dart:59:44 - strict_top_level_inference
+   info - The variable name 'Score' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\inplay\live_my_bets.dart:164:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\live_my_bets.dart:164:16 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\inplay\loses.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\inplay\loses.dart:11:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\sign_in\home_screen\inplay\loses.dart:21:5 - avoid_print
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\inplay\loses.dart:60:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\loses.dart:60:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\loses.dart:60:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\loses.dart:60:31 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\loses.dart:60:37 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\loses.dart:60:42 - strict_top_level_inference
+   info - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' - lib\sign_in\home_screen\inplay\loses.dart:124:21 - sized_box_for_whitespace
+   info - The variable name 'Score' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\inplay\loses.dart:177:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\loses.dart:177:16 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\inplay\wins.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\inplay\wins.dart:14:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\sign_in\home_screen\inplay\wins.dart:24:5 - avoid_print
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\inplay\wins.dart:62:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\wins.dart:62:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\wins.dart:62:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\wins.dart:62:31 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\wins.dart:62:38 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\wins.dart:62:44 - strict_top_level_inference
+   info - The variable name 'Score' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\inplay\wins.dart:168:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\inplay\wins.dart:168:16 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\all.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\all.dart:12:3 - library_private_types_in_public_api
+   info - The variable name 'Sports' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\all.dart:324:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:324:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:324:23 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:324:29 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:324:33 - strict_top_level_inference
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\all.dart:378:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:378:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:378:23 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:378:28 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:378:33 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:378:39 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\all.dart:378:45 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\comments.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\comments.dart:9:3 - library_private_types_in_public_api
+   info - The variable name 'Comment' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\comments.dart:58:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\comments.dart:58:18 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\comments.dart:58:23 - strict_top_level_inference
+   info - Instances of 'Color' should be created using an 8-digit hexadecimal integer (such as '0xFFFFFFFF') - lib\sign_in\home_screen\matches\comments.dart:100:38 - use_full_hex_values_for_flutter_colors
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\finished.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\finished.dart:10:3 - library_private_types_in_public_api
+   info - The 'children' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\matches\finished.dart:67:29 - sort_child_properties_last
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\finished.dart:78:33 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\finished.dart:83:33 - curly_braces_in_flow_control_structures
+   info - The 'children' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\matches\finished.dart:131:29 - sort_child_properties_last
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\finished.dart:145:33 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\finished.dart:150:33 - curly_braces_in_flow_control_structures
+   info - The variable name 'League2' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\finished.dart:165:8 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:23 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:30 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:37 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:43 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:49 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:56 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:63 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:69 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:165:73 - strict_top_level_inference
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\finished.dart:304:8 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:15 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:22 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:29 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:36 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:42 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:48 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:55 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:62 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:68 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:72 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:304:78 - strict_top_level_inference
+   info - The variable name 'League3' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\finished.dart:458:8 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:23 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:30 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:37 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:43 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:49 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:56 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:63 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:69 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:73 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\finished.dart:458:79 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\live.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\live.dart:9:3 - library_private_types_in_public_api
+   info - The variable name '_Visible' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\live.dart:17:8 - non_constant_identifier_names
+   info - The variable name 'Toast' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\live.dart:28:8 - non_constant_identifier_names
+   info - The variable name 'Show' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\live.dart:34:8 - non_constant_identifier_names
+   info - The variable name 'Hide' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\live.dart:40:8 - non_constant_identifier_names
+   info - The variable name 'Select' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\live.dart:46:8 - non_constant_identifier_names
+   info - The 'children' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\matches\live.dart:105:31 - sort_child_properties_last
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\live.dart:152:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\live.dart:157:35 - curly_braces_in_flow_control_structures
+   info - The 'children' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\matches\live.dart:205:31 - sort_child_properties_last
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\live.dart:252:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\live.dart:257:35 - curly_braces_in_flow_control_structures
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\live.dart:272:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:31 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:38 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:44 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:50 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:57 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:64 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:71 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:272:77 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:7 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:14 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:21 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:28 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:36 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:44 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:52 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:60 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\live.dart:273:68 - strict_top_level_inference
+   info - The type name 'Live_match' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\matches\match.dart:10:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\match.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\match.dart:14:3 - library_private_types_in_public_api
+   info - The type name '_Live_matchState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\matches\match.dart:17:7 - camel_case_types
+   info - The type name 'Finish_match' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\matches\match_finish.dart:5:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\match_finish.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\match_finish.dart:9:3 - library_private_types_in_public_api
+   info - The type name '_Finish_matchState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\matches\match_finish.dart:12:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\matches.dart:14:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\matches.dart:17:3 - library_private_types_in_public_api
+   info - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' - lib\sign_in\home_screen\matches\matches.dart:73:32 - sized_box_for_whitespace
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\participated.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\participated.dart:9:3 - library_private_types_in_public_api
+   info - The variable name 'Users' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\participated.dart:67:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\participated.dart:67:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\participated.dart:67:23 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\top.dart:8:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\top.dart:11:3 - library_private_types_in_public_api
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\sign_in\home_screen\matches\top.dart:21:5 - avoid_print
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\top.dart:101:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:31 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:38 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:43 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:49 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:55 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:101:59 - strict_top_level_inference
+   info - The variable name 'Score' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\top.dart:242:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\top.dart:242:16 - strict_top_level_inference
+   info - The type name 'Up_coming' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\matches\up_coming.dart:8:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\matches\up_coming.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\matches\up_coming.dart:12:3 - library_private_types_in_public_api
+   info - The type name '_Up_comingState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\matches\up_coming.dart:15:7 - camel_case_types
+   info - The 'children' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\matches\up_coming.dart:70:31 - sort_child_properties_last
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\up_coming.dart:81:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\up_coming.dart:86:35 - curly_braces_in_flow_control_structures
+   info - The 'children' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\matches\up_coming.dart:134:31 - sort_child_properties_last
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\up_coming.dart:148:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\sign_in\home_screen\matches\up_coming.dart:153:35 - curly_braces_in_flow_control_structures
+   info - The variable name 'League' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\matches\up_coming.dart:263:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:31 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:38 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:44 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:50 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:57 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\matches\up_coming.dart:263:64 - strict_top_level_inference
+   info - The type name 'Betting_know' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\news\betting_know.dart:6:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\news\betting_know.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\news\betting_know.dart:10:3 - library_private_types_in_public_api
+   info - The type name '_Betting_knowState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\news\betting_know.dart:13:7 - camel_case_types
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\betting_know.dart:300:15 - strict_top_level_inference
+   info - The type name 'Important_step' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\news\important_step.dart:9:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\news\important_step.dart:10:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\news\important_step.dart:13:3 - library_private_types_in_public_api
+   info - The type name '_Important_stepState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\news\important_step.dart:16:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\news\news.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\news\news.dart:15:3 - library_private_types_in_public_api
+   info - The variable name 'Trading_news' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\news\news.dart:494:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:494:23 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:494:30 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:494:37 - strict_top_level_inference
+   info - The variable name 'Video' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\news\news.dart:552:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:552:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:552:23 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:552:30 - strict_top_level_inference
+   info - The variable name 'Latest_news' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\news\news.dart:626:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:626:22 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:626:29 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:626:36 - strict_top_level_inference
+   info - The variable name 'Lines' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\news\news.dart:686:10 - non_constant_identifier_names
+   info - The variable name 'Popular_site' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\news\news.dart:718:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:718:23 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:718:30 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\news\news.dart:718:37 - strict_top_level_inference
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\sports\sports.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\sports\sports.dart:14:3 - library_private_types_in_public_api
+   info - The variable name 'Games' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\sports\sports.dart:372:10 - non_constant_identifier_names
+   info - The 'child' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\sports\sports.dart:394:21 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\sports\sports.dart:430:21 - sort_child_properties_last
+   info - The 'child' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\sports\sports.dart:466:21 - sort_child_properties_last
+   info - The variable name 'Game' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\home_screen\sports\sports.dart:491:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\sports\sports.dart:491:15 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\sports\sports.dart:491:21 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\sports\sports.dart:491:26 - strict_top_level_inference
+   info - The 'child' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list - lib\sign_in\home_screen\sports\sports.dart:508:15 - sort_child_properties_last
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\statistic\day.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\statistic\day.dart:10:3 - library_private_types_in_public_api
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\statistic\day.dart:66:17 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\statistic\day.dart:66:24 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\statistic\day.dart:66:31 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\home_screen\statistic\day.dart:66:36 - strict_top_level_inference
+   info - The type name 'Fl_chat' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\statistic\fl_chat.dart:6:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\statistic\fl_chat.dart:7:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\statistic\fl_chat.dart:10:3 - library_private_types_in_public_api
+   info - The type name '_Fl_chatState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\home_screen\statistic\fl_chat.dart:13:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\statistic\month.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\statistic\month.dart:12:3 - library_private_types_in_public_api
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\home_screen\statistic\statics.dart:12:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\home_screen\statistic\statics.dart:15:3 - library_private_types_in_public_api
+   info - The type name 'Sign_up' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\signup.dart:9:7 - camel_case_types
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\sign_in\signup.dart:10:9 - use_super_parameters
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\sign_in\signup.dart:13:3 - library_private_types_in_public_api
+   info - The type name '_Sign_upState' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style - lib\sign_in\signup.dart:16:7 - camel_case_types
+   info - The variable name 'Textf' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\sign_in\signup.dart:241:10 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\signup.dart:241:16 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\signup.dart:241:21 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\sign_in\signup.dart:241:28 - strict_top_level_inference
+   info - The variable name 'PrimeryColor' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\utils\color.dart:3:7 - non_constant_identifier_names
+   info - The variable name 'IsDark' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style - lib\utils\color_notifire.dart:5:8 - non_constant_identifier_names
+   info - Missing type annotation. Try adding a type annotation - lib\utils\color_notifire.dart:6:7 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\utils\color_notifire.dart:9:7 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\utils\color_notifire.dart:10:7 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\utils\color_notifire.dart:11:7 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\utils\color_notifire.dart:12:7 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\utils\color_notifire.dart:13:7 - strict_top_level_inference
+   info - Missing type annotation. Try adding a type annotation - lib\utils\color_notifire.dart:14:7 - strict_top_level_inference
+
+408 issues found. (ran in 7.6s)
