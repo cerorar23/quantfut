@@ -105,6 +105,10 @@ VPS declarada por el titular: Berlín, Alemania.
 
 - [ ] Cerrar textos con datos confirmados y retención efectiva; preparar páginas
   legales públicas y procedimiento de solicitudes, sin inventar certificaciones.
+  Avance 2026-10-12: la retención ya es efectiva y está reflejada en la política
+  (avisos 30 d, dispositivos 90 d, sesiones 30 d, tokens de correo 7 d, copias 30 d).
+  Falta lo que solo el titular puede aportar: país contractual de Contabo/Proton,
+  atención del buzón de contacto, plazos legales por categoría y revisión jurídica.
 - [x] Configurar conservación y limpieza de datos operativos Firebase; respaldo
   privado con rotación acotada, separado de los registros deportivos inmutables.
   Programado en el VPS el 2026-10-12 (03:40 UTC), probado y con alerta Telegram;

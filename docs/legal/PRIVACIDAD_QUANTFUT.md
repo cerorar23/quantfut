@@ -122,7 +122,9 @@ de la reclamación correspondiente, según su naturaleza y jurisdicción. Al
 concluir ese motivo de conservación se eliminarán o anonimizarán. No se conservarán indefinidamente sin una
 justificación. Los avisos y sus colas caducados se eliminan a los 30 días;
 los tokens de dispositivos sin actualizar durante 90 días se desactivan y
-retiran mediante la limpieza diaria.
+retiran mediante la limpieza diaria. Las sesiones de acceso, con la IP y el agente
+de usuario asociados, se eliminan a los 30 días de caducar o de ser revocadas, y los
+enlaces de verificación y recuperación de correo, a los 7 días de caducar o de usarse.
 
 Las copias de respaldo se retirarán mediante el ciclo de rotación documentado
 de **30 días para las copias comerciales periódicas**. Durante ese ciclo no deben utilizarse
