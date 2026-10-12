@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'live_api.dart';
 import 'live_markets.dart';
+import 'live_parley.dart';
 import 'live_widgets.dart';
 import 'live_vip.dart';
 import 'live_detail.dart';
@@ -589,15 +590,27 @@ class _ProductShellState extends State<ProductShell>
                               value: 'Reto Escalera',
                               label: Text('Reto Escalera'),
                             ),
+                            ButtonSegment(
+                              value: 'Parley',
+                              label: Text('Parley'),
+                            ),
                           ],
+                          showSelectedIcon: false,
+                          style: const ButtonStyle(
+                            textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12.5)),
+                            padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 6)),
+                          ),
                           selected: {stream},
                           onSelectionChanged: (s) =>
                               setState(() => stream = s.first),
                         ),
                         const SizedBox(height: 16),
-                        stream == 'Alta probabilidad'
-                            ? picks(data!)
-                            : ladder(data!),
+                        if (stream == 'Alta probabilidad')
+                          picks(data!)
+                        else if (stream == 'Reto Escalera')
+                          ladder(data!)
+                        else
+                          ParleyTab(api: api),
                       ],
                     )
                   else

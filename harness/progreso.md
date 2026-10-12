@@ -4860,3 +4860,17 @@ proporción (0,4366 local, 0,4588 visitante) del mismo ajuste de mercado; vive e
 Se publican solo esos dos, por ese lado y en el tramo medido (62-95 %). Desplegado (respaldo
 `before-primer-tiempo`). Ojo: hay OTRA edición sin commit de `mobile.py` (alta probabilidad 62-95 %, db/057)
 que no es de esta tarea y NO está desplegada.
+
+### Parley activado (2026-10-12, 05:5x UTC)
+
+Visto bueno del usuario. Fecha de arranque = 12-oct (`LOTE_PARLEY_DESDE`, ya fijada): el sellado de las
+08:00 UTC es el primero que lo lleva. ANTES de activarlo, el ensayo (`parley_datos preview`) mostró una pata
+«más de 9,5 córners», línea que la revisión del 10-oct había quitado y que el VPS aún permitía. Con la
+aprobación del usuario se desplegó esa revisión al worker y a la API (`estadisticas_mercado.py` y, en el
+worker, solo el hunk de `CORNERS_HABILITADOS` de `alta_prob.py` sobre el archivo ya desplegado por la otra
+sesión; respaldo `quantfut-worker:before-lineas`, `...:before-lineas-api`). Efecto: córners más de 7,5/8,5 y
+menos de 9,5/10,5/11,5; tarjetas menos de 4,5/5,5/6,5; fuera córners más de 6,5/9,5 y local más de 2,5 en alta
+probabilidad. Segundo ensayo: 5 parlays de 2 patas, 0 con líneas no validadas. `PARLEY_ENABLED=1` en el
+`.env` del VPS (copia en `releases/lineas-10oct-20261012/env.before-parley`), worker y API recreados.
+PENDIENTE: quién ve cada parley. `/parley` es público y la app los muestra todos; falta el reparto
+gratis/VIP (hoy son gratis para cualquiera).
