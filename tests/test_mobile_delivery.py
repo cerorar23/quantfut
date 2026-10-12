@@ -47,6 +47,21 @@ def test_free_pick_is_highest_quote_capped_at_1_60():
     assert [r['match_id'] for r in mobile.choose_free([row(1,.9,1.10),row(2,.8,1.65)],'alta_probabilidad')]==['m1']
 
 
+def test_top_up_adds_best_quote_of_markets_without_an_open_free():
+    now=datetime.now(timezone.utc)
+    soon=now+timedelta(hours=2); started=now-timedelta(hours=1)
+    rows=[{**row(1,.8,1.18),'market':'totals','kickoff_utc':soon},
+          {**row(2,.8,1.10),'market':'totals','kickoff_utc':soon},
+          {**row(3,.8,1.25),'market':'corners','kickoff_utc':soon},
+          {**row(4,.8,1.30),'market':'spreads','kickoff_utc':started},   # ya empezó: no cuenta
+          {**row(5,.8,None),'market':'double_chance','kickoff_utc':soon}]  # sin cuota: no entra
+    assert {r['match_id'] for r in mobile.top_up(rows,set(),now)}=={'m1','m3'}
+    # un mercado con gratis abierto no suma otro; el que ya empezó no cuenta como abierto
+    assert {r['match_id'] for r in mobile.top_up(rows,{'m2'},now)}=={'m3'}
+    assert {r['match_id'] for r in mobile.top_up(rows,{'m4'},now)}=={'m1','m3'}
+    assert mobile.top_up(rows,{'m1','m3'},now)==[]  # idempotente
+
+
 def test_probability_bounds_and_no_fake_quote():
     rows=[row(1,.749),row(2,.75),row(3,.90),row(4,.901),row(5,.85,None)]
     assert mobile.choose_free(rows,'alta_probabilidad')[0]['match_id']=='m3'

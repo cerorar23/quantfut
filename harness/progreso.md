@@ -4792,3 +4792,12 @@ aunque tenga menos probabilidad que otros; empate por probabilidad. Sustituye al
 probabilidad. Desplegado (respaldo `before-mayor-cuota`) y los 3 gratis quitados antes se volvieron a
 añadir al lote 2026-10-11 (Elfsborg 1,19, Valerenga 1,18, Malmo 1,08; free_count 3 -> 6). Hándicap y
 doble oportunidad siguen sin gratis: sus candidatos no tienen cuota publicada.
+
+### Gratis automático (2026-10-12)
+
+Decisión del usuario: la regla es permanente, no un parche por lote. `top_up()` corre en cada lectura
+(`allocations()`, dentro del mismo bloqueo del lote) y hace gratis el pronóstico sin empezar de mayor
+cuota de cada mercado que no tenga ya uno abierto. Solo añade (no quita lo que el usuario ya vio),
+es idempotente y queda auditado (`mobile:allocation_topup`). Desplegado (respaldo `before-automatico`):
+tres lecturas seguidas dejaron free_count en 6, sin cambios. Ya no hacen falta ampliaciones manuales.
+La Escalera conserva su regla de un solo pendiente gratuito.

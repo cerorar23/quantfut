@@ -94,6 +94,19 @@ def choose_free(rows: list[dict], stream: str) -> list[dict]:
     raise ValueError('Unknown stream')
 
 
+def top_up(rows: list[dict], free_keys: set[str], now: datetime) -> list[dict]:
+    """Pronósticos sin empezar que deben pasar a gratis aunque el lote ya esté repartido.
+
+    Regla permanente (decisión del usuario, 2026-10-12): siempre queda gratis el de
+    mayor cuota de cada mercado. Solo AÑADE: nunca quita uno que el usuario ya vio, y
+    no toca los que ya empezaron. Un mercado que ya tiene uno abierto gratis no suma otro.
+    """
+    pending = [r for r in rows if r['kickoff_utc'] > now]
+    open_markets = {r.get('market') for r in pending if pick_key(r) in free_keys}
+    return [r for r in choose_free(pending, 'alta_probabilidad')
+            if pick_key(r) not in free_keys and r.get('market') not in open_markets]
+
+
 def allocations(rows: list[dict], stream: str) -> set[str]:
     grouped = defaultdict(list)
     for row in rows:
@@ -122,6 +135,20 @@ def allocations(rows: list[dict], stream: str) -> set[str]:
                               'VALUES (%s,%s,%s)', (stream, batch, pick_key(row)))
                 audit(c, 'mobile:allocation', 'mobile_free_batch', detail={
                     'stream': stream, 'batch_date': batch, 'total': len(candidates), 'free': len(selected)})
+            if stream == 'alta_probabilidad':
+                have = {r['pick_key'] for r in c.execute(
+                    'SELECT pick_key FROM mobile_free_allocations WHERE stream=%s AND batch_date=%s',
+                    (stream, batch)).fetchall()}
+                added = top_up(candidates, have, datetime.now(timezone.utc))
+                for row in added:
+                    c.execute('INSERT INTO mobile_free_allocations (stream,batch_date,pick_key) '
+                              'VALUES (%s,%s,%s) ON CONFLICT DO NOTHING', (stream, batch, pick_key(row)))
+                if added:
+                    c.execute('UPDATE mobile_allocation_batches SET free_count=%s '
+                              'WHERE stream=%s AND batch_date=%s', (len(have) + len(added), stream, batch))
+                    audit(c, 'mobile:allocation_topup', 'mobile_free_batch', detail={
+                        'stream': stream, 'batch_date': batch, 'added': [pick_key(r) for r in added],
+                        'rule': 'highest_quote_per_market'})
             selected_rows = c.execute('SELECT pick_key FROM mobile_free_allocations '
                                       'WHERE stream=%s AND batch_date=%s', (stream, batch)).fetchall()
             result.update(r['pick_key'] for r in selected_rows)
