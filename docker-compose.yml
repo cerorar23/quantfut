@@ -22,7 +22,7 @@ services:
 
   api:
     build: .
-    image: quantfut-api-tapjoy:20261012-mant
+    image: quantfut-api-tapjoy:20261012-msg
     env_file: .env
     depends_on:
       db: {condition: service_healthy}
