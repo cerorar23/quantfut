@@ -18,6 +18,184 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## App Flutter + Firebase — contenido real y monedas (2026-10-11)
+
+Decisión más reciente del usuario: conectar datos completos reales y omitir el
+modo demo; cada sección se podrá activar/desactivar desde configuración backend
+con una leyenda de entrenamiento. Las ideas de pantallas recibidas se adaptaron
+al calendario, pronósticos, detalle, VIP, Perfil, Monedas y Referidos.
+
+Estado y documentación actual:
+`apps/mobile/docs/APP_REAL_MONEDAS_REFERIDOS_20261011.md`.
+
+- [x] Inicio por calendario y hora local con enfrentamientos reales.
+- [x] Alta Probabilidad 75–90 %, 10 % gratuito de mayor cuota entre elegibles;
+  asignación fija por lote y resto VIP sin revelar el contenido protegido.
+- [x] Escalera: un solo pendiente gratuito de mayor probabilidad entre todos
+  los retos activos; resto VIP. Historial de resultados conservado.
+- [x] API móvil, permisos de cuenta, configuración por sección y mensajes
+  de entrenamiento; desplegada sin alterar workers de fútbol/NBA.
+- [x] Coins: cuarta pestaña directamente a recompensas, sin menú intermedio;
+  saldo, asistencia, ofertas y referidos en la misma pantalla. Eliminadas las
+  tarjetas de entrada Monedas/Referidos por corrección posterior del usuario.
+- [x] Monedas y Referidos; asistencia, saldo, registro de movimientos
+  y canje atómico de un pick. Panel de reglas, premios y proveedores.
+- [x] Adaptadores RevU y BitLabs con callbacks verificados, deduplicación y
+  anulaciones; elección documentada con fuentes oficiales y reseñas.
+- [ ] Cuentas de editor aprobadas RevU/BitLabs, IDs públicos y secretos del
+  servidor; piloto de ofertas y comprobación comercial de cobros. El usuario
+  confirmó que todavía no tiene cuentas: proveedores desactivados.
+- [ ] Tapjoy/Unity, ayeT, adjoe y Torox: evaluar tras el piloto e implementar
+  únicamente los proveedores adicionales aprobados para la audiencia.
+- [ ] Persistencia segura de sesión, firma de distribución y pruebas iOS.
+
+Referencia: `apps/mobile/docs/FIREBASE_INTEGRACION_CON_BACKEND_20261011.md`.
+
+Primer diseño implementado a partir de las referencias del usuario:
+`apps/mobile/docs/PANTALLAS_BIENVENIDA_INICIO_VIP_20261011.md`.
+Cinco bienvenidas animadas y cinco pestañas inferiores. Este documento conserva
+la fase de prototipo anterior; la navegación actual ya consume datos reales.
+18 pruebas Flutter aprobadas, análisis limpio y APK Android compilado.
+
+Actualización de mercados: tercera pestaña **Mercados**, con respaldo
+retrospectivo separado del historial público guardado; 18 pruebas aprobadas.
+Referencia: `apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
+
+- [x] Adaptar tarjeta VIP, ventana de pronóstico con tres pestañas y página VIP
+  con rendimiento publicado, comparación de beneficios y botón fijo.
+  Detalle: `apps/mobile/docs/DETALLE_PRONOSTICO_Y_VIP_20261011.md`.
+- [x] Conectar detalle autorizado: picks, cuotas, probabilidades disponibles,
+  H2H, alineaciones y bajas; distinguir datos ausentes de confirmados.
+- [ ] Ampliar contrato para Poisson, marcadores probables y árbitro con fuentes
+  existentes; favoritos de cuenta, rachas y notificaciones reales.
+- [x] Rediseñar Estadísticas dentro del pick según las seis capturas: resumen
+  1X2, forma, radar fl_chart morado/verde con datos disponibles, comparaciones,
+  clasificación y cara a cara. Detalle: `apps/mobile/docs/ESTADISTICAS_PICK_20261011.md`.
+- [ ] Datos para goles por minuto, disciplina agregada y récords de temporada
+  completa; encuestas de aficionados con votos reales y control de duplicados.
+- [x] Conectar rendimiento publicado, catálogo de planes y permisos VIP del
+  servidor; compra/restauración pendiente de proveedor de pagos.
+- [ ] Enlaces FCM y traducciones del detalle.
+
+- [x] Analizar app, backend y documentación oficial; documentar integración.
+- [x] Adaptar las primeras pantallas de mercados a las métricas del proyecto,
+  sin promover muestras pequeñas o confundir retrospectivo/publicado.
+- [ ] Primera pantalla de registro/acceso con Google mediante Firebase,
+  marca QuantFut, beneficios con métricas reales, selector de idioma y aceptación
+  de términos/privacidad según captura `codex-clipboard-9da919e1-f27f-400b-8c67-6b5038e0fb25.png`.
+  Registro antes de las bienvenidas/contenido para personas sin sesión; restaurar
+  sesión existente y vincular permisos/saldo del backend. **Solo plan registrado:
+  el usuario pidió no ejecutar todavía.** Detalle y aceptación en el plan Firebase.
+- [ ] Idioma en la primera pantalla de registro, antes de la bienvenida:
+  español, inglés, portugués, francés,
+  italiano y alemán; persistir preferencia y cambio desde Perfil.
+- [ ] Localización completa Flutter y contratos backend: textos, errores,
+  descripciones de mercados, formatos y preferencia sincronizada app/web.
+- [ ] Firebase en el idioma elegido: Auth/correos, FCM/bandeja, preferencias
+  por instalación y medición; evitar avisos duplicados por idioma.
+  Detalle: `apps/mobile/docs/IDIOMAS_APP_BACKEND_FIREBASE_20261011.md`.
+- [x] Fase 0: recibir ideas de pantallas, contrastarlas con fútbol/NBA y web,
+  proponer mejoras y acordar navegación y alcance de la primera versión.
+- [ ] Convertir el diseño acordado en fases con entregables y criterios de
+  aceptación: base Firebase, identidad compartida, contenido real, avisos,
+  medición/control, cobros y lanzamiento.
+- [ ] Implementar las fases según sus dependencias y validar cada entrega.
+
+Estado actual: integración real autorizada y desplegada. Firebase, traducciones,
+notificaciones y cobros siguen pendientes; las secciones sin integración muestran
+su estado real. No sustituir información ausente por ejemplos de producción.
+
+## Parley del día (2026-10-11, pedido del usuario)
+
+Pestaña "Parley" en Fútbol con historial: cada día, 1-5 parlays de cuota
+1,90-5,00 por escalones (≈2,0 · 2,5 · 3,0 · 4,0 · 5,0), en cada uno la
+combinación MÁS PROBABLE de todos los mercados; un partido por parlay y
+ninguno repetido en el día; solo probabilidad (sin filtro de valor, decisión
+del usuario: pierde el margen en cada pata y el historial lo enseña). Diseño:
+`docs/superpowers/specs/2026-10-11-parley-design.md`.
+
+1. [x] Especificación aprobada y plan detallado:
+   `docs/superpowers/plans/2026-10-11-parley.md` (ejecución nativa).
+2. [x] `db/053_parley.sql` (tickets, patas con hora original, resultados).
+3. [x] `publish/parley.py`: escalones, filtro, mochila sobre ln(cuota) sin poda
+   de dominadas, liquidación, control. Fuerza bruta en tests; 4,5 s con 60
+   partidos × 8 patas.
+4. [x] `publish/parley_datos.py`: elegir (una transacción con candado por
+   día), liquidar (nula a las 48 h de la hora ORIGINAL), informe.
+5. [x] Enganches: `daily.run` antes de `seal()`, `_collect` desde
+   `LOTE_PARLEY_DESDE`, `clv.settle_pending`, `PARLEY_ENABLED`, alerta.
+6. [x] Control prometido/real por escalón (50, 10 semanas, IC99, z ≤ −4).
+7. [x] `GET /parley` y pestaña web. Revisión final independiente: 4 fallos
+   importantes arreglados con test (commit 059372a).
+8. [x] Desplegado APAGADO 2026-10-12 00:10 UTC (commit d28af15,
+   `LOTE_PARLEY_DESDE` = 12-oct): db/053 aplicada (triggers probados en real
+   con ROLLBACK), imágenes = las de producción (`*:before-parley`, con la app
+   móvil sin commitear) + SOLO los archivos del parley; los cambios de
+   tarjetas/córners del 10-oct siguen sin desplegar. Respaldo
+   `~/release-parley/antes.dump`. Ensayo en seco: 5 parlays de 2 patas
+   (1,90 · 2,22 · 2,76 · 3,41 · 4,42) con 26 partidos.
+9. [ ] Activar: `PARLEY_ENABLED=1` en `.env` y recrear `worker` fuera de
+   07:50-08:40 UTC, con el visto bueno del usuario.
+
+## Modelo propio en las 12 ligas "solo sharp" (2026-10-11, pedido del usuario)
+
+"Activa todas esas ligas en el modelo propio": Championship, LaLiga 2,
+2. Bundesliga, Serie B, Ligue 2, Eliteserien, Allsvenskan, Superliga danesa,
+Super League suiza, Süper Lig, Primera chilena y Série B brasileña. Hoy tienen
+`model_enabled = FALSE` y su historial empieza en jul-ago 2026 (57-106
+partidos): el modelo no puede valorar a sus equipos ni a los recién
+ascendidos de Primera (Racing y Deportivo 7 partidos, Troyes 5).
+
+Riesgos encontrados antes de tocar nada:
+- `history_fd._ensure_team` solo busca el club en la liga que carga: el
+  historial de Segunda crearía un segundo Racing, Leeds, Troyes… y partiría
+  su historial en dos sin error. Hay que resolver como `resolve_or_register`
+  (alias del país, hermanas exactas, dudosos a revisión, nunca crear sobre
+  un parecido).
+- `model_enabled` también decide qué se paga a los proveedores: The Odds API
+  pasaría de `h2h` (1 crédito) a 3 mercados en 12 ligas; lineups, bajas y
+  estadísticas por jugador gastan API-Football. Separarlo ANTES de activar.
+- Al cargar Segunda, los clubes que subieron/bajaron conectan las divisiones
+  por el término `strength`: CAMBIA la valoración de equipos de Primera ya
+  medidos. Es lo buscado, pero exige validar que no empeora (la puerta de
+  RPS de `train` lo hace) y comparar por liga contra el mercado.
+- Chile y Série B no están en football-data: historial desde API-Football.
+
+Plan:
+1. [x] Catálogo football-data (db/049): E1, SP2, D2, I2, F2, T1 (principal;
+   cierre de Pinnacle y estadísticas) y NOR, SWE, DNK, SWZ (extra). Chile
+   fuera: `new/CHL.csv` redirige a la Superliga china.
+2. [x] Cargador sin duplicados (`normalize.clasificar_historial`, alias del
+   país + exacto de cualquier fuente, dudosos a revisión) + `csv_ajeno`
+   (CSV de otra liga) + lectura UTF-8 + `history_fd ensayo|cargar`. Tests.
+3. [x] Ensayo en el servidor y revisión a mano: db/050 (fusión del
+   "Arminia Bielefeld" duplicado, 25 alias, 61 clubes que solo se parecen) y
+   db/051 (91 clubes sin parecido creados antes de cargar). Ensayo final:
+   0 nuevos, 0 dudosos.
+4. [x] Carga real (2026-10-11, respaldos `~/release-ligas-modelo/*.dump`):
+   39.842 partidos, 0 equipos creados, 0 duplicados, ~93 % con cierre de
+   Pinnacle. Racing 7 → 259 partidos, Troyes 5 → 442.
+5. [x] `leagues.captura_completa` (db/052) separa el gasto de proveedores
+   de `model_enabled`; `train --incluir` entrena con ligas aún apagadas;
+   el chequeo de xG ignora ligas sin fuente. Desplegado 2026-10-11
+   (imágenes `*:before-ligas`, respaldo `~/release-ligas-modelo/backup.tgz`):
+   sin cambio de comportamiento mientras `model_enabled` siga apagado.
+6. [x] Sombra (mismo año que el OOS del 2026-10-01, 486 min): ligas ya
+   medidas RPS 0,20800 → 0,20752 en los mismos 4.106 partidos (mejoran
+   Bundesliga, LaLiga, Ligue 1: las de ascendidos; Eredivisie 0,1983 →
+   0,1994). Nuevas: modelo 0,2208 frente a mercado 0,2116 (gana en Ligue 2,
+   Eliteserien y Suiza). Visto bueno del usuario el 2026-10-11.
+7. [ ] Activar. Intento del 2026-10-11 (`~/release-ligas-modelo/activar.sh`,
+   9 h 40 min): artefacto `2026.10.11-135412` NO promovido, "no mejora el
+   baseline Elo sobre las mismas filas" (Dixon-Coles 0,20517 frente a Elo
+   0,20468, mercado 0,19928, n=1.541). No es por las ligas nuevas: el
+   entrenamiento del 2026-10-01 SIN ellas ya falló igual (0,20074 frente a
+   0,19995) y el activo (09-27) pasó por 0,0002. `model_enabled` sigue
+   apagado; decisión del usuario pendiente (forzar la activación saltándose
+   la puerta, o investigar antes por qué Dixon-Coles ya no gana a Elo).
+8. [ ] Chile y Série B: sin football-data; historial por API-Football
+   (temporadas pasadas con `fixtures.ingest_league(season=…)`), pasos 2-7.
+
 ## Reto escalera (2026-10-08, pedido del usuario)
 
 Sección nueva de la web con historial y ganancias propios. Regla del texto
@@ -73,6 +251,22 @@ pasos y −26 % a 6. Se publica igual que antes, con su historial entero.
 - [x] Desplegado 2026-10-08 23:20 UTC (commit abe3da4) y `history_fd tarjetas`
       ejecutado (27.398 partidos con tarjetas; árbitro en 4.610 de la Premier).
 
+## Tarjetas con árbitro y revisión de líneas con datos completos (2026-10-10, pedido del usuario)
+
+- [x] `eval/tarjetas_arbitro.py`: Premier + Championship con y sin árbitro,
+      criterio fijado antes. El árbitro apenas mejora (z=1,07; peor en la
+      Premier): sin regla propia para Inglaterra.
+- [x] BOM en 9 CSV de football-data: `soft_vs_sharp.load_csvs` perdía la
+      columna `Div` y `escalera_estadistica` descartaba 2024/25 y la Premier
+      2021/22. Arreglado + test; `--fijos` arreglado (KeyError `corners_equipo`).
+- [x] Repetida la prueba de las líneas en producción con datos completos:
+      escalera sin más de 6,5 / 9,5 córners ni visitante menos de 7,5, con
+      menos de 4,5 / 5,5 tarjetas; alta probabilidad sin local más de 2,5.
+- [ ] Desplegar (api + worker), con autorización del usuario.
+- [ ] Tarjetas en alta probabilidad: NO por ahora (alta va 71,9 % real frente
+      a 82,9 % prometido en sus primeros 57; antes entender eso). Necesitaría
+      prueba con los tramos 80-95, migración y liquidación.
+
 ## Fase comercial desbloqueada (2026-10-07, decisión del usuario)
 
 El usuario desbloquea cuentas, suscripciones y panel de administración ya,
@@ -106,7 +300,9 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       refresh en cookie HttpOnly, acceso en memoria, sesión recuperada al
       recargar, Mi cuenta con el plan real.
       Desplegado en producción (commit 9b9d180).
-- [ ] Conectar la app Flutter a `/app/v1` (cliente Dart desde el OpenAPI).
+- [x] Conectar la app Flutter a `/app/v1` (2026-10-11): cliente Dart con registro,
+      login/refresh, perfil, verificación, recuperación y suscripción. Firebase
+      y persistencia segura de sesión continúan pendientes.
 - [x] Web: precios desde `/app/v1/plans` (2026-10-07). El panel decide
       importe, duración y qué se vende; la web solo guarda los textos.
 - [x] Desplegar commit 3d40e05 (2026-10-07): `db/043` y `db/044` aplicados,
@@ -2043,3 +2239,11 @@ NBA-RUN-070: menú Fútbol/NBA publicado y navegación de ida/vuelta verificada.
 - [x] Ejecutar pruebas, publicar en VPS aislado, verificar página y registrar NBA-RUN-071; conservar puertas y exclusión de copias periódicas.
 
 NBA-RUN-071: nueve mercados desarrollados/calibrados con estadísticas sin cuotas. 157.962filas/6.108partidos regulares;42partidos discrepantes excluidos. 42pronósticos nuevos sellados y publicados,15originales conservados. Comparación2023–26 con referencias igualmente calibradas y coberturas;≥70% puntos/rebotes sobreestima acierto, no aptos como selecciones fiables70%. Lectura oficial con reconciliación/DNP separado,577/18suiteNBA+3integración y800/16arnés. Fútbol/proxy/piloto intactos;0cuotasAPI/0apuestas/sin nuevascopiasperiódicas. Puertas/confirmación y disponibilidad futura pendientes. docs/nba_nueve_mercados_estadistica_20261009.md.
+
+### NBA — verificar clave y permisos efectivos de API-NBA, 2026-10-09
+
+- [x] Comprobar credencial local privada existente sin imprimirla ni modificar capturas anteriores.
+- [x] Consultar estado y acceso efectivo a temporadas recientes con un máximo de cinco solicitudes de datos, reserva de quince y sin reintentos automáticos.
+- [x] Conservar respuestas sin datos personales, documentar limitaciones reales y corregir presupuesto operativo si el plan gratuito no permite la temporada actual. No activar tareas repetitivas sin acceso válido.
+
+Clave existente verificada: Free activo, 100/día, temporadas 2025 y 2026 rechazadas. Calendario 2024 sin filtro de fecha válido, 1.406 partidos; fecha histórica rechazada. Cinco solicitudes de datos, dos estados, cabecera final 99 restantes. No se activa captura actual ni se contrata un plan; volumen suficiente no acredita permisos. docs/nba_api_nba_acceso_actual_20261009.md.

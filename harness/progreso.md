@@ -3663,7 +3663,8 @@ sincronización lo habría revertido), `git archive HEAD` sin `harness/`,
 build y reinicio de api/worker en un minuto sin crons (04:14 UTC). Verificado:
 cadena (7 lotes), salud, model-card, web, /control 401 y crons sin errores.
 Respaldo en `~/respaldo_20261006_presync.tgz`. Regla para el futuro: comparar
-servidor y repo con `tr -d ''`, o la lista de "cambios" engaña.
+servidor y repo con `tr -d '
+'`, o la lista de "cambios" engaña.
 
 ## 2026-10-06 — NBA: recuperación con actores adicionales de Apify
 
@@ -4436,6 +4437,11 @@ imagen fijada en compose (`quantfut-api-menu70:20261009`), así que se
 retagueó ese nombre; respaldo `~/release-27e8a7f/`, imágenes `*:before-27e8a7f`.
 Vista previa: 61 decisiones, 29 de hándicap y 8 de córners.
 
+## 2026-10-09 — API-NBA: comprobar permisos antes de activar la fuente
+
+La clave facilitada coincide con la privada ya configurada; autenticación y Free activo comprobados. Se corrigió la afirmación basada en la guía pública: 100 consultas pueden alcanzar por volumen, pero la cuenta rechaza temporadas 2025 y 2026. También rechaza fechas históricas explícitas; el calendario de temporada 2024 sin fecha devuelve 1.406 partidos y es acceso expresamente permitido. Cinco solicitudes de datos y dos estados, sin reintentos; cabecera final 99 restantes, estados declararon cero consumo y no se fuerza conciliación de contadores. Cuenta personal retirada de recibos, clave excluida de evidencia/Git. No se activa un bucle improductivo ni una suscripción, no se modifica VPS/fútbol/modelos/sellos. Recibos nuevos separados de originales previos, docs/nba_api_nba_acceso_actual_20261009.md. Arnés previo:808/16.
+Cierre del diagnóstico API-NBA: arnés posterior808/16, igual al previo; siete recibos con SHA-256 verificados y evidencia sin credencial/identidad de cuenta. Docker no disponible. Los cambios ajenos en escalera_estadistica.py se conservaron sin intervención.
+
 ## 2026-10-10 — Córners de cada equipo y más de 6,5 (commits 3ce62c4 y 583d432)
 
 Pedido del usuario a partir de un texto de "mercados de más del 70 %". De ese
@@ -4452,3 +4458,215 @@ córners por equipo salían sin cuota de referencia (`_ref_nuevos` solo miraba
 'corners'); corregido y redesplegado 01:27 (583d432). Vista previa: 81
 pronósticos de alta probabilidad, 22 de córners; la escalera sigue eligiendo
 sobre todo goles.
+
+## 2026-10-11 — Historial de las ligas "solo sharp" para el modelo propio (pasos 1-5)
+
+Pedido del usuario ("activa todas esas ligas en el modelo propio"). El
+cargador de football-data buscaba cada nombre SOLO en la liga que cargaba:
+el historial de Segunda habría creado un segundo Racing, Leeds, Troyes… y
+partido su historia sin error. Ahora clasifica en todo el país (alias del
+país o exacto de cualquier fuente; un parecido NUNCA se crea ni se acepta
+solo) y hay un ensayo en seco previo. El ensayo cazó dos cosas que la carga
+habría grabado: `new/CHL.csv` redirige con 200 a la Superliga CHINA (Chile
+se queda sin football-data; el cargador comprueba ahora Country/Div), y un
+duplicado que ya existía (el calendario creó "Arminia Bielefeld" sin ver al
+"Bielefeld" de la Bundesliga; fusionado en db/050). Los 86 dudosos se
+revisaron a mano (db/050) y los clubes nuevos se crearon ANTES de cargar
+(db/051): cada club que crea el cargador se vuelve candidato para los
+siguientes nombres, y la carga dejaba de ser lo que el ensayo había medido.
+Resultado: 39.842 partidos, 0 equipos creados por la carga, 0 duplicados.
+
+`model_enabled` decidía también qué se paga a los proveedores; encenderlo
+habría triplicado el gasto de The Odds API en 10 ligas y activado
+alineaciones/bajas/jugadores con API-Football ya en ~5.400 de 7.500/día.
+`captura_completa` (db/052) lo separa. Y el modelo no se puede entrenar con
+el interruptor encendido: con el modelo viejo activo, el job de las 08:00
+sellaría predicciones de equipos que no conoce. De ahí `train --incluir`.
+Desplegado sin cambio de comportamiento (imágenes `*:before-ligas`).
+Pendiente: evaluación en sombra y decisión del usuario antes de activar.
+
+## 2026-10-10 — Tarjetas con árbitro: no; y las pruebas de córners/tarjetas iban sin 2024/25
+
+Pedido del usuario (mercado de tarjetas "con historial y árbitros"). Prueba
+`eval/tarjetas_arbitro.py` en E0+E1 (árbitro en el 100 %), criterio fijado
+antes de mirar. El árbitro mejora la pérdida logarítmica 0,0011 por partido
+(z=1,07; Premier −1,48, Championship +2,47) y empuja la media 0,18 tarjetas
+por encima de la real: cumple la letra del criterio (A) pero no es una
+mejora real, así que no hay regla propia para Inglaterra. Y en Inglaterra el
+modelo calibra igual de bien SIN árbitro.
+
+Lo importante salió de rebote: 9 CSV de football-data (toda 2024/25 y la
+Premier 2021/22) traen BOM; leídos en latin-1 la columna `Div` era
+`ï»¿Div` y `groupby("Div")` de `escalera_estadistica` los tiraba sin error.
+Las pruebas del 8 y 9-oct midieron 10.842 partidos, no 13.555, y la Premier
+eligió parámetros sin su temporada de ajuste. Las demás pruebas agrupan por
+`league_id` y no se vieron afectadas; el cargador de producción
+(`history_fd`) ya decodificaba con utf-8-sig. Con los datos completos y los
+mismos parámetros (`--fijos`) caen tres líneas de córners de la escalera, las
+tres en el tramo 70-80 %, que es justo donde elige la escalera, y una de alta
+probabilidad; entran tarjetas menos de 4,5 y 5,5. La regla es la de siempre
+(solo lo que pasa), no se reajustaron parámetros. Tarjetas en alta
+probabilidad, todavía no: alta va 11 puntos por debajo de lo prometido.
+Resultados en `.local/escalera_estadistica_20261010_fijos.json` y
+`.local/tarjetas_arbitro_20261010.json`. Sin desplegar.
+
+## 2026-10-11 — Flutter/Firebase: análisis y pantallas antes de implementar
+
+App ubicada en `apps/mobile`: revisados 62 archivos Dart, configuración
+nativa, cuentas/suscripciones/API/panel existentes y documentación oficial de
+Firebase. Análisis Flutter sin incidencias y nueve pruebas existentes
+aprobadas desde la nueva ubicación; no validan aún Auth/FCM/compras. Plan
+documentado en
+`apps/mobile/docs/FIREBASE_INTEGRACION_CON_BACKEND_20261011.md` con identidad
+Firebase vinculada a cuentas existentes, API como autoridad de permisos,
+notificaciones, medición, control y transición de usuarios.
+
+El usuario confirmó implementación por fases y pidió primero presentar sus
+ideas de pantallas. Se registra fase 0 de diseño y recomendaciones antes de
+concretar fases/entregables. Pendiente de recibir esas ideas; no se inició
+integración funcional, configuración Firebase ni cambios de producción.
+
+## 2026-10-11 — Flutter: primeras pantallas QuantFut y navegación VIP
+
+Incorporadas las referencias del usuario en `apps/mobile`: cinco bienvenidas
+con ilustraciones animadas originales, arranque QuantFut y barra inferior
+Inicio / Predicciones / En vivo / La Grada / Perfil. Tarjetas de ejemplo,
+filtros de equipo/liga/día/deporte, fichas VIP difuminadas y botón Hazte VIP
+que abre la selección de planes. Los metadatos VIP no contienen el análisis
+privado. Precios pendientes; comprar muestra un aviso y no realiza cargos.
+
+Estados de directo, comunidad y perfil preparados como propuestas. Sin
+conexión Firebase/API, sin sesión ni pagos activos. No se alteró producción.
+Diseño, límites y fases documentados en
+`apps/mobile/docs/PANTALLAS_BIENVENIDA_INICIO_VIP_20261011.md`.
+Validación: trece pruebas Flutter, texto ampliado en 320 × 568, análisis sin
+incidencias y Android debug. Capturas en `apps/mobile/docs/validation/`.
+
+## 2026-10-11 — Flutter: mercados con evidencia e idioma registrado
+
+Sustituidas las propuestas de radar/primer tiempo por Mercados: ocho familias
+fútbol, selección de líneas habilitadas con prueba aprobada y al menos 500
+casos como regla de presentación, sin modificar las reglas del modelo.
+Historial público del VPS guardado aparte: 75/96 (78,1 %), muestra inicial;
+las tasas retrospectivas no se presentan como resultados publicados.
+Pantallas Hoy/Histórico, avisos pendientes, ruta VIP y NBA exploratoria.
+Revisión local del 10-oct distinta de la desplegada: tarjetas 4,5/5,5
+pendientes y córners local +2,5 no se destacan; servidor sin cambios.
+18 pruebas Flutter aprobadas, análisis sin incidencias, Android debug
+compilado e instalado en el emulador. Detalle y fuentes:
+`apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
+
+Nueva referencia del usuario: selector de idioma desde el primer arranque,
+antes de bienvenida, con es/en/pt/fr/it/de, persistencia y cambio en Perfil.
+Registrado junto a Firebase: traducción Flutter, cuenta/backend/web,
+Auth/correos, FCM/bandeja y medición; identificadores y datos del modelo no
+se traducen. Pendiente de implementar, sin simular traducciones ya listas.
+`apps/mobile/docs/IDIOMAS_APP_BACKEND_FIREBASE_20261011.md` y tareas del arnés.
+
+## 2026-10-11 — App con datos reales, Monedas y Referidos
+
+Autorización posterior del usuario: eliminar el modo demo y conectar el modelo
+real, con interruptores por sección y leyenda configurable de entrenamiento.
+La raíz Flutter consume la API de producción; calendario, enfrentamientos,
+pronósticos, detalle, historial, planes y cuenta dejan de usar datos ilustrativos.
+Los datos que la fuente todavía no entrega se identifican como ausentes.
+
+Alta Probabilidad: rango de presentación 75–90 %, 10 % gratuito (redondeado
+hacia arriba), mayor cuota real entre elegibles y asignación inmutable por lote.
+Escalera: un único pendiente gratuito de mayor probabilidad exacta entre todos
+los retos activos. VIP oculta selección/mercado/cuota/probabilidad desde el
+servidor, incluidas las rutas web públicas; no solo desde la pantalla.
+
+Menú reemplaza La Grada y ofrece Monedas y Referidos. Saldo y movimientos en
+PostgreSQL, asistencia de siete días, códigos de invitación y canje de un pick.
+Correo verificado, movimientos idempotentes, canjes atómicos y anulaciones
+reversibles de premios. Configuración administrativa en
+`/control/configuracion-app` y `/control/recompensas`, con CSRF y auditoría.
+
+Investigación de Tapjoy/Unity, RevU, Torox, ayeT, adjoe y BitLabs documentada con
+fuentes. Adaptadores iniciales RevU/BitLabs preparados; el usuario confirmó que
+todavía no tiene cuentas de editor. Los seis proveedores están desactivados:
+no se anuncian ofertas, ingresos ni acreditaciones comerciales inventadas.
+
+Migraciones 054/055 instaladas. Despliegue limitado de API sobre su imagen previa,
+sin recrear los workers. Imagen activa y persistida en compose:
+`quantfut-api-mobile-rewards:20261011`; copia de configuración anterior guardada.
+Web, health y seis rutas de contenido/monedas respondieron 200. Comprobación
+UTC−6 del 11/10: 99 enfrentamientos, dos picks públicos, quince VIP pendientes,
+un escalón público y seis proveedores pendientes. Estos conteos son variables.
+
+Validación: 124 pruebas backend aprobadas y cinco PostgreSQL condicionadas
+omitidas localmente; ocho comprobaciones adicionales contra PostgreSQL real,
+siempre con rollback (saldo, repetición, reversión, referidos, cuotas gratuitas,
+canje, vistas y formularios administrativos). Flutter: 18 pruebas aprobadas;
+siete pruebas de navegación repetidas tras los últimos ajustes, análisis limpio,
+APK debug compilado e instalado. Calendario, tarjetas y Monedas inspeccionados
+en el emulador, sin errores Flutter/AndroidRuntime observados.
+
+Estado, fuentes y activación:
+`apps/mobile/docs/APP_REAL_MONEDAS_REFERIDOS_20261011.md`.
+Evidencia pública y de servidor:
+`docs/validation/mobile_rewards_release_20261011/`.
+Capturas Android reales:
+`apps/mobile/docs/validation/real_mobile_20261011/emulator-*.png`.
+Firebase, idiomas, persistencia segura de sesión, pagos/restauración, cuentas
+de editor y métricas de detalle aún no expuestas permanecen en tareas pendientes.
+
+## 2026-10-11 — Registro primero: requisito Firebase, sin ejecución
+
+El usuario entregó la captura de acceso oscuro con Google, idioma en la esquina
+superior y aceptación de términos/privacidad. Pidió que registro/acceso sea la
+primera pantalla de la app y que se anote en el plan Firebase sin implementarlo
+todavía. Registrado en el plan principal, el plan de suscripciones, la
+especificación de idiomas y el backlog. La elección de idioma pasa a estar
+disponible en la pantalla de registro; bienvenida y contenido vienen después
+del acceso para personas sin sesión. La sesión existente y los derechos/saldo
+del backend deben conservarse. Las cifras de la referencia no se trasladarán
+sin respaldo real. Este ajuste modifica documentación únicamente: sin cambios
+de código, configuración Firebase, compilación, emulador ni despliegue.
+
+## 2026-10-11 — Coins: recompensas como cuarta pestaña
+
+Corrección del usuario: eliminar el menú intermedio de Monedas/Referidos y
+abrir directamente la pantalla de saldo, asistencia, ofertas y referidos.
+La cuarta pestaña y su encabezado ahora se llaman Coins, con icono de monedas.
+La navegación inferior permanece disponible dentro de esta pantalla y su
+actualización consulta el saldo real. No se alteraron las reglas del backend.
+Siete pruebas de navegación aprobadas, análisis sin incidencias y APK debug
+compilado para actualizar el emulador. Registro inicial Firebase sigue pendiente
+sin implementación, conforme a la instrucción anterior del usuario.
+
+## 2026-10-11 — Activación de las 10 ligas: el modelo nuevo no pasa la puerta
+
+Con el visto bueno del usuario se entrenó con `--incluir` (9 h 40 min,
+artefacto 2026.10.11-135412). La puerta lo rechazó: no vence a Elo en las
+mismas filas (0,20517 frente a 0,20468, n=1.541). El script no encendió
+`model_enabled` y nada cambió en producción. La causa no son las ligas
+nuevas: el entrenamiento del 1-oct, sin ellas, ya perdía contra Elo
+(0,20074 frente a 0,19995); con ellas la distancia se acorta, y la sombra
+mostró que las ligas ya medidas mejoran (0,20800 → 0,20752). El activo
+(09-27) pasó la puerta por 0,0002: Dixon-Coles y Elo están empatados en la
+ventana reciente. No se fuerza una puerta de seguridad sin decisión expresa.
+
+## 2026-10-11 — Parley del día (sin desplegar)
+
+Pedido del usuario: 1-5 parlays diarios de cuota 1,90-5,00, "los más
+probables". Con "máxima probabilidad dentro de un rango" todo saldría pegado
+a 1,90, así que el usuario eligió escalones (≈2 · 2,5 · 3 · 4 · 5), un partido
+por parlay y ninguno repetido en el día, y solo probabilidad (pierde el margen
+en cada pata; el historial lo enseña). La revisión final cazó cuatro cosas que
+los tests del plan no veían: la poda de patas "dominadas" que prescribía la
+propia spec pierde parlays válidos cuando hay techo de cuota (se quitó; 4,5 s
+sin ella); las cuotas llegan como float4 y 1,25 × 1,76 salía "2,20 en el
+escalón 1"; un ticket se guardaba fila a fila y uno a medias habría quedado
+inmutable y sellado (ahora una transacción con candado por día); y
+`fixtures` sobrescribe la hora de un partido reprogramado, así que la pata
+guarda su hora original y se anula a las 48 h de ella. Acierto frente a la
+probabilidad EFECTIVA (solo patas que contaron). Sin doble oportunidad:
+ningún proveedor la cotiza. Desplegado apagado el 12-oct 00:10 UTC SOBRE las imágenes de producción (que
+ya llevan la app móvil sin commitear) copiando SOLO los archivos del parley:
+desplegar la carpeta entera habría metido también los cambios de tarjetas y
+córners del 10-oct, que no estaban desplegados. El árbol `~/quantfut` del
+VPS no tiene ni la app móvil ni el parley: un `docker compose build` los
+quitaría. Primer ensayo: los cinco parlays salen de 2 patas; la búsqueda
+prefiere pocas patas porque cada una paga margen.
