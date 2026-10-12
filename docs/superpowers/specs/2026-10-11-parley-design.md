@@ -92,9 +92,10 @@ Por cada escalón, en orden ascendente:
   `(k, b)` = las 2 mejores `Σ ln p` con `k` patas y `Σ ln cuota` en el cubo
   `b` (ancho 0,002 en ln, ~805 cubos hasta ln 5), guardando la suma EXACTA de
   cada una. Se recorre partido a partido; cada partido aporta "ninguna pata" o
-  una de sus patas no dominadas (se quita la que tiene otra del mismo partido
-  con probabilidad y cuota mayores o iguales). Es exacta salvo combinaciones
-  a menos de 0,2 % de cuota de un borde del escalón.
+  una de sus patas. NO se podan patas "dominadas": con techo de cuota, la más
+  barata y menos probable puede ser la única que no se pasa del escalón
+  (revisión final, 2026-10-11). Es exacta salvo combinaciones pegadas al
+  borde de un escalón (hasta 0,2 % por pata).
 - Reconstrucción: entre los estados con `k ≥ 2` cuyo cubo cae en el rango, se
   toman en orden de probabilidad y se **verifica la cuota exacta**; el primero
   que cumple gana. Así el redondeo del cubo nunca saca un parlay fuera de rango.
@@ -145,8 +146,12 @@ Enganche en `clv.settle_pending()` (ya se dispara con cada resultado).
   Las líneas de hándicap validadas son enteras o medias: no hay medias
   ganadas ni perdidas.
 - Factor de la pata: ganada = cuota; perdida = 0; push o nula = 1.
-- Partido aplazado más de 48 h desde su hora original: pata nula
-  (`MARGEN_APLAZADO`, como la escalera).
+- Partido que no se juega a su hora original (±48 h): pata nula a las 48 h
+  de esa hora (`MARGEN_APLAZADO`). La hora original se guarda en la pata,
+  porque `fixtures` sobrescribe `matches.kickoff_utc` al reprogramar.
+- Cuotas: llegan de columnas REAL (float4) y se redondean a 4 decimales; el
+  producto se clasifica redondeado a 6 (1,25 × 1,76 = 2,20 va al escalón 2).
+- Tickets y patas del día se guardan en UNA transacción con candado por día.
 - Ticket: se liquida cuando todas sus patas lo están. `factor_pago = Π
   factores`. `outcome`: `perdido` si alguna pata perdió; `ganado` si ninguna
   perdió y alguna se ganó; `nulo` si todas fueron push o nulas.

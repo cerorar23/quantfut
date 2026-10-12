@@ -164,7 +164,7 @@ def _collect(batch_date: date) -> dict:
     ) if con_parley else []
     parley_patas = query(
         """SELECT p.pata_id, p.ticket_id, p.match_id, p.market, p.selection, p.line, p.prob,
-                  p.fair_price, p.price, p.book, p.odds_source, p.odds_as_of
+                  p.fair_price, p.price, p.book, p.odds_source, p.odds_as_of, p.kickoff_utc
            FROM parley_patas p
            JOIN parley_tickets t ON t.ticket_id = p.ticket_id
            WHERE (t.decided_at AT TIME ZONE 'UTC')::date = %s

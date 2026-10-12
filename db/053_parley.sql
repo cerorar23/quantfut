@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS parley_patas (
     book         TEXT NOT NULL,
     odds_source  TEXT NOT NULL,
     odds_as_of   TIMESTAMPTZ NOT NULL,
+    -- Hora del partido al decidir. Si luego se reprograma, la pata se anula a
+    -- las 48 h de ESTA hora (`fixtures` sobrescribe matches.kickoff_utc).
+    kickoff_utc  TIMESTAMPTZ NOT NULL,
     UNIQUE (ticket_id, match_id)
 );
 CREATE INDEX IF NOT EXISTS idx_parley_patas_match ON parley_patas(match_id);

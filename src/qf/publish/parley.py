@@ -19,6 +19,7 @@ Este módulo es la parte pura. La base de datos está en `parley_datos.py`.
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from datetime import datetime
 
 from ..eval.soft_vs_sharp import MIN_WEEKS, _weekly_ci
@@ -38,27 +39,23 @@ _POR_CELDA = 2
 
 
 def en_escalon(cuota: float, escalon: int) -> bool:
+    """Redondeado a 6 decimales: 1,25 × 1,76 es 2,20 y va al escalón 2, no al 1."""
     _, lo, hi = ESCALONES[escalon - 1]
+    cuota = round(cuota, 6)
     ultimo = escalon == ESCALONES[-1][0]
     return lo <= cuota and (cuota < hi or (ultimo and cuota <= hi))
 
 
 def filtrar(opciones: list[Opcion], now: datetime) -> list[Opcion]:
-    """Patas que pueden entrar: mercado conocido, cuota ≥ 1,15, sin cuota errónea, sin fuga."""
-    return [o for o in opciones
-            if o.cand.market in MERCADOS and o.price >= CUOTA_MIN_PATA
+    """
+    Patas que pueden entrar: mercado conocido, cuota ≥ 1,15, sin cuota errónea,
+    sin fuga. La cuota llega de columnas REAL (float4: 1,76 es 1,7599999…) y
+    se redondea a 4 decimales, que es como la cotizan las casas.
+    """
+    return [replace(o, price=round(o.price, 4)) for o in opciones
+            if o.cand.market in MERCADOS and round(o.price, 4) >= CUOTA_MIN_PATA
             and o.ev <= EV_ERRONEA
             and (o.odds_as_of is None or o.odds_as_of <= now)]
-
-
-def _frente(patas: list[Opcion]) -> list[Opcion]:
-    """Quita las dominadas: otra pata del mismo partido con prob y cuota ≥."""
-    out, mejor_cuota = [], 0.0
-    for o in sorted(patas, key=lambda o: (-o.cand.prob, -o.price)):
-        if o.price > mejor_cuota:
-            out.append(o)
-            mejor_cuota = o.price
-    return out
 
 
 def _meter(estados: dict, clave: tuple[int, int], e: tuple) -> None:
@@ -80,6 +77,8 @@ def buscar(patas: list[Opcion], escalon: int) -> tuple[Opcion, ...] | None:
     de MIN_PATAS a MAX_PATAS patas. Mochila de elección múltiple sobre
     ln(cuota): cada celda (patas, ln cuota) guarda sus `_POR_CELDA` mejores
     combinaciones con la suma exacta, y al final se verifica la cuota exacta.
+    No se podan patas "dominadas" (más baratas y menos probables): con techo
+    de cuota, la más barata puede ser la única que no se pasa del escalón.
     """
     por_partido: dict[str, list[Opcion]] = {}
     for o in patas:
@@ -88,7 +87,7 @@ def buscar(patas: list[Opcion], escalon: int) -> tuple[Opcion, ...] | None:
     techo = math.log(hi) + 1e-12
     estados: dict[tuple[int, int], list[tuple]] = {(0, 0): [(0.0, 0.0, ())]}
     for mid in sorted(por_partido):
-        opciones = _frente(por_partido[mid])
+        opciones = por_partido[mid]
         nuevos = {k: list(v) for k, v in estados.items()}
         for (k, _), lista in estados.items():
             if k == MAX_PATAS:

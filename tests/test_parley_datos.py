@@ -66,23 +66,63 @@ def test_sin_partidos_no_rompe(monkeypatch, encendido):
     assert out["estado"] == "sin_combinacion" and out["tickets"] == []
 
 
-def test_elige_y_guarda_ticket_y_patas(monkeypatch, encendido):
-    escritos = []
-    def query_one(sql, params=()):
-        if "INSERT INTO parley_tickets" in sql:
-            escritos.append(("ticket", params))
-            return {"ticket_id": f"t{len(escritos)}"}
+class _Cursor:
+    def __init__(self, log, ya):
+        self.log, self.ya, self._ultimo = log, ya, None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def execute(self, sql, params=()):
+        self.log.append((sql, params))
+        self._ultimo = sql
+
+    def fetchone(self):
+        if "FROM parley_tickets WHERE dia" in self._ultimo:
+            return {"x": 1} if self.ya else None
+        if "INSERT INTO parley_tickets" in self._ultimo:
+            return {"ticket_id": f"t{sum('INSERT INTO parley_tickets' in s for s, _ in self.log)}"}
         return None
-    monkeypatch.setattr(pd_, "query_one", query_one)
-    monkeypatch.setattr(pd_, "execute", lambda sql, params=(): escritos.append(("pata", params)) or 1)
+
+
+def _conn_falsa(monkeypatch, ya=False):
+    from contextlib import contextmanager
+    log, usos = [], []
+
+    @contextmanager
+    def conn():
+        usos.append(1)
+        yield type("C", (), {"cursor": lambda self: _Cursor(log, ya)})()
+    monkeypatch.setattr(pd_, "conn", conn)
+    return log, usos
+
+
+def test_elige_y_guarda_todo_en_una_transaccion_con_candado(monkeypatch, encendido):
+    monkeypatch.setattr(pd_, "query_one", lambda sql, params=(): None)
+    log, usos = _conn_falsa(monkeypatch)
     # a, b: 1,40² = 1,96 (escalón 1) · c, d: 1,60² = 2,56 (escalón 2)
     monkeypatch.setattr(pd_, "candidatas", lambda now: ([_o("a"), _o("b"), _o("c", 0.6, 1.6),
                                                          _o("d", 0.6, 1.6)], 0))
     out = pd_.select_and_persist(AHORA)
     assert out["estado"] == "elegido" and [t["escalon"] for t in out["tickets"]] == [1, 2]
-    tickets = [p for k, p in escritos if k == "ticket"]
+    assert len(usos) == 1                                    # una sola conexión = una transacción
+    assert "pg_advisory_xact_lock" in log[0][0]
+    assert "FROM parley_tickets WHERE dia" in log[1][0]      # se vuelve a mirar DENTRO del candado
+    tickets = [p for s, p in log if "INSERT INTO parley_tickets" in s]
     assert tickets[0][0] == date(2026, 10, 12) and tickets[0][1] == 1
-    assert sum(1 for k, _ in escritos if k == "pata") == 4
+    patas = [(s, p) for s, p in log if "INSERT INTO parley_patas" in s]
+    assert len(patas) == 4 and all("kickoff_utc" in s for s, _ in patas)
+
+
+def test_dos_ejecuciones_a_la_vez_no_duplican(monkeypatch, encendido):
+    monkeypatch.setattr(pd_, "query_one", lambda sql, params=(): None)   # la primera mirada no ve nada
+    log, _ = _conn_falsa(monkeypatch, ya=True)                          # dentro del candado, ya hay
+    monkeypatch.setattr(pd_, "candidatas", lambda now: ([_o("a"), _o("b")], 0))
+    assert pd_.select_and_persist(AHORA)["estado"] == "ya_elegido"
+    assert not any("INSERT" in s for s, _ in log)
 
 
 def test_ensayo_no_escribe(monkeypatch):
@@ -94,11 +134,24 @@ def test_ensayo_no_escribe(monkeypatch):
     assert out["estado"] == "elegido" and out["sin_precio"] == 1
 
 
-def _fila_pata(outcome_partido="finished", ko=AHORA, hg=2, ag=1):
+def _fila_pata(outcome_partido="finished", ko=AHORA, hg=2, ag=1, original=AHORA):
     return {"pata_id": "p1", "market": "totals", "selection": "over", "line": 1.5,
-            "status": outcome_partido, "kickoff_utc": ko, "home_goals": hg, "away_goals": ag,
+            "status": outcome_partido, "kickoff_utc": ko, "kickoff_original": original,
+            "home_goals": hg, "away_goals": ag,
             "home_corners": None, "away_corners": None, "home_yellow": None,
             "away_yellow": None, "home_red": None, "away_red": None}
+
+
+def test_partido_reprogramado_deja_la_pata_nula_a_las_48_h_de_su_hora_original():
+    ahora = AHORA + timedelta(days=3)
+    otra_fecha = AHORA + timedelta(days=10)
+    assert pd_._resultado_pata(_fila_pata("scheduled", otra_fecha, None, None), ahora)[0] == "void"
+    # Jugado días después de su hora original: tampoco cuenta.
+    assert pd_._resultado_pata(_fila_pata("finished", AHORA + timedelta(days=5)), AHORA + timedelta(days=6))[0] == "void"
+    # Aún dentro del margen y sin jugar: se espera.
+    assert pd_._resultado_pata(_fila_pata("scheduled", otra_fecha, None, None), AHORA + timedelta(hours=10)) is None
+    # Jugado a su hora: se liquida normal.
+    assert pd_._resultado_pata(_fila_pata("finished"), AHORA + timedelta(hours=3))[0] == "win"
 
 
 def test_aplazado_deja_la_pata_nula_y_liquida_el_ticket(monkeypatch):

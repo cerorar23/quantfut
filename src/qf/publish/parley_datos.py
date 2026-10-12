@@ -15,7 +15,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from ..config import settings
-from ..db import execute, query, query_one
+from ..db import conn, execute, query, query_one
 from . import alta_prob_datos as ad
 from . import escalera_datos as ed
 from . import hashchain
@@ -111,24 +111,60 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
            "candidatas": len(patas), "partidos": len({o.match_id for o in patas}),
            "sin_precio": sin_precio, "pausados": ctl["pausados"],
            "tickets": [_ticket_json(e, sel) for e, sel in plan]}
-    if dry_run:
+    if dry_run or not plan:
         return out
-
-    for (escalon, sel), t in zip(plan, out["tickets"]):
-        ticket_id = query_one(
-            """INSERT INTO parley_tickets (dia, escalon, cuota_total, prob_total, n_patas)
-               VALUES (%s, %s, %s, %s, %s) RETURNING ticket_id""",
-            (dia, escalon, t["cuota_total"], t["prob_total"], t["n_patas"]))["ticket_id"]
-        for o in sel:
-            execute(
-                """INSERT INTO parley_patas (ticket_id, match_id, market, selection, line, prob,
-                                             fair_price, price, book, odds_source, odds_as_of)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                (ticket_id, o.match_id, o.cand.market, o.cand.selection, o.cand.line,
-                 round(o.cand.prob, 6), round(1.0 / o.cand.prob, 4), o.price, o.book,
-                 o.odds_source, o.odds_as_of))
+    if not _guardar(dia, plan, out["tickets"]):
+        return {"estado": "ya_elegido", "dia": dia.isoformat()}
     log.info("Parley: %s", {k: v for k, v in out.items() if k != "tickets"})
     return out
+
+
+def _guardar(dia, plan: list, tickets: list[dict]) -> bool:
+    """
+    Todos los tickets y patas del día en UNA transacción: las filas son
+    inmutables y un ticket a medias (cortado entre pata y pata) quedaría
+    sellado para siempre. El candado por día y la segunda mirada dentro de él
+    impiden que dos ejecuciones a la vez repartan el mismo partido en dos
+    parlays. False si otra ejecución ya eligió el día.
+    """
+    with conn() as c, c.cursor() as cur:
+        cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                    (f"parley:{dia.isoformat()}",))
+        cur.execute("SELECT 1 AS x FROM parley_tickets WHERE dia = %s", (dia,))
+        if cur.fetchone():
+            return False
+        for (escalon, sel), t in zip(plan, tickets):
+            cur.execute(
+                """INSERT INTO parley_tickets (dia, escalon, cuota_total, prob_total, n_patas)
+                   VALUES (%s, %s, %s, %s, %s) RETURNING ticket_id""",
+                (dia, escalon, t["cuota_total"], t["prob_total"], t["n_patas"]))
+            ticket_id = cur.fetchone()["ticket_id"]
+            for o in sel:
+                cur.execute(
+                    """INSERT INTO parley_patas (ticket_id, match_id, market, selection, line,
+                                                 prob, fair_price, price, book, odds_source,
+                                                 odds_as_of, kickoff_utc)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                               (SELECT kickoff_utc FROM matches WHERE match_id = %s))""",
+                    (ticket_id, o.match_id, o.cand.market, o.cand.selection, o.cand.line,
+                     round(o.cand.prob, 6), round(1.0 / o.cand.prob, 4), o.price, o.book,
+                     o.odds_source, o.odds_as_of, o.match_id))
+    return True
+
+
+def _resultado_pata(r: dict, now: datetime) -> tuple | None:
+    """
+    Como `escalera_datos.resultado`, pero contra la hora ORIGINAL del partido:
+    `fixtures` sobrescribe `matches.kickoff_utc` y vuelve a 'scheduled' un
+    partido reprogramado. Si no se jugó a su hora (±48 h), la pata es nula a
+    las 48 h de la hora original, como en las casas; nunca espera semanas.
+    """
+    movido = abs(r["kickoff_utc"] - r["kickoff_original"]) > ed.MARGEN_APLAZADO
+    if not movido and r["status"] == "finished" and r["home_goals"] is not None:
+        return ed.resultado(r, now)
+    if now > r["kickoff_original"] + ed.MARGEN_APLAZADO:
+        return ("void", None, None, None)
+    return None
 
 
 def settle_pending(now: datetime | None = None) -> dict:
@@ -136,6 +172,7 @@ def settle_pending(now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     rows = query(
         """SELECT p.pata_id, p.market, p.selection, p.line, m.status, m.kickoff_utc,
+                  p.kickoff_utc AS kickoff_original,
                   m.home_goals, m.away_goals, m.home_corners, m.away_corners,
                   m.home_yellow, m.away_yellow, m.home_red, m.away_red
            FROM parley_patas p
@@ -143,11 +180,11 @@ def settle_pending(now: datetime | None = None) -> dict:
            LEFT JOIN parley_resultados_pata r ON r.pata_id = p.pata_id
            WHERE r.pata_id IS NULL
              AND ((m.status = 'finished' AND m.home_goals IS NOT NULL)
-                  OR (m.status = 'postponed' AND m.kickoff_utc < %s))""",
+                  OR p.kickoff_utc < %s)""",
         (now - ed.MARGEN_APLAZADO,))
     n_patas = 0
     for r in rows:
-        res = ed.resultado(r, now)
+        res = _resultado_pata(r, now)
         if res is None:
             continue
         n_patas += execute(

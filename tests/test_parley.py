@@ -146,3 +146,29 @@ def test_resumen_unidades_y_nulos_fuera():
     assert b["n"] == 2 and b["aciertos"] == 1 and b["unidades"] == 0.0 and b["roi"] == 0.0
     assert b["prob_media"] == 50.0 and b["acierto_real"] == 50.0
     assert r["total"]["n"] == 2 and "2" not in r["por_escalon"]
+
+
+# --- Revisión final: borde con cuotas float4 y patas "dominadas" ---------------
+
+def _f4(x):
+    """La cuota tal como sale de una columna REAL de Postgres."""
+    import struct
+    return struct.unpack("f", struct.pack("f", x))[0]
+
+
+def test_cuotas_float4_en_el_borde_caen_en_su_escalon():
+    patas = pl.filtrar([_o("a", 0.62, _f4(1.25)),
+                        _o("b", 0.55, _f4(1.76), market="h2h", sel="home", line=None)], AHORA)
+    assert pl.buscar(patas, 1) is None                        # 1,25 × 1,76 = 2,20: no es del 1
+    sel = pl.buscar(patas, 2)
+    assert sel is not None and round(math.prod(o.price for o in sel), 6) == 2.2
+    exacto = pl.filtrar([_o("a", 0.7, _f4(1.25)), _o("b", 0.7, _f4(1.52))], AHORA)
+    assert pl.buscar(exacto, 1) is not None                   # 1,25 × 1,52 = 1,90: sí es del 1
+
+
+def test_pata_menos_probable_y_mas_barata_sirve_para_no_pasarse_del_escalon():
+    a = _o("m1", 0.80, 1.30)
+    b = _o("m1", 0.75, 1.25, line=2.5)
+    c = _o("m2", 0.55, 1.72, market="h2h", sel="home", line=None)
+    sel = pl.buscar([a, b, c], 1)                             # A×C = 2,236 se pasa; B×C = 2,15
+    assert sel is not None and sorted(o.cand.prob for o in sel) == [0.55, 0.75]
