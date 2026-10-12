@@ -40,11 +40,11 @@ def test_one_free_per_market_across_markets():
     assert ids=={'m11','m103','m200'}  # la mejor probabilidad de cada mercado
 
 
-def test_free_pick_needs_quote_between_1_20_and_1_60():
-    rows=[row(1,.88,1.19),row(2,.87,1.20),row(3,.86,1.60),row(4,.85,1.61),row(5,.80,1.30)]
+def test_free_pick_is_highest_quote_capped_at_1_60():
+    rows=[row(1,.88,1.10),row(2,.80,1.25),row(3,.79,1.60),row(4,.78,1.61),row(5,.85,None)]
     ids=[r['match_id'] for r in mobile.choose_free(rows,'alta_probabilidad')]
-    assert ids==['m2']  # 1,19 y 1,61 fuera; los límites 1,20 y 1,60 dentro; gana la mayor probabilidad
-    assert mobile.choose_free([row(1,.9,1.10),row(2,.8,1.65)],'alta_probabilidad')==[]
+    assert ids==['m3']  # manda la cuota (1,60 dentro del tope; 1,61 fuera; sin cuota no entra)
+    assert [r['match_id'] for r in mobile.choose_free([row(1,.9,1.10),row(2,.8,1.65)],'alta_probabilidad')]==['m1']
 
 
 def test_probability_bounds_and_no_fake_quote():

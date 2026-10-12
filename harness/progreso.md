@@ -4784,3 +4784,11 @@ a 1,25 (132 candidatos en 7 días, 0 en 1,40-1,60), así que eligió piso 1,20. 
 `before-cuota`). Los 3 gratis añadidos a mano al lote 2026-10-11 se quitaron (cuotas 1,08-1,19; fuera de
 rango; free_count 6 -> 3, auditado). Hoy no queda ningún gratis abierto: ningún candidato sin empezar
 tiene cuota en rango.
+
+### Gratis: la cuota manda (2026-10-12)
+
+Decisión del usuario: el gratis de cada mercado es el de MAYOR cuota publicada (tope 1,60, sin piso),
+aunque tenga menos probabilidad que otros; empate por probabilidad. Sustituye al rango 1,20-1,60 por
+probabilidad. Desplegado (respaldo `before-mayor-cuota`) y los 3 gratis quitados antes se volvieron a
+añadir al lote 2026-10-11 (Elfsborg 1,19, Valerenga 1,18, Malmo 1,08; free_count 3 -> 6). Hándicap y
+doble oportunidad siguen sin gratis: sus candidatos no tienen cuota publicada.
