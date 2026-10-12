@@ -93,6 +93,7 @@ def main():
         if mode == "daily":
             # Expire disposable identifiers before copying the commercial data.
             run(["docker", "exec", "quantfut-api-1", "python", "-m", "qf.comercial.firebase_mantenimiento"])
+            run(["docker", "exec", "quantfut-api-1", "python", "-m", "qf.comercial.cuentas_mantenimiento"])
             print(json.dumps(backup()))
         else:
             run(["docker", "exec", "quantfut-api-1", "python", "-m", "qf.comercial.firebase_notificaciones", "--limit", "30"])

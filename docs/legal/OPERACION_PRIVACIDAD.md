@@ -43,6 +43,14 @@ un envío de correo a terceros ni un borrado automático de cuentas.
   No incluyen historias deportivas ni NBA. No sustituyen un respaldo completo
   ni una copia fuera del VPS. Restaurar sobre la base completa correspondiente,
   con una validación previa y reaplicación de solicitudes de borrado.
+- Sesiones y tokens de correo (2026-10-12): la misma tarea diaria borra, con
+  `qf.comercial.cuentas_mantenimiento`, las sesiones 30 días después de caducar o
+  ser revocadas (con su IP y user-agent), los tokens de refresh retirados al borrar
+  su sesión o al superar la vida máxima del refresh (30 días, enlazado a
+  `REFRESH_TTL_DAYS`) y los tokens de correo 7 días después de caducar o usarse.
+  Verificado con tablas reales y claves foráneas en una transacción revertida.
+  Pendiente de revisión legal: reflejar estos plazos en la política de privacidad
+  publicada (hoy solo menciona avisos y dispositivos).
 - Programación (VPS, usuario `qf`, UTC): `crontab` a las 03:40 ejecuta
   `scripts/firebase_operations.py daily` (limpieza + copia comercial + rotación);
   salida en `/home/qf/.local/share/quantfut/firebase_daily.log` (0600). Si falla,
