@@ -49,8 +49,8 @@ un envío de correo a terceros ni un borrado automático de cuentas.
   su sesión o al superar la vida máxima del refresh (30 días, enlazado a
   `REFRESH_TTL_DAYS`) y los tokens de correo 7 días después de caducar o usarse.
   Verificado con tablas reales y claves foráneas en una transacción revertida.
-  Pendiente de revisión legal: reflejar estos plazos en la política de privacidad
-  publicada (hoy solo menciona avisos y dispositivos).
+  Estos plazos ya figuran en la sección 5 de la política de privacidad
+  (commit bf47bdd); si cambian, actualizar política y página a la vez.
 - Programación (VPS, usuario `qf`, UTC): `crontab` a las 03:40 ejecuta
   `scripts/firebase_operations.py daily` (limpieza + copia comercial + rotación);
   salida en `/home/qf/.local/share/quantfut/firebase_daily.log` (0600). Si falla,

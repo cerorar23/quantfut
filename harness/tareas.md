@@ -71,7 +71,7 @@ vínculo seguro con cuentas existentes forman parte de esta integración.
 - [x] Redactar borradores de términos y privacidad por autorización del titular:
   Saptain LTD, Seychelles. `docs/legal/`; fuentes oficiales consultadas.
 - [x] Recibir datos del titular: Saptain LTD, E Coast Rd, Victoria, Seychelles;
-  admin@pronosticosdeportivos.com; edad mínima 18; Estados Unidos, Europa y
+  admin@pronosticosdeportivos.pro (corregido); edad mínima 18; Estados Unidos, Europa y
   Latinoamérica como mercados previstos.
 - [ ] Completar datos operativos y revisión legal; publicar documentos y activar
   la primera pantalla de Google. No registrar
@@ -103,12 +103,14 @@ Ampliación del 2026-10-12: el usuario pidió «termina los pendientes» y corri
 el contacto a admin@pronosticosdeportivos.pro (buzón existente); ubicación del
 VPS declarada por el titular: Berlín, Alemania.
 
-- [ ] Cerrar textos con datos confirmados y retención efectiva; preparar páginas
+- [x] Cerrar textos con datos confirmados y retención efectiva; preparar páginas
   legales públicas y procedimiento de solicitudes, sin inventar certificaciones.
-  Avance 2026-10-12: la retención ya es efectiva y está reflejada en la política
-  (avisos 30 d, dispositivos 90 d, sesiones 30 d, tokens de correo 7 d, copias 30 d).
-  Falta lo que solo el titular puede aportar: país contractual de Contabo/Proton,
-  atención del buzón de contacto, plazos legales por categoría y revisión jurídica.
+  Hecho 2026-10-12: textos finales de contenido, páginas en `/legal/*` (prueba
+  `tests/test_legal.py`), procedimiento en `docs/legal/OPERACION_PRIVACIDAD.md`,
+  estado en `docs/legal/REVISION_Y_PUBLICACION.md`. Sin desplegar a propósito.
+- [ ] Del titular, para publicar: revisión por profesional habilitado, país
+  contractual de Contabo/Proton y sus DPA, atender el buzón de contacto, plazos
+  legales por categoría, y aprobar el despliegue de `/legal/*`.
 - [x] Configurar conservación y limpieza de datos operativos Firebase; respaldo
   privado con rotación acotada, separado de los registros deportivos inmutables.
   Programado en el VPS el 2026-10-12 (03:40 UTC), probado y con alerta Telegram;

@@ -5074,3 +5074,13 @@ Decision del usuario: traducir toda la app y mantenerlo siempre al dia (regla ta
 - Despliegue VPS 2026-10-12 (mensajes por idioma): `mensajes.py` + manejador de HTTPException + terminos/mensaje de monedas traducidos. `main.py` desplegado se PARCHEO (solo import + manejador): el local trae cambios de Parley/Alta prob. sin desplegar. Respaldos en ~/backups/mensajes-20261012; vuelta atras = imagen `quantfut-api-tapjoy:pre-mensajes-backup` (compose `image:`) + `compose up -d --no-deps api`. Imagen vigente: `quantfut-api-tapjoy:20261012-msg`.
 
 - 2026-10-12 — Icono y arranque nativo: se reemplazo el icono «GoBet» de la plantilla por el «Q.» verde sobre fondo oscuro de la bienvenida (no habia logotipo de QuantFut en el repo). Generado con `apps/mobile/tool/make_icon.py` (Pillow) + `dart run flutter_launcher_icons` (Android clasico y adaptable, iOS) y el fondo de `launch_background` pasa de blanco a #090f1a. Es un icono provisional con la identidad actual de la app: si el titular tiene un logotipo propio, sustituir `image/quantfut_icon*.png` y repetir el comando.
+
+## 2026-10-12 — Textos legales finales
+
+Los tres textos (términos, privacidad, eliminar cuenta) ya no tienen marcadores y
+describen solo lo que el servidor hace: retención 30/90/30/7 días, copias de 30 días,
+eliminación manual atendida por correo. Decisión clave: **no se despliegan `/legal/*`**
+(el VPS responde 404) ni se registran aceptaciones; publicar y activar Google es del
+titular tras la revisión jurídica. `REVISION_Y_PUBLICACION.md` estaba obsoleto (decía
+`.com` y «borrador») y se reescribió con lo que solo el titular puede aportar. Los
+`*_BORRADOR.md` quedan como historial. Los textos legales siguen solo en español.
