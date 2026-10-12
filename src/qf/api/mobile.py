@@ -23,6 +23,10 @@ from ..publish import alta_prob_datos, escalera_datos
 router = APIRouter(tags=["mobile"])
 _bearer = HTTPBearer(auto_error=False)
 PROB_MIN, PROB_MAX = .75, .90
+# Cuota publicada que debe tener un pronóstico para salir gratis. Con 75-90 % de
+# probabilidad las cuotas reales van de 1,01 a 1,25: un mínimo de 1,40 no deja
+# ninguno, así que el piso es 1,20 (decisión del usuario, 2026-10-12).
+FREE_QUOTE_MIN, FREE_QUOTE_MAX = 1.20, 1.60
 SECTIONS = {
     'agenda': 'Calendario de partidos', 'alta_probabilidad': 'Alta probabilidad',
     'escalera': 'Reto Escalera', 'estadisticas': 'Estadísticas del partido',
@@ -47,6 +51,7 @@ def features() -> dict:
 def config() -> dict:
     return {'features': features(), 'probability_min': PROB_MIN,
             'probability_max': PROB_MAX, 'high_probability_free_per_market': 1,
+            'high_probability_free_quote': [FREE_QUOTE_MIN, FREE_QUOTE_MAX],
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
 
@@ -71,7 +76,8 @@ def choose_free(rows: list[dict], stream: str) -> list[dict]:
     valid = [r for r in rows if PROB_MIN <= probability(r) <= PROB_MAX]
     if stream == 'alta_probabilidad':
         priced = [r for r in valid if r.get('ref_price') is not None
-                  and math.isfinite(float(r['ref_price'])) and float(r['ref_price']) > 1]
+                  and math.isfinite(float(r['ref_price']))
+                  and FREE_QUOTE_MIN <= float(r['ref_price']) <= FREE_QUOTE_MAX]
         # UNO por mercado, el de mayor probabilidad: lo gratis es lo más sólido y
         # el usuario ve que la mayoría acierta. El empate lo decide la cuota.
         priced.sort(key=lambda r: (-probability(r), -float(r['ref_price']), pick_key(r)))

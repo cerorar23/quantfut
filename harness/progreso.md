@@ -4775,3 +4775,12 @@ Desplegado el 2026-10-12 (respaldo `quantfut-api-mobile-rewards:before-gratis`).
 ampliado a mano con 3 gratis (córners, goles, goles del visitante; free_count 3 -> 6). Hándicap (7)
 y doble oportunidad (1) siguen bloqueados: sus candidatos no tienen cuota publicada y un gratis
 sin cuota real no se entrega.
+
+### Gratis: cuota entre 1,20 y 1,60 (2026-10-12)
+
+Decisión del usuario: el gratis debe tener cuota publicada entre 1,20 y 1,60, el de mayor probabilidad
+por mercado. El usuario pidió 1,40-1,60 pero con 75-90 % de probabilidad las cuotas reales van de 1,01
+a 1,25 (132 candidatos en 7 días, 0 en 1,40-1,60), así que eligió piso 1,20. Desplegado (respaldo
+`before-cuota`). Los 3 gratis añadidos a mano al lote 2026-10-11 se quitaron (cuotas 1,08-1,19; fuera de
+rango; free_count 6 -> 3, auditado). Hoy no queda ningún gratis abierto: ningún candidato sin empezar
+tiene cuota en rango.
