@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 
+// Los identificadores de categoría son los que envía el servidor (en español);
+// no son texto visible: se traducen con `groupLabel`.
+// l10n-ignore-start
 const _icons = <String, String>{
   'RESULTADO': '🏆',
   'DOBLE OPORTUNIDAD': '🎯',
@@ -16,19 +21,29 @@ const _icons = <String, String>{
   'CÓRNERS': '🚩',
   'TARJETAS': '🟨',
 };
+// l10n-ignore-end
 
 (Color, String) _nivel(dynamic nivel) => switch (nivel) {
-  'alta' => (liveGreen, 'ALTA PROB.'),
-  'solida' => (liveCyan, 'SÓLIDA'),
-  _ => (liveGold, 'MODERADA'),
+  'alta' => (liveGreen, levelLabel('alta')),
+  'solida' => (liveCyan, levelLabel('solida')),
+  _ => (liveGold, levelLabel('moderada')),
 };
 
 /// Mercados del partido (pestaña Pronósticos): los que el usuario puede ver, con su
 /// probabilidad y cuota, y los demás como candado que solo dice la categoría.
 /// Todo lo manda el servidor (`ficha.mercados`); sin eso no se dibuja nada.
 class MatchMarkets extends StatelessWidget {
-  const MatchMarkets({super.key, required this.data, this.onVip});
+  const MatchMarkets({
+    super.key,
+    required this.data,
+    this.onVip,
+    this.home = '',
+    this.away = '',
+  });
   final JsonMap data;
+
+  /// Nombres de los equipos, para redactar títulos y selecciones.
+  final String home, away;
   final VoidCallback? onVip;
 
   @override
@@ -45,38 +60,32 @@ class MatchMarkets extends StatelessWidget {
       groups.update('${r['grupo']}', (n) => n + 1, ifAbsent: () => 1);
     }
     final scores = data['marcadores'] as List?;
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(
-              child: liveText('Mercados del partido', size: 16, bold: true),
-            ),
+            Expanded(child: liveText(l10n.mmTitle, size: 16, bold: true)),
             liveText(
-              '${open.length} abiertos${locked.isEmpty ? '' : ' · ${locked.length} con candado'}',
+              '${l10n.mmOpen(open.length)}${locked.isEmpty ? '' : ' · ${l10n.mmLocked(locked.length)}'}',
               size: 11,
               color: liveMuted,
             ),
           ],
         ),
         const SizedBox(height: 10),
-        for (final r in open) _OpenRow(row: r),
+        for (final r in open) _OpenRow(row: r, home: home, away: away),
         if (locked.isNotEmpty) ...[
           const SizedBox(height: 4),
           for (final g in groups.entries)
             _LockedRow(group: g.key, count: g.value, onVip: onVip),
         ],
         const SizedBox(height: 8),
-        liveText(
-          'Es análisis del modelo, no una recomendación de apuesta. «Cuota justa» es 1/probabilidad: '
-          'no es una cuota de casa. Un pronóstico puede fallar.',
-          size: 10,
-          color: liveMuted,
-        ),
+        liveText(l10n.mmDisclaimer, size: 10, color: liveMuted),
         if (scores != null || locked.isNotEmpty) ...[
           const SizedBox(height: 16),
-          liveText('Marcadores más probables', size: 14, bold: true),
+          liveText(l10n.mmScoresTitle, size: 14, bold: true),
           const SizedBox(height: 10),
           _Scores(scores: scores, onVip: onVip),
         ],
@@ -86,11 +95,13 @@ class MatchMarkets extends StatelessWidget {
 }
 
 class _OpenRow extends StatelessWidget {
-  const _OpenRow({required this.row});
+  const _OpenRow({required this.row, required this.home, required this.away});
   final JsonMap row;
+  final String home, away;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final (color, badge) = _nivel(row['nivel']);
     final prob = row['prob'] is num ? (row['prob'] as num).toDouble() : 0.0;
     final published = row['cuota_tipo'] == 'publicada';
@@ -113,7 +124,7 @@ class _OpenRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${_icons[row['grupo']] ?? '•'}  ${row['grupo']}',
+                  '${_icons[row['grupo']] ?? '•'}  ${groupLabel(row['grupo'])}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -124,14 +135,14 @@ class _OpenRow extends StatelessWidget {
                   ),
                 ),
               ),
-              if (chance) _tag('OPORTUNIDAD', liveGold),
+              if (chance) _tag(l10n.mmChance, liveGold),
             ],
           ),
           const SizedBox(height: 6),
-          liveText('${row['titulo'] ?? ''}', size: 11, color: liveMuted),
+          liveText(rowTitle(row, home, away), size: 11, color: liveMuted),
           const SizedBox(height: 2),
           Text(
-            '${row['seleccion'] ?? '—'}',
+            rowSelection(row, home, away),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -142,7 +153,7 @@ class _OpenRow extends StatelessWidget {
           if (row['nota'] != null) ...[
             const SizedBox(height: 4),
             Text(
-              '${row['nota']}',
+              noteText(row['nota'], home, away) ?? '',
               style: const TextStyle(
                 fontSize: 10,
                 fontStyle: FontStyle.italic,
@@ -165,7 +176,10 @@ class _OpenRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: liveGreen.withValues(alpha: .13),
                   borderRadius: BorderRadius.circular(10),
@@ -179,7 +193,7 @@ class _OpenRow extends StatelessWidget {
                       color: liveGreen,
                     ),
                     liveText(
-                      published ? 'cuota publicada' : 'cuota justa',
+                      published ? l10n.mmPublishedOdds : l10n.mmFairOdds,
                       size: 8,
                       color: liveMuted,
                     ),
@@ -191,7 +205,7 @@ class _OpenRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   liveText(
-                    '${(prob * 100).round()}% Prob.',
+                    l10n.mmProb((prob * 100).round()),
                     size: 15,
                     bold: true,
                   ),
@@ -242,7 +256,7 @@ class _LockedRow extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                '${_icons[group] ?? '•'}  $group · $count ${count == 1 ? 'mercado' : 'mercados'}',
+                '${_icons[group] ?? '•'}  ${context.l10n.mmGroupCount(groupLabel(group), count)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -288,7 +302,7 @@ class _Scores extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: liveText(
-                  'Los marcadores más probables son para VIP.',
+                  context.l10n.mmScoresVip,
                   size: 12,
                   color: liveMuted,
                 ),
@@ -307,11 +321,15 @@ class _Scores extends StatelessWidget {
         itemBuilder: (_, i) {
           final s = jsonMap(scores![i]);
           final top = i == 0;
-          final p = s['prob'] is num ? ((s['prob'] as num) * 100).round() : null;
+          final p = s['prob'] is num
+              ? ((s['prob'] as num) * 100).round()
+              : null;
           return Container(
             width: 70,
             decoration: BoxDecoration(
-              color: top ? liveGold.withValues(alpha: .13) : const Color(0xff0f1925),
+              color: top
+                  ? liveGold.withValues(alpha: .13)
+                  : const Color(0xff0f1925),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: top ? liveGold : Colors.white12),
             ),

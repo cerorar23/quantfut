@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+
 /// Counts down to an absolute deadline, so delayed ticks do not accumulate drift.
 class CountdownTimer extends StatefulWidget {
   const CountdownTimer({
@@ -95,6 +97,9 @@ class _CountdownTimerState extends State<CountdownTimer>
     final seconds = _seconds % 60;
     String pad(int value) => value.toString().padLeft(2, '0');
     final time = '${pad(hours)}:${pad(minutes)}:${pad(seconds)}';
-    return Text(days > 0 ? '${days}d $time' : time, style: widget.textStyle);
+    return Text(
+      days > 0 ? context.l10n.countdownDays(days, time) : time,
+      style: widget.textStyle,
+    );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_markets.dart';
 import 'package:gobet/product/market_catalog.dart';
+import 'package:gobet/l10n/app_locale.dart';
 
 class _Api extends QuantFutApi {
   final paths = <String>[];
@@ -133,6 +134,10 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: AppLocale.instance.locale,
+
         home: MediaQuery(
           data: MediaQueryData(disableAnimations: reduce),
           child: Scaffold(

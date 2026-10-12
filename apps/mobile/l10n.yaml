@@ -1,0 +1,8 @@
+# Traducciones de la app (es, en, pt, fr, it, de). Plantilla: app_es.arb.
+# Regla del proyecto: cualquier texto nuevo o modificado se traduce a los 6 idiomas
+# en el mismo cambio; test/l10n_test.dart lo exige.
+arb-dir: lib/l10n
+template-arb-file: app_es.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

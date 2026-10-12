@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/language_picker.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 import '../core/firebase_services.dart';
@@ -55,10 +57,11 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final api = widget.api, account = jsonMap(api.account?['account']);
+    final l10n = context.l10n;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        liveHeading('Perfil y configuración'),
+        liveHeading(l10n.profileTitle),
         liveCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,17 +69,17 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
               liveText(
                 api.signedIn
                     ? '${account['display_name'] ?? account['email']}'
-                    : 'Tu cuenta QuantFut',
+                    : l10n.profileYourAccount,
                 size: 18,
                 bold: true,
               ),
               const SizedBox(height: 8),
               liveText(
-                api.plus ? 'Acceso VIP activo' : 'Plan gratuito',
+                api.plus ? l10n.profileVipActive : l10n.profileFreePlan,
                 color: api.plus ? liveGold : liveMuted,
               ),
               const SizedBox(height: 12),
-              liveButton('Ver planes VIP', widget.onVip),
+              liveButton(l10n.profileSeePlans, widget.onVip),
             ],
           ),
         ),
@@ -88,26 +91,24 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
                   controller: email,
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(
-                    labelText: 'Correo electrónico',
-                  ),
+                  decoration: InputDecoration(labelText: l10n.profileEmail),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: password,
                   obscureText: true,
                   autofillHints: const [AutofillHints.password],
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
+                  decoration: InputDecoration(labelText: l10n.profilePassword),
                   onSubmitted: (_) => busy ? null : login(),
                 ),
                 const SizedBox(height: 16),
                 if (error != null) liveText(error!, color: liveGold),
                 liveButton(
                   busy
-                      ? 'Conectando…'
+                      ? l10n.commonConnecting
                       : creating
-                      ? 'Crear cuenta'
-                      : 'Iniciar sesión',
+                      ? l10n.profileCreateAccount
+                      : l10n.profileSignIn,
                   busy ? null : login,
                   color: liveCyan,
                 ),
@@ -119,7 +120,7 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
                           error = null;
                         }),
                   child: Text(
-                    creating ? 'Ya tengo cuenta' : 'Crear una cuenta',
+                    creating ? l10n.profileHaveAccount : l10n.profileCreateOne,
                   ),
                 ),
                 TextButton(
@@ -129,16 +130,13 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
                           try {
                             await api.forgotPassword(email.text);
                             if (context.mounted) {
-                              liveNotice(
-                                context,
-                                'Si la cuenta existe, recibirás las instrucciones por correo.',
-                              );
+                              liveNotice(context, l10n.profileForgotSent);
                             }
                           } catch (e) {
                             if (context.mounted) liveNotice(context, '$e');
                           }
                         },
-                  child: const Text('Olvidé mi contraseña'),
+                  child: Text(l10n.profileForgot),
                 ),
               ],
             ),
@@ -152,8 +150,8 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
                 const SizedBox(height: 8),
                 liveText(
                   account['email_verified'] == true
-                      ? 'Correo verificado'
-                      : 'Correo pendiente de verificación',
+                      ? l10n.profileEmailVerified
+                      : l10n.profileEmailPending,
                   color: liveCyan,
                 ),
                 if (account['email_verified'] != true)
@@ -162,27 +160,28 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
                       try {
                         await api.resendVerification();
                         if (context.mounted) {
-                          liveNotice(
-                            context,
-                            'Correo de verificación enviado.',
-                          );
+                          liveNotice(context, l10n.profileVerificationSent);
                         }
                       } catch (e) {
                         if (context.mounted) liveNotice(context, '$e');
                       }
                     },
-                    child: const Text('Enviar correo de verificación'),
+                    child: Text(l10n.profileSendVerification),
                   ),
                 if (api.account?['subscription'] != null)
                   liveText(
-                    'Vigencia: ${kickoffText(jsonMap(api.account?['subscription'])['ends_at'])}',
+                    l10n.profileValidUntil(
+                      kickoffText(
+                        jsonMap(api.account?['subscription'])['ends_at'],
+                      ),
+                    ),
                     color: liveMuted,
                     size: 12,
                   ),
               ],
             ),
           ),
-          liveButton('Actualizar mi acceso', () async {
+          liveButton(l10n.profileRefreshAccess, () async {
             try {
               await api.updateAccount();
               await widget.onChanged();
@@ -201,33 +200,43 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
               await widget.onChanged();
               if (mounted) setState(() {});
             },
-            child: const Text('Cerrar sesión'),
+            child: Text(l10n.profileSignOut),
           ),
         ],
-        liveHeading('Preferencias'),
+        liveHeading(l10n.profilePreferences),
         for (final item in [
-          ('notificaciones', 'Notificaciones', Icons.notifications_outlined),
+          (
+            'notificaciones',
+            l10n.profileNotifications,
+            Icons.notifications_outlined,
+          ),
           (
             'balance',
-            'Balance y seguimiento',
+            l10n.profileBalance,
             Icons.account_balance_wallet_outlined,
           ),
-          ('medicion', 'Medición y errores', Icons.shield_outlined),
-          ('idiomas', 'Idioma', Icons.language),
+          ('medicion', l10n.profileMeasurement, Icons.shield_outlined),
+          ('idiomas', l10n.profileLanguage, Icons.language),
         ])
           liveCard(
             child: ListTile(
+              key: ValueKey('profile-${item.$1}'),
               contentPadding: EdgeInsets.zero,
               leading: Icon(item.$3, color: liveCyan),
               title: liveText(item.$2, bold: true),
               subtitle: liveText(
-                featureMessage(widget.data, item.$1),
+                item.$1 == 'idiomas'
+                    ? appLanguages[AppLocale.instance.code]!
+                    : featureMessage(widget.data, item.$1),
                 size: 12,
                 color: liveMuted,
               ),
               trailing: const Icon(Icons.chevron_right, color: liveMuted),
               onTap: () {
-                if (FirebaseServices.current != null && item.$1 != 'balance') {
+                if (item.$1 == 'idiomas') {
+                  showLanguagePicker(context);
+                } else if (FirebaseServices.current != null &&
+                    item.$1 != 'balance') {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => FirebasePreferencesScreen(api: api),
@@ -243,36 +252,24 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              liveText('Formato de cuotas', bold: true),
+              liveText(l10n.profileOddsFormat, bold: true),
               const SizedBox(height: 6),
-              liveText(
-                'Decimal · Cuotas registradas al publicar',
-                color: liveMuted,
-                size: 12,
-              ),
+              liveText(l10n.profileOddsFormatValue, color: liveMuted, size: 12),
             ],
           ),
         ),
-        liveHeading('General'),
+        liveHeading(l10n.profileGeneral),
         liveCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              liveText('Versión de la app', bold: true),
+              liveText(l10n.profileAppVersion, bold: true),
               const SizedBox(height: 6),
-              liveText(
-                'QuantFut · Conectada al servidor',
-                color: liveMuted,
-                size: 12,
-              ),
+              liveText(l10n.profileConnected, color: liveMuted, size: 12),
             ],
           ),
         ),
-        liveText(
-          'Una probabilidad no es una certeza. Decide con información y juega responsablemente.',
-          size: 12,
-          color: liveMuted,
-        ),
+        liveText(l10n.disclaimerProbability, size: 12, color: liveMuted),
         const SizedBox(height: 24),
       ],
     );

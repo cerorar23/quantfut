@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 
@@ -22,7 +23,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
 
   Future<void> checkAccess() async {
     if (!widget.api.signedIn) {
-      liveNotice(context, 'Inicia sesión en Perfil para comprobar tu acceso.');
+      liveNotice(context, context.l10n.vipCheckSignIn);
       return;
     }
     try {
@@ -30,9 +31,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
       if (mounted) {
         liveNotice(
           context,
-          widget.api.plus
-              ? 'Tu acceso VIP está activo.'
-              : 'Tu cuenta tiene acceso gratuito.',
+          widget.api.plus ? context.l10n.vipActive : context.l10n.vipFreeAccess,
         );
         setState(() {});
       }
@@ -52,12 +51,13 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
       '\$${decimalText((plan['price_cents'] as num?) == null ? null : (plan['price_cents'] as num) / 100)}';
 
   static String _period(JsonMap plan) {
+    final l10n = AppLocale.instance.l10n;
     final days = plan['duration_days'];
-    if (days is! num) return 'Sin vencimiento';
+    if (days is! num) return l10n.vipNoExpiry;
     final months = (days / 30).round();
     return days % 30 == 0 && months >= 1
-        ? (months == 1 ? '1 mes' : '$months meses')
-        : '$days días';
+        ? l10n.vipMonths(months)
+        : l10n.vipDays(days.toInt());
   }
 
   Widget _stat(String value, String label, IconData icon) => Expanded(
@@ -145,7 +145,9 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  best ? '★ MEJOR PRECIO' : _period(plan).toUpperCase(),
+                  best
+                      ? AppLocale.instance.l10n.vipBestPrice
+                      : _period(plan).toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -165,7 +167,9 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
               if (best) liveText(_period(plan), size: 10, color: liveMuted),
               if (monthly != null)
                 liveText(
-                  '≈ \$${decimalText(monthly)}/mes',
+                  AppLocale.instance.l10n.vipMonthly(
+                    '\$${decimalText(monthly)}',
+                  ),
                   size: 10,
                   color: selected ? _vipGold : liveMuted,
                   bold: true,
@@ -179,6 +183,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final plans = jsonRows(widget.data['plans']);
     final history = jsonMap(
       jsonMap(widget.data['alta_probabilidad'])['historial'],
@@ -219,7 +224,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                       border: Border.all(color: _vipGold.withValues(alpha: .5)),
                     ),
                     child: liveText(
-                      '✦  ACCESO VIP',
+                      l10n.vipBadge,
                       size: 10,
                       color: _vipGold,
                       bold: true,
@@ -259,10 +264,10 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                 ),
                 const SizedBox(height: 8),
                 Center(
-                  child: const Text(
-                    'Todos los pronósticos de Alta Probabilidad y del Reto Escalera mientras tu suscripción esté vigente.',
+                  child: Text(
+                    l10n.vipIntro,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: liveMuted,
                       height: 1.4,
@@ -281,13 +286,13 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                     children: [
                       _stat(
                         real is num ? '${decimalText(real, 1)} %' : '—',
-                        'Acierto registrado',
+                        l10n.vipStatRecorded,
                         Icons.trending_up,
                       ),
                       Container(width: 1, height: 34, color: Colors.white12),
                       _stat(
                         '${history['aciertos'] ?? '—'}/${history['n'] ?? '—'}',
-                        'Resueltos',
+                        l10n.vipStatResolved,
                         Icons.fact_check_outlined,
                       ),
                     ],
@@ -297,7 +302,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: liveText(
-                    'Historial público y sellado; las muestras por mercado son pequeñas y un pronóstico puede fallar.',
+                    l10n.vipHistoryNote,
                     size: 10,
                     color: liveMuted,
                   ),
@@ -318,33 +323,33 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                       _benefit(
                         Icons.verified_outlined,
                         liveGreen,
-                        'Historial verificable',
-                        'Cada pronóstico se sella antes del partido',
+                        l10n.vipBenefit1Title,
+                        l10n.vipBenefit1Body,
                       ),
                       _benefit(
                         Icons.star_outline,
                         _vipGold,
-                        'Alta Probabilidad completa',
-                        'Todos los picks de ${min.round()} a ${max.round()} %, sin cupo gratuito',
+                        l10n.vipBenefit2Title,
+                        l10n.vipBenefit2Body(min.round(), max.round()),
                       ),
                       _benefit(
                         Icons.stairs_outlined,
                         const Color(0xffa78bfa),
-                        'Reto Escalera completo',
-                        'Todos los escalones pendientes, no solo uno',
+                        l10n.vipBenefit3Title,
+                        l10n.vipBenefit3Body,
                       ),
                       _benefit(
                         Icons.bolt_outlined,
                         const Color(0xffff4d6d),
-                        'Cuotas y análisis del partido',
-                        'Cuota publicada, probabilidad y xG de cada pick',
+                        l10n.vipBenefit4Title,
+                        l10n.vipBenefit4Body,
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 18),
                 if (shown.isEmpty)
-                  training('Los planes se mostrarán cuando estén disponibles.')
+                  training(l10n.vipPlansSoon)
                 else
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,13 +384,13 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                       onPressed: () => liveNotice(
                         context,
                         purchases
-                            ? 'La contratación requiere un canal de pago configurado.'
+                            ? l10n.vipPaymentRequired
                             : featureMessage(widget.data, 'compras'),
                       ),
                       icon: const Icon(Icons.workspace_premium),
-                      label: const Text(
-                        'Activar acceso VIP',
-                        style: TextStyle(
+                      label: Text(
+                        l10n.vipActivate,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
@@ -396,7 +401,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                 const SizedBox(height: 10),
                 Center(
                   child: liveText(
-                    purchases ? 'Precios del catálogo del servidor.' : 'Compras en preparación: aún no se cobra nada desde la app.',
+                    purchases ? l10n.vipPricesNote : l10n.vipPurchasesPending,
                     size: 11,
                     color: liveMuted,
                   ),
@@ -408,18 +413,14 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                     icon: const Icon(Icons.refresh, size: 16),
                     label: Text(
                       widget.api.plus
-                          ? 'Actualizar mi acceso'
-                          : 'Comprobar mi acceso',
+                          ? l10n.profileRefreshAccess
+                          : l10n.vipCheckAccess,
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Center(
-                  child: liveText(
-                    '🔒  Tu acceso VIP queda vinculado a tu cuenta',
-                    size: 10,
-                    color: liveMuted,
-                  ),
+                  child: liveText(l10n.vipLinked, size: 10, color: liveMuted),
                 ),
               ],
             ),
@@ -427,7 +428,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
               top: 4,
               right: 6,
               child: IconButton(
-                tooltip: 'Cerrar',
+                tooltip: l10n.commonClose,
                 onPressed: () => Navigator.maybePop(context),
                 icon: const Icon(Icons.close, color: liveMuted),
               ),

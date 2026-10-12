@@ -4,7 +4,10 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:intl/intl.dart';
+
 import '../core/firebase_services.dart';
+import '../l10n/app_locale.dart';
 
 typedef JsonMap = Map<String, dynamic>;
 JsonMap jsonMap(dynamic value) =>
@@ -12,11 +15,44 @@ JsonMap jsonMap(dynamic value) =>
 List<JsonMap> jsonRows(dynamic value) =>
     value is List ? value.map(jsonMap).toList() : [];
 
+/// Errores propios de la app, con texto en el idioma actual. Los mensajes que envía
+/// el servidor (`detail`) viajan como texto libre con `ApiFailure('...')`.
+enum ApiError {
+  sessionExpired,
+  loadFailed,
+  invalidResponse,
+  offline,
+  invalidSession,
+  signInWithGoogle,
+  googleNotVerified,
+}
+
 class ApiFailure implements Exception {
-  const ApiFailure(this.message, [this.status, this.code]);
-  final String message;
+  const ApiFailure(String text, [this.status, this.code])
+    : _text = text,
+      kind = null;
+  const ApiFailure.kind(ApiError this.kind, [this.status, this.code])
+    : _text = null;
+  final String? _text;
+  final ApiError? kind;
   final int? status;
   final String? code;
+
+  /// Texto para mostrar, en el idioma actual.
+  String get message {
+    final l10n = AppLocale.instance.l10n;
+    return switch (kind) {
+      null => _text!,
+      ApiError.sessionExpired => l10n.apiSessionExpired,
+      ApiError.loadFailed => l10n.apiLoadFailed(status ?? 0),
+      ApiError.invalidResponse => l10n.apiInvalidResponse,
+      ApiError.offline => l10n.apiOffline,
+      ApiError.invalidSession => l10n.apiInvalidSession,
+      ApiError.signInWithGoogle => l10n.apiSignInWithGoogle,
+      ApiError.googleNotVerified => l10n.apiGoogleNotVerified,
+    };
+  }
+
   @override
   String toString() => message;
 }
@@ -63,10 +99,14 @@ class QuantFutApi extends ChangeNotifier {
           .openUrl(body == null ? 'GET' : 'POST', uri)
           .timeout(const Duration(seconds: 20));
       req.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      req.headers.set(
+        HttpHeaders.acceptLanguageHeader,
+        AppLocale.instance.code,
+      );
       if (_firebaseIdentity) {
         final token = await services?.auth.currentUser?.getIdToken();
         if (token == null) {
-          throw const ApiFailure('Inicia sesión de nuevo.', 401);
+          throw const ApiFailure.kind(ApiError.sessionExpired, 401);
         }
         req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
         req.headers.set('X-QF-Identity', 'firebase');
@@ -115,23 +155,27 @@ class QuantFutApi extends ChangeNotifier {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         final detail = jsonMap(data)['detail'];
         final message = detail is String ? detail : jsonMap(detail)['message'];
-        throw ApiFailure(
-          message?.toString() ??
-              'No se pudo cargar la información (HTTP ${response.statusCode}).',
-          response.statusCode,
-          jsonMap(detail)['code']?.toString(),
-        );
+        final serverText = message?.toString();
+        throw serverText == null
+            ? ApiFailure.kind(
+                ApiError.loadFailed,
+                response.statusCode,
+                jsonMap(detail)['code']?.toString(),
+              )
+            : ApiFailure(
+                serverText,
+                response.statusCode,
+                jsonMap(detail)['code']?.toString(),
+              );
       }
       if (data == null && text.isNotEmpty) {
-        throw const ApiFailure('Respuesta no válida del servidor.');
+        throw const ApiFailure.kind(ApiError.invalidResponse);
       }
       return data;
     } on ApiFailure {
       rethrow;
     } catch (_) {
-      throw const ApiFailure(
-        'No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.',
-      );
+      throw const ApiFailure.kind(ApiError.offline);
     } finally {
       try {
         await trace?.stop();
@@ -227,7 +271,7 @@ class QuantFutApi extends ChangeNotifier {
   void _tokens(JsonMap tokens) {
     if (tokens['access_token'] is! String ||
         tokens['refresh_token'] is! String) {
-      throw const ApiFailure('Sesión no válida.');
+      throw const ApiFailure.kind(ApiError.invalidSession);
     }
     _access = tokens['access_token'];
     _refresh = tokens['refresh_token'];
@@ -246,7 +290,7 @@ class QuantFutApi extends ChangeNotifier {
     final services = FirebaseServices.current;
     final user = services?.auth.currentUser;
     if (services == null || user == null) {
-      throw const ApiFailure('Inicia sesión con Google.', 401);
+      throw const ApiFailure.kind(ApiError.signInWithGoogle, 401);
     }
     if (_firebaseIdentity) {
       await updateAccount();
@@ -363,22 +407,67 @@ DateTime? dateValue(dynamic value) => value is String
     : null;
 String kickoffText(dynamic value) {
   final date = dateValue(value)?.toLocal();
-  return date == null
-      ? 'Horario no disponible'
-      : '${date.day}/${date.month} · ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  if (date == null) return AppLocale.instance.l10n.formatScheduleUnavailable;
+  return '${localDate(DateFormat.Md, date)} · ${localDate(DateFormat.Hm, date)}';
 }
 
-String realPercent(dynamic value) => value is num && value.isFinite
-    ? '${(value * 100).toStringAsFixed(0)} %'
-    : '—';
+/// Formatea una fecha con el idioma actual. Si los datos de ese idioma aún no
+/// están cargados, usa inglés (siempre disponible) en lugar de fallar.
+String localDate(DateFormat Function(String locale) pattern, DateTime date) {
+  try {
+    return pattern(AppLocale.instance.code).format(date);
+  } on Exception {
+    return pattern('en_US').format(date);
+  }
+}
+
+/// Separador entre el número y «%»: es/fr/de llevan espacio («65 %»); en/pt/it no.
+String _percentSeparator() =>
+    const {'es', 'fr', 'de'}.contains(AppLocale.instance.code) ? ' ' : '';
+
+/// Porcentaje ya escalado (65,4 → «65 %») con el formato del idioma actual.
+String percentText(num value, [int digits = 0]) =>
+    '${decimalText(value, digits)}${_percentSeparator()}%';
+
+/// Probabilidad (0–1) como porcentaje entero con el formato del idioma actual.
+String realPercent(dynamic value) =>
+    value is num && value.isFinite ? percentText(value * 100) : '—';
+
+/// Número decimal con el separador del idioma actual (coma o punto), sin miles.
 String decimalText(dynamic value, [int digits = 2]) =>
     value is num && value.isFinite
-    ? value.toStringAsFixed(digits).replaceAll('.', ',')
+    ? (NumberFormat.decimalPatternDigits(
+        locale: AppLocale.instance.code,
+        decimalDigits: digits,
+      )..turnOffGrouping()).format(value)
     : '—';
 JsonMap featureMap(JsonMap data) =>
     jsonMap(jsonMap(data['config'])['features']);
 bool featureEnabled(JsonMap data, String key) =>
     jsonMap(featureMap(data)[key])['enabled'] == true;
-String featureMessage(JsonMap data, String key) =>
-    jsonMap(featureMap(data)[key])['message']?.toString() ??
-    'Modelo en entrenamiento';
+
+/// Mensaje de una sección desactivada. El servidor guarda textos por defecto en
+/// español: se muestran traducidos; un texto personalizado del administrador se
+/// respeta tal cual.
+String featureMessage(JsonMap data, String key) {
+  final text = jsonMap(featureMap(data)[key])['message']?.toString();
+  final l10n = AppLocale.instance.l10n;
+  if (text == null || text.isEmpty) return l10n.featureTraining;
+  // l10n-ignore-start
+  return switch (text) {
+    'Modelo en entrenamiento' => l10n.featureTraining,
+    'Agenda temporalmente no disponible' => l10n.featAgenda,
+    'Seguimiento en preparación' => l10n.featBalance,
+    'Compras en preparación' => l10n.featPurchases,
+    'Comunidad en preparación' => l10n.featCommunity,
+    'Estadísticas temporalmente no disponibles' => l10n.featStats,
+    'Datos del partido temporalmente no disponibles' => l10n.featMatchData,
+    'Traducciones en preparación' => l10n.featLanguages,
+    'Medición en preparación' => l10n.featMeasurement,
+    'Modelo NBA en entrenamiento' => l10n.featNba,
+    'Notificaciones en preparación' => l10n.featNotifications,
+    'Acceso VIP temporalmente no disponible' => l10n.featVip,
+    _ => text,
+  };
+  // l10n-ignore-end
+}

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
 import 'second_screen.dart';
 
 class Splesh_Screen extends StatefulWidget {
@@ -30,14 +31,14 @@ class _Splesh_ScreenState extends State<Splesh_Screen> {
   }
 
   @override
-  Widget build(BuildContext context) => const Scaffold(
-    backgroundColor: Color(0xff090f1a),
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xff090f1a),
     body: SafeArea(
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            const Text(
               'Q.',
               style: TextStyle(
                 color: Color(0xff00d58b),
@@ -45,8 +46,8 @@ class _Splesh_ScreenState extends State<Splesh_Screen> {
                 fontSize: 90,
               ),
             ),
-            SizedBox(height: 12),
-            Text(
+            const SizedBox(height: 12),
+            const Text(
               'QuantFut',
               style: TextStyle(
                 color: Colors.white,
@@ -54,10 +55,10 @@ class _Splesh_ScreenState extends State<Splesh_Screen> {
                 fontSize: 28,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'FÚTBOL · NBA · ESTADÍSTICA',
-              style: TextStyle(
+              context.l10n.splashTagline,
+              style: const TextStyle(
                 color: Color(0xffa0adbd),
                 fontSize: 10,
                 letterSpacing: 1.4,

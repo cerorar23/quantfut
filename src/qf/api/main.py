@@ -56,6 +56,7 @@ import os
 
 import redis
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, Request, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -69,6 +70,7 @@ from .fichas import router as fichas_router
 from .panel import router as panel_router
 from .web import router as web_router
 from .mobile import member, router as mobile_router
+from . import mensajes
 from .rewards import router as rewards_router
 from .firebase import router as firebase_router
 from .legal import router as legal_router
@@ -144,6 +146,15 @@ async def security_middleware(request: Request, call_next):
     if request.url.path.startswith(("/v1", "/admin", "/control")):
         response.headers["Cache-Control"] = "no-store"
     return response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Igual que el manejador por defecto de FastAPI, pero traduce los mensajes
+    conocidos al idioma de `Accept-Language` (ver `mensajes.py`)."""
+    lang = mensajes.idioma(request.headers.get("accept-language"))
+    return JSONResponse({"detail": mensajes.traducir_detalle(exc.detail, lang)},
+                        status_code=exc.status_code, headers=getattr(exc, "headers", None))
 
 
 @app.exception_handler(Exception)

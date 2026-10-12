@@ -1,0 +1,1223 @@
+{
+  "@@locale": "es",
+  "accessConsent": "Tengo al menos 18 años y acepto los términos y la política de privacidad.",
+  "accessContinueWithGoogle": "Continuar con Google",
+  "accessDocumentOpenError": "No se pudo abrir el documento.",
+  "accessForgotLink": "Recuperar contraseña anterior",
+  "accessForgotSent": "Si existe la cuenta, recibirás instrucciones por correo.",
+  "accessGenericError": "No se pudo completar el acceso. Inténtalo de nuevo.",
+  "accessGoogleError": "No se pudo acceder con Google. Inténtalo de nuevo.",
+  "accessLinkButton": "Vincular mi cuenta",
+  "accessLinkEmail": "Correo de tu cuenta anterior",
+  "accessLinkIntro": "Vincula tu cuenta anterior para conservar saldo y acceso.",
+  "accessLinkPassword": "Contraseña anterior",
+  "accessOtherAccount": "Usar otra cuenta",
+  "accessPreparingDocs": "Estamos preparando los documentos de acceso.",
+  "accessPrivacy": "Política de privacidad",
+  "accessRetry": "Reintentar acceso",
+  "accessTagline": "Partidos, análisis e historial. Una probabilidad no es una certeza.",
+  "accessTerms": "Términos de uso",
+  "apiGoogleNotVerified": "Google no pudo verificar el acceso.",
+  "apiInvalidResponse": "Respuesta no válida del servidor.",
+  "apiInvalidSession": "Sesión no válida.",
+  "apiLoadFailed": "No se pudo cargar la información (HTTP {status}).",
+  "@apiLoadFailed": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "apiOffline": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
+  "apiSessionExpired": "Inicia sesión de nuevo.",
+  "apiSignInWithGoogle": "Inicia sesión con Google.",
+  "artAnalyzeEach": "ANALIZA CADA SELECCIÓN",
+  "artCorners": "CÓRNERS",
+  "artFootball": "FÚTBOL",
+  "artForm": "FORMA",
+  "artGoals": "GOLES",
+  "artHeadToHead": "CARA A CARA",
+  "artHeading0": "FÚTBOL + NBA",
+  "@artHeading0": {
+    "description": "Texto dibujado en la ilustración de bienvenida (mayúsculas)"
+  },
+  "artHeading1": "EL CONTEXTO IMPORTA",
+  "artHeading2": "EXPLORA LOS MERCADOS",
+  "artHeading3": "HISTORIAL A LA VISTA",
+  "artHeading4": "DATOS + TU CRITERIO",
+  "artNba": "NBA",
+  "artStats": "ESTADÍSTICAS",
+  "artTagline": "ANALIZA. COMPARA. EXPLORA.",
+  "artTransparency": "TRANSPARENCIA",
+  "bannerLive": "PARTIDO EN JUEGO · pronóstico sellado antes del inicio",
+  "bannerLost": "FALLADO{score} · pronóstico sellado antes del inicio",
+  "@bannerLost": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "bannerWon": "ACERTADO{score} · pronóstico sellado antes del inicio",
+  "@bannerWon": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarEmpty": "No hay enfrentamientos para estos filtros.",
+  "calendarMatchesCount": "{count, plural, one{{count} enfrentamiento} other{{count} enfrentamientos}}",
+  "@calendarMatchesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarPickDate": "Elegir fecha",
+  "calendarSearchHint": "Busca equipos o ligas",
+  "calendarTitle": "Calendario · hora local",
+  "casesCount": "{count, plural, one{{formatted} caso} other{{formatted} casos}}",
+  "@casesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "formatted": {
+        "type": "String"
+      }
+    }
+  },
+  "commonAll": "Todos",
+  "commonAway": "Visitante",
+  "commonCancel": "Cancelar",
+  "commonClose": "Cerrar",
+  "commonConfirm": "Confirmar",
+  "commonConnecting": "Conectando…",
+  "commonDraw": "Empate",
+  "commonHome": "Local",
+  "commonRefresh": "Actualizar",
+  "commonRetry": "Reintentar",
+  "commonSeeVip": "Ver acceso VIP",
+  "commonToday": "Hoy",
+  "commonYesterday": "Ayer",
+  "countdownDays": "{days}d {time}",
+  "@countdownDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "detailChecked": "Comprobado: {date}",
+  "@detailChecked": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "detailFormationPending": "Formación pendiente",
+  "detailH2hTitle": "Historial directo (H2H)",
+  "detailInjuries": "Bajas reportadas",
+  "detailLineups": "Alineaciones",
+  "detailLineupsPending": "Alineaciones todavía no confirmadas.",
+  "detailNoH2h": "No hay enfrentamientos registrados para este partido.",
+  "detailNoInjuries": "Sin bajas en el reporte disponible.",
+  "detailNoInjuriesCheck": "No hay una comprobación de bajas disponible.",
+  "detailNoPicks": "No hay pronósticos publicados para este partido.",
+  "detailNoStarters": "Sin titulares confirmados.",
+  "detailReferee": "Árbitro",
+  "detailRefereePending": "Árbitro pendiente de confirmar.",
+  "detailTabH2h": "H2H",
+  "detailTabPredictions": "Pronósticos",
+  "detailTabStats": "Estadísticas",
+  "detailVipPickNotice": "Este partido tiene un pronóstico VIP",
+  "dictAwayDefault": "el visitante",
+  "dictHomeDefault": "el local",
+  "dictOddsAbove": "La cuota publicada supera la cuota justa ({fair}).",
+  "@dictOddsAbove": {
+    "placeholders": {
+      "fair": {
+        "type": "String"
+      }
+    }
+  },
+  "dictOddsBelow": "La cuota publicada queda por debajo de la cuota justa ({fair}); el atractivo está en la probabilidad, no en el precio.",
+  "@dictOddsBelow": {
+    "placeholders": {
+      "fair": {
+        "type": "String"
+      }
+    }
+  },
+  "dictPick": "{pick} con probabilidad calculada de {percent}.",
+  "@dictPick": {
+    "placeholders": {
+      "pick": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "dictPickDefault": "El pronóstico",
+  "dictXg": "Las cuotas del mercado sin margen implican {total} goles esperados ({home} {homeXg} · {away} {awayXg}).",
+  "@dictXg": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "home": {
+        "type": "String"
+      },
+      "homeXg": {
+        "type": "String"
+      },
+      "away": {
+        "type": "String"
+      },
+      "awayXg": {
+        "type": "String"
+      }
+    }
+  },
+  "disclaimerProbability": "Una probabilidad no es una certeza. Decide con información y juega responsablemente.",
+  "famCardsSubtitle": "Líneas de menos tarjetas con respaldo histórico",
+  "famCardsTitle": "Tarjetas",
+  "famCornersSubtitle": "Más y menos córners del partido completo",
+  "famCornersTeamSubtitle": "Local y visitante, con su propia línea",
+  "famCornersTeamTitle": "Córners por equipo",
+  "famCornersTitle": "Córners totales",
+  "famDoubleChanceSubtitle": "Dos resultados posibles en una selección",
+  "famDoubleChanceTitle": "Doble oportunidad",
+  "famGoalsSubtitle": "Totales con líneas históricamente evaluadas",
+  "famGoalsTitle": "Goles del partido",
+  "famHandicapSubtitle": "Líneas de protección y empate con devolución",
+  "famHandicapTitle": "Hándicap asiático",
+  "famNbaSubtitle": "Evaluación exploratoria · pendiente de confirmación",
+  "famNbaTeamTitle": "NBA · Puntos de equipo",
+  "famNbaTotalTitle": "NBA · Total del partido",
+  "famNbaWinnerTitle": "NBA · Ganador",
+  "famTeamGoalsSubtitle": "Al menos un gol del local o del visitante",
+  "famTeamGoalsTitle": "Marca un equipo",
+  "famWinnerSubtitle": "Resultado 1X2 de alta probabilidad",
+  "famWinnerTitle": "Ganador del partido",
+  "featAgenda": "Agenda temporalmente no disponible",
+  "featBalance": "Seguimiento en preparación",
+  "featCommunity": "Comunidad en preparación",
+  "featLanguages": "Traducciones en preparación",
+  "featMatchData": "Datos del partido temporalmente no disponibles",
+  "featMeasurement": "Medición en preparación",
+  "featNba": "Modelo NBA en entrenamiento",
+  "featNotifications": "Notificaciones en preparación",
+  "featPurchases": "Compras en preparación",
+  "featStats": "Estadísticas temporalmente no disponibles",
+  "featVip": "Acceso VIP temporalmente no disponible",
+  "featureTraining": "Modelo en entrenamiento",
+  "fixtureFinished": "FINALIZADO",
+  "fixtureLive": "EN VIVO",
+  "fixtureLocalTime": "HORA LOCAL",
+  "fixtureStartsIn": "EMPIEZA EN",
+  "fixtureTbd": "POR CONFIRMAR",
+  "forecastCanFail": "Un pronóstico puede fallar; la probabilidad no garantiza el resultado.",
+  "forecastFeatured": "DESTACADO",
+  "forecastFree": "GRATUITO",
+  "forecastHalfTime": "DESCANSO",
+  "forecastInPlay": "EN JUEGO",
+  "forecastLiveScore": "Marcador en vivo",
+  "forecastLiveScoreAgo": "Marcador en vivo · actualizado hace {minutes} min",
+  "@forecastLiveScoreAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "forecastMarketNote": "Probabilidades calculadas con las cuotas del mercado sin margen: esta liga no tiene modelo propio.",
+  "forecastOddsAtPublish": "Cuota al publicar",
+  "forecastProbCalc": "{percent} prob. calculada",
+  "@forecastProbCalc": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "forecastSeeStats": "Ver estadísticas del partido",
+  "forecastSourceMarket": "CUOTAS DEL MERCADO",
+  "forecastSourceModel": "MODELO PROPIO",
+  "forecastTitle": "ANÁLISIS ESTADÍSTICO",
+  "forecastUnlocked": "DESBLOQUEADO",
+  "forecastVerdictTitle": "💡  DICTAMEN DEL MODELO",
+  "formatScheduleUnavailable": "Horario no disponible",
+  "groupBtts": "AMBOS MARCAN",
+  "groupCards": "TARJETAS",
+  "groupCorners": "CÓRNERS",
+  "groupDoubleChance": "DOBLE OPORTUNIDAD",
+  "groupDrawNoBet": "EMPATE NO ACCIÓN",
+  "groupFirstHalf": "1ª MITAD",
+  "groupGoals": "GOLES",
+  "groupHandicap": "HÁNDICAP",
+  "groupResult": "RESULTADO",
+  "groupSpecials": "ESPECIALES",
+  "groupTeamGoals": "GOLES DE EQUIPO",
+  "homeByDate": "Partidos por fecha y horario",
+  "inboxEmpty": "Todavía no tienes avisos.",
+  "inboxMatch": "Partido",
+  "inboxTitle": "Avisos",
+  "ladderEmpty": "No hay retos activos publicados.",
+  "ladderFreeHint": "Un escalón gratuito: el de mayor probabilidad.",
+  "ladderTitle": "Reto #{id} · {steps, plural, one{{steps} escalón} other{{steps} escalones}}",
+  "@ladderTitle": {
+    "placeholders": {
+      "id": {
+        "type": "Object"
+      },
+      "steps": {
+        "type": "int"
+      }
+    }
+  },
+  "languageHint": "Elige el idioma. Se guarda en este dispositivo y en tu cuenta.",
+  "languageTitle": "Idioma de la app",
+  "@languageTitle": {
+    "description": "Título del selector de idioma"
+  },
+  "ledgerAttendance": "Asistencia",
+  "ledgerInvitee": "Premio de bienvenida",
+  "ledgerOffer": "Oferta completada",
+  "ledgerReferralReversal": "Premio de invitación revertido",
+  "ledgerReferrer": "Premio por invitar",
+  "ledgerReversal": "Oferta anulada",
+  "ledgerUnlock": "Pronóstico desbloqueado",
+  "levelHigh": "ALTA PROB.",
+  "levelModerate": "MODERADA",
+  "levelSolid": "SÓLIDA",
+  "lineAwayScores": "Marca el visitante · más de 0,5 goles",
+  "lineDoubleChance": "Doble oportunidad · 1X / X2 / 12",
+  "lineHandicap": "Hándicap {line}",
+  "@lineHandicap": {
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "lineHomeScores": "Marca el local · más de 0,5 goles",
+  "lineTeamCorners": "{team}: {side, select, over{más de {line} córners} other{menos de {line} córners}}",
+  "@lineTeamCorners": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "side": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "lineWinner": "Ganador · selección de alta probabilidad",
+  "maintenanceNotice": "Estamos realizando mantenimiento. Algunas funciones pueden tardar más.",
+  "marketAwayScores": "Marca el visitante",
+  "marketBtts": "Ambos marcan",
+  "marketCards": "Tarjetas",
+  "marketCorners": "Córners",
+  "marketCornersAway": "Córners del visitante",
+  "marketCornersHome": "Córners del local",
+  "marketDoubleChance": "Doble oportunidad",
+  "marketGoals": "Goles",
+  "marketGoalsAway": "Goles del visitante",
+  "marketGoalsHome": "Goles del local",
+  "marketHandicap": "Hándicap",
+  "marketHomeScores": "Marca el local",
+  "marketHtBtts": "Ambos anotan en el 1er tiempo",
+  "marketHtGoal": "Gol en el 1er tiempo",
+  "marketResult1x2": "Resultado 1X2",
+  "marketUnknown": "Mercado",
+  "marketWinToNil": "Gana a cero",
+  "marketsAndResults": "Mercados y resultados",
+  "marketsEvidenceAt": "Evidencia al {date}",
+  "@marketsEvidenceAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "marketsFamiliesRadar": "familias de mercado en el radar",
+  "marketsHistoricHit": "acierto histórico {percent}",
+  "@marketsHistoricHit": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "marketsInReview": "En revisión: sin línea confirmada",
+  "marketsModelActive": "MODELO ACTIVO",
+  "marketsNoLineLabel": "sin línea confirmada",
+  "marketsNoPublications": "Sin publicaciones aún",
+  "marketsNoResolved": "Sin pronósticos resueltos",
+  "marketsPublished": "Publicado {won}/{cases}",
+  "@marketsPublished": {
+    "placeholders": {
+      "won": {
+        "type": "int"
+      },
+      "cases": {
+        "type": "int"
+      }
+    }
+  },
+  "marketsPublishedWon": "{won}/{cases} publicados acertados · {percent}",
+  "@marketsPublishedWon": {
+    "placeholders": {
+      "won": {
+        "type": "int"
+      },
+      "cases": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "marketsRadarNote": "El anillo es el acierto histórico de la mejor línea validada de cada mercado; «Publicado» son los pronósticos ya resueltos. Son pronósticos previos al partido, no alertas en vivo, y ninguna probabilidad garantiza un resultado.",
+  "mdCornersTotal": "córners · total {total}",
+  "@mdCornersTotal": {
+    "placeholders": {
+      "total": {
+        "type": "Object"
+      }
+    }
+  },
+  "mdEmptyHistory": "Todavía no hay pronósticos resueltos en este mercado.",
+  "mdEmptyToday": "No hay pronósticos disponibles ahora para este mercado. Aparecen cuando el modelo los publica, antes del partido.",
+  "mdHitRate": "Tasa de acierto",
+  "mdLineConfirmed": "Confirmada",
+  "mdLineNotDeployed": "Sin desplegar",
+  "mdLineReview": "En revisión",
+  "mdLineShort": "Muestra corta",
+  "mdLoadError": "No se pudo cargar el historial.",
+  "mdModel": "MODELO",
+  "mdNoDate": "Sin fecha",
+  "mdOverall": "General",
+  "mdTabPrevious": "Anteriores",
+  "mdTabToday": "Hoy ({count})",
+  "@mdTabToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mdValidatedLines": "Líneas validadas",
+  "mmChance": "OPORTUNIDAD",
+  "mmDisclaimer": "Es análisis del modelo, no una recomendación de apuesta. «Cuota justa» es 1/probabilidad: no es una cuota de casa. Un pronóstico puede fallar.",
+  "mmFairOdds": "cuota justa",
+  "mmGroupCount": "{group} · {count, plural, one{{count} mercado} other{{count} mercados}}",
+  "@mmGroupCount": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mmLocked": "{count} con candado",
+  "@mmLocked": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mmOpen": "{count, plural, one{{count} abierto} other{{count} abiertos}}",
+  "@mmOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mmProb": "{value}% Prob.",
+  "@mmProb": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "mmPublishedOdds": "cuota publicada",
+  "mmScoresTitle": "Marcadores más probables",
+  "mmScoresVip": "Los marcadores más probables son para VIP.",
+  "mmTitle": "Mercados del partido",
+  "navCoins": "Coins",
+  "navHome": "Inicio",
+  "navMarkets": "Mercados",
+  "navPredictions": "Predicciones",
+  "navProfile": "Perfil",
+  "noteExpectedAverage": "Media esperada: {value}",
+  "@noteExpectedAverage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "noteExpectedGoals": "Goles esperados: {value}",
+  "@noteExpectedGoals": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "noteXg": "xG: {home} {homeValue} · {away} {awayValue}",
+  "@noteXg": {
+    "placeholders": {
+      "home": {
+        "type": "String"
+      },
+      "homeValue": {
+        "type": "String"
+      },
+      "away": {
+        "type": "String"
+      },
+      "awayValue": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationIosPending": "Las notificaciones de iOS esperan la configuración de Apple.",
+  "notificationPermissionDenied": "Activa el permiso desde los ajustes del dispositivo.",
+  "outcomeLoss": "Fallado",
+  "outcomePush": "Reembolso",
+  "outcomeWin": "Acertado",
+  "parleyDayCount": "{count, plural, one{{count} parlay} other{{count} parlays}}",
+  "@parleyDayCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parleyDaySettled": "{won}/{settled} acertados",
+  "@parleyDaySettled": {
+    "placeholders": {
+      "won": {
+        "type": "int"
+      },
+      "settled": {
+        "type": "int"
+      }
+    }
+  },
+  "parleyDisclaimer": "Se elige por probabilidad, no por valor, y cada pata resta margen. Un parley puede fallar: multiplicar cuotas también multiplica el riesgo.",
+  "parleyFewNote": "Con pocos parlays la tasa real no demuestra nada todavía.",
+  "parleyFreeNote": "Uno gratis al día (el de menor cuota); el resto, VIP.",
+  "parleyHistoryTitle": "Historial del Parley",
+  "parleyInactiveBody": "Cuando se active verás aquí los parlays del día, sellados antes de que empiecen los partidos.",
+  "parleyInactiveTitle": "El Parley todavía no está activo",
+  "parleyJointProb": "{percent} de probabilidad conjunta · {legs, plural, one{{legs} pata} other{{legs} patas}}",
+  "@parleyJointProb": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "legs": {
+        "type": "int"
+      }
+    }
+  },
+  "parleyLoadError": "No se pudo cargar el Parley.",
+  "parleyNoneBody": "El modelo no publica un parley si no encuentra uno dentro de las reglas.",
+  "parleyNoneTitle": "Hoy no hay parlays",
+  "parleyOddsBetween": "Cuota entre {min} y {max}",
+  "@parleyOddsBetween": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "parleyOutcomeLoss": "Falló",
+  "parleyOutcomePending": "Pendiente",
+  "parleyOutcomeVoid": "Anulado",
+  "parleyOutcomeWin": "Acertó",
+  "parleyPastDays": "Días anteriores",
+  "parleyRange": "De 1 a {count} parlays · cuota entre {min} y {max} · el más probable de cada escalón",
+  "@parleyRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "parleyResultScore": "Resultado {score}",
+  "@parleyResultScore": {
+    "placeholders": {
+      "score": {
+        "type": "Object"
+      }
+    }
+  },
+  "parleySealed": "Parlays sellados antes de los partidos",
+  "parleyStep": "ESCALÓN {step}",
+  "@parleyStep": {
+    "placeholders": {
+      "step": {
+        "type": "Object"
+      }
+    }
+  },
+  "parleySummary": "{hits}/{total} parlays acertados",
+  "@parleySummary": {
+    "placeholders": {
+      "hits": {
+        "type": "Object"
+      },
+      "total": {
+        "type": "Object"
+      }
+    }
+  },
+  "parleySummaryPromised": " frente a {value} % prometido",
+  "@parleySummaryPromised": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "parleySummaryReal": " · {value} % real",
+  "@parleySummaryReal": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pickOddsAtPublish": "Cuota al publicar · {book}",
+  "@pickOddsAtPublish": {
+    "placeholders": {
+      "book": {
+        "type": "Object"
+      }
+    }
+  },
+  "pickProbability": "Probabilidad {percent}",
+  "@pickProbability": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "pickSeeAnalysis": "Ver análisis del partido",
+  "pickSourceNA": "Fuente no disponible",
+  "pickUnlockCoins": "Desbloquear por {cost} monedas",
+  "@pickUnlockCoins": {
+    "placeholders": {
+      "cost": {
+        "type": "Object"
+      }
+    }
+  },
+  "pickUnlockPrompt": "Desbloquea el pronóstico y su cuota.",
+  "pickUnlockVip": "Desbloquear pronóstico VIP",
+  "picksEmpty": "No hay pronósticos publicados pendientes en este rango.",
+  "picksRangeHint": "62–95 % de probabilidad · uno gratis por mercado",
+  "picksTrainingReasons": "Modelo en entrenamiento · {reasons}",
+  "@picksTrainingReasons": {
+    "placeholders": {
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "prefsAnalyticsBody": "Ayuda a mejorar la app con datos sobre las pantallas utilizadas. Es opcional.",
+  "prefsAnalyticsTitle": "Medición de uso",
+  "prefsDeleteAccount": "Solicitar eliminación de mi cuenta",
+  "prefsDeleteAccountHint": "Consulta los pasos y el contacto de Saptain LTD.",
+  "prefsDiagnosticsBody": "Envía información técnica a Firebase para diagnosticar fallos. Es opcional.",
+  "prefsDiagnosticsTitle": "Informes de errores y rendimiento",
+  "prefsInbox": "Bandeja de avisos",
+  "prefsLanguageNote": "El idioma se aplica a toda la app y se guarda como preferencia.",
+  "prefsNote": "Puedes usar las funciones básicas sin activar medición o diagnóstico. Cambiar estas opciones no borra automáticamente los datos ya enviados.",
+  "prefsNotificationsOff": "Disponible cuando se complete el acceso con Google.",
+  "prefsNotificationsOn": "Puedes retirarlas cuando quieras. Los avisos pueden aparecer en la pantalla bloqueada.",
+  "prefsNotificationsTitle": "Notificaciones de QuantFut",
+  "prefsPrivacyRights": "Privacidad y tus derechos",
+  "prefsTitle": "Privacidad y preferencias",
+  "probBarAway": "Visita",
+  "probBarDraw": "Empate",
+  "probBarHome": "Local",
+  "profileAppVersion": "Versión de la app",
+  "profileBalance": "Balance y seguimiento",
+  "profileConnected": "QuantFut · Conectada al servidor",
+  "profileCreateAccount": "Crear cuenta",
+  "profileCreateOne": "Crear una cuenta",
+  "profileEmail": "Correo electrónico",
+  "profileEmailPending": "Correo pendiente de verificación",
+  "profileEmailVerified": "Correo verificado",
+  "profileForgot": "Olvidé mi contraseña",
+  "profileForgotSent": "Si la cuenta existe, recibirás las instrucciones por correo.",
+  "profileFreePlan": "Plan gratuito",
+  "profileGeneral": "General",
+  "profileHaveAccount": "Ya tengo cuenta",
+  "profileLanguage": "Idioma",
+  "profileMeasurement": "Medición y errores",
+  "profileNotifications": "Notificaciones",
+  "profileOddsFormat": "Formato de cuotas",
+  "profileOddsFormatValue": "Decimal · Cuotas registradas al publicar",
+  "profilePassword": "Contraseña",
+  "profilePreferences": "Preferencias",
+  "profileRefreshAccess": "Actualizar mi acceso",
+  "profileSeePlans": "Ver planes VIP",
+  "profileSendVerification": "Enviar correo de verificación",
+  "profileSignIn": "Iniciar sesión",
+  "profileSignOut": "Cerrar sesión",
+  "profileTitle": "Perfil y configuración",
+  "profileValidUntil": "Vigencia: {date}",
+  "@profileValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "profileVerificationSent": "Correo de verificación enviado.",
+  "profileVipActive": "Acceso VIP activo",
+  "profileYourAccount": "Tu cuenta QuantFut",
+  "resultLabel": "Resultado: {score}",
+  "@resultLabel": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "rewardsCheckIn": "Marcar asistencia",
+  "rewardsCheckInNote": "Una vez por día UTC. Si omites un día, la racha se reinicia.",
+  "rewardsCodeCopied": "Código copiado.",
+  "rewardsCodeRegistered": "Código de invitación registrado.",
+  "rewardsCopyCode": "Copiar mi código · {code}",
+  "@rewardsCopyCode": {
+    "placeholders": {
+      "code": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsDay": "Día {number}",
+  "@rewardsDay": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsDebt": "Saldo pendiente por recompensas anuladas.",
+  "rewardsEnough": "Tienes monedas para un desbloqueo.",
+  "rewardsGo": "Ir",
+  "rewardsInviteCondition": "Tras verificar el correo y completar {min} monedas en ofertas confirmadas.",
+  "@rewardsInviteCondition": {
+    "placeholders": {
+      "min": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsInviteReward": "Tú +{referrer} · Tu amigo +{invitee} monedas",
+  "@rewardsInviteReward": {
+    "placeholders": {
+      "referrer": {
+        "type": "Object"
+      },
+      "invitee": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsInviteTitle": "Invita a tus amigos",
+  "rewardsInviterCode": "Código de quien te invitó",
+  "rewardsLedgerEmpty": "Todavía no hay movimientos.",
+  "rewardsLedgerTitle": "Mis movimientos",
+  "rewardsMissing": "{missing, plural, one{Falta {missing} moneda para tu próximo desbloqueo.} other{Faltan {missing} monedas para tu próximo desbloqueo.}}",
+  "@rewardsMissing": {
+    "placeholders": {
+      "missing": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsMissingUnknown": "Faltan — monedas para tu próximo desbloqueo.",
+  "rewardsMyCoins": "Mis monedas",
+  "rewardsOfferAvailable": "Ofertas según tu país y dispositivo",
+  "rewardsOfferPending": "Pendiente de activar",
+  "rewardsOffersTitle": "Ofertas para ganar monedas",
+  "rewardsOperationDone": "Operación confirmada.",
+  "rewardsReferralStats": "{registered} registrados · {qualified} validados",
+  "@rewardsReferralStats": {
+    "placeholders": {
+      "registered": {
+        "type": "Object"
+      },
+      "qualified": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsRefreshBalance": "Actualizar saldo",
+  "rewardsRegisterCode": "Registrar código",
+  "rewardsSignIn": "Inicia sesión",
+  "rewardsSignInHint": "Inicia sesión en Perfil para guardar tu saldo, marcar asistencia y usar un código de referido.",
+  "rewardsStreak": "Racha de asistencia · {days, plural, one{{days} día} other{{days} días}}",
+  "@rewardsStreak": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsUnlockFor": "Desbloquea un pronóstico por {cost} monedas",
+  "@rewardsUnlockFor": {
+    "placeholders": {
+      "cost": {
+        "type": "Object"
+      }
+    }
+  },
+  "selBttsNo": "No marcan los dos",
+  "selBttsYes": "Marcan los dos",
+  "selCards": "{side, select, over{Más de {line} tarjetas} other{Menos de {line} tarjetas}}",
+  "@selCards": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selCorners": "{side, select, over{Más de {line} córners} other{Menos de {line} córners}}",
+  "@selCorners": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selCornersTeam": "{side, select, over{Más de {line} córners de {team}} other{Menos de {line} córners de {team}}}",
+  "@selCornersTeam": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      },
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "selDrawNoBet": "{team} gana (empate devuelve)",
+  "@selDrawNoBet": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "selEitherNoDraw": "{home} o {away} (sin empate)",
+  "@selEitherNoDraw": {
+    "placeholders": {
+      "home": {
+        "type": "String"
+      },
+      "away": {
+        "type": "String"
+      }
+    }
+  },
+  "selGoals": "{side, select, over{Más de {line} goles} other{Menos de {line} goles}}",
+  "@selGoals": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selHandicapLong": "{team} {line} (hándicap asiático)",
+  "@selHandicapLong": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selHandicapShort": "{team} {line}",
+  "@selHandicapShort": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selHomeWins": "Gana {team}",
+  "@selHomeWins": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "selHtBttsNo": "No marcan los dos en el 1T",
+  "selHtGoalYes": "Habrá gol en el 1T",
+  "selTeamOrDraw": "{team} o empate",
+  "@selTeamOrDraw": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "selTeamScores": "Marca {team}",
+  "@selTeamScores": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "selWinToNil": "{team} gana sin recibir gol",
+  "@selWinToNil": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "shellNewAlert": "Nuevo aviso de QuantFut",
+  "shellSignInForCoins": "Inicia sesión en Perfil para usar tus monedas.",
+  "shellUnlockBody": "Se descontarán {cost} monedas de tu saldo. El acceso corresponde a este pronóstico.",
+  "@shellUnlockBody": {
+    "placeholders": {
+      "cost": {
+        "type": "Object"
+      }
+    }
+  },
+  "shellUnlockTitle": "Desbloquear pronóstico",
+  "shellView": "Ver",
+  "splashTagline": "FÚTBOL · NBA · ESTADÍSTICA",
+  "startupFailed": "No pudimos iniciar QuantFut. Inténtalo de nuevo.",
+  "startupLoading": "Iniciando QuantFut",
+  "statAveragesNote": "Promedios de {homeN} partidos del local y {awayN} del visitante. La cobertura de remates, córners y xG puede ser parcial.",
+  "@statAveragesNote": {
+    "placeholders": {
+      "homeN": {
+        "type": "Object"
+      },
+      "awayN": {
+        "type": "Object"
+      }
+    }
+  },
+  "statBestAway": "Mejor triunfo fuera",
+  "statBestHome": "Mejor triunfo en casa",
+  "statCleanSheet": "Portería a cero",
+  "statCompareNote": "Las barras comparan los valores registrados; no representan probabilidades de victoria. Menos goles recibidos es mejor.",
+  "statCompareTitle": "Comparación de equipos",
+  "statDrawStreak": "Racha de empates",
+  "statFormLegend": "G: ganado · E: empate · P: perdido. Más reciente a la izquierda.",
+  "statFormNA": "Forma no disponible.",
+  "statFormTitle": "Forma de los equipos",
+  "statGoalsAgainst": "Goles recibidos",
+  "statGoalsAvgNote": "Goles a favor por partido; no es la proyección de goles del modelo.",
+  "statGoalsAvgTitle": "PROMEDIO HISTÓRICO DE GOLES",
+  "statGoalsFor": "Goles a favor",
+  "statH2hSummary": "En {n} cruces registrados: {home} ganó {homeWins}, {away} ganó {awayWins} y hubo {draws} empates.",
+  "@statH2hSummary": {
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      },
+      "home": {
+        "type": "Object"
+      },
+      "homeWins": {
+        "type": "Object"
+      },
+      "away": {
+        "type": "Object"
+      },
+      "awayWins": {
+        "type": "Object"
+      },
+      "draws": {
+        "type": "Object"
+      }
+    }
+  },
+  "statH2hTitle": "Cara a cara",
+  "statLastMatches": "Últimos {count} partidos registrados",
+  "@statLastMatches": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statMinutesNA": "La distribución por minutos no está disponible para este partido.",
+  "statMinutesTitle": "Goles por minuto",
+  "statNeedsAccess": "El pronóstico de este partido requiere acceso VIP o un desbloqueo con monedas.",
+  "statOnTargetShort": "A puerta",
+  "statOver25": "Más de 2,5 goles",
+  "statPickProbOdds": "Probabilidad {percent} · Cuota @ {odds}",
+  "@statPickProbOdds": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "odds": {
+        "type": "String"
+      }
+    }
+  },
+  "statPlayed": "{played} partidos",
+  "@statPlayed": {
+    "placeholders": {
+      "played": {
+        "type": "Object"
+      }
+    }
+  },
+  "statPoints": "{points} puntos",
+  "@statPoints": {
+    "placeholders": {
+      "points": {
+        "type": "Object"
+      }
+    }
+  },
+  "statPoissonNA": "La distribución Poisson y los marcadores probables aún no están disponibles en la entrega de este partido.",
+  "statPoissonTitle": "Distribución de goles Poisson",
+  "statPosition": "Posición {position}",
+  "@statPosition": {
+    "placeholders": {
+      "position": {
+        "type": "Object"
+      }
+    }
+  },
+  "statProbNA": "Probabilidades del modelo todavía no disponibles.",
+  "statProbTitle": "PROBABILIDAD DE VICTORIA · 1X2",
+  "statPublishedPick": "PRONÓSTICO PUBLICADO",
+  "statRadarNeeds": "La comparación gráfica necesita al menos tres métricas disponibles de ambos equipos.",
+  "statRadarNote": "Escala relativa por eje. Un área mayor no implica mayor probabilidad de ganar.",
+  "statResDraw": "E",
+  "statResLoss": "P",
+  "statResWin": "G",
+  "statResultsAvailable": "{count, plural, one{{count} resultado disponible} other{{count} resultados disponibles}}",
+  "@statResultsAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statSeasonTitle": "Temporada y resultados recientes",
+  "statShots": "Remates",
+  "statShotsOnTarget": "Remates a puerta",
+  "statStandingNA": "Clasificación no disponible.",
+  "statSummaryTitle": "Resumen de predicción",
+  "statTeamStatsTitle": "Estadísticas del equipo",
+  "statWinStreak": "Racha de victorias",
+  "statXgHistoric": "xG histórico",
+  "streamHighProb": "Alta probabilidad",
+  "streamLadder": "Reto Escalera",
+  "streamParley": "Parley",
+  "tileFairOdds": "Cuota justa {value}",
+  "@tileFairOdds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "tileFavorite": "Favorito 1X2",
+  "tileFavoriteLead": "{team} · +{pts} pts",
+  "@tileFavoriteLead": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "pts": {
+        "type": "int"
+      }
+    }
+  },
+  "tileFavoriteNA": "Probabilidades no disponibles",
+  "tileGoalsNA": "Historial insuficiente",
+  "tileGoalsTrend": "Tendencia goles",
+  "tileOver25Model": "Más de 2,5 según el modelo",
+  "tileOver25Recent": "Más de 2,5 en sus últimos partidos",
+  "tileProbability": "Probabilidad",
+  "tileXg": "xG proyectado",
+  "tileXgCaption": "{home} local · {away} visita",
+  "@tileXgCaption": {
+    "placeholders": {
+      "home": {
+        "type": "String"
+      },
+      "away": {
+        "type": "String"
+      }
+    }
+  },
+  "tileXgNA": "Disponible en mercados de goles",
+  "titleAsianHandicap": "Hándicap asiático",
+  "titleDrawNoBet": "Empate no acción",
+  "titleTeamGoals": "Goles de {team}",
+  "@titleTeamGoals": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "titleTotalCards": "Tarjetas totales",
+  "titleTotalCorners": "Córners totales",
+  "titleTotalGoals": "Goles totales",
+  "titleWinner": "Ganador del partido",
+  "tooltipVip": "VIP",
+  "vipActivate": "Activar acceso VIP",
+  "vipActive": "Tu acceso VIP está activo.",
+  "vipBadge": "✦  ACCESO VIP",
+  "vipBenefit1Body": "Cada pronóstico se sella antes del partido",
+  "vipBenefit1Title": "Historial verificable",
+  "vipBenefit2Body": "Todos los picks de {min} a {max} %, sin cupo gratuito",
+  "@vipBenefit2Body": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "vipBenefit2Title": "Alta Probabilidad completa",
+  "vipBenefit3Body": "Todos los escalones pendientes, no solo uno",
+  "vipBenefit3Title": "Reto Escalera completo",
+  "vipBenefit4Body": "Cuota publicada, probabilidad y xG de cada pick",
+  "vipBenefit4Title": "Cuotas y análisis del partido",
+  "vipBestPrice": "★ MEJOR PRECIO",
+  "vipCheckAccess": "Comprobar mi acceso",
+  "vipCheckSignIn": "Inicia sesión en Perfil para comprobar tu acceso.",
+  "vipDays": "{days, plural, one{{days} día} other{{days} días}}",
+  "@vipDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "vipFreeAccess": "Tu cuenta tiene acceso gratuito.",
+  "vipHistoryNote": "Historial público y sellado; las muestras por mercado son pequeñas y un pronóstico puede fallar.",
+  "vipIntro": "Todos los pronósticos de Alta Probabilidad y del Reto Escalera mientras tu suscripción esté vigente.",
+  "vipLinked": "🔒  Tu acceso VIP queda vinculado a tu cuenta",
+  "vipMonthly": "≈ {amount}/mes",
+  "@vipMonthly": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "vipMonths": "{months, plural, one{{months} mes} other{{months} meses}}",
+  "@vipMonths": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "vipNoExpiry": "Sin vencimiento",
+  "vipPaymentRequired": "La contratación requiere un canal de pago configurado.",
+  "vipPickLabel": "Pronóstico VIP",
+  "vipPlansSoon": "Los planes se mostrarán cuando estén disponibles.",
+  "vipPricesNote": "Precios del catálogo del servidor.",
+  "vipPurchasesPending": "Compras en preparación: aún no se cobra nada desde la app.",
+  "vipStatRecorded": "Acierto registrado",
+  "vipStatResolved": "Resueltos",
+  "welcome1Body": "Descubre el lado estadístico del deporte: partidos, análisis y pronósticos del proyecto que ya conoces en la web.",
+  "welcome1Title": "Fútbol y NBA,\ncon otra perspectiva",
+  "welcome2Body": "La forma reciente, el cara a cara y las estadísticas ayudan a entender lo que puede pasar. Empieza por los datos.",
+  "welcome2Title": "Cada partido,\ncon más contexto",
+  "welcome3Body": "Goles, córners, hándicap y estadísticas de la NBA. Conoce qué mide cada análisis antes de interpretar una selección.",
+  "welcome3Title": "Más mercados.\nMás información.",
+  "welcome4Body": "Un pronóstico también se entiende después del partido. El historial permite comparar estimaciones con resultados.",
+  "welcome4Title": "Los resultados,\na la vista",
+  "welcome5Body": "Una probabilidad no es una certeza. Explora el contenido, revisa el contexto y forma tu propio criterio.",
+  "welcome5Title": "Todo empieza\npor informarte",
+  "welcomeGoTo": "Ir a bienvenida {number}",
+  "@welcomeGoTo": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "welcomeNext": "Siguiente",
+  "welcomeScreenOf": "Pantalla {page} de {total}",
+  "@welcomeScreenOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "welcomeSkip": "Saltar",
+  "welcomeStart": "Empezar"
+}

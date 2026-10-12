@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_market_detail.dart';
 import 'live_widgets.dart';
@@ -112,7 +113,7 @@ class _MarketsDashboardState extends State<MarketsDashboard>
           child: Center(child: CircularProgressIndicator()),
         );
       }
-      final families = catalog.forSport('Fútbol');
+      final families = catalog.forSport(sportFootball);
       final historial = jsonMap(widget.alta['historial']);
       final upcoming = [
         for (final p in (widget.alta['proximos'] as List? ?? const []))
@@ -162,17 +163,20 @@ class _MarketsDashboardState extends State<MarketsDashboard>
                               family: families[i],
                               minimum: catalog.minimumCases,
                               color: _lookOf(families[i].id).$1,
-                              markets: familyMarkets[families[i].id] ?? const [],
+                              markets:
+                                  familyMarkets[families[i].id] ?? const [],
                               onVip: widget.onVip,
                               locked: [
                                 for (final p in locked)
-                                  if ((familyMarkets[families[i].id] ?? const [])
+                                  if ((familyMarkets[families[i].id] ??
+                                          const [])
                                       .contains(p['market']))
                                     p,
                               ],
                               upcoming: [
                                 for (final p in upcoming)
-                                  if ((familyMarkets[families[i].id] ?? const [])
+                                  if ((familyMarkets[families[i].id] ??
+                                          const [])
                                       .contains(p['market']))
                                     p,
                               ],
@@ -189,14 +193,7 @@ class _MarketsDashboardState extends State<MarketsDashboard>
             },
           ),
           const SizedBox(height: 12),
-          liveText(
-            'El anillo es el acierto histórico de la mejor línea validada de '
-            'cada mercado; «Publicado» son los pronósticos ya resueltos. Son '
-            'pronósticos previos al partido, no alertas en vivo, y ninguna '
-            'probabilidad garantiza un resultado.',
-            size: 10,
-            color: liveMuted,
-          ),
+          liveText(context.l10n.marketsRadarNote, size: 10, color: liveMuted),
         ],
       );
     },
@@ -247,7 +244,9 @@ class _RadarHero extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: liveGreen.withValues(
-                                alpha: .25 + .45 * math.sin(clock.value * 12.566).abs(),
+                                alpha:
+                                    .25 +
+                                    .45 * math.sin(clock.value * 12.566).abs(),
                               ),
                               blurRadius: 8,
                             ),
@@ -257,7 +256,7 @@ class _RadarHero extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     liveText(
-                      'MODELO ACTIVO',
+                      context.l10n.marketsModelActive,
                       size: 11,
                       color: liveGreen,
                       bold: true,
@@ -279,7 +278,7 @@ class _RadarHero extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: liveText(
-                        'familias de mercado en el radar',
+                        context.l10n.marketsFamiliesRadar,
                         size: 14,
                         bold: true,
                       ),
@@ -288,7 +287,7 @@ class _RadarHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 liveText(
-                  'Evidencia al ${catalog.cutoff}',
+                  context.l10n.marketsEvidenceAt(catalog.cutoff),
                   size: 12,
                   color: liveMuted,
                 ),
@@ -304,8 +303,12 @@ class _RadarHero extends StatelessWidget {
                   ),
                   child: liveText(
                     overall.cases == 0
-                        ? 'Sin pronósticos resueltos'
-                        : '${overall.won}/${overall.cases} publicados acertados · ${percent(overall.observed)}',
+                        ? context.l10n.marketsNoResolved
+                        : context.l10n.marketsPublishedWon(
+                            overall.won,
+                            overall.cases,
+                            percent(overall.observed),
+                          ),
                     size: 11,
                     bold: true,
                   ),
@@ -320,10 +323,9 @@ class _RadarHero extends StatelessWidget {
             child: AnimatedBuilder(
               animation: clock,
               builder: (_, _) => CustomPaint(
-                painter: _RadarPainter(
-                  clock.value,
-                  [for (final f in families) _lookOf(f.id).$1],
-                ),
+                painter: _RadarPainter(clock.value, [
+                  for (final f in families) _lookOf(f.id).$1,
+                ]),
               ),
             ),
           ),
@@ -418,8 +420,8 @@ class _FamilyCard extends StatelessWidget {
     return Semantics(
       button: true,
       label:
-          '${family.title}, '
-          '${best == null ? 'sin línea confirmada' : 'acierto histórico ${percent(best.observed)}'}',
+          '${family.localTitle}, '
+          '${best == null ? context.l10n.marketsNoLineLabel : context.l10n.marketsHistoricHit(percent(best.observed))}',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -483,7 +485,7 @@ class _FamilyCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      family.title,
+                      family.localTitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -495,8 +497,8 @@ class _FamilyCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       best == null
-                          ? 'En revisión: sin línea confirmada'
-                          : '${best.label} · ${caseCount(best.cases)} casos',
+                          ? context.l10n.marketsInReview
+                          : '${best.localLabel} · ${casesLabel(best.cases)}',
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 11, color: liveMuted),
@@ -529,7 +531,11 @@ class _PublishedRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (record.cases == 0) {
-      return liveText('Sin publicaciones aún', size: 10, color: liveMuted);
+      return liveText(
+        context.l10n.marketsNoPublications,
+        size: 10,
+        color: liveMuted,
+      );
     }
     final dots = math.min(record.cases, 10);
     final hits = (record.won * dots / record.cases).round();
@@ -537,7 +543,7 @@ class _PublishedRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         liveText(
-          'Publicado ${record.won}/${record.cases}',
+          context.l10n.marketsPublished(record.won, record.cases),
           size: 10,
           color: liveMuted,
           bold: true,
@@ -558,7 +564,8 @@ class _PublishedRow extends StatelessWidget {
                     color: i < hits
                         ? color.withValues(
                             alpha: i == hits - 1
-                                ? .55 + .45 * math.sin(clock.value * 12.566).abs()
+                                ? .55 +
+                                      .45 * math.sin(clock.value * 12.566).abs()
                                 : 1,
                           )
                         : Colors.transparent,

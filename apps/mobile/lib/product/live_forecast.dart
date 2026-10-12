@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_statistics.dart';
 import 'live_widgets.dart';
 
-const marketNames = {
-  'totals': 'Goles',
-  'h2h': 'Resultado 1X2',
-  'double_chance': 'Doble oportunidad',
-  'corners': 'Córners',
-  'corners_home': 'Córners del local',
-  'corners_away': 'Córners del visitante',
-  'spreads': 'Hándicap',
-  'team_totals_home': 'Goles del local',
-  'team_totals_away': 'Goles del visitante',
-  'home_to_score': 'Marca el local',
-  'away_to_score': 'Marca el visitante',
-  'btts': 'Ambos marcan',
-};
-
-String marketName(dynamic key) => marketNames['$key'] ?? '${key ?? 'Mercado'}';
+export '../l10n/pick_labels.dart' show marketName;
 
 /// Marcador real mientras el partido se juega (`partido.vivo`). Si el servidor
 /// no lo manda, no se dibuja nada. Muestra cuánto hace de la última lectura:
@@ -30,9 +17,10 @@ class LiveScoreStrip extends StatelessWidget {
 
   static String _minute(JsonMap vivo) {
     final status = vivo['estado'];
-    if (status == 'HT') return 'DESCANSO';
+    final l10n = AppLocale.instance.l10n;
+    if (status == 'HT') return l10n.forecastHalfTime;
     final minute = vivo['minuto'];
-    return minute is num ? "${minute.toInt()}'" : 'EN JUEGO';
+    return minute is num ? "${minute.toInt()}'" : l10n.forecastInPlay;
   }
 
   @override
@@ -42,8 +30,9 @@ class LiveScoreStrip extends StatelessWidget {
     if (score is! List || score.length != 2 || score.any((g) => g is! num)) {
       return const SizedBox.shrink();
     }
-    final home = jsonMap(ficha['local'])['nombre'] ?? 'Local';
-    final away = jsonMap(ficha['visitante'])['nombre'] ?? 'Visitante';
+    final l10n = context.l10n;
+    final home = jsonMap(ficha['local'])['nombre'] ?? l10n.commonHome;
+    final away = jsonMap(ficha['visitante'])['nombre'] ?? l10n.commonAway;
     final updated = dateValue(vivo['actualizado']);
     final ago = updated == null
         ? null
@@ -114,8 +103,8 @@ class LiveScoreStrip extends StatelessWidget {
           const SizedBox(height: 8),
           liveText(
             ago == null
-                ? 'Marcador en vivo'
-                : 'Marcador en vivo · actualizado hace $ago min',
+                ? l10n.forecastLiveScore
+                : l10n.forecastLiveScoreAgo(ago),
             size: 10,
             color: liveMuted,
           ),
@@ -138,15 +127,27 @@ class ForecastPanel extends StatelessWidget {
   final VoidCallback onStats;
 
   String get dictamen {
-    final local = jsonMap(ficha['local'])['nombre'] ?? 'el local';
-    final away = jsonMap(ficha['visitante'])['nombre'] ?? 'el visitante';
+    final l10n = AppLocale.instance.l10n;
+    final local = jsonMap(ficha['local'])['nombre'] ?? l10n.dictHomeDefault;
+    final away = jsonMap(ficha['visitante'])['nombre'] ?? l10n.dictAwayDefault;
     final parts = <String>[
-      '${pick['texto'] ?? 'El pronóstico'} con probabilidad calculada de ${realPercent(pick['prob'])}.',
+      l10n.dictPick(
+        pick['market'] == null && pick['texto'] == null
+            ? l10n.dictPickDefault
+            : pickText(pick, home: local, away: away),
+        realPercent(pick['prob']),
+      ),
     ];
     final xg = jsonMap(pick['xg']);
     if (xg['total'] is num) {
       parts.add(
-        'Las cuotas del mercado sin margen implican ${decimalText(xg['total'])} goles esperados ($local ${decimalText(xg['local'])} · $away ${decimalText(xg['visita'])}).',
+        l10n.dictXg(
+          decimalText(xg['total']),
+          '$local',
+          decimalText(xg['local']),
+          '$away',
+          decimalText(xg['visita']),
+        ),
       );
     }
     final price = pick['ref_price'] ?? pick['price'];
@@ -155,8 +156,8 @@ class ForecastPanel extends StatelessWidget {
       final edge = price * prob - 1;
       parts.add(
         edge >= 0
-            ? 'La cuota publicada supera la cuota justa (${decimalText(1 / prob)}).'
-            : 'La cuota publicada queda por debajo de la cuota justa (${decimalText(1 / prob)}); el atractivo está en la probabilidad, no en el precio.',
+            ? l10n.dictOddsAbove(decimalText(1 / prob))
+            : l10n.dictOddsBelow(decimalText(1 / prob)),
       );
     }
     return parts.join(' ');
@@ -173,9 +174,12 @@ class ForecastPanel extends StatelessWidget {
     final score = pick['home_goals'] is num && pick['away_goals'] is num
         ? ' · ${pick['home_goals']}-${pick['away_goals']}'
         : '';
+    final l10n = AppLocale.instance.l10n;
     final label = outcome == null
-        ? 'PARTIDO EN JUEGO · pronóstico sellado antes del inicio'
-        : '${won ? 'ACERTADO' : 'FALLADO'}$score · pronóstico sellado antes del inicio';
+        ? l10n.bannerLive
+        : won
+        ? l10n.bannerWon(score)
+        : l10n.bannerLost(score);
     return _chip(label, color);
   }
 
@@ -186,12 +190,14 @@ class ForecastPanel extends StatelessWidget {
       return v is num && v.isFinite && v >= 0 && v <= 100 ? v.toDouble() : null;
     }
 
-    final a = share(jsonMap(ficha['local'])), b = share(jsonMap(ficha['visitante']));
+    final a = share(jsonMap(ficha['local'])),
+        b = share(jsonMap(ficha['visitante']));
     return a != null && b != null ? (a + b) / 2 : null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final prob = pick['prob'];
     final price = pick['ref_price'] ?? pick['price'];
     final xg = jsonMap(pick['xg']);
@@ -203,13 +209,25 @@ class ForecastPanel extends StatelessWidget {
     // Favorito 1X2: del modelo (o del 1X2 guardado), el lado con más probabilidad.
     final side = <(String, num)>[
       if ((modelo['local'] ?? probs['home']) is num)
-        ('${local['nombre'] ?? 'Local'}', (modelo['local'] ?? probs['home']) as num),
+        (
+          '${local['nombre'] ?? l10n.commonHome}',
+          (modelo['local'] ?? probs['home']) as num,
+        ),
       if ((modelo['visita'] ?? probs['away']) is num)
-        ('${away['nombre'] ?? 'Visitante'}', (modelo['visita'] ?? probs['away']) as num),
+        (
+          '${away['nombre'] ?? l10n.commonAway}',
+          (modelo['visita'] ?? probs['away']) as num,
+        ),
     ]..sort((a, b) => b.$2.compareTo(a.$2));
-    final over25 = modelo['mas_2_5'] is num ? (modelo['mas_2_5'] as num) * 100 : _trend;
+    final over25 = modelo['mas_2_5'] is num
+        ? (modelo['mas_2_5'] as num) * 100
+        : _trend;
     final level = prob is num
-        ? (prob >= .75 ? 'ALTA PROB.' : prob >= .6 ? 'SÓLIDA' : 'MODERADA')
+        ? (prob >= .75
+              ? l10n.levelHigh
+              : prob >= .6
+              ? l10n.levelSolid
+              : l10n.levelModerate)
         : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +240,10 @@ class ForecastPanel extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [liveGreen.withValues(alpha: .08), const Color(0xff0c1520)],
+              colors: [
+                liveGreen.withValues(alpha: .08),
+                const Color(0xff0c1520),
+              ],
             ),
           ),
           child: Column(
@@ -232,7 +253,7 @@ class ForecastPanel extends StatelessWidget {
                 children: [
                   Expanded(
                     child: liveText(
-                      'ANÁLISIS ESTADÍSTICO',
+                      l10n.forecastTitle,
                       size: 12,
                       color: liveGreen,
                       bold: true,
@@ -240,8 +261,8 @@ class ForecastPanel extends StatelessWidget {
                   ),
                   _chip(
                     modelo['fuente'] == 'mercado'
-                        ? 'CUOTAS DEL MERCADO'
-                        : 'MODELO PROPIO',
+                        ? l10n.forecastSourceMarket
+                        : l10n.forecastSourceModel,
                     liveCyan,
                   ),
                 ],
@@ -261,14 +282,17 @@ class ForecastPanel extends StatelessWidget {
                     Row(
                       children: [
                         Flexible(
-                          child: _chip('DESTACADO', liveGreen),
+                          child: _chip(l10n.forecastFeatured, liveGreen),
                         ),
                         const Spacer(),
                         if (level != null) ...[
                           _chip(level, liveGold),
                           const SizedBox(width: 6),
                         ],
-                        _chip(free ? 'GRATUITO' : 'DESBLOQUEADO', liveGold),
+                        _chip(
+                          free ? l10n.forecastFree : l10n.forecastUnlocked,
+                          liveGold,
+                        ),
                       ],
                     ),
                     if (pick['started'] == true) ...[
@@ -284,7 +308,11 @@ class ForecastPanel extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${pick['texto'] ?? '—'}',
+                                pickText(
+                                  pick,
+                                  home: local['nombre'],
+                                  away: away['nombre'],
+                                ),
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
@@ -322,7 +350,7 @@ class ForecastPanel extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             liveText(
-                              '${realPercent(prob)} prob. calculada',
+                              l10n.forecastProbCalc(realPercent(prob)),
                               size: 10,
                               color: liveGreen,
                             ),
@@ -333,7 +361,7 @@ class ForecastPanel extends StatelessWidget {
                     if (book != null || pick['odds_as_of'] != null) ...[
                       const SizedBox(height: 10),
                       liveText(
-                        'Cuota al publicar${book != null ? ' · $book' : ''}${pick['odds_as_of'] != null ? ' · ${kickoffText(pick['odds_as_of'])}' : ''}',
+                        '${l10n.forecastOddsAtPublish}${book != null ? ' · $book' : ''}${pick['odds_as_of'] != null ? ' · ${kickoffText(pick['odds_as_of'])}' : ''}',
                         size: 10,
                         color: liveMuted,
                       ),
@@ -347,23 +375,27 @@ class ForecastPanel extends StatelessWidget {
                   Expanded(
                     child: _Tile(
                       icon: '🎯',
-                      label: 'Probabilidad',
+                      label: l10n.tileProbability,
                       value: realPercent(prob),
                       color: liveCyan,
-                      caption:
-                          'Cuota justa ${decimalText(prob is num && prob > 0 ? 1 / prob : null)}',
+                      caption: l10n.tileFairOdds(
+                        decimalText(prob is num && prob > 0 ? 1 / prob : null),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _Tile(
                       icon: '⚽',
-                      label: 'xG proyectado',
+                      label: l10n.tileXg,
                       value: decimalText(xg['total']),
                       color: liveGold,
                       caption: xg['total'] is num
-                          ? '${decimalText(xg['local'])} local · ${decimalText(xg['visita'])} visita'
-                          : 'Disponible en mercados de goles',
+                          ? l10n.tileXgCaption(
+                              decimalText(xg['local']),
+                              decimalText(xg['visita']),
+                            )
+                          : l10n.tileXgNA,
                     ),
                   ),
                 ],
@@ -374,26 +406,31 @@ class ForecastPanel extends StatelessWidget {
                   Expanded(
                     child: _Tile(
                       icon: '⚔',
-                      label: 'Favorito 1X2',
+                      label: l10n.tileFavorite,
                       value: side.isEmpty ? '—' : realPercent(side.first.$2),
                       color: statsPurple,
                       caption: side.isEmpty
-                          ? 'Probabilidades no disponibles'
-                          : '${side.first.$1}${side.length > 1 ? ' · +${((side.first.$2 - side.last.$2) * 100).round()} pts' : ''}',
+                          ? l10n.tileFavoriteNA
+                          : side.length > 1
+                          ? l10n.tileFavoriteLead(
+                              side.first.$1,
+                              ((side.first.$2 - side.last.$2) * 100).round(),
+                            )
+                          : side.first.$1,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _Tile(
                       icon: '📊',
-                      label: 'Tendencia goles',
-                      value: over25 == null ? '—' : '${over25.round()} %',
+                      label: l10n.tileGoalsTrend,
+                      value: over25 == null ? '—' : realPercent(over25 / 100),
                       color: statsLime,
                       caption: over25 == null
-                          ? 'Historial insuficiente'
+                          ? l10n.tileGoalsNA
                           : modelo['mas_2_5'] is num
-                          ? 'Más de 2,5 según el modelo'
-                          : 'Más de 2,5 en sus últimos partidos',
+                          ? l10n.tileOver25Model
+                          : l10n.tileOver25Recent,
                     ),
                   ),
                 ],
@@ -410,7 +447,7 @@ class ForecastPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     liveText(
-                      '💡  DICTAMEN DEL MODELO',
+                      l10n.forecastVerdictTitle,
                       size: 11,
                       color: liveCyan,
                       bold: true,
@@ -420,17 +457,13 @@ class ForecastPanel extends StatelessWidget {
                     if (modelo['fuente'] == 'mercado') ...[
                       const SizedBox(height: 8),
                       liveText(
-                        'Probabilidades calculadas con las cuotas del mercado sin margen: esta liga no tiene modelo propio.',
+                        l10n.forecastMarketNote,
                         size: 10,
                         color: liveMuted,
                       ),
                     ],
                     const SizedBox(height: 8),
-                    liveText(
-                      'Un pronóstico puede fallar; la probabilidad no garantiza el resultado.',
-                      size: 10,
-                      color: liveMuted,
-                    ),
+                    liveText(l10n.forecastCanFail, size: 10, color: liveMuted),
                   ],
                 ),
               ),
@@ -438,7 +471,7 @@ class ForecastPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        liveButton('Ver estadísticas del partido', onStats, color: liveCyan),
+        liveButton(l10n.forecastSeeStats, onStats, color: liveCyan),
         const SizedBox(height: 18),
       ],
     );

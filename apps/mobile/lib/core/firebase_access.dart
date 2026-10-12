@@ -5,21 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/language_picker.dart';
 import '../onbonding_screen/second_screen.dart';
 import '../onbonding_screen/splesh_screen.dart';
 import '../product/live_api.dart';
 import '../product/live_shell.dart';
 import '../product/live_widgets.dart';
 import 'firebase_services.dart';
-
-const languageNames = {
-  'es': 'Español',
-  'en': 'English',
-  'pt': 'Português',
-  'fr': 'Français',
-  'it': 'Italiano',
-  'de': 'Deutsch',
-};
 
 Uri? legalUrl(String value) {
   final uri = Uri.tryParse(value);
@@ -113,9 +106,7 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
       }
     } catch (_) {
       if (mounted && attempt == generation) {
-        setState(
-          () => error = 'No se pudo completar el acceso. Inténtalo de nuevo.',
-        );
+        setState(() => error = context.l10n.accessGenericError);
       }
     } finally {
       if (mounted && attempt == generation) setState(() => busy = false);
@@ -132,22 +123,18 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
       final user = await GoogleSignIn.instance.authenticate();
       final token = user.authentication.idToken;
       if (token == null) {
-        throw const ApiFailure('Google no pudo verificar el acceso.');
+        throw const ApiFailure.kind(ApiError.googleNotVerified);
       }
       await services.auth.signInWithCredential(
         GoogleAuthProvider.credential(idToken: token),
       );
     } on GoogleSignInException catch (failure) {
       if (failure.code != GoogleSignInExceptionCode.canceled && mounted) {
-        setState(
-          () => error = 'No se pudo acceder con Google. Inténtalo de nuevo.',
-        );
+        setState(() => error = context.l10n.accessGoogleError);
       }
     } catch (_) {
       if (mounted) {
-        setState(
-          () => error = 'No se pudo acceder con Google. Inténtalo de nuevo.',
-        );
+        setState(() => error = context.l10n.accessGoogleError);
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -185,7 +172,7 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
         mounted) {
-      liveNotice(context, 'No se pudo abrir el documento.');
+      liveNotice(context, context.l10n.accessDocumentOpenError);
     }
   }
 
@@ -216,15 +203,7 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
       }
       return ProductShell(api: api);
     }
-    final language = services.language;
-    final googleLabel = {
-      'es': 'Continuar con Google',
-      'en': 'Continue with Google',
-      'pt': 'Continuar com Google',
-      'fr': 'Continuer avec Google',
-      'it': 'Continua con Google',
-      'de': 'Mit Google fortfahren',
-    }[language]!;
+    final l10n = context.l10n;
     return Scaffold(
       backgroundColor: liveBg,
       body: SafeArea(
@@ -236,46 +215,33 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      key: const ValueKey('language-button'),
+                      onPressed: busy
+                          ? null
+                          : () => showLanguagePicker(context),
+                      icon: const Icon(Icons.language_rounded),
+                      label: Text(appLanguages[AppLocale.instance.code]!),
+                    ),
+                  ),
                   const Icon(Icons.insights, size: 64, color: liveCyan),
                   const SizedBox(height: 16),
                   liveText('QuantFut', size: 32, bold: true),
                   const SizedBox(height: 12),
-                  liveText(
-                    'Partidos, análisis e historial. Una probabilidad no es una certeza.',
-                    color: liveMuted,
-                  ),
-                  const SizedBox(height: 24),
-                  DropdownButtonFormField<String>(
-                    initialValue: language,
-                    decoration: const InputDecoration(
-                      labelText: 'Idioma / Language',
-                    ),
-                    items: languageNames.entries
-                        .map(
-                          (item) => DropdownMenuItem(
-                            value: item.key,
-                            child: Text(item.value),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: busy
-                        ? null
-                        : (value) async {
-                            if (value != null) {
-                              await services.setLanguage(value);
-                            }
-                          },
-                  ),
+                  liveText(l10n.accessTagline, color: liveMuted),
+                  const SizedBox(height: 8),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: terms == null ? null : () => openLegal(terms),
-                    child: const Text('Términos de uso'),
+                    child: Text(l10n.accessTerms),
                   ),
                   TextButton(
                     onPressed: privacy == null
                         ? null
                         : () => openLegal(privacy),
-                    child: const Text('Política de privacidad'),
+                    child: Text(l10n.accessPrivacy),
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
@@ -283,42 +249,34 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
                     onChanged: busy || terms == null || privacy == null
                         ? null
                         : (value) => setState(() => consent = value ?? false),
-                    title: const Text(
-                      'Tengo al menos 18 años y acepto los términos y la política de privacidad.',
-                    ),
+                    title: Text(l10n.accessConsent),
                   ),
                   if (terms == null || privacy == null)
-                    liveText(
-                      'Estamos preparando los documentos de acceso.',
-                      color: liveMuted,
-                    ),
+                    liveText(l10n.accessPreparingDocs, color: liveMuted),
                   if (error != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: liveText(error!, color: liveGold),
                     ),
                   if (linking) ...[
-                    liveText(
-                      'Vincula tu cuenta anterior para conservar saldo y acceso.',
-                      color: liveMuted,
-                    ),
+                    liveText(l10n.accessLinkIntro, color: liveMuted),
                     TextField(
                       controller: email,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo de tu cuenta anterior',
+                      decoration: InputDecoration(
+                        labelText: l10n.accessLinkEmail,
                       ),
                     ),
                     TextField(
                       controller: password,
                       obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Contraseña anterior',
+                      decoration: InputDecoration(
+                        labelText: l10n.accessLinkPassword,
                       ),
                     ),
                     const SizedBox(height: 16),
                     liveButton(
-                      busy ? 'Conectando…' : 'Vincular mi cuenta',
+                      busy ? l10n.commonConnecting : l10n.accessLinkButton,
                       busy ? null : link,
                     ),
                     TextButton(
@@ -328,20 +286,21 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
                               try {
                                 await api.forgotPassword(email.text);
                                 if (context.mounted) {
-                                  liveNotice(
-                                    context,
-                                    'Si existe la cuenta, recibirás instrucciones por correo.',
-                                  );
+                                  liveNotice(context, l10n.accessForgotSent);
                                 }
                               } catch (failure) {
-                                if (context.mounted) liveNotice(context, '$failure');
+                                if (context.mounted) {
+                                  liveNotice(context, '$failure');
+                                }
                               }
                             },
-                      child: const Text('Recuperar contraseña anterior'),
+                      child: Text(l10n.accessForgotLink),
                     ),
                   ] else
                     liveButton(
-                      busy ? 'Conectando…' : googleLabel,
+                      busy
+                          ? l10n.commonConnecting
+                          : l10n.accessContinueWithGoogle,
                       busy || !consent || terms == null || privacy == null
                           ? null
                           : google,
@@ -350,7 +309,7 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
                   if (services.auth.currentUser != null) ...[
                     TextButton(
                       onPressed: busy ? null : resolve,
-                      child: const Text('Reintentar acceso'),
+                      child: Text(l10n.accessRetry),
                     ),
                     TextButton(
                       onPressed: busy
@@ -358,7 +317,7 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
                           : () async {
                               await api.logout();
                             },
-                      child: const Text('Usar otra cuenta'),
+                      child: Text(l10n.accessOtherAccount),
                     ),
                   ],
                 ],

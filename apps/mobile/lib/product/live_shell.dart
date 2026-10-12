@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'dart:async';
 
+import 'package:intl/intl.dart';
+
 import '../core/firebase_services.dart';
+import '../l10n/app_locale.dart';
 
 import 'live_api.dart';
 import 'live_markets.dart';
@@ -32,7 +35,8 @@ class _ProductShellState extends State<ProductShell>
   int tab = 0, horizon = 48;
   DateTime selected = DateTime.now();
   String search = '';
-  String stream = 'Alta probabilidad';
+  // Identificadores estables de la pestaña Predicciones (no son texto visible).
+  String stream = 'high';
   @override
   void initState() {
     super.initState();
@@ -91,10 +95,15 @@ class _ProductShellState extends State<ProductShell>
     final id = notificationMatchId(message.data);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message.notification?.title ?? 'Nuevo aviso de QuantFut'),
+        content: Text(
+          message.notification?.title ?? context.l10n.shellNewAlert,
+        ),
         action: id == null
             ? null
-            : SnackBarAction(label: 'Ver', onPressed: () => detail(id)),
+            : SnackBarAction(
+                label: context.l10n.shellView,
+                onPressed: () => detail(id),
+              ),
       ),
     );
   }
@@ -152,7 +161,7 @@ class _ProductShellState extends State<ProductShell>
   ).then((_) => reload());
   Future<void> unlock(JsonMap pick) async {
     if (!api.signedIn) {
-      liveNotice(context, 'Inicia sesión en Perfil para usar tus monedas.');
+      liveNotice(context, context.l10n.shellSignInForCoins);
       setState(() => tab = 4);
       return;
     }
@@ -160,18 +169,16 @@ class _ProductShellState extends State<ProductShell>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Desbloquear pronóstico'),
-        content: Text(
-          'Se descontarán $cost monedas de tu saldo. El acceso corresponde a este pronóstico.',
-        ),
+        title: Text(context.l10n.shellUnlockTitle),
+        content: Text(context.l10n.shellUnlockBody(cost ?? '—')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c, false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Confirmar'),
+            child: Text(context.l10n.commonConfirm),
           ),
         ],
       ),
@@ -217,18 +224,16 @@ class _ProductShellState extends State<ProductShell>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        liveText(
-          '62–95 % de probabilidad · uno gratis por mercado',
-          color: liveMuted,
-          size: 12,
-        ),
+        liveText(context.l10n.picksRangeHint, color: liveMuted, size: 12),
         const SizedBox(height: 12),
         if (report['estado'] != 'activa')
           training(
-            'Modelo en entrenamiento · ${jsonMap(report)['motivos'] ?? ''}',
+            context.l10n.picksTrainingReasons(
+              '${jsonMap(report)['motivos'] ?? ''}',
+            ),
           )
         else if (rows.isEmpty)
-          training('No hay pronósticos publicados pendientes en este rango.'),
+          training(context.l10n.picksEmpty),
         ...rows.map((p) => pickCard(p, d)),
       ],
     );
@@ -250,19 +255,18 @@ class _ProductShellState extends State<ProductShell>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        liveText(
-          'Un escalón gratuito: el de mayor probabilidad.',
-          color: liveMuted,
-          size: 12,
-        ),
+        liveText(context.l10n.ladderFreeHint, color: liveMuted, size: 12),
         const SizedBox(height: 12),
-        if (rows.isEmpty) training('No hay retos activos publicados.'),
+        if (rows.isEmpty) training(context.l10n.ladderEmpty),
         ...rows.map(
           (r) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               liveHeading(
-                'Reto #${r['reto_id']} · ${r['pasos_objetivo']} escalones',
+                context.l10n.ladderTitle(
+                  r['reto_id'] ?? '—',
+                  (r['pasos_objetivo'] as num?)?.toInt() ?? 0,
+                ),
               ),
               ...jsonRows(r['pasos'])
                   .where((p) => p['outcome'] != null)
@@ -281,7 +285,7 @@ class _ProductShellState extends State<ProductShell>
                           const SizedBox(width: 10),
                           Expanded(
                             child: liveText(
-                              '${p['local']} · ${p['visitante']}\n${p['texto']} · ${{'win': 'Acertado', 'loss': 'Fallado', 'push': 'Reembolso'}[p['outcome']] ?? p['outcome']}\n${p['marcador'] ?? ''}',
+                              '${p['local']} · ${p['visitante']}\n${p['texto']} · ${{'win': context.l10n.outcomeWin, 'loss': context.l10n.outcomeLoss, 'push': context.l10n.outcomePush}[p['outcome']] ?? p['outcome']}\n${p['marcador'] ?? ''}',
                               size: 12,
                             ),
                           ),
@@ -334,10 +338,10 @@ class _ProductShellState extends State<ProductShell>
             children: [
               Row(
                 children: [
-                  liveText('Calendario · hora local', bold: true),
+                  liveText(context.l10n.calendarTitle, bold: true),
                   const Spacer(),
                   IconButton(
-                    tooltip: 'Elegir fecha',
+                    tooltip: context.l10n.calendarPickDate,
                     onPressed: () async {
                       final date = await showDatePicker(
                         context: context,
@@ -373,15 +377,10 @@ class _ProductShellState extends State<ProductShell>
                         child: Column(
                           children: [
                             liveText(
-                              [
-                                'Lun',
-                                'Mar',
-                                'Mié',
-                                'Jue',
-                                'Vie',
-                                'Sáb',
-                                'Dom',
-                              ][i],
+                              toBeginningOfSentenceCase(
+                                    localDate(DateFormat.E, date),
+                                  ) ??
+                                  '',
                               size: 10,
                               color: active ? liveBg : liveMuted,
                             ),
@@ -404,11 +403,11 @@ class _ProductShellState extends State<ProductShell>
         TextField(
           onChanged: (s) => setState(() => search = s),
           style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.search, color: liveMuted),
-            hintText: 'Busca equipos o ligas',
-            hintStyle: TextStyle(color: liveMuted),
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search, color: liveMuted),
+            hintText: context.l10n.calendarSearchHint,
+            hintStyle: const TextStyle(color: liveMuted),
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 10),
@@ -429,9 +428,8 @@ class _ProductShellState extends State<ProductShell>
                 .toList(),
           ),
         ),
-        liveHeading('${rows.length} enfrentamientos'),
-        if (rows.isEmpty)
-          training('No hay enfrentamientos para estos filtros.'),
+        liveHeading(context.l10n.calendarMatchesCount(rows.length)),
+        if (rows.isEmpty) training(context.l10n.calendarEmpty),
         ...rows.map((m) {
           final local = jsonMap(m['local']), away = jsonMap(m['visitante']);
           final available = allPicks
@@ -491,7 +489,9 @@ class _ProductShellState extends State<ProductShell>
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: liveText(
-                        'Resultado: ${(m['marcador'] as List).join(' – ')}',
+                        context.l10n.resultLabel(
+                          (m['marcador'] as List).join(' – '),
+                        ),
                         color: liveMuted,
                       ),
                     ),
@@ -504,7 +504,11 @@ class _ProductShellState extends State<ProductShell>
                     ),
                   ] else if (available.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    liveText('Pronóstico VIP', color: liveGold, size: 12),
+                    liveText(
+                      context.l10n.vipPickLabel,
+                      color: liveGold,
+                      size: 12,
+                    ),
                   ],
                 ],
               ),
@@ -524,10 +528,10 @@ class _ProductShellState extends State<ProductShell>
             child: OutlinedButton.icon(
               onPressed: () => setState(() {
                 tab = 1;
-                stream = 'Alta probabilidad';
+                stream = 'high';
               }),
               icon: const Icon(Icons.verified_outlined),
-              label: const Text('Alta probabilidad'),
+              label: _segmentLabel(context.l10n.streamHighProb),
             ),
           ),
           const SizedBox(width: 8),
@@ -535,36 +539,40 @@ class _ProductShellState extends State<ProductShell>
             child: OutlinedButton.icon(
               onPressed: () => setState(() {
                 tab = 1;
-                stream = 'Reto Escalera';
+                stream = 'ladder';
               }),
               icon: const Icon(Icons.stairs_outlined),
-              label: const Text('Reto Escalera'),
+              label: _segmentLabel(context.l10n.streamLadder),
             ),
           ),
         ],
       ),
-      liveHeading('Partidos por fecha y horario'),
+      liveHeading(context.l10n.homeByDate),
       calendar(d),
-      liveHeading('Alta probabilidad'),
+      liveHeading(context.l10n.streamHighProb),
       picks(d),
-      liveHeading('Reto Escalera'),
+      liveHeading(context.l10n.streamLadder),
       ladder(d),
     ],
   );
   Widget markets(JsonMap d) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      liveHeading('Mercados y resultados'),
+      liveHeading(context.l10n.marketsAndResults),
       MarketsDashboard(
         api: api,
         alta: jsonMap(d['alta_probabilidad']),
         onVip: vip,
       ),
-      liveButton('Ver acceso VIP', vip),
+      liveButton(context.l10n.commonSeeVip, vip),
       const SizedBox(height: 16),
       if (!featureEnabled(d, 'nba')) training(featureMessage(d, 'nba')),
     ],
   );
+
+  /// Las traducciones largas se reducen para caber en el segmento.
+  Widget _segmentLabel(String text) =>
+      FittedBox(fit: BoxFit.scaleDown, child: Text(text, maxLines: 1));
 
   @override
   Widget build(BuildContext context) => Theme(
@@ -585,12 +593,12 @@ class _ProductShellState extends State<ProductShell>
               title: liveText('QuantFut', bold: true, size: 22),
               actions: [
                 IconButton(
-                  tooltip: 'VIP',
+                  tooltip: context.l10n.tooltipVip,
                   onPressed: data == null ? null : vip,
                   icon: const Icon(Icons.workspace_premium, color: liveGold),
                 ),
                 IconButton(
-                  tooltip: 'Actualizar',
+                  tooltip: context.l10n.commonRefresh,
                   onPressed: busy ? null : reload,
                   icon: const Icon(Icons.refresh, color: liveCyan),
                 ),
@@ -609,7 +617,7 @@ class _ProductShellState extends State<ProductShell>
                   children: [
                     liveText(error!, color: liveMuted),
                     const SizedBox(height: 16),
-                    liveButton('Reintentar', reload),
+                    liveButton(context.l10n.commonRetry, reload),
                   ],
                 ),
               ),
@@ -634,7 +642,7 @@ class _ProductShellState extends State<ProductShell>
                   if (services?.maintenance == true)
                     liveCard(
                       child: liveText(
-                        'Estamos realizando mantenimiento. Algunas funciones pueden tardar más.',
+                        context.l10n.maintenanceNotice,
                         color: liveGold,
                       ),
                     ),
@@ -644,18 +652,18 @@ class _ProductShellState extends State<ProductShell>
                     Column(
                       children: [
                         SegmentedButton<String>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
-                              value: 'Alta probabilidad',
-                              label: Text('Alta probabilidad'),
+                              value: 'high',
+                              label: _segmentLabel(context.l10n.streamHighProb),
                             ),
                             ButtonSegment(
-                              value: 'Reto Escalera',
-                              label: Text('Reto Escalera'),
+                              value: 'ladder',
+                              label: _segmentLabel(context.l10n.streamLadder),
                             ),
                             ButtonSegment(
-                              value: 'Parley',
-                              label: Text('Parley'),
+                              value: 'parley',
+                              label: _segmentLabel(context.l10n.streamParley),
                             ),
                           ],
                           showSelectedIcon: false,
@@ -672,9 +680,9 @@ class _ProductShellState extends State<ProductShell>
                               setState(() => stream = s.first),
                         ),
                         const SizedBox(height: 16),
-                        if (stream == 'Alta probabilidad')
+                        if (stream == 'high')
                           picks(data!)
-                        else if (stream == 'Reto Escalera')
+                        else if (stream == 'ladder')
                           ladder(data!)
                         else
                           ParleyTab(api: api, onVip: vip),
@@ -702,20 +710,26 @@ class _ProductShellState extends State<ProductShell>
             ),
           );
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'Inicio'),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.track_changes),
-            label: 'Predicciones',
+            icon: const Icon(Icons.grid_view),
+            label: context.l10n.navHome,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.insights),
-            label: 'Mercados',
+            icon: const Icon(Icons.track_changes),
+            label: context.l10n.navPredictions,
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.toll), label: 'Coins'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Perfil',
+            icon: const Icon(Icons.insights),
+            label: context.l10n.navMarkets,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.toll),
+            label: context.l10n.navCoins,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person_outline),
+            label: context.l10n.navProfile,
           ),
         ],
       ),

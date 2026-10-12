@@ -116,6 +116,29 @@ VPS declarada por el titular: Berlín, Alemania.
   externo del almacén y Play App Signing al publicar).
 - [ ] Dejar iOS reproducible para Mac/Apple; APNs y firma requieren Apple Developer.
 
+## Traducciones completas de la app (es, en, pt, fr, it, de) — 2026-10-12
+
+Decisión del usuario: traducir toda la app a los 6 idiomas y mantenerlo SIEMPRE al día:
+cualquier texto nuevo o modificado en la app se traduce en el mismo cambio (ver memoria
+`traducciones-siempre-en-la-app`). Alcance real: los 29 archivos alcanzables desde
+`main.dart` (~8.200 líneas, ~450 textos); 60 archivos de la plantilla original y 5 de
+`lib/product` (market_screens, match_detail, match_visuals, profile_settings,
+vip_performance) son código muerto y no se traducen.
+
+- [x] Fase 1 — Base: `flutter_localizations` + `gen-l10n` (ARB, plantilla `app_es.arb`),
+  `LocaleController` persistente (funciona sin Firebase), selector de idioma (bienvenida,
+  Perfil, acceso), idioma del dispositivo como sugerencia, español como respaldo y prueba
+  que exige las mismas claves/placeholders en los 6 ARB.
+- [x] Fase 2 — Migrar todos los textos fijos de los 29 archivos a ARB (con plurales y
+  parámetros) y formatear fechas, horas, números y porcentajes según el idioma.
+- [x] Fase 3 — Textos que llegan del servidor: el pronóstico (`texto`) se genera en la app
+  desde `market`/`selection`/`line`/equipos (misma lógica que `alta_prob.texto`); grupos y
+  títulos de mercado, estados y motivos con catálogos propios.
+- [x] Fase 4 — Mensajes del backend (errores `detail`, términos de monedas, avisos FCM,
+  correos) según el idioma de la cuenta; revisión humana de las traducciones antes de publicar.
+  Hecho el 2026-10-12 salvo: revisión por hablantes nativos (pendiente, antes de publicar), textos
+  legales públicos y correos de cuenta (requieren revisión jurídica). Ver `apps/mobile/docs/TRADUCCIONES.md`.
+
 Primer diseño implementado a partir de las referencias del usuario:
 `apps/mobile/docs/PANTALLAS_BIENVENIDA_INICIO_VIP_20261011.md`.
 Cinco bienvenidas animadas y cinco pestañas inferiores. Este documento conserva

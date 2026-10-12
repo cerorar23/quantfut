@@ -14,12 +14,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase_options.dart';
+import '../l10n/app_locale.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseBackgroundMessage(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Background delivery must not log tokens or download protected predictions.
 }
+
+/// Motivo por el que no hay notificaciones; el texto se traduce al mostrarlo.
+enum NotificationStatus { permissionDenied, iosPending }
 
 class FirebaseServices extends ChangeNotifier {
   FirebaseServices._(this.preferences);
@@ -29,7 +33,7 @@ class FirebaseServices extends ChangeNotifier {
   bool diagnosticsAllowed = false;
   bool notificationsAllowed = false;
   String language = 'es';
-  String? notificationStatus;
+  NotificationStatus? notificationStatus;
   final openedMatch = ValueNotifier<String?>(null);
   final foregroundMessage = ValueNotifier<RemoteMessage?>(null);
   final List<StreamSubscription<dynamic>> _subscriptions = [];
@@ -47,8 +51,8 @@ class FirebaseServices extends ChangeNotifier {
         await services.preferences.getBool('diagnostics_consent') ?? false;
     services.notificationsAllowed =
         await services.preferences.getBool('push_consent') ?? false;
-    services.language =
-        await services.preferences.getString('language') ?? 'es';
+    // La app decide el idioma (elección guardada → dispositivo → español).
+    services.language = AppLocale.instance.code;
     await FirebaseAppCheck.instance.activate(
       providerAndroid: kReleaseMode
           ? const AndroidPlayIntegrityProvider()
@@ -161,6 +165,7 @@ class FirebaseServices extends ChangeNotifier {
   Future<void> setLanguage(String value) async {
     if (!const ['es', 'en', 'pt', 'fr', 'it', 'de'].contains(value)) return;
     language = value;
+    await AppLocale.instance.select(value);
     await preferences.setString('language', value);
     await auth.setLanguageCode(value);
     notifyListeners();
@@ -232,9 +237,7 @@ class FirebaseServices extends ChangeNotifier {
     notificationsAllowed = allowed;
     await preferences.setBool('push_consent', allowed);
     await messaging.setAutoInitEnabled(allowed);
-    notificationStatus = allowed
-        ? null
-        : 'Activa el permiso desde los ajustes del dispositivo.';
+    notificationStatus = allowed ? null : NotificationStatus.permissionDenied;
     notifyListeners();
     return allowed ? notificationToken() : null;
   }
@@ -242,8 +245,7 @@ class FirebaseServices extends ChangeNotifier {
   Future<String?> notificationToken() async {
     if (!notificationsAllowed) return null;
     if (Platform.isIOS && await messaging.getAPNSToken() == null) {
-      notificationStatus =
-          'Las notificaciones de iOS esperan la configuración de Apple.';
+      notificationStatus = NotificationStatus.iosPending;
       return null;
     }
     return messaging.getToken();

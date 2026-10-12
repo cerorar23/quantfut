@@ -100,6 +100,7 @@ Consecuencias que hay que respetar:
 
 ## Reglas estrictas
 
+- **Traducciones de la app (decisión del usuario, 2026-10-12):** cualquier texto visible que se añada o cambie en `apps/mobile` (o mensaje del servidor que la app muestre) se traduce a los 6 idiomas (es, en, pt, fr, it, de) en el MISMO cambio. Sin cadenas fijas en los widgets: `context.l10n` + `python apps/mobile/tool/l10n_add.py`; mensajes de API en `src/qf/api/mensajes.py`. Ver `apps/mobile/docs/TRADUCCIONES.md`; las pruebas `test/l10n_test.dart` y `tests/test_mensajes.py` lo exigen.
 - No inventes que existe un archivo o módulo sin verificarlo (`ls`, `grep`).
   Este repo mezcla partes completas (Fase 0-1) con partes que no existen
   todavía (Fase 4-5) — confundir eso rompe el plan.

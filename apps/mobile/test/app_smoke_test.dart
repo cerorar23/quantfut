@@ -9,6 +9,7 @@ import 'package:gobet/forget_password/create_account.dart';
 import 'package:gobet/sign_in/home_screen/statistic/month.dart';
 import 'package:gobet/utils/color_notifire.dart';
 import 'package:provider/provider.dart';
+import 'package:gobet/l10n/app_locale.dart';
 
 void main() {
   setUpAll(() async {
@@ -61,6 +62,10 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => ColorNotifire(),
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: AppLocale.instance.locale,
+
             theme: ThemeData(useMaterial3: false, fontFamily: 'Gilroy Medium'),
             home: screen.value,
           ),

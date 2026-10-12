@@ -21,7 +21,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from psycopg.errors import UndefinedTable
 
-from . import console, cuentas, panel
+from . import console, cuentas, mensajes, panel
 from ..db import conn, query, query_one
 from ..comercial.auditoria import audit
 from ..comercial import cifrado
@@ -89,6 +89,14 @@ def change(c, account_id: int, delta: int, event_key: str, kind: str, *, spend: 
     return True
 
 
+# Términos que ve la persona en la app (traducidos en `mensajes.py`).
+TERMS = ('Monedas sin valor monetario: canjeables solo por pronósticos. '
+         'Las ofertas dependen del país y se acreditan tras la confirmación del proveedor. '
+         'Una oferta anulada revierte sus monedas. La asistencia usa días UTC. '
+         'Los referidos se premian una vez, después de verificar el correo y completar '
+         'ofertas confirmadas por el mínimo indicado. No se premian reseñas.')
+
+
 def public_settings() -> dict:
     cfg = settings()
     return {k: cfg[k] for k in ('enabled','unlock_cost','attendance_enabled','attendance_coins',
@@ -102,19 +110,17 @@ def entitlements(account: dict | None) -> set[tuple[str,str]]:
 
 
 @router.get('/mobile/v1/rewards')
-def overview(response: Response, account: dict | None = Depends(optional_account)):
+def overview(request: Request, response: Response, account: dict | None = Depends(optional_account)):
     response.headers['Cache-Control'] = 'no-store'
+    lang = mensajes.idioma(request.headers.get('accept-language'))
     cfg = public_settings()
+    cfg['message'] = mensajes.traducir(cfg['message'], lang)
     providers = query('SELECT provider,enabled FROM reward_providers ORDER BY provider')
     out = {'settings':cfg, 'signed_in':account is not None, 'providers':[
         {'provider':p['provider'],'name':PROVIDERS[p['provider']],
          'available':cfg['enabled'] and p['enabled'] and provider_ready(p['provider'])} for p in providers],
         'wallet':None, 'ledger':[], 'referrals':None,
-        'terms':'Monedas sin valor monetario: canjeables solo por pronósticos. '
-                'Las ofertas dependen del país y se acreditan tras la confirmación del proveedor. '
-                'Una oferta anulada revierte sus monedas. La asistencia usa días UTC. '
-                'Los referidos se premian una vez, después de verificar el correo y completar '
-                'ofertas confirmadas por el mínimo indicado. No se premian reseñas.'}
+        'terms':mensajes.traducir(TERMS,lang)}
     if account is not None:
         with conn() as c:
             w = wallet(c,account['account_id'])

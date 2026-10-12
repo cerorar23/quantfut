@@ -2,6 +2,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/widgets/countdown_timer.dart';
+import 'package:gobet/l10n/app_locale.dart';
 
 void main() {
   testWidgets('expires once and never renders negative time', (tester) async {
@@ -10,6 +11,10 @@ void main() {
     await withClock(Clock(() => now), () async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: AppLocale.instance.locale,
+
           home: CountdownTimer(
             endTime: now.add(const Duration(seconds: 2)).millisecondsSinceEpoch,
             onEnd: () => ended++,
@@ -38,6 +43,10 @@ void main() {
     await withClock(Clock.fixed(now), () async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: AppLocale.instance.locale,
+
           home: CountdownTimer(
             endTime: now
                 .subtract(const Duration(seconds: 1))
@@ -61,6 +70,10 @@ void main() {
     var ended = 0;
     await withClock(Clock(() => now), () async {
       Widget countdown(int seconds) => MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: AppLocale.instance.locale,
+
         home: CountdownTimer(
           key: const ValueKey('countdown'),
           endTime: now.add(Duration(seconds: seconds)).millisecondsSinceEpoch,
@@ -87,6 +100,10 @@ void main() {
     await withClock(Clock(() => now), () async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: AppLocale.instance.locale,
+
           home: CountdownTimer(
             endTime: now.add(const Duration(seconds: 5)).millisecondsSinceEpoch,
             onEnd: () => ended++,

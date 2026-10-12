@@ -2,45 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../bottombar.dart';
+import '../l10n/app_locale.dart';
+import '../l10n/language_picker.dart';
 import '../product/welcome_art.dart';
 
 class WelcomePage {
   const WelcomePage(this.title, this.description, this.color);
-  final String title;
-  final String description;
+  final String Function(AppLocalizations l10n) title;
+  final String Function(AppLocalizations l10n) description;
   final Color color;
 }
 
-const welcomePages = [
+final welcomePages = [
   WelcomePage(
-    'Fútbol y NBA,\ncon otra perspectiva',
-    'Descubre el lado estadístico del deporte: partidos, análisis y '
-        'pronósticos del proyecto que ya conoces en la web.',
-    Color(0xff00d5ee),
+    (l10n) => l10n.welcome1Title,
+    (l10n) => l10n.welcome1Body,
+    const Color(0xff00d5ee),
   ),
   WelcomePage(
-    'Cada partido,\ncon más contexto',
-    'La forma reciente, el cara a cara y las estadísticas ayudan a '
-        'entender lo que puede pasar. Empieza por los datos.',
-    Color(0xffffb600),
+    (l10n) => l10n.welcome2Title,
+    (l10n) => l10n.welcome2Body,
+    const Color(0xffffb600),
   ),
   WelcomePage(
-    'Más mercados.\nMás información.',
-    'Goles, córners, hándicap y estadísticas de la NBA. '
-        'Conoce qué mide cada análisis antes de interpretar una selección.',
-    Color(0xff00d58b),
+    (l10n) => l10n.welcome3Title,
+    (l10n) => l10n.welcome3Body,
+    const Color(0xff00d58b),
   ),
   WelcomePage(
-    'Los resultados,\na la vista',
-    'Un pronóstico también se entiende después del partido. '
-        'El historial permite comparar estimaciones con resultados.',
-    Color(0xffbd81ff),
+    (l10n) => l10n.welcome4Title,
+    (l10n) => l10n.welcome4Body,
+    const Color(0xffbd81ff),
   ),
   WelcomePage(
-    'Todo empieza\npor informarte',
-    'Una probabilidad no es una certeza. Explora el contenido, '
-        'revisa el contexto y forma tu propio criterio.',
-    Color(0xff00d5ee),
+    (l10n) => l10n.welcome5Title,
+    (l10n) => l10n.welcome5Body,
+    const Color(0xff00d5ee),
   ),
 ];
 
@@ -88,6 +85,7 @@ class _SecondScreenState extends State<SecondScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final accent = welcomePages[_page].color;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -132,13 +130,14 @@ class _SecondScreenState extends State<SecondScreen> {
                             ),
                           ),
                           const Spacer(),
+                          const LanguageButton(),
                           TextButton(
                             onPressed: _finish,
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xffb4bfce),
                               minimumSize: const Size(64, 48),
                             ),
-                            child: const Text('Saltar'),
+                            child: Text(l10n.welcomeSkip),
                           ),
                         ],
                       ),
@@ -182,7 +181,7 @@ class _SecondScreenState extends State<SecondScreen> {
                                       ),
                                       const SizedBox(height: 30),
                                       Text(
-                                        page.title,
+                                        page.title(l10n),
                                         key: ValueKey('welcome-title-$index'),
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
@@ -194,7 +193,7 @@ class _SecondScreenState extends State<SecondScreen> {
                                       ),
                                       const SizedBox(height: 16),
                                       Text(
-                                        page.description,
+                                        page.description(l10n),
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
                                           color: Color(0xffa0adbd),
@@ -218,7 +217,7 @@ class _SecondScreenState extends State<SecondScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Semantics(
-                            label: 'Pantalla ${_page + 1} de 5',
+                            label: l10n.welcomeScreenOf(_page + 1, welcomePages.length),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: List.generate(
@@ -227,7 +226,7 @@ class _SecondScreenState extends State<SecondScreen> {
                                   width: 40,
                                   height: 44,
                                   child: IconButton(
-                                    tooltip: 'Ir a bienvenida ${index + 1}',
+                                    tooltip: l10n.welcomeGoTo(index + 1),
                                     onPressed: () => _goTo(index),
                                     padding: EdgeInsets.zero,
                                     icon: AnimatedContainer(
@@ -268,7 +267,7 @@ class _SecondScreenState extends State<SecondScreen> {
                                   fontSize: 16,
                                 ),
                               ),
-                              child: Text(_page == 4 ? 'Empezar' : 'Siguiente'),
+                              child: Text(_page == 4 ? l10n.welcomeStart : l10n.welcomeNext),
                             ),
                           ),
                         ],

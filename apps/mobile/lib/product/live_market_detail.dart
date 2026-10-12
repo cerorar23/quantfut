@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+
+import 'package:intl/intl.dart';
+
 import 'market_catalog.dart';
 
 /// Pantalla de un mercado: tasa de acierto, pronósticos de hoy (abiertos) y
@@ -73,13 +78,12 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
       if (!mounted) return;
       setState(
         () => history = [
-          for (final row in (body['items'] as List? ?? const []))
-            jsonMap(row),
+          for (final row in (body['items'] as List? ?? const [])) jsonMap(row),
         ],
       );
     } catch (_) {
       if (mounted) {
-        setState(() => error = 'No se pudo cargar el historial.');
+        setState(() => error = context.l10n.mdLoadError);
       }
     }
   }
@@ -102,7 +106,7 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
         child: Scaffold(
           appBar: AppBar(
             backgroundColor: liveBg,
-            title: liveText(widget.family.title, size: 18, bold: true),
+            title: liveText(widget.family.localTitle, size: 18, bold: true),
           ),
           body: Column(
             children: [
@@ -110,7 +114,9 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: _RateCard(
                   color: widget.color,
-                  today: history == null ? null : PublishedRecord(todays.length, todayWon),
+                  today: history == null
+                      ? null
+                      : PublishedRecord(todays.length, todayWon),
                   overall: widget.record,
                   onLines: () => showLinesSheet(
                     context,
@@ -125,8 +131,12 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
                 labelColor: Colors.white,
                 unselectedLabelColor: liveMuted,
                 tabs: [
-                  Tab(text: 'Hoy (${widget.upcoming.length + widget.locked.length})'),
-                  const Tab(text: 'Anteriores'),
+                  Tab(
+                    text: context.l10n.mdTabToday(
+                      widget.upcoming.length + widget.locked.length,
+                    ),
+                  ),
+                  Tab(text: context.l10n.mdTabPrevious),
                 ],
               ),
               Expanded(
@@ -205,20 +215,25 @@ class _RateCard extends StatelessWidget {
           children: [
             Icon(Icons.show_chart, color: color, size: 20),
             const SizedBox(width: 8),
-            Expanded(child: liveText('Tasa de acierto', size: 14, bold: true)),
+            Expanded(
+              child: liveText(context.l10n.mdHitRate, size: 14, bold: true),
+            ),
             TextButton(
               onPressed: onLines,
-              child: const Text('Líneas validadas', style: TextStyle(fontSize: 11)),
+              child: Text(
+                context.l10n.mdValidatedLines,
+                style: const TextStyle(fontSize: 11),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 6),
         Row(
           children: [
-            _stat('Hoy', today),
+            _stat(context.l10n.commonToday, today),
             Container(width: 1, height: 36, color: Colors.white12),
             const SizedBox(width: 14),
-            _stat('General', overall),
+            _stat(context.l10n.mdOverall, overall),
           ],
         ),
       ],
@@ -263,7 +278,7 @@ Widget _modelColumn(JsonMap p, {String? extra}) => Column(
   crossAxisAlignment: CrossAxisAlignment.end,
   children: [
     liveText(realPercent(p['prob']), size: 20, bold: true, color: liveGreen),
-    liveText('MODELO', size: 9, color: liveMuted),
+    liveText(AppLocale.instance.l10n.mdModel, size: 9, color: liveMuted),
     if (extra != null) liveText(extra, size: 10, color: liveMuted),
   ],
 );
@@ -289,10 +304,7 @@ class _TodayTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (picks.isEmpty && locked.isEmpty) {
-      return _emptyState(
-        'No hay pronósticos disponibles ahora para este mercado. '
-        'Aparecen cuando el modelo los publica, antes del partido.',
-      );
+      return _emptyState(context.l10n.mdEmptyToday);
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -318,7 +330,7 @@ class _TodayTab extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _pickChip('${p['texto'] ?? '—'}', color)),
+                    Expanded(child: _pickChip(pickText(p), color)),
                     const SizedBox(width: 10),
                     if ((p['ref_price'] ?? p['price']) is num)
                       liveText(
@@ -385,14 +397,17 @@ class _HistoryTab extends StatelessWidget {
 
   static String _day(DateTime d) {
     final now = DateTime.now();
-    final diff = DateTime(now.year, now.month, now.day)
-        .difference(DateTime(d.year, d.month, d.day))
-        .inDays;
+    final diff = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).difference(DateTime(d.year, d.month, d.day)).inDays;
+    final l10n = AppLocale.instance.l10n;
     return diff == 0
-        ? 'Hoy'
+        ? l10n.commonToday
         : diff == 1
-        ? 'Ayer'
-        : '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+        ? l10n.commonYesterday
+        : localDate(DateFormat.yMd, d);
   }
 
   @override
@@ -404,7 +419,10 @@ class _HistoryTab extends StatelessWidget {
           children: [
             liveText(error!, color: liveMuted),
             const SizedBox(height: 12),
-            TextButton(onPressed: onRetry, child: const Text('Reintentar')),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(context.l10n.commonRetry),
+            ),
           ],
         ),
       );
@@ -412,13 +430,13 @@ class _HistoryTab extends StatelessWidget {
     final rows = history;
     if (rows == null) return const Center(child: CircularProgressIndicator());
     if (rows.isEmpty) {
-      return _emptyState('Todavía no hay pronósticos resueltos en este mercado.');
+      return _emptyState(context.l10n.mdEmptyHistory);
     }
     final children = <Widget>[];
     String? current;
     for (final p in rows) {
       final d = dateValue(p['kickoff_utc'])?.toLocal();
-      final label = d == null ? 'Sin fecha' : _day(d);
+      final label = d == null ? context.l10n.mdNoDate : _day(d);
       if (label != current) {
         current = label;
         children.add(
@@ -426,7 +444,10 @@ class _HistoryTab extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8, bottom: 10),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .06),
                   borderRadius: BorderRadius.circular(14),
@@ -466,7 +487,7 @@ class _HistoryTab extends StatelessWidget {
                         ),
                         if (isCorners)
                           liveText(
-                            'córners · total ${hh + aa}',
+                            context.l10n.mdCornersTotal(hh + aa),
                             size: 9,
                             color: liveMuted,
                           ),
@@ -479,11 +500,15 @@ class _HistoryTab extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: won ? const Color(0xff1f7a3d) : const Color(0xffc23b4d),
+                      color: won
+                          ? const Color(0xff1f7a3d)
+                          : const Color(0xffc23b4d),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: liveText(
-                      won ? 'Acertó' : 'Falló',
+                      won
+                          ? context.l10n.parleyOutcomeWin
+                          : context.l10n.parleyOutcomeLoss,
                       size: 11,
                       bold: true,
                     ),
@@ -493,7 +518,7 @@ class _HistoryTab extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _pickChip('${p['texto'] ?? '—'}', color)),
+                  Expanded(child: _pickChip(pickText(p), color)),
                   const SizedBox(width: 10),
                   _modelColumn(p),
                 ],
@@ -519,13 +544,14 @@ void showLinesSheet(
 ) {
   Widget row(MarketLine line) {
     final supported = line.supported(minimum);
+    final l10n = context.l10n;
     final (label, tone) = supported
-        ? ('Confirmada', liveGreen)
+        ? (l10n.mdLineConfirmed, liveGreen)
         : !line.deployed
-        ? ('Sin desplegar', liveGold)
+        ? (l10n.mdLineNotDeployed, liveGold)
         : line.cases < minimum
-        ? ('Muestra corta', liveGold)
-        : ('En revisión', liveMuted);
+        ? (l10n.mdLineShort, liveGold)
+        : (l10n.mdLineReview, liveMuted);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -534,12 +560,8 @@ void showLinesSheet(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                liveText(line.label, size: 13, bold: true),
-                liveText(
-                  '${caseCount(line.cases)} casos',
-                  size: 10,
-                  color: liveMuted,
-                ),
+                liveText(line.localLabel, size: 13, bold: true),
+                liveText(casesLabel(line.cases), size: 10, color: liveMuted),
               ],
             ),
           ),
@@ -572,9 +594,9 @@ void showLinesSheet(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            liveText(family.title, size: 18, bold: true, color: color),
+            liveText(family.localTitle, size: 18, bold: true, color: color),
             const SizedBox(height: 6),
-            liveText(family.subtitle, size: 12, color: liveMuted),
+            liveText(family.localSubtitle, size: 12, color: liveMuted),
             const SizedBox(height: 14),
             for (final line in family.lines) row(line),
           ],

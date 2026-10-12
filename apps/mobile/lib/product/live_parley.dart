@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 
@@ -36,7 +37,7 @@ class _ParleyTabState extends State<ParleyTab> {
       final body = jsonMap(await widget.api.request('/parley'));
       if (mounted) setState(() => data = body);
     } catch (_) {
-      if (mounted) setState(() => error = 'No se pudo cargar el Parley.');
+      if (mounted) setState(() => error = context.l10n.parleyLoadError);
     }
   }
 
@@ -49,7 +50,7 @@ class _ParleyTabState extends State<ParleyTab> {
           children: [
             liveText(error!, color: liveMuted),
             const SizedBox(height: 12),
-            TextButton(onPressed: _load, child: const Text('Reintentar')),
+            TextButton(onPressed: _load, child: Text(context.l10n.commonRetry)),
           ],
         ),
       );
@@ -65,39 +66,38 @@ class _ParleyTabState extends State<ParleyTab> {
     final steps = [
       for (final e in (rules['escalones'] as List? ?? const [])) jsonMap(e),
     ];
-    final days = [
-      for (final x in (d['dias'] as List? ?? const [])) jsonMap(x),
-    ];
+    final days = [for (final x in (d['dias'] as List? ?? const [])) jsonMap(x)];
     final latest = days.isEmpty ? null : days.first;
     final tickets = [
       for (final t in (latest?['tickets'] as List? ?? const [])) jsonMap(t),
     ];
     final total = jsonMap(jsonMap(d['resumen'])['total']);
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         liveText(
           steps.isEmpty
-              ? 'Parlays sellados antes de los partidos'
-              : 'De 1 a ${steps.length} parlays · cuota entre ${decimalText(steps.first['cuota_min'])} y ${decimalText(steps.last['cuota_max'])} · el más probable de cada escalón',
+              ? l10n.parleySealed
+              : l10n.parleyRange(
+                  steps.length,
+                  decimalText(steps.first['cuota_min']),
+                  decimalText(steps.last['cuota_max']),
+                ),
           size: 12,
           color: liveMuted,
         ),
         const SizedBox(height: 4),
-        liveText('Uno gratis al día (el de menor cuota); el resto, VIP.', size: 11, color: liveMuted),
+        liveText(l10n.parleyFreeNote, size: 11, color: liveMuted),
         const SizedBox(height: 14),
         if (d['activo'] != true)
           _notice(
             Icons.hourglass_empty,
-            'El Parley todavía no está activo',
-            'Cuando se active verás aquí los parlays del día, sellados antes de que empiecen los partidos.',
+            l10n.parleyInactiveTitle,
+            l10n.parleyInactiveBody,
           )
         else if (tickets.isEmpty)
-          _notice(
-            Icons.event_busy,
-            'Hoy no hay parlays',
-            'El modelo no publica un parley si no encuentra uno dentro de las reglas.',
-          )
+          _notice(Icons.event_busy, l10n.parleyNoneTitle, l10n.parleyNoneBody)
         else ...[
           for (final t in tickets)
             t['locked'] == true
@@ -105,17 +105,12 @@ class _ParleyTabState extends State<ParleyTab> {
                 : _TicketCard(ticket: t),
         ],
         if (days.length > 1) ...[
-          liveHeading('Días anteriores'),
+          liveHeading(l10n.parleyPastDays),
           for (final day in days.skip(1).take(7)) _PastDay(day: day),
         ],
         if ((total['n'] as num? ?? 0) > 0) _Summary(total: total),
         const SizedBox(height: 8),
-        liveText(
-          'Se elige por probabilidad, no por valor, y cada pata resta margen. Un parley puede fallar: '
-          'multiplicar cuotas también multiplica el riesgo.',
-          size: 10,
-          color: liveMuted,
-        ),
+        liveText(l10n.parleyDisclaimer, size: 10, color: liveMuted),
         const SizedBox(height: 18),
       ],
     );
@@ -143,12 +138,15 @@ class _ParleyTabState extends State<ParleyTab> {
 }
 
 /// Los parlays liquidan como ganado/perdido/nulo y sus patas como win/loss/push/void.
-(Color, String) _outcome(dynamic o) => switch (o) {
-  'win' || 'ganado' => (liveGreen, 'Acertó'),
-  'loss' || 'perdido' => (const Color(0xffe85667), 'Falló'),
-  'push' || 'void' || 'nulo' => (liveMuted, 'Anulado'),
-  _ => (liveGold, 'Pendiente'),
-};
+(Color, String) _outcome(dynamic o) {
+  final l10n = AppLocale.instance.l10n;
+  return switch (o) {
+    'win' || 'ganado' => (liveGreen, l10n.parleyOutcomeWin),
+    'loss' || 'perdido' => (const Color(0xffe85667), l10n.parleyOutcomeLoss),
+    'push' || 'void' || 'nulo' => (liveMuted, l10n.parleyOutcomeVoid),
+    _ => (liveGold, l10n.parleyOutcomePending),
+  };
+}
 
 /// Parley VIP: solo se ve su escalón y el rango de cuota de ese escalón.
 class _LockedTicket extends StatelessWidget {
@@ -171,11 +169,17 @@ class _LockedTicket extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _TicketCard._chip('ESCALÓN ${ticket['escalon'] ?? '—'}', liveCyan),
+            _TicketCard._chip(
+              context.l10n.parleyStep(ticket['escalon'] ?? '—'),
+              liveCyan,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: liveText(
-                'Cuota entre ${decimalText(ticket['cuota_min'])} y ${decimalText(ticket['cuota_max'])}',
+                context.l10n.parleyOddsBetween(
+                  decimalText(ticket['cuota_min']),
+                  decimalText(ticket['cuota_max']),
+                ),
                 size: 12,
                 color: liveMuted,
               ),
@@ -207,7 +211,10 @@ class _TicketCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _chip('ESCALÓN ${ticket['escalon'] ?? '—'}', liveCyan),
+              _chip(
+                context.l10n.parleyStep(ticket['escalon'] ?? '—'),
+                liveCyan,
+              ),
               const SizedBox(width: 6),
               _chip(label.toUpperCase(), color),
               const Spacer(),
@@ -221,7 +228,10 @@ class _TicketCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           liveText(
-            '${realPercent(ticket['prob_total'])} de probabilidad conjunta · ${legs.length} ${legs.length == 1 ? 'pata' : 'patas'}',
+            context.l10n.parleyJointProb(
+              realPercent(ticket['prob_total']),
+              legs.length,
+            ),
             size: 11,
             color: liveMuted,
           ),
@@ -298,7 +308,7 @@ class _Leg extends StatelessWidget {
                 ),
                 liveText(
                   leg['marcador'] != null
-                      ? 'Resultado ${leg['marcador']}'
+                      ? context.l10n.parleyResultScore(leg['marcador'])
                       : kickoffText(leg['kickoff_utc']),
                   size: 10,
                   color: liveMuted,
@@ -316,11 +326,7 @@ class _Leg extends StatelessWidget {
                 bold: true,
                 color: liveGold,
               ),
-              liveText(
-                realPercent(leg['prob']),
-                size: 10,
-                color: liveMuted,
-              ),
+              liveText(realPercent(leg['prob']), size: 10, color: liveMuted),
             ],
           ),
         ],
@@ -348,7 +354,7 @@ class _PastDay extends StatelessWidget {
             child: liveText('${day['dia'] ?? '—'}', size: 13, bold: true),
           ),
           liveText(
-            '${tickets.length} parlays${settled == 0 ? '' : ' · $won/$settled acertados'}',
+            '${context.l10n.parleyDayCount(tickets.length)}${settled == 0 ? '' : ' · ${context.l10n.parleyDaySettled(won, settled)}'}',
             size: 11,
             color: liveMuted,
           ),
@@ -371,22 +377,27 @@ class _Summary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          liveText('Historial del Parley', bold: true, size: 15),
+          liveText(context.l10n.parleyHistoryTitle, bold: true, size: 15),
           const SizedBox(height: 8),
           liveText(
-            '${total['aciertos'] ?? 0}/${total['n']} parlays acertados'
-            '${real is num ? ' · ${decimalText(real, 1)} % real' : ''}'
-            '${promised is num ? ' frente a ${decimalText(promised, 1)} % prometido' : ''}',
+            context.l10n.parleySummary(
+                  total['aciertos'] ?? 0,
+                  total['n'] ?? 0,
+                ) +
+                (real is num
+                    ? context.l10n.parleySummaryReal(decimalText(real, 1))
+                    : '') +
+                (promised is num
+                    ? context.l10n.parleySummaryPromised(
+                        decimalText(promised, 1),
+                      )
+                    : ''),
             size: 12,
             color: liveGreen,
             bold: true,
           ),
           const SizedBox(height: 6),
-          liveText(
-            'Con pocos parlays la tasa real no demuestra nada todavía.',
-            size: 10,
-            color: liveMuted,
-          ),
+          liveText(context.l10n.parleyFewNote, size: 10, color: liveMuted),
         ],
       ),
     );

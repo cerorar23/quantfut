@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/product/live_forecast.dart';
+import 'package:gobet/l10n/app_locale.dart';
 
 Map<String, dynamic> _ficha(Map<String, dynamic>? vivo) => {
   'partido': {'vivo': ?vivo},
@@ -9,6 +10,10 @@ Map<String, dynamic> _ficha(Map<String, dynamic>? vivo) => {
 };
 
 Widget _host(Map<String, dynamic> ficha) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: AppLocale.instance.locale,
+
   home: Scaffold(body: LiveScoreStrip(ficha: ficha)),
 );
 

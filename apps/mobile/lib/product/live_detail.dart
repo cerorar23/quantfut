@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_forecast.dart';
 import 'live_match_markets.dart';
@@ -23,7 +25,9 @@ class LiveMatchDetail extends StatefulWidget {
 class _LiveMatchDetailState extends State<LiveMatchDetail> {
   late Future<JsonMap> future = widget.api.detail(widget.id);
   int tab = 0;
-  String filter = 'Todos';
+  // Filtro de mercado; `_all` es un identificador, no un texto visible.
+  static const _all = '*';
+  String filter = _all;
   Widget results(List<JsonMap> rows) => Column(
     children: rows
         .map(
@@ -38,7 +42,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                   ),
                 ),
                 liveText(
-                  '${p['marcador'] ?? ''} · ${p['res'] ?? ''}',
+                  '${p['marcador'] ?? ''} · ${resultLetter(p['res'] ?? '')}',
                   bold: true,
                 ),
               ],
@@ -54,20 +58,18 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
     if (!featureEnabled(data, 'h2h')) {
       return training(featureMessage(data, 'h2h'));
     }
+    final l10n = context.l10n;
     final h2h = jsonRows(jsonMap(ficha['cara_a_cara'])['partidos']);
     final lineups = jsonMap(ficha['alineaciones']),
         injuries = jsonMap(ficha['bajas']);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        liveHeading('Historial directo (H2H)'),
-        if (h2h.isEmpty)
-          training('No hay enfrentamientos registrados para este partido.')
-        else
-          results(h2h),
-        liveHeading('Alineaciones'),
+        liveHeading(l10n.detailH2hTitle),
+        if (h2h.isEmpty) training(l10n.detailNoH2h) else results(h2h),
+        liveHeading(l10n.detailLineups),
         if (lineups.isEmpty)
-          training('Alineaciones todavía no confirmadas.')
+          training(l10n.detailLineupsPending)
         else
           ...['home', 'away'].map((side) {
             final l = jsonMap(lineups[side]);
@@ -77,12 +79,12 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   liveText(
-                    '${jsonMap(ficha[side == 'home' ? 'local' : 'visitante'])['nombre']} · ${l['formacion'] ?? 'Formación pendiente'}',
+                    '${jsonMap(ficha[side == 'home' ? 'local' : 'visitante'])['nombre']} · ${l['formacion'] ?? l10n.detailFormationPending}',
                     bold: true,
                   ),
                   const SizedBox(height: 10),
                   if (players.isEmpty)
-                    liveText('Sin titulares confirmados.', color: liveMuted)
+                    liveText(l10n.detailNoStarters, color: liveMuted)
                   else
                     ...players.map(
                       (p) => liveText(
@@ -94,9 +96,9 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
               ),
             );
           }),
-        liveHeading('Bajas reportadas'),
+        liveHeading(l10n.detailInjuries),
         if (injuries.isEmpty)
-          training('No hay una comprobación de bajas disponible.')
+          training(l10n.detailNoInjuriesCheck)
         else
           ...['home', 'away'].map(
             (side) => liveCard(
@@ -109,11 +111,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                   ),
                   const SizedBox(height: 8),
                   if (jsonRows(injuries[side]).isEmpty)
-                    liveText(
-                      'Sin bajas en el reporte disponible.',
-                      color: liveMuted,
-                      size: 12,
-                    )
+                    liveText(l10n.detailNoInjuries, color: liveMuted, size: 12)
                   else
                     ...jsonRows(injuries[side]).map(
                       (p) => liveText(
@@ -122,7 +120,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                       ),
                     ),
                   liveText(
-                    'Comprobado: ${kickoffText(injuries['comprobada'])}',
+                    l10n.detailChecked(kickoffText(injuries['comprobada'])),
                     color: liveMuted,
                     size: 10,
                   ),
@@ -130,8 +128,8 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
               ),
             ),
           ),
-        liveHeading('Árbitro'),
-        training('Árbitro pendiente de confirmar.'),
+        liveHeading(l10n.detailReferee),
+        training(l10n.detailRefereePending),
       ],
     );
   }
@@ -162,7 +160,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                             children: [
                               liveText('${snapshot.error}', color: liveMuted),
                               liveButton(
-                                'Reintentar',
+                                context.l10n.commonRetry,
                                 () => setState(
                                   () => future = widget.api.detail(widget.id),
                                 ),
@@ -180,7 +178,8 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
             ficha = jsonMap(data['ficha']),
             match = jsonMap(ficha['partido']);
         final picks = jsonRows(data['picks']);
-        final markets = {'Todos', ...picks.map((p) => '${p['market']}')};
+        final l10n = context.l10n;
+        final markets = {_all, ...picks.map((p) => '${p['market']}')};
         return Column(
           children: [
             Padding(
@@ -195,7 +194,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Cerrar',
+                    tooltip: l10n.commonClose,
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close, color: liveMuted),
                   ),
@@ -215,9 +214,9 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                     child: Row(
                       children: [
                         for (final item in [
-                          (0, 'Pronósticos'),
-                          (1, 'Estadísticas'),
-                          (2, 'H2H'),
+                          (0, l10n.detailTabPredictions),
+                          (1, l10n.detailTabStats),
+                          (2, l10n.detailTabH2h),
                         ])
                           Expanded(
                             child: Semantics(
@@ -269,19 +268,14 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                             border: liveGold,
                             child: Column(
                               children: [
-                                liveText(
-                                  'Este partido tiene un pronóstico VIP',
-                                  bold: true,
-                                ),
+                                liveText(l10n.detailVipPickNotice, bold: true),
                                 const SizedBox(height: 12),
-                                liveButton('Ver acceso VIP', widget.onVip),
+                                liveButton(l10n.commonSeeVip, widget.onVip),
                               ],
                             ),
                           ),
                         if (picks.isEmpty && data['locked'] != true)
-                          training(
-                            'No hay pronósticos publicados para este partido.',
-                          ),
+                          training(l10n.detailNoPicks),
                         if (markets.length > 2)
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -292,7 +286,9 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                       padding: const EdgeInsets.only(right: 6),
                                       child: ChoiceChip(
                                         label: Text(
-                                          m == 'Todos' ? m : marketName(m),
+                                          m == _all
+                                              ? l10n.commonAll
+                                              : marketName(m),
                                         ),
                                         selected: filter == m,
                                         onSelected: (_) =>
@@ -307,7 +303,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                         LiveScoreStrip(ficha: ficha),
                         ...picks
                             .where(
-                              (p) => filter == 'Todos' || p['market'] == filter,
+                              (p) => filter == _all || p['market'] == filter,
                             )
                             .map(
                               (p) => ForecastPanel(
@@ -319,6 +315,10 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                         MatchMarkets(
                           data: jsonMap(ficha['mercados']),
                           onVip: widget.onVip,
+                          home:
+                              '${jsonMap(ficha['local'])['nombre'] ?? l10n.commonHome}',
+                          away:
+                              '${jsonMap(ficha['visitante'])['nombre'] ?? l10n.commonAway}',
                         ),
                       ],
                     )

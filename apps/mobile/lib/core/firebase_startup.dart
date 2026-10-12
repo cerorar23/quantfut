@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import '../firebase_options.dart';
+import '../l10n/app_locale.dart';
 import 'firebase_services.dart';
 
 const firebaseEnabled = bool.fromEnvironment(
@@ -49,6 +50,9 @@ class _FirebaseStartupState extends State<FirebaseStartup> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark(),
+        locale: AppLocale.instance.locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SafeArea(
             child: Center(
@@ -60,21 +64,28 @@ class _FirebaseStartupState extends State<FirebaseStartup> {
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            'No pudimos iniciar QuantFut. Inténtalo de nuevo.',
-                            textAlign: TextAlign.center,
+                          Builder(
+                            builder: (context) => Text(
+                              context.l10n.startupFailed,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           FilledButton(
                             onPressed: () => setState(() {
                               _initialization = Future.sync(widget.initialize);
                             }),
-                            child: const Text('Reintentar'),
+                            child: Builder(
+                              builder: (context) =>
+                                  Text(context.l10n.commonRetry),
+                            ),
                           ),
                         ],
                       )
-                    : const CircularProgressIndicator(
-                        semanticsLabel: 'Iniciando QuantFut',
+                    : Builder(
+                        builder: (context) => CircularProgressIndicator(
+                          semanticsLabel: context.l10n.startupLoading,
+                        ),
                       ),
               ),
             ),

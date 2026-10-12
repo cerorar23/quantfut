@@ -3,6 +3,11 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
+
+import 'package:intl/intl.dart';
+
 import 'live_api.dart';
 import 'live_widgets.dart';
 import '../widgets/countdown_timer.dart';
@@ -37,6 +42,7 @@ class MatchStatistics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (!featureEnabled(data, 'estadisticas')) {
       return training(featureMessage(data, 'estadisticas'));
     }
@@ -49,24 +55,24 @@ class MatchStatistics extends StatelessWidget {
         : <String, dynamic>{};
     final hs = jsonMap(h2h['resumen']);
     final picks = jsonRows(data['picks']);
-    const metrics = {
-      'goles_favor': 'Goles a favor',
-      'goles_contra': 'Goles recibidos',
-      'tiros_favor': 'Remates',
-      'tiros_puerta_favor': 'Remates a puerta',
-      'corners_favor': 'Córners',
-      'pct_porteria_cero': 'Portería a cero',
-      'pct_ambos_marcan': 'Ambos marcan',
-      'pct_mas_2_5': 'Más de 2,5 goles',
-      'xg_favor': 'xG histórico',
+    final metrics = {
+      'goles_favor': l10n.statGoalsFor,
+      'goles_contra': l10n.statGoalsAgainst,
+      'tiros_favor': l10n.statShots,
+      'tiros_puerta_favor': l10n.statShotsOnTarget,
+      'corners_favor': l10n.marketCorners,
+      'pct_porteria_cero': l10n.statCleanSheet,
+      'pct_ambos_marcan': l10n.marketBtts,
+      'pct_mas_2_5': l10n.statOver25,
+      'xg_favor': l10n.statXgHistoric,
     };
-    const radarLabels = {
-      'goles_favor': 'Goles a favor',
-      'tiros_favor': 'Remates',
-      'tiros_puerta_favor': 'A puerta',
-      'corners_favor': 'Córners',
-      'pct_porteria_cero': 'Portería a cero',
-      'goles_contra': 'Goles recibidos',
+    final radarLabels = {
+      'goles_favor': l10n.statGoalsFor,
+      'tiros_favor': l10n.statShots,
+      'tiros_puerta_favor': l10n.statOnTargetShort,
+      'corners_favor': l10n.marketCorners,
+      'pct_porteria_cero': l10n.statCleanSheet,
+      'goles_contra': l10n.statGoalsAgainst,
       'xg_favor': 'xG',
     };
     final radarKeys = radarLabels.keys
@@ -85,28 +91,37 @@ class MatchStatistics extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        statisticsHeading('Resumen de predicción'),
+        statisticsHeading(l10n.statSummaryTitle),
         MatchProbabilitySummary(
           probabilities: jsonMap(ficha['probabilities']),
-          local: '${local['nombre'] ?? 'Local'}',
-          away: '${away['nombre'] ?? 'Visitante'}',
+          local: '${local['nombre'] ?? l10n.commonHome}',
+          away: '${away['nombre'] ?? l10n.commonAway}',
         ),
         if (picks.isNotEmpty)
           statisticsCard(
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                liveText('PRONÓSTICO PUBLICADO', size: 10, color: liveMuted),
+                liveText(l10n.statPublishedPick, size: 10, color: liveMuted),
                 const SizedBox(height: 8),
                 liveText(
-                  '${picks.first['texto'] ?? ''}',
+                  pickText(
+                    picks.first,
+                    home: local['nombre'],
+                    away: away['nombre'],
+                  ),
                   color: statsLime,
                   bold: true,
                   size: 17,
                 ),
                 const SizedBox(height: 8),
                 liveText(
-                  'Probabilidad ${realPercent(picks.first['prob'])} · Cuota @ ${decimalText(picks.first['ref_price'] ?? picks.first['price'])}',
+                  l10n.statPickProbOdds(
+                    realPercent(picks.first['prob']),
+                    decimalText(
+                      picks.first['ref_price'] ?? picks.first['price'],
+                    ),
+                  ),
                   size: 12,
                 ),
               ],
@@ -114,20 +129,12 @@ class MatchStatistics extends StatelessWidget {
           )
         else if (data['locked'] == true)
           statisticsCard(
-            liveText(
-              'El pronóstico de este partido requiere acceso VIP o un desbloqueo con monedas.',
-              color: liveMuted,
-              size: 12,
-            ),
+            liveText(l10n.statNeedsAccess, color: liveMuted, size: 12),
           ),
         statisticsCard(
           Column(
             children: [
-              liveText(
-                'PROMEDIO HISTÓRICO DE GOLES',
-                size: 10,
-                color: liveMuted,
-              ),
+              liveText(l10n.statGoalsAvgTitle, size: 10, color: liveMuted),
               const SizedBox(height: 14),
               Row(
                 children: [
@@ -137,28 +144,20 @@ class MatchStatistics extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              liveText(
-                'Goles a favor por partido; no es la proyección de goles del modelo.',
-                color: liveMuted,
-                size: 11,
-              ),
+              liveText(l10n.statGoalsAvgNote, color: liveMuted, size: 11),
             ],
           ),
         ),
-        statisticsHeading('Forma de los equipos'),
+        statisticsHeading(l10n.statFormTitle),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _form(local, statsPurple)),
+            Expanded(child: _form(context, local, statsPurple)),
             const SizedBox(width: 10),
-            Expanded(child: _form(away, statsLime)),
+            Expanded(child: _form(context, away, statsLime)),
           ],
         ),
-        liveText(
-          'G: ganado · E: empate · P: perdido. Más reciente a la izquierda.',
-          color: liveMuted,
-          size: 10,
-        ),
+        liveText(l10n.statFormLegend, color: liveMuted, size: 10),
         if ((statisticNumber(hs['n']) ?? 0) > 0)
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -169,7 +168,14 @@ class MatchStatistics extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: liveText(
-                      'En ${hs['n']} cruces registrados: ${local['nombre']} ganó ${hs['victorias_local'] ?? '—'}, ${away['nombre']} ganó ${hs['victorias_visitante'] ?? '—'} y hubo ${hs['empates'] ?? '—'} empates.',
+                      l10n.statH2hSummary(
+                        hs['n'] ?? '—',
+                        local['nombre'] ?? '',
+                        hs['victorias_local'] ?? '—',
+                        away['nombre'] ?? '',
+                        hs['victorias_visitante'] ?? '—',
+                        hs['empates'] ?? '—',
+                      ),
                       size: 12,
                     ),
                   ),
@@ -177,9 +183,9 @@ class MatchStatistics extends StatelessWidget {
               ),
             ),
           ),
-        statisticsHeading('Estadísticas del equipo'),
+        statisticsHeading(l10n.statTeamStatsTitle),
         liveText(
-          'Promedios de ${lm['n'] ?? 0} partidos del local y ${am['n'] ?? 0} del visitante. La cobertura de remates, córners y xG puede ser parcial.',
+          l10n.statAveragesNote(lm['n'] ?? 0, am['n'] ?? 0),
           color: liveMuted,
           size: 11,
         ),
@@ -252,22 +258,18 @@ class MatchStatistics extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: liveText(
-                    'La comparación gráfica necesita al menos tres métricas disponibles de ambos equipos.',
+                    l10n.statRadarNeeds,
                     color: liveMuted,
                     size: 12,
                   ),
                 ),
               _legend(local, away),
               const SizedBox(height: 12),
-              liveText(
-                'Escala relativa por eje. Un área mayor no implica mayor probabilidad de ganar.',
-                color: liveMuted,
-                size: 10,
-              ),
+              liveText(l10n.statRadarNote, color: liveMuted, size: 10),
             ],
           ),
         ),
-        statisticsHeading('Comparación de equipos'),
+        statisticsHeading(l10n.statCompareTitle),
         statisticsCard(
           Column(
             children: [
@@ -280,45 +282,29 @@ class MatchStatistics extends StatelessWidget {
                   away: statisticNumber(am[e.key]),
                   percentage: e.key.startsWith('pct_'),
                 ),
-              liveText(
-                'Las barras comparan los valores registrados; no representan probabilidades de victoria. Menos goles recibidos es mejor.',
-                color: liveMuted,
-                size: 10,
-              ),
+              liveText(l10n.statCompareNote, color: liveMuted, size: 10),
             ],
           ),
         ),
-        statisticsHeading('Goles por minuto'),
+        statisticsHeading(l10n.statMinutesTitle),
         statisticsCard(
-          liveText(
-            'La distribución por minutos no está disponible para este partido.',
-            color: liveMuted,
-            size: 12,
-          ),
+          liveText(l10n.statMinutesNA, color: liveMuted, size: 12),
         ),
-        statisticsHeading('Temporada y resultados recientes'),
+        statisticsHeading(l10n.statSeasonTitle),
         for (final entry in [(local, statsPurple), (away, statsLime)])
-          _season(entry.$1, entry.$2),
+          _season(context, entry.$1, entry.$2),
         if (featureEnabled(data, 'h2h')) ...[
-          statisticsHeading('Cara a cara'),
+          statisticsHeading(l10n.statH2hTitle),
           if (jsonRows(h2h['partidos']).isEmpty)
             statisticsCard(
-              liveText(
-                'No hay enfrentamientos registrados para este partido.',
-                color: liveMuted,
-                size: 12,
-              ),
+              liveText(l10n.detailNoH2h, color: liveMuted, size: 12),
             )
           else
             ...jsonRows(h2h['partidos']).map((p) => h2hResult(p, local, away)),
         ],
-        statisticsHeading('Distribución de goles Poisson'),
+        statisticsHeading(l10n.statPoissonTitle),
         statisticsCard(
-          liveText(
-            'La distribución Poisson y los marcadores probables aún no están disponibles en la entrega de este partido.',
-            color: liveMuted,
-            size: 12,
-          ),
+          liveText(l10n.statPoissonNA, color: liveMuted, size: 12),
         ),
       ],
     );
@@ -337,7 +323,8 @@ class MatchStatistics extends StatelessWidget {
     ],
   );
 
-  Widget _form(JsonMap team, Color color) {
+  Widget _form(BuildContext context, JsonMap team, Color color) {
+    final l10n = context.l10n;
     final rows = jsonRows(jsonMap(team['forma'])['partidos']);
     return statisticsCard(
       Column(
@@ -346,7 +333,7 @@ class MatchStatistics extends StatelessWidget {
           liveText('${team['nombre'] ?? ''}', bold: true, size: 12),
           const SizedBox(height: 12),
           if (rows.isEmpty)
-            liveText('Forma no disponible.', color: liveMuted, size: 11)
+            liveText(l10n.statFormNA, color: liveMuted, size: 11)
           else
             Wrap(
               spacing: 4,
@@ -370,14 +357,14 @@ class MatchStatistics extends StatelessWidget {
                       color: c,
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    child: liveText(result, size: 11, bold: true),
+                    child: liveText(resultLetter(result), size: 11, bold: true),
                   ),
                 );
               }).toList(),
             ),
           const SizedBox(height: 9),
           liveText(
-            '${rows.length} resultados disponibles',
+            l10n.statResultsAvailable(rows.length),
             color: color,
             size: 10,
           ),
@@ -404,7 +391,8 @@ class MatchStatistics extends StatelessWidget {
     ],
   );
 
-  Widget _season(JsonMap team, Color color) {
+  Widget _season(BuildContext context, JsonMap team, Color color) {
+    final l10n = context.l10n;
     final table = jsonMap(team['clasificacion']);
     final rows = jsonRows(jsonMap(team['forma'])['partidos']);
     String best(bool home) {
@@ -445,22 +433,18 @@ class MatchStatistics extends StatelessWidget {
               spacing: 16,
               runSpacing: 8,
               children: [
-                liveText('Posición ${table['posicion'] ?? '—'}', size: 12),
-                liveText('${table['puntos'] ?? '—'} puntos', size: 12),
-                liveText('${table['jugados'] ?? '—'} partidos', size: 12),
+                liveText(l10n.statPosition(table['posicion'] ?? '—'), size: 12),
+                liveText(l10n.statPoints(table['puntos'] ?? '—'), size: 12),
+                liveText(l10n.statPlayed(table['jugados'] ?? '—'), size: 12),
               ],
             ),
           ] else ...[
             const SizedBox(height: 8),
-            liveText(
-              'Clasificación no disponible.',
-              color: liveMuted,
-              size: 11,
-            ),
+            liveText(l10n.statStandingNA, color: liveMuted, size: 11),
           ],
           const Divider(height: 26, color: Colors.white10),
           liveText(
-            'Últimos ${rows.length} partidos registrados',
+            l10n.statLastMatches(rows.length),
             color: liveMuted,
             size: 10,
           ),
@@ -471,10 +455,10 @@ class MatchStatistics extends StatelessWidget {
               runSpacing: 8,
               children: [
                 for (final item in [
-                  ('Mejor triunfo en casa', best(true)),
-                  ('Mejor triunfo fuera', best(false)),
-                  ('Racha de victorias', rows.isEmpty ? '—' : '${streak('G')}'),
-                  ('Racha de empates', rows.isEmpty ? '—' : '${streak('E')}'),
+                  (l10n.statBestHome, best(true)),
+                  (l10n.statBestAway, best(false)),
+                  (l10n.statWinStreak, rows.isEmpty ? '—' : '${streak('G')}'),
+                  (l10n.statDrawStreak, rows.isEmpty ? '—' : '${streak('E')}'),
                 ])
                   Container(
                     width: (constraints.maxWidth - 8) / 2,
@@ -553,7 +537,9 @@ class HistoricalComparison extends StatelessWidget {
     final available = local != null && away != null && local! + away! > 0;
     String value(double? n) => n == null
         ? '—'
-        : '${decimalText(n, percentage ? 1 : 2)}${percentage ? ' %' : ''}';
+        : percentage
+        ? percentText(n, 1)
+        : decimalText(n, 2);
     return Padding(
       padding: const EdgeInsets.only(bottom: 17),
       child: Column(
@@ -622,17 +608,13 @@ class MatchProbabilitySummary extends StatelessWidget {
     final valid =
         values.every((v) => v != null && v <= 1) &&
         (values.fold<double>(0, (sum, v) => sum + (v ?? 0)) - 1).abs() < .05;
-    final names = [local, 'Empate', away];
+    final names = [local, context.l10n.commonDraw, away];
     const colors = [statsPurple, Color(0xff8993a6), statsLime];
     return statisticsCard(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          liveText(
-            'PROBABILIDAD DE VICTORIA · 1X2',
-            size: 10,
-            color: liveMuted,
-          ),
+          liveText(context.l10n.statProbTitle, size: 10, color: liveMuted),
           const SizedBox(height: 16),
           if (valid)
             ClipRRect(
@@ -686,11 +668,7 @@ class MatchProbabilitySummary extends StatelessWidget {
           ),
           if (!valid) ...[
             const SizedBox(height: 12),
-            liveText(
-              'Probabilidades del modelo todavía no disponibles.',
-              color: liveMuted,
-              size: 11,
-            ),
+            liveText(context.l10n.statProbNA, color: liveMuted, size: 11),
           ],
         ],
       ),
@@ -708,20 +686,7 @@ class MatchFixtureHeader extends StatelessWidget {
     final kickoff = dateValue(match['kickoff_utc'])?.toLocal();
     final score = match['marcador'];
     final future = kickoff != null && kickoff.isAfter(DateTime.now());
-    const months = [
-      'ENE',
-      'FEB',
-      'MAR',
-      'ABR',
-      'MAY',
-      'JUN',
-      'JUL',
-      'AGO',
-      'SEP',
-      'OCT',
-      'NOV',
-      'DIC',
-    ];
+    final l10n = context.l10n;
     Widget team(String side) {
       final t = jsonMap(ficha[side]);
       return Expanded(
@@ -765,8 +730,8 @@ class MatchFixtureHeader extends StatelessWidget {
               children: [
                 liveText(
                   kickoff == null
-                      ? 'POR CONFIRMAR'
-                      : '${kickoff.day} ${months[kickoff.month - 1]}',
+                      ? l10n.fixtureTbd
+                      : localDate(DateFormat.MMMd, kickoff).toUpperCase(),
                   size: 10,
                   color: liveMuted,
                 ),
@@ -776,14 +741,14 @@ class MatchFixtureHeader extends StatelessWidget {
                       ? '${score[0]}–${score[1]}'
                       : kickoff == null
                       ? '—'
-                      : '${kickoff.hour.toString().padLeft(2, '0')}:${kickoff.minute.toString().padLeft(2, '0')}',
+                      : localDate(DateFormat.Hm, kickoff),
                   color: statsLime,
                   bold: true,
                   size: 22,
                 ),
                 const SizedBox(height: 8),
                 if (future && match['estado'] == 'scheduled') ...[
-                  liveText('EMPIEZA EN', size: 8, color: liveMuted),
+                  liveText(l10n.fixtureStartsIn, size: 8, color: liveMuted),
                   const SizedBox(height: 5),
                   CountdownTimer(
                     endTime: kickoff.millisecondsSinceEpoch,
@@ -796,10 +761,10 @@ class MatchFixtureHeader extends StatelessWidget {
                 ] else
                   liveText(
                     match['estado'] == 'finished'
-                        ? 'FINALIZADO'
+                        ? l10n.fixtureFinished
                         : match['estado'] == 'live'
-                        ? 'EN VIVO'
-                        : 'HORA LOCAL',
+                        ? l10n.fixtureLive
+                        : l10n.fixtureLocalTime,
                     size: 8,
                     color: liveMuted,
                   ),

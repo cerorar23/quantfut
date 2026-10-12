@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/language_picker.dart';
 import '../product/live_api.dart';
 import '../product/live_detail.dart';
 import '../product/live_widgets.dart';
-import 'firebase_access.dart';
 import 'firebase_services.dart';
 
 class FirebasePreferencesScreen extends StatefulWidget {
@@ -37,40 +38,25 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Privacidad y preferencias')),
+    appBar: AppBar(title: Text(context.l10n.prefsTitle)),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
         if (busy) const LinearProgressIndicator(),
         if (error != null) liveText(error!, color: liveGold),
-        DropdownButtonFormField<String>(
-          initialValue: services.language,
-          decoration: const InputDecoration(labelText: 'Idioma / Language'),
-          items: languageNames.entries
-              .map(
-                (entry) => DropdownMenuItem(
-                  value: entry.key,
-                  child: Text(entry.value),
-                ),
-              )
-              .toList(),
-          onChanged: busy
-              ? null
-              : (value) {
-                  if (value != null) change(() => services.setLanguage(value));
-                },
+        ListTile(
+          key: const ValueKey('prefs-language'),
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.language_rounded),
+          title: Text(context.l10n.languageTitle),
+          subtitle: Text(appLanguages[AppLocale.instance.code]!),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: busy ? null : () => showLanguagePicker(context),
         ),
-        const SizedBox(height: 12),
-        liveText(
-          'El idioma se aplica al acceso y se guarda como preferencia. La traducción de todas las pantallas sigue en preparación.',
-          size: 12,
-          color: liveMuted,
-        ),
+        liveText(context.l10n.prefsLanguageNote, size: 12, color: liveMuted),
         SwitchListTile(
-          title: const Text('Medición de uso'),
-          subtitle: const Text(
-            'Ayuda a mejorar la app con datos sobre las pantallas utilizadas. Es opcional.',
-          ),
+          title: Text(context.l10n.prefsAnalyticsTitle),
+          subtitle: Text(context.l10n.prefsAnalyticsBody),
           value: services.analyticsAllowed,
           onChanged: busy
               ? null
@@ -82,10 +68,8 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
                 ),
         ),
         SwitchListTile(
-          title: const Text('Informes de errores y rendimiento'),
-          subtitle: const Text(
-            'Envía información técnica a Firebase para diagnosticar fallos. Es opcional.',
-          ),
+          title: Text(context.l10n.prefsDiagnosticsTitle),
+          subtitle: Text(context.l10n.prefsDiagnosticsBody),
           value: services.diagnosticsAllowed,
           onChanged: busy
               ? null
@@ -97,11 +81,11 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
                 ),
         ),
         SwitchListTile(
-          title: const Text('Notificaciones de QuantFut'),
+          title: Text(context.l10n.prefsNotificationsTitle),
           subtitle: Text(
             widget.api.firebaseConnected
-                ? 'Puedes retirarlas cuando quieras. Los avisos pueden aparecer en la pantalla bloqueada.'
-                : 'Disponible cuando se complete el acceso con Google.',
+                ? context.l10n.prefsNotificationsOn
+                : context.l10n.prefsNotificationsOff,
           ),
           value: services.notificationsAllowed,
           onChanged: busy || !widget.api.firebaseConnected
@@ -117,10 +101,19 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
                 }),
         ),
         if (services.notificationStatus != null)
-          liveText(services.notificationStatus!, size: 12, color: liveMuted),
+          liveText(
+            switch (services.notificationStatus!) {
+              NotificationStatus.permissionDenied =>
+                context.l10n.notificationPermissionDenied,
+              NotificationStatus.iosPending =>
+                context.l10n.notificationIosPending,
+            },
+            size: 12,
+            color: liveMuted,
+          ),
         if (widget.api.firebaseConnected)
           ListTile(
-            title: const Text('Bandeja de avisos'),
+            title: Text(context.l10n.prefsInbox),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -130,7 +123,7 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
           ),
         const SizedBox(height: 16),
         ListTile(
-          title: const Text('Privacidad y tus derechos'),
+          title: Text(context.l10n.prefsPrivacyRights),
           trailing: const Icon(Icons.open_in_new),
           onTap: () => launchUrl(
             Uri.parse('https://pronosticosdeportivos.pro/legal/privacidad'),
@@ -138,10 +131,8 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
           ),
         ),
         ListTile(
-          title: const Text('Solicitar eliminación de mi cuenta'),
-          subtitle: const Text(
-            'Consulta los pasos y el contacto de Saptain LTD.',
-          ),
+          title: Text(context.l10n.prefsDeleteAccount),
+          subtitle: Text(context.l10n.prefsDeleteAccountHint),
           trailing: const Icon(Icons.open_in_new),
           onTap: () => launchUrl(
             Uri.parse(
@@ -150,11 +141,7 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
             mode: LaunchMode.externalApplication,
           ),
         ),
-        liveText(
-          'Puedes usar las funciones básicas sin activar medición o diagnóstico. Cambiar estas opciones no borra automáticamente los datos ya enviados.',
-          size: 12,
-          color: liveMuted,
-        ),
+        liveText(context.l10n.prefsNote, size: 12, color: liveMuted),
       ],
     ),
   );
@@ -207,7 +194,7 @@ class _FirebaseInboxState extends State<FirebaseInbox> {
         await Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => Scaffold(
-              appBar: AppBar(title: const Text('Partido')),
+              appBar: AppBar(title: Text(context.l10n.inboxMatch)),
               body: LiveMatchDetail(
                 api: widget.api,
                 id: id,
@@ -225,21 +212,24 @@ class _FirebaseInboxState extends State<FirebaseInbox> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Avisos')),
+    appBar: AppBar(title: Text(context.l10n.inboxTitle)),
     body: error != null
         ? Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(error!),
-                TextButton(onPressed: load, child: const Text('Reintentar')),
+                TextButton(
+                  onPressed: load,
+                  child: Text(context.l10n.commonRetry),
+                ),
               ],
             ),
           )
         : rows == null
         ? const Center(child: CircularProgressIndicator())
         : rows!.isEmpty
-        ? const Center(child: Text('Todavía no tienes avisos.'))
+        ? Center(child: Text(context.l10n.inboxEmpty))
         : RefreshIndicator(
             onRefresh: load,
             child: ListView(

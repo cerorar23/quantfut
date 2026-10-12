@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+
 /// Original offline illustrations. Shapes are decorative, not real statistics.
 class WelcomeArt extends StatefulWidget {
   const WelcomeArt({
@@ -75,6 +77,7 @@ class _WelcomeArtState extends State<WelcomeArt>
           widget.index,
           widget.accent,
           MediaQuery.disableAnimationsOf(context) ? .5 : _animation.value,
+          context.l10n,
         ),
       ),
     ),
@@ -82,32 +85,40 @@ class _WelcomeArtState extends State<WelcomeArt>
 }
 
 class _ArtPainter extends CustomPainter {
-  _ArtPainter(this.index, this.accent, this.phase);
+  _ArtPainter(this.index, this.accent, this.phase, this.l10n);
+  final AppLocalizations l10n;
   final int index;
   final Color accent;
   final double phase;
   static const ink = Color(0xffe9edf5),
       track = Color(0xff293a4b),
       muted = Color(0xff8496aa);
+
+  /// Texto dibujado. Si la traducción es más larga que el espacio disponible
+  /// (borde de la tarjeta menos margen), reduce el cuerpo para que no se corte.
   void text(
     Canvas c,
     String value,
     Offset at, {
     double size = 9,
     Color color = ink,
+    double? maxWidth,
   }) {
-    final p = TextPainter(
+    TextPainter build(double fontSize) => TextPainter(
       text: TextSpan(
         text: value,
         style: TextStyle(
           fontFamily: 'Gilroy Bold',
-          fontSize: size,
+          fontSize: fontSize,
           color: color,
           letterSpacing: .7,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
+    final room = maxWidth ?? (232 - at.dx - 14);
+    var p = build(size);
+    if (p.width > room && room > 20) p = build(size * room / p.width);
     p.paint(c, at);
   }
 
@@ -160,12 +171,12 @@ class _ArtPainter extends CustomPainter {
         ..color = const Color(0xff2b506a)
         ..style = PaintingStyle.stroke,
     );
-    const headings = [
-      'FÚTBOL + NBA',
-      'EL CONTEXTO IMPORTA',
-      'EXPLORA LOS MERCADOS',
-      'HISTORIAL A LA VISTA',
-      'DATOS + TU CRITERIO',
+    final headings = [
+      l10n.artHeading0,
+      l10n.artHeading1,
+      l10n.artHeading2,
+      l10n.artHeading3,
+      l10n.artHeading4,
     ];
     text(c, headings[index], const Offset(48, 47), color: accent);
     if (index == 0) {
@@ -184,8 +195,13 @@ class _ArtPainter extends CustomPainter {
       }
       ball(c, Offset(91, 111 - bounce), false);
       ball(c, Offset(170, 115 + bounce * .3), true);
-      text(c, 'FÚTBOL', const Offset(67, 186), color: accent);
-      text(c, 'NBA', const Offset(160, 186), color: const Color(0xffffb600));
+      text(c, l10n.artFootball, const Offset(67, 186), color: accent);
+      text(
+        c,
+        l10n.artNba,
+        const Offset(160, 186),
+        color: const Color(0xffffb600),
+      );
     } else if (index == 1) {
       final rect = Rect.fromCircle(center: const Offset(130, 116), radius: 40);
       final p = Paint()
@@ -201,7 +217,7 @@ class _ArtPainter extends CustomPainter {
         p..color = accent,
       );
       icon(c, Icons.insights_rounded, const Offset(111, 98), ink, 38);
-      const labels = ['FORMA', 'CARA A CARA', 'ESTADÍSTICAS'];
+      final labels = [l10n.artForm, l10n.artHeadToHead, l10n.artStats];
       for (var i = 0; i < 3; i++) {
         final y = 176.0 + i * 18;
         text(c, labels[i], Offset(48, y - 5), size: 7, color: muted);
@@ -219,7 +235,7 @@ class _ArtPainter extends CustomPainter {
         Icons.close_rounded,
         Icons.schedule_rounded,
       ];
-      const labels = ['GOLES', 'CÓRNERS', 'NBA'];
+      final labels = [l10n.artGoals, l10n.artCorners, l10n.artNba];
       const colors = [Color(0xff00d5ee), Color(0xff00d58b), Color(0xffffb600)];
       for (var i = 0; i < 3; i++) {
         final y = 90.0 + i * 39;
@@ -253,7 +269,7 @@ class _ArtPainter extends CustomPainter {
       }
       text(
         c,
-        index == 2 ? 'ANALIZA CADA SELECCIÓN' : 'TRANSPARENCIA',
+        index == 2 ? l10n.artAnalyzeEach : l10n.artTransparency,
         const Offset(49, 210),
         size: 7.5,
         color: muted,
@@ -280,13 +296,7 @@ class _ArtPainter extends CustomPainter {
           Paint()..color = i == 1 ? const Color(0xffffb600) : accent,
         );
       }
-      text(
-        c,
-        'ANALIZA. COMPARA. EXPLORA.',
-        const Offset(47, 205),
-        size: 8,
-        color: muted,
-      );
+      text(c, l10n.artTagline, const Offset(47, 205), size: 8, color: muted);
     }
     c.restore();
   }
@@ -329,5 +339,8 @@ class _ArtPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ArtPainter old) =>
-      old.index != index || old.phase != phase || old.accent != accent;
+      old.l10n.localeName != l10n.localeName ||
+      old.index != index ||
+      old.phase != phase ||
+      old.accent != accent;
 }

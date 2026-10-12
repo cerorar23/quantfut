@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+
+/// Etiqueta legible de un movimiento del historial (el servidor envía un código).
+String ledgerKindLabel(AppLocalizations l10n, Object? kind) => switch (kind) {
+  'attendance' => l10n.ledgerAttendance,
+  'offer' => l10n.ledgerOffer,
+  'unlock' => l10n.ledgerUnlock,
+  'referrer' => l10n.ledgerReferrer,
+  'invitee' => l10n.ledgerInvitee,
+  'reversal' => l10n.ledgerReversal,
+  'referral_reversal' => l10n.ledgerReferralReversal,
+  _ => '$kind',
+};
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key, required this.api, this.embedded = false});
@@ -58,7 +71,7 @@ class _RewardsScreenState extends State<RewardsScreen>
     setState(() => busy = true);
     try {
       await widget.api.request(path, body: body ?? {});
-      if (mounted) liveNotice(context, 'Operación confirmada.');
+      if (mounted) liveNotice(context, context.l10n.rewardsOperationDone);
     } catch (e) {
       if (mounted) liveNotice(context, '$e');
     } finally {
@@ -92,6 +105,7 @@ class _RewardsScreenState extends State<RewardsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cfg = jsonMap(data?['settings']),
         wallet = jsonMap(data?['wallet']),
         refs = jsonMap(data?['referrals']);
@@ -106,10 +120,10 @@ class _RewardsScreenState extends State<RewardsScreen>
         backgroundColor: liveBg,
         foregroundColor: Colors.white,
         automaticallyImplyLeading: !widget.embedded,
-        title: const Text('Coins'),
+        title: Text(l10n.navCoins),
         actions: [
           IconButton(
-            tooltip: 'Actualizar saldo',
+            tooltip: l10n.rewardsRefreshBalance,
             onPressed: busy ? null : load,
             icon: const Icon(Icons.refresh),
           ),
@@ -125,7 +139,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           liveText(error!, color: liveMuted),
-                          liveButton('Reintentar', load),
+                          liveButton(l10n.commonRetry, load),
                         ],
                       ),
                     ),
@@ -150,7 +164,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                       children: [
                         Row(
                           children: [
-                            liveText('Mis monedas', bold: true),
+                            liveText(l10n.rewardsMyCoins, bold: true),
                             const Spacer(),
                             const Icon(Icons.toll, color: liveGold, size: 40),
                           ],
@@ -159,14 +173,14 @@ class _RewardsScreenState extends State<RewardsScreen>
                         liveText(
                           data?['signed_in'] == true
                               ? '${wallet['balance'] ?? 0}'
-                              : 'Inicia sesión',
+                              : l10n.rewardsSignIn,
                           size: 36,
                           color: liveGold,
                           bold: true,
                         ),
                         const SizedBox(height: 10),
                         liveText(
-                          'Desbloquea un pronóstico por ${cfg['unlock_cost']} monedas',
+                          l10n.rewardsUnlockFor(cfg['unlock_cost'] ?? '—'),
                           size: 12,
                         ),
                         const SizedBox(height: 16),
@@ -181,27 +195,27 @@ class _RewardsScreenState extends State<RewardsScreen>
                         const SizedBox(height: 8),
                         liveText(
                           cost != null && balance >= cost
-                              ? 'Tienes monedas para un desbloqueo.'
-                              : 'Faltan ${cost == null ? '—' : (cost - balance).clamp(0, cost).toInt()} monedas para tu próximo desbloqueo.',
+                              ? l10n.rewardsEnough
+                              : cost == null
+                              ? l10n.rewardsMissingUnknown
+                              : l10n.rewardsMissing(
+                                  (cost - balance).clamp(0, cost).toInt(),
+                                ),
                           size: 12,
                         ),
                         if (wallet['balance'] is num &&
                             (wallet['balance'] as num) < 0)
-                          liveText(
-                            'Saldo pendiente por recompensas anuladas.',
-                            color: liveGold,
-                            size: 12,
-                          ),
+                          liveText(l10n.rewardsDebt, color: liveGold, size: 12),
                       ],
                     ),
                   ),
                   if (cfg['enabled'] != true) training('${cfg['message']}'),
                   if (data?['signed_in'] != true)
-                    training(
-                      'Inicia sesión en Perfil para guardar tu saldo, marcar asistencia y usar un código de referido.',
-                    ),
+                    training(l10n.rewardsSignInHint),
                   liveHeading(
-                    'Racha de asistencia · ${wallet['streak'] ?? 0} días',
+                    l10n.rewardsStreak(
+                      ((wallet['streak'] as num?) ?? 0).toInt(),
+                    ),
                   ),
                   liveCard(
                     child: Column(
@@ -230,7 +244,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                                       color: liveGold,
                                     ),
                                     liveText(
-                                      'Día ${i + 1}',
+                                      l10n.rewardsDay(i + 1),
                                       size: 10,
                                       color: liveMuted,
                                     ),
@@ -242,7 +256,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                         ),
                         const SizedBox(height: 16),
                         liveButton(
-                          'Marcar asistencia',
+                          l10n.rewardsCheckIn,
                           !busy && wallet['can_check_in'] == true
                               ? () => action('/mobile/v1/rewards/attendance')
                               : null,
@@ -250,14 +264,14 @@ class _RewardsScreenState extends State<RewardsScreen>
                         ),
                         const SizedBox(height: 8),
                         liveText(
-                          'Una vez por día UTC. Si omites un día, la racha se reinicia.',
+                          l10n.rewardsCheckInNote,
                           size: 11,
                           color: liveMuted,
                         ),
                       ],
                     ),
                   ),
-                  liveHeading('Ofertas para ganar monedas'),
+                  liveHeading(l10n.rewardsOffersTitle),
                   ...jsonRows(data?['providers']).map(
                     (p) => liveCard(
                       child: Row(
@@ -275,8 +289,8 @@ class _RewardsScreenState extends State<RewardsScreen>
                                 const SizedBox(height: 5),
                                 liveText(
                                   p['available'] == true
-                                      ? 'Ofertas según tu país y dispositivo'
-                                      : 'Pendiente de activar',
+                                      ? l10n.rewardsOfferAvailable
+                                      : l10n.rewardsOfferPending,
                                   size: 11,
                                   color: liveMuted,
                                 ),
@@ -290,33 +304,38 @@ class _RewardsScreenState extends State<RewardsScreen>
                                     widget.api.signedIn
                                 ? () => offer(p['provider'])
                                 : null,
-                            child: const Text('Ir'),
+                            child: Text(l10n.rewardsGo),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  liveHeading('Invita a tus amigos'),
+                  liveHeading(l10n.rewardsInviteTitle),
                   liveCard(
                     border: liveGold.withValues(alpha: .4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         liveText(
-                          'Tú +${cfg['referrer_coins']} · Tu amigo +${cfg['invitee_coins']} monedas',
+                          l10n.rewardsInviteReward(
+                            cfg['referrer_coins'] ?? '—',
+                            cfg['invitee_coins'] ?? '—',
+                          ),
                           bold: true,
                           color: liveGold,
                         ),
                         const SizedBox(height: 10),
                         liveText(
-                          'Tras verificar el correo y completar ${cfg['referral_min_coins']} monedas en ofertas confirmadas.',
+                          l10n.rewardsInviteCondition(
+                            cfg['referral_min_coins'] ?? '—',
+                          ),
                           color: liveMuted,
                           size: 12,
                         ),
                         if (wallet['referral_code'] != null) ...[
                           const SizedBox(height: 12),
                           liveButton(
-                            'Copiar mi código · ${wallet['referral_code']}',
+                            l10n.rewardsCopyCode(wallet['referral_code']),
                             () async {
                               await Clipboard.setData(
                                 ClipboardData(
@@ -324,14 +343,17 @@ class _RewardsScreenState extends State<RewardsScreen>
                                 ),
                               );
                               if (context.mounted) {
-                                liveNotice(context, 'Código copiado.');
+                                liveNotice(context, l10n.rewardsCodeCopied);
                               }
                             },
                             color: liveCyan,
                           ),
                           const SizedBox(height: 10),
                           liveText(
-                            '${refs['registered'] ?? 0} registrados · ${refs['qualified'] ?? 0} validados',
+                            l10n.rewardsReferralStats(
+                              refs['registered'] ?? 0,
+                              refs['qualified'] ?? 0,
+                            ),
                             size: 12,
                             color: liveMuted,
                           ),
@@ -342,13 +364,13 @@ class _RewardsScreenState extends State<RewardsScreen>
                           TextField(
                             controller: code,
                             textCapitalization: TextCapitalization.characters,
-                            decoration: const InputDecoration(
-                              labelText: 'Código de quien te invitó',
+                            decoration: InputDecoration(
+                              labelText: l10n.rewardsInviterCode,
                             ),
                           ),
                           const SizedBox(height: 10),
                           liveButton(
-                            'Registrar código',
+                            l10n.rewardsRegisterCode,
                             !busy && cfg['referrals_enabled'] == true
                                 ? () => action(
                                     '/mobile/v1/rewards/referrals',
@@ -359,16 +381,16 @@ class _RewardsScreenState extends State<RewardsScreen>
                         ] else if (refs['joined'] != null) ...[
                           const SizedBox(height: 12),
                           liveText(
-                            'Código de invitación registrado.',
+                            l10n.rewardsCodeRegistered,
                             color: liveGreen,
                           ),
                         ],
                       ],
                     ),
                   ),
-                  liveHeading('Mis movimientos'),
+                  liveHeading(l10n.rewardsLedgerTitle),
                   if (jsonRows(data?['ledger']).isEmpty)
-                    training('Todavía no hay movimientos.')
+                    training(l10n.rewardsLedgerEmpty)
                   else
                     ...jsonRows(data?['ledger']).map(
                       (r) => liveCard(
@@ -376,7 +398,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                           children: [
                             Expanded(
                               child: liveText(
-                                '${r['kind']}\n${kickoffText(r['created_at'])}',
+                                '${ledgerKindLabel(l10n, r['kind'])}\n${kickoffText(r['created_at'])}',
                                 size: 12,
                                 color: liveMuted,
                               ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 
 const liveBg = Color(0xff090f1a),
@@ -123,6 +125,7 @@ class RealPickCard extends StatelessWidget {
   final int? cost;
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final locked = pick['locked'] == true;
     return liveCard(
       border: locked
@@ -143,8 +146,8 @@ class RealPickCard extends StatelessWidget {
                 locked
                     ? 'VIP'
                     : pick['free'] == true
-                    ? 'GRATUITO'
-                    : 'DESBLOQUEADO',
+                    ? l10n.forecastFree
+                    : l10n.forecastUnlocked,
                 color: locked ? liveGold : liveGreen,
                 size: 11,
                 bold: true,
@@ -173,12 +176,12 @@ class RealPickCard extends StatelessWidget {
           ),
           if (!locked) ...[
             const SizedBox(height: 8),
-            liveText('${pick['texto'] ?? ''}', color: liveGreen, bold: true),
+            liveText(pickText(pick), color: liveGreen, bold: true),
             const SizedBox(height: 10),
             Row(
               children: [
                 liveText(
-                  'Probabilidad ${realPercent(pick['prob'])}',
+                  l10n.pickProbability(realPercent(pick['prob'])),
                   color: liveCyan,
                   bold: true,
                 ),
@@ -192,7 +195,9 @@ class RealPickCard extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             liveText(
-              'Cuota al publicar · ${pick['ref_book'] ?? pick['book'] ?? 'Fuente no disponible'}',
+              l10n.pickOddsAtPublish(
+                pick['ref_book'] ?? pick['book'] ?? l10n.pickSourceNA,
+              ),
               size: 11,
               color: liveMuted,
             ),
@@ -203,20 +208,16 @@ class RealPickCard extends StatelessWidget {
                 color: liveMuted,
               ),
             const SizedBox(height: 12),
-            liveButton('Ver análisis del partido', onOpen, color: liveCyan),
+            liveButton(l10n.pickSeeAnalysis, onOpen, color: liveCyan),
           ] else ...[
             const SizedBox(height: 8),
-            liveText(
-              'Desbloquea el pronóstico y su cuota.',
-              color: liveMuted,
-              size: 12,
-            ),
+            liveText(l10n.pickUnlockPrompt, color: liveMuted, size: 12),
             const SizedBox(height: 12),
-            liveButton('Desbloquear pronóstico VIP', onVip),
+            liveButton(l10n.pickUnlockVip, onVip),
             if (onUnlock != null) ...[
               const SizedBox(height: 6),
               liveButton(
-                'Desbloquear por $cost monedas',
+                l10n.pickUnlockCoins(cost ?? '—'),
                 onUnlock,
                 color: liveCyan,
               ),
@@ -228,41 +229,44 @@ class RealPickCard extends StatelessWidget {
   }
 }
 
-Widget probabilityBars(JsonMap values) => Column(
-  children: ['home', 'draw', 'away'].map((key) {
-    final value = values[key];
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 38,
-            child: liveText(
-              key == 'home'
-                  ? 'Local'
-                  : key == 'draw'
-                  ? 'Empate'
-                  : 'Visita',
-              size: 10,
-              color: liveMuted,
+Widget probabilityBars(JsonMap values) => Builder(
+  builder: (context) => Column(
+    children: ['home', 'draw', 'away'].map((key) {
+      final l10n = context.l10n;
+      final value = values[key];
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 38,
+              child: liveText(
+                key == 'home'
+                    ? l10n.probBarHome
+                    : key == 'draw'
+                    ? l10n.probBarDraw
+                    : l10n.probBarAway,
+                size: 10,
+                color: liveMuted,
+              ),
             ),
-          ),
-          Expanded(
-            child: LinearProgressIndicator(
-              value: value is num ? value.toDouble().clamp(0, 1) : 0,
-              color: key == 'home'
-                  ? liveGreen
-                  : key == 'away'
-                  ? liveCyan
-                  : liveMuted,
-              backgroundColor: Colors.white12,
-              minHeight: 4,
+            Expanded(
+              child: LinearProgressIndicator(
+                value: value is num ? value.toDouble().clamp(0, 1) : 0,
+                color: key == 'home'
+                    ? liveGreen
+                    : key == 'away'
+                    ? liveCyan
+                    : liveMuted,
+                backgroundColor: Colors.white12,
+                minHeight: 4,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          liveText(realPercent(value), size: 11),
-        ],
-      ),
-    );
-  }).toList(),
+            const SizedBox(width: 8),
+            liveText(realPercent(value), size: 11),
+          ],
+        ),
+      );
+    }).toList(),
+  ),
 );
