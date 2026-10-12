@@ -105,9 +105,12 @@ HANDICAP_HABILITADOS: tuple[float, ...] = (-1.0, 0.0, 1.0, 1.5, 2.0)
 # 81,89→82,64 (2022-2025: 81,26→81,93); dentro de lo elegido, local más de
 # 2,5 queda por debajo
 # (n=680, 82,08→78,97): lo vigila el control por grupo.
+# Revisión 2026-10-10 con 2024/25 y la Premier 2021/22 que las pruebas
+# anteriores perdían (BOM, ver `estadisticas_mercado`): local más de 2,5 falla
+# el tramo 80-85 (82,84→81,35, n=3.368) y sale; el resto sigue pasando.
 CORNERS_HABILITADOS: tuple[tuple[str, str, float], ...] = (
     ("corners", "under", 11.5), ("corners", "under", 12.5), ("corners", "over", 6.5),
-    ("corners_home", "over", 2.5), ("corners_home", "over", 3.5),
+    ("corners_home", "over", 3.5),
     ("corners_home", "under", 7.5),
     ("corners_away", "over", 2.5), ("corners_away", "under", 6.5))
 # Mercados que guardan el ajuste de goles en `fit`.

@@ -143,7 +143,10 @@ def load_csvs(leagues: dict[str, str], seasons: tuple[str, ...],
                 path.write_bytes(r.content)
             raw = path.read_bytes()
             digests.append(f"{code}_{season}:{hashlib.sha256(raw).hexdigest()}")
-            df = pd.read_csv(io.BytesIO(raw), encoding="latin-1", on_bad_lines="skip")
+            # Varios CSV recientes traen BOM: en latin-1 la primera columna
+            # salía como "ï»¿Div". La firma sigue siendo la de los bytes.
+            df = pd.read_csv(io.BytesIO(raw.removeprefix(b"\xef\xbb\xbf")),
+                             encoding="latin-1", on_bad_lines="skip")
             df["league_id"], df["season"] = league_id, season
             frames.append(df)
     if not frames:

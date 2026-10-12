@@ -229,7 +229,7 @@ def run(goles: bool = False, rho: float = apc.RHO_POR_DEFECTO,
     raw, dataset = sv.load_csvs(apc.LIGAS, sv.DEFAULT_SEASONS, cache_dir)
     raw = raw.copy()
     raw["temporada"] = raw["season"] if "season" in raw.columns else raw.get("Season")
-    params = ({k: dict(v) for k, v in em.PARAMETROS.items()} if fijos
+    params = ({k: dict(em.PARAMETROS[k]) for k in ("corners", "cards")} if fijos
               else elegir_parametros(raw))
     filas_test = []
     for mercado, pm in params.items():

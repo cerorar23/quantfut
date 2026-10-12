@@ -78,6 +78,7 @@ class Acumulador:
     usar_arbitro: bool = False
     prior: float = PRIOR_PARTIDOS
     media_vida: float = MEDIA_VIDA_DIAS
+    prior_arbitro: float = PRIOR_ARBITRO
 
     def __post_init__(self) -> None:
         k = math.log(2) / self.media_vida
@@ -121,7 +122,7 @@ class Acumulador:
         lam_v = (self.media_visit.media(0) * self.ataque[visitante].encogida(self.prior, d)
                  * self.defensa[local].encogida(self.prior, d))
         if self.usar_arbitro and arbitro and arbitro in self.arbitro:
-            f = self.arbitro[arbitro].encogida(PRIOR_ARBITRO, d)
+            f = self.arbitro[arbitro].encogida(self.prior_arbitro, d)
             lam_l, lam_v = lam_l * f, lam_v * f
         return lam_l, lam_v
 
@@ -157,15 +158,26 @@ def prob_total(media: float, phi: float, linea: float) -> dict[str, float]:
 # 4,5 (62,51→74,64) y 7,5 (87,43→88,07). No pasan (tramo 60-70 o 70-80 por
 # debajo): local más de 2,5 y 3,5, menos de 6,5 y 7,5; visitante más de 1,5 y
 # 2,5, menos de 5,5 y 6,5.
+#
+# Revisión 2026-10-10 (`--fijos`): las dos pruebas anteriores perdían en
+# silencio 2024/25 entera y la Premier 2021/22 (CSV con BOM: la columna Div
+# salía como "ï»¿Div"; arreglado en `soft_vs_sharp.load_csvs`). Con los datos
+# completos (13.555 partidos frente a 10.842): dejan de pasar más de 6,5
+# (tramo 70-80: 78,7→75,9), más de 9,5 (−1,35) y visitante menos de 7,5 (tramo
+# 70-80: 78,6→60,7, n=145), y fuera; tarjetas menos de 4,5 (70,60→70,61) y 5,5
+# (75,59→76,70) pasan, y entran. El árbitro en Inglaterra
+# (`eval/tarjetas_arbitro.py`, E0+E1 con árbitro en el 100 %) mejora la
+# pérdida logarítmica solo 0,0011 por partido (z=1,07; en la Premier empeora):
+# no justifica reglas propias para Inglaterra.
 PARAMETROS = {"corners": {"prior": 120.0, "media_vida": 365.0, "phi": 1.175},
               "cards": {"prior": 50.0, "media_vida": 180.0, "phi": 1.0956},
               "corners_equipo": {"phi": 1.5455}}
 LINEAS_HABILITADAS: dict[str, tuple[tuple[str, float], ...]] = {
-    "corners": (("over", 6.5), ("over", 7.5), ("over", 8.5), ("over", 9.5),
+    "corners": (("over", 7.5), ("over", 8.5),
                 ("under", 9.5), ("under", 10.5), ("under", 11.5)),
-    "cards": (("under", 6.5),),
+    "cards": (("under", 4.5), ("under", 5.5), ("under", 6.5)),
     "corners_home": (("over", 1.5), ("over", 4.5), ("over", 5.5), ("under", 5.5)),
-    "corners_away": (("over", 3.5), ("over", 4.5), ("under", 4.5), ("under", 7.5)),
+    "corners_away": (("over", 3.5), ("over", 4.5), ("under", 4.5)),
 }
 # De qué acumulador sale cada mercado.
 FUENTE = {"corners": "corners", "cards": "cards",

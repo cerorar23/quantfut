@@ -136,3 +136,16 @@ def test_totales_liquidan_por_goles():
     q = svs.build_quotes(_frame(goals=(2, 1)))
     over = q[(q["market"] == "totals_2.5") & (q["selection"] == "over")]
     assert over["won"].all()
+
+
+def test_un_csv_con_bom_conserva_la_columna_div(tmp_path):
+    # Varios CSV recientes de football-data empiezan con BOM; leídos en
+    # latin-1 la primera columna salía como "ï»¿Div" y `groupby("Div")`
+    # descartaba la temporada entera sin avisar.
+    texto = "Div,Date,HomeTeam,AwayTeam\nE0,01/08/2024,A,B\n"
+    (tmp_path / "E0_2425.csv").write_bytes(b"\xef\xbb\xbf" + texto.encode())
+    (tmp_path / "E0_2324.csv").write_bytes(texto.encode())
+    df, _ = svs.load_csvs({"gb.premier_league": "E0"}, ("2324", "2425"), tmp_path)
+    assert "Div" in df.columns
+    assert df["Div"].notna().all()
+    assert len(df.columns) == 6
