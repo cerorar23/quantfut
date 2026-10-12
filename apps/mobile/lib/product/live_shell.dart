@@ -163,7 +163,7 @@ class _ProductShellState extends State<ProductShell>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         liveText(
-          '75–90 % de probabilidad · 10 % gratuito por lote',
+          '75–90 % de probabilidad · uno gratis por mercado',
           color: liveMuted,
           size: 12,
         ),

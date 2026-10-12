@@ -29,7 +29,7 @@ Estado y documentación actual:
 `apps/mobile/docs/APP_REAL_MONEDAS_REFERIDOS_20261011.md`.
 
 - [x] Inicio por calendario y hora local con enfrentamientos reales.
-- [x] Alta Probabilidad 75–90 %, 10 % gratuito de mayor cuota entre elegibles;
+- [x] Alta Probabilidad 75–90 %, UNO gratuito por mercado, el de mayor probabilidad (antes 10 % por mejor cuota, cambio 2026-10-12);
   asignación fija por lote y resto VIP sin revelar el contenido protegido.
 - [x] Escalera: un solo pendiente gratuito de mayor probabilidad entre todos
   los retos activos; resto VIP. Historial de resultados conservado.

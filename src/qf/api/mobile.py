@@ -46,7 +46,7 @@ def features() -> dict:
 
 def config() -> dict:
     return {'features': features(), 'probability_min': PROB_MIN,
-            'probability_max': PROB_MAX, 'high_probability_free_fraction': .10,
+            'probability_max': PROB_MAX, 'high_probability_free_per_market': 1,
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
 
@@ -72,8 +72,15 @@ def choose_free(rows: list[dict], stream: str) -> list[dict]:
     if stream == 'alta_probabilidad':
         priced = [r for r in valid if r.get('ref_price') is not None
                   and math.isfinite(float(r['ref_price'])) and float(r['ref_price']) > 1]
-        priced.sort(key=lambda r: (-float(r['ref_price']), -probability(r), pick_key(r)))
-        return priced[:math.ceil(len(valid) / 10)]
+        # UNO por mercado, el de mayor probabilidad: lo gratis es lo más sólido y
+        # el usuario ve que la mayoría acierta. El empate lo decide la cuota.
+        priced.sort(key=lambda r: (-probability(r), -float(r['ref_price']), pick_key(r)))
+        chosen, seen = [], set()
+        for r in priced:
+            if r.get('market') not in seen:
+                seen.add(r.get('market'))
+                chosen.append(r)
+        return chosen
     if stream == 'escalera':
         valid.sort(key=lambda r: (-probability(r), -float(r.get('price') or 0), pick_key(r)))
         return valid[:1]

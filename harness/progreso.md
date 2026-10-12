@@ -4762,3 +4762,16 @@ Decisión del usuario: los pronósticos VIP bloqueados se ven dentro de su merca
 bloqueado no llevaba `market`. Ahora sale SOLO la categoría; selección, línea,
 probabilidad, cuota y `fit` siguen fuera (test actualizado). Sin tarjeta de venta:
 tocar el candado abre VIP. Escalera no se incluye (su metadato no se reparte por familia).
+
+### Gratis: uno por mercado, el de mayor probabilidad (2026-10-12)
+
+Decisión del usuario: el escaparate gratuito debe mostrar lo más sólido para que se vea que la
+mayoría acierta. Antes: 10 % del lote por mejor cuota. Ahora: un pronóstico por mercado con
+candidatos, el de mayor probabilidad (empate: cuota). El reparto de cada lote queda fijo en
+`mobile_free_allocations` al crearse, así que la regla solo afecta a lotes NUEVOS salvo que se
+amplíe el lote vigente a mano (solo añadir, nunca quitar).
+
+Desplegado el 2026-10-12 (respaldo `quantfut-api-mobile-rewards:before-gratis`). Lote 2026-10-11
+ampliado a mano con 3 gratis (córners, goles, goles del visitante; free_count 3 -> 6). Hándicap (7)
+y doble oportunidad (1) siguen bloqueados: sus candidatos no tienen cuota publicada y un gratis
+sin cuota real no se entrega.

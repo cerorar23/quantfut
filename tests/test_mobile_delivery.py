@@ -24,12 +24,20 @@ def delivery(monkeypatch):
     return flags
 
 
-@pytest.mark.parametrize('n,expected',[(0,0),(1,1),(9,1),(10,1),(11,2),(20,2),(21,3)])
-def test_ten_percent_rounded_up_and_best_quote(n,expected):
-    rows=[row(i,price=1+i/100) for i in range(1,n+1)]
+@pytest.mark.parametrize('n,expected',[(0,0),(1,1),(9,1),(21,1)])
+def test_one_free_per_market_highest_probability(n,expected):
+    rows=[row(i,prob=.75+i/200,price=1.4) for i in range(1,n+1)]
     selected=mobile.choose_free(rows,'alta_probabilidad')
     assert len(selected)==expected
-    assert [r['match_id'] for r in selected]==[f'm{i}' for i in range(n,n-expected,-1)]
+    assert [r['match_id'] for r in selected]==([f'm{n}'] if n else [])
+
+
+def test_one_free_per_market_across_markets():
+    rows=[{**row(i,prob=.75+i/100),'market':'totals'} for i in range(1,12)]
+    rows+=[{**row(100+i,prob=.80+i/100),'market':'spreads'} for i in range(1,4)]
+    rows+=[{**row(200,prob=.78),'market':'corners'}]
+    ids={r['match_id'] for r in mobile.choose_free(rows,'alta_probabilidad')}
+    assert ids=={'m11','m103','m200'}  # la mejor probabilidad de cada mercado
 
 
 def test_probability_bounds_and_no_fake_quote():
@@ -47,14 +55,14 @@ def test_ladder_uses_exact_probability_not_rounded():
 def test_anonymous_does_not_receive_vip_selection(delivery,monkeypatch):
     monkeypatch.setattr(mobile,'high_rows',lambda:[row(i,price=1+i/100) for i in range(1,21)])
     report=mobile.high_probability()
-    assert len(report['proximos'])==2 and len(report['vip'])==18
+    assert len(report['proximos'])==1 and len(report['vip'])==19  # uno por mercado
     for r in report['vip']:
         assert not {'selection','line','texto','prob','ref_price','fit'} & r.keys()
         assert r['market']=='totals'  # solo la categoría, para ubicar el candado
     assert len(mobile.high_probability(True)['proximos'])==20
     owned=mobile.high_probability(unlocks={('alta_probabilidad','m1')})
-    assert len(owned['proximos'])==3
-    assert len(owned['vip'])==17
+    assert len(owned['proximos'])==2
+    assert len(owned['vip'])==18
 
 
 def test_disabled_feature_and_disabled_vip(delivery,monkeypatch):
