@@ -75,8 +75,16 @@ class _RewardsScreenState extends State<RewardsScreen>
           body: {},
         ),
       );
-      await const MethodChannel('quantfut/offers')
-          .invokeMethod<bool>('open', {'url': result['url']});
+      const channel = MethodChannel('quantfut/offers');
+      if (result['sdk'] == 'tapjoy') {
+        await channel.invokeMethod<bool>('tapjoy', {
+          'sdk_key': result['sdk_key'],
+          'user_id': result['user_id'],
+          'placement': 'coins_offerwall',
+        });
+      } else {
+        await channel.invokeMethod<bool>('open', {'url': result['url']});
+      }
     } catch (e) {
       if (mounted) liveNotice(context, '$e');
     }

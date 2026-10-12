@@ -24,12 +24,13 @@ from psycopg.errors import UndefinedTable
 from . import console, cuentas, panel
 from ..db import conn, query, query_one
 from ..comercial.auditoria import audit
+from ..comercial import cifrado
 
 router = APIRouter(tags=['rewards'])
 bearer = HTTPBearer(auto_error=False)
 PROVIDERS = {'revu':'RevU', 'bitlabs':'BitLabs', 'tapjoy':'Tapjoy / Unity Offerwall',
              'torox':'Torox','ayet':'ayeT-Studios','adjoe':'adjoe Playtime'}
-IMPLEMENTED = {'revu', 'bitlabs'}
+IMPLEMENTED = {'revu', 'bitlabs', 'tapjoy'}
 
 
 def settings() -> dict:
@@ -39,10 +40,14 @@ def settings() -> dict:
         raise HTTPException(503, 'Configuración de monedas pendiente de instalar') from None
 
 
-def optional_account(creds: HTTPAuthorizationCredentials | None = Depends(bearer)) -> dict | None:
+def optional_account(creds: HTTPAuthorizationCredentials | None = Depends(bearer),
+                     request: Request = None) -> dict | None:
     if creds is None:
         return None
     cuentas.require_enabled()
+    if request is not None and request.headers.get('x-qf-identity') == 'firebase':
+        from .firebase import firebase_account
+        return firebase_account(creds, request)
     return cuentas.current_account(creds)
 
 
@@ -210,12 +215,29 @@ def unlock(body: UnlockIn, account: dict = Depends(verified_account)):
     return {'unlocked':True,'charged':cfg['unlock_cost']}
 
 
+ENV_SECRETS = {'bitlabs':'QF_BITLABS_SECRET', 'tapjoy':'QF_TAPJOY_SECRET'}
+
+
+def provider_secret(provider: str, p: dict | None = None) -> str:
+    """Secret guardada (cifrada) desde el panel; si no hay o no se puede
+    descifrar, la variable de entorno."""
+    if p is None:
+        p = query_one('SELECT * FROM reward_providers WHERE provider=%s',(provider,))
+    token = (p or {}).get('secret_enc')
+    if token:
+        try:
+            return cifrado.descifrar(token, f'reward_provider:{provider}')
+        except cifrado.CifradoError:
+            pass
+    return os.getenv(ENV_SECRETS.get(provider,''),'')
+
+
 def provider_ready(provider: str) -> bool:
     p = query_one('SELECT * FROM reward_providers WHERE provider=%s',(provider,))
     if not p or not p['public_id'] or provider not in IMPLEMENTED:
         return False
-    if provider == 'bitlabs':
-        return bool(os.getenv('QF_BITLABS_SECRET'))
+    if provider in ENV_SECRETS:
+        return bool(provider_secret(provider,p))
     return bool(p['approved_ips'] and os.getenv('QF_REWARDS_TRUSTED_PROXY_CIDRS'))
 
 
@@ -227,6 +249,10 @@ def launch(provider: str, account: dict = Depends(verified_account)):
         raise HTTPException(503,'Proveedor todavía no configurado')
     with conn() as c:
         uid = wallet(c,account['account_id'])['uid']
+    if provider == 'tapjoy':
+        # El offerwall de Tapjoy lo abre el SDK nativo: no hay URL. `user_id`
+        # debe pasarse como TJC_OPTION_USER_ID para que llegue como `snuid`.
+        return {'sdk':'tapjoy','sdk_key':p['public_id'],'user_id':uid}
     url = (f"https://wall.revenueuniverse.com/{p['public_id']}/offers/{uid}" if provider == 'revu' else
            'https://web.bitlabs.ai/?'+urlencode({'token':p['public_id'],'uid':uid}))
     return {'url':url}
@@ -239,6 +265,15 @@ def bitlabs_valid(raw_url: str, secret: str) -> bool:
     if not secret or len(signature) != 40:
         return False
     return hmac.compare_digest(hmac.new(secret.encode(),original.encode(),hashlib.sha1).hexdigest(),signature)
+
+
+def tapjoy_valid(request: Request, secret: str) -> bool:
+    """MD5(id:snuid:currency:secret) del callback estándar de Tapjoy."""
+    q = request.query_params
+    if not secret or not q.get('id') or not q.get('verifier'):
+        return False
+    expected = hashlib.md5(f"{q['id']}:{q.get('snuid','')}:{q.get('currency','')}:{secret}".encode()).hexdigest()
+    return hmac.compare_digest(expected, q['verifier'].lower())
 
 
 def revu_valid(request: Request, allowed: str) -> bool:
@@ -310,7 +345,7 @@ def callback(provider: str, request: Request):
         raw = request.scope.get('query_string',b'').decode('ascii')
         base = os.getenv('QF_REWARDS_PUBLIC_ORIGIN','https://pronosticosdeportivos.pro').rstrip('/')
         original = base+request.scope.get('raw_path',request.url.path.encode()).decode('ascii')+'?'+raw
-        if not bitlabs_valid(original,os.getenv('QF_BITLABS_SECRET','')):
+        if not bitlabs_valid(original,provider_secret(provider,p)):
             raise HTTPException(403,'Firma inválida')
         q = request.query_params; uid=q.get('uid','');tx=q.get('tx','');value=q.get('amount','')
         offer_state = q.get('state')
@@ -319,6 +354,23 @@ def callback(provider: str, request: Request):
         state='reversal' if offer_state == 'RECONCILED' or value.startswith('-') else 'credit'
         if state == 'reversal' and offer_state is None:
             tx=q.get('ref','')  # configure REF for legacy negative reconciliation
+    elif provider == 'tapjoy':
+        # Tapjoy reintenta cada 5 min durante 4 días ante cualquier respuesta
+        # distinta de 200/403: los errores definitivos deben ser 403.
+        if p['approved_ips'] and not revu_valid(request,p['approved_ips']):
+            raise HTTPException(403,'Origen no autorizado')
+        if not tapjoy_valid(request,provider_secret(provider,p)):
+            raise HTTPException(403,'Firma inválida')
+        q=request.query_params;uid=q.get('snuid','');tx=q['id'];value=q.get('currency','');state='credit'
+        if value.startswith('-'):
+            raise HTTPException(403,'Un crédito no puede ser negativo')
+        try:
+            provider_event(provider,tx,uid,coin_amount(value),state)
+        except HTTPException as e:
+            if e.status_code in (409,422):
+                raise HTTPException(403,e.detail) from None
+            raise
+        return PlainTextResponse('OK',headers={'Cache-Control':'no-store'})
     else:
         if not revu_valid(request,p['approved_ips']):
             raise HTTPException(403,'Origen no autorizado')
@@ -340,6 +392,7 @@ def control(request: Request, user: str = Depends(console.require_console)):
     providers=query('SELECT * FROM reward_providers ORDER BY provider')
     for p in providers:
         p['ready']=provider_ready(p['provider']);p['name']=PROVIDERS[p['provider']]
+        p['has_secret']=bool(p.pop('secret_enc',''));p['env_secret']=bool(os.getenv(ENV_SECRETS.get(p['provider'],'')))
     return panel._render(request,'rewards.html',user,'rewards',cfg=settings(),providers=providers,
                          ledger=query('SELECT ledger_id,account_id,delta,balance_after,kind,created_at FROM reward_ledger ORDER BY ledger_id DESC LIMIT 100'),
                          referrals=query('SELECT * FROM reward_referrals ORDER BY created_at DESC LIMIT 100'))
@@ -371,22 +424,38 @@ def control_config(request: Request, enabled: str = Form(''), attendance_enabled
 
 @router.post('/control/recompensas/proveedores/{provider}',include_in_schema=False)
 def control_provider(provider: str, request: Request, enabled: str = Form(''), public_id: str = Form('',max_length=120),
-                     approved_ips: str = Form('',max_length=1000),csrf: str = Form(''),user: str = Depends(console.require_console)):
+                     approved_ips: str = Form('',max_length=1000), secret: str = Form('',max_length=200),
+                     clear_secret: str = Form(''), csrf: str = Form(''), user: str = Depends(console.require_console)):
     panel._check_post(request,user,csrf)
-    if provider not in PROVIDERS or enabled not in ('','1'):
+    if provider not in PROVIDERS or enabled not in ('','1') or clear_secret not in ('','1'):
         raise HTTPException(422,'Proveedor inválido')
     if public_id and not all(ch.isalnum() or ch in '-_' for ch in public_id):
         raise HTTPException(422,'Identificador público inválido')
+    secret = secret.strip()
+    if secret and not cifrado.disponible():
+        raise HTTPException(422,'Falta QF_SECRETS_KEY en el servidor: no se puede guardar la secret key cifrada')
+    if secret and (provider not in ENV_SECRETS or not secret.isprintable() or any(ch.isspace() for ch in secret)):
+        raise HTTPException(422,'Secret key no válida para este proveedor')
     try:
         for v in approved_ips.split(','):
             if v.strip(): ipaddress.ip_network(v.strip())
     except ValueError:
         raise HTTPException(422,'Lista de IP no válida') from None
+    current = query_one('SELECT * FROM reward_providers WHERE provider=%s',(provider,)) or {}
+    # Campo de solo escritura: vacío conserva la actual; "quitar" la borra.
+    if clear_secret == '1':
+        new_enc = ''
+    elif secret:
+        new_enc = cifrado.cifrar(secret, f'reward_provider:{provider}')
+    else:
+        new_enc = current.get('secret_enc') or ''
+    effective = secret or provider_secret(provider, {**current, 'secret_enc': new_enc})
     if enabled=='1' and (provider not in IMPLEMENTED or not public_id or
-                         (provider=='bitlabs' and not os.getenv('QF_BITLABS_SECRET')) or
+                         (provider in ENV_SECRETS and not effective) or
                          (provider=='revu' and (not approved_ips or not os.getenv('QF_REWARDS_TRUSTED_PROXY_CIDRS')))):
         raise HTTPException(422,'Faltan credenciales o la integración de este proveedor')
     with conn() as c:
-        c.execute('UPDATE reward_providers SET enabled=%s,public_id=%s,approved_ips=%s,updated_at=now() WHERE provider=%s',(enabled=='1',public_id,approved_ips,provider))
-        audit(c,panel._actor(request,user),'reward_provider',detail={'provider':provider,'enabled':enabled=='1','public_id':public_id})
+        c.execute('UPDATE reward_providers SET enabled=%s,public_id=%s,approved_ips=%s,secret_enc=%s,updated_at=now() WHERE provider=%s',(enabled=='1',public_id,approved_ips,new_enc,provider))
+        audit(c,panel._actor(request,user),'reward_provider',detail={'provider':provider,'enabled':enabled=='1','public_id':public_id,
+              'secret':'cambiada' if secret else ('borrada' if clear_secret=='1' else 'sin cambios')})
     return panel._back('/control/recompensas','mobile_guardado')

@@ -39,6 +39,18 @@ def test_revu_rejects_forged_forwarded_ip(monkeypatch):
     assert not rewards.revu_valid(request,'1.2.3.5/32')
 
 
+def test_tapjoy_verifier_md5():
+    verifier=hashlib.md5(b'tx1:abc123:50:secreto').hexdigest()
+    def req(**q):
+        qs='&'.join(f'{k}={v}' for k,v in q.items()).encode()
+        return Request({'type':'http','headers':[],'query_string':qs})
+    ok=dict(id='tx1',snuid='abc123',currency='50',verifier=verifier)
+    assert rewards.tapjoy_valid(req(**ok),'secreto')
+    assert not rewards.tapjoy_valid(req(**{**ok,'currency':'500'}),'secreto')
+    assert not rewards.tapjoy_valid(req(**ok),'otro')
+    assert not rewards.tapjoy_valid(req(snuid='abc123',currency='50'),'secreto')
+
+
 @pytest.fixture
 def pg(monkeypatch):
     """Optional real PostgreSQL tests, ALL changes rolled back including users."""

@@ -2,6 +2,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://sdk.tapjoy.com/' }
     }
 }
 rootProject.layout.buildDirectory.set(file('../build'))

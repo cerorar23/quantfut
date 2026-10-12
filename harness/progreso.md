@@ -4874,3 +4874,11 @@ probabilidad. Segundo ensayo: 5 parlays de 2 patas, 0 con líneas no validadas. 
 `.env` del VPS (copia en `releases/lineas-10oct-20261012/env.before-parley`), worker y API recreados.
 PENDIENTE: quién ve cada parley. `/parley` es público y la app los muestra todos; falta el reparto
 gratis/VIP (hoy son gratis para cualquiera).
+
+## 2026-10-12 — Tapjoy Offerwall (Unity) como proveedor de monedas
+
+- Decision: callback S2S estandar de Tapjoy (GET, `verifier=md5(id:snuid:currency:secret)`), moneda *self-managed*. Solo creditos: la doc de Tapjoy no define reversiones; un `currency` negativo se rechaza con 403. Errores definitivos siempre 403 (Tapjoy reintenta 4 dias ante cualquier otro codigo distinto de 200/403).
+- El offerwall se abre por SDK nativo (no URL): `launch` devuelve `{sdk,sdk_key,user_id}` y `MainActivity.kt` hace `Tapjoy.connect` con `USER_ID`=uid del monedero, que llega como `snuid`.
+- Dashboard (cloud.unity.com > Tapjoy Offerwall): app Quantumfut (Android, no activa), moneda `Monedas` ($1 = 1000), placement `coins_offerwall` + tarjeta `Coins`. Secreto en `QF_TAPJOY_SECRET` (VPS); la cuenta Tapjoy esta en revision.
+
+- Secret keys de proveedores (Tapjoy, BitLabs) editables desde /control/recompensas (db/060, columna `secret_enc`): AES-256-GCM con `cryptography` (pyca; AEAD estandar, auditado, sobre OpenSSL), nonce aleatorio y contexto `reward_provider:<id>` como AAD para que un secreto no se pueda mover a otra fila. La clave maestra `QF_SECRETS_KEY` vive solo en el entorno del servidor (rotacion con `QF_SECRETS_KEY_OLD`): copiar la BD no basta. Campo de solo escritura, auditoria sin el valor, variable de entorno como respaldo. Fallo cerrado: sin clave maestra el panel rechaza guardar.
