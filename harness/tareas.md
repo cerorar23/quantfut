@@ -184,7 +184,8 @@ Referencia: `apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
   completa; encuestas de aficionados con votos reales y control de duplicados.
 - [x] Conectar rendimiento publicado, catálogo de planes y permisos VIP del
   servidor; compra/restauración pendiente de proveedor de pagos.
-- [ ] Enlaces FCM y traducciones del detalle.
+- [x] Enlaces FCM (`route=match` abre el partido, con prueba en
+  `firebase_security_test.dart`) y traducciones del detalle (ARB, 6 idiomas).
 
 - [x] Analizar app, backend y documentación oficial; documentar integración.
 - [x] Adaptar las primeras pantallas de mercados a las métricas del proyecto,
@@ -196,12 +197,12 @@ Referencia: `apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
   sesión existente y vincular permisos/saldo del backend. Implementación
   autorizada el 12-oct e incorporada; activación pendiente de documentos
   legales publicados y conexión del backend de producción.
-- [ ] Idioma en la primera pantalla de registro, antes de la bienvenida:
+- [x] Idioma en la primera pantalla de registro, antes de la bienvenida:
   español, inglés, portugués, francés,
   italiano y alemán; persistir preferencia y cambio desde Perfil.
-- [ ] Localización completa Flutter y contratos backend: textos, errores,
+- [x] Localización completa Flutter y contratos backend: textos, errores,
   descripciones de mercados, formatos y preferencia sincronizada app/web.
-- [ ] Firebase en el idioma elegido: Auth/correos, FCM/bandeja, preferencias
+- [x] Firebase en el idioma elegido: Auth/correos, FCM/bandeja, preferencias
   por instalación y medición; evitar avisos duplicados por idioma.
   Detalle: `apps/mobile/docs/IDIOMAS_APP_BACKEND_FIREBASE_20261011.md`.
 - [x] Fase 0: recibir ideas de pantallas, contrastarlas con fútbol/NBA y web,

@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
-from . import ratelimit
+from . import mensajes, ratelimit
 from ..comercial import correo, cuentas, suscripciones
 from ..comercial.cuentas import CuentaError
 from ..comercial.entrega import picks_for_tiers
@@ -194,6 +194,10 @@ def current_account(creds: HTTPAuthorizationCredentials | None = Depends(_bearer
     return acc
 
 
+def _lang(request: Request) -> str:
+    return mensajes.idioma(request.headers.get("accept-language"))
+
+
 def _account_out(acc: dict) -> AccountOut:
     return AccountOut(account_id=acc["account_id"], email=acc["email"],
                       display_name=acc["display_name"],
@@ -208,7 +212,7 @@ def register(body: RegisterIn, request: Request, response: Response, tasks: Back
         acc = cuentas.create_account(body.email, body.password, body.display_name)
     except CuentaError as e:
         _fail(409 if e.code == "email_en_uso" else 422, e)
-    tasks.add_task(correo.enviar_verificacion, acc["account_id"], acc["email"])
+    tasks.add_task(correo.enviar_verificacion, acc["account_id"], acc["email"], _lang(request))
     return _deliver(cuentas.open_session(redis_client(), acc["account_id"],
                                          request.headers.get("user-agent"),
                                          ratelimit.client_ip(request)), request, response)
@@ -259,7 +263,7 @@ def logout(response: Response, acc: dict = Depends(current_account)):
 
 
 @router.post("/auth/verify/resend", status_code=202)
-def verify_resend(tasks: BackgroundTasks, acc: dict = Depends(current_account)):
+def verify_resend(request: Request, tasks: BackgroundTasks, acc: dict = Depends(current_account)):
     if acc["email_verified_at"] is not None:
         return {"status": "ya_verificado"}
     if not correo.configurado():
@@ -268,7 +272,7 @@ def verify_resend(tasks: BackgroundTasks, acc: dict = Depends(current_account)):
     if ratelimit.rate_limited(redis_client(), f"verificar:{acc['account_id']}", 3, 3600):
         raise HTTPException(429, {"code": "demasiados_intentos",
                                   "message": "Ya enviamos varios enlaces; revisa tu correo"})
-    tasks.add_task(correo.enviar_verificacion, acc["account_id"], acc["email"])
+    tasks.add_task(correo.enviar_verificacion, acc["account_id"], acc["email"], _lang(request))
     return {"status": "enviado"}
 
 
@@ -287,7 +291,7 @@ def password_forgot(body: ForgotIn, request: Request, tasks: BackgroundTasks):
     if not ratelimit.rate_limited(redis_client(), f"olvido_email:{email_key}", 3, 3600):
         acc = cuentas.account_for_reset(body.email)
         if acc is not None:
-            tasks.add_task(correo.enviar_restablecimiento, acc["account_id"], acc["email"])
+            tasks.add_task(correo.enviar_restablecimiento, acc["account_id"], acc["email"], _lang(request))
     return {"status": "si_existe_la_cuenta_se_envio_el_enlace"}
 
 

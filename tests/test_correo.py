@@ -94,23 +94,23 @@ def client(monkeypatch):
 
 def test_olvido_responde_igual_exista_o_no_la_cuenta(monkeypatch, client):
     enviados = []
-    monkeypatch.setattr(correo, "enviar_restablecimiento", lambda aid, email: enviados.append(aid))
+    monkeypatch.setattr(correo, "enviar_restablecimiento", lambda aid, email, lang="es": enviados.append((aid, lang)))
     monkeypatch.setattr(cuentas, "account_for_reset",
                         lambda email: {"account_id": 9, "email": email} if email == "si@b.com" else None)
     a = client.post("/app/v1/auth/password/forgot", json={"email": "si@b.com"})
     b = client.post("/app/v1/auth/password/forgot", json={"email": "no@b.com"})
     assert a.status_code == b.status_code == 202 and a.json() == b.json()
-    assert enviados == [9]
+    assert enviados == [(9, "es")]
 
 
 def test_olvido_limita_enlaces_por_correo(monkeypatch, client):
     enviados = []
-    monkeypatch.setattr(correo, "enviar_restablecimiento", lambda aid, email: enviados.append(aid))
+    monkeypatch.setattr(correo, "enviar_restablecimiento", lambda aid, email, lang="es": enviados.append((aid, lang)))
     monkeypatch.setattr(cuentas, "account_for_reset", lambda email: {"account_id": 9, "email": email})
     for i in range(5):
         client.post("/app/v1/auth/password/forgot", json={"email": "si@b.com"},
                     headers={"X-Forwarded-For": f"10.1.0.{i}"})
-    assert enviados == [9, 9, 9]
+    assert [a for a, _ in enviados] == [9, 9, 9]
 
 
 def test_reenviar_verificacion_sin_smtp_lo_dice(monkeypatch, client):
@@ -144,3 +144,24 @@ def test_token_del_formulario_se_escapa(monkeypatch, client):
     monkeypatch.setattr(cuentas, "email_token_valid", lambda tok, purpose: True)
     r = client.get('/cuenta/restablecer?token="><script>alert(1)</script>')
     assert "<script>alert(1)" not in r.text and "&lt;script&gt;" in r.text
+
+
+def test_correos_en_los_seis_idiomas(proton):
+    for hacer, n in ((correo.verification_message, 48), (correo.reset_message, 60)):
+        _, es = hacer("tok", n)
+        for lang in correo.IDIOMAS:
+            asunto, texto = hacer("tok", n, lang)
+            assert "QuantFut" in asunto and "token=tok" in texto and str(n) in texto
+            assert "{" not in texto
+            assert (texto == es) == (lang == "es")
+        # idioma desconocido: español
+        assert hacer("tok", n, "ja") == hacer("tok", n, "es")
+
+
+def test_el_idioma_de_la_peticion_llega_al_correo(monkeypatch, client):
+    enviados = []
+    monkeypatch.setattr(correo, "enviar_restablecimiento", lambda aid, email, lang="es": enviados.append((aid, lang)))
+    monkeypatch.setattr(cuentas, "account_for_reset", lambda email: {"account_id": 9, "email": email})
+    client.post("/app/v1/auth/password/forgot", json={"email": "si@b.com"},
+                headers={"Accept-Language": "de-DE,de;q=0.9", "X-Forwarded-For": "10.2.0.1"})
+    assert enviados == [(9, "de")]

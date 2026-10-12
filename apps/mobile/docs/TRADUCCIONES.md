@@ -24,6 +24,10 @@ cambio**. Las pruebas lo exigen; no hay excepciones por prisa.
 - **Fechas, números y porcentajes:** `kickoffText`, `decimalText`, `realPercent`,
   `percentText` (en `live_api.dart`) usan el idioma actual. Porcentaje con espacio en
   es/fr/de («65 %») y sin él en en/pt/it («65%»).
+- **Correos de cuenta** (verificar correo, restablecer contraseña): plantillas por idioma
+  en `src/qf/comercial/correo.py`; el idioma sale del `Accept-Language` de la petición
+  (el panel de administración reenvía en español). La página web a la que lleva el
+  enlace (`/cuenta/...`) sigue en español.
 - **Mensajes del servidor:** la app envía `Accept-Language`. `src/qf/api/mensajes.py`
   traduce los errores (`HTTPException`), los términos de las monedas y el mensaje de
   recompensas desactivadas. Los avisos push ya se redactan por idioma en
@@ -74,7 +78,8 @@ trabajo hechas por un modelo: **antes de publicar, deben revisarlas hablantes na
 - Código heredado de la plantilla (`lib/sign_in`, `lib/forget_password`, `lib/log_in`…) y 5
   archivos de `lib/product` no están conectados a `main.dart` y no se traducen
   (lista en `test/l10n_test.dart`).
-- Los textos legales públicos (`/legal/terminos`, `/legal/privacidad`) y los correos de
-  cuenta siguen en su idioma original; su traducción exige revisión jurídica.
+- Los textos legales públicos (`/legal/terminos`, `/legal/privacidad`) siguen solo en
+  español; su traducción exige revisión jurídica. Las páginas web de cuenta
+  (`/cuenta/verificar`, `/cuenta/restablecer`) tampoco están traducidas.
 - Un mensaje de error del servidor que no esté en el catálogo se muestra en español.
 - Los nombres de equipos, ligas y jugadores vienen de los datos y no se traducen.

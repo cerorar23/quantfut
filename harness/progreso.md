@@ -5136,3 +5136,15 @@ pantalla de acceso, el botón queda desactivado hasta aceptar y, al pulsarlo, ab
 NO probado: sesión completa con una cuenta real (el emulador no tiene cuenta y no se introducen credenciales
 de Google) ni FCM. Vuelta atrás: Remote Config `qf_google_auth_enabled=false` (apaga la pantalla al instante,
 plantilla anterior en el historial de Firebase) y/o compose con `FIREBASE_AUTH_ENABLED: '0'` + `up -d --no-deps api`.
+
+## 2026-10-12 — Correos de cuenta en 6 idiomas
+
+Los dos correos propios (verificar y restablecer) estaban solo en español pese a la regla de
+traducciones. Las plantillas viven en `comercial/correo.py` y el idioma sale del `Accept-Language`
+(la app ya lo envía) en vez de guardarse en la cuenta: no hay migración y funciona también para
+cuentas sin preferencia Firebase. El panel `/control` reenvía en español (el admin no conoce el
+idioma de la persona). Un idioma desconocido cae a español. Desplegado con respaldo en
+`~/backups/correos-20261012`; vuelta atrás = imagen `quantfut-api-tapjoy:pre-correos-backup` en el
+compose. Imagen vigente: `quantfut-api-tapjoy:20261012-correos`. Las páginas web a las que llevan los
+enlaces siguen en español (límite documentado en `TRADUCCIONES.md`).
+Se marcaron como hechos cuatro pendientes de idioma/FCM que ya estaban implementados y sin tildar.

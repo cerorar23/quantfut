@@ -100,50 +100,185 @@ def send_safely(to: str, subject: str, text: str) -> bool:
 
 # --- Mensajes ----------------------------------------------------------------
 
-def verification_message(token: str, horas: int) -> tuple[str, str]:
-    url = f"{base_url()}/cuenta/verificar?token={token}"
-    return ("Confirma tu correo en QuantFut", f"""Hola:
+IDIOMAS = ("es", "en", "pt", "fr", "it", "de")
+
+# {url} y {n} se rellenan al enviar. Regla del proyecto: todo texto visible va en los 6 idiomas.
+_VERIFICACION = {
+    "es": ("Confirma tu correo en QuantFut", """Hola:
 
 Para confirmar este correo en tu cuenta de QuantFut, abre este enlace:
 
 {url}
 
-El enlace caduca en {horas} horas y solo sirve una vez. Si no creaste una
+El enlace caduca en {n} horas y solo sirve una vez. Si no creaste una
 cuenta, ignora este mensaje.
 
 QuantFut
-""")
+"""),
+    "en": ("Confirm your email for QuantFut", """Hello,
 
+To confirm this email address on your QuantFut account, open this link:
 
-def reset_message(token: str, minutos: int) -> tuple[str, str]:
-    url = f"{base_url()}/cuenta/restablecer?token={token}"
-    return ("Restablece tu contraseña de QuantFut", f"""Hola:
+{url}
+
+The link expires in {n} hours and can only be used once. If you did not
+create an account, ignore this message.
+
+QuantFut
+"""),
+    "pt": ("Confirme seu e-mail na QuantFut", """Olá,
+
+Para confirmar este e-mail na sua conta da QuantFut, abra este link:
+
+{url}
+
+O link expira em {n} horas e só pode ser usado uma vez. Se você não criou
+uma conta, ignore esta mensagem.
+
+QuantFut
+"""),
+    "fr": ("Confirmez votre e-mail sur QuantFut", """Bonjour,
+
+Pour confirmer cette adresse e-mail sur votre compte QuantFut, ouvrez ce lien :
+
+{url}
+
+Le lien expire dans {n} heures et ne peut être utilisé qu'une seule fois.
+Si vous n'avez pas créé de compte, ignorez ce message.
+
+QuantFut
+"""),
+    "it": ("Conferma la tua email su QuantFut", """Ciao,
+
+Per confermare questo indirizzo email sul tuo account QuantFut, apri questo link:
+
+{url}
+
+Il link scade tra {n} ore e può essere usato una sola volta. Se non hai
+creato un account, ignora questo messaggio.
+
+QuantFut
+"""),
+    "de": ("Bestätige deine E-Mail bei QuantFut", """Hallo,
+
+um diese E-Mail-Adresse in deinem QuantFut-Konto zu bestätigen, öffne diesen Link:
+
+{url}
+
+Der Link läuft in {n} Stunden ab und kann nur einmal verwendet werden. Wenn
+du kein Konto erstellt hast, ignoriere diese Nachricht.
+
+QuantFut
+"""),
+}
+
+_RESTABLECIMIENTO = {
+    "es": ("Restablece tu contraseña de QuantFut", """Hola:
 
 Alguien pidió restablecer la contraseña de tu cuenta de QuantFut. Si fuiste
 tú, abre este enlace y elige una nueva:
 
 {url}
 
-El enlace caduca en {minutos} minutos y solo sirve una vez. Al cambiarla se
+El enlace caduca en {n} minutos y solo sirve una vez. Al cambiarla se
 cierran todas tus sesiones abiertas. Si no lo pediste, ignora este mensaje:
 tu contraseña no cambia.
 
 QuantFut
-""")
+"""),
+    "en": ("Reset your QuantFut password", """Hello,
+
+Someone asked to reset the password of your QuantFut account. If it was
+you, open this link and choose a new one:
+
+{url}
+
+The link expires in {n} minutes and can only be used once. Changing the
+password signs you out of all open sessions. If you did not ask for this,
+ignore this message: your password does not change.
+
+QuantFut
+"""),
+    "pt": ("Redefina sua senha da QuantFut", """Olá,
+
+Alguém pediu para redefinir a senha da sua conta da QuantFut. Se foi você,
+abra este link e escolha uma nova:
+
+{url}
+
+O link expira em {n} minutos e só pode ser usado uma vez. Ao alterá-la, todas
+as suas sessões abertas são encerradas. Se você não pediu isso, ignore esta
+mensagem: sua senha não muda.
+
+QuantFut
+"""),
+    "fr": ("Réinitialisez votre mot de passe QuantFut", """Bonjour,
+
+Quelqu'un a demandé la réinitialisation du mot de passe de votre compte
+QuantFut. Si c'était vous, ouvrez ce lien et choisissez-en un nouveau :
+
+{url}
+
+Le lien expire dans {n} minutes et ne peut être utilisé qu'une seule fois.
+Le changement déconnecte toutes vos sessions ouvertes. Si vous n'êtes pas à
+l'origine de cette demande, ignorez ce message : votre mot de passe ne change pas.
+
+QuantFut
+"""),
+    "it": ("Reimposta la tua password di QuantFut", """Ciao,
+
+Qualcuno ha chiesto di reimpostare la password del tuo account QuantFut. Se
+sei stato tu, apri questo link e scegline una nuova:
+
+{url}
+
+Il link scade tra {n} minuti e può essere usato una sola volta. Cambiandola,
+tutte le tue sessioni aperte vengono chiuse. Se non l'hai chiesto tu, ignora
+questo messaggio: la tua password non cambia.
+
+QuantFut
+"""),
+    "de": ("Setze dein QuantFut-Passwort zurück", """Hallo,
+
+jemand hat darum gebeten, das Passwort deines QuantFut-Kontos zurückzusetzen.
+Falls du das warst, öffne diesen Link und wähle ein neues:
+
+{url}
+
+Der Link läuft in {n} Minuten ab und kann nur einmal verwendet werden. Beim
+Ändern werden alle offenen Sitzungen beendet. Falls du das nicht angefordert
+hast, ignoriere diese Nachricht: Dein Passwort bleibt unverändert.
+
+QuantFut
+"""),
+}
 
 
-def enviar_verificacion(account_id: int, email: str) -> bool:
+def _render(plantillas: dict, lang: str, url: str, n: int) -> tuple[str, str]:
+    asunto, cuerpo = plantillas.get(lang) or plantillas["es"]
+    return asunto, cuerpo.format(url=url, n=n)
+
+
+def verification_message(token: str, horas: int, lang: str = "es") -> tuple[str, str]:
+    return _render(_VERIFICACION, lang, f"{base_url()}/cuenta/verificar?token={token}", horas)
+
+
+def reset_message(token: str, minutos: int, lang: str = "es") -> tuple[str, str]:
+    return _render(_RESTABLECIMIENTO, lang, f"{base_url()}/cuenta/restablecer?token={token}", minutos)
+
+
+def enviar_verificacion(account_id: int, email: str, lang: str = "es") -> bool:
     """Emite el enlace y lo envía. Sin SMTP configurado no emite nada."""
     if not configurado():
         return False
     subject, text = verification_message(
-        cuentas.issue_email_token(account_id, "verify"), cuentas.VERIFY_TTL_HOURS)
+        cuentas.issue_email_token(account_id, "verify"), cuentas.VERIFY_TTL_HOURS, lang)
     return send_safely(email, subject, text)
 
 
-def enviar_restablecimiento(account_id: int, email: str) -> bool:
+def enviar_restablecimiento(account_id: int, email: str, lang: str = "es") -> bool:
     if not configurado():
         return False
     subject, text = reset_message(
-        cuentas.issue_email_token(account_id, "reset"), cuentas.RESET_TTL_MINUTES)
+        cuentas.issue_email_token(account_id, "reset"), cuentas.RESET_TTL_MINUTES, lang)
     return send_safely(email, subject, text)
