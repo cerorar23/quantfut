@@ -230,14 +230,17 @@ def alta_probabilidad(response: Response):
     return high_probability()
 
 @publico.get("/parley")
-def parley():
+def parley(response: Response, plus: bool = Depends(member)):
     """
     Parley del día: 1 a 5 parlays sellados de cuota 1,90-5,00, el más probable
     de cada escalón, y su historial prometido frente a real. Se elige por
-    probabilidad, no por valor.
+    probabilidad, no por valor. Uno gratis al día (el de menor escalón); el resto
+    es VIP y los ya liquidados se ven siempre (`parley_acceso`).
     """
     from ..publish import parley_datos
-    return parley_datos.informe_publico()
+    from .parley_acceso import aplicar_acceso
+    response.headers['Cache-Control'] = 'no-store'
+    return aplicar_acceso(parley_datos.informe_publico(), plus)
 
 
 @publico.get("/calibration")
@@ -743,8 +746,8 @@ app.include_router(web_router)
 app.include_router(fichas_router)
 app.include_router(mobile_router)
 app.include_router(rewards_router)
+app.include_router(firebase_router)
+app.include_router(legal_router)
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-app.include_router(firebase_router)
-app.include_router(legal_router)

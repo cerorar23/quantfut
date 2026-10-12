@@ -218,7 +218,7 @@ class _ProductShellState extends State<ProductShell>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         liveText(
-          '75–90 % de probabilidad · uno gratis por mercado',
+          '62–95 % de probabilidad · uno gratis por mercado',
           color: liveMuted,
           size: 12,
         ),
@@ -660,8 +660,12 @@ class _ProductShellState extends State<ProductShell>
                           ],
                           showSelectedIcon: false,
                           style: const ButtonStyle(
-                            textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12.5)),
-                            padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 6)),
+                            textStyle: WidgetStatePropertyAll(
+                              TextStyle(fontSize: 12.5),
+                            ),
+                            padding: WidgetStatePropertyAll(
+                              EdgeInsets.symmetric(horizontal: 6),
+                            ),
                           ),
                           selected: {stream},
                           onSelectionChanged: (s) =>
@@ -673,7 +677,7 @@ class _ProductShellState extends State<ProductShell>
                         else if (stream == 'Reto Escalera')
                           ladder(data!)
                         else
-                          ParleyTab(api: api),
+                          ParleyTab(api: api, onVip: vip),
                       ],
                     )
                   else

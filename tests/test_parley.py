@@ -47,7 +47,12 @@ def test_cuota_erronea_fuera():
 
 def test_filtro_cuota_minima_mercado_y_hora():
     assert pl.filtrar([_o("a", 0.9, 1.10)], AHORA) == []
-    assert pl.filtrar([_o("a", 0.7, 1.40, market="double_chance", sel="1X", line=None)], AHORA) == []
+    # Doble oportunidad: entra desde el 2026-10-12 (cuota real de API-Football); un mercado
+    # que el parley no conoce sigue fuera.
+    dc = _o("a", 0.7, 1.40, market="double_chance", sel="1X", line=None)
+    assert pl.filtrar([dc], AHORA) == [dc]
+    assert pl.filtrar([_o("a", 0.7, 1.10, market="double_chance", sel="1X", line=None)], AHORA) == []
+    assert pl.filtrar([_o("a", 0.7, 1.40, market="first_half", sel="yes", line=None)], AHORA) == []
     assert pl.filtrar([_o("a", 0.7, 1.40, as_of=AHORA + timedelta(minutes=1))], AHORA) == []
 
 

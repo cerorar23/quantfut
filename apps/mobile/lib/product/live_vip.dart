@@ -196,8 +196,8 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
         : -1;
     final selected = chosen ?? (bestIndex >= 0 ? bestIndex : 0);
     final purchases = featureEnabled(widget.data, 'compras');
-    final min = ((config['probability_min'] as num?) ?? .75) * 100;
-    final max = ((config['probability_max'] as num?) ?? .90) * 100;
+    final min = ((config['probability_min'] as num?) ?? .62) * 100;
+    final max = ((config['probability_max'] as num?) ?? .95) * 100;
     final real = history['acierto_real'];
     return Scaffold(
       backgroundColor: liveBg,

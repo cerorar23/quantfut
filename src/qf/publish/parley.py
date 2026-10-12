@@ -28,6 +28,8 @@ from .escalera import MERCADOS, Opcion
 
 ESCALONES: tuple[tuple[int, float, float], ...] = (
     (1, 1.90, 2.20), (2, 2.20, 2.70), (3, 2.70, 3.40), (4, 3.40, 4.30), (5, 4.30, 5.00))
+# La doble oportunidad solo entra en el parley (cuota real de API-Football desde el 2026-10-12).
+MERCADOS_PARLEY = MERCADOS + ("double_chance",)
 CUOTA_MIN_PATA = 1.15
 # Valor esperado por encima del cual la cuota se da por error de la casa
 # (11-oct: William Hill pagaba a Deportivo a 19,00 con el mercado en ~5).
@@ -53,7 +55,7 @@ def filtrar(opciones: list[Opcion], now: datetime) -> list[Opcion]:
     se redondea a 4 decimales, que es como la cotizan las casas.
     """
     return [replace(o, price=round(o.price, 4)) for o in opciones
-            if o.cand.market in MERCADOS and round(o.price, 4) >= CUOTA_MIN_PATA
+            if o.cand.market in MERCADOS_PARLEY and round(o.price, 4) >= CUOTA_MIN_PATA
             and o.ev <= EV_ERRONEA
             and (o.odds_as_of is None or o.odds_as_of <= now)]
 

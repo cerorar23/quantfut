@@ -251,6 +251,12 @@ def settle_pending(lookback_hours: int = 96) -> dict:
         alta = {"settled": 0, "error": str(exc)}
 
     try:
+        from ..publish.alta_prob_ext import settle_pending as settle_alta_ext
+        settle_alta_ext()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("No se pudo liquidar la alta probabilidad ampliada: %s", exc)
+
+    try:
         from ..publish.escalera_datos import settle_pending as settle_escalera
         escalera = settle_escalera()
     except Exception as exc:  # noqa: BLE001

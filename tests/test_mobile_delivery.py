@@ -63,8 +63,9 @@ def test_top_up_adds_best_quote_of_markets_without_an_open_free():
 
 
 def test_probability_bounds_and_no_fake_quote():
-    rows=[row(1,.749),row(2,.75),row(3,.90),row(4,.901),row(5,.85,None)]
+    rows=[row(1,.619),row(2,.62),row(3,.95),row(4,.951),row(5,.85,None)]
     assert mobile.choose_free(rows,'alta_probabilidad')[0]['match_id']=='m3'
+    assert {r['match_id'] for r in mobile.choose_free([row(1,.619),row(4,.951)],'alta_probabilidad')}==set()
     assert len(mobile.choose_free([row(1,.8,None)],'alta_probabilidad'))==0
 
 

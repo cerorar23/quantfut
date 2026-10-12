@@ -4849,6 +4849,34 @@ AVISO de despliegue: el VPS corre el módulo VIEJO de córners/tarjetas (líneas
 que está desplegado y se alineará sola cuando esa revisión se despliegue (decisión sobre los picks del worker).
 La tarjeta anterior de anillos/«¿Cuántos goles?» se retiró de la pestaña (la sustituye la lista).
 
+## 2026-10-11 — Alta probabilidad ampliada 62–95 % (`alta_prob_ext`), implementada sin desplegar
+
+- Decisión del usuario: tabla aparte (`db/057`, un candidato por partido+mercado+
+  selección+línea, inmutable) con todo lo aprobado por la prueba amplia; la línea
+  de 80–95 % (`alta_prob_picks`) no cambia. Por qué aparte: `match_id UNIQUE` de
+  `alta_prob_picks` y su lote ya sellado no admiten varios picks por partido.
+- `publish/alta_prob_ext.py`: selección (`alta_prob.elegir_ext`, listas `*_EXT`),
+  control por mercado (reusa `ap.control`), liquidación (encadenada en
+  `eval/clv.settle_pending`). Sellado: bloque `alta_ext` en el lote desde
+  `LOTE_ALTA_EXT_DESDE = 2026-10-12`; los lotes anteriores no cambian de hash.
+- App: `mobile.py` lee ambas tablas (62–95 %), sin duplicar partido+mercado+
+  selección+línea (manda la fila original); gratis = mayor cuota por mercado, tope
+  1,60; `pick_key` de las filas ampliadas es `ext_id`. Escalera sigue en 75–90 %.
+- Apagada: `ALTA_PROB_EXT_ENABLED=0`. Falta aplicar db/057 en el servidor, activar
+  el flag ANTES del sellado de las 08:00 UTC del 12-oct, y verificar con
+  `python -m qf.publish.alta_prob_ext preview`. Si no se despliega a tiempo,
+  mover `LOTE_ALTA_EXT_DESDE` al primer lote sin sellar.
+- Desplegado el 12-oct ~02:40 UTC con visto bueno del usuario. db/057 aplicada;
+  archivos copiados a `api` y `worker` partiendo de lo que había en producción
+  (el servidor NO tenía la revisión de córners del 10-oct en `alta_prob.py`: se
+  conservó, solo se añadió lo de la ampliación). Imágenes confirmadas con
+  `docker commit` (`quantfut-api-mobile-rewards:20261011`, `quantfut-worker:latest`)
+  y recreados `api` y `worker` con `ALTA_PROB_EXT_ENABLED=1` en `.env`; respaldo en
+  `~/quantfut/deployments/before-ext` y etiquetas `:before-ext`. Preview real:
+  287 candidatos en 25 partidos (143 con cuota publicada), 0,62–0,95. El árbol
+  `~/quantfut/src` del VPS sigue sin actualizar. Falta: ver el primer sellado (08:00
+  UTC) con `n_alta_ext` > 0 y recompilar la app.
+
 ### 1ª mitad: prueba histórica y mercados publicados (2026-10-12)
 
 `eval/primer_tiempo.py` (football-data, cuotas de Pinnacle, entreno 2019-2022 con 5.743 partidos y medida en
@@ -4875,15 +4903,40 @@ probabilidad. Segundo ensayo: 5 parlays de 2 patas, 0 con líneas no validadas. 
 PENDIENTE: quién ve cada parley. `/parley` es público y la app los muestra todos; falta el reparto
 gratis/VIP (hoy son gratis para cualquiera).
 
-## 2026-10-12 — Tapjoy Offerwall (Unity) como proveedor de monedas
+### Corrección: hora real de la activación del Parley y nuevo horario de sellado (2026-10-12)
 
-- Decision: callback S2S estandar de Tapjoy (GET, `verifier=md5(id:snuid:currency:secret)`), moneda *self-managed*. Solo creditos: la doc de Tapjoy no define reversiones; un `currency` negativo se rechaza con 403. Errores definitivos siempre 403 (Tapjoy reintenta 4 dias ante cualquier otro codigo distinto de 200/403).
-- El offerwall se abre por SDK nativo (no URL): `launch` devuelve `{sdk,sdk_key,user_id}` y `MainActivity.kt` hace `Tapjoy.connect` con `USER_ID`=uid del monedero, que llega como `snuid`.
-- Dashboard (cloud.unity.com > Tapjoy Offerwall): app Quantumfut (Android, no activa), moneda `Monedas` ($1 = 1000), placement `coins_offerwall` + tarjeta `Coins`. Secreto en `QF_TAPJOY_SECRET` (VPS); la cuenta Tapjoy esta en revision.
+La sección «Parley activado (05:5x UTC)» y el mensaje del commit fe441c1 están MAL en la hora: la pregunta al
+usuario esperó ~9 h y la activación se ejecutó a las 14:48 UTC, no a las 05:5x. El sellado de las 08:00 UTC
+de hoy ya había corrido con el Parley apagado (`parley: desactivado`, 0 parlays), así que NO hay parlays
+sin sellar (`hashchain verify`: 14 lotes OK). El primer lote con Parley es el del 13-oct.
+Decisión del usuario: el sellado diario pasa a las 07:00 de Ciudad de México = 13:00 UTC, siempre (México no
+tiene horario de verano desde 2022; cron corre en UTC). `scripts/crontab`: `0 13 * * *` (antes `0 8`),
+aplicado en el VPS (copia `scripts/crontab.before-13utc`) y recargado con `crontab /etc/cron.d/quantfut`, sin
+reiniciar el worker. Efecto: solo entran partidos que empiezan DESPUÉS del sellado; los de 08:00-13:00 UTC
+dependen del lote anterior (el job ya mira partidos de hoy y mañana). El comentario de `daily.py` («08:00,
+antes del primer kickoff europeo») queda desfasado; no se tocó porque ese archivo tiene cambios de otra sesión.
 
-- Secret keys de proveedores (Tapjoy, BitLabs) editables desde /control/recompensas (db/060, columna `secret_enc`): AES-256-GCM con `cryptography` (pyca; AEAD estandar, auditado, sobre OpenSSL), nonce aleatorio y contexto `reward_provider:<id>` como AAD para que un secreto no se pueda mover a otra fila. La clave maestra `QF_SECRETS_KEY` vive solo en el entorno del servidor (rotacion con `QF_SECRETS_KEY_OLD`): copiar la BD no basta. Campo de solo escritura, auditoria sin el valor, variable de entorno como respaldo. Fallo cerrado: sin clave maestra el panel rechaza guardar.
+## 2026-10-12 — App actualizada en el emulador Android
 
-- Despliegue VPS 2026-10-12 (sin git): codigo copiado al contenedor, `docker commit` a `quantfut-api-tapjoy:20261012`, compose apuntado a esa imagen y `compose up -d --no-deps api`. Respaldos en ~/backups/tapjoy-20261012 (env, compose, rewards.py/html previos); vuelta atras = imagen `quantfut-api-mobile-rewards:pre-tapjoy-backup` + env respaldado. db/060 aplicada; `QF_SECRETS_KEY` generada en el servidor (no esta en ningun otro sitio: respaldarla).
+Pedido: «despliega el trabajo». Compilada la app del espacio de trabajo actual,
+con Estadísticas, Coins, mercados y la nueva pestaña Parley. `flutter analyze`
+sin incidencias; suite completa `flutter test`: 32 pruebas aprobadas.
+`flutter build apk --release`: correcto, 59,8 MB. Instalación con `adb install -r`
+confirmada (Success) en Medium_Phone_API_37.0, emulator-5556, sin borrar los datos.
+Aplicación abierta y navegación Inicio / Predicciones / Parley comprobada con
+respuesta real; Parley activo pero sin tickets publicados hoy, estado mostrado
+sin inventar selecciones. Registro de errores Android/Flutter vacío.
+
+API HTTPS comprobada: /mobile/v1/config, /mobile/v1/home y /parley devuelven 200.
+La configuración real entrega 62–95 %. Los servicios del VPS ya estaban activos;
+no se volvieron a desplegar archivos ni trabajadores desde este árbol local.
+Firebase/registro inicial continúa únicamente en el plan.
+
+APK: apps/mobile/build/app/outputs/flutter-apk/app-release.apk (1.0.0+1).
+SHA256: 3D963890AB6FFF66CA0A46AC76B2377DBAFE92878DC80E635AD0F0213037E62F.
+Captura: apps/mobile/docs/validation/real_mobile_20261011/release-parley-20261012.png.
+Este APK conserva la firma de desarrollo configurada en el proyecto; no se ha
+publicado en Google Play ni cambiado la firma o el identificador de la aplicación.
 
 ## 2026-10-12 — Firebase Core e identidad definitiva de QuantFut
 
@@ -4930,6 +4983,7 @@ PENDIENTE (toca archivos de la otra sesión, alta probabilidad ampliada): que `a
 para que la doble oportunidad pueda ser pronóstico gratis; hoy `_ref` devuelve sin precio. Ideas aún sin hacer:
 informe de calibración por origen (Pinnacle frente a córners/tarjetas), test binomial exacto en el control del parley
 (con n=50 y p=0,24 el `z<=-4` actual no puede dispararse) y orden del armado (medido: +0,6 % en un día).
+
 
 ## 2026-10-12 — Servicios Firebase, identidad y despliegue de API
 
@@ -4990,5 +5044,15 @@ de mercados de destino no se excluyen por la constitución en Seychelles.
 Detalle: apps/mobile/docs/FIREBASE_SERVICIOS_20261012.md. Evidencia sin secretos
 en apps/mobile/docs/validation/firebase_services_20261012/; borradores y control
 de publicación en docs/legal/.
+
+## 2026-10-12 — Tapjoy Offerwall (Unity) como proveedor de monedas
+
+- Decision: callback S2S estandar de Tapjoy (GET, `verifier=md5(id:snuid:currency:secret)`), moneda *self-managed*. Solo creditos: la doc de Tapjoy no define reversiones; un `currency` negativo se rechaza con 403. Errores definitivos siempre 403 (Tapjoy reintenta 4 dias ante cualquier otro codigo distinto de 200/403).
+- El offerwall se abre por SDK nativo (no URL): `launch` devuelve `{sdk,sdk_key,user_id}` y `MainActivity.kt` hace `Tapjoy.connect` con `USER_ID`=uid del monedero, que llega como `snuid`.
+- Dashboard (cloud.unity.com > Tapjoy Offerwall): app Quantumfut (Android, no activa), moneda `Monedas` ($1 = 1000), placement `coins_offerwall` + tarjeta `Coins`. Secreto en `QF_TAPJOY_SECRET` (VPS); la cuenta Tapjoy esta en revision.
+
+- Secret keys de proveedores (Tapjoy, BitLabs) editables desde /control/recompensas (db/060, columna `secret_enc`): AES-256-GCM con `cryptography` (pyca; AEAD estandar, auditado, sobre OpenSSL), nonce aleatorio y contexto `reward_provider:<id>` como AAD para que un secreto no se pueda mover a otra fila. La clave maestra `QF_SECRETS_KEY` vive solo en el entorno del servidor (rotacion con `QF_SECRETS_KEY_OLD`): copiar la BD no basta. Campo de solo escritura, auditoria sin el valor, variable de entorno como respaldo. Fallo cerrado: sin clave maestra el panel rechaza guardar.
+
+- Despliegue VPS 2026-10-12 (sin git): codigo copiado al contenedor, `docker commit` a `quantfut-api-tapjoy:20261012`, compose apuntado a esa imagen y `compose up -d --no-deps api`. Respaldos en ~/backups/tapjoy-20261012 (env, compose, rewards.py/html previos); vuelta atras = imagen `quantfut-api-mobile-rewards:pre-tapjoy-backup` + env respaldado. db/060 aplicada; `QF_SECRETS_KEY` generada en el servidor (no esta en ningun otro sitio: respaldarla).
 
 - 2026-10-12 — Firebase no arrancaba en el emulador (`channel-error` en `FirebaseCoreHostApi.initializeCore`): `GeneratedPluginRegistrant.java` estaba vacio (19 lineas) porque las dependencias de Flutter no estaban resueltas (avisos de `google_sign_in_android` inexistente). `flutter pub get` lo regenero (71 lineas) y `FirebaseApp initialization successful`. Si reaparece el mensaje «No pudimos iniciar QuantFut», comprobar primero `flutter pub get` y que el registrant liste los plugins.

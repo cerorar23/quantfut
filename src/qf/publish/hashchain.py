@@ -84,6 +84,15 @@ def lote_lleva_parley(dia: date) -> bool:
     return LOTE_PARLEY_DESDE is not None and dia >= LOTE_PARLEY_DESDE
 
 
+# Desde esta fecha el lote lleva la alta probabilidad ampliada, 62-95 %
+# (`alta_prob_ext`, db/057). Misma regla: primer lote sin sellar al desplegar.
+LOTE_ALTA_EXT_DESDE: date | None = date(2026, 10, 12)
+
+
+def lote_lleva_alta_ext(dia: date) -> bool:
+    return LOTE_ALTA_EXT_DESDE is not None and dia >= LOTE_ALTA_EXT_DESDE
+
+
 def lote_lleva_alta(dia: date) -> bool:
     """
     ¿El lote de `dia` lleva el bloque de alta probabilidad? Única fuente de
@@ -137,6 +146,15 @@ def _collect(batch_date: date) -> dict:
            ORDER BY decided_at, alta_id""",
         (batch_date,),
     ) if con_alta else []
+    con_ext = lote_lleva_alta_ext(batch_date)
+    alta_ext = query(
+        """SELECT ext_id, match_id, market, selection, line, prob, fair_price,
+                  ref_price, ref_book, odds_source, odds_as_of, fit, decided_at
+           FROM alta_prob_ext
+           WHERE (decided_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY decided_at, ext_id""",
+        (batch_date,),
+    ) if con_ext else []
     con_escalera = lote_lleva_escalera(batch_date)
     retos = query(
         """SELECT reto_id, stake_inicial, pasos_objetivo, cuota_min, cuota_max, ev_min,
@@ -184,6 +202,9 @@ def _collect(batch_date: date) -> dict:
     if con_alta:
         payload["n_alta_prob"] = len(alta)
         payload["alta_probabilidad"] = alta
+    if con_ext:
+        payload["n_alta_ext"] = len(alta_ext)
+        payload["alta_ext"] = alta_ext
     if con_escalera:
         payload["escalera"] = {"retos": retos, "pasos": escalones}
     if con_parley:
@@ -226,6 +247,7 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
         "n_predictions": payload["n_predictions"],
         "n_picks": payload["n_picks"],
         **({"n_alta_prob": payload["n_alta_prob"]} if "n_alta_prob" in payload else {}),
+        **({"n_alta_ext": payload["n_alta_ext"]} if "n_alta_ext" in payload else {}),
         "sealed_at_utc": datetime.now(timezone.utc).isoformat(),
     }
     (out_dir / f"{batch_date.isoformat()}.receipt.json").write_text(

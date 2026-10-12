@@ -89,6 +89,9 @@ class Settings:
     # Fecha (AAAA-MM-DD) desde la que el control de calidad mide. Reanudar
     # tras una pausa es decisión del usuario: se mueve esta fecha.
     alta_prob_control_desde: str = os.getenv("ALTA_PROB_CONTROL_DESDE", "")
+    # Ampliación 62-95 % (tabla alta_prob_ext, 2026-10-11). Apagada hasta aplicar
+    # db/057 y desplegar con LOTE_ALTA_EXT_DESDE fijado.
+    alta_prob_ext_enabled: bool = os.getenv("ALTA_PROB_EXT_ENABLED", "0") in ("1", "true", "True")
 
     # --- Reto escalera (publish/escalera.py, 2026-10-08) ---
     # Apagado hasta desplegar con LOTE_ESCALERA_DESDE fijado: sin bloque en el

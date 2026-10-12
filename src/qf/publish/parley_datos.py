@@ -57,7 +57,7 @@ def candidatas(now: datetime) -> tuple[list, int]:
     modelos = ed.Modelos(now)
     todas, sin_precio = [], 0
     for m in _partidos(now):
-        res = ed.opciones(m, now, rho, modelos)
+        res = ed.opciones(m, now, rho, modelos, incluir_doble=True)
         if res is None:
             sin_precio += 1
             continue

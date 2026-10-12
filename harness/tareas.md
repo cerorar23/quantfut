@@ -2350,3 +2350,11 @@ justa (1/prob) etiquetada donde no hay cuota publicada.
 - [x] Flutter: pestaña Pronósticos nueva (análisis + lista + marcadores).
 - [ ] 1ª mitad: modelo con los 59.752 partidos con goles al descanso + prueba de calibración. No publicar si no calibra.
 - [x] Desplegado en el VPS y comprobado en el emulador (2026-10-12).
+
+## Alta probabilidad ampliada 62–95 % (2026-10-11, decisión del usuario)
+
+- [x] Medición de los tramos 62–80 % (`eval/alta_prob_calibracion.py --amplio`).
+- [x] `db/057`, `publish/alta_prob_ext.py`, sellado `alta_ext`, liquidación, app.
+- [x] (hecho 12-oct) Desplegar: aplicar db/057, `ALTA_PROB_EXT_ENABLED=1` antes del sellado del
+      12-oct (08:00 UTC), `preview` y verify del primer lote; si se retrasa, mover
+      `LOTE_ALTA_EXT_DESDE`. Recompilar la app (texto 62–95 %).

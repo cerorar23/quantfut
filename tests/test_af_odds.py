@@ -166,3 +166,31 @@ def test_goles_de_cada_equipo_exige_el_nombre_del_bet(casas):
         _equipo("1xBet", 17, {0.5: ("1.40", "2.80")}),
     ]), "m1", KO)
     assert {(r[2], r[3]) for r in rows} == {("1xbet", "team_totals_away")}
+
+
+def _doble(name, valores, bet_id=12, bet_name="Double Chance"):
+    return {"name": name, "bets": [{"id": bet_id, "name": bet_name, "values": [
+        {"value": k, "odd": v} for k, v in valores.items()]}]}
+
+
+def test_doble_oportunidad_de_blandas_y_pinnacle_con_los_nombres_de_alta_probabilidad(casas):
+    rows = parse(_resp([
+        _doble("Bet365", {"Home/Draw": "1.40", "Home/Away": "1.36", "Draw/Away": "1.40"}),
+        _doble("Pinnacle", {"Home/Draw": "1.38", "Home/Away": "1.33", "Draw/Away": "1.36"}),
+        _doble("Marathonbet", {"Home/Draw": "1.49", "Home/Away": "1.38", "Draw/Away": "1.49"}),  # no es de la lista
+    ]), "m1", KO)
+    got = {(r[2], r[3], r[4], r[5], r[8]) for r in rows}
+    assert got == {("bet365", "double_chance", "1X", 1.4, None), ("bet365", "double_chance", "12", 1.36, None),
+                   ("bet365", "double_chance", "X2", 1.4, None), ("pinnacle", "double_chance", "1X", 1.38, None),
+                   ("pinnacle", "double_chance", "12", 1.33, None), ("pinnacle", "double_chance", "X2", 1.36, None)}
+
+
+def test_doble_oportunidad_exige_el_grupo_completo_cuotas_validas_y_el_nombre(casas):
+    rows = parse(_resp([
+        _doble("Bet365", {"Home/Draw": "1.40", "Home/Away": "1.36"}),                               # falta uno
+        _doble("Betano", {"Home/Draw": "1.50", "Home/Away": "1.00", "Draw/Away": "1.47"}),         # cuota no válida
+        _doble("1xBet", {"Home/Draw": "1.49", "Home/Away": "1.38", "Draw/Away": "1.49"},
+               bet_name="Double Chance - Second Half"),                                             # otro mercado
+        _doble("William Hill", {"Home/Draw": "1.50", "Home/Away": "1.33", "Draw/Away": "1.44"}, bet_id=33),
+    ]), "m1", KO)
+    assert not [r for r in rows if r[3] == "double_chance"]

@@ -132,15 +132,16 @@ class Modelos:
 
 def _cuotas_af(match_id: str, now: datetime) -> list[dict]:
     """
-    Última cotización de cada casa para ambos anotan, córners y tarjetas, ya
-    recibida en `now` y con menos de MAX_EDAD_PRECIO.
+    Última cotización de cada casa para ambos anotan, doble oportunidad, córners y
+    tarjetas, ya recibida en `now` y con menos de MAX_EDAD_PRECIO.
     """
     return query(
         """SELECT DISTINCT ON (bookmaker, market, selection, line)
                   bookmaker, market, selection, line, price, provider_updated_at
            FROM af_odds_snapshots
            WHERE match_id = %s
-             AND market IN ('btts', 'corners', 'cards', 'corners_home', 'corners_away')
+             AND market IN ('btts', 'double_chance', 'corners', 'cards', 'corners_home',
+                            'corners_away')
              AND fetched_at <= %s AND provider_updated_at >= %s
            ORDER BY bookmaker, market, selection, line, provider_updated_at DESC""",
         (match_id, now, now - es.MAX_EDAD_PRECIO))
@@ -214,13 +215,18 @@ def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
 
 
 def opciones(m: dict, now: datetime, rho: float | None,
-             modelos: "Modelos | None" = None) -> list[es.Opcion] | None:
+             modelos: "Modelos | None" = None,
+             incluir_doble: bool = False) -> list[es.Opcion] | None:
     """
     Todos los candidatos de un partido con la mejor cuota de la lista. Los de
     Pinnacle (1X2, goles, ambos anotan, hándicap) necesitan su precio vigente;
     córners y tarjetas salen del modelo estadístico, recortado a lo que da el
     mercado (`prudente`), y de las cuotas de API-Football. None si no hay ni
     precio de Pinnacle ni nada con cuota.
+
+    `incluir_doble`: añade la doble oportunidad (probabilidad = suma de las del 1X2 de
+    Pinnacle sin margen; cuota REAL de API-Football, bet 12). Solo la usa el parley: la
+    escalera no la considera, así que su selección no cambia.
     """
     match_id, kickoff = m["match_id"], m["kickoff_utc"]
     out = []
@@ -239,6 +245,8 @@ def opciones(m: dict, now: datetime, rho: float | None,
         fair = devig([q[s] for s in ad.SEL], settings.devig_method)
         p = {s: float(fair[i]) for i, s in enumerate(ad.SEL)}
         cands = ap.candidatos_1x2(p)
+        if incluir_doble:
+            cands += ap.candidatos_doble(p)
         linea = ad.linea_pinnacle(totales) if rho is not None else None
         ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho) if linea else None
         cands += ap.candidatos_goles(ajuste, es.LINEAS_GOLES)
@@ -255,7 +263,7 @@ def opciones(m: dict, now: datetime, rho: float | None,
             cands += es.candidatos_handicap(p, mat)
             lineas_ah = _handicaps(match_id, snap.as_of)
         for c in cands:
-            if c.market == "btts":
+            if c.market in ("btts", "double_chance"):
                 price, book, _ = _ref_af(filas_af, c)
             elif c.market == "spreads":
                 price, book = _ref_handicap(lineas_ah, c)

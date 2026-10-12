@@ -32,7 +32,7 @@ SEL = ("home", "draw", "away")
 _MEDIO_GOL = (2.5, 3.5)
 
 
-def _sql_sellado() -> str:
+def _sql_sellado(desde: date | None | str = "alta") -> str:
     """
     JOIN con el lote que cubre cada fila: existe, se selló DESPUÉS de decidirla
     y es de un día cuyo payload LLEVA el bloque (`hashchain.lote_lleva_alta`).
@@ -41,7 +41,8 @@ def _sql_sellado() -> str:
     `AND FALSE`. El literal de fecha es seguro de incrustar: sale de una
     constante `date` del código (`LOTE_ALTA_PROB_DESDE`), no de entrada de usuario.
     """
-    desde = hashchain.LOTE_ALTA_PROB_DESDE
+    if desde == "alta":
+        desde = hashchain.LOTE_ALTA_PROB_DESDE
     corte = (f"AND b.batch_date >= DATE '{desde.isoformat()}'"
              if desde is not None else "AND FALSE")
     return f"""JOIN prediction_batches b
@@ -197,8 +198,8 @@ def decidir(snap: pk.Snapshot, totales: list[dict], rho: float | None,
     return elegido, (ajuste if elegido.market in ap.MERCADOS_CON_AJUSTE else None)
 
 
-def _corners(m: dict, now: datetime, modelos, filas_af: list[dict]
-             ) -> tuple[list[ap.Candidato], dict]:
+def _corners(m: dict, now: datetime, modelos, filas_af: list[dict],
+             lineas: tuple | None = None) -> tuple[list[ap.Candidato], dict]:
     """
     Córners del modelo estadístico, recortados a la probabilidad sin margen del
     mercado (`escalera_datos.prudente`, la misma regla de la escalera desde el
@@ -207,7 +208,8 @@ def _corners(m: dict, now: datetime, modelos, filas_af: list[dict]
     por línea, lo que se guarda en `fit` (modelo, mercado, media).
     """
     from . import escalera_datos as ed            # importa este módulo
-    if not ap.CORNERS_HABILITADOS or modelos is None:
+    lineas = ap.CORNERS_HABILITADOS if lineas is None else lineas
+    if not lineas or modelos is None:
         return [], {}
     acc = modelos.de(m["league_id"], "corners")
     lam = (acc.lambdas(now, m["home_team_id"], m["away_team_id"])
@@ -215,7 +217,7 @@ def _corners(m: dict, now: datetime, modelos, filas_af: list[dict]
     if lam is None:
         return [], {}
     cands, fits = [], {}
-    for mercado, lado, linea in ap.CORNERS_HABILITADOS:
+    for mercado, lado, linea in lineas:
         modelo = em.prob(mercado, lam, lado, linea)
         c = ed.prudente(ap.Candidato(mercado, lado, linea, modelo), filas_af)
         if c is None:

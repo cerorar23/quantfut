@@ -35,6 +35,14 @@ bets 8 ("Both Teams Score"), 45 ("Corners Over Under") y 80 ("Cards
 Over/Under"), de SOFT_BOOKS y de Pinnacle (referencia). Mismo cuidado que en
 16/17: id y nombre esperado, o no se guarda.
 
+DOBLE OPORTUNIDAD (2026-10-12): bet 12 ("Double Chance"), de SOFT_BOOKS y de Pinnacle.
+La nota anterior «ningún proveedor la cotiza» era falsa para API-Football (medido el
+2026-10-12 en un partido de La Liga: 8 casas, incluidas Bet365, Betano, 1xBet y William
+Hill). Los valores llegan como "Home/Draw", "Home/Away" y "Draw/Away" y se guardan como
+'1X', '12' y 'X2' (los mismos nombres que `alta_prob.candidatos_doble`). Solo se guarda el
+grupo completo de una casa. NO se sintetiza ninguna cuota: una cuota justa calculada desde
+el 1X2 no la ofrece nadie y no sirve de precio de referencia.
+
 Se guarda en `af_odds_snapshots`, no en `odds_snapshots` (ver db/016).
 Una petición por partido dentro del horizonte.
 """
@@ -64,6 +72,9 @@ LINEAS_BLANDAS = (1.5, 2.5, 3.5, 4.5)
 TEAM_TOTALS = {16: ("Total - Home", "team_totals_home"),
                17: ("Total - Away", "team_totals_away")}
 BTTS = (8, "Both Teams Score")
+# Doble oportunidad: id, nombre esperado y cómo llegan los tres resultados.
+DOBLE = (12, "Double Chance")
+DOBLE_VALORES = {"Home/Draw": "1X", "Home/Away": "12", "Draw/Away": "X2"}
 # Totales de córners y de tarjetas: id -> (nombre esperado, mercado). Córners
 # de cada equipo (57/58) desde el 2026-10-09; ids comprobados en /odds/bets.
 OTROS_TOTALES = {45: ("Corners Over Under", "corners"),
@@ -162,6 +173,16 @@ def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]
                             q[sel] = pr
                     if set(q) == {"yes", "no"}:
                         rows += [(match_id, fid, book, "btts", s, pr, updated, mins, None)
+                                 for s, pr in q.items()]
+                elif (bet.get("id"), bet.get("name")) == DOBLE and (
+                        book in settings.soft_books or book == settings.sharp_book):
+                    q = {}
+                    for v in bet.get("values", []):
+                        sel, pr = DOBLE_VALORES.get(v.get("value")), _precio(v)
+                        if sel and pr is not None:
+                            q[sel] = pr
+                    if set(q) == set(DOBLE_VALORES.values()):
+                        rows += [(match_id, fid, book, "double_chance", s, pr, updated, mins, None)
                                  for s, pr in q.items()]
                 elif bet.get("id") in OTROS_TOTALES and (
                         book in settings.soft_books or book == settings.sharp_book):

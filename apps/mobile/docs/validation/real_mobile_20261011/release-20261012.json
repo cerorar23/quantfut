@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-12",
+  "apk": "apps/mobile/build/app/outputs/flutter-apk/app-release.apk",
+  "sha256": "3D963890AB6FFF66CA0A46AC76B2377DBAFE92878DC80E635AD0F0213037E62F",
+  "version": "1.0.0+1",
+  "device": "emulator-5556",
+  "install": "Success",
+  "analyze": "No issues found",
+  "tests_passed": 32,
+  "https_checked": [
+    "/mobile/v1/config",
+    "/mobile/v1/home",
+    "/parley"
+  ],
+  "server_modified": false,
+  "firebase_implemented": false
+}

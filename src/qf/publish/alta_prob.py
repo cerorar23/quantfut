@@ -113,6 +113,20 @@ CORNERS_HABILITADOS: tuple[tuple[str, str, float], ...] = (
     ("corners_home", "over", 3.5),
     ("corners_home", "under", 7.5),
     ("corners_away", "over", 2.5), ("corners_away", "under", 6.5))
+# --- Ampliación 62-95 % (tabla alta_prob_ext, 2026-10-11) -------------------
+# Prueba `eval/alta_prob_calibracion.py --amplio` (14.305 partidos, mismo
+# criterio): pasan 1X2, doble oportunidad, hándicap, "marca el local/visitante",
+# más de 1,5 y 2,5, menos de 3,5 y 4,5, ambos marcan «sí» y córners totales más de
+# 6,5 / 8,5 y menos de 10,5 / 11,5 / 12,5. Fuera: ambos marcan «no», menos de 2,5,
+# más de 7,5 y 9,5 (n pequeño) y los córners por equipo (déficits o n de 1 a 8).
+# Se publican TODOS los candidatos aprobados de cada partido, no uno solo.
+PROB_MIN_EXT = 0.62
+GOLES_EXT: tuple[tuple[str, float], ...] = (("over", 1.5), ("over", 2.5), ("under", 3.5),
+                                            ("under", 4.5))
+BTTS_EXT: tuple[str, ...] = ("yes",)
+CORNERS_EXT: tuple[tuple[str, str, float], ...] = (
+    ("corners", "over", 6.5), ("corners", "over", 8.5), ("corners", "under", 10.5),
+    ("corners", "under", 11.5), ("corners", "under", 12.5))
 # Mercados que guardan el ajuste de goles en `fit`.
 MERCADOS_CON_AJUSTE = ("totals", "team_totals_home", "team_totals_away", "btts", "spreads")
 # Liquidados mínimos antes de que el control pueda pausar la línea.
@@ -253,6 +267,16 @@ def elegir(cands: list[Candidato], excluir: set[str] | frozenset = frozenset()
     if not dentro:
         return None
     return min(dentro, key=lambda c: (c.prob, _PRIORIDAD[c.market]))
+
+
+def elegir_ext(cands: list[Candidato], excluir: set[str] | frozenset = frozenset()
+               ) -> list[Candidato]:
+    """Todos los candidatos de 62-95 %, el de mayor probabilidad primero."""
+    dentro = [c for c in cands
+              if c.market not in excluir and grupo_control(c.market) not in excluir
+              and PROB_MIN_EXT <= c.prob <= PROB_MAX]
+    return sorted(dentro, key=lambda c: (-c.prob, _PRIORIDAD[c.market], c.selection,
+                                         c.line if c.line is not None else 0.0))
 
 
 def _goles(x: float) -> str:

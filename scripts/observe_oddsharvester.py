@@ -71,7 +71,8 @@ def collect(league: str, slug: str, run_dir: Path, timeout_seconds: int) -> dict
     log_file = run_dir / f"{league}.log"
     command = [
         str(executable()), "upcoming", "-s", "football", "-l", slug,
-        "-m", "1x2", "--base-url", REGIONAL_DOMAIN, "--headless",
+        "-m", "1x2", "--base-url", REGIONAL_DOMAIN,
+        "--locale", "es-MX", "--timezone", "America/Mexico_City", "--headless",
         "--full-scrape", "-f", "json", "-o", str(raw_file),
     ]
     env = os.environ.copy()

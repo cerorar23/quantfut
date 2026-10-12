@@ -57,6 +57,10 @@ LIGAS = {"de.bundesliga": "D1", "es.laliga": "SP1", "fr.ligue_1": "F1",
          "pt.primeira": "P1"}
 COLS = ["PSH", "PSD", "PSA", "P>2.5", "P<2.5"]
 TRAMOS = ((0.80, 0.85), (0.85, 0.90), (0.90, 0.95 + 1e-9))
+# Ampliación 2026-10-11 (pedida por el usuario): medir también 62-80 %. Mismo
+# criterio, tramos de cinco puntos hasta 75 y de 75 a 80.
+PROB_MIN_AMPLIO = 0.62
+TRAMOS_AMPLIOS = ((0.62, 0.67), (0.67, 0.72), (0.72, 0.76), (0.76, 0.80)) + TRAMOS
 MIN_N_TRAMO = 100
 MAX_DEFICIT_PTS = 1.0
 # rho del modelo activo el 2026-10-05 (2026.09.27-010508, /model-card).
@@ -115,7 +119,7 @@ def medias_corners(df: pd.DataFrame) -> dict[str, tuple[float, float]]:
     return out
 
 
-def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
+def filas(raw: pd.DataFrame, rho: float, prob_min: float = ap.PROB_MIN) -> pd.DataFrame:
     """
     Una fila por candidato dentro del rango, con si acertó y si era el elegido.
 
@@ -163,7 +167,7 @@ def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
                                                   em.prob(mercado, lam, lado, linea)))
         elegido = ap.elegir([c for c in cands if habilitado(c)])
         for c in cands:
-            if not ap.PROB_MIN <= c.prob <= ap.PROB_MAX:
+            if not prob_min <= c.prob <= ap.PROB_MAX:
                 continue
             if c.market in reales:
                 real = reales[c.market]
@@ -179,11 +183,11 @@ def filas(raw: pd.DataFrame, rho: float) -> pd.DataFrame:
     return pd.DataFrame(out)
 
 
-def evaluar(f: pd.DataFrame) -> dict[str, dict]:
+def evaluar(f: pd.DataFrame, tramos_def: tuple = TRAMOS) -> dict[str, dict]:
     res = {}
     for nombre, g in f.groupby("mercado"):
         tramos, ok = [], True
-        for lo, hi in TRAMOS:
+        for lo, hi in tramos_def:
             t = g[(g["prob"] >= lo) & (g["prob"] < hi)]
             if t.empty:
                 continue
@@ -201,6 +205,17 @@ def evaluar(f: pd.DataFrame) -> dict[str, dict]:
                             "real": round(float(g["won"].mean()) * 100, 2),
                             "diferencia_pts": dif, "tramos": tramos, "pasa": bool(ok)}
     return res
+
+
+def run_amplio(rho: float = RHO_POR_DEFECTO, cache_dir: Path = Path(".local/fd_cache")) -> dict:
+    """Todos los candidatos de 62 a 95 %, por mercado y tramo (sin regla de elección)."""
+    raw, dataset = sv.load_csvs(LIGAS, sv.DEFAULT_SEASONS, cache_dir)
+    f = filas(raw, rho, PROB_MIN_AMPLIO)
+    por_mercado = evaluar(f, TRAMOS_AMPLIOS)
+    return {"dataset_sha256": dataset["sha256"], "partidos": dataset["rows"], "rho": rho,
+            "por_mercado": por_mercado,
+            "que_pasan": sorted(k for k, v in por_mercado.items() if v["pasa"]),
+            "que_no_pasan": sorted(k for k, v in por_mercado.items() if not v["pasa"])}
 
 
 def run(rho: float = RHO_POR_DEFECTO, cache_dir: Path = Path(".local/fd_cache")) -> dict:
@@ -223,5 +238,6 @@ if __name__ == "__main__":
     ap_ = argparse.ArgumentParser(description="Prueba histórica de la línea de alta probabilidad")
     ap_.add_argument("--rho", type=float, default=RHO_POR_DEFECTO)
     ap_.add_argument("--cache", type=Path, default=Path(".local/fd_cache"))
+    ap_.add_argument("--amplio", action="store_true", help="medir 62-95 %%")
     a = ap_.parse_args()
-    print(json.dumps(run(a.rho, a.cache), indent=2, ensure_ascii=False))
+    print(json.dumps((run_amplio if a.amplio else run)(a.rho, a.cache), indent=2, ensure_ascii=False))

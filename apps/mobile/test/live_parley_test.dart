@@ -21,14 +21,14 @@ class _Api extends QuantFutApi {
   }
 }
 
-Future<_Api> open(WidgetTester tester, dynamic body, {bool fail = false}) async {
+Future<_Api> open(WidgetTester tester, dynamic body, {bool fail = false, VoidCallback? onVip}) async {
   final api = _Api(body, fail: fail);
   tester.view.physicalSize = const Size(390, 2400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(child: ParleyTab(api: api))),
+      home: Scaffold(body: SingleChildScrollView(child: ParleyTab(api: api, onVip: onVip))),
     ),
   );
   await tester.pump(const Duration(milliseconds: 300));
@@ -102,6 +102,7 @@ void main() {
     expect(find.text('Días anteriores'), findsOneWidget);
     expect(find.text('2026-10-11'), findsOneWidget);
     expect(find.textContaining('1/2 acertados'), findsOneWidget);
+    expect(find.text('Uno gratis al día (el de menor cuota); el resto, VIP.'), findsOneWidget);
     expect(find.text('Historial del Parley'), findsOneWidget);
     expect(find.textContaining('25,0 % real frente a 41,5 % prometido'), findsOneWidget);
   });
@@ -111,4 +112,38 @@ void main() {
     expect(find.text('No se pudo cargar el Parley.'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
   });
+  testWidgets('el parley VIP sale bloqueado, sin patas ni cuota exacta, y abre VIP', (tester) async {
+    var vip = 0;
+    await open(
+      tester,
+      {
+        'activo': true,
+        'reglas': rules,
+        'resumen': {'total': {'n': 0}},
+        'dias': [
+          {
+            'dia': '2026-10-13',
+            'tickets': [
+              {
+                'escalon': 1, 'locked': false, 'gratis': true, 'cuota_total': 1.92, 'prob_total': .54, 'n_patas': 2,
+                'outcome': null,
+                'patas': [
+                  {'local': 'Pumas', 'visitante': 'Cruz Azul', 'texto': 'Más de 1,5 goles', 'price': 1.3, 'prob': .8, 'outcome': null, 'kickoff_utc': '2026-10-13T01:00:00Z'},
+                ],
+              },
+              {'escalon': 3, 'locked': true, 'cuota_min': 2.7, 'cuota_max': 3.4},
+            ],
+          },
+        ],
+      },
+      onVip: () => vip++,
+    );
+    expect(find.text('@1,92'), findsOneWidget); // el gratis, abierto
+    expect(find.text('ESCALÓN 3'), findsOneWidget);
+    expect(find.text('Cuota entre 2,70 y 3,40'), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    await tester.tap(find.text('Cuota entre 2,70 y 3,40'));
+    expect(vip, 1);
+  });
 }
+

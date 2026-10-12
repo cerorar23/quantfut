@@ -72,8 +72,11 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 0 */4 * * * cd /app && python -m qf.ingest.injuries >> /var/log/injuries.log 2>&1
 
 # --- FASE 3 ---
-# Job diario: predecir, seleccionar picks, sellar cadena, publicar. 08:00 UTC.
-0 8 * * * cd /app && python -m qf.publish.daily >> /var/log/daily.log 2>&1
+# Job diario: predecir, seleccionar picks, sellar cadena, publicar. 13:00 UTC = 07:00 en
+# Ciudad de México, siempre (México no tiene horario de verano desde 2022; cron corre en
+# UTC). Decisión del usuario, 2026-10-12: antes era 08:00 UTC (02:00 en México). Solo entran
+# partidos que empiezan DESPUÉS del sellado: los de 08:00-13:00 UTC dependen del lote anterior.
+0 13 * * * cd /app && python -m qf.publish.daily >> /var/log/daily.log 2>&1
 
 # Liquidacion y CLV de respaldo (results.py ya la encadena).
 30 2,10,18 * * * cd /app && python -m qf.eval.clv >> /var/log/clv.log 2>&1

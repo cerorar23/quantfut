@@ -19,11 +19,15 @@ from . import console, cuentas, fichas, panel, partido_mercados, rewards
 from ..comercial import suscripciones
 from ..comercial.auditoria import audit
 from ..db import conn, query, query_one
-from ..publish import alta_prob_datos, escalera_datos
+from ..config import settings
+from ..publish import alta_prob_datos, alta_prob_ext, escalera_datos
 
 router = APIRouter(tags=["mobile"])
 _bearer = HTTPBearer(auto_error=False)
-PROB_MIN, PROB_MAX = .75, .90
+PROB_MIN, PROB_MAX = .75, .90          # escalera
+# Alta probabilidad ampliada (decisión del usuario, 2026-10-11): 62-95 %, con las
+# filas de `alta_prob_picks` (80-95 %) y `alta_prob_ext` (62-95 %, db/057).
+HIGH_MIN, HIGH_MAX = .62, .95
 # Gratis: un pronóstico por mercado, el de MAYOR cuota publicada (decisión del
 # usuario, 2026-10-12: la cuota manda sobre la probabilidad), con tope 1,60. Con
 # 75-90 % de probabilidad las cuotas reales van de 1,01 a 1,25: un piso de 1,40
@@ -51,8 +55,8 @@ def features() -> dict:
 
 
 def config() -> dict:
-    return {'features': features(), 'probability_min': PROB_MIN,
-            'probability_max': PROB_MAX, 'high_probability_free_per_market': 1,
+    return {'features': features(), 'probability_min': HIGH_MIN,
+            'probability_max': HIGH_MAX, 'high_probability_free_per_market': 1,
             'high_probability_free_quote_max': FREE_QUOTE_MAX,
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
@@ -80,7 +84,8 @@ def probability(row: dict) -> float:
 
 def choose_free(rows: list[dict], stream: str) -> list[dict]:
     """Only sealed eligible rows enter. Odds are publication quotes, not live."""
-    valid = [r for r in rows if PROB_MIN <= probability(r) <= PROB_MAX]
+    lo, hi = (HIGH_MIN, HIGH_MAX) if stream == 'alta_probabilidad' else (PROB_MIN, PROB_MAX)
+    valid = [r for r in rows if lo <= probability(r) <= hi]
     if stream == 'alta_probabilidad':
         priced = [r for r in valid if r.get('ref_price') is not None
                   and math.isfinite(float(r['ref_price']))
@@ -161,20 +166,40 @@ def allocations(rows: list[dict], stream: str) -> set[str]:
     return result
 
 
-def high_rows() -> list[dict]:
-    # The full immutable batch, including matches already started, fixes the
-    # public fraction. A source gate can pause delivery but not rewrite a seal.
-    rows = query(f'''SELECT a.match_id, m.league_id, m.kickoff_utc,
+_HIGH_COLS = """a.match_id, m.league_id, m.kickoff_utc,
         COALESCE(th.display_name, th.canonical_name) AS local,
         COALESCE(ta.display_name, ta.canonical_name) AS visitante,
         a.market,a.selection,a.line,a.prob,a.ref_price,a.ref_book,a.odds_as_of,a.fit,
-        b.batch_date,b.chain_sha256,r.outcome,r.home_goals,r.away_goals
+        b.batch_date,b.chain_sha256"""
+
+
+def high_rows() -> list[dict]:
+    # The full immutable batch, including matches already started, fixes the
+    # public fraction. A source gate can pause delivery but not rewrite a seal.
+    rows = query(f'''SELECT {_HIGH_COLS},r.outcome,r.home_goals,r.away_goals
         FROM alta_prob_picks a JOIN matches m ON m.match_id=a.match_id
         JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
         {alta_prob_datos._sql_sellado()}
         LEFT JOIN alta_prob_results r ON r.alta_id=a.alta_id
         WHERE a.prob BETWEEN %s AND %s AND b.batch_date >= current_date - 7
-        ORDER BY m.kickoff_utc,a.match_id''', (PROB_MIN, PROB_MAX))
+        ORDER BY m.kickoff_utc,a.match_id''', (HIGH_MIN, HIGH_MAX))
+    if settings.alta_prob_ext_enabled:
+        # Un pronóstico por partido y mercado: si la línea de 80-95 % ya lo publicó,
+        # esa fila manda y la ampliada no lo repite.
+        seen = {(r['match_id'], r['market'], r['selection'], r['line']) for r in rows}
+        try:
+            extra = query(f'''SELECT {_HIGH_COLS},a.ext_id::text AS pick_key,
+                r.outcome,r.home_goals,r.away_goals
+                FROM alta_prob_ext a JOIN matches m ON m.match_id=a.match_id
+                JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
+                {alta_prob_ext.sql_sellado()}
+                LEFT JOIN alta_prob_ext_results r ON r.ext_id=a.ext_id
+                WHERE a.prob BETWEEN %s AND %s AND b.batch_date >= current_date - 7
+                ORDER BY m.kickoff_utc,a.match_id''', (HIGH_MIN, HIGH_MAX))
+        except UndefinedTable:
+            extra = []
+        rows += [r for r in extra if (r['match_id'], r['market'], r['selection'], r['line']) not in seen]
+        rows.sort(key=lambda r: (r['kickoff_utc'], r['match_id']))
     from ..publish import alta_prob as ap
     for row in rows:
         row['texto'] = ap.texto(row['market'], row['selection'], row['line'], row['local'], row['visitante'])
@@ -350,18 +375,29 @@ def markets_history(response: Response,
     if not features()['alta_probabilidad']['enabled']:
         return {'items': []}
     markets = market.split(',') if market else None
-    rows = query(f'''SELECT a.match_id, m.league_id, m.kickoff_utc,
+    def history(table: str, results: str, key: str, sealed: str) -> list[dict]:
+        return query(f'''SELECT a.match_id, m.league_id, m.kickoff_utc,
         COALESCE(th.display_name, th.canonical_name) AS local,
         COALESCE(ta.display_name, ta.canonical_name) AS visitante,
         a.market, a.selection, a.line, a.prob, a.ref_price, r.outcome, r.home_goals, r.away_goals,
         m.home_corners, m.away_corners
-        FROM alta_prob_picks a JOIN matches m ON m.match_id=a.match_id
+        FROM {table} a JOIN matches m ON m.match_id=a.match_id
         JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
-        {alta_prob_datos._sql_sellado()}
-        JOIN alta_prob_results r ON r.alta_id=a.alta_id
+        {sealed}
+        JOIN {results} r ON r.{key}=a.{key}
         WHERE r.outcome IN ('win','loss') AND a.prob BETWEEN %s AND %s
           AND (%s::text[] IS NULL OR a.market = ANY(%s))
-        ORDER BY m.kickoff_utc DESC, a.match_id LIMIT %s''', (PROB_MIN, PROB_MAX, markets, markets, limit))
+        ORDER BY m.kickoff_utc DESC, a.match_id LIMIT %s''', (HIGH_MIN, HIGH_MAX, markets, markets, limit))
+    rows = history('alta_prob_picks', 'alta_prob_results', 'alta_id', alta_prob_datos._sql_sellado())
+    if settings.alta_prob_ext_enabled:
+        try:
+            extra = history('alta_prob_ext', 'alta_prob_ext_results', 'ext_id', alta_prob_ext.sql_sellado())
+        except UndefinedTable:
+            extra = []
+        seen = {(r['match_id'], r['market'], r['selection'], r['line']) for r in rows}
+        rows += [r for r in extra if (r['match_id'], r['market'], r['selection'], r['line']) not in seen]
+        rows.sort(key=lambda r: (r['kickoff_utc'], r['match_id']), reverse=True)
+        rows = rows[:limit]
     from ..publish import alta_prob as ap
     for row in rows:
         row['texto'] = ap.texto(row['market'], row['selection'], row['line'], row['local'], row['visitante'])

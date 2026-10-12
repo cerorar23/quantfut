@@ -275,4 +275,7 @@ def test_ruta_publica_del_parley(monkeypatch):
     monkeypatch.setattr(main.ratelimit, "rate_limited", lambda *_a: False)
     monkeypatch.setattr(pd_, "informe_publico", lambda: {"dias": [], "activo": False})
     r = TestClient(main.app).get("/parley")
-    assert r.status_code == 200 and r.json() == {"dias": [], "activo": False}
+    assert r.status_code == 200
+    body = r.json()
+    assert body["dias"] == [] and body["activo"] is False
+    assert body["acceso"]["plus"] is False

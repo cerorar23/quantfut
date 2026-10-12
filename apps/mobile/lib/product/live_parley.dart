@@ -7,8 +7,11 @@ import 'live_widgets.dart';
 /// cada escalón de cuota. Todo lo manda el servidor (`/parley`); mientras esté apagado
 /// o sin parlays se dice tal cual, sin rellenar nada.
 class ParleyTab extends StatefulWidget {
-  const ParleyTab({super.key, required this.api});
+  const ParleyTab({super.key, required this.api, this.onVip});
   final QuantFutApi api;
+
+  /// Abre la pantalla VIP desde un parley bloqueado.
+  final VoidCallback? onVip;
 
   @override
   State<ParleyTab> createState() => _ParleyTabState();
@@ -80,6 +83,8 @@ class _ParleyTabState extends State<ParleyTab> {
           size: 12,
           color: liveMuted,
         ),
+        const SizedBox(height: 4),
+        liveText('Uno gratis al día (el de menor cuota); el resto, VIP.', size: 11, color: liveMuted),
         const SizedBox(height: 14),
         if (d['activo'] != true)
           _notice(
@@ -94,7 +99,10 @@ class _ParleyTabState extends State<ParleyTab> {
             'El modelo no publica un parley si no encuentra uno dentro de las reglas.',
           )
         else ...[
-          for (final t in tickets) _TicketCard(ticket: t),
+          for (final t in tickets)
+            t['locked'] == true
+                ? _LockedTicket(ticket: t, onVip: widget.onVip)
+                : _TicketCard(ticket: t),
         ],
         if (days.length > 1) ...[
           liveHeading('Días anteriores'),
@@ -141,6 +149,46 @@ class _ParleyTabState extends State<ParleyTab> {
   'push' || 'void' || 'nulo' => (liveMuted, 'Anulado'),
   _ => (liveGold, 'Pendiente'),
 };
+
+/// Parley VIP: solo se ve su escalón y el rango de cuota de ese escalón.
+class _LockedTicket extends StatelessWidget {
+  const _LockedTicket({required this.ticket, this.onVip});
+  final JsonMap ticket;
+  final VoidCallback? onVip;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onVip,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xff0c131c),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          children: [
+            _TicketCard._chip('ESCALÓN ${ticket['escalon'] ?? '—'}', liveCyan),
+            const SizedBox(width: 10),
+            Expanded(
+              child: liveText(
+                'Cuota entre ${decimalText(ticket['cuota_min'])} y ${decimalText(ticket['cuota_max'])}',
+                size: 12,
+                color: liveMuted,
+              ),
+            ),
+            const Icon(Icons.lock_outline, color: liveGold, size: 18),
+            const SizedBox(width: 6),
+            liveText('VIP', size: 11, bold: true, color: liveGold),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
 class _TicketCard extends StatelessWidget {
   const _TicketCard({required this.ticket});
