@@ -19,13 +19,14 @@ from datetime import datetime, timezone
 
 from ..db import query_one
 from ..model import estadisticas_mercado as em
+from ..model import primer_tiempo as modelo_1t
 from ..model import pricing
 
 NIVEL_ALTA, NIVEL_SOLIDA = .75, .60
 
 # Orden canónico de las categorías (el de los candados, que no ordena por probabilidad).
 GRUPOS = ('RESULTADO', 'DOBLE OPORTUNIDAD', 'EMPATE NO ACCIÓN', 'GOLES', 'GOLES DE EQUIPO',
-          'AMBOS MARCAN', 'HÁNDICAP', 'ESPECIALES', 'CÓRNERS', 'TARJETAS')
+          'AMBOS MARCAN', 'HÁNDICAP', 'ESPECIALES', '1ª MITAD', 'CÓRNERS', 'TARJETAS')
 
 LINEAS_GOLES = (1.5, 2.5, 3.5, 4.5)
 LINEAS_EQUIPO = (0.5, 1.5)
@@ -118,6 +119,25 @@ def filas_goles(lam: float, mu: float, rho: float, local: str, visitante: str):
     marcadores = [{'marcador': r['score'], 'prob': round(r['prob'], 4)}
                   for r in pricing.market_correct_score(m, MARCADORES)]
     return filas, marcadores
+
+
+def filas_primer_tiempo(lam: float, mu: float) -> list[dict]:
+    """
+    1ª mitad: SOLO los dos mercados que pasaron la prueba histórica y solo por el lado
+    y en el tramo medido (`model/primer_tiempo`): «ambos anotan 1T: no» y «gol en 1T: sí».
+    Si la probabilidad cae fuera de lo medido no se publica nada.
+    """
+    p = modelo_1t.probs(lam, mu)
+    lo, hi = modelo_1t.PROB_MIN_VALIDADA, modelo_1t.PROB_MAX_VALIDADA
+    filas: list[dict] = []
+    no_ambos = 1 - p['ambos_1t_si']
+    if lo <= no_ambos <= hi:
+        filas.append(_fila('1ª MITAD', 'Ambos anotan en el 1er tiempo', 'ht_btts', 'no', None,
+                           'No marcan los dos en el 1T', no_ambos))
+    if lo <= p['gol_1t_si'] <= hi:
+        filas.append(_fila('1ª MITAD', 'Gol en el 1er tiempo', 'ht_goal', 'yes', None,
+                           'Habrá gol en el 1T', p['gol_1t_si']))
+    return filas
 
 
 def filas_estadisticas(corners: tuple[float, float] | None,
@@ -222,6 +242,7 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     if lam is None:
         return None
     filas, marcadores = filas_goles(*lam, local, visitante)
+    filas += filas_primer_tiempo(lam[0], lam[1])
     corners, tarjetas = lambdas_estadisticas(match_id)
     filas += filas_estadisticas(corners, tarjetas)
     filas, marcadores = aplicar_acceso(filas, marcadores, abiertas, plus)

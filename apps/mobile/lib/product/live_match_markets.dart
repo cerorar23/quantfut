@@ -12,6 +12,7 @@ const _icons = <String, String>{
   'AMBOS MARCAN': '🤝',
   'HÁNDICAP': '⚖',
   'ESPECIALES': '✨',
+  '1ª MITAD': '⏱',
   'CÓRNERS': '🚩',
   'TARJETAS': '🟨',
 };

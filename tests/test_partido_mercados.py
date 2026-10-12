@@ -83,3 +83,21 @@ def test_vip_sees_everything_and_marks_real_value_only_with_a_published_quote(li
 def test_nivel_boundaries():
     assert [pm.nivel(p) for p in (.75, .7499, .60, .5999)] == ['alta', 'solida', 'solida', 'moderada']
     assert pm.clave('totals', 'over', 1.5) == 'totals:over:1.5' and pm.clave('h2h', 'home', None) == 'h2h:home:None'
+
+
+def test_first_half_publishes_only_the_two_validated_markets_inside_the_measured_range():
+    filas = pm.filas_primer_tiempo(2.41, .76)
+    assert {f['id'] for f in filas} == {pm.clave('ht_btts', 'no', None), pm.clave('ht_goal', 'yes', None)}
+    assert all(f['grupo'] == '1ª MITAD' and .62 <= f['prob'] <= .95 for f in filas)
+    # partido cerrado: «gol en 1T: sí» cae por debajo de lo medido -> no se publica; el «no» tampoco existe
+    assert [f['market'] for f in pm.filas_primer_tiempo(.9, .7)] == ['ht_btts']
+    # partido abierto: «ambos 1T: no» cae por debajo de lo medido -> solo «gol en 1T»
+    assert [f['market'] for f in pm.filas_primer_tiempo(3.2, 2.4)] == ['ht_goal']
+    assert pm.GRUPOS.index('1ª MITAD') < pm.GRUPOS.index('CÓRNERS')
+
+
+def test_first_half_model_is_a_proper_distribution():
+    from qf.model import primer_tiempo as m
+    p = m.probs(1.46, .72)
+    assert p['ganador_1t_local'] + p['ganador_1t_empate'] + p['ganador_1t_visita'] == pytest.approx(1)
+    assert 0 < p['ambos_1t_si'] < p['gol_1t_si'] < 1

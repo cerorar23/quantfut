@@ -4848,3 +4848,15 @@ AVISO de despliegue: el VPS corre el módulo VIEJO de córners/tarjetas (líneas
 10-oct, que se dejó «sin desplegar» a propósito: más de 6,5 y 9,5 córners siguen apareciendo). La lista sigue lo
 que está desplegado y se alineará sola cuando esa revisión se despliegue (decisión sobre los picks del worker).
 La tarjeta anterior de anillos/«¿Cuántos goles?» se retiró de la pestaña (la sustituye la lista).
+
+### 1ª mitad: prueba histórica y mercados publicados (2026-10-12)
+
+`eval/primer_tiempo.py` (football-data, cuotas de Pinnacle, entreno 2019-2022 con 5.743 partidos y medida en
+2022-2025 con 6.236, criterio de `alta_prob_calibracion` fijado antes): PASAN «ambos anotan 1T: no» (n=6.236,
+79,9 frente a 80,5 prometido) y «gol en 1T: sí» (n=6.015, 72,6 frente a 71,7). No pasan: ganador 1T visitante
+(n=27), más de 1,5 goles 1T (tramo 62-67 %: 61,7 frente a 64,4) y ganador 1T local pasa pero con n=159, por
+debajo de las 500 muestras que exige el catálogo de evidencia: no se publica. Modelo: goles del 1T Poisson con
+proporción (0,4366 local, 0,4588 visitante) del mismo ajuste de mercado; vive en `model/primer_tiempo.py`.
+Se publican solo esos dos, por ese lado y en el tramo medido (62-95 %). Desplegado (respaldo
+`before-primer-tiempo`). Ojo: hay OTRA edición sin commit de `mobile.py` (alta probabilidad 62-95 %, db/057)
+que no es de esta tarea y NO está desplegada.

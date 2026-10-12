@@ -21,19 +21,17 @@ import argparse
 import json
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-from scipy.stats import poisson
 
 from ..config import settings
+from ..model import primer_tiempo as modelo_1t
 from ..model.devig import devig, two_way_devig
 from ..publish import alta_prob as ap
 from . import alta_prob_calibracion as ac
 from . import soft_vs_sharp as sv
 
-PROB_MIN = 0.62
-PROB_MAX = 0.95
-MAX_GOLES_1T = 8
+PROB_MIN = modelo_1t.PROB_MIN_VALIDADA
+PROB_MAX = modelo_1t.PROB_MAX_VALIDADA
 # Temporadas de ENTRENO de la proporción s; el resto es de medida.
 ENTRENO = ("1920", "2021", "2122")
 
@@ -66,27 +64,10 @@ def ajustar_proporcion(train: pd.DataFrame) -> tuple[float, float]:
     return float(train["hth"].sum() / train["lam"].sum()), float(train["hta"].sum() / train["mu"].sum())
 
 
-def probs_1t(lam: float, mu: float, s: tuple[float, float]) -> dict[str, float]:
-    """Mercados de 1ª mitad desde los goles esperados del partido."""
-    lh, la = s[0] * lam, s[1] * mu
-    g = np.arange(MAX_GOLES_1T + 1)
-    m = np.outer(poisson.pmf(g, lh), poisson.pmf(g, la))
-    m = m / m.sum()
-    total = np.add.outer(g, g)
-    return {
-        "gol_1t_si": float(1 - m[0, 0]),
-        "ambos_1t_si": float(m[1:, 1:].sum()),
-        "ganador_1t_local": float(np.tril(m, -1).sum()),
-        "ganador_1t_empate": float(np.trace(m)),
-        "ganador_1t_visita": float(np.triu(m, 1).sum()),
-        "mas_1_5_1t": float(m[total > 1].sum()),
-    }
-
-
 def filas(df: pd.DataFrame, s: tuple[float, float]) -> pd.DataFrame:
     out = []
     for r in df.to_dict("records"):
-        p = probs_1t(r["lam"], r["mu"], s)
+        p = modelo_1t.probs(r["lam"], r["mu"], s)
         h, a = r["hth"], r["hta"]
         reales = {
             "gol_1t_si": h + a >= 1, "ambos_1t_si": h >= 1 and a >= 1, "mas_1_5_1t": h + a >= 2,
