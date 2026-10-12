@@ -93,3 +93,26 @@ def test_guest_cannot_award_or_unlock():
     client=TestClient(app)
     for route,body in [('attendance',{}),('referrals',{'code':'ABC'}),('unlock',{'stream':'alta_probabilidad','pick_key':'m1'})]:
         assert client.post('/mobile/v1/rewards/'+route,json=body).status_code==401
+
+
+def test_goles_esperados_implicitos_sin_filtrar_el_ajuste(delivery,monkeypatch):
+    con={**row(1),'fit':{'lambda':2.204,'mu':.856,'rho':-.1,'linea':2.5,'residuo':.001}}
+    monkeypatch.setattr(mobile,'high_rows',lambda:[con,row(2)])
+    proximos={p['match_id']:p for p in mobile.high_probability(True)['proximos']}
+    assert proximos['m1']['xg']=={'local':2.2,'visita':.86,'total':3.06}
+    assert proximos['m2']['xg'] is None
+    assert all('fit' not in p for p in proximos.values())
+
+
+@pytest.mark.parametrize('fit',[None,{},{'lambda':float('nan'),'mu':1},{'lambda':'x','mu':1}])
+def test_goles_esperados_ausentes_o_invalidos(fit):
+    assert mobile.implied_goals(fit) is None
+
+
+def test_started_match_keeps_sealed_pick_with_result(monkeypatch,delivery):
+    started={**row(1),'kickoff_utc':datetime.now(timezone.utc)-timedelta(minutes=30),
+             'outcome':'win','home_goals':2,'away_goals':1}
+    monkeypatch.setattr(mobile,'high_rows',lambda:[started])
+    assert mobile.high_probability()['proximos']==[]
+    shown=mobile.high_probability(started=True)['proximos']
+    assert [(p['match_id'],p['started'],p['outcome']) for p in shown]==[('m1',True,'win')]

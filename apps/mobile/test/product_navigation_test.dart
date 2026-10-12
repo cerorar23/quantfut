@@ -11,11 +11,13 @@ import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_shell.dart';
 import 'package:gobet/product/live_detail.dart';
 import 'package:gobet/product/live_rewards.dart';
+import 'package:gobet/product/live_vip.dart';
 import 'package:gobet/product/live_widgets.dart';
 
 class FixtureApi extends QuantFutApi {
   bool fail = false;
   bool richDetail = false;
+  List<JsonMap> detailPicks = [];
   int homes = 0;
   final flags = {
     for (final k in [
@@ -102,6 +104,7 @@ class FixtureApi extends QuantFutApi {
             ),
           ),
           'config': config,
+          'picks': detailPicks,
         }
       : {
           'config': config,
@@ -248,7 +251,8 @@ void main() {
     await capture(tester, 'predictions');
     await tester.tap(find.text('Desbloquear pronóstico VIP'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('14,99 USD'), findsOneWidget);
+    expect(find.text(r'$14,99'), findsOneWidget);
+    expect(find.text('USD'), findsOneWidget);
     expect(find.text('999.00 MXN'), findsNothing);
     await capture(tester, 'vip');
     expect(tester.takeException(), isNull);
@@ -322,6 +326,117 @@ void main() {
     await tester.ensureVisible(find.text('CARA A CARA'));
     await tester.pumpAndSettle();
     await capture(tester, 'stats_real_h2h');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('forecast tab shows featured pick with real indicators only', (
+    tester,
+  ) async {
+    final api = FixtureApi()
+      ..richDetail = true
+      ..detailPicks = [
+        {
+          'match_id': 'real-match',
+          'market': 'totals',
+          'texto': 'Más de 2,5 goles',
+          'prob': .79,
+          'ref_price': 1.45,
+          'ref_book': 'Fuente de prueba',
+          'free': true,
+          'locked': false,
+          'xg': {'local': 2.2, 'visita': .86, 'total': 3.06},
+        },
+        {
+          'match_id': 'real-match',
+          'market': 'h2h',
+          'texto': 'Gana el local',
+          'prob': .76,
+          'locked': false,
+        },
+      ];
+    await open(
+      tester,
+      LiveMatchDetail(api: api, id: 'real-match', onVip: () {}),
+    );
+    expect(find.text('Más de 2,5 goles'), findsOneWidget);
+    expect(find.text('@1,45'), findsOneWidget);
+    expect(find.text('3,06'), findsOneWidget);
+    expect(find.text('2,20 local / 0,86 visita'), findsOneWidget);
+    expect(find.text('Disponible en mercados de goles'), findsOneWidget);
+    expect(find.textContaining('DICTAMEN DEL MODELO'), findsNWidgets(2));
+    await capture(tester, 'forecast_panel');
+    await tester.tap(find.text('Goles').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Gana el local'), findsNothing);
+    await tester.ensureVisible(find.text('Ver estadísticas del partido'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ver estadísticas del partido'));
+    await tester.pumpAndSettle();
+    expect(find.text('RESUMEN DE PREDICCIÓN'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('vip screen shows server plans and no invented figures', (
+    tester,
+  ) async {
+    final api = FixtureApi();
+    await open(
+      tester,
+      LiveVipScreen(
+        api: api,
+        data: {
+          'config': {
+            'features': {
+              'compras': {
+                'enabled': false,
+                'message': 'Compras en preparación',
+              },
+            },
+            'probability_min': .75,
+            'probability_max': .9,
+          },
+          'alta_probabilidad': {
+            'historial': {'n': 114, 'aciertos': 89, 'acierto_real': 78.1},
+          },
+          'plans': [
+            {
+              'name': 'Plus · 1 mes',
+              'price_cents': 1499,
+              'currency': 'USD',
+              'duration_days': 30,
+            },
+            {
+              'name': 'Plus · 3 meses',
+              'price_cents': 3399,
+              'currency': 'USD',
+              'duration_days': 90,
+            },
+            {
+              'name': 'Plus · 6 meses',
+              'price_cents': 5399,
+              'currency': 'USD',
+              'duration_days': 180,
+            },
+          ],
+        },
+      ),
+    );
+    expect(find.text('QuantFut VIP'), findsOneWidget);
+    expect(find.text('78,1 %'), findsOneWidget);
+    expect(find.text('89/114'), findsOneWidget);
+    expect(find.text('\$14,99'), findsOneWidget);
+    expect(find.text('\$53,99'), findsOneWidget);
+    expect(find.text('★ MEJOR PRECIO'), findsOneWidget);
+    expect(find.text('≈ \$9,00/mes'), findsOneWidget);
+    await capture(tester, 'vip_screen');
+    await tester.ensureVisible(find.text('Activar acceso VIP'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Activar acceso VIP'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Compras en preparación'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     api.dispose();

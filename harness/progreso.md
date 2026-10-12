@@ -4670,3 +4670,44 @@ córners del 10-oct, que no estaban desplegados. El árbol `~/quantfut` del
 VPS no tiene ni la app móvil ni el parley: un `docker compose build` los
 quitaría. Primer ensayo: los cinco parlays salen de 2 patas; la búsqueda
 prefiere pocas patas porque cada una paga margen.
+
+## 2026-10-11 — Pestaña Pronósticos con el formato «Pronósticos IA»
+
+El usuario pidió la ficha de la referencia (pronóstico destacado, Confianza IA,
+xG proyectado, diferencial Elo, tendencia de goles, dictamen). Se adoptó el
+diseño, no las cifras: «Confianza IA» y Elo no existen en el contrato y el
+documento de detalle prohíbe fabricarlos a partir de un porcentaje histórico.
+Se sustituyeron por magnitudes que el servidor sí tiene: probabilidad con cuota
+justa, favorito 1X2 (`ficha.probabilities`) y tendencia de más de 2,5 goles
+(`promedios.pct_mas_2_5`). El xG proyectado sale de las lambdas del ajuste de
+mercado (`alta_prob_picks.fit`), que `high_probability` ahora expone como `xg`
+sin filtrar el ajuste crudo; en mercados sin ajuste queda «—». El dictamen se
+compone en el cliente solo con esos datos. Con el visto bueno del usuario se desplegó SOLO `mobile.py` (el remoto era
+idéntico a HEAD) con `docker compose cp` + reinicio de `api`, sin tocar el
+worker; producción ya devuelve `xg` real. Ojo: al ser `cp`, una recreación del
+contenedor desde la imagen lo perdería hasta reconstruirla. APK debug
+compilado e instalado en el emulador.
+
+## 2026-10-11 — Pantalla VIP con el formato «VIP ELITE» (solo app, sin backend)
+
+Se movió `LiveVipScreen` a `live_vip.dart` y se rediseñó. De la referencia se
+tomó la estructura; se descartaron las cifras y promesas que el servidor no
+respalda (miembros, testimonio, pruebas gratuitas, «pago con Google Play»,
+«cancela cuando quieras»): el cobro sigue sin proveedor y el botón dorado solo
+muestra el mensaje de la sección `compras`. «Mejor precio» se marca por el menor
+equivalente mensual entre los planes que llegan del servidor. Sin despliegue de
+backend; APK debug instalado en el emulador. 21 pruebas Flutter aprobadas.
+
+## 2026-10-12 — Ficha de partido: el pick sellado sigue visible al empezar el partido
+
+Pumas–Cruz Azul mostraba «No hay pronósticos publicados» a los 20 min de empezar
+aunque el pick existía en `alta_prob_picks`: `high_probability` descartaba todo
+pick con `kickoff_utc <= now`, decisión pensada para los listados de «próximos»
+y no para la ficha. Ahora `detail()` pide `started=True` y recibe también los
+picks de partidos en curso o liquidados, con `started` y `outcome`/marcador
+(LEFT JOIN `alta_prob_results`); el reparto gratis/VIP no cambia, y home y
+listados siguen sin verlos. La app muestra una franja «EN JUEGO / ACERTADO /
+FALLADO». Desplegado SOLO `mobile.py` (el remoto era idéntico salvo este cambio)
+con `docker compose cp` + reinicio de `api`; copia previa en
+`~/backups/mobile.py.*.bak` del VPS. Mismo aviso de siempre: al ser `cp`, una
+recreación del contenedor desde la imagen lo perdería hasta reconstruirla.

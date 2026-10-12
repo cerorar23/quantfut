@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'live_api.dart';
+import 'live_forecast.dart';
 import 'live_widgets.dart';
 import 'live_statistics.dart';
 
@@ -280,7 +281,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                           training(
                             'No hay pronósticos publicados para este partido.',
                           ),
-                        if (picks.isNotEmpty)
+                        if (markets.length > 2)
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
@@ -289,7 +290,9 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                     (m) => Padding(
                                       padding: const EdgeInsets.only(right: 6),
                                       child: ChoiceChip(
-                                        label: Text(m),
+                                        label: Text(
+                                          m == 'Todos' ? m : marketName(m),
+                                        ),
                                         selected: filter == m,
                                         onSelected: (_) =>
                                             setState(() => filter = m),
@@ -305,10 +308,10 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                               (p) => filter == 'Todos' || p['market'] == filter,
                             )
                             .map(
-                              (p) => RealPickCard(
+                              (p) => ForecastPanel(
                                 pick: p,
-                                onOpen: () => setState(() => tab = 1),
-                                onVip: widget.onVip,
+                                ficha: ficha,
+                                onStats: () => setState(() => tab = 1),
                               ),
                             ),
                       ],

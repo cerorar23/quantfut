@@ -66,6 +66,17 @@ Referencia: `apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
   Detalle: `apps/mobile/docs/DETALLE_PRONOSTICO_Y_VIP_20261011.md`.
 - [x] Conectar detalle autorizado: picks, cuotas, probabilidades disponibles,
   H2H, alineaciones y bajas; distinguir datos ausentes de confirmados.
+- [x] Pestaña Pronósticos del detalle con el formato de la referencia «Pronósticos IA»:
+  pronóstico destacado con cuota y probabilidad, cuatro indicadores (probabilidad,
+  xG proyectado, favorito 1X2, tendencia de goles) y dictamen. Solo datos reales;
+  Elo, «confianza IA» y briefing de la referencia no se copian. El xG proyectado
+  requiere `implied_goals` (ya desplegado) (`src/qf/api/mobile.py`); sin eso muestra «—».
+- [x] Pantalla de acceso VIP con el formato de la referencia «AiAD VIP ELITE»
+  (cabecera, acierto registrado, beneficios, tres planes, botón dorado). Solo datos
+  del servidor: aciertos del historial, planes y precios del catálogo, «mejor
+  precio» y equivalente mensual calculados. No se copiaron miembros, reseña, «3
+  días gratis», 87,6 % ni «Google Play»: no existen o no están contratados.
+  Detalle: `apps/mobile/lib/product/live_vip.dart`.
 - [ ] Ampliar contrato para Poisson, marcadores probables y árbitro con fuentes
   existentes; favoritos de cuenta, rachas y notificaciones reales.
 - [x] Rediseñar Estadísticas dentro del pick según las seis capturas: resumen

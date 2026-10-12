@@ -120,11 +120,12 @@ def high_rows() -> list[dict]:
     rows = query(f'''SELECT a.match_id, m.league_id, m.kickoff_utc,
         COALESCE(th.display_name, th.canonical_name) AS local,
         COALESCE(ta.display_name, ta.canonical_name) AS visitante,
-        a.market,a.selection,a.line,a.prob,a.ref_price,a.ref_book,a.odds_as_of,
-        b.batch_date,b.chain_sha256
+        a.market,a.selection,a.line,a.prob,a.ref_price,a.ref_book,a.odds_as_of,a.fit,
+        b.batch_date,b.chain_sha256,r.outcome,r.home_goals,r.away_goals
         FROM alta_prob_picks a JOIN matches m ON m.match_id=a.match_id
         JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
         {alta_prob_datos._sql_sellado()}
+        LEFT JOIN alta_prob_results r ON r.alta_id=a.alta_id
         WHERE a.prob BETWEEN %s AND %s AND b.batch_date >= current_date - 7
         ORDER BY m.kickoff_utc,a.match_id''', (PROB_MIN, PROB_MAX))
     from ..publish import alta_prob as ap
@@ -133,12 +134,29 @@ def high_rows() -> list[dict]:
     return rows
 
 
+def implied_goals(fit: dict | None) -> dict | None:
+    """Goles esperados implícitos en las cuotas sin margen (lambdas del ajuste).
+
+    Solo existen en los mercados de goles; en el resto el cliente muestra «—».
+    """
+    try:
+        home, away = float(fit['lambda']), float(fit['mu'])
+    except (TypeError, KeyError, ValueError):
+        return None
+    if not (math.isfinite(home) and math.isfinite(away)):
+        return None
+    return {'local': round(home, 2), 'visita': round(away, 2), 'total': round(home + away, 2)}
+
+
 def metadata(row: dict) -> dict:
     return {**{key: row.get(key) for key in ('match_id','league_id','kickoff_utc','local','visitante','batch_date')},
             'locked': True, 'pick_key': pick_key(row)}
 
 
-def high_probability(plus: bool = False, unlocks: set[tuple[str,str]] | None = None) -> dict:
+def high_probability(plus: bool = False, unlocks: set[tuple[str,str]] | None = None,
+                     started: bool = False) -> dict:
+    # started=True keeps sealed picks of matches already underway or settled,
+    # tagged with their result; the same free/VIP gating applies.
     flags = features()
     base = alta_prob_datos.informe_publico()
     base = {**base, 'proximos': [], 'vip': []}
@@ -148,13 +166,15 @@ def high_probability(plus: bool = False, unlocks: set[tuple[str,str]] | None = N
     free = allocations(rows, 'alta_probabilidad')
     now = datetime.now(timezone.utc)
     for row in rows:
-        if row['kickoff_utc'] <= now:
+        begun = row['kickoff_utc'] <= now
+        if begun and not started:
             continue
         public = pick_key(row) in free
         owned = ('alta_probabilidad',pick_key(row)) in (unlocks or set())
         if public or ((plus or owned) and flags['vip']['enabled']):
             value = {**row, 'prob': round(float(row['prob']), 2), 'locked': False,
-                     'free': public, 'pick_key': pick_key(row)}
+                     'free': public, 'pick_key': pick_key(row), 'started': begun}
+            value['xg'] = implied_goals(value.pop('fit', None))
             value['fair_price'] = round(1 / value['prob'], 2)
             base['proximos'].append(value)
         else:
@@ -234,7 +254,7 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
     if ficha is None:
         raise HTTPException(404, 'Partido no encontrado')
     unlocks = rewards.entitlements(account)
-    high = high_probability(plus,unlocks)
+    high = high_probability(plus,unlocks,started=True)
     steps = ladder(plus,unlocks)
     picks = [p for p in high['proximos'] if p['match_id'] == match_id]
     picks += [p for r in steps['actuales'] for p in r['pasos'] if p['match_id'] == match_id and p['outcome'] is None]
