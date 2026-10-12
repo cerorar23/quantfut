@@ -31,8 +31,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    app.main();
-    await tester.pump();
+    await tester.pumpWidget(const app.QuantFutApp());
     expect(find.byType(Splesh_Screen), findsOneWidget);
     await tester.pump(const Duration(seconds: 4));
     await tester.pump(const Duration(milliseconds: 500));
@@ -43,8 +42,7 @@ void main() {
   });
 
   testWidgets('closing splash cancels delayed navigation', (tester) async {
-    app.main();
-    await tester.pump();
+    await tester.pumpWidget(const app.QuantFutApp());
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 5));
     expect(tester.takeException(), isNull);

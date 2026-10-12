@@ -1,9 +1,22 @@
 plugins {
     id 'com.android.application'
+    // START: FlutterFire Configuration
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+    id 'com.google.firebase.firebase-perf'
+    // END: FlutterFire Configuration
     id 'dev.flutter.flutter-gradle-plugin'
 }
+def releaseKeyFile = rootProject.file('key.properties')
+def releaseKeys = new Properties()
+if (releaseKeyFile.exists()) {
+    releaseKeyFile.withInputStream { releaseKeys.load(it) }
+}
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') } && !releaseKeyFile.exists()) {
+    throw new GradleException('Release signing requires private android/key.properties; see docs/FIRMA_ANDROID.md')
+}
 android {
-    namespace 'com.example.gobet'
+    namespace 'com.saptain.quantfut'
     compileSdk 37
     ndkVersion '30.0.16248370'
     compileOptions {
@@ -11,16 +24,25 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     defaultConfig {
-        applicationId 'com.example.gobet'
+        applicationId 'com.saptain.quantfut'
         minSdk flutter.minSdkVersion
         targetSdk 37
         versionCode flutter.versionCode
         versionName flutter.versionName
     }
+    signingConfigs {
+        release {
+            if (releaseKeyFile.exists()) {
+                keyAlias releaseKeys['keyAlias']
+                keyPassword releaseKeys['keyPassword']
+                storeFile file(releaseKeys['storeFile'])
+                storePassword releaseKeys['storePassword']
+            }
+        }
+    }
     buildTypes {
         release {
-            // Replace with a private release keystore before distributing the app.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 }

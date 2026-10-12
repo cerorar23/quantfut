@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>68225142184-qqb1nmgj19ucmhes5mqtg3962bomoj6p.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.68225142184-qqb1nmgj19ucmhes5mqtg3962bomoj6p</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>68225142184-pnatfuidqbah92or4g4avpnou6pk334e.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCfUkeGZM7pdgevtUGB6YPrWu2MLGrjhvI</string>
+	<key>GCM_SENDER_ID</key>
+	<string>68225142184</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.saptain.quantfut</string>
+	<key>PROJECT_ID</key>
+	<string>pronosticos-deportivos-85ffa</string>
+	<key>STORAGE_BUCKET</key>
+	<string>pronosticos-deportivos-85ffa.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:68225142184:ios:27b4ad1feef18adfe0619d</string>
+</dict>
+</plist>

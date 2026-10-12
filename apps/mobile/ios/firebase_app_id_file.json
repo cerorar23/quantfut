@@ -1,0 +1,7 @@
+{
+  "file_generated_by": "QuantFut configure_firebase.ps1",
+  "purpose": "Firebase app identifiers used for Crashlytics symbol uploads",
+  "GOOGLE_APP_ID": "1:68225142184:ios:27b4ad1feef18adfe0619d",
+  "FIREBASE_PROJECT_ID": "pronosticos-deportivos-85ffa",
+  "GCM_SENDER_ID": "68225142184"
+}

@@ -51,6 +51,67 @@ Estado y documentación actual:
 
 Referencia: `apps/mobile/docs/FIREBASE_INTEGRACION_CON_BACKEND_20261011.md`.
 
+Inicio autorizado el 2026-10-12: instalar Firebase en Flutter por fases.
+Ampliación autorizada el mismo día: instalar y configurar los restantes
+servicios del plan (Auth/Google, FCM, Analytics, Crashlytics, Performance,
+Remote Config y App Check). Android primero; iOS preparado, sin APNs porque
+el usuario todavía no tiene cuenta/clave Apple. El registro primero y el
+vínculo seguro con cuentas existentes forman parte de esta integración.
+
+- [x] Instalar plugins P0/P1, configurar Google/huellas, Remote Config y App Check
+  en consola; recursos Android/iOS. Compilación Android correcta.
+- [x] Integrar sesión Google, consentimiento, enlace de cuenta y restauración;
+  desplegar puente en API. Activación Google pendiente de documentos publicados.
+- [x] Integrar preferencias FCM, dispositivos, recepción, bandeja y apertura
+  segura; cola/emisor preparados. Envío real y campañas todavía pendientes.
+- [x] Integrar medición consentida, fallos, trazas, banners y App Check.
+- [x] Validar pruebas, compilación y ejecución Android; documentar límites iOS.
+  38 pruebas Flutter, 924 del arnés y ocho escenarios PostgreSQL aislados.
+  Detalle: `apps/mobile/docs/FIREBASE_SERVICIOS_20261012.md`.
+- [x] Redactar borradores de términos y privacidad por autorización del titular:
+  Saptain LTD, Seychelles. `docs/legal/`; fuentes oficiales consultadas.
+- [x] Recibir datos del titular: Saptain LTD, E Coast Rd, Victoria, Seychelles;
+  admin@pronosticosdeportivos.com; edad mínima 18; Estados Unidos, Europa y
+  Latinoamérica como mercados previstos.
+- [ ] Completar datos operativos y revisión legal; publicar documentos y activar
+  la primera pantalla de Google. No registrar
+  aceptación de borradores como si ya fueran documentos vigentes.
+
+- [x] Fase 1: instalar Firebase CLI/FlutterFire y `firebase_core`, preparar
+  arranque condicionado a configuración real y validar análisis/tests/APK.
+  Base instalada el 2026-10-12; configuración real generada. Detalle:
+  `apps/mobile/docs/FIREBASE_INSTALACION_20261012.md`.
+- [x] Elegir proyecto Firebase e identificadores de Android/iOS, autenticar
+  la CLI y generar configuración real con FlutterFire. No inventar valores.
+  Proyecto indicado por el usuario: `pronosticos-deportivos-85ffa`.
+  Identificadores definitivos indicados después de la pausa: nombre QuantFut,
+  Android/iOS `com.saptain.quantfut`. Configuración regenerada para esas apps.
+- [x] Eliminar de Firebase los dos registros de ejemplo `com.example.gobet`,
+  por petición del usuario; solo quedan QuantFut Android e iOS activos.
+- [x] Comprobar el arranque de Firebase con la nueva identidad en Android:
+  APK instalado, inicialización correcta y navegación real en emulator-5556.
+- [ ] Compilar y comprobar el arranque de Firebase en iOS con Mac/Xcode.
+- [x] Fase 2 implementada: Google Auth y vínculo seguro con cuentas existentes;
+  registro primero, restauración y conservación de permisos/saldo/referidos.
+- [x] Fase 3 implementada: FCM, dispositivos, preferencias, bandeja y enlaces
+  autorizados. Prueba de entrega y activación de eventos pendientes.
+- [x] Fase 4 implementada: consentimiento, Analytics, Crashlytics y rendimiento.
+- [ ] Validar Google con usuario real, entrega FCM y fallo controlado en cuenta
+  de prueba después de publicar los documentos y activar el acceso.
+
+Ampliación del 2026-10-12: el usuario pidió «termina los pendientes» y corrigió
+el contacto a admin@pronosticosdeportivos.pro (buzón existente); ubicación del
+VPS declarada por el titular: Berlín, Alemania.
+
+- [ ] Cerrar textos con datos confirmados y retención efectiva; preparar páginas
+  legales públicas y procedimiento de solicitudes, sin inventar certificaciones.
+- [ ] Configurar conservación y limpieza de datos operativos Firebase; respaldo
+  privado con rotación acotada, separado de los registros deportivos inmutables.
+- [ ] Publicar documentos y activar el acceso Google coordinadamente; comprobar
+  Android y pruebas reales que no requieran credenciales personales del usuario.
+- [ ] Preparar clave/firma Android de distribución y comprobar APK firmado.
+- [ ] Dejar iOS reproducible para Mac/Apple; APNs y firma requieren Apple Developer.
+
 Primer diseño implementado a partir de las referencias del usuario:
 `apps/mobile/docs/PANTALLAS_BIENVENIDA_INICIO_VIP_20261011.md`.
 Cinco bienvenidas animadas y cinco pestañas inferiores. Este documento conserva
@@ -95,8 +156,9 @@ Referencia: `apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
   marca QuantFut, beneficios con métricas reales, selector de idioma y aceptación
   de términos/privacidad según captura `codex-clipboard-9da919e1-f27f-400b-8c67-6b5038e0fb25.png`.
   Registro antes de las bienvenidas/contenido para personas sin sesión; restaurar
-  sesión existente y vincular permisos/saldo del backend. **Solo plan registrado:
-  el usuario pidió no ejecutar todavía.** Detalle y aceptación en el plan Firebase.
+  sesión existente y vincular permisos/saldo del backend. Implementación
+  autorizada el 12-oct e incorporada; activación pendiente de documentos
+  legales publicados y conexión del backend de producción.
 - [ ] Idioma en la primera pantalla de registro, antes de la bienvenida:
   español, inglés, portugués, francés,
   italiano y alemán; persistir preferencia y cambio desde Perfil.
@@ -112,8 +174,9 @@ Referencia: `apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
   medición/control, cobros y lanzamiento.
 - [ ] Implementar las fases según sus dependencias y validar cada entrega.
 
-Estado actual: integración real autorizada y desplegada. Firebase, traducciones,
-notificaciones y cobros siguen pendientes; las secciones sin integración muestran
+Estado actual: integración real autorizada y desplegada. Firebase Core instalado
+y configurado; identidad Firebase, traducciones, notificaciones y cobros siguen
+pendientes; las secciones sin integración muestran
 su estado real. No sustituir información ausente por ejemplos de producción.
 
 ## Parley del día (2026-10-11, pedido del usuario)

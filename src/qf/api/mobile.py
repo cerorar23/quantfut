@@ -57,11 +57,16 @@ def config() -> dict:
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
 
-def member(creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> bool:
+def member(creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
+           request: Request = None) -> bool:
     if creds is None:
         return False
     cuentas.require_enabled()
-    account = cuentas.current_account(creds)
+    if request is not None and request.headers.get('x-qf-identity') == 'firebase':
+        from .firebase import firebase_account
+        account = firebase_account(creds, request)
+    else:
+        account = cuentas.current_account(creds)
     return suscripciones.active_subscription(account['account_id']) is not None
 
 

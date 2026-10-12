@@ -1,0 +1,16 @@
+{
+  "project": "pronosticos-deportivos-85ffa",
+  "googleEnabled": true,
+  "remoteConfigParameters": [
+    "qf_banner_enabled",
+    "qf_banner_text",
+    "qf_maintenance_enabled",
+    "qf_minimum_version",
+    "qf_google_auth_enabled",
+    "qf_terms_url",
+    "qf_privacy_url"
+  ],
+  "playIntegrity": "projects/68225142184/apps/1:68225142184:android:c4cf6e1ff70dbbb2e0619d/playIntegrityConfig",
+  "appCheckEnforced": false,
+  "legalPublished": false
+}

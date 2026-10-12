@@ -1,0 +1,13 @@
+{
+  "package": "com.saptain.quantfut",
+  "running": true,
+  "firebase_native_initialized": true,
+  "android_fatal_error": false,
+  "flutter_unhandled_error": false,
+  "appcheck_debug_exchange_failed": false,
+  "development_emulator_registered": true,
+  "consent_toggles_default_off": true,
+  "google_end_user_signin_tested": false,
+  "fcm_real_delivery_tested": false,
+  "ios_runtime_tested": false
+}

@@ -45,7 +45,8 @@ const welcomePages = [
 ];
 
 class SecondScreen extends StatefulWidget {
-  const SecondScreen({super.key});
+  const SecondScreen({super.key, this.onFinished});
+  final VoidCallback? onFinished;
   @override
   State<SecondScreen> createState() => _SecondScreenState();
 }
@@ -58,6 +59,10 @@ class _SecondScreenState extends State<SecondScreen> {
   void _finish() {
     if (_leaving) return;
     _leaving = true;
+    if (widget.onFinished != null) {
+      widget.onFinished!();
+      return;
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => const MainScreen()),
     );

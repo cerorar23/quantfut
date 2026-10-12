@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'live_api.dart';
 import 'live_widgets.dart';
+import '../core/firebase_services.dart';
+import '../core/firebase_preferences.dart';
 
 class LiveProfileScreen extends StatefulWidget {
   const LiveProfileScreen({
@@ -224,8 +226,17 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
                 color: liveMuted,
               ),
               trailing: const Icon(Icons.chevron_right, color: liveMuted),
-              onTap: () =>
-                  liveNotice(context, featureMessage(widget.data, item.$1)),
+              onTap: () {
+                if (FirebaseServices.current != null && item.$1 != 'balance') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => FirebasePreferencesScreen(api: api),
+                    ),
+                  );
+                } else {
+                  liveNotice(context, featureMessage(widget.data, item.$1));
+                }
+              },
             ),
           ),
         liveCard(

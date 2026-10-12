@@ -1,0 +1,27 @@
+{
+  "firebase_admin": "7.7.0",
+  "project": "pronosticos-deportivos-85ffa",
+  "auth_signup_enabled": false,
+  "appcheck_enforced": false,
+  "credential_readable": true,
+  "firebase_auth_credentials_verified": true,
+  "firebase_tables": [
+    "account_consents",
+    "account_notifications",
+    "firebase_identities",
+    "firebase_preferences",
+    "notification_outbox",
+    "push_devices"
+  ],
+  "mobile_config_status": 200,
+  "anonymous_preferences_status": 401,
+  "anonymous_notifications_status": 401,
+  "closed_google_signup_status": 503,
+  "public_config_status": 200,
+  "public_home_status": 200,
+  "api_only_deployment": true,
+  "credential_mount_read_only": true,
+  "backup_directory": "/home/qf/quantfut/releases/firebase-backend-20261012",
+  "server_host_checkout_matches_running_image": false,
+  "release_source_files_preserved": true
+}

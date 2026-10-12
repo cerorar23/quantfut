@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'dart:async';
+
+import '../core/firebase_services.dart';
+
 import 'live_api.dart';
 import 'live_markets.dart';
 import 'live_parley.dart';
@@ -18,7 +22,10 @@ class ProductShell extends StatefulWidget {
 
 class _ProductShellState extends State<ProductShell>
     with WidgetsBindingObserver {
-  late final QuantFutApi api = widget.api ?? QuantFutApi();
+  late final QuantFutApi api =
+      widget.api ?? QuantFutApi.firebaseSession ?? QuantFutApi();
+  final services = FirebaseServices.current;
+  StreamSubscription<String>? tokenSubscription;
   JsonMap? data;
   String? error;
   bool busy = false;
@@ -30,19 +37,66 @@ class _ProductShellState extends State<ProductShell>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    services?.openedMatch.addListener(openNotification);
+    services?.foregroundMessage.addListener(showNotification);
+    services?.addListener(configurationChanged);
+    tokenSubscription = services?.messaging.onTokenRefresh.listen((
+      token,
+    ) async {
+      try {
+        await api.registerDevice(token);
+      } catch (_) {
+        /* Retried on resume. */
+      }
+    });
+    unawaited(services?.screen('home'));
+    WidgetsBinding.instance.addPostFrameCallback((_) => openNotification());
     reload();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (widget.api == null) api.dispose();
+    services?.openedMatch.removeListener(openNotification);
+    services?.foregroundMessage.removeListener(showNotification);
+    services?.removeListener(configurationChanged);
+    tokenSubscription?.cancel();
+    if (widget.api == null && QuantFutApi.firebaseSession != api) api.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) reload();
+    if (state == AppLifecycleState.resumed) {
+      reload();
+      unawaited(api.registerDevice().catchError((_) {}));
+    }
+  }
+
+  void configurationChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void openNotification() {
+    final id = services?.openedMatch.value;
+    if (!mounted || id == null || !api.firebaseConnected) return;
+    services!.openedMatch.value = null;
+    detail(id);
+  }
+
+  void showNotification() {
+    final message = services?.foregroundMessage.value;
+    if (!mounted || message == null || !api.firebaseConnected) return;
+    services!.foregroundMessage.value = null;
+    final id = notificationMatchId(message.data);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message.notification?.title ?? 'Nuevo aviso de QuantFut'),
+        action: id == null
+            ? null
+            : SnackBarAction(label: 'Ver', onPressed: () => detail(id)),
+      ),
+    );
   }
 
   Future<void> reload() async {
@@ -575,6 +629,15 @@ class _ProductShellState extends State<ProductShell>
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (busy) const LinearProgressIndicator(),
+                  if (services?.banner.isNotEmpty == true)
+                    liveCard(child: liveText(services!.banner)),
+                  if (services?.maintenance == true)
+                    liveCard(
+                      child: liveText(
+                        'Estamos realizando mantenimiento. Algunas funciones pueden tardar más.',
+                        color: liveGold,
+                      ),
+                    ),
                   if (tab == 0)
                     home(data!)
                   else if (tab == 1)
@@ -626,7 +689,15 @@ class _ProductShellState extends State<ProductShell>
         selectedFontSize: 11,
         unselectedFontSize: 10,
         currentIndex: tab,
-        onTap: (i) => setState(() => tab = i),
+        onTap: (i) {
+          if (i == tab) return;
+          setState(() => tab = i);
+          unawaited(
+            services?.screen(
+              const ['home', 'predictions', 'markets', 'rewards', 'profile'][i],
+            ),
+          );
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'Inicio'),
           BottomNavigationBarItem(

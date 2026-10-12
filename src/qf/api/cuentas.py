@@ -181,7 +181,11 @@ def _limit(request: Request, scope: str, limit: int, window: int) -> None:
                                   "message": "Demasiados intentos, espera un momento"})
 
 
-def current_account(creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> dict:
+def current_account(creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
+                    request: Request = None) -> dict:
+    if request is not None and request.headers.get('x-qf-identity') == 'firebase':
+        from .firebase import firebase_account
+        return firebase_account(creds, request)
     acc = cuentas.account_from_access(redis_client(), creds.credentials if creds else "")
     if acc is None:
         raise HTTPException(401, {"code": "no_autenticado", "message": "Sesión no válida"},
@@ -249,7 +253,8 @@ def refresh(request: Request, response: Response, body: RefreshIn | None = None)
 
 @router.post("/auth/logout", status_code=204)
 def logout(response: Response, acc: dict = Depends(current_account)):
-    cuentas.logout(redis_client(), acc["_token"], acc["session_id"])
+    if acc.get('_identity') != 'firebase':
+        cuentas.logout(redis_client(), acc["_token"], acc["session_id"])
     _clear_web(response)
 
 

@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "consentimiento_requerido",
+    "new_and_restored_identity",
+    "vinculacion_requerida",
+    "legacy_link_preserves_account_and_password",
+    "firebase_conflicto_existing_identity",
+    "firebase_conflicto_existing_account",
+    "cuenta_suspendida",
+    "no_duplicate_accounts_or_consents"
+  ],
+  "schemaRolledBack": true,
+  "productionRowsChanged": false
+}

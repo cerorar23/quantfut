@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+
+import '../core/firebase_services.dart';
 
 typedef JsonMap = Map<String, dynamic>;
 JsonMap jsonMap(dynamic value) =>
@@ -10,14 +13,16 @@ List<JsonMap> jsonRows(dynamic value) =>
     value is List ? value.map(jsonMap).toList() : [];
 
 class ApiFailure implements Exception {
-  const ApiFailure(this.message, [this.status]);
+  const ApiFailure(this.message, [this.status, this.code]);
   final String message;
   final int? status;
+  final String? code;
   @override
   String toString() => message;
 }
 
 class QuantFutApi extends ChangeNotifier {
+  static QuantFutApi? firebaseSession;
   QuantFutApi({Uri? base})
     : base =
           base ??
@@ -32,9 +37,13 @@ class QuantFutApi extends ChangeNotifier {
     ..userAgent = 'QuantFut/1.0 (Android; Flutter)'
     ..connectionTimeout = const Duration(seconds: 15);
   String? _access, _refresh;
+  bool _firebaseIdentity = false;
   JsonMap? account;
-  bool get signedIn => _access != null;
+  bool get signedIn => _firebaseIdentity
+      ? FirebaseServices.current?.auth.currentUser != null
+      : _access != null;
   bool get plus => account?['plus'] == true;
+  bool get firebaseConnected => _firebaseIdentity && signedIn;
 
   Future<dynamic> request(
     String path, {
@@ -47,14 +56,25 @@ class QuantFutApi extends ChangeNotifier {
         .replace(
           queryParameters: query?.map((key, value) => MapEntry(key, '$value')),
         );
+    final services = FirebaseServices.current;
+    final trace = await services?.startTrace(apiTraceName(path));
     try {
       final req = await _client
           .openUrl(body == null ? 'GET' : 'POST', uri)
           .timeout(const Duration(seconds: 20));
       req.headers.set(HttpHeaders.acceptHeader, 'application/json');
-      if (_access != null) {
+      if (_firebaseIdentity) {
+        final token = await services?.auth.currentUser?.getIdToken();
+        if (token == null) {
+          throw const ApiFailure('Inicia sesión de nuevo.', 401);
+        }
+        req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+        req.headers.set('X-QF-Identity', 'firebase');
+      } else if (_access != null) {
         req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_access');
       }
+      final appToken = await services?.appCheckToken();
+      if (appToken != null) req.headers.set('X-Firebase-AppCheck', appToken);
       if (body != null) {
         req.headers.contentType = ContentType.json;
         req.write(jsonEncode(body));
@@ -69,6 +89,10 @@ class QuantFutApi extends ChangeNotifier {
         data = text.isEmpty ? null : jsonDecode(text);
       } catch (_) {
         data = null;
+      }
+      if (response.statusCode == 401 && retry && _firebaseIdentity) {
+        await services?.auth.currentUser?.getIdToken(true);
+        return await request(path, query: query, body: body, retry: false);
       }
       if (response.statusCode == 401 &&
           retry &&
@@ -95,6 +119,7 @@ class QuantFutApi extends ChangeNotifier {
           message?.toString() ??
               'No se pudo cargar la información (HTTP ${response.statusCode}).',
           response.statusCode,
+          jsonMap(detail)['code']?.toString(),
         );
       }
       if (data == null && text.isNotEmpty) {
@@ -107,6 +132,12 @@ class QuantFutApi extends ChangeNotifier {
       throw const ApiFailure(
         'No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.',
       );
+    } finally {
+      try {
+        await trace?.stop();
+      } catch (_) {
+        /* Optional measurement must not mask API responses. */
+      }
     }
   }
 
@@ -175,9 +206,21 @@ class QuantFutApi extends ChangeNotifier {
 
   Future<void> logout() async {
     try {
+      if (FirebaseServices.current != null && signedIn) {
+        await unregisterDevice();
+      }
       if (signedIn) await request('/app/v1/auth/logout', body: {});
     } finally {
       _clearSession();
+      final services = FirebaseServices.current;
+      if (services != null) {
+        try {
+          await services.disableNotifications();
+        } finally {
+          await services.auth.signOut();
+          await services.clearAccountData();
+        }
+      }
     }
   }
 
@@ -194,7 +237,106 @@ class QuantFutApi extends ChangeNotifier {
     _access = null;
     _refresh = null;
     account = null;
+    _firebaseIdentity = false;
+    if (firebaseSession == this) firebaseSession = null;
     notifyListeners();
+  }
+
+  Future<void> connectFirebase({bool acceptedTerms = false}) async {
+    final services = FirebaseServices.current;
+    final user = services?.auth.currentUser;
+    if (services == null || user == null) {
+      throw const ApiFailure('Inicia sesión con Google.', 401);
+    }
+    if (_firebaseIdentity) {
+      await updateAccount();
+      return;
+    }
+    final token = await user.getIdToken();
+    final result = jsonMap(
+      await request(
+        '/app/v1/firebase/connect',
+        body: {
+          'id_token': token,
+          'language': services.language,
+          if (acceptedTerms) 'terms_version': '2026-10-12',
+          if (acceptedTerms) 'privacy_version': '2026-10-12',
+        },
+      ),
+    );
+    if (_access != null) {
+      try {
+        await request('/app/v1/auth/logout', body: {});
+      } catch (_) {
+        /* Linking succeeded. */
+      }
+    }
+    _access = null;
+    _refresh = null;
+    _firebaseIdentity = true;
+    firebaseSession = this;
+    account = result;
+    notifyListeners();
+    try {
+      await syncPreferences();
+      if (services.notificationsAllowed) await registerDevice();
+    } catch (_) {
+      /* Preferences retry when opened; the authenticated account stays usable. */
+    }
+  }
+
+  Future<void> syncPreferences() async {
+    final services = FirebaseServices.current;
+    if (!signedIn || services == null) return;
+    await request(
+      '/app/v1/firebase/preferences',
+      body: {
+        'language': services.language,
+        'analytics': services.analyticsAllowed,
+        'diagnostics': services.diagnosticsAllowed,
+        'push_enabled': services.notificationsAllowed,
+      },
+    );
+  }
+
+  Future<String> installationId() async {
+    final preferences = FirebaseServices.current!.preferences;
+    final stored = await preferences.getString('push_installation');
+    if (stored != null) return stored;
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    final id =
+        '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+    await preferences.setString('push_installation', id);
+    return id;
+  }
+
+  Future<void> registerDevice([String? refreshedToken]) async {
+    final services = FirebaseServices.current;
+    if (!signedIn || services == null || !services.notificationsAllowed) return;
+    final token = refreshedToken ?? await services.notificationToken();
+    if (token == null) return;
+    await syncPreferences();
+    await request(
+      '/app/v1/firebase/devices',
+      body: {
+        'installation_id': await installationId(),
+        'token': token,
+        'platform': Platform.isIOS ? 'ios' : 'android',
+        'language': services.language,
+      },
+    );
+  }
+
+  Future<void> unregisterDevice() async {
+    if (!signedIn || FirebaseServices.current == null) return;
+    await request(
+      '/app/v1/firebase/devices/unregister',
+      body: {'installation_id': await installationId()},
+    );
   }
 
   @override
@@ -202,6 +344,14 @@ class QuantFutApi extends ChangeNotifier {
     _client.close(force: true);
     super.dispose();
   }
+}
+
+String apiTraceName(String path) {
+  if (path.startsWith('/mobile/v1/home')) return 'qf_load_home';
+  if (path.startsWith('/mobile/v1/matches/')) return 'qf_load_match';
+  if (path == '/app/v1/me') return 'qf_load_profile';
+  if (path.startsWith('/app/v1/firebase/')) return 'qf_firebase_request';
+  return 'qf_api_request';
 }
 
 String dateKey(DateTime date) =>

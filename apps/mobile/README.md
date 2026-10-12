@@ -11,6 +11,19 @@ Aplicación Flutter conectada a la API real de QuantFut: calendario, pronóstico
 
 La actualización y sus límites están documentados en [la auditoría](docs/AUDITORIA_STACK.md).
 
+## Firebase
+
+Firebase Core y los servicios P0/P1 están instalados para Android/iOS en
+`pronosticos-deportivos-85ffa`; el arranque lo inicializa por defecto.
+El nombre visible es QuantFut y ambos identificadores son
+`com.saptain.quantfut`. Instalación, herramientas locales y
+pasos de conexión en [Firebase: instalación base](docs/FIREBASE_INSTALACION_20261012.md).
+Google, avisos, medición, diagnóstico, rendimiento, Remote Config y App Check
+están integrados; la API del servidor también está desplegada. Google permanece
+cerrado hasta publicar documentos legales y los servicios opcionales requieren
+elección del usuario. Validación y pendientes en
+[Firebase: servicios y servidor](docs/FIREBASE_SERVICIOS_20261012.md).
+
 ## Ejecutar y comprobar
 
 Desde esta carpeta, con Flutter en PATH:
@@ -51,7 +64,7 @@ dart run flutter_launcher_icons
 
 El generador usa image/batting app icon.png y elimina la transparencia al generar iconos iOS. No se regeneraron los iconos durante esta actualización.
 
-La firma release de Android sigue usando la clave de depuración de la plantilla. Configura una clave privada e identificadores propios antes de distribuir. Las pantallas de pagos y acceso requieren servicios reales para funcionar con usuarios.
+La firma release de Android sigue usando la clave de depuración de la plantilla. Configura una clave privada antes de distribuir. Google Auth está integrado pero su activación espera los documentos legales; los pagos siguen pendientes de elegir proveedor.
 
 ## Ver la app en el emulador Android
 

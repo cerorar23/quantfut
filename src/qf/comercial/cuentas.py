@@ -85,10 +85,10 @@ def authenticate(email: str, password: str) -> dict | None:
         return None
     row = query_one(f"SELECT {_PUBLIC}, password_hash FROM accounts WHERE email = %s", (email,))
     try:
-        _ph.verify(row["password_hash"] if row else _DUMMY_HASH, password or "")
+        _ph.verify((row["password_hash"] if row else None) or _DUMMY_HASH, password or "")
     except (VerificationError, InvalidHashError):
         return None
-    if row is None:
+    if row is None or row["password_hash"] is None:
         return None
     stored = row.pop("password_hash")
     with conn() as c:

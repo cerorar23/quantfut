@@ -68,8 +68,10 @@ from .cuentas import router as cuentas_router
 from .fichas import router as fichas_router
 from .panel import router as panel_router
 from .web import router as web_router
-from .mobile import router as mobile_router
+from .mobile import member, router as mobile_router
 from .rewards import router as rewards_router
+from .firebase import router as firebase_router
+from .legal import router as legal_router
 from ..comercial.entrega import picks_for_tiers
 from ..config import settings
 from ..db import query, query_one
@@ -102,7 +104,7 @@ app.add_middleware(
     allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "X-QF-Identity", "X-Firebase-AppCheck"],
 )
 
 r = redis.from_url(settings.redis_url, decode_responses=True)
@@ -744,3 +746,5 @@ app.include_router(rewards_router)
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.include_router(firebase_router)
+app.include_router(legal_router)

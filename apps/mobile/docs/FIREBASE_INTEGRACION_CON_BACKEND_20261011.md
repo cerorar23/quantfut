@@ -1,8 +1,18 @@
 # Flutter + Firebase + backend QuantFut: revisión y plan de integración
 
+**Actualización 2026-10-12:** el usuario autorizó empezar la instalación de
+Firebase. Firebase Core y las herramientas están instalados; Android/iOS se
+configuraron en `pronosticos-deportivos-85ffa`, con nombre QuantFut e
+identificadores `com.saptain.quantfut`. Posteriormente autorizó instalar los
+servicios P0/P1 y desplegar la identidad compartida en su API. Implementación,
+validación y activaciones pendientes en [servicios y servidor](FIREBASE_SERVICIOS_20261012.md).
+Las indicaciones de «no ejecutar todavía» que siguen son históricas; el
+registro primero conserva sus requisitos para la fase de identidad.
+
 **Actualización posterior del mismo día:** el usuario autorizó conectar contenido
 real y eliminar el modo demo. La app ya usa la API de clientes existente y los
-módulos móviles de contenido y monedas; Firebase sigue pendiente. Ver
+módulos móviles de contenido y monedas; Firebase ya está integrado y su acceso
+Google espera documentos legales publicados. Ver
 [estado actual](APP_REAL_MONEDAS_REFERIDOS_20261011.md). La auditoría y decisión
 de fase 0 siguientes conservan el contexto anterior a esa autorización.
 

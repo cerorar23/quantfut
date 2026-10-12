@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-12T09:40:51.5579099-06:00",
+  "projectId": "pronosticos-deportivos-85ffa",
+  "packageId": "com.saptain.quantfut",
+  "device": "emulator-5556",
+  "processId": "7947",
+  "firebaseInitialization": "successful",
+  "activeFirebaseApps": [
+    "QuantFut (Android)",
+    "QuantFut (iOS)"
+  ],
+  "removedExampleApps": [
+    "gobet (android)",
+    "gobet (ios)"
+  ],
+  "androidAppId": "1:68225142184:android:c4cf6e1ff70dbbb2e0619d",
+  "iosAppId": "1:68225142184:ios:27b4ad1feef18adfe0619d",
+  "apkSha256": "3DF7AD1E0DC7425C3C478EA1BB6C3F6F17C72A60B709ECA9B4740F6CFB29A25D",
+  "flutterTestsPassed": 35,
+  "iosBuildVerified": false,
+  "harnessTestsPassed": 911,
+  "harnessTestsSkipped": 21,
+  "finalStartupScreen": "QuantFut welcome"
+}

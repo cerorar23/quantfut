@@ -4884,3 +4884,111 @@ gratis/VIP (hoy son gratis para cualquiera).
 - Secret keys de proveedores (Tapjoy, BitLabs) editables desde /control/recompensas (db/060, columna `secret_enc`): AES-256-GCM con `cryptography` (pyca; AEAD estandar, auditado, sobre OpenSSL), nonce aleatorio y contexto `reward_provider:<id>` como AAD para que un secreto no se pueda mover a otra fila. La clave maestra `QF_SECRETS_KEY` vive solo en el entorno del servidor (rotacion con `QF_SECRETS_KEY_OLD`): copiar la BD no basta. Campo de solo escritura, auditoria sin el valor, variable de entorno como respaldo. Fallo cerrado: sin clave maestra el panel rechaza guardar.
 
 - Despliegue VPS 2026-10-12 (sin git): codigo copiado al contenedor, `docker commit` a `quantfut-api-tapjoy:20261012`, compose apuntado a esa imagen y `compose up -d --no-deps api`. Respaldos en ~/backups/tapjoy-20261012 (env, compose, rewards.py/html previos); vuelta atras = imagen `quantfut-api-mobile-rewards:pre-tapjoy-backup` + env respaldado. db/060 aplicada; `QF_SECRETS_KEY` generada en el servidor (no esta en ningun otro sitio: respaldarla).
+
+## 2026-10-12 — Firebase Core e identidad definitiva de QuantFut
+
+Decisión del usuario: comenzar Firebase por fases en el proyecto existente
+`pronosticos-deportivos-85ffa`; después de la pausa, fijar nombre QuantFut e
+identificadores Android/iOS `com.saptain.quantfut`. Por eso se generaron apps y
+configuración nuevas, en vez de conservar los registros `com.example.gobet`.
+El usuario completó el acceso de Google y pidió eliminar los dos ejemplos.
+Ambos registros `gobet` se eliminaron; la lista remota confirma únicamente
+QuantFut Android e iOS activos. Configuración Android descargada de nuevo,
+verificando que contiene solo el paquete definitivo.
+
+La fase actual instala `firebase_core` y espera su inicialización antes de
+abrir la app, con reintento visible si falla. Firebase está activo por defecto.
+Se conserva FastAPI/Postgres como autoridad de cuentas, suscripción, saldo y
+pronósticos: Auth/Google, FCM, Analytics, Crashlytics, Performance y Remote
+Config siguen pendientes. Las herramientas CLI quedan locales e ignoradas;
+la configuración pública puede versionarse, las credenciales privadas no.
+
+Validación: análisis Flutter limpio, 35 pruebas aprobadas y APK debug con la
+nueva identidad compilado/instalado en emulator-5556. Registro nativo confirma
+`FirebaseApp initialization successful`; el arranque abrió el calendario con
+datos reales. Arnés inicial y posterior: 911 aprobadas, 21 omitidas y una
+advertencia; Docker no disponible. iOS tiene bundle ID, opciones y plist
+incluido en Runner, pero necesita compilación/ejecución en Mac. Firma Android
+de distribución pendiente. Detalle: apps/mobile/docs/FIREBASE_INSTALACION_20261012.md;
+evidencia: apps/mobile/docs/validation/firebase_base_20261012/.
+
+
+### Doble oportunidad con cuota real en el Parley (2026-10-12)
+
+CORRECCIÓN de la nota «ningún proveedor la cotiza»: API-Football SÍ cotiza Doble Oportunidad (bet 12, 8 casas
+en un partido de La Liga, entre ellas Bet365, Betano, 1xBet y William Hill; valores `Home/Draw`, `Home/Away`,
+`Draw/Away`). Se descartó sintetizarla desde el 1X2: una cuota justa calculada no la ofrece nadie y no sirve de
+precio de referencia; se capturan las cuotas reales. Hecho: (1) `ingest/af_odds.py` guarda bet 12 como
+`double_chance` 1X/12/X2 (grupo completo, nombre exacto, soft books y Pinnacle); sin peticiones extra; primera
+pasada: 65 partidos x 4 casas. (2) Solo el PARLEY la usa: `escalera_datos.opciones(incluir_doble=True)` añade
+`candidatos_doble` (probabilidad = P1+PX de Pinnacle sin margen) con cuota de `_cuotas_af`; `parley.MERCADOS_PARLEY`.
+La Escalera NO cambió (verificado en producción: 323 opciones evaluadas, 48 en rango, antes y después). (3) db/059:
+el CHECK `parley_patas_market_check` rechazaba `double_chance` y habría roto el guardado del primer parley; la migración
+solo amplía la regla (0 filas afectadas). Desplegado en worker (respaldos `before-doble`, `before-doble-parley`).
+Ensayo: 4 patas de doble oportunidad con cuotas reales (Betano 1,16/1,29/1,67, Bet365 1,33).
+PENDIENTE (toca archivos de la otra sesión, alta probabilidad ampliada): que `alta_prob_datos._ref` use esas cuotas
+para que la doble oportunidad pueda ser pronóstico gratis; hoy `_ref` devuelve sin precio. Ideas aún sin hacer:
+informe de calibración por origen (Pinnacle frente a córners/tarjetas), test binomial exacto en el control del parley
+(con n=50 y p=0,24 el `z<=-4` actual no puede dispararse) y orden del armado (medido: +0,6 % en un día).
+
+## 2026-10-12 — Servicios Firebase, identidad y despliegue de API
+
+El usuario amplió el alcance a Auth/Google, FCM, Analytics, Crashlytics,
+Performance, Remote Config y App Check. Se conservan FastAPI/Postgres como
+autoridad comercial; Firestore/Storage/Functions P2 no se activaron. Google
+está habilitado en Firebase y los recursos Android/iOS preparados. App Check
+usa Play Integrity en distribución y proveedor de desarrollo registrado en
+emulator-5556; enforcement continúa apagado. Los registros de ejemplo ya no
+están activos.
+
+Decisión de identidad: cabecera explícita Firebase y verificación de proyecto/
+revocación; no convertir un token inválido en sesión anterior. El mismo correo
+no toma control de una cuenta: vínculo solo demostrando la sesión previa.
+Se preservan ID, saldo, VIP y referidos. Consentimientos versionados;
+medición/diagnóstico/avisos opcionales apagados por defecto. Avisos genéricos,
+ruta interna validada y permisos consultados de nuevo al abrir; bandeja y
+cola con propietario/caducidad/reintentos. El envío automático no está activo.
+
+Tras rechazo de revisión automática, el usuario autorizó explícitamente crear
+quantfut-backend con lectura Auth y envío FCM, generar clave privada, y después
+desplegar en producción. Clave fuera de Git y Flutter, privada y montada como
+solo lectura. SDK 7.7.0 instalado, migración 058 aplicada, solo API recreada.
+Compose e imagen anteriores respaldados, reversión de arranque preparada.
+Paquete sobre la imagen real del servidor, sin cambios deportivos de otras
+sesiones. La primera compilación falló al interpretar SHA como repositorio;
+se corrigió usando una etiqueta local de la misma imagen y el despliegue pasó.
+
+La imagen en ejecución incluye módulos móviles que todavía no están en el
+checkout del VPS. Una comprobación previa detuvo la sincronización antes de
+escribir archivos; no se intentó reconstruir desde ese checkout antiguo.
+El paquete y fuentes exactas quedan en releases/firebase-backend-20261012.
+Una futura reconstrucción debe partir de la imagen vigente o reconciliar
+primero todo el código desplegado, para no perder funciones anteriores.
+
+Servidor verificado: credencial Auth válida sin descargar usuarios reales,
+seis tablas presentes, pip check correcto, API HTTPS config/home 200;
+preferencias/avisos anónimos 401 y acceso Google cerrado 503. Google continúa
+FIREBASE_AUTH_ENABLED=0 y qf_google_auth_enabled=false hasta documentos vigentes.
+
+Validación: análisis Flutter limpio, 38 pruebas aprobadas,APKdebug instalado y
+calendario real con 43 partidos. Preferencias opcionales comprobadas apagadas;
+arranque posterior al registro App Check sin error fatal/Flutter/intercambio
+en la observación. 11 pruebas Firebase y 8 escenarios PostgreSQL real en esquema
+aislado con rollback, sin cambiar filas comerciales. Arnés completo: 924 aprobadas,
+21 omitidas, 2 advertencias; Docker local no disponible. No se ha probado Google
+con usuario real, entrega FCM ni iOS. Firma de distribución y Apple/APNs
+pendientes; selector de 6 idiomas disponible, traducción completa pendiente.
+
+Datos legales confirmados por el usuario: Saptain LTD; E Coast Rd, Victoria,
+Seychelles; admin@pronosticosdeportivos.com; edad 18; Estados Unidos, toda Europa
+y Latinoamérica. Se actualizaron borradores y fuentes primarias. Proveedores
+Contabo/Proton identificados en notas; faltan ubicación contractual, ciclos de
+retención/respaldo/procedimiento de derechos y revisión territorial. No se
+publicaron borradores ni se registraron como aceptados. Las leyes obligatorias
+de mercados de destino no se excluyen por la constitución en Seychelles.
+
+Detalle: apps/mobile/docs/FIREBASE_SERVICIOS_20261012.md. Evidencia sin secretos
+en apps/mobile/docs/validation/firebase_services_20261012/; borradores y control
+de publicación en docs/legal/.
+
+- 2026-10-12 — Firebase no arrancaba en el emulador (`channel-error` en `FirebaseCoreHostApi.initializeCore`): `GeneratedPluginRegistrant.java` estaba vacio (19 lineas) porque las dependencias de Flutter no estaban resueltas (avisos de `google_sign_in_android` inexistente). `flutter pub get` lo regenero (71 lineas) y `FirebaseApp initialization successful`. Si reaparece el mensaje «No pudimos iniciar QuantFut», comprobar primero `flutter pub get` y que el registrant liste los plugins.

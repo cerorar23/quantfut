@@ -2,10 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>GIDClientID</key>
+    <string>68225142184-qqb1nmgj19ucmhes5mqtg3962bomoj6p.apps.googleusercontent.com</string>
+    <key>CFBundleURLTypes</key>
+    <array><dict><key>CFBundleURLSchemes</key><array>
+        <string>com.googleusercontent.apps.68225142184-qqb1nmgj19ucmhes5mqtg3962bomoj6p</string>
+    </array></dict></array>
+    <key>UIBackgroundModes</key>
+    <array><string>remote-notification</string></array>
+    <key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key><false/>
+    <key>GOOGLE_ANALYTICS_IDFA_COLLECTION_ENABLED</key><false/>
+    <key>FirebaseAutomaticScreenReportingEnabled</key><false/>
+    <key>FirebaseCrashlyticsCollectionEnabled</key><false/>
+    <key>firebase_performance_collection_enabled</key><false/>
+    <key>FirebaseMessagingAutoInitEnabled</key><false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>gobet</string>
+	<string>QuantFut</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +27,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>gobet</string>
+	<string>QuantFut</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

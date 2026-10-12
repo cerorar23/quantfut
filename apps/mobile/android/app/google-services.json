@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "68225142184",
+    "project_id": "pronosticos-deportivos-85ffa",
+    "storage_bucket": "pronosticos-deportivos-85ffa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68225142184:android:c4cf6e1ff70dbbb2e0619d",
+        "android_client_info": {
+          "package_name": "com.saptain.quantfut"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "68225142184-frjdog9cd723ttap1osioui5oj0e01tt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.saptain.quantfut",
+            "certificate_hash": "2b507566245504d00f5fadd6d18200248348c00a"
+          }
+        },
+        {
+          "client_id": "68225142184-pnatfuidqbah92or4g4avpnou6pk334e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.saptain.quantfut",
+            "certificate_hash": "3f38e9fca547a1da80b3f4637b725298e9d61567"
+          }
+        },
+        {
+          "client_id": "68225142184-pealu6a54p0m9l29g5kgq1coglol8ikl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBuUI0Ay40cuJFTXYN65UpcCAaqy6QTUA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "68225142184-pealu6a54p0m9l29g5kgq1coglol8ikl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "68225142184-qqb1nmgj19ucmhes5mqtg3962bomoj6p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.saptain.quantfut"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
