@@ -111,7 +111,9 @@ VPS declarada por el titular: Berlín, Alemania.
   detalle en `docs/legal/OPERACION_PRIVACIDAD.md`.
 - [ ] Publicar documentos y activar el acceso Google coordinadamente; comprobar
   Android y pruebas reales que no requieran credenciales personales del usuario.
-- [ ] Preparar clave/firma Android de distribución y comprobar APK firmado.
+- [x] Preparar clave/firma Android de distribución y comprobar APK firmado.
+  Verificado el 2026-10-12; ver `apps/mobile/docs/FIRMA_ANDROID.md` (falta respaldo
+  externo del almacén y Play App Signing al publicar).
 - [ ] Dejar iOS reproducible para Mac/Apple; APNs y firma requieren Apple Developer.
 
 Primer diseño implementado a partir de las referencias del usuario:
