@@ -124,6 +124,13 @@ VPS declarada por el titular: Berlín, Alemania.
 - [x] Preparar clave/firma Android de distribución y comprobar APK firmado.
   Verificado el 2026-10-12; ver `apps/mobile/docs/FIRMA_ANDROID.md` (falta respaldo
   externo del almacén y Play App Signing al publicar).
+- [x] Instalar y configurar Sentry (errores) en backend, worker y app Flutter, solo con
+  diagnóstico consentido en la app y sin datos personales. Proyectos `quantfut-api` y
+  `quantfut-app` en `saptain.sentry.io`. Ver `harness/progreso.md` y
+  `docs/legal/OPERACION_PRIVACIDAD.md`.
+- [ ] Sentry, del titular: confirmar retención del plan tras la prueba Business (~26-oct),
+  ajustes de organización (IPs, Data Scrubber, issues compartidos, 2FA) y probar en un
+  dispositivo real (activar diagnóstico y provocar un error).
 - [ ] Dejar iOS reproducible para Mac/Apple; APNs y firma requieren Apple Developer.
 
 ## Traducciones completas de la app (es, en, pt, fr, it, de) — 2026-10-12

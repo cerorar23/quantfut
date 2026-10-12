@@ -24,3 +24,5 @@ jinja2==3.1.6
 firebase-admin==7.7.0
 # Cifrado en reposo de secret keys (AES-256-GCM): src/qf/comercial/cifrado.py
 cryptography==50.0.2
+# Errores del backend y del worker (src/qf/observabilidad.py); solo si hay SENTRY_DSN
+sentry-sdk==2.72.0

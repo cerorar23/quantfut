@@ -5148,3 +5148,23 @@ idioma de la persona). Un idioma desconocido cae a español. Desplegado con resp
 compose. Imagen vigente: `quantfut-api-tapjoy:20261012-correos`. Las páginas web a las que llevan los
 enlaces siguen en español (límite documentado en `TRADUCCIONES.md`).
 Se marcaron como hechos cuatro pendientes de idioma/FCM que ya estaban implementados y sin tildar.
+
+## 2026-10-12 — Sentry instalado (errores)
+
+Orden del titular. Dos proyectos en la organización `saptain`: `quantfut-api` (FastAPI, también
+recibe los trabajos del worker) y `quantfut-app` (Flutter). Decisiones, todas por privacidad:
+solo errores (sin tracing/replay/logs); el backend maneja tokens y claves en URLs, así que
+`src/qf/observabilidad.py` apaga PII, cuerpos, variables locales, SQL y migas de pan, y limpia
+cabeceras/cookies/query/usuario/`sys.argv` antes de enviar (pruebas en `tests/test_observabilidad.py`).
+Se inicia desde `qf/__init__.py` para cubrir API y todos los `python -m qf...` del cron; sin
+`SENTRY_DSN` no hace nada. El DSN vive solo en el `.env` del servidor.
+App: Sentry se inicia únicamente si el diagnóstico está activado (mismo consentimiento que
+Crashlytics) y se cierra al retirarlo; no basta un `beforeSend` porque los fallos nativos se
+capturan antes que Dart. Texto del interruptor actualizado en los 6 idiomas y política de
+privacidad (Sentry como encargado; publicada en `/legal/privacidad`).
+Coste: `sentry_flutter` 10 exige Android 8.0, así que `minSdk` sube de 24 a 26 (la 9.x no compila
+con AGP 9). Desplegado en la API (imagen `quantfut-api-tapjoy:20261012-sentry`, respaldos en
+`~/backups/sentry-20261012`, vuelta atrás = `pre-sentry-backup`) y en el worker (pip + archivos +
+`/etc/environment`, sin recrearlo; `~/quantfut/{requirements.txt,src}` actualizados para el próximo
+build). Verificado: evento `QUANTFUT-API-1` desde la API y `-2` (excepción no capturada) desde el worker.
+No verificado: la app en un dispositivo (exige consentimiento y sesión de Google).

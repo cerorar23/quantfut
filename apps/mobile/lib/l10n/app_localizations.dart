@@ -1825,7 +1825,7 @@ abstract class AppLocalizations {
   /// No description provided for @prefsDiagnosticsBody.
   ///
   /// In es, this message translates to:
-  /// **'Envía información técnica a Firebase para diagnosticar fallos. Es opcional.'**
+  /// **'Envía información técnica a Firebase y a Sentry para diagnosticar fallos. Es opcional.'**
   String get prefsDiagnosticsBody;
 
   /// No description provided for @prefsDiagnosticsTitle.

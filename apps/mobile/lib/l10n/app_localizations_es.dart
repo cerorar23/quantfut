@@ -1041,7 +1041,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get prefsDiagnosticsBody =>
-      'Envía información técnica a Firebase para diagnosticar fallos. Es opcional.';
+      'Envía información técnica a Firebase y a Sentry para diagnosticar fallos. Es opcional.';
 
   @override
   String get prefsDiagnosticsTitle => 'Informes de errores y rendimiento';

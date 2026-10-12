@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase_options.dart';
 import '../l10n/app_locale.dart';
+import 'sentry_reporting.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseBackgroundMessage(RemoteMessage message) async {
@@ -141,6 +142,7 @@ class FirebaseServices extends ChangeNotifier {
     await FirebasePerformance.instance.setPerformanceCollectionEnabled(
       diagnosticsAllowed,
     );
+    await SentryReporting.apply(diagnosticsAllowed);
     if (!diagnosticsAllowed) {
       await FirebaseCrashlytics.instance.deleteUnsentReports();
     }

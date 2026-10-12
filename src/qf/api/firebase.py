@@ -1,6 +1,7 @@
 """Explicit Firebase identity and authenticated installation preferences."""
 from __future__ import annotations
 
+import logging
 import os
 from typing import Literal
 from uuid import UUID
@@ -14,6 +15,7 @@ from ..comercial import cuentas, firebase
 from ..comercial.cuentas import CuentaError
 from ..db import conn, query, query_one
 
+_log = logging.getLogger(__name__)
 _bearer = HTTPBearer(auto_error=False)
 router = APIRouter(prefix='/app/v1/firebase', tags=['firebase'],
                    dependencies=[Depends(api.require_enabled)])
@@ -21,6 +23,7 @@ Language = Literal['es', 'en', 'pt', 'fr', 'it', 'de']
 
 
 def fail(error: CuentaError):
+    _log.warning('identidad Firebase rechazada: %s', error.code)
     status = 401 if error.code == 'firebase_token_invalido' else (
         503 if error.code in ('firebase_no_configurado', 'firebase_no_disponible', 'firebase_deshabilitado') else 409)
     raise HTTPException(status, {'code': error.code, 'message': error.message})
@@ -51,6 +54,7 @@ def firebase_account(creds: HTTPAuthorizationCredentials | None, request: Reques
     except CuentaError as error:
         fail(error)
     if not account:
+        _log.warning('identidad Firebase sin cuenta activa vinculada')
         raise HTTPException(401, {'code': 'firebase_sin_cuenta', 'message': 'Vuelve a iniciar sesión'})
     return {**account, '_identity': 'firebase', '_token': creds.credentials}
 

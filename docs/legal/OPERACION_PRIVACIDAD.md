@@ -79,3 +79,18 @@ de pronósticos, consumo, pagos, representación EEE/Reino Unido y garantías de
 transferencias. Documentar contratos/DPA de Contabo/Google/Proton; aceptar un
 contrato nuevo corresponde al titular, no se ha firmado en su nombre.
 Pagos y proveedores de ofertas continúan desactivados.
+
+## Sentry (informes de errores, 2026-10-12)
+
+- Organización `saptain`, proyectos `quantfut-api` (backend y worker) y `quantfut-app` (Flutter).
+- Backend: `SENTRY_DSN` solo en el `.env` del servidor (0600), nunca en el repo.
+  `src/qf/observabilidad.py` envía únicamente errores, sin PII, cuerpos, variables locales,
+  migas de pan ni consultas SQL, y limpia cabeceras, cookies, query string y usuario.
+- App: se inicia solo con el diagnóstico activado y se cierra al desactivarlo
+  (`lib/core/sentry_reporting.dart`). El DSN de cliente es público por diseño.
+- Retención y cuota: la cuenta está en una prueba del plan Business hasta ~2026-10-26; luego
+  pasa al plan gratuito. **Confirmar el plazo de retención de ese plan y reflejarlo si cambia**
+  (la política remite al plazo del plan sin dar un número).
+- Pendiente del titular en Sentry (ajustes de organización, no tocados): activar «Prevent Storing
+  of IP Addresses», «Require Data Scrubber», desactivar «Allow Shared Issues» y «Allow Join
+  Requests», y exigir 2FA.

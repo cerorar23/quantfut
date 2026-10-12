@@ -25,7 +25,7 @@ android {
     }
     defaultConfig {
         applicationId 'com.saptain.quantfut'
-        minSdk flutter.minSdkVersion
+        minSdk 26 // sentry_flutter 10 (JNI) exige Android 8.0
         targetSdk 37
         versionCode flutter.versionCode
         versionName flutter.versionName

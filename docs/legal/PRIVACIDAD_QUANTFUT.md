@@ -98,6 +98,14 @@ aloja la base de cuentas y operaciones. **Proton Mail** procesa los correos
 transaccionales, como verificación y recuperación. Se les facilita la información necesaria para su función, bajo las condiciones
 y medidas de protección aplicables a los servicios contratados.
 
+**Sentry** (Functional Software, Inc., Estados Unidos) recibe informes de errores
+técnicos para corregir fallos. Del servidor se envían la traza del error, la versión
+y el entorno, sin cabeceras, cookies, cuerpos de petición, direcciones IP ni datos de
+cuenta. De la aplicación solo se envían, y únicamente si activas el diagnóstico, la
+traza del fallo, el modelo y la versión del sistema y de la aplicación; si lo
+desactivas, el envío se detiene. Sentry no se utiliza para publicidad. Su plazo de
+conservación es el del plan contratado y no equivale a un borrado instantáneo.
+
 No se venden datos personales mediante esta integración. Las plataformas de
 ofertas y encuestas todavía no están activas. Su habilitación requerirá una
 información específica previa sobre proveedor, datos compartidos, finalidades

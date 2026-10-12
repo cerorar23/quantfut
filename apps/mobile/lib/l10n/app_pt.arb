@@ -285,7 +285,7 @@
   "prefsAnalyticsTitle": "Medição de uso",
   "prefsDeleteAccount": "Solicitar exclusão da minha conta",
   "prefsDeleteAccountHint": "Consulte as etapas e o contato da Saptain LTD.",
-  "prefsDiagnosticsBody": "Envia informações técnicas ao Firebase para diagnosticar falhas. É opcional.",
+  "prefsDiagnosticsBody": "Envia informações técnicas ao Firebase e ao Sentry para diagnosticar falhas. É opcional.",
   "prefsDiagnosticsTitle": "Relatórios de erros e desempenho",
   "prefsInbox": "Caixa de avisos",
   "prefsLanguageNote": "O idioma se aplica a todo o app e fica guardado como preferência.",
