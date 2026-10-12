@@ -43,6 +43,18 @@ un envío de correo a terceros ni un borrado automático de cuentas.
   No incluyen historias deportivas ni NBA. No sustituyen un respaldo completo
   ni una copia fuera del VPS. Restaurar sobre la base completa correspondiente,
   con una validación previa y reaplicación de solicitudes de borrado.
+- Programación (VPS, usuario `qf`, UTC): `crontab` a las 03:40 ejecuta
+  `scripts/firebase_operations.py daily` (limpieza + copia comercial + rotación);
+  salida en `/home/qf/.local/share/quantfut/firebase_daily.log` (0600). Si falla,
+  avisa por Telegram (canal de alertas). `deliver` (envío de avisos) NO está
+  programado: el envío automático sigue apagado.
+- Verificación del 2026-10-12: la limpieza se probó con datos ficticios en una
+  transacción revertida (borra a los 30 días de caducar y a los 90 sin actualizar,
+  conserva lo vigente) y una copia real se restauró en una base temporal con las
+  mismas filas que el original. Una copia parcial no trae la extensión `citext` ni
+  la función `deny_mutation()` de los triggers de inmutabilidad: existen en la base
+  completa (el destino documentado); en una base vacía de ensayo hay que crear
+  `citext` antes y los triggers de `admin_audit` darán error.
 - Copias manuales de despliegues anteriores: inventariar y revisar por motivo
   de recuperación, obligación o reclamación; no se han eliminado archivos
   anteriores de otras sesiones. No están incluidos en el ciclo periódico.

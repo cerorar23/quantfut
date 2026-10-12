@@ -105,8 +105,10 @@ VPS declarada por el titular: Berlín, Alemania.
 
 - [ ] Cerrar textos con datos confirmados y retención efectiva; preparar páginas
   legales públicas y procedimiento de solicitudes, sin inventar certificaciones.
-- [ ] Configurar conservación y limpieza de datos operativos Firebase; respaldo
+- [x] Configurar conservación y limpieza de datos operativos Firebase; respaldo
   privado con rotación acotada, separado de los registros deportivos inmutables.
+  Programado en el VPS el 2026-10-12 (03:40 UTC), probado y con alerta Telegram;
+  detalle en `docs/legal/OPERACION_PRIVACIDAD.md`.
 - [ ] Publicar documentos y activar el acceso Google coordinadamente; comprobar
   Android y pruebas reales que no requieran credenciales personales del usuario.
 - [ ] Preparar clave/firma Android de distribución y comprobar APK firmado.
