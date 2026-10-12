@@ -57,13 +57,21 @@ PublishedRecord? serverRecord(JsonMap historial, String familyId) {
 /// No hay alertas en vivo porque el modelo pronostica antes del partido; la
 /// pantalla no insinúa lo contrario.
 class MarketsDashboard extends StatefulWidget {
-  const MarketsDashboard({super.key, required this.api, required this.alta});
+  const MarketsDashboard({
+    super.key,
+    required this.api,
+    required this.alta,
+    this.onVip,
+  });
 
   /// Cliente para pedir el historial de cada mercado.
   final QuantFutApi api;
 
   /// Bloque `alta_probabilidad` de /home: próximos pronósticos e historial.
   final JsonMap alta;
+
+  /// Abre la pantalla VIP desde un candado.
+  final VoidCallback? onVip;
   @override
   State<MarketsDashboard> createState() => _MarketsDashboardState();
 }
@@ -110,6 +118,9 @@ class _MarketsDashboardState extends State<MarketsDashboard>
         for (final p in (widget.alta['proximos'] as List? ?? const []))
           jsonMap(p),
       ];
+      final locked = [
+        for (final p in (widget.alta['vip'] as List? ?? const [])) jsonMap(p),
+      ];
       final liveOverall = (historial['n'] as num?) == null
           ? null
           : PublishedRecord(
@@ -152,6 +163,13 @@ class _MarketsDashboardState extends State<MarketsDashboard>
                               minimum: catalog.minimumCases,
                               color: _lookOf(families[i].id).$1,
                               markets: familyMarkets[families[i].id] ?? const [],
+                              onVip: widget.onVip,
+                              locked: [
+                                for (final p in locked)
+                                  if ((familyMarkets[families[i].id] ?? const [])
+                                      .contains(p['market']))
+                                    p,
+                              ],
                               upcoming: [
                                 for (final p in upcoming)
                                   if ((familyMarkets[families[i].id] ?? const [])

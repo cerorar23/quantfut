@@ -88,6 +88,28 @@ void main() {
         'corners_home': {'n': 10, 'aciertos': 9},
       },
     },
+    'vip': [
+      {
+        'market': 'totals',
+        'local': 'Cruz Azul',
+        'visitante': 'Toluca',
+        'kickoff_utc': DateTime.now()
+            .add(const Duration(hours: 8))
+            .toUtc()
+            .toIso8601String(),
+        'locked': true,
+      },
+      {
+        'market': 'spreads',
+        'local': 'Otro',
+        'visitante': 'Equipo',
+        'kickoff_utc': DateTime.now()
+            .add(const Duration(hours: 9))
+            .toUtc()
+            .toIso8601String(),
+        'locked': true,
+      },
+    ],
     'proximos': [
       {
         'market': 'totals',
@@ -149,7 +171,10 @@ void main() {
     expect(api.paths, ['/mobile/v1/markets/history']);
     expect(api.lastQuery!['market'], 'totals');
     expect(find.text('Tasa de acierto'), findsOneWidget);
-    expect(find.text('Hoy (1)'), findsOneWidget);
+    expect(find.text('Hoy (2)'), findsOneWidget); // 1 abierto + 1 VIP
+    expect(find.text('Cruz Azul'), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    expect(find.text('Otro'), findsNothing); // otro mercado (hándicap)
     expect(find.text('Más de 2,5 goles · Tigres - Leon'), findsOneWidget);
     expect(find.text('24/30'), findsOneWidget); // General, del servidor
     expect(find.text('1/1'), findsOneWidget); // Hoy: el de hoy acertó

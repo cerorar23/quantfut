@@ -49,7 +49,8 @@ def test_anonymous_does_not_receive_vip_selection(delivery,monkeypatch):
     report=mobile.high_probability()
     assert len(report['proximos'])==2 and len(report['vip'])==18
     for r in report['vip']:
-        assert not {'market','selection','line','texto','prob','ref_price','fit'} & r.keys()
+        assert not {'selection','line','texto','prob','ref_price','fit'} & r.keys()
+        assert r['market']=='totals'  # solo la categoría, para ubicar el candado
     assert len(mobile.high_probability(True)['proximos'])==20
     owned=mobile.high_probability(unlocks={('alta_probabilidad','m1')})
     assert len(owned['proximos'])==3

@@ -500,7 +500,11 @@ class _ProductShellState extends State<ProductShell>
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       liveHeading('Mercados y resultados'),
-      MarketsDashboard(api: api, alta: jsonMap(d['alta_probabilidad'])),
+      MarketsDashboard(
+        api: api,
+        alta: jsonMap(d['alta_probabilidad']),
+        onVip: vip,
+      ),
       liveButton('Ver acceso VIP', vip),
       const SizedBox(height: 16),
       if (!featureEnabled(d, 'nba')) training(featureMessage(d, 'nba')),

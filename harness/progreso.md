@@ -4754,3 +4754,11 @@ El historial por mercado manda `home_corners/away_corners` y la app los muestra 
 mercados de córners en vez del marcador de goles (despliegue 2026-10-12, respaldo
 `before-corners`). Posible hueco de datos: Operario-PR - Goias figura 14-0 en córners;
 un 0 puede ser un córner no capturado, no un cero real.
+
+### Candados dentro de cada mercado (2026-10-12)
+
+Decisión del usuario: los pronósticos VIP bloqueados se ven dentro de su mercado
+(partido, hora, candado), sin el pick. Cambio de política: antes el metadato
+bloqueado no llevaba `market`. Ahora sale SOLO la categoría; selección, línea,
+probabilidad, cuota y `fit` siguen fuera (test actualizado). Sin tarjeta de venta:
+tocar el candado abre VIP. Escalera no se incluye (su metadato no se reparte por familia).

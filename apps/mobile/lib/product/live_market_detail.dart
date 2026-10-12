@@ -17,6 +17,8 @@ class MarketDetailScreen extends StatefulWidget {
     required this.markets,
     required this.upcoming,
     required this.record,
+    this.locked = const [],
+    this.onVip,
   });
   final QuantFutApi api;
   final MarketFamily family;
@@ -28,6 +30,12 @@ class MarketDetailScreen extends StatefulWidget {
 
   /// Pronósticos próximos de esta familia que el servidor entregó abiertos.
   final List<JsonMap> upcoming;
+
+  /// Pronósticos de esta familia bloqueados (VIP): solo partido y hora.
+  final List<JsonMap> locked;
+
+  /// Abre la pantalla VIP.
+  final VoidCallback? onVip;
 
   /// Resueltos de esta familia (acertados / total).
   final PublishedRecord record;
@@ -117,14 +125,19 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
                 labelColor: Colors.white,
                 unselectedLabelColor: liveMuted,
                 tabs: [
-                  Tab(text: 'Hoy (${widget.upcoming.length})'),
+                  Tab(text: 'Hoy (${widget.upcoming.length + widget.locked.length})'),
                   const Tab(text: 'Anteriores'),
                 ],
               ),
               Expanded(
                 child: TabBarView(
                   children: [
-                    _TodayTab(picks: widget.upcoming, color: widget.color),
+                    _TodayTab(
+                      picks: widget.upcoming,
+                      locked: widget.locked,
+                      color: widget.color,
+                      onVip: widget.onVip,
+                    ),
                     _HistoryTab(
                       history: history,
                       error: error,
@@ -263,13 +276,19 @@ Widget _emptyState(String message) => Center(
 );
 
 class _TodayTab extends StatelessWidget {
-  const _TodayTab({required this.picks, required this.color});
-  final List<JsonMap> picks;
+  const _TodayTab({
+    required this.picks,
+    required this.locked,
+    required this.color,
+    this.onVip,
+  });
+  final List<JsonMap> picks, locked;
   final Color color;
+  final VoidCallback? onVip;
 
   @override
   Widget build(BuildContext context) {
-    if (picks.isEmpty) {
+    if (picks.isEmpty && locked.isEmpty) {
       return _emptyState(
         'No hay pronósticos disponibles ahora para este mercado. '
         'Aparecen cuando el modelo los publica, antes del partido.',
@@ -311,6 +330,40 @@ class _TodayTab extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+        for (final p in locked)
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onVip,
+            child: liveCard(
+              border: Colors.white12,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        liveText(
+                          kickoffText(p['kickoff_utc']),
+                          size: 11,
+                          color: liveMuted,
+                        ),
+                        const SizedBox(height: 8),
+                        _teams(p),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    children: [
+                      const Icon(Icons.lock_outline, color: liveGold, size: 22),
+                      const SizedBox(height: 4),
+                      liveText('VIP', size: 11, color: liveGold, bold: true),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
       ],

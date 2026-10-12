@@ -149,7 +149,9 @@ def implied_goals(fit: dict | None) -> dict | None:
 
 
 def metadata(row: dict) -> dict:
-    return {**{key: row.get(key) for key in ('match_id','league_id','kickoff_utc','local','visitante','batch_date')},
+    # `market` es solo la categoría (goles, córners...): permite ubicar el candado
+    # en su mercado. Selección, línea, probabilidad y cuota siguen sin salir.
+    return {**{key: row.get(key) for key in ('match_id','league_id','kickoff_utc','local','visitante','batch_date','market')},
             'locked': True, 'pick_key': pick_key(row)}
 
 
