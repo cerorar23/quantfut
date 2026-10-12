@@ -707,6 +707,40 @@ frente al modelo base a T-60 y evidencia en varias ligas.
 
 ---
 
+## Parley del día (desde 2026-10-11, apagado hasta el visto bueno)
+
+Pestaña "Parley" y ruta pública `GET /parley`. Cada día (de 08:00 a 08:00
+UTC, la jornada americana entera) se arman de 1 a 5 parlays, uno por escalón
+de cuota total: ≈2,0 (1,90-2,20), ≈2,5 (2,20-2,70), ≈3,0 (2,70-3,40), ≈4,0
+(3,40-4,30) y ≈5,0 (4,30-5,00). En cada escalón entra la combinación MÁS
+PROBABLE de los mercados de la escalera (1X2, goles, goles por equipo, ambos
+marcan, hándicap y córners/tarjetas validados), de 2 a 6 patas de cuota
+≥ 1,15, un partido por parlay y ninguno repetido en el día. Reglas en
+`src/qf/publish/parley.py`; diseño en
+`docs/superpowers/specs/2026-10-11-parley-design.md`.
+
+Lo que NO promete (decisión del usuario: solo probabilidad, sin filtro de
+valor): el margen de la casa se paga en CADA pata y se multiplica; a la larga
+los parlays pierden aunque acierten lo prometido. El historial publica
+unidades y ROI a 1 unidad por parlay, también los perdidos.
+
+- Se eligen antes de `seal()` y entran en el lote del día desde
+  `LOTE_PARLEY_DESDE`: un parlay fuera de un lote sellado no se enseña.
+- La búsqueda es una mochila sobre ln(cuota) con celdas de 0,2 % y sin podar
+  patas "dominadas" (con techo de cuota la más barata puede ser la única que
+  cabe): exacta salvo combinaciones pegadas al borde de un escalón (test
+  contra fuerza bruta). Fuera las cuotas erróneas (`prob · cuota − 1 > 0,25`).
+- Tickets y patas del día en una transacción con candado: nunca un ticket a
+  medias, que sería inmutable. Pata no jugada a su hora original (±48 h):
+  nula a las 48 h de esa hora, aunque `fixtures` la reprograme.
+- Sin doble oportunidad: ningún proveedor capturado la cotiza.
+- Una pata aplazada o devuelta cuenta ×1,00. El acierto se compara con la
+  probabilidad EFECTIVA (producto de las patas que contaron), para que un nulo
+  no haga parecer peor el escalón.
+- Control por escalón como la alta probabilidad (50 liquidados, 10 semanas,
+  IC99; fallo grosero z ≤ −4): un escalón que acierta por debajo de lo
+  prometido se pausa solo.
+
 ## Reto escalera (desde 2026-10-08)
 
 Pestaña propia en la web (`/escalera`): retos de 3 a 6 escalones que empiezan
@@ -767,6 +801,18 @@ Desde el 2026-10-09 también más de 6,5 córners y córners de cada equipo
 menos de 4,5 / 7,5), las líneas que pasan con el criterio de la escalera
 (`python -m qf.eval.escalera_estadistica --fijos`). El modelo por equipo está
 peor calibrado que el de totales (varias líneas fallan en el tramo 60-80 %).
+
+**Revisión con los datos completos (2026-10-10).** Las pruebas del 8 y el 9 de
+octubre perdían en silencio 2024/25 entera y la Premier 2021/22: esos CSV de
+football-data traen BOM y, leídos en latin-1, la columna `Div` salía como
+`ï»¿Div` (arreglado en `soft_vs_sharp.load_csvs`). Con 13.555 partidos en vez de
+10.842 la escalera queda así: fuera más de 6,5 y 9,5 córners y visitante menos
+de 7,5 (fallan en el tramo 70-80 %, justo el de la escalera); dentro menos de
+4,5 y 5,5 tarjetas. Córners totales: más de 7,5 / 8,5 y menos de 9,5 / 10,5 /
+11,5. El árbitro en Inglaterra (`python -m qf.eval.tarjetas_arbitro`, Premier +
+Championship, árbitro en el 100 % de los partidos) mejora la pérdida
+logarítmica de tarjetas solo 0,0011 por partido (z=1,07; en la Premier
+empeora): no hay regla propia para Inglaterra.
 
 **Probabilidad prudente en córners y tarjetas (2026-10-09, decisión del
 usuario).** La primera vista previa con cuotas reales (madrugada del 9-oct)
@@ -856,6 +902,8 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   menos de 7,5, visitante más de 2,5 y menos de 6,5. Regla completa: 12.557
   partidos, 81,89 % → 82,64 %. Ojo: dentro de lo elegido, "local más de 2,5"
   queda 3 puntos por debajo (n=680); lo vigila el control por grupo.
+  Con los datos completos (2026-10-10, ver la escalera) "local más de 2,5"
+  falla el tramo 80-85 % (82,84 → 81,35, n=3.368) y sale de alta probabilidad.
 
 ## La cadena de hashes en la práctica
 
