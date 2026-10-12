@@ -244,6 +244,48 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
             'plans': suscripciones.plans(only_active=True) if flags['vip']['enabled'] else []}
 
 
+def live_score(match_id: str) -> dict | None:
+    """Marcador en juego (db/056). Fuera de la ficha cacheada: debe ser fresco."""
+    row = query_one('SELECT live_home_goals, live_away_goals, live_minute, live_status, live_updated_at '
+                    'FROM matches WHERE match_id=%s AND live_status IS NOT NULL', (match_id,))
+    if not row:
+        return None
+    return {'marcador': [row['live_home_goals'], row['live_away_goals']], 'minuto': row['live_minute'],
+            'estado': row['live_status'], 'actualizado': row['live_updated_at']}
+
+
+@router.get('/mobile/v1/markets/history')
+def markets_history(response: Response,
+                    market: str | None = Query(None, pattern=r'^[a-z_]+(,[a-z_]+)*$', max_length=200),
+                    limit: int = Query(200, ge=1, le=500)):
+    """Pronósticos de alta probabilidad ya resueltos (acertó/falló), uno a uno.
+
+    Mismo universo que ve el usuario en «Hoy»: selladas y en el rango público. Las
+    anuladas no cuentan. La probabilidad sale con la precisión pública reducida.
+    """
+    response.headers['Cache-Control'] = 'no-store'
+    if not features()['alta_probabilidad']['enabled']:
+        return {'items': []}
+    markets = market.split(',') if market else None
+    rows = query(f'''SELECT a.match_id, m.league_id, m.kickoff_utc,
+        COALESCE(th.display_name, th.canonical_name) AS local,
+        COALESCE(ta.display_name, ta.canonical_name) AS visitante,
+        a.market, a.selection, a.line, a.prob, a.ref_price, r.outcome, r.home_goals, r.away_goals,
+        m.home_corners, m.away_corners
+        FROM alta_prob_picks a JOIN matches m ON m.match_id=a.match_id
+        JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
+        {alta_prob_datos._sql_sellado()}
+        JOIN alta_prob_results r ON r.alta_id=a.alta_id
+        WHERE r.outcome IN ('win','loss') AND a.prob BETWEEN %s AND %s
+          AND (%s::text[] IS NULL OR a.market = ANY(%s))
+        ORDER BY m.kickoff_utc DESC, a.match_id LIMIT %s''', (PROB_MIN, PROB_MAX, markets, markets, limit))
+    from ..publish import alta_prob as ap
+    for row in rows:
+        row['texto'] = ap.texto(row['market'], row['selection'], row['line'], row['local'], row['visitante'])
+        row['prob'] = round(float(row['prob']), 2)
+    return {'items': rows}
+
+
 @router.get('/mobile/v1/matches/{match_id}')
 def detail(match_id: str, response: Response, plus: bool = Depends(member),
            account: dict | None = Depends(rewards.optional_account)):
@@ -253,6 +295,7 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
     ficha = fichas._ficha(match_id)
     if ficha is None:
         raise HTTPException(404, 'Partido no encontrado')
+    ficha['partido']['vivo'] = live_score(match_id)
     unlocks = rewards.entitlements(account)
     high = high_probability(plus,unlocks,started=True)
     steps = ladder(plus,unlocks)

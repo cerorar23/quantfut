@@ -90,6 +90,110 @@ class ForecastTile extends StatelessWidget {
   );
 }
 
+/// Marcador real mientras el partido se juega (`partido.vivo`). Si el servidor
+/// no lo manda, no se dibuja nada. Muestra cuánto hace de la última lectura:
+/// el dato se refresca por ciclos, no es un directo.
+class LiveScoreStrip extends StatelessWidget {
+  const LiveScoreStrip({super.key, required this.ficha});
+  final JsonMap ficha;
+
+  static String _minute(JsonMap vivo) {
+    final status = vivo['estado'];
+    if (status == 'HT') return 'DESCANSO';
+    final minute = vivo['minuto'];
+    return minute is num ? "${minute.toInt()}'" : 'EN JUEGO';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vivo = jsonMap(jsonMap(ficha['partido'])['vivo']);
+    final score = vivo['marcador'];
+    if (score is! List || score.length != 2 || score.any((g) => g is! num)) {
+      return const SizedBox.shrink();
+    }
+    final home = jsonMap(ficha['local'])['nombre'] ?? 'Local';
+    final away = jsonMap(ficha['visitante'])['nombre'] ?? 'Visitante';
+    final updated = dateValue(vivo['actualizado']);
+    final ago = updated == null
+        ? null
+        : DateTime.now().difference(updated).inMinutes.clamp(0, 999);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: statsPanel,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: liveGreen.withValues(alpha: .35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: liveGreen,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              liveText(_minute(vivo), size: 12, color: liveGreen, bold: true),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '$home',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  '${(score[0] as num).toInt()} — ${(score[1] as num).toInt()}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  '$away',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          liveText(
+            ago == null
+                ? 'Marcador en vivo'
+                : 'Marcador en vivo · actualizado hace $ago min',
+            size: 10,
+            color: liveMuted,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Pronóstico destacado + indicadores + dictamen, todo con datos entregados
 /// por el servidor. Lo que no llega se muestra como «—», nunca se rellena.
 class ForecastPanel extends StatelessWidget {

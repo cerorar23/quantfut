@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'live_api.dart';
+import 'live_markets.dart';
 import 'live_widgets.dart';
 import 'live_vip.dart';
 import 'live_detail.dart';
@@ -499,7 +500,7 @@ class _ProductShellState extends State<ProductShell>
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       liveHeading('Mercados y resultados'),
-      historyPerformance(jsonMap(jsonMap(d['alta_probabilidad'])['historial'])),
+      MarketsDashboard(api: api, alta: jsonMap(d['alta_probabilidad'])),
       liveButton('Ver acceso VIP', vip),
       const SizedBox(height: 16),
       if (!featureEnabled(d, 'nba')) training(featureMessage(d, 'nba')),

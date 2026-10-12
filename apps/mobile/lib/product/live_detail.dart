@@ -303,6 +303,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                             ),
                           ),
                         const SizedBox(height: 12),
+                        LiveScoreStrip(ficha: ficha),
                         ...picks
                             .where(
                               (p) => filter == 'Todos' || p['market'] == filter,

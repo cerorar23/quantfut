@@ -3,7 +3,7 @@ import copy
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.testclient import TestClient
 
 from qf.api import mobile, rewards, console, panel
@@ -116,3 +116,31 @@ def test_started_match_keeps_sealed_pick_with_result(monkeypatch,delivery):
     assert mobile.high_probability()['proximos']==[]
     shown=mobile.high_probability(started=True)['proximos']
     assert [(p['match_id'],p['started'],p['outcome']) for p in shown]==[('m1',True,'win')]
+
+
+def test_live_score_shape(monkeypatch):
+    now = datetime.now(timezone.utc)
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: {
+        'live_home_goals': 1, 'live_away_goals': 0, 'live_minute': 48,
+        'live_status': '2H', 'live_updated_at': now})
+    assert mobile.live_score('m1') == {'marcador': [1, 0], 'minuto': 48, 'estado': '2H', 'actualizado': now}
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: None)
+    assert mobile.live_score('m1') is None
+
+
+def test_markets_history_filters_and_rounds(monkeypatch):
+    captured = {}
+
+    def fake_query(sql, params=()):
+        captured['params'] = params
+        return [{'match_id': 'm1', 'market': 'totals', 'selection': 'over', 'line': 1.5, 'prob': 0.8123456,
+                 'local': 'A', 'visitante': 'B', 'outcome': 'win', 'home_goals': 2, 'away_goals': 1}]
+
+    monkeypatch.setattr(mobile, 'query', fake_query)
+    monkeypatch.setattr(mobile, 'features', lambda: {'alta_probabilidad': {'enabled': True}})
+    out = mobile.markets_history(Response(), market='totals,spreads', limit=50)
+    assert captured['params'][2] == ['totals', 'spreads'] and captured['params'][-1] == 50
+    item = out['items'][0]
+    assert item['prob'] == 0.81 and item['texto']
+    monkeypatch.setattr(mobile, 'features', lambda: {'alta_probabilidad': {'enabled': False}})
+    assert mobile.markets_history(Response(), market=None, limit=10) == {'items': []}

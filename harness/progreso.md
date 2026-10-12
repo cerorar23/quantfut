@@ -4711,3 +4711,46 @@ FALLADO». Desplegado SOLO `mobile.py` (el remoto era idéntico salvo este cambi
 con `docker compose cp` + reinicio de `api`; copia previa en
 `~/backups/mobile.py.*.bak` del VPS. Mismo aviso de siempre: al ser `cp`, una
 recreación del contenedor desde la imagen lo perdería hasta reconstruirla.
+
+### Marcador en vivo para la app (2026-10-11)
+
+Decisión: columnas `live_*` propias (db/056) en vez de reutilizar `status` y
+`home_goals`. Esos los usa el pipeline de picks y `results.py` los escribe con
+`result_recorded_at`; un marcador provisional ahí contaminaría la auditoría
+temporal. `ingest/live.py` hace UNA petición `fixtures?live=all` por pasada y
+ninguna si no hay partido en ventana, así el coste no depende de los usuarios.
+Cron cada 45 min por decisión del usuario (cuota); `*/45` da huecos de 45 y 15
+min. El marcador sale en `/mobile/v1/matches/{id}` como `partido.vivo`, fuera
+de la ficha cacheada. Se descartó `tunjayoff/sofascore_scraper`: licencia
+PolyForm Noncommercial y raspado contra los términos de Sofascore.
+Desplegado el 2026-10-12 sin tocar compose: imágenes delgadas sobre las vivas, con
+respaldo `before-live` (api `quantfut-api-mobile-rewards`, worker `quantfut-worker`).
+Primera pasada real: 6 candidatos, 2 en juego, 1 petición. Franja `LiveScoreStrip`
+en Flutter (falta recompilar la app). Pendiente: marcador en el calendario.
+
+### Pestaña Mercados rediseñada (2026-10-12)
+
+Decisión: se adapta el lenguaje visual de la referencia (radar, anillos, puntos)
+pero NO sus alertas en vivo («Más/Menos en vivo», «Quién marca en el primer
+tiempo»): los modelos pronostican antes del partido y el catálogo de evidencia
+lo dice expresamente. Cada tarjeta sale de `MarketCatalog` (mejor línea
+confirmada + publicados resueltos), así que no hay cifras inventadas y una
+familia sin línea confirmada muestra «—». Animaciones con CustomPainter, sin
+paquetes ni assets de terceros; se detienen con «reducir movimiento».
+
+### Mercados: pantalla por mercado e historial por pronóstico (2026-10-12)
+
+Decisión: se quita la tarjeta «Rendimiento registrado» de Mercados; cada
+familia abre su pantalla con «Hoy» (pronósticos abiertos que el servidor ya
+entrega) y «Anteriores» (resueltos, acertó/falló). Las cifras salen del
+historial del servidor, no del JSON empaquetado: el radar decía 75/96 y el
+servidor 89/114. Nuevo `GET /mobile/v1/markets/history` (alta probabilidad,
+selladas, rango público 75-90 %, anuladas fuera, probabilidad con precisión
+pública). Los pronósticos VIP bloqueados no se atribuyen a un mercado (su
+metadato no lo lleva) y no se muestran en «Hoy»; el reparto gratis/VIP sigue
+decidido por el servidor.
+
+El historial por mercado manda `home_corners/away_corners` y la app los muestra en los
+mercados de córners en vez del marcador de goles (despliegue 2026-10-12, respaldo
+`before-corners`). Posible hueco de datos: Operario-PR - Goias figura 14-0 en córners;
+un 0 puede ser un córner no capturado, no un cero real.

@@ -2258,3 +2258,14 @@ NBA-RUN-071: nueve mercados desarrollados/calibrados con estadísticas sin cuota
 - [x] Conservar respuestas sin datos personales, documentar limitaciones reales y corregir presupuesto operativo si el plan gratuito no permite la temporada actual. No activar tareas repetitivas sin acceso válido.
 
 Clave existente verificada: Free activo, 100/día, temporadas 2025 y 2026 rechazadas. Calendario 2024 sin filtro de fecha válido, 1.406 partidos; fecha histórica rechazada. Cinco solicitudes de datos, dos estados, cabecera final 99 restantes. No se activa captura actual ni se contrata un plan; volumen suficiente no acredita permisos. docs/nba_api_nba_acceso_actual_20261009.md.
+
+- [x] Marcador en vivo, backend (2026-10-11): db/056, `ingest/live.py`, cron
+  cada 45 min, `partido.vivo` en el detalle móvil. Sin desplegar.
+- [x] Franja de marcador en vivo en el pronóstico de Flutter (`LiveScoreStrip`).
+- [x] db/056, API y cron de marcador en vivo desplegados en el VPS (2026-10-12).
+- [ ] Marcador en vivo en el calendario de inicio.
+
+- [x] Pestaña Mercados con radar y una tarjeta por familia de fútbol
+  (`live_markets.dart`). Pendiente: NBA (experimental, sin tarjeta) y recompilar el APK.
+
+- [x] Pantalla por mercado (Hoy / Anteriores) y endpoint de historial. Desplegado el 2026-10-12 (respaldo `quantfut-api-mobile-rewards:before-history`).

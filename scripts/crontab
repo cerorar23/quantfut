@@ -34,6 +34,10 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # ~14 peticiones por pasada de 7.500/dia.
 40 6,22 * * * cd /app && python -m qf.ingest.standings >> /var/log/standings.log 2>&1
 
+# Marcador en juego para la app (db/056). UNA peticion `live=all` por pasada y solo
+# si hay algun partido en ventana; cada 45 min por decision del usuario (menos cuota).
+*/45 * * * * cd /app && python -m qf.ingest.live >> /var/log/live.log 2>&1
+
 # Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
 45 */3 * * * cd /app && python -m qf.ingest.results >> /var/log/results.log 2>&1
 
