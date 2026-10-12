@@ -10,8 +10,8 @@ solo como historial; no son fuente de nada.
 Las páginas públicas están en `src/qf/api/legal_pages/` (generadas con
 `scripts/build_legal_pages.cjs`, que se niega a compilar un texto con marcadores
 o con la palabra «Borrador») y las sirve `src/qf/api/legal.py` en `/legal/terminos`,
-`/legal/privacidad` y `/legal/eliminar-cuenta`. **Aún no están desplegadas**: el
-servidor responde 404 hasta que el titular decida publicarlas.
+`/legal/privacidad` y `/legal/eliminar-cuenta`. **Publicadas el 2026-10-12** por
+orden del titular (https://pronosticosdeportivos.pro/legal/…, 200 en las tres).
 
 Datos confirmados por el titular: **Saptain LTD**, constituida en **Seychelles**,
 **E Coast Rd, Victoria, Seychelles**, edad mínima **18 años**, mercados **Estados
@@ -38,9 +38,8 @@ solas: el texto público lo dice así y no promete lo contrario.
   atiende de verdad a esos mercados.
 - Condiciones de cobro, cancelación y devoluciones cuando se elija procesador.
 
-## Antes de publicar
+## Antes de activar Google
 
-- Desplegar el backend con las páginas y comprobar `/legal/*` desde el dominio.
 - Mantener alineadas la versión de los textos y `CONSENT_VERSION`
   (`src/qf/comercial/firebase.py`); la prueba `tests/test_legal.py` lo exige.
 - No registrar aceptaciones ni activar Google (`FIREBASE_AUTH_ENABLED`,

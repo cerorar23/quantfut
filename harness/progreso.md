@@ -5079,8 +5079,11 @@ Decision del usuario: traducir toda la app y mantenerlo siempre al dia (regla ta
 
 Los tres textos (términos, privacidad, eliminar cuenta) ya no tienen marcadores y
 describen solo lo que el servidor hace: retención 30/90/30/7 días, copias de 30 días,
-eliminación manual atendida por correo. Decisión clave: **no se despliegan `/legal/*`**
-(el VPS responde 404) ni se registran aceptaciones; publicar y activar Google es del
-titular tras la revisión jurídica. `REVISION_Y_PUBLICACION.md` estaba obsoleto (decía
-`.com` y «borrador») y se reescribió con lo que solo el titular puede aportar. Los
+eliminación manual atendida por correo. Decisión clave: el titular ordenó publicarlas (2026-10-12). Se desplegó solo
+`legal.py` + `legal_pages/` y se parcheó el `main.py` del contenedor (import + include_router;
+el local trae cambios de otras tareas sin desplegar). Respaldos en `~/backups/legal-20261012`;
+vuelta atrás = imagen `quantfut-api-tapjoy:pre-legal-backup` en el compose y
+`up -d --no-deps api`. Imagen vigente: `quantfut-api-tapjoy:20261012-legal`. `/legal/*` da 200
+desde el dominio. NO se activó Google ni se registran aceptaciones: eso sigue siendo del titular.
+`REVISION_Y_PUBLICACION.md` estaba obsoleto (decía `.com` y «borrador») y se reescribió; los
 `*_BORRADOR.md` quedan como historial. Los textos legales siguen solo en español.

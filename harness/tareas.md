@@ -107,10 +107,10 @@ VPS declarada por el titular: Berlín, Alemania.
   legales públicas y procedimiento de solicitudes, sin inventar certificaciones.
   Hecho 2026-10-12: textos finales de contenido, páginas en `/legal/*` (prueba
   `tests/test_legal.py`), procedimiento en `docs/legal/OPERACION_PRIVACIDAD.md`,
-  estado en `docs/legal/REVISION_Y_PUBLICACION.md`. Sin desplegar a propósito.
+  estado en `docs/legal/REVISION_Y_PUBLICACION.md`. Publicadas en producción el 2026-10-12 por orden del titular.
 - [ ] Del titular, para publicar: revisión por profesional habilitado, país
   contractual de Contabo/Proton y sus DPA, atender el buzón de contacto, plazos
-  legales por categoría, y aprobar el despliegue de `/legal/*`.
+  legales por categoría. Activar Google (`FIREBASE_AUTH_ENABLED`) sigue pendiente de su decisión.
 - [x] Configurar conservación y limpieza de datos operativos Firebase; respaldo
   privado con rotación acotada, separado de los registros deportivos inmutables.
   Programado en el VPS el 2026-10-12 (03:40 UTC), probado y con alerta Telegram;
