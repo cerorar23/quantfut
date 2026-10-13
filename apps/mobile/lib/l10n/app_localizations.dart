@@ -1066,6 +1066,24 @@ abstract class AppLocalizations {
   /// **'Reto #{id} · {steps, plural, one{{steps} escalón} other{{steps} escalones}}'**
   String ladderTitle(Object id, int steps);
 
+  /// Etiqueta de la pantalla inicial de elección de idioma (se muestra en mayúsculas).
+  ///
+  /// In es, this message translates to:
+  /// **'Configuración de idioma'**
+  String get languageFirstBadge;
+
+  /// Subtítulo de la pantalla inicial de elección de idioma.
+  ///
+  /// In es, this message translates to:
+  /// **'Configura el idioma de análisis para una mejor experiencia'**
+  String get languageFirstHint;
+
+  /// Título de la pantalla inicial de elección de idioma.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona tu idioma'**
+  String get languageFirstTitle;
+
   /// No description provided for @languageHint.
   ///
   /// In es, this message translates to:

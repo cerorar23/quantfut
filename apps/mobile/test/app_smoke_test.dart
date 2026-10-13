@@ -32,6 +32,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    // La primera pantalla es la elección de idioma (test/language_selection_test.dart);
+    // aquí la persona ya eligió y se comprueba el resto del arranque.
+    await AppLocale.instance.select('es');
     await tester.pumpWidget(const app.QuantFutApp());
     expect(find.byType(Splesh_Screen), findsOneWidget);
     await tester.pump(const Duration(seconds: 4));
@@ -43,6 +46,7 @@ void main() {
   });
 
   testWidgets('closing splash cancels delayed navigation', (tester) async {
+    await AppLocale.instance.select('es');
     await tester.pumpWidget(const app.QuantFutApp());
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 5));

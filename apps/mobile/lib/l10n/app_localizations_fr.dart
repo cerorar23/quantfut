@@ -560,6 +560,16 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get languageFirstBadge => 'Configuration de la langue';
+
+  @override
+  String get languageFirstHint =>
+      'Choisissez la langue de l\'analyse pour une meilleure expérience';
+
+  @override
+  String get languageFirstTitle => 'Choisissez votre langue';
+
+  @override
   String get languageHint =>
       'Choisissez la langue. Elle est enregistrée sur cet appareil et dans votre compte.';
 

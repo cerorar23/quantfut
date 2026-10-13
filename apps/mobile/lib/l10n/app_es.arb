@@ -284,6 +284,18 @@
       }
     }
   },
+  "languageFirstBadge": "Configuración de idioma",
+  "@languageFirstBadge": {
+    "description": "Etiqueta de la pantalla inicial de elección de idioma (se muestra en mayúsculas)."
+  },
+  "languageFirstHint": "Configura el idioma de análisis para una mejor experiencia",
+  "@languageFirstHint": {
+    "description": "Subtítulo de la pantalla inicial de elección de idioma."
+  },
+  "languageFirstTitle": "Selecciona tu idioma",
+  "@languageFirstTitle": {
+    "description": "Título de la pantalla inicial de elección de idioma."
+  },
   "languageHint": "Elige el idioma. Se guarda en este dispositivo y en tu cuenta.",
   "languageTitle": "Idioma de la app",
   "@languageTitle": {

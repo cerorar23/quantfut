@@ -7,6 +7,7 @@ import 'core/firebase_startup.dart';
 import 'core/firebase_services.dart';
 import 'core/firebase_access.dart';
 import 'l10n/app_locale.dart';
+import 'l10n/language_selection_screen.dart';
 import 'onbonding_screen/splesh_screen.dart';
 import 'product/live_widgets.dart';
 
@@ -31,7 +32,10 @@ class QuantFutApp extends StatelessWidget {
         locale: AppLocale.instance.locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: FirebaseServices.current == null
+        // Primera vez: elegir idioma antes de la bienvenida y del acceso.
+        home: !AppLocale.instance.chosen
+            ? const LanguageSelectionScreen()
+            : FirebaseServices.current == null
             ? Splesh_Screen()
             : const FirebaseAccountGate(),
         debugShowCheckedModeBanner: false,
