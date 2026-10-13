@@ -106,17 +106,77 @@ abstract class AppLocalizations {
     Locale('pt'),
   ];
 
+  /// Texto de la diapositiva 1.
+  ///
+  /// In es, this message translates to:
+  /// **'Un modelo estadístico calcula las probabilidades. Una probabilidad no es una certeza.'**
+  String get accessBody1;
+
+  /// Texto de la diapositiva 2.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada día, los de mayor probabilidad, con su acierto histórico real.'**
+  String get accessBody2;
+
+  /// Texto de la diapositiva 3.
+  ///
+  /// In es, this message translates to:
+  /// **'Sigue el avance de cada reto y cuánto falta para completarlo.'**
+  String get accessBody3;
+
+  /// Texto de la diapositiva 4.
+  ///
+  /// In es, this message translates to:
+  /// **'Con su cuota y su probabilidad conjunta, para que sepas qué arriesgas.'**
+  String get accessBody4;
+
+  /// Texto de la diapositiva 5.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca asistencia, completa ofertas e invita amigos para desbloquear pronósticos.'**
+  String get accessBody5;
+
+  /// Texto de la tarjeta de acceso.
+  ///
+  /// In es, this message translates to:
+  /// **'Guarda tu progreso y tus monedas en todos tus dispositivos.'**
+  String get accessCardBody;
+
+  /// Título de la tarjeta de acceso.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicia sesión para continuar'**
+  String get accessCardTitle;
+
   /// No description provided for @accessConsent.
   ///
   /// In es, this message translates to:
   /// **'Tengo al menos 18 años y acepto los términos y la política de privacidad.'**
   String get accessConsent;
 
+  /// Aviso al pulsar Google sin aceptar los términos.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca la casilla para continuar.'**
+  String get accessConsentNeeded;
+
+  /// Consentimiento con los dos enlaces legales dentro de la frase.
+  ///
+  /// In es, this message translates to:
+  /// **'Tengo 18 años o más y acepto los {terms} y la {privacy}.'**
+  String accessConsentRich(String terms, String privacy);
+
   /// No description provided for @accessContinueWithGoogle.
   ///
   /// In es, this message translates to:
   /// **'Continuar con Google'**
   String get accessContinueWithGoogle;
+
+  /// Aviso legal bajo la tarjeta de acceso.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo con fines informativos y de entretenimiento. Los pronósticos no garantizan resultados.'**
+  String get accessDisclaimer;
 
   /// No description provided for @accessDocumentOpenError.
   ///
@@ -147,6 +207,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudo acceder con Google. Inténtalo de nuevo.'**
   String get accessGoogleError;
+
+  /// Etiqueta de la diapositiva 1 de la pantalla de acceso.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDADES REALES'**
+  String get accessKicker1;
+
+  /// Etiqueta de la diapositiva 2.
+  ///
+  /// In es, this message translates to:
+  /// **'ALTA PROBABILIDAD'**
+  String get accessKicker2;
+
+  /// Etiqueta de la diapositiva 3.
+  ///
+  /// In es, this message translates to:
+  /// **'RETO ESCALERA'**
+  String get accessKicker3;
+
+  /// Etiqueta de la diapositiva 4.
+  ///
+  /// In es, this message translates to:
+  /// **'PARLEY'**
+  String get accessKicker4;
+
+  /// Etiqueta de la diapositiva 5.
+  ///
+  /// In es, this message translates to:
+  /// **'COINS'**
+  String get accessKicker5;
 
   /// No description provided for @accessLinkButton.
   ///
@@ -207,6 +297,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Términos de uso'**
   String get accessTerms;
+
+  /// Título de la diapositiva 1.
+  ///
+  /// In es, this message translates to:
+  /// **'Entiende cada partido con datos.'**
+  String get accessTitle1;
+
+  /// Título de la diapositiva 2.
+  ///
+  /// In es, this message translates to:
+  /// **'Pronósticos con su acierto a la vista.'**
+  String get accessTitle2;
+
+  /// Título de la diapositiva 3.
+  ///
+  /// In es, this message translates to:
+  /// **'Sube escalón a escalón.'**
+  String get accessTitle3;
+
+  /// Título de la diapositiva 4.
+  ///
+  /// In es, this message translates to:
+  /// **'Un boleto sellado antes de los partidos.'**
+  String get accessTitle4;
+
+  /// Título de la diapositiva 5.
+  ///
+  /// In es, this message translates to:
+  /// **'Gana monedas y desbloquea.'**
+  String get accessTitle5;
 
   /// Subtítulo: de qué equipo son las bajas de la sección.
   ///

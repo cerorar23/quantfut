@@ -1,12 +1,80 @@
 {
   "@@locale": "es",
+  "accessBody1": "Un modelo estadístico calcula las probabilidades. Una probabilidad no es una certeza.",
+  "@accessBody1": {
+    "description": "Texto de la diapositiva 1."
+  },
+  "accessBody2": "Cada día, los de mayor probabilidad, con su acierto histórico real.",
+  "@accessBody2": {
+    "description": "Texto de la diapositiva 2."
+  },
+  "accessBody3": "Sigue el avance de cada reto y cuánto falta para completarlo.",
+  "@accessBody3": {
+    "description": "Texto de la diapositiva 3."
+  },
+  "accessBody4": "Con su cuota y su probabilidad conjunta, para que sepas qué arriesgas.",
+  "@accessBody4": {
+    "description": "Texto de la diapositiva 4."
+  },
+  "accessBody5": "Marca asistencia, completa ofertas e invita amigos para desbloquear pronósticos.",
+  "@accessBody5": {
+    "description": "Texto de la diapositiva 5."
+  },
+  "accessCardBody": "Guarda tu progreso y tus monedas en todos tus dispositivos.",
+  "@accessCardBody": {
+    "description": "Texto de la tarjeta de acceso."
+  },
+  "accessCardTitle": "Inicia sesión para continuar",
+  "@accessCardTitle": {
+    "description": "Título de la tarjeta de acceso."
+  },
   "accessConsent": "Tengo al menos 18 años y acepto los términos y la política de privacidad.",
+  "accessConsentNeeded": "Marca la casilla para continuar.",
+  "@accessConsentNeeded": {
+    "description": "Aviso al pulsar Google sin aceptar los términos."
+  },
+  "accessConsentRich": "Tengo 18 años o más y acepto los {terms} y la {privacy}.",
+  "@accessConsentRich": {
+    "description": "Consentimiento con los dos enlaces legales dentro de la frase.",
+    "placeholders": {
+      "terms": {
+        "type": "String"
+      },
+      "privacy": {
+        "type": "String"
+      }
+    }
+  },
   "accessContinueWithGoogle": "Continuar con Google",
+  "accessDisclaimer": "Solo con fines informativos y de entretenimiento. Los pronósticos no garantizan resultados.",
+  "@accessDisclaimer": {
+    "description": "Aviso legal bajo la tarjeta de acceso."
+  },
   "accessDocumentOpenError": "No se pudo abrir el documento.",
   "accessForgotLink": "Recuperar contraseña anterior",
   "accessForgotSent": "Si existe la cuenta, recibirás instrucciones por correo.",
   "accessGenericError": "No se pudo completar el acceso. Inténtalo de nuevo.",
   "accessGoogleError": "No se pudo acceder con Google. Inténtalo de nuevo.",
+  "accessKicker1": "PROBABILIDADES REALES",
+  "@accessKicker1": {
+    "description": "Etiqueta de la diapositiva 1 de la pantalla de acceso."
+  },
+  "accessKicker2": "ALTA PROBABILIDAD",
+  "@accessKicker2": {
+    "description": "Etiqueta de la diapositiva 2."
+  },
+  "accessKicker3": "RETO ESCALERA",
+  "@accessKicker3": {
+    "description": "Etiqueta de la diapositiva 3."
+  },
+  "accessKicker4": "PARLEY",
+  "@accessKicker4": {
+    "description": "Etiqueta de la diapositiva 4."
+  },
+  "accessKicker5": "COINS",
+  "@accessKicker5": {
+    "description": "Etiqueta de la diapositiva 5."
+  },
   "accessLinkButton": "Vincular mi cuenta",
   "accessLinkEmail": "Correo de tu cuenta anterior",
   "accessLinkIntro": "Vincula tu cuenta anterior para conservar saldo y acceso.",
@@ -17,6 +85,26 @@
   "accessRetry": "Reintentar acceso",
   "accessTagline": "Partidos, análisis e historial. Una probabilidad no es una certeza.",
   "accessTerms": "Términos de uso",
+  "accessTitle1": "Entiende cada partido con datos.",
+  "@accessTitle1": {
+    "description": "Título de la diapositiva 1."
+  },
+  "accessTitle2": "Pronósticos con su acierto a la vista.",
+  "@accessTitle2": {
+    "description": "Título de la diapositiva 2."
+  },
+  "accessTitle3": "Sube escalón a escalón.",
+  "@accessTitle3": {
+    "description": "Título de la diapositiva 3."
+  },
+  "accessTitle4": "Un boleto sellado antes de los partidos.",
+  "@accessTitle4": {
+    "description": "Título de la diapositiva 4."
+  },
+  "accessTitle5": "Gana monedas y desbloquea.",
+  "@accessTitle5": {
+    "description": "Título de la diapositiva 5."
+  },
   "alertsAbsencesOf": "Bajas de {team}",
   "@alertsAbsencesOf": {
     "description": "Subtítulo: de qué equipo son las bajas de la sección.",

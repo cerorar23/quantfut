@@ -5316,3 +5316,18 @@ uno. Desplegado con respaldo `~/backups/ultimo-once-20261012` (vuelta atrás = i
 Decidido NO incluir el estadio: la base no guarda sede por partido (haría falta una columna nueva y
 cambiar la captura del calendario). La cobertura del once depende de las alineaciones guardadas (desde
 finales de septiembre más el histórico): un equipo sin ninguna lo muestra como ausente.
+
+## 2026-10-12 — Pantalla de acceso rediseñada (carrusel + tarjeta con Google) y fuera la presentación posterior
+
+Decisión: la pantalla de acceso pasa a ser un carrusel de 5 diapositivas con ilustraciones dibujadas en
+código (no capturas reales: no envejecen ni prometen cifras) y una tarjeta fija abajo, a la altura del
+pulgar, con el botón oficial de Google y el consentimiento (mayor de 18 + términos + privacidad) con los
+enlaces dentro de la frase. El botón de Google ya no se apaga sin casilla: se deja pulsar, la casilla
+vibra y se explica qué falta (un botón gris sin motivo es peor ergonomía). Los textos del carrusel no llevan
+cifras ni promesas de resultado (solo lo que la app hace). Se retira la presentación `SecondScreen` que salía
+tras el acceso: quien entra con Google va directo al producto (`onboarding_done` ya no se lee).
+Código en `lib/core/access_screen.dart` (no conoce Firebase; la puerta de acceso le pasa estado y acciones) y
+`lib/core/access_illustrations.dart`; dependencia nueva `flutter_svg` solo para la «G» de 4 colores. 20 textos
+nuevos en los 6 idiomas. Por debajo de 700 px de alto la pantalla se desplaza en vez de apretar el texto.
+Pruebas: `test/access_screen_test.dart` (14, incluye 6 idiomas a 390 y 320 px). Suite: 177 verdes. Sin cambios
+de servidor ni despliegue.

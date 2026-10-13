@@ -6,12 +6,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_locale.dart';
-import '../l10n/language_picker.dart';
-import '../onbonding_screen/second_screen.dart';
 import '../onbonding_screen/splesh_screen.dart';
 import '../product/live_api.dart';
 import '../product/live_shell.dart';
 import '../product/live_widgets.dart';
+import 'access_screen.dart';
 import 'firebase_services.dart';
 
 Uri? legalUrl(String value) {
@@ -37,7 +36,7 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
   final api = QuantFutApi();
   final email = TextEditingController(), password = TextEditingController();
   StreamSubscription<User?>? subscription;
-  bool busy = false, ready = false, onboardingDone = false;
+  bool busy = false, ready = false;
   bool consent = false, linking = false, wasEnabled = false;
   String? error;
   int generation = 0;
@@ -88,13 +87,10 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
     });
     try {
       await api.connectFirebase(acceptedTerms: consent);
-      final completed =
-          await services.preferences.getBool('onboarding_done') ?? false;
       if (!mounted || attempt != generation) return;
       setState(() {
         ready = true;
         linking = false;
-        onboardingDone = completed;
       });
       unawaited(services.event('login'));
     } on ApiFailure catch (failure) {
@@ -152,8 +148,6 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
       await api.login(email.text, password.text);
       password.clear();
       await api.connectFirebase(acceptedTerms: true);
-      onboardingDone =
-          await services.preferences.getBool('onboarding_done') ?? false;
       if (mounted) {
         setState(() {
           ready = true;
@@ -192,140 +186,70 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
   Widget build(BuildContext context) {
     // Activation follows publication of real legal documents and the backend.
     if (!enabled) return Splesh_Screen();
-    if (ready) {
-      if (!onboardingDone) {
-        return SecondScreen(
-          onFinished: () async {
-            await services.preferences.setBool('onboarding_done', true);
-            if (mounted) setState(() => onboardingDone = true);
-          },
-        );
-      }
-      return ProductShell(api: api);
-    }
+    if (ready) return ProductShell(api: api);
     final l10n = context.l10n;
-    return Scaffold(
-      backgroundColor: liveBg,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      key: const ValueKey('language-button'),
-                      onPressed: busy
-                          ? null
-                          : () => showLanguagePicker(context),
-                      icon: const Icon(Icons.language_rounded),
-                      label: Text(appLanguages[AppLocale.instance.code]!),
-                    ),
-                  ),
-                  const Icon(Icons.insights, size: 64, color: liveCyan),
-                  const SizedBox(height: 16),
-                  liveText('QuantFut', size: 32, bold: true),
-                  const SizedBox(height: 12),
-                  liveText(l10n.accessTagline, color: liveMuted),
-                  const SizedBox(height: 8),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: terms == null ? null : () => openLegal(terms),
-                    child: Text(l10n.accessTerms),
-                  ),
-                  TextButton(
-                    onPressed: privacy == null
-                        ? null
-                        : () => openLegal(privacy),
-                    child: Text(l10n.accessPrivacy),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: consent,
-                    onChanged: busy || terms == null || privacy == null
-                        ? null
-                        : (value) => setState(() => consent = value ?? false),
-                    title: Text(l10n.accessConsent),
-                  ),
-                  if (terms == null || privacy == null)
-                    liveText(l10n.accessPreparingDocs, color: liveMuted),
-                  if (error != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: liveText(error!, color: liveGold),
-                    ),
-                  if (linking) ...[
-                    liveText(l10n.accessLinkIntro, color: liveMuted),
-                    TextField(
-                      controller: email,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: l10n.accessLinkEmail,
-                      ),
-                    ),
-                    TextField(
-                      controller: password,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: l10n.accessLinkPassword,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    liveButton(
-                      busy ? l10n.commonConnecting : l10n.accessLinkButton,
-                      busy ? null : link,
-                    ),
-                    TextButton(
-                      onPressed: busy
-                          ? null
-                          : () async {
-                              try {
-                                await api.forgotPassword(email.text);
-                                if (context.mounted) {
-                                  liveNotice(context, l10n.accessForgotSent);
-                                }
-                              } catch (failure) {
-                                if (context.mounted) {
-                                  liveNotice(context, '$failure');
-                                }
-                              }
-                            },
-                      child: Text(l10n.accessForgotLink),
-                    ),
-                  ] else
-                    liveButton(
-                      busy
-                          ? l10n.commonConnecting
-                          : l10n.accessContinueWithGoogle,
-                      busy || !consent || terms == null || privacy == null
-                          ? null
-                          : google,
-                      color: liveCyan,
-                    ),
-                  if (services.auth.currentUser != null) ...[
-                    TextButton(
-                      onPressed: busy ? null : resolve,
-                      child: Text(l10n.accessRetry),
-                    ),
-                    TextButton(
-                      onPressed: busy
-                          ? null
-                          : () async {
-                              await api.logout();
-                            },
-                      child: Text(l10n.accessOtherAccount),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+    return AccessScreen(
+      busy: busy,
+      consent: consent,
+      docsReady: terms != null && privacy != null,
+      onConsent: (value) => setState(() => consent = value),
+      onGoogle: google,
+      onTerms: () => openLegal(terms),
+      onPrivacy: () => openLegal(privacy),
+      error: error,
+      linkingForm: linking ? _linkingForm(l10n) : null,
+      actions: [
+        if (services.auth.currentUser != null) ...[
+          TextButton(
+            onPressed: busy ? null : resolve,
+            child: Text(l10n.accessRetry),
           ),
-        ),
-      ),
+          TextButton(
+            onPressed: busy
+                ? null
+                : () async {
+                    await api.logout();
+                  },
+            child: Text(l10n.accessOtherAccount),
+          ),
+        ],
+      ],
     );
   }
+
+  Widget _linkingForm(AppLocalizations l10n) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      liveText(l10n.accessLinkIntro, color: liveMuted),
+      TextField(
+        controller: email,
+        keyboardType: TextInputType.emailAddress,
+        decoration: InputDecoration(labelText: l10n.accessLinkEmail),
+      ),
+      TextField(
+        controller: password,
+        obscureText: true,
+        decoration: InputDecoration(labelText: l10n.accessLinkPassword),
+      ),
+      const SizedBox(height: 16),
+      liveButton(
+        busy ? l10n.commonConnecting : l10n.accessLinkButton,
+        busy ? null : link,
+      ),
+      TextButton(
+        onPressed: busy
+            ? null
+            : () async {
+                try {
+                  await api.forgotPassword(email.text);
+                  if (mounted) liveNotice(context, l10n.accessForgotSent);
+                } catch (failure) {
+                  if (mounted) liveNotice(context, '$failure');
+                }
+              },
+        child: Text(l10n.accessForgotLink),
+      ),
+    ],
+  );
 }

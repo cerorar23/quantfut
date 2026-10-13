@@ -10,11 +10,50 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get accessBody1 =>
+      'Un modèle statistique calcule les probabilités. Une probabilité n\'est pas une certitude.';
+
+  @override
+  String get accessBody2 =>
+      'Chaque jour, les plus probables, avec leur taux de réussite historique réel.';
+
+  @override
+  String get accessBody3 =>
+      'Suivez l\'avancement de chaque défi et ce qu\'il reste pour le terminer.';
+
+  @override
+  String get accessBody4 =>
+      'Avec sa cote et sa probabilité conjointe, pour savoir ce que vous risquez.';
+
+  @override
+  String get accessBody5 =>
+      'Pointez votre présence, terminez des offres et invitez des amis pour débloquer des pronostics.';
+
+  @override
+  String get accessCardBody =>
+      'Gardez votre progression et vos pièces sur tous vos appareils.';
+
+  @override
+  String get accessCardTitle => 'Connectez-vous pour continuer';
+
+  @override
   String get accessConsent =>
       'J\'ai au moins 18 ans et j\'accepte les conditions et la politique de confidentialité.';
 
   @override
+  String get accessConsentNeeded => 'Cochez la case pour continuer.';
+
+  @override
+  String accessConsentRich(String terms, String privacy) {
+    return 'J\'ai 18 ans ou plus et j\'accepte les $terms et la $privacy.';
+  }
+
+  @override
   String get accessContinueWithGoogle => 'Continuer avec Google';
+
+  @override
+  String get accessDisclaimer =>
+      'À titre informatif et de divertissement uniquement. Les pronostics ne garantissent pas les résultats.';
 
   @override
   String get accessDocumentOpenError => 'Impossible d\'ouvrir le document.';
@@ -33,6 +72,21 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get accessGoogleError =>
       'Impossible de se connecter avec Google. Veuillez réessayer.';
+
+  @override
+  String get accessKicker1 => 'PROBABILITÉS RÉELLES';
+
+  @override
+  String get accessKicker2 => 'HAUTE PROBABILITÉ';
+
+  @override
+  String get accessKicker3 => 'DÉFI ESCALIER';
+
+  @override
+  String get accessKicker4 => 'COMBINÉ';
+
+  @override
+  String get accessKicker5 => 'PIÈCES';
 
   @override
   String get accessLinkButton => 'Associer mon compte';
@@ -65,6 +119,22 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get accessTerms => 'Conditions d\'utilisation';
+
+  @override
+  String get accessTitle1 => 'Comprenez chaque match avec des données.';
+
+  @override
+  String get accessTitle2 =>
+      'Des pronostics avec leur taux de réussite visible.';
+
+  @override
+  String get accessTitle3 => 'Montez palier par palier.';
+
+  @override
+  String get accessTitle4 => 'Un ticket scellé avant les matchs.';
+
+  @override
+  String get accessTitle5 => 'Gagnez des pièces et débloquez.';
 
   @override
   String alertsAbsencesOf(String team) {

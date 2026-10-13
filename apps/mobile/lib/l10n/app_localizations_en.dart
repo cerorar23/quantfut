@@ -10,11 +10,50 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get accessBody1 =>
+      'A statistical model calculates the probabilities. A probability is not a certainty.';
+
+  @override
+  String get accessBody2 =>
+      'Every day, the most likely ones, with their real historical hit rate.';
+
+  @override
+  String get accessBody3 =>
+      'Follow each challenge\'s progress and how much is left to complete it.';
+
+  @override
+  String get accessBody4 =>
+      'With its odds and joint probability, so you know what you risk.';
+
+  @override
+  String get accessBody5 =>
+      'Check in, complete offers and invite friends to unlock predictions.';
+
+  @override
+  String get accessCardBody =>
+      'Keep your progress and coins on all your devices.';
+
+  @override
+  String get accessCardTitle => 'Sign in to continue';
+
+  @override
   String get accessConsent =>
       'I am at least 18 years old and I accept the terms and the privacy policy.';
 
   @override
+  String get accessConsentNeeded => 'Tick the box to continue.';
+
+  @override
+  String accessConsentRich(String terms, String privacy) {
+    return 'I am 18 or older and I accept the $terms and the $privacy.';
+  }
+
+  @override
   String get accessContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get accessDisclaimer =>
+      'For information and entertainment only. Predictions do not guarantee results.';
 
   @override
   String get accessDocumentOpenError => 'The document could not be opened.';
@@ -33,6 +72,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get accessGoogleError =>
       'Could not sign in with Google. Please try again.';
+
+  @override
+  String get accessKicker1 => 'REAL PROBABILITIES';
+
+  @override
+  String get accessKicker2 => 'HIGH PROBABILITY';
+
+  @override
+  String get accessKicker3 => 'LADDER CHALLENGE';
+
+  @override
+  String get accessKicker4 => 'PARLAY';
+
+  @override
+  String get accessKicker5 => 'COINS';
 
   @override
   String get accessLinkButton => 'Link my account';
@@ -65,6 +119,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accessTerms => 'Terms of use';
+
+  @override
+  String get accessTitle1 => 'Understand every match with data.';
+
+  @override
+  String get accessTitle2 => 'Predictions with their hit rate in view.';
+
+  @override
+  String get accessTitle3 => 'Climb step by step.';
+
+  @override
+  String get accessTitle4 => 'A ticket sealed before the matches.';
+
+  @override
+  String get accessTitle5 => 'Earn coins and unlock.';
 
   @override
   String alertsAbsencesOf(String team) {

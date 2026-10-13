@@ -10,11 +10,50 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get accessBody1 =>
+      'Ein statistisches Modell berechnet die Wahrscheinlichkeiten. Eine Wahrscheinlichkeit ist keine Gewissheit.';
+
+  @override
+  String get accessBody2 =>
+      'Jeden Tag die wahrscheinlichsten, mit ihrer echten historischen Trefferquote.';
+
+  @override
+  String get accessBody3 =>
+      'Verfolge den Fortschritt jeder Challenge und wie viel bis zum Abschluss fehlt.';
+
+  @override
+  String get accessBody4 =>
+      'Mit Quote und gemeinsamer Wahrscheinlichkeit, damit du weißt, was du riskierst.';
+
+  @override
+  String get accessBody5 =>
+      'Checke ein, schließe Angebote ab und lade Freunde ein, um Prognosen freizuschalten.';
+
+  @override
+  String get accessCardBody =>
+      'Behalte deinen Fortschritt und deine Münzen auf allen Geräten.';
+
+  @override
+  String get accessCardTitle => 'Melde dich an, um fortzufahren';
+
+  @override
   String get accessConsent =>
       'Ich bin mindestens 18 Jahre alt und akzeptiere die Nutzungsbedingungen und die Datenschutzerklärung.';
 
   @override
+  String get accessConsentNeeded => 'Setze den Haken, um fortzufahren.';
+
+  @override
+  String accessConsentRich(String terms, String privacy) {
+    return 'Ich bin mindestens 18 Jahre alt und akzeptiere $terms und $privacy.';
+  }
+
+  @override
   String get accessContinueWithGoogle => 'Mit Google fortfahren';
+
+  @override
+  String get accessDisclaimer =>
+      'Nur zu Informations- und Unterhaltungszwecken. Prognosen garantieren keine Ergebnisse.';
 
   @override
   String get accessDocumentOpenError =>
@@ -34,6 +73,21 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get accessGoogleError =>
       'Anmeldung mit Google nicht möglich. Bitte versuche es erneut.';
+
+  @override
+  String get accessKicker1 => 'ECHTE WAHRSCHEINLICHKEITEN';
+
+  @override
+  String get accessKicker2 => 'HOHE WAHRSCHEINLICHKEIT';
+
+  @override
+  String get accessKicker3 => 'TREPPEN-CHALLENGE';
+
+  @override
+  String get accessKicker4 => 'KOMBIWETTE';
+
+  @override
+  String get accessKicker5 => 'MÜNZEN';
 
   @override
   String get accessLinkButton => 'Mein Konto verknüpfen';
@@ -66,6 +120,21 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get accessTerms => 'Nutzungsbedingungen';
+
+  @override
+  String get accessTitle1 => 'Verstehe jedes Spiel mit Daten.';
+
+  @override
+  String get accessTitle2 => 'Prognosen mit sichtbarer Trefferquote.';
+
+  @override
+  String get accessTitle3 => 'Stufe für Stufe nach oben.';
+
+  @override
+  String get accessTitle4 => 'Ein Schein, vor den Spielen versiegelt.';
+
+  @override
+  String get accessTitle5 => 'Verdiene Münzen und schalte frei.';
 
   @override
   String alertsAbsencesOf(String team) {
