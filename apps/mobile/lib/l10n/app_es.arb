@@ -660,7 +660,18 @@
   "pickUnlockPrompt": "Desbloquea el pronóstico y su cuota.",
   "pickUnlockVip": "Desbloquear pronóstico VIP",
   "picksEmpty": "No hay pronósticos publicados pendientes en este rango.",
-  "picksRangeHint": "62–95 % de probabilidad · uno gratis por mercado",
+  "picksRangeHint": "{min}–{max} % de probabilidad · uno gratis por mercado",
+  "@picksRangeHint": {
+    "description": "Rango de probabilidad de Alta probabilidad; los límites los manda el servidor.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "picksTrainingReasons": "Modelo en entrenamiento · {reasons}",
   "@picksTrainingReasons": {
     "placeholders": {

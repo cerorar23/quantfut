@@ -282,7 +282,7 @@
   "pickUnlockPrompt": "Schalte die Prognose und ihre Quote frei.",
   "pickUnlockVip": "VIP-Prognose freischalten",
   "picksEmpty": "In diesem Bereich sind keine veröffentlichten Prognosen offen.",
-  "picksRangeHint": "62–95 % Wahrscheinlichkeit · einer kostenlos pro Markt",
+  "picksRangeHint": "{min}–{max} % Wahrscheinlichkeit · einer kostenlos pro Markt",
   "picksTrainingReasons": "Modell im Training · {reasons}",
   "prefsAnalyticsBody": "Hilft, die App mit Daten zu den genutzten Bildschirmen zu verbessern. Optional.",
   "prefsAnalyticsTitle": "Nutzungsmessung",

@@ -1804,11 +1804,11 @@ abstract class AppLocalizations {
   /// **'No hay pronósticos publicados pendientes en este rango.'**
   String get picksEmpty;
 
-  /// No description provided for @picksRangeHint.
+  /// Rango de probabilidad de Alta probabilidad; los límites los manda el servidor.
   ///
   /// In es, this message translates to:
-  /// **'62–95 % de probabilidad · uno gratis por mercado'**
-  String get picksRangeHint;
+  /// **'{min}–{max} % de probabilidad · uno gratis por mercado'**
+  String picksRangeHint(int min, int max);
 
   /// No description provided for @picksTrainingReasons.
   ///

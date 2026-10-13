@@ -282,7 +282,7 @@
   "pickUnlockPrompt": "Desbloqueie o prognóstico e sua odd.",
   "pickUnlockVip": "Desbloquear prognóstico VIP",
   "picksEmpty": "Não há prognósticos publicados pendentes nesta faixa.",
-  "picksRangeHint": "62–95% de probabilidade · um grátis por mercado",
+  "picksRangeHint": "{min}–{max}% de probabilidade · um grátis por mercado",
   "picksTrainingReasons": "Modelo em treinamento · {reasons}",
   "prefsAnalyticsBody": "Ajuda a melhorar o app com dados sobre as telas utilizadas. É opcional.",
   "prefsAnalyticsTitle": "Medição de uso",

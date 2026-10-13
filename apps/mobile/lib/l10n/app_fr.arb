@@ -282,7 +282,7 @@
   "pickUnlockPrompt": "Débloquez le pronostic et sa cote.",
   "pickUnlockVip": "Débloquer le pronostic VIP",
   "picksEmpty": "Aucun pronostic publié en attente dans cette plage.",
-  "picksRangeHint": "62–95 % de probabilité · un gratuit par marché",
+  "picksRangeHint": "{min}–{max} % de probabilité · un gratuit par marché",
   "picksTrainingReasons": "Modèle en entraînement · {reasons}",
   "prefsAnalyticsBody": "Aide à améliorer l'application grâce à des données sur les écrans utilisés. Facultatif.",
   "prefsAnalyticsTitle": "Mesure d'utilisation",

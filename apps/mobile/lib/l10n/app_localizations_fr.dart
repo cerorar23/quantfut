@@ -1036,7 +1036,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun pronostic publié en attente dans cette plage.';
 
   @override
-  String get picksRangeHint => '62–95 % de probabilité · un gratuit par marché';
+  String picksRangeHint(int min, int max) {
+    return '$min–$max % de probabilité · un gratuit par marché';
+  }
 
   @override
   String picksTrainingReasons(String reasons) {

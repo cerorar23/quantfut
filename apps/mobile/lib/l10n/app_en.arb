@@ -282,7 +282,7 @@
   "pickUnlockPrompt": "Unlock the prediction and its odds.",
   "pickUnlockVip": "Unlock VIP prediction",
   "picksEmpty": "There are no published predictions pending in this range.",
-  "picksRangeHint": "62–95% probability · one free per market",
+  "picksRangeHint": "{min}–{max}% probability · one free per market",
   "picksTrainingReasons": "Model in training · {reasons}",
   "prefsAnalyticsBody": "Helps improve the app with data about the screens used. It is optional.",
   "prefsAnalyticsTitle": "Usage measurement",

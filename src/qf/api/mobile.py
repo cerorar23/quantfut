@@ -25,9 +25,10 @@ from ..publish import alta_prob_datos, alta_prob_ext, escalera_datos
 router = APIRouter(tags=["mobile"])
 _bearer = HTTPBearer(auto_error=False)
 PROB_MIN, PROB_MAX = .75, .90          # escalera
-# Alta probabilidad ampliada (decisión del usuario, 2026-10-11): 62-95 %, con las
-# filas de `alta_prob_picks` (80-95 %) y `alta_prob_ext` (62-95 %, db/057).
-HIGH_MIN, HIGH_MAX = .62, .95
+# Alta probabilidad: lo que se MUESTRA es 73-95 % (decisión del usuario, 2026-10-12; el 11-oct
+# se había ampliado a 62-95 %). Es un filtro de lectura: `alta_prob_ext` sigue sellando
+# candidatos desde 62 % y sus filas inmutables no se tocan; solo dejan de mostrarse.
+HIGH_MIN, HIGH_MAX = .73, .95
 # Gratis: un pronóstico por mercado, el de MAYOR cuota publicada (decisión del
 # usuario, 2026-10-12: la cuota manda sobre la probabilidad), con tope 1,60. Con
 # 75-90 % de probabilidad las cuotas reales van de 1,01 a 1,25: un piso de 1,40

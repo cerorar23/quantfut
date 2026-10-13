@@ -5201,3 +5201,15 @@ filtrar. Ahora `featuredPick` (`live_forecast.dart`) elige UNA: la de mayor prob
 empatan, la de cuota más alta (decisión del titular entre tres reglas; la cuota más alta y
 probabilidad × cuota quedaron descartadas). Se quitaron los chips, que ya no filtran nada; el resto de
 mercados sigue en la tabla «Mercados del partido». Es lógica del cliente: el servidor no cambia.
+
+## 2026-10-12 — Alta probabilidad muestra solo 73-95 %
+
+Pedido del titular: el apartado solo muestra pronosticos de mas de 73 %. Revierte la ampliacion
+del 11-oct (62-95 %). Es un FILTRO DE LECTURA (`HIGH_MIN` en `api/mobile.py`): `alta_prob_ext`
+sigue sellando candidatos desde 62 % y sus filas inmutables no se tocan, solo dejan de mostrarse
+(cambiar `PROB_MIN_EXT` alteraria el sellado y se haria solo si el titular lo pide). Efectos: el
+historial y el acierto mostrados pasan a calcularse solo sobre >=73 % (mismo filtro) y la pantalla
+VIP ya leia el rango del servidor. El texto del apartado (`picksRangeHint`) ahora recibe el rango
+del servidor en vez de tenerlo escrito en 6 idiomas. Desplegado con respaldo
+`~/backups/alta-73-20261012` (vuelta atras = imagen `pre-alta73-backup`); la app instalada filtra
+bien sin APK nuevo, pero su texto dira «62-95 %» hasta actualizarla.

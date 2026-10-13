@@ -204,6 +204,12 @@ class _ProductShellState extends State<ProductShell>
       return training(featureMessage(d, 'alta_probabilidad'));
     }
     final report = jsonMap(d['alta_probabilidad']);
+    // El rango lo manda el servidor (mismo origen que la pantalla VIP).
+    final config = jsonMap(d['config']);
+    final minPercent = (((config['probability_min'] as num?) ?? .73) * 100)
+        .round();
+    final maxPercent = (((config['probability_max'] as num?) ?? .95) * 100)
+        .round();
     final rows = [...jsonRows(report['proximos']), ...jsonRows(report['vip'])];
     rows.sort((a, b) {
       int rank(JsonMap p) => p['free'] == true
@@ -224,7 +230,11 @@ class _ProductShellState extends State<ProductShell>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        liveText(context.l10n.picksRangeHint, color: liveMuted, size: 12),
+        liveText(
+          context.l10n.picksRangeHint(minPercent, maxPercent),
+          color: liveMuted,
+          size: 12,
+        ),
         const SizedBox(height: 12),
         if (report['estado'] != 'activa')
           training(
