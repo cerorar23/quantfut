@@ -5518,3 +5518,33 @@ docs/futbol_scraping_viabilidad_20261013.md. Evidencia:
 ## 2026-10-13 — Detalle del partido sin modelo de goles: los VIP se avisan aparte del gratuito
 
 En partidos de ligas sin modelo propio (p. ej. Championship) `ficha.mercados` salía `None` (`partido_mercados.construir` exige lambdas de goles; el `fit` de un pronóstico de córners solo trae lambdas de córners) y la pestaña Pronósticos mostraba el banner «tiene un pronóstico VIP» sin nada que lo respaldara debajo. Solución provisional hasta que exista modelo: `partido_mercados.solo_candados` devuelve candados SOLO con la categoría de cada pronóstico VIP real del partido (sin línea, selección, probabilidad ni cuota), con `sin_modelo: true` y sin marcadores; la app oculta el bloque «Marcadores más probables» en ese caso para no prometer lo que ni un VIP vería. Con VIP no cambia nada. Pruebas: `test_partido_mercados`, `test_mobile_delivery` y `match_markets_sin_modelo_test.dart`. Servidor desplegado (api) con respaldo `~/backups/sin-modelo-20261013` (vuelta atrás = imagen `quantfut-api-tapjoy:pre-sinmodelo-backup` en el compose + `up -d --no-deps api`; imagen nueva = la anterior + `mobile.py` y `partido_mercados.py`, que coincidían con el commit). Verificado en producción: Bristol City–Blackburn devuelve 2 candados (Doble oportunidad, Córners) con `sin_modelo`; partidos con modelo de goles no cambian. PENDIENTE: APK nuevo (sin él, la app vieja muestra además el bloque de marcadores bloqueado en estos partidos).
+
+
+## 2026-10-13 — Histórico FotMob importado en PostgreSQL
+
+El usuario autorizó transferir e importar los originales en quantfut y confirmó
+el importador/migración/protección temporal. Carga atómica completada 20:06 UTC:
+22.456 originales, 44.912 XI de equipo, 940.386 registros de estadísticas y
+48.571 declaraciones de bajas históricas. 20.502 asociaciones existentes,
+1.554 partidos nuevos y once clubes domésticos nuevos; 400 originales conservan
+asociación pendiente/conflicto (379 identidades de copas, 21 discrepancias).
+
+Se rellenan 14.629 parejas xG vacías con recepción real del 3-oct y 8.537
+partidos en conteos ausentes; no se toca xG previo. Control temporal de todas
+las fuentes observadas y replay Kalman sin anticipar xG. IDs por proveedor,
+originales/recibos congelados, datos históricos separados de capturas PIT;
+los consumidores de jugadores/XI/bajas requieren adaptación posterior.
+
+Prueba PostgreSQL con 53 encuentros, segunda carga cero escrituras y reversión
+confirmada; arnés 1.007 aprobadas/24 omitidas. Se cotejan 20.816 partidos previos,
+25 originales releídos por hash y las 14.629 parejas contra cortes temporales.
+Ligas, puertas, lotes sellados, XI/jugadores previos y modelo 2026.09.27-010508
+conservados; API interna/pública 200 y versión coincidente. La captura habitual
+injuries de las 20:00 añadió 324 filas durante la carga; se corroboró su cron y
+recepción, sin modificar esa tabla/tarea desde el importador. Sin entrenamiento
+nuevo, publicación o mensajes manuales externos.
+
+Evidencia .local/fotmob_import_20261013/verified/ y volumen
+/srv/quantfut/artifacts/imports/fotmob-20261013/; backup de partidos y worker.
+Detalle/cobertura: docs/importacion_fotmob_20261013.md. El xG nuevo no demuestra
+una mejora retroactiva; Chile continúa sin xG en el archivo.

@@ -1,4 +1,4 @@
-"""Disponibilidad temporal del xG observado de API-Football."""
+"""Disponibilidad temporal del xG con procedencia y recepción acreditadas."""
 from __future__ import annotations
 
 import numpy as np
@@ -15,14 +15,14 @@ def xg_at_cutoff(df: pd.DataFrame, as_of) -> tuple[np.ndarray, np.ndarray]:
               if c in df else np.full(len(df), np.nan)
               for c in ("home_xg", "away_xg")]
     if "xg_source" in df:
-        api = df["xg_source"].eq("api_football").fillna(False).to_numpy()
+        observed = df["xg_source"].notna().to_numpy()
         captured = pd.to_datetime(
             df.get("xg_recorded_at", pd.Series(pd.NaT, index=df.index)),
             utc=True, errors="coerce")
         cutoff = pd.Timestamp(as_of)
         cutoff = (cutoff.tz_localize("UTC") if cutoff.tzinfo is None
                   else cutoff.tz_convert("UTC"))
-        unavailable = api & (captured.isna() | (captured > cutoff)).to_numpy()
+        unavailable = observed & (captured.isna() | (captured > cutoff)).to_numpy()
         for values in arrays:
             values[unavailable] = np.nan
     return arrays[0], arrays[1]

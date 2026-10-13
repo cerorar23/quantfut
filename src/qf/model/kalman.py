@@ -336,8 +336,8 @@ class DynamicRatings:
             # llegadas tardías. La nueva fuente usa solo goles aquí hasta
             # implementar eventos de recepción; no se adelanta su xG.
             df = df.copy()
-            api = df["xg_source"].eq("api_football").fillna(False)
-            df.loc[api, ["home_xg", "away_xg"]] = np.nan
+            observed = df["xg_source"].notna()
+            df.loc[observed, ["home_xg", "away_xg"]] = np.nan
         self._estimate_league_params(df)
         filas = []
 

@@ -29,9 +29,30 @@ para las 12 ligas sin modelo y huecos de las 13 actuales.
   de 100 créditos, sin compras ni descarga masiva; registrar cobertura real.
 - [x] Entregar matriz de viabilidad y límites del histórico/recepción temporal.
   No activar captura_completa, ligas o un candidato por disponer de más datos.
-- [ ] Integración posterior: emparejar/importar el archivo verificado, extender
+- [x] Importación realizada: emparejar/importar el archivo verificado, extender
   el control temporal a FotMob/SofaScore y separar bajas/XI históricos de PIT.
   Detalle: docs/futbol_scraping_viabilidad_20261013.md.
+
+Importación autorizada por el usuario el 13-oct:
+
+- [x] Preparar emparejamiento revisable contra equipos, alias, fechas y marcadores;
+  resolver Brasil B/Chile sin duplicar partidos ni dar de alta equipos en copas.
+- [x] Añadir almacenamiento histórico con IDs por proveedor, originales/recibos
+  y tablas separadas de XI, jugadores y bajas; conservar datos previos.
+- [x] Extender la disponibilidad del xG a nuevas fuentes y validar la carga
+  idempotente, conflictos y restricciones en PostgreSQL antes de ejecutar.
+- [x] Desplegar protección temporal, importar al VPS y comprobar conteos,
+  correspondencias, modelo activo, servicios y evidencia; documentar y commit.
+
+Resultado: 22.456 originales, 44.912 XI de equipo, 940.386 registros de jugadores
+y 48.571 bajas históricas guardados; 1.554 partidos nuevos y 14.629 parejas xG
+incorporadas. 400 originales mantienen asociación pendiente/conflicto. Modelo
+activo y puertas sin cambios; 1.007 pruebas, prueba PostgreSQL e idempotencia.
+Detalle: docs/importacion_fotmob_20261013.md.
+
+- [ ] Resolver 379 identidades de copas y revisar 21 conflictos sin forzar uniones.
+- [ ] Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
+  respetando recepción temporal; las tablas nuevas ya están importadas.
 
 ## App Flutter + Firebase — contenido real y monedas (2026-10-11)
 

@@ -1,5 +1,8 @@
 # Fútbol: cobertura archivada y prueba ZenRows — 13 de octubre de 2026
 
+Actualización posterior: el archivo FotMob se importó en PostgreSQL. Resultado
+y cobertura verificados en [importación del 13-oct](importacion_fotmob_20261013.md).
+
 Pedido del usuario: comprobar si se pueden recuperar xG, alineaciones, bajas
 y estadísticas de jugadores para las doce ligas sin modelo y huecos de las
 trece competiciones habilitadas. **La recuperación es técnicamente viable y
