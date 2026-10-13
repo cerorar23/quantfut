@@ -145,7 +145,10 @@ def records(path):
 
 class Matcher:
     """Identidades exactas por país; el calendario corrobora nombres e IDs."""
-    def __init__(self, snapshot, rows, overrides=None):
+    def __init__(self, snapshot, rows, overrides=None, provider="fotmob"):
+        if provider not in ("fotmob", "sofascore"):
+            raise ValueError("unsupported_provider")
+        self.provider = provider
         self.teams = {t["team_id"]: t for t in snapshot["teams"]}
         self.leagues = {l["league_id"]: l for l in snapshot["leagues"]}
         self.names = defaultdict(set)
@@ -220,9 +223,12 @@ class Matcher:
             if not self.leagues[league]["cross_league"]:
                 known_by_source[sid].update(ids)
         for key, ids in self.candidates.items():
-            if self.leagues[key[0]]["cross_league"] and not ids and known_by_source[key[1]]:
-                self.candidates[key] = set(known_by_source[key[1]])
-                self.reasons[key] = "domestic_source_id"
+            if self.leagues[key[0]]["cross_league"] and known_by_source[key[1]]:
+                domestic = known_by_source[key[1]]
+                corroborated = ids & domestic if ids else domestic
+                if len(corroborated) == 1 and len(ids) != 1:
+                    self.candidates[key] = set(corroborated)
+                    self.reasons[key] = "domestic_source_id"
 
     def ids(self, r, side):
         return self.candidates[(r["league_id"], r[side + "_source_team_id"])]
@@ -243,7 +249,7 @@ class Matcher:
             m = pair[0]
             if not self.score_agrees(r, m):
                 return {"mapping_status": "conflict", "mapping_reason": "score_or_status_conflict", "match_id": None}
-            existing = (m.get("external_ids") or {}).get("fotmob")
+            existing = (m.get("external_ids") or {}).get(self.provider)
             if existing is not None and str(existing) != r["source_match_id"]:
                 return {"mapping_status": "conflict", "mapping_reason": "different_source_id", "match_id": None}
             return {"mapping_status": "matched", "mapping_reason": "exact_teams_time_score",
@@ -256,7 +262,7 @@ class Matcher:
             if clashes:
                 return {"mapping_status": "conflict", "mapping_reason": "nearby_opponent_conflict", "match_id": None}
             return {"mapping_status": "created", "mapping_reason": "resolved_teams_missing_match",
-                    "match_id": "fotmob:" + r["source_match_id"],
+                    "match_id": self.provider + ":" + r["source_match_id"],
                     "home_team_id": next(iter(home)), "away_team_id": next(iter(away))}
         return {"mapping_status": "unresolved", "mapping_reason": "team_identity_unresolved", "match_id": None}
 
@@ -267,7 +273,11 @@ def plan(normalized, snapshot_path, output, overrides_path=None):
     metadata = [{k: v for k, v in r.items() if k not in ("players", "lineups", "absences", "statistics", "counts")}
                 for r in records(normalized)]
     overrides = json.loads(Path(overrides_path).read_text()) if overrides_path else {}
-    matcher = Matcher(snapshot, metadata, overrides)
+    providers = {r["provider"] for r in metadata}
+    if len(providers) != 1 or not providers <= {"fotmob", "sofascore"}:
+        raise ValueError("unsupported_or_mixed_providers")
+    provider = next(iter(providers))
+    matcher = Matcher(snapshot, metadata, overrides, provider=provider)
     decisions, totals, by_league = {}, Counter(), defaultdict(Counter)
     used = defaultdict(list)
     for r in metadata:
@@ -290,7 +300,7 @@ def plan(normalized, snapshot_path, output, overrides_path=None):
             profiles.append({"key": key[0] + "/" + key[1], "names": dict(names),
                              "candidate_ids": sorted(ids, key=str),
                              "candidate_names": [matcher.teams[t]["canonical_name"] for t in ids if isinstance(t, int)]})
-    result = {"provider": "fotmob", "decisions": decisions, "totals": dict(totals),
+    result = {"provider": provider, "decisions": decisions, "totals": dict(totals),
               "by_league": dict(by_league), "unresolved_profiles": profiles, "overrides": overrides,
               "snapshot_sha256": hashlib.sha256(Path(snapshot_path).read_bytes()).hexdigest(),
               "normalized_sha256": hashlib.sha256(Path(normalized).read_bytes()).hexdigest(),
@@ -318,6 +328,9 @@ def apply_import(connection, normalized, plan_path, archive, output, *, rollback
     from psycopg.types.json import Jsonb
     from psycopg import sql
     reviewed = json.loads(Path(plan_path).read_text(encoding="utf-8"))
+    provider = reviewed["provider"]
+    if provider not in ("fotmob", "sofascore"):
+        raise ValueError("unsupported_provider")
     digest = hashlib.sha256(Path(normalized).read_bytes()).hexdigest()
     if digest != reviewed["normalized_sha256"]:
         raise ValueError("reviewed_input_hash_changed")
@@ -360,6 +373,8 @@ def apply_import(connection, normalized, plan_path, archive, output, *, rollback
         with connection.cursor().copy(sql.SQL("COPY stage_matches ({}) FROM STDIN").format(
                 sql.SQL(",").join(map(sql.Identifier, columns)))) as cp:
             for r in records(normalized):
+                if r["provider"] != provider:
+                    raise ValueError("mixed_providers")
                 sid = r["source_match_id"]
                 decision = reviewed["decisions"][sid]
                 raw_path = Path(archive) / "raw/matches" / (sid + ".json.gz")
@@ -393,7 +408,7 @@ def apply_import(connection, normalized, plan_path, archive, output, *, rollback
                     sql.Identifier("stage_" + suffix), sql.SQL(",").join(map(sql.Identifier, cols)))) as cp:
                 for r in records(normalized):
                     for child in r[field]:
-                        row = dict(child, provider="fotmob", source_match_id=r["source_match_id"])
+                        row = dict(child, provider=provider, source_match_id=r["source_match_id"])
                         for k in ("statistics", "availability", "starters", "substitutes"):
                             if k in row:
                                 row[k] = Jsonb(row[k])
@@ -418,7 +433,7 @@ def apply_import(connection, normalized, plan_path, archive, output, *, rollback
                 AND m.home_team_id=s.home_team_id AND m.away_team_id=s.away_team_id
                 AND abs(extract(epoch FROM (m.kickoff_utc-s.kickoff_utc)))<=129600
                 AND m.status='finished' AND m.home_goals=s.home_goals AND m.away_goals=s.away_goals
-                AND (m.external_ids->>'fotmob' IS NULL OR m.external_ids->>'fotmob'=s.source_match_id))""")
+                AND (m.external_ids->>%s IS NULL OR m.external_ids->>%s=s.source_match_id))""", (provider, provider))
         # New fixtures cannot collide with an existing game, including swapped sides.
         connection.execute("""UPDATE stage_matches s SET match_id=NULL,mapping_status='conflict',
             mapping_reason='nearby_database_match'
@@ -440,17 +455,17 @@ def apply_import(connection, normalized, plan_path, archive, output, *, rollback
             (match_id,league_id,season,kickoff_utc,home_team_id,away_team_id,status,
              home_goals,away_goals,result_recorded_at,external_ids)
             SELECT match_id,league_id,season,kickoff_utc,home_team_id,away_team_id,'finished',
-             home_goals,away_goals,captured_at,jsonb_build_object('fotmob',source_match_id)
-            FROM stage_matches WHERE mapping_status='created' ON CONFLICT(match_id) DO NOTHING""").rowcount
+             home_goals,away_goals,captured_at,jsonb_build_object(%s::text,source_match_id)
+            FROM stage_matches WHERE mapping_status='created' ON CONFLICT(match_id) DO NOTHING""", (provider,)).rowcount
         report["xg_added"] = connection.execute("""UPDATE matches m SET home_xg=s.home_xg,
-            away_xg=s.away_xg,xg_source='fotmob',xg_recorded_at=s.captured_at
+            away_xg=s.away_xg,xg_source=%s,xg_recorded_at=s.captured_at
             FROM stage_matches s WHERE m.match_id=s.match_id
             AND m.home_xg IS NULL AND m.away_xg IS NULL AND s.home_xg IS NOT NULL AND s.away_xg IS NOT NULL
             AND m.status='finished' AND m.home_team_id=s.home_team_id AND m.away_team_id=s.away_team_id
-            AND m.home_goals=s.home_goals AND m.away_goals=s.away_goals""").rowcount
+            AND m.home_goals=s.home_goals AND m.away_goals=s.away_goals""", (provider,)).rowcount
         report["external_ids_added"] = connection.execute("""UPDATE matches m SET
-            external_ids=m.external_ids||jsonb_build_object('fotmob',s.source_match_id)
-            FROM stage_matches s WHERE m.match_id=s.match_id AND m.external_ids->>'fotmob' IS NULL""").rowcount
+            external_ids=m.external_ids||jsonb_build_object(%s::text,s.source_match_id)
+            FROM stage_matches s WHERE m.match_id=s.match_id AND m.external_ids->>%s IS NULL""", (provider, provider)).rowcount
         set_counts = sql.SQL(",").join(sql.SQL("{}=coalesce(m.{},s.{})").format(
             sql.Identifier(k), sql.Identifier(k), sql.Identifier(k)) for k in COUNTS)
         needs_counts = sql.SQL(" OR ").join(sql.SQL("(m.{} IS NULL AND s.{} IS NOT NULL)").format(

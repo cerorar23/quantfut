@@ -5552,3 +5552,41 @@ Evidencia .local/fotmob_import_20261013/verified/ y volumen
 /srv/quantfut/artifacts/imports/fotmob-20261013/; backup de partidos y worker.
 Detalle/cobertura: docs/importacion_fotmob_20261013.md. El xG nuevo no demuestra
 una mejora retroactiva; Chile continúa sin xG en el archivo.
+
+## 2026-10-13 — soccerdata con ZenRows e importación adicional verificada
+
+El usuario detuvo el scraper anterior y lo sustituyó por soccerdata y su
+documentación. Se confirmó cero procesos anteriores activos. soccerdata 1.9.1
+fijado en e120471e424a173e83e8aeeaaf4d954ab9d38ee4, Apache-2.0; instalación
+aislada optativa. Transporte MCP ZenRows 2.4.0 con proxies automáticos, recibos,
+hashes, reserva 100 y caché que conserva fallos sin bucles. Los calendarios que
+habían fallado con otra configuración se probaron una vez con GB, recuperando
+Chile/LaLiga 2/Ligue 2/Serie B. Se reutilizan respuestas antiguas verificadas.
+
+El lector SofaScore se amplía para detalles; FBref ya retiró datos avanzados y
+el listado obtenido no sirvió para ligas domésticas. ESPN Chile/Brasil B falló.
+Muestra 2023/24: eventos sin xG anunciado en LaLiga 2, Serie B y Ligue 2; las
+estadísticas consultadas en España/Francia no traían esa métrica y las demás
+consultas no acreditaron cobertura. No prometer historia completa por aceptar
+un calendario ni atribuir una mejora de backtest al xG recibido ahora.
+
+Carga adicional completada 23:15 UTC: 586 originales, 574 asociaciones,
+54 parejas xG añadidas a huecos, 138 XI, 2.789 registros de jugadores y 269
+bajas históricas. Cero partidos/clubes nuevos: la propuesta Troyes–Valenciennes
+1–1 fue puesta en cuarentena tras cotejar la derrota administrativa en LFP.
+Otro marcador discrepante y diez identidades de copas quedan separados. Doce
+equivalencias domésticas revisadas con nombres, país y partidos; sin difuso.
+
+Prueba PostgreSQL de carga repetida dentro de transacción revertida: cero
+escrituras adicionales y reversión corroborada. Carga real coteja 22.615 registros
+previos, 586 hashes y 54 disponibilidades temporales. Se conservan modelo
+2026.09.27-010508, flags, lotes sellados y tablas de jugadores/XI API-Football;
+model-card interna/pública 200 y misma versión. Worker respaldado y ampliación
+persistida sin reiniciar ni reconstruir desde el checkout viejo. Arnés final:
+1.033 aprobadas/24 omitidas, 35 relevantes. Sin entrenamiento, compras o mensajes
+externos. ZenRows 2.515→3.751 utilizados; quedan 1.249 en última lectura.
+
+Persisten 3.154 partidos sin xG y bloqueos de calendario en cinco competiciones;
+los consumidores de XI/jugadores/bajas históricos siguen pendientes. Evidencia
+.local/soccerdata_completion_20261013/verified/ y artifacts/imports/soccerdata-20261013
+del worker. Detalle y desglose: docs/soccerdata_zenrows_20261013.md.

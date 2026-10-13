@@ -18,6 +18,40 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Completar fútbol con soccerdata + ZenRows (2026-10-13)
+
+Cambio del usuario: scraper anterior detenido; usar probberechts/soccerdata
+1.9.1, revisión e120471e424a173e83e8aeeaaf4d954ab9d38ee4 (Apache-2.0).
+Documentación: https://soccerdata.readthedocs.io/en/latest/.
+Arquitectura: lectores reales con transporte MCP ZenRows y originales recibidos;
+selección por huecos, caché verificada y normalización por proveedor antes de
+reutilizar el importador histórico. No confundir cobertura declarada con datos
+efectivamente recuperados; registrar bloqueos y datos inexistentes por separado.
+
+- [x] Auditar huecos actuales y detener el scraper anterior; comprobar licencia,
+  versión y límites de los lectores de soccerdata antes de seleccionar fuentes.
+- [x] Adaptar su cliente al MCP ZenRows con proxies automáticos, recibos/hash,
+  caché, control del saldo existente y reserva de 100 créditos; sin compras.
+- [x] Comprobar cobertura real de xG/XI/jugadores/bajas antes de ampliar descargas;
+  conservar información ausente y conflictos sin fabricar valores.
+- [x] Importar los nuevos originales y datos verificados al VPS, resolver las
+  correspondencias seguras y medir qué huecos se cerraron y cuáles persisten.
+- [x] Validar idempotencia/recepción temporal, conservar modelo/puertas/publicación,
+  registrar evidencia, ejecutar arnés y comitear únicamente esta ampliación.
+
+Carga verificada: 586 originales, 574 asociaciones, 54 parejas xG nuevas,
+138 XI de equipo, 2.789 registros de jugadores y 269 bajas históricas.
+Diez identidades de copas pendientes y dos conflictos conservados; sin nuevos
+partidos/clubes canónicos. 1.033 pruebas, transacción reversible e idempotencia;
+modelo/API verificados. Detalle: docs/soccerdata_zenrows_20261013.md.
+
+- [ ] Completar los 3.154 huecos xG restantes cuando una fuente acredite cobertura:
+  muestras 2024 sin xG o con error; no convertir ausencia/bloqueo en cero.
+- [ ] Recuperar calendarios aún bloqueados de Brasil B, Bundesliga 2, Dinamarca,
+  Suecia y Europa League; conservar cuota y originales de cada configuración.
+- [ ] Resolver identidades de copas pendientes y adaptar consumidores históricos
+  de XI/jugadores/bajas; los datos almacenados no activan modelos por sí solos.
+
 ## Viabilidad de recuperar fútbol con ZenRows (2026-10-13)
 
 Pedido del usuario: comprobar xG, alineaciones, bajas y estadísticas de jugadores

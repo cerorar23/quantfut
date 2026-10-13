@@ -1,0 +1,3 @@
+# Entorno optativo de captura local; no instalar en API/worker por esta carga.
+# Fuente Apache-2.0 revisada el 13-oct-2026, soccerdata 1.9.1.
+soccerdata @ git+https://github.com/probberechts/soccerdata.git@e120471e424a173e83e8aeeaaf4d954ab9d38ee4
