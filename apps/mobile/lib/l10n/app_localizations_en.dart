@@ -1342,6 +1342,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get rewardsAttendanceSub => 'Once a day · resets at 00:00 UTC';
+
+  @override
+  String get rewardsAttendanceTitle => 'Daily check-in';
+
+  @override
+  String get rewardsAvailable => 'Available';
+
+  @override
   String get rewardsCheckIn => 'Check in';
 
   @override
@@ -1349,10 +1358,47 @@ class AppLocalizationsEn extends AppLocalizations {
       'Once per UTC day. If you skip a day, the streak resets.';
 
   @override
+  String rewardsChipRate(Object cost) {
+    return '$cost coins = 1 prediction';
+  }
+
+  @override
+  String rewardsChipStreak(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days-day streak',
+      one: '1-day streak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rewardsClaimCta(Object coins) {
+    return 'Check in · +$coins';
+  }
+
+  @override
+  String rewardsClaimed(Object coins) {
+    return '+$coins coins';
+  }
+
+  @override
+  String get rewardsClaimedToday => 'Claimed today';
+
+  @override
   String get rewardsCodeCopied => 'Code copied.';
 
   @override
   String get rewardsCodeRegistered => 'Invitation code registered.';
+
+  @override
+  String rewardsComingSoon(String names) {
+    return 'Coming soon: $names';
+  }
+
+  @override
+  String get rewardsCopy => 'Copy';
 
   @override
   String rewardsCopyCode(Object code) {
@@ -1368,14 +1414,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rewardsDebt => 'Balance pending due to voided rewards.';
 
   @override
+  String get rewardsEarnTitle => 'Earn coins today';
+
+  @override
   String get rewardsEnough => 'You have enough coins for an unlock.';
 
   @override
   String get rewardsGo => 'Go';
 
   @override
+  String rewardsInviteChip(Object coins) {
+    return '+$coins for you';
+  }
+
+  @override
   String rewardsInviteCondition(Object min) {
     return 'After verifying the email and completing $min coins in confirmed offers.';
+  }
+
+  @override
+  String rewardsInviteFriend(Object coins) {
+    return 'Your friend gets +$coins when they enter your code';
   }
 
   @override
@@ -1391,6 +1450,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rewardsLedgerEmpty => 'There are no transactions yet.';
+
+  @override
+  String get rewardsLedgerLess => 'Show less';
+
+  @override
+  String get rewardsLedgerMore => 'Show more';
 
   @override
   String get rewardsLedgerTitle => 'My transactions';
@@ -1413,6 +1478,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rewardsMyCoins => 'My coins';
 
   @override
+  String rewardsNextIn(String time) {
+    return 'Next check-in in $time';
+  }
+
+  @override
   String get rewardsOfferAvailable =>
       'Offers depend on your country and device';
 
@@ -1422,6 +1492,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get rewardsOffersConfig =>
       'This provider isn\'t ready yet. Try again later.';
+
+  @override
+  String get rewardsOffersCta => 'See offers';
+
+  @override
+  String get rewardsOffersLead => 'Complete offers and receive coins.';
 
   @override
   String get rewardsOffersLoadFailed =>
@@ -1469,6 +1545,9 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return 'Check-in streak · $_temp0';
   }
+
+  @override
+  String get rewardsTermsTitle => 'Rules and conditions';
 
   @override
   String rewardsUnlockFor(Object cost) {
@@ -1562,6 +1641,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String selWinToNil(String team) {
     return '$team wins without conceding';
   }
+
+  @override
+  String get shellNeedCoinsBody =>
+      'Earn coins with the daily check-in and offers to unlock this prediction.';
+
+  @override
+  String get shellNeedCoinsCta => 'Earn coins';
+
+  @override
+  String get shellNeedCoinsTitle => 'You need more coins';
 
   @override
   String get shellNewAlert => 'New QuantFut alert';

@@ -81,7 +81,7 @@ def change(c, account_id: int, delta: int, event_key: str, kind: str, *, spend: 
             raise HTTPException(409, 'Evento duplicado con datos distintos')
         return False
     if spend and w['balance'] + delta < 0:
-        raise HTTPException(409, 'No tienes monedas suficientes')
+        raise HTTPException(409, {'code': 'monedas_insuficientes', 'message': 'No tienes monedas suficientes'})
     balance = w['balance'] + delta
     c.execute('UPDATE reward_wallets SET balance=%s WHERE account_id=%s', (balance,account_id))
     c.execute('INSERT INTO reward_ledger(account_id,delta,balance_after,event_key,kind) VALUES(%s,%s,%s,%s,%s)',

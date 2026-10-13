@@ -198,9 +198,39 @@ class _ProductShellState extends State<ProductShell>
       );
       await reload();
       if (mounted) detail(pick['match_id']);
+    } on ApiFailure catch (e) {
+      if (!mounted) return;
+      if (e.code == 'monedas_insuficientes') {
+        await needCoins();
+      } else {
+        liveNotice(context, e.message);
+      }
     } catch (e) {
       if (mounted) liveNotice(context, '$e');
     }
+  }
+
+  /// Sin saldo suficiente no se deja al usuario en un error: se le lleva a ganar monedas.
+  Future<void> needCoins() async {
+    final l10n = context.l10n;
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(l10n.shellNeedCoinsTitle),
+        content: Text(l10n.shellNeedCoinsBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(l10n.shellNeedCoinsCta),
+          ),
+        ],
+      ),
+    );
+    if (go == true && mounted) setState(() => tab = 3);
   }
 
   Widget picks(JsonMap d) {

@@ -2320,6 +2320,24 @@ abstract class AppLocalizations {
   /// **'Resultado: {score}'**
   String resultLabel(String score);
 
+  /// Regla de la asistencia diaria.
+  ///
+  /// In es, this message translates to:
+  /// **'Una vez al día · se reinicia a las 00:00 UTC'**
+  String get rewardsAttendanceSub;
+
+  /// Título de la tarjeta de asistencia.
+  ///
+  /// In es, this message translates to:
+  /// **'Asistencia diaria'**
+  String get rewardsAttendanceTitle;
+
+  /// Etiqueta: la asistencia de hoy se puede marcar.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponible'**
+  String get rewardsAvailable;
+
   /// No description provided for @rewardsCheckIn.
   ///
   /// In es, this message translates to:
@@ -2332,6 +2350,36 @@ abstract class AppLocalizations {
   /// **'Una vez por día UTC. Si omites un día, la racha se reinicia.'**
   String get rewardsCheckInNote;
 
+  /// Chip con el coste de desbloquear un pronóstico.
+  ///
+  /// In es, this message translates to:
+  /// **'{cost} monedas = 1 pronóstico'**
+  String rewardsChipRate(Object cost);
+
+  /// Chip con la racha de asistencia vigente.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, one{Racha de 1 día} other{Racha de {days} días}}'**
+  String rewardsChipStreak(int days);
+
+  /// Botón de la asistencia con las monedas de hoy.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar asistencia · +{coins}'**
+  String rewardsClaimCta(Object coins);
+
+  /// Aviso tras reclamar la asistencia.
+  ///
+  /// In es, this message translates to:
+  /// **'+{coins} monedas'**
+  String rewardsClaimed(Object coins);
+
+  /// Etiqueta: la asistencia de hoy ya se marcó.
+  ///
+  /// In es, this message translates to:
+  /// **'Reclamada hoy'**
+  String get rewardsClaimedToday;
+
   /// No description provided for @rewardsCodeCopied.
   ///
   /// In es, this message translates to:
@@ -2343,6 +2391,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Código de invitación registrado.'**
   String get rewardsCodeRegistered;
+
+  /// Proveedores de ofertas aún sin activar.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximamente: {names}'**
+  String rewardsComingSoon(String names);
+
+  /// Botón corto para copiar el código de invitación.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar'**
+  String get rewardsCopy;
 
   /// No description provided for @rewardsCopyCode.
   ///
@@ -2362,6 +2422,12 @@ abstract class AppLocalizations {
   /// **'Saldo pendiente por recompensas anuladas.'**
   String get rewardsDebt;
 
+  /// Encabezado de las formas de ganar monedas.
+  ///
+  /// In es, this message translates to:
+  /// **'Gana monedas hoy'**
+  String get rewardsEarnTitle;
+
   /// No description provided for @rewardsEnough.
   ///
   /// In es, this message translates to:
@@ -2374,11 +2440,23 @@ abstract class AppLocalizations {
   /// **'Ir'**
   String get rewardsGo;
 
+  /// Premio de quien invita.
+  ///
+  /// In es, this message translates to:
+  /// **'+{coins} para ti'**
+  String rewardsInviteChip(Object coins);
+
   /// No description provided for @rewardsInviteCondition.
   ///
   /// In es, this message translates to:
   /// **'Tras verificar el correo y completar {min} monedas en ofertas confirmadas.'**
   String rewardsInviteCondition(Object min);
+
+  /// Premio del invitado.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu amigo recibe +{coins} al registrar tu código'**
+  String rewardsInviteFriend(Object coins);
 
   /// No description provided for @rewardsInviteReward.
   ///
@@ -2404,6 +2482,18 @@ abstract class AppLocalizations {
   /// **'Todavía no hay movimientos.'**
   String get rewardsLedgerEmpty;
 
+  /// Pliega los movimientos.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver menos'**
+  String get rewardsLedgerLess;
+
+  /// Despliega más movimientos.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver más'**
+  String get rewardsLedgerMore;
+
   /// No description provided for @rewardsLedgerTitle.
   ///
   /// In es, this message translates to:
@@ -2428,6 +2518,12 @@ abstract class AppLocalizations {
   /// **'Mis monedas'**
   String get rewardsMyCoins;
 
+  /// Cuenta atrás hasta poder marcar asistencia de nuevo.
+  ///
+  /// In es, this message translates to:
+  /// **'Próxima asistencia en {time}'**
+  String rewardsNextIn(String time);
+
   /// No description provided for @rewardsOfferAvailable.
   ///
   /// In es, this message translates to:
@@ -2445,6 +2541,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Este proveedor todavía no está listo. Vuelve a intentarlo más tarde.'**
   String get rewardsOffersConfig;
+
+  /// Botón que abre las ofertas del proveedor.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver ofertas'**
+  String get rewardsOffersCta;
+
+  /// Frase de la tarjeta de ofertas.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa ofertas y recibe monedas.'**
+  String get rewardsOffersLead;
 
   /// No description provided for @rewardsOffersLoadFailed.
   ///
@@ -2511,6 +2619,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Racha de asistencia · {days, plural, one{{days} día} other{{days} días}}'**
   String rewardsStreak(int days);
+
+  /// Sección desplegable con los términos de las monedas.
+  ///
+  /// In es, this message translates to:
+  /// **'Reglas y condiciones'**
+  String get rewardsTermsTitle;
 
   /// No description provided for @rewardsUnlockFor.
   ///
@@ -2613,6 +2727,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{team} gana sin recibir gol'**
   String selWinToNil(String team);
+
+  /// Explica cómo conseguir monedas.
+  ///
+  /// In es, this message translates to:
+  /// **'Gana monedas con la asistencia diaria y las ofertas para desbloquear este pronóstico.'**
+  String get shellNeedCoinsBody;
+
+  /// Botón que lleva a la pestaña Coins.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganar monedas'**
+  String get shellNeedCoinsCta;
+
+  /// Título del aviso al intentar desbloquear sin saldo.
+  ///
+  /// In es, this message translates to:
+  /// **'Te faltan monedas'**
+  String get shellNeedCoinsTitle;
 
   /// No description provided for @shellNewAlert.
   ///

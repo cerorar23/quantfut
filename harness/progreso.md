@@ -5247,3 +5247,26 @@ entrega: sin cambios de backend. Referencias sin copiar código: splashbyte/anim
 hadukin/custom_sliding_segmented_control (MIT), fathialamre/ticketcher y FazalHussain/Ticket-UI-Widget (MIT).
 `product_navigation_test` y `live_parley_test` se actualizaron: ya no hay un botón por candado y las
 reglas largas viven en la hoja.
+
+## 2026-10-12 — Coins rediseñado y aviso de monedas insuficientes
+
+Pedido del titular (referencia: capturas de otra app de recompensas). Se adaptó la FORMA, no su
+contenido: no hay cobro en dinero (las monedas no tienen valor monetario, dicen los términos), ni
+marcadores «en vivo» de otros usuarios, ni «2×»/temporizadores inventados, ni juegos de terceros. La
+cuenta atrás es real (reinicio de la asistencia a las 00:00 UTC).
+`live_rewards.dart`: saldo con anillo de avance hacia el desbloqueo, asistencia de 7 días con el de hoy
+resaltado y botón con las monedas de hoy, ofertas como UNA tarjeta del proveedor listo (Tapjoy) y los 5
+sin activar en una línea «Próximamente» (antes 5 tarjetas muertas), invitación con código copiable,
+historial con 5 movimientos y «Ver más», términos plegados y lluvia de monedas al reclamar
+(`coin_burst.dart`, respeta «reducir animaciones»). Base oscura con acentos vivos (morado, dorado,
+rosa), decisión recomendada y aprobada con «hazlo».
+Bug corregido: la racha mostrada era el número guardado aunque se hubiera roto; ahora se calcula con la
+fecha real UTC (`rewards_progress.dart`, misma regla que el servidor).
+Cuando faltan monedas al desbloquear, el servidor responde 409 con `code: monedas_insuficientes` (antes
+solo texto traducido) y la app ofrece «Ganar monedas» en vez de un error. Desplegado en la API con
+respaldo `~/backups/coins-409-20261012` (vuelta atrás = imagen `pre-coins409-backup`); la app antigua
+sigue funcionando (muestra el texto de siempre).
+Tapjoy: según la documentación de Unity Grow, el SDK de Flutter solo muestra el placement entero
+(`TJPlacement.requestContent/showContent`); no hay forma documentada de pintar las ofertas una a una en
+la propia pantalla. Lo personalizable es la tarjeta de contenido del panel (moneda, icono, colores,
+tasa), Message to Earn y los placements contextuales.

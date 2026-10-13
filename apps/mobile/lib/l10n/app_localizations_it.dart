@@ -1362,6 +1362,16 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get rewardsAttendanceSub =>
+      'Una volta al giorno · si azzera alle 00:00 UTC';
+
+  @override
+  String get rewardsAttendanceTitle => 'Presenza giornaliera';
+
+  @override
+  String get rewardsAvailable => 'Disponibile';
+
+  @override
   String get rewardsCheckIn => 'Segna la presenza';
 
   @override
@@ -1369,10 +1379,47 @@ class AppLocalizationsIt extends AppLocalizations {
       'Una volta al giorno UTC. Se salti un giorno, la serie ricomincia.';
 
   @override
+  String rewardsChipRate(Object cost) {
+    return '$cost monete = 1 pronostico';
+  }
+
+  @override
+  String rewardsChipStreak(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Serie di $days giorni',
+      one: 'Serie di 1 giorno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rewardsClaimCta(Object coins) {
+    return 'Segna la presenza · +$coins';
+  }
+
+  @override
+  String rewardsClaimed(Object coins) {
+    return '+$coins monete';
+  }
+
+  @override
+  String get rewardsClaimedToday => 'Riscattata oggi';
+
+  @override
   String get rewardsCodeCopied => 'Codice copiato.';
 
   @override
   String get rewardsCodeRegistered => 'Codice invito registrato.';
+
+  @override
+  String rewardsComingSoon(String names) {
+    return 'Prossimamente: $names';
+  }
+
+  @override
+  String get rewardsCopy => 'Copia';
 
   @override
   String rewardsCopyCode(Object code) {
@@ -1388,14 +1435,27 @@ class AppLocalizationsIt extends AppLocalizations {
   String get rewardsDebt => 'Saldo in sospeso per ricompense annullate.';
 
   @override
+  String get rewardsEarnTitle => 'Guadagna monete oggi';
+
+  @override
   String get rewardsEnough => 'Hai monete per uno sblocco.';
 
   @override
   String get rewardsGo => 'Vai';
 
   @override
+  String rewardsInviteChip(Object coins) {
+    return '+$coins per te';
+  }
+
+  @override
   String rewardsInviteCondition(Object min) {
     return 'Dopo aver verificato l\'e-mail e completato $min monete in offerte confermate.';
+  }
+
+  @override
+  String rewardsInviteFriend(Object coins) {
+    return 'Il tuo amico riceve +$coins registrando il tuo codice';
   }
 
   @override
@@ -1411,6 +1471,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get rewardsLedgerEmpty => 'Non ci sono ancora movimenti.';
+
+  @override
+  String get rewardsLedgerLess => 'Mostra meno';
+
+  @override
+  String get rewardsLedgerMore => 'Mostra altro';
 
   @override
   String get rewardsLedgerTitle => 'I miei movimenti';
@@ -1434,6 +1500,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get rewardsMyCoins => 'Le mie monete';
 
   @override
+  String rewardsNextIn(String time) {
+    return 'Prossima presenza tra $time';
+  }
+
+  @override
   String get rewardsOfferAvailable =>
       'Offerte in base al tuo paese e dispositivo';
 
@@ -1443,6 +1514,12 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get rewardsOffersConfig =>
       'Questo fornitore non è ancora pronto. Riprova più tardi.';
+
+  @override
+  String get rewardsOffersCta => 'Vedi le offerte';
+
+  @override
+  String get rewardsOffersLead => 'Completa le offerte e ricevi monete.';
 
   @override
   String get rewardsOffersLoadFailed =>
@@ -1490,6 +1567,9 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return 'Serie di presenze · $_temp0';
   }
+
+  @override
+  String get rewardsTermsTitle => 'Regole e condizioni';
 
   @override
   String rewardsUnlockFor(Object cost) {
@@ -1583,6 +1663,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String selWinToNil(String team) {
     return '$team vince senza subire gol';
   }
+
+  @override
+  String get shellNeedCoinsBody =>
+      'Guadagna monete con la presenza giornaliera e le offerte per sbloccare questo pronostico.';
+
+  @override
+  String get shellNeedCoinsCta => 'Guadagna monete';
+
+  @override
+  String get shellNeedCoinsTitle => 'Ti mancano delle monete';
 
   @override
   String get shellNewAlert => 'Nuovo avviso di QuantFut';

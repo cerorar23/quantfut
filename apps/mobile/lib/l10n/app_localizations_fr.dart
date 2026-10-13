@@ -1364,6 +1364,16 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get rewardsAttendanceSub =>
+      'Une fois par jour · réinitialisé à 00:00 UTC';
+
+  @override
+  String get rewardsAttendanceTitle => 'Présence quotidienne';
+
+  @override
+  String get rewardsAvailable => 'Disponible';
+
+  @override
   String get rewardsCheckIn => 'Pointer ma présence';
 
   @override
@@ -1371,10 +1381,47 @@ class AppLocalizationsFr extends AppLocalizations {
       'Une fois par jour UTC. Si vous manquez un jour, la série repart de zéro.';
 
   @override
+  String rewardsChipRate(Object cost) {
+    return '$cost pièces = 1 pronostic';
+  }
+
+  @override
+  String rewardsChipStreak(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Série de $days jours',
+      one: 'Série de 1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rewardsClaimCta(Object coins) {
+    return 'Pointer ma présence · +$coins';
+  }
+
+  @override
+  String rewardsClaimed(Object coins) {
+    return '+$coins pièces';
+  }
+
+  @override
+  String get rewardsClaimedToday => 'Réclamée aujourd\'hui';
+
+  @override
   String get rewardsCodeCopied => 'Code copié.';
 
   @override
   String get rewardsCodeRegistered => 'Code d\'invitation enregistré.';
+
+  @override
+  String rewardsComingSoon(String names) {
+    return 'Bientôt : $names';
+  }
+
+  @override
+  String get rewardsCopy => 'Copier';
 
   @override
   String rewardsCopyCode(Object code) {
@@ -1390,14 +1437,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rewardsDebt => 'Solde en attente à cause de récompenses annulées.';
 
   @override
+  String get rewardsEarnTitle => 'Gagnez des pièces aujourd\'hui';
+
+  @override
   String get rewardsEnough => 'Vous avez assez de pièces pour un déblocage.';
 
   @override
   String get rewardsGo => 'Aller';
 
   @override
+  String rewardsInviteChip(Object coins) {
+    return '+$coins pour vous';
+  }
+
+  @override
   String rewardsInviteCondition(Object min) {
     return 'Après vérification de l\'e-mail et $min pièces gagnées en offres confirmées.';
+  }
+
+  @override
+  String rewardsInviteFriend(Object coins) {
+    return 'Votre ami reçoit +$coins en saisissant votre code';
   }
 
   @override
@@ -1413,6 +1473,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rewardsLedgerEmpty => 'Aucun mouvement pour le moment.';
+
+  @override
+  String get rewardsLedgerLess => 'Voir moins';
+
+  @override
+  String get rewardsLedgerMore => 'Voir plus';
 
   @override
   String get rewardsLedgerTitle => 'Mes mouvements';
@@ -1436,6 +1502,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rewardsMyCoins => 'Mes pièces';
 
   @override
+  String rewardsNextIn(String time) {
+    return 'Prochaine présence dans $time';
+  }
+
+  @override
   String get rewardsOfferAvailable =>
       'Offres selon votre pays et votre appareil';
 
@@ -1445,6 +1516,12 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get rewardsOffersConfig =>
       'Ce fournisseur n’est pas encore prêt. Réessayez plus tard.';
+
+  @override
+  String get rewardsOffersCta => 'Voir les offres';
+
+  @override
+  String get rewardsOffersLead => 'Terminez des offres et recevez des pièces.';
 
   @override
   String get rewardsOffersLoadFailed =>
@@ -1492,6 +1569,9 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return 'Série de présence · $_temp0';
   }
+
+  @override
+  String get rewardsTermsTitle => 'Règles et conditions';
 
   @override
   String rewardsUnlockFor(Object cost) {
@@ -1585,6 +1665,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String selWinToNil(String team) {
     return '$team gagne sans encaisser';
   }
+
+  @override
+  String get shellNeedCoinsBody =>
+      'Gagnez des pièces avec la présence quotidienne et les offres pour débloquer ce pronostic.';
+
+  @override
+  String get shellNeedCoinsCta => 'Gagner des pièces';
+
+  @override
+  String get shellNeedCoinsTitle => 'Il vous manque des pièces';
 
   @override
   String get shellNewAlert => 'Nouvelle alerte QuantFut';

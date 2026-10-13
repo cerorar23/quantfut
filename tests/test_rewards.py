@@ -129,3 +129,24 @@ def test_pg_referral_paid_once_and_reversed(pg):
     rewards.provider_event('bitlabs','test-ref',invitee['uid'],100,'reversal')
     assert rewards.wallet(pg,-91001)['balance']==0
     assert rewards.wallet(pg,-91002)['balance']==0
+
+
+def test_desbloquear_sin_saldo_responde_con_codigo_estable(monkeypatch):
+    """La app lleva a «ganar monedas» según el código, no según el texto (que se traduce)."""
+    import pytest
+    from fastapi import HTTPException
+
+    class Cur:
+        def fetchone(self):
+            return None
+
+    class Conn:
+        def execute(self, *a, **k):
+            return Cur()
+
+    monkeypatch.setattr(rewards, "wallet", lambda c, account_id, lock=False: {"balance": 50})
+    with pytest.raises(HTTPException) as e:
+        rewards.change(Conn(), 1, -100, "unlock:1:x", "unlock", spend=True)
+    assert e.value.status_code == 409
+    assert e.value.detail["code"] == "monedas_insuficientes"
+    assert e.value.detail["message"] == "No tienes monedas suficientes"

@@ -976,10 +976,75 @@
       }
     }
   },
+  "rewardsAttendanceSub": "Una vez al día · se reinicia a las 00:00 UTC",
+  "@rewardsAttendanceSub": {
+    "description": "Regla de la asistencia diaria."
+  },
+  "rewardsAttendanceTitle": "Asistencia diaria",
+  "@rewardsAttendanceTitle": {
+    "description": "Título de la tarjeta de asistencia."
+  },
+  "rewardsAvailable": "Disponible",
+  "@rewardsAvailable": {
+    "description": "Etiqueta: la asistencia de hoy se puede marcar."
+  },
   "rewardsCheckIn": "Marcar asistencia",
   "rewardsCheckInNote": "Una vez por día UTC. Si omites un día, la racha se reinicia.",
+  "rewardsChipRate": "{cost} monedas = 1 pronóstico",
+  "@rewardsChipRate": {
+    "description": "Chip con el coste de desbloquear un pronóstico.",
+    "placeholders": {
+      "cost": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsChipStreak": "{days, plural, one{Racha de 1 día} other{Racha de {days} días}}",
+  "@rewardsChipStreak": {
+    "description": "Chip con la racha de asistencia vigente.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardsClaimCta": "Marcar asistencia · +{coins}",
+  "@rewardsClaimCta": {
+    "description": "Botón de la asistencia con las monedas de hoy.",
+    "placeholders": {
+      "coins": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsClaimed": "+{coins} monedas",
+  "@rewardsClaimed": {
+    "description": "Aviso tras reclamar la asistencia.",
+    "placeholders": {
+      "coins": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsClaimedToday": "Reclamada hoy",
+  "@rewardsClaimedToday": {
+    "description": "Etiqueta: la asistencia de hoy ya se marcó."
+  },
   "rewardsCodeCopied": "Código copiado.",
   "rewardsCodeRegistered": "Código de invitación registrado.",
+  "rewardsComingSoon": "Próximamente: {names}",
+  "@rewardsComingSoon": {
+    "description": "Proveedores de ofertas aún sin activar.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "rewardsCopy": "Copiar",
+  "@rewardsCopy": {
+    "description": "Botón corto para copiar el código de invitación."
+  },
   "rewardsCopyCode": "Copiar mi código · {code}",
   "@rewardsCopyCode": {
     "placeholders": {
@@ -997,12 +1062,34 @@
     }
   },
   "rewardsDebt": "Saldo pendiente por recompensas anuladas.",
+  "rewardsEarnTitle": "Gana monedas hoy",
+  "@rewardsEarnTitle": {
+    "description": "Encabezado de las formas de ganar monedas."
+  },
   "rewardsEnough": "Tienes monedas para un desbloqueo.",
   "rewardsGo": "Ir",
+  "rewardsInviteChip": "+{coins} para ti",
+  "@rewardsInviteChip": {
+    "description": "Premio de quien invita.",
+    "placeholders": {
+      "coins": {
+        "type": "Object"
+      }
+    }
+  },
   "rewardsInviteCondition": "Tras verificar el correo y completar {min} monedas en ofertas confirmadas.",
   "@rewardsInviteCondition": {
     "placeholders": {
       "min": {
+        "type": "Object"
+      }
+    }
+  },
+  "rewardsInviteFriend": "Tu amigo recibe +{coins} al registrar tu código",
+  "@rewardsInviteFriend": {
+    "description": "Premio del invitado.",
+    "placeholders": {
+      "coins": {
         "type": "Object"
       }
     }
@@ -1021,6 +1108,14 @@
   "rewardsInviteTitle": "Invita a tus amigos",
   "rewardsInviterCode": "Código de quien te invitó",
   "rewardsLedgerEmpty": "Todavía no hay movimientos.",
+  "rewardsLedgerLess": "Ver menos",
+  "@rewardsLedgerLess": {
+    "description": "Pliega los movimientos."
+  },
+  "rewardsLedgerMore": "Ver más",
+  "@rewardsLedgerMore": {
+    "description": "Despliega más movimientos."
+  },
   "rewardsLedgerTitle": "Mis movimientos",
   "rewardsMissing": "{missing, plural, one{Falta {missing} moneda para tu próximo desbloqueo.} other{Faltan {missing} monedas para tu próximo desbloqueo.}}",
   "@rewardsMissing": {
@@ -1032,9 +1127,26 @@
   },
   "rewardsMissingUnknown": "Faltan — monedas para tu próximo desbloqueo.",
   "rewardsMyCoins": "Mis monedas",
+  "rewardsNextIn": "Próxima asistencia en {time}",
+  "@rewardsNextIn": {
+    "description": "Cuenta atrás hasta poder marcar asistencia de nuevo.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "rewardsOfferAvailable": "Ofertas según tu país y dispositivo",
   "rewardsOfferPending": "Pendiente de activar",
   "rewardsOffersConfig": "Este proveedor todavía no está listo. Vuelve a intentarlo más tarde.",
+  "rewardsOffersCta": "Ver ofertas",
+  "@rewardsOffersCta": {
+    "description": "Botón que abre las ofertas del proveedor."
+  },
+  "rewardsOffersLead": "Completa ofertas y recibe monedas.",
+  "@rewardsOffersLead": {
+    "description": "Frase de la tarjeta de ofertas."
+  },
   "rewardsOffersLoadFailed": "No pudimos abrir las ofertas. Revisa tu conexión y vuelve a intentarlo.",
   "rewardsOffersTimeout": "Las ofertas tardaron demasiado en cargar. Vuelve a intentarlo.",
   "rewardsOffersTitle": "Ofertas para ganar monedas",
@@ -1062,6 +1174,10 @@
         "type": "int"
       }
     }
+  },
+  "rewardsTermsTitle": "Reglas y condiciones",
+  "@rewardsTermsTitle": {
+    "description": "Sección desplegable con los términos de las monedas."
   },
   "rewardsUnlockFor": "Desbloquea un pronóstico por {cost} monedas",
   "@rewardsUnlockFor": {
@@ -1194,6 +1310,18 @@
         "type": "String"
       }
     }
+  },
+  "shellNeedCoinsBody": "Gana monedas con la asistencia diaria y las ofertas para desbloquear este pronóstico.",
+  "@shellNeedCoinsBody": {
+    "description": "Explica cómo conseguir monedas."
+  },
+  "shellNeedCoinsCta": "Ganar monedas",
+  "@shellNeedCoinsCta": {
+    "description": "Botón que lleva a la pestaña Coins."
+  },
+  "shellNeedCoinsTitle": "Te faltan monedas",
+  "@shellNeedCoinsTitle": {
+    "description": "Título del aviso al intentar desbloquear sin saldo."
   },
   "shellNewAlert": "Nuevo aviso de QuantFut",
   "shellSignInForCoins": "Inicia sesión en Perfil para usar tus monedas.",
