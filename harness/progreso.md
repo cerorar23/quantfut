@@ -5462,3 +5462,16 @@ y :app:compileReleaseKotlin correcto. Se restauraron las cachés Pub/Maven que
 faltaban, con pub get --enforce-lockfile; pubspec y lock permanecen iguales.
 Se excluyen .venv-api, caché Kotlin y build Android; el informe HTML generado
 sale del índice, conservado en disco. No se instala APK ni se modifican claves.
+
+## 2026-10-13 — Un pronóstico gratis abre también los marcadores más probables del partido
+
+Pedido del titular (captura del detalle de Lens–Sporting): un pronóstico gratis debe ir completo. Hoy la fila del
+pronóstico, su dictamen y su cuota ya iban abiertos; lo único suyo que seguía con candado eran los «marcadores más
+probables». Alcance elegido por el titular: SOLO el pronóstico gratis completo; los demás mercados del partido
+(Resultado, Doble oportunidad…) siguen siendo VIP, que es el contenido de pago. Cambio solo de servidor
+(`partido_mercados.aplicar_acceso`): hay marcadores si el usuario es VIP o si tiene algún pronóstico abierto del
+partido (gratis o desbloqueado con monedas). Revierte la regla anterior «marcadores solo con VIP» (la prueba
+`test_locked_rows_reveal...` la fijaba y se actualizó; nueva prueba: sin pronóstico abierto ni VIP no hay marcadores).
+Verificado en producción: partidos con pronóstico abierto devuelven 5 marcadores sin ser VIP. Desplegado con respaldo
+`~/backups/marcadores-20261013` (vuelta atrás = imagen `quantfut-api-tapjoy:pre-marcadores-backup`). No hace falta
+APK nuevo: la app ya dibuja los marcadores cuando llegan.

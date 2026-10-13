@@ -160,7 +160,10 @@ def filas_estadisticas(corners: tuple[float, float] | None,
 def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
                    plus: bool) -> tuple[list[dict], list[dict] | None]:
     """
-    `abiertas` = picks que el usuario ya puede ver, por clave. Con VIP se ve todo.
+    `abiertas` = picks que el usuario ya puede ver, por clave. Con VIP se ve todo. Un partido
+    con un pronóstico abierto (gratis o desbloqueado) enseña además sus marcadores más
+    probables (decisión del titular, 2026-10-13): todo lo del pronóstico va abierto; los demás
+    mercados siguen siendo VIP.
     Las filas sin acceso salen con candado y SOLO su categoría: sin línea, selección,
     probabilidad, nivel ni cuota, y en orden canónico (el orden por probabilidad
     filtraría cuál es más probable). Las abiertas llevan la cuota publicada del pick.
@@ -179,7 +182,7 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
             cerradas.append({'id': f['id'], 'grupo': f['grupo'], 'locked': True})
     abiertas_f.sort(key=lambda f: -f['prob'])
     cerradas.sort(key=lambda f: GRUPOS.index(f['grupo']) if f['grupo'] in GRUPOS else len(GRUPOS))
-    return abiertas_f + cerradas, (marcadores if plus else None)
+    return abiertas_f + cerradas, (marcadores if plus or abiertas else None)
 
 
 # --- fuentes de lambdas ---------------------------------------------------------------------

@@ -57,7 +57,7 @@ def test_locked_rows_reveal_only_the_category_and_do_not_sort_by_probability(lis
     filas = filas + pm.filas_estadisticas((5.0, 3.8), (2.4, 2.0))
     abiertas = {pm.clave('totals', 'over', 1.5): {'ref_price': 1.19}}
     out, marc = pm.aplicar_acceso(filas, marcadores, abiertas, plus=False)
-    assert marc is None                                     # marcadores solo con VIP
+    assert marc == marcadores                               # el pronóstico abierto trae sus marcadores
     abierta = [f for f in out if not f['locked']]
     assert [f['id'] for f in abierta] == [pm.clave('totals', 'over', 1.5)]
     assert abierta[0]['cuota'] == 1.19 and abierta[0]['cuota_tipo'] == 'publicada'
@@ -67,6 +67,12 @@ def test_locked_rows_reveal_only_the_category_and_do_not_sort_by_probability(lis
         assert set(c) == {'id', 'grupo', 'locked'}          # nada más: ni línea, ni prob, ni cuota
     orden = [pm.GRUPOS.index(c['grupo']) for c in cerradas]
     assert orden == sorted(orden)                           # orden canónico, no por probabilidad
+
+
+def test_sin_pronostico_abierto_ni_vip_no_hay_marcadores(lista):
+    filas, marcadores = lista
+    out, marc = pm.aplicar_acceso(filas, marcadores, {}, plus=False)
+    assert marc is None and all(f['locked'] for f in out)
 
 
 def test_vip_sees_everything_and_marks_real_value_only_with_a_published_quote(lista):
