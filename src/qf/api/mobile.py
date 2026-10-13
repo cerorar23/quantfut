@@ -174,6 +174,12 @@ _HIGH_COLS = """a.match_id, m.league_id, m.kickoff_utc,
         b.batch_date,b.chain_sha256"""
 
 
+def visible_agenda(rows: list[dict]) -> list[dict]:
+    """Inicio solo enseña lo que está por jugarse o en juego: un partido terminado sale de la
+    agenda (decisión del titular, 2026-10-12) y queda en los registros históricos."""
+    return [m for m in rows if m.get('estado') != 'finished']
+
+
 def high_rows() -> list[dict]:
     # The full immutable batch, including matches already started, fixes the
     # public fraction. A source gate can pause delivery but not rewrite a seal.
@@ -304,7 +310,7 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
         start, end = fichas.ventana(fecha, tz, 2)
     except ValueError:
         raise HTTPException(422, 'Fecha inválida') from None
-    agenda = fichas._agenda(start, end, None) if flags['agenda']['enabled'] else []
+    agenda = visible_agenda(fichas._agenda(start, end, None)) if flags['agenda']['enabled'] else []
     if agenda and flags['estadisticas']['enabled']:
         probabilities = {r['match_id']: r['probabilities'] for r in query(
             "SELECT DISTINCT ON (match_id) match_id, markets->'1x2' AS probabilities "

@@ -311,6 +311,8 @@ class _ProductShellState extends State<ProductShell>
     final now = DateTime.now();
     final today = dateKey(selected) == dateKey(now);
     final rows = jsonRows(d['agenda']).where((m) {
+      // Un partido terminado ya no se enseña aquí: queda en los registros históricos.
+      if (m['estado'] == 'finished') return false;
       final ko = dateValue(m['kickoff_utc'])?.toLocal();
       final name =
           '${jsonMap(m['local'])['nombre']} ${jsonMap(m['visitante'])['nombre']} ${jsonMap(m['liga'])['nombre']}'

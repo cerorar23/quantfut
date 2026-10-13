@@ -20,6 +20,7 @@ class FixtureApi extends QuantFutApi {
   bool fail = false;
   bool richDetail = false;
   List<JsonMap> detailPicks = [];
+  List<JsonMap> extraAgenda = [];
   JsonMap? modelo, mercados;
   int homes = 0;
   final flags = {
@@ -61,6 +62,7 @@ class FixtureApi extends QuantFutApi {
           'liga': {'nombre': 'Liga de prueba'},
           'probabilities': {'home': .6, 'draw': .25, 'away': .15},
         },
+        ...extraAgenda,
       ],
       'alta_probabilidad': {
         'estado': 'activa',
@@ -259,6 +261,34 @@ void main() {
       await navigate(tester, label);
       expect(tester.takeException(), isNull);
     }
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('los partidos terminados no salen en Inicio, los de en juego sí', (
+    tester,
+  ) async {
+    JsonMap match(String home, String status, {List<int>? score}) => {
+      'match_id': home,
+      'kickoff_utc': DateTime.now()
+          .subtract(const Duration(hours: 1))
+          .toUtc()
+          .toIso8601String(),
+      'estado': status,
+      'marcador': score,
+      'local': {'nombre': home},
+      'visitante': {'nombre': 'Rival de $home'},
+      'liga': {'nombre': 'Liga de prueba'},
+    };
+    final api = FixtureApi()
+      ..extraAgenda = [
+        match('Terminado FC', 'finished', score: [5, 0]),
+        match('Directo FC', 'live'),
+      ];
+    await open(tester, ProductShell(api: api));
+    expect(find.text('Equipo A'), findsOneWidget); // por jugar
+    expect(find.text('Directo FC'), findsOneWidget); // en juego
+    expect(find.text('Terminado FC'), findsNothing);
+    expect(find.textContaining('Resultado: 5'), findsNothing);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

@@ -229,3 +229,11 @@ def test_market_card_for_sharp_leagues_is_labelled_and_coherent(monkeypatch):
         assert mobile.market_card('m1') is None
     monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: None)
     assert mobile.market_card('m1') is None
+
+
+def test_inicio_no_enseña_partidos_terminados():
+    """Un partido terminado sale de la agenda de Inicio (queda en los registros históricos)."""
+    agenda = [{'match_id': 'a', 'estado': 'scheduled'}, {'match_id': 'b', 'estado': 'live'},
+              {'match_id': 'c', 'estado': 'finished', 'marcador': [5, 0]},
+              {'match_id': 'd'}, {'match_id': 'e', 'estado': 'postponed'}]
+    assert [m['match_id'] for m in mobile.visible_agenda(agenda)] == ['a', 'b', 'd', 'e']

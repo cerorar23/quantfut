@@ -5270,3 +5270,15 @@ Tapjoy: según la documentación de Unity Grow, el SDK de Flutter solo muestra e
 (`TJPlacement.requestContent/showContent`); no hay forma documentada de pintar las ofertas una a una en
 la propia pantalla. Lo personalizable es la tarjeta de contenido del panel (moneda, icono, colores,
 tasa), Message to Earn y los placements contextuales.
+
+## 2026-10-12 — Inicio ya no enseña partidos terminados
+
+Pedido del titular: un partido que acaba sale de la app y queda en los registros históricos. Se filtra en
+el SERVIDOR (`visible_agenda` en `api/mobile.py`, solo la agenda de `/mobile/v1/home`) para que la app ya
+instalada lo tenga sin actualizarse, y otra vez en la app (`calendar()`), por si llega una agenda sin
+filtrar. Se quita todo `estado == 'finished'`; los de en juego y los por jugar siguen. La web y las demás
+rutas de fichas no cambian. Medido en producción antes/después con `fecha=2026-10-12`: 41 partidos (25
+terminados) → 16, todos por jugar. Consecuencia a vigilar: en un día pasado Inicio queda vacío, porque
+todos sus partidos ya terminaron; los resultados siguen en los pronósticos liquidados y en las
+estadísticas del partido. Desplegado con respaldo `~/backups/agenda-sin-terminados-20261012`
+(vuelta atrás = imagen `pre-agenda-backup`).
