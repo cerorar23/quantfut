@@ -252,3 +252,25 @@ def test_inicio_pide_una_semana_de_agenda(monkeypatch):
     with pytest.raises(mobile.HTTPException):
         mobile.home(Response(), '2026-10-13', 0, False, None)
     assert pedido['dias'] == mobile.DIAS_AGENDA == 7
+
+
+def test_detail_without_goals_model_lists_vip_picks_as_locks(delivery, monkeypatch):
+    monkeypatch.setattr(mobile.fichas, '_ficha', lambda mid: {
+        'partido': {}, 'local': {'id': 1, 'nombre': 'A'}, 'visitante': {'id': 2, 'nombre': 'B'},
+        'cara_a_cara': None, 'alineaciones': None, 'bajas': None, 'tabla': None})
+    monkeypatch.setattr(mobile.rewards, 'entitlements', lambda account: set())
+    monkeypatch.setattr(mobile, 'ladder', lambda *a, **k: {'actuales': []})
+    monkeypatch.setattr(mobile, 'live_score', lambda mid: None)
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: None)
+    monkeypatch.setattr(mobile, 'mercados_partido', lambda *a, **k: None)  # sin modelo de goles
+    vip = [{'match_id': 'm1', 'pick_key': 'k1', 'market': 'corners', 'locked': True},
+           {'match_id': 'm1', 'pick_key': 'k2', 'market': 'double_chance', 'locked': True}]
+    monkeypatch.setattr(mobile, 'high_probability',
+                        lambda *a, **k: {'proximos': [{'match_id': 'm1'}], 'vip': vip})
+    out = mobile.detail('m1', Response(), plus=False, account=None)
+    filas = out['ficha']['mercados']['filas']
+    assert [f['grupo'] for f in filas] == ['DOBLE OPORTUNIDAD', 'CÓRNERS'] and all(f['locked'] for f in filas)
+    assert out['ficha']['mercados']['sin_modelo'] is True and out['locked'] is True
+    assert set(filas[0]) == {'id', 'grupo', 'locked'}
+    out = mobile.detail('m1', Response(), plus=True, account=None)
+    assert out['ficha']['mercados'] is None

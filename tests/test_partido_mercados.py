@@ -107,3 +107,14 @@ def test_first_half_model_is_a_proper_distribution():
     p = m.probs(1.46, .72)
     assert p['ganador_1t_local'] + p['ganador_1t_empate'] + p['ganador_1t_visita'] == pytest.approx(1)
     assert 0 < p['ambos_1t_si'] < p['gol_1t_si'] < 1
+
+
+def test_sin_modelo_de_goles_los_vip_salen_solo_con_su_categoria():
+    vip = [{'match_id': 'm1', 'pick_key': 'k1', 'market': 'double_chance', 'prob': .9, 'price': 1.2},
+           {'match_id': 'm1', 'pick_key': 'k2', 'market': 'corners', 'selection': 'under'},
+           {'match_id': 'm1', 'pick_key': 'k3', 'market': 'raro'}]
+    out = pm.solo_candados(vip)
+    assert out['filas'] == [{'id': 'k1', 'grupo': 'DOBLE OPORTUNIDAD', 'locked': True},
+                            {'id': 'k2', 'grupo': 'CÓRNERS', 'locked': True}]
+    assert out['marcadores'] is None and out['sin_modelo'] is True and out['abiertas'] == 0
+    assert pm.solo_candados([{'market': 'raro'}]) is None and pm.solo_candados([]) is None

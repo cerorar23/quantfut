@@ -471,8 +471,9 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
     steps = ladder(plus,unlocks)
     picks = [p for p in high['proximos'] if p['match_id'] == match_id]
     picks += [p for r in steps['actuales'] for p in r['pasos'] if p['match_id'] == match_id and p['outcome'] is None]
-    blocked = any(p['match_id'] == match_id for p in high['vip']) or any(
-        p['match_id'] == match_id for r in steps['actuales'] for p in r['vip'])
+    vip_picks = [p for p in high['vip'] if p['match_id'] == match_id]
+    vip_picks += [p for r in steps['actuales'] for p in r['vip'] if p['match_id'] == match_id]
+    blocked = bool(vip_picks)
     if not flags['estadisticas']['enabled']:
         for side in ('local', 'visitante'):
             ficha[side] = {key: ficha[side].get(key) for key in ('id','nombre','escudo')}
@@ -486,6 +487,9 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
         ficha['probabilities'] = markets.get('1x2') if isinstance(markets, dict) else None
         ficha['modelo'] = ((model_card(markets) or market_card(match_id)) if picks else None)
         ficha['mercados'] = mercados_partido(match_id, ficha, picks, plus)
+        if ficha['mercados'] is None and blocked and not (plus and flags['vip']['enabled']):
+            # Sin modelo de goles: sus pronósticos VIP se avisan aparte del gratuito (solo categoría).
+            ficha['mercados'] = partido_mercados.solo_candados(vip_picks)
     if not flags['h2h']['enabled']:
         for key in ('cara_a_cara','alineaciones','bajas'):
             ficha[key] = None

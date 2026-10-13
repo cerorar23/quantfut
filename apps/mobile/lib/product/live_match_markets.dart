@@ -83,7 +83,8 @@ class MatchMarkets extends StatelessWidget {
         ],
         const SizedBox(height: 8),
         liveText(l10n.mmDisclaimer, size: 10, color: liveMuted),
-        if (scores != null || locked.isNotEmpty) ...[
+        // Sin modelo de goles (`sin_modelo`) no hay marcadores que prometer ni a un VIP.
+        if (data['sin_modelo'] != true && (scores != null || locked.isNotEmpty)) ...[
           const SizedBox(height: 16),
           liveText(l10n.mmScoresTitle, size: 14, bold: true),
           const SizedBox(height: 10),

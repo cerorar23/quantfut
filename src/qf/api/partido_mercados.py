@@ -157,6 +157,28 @@ def filas_estadisticas(corners: tuple[float, float] | None,
     return filas
 
 
+GRUPO_DE_MERCADO = {'h2h': 'RESULTADO', 'double_chance': 'DOBLE OPORTUNIDAD', 'totals': 'GOLES',
+                    'team_totals_home': 'GOLES DE EQUIPO', 'team_totals_away': 'GOLES DE EQUIPO',
+                    'btts': 'AMBOS MARCAN', 'spreads': 'HÁNDICAP', 'win_to_nil': 'ESPECIALES',
+                    'ht_btts': '1ª MITAD', 'ht_goal': '1ª MITAD', 'corners': 'CÓRNERS',
+                    'corners_home': 'CÓRNERS', 'corners_away': 'CÓRNERS', 'cards': 'TARJETAS'}
+
+
+def solo_candados(bloqueados: list[dict]) -> dict | None:
+    """
+    Partido sin modelo de goles (no hay lista completa que construir) pero con pronósticos VIP
+    reales: se avisan SOLO con su categoría, igual que los candados de `aplicar_acceso`. Sin
+    marcadores (no hay modelo que los calcule) y marcado `sin_modelo` para que la app no
+    prometa lo que ni un VIP vería.
+    """
+    filas = [{'id': str(p.get('pick_key') or p.get('match_id')), 'grupo': GRUPO_DE_MERCADO[p['market']],
+              'locked': True} for p in bloqueados if p.get('market') in GRUPO_DE_MERCADO]
+    if not filas:
+        return None
+    filas.sort(key=lambda f: GRUPOS.index(f['grupo']))
+    return {'filas': filas, 'marcadores': None, 'abiertas': 0, 'total': len(filas), 'sin_modelo': True}
+
+
 def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
                    plus: bool) -> tuple[list[dict], list[dict] | None]:
     """
