@@ -541,11 +541,94 @@ class AppLocalizationsDe extends AppLocalizations {
   String get inboxTitle => 'Hinweise';
 
   @override
+  String ladderActiveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Challenges laufen',
+      one: '1 Challenge läuft',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderBalance => 'aktuelles Guthaben';
+
+  @override
+  String get ladderChance => 'bis zum Abschluss';
+
+  @override
   String get ladderEmpty => 'Es sind keine aktiven Challenges veröffentlicht.';
+
+  @override
+  String ladderEstimateNote(String avg) {
+    return 'Schätzung: nutzt die Wahrscheinlichkeit der laufenden Stufe und den Durchschnitt der übrigen ($avg). Keine Garantie.';
+  }
 
   @override
   String get ladderFreeHint =>
       'Eine kostenlose Stufe: die mit der höchsten Wahrscheinlichkeit.';
+
+  @override
+  String get ladderHideSteps => 'Stufen ausblenden';
+
+  @override
+  String get ladderHistoryDone => 'Geschafft';
+
+  @override
+  String get ladderHistoryEmpty =>
+      'Noch keine beendeten Challenges. Sobald eine endet, erscheint sie hier mit ihrem Ergebnis.';
+
+  @override
+  String ladderHistoryFailedAt(int step) {
+    return 'Gescheitert an Stufe $step';
+  }
+
+  @override
+  String ladderHistoryRate(String rate) {
+    return 'Erfolgsquote: $rate';
+  }
+
+  @override
+  String ladderHistoryResult(String roi) {
+    return 'Gesamtergebnis: $roi';
+  }
+
+  @override
+  String ladderHistorySummary(int done, int closed) {
+    return '$done geschafft von $closed beendeten';
+  }
+
+  @override
+  String get ladderHistoryTitle => 'Challenge-Verlauf';
+
+  @override
+  String get ladderNoteInPlay =>
+      'Eine Stufe wartet auf ihr Ergebnis. Die Challenge läuft weiter.';
+
+  @override
+  String get ladderNoteToPick =>
+      'Die nächste Stufe steht noch aus; das kann Tage dauern. Die Challenge läuft weiter.';
+
+  @override
+  String ladderRemaining(int remaining) {
+    String _temp0 = intl.Intl.pluralLogic(
+      remaining,
+      locale: localeName,
+      other: 'noch $remaining',
+      one: 'noch 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderShowSteps => 'Stufen anzeigen';
+
+  @override
+  String get ladderStatusInPlay => 'Läuft';
+
+  @override
+  String get ladderStatusToPick => 'Auswahl offen';
 
   @override
   String ladderTitle(Object id, int steps) {
@@ -556,6 +639,11 @@ class AppLocalizationsDe extends AppLocalizations {
       one: '$steps Stufe',
     );
     return 'Challenge #$id · $_temp0';
+  }
+
+  @override
+  String ladderWonOf(int won, int goal) {
+    return '$won von $goal gewonnen';
   }
 
   @override

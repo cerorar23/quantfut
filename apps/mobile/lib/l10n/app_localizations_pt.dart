@@ -542,10 +542,93 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inboxTitle => 'Avisos';
 
   @override
+  String ladderActiveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count desafios em andamento',
+      one: '1 desafio em andamento',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderBalance => 'saldo atual';
+
+  @override
+  String get ladderChance => 'de concluir';
+
+  @override
   String get ladderEmpty => 'Não há desafios ativos publicados.';
 
   @override
+  String ladderEstimateNote(String avg) {
+    return 'Estimativa: usa a probabilidade do degrau em jogo e a média dos demais ($avg). Não é garantia.';
+  }
+
+  @override
   String get ladderFreeHint => 'Um degrau grátis: o de maior probabilidade.';
+
+  @override
+  String get ladderHideSteps => 'Ocultar degraus';
+
+  @override
+  String get ladderHistoryDone => 'Concluído';
+
+  @override
+  String get ladderHistoryEmpty =>
+      'Ainda não há desafios encerrados. Quando um terminar, aparecerá aqui com o resultado.';
+
+  @override
+  String ladderHistoryFailedAt(int step) {
+    return 'Falhou no degrau $step';
+  }
+
+  @override
+  String ladderHistoryRate(String rate) {
+    return 'Taxa de concluídos: $rate';
+  }
+
+  @override
+  String ladderHistoryResult(String roi) {
+    return 'Resultado acumulado: $roi';
+  }
+
+  @override
+  String ladderHistorySummary(int done, int closed) {
+    return '$done concluídos de $closed encerrados';
+  }
+
+  @override
+  String get ladderHistoryTitle => 'Histórico de desafios';
+
+  @override
+  String get ladderNoteInPlay =>
+      'Há um degrau aguardando resultado. O desafio continua vivo.';
+
+  @override
+  String get ladderNoteToPick =>
+      'Falta escolher o próximo degrau; pode levar dias. O desafio continua vivo.';
+
+  @override
+  String ladderRemaining(int remaining) {
+    String _temp0 = intl.Intl.pluralLogic(
+      remaining,
+      locale: localeName,
+      other: 'faltam $remaining',
+      one: 'falta 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderShowSteps => 'Ver degraus';
+
+  @override
+  String get ladderStatusInPlay => 'Em jogo';
+
+  @override
+  String get ladderStatusToPick => 'A escolher';
 
   @override
   String ladderTitle(Object id, int steps) {
@@ -556,6 +639,11 @@ class AppLocalizationsPt extends AppLocalizations {
       one: '$steps degrau',
     );
     return 'Desafio #$id · $_temp0';
+  }
+
+  @override
+  String ladderWonOf(int won, int goal) {
+    return '$won de $goal ganhos';
   }
 
   @override

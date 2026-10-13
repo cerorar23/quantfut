@@ -1048,11 +1048,35 @@ abstract class AppLocalizations {
   /// **'Avisos'**
   String get inboxTitle;
 
+  /// Resumen sobre las tarjetas del Reto Escalera.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 reto en marcha} other{{count} retos en marcha}}'**
+  String ladderActiveCount(int count);
+
+  /// Etiqueta bajo el multiplicador del saldo del reto.
+  ///
+  /// In es, this message translates to:
+  /// **'saldo actual'**
+  String get ladderBalance;
+
+  /// Etiqueta bajo la probabilidad estimada de completar el reto.
+  ///
+  /// In es, this message translates to:
+  /// **'de completarlo'**
+  String get ladderChance;
+
   /// No description provided for @ladderEmpty.
   ///
   /// In es, this message translates to:
   /// **'No hay retos activos publicados.'**
   String get ladderEmpty;
+
+  /// Aviso de que la probabilidad de completar es una estimación.
+  ///
+  /// In es, this message translates to:
+  /// **'Estimación: usa la probabilidad del escalón en juego y la media de los demás ({avg}). No es una garantía.'**
+  String ladderEstimateNote(String avg);
 
   /// No description provided for @ladderFreeHint.
   ///
@@ -1060,11 +1084,101 @@ abstract class AppLocalizations {
   /// **'Un escalón gratuito: el de mayor probabilidad.'**
   String get ladderFreeHint;
 
+  /// Pliega los escalones de un reto.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar escalones'**
+  String get ladderHideSteps;
+
+  /// Un reto cerrado con todos los escalones ganados.
+  ///
+  /// In es, this message translates to:
+  /// **'Cumplido'**
+  String get ladderHistoryDone;
+
+  /// Estado vacío del historial de retos.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay retos cerrados. Cuando uno termine, aparecerá aquí con su resultado.'**
+  String get ladderHistoryEmpty;
+
+  /// Un reto cerrado por perder un escalón.
+  ///
+  /// In es, this message translates to:
+  /// **'Falló en el escalón {step}'**
+  String ladderHistoryFailedAt(int step);
+
+  /// Porcentaje de retos cerrados que se cumplieron.
+  ///
+  /// In es, this message translates to:
+  /// **'Tasa de cumplidos: {rate}'**
+  String ladderHistoryRate(String rate);
+
+  /// Retorno acumulado sobre lo invertido en los retos cerrados.
+  ///
+  /// In es, this message translates to:
+  /// **'Resultado acumulado: {roi}'**
+  String ladderHistoryResult(String roi);
+
+  /// Resumen del historial de retos.
+  ///
+  /// In es, this message translates to:
+  /// **'{done} cumplidos de {closed} cerrados'**
+  String ladderHistorySummary(int done, int closed);
+
+  /// Título de la tarjeta de retos cerrados.
+  ///
+  /// In es, this message translates to:
+  /// **'Historial de retos'**
+  String get ladderHistoryTitle;
+
+  /// Explica que un reto con un escalón en juego sigue activo.
+  ///
+  /// In es, this message translates to:
+  /// **'Hay un escalón esperando resultado. El reto sigue vivo.'**
+  String get ladderNoteInPlay;
+
+  /// Explica que a un reto le falta elegir el siguiente escalón y sigue activo.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta elegir el siguiente escalón; puede tardar días. El reto sigue vivo.'**
+  String get ladderNoteToPick;
+
+  /// Escalones que faltan para cerrar el reto.
+  ///
+  /// In es, this message translates to:
+  /// **'{remaining, plural, one{falta 1} other{faltan {remaining}}}'**
+  String ladderRemaining(int remaining);
+
+  /// Despliega los escalones de un reto.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver escalones'**
+  String get ladderShowSteps;
+
+  /// Estado de un reto con un escalón esperando resultado.
+  ///
+  /// In es, this message translates to:
+  /// **'En juego'**
+  String get ladderStatusInPlay;
+
+  /// Estado de un reto al que le falta elegir el siguiente escalón.
+  ///
+  /// In es, this message translates to:
+  /// **'Por elegir'**
+  String get ladderStatusToPick;
+
   /// No description provided for @ladderTitle.
   ///
   /// In es, this message translates to:
   /// **'Reto #{id} · {steps, plural, one{{steps} escalón} other{{steps} escalones}}'**
   String ladderTitle(Object id, int steps);
+
+  /// Avance de un reto.
+  ///
+  /// In es, this message translates to:
+  /// **'{won} de {goal} ganados'**
+  String ladderWonOf(int won, int goal);
 
   /// Etiqueta de la pantalla inicial de elección de idioma (se muestra en mayúsculas).
   ///

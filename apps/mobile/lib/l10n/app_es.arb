@@ -271,8 +271,118 @@
   "inboxEmpty": "Todavía no tienes avisos.",
   "inboxMatch": "Partido",
   "inboxTitle": "Avisos",
+  "ladderActiveCount": "{count, plural, one{1 reto en marcha} other{{count} retos en marcha}}",
+  "@ladderActiveCount": {
+    "description": "Resumen sobre las tarjetas del Reto Escalera.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ladderBalance": "saldo actual",
+  "@ladderBalance": {
+    "description": "Etiqueta bajo el multiplicador del saldo del reto."
+  },
+  "ladderChance": "de completarlo",
+  "@ladderChance": {
+    "description": "Etiqueta bajo la probabilidad estimada de completar el reto."
+  },
   "ladderEmpty": "No hay retos activos publicados.",
+  "ladderEstimateNote": "Estimación: usa la probabilidad del escalón en juego y la media de los demás ({avg}). No es una garantía.",
+  "@ladderEstimateNote": {
+    "description": "Aviso de que la probabilidad de completar es una estimación.",
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      }
+    }
+  },
   "ladderFreeHint": "Un escalón gratuito: el de mayor probabilidad.",
+  "ladderHideSteps": "Ocultar escalones",
+  "@ladderHideSteps": {
+    "description": "Pliega los escalones de un reto."
+  },
+  "ladderHistoryDone": "Cumplido",
+  "@ladderHistoryDone": {
+    "description": "Un reto cerrado con todos los escalones ganados."
+  },
+  "ladderHistoryEmpty": "Aún no hay retos cerrados. Cuando uno termine, aparecerá aquí con su resultado.",
+  "@ladderHistoryEmpty": {
+    "description": "Estado vacío del historial de retos."
+  },
+  "ladderHistoryFailedAt": "Falló en el escalón {step}",
+  "@ladderHistoryFailedAt": {
+    "description": "Un reto cerrado por perder un escalón.",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "ladderHistoryRate": "Tasa de cumplidos: {rate}",
+  "@ladderHistoryRate": {
+    "description": "Porcentaje de retos cerrados que se cumplieron.",
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "ladderHistoryResult": "Resultado acumulado: {roi}",
+  "@ladderHistoryResult": {
+    "description": "Retorno acumulado sobre lo invertido en los retos cerrados.",
+    "placeholders": {
+      "roi": {
+        "type": "String"
+      }
+    }
+  },
+  "ladderHistorySummary": "{done} cumplidos de {closed} cerrados",
+  "@ladderHistorySummary": {
+    "description": "Resumen del historial de retos.",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "closed": {
+        "type": "int"
+      }
+    }
+  },
+  "ladderHistoryTitle": "Historial de retos",
+  "@ladderHistoryTitle": {
+    "description": "Título de la tarjeta de retos cerrados."
+  },
+  "ladderNoteInPlay": "Hay un escalón esperando resultado. El reto sigue vivo.",
+  "@ladderNoteInPlay": {
+    "description": "Explica que un reto con un escalón en juego sigue activo."
+  },
+  "ladderNoteToPick": "Falta elegir el siguiente escalón; puede tardar días. El reto sigue vivo.",
+  "@ladderNoteToPick": {
+    "description": "Explica que a un reto le falta elegir el siguiente escalón y sigue activo."
+  },
+  "ladderRemaining": "{remaining, plural, one{falta 1} other{faltan {remaining}}}",
+  "@ladderRemaining": {
+    "description": "Escalones que faltan para cerrar el reto.",
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "ladderShowSteps": "Ver escalones",
+  "@ladderShowSteps": {
+    "description": "Despliega los escalones de un reto."
+  },
+  "ladderStatusInPlay": "En juego",
+  "@ladderStatusInPlay": {
+    "description": "Estado de un reto con un escalón esperando resultado."
+  },
+  "ladderStatusToPick": "Por elegir",
+  "@ladderStatusToPick": {
+    "description": "Estado de un reto al que le falta elegir el siguiente escalón."
+  },
   "ladderTitle": "Reto #{id} · {steps, plural, one{{steps} escalón} other{{steps} escalones}}",
   "@ladderTitle": {
     "placeholders": {
@@ -280,6 +390,18 @@
         "type": "Object"
       },
       "steps": {
+        "type": "int"
+      }
+    }
+  },
+  "ladderWonOf": "{won} de {goal} ganados",
+  "@ladderWonOf": {
+    "description": "Avance de un reto.",
+    "placeholders": {
+      "won": {
+        "type": "int"
+      },
+      "goal": {
         "type": "int"
       }
     }

@@ -543,11 +543,94 @@ class AppLocalizationsIt extends AppLocalizations {
   String get inboxTitle => 'Avvisi';
 
   @override
+  String ladderActiveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sfide in corso',
+      one: '1 sfida in corso',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderBalance => 'saldo attuale';
+
+  @override
+  String get ladderChance => 'di completarlo';
+
+  @override
   String get ladderEmpty => 'Non ci sono sfide attive pubblicate.';
+
+  @override
+  String ladderEstimateNote(String avg) {
+    return 'Stima: usa la probabilità del gradino in gioco e la media degli altri ($avg). Non è una garanzia.';
+  }
 
   @override
   String get ladderFreeHint =>
       'Un gradino gratuito: quello a maggiore probabilità.';
+
+  @override
+  String get ladderHideSteps => 'Nascondi i gradini';
+
+  @override
+  String get ladderHistoryDone => 'Completata';
+
+  @override
+  String get ladderHistoryEmpty =>
+      'Non ci sono ancora sfide chiuse. Quando una finisce, comparirà qui con il suo risultato.';
+
+  @override
+  String ladderHistoryFailedAt(int step) {
+    return 'Fallita al gradino $step';
+  }
+
+  @override
+  String ladderHistoryRate(String rate) {
+    return 'Tasso di completamento: $rate';
+  }
+
+  @override
+  String ladderHistoryResult(String roi) {
+    return 'Risultato cumulato: $roi';
+  }
+
+  @override
+  String ladderHistorySummary(int done, int closed) {
+    return '$done completate su $closed chiuse';
+  }
+
+  @override
+  String get ladderHistoryTitle => 'Storico delle sfide';
+
+  @override
+  String get ladderNoteInPlay =>
+      'Un gradino attende il risultato. La sfida è ancora viva.';
+
+  @override
+  String get ladderNoteToPick =>
+      'Manca da scegliere il prossimo gradino; può richiedere giorni. La sfida è ancora viva.';
+
+  @override
+  String ladderRemaining(int remaining) {
+    String _temp0 = intl.Intl.pluralLogic(
+      remaining,
+      locale: localeName,
+      other: 'ne mancano $remaining',
+      one: 'ne manca 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderShowSteps => 'Mostra i gradini';
+
+  @override
+  String get ladderStatusInPlay => 'In gioco';
+
+  @override
+  String get ladderStatusToPick => 'Da scegliere';
 
   @override
   String ladderTitle(Object id, int steps) {
@@ -558,6 +641,11 @@ class AppLocalizationsIt extends AppLocalizations {
       one: '$steps gradino',
     );
     return 'Sfida #$id · $_temp0';
+  }
+
+  @override
+  String ladderWonOf(int won, int goal) {
+    return '$won su $goal vinti';
   }
 
   @override

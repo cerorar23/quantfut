@@ -5213,3 +5213,20 @@ VIP ya leia el rango del servidor. El texto del apartado (`picksRangeHint`) ahor
 del servidor en vez de tenerlo escrito en 6 idiomas. Desplegado con respaldo
 `~/backups/alta-73-20261012` (vuelta atras = imagen `pre-alta73-backup`); la app instalada filtra
 bien sin APK nuevo, pero su texto dira «62-95 %» hasta actualizarla.
+
+## 2026-10-12 — Reto Escalera rediseñado (tarjetas de avance)
+
+Pedido del titular: diseño ergonómico, % de avance, cuánto falta, si el reto sigue vivo, probabilidad
+de cumplirse e historial. Una tarjeta por reto (`lib/product/live_ladder.dart`): anillo de avance,
+barra con un tramo por escalón (verde ganado, ámbar en juego), estado «En juego» / «Por elegir»,
+probabilidad estimada, saldo como MULTIPLICADOR (×1,56, decisión del titular: sin cantidades) y
+escalones liquidados plegados. Orden: primero el que tiene un escalón en juego, luego el más avanzado.
+Historial: tarjeta pequeña con cumplidos Y fallidos (decisión del titular, por honestidad de la tasa);
+hoy está vacío (0 retos cerrados) y muestra un estado vacío.
+La probabilidad es una ESTIMACIÓN (`ladder_progress.dart`): escalón en juego (si es visible) × la media
+de probabilidad de los escalones liquidados elevada a los que faltan; la media viene del servidor
+(`escalones.prob_media`, 79,1 % con 9 escalones) y solo se usa con ≥5 escalones, si no se asume el 73 %
+medido en `publish/escalera.py`. La tarjeta lo dice («Estimación … No es una garantía»). Todo sale de
+datos que el servidor ya entrega: sin cambios de backend ni despliegue. Referencias sin copiar código:
+SandroMaglione/step-progress-indicator (MIT), JHBitencourt/timeline_tile (MIT), flutter_percent_indicator
+(BSD-2); `InlitX/streak` es GPL-3.0 y se descartó.

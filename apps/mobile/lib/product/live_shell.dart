@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import '../core/firebase_services.dart';
 import '../l10n/app_locale.dart';
 
+import 'ladder_progress.dart';
 import 'live_api.dart';
+import 'live_ladder.dart';
 import 'live_markets.dart';
 import 'live_parley.dart';
 import 'live_widgets.dart';
@@ -261,55 +263,38 @@ class _ProductShellState extends State<ProductShell>
       return training(featureMessage(d, 'escalera'));
     }
     final report = jsonMap(d['escalera']);
-    final rows = jsonRows(report['actuales']);
+    final rows = sortLadder(jsonRows(report['actuales']));
+    final average = LadderProgress.averageProbability(
+      jsonMap(report['escalones']),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         liveText(context.l10n.ladderFreeHint, color: liveMuted, size: 12),
         const SizedBox(height: 12),
-        if (rows.isEmpty) training(context.l10n.ladderEmpty),
-        ...rows.map(
-          (r) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              liveHeading(
-                context.l10n.ladderTitle(
-                  r['reto_id'] ?? '—',
-                  (r['pasos_objetivo'] as num?)?.toInt() ?? 0,
-                ),
-              ),
-              ...jsonRows(r['pasos'])
-                  .where((p) => p['outcome'] != null)
-                  .map(
-                    (p) => liveCard(
-                      child: Row(
-                        children: [
-                          Icon(
-                            p['outcome'] == 'win'
-                                ? Icons.check_circle
-                                : Icons.cancel_outlined,
-                            color: p['outcome'] == 'win'
-                                ? liveGreen
-                                : liveMuted,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: liveText(
-                              '${p['local']} · ${p['visitante']}\n${p['texto']} · ${{'win': context.l10n.outcomeWin, 'loss': context.l10n.outcomeLoss, 'push': context.l10n.outcomePush}[p['outcome']] ?? p['outcome']}\n${p['marcador'] ?? ''}',
-                              size: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ...[
+        if (rows.isEmpty)
+          training(context.l10n.ladderEmpty)
+        else
+          liveText(
+            context.l10n.ladderActiveCount(rows.length),
+            bold: true,
+            size: 15,
+          ),
+        if (rows.isNotEmpty) const SizedBox(height: 10),
+        for (final r in rows)
+          LadderChallengeCard(
+            key: ValueKey('ladder-${r['reto_id']}'),
+            challenge: r,
+            averageProbability: average,
+            pending: [
+              for (final p in [
                 ...jsonRows(r['pasos']).where((p) => p['outcome'] == null),
                 ...jsonRows(r['vip']),
-              ].map((p) => pickCard({...p, '_stream': 'escalera'}, d)),
+              ])
+                pickCard({...p, '_stream': 'escalera'}, d),
             ],
           ),
-        ),
+        LadderHistoryCard(report: report),
       ],
     );
   }

@@ -542,11 +542,94 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inboxTitle => 'Alertes';
 
   @override
+  String ladderActiveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count défis en cours',
+      one: '1 défi en cours',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderBalance => 'solde actuel';
+
+  @override
+  String get ladderChance => 'de le terminer';
+
+  @override
   String get ladderEmpty => 'Aucun défi actif publié.';
+
+  @override
+  String ladderEstimateNote(String avg) {
+    return 'Estimation : probabilité du palier en cours et moyenne des autres ($avg). Ce n\'est pas une garantie.';
+  }
 
   @override
   String get ladderFreeHint =>
       'Un palier gratuit : celui de plus forte probabilité.';
+
+  @override
+  String get ladderHideSteps => 'Masquer les paliers';
+
+  @override
+  String get ladderHistoryDone => 'Réussi';
+
+  @override
+  String get ladderHistoryEmpty =>
+      'Aucun défi n\'est encore clos. Quand l\'un se termine, il apparaît ici avec son résultat.';
+
+  @override
+  String ladderHistoryFailedAt(int step) {
+    return 'Échec au palier $step';
+  }
+
+  @override
+  String ladderHistoryRate(String rate) {
+    return 'Taux de réussite : $rate';
+  }
+
+  @override
+  String ladderHistoryResult(String roi) {
+    return 'Résultat cumulé : $roi';
+  }
+
+  @override
+  String ladderHistorySummary(int done, int closed) {
+    return '$done réussis sur $closed clos';
+  }
+
+  @override
+  String get ladderHistoryTitle => 'Historique des défis';
+
+  @override
+  String get ladderNoteInPlay =>
+      'Un palier attend son résultat. Le défi est toujours en cours.';
+
+  @override
+  String get ladderNoteToPick =>
+      'Le prochain palier reste à choisir ; cela peut prendre des jours. Le défi est toujours en cours.';
+
+  @override
+  String ladderRemaining(int remaining) {
+    String _temp0 = intl.Intl.pluralLogic(
+      remaining,
+      locale: localeName,
+      other: 'il en reste $remaining',
+      one: 'il en reste 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ladderShowSteps => 'Voir les paliers';
+
+  @override
+  String get ladderStatusInPlay => 'En jeu';
+
+  @override
+  String get ladderStatusToPick => 'À choisir';
 
   @override
   String ladderTitle(Object id, int steps) {
@@ -557,6 +640,11 @@ class AppLocalizationsFr extends AppLocalizations {
       one: '$steps palier',
     );
     return 'Défi n° $id · $_temp0';
+  }
+
+  @override
+  String ladderWonOf(int won, int goal) {
+    return '$won sur $goal gagnés';
   }
 
   @override
