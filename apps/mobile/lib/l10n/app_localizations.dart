@@ -1504,6 +1504,18 @@ abstract class AppLocalizations {
   /// **'Partidos por fecha y horario'**
   String get homeByDate;
 
+  /// Aviso de un partido cuyo pronóstico aún no se calcula: se calcula el mismo día a las 05:00 de México.
+  ///
+  /// In es, this message translates to:
+  /// **'Pronóstico el {when} ({mexico} en México)'**
+  String homeForecastAt(String when, String mexico);
+
+  /// Etiqueta accesible del candado de un partido sin pronóstico todavía.
+  ///
+  /// In es, this message translates to:
+  /// **'Pronóstico pendiente'**
+  String get homeForecastPending;
+
   /// Botón que abre el menú Más.
   ///
   /// In es, this message translates to:

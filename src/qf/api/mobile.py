@@ -20,7 +20,7 @@ from ..comercial import suscripciones
 from ..comercial.auditoria import audit
 from ..db import conn, query, query_one
 from ..config import settings
-from ..publish import alta_prob_datos, alta_prob_ext, escalera_datos
+from ..publish import alta_prob_datos, alta_prob_ext, escalera_datos, ventana
 
 router = APIRouter(tags=["mobile"])
 _bearer = HTTPBearer(auto_error=False)
@@ -320,11 +320,27 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
             ([r['match_id'] for r in agenda],))}
         for row in agenda:
             row['probabilities'] = probabilities.get(row['match_id'])
+    for row in agenda:
+        row['pronostico_desde'] = pronostico_desde(row.get('kickoff_utc'))
     unlocks = rewards.entitlements(account)
     return {'config': cfg, 'plus': plus, 'agenda': agenda,
             'alta_probabilidad': high_probability(plus,unlocks), 'escalera': ladder(plus,unlocks),
             'rewards': rewards.public_settings(),
             'plans': suscripciones.plans(only_active=True) if flags['vip']['enabled'] else []}
+
+
+def pronostico_desde(kickoff) -> str | None:
+    """Cuándo se calcula el pronóstico del partido (03:00 de México de su día): ver `ventana`."""
+    if isinstance(kickoff, str):
+        try:
+            kickoff = datetime.fromisoformat(kickoff.replace('Z', '+00:00'))
+        except ValueError:
+            return None
+    if not isinstance(kickoff, datetime):
+        return None
+    if kickoff.tzinfo is None:
+        kickoff = kickoff.replace(tzinfo=timezone.utc)
+    return ventana.desbloqueo(kickoff).isoformat()
 
 
 def market_card(match_id: str) -> dict | None:

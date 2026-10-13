@@ -813,6 +813,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeByDate => 'Partite per data e orario';
 
   @override
+  String homeForecastAt(String when, String mexico) {
+    return 'Pronostico il $when ($mexico ora del Messico)';
+  }
+
+  @override
+  String get homeForecastPending => 'Pronostico in attesa';
+
+  @override
   String get homeMenuTooltip => 'Menu';
 
   @override

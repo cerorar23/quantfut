@@ -631,6 +631,22 @@
     "description": "Cierra el aviso de la parte superior."
   },
   "homeByDate": "Partidos por fecha y horario",
+  "homeForecastAt": "Pronóstico el {when} ({mexico} en México)",
+  "@homeForecastAt": {
+    "description": "Aviso de un partido cuyo pronóstico aún no se calcula: se calcula el mismo día a las 05:00 de México.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      },
+      "mexico": {
+        "type": "String"
+      }
+    }
+  },
+  "homeForecastPending": "Pronóstico pendiente",
+  "@homeForecastPending": {
+    "description": "Etiqueta accesible del candado de un partido sin pronóstico todavía."
+  },
   "homeMenuTooltip": "Menú",
   "@homeMenuTooltip": {
     "description": "Botón que abre el menú Más."

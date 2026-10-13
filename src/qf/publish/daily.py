@@ -10,7 +10,7 @@ Orden ESTRICTO, no negociable:
 Si publicas antes de sellar, el hash deja de probar nada. Si el paso 3 falla,
 el 4 no se ejecuta: mejor no publicar hoy que publicar sin prueba.
 
-Cron sugerido: 08:00 hora local, antes del primer kickoff europeo.
+Cron: 03:00 hora de México (09:00 UTC); ver `ventana` para qué partidos entran.
 """
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ from . import escalera_datos
 from . import parley_datos
 from . import picks as pk
 from . import telegram as tg
+from . import ventana
 from .hashchain import seal
 
 log = logging.getLogger(__name__)
@@ -45,7 +46,9 @@ def _shadow_gate_allows_publication() -> tuple[bool, list[str]]:
         return False, ["Puerta de CLV no disponible"]
 
 
-def _upcoming(hours: int = 36) -> list[dict]:
+def _upcoming(hasta: datetime | None = None) -> list[dict]:
+    """Partidos de la corrida de hoy (03:00 de México): ver `ventana`."""
+    hasta = hasta or ventana.fin_ventana(datetime.now(timezone.utc))
     return query(
         """SELECT m.match_id, m.league_id, m.kickoff_utc,
                   m.home_team_id, m.away_team_id,
@@ -73,19 +76,20 @@ def _upcoming(hours: int = 36) -> list[dict]:
            JOIN leagues lh ON lh.league_id = th.league_id AND lh.model_enabled
            JOIN leagues la ON la.league_id = ta.league_id AND la.model_enabled
            WHERE m.status = 'scheduled'
-             AND m.kickoff_utc BETWEEN now() AND now() + make_interval(hours => %s)
+             AND m.kickoff_utc BETWEEN now() AND %s
            ORDER BY m.kickoff_utc""",
-        (hours,),
+        (hasta,),
     )
 
 
-def _sharp_only_upcoming(hours: int = 36) -> list[dict]:
+def _sharp_only_upcoming(hasta: datetime | None = None) -> list[dict]:
     """
     Partidos de ligas "solo sharp" (db/023): entran en la selección de picks
     SIN predicción, porque el criterio de precio no la necesita y el modelo no
     conoce a sus equipos. No se predicen ni se sella ninguna predicción suya.
     Misma forma que una predicción para `picks.select_daily`.
     """
+    hasta = hasta or ventana.fin_ventana(datetime.now(timezone.utc))
     rows = query(
         """SELECT m.match_id, m.league_id, m.kickoff_utc,
                   th.canonical_name AS home_team, ta.canonical_name AS away_team
@@ -95,9 +99,9 @@ def _sharp_only_upcoming(hours: int = 36) -> list[dict]:
            JOIN leagues lg ON lg.league_id = m.league_id
                           AND lg.active AND NOT lg.model_enabled
            WHERE m.status = 'scheduled'
-             AND m.kickoff_utc BETWEEN now() AND now() + make_interval(hours => %s)
+             AND m.kickoff_utc BETWEEN now() AND %s
            ORDER BY m.kickoff_utc""",
-        (hours,),
+        (hasta,),
     )
     return [{"prediction_id": None, "match_id": r["match_id"], "markets": {},
              "kickoff_utc": r["kickoff_utc"], "league_id": r["league_id"],

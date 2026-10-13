@@ -812,6 +812,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get homeByDate => 'Jogos por data e horário';
 
   @override
+  String homeForecastAt(String when, String mexico) {
+    return 'Prognóstico em $when ($mexico no México)';
+  }
+
+  @override
+  String get homeForecastPending => 'Prognóstico pendente';
+
+  @override
   String get homeMenuTooltip => 'Menu';
 
   @override

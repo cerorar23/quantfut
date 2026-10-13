@@ -5356,3 +5356,27 @@ Código: `home_agenda.dart` (agrupar, tira, fila de partido), `live_home.dart`, 
 42 textos nuevos en 6 idiomas. Pruebas: `home_screen_test.dart` (19) y las de navegación/idiomas actualizadas;
 suite 196 verdes. Lección: `dart format lib/product` reformateó archivos ajenos; se restauraron con `git checkout`
 (formatear solo archivos propios).
+
+## 2026-10-13 — El pronóstico se calcula cada día a las 03:00 de México (09:00 UTC)
+
+Pedido del titular: el calendario se ve 7 días, pero un partido solo tiene probabilidad el mismo día en que se
+calcula; antes la app enseña el partido con candado y la hora. Hora elegida por el titular tras comparar
+(03:00 / 04:00 / 05:00 / 07:00 MX): las 03:00 cubren casi todos los kickoffs europeos de mediodía el mismo día
+(Serie A 12:30 CEST = 04:30 MX, Premier 12:30 BST = 05:30 MX), con los datos del día ya capturados (calendario
+05:15 UTC, clasificación 06:40, resultados 06:45, lesiones 08:00) y ~3 h de margen para arreglar un fallo antes
+de que se despierten los usuarios de México. Coste: el precio de mercado usado tiene 2 h más que a las 05:00.
+Regla (`src/qf/publish/ventana.py`): un partido pertenece a la corrida de las 03:00 de su día de México; si
+empieza antes de las 03:00 + 60 min (sin tiempo para sellar) pertenece a la del día anterior. México es UTC-6 fijo
+(sin horario de verano desde 2022). Mismo corte en TODOS los generadores —`daily` (predicciones y «solo sharp»),
+alta probabilidad, alta ext., escalera y parley—, siempre con tope en su horizonte propio: la ventana solo se
+recorta, nunca se amplía. El servidor añade `pronostico_desde` (UTC) a cada partido de la agenda; la app pinta el
+candado solo si no hay probabilidad y esa hora aún no llegó (si ya pasó y sigue sin dato, no finge un candado: son
+ligas sin modelo). La hora de México que enseña la app sale de ese dato (UTC-6), no de una constante propia.
+NO se cambió el orden predecir → seleccionar → sellar → publicar ni ningún trigger. Aviso de transición: la corrida
+de las 13:00 UTC de hoy ya usó la ventana antigua de 36 h; desde mañana 09:00 UTC rige la nueva. `prediction_batches`
+sigue indexado por fecha UTC (09:00 UTC es el mismo día UTC que antes).
+Corrección de lo dicho antes al titular: el xG de API-Football solo alimenta el entrenamiento y el modelo no usa
+lesiones, así que NO hacía falta mover esas capturas (se dejaron como estaban, incluida la del xG de otra sesión).
+Desplegado en api y worker con respaldo `~/backups/ventana-20261013` (vuelta atrás = imágenes `pre-ventana-backup`
+de `quantfut-worker` y `quantfut-api-tapjoy`, y el crontab respaldado). Pruebas: `tests/test_ventana_pronostico.py`
+(13) + suite Python completa (972) y Flutter (197).

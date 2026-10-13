@@ -24,6 +24,7 @@ from . import alta_prob as ap
 from . import alta_prob_datos as ad
 from . import hashchain
 from . import picks as pk
+from . import ventana
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ def _partidos(now: datetime) -> list[dict]:
              AND NOT EXISTS (SELECT 1 FROM alta_prob_ext e WHERE e.match_id = m.match_id)
              AND m.kickoff_utc BETWEEN %s AND %s
            ORDER BY m.kickoff_utc""",
-        (now + pk.MIN_LEAD, now + ap.HORIZONTE))
+        (now + pk.MIN_LEAD, ventana.fin_ventana(now, ap.HORIZONTE)))
 
 
 def candidatos(snap: pk.Snapshot, totales: list[dict], rho: float | None,

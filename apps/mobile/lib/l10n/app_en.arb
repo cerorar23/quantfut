@@ -232,6 +232,8 @@
   "guideTopic6": "RESPONSIBILITY",
   "homeBannerClose": "Dismiss notice",
   "homeByDate": "Matches by date and time",
+  "homeForecastAt": "Forecast on {when} ({mexico} Mexico time)",
+  "homeForecastPending": "Forecast pending",
   "homeMenuTooltip": "Menu",
   "homeNoMatchesDay": "No matches on this day.",
   "homeSeeAll": "See all",

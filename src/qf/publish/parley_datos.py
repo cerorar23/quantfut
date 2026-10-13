@@ -21,6 +21,7 @@ from . import escalera_datos as ed
 from . import hashchain
 from . import parley as pl
 from . import picks as pk
+from . import ventana
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ def _partidos(now: datetime) -> list[dict]:
            WHERE m.status = 'scheduled' AND l.active
              AND m.kickoff_utc BETWEEN %s AND %s
            ORDER BY m.kickoff_utc""",
-        (now + pk.MIN_LEAD, now + VENTANA))
+        (now + pk.MIN_LEAD, ventana.fin_ventana(now, VENTANA)))
 
 
 def candidatas(now: datetime) -> tuple[list, int]:

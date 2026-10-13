@@ -305,6 +305,10 @@ class MatchRow extends StatelessWidget {
     final ko = dateValue(match['kickoff_utc'])?.toLocal();
     final probabilities = jsonMap(match['probabilities']);
     final top = best(probabilities);
+    final unlock = dateValue(match['pronostico_desde'])?.toLocal();
+    // Aún sin calcular: el servidor lo calcula el mismo día, a las 03:00 de México.
+    final pending =
+        top == null && unlock != null && unlock.isAfter(DateTime.now());
     final public = picks.where((p) => p['locked'] != true).toList();
     final league = '${jsonMap(match['liga'])['nombre'] ?? ''}';
     return Padding(
@@ -377,7 +381,16 @@ class MatchRow extends StatelessWidget {
                     const SizedBox(width: 10),
                     SizedBox(
                       width: 84,
-                      child: top == null
+                      child: pending
+                          ? Align(
+                              alignment: Alignment.centerRight,
+                              child: Icon(
+                                Icons.lock_clock,
+                                semanticLabel: l10n.homeForecastPending,
+                                color: liveGold,
+                              ),
+                            )
+                          : top == null
                           ? const SizedBox.shrink()
                           : _Likely(
                               label: switch (top.$1) {
@@ -401,7 +414,21 @@ class MatchRow extends StatelessWidget {
                       size: 12,
                     ),
                   ),
-                if (public.isNotEmpty) ...[
+                if (pending) ...[
+                  const SizedBox(height: 8),
+                  _PickTag(
+                    text: l10n.homeForecastAt(
+                      '${localDate(DateFormat.MMMEd, unlock)}, ${localDate(DateFormat.Hm, unlock)}',
+                      // México es UTC-6 todo el año; la hora sale del propio dato del servidor.
+                      localDate(
+                        DateFormat.Hm,
+                        unlock.toUtc().subtract(const Duration(hours: 6)),
+                      ),
+                    ),
+                    color: liveGold,
+                    icon: Icons.lock_clock,
+                  ),
+                ] else if (public.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   _PickTag(
                     text:

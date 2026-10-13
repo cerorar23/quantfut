@@ -25,6 +25,7 @@ from ..model.devig import devig, two_way_devig
 from . import alta_prob as ap
 from . import hashchain
 from . import picks as pk
+from . import ventana
 
 log = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def _partidos(now: datetime) -> list[dict]:
            WHERE m.status = 'scheduled' AND l.active AND a.match_id IS NULL
              AND m.kickoff_utc BETWEEN %s AND %s
            ORDER BY m.kickoff_utc""",
-        (now + pk.MIN_LEAD, now + ap.HORIZONTE))
+        (now + pk.MIN_LEAD, ventana.fin_ventana(now, ap.HORIZONTE)))
 
 
 def _totales(match_id: str, as_of: datetime) -> list[dict]:

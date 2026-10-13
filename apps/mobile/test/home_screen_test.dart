@@ -61,6 +61,8 @@ Map<String, dynamic> match(
   int hour, {
   String league = 'Liga de prueba',
   Map<String, dynamic>? probabilities,
+  bool noForecast = false,
+  DateTime? unlock,
 }) => {
   'match_id': id,
   'kickoff_utc': DateTime(day.year, day.month, day.day, hour, 30)
@@ -70,7 +72,10 @@ Map<String, dynamic> match(
   'local': {'nombre': home},
   'visitante': {'nombre': 'Rival de $home'},
   'liga': {'nombre': league},
-  'probabilities': probabilities ?? {'home': .43, 'draw': .26, 'away': .31},
+  'probabilities': noForecast
+      ? null
+      : probabilities ?? {'home': .43, 'draw': .26, 'away': .31},
+  if (unlock != null) 'pronostico_desde': unlock.toUtc().toIso8601String(),
 };
 
 Map<String, dynamic> pick(String id, double prob, {bool locked = false}) => {
@@ -261,6 +266,42 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const ValueKey('home-search')), findsNothing);
     expect(find.text('No hay enfrentamientos para estos filtros.'), findsNothing);
+  });
+
+  testWidgets('los días futuros enseñan el partido con candado hasta que se calcula', (
+    tester,
+  ) async {
+    final future = DateTime.utc(day(3).year, day(3).month, day(3).day, 9); // 03:00 MX
+    await pump(
+      tester,
+      data: homeData(
+        agenda: [
+          match('a1', 'Hoy Con', day(0), 15),
+          match('c1', 'Futuro Sin', day(3), 15, noForecast: true, unlock: future),
+          // Ya pasó su hora de cálculo y sigue sin probabilidad: no se finge un candado.
+          match(
+            'c2',
+            'Pasado Sin',
+            day(3),
+            17,
+            noForecast: true,
+            unlock: DateTime.now().subtract(const Duration(hours: 1)),
+          ),
+        ],
+        picks: [],
+      ),
+    );
+    await tester.scrollUntilVisible(find.text('Futuro Sin'), 200, scrollable: scroller);
+    expect(find.byIcon(Icons.lock_clock), findsNWidgets(2)); // icono + etiqueta
+    expect(find.textContaining('Pronóstico el '), findsOneWidget);
+    expect(find.textContaining('3:00 en México'), findsOneWidget);
+    Finder likely(String id) => find.descendant(
+      of: find.byKey(ValueKey('match-$id')),
+      matching: find.text('Local 43 %'),
+    );
+    expect(likely('c1'), findsNothing);
+    expect(likely('c2'), findsNothing);
+    expect(likely('a1'), findsOneWidget);
   });
 
   testWidgets('abre el partido al tocarlo', (tester) async {

@@ -805,6 +805,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeByDate => 'Matches by date and time';
 
   @override
+  String homeForecastAt(String when, String mexico) {
+    return 'Forecast on $when ($mexico Mexico time)';
+  }
+
+  @override
+  String get homeForecastPending => 'Forecast pending';
+
+  @override
   String get homeMenuTooltip => 'Menu';
 
   @override

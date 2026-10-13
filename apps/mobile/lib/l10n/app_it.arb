@@ -232,6 +232,8 @@
   "guideTopic6": "RESPONSABILITÀ",
   "homeBannerClose": "Chiudi l'avviso",
   "homeByDate": "Partite per data e orario",
+  "homeForecastAt": "Pronostico il {when} ({mexico} ora del Messico)",
+  "homeForecastPending": "Pronostico in attesa",
   "homeMenuTooltip": "Menu",
   "homeNoMatchesDay": "Nessuna partita in questo giorno.",
   "homeSeeAll": "Vedi tutto",
