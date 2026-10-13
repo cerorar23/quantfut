@@ -17,6 +17,108 @@
   "accessRetry": "Reintentar acceso",
   "accessTagline": "Partidos, análisis e historial. Una probabilidad no es una certeza.",
   "accessTerms": "Términos de uso",
+  "alertsAbsencesOf": "Bajas de {team}",
+  "@alertsAbsencesOf": {
+    "description": "Subtítulo: de qué equipo son las bajas de la sección.",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsAdvantage": "Ventaja",
+  "@alertsAdvantage": {
+    "description": "Sección: bajas del rival, que benefician a este equipo."
+  },
+  "alertsAdvantageEmpty": "Sin ventajas reportadas.",
+  "@alertsAdvantageEmpty": {
+    "description": "El rival no tiene bajas reportadas."
+  },
+  "alertsChecked": "Comprobado {when}",
+  "@alertsChecked": {
+    "description": "Cuándo se comprobaron las bajas por última vez.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsDisadvantage": "Desventaja",
+  "@alertsDisadvantage": {
+    "description": "Sección: bajas de este equipo."
+  },
+  "alertsDisadvantageEmpty": "Sin desventajas reportadas.",
+  "@alertsDisadvantageEmpty": {
+    "description": "Este equipo no tiene bajas reportadas."
+  },
+  "alertsDoubt": "Duda",
+  "@alertsDoubt": {
+    "description": "Estado de un jugador con duda."
+  },
+  "alertsNoCheck": "Todavía no hay una comprobación de bajas para este partido. Si su liga no tiene este dato, eso no significa que no haya lesionados.",
+  "@alertsNoCheck": {
+    "description": "No hay comprobación de bajas: no equivale a «sin lesionados»."
+  },
+  "alertsNote": "Las bajas pueden cambiar hasta el inicio. El once oficial se publica poco antes del partido.",
+  "@alertsNote": {
+    "description": "Aviso al pie de la pestaña de alertas."
+  },
+  "alertsOut": "No disponible",
+  "@alertsOut": {
+    "description": "Estado de un jugador que no jugará."
+  },
+  "alertsReasonFoot": "Lesión de tobillo o pie",
+  "@alertsReasonFoot": {
+    "description": "Motivo de la baja."
+  },
+  "alertsReasonIllness": "Enfermedad",
+  "@alertsReasonIllness": {
+    "description": "Motivo de la baja."
+  },
+  "alertsReasonInjury": "Lesión",
+  "@alertsReasonInjury": {
+    "description": "Motivo de la baja cuando el proveedor no precisa más."
+  },
+  "alertsReasonKnee": "Lesión de rodilla",
+  "@alertsReasonKnee": {
+    "description": "Motivo de la baja."
+  },
+  "alertsReasonKnock": "Golpe",
+  "@alertsReasonKnock": {
+    "description": "Motivo de la baja."
+  },
+  "alertsReasonMuscle": "Lesión muscular",
+  "@alertsReasonMuscle": {
+    "description": "Motivo de la baja."
+  },
+  "alertsReasonSuspension": "Sanción",
+  "@alertsReasonSuspension": {
+    "description": "Motivo de la baja."
+  },
+  "alertsReasonUnknown": "Motivo no indicado",
+  "@alertsReasonUnknown": {
+    "description": "El proveedor no indica el motivo."
+  },
+  "alertsSource": "Fuente: API-Football",
+  "@alertsSource": {
+    "description": "Proveedor de los datos de bajas."
+  },
+  "alertsSummary": "{out, plural, one{1 baja} other{{out} bajas}} · {doubt, plural, one{1 duda} other{{doubt} dudas}}",
+  "@alertsSummary": {
+    "description": "Resumen de bajas y dudas del partido.",
+    "placeholders": {
+      "out": {
+        "type": "int"
+      },
+      "doubt": {
+        "type": "int"
+      }
+    }
+  },
+  "alertsSuspended": "Sancionado",
+  "@alertsSuspended": {
+    "description": "Estado de un jugador sancionado."
+  },
   "apiGoogleNotVerified": "Google no pudo verificar el acceso.",
   "apiInvalidResponse": "Respuesta no válida del servidor.",
   "apiInvalidSession": "Sesión no válida.",
@@ -133,6 +235,10 @@
   "detailNoStarters": "Sin titulares confirmados.",
   "detailReferee": "Árbitro",
   "detailRefereePending": "Árbitro pendiente de confirmar.",
+  "detailTabAlerts": "Alertas",
+  "@detailTabAlerts": {
+    "description": "Pestaña del análisis del partido con bajas y dudas."
+  },
   "detailTabH2h": "H2H",
   "detailTabPredictions": "Pronósticos",
   "detailTabStats": "Estadísticas",

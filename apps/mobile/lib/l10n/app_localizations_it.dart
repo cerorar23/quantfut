@@ -66,6 +66,89 @@ class AppLocalizationsIt extends AppLocalizations {
   String get accessTerms => 'Termini di utilizzo';
 
   @override
+  String alertsAbsencesOf(String team) {
+    return 'Assenze di $team';
+  }
+
+  @override
+  String get alertsAdvantage => 'Vantaggio';
+
+  @override
+  String get alertsAdvantageEmpty => 'Nessun vantaggio segnalato.';
+
+  @override
+  String alertsChecked(String when) {
+    return 'Verificato $when';
+  }
+
+  @override
+  String get alertsDisadvantage => 'Svantaggio';
+
+  @override
+  String get alertsDisadvantageEmpty => 'Nessuno svantaggio segnalato.';
+
+  @override
+  String get alertsDoubt => 'Dubbio';
+
+  @override
+  String get alertsNoCheck =>
+      'Non c\'è ancora un controllo delle assenze per questa partita. Se il suo campionato non ha questo dato, non significa che non ci siano infortunati.';
+
+  @override
+  String get alertsNote =>
+      'Le assenze possono cambiare fino al calcio d\'inizio. La formazione ufficiale esce poco prima della partita.';
+
+  @override
+  String get alertsOut => 'Indisponibile';
+
+  @override
+  String get alertsReasonFoot => 'Infortunio a caviglia o piede';
+
+  @override
+  String get alertsReasonIllness => 'Malattia';
+
+  @override
+  String get alertsReasonInjury => 'Infortunio';
+
+  @override
+  String get alertsReasonKnee => 'Infortunio al ginocchio';
+
+  @override
+  String get alertsReasonKnock => 'Colpo';
+
+  @override
+  String get alertsReasonMuscle => 'Infortunio muscolare';
+
+  @override
+  String get alertsReasonSuspension => 'Squalifica';
+
+  @override
+  String get alertsReasonUnknown => 'Motivo non indicato';
+
+  @override
+  String get alertsSource => 'Fonte: API-Football';
+
+  @override
+  String alertsSummary(int out, int doubt) {
+    String _temp0 = intl.Intl.pluralLogic(
+      out,
+      locale: localeName,
+      other: '$out assenze',
+      one: '1 assenza',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      doubt,
+      locale: localeName,
+      other: '$doubt dubbi',
+      one: '1 dubbio',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
+  String get alertsSuspended => 'Squalificato';
+
+  @override
   String get apiGoogleNotVerified =>
       'Google non è riuscito a verificare l\'accesso.';
 
@@ -270,6 +353,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get detailRefereePending => 'Arbitro da confermare.';
+
+  @override
+  String get detailTabAlerts => 'Avvisi';
 
   @override
   String get detailTabH2h => 'H2H';

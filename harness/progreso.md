@@ -5282,3 +5282,21 @@ terminados) → 16, todos por jugar. Consecuencia a vigilar: en un día pasado I
 todos sus partidos ya terminaron; los resultados siguen en los pronósticos liquidados y en las
 estadísticas del partido. Desplegado con respaldo `~/backups/agenda-sin-terminados-20261012`
 (vuelta atrás = imagen `pre-agenda-backup`).
+
+## 2026-10-12 — Pestaña «Alertas» en el análisis del partido (fase 1, sin IA)
+
+Pedido del titular (referencia: pestaña de alertas de otra app). Fase 1 decidida con él: datos REALES y
+verificables, sin modelo de lenguaje. Se apoya en lo que ya existía: `ficha.bajas` (API-Football
+`/injuries`, última comprobación, ver `fichas._bajas` e `ingest/injuries.py`). No se tocó el servidor.
+`live_alerts.dart` + `alerts_model.dart`: por equipo, «Desventaja» = sus bajas y «Ventaja» = las del rival
+(como en la referencia); tarjeta con iniciales, motivo traducido (se agrupa el texto en inglés del
+proveedor y lo que no encaja se muestra TAL CUAL, nunca se inventa un motivo), estado No disponible /
+Duda / Sancionado, fuente y hora de la comprobación. Selector de equipo con escudo, indicador que se
+desliza, cambio por deslizamiento, entrada escalonada (respeta «reducir animaciones») y contador de
+bajas en la pestaña. El estado va siempre en rojo/ámbar (hecho del jugador); solo el borde marca la
+sección, para que «No disponible» no se lea como algo bueno en la sección de Ventaja.
+Sin comprobación (`bajas` nulo) se dice que NO equivale a «sin lesionados»: hay ligas sin cobertura del
+proveedor (Championship, Liga Profesional, Série B hoy; ver README) y para esas es dato ausente.
+No hay foto del jugador (no se guarda ni se sirve). Pendiente, solo si el titular lo pide: fase 2 con IA
+(resumen de prensa con citas, aparte de los datos oficiales) y retirar la lista de bajas duplicada de la
+pestaña H2H.

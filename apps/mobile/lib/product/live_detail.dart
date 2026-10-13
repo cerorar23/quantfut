@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
+import 'alerts_model.dart';
+import 'live_alerts.dart';
 import 'live_api.dart';
 import 'live_forecast.dart';
 import 'live_match_markets.dart';
@@ -177,6 +179,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
         final picks = jsonRows(data['picks']);
         final l10n = context.l10n;
         final featured = featuredPick(picks);
+        final alertCount = MatchAlerts.fromFicha(ficha)?.total ?? 0;
         return Column(
           children: [
             Padding(
@@ -214,6 +217,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                           (0, l10n.detailTabPredictions),
                           (1, l10n.detailTabStats),
                           (2, l10n.detailTabH2h),
+                          (3, l10n.detailTabAlerts),
                         ])
                           Expanded(
                             child: Semantics(
@@ -228,17 +232,50 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                         vertical: 14,
                                         horizontal: 4,
                                       ),
-                                      child: Text(
-                                        item.$2,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: tab == item.$1
-                                              ? statsLime
-                                              : liveMuted,
-                                        ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              item.$2,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: tab == item.$1
+                                                    ? statsLime
+                                                    : liveMuted,
+                                              ),
+                                            ),
+                                          ),
+                                          if (item.$1 == 3 && alertCount > 0) ...[
+                                            const SizedBox(width: 4),
+                                            Container(
+                                              key: const ValueKey(
+                                                'alerts-tab-badge',
+                                              ),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 5,
+                                                vertical: 1,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xffe85667),
+                                                borderRadius:
+                                                    BorderRadius.circular(99),
+                                              ),
+                                              child: Text(
+                                                '$alertCount',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                     Container(
@@ -293,6 +330,8 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                     )
                   else if (tab == 1)
                     stats(data, ficha)
+                  else if (tab == 3)
+                    AlertsTab(ficha: ficha, api: widget.api)
                   else
                     tactics(data, ficha),
                 ],

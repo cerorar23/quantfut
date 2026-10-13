@@ -208,6 +208,132 @@ abstract class AppLocalizations {
   /// **'Términos de uso'**
   String get accessTerms;
 
+  /// Subtítulo: de qué equipo son las bajas de la sección.
+  ///
+  /// In es, this message translates to:
+  /// **'Bajas de {team}'**
+  String alertsAbsencesOf(String team);
+
+  /// Sección: bajas del rival, que benefician a este equipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ventaja'**
+  String get alertsAdvantage;
+
+  /// El rival no tiene bajas reportadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin ventajas reportadas.'**
+  String get alertsAdvantageEmpty;
+
+  /// Cuándo se comprobaron las bajas por última vez.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprobado {when}'**
+  String alertsChecked(String when);
+
+  /// Sección: bajas de este equipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Desventaja'**
+  String get alertsDisadvantage;
+
+  /// Este equipo no tiene bajas reportadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin desventajas reportadas.'**
+  String get alertsDisadvantageEmpty;
+
+  /// Estado de un jugador con duda.
+  ///
+  /// In es, this message translates to:
+  /// **'Duda'**
+  String get alertsDoubt;
+
+  /// No hay comprobación de bajas: no equivale a «sin lesionados».
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no hay una comprobación de bajas para este partido. Si su liga no tiene este dato, eso no significa que no haya lesionados.'**
+  String get alertsNoCheck;
+
+  /// Aviso al pie de la pestaña de alertas.
+  ///
+  /// In es, this message translates to:
+  /// **'Las bajas pueden cambiar hasta el inicio. El once oficial se publica poco antes del partido.'**
+  String get alertsNote;
+
+  /// Estado de un jugador que no jugará.
+  ///
+  /// In es, this message translates to:
+  /// **'No disponible'**
+  String get alertsOut;
+
+  /// Motivo de la baja.
+  ///
+  /// In es, this message translates to:
+  /// **'Lesión de tobillo o pie'**
+  String get alertsReasonFoot;
+
+  /// Motivo de la baja.
+  ///
+  /// In es, this message translates to:
+  /// **'Enfermedad'**
+  String get alertsReasonIllness;
+
+  /// Motivo de la baja cuando el proveedor no precisa más.
+  ///
+  /// In es, this message translates to:
+  /// **'Lesión'**
+  String get alertsReasonInjury;
+
+  /// Motivo de la baja.
+  ///
+  /// In es, this message translates to:
+  /// **'Lesión de rodilla'**
+  String get alertsReasonKnee;
+
+  /// Motivo de la baja.
+  ///
+  /// In es, this message translates to:
+  /// **'Golpe'**
+  String get alertsReasonKnock;
+
+  /// Motivo de la baja.
+  ///
+  /// In es, this message translates to:
+  /// **'Lesión muscular'**
+  String get alertsReasonMuscle;
+
+  /// Motivo de la baja.
+  ///
+  /// In es, this message translates to:
+  /// **'Sanción'**
+  String get alertsReasonSuspension;
+
+  /// El proveedor no indica el motivo.
+  ///
+  /// In es, this message translates to:
+  /// **'Motivo no indicado'**
+  String get alertsReasonUnknown;
+
+  /// Proveedor de los datos de bajas.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuente: API-Football'**
+  String get alertsSource;
+
+  /// Resumen de bajas y dudas del partido.
+  ///
+  /// In es, this message translates to:
+  /// **'{out, plural, one{1 baja} other{{out} bajas}} · {doubt, plural, one{1 duda} other{{doubt} dudas}}'**
+  String alertsSummary(int out, int doubt);
+
+  /// Estado de un jugador sancionado.
+  ///
+  /// In es, this message translates to:
+  /// **'Sancionado'**
+  String get alertsSuspended;
+
   /// No description provided for @apiGoogleNotVerified.
   ///
   /// In es, this message translates to:
@@ -555,6 +681,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Árbitro pendiente de confirmar.'**
   String get detailRefereePending;
+
+  /// Pestaña del análisis del partido con bajas y dudas.
+  ///
+  /// In es, this message translates to:
+  /// **'Alertas'**
+  String get detailTabAlerts;
 
   /// No description provided for @detailTabH2h.
   ///

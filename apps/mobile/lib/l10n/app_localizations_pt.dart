@@ -68,6 +68,89 @@ class AppLocalizationsPt extends AppLocalizations {
   String get accessTerms => 'Termos de uso';
 
   @override
+  String alertsAbsencesOf(String team) {
+    return 'Desfalques de $team';
+  }
+
+  @override
+  String get alertsAdvantage => 'Vantagem';
+
+  @override
+  String get alertsAdvantageEmpty => 'Sem vantagens registradas.';
+
+  @override
+  String alertsChecked(String when) {
+    return 'Verificado $when';
+  }
+
+  @override
+  String get alertsDisadvantage => 'Desvantagem';
+
+  @override
+  String get alertsDisadvantageEmpty => 'Sem desvantagens registradas.';
+
+  @override
+  String get alertsDoubt => 'Dúvida';
+
+  @override
+  String get alertsNoCheck =>
+      'Ainda não há verificação de desfalques para esta partida. Se a liga não tem esse dado, isso não significa que não haja lesionados.';
+
+  @override
+  String get alertsNote =>
+      'Os desfalques podem mudar até o início. A escalação oficial sai pouco antes da partida.';
+
+  @override
+  String get alertsOut => 'Indisponível';
+
+  @override
+  String get alertsReasonFoot => 'Lesão no tornozelo ou pé';
+
+  @override
+  String get alertsReasonIllness => 'Doença';
+
+  @override
+  String get alertsReasonInjury => 'Lesão';
+
+  @override
+  String get alertsReasonKnee => 'Lesão no joelho';
+
+  @override
+  String get alertsReasonKnock => 'Pancada';
+
+  @override
+  String get alertsReasonMuscle => 'Lesão muscular';
+
+  @override
+  String get alertsReasonSuspension => 'Suspensão';
+
+  @override
+  String get alertsReasonUnknown => 'Motivo não informado';
+
+  @override
+  String get alertsSource => 'Fonte: API-Football';
+
+  @override
+  String alertsSummary(int out, int doubt) {
+    String _temp0 = intl.Intl.pluralLogic(
+      out,
+      locale: localeName,
+      other: '$out desfalques',
+      one: '1 desfalque',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      doubt,
+      locale: localeName,
+      other: '$doubt dúvidas',
+      one: '1 dúvida',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
+  String get alertsSuspended => 'Suspenso';
+
+  @override
   String get apiGoogleNotVerified =>
       'O Google não conseguiu verificar o acesso.';
 
@@ -270,6 +353,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get detailRefereePending => 'Árbitro a confirmar.';
+
+  @override
+  String get detailTabAlerts => 'Alertas';
 
   @override
   String get detailTabH2h => 'H2H';
