@@ -5180,3 +5180,24 @@ Regresión cubierta en `tests/test_mobile_identidad_firebase.py`. Desplegado en 
 `~/backups/mobile-identidad-20261012`, vuelta atrás = imagen `pre-mobile-identidad-backup`).
 Lección: un `Request` sin importar no da error al arrancar; revisar esto en endpoints nuevos.
 El registro de rechazos de identidad añadido en `api/firebase.py` se queda (aviso WARNING).
+
+## 2026-10-12 — Elección de idioma como primera pantalla
+
+Pedido del titular (captura de referencia con globo animado y cuadrícula de 6 idiomas).
+`LanguageSelectionScreen` (`lib/l10n/language_selection_screen.dart`) sale solo la primera vez:
+`QuantFutApp.home` la muestra mientras `AppLocale.chosen` sea falso y la app pasa sola al flujo
+normal al elegir (ya escucha `AppLocale`), así que no se tocó el acceso con Google ni Firebase.
+Quien actualiza la app la verá una vez, porque su idioma nunca se guardó como «elegido».
+Animación dibujada en código (CustomPainter + controladores), sin dependencias: respeta «reducir
+animaciones». Referencias consultadas, sin copiar código: `gskinner/flutter_animate` (BSD-3) y
+`flutterfx/flutterfx_widgets` (sin licencia). La etiqueta de la captura («Neural interface
+configuration») se cambió por «Configuración de idioma» y los textos van en los 6 idiomas.
+No verificado visualmente en emulador (se interrumpió el reinicio): compararlo con la captura.
+
+## 2026-10-12 — Una sola tarjeta destacada por partido
+
+Antes el detalle pintaba una tarjeta verde por cada pronóstico (una por mercado) con chips para
+filtrar. Ahora `featuredPick` (`live_forecast.dart`) elige UNA: la de mayor probabilidad y, si
+empatan, la de cuota más alta (decisión del titular entre tres reglas; la cuota más alta y
+probabilidad × cuota quedaron descartadas). Se quitaron los chips, que ya no filtran nada; el resto de
+mercados sigue en la tabla «Mercados del partido». Es lógica del cliente: el servidor no cambia.

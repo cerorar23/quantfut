@@ -12,6 +12,7 @@ import 'package:gobet/product/live_shell.dart';
 import 'package:gobet/product/live_detail.dart';
 import 'package:gobet/product/live_rewards.dart';
 import 'package:gobet/product/live_vip.dart';
+import 'package:gobet/product/live_forecast.dart';
 import 'package:gobet/product/live_widgets.dart';
 import 'package:gobet/l10n/app_locale.dart';
 
@@ -414,17 +415,20 @@ void main() {
     );
     expect(find.text('Más de 2,5 goles'), findsOneWidget);
     expect(find.text('@1,45'), findsOneWidget);
-    // Tarjeta «Análisis estadístico» (una por pronóstico) con los 4 indicadores.
-    expect(find.text('ANÁLISIS ESTADÍSTICO'), findsNWidgets(2));
-    expect(find.text('CUOTAS DEL MERCADO'), findsNWidgets(2));
+    // Una sola tarjeta «Análisis estadístico» (la de mayor probabilidad: 79 % frente a 76 %)
+    // con los 4 indicadores, y sin chips de mercado.
+    expect(find.byType(ForecastPanel), findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNothing);
+    expect(find.text('ANÁLISIS ESTADÍSTICO'), findsOneWidget);
+    expect(find.text('CUOTAS DEL MERCADO'), findsOneWidget);
     expect(
       find.text('61 %'),
-      findsNWidgets(2),
+      findsOneWidget,
     ); // tendencia: más de 2,5 según el modelo
-    expect(find.text('43 %'), findsNWidgets(2)); // favorito 1X2
+    expect(find.text('43 %'), findsOneWidget); // favorito 1X2
     expect(
       find.textContaining('esta liga no tiene modelo propio'),
-      findsNWidgets(2),
+      findsOneWidget,
     );
     expect(find.textContaining('3,06 goles esperados'), findsOneWidget);
     // Lista de mercados del partido: el abierto con su nivel y cuota justa, el otro con candado.
@@ -441,10 +445,8 @@ void main() {
     ); // candados agrupados por categoría
     expect(find.text('Marcadores más probables'), findsOneWidget);
     expect(find.text('2-0'), findsOneWidget);
-    expect(find.textContaining('DICTAMEN DEL MODELO'), findsNWidgets(2));
+    expect(find.textContaining('DICTAMEN DEL MODELO'), findsOneWidget);
     await capture(tester, 'forecast_panel');
-    await tester.tap(find.text('Goles').first);
-    await tester.pumpAndSettle();
     expect(find.text('Gana el local'), findsNothing);
     await tester.ensureVisible(find.text('Ver estadísticas del partido'));
     await tester.pumpAndSettle();

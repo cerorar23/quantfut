@@ -114,6 +114,28 @@ class LiveScoreStrip extends StatelessWidget {
   }
 }
 
+/// El único pronóstico destacado de un partido: el de mayor probabilidad; si empatan,
+/// el de la cuota más alta. Los que no traen probabilidad numérica no compiten (si ninguno
+/// la trae, se muestra el primero).
+JsonMap? featuredPick(List<JsonMap> picks) {
+  double number(dynamic value) =>
+      value is num && value.isFinite ? value.toDouble() : double.negativeInfinity;
+  JsonMap? best;
+  for (final pick in picks) {
+    if (number(pick['prob']) == double.negativeInfinity) continue;
+    if (best == null) {
+      best = pick;
+      continue;
+    }
+    final byProb = number(pick['prob']).compareTo(number(best['prob']));
+    final byPrice = number(pick['ref_price'] ?? pick['price']).compareTo(
+      number(best['ref_price'] ?? best['price']),
+    );
+    if (byProb > 0 || (byProb == 0 && byPrice > 0)) best = pick;
+  }
+  return best ?? (picks.isEmpty ? null : picks.first);
+}
+
 /// Pronóstico destacado + indicadores + dictamen, todo con datos entregados
 /// por el servidor. Lo que no llega se muestra como «—», nunca se rellena.
 class ForecastPanel extends StatelessWidget {

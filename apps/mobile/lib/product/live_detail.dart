@@ -25,9 +25,6 @@ class LiveMatchDetail extends StatefulWidget {
 class _LiveMatchDetailState extends State<LiveMatchDetail> {
   late Future<JsonMap> future = widget.api.detail(widget.id);
   int tab = 0;
-  // Filtro de mercado; `_all` es un identificador, no un texto visible.
-  static const _all = '*';
-  String filter = _all;
   Widget results(List<JsonMap> rows) => Column(
     children: rows
         .map(
@@ -179,7 +176,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
             match = jsonMap(ficha['partido']);
         final picks = jsonRows(data['picks']);
         final l10n = context.l10n;
-        final markets = {_all, ...picks.map((p) => '${p['market']}')};
+        final featured = featuredPick(picks);
         return Column(
           children: [
             Padding(
@@ -276,42 +273,14 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                           ),
                         if (picks.isEmpty && data['locked'] != true)
                           training(l10n.detailNoPicks),
-                        if (markets.length > 2)
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: markets
-                                  .map(
-                                    (m) => Padding(
-                                      padding: const EdgeInsets.only(right: 6),
-                                      child: ChoiceChip(
-                                        label: Text(
-                                          m == _all
-                                              ? l10n.commonAll
-                                              : marketName(m),
-                                        ),
-                                        selected: filter == m,
-                                        onSelected: (_) =>
-                                            setState(() => filter = m),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          ),
                         const SizedBox(height: 12),
                         LiveScoreStrip(ficha: ficha),
-                        ...picks
-                            .where(
-                              (p) => filter == _all || p['market'] == filter,
-                            )
-                            .map(
-                              (p) => ForecastPanel(
-                                pick: p,
-                                ficha: ficha,
-                                onStats: () => setState(() => tab = 1),
-                              ),
-                            ),
+                        if (featured != null)
+                          ForecastPanel(
+                            pick: featured,
+                            ficha: ficha,
+                            onStats: () => setState(() => tab = 1),
+                          ),
                         MatchMarkets(
                           data: jsonMap(ficha['mercados']),
                           onVip: widget.onVip,
