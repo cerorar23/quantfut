@@ -11,7 +11,7 @@ import math
 from collections import defaultdict
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from psycopg.errors import UndefinedTable
 

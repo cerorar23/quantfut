@@ -5168,3 +5168,15 @@ con AGP 9). Desplegado en la API (imagen `quantfut-api-tapjoy:20261012-sentry`, 
 `/etc/environment`, sin recrearlo; `~/quantfut/{requirements.txt,src}` actualizados para el próximo
 build). Verificado: evento `QUANTFUT-API-1` desde la API y `-2` (excepción no capturada) desde el worker.
 No verificado: la app en un dispositivo (exige consentimiento y sesión de Google).
+
+## 2026-10-12 — «Sesión no válida» tras entrar con Google
+
+Causa: `api/mobile.py` usaba `request: Request` en `member()` sin importar `Request`. Con
+`from __future__ import annotations`, FastAPI no resolvía el tipo y trataba `request` como un
+parámetro de consulta siempre vacío, así que la rama `X-QF-Identity: firebase` nunca se activaba
+y el ID token de Google se validaba como sesión clásica: 401 en todo `/mobile/v1/*` con sesión.
+Pasó desapercibido porque `connect`/`preferences` (otro módulo, sí importa `Request`) funcionaban.
+Regresión cubierta en `tests/test_mobile_identidad_firebase.py`. Desplegado en la API (respaldo
+`~/backups/mobile-identidad-20261012`, vuelta atrás = imagen `pre-mobile-identidad-backup`).
+Lección: un `Request` sin importar no da error al arrancar; revisar esto en endpoints nuevos.
+El registro de rechazos de identidad añadido en `api/firebase.py` se queda (aviso WARNING).
