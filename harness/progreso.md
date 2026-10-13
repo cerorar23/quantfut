@@ -5475,3 +5475,7 @@ partido (gratis o desbloqueado con monedas). Revierte la regla anterior «marcad
 Verificado en producción: partidos con pronóstico abierto devuelven 5 marcadores sin ser VIP. Desplegado con respaldo
 `~/backups/marcadores-20261013` (vuelta atrás = imagen `quantfut-api-tapjoy:pre-marcadores-backup`). No hace falta
 APK nuevo: la app ya dibuja los marcadores cuando llegan.
+
+## 2026-10-13 — Parley: un único parley del día no es gratis
+
+La app mostraba todos los parlays porque el reparto gratis/VIP (`api/parley_acceso.py`) solo existía en local: el VPS sigue con `/parley` público sin filtro (comprobado: el contenedor de la API no trae `parley_acceso.py`). Decisión del usuario: un parley gratis por día y, si el día trae uno solo, ninguno gratis (con uno solo no hay "resto" que vender; el liquidado se sigue viendo siempre). Regla en `aplicar_acceso`: `gratis = None` si `len(tickets) <= 1`. Desplegado en el VPS (api) con respaldo `~/backups/parley-20261013` (vuelta atrás = imagen `quantfut-api-tapjoy:pre-parley-backup` en el compose + `up -d --no-deps api`). Imagen nueva = la anterior + `main.py` y `parley_acceso.py`; el `main.py` del contenedor difería del local solo en `/parley`. Verificado en producción sin cuenta: hoy 1 parley abierto (escalón 1, gratis) y 4 bloqueados. Sin APK nuevo.

@@ -30,6 +30,13 @@ def test_si_no_hay_escalon_1_el_gratis_es_el_de_menor_escalon():
     assert t3["locked"] is False and t3["gratis"] and t4["locked"] is True
 
 
+def test_un_unico_parley_en_el_dia_no_es_gratis():
+    out = aplicar_acceso(informe(("2026-10-13", [_t(1)])), plus=False)
+    assert out["dias"][0]["tickets"] == [{"escalon": 1, "locked": True, "cuota_min": 1.9, "cuota_max": 2.2}]
+    vip = aplicar_acceso(informe(("2026-10-13", [_t(1)])), plus=True)["dias"][0]["tickets"][0]
+    assert not vip["locked"] and vip["gratis"] is False
+
+
 def test_vip_ve_todo_y_solo_uno_figura_como_gratis():
     out = aplicar_acceso(informe(("2026-10-13", [_t(1), _t(2)])), plus=True)
     t1, t2 = out["dias"][0]["tickets"]
