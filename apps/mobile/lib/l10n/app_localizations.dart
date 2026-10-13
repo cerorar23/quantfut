@@ -1372,11 +1372,197 @@ abstract class AppLocalizations {
   /// **'GOLES DE EQUIPO'**
   String get groupTeamGoals;
 
+  /// Texto del tema 1.
+  ///
+  /// In es, this message translates to:
+  /// **'Si un pronóstico tiene 75 % de probabilidad, el modelo espera que se cumpla cerca de 3 de cada 4 veces que se repita una situación así. Eso significa que 1 de cada 4 no se cumplirá. Ningún dato garantiza un resultado concreto.'**
+  String get guideBody1;
+
+  /// Texto del tema 2.
+  ///
+  /// In es, this message translates to:
+  /// **'La cuota la fija una casa de apuestas e incluye su margen. Comparar la probabilidad del modelo con la que implica la cuota ayuda a ver si el precio es razonable; no asegura que el resultado llegue.'**
+  String get guideBody2;
+
+  /// Texto del tema 3.
+  ///
+  /// In es, this message translates to:
+  /// **'Se publican con su probabilidad y su cuota de referencia antes de empezar y no se pueden editar. Por eso puedes comparar el acierto histórico real con el que se prometía.'**
+  String get guideBody3;
+
+  /// Texto del tema 4.
+  ///
+  /// In es, this message translates to:
+  /// **'En una combinada, la probabilidad conjunta es el producto de la de cada selección, así que baja rápido al añadir partidos. Una cuota alta suele reflejar justo eso.'**
+  String get guideBody4;
+
+  /// Texto del tema 5.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada reto va por pasos y el siguiente solo cuenta si se cumple el anterior. Mira el avance y el historial, incluidos los retos fallidos, antes de seguir uno.'**
+  String get guideBody5;
+
+  /// Texto del tema 6.
+  ///
+  /// In es, this message translates to:
+  /// **'QuantFut no es una casa de apuestas ni asegura ganancias. Si decides apostar, hazlo solo con dinero que puedas perder y solo si eres mayor de edad. Si el juego deja de ser un pasatiempo, pide ayuda.'**
+  String get guideBody6;
+
+  /// Título del tema 1.
+  ///
+  /// In es, this message translates to:
+  /// **'Una probabilidad no es una certeza'**
+  String get guideHead1;
+
+  /// Título del tema 2.
+  ///
+  /// In es, this message translates to:
+  /// **'La cuota es un precio, no una opinión del modelo'**
+  String get guideHead2;
+
+  /// Título del tema 3.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada pronóstico se sella antes del partido'**
+  String get guideHead3;
+
+  /// Título del tema 4.
+  ///
+  /// In es, this message translates to:
+  /// **'Más selecciones, menos probabilidad'**
+  String get guideHead4;
+
+  /// Título del tema 5.
+  ///
+  /// In es, this message translates to:
+  /// **'Se avanza un escalón cada vez'**
+  String get guideHead5;
+
+  /// Título del tema 6.
+  ///
+  /// In es, this message translates to:
+  /// **'Es información y entretenimiento'**
+  String get guideHead6;
+
+  /// Subtítulo de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Aprende a leer los datos antes de decidir.'**
+  String get guideSubtitle;
+
+  /// Título de la pantalla de guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Guía de pronósticos'**
+  String get guideTitle;
+
+  /// Tema 1 de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDAD'**
+  String get guideTopic1;
+
+  /// Tema 2 de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'CUOTA'**
+  String get guideTopic2;
+
+  /// Tema 3 de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'ALTA PROBABILIDAD'**
+  String get guideTopic3;
+
+  /// Tema 4 de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'PARLEY'**
+  String get guideTopic4;
+
+  /// Tema 5 de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'RETO ESCALERA'**
+  String get guideTopic5;
+
+  /// Tema 6 de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'RESPONSABILIDAD'**
+  String get guideTopic6;
+
+  /// Cierra el aviso de la parte superior.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar aviso'**
+  String get homeBannerClose;
+
   /// No description provided for @homeByDate.
   ///
   /// In es, this message translates to:
   /// **'Partidos por fecha y horario'**
   String get homeByDate;
+
+  /// Botón que abre el menú Más.
+  ///
+  /// In es, this message translates to:
+  /// **'Menú'**
+  String get homeMenuTooltip;
+
+  /// Aviso al tocar un día sin partidos.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay partidos este día.'**
+  String get homeNoMatchesDay;
+
+  /// Lleva a la pestaña Predicciones.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todo'**
+  String get homeSeeAll;
+
+  /// Probabilidad conjunta de un parley.
+  ///
+  /// In es, this message translates to:
+  /// **'Prob. conjunta {percent}'**
+  String homeTicketJoint(String percent);
+
+  /// Número de selecciones de un parley.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{{count} selección} other{{count} selecciones}}'**
+  String homeTicketLegs(int count);
+
+  /// Cuota de un boleto.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuota {value}'**
+  String homeTicketOdds(String value);
+
+  /// Tarjeta de boleto sin datos.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay boletos hoy'**
+  String get homeTicketsEmpty;
+
+  /// Sección con el pronóstico de mayor probabilidad y el parley del día.
+  ///
+  /// In es, this message translates to:
+  /// **'Boletos del día'**
+  String get homeTicketsTitle;
+
+  /// Encabezado del día de hoy en la agenda.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get homeToday;
+
+  /// Encabezado del día de mañana en la agenda.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get homeTomorrow;
 
   /// No description provided for @inboxEmpty.
   ///
@@ -1989,6 +2175,72 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Mercados del partido'**
   String get mmTitle;
+
+  /// Sección del menú Más.
+  ///
+  /// In es, this message translates to:
+  /// **'App'**
+  String get moreApp;
+
+  /// Entrada del menú que abre la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Guía de pronósticos'**
+  String get moreGuide;
+
+  /// Subtítulo de la entrada de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo leer probabilidades, cuotas y retos'**
+  String get moreGuideSub;
+
+  /// Sección del menú Más.
+  ///
+  /// In es, this message translates to:
+  /// **'Aprende'**
+  String get moreLearn;
+
+  /// Sección del menú Más con términos y privacidad.
+  ///
+  /// In es, this message translates to:
+  /// **'Legal'**
+  String get moreLegal;
+
+  /// Abre la ficha de la app en la tienda.
+  ///
+  /// In es, this message translates to:
+  /// **'Evaluar la app'**
+  String get moreRate;
+
+  /// Subtítulo de evaluar la app.
+  ///
+  /// In es, this message translates to:
+  /// **'Comparte tu opinión'**
+  String get moreRateSub;
+
+  /// Abre el menú de compartir del sistema.
+  ///
+  /// In es, this message translates to:
+  /// **'Compartir la app'**
+  String get moreShare;
+
+  /// Texto que se comparte con amigos.
+  ///
+  /// In es, this message translates to:
+  /// **'Mira QuantFut: probabilidades de fútbol con datos, sin promesas. https://pronosticosdeportivos.pro'**
+  String get moreShareMessage;
+
+  /// Subtítulo de compartir la app.
+  ///
+  /// In es, this message translates to:
+  /// **'Invita a tus amigos'**
+  String get moreShareSub;
+
+  /// Error al abrir la tienda.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir la tienda de aplicaciones.'**
+  String get moreStoreError;
 
   /// No description provided for @navCoins.
   ///

@@ -248,8 +248,7 @@ void main() {
     await open(tester, ProductShell(api: api));
     expect(api.homes, 1);
     expect(find.text('Equipo A'), findsOneWidget);
-    expect(find.text('Liga de prueba'), findsNothing);
-    expect(find.textContaining('Liga de prueba'), findsOneWidget);
+    expect(find.text('Liga de prueba'), findsOneWidget);
     await capture(tester, 'home');
     for (final label in [
       'Predicciones',
@@ -285,6 +284,16 @@ void main() {
         match('Directo FC', 'live'),
       ];
     await open(tester, ProductShell(api: api));
+    await tester.scrollUntilVisible(
+      find.text('Equipo A'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('home-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Equipo A'), findsOneWidget); // por jugar
     expect(find.text('Directo FC'), findsOneWidget); // en juego
     expect(find.text('Terminado FC'), findsNothing);

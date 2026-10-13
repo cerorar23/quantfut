@@ -29,6 +29,8 @@ PROB_MIN, PROB_MAX = .75, .90          # escalera
 # se había ampliado a 62-95 %). Es un filtro de lectura: `alta_prob_ext` sigue sellando
 # candidatos desde 62 % y sus filas inmutables no se tocan; solo dejan de mostrarse.
 HIGH_MIN, HIGH_MAX = .73, .95
+# Días de agenda que recibe la app (decisión del titular, 2026-10-12): una semana, agrupada por día.
+DIAS_AGENDA = 7
 # Gratis: un pronóstico por mercado, el de MAYOR cuota publicada (decisión del
 # usuario, 2026-10-12: la cuota manda sobre la probabilidad), con tope 1,60. Con
 # 75-90 % de probabilidad las cuotas reales van de 1,01 a 1,25: un piso de 1,40
@@ -307,7 +309,7 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
     cfg = config()
     flags = cfg['features']
     try:
-        start, end = fichas.ventana(fecha, tz, 2)
+        start, end = fichas.ventana(fecha, tz, DIAS_AGENDA)
     except ValueError:
         raise HTTPException(422, 'Fecha inválida') from None
     agenda = visible_agenda(fichas._agenda(start, end, None)) if flags['agenda']['enabled'] else []

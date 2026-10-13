@@ -137,7 +137,7 @@ void main() {
       await pumpShell(tester);
 
       expect(navLabel(l10n.navHome), findsOneWidget);
-      expect(find.text(l10n.homeByDate), findsOneWidget);
+      expect(find.text(l10n.homeTicketsTitle), findsOneWidget);
 
       await tester.tap(navLabel(l10n.navPredictions));
       await tester.pumpAndSettle();

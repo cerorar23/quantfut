@@ -733,7 +733,118 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupTeamGoals => 'TEAM GOALS';
 
   @override
+  String get guideBody1 =>
+      'If a prediction has a 75% probability, the model expects it to come true about 3 times out of 4 when a similar situation repeats. That means 1 in 4 will not. No data guarantees a specific result.';
+
+  @override
+  String get guideBody2 =>
+      'Odds are set by a bookmaker and include its margin. Comparing the model\'s probability with the one implied by the odds helps you judge whether the price is reasonable; it does not ensure the result.';
+
+  @override
+  String get guideBody3 =>
+      'They are published with their probability and reference odds before kickoff and cannot be edited. That is why you can compare the real historical hit rate with the promised one.';
+
+  @override
+  String get guideBody4 =>
+      'In a parlay, the joint probability is the product of each selection\'s, so it drops quickly as you add matches. A high price usually reflects exactly that.';
+
+  @override
+  String get guideBody5 =>
+      'Each challenge goes in steps and the next one only counts if the previous one is met. Check the progress and the history, failed challenges included, before following one.';
+
+  @override
+  String get guideBody6 =>
+      'QuantFut is not a bookmaker and does not ensure profits. If you decide to bet, only use money you can afford to lose and only if you are of legal age. If gambling stops being a pastime, ask for help.';
+
+  @override
+  String get guideHead1 => 'A probability is not a certainty';
+
+  @override
+  String get guideHead2 => 'Odds are a price, not the model\'s opinion';
+
+  @override
+  String get guideHead3 => 'Every prediction is sealed before the match';
+
+  @override
+  String get guideHead4 => 'More selections, lower probability';
+
+  @override
+  String get guideHead5 => 'You move up one step at a time';
+
+  @override
+  String get guideHead6 => 'It is information and entertainment';
+
+  @override
+  String get guideSubtitle => 'Learn to read the data before you decide.';
+
+  @override
+  String get guideTitle => 'Predictions guide';
+
+  @override
+  String get guideTopic1 => 'PROBABILITY';
+
+  @override
+  String get guideTopic2 => 'ODDS';
+
+  @override
+  String get guideTopic3 => 'HIGH PROBABILITY';
+
+  @override
+  String get guideTopic4 => 'PARLAY';
+
+  @override
+  String get guideTopic5 => 'LADDER CHALLENGE';
+
+  @override
+  String get guideTopic6 => 'RESPONSIBILITY';
+
+  @override
+  String get homeBannerClose => 'Dismiss notice';
+
+  @override
   String get homeByDate => 'Matches by date and time';
+
+  @override
+  String get homeMenuTooltip => 'Menu';
+
+  @override
+  String get homeNoMatchesDay => 'No matches on this day.';
+
+  @override
+  String get homeSeeAll => 'See all';
+
+  @override
+  String homeTicketJoint(String percent) {
+    return 'Joint prob. $percent';
+  }
+
+  @override
+  String homeTicketLegs(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selections',
+      one: '$count selection',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeTicketOdds(String value) {
+    return 'Odds $value';
+  }
+
+  @override
+  String get homeTicketsEmpty => 'No tickets yet today';
+
+  @override
+  String get homeTicketsTitle => 'Tickets of the day';
+
+  @override
+  String get homeToday => 'Today';
+
+  @override
+  String get homeTomorrow => 'Tomorrow';
 
   @override
   String get inboxEmpty => 'You have no alerts yet.';
@@ -1121,6 +1232,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mmTitle => 'Match markets';
+
+  @override
+  String get moreApp => 'App';
+
+  @override
+  String get moreGuide => 'Predictions guide';
+
+  @override
+  String get moreGuideSub => 'How to read probabilities, odds and challenges';
+
+  @override
+  String get moreLearn => 'Learn';
+
+  @override
+  String get moreLegal => 'Legal';
+
+  @override
+  String get moreRate => 'Rate the app';
+
+  @override
+  String get moreRateSub => 'Share your opinion';
+
+  @override
+  String get moreShare => 'Share the app';
+
+  @override
+  String get moreShareMessage =>
+      'Check out QuantFut: football probabilities backed by data, no promises. https://pronosticosdeportivos.pro';
+
+  @override
+  String get moreShareSub => 'Invite your friends';
+
+  @override
+  String get moreStoreError => 'Could not open the app store.';
 
   @override
   String get navCoins => 'Coins';

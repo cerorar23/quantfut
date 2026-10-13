@@ -739,7 +739,120 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupTeamGoals => 'TEAMTORE';
 
   @override
+  String get guideBody1 =>
+      'Hat eine Prognose 75 % Wahrscheinlichkeit, erwartet das Modell, dass sie bei einer ähnlichen Situation etwa 3 von 4 Mal eintritt. Das heißt, 1 von 4 Mal tritt sie nicht ein. Keine Daten garantieren ein bestimmtes Ergebnis.';
+
+  @override
+  String get guideBody2 =>
+      'Die Quote setzt ein Wettanbieter und sie enthält dessen Marge. Die Wahrscheinlichkeit des Modells mit der in der Quote enthaltenen zu vergleichen, hilft einzuschätzen, ob der Preis vernünftig ist; das Ergebnis sichert es nicht.';
+
+  @override
+  String get guideBody3 =>
+      'Sie werden vor dem Anpfiff mit Wahrscheinlichkeit und Referenzquote veröffentlicht und können nicht geändert werden. So kannst du die echte historische Trefferquote mit der versprochenen vergleichen.';
+
+  @override
+  String get guideBody4 =>
+      'Bei einer Kombiwette ist die gemeinsame Wahrscheinlichkeit das Produkt der einzelnen und sinkt daher schnell, wenn du Spiele hinzufügst. Eine hohe Quote spiegelt meist genau das wider.';
+
+  @override
+  String get guideBody5 =>
+      'Jede Challenge läuft in Schritten, und der nächste zählt nur, wenn der vorherige erfüllt ist. Sieh dir Fortschritt und Verlauf an, auch gescheiterte Challenges, bevor du einer folgst.';
+
+  @override
+  String get guideBody6 =>
+      'QuantFut ist kein Wettanbieter und sichert keine Gewinne zu. Wenn du wettest, setze nur Geld, dessen Verlust du verkraften kannst, und nur als Volljähriger. Wenn das Spielen kein Zeitvertreib mehr ist, hol dir Hilfe.';
+
+  @override
+  String get guideHead1 => 'Eine Wahrscheinlichkeit ist keine Gewissheit';
+
+  @override
+  String get guideHead2 =>
+      'Die Quote ist ein Preis, nicht die Meinung des Modells';
+
+  @override
+  String get guideHead3 => 'Jede Prognose wird vor dem Spiel versiegelt';
+
+  @override
+  String get guideHead4 => 'Mehr Auswahlen, geringere Wahrscheinlichkeit';
+
+  @override
+  String get guideHead5 => 'Es geht jeweils eine Stufe nach oben';
+
+  @override
+  String get guideHead6 => 'Es dient der Information und Unterhaltung';
+
+  @override
+  String get guideSubtitle =>
+      'Lerne die Daten zu lesen, bevor du entscheidest.';
+
+  @override
+  String get guideTitle => 'Prognose-Leitfaden';
+
+  @override
+  String get guideTopic1 => 'WAHRSCHEINLICHKEIT';
+
+  @override
+  String get guideTopic2 => 'QUOTE';
+
+  @override
+  String get guideTopic3 => 'HOHE WAHRSCHEINLICHKEIT';
+
+  @override
+  String get guideTopic4 => 'KOMBIWETTE';
+
+  @override
+  String get guideTopic5 => 'TREPPEN-CHALLENGE';
+
+  @override
+  String get guideTopic6 => 'VERANTWORTUNG';
+
+  @override
+  String get homeBannerClose => 'Hinweis schließen';
+
+  @override
   String get homeByDate => 'Spiele nach Datum und Uhrzeit';
+
+  @override
+  String get homeMenuTooltip => 'Menü';
+
+  @override
+  String get homeNoMatchesDay => 'An diesem Tag gibt es keine Spiele.';
+
+  @override
+  String get homeSeeAll => 'Alle ansehen';
+
+  @override
+  String homeTicketJoint(String percent) {
+    return 'Gem. Wahrsch. $percent';
+  }
+
+  @override
+  String homeTicketLegs(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Auswahlen',
+      one: '$count Auswahl',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeTicketOdds(String value) {
+    return 'Quote $value';
+  }
+
+  @override
+  String get homeTicketsEmpty => 'Heute noch keine Scheine';
+
+  @override
+  String get homeTicketsTitle => 'Scheine des Tages';
+
+  @override
+  String get homeToday => 'Heute';
+
+  @override
+  String get homeTomorrow => 'Morgen';
 
   @override
   String get inboxEmpty => 'Du hast noch keine Hinweise.';
@@ -1127,6 +1240,41 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get mmTitle => 'Spielmärkte';
+
+  @override
+  String get moreApp => 'App';
+
+  @override
+  String get moreGuide => 'Prognose-Leitfaden';
+
+  @override
+  String get moreGuideSub =>
+      'Wahrscheinlichkeiten, Quoten und Challenges lesen';
+
+  @override
+  String get moreLearn => 'Lernen';
+
+  @override
+  String get moreLegal => 'Rechtliches';
+
+  @override
+  String get moreRate => 'App bewerten';
+
+  @override
+  String get moreRateSub => 'Teile deine Meinung';
+
+  @override
+  String get moreShare => 'App teilen';
+
+  @override
+  String get moreShareMessage =>
+      'Schau dir QuantFut an: Fußball-Wahrscheinlichkeiten auf Datenbasis, ohne Versprechen. https://pronosticosdeportivos.pro';
+
+  @override
+  String get moreShareSub => 'Lade deine Freunde ein';
+
+  @override
+  String get moreStoreError => 'Der App-Store konnte nicht geöffnet werden.';
 
   @override
   String get navCoins => 'Coins';

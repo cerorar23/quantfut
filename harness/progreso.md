@@ -5331,3 +5331,28 @@ Código en `lib/core/access_screen.dart` (no conoce Firebase; la puerta de acces
 nuevos en los 6 idiomas. Por debajo de 700 px de alto la pantalla se desplaza en vez de apretar el texto.
 Pruebas: `test/access_screen_test.dart` (14, incluye 6 idiomas a 390 y 320 px). Suite: 177 verdes. Sin cambios
 de servidor ni despliegue.
+
+## 2026-10-13 — Inicio rediseñado: agenda por día, boletos del día y menú «Más» con guía
+
+Pedido del titular (capturas de QuantFut y de WIN Betting): quitar los atajos «Alta probabilidad / Reto
+Escalera» y los filtros «+48 h, +1 h…» del Inicio, un calendario más visual y los partidos agrupados por día en
+orden cronológico; del diseño de referencia, resumen, boletos y un menú con ventanas nuevas. Repos usados como
+referencia de patrón (no como dependencia): `easy_date_timeline` (tira de días) y `sticky_grouped_list`
+(encabezados por día con salto). Lo que NO se copia de la referencia: oferta con cuenta atrás, «1.000.000+
+apostantes», «Seguro/Medio/Arriesgado» y el «84 % de acierto» fijo: serían cifras inventadas. El aviso superior es
+el de Remote Config que ya existía (cerrable), no una oferta nueva.
+Decisiones: (1) el servidor manda 7 días (`mobile.DIAS_AGENDA`, antes 2) y la app agrupa por día local; la app
+anterior sigue funcionando (filtra por su cuenta). Desplegado con respaldo `~/backups/agenda7-20261013` (vuelta
+atrás = imagen `quantfut-api-tapjoy:pre-agenda-backup`). (2) La tira de 7 días queda FIJA arriba y el día activo
+sigue al desplazamiento; tocar un día salta a sus partidos y un día sin partidos avisa. Los encabezados de día no
+son fijos: con una lista de hasta ~85 partidos por día, una tira fija es más útil que dos barras fijas. (3) Se
+quitan Alta probabilidad y Reto Escalera del Inicio (viven en Predicciones; quedan como tarjetas de «Boletos del
+día» con el pronóstico de mayor probabilidad y el parley). (4) Resumen con datos reales: saldo de monedas
+(`/mobile/v1/rewards`) y acierto histórico real de Alta probabilidad; sin historial liquidado no se enseña la
+tarjeta. (5) Menú «Más» (hoja inferior): guía de pronósticos (6 temas, sin promesas de ganancia), evaluar la app
+(ficha de la tienda; no abrirá nada hasta que la app esté publicada), compartir (hoja del sistema; dependencia
+`share_plus`) y términos/privacidad. El buscador pasa a un icono de la tira para ganar sitio.
+Código: `home_agenda.dart` (agrupar, tira, fila de partido), `live_home.dart`, `live_more.dart`, `live_guide.dart`;
+42 textos nuevos en 6 idiomas. Pruebas: `home_screen_test.dart` (19) y las de navegación/idiomas actualizadas;
+suite 196 verdes. Lección: `dart format lib/product` reformateó archivos ajenos; se restauraron con `git checkout`
+(formatear solo archivos propios).

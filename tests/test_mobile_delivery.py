@@ -237,3 +237,18 @@ def test_inicio_no_enseña_partidos_terminados():
               {'match_id': 'c', 'estado': 'finished', 'marcador': [5, 0]},
               {'match_id': 'd'}, {'match_id': 'e', 'estado': 'postponed'}]
     assert [m['match_id'] for m in mobile.visible_agenda(agenda)] == ['a', 'b', 'd', 'e']
+
+
+def test_inicio_pide_una_semana_de_agenda(monkeypatch):
+    """La app agrupa la agenda por día: el servidor manda DIAS_AGENDA (7) días desde la fecha."""
+    pedido = {}
+
+    def ventana(fecha, tz, dias, ahora=None):
+        pedido['dias'] = dias
+        raise ValueError('corta aquí')
+
+    monkeypatch.setattr(mobile, 'config', lambda: {'features': {'agenda': {'enabled': True}}})
+    monkeypatch.setattr(mobile.fichas, 'ventana', ventana)
+    with pytest.raises(mobile.HTTPException):
+        mobile.home(Response(), '2026-10-13', 0, False, None)
+    assert pedido['dias'] == mobile.DIAS_AGENDA == 7

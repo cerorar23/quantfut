@@ -546,7 +546,146 @@
   "groupResult": "RESULTADO",
   "groupSpecials": "ESPECIALES",
   "groupTeamGoals": "GOLES DE EQUIPO",
+  "guideBody1": "Si un pronóstico tiene 75 % de probabilidad, el modelo espera que se cumpla cerca de 3 de cada 4 veces que se repita una situación así. Eso significa que 1 de cada 4 no se cumplirá. Ningún dato garantiza un resultado concreto.",
+  "@guideBody1": {
+    "description": "Texto del tema 1."
+  },
+  "guideBody2": "La cuota la fija una casa de apuestas e incluye su margen. Comparar la probabilidad del modelo con la que implica la cuota ayuda a ver si el precio es razonable; no asegura que el resultado llegue.",
+  "@guideBody2": {
+    "description": "Texto del tema 2."
+  },
+  "guideBody3": "Se publican con su probabilidad y su cuota de referencia antes de empezar y no se pueden editar. Por eso puedes comparar el acierto histórico real con el que se prometía.",
+  "@guideBody3": {
+    "description": "Texto del tema 3."
+  },
+  "guideBody4": "En una combinada, la probabilidad conjunta es el producto de la de cada selección, así que baja rápido al añadir partidos. Una cuota alta suele reflejar justo eso.",
+  "@guideBody4": {
+    "description": "Texto del tema 4."
+  },
+  "guideBody5": "Cada reto va por pasos y el siguiente solo cuenta si se cumple el anterior. Mira el avance y el historial, incluidos los retos fallidos, antes de seguir uno.",
+  "@guideBody5": {
+    "description": "Texto del tema 5."
+  },
+  "guideBody6": "QuantFut no es una casa de apuestas ni asegura ganancias. Si decides apostar, hazlo solo con dinero que puedas perder y solo si eres mayor de edad. Si el juego deja de ser un pasatiempo, pide ayuda.",
+  "@guideBody6": {
+    "description": "Texto del tema 6."
+  },
+  "guideHead1": "Una probabilidad no es una certeza",
+  "@guideHead1": {
+    "description": "Título del tema 1."
+  },
+  "guideHead2": "La cuota es un precio, no una opinión del modelo",
+  "@guideHead2": {
+    "description": "Título del tema 2."
+  },
+  "guideHead3": "Cada pronóstico se sella antes del partido",
+  "@guideHead3": {
+    "description": "Título del tema 3."
+  },
+  "guideHead4": "Más selecciones, menos probabilidad",
+  "@guideHead4": {
+    "description": "Título del tema 4."
+  },
+  "guideHead5": "Se avanza un escalón cada vez",
+  "@guideHead5": {
+    "description": "Título del tema 5."
+  },
+  "guideHead6": "Es información y entretenimiento",
+  "@guideHead6": {
+    "description": "Título del tema 6."
+  },
+  "guideSubtitle": "Aprende a leer los datos antes de decidir.",
+  "@guideSubtitle": {
+    "description": "Subtítulo de la guía."
+  },
+  "guideTitle": "Guía de pronósticos",
+  "@guideTitle": {
+    "description": "Título de la pantalla de guía."
+  },
+  "guideTopic1": "PROBABILIDAD",
+  "@guideTopic1": {
+    "description": "Tema 1 de la guía."
+  },
+  "guideTopic2": "CUOTA",
+  "@guideTopic2": {
+    "description": "Tema 2 de la guía."
+  },
+  "guideTopic3": "ALTA PROBABILIDAD",
+  "@guideTopic3": {
+    "description": "Tema 3 de la guía."
+  },
+  "guideTopic4": "PARLEY",
+  "@guideTopic4": {
+    "description": "Tema 4 de la guía."
+  },
+  "guideTopic5": "RETO ESCALERA",
+  "@guideTopic5": {
+    "description": "Tema 5 de la guía."
+  },
+  "guideTopic6": "RESPONSABILIDAD",
+  "@guideTopic6": {
+    "description": "Tema 6 de la guía."
+  },
+  "homeBannerClose": "Cerrar aviso",
+  "@homeBannerClose": {
+    "description": "Cierra el aviso de la parte superior."
+  },
   "homeByDate": "Partidos por fecha y horario",
+  "homeMenuTooltip": "Menú",
+  "@homeMenuTooltip": {
+    "description": "Botón que abre el menú Más."
+  },
+  "homeNoMatchesDay": "No hay partidos este día.",
+  "@homeNoMatchesDay": {
+    "description": "Aviso al tocar un día sin partidos."
+  },
+  "homeSeeAll": "Ver todo",
+  "@homeSeeAll": {
+    "description": "Lleva a la pestaña Predicciones."
+  },
+  "homeTicketJoint": "Prob. conjunta {percent}",
+  "@homeTicketJoint": {
+    "description": "Probabilidad conjunta de un parley.",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "homeTicketLegs": "{count, plural, one{{count} selección} other{{count} selecciones}}",
+  "@homeTicketLegs": {
+    "description": "Número de selecciones de un parley.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeTicketOdds": "Cuota {value}",
+  "@homeTicketOdds": {
+    "description": "Cuota de un boleto.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "homeTicketsEmpty": "Aún no hay boletos hoy",
+  "@homeTicketsEmpty": {
+    "description": "Tarjeta de boleto sin datos."
+  },
+  "homeTicketsTitle": "Boletos del día",
+  "@homeTicketsTitle": {
+    "description": "Sección con el pronóstico de mayor probabilidad y el parley del día."
+  },
+  "homeToday": "Hoy",
+  "@homeToday": {
+    "description": "Encabezado del día de hoy en la agenda."
+  },
+  "homeTomorrow": "Mañana",
+  "@homeTomorrow": {
+    "description": "Encabezado del día de mañana en la agenda."
+  },
   "inboxEmpty": "Todavía no tienes avisos.",
   "inboxMatch": "Partido",
   "inboxTitle": "Avisos",
@@ -876,6 +1015,50 @@
   "mmScoresTitle": "Marcadores más probables",
   "mmScoresVip": "Los marcadores más probables son para VIP.",
   "mmTitle": "Mercados del partido",
+  "moreApp": "App",
+  "@moreApp": {
+    "description": "Sección del menú Más."
+  },
+  "moreGuide": "Guía de pronósticos",
+  "@moreGuide": {
+    "description": "Entrada del menú que abre la guía."
+  },
+  "moreGuideSub": "Cómo leer probabilidades, cuotas y retos",
+  "@moreGuideSub": {
+    "description": "Subtítulo de la entrada de la guía."
+  },
+  "moreLearn": "Aprende",
+  "@moreLearn": {
+    "description": "Sección del menú Más."
+  },
+  "moreLegal": "Legal",
+  "@moreLegal": {
+    "description": "Sección del menú Más con términos y privacidad."
+  },
+  "moreRate": "Evaluar la app",
+  "@moreRate": {
+    "description": "Abre la ficha de la app en la tienda."
+  },
+  "moreRateSub": "Comparte tu opinión",
+  "@moreRateSub": {
+    "description": "Subtítulo de evaluar la app."
+  },
+  "moreShare": "Compartir la app",
+  "@moreShare": {
+    "description": "Abre el menú de compartir del sistema."
+  },
+  "moreShareMessage": "Mira QuantFut: probabilidades de fútbol con datos, sin promesas. https://pronosticosdeportivos.pro",
+  "@moreShareMessage": {
+    "description": "Texto que se comparte con amigos."
+  },
+  "moreShareSub": "Invita a tus amigos",
+  "@moreShareSub": {
+    "description": "Subtítulo de compartir la app."
+  },
+  "moreStoreError": "No se pudo abrir la tienda de aplicaciones.",
+  "@moreStoreError": {
+    "description": "Error al abrir la tienda."
+  },
   "navCoins": "Coins",
   "navHome": "Inicio",
   "navMarkets": "Mercados",

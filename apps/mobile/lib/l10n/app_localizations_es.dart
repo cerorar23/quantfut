@@ -740,7 +740,118 @@ class AppLocalizationsEs extends AppLocalizations {
   String get groupTeamGoals => 'GOLES DE EQUIPO';
 
   @override
+  String get guideBody1 =>
+      'Si un pronóstico tiene 75 % de probabilidad, el modelo espera que se cumpla cerca de 3 de cada 4 veces que se repita una situación así. Eso significa que 1 de cada 4 no se cumplirá. Ningún dato garantiza un resultado concreto.';
+
+  @override
+  String get guideBody2 =>
+      'La cuota la fija una casa de apuestas e incluye su margen. Comparar la probabilidad del modelo con la que implica la cuota ayuda a ver si el precio es razonable; no asegura que el resultado llegue.';
+
+  @override
+  String get guideBody3 =>
+      'Se publican con su probabilidad y su cuota de referencia antes de empezar y no se pueden editar. Por eso puedes comparar el acierto histórico real con el que se prometía.';
+
+  @override
+  String get guideBody4 =>
+      'En una combinada, la probabilidad conjunta es el producto de la de cada selección, así que baja rápido al añadir partidos. Una cuota alta suele reflejar justo eso.';
+
+  @override
+  String get guideBody5 =>
+      'Cada reto va por pasos y el siguiente solo cuenta si se cumple el anterior. Mira el avance y el historial, incluidos los retos fallidos, antes de seguir uno.';
+
+  @override
+  String get guideBody6 =>
+      'QuantFut no es una casa de apuestas ni asegura ganancias. Si decides apostar, hazlo solo con dinero que puedas perder y solo si eres mayor de edad. Si el juego deja de ser un pasatiempo, pide ayuda.';
+
+  @override
+  String get guideHead1 => 'Una probabilidad no es una certeza';
+
+  @override
+  String get guideHead2 => 'La cuota es un precio, no una opinión del modelo';
+
+  @override
+  String get guideHead3 => 'Cada pronóstico se sella antes del partido';
+
+  @override
+  String get guideHead4 => 'Más selecciones, menos probabilidad';
+
+  @override
+  String get guideHead5 => 'Se avanza un escalón cada vez';
+
+  @override
+  String get guideHead6 => 'Es información y entretenimiento';
+
+  @override
+  String get guideSubtitle => 'Aprende a leer los datos antes de decidir.';
+
+  @override
+  String get guideTitle => 'Guía de pronósticos';
+
+  @override
+  String get guideTopic1 => 'PROBABILIDAD';
+
+  @override
+  String get guideTopic2 => 'CUOTA';
+
+  @override
+  String get guideTopic3 => 'ALTA PROBABILIDAD';
+
+  @override
+  String get guideTopic4 => 'PARLEY';
+
+  @override
+  String get guideTopic5 => 'RETO ESCALERA';
+
+  @override
+  String get guideTopic6 => 'RESPONSABILIDAD';
+
+  @override
+  String get homeBannerClose => 'Cerrar aviso';
+
+  @override
   String get homeByDate => 'Partidos por fecha y horario';
+
+  @override
+  String get homeMenuTooltip => 'Menú';
+
+  @override
+  String get homeNoMatchesDay => 'No hay partidos este día.';
+
+  @override
+  String get homeSeeAll => 'Ver todo';
+
+  @override
+  String homeTicketJoint(String percent) {
+    return 'Prob. conjunta $percent';
+  }
+
+  @override
+  String homeTicketLegs(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selecciones',
+      one: '$count selección',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeTicketOdds(String value) {
+    return 'Cuota $value';
+  }
+
+  @override
+  String get homeTicketsEmpty => 'Aún no hay boletos hoy';
+
+  @override
+  String get homeTicketsTitle => 'Boletos del día';
+
+  @override
+  String get homeToday => 'Hoy';
+
+  @override
+  String get homeTomorrow => 'Mañana';
 
   @override
   String get inboxEmpty => 'Todavía no tienes avisos.';
@@ -1133,6 +1244,40 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get mmTitle => 'Mercados del partido';
+
+  @override
+  String get moreApp => 'App';
+
+  @override
+  String get moreGuide => 'Guía de pronósticos';
+
+  @override
+  String get moreGuideSub => 'Cómo leer probabilidades, cuotas y retos';
+
+  @override
+  String get moreLearn => 'Aprende';
+
+  @override
+  String get moreLegal => 'Legal';
+
+  @override
+  String get moreRate => 'Evaluar la app';
+
+  @override
+  String get moreRateSub => 'Comparte tu opinión';
+
+  @override
+  String get moreShare => 'Compartir la app';
+
+  @override
+  String get moreShareMessage =>
+      'Mira QuantFut: probabilidades de fútbol con datos, sin promesas. https://pronosticosdeportivos.pro';
+
+  @override
+  String get moreShareSub => 'Invita a tus amigos';
+
+  @override
+  String get moreStoreError => 'No se pudo abrir la tienda de aplicaciones.';
 
   @override
   String get navCoins => 'Coins';
