@@ -2410,3 +2410,14 @@ justa (1/prob) etiquetada donde no hay cuota publicada.
 - [x] (hecho 12-oct) Desplegar: aplicar db/057, `ALTA_PROB_EXT_ENABLED=1` antes del sellado del
       12-oct (08:00 UTC), `preview` y verify del primer lote; si se retrasa, mover
       `LOTE_ALTA_EXT_DESDE`. Recompilar la app (texto 62–95 %).
+
+## Tapjoy: HTML visible al abrir ofertas (2026-10-12)
+
+- [x] Sustituir errores crudos del SDK por códigos y avisos en los seis idiomas; evitar solicitudes simultáneas, limitar la espera y actualizar SDK Android a 14.8.0.
+- [x] Verificar la regresión de HTML, reintento y concurrencia: 16 pruebas Flutter y análisis sin incidencias; arnés final 977 aprobadas/24 omitidas.
+- [x] Confirmar apertura del proveedor en la sesión de prueba del usuario; detalle en el seguimiento de BlueStacks.
+- [ ] Confirmar acreditación de una oferta real; aprobación comercial pendiente.
+- [x] Generar APK release con Tapjoy 14.8.0, comprobar firma vigente y entregar artefacto `.local/artifacts/QuantFut-ofertas-corregidas-20261012.apk`.
+
+- [x] Seguimiento Tapjoy: identificar `no_currency`, verificar clave/moneda/tarjeta y registrar BlueStacks como prueba con autorización explícita. Offerwall abrió Tapjoy Test CPA de 7 monedas.
+- [ ] Tapjoy comercial: aprobación de cuenta/aplicación y prueba de acreditación de una oferta confirmada; las ofertas de prueba no acreditan este hito.

@@ -53,7 +53,7 @@ kotlin {
     }
 }
 dependencies {
-    implementation 'com.tapjoy:tapjoy-android-sdk:14.4.0'
+    implementation 'com.tapjoy:tapjoy-android-sdk:14.8.0'
 }
 flutter {
     source '../..'

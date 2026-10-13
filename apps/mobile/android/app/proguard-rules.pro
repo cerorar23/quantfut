@@ -1,4 +1,4 @@
-# Tapjoy Offerwall SDK 14.4.0 (reglas oficiales de Unity/Tapjoy).
+# Tapjoy Offerwall SDK 14.8.0 (reglas oficiales de Unity/Tapjoy).
 -keep class com.tapjoy.** { *; }
 -keep class com.moat.** { *; }
 -keepattributes JavascriptInterface

@@ -5273,6 +5273,12 @@ hadukin/custom_sliding_segmented_control (MIT), fathialamre/ticketcher y FazalHu
 `product_navigation_test` y `live_parley_test` se actualizaron: ya no hay un botón por candado y las
 reglas largas viven en la hoja.
 
+## 2026-10-12 — Tapjoy: no mostrar HTML de errores en Coins
+
+El puente reenviaba TJError.message y Flutter lo mostraba completo dentro del SnackBar: un fallo del SDK podía cubrir la pantalla con HTML. Ahora el canal solo transmite códigos estables y el código numérico del SDK; la app presenta avisos en es/en/pt/fr/it/de, permite reintentar y bloquea solicitudes duplicadas. Activity en connect, apertura en el hilo principal, éxito al mostrarse contenido y límite de 45 s. SDK 14.8.0 por mejoras oficiales de contenido web/interfaz, sin atribuirle una solución específica no documentada. 16 pruebas Flutter y análisis correctos, arnés final 977/24. Caché Pub incompleta restaurada. La apertura real sigue pendiente: BlueStacks no ofreció logs dentro del límite y hubo interacción concurrente del usuario. Detalle: apps/mobile/docs/TAPJOY_ERROR_HTML_20261012.md.
+
+APK corregido release compilado, SDK/códigos verificados dentro del archivo y firma v2 coincidente con distribución vigente; entregable `.local/artifacts/QuantFut-ofertas-corregidas-20261012.apk` (74,1 MB). No instalado ni acreditada apertura real en la cuenta del usuario.
+
 ## 2026-10-12 — Entrenamiento xG terminado; candidato no activado
 
 2026.10.12-221104 terminó a las 20:55:22 CDMX (13-oct, 02:55 UTC), tras
@@ -5300,6 +5306,10 @@ artifact-verification.json y result.json/status.json/training.log exactos,
 con hashes iguales al VPS. Actualizadas documentación y tareas.
 Automatización resultado-del-entrenamiento-con-xg detenida (PAUSED) conforme
 a la orden de avisar al finalizar; sin cambios de código ni puertas.
+
+## 2026-10-12 — Tapjoy abierto en BlueStacks tras registro de prueba
+
+La segunda captura conservaba el fallo de carga pese a ocultar el HTML. Registro Android: `no_currency`; Unity: moneda Monedas activa, Coins vinculada a esa moneda y coins_offerwall, SDK coincidente. Cuenta aún en revisión/app no activa sin tienda; cero dispositivos de prueba. Se registró BlueStacks QuantFut con permiso explícito para enviar su ID publicitario a Unity. Registro confirmado y apertura en la sesión actual verificada visualmente: Earn Rewards, Tapjoy Test CPA, 7 monedas. No se completó oferta ni se acreditaron monedas. La apertura de pruebas queda resuelta; aprobación/comercial y callback real siguen pendientes. Sin nuevos cambios de código o APK.
 
 ## 2026-10-12 — Coins rediseñado y aviso de monedas insuficientes
 
@@ -5440,3 +5450,15 @@ Comprobación actual antes de guardar esta integración: 994 pruebas aprobadas,
 24 omitidas y 2 advertencias. El commit incluye la captura de la primera pareja,
 protección temporal, migración, pruebas y resultado del candidato rechazado.
 Se conservan sin incluir los cambios concurrentes de Tapjoy y de la app.
+
+## 2026-10-13 — Cambios pendientes de Tapjoy preparados para commit
+
+Orden del titular: guardar los cambios restantes. Puente Android con códigos
+seguros (sin HTML del SDK), exclusión de aperturas simultáneas, espera de 45 s
+y SDK 14.8.0; documentación del diagnóstico y apertura de prueba conservada.
+La apertura de pruebas ya está confirmada, pero aprobación y acreditación
+comercial siguen pendientes. Comprobación actual: 16 pruebas Flutter aprobadas
+y :app:compileReleaseKotlin correcto. Se restauraron las cachés Pub/Maven que
+faltaban, con pub get --enforce-lockfile; pubspec y lock permanecen iguales.
+Se excluyen .venv-api, caché Kotlin y build Android; el informe HTML generado
+sale del índice, conservado en disco. No se instala APK ni se modifican claves.
