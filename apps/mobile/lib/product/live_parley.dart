@@ -76,64 +76,177 @@ class _ParleyTabState extends State<ParleyTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        liveText(
-          steps.isEmpty
+        _RulesStrip(
+          chip: steps.isEmpty
               ? l10n.parleySealed
-              : l10n.parleyRange(
+              : l10n.parleyChipLine(
                   steps.length,
                   decimalText(steps.first['cuota_min']),
                   decimalText(steps.last['cuota_max']),
                 ),
-          size: 12,
-          color: liveMuted,
+          onInfo: () => _showRules(context, steps),
         ),
-        const SizedBox(height: 4),
-        liveText(l10n.parleyFreeNote, size: 11, color: liveMuted),
         const SizedBox(height: 14),
         if (d['activo'] != true)
           _notice(
             Icons.hourglass_empty,
             l10n.parleyInactiveTitle,
             l10n.parleyInactiveBody,
+            onInfo: () => _showRules(context, steps),
           )
         else if (tickets.isEmpty)
-          _notice(Icons.event_busy, l10n.parleyNoneTitle, l10n.parleyNoneBody)
+          _notice(
+            Icons.event_busy,
+            l10n.parleyNoneTitle,
+            l10n.parleyNoneBody,
+            onInfo: () => _showRules(context, steps),
+          )
         else ...[
-          for (final t in tickets)
+          for (final (i, t) in tickets.indexed)
             t['locked'] == true
                 ? _LockedTicket(ticket: t, onVip: widget.onVip)
-                : _TicketCard(ticket: t),
+                : _TicketCard(key: ValueKey('parley-ticket-$i'), ticket: t),
         ],
         if (days.length > 1) ...[
           liveHeading(l10n.parleyPastDays),
           for (final day in days.skip(1).take(7)) _PastDay(day: day),
         ],
-        if ((total['n'] as num? ?? 0) > 0) _Summary(total: total),
-        const SizedBox(height: 8),
-        liveText(l10n.parleyDisclaimer, size: 10, color: liveMuted),
+        if ((total['n'] as num? ?? 0) > 0)
+          _Summary(total: total)
+        else if (days.isEmpty)
+          _NoHistory(message: l10n.parleyNoHistory),
         const SizedBox(height: 18),
       ],
     );
   }
 
-  static Widget _notice(IconData icon, String title, String body) => liveCard(
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: liveGold),
-        const SizedBox(width: 12),
-        Expanded(
+  void _showRules(BuildContext context, List<JsonMap> steps) {
+    final l10n = context.l10n;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: livePanel,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheet) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           child: Column(
+            key: const ValueKey('parley-rules'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              liveText(title, bold: true, size: 15),
-              const SizedBox(height: 6),
-              liveText(body, size: 12, color: liveMuted),
+              liveText(l10n.parleyInfoTitle, bold: true, size: 19),
+              const SizedBox(height: 12),
+              if (steps.isNotEmpty)
+                liveText(
+                  l10n.parleyRange(
+                    steps.length,
+                    decimalText(steps.first['cuota_min']),
+                    decimalText(steps.last['cuota_max']),
+                  ),
+                  size: 13,
+                )
+              else
+                liveText(l10n.parleySealed, size: 13),
+              const SizedBox(height: 10),
+              liveText(l10n.parleyFreeNote, size: 13, color: liveMuted),
+              const SizedBox(height: 10),
+              liveText(l10n.parleyDisclaimer, size: 12, color: liveMuted),
             ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  static Widget _notice(
+    IconData icon,
+    String title,
+    String body, {
+    required VoidCallback onInfo,
+  }) => Builder(
+    builder: (context) => liveCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: liveGold, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    liveText(title, bold: true, size: 16),
+                    const SizedBox(height: 6),
+                    liveText(body, size: 12, color: liveMuted),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const ValueKey('parley-info'),
+              onPressed: onInfo,
+              icon: const Icon(Icons.info_outline, size: 18),
+              label: Text(context.l10n.parleyInfoTitle),
+            ),
+          ),
+        ],
+      ),
     ),
+  );
+}
+
+/// Resumen de las reglas en una línea, con acceso a la explicación completa.
+class _RulesStrip extends StatelessWidget {
+  const _RulesStrip({required this.chip, required this.onInfo});
+
+  final String chip;
+  final VoidCallback onInfo;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            _TicketCard._chip(chip, liveCyan),
+            _TicketCard._chip(context.l10n.parleyFreeChip, liveGreen),
+          ],
+        ),
+      ),
+      IconButton(
+        key: const ValueKey('parley-rules-button'),
+        tooltip: context.l10n.parleyInfoTitle,
+        onPressed: onInfo,
+        icon: const Icon(Icons.info_outline, color: liveMuted),
+      ),
+    ],
+  );
+}
+
+class _NoHistory extends StatelessWidget {
+  const _NoHistory({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('parley-no-history'),
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xff0f1a28),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white12),
+    ),
+    child: liveText(message, size: 12, color: liveMuted),
   );
 }
 
@@ -194,8 +307,10 @@ class _LockedTicket extends StatelessWidget {
   );
 }
 
+/// Un parley como boleto: arriba escalón, estado, cuota total y probabilidad conjunta;
+/// abajo, las patas en una línea de tiempo. Las muescas y la línea punteada separan ambas partes.
 class _TicketCard extends StatelessWidget {
-  const _TicketCard({required this.ticket});
+  const _TicketCard({super.key, required this.ticket});
   final JsonMap ticket;
 
   @override
@@ -204,39 +319,73 @@ class _TicketCard extends StatelessWidget {
       for (final p in (ticket['patas'] as List? ?? const [])) jsonMap(p),
     ];
     final (color, label) = _outcome(ticket['outcome']);
-    return liveCard(
-      border: color.withValues(alpha: .35),
+    final prob = ticket['prob_total'];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: livePanel,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: .35)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _chip(
-                context.l10n.parleyStep(ticket['escalon'] ?? '—'),
-                liveCyan,
-              ),
-              const SizedBox(width: 6),
-              _chip(label.toUpperCase(), color),
-              const Spacer(),
-              liveText(
-                '@${decimalText(ticket['cuota_total'])}',
-                size: 22,
-                bold: true,
-                color: liveGold,
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          liveText(
-            context.l10n.parleyJointProb(
-              realPercent(ticket['prob_total']),
-              legs.length,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _chip(
+                            context.l10n.parleyStep(ticket['escalon'] ?? '—'),
+                            liveCyan,
+                          ),
+                          _chip(label.toUpperCase(), color),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      liveText(
+                        context.l10n.parleyJointProb(
+                          realPercent(prob),
+                          legs.length,
+                        ),
+                        size: 12,
+                        color: liveMuted,
+                      ),
+                      const SizedBox(height: 6),
+                      _Bar(value: prob is num ? prob.toDouble() : 0),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Text(
+                  '@${decimalText(ticket['cuota_total'])}',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontFamily: 'Gilroy ExtraBold',
+                    color: liveGold,
+                  ),
+                ),
+              ],
             ),
-            size: 11,
-            color: liveMuted,
           ),
-          const SizedBox(height: 10),
-          for (final leg in legs) _Leg(leg: leg),
+          const _TearLine(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              children: [
+                for (final (i, leg) in legs.indexed)
+                  _Leg(leg: leg, first: i == 0, last: i == legs.length - 1),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -255,71 +404,168 @@ class _TicketCard extends StatelessWidget {
   );
 }
 
+class _Bar extends StatelessWidget {
+  const _Bar({required this.value});
+  final double value;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(3),
+    child: Stack(
+      children: [
+        Container(height: 6, color: const Color(0xff243447)),
+        FractionallySizedBox(
+          widthFactor: value.clamp(0, 1).toDouble(),
+          child: Container(height: 6, color: liveGold),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Línea punteada con una muesca a cada lado, como el corte de un boleto.
+class _TearLine extends StatelessWidget {
+  const _TearLine();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 16,
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: LayoutBuilder(
+              builder: (context, box) => Row(
+                children: [
+                  for (var i = 0; i < (box.maxWidth / 9).floor(); i++) ...[
+                    Expanded(
+                      child: Container(
+                        height: 1.5,
+                        color: const Color(0xff2f4258),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+        for (final left in [true, false])
+          Positioned(
+            left: left ? -9 : null,
+            right: left ? null : -9,
+            top: 0,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: liveBg,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// Una pata del parley en la línea de tiempo: punto de estado, partido, pronóstico y cuota.
 class _Leg extends StatelessWidget {
-  const _Leg({required this.leg});
+  const _Leg({required this.leg, required this.first, required this.last});
   final JsonMap leg;
+  final bool first, last;
 
   @override
   Widget build(BuildContext context) {
     final (color, _) = _outcome(leg['outcome']);
-    final done = leg['outcome'] != null;
-    return Container(
-      margin: const EdgeInsets.only(top: 6),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .04),
-        borderRadius: BorderRadius.circular(12),
-      ),
+    final outcome = leg['outcome'];
+    final settled = outcome != null;
+    return IntrinsicHeight(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            done
-                ? (leg['outcome'] == 'win'
-                      ? Icons.check_circle
-                      : leg['outcome'] == 'loss'
-                      ? Icons.cancel
-                      : Icons.remove_circle_outline)
-                : Icons.schedule,
-            color: color,
-            size: 18,
+          SizedBox(
+            width: 20,
+            child: Column(
+              children: [
+                Container(
+                  width: 2,
+                  height: 6,
+                  color: first ? Colors.transparent : const Color(0xff243447),
+                ),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: settled ? color : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color, width: 2),
+                  ),
+                  child: settled
+                      ? Icon(
+                          outcome == 'win'
+                              ? Icons.check
+                              : outcome == 'loss'
+                              ? Icons.close
+                              : Icons.remove,
+                          size: 8,
+                          color: liveBg,
+                        )
+                      : null,
+                ),
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: last ? Colors.transparent : const Color(0xff243447),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${leg['local'] ?? '—'} · ${leg['visitante'] ?? '—'}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: last ? 4 : 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${leg['local'] ?? '—'} · ${leg['visitante'] ?? '—'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${leg['texto'] ?? '—'}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: color == liveMuted ? Colors.white70 : liveGreen,
+                  const SizedBox(height: 2),
+                  Text(
+                    '${leg['texto'] ?? '—'}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: color == liveMuted ? Colors.white70 : liveGreen,
+                    ),
                   ),
-                ),
-                liveText(
-                  leg['marcador'] != null
-                      ? context.l10n.parleyResultScore(leg['marcador'])
-                      : kickoffText(leg['kickoff_utc']),
-                  size: 10,
-                  color: liveMuted,
-                ),
-              ],
+                  liveText(
+                    leg['marcador'] != null
+                        ? context.l10n.parleyResultScore(leg['marcador'])
+                        : kickoffText(leg['kickoff_utc']),
+                    size: 10,
+                    color: liveMuted,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              const SizedBox(height: 4),
               liveText(
                 '@${decimalText(leg['price'])}',
                 size: 14,

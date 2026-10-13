@@ -69,6 +69,12 @@ void main() {
     expect(api.paths, ['/parley']);
     expect(find.text('El Parley todavía no está activo'), findsOneWidget);
     expect(find.textContaining('ESCALÓN'), findsNothing);
+    // Las reglas van en una línea corta y la explicación completa en una hoja.
+    expect(find.text('Hasta 2 parlays · cuota 1,90–5,00'), findsOneWidget);
+    expect(find.text('1 gratis al día'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('parley-rules-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Cómo se elige un parley'), findsWidgets);
     expect(find.textContaining('cuota entre 1,90 y 5,00'), findsOneWidget);
   });
 
@@ -163,10 +169,7 @@ void main() {
     expect(find.text('Días anteriores'), findsOneWidget);
     expect(find.text('2026-10-11'), findsOneWidget);
     expect(find.textContaining('1/2 acertados'), findsOneWidget);
-    expect(
-      find.text('Uno gratis al día (el de menor cuota); el resto, VIP.'),
-      findsOneWidget,
-    );
+    expect(find.text('1 gratis al día'), findsOneWidget);
     expect(find.text('Historial del Parley'), findsOneWidget);
     expect(
       find.textContaining('25,0 % real frente a 41,5 % prometido'),

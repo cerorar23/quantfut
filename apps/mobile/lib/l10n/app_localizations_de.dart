@@ -966,6 +966,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get outcomeWin => 'Gewonnen';
 
   @override
+  String parleyChipLine(int count, String min, String max) {
+    return 'Bis zu $count Kombiwetten · Quote $min–$max';
+  }
+
+  @override
   String parleyDayCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -990,6 +995,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Mit wenigen Kombiwetten beweist die tatsächliche Quote noch nichts.';
 
   @override
+  String get parleyFreeChip => '1 kostenlos pro Tag';
+
+  @override
   String get parleyFreeNote =>
       'Eine pro Tag kostenlos (die mit der niedrigsten Quote); der Rest ist VIP.';
 
@@ -1004,6 +1012,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get parleyInactiveTitle => 'Die Kombiwette ist noch nicht aktiv';
 
   @override
+  String get parleyInfoTitle => 'So wird eine Kombiwette gewählt';
+
+  @override
   String parleyJointProb(String percent, int legs) {
     String _temp0 = intl.Intl.pluralLogic(
       legs,
@@ -1016,6 +1027,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get parleyLoadError => 'Die Kombiwette konnte nicht geladen werden.';
+
+  @override
+  String get parleyNoHistory =>
+      'Noch kein Verlauf. Er erscheint hier, sobald die erste Kombiwette abgerechnet ist.';
 
   @override
   String get parleyNoneBody =>
@@ -1105,8 +1120,47 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pickUnlockVip => 'VIP-Prognose freischalten';
 
   @override
+  String picksAllHeading(int count) {
+    return 'Prognosen · $count';
+  }
+
+  @override
+  String get picksBestProb => 'Höchste Wahrscheinlichkeit';
+
+  @override
+  String picksCoinsShort(Object cost) {
+    return '$cost Münzen';
+  }
+
+  @override
   String get picksEmpty =>
       'In diesem Bereich sind keine veröffentlichten Prognosen offen.';
+
+  @override
+  String picksFreeHeading(int count) {
+    return 'Kostenlos · $count';
+  }
+
+  @override
+  String get picksLockedHide => 'Liste ausblenden';
+
+  @override
+  String get picksLockedHint =>
+      'Mit VIP siehst du Wahrscheinlichkeit, Quote und Analyse';
+
+  @override
+  String get picksLockedShow => 'Liste anzeigen';
+
+  @override
+  String picksLockedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count weitere Prognosen mit VIP',
+      one: '1 weitere Prognose mit VIP',
+    );
+    return '$_temp0';
+  }
 
   @override
   String picksRangeHint(int min, int max) {
@@ -1114,9 +1168,28 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get picksSeeAnalysis => 'Analyse ansehen';
+
+  @override
+  String get picksTomorrow => 'Morgen';
+
+  @override
   String picksTrainingReasons(String reasons) {
     return 'Modell im Training · $reasons';
   }
+
+  @override
+  String picksTrustDetail(int hits, int total) {
+    return '$hits von $total Prognosen';
+  }
+
+  @override
+  String picksTrustPromised(String percent) {
+    return 'Versprochen: $percent';
+  }
+
+  @override
+  String get picksTrustTitle => 'Bisherige Trefferquote';
 
   @override
   String get prefsAnalyticsBody =>
@@ -1354,7 +1427,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get rewardsOfferPending => 'Aktivierung ausstehend';
 
   @override
+  String get rewardsOffersConfig =>
+      'Dieser Anbieter ist noch nicht bereit. Versuche es später erneut.';
+
+  @override
+  String get rewardsOffersLoadFailed =>
+      'Die Angebote konnten nicht geöffnet werden. Prüfe deine Verbindung und versuche es erneut.';
+
+  @override
+  String get rewardsOffersTimeout =>
+      'Das Laden der Angebote hat zu lange gedauert. Versuche es erneut.';
+
+  @override
   String get rewardsOffersTitle => 'Angebote, um Münzen zu verdienen';
+
+  @override
+  String get rewardsOffersUnavailable =>
+      'Zurzeit sind keine Angebote verfügbar. Versuche es später erneut.';
 
   @override
   String get rewardsOperationDone => 'Vorgang bestätigt.';

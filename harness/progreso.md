@@ -5230,3 +5230,20 @@ medido en `publish/escalera.py`. La tarjeta lo dice («Estimación … No es una
 datos que el servidor ya entrega: sin cambios de backend ni despliegue. Referencias sin copiar código:
 SandroMaglione/step-progress-indicator (MIT), JHBitencourt/timeline_tile (MIT), flutter_percent_indicator
 (BSD-2); `InlitX/streak` es GPL-3.0 y se descartó.
+
+## 2026-10-12 — Predicciones: menú, Alta probabilidad y Parley rediseñados
+
+Pedido del titular (misma línea que el Reto Escalera). Menú superior (`predictions_switcher.dart`):
+píldora con indicador que se desliza, icono + texto + contador (pronósticos abiertos y retos en marcha),
+fijo arriba al hacer scroll; se cambia de sección tocando o DESLIZANDO el dedo (decisión del titular).
+Alta probabilidad (`live_picks.dart`): tarjeta de acierto histórico real frente al prometido (hoy 80,9 %
+sobre 141), pronósticos abiertos agrupados por día con la etiqueta «Mayor probabilidad» en el primero
+(misma regla que la tarjeta única del detalle) y los de candado AGRUPADOS en una sola tarjeta plegable
+(decisión del titular: había 54 candados casi idénticos ahogando a 5 gratuitos). Los nombres de liga
+salen de `league_names.dart` (el payload solo trae el id; es un dato, no se traduce).
+Parley (`live_parley.dart`): boleto con muescas, patas en línea de tiempo, reglas en una línea con ⓘ
+que abre una hoja, y estados vacíos (sin parlays / sin historial). Todo con datos que el servidor ya
+entrega: sin cambios de backend. Referencias sin copiar código: splashbyte/animated_toggle_switch (BSD-3),
+hadukin/custom_sliding_segmented_control (MIT), fathialamre/ticketcher y FazalHussain/Ticket-UI-Widget (MIT).
+`product_navigation_test` y `live_parley_test` se actualizaron: ya no hay un botón por candado y las
+reglas largas viven en la hoja.

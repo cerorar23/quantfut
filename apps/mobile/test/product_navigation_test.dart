@@ -267,9 +267,11 @@ void main() {
     await open(tester, ProductShell(api: api));
     await navigate(tester, 'Predicciones');
     expect(find.text('Más de 1,5 goles'), findsOneWidget);
-    expect(find.text('Desbloquear pronóstico VIP'), findsOneWidget);
+    // Los pronósticos de candado van en una sola tarjeta con el acceso VIP.
+    expect(find.text('1 pronóstico más con VIP'), findsOneWidget);
+    expect(find.text('Ver acceso VIP'), findsOneWidget);
     await capture(tester, 'predictions');
-    await tester.tap(find.text('Desbloquear pronóstico VIP'));
+    await tester.tap(find.text('Ver acceso VIP'));
     await tester.pumpAndSettle();
     expect(find.text(r'$14,99'), findsOneWidget);
     expect(find.text('USD'), findsOneWidget);

@@ -640,6 +640,21 @@
   "outcomeLoss": "Fallado",
   "outcomePush": "Reembolso",
   "outcomeWin": "Acertado",
+  "parleyChipLine": "Hasta {count} parlays · cuota {min}–{max}",
+  "@parleyChipLine": {
+    "description": "Resumen corto de las reglas del parley.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
   "parleyDayCount": "{count, plural, one{{count} parlay} other{{count} parlays}}",
   "@parleyDayCount": {
     "placeholders": {
@@ -661,10 +676,18 @@
   },
   "parleyDisclaimer": "Se elige por probabilidad, no por valor, y cada pata resta margen. Un parley puede fallar: multiplicar cuotas también multiplica el riesgo.",
   "parleyFewNote": "Con pocos parlays la tasa real no demuestra nada todavía.",
+  "parleyFreeChip": "1 gratis al día",
+  "@parleyFreeChip": {
+    "description": "Etiqueta corta: el parley gratuito del día."
+  },
   "parleyFreeNote": "Uno gratis al día (el de menor cuota); el resto, VIP.",
   "parleyHistoryTitle": "Historial del Parley",
   "parleyInactiveBody": "Cuando se active verás aquí los parlays del día, sellados antes de que empiecen los partidos.",
   "parleyInactiveTitle": "El Parley todavía no está activo",
+  "parleyInfoTitle": "Cómo se elige un parley",
+  "@parleyInfoTitle": {
+    "description": "Título de la hoja con las reglas del parley."
+  },
   "parleyJointProb": "{percent} de probabilidad conjunta · {legs, plural, one{{legs} pata} other{{legs} patas}}",
   "@parleyJointProb": {
     "placeholders": {
@@ -677,6 +700,10 @@
     }
   },
   "parleyLoadError": "No se pudo cargar el Parley.",
+  "parleyNoHistory": "Aún no hay historial de parlays. Aparecerá aquí cuando se liquide el primero.",
+  "@parleyNoHistory": {
+    "description": "Estado vacío del historial de parlays."
+  },
   "parleyNoneBody": "El modelo no publica un parley si no encuentra uno dentro de las reglas.",
   "parleyNoneTitle": "Hoy no hay parlays",
   "parleyOddsBetween": "Cuota entre {min} y {max}",
@@ -781,7 +808,59 @@
   },
   "pickUnlockPrompt": "Desbloquea el pronóstico y su cuota.",
   "pickUnlockVip": "Desbloquear pronóstico VIP",
+  "picksAllHeading": "Pronósticos · {count}",
+  "@picksAllHeading": {
+    "description": "Encabezado de la lista cuando hay pronósticos gratuitos y desbloqueados.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "picksBestProb": "Mayor probabilidad",
+  "@picksBestProb": {
+    "description": "Etiqueta del pronóstico con la probabilidad más alta."
+  },
+  "picksCoinsShort": "{cost} monedas",
+  "@picksCoinsShort": {
+    "description": "Botón compacto para desbloquear un pronóstico con monedas.",
+    "placeholders": {
+      "cost": {
+        "type": "Object"
+      }
+    }
+  },
   "picksEmpty": "No hay pronósticos publicados pendientes en este rango.",
+  "picksFreeHeading": "Gratis · {count}",
+  "@picksFreeHeading": {
+    "description": "Encabezado de los pronósticos gratuitos.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "picksLockedHide": "Ocultar la lista",
+  "@picksLockedHide": {
+    "description": "Pliega los pronósticos bloqueados."
+  },
+  "picksLockedHint": "Con VIP ves la probabilidad, la cuota y el análisis",
+  "@picksLockedHint": {
+    "description": "Qué se obtiene al desbloquear los pronósticos."
+  },
+  "picksLockedShow": "Ver la lista",
+  "@picksLockedShow": {
+    "description": "Despliega los pronósticos bloqueados."
+  },
+  "picksLockedTitle": "{count, plural, one{1 pronóstico más con VIP} other{{count} pronósticos más con VIP}}",
+  "@picksLockedTitle": {
+    "description": "Tarjeta que agrupa los pronósticos bloqueados.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "picksRangeHint": "{min}–{max} % de probabilidad · uno gratis por mercado",
   "@picksRangeHint": {
     "description": "Rango de probabilidad de Alta probabilidad; los límites los manda el servidor.",
@@ -794,6 +873,14 @@
       }
     }
   },
+  "picksSeeAnalysis": "Ver análisis",
+  "@picksSeeAnalysis": {
+    "description": "Pie de la tarjeta de pronóstico que abre el análisis."
+  },
+  "picksTomorrow": "Mañana",
+  "@picksTomorrow": {
+    "description": "Encabezado de día en la lista de pronósticos."
+  },
   "picksTrainingReasons": "Modelo en entrenamiento · {reasons}",
   "@picksTrainingReasons": {
     "placeholders": {
@@ -801,6 +888,31 @@
         "type": "String"
       }
     }
+  },
+  "picksTrustDetail": "{hits} de {total} pronósticos",
+  "@picksTrustDetail": {
+    "description": "Aciertos sobre el total de pronósticos liquidados.",
+    "placeholders": {
+      "hits": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "picksTrustPromised": "Prometido: {percent}",
+  "@picksTrustPromised": {
+    "description": "Acierto que prometía la probabilidad media de los pronósticos.",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "picksTrustTitle": "Acierto histórico",
+  "@picksTrustTitle": {
+    "description": "Título de la tarjeta con el acierto real de Alta probabilidad."
   },
   "prefsAnalyticsBody": "Ayuda a mejorar la app con datos sobre las pantallas utilizadas. Es opcional.",
   "prefsAnalyticsTitle": "Medición de uso",
@@ -922,7 +1034,11 @@
   "rewardsMyCoins": "Mis monedas",
   "rewardsOfferAvailable": "Ofertas según tu país y dispositivo",
   "rewardsOfferPending": "Pendiente de activar",
+  "rewardsOffersConfig": "Este proveedor todavía no está listo. Vuelve a intentarlo más tarde.",
+  "rewardsOffersLoadFailed": "No pudimos abrir las ofertas. Revisa tu conexión y vuelve a intentarlo.",
+  "rewardsOffersTimeout": "Las ofertas tardaron demasiado en cargar. Vuelve a intentarlo.",
   "rewardsOffersTitle": "Ofertas para ganar monedas",
+  "rewardsOffersUnavailable": "No hay ofertas disponibles ahora. Vuelve a intentarlo más tarde.",
   "rewardsOperationDone": "Operación confirmada.",
   "rewardsReferralStats": "{registered} registrados · {qualified} validados",
   "@rewardsReferralStats": {

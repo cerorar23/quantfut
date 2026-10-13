@@ -980,6 +980,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get outcomeWin => 'Vinto';
 
   @override
+  String parleyChipLine(int count, String min, String max) {
+    return 'Fino a $count multiple · quota $min–$max';
+  }
+
+  @override
   String parleyDayCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1004,6 +1009,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'Con poche multiple il tasso reale non dimostra ancora nulla.';
 
   @override
+  String get parleyFreeChip => '1 gratis al giorno';
+
+  @override
   String get parleyFreeNote =>
       'Una gratis al giorno (quella a quota più bassa); le altre, VIP.';
 
@@ -1018,6 +1026,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get parleyInactiveTitle => 'La Multipla non è ancora attiva';
 
   @override
+  String get parleyInfoTitle => 'Come viene scelta una multipla';
+
+  @override
   String parleyJointProb(String percent, int legs) {
     String _temp0 = intl.Intl.pluralLogic(
       legs,
@@ -1030,6 +1041,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get parleyLoadError => 'Impossibile caricare la Multipla.';
+
+  @override
+  String get parleyNoHistory =>
+      'Non c\'è ancora uno storico delle multiple. Comparirà qui quando la prima sarà liquidata.';
 
   @override
   String get parleyNoneBody =>
@@ -1119,8 +1134,46 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pickUnlockVip => 'Sblocca il pronostico VIP';
 
   @override
+  String picksAllHeading(int count) {
+    return 'Pronostici · $count';
+  }
+
+  @override
+  String get picksBestProb => 'Probabilità più alta';
+
+  @override
+  String picksCoinsShort(Object cost) {
+    return '$cost monete';
+  }
+
+  @override
   String get picksEmpty =>
       'Non ci sono pronostici pubblicati in attesa in questo intervallo.';
+
+  @override
+  String picksFreeHeading(int count) {
+    return 'Gratis · $count';
+  }
+
+  @override
+  String get picksLockedHide => 'Nascondi l\'elenco';
+
+  @override
+  String get picksLockedHint => 'Con VIP vedi probabilità, quota e analisi';
+
+  @override
+  String get picksLockedShow => 'Mostra l\'elenco';
+
+  @override
+  String picksLockedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pronostici in più con VIP',
+      one: '1 pronostico in più con VIP',
+    );
+    return '$_temp0';
+  }
 
   @override
   String picksRangeHint(int min, int max) {
@@ -1128,9 +1181,28 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get picksSeeAnalysis => 'Vedi l\'analisi';
+
+  @override
+  String get picksTomorrow => 'Domani';
+
+  @override
   String picksTrainingReasons(String reasons) {
     return 'Modello in addestramento · $reasons';
   }
+
+  @override
+  String picksTrustDetail(int hits, int total) {
+    return '$hits su $total pronostici';
+  }
+
+  @override
+  String picksTrustPromised(String percent) {
+    return 'Promesso: $percent';
+  }
+
+  @override
+  String get picksTrustTitle => 'Tasso di successo storico';
 
   @override
   String get prefsAnalyticsBody =>
@@ -1369,7 +1441,23 @@ class AppLocalizationsIt extends AppLocalizations {
   String get rewardsOfferPending => 'In attesa di attivazione';
 
   @override
+  String get rewardsOffersConfig =>
+      'Questo fornitore non è ancora pronto. Riprova più tardi.';
+
+  @override
+  String get rewardsOffersLoadFailed =>
+      'Impossibile aprire le offerte. Controlla la connessione e riprova.';
+
+  @override
+  String get rewardsOffersTimeout =>
+      'Il caricamento delle offerte ha richiesto troppo tempo. Riprova.';
+
+  @override
   String get rewardsOffersTitle => 'Offerte per guadagnare monete';
+
+  @override
+  String get rewardsOffersUnavailable =>
+      'Nessuna offerta disponibile al momento. Riprova più tardi.';
 
   @override
   String get rewardsOperationDone => 'Operazione confermata.';

@@ -1720,6 +1720,12 @@ abstract class AppLocalizations {
   /// **'Acertado'**
   String get outcomeWin;
 
+  /// Resumen corto de las reglas del parley.
+  ///
+  /// In es, this message translates to:
+  /// **'Hasta {count} parlays · cuota {min}–{max}'**
+  String parleyChipLine(int count, String min, String max);
+
   /// No description provided for @parleyDayCount.
   ///
   /// In es, this message translates to:
@@ -1743,6 +1749,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Con pocos parlays la tasa real no demuestra nada todavía.'**
   String get parleyFewNote;
+
+  /// Etiqueta corta: el parley gratuito del día.
+  ///
+  /// In es, this message translates to:
+  /// **'1 gratis al día'**
+  String get parleyFreeChip;
 
   /// No description provided for @parleyFreeNote.
   ///
@@ -1768,6 +1780,12 @@ abstract class AppLocalizations {
   /// **'El Parley todavía no está activo'**
   String get parleyInactiveTitle;
 
+  /// Título de la hoja con las reglas del parley.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo se elige un parley'**
+  String get parleyInfoTitle;
+
   /// No description provided for @parleyJointProb.
   ///
   /// In es, this message translates to:
@@ -1779,6 +1797,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudo cargar el Parley.'**
   String get parleyLoadError;
+
+  /// Estado vacío del historial de parlays.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay historial de parlays. Aparecerá aquí cuando se liquide el primero.'**
+  String get parleyNoHistory;
 
   /// No description provided for @parleyNoneBody.
   ///
@@ -1912,11 +1936,59 @@ abstract class AppLocalizations {
   /// **'Desbloquear pronóstico VIP'**
   String get pickUnlockVip;
 
+  /// Encabezado de la lista cuando hay pronósticos gratuitos y desbloqueados.
+  ///
+  /// In es, this message translates to:
+  /// **'Pronósticos · {count}'**
+  String picksAllHeading(int count);
+
+  /// Etiqueta del pronóstico con la probabilidad más alta.
+  ///
+  /// In es, this message translates to:
+  /// **'Mayor probabilidad'**
+  String get picksBestProb;
+
+  /// Botón compacto para desbloquear un pronóstico con monedas.
+  ///
+  /// In es, this message translates to:
+  /// **'{cost} monedas'**
+  String picksCoinsShort(Object cost);
+
   /// No description provided for @picksEmpty.
   ///
   /// In es, this message translates to:
   /// **'No hay pronósticos publicados pendientes en este rango.'**
   String get picksEmpty;
+
+  /// Encabezado de los pronósticos gratuitos.
+  ///
+  /// In es, this message translates to:
+  /// **'Gratis · {count}'**
+  String picksFreeHeading(int count);
+
+  /// Pliega los pronósticos bloqueados.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar la lista'**
+  String get picksLockedHide;
+
+  /// Qué se obtiene al desbloquear los pronósticos.
+  ///
+  /// In es, this message translates to:
+  /// **'Con VIP ves la probabilidad, la cuota y el análisis'**
+  String get picksLockedHint;
+
+  /// Despliega los pronósticos bloqueados.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver la lista'**
+  String get picksLockedShow;
+
+  /// Tarjeta que agrupa los pronósticos bloqueados.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 pronóstico más con VIP} other{{count} pronósticos más con VIP}}'**
+  String picksLockedTitle(int count);
 
   /// Rango de probabilidad de Alta probabilidad; los límites los manda el servidor.
   ///
@@ -1924,11 +1996,41 @@ abstract class AppLocalizations {
   /// **'{min}–{max} % de probabilidad · uno gratis por mercado'**
   String picksRangeHint(int min, int max);
 
+  /// Pie de la tarjeta de pronóstico que abre el análisis.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver análisis'**
+  String get picksSeeAnalysis;
+
+  /// Encabezado de día en la lista de pronósticos.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get picksTomorrow;
+
   /// No description provided for @picksTrainingReasons.
   ///
   /// In es, this message translates to:
   /// **'Modelo en entrenamiento · {reasons}'**
   String picksTrainingReasons(String reasons);
+
+  /// Aciertos sobre el total de pronósticos liquidados.
+  ///
+  /// In es, this message translates to:
+  /// **'{hits} de {total} pronósticos'**
+  String picksTrustDetail(int hits, int total);
+
+  /// Acierto que prometía la probabilidad media de los pronósticos.
+  ///
+  /// In es, this message translates to:
+  /// **'Prometido: {percent}'**
+  String picksTrustPromised(String percent);
+
+  /// Título de la tarjeta con el acierto real de Alta probabilidad.
+  ///
+  /// In es, this message translates to:
+  /// **'Acierto histórico'**
+  String get picksTrustTitle;
 
   /// No description provided for @prefsAnalyticsBody.
   ///
@@ -2338,11 +2440,35 @@ abstract class AppLocalizations {
   /// **'Pendiente de activar'**
   String get rewardsOfferPending;
 
+  /// No description provided for @rewardsOffersConfig.
+  ///
+  /// In es, this message translates to:
+  /// **'Este proveedor todavía no está listo. Vuelve a intentarlo más tarde.'**
+  String get rewardsOffersConfig;
+
+  /// No description provided for @rewardsOffersLoadFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos abrir las ofertas. Revisa tu conexión y vuelve a intentarlo.'**
+  String get rewardsOffersLoadFailed;
+
+  /// No description provided for @rewardsOffersTimeout.
+  ///
+  /// In es, this message translates to:
+  /// **'Las ofertas tardaron demasiado en cargar. Vuelve a intentarlo.'**
+  String get rewardsOffersTimeout;
+
   /// No description provided for @rewardsOffersTitle.
   ///
   /// In es, this message translates to:
   /// **'Ofertas para ganar monedas'**
   String get rewardsOffersTitle;
+
+  /// No description provided for @rewardsOffersUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay ofertas disponibles ahora. Vuelve a intentarlo más tarde.'**
+  String get rewardsOffersUnavailable;
 
   /// No description provided for @rewardsOperationDone.
   ///

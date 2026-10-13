@@ -9,7 +9,9 @@ import '../l10n/app_locale.dart';
 
 import 'ladder_progress.dart';
 import 'live_api.dart';
+import 'predictions_switcher.dart';
 import 'live_ladder.dart';
+import 'live_picks.dart';
 import 'live_markets.dart';
 import 'live_parley.dart';
 import 'live_widgets.dart';
@@ -212,42 +214,15 @@ class _ProductShellState extends State<ProductShell>
         .round();
     final maxPercent = (((config['probability_max'] as num?) ?? .95) * 100)
         .round();
-    final rows = [...jsonRows(report['proximos']), ...jsonRows(report['vip'])];
-    rows.sort((a, b) {
-      int rank(JsonMap p) => p['free'] == true
-          ? 0
-          : p['locked'] == true
-          ? 2
-          : 1;
-      final access = rank(a).compareTo(rank(b));
-      if (access != 0) return access;
-      if (a['free'] == true && b['free'] == true) {
-        final odds = ((b['ref_price'] as num?) ?? 0).compareTo(
-          (a['ref_price'] as num?) ?? 0,
-        );
-        if (odds != 0) return odds;
-      }
-      return '${a['kickoff_utc']}'.compareTo('${b['kickoff_utc']}');
-    });
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        liveText(
-          context.l10n.picksRangeHint(minPercent, maxPercent),
-          color: liveMuted,
-          size: 12,
-        ),
-        const SizedBox(height: 12),
-        if (report['estado'] != 'activa')
-          training(
-            context.l10n.picksTrainingReasons(
-              '${jsonMap(report)['motivos'] ?? ''}',
-            ),
-          )
-        else if (rows.isEmpty)
-          training(context.l10n.picksEmpty),
-        ...rows.map((p) => pickCard(p, d)),
-      ],
+    final rewards = jsonMap(d['rewards']);
+    return HighProbabilityView(
+      report: report,
+      minPercent: minPercent,
+      maxPercent: maxPercent,
+      onOpen: (p) => detail(p['match_id']),
+      onVip: vip,
+      unlockCost: rewards['unlock_cost'],
+      onUnlock: rewards['enabled'] == true ? (p) => unlock(p) : null,
     );
   }
 
@@ -565,6 +540,76 @@ class _ProductShellState extends State<ProductShell>
     ],
   );
 
+  /// Alta probabilidad, Reto Escalera y Parley: el menú queda fijo arriba y se cambia de
+  /// sección tocándolo o deslizando el dedo hacia los lados.
+  Widget streamContent() => AnimatedSwitcher(
+    duration: const Duration(milliseconds: 220),
+    child: KeyedSubtree(
+      key: ValueKey(stream),
+      child: stream == 'high'
+          ? picks(data!)
+          : stream == 'ladder'
+          ? ladder(data!)
+          : ParleyTab(api: api, onVip: vip),
+    ),
+  );
+
+  Widget mainBody() {
+    final list = RefreshIndicator(
+              onRefresh: reload,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (busy) const LinearProgressIndicator(),
+                  if (services?.banner.isNotEmpty == true)
+                    liveCard(child: liveText(services!.banner)),
+                  if (services?.maintenance == true)
+                    liveCard(
+                      child: liveText(
+                        context.l10n.maintenanceNotice,
+                        color: liveGold,
+                      ),
+                    ),
+                  if (tab == 0)
+                    home(data!)
+                  else if (tab == 1)
+                    streamContent()
+                  else
+                    markets(data!),
+                ],
+              ),
+            );
+    if (tab != 1) return list;
+    final report = jsonMap(data!['alta_probabilidad']);
+    final open = jsonRows(report['proximos']).length;
+    final retos = jsonRows(jsonMap(data!['escalera'])['actuales']).length;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: PredictionsSwitcher(
+            value: stream,
+            onChanged: (value) => setState(() => stream = value),
+            badges: {'high': open, 'ladder': retos},
+          ),
+        ),
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragEnd: (details) {
+              final next = PredictionsSwitcher.swipe(
+                stream,
+                details.primaryVelocity ?? 0,
+              );
+              if (next != stream) setState(() => stream = next);
+            },
+            child: list,
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Las traducciones largas se reducen para caber en el segmento.
   Widget _segmentLabel(String text) =>
       FittedBox(fit: BoxFit.scaleDown, child: Text(text, maxLines: 1));
@@ -626,68 +671,7 @@ class _ProductShellState extends State<ProductShell>
               onVip: vip,
               onChanged: reload,
             )
-          : RefreshIndicator(
-              onRefresh: reload,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (busy) const LinearProgressIndicator(),
-                  if (services?.banner.isNotEmpty == true)
-                    liveCard(child: liveText(services!.banner)),
-                  if (services?.maintenance == true)
-                    liveCard(
-                      child: liveText(
-                        context.l10n.maintenanceNotice,
-                        color: liveGold,
-                      ),
-                    ),
-                  if (tab == 0)
-                    home(data!)
-                  else if (tab == 1)
-                    Column(
-                      children: [
-                        SegmentedButton<String>(
-                          segments: [
-                            ButtonSegment(
-                              value: 'high',
-                              label: _segmentLabel(context.l10n.streamHighProb),
-                            ),
-                            ButtonSegment(
-                              value: 'ladder',
-                              label: _segmentLabel(context.l10n.streamLadder),
-                            ),
-                            ButtonSegment(
-                              value: 'parley',
-                              label: _segmentLabel(context.l10n.streamParley),
-                            ),
-                          ],
-                          showSelectedIcon: false,
-                          style: const ButtonStyle(
-                            textStyle: WidgetStatePropertyAll(
-                              TextStyle(fontSize: 12.5),
-                            ),
-                            padding: WidgetStatePropertyAll(
-                              EdgeInsets.symmetric(horizontal: 6),
-                            ),
-                          ),
-                          selected: {stream},
-                          onSelectionChanged: (s) =>
-                              setState(() => stream = s.first),
-                        ),
-                        const SizedBox(height: 16),
-                        if (stream == 'high')
-                          picks(data!)
-                        else if (stream == 'ladder')
-                          ladder(data!)
-                        else
-                          ParleyTab(api: api, onVip: vip),
-                      ],
-                    )
-                  else
-                    markets(data!),
-                ],
-              ),
-            ),
+          : mainBody(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: livePanel,
