@@ -363,7 +363,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get detailTabPredictions => 'Pronostics';
 
   @override
-  String get detailTabStats => 'Statistiques';
+  String get detailTabStats => 'Analyse';
 
   @override
   String get detailVipPickNotice => 'Ce match a un pronostic VIP';
@@ -406,6 +406,61 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get disclaimerProbability =>
       'Une probabilité n\'est pas une certitude. Décidez en connaissance de cause et jouez de manière responsable.';
+
+  @override
+  String get factsAbsences => 'Absences';
+
+  @override
+  String get factsDrew => 'Nul';
+
+  @override
+  String get factsHideLineup => 'Masquer les onze';
+
+  @override
+  String factsInCompetition(String competition) {
+    return 'En $competition';
+  }
+
+  @override
+  String get factsLastLineup => 'Dernière composition connue';
+
+  @override
+  String get factsLastMatch => 'Dernier match';
+
+  @override
+  String factsLineupMeta(String rival, String date) {
+    return 'contre $rival · $date';
+  }
+
+  @override
+  String get factsLineupNote =>
+      'C\'est la composition de ce match, pas une prévision pour celui d\'aujourd\'hui.';
+
+  @override
+  String get factsLost => 'Perdu';
+
+  @override
+  String get factsNoLineup => 'Aucune composition enregistrée pour l\'instant.';
+
+  @override
+  String get factsNoResult => 'Aucun match précédent enregistré.';
+
+  @override
+  String get factsSeeAlerts => 'Voir les alertes';
+
+  @override
+  String get factsShowLineup => 'Voir les onze';
+
+  @override
+  String get factsTitle => 'Données du match';
+
+  @override
+  String factsVs(String score, String rival) {
+    return '$score contre $rival';
+  }
+
+  @override
+  String get factsWon => 'Gagné';
 
   @override
   String get famCardsSubtitle =>

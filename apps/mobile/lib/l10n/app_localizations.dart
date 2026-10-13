@@ -703,7 +703,7 @@ abstract class AppLocalizations {
   /// No description provided for @detailTabStats.
   ///
   /// In es, this message translates to:
-  /// **'Estadísticas'**
+  /// **'Análisis'**
   String get detailTabStats;
 
   /// No description provided for @detailVipPickNotice.
@@ -765,6 +765,102 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Una probabilidad no es una certeza. Decide con información y juega responsablemente.'**
   String get disclaimerProbability;
+
+  /// Fila de resumen de bajas en la tarjeta de datos.
+  ///
+  /// In es, this message translates to:
+  /// **'Bajas'**
+  String get factsAbsences;
+
+  /// El equipo empató su último partido.
+  ///
+  /// In es, this message translates to:
+  /// **'Empató'**
+  String get factsDrew;
+
+  /// Pliega los once titulares.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar los once'**
+  String get factsHideLineup;
+
+  /// Resultado más reciente del equipo en esta competición.
+  ///
+  /// In es, this message translates to:
+  /// **'En {competition}'**
+  String factsInCompetition(String competition);
+
+  /// Once con el que el equipo jugó su último partido guardado.
+  ///
+  /// In es, this message translates to:
+  /// **'Último once conocido'**
+  String get factsLastLineup;
+
+  /// Resultado más reciente del equipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Último partido'**
+  String get factsLastMatch;
+
+  /// Partido del que sale el último once conocido.
+  ///
+  /// In es, this message translates to:
+  /// **'contra {rival} · {date}'**
+  String factsLineupMeta(String rival, String date);
+
+  /// Aclara que el último once no es una predicción.
+  ///
+  /// In es, this message translates to:
+  /// **'Es el once de ese partido, no una predicción del de hoy.'**
+  String get factsLineupNote;
+
+  /// El equipo perdió su último partido.
+  ///
+  /// In es, this message translates to:
+  /// **'Perdió'**
+  String get factsLost;
+
+  /// No hay alineación guardada de este equipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay una alineación guardada.'**
+  String get factsNoLineup;
+
+  /// No hay resultados previos del equipo en la base.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin partidos previos registrados.'**
+  String get factsNoResult;
+
+  /// Lleva a la pestaña de alertas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver alertas'**
+  String get factsSeeAlerts;
+
+  /// Despliega los once titulares.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver los once'**
+  String get factsShowLineup;
+
+  /// Título de la tarjeta con resultados previos, último once y bajas.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos del partido'**
+  String get factsTitle;
+
+  /// Marcador y rival de un partido.
+  ///
+  /// In es, this message translates to:
+  /// **'{score} contra {rival}'**
+  String factsVs(String score, String rival);
+
+  /// El equipo ganó su último partido.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganó'**
+  String get factsWon;
 
   /// No description provided for @famCardsSubtitle.
   ///

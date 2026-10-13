@@ -241,7 +241,7 @@
   },
   "detailTabH2h": "H2H",
   "detailTabPredictions": "Pronósticos",
-  "detailTabStats": "Estadísticas",
+  "detailTabStats": "Análisis",
   "detailVipPickNotice": "Este partido tiene un pronóstico VIP",
   "dictAwayDefault": "el visitante",
   "dictHomeDefault": "el local",
@@ -294,6 +294,91 @@
     }
   },
   "disclaimerProbability": "Una probabilidad no es una certeza. Decide con información y juega responsablemente.",
+  "factsAbsences": "Bajas",
+  "@factsAbsences": {
+    "description": "Fila de resumen de bajas en la tarjeta de datos."
+  },
+  "factsDrew": "Empató",
+  "@factsDrew": {
+    "description": "El equipo empató su último partido."
+  },
+  "factsHideLineup": "Ocultar los once",
+  "@factsHideLineup": {
+    "description": "Pliega los once titulares."
+  },
+  "factsInCompetition": "En {competition}",
+  "@factsInCompetition": {
+    "description": "Resultado más reciente del equipo en esta competición.",
+    "placeholders": {
+      "competition": {
+        "type": "String"
+      }
+    }
+  },
+  "factsLastLineup": "Último once conocido",
+  "@factsLastLineup": {
+    "description": "Once con el que el equipo jugó su último partido guardado."
+  },
+  "factsLastMatch": "Último partido",
+  "@factsLastMatch": {
+    "description": "Resultado más reciente del equipo."
+  },
+  "factsLineupMeta": "contra {rival} · {date}",
+  "@factsLineupMeta": {
+    "description": "Partido del que sale el último once conocido.",
+    "placeholders": {
+      "rival": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "factsLineupNote": "Es el once de ese partido, no una predicción del de hoy.",
+  "@factsLineupNote": {
+    "description": "Aclara que el último once no es una predicción."
+  },
+  "factsLost": "Perdió",
+  "@factsLost": {
+    "description": "El equipo perdió su último partido."
+  },
+  "factsNoLineup": "Aún no hay una alineación guardada.",
+  "@factsNoLineup": {
+    "description": "No hay alineación guardada de este equipo."
+  },
+  "factsNoResult": "Sin partidos previos registrados.",
+  "@factsNoResult": {
+    "description": "No hay resultados previos del equipo en la base."
+  },
+  "factsSeeAlerts": "Ver alertas",
+  "@factsSeeAlerts": {
+    "description": "Lleva a la pestaña de alertas."
+  },
+  "factsShowLineup": "Ver los once",
+  "@factsShowLineup": {
+    "description": "Despliega los once titulares."
+  },
+  "factsTitle": "Datos del partido",
+  "@factsTitle": {
+    "description": "Título de la tarjeta con resultados previos, último once y bajas."
+  },
+  "factsVs": "{score} contra {rival}",
+  "@factsVs": {
+    "description": "Marcador y rival de un partido.",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "rival": {
+        "type": "String"
+      }
+    }
+  },
+  "factsWon": "Ganó",
+  "@factsWon": {
+    "description": "El equipo ganó su último partido."
+  },
   "famCardsSubtitle": "Líneas de menos tarjetas con respaldo histórico",
   "famCardsTitle": "Tarjetas",
   "famCornersSubtitle": "Más y menos córners del partido completo",

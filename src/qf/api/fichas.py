@@ -217,6 +217,46 @@ def _tabla(league_id: str) -> list[dict]:
     )
 
 
+def _formatear_once(row: dict | None) -> dict | None:
+    """Último once conocido de un equipo, tal como se guardó (sin proyectar nada)."""
+    if not row or not row.get("starters"):
+        return None
+    titulares = [{"nombre": j.get("name"), "pos": j.get("pos"), "numero": j.get("number")}
+                 for j in row["starters"] if isinstance(j, dict) and j.get("name")]
+    if not titulares:
+        return None
+    return {"match_id": row["match_id"], "fecha": row["kickoff_utc"],
+            "competicion": row["competicion"], "rival": row["rival"],
+            "formacion": row["formation"], "titulares": titulares[:11]}
+
+
+def _ultimo_once(team_id: int, antes: datetime) -> dict | None:
+    """
+    El once que el equipo sacó en su ÚLTIMO partido terminado del que se guardó la alineación
+    (capturas en vivo o histórico). Es un hecho pasado con su fecha, no una predicción del once.
+    """
+    return _formatear_once(query_one(
+        """SELECT m.match_id, m.kickoff_utc, l.name AS competicion,
+                  CASE WHEN m.home_team_id = %s
+                       THEN COALESCE(ta.display_name, ta.canonical_name)
+                       ELSE COALESCE(th.display_name, th.canonical_name) END AS rival,
+                  u.formation, u.starters
+           FROM (SELECT match_id, side, formation, starters, captured_at FROM lineups
+                 UNION ALL
+                 SELECT match_id, side, formation, starters, fetched_at AS captured_at
+                 FROM lineups_historicas) u
+           JOIN matches m USING (match_id)
+           JOIN leagues l ON l.league_id = m.league_id
+           JOIN teams th ON th.team_id = m.home_team_id
+           JOIN teams ta ON ta.team_id = m.away_team_id
+           WHERE m.status = 'finished' AND m.kickoff_utc < %s AND u.starters IS NOT NULL
+             AND ((m.home_team_id = %s AND u.side = 'home')
+               OR (m.away_team_id = %s AND u.side = 'away'))
+           ORDER BY m.kickoff_utc DESC, u.captured_at DESC NULLS LAST LIMIT 1""",
+        (team_id, antes, team_id, team_id),
+    ))
+
+
 def _alineaciones(match_id: str) -> dict:
     filas = query(
         """SELECT DISTINCT ON (side) side, formation, starters, captured_at
@@ -347,6 +387,7 @@ def _ficha(match_id: str) -> dict | None:
                          "escudo": escudo(tid),
                          "forma": forma(tid, filas),
                          "promedios": promedios(tid, filas),
+                         "ultimo_once": _ultimo_once(tid, ko),
                          "clasificacion": _posicion(tid, m["league_id"])}
     terminado = m["status"] == "finished" and m["home_goals"] is not None
     return {

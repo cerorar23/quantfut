@@ -317,7 +317,7 @@ void main() {
     final api = FixtureApi();
     await open(tester, LiveMatchDetail(api: api, id: 'test-2', onVip: () {}));
     expect(find.text('Este partido tiene un pronóstico VIP'), findsOneWidget);
-    await tester.tap(find.text('Estadísticas'));
+    await tester.tap(find.text('Análisis'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Promedios de 0'), findsOneWidget);
     expect(find.byType(RadarChart), findsNothing);
@@ -356,7 +356,7 @@ void main() {
       tester,
       LiveMatchDetail(api: api, id: 'real-match', onVip: () {}),
     );
-    await tester.tap(find.text('Estadísticas'));
+    await tester.tap(find.text('Análisis'));
     await tester.pumpAndSettle();
     expect(find.text('RESUMEN DE PREDICCIÓN'), findsOneWidget);
     expect(find.text('37 %'), findsOneWidget);

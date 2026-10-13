@@ -225,3 +225,21 @@ def test_el_escudo_solo_se_anuncia_si_existe(monkeypatch, tmp_path):
     assert "max-age" in r.headers["cache-control"]
     assert cliente.get("/web/escudos/8.png").status_code == 404
     assert cliente.get("/web/escudos/..%2F..%2Fetc.png").status_code in (404, 422)
+
+
+def test_ultimo_once_se_formatea_sin_inventar():
+    from datetime import datetime, timezone
+    from qf.api import fichas
+
+    fila = {"match_id": "m1", "kickoff_utc": datetime(2026, 10, 9, tzinfo=timezone.utc),
+            "competicion": "Ligue 1", "rival": "Lyon", "formation": "3-4-2-1",
+            "starters": [{"name": "Risser", "pos": "G", "number": 1, "player_id": 9},
+                         {"name": "Gradit", "pos": "D", "number": 24},
+                         {"pos": "M", "number": 8}]}  # sin nombre: se descarta
+    once = fichas._formatear_once(fila)
+    assert once["formacion"] == "3-4-2-1" and once["rival"] == "Lyon"
+    assert [j["nombre"] for j in once["titulares"]] == ["Risser", "Gradit"]
+    assert "player_id" not in once["titulares"][0]
+    assert fichas._formatear_once(None) is None
+    assert fichas._formatear_once({**fila, "starters": []}) is None
+    assert fichas._formatear_once({**fila, "starters": [{"pos": "M"}]}) is None

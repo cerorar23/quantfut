@@ -5300,3 +5300,19 @@ proveedor (Championship, Liga Profesional, Série B hoy; ver README) y para esas
 No hay foto del jugador (no se guarda ni se sirve). Pendiente, solo si el titular lo pide: fase 2 con IA
 (resumen de prensa con citas, aparte de los datos oficiales) y retirar la lista de bajas duplicada de la
 pestaña H2H.
+
+## 2026-10-12 — «Datos del partido» en Análisis (la pestaña Estadísticas pasa a llamarse Análisis)
+
+Pedido del titular: una tarjeta como la de la referencia, justo debajo de «Probabilidad de victoria 1X2»,
+y la pestaña Estadísticas renombrada a Análisis. Solo datos comprobables: último resultado de cada equipo
+(y el de la competición si es otro partido), ÚLTIMO once conocido con su fecha y rival (nunca un «once
+probable»: lo dice la propia tarjeta), y el resumen de bajas con acceso a la pestaña Alertas. Lo que falta
+se dice («Aún no hay una alineación guardada», «Sin partidos previos registrados»). Lo narrativo de la
+referencia («perfil de la previa apunta a un juego abierto…») queda para la fase 2 con IA, si se aprueba.
+Servidor: `fichas._ultimo_once` añade `ultimo_once` por equipo (último partido terminado con alineación,
+de `lineups` o `lineups_historicas`); es un campo NUEVO, compatible con la web y la app anterior.
+Verificado en producción: Lens 3-4-2-1 vs Lyon (9-oct) y Sporting CP 4-2-3-1 vs SC Braga, 11 titulares cada
+uno. Desplegado con respaldo `~/backups/ultimo-once-20261012` (vuelta atrás = imagen `pre-once-backup`).
+Decidido NO incluir el estadio: la base no guarda sede por partido (haría falta una columna nueva y
+cambiar la captura del calendario). La cobertura del once depende de las alineaciones guardadas (desde
+finales de septiembre más el histórico): un equipo sin ninguna lo muestra como ausente.

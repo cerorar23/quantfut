@@ -364,7 +364,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get detailTabPredictions => 'Prognósticos';
 
   @override
-  String get detailTabStats => 'Estatísticas';
+  String get detailTabStats => 'Análise';
 
   @override
   String get detailVipPickNotice => 'Este jogo tem um prognóstico VIP';
@@ -407,6 +407,61 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get disclaimerProbability =>
       'Uma probabilidade não é uma certeza. Decida com informação e jogue com responsabilidade.';
+
+  @override
+  String get factsAbsences => 'Desfalques';
+
+  @override
+  String get factsDrew => 'Empatou';
+
+  @override
+  String get factsHideLineup => 'Ocultar os onze';
+
+  @override
+  String factsInCompetition(String competition) {
+    return 'Em $competition';
+  }
+
+  @override
+  String get factsLastLineup => 'Última escalação conhecida';
+
+  @override
+  String get factsLastMatch => 'Última partida';
+
+  @override
+  String factsLineupMeta(String rival, String date) {
+    return 'contra $rival · $date';
+  }
+
+  @override
+  String get factsLineupNote =>
+      'É a escalação dessa partida, não uma previsão da de hoje.';
+
+  @override
+  String get factsLost => 'Perdeu';
+
+  @override
+  String get factsNoLineup => 'Ainda não há escalação salva.';
+
+  @override
+  String get factsNoResult => 'Sem partidas anteriores registradas.';
+
+  @override
+  String get factsSeeAlerts => 'Ver alertas';
+
+  @override
+  String get factsShowLineup => 'Ver os onze';
+
+  @override
+  String get factsTitle => 'Dados da partida';
+
+  @override
+  String factsVs(String score, String rival) {
+    return '$score contra $rival';
+  }
+
+  @override
+  String get factsWon => 'Ganhou';
 
   @override
   String get famCardsSubtitle =>

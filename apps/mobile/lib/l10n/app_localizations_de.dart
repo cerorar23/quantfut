@@ -363,7 +363,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get detailTabPredictions => 'Prognosen';
 
   @override
-  String get detailTabStats => 'Statistiken';
+  String get detailTabStats => 'Analyse';
 
   @override
   String get detailVipPickNotice => 'Dieses Spiel hat eine VIP-Prognose';
@@ -406,6 +406,61 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get disclaimerProbability =>
       'Eine Wahrscheinlichkeit ist keine Gewissheit. Entscheide informiert und spiele verantwortungsvoll.';
+
+  @override
+  String get factsAbsences => 'Ausfälle';
+
+  @override
+  String get factsDrew => 'Unentschieden';
+
+  @override
+  String get factsHideLineup => 'Elf ausblenden';
+
+  @override
+  String factsInCompetition(String competition) {
+    return 'In $competition';
+  }
+
+  @override
+  String get factsLastLineup => 'Letzte bekannte Aufstellung';
+
+  @override
+  String get factsLastMatch => 'Letztes Spiel';
+
+  @override
+  String factsLineupMeta(String rival, String date) {
+    return 'gegen $rival · $date';
+  }
+
+  @override
+  String get factsLineupNote =>
+      'Das ist die Aufstellung dieses Spiels, keine Vorhersage für das heutige.';
+
+  @override
+  String get factsLost => 'Verloren';
+
+  @override
+  String get factsNoLineup => 'Noch keine Aufstellung gespeichert.';
+
+  @override
+  String get factsNoResult => 'Keine früheren Spiele erfasst.';
+
+  @override
+  String get factsSeeAlerts => 'Hinweise ansehen';
+
+  @override
+  String get factsShowLineup => 'Elf anzeigen';
+
+  @override
+  String get factsTitle => 'Spieldaten';
+
+  @override
+  String factsVs(String score, String rival) {
+    return '$score gegen $rival';
+  }
+
+  @override
+  String get factsWon => 'Gewonnen';
 
   @override
   String get famCardsSubtitle =>

@@ -9,6 +9,7 @@ import '../l10n/pick_labels.dart';
 import 'package:intl/intl.dart';
 
 import 'live_api.dart';
+import 'live_match_facts.dart';
 import 'live_widgets.dart';
 import '../widgets/countdown_timer.dart';
 
@@ -36,9 +37,17 @@ Widget statisticsHeading(String text) => Padding(
 );
 
 class MatchStatistics extends StatelessWidget {
-  const MatchStatistics({super.key, required this.data, required this.api});
+  const MatchStatistics({
+    super.key,
+    required this.data,
+    required this.api,
+    this.onAlerts,
+  });
   final JsonMap data;
   final QuantFutApi api;
+
+  /// Abre la pestaña de alertas desde la tarjeta de datos del partido.
+  final VoidCallback? onAlerts;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +105,9 @@ class MatchStatistics extends StatelessWidget {
           probabilities: jsonMap(ficha['probabilities']),
           local: '${local['nombre'] ?? l10n.commonHome}',
           away: '${away['nombre'] ?? l10n.commonAway}',
+        ),
+        statisticsCard(
+          MatchFacts(ficha: ficha, api: api, onAlerts: onAlerts),
         ),
         if (picks.isNotEmpty)
           statisticsCard(

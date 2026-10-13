@@ -50,8 +50,11 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
         )
         .toList(),
   );
-  Widget stats(JsonMap data, JsonMap ficha) =>
-      MatchStatistics(data: data, api: widget.api);
+  Widget stats(JsonMap data, JsonMap ficha) => MatchStatistics(
+    data: data,
+    api: widget.api,
+    onAlerts: () => setState(() => tab = 3),
+  );
 
   Widget tactics(JsonMap data, JsonMap ficha) {
     if (!featureEnabled(data, 'h2h')) {
