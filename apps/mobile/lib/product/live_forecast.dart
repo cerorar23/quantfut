@@ -139,14 +139,8 @@ JsonMap? featuredPick(List<JsonMap> picks) {
 /// Pronóstico destacado + indicadores + dictamen, todo con datos entregados
 /// por el servidor. Lo que no llega se muestra como «—», nunca se rellena.
 class ForecastPanel extends StatelessWidget {
-  const ForecastPanel({
-    super.key,
-    required this.pick,
-    required this.ficha,
-    required this.onStats,
-  });
+  const ForecastPanel({super.key, required this.pick, required this.ficha});
   final JsonMap pick, ficha;
-  final VoidCallback onStats;
 
   String get dictamen {
     final l10n = AppLocale.instance.l10n;
@@ -492,8 +486,6 @@ class ForecastPanel extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        liveButton(l10n.forecastSeeStats, onStats, color: liveCyan),
         const SizedBox(height: 18),
       ],
     );

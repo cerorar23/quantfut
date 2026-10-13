@@ -19,6 +19,8 @@ import 'package:gobet/l10n/app_locale.dart';
 class FixtureApi extends QuantFutApi {
   bool fail = false;
   bool richDetail = false;
+  bool detailLocked = false;
+  JsonMap? wallet;
   List<JsonMap> detailPicks = [];
   List<JsonMap> extraAgenda = [];
   JsonMap? modelo, mercados;
@@ -110,6 +112,7 @@ class FixtureApi extends QuantFutApi {
           ),
           'config': config,
           'picks': detailPicks,
+          'locked': detailLocked,
           if (modelo != null || mercados != null)
             'ficha': {
               ...jsonMap(
@@ -162,7 +165,8 @@ class FixtureApi extends QuantFutApi {
       'invitee_coins': 100,
       'referral_min_coins': 100,
     },
-    'signed_in': false,
+    'signed_in': wallet != null,
+    if (wallet != null) 'wallet': wallet,
     'providers': [
       {'name': 'BitLabs', 'provider': 'bitlabs', 'available': false},
     ],
@@ -301,6 +305,47 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
+  testWidgets('la cabecera muestra las monedas disponibles y abre Coins', (
+    tester,
+  ) async {
+    final api = FixtureApi()..wallet = {'balance': -5, 'spendable': 0};
+    await open(tester, ProductShell(api: api));
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('header-coins')),
+        matching: find.text('0'),
+      ),
+      findsOneWidget,
+    );
+    api.wallet = {'balance': 120, 'spendable': 120};
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('header-coins')),
+        matching: find.text('120'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('header-coins')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('coins-hero')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('sin cuenta la cabecera no inventa saldo', (tester) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api));
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('header-coins')),
+        matching: find.text('—'),
+      ),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
   testWidgets('VIP card opens actual plans; no sample prices', (tester) async {
     final api = FixtureApi();
     await open(tester, ProductShell(api: api));
@@ -396,6 +441,7 @@ void main() {
   ) async {
     final api = FixtureApi()
       ..richDetail = true
+      ..detailLocked = true
       ..modelo = {
         'fuente': 'mercado',
         'mas_2_5': .61,
@@ -489,9 +535,11 @@ void main() {
     expect(find.textContaining('DICTAMEN DEL MODELO'), findsOneWidget);
     await capture(tester, 'forecast_panel');
     expect(find.text('Gana el local'), findsNothing);
-    await tester.ensureVisible(find.text('Ver estadísticas del partido'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Ver estadísticas del partido'));
+    // Con un pronóstico abierto no se ofrece VIP arriba aunque el partido tenga otros bloqueados,
+    // y la tarjeta ya no lleva el botón de estadísticas.
+    expect(find.text('Este partido tiene un pronóstico VIP'), findsNothing);
+    expect(find.text('Ver estadísticas del partido'), findsNothing);
+    await tester.tap(find.text('Análisis'));
     await tester.pumpAndSettle();
     expect(find.text('RESUMEN DE PREDICCIÓN'), findsOneWidget);
     expect(tester.takeException(), isNull);

@@ -36,6 +36,8 @@ class _ProductShellState extends State<ProductShell>
   JsonMap? data;
   String? error;
   bool busy = false;
+  // Monedas disponibles para la cabecera; null mientras no hay cuenta o no cargó.
+  int? coins;
   int tab = 0;
   DateTime selected = DateTime.now();
   String search = '';
@@ -131,6 +133,17 @@ class _ProductShellState extends State<ProductShell>
     } finally {
       if (mounted) setState(() => busy = false);
     }
+    unawaited(loadCoins());
+  }
+
+  /// Saldo disponible (`spendable`, nunca negativo) para la cabecera. Si falla, se conserva el anterior.
+  Future<void> loadCoins() async {
+    try {
+      final wallet = jsonMap(
+        jsonMap(await api.request('/mobile/v1/rewards'))['wallet'],
+      );
+      if (mounted) setState(() => coins = (wallet['spendable'] as num?)?.toInt());
+    } catch (_) {}
   }
 
   void vip() => Navigator.of(context)
@@ -426,6 +439,10 @@ class _ProductShellState extends State<ProductShell>
               ),
               title: liveText('QuantFut', bold: true, size: 22),
               actions: [
+                _CoinsChip(
+                  coins: coins,
+                  onTap: () => setState(() => tab = 3),
+                ),
                 IconButton(
                   tooltip: context.l10n.tooltipVip,
                   onPressed: data == null ? null : vip,
@@ -476,7 +493,9 @@ class _ProductShellState extends State<ProductShell>
         currentIndex: tab,
         onTap: (i) {
           if (i == tab) return;
+          final leavingCoins = tab == 3;
           setState(() => tab = i);
+          if (leavingCoins) unawaited(loadCoins()); // el saldo pudo cambiar allí
           unawaited(
             services?.screen(
               const ['home', 'predictions', 'markets', 'rewards', 'profile'][i],
@@ -505,6 +524,34 @@ class _ProductShellState extends State<ProductShell>
             label: context.l10n.navProfile,
           ),
         ],
+      ),
+    ),
+  );
+}
+
+/// Saldo de monedas en miniatura en la cabecera; al tocarlo abre la pestaña Coins.
+class _CoinsChip extends StatelessWidget {
+  const _CoinsChip({required this.coins, required this.onTap});
+  final int? coins;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: context.l10n.navCoins,
+    child: InkWell(
+      key: const ValueKey('header-coins'),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.toll, color: liveGold, size: 20),
+            const SizedBox(width: 4),
+            liveText(coins?.toString() ?? '—', bold: true, size: 14, color: liveGold),
+          ],
+        ),
       ),
     ),
   );

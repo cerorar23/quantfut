@@ -300,7 +300,9 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (data['locked'] == true)
+                        // Con un pronóstico ya abierto (gratis o desbloqueado) no se ofrece VIP
+                        // arriba: los demás van con su candado en «Mercados del partido».
+                        if (data['locked'] == true && picks.isEmpty)
                           liveCard(
                             border: liveGold,
                             child: Column(
@@ -316,11 +318,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                         const SizedBox(height: 12),
                         LiveScoreStrip(ficha: ficha),
                         if (featured != null)
-                          ForecastPanel(
-                            pick: featured,
-                            ficha: ficha,
-                            onStats: () => setState(() => tab = 1),
-                          ),
+                          ForecastPanel(pick: featured, ficha: ficha),
                         MatchMarkets(
                           data: jsonMap(ficha['mercados']),
                           onVip: widget.onVip,
