@@ -86,6 +86,7 @@ def load_training_data(league_id: str | None = None,
                   -- identifica al equipo en el modelo de fuerza.
                   th.league_id AS home_league, ta.league_id AS away_league,
                   m.home_goals, m.away_goals, m.home_xg, m.away_xg,
+                  m.xg_source, m.xg_recorded_at,
                   m.home_shots, m.away_shots,
                   m.home_shots_target, m.away_shots_target,
                   m.home_psxg, m.away_psxg,
@@ -163,7 +164,8 @@ def source_hash() -> str:
     """Huella del código que construye las predicciones y sus features."""
     root = Path(__file__).parent
     files = ("train.py", "dixon_coles.py", "pricing.py", "elo.py",
-             "features.py", "multinomial.py", "lineup_challenger.py")
+             "features.py", "multinomial.py", "lineup_challenger.py", "xg.py",
+             "masmenos.py", "player_value.py")
     digest = hashlib.sha256()
     for name in files:
         digest.update(name.encode())

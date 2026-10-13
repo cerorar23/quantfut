@@ -24,6 +24,7 @@ from ..db import execute, query
 from . import api_football as af
 from .estadisticas import arbitro, normalizar_estadisticas
 from .estadisticas_jugador import capturar as capturar_jugadores
+from .xg_api_football import record_capture as capturar_xg
 
 log = logging.getLogger(__name__)
 
@@ -169,6 +170,8 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
                  row["match_id"]),
             )
             closed += 1
+            if with_stats and stats:
+                capturar_xg(row["match_id"], sresp, home_af, away_af)
             # Fuerza por jugador (db/035): una petición más, solo en ligas con
             # modelo y captura completa. Un fallo aquí no debe dejar el
             # partido sin cerrar.

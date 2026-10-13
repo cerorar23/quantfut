@@ -46,8 +46,10 @@ pasada del chequeo diario queda además en `health_runs` (db/037).
 ## Dónde vive cada cosa (no lo derives, ya está aquí)
 
 - `src/qf/ingest/` — captura de datos (cuotas, calendario, resultados, xG).
-  **Nunca** toques `api_football.py` para xG: ese proveedor no se usa para xG
-  a propósito, ver README.
+  Desde el 12-oct-2026, por decisión del usuario, API-Football SÍ alimenta el
+  xG del modelo mediante `xg_api_football.py`: primera pareja válida congelada,
+  recepción real en `xg_recorded_at` y uso solo desde esa fecha. El cliente
+  `api_football.py` conserva su control de cuota.
 - `src/qf/model/` — Dixon-Coles, de-vig, pricing, entrenamiento, calibración
   (`calibration.py`), peso modelo/mercado (`meta.py`), GBM de residuo
   (`residual.py`) y ratings dinámicos (`kalman.py`). Todos existen.
@@ -108,7 +110,8 @@ Consecuencias que hay que respetar:
   point-in-time, ni el orden `predecir → sellar → publicar` sin pedir
   confirmación explícita: son las garantías que hacen creíble el producto.
 - No añadas manejo de errores o fallback para escenarios de proveedor que el
-  README ya descarta (p. ej. xG de API-Football).
+  README ya descarta. La antigua exclusión del xG de API-Football fue revocada
+  por el usuario el 12-oct-2026; el histórico previo no acredita su recepción original.
 - Sé directo, sin explicar código que ya es legible por sí mismo.
 - Al terminar una tarea: márcala en `harness/tareas.md` y añade la decisión
   clave (el porqué, no el qué) a `harness/progreso.md`.

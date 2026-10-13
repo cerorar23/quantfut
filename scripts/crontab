@@ -41,6 +41,10 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
 45 */3 * * * cd /app && python -m qf.ingest.results >> /var/log/results.log 2>&1
 
+# xG API-Football tardío: reconsulta hasta 35 días, máximo 100 partidos/día,
+# reserva el 15% de cuota. Primera observación congelada para entrenamiento.
+10 12 * * * cd /app && python -m qf.ingest.xg_api_football >> /var/log/xg_api_football.log 2>&1
+
 # xG historico desde los releases de worldfootballR_data. Semanal: esos
 # datasets se publican por lotes, no cambian a diario.
 # No se raspa FBref en vivo: esta detras de Cloudflare y devuelve 403.

@@ -14,7 +14,7 @@ infraestructura de credibilidad desde la primera línea.
 | Fase | Qué es | Estado | Falta |
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | Fuente de xG reciente: la actual está parada desde 2024-25 (ver "Corrección (2026-10-02)" en la sección de xG; copas ya recuperadas) (11 ligas + 2 copas en el modelo; + 12 ligas solo para el criterio sharp, `leagues.model_enabled = FALSE`: LaLiga 2 y Serie B desde 2026-09-25; Chile, Turquía, Suiza, Dinamarca, Noruega, Suecia, Championship, Ligue 2, 2. Bundesliga y Brasil B desde 2026-09-28) |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de API-Football conectado el 12-oct-2026; falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 12 ligas adicionales solo sharp. |
 | **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-10-08, 24 de 300 (IC [−0,11, +6,03] %, 0 de 3 ligas con muestra propia). Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **80%** | Cobros (elegir procesador). Hecho el 7-oct: cuentas, web conectada, correo Proton, panel `/control` |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
@@ -1088,9 +1088,11 @@ Consumo real de la ingesta operativa, muy por debajo del plan: 13 llamadas por
 pasada de calendario (2/día), 1 por partido terminado y 1 por partido en la
 ventana de alineaciones.
 
-**No uses el xG de API-Football**: su cobertura es inconsistente entre ligas y
-planes, y una liga sin datos devuelve un array vacío con status 200 en vez de un
-error.
+**xG de API-Football habilitado el 12-oct-2026, por decisión del usuario.**
+La exclusión anterior queda revocada. Su cobertura sigue siendo variable:
+una respuesta vacía o un valor null no se convierte en cero. Se conserva
+la primera pareja válida con su fecha real y se reconsulta el dato tardío;
+ver la sección de conexión al entrenamiento más abajo.
 
 **El endpoint `/injuries` tiene el mismo problema de cobertura silenciosa,
 verificado 2026-09-22 contra las 13 competiciones con clave real.** 10 de 13
@@ -1152,6 +1154,28 @@ competiciones paradas quedan reconocidas hasta el 1-nov-2026, y desde
 entonces vuelven a alertar si no se ha decidido la fuente de xG.
 
 ---
+
+### xG reciente conectado al entrenamiento (12-oct-2026)
+
+Por decisión del usuario se adopta API-Football para el xG reciente. El cierre
+guarda la primera pareja válida en `home_xg`/`away_xg`, sin peticiones extra,
+con `xg_source=api_football` y la fecha real de recepción en `xg_recorded_at`.
+La captura diaria vuelve a pedir los terminados sin xG de los últimos 35 días:
+máximo 100 consultas, espera de 20 horas entre intentos y reserva del 15% de
+cuota. No se reemplazan el xG previo ni las observaciones ya guardadas.
+
+El entrenamiento incorpora origen y timestamp al dataset y su hash. Dixon-Coles
+y más-menos usan este xG solo cuando ya existía en el corte evaluado; el replay
+secuencial de Kalman conserva goles para esta fuente hasta implementar llegadas
+tardías. La recepción original del histórico previo sigue sin acreditarse.
+La conexión no activa otro modelo ni demuestra rentabilidad. Detalle operativo
+y comprobaciones: [docs/xg_api_football_20261012.md](docs/xg_api_football_20261012.md).
+
+El entrenamiento `2026.10.12-221104` terminó el mismo día a las 20:55 CDMX:
+49.504 partidos y 148 parejas de la nueva fuente, pero no superó la puerta
+frente a Elo. El candidato queda registrado inactivo y continúa
+`2026.09.27-010508`. Resultado verificado:
+[docs/entrenamiento_xg_20261012.md](docs/entrenamiento_xg_20261012.md).
 
 ## Expectativas realistas
 

@@ -34,13 +34,16 @@ REAJUSTE_DIAS = 7
 MASMENOS_FEATURES = [f"{lado}_d_pm" for lado in LADOS]
 
 
-def objetivo(partidos: pd.DataFrame, xg_blend: float) -> np.ndarray:
+def objetivo(partidos: pd.DataFrame, xg_blend: float, as_of=None) -> np.ndarray:
     """Diferencia de goles mezclada con la de xG donde la hay, igual que el modelo."""
     gd = (partidos["home_goals"].astype(float) - partidos["away_goals"].astype(float)).to_numpy()
     if not {"home_xg", "away_xg"} <= set(partidos.columns):
         return gd
-    xgd = (pd.to_numeric(partidos["home_xg"], errors="coerce")
-           - pd.to_numeric(partidos["away_xg"], errors="coerce")).to_numpy(float)
+    from .xg import xg_at_cutoff
+    # Sin corte acreditado, la fuente nueva falla cerrada; el histórico previo
+    # mantiene el tratamiento existente.
+    hx, ax = xg_at_cutoff(partidos, as_of or pd.Timestamp.min.tz_localize("UTC"))
+    xgd = hx - ax
     return np.where(np.isfinite(xgd), (1 - xg_blend) * gd + xg_blend * xgd, gd)
 
 
@@ -53,6 +56,8 @@ class _Disenio:
         con_stats = con_stats.sort_values("kickoff_utc").reset_index(drop=True)
         self.ko = pd.to_datetime(con_stats["kickoff_utc"], utc=True).dt.tz_convert(None).to_numpy()
         self.y = objetivo(con_stats, xg_blend)
+        self.partidos = con_stats
+        self.xg_blend = xg_blend
         fila = {mid: i for i, mid in enumerate(con_stats["match_id"])}
         s = stats[stats["match_id"].isin(fila)]
         self.jugadores = np.array(sorted(s["player_id"].astype(int).unique()))
@@ -73,7 +78,9 @@ class _Disenio:
         X = self.X[:n]
         dias = (t - self.ko[:n]) / np.timedelta64(1, "D")
         w = 0.5 ** (dias / vida_media_dias)
-        y = self.y[:n] - np.average(self.y[:n], weights=w)   # la localía
+        target = (objetivo(self.partidos.iloc[:n], self.xg_blend, hasta)
+                  if "xg_source" in self.partidos else self.y[:n])
+        y = target - np.average(target, weights=w)   # la localía
         raiz = np.sqrt(w)
         A = X.multiply(raiz[:, None]).tocsr()
         beta = lsqr(A, y * raiz, damp=np.sqrt(lam), atol=1e-8, btol=1e-8)[0]

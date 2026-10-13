@@ -5149,6 +5149,31 @@ compose. Imagen vigente: `quantfut-api-tapjoy:20261012-correos`. Las páginas we
 enlaces siguen en español (límite documentado en `TRADUCCIONES.md`).
 Se marcaron como hechos cuatro pendientes de idioma/FCM que ya estaban implementados y sin tildar.
 
+## 2026-10-12 — Entrenamiento con el nuevo xG iniciado
+
+El usuario pidió ejecutar el entrenamiento y recibir aviso al terminar.
+Versión 2026.10.12-221104 lanzada en el worker a las 22:11:04 UTC / 16:11 CDMX:
+49.504 partidos, 148 parejas xG de API-Football, 11 ligas + 2 copas, validación
+completa de 365 días y puertas habituales. No se amplían ligas ni se fuerza
+activación: el modelo 2026.09.27-010508 permanece activo durante el cálculo.
+La nueva fuente entra en el ajuste final y se oculta en cortes anteriores a
+su captura; no atribuirle mejora retrospectiva en el backtest.
+
+Proceso desacoplado de SSH, prioridad reducida y un hilo por biblioteca.
+Snapshot del input y fuentes, log, estado con señal de vida cada 30 s y resultado
+final en /srv/quantfut/artifacts/training-runs/xg-2026.10.12-221104/.
+A las 22:15 UTC: proceso vivo, primer ajuste histórico, sin errores registrados;
+/model-card interno y público 200. Una consulta urllib desde VPS al dominio
+recibió 403; desde este equipo con User-Agent de navegador dio 200.
+
+Automatización heartbeat resultado-del-entrenamiento-con-xg creada y verificada
+en este chat, cada 15 min: avisar resultado/fallo, verificar registro/artefactos,
+actualizar documentación y detener seguimiento; silencio mientras sigue.
+El equipo y Codex deben estar encendidos para el seguimiento, no para el cálculo
+remoto. Comprobaciones obligatorias inicial y final: 972 aprobadas, 22 omitidas,
+2 advertencias. Documentación: docs/entrenamiento_xg_20261012.md.
+El entrenamiento sigue en curso; todavía no hay métricas nuevas ni promoción.
+
 ## 2026-10-12 — Sentry instalado (errores)
 
 Orden del titular. Dos proyectos en la organización `saptain`: `quantfut-api` (FastAPI, también
@@ -5247,6 +5272,34 @@ entrega: sin cambios de backend. Referencias sin copiar código: splashbyte/anim
 hadukin/custom_sliding_segmented_control (MIT), fathialamre/ticketcher y FazalHussain/Ticket-UI-Widget (MIT).
 `product_navigation_test` y `live_parley_test` se actualizaron: ya no hay un botón por candado y las
 reglas largas viven en la hoja.
+
+## 2026-10-12 — Entrenamiento xG terminado; candidato no activado
+
+2026.10.12-221104 terminó a las 20:55:22 CDMX (13-oct, 02:55 UTC), tras
+4 h 44 min 18 s: 49.504 partidos, 148 parejas nuevas xG y 13 competiciones.
+Se ejecutaron todas las etapas, 12 ajustes históricos (una ventana mensual
+sin test), ajuste final y puertas existentes. El candidato quedó registrado
+inactivo: en los mismos 1.051 partidos, RPS DC 0,19873 frente a Elo 0,19657
+y mercado 0,19147; log-loss 0,98694 / 0,98686 / 0,96547. Menor es mejor.
+El veto es no superar Elo; champion de ventana distinta no comparable y la
+puerta comercial sigue cerrada (clv_report de este pipeline n=0, mínimo 300;
+no confundir con las capturas de otros informes sharp). Calibración aprobada
+no anula el veto del modelo base. Modelo activo conservado 2026.09.27-010508.
+
+La nueva fuente está incorporada en el artefacto candidato, no en el modelo
+activo: carga con mezcla xG 0,65 y las 148 parejas disponibles en el corte
+final 13-oct 02:32:16 UTC. Su backtest no acredita mejora retrospectiva por
+xG capturado hoy. No se fuerza promoción ni se reinicia entrenamiento.
+
+Resultado, fila model_artifacts y métricas cotejados. Recalculado el hash del
+dataset desde training_input.pkl con la configuración registrada; fuentes
+copiadas coinciden con el hash inicial. Diez artefactos comprobados y hashes
+registrados; /model-card interno/público 200. Evidencia local completa en
+.local/xg_api_20261012/training-2026.10.12-221104/: completion-audit.json,
+artifact-verification.json y result.json/status.json/training.log exactos,
+con hashes iguales al VPS. Actualizadas documentación y tareas.
+Automatización resultado-del-entrenamiento-con-xg detenida (PAUSED) conforme
+a la orden de avisar al finalizar; sin cambios de código ni puertas.
 
 ## 2026-10-12 — Coins rediseñado y aviso de monedas insuficientes
 
@@ -5380,3 +5433,10 @@ lesiones, así que NO hacía falta mover esas capturas (se dejaron como estaban,
 Desplegado en api y worker con respaldo `~/backups/ventana-20261013` (vuelta atrás = imágenes `pre-ventana-backup`
 de `quantfut-worker` y `quantfut-api-tapjoy`, y el crontab respaldado). Pruebas: `tests/test_ventana_pronostico.py`
 (13) + suite Python completa (972) y Flutter (197).
+
+## 2026-10-13 — Integración xG y resultado preparados para commit
+
+Comprobación actual antes de guardar esta integración: 994 pruebas aprobadas,
+24 omitidas y 2 advertencias. El commit incluye la captura de la primera pareja,
+protección temporal, migración, pruebas y resultado del candidato rechazado.
+Se conservan sin incluir los cambios concurrentes de Tapjoy y de la app.

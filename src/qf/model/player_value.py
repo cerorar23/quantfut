@@ -66,7 +66,8 @@ def _conjunto(oos: pd.DataFrame) -> pd.DataFrame:
         return base
     matches = pd.DataFrame(query(
         """SELECT m.match_id, m.kickoff_utc, m.home_team_id, m.away_team_id,
-                  m.home_goals, m.away_goals, m.home_xg, m.away_xg
+                  m.home_goals, m.away_goals, m.home_xg, m.away_xg,
+                  m.xg_source, m.xg_recorded_at
            FROM matches m JOIN leagues l USING (league_id)
            WHERE l.model_enabled AND m.status = 'finished'
              AND m.kickoff_utc > now() - interval '500 days'"""))

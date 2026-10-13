@@ -751,8 +751,11 @@ Cruzadas con lo ya medido (2.D, 2.E): solo entra lo que no se ha probado.
 - [x] **Fuente de xG reciente — API-Football conectada el 12-oct-2026**
       por decisión explícita del usuario. Primera pareja válida congelada,
       timestamp real y protección temporal en entrenamiento; reconsulta diaria
-      acotada de partidos sin dato. Cobertura sostenida y nuevo entrenamiento
-      siguen pendientes; ver docs/xg_api_football_20261012.md.
+      acotada de partidos sin dato. Cobertura sostenida pendiente; entrenamiento
+      `2026.10.12-221104` terminado el 12-oct a las 20:55 CDMX, candidato
+      rechazado frente a Elo (RPS 0,19873 > 0,19657 en 1.051 partidos comunes).
+      El modelo anterior sigue activo. Ver docs/xg_api_football_20261012.md y
+      docs/entrenamiento_xg_20261012.md.
       **Antecedente, medido el 3-oct: el xG APORTA** (regla
       fijada antes: IC95 entero bajo cero y ≥ mitad de ligas). Ventana
       jul-2023→ene-2025: RPS 0,20154 con xG frente a 0,20440 solo goles,

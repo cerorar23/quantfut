@@ -234,10 +234,8 @@ class DixonColes:
         team_league_names = [leagues[j] for j in team_league]
 
         # Objetivo mezclado. Si falta xG, se usa el gol.
-        hx = df["home_xg"].to_numpy(dtype=float) if "home_xg" in df.columns \
-            else np.full(len(df), np.nan)
-        ax = df["away_xg"].to_numpy(dtype=float) if "away_xg" in df.columns \
-            else np.full(len(df), np.nan)
+        from .xg import xg_at_cutoff
+        hx, ax = xg_at_cutoff(df, as_of)
         b = self.xg_blend
         y_h = np.where(np.isnan(hx), hg, (1 - b) * hg + b * hx)
         y_a = np.where(np.isnan(ax), ag, (1 - b) * ag + b * ax)

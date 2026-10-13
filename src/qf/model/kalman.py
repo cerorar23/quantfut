@@ -331,6 +331,13 @@ class DynamicRatings:
         from .devig import devig
 
         df = df.dropna(subset=["home_goals", "away_goals"]).sort_values("kickoff_utc")
+        if "xg_source" in df:
+            # Este replay actualiza al terminar el partido y no procesa
+            # llegadas tardías. La nueva fuente usa solo goles aquí hasta
+            # implementar eventos de recepción; no se adelanta su xG.
+            df = df.copy()
+            api = df["xg_source"].eq("api_football").fillna(False)
+            df.loc[api, ["home_xg", "away_xg"]] = np.nan
         self._estimate_league_params(df)
         filas = []
 
