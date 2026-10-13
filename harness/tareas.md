@@ -18,6 +18,21 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Viabilidad de recuperar fútbol con ZenRows (2026-10-13)
+
+Pedido del usuario: comprobar xG, alineaciones, bajas y estadísticas de jugadores
+para las 12 ligas sin modelo y huecos de las 13 actuales.
+
+- [x] Auditar el archivo FotMob ya descargado: originales, hashes, xG, XI y
+  estadísticas por competición; separar los datos guardados de los importados.
+- [x] Probar SofaScore con ZenRows existente: hasta cuatro solicitudes y reserva
+  de 100 créditos, sin compras ni descarga masiva; registrar cobertura real.
+- [x] Entregar matriz de viabilidad y límites del histórico/recepción temporal.
+  No activar captura_completa, ligas o un candidato por disponer de más datos.
+- [ ] Integración posterior: emparejar/importar el archivo verificado, extender
+  el control temporal a FotMob/SofaScore y separar bajas/XI históricos de PIT.
+  Detalle: docs/futbol_scraping_viabilidad_20261013.md.
+
 ## App Flutter + Firebase — contenido real y monedas (2026-10-11)
 
 Decisión más reciente del usuario: conectar datos completos reales y omitir el

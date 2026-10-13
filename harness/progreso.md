@@ -5479,3 +5479,38 @@ APK nuevo: la app ya dibuja los marcadores cuando llegan.
 ## 2026-10-13 — Parley: un único parley del día no es gratis
 
 La app mostraba todos los parlays porque el reparto gratis/VIP (`api/parley_acceso.py`) solo existía en local: el VPS sigue con `/parley` público sin filtro (comprobado: el contenedor de la API no trae `parley_acceso.py`). Decisión del usuario: un parley gratis por día y, si el día trae uno solo, ninguno gratis (con uno solo no hay "resto" que vender; el liquidado se sigue viendo siempre). Regla en `aplicar_acceso`: `gratis = None` si `len(tickets) <= 1`. Desplegado en el VPS (api) con respaldo `~/backups/parley-20261013` (vuelta atrás = imagen `quantfut-api-tapjoy:pre-parley-backup` en el compose + `up -d --no-deps api`). Imagen nueva = la anterior + `main.py` y `parley_acceso.py`; el `main.py` del contenedor difería del local solo en `/parley`. Verificado en producción sin cuenta: hoy 1 parley abierto (escalón 1, gratis) y 4 bloqueados. Sin APK nuevo.
+
+## 2026-10-13 — Cobertura fútbol: archivo disponible y ZenRows comprobado
+
+El usuario pidió viabilidad de xG, XI, bajas y estadísticas para 12 ligas sin
+modelo y huecos de las 13 habilitadas. Se comprobó la base actual (interruptores
+false y conteos citados), pero el dato pendiente está en buena parte archivado:
+FotMob 2024-01-01 a 2026-10-03, 22.461 filas, 22.456 originales verificados.
+Hashes y normalizador cotejados: 3 originales faltantes Championship y 2 fechas
+inconsistentes Brasil A excluidos. Las 12 ligas tienen 7.701 parejas xG,
+10.524 partidos con ambos XI válidos y 10.466 con estadísticas de ambos equipos.
+Campos de bajas presentes en 6.013 partidos; no se acredita exhaustividad ni
+publicación previa al kickoff. Chile 662 resultados/XI, sin xG; Brasil B 1.066
+resultados/XI y 686 xG. Copas: 425 UCL/441 UEL con xG, XI y estadísticas.
+Argentina/MX/Primeira también tienen bajas declaradas en el archivo, pese al
+vacío de API-Football. No se mezclan universos ni se atribuyen eventos nuevos
+antes de emparejar con las identidades existentes.
+
+Prueba SofaScore por cuenta ZenRows existente: cuatro GET correctos, reserva
+100, incremento observado 20 créditos (1804→1824). Southampton-Portsmouth,
+16391229, Championship/18: xG 1,28/1,18; 22 titulares, 40 fichas/29 jugadores
+con minutos positivos, 6 bajas visitantes. Recibos y hashes verificados. Un
+primer arranque MCP falló antes de consultar; segundo correcto. Repo fijado
+dd9f061be2c64f01a6d3a50fb34d55a102d7107b: PolyForm Noncommercial real comprobada
+por API ref fijo, pese a raw main en caché que daba MIT; piloto con adaptador
+propio, sin integrar ese código restringido. No se declara qué IP usó el servicio.
+
+Decisión: reutilizar primero el archivo existente; completar con consultas
+acotadas tras medir cobertura por liga. Próxima integración necesita matching
+estricto y extender la protección xG (hoy explícita para api_football) a las
+nuevas fuentes; disponibilidad real del 3-oct no acredita datos en backtests
+anteriores. Más datos no equivalen a superar Elo. Cero importaciones, compras,
+API-Football/Odds API nuevas, cambios de flags, cron o modelo. Arnés antes:
+995/24; después: 996/24, dos advertencias. Informe:
+docs/futbol_scraping_viabilidad_20261013.md. Evidencia:
+.local/football_scraper_20261013/; originales antiguos intactos.
