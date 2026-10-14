@@ -194,3 +194,30 @@ def test_un_partido_nuevo_se_inserta_con_su_cierre(base_falsa):
     assert _ingest_rows("mx.liga_mx", "2627", _fila_extra(), COLS_EXTRA) == 1
     assert sum("INSERT INTO matches" in s for s in base_falsa["sentencias"]) == 1
     assert sum("odds_snapshots" in s for s in base_falsa["sentencias"]) == 3
+
+
+def _csv(**extra):
+    base = {"Date": ["20/09/2025"], "Home": ["A"], "Away": ["B"], "PSCH": [2.1], "PSCD": [3.3], "PSCA": [3.6]}
+    base.update({k: [v] for k, v in extra.items()})
+    return pd.DataFrame(base)
+
+
+def test_ternas_pinnacle_toma_la_terna_completa():
+    from qf.ingest.history_fd import COLS_EXTRA, ternas_pinnacle
+    t = ternas_pinnacle(_csv(), COLS_EXTRA, datetime(2024, 1, 1, tzinfo=timezone.utc))
+    assert len(t) == 1 and t[0]["home"] == "A" and t[0]["away"] == "B"
+    assert t[0]["price"] == {"home": 2.1, "draw": 3.3, "away": 3.6}
+    assert t[0]["ko"].year == 2025
+
+
+def test_ternas_pinnacle_descarta_cuotas_invalidas_o_incompletas():
+    from qf.ingest.history_fd import COLS_EXTRA, ternas_pinnacle
+    desde = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    for malo in (dict(PSCD=1.0), dict(PSCH=float("nan")), dict(PSCA=float("inf")), dict(PSCH=-3.0)):
+        assert ternas_pinnacle(_csv(**malo), COLS_EXTRA, desde) == []
+    assert ternas_pinnacle(_csv().drop(columns=["PSCA"]), COLS_EXTRA, desde) == []
+
+
+def test_ternas_pinnacle_respeta_el_desde():
+    from qf.ingest.history_fd import COLS_EXTRA, ternas_pinnacle
+    assert ternas_pinnacle(_csv(), COLS_EXTRA, datetime(2026, 1, 1, tzinfo=timezone.utc)) == []

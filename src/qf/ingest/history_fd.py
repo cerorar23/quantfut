@@ -94,6 +94,32 @@ def _parse_date(row) -> datetime | None:
     return dt.replace(tzinfo=timezone.utc)
 
 
+PINNACLE_CIERRE = ("PSCH", "PSCD", "PSCA")
+
+
+def ternas_pinnacle(df: pd.DataFrame, cols: dict, desde: datetime) -> list[dict]:
+    """Filas del CSV con la terna de cierre de Pinnacle completa y válida, desde `desde`."""
+    import math
+
+    if not set(PINNACLE_CIERRE) <= set(df.columns):
+        return []
+    out = []
+    for _, row in df.iterrows():
+        home, away = row.get(cols["home"]), row.get(cols["away"])
+        ko = _parse_date(row)
+        if ko is None or ko < desde or not isinstance(home, str) or not isinstance(away, str):
+            continue
+        try:
+            precios = [float(row[c]) for c in PINNACLE_CIERRE]
+        except (TypeError, ValueError):
+            continue
+        if not all(math.isfinite(p) and p > 1.0 for p in precios):
+            continue
+        out.append({"home": home, "away": away, "ko": ko,
+                    "price": dict(zip(("home", "draw", "away"), precios))})
+    return out
+
+
 # Los dos formatos de football-data.co.uk NO comparten nombres de columna.
 # Leer el "extra" con los nombres del principal devuelve None en cada fila y la
 # liga entera se carga vacía sin dar ningún error.
