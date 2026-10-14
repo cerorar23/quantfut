@@ -258,6 +258,8 @@ class Matcher:
                     "match_id": m["match_id"], "home_team_id": m["home_team_id"], "away_team_id": m["away_team_id"]}
         if pair:
             return {"mapping_status": "conflict", "mapping_reason": "multiple_candidate_matches", "match_id": None}
+        if r.get('historical_tournament_id'):
+            return {"mapping_status": "unresolved", "mapping_reason": "historical_tournament_requires_existing_match", "match_id": None}
         if len(home) == len(away) == 1 and home != away:
             # Do not create a duplicate if one identified team already plays nearby.
             clashes = [m for m in near if {m["home_team_id"], m["away_team_id"]} & (home | away)]

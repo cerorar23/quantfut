@@ -2587,7 +2587,7 @@ abstract class AppLocalizations {
   /// Qué se obtiene al desbloquear los pronósticos.
   ///
   /// In es, this message translates to:
-  /// **'Con VIP ves la probabilidad, la cuota y el análisis'**
+  /// **'Con VIP ves la selección, la probabilidad y el análisis'**
   String get picksLockedHint;
 
   /// Despliega los pronósticos bloqueados.

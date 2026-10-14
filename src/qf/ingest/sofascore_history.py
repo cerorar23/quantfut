@@ -64,6 +64,10 @@ def normalize_bundle(league, raw, metadata):
     allowed = {TOURNAMENTS[league]}
     if league == 'mx.liga_mx':
         allowed.add(11621)  # Torneos Apertura/Clausura de la misma competición.
+    historical_arg_cup = (league == 'ar.primera' and tid == 13475
+                          and str((event.get('season') or {}).get('year')) == '2024')
+    if historical_arg_cup:
+        allowed.add(13475)  # Copa de la Liga 2024: solo asociación histórica existente.
     if tid not in allowed:
         raise ValueError('wrong_tournament')
     category = (event.get('tournament') or {}).get('category') or {}
@@ -86,6 +90,8 @@ def normalize_bundle(league, raw, metadata):
         raise ValueError('invalid_event_identity')
     kickoff = datetime.fromtimestamp(event['startTimestamp'],timezone.utc)
     captured = timestamp(metadata['captured_at'])
+    if historical_arg_cup and kickoff.year != 2024:
+        raise ValueError('wrong_historical_competition_year')
     if not kickoff <= captured <= datetime.now(timezone.utc):
         raise ValueError('invalid_capture_time')
     statistics = payload.get('statistics')
@@ -107,6 +113,8 @@ def normalize_bundle(league, raw, metadata):
         row[side+'_source_team_id'] = str(teams[side]['id'])
         row[side+'_name'] = teams[side]['name']
         row[side+'_goals'] = score(event,side)
+    if historical_arg_cup:
+        row['historical_tournament_id'] = 13475
     for target,key in [('shots','totalShotsOnGoal'),('shots_target','shotsOnTarget'),('corners','cornerKicks')]:
         pair = stat_pair(statistics,key) if code==100 else (None,None)
         for side,value in zip(('home','away'),pair):

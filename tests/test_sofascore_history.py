@@ -7,6 +7,35 @@ from qf.ingest.sofascore_history import normalize_bundle, stat_pair
 from qf.ingest.fotmob_import import Matcher
 
 
+def test_argentine_2024_cup_alias_requires_existing_canonical_fixture():
+    data=example()
+    event=data['event']
+    event['startTimestamp']=1706364000
+    event['season']={'year':'2024'}
+    event['tournament']={'uniqueTournament':{'id':13475},'category':{'alpha2':'AR'}}
+    raw=json.dumps(data).encode()
+    meta={'sha256':hashlib.sha256(raw).hexdigest(),'captured_at':'2026-10-13T12:00:00Z'}
+    row=normalize_bundle('ar.primera',raw,meta)
+    assert row['historical_tournament_id']==13475
+    snapshot={'teams':[{'team_id':1,'league_id':'ar.primera','canonical_name':'A'},
+                       {'team_id':2,'league_id':'ar.primera','canonical_name':'B'}],
+              'leagues':[{'league_id':'ar.primera','cross_league':False}],
+              'aliases':[],'matches':[]}
+    assert Matcher(snapshot,[row],provider='sofascore').match(row)['mapping_status']=='unresolved'
+    snapshot['matches']=[{'match_id':'existing','league_id':'ar.primera',
+        'kickoff_utc':row['kickoff_utc'],'home_team_id':1,'away_team_id':2,
+        'status':'finished','home_goals':2,'away_goals':1,'external_ids':{}}]
+    assert Matcher(snapshot,[row],provider='sofascore').match(row)['match_id']=='existing'
+    event['tournament']['category']['alpha2']='BR'
+    raw=json.dumps(data).encode();meta['sha256']=hashlib.sha256(raw).hexdigest()
+    with pytest.raises(ValueError,match='wrong_competition_country'):
+        normalize_bundle('ar.primera',raw,meta)
+    event['tournament']['category']['alpha2']='AR';event['season']['year']='2025'
+    raw=json.dumps(data).encode();meta['sha256']=hashlib.sha256(raw).hexdigest()
+    with pytest.raises(ValueError,match='wrong_tournament'):
+        normalize_bundle('ar.primera',raw,meta)
+
+
 def example():
     def team(tid,name):
         return {'id':tid,'name':name,'sport':{'id':1},'gender':'M','national':False}

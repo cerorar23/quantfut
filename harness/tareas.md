@@ -18,6 +18,20 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Buscar datos restantes de las 23 competiciones (2026-10-13)
+
+Pedido del usuario tras eliminar Chile y Brasil B: buscar los datos que faltan.
+Saldo nuevo verificado 4.012; sin compras, entrenamiento o reintroducción de
+ligas retiradas. Autoriza la recuperación/importación ya acordada en este chat.
+
+- [x] Auditar huecos vigentes y fuente/temporada; arnés previo 1.049/24.
+- [ ] Reutilizar originales y muestrear fuentes históricas con soccerdata y
+  ZenRows CLI/MCP; separar métrica no publicada de errores de acceso.
+- [ ] Descargar datos faltantes acreditados con presupuesto/concurrencia
+  compartidos, revisar identidades y conservar recibos/reloj por observación.
+- [ ] Importar lo recuperado sin reemplazar originales/xG congelados; verificar
+  reversión, repetición, modelo y servicios; documentar cobertura y pendientes.
+
 ## Eliminar Chile y Brasil B (2026-10-13)
 
 Orden del usuario: eliminarlas por completo. Autoriza expresamente el borrado
@@ -2545,3 +2559,17 @@ justa (1/prob) etiquetada donde no hay cuota publicada.
 
 - [x] Seguimiento Tapjoy: identificar `no_currency`, verificar clave/moneda/tarjeta y registrar BlueStacks como prueba con autorización explícita. Offerwall abrió Tapjoy Test CPA de 7 monedas.
 - [ ] Tapjoy comercial: aprobación de cuenta/aplicación y prueba de acreditación de una oferta confirmada; las ofertas de prueba no acreditan este hito.
+
+## Continuar recuperación xG LaLiga 2 y Ligue 2 — 2026-10-13
+
+- [x] Revisar estado, arnés y nuevas fuentes públicas históricas.
+- [ ] Incorporar únicamente parejas verificadas de archivos FBref con recepción real, resultados e identidades corroboradas.
+- [ ] Verificar y terminar la carga SofaScore pendiente; conservar modelo activo.
+- [ ] Completar los huecos restantes con fuentes por partido verificables, sin promedios ni valores inventados.
+
+## PitchAPI — histórico de las 23 competiciones (2026-10-14)
+
+- [x] Descargar listas y estadísticas de PitchAPI con recibos y hash; sin fallos.
+- [x] Importar xG emparejados con identidad corroborada (5.355), con ensayo revertido.
+- [ ] Huecos restantes desde 2024: Serie B 588, LaLiga 2 236, Argentina 208, Ligue 2 144; PitchAPI no los cubre.
+- [ ] PitchAPI aún no se usa para alineaciones, jugadores ni eventos (`/lineups`, `/players`); no se descargaron.

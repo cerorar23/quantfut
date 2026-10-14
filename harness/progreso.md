@@ -5601,6 +5601,9 @@ Pedido del titular, tras una primera lectura equivocada mía (que cambió la cuo
 
 Decisión del titular sobre mercados (2026-10-13): el parley NO busca en todos los mercados, solo en los de líneas validadas (1X2, doble oportunidad, goles 1,5/2,5/3,5, goles por equipo, ambos marcan sí, hándicap, córners y tarjetas habilitados) y elige por probabilidad calculada, no por acierto real. Ponderar por acierto real por mercado se pospone hasta tener ~50 liquidados por mercado (hoy 5-41): anotado en `harness/tareas.md` (Parley, punto 11) y en el README.
 
+Parley con patas de 1,20-1,80 DESPLEGADO (2026-10-13 ~20:00 UTC, commit a90bdd2) en worker y api con respaldo `~/backups/patas-20261013` (vuelta atrás = imágenes `quantfut-worker:pre-patas-backup` y `quantfut-api-tapjoy:pre-patas-backup`; en el compose la api vuelve a `image: quantfut-api-tapjoy:pre-patas-backup` y el worker se retaga a `latest`, luego `up -d --no-deps --no-build api worker`). El `parley.py` de la api estaba en la versión 059372a (sin doble oportunidad); ahora los dos llevan la misma. Comprobado: md5 de parley.py/parley_datos.py = HEAD en ambos contenedores, cron del worker vivo (daily 09:00 UTC), `/parley` publica `cuota_min_pata 1.2` y `cuota_max_pata 1.8`. El ensayo en seco a las ~20:00 UTC sale vacío (ventana por día, sin partidos dentro): el primer sellado real con la regla es el del 14-oct 09:00 UTC; VERIFICAR ese lote (`parley_datos informe`: toda pata entre 1,20 y 1,80). APK nuevo compilado con la cuota de los bloqueados y la leyenda nueva: 76,0 MB, 13-oct 18:50, SHA256 1113356E19103446A3C7C28EDA5551340E27C48EDFFF363E3C371BCA10104EC7; sin instalar ni publicar.
+
+
 ## 2026-10-13 — Recuperación adicional con clave nueva de ZenRows
 
 Se priorizó el modo automático de la CLI oficial 1.5.0, sin imponer país ni
@@ -5680,3 +5683,34 @@ recién importados aún no participaron en un nuevo modelo activado. Evidencia
 remove-chile-brasil-b-20261013 del worker; 45MB de respaldo también en host.
 Detalle: docs/eliminacion_chile_brasil_b_20261013.md. Informes de cobertura
 actuales actualizados; archivos previos y sellados conservados como evidencia.
+
+## 2026-10-14 — PitchAPI: histórico y xG a la base
+
+Por orden del titular se descargó el histórico de PitchAPI y se importaron
+sus xG. Decisión clave: identidad de club solo por corroboración de partidos
+(3 votos, 90 % de dominancia, fecha UTC exacta), nunca por nombre. Una primera
+versión con ventana de ±1 día votaba mal entre partidos vecinos con igual
+marcador; se corrigió antes de escribir nada. La recepción real queda en
+`xg_recorded_at` para que el modelo no use el xG antes de existir.
+
+5.355 xG importados (ensayo revertido, carga e idempotencia verificadas); los
+huecos desde 2024 pasan de 1.262 a 1.220 porque PitchAPI no cubre 2024 en
+Serie B, LaLiga 2 ni Ligue 2. Detalle: docs/pitchapi_historico_20261014.md.
+
+## 2026-10-14 — Auditoría de completitud desde 2025-01-01 y cierre de Allsvenskan
+
+Auditoría de solo lectura de las 23 competiciones contra API-Football (segunda
+fuente independiente) y la base. Resultado: 13.200 partidos terminados, todos
+con marcador, y la base no tiene ningún partido que API-Football no tenga. Las
+diferencias son playoffs de promoción/relegación y finales (~55, fuera de
+jornada regular) y, en Champions/Europa League, clubes fuera del catálogo, que
+se descartan por diseño. Lección del método: emparejar por fecha y marcador
+produce falsos positivos entre partidos con igual resultado en días cercanos;
+solo son fiables los conteos y el emparejamiento con fecha exacta primero.
+
+Tres partidos de Allsvenskan del 31-may-2026 seguían `scheduled` porque
+`close_recent` solo mira 72 horas. Se cerraron con esa misma función
+(`hours_back` amplio, solo `se.allsvenskan`), sin picks ni predicciones
+asociados: 2-2, 3-2 y 4-5, con `result_recorded_at` real de hoy. Vencidos sin
+cerrar: 0; queda 1 aplazado (Vallecano–Athletic, 10-oct). xG desde 2025 sin
+cubrir: 237 (Serie B 188 de ene–jun 2025, copas 26, resto ~23).

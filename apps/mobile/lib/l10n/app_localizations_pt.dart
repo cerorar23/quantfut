@@ -1521,7 +1521,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get picksLockedHint =>
-      'Com VIP você vê a probabilidade, a cota e a análise';
+      'Com VIP você vê o prognóstico, a probabilidade e a análise';
 
   @override
   String get picksLockedShow => 'Ver a lista';
