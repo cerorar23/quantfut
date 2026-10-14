@@ -5736,3 +5736,52 @@ difería del repo) en vez de pisarlo; el worker, de imagen anterior a las claves
 cifradas, recibió `cryptography==50.0.2` (la versión ya fijada) y `cifrado.py`,
 en capas nuevas sin reiniciar. Primera pasada real: 0 discrepancias. Detalle y
 reversión en docs/pitchapi_respaldo_20261014.md.
+
+## 2026-10-14 — Auditoría de las 23 competiciones y entradas del pronóstico
+
+La disponibilidad de datos no equivale a que el motor los utilice. Se auditó
+producción en transacciones de solo lectura: 20.854 terminados desde 2024,
+1.222 sin xG, 336 sin XI completo archivado y 349 sin al menos 11 jugadores
+con minutos por lado. Los módulos actuales solo leen las tablas nativas:
+16.176 no tienen XI compatible y 15.822 no tienen jugadores compatibles.
+Se encontraron 8.118 parejas de amarillas pendientes de pasar del archivo a
+la tabla principal. De 20.331 originales FotMob vinculados y leídos, 8.623
+contienen campos de clima, 20.331 sede y 20.140 árbitro; no son entradas
+directas del motor principal. Deben validarse contenido, unidades y momento
+de disponibilidad, sin usar el clima posterior como pronóstico anterior.
+
+El modelo activo sigue `2026.09.27-010508` en 13 competiciones, sin mezcla ni
+residuo. XI tiene 106 predicciones experimentales pero no promoción; las bajas
+se capturan. El selector de valor decide por cuotas frente a Pinnacle, no por
+el edge del modelo. En 7.689 parejas xG de las competiciones modeladas la
+recepción es posterior al ajuste del artefacto, por lo que importar no actualiza
+sus parámetros. Otra limitación comprobada: el importador de estadísticas
+individuales convierte ausentes en cero; no nulo no certifica cobertura real.
+
+Próximos siete días: 227 programados, 140 en ligas modeladas con consulta de
+bajas en últimas 24 h y 87 excluidos de esa captura por configuración; ninguno
+estaba en la ventana de XI. Informe y prioridades propuestas en
+`docs/auditoria_datos_modelo_20261014.md`; sin cambios de producción ni nuevo
+entrenamiento. Arnés inicial aprobado (1.084 pruebas, 24 omitidas) y huellas
+del código principal/selector/captura contrastadas con el despliegue.
+
+## 2026-10-14 — Señales del motor: spec, plan y F0 aplicada
+
+El usuario pidió llevar al motor principal los datos que solo estaban archivados.
+Decisiones: una señal entra únicamente si gana fuera de muestra (RPS, log-loss y
+ECE en >=2 ligas); mecanismo de ajuste de lambdas sobre Dixon-Coles, no dentro del
+ajuste ni un GBM; y, como el XI llega a T-60 y la predicción se sellaba a las 08:00,
+el usuario relajó la garantía a un sello por partido justo antes del inicio (los
+lotes antiguos se regeneran con su formato por fecha de corte). Spec y plan en
+docs/superpowers/. Clima con Open-Meteo plan Standard: sin Historical Forecast, así
+que el bloque se valida con los pronósticos que guardemos o con el clima observado
+de FotMob como sustituto declarado.
+
+F0 aplicada: el archivo FotMob rellenó solo NULL en `matches` (amarillas/rojas
+8.412->294, descanso 7.325->240, xGOT, árbitro en columna aparte, sede en la tabla
+`estadios`) con procedencia en `matches_enriquecimiento`. Decisiones que costaron
+algo: el xGOT no se mezcla con PSxG; el árbitro de FotMob no pisa `matches.referee`
+(lo lee el motor de tarjetas); el simulacro fue de solo lectura porque la migración
+bloquea `matches`. Contraste: FotMob cuenta tarjetas distinto en ~6 % de los
+partidos (+1), así que las probabilidades de tarjetas se mueven en las ligas que casi
+no tenían historial. Detalle y reversión: docs/f0_archivo_a_matches_20261014.md.

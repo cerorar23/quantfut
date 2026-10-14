@@ -18,6 +18,25 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Señales nuevas en el motor principal (2026-10-14)
+
+Pedido del usuario: llevar al motor principal XI y valor de jugadores, bajas, tiros/PSxG,
+árbitro, sede y clima, cuotas de apertura/cierre. Spec:
+docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md. Regla: una
+señal entra solo si mejora RPS, log-loss y ECE fuera de muestra en >=2 ligas.
+Decisión del usuario: sello tardío (un sello por partido a T-30/XI) y capa de ajuste
+de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
+
+- [x] F0 — Archivo FotMob a `matches` y `estadios` (db/067). Detalle: docs/f0_archivo_a_matches_20261014.md.
+- [ ] F1 — Reentrenar con los xG recibidos desde el 27-sep y `ajuste.py` sin bloques: línea base.
+- [ ] F2 — Apertura/cierre de Pinnacle, CLV y movimiento (bloque `mercado`).
+- [ ] F3 — Bajas y sanciones como minutos perdidos (bloque `bajas`).
+- [ ] F4 — Puente de identidades FotMob/API-Football; XI con valor de jugador (bloque `xi`).
+- [ ] F5 — Árbitro: penaltis, expulsiones y tarjetas; unificar identidades (bloque `arbitro`).
+- [ ] F6 — Sede, viaje, altitud y clima con Open-Meteo (bloque `sede_clima`).
+- [ ] F7 — Sello tardío en producción (un lote por partido, `batch_kind`).
+- [ ] Huecos de xG desde 2024 (1.222; Serie B, LaLiga 2, Ligue 2): requieren una fuente nueva, decisión del usuario.
+
 ## Buscar datos restantes de las 23 competiciones (2026-10-13)
 
 Pedido del usuario tras eliminar Chile y Brasil B: buscar los datos que faltan.
@@ -2601,3 +2620,13 @@ revocó sola el 14-oct).
 - [x] Pruebas (18) y arnés 1.067 aprobadas; commit hecho.
 - [x] Desplegado el 14-oct (migraciones, worker, API, cron) con la clave cifrada en la base y el respaldo activo; ver docs/pitchapi_respaldo_20261014.md.
 - [ ] Clave `pk_live_` y consulta al proveedor sobre uso comercial y almacenamiento.
+
+## Auditoría de datos y entradas del motor — 2026-10-14
+
+- [x] Revisar las 23 competiciones en producción, históricos desde 2024/2025,
+  próximos siete días, XI, jugadores, bajas, clima, sede, árbitro y cuotas;
+  distinguir disponibilidad archivada, integración y recepción previa al partido.
+  Informe: `docs/auditoria_datos_modelo_20261014.md`. Solo lectura; modelo intacto.
+- [ ] Preservar dato ausente frente a cero en estadísticas individuales antes
+  de ampliar los ratings; integrar identidades y campos archivados y evaluar
+  cualquier nuevo modelo antes de promoverlo (propuesta, sin implementación).

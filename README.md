@@ -1185,6 +1185,19 @@ frente a Elo. El candidato queda registrado inactivo y continúa
 `2026.09.27-010508`. Resultado verificado:
 [docs/entrenamiento_xg_20261012.md](docs/entrenamiento_xg_20261012.md).
 
+### Archivo FotMob integrado a las tablas principales (14-oct-2026)
+
+Primera fase de llevar al motor las señales que estaban archivadas (spec:
+[docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md](docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md)).
+`qf.ingest.archivo_a_matches` rellenó solo columnas vacías de `matches`: amarillas
+y rojas (huecos 8.412 a 294), marcador al descanso (7.325 a 240), xGOT, árbitro de
+FotMob y sede con coordenadas (tabla `estadios`, 758 sedes), con la procedencia de
+cada campo en `matches_enriquecimiento`. No cambia el modelo activo ni las
+predicciones; usar estas columnas en el motor es de las fases siguientes. FotMob
+cuenta las tarjetas un poco distinto (~6 % de partidos, +1), que mueve las
+probabilidades de tarjetas en ligas con poco historial. Detalle y reversión:
+[docs/f0_archivo_a_matches_20261014.md](docs/f0_archivo_a_matches_20261014.md).
+
 ## Expectativas realistas
 
 - Un ROI sostenido de **1-4% sobre el volumen** es un resultado profesional
