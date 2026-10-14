@@ -66,3 +66,23 @@ def test_arbitro_vacio_es_none():
     p = payload()
     p["content"]["matchFacts"]["infoBox"]["Referee"] = {"text": "   "}
     assert extraer(p, STATS, 2, 3)["referee_fotmob"] is None
+
+
+def test_el_cli_por_defecto_es_ensayo(monkeypatch, capsys):
+    from qf.ingest import archivo_a_matches as mod
+
+    llamadas = []
+
+    class FalsaConexion:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    monkeypatch.setattr("qf.db.conn", lambda: FalsaConexion())
+    monkeypatch.setattr(mod, "aplicar", lambda c, desde, rollback: llamadas.append(rollback) or {"ok": 1})
+    mod.main(["--desde", "2024-01-01"])
+    mod.main(["--desde", "2024-01-01", "--aplicar"])
+    assert llamadas == [True, False]
+    assert '"ok": 1' in capsys.readouterr().out

@@ -185,3 +185,20 @@ def aplicar(c, desde: str = "2024-01-01", rollback: bool = False) -> dict:
     informe["rellenados"] = dict(informe["rellenados"])
     informe["omitidos"] = dict(informe["omitidos"])
     return informe
+
+
+def main(argv=None):
+    import argparse
+
+    from ..db import conn
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--desde", default="2024-01-01")
+    p.add_argument("--aplicar", action="store_true", help="sin esto es un ensayo que se revierte")
+    args = p.parse_args(argv)
+    with conn() as c:
+        informe = aplicar(c, desde=args.desde, rollback=not args.aplicar)
+    print(json.dumps(informe, ensure_ascii=False, default=str, indent=2))
+
+
+if __name__ == "__main__":
+    main()
