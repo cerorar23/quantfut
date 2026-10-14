@@ -88,11 +88,42 @@ Módulo nuevo `src/qf/model/ajuste.py`; generaliza `lineup_challenger.py`
 | F3 | Bajas y sanciones → minutos esperados perdidos ponderados por importancia del jugador; duda ≠ baja segura | `bajas` |
 | F4 | Puente de identidades FotMob/API-Football; XI con valor de jugador | `xi` |
 | F5 | Árbitro: penaltis, expulsiones y tarjetas por partido, con muestra efectiva | `arbitro` |
-| F6 | Sede real, distancia, husos, altitud; clima con pronóstico emitido antes del sello (el usuario elige la API) | `sede_clima` |
+| F6 | Sede real, distancia, husos, altitud; clima con pronóstico emitido antes del sello (API: Open-Meteo, ver "F6: clima") | `sede_clima` |
 | F7 | Sello tardío en producción | — |
 
 Cada fase tiene su propio plan en `docs/superpowers/plans/`. F7 puede adelantarse
 porque mejora los picks por sí sola (cuotas de último momento).
+
+### F6: clima con Open-Meteo (elegida por el usuario el 2026-10-14)
+
+Documentación leída el mismo día (open-meteo.com/en/terms, /pricing, /docs):
+
+- **Licencia — bloqueante antes de producción.** El plan gratuito (600/min,
+  5.000/h, 10.000/día, 300.000/mes) es solo **no comercial**, y sus términos
+  cuentan como comercial los sitios con suscripciones y "integrar el servicio
+  en productos comerciales". QuantFut vende suscripciones, así que hace falta un
+  plan de pago. Los precios no están publicados (aparecen en el pago o por
+  info@open-meteo.com).
+- **Planes:** Standard (1 M llamadas/mes) y Professional (5 M). Según su tabla,
+  las APIs históricas (Historical Forecast, Previous Runs) requieren
+  **Professional**; la celda del plan gratuito es ilegible en la página, así que
+  se confirma con ellos antes de contratar.
+- **En vivo:** API de pronóstico con las coordenadas de la sede, una llamada por
+  partido en el momento del sello (T-30). El volumen es trivial frente a
+  cualquier plan.
+- **Para entrenar y validar sin fuga:** *Historical Forecast API*
+  (`historical-forecast-api.open-meteo.com/v1/forecast`, desde 2022) encadena las
+  primeras horas de cada corrida del modelo, que es lo que habría visto el sello
+  de T-30. *Previous Runs API* (`previous-runs-api.open-meteo.com/v1/forecast`,
+  desde enero de 2024) da el pronóstico emitido 1 a 7 días antes
+  (`temperature_2m_previous_day1`...). Nunca se entrena con el clima observado
+  después del partido.
+- **Coordenadas:** salen de `estadios` (F0). Para un partido futuro se usa el
+  estadio más reciente del club local; las finales y los campos neutrales se
+  marcan aparte.
+- **Atribución:** los datos son CC-BY 4.0; hay que citar la fuente en la web.
+- La tabla de pronósticos guarda `emitido_en` y `valido_para`: así la puerta de
+  entrada puede comprobar que el clima usado en un sello existía antes de él.
 
 ## 4. Puerta de entrada
 
