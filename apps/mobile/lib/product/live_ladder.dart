@@ -408,23 +408,29 @@ class LadderHistoryCard extends StatefulWidget {
   State<LadderHistoryCard> createState() => _LadderHistoryCardState();
 }
 
-enum _HistoryFilter { all, done, failed }
-
 class _LadderHistoryCardState extends State<LadderHistoryCard> {
-  /// Cuántos retos se enseñan a la vez; el resumen de arriba cuenta todos.
-  static const _shown = 10;
+  /// Qué se enseña (decisión del titular, 2026-10-14): los 9 últimos retos cumplidos y el
+  /// último fallido, del más reciente al más antiguo. El resumen de arriba cuenta todos.
+  static const _maxDone = 9;
+  static const _maxFailed = 1;
 
   bool _open = false;
-  _HistoryFilter _filter = _HistoryFilter.all;
 
   /// Un solo reto desplegado a la vez, para no llenar la pantalla.
   Object? _expanded;
 
-  bool _matches(JsonMap r) => switch (_filter) {
-    _HistoryFilter.all => true,
-    _HistoryFilter.done => r['estado'] == 'completado',
-    _HistoryFilter.failed => r['estado'] == 'fallido',
-  };
+  List<JsonMap> _selection(List<JsonMap> all) {
+    var done = 0, failed = 0;
+    final out = <JsonMap>[];
+    for (final r in all) {
+      if (r['estado'] == 'completado') {
+        if (done++ < _maxDone) out.add(r);
+      } else if (failed++ < _maxFailed) {
+        out.add(r);
+      }
+    }
+    return out;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -434,8 +440,7 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
     final done = (summary['completados'] as num?)?.toInt() ?? 0;
     final rate = summary['tasa_completados'];
     final roi = summary['roi'];
-    final matching = jsonRows(widget.report['historial']).where(_matches).toList();
-    final rows = matching.take(_shown).toList();
+    final rows = _selection(jsonRows(widget.report['historial']));
     final empty = closed == 0;
     return Container(
       key: const ValueKey('ladder-history'),
@@ -511,39 +516,11 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
             ),
             if (_open)
               Padding(
+                key: const ValueKey('ladder-history-list'),
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final f in _HistoryFilter.values)
-                          _FilterChip(
-                            key: ValueKey('ladder-filter-${f.name}'),
-                            label: switch (f) {
-                              _HistoryFilter.all => l10n.ladderFilterAll,
-                              _HistoryFilter.done => l10n.ladderFilterDone,
-                              _HistoryFilter.failed => l10n.ladderFilterFailed,
-                            },
-                            selected: _filter == f,
-                            onTap: () => setState(() {
-                              _filter = f;
-                              _expanded = null;
-                            }),
-                          ),
-                      ],
-                    ),
-                    if (rows.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: liveText(
-                          l10n.ladderHistoryNoneFilter,
-                          size: 12,
-                          color: liveMuted,
-                        ),
-                      ),
                     for (final r in rows)
                       _HistoryRow(
                         challenge: r,
@@ -554,15 +531,14 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
                               : r['reto_id'],
                         ),
                       ),
-                    if (matching.length > _shown)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: liveText(
-                          l10n.ladderHistoryLatest(_shown, matching.length),
-                          size: 11,
-                          color: liveMuted,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: liveText(
+                        l10n.ladderHistoryShown,
+                        size: 11,
+                        color: liveMuted,
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -571,45 +547,6 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
       ),
     );
   }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    super.key,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: selected,
-    child: InkWell(
-      borderRadius: BorderRadius.circular(99),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? liveCyan.withValues(alpha: .16) : Colors.transparent,
-          borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: selected ? liveCyan : Colors.white24),
-        ),
-        child: ExcludeSemantics(
-          child: liveText(
-            label,
-            size: 12,
-            bold: selected,
-            color: selected ? liveCyan : liveMuted,
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 /// Un reto cerrado: una línea con su resultado; al tocarlo enseña sus escalones.

@@ -2644,7 +2644,7 @@ revocó sola el 14-oct).
 ## App — historial del Reto Escalera con detalle (2026-10-14)
 
 - [x] Los retos cerrados se abren y enseñan sus escalones (partido, selección en el
-  idioma del usuario, cuota, marcador, fecha); un solo reto desplegado a la vez, filtro
-  Todos / Cumplidos / Fallidos y tope de 10 por filtro con aviso del total. Backend:
-  `_paso_publico` añade `selection` y `line`. Pruebas en `live_ladder_test.dart` y
-  `tests/test_escalera.py`.
+  idioma del usuario, cuota, marcador, fecha); un solo reto desplegado a la vez. El
+  historial enseña los 9 últimos retos cumplidos y el último fallido (decisión del
+  titular, 2026-10-14), sin filtros. Backend: `_paso_publico` añade `selection` y
+  `line`. Pruebas en `live_ladder_test.dart` y `tests/test_escalera.py`.

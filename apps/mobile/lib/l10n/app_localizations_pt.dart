@@ -896,15 +896,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get ladderFilterAll => 'Todos';
-
-  @override
-  String get ladderFilterDone => 'Concluídos';
-
-  @override
-  String get ladderFilterFailed => 'Falhados';
-
-  @override
   String get ladderFreeHint => 'Um degrau grátis: o de maior probabilidade.';
 
   @override
@@ -923,15 +914,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String ladderHistoryLatest(int count, int total) {
-    return 'Mostrando os últimos $count de $total.';
-  }
-
-  @override
-  String get ladderHistoryNoneFilter =>
-      'Nenhum desafio encerrado com este filtro.';
-
-  @override
   String ladderHistoryRate(String rate) {
     return 'Taxa de concluídos: $rate';
   }
@@ -940,6 +922,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String ladderHistoryResult(String roi) {
     return 'Resultado acumulado: $roi';
   }
+
+  @override
+  String get ladderHistoryShown =>
+      'Mostrando os últimos desafios concluídos e o último falhado.';
 
   @override
   String ladderHistorySummary(int done, int closed) {

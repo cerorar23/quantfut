@@ -5851,9 +5851,11 @@ docs/f1_capa_de_ajuste_20261014.md.
 
 El historial ya se guardaba (tablas inmutables `escalera_*`) y la app listaba los últimos 10
 cerrados, pero sin ver sus escalones. Decisión: el detalle se despliega en la propia fila
-(acordeón de uno), no en otra pantalla, para no recargar; el filtro por defecto es «Todos»,
-no solo cumplidos, para no esconder los fallidos (el texto de la guía de la app promete
-historial «incluidos los retos fallidos»). `_paso_publico` ahora publica `selection` y
+(acordeón de uno), no en otra pantalla, para no recargar. Qué se enseña lo fijó el titular:
+los 9 últimos retos cumplidos y el último fallido, sin filtros (mi primer intento fue un
+filtro Todos/Cumplidos/Fallidos con 10 por filtro y no era lo pedido). El resumen de arriba
+sigue contando todos los cerrados y un texto bajo la lista dice qué se muestra, para que la
+selección no pase por el historial completo. `_paso_publico` ahora publica `selection` y
 `line` porque la app traduce el pronóstico desde esos campos; no revela nada nuevo (el
 `texto` en español ya salía). Los escalones sin liquidar siguen saliendo por `metadata`
 (lista blanca), así que el candado VIP no cambia.

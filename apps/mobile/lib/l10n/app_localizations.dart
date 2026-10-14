@@ -1624,24 +1624,6 @@ abstract class AppLocalizations {
   /// **'Estimación: usa la probabilidad del escalón en juego y la media de los demás ({avg}). No es una garantía.'**
   String ladderEstimateNote(String avg);
 
-  /// Filtro del historial de retos: todos los cerrados.
-  ///
-  /// In es, this message translates to:
-  /// **'Todos'**
-  String get ladderFilterAll;
-
-  /// Filtro del historial de retos: solo los cumplidos.
-  ///
-  /// In es, this message translates to:
-  /// **'Cumplidos'**
-  String get ladderFilterDone;
-
-  /// Filtro del historial de retos: solo los fallidos.
-  ///
-  /// In es, this message translates to:
-  /// **'Fallidos'**
-  String get ladderFilterFailed;
-
   /// No description provided for @ladderFreeHint.
   ///
   /// In es, this message translates to:
@@ -1672,18 +1654,6 @@ abstract class AppLocalizations {
   /// **'Falló en el escalón {step}'**
   String ladderHistoryFailedAt(int step);
 
-  /// Aviso del historial de retos cuando hay más cerrados de los que se enseñan.
-  ///
-  /// In es, this message translates to:
-  /// **'Se muestran los últimos {count} de {total}.'**
-  String ladderHistoryLatest(int count, int total);
-
-  /// El filtro del historial de retos no devuelve ninguno.
-  ///
-  /// In es, this message translates to:
-  /// **'Ningún reto cerrado con este filtro.'**
-  String get ladderHistoryNoneFilter;
-
   /// Porcentaje de retos cerrados que se cumplieron.
   ///
   /// In es, this message translates to:
@@ -1695,6 +1665,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Resultado acumulado: {roi}'**
   String ladderHistoryResult(String roi);
+
+  /// Aviso bajo la lista del historial de retos: qué retos se enseñan.
+  ///
+  /// In es, this message translates to:
+  /// **'Se muestran los últimos cumplidos y el último fallido.'**
+  String get ladderHistoryShown;
 
   /// Resumen del historial de retos.
   ///

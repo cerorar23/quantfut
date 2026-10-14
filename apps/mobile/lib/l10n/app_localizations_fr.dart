@@ -897,15 +897,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get ladderFilterAll => 'Tous';
-
-  @override
-  String get ladderFilterDone => 'Réussis';
-
-  @override
-  String get ladderFilterFailed => 'Échoués';
-
-  @override
   String get ladderFreeHint =>
       'Un palier gratuit : celui de plus forte probabilité.';
 
@@ -925,14 +916,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String ladderHistoryLatest(int count, int total) {
-    return 'Affichage des $count derniers sur $total.';
-  }
-
-  @override
-  String get ladderHistoryNoneFilter => 'Aucun défi clos avec ce filtre.';
-
-  @override
   String ladderHistoryRate(String rate) {
     return 'Taux de réussite : $rate';
   }
@@ -941,6 +924,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String ladderHistoryResult(String roi) {
     return 'Résultat cumulé : $roi';
   }
+
+  @override
+  String get ladderHistoryShown =>
+      'Affichage des derniers défis réussis et du dernier échoué.';
 
   @override
   String ladderHistorySummary(int done, int closed) {

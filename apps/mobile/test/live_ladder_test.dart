@@ -123,22 +123,25 @@ final closedReport = {
   ],
 };
 
-/// Más cerrados de los que caben: 12 cumplidos y 1 fallido, el más reciente primero.
+/// Más cerrados de los que se enseñan: 12 cumplidos y 3 fallidos, el más reciente primero.
 Map<String, dynamic> longReport() => {
   'resumen': {
-    'cerrados': 13,
+    'cerrados': 15,
     'completados': 12,
-    'tasa_completados': 92.3,
-    'invertido': '130.00',
+    'tasa_completados': 80.0,
+    'invertido': '150.00',
     'ganancia': '40.00',
-    'roi': 30.8,
+    'roi': 26.7,
   },
   'historial': [
     challenge(30, goal: 3, won: 1, estado: 'fallido', saldo: '0.00'),
     for (var i = 29; i >= 18; i--)
       challenge(i, goal: 3, won: 3, estado: 'completado', saldo: '26.00', ganancia: '16.00'),
+    challenge(17, goal: 3, won: 0, estado: 'fallido', saldo: '0.00'),
+    challenge(16, goal: 4, won: 1, estado: 'fallido', saldo: '0.00'),
   ],
 };
+
 const emptyReport = {
   'resumen': {'cerrados': 0, 'completados': 0, 'tasa_completados': null, 'roi': null},
   'historial': <Map<String, dynamic>>[],
@@ -267,17 +270,10 @@ void main() {
 
   Future<void> openHistory(WidgetTester tester) async {
     // Entre dos `pump` seguidos el estado de la tarjeta se conserva: no la cierres.
-    if (find.byKey(const ValueKey('ladder-filter-all')).evaluate().isNotEmpty) return;
+    if (find.byKey(const ValueKey('ladder-history-list')).evaluate().isNotEmpty) return;
     final header = find.byKey(const ValueKey('ladder-history')).first;
     await tester.ensureVisible(header);
     await tester.tap(find.descendant(of: header, matching: find.byIcon(Icons.emoji_events_outlined)));
-    await tester.pump();
-  }
-
-  Future<void> tapKey(WidgetTester tester, String key) async {
-    final f = find.byKey(ValueKey(key));
-    await tester.ensureVisible(f);
-    await tester.tap(f);
     await tester.pump();
   }
 
@@ -326,44 +322,27 @@ void main() {
     expect(find.text('texto-del-servidor'), findsNothing);
   });
 
-  testWidgets('filtros: cumplidos, fallidos y todos', (tester) async {
-    await pump(tester, cards(closedReport), code: 'es');
-    await openHistory(tester);
-    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsOneWidget);
-    expect(find.byKey(const ValueKey('ladder-history-row-8')), findsOneWidget);
-    await tapKey(tester, 'ladder-filter-done');
-    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsOneWidget);
-    expect(find.byKey(const ValueKey('ladder-history-row-8')), findsNothing);
-    await tapKey(tester, 'ladder-filter-failed');
-    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsNothing);
-    expect(find.byKey(const ValueKey('ladder-history-row-8')), findsOneWidget);
-    await tapKey(tester, 'ladder-filter-all');
-    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsOneWidget);
-  });
-
-  testWidgets('un filtro sin resultados lo dice', (tester) async {
-    final onlyDone = {
-      ...closedReport,
-      'historial': [(closedReport['historial']! as List).last],
-    };
-    await pump(tester, cards(onlyDone), code: 'es');
-    await openHistory(tester);
-    await tapKey(tester, 'ladder-filter-failed');
-    expect(find.text('Ningún reto cerrado con este filtro.'), findsOneWidget);
-  });
-
-  testWidgets('enseña solo los últimos 10 de cada filtro y avisa de cuántos hay', (tester) async {
+  testWidgets('enseña los 9 últimos cumplidos y el último fallido, y lo avisa', (tester) async {
     await pump(tester, cards(longReport()), size: const Size(390, 6000), code: 'es');
     await openHistory(tester);
+    bool shown(int id) => find.byKey(ValueKey('ladder-history-row-$id')).evaluate().isNotEmpty;
+    // El último fallido (30) y los 9 cumplidos más recientes (29 a 21).
+    expect([for (var i = 30; i >= 21; i--) shown(i)], everyElement(isTrue));
+    // Los cumplidos más antiguos y los otros fallidos no salen.
+    expect([20, 19, 18, 17, 16].map(shown), everyElement(isFalse));
     expect(find.byKey(const ValueKey('ladder-history-row-30')), findsOneWidget);
-    expect(find.byKey(const ValueKey('ladder-history-row-21')), findsOneWidget);
-    expect(find.byKey(const ValueKey('ladder-history-row-20')), findsNothing);
-    expect(find.text('Se muestran los últimos 10 de 13.'), findsOneWidget);
-    await tapKey(tester, 'ladder-filter-failed');
-    expect(find.textContaining('Se muestran los últimos'), findsNothing);
-    await tapKey(tester, 'ladder-filter-done');
-    expect(find.byKey(const ValueKey('ladder-history-row-29')), findsOneWidget);
-    expect(find.text('Se muestran los últimos 10 de 12.'), findsOneWidget);
+    expect(find.text('Se muestran los últimos cumplidos y el último fallido.'), findsOneWidget);
+    expect(find.text('12 cumplidos de 15 cerrados'), findsOneWidget); // el resumen cuenta todos
+  });
+
+  testWidgets('el fallido sale en su sitio por fecha, no al final', (tester) async {
+    await pump(tester, cards(closedReport), code: 'es');
+    await openHistory(tester);
+    // closedReport: primero el fallido (8) y luego el cumplido (7).
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('ladder-history-row-8'))).dy,
+      lessThan(tester.getTopLeft(find.byKey(const ValueKey('ladder-history-row-7'))).dy),
+    );
   });
 
   for (final code in languages) {
@@ -375,8 +354,6 @@ void main() {
         expect(tester.takeException(), isNull, reason: '$code $size');
         await openHistory(tester);
         await tapRow(tester, 7);
-        await tapKey(tester, 'ladder-filter-failed');
-        await tapKey(tester, 'ladder-filter-all');
         await tapRow(tester, 8);
         expect(tester.takeException(), isNull, reason: '$code $size detalle');
       }
