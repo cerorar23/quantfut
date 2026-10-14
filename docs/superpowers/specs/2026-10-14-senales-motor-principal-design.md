@@ -136,6 +136,41 @@ Documentación leída el mismo día (open-meteo.com/en/terms, /pricing, /docs):
 - La tabla de pronósticos guarda `emitido_en` y `valido_para`: así la puerta de
   entrada puede comprobar que el clima usado en un sello existía antes de él.
 
+### F6: variables físicas y de entorno (recomendación del 2026-10-14)
+
+El usuario pidió incluir lluvia, temperatura, viaje y altitud. Se agrupan en cuatro
+**compuestos** (no una docena de variables sueltas) para no sobreajustar, y cada
+uno se prueba una sola vez contra la puerta de entrada. La dirección esperada se
+fija ANTES de medir; si el dato dice lo contrario, se informa y el bloque no entra.
+
+| Compuesto | Variables (todas conocidas antes del sello) | Efecto esperado | Dónde actúa |
+|---|---|---|---|
+| `altitud` | Altitud del estadio local; diferencia con la altitud base del visitante, con bisagra `max(0, (Δm − 500)/1000)` | Sube λ local y baja μ visitante | Principalmente Liga MX (CDMX 2.240 m, Pachuca 2.400 m, Toluca 2.670 m) y algunas sedes de Argentina; casi nulo en Europa |
+| `viaje` | `log(km)` entre estadios habituales de los clubes, cambio de huso horario, y viaje × pocos días de descanso | Baja μ del visitante | MLS, Argentina, Brasil, Champions/Europa; en ligas pequeñas es ruido |
+| `estres_termico` | Temperatura de bulbo húmedo (o sensación térmica) al inicio; desviación respecto al clima habitual del visitante (aclimatación); frío bajo 3 °C | Menos goles totales y más ventaja del local aclimatado | Calor: MX, MLS, Brasil, Turquía, verano europeo |
+| `campo_y_balon` | Lluvia en las 3 h alrededor del inicio y en las 24 h previas, ráfagas de viento, superficie (césped natural o artificial) y la que usa habitualmente el visitante | Afecta los goles totales; sin signo fijado (la lluvia puede subir o bajar goles) | Todas; el sintético en MLS, Suiza, Suecia, Noruega |
+
+Notas de diseño:
+
+- **Mecanismo:** igual que el resto, `λ = λ_base·exp(...)`. `altitud` y `viaje`
+  entran por lado (local y visitante); `estres_termico` y `campo_y_balon` mueven
+  los dos lados en el mismo sentido (total de goles) más un término asimétrico de
+  aclimatación.
+- **Muestra:** estos efectos son pequeños; se estiman con las 12 años de historia
+  (~48.000 partidos), no solo con los 20.854 desde 2024. Para el historial viejo
+  se asume el estadio actual del club (los cambios de estadio son raros; se
+  declara). Con encogimiento fuerte hacia 0 (shrink) y recorte ±1 como el resto.
+- **Desajuste entrenamiento/uso:** se entrena con clima observado (reanálisis) y
+  en vivo se usa pronóstico. La temperatura y el viento se pronostican bien a
+  30-60 min; la lluvia peor. Mitigación: usar umbrales (seco / llovizna /
+  lluvia fuerte) y, desde F6, acumular los pronósticos realmente usados
+  (`emitido_en`) para medir ese desajuste con datos propios.
+- **Altitud de la sede:** el Elevation API de Open-Meteo está en el plan Standard;
+  la sede (coordenadas) ya sale de `estadios` (F0).
+- **Fuera de alcance por ahora:** asistencia (se conoce después del partido y
+  filtraría el resultado), hora local del partido y capacidad del estadio: se
+  añaden solo si los cuatro compuestos pasan la puerta.
+
 ## 4. Puerta de entrada
 
 - Walk-forward sobre las mismas filas: motor con el bloque frente a motor sin él.
