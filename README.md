@@ -715,7 +715,7 @@ de cuota total: ≈2,0 (1,90-2,20), ≈2,5 (2,20-2,70), ≈3,0 (2,70-3,40), ≈4
 (3,40-4,30) y ≈5,0 (4,30-5,00). En cada escalón entra la combinación MÁS
 PROBABLE de los mercados de la escalera (1X2, goles, goles por equipo, ambos
 marcan, hándicap y córners/tarjetas validados), de 2 a 6 patas de cuota
-≥ 1,15, un partido por parlay y ninguno repetido en el día. Reglas en
+de 1,20 a 1,80 (desde el sellado del 14-oct; antes ≥ 1,15 sin techo), un partido por parlay y ninguno repetido en el día. Reglas en
 `src/qf/publish/parley.py`; diseño en
 `docs/superpowers/specs/2026-10-11-parley-design.md`.
 
@@ -723,6 +723,8 @@ Lo que NO promete (decisión del usuario: solo probabilidad, sin filtro de
 valor): el margen de la casa se paga en CADA pata y se multiplica; a la larga
 los parlays pierden aunque acierten lo prometido. El historial publica
 unidades y ROI a 1 unidad por parlay, también los perdidos.
+
+**Pendiente (a la espera de más casos):** hoy el parley elige solo por probabilidad calculada; el acierto real por mercado solo sirve para pausar un escalón. Ponderar la elección por el acierto real de cada mercado queda para cuando haya ~50 liquidados POR mercado (el 2026-10-13 hay entre 5 y 41 en Alta probabilidad: con esos n, 73 % frente a 100 % puede ser azar). Ver `harness/tareas.md`, sección Parley.
 
 - Se eligen antes de `seal()` y entran en el lote del día desde
   `LOTE_PARLEY_DESDE`: un parlay fuera de un lote sellado no se enseña.

@@ -75,8 +75,8 @@ Cuotas de más de 6 h (`MAX_EDAD_PRECIO`) no entran.
 
 Filtros por pata:
 
-1. Cuota ≥ **1,15** (por debajo apenas sube la cuota total y solo resta
-   probabilidad).
+1. Cuota de la pata entre **1,20 y 1,80** (decisión del 2026-10-13; antes solo ≥ 1,15):
+   sin patas largas ni patas casi regaladas. La cuota TOTAL sigue en los escalones.
 2. **Cuota errónea fuera**: si `p · cuota − 1 > 0,25` la cuota se descarta como
    error de la casa (caso real: William Hill pagaba a Deportivo a 19,00 con el
    resto del mercado en ~5).
@@ -196,7 +196,7 @@ debajo de la muestra: "muestra insuficiente".
 
 - Búsqueda: igual al óptimo por fuerza bruta en casos pequeños aleatorios;
   respeta rango de escalón, 2–6 patas, una pata por partido, ningún partido
-  repetido en el día, cuota ≥ 1,15, filtro de cuota errónea; desempate
+  repetido en el día, cuota de pata 1,20-1,80, filtro de cuota errónea; desempate
   determinista; escalón sin solución se salta.
 - Sin fuga: ninguna pata con `odds_as_of` posterior a `decided_at` ni partido
   empezado.

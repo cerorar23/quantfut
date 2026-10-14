@@ -56,6 +56,26 @@ def test_filtro_cuota_minima_mercado_y_hora():
     assert pl.filtrar([_o("a", 0.7, 1.40, as_of=AHORA + timedelta(minutes=1))], AHORA) == []
 
 
+def test_cada_pata_entra_solo_con_cuota_de_1_20_a_1_80():
+    """Decisión del 2026-10-13: patas de 1,20 a 1,80 (ambos bordes dentro); la cuota TOTAL no cambia."""
+    ok = [_o("a", 0.8, 1.20), _o("b", 0.7, 1.50), _o("c", 0.55, 1.80)]
+    assert pl.filtrar(ok, AHORA) == ok
+    for fuera in (1.19, 1.15, 1.81, 2.16, 2.00):
+        assert pl.filtrar([_o("a", 0.5, fuera)], AHORA) == [], fuera
+    # float4 en los bordes (1,80 sale de la columna REAL como 1,7999999…): sigue dentro.
+    assert len(pl.filtrar([_o("a", 0.55, _f4(1.80)), _o("b", 0.8, _f4(1.20))], AHORA)) == 2
+    assert (pl.CUOTA_MIN_PATA, pl.CUOTA_MAX_PATA) == (1.20, 1.80)
+    assert pl.ESCALONES[0][1] == 1.90 and pl.ESCALONES[-1][2] == 5.00
+
+
+def test_ningun_parlay_del_dia_lleva_una_pata_fuera_de_1_20_a_1_80():
+    patas = pl.filtrar([_o(f"m{i}", round(0.97 / p, 3), p) for i, p in
+                        enumerate((1.12, 1.19, 1.20, 1.35, 1.50, 1.62, 1.80, 1.81, 2.00, 2.16))], AHORA)
+    assert {o.price for o in patas} == {1.20, 1.35, 1.50, 1.62, 1.80}
+    for _, sel in pl.armar_dia(patas):
+        assert all(1.20 <= o.price <= 1.80 for o in sel)
+
+
 def test_busqueda_igual_a_fuerza_bruta():
     rnd = random.Random(20261011)
     comparados = 0

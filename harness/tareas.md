@@ -325,6 +325,16 @@ del usuario: pierde el margen en cada pata y el historial lo enseña). Diseño:
    (1,90 · 2,22 · 2,76 · 3,41 · 4,42) con 26 partidos.
 9. [ ] Activar: `PARLEY_ENABLED=1` en `.env` y recrear `worker` fuera de
    07:50-08:40 UTC, con el visto bueno del usuario.
+10. [x] Patas de cuota 1,20 a 1,80 (2026-10-13, pedido del usuario): la cuota TOTAL sigue en los 5
+    escalones de 1,90-5,00; cada pata debe cotizar entre 1,20 y 1,80 (`parley.CUOTA_MIN_PATA/MAX_PATA`).
+    Rige desde el primer sellado tras desplegar el worker.
+11. [ ] **Esperar a tener más casos** antes de ponderar la elección del parley por el acierto REAL por
+    mercado (hoy solo elige por probabilidad calculada; el acierto real solo pausa escalones). Muestra
+    del 2026-10-13 en Alta probabilidad: 5 a 41 liquidados por mercado (hándicap 41, goles 29, doble
+    oportunidad 25, córners 15, goles local 14, córners local 12, goles visita 10, 1X2 6, córners visita
+    5): con esos n, 73 % frente a 100 % puede ser azar y se favorecerían mercados por suerte. Revisar
+    cuando haya ~50 liquidados POR mercado (`historial.por_mercado` de `/alta-probabilidad` y el
+    resumen del parley); entonces medir calibración real/prometida por mercado antes de ponderar.
 
 ## Modelo propio en las 12 ligas "solo sharp" (2026-10-11, pedido del usuario)
 

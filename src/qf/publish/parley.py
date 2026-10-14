@@ -30,7 +30,9 @@ ESCALONES: tuple[tuple[int, float, float], ...] = (
     (1, 1.90, 2.20), (2, 2.20, 2.70), (3, 2.70, 3.40), (4, 3.40, 4.30), (5, 4.30, 5.00))
 # La doble oportunidad solo entra en el parley (cuota real de API-Football desde el 2026-10-12).
 MERCADOS_PARLEY = MERCADOS + ("double_chance",)
-CUOTA_MIN_PATA = 1.15
+# Cuota de CADA pata (decisión del usuario, 2026-10-13): de 1,20 a 1,80, o sea pronósticos de
+# probabilidad alta/media y sin patas largas. La cuota TOTAL del parley sigue en ESCALONES.
+CUOTA_MIN_PATA, CUOTA_MAX_PATA = 1.20, 1.80
 # Valor esperado por encima del cual la cuota se da por error de la casa
 # (11-oct: William Hill pagaba a Deportivo a 19,00 con el mercado en ~5).
 EV_ERRONEA = 0.25
@@ -50,12 +52,13 @@ def en_escalon(cuota: float, escalon: int) -> bool:
 
 def filtrar(opciones: list[Opcion], now: datetime) -> list[Opcion]:
     """
-    Patas que pueden entrar: mercado conocido, cuota ≥ 1,15, sin cuota errónea,
-    sin fuga. La cuota llega de columnas REAL (float4: 1,76 es 1,7599999…) y
+    Patas que pueden entrar: mercado conocido, cuota entre `CUOTA_MIN_PATA` y
+    `CUOTA_MAX_PATA`, sin cuota errónea, sin fuga. La cuota llega de columnas REAL (float4: 1,76 es 1,7599999…) y
     se redondea a 4 decimales, que es como la cotizan las casas.
     """
     return [replace(o, price=round(o.price, 4)) for o in opciones
-            if o.cand.market in MERCADOS_PARLEY and round(o.price, 4) >= CUOTA_MIN_PATA
+            if o.cand.market in MERCADOS_PARLEY
+            and CUOTA_MIN_PATA <= round(o.price, 4) <= CUOTA_MAX_PATA
             and o.ev <= EV_ERRONEA
             and (o.odds_as_of is None or o.odds_as_of <= now)]
 

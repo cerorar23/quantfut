@@ -270,7 +270,7 @@ def informe_publico() -> dict:
         "activo": settings.parley_enabled,
         "reglas": {"escalones": [{"escalon": e, "cuota_min": lo, "cuota_max": hi}
                                  for e, lo, hi in pl.ESCALONES],
-                   "cuota_min_pata": pl.CUOTA_MIN_PATA,
+                   "cuota_min_pata": pl.CUOTA_MIN_PATA, "cuota_max_pata": pl.CUOTA_MAX_PATA,
                    "min_patas": pl.MIN_PATAS, "max_patas": pl.MAX_PATAS},
         "control": pl.control(liq),
         "resumen": pl.resumen(liq),
