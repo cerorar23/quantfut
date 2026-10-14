@@ -5846,3 +5846,14 @@ Con datos reales, el XI simple pasa la puerta estricta (dRPS -0,0013, p95 -0,000
 re-nivelación. No se reentrenó: el entrenamiento del 12-oct ya usó el xG nuevo y no
 pasó la puerta frente a Elo; el cron del 1-nov incorpora el resto. Detalle:
 docs/f1_capa_de_ajuste_20261014.md.
+
+## 2026-10-14 — Historial del Reto Escalera con detalle en la app
+
+El historial ya se guardaba (tablas inmutables `escalera_*`) y la app listaba los últimos 10
+cerrados, pero sin ver sus escalones. Decisión: el detalle se despliega en la propia fila
+(acordeón de uno), no en otra pantalla, para no recargar; el filtro por defecto es «Todos»,
+no solo cumplidos, para no esconder los fallidos (el texto de la guía de la app promete
+historial «incluidos los retos fallidos»). `_paso_publico` ahora publica `selection` y
+`line` porque la app traduce el pronóstico desde esos campos; no revela nada nuevo (el
+`texto` en español ya salía). Los escalones sin liquidar siguen saliendo por `metadata`
+(lista blanca), así que el candado VIP no cambia.

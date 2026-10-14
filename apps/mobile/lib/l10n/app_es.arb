@@ -732,6 +732,18 @@
       }
     }
   },
+  "ladderFilterAll": "Todos",
+  "@ladderFilterAll": {
+    "description": "Filtro del historial de retos: todos los cerrados."
+  },
+  "ladderFilterDone": "Cumplidos",
+  "@ladderFilterDone": {
+    "description": "Filtro del historial de retos: solo los cumplidos."
+  },
+  "ladderFilterFailed": "Fallidos",
+  "@ladderFilterFailed": {
+    "description": "Filtro del historial de retos: solo los fallidos."
+  },
   "ladderFreeHint": "Un escalón gratuito: el de mayor probabilidad.",
   "ladderHideSteps": "Ocultar escalones",
   "@ladderHideSteps": {
@@ -753,6 +765,22 @@
         "type": "int"
       }
     }
+  },
+  "ladderHistoryLatest": "Se muestran los últimos {count} de {total}.",
+  "@ladderHistoryLatest": {
+    "description": "Aviso del historial de retos cuando hay más cerrados de los que se enseñan.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "ladderHistoryNoneFilter": "Ningún reto cerrado con este filtro.",
+  "@ladderHistoryNoneFilter": {
+    "description": "El filtro del historial de retos no devuelve ninguno."
   },
   "ladderHistoryRate": "Tasa de cumplidos: {rate}",
   "@ladderHistoryRate": {

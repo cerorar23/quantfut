@@ -182,3 +182,17 @@ def test_textos_de_los_mercados_nuevos():
     assert es.texto_total("corners", "over", 8.5) == "Más de 8,5 córners"
     assert es.texto_total("cards", "under", 6.5) == "Menos de 6,5 tarjetas"
     assert es.texto_btts("yes") == "Ambos equipos marcan"
+
+
+def test_paso_publico_lleva_seleccion_y_linea_para_traducir_en_la_app():
+    from datetime import datetime, timezone
+    from qf.publish import escalera_datos as ed
+    paso = {"paso": 1, "match_id": "m1", "league_id": "es.laliga",
+            "kickoff_utc": datetime(2026, 10, 10, 18, tzinfo=timezone.utc),
+            "local": "Lens", "visitante": "Nice", "market": "totals", "selection": "over",
+            "line": 1.5, "prob": 0.78123, "price": 1.4, "book": "bet365", "outcome": "win",
+            "home_goals": 2, "away_goals": 1, "valor": None}
+    out = ed._paso_publico(paso)
+    assert (out["market"], out["selection"], out["line"]) == ("totals", "over", 1.5)
+    assert out["texto"] == "Más de 1,5 goles"
+    assert ed._paso_publico({**paso, "market": "btts", "selection": "no", "line": None})["line"] is None

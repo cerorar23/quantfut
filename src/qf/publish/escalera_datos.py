@@ -466,6 +466,10 @@ def _paso_publico(p: dict) -> dict:
             "kickoff_utc": p["kickoff_utc"], "local": p["local"], "visitante": p["visitante"],
             "texto": texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"]),
             "market": p["market"],
+            # La app reconstruye el texto en el idioma del usuario desde estos campos
+            # (`pick_labels.dart`); `texto` sigue siendo el español.
+            "selection": p["selection"],
+            "line": None if p["line"] is None else float(p["line"]),
             # Misma precisión pública reducida que la línea de alta probabilidad.
             "prob": round(float(p["prob"]), 2), "price": float(p["price"]), "book": p["book"],
             "outcome": p["outcome"],

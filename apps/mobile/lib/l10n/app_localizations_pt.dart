@@ -896,6 +896,15 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get ladderFilterAll => 'Todos';
+
+  @override
+  String get ladderFilterDone => 'Concluídos';
+
+  @override
+  String get ladderFilterFailed => 'Falhados';
+
+  @override
   String get ladderFreeHint => 'Um degrau grátis: o de maior probabilidade.';
 
   @override
@@ -912,6 +921,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String ladderHistoryFailedAt(int step) {
     return 'Falhou no degrau $step';
   }
+
+  @override
+  String ladderHistoryLatest(int count, int total) {
+    return 'Mostrando os últimos $count de $total.';
+  }
+
+  @override
+  String get ladderHistoryNoneFilter =>
+      'Nenhum desafio encerrado com este filtro.';
 
   @override
   String ladderHistoryRate(String rate) {

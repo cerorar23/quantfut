@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'ladder_progress.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
@@ -407,8 +408,23 @@ class LadderHistoryCard extends StatefulWidget {
   State<LadderHistoryCard> createState() => _LadderHistoryCardState();
 }
 
+enum _HistoryFilter { all, done, failed }
+
 class _LadderHistoryCardState extends State<LadderHistoryCard> {
+  /// Cuántos retos se enseñan a la vez; el resumen de arriba cuenta todos.
+  static const _shown = 10;
+
   bool _open = false;
+  _HistoryFilter _filter = _HistoryFilter.all;
+
+  /// Un solo reto desplegado a la vez, para no llenar la pantalla.
+  Object? _expanded;
+
+  bool _matches(JsonMap r) => switch (_filter) {
+    _HistoryFilter.all => true,
+    _HistoryFilter.done => r['estado'] == 'completado',
+    _HistoryFilter.failed => r['estado'] == 'fallido',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +434,8 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
     final done = (summary['completados'] as num?)?.toInt() ?? 0;
     final rate = summary['tasa_completados'];
     final roi = summary['roi'];
-    final rows = jsonRows(widget.report['historial']).take(10).toList();
+    final matching = jsonRows(widget.report['historial']).where(_matches).toList();
+    final rows = matching.take(_shown).toList();
     final empty = closed == 0;
     return Container(
       key: const ValueKey('ladder-history'),
@@ -496,7 +513,57 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                 child: Column(
-                  children: [for (final r in rows) _HistoryRow(challenge: r)],
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final f in _HistoryFilter.values)
+                          _FilterChip(
+                            key: ValueKey('ladder-filter-${f.name}'),
+                            label: switch (f) {
+                              _HistoryFilter.all => l10n.ladderFilterAll,
+                              _HistoryFilter.done => l10n.ladderFilterDone,
+                              _HistoryFilter.failed => l10n.ladderFilterFailed,
+                            },
+                            selected: _filter == f,
+                            onTap: () => setState(() {
+                              _filter = f;
+                              _expanded = null;
+                            }),
+                          ),
+                      ],
+                    ),
+                    if (rows.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: liveText(
+                          l10n.ladderHistoryNoneFilter,
+                          size: 12,
+                          color: liveMuted,
+                        ),
+                      ),
+                    for (final r in rows)
+                      _HistoryRow(
+                        challenge: r,
+                        expanded: _expanded == r['reto_id'],
+                        onTap: () => setState(
+                          () => _expanded = _expanded == r['reto_id']
+                              ? null
+                              : r['reto_id'],
+                        ),
+                      ),
+                    if (matching.length > _shown)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: liveText(
+                          l10n.ladderHistoryLatest(_shown, matching.length),
+                          size: 11,
+                          color: liveMuted,
+                        ),
+                      ),
+                  ],
                 ),
               ),
           ],
@@ -506,14 +573,61 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
   }
 }
 
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(99),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? liveCyan.withValues(alpha: .16) : Colors.transparent,
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: selected ? liveCyan : Colors.white24),
+        ),
+        child: ExcludeSemantics(
+          child: liveText(
+            label,
+            size: 12,
+            bold: selected,
+            color: selected ? liveCyan : liveMuted,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Un reto cerrado: una línea con su resultado; al tocarlo enseña sus escalones.
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.challenge});
+  const _HistoryRow({
+    required this.challenge,
+    required this.expanded,
+    required this.onTap,
+  });
 
   final JsonMap challenge;
+  final bool expanded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final id = challenge['reto_id'] ?? '—';
     final done = challenge['estado'] == 'completado';
     final goal = (challenge['pasos_objetivo'] as num?)?.toInt() ?? 0;
     final won = (challenge['ganados'] as num?)?.toInt() ?? 0;
@@ -521,39 +635,126 @@ class _HistoryRow extends StatelessWidget {
         ? '${l10n.ladderHistoryDone} · ${l10n.ladderWonOf(won, goal)}'
         : l10n.ladderHistoryFailedAt(won + 1);
     final multiplier = LadderProgress.multiplierOf(challenge);
+    final steps = jsonRows(challenge['pasos']).toList()
+      ..sort(
+        (a, b) => ((a['paso'] as num?) ?? 0).compareTo((b['paso'] as num?) ?? 0),
+      );
     return Container(
+      key: ValueKey('ladder-history-row-$id'),
       margin: const EdgeInsets.only(top: 6),
-      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: _tile,
         borderRadius: BorderRadius.circular(12),
       ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: steps.isEmpty ? null : onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                children: [
+                  Icon(
+                    done ? Icons.check_circle : Icons.cancel_outlined,
+                    color: done ? liveGreen : liveMuted,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        liveText(
+                          l10n.ladderTitle(id, goal),
+                          size: 13,
+                          bold: true,
+                        ),
+                        liveText(detail, size: 12, color: liveMuted),
+                      ],
+                    ),
+                  ),
+                  liveText(
+                    _multiplierText(multiplier),
+                    size: 14,
+                    bold: true,
+                    color: done ? liveGreen : liveMuted,
+                  ),
+                  if (steps.isNotEmpty)
+                    Icon(
+                      expanded ? Icons.expand_less : Icons.expand_more,
+                      color: liveMuted,
+                      size: 20,
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+              child: Column(
+                children: [
+                  const Divider(height: 1, color: Colors.white12),
+                  for (final s in steps) _ClosedStep(step: s),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Un escalón de un reto cerrado: partido, qué se eligió, a qué cuota y cómo acabó.
+class _ClosedStep extends StatelessWidget {
+  const _ClosedStep({required this.step});
+
+  final JsonMap step;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final outcome = step['outcome'];
+    final won = outcome == 'win';
+    final lost = outcome == 'loss';
+    final price = step['price'];
+    final score = step['marcador'];
+    final detail = [
+      pickText(step),
+      if (price is num) l10n.homeTicketOdds(decimalText(price)),
+      if (score != null) '$score',
+      if (!won && !lost) l10n.outcomePush,
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            done ? Icons.check_circle : Icons.cancel_outlined,
-            color: done ? liveGreen : liveMuted,
+            won
+                ? Icons.check_circle
+                : (lost ? Icons.cancel_outlined : Icons.remove_circle_outline),
+            size: 18,
+            color: won ? liveGreen : liveMuted,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 liveText(
-                  l10n.ladderTitle(challenge['reto_id'] ?? '—', goal),
-                  size: 13,
+                  '${step['local']} · ${step['visitante']}',
+                  size: 12,
                   bold: true,
                 ),
                 liveText(detail, size: 12, color: liveMuted),
               ],
             ),
           ),
-          liveText(
-            _multiplierText(multiplier),
-            size: 14,
-            bold: true,
-            color: done ? liveGreen : liveMuted,
-          ),
+          if (step['kickoff_utc'] != null) ...[
+            const SizedBox(width: 8),
+            liveText(kickoffText(step['kickoff_utc']), size: 11, color: liveMuted),
+          ],
         ],
       ),
     );

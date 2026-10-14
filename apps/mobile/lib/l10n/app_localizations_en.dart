@@ -889,6 +889,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get ladderFilterAll => 'All';
+
+  @override
+  String get ladderFilterDone => 'Completed';
+
+  @override
+  String get ladderFilterFailed => 'Failed';
+
+  @override
   String get ladderFreeHint =>
       'One free step: the one with the highest probability.';
 
@@ -906,6 +915,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String ladderHistoryFailedAt(int step) {
     return 'Failed at step $step';
   }
+
+  @override
+  String ladderHistoryLatest(int count, int total) {
+    return 'Showing the latest $count of $total.';
+  }
+
+  @override
+  String get ladderHistoryNoneFilter =>
+      'No closed challenges match this filter.';
 
   @override
   String ladderHistoryRate(String rate) {

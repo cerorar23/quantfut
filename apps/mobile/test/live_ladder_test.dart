@@ -60,6 +60,31 @@ final toPick = challenge(
   pasos: [step('win', 'Cobresal', 'U. de Concepción', 'Más de 1,5 goles', '1-1')],
 );
 
+/// Escalón de un reto cerrado, con los campos que el servidor publica (`_paso_publico`).
+Map<String, dynamic> closedStep(
+  int n,
+  String outcome,
+  String home,
+  String away,
+  String market,
+  String selection,
+  double? line,
+  double price,
+  String score,
+) => {
+  'paso': n,
+  'outcome': outcome,
+  'local': home,
+  'visitante': away,
+  'market': market,
+  'selection': selection,
+  'line': line,
+  'texto': 'texto-del-servidor',
+  'price': price,
+  'marcador': score,
+  'kickoff_utc': '2026-10-10T18:00:00Z',
+};
+
 final closedReport = {
   'resumen': {
     'cerrados': 2,
@@ -70,8 +95,48 @@ final closedReport = {
     'roi': 30.0,
   },
   'historial': [
-    challenge(8, goal: 4, won: 2, estado: 'fallido', saldo: '0.00'),
-    challenge(7, goal: 3, won: 3, estado: 'completado', saldo: '26.00', ganancia: '16.00'),
+    challenge(
+      8,
+      goal: 4,
+      won: 2,
+      estado: 'fallido',
+      saldo: '0.00',
+      pasos: [
+        closedStep(2, 'win', 'Lens', 'Nice', 'totals', 'over', 1.5, 1.4, '2-1'),
+        closedStep(1, 'win', 'Burgos', 'Granada', 'totals', 'under', 3.5, 1.3, '0-1'),
+        closedStep(3, 'loss', 'Leeds', 'Hull', 'corners', 'over', 8.5, 1.5, '1-0'),
+      ],
+    ),
+    challenge(
+      7,
+      goal: 3,
+      won: 3,
+      estado: 'completado',
+      saldo: '26.00',
+      ganancia: '16.00',
+      pasos: [
+        closedStep(1, 'win', 'Roma', 'Lazio', 'btts', 'no', null, 1.7, '1-0'),
+        closedStep(2, 'push', 'Ajax', 'PSV', 'spreads', 'home', -1, 1.9, '2-1'),
+        closedStep(3, 'win', 'Cádiz', 'Elche', 'h2h', 'home', null, 1.6, '2-0'),
+      ],
+    ),
+  ],
+};
+
+/// Más cerrados de los que caben: 12 cumplidos y 1 fallido, el más reciente primero.
+Map<String, dynamic> longReport() => {
+  'resumen': {
+    'cerrados': 13,
+    'completados': 12,
+    'tasa_completados': 92.3,
+    'invertido': '130.00',
+    'ganancia': '40.00',
+    'roi': 30.8,
+  },
+  'historial': [
+    challenge(30, goal: 3, won: 1, estado: 'fallido', saldo: '0.00'),
+    for (var i = 29; i >= 18; i--)
+      challenge(i, goal: 3, won: 3, estado: 'completado', saldo: '26.00', ganancia: '16.00'),
   ],
 };
 const emptyReport = {
@@ -200,6 +265,107 @@ void main() {
     expect(find.text('×0,00'), findsOneWidget); // reto fallido sin nada retirado
   });
 
+  Future<void> openHistory(WidgetTester tester) async {
+    // Entre dos `pump` seguidos el estado de la tarjeta se conserva: no la cierres.
+    if (find.byKey(const ValueKey('ladder-filter-all')).evaluate().isNotEmpty) return;
+    final header = find.byKey(const ValueKey('ladder-history')).first;
+    await tester.ensureVisible(header);
+    await tester.tap(find.descendant(of: header, matching: find.byIcon(Icons.emoji_events_outlined)));
+    await tester.pump();
+  }
+
+  Future<void> tapKey(WidgetTester tester, String key) async {
+    final f = find.byKey(ValueKey(key));
+    await tester.ensureVisible(f);
+    await tester.tap(f);
+    await tester.pump();
+  }
+
+  /// Toca la cabecera del reto (su centro cae en los escalones cuando está desplegado).
+  Future<void> tapRow(WidgetTester tester, int id) async {
+    final row = find.byKey(ValueKey('ladder-history-row-$id'));
+    await tester.ensureVisible(row);
+    await tester.tapAt(tester.getTopLeft(row) + const Offset(24, 24));
+    await tester.pump();
+  }
+
+  testWidgets('un reto cerrado enseña sus escalones: partido, selección, cuota y marcador', (tester) async {
+    await pump(tester, cards(closedReport), code: 'es');
+    await openHistory(tester);
+    // Plegado por defecto: no hay detalle hasta tocar el reto.
+    expect(find.text('Roma · Lazio'), findsNothing);
+    await tapRow(tester, 7);
+    expect(find.text('Roma · Lazio'), findsOneWidget);
+    expect(find.text('No marcan los dos · Cuota 1,70 · 1-0'), findsOneWidget);
+    expect(find.textContaining('Cuota 1,90 · 2-1 · Reembolso'), findsOneWidget);
+    expect(find.text('Cádiz · Elche'), findsOneWidget);
+  });
+
+  testWidgets('solo un reto desplegado a la vez, y los escalones salen en orden', (tester) async {
+    await pump(tester, cards(closedReport), code: 'es');
+    await openHistory(tester);
+    await tapRow(tester, 8);
+    expect(find.text('Burgos · Granada'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Burgos · Granada')).dy,
+      lessThan(tester.getTopLeft(find.text('Lens · Nice')).dy),
+    );
+    expect(find.textContaining('Más de 8,5 córners'), findsOneWidget);
+    await tapRow(tester, 7);
+    expect(find.text('Burgos · Granada'), findsNothing);
+    expect(find.text('Roma · Lazio'), findsOneWidget);
+    await tapRow(tester, 7);
+    expect(find.text('Roma · Lazio'), findsNothing);
+  });
+
+  testWidgets('el detalle sale en el idioma del usuario, no en el del servidor', (tester) async {
+    await pump(tester, cards(closedReport), code: 'en');
+    await openHistory(tester);
+    await tapRow(tester, 7);
+    expect(find.textContaining('Odds 1.70'), findsOneWidget);
+    expect(find.text('texto-del-servidor'), findsNothing);
+  });
+
+  testWidgets('filtros: cumplidos, fallidos y todos', (tester) async {
+    await pump(tester, cards(closedReport), code: 'es');
+    await openHistory(tester);
+    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsOneWidget);
+    expect(find.byKey(const ValueKey('ladder-history-row-8')), findsOneWidget);
+    await tapKey(tester, 'ladder-filter-done');
+    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsOneWidget);
+    expect(find.byKey(const ValueKey('ladder-history-row-8')), findsNothing);
+    await tapKey(tester, 'ladder-filter-failed');
+    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsNothing);
+    expect(find.byKey(const ValueKey('ladder-history-row-8')), findsOneWidget);
+    await tapKey(tester, 'ladder-filter-all');
+    expect(find.byKey(const ValueKey('ladder-history-row-7')), findsOneWidget);
+  });
+
+  testWidgets('un filtro sin resultados lo dice', (tester) async {
+    final onlyDone = {
+      ...closedReport,
+      'historial': [(closedReport['historial']! as List).last],
+    };
+    await pump(tester, cards(onlyDone), code: 'es');
+    await openHistory(tester);
+    await tapKey(tester, 'ladder-filter-failed');
+    expect(find.text('Ningún reto cerrado con este filtro.'), findsOneWidget);
+  });
+
+  testWidgets('enseña solo los últimos 10 de cada filtro y avisa de cuántos hay', (tester) async {
+    await pump(tester, cards(longReport()), size: const Size(390, 6000), code: 'es');
+    await openHistory(tester);
+    expect(find.byKey(const ValueKey('ladder-history-row-30')), findsOneWidget);
+    expect(find.byKey(const ValueKey('ladder-history-row-21')), findsOneWidget);
+    expect(find.byKey(const ValueKey('ladder-history-row-20')), findsNothing);
+    expect(find.text('Se muestran los últimos 10 de 13.'), findsOneWidget);
+    await tapKey(tester, 'ladder-filter-failed');
+    expect(find.textContaining('Se muestran los últimos'), findsNothing);
+    await tapKey(tester, 'ladder-filter-done');
+    expect(find.byKey(const ValueKey('ladder-history-row-29')), findsOneWidget);
+    expect(find.text('Se muestran los últimos 10 de 12.'), findsOneWidget);
+  });
+
   for (final code in languages) {
     testWidgets('se pinta en $code sin desbordes, también en 320 px', (tester) async {
       for (final size in const [Size(390, 900), Size(320, 640)]) {
@@ -207,6 +373,12 @@ void main() {
         await tester.tap(find.byKey(const ValueKey('ladder-toggle-3')));
         await tester.pump();
         expect(tester.takeException(), isNull, reason: '$code $size');
+        await openHistory(tester);
+        await tapRow(tester, 7);
+        await tapKey(tester, 'ladder-filter-failed');
+        await tapKey(tester, 'ladder-filter-all');
+        await tapRow(tester, 8);
+        expect(tester.takeException(), isNull, reason: '$code $size detalle');
       }
     });
   }
