@@ -187,6 +187,16 @@ def aplicar(c, desde: str = "2024-01-01", rollback: bool = False) -> dict:
     return informe
 
 
+def huecos_xg(c, desde: str) -> list[dict]:
+    """Partidos terminados sin la pareja de xG, por competición. Solo lectura."""
+    return c.execute("""
+        SELECT league_id, count(*) AS terminados,
+               count(*) FILTER (WHERE home_xg IS NULL OR away_xg IS NULL) AS sin_xg
+        FROM matches WHERE status = 'finished' AND kickoff_utc >= %s
+        GROUP BY league_id HAVING count(*) FILTER (WHERE home_xg IS NULL OR away_xg IS NULL) > 0
+        ORDER BY sin_xg DESC""", (desde,)).fetchall()
+
+
 def main(argv=None):
     import argparse
 

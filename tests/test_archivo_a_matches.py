@@ -86,3 +86,23 @@ def test_el_cli_por_defecto_es_ensayo(monkeypatch, capsys):
     mod.main(["--desde", "2024-01-01", "--aplicar"])
     assert llamadas == [True, False]
     assert '"ok": 1' in capsys.readouterr().out
+
+
+def test_huecos_xg_consulta_solo_lectura():
+    from qf.ingest.archivo_a_matches import huecos_xg
+
+    class Cursor:
+        def __init__(self):
+            self.sql = None
+
+        def execute(self, sql, params=()):
+            self.sql = sql
+            return self
+
+        def fetchall(self):
+            return [{"league_id": "it.serie_b", "terminados": 639, "sin_xg": 188}]
+
+    c = Cursor()
+    filas = huecos_xg(c, "2025-01-01")
+    assert filas[0]["sin_xg"] == 188
+    assert "UPDATE" not in c.sql.upper() and "INSERT" not in c.sql.upper()
