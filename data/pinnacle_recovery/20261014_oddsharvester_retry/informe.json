@@ -1,0 +1,136 @@
+{
+  "created_at_utc": "2026-10-14T23:02:41.508084+00:00",
+  "input_sha256": "3a418b365b51409bed24842cb7897ae5dea146b1740f4d778c80cbedaf9b1eaf",
+  "requested_matches": 6185,
+  "repeated_trial_sessions": 4,
+  "distinct_pending_matches_tested": 2,
+  "new_verified_pinnacle_closes": 0,
+  "previous_unverified_candidates": 272,
+  "without_candidate": 5913,
+  "database_writes": 0,
+  "input_unchanged": true,
+  "upstream_commit": "5bbc0467fc5b7742bdb1b2fa2c50cdfd7721f86f",
+  "receipt_hashes_verified": 17,
+  "effective_proxy_country_independently_verified": false,
+  "limitation": "No claim of 6185 individual OddsPortal checks; four sessions over two fixtures. No Pinnacle in returned prices; prior candidates remain unverified.",
+  "trials": [
+    {
+      "label": "peru-united-city-20260117",
+      "match_id": "gb.premier_league:2526:manchesteru-manchesterc:20260117",
+      "source_event_id": "Q5AqCTPG",
+      "proxy_country_requested": "pe",
+      "source_url": "https://www.oddsportal.com/football/h2h/manchester-city-Wtn9Stg0/manchester-united-ppjDR086/#Q5AqCTPG",
+      "match_date_utc": null,
+      "home_team": "Manchester Utd",
+      "away_team": "Manchester City",
+      "home_goals": "2",
+      "away_goals": "0",
+      "bookmakers": [
+        "1xBet",
+        "Betano.pe",
+        "Betsson",
+        "CoolbetLATAM",
+        "DoradoBet"
+      ],
+      "pinnacle_triples": 0,
+      "all_bookies_verified": false,
+      "plaintext_price_payloads": 0,
+      "source_geo_parameters": [],
+      "notes": "Peru mirror did not parse Spanish month or verify All Bookies",
+      "captured_at_utc": "2026-10-14 21:58:55 UTC"
+    },
+    {
+      "label": "finland-united-city-20260117",
+      "match_id": "gb.premier_league:2526:manchesteru-manchesterc:20260117",
+      "source_event_id": "Q5AqCTPG",
+      "proxy_country_requested": "fi",
+      "source_url": "https://www.oddsportal.com/football/h2h/manchester-city-Wtn9Stg0/manchester-united-ppjDR086/#Q5AqCTPG",
+      "match_date_utc": "2026-01-17 12:30:00 UTC",
+      "home_team": "Manchester Utd",
+      "away_team": "Manchester City",
+      "home_goals": "2",
+      "away_goals": "0",
+      "bookmakers": [
+        "1xBet",
+        "bet365",
+        "Betfury",
+        "Bets.io",
+        "Cloudbet",
+        "Roobet",
+        "Stake.com",
+        "Unibet"
+      ],
+      "pinnacle_triples": 0,
+      "all_bookies_verified": true,
+      "plaintext_price_payloads": 1,
+      "source_geo_parameters": [
+        "BG"
+      ],
+      "notes": "",
+      "captured_at_utc": "2026-10-14 21:59:59 UTC"
+    },
+    {
+      "label": "canada-united-city-20260117",
+      "match_id": "gb.premier_league:2526:manchesteru-manchesterc:20260117",
+      "source_event_id": "Q5AqCTPG",
+      "proxy_country_requested": "ca",
+      "source_url": "https://www.oddsportal.com/football/h2h/manchester-city-Wtn9Stg0/manchester-united-ppjDR086/#Q5AqCTPG",
+      "match_date_utc": "2026-01-17 12:30:00 UTC",
+      "home_team": "Manchester Utd",
+      "away_team": "Manchester City",
+      "home_goals": "2",
+      "away_goals": "0",
+      "bookmakers": [
+        "1xBet",
+        "888sport",
+        "bet365",
+        "Betfury",
+        "Bets.io",
+        "Betway",
+        "Cloudbet",
+        "Melbet",
+        "Roobet",
+        "Sports Interaction",
+        "Stake.com"
+      ],
+      "pinnacle_triples": 0,
+      "all_bookies_verified": true,
+      "plaintext_price_payloads": 1,
+      "source_geo_parameters": [
+        "BG"
+      ],
+      "notes": "",
+      "captured_at_utc": "2026-10-14 22:02:08 UTC"
+    },
+    {
+      "label": "canada-psg-inter-20250531",
+      "match_id": "eu.ucl:2425:parissg-internaziona:20250531",
+      "source_event_id": "6LTndcTP",
+      "proxy_country_requested": "ca",
+      "source_url": "https://www.oddsportal.com/football/h2h/inter-Iw7eKK25/psg-CjhkPw0k/#6LTndcTP",
+      "match_date_utc": "2025-05-31 19:00:00 UTC",
+      "home_team": "PSG",
+      "away_team": "Inter",
+      "home_goals": "5",
+      "away_goals": "0",
+      "bookmakers": [
+        "1xBet",
+        "bet365",
+        "Betfury",
+        "Bets.io",
+        "Betway",
+        "Cloudbet",
+        "Roobet",
+        "Stake.com"
+      ],
+      "pinnacle_triples": 0,
+      "all_bookies_verified": true,
+      "plaintext_price_payloads": 1,
+      "source_geo_parameters": [
+        "BG"
+      ],
+      "notes": "",
+      "captured_at_utc": "2026-10-14 22:59:59 UTC"
+    }
+  ]
+}

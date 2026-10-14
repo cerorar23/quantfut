@@ -1,5 +1,21 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-14 — Reintento OddsHarvester: comprobar el payload completo
+
+A petición repetida del usuario, cuatro sesiones nuevas de ZenRows sobre dos
+filas exactas (United–City ene-2026 y PSG–Inter may-2025): cero Pinnacle. Tres
+capturas acreditan en el JSON que consume la interfaz el evento, mercado 1,
+scope 2 y `bookieFilter=all`; sus 8/11/8 proveedores coinciden con las filas
+extraídas. No era solamente el filtro del parser. Perú quedó limitado por
+idioma y filtro, y la geolocalización física no se verificó independientemente:
+se registran los países solicitados, sin afirmar que sean los de salida.
+
+Se conserva la lista con 272 candidatas previas sin verificar y 5.913 sin
+candidata. No se hicieron 6.185 consultas individuales ni cargas. Nuevos
+datos/recibos/manifiesto en `data/pinnacle_recovery/20261014_oddsharvester_retry/`;
+detalle: docs/oddsharvester_reintento_20261014.md. El paquete del commit
+43c462f permanece intacto.
+
 ## 2026-10-14 — PySBR/Flashscore: separar precio histórico candidato de cierre acreditado
 
 Sobre la lista exacta `.local/cierres_faltantes_20261014.csv` (6.185 filas de

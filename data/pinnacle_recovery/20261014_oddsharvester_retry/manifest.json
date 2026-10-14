@@ -1,0 +1,82 @@
+{
+  ".gitattributes": {
+    "bytes": 61,
+    "sha256": "22106984a6c1274ead5c283789ca11d75b303658949aaa627698747e7b2d6160"
+  },
+  "canada-psg-inter-20250531/9135b7a13c3e17d05a9410a24fd2dc7ea7694ea16444ae05c8da73f3fafc45c0.receipt.json": {
+    "bytes": 344,
+    "sha256": "be5050d3cb2d4af49c7ccb59a1fc0a00a09c640bb164ae935bfb9e6cad8630a9"
+  },
+  "canada-psg-inter-20250531/9135b7a13c3e17d05a9410a24fd2dc7ea7694ea16444ae05c8da73f3fafc45c0.response": {
+    "bytes": 2604,
+    "sha256": "9135b7a13c3e17d05a9410a24fd2dc7ea7694ea16444ae05c8da73f3fafc45c0"
+  },
+  "canada-psg-inter-20250531/feb6423973d7898740508fc73f82a8ca7bc68f661c068bc250448cc9fe5aa08f.view.json": {
+    "bytes": 3944,
+    "sha256": "feb6423973d7898740508fc73f82a8ca7bc68f661c068bc250448cc9fe5aa08f"
+  },
+  "canada-psg-inter-20250531/feb6423973d7898740508fc73f82a8ca7bc68f661c068bc250448cc9fe5aa08f.view.receipt.json": {
+    "bytes": 330,
+    "sha256": "6c3209a2552c51ae3278d564563dec0beccacc6cfe012606d4aa6f3f9019001d"
+  },
+  "canada-psg-inter-20250531/result.json": {
+    "bytes": 2594,
+    "sha256": "c50def03d23a537321a859adaa5af26f22f91ef3ea6a7d273df6864b1fb3d366"
+  },
+  "canada-united-city-20260117/09c9dd3172279c175058c2315254584ee16bbdfc9c391f6e07b2ad4b3882e96b.receipt.json": {
+    "bytes": 344,
+    "sha256": "e1e5b1f9e6f322f85e36930bd4fb90050f531bee582da58ca904823cc2ed0219"
+  },
+  "canada-united-city-20260117/09c9dd3172279c175058c2315254584ee16bbdfc9c391f6e07b2ad4b3882e96b.response": {
+    "bytes": 3260,
+    "sha256": "09c9dd3172279c175058c2315254584ee16bbdfc9c391f6e07b2ad4b3882e96b"
+  },
+  "canada-united-city-20260117/a691dae0e55bff8fd6be96c3fabdbd78500089552e203058e4dc6b4369c5fc80.view.json": {
+    "bytes": 5161,
+    "sha256": "a691dae0e55bff8fd6be96c3fabdbd78500089552e203058e4dc6b4369c5fc80"
+  },
+  "canada-united-city-20260117/a691dae0e55bff8fd6be96c3fabdbd78500089552e203058e4dc6b4369c5fc80.view.receipt.json": {
+    "bytes": 354,
+    "sha256": "62b4fcd0766adaea5dd6eef4c61efc599b6d41b606ee061bd61ed353466af23c"
+  },
+  "canada-united-city-20260117/result.json": {
+    "bytes": 3369,
+    "sha256": "46a5165c259e496ba925ea939805c77b7e259b0066e816c8a363fd4fbb25391e"
+  },
+  "finland-united-city-20260117/2fc21da3bdfa18790d68a4445034dc407673c00db8c79f12c61b0cd3f986513f.view.json": {
+    "bytes": 3944,
+    "sha256": "2fc21da3bdfa18790d68a4445034dc407673c00db8c79f12c61b0cd3f986513f"
+  },
+  "finland-united-city-20260117/2fc21da3bdfa18790d68a4445034dc407673c00db8c79f12c61b0cd3f986513f.view.receipt.json": {
+    "bytes": 354,
+    "sha256": "2399ba95f68e46083d2c795f85fc6c4b07f39358fc3b51eb19f3c9ba30eef126"
+  },
+  "finland-united-city-20260117/be6b69f14388f8a28209d2dca1a8e81885be5a4c60b84e2b4b8e05e3b41e7023.receipt.json": {
+    "bytes": 344,
+    "sha256": "e6208c4c88d8154abadde5ce55859de75023f1e9adbca566ef7896c8a57b52c1"
+  },
+  "finland-united-city-20260117/be6b69f14388f8a28209d2dca1a8e81885be5a4c60b84e2b4b8e05e3b41e7023.response": {
+    "bytes": 2860,
+    "sha256": "be6b69f14388f8a28209d2dca1a8e81885be5a4c60b84e2b4b8e05e3b41e7023"
+  },
+  "finland-united-city-20260117/result.json": {
+    "bytes": 2617,
+    "sha256": "126f736e77ef132f522db0628fbfb1f6bf182db6e4ab457e939a88de02dfae54"
+  },
+  "informe.json": {
+    "bytes": 4539,
+    "sha256": "e224d1ac3a778eb0ee0d512bcbaf2c693d64217f0b32624a2761663d59d23a75"
+  },
+  "lista_resultado.csv": {
+    "bytes": 2280300,
+    "sha256": "041a5cab3fa1356bde6e4865504d5aaa1131ff74fd7c243d5ef88ab054c2db5d"
+  },
+  "peru-united-city-20260117/result.json": {
+    "bytes": 1864,
+    "sha256": "d0e98c7744fac32026ffc39ee7c762d2c027dcb48ef12ed8fb1de2e3c5664305"
+  },
+  "README.md": {
+    "bytes": 1308,
+    "sha256": "0d09e48172737830db4558104eee8fe141258307b6c62f43bd68db2f6c7b7462"
+  }
+}

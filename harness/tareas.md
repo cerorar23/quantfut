@@ -26,6 +26,7 @@ operativo como canal de clientes.
 - [x] PySBR adaptado a OddsTrader y ZenRows residencial: 149 meses de 13 competiciones, 586 ternas anteriores al inicio; 272 candidatas de la lista exacta (147 UCL, 114 UEL, 9 Championship, 2 MX), cierre definitivo todavía sin acreditar. Ver docs/pysbr_zenrows_20261014.md.
 - [x] Ejecutar omkarcloud y M3MONs Flashscore con ZenRows; corregir la ruta histórica del segundo en un adaptador. Leen otras casas; cero Pinnacle en las muestras. Archivo original intacto, resultado de búsqueda para las 6.185 filas. Ver docs/flashscore_pinnacle_20261014.md.
 - [x] Guardar por petición del usuario las 272 candidatas y las 586 ternas con originales y hashes en `data/pinnacle_recovery/20261014/`; marcadas como cierre sin verificar, sin carga en producción.
+- [x] Reintento explícito de OddsHarvester: cuatro sesiones nuevas, dos partidos de la lista, tres payloads de todas las casas verificados, cero Pinnacle nuevo. Resultado por fila y evidencia en `data/pinnacle_recovery/20261014_oddsharvester_retry/`; no son 6.185 consultas individuales.
 - [ ] Conseguir fuente/acceso con Pinnacle para los 6.185, validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
 
 ## Señales nuevas en el motor principal (2026-10-14)
