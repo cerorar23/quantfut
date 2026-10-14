@@ -25,6 +25,7 @@ from ..normalize import (
     _record_unresolved,
     clasificar_historial,
     clear_cache,
+    match_team,
     register_alias,
     resolve_team,
     slugify,
@@ -165,6 +166,51 @@ def cargar_ternas(c, league_id: str, ternas: list[dict], resolver, aplicar: bool
                     (m["match_id"], m["kickoff_utc"], p["home"], p["draw"], p["away"],
                      m["match_id"])).rowcount
     return r
+
+
+def _resolver_lectura(nombre: str, league_id: str) -> str | None:
+    """Nombre canónico por coincidencia EXACTA y sin escribir nada (ni alias ni pendientes)."""
+    tid, _, score = match_team(nombre, "football_data", league_id)
+    if not tid or score < 100.0:
+        return None
+    row = query_one("SELECT canonical_name FROM teams WHERE team_id = %s", (tid,))
+    return row["canonical_name"] if row else None
+
+
+def _ligas_con_csv(ligas: list[str] | None) -> list[dict]:
+    from ..db import query
+    filas = query("SELECT league_id, fd_code, fd_extra FROM leagues WHERE fd_code IS NOT NULL AND active")
+    return [f for f in filas if not ligas or f["league_id"] in ligas]
+
+
+def completar_cierres(ligas: list[str] | None = None, seasons: list[str] | None = None,
+                      desde: str = "2024-01-01", aplicar: bool = False) -> dict:
+    """
+    Cierre de Pinnacle de football-data para partidos YA cargados que no lo tienen. Por defecto
+    es un ensayo. Los CSV de las ligas europeas dejaron de traer Pinnacle hacia enero de 2026; los
+    «extra» (México, Argentina, Brasil, MLS) lo siguen trayendo.
+    """
+    from ..db import conn
+
+    desde_dt = datetime.fromisoformat(desde).replace(tzinfo=timezone.utc)
+    seasons = seasons or default_seasons()[-3:]
+    out = {}
+    for lg in _ligas_con_csv(ligas):
+        ternas = []
+        if lg["fd_extra"]:
+            df = _fetch_csv(BASE_EXTRA.format(code=lg["fd_code"]))
+            if df is not None and not df.empty:
+                ternas += ternas_pinnacle(df, COLS_EXTRA, desde_dt)
+        else:
+            for s in seasons:
+                df = _fetch_csv(BASE_MAIN.format(season=s, code=lg["fd_code"]))
+                if df is not None and not df.empty:
+                    ternas += ternas_pinnacle(df, COLS_MAIN, desde_dt)
+        with conn() as c:
+            out[lg["league_id"]] = cargar_ternas(
+                c, lg["league_id"], ternas,
+                _resolver_lectura, aplicar)
+    return out
 
 
 # Los dos formatos de football-data.co.uk NO comparten nombres de columna.
@@ -583,8 +629,13 @@ if __name__ == "__main__":
     # `tarjetas`: solo rellena amarillas, árbitro y córners de lo ya cargado.
     # `ensayo <ligas>`: qué se reutiliza, crea o queda dudoso, sin escribir.
     # `cargar <ligas>`: carga solo esas ligas.
+    # `cierres [--aplicar] [ligas]`: cierre de Pinnacle de partidos ya cargados (ensayo sin --aplicar).
     if sys.argv[1:] == ["tarjetas"]:
         print(completar_tarjetas())
+    elif sys.argv[1:2] == ["cierres"]:
+        args = sys.argv[2:]
+        print(json.dumps(completar_cierres([a for a in args if a != "--aplicar"],
+                                           aplicar="--aplicar" in args), ensure_ascii=False, indent=1))
     elif sys.argv[1:2] == ["ensayo"]:
         print(json.dumps(ensayo(sys.argv[2:]), ensure_ascii=False, indent=1))
     elif sys.argv[1:2] == ["cargar"]:

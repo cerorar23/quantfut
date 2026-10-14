@@ -221,3 +221,48 @@ def test_ternas_pinnacle_descarta_cuotas_invalidas_o_incompletas():
 def test_ternas_pinnacle_respeta_el_desde():
     from qf.ingest.history_fd import COLS_EXTRA, ternas_pinnacle
     assert ternas_pinnacle(_csv(), COLS_EXTRA, datetime(2026, 1, 1, tzinfo=timezone.utc)) == []
+
+
+def test_completar_cierres_usa_el_csv_correcto_por_formato_y_es_ensayo_por_defecto(monkeypatch):
+    from qf.ingest import history_fd as h
+
+    pedidos, llamadas = [], []
+    csv_extra = pd.DataFrame({"Date": ["20/09/2025"], "Home": ["A"], "Away": ["B"],
+                              "PSCH": [2.1], "PSCD": [3.3], "PSCA": [3.6]})
+    csv_main = pd.DataFrame({"Date": ["20/09/2025"], "HomeTeam": ["C"], "AwayTeam": ["D"],
+                             "PSCH": [1.9], "PSCD": [3.5], "PSCA": [4.0]})
+    monkeypatch.setattr(h, "_fetch_csv", lambda url: pedidos.append(url) or (
+        csv_extra if "/new/" in url else csv_main))
+    monkeypatch.setattr(h, "_ligas_con_csv", lambda ligas: [
+        {"league_id": "mx.liga_mx", "fd_code": "MEX", "fd_extra": True},
+        {"league_id": "es.laliga", "fd_code": "SP1", "fd_extra": False}])
+
+    class Con:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    monkeypatch.setattr("qf.db.conn", lambda: Con())
+    monkeypatch.setattr(h, "cargar_ternas", lambda c, liga, ternas, resolver, aplicar:
+                        llamadas.append((liga, [t["home"] for t in ternas], aplicar)) or {"ok": 1})
+    out = h.completar_cierres(seasons=["2526"])
+    assert any(u.endswith("/new/MEX.csv") for u in pedidos)
+    assert any(u.endswith("/mmz4281/2526/SP1.csv") for u in pedidos)
+    assert out == {"mx.liga_mx": {"ok": 1}, "es.laliga": {"ok": 1}}
+    assert llamadas == [("mx.liga_mx", ["A"], False), ("es.laliga", ["C"], False)]
+    h.completar_cierres(seasons=["2526"], aplicar=True)
+    assert llamadas[-1][2] is True
+
+
+def test_el_resolutor_de_cierres_solo_lee_y_exige_coincidencia_exacta(monkeypatch):
+    from qf.ingest import history_fd as h
+
+    escrituras = []
+    monkeypatch.setattr(h, "match_team", lambda raw, src, liga: (7, "x", 100.0) if raw == "Exacto" else (7, "x", 92.0))
+    monkeypatch.setattr(h, "query_one", lambda sql, params=(): {"canonical_name": "Canonico"})
+    monkeypatch.setattr(h, "execute", lambda *a, **k: escrituras.append(a))
+    assert h._resolver_lectura("Exacto", "L") == "Canonico"
+    assert h._resolver_lectura("Difuso", "L") is None
+    assert escrituras == []
