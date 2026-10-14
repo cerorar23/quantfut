@@ -2608,11 +2608,11 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{1 pronóstico más con VIP} other{{count} pronósticos más con VIP}}'**
   String picksLockedTitle(int count);
 
-  /// Rango de probabilidad de Alta probabilidad; los límites los manda el servidor.
+  /// Rango de probabilidad de Alta probabilidad y tope de gratis; los límites los manda el servidor.
   ///
   /// In es, this message translates to:
-  /// **'{min}–{max} % de probabilidad · uno gratis por mercado'**
-  String picksRangeHint(int min, int max);
+  /// **'{min}–{max} % de probabilidad · hasta {free} gratis'**
+  String picksRangeHint(int min, int max, int free);
 
   /// Pie de la tarjeta de pronóstico que abre el análisis.
   ///

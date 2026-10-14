@@ -5932,3 +5932,16 @@ trampa que ya estaba documentada en el código archivado del 25-sep. `_cuotas_af
 API sigue leyendo los suyos (nunca mezcladas). Solo afecta a pronósticos nuevos y solo cuando
 la casa ya tenga guardada la cuota; los sellados no se tocan. Pendiente de medir: cuántos
 hándicap salen con cuota tras uno o dos días de captura.
+
+## 2026-10-14 — Tope de 4 gratis en Inicio y en Alta probabilidad
+
+Decisión del titular: como mucho 4 pronósticos gratis a la vez en Inicio y en Alta probabilidad
+(antes uno por mercado y por lote: hoy había más de 4 abiertos al sumar lotes de varios días).
+Se aplica como filtro de lectura en `high_probability` (`cap_free`, FREE_MAX = 4): entre los
+gratis sin empezar quedan los de mayor cuota publicada y a igualdad mayor probabilidad, la
+misma prioridad de siempre; los demás pasan a candado con su cuota a la vista. Los que ya
+empezaron no cuentan y siguen visibles con su resultado. El reparto por lote
+(`mobile_free_allocations`) no se toca: es auditoría. Inicio y Alta probabilidad leen el mismo
+bloque `alta_probabilidad`, por eso un solo punto cubre las dos pantallas. El Reto Escalera
+conserva su único escalón gratis aparte. Tope de 4 gratis publicado también en `/config`
+(`high_probability_free_max`) y el texto de la app lo muestra («hasta 4 gratis»).

@@ -286,3 +286,32 @@ def test_quote_of_accepts_both_price_names_and_rejects_garbage():
     meta = mobile.metadata({'match_id': 'm1', 'market': 'totals', 'selection': 'over', 'line': 2.5,
                             'prob': .9, 'ref_price': 1.4, 'fit': {}})
     assert meta['cuota'] == 1.4 and not {'selection', 'line', 'prob', 'ref_price', 'fit'} & meta.keys()
+
+
+def test_cap_free_deja_cuatro_los_de_mayor_cuota():
+    now = datetime.now(timezone.utc)
+    rows = [{**row(i, price=1.0 + i / 100), 'market': f'mk{i}'} for i in range(1, 8)]
+    free = {mobile.pick_key(r) for r in rows}
+    kept = mobile.cap_free(rows, free, now)
+    assert kept == {'m7', 'm6', 'm5', 'm4'}          # las cuatro cuotas más altas
+    assert mobile.cap_free(rows, {'m1', 'm2', 'm3', 'm4'}, now) == {'m1', 'm2', 'm3', 'm4'}  # no toca si caben
+
+
+def test_cap_free_no_cuenta_los_que_ya_empezaron():
+    now = datetime.now(timezone.utc)
+    empezados = [{**row(i, price=1.5), 'kickoff_utc': now - timedelta(hours=1)} for i in range(10, 14)]
+    abiertos = [row(i, price=1.2) for i in range(1, 5)]
+    free = {mobile.pick_key(r) for r in empezados + abiertos}
+    assert mobile.cap_free(empezados + abiertos, free, now) == free      # 4 abiertos + 4 ya empezados
+
+
+def test_alta_probabilidad_enseña_como_mucho_cuatro_gratis_y_el_resto_con_candado(monkeypatch, delivery):
+    rows = [{**row(i, price=1.0 + i / 100), 'market': f'mk{i}'} for i in range(1, 9)]
+    monkeypatch.setattr(mobile, 'high_rows', lambda: rows)
+    monkeypatch.setattr(mobile, 'allocations', lambda r, stream: {mobile.pick_key(p) for p in r})
+    report = mobile.high_probability()
+    assert sorted(p['match_id'] for p in report['proximos']) == ['m5', 'm6', 'm7', 'm8']
+    assert all(p['free'] for p in report['proximos'])
+    assert {v['match_id'] for v in report['vip']} == {'m1', 'm2', 'm3', 'm4'}
+    assert all(v['locked'] and v['cuota'] for v in report['vip'])          # el candado enseña su cuota
+    assert mobile.config()['high_probability_free_max'] == 4

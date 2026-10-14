@@ -416,7 +416,7 @@
   "picksLockedHint": "Mit VIP siehst du die Prognose, die Wahrscheinlichkeit und die Analyse",
   "picksLockedShow": "Liste anzeigen",
   "picksLockedTitle": "{count, plural, one{1 weitere Prognose mit VIP} other{{count} weitere Prognosen mit VIP}}",
-  "picksRangeHint": "{min}–{max} % Wahrscheinlichkeit · einer kostenlos pro Markt",
+  "picksRangeHint": "{min}–{max} % Wahrscheinlichkeit · bis zu {free} kostenlos",
   "picksSeeAnalysis": "Analyse ansehen",
   "picksTomorrow": "Morgen",
   "picksTrainingReasons": "Modell im Training · {reasons}",

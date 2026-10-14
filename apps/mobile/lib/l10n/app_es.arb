@@ -1343,14 +1343,17 @@
       }
     }
   },
-  "picksRangeHint": "{min}–{max} % de probabilidad · uno gratis por mercado",
+  "picksRangeHint": "{min}–{max} % de probabilidad · hasta {free} gratis",
   "@picksRangeHint": {
-    "description": "Rango de probabilidad de Alta probabilidad; los límites los manda el servidor.",
+    "description": "Rango de probabilidad de Alta probabilidad y tope de gratis; los límites los manda el servidor.",
     "placeholders": {
       "min": {
         "type": "int"
       },
       "max": {
+        "type": "int"
+      },
+      "free": {
         "type": "int"
       }
     }

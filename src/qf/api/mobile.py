@@ -36,6 +36,10 @@ DIAS_AGENDA = 7
 # 75-90 % de probabilidad las cuotas reales van de 1,01 a 1,25: un piso de 1,40
 # o 1,20 deja el escaparate vacío casi siempre, así que no hay piso (solo > 1).
 FREE_QUOTE_MIN, FREE_QUOTE_MAX = 1.0, 1.60
+# Tope de gratis abiertos a la vez en Inicio y en Alta probabilidad (decisión del usuario,
+# 2026-10-14): como mucho 4 pronósticos sin empezar. Es un filtro de lectura sobre el reparto
+# por lote, que no se toca. Entre los candidatos manda la misma regla de siempre: mayor cuota.
+FREE_MAX = 4
 SECTIONS = {
     'agenda': 'Calendario de partidos', 'alta_probabilidad': 'Alta probabilidad',
     'escalera': 'Reto Escalera', 'estadisticas': 'Estadísticas del partido',
@@ -60,6 +64,7 @@ def features() -> dict:
 def config() -> dict:
     return {'features': features(), 'probability_min': HIGH_MIN,
             'probability_max': HIGH_MAX, 'high_probability_free_per_market': 1,
+            'high_probability_free_max': FREE_MAX,
             'high_probability_free_quote_max': FREE_QUOTE_MAX,
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
@@ -119,6 +124,19 @@ def top_up(rows: list[dict], free_keys: set[str], now: datetime) -> list[dict]:
     open_markets = {r.get('market') for r in pending if pick_key(r) in free_keys}
     return [r for r in choose_free(pending, 'alta_probabilidad')
             if pick_key(r) not in free_keys and r.get('market') not in open_markets]
+
+
+def cap_free(rows: list[dict], free: set[str], now: datetime) -> set[str]:
+    """
+    Deja como mucho FREE_MAX gratis entre los pronósticos que aún no han empezado, los de
+    mayor cuota publicada (a igualdad, mayor probabilidad). Los que ya empezaron no cuentan:
+    siguen visibles con su resultado. Los que sobran pasan a candado, con su cuota a la vista.
+    """
+    pending = [r for r in rows if pick_key(r) in free and r['kickoff_utc'] > now]
+    if len(pending) <= FREE_MAX:
+        return free
+    pending.sort(key=lambda r: (-float(r.get('ref_price') or 0), -probability(r), pick_key(r)))
+    return free - {pick_key(r) for r in pending[FREE_MAX:]}
 
 
 def allocations(rows: list[dict], stream: str) -> set[str]:
@@ -256,8 +274,8 @@ def high_probability(plus: bool = False, unlocks: set[tuple[str,str]] | None = N
     if not flags['alta_probabilidad']['enabled'] or base['estado'] != 'activa':
         return base
     rows = high_rows()
-    free = allocations(rows, 'alta_probabilidad')
     now = datetime.now(timezone.utc)
+    free = cap_free(rows, allocations(rows, 'alta_probabilidad'), now)
     for row in rows:
         begun = row['kickoff_utc'] <= now
         if begun and not started:
