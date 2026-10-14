@@ -168,3 +168,37 @@ def construir_ajuste(frame: pd.DataFrame, candidatos: list[str], rho: float = 0.
     modelo = _modelo(ordered.iloc[:cut], cols, rho, kw.get("shrink", 0.5), kw.get("l2", 10.0))
     modelo.params.offline_validated = True
     return Ajuste(aceptados, modelo, informe)
+
+
+def _cargar_marco(ruta: str | None):
+    import glob
+    import os
+
+    from ..config import settings
+    from ..db import query_one
+    ruta = ruta or max(glob.glob(f"{settings.artifact_dir}/oos_*.pkl"), key=os.path.getmtime)
+    version = os.path.basename(ruta)[len("oos_"):-len(".pkl")]
+    fila = query_one("SELECT params->>'rho' AS rho FROM model_artifacts WHERE model_version = %s", (version,))
+    frame, _ = lc.load_training_frame(pd.read_pickle(ruta))
+    return frame, float(fila["rho"]), version
+
+
+def main(argv=None):
+    import argparse
+    import json
+
+    from ..config import settings
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--oos", help="oos_<versión>.pkl; por defecto el más reciente")
+    p.add_argument("--guardar", action="store_true", help="escribe ajuste_<versión>.pkl")
+    args = p.parse_args(argv)
+    frame, rho, version = _cargar_marco(args.oos)
+    a = construir_ajuste(frame, list(BLOQUES), rho=rho)
+    if args.guardar:
+        a.guardar(f"{settings.artifact_dir}/ajuste_{version}.pkl")
+    print(json.dumps({"version": version, "bloques_aceptados": a.bloques, "informe": a.informe},
+                     indent=2, ensure_ascii=False, default=str))
+
+
+if __name__ == "__main__":
+    main()

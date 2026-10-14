@@ -1198,6 +1198,17 @@ cuenta las tarjetas un poco distinto (~6 % de partidos, +1), que mueve las
 probabilidades de tarjetas en ligas con poco historial. Detalle y reversión:
 [docs/f0_archivo_a_matches_20261014.md](docs/f0_archivo_a_matches_20261014.md).
 
+### Capa de ajuste por bloques de señales (14-oct-2026)
+
+`qf.model.ajuste` decide qué señales entran al motor principal: un bloque se acepta
+solo si mejora al modelo sin él, sobre las mismas filas, en RPS, log-loss y ECE, en
+al menos 2 ligas y con una mejora significativa de RPS (remuestreo pareado). La
+puerta antigua dejaba pasar ruido puro en 8 de 40 pruebas y atribuía al primer
+bloque el mérito de re-nivelar las lambdas; ambas cosas están corregidas. Con
+datos reales, el XI simple pasa: RPS 0,2133 a 0,2120 y 9 de 12 ligas mejoran, aún
+en sombra hasta que haya CLV y sello tardío. Detalle:
+[docs/f1_capa_de_ajuste_20261014.md](docs/f1_capa_de_ajuste_20261014.md).
+
 ## Expectativas realistas
 
 - Un ROI sostenido de **1-4% sobre el volumen** es un resultado profesional

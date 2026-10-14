@@ -100,3 +100,18 @@ def test_guardar_y_cargar_conserva_el_ajuste(tmp_path):
     l1, m1 = a.aplicar(marco())
     l2, m2 = b.aplicar(marco())
     assert np.allclose(l1, l2) and np.allclose(m1, m2)
+
+
+def test_el_cli_no_guarda_sin_la_bandera(monkeypatch, capsys):
+    import json
+
+    guardados = []
+    monkeypatch.setattr(aj, "_cargar_marco", lambda ruta: (marco(), -0.05, "vprueba"))
+    monkeypatch.setattr(aj.Ajuste, "guardar", lambda self, ruta: guardados.append(ruta))
+    aj.main(["--oos", "x.pkl"])
+    salida = json.loads(capsys.readouterr().out)
+    assert guardados == [] and salida["version"] == "vprueba"
+    assert salida["bloques_aceptados"] == ["con_senal"]
+    assert set(salida["informe"]) == {"con_senal", "ruido"}
+    aj.main(["--oos", "x.pkl", "--guardar"])
+    assert len(guardados) == 1 and guardados[0].endswith("ajuste_vprueba.pkl")

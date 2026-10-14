@@ -5785,3 +5785,19 @@ algo: el xGOT no se mezcla con PSxG; el árbitro de FotMob no pisa `matches.refe
 bloquea `matches`. Contraste: FotMob cuenta tarjetas distinto en ~6 % de los
 partidos (+1), así que las probabilidades de tarjetas se mueven en las ligas que casi
 no tenían historial. Detalle y reversión: docs/f0_archivo_a_matches_20261014.md.
+
+## 2026-10-14 — F1: capa de ajuste por bloques y puerta corregida
+
+`qf.model.ajuste` generaliza el challenger de XI (bloques registrados, comparación
+incremental A frente a A+B, artefacto `ajuste_<versión>.pkl`). Decisión clave: la
+puerta heredada tenía dos defectos que se midieron antes de corregirlos. Una
+columna constante pasaba la puerta con la misma mejora que el ruido, porque el
+intercepto re-nivela lambdas sesgadas y el mérito se le daba al primer bloque; y el
+ruido puro la pasaba en 8 de 40 semillas. En `ajuste.comparar` la referencia es
+ahora un modelo solo de nivel y se exige significancia (remuestreo pareado de la
+diferencia de RPS, percentil 95 < 0). La puerta de `lineup_challenger` no cambia.
+Con datos reales, el XI simple pasa la puerta estricta (dRPS -0,0013, p95 -0,00056,
+9 de 12 ligas) y el modelo de nivel casi coincide con las lambdas crudas: no era
+re-nivelación. No se reentrenó: el entrenamiento del 12-oct ya usó el xG nuevo y no
+pasó la puerta frente a Elo; el cron del 1-nov incorpora el resto. Detalle:
+docs/f1_capa_de_ajuste_20261014.md.

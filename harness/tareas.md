@@ -28,7 +28,7 @@ Decisión del usuario: sello tardío (un sello por partido a T-30/XI) y capa de 
 de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 
 - [x] F0 — Archivo FotMob a `matches` y `estadios` (db/067). Detalle: docs/f0_archivo_a_matches_20261014.md.
-- [ ] F1 — Reentrenar con los xG recibidos desde el 27-sep y `ajuste.py` sin bloques: línea base.
+- [x] F1 — Capa de ajuste `qf.model.ajuste` (puerta con referencia de nivel y significancia) y línea base: el XI simple pasa la puerta estricta (dRPS -0,0013, 9 de 12 ligas). Sin reentrenar: el del 12-oct ya usó el xG nuevo y el cron repite el 1-nov. Detalle: docs/f1_capa_de_ajuste_20261014.md.
 - [ ] F2 — Apertura/cierre de Pinnacle, CLV y movimiento (bloque `mercado`).
 - [ ] F3 — Bajas y sanciones como minutos perdidos (bloque `bajas`).
 - [ ] F4 — Puente de identidades FotMob/API-Football; XI con valor de jugador (bloque `xi`).
