@@ -1,0 +1,38 @@
+{
+  "url": "https://www.oddstrader.com/odds-v2/odds-v2-service?query=%7Bq0%3A+eventsByDateNew%28lid%3A%5B33%5D%2CstartDate%3A1788220800000%2ChoursRange%3A720%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq1%3A+eventsByDateNew%28lid%3A%5B33%5D%2CstartDate%3A1790812800000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq2%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1759276800000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq3%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1761955200000%2ChoursRange%3A720%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq4%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1769904000000%2ChoursRange%3A672%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq5%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1772323200000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7D%7D",
+  "tasks": [
+    [
+      "pt.primeira",
+      "2026-09"
+    ],
+    [
+      "pt.primeira",
+      "2026-10"
+    ],
+    [
+      "us.mls",
+      "2025-10"
+    ],
+    [
+      "us.mls",
+      "2025-11"
+    ],
+    [
+      "us.mls",
+      "2026-02"
+    ],
+    [
+      "us.mls",
+      "2026-03"
+    ]
+  ],
+  "started_at": "2026-10-14T21:24:35.432520+00:00",
+  "received_at": "2026-10-14T21:24:37.986733+00:00",
+  "sha256": "fe011de508cf453936b2f10b37775cdb62a983427a61475acbb09888a87fba4b",
+  "bytes": 70585,
+  "status": 200,
+  "cost_credits": 1,
+  "ok": true,
+  "exit_code": 0,
+  "run_id": "r-95e13eaf"
+}

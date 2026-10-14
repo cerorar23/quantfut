@@ -1,0 +1,38 @@
+{
+  "url": "https://www.oddstrader.com/odds-v2/odds-v2-service?query=%7Bq0%3A+eventsByDateNew%28lid%3A%5B8%5D%2CstartDate%3A1764547200000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq1%3A+eventsByDateNew%28lid%3A%5B8%5D%2CstartDate%3A1767225600000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq2%3A+eventsByDateNew%28lid%3A%5B8%5D%2CstartDate%3A1769904000000%2ChoursRange%3A672%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq3%3A+eventsByDateNew%28lid%3A%5B8%5D%2CstartDate%3A1772323200000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq4%3A+eventsByDateNew%28lid%3A%5B8%5D%2CstartDate%3A1775001600000%2ChoursRange%3A720%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq5%3A+eventsByDateNew%28lid%3A%5B8%5D%2CstartDate%3A1777593600000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7D%7D",
+  "tasks": [
+    [
+      "eu.ucl",
+      "2025-12"
+    ],
+    [
+      "eu.ucl",
+      "2026-01"
+    ],
+    [
+      "eu.ucl",
+      "2026-02"
+    ],
+    [
+      "eu.ucl",
+      "2026-03"
+    ],
+    [
+      "eu.ucl",
+      "2026-04"
+    ],
+    [
+      "eu.ucl",
+      "2026-05"
+    ]
+  ],
+  "started_at": "2026-10-14T21:23:12.257455+00:00",
+  "received_at": "2026-10-14T21:23:15.396545+00:00",
+  "sha256": "7ff41eac94051c3bdcc2cc8732fd69e6b4e476819594a065f5f28fdce2947085",
+  "bytes": 49689,
+  "status": 200,
+  "cost_credits": 1,
+  "ok": true,
+  "exit_code": 0,
+  "run_id": "r-eed561e2"
+}

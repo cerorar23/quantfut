@@ -1,5 +1,50 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-14 — PySBR/Flashscore: separar precio histórico candidato de cierre acreditado
+
+Sobre la lista exacta `.local/cierres_faltantes_20261014.csv` (6.185 filas de
+23 competiciones), OddsTrader permitió descargar 3.624 eventos: 586 ternas
+Pinnacle candidatas anteriores al inicio, 272 asociadas a pendientes con
+nombres/alias o equivalencias explícitas, fecha y marcador reglamentario
+corroborados. Se conserva la distinción: `currentLines` no demuestra la
+integridad del historial ni el cierre final. Nueve discrepancias de marcador
+(prórrogas) se excluyeron; no se arreglaron silenciosamente ni se cargaron cuotas.
+
+PySBR original apunta a un endpoint retirado; su consulta funcionó adaptada a
+OddsTrader y ZenRows residencial GB. Flashscore omkarcloud y M3MONs también
+funcionaron con ZenRows CL; el segundo necesitó conservar `mid` y la ruta del
+mercado histórico. Las cinco ternas comunes coinciden por casa, pero ninguna
+es Pinnacle. Catálogos de siete regiones y controles de 2025/2026 tampoco
+aportaron la casa en las muestras. No se confunde bloqueo resuelto con cobertura.
+
+Se entrega CSV de estado para las 6.185 filas, candidatas separadas, 5.913 sin
+candidato, y cobertura/limitaciones por fuente. Las dos muestras individuales
+Flashscore están señaladas; no se afirma haber consultado las 6.185 allí.
+La base y el archivo original permanecen intactos. Detalles y reproducción:
+docs/pysbr_zenrows_20261014.md y docs/flashscore_pinnacle_20261014.md.
+
+Por petición posterior del usuario se guarda una copia versionada en
+`data/pinnacle_recovery/20261014/`: 272 candidatas, 586 ternas totales,
+lista/estados, 25 originales con sus recibos y evidencia del subconjunto
+asociado. El manifiesto y atributos de Git conservan los hashes exactos.
+Guardar los datos no acredita cierre final ni autoriza usarlos como tal.
+
+## 2026-10-14 — Recuperación Pinnacle: no confundir cobertura histórica con reciente
+
+Ensayo de lectura sobre los 6.185 cierres faltantes: 60 CSV públicos, 14.381
+ternas explícitas válidas desde 2024, TODAS ya almacenadas. MEX contiene 4.437
+ternas de 4.752 filas, pero la última es del 27-oct-2025; ARG/BRA/USA también
+terminan en 2025. Los 1.457 huecos de esas ligas no se recuperan reimportando
+los CSV actuales. No se escribió en producción ni se entrenaron modelos.
+
+OddsHarvester 0.20.0 aislado + ZenRows Browser Sessions lee páginas y fichas,
+pero las pruebas GB/CA/CL y PSG–Inter de mayo de 2025 devolvieron cero Pinnacle.
+Se archivan originales y recibos; el adaptador devuelve error cuando una ficha
+leída no trae ternas de la casa pedida. Pendiente fuente/acceso con cobertura
+acreditada antes del lote. Incidencia de autoalta gratuita de la CLI documentada,
+sin compras; las pruebas usan la clave existente. Detalle y archivos:
+docs/pinnacle_recuperacion_20261014.md.
+
 ## 2026-10-03 — Decorrelación con el mercado: tampoco
 
 Idea 4. Hubáček y Šír (IJF 2023) entrenan con `Σ(t−y)² − γΣ(t−m)²` y ganan

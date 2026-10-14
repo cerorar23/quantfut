@@ -1,0 +1,11 @@
+{
+  "package": "python-sbr",
+  "version": "0.3.2",
+  "event_id": 4745590,
+  "sportsbook_id": 20,
+  "quotes": 3,
+  "matches_archived_query": true,
+  "premium_proxy": true,
+  "proxy_country": "gb",
+  "endpoint_adapted": true
+}

@@ -1,0 +1,38 @@
+{
+  "url": "https://www.oddstrader.com/odds-v2/odds-v2-service?query=%7Bq0%3A+eventsByDateNew%28lid%3A%5B35%5D%2CstartDate%3A1777593600000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq1%3A+eventsByDateNew%28lid%3A%5B35%5D%2CstartDate%3A1782864000000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq2%3A+eventsByDateNew%28lid%3A%5B35%5D%2CstartDate%3A1785542400000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq3%3A+eventsByDateNew%28lid%3A%5B35%5D%2CstartDate%3A1788220800000%2ChoursRange%3A720%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq4%3A+eventsByDateNew%28lid%3A%5B32%5D%2CstartDate%3A1759276800000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq5%3A+eventsByDateNew%28lid%3A%5B32%5D%2CstartDate%3A1761955200000%2ChoursRange%3A720%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7D%7D",
+  "tasks": [
+    [
+      "eu.uel",
+      "2026-05"
+    ],
+    [
+      "eu.uel",
+      "2026-07"
+    ],
+    [
+      "eu.uel",
+      "2026-08"
+    ],
+    [
+      "eu.uel",
+      "2026-09"
+    ],
+    [
+      "br.serie_a",
+      "2025-10"
+    ],
+    [
+      "br.serie_a",
+      "2025-11"
+    ]
+  ],
+  "started_at": "2026-10-14T21:23:33.508823+00:00",
+  "received_at": "2026-10-14T21:23:37.868417+00:00",
+  "sha256": "3a019c8b32453f8be07809edea3c3ca5d7ffa2e6b3b98371df005b6cea960b5b",
+  "bytes": 51767,
+  "status": 200,
+  "cost_credits": 1,
+  "ok": true,
+  "exit_code": 0,
+  "run_id": "r-0ad5c279"
+}

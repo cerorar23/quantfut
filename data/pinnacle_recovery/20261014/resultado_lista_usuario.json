@@ -1,0 +1,231 @@
+{
+  "input": "C:\\Users\\huye\\Documents\\apuesta proyec\\.local\\cierres_faltantes_20261014.csv",
+  "input_sha256": "3a418b365b51409bed24842cb7897ae5dea146b1740f4d778c80cbedaf9b1eaf",
+  "rows": 6185,
+  "leagues": 23,
+  "candidates": 272,
+  "without_candidate": 5913,
+  "verified_closes": 0,
+  "database_writes": 0,
+  "input_unchanged": true,
+  "statuses": {
+    "sin_catalogo_sbr_resuelto": 2721,
+    "mes_consultado_sin_eventos": 773,
+    "mes_consultado_sin_candidato_validado": 2419,
+    "candidato_prematch_cierre_no_verificado": 272
+  },
+  "flashscore_individual_pending_samples": 2,
+  "counts_by_league": [
+    {
+      "league_id": "ar.primera",
+      "pendientes_originales": 451,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 451
+    },
+    {
+      "league_id": "br.serie_a",
+      "pendientes_originales": 321,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 321,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "ch.super_league",
+      "pendientes_originales": 223,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 223
+    },
+    {
+      "league_id": "de.bundesliga",
+      "pendientes_originales": 193,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 193,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "de.bundesliga2",
+      "pendientes_originales": 270,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 270
+    },
+    {
+      "league_id": "dk.superliga",
+      "pendientes_originales": 170,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 170
+    },
+    {
+      "league_id": "es.laliga",
+      "pendientes_originales": 261,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 261,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "es.laliga2",
+      "pendientes_originales": 350,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 350
+    },
+    {
+      "league_id": "eu.ucl",
+      "pendientes_originales": 305,
+      "candidatos_prematch": 147,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 158,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "eu.uel",
+      "pendientes_originales": 208,
+      "candidatos_prematch": 114,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 94,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "fr.ligue_1",
+      "pendientes_originales": 198,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 198,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "fr.ligue_2",
+      "pendientes_originales": 269,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 269
+    },
+    {
+      "league_id": "gb.championship",
+      "pendientes_originales": 389,
+      "candidatos_prematch": 9,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 380,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "gb.premier_league",
+      "pendientes_originales": 220,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 220,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "it.serie_a",
+      "pendientes_originales": 232,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 232,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "it.serie_b",
+      "pendientes_originales": 369,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 369
+    },
+    {
+      "league_id": "mx.liga_mx",
+      "pendientes_originales": 282,
+      "candidatos_prematch": 2,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 280,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "nl.eredivisie",
+      "pendientes_originales": 236,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 236,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "no.eliteserien",
+      "pendientes_originales": 202,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 202
+    },
+    {
+      "league_id": "pt.primeira",
+      "pendientes_originales": 216,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 216,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 0
+    },
+    {
+      "league_id": "se.allsvenskan",
+      "pendientes_originales": 192,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 192
+    },
+    {
+      "league_id": "tr.super_lig",
+      "pendientes_originales": 225,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 0,
+      "sin_catalogo_sbr_resuelto": 225
+    },
+    {
+      "league_id": "us.mls",
+      "pendientes_originales": 403,
+      "candidatos_prematch": 0,
+      "mes_consultado_sin_eventos": 0,
+      "mes_consultado_sin_candidato_validado": 403,
+      "sin_catalogo_sbr_resuelto": 0
+    }
+  ],
+  "files": {
+    "cierres_faltantes_resultado_busqueda.csv": {
+      "bytes": 2026572,
+      "sha256": "61c3f47f800bd5b2cb6e2723d8acc402200c09944a24bce9b3039167a88ebaa2",
+      "rows": 6185
+    },
+    "cierres_sin_candidato.csv": {
+      "bytes": 1364381,
+      "sha256": "5a02a6fa5950da67eff5c8a4e44d789673eb39747904249d911cfa71ffafc3e1",
+      "rows": 5913
+    },
+    "cobertura_por_liga.csv": {
+      "bytes": 775,
+      "sha256": "4012f24211799769b96129bf7dec096eaa011b28ef84cb8a9fea4547406c82fb",
+      "rows": 23
+    },
+    "pinnacle_candidatos_pendientes.csv": {
+      "bytes": 641715,
+      "sha256": "b9506fd1cf61be73524ae8f17138852efb6fc48546e666d491feaa0ee2f34bfd",
+      "rows": 272
+    },
+    "pinnacle_ternas_historicas.csv": {
+      "bytes": 1375351,
+      "sha256": "bfd717101103a3daa698484a9b5c70cb2b49b8b171c967860ac81c626dbf4acb",
+      "rows": 586
+    }
+  }
+}

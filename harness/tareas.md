@@ -18,6 +18,16 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Recuperación de cierres Pinnacle (2026-10-14)
+
+- [x] Descargar y archivar 60 CSV: 14.381 ternas explícitas desde 2024, todas ya presentes.
+- [x] Ensayo Football-data de asociación sin escrituras: 0 candidatos nuevos; siguen los 6.185 huecos en producción.
+- [x] OddsHarvester con ZenRows GB/CA/CL y control Champions 2025: 0 ternas Pinnacle en las muestras. Versión actual 0.20.0 aislada.
+- [x] PySBR adaptado a OddsTrader y ZenRows residencial: 149 meses de 13 competiciones, 586 ternas anteriores al inicio; 272 candidatas de la lista exacta (147 UCL, 114 UEL, 9 Championship, 2 MX), cierre definitivo todavía sin acreditar. Ver docs/pysbr_zenrows_20261014.md.
+- [x] Ejecutar omkarcloud y M3MONs Flashscore con ZenRows; corregir la ruta histórica del segundo en un adaptador. Leen otras casas; cero Pinnacle en las muestras. Archivo original intacto, resultado de búsqueda para las 6.185 filas. Ver docs/flashscore_pinnacle_20261014.md.
+- [x] Guardar por petición del usuario las 272 candidatas y las 586 ternas con originales y hashes en `data/pinnacle_recovery/20261014/`; marcadas como cierre sin verificar, sin carga en producción.
+- [ ] Conseguir fuente/acceso con Pinnacle para los 6.185, validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
+
 ## Señales nuevas en el motor principal (2026-10-14)
 
 Pedido del usuario: llevar al motor principal XI y valor de jugadores, bajas, tiros/PSxG,

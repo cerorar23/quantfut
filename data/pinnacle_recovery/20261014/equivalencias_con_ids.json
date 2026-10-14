@@ -1,0 +1,555 @@
+[
+  {
+    "source_name": "Arsenal FC",
+    "canonical_name": "Arsenal",
+    "team_ids": [
+      3
+    ]
+  },
+  {
+    "source_name": "Paris Saint-Germain FC",
+    "canonical_name": "Paris SG",
+    "team_ids": [
+      68857
+    ]
+  },
+  {
+    "source_name": "SL Benfica",
+    "canonical_name": "Benfica",
+    "team_ids": [
+      77426
+    ]
+  },
+  {
+    "source_name": "FC Barcelona",
+    "canonical_name": "Barcelona",
+    "team_ids": [
+      2973
+    ]
+  },
+  {
+    "source_name": "Inter Milano",
+    "canonical_name": "Inter",
+    "team_ids": [
+      12102
+    ]
+  },
+  {
+    "source_name": "Feyenoord Rotterdam",
+    "canonical_name": "Feyenoord",
+    "team_ids": [
+      21218
+    ]
+  },
+  {
+    "source_name": "Fenerbahce Istanbul",
+    "canonical_name": "Fenerbah\u00e7e",
+    "team_ids": [
+      85065
+    ]
+  },
+  {
+    "source_name": "Real Sociedad San Sebastian",
+    "canonical_name": "Sociedad",
+    "team_ids": [
+      2978
+    ]
+  },
+  {
+    "source_name": "Lazio Roma",
+    "canonical_name": "Lazio",
+    "team_ids": [
+      12096
+    ]
+  },
+  {
+    "source_name": "Liverpool FC",
+    "canonical_name": "Liverpool",
+    "team_ids": [
+      18
+    ]
+  },
+  {
+    "source_name": "Borussia Dortmund",
+    "canonical_name": "Dortmund",
+    "team_ids": [
+      61442
+    ]
+  },
+  {
+    "source_name": "Galatasaray SK",
+    "canonical_name": "Galatasaray",
+    "team_ids": [
+      85066
+    ]
+  },
+  {
+    "source_name": "Ajax Amsterdam",
+    "canonical_name": "Ajax",
+    "team_ids": [
+      21215
+    ]
+  },
+  {
+    "source_name": "Olympique Lyon",
+    "canonical_name": "Lyon",
+    "team_ids": [
+      68872
+    ]
+  },
+  {
+    "source_name": "AC Milan",
+    "canonical_name": "Milan",
+    "team_ids": [
+      12095
+    ]
+  },
+  {
+    "source_name": "Atalanta BC",
+    "canonical_name": "Atalanta",
+    "team_ids": [
+      12089
+    ]
+  },
+  {
+    "source_name": "Juventus Turin",
+    "canonical_name": "Juventus",
+    "team_ids": [
+      12086
+    ]
+  },
+  {
+    "source_name": "Lille OSC",
+    "canonical_name": "Lille",
+    "team_ids": [
+      68864
+    ]
+  },
+  {
+    "source_name": "Stade Brest 29",
+    "canonical_name": "Brest",
+    "team_ids": [
+      72662
+    ]
+  },
+  {
+    "source_name": "OGC Nice",
+    "canonical_name": "Nice",
+    "team_ids": [
+      68870
+    ]
+  },
+  {
+    "source_name": "SC Braga",
+    "canonical_name": "Sp Braga",
+    "team_ids": [
+      77434
+    ]
+  },
+  {
+    "source_name": "AS Monaco",
+    "canonical_name": "Monaco",
+    "team_ids": [
+      68874
+    ]
+  },
+  {
+    "source_name": "Manchester United",
+    "canonical_name": "Man United",
+    "team_ids": [
+      19
+    ]
+  },
+  {
+    "source_name": "Atletico Madrid",
+    "canonical_name": "Ath Madrid",
+    "team_ids": [
+      2984
+    ]
+  },
+  {
+    "source_name": "Bologna FC",
+    "canonical_name": "Bologna",
+    "team_ids": [
+      12846
+    ]
+  },
+  {
+    "source_name": "Bayer Leverkusen",
+    "canonical_name": "Leverkusen",
+    "team_ids": [
+      61443
+    ]
+  },
+  {
+    "source_name": "Olympique Marseille",
+    "canonical_name": "Marseille",
+    "team_ids": [
+      68859
+    ]
+  },
+  {
+    "source_name": "Besiktas Istanbul",
+    "canonical_name": "Be\u015fikta\u015f",
+    "team_ids": [
+      85062
+    ]
+  },
+  {
+    "source_name": "Eintracht Frankfurt",
+    "canonical_name": "Ein Frankfurt",
+    "team_ids": [
+      61444
+    ]
+  },
+  {
+    "source_name": "Manchester City",
+    "canonical_name": "Man City",
+    "team_ids": [
+      2
+    ]
+  },
+  {
+    "source_name": "FC Twente Enschede",
+    "canonical_name": "Twente",
+    "team_ids": [
+      21208
+    ]
+  },
+  {
+    "source_name": "Athletic Bilbao",
+    "canonical_name": "Ath Bilbao",
+    "team_ids": [
+      2970
+    ]
+  },
+  {
+    "source_name": "FC Porto",
+    "canonical_name": "Porto",
+    "team_ids": [
+      77420
+    ]
+  },
+  {
+    "source_name": "Girona FC",
+    "canonical_name": "Girona",
+    "team_ids": [
+      5251
+    ]
+  },
+  {
+    "source_name": "AS Roma",
+    "canonical_name": "Roma",
+    "team_ids": [
+      12087
+    ]
+  },
+  {
+    "source_name": "Sporting Lisbon",
+    "canonical_name": "Sp Lisbon",
+    "team_ids": [
+      77423
+    ]
+  },
+  {
+    "source_name": "VfB Stuttgart",
+    "canonical_name": "Stuttgart",
+    "team_ids": [
+      61455
+    ]
+  },
+  {
+    "source_name": "Sunderland AFC",
+    "canonical_name": "Sunderland",
+    "team_ids": [
+      767
+    ]
+  },
+  {
+    "source_name": "Tottenham Hotspur",
+    "canonical_name": "Tottenham",
+    "team_ids": [
+      16
+    ]
+  },
+  {
+    "source_name": "TSG Hoffenheim",
+    "canonical_name": "Hoffenheim",
+    "team_ids": [
+      61452
+    ]
+  },
+  {
+    "source_name": "SK Brann",
+    "canonical_name": "Brann",
+    "team_ids": [
+      85103
+    ]
+  },
+  {
+    "source_name": "FC Utrecht",
+    "canonical_name": "Utrecht",
+    "team_ids": [
+      21206
+    ]
+  },
+  {
+    "source_name": "SSC Napoli",
+    "canonical_name": "Napoli",
+    "team_ids": [
+      12094
+    ]
+  },
+  {
+    "source_name": "Stade Rennais FC",
+    "canonical_name": "Rennes",
+    "team_ids": [
+      68873
+    ]
+  },
+  {
+    "source_name": "Toulouse FC",
+    "canonical_name": "Toulouse",
+    "team_ids": [
+      68871
+    ]
+  },
+  {
+    "source_name": "Brighton & Hove Albion",
+    "canonical_name": "Brighton",
+    "team_ids": [
+      7
+    ]
+  },
+  {
+    "source_name": "Villarreal CF",
+    "canonical_name": "Villarreal",
+    "team_ids": [
+      2980
+    ]
+  },
+  {
+    "source_name": "Hacken Gothenburg",
+    "canonical_name": "BK Hacken",
+    "team_ids": [
+      85118
+    ]
+  },
+  {
+    "source_name": "Servette Geneva",
+    "canonical_name": "Servette FC",
+    "team_ids": [
+      85088
+    ]
+  },
+  {
+    "source_name": "SC Freiburg",
+    "canonical_name": "Freiburg",
+    "team_ids": [
+      61445
+    ]
+  },
+  {
+    "source_name": "RC Lens",
+    "canonical_name": "Lens",
+    "team_ids": [
+      68869
+    ]
+  },
+  {
+    "source_name": "Southampton FC",
+    "canonical_name": "Southampton",
+    "team_ids": [
+      768
+    ]
+  },
+  {
+    "source_name": "Leeds United",
+    "canonical_name": "Leeds",
+    "team_ids": [
+      2320
+    ]
+  },
+  {
+    "source_name": "Ipswich Town",
+    "canonical_name": "Ipswich",
+    "team_ids": [
+      2775
+    ]
+  },
+  {
+    "source_name": "Huddersfield Town",
+    "canonical_name": "Huddersfield",
+    "team_ids": [
+      1712
+    ]
+  },
+  {
+    "source_name": "Middlesbrough FC",
+    "canonical_name": "Middlesbrough",
+    "team_ids": [
+      1374
+    ]
+  },
+  {
+    "source_name": "Watford FC",
+    "canonical_name": "Watford",
+    "team_ids": [
+      1066
+    ]
+  },
+  {
+    "source_name": "Plymouth Argyle",
+    "canonical_name": "Plymouth",
+    "team_ids": [
+      85208
+    ]
+  },
+  {
+    "source_name": "Hull City",
+    "canonical_name": "Hull",
+    "team_ids": [
+      764
+    ]
+  },
+  {
+    "source_name": "Rotherham United",
+    "canonical_name": "Rotherham",
+    "team_ids": [
+      85202
+    ]
+  },
+  {
+    "source_name": "Cardiff City",
+    "canonical_name": "Cardiff",
+    "team_ids": [
+      1978
+    ]
+  },
+  {
+    "source_name": "Sheffield Wednesday",
+    "canonical_name": "Sheffield Weds",
+    "team_ids": [
+      85216
+    ]
+  },
+  {
+    "source_name": "Swansea City",
+    "canonical_name": "Swansea",
+    "team_ids": [
+      762
+    ]
+  },
+  {
+    "source_name": "Millwall FC",
+    "canonical_name": "Millwall",
+    "team_ids": [
+      85140
+    ]
+  },
+  {
+    "source_name": "West Bromwich Albion",
+    "canonical_name": "West Brom",
+    "team_ids": [
+      766
+    ]
+  },
+  {
+    "source_name": "Oxford United",
+    "canonical_name": "Oxford",
+    "team_ids": [
+      85214
+    ]
+  },
+  {
+    "source_name": "Portsmouth FC",
+    "canonical_name": "Portsmouth",
+    "team_ids": [
+      85141
+    ]
+  },
+  {
+    "source_name": "Coventry City",
+    "canonical_name": "Coventry",
+    "team_ids": [
+      84888
+    ]
+  },
+  {
+    "source_name": "Burnley FC",
+    "canonical_name": "Burnley",
+    "team_ids": [
+      1
+    ]
+  },
+  {
+    "source_name": "Queens Park Rangers",
+    "canonical_name": "QPR",
+    "team_ids": [
+      763
+    ]
+  },
+  {
+    "source_name": "Club Necaxa",
+    "canonical_name": "Necaxa",
+    "team_ids": [
+      32605
+    ]
+  },
+  {
+    "source_name": "Queretaro FC",
+    "canonical_name": "Queretaro",
+    "team_ids": [
+      31257
+    ]
+  },
+  {
+    "source_name": "CF Pachuca",
+    "canonical_name": "Pachuca",
+    "team_ids": [
+      31262
+    ]
+  },
+  {
+    "source_name": "Pumas UNAM",
+    "canonical_name": "UNAM Pumas",
+    "team_ids": [
+      31258
+    ]
+  },
+  {
+    "source_name": "CD Guadalajara",
+    "canonical_name": "Guadalajara Chivas",
+    "team_ids": [
+      31273
+    ]
+  },
+  {
+    "source_name": "Deportivo Toluca FC",
+    "canonical_name": "Toluca",
+    "team_ids": [
+      31271
+    ]
+  },
+  {
+    "source_name": "CF America",
+    "canonical_name": "Club America",
+    "team_ids": [
+      31268
+    ]
+  },
+  {
+    "source_name": "CF Cruz Azul",
+    "canonical_name": "Cruz Azul",
+    "team_ids": [
+      31261
+    ]
+  },
+  {
+    "source_name": "CF Monterrey",
+    "canonical_name": "Monterrey",
+    "team_ids": [
+      31265
+    ]
+  }
+]

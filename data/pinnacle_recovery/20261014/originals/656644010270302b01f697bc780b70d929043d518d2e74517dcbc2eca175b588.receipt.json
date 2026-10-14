@@ -1,0 +1,34 @@
+{
+  "url": "https://www.oddstrader.com/odds-v2/odds-v2-service?query=%7Bq0%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1775001600000%2ChoursRange%3A720%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq1%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1777593600000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq2%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1782864000000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq3%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1785542400000%2ChoursRange%3A744%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7Dq4%3A+eventsByDateNew%28lid%3A%5B4%5D%2CstartDate%3A1788220800000%2ChoursRange%3A720%2Climit%3A1000%2Cmtid%3A%5B1%5D%29%7Bevents%7Beid+lid+spid+des+dt+es+league%7Blid+nam+sn%7D+participants%7Bpartid+ih+source%7B...+on+Team%7Bnam+abbr%7D%7D%7D+scores%7Bpartid+pn+val%7D+currentLines%28paid%3A%5B20%5D%29%7D%7D%7D",
+  "tasks": [
+    [
+      "us.mls",
+      "2026-04"
+    ],
+    [
+      "us.mls",
+      "2026-05"
+    ],
+    [
+      "us.mls",
+      "2026-07"
+    ],
+    [
+      "us.mls",
+      "2026-08"
+    ],
+    [
+      "us.mls",
+      "2026-09"
+    ]
+  ],
+  "started_at": "2026-10-14T21:24:38.794036+00:00",
+  "received_at": "2026-10-14T21:24:41.378207+00:00",
+  "sha256": "7db7fd3d4eec47dc2f3974a34ef4ac03ef21f265ada6d9115d89c57f8541cadf",
+  "bytes": 166472,
+  "status": 200,
+  "cost_credits": 1,
+  "ok": true,
+  "exit_code": 0,
+  "run_id": "r-996bed36"
+}

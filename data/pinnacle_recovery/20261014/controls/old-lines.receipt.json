@@ -1,0 +1,7 @@
+{
+  "url": "https://www.oddstrader.com/odds-v2/odds-v2-service?query=%7B+old%3A+currentLines%28eid%3A%5B4736448%2C+4736473%2C+4736461%2C+4736441%2C+4736458%2C+4736450%2C+4736444%2C+4736456%2C+4736466%2C+4736469%5D%2Cmtid%3A%5B1%5D%2Cpaid%3A%5B10%2C20%5D%29+%7D",
+  "received_at": "2026-10-14T21:14:32.998410+00:00",
+  "sha256": "b8326d4464321915ad9ae8d6f4f0a8f2dc86e27690b89bc9bb377a91825497c3",
+  "bytes": 17110,
+  "provider_error": false
+}

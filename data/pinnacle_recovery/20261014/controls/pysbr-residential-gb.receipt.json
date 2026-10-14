@@ -1,0 +1,13 @@
+{
+  "original_pysbr_endpoint": "https://www.sportsbookreview.com/ms-odds-v2/odds-v2-service",
+  "effective_endpoint": "https://www.oddstrader.com/odds-v2/odds-v2-service",
+  "source_url": "https://www.oddstrader.com/odds-v2/odds-v2-service?query=%7B%0A++currentLines%28eid%3A+%5B4745590%5D%2C+mtid%3A+%5B1%5D%2C+paid%3A+%5B20%5D%29%0A%7D",
+  "transport": "ZenRows Universal Scraper API",
+  "premium_proxy": true,
+  "proxy_country": "gb",
+  "started_at": "2026-10-14T21:28:23.711674+00:00",
+  "received_at": "2026-10-14T21:28:25.581787+00:00",
+  "status": 200,
+  "bytes": 931,
+  "sha256": "7c9b844d34427f70286940320c823f9041538231eae203e6498f24688aa7f151"
+}

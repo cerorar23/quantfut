@@ -1,0 +1,45 @@
+{
+  "snapshot_checked_at": "2026-10-14T19:01:51.965792+00:00",
+  "events": 3624,
+  "qualified_triples": 586,
+  "candidates_missing_close": 272,
+  "candidate_by_league": {
+    "eu.ucl": 147,
+    "eu.uel": 114,
+    "gb.championship": 9,
+    "mx.liga_mx": 2
+  },
+  "statuses": {
+    "missing_close": 272,
+    "no_exact_fixture": 266,
+    "regulation_score_mismatch": 9,
+    "already_has_close": 39
+  },
+  "rejections": {
+    "no_pinnacle_lines": 2994,
+    "not_complete": 32,
+    "quote_older_than_24h": 12
+  },
+  "events_by_league": {
+    "eu.uel": 571,
+    "eu.ucl": 493,
+    "fr.ligue_1": 211,
+    "gb.championship": 529,
+    "de.bundesliga": 210,
+    "es.laliga": 314,
+    "it.serie_a": 266,
+    "mx.liga_mx": 312,
+    "us.mls": 474,
+    "gb.premier_league": 244
+  },
+  "qualified_by_league": {
+    "eu.ucl": 252,
+    "eu.uel": 283,
+    "gb.championship": 34,
+    "mx.liga_mx": 17
+  },
+  "database_writes": 0,
+  "verified_final_closes": 0,
+  "limitation": "currentLines returns latest archived quotes. Full history/final closing completeness not verified; all exports require review before treating as closes.",
+  "methods": "paid20/mtid1, three valid prices, all updates before kickoff and within 24h, exact normalized registered names/aliases plus explicit reviewed equivalences, unique fixture within36h, matching regulation score, no fuzzy matching"
+}

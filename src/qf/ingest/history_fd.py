@@ -183,8 +183,9 @@ def completar_cierres(ligas: list[str] | None = None, seasons: list[str] | None 
                       desde: str = "2024-01-01", aplicar: bool = False) -> dict:
     """
     Cierre de Pinnacle de football-data para partidos YA cargados que no lo tienen. Por defecto
-    es un ensayo. Los CSV de las ligas europeas dejaron de traer Pinnacle hacia enero de 2026; los
-    «extra» (México, Argentina, Brasil, MLS) lo siguen trayendo.
+    es un ensayo. Solo se aceptan PSCH/PSCD/PSCA. La presencia de esas columnas
+    en un CSV no garantiza cobertura reciente: la descarga del 14-oct-2026
+    tampoco encontró cierres nuevos en México, Argentina, Brasil ni MLS.
     """
     from ..db import conn
 

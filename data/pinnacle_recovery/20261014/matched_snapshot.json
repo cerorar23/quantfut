@@ -1,0 +1,4310 @@
+{
+  "checked_at": "2026-10-14T19:01:51.965792+00:00",
+  "matches": [
+    {
+      "match_id": "eu.uel:2324:benfica-toulouse:20240215",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-15 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 68871,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:villarreal-marseille:20240314",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-14 18:45:00+00:00",
+      "home_team_id": 2980,
+      "away_team_id": 68859,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:feyenoord-fenerbahce:20250806",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-06 19:00:00+00:00",
+      "home_team_id": 21218,
+      "away_team_id": 85065,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:fenerbahce-feyenoord:20250812",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-12 17:00:00+00:00",
+      "home_team_id": 85065,
+      "away_team_id": 21218,
+      "home_goals": 5,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:nice-benfica:20250806",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-06 19:00:00+00:00",
+      "home_team_id": 68870,
+      "away_team_id": 77426,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:benfica-nice:20250812",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-12 19:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 68870,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:malmoff-copenhagen:20250805",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-05 17:00:00+00:00",
+      "home_team_id": 85128,
+      "away_team_id": 85092,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:basel1893-copenhagen:20250820",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-20 19:00:00+00:00",
+      "home_team_id": 85078,
+      "away_team_id": 85092,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:benfica-fenerbahce:20250827",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-27 19:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 85065,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:copenhagen-malmoff:20250812",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-12 17:00:00+00:00",
+      "home_team_id": 85092,
+      "away_team_id": 85128,
+      "home_goals": 5,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:fenerbahce-benfica:20250820",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-20 19:00:00+00:00",
+      "home_team_id": 85065,
+      "away_team_id": 77426,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2526:copenhagen-basel1893:20250827",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-08-27 19:00:00+00:00",
+      "home_team_id": 85092,
+      "away_team_id": 85078,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2526:fredrikstad-midtjylland:20250807",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-08-07 16:00:00+00:00",
+      "home_team_id": 85104,
+      "away_team_id": 85093,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2526:hacken-brann:20250807",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-08-07 17:00:00+00:00",
+      "home_team_id": 85118,
+      "away_team_id": 85103,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2526:midtjylland-fredrikstad:20250814",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-08-14 16:00:00+00:00",
+      "home_team_id": 85093,
+      "away_team_id": 85104,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2526:utrecht-servette:20250814",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-08-14 18:00:00+00:00",
+      "home_team_id": 21206,
+      "away_team_id": 85088,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2526:servette-utrecht:20250807",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-08-07 18:30:00+00:00",
+      "home_team_id": 85088,
+      "away_team_id": 21206,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2526:brann-hacken:20250814",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-08-14 17:00:00+00:00",
+      "home_team_id": 85103,
+      "away_team_id": 85118,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:parissg-realsocieda:20240214",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-02-14 21:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 2978,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:lazio-bayernmunic:20240214",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-02-14 21:00:00+00:00",
+      "home_team_id": 12096,
+      "away_team_id": 61440,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4384183",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-02-13 20:00:00+00:00",
+      "home_team_id": 85092,
+      "away_team_id": 2,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:rbleipzig-realmadrid:20240213",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-02-13 21:00:00+00:00",
+      "home_team_id": 62681,
+      "away_team_id": 2981,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:feyenoord-roma:20240215",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-15 18:45:00+00:00",
+      "home_team_id": 21218,
+      "away_team_id": 12087,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:milan-rennes:20240215",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-15 21:00:00+00:00",
+      "home_team_id": 12095,
+      "away_team_id": 68873,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:lens-freiburg:20240215",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-15 21:00:00+00:00",
+      "home_team_id": 68869,
+      "away_team_id": 61445,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4384257",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-15 17:45:00+00:00",
+      "home_team_id": 85077,
+      "away_team_id": 77423,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:napoli-barcelona:20240221",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-02-21 21:00:00+00:00",
+      "home_team_id": 12094,
+      "away_team_id": 2973,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:internaziona-atleticomad:20240220",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-02-20 21:00:00+00:00",
+      "home_team_id": 12102,
+      "away_team_id": 2984,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:psveindhove-dortmund:20240220",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-02-20 21:00:00+00:00",
+      "home_team_id": 21222,
+      "away_team_id": 61442,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:roma-feyenoord:20240222",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-22 21:00:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 21218,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:rennes-milan:20240222",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-22 18:45:00+00:00",
+      "home_team_id": 68873,
+      "away_team_id": 12095,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4384258",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-22 20:00:00+00:00",
+      "home_team_id": 77423,
+      "away_team_id": 85077,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:toulouse-benfica:20240222",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-02-22 18:45:00+00:00",
+      "home_team_id": 68871,
+      "away_team_id": 77426,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:realsocieda-parissg:20240305",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-03-05 21:00:00+00:00",
+      "home_team_id": 2978,
+      "away_team_id": 68857,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:bayernmunic-lazio:20240305",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-03-05 21:00:00+00:00",
+      "home_team_id": 61440,
+      "away_team_id": 12096,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4384191",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-03-06 20:00:00+00:00",
+      "home_team_id": 2,
+      "away_team_id": 85092,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:realmadrid-rbleipzig:20240306",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-03-06 21:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 62681,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:barcelona-napoli:20240312",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-03-12 21:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 12094,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:dortmund-psveindhove:20240313",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-03-13 21:00:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 21222,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:parissg-dortmund:20240507",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-05-07 21:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 61442,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:realmadrid-bayernmunic:20240508",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-05-08 21:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 61440,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:atalanta-marseille:20240509",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-05-09 21:00:00+00:00",
+      "home_team_id": 12089,
+      "away_team_id": 68859,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:leverkusen-roma:20240509",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-05-09 21:00:00+00:00",
+      "home_team_id": 61443,
+      "away_team_id": 12087,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "mx.liga_mx:2324:unampumas-cruzazul:20240510",
+      "league_id": "mx.liga_mx",
+      "kickoff_utc": "2024-05-10 02:00:00+00:00",
+      "home_team_id": 31258,
+      "away_team_id": 31261,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4473659",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2024-05-12 13:15:00+00:00",
+      "home_team_id": 766,
+      "away_team_id": 768,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4473658",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2024-05-16 19:00:00+00:00",
+      "home_team_id": 2320,
+      "away_team_id": 1069,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4473660",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2024-05-17 19:00:00+00:00",
+      "home_team_id": 768,
+      "away_team_id": 766,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:dortmund-realmadrid:20240601",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-06-01 20:00:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 2981,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:atalanta-leverkusen:20240522",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-05-22 20:00:00+00:00",
+      "home_team_id": 12089,
+      "away_team_id": 61443,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4473671",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2024-05-26 14:00:00+00:00",
+      "home_team_id": 2320,
+      "away_team_id": 768,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:manchesterc-internaziona:20240918",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-18 20:00:00+00:00",
+      "home_team_id": 2,
+      "away_team_id": 12102,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:atleticomad-rbleipzig:20240919",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-19 21:00:00+00:00",
+      "home_team_id": 2984,
+      "away_team_id": 62681,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:monaco-barcelona:20240919",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-19 21:00:00+00:00",
+      "home_team_id": 68874,
+      "away_team_id": 2973,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:realmadrid-stuttgart:20240917",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-17 21:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 61455,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:milan-liverpool:20240917",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-17 21:00:00+00:00",
+      "home_team_id": 12095,
+      "away_team_id": 18,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:feyenoord-leverkusen:20240919",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-19 18:45:00+00:00",
+      "home_team_id": 21218,
+      "away_team_id": 61443,
+      "home_goals": 0,
+      "away_goals": 4,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-girona:20240918",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-18 21:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 5251,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:atalanta-arsenal:20240919",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-19 21:00:00+00:00",
+      "home_team_id": 12089,
+      "away_team_id": 3,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:juventus-psveindhove:20240917",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-17 18:45:00+00:00",
+      "home_team_id": 12086,
+      "away_team_id": 21222,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:sporting-lille:20240917",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-17 20:00:00+00:00",
+      "home_team_id": 77423,
+      "away_team_id": 68864,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4621648",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-09-17 16:45:00+00:00",
+      "home_team_id": 85077,
+      "away_team_id": 14,
+      "home_goals": 0,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:roma-athletic:20240926",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-09-26 21:00:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 2970,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:manchesteru-twente:20240925",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-09-25 20:00:00+00:00",
+      "home_team_id": 19,
+      "away_team_id": 21208,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622050",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-09-26 19:00:00+00:00",
+      "home_team_id": 21215,
+      "away_team_id": 85062,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622083",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-09-25 16:45:00+00:00",
+      "home_team_id": 21212,
+      "away_team_id": 85125,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622111",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-09-25 19:00:00+00:00",
+      "home_team_id": 85093,
+      "away_team_id": 61452,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622116",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-09-25 16:45:00+00:00",
+      "home_team_id": 85102,
+      "away_team_id": 77420,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:nice-realsocieda:20240925",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-09-25 21:00:00+00:00",
+      "home_team_id": 68870,
+      "away_team_id": 2978,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:astonvilla-bayernmunic:20241002",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-02 20:00:00+00:00",
+      "home_team_id": 14,
+      "away_team_id": 61440,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:rbleipzig-juventus:20241002",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-02 21:00:00+00:00",
+      "home_team_id": 62681,
+      "away_team_id": 12086,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4621538",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-01 19:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 85077,
+      "home_goals": 5,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:lille-realmadrid:20241002",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-02 21:00:00+00:00",
+      "home_team_id": 68864,
+      "away_team_id": 2981,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:liverpool-bologna:20241002",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-02 20:00:00+00:00",
+      "home_team_id": 18,
+      "away_team_id": 12846,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:leverkusen-milan:20241001",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-01 21:00:00+00:00",
+      "home_team_id": 61443,
+      "away_team_id": 12095,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:benfica-atleticomad:20241002",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-02 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 2984,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:girona-feyenoord:20241002",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-02 18:45:00+00:00",
+      "home_team_id": 5251,
+      "away_team_id": 21218,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:psveindhove-sporting:20241001",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-01 21:00:00+00:00",
+      "home_team_id": 21222,
+      "away_team_id": 77423,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:porto-manchesteru:20241003",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-03 20:00:00+00:00",
+      "home_team_id": 77420,
+      "away_team_id": 19,
+      "home_goals": 3,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:lazio-nice:20241003",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-03 18:45:00+00:00",
+      "home_team_id": 12096,
+      "away_team_id": 68870,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622124",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-03 19:00:00+00:00",
+      "home_team_id": 85062,
+      "away_team_id": 61444,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622133",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-03 19:00:00+00:00",
+      "home_team_id": 21208,
+      "away_team_id": 85065,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622137",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-03 19:00:00+00:00",
+      "home_team_id": 85125,
+      "away_team_id": 12087,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:athletic-azalkmaar:20241003",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-03 21:00:00+00:00",
+      "home_team_id": 2970,
+      "away_team_id": 21212,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4621505",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-23 19:00:00+00:00",
+      "home_team_id": 85077,
+      "away_team_id": 12102,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:barcelona-bayernmunic:20241023",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-23 21:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 61440,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:rbleipzig-liverpool:20241023",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-23 21:00:00+00:00",
+      "home_team_id": 62681,
+      "away_team_id": 18,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:realmadrid-dortmund:20241022",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-22 21:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 61442,
+      "home_goals": 5,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:brest-leverkusen:20241023",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-23 18:45:00+00:00",
+      "home_team_id": 72662,
+      "away_team_id": 61443,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:atleticomad-lille:20241023",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-23 21:00:00+00:00",
+      "home_team_id": 2984,
+      "away_team_id": 68864,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-psveindhove:20241022",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-22 21:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 21222,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:juventus-stuttgart:20241022",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-22 21:00:00+00:00",
+      "home_team_id": 12086,
+      "away_team_id": 61455,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:benfica-feyenoord:20241023",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-23 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 21218,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:astonvilla-bologna:20241022",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-10-22 20:00:00+00:00",
+      "home_team_id": 14,
+      "away_team_id": 12846,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:porto-hoffenheim:20241024",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-24 20:00:00+00:00",
+      "home_team_id": 77420,
+      "away_team_id": 61452,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622055",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-24 19:00:00+00:00",
+      "home_team_id": 85065,
+      "away_team_id": 19,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622070",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-23 14:30:00+00:00",
+      "home_team_id": 77434,
+      "away_team_id": 85102,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622087",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-24 19:00:00+00:00",
+      "home_team_id": 68872,
+      "away_team_id": 85062,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622103",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-23 14:30:00+00:00",
+      "home_team_id": 85066,
+      "away_team_id": 85125,
+      "home_goals": 4,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:tottenham-azalkmaar:20241024",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-24 20:00:00+00:00",
+      "home_team_id": 16,
+      "away_team_id": 21212,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:twente-lazio:20241024",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-10-24 21:00:00+00:00",
+      "home_team_id": 21208,
+      "away_team_id": 12096,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:sporting-manchesterc:20241105",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-05 20:00:00+00:00",
+      "home_team_id": 77423,
+      "away_team_id": 2,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:internaziona-arsenal:20241106",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-06 21:00:00+00:00",
+      "home_team_id": 12102,
+      "away_team_id": 3,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:bayernmunic-benfica:20241106",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-06 21:00:00+00:00",
+      "home_team_id": 61440,
+      "away_team_id": 77426,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:realmadrid-milan:20241105",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-05 21:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 12095,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:liverpool-leverkusen:20241105",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-05 20:00:00+00:00",
+      "home_team_id": 18,
+      "away_team_id": 61443,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-atleticomad:20241106",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-06 21:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 2984,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:stuttgart-atalanta:20241106",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-06 21:00:00+00:00",
+      "home_team_id": 61455,
+      "away_team_id": 12089,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:lille-juventus:20241105",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-05 21:00:00+00:00",
+      "home_team_id": 68864,
+      "away_team_id": 12086,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:psveindhove-girona:20241105",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-05 18:45:00+00:00",
+      "home_team_id": 21222,
+      "away_team_id": 5251,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:bologna-monaco:20241105",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-05 21:00:00+00:00",
+      "home_team_id": 12846,
+      "away_team_id": 68874,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:lazio-porto:20241107",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-07 21:00:00+00:00",
+      "home_team_id": 12096,
+      "away_team_id": 77420,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622081",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-07 20:00:00+00:00",
+      "home_team_id": 21212,
+      "away_team_id": 85065,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622100",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-07 17:45:00+00:00",
+      "home_team_id": 85066,
+      "away_team_id": 16,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622126",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-06 15:30:00+00:00",
+      "home_team_id": 85062,
+      "away_team_id": 85128,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:hoffenheim-lyon:20241107",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-07 21:00:00+00:00",
+      "home_team_id": 61452,
+      "away_team_id": 68872,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622138",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-07 17:45:00+00:00",
+      "home_team_id": 85125,
+      "away_team_id": 77434,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:nice-twente:20241107",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-07 18:45:00+00:00",
+      "home_team_id": 68870,
+      "away_team_id": 21208,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:manchesterc-feyenoord:20241126",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-26 20:00:00+00:00",
+      "home_team_id": 2,
+      "away_team_id": 21218,
+      "home_goals": 3,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:internaziona-rbleipzig:20241126",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-26 21:00:00+00:00",
+      "home_team_id": 12102,
+      "away_team_id": 62681,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:bayernmunic-parissg:20241126",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-26 21:00:00+00:00",
+      "home_team_id": 61440,
+      "away_team_id": 68857,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:barcelona-brest:20241126",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-26 21:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 72662,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:liverpool-realmadrid:20241127",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-27 20:00:00+00:00",
+      "home_team_id": 18,
+      "away_team_id": 2981,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4621586",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-26 20:00:00+00:00",
+      "home_team_id": 85077,
+      "away_team_id": 12089,
+      "home_goals": 1,
+      "away_goals": 6,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:astonvilla-juventus:20241127",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-27 20:00:00+00:00",
+      "home_team_id": 14,
+      "away_team_id": 12086,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:monaco-benfica:20241127",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-27 21:00:00+00:00",
+      "home_team_id": 68874,
+      "away_team_id": 77426,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:bologna-lille:20241127",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-11-27 21:00:00+00:00",
+      "home_team_id": 12846,
+      "away_team_id": 68864,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622037",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-28 20:00:00+00:00",
+      "home_team_id": 19,
+      "away_team_id": 85102,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:tottenham-roma:20241128",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-28 20:00:00+00:00",
+      "home_team_id": 16,
+      "away_team_id": 12087,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:braga-hoffenheim:20241128",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-28 20:00:00+00:00",
+      "home_team_id": 77434,
+      "away_team_id": 61452,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:realsocieda-ajax:20241128",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-28 21:00:00+00:00",
+      "home_team_id": 2978,
+      "away_team_id": 21215,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622082",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-28 17:45:00+00:00",
+      "home_team_id": 21212,
+      "away_team_id": 85066,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622108",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-28 20:00:00+00:00",
+      "home_team_id": 85093,
+      "away_team_id": 61444,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622145",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-11-28 17:45:00+00:00",
+      "home_team_id": 2970,
+      "away_team_id": 85125,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:juventus-manchesterc:20241211",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-11 21:00:00+00:00",
+      "home_team_id": 12086,
+      "away_team_id": 2,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:leverkusen-internaziona:20241210",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-10 21:00:00+00:00",
+      "home_team_id": 61443,
+      "away_team_id": 12102,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:rbleipzig-astonvilla:20241210",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-10 21:00:00+00:00",
+      "home_team_id": 62681,
+      "away_team_id": 14,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:dortmund-barcelona:20241211",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-11 21:00:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 2973,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:atalanta-realmadrid:20241210",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-10 21:00:00+00:00",
+      "home_team_id": 12089,
+      "away_team_id": 2981,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:girona-liverpool:20241210",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-10 18:45:00+00:00",
+      "home_team_id": 5251,
+      "away_team_id": 18,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:benfica-bologna:20241211",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-11 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 12846,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:brest-psveindhove:20241210",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-10 21:00:00+00:00",
+      "home_team_id": 72662,
+      "away_team_id": 21222,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4621649",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-12-11 20:00:00+00:00",
+      "home_team_id": 61455,
+      "away_team_id": 85077,
+      "home_goals": 5,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:roma-braga:20241212",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-12-12 18:45:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 77434,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622028",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-12-12 20:00:00+00:00",
+      "home_team_id": 77420,
+      "away_team_id": 85093,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:ajax-lazio:20241212",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-12-12 21:00:00+00:00",
+      "home_team_id": 21215,
+      "away_team_id": 12096,
+      "home_goals": 1,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622058",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-12-11 15:30:00+00:00",
+      "home_team_id": 85065,
+      "away_team_id": 2970,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:lyon-eintfrankfu:20241212",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-12-12 21:00:00+00:00",
+      "home_team_id": 68872,
+      "away_team_id": 61444,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622098",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-12-12 17:45:00+00:00",
+      "home_team_id": 85128,
+      "away_team_id": 85066,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4622119",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-12-12 20:00:00+00:00",
+      "home_team_id": 85102,
+      "away_team_id": 85062,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:bologna-dortmund:20250121",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-21 20:00:00+00:00",
+      "home_team_id": 12846,
+      "away_team_id": 61442,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:benfica-barcelona:20250121",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-21 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 2973,
+      "home_goals": 4,
+      "away_goals": 5,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:liverpool-lille:20250121",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-21 20:00:00+00:00",
+      "home_team_id": 18,
+      "away_team_id": 68864,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:milan-girona:20250122",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-22 20:00:00+00:00",
+      "home_team_id": 12095,
+      "away_team_id": 5251,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:monaco-astonvilla:20250121",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-21 17:45:00+00:00",
+      "home_team_id": 68874,
+      "away_team_id": 14,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:lazio-sociedad:20250123",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-23 20:00:00+00:00",
+      "home_team_id": 12096,
+      "away_team_id": 2978,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:azalkmaar-roma:20250123",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-23 17:45:00+00:00",
+      "home_team_id": 21212,
+      "away_team_id": 12087,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:malmoff-twente:20250123",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-23 17:45:00+00:00",
+      "home_team_id": 85128,
+      "away_team_id": 21208,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:elfsborg-nice:20250123",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-23 20:00:00+00:00",
+      "home_team_id": 85125,
+      "away_team_id": 68870,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:barcelona-atalanta:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 12089,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:psveindhove-liverpool:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 21222,
+      "away_team_id": 18,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:stuttgart-parissg:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 61455,
+      "away_team_id": 68857,
+      "home_goals": 1,
+      "away_goals": 4,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:juventus-benfica:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 12086,
+      "away_team_id": 77426,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:girona-arsenal:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 5251,
+      "away_team_id": 3,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:lille-feyenoord:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 68864,
+      "away_team_id": 21218,
+      "home_goals": 6,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:splisbon-bologna:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 77423,
+      "away_team_id": 12846,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:roma-einfrankfur:20250130",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-30 20:00:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 61444,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:tottenham-elfsborg:20250130",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-30 20:00:00+00:00",
+      "home_team_id": 16,
+      "away_team_id": 85125,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:ajax-galatasaray:20250130",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-30 20:00:00+00:00",
+      "home_team_id": 21215,
+      "away_team_id": 85066,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:spbraga-lazio:20250130",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-30 20:00:00+00:00",
+      "home_team_id": 77434,
+      "away_team_id": 12096,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:midtjylland-fenerbahce:20250130",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-30 20:00:00+00:00",
+      "home_team_id": 85093,
+      "away_team_id": 85065,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:nice-bodoglimt:20250130",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-30 20:00:00+00:00",
+      "home_team_id": 68870,
+      "away_team_id": 85102,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:feyenoord-milan:20250212",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-12 20:00:00+00:00",
+      "home_team_id": 21218,
+      "away_team_id": 12095,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:twente-bodoglimt:20250213",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-02-13 20:00:00+00:00",
+      "home_team_id": 21208,
+      "away_team_id": 85102,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:azalkmaar-galatasaray:20250213",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-02-13 20:00:00+00:00",
+      "home_team_id": 21212,
+      "away_team_id": 85066,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:midtjylland-sociedad:20250213",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-02-13 17:45:00+00:00",
+      "home_team_id": 85093,
+      "away_team_id": 2978,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:porto-roma:20250213",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-02-13 20:00:00+00:00",
+      "home_team_id": 77420,
+      "away_team_id": 12087,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:dortmund-splisbon:20250219",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-19 17:45:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 77423,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:realmadrid-manchesterc:20250219",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-19 20:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 2,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-brest:20250219",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-19 20:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 72662,
+      "home_goals": 7,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:benfica-monaco:20250218",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-18 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 68874,
+      "home_goals": 3,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:galatasaray-azalkmaar:20250220",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-02-20 17:45:00+00:00",
+      "home_team_id": 85066,
+      "away_team_id": 21212,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:sociedad-midtjylland:20250220",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-02-20 20:00:00+00:00",
+      "home_team_id": 2978,
+      "away_team_id": 85093,
+      "home_goals": 5,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:roma-porto:20250220",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-02-20 17:45:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 77420,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:realmadrid-athmadrid:20250304",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-04 20:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 2984,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:bayernmunic-leverkusen:20250305",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-05 20:00:00+00:00",
+      "home_team_id": 61440,
+      "away_team_id": 61443,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:psveindhove-arsenal:20250304",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-04 20:00:00+00:00",
+      "home_team_id": 21222,
+      "away_team_id": 3,
+      "home_goals": 1,
+      "away_goals": 7,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:feyenoord-internaziona:20250305",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-05 17:45:00+00:00",
+      "home_team_id": 21218,
+      "away_team_id": 12102,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-liverpool:20250305",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-05 20:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 18,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:ajax-einfrankfur:20250306",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-06 20:00:00+00:00",
+      "home_team_id": 21215,
+      "away_team_id": 61444,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:azalkmaar-tottenham:20250306",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-06 17:45:00+00:00",
+      "home_team_id": 21212,
+      "away_team_id": 16,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:sociedad-manchesteru:20250306",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-06 17:45:00+00:00",
+      "home_team_id": 2978,
+      "away_team_id": 19,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:roma-athbilbao:20250306",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-06 20:00:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 2970,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:athmadrid-realmadrid:20250312",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-12 20:00:00+00:00",
+      "home_team_id": 2984,
+      "away_team_id": 2981,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:leverkusen-bayernmunic:20250311",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-11 20:00:00+00:00",
+      "home_team_id": 61443,
+      "away_team_id": 61440,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:arsenal-psveindhove:20250312",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-12 20:00:00+00:00",
+      "home_team_id": 3,
+      "away_team_id": 21222,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:internaziona-feyenoord:20250311",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-11 20:00:00+00:00",
+      "home_team_id": 12102,
+      "away_team_id": 21218,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:liverpool-parissg:20250311",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-11 20:00:00+00:00",
+      "home_team_id": 18,
+      "away_team_id": 68857,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:barcelona-benfica:20250311",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-11 17:45:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 77426,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:einfrankfur-ajax:20250313",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-13 17:45:00+00:00",
+      "home_team_id": 61444,
+      "away_team_id": 21215,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:tottenham-azalkmaar:20250313",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-13 20:00:00+00:00",
+      "home_team_id": 16,
+      "away_team_id": 21212,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:manchesteru-sociedad:20250313",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-13 20:00:00+00:00",
+      "home_team_id": 19,
+      "away_team_id": 2978,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-astonvilla:20250409",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-09 19:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 14,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:arsenal-realmadrid:20250408",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-08 19:00:00+00:00",
+      "home_team_id": 3,
+      "away_team_id": 2981,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:barcelona-dortmund:20250409",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-09 19:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 61442,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:bayernmunic-internaziona:20250408",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-08 19:00:00+00:00",
+      "home_team_id": 61440,
+      "away_team_id": 12102,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:bodoglimt-lazio:20250410",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-04-10 16:45:00+00:00",
+      "home_team_id": 85102,
+      "away_team_id": 12096,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:tottenham-einfrankfur:20250410",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-04-10 19:00:00+00:00",
+      "home_team_id": 16,
+      "away_team_id": 61444,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:lyon-manchesteru:20250410",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-04-10 19:00:00+00:00",
+      "home_team_id": 68872,
+      "away_team_id": 19,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:astonvilla-parissg:20250415",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-15 19:00:00+00:00",
+      "home_team_id": 14,
+      "away_team_id": 68857,
+      "home_goals": 3,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:realmadrid-arsenal:20250416",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-16 19:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 3,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:dortmund-barcelona:20250415",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-15 19:00:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 2973,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:internaziona-bayernmunic:20250416",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-16 19:00:00+00:00",
+      "home_team_id": 12102,
+      "away_team_id": 61440,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:einfrankfur-tottenham:20250417",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-04-17 19:00:00+00:00",
+      "home_team_id": 61444,
+      "away_team_id": 16,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:arsenal-parissg:20250429",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-29 19:00:00+00:00",
+      "home_team_id": 3,
+      "away_team_id": 68857,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:barcelona-internaziona:20250430",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-04-30 19:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 12102,
+      "home_goals": 3,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:tottenham-bodoglimt:20250501",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-05-01 19:00:00+00:00",
+      "home_team_id": 16,
+      "away_team_id": 85102,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-arsenal:20250507",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-05-07 19:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 3,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:manchesteru-athbilbao:20250508",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-05-08 19:00:00+00:00",
+      "home_team_id": 19,
+      "away_team_id": 2970,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4783296",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2025-05-08 19:00:00+00:00",
+      "home_team_id": 85136,
+      "away_team_id": 11,
+      "home_goals": 0,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4783297",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2025-05-09 19:00:00+00:00",
+      "home_team_id": 84888,
+      "away_team_id": 767,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4783298",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2025-05-12 19:00:00+00:00",
+      "home_team_id": 11,
+      "away_team_id": 85136,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4785697",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2025-05-24 14:01:00+00:00",
+      "home_team_id": 11,
+      "away_team_id": 767,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-internaziona:20250531",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-05-31 19:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 12102,
+      "home_goals": 5,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:parissg-manchesterc:20250122",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-22 20:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 2,
+      "home_goals": 4,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:rbleipzig-splisbon:20250122",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-22 17:45:00+00:00",
+      "home_team_id": 62681,
+      "away_team_id": 77423,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:athmadrid-leverkusen:20250121",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-21 20:00:00+00:00",
+      "home_team_id": 2984,
+      "away_team_id": 61443,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:twente-besiktas:20250130",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-30 20:00:00+00:00",
+      "home_team_id": 21208,
+      "away_team_id": 85062,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:manchesterc-realmadrid:20250211",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-11 20:00:00+00:00",
+      "home_team_id": 2,
+      "away_team_id": 2981,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:juventus-psveindhove:20250211",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-11 20:00:00+00:00",
+      "home_team_id": 12086,
+      "away_team_id": 21222,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:dortmund-lille:20250304",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-04 20:00:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 68864,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:benfica-barcelona:20250305",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-05 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 2973,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:lille-dortmund:20250312",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-03-12 17:45:00+00:00",
+      "home_team_id": 68864,
+      "away_team_id": 61442,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:athbilbao-roma:20250313",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-03-13 17:45:00+00:00",
+      "home_team_id": 2970,
+      "away_team_id": 12087,
+      "home_goals": 3,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:internaziona-monaco:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 12102,
+      "away_team_id": 68874,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:feyenoord-bayernmunic:20250122",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-22 20:00:00+00:00",
+      "home_team_id": 21218,
+      "away_team_id": 61440,
+      "home_goals": 3,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:brest-realmadrid:20250129",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-01-29 20:00:00+00:00",
+      "home_team_id": 72662,
+      "away_team_id": 2981,
+      "home_goals": 0,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:fenerbahce-lyon:20250123",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-23 17:45:00+00:00",
+      "home_team_id": 85065,
+      "away_team_id": 68872,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:besiktas-athbilbao:20250122",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-22 15:30:00+00:00",
+      "home_team_id": 85062,
+      "away_team_id": 2970,
+      "home_goals": 4,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:hoffenheim-tottenham:20250123",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-01-23 17:45:00+00:00",
+      "home_team_id": 61452,
+      "away_team_id": 16,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:splisbon-dortmund:20250211",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-11 20:00:00+00:00",
+      "home_team_id": 77423,
+      "away_team_id": 61442,
+      "home_goals": 0,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:brest-parissg:20250211",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-11 17:45:00+00:00",
+      "home_team_id": 72662,
+      "away_team_id": 68857,
+      "home_goals": 0,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:milan-feyenoord:20250218",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-18 17:45:00+00:00",
+      "home_team_id": 12095,
+      "away_team_id": 21218,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2425:monaco-benfica:20250212",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2025-02-12 20:00:00+00:00",
+      "home_team_id": 68874,
+      "away_team_id": 77426,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:athbilbao-manchesteru:20250501",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-05-01 19:00:00+00:00",
+      "home_team_id": 2970,
+      "away_team_id": 19,
+      "home_goals": 0,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:bodoglimt-tottenham:20250508",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-05-08 19:00:00+00:00",
+      "home_team_id": 85102,
+      "away_team_id": 16,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2425:tottenham-manchesteru:20250521",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2025-05-21 19:00:00+00:00",
+      "home_team_id": 16,
+      "away_team_id": 19,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:roma-brighton:20240307",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-07 18:45:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 7,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:freiburg-westham:20240307",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-07 21:00:00+00:00",
+      "home_team_id": 61445,
+      "away_team_id": 6,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:sporting-atalanta:20240306",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-06 17:45:00+00:00",
+      "home_team_id": 77423,
+      "away_team_id": 12089,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:westham-freiburg:20240314",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-14 17:45:00+00:00",
+      "home_team_id": 6,
+      "away_team_id": 61445,
+      "home_goals": 5,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:atleticomad-dortmund:20240410",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-04-10 21:00:00+00:00",
+      "home_team_id": 2984,
+      "away_team_id": 61442,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:parissg-barcelona:20240410",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-04-10 21:00:00+00:00",
+      "home_team_id": 68857,
+      "away_team_id": 2973,
+      "home_goals": 2,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:milan-roma:20240411",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-04-11 21:00:00+00:00",
+      "home_team_id": 12095,
+      "away_team_id": 12087,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:liverpool-atalanta:20240411",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-04-11 20:00:00+00:00",
+      "home_team_id": 18,
+      "away_team_id": 12089,
+      "home_goals": 0,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:leverkusen-westham:20240411",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-04-11 21:00:00+00:00",
+      "home_team_id": 61443,
+      "away_team_id": 6,
+      "home_goals": 2,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:benfica-marseille:20240411",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-04-11 20:00:00+00:00",
+      "home_team_id": 77426,
+      "away_team_id": 68859,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:dortmund-atleticomad:20240416",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-04-16 21:00:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 2984,
+      "home_goals": 4,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:manchesterc-realmadrid:20240417",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-04-17 20:00:00+00:00",
+      "home_team_id": 2,
+      "away_team_id": 2981,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:roma-milan:20240418",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-04-18 21:00:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 12095,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:atalanta-liverpool:20240418",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-04-18 21:00:00+00:00",
+      "home_team_id": 12089,
+      "away_team_id": 18,
+      "home_goals": 0,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:westham-leverkusen:20240418",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-04-18 20:00:00+00:00",
+      "home_team_id": 6,
+      "away_team_id": 61443,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:marseille-atalanta:20240502",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-05-02 21:00:00+00:00",
+      "home_team_id": 68859,
+      "away_team_id": 12089,
+      "home_goals": 1,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:roma-leverkusen:20240502",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-05-02 21:00:00+00:00",
+      "home_team_id": 12087,
+      "away_team_id": 61443,
+      "home_goals": 0,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "mx.liga_mx:2324:tigresuanl-monterrey:20240510",
+      "league_id": "mx.liga_mx",
+      "kickoff_utc": "2024-05-10 04:10:00+00:00",
+      "home_team_id": 31270,
+      "away_team_id": 31265,
+      "home_goals": 1,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:marseille-villarreal:20240307",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-07 21:00:00+00:00",
+      "home_team_id": 68859,
+      "away_team_id": 2980,
+      "home_goals": 4,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:brighton-roma:20240314",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-14 20:00:00+00:00",
+      "home_team_id": 7,
+      "away_team_id": 12087,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.uel:2324:atalanta-sporting:20240314",
+      "league_id": "eu.uel",
+      "kickoff_utc": "2024-03-14 21:00:00+00:00",
+      "home_team_id": 12089,
+      "away_team_id": 77423,
+      "home_goals": 2,
+      "away_goals": 1,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:realmadrid-manchesterc:20240409",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-04-09 21:00:00+00:00",
+      "home_team_id": 2981,
+      "away_team_id": 2,
+      "home_goals": 3,
+      "away_goals": 3,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:barcelona-parissg:20240416",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-04-16 21:00:00+00:00",
+      "home_team_id": 2973,
+      "away_team_id": 68857,
+      "home_goals": 1,
+      "away_goals": 4,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:dortmund-parissg:20240501",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-05-01 21:00:00+00:00",
+      "home_team_id": 61442,
+      "away_team_id": 68857,
+      "home_goals": 1,
+      "away_goals": 0,
+      "close_selections": 0
+    },
+    {
+      "match_id": "eu.ucl:2324:bayernmunic-realmadrid:20240430",
+      "league_id": "eu.ucl",
+      "kickoff_utc": "2024-04-30 21:00:00+00:00",
+      "home_team_id": 61440,
+      "away_team_id": 2981,
+      "home_goals": 2,
+      "away_goals": 2,
+      "close_selections": 0
+    },
+    {
+      "match_id": "fotmob:4473657",
+      "league_id": "gb.championship",
+      "kickoff_utc": "2024-05-12 11:00:00+00:00",
+      "home_team_id": 1069,
+      "away_team_id": 2320,
+      "home_goals": 0,
+      "away_goals": 0,
+      "close_selections": 0
+    }
+  ],
+  "teams": [
+    {
+      "team_id": 6,
+      "league_id": "gb.premier_league",
+      "canonical_name": "West Ham"
+    },
+    {
+      "team_id": 11,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Sheffield United"
+    },
+    {
+      "team_id": 768,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Southampton"
+    },
+    {
+      "team_id": 766,
+      "league_id": "gb.premier_league",
+      "canonical_name": "West Brom"
+    },
+    {
+      "team_id": 1069,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Norwich"
+    },
+    {
+      "team_id": 2,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Man City"
+    },
+    {
+      "team_id": 3,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Arsenal"
+    },
+    {
+      "team_id": 7,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Brighton"
+    },
+    {
+      "team_id": 2320,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Leeds"
+    },
+    {
+      "team_id": 18,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Liverpool"
+    },
+    {
+      "team_id": 12087,
+      "league_id": "it.serie_a",
+      "canonical_name": "Roma"
+    },
+    {
+      "team_id": 12102,
+      "league_id": "it.serie_a",
+      "canonical_name": "Inter"
+    },
+    {
+      "team_id": 12096,
+      "league_id": "it.serie_a",
+      "canonical_name": "Lazio"
+    },
+    {
+      "team_id": 12095,
+      "league_id": "it.serie_a",
+      "canonical_name": "Milan"
+    },
+    {
+      "team_id": 12086,
+      "league_id": "it.serie_a",
+      "canonical_name": "Juventus"
+    },
+    {
+      "team_id": 12094,
+      "league_id": "it.serie_a",
+      "canonical_name": "Napoli"
+    },
+    {
+      "team_id": 12089,
+      "league_id": "it.serie_a",
+      "canonical_name": "Atalanta"
+    },
+    {
+      "team_id": 21212,
+      "league_id": "nl.eredivisie",
+      "canonical_name": "AZ Alkmaar"
+    },
+    {
+      "team_id": 21218,
+      "league_id": "nl.eredivisie",
+      "canonical_name": "Feyenoord"
+    },
+    {
+      "team_id": 21208,
+      "league_id": "nl.eredivisie",
+      "canonical_name": "Twente"
+    },
+    {
+      "team_id": 21215,
+      "league_id": "nl.eredivisie",
+      "canonical_name": "Ajax"
+    },
+    {
+      "team_id": 21206,
+      "league_id": "nl.eredivisie",
+      "canonical_name": "Utrecht"
+    },
+    {
+      "team_id": 5251,
+      "league_id": "es.laliga",
+      "canonical_name": "Girona"
+    },
+    {
+      "team_id": 85066,
+      "league_id": "tr.super_lig",
+      "canonical_name": "Galatasaray"
+    },
+    {
+      "team_id": 31261,
+      "league_id": "mx.liga_mx",
+      "canonical_name": "Cruz Azul"
+    },
+    {
+      "team_id": 31265,
+      "league_id": "mx.liga_mx",
+      "canonical_name": "Monterrey"
+    },
+    {
+      "team_id": 31258,
+      "league_id": "mx.liga_mx",
+      "canonical_name": "UNAM Pumas"
+    },
+    {
+      "team_id": 31270,
+      "league_id": "mx.liga_mx",
+      "canonical_name": "Tigres UANL"
+    },
+    {
+      "team_id": 21222,
+      "league_id": "nl.eredivisie",
+      "canonical_name": "PSV Eindhoven"
+    },
+    {
+      "team_id": 77420,
+      "league_id": "pt.primeira",
+      "canonical_name": "Porto"
+    },
+    {
+      "team_id": 77426,
+      "league_id": "pt.primeira",
+      "canonical_name": "Benfica"
+    },
+    {
+      "team_id": 77423,
+      "league_id": "pt.primeira",
+      "canonical_name": "Sp Lisbon"
+    },
+    {
+      "team_id": 77434,
+      "league_id": "pt.primeira",
+      "canonical_name": "Sp Braga"
+    },
+    {
+      "team_id": 85092,
+      "league_id": "dk.superliga",
+      "canonical_name": "FC Copenhagen"
+    },
+    {
+      "team_id": 85093,
+      "league_id": "dk.superliga",
+      "canonical_name": "FC Midtjylland"
+    },
+    {
+      "team_id": 68874,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Monaco"
+    },
+    {
+      "team_id": 68872,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Lyon"
+    },
+    {
+      "team_id": 68864,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Lille"
+    },
+    {
+      "team_id": 68873,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Rennes"
+    },
+    {
+      "team_id": 68857,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Paris SG"
+    },
+    {
+      "team_id": 72662,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Brest"
+    },
+    {
+      "team_id": 68871,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Toulouse"
+    },
+    {
+      "team_id": 68870,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Nice"
+    },
+    {
+      "team_id": 68869,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Lens"
+    },
+    {
+      "team_id": 61442,
+      "league_id": "de.bundesliga",
+      "canonical_name": "Dortmund"
+    },
+    {
+      "team_id": 2984,
+      "league_id": "es.laliga",
+      "canonical_name": "Ath Madrid"
+    },
+    {
+      "team_id": 85102,
+      "league_id": "no.eliteserien",
+      "canonical_name": "Bodo/Glimt"
+    },
+    {
+      "team_id": 85125,
+      "league_id": "se.allsvenskan",
+      "canonical_name": "IF Elfsborg"
+    },
+    {
+      "team_id": 85118,
+      "league_id": "se.allsvenskan",
+      "canonical_name": "BK Hacken"
+    },
+    {
+      "team_id": 61440,
+      "league_id": "de.bundesliga",
+      "canonical_name": "Bayern Munich"
+    },
+    {
+      "team_id": 61445,
+      "league_id": "de.bundesliga",
+      "canonical_name": "Freiburg"
+    },
+    {
+      "team_id": 61443,
+      "league_id": "de.bundesliga",
+      "canonical_name": "Leverkusen"
+    },
+    {
+      "team_id": 62681,
+      "league_id": "de.bundesliga",
+      "canonical_name": "RB Leipzig"
+    },
+    {
+      "team_id": 61444,
+      "league_id": "de.bundesliga",
+      "canonical_name": "Ein Frankfurt"
+    },
+    {
+      "team_id": 61452,
+      "league_id": "de.bundesliga",
+      "canonical_name": "Hoffenheim"
+    },
+    {
+      "team_id": 61455,
+      "league_id": "de.bundesliga",
+      "canonical_name": "Stuttgart"
+    },
+    {
+      "team_id": 2973,
+      "league_id": "es.laliga",
+      "canonical_name": "Barcelona"
+    },
+    {
+      "team_id": 2981,
+      "league_id": "es.laliga",
+      "canonical_name": "Real Madrid"
+    },
+    {
+      "team_id": 2978,
+      "league_id": "es.laliga",
+      "canonical_name": "Sociedad"
+    },
+    {
+      "team_id": 2980,
+      "league_id": "es.laliga",
+      "canonical_name": "Villarreal"
+    },
+    {
+      "team_id": 2970,
+      "league_id": "es.laliga",
+      "canonical_name": "Ath Bilbao"
+    },
+    {
+      "team_id": 84888,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Coventry"
+    },
+    {
+      "team_id": 68859,
+      "league_id": "fr.ligue_1",
+      "canonical_name": "Marseille"
+    },
+    {
+      "team_id": 19,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Man United"
+    },
+    {
+      "team_id": 767,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Sunderland"
+    },
+    {
+      "team_id": 14,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Aston Villa"
+    },
+    {
+      "team_id": 85136,
+      "league_id": "gb.championship",
+      "canonical_name": "Bristol City"
+    },
+    {
+      "team_id": 85128,
+      "league_id": "se.allsvenskan",
+      "canonical_name": "Malmo FF"
+    },
+    {
+      "team_id": 16,
+      "league_id": "gb.premier_league",
+      "canonical_name": "Tottenham"
+    },
+    {
+      "team_id": 12846,
+      "league_id": "it.serie_a",
+      "canonical_name": "Bologna"
+    },
+    {
+      "team_id": 85077,
+      "league_id": "ch.super_league",
+      "canonical_name": "BSC Young Boys"
+    },
+    {
+      "team_id": 85078,
+      "league_id": "ch.super_league",
+      "canonical_name": "FC Basel 1893"
+    },
+    {
+      "team_id": 85088,
+      "league_id": "ch.super_league",
+      "canonical_name": "Servette FC"
+    },
+    {
+      "team_id": 85103,
+      "league_id": "no.eliteserien",
+      "canonical_name": "Brann"
+    },
+    {
+      "team_id": 85104,
+      "league_id": "no.eliteserien",
+      "canonical_name": "Fredrikstad"
+    },
+    {
+      "team_id": 85062,
+      "league_id": "tr.super_lig",
+      "canonical_name": "Beşiktaş"
+    },
+    {
+      "team_id": 85065,
+      "league_id": "tr.super_lig",
+      "canonical_name": "Fenerbahçe"
+    }
+  ],
+  "aliases": [
+    {
+      "alias": "West Ham",
+      "source": "football_data",
+      "team_id": 6
+    },
+    {
+      "alias": "Sheffield United",
+      "source": "football_data",
+      "team_id": 11
+    },
+    {
+      "alias": "West Brom",
+      "source": "football_data",
+      "team_id": 766
+    },
+    {
+      "alias": "Southampton",
+      "source": "football_data",
+      "team_id": 768
+    },
+    {
+      "alias": "Norwich",
+      "source": "football_data",
+      "team_id": 1069
+    },
+    {
+      "alias": "Girona",
+      "source": "football_data",
+      "team_id": 5251
+    },
+    {
+      "alias": "Man City",
+      "source": "football_data",
+      "team_id": 2
+    },
+    {
+      "alias": "Man United",
+      "source": "football_data",
+      "team_id": 19
+    },
+    {
+      "alias": "Liverpool",
+      "source": "football_data",
+      "team_id": 18
+    },
+    {
+      "alias": "Tottenham",
+      "source": "football_data",
+      "team_id": 16
+    },
+    {
+      "alias": "Leeds",
+      "source": "football_data",
+      "team_id": 2320
+    },
+    {
+      "alias": "Sunderland",
+      "source": "football_data",
+      "team_id": 767
+    },
+    {
+      "alias": "Aston Villa",
+      "source": "football_data",
+      "team_id": 14
+    },
+    {
+      "alias": "Sociedad",
+      "source": "football_data",
+      "team_id": 2978
+    },
+    {
+      "alias": "Barcelona",
+      "source": "football_data",
+      "team_id": 2973
+    },
+    {
+      "alias": "Ath Madrid",
+      "source": "football_data",
+      "team_id": 2984
+    },
+    {
+      "alias": "Ath Bilbao",
+      "source": "football_data",
+      "team_id": 2970
+    },
+    {
+      "alias": "Lazio",
+      "source": "football_data",
+      "team_id": 12096
+    },
+    {
+      "alias": "Villarreal",
+      "source": "football_data",
+      "team_id": 2980
+    },
+    {
+      "alias": "Inter",
+      "source": "football_data",
+      "team_id": 12102
+    },
+    {
+      "alias": "Bologna",
+      "source": "football_data",
+      "team_id": 12846
+    },
+    {
+      "alias": "Juventus",
+      "source": "football_data",
+      "team_id": 12086
+    },
+    {
+      "alias": "Roma",
+      "source": "football_data",
+      "team_id": 12087
+    },
+    {
+      "alias": "Atalanta",
+      "source": "football_data",
+      "team_id": 12089
+    },
+    {
+      "alias": "Milan",
+      "source": "football_data",
+      "team_id": 12095
+    },
+    {
+      "alias": "Napoli",
+      "source": "football_data",
+      "team_id": 12094
+    },
+    {
+      "alias": "Twente",
+      "source": "football_data",
+      "team_id": 21208
+    },
+    {
+      "alias": "PSV Eindhoven",
+      "source": "football_data",
+      "team_id": 21222
+    },
+    {
+      "alias": "Utrecht",
+      "source": "football_data",
+      "team_id": 21206
+    },
+    {
+      "alias": "Feyenoord",
+      "source": "football_data",
+      "team_id": 21218
+    },
+    {
+      "alias": "AZ Alkmaar",
+      "source": "football_data",
+      "team_id": 21212
+    },
+    {
+      "alias": "Ajax",
+      "source": "football_data",
+      "team_id": 21215
+    },
+    {
+      "alias": "Norwich City",
+      "source": "fbref",
+      "team_id": 1069
+    },
+    {
+      "alias": "Leeds United",
+      "source": "fbref",
+      "team_id": 2320
+    },
+    {
+      "alias": "Athletic Club",
+      "source": "fbref",
+      "team_id": 2970
+    },
+    {
+      "alias": "Real Sociedad",
+      "source": "fbref",
+      "team_id": 2978
+    },
+    {
+      "alias": "Atlético Madrid",
+      "source": "fbref",
+      "team_id": 2984
+    },
+    {
+      "alias": "UNAM",
+      "source": "fbref",
+      "team_id": 31258
+    },
+    {
+      "alias": "UANL",
+      "source": "fbref",
+      "team_id": 31270
+    },
+    {
+      "alias": "Cruz Azul",
+      "source": "football_data",
+      "team_id": 31261
+    },
+    {
+      "alias": "Monterrey",
+      "source": "football_data",
+      "team_id": 31265
+    },
+    {
+      "alias": "Tigres UANL",
+      "source": "football_data",
+      "team_id": 31270
+    },
+    {
+      "alias": "Stuttgart",
+      "source": "football_data",
+      "team_id": 61455
+    },
+    {
+      "alias": "Dortmund",
+      "source": "football_data",
+      "team_id": 61442
+    },
+    {
+      "alias": "Hoffenheim",
+      "source": "football_data",
+      "team_id": 61452
+    },
+    {
+      "alias": "Bayern Munich",
+      "source": "football_data",
+      "team_id": 61440
+    },
+    {
+      "alias": "Nice",
+      "source": "football_data",
+      "team_id": 68870
+    },
+    {
+      "alias": "RB Leipzig",
+      "source": "football_data",
+      "team_id": 62681
+    },
+    {
+      "alias": "Leverkusen",
+      "source": "football_data",
+      "team_id": 61443
+    },
+    {
+      "alias": "Freiburg",
+      "source": "football_data",
+      "team_id": 61445
+    },
+    {
+      "alias": "Ein Frankfurt",
+      "source": "football_data",
+      "team_id": 61444
+    },
+    {
+      "alias": "Lille",
+      "source": "football_data",
+      "team_id": 68864
+    },
+    {
+      "alias": "Paris SG",
+      "source": "football_data",
+      "team_id": 68857
+    },
+    {
+      "alias": "Marseille",
+      "source": "football_data",
+      "team_id": 68859
+    },
+    {
+      "alias": "Lens",
+      "source": "football_data",
+      "team_id": 68869
+    },
+    {
+      "alias": "Paris S-G",
+      "source": "fbref",
+      "team_id": 68857
+    },
+    {
+      "alias": "Sporting CP",
+      "source": "fbref",
+      "team_id": 77423
+    },
+    {
+      "alias": "Braga",
+      "source": "fbref",
+      "team_id": 77434
+    },
+    {
+      "alias": "Manchester United",
+      "source": "api_football",
+      "team_id": 19
+    },
+    {
+      "alias": "Liverpool",
+      "source": "api_football",
+      "team_id": 18
+    },
+    {
+      "alias": "Southampton",
+      "source": "api_football",
+      "team_id": 768
+    },
+    {
+      "alias": "Arsenal",
+      "source": "api_football",
+      "team_id": 3
+    },
+    {
+      "alias": "Tottenham",
+      "source": "api_football",
+      "team_id": 16
+    },
+    {
+      "alias": "West Ham",
+      "source": "api_football",
+      "team_id": 6
+    },
+    {
+      "alias": "Manchester City",
+      "source": "api_football",
+      "team_id": 2
+    },
+    {
+      "alias": "Brighton",
+      "source": "api_football",
+      "team_id": 7
+    },
+    {
+      "alias": "Aston Villa",
+      "source": "api_football",
+      "team_id": 14
+    },
+    {
+      "alias": "Barcelona",
+      "source": "api_football",
+      "team_id": 2973
+    },
+    {
+      "alias": "Villarreal",
+      "source": "api_football",
+      "team_id": 2980
+    },
+    {
+      "alias": "Real Madrid",
+      "source": "api_football",
+      "team_id": 2981
+    },
+    {
+      "alias": "Girona",
+      "source": "api_football",
+      "team_id": 5251
+    },
+    {
+      "alias": "Lazio",
+      "source": "api_football",
+      "team_id": 12096
+    },
+    {
+      "alias": "AC Milan",
+      "source": "api_football",
+      "team_id": 12095
+    },
+    {
+      "alias": "Napoli",
+      "source": "api_football",
+      "team_id": 12094
+    },
+    {
+      "alias": "Juventus",
+      "source": "api_football",
+      "team_id": 12086
+    },
+    {
+      "alias": "AS Roma",
+      "source": "api_football",
+      "team_id": 12087
+    },
+    {
+      "alias": "Atalanta",
+      "source": "api_football",
+      "team_id": 12089
+    },
+    {
+      "alias": "Bologna",
+      "source": "api_football",
+      "team_id": 12846
+    },
+    {
+      "alias": "Inter",
+      "source": "api_football",
+      "team_id": 12102
+    },
+    {
+      "alias": "Ajax",
+      "source": "api_football",
+      "team_id": 21215
+    },
+    {
+      "alias": "PSV Eindhoven",
+      "source": "api_football",
+      "team_id": 21222
+    },
+    {
+      "alias": "AZ Alkmaar",
+      "source": "api_football",
+      "team_id": 21212
+    },
+    {
+      "alias": "Utrecht",
+      "source": "api_football",
+      "team_id": 21206
+    },
+    {
+      "alias": "Feyenoord",
+      "source": "api_football",
+      "team_id": 21218
+    },
+    {
+      "alias": "Lyon",
+      "source": "football_data",
+      "team_id": 68872
+    },
+    {
+      "alias": "Monaco",
+      "source": "football_data",
+      "team_id": 68874
+    },
+    {
+      "alias": "Rennes",
+      "source": "football_data",
+      "team_id": 68873
+    },
+    {
+      "alias": "Sp Lisbon",
+      "source": "football_data",
+      "team_id": 77423
+    },
+    {
+      "alias": "Toulouse",
+      "source": "football_data",
+      "team_id": 68871
+    },
+    {
+      "alias": "Brest",
+      "source": "football_data",
+      "team_id": 72662
+    },
+    {
+      "alias": "Sp Braga",
+      "source": "football_data",
+      "team_id": 77434
+    },
+    {
+      "alias": "Benfica",
+      "source": "football_data",
+      "team_id": 77426
+    },
+    {
+      "alias": "Porto",
+      "source": "football_data",
+      "team_id": 77420
+    },
+    {
+      "alias": "Twente",
+      "source": "api_football",
+      "team_id": 21208
+    },
+    {
+      "alias": "Lille",
+      "source": "api_football",
+      "team_id": 68864
+    },
+    {
+      "alias": "Monaco",
+      "source": "api_football",
+      "team_id": 68874
+    },
+    {
+      "alias": "RB Leipzig",
+      "source": "api_football",
+      "team_id": 62681
+    },
+    {
+      "alias": "Benfica",
+      "source": "api_football",
+      "team_id": 77426
+    },
+    {
+      "alias": "Marseille",
+      "source": "api_football",
+      "team_id": 68859
+    },
+    {
+      "alias": "Rennes",
+      "source": "api_football",
+      "team_id": 68873
+    },
+    {
+      "alias": "Toulouse",
+      "source": "api_football",
+      "team_id": 68871
+    },
+    {
+      "alias": "Lens",
+      "source": "api_football",
+      "team_id": 68869
+    },
+    {
+      "alias": "Aston Villa",
+      "source": "odds_api",
+      "team_id": 14
+    },
+    {
+      "alias": "Sunderland",
+      "source": "odds_api",
+      "team_id": 767
+    },
+    {
+      "alias": "Liverpool",
+      "source": "odds_api",
+      "team_id": 18
+    },
+    {
+      "alias": "Arsenal",
+      "source": "odds_api",
+      "team_id": 3
+    },
+    {
+      "alias": "Manchester United",
+      "source": "odds_api",
+      "team_id": 19
+    },
+    {
+      "alias": "Manchester City",
+      "source": "odds_api",
+      "team_id": 2
+    },
+    {
+      "alias": "FC Porto",
+      "source": "odds_api",
+      "team_id": 77420
+    },
+    {
+      "alias": "Tigres UANL",
+      "source": "api_football",
+      "team_id": 31270
+    },
+    {
+      "alias": "Monterrey",
+      "source": "api_football",
+      "team_id": 31265
+    },
+    {
+      "alias": "Cruz Azul",
+      "source": "api_football",
+      "team_id": 31261
+    },
+    {
+      "alias": "Lyon",
+      "source": "api_football",
+      "team_id": 68872
+    },
+    {
+      "alias": "Nice",
+      "source": "api_football",
+      "team_id": 68870
+    },
+    {
+      "alias": "FC Porto",
+      "source": "api_football",
+      "team_id": 77420
+    },
+    {
+      "alias": "SC Freiburg",
+      "source": "api_football",
+      "team_id": 61445
+    },
+    {
+      "alias": "Barcelona",
+      "source": "odds_api",
+      "team_id": 2973
+    },
+    {
+      "alias": "Villarreal",
+      "source": "odds_api",
+      "team_id": 2980
+    },
+    {
+      "alias": "Real Madrid",
+      "source": "odds_api",
+      "team_id": 2981
+    },
+    {
+      "alias": "AC Milan",
+      "source": "odds_api",
+      "team_id": 12095
+    },
+    {
+      "alias": "Juventus",
+      "source": "odds_api",
+      "team_id": 12086
+    },
+    {
+      "alias": "AS Roma",
+      "source": "odds_api",
+      "team_id": 12087
+    },
+    {
+      "alias": "Lazio",
+      "source": "odds_api",
+      "team_id": 12096
+    },
+    {
+      "alias": "Bologna",
+      "source": "odds_api",
+      "team_id": 12846
+    },
+    {
+      "alias": "Napoli",
+      "source": "odds_api",
+      "team_id": 12094
+    },
+    {
+      "alias": "Ajax",
+      "source": "odds_api",
+      "team_id": 21215
+    },
+    {
+      "alias": "AZ Alkmaar",
+      "source": "odds_api",
+      "team_id": 21212
+    },
+    {
+      "alias": "Feyenoord",
+      "source": "odds_api",
+      "team_id": 21218
+    },
+    {
+      "alias": "FC Utrecht",
+      "source": "odds_api",
+      "team_id": 21206
+    },
+    {
+      "alias": "PSV Eindhoven",
+      "source": "odds_api",
+      "team_id": 21222
+    },
+    {
+      "alias": "Monterrey",
+      "source": "odds_api",
+      "team_id": 31265
+    },
+    {
+      "alias": "Cruz Azul",
+      "source": "odds_api",
+      "team_id": 31261
+    },
+    {
+      "alias": "Bayern Munich",
+      "source": "odds_api",
+      "team_id": 61440
+    },
+    {
+      "alias": "RB Leipzig",
+      "source": "odds_api",
+      "team_id": 62681
+    },
+    {
+      "alias": "SC Freiburg",
+      "source": "odds_api",
+      "team_id": 61445
+    },
+    {
+      "alias": "Toulouse",
+      "source": "odds_api",
+      "team_id": 68871
+    },
+    {
+      "alias": "Brest",
+      "source": "odds_api",
+      "team_id": 72662
+    },
+    {
+      "alias": "Nice",
+      "source": "odds_api",
+      "team_id": 68870
+    },
+    {
+      "alias": "RC Lens",
+      "source": "odds_api",
+      "team_id": 68869
+    },
+    {
+      "alias": "Marseille",
+      "source": "odds_api",
+      "team_id": 68859
+    },
+    {
+      "alias": "Lille",
+      "source": "odds_api",
+      "team_id": 68864
+    },
+    {
+      "alias": "Rennes",
+      "source": "odds_api",
+      "team_id": 68873
+    },
+    {
+      "alias": "AS Monaco",
+      "source": "odds_api",
+      "team_id": 68874
+    },
+    {
+      "alias": "Lyon",
+      "source": "odds_api",
+      "team_id": 68872
+    },
+    {
+      "alias": "Benfica",
+      "source": "odds_api",
+      "team_id": 77426
+    },
+    {
+      "alias": "Bayern München",
+      "source": "api_football",
+      "team_id": 61440
+    },
+    {
+      "alias": "Atalanta BC",
+      "source": "odds_api",
+      "team_id": 12089
+    },
+    {
+      "alias": "TSG Hoffenheim",
+      "source": "odds_api",
+      "team_id": 61452
+    },
+    {
+      "alias": "Inter Milan",
+      "source": "odds_api",
+      "team_id": 12102
+    },
+    {
+      "alias": "VfB Stuttgart",
+      "source": "api_football",
+      "team_id": 61455
+    },
+    {
+      "alias": "VfB Stuttgart",
+      "source": "odds_api",
+      "team_id": 61455
+    },
+    {
+      "alias": "Eintracht Frankfurt",
+      "source": "api_football",
+      "team_id": 61444
+    },
+    {
+      "alias": "Eintracht Frankfurt",
+      "source": "odds_api",
+      "team_id": 61444
+    },
+    {
+      "alias": "1899 Hoffenheim",
+      "source": "api_football",
+      "team_id": 61452
+    },
+    {
+      "alias": "Athletic Bilbao",
+      "source": "odds_api",
+      "team_id": 2970
+    },
+    {
+      "alias": "Bayer Leverkusen",
+      "source": "api_football",
+      "team_id": 61443
+    },
+    {
+      "alias": "SC Braga",
+      "source": "api_football",
+      "team_id": 77434
+    },
+    {
+      "alias": "Bayer Leverkusen",
+      "source": "odds_api",
+      "team_id": 61443
+    },
+    {
+      "alias": "Braga",
+      "source": "odds_api",
+      "team_id": 77434
+    },
+    {
+      "alias": "Real Sociedad",
+      "source": "api_football",
+      "team_id": 2978
+    },
+    {
+      "alias": "Real Sociedad",
+      "source": "odds_api",
+      "team_id": 2978
+    },
+    {
+      "alias": "Sporting Lisbon",
+      "source": "odds_api",
+      "team_id": 77423
+    },
+    {
+      "alias": "Atletico Madrid",
+      "source": "api_football",
+      "team_id": 2984
+    },
+    {
+      "alias": "Atlético Madrid",
+      "source": "odds_api",
+      "team_id": 2984
+    },
+    {
+      "alias": "Leeds United",
+      "source": "odds_api",
+      "team_id": 2320
+    },
+    {
+      "alias": "Tigres",
+      "source": "odds_api",
+      "team_id": 31270
+    },
+    {
+      "alias": "Tottenham Hotspur",
+      "source": "odds_api",
+      "team_id": 16
+    },
+    {
+      "alias": "Pumas",
+      "source": "odds_api",
+      "team_id": 31258
+    },
+    {
+      "alias": "Athletic Club",
+      "source": "api_football",
+      "team_id": 2970
+    },
+    {
+      "alias": "Sporting CP",
+      "source": "api_football",
+      "team_id": 77423
+    },
+    {
+      "alias": "FC Twente Enschede",
+      "source": "odds_api",
+      "team_id": 21208
+    },
+    {
+      "alias": "Paris Saint Germain",
+      "source": "api_football",
+      "team_id": 68857
+    },
+    {
+      "alias": "Paris Saint Germain",
+      "source": "odds_api",
+      "team_id": 68857
+    },
+    {
+      "alias": "Brighton and Hove Albion",
+      "source": "odds_api",
+      "team_id": 7
+    },
+    {
+      "alias": "Borussia Dortmund",
+      "source": "api_football",
+      "team_id": 61442
+    },
+    {
+      "alias": "Borussia Dortmund",
+      "source": "odds_api",
+      "team_id": 61442
+    },
+    {
+      "alias": "U.N.A.M. - Pumas",
+      "source": "api_football",
+      "team_id": 31258
+    },
+    {
+      "alias": "Stade Brestois 29",
+      "source": "api_football",
+      "team_id": 72662
+    },
+    {
+      "alias": "Coventry",
+      "source": "api_football",
+      "team_id": 84888
+    },
+    {
+      "alias": "Coventry City",
+      "source": "odds_api",
+      "team_id": 84888
+    },
+    {
+      "alias": "Brighton",
+      "source": "football_data",
+      "team_id": 7
+    },
+    {
+      "alias": "Arsenal",
+      "source": "football_data",
+      "team_id": 3
+    },
+    {
+      "alias": "Coventry",
+      "source": "football_data",
+      "team_id": 84888
+    },
+    {
+      "alias": "Real Madrid",
+      "source": "football_data",
+      "team_id": 2981
+    },
+    {
+      "alias": "Beşiktaş",
+      "source": "api_football",
+      "team_id": 85062
+    },
+    {
+      "alias": "Fenerbahçe",
+      "source": "api_football",
+      "team_id": 85065
+    },
+    {
+      "alias": "Galatasaray",
+      "source": "api_football",
+      "team_id": 85066
+    },
+    {
+      "alias": "UNAM Pumas",
+      "source": "football_data",
+      "team_id": 31258
+    },
+    {
+      "alias": "BSC Young Boys",
+      "source": "api_football",
+      "team_id": 85077
+    },
+    {
+      "alias": "FC Basel 1893",
+      "source": "api_football",
+      "team_id": 85078
+    },
+    {
+      "alias": "Girona FC",
+      "source": "odds_api",
+      "team_id": 5251
+    },
+    {
+      "alias": "Servette FC",
+      "source": "api_football",
+      "team_id": 85088
+    },
+    {
+      "alias": "FC Copenhagen",
+      "source": "api_football",
+      "team_id": 85092
+    },
+    {
+      "alias": "FC Midtjylland",
+      "source": "api_football",
+      "team_id": 85093
+    },
+    {
+      "alias": "Bodo/Glimt",
+      "source": "api_football",
+      "team_id": 85102
+    },
+    {
+      "alias": "Brann",
+      "source": "api_football",
+      "team_id": 85103
+    },
+    {
+      "alias": "Fredrikstad",
+      "source": "api_football",
+      "team_id": 85104
+    },
+    {
+      "alias": "BK Hacken",
+      "source": "api_football",
+      "team_id": 85118
+    },
+    {
+      "alias": "IF Elfsborg",
+      "source": "api_football",
+      "team_id": 85125
+    },
+    {
+      "alias": "Malmo FF",
+      "source": "api_football",
+      "team_id": 85128
+    },
+    {
+      "alias": "Bristol City",
+      "source": "api_football",
+      "team_id": 85136
+    },
+    {
+      "alias": "Besiktas JK",
+      "source": "odds_api",
+      "team_id": 85062
+    },
+    {
+      "alias": "Fenerbahce",
+      "source": "odds_api",
+      "team_id": 85065
+    },
+    {
+      "alias": "Galatasaray",
+      "source": "odds_api",
+      "team_id": 85066
+    },
+    {
+      "alias": "BSC Young Boys",
+      "source": "odds_api",
+      "team_id": 85077
+    },
+    {
+      "alias": "FC Basel",
+      "source": "odds_api",
+      "team_id": 85078
+    },
+    {
+      "alias": "Servette",
+      "source": "odds_api",
+      "team_id": 85088
+    },
+    {
+      "alias": "FC Copenhagen",
+      "source": "odds_api",
+      "team_id": 85092
+    },
+    {
+      "alias": "FC Midtjylland",
+      "source": "odds_api",
+      "team_id": 85093
+    },
+    {
+      "alias": "Bodø/Glimt",
+      "source": "odds_api",
+      "team_id": 85102
+    },
+    {
+      "alias": "SK Brann",
+      "source": "odds_api",
+      "team_id": 85103
+    },
+    {
+      "alias": "Fredrikstad FK",
+      "source": "odds_api",
+      "team_id": 85104
+    },
+    {
+      "alias": "BK Hacken",
+      "source": "odds_api",
+      "team_id": 85118
+    },
+    {
+      "alias": "IF Elfsborg",
+      "source": "odds_api",
+      "team_id": 85125
+    },
+    {
+      "alias": "Malmo FF",
+      "source": "odds_api",
+      "team_id": 85128
+    },
+    {
+      "alias": "Bristol City",
+      "source": "odds_api",
+      "team_id": 85136
+    },
+    {
+      "alias": "Norwich",
+      "source": "api_football",
+      "team_id": 1069
+    },
+    {
+      "alias": "Sheffield Utd",
+      "source": "api_football",
+      "team_id": 11
+    },
+    {
+      "alias": "West Brom",
+      "source": "api_football",
+      "team_id": 766
+    },
+    {
+      "alias": "Norwich City",
+      "source": "odds_api",
+      "team_id": 1069
+    },
+    {
+      "alias": "Sheffield United",
+      "source": "odds_api",
+      "team_id": 11
+    },
+    {
+      "alias": "Southampton",
+      "source": "odds_api",
+      "team_id": 768
+    },
+    {
+      "alias": "West Bromwich Albion",
+      "source": "odds_api",
+      "team_id": 766
+    },
+    {
+      "alias": "West Ham United",
+      "source": "odds_api",
+      "team_id": 6
+    },
+    {
+      "alias": "Young Boys",
+      "source": "football_data",
+      "team_id": 85077
+    },
+    {
+      "alias": "Bristol City",
+      "source": "football_data",
+      "team_id": 85136
+    },
+    {
+      "alias": "Galatasaray",
+      "source": "football_data",
+      "team_id": 85066
+    },
+    {
+      "alias": "Brann",
+      "source": "football_data",
+      "team_id": 85103
+    },
+    {
+      "alias": "Fredrikstad",
+      "source": "football_data",
+      "team_id": 85104
+    },
+    {
+      "alias": "Malmo FF",
+      "source": "football_data",
+      "team_id": 85128
+    },
+    {
+      "alias": "Elfsborg",
+      "source": "football_data",
+      "team_id": 85125
+    },
+    {
+      "alias": "Hacken",
+      "source": "football_data",
+      "team_id": 85118
+    },
+    {
+      "alias": "Servette",
+      "source": "football_data",
+      "team_id": 85088
+    },
+    {
+      "alias": "Besiktas",
+      "source": "football_data",
+      "team_id": 85062
+    },
+    {
+      "alias": "Fenerbahce",
+      "source": "football_data",
+      "team_id": 85065
+    },
+    {
+      "alias": "Bodo/Glimt",
+      "source": "football_data",
+      "team_id": 85102
+    },
+    {
+      "alias": "FC Copenhagen",
+      "source": "football_data",
+      "team_id": 85092
+    },
+    {
+      "alias": "Midtjylland",
+      "source": "football_data",
+      "team_id": 85093
+    },
+    {
+      "alias": "Basel",
+      "source": "football_data",
+      "team_id": 85078
+    }
+  ],
+  "scope": "Only the 272 matched pending fixtures and their catalog identities; not a full database dump."
+}
