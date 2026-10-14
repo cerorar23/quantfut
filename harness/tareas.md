@@ -2573,3 +2573,31 @@ justa (1/prob) etiquetada donde no hay cuota publicada.
 - [x] Importar xG emparejados con identidad corroborada (5.355), con ensayo revertido.
 - [ ] Huecos restantes desde 2024: Serie B 588, LaLiga 2 236, Argentina 208, Ligue 2 144; PitchAPI no los cubre.
 - [ ] PitchAPI aún no se usa para alineaciones, jugadores ni eventos (`/lineups`, `/players`); no se descargaron.
+
+## PitchAPI como respaldo y cotejo de API-Football (2026-10-14)
+
+Decisión del usuario: PitchAPI descarga sola, con la clave editable desde el
+panel `/control`, como verificador y respaldo de API-Football. Resultados:
+solo AVISOS de discrepancia, nunca relleno ni cierre automático (IDs de
+partido inestables, sin SLA, sin términos publicados). Relleno automático
+solo de xG. Pendiente del usuario: preguntar al proveedor por uso comercial y
+almacenamiento, y conseguir una clave `pk_live_` (la `pk_test_` anterior se
+revocó sola el 14-oct).
+
+- [x] `db/065`/`066` (semilla de 496 equivalencias): `pitchapi_settings` (singleton: activo, clave cifrada, pista),
+  `leagues.pitchapi_id`, `pitchapi_teams` (equivalencias con evidencia),
+  `pitchapi_team_votes`, `pitchapi_discrepancies`, `pitchapi_originals`.
+- [x] Job `qf.ingest.pitchapi_respaldo` (cron 12:40 UTC, tras el xG de AF):
+  `/v1/date/{d}` de los últimos 10 días (1 llamada por día), equivalencias de
+  clubes por corroboración, discrepancias (marcador distinto, resultado sin
+  cerrar, partido ausente), alerta por Telegram operativo, health en
+  `ingest_health`. Sin clave o desactivado: no hace nada ni falla.
+- [x] xG de respaldo: solo terminados hace más de 48 h sin xG (AF tiene su
+  oportunidad primero), `xg_source='pitchapi'`, `xg_recorded_at` = recepción
+  real, original guardado con hash. Nunca sobrescribe.
+- [x] Panel `/control/respaldo`: clave cifrada (AES-GCM, solo escritura, pista
+  de 4 caracteres, `admin_audit`), activar, probar conexión, última pasada,
+  discrepancias abiertas con "marcar revisada", xG rellenados.
+- [x] Pruebas (18) y arnés 1.067 aprobadas; commit hecho.
+- [ ] Despliegue (migraciones 065/066, worker, API, cron) aparte y solo con clave válida y
+  confirmación del usuario (worker, API, cron).

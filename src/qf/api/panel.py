@@ -96,6 +96,11 @@ _MENSAJES = {
     "correo_enviado": ("success", "Correo enviado."),
     "correo_fallo": ("danger", "No se pudo enviar el correo; revisa los logs y la configuración SMTP."),
     "correo_no_configurado": ("warning", "El envío de correo no está configurado (SMTP_HOST / SMTP_FROM)."),
+    "respaldo_guardado": ("success", "Configuración del respaldo guardada."),
+    "respaldo_ok": ("success", "PitchAPI respondió: la clave funciona."),
+    "respaldo_401": ("danger", "PitchAPI rechazó la clave: inválida o revocada."),
+    "respaldo_error": ("danger", "No se pudo probar PitchAPI; revisa la clave y la conexión."),
+    "respaldo_revisada": ("success", "Discrepancia marcada como revisada."),
     "cuenta_suspendida": ("warning", "La cuenta está suspendida: no se envía enlace de acceso."),
 }
 

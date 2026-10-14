@@ -72,6 +72,7 @@ from .web import router as web_router
 from .mobile import member, router as mobile_router
 from . import mensajes
 from .rewards import router as rewards_router
+from .respaldo import router as respaldo_router
 from .firebase import router as firebase_router
 from .legal import router as legal_router
 from ..comercial.entrega import picks_for_tiers
@@ -757,6 +758,7 @@ app.include_router(web_router)
 app.include_router(fichas_router)
 app.include_router(mobile_router)
 app.include_router(rewards_router)
+app.include_router(respaldo_router)
 app.include_router(firebase_router)
 app.include_router(legal_router)
 

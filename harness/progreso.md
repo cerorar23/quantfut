@@ -5714,3 +5714,17 @@ Tres partidos de Allsvenskan del 31-may-2026 seguían `scheduled` porque
 asociados: 2-2, 3-2 y 4-5, con `result_recorded_at` real de hoy. Vencidos sin
 cerrar: 0; queda 1 aplazado (Vallecano–Athletic, 10-oct). xG desde 2025 sin
 cubrir: 237 (Serie B 188 de ene–jun 2025, copas 26, resto ~23).
+
+## 2026-10-14 — Respaldo y cotejo con PitchAPI (implementado, sin desplegar)
+
+Decisión del usuario: resultados solo con AVISOS; relleno automático solo de xG.
+Se eligió así porque los IDs de partido de PitchAPI no son estables (26 ligas se
+restauraron con IDs nuevos), no hay SLA ni términos publicados y un resultado
+erróneo liquidaría picks. El xG espera 48 h para que API-Football capture
+primero; PitchAPI nunca sobrescribe y guarda el original con hash y recepción.
+Los clubes se emparejan solo por partidos corroborados (semilla de 496 más
+aprendizaje diario por votos). La clave `pk_test_` anterior se revocó sola el
+14-oct: el panel permite rotarla sin tocar el servidor. Comprobado contra datos
+reales (10 días, 235 partidos, 0 discrepancias) y las migraciones en transacción
+revertida. Pendiente: pasar a una clave `pk_live_`, preguntar al proveedor por
+uso comercial y almacenamiento, y desplegar.

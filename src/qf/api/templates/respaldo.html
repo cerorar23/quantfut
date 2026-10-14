@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Respaldo PitchAPI{% endblock %}
+{% block heading %}Respaldo y cotejo con PitchAPI{% endblock %}
+{% block content %}
+<p>PitchAPI coteja cada día los resultados de API-Football y rellena el xG que falte. En resultados solo avisa: nunca corrige ni cierra un partido por su cuenta. El xG de respaldo solo entra en partidos terminados hace más de 48 h que sigan sin xG, con la fecha real de recepción, y nunca sustituye un valor ya guardado.</p>
+<div class="row row-cards mb-4">
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="subheader">Estado</div>
+    <div class="h2">{% if cfg.enabled %}Activo{% else %}Desactivado{% endif %}</div>
+    <div class="text-muted">{% if cfg.last_run_at %}Última pasada {{ cfg.last_run_at|fecha }} UTC: {% if cfg.last_ok %}correcta{% else %}con error{% endif %}{% else %}Todavía no se ha ejecutado{% endif %}</div></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="subheader">xG de PitchAPI en la base</div>
+    <div class="h2">{{ stats.xg_total }}</div><div class="text-muted">{{ stats.xg_30d }} en los últimos 30 días</div></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="subheader">Clubes equivalentes</div>
+    <div class="h2">{{ stats.equipos }}</div><div class="text-muted">Solo por partidos corroborados, nunca por nombre</div></div></div></div>
+</div>
+<form class="card mb-4" action="/control/respaldo/config" method="post"><div class="card-body">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="enabled" value="1" {% if cfg.enabled %}checked{% endif %}><span class="form-check-label">Respaldo activo (pasada diaria 12:40 UTC)</span></label>
+<label class="form-label">Clave de PitchAPI (solo escritura){% if has_key %} <span class="badge bg-green-lt">guardada, termina en {{ cfg.key_hint }}</span>{% elif env_key %} <span class="badge bg-blue-lt">definida en el servidor</span>{% else %} <span class="badge bg-yellow-lt">sin clave</span>{% endif %}
+<input class="form-control" name="key" type="password" autocomplete="off" maxlength="200" placeholder="{% if has_key %}Déjala vacía para conservar la actual{% else %}Pega la clave pk_live_… o pk_test_…{% endif %}"></label>
+{% if has_key %}<label class="form-check"><input class="form-check-input" type="checkbox" name="clear_key" value="1"><span class="form-check-label">Borrar la clave guardada</span></label>{% endif %}
+{% if not cifrado_ok %}<div class="alert alert-warning mt-3">Falta QF_SECRETS_KEY en el servidor: no se puede guardar una clave cifrada.</div>{% endif %}
+<p class="text-muted mt-3">La clave se guarda cifrada (AES-256-GCM) y no vuelve a mostrarse ni llega al navegador de ningún cliente. Una clave rechazada detiene la pasada y avisa por Telegram operativo.</p>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Guardar</button></div></form>
+<form class="mb-4" action="/control/respaldo/probar" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-outline-primary" type="submit">Probar conexión con la clave guardada</button></form>
+<h2>Discrepancias abiertas</h2>
+<p class="text-muted">«Marcador distinto» y «resultado sin cerrar» avisan por Telegram. «Partido ausente» incluye eliminatorias y playoffs que la base no guarda por diseño.</p>
+<div class="table-responsive mb-4"><table class="table"><thead><tr><th>Detectada (UTC)</th><th>Tipo</th><th>Liga</th><th>Partido</th><th>Detalle</th><th></th></tr></thead><tbody>
+{% for d in discrepancias %}<tr><td>{{ d.detected_at|fecha }}</td><td>{{ kinds[d.kind] }}</td><td>{{ d.league_id }}</td>
+<td>{{ d.detail.home }} – {{ d.detail.away }}<br><span class="text-muted">{{ d.detail.date }}</span></td>
+<td>{% if d.detail.db is defined %}Base {{ d.detail.db|join('-') }} / PitchAPI {{ d.detail.pitchapi|join('-') }}{% elif d.detail.db_status is defined %}Base «{{ d.detail.db_status }}» / PitchAPI {{ d.detail.pitchapi|join('-') }}{% else %}PitchAPI {{ d.detail.score|join('-') }}{% endif %}</td>
+<td><form action="/control/respaldo/discrepancias/{{ d.id }}/revisar" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-sm" type="submit">Marcar revisada</button></form></td></tr>
+{% else %}<tr><td colspan="6">No hay discrepancias abiertas.</td></tr>{% endfor %}</tbody></table></div>
+<h2>Últimas pasadas</h2>
+<div class="table-responsive"><table class="table"><thead><tr><th>Fecha (UTC)</th><th>Resultado</th><th>xG rellenados</th><th>Detalle</th></tr></thead><tbody>
+{% for p in pasadas %}<tr><td>{{ p.ran_at|fecha }}</td><td>{% if p.ok %}correcta{% else %}error{% endif %}</td><td>{{ p.rows_written }}</td><td class="text-muted">{{ p.detail|detalle }}</td></tr>
+{% else %}<tr><td colspan="4">Todavía no hay pasadas.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
