@@ -48,8 +48,8 @@ Map<String, dynamic> report(DateTime today) {
       pick('Leipzig', 'PSV', 'Más de 2,5 goles', .73, 1.34, iso(tomorrow, 20)),
     ],
     'vip': [
-      pick('Inter', 'Benfica', '', 0, 0, iso(today, 21), locked: true),
-      pick('Milan', 'Roma', '', 0, 0, iso(tomorrow, 19), locked: true),
+      {...pick('Inter', 'Benfica', '', 0, 0, iso(today, 21), locked: true), 'cuota': 1.35},
+      {...pick('Milan', 'Roma', '', 0, 0, iso(tomorrow, 19), locked: true), 'cuota': null},
     ],
   };
 }
@@ -228,6 +228,9 @@ void main() {
       await tester.pump();
       expect(find.text('Inter · Benfica'), findsOneWidget);
       expect(find.text('Milan · Roma'), findsOneWidget);
+      // La cuota publicada se ve en el candado; si el servidor no la manda, no se inventa.
+      expect(find.byKey(const ValueKey('locked-quote')), findsOneWidget);
+      expect(find.text('@1,35'), findsOneWidget);
       await tester.tap(find.text('100 monedas').first);
       expect(unlocked, ['Inter']);
       await tester.tap(find.text('Ver acceso VIP'));

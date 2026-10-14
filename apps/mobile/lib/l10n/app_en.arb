@@ -412,7 +412,7 @@
   "picksEmpty": "There are no published predictions pending in this range.",
   "picksFreeHeading": "Free · {count}",
   "picksLockedHide": "Hide the list",
-  "picksLockedHint": "With VIP you see the probability, odds and analysis",
+  "picksLockedHint": "With VIP you see the pick, the probability and the analysis",
   "picksLockedShow": "Show the list",
   "picksLockedTitle": "{count, plural, one{1 more prediction with VIP} other{{count} more predictions with VIP}}",
   "picksRangeHint": "{min}–{max}% probability · one free per market",

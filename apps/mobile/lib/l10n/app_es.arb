@@ -1322,7 +1322,7 @@
   "@picksLockedHide": {
     "description": "Pliega los pronósticos bloqueados."
   },
-  "picksLockedHint": "Con VIP ves la probabilidad, la cuota y el análisis",
+  "picksLockedHint": "Con VIP ves la selección, la probabilidad y el análisis",
   "@picksLockedHint": {
     "description": "Qué se obtiene al desbloquear los pronósticos."
   },

@@ -229,11 +229,21 @@ def implied_goals(fit: dict | None) -> dict | None:
     return {'local': round(home, 2), 'visita': round(away, 2), 'total': round(home + away, 2)}
 
 
+def quote_of(row: dict) -> float | None:
+    """Cuota publicada del pronóstico (la de la fuente al sellar), si es válida."""
+    try:
+        price = float(row.get('ref_price') or row.get('price'))
+    except (TypeError, ValueError):
+        return None
+    return round(price, 2) if math.isfinite(price) and price > 1 else None
+
+
 def metadata(row: dict) -> dict:
     # `market` es solo la categoría (goles, córners...): permite ubicar el candado
-    # en su mercado. Selección, línea, probabilidad y cuota siguen sin salir.
+    # en su mercado. `cuota` es el gancho comercial (decisión del titular, 2026-10-13);
+    # selección, línea y probabilidad siguen sin salir.
     return {**{key: row.get(key) for key in ('match_id','league_id','kickoff_utc','local','visitante','batch_date','market')},
-            'locked': True, 'pick_key': pick_key(row)}
+            'locked': True, 'pick_key': pick_key(row), 'cuota': quote_of(row)}
 
 
 def high_probability(plus: bool = False, unlocks: set[tuple[str,str]] | None = None,

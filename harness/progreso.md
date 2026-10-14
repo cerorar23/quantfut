@@ -5590,3 +5590,7 @@ Persisten 3.154 partidos sin xG y bloqueos de calendario en cinco competiciones;
 los consumidores de XI/jugadores/bajas históricos siguen pendientes. Evidencia
 .local/soccerdata_completion_20261013/verified/ y artifacts/imports/soccerdata-20261013
 del worker. Detalle y desglose: docs/soccerdata_zenrows_20261013.md.
+
+## 2026-10-13 — Los pronósticos bloqueados enseñan su cuota
+
+Pedido del titular (lista «143 pronósticos más con VIP»): que cada bloqueado muestre la cuota para que sea atractivo. `mobile.metadata()` añade `cuota` (cuota publicada: `ref_price` en alta probabilidad, `price` en la escalera; `None` si no es válida, nunca inventada). Sigue SIN salir selección, línea ni probabilidad (el test lo comprueba). Efecto a tener en cuenta: cuota + categoría permite estimar la probabilidad (~1/cuota), así que la leyenda «Con VIP ves la probabilidad, la cuota y el análisis» pasó a «…la selección, la probabilidad y el análisis» (6 idiomas, `picksLockedHint`). App: la fila bloqueada de `LockedPicksGroup` dibuja `@cuota` en dorado. Los candados por categoría del detalle del partido (`solo_candados`) no llevan cuota. PENDIENTE: desplegar servidor (`mobile.py`) y APK; sin APK nuevo la cuota viaja pero no se ve, y la leyenda vieja sigue diciendo que la cuota es de VIP. Pruebas: Python 1032 OK, Flutter 201 OK, analyze limpio.

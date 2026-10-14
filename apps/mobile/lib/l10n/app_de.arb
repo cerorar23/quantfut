@@ -412,7 +412,7 @@
   "picksEmpty": "In diesem Bereich sind keine veröffentlichten Prognosen offen.",
   "picksFreeHeading": "Kostenlos · {count}",
   "picksLockedHide": "Liste ausblenden",
-  "picksLockedHint": "Mit VIP siehst du Wahrscheinlichkeit, Quote und Analyse",
+  "picksLockedHint": "Mit VIP siehst du die Prognose, die Wahrscheinlichkeit und die Analyse",
   "picksLockedShow": "Liste anzeigen",
   "picksLockedTitle": "{count, plural, one{1 weitere Prognose mit VIP} other{{count} weitere Prognosen mit VIP}}",
   "picksRangeHint": "{min}–{max} % Wahrscheinlichkeit · einer kostenlos pro Markt",

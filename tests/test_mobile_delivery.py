@@ -84,6 +84,7 @@ def test_anonymous_does_not_receive_vip_selection(delivery,monkeypatch):
     for r in report['vip']:
         assert not {'selection','line','texto','prob','ref_price','fit'} & r.keys()
         assert r['market']=='totals'  # solo la categoría, para ubicar el candado
+        assert 1.01<=r["cuota"]<=1.2  # la cuota publicada sí sale: es el gancho del candado
     assert len(mobile.high_probability(True)['proximos'])==20
     owned=mobile.high_probability(unlocks={('alta_probabilidad','m1')})
     assert len(owned['proximos'])==2
@@ -274,3 +275,14 @@ def test_detail_without_goals_model_lists_vip_picks_as_locks(delivery, monkeypat
     assert set(filas[0]) == {'id', 'grupo', 'locked'}
     out = mobile.detail('m1', Response(), plus=True, account=None)
     assert out['ficha']['mercados'] is None
+
+
+def test_quote_of_accepts_both_price_names_and_rejects_garbage():
+    assert mobile.quote_of({'ref_price': 1.3456}) == 1.35
+    assert mobile.quote_of({'price': '1.25'}) == 1.25  # escalera
+    for bad in ({}, {'ref_price': None}, {'ref_price': 1.0}, {'ref_price': .8},
+                {'ref_price': float('nan')}, {'ref_price': 'x'}):
+        assert mobile.quote_of(bad) is None
+    meta = mobile.metadata({'match_id': 'm1', 'market': 'totals', 'selection': 'over', 'line': 2.5,
+                            'prob': .9, 'ref_price': 1.4, 'fit': {}})
+    assert meta['cuota'] == 1.4 and not {'selection', 'line', 'prob', 'ref_price', 'fit'} & meta.keys()

@@ -567,6 +567,19 @@ class _LockedPicksGroupState extends State<LockedPicksGroup> {
                           ],
                         ),
                       ),
+                      // La cuota publicada es el gancho: se ve aunque la selección siga oculta.
+                      if (p['cuota'] is num) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          '@${decimalText(p['cuota'])}',
+                          key: const ValueKey('locked-quote'),
+                          style: const TextStyle(
+                            color: liveGold,
+                            fontFamily: 'Gilroy ExtraBold',
+                            fontSize: 17,
+                          ),
+                        ),
+                      ],
                       if (widget.onUnlock != null) ...[
                         const SizedBox(width: 8),
                         OutlinedButton(

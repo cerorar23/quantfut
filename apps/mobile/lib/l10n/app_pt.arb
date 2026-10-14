@@ -412,7 +412,7 @@
   "picksEmpty": "Não há prognósticos publicados pendentes nesta faixa.",
   "picksFreeHeading": "Grátis · {count}",
   "picksLockedHide": "Ocultar a lista",
-  "picksLockedHint": "Com VIP você vê a probabilidade, a cota e a análise",
+  "picksLockedHint": "Com VIP você vê o prognóstico, a probabilidade e a análise",
   "picksLockedShow": "Ver a lista",
   "picksLockedTitle": "{count, plural, one{1 prognóstico a mais com VIP} other{{count} prognósticos a mais com VIP}}",
   "picksRangeHint": "{min}–{max}% de probabilidade · um grátis por mercado",
