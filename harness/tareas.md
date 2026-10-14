@@ -18,6 +18,28 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Recuperación adicional con clave nueva ZenRows (2026-10-13)
+
+El usuario proporciona otra clave y solicita aplicar la documentación oficial
+para descargar más datos con eficiencia. Clave cifrada localmente con DPAPI,
+fuera de Git; la configuración compartida conserva su cuenta anterior.
+
+- [x] Validar autenticación, saldo y concurrencia sin comprar ni cambiar planes.
+- [x] Aplicar modo automático, caché de éxitos y selección por huecos; probar
+  calendarios bloqueados con país alternativo solo cuando aporte información.
+- [x] Medir cobertura histórica con muestras antes de ampliar solicitudes;
+  recuperar calendarios actuales sin repetir fallos ni inventar xG ausente.
+- [x] Revisar asociaciones, importar nuevos originales y verificar reversión,
+  idempotencia y preservación del modelo, ligas y datos históricos anteriores.
+- [x] Documentar métricas y consumo comprobados, ejecutar arnés final y
+  comitear solo esta ampliación; credencial cifrada y originales fuera de Git.
+
+Carga adicional confirmada: 125 originales, 101 asociaciones, 36 parejas xG
+nuevas, 228 XI, 4.137 registros de jugadores y 294 bajas históricas. 24 identidades
+europeas pendientes; cero clubes/partidos canónicos nuevos. Saldo nuevo:
+988/5.000 utilizados, 4.012 restantes; arnés 1.045/24 y modelo/API conservados.
+Detalle: docs/zenrows_clave_nueva_futbol_20261013.md.
+
 ## Completar fútbol con soccerdata + ZenRows (2026-10-13)
 
 Cambio del usuario: scraper anterior detenido; usar probberechts/soccerdata
@@ -45,10 +67,12 @@ Diez identidades de copas pendientes y dos conflictos conservados; sin nuevos
 partidos/clubes canónicos. 1.033 pruebas, transacción reversible e idempotencia;
 modelo/API verificados. Detalle: docs/soccerdata_zenrows_20261013.md.
 
-- [ ] Completar los 3.154 huecos xG restantes cuando una fuente acredite cobertura:
+- [ ] Completar los 3.118 huecos xG restantes cuando una fuente acredite cobertura:
   muestras 2024 sin xG o con error; no convertir ausencia/bloqueo en cero.
-- [ ] Recuperar calendarios aún bloqueados de Brasil B, Bundesliga 2, Dinamarca,
+- [x] Recuperar calendarios actuales antes bloqueados de Brasil B, Bundesliga 2, Dinamarca,
   Suecia y Europa League; conservar cuota y originales de cada configuración.
+- [ ] Extender esos calendarios a toda la historia cuando respondan los originales;
+  la recuperación de jornadas actuales no acredita temporadas anteriores.
 - [ ] Resolver identidades de copas pendientes y adaptar consumidores históricos
   de XI/jugadores/bajas; los datos almacenados no activan modelos por sí solos.
 

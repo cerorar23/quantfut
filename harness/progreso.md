@@ -5600,3 +5600,45 @@ Pedido del titular (lista «143 pronósticos más con VIP»): que cada bloqueado
 Pedido del titular, tras una primera lectura equivocada mía (que cambió la cuota TOTAL; se revirtió entera): la cuota total de cada parlay sigue en los 5 escalones de 1,90 a 5,00; lo que cambia es que CADA PATA tenga cuota de 1,20 a 1,80 (antes: >= 1,15 sin techo), con la combinación más probable de cada escalón y las patas que hagan falta (2 a 6). `parley.CUOTA_MIN_PATA, CUOTA_MAX_PATA = 1.20, 1.80` en `filtrar`; el informe público añade `reglas.cuota_max_pata`. Sin cambio de esquema, escalones ni historial (el control sigue comparando probabilidad prometida y acierto, mismo significado). Simulación con datos reales (17 partidos con precio, dry-run en el worker, sin escribir): la probabilidad de cada parlay casi NO cambia (52/46/37/28/22 % frente a 52/45/37/30/23 %), porque la fija la cuota total y mas patas la bajan; el efecto es que desaparecen las patas largas (1X2 a 2,16 con 48 %, córners a 2,00 con 51 %) y toda pata queda entre 56 % y 82 %. Rige desde el primer sellado tras desplegar el worker (el del 14-oct 09:00 UTC si se despliega antes). Pruebas: `test_parley` (rango de pata incluidos bordes y float4, ningún parlay con pata fuera de rango), suite Python OK. PENDIENTE: desplegar worker (parley.py, parley_datos.py) y api (parley_datos.py: informe) antes de ese sellado.
 
 Decisión del titular sobre mercados (2026-10-13): el parley NO busca en todos los mercados, solo en los de líneas validadas (1X2, doble oportunidad, goles 1,5/2,5/3,5, goles por equipo, ambos marcan sí, hándicap, córners y tarjetas habilitados) y elige por probabilidad calculada, no por acierto real. Ponderar por acierto real por mercado se pospone hasta tener ~50 liquidados por mercado (hoy 5-41): anotado en `harness/tareas.md` (Parley, punto 11) y en el README.
+
+## 2026-10-13 — Recuperación adicional con clave nueva de ZenRows
+
+Se priorizó el modo automático de la CLI oficial 1.5.0, sin imponer país ni
+funciones caras a todas las llamadas; tres conexiones frente al límite verificado
+de cinco. Presupuesto compartido con reserva previa de 25 por solicitud, devolución
+solo del coste comunicado y parada ante autenticación/cuota agotada. MCP 2.4.0
+lee cuota y acepta la clave de la tarea solo en el entorno; configuración y cuenta
+compartidas anteriores conservadas. Clave nueva cifrada DPAPI fuera de Git y VPS.
+
+La ruta pública www de SofaScore recuperó calendarios antes bloqueados en Brasil B,
+Bundesliga 2, Dinamarca, Suecia y Europa League. Parser real de soccerdata 1.9.1;
+fallos conservados, jornadas danesas procesadas independientemente. No repetir
+fallos ni confundir tiros sin xG con xG publicado: las muestras históricas de
+España/Francia carecían de ese campo. Recuperar jornadas actuales no demuestra
+acceso a toda la historia. Se excluyen los 586 IDs SofaScore ya congelados.
+
+Carga confirmada 14-oct 00:55 UTC (13-oct 18:55 México): 125 originales, 101
+asociaciones, 36 parejas xG canónicas añadidas, 228 XI, 4.137 registros de jugadores
+y 294 bajas históricas. De 97 xG originales, once no tienen asociación y cincuenta
+conservan valores canónicos anteriores. Cero partidos/clubes nuevos; 24 originales
+europeos sin identidad canónica conservados. Seis equivalencias danesas revisadas
+con país/nombres y dos fixtures independientes cada una; AGF doméstico resuelve
+también su encuentro europeo. Sin difuso ni altas bajo copas.
+
+Dos cargas en transacción revertida: segunda cero escrituras y conteos restaurados.
+Carga real verifica 125 normalizaciones y cuerpos HTTP/hash/recepción; conserva
+22.632 partidos previos y 23.042 originales anteriores con identidad/hash/reloj.
+Las 36 parejas xG respetan cortes temporales. Modelo 2026.09.27-010508, flags,
+lotes sellados y tablas antiguas XI/jugadores conservados; API interna/pública
+200 y misma versión. Sin código nuevo en worker ni reinicio, entrenamiento,
+compras, activación de ligas o mensajes externos manuales.
+
+Saldo nuevo verificado: 988 utilizados de 5.000, 4.012 restantes y cero concurrencia
+activa. Descarga principal 233 llamadas CLI y complemento danés 26; pruebas previas
+incluidas en consumo total. Arnés final 1.045 aprobadas/24 omitidas. Huecos xG
+3.154→3.118; Bundesliga 2 queda sin huecos en el corte desde 2024, Brasil B aún384,
+Dinamarca3 y Suecia2. Consumo medido por cuenta, sin inferir fallos gratuitos;
+RESP008 puede cobrarse. Evidencia .local/zenrows_key_20261013/prepared/ y verified/,
+worker artifacts/imports/zenrows-new-key-20261013/. Detalle y pendientes en
+docs/zenrows_clave_nueva_futbol_20261013.md; adaptación de consumidores históricos
+y mejoras del modelo siguen sujetas a validación, sin mejora retroactiva atribuible.
