@@ -24,6 +24,10 @@ def _solo_mercados_de_pinnacle(monkeypatch):
     monkeypatch.setattr(ap, "HANDICAP_HABILITADOS", ())
     monkeypatch.setattr(ap, "CORNERS_HABILITADOS", ())
     monkeypatch.setattr(ap, "BTTS_HABILITADOS", ())
+    # Las cuotas de API-Football (doble oportunidad, ambos marcan, córners) se leen siempre;
+    # aquí no hay base real: cada prueba que las necesita las simula.
+    from qf.publish import escalera_datos as ed
+    monkeypatch.setattr(ed, "_cuotas_af", lambda match_id, now: [])
 
 
 def _snap(pin, otros=None, source="the_odds_api", edad=timedelta(hours=1)):
@@ -729,3 +733,19 @@ def test_cuota_de_referencia_de_todos_los_corners(market):
               "price": 1.08, "provider_updated_at": NOW}]
     c = ap.Candidato(market, "under", 7.5, 0.80)
     assert ad._ref_nuevos(c, "m1", _snap((2.0, 3.4, 3.8)), filas) == (1.08, "betano")
+
+
+def test_doble_oportunidad_toma_su_cuota_de_api_football():
+    """Antes salía sin cuota aunque `af_odds` la guardara (bet 12): el candado no la enseñaba."""
+    snap = _snap((2.0, 3.5, 4.0), source="api_football")
+    filas = [{"bookmaker": "betano", "market": "double_chance", "selection": "1X", "line": None,
+              "price": 1.35, "provider_updated_at": NOW},
+             {"bookmaker": "bet365", "market": "double_chance", "selection": "1X", "line": None,
+              "price": 1.30, "provider_updated_at": NOW},
+             {"bookmaker": "pinnacle", "market": "double_chance", "selection": "1X", "line": None,
+              "price": 1.50, "provider_updated_at": NOW},        # no es de la lista de casas
+             {"bookmaker": "betano", "market": "double_chance", "selection": "X2", "line": None,
+              "price": 2.10, "provider_updated_at": NOW}]
+    c = ap.Candidato("double_chance", "1X", None, 0.80)
+    assert ad._ref_nuevos(c, "m1", snap, filas) == (1.35, "betano")      # la mejor de la lista
+    assert ad._ref_nuevos(ap.Candidato("double_chance", "12", None, 0.8), "m1", snap, filas) == (None, None)

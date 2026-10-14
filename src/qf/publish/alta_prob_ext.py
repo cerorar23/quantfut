@@ -124,7 +124,7 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         for c in elegidos:
             fit = (fits_corners[(c.market, c.selection, c.line)] if c.market in ad.CORNERS
                    else ajuste if c.market in ap.MERCADOS_CON_AJUSTE else None)
-            if c.market in ("btts", "spreads", *ad.CORNERS):
+            if c.market in ("btts", "double_chance", "spreads", *ad.CORNERS):
                 ref_price, ref_book = ad._ref_nuevos(c, m["match_id"], snap, filas_af)
             else:
                 ref_price, ref_book = ad._ref(snap, totales, c, equipos)

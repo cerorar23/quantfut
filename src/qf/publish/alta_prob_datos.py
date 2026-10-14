@@ -232,9 +232,15 @@ def _corners(m: dict, now: datetime, modelos, filas_af: list[dict],
 
 def _ref_nuevos(c: ap.Candidato, match_id: str, snap: pk.Snapshot, filas_af: list[dict]
                 ) -> tuple[float | None, str | None]:
-    """Cuota de referencia de ambos marcan, hándicap y córners."""
+    """
+    Cuota de referencia de ambos marcan, doble oportunidad, hándicap y córners.
+
+    La doble oportunidad sale de API-Football (bet 12, `af_odds`, desde el 12-oct): la
+    misma fuente y la misma regla de edad que usan la escalera y el parley. Sin esto el
+    pronóstico salía sin cuota aunque el dato estuviera en la base.
+    """
     from . import escalera_datos as ed
-    if c.market in ("btts", *CORNERS):
+    if c.market in ("btts", "double_chance", *CORNERS):
         price, book, _ = ed._ref_af(filas_af, c)
         return price, book
     # Hándicap: solo hay cuotas de las casas en The Odds API.
@@ -260,7 +266,7 @@ def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato,
                    and pk.canonical_book(r["bookmaker"]) in settings.soft_books
                    and r["selection"] == c.selection and r["line"] is not None
                    and float(r["line"]) == c.line]
-    else:   # doble oportunidad: ningún proveedor capturado la cotiza
+    else:   # doble oportunidad y el resto: no salen de este snapshot (ver `_ref_nuevos`)
         precios = []
     return max(precios) if precios else (None, None)
 
@@ -306,11 +312,8 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     excluir = set(est["bloqueados"])
     habilitados = ap.MERCADOS_GOLES_HABILITADOS
     rho = _rho_activo()
-    nuevos = bool(ap.BTTS_HABILITADOS or ap.CORNERS_HABILITADOS)
-    modelos = None
-    if ap.CORNERS_HABILITADOS:
-        from . import escalera_datos as ed
-        modelos = ed.Modelos(now)
+    from . import escalera_datos as ed
+    modelos = ed.Modelos(now) if ap.CORNERS_HABILITADOS else None
     for m in _partidos(now):
         snap = _snapshot(m["match_id"], m["kickoff_utc"], now)
         if snap is None:
@@ -327,10 +330,8 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             equipos = _equipos_af(m["match_id"], snap.as_of, now)
         else:
             totales = []
-        filas_af: list[dict] = []
-        if nuevos:
-            from . import escalera_datos as ed
-            filas_af = ed._cuotas_af(m["match_id"], now)
+        # Siempre: la doble oportunidad (que decidir() ofrece siempre) cotiza ahí.
+        filas_af = ed._cuotas_af(m["match_id"], now)
         corners, fits_corners = _corners(m, now, modelos, filas_af)
         res = decidir(snap, totales, rho, habilitados, excluir,
                       ap.MERCADOS_EQUIPO_HABILITADOS, ap.BTTS_HABILITADOS,
@@ -341,7 +342,7 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         c, ajuste = res
         if c.market in CORNERS:
             ajuste = fits_corners[(c.market, c.selection, c.line)]
-        if c.market in ("btts", "spreads", *CORNERS):
+        if c.market in ("btts", "double_chance", "spreads", *CORNERS):
             ref_price, ref_book = _ref_nuevos(c, m["match_id"], snap, filas_af)
         else:
             ref_price, ref_book = _ref(snap, totales, c, equipos)

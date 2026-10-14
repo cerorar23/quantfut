@@ -27,6 +27,7 @@ operativo como canal de clientes.
 - [x] Ejecutar omkarcloud y M3MONs Flashscore con ZenRows; corregir la ruta histórica del segundo en un adaptador. Leen otras casas; cero Pinnacle en las muestras. Archivo original intacto, resultado de búsqueda para las 6.185 filas. Ver docs/flashscore_pinnacle_20261014.md.
 - [x] Guardar por petición del usuario las 272 candidatas y las 586 ternas con originales y hashes en `data/pinnacle_recovery/20261014/`; marcadas como cierre sin verificar, sin carga en producción.
 - [x] Reintento explícito de OddsHarvester: cuatro sesiones nuevas, dos partidos de la lista, tres payloads de todas las casas verificados, cero Pinnacle nuevo. Resultado por fila y evidencia en `data/pinnacle_recovery/20261014_oddsharvester_retry/`; no son 6.185 consultas individuales.
+- [ ] Recuperar con la clave OddsPapi autorizada: catálogo y asociación exacta, historial con límite de 5 s, originales, corte prepartido y lista de pendientes; conservar el cupo disponible.
 - [ ] Conseguir fuente/acceso con Pinnacle para los 6.185, validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
 
 ## Señales nuevas en el motor principal (2026-10-14)
@@ -2649,3 +2650,6 @@ revocó sola el 14-oct).
   historial enseña los 9 últimos retos cumplidos y el último fallido (decisión del
   titular, 2026-10-14), sin filtros. Backend: `_paso_publico` añade `selection` y
   `line`. Pruebas en `live_ladder_test.dart` y `tests/test_escalera.py`.
+
+- [x] Cuota de la doble oportunidad en alta probabilidad (2026-10-14): `_ref_nuevos` la lee de API-Football; prueba en `tests/test_alta_prob_datos.py`.
+- [ ] Hándicap sin cuota en alta probabilidad: decidir entre cruzar The Odds API (otra fuente y snapshot) u ocultar el pronóstico sin cuota.

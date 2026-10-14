@@ -5875,3 +5875,15 @@ selección no pase por el historial completo. `_paso_publico` ahora publica `sel
 `line` porque la app traduce el pronóstico desde esos campos; no revela nada nuevo (el
 `texto` en español ya salía). Los escalones sin liquidar siguen saliendo por `metadata`
 (lista blanca), así que el candado VIP no cambia.
+
+## 2026-10-14 — Doble oportunidad: su cuota se toma de API-Football
+
+En la lista de alta probabilidad, los pronósticos de doble oportunidad (119 + 28 en
+producción) salían sin cuota: `_ref` decía que ningún proveedor la cotizaba, pero
+`af_odds` guarda el bet 12 desde el 12-oct (154 partidos). Ahora `_ref_nuevos` la lee de
+las filas de API-Football con la misma regla de casas y edad que la escalera y el parley,
+y `select_and_persist` carga esas filas siempre (antes solo con ambos marcan/córners
+activos). Solo afecta a pronósticos NUEVOS: los sellados tienen `ref_price` vacío en la
+cadena y no se tocan. El hándicap sigue sin cuota (API-Football no lo trae; las cuotas de
+hándicap están en The Odds API y el pronóstico se elige sobre otro snapshot): pendiente
+de decidir si se cruzan fuentes o se oculta el pronóstico sin cuota.
