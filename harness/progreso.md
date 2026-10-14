@@ -5945,3 +5945,9 @@ empezaron no cuentan y siguen visibles con su resultado. El reparto por lote
 bloque `alta_probabilidad`, por eso un solo punto cubre las dos pantallas. El Reto Escalera
 conserva su único escalón gratis aparte. Tope de 4 gratis publicado también en `/config`
 (`high_probability_free_max`) y el texto de la app lo muestra («hasta 4 gratis»).
+
+Desplegado el 14-oct: API reconstruida sobre la imagen anterior con solo `api/mobile.py`
+(`quantfut-api-tope-gratis:20261014`, persistida en el compose; worker intacto). Respaldo y ID de
+la imagen previa en `~/quantfut/releases/tope-gratis-20261014/`. Comprobado en producción:
+`/mobile/v1/home` devuelve 4 gratis abiertos (cuotas 1,32 / 1,28 / 1,27 / 1,25) y 81 con candado, y
+`/mobile/v1/config` publica `high_probability_free_max: 4`.
