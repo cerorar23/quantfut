@@ -111,7 +111,18 @@ Documentación leída el mismo día (open-meteo.com/en/terms, /pricing, /docs):
 - **En vivo:** API de pronóstico con las coordenadas de la sede, una llamada por
   partido en el momento del sello (T-30). El volumen es trivial frente a
   cualquier plan.
-- **Para entrenar y validar sin fuga:** *Historical Forecast API*
+- **Plan contratado: Standard (2026-10-14).** Sin Historical Forecast ni
+  Previous Runs. Consecuencias para el bloque `sede_clima`:
+  1. En vivo funciona con el pronóstico de la API estándar.
+  2. Desde F6 se guarda cada pronóstico usado (`emitido_en`, `valido_para`):
+     esa es la única serie de pronósticos pasados auditable, y crece a partir de
+     ese día.
+  3. Para entrenar antes de que haya meses acumulados, la alternativa es el clima
+     observado de los originales FotMob (temperatura en ~43 % de los partidos).
+     Es un sustituto, no un pronóstico: se declara como tal en el informe de
+     validación y el bloque no entra al motor si su mejora depende de ese
+     supuesto. Subir a Professional evita esta limitación.
+- **Si se contratara Professional:** *Historical Forecast API*
   (`historical-forecast-api.open-meteo.com/v1/forecast`, desde 2022) encadena las
   primeras horas de cada corrida del modelo, que es lo que habría visto el sello
   de T-30. *Previous Runs API* (`previous-runs-api.open-meteo.com/v1/forecast`,
