@@ -5728,3 +5728,11 @@ aprendizaje diario por votos). La clave `pk_test_` anterior se revocó sola el
 reales (10 días, 235 partidos, 0 discrepancias) y las migraciones en transacción
 revertida. Pendiente: pasar a una clave `pk_live_`, preguntar al proveedor por
 uso comercial y almacenamiento, y desplegar.
+
+Desplegado el mismo día por orden del titular: la clave se guardó cifrada en la
+base (no en `.env`) y el respaldo quedó activo con cron 12:40 UTC. Decisiones del
+despliegue: se parchó `base.html` sobre la versión de producción (el menú
+difería del repo) en vez de pisarlo; el worker, de imagen anterior a las claves
+cifradas, recibió `cryptography==50.0.2` (la versión ya fijada) y `cifrado.py`,
+en capas nuevas sin reiniciar. Primera pasada real: 0 discrepancias. Detalle y
+reversión en docs/pitchapi_respaldo_20261014.md.

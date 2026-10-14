@@ -2599,5 +2599,5 @@ revocó sola el 14-oct).
   de 4 caracteres, `admin_audit`), activar, probar conexión, última pasada,
   discrepancias abiertas con "marcar revisada", xG rellenados.
 - [x] Pruebas (18) y arnés 1.067 aprobadas; commit hecho.
-- [ ] Despliegue (migraciones 065/066, worker, API, cron) aparte y solo con clave válida y
-  confirmación del usuario (worker, API, cron).
+- [x] Desplegado el 14-oct (migraciones, worker, API, cron) con la clave cifrada en la base y el respaldo activo; ver docs/pitchapi_respaldo_20261014.md.
+- [ ] Clave `pk_live_` y consulta al proveedor sobre uso comercial y almacenamiento.
