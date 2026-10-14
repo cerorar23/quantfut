@@ -120,6 +120,53 @@ def ternas_pinnacle(df: pd.DataFrame, cols: dict, desde: datetime) -> list[dict]
     return out
 
 
+def cargar_ternas(c, league_id: str, ternas: list[dict], resolver, aplicar: bool) -> dict:
+    """
+    Adjunta el cierre de Pinnacle a partidos que YA existen. No da de alta equipos ni
+    partidos. `odds_snapshots` no admite DELETE: la comprobación de que no hay ya un cierre
+    de Pinnacle va dentro del propio INSERT, para que dos ejecuciones no se pisen.
+    """
+    r = {"filas": len(ternas), "sin_resolver": 0, "sin_partido": 0, "ya_tenia_cierre": 0,
+         "a_insertar": 0, "insertadas": 0}
+    for t in ternas:
+        hn, an = resolver(t["home"], league_id), resolver(t["away"], league_id)
+        if hn is None or an is None:
+            r["sin_resolver"] += 1
+            continue
+        m = c.execute(
+            """SELECT m.match_id, m.kickoff_utc,
+                      EXISTS (SELECT 1 FROM odds_snapshots o WHERE o.match_id = m.match_id
+                              AND o.bookmaker = 'pinnacle' AND o.market = 'h2h'
+                              AND o.window_tag = 'close') AS tiene
+               FROM matches m JOIN teams th ON th.team_id = m.home_team_id
+                              JOIN teams ta ON ta.team_id = m.away_team_id
+               WHERE m.league_id = %s AND th.league_id = %s AND th.canonical_name = %s
+                 AND ta.league_id = %s AND ta.canonical_name = %s AND m.status = 'finished'
+                 AND m.kickoff_utc BETWEEN %s AND %s
+               ORDER BY abs(extract(epoch FROM (m.kickoff_utc - %s::timestamptz))) LIMIT 1""",
+            (league_id, league_id, hn, league_id, an, t["ko"] - timedelta(hours=36),
+             t["ko"] + timedelta(hours=36), t["ko"])).fetchone()
+        if m is None:
+            r["sin_partido"] += 1
+        elif m["tiene"]:
+            r["ya_tenia_cierre"] += 1
+        else:
+            r["a_insertar"] += 1
+            if aplicar:
+                p = t["price"]
+                r["insertadas"] += c.execute(
+                    """INSERT INTO odds_snapshots (match_id, bookmaker, market, selection, line, price,
+                                                   captured_at, mins_to_kickoff, window_tag, source)
+                       SELECT %s, 'pinnacle', 'h2h', v.sel, NULL, v.price, %s, 0, 'close', 'football_data'
+                       FROM (VALUES ('home', %s::real), ('draw', %s::real), ('away', %s::real)) AS v(sel, price)
+                       WHERE NOT EXISTS (SELECT 1 FROM odds_snapshots o WHERE o.match_id = %s
+                                         AND o.bookmaker = 'pinnacle' AND o.market = 'h2h'
+                                         AND o.window_tag = 'close')""",
+                    (m["match_id"], m["kickoff_utc"], p["home"], p["draw"], p["away"],
+                     m["match_id"])).rowcount
+    return r
+
+
 # Los dos formatos de football-data.co.uk NO comparten nombres de columna.
 # Leer el "extra" con los nombres del principal devuelve None en cada fila y la
 # liga entera se carga vacía sin dar ningún error.
