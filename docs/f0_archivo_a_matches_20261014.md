@@ -17,7 +17,7 @@ vacías y con la procedencia de cada campo en `matches_enriquecimiento`
 | xGOT (`home_xgot`/`away_xgot`, nuevas) | 18.321 | 20.854 → 2.533 |
 | Árbitro (`referee_fotmob`, nueva) | 19.183 | `referee` vacío 18.280 → 1.429 con algún nombre |
 | Sede (`stadium_id`, tabla `estadios` nueva) | 20.331 | 20.854 → 523 |
-| Córners, tiros, tiros a puerta | 0 | sin cambio (250 / 247 / 245): FotMob no los cubre |
+| Córners, tiros, tiros a puerta | 0 | sin cambio (250 / 247 / 245): esos partidos no traen el dato en el original de FotMob |
 
 `estadios`: 758 sedes con nombre, ciudad, país, coordenadas, capacidad y
 superficie. Las coordenadas son las que usará el clima (F6).
@@ -80,4 +80,4 @@ el servidor.
 
 - Los huecos de xG (1.222 desde 2024) no se cierran con este archivo; el informe
   por competición es `huecos_xg()`. Fuente nueva: decisión del usuario.
-- Tiros y córners restantes (≈250) no están en FotMob.
+- Tiros y córners restantes (≈250): sus originales de FotMob no los traen; hace falta otra fuente.
