@@ -33,7 +33,7 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 - [ ] F3 — Bajas y sanciones como minutos perdidos (bloque `bajas`).
 - [ ] F4 — Puente de identidades FotMob/API-Football; XI con valor de jugador (bloque `xi`).
 - [ ] F5 — Árbitro: penaltis, expulsiones y tarjetas; unificar identidades (bloque `arbitro`).
-- [ ] F6 — Sede, viaje, altitud y clima con Open-Meteo (bloque `sede_clima`).
+- [ ] F6 — Sede, viaje, altitud y clima (bloque `sede_clima`): historial desde Copernicus ERA5 (decisión del usuario), pronóstico en vivo y altitud con Open-Meteo Standard. Requiere antes: cuenta CDS, licencia aceptada y token personal del usuario.
 - [ ] F7 — Sello tardío en producción (un lote por partido, `batch_kind`).
 - [ ] Huecos de xG desde 2024 (1.222; Serie B, LaLiga 2, Ligue 2): requieren una fuente nueva, decisión del usuario.
 

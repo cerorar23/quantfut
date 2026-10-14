@@ -144,6 +144,26 @@ Documentación leída el mismo día (open-meteo.com/en/terms, /pricing, /docs):
 - La tabla de pronósticos guarda `emitido_en` y `valido_para`: así la puerta de
   entrada puede comprobar que el clima usado en un sello existía antes de él.
 
+### F6: historial de clima desde Copernicus ERA5 (decisión del usuario, 2026-10-14)
+
+- **Fuente del historial:** ERA5 del Copernicus Climate Data Store (CDS), no
+  Open-Meteo. Open-Meteo Standard se queda para el pronóstico en vivo y la
+  altitud (Elevation API).
+- **Qué se descarga:** una serie horaria por estadio (758 sedes de `estadios`) y
+  por las fechas de sus partidos: temperatura a 2 m, punto de rocío (de ahí el
+  bulbo húmedo), precipitación, viento a 10 m y ráfaga, nubosidad. El conjunto
+  concreto (series temporales por punto de ERA5 o ERA5-Land, ~9 km) y el nombre
+  de cada variable se confirman contra el catálogo del CDS al implementar F6.
+- **Lo que debe hacer el usuario** (el agente no crea cuentas ni acepta
+  licencias): registrarse en el CDS, aceptar la licencia de los datasets que se
+  usen y generar su token personal de API. El token se guarda cifrado en la
+  base, como la clave de PitchAPI, nunca en `.env` ni en el repo.
+- **Atribución:** texto visible en la web ("Generated using Copernicus Climate
+  Change Service information", CC-BY 4.0), sin logos.
+- **Limitaciones declaradas:** el reanálisis es clima observado a ~25 km (o
+  ~9 km en ERA5-Land), no el pronóstico que se habría visto antes del partido;
+  tiene unos 5 días de retraso, así que sirve para entrenar, no para el sello.
+
 ### F6: variables físicas y de entorno (recomendación del 2026-10-14)
 
 El usuario pidió incluir lluvia, temperatura, viaje y altitud. Se agrupan en cuatro
