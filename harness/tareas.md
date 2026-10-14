@@ -18,6 +18,25 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Eliminar Chile y Brasil B (2026-10-13)
+
+Orden del usuario: eliminarlas por completo. Autoriza expresamente el borrado
+del historial protegido, después de revisar sus dependencias. Série A permanece.
+
+- [x] Auditar partidos, clubes, cuotas y selecciones protegidas; arnés previo.
+- [x] Preparar respaldo selectivo y eliminación transaccional de dependencias,
+  incluyendo tickets/retos afectados sin dejar productos incompletos.
+- [x] Retirar las dos competiciones de recolectores, catálogo y tareas futuras;
+  impedir su reintroducción por archivos históricos y migraciones anteriores.
+- [x] Probar reversión y eliminación, restaurar protecciones, cotejar otras
+  ligas, modelo/API y evidencia; documentar y registrar solo esta retirada.
+
+Eliminación confirmada: 1.806 partidos, 1.784 originales, 36 clubes, cuotas y
+dependencias; dos retos completos y un parley afectados. Cero datos operativos
+de ambas, 23 ligas, Série A intacta, 15 lotes originales verificados y modelo
+conservado. Guardas de reintroducción, respaldo COPY, 1.049/24 pruebas y API/app
+200. Detalle: docs/eliminacion_chile_brasil_b_20261013.md.
+
 ## Recuperación adicional con clave nueva ZenRows (2026-10-13)
 
 El usuario proporciona otra clave y solicita aplicar la documentación oficial
@@ -67,7 +86,7 @@ Diez identidades de copas pendientes y dos conflictos conservados; sin nuevos
 partidos/clubes canónicos. 1.033 pruebas, transacción reversible e idempotencia;
 modelo/API verificados. Detalle: docs/soccerdata_zenrows_20261013.md.
 
-- [ ] Completar los 3.118 huecos xG restantes cuando una fuente acredite cobertura:
+- [ ] Completar los 2.073 huecos xG de las 23 ligas restantes cuando una fuente acredite cobertura:
   muestras 2024 sin xG o con error; no convertir ausencia/bloqueo en cero.
 - [x] Recuperar calendarios actuales antes bloqueados de Brasil B, Bundesliga 2, Dinamarca,
   Suecia y Europa League; conservar cuota y originales de cada configuración.
@@ -416,8 +435,9 @@ Plan:
    0,19995) y el activo (09-27) pasó por 0,0002. `model_enabled` sigue
    apagado; decisión del usuario pendiente (forzar la activación saltándose
    la puerta, o investigar antes por qué Dixon-Coles ya no gana a Elo).
-8. [ ] Chile y Série B: sin football-data; historial por API-Football
-   (temporadas pasadas con `fixtures.ingest_league(season=…)`), pasos 2-7.
+8. [x] Cancelado: Chile y Série B fueron eliminadas por orden del titular el
+   13-oct-2026. La ampliación de modelo pendiente queda en diez ligas; los
+   diagnósticos anteriores de esta sección corresponden al alcance del 11-oct.
 
 ## Reto escalera (2026-10-08, pedido del usuario)
 

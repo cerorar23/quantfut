@@ -210,7 +210,8 @@ def collect(root, output, snapshot_path, cached, max_requests=70):
         # Cache-aware recent calendars: prioritize the twelve leagues lacking
         # models, then the remaining enabled leagues. The importer never enables.
         flags={l['league_id']:l for l in snapshot['leagues']}
-        order=sorted(TOURNAMENTS,key=lambda l:(flags[l]['model_enabled'],l))
+        order=sorted((l for l in TOURNAMENTS if l in flags and flags[l].get('active',True)),
+                     key=lambda l:(flags[l]['model_enabled'],l))
         for league in order:
             tid=TOURNAMENTS[league]
             url=f'https://www.sofascore.com/api/v1/unique-tournament/{tid}/seasons'

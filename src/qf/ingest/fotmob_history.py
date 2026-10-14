@@ -21,6 +21,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from ..league_policy import RETIRED_LEAGUES, require_supported_league
+
 BASE = "https://www.fotmob.com/api/data/"
 # IDs contrastados con allLeagues; no son los IDs de API-Football.
 COMPETITIONS = {
@@ -37,7 +39,6 @@ COMPETITIONS = {
     "pt.primeira": (61, "POR", "Liga Portugal"),
     "es.laliga2": (140, "ESP", "LaLiga2"),
     "it.serie_b": (86, "ITA", "Serie B"),
-    "cl.primera": (273, "CHI", "Liga de Primera"),
     "tr.super_lig": (71, "TUR", "Süper Lig"),
     "ch.super_league": (69, "SUI", "Super League"),
     "dk.superliga": (46, "DEN", "Superligaen"),
@@ -46,7 +47,6 @@ COMPETITIONS = {
     "gb.championship": (48, "ENG", "Championship"),
     "fr.ligue_2": (110, "FRA", "Ligue 2"),
     "de.bundesliga2": (146, "GER", "2. Bundesliga"),
-    "br.serie_b": (8814, "BRA", "Serie B"),
     "eu.ucl": (42, "INT", "Champions League"),
     "eu.uel": (73, "INT", "Europa League"),
 }
@@ -91,6 +91,7 @@ def season_labels(hub: dict, start: date, end: date) -> list[str]:
 
 
 def collect_fixtures(hub: dict, league: str, season: str, start: date, end: date) -> list[dict]:
+    require_supported_league(league)
     expected = COMPETITIONS[league][0]
     details = hub.get("details", {})
     if int(details.get("id", -1)) != expected or details.get("selectedSeason") != season:
@@ -150,6 +151,7 @@ def stat_pairs(node) -> dict[str, list]:
 
 
 def normalize_match(fixture: dict, payload: dict, captured_at: str) -> dict:
+    require_supported_league(fixture['league_id'])
     general = payload.get("general", {})
     if str(general.get("matchId")) != fixture["fotmob_match_id"]:
         raise ValueError("El detalle pertenece a otro partido")
@@ -288,7 +290,13 @@ def inventory(downloader: Downloader, start: date, end: date) -> dict:
     return manifest
 
 
+def supported_manifest(manifest):
+    return dict(manifest, fixtures=[m for m in manifest['fixtures']
+                                   if m['league_id'] not in RETIRED_LEAGUES])
+
+
 def export(root: Path, manifest: dict, rows: dict) -> dict:
+    manifest = supported_manifest(manifest)
     output = root / "matches.csv"
     fields = list(dict.fromkeys(k for row in rows.values() for k in row)) if rows else list(manifest["fixtures"][0]) if manifest["fixtures"] else ["fotmob_match_id"]
     fields = list(dict.fromkeys([*fields, "download_status", "error"]))
@@ -319,6 +327,7 @@ def export(root: Path, manifest: dict, rows: dict) -> dict:
 
 
 def download_details(downloader: Downloader, manifest: dict, workers: int) -> dict:
+    manifest = supported_manifest(manifest)
     root = downloader.root
     checkpoints = root / "rows"
     rows = {p.stem: load_json(p) for p in checkpoints.glob("*.json")}

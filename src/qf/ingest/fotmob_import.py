@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 
 from ..normalize import slugify
+from ..league_policy import require_supported_league
 from .fotmob_history import normalize_match, number
 
 log = logging.getLogger(__name__)
@@ -167,6 +168,7 @@ class Matcher:
         self.profiles = defaultdict(set)
         self.profile_names = defaultdict(Counter)
         for r in rows:
+            require_supported_league(r['league_id'])
             for side in ("home", "away"):
                 key = (r["league_id"], r[side + "_source_team_id"])
                 name = r[side + "_name"]
@@ -373,6 +375,7 @@ def apply_import(connection, normalized, plan_path, archive, output, *, rollback
         with connection.cursor().copy(sql.SQL("COPY stage_matches ({}) FROM STDIN").format(
                 sql.SQL(",").join(map(sql.Identifier, columns)))) as cp:
             for r in records(normalized):
+                require_supported_league(r['league_id'])
                 if r["provider"] != provider:
                     raise ValueError("mixed_providers")
                 sid = r["source_match_id"]

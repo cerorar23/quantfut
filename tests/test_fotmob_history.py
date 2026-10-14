@@ -108,7 +108,7 @@ def test_export_handles_success_error_and_pending(tmp_path):
     assert not summary["download_complete"]
     assert summary["coverage"][0] == {"league_id": "gb.premier_league", "matches": 3,
                                       "with_xg": 1, "missing_xg": 0, "error": 1, "pending": 1}
-    assert len(summary["coverage"]) == 25
+    assert len(summary["coverage"]) == 23
 
 
 def test_resume_uses_original_capture_time_without_network(monkeypatch, tmp_path):

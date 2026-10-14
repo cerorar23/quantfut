@@ -14,11 +14,17 @@ infraestructura de credibilidad desde la primera línea.
 | Fase | Qué es | Estado | Falta |
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de API-Football conectado el 12-oct-2026; falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 12 ligas adicionales solo sharp. |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de API-Football conectado el 12-oct-2026; falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 10 ligas adicionales solo sharp. |
 | **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-10-08, 24 de 300 (IC [−0,11, +6,03] %, 0 de 3 ligas con muestra propia). Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **80%** | Cobros (elegir procesador). Hecho el 7-oct: cuentas, web conectada, correo Proton, panel `/control` |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
 | **5** Movimiento de línea | Producto defendible | ❌ **0%** | Todo (necesita 12 meses de datos) |
+
+El 13-oct-2026 el titular retiró Chile y Brasil B y autorizó borrar su historial
+protegido. Quedan 23 competiciones; Brasileirão Série A permanece. Se eliminaron
+sus datos operativos y los productos compuestos afectados, con respaldo y
+protecciones restauradas. Los lotes sellados originales conservan su evidencia.
+Detalle: [eliminación verificada](docs/eliminacion_chile_brasil_b_20261013.md).
 
 **Las fases 2, 4 y 5 ya no están bloqueadas por los datos: están esperando
 MUESTRA.** Con el plan Pro de API-Football contratado (2026-09-22) el

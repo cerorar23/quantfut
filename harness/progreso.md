@@ -5642,3 +5642,41 @@ RESP008 puede cobrarse. Evidencia .local/zenrows_key_20261013/prepared/ y verifi
 worker artifacts/imports/zenrows-new-key-20261013/. Detalle y pendientes en
 docs/zenrows_clave_nueva_futbol_20261013.md; adaptación de consumidores históricos
 y mejoras del modelo siguen sujetas a validación, sin mejora retroactiva atribuible.
+
+## 2026-10-13 — Eliminación física de Chile y Brasil B
+
+El titular pidió retirarlas por completo y autorizó expresamente borrar su
+historial protegido tras revisar cuotas, alta probabilidad, escalera y parley.
+Se comprobó que sus clubes domésticos no intervenían en otras competiciones.
+Se eliminan 1.806 partidos, 1.784 originales históricos, 36 clubes, 49 alias,
+36 clasificaciones, 81.082 cuotas, 3.518 XI, 73.414 registros de jugadores y
+465 bajas, junto con selecciones y resultados relacionados. Para evitar
+productos incompletos se retiran dos retos enteros (seis pasos) y un parley
+entero (tres patas), incluidas las partes de otras ligas dentro de esos grupos.
+
+Respaldo selectivo: 25 COPY binarios, 45.427.123 bytes, con hashes cotejados
+localmente. Bloqueos exclusivos y excepción temporal de triggers solo en
+tablas seleccionadas, restaurados antes del commit. Prueba PostgreSQL real:
+primera eliminación, repetición cero escrituras y reversión; eliminación real
+con los mismos conteos. Conteos y huellas de filas ajenas a la selección en
+40 tablas conservados, modelo 2026.09.27-010508 y Série A intactos. Los 15
+lotes originales en disco conservan su cadena; no se reescriben. Su contenido
+retirado ya no se regenera desde la base operativa. Comparaciones de acierto
+posteriores deben explicar el cambio de población, sin atribuirlo a una mejora.
+
+db/063 registra únicamente metadatos de retiro y bloquea reinserción en
+catálogo/partidos. FotMob y SofaScore quedan en 23 competiciones; normalización,
+emparejamiento/importación y manifests viejos no reintroducen las dos retiradas.
+Fuentes exactas cotejadas y desplegadas sin reconstruir checkout viejo ni
+reiniciar. Worker respaldado y cambios persistidos en imagen. API interna y
+pública 200, catálogo23 y home móvil sin IDs retirados; cero ligas/partidos/
+originales/clubes de ambas. Arnés 1.049/24. Sin entrenamiento ni llamadas nuevas
+a proveedores deportivos; comprobado cero procesos entrenadores al terminar.
+
+Quedan 13 competiciones con modelo habilitado y diez pendientes; huecos xG
+desde2024: 3.118→2.073 por retirar ligas, no por recuperar valores. Los datos
+recién importados aún no participaron en un nuevo modelo activado. Evidencia
+.local/remove_chile_brasil_b_20261013/verified/ y artifacts/maintenance/
+remove-chile-brasil-b-20261013 del worker; 45MB de respaldo también en host.
+Detalle: docs/eliminacion_chile_brasil_b_20261013.md. Informes de cobertura
+actuales actualizados; archivos previos y sellados conservados como evidencia.

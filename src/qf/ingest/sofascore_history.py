@@ -7,6 +7,7 @@ import json
 
 from .fotmob_history import number
 from .fotmob_import import timestamp
+from ..league_policy import require_supported_league
 
 # Se verifica el torneo y país en cada calendario; los IDs son del proveedor.
 TOURNAMENTS = {
@@ -14,10 +15,10 @@ TOURNAMENTS = {
     'es.laliga': 8, 'es.laliga2': 54, 'it.serie_a': 23, 'it.serie_b': 53,
     'fr.ligue_1': 34, 'fr.ligue_2': 182, 'de.bundesliga': 35, 'de.bundesliga2': 44,
     'nl.eredivisie': 37, 'pt.primeira': 238, 'ar.primera': 155,
-    'br.serie_a': 325, 'br.serie_b': 390, 'mx.liga_mx': 11620,
+    'br.serie_a': 325, 'mx.liga_mx': 11620,
     'us.mls': 242, 'ch.super_league': 215, 'dk.superliga': 39,
     'no.eliteserien': 20, 'se.allsvenskan': 40, 'tr.super_lig': 52,
-    'cl.primera': 11653, 'eu.ucl': 7, 'eu.uel': 679,
+    'eu.ucl': 7, 'eu.uel': 679,
 }
 
 
@@ -54,6 +55,7 @@ def score(event, side):
 
 
 def normalize_bundle(league, raw, metadata):
+    require_supported_league(league)
     if hashlib.sha256(raw).hexdigest() != metadata['sha256']:
         raise ValueError('original_hash_mismatch')
     payload = json.loads(raw)
