@@ -20,6 +20,9 @@ operativo como canal de clientes.
 
 ## Recuperación de cierres Pinnacle (2026-10-14)
 
+- [x] Validar la clave OddsPapi del usuario, descargar calendarios, asociar 6.094 pendientes con nombres revisados y recuperar un primer lote de 51 ternas prepartido. Fuente, marcas horarias y originales conservados; sin carga en producción.
+- [ ] Terminar y revisar el lote continuo OddsPapi: consultar `.local/oddspapi_20261014/worker_state.json` y el recuento de `data/pinnacle_recovery/20261014_oddspapi/informe.json`; conciliar cuatro cancelados y 87 filas sin fixture. No equiparar una cola recorrida con cobertura completa ni un cierre reconstruido con certificación oficial.
+
 - [x] Descargar y archivar 60 CSV: 14.381 ternas explícitas desde 2024, todas ya presentes.
 - [x] Ensayo Football-data de asociación sin escrituras: 0 candidatos nuevos; siguen los 6.185 huecos en producción.
 - [x] OddsHarvester con ZenRows GB/CA/CL y control Champions 2025: 0 ternas Pinnacle en las muestras. Versión actual 0.20.0 aislada.
@@ -2652,4 +2655,4 @@ revocó sola el 14-oct).
   `line`. Pruebas en `live_ladder_test.dart` y `tests/test_escalera.py`.
 
 - [x] Cuota de la doble oportunidad en alta probabilidad (2026-10-14): `_ref_nuevos` la lee de API-Football; prueba en `tests/test_alta_prob_datos.py`.
-- [ ] Hándicap sin cuota en alta probabilidad: decidir entre cruzar The Odds API (otra fuente y snapshot) u ocultar el pronóstico sin cuota.
+- [x] Hándicap sin cuota en alta probabilidad (2026-10-14): captura del bet 4 de API-Football en `af_odds` y lectura en `_ref_nuevos`. Medir en 1-2 días qué parte sale con cuota.

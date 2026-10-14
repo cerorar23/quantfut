@@ -194,3 +194,47 @@ def test_doble_oportunidad_exige_el_grupo_completo_cuotas_validas_y_el_nombre(ca
         _doble("William Hill", {"Home/Draw": "1.50", "Home/Away": "1.33", "Draw/Away": "1.44"}, bet_id=33),
     ]), "m1", KO)
     assert not [r for r in rows if r[3] == "double_chance"]
+
+
+def _ah(name, valores, bet_id=4, bet_name="Asian Handicap"):
+    return {"name": name, "bets": [{"id": bet_id, "name": bet_name, "values": [
+        {"value": k, "odd": v} for k, v in valores]}]}
+
+
+def _spreads(rows):
+    return {(r[2], r[4], r[8]): r[5] for r in rows if r[3] == "spreads"}
+
+
+def test_handicap_el_visitante_lleva_su_propia_linea(casas):
+    """'Home -1' y 'Away -1' son local -1 y visitante +1: con la cuota del lado contrario se invertiría todo."""
+    rows = parse(_resp([_ah("Bet365", [("Home -1", "3.55"), ("Away -1", "1.27"),
+                                       ("Home +0", "1.93"), ("Away +0", "1.94"),
+                                       ("Home +1.5", "1.14"), ("Away +1.5", "5.00")])]), "m1", KO)
+    assert _spreads(rows) == {
+        ("bet365", "home", -1.0): 3.55, ("bet365", "away", 1.0): 1.27,
+        ("bet365", "home", 0.0): 1.93, ("bet365", "away", 0.0): 1.94,
+        ("bet365", "home", 1.5): 1.14, ("bet365", "away", -1.5): 5.0}
+    assert all(str(r[8]) != "-0.0" for r in rows)        # el cero no se guarda con signo
+
+
+def test_handicap_solo_blandas_pares_completos_y_lineas_que_se_eligen(casas):
+    rows = parse(_resp([
+        _ah("Betano", [("Home -0.5", "2.27"), ("Away -0.5", "1.67"),
+                       ("Home -0.75", "2.60"), ("Away -0.75", "1.45"),   # cuarto: nadie lo elige
+                       ("Home -3", "9.00"), ("Away -3", "1.05"),          # fuera de las líneas
+                       ("Home +0.5", "1.45")]),                           # falta el visitante
+        _ah("Marathonbet", [("Home -1", "3.34"), ("Away -1", "1.24")]),   # no es de la lista
+        _ah("Pinnacle", [("Home -1", "3.57"), ("Away -1", "1.32")]),      # la referencia no hace falta
+    ]), "m1", KO)
+    assert _spreads(rows) == {("betano", "home", -0.5): 2.27, ("betano", "away", 0.5): 1.67}
+
+
+def test_handicap_exige_el_nombre_del_bet_y_descarta_lineas_repetidas(casas):
+    rows = parse(_resp([
+        _ah("Bet365", [("Home -1", "3.55"), ("Away -1", "1.27")],
+            bet_name="Asian Handicap First Half"),                        # otra mitad
+        _ah("Betano", [("Home -1", "3.45"), ("Away -1", "1.33"), ("Home -1", "3.60")]),   # repetida
+        _ah("1xBet", [("Home -1", "1.00"), ("Away -1", "1.30")]),         # cuota no válida
+        _ah("William Hill", [("Home -1", "3.5"), ("Away -1", "1.3")], bet_id=19),
+    ]), "m1", KO)
+    assert not _spreads(rows)

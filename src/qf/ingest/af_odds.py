@@ -43,6 +43,18 @@ Hill). Los valores llegan como "Home/Draw", "Home/Away" y "Draw/Away" y se guard
 grupo completo de una casa. NO se sintetiza ninguna cuota: una cuota justa calculada desde
 el 1X2 no la ofrece nadie y no sirve de precio de referencia.
 
+HÁNDICAP ASIÁTICO (2026-10-14): bet 4 ("Asian Handicap"), solo de SOFT_BOOKS y solo
+las líneas de HANDICAP_LINEAS (enteras y medias; los cuartos no los elige nadie). Medido
+el 2026-10-14 en un partido de MLS: Bet365 y Betano lo cotizan (Pinnacle también, pero
+no hace falta). Sirve de cuota de referencia de los pronósticos de hándicap: sin esto
+salían sin cuota (0 de 279 en producción) porque The Odds API es la única otra fuente de
+hándicap y no es la del snapshot con el que se elige. Había una captura igual hasta la
+limpieza del 2026-09-25 (`harness/archivo/goles_handicap_20260925/`). TRAMPA ya conocida:
+API-Football etiqueta las DOS patas con la línea del LOCAL ('Home -1' y 'Away -1' son
+local −1 y visitante +1). Se guarda la línea PROPIA de cada lado, la convención de The
+Odds API, de `alta_prob.candidatos_handicap` y de `eval/clv`: sin invertir la del
+visitante, cada hándicap quedaría con la cuota del lado contrario.
+
 Se guarda en `af_odds_snapshots`, no en `odds_snapshots` (ver db/016).
 Una petición por partido dentro del horizonte.
 """
@@ -72,6 +84,10 @@ LINEAS_BLANDAS = (1.5, 2.5, 3.5, 4.5)
 TEAM_TOTALS = {16: ("Total - Home", "team_totals_home"),
                17: ("Total - Away", "team_totals_away")}
 BTTS = (8, "Both Teams Score")
+# Hándicap asiático: id y nombre esperado. Líneas PROPIAS de cada lado que se guardan.
+HANDICAP = (4, "Asian Handicap")
+HANDICAP_LINEAS = (-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0)
+_LADO_HANDICAP = re.compile(r"^(Home|Away)\s+([+-]?\d+(?:\.\d+)?)$")
 # Doble oportunidad: id, nombre esperado y cómo llegan los tres resultados.
 DOBLE = (12, "Double Chance")
 DOBLE_VALORES = {"Home/Draw": "1X", "Home/Away": "12", "Draw/Away": "X2"}
@@ -123,6 +139,37 @@ def _totales(bet: dict) -> dict[float, dict[str, float]]:
             out.setdefault(linea, {})[lado] = p
     return {ln: q for ln, q in out.items()
             if ln not in repetidas and set(q) == {"over", "under"}}
+
+
+def _handicap(bet: dict) -> list[tuple[str, float, float]]:
+    """
+    (lado, línea PROPIA, cuota) de cada par completo cuya línea esté en HANDICAP_LINEAS.
+    Las dos patas llegan con la línea del local: la del visitante es la opuesta. Un mismo
+    (lado, línea) repetido invalida la línea entera, como en `_totales`.
+    """
+    por_linea: dict[float, dict[str, float]] = {}
+    vistos: set[tuple[str, float]] = set()
+    repetidas: set[float] = set()
+    for v in bet.get("values", []):
+        m = _LADO_HANDICAP.match(str(v.get("value", "")).strip())
+        if not m:
+            continue
+        lado, linea = m.group(1).lower(), float(m.group(2))
+        if (lado, linea) in vistos:
+            repetidas.add(linea)
+        vistos.add((lado, linea))
+        p = _precio(v)
+        if p is not None:
+            por_linea.setdefault(linea, {})[lado] = p
+    out = []
+    for linea, q in por_linea.items():
+        if linea in repetidas or set(q) != {"home", "away"}:
+            continue
+        for lado, p in q.items():
+            propia = (-linea if lado == "away" else linea) + 0.0     # +0.0: sin -0.0
+            if propia in HANDICAP_LINEAS:
+                out.append((lado, propia, p))
+    return out
 
 
 def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]:
@@ -184,6 +231,9 @@ def parse(response: list[dict], match_id: str, kickoff: datetime) -> list[tuple]
                     if set(q) == set(DOBLE_VALORES.values()):
                         rows += [(match_id, fid, book, "double_chance", s, pr, updated, mins, None)
                                  for s, pr in q.items()]
+                elif (bet.get("id"), bet.get("name")) == HANDICAP and book in settings.soft_books:
+                    rows += [(match_id, fid, book, "spreads", lado, p, updated, mins, ln)
+                             for lado, ln, p in _handicap(bet)]
                 elif bet.get("id") in OTROS_TOTALES and (
                         book in settings.soft_books or book == settings.sharp_book):
                     nombre, mercado = OTROS_TOTALES[bet["id"]]

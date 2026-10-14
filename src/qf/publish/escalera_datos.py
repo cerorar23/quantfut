@@ -133,16 +133,16 @@ class Modelos:
 
 def _cuotas_af(match_id: str, now: datetime) -> list[dict]:
     """
-    Última cotización de cada casa para ambos anotan, doble oportunidad, córners y
-    tarjetas, ya recibida en `now` y con menos de MAX_EDAD_PRECIO.
+    Última cotización de cada casa para ambos anotan, doble oportunidad, hándicap,
+    córners y tarjetas, ya recibida en `now` y con menos de MAX_EDAD_PRECIO.
     """
     return query(
         """SELECT DISTINCT ON (bookmaker, market, selection, line)
                   bookmaker, market, selection, line, price, provider_updated_at
            FROM af_odds_snapshots
            WHERE match_id = %s
-             AND market IN ('btts', 'double_chance', 'corners', 'cards', 'corners_home',
-                            'corners_away')
+             AND market IN ('btts', 'double_chance', 'spreads', 'corners', 'cards',
+                            'corners_home', 'corners_away')
              AND fetched_at <= %s AND provider_updated_at >= %s
            ORDER BY bookmaker, market, selection, line, provider_updated_at DESC""",
         (match_id, now, now - es.MAX_EDAD_PRECIO))

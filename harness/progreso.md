@@ -1,5 +1,26 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-14 — OddsPapi: recuperar el historial sin introducir cuotas en vivo
+
+Clave autorizada, cuenta gratuita con Pinnacle y cupo de 250 consultas. El
+histórico no factura consultas según la documentación; catálogo/calendario sí.
+Se asociaron 6.094 de los 6.185 pendientes con 48 equivalencias revisadas y
+equipos existentes. Quedan 87 de 2024 fuera de los calendarios consultados y
+cuatro de 2026 cancelados en la fuente, registrados para conciliación.
+
+Primer lote: 51 ternas prepartido con historial, originales y marcas de tiempo.
+La descarga continua está en marcha sobre la cola completa, con espera mínima
+de 5,15 s tras cada respuesta, caché verificable y reanudación. CSV y recuentos
+en `data/pinnacle_recovery/20261014_oddspapi/`; estado del proceso y originales
+en `.local/oddspapi_20261014/`. No afirmar que el lote ya terminó: consultar
+`worker_state.json` e `informe.json` antes de informar cifras actuales.
+
+El histórico mezcla prepartido y en vivo: solo se toma Pinnacle/101/101-103,
+última cuota no suspendida anterior al menor del inicio programado y real.
+Se documenta como cierre reconstruido, `close_verified=False`, sin carga
+automática ni entrenamiento. Los 404 comprobados de enero/febrero no acreditan
+una ausencia universal de esos meses. Detalle: docs/oddspapi_recuperacion_20261014.md.
+
 ## 2026-10-14 — Reintento OddsHarvester: comprobar el payload completo
 
 A petición repetida del usuario, cuatro sesiones nuevas de ZenRows sobre dos
@@ -5896,3 +5917,18 @@ producción: tres partidos con doble oportunidad vigente dan cuota por casa (p. 
 betano). Aviso: la copia es solo del contenedor; el árbol `~/quantfut/src` del VPS está
 desfasado (ni siquiera tiene `alta_prob_ext.py`), así que reconstruir el worker desde él
 perdería este y otros parches.
+
+## 2026-10-14 — Hándicap: su cuota sale de API-Football (bet 4)
+
+Los 279 pronósticos de hándicap de producción tenían `ref_price` vacío: la cuota solo se
+buscaba en The Odds API y los pronósticos se eligen sobre un snapshot de API-Football.
+Cruzar fuentes cubría solo el 19 % (53 de 279; solo 1xBet y Coolbet cotizan ahí) y mezclaría
+edades distintas, que el proyecto prohíbe. Decisión: volver a capturar el bet 4 ("Asian
+Handicap") en `af_odds` (misma petición, sin coste de cuota ni migración), solo de SOFT_BOOKS
+y solo líneas enteras y medias; comprobado con una respuesta real (Bet365 y Betano lo
+cotizan). La línea del visitante se guarda invertida (propia, no la del local): es la
+trampa que ya estaba documentada en el código archivado del 25-sep. `_cuotas_af` lee
+`spreads` y `_ref_nuevos` los usa cuando el snapshot es de API-Football; con uno de The Odds
+API sigue leyendo los suyos (nunca mezcladas). Solo afecta a pronósticos nuevos y solo cuando
+la casa ya tenga guardada la cuota; los sellados no se tocan. Pendiente de medir: cuántos
+hándicap salen con cuota tras uno o dos días de captura.

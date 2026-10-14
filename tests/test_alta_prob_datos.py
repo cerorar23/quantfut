@@ -749,3 +749,28 @@ def test_doble_oportunidad_toma_su_cuota_de_api_football():
     c = ap.Candidato("double_chance", "1X", None, 0.80)
     assert ad._ref_nuevos(c, "m1", snap, filas) == (1.35, "betano")      # la mejor de la lista
     assert ad._ref_nuevos(ap.Candidato("double_chance", "12", None, 0.8), "m1", snap, filas) == (None, None)
+
+
+def test_handicap_de_un_snapshot_de_api_football_toma_su_cuota_de_api_football():
+    """El hándicap salía siempre sin cuota con un snapshot de API-Football (0 de 279 en producción)."""
+    snap = _snap((2.0, 3.5, 4.0), source="api_football")
+    def fila(casa, lado, linea, precio):
+        return {"bookmaker": casa, "market": "spreads", "selection": lado, "line": linea,
+                "price": precio, "provider_updated_at": NOW}
+    filas = [fila("betano", "home", 1.0, 1.16), fila("bet365", "home", 1.0, 1.18),
+             fila("pinnacle", "home", 1.0, 1.30),                     # no es de la lista de casas
+             fila("betano", "away", 1.0, 3.40), fila("betano", "home", -1.0, 3.45)]
+    c = ap.Candidato("spreads", "home", 1.0, 0.83)
+    assert ad._ref_nuevos(c, "m1", snap, filas) == (1.18, "bet365")        # la mejor de la lista
+    assert ad._ref_nuevos(ap.Candidato("spreads", "away", 1.0, 0.3), "m1", snap, filas) == (3.4, "betano")
+    assert ad._ref_nuevos(ap.Candidato("spreads", "home", 2.0, 0.9), "m1", snap, filas) == (None, None)  # otra línea
+
+
+def test_handicap_de_the_odds_api_sigue_leyendo_sus_propios_spreads(monkeypatch):
+    from qf.publish import escalera_datos as ed
+    snap = _snap((2.0, 3.5, 4.0), source="the_odds_api")
+    monkeypatch.setattr(ed, "_handicaps", lambda match_id, as_of: [
+        {"bookmaker": "coolbet", "selection": "home", "line": 1.0, "price": 1.2}])
+    c = ap.Candidato("spreads", "home", 1.0, 0.83)
+    assert ad._ref_nuevos(c, "m1", snap, filas_af=[{"bookmaker": "betano", "market": "spreads",
+        "selection": "home", "line": 1.0, "price": 9.9, "provider_updated_at": NOW}]) == (1.2, "coolbet")

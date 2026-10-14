@@ -243,7 +243,11 @@ def _ref_nuevos(c: ap.Candidato, match_id: str, snap: pk.Snapshot, filas_af: lis
     if c.market in ("btts", "double_chance", *CORNERS):
         price, book, _ = ed._ref_af(filas_af, c)
         return price, book
-    # Hándicap: solo hay cuotas de las casas en The Odds API.
+    # Hándicap: cada fuente con SU snapshot, nunca mezcladas (edades distintas). Con uno de
+    # API-Football, su bet 4 (desde el 2026-10-14); con uno de The Odds API, sus spreads.
+    if snap.source == "api_football":
+        price, book, _ = ed._ref_af(filas_af, c)
+        return price, book
     if snap.source != "the_odds_api":
         return None, None
     return ed._ref_handicap(ed._handicaps(match_id, snap.as_of), c)
