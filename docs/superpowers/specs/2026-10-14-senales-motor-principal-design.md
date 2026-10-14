@@ -111,8 +111,16 @@ Documentación leída el mismo día (open-meteo.com/en/terms, /pricing, /docs):
 - **En vivo:** API de pronóstico con las coordenadas de la sede, una llamada por
   partido en el momento del sello (T-30). El volumen es trivial frente a
   cualquier plan.
-- **Plan contratado: Standard (2026-10-14).** Sin Historical Forecast ni
-  Previous Runs. Consecuencias para el bloque `sede_clima`:
+- **Plan contratado: Standard (2026-10-14).** Sin Historical Weather (ERA5),
+  Historical Forecast ni Previous Runs: según la tabla de su página de precios,
+  las tres APIs históricas están solo en Free (no comercial), Professional y
+  Enterprise; el *Elevation API* sí está en todos los planes. Para bajar el
+  historial hay dos caminos legítimos: (a) subir a Professional, o (b) descargar
+  ERA5 directamente del Copernicus Climate Data Store (el mismo reanálisis que
+  sirve Open-Meteo; licencia abierta CC-BY 4.0 con atribución, uso comercial
+  permitido; verificar el texto vigente antes de publicar). Descargar el
+  historial con la clave gratuita para un producto de pago incumpliría sus
+  términos. Consecuencias para el bloque `sede_clima`:
   1. En vivo funciona con el pronóstico de la API estándar.
   2. Desde F6 se guarda cada pronóstico usado (`emitido_en`, `valido_para`):
      esa es la única serie de pronósticos pasados auditable, y crece a partir de
