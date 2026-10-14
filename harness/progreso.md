@@ -5887,3 +5887,12 @@ activos). Solo afecta a pronósticos NUEVOS: los sellados tienen `ref_price` vac
 cadena y no se tocan. El hándicap sigue sin cuota (API-Football no lo trae; las cuotas de
 hándicap están en The Odds API y el pronóstico se elige sobre otro snapshot): pendiente
 de decidir si se cruzan fuentes o se oculta el pronóstico sin cuota.
+
+Desplegado el 14-oct (solo `worker`, sin reiniciarlo): `docker cp` de `alta_prob_datos.py` y
+`alta_prob_ext.py` al contenedor; los jobs de cron arrancan un proceso nuevo y cogen el
+archivo en la siguiente pasada. Respaldo de los anteriores en
+`~/quantfut/releases/doble-oportunidad-cuota-20261014/*.before`. Comprobado con la base de
+producción: tres partidos con doble oportunidad vigente dan cuota por casa (p. ej. 1X 1,75
+betano). Aviso: la copia es solo del contenedor; el árbol `~/quantfut/src` del VPS está
+desfasado (ni siquiera tiene `alta_prob_ext.py`), así que reconstruir el worker desde él
+perdería este y otros parches.
