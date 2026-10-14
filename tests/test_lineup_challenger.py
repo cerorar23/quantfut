@@ -157,3 +157,37 @@ def test_ece_solo_empeora_si_el_ruido_no_lo_explica():
     sesgado /= sesgado.sum(axis=1, keepdims=True)
     peor, ic = _ece_empeora(antes, sesgado, onehot)
     assert peor is True and ic[0] > 0
+
+
+def test_fit_and_validate_informe_no_cambia_tras_extraer_la_puerta():
+    """Caracterización: los números de la puerta son los de antes del refactor."""
+    import numpy as np
+
+    from qf.model.lineup_challenger import fit_and_validate
+    rng = np.random.default_rng(0)
+    n = 800
+    x = rng.normal(size=n)
+    frame = pd.DataFrame({
+        "match_id": [f"m{i}" for i in range(n)], "league_id": ["A", "B"] * (n // 2),
+        "kickoff_utc": pd.date_range("2025-01-01", periods=n, freq="D", tz="UTC"),
+        "base_lam": 1.4, "base_mu": 1.1, "rho": -0.05, "home_d_tiros": x,
+        "home_goals": rng.poisson(1.4 * np.exp(0.3 * x)), "away_goals": rng.poisson(1.1, n)})
+    _, r = fit_and_validate(frame, rho=-0.05, features=["home_d_tiros"])
+    esperado = {"n_fit": 560, "n_val": 240, "rps_before": 0.22776, "rps_after": 0.22356,
+                "log_loss_before": 1.06059, "log_loss_after": 1.04757, "ece_before": 0.0261,
+                "ece_after": 0.05037, "leagues_improved": 2, "ok": False}
+    assert {k: r[k] for k in esperado} == esperado
+
+
+def test_informe_antes_despues_expuesto_y_coherente():
+    import numpy as np
+
+    from qf.model.lineup_challenger import informe_antes_despues
+    val = pd.DataFrame({"home_goals": [2, 0, 1, 1], "away_goals": [0, 1, 1, 3],
+                        "league_id": ["A", "A", "B", "B"]})
+    antes = np.array([[.4, .3, .3]] * 4)
+    despues = np.array([[.7, .2, .1], [.1, .2, .7], [.2, .6, .2], [.1, .1, .8]])
+    r = informe_antes_despues(val, antes, despues, n_fit=10)
+    assert r["n_fit"] == 10 and r["n_val"] == 4
+    assert r["rps_after"] < r["rps_before"] and r["log_loss_after"] < r["log_loss_before"]
+    assert set(r["by_league"]) == {"A", "B"} and r["leagues_improved"] == 2

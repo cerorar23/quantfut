@@ -222,6 +222,48 @@ def _ece_empeora(antes: np.ndarray, despues: np.ndarray, onehot: np.ndarray,
     return bool(ic[0] > 0), ic
 
 
+def informe_antes_despues(val: pd.DataFrame, before: np.ndarray, after: np.ndarray,
+                         n_fit: int) -> dict:
+    """Puerta de un ajuste: probabilidades 1X2 antes y después sobre las mismas filas."""
+    outcomes = np.where(val["home_goals"] > val["away_goals"], 0,
+                        np.where(val["home_goals"] == val["away_goals"], 1, 2))
+    onehot = np.zeros_like(before)
+    onehot[np.arange(len(outcomes)), outcomes] = 1.0
+    report = {
+        "status": "shadow_only", "n_fit": int(n_fit), "n_val": int(len(val)),
+        "rps_before": round(rps(before, outcomes), 5),
+        "rps_after": round(rps(after, outcomes), 5),
+        "log_loss_before": round(log_loss(before, outcomes), 5),
+        "log_loss_after": round(log_loss(after, outcomes), 5),
+        "ece_before": round(ece(before.ravel(), onehot.ravel()), 5),
+        "ece_after": round(ece(after.ravel(), onehot.ravel()), 5),
+        "promotion_blocked_until_clv": True,
+    }
+    ece_peor, ece_ic = _ece_empeora(before, after, onehot)
+    report["ece_delta_ic95"] = ece_ic
+    report["ece_empeora"] = ece_peor
+    league_report = {}
+    improved_leagues = 0
+    for league, group in val.groupby("league_id"):
+        positions = val.index.get_indexer(group.index)
+        old_rps = rps(before[positions], outcomes[positions])
+        new_rps = rps(after[positions], outcomes[positions])
+        improved_leagues += int(new_rps < old_rps)
+        league_report[str(league)] = {
+            "n": int(len(positions)), "rps_before": round(old_rps, 5),
+            "rps_after": round(new_rps, 5),
+            "improved": bool(new_rps < old_rps),
+        }
+    report["by_league"] = league_report
+    report["leagues_improved"] = improved_leagues
+    improved = (report["rps_after"] < report["rps_before"]
+                and report["log_loss_after"] < report["log_loss_before"]
+                and not ece_peor
+                and improved_leagues >= 2)
+    report["ok"] = bool(improved)
+    return report
+
+
 def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
                      holdout_frac: float = 0.30, min_fit: int = 500,
                      min_val: int = 200, l2: float = 10.0,
@@ -260,43 +302,8 @@ def fit_and_validate(frame: pd.DataFrame, rho: float = 0.0, shrink: float = 0.5,
                             val["base_mu"].to_numpy(), historical_rho)
     lam, mu = model.apply(val)
     after = _probabilities(lam, mu, historical_rho)
-    outcomes = np.where(val["home_goals"] > val["away_goals"], 0,
-                        np.where(val["home_goals"] == val["away_goals"], 1, 2))
-    onehot = np.zeros_like(before)
-    onehot[np.arange(len(outcomes)), outcomes] = 1.0
-    report = {
-        "status": "shadow_only", "n_fit": int(cut), "n_val": int(len(val)),
-        "rps_before": round(rps(before, outcomes), 5),
-        "rps_after": round(rps(after, outcomes), 5),
-        "log_loss_before": round(log_loss(before, outcomes), 5),
-        "log_loss_after": round(log_loss(after, outcomes), 5),
-        "ece_before": round(ece(before.ravel(), onehot.ravel()), 5),
-        "ece_after": round(ece(after.ravel(), onehot.ravel()), 5),
-        "promotion_blocked_until_clv": True,
-    }
-    ece_peor, ece_ic = _ece_empeora(before, after, onehot)
-    report["ece_delta_ic95"] = ece_ic
-    report["ece_empeora"] = ece_peor
-    league_report = {}
-    improved_leagues = 0
-    for league, group in val.groupby("league_id"):
-        positions = val.index.get_indexer(group.index)
-        old_rps = rps(before[positions], outcomes[positions])
-        new_rps = rps(after[positions], outcomes[positions])
-        improved_leagues += int(new_rps < old_rps)
-        league_report[str(league)] = {
-            "n": int(len(positions)), "rps_before": round(old_rps, 5),
-            "rps_after": round(new_rps, 5),
-            "improved": bool(new_rps < old_rps),
-        }
-    report["by_league"] = league_report
-    report["leagues_improved"] = improved_leagues
-    improved = (report["rps_after"] < report["rps_before"]
-                and report["log_loss_after"] < report["log_loss_before"]
-                and not ece_peor
-                and improved_leagues >= 2)
-    report["ok"] = bool(improved)
-    model.params.offline_validated = bool(improved)
+    report = informe_antes_despues(val, before, after, int(cut))
+    model.params.offline_validated = bool(report["ok"])
     return model, report
 
 
