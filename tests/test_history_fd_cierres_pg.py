@@ -40,7 +40,9 @@ def _terna(local, visita, ko, p=(2.1, 3.3, 3.6)):
 
 
 def _resolver(nombre, league_id):
-    return nombre
+    """Equivalente en la prueba del resolutor real: nombre canónico -> team_id, de cualquier liga."""
+    fila = db.query_one("SELECT team_id FROM teams WHERE canonical_name = %s", (nombre,))
+    return fila["team_id"] if fila else None
 
 
 def _cierres(mid):
@@ -94,7 +96,7 @@ def test_sin_partido_y_sin_resolver_se_cuentan_y_se_omiten():
     sin_pareja = _terna(local, visita, ko + timedelta(days=10))
     desconocido = _terna("Nadie", visita, ko)
     with db.conn() as c:
-        r = cargar_ternas(c, liga, [sin_pareja, desconocido], lambda n, l: None if n == "Nadie" else n,
+        r = cargar_ternas(c, liga, [sin_pareja, desconocido], lambda n, l: None if n == "Nadie" else _resolver(n, l),
                           aplicar=True)
     assert r["sin_partido"] == 1 and r["sin_resolver"] == 1 and r["insertadas"] == 0
 
@@ -108,3 +110,13 @@ def test_con_dos_partidos_cercanos_elige_el_mas_proximo():
     with db.conn() as c:
         cargar_ternas(c, liga, [_terna(local, visita, ko + timedelta(hours=28))], _resolver, aplicar=True)
     assert len(_cierres(mid1)) == 0 and len(_cierres(mid1 + "-b")) == 3
+
+
+def test_un_club_de_otra_division_tambien_empareja():
+    """Ascendidos y descendidos tienen su fila de equipo en otra liga; el partido es de esta."""
+    mid, liga, local, visita, ko = _partido()
+    otra = db.query_one("SELECT league_id FROM leagues WHERE league_id <> %s ORDER BY league_id LIMIT 1", (liga,))["league_id"]
+    db.execute("UPDATE teams SET league_id = %s WHERE canonical_name = %s", (otra, local))
+    with db.conn() as c:
+        r = cargar_ternas(c, liga, [_terna(local, visita, ko)], _resolver, aplicar=True)
+    assert r["insertadas"] == 3 and len(_cierres(mid)) == 3

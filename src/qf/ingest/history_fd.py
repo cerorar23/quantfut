@@ -123,8 +123,9 @@ def ternas_pinnacle(df: pd.DataFrame, cols: dict, desde: datetime) -> list[dict]
 
 def cargar_ternas(c, league_id: str, ternas: list[dict], resolver, aplicar: bool) -> dict:
     """
-    Adjunta el cierre de Pinnacle a partidos que YA existen. No da de alta equipos ni
-    partidos. `odds_snapshots` no admite DELETE: la comprobación de que no hay ya un cierre
+    Adjunta el cierre de Pinnacle a partidos que YA existen. `resolver` devuelve el team_id (un club
+    ascendido o descendido tiene su fila en otra división, así que no se exige la liga del equipo).
+    No da de alta equipos ni partidos. `odds_snapshots` no admite DELETE: la comprobación de que no hay ya un cierre
     de Pinnacle va dentro del propio INSERT, para que dos ejecuciones no se pisen.
     """
     r = {"filas": len(ternas), "sin_resolver": 0, "sin_partido": 0, "ya_tenia_cierre": 0,
@@ -139,14 +140,12 @@ def cargar_ternas(c, league_id: str, ternas: list[dict], resolver, aplicar: bool
                       EXISTS (SELECT 1 FROM odds_snapshots o WHERE o.match_id = m.match_id
                               AND o.bookmaker = 'pinnacle' AND o.market = 'h2h'
                               AND o.window_tag = 'close') AS tiene
-               FROM matches m JOIN teams th ON th.team_id = m.home_team_id
-                              JOIN teams ta ON ta.team_id = m.away_team_id
-               WHERE m.league_id = %s AND th.league_id = %s AND th.canonical_name = %s
-                 AND ta.league_id = %s AND ta.canonical_name = %s AND m.status = 'finished'
-                 AND m.kickoff_utc BETWEEN %s AND %s
+               FROM matches m
+               WHERE m.league_id = %s AND m.home_team_id = %s AND m.away_team_id = %s
+                 AND m.status = 'finished' AND m.kickoff_utc BETWEEN %s AND %s
                ORDER BY abs(extract(epoch FROM (m.kickoff_utc - %s::timestamptz))) LIMIT 1""",
-            (league_id, league_id, hn, league_id, an, t["ko"] - timedelta(hours=36),
-             t["ko"] + timedelta(hours=36), t["ko"])).fetchone()
+            (league_id, hn, an, t["ko"] - timedelta(hours=36), t["ko"] + timedelta(hours=36),
+             t["ko"])).fetchone()
         if m is None:
             r["sin_partido"] += 1
         elif m["tiene"]:
@@ -168,13 +167,10 @@ def cargar_ternas(c, league_id: str, ternas: list[dict], resolver, aplicar: bool
     return r
 
 
-def _resolver_lectura(nombre: str, league_id: str) -> str | None:
-    """Nombre canónico por coincidencia EXACTA y sin escribir nada (ni alias ni pendientes)."""
+def _resolver_lectura(nombre: str, league_id: str) -> int | None:
+    """team_id por coincidencia EXACTA y sin escribir nada (ni alias ni pendientes)."""
     tid, _, score = match_team(nombre, "football_data", league_id)
-    if not tid or score < 100.0:
-        return None
-    row = query_one("SELECT canonical_name FROM teams WHERE team_id = %s", (tid,))
-    return row["canonical_name"] if row else None
+    return tid if tid and score >= 100.0 else None
 
 
 def _ligas_con_csv(ligas: list[str] | None) -> list[dict]:

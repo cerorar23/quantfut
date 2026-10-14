@@ -261,8 +261,7 @@ def test_el_resolutor_de_cierres_solo_lee_y_exige_coincidencia_exacta(monkeypatc
 
     escrituras = []
     monkeypatch.setattr(h, "match_team", lambda raw, src, liga: (7, "x", 100.0) if raw == "Exacto" else (7, "x", 92.0))
-    monkeypatch.setattr(h, "query_one", lambda sql, params=(): {"canonical_name": "Canonico"})
     monkeypatch.setattr(h, "execute", lambda *a, **k: escrituras.append(a))
-    assert h._resolver_lectura("Exacto", "L") == "Canonico"
+    assert h._resolver_lectura("Exacto", "L") == 7
     assert h._resolver_lectura("Difuso", "L") is None
     assert escrituras == []
