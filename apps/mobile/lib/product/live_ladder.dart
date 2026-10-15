@@ -531,14 +531,6 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
                               : r['reto_id'],
                         ),
                       ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: liveText(
-                        l10n.ladderHistoryShown,
-                        size: 11,
-                        color: liveMuted,
-                      ),
-                    ),
                   ],
                 ),
               ),

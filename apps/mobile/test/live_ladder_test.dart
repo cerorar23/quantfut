@@ -331,7 +331,7 @@ void main() {
     // Los cumplidos más antiguos y los otros fallidos no salen.
     expect([20, 19, 18, 17, 16].map(shown), everyElement(isFalse));
     expect(find.byKey(const ValueKey('ladder-history-row-30')), findsOneWidget);
-    expect(find.text('Se muestran los últimos cumplidos y el último fallido.'), findsOneWidget);
+    expect(find.text('Se muestran los últimos cumplidos y el último fallido.'), findsNothing);
     expect(find.text('12 cumplidos de 15 cerrados'), findsOneWidget); // el resumen cuenta todos
   });
 
