@@ -6069,3 +6069,18 @@ de apuestas de AdMob/Play para una app de cuotas no se pudo confirmar y la polí
 dice que no hay publicidad personalizada; ambos son bloqueantes (ver `tareas.md`). Nada desplegado.
 Probado con Postgres local en un esquema aislado: la prueba `test_pg_fixed_allocations_and_ladder_global_one`
 (ajena a esto) falla con `KeyError: 'kickoff_utc'` en `mobile.py` cuando hay base; antes se omitía.
+
+Desplegado el 15-oct (solo API; worker intacto): imagen `quantfut-api-admob:20261014b` sobre `quantfut-api-invitacion:20261014`
+con `anuncios.py`, `anuncios_ssv.py`, `rewards.py`, `main.py`, `panel.py`, `mensajes.py` y las plantillas `anuncios.html` y
+`base.html` (los cinco archivos ya existentes en producción eran idénticos a la base de la rama antes de copiar los
+míos). `db/069` aplicada tras un ensayo con ROLLBACK; respaldo del compose y de las tablas `reward_*` en
+`~/quantfut/releases/admob-recompensas-20261014/`; imagen previa conservada para volver atrás (la migración es
+aditiva: el código anterior la ignora). Comprobado en el dominio real: `/health` 200, `/app-ads.txt` 404 (sin ID de
+editor), callback con firma inválida 403, ticket sin sesión 401, `/control/anuncios` tras Cloudflare Access,
+resumen de monedas sin cambios para la app actual; el contenedor alcanza las claves públicas de Google.
+
+Fallo encontrado SOLO al verificar en producción: `/rewards/callback/{provider}` (ofertas) capturaba
+`/rewards/callback/admob` y respondía 503 «Proveedor no configurado». Mis pruebas usaban una app mínima con solo el
+router de anuncios y no lo veían. Corregido registrando el router de anuncios antes que el de ofertas y con una
+prueba sobre la app completa (`test_el_callback_de_admob_no_lo_captura…`). Lección: en rutas con parámetro de
+ruta genérico, probar el orden de registro con `main.app`.

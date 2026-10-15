@@ -2724,7 +2724,8 @@ Detalle en `docs/admob_recompensas_20261014.md`.
       pronósticos con cuotas puede monetizar con anuncios; bloquear la categoría de apuestas.
 - [ ] **Bloqueante antes de anuncios reales:** actualizar la política de privacidad (hoy dice que no hay
       publicidad personalizada) — texto legal, lo decide el titular.
-- [ ] Aplicar `db/069` y desplegar solo API (con visto bueno), configurar el bloque con SSV, probar con la
-      herramienta de SSV de AdMob y en un teléfono con bloques de prueba.
+- [x] `db/069` aplicada y API desplegada el 15-oct (imagen `quantfut-api-admob:20261014b`, worker intacto,
+      anuncios apagados y en modo prueba). Falta configurar el bloque con SSV en AdMob y el panel, probar
+      con la herramienta de SSV de AdMob y en un teléfono con bloques de prueba.
 - [ ] Sustituir el ID de APP de ejemplo por el real (AndroidManifest / Info.plist); declaraciones de Play.
 - [ ] Más adelante, con datos reales: mediación (Unity Ads, AppLovin) sobre AdMob.
