@@ -15,6 +15,22 @@ solo información ajena al mercado puede cambiar ese signo. Por decisión del
 usuario no se toca el motor antes del 1-nov. Spec:
 docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md.
 
+## 2026-10-15 — Revisión del plan: A se juzga contra B del mismo momento
+
+La revisión del usuario corrige el orden: F8 se evalúa en paralelo con F9 y se
+activa al final, porque una mezcla no evita el doble conteo por sí sola y ganar a
+un B de las 03:00 puede ser solo ventaja de hora (F7). Por eso F9 separa el efecto
+del horario, del modelo y de la selección. La regla «≥2 ligas» queda como filtro
+inicial: con muchas variantes probadas hace falta magnitud, estabilidad y
+registro de lo probado. Descanso/calendario sube por coste bajo. Hallazgo de
+datos: el archivo FotMob ya trae XI, minutos, bajas, entrenador, ronda y estilos
+de 2024 en adelante (sin pasar a las tablas del motor, donde el XI está al 0 %
+antes de 25-26); lo que de verdad falta descargar es el calendario de copas y
+otras competiciones, altitud y ERA5. El 91/223 con cuota de referencia está
+sesgado porque doble oportunidad y hándicap se capturan desde el 12 y 14-oct. No
+se compran cuotas históricas a T-60 (≈14.000–31.000 créditos por temporada): se
+evalúa hacia delante con la captura propia.
+
 ## 2026-10-15 — Carga autorizada de OddsPapi: cierre utilizable y referencia separados
 
 Confirmados 2.918 cierres reconstruidos (8.754 cuotas), más 25 referencias solo

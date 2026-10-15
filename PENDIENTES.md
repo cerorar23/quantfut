@@ -34,13 +34,15 @@ Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. 
 | F6 clima y sede | Decidido (Copernicus ERA5 para historial; Open-Meteo Standard en vivo y altitud); sin código | Guardar token cifrado |
 | F5 árbitro | Sin empezar; datos de F0 listos | Unificar identidades |
 | F4 puente FotMob/API-Football y XI con valor | Sin empezar; las variantes con valor hoy no pasan la puerta | F7 |
-| **F9 evaluación de picks a volumen constante** | Nueva (15-oct). Requisito para activar cualquier fase | F7 |
-| **F8 conectar el modelo propio con los picks** | Nueva (15-oct). Sin esto, mejorar el modelo no cambia ningún pick vendido | F9 |
-| F10 selección y diversidad (alternativas por partido, correlación en parley/escalera) | Nueva (15-oct) | F8 |
+| **F9 evaluación (probabilidades y selección, a volumen constante)** | Nueva (15-oct). La prueba decisiva es contra B actualizado al mismo momento | F7 |
+| **F8 conectar el modelo propio con los picks** | Nueva (15-oct). Se evalúa en paralelo con F9 sin tocar picks vendidos; se activa al final | F9 y factores validados |
+| F10 selección y exposición entre productos | Nueva (15-oct) | F8 |
 | F11 app: fuente de cada cifra e indicador de calidad de datos (6 idiomas) | Nueva (15-oct); no toca el motor, puede adelantarse | Tu visto bueno |
-| F12 factores sin fase (descanso, ida/vuelta, entrenador, estilos, córners/tarjetas ampliados) | Nueva (15-oct) | F9 |
+| F12 factores sin fase: **descanso y calendario primero**; ida/vuelta, entrenador, estilos, córners/tarjetas ampliados | Nueva (15-oct) | Calendario de otras competiciones |
 
-Orden tras el 1-nov: F7 → F9 → F8 → F3, F6, F5, F4 → F10 → F12. Plan completo:
+Orden tras el 1-nov: F7 (y captura de XI y bajas completa) → F9 con F8 en paralelo → descanso/calendario → archivo FotMob a tablas y
+F3, F6, F5, F4 → activar F8 y F10. Datos que faltan descargar: calendario de copas y otras competiciones, altitud de sedes y clima
+ERA5 (tu token); el XI, minutos, bajas, entrenador y estilos ya están en el archivo FotMob. Plan completo:
 `docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md`.
 
 Tareas sueltas:
