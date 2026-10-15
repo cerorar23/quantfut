@@ -53,6 +53,10 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 - [ ] F5 — Árbitro: penaltis, expulsiones y tarjetas; unificar identidades (bloque `arbitro`).
 - [ ] F6 — Sede, viaje, altitud y clima (bloque `sede_clima`): historial desde Copernicus ERA5 (decisión del usuario), pronóstico en vivo y altitud con Open-Meteo Standard. Requiere antes: cuenta CDS, licencia aceptada y token personal del usuario.
 - [ ] F7 — Sello tardío en producción (un lote por partido, `batch_kind`).
+- **Orden acordado con el usuario (2026-10-15):** hasta el 1-nov no se toca código del motor (reentrenamiento automático con el
+  filtro de cierres y el worker alineado con `main`). Después: reejecutar `python -m qf.model.ajuste` sobre el nuevo OOS, comprar
+  los 527 snapshots de The Odds API (~5.270 créditos) y diseñar **F7** (es lo que deja entrar al XI en el motor y mejora los picks
+  con cuotas de última hora; toca la cadena de hashes). Luego F3, F6, F5 y F4. Fecha de control: ~10-nov, CLV en sombra a 300.
 - [ ] Huecos de xG desde 2024 (1.222; Serie B, LaLiga 2, Ligue 2): requieren una fuente nueva, decisión del usuario.
 
 ## Buscar datos restantes de las 23 competiciones (2026-10-13)
