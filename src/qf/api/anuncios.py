@@ -7,15 +7,16 @@ video y Google avisa al servidor con un callback firmado (SSV); solo ese callbac
 from __future__ import annotations
 
 import math
+import re
 import secrets
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 from . import anuncios_ssv as ssv
-from . import rewards
+from . import console, panel, rewards
 from ..comercial.auditoria import audit
 from ..db import conn, query, query_one  # noqa: F401 - `query*` los usa el panel
 
@@ -195,3 +196,76 @@ def callback(request: Request):
                          ad_unit=q.get('ad_unit', '')[:80], cfg=cfg, now=datetime.now(timezone.utc))
         audit(c, 'reward:admob', 'reward_callback', detail={'transaction_id': tx, 'outcome': outcome})
     return PlainTextResponse('OK', headers={'Cache-Control': 'no-store'})
+
+
+# --- panel /control/anuncios y app-ads.txt --------------------------------------------
+
+UNIT_RE = re.compile(r'^ca-app-pub-\d{16}/\d{10}$')
+PUBLISHER_RE = re.compile(r'^pub-\d{16}$')
+
+
+def parse_config(*, enabled: str, test_mode: str, coins: int, cap: int, cooldown: int,
+                 unit_android: str, unit_ios: str, publisher: str) -> dict:
+    if enabled not in ('', '1') or test_mode not in ('', '1'):
+        raise HTTPException(422, 'Estado inválido')
+    if not (1 <= coins <= 1_000_000 and 1 <= cap <= 50 and 0 <= cooldown <= 3600):
+        raise HTTPException(422, 'Valores de anuncios no válidos')
+    unit_android, unit_ios, publisher = unit_android.strip(), unit_ios.strip(), publisher.strip()
+    if any(u and not UNIT_RE.match(u) for u in (unit_android, unit_ios)):
+        raise HTTPException(422, 'ID de bloque no válido')
+    if publisher and not PUBLISHER_RE.match(publisher):
+        raise HTTPException(422, 'ID de editor no válido')
+    if enabled == '1' and test_mode == '' and not (unit_android or unit_ios):
+        raise HTTPException(422, 'Activa el modo prueba o indica un ID de bloque real')
+    return {'ads_enabled': enabled == '1', 'ad_test_mode': test_mode == '1', 'ad_coins': coins,
+            'ad_daily_cap': cap, 'ad_cooldown_seconds': cooldown, 'ad_unit_android': unit_android,
+            'ad_unit_ios': unit_ios, 'admob_publisher_id': publisher}
+
+
+def save_config(c, actor: str, values: dict) -> None:
+    cols = ','.join(f'{k}=%s' for k in values)
+    c.execute(f'UPDATE reward_settings SET {cols},updated_at=now() WHERE id=1', tuple(values.values()))
+    audit(c, actor, 'ads_settings', detail=values)
+
+
+def page_data() -> dict:
+    today = utc_day(datetime.now(timezone.utc))
+    return {
+        'cfg': rewards.settings(),
+        'today': {r['outcome']: r['n'] for r in query(
+            'SELECT outcome, count(*) AS n FROM reward_ad_events WHERE day=%s GROUP BY outcome', (today,))},
+        'events': query('SELECT transaction_id,account_id,ad_unit,coins,outcome,day,created_at '
+                        'FROM reward_ad_events ORDER BY created_at DESC LIMIT 100'),
+    }
+
+
+@router.get('/control/anuncios', include_in_schema=False)
+def control(request: Request, user: str = Depends(console.require_console)):
+    return panel._render(request, 'anuncios.html', user, 'anuncios', **page_data())
+
+
+@router.post('/control/anuncios/config', include_in_schema=False)
+def control_config(request: Request, enabled: str = Form(''), test_mode: str = Form(''),
+                   coins: int = Form(10), cap: int = Form(5), cooldown: int = Form(180),
+                   unit_android: str = Form('', max_length=60), unit_ios: str = Form('', max_length=60),
+                   publisher: str = Form('', max_length=30), csrf: str = Form(''),
+                   user: str = Depends(console.require_console)):
+    panel._check_post(request, user, csrf)
+    values = parse_config(enabled=enabled, test_mode=test_mode, coins=coins, cap=cap, cooldown=cooldown,
+                          unit_android=unit_android, unit_ios=unit_ios, publisher=publisher)
+    with conn() as c:
+        save_config(c, panel._actor(request, user), values)
+    return panel._back('/control/anuncios', 'anuncios_guardado')
+
+
+def app_ads_line(publisher_id: str) -> str:
+    # f08c47fec0942fa0 es el ID de autoridad certificadora de Google para AdMob.
+    return f'google.com, {publisher_id}, DIRECT, f08c47fec0942fa0\n'
+
+
+@router.get('/app-ads.txt', include_in_schema=False)
+def app_ads_txt():
+    publisher = rewards.settings()['admob_publisher_id']
+    if not publisher:
+        raise HTTPException(404, 'No encontrado')
+    return PlainTextResponse(app_ads_line(publisher), headers={'Cache-Control': 'public, max-age=3600'})

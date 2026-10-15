@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Publicidad AdMob{% endblock %}
+{% block heading %}Publicidad AdMob{% endblock %}
+{% block content %}
+<p>Anuncios con recompensa: la persona ve un video completo y el servidor acredita monedas cuando Google confirma la visualización con un callback firmado. La app nunca decide el importe. Apagar los anuncios no impide acreditar un video ya iniciado.</p>
+<div class="alert alert-warning"><strong>Nunca pulses anuncios reales de tu app.</strong> Los clics propios cuentan como tráfico no válido y pueden costarte la cuenta de AdMob. Mientras desarrollas, deja el modo prueba encendido.</div>
+<form class="card mb-4" action="/control/anuncios/config" method="post"><div class="card-body">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="enabled" value="1" {% if cfg.ads_enabled %}checked{% endif %}><span class="form-check-label">Anuncios con recompensa activos</span></label>
+<label class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="test_mode" value="1" {% if cfg.ad_test_mode %}checked{% endif %}><span class="form-check-label">Modo prueba (bloques oficiales de prueba de Google; ignora los ID reales)</span></label>
+<label class="form-label">Monedas por anuncio<input class="form-control" type="number" name="coins" min="1" max="1000000" value="{{ cfg.ad_coins }}" required></label>
+<label class="form-label">Máximo de anuncios por día (día UTC)<input class="form-control" type="number" name="cap" min="1" max="50" value="{{ cfg.ad_daily_cap }}" required></label>
+<label class="form-label">Pausa entre anuncios (segundos)<input class="form-control" type="number" name="cooldown" min="0" max="3600" value="{{ cfg.ad_cooldown_seconds }}" required></label>
+<label class="form-label">ID de bloque Android (con recompensa)<input class="form-control" name="unit_android" value="{{ cfg.ad_unit_android }}" maxlength="60" placeholder="ca-app-pub-0000000000000000/0000000000"></label>
+<label class="form-label">ID de bloque iOS (con recompensa)<input class="form-control" name="unit_ios" value="{{ cfg.ad_unit_ios }}" maxlength="60" placeholder="ca-app-pub-0000000000000000/0000000000"></label>
+<label class="form-label">ID de editor de AdMob (para app-ads.txt)<input class="form-control" name="publisher" value="{{ cfg.admob_publisher_id }}" maxlength="30" placeholder="pub-0000000000000000"></label>
+<p class="text-muted">En AdMob, activa la verificación del lado del servidor del bloque con la URL <code>https://pronosticosdeportivos.pro/rewards/callback/admob</code>. El ID de la app de AdMob va dentro de la app (AndroidManifest / Info.plist), no aquí. Los ID de bloque son públicos: no hay secretos que guardar.</p>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Guardar</button></div></form>
+<h2>Hoy (UTC)</h2>
+<div class="row row-cards mb-4">{% for key,label in [('credited','Acreditados'),('rejected_cap','Rechazados por tope'),('rejected_ticket','Sin ticket válido'),('rejected_unit','Bloque ajeno'),('rejected_account','Cuenta no válida')] %}<div class="col-6 col-md-2"><div class="card"><div class="card-body"><div class="subheader">{{ label }}</div><div class="h2">{{ today.get(key, 0) }}</div></div></div></div>{% endfor %}</div>
+<h2>Últimos eventos</h2><div class="table-responsive"><table class="table"><thead><tr><th>Fecha UTC</th><th>Cuenta</th><th>Resultado</th><th>Monedas</th><th>Bloque</th><th>Transacción</th></tr></thead><tbody>{% for r in events %}<tr><td>{{ r.created_at|fecha }}</td><td>{{ r.account_id }}</td><td>{{ r.outcome }}</td><td>{{ r.coins }}</td><td>{{ r.ad_unit }}</td><td>{{ r.transaction_id[:12] }}</td></tr>{% else %}<tr><td colspan="6">Todavía no hay eventos.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
