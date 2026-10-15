@@ -6099,3 +6099,11 @@ anterior con solo `legal_pages/terminos.html` (la desplegada era idéntica a la 
 repo). Fijada en el compose; respaldo en `~/quantfut/releases/terminos-admob-20261014/`. Comprobado en el dominio: 200 en las
 tres páginas legales, párrafo nuevo presente, versión `2026-10-12` intacta, privacidad con AdMob, API sana y sin errores en logs.
 Esta vez la comparación previa se protegió contra una lectura vacía (hash de archivo vacío) antes de dar el paso por válido.
+
+Anuncios activados en modo prueba en producción (15-oct, a petición del titular «usa por mientras ID de modo prueba»): UPDATE de
+`reward_settings` (`ads_enabled=TRUE`, `ad_test_mode=TRUE`) más fila en `admin_audit` con actor `claude:despliegue`, hecho por SQL
+porque el panel está detrás de Cloudflare Access sin sesión disponible. Comprobado con el código real del servidor: ticket permitido
+en Android e iOS con los bloques de prueba oficiales; sin sesión nada se expone (`ads: {enabled: false}`, ticket 401). Riesgo
+acotado: solo bloques de prueba y la app publicada no trae aún el código. Sin comprobar: si los bloques de prueba envían el callback
+SSV a `/rewards/callback/admob`; si no lo hacen, el saldo no sube y la app muestra «tus monedas llegarán en unos instantes».
+Intento de leer los IDs desde el Chrome del titular: no tiene cuenta de AdMob (redirige al registro); no se creó ninguna.

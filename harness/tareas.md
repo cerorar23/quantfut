@@ -2734,5 +2734,10 @@ Detalle en `docs/admob_recompensas_20261014.md`.
 - [x] `db/069` aplicada y API desplegada el 15-oct (imagen `quantfut-api-admob:20261014b`, worker intacto,
       anuncios apagados y en modo prueba). Falta configurar el bloque con SSV en AdMob y el panel, probar
       con la herramienta de SSV de AdMob y en un teléfono con bloques de prueba.
+- [x] Anuncios ACTIVADOS en producción en modo prueba (a petición del titular): `ads_enabled=TRUE`,
+      `ad_test_mode=TRUE`, sin IDs reales; entrega los bloques de prueba oficiales de Google. Fila en
+      `admin_audit`. La app instalada no muestra nada (aún no tiene el código); el APK de depuración de la rama
+      sí, con IDs de app de ejemplo, y apunta a producción.
 - [ ] Sustituir el ID de APP de ejemplo por el real (AndroidManifest / Info.plist); declaraciones de Play.
+      Pendiente de que el titular consiga una cuenta de AdMob (el Chrome conectado no tiene una).
 - [ ] Más adelante, con datos reales: mediación (Unity Ads, AppLovin) sobre AdMob.
