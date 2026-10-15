@@ -6036,3 +6036,11 @@ Registrar también lo normaliza. `APP_DOWNLOAD_URL` (vacío por defecto) añade 
 cuando la app tenga tienda. Pendiente, a propósito: leer el referrer de Google Play al instalar
 (Android y solo desde la tienda), App Links para abrir la app desde el enlace y una solución para iOS
 (terceros: Branch, AppsFlyer o Adjust).
+
+Desplegado el 15-oct (solo API; worker intacto): imagen `quantfut-api-invitacion:20261014` sobre la anterior con
+`invitacion.py`, `main.py`, `config.py`, la plantilla `cuenta/base.html` (ahora con `lang` variable),
+`cuenta/invitacion.html` y `static/invitacion.js`; persistida en el compose. Respaldo del compose y de
+la imagen previa en `~/quantfut/releases/invitacion-20261014/`. Comprobado en el dominio real (vía
+Cloudflare): `/i/f9b9cbe3633f` → 200 con el código en mayúsculas; `Accept-Language` en/de cambian el
+idioma; `/i/abc` y un código con `<script>` → 404 sin repetirlo; `/static/invitacion.js` 200;
+cabeceras `no-store`, CSP `script-src 'self'`, `noindex` y `no-referrer`.
