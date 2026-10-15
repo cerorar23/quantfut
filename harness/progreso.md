@@ -6005,3 +6005,10 @@ prometido frente a 60,9 % real (n 110, IC95 51,6-69,5 %, «por debajo»); `sprea
 `corners_home/away` y `cards` (2) sin muestra. Misma salvedad de siempre: la copia es solo del
 contenedor y el árbol `~/quantfut/src` del VPS está desfasado. Por qué no hay API: la API no lee la
 tabla ni necesita este código, así que su imagen no se tocó.
+
+Medido el 15-oct tras la primera captura con el bet 4 (00:20 UTC): 2.580 filas de hándicap de 101
+partidos de las tres casas de la lista que lo cotizan (Bet365 96 partidos, 1xBet 84, Betano 108
+partidos con alguna línea). De las combinaciones lado/línea que elige la alta probabilidad en los 9
+partidos próximos con hándicap, el 86 % (77 de 90) ya tiene cuota; la línea +2 del local casi nunca
+se cotiza (1 de 9) y el resto cubre 8-9 de 9. El primer lote que ya sale con cuota de hándicap es el
+de las 08:00 UTC del 15-oct. Pendiente de confirmarlo con los pronósticos reales de ese lote.
