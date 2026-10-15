@@ -6107,3 +6107,14 @@ en Android e iOS con los bloques de prueba oficiales; sin sesión nada se expone
 acotado: solo bloques de prueba y la app publicada no trae aún el código. Sin comprobar: si los bloques de prueba envían el callback
 SSV a `/rewards/callback/admob`; si no lo hacen, el saldo no sube y la app muestra «tus monedas llegarán en unos instantes».
 Intento de leer los IDs desde el Chrome del titular: no tiene cuenta de AdMob (redirige al registro); no se creó ninguna.
+
+## 2026-10-14 — APK de release no abría (WorkManager / R8)
+
+Causa: al añadir `google_mobile_ads` entró una versión de WorkManager cuyo `WorkDatabase_Impl`
+se instancia por reflexión; R8 conservaba la clase (`-keep class * extends RoomDatabase`) pero
+eliminaba su constructor vacío, y `androidx.startup.InitializationProvider` mataba el proceso al
+arrancar (antes de Dart, así que Sentry/Crashlytics no lo habrían recibido). Se vio en `adb logcat`,
+no en Sentry. Arreglo: `-keep class * extends androidx.room.RoomDatabase { <init>(); }` en
+`android/app/proguard-rules.pro`. Verificado: release recompilado, instalado en el emulador, abre
+sin `FATAL EXCEPTION`. Lección: tras añadir un SDK con dependencias nativas, abrir el release en
+emulador antes de darlo por bueno (el debug no pasa por R8).

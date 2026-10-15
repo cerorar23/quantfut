@@ -20,3 +20,7 @@
 -dontwarn com.tapjoy.**
 # Dependencia opcional de Tapjoy (AppSet ID): no esta en el classpath y R8 la pide.
 -dontwarn com.google.android.gms.appset.**
+
+# Room instancia sus bases por reflexion (WorkManager, via google_mobile_ads): R8 conservaba la clase
+# pero eliminaba el constructor vacio y la app de release moria al arrancar (androidx.startup).
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
