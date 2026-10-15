@@ -6129,3 +6129,12 @@ al modo prueba Y a `QF_ADS_TEST_CREDIT_EMAILS`. La lista existe porque producci�
 anuncios activos: sin ella cualquier cuenta cobraría 5×10 monedas al día sin ver nada. Reusa `credit()`.
 Verificado: 42 pruebas de anuncios con Postgres real (esquema aislado), Flutter 235 y analyze limpios.
 Desplegado el 2026-10-14 (imagen `quantfut-api-admob:20261014e`, variable `QF_ADS_TEST_CREDIT_EMAILS` en el `.env`, respaldos en `~/backups/ads-test-credit-20261014`, vuelta atrás = `pre-test-credit`). Probado por el titular en su teléfono: las monedas se acreditan.
+
+## 2026-10-15 — «Demasiadas solicitudes» en Coins: escudos con contador propio
+
+Causa: el límite global es 60/min por IP y cuenta todas las rutas. Una pantalla de la app pide ~80
+escudos (`/web/escudos/*.png`, uno por equipo) en un minuto; al pasar de 60 el servidor devolvía 429
+también a `/mobile/v1/rewards` y Coins quedaba con «Reintentar». Medido en los logs de producción
+(05:55 UTC: ~95 solicitudes, 23 rechazadas). Arreglo: los escudos van a su propio contador
+(`escudos:<ip>`, 10× el límite general), igual que `/control` y `/static`; el resto sigue en 60/min.
+Pendiente posible: que la app cachee los escudos en disco para no repetir las descargas.

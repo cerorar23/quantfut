@@ -82,3 +82,20 @@ def test_ipv6_se_agrupa_por_64_e_ipv4_no_cambia(monkeypatch):
     assert key("203.0.113.7") == "203.0.113.7"
     assert key("::ffff:203.0.113.7") == "203.0.113.7"
     assert key("no-es-ip") == "no-es-ip"
+
+
+def test_escudos_tienen_contador_propio_y_no_gastan_el_limite_general(monkeypatch):
+    """Una pantalla con ~80 escudos agotaba los 60/min por IP y el resto de la app recibía 429."""
+    from fastapi.testclient import TestClient
+
+    from qf.api import main
+
+    vistos: list[tuple[str, int]] = []
+    monkeypatch.setattr(main.ratelimit, "rate_limited", lambda _r, key, limit: vistos.append((key, limit)) or False)
+    client = TestClient(main.app)
+    client.get("/web/escudos/1.png")
+    client.get("/")
+    (clave_escudo, limite_escudo), (clave_web, limite_web) = vistos[-2:]
+    assert clave_escudo.startswith("escudos:") and not clave_escudo.startswith("ip:")
+    assert limite_escudo >= 10 * limite_web
+    assert clave_web.startswith("ip:") and limite_web == main.settings.rate_limit_default_per_minute

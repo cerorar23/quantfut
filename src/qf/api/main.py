@@ -135,6 +135,10 @@ async def security_middleware(request: Request, call_next):
     # que bastaba para una sola página cortaba la navegación normal.
     if request.url.path.startswith(("/control", "/static")):
         scope, limit = "control", settings.rate_limit_default_per_minute * 2
+    elif request.url.path.startswith("/web/escudos/"):
+        # Una sola pantalla de la app pide ~80 escudos (uno por equipo) y agotaba los 60/min por IP:
+        # el resto de la app (p. ej. Coins) recibía 429 (2026-10-15). Son PNG estáticos y de solo lectura.
+        scope, limit = "escudos", settings.rate_limit_default_per_minute * 10
     else:
         scope, limit = "ip", settings.rate_limit_default_per_minute
     if ratelimit.rate_limited(r, f"{scope}:{_client_key(request)}", limit):
