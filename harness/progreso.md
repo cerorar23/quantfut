@@ -6128,4 +6128,4 @@ con dispositivo de prueba, el servidor acredita por una vía de solo prueba (`/a
 al modo prueba Y a `QF_ADS_TEST_CREDIT_EMAILS`. La lista existe porque producción está en modo prueba con
 anuncios activos: sin ella cualquier cuenta cobraría 5×10 monedas al día sin ver nada. Reusa `credit()`.
 Verificado: 42 pruebas de anuncios con Postgres real (esquema aislado), Flutter 235 y analyze limpios.
-No hecho: despliegue (imagen API + variable en el servidor) ni prueba en el teléfono.
+Desplegado el 2026-10-14 (imagen `quantfut-api-admob:20261014e`, variable `QF_ADS_TEST_CREDIT_EMAILS` en el `.env`, respaldos en `~/backups/ads-test-credit-20261014`, vuelta atrás = `pre-test-credit`). Probado por el titular en su teléfono: las monedas se acreditan.
