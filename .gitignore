@@ -40,3 +40,7 @@ Thumbs.db
 .zenrows/runs/
 .zenrows/traces/
 .zenrows/logs/
+
+# Respuestas originales de proveedores (OddsPapi, OddsHarvester, FotMob...): datos de terceros, solo en el servidor
+data/**/originals/
+data/**/*.gz

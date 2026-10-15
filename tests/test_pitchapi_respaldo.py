@@ -98,7 +98,7 @@ def test_valid_xg_rejects_missing_and_absurd_values():
     assert r.valid_xg(stats(None, '1')) is None
 
 
-@pytest.mark.parametrize('key,ok', [('pk_test_AVJovd7Q72brGkowzRZKGlJ5VtmJDChPzxnfoEbWxcs', True),
+@pytest.mark.parametrize('key,ok', [('pk_test_' + 'A1b2C3d4E5' * 4 + 'xyz', True),
                                     ('pk_live_' + 'a' * 30, True), ('sk_live_' + 'a' * 30, False),
                                     ('pk_short', False), ('pk_test_' + 'a b' * 10, False)])
 def test_key_format(key, ok):

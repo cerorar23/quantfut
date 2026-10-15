@@ -26,6 +26,13 @@ pago (ver `harness/tareas.md`).
    sesiones anteriores, para no repetir trabajo ni deshacer decisiones ya
    tomadas.
 
+## Despliegues (desde 2026-10-15)
+
+Antes de tocar el servidor lee [DEPLOYS.md](DEPLOYS.md). Lo que corre en producción debe ser lo que dice `main`;
+solo despliega una sesión a la vez, se compara lo desplegado con `main` antes de sobrescribir, y cada despliegue
+se anota en DEPLOYS.md con su vuelta atrás. No reconstruyas imágenes desde `~/quantfut/src` del servidor:
+está desactualizada.
+
 ## Alcance del negocio (decisión del usuario, 2026-09-21)
 
 El usuario **no usa Telegram**. Vende picks solo desde su propia web, que
