@@ -65,6 +65,10 @@ CATALOGO: dict[str, tuple[str, str, str, str, str]] = {
         "Les publicités avec récompense ne sont pas disponibles",
         "Le pubblicità con ricompensa non sono disponibili",
         "Anzeigen mit Belohnung sind nicht verfügbar"),
+    "Crédito de prueba no disponible": (
+        "Test credit is not available", "Crédito de teste indisponível",
+        "Crédit de test indisponible", "Credito di prova non disponibile",
+        "Testgutschrift nicht verfügbar"),
     "Anuncios no disponibles en este dispositivo": (
         "Ads are not available on this device", "Anúncios indisponíveis neste dispositivo",
         "Publicités indisponibles sur cet appareil",

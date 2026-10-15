@@ -7,6 +7,7 @@ video y Google avisa al servidor con un callback firmado (SSV); solo ese callbac
 from __future__ import annotations
 
 import math
+import os
 import re
 import secrets
 from datetime import date, datetime, timedelta, timezone
@@ -81,6 +82,23 @@ def ads_block(c, account_id: int | None, cfg: dict, now: datetime) -> dict:
     return ads_state(cfg, used, last, now)
 
 
+def simulated_credit_allowed(cfg: dict, email: str) -> bool:
+    """Crédito simulado: solo con modo prueba encendido y para los correos de la lista del servidor.
+
+    Los bloques de prueba de Google no disparan el callback SSV; esta vía deja ver el ciclo completo
+    en un teléfono. Sin `QF_ADS_TEST_CREDIT_EMAILS` nadie puede, para que nadie cobre sin ver un anuncio.
+    """
+    if not (cfg['enabled'] and cfg['ads_enabled'] and cfg['ad_test_mode']):
+        return False
+    allowed = {e.strip().lower() for e in os.getenv('QF_ADS_TEST_CREDIT_EMAILS', '').split(',') if e.strip()}
+    return bool(email) and email.strip().lower() in allowed
+
+
+def _email(c, account_id: int) -> str:
+    row = c.execute('SELECT email FROM accounts WHERE account_id=%s', (account_id,)).fetchone()
+    return row['email'] if row else ''
+
+
 def issue_ticket(c, account_id: int, cfg: dict, platform: str, now: datetime) -> dict:
     wallet = rewards.wallet(c, account_id, lock=True)            # serializa por cuenta
     used, last = usage(c, account_id, utc_day(now))
@@ -92,7 +110,8 @@ def issue_ticket(c, account_id: int, cfg: dict, platform: str, now: datetime) ->
     c.execute('INSERT INTO reward_ad_tickets(nonce,account_id,day,created_at,expires_at) VALUES(%s,%s,%s,%s,%s)',
               (nonce, account_id, utc_day(now), now, expires))
     return {'user_id': wallet['uid'], 'nonce': nonce, 'unit_id': unit_for(cfg, platform),
-            'expires_at': expires.isoformat()}
+            'expires_at': expires.isoformat(),
+            'test_credit': simulated_credit_allowed(cfg, _email(c, account_id))}
 
 
 def cancel_ticket(c, account_id: int, nonce: str, now: datetime) -> dict:
@@ -173,6 +192,29 @@ def credit(c, *, transaction_id: str, uid: str, nonce: str, ad_unit: str, cfg: d
     c.execute('INSERT INTO reward_ad_events(transaction_id,account_id,nonce,ad_unit,coins,outcome,day,created_at) '
               'VALUES(%s,%s,%s,%s,%s,%s,%s,%s)', (transaction_id, aid, nonce, ad_unit, coins, outcome, day, now))
     return outcome
+
+
+def simulated_credit(c, account_id: int, nonce: str, platform: str, cfg: dict, now: datetime) -> str:
+    """Acredita como lo haría el callback real, con un bloque de prueba y `transaction_id` propio."""
+    if not simulated_credit_allowed(cfg, _email(c, account_id)):
+        raise HTTPException(403, 'Crédito de prueba no disponible')
+    wallet = rewards.wallet(c, account_id, lock=True)
+    return credit(c, transaction_id=f'test:{nonce}', uid=wallet['uid'], nonce=nonce,
+                  ad_unit=TEST_UNITS[platform], cfg=cfg, now=now)
+
+
+class SimulatedCreditIn(CancelIn):
+    platform: str = Field(pattern='^(android|ios)$')
+
+
+@router.post('/mobile/v1/rewards/ads/test-credit')
+def simulated_credit_endpoint(body: SimulatedCreditIn, account: dict = Depends(rewards.verified_account)):
+    cfg = rewards.settings()
+    now = datetime.now(timezone.utc)
+    with conn() as c:
+        outcome = simulated_credit(c, account['account_id'], body.nonce, body.platform, cfg, now)
+        audit(c, 'reward:admob-test', 'reward_callback', detail={'nonce': body.nonce, 'outcome': outcome})
+    return {'outcome': outcome}
 
 
 @router.get('/rewards/callback/admob', include_in_schema=False)

@@ -4,8 +4,10 @@ import 'package:gobet/product/live_ads.dart';
 import 'package:gobet/product/live_api.dart';
 
 class _Api extends QuantFutApi {
-  _Api({this.balances = const [0, 10], this.ticketError});
+  _Api({this.balances = const [0, 10], this.ticketError, this.testCredit = false});
   final List<num> balances;
+  final bool testCredit;
+  JsonMap? testCreditBody;
   final ApiFailure? ticketError;
   final calls = <String>[];
   int _i = 0;
@@ -23,7 +25,17 @@ class _Api extends QuantFutApi {
     calls.add(path);
     if (path == '/mobile/v1/rewards/ads/ticket') {
       if (ticketError != null) throw ticketError!;
-      return {'user_id': 'u1', 'nonce': 'n1', 'unit_id': 'unit', 'expires_at': 'x'};
+      return {
+        'user_id': 'u1',
+        'nonce': 'n1',
+        'unit_id': 'unit',
+        'expires_at': 'x',
+        'test_credit': testCredit,
+      };
+    }
+    if (path == '/mobile/v1/rewards/ads/test-credit') {
+      testCreditBody = body;
+      return {'outcome': 'credited'};
     }
     if (path == '/mobile/v1/rewards/ads/cancel') return {'cancelled': true};
     final b = balances[_i < balances.length ? _i : balances.length - 1];
@@ -77,6 +89,23 @@ void main() {
     expect(out.coins, 10);
     expect(gw.shown, {'unit': 'unit', 'user': 'u1', 'custom': 'n1'});
     expect(api.calls, isNot(contains('/mobile/v1/rewards/ads/cancel')));
+  });
+
+  test('con crédito de prueba autorizado, pide al servidor el crédito simulado tras el video', () async {
+    final api = _Api(balances: [0, 0, 10], testCredit: true);
+    final out = await _flow(api, _Gateway(AdShow.earned)).run();
+    expect(api.testCreditBody, {'nonce': 'n1', 'platform': 'android'});
+    expect(out.result, AdResult.credited);
+    expect(out.coins, 10);
+  });
+
+  test('sin la marca del servidor o sin completar el video no pide crédito de prueba', () async {
+    final normal = _Api(balances: [0, 10]);
+    await _flow(normal, _Gateway(AdShow.earned)).run();
+    expect(normal.calls, isNot(contains('/mobile/v1/rewards/ads/test-credit')));
+    final cerrado = _Api(testCredit: true);
+    await _flow(cerrado, _Gateway(AdShow.dismissed)).run();
+    expect(cerrado.calls, isNot(contains('/mobile/v1/rewards/ads/test-credit')));
   });
 
   test('avisa de que está verificando solo cuando el video se completó', () async {

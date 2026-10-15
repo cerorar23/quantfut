@@ -65,6 +65,19 @@ class RewardedAdFlow {
     }
   }
 
+  /// Solo con el modo prueba del servidor y una cuenta autorizada: los bloques de prueba de Google
+  /// no disparan el callback, así que el servidor simula el crédito. La app sigue sin acreditar.
+  Future<void> _requestTestCredit(String nonce) async {
+    try {
+      await api.request(
+        '/mobile/v1/rewards/ads/test-credit',
+        body: {'nonce': nonce, 'platform': platform},
+      );
+    } catch (_) {
+      /* el sondeo de saldo decide el resultado */
+    }
+  }
+
   Future<AdOutcome> run() async {
     if (!await gateway.prepare()) return const AdOutcome(AdResult.unavailable);
     final before = await _balance();
@@ -107,6 +120,7 @@ class RewardedAdFlow {
       );
     }
     onVerifying?.call();
+    if (ticket['test_credit'] == true) await _requestTestCredit(nonce);
     final deadline = DateTime.now().add(pollFor);
     while (true) {
       final now = await _balance();

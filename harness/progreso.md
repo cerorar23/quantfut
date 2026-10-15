@@ -6118,3 +6118,14 @@ no en Sentry. Arreglo: `-keep class * extends androidx.room.RoomDatabase { <init
 `android/app/proguard-rules.pro`. Verificado: release recompilado, instalado en el emulador, abre
 sin `FATAL EXCEPTION`. Lección: tras añadir un SDK con dependencias nativas, abrir el release en
 emulador antes de darlo por bueno (el debug no pasa por R8).
+
+## 2026-10-14 — Videos de prueba no acreditaban: crédito simulado solo en modo prueba
+
+Causa: el video demo se vio y el ticket se pidió bien, pero Google nunca llamó a `/rewards/callback/admob`
+(Caddy sin llamadas, `reward_ad_events` vacía). Los bloques de prueba son de Google y no admiten nuestra
+URL SSV, así que no hay callback que acredite. Decisión del titular: en lugar de montar un bloque real
+con dispositivo de prueba, el servidor acredita por una vía de solo prueba (`/ads/test-credit`), limitada
+al modo prueba Y a `QF_ADS_TEST_CREDIT_EMAILS`. La lista existe porque producción está en modo prueba con
+anuncios activos: sin ella cualquier cuenta cobraría 5×10 monedas al día sin ver nada. Reusa `credit()`.
+Verificado: 42 pruebas de anuncios con Postgres real (esquema aislado), Flutter 235 y analyze limpios.
+No hecho: despliegue (imagen API + variable en el servidor) ni prueba en el teléfono.

@@ -68,3 +68,17 @@ Verificado: pruebas unitarias y de base de datos reales (Postgres local, esquema
 backend; pruebas de Flutter (233) y `flutter analyze` limpios.
 No verificado: panel visto en un navegador (solo prueba de renderizado), anuncios mostrados en un
 dispositivo, callback real de Google, despliegue.
+
+## Crédito simulado para probar en un teléfono (2026-10-14)
+
+Los bloques de prueba de Google no disparan el callback SSV (no se puede registrar la URL en un bloque
+ajeno), así que el video se ve pero nadie acredita. Para ver el ciclo completo existe una vía de
+**solo prueba**: `POST /mobile/v1/rewards/ads/test-credit {nonce, platform}`.
+
+- Solo funciona con anuncios activos **y modo prueba encendido**, y solo para los correos de la variable
+  de entorno del servidor `QF_ADS_TEST_CREDIT_EMAILS` (separados por comas). Sin la variable, nadie.
+- Reusa `credit()`: mismas reglas de ticket, cuenta, bloque y tope; idempotente (`transaction_id` =
+  `test:<nonce>`, libro `ad:test:<nonce>`); queda en `reward_ad_events` y en la auditoría.
+- El ticket trae `test_credit: true` solo para esas cuentas; la app entonces llama al endpoint tras
+  completar el video. La app sigue sin acreditar ni elegir el importe.
+- Apagar el modo prueba lo desactiva por completo. Con anuncios reales el único camino es el callback.
