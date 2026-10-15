@@ -23,6 +23,7 @@ La carpeta `~/quantfut/src` y la API llevan versiones antiguas de `train.py` y `
 imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Procedimiento (objetivo)
+0. `scripts/deploy.sh estado` antes de empezar: dice qué corre realmente frente a `main`.
 1. Árbol limpio, cambio en `main`, arnés en verde (GitHub Actions o `./scripts/harness_check.sh`).
 2. Comparar lo desplegado con el commit base anterior: si hay diferencias que no son tuyas, parar y averiguar.
 3. Respaldar lo que se va a cambiar (archivos y, si toca la base, la tabla).
@@ -31,6 +32,26 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 6. Anotar la entrada de abajo con la vuelta atrás.
 
 ## Registro (lo más reciente arriba)
+
+### 2026-10-15 · Orden de imágenes del worker — sin reiniciar nada
+- `quantfut-worker:latest` (la imagen que se usaría al recrear el contenedor) era **más antigua** que el worker en
+  ejecución: 16 archivos distintos, entre ellos `publish/daily.py` y `publish/hashchain.py` (sellado de la cadena).
+  Recrear el worker habría retrocedido ese código y roto la verificación de lotes recientes.
+- Se fijó el estado en ejecución: `scripts/deploy.sh congelar worker`. Etiquetas: `latest` = `en-ejecucion-20261015`
+  (`11cd07f588be`, con el parche F2c); la anterior queda como `latest-previo-20261015` (`2cac1af32eed`).
+  El contenedor no se tocó (en ejecución desde 2026-10-14).
+- Vuelta atrás de esta operación: `docker tag quantfut-worker:latest-previo-20261015 quantfut-worker:latest`.
+- Diferencia worker vs `main` que queda: 12 archivos. Los relevantes son pequeños y de bajo riesgo (`config.py`: un ajuste
+  nuevo `APP_DOWNLOAD_URL`; `eval/alta_prob_calibracion.py`: ampliación aditiva de un script de evaluación sin cron;
+  `ingest/history_fd.py` y `model/lineup_challenger.py`: trabajo de F1/F2, probado). El resto es código de la API.
+
+### Trampas conocidas (no repetirlas)
+- **`requirements.txt` del servidor no tiene `cryptography` ni `firebase-admin`** (el de `main` sí). El worker en ejecución
+  los tiene instalados a mano. Reconstruir una imagen desde `~/quantfut` tal cual **perdería `cryptography`**, que descifra
+  la clave de PitchAPI guardada en la base.
+- **`docker-compose.yml` de `main` fija una imagen antigua de la API** (`quantfut-api-tapjoy:20261012-msg`); el servidor usa
+  `quantfut-api-admob:20261015a`. Desplegar con el compose del repo retrocedería la API.
+- La API (`api`) y la carpeta `~/quantfut/src` llevan código antiguo (ver tabla de arriba); la API no se ha alineado.
 
 ### 2026-10-15 · F2c · filtro del cierre reconstruido — worker
 - Commit `976b448`. `docker cp` de `eval/cierre.py`, `eval/clv.py`, `model/train.py`, `model/shadow.py`,
