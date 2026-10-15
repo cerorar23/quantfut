@@ -120,3 +120,21 @@ def test_un_club_de_otra_division_tambien_empareja():
     with db.conn() as c:
         r = cargar_ternas(c, liga, [_terna(local, visita, ko)], _resolver, aplicar=True)
     assert r["insertadas"] == 3 and len(_cierres(mid)) == 3
+
+
+def test_insertar_cierre_conserva_hora_fuente_y_actualizacion_de_la_casa():
+    from qf.ingest.history_fd import insertar_cierre
+
+    mid, liga, local, visita, ko = _partido()
+    cap = ko - timedelta(minutes=5)
+    upd = ko - timedelta(minutes=6)
+    with db.conn() as c:
+        n = insertar_cierre(c, mid, ko, {"home": 2.0, "draw": 3.4, "away": 3.9},
+                            captured_at=cap, book_updated_at=upd, source="the_odds_api_hist")
+        again = insertar_cierre(c, mid, ko, {"home": 9.0, "draw": 9.0, "away": 9.0}, source="the_odds_api_hist")
+    f = db.query("""SELECT selection, price, captured_at, mins_to_kickoff, source, book_updated_at
+                    FROM odds_snapshots WHERE match_id=%s AND window_tag='close' ORDER BY selection""", (mid,))
+    assert n == 3 and again == 0 and len(f) == 3
+    assert {x["source"] for x in f} == {"the_odds_api_hist"}
+    assert all(x["captured_at"] == cap and x["mins_to_kickoff"] == 5 and x["book_updated_at"] == upd for x in f)
+    assert [round(x["price"], 2) for x in f] == [3.9, 3.4, 2.0]

@@ -121,6 +121,26 @@ def ternas_pinnacle(df: pd.DataFrame, cols: dict, desde: datetime) -> list[dict]
     return out
 
 
+def insertar_cierre(c, match_id: str, kickoff, precios: dict, captured_at=None,
+                    book_updated_at=None, source: str = "football_data") -> int:
+    """
+    Inserta la terna 1X2 de cierre de Pinnacle de un partido, salvo que ya tenga un cierre de
+    Pinnacle de cualquier fuente: la comprobación va DENTRO del INSERT porque `odds_snapshots`
+    no admite DELETE y dos ejecuciones no deben pisarse. Devuelve las filas insertadas (0 o 3).
+    """
+    captured_at = captured_at or kickoff
+    mins = max(0, int((kickoff - captured_at).total_seconds() // 60))
+    return c.execute(
+        """INSERT INTO odds_snapshots (match_id, bookmaker, market, selection, line, price, captured_at,
+                                       mins_to_kickoff, window_tag, source, book_updated_at)
+           SELECT %s, 'pinnacle', 'h2h', v.sel, NULL, v.price, %s, %s, 'close', %s, %s
+           FROM (VALUES ('home', %s::real), ('draw', %s::real), ('away', %s::real)) AS v(sel, price)
+           WHERE NOT EXISTS (SELECT 1 FROM odds_snapshots o WHERE o.match_id = %s
+                             AND o.bookmaker = 'pinnacle' AND o.market = 'h2h' AND o.window_tag = 'close')""",
+        (match_id, captured_at, mins, source, book_updated_at, precios["home"], precios["draw"],
+         precios["away"], match_id)).rowcount
+
+
 def cargar_ternas(c, league_id: str, ternas: list[dict], resolver, aplicar: bool) -> dict:
     """
     Adjunta el cierre de Pinnacle a partidos que YA existen. `resolver` devuelve el team_id (un club
@@ -153,17 +173,7 @@ def cargar_ternas(c, league_id: str, ternas: list[dict], resolver, aplicar: bool
         else:
             r["a_insertar"] += 1
             if aplicar:
-                p = t["price"]
-                r["insertadas"] += c.execute(
-                    """INSERT INTO odds_snapshots (match_id, bookmaker, market, selection, line, price,
-                                                   captured_at, mins_to_kickoff, window_tag, source)
-                       SELECT %s, 'pinnacle', 'h2h', v.sel, NULL, v.price, %s, 0, 'close', 'football_data'
-                       FROM (VALUES ('home', %s::real), ('draw', %s::real), ('away', %s::real)) AS v(sel, price)
-                       WHERE NOT EXISTS (SELECT 1 FROM odds_snapshots o WHERE o.match_id = %s
-                                         AND o.bookmaker = 'pinnacle' AND o.market = 'h2h'
-                                         AND o.window_tag = 'close')""",
-                    (m["match_id"], m["kickoff_utc"], p["home"], p["draw"], p["away"],
-                     m["match_id"])).rowcount
+                r["insertadas"] += insertar_cierre(c, m["match_id"], m["kickoff_utc"], t["price"])
     return r
 
 
