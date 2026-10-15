@@ -1,5 +1,39 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-15 — Carga autorizada de OddsPapi: cierre utilizable y referencia separados
+
+Confirmados 2.918 cierres reconstruidos (8.754 cuotas), más 25 referencias solo
+en procedencia. Se cotejaron los 2.943 originales completos y las identidades
+actuales, sin cambios ni cierres previos. Se mantienen sin certificar: fuente
+`oddspapi_reconstructed`, recepción real separada y marcas de cambio originales.
+Las 23 ternas antiguas y dos conflictos temporales adicionales no entran en
+`odds_snapshots`: consumidores existentes podrían usarlas incluso con otra etiqueta.
+
+Nueva procedencia inmutable `historical_odds_backfills` conserva las 2.943 y sus
+extractos 1X2 verificables. Ensayo con rollback y repetición cero; commit con
+respaldo completo de 444.756 cuotas previas. Partido/equipos/predicciones/picks/
+modelo/cuotas anteriores intactos; cero violaciones temporales. Huecos desde
+2024: 6.185 → 3.267. Sin entrenamiento. Pruebas: 1.237/60 omitidas.
+
+La copia local del respaldo completo fue rechazada por revisión automática como
+exportación no autorizada específicamente; se verificó hash/CRC/cabecera COPY en
+el servidor y permanece en su volumen persistente. La carga sí quedó completada.
+Detalle: docs/oddspapi_carga_20261015.md; informe y estados en el paquete de OddsPapi.
+
+Comprobación antes de guardar en Git: arnés correcto, 1.246 pruebas pasadas y
+64 omitidas; revisión de credenciales y recuentos del paquete sin incidencias.
+
+## 2026-10-15 — OddsPapi: cola terminada, cobertura parcial
+
+A las 03:46 de Ciudad de México finalizó la cola de 6.094 asociados. Resultado:
+2.943 ternas Pinnacle prepartido reconstruidas (2.920 recientes, 23 para revisar),
+3.151 sin histórico; además, 87 sin fixture y cuatro cancelados. Quedan 3.242
+de las 6.185 filas originales sin recuperar con esta API; cero consultas pendientes.
+CSV final y estados en `data/pinnacle_recovery/20261014_oddspapi/`; originales
+y recibos conservados en `.local/oddspapi_20261014/`. Unicidad, corte temporal,
+referencias a recibos y preservación del original comprobados. No se cargaron
+automáticamente ni se acreditó cierre oficial. Seguimiento periódico desactivado.
+
 ## 2026-10-14 — OddsPapi: recuperar el historial sin introducir cuotas en vivo
 
 Clave autorizada, cuenta gratuita con Pinnacle y cupo de 250 consultas. El

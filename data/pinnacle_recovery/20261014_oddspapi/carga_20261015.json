@@ -1,0 +1,97 @@
+{
+  "snapshots": 8754,
+  "provenance": 2943,
+  "counts": {
+    "close_inserted": 2918,
+    "reference_only": 25
+  },
+  "repeat_snapshots": 0,
+  "repeat_provenance": 0,
+  "protected_unchanged": true,
+  "existing_odds_unchanged": true,
+  "mode": "apply",
+  "completed_at_utc": "2026-10-15 12:51:35.252380+00:00",
+  "confirmed_provenance": [
+    {
+      "disposition": "close_inserted",
+      "n": 2918
+    },
+    {
+      "disposition": "reference_only",
+      "n": 25
+    }
+  ],
+  "confirmed_source_snapshots": 8754,
+  "database_verification": {
+    "provenance": [
+      {
+        "disposition": "close_inserted",
+        "n": 2918
+      },
+      {
+        "disposition": "reference_only",
+        "n": 25
+      }
+    ],
+    "snapshots": [
+      {
+        "n": 8754,
+        "matches": 2918
+      }
+    ],
+    "temporal_violations": [
+      {
+        "n": 0
+      }
+    ],
+    "coverage": [
+      {
+        "finished": 20880,
+        "missing": 3267
+      }
+    ],
+    "triggers": [
+      {
+        "relname": "historical_odds_backfills",
+        "tgname": "trg_historical_odds_backfill_immutable",
+        "tgenabled": "O"
+      },
+      {
+        "relname": "odds_snapshots",
+        "tgname": "trg_odds_immutable",
+        "tgenabled": "O"
+      }
+    ],
+    "active_models": [
+      {
+        "model_version": "2026.09.27-010508"
+      }
+    ],
+    "unverified_retained": [
+      {
+        "n": 2943
+      }
+    ],
+    "reference_snapshots": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  "backup": {
+    "path": "/srv/quantfut/artifacts/imports/oddspapi-20261015/odds_snapshots_before.copy.gz",
+    "rows": 444756,
+    "bytes": 5348101,
+    "sha256_compressed": "43d9342dbe8ef79dcf6856d045f0ba042d858ad2009c06abb9001652e8b03449",
+    "gzip_crc_verified": true,
+    "binary_copy_header_verified": true,
+    "verified_on_server": true,
+    "downloaded_locally": false
+  },
+  "tests": {
+    "passed": 1237,
+    "skipped": 60
+  },
+  "official_close_verified": false,
+  "backup_local_copy": "Not exported; automatic approval review rejected downloading the full production table. Integrity verified on server instead."
+}

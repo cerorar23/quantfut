@@ -1,0 +1,43 @@
+{
+  "updated_at_utc": "2026-10-15T09:45:59.440490+00:00",
+  "total": 6185,
+  "matched": 6094,
+  "recovered_prematch_references": 2943,
+  "verified_official_closes": 0,
+  "quality": {
+    "recent": 2920,
+    "review": 23
+  },
+  "original_list_sha256": "3a418b365b51409bed24842cb7897ae5dea146b1740f4d778c80cbedaf9b1eaf",
+  "statuses": {
+    "no_history": 3151,
+    "reconstructed_prematch_reference": 2943,
+    "unmatched": 87,
+    "source_cancelled": 4
+  },
+  "by_league": {
+    "ar.primera": 225,
+    "br.serie_a": 180,
+    "ch.super_league": 90,
+    "de.bundesliga": 90,
+    "de.bundesliga2": 108,
+    "dk.superliga": 97,
+    "es.laliga": 149,
+    "es.laliga2": 162,
+    "eu.ucl": 25,
+    "eu.uel": 20,
+    "fr.ligue_1": 98,
+    "fr.ligue_2": 107,
+    "gb.championship": 160,
+    "gb.premier_league": 121,
+    "it.serie_a": 120,
+    "it.serie_b": 111,
+    "mx.liga_mx": 129,
+    "nl.eredivisie": 110,
+    "no.eliteserien": 147,
+    "pt.primeira": 119,
+    "se.allsvenskan": 168,
+    "tr.super_lig": 108,
+    "us.mls": 299
+  }
+}

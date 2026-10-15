@@ -20,8 +20,11 @@ operativo como canal de clientes.
 
 ## Recuperación de cierres Pinnacle (2026-10-14)
 
+- [x] Carga OddsPapi autorizada (15-oct): 2.918 cierres reconstruidos / 8.754 cuotas y 25 referencias para revisión, los 2.943 con procedencia inmutable. Originales verificados, respaldo completo en servidor, reversión e idempotencia comprobadas; 1.237 pruebas y huecos reducidos de 6.185 a 3.267. Detalle: docs/oddspapi_carga_20261015.md.
+
 - [x] Validar la clave OddsPapi del usuario, descargar calendarios, asociar 6.094 pendientes con nombres revisados y recuperar un primer lote de 51 ternas prepartido. Fuente, marcas horarias y originales conservados; sin carga en producción.
-- [ ] Terminar y revisar el lote continuo OddsPapi: consultar `.local/oddspapi_20261014/worker_state.json` y el recuento de `data/pinnacle_recovery/20261014_oddspapi/informe.json`; conciliar cuatro cancelados y 87 filas sin fixture. No equiparar una cola recorrida con cobertura completa ni un cierre reconstruido con certificación oficial.
+- [x] Terminar y comprobar el lote OddsPapi (15-oct, 03:46 CDMX): 6.094 consultados, 2.943 ternas reconstruidas (23 requieren revisión), 3.151 sin histórico; CSV final y recibos conservados, seguimiento desactivado. Cero cargas automáticas.
+- [ ] Resolver los 3.267 cierres pendientes tras la carga: 3.151 sin histórico, 87 sin fixture, cuatro cancelados en la fuente y 25 referencias retenidas para revisión. Recorrer la cola no acredita cobertura completa ni cierre oficial.
 
 - [x] Descargar y archivar 60 CSV: 14.381 ternas explícitas desde 2024, todas ya presentes.
 - [x] Ensayo Football-data de asociación sin escrituras: 0 candidatos nuevos; siguen los 6.185 huecos en producción.
@@ -30,8 +33,8 @@ operativo como canal de clientes.
 - [x] Ejecutar omkarcloud y M3MONs Flashscore con ZenRows; corregir la ruta histórica del segundo en un adaptador. Leen otras casas; cero Pinnacle en las muestras. Archivo original intacto, resultado de búsqueda para las 6.185 filas. Ver docs/flashscore_pinnacle_20261014.md.
 - [x] Guardar por petición del usuario las 272 candidatas y las 586 ternas con originales y hashes en `data/pinnacle_recovery/20261014/`; marcadas como cierre sin verificar, sin carga en producción.
 - [x] Reintento explícito de OddsHarvester: cuatro sesiones nuevas, dos partidos de la lista, tres payloads de todas las casas verificados, cero Pinnacle nuevo. Resultado por fila y evidencia en `data/pinnacle_recovery/20261014_oddsharvester_retry/`; no son 6.185 consultas individuales.
-- [ ] Recuperar con la clave OddsPapi autorizada: catálogo y asociación exacta, historial con límite de 5 s, originales, corte prepartido y lista de pendientes; conservar el cupo disponible.
-- [ ] Conseguir fuente/acceso con Pinnacle para los 6.185, validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
+- [x] Recuperar con la clave OddsPapi autorizada: catálogo y asociación exacta, cola histórica terminada, originales y corte prepartido conservados; resultado y carga documentados arriba.
+- [ ] Conseguir fuente/acceso con Pinnacle para los 3.267 cierres pendientes, validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
 
 ## Señales nuevas en el motor principal (2026-10-14)
 

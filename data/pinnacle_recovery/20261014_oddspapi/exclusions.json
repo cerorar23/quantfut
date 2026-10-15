@@ -1,0 +1,26 @@
+[
+  {
+    "match_id": "fr.ligue_1:2526:nantes-toulouse:20260517",
+    "fixture_id": "id1000003461512162",
+    "status": "source_cancelled",
+    "reason": "OddsPapi statusId=3 while the missing list describes a finished fixture; requires reconciliation."
+  },
+  {
+    "match_id": "fr.ligue_2:2526:bastia-lemans:20260509",
+    "fixture_id": "id1000018261512124",
+    "status": "source_cancelled",
+    "reason": "OddsPapi statusId=3 while the missing list describes a finished fixture; requires reconciliation."
+  },
+  {
+    "match_id": "nl.eredivisie:2526:spartarotte-nijmegen:20260217",
+    "fixture_id": "id1000003761320073",
+    "status": "source_cancelled",
+    "reason": "OddsPapi statusId=3 while the missing list describes a finished fixture; requires reconciliation."
+  },
+  {
+    "match_id": "nl.eredivisie:2627:utrecht-goaheadeag:20260908",
+    "fixture_id": "id1000003774382824",
+    "status": "source_cancelled",
+    "reason": "OddsPapi statusId=3 while the missing list describes a finished fixture; requires reconciliation."
+  }
+]
