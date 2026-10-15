@@ -2720,8 +2720,8 @@ Detalle en `docs/admob_recompensas_20261014.md`.
 
 - [x] Migración `db/069`, verificación SSV, tickets con tope/pausa/día UTC, callback que acredita, panel
       `/control/anuncios`, `app-ads.txt`, flujo y tarjeta en la app, 6 idiomas. Apagado y en modo prueba.
-- [ ] **Bloqueante antes de anuncios reales:** confirmar por escrito con el soporte de AdMob que una app de
-      pronósticos con cuotas puede monetizar con anuncios; bloquear la categoría de apuestas.
+- [x] Autorización de AdMob: el titular indica que AdMob ya está autorizado para la app (sin documento
+      adjunto en el repo). Sigue siendo prudente bloquear la categoría de apuestas en los controles de AdMob.
 - [ ] **Bloqueante antes de anuncios reales:** actualizar la política de privacidad (hoy dice que no hay
       publicidad personalizada) — texto legal, lo decide el titular.
 - [x] `db/069` aplicada y API desplegada el 15-oct (imagen `quantfut-api-admob:20261014b`, worker intacto,
