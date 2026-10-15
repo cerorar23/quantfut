@@ -9,7 +9,7 @@ Privado en GitHub: `cerorar23/quantfut` (rama `main`). Cada push ejecuta el arn�
 plan gratuito**, así que la regla es por costumbre: rama + pull request + arnés verde antes de fusionar a `main`.
 El servidor todavía NO despliega desde aquí (pendiente: clave de despliegue de solo lectura y `git pull` de una etiqueta).
 
-## Estado medido el 2026-10-15 (antes de ordenar)
+## Estado medido el 2026-10-15 (antes de ordenar; el worker ya quedó en 0 diferencias, ver el registro)
 Comparando cada `.py` de `src/` contra `main`:
 
 | Lugar | Archivos | Distintos a `main` | Faltan de `main` |
@@ -32,6 +32,24 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 6. Anotar la entrada de abajo con la vuelta atrás.
 
 ## Registro (lo más reciente arriba)
+
+### 2026-10-15 15:52 UTC · Worker alineado con `main` (`495053a`) — recreado
+- Imagen `quantfut-worker:candidato-495053a` (`896c5009c1ac`), construida desde `main` con el `requirements.txt` corregido
+  (incluye `cryptography` y `firebase-admin`). `latest` = esa imagen. El worker pasó de 12 archivos distintos a **0**.
+- **Ensayo previo** (worker actual frente a candidata, solo lectura, `scripts/ensayo_worker.py`): 0 módulos con error, 21/21
+  entradas del cron importables, `hashchain verify` OK en 17 lotes y conjunto de entrenamiento idéntico (49.509 filas,
+  46.226 con cierre, misma huella).
+- Se recreó **solo el worker** justo cuando no había trabajos en curso. El ciclo de cron de las 16:00 corrió limpio
+  (cuotas, bajas, alineaciones, marcador, sombra) y no hay errores posteriores al cambio.
+- **Vuelta atrás:** `docker tag quantfut-worker:en-ejecucion-20261015 quantfut-worker:latest &&
+  docker compose up -d --no-deps --force-recreate worker` (el estado exacto de antes, con el parche F2c).
+- Receta usada: `git archive HEAD Dockerfile requirements.txt src frontend` → carpeta `~/quantfut/releases/worker-<commit>` →
+  `docker build -t quantfut-worker:candidato-<commit>` → ensayo → `docker tag ... latest` → `docker compose up -d --no-deps
+  --force-recreate worker`.
+- **Nota sobre lotes sellados:** regenerar desde la base 8 de los 17 lotes ya no reproduce el contenido sellado (también pasaba
+  antes del cambio). Causa: 93 ítems de Chile y Brasil B eliminados el 13-oct (autorizado) y 4 predicciones de partidos
+  reprogramados. Los archivos sellados siguen intactos y la verificación de la cadena da OK; lo que cambia es que ya no se
+  puede reconstruir desde la base. No es un fallo de esta alineación.
 
 ### 2026-10-15 · Orden de imágenes del worker — sin reiniciar nada
 - `quantfut-worker:latest` (la imagen que se usaría al recrear el contenedor) era **más antigua** que el worker en
