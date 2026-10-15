@@ -47,7 +47,7 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 
 - [x] F0 — Archivo FotMob a `matches` y `estadios` (db/067). Detalle: docs/f0_archivo_a_matches_20261014.md.
 - [x] F1 — Capa de ajuste `qf.model.ajuste` (puerta con referencia de nivel y significancia) y línea base: el XI simple pasa la puerta estricta (dRPS -0,0013, 9 de 12 ligas). Sin reentrenar: el del 12-oct ya usó el xG nuevo y el cron repite el 1-nov. Detalle: docs/f1_capa_de_ajuste_20261014.md.
-- [ ] F2 — Apertura/cierre de Pinnacle, CLV y movimiento (bloque `mercado`).
+- [~] F2 — Cierres de Pinnacle: faltan 2.103 (697 en las 13 modeladas, antes 6.185/3.526). Football-data no aporta; The Odds API fase 1 hecha (8.000 créditos, +1.164 cierres). Pendiente: ~5.270 créditos para 527 snapshots tras el 1-nov, alias de Champions/Europa y decidir el filtro de los cierres de 60 min de OddsPapi. Bloque `mercado` (movimiento) cuando haya muestra. Detalle: docs/f2_cierres_pinnacle_20261015.md.
 - [ ] F3 — Bajas y sanciones como minutos perdidos (bloque `bajas`).
 - [ ] F4 — Puente de identidades FotMob/API-Football; XI con valor de jugador (bloque `xi`).
 - [ ] F5 — Árbitro: penaltis, expulsiones y tarjetas; unificar identidades (bloque `arbitro`).

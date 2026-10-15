@@ -6172,3 +6172,17 @@ también a `/mobile/v1/rewards` y Coins quedaba con «Reintentar». Medido en lo
 (05:55 UTC: ~95 solicitudes, 23 rechazadas). Arreglo: los escudos van a su propio contador
 (`escudos:<ip>`, 10× el límite general), igual que `/control` y `/static`; el resto sigue en 60/min.
 Pendiente posible: que la app cachee los escudos en disco para no repetir las descargas.
+
+## 2026-10-15 — F2: cierres de Pinnacle, comprobando antes de pagar
+
+Football-data parecía poder rellenar ~1.457 cierres de México, Argentina, Brasil y MLS; el
+ensayo en producción demostró lo contrario (11.923 filas de Pinnacle desde 2024, todas ya
+cargadas) y se descartó sin escribir nada. Para Europa se compró histórico de The Odds API en
+fases: prueba de 10 créditos, 8.000 créditos (801 snapshots) con reserva de 6.000 para la captura
+en vivo, y carga solo tras ensayo, comprobación de integridad (RPS 0,1987 con las cuotas
+emparejadas frente a 0,2357 uniforme: un emparejamiento erróneo se vería) y respaldo. Decisión
+clave: un cierre solo se acepta si el snapshot está a <=30 min del inicio y el precio de Pinnacle
+se movió <=30 min antes; el emparejador usa ids de equipo, no nombres de liga, porque los clubes
+ascendidos tienen su fila en otra división. Huecos de modeladas: 1.861 a 697. Quedan para tras el
+1-nov los snapshots de México, LaLiga, Serie A, Eredivisie y Primeira (~5.270 créditos) y los alias
+de Champions. Detalle: docs/f2_cierres_pinnacle_20261015.md.

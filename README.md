@@ -1209,6 +1209,15 @@ datos reales, el XI simple pasa: RPS 0,2133 a 0,2120 y 9 de 12 ligas mejoran, a�
 en sombra hasta que haya CLV y sello tardío. Detalle:
 [docs/f1_capa_de_ajuste_20261014.md](docs/f1_capa_de_ajuste_20261014.md).
 
+### Cierres de Pinnacle: de 6.185 huecos a 2.103 (15-oct-2026)
+
+Football-data ya no trae Pinnacle de Europa ni puede rellenar nada más; el cierre histórico faltante se
+compra a The Odds API (10 créditos por snapshot de 5 minutos antes del inicio, que sirve a todos los
+partidos con la misma hora). Una primera fase de 8.000 créditos añadió 1.164 cierres validados (RPS 0,1987
+con esas cuotas, coherente con un mercado real); quedan 697 huecos en las 13 ligas modeladas. Las cuotas
+`oddspapi_reconstructed` no son cierres sino precios de 60 minutos antes. Detalle:
+[docs/f2_cierres_pinnacle_20261015.md](docs/f2_cierres_pinnacle_20261015.md).
+
 ## Expectativas realistas
 
 - Un ROI sostenido de **1-4% sobre el volumen** es un resultado profesional
