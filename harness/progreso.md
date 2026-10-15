@@ -6093,3 +6093,9 @@ subió `CONSENT_VERSION`: el servidor la compara con la que envía la app (`live
 instaladas. El `<script>` que se ve en las páginas públicas es la ofuscación de correo de Cloudflare (también en términos);
 el origen no sirve ninguno. Error propio al preparar: una primera comparación usó una ruta mal formada y dio «vacío»; se
 detectó antes de actuar y se repitió bien.
+
+Términos con los videos con recompensa desplegados (solo API; worker intacto): imagen `quantfut-api-admob:20261014d` sobre la
+anterior con solo `legal_pages/terminos.html` (la desplegada era idéntica a la base de la rama; privacidad ya coincidía con el
+repo). Fijada en el compose; respaldo en `~/quantfut/releases/terminos-admob-20261014/`. Comprobado en el dominio: 200 en las
+tres páginas legales, párrafo nuevo presente, versión `2026-10-12` intacta, privacidad con AdMob, API sana y sin errores en logs.
+Esta vez la comparación previa se protegió contra una lectura vacía (hash de archivo vacío) antes de dar el paso por válido.
