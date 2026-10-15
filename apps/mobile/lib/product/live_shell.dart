@@ -327,7 +327,6 @@ class _ProductShellState extends State<ProductShell>
         alta: jsonMap(d['alta_probabilidad']),
         onVip: vip,
       ),
-      liveButton(context.l10n.commonSeeVip, vip),
     ],
   );
 

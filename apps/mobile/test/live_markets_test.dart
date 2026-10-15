@@ -163,7 +163,7 @@ void main() {
     expect(find.text('${football.length}'), findsOneWidget);
     expect(find.textContaining('89/114 publicados'), findsOneWidget);
     expect(find.text('Publicado 24/30'), findsOneWidget);
-    expect(find.textContaining('no alertas en vivo'), findsOneWidget);
+    expect(find.textContaining('no alertas en vivo'), findsNothing);   // nota retirada a pedido del titular
     expect(find.textContaining('Rendimiento registrado'), findsNothing);
   });
 

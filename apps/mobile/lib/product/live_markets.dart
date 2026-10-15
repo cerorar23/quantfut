@@ -192,8 +192,6 @@ class _MarketsDashboardState extends State<MarketsDashboard>
               );
             },
           ),
-          const SizedBox(height: 12),
-          liveText(context.l10n.marketsRadarNote, size: 10, color: liveMuted),
         ],
       );
     },
