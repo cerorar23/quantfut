@@ -105,6 +105,64 @@
   "@accessTitle5": {
     "description": "Título de la diapositiva 5."
   },
+  "adsCardTitle": "Videos con recompensa",
+  "@adsCardTitle": {
+    "description": "Título de la tarjeta de anuncios con recompensa en Coins."
+  },
+  "adsFootnote": "Las monedas se acreditan al terminar el video. Si lo cierras antes, no recibes monedas.",
+  "@adsFootnote": {
+    "description": "Aviso bajo el botón; describe la condición de la recompensa."
+  },
+  "adsLimitReached": "Límite de hoy alcanzado. Vuelve después de las 00:00 UTC.",
+  "@adsLimitReached": {
+    "description": "Se ha usado el máximo diario de videos."
+  },
+  "adsLoading": "Cargando video…",
+  "@adsLoading": {
+    "description": "Estado mientras se pide el ticket y se carga el anuncio."
+  },
+  "adsPending": "Tus monedas llegarán en unos instantes.",
+  "@adsPending": {
+    "description": "El saldo aún no subió tras 10 s; la confirmación puede tardar."
+  },
+  "adsProgress": "Hoy: {used} de {cap}",
+  "@adsProgress": {
+    "description": "Videos vistos hoy sobre el máximo diario.",
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "cap": {
+        "type": "int"
+      }
+    }
+  },
+  "adsUnavailable": "No hay videos disponibles ahora. Inténtalo más tarde.",
+  "@adsUnavailable": {
+    "description": "El anuncio no cargó o está desactivado en este dispositivo."
+  },
+  "adsVerifying": "Verificando tu recompensa…",
+  "@adsVerifying": {
+    "description": "Estado tras ver el video, mientras el servidor confirma."
+  },
+  "adsWaitFor": "Siguiente video en {time}",
+  "@adsWaitFor": {
+    "description": "Pausa entre videos con cuenta atrás.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "adsWatchCta": "Ver video · +{coins} monedas",
+  "@adsWatchCta": {
+    "description": "Botón que pide ver un video completo; dice la acción y la recompensa.",
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "alertsAbsencesOf": "Bajas de {team}",
   "@alertsAbsencesOf": {
     "description": "Subtítulo: de qué equipo son las bajas de la sección.",
@@ -860,6 +918,10 @@
   "languageTitle": "Idioma de la app",
   "@languageTitle": {
     "description": "Título del selector de idioma"
+  },
+  "ledgerAd": "Video con recompensa",
+  "@ledgerAd": {
+    "description": "Etiqueta del historial para monedas ganadas viendo un video."
   },
   "ledgerAttendance": "Asistencia",
   "ledgerInvitee": "Premio de bienvenida",

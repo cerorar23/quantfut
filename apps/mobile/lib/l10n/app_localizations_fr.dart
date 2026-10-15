@@ -137,6 +137,45 @@ class AppLocalizationsFr extends AppLocalizations {
   String get accessTitle5 => 'Gagnez des pièces et débloquez.';
 
   @override
+  String get adsCardTitle => 'Vidéos avec récompense';
+
+  @override
+  String get adsFootnote =>
+      'Les pièces sont créditées à la fin de la vidéo. Si vous la fermez avant, vous n\'en recevez pas.';
+
+  @override
+  String get adsLimitReached =>
+      'Limite du jour atteinte. Revenez après 00:00 UTC.';
+
+  @override
+  String get adsLoading => 'Chargement de la vidéo…';
+
+  @override
+  String get adsPending => 'Vos pièces arriveront dans un instant.';
+
+  @override
+  String adsProgress(int used, int cap) {
+    return 'Aujourd\'hui : $used sur $cap';
+  }
+
+  @override
+  String get adsUnavailable =>
+      'Aucune vidéo disponible pour le moment. Réessayez plus tard.';
+
+  @override
+  String get adsVerifying => 'Vérification de votre récompense…';
+
+  @override
+  String adsWaitFor(String time) {
+    return 'Prochaine vidéo dans $time';
+  }
+
+  @override
+  String adsWatchCta(int coins) {
+    return 'Voir la vidéo · +$coins pièces';
+  }
+
+  @override
   String alertsAbsencesOf(String team) {
     return 'Absences de $team';
   }
@@ -997,6 +1036,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get languageTitle => 'Langue de l\'application';
+
+  @override
+  String get ledgerAd => 'Vidéo avec récompense';
 
   @override
   String get ledgerAttendance => 'Présence';

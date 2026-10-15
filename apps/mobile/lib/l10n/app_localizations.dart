@@ -328,6 +328,66 @@ abstract class AppLocalizations {
   /// **'Gana monedas y desbloquea.'**
   String get accessTitle5;
 
+  /// Título de la tarjeta de anuncios con recompensa en Coins.
+  ///
+  /// In es, this message translates to:
+  /// **'Videos con recompensa'**
+  String get adsCardTitle;
+
+  /// Aviso bajo el botón; describe la condición de la recompensa.
+  ///
+  /// In es, this message translates to:
+  /// **'Las monedas se acreditan al terminar el video. Si lo cierras antes, no recibes monedas.'**
+  String get adsFootnote;
+
+  /// Se ha usado el máximo diario de videos.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de hoy alcanzado. Vuelve después de las 00:00 UTC.'**
+  String get adsLimitReached;
+
+  /// Estado mientras se pide el ticket y se carga el anuncio.
+  ///
+  /// In es, this message translates to:
+  /// **'Cargando video…'**
+  String get adsLoading;
+
+  /// El saldo aún no subió tras 10 s; la confirmación puede tardar.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus monedas llegarán en unos instantes.'**
+  String get adsPending;
+
+  /// Videos vistos hoy sobre el máximo diario.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy: {used} de {cap}'**
+  String adsProgress(int used, int cap);
+
+  /// El anuncio no cargó o está desactivado en este dispositivo.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay videos disponibles ahora. Inténtalo más tarde.'**
+  String get adsUnavailable;
+
+  /// Estado tras ver el video, mientras el servidor confirma.
+  ///
+  /// In es, this message translates to:
+  /// **'Verificando tu recompensa…'**
+  String get adsVerifying;
+
+  /// Pausa entre videos con cuenta atrás.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente video en {time}'**
+  String adsWaitFor(String time);
+
+  /// Botón que pide ver un video completo; dice la acción y la recompensa.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver video · +{coins} monedas'**
+  String adsWatchCta(int coins);
+
   /// Subtítulo: de qué equipo son las bajas de la sección.
   ///
   /// In es, this message translates to:
@@ -1761,6 +1821,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Idioma de la app'**
   String get languageTitle;
+
+  /// Etiqueta del historial para monedas ganadas viendo un video.
+  ///
+  /// In es, this message translates to:
+  /// **'Video con recompensa'**
+  String get ledgerAd;
 
   /// No description provided for @ledgerAttendance.
   ///

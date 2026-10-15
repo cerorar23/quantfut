@@ -137,6 +137,45 @@ class AppLocalizationsPt extends AppLocalizations {
   String get accessTitle5 => 'Ganhe moedas e desbloqueie.';
 
   @override
+  String get adsCardTitle => 'Vídeos com recompensa';
+
+  @override
+  String get adsFootnote =>
+      'As moedas são creditadas ao terminar o vídeo. Se fechar antes, você não recebe moedas.';
+
+  @override
+  String get adsLimitReached =>
+      'Limite de hoje atingido. Volte depois das 00:00 UTC.';
+
+  @override
+  String get adsLoading => 'Carregando vídeo…';
+
+  @override
+  String get adsPending => 'Suas moedas chegarão em instantes.';
+
+  @override
+  String adsProgress(int used, int cap) {
+    return 'Hoje: $used de $cap';
+  }
+
+  @override
+  String get adsUnavailable =>
+      'Não há vídeos disponíveis agora. Tente mais tarde.';
+
+  @override
+  String get adsVerifying => 'Verificando sua recompensa…';
+
+  @override
+  String adsWaitFor(String time) {
+    return 'Próximo vídeo em $time';
+  }
+
+  @override
+  String adsWatchCta(int coins) {
+    return 'Ver vídeo · +$coins moedas';
+  }
+
+  @override
   String alertsAbsencesOf(String team) {
     return 'Desfalques de $team';
   }
@@ -995,6 +1034,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get languageTitle => 'Idioma do app';
+
+  @override
+  String get ledgerAd => 'Vídeo com recompensa';
 
   @override
   String get ledgerAttendance => 'Presença';

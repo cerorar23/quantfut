@@ -45,6 +45,7 @@ String ledgerKindLabel(AppLocalizations l10n, Object? kind) => switch (kind) {
   'invitee' => l10n.ledgerInvitee,
   'reversal' => l10n.ledgerReversal,
   'referral_reversal' => l10n.ledgerReferralReversal,
+  'ad' => l10n.ledgerAd,
   _ => '$kind',
 };
 
