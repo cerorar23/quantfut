@@ -34,11 +34,21 @@ Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. 
 | F6 clima y sede | Decidido (Copernicus ERA5 para historial; Open-Meteo Standard en vivo y altitud); sin código | Guardar token cifrado |
 | F5 árbitro | Sin empezar; datos de F0 listos | Unificar identidades |
 | F4 puente FotMob/API-Football y XI con valor | Sin empezar; las variantes con valor hoy no pasan la puerta | F7 |
+| **F9 evaluación de picks a volumen constante** | Nueva (15-oct). Requisito para activar cualquier fase | F7 |
+| **F8 conectar el modelo propio con los picks** | Nueva (15-oct). Sin esto, mejorar el modelo no cambia ningún pick vendido | F9 |
+| F10 selección y diversidad (alternativas por partido, correlación en parley/escalera) | Nueva (15-oct) | F8 |
+| F11 app: fuente de cada cifra e indicador de calidad de datos (6 idiomas) | Nueva (15-oct); no toca el motor, puede adelantarse | Tu visto bueno |
+| F12 factores sin fase (descanso, ida/vuelta, entrenador, estilos, córners/tarjetas ampliados) | Nueva (15-oct) | F9 |
+
+Orden tras el 1-nov: F7 → F9 → F8 → F3, F6, F5, F4 → F10 → F12. Plan completo:
+`docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md`.
 
 Tareas sueltas:
 - [ ] Comprar los **527 snapshots** de The Odds API (~5.270 créditos, tras el reset): `python -m qf.ingest.cierres_odds_api fetch ...`. Necesita tu visto bueno.
 - [ ] Registrar alias de Champions y Europa League (103 partidos; Bayern München, Internazionale Milano, LOSC Lille...). Escribe en la tabla de alias: con tu visto bueno.
 - [ ] Bloque `mercado` (movimiento de cuotas): cuando haya muestra propia.
+- [ ] Antes de encender los picks de valor: hoy solo verían las 13 ligas con modelo y la sombra mide 22; alinear.
+- [ ] Vigilar la ampliada 73–95 %: con cuota de referencia acierta 78,0 % frente a 81,4 % prometido (n=223).
 - [ ] Resolver 379 identidades de copas y 21 conflictos; unos 250 huecos de tiros y córners.
 - [ ] **Tú decides:** fuente nueva para los **1.222 huecos de xG** (Serie B 588, LaLiga 2 236, Argentina 208, Ligue 2 144). Otra sesión está probando LanusStats y 365Scores para esto (15-oct): su resultado define la decisión.
 
