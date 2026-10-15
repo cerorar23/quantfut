@@ -5969,3 +5969,9 @@ mercados (por grupo de control) bloqueados en la alta probabilidad principal o a
 `todo` no pausa el parlay. Con 9 partidos de muestra y 6 parlays liquidados NO se puede medir el
 efecto sobre el acierto: el control por escalón del propio parlay sigue siendo el juez. Pendiente
 de medir: tarjetas y córners, que dominan los tickets y no tienen historial de calibración propio.
+
+Desplegado el 14-oct (solo `worker`, sin reiniciarlo): `docker cp` de `parley.py` y `parley_datos.py`;
+respaldo de los anteriores en `~/quantfut/releases/parley-bloqueados-20261014/*.before`. Ensayo en
+seco con datos reales: mercados bloqueados `['totals']`, 104 candidatas (se quitaron las 12 de
+goles de las 116), 4 tickets (1,97 · 2,21 · 2,79 · 3,49) sin cambios de probabilidad. Misma
+salvedad que antes: la copia es solo del contenedor y el árbol `~/quantfut/src` está desfasado.
