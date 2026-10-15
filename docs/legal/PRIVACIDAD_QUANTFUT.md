@@ -1,6 +1,6 @@
 # Aviso y política de privacidad de QuantFut
 
-**Versión 2026-10-12 — vigente desde el 12 de octubre de 2026.**
+**Versión 2026-10-12 — vigente desde el 12 de octubre de 2026. Actualizado en octubre de 2026 para informar de los videos con recompensa de Google AdMob.**
 
 ## 1. Responsable y contacto
 
@@ -26,6 +26,7 @@ Podemos tratar los siguientes datos en función de las funciones que utilices:
 | Correo, nombre de perfil, identificador de cuenta y de Google/Firebase, proveedor y estado de verificación | Crear y autenticar la cuenta, vincular una cuenta anterior y evitar suplantaciones. |
 | Credenciales de sesión, IP, información técnica de conexión y del dispositivo | Mantener el acceso, comprobar integridad de la aplicación, prevenir abuso y atender incidencias de seguridad. |
 | Plan y vigencia, permisos de consulta, saldo y movimientos de monedas, asistencia, referidos y canjes | Aplicar los derechos de acceso y las reglas de recompensas, conciliar operaciones y resolver reclamaciones. |
+| Código interno del monedero, identificador de transacción y confirmación de que viste un video con recompensa | Acreditar las monedas, evitar duplicados y abusos y resolver reclamaciones. |
 | Idioma, preferencias, versión y fecha de aceptación de documentos | Aplicar tus elecciones y acreditar información y aceptación. |
 | Mensajes que envíes y datos pertinentes de una solicitud | Dar soporte y atender derechos, reclamaciones u obligaciones legales. |
 
@@ -68,6 +69,13 @@ funciones básicas de tu cuenta:
 - **Notificaciones:** si las activas, se utiliza un identificador de instalación
   y un token de envío para entregar avisos. Los ajustes del sistema operativo
   también deben permitirlas. Los avisos pueden verse en la pantalla bloqueada.
+- **Videos con recompensa:** si tocas «Ver video» para ganar monedas, la
+  aplicación muestra un anuncio de Google AdMob. Es voluntario: ningún anuncio
+  se muestra sin que lo pidas, no tienes que pulsar el anuncio y, si lo cierras
+  antes de que termine, simplemente no recibes monedas. Donde la ley lo exige,
+  antes se muestra el formulario de consentimiento de Google, en el que puedes
+  elegir o rechazar el uso de tus datos para publicidad; también puedes revisar
+  esa elección en los ajustes de anuncios de tu dispositivo.
 
 Puedes cambiar estas elecciones en las preferencias de la aplicación. Su
 retirada detiene nuevos envíos de la función correspondiente cuando se aplica
@@ -77,8 +85,11 @@ dispositivo para futuros avisos de esa cuenta.
 
 La aceptación de los términos o de este aviso no equivale a aceptar todas
 estas finalidades. La aplicación mantiene la medición y el
-diagnóstico desactivados hasta que los elijas. La publicidad personalizada no
-está habilitada por esta integración.
+diagnóstico desactivados hasta que los elijas. Los anuncios solo se muestran si
+eliges ver un video con recompensa; Google AdMob puede mostrar anuncios
+personalizados o no según tu elección en su formulario de consentimiento
+(donde se aplica) y los ajustes de anuncios de tu dispositivo y de tu cuenta de
+Google.
 
 ## 4. Proveedores y tratamiento internacional
 
@@ -105,6 +116,18 @@ cuenta. De la aplicación solo se envían, y únicamente si activas el diagnóst
 traza del fallo, el modelo y la versión del sistema y de la aplicación; si lo
 desactivas, el envío se detiene. Sentry no se utiliza para publicidad. Su plazo de
 conservación es el del plan contratado y no equivale a un borrado instantáneo.
+
+**Google AdMob** muestra los videos con recompensa. Para ello puede tratar el
+identificador de publicidad de tu dispositivo, la dirección IP, información
+técnica del dispositivo y de la aplicación y datos de tu interacción con el
+anuncio, como proveedor propio, bajo sus condiciones y su política de
+privacidad; QuantFut no controla esos tratamientos. QuantFut solo le envía el
+código interno de tu monedero y un código de un solo uso del anuncio, para que
+Google pueda incluirlos en la confirmación firmada que recibe nuestro servidor
+cuando terminas el video; no le envía tu correo ni tu nombre. Esa confirmación
+se usa únicamente para acreditar tus monedas y detectar abusos. Google aplica
+sus propios plazos de conservación y puede procesar datos fuera de tu país,
+incluidos Estados Unidos.
 
 No se venden datos personales mediante esta integración. Las plataformas de
 ofertas y encuestas todavía no están activas. Su habilitación requerirá una
@@ -194,8 +217,11 @@ Cuando se aplique una ley estatal de privacidad de Estados Unidos, podrás
 ejercer sus derechos, incluido reclamar o recurrir una denegación cuando la
 norma lo permita, sin discriminación por ejercerlos. La aplicación de una ley
 como CCPA depende de su ámbito y umbrales; no se presupone por dirigirse a Estados
-Unidos. Esta integración no vende datos ni los comparte para publicidad entre
-servicios. También se respetarán los derechos obligatorios aplicables en cada país
+Unidos. QuantFut no vende datos personales. Los anuncios de Google AdMob, que solo
+se muestran si eliges ver un video, pueden considerarse en algunas leyes estatales
+una forma de compartir datos para publicidad; puedes evitarlo no viendo videos con
+recompensa o rechazando la personalización en el formulario de consentimiento o en
+los ajustes de anuncios de tu dispositivo. También se respetarán los derechos obligatorios aplicables en cada país
 latinoamericano y europeo fuera del EEE donde se preste el servicio.
 
 La eliminación debe coordinar la cuenta de QuantFut, su vínculo con Firebase
