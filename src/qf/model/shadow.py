@@ -11,6 +11,7 @@ import pandas as pd
 from ..config import settings
 from ..db import conn, execute, query, query_one
 from ..ingest.lineups import availability
+from ..eval.cierre import es_cierre_real
 from .devig import consensus_devig, devig
 from .lineup_challenger import LINEUP_FEATURES, LineupLambdaChallenger
 from .market_anchor import anchor_from_consensus
@@ -277,10 +278,10 @@ def capture_lineup_shadows() -> dict:
 
 def _closing(match_id: str) -> dict[str, float]:
     rows = query(
-        """SELECT DISTINCT ON (selection) selection, price
+        f"""SELECT DISTINCT ON (selection) selection, price
            FROM odds_snapshots
            WHERE match_id=%s AND market='h2h' AND mins_to_kickoff >= 0
-             AND window_tag='close' AND bookmaker=%s
+             AND window_tag='close' AND {es_cierre_real()} AND bookmaker=%s
            ORDER BY selection, captured_at DESC""",
         (match_id, settings.sharp_book),
     )

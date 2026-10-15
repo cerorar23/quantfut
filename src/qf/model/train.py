@@ -42,6 +42,7 @@ from .player_value import evaluar as player_value_evaluar
 from .multinomial import run_ablations
 from ..eval.clv import clv_report
 from .promotion import MARKET_MAX_AGE_DAYS, evaluate_base_promotion
+from ..eval.cierre import es_cierre_real
 from .residual import fit_and_validate as residual_fit_and_validate
 from .structure import evaluate as structure_evaluate
 
@@ -71,11 +72,12 @@ def load_training_data(league_id: str | None = None,
     since = datetime.now(timezone.utc) - timedelta(days=365 * years)
     incluir = list(incluir)
     rows = query(
-        """WITH sharp_close AS (
+        f"""WITH sharp_close AS (
                SELECT DISTINCT ON (match_id, selection)
                       match_id, selection, price
                FROM odds_snapshots
                WHERE bookmaker=%s AND market='h2h' AND window_tag='close'
+                 AND {es_cierre_real()}
                ORDER BY match_id, selection, captured_at DESC
            )
            SELECT m.match_id, m.league_id, m.kickoff_utc,
@@ -446,9 +448,10 @@ def bootstrap_status() -> tuple[bool, str]:
     if query_one("SELECT 1 AS x FROM model_artifacts WHERE is_active LIMIT 1"):
         return False, "Ya hay un modelo activo; el reentrenamiento es el mensual"
     row = query_one(
-        """WITH close3 AS (
+        f"""WITH close3 AS (
                SELECT match_id FROM odds_snapshots
                WHERE bookmaker=%s AND market='h2h' AND window_tag='close'
+                 AND {es_cierre_real()}
                GROUP BY match_id HAVING count(DISTINCT selection) = 3
            )
            SELECT max(m.kickoff_utc) AS last_match,

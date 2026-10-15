@@ -20,6 +20,7 @@ import numpy as np
 
 from ..config import settings
 from ..db import execute, query
+from .cierre import es_cierre_real
 from ..model.devig import devig
 
 log = logging.getLogger(__name__)
@@ -52,14 +53,14 @@ def _sharp_close_quotes(match_id: str, market: str) -> dict[tuple[str, float | N
     precios de momentos distintos en el mismo de-vig.
     """
     rows = query(
-        """SELECT selection, line, price
+        f"""SELECT selection, line, price
            FROM odds_snapshots
            WHERE match_id = %s AND market = %s AND bookmaker = %s
-             AND window_tag = 'close' AND mins_to_kickoff >= 0
+             AND window_tag = 'close' AND mins_to_kickoff >= 0 AND {es_cierre_real()}
              AND captured_at = (
                  SELECT max(captured_at) FROM odds_snapshots
                  WHERE match_id = %s AND market = %s AND bookmaker = %s
-                   AND window_tag = 'close' AND mins_to_kickoff >= 0)""",
+                   AND window_tag = 'close' AND mins_to_kickoff >= 0 AND {es_cierre_real()})""",
         (match_id, market, settings.sharp_book,
          match_id, market, settings.sharp_book),
     )

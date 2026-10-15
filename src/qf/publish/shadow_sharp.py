@@ -45,6 +45,7 @@ import pandas as pd
 from ..config import settings
 from ..db import execute, executemany, query
 from ..eval import clv
+from ..eval.cierre import es_cierre_real
 from ..eval.soft_vs_sharp import _weekly_ci
 from . import picks as pk
 
@@ -402,12 +403,12 @@ def audit_summary(rows: list[dict], now: datetime | None = None) -> dict:
 def audit(now: datetime | None = None) -> dict:
     """Diagnóstico interno por liga, de solo lectura y sin datos de usuario."""
     rows = query(
-        """WITH latest_close AS (
+        f"""WITH latest_close AS (
                SELECT DISTINCT ON (match_id) match_id, captured_at
                FROM odds_snapshots
                WHERE match_id IN (SELECT DISTINCT match_id FROM sharp_shadow_offers)
                  AND bookmaker = %s AND market = 'h2h'
-                 AND window_tag = 'close' AND mins_to_kickoff >= 0
+                 AND window_tag = 'close' AND mins_to_kickoff >= 0 AND {es_cierre_real()}
                ORDER BY match_id, captured_at DESC
            ), close_quality AS (
                SELECT lc.match_id,
@@ -419,7 +420,7 @@ def audit(now: datetime | None = None) -> dict:
                JOIN odds_snapshots s ON s.match_id = lc.match_id
                    AND s.captured_at = lc.captured_at
                    AND s.bookmaker = %s AND s.market = 'h2h'
-                   AND s.window_tag = 'close' AND s.mins_to_kickoff >= 0
+                   AND s.window_tag = 'close' AND s.mins_to_kickoff >= 0 AND {es_cierre_real("s")}
                GROUP BY lc.match_id
            )
            SELECT o.offer_id, o.match_id, o.league_id, o.kickoff_utc,
