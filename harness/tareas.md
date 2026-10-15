@@ -2727,7 +2727,9 @@ Detalle en `docs/admob_recompensas_20261014.md`.
       propósito:** `CONSENT_VERSION` (servidor) y `'2026-10-12'` (app, `live_api.dart`) deben coincidir o se
       rechazan los registros; subirla exige publicar app y servidor a la vez. **Desplegada** (imagen
       `quantfut-api-admob:20261014c`). Revisión legal hecha: el titular lo confirma (sin documento adjunto en
-      el repo). Pendiente menor: los términos de uso (sección 5) aún no mencionan los videos con recompensa.
+      el repo). Términos de uso (sección 5) redactados con los videos con recompensa y regenerados en
+      `legal_pages/terminos.html`, sin subir la versión por la misma razón; **falta desplegarlos** y que el
+      titular los revise.
 - [x] `db/069` aplicada y API desplegada el 15-oct (imagen `quantfut-api-admob:20261014b`, worker intacto,
       anuncios apagados y en modo prueba). Falta configurar el bloque con SSV en AdMob y el panel, probar
       con la herramienta de SSV de AdMob y en un teléfono con bloques de prueba.

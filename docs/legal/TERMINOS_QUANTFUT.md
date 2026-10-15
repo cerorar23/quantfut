@@ -1,6 +1,6 @@
 # Términos de uso de QuantFut
 
-**Versión 2026-10-12 — vigente desde el 12 de octubre de 2026.**
+**Versión 2026-10-12 — vigente desde el 12 de octubre de 2026. Actualizado en octubre de 2026 para incluir los videos con recompensa.**
 
 ## 1. Quién presta el servicio
 
@@ -87,6 +87,18 @@ recompensa. Los créditos de ofertas, si estas se habilitan, dependerán de la
 confirmación del proveedor. Una repetición del mismo evento no genera un
 segundo crédito. Un canje repetido de contenido ya desbloqueado no debe causar
 un segundo descuento.
+
+Los videos con recompensa son voluntarios: la aplicación solo muestra un
+anuncio de Google AdMob cuando tocas «Ver video». Las monedas se acreditan
+cuando el servidor recibe la confirmación firmada de que el video se completó;
+si lo cierras antes de que termine o la confirmación no llega, no se acreditan.
+No tienes que pulsar el anuncio ni se te pide hacerlo. Pulsar anuncios para
+obtener monedas, usar medios automáticos o simular visualizaciones no está
+permitido y puede dar lugar a la anulación de esos créditos y a las medidas
+previstas en la sección 8. Hay un máximo diario de videos y una pausa entre uno
+y otro, que se muestran en la aplicación y pueden cambiar con información
+previa. Los anuncios los gestiona Google bajo sus propias condiciones;
+QuantFut no controla su contenido ni garantiza su disponibilidad.
 
 Las reglas podrán cambiar para actividades futuras con información previa.
 Los cambios no autorizan a desconocer arbitrariamente derechos ya adquiridos.
