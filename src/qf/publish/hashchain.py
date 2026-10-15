@@ -93,6 +93,16 @@ def lote_lleva_alta_ext(dia: date) -> bool:
     return LOTE_ALTA_EXT_DESDE is not None and dia >= LOTE_ALTA_EXT_DESDE
 
 
+# Desde esta fecha el lote lleva el seguimiento sin publicar de tarjetas (`tarjetas_seg`,
+# db/068). Misma regla: primer lote sin sellar al desplegar (el del 14-oct ya selló a las
+# 08:00 UTC). Se sella aunque no se publique: así queda probado que no se fabricó después.
+LOTE_TARJETAS_DESDE: date | None = date(2026, 10, 15)
+
+
+def lote_lleva_tarjetas(dia: date) -> bool:
+    return LOTE_TARJETAS_DESDE is not None and dia >= LOTE_TARJETAS_DESDE
+
+
 def lote_lleva_alta(dia: date) -> bool:
     """
     ¿El lote de `dia` lleva el bloque de alta probabilidad? Única fuente de
@@ -189,6 +199,15 @@ def _collect(batch_date: date) -> dict:
            ORDER BY t.decided_at, p.ticket_id, p.pata_id""",
         (batch_date,),
     ) if con_parley else []
+    con_tarjetas = lote_lleva_tarjetas(batch_date)
+    tarjetas_seg = query(
+        """SELECT seg_id, match_id, market, selection, line, prob, fair_price,
+                  ref_price, ref_book, odds_source, odds_as_of, fit, decided_at
+           FROM tarjetas_seg
+           WHERE (decided_at AT TIME ZONE 'UTC')::date = %s
+           ORDER BY decided_at, seg_id""",
+        (batch_date,),
+    ) if con_tarjetas else []
     payload = {
         "batch_date": batch_date.isoformat(),
         "model_version": settings.model_version,
@@ -205,6 +224,9 @@ def _collect(batch_date: date) -> dict:
     if con_ext:
         payload["n_alta_ext"] = len(alta_ext)
         payload["alta_ext"] = alta_ext
+    if con_tarjetas:
+        payload["n_tarjetas_seg"] = len(tarjetas_seg)
+        payload["tarjetas_seg"] = tarjetas_seg
     if con_escalera:
         payload["escalera"] = {"retos": retos, "pasos": escalones}
     if con_parley:

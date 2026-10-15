@@ -93,6 +93,10 @@ class Settings:
     # db/057 y desplegar con LOTE_ALTA_EXT_DESDE fijado.
     alta_prob_ext_enabled: bool = os.getenv("ALTA_PROB_EXT_ENABLED", "0") in ("1", "true", "True")
 
+    # Seguimiento sin publicar de tarjetas (tabla tarjetas_seg, 2026-10-14). ENCENDIDO por
+    # defecto: no publica nada y activarlo por entorno exigiría recrear el worker.
+    tarjetas_seg_enabled: bool = os.getenv("TARJETAS_SEG_ENABLED", "1") in ("1", "true", "True")
+
     # --- Reto escalera (publish/escalera.py, 2026-10-08) ---
     # Apagado hasta desplegar con LOTE_ESCALERA_DESDE fijado: sin bloque en el
     # lote, un escalón no quedaría sellado.

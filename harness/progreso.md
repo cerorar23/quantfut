@@ -5975,3 +5975,20 @@ respaldo de los anteriores en `~/quantfut/releases/parley-bloqueados-20261014/*.
 seco con datos reales: mercados bloqueados `['totals']`, 104 candidatas (se quitaron las 12 de
 goles de las 116), 4 tickets (1,97 · 2,21 · 2,79 · 3,49) sin cambios de probabilidad. Misma
 salvedad que antes: la copia es solo del contenedor y el árbol `~/quantfut/src` está desfasado.
+
+## 2026-10-14 — Seguimiento sin publicar de tarjetas e informe de prometido frente a real
+
+Las tarjetas están en 3 de los 4 tickets del parley y no tienen historial propio (ninguna liquidada
+en alta probabilidad ni en la escalera; 2 patas en el parley). Decisión del usuario: tabla aparte
+`tarjetas_seg` (db/068, inmutable, con `tarjetas_seg_results`) que guarda cada día TODOS los
+candidatos de tarjetas de los partidos con precio (líneas de `LINEAS_HABILITADAS["cards"]`, la
+probabilidad prudente = menor entre modelo y mercado, y la mejor cuota de la lista; sin cuota de la
+lista no entra, como en el parley). NO se publica: ninguna ruta de API, panel, web ni app la lee (lo
+comprueba una prueba). Se sella en el lote (`tarjetas_seg`, `LOTE_TARJETAS_DESDE` = 2026-10-15, primer
+lote sin sellar) y se liquida en `clv.settle_pending` con la misma regla que la escalera (amarillas +
+rojas). Va ENCENDIDO por defecto en código, no por entorno: activarlo por `.env` obliga a recrear el
+worker y eso borraría los parches copiados con `docker cp`; `tests/conftest.py` lo apaga en las
+pruebas. `eval/calibracion_mercados.py` (`python -m qf.eval.calibracion_mercados [--json]`) compara por
+mercado prometido y real con IC de Wilson al 95 % sobre lo liquidado y SELLADO de alta probabilidad,
+ampliada, escalera, parley y tarjetas; un pronóstico repetido en varias fuentes cuenta una vez en el
+total (el desglose no deduplica) y con menos de 30 casos no opina. Solo lectura: no bloquea nada.

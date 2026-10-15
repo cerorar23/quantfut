@@ -2659,3 +2659,5 @@ revocó sola el 14-oct).
 - [x] Tope de 4 gratis en Inicio y Alta probabilidad (2026-10-14): `cap_free` en `api/mobile.py`; texto de la app en 6 idiomas.
 - [x] El parley excluye las patas de mercados bloqueados por el control de alta probabilidad (2026-10-14): `pl.sin_bloqueados`, `pd.mercados_bloqueados`.
 - [ ] Medir la calibración de tarjetas y córners en el parley (dominan los tickets y no tienen historial propio) antes de dar más peso a esos mercados.
+- [x] Seguimiento sin publicar de tarjetas (db/068, `publish/tarjetas_seg.py`, sellado desde 2026-10-15) e informe `eval/calibracion_mercados.py` de prometido frente a real por mercado (2026-10-14).
+- [ ] Revisar el informe de calibración cuando `tarjetas_seg` tenga ~100 liquidadas; decidir entonces si tarjetas necesita bloqueo, calibración suave o más peso en el parley.

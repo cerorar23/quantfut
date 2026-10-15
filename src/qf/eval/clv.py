@@ -257,6 +257,12 @@ def settle_pending(lookback_hours: int = 96) -> dict:
         log.warning("No se pudo liquidar la alta probabilidad ampliada: %s", exc)
 
     try:
+        from ..publish.tarjetas_seg import settle_pending as settle_tarjetas
+        settle_tarjetas()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("No se pudo liquidar el seguimiento de tarjetas: %s", exc)
+
+    try:
         from ..publish.escalera_datos import settle_pending as settle_escalera
         escalera = settle_escalera()
     except Exception as exc:  # noqa: BLE001

@@ -24,7 +24,7 @@ from ..config import settings
 from ..db import query, query_one
 from ..model.dixon_coles import DixonColes
 from ..model.devig import consensus_devig
-from . import alta_prob_datos, alta_prob_ext
+from . import alta_prob_datos, alta_prob_ext, tarjetas_seg
 from . import escalera_datos
 from . import parley_datos
 from . import picks as pk
@@ -534,6 +534,18 @@ def _alta_ext() -> dict:
     return out
 
 
+def _tarjetas_seg() -> dict:
+    """Seguimiento sin publicar de tarjetas: se guarda ANTES de sellar. Nunca rompe el job."""
+    if not settings.tarjetas_seg_enabled:
+        return {"guardados": 0, "estado": "desactivado"}
+    try:
+        return tarjetas_seg.select_and_persist()
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Fallo en el seguimiento de tarjetas")
+        tg.alert(f"Fallo en el seguimiento de tarjetas: {exc}")
+        return {"guardados": 0, "error": str(exc)}
+
+
 def _alerta_sin_sellar(alta: dict, receipt: dict, escalera: dict | None = None,
                        parley: dict | None = None) -> None:
     if not receipt and alta.get("elegidos"):
@@ -594,6 +606,7 @@ def run() -> dict:
         # puerta: también debe aprobar la muestra en sombra del criterio.
         alta = _alta()
         _alta_ext()
+        _tarjetas_seg()
         escalera = _escalera()
         parley = _parley()
         receipt = seal()
@@ -625,6 +638,7 @@ def run() -> dict:
 
     alta = _alta()
     _alta_ext()
+    _tarjetas_seg()
     escalera = _escalera()
     parley = _parley()
     receipt = seal()
