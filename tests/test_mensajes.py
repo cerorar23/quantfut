@@ -13,7 +13,7 @@ from qf.api.mensajes import CATALOGO, IDIOMAS, PATRONES
 
 RAIZ = Path(__file__).resolve().parents[1] / "src" / "qf"
 ARCHIVOS = [RAIZ / "api" / "rewards.py", RAIZ / "api" / "cuentas.py", RAIZ / "api" / "firebase.py",
-            RAIZ / "api" / "mobile.py", RAIZ / "api" / "main.py",
+            RAIZ / "api" / "mobile.py", RAIZ / "api" / "main.py", RAIZ / "api" / "anuncios.py",
             RAIZ / "comercial" / "cuentas.py", RAIZ / "comercial" / "firebase.py"]
 
 # Mensajes que NO ve una persona en la app (webhooks de proveedores y panel de administración).
@@ -27,6 +27,8 @@ SOLO_ADMIN = {
     "Faltan credenciales o la integración de este proveedor", "Evento duplicado con datos distintos",
     "Falta QF_SECRETS_KEY en el servidor: no se puede guardar la secret key cifrada",
     "Secret key no válida para este proveedor", "Sección no válida",
+    "Claves de verificación no disponibles", "Valores de anuncios no válidos", "ID de bloque no válido",
+    "ID de editor no válido", "Activa el modo prueba o indica un ID de bloque real", "No encontrado",
 }
 
 

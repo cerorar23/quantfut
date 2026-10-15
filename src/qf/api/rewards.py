@@ -119,11 +119,13 @@ def overview(request: Request, response: Response, account: dict | None = Depend
     out = {'settings':cfg, 'signed_in':account is not None, 'providers':[
         {'provider':p['provider'],'name':PROVIDERS[p['provider']],
          'available':cfg['enabled'] and p['enabled'] and provider_ready(p['provider'])} for p in providers],
-        'wallet':None, 'ledger':[], 'referrals':None,
+        'wallet':None, 'ledger':[], 'referrals':None, 'ads':{'enabled':False},
         'terms':mensajes.traducir(TERMS,lang)}
     if account is not None:
+        from . import anuncios  # import local: `anuncios` importa este módulo
         with conn() as c:
             w = wallet(c,account['account_id'])
+            out['ads'] = anuncios.ads_block(c,account['account_id'],settings(),datetime.now(timezone.utc))
         today = datetime.now(timezone.utc).date()
         out['wallet'] = {k:w[k] for k in ('balance','streak','last_attendance','referral_code')}
         out['wallet']['spendable'] = max(0,w['balance'])

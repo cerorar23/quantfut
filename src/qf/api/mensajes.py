@@ -60,6 +60,30 @@ CATALOGO: dict[str, tuple[str, str, str, str, str]] = {
         "Provider not configured yet", "Provedor ainda não configurado",
         "Fournisseur pas encore configuré", "Fornitore non ancora configurato",
         "Anbieter noch nicht eingerichtet"),
+    "Los anuncios con recompensa no están disponibles": (
+        "Rewarded ads are not available", "Os anúncios com recompensa não estão disponíveis",
+        "Les publicités avec récompense ne sont pas disponibles",
+        "Le pubblicità con ricompensa non sono disponibili",
+        "Anzeigen mit Belohnung sind nicht verfügbar"),
+    "Anuncios no disponibles en este dispositivo": (
+        "Ads are not available on this device", "Anúncios indisponíveis neste dispositivo",
+        "Publicités indisponibles sur cet appareil",
+        "Pubblicità non disponibili su questo dispositivo",
+        "Anzeigen sind auf diesem Gerät nicht verfügbar"),
+    "Ya tienes un anuncio en curso": (
+        "You already have an ad in progress", "Você já tem um anúncio em andamento",
+        "Vous avez déjà une publicité en cours", "Hai già una pubblicità in corso",
+        "Du hast bereits eine laufende Anzeige"),
+    "Has alcanzado el límite de anuncios de hoy": (
+        "You've reached today's ad limit", "Você atingiu o limite de anúncios de hoje",
+        "Vous avez atteint la limite de publicités du jour",
+        "Hai raggiunto il limite di pubblicità di oggi",
+        "Du hast das Anzeigenlimit für heute erreicht"),
+    "Espera un momento antes del siguiente anuncio": (
+        "Wait a moment before the next ad", "Aguarde um momento antes do próximo anúncio",
+        "Patientez un instant avant la prochaine publicité",
+        "Attendi un momento prima della prossima pubblicità",
+        "Warte einen Moment bis zur nächsten Anzeige"),
     "Inicia sesión para usar monedas": (
         "Sign in to use coins", "Inicie sessão para usar moedas",
         "Connectez-vous pour utiliser les pièces", "Accedi per usare le monete",
