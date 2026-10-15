@@ -10,10 +10,13 @@ import math
 import secrets
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
+from . import anuncios_ssv as ssv
 from . import rewards
+from ..comercial.auditoria import audit
 from ..db import conn, query, query_one  # noqa: F401 - `query*` los usa el panel
 
 router = APIRouter(tags=['anuncios'])
@@ -116,3 +119,79 @@ def ticket(body: TicketIn, account: dict = Depends(rewards.verified_account)):
 def cancel(body: CancelIn, account: dict = Depends(rewards.verified_account)):
     with conn() as c:
         return cancel_ticket(c, account['account_id'], body.nonce, datetime.now(timezone.utc))
+
+
+def normalize_unit(unit: str) -> str:
+    """Google envía `ad_unit` solo con la parte numérica; la configuración lleva `ca-app-pub-…/<n>`."""
+    return unit.rsplit('/', 1)[-1]
+
+
+def allowed_units(cfg: dict) -> set[str]:
+    units = {cfg['ad_unit_android'], cfg['ad_unit_ios']} - {''}
+    if cfg['ad_test_mode']:
+        units |= set(TEST_UNITS.values())
+    return {normalize_unit(u) for u in units}
+
+
+def decide_outcome(*, ticket: dict | None, account: dict, cfg: dict, ad_unit: str,
+                   used_today: int, now: datetime) -> str:
+    if (ticket is None or ticket['used_at'] is not None or ticket['cancelled_at'] is not None
+            or ticket['expires_at'] < now):
+        return 'rejected_ticket'
+    if account['status'] != 'active' or account['email_verified_at'] is None:
+        return 'rejected_account'
+    if normalize_unit(ad_unit) not in allowed_units(cfg):
+        return 'rejected_unit'
+    if used_today >= cfg['ad_daily_cap']:
+        return 'rejected_cap'
+    return 'credited'
+
+
+def credit(c, *, transaction_id: str, uid: str, nonce: str, ad_unit: str, cfg: dict, now: datetime) -> str:
+    """Decide y registra un callback ya autenticado. Idempotente por `transaction_id`."""
+    account = c.execute('SELECT a.account_id,a.status,a.email_verified_at FROM accounts a '
+                        'JOIN reward_wallets w USING(account_id) WHERE w.uid=%s', (uid,)).fetchone() if uid else None
+    if account is None:
+        return 'unknown_user'
+    aid = account['account_id']
+    rewards.wallet(c, aid, lock=True)
+    prev = c.execute('SELECT outcome FROM reward_ad_events WHERE transaction_id=%s', (transaction_id,)).fetchone()
+    if prev:
+        return prev['outcome']
+    ticket = c.execute('SELECT * FROM reward_ad_tickets WHERE nonce=%s AND account_id=%s FOR UPDATE',
+                       (nonce, aid)).fetchone() if nonce else None
+    day = ticket['day'] if ticket else utc_day(now)
+    used = c.execute("SELECT count(*) AS n FROM reward_ad_events WHERE account_id=%s AND day=%s "
+                     "AND outcome='credited'", (aid, day)).fetchone()['n']
+    outcome = decide_outcome(ticket=ticket, account=account, cfg=cfg, ad_unit=ad_unit, used_today=used, now=now)
+    coins = cfg['ad_coins'] if outcome == 'credited' else 0
+    if outcome == 'credited':
+        rewards.change(c, aid, coins, f'ad:{transaction_id}', 'ad')
+    if ticket is not None and ticket['cancelled_at'] is None and ticket['used_at'] is None:
+        c.execute('UPDATE reward_ad_tickets SET used_at=%s WHERE nonce=%s', (now, nonce))
+    c.execute('INSERT INTO reward_ad_events(transaction_id,account_id,nonce,ad_unit,coins,outcome,day,created_at) '
+              'VALUES(%s,%s,%s,%s,%s,%s,%s,%s)', (transaction_id, aid, nonce, ad_unit, coins, outcome, day, now))
+    return outcome
+
+
+@router.get('/rewards/callback/admob', include_in_schema=False)
+def callback(request: Request):
+    raw = request.scope.get('query_string', b'').decode('ascii', 'replace')
+    try:
+        _, _, key_id = ssv.split_signed(raw)
+        ssv.verify(raw, ssv.keys_for(key_id))
+    except ssv.SignatureError:
+        raise HTTPException(403, 'Firma inválida') from None
+    except ssv.KeysUnavailable:
+        raise HTTPException(503, 'Claves de verificación no disponibles') from None
+    q = request.query_params
+    tx = q.get('transaction_id', '')
+    if not tx or len(tx) > 160:
+        raise HTTPException(422, 'Transacción inválida')
+    # Un callback ya emitido se acepta aunque el administrador apague los anuncios después.
+    cfg = rewards.settings()
+    with conn() as c:
+        outcome = credit(c, transaction_id=tx, uid=q.get('user_id', '')[:64], nonce=q.get('custom_data', '')[:64],
+                         ad_unit=q.get('ad_unit', '')[:80], cfg=cfg, now=datetime.now(timezone.utc))
+        audit(c, 'reward:admob', 'reward_callback', detail={'transaction_id': tx, 'outcome': outcome})
+    return PlainTextResponse('OK', headers={'Cache-Control': 'no-store'})
