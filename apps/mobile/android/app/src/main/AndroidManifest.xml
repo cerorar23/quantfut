@@ -11,6 +11,9 @@
         <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
         <meta-data android:name="firebase_performance_collection_enabled" android:value="false" />
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
+        <!-- ID de APP de AdMob. Este es el de EJEMPLO de Google (solo anuncios de prueba):
+             cámbialo por el real antes de publicar con anuncios reales. -->
+        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="quantfut_predictions" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_quantfut" />
         <activity

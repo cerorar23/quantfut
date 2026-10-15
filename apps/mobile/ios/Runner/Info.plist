@@ -2,6 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- ID de APP de AdMob: el de EJEMPLO de Google (solo anuncios de prueba). Cámbialo por el real antes de publicar. -->
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-3940256099942544~1458002511</string>
     <key>GIDClientID</key>
     <string>68225142184-qqb1nmgj19ucmhes5mqtg3962bomoj6p.apps.googleusercontent.com</string>
     <key>CFBundleURLTypes</key>

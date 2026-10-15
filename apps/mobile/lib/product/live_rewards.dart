@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_locale.dart';
 import 'coin_burst.dart';
+import 'live_ads.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 import 'rewards_progress.dart';
@@ -50,9 +51,17 @@ String ledgerKindLabel(AppLocalizations l10n, Object? kind) => switch (kind) {
 };
 
 class RewardsScreen extends StatefulWidget {
-  const RewardsScreen({super.key, required this.api, this.embedded = false});
+  const RewardsScreen({
+    super.key,
+    required this.api,
+    this.embedded = false,
+    this.adGateway,
+  });
   final QuantFutApi api;
   final bool embedded;
+
+  /// Pasarela del SDK de anuncios; las pruebas inyectan una falsa.
+  final RewardedAdGateway? adGateway;
   @override
   State<RewardsScreen> createState() => _RewardsScreenState();
 }
@@ -63,6 +72,9 @@ class _RewardsScreenState extends State<RewardsScreen>
   String? error;
   bool busy = false;
   bool openingOffer = false;
+  bool watchingAd = false;
+  String? adStatus;
+  late final RewardedAdGateway _adGateway = widget.adGateway ?? AdMobGateway();
   bool _ledgerOpen = false;
   bool _termsOpen = false;
   int _burst = 0;
@@ -79,7 +91,9 @@ class _RewardsScreenState extends State<RewardsScreen>
       final wallet = jsonMap(data?['wallet']);
       if (!mounted || wallet.isEmpty) return;
       final coins = _attendanceCoins(jsonMap(data?['settings']));
-      if (AttendanceState.of(wallet, coins, DateTime.now()).claimedToday) {
+      final nextAd = DateTime.tryParse('${jsonMap(data?['ads'])['next_at'] ?? ''}');
+      if (AttendanceState.of(wallet, coins, DateTime.now()).claimedToday ||
+          (nextAd != null && nextAd.isAfter(DateTime.now().toUtc()))) {
         setState(() {});
       }
     });
@@ -199,6 +213,54 @@ class _RewardsScreenState extends State<RewardsScreen>
     }
   }
 
+  /// Ver un video con recompensa. La celebración sale de la diferencia de saldo que
+  /// confirma el servidor; la app nunca acredita monedas por su cuenta.
+  Future<void> watchAd() async {
+    if (watchingAd || busy) return;
+    final l10n = context.l10n;
+    setState(() {
+      watchingAd = true;
+      adStatus = l10n.adsLoading;
+    });
+    String? message;
+    try {
+      final out = await RewardedAdFlow(
+        api: widget.api,
+        gateway: _adGateway,
+        onVerifying: () {
+          if (mounted) setState(() => adStatus = l10n.adsVerifying);
+        },
+      ).run();
+      if (!mounted) return;
+      switch (out.result) {
+        case AdResult.credited:
+          HapticFeedback.mediumImpact();
+          setState(() {
+            _burst++;
+            _burstLabel = l10n.rewardsClaimed(out.coins);
+          });
+        case AdResult.pending:
+          message = l10n.adsPending;
+        case AdResult.unavailable:
+          message = l10n.adsUnavailable;
+        case AdResult.dismissed || AdResult.limit || AdResult.waiting:
+          break;
+      }
+    } on ApiFailure catch (e) {
+      message = e.message;
+    } catch (_) {
+      message = l10n.adsUnavailable;
+    } finally {
+      if (mounted) {
+        setState(() {
+          watchingAd = false;
+          adStatus = message;
+        });
+      }
+    }
+    await load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -260,6 +322,12 @@ class _RewardsScreenState extends State<RewardsScreen>
                         wallet: wallet,
                         busy: busy,
                         onClaim: claim,
+                      ),
+                      AdsCard(
+                        ads: jsonMap(data?['ads']),
+                        enabled: !busy && !watchingAd && widget.api.signedIn,
+                        status: adStatus,
+                        onWatch: watchAd,
                       ),
                       _OffersCard(
                         providers: jsonRows(data?['providers']),

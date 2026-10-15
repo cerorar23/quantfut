@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../l10n/app_locale.dart';
 import 'live_api.dart';
+import 'live_widgets.dart';
+import 'rewards_progress.dart';
 
 enum AdShow { earned, dismissed, failedToLoad }
 
@@ -174,5 +178,98 @@ class AdMobGateway implements RewardedAdGateway {
     await closed.future;
     await ad.dispose();
     return earned ? AdShow.earned : AdShow.dismissed;
+  }
+}
+
+/// Tarjeta «Videos con recompensa». El botón dice la acción y la recompensa (aviso previo
+/// que exige AdMob); nunca se lanza un anuncio sin que la persona toque el botón.
+class AdsCard extends StatelessWidget {
+  const AdsCard({
+    super.key,
+    required this.ads,
+    required this.enabled,
+    required this.status,
+    required this.onWatch,
+  });
+
+  final JsonMap ads;
+  final bool enabled;
+  final String? status;
+  final VoidCallback onWatch;
+
+  @override
+  Widget build(BuildContext context) {
+    if (ads['enabled'] != true) return const SizedBox.shrink();
+    final l10n = context.l10n;
+    final coins = (ads['coins'] as num?)?.toInt() ?? 0;
+    final used = (ads['used_today'] as num?)?.toInt() ?? 0;
+    final cap = (ads['daily_cap'] as num?)?.toInt() ?? 0;
+    final remaining = (ads['remaining_today'] as num?)?.toInt() ?? 0;
+    final next = DateTime.tryParse('${ads['next_at'] ?? ''}');
+    final wait = next?.difference(DateTime.now().toUtc());
+    final waiting = wait != null && wait > Duration.zero;
+    final note = remaining == 0
+        ? l10n.adsLimitReached
+        : waiting
+        ? l10n.adsWaitFor(AttendanceState.clock(wait))
+        : status;
+    return Container(
+      key: const ValueKey('coins-ads'),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: livePanel,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: liveCyan.withValues(alpha: .35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.ondemand_video, color: liveGold, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    liveText(l10n.adsCardTitle, size: 15, bold: true),
+                    const SizedBox(height: 2),
+                    liveText(
+                      l10n.adsProgress(used, cap),
+                      size: 12,
+                      color: liveMuted,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: liveCyan,
+                foregroundColor: liveBg,
+                padding: const EdgeInsets.all(15),
+                shape: const StadiumBorder(),
+              ),
+              onPressed: enabled && remaining > 0 && !waiting ? onWatch : null,
+              child: Text(
+                l10n.adsWatchCta(coins),
+                style: const TextStyle(fontFamily: 'Gilroy Bold', fontSize: 15),
+              ),
+            ),
+          ),
+          if (note != null) ...[
+            const SizedBox(height: 8),
+            liveText(note, size: 12, color: liveGold),
+          ],
+          const SizedBox(height: 8),
+          liveText(l10n.adsFootnote, size: 11, color: liveMuted),
+        ],
+      ),
+    );
   }
 }
