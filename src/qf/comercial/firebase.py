@@ -7,7 +7,10 @@ import threading
 from ..db import conn, query_one
 from .cuentas import CuentaError, _PUBLIC, normalize_email
 
-CONSENT_VERSION = "2026-10-12"
+CONSENT_VERSION = "2026-10-16"
+# La app publicada antes del cambio envia 2026-10-12: se acepta mientras se actualiza
+# (spec 2026-10-15). Retirar la anterior cuando la version nueva de la app sea la minima.
+ACCEPTED_CONSENT_VERSIONS = frozenset({"2026-10-12", CONSENT_VERSION})
 _admin_lock = threading.Lock()
 
 
@@ -74,7 +77,7 @@ def connect_identity(claims: dict, terms_version: str | None,
                 raise CuentaError("firebase_conflicto", "Google ya está vinculado a otra cuenta")
             account_id = linked["account_id"]
         else:
-            if terms_version != CONSENT_VERSION or privacy_version != CONSENT_VERSION:
+            if terms_version not in ACCEPTED_CONSENT_VERSIONS or privacy_version != terms_version:
                 raise CuentaError("consentimiento_requerido", "Acepta los términos y la política de privacidad")
             if existing_account:
                 account_id = existing_account["account_id"]
@@ -95,10 +98,13 @@ def connect_identity(claims: dict, terms_version: str | None,
                 if not row:
                     raise CuentaError("vinculacion_requerida", "Accede a tu cuenta existente para vincular Google")
                 account_id = row["account_id"]
+                from . import meta_capi
+                meta_capi.enqueue(c, account_id, "CompleteRegistration", f"reg:{account_id}",
+                                  {"registration_method": "google"})
             c.execute(
                 """INSERT INTO firebase_identities (project_id, firebase_uid, account_id, provider)
                    VALUES (%s, %s, %s, %s)""", (project, uid, account_id, provider))
-        if terms_version == CONSENT_VERSION and privacy_version == CONSENT_VERSION:
+        if terms_version in ACCEPTED_CONSENT_VERSIONS and privacy_version == terms_version:
             c.execute(
                 """INSERT INTO account_consents (account_id, terms_version, privacy_version)
                    VALUES (%s, %s, %s) ON CONFLICT DO NOTHING""",

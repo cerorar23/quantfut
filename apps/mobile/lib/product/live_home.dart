@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'home_agenda.dart';
+import '../core/meta_events.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 
@@ -135,6 +136,10 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   void _toggleSearch() {
+    // Se registra al cerrar la búsqueda con texto, no en cada tecla.
+    if (_searching && search.trim().isNotEmpty) {
+      MetaEvents.current?.search(search.trim());
+    }
     setState(() {
       _searching = !_searching;
       if (!_searching) search = '';

@@ -278,6 +278,38 @@ CATALOGO: dict[str, tuple[str, str, str, str, str]] = {
         "Connectez-vous à votre compte existant pour associer Google",
         "Accedi al tuo account esistente per collegare Google",
         "Melde dich bei deinem bestehenden Konto an, um Google zu verknüpfen"),
+    # --- compras en tiendas ---
+    "Las compras todavía no están disponibles": (
+        "Purchases are not available yet", "As compras ainda não estão disponíveis",
+        "Les achats ne sont pas encore disponibles", "Gli acquisti non sono ancora disponibili",
+        "Käufe sind noch nicht verfügbar"),
+    "La tienda no está disponible. Inténtalo de nuevo": (
+        "The store is not available. Please try again", "A loja não está disponível. Tente novamente",
+        "La boutique n'est pas disponible. Réessayez", "Lo store non è disponibile. Riprova",
+        "Der Store ist nicht verfügbar. Bitte versuche es erneut"),
+    "Esta compra pertenece a otra cuenta": (
+        "This purchase belongs to another account", "Esta compra pertence a outra conta",
+        "Cet achat appartient à un autre compte", "Questo acquisto appartiene a un altro account",
+        "Dieser Kauf gehört zu einem anderen Konto"),
+    "La compra no está asociada a ninguna cuenta": (
+        "The purchase is not linked to any account", "A compra não está associada a nenhuma conta",
+        "L'achat n'est associé à aucun compte", "L'acquisto non è associato a nessun account",
+        "Der Kauf ist mit keinem Konto verknüpft"),
+    "No se reconoce el producto comprado": (
+        "The purchased product is not recognized", "O produto comprado não é reconhecido",
+        "Le produit acheté n'est pas reconnu", "Il prodotto acquistato non è riconosciuto",
+        "Das gekaufte Produkt wird nicht erkannt"),
+    "La tienda no reconoce esta compra": (
+        "The store does not recognize this purchase", "A loja não reconhece esta compra",
+        "La boutique ne reconnaît pas cet achat", "Lo store non riconosce questo acquisto",
+        "Der Store erkennt diesen Kauf nicht"),
+    "Falta el token de compra": (
+        "The purchase token is missing", "Falta o token da compra", "Le jeton d'achat est manquant",
+        "Manca il token di acquisto", "Das Kauf-Token fehlt"),
+    "Falta la transacción firmada": (
+        "The signed transaction is missing", "Falta a transação assinada",
+        "La transaction signée est manquante", "Manca la transazione firmata",
+        "Die signierte Transaktion fehlt"),
 }
 
 # Mensajes con números: plantilla en español con {nombre} -> traducciones con los mismos.

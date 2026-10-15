@@ -1618,6 +1618,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get picksTrustTitle => 'Taux de réussite historique';
 
   @override
+  String get prefsAdsBody =>
+      'Partage avec Meta des données chiffrées de votre compte, de l\'appareil et de vos achats pour mesurer quelles publicités fonctionnent. En Californie, le désactiver équivaut à « Ne pas partager mes données ».';
+
+  @override
+  String get prefsAdsTitle => 'Mesure des publicités (Meta)';
+
+  @override
   String get prefsAnalyticsBody =>
       'Aide à améliorer l\'application grâce à des données sur les écrans utilisés. Facultatif.';
 
@@ -1665,6 +1672,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get prefsTitle => 'Confidentialité et préférences';
+
+  @override
+  String get privacyUpdateBody =>
+      'Vous pouvez désormais vous abonner via Google Play ou l\'App Store, et la mesure d\'utilisation, le diagnostic et la mesure publicitaire Meta sont activés. Vous pouvez les désactiver dans Préférences.';
+
+  @override
+  String get privacyUpdateOk => 'Compris';
+
+  @override
+  String get privacyUpdateRead => 'Lire la politique';
+
+  @override
+  String get privacyUpdateTitle => 'Nous avons mis à jour la confidentialité';
 
   @override
   String get probBarAway => 'Ext.';
@@ -2440,6 +2460,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipFreeAccess => 'Votre compte a un accès gratuit.';
 
   @override
+  String get vipGranted => 'C\'est fait ! Votre accès VIP est actif.';
+
+  @override
   String get vipHistoryNote =>
       'Historique public et scellé ; les échantillons par marché sont petits et un pronostic peut échouer.';
 
@@ -2449,6 +2472,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vipLinked => '🔒  Votre accès VIP est lié à votre compte';
+
+  @override
+  String get vipManage =>
+      'Vous avez déjà Plus. Modifiez ou résiliez votre forfait dans la boutique.';
 
   @override
   String vipMonthly(String amount) {
@@ -2474,6 +2501,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'La souscription nécessite un canal de paiement configuré.';
 
   @override
+  String get vipPending =>
+      'Paiement en attente. Vous aurez accès dès que la boutique le confirmera.';
+
+  @override
   String get vipPickLabel => 'Pronostic VIP';
 
   @override
@@ -2488,10 +2519,31 @@ class AppLocalizationsFr extends AppLocalizations {
       'Achats en préparation : rien n\'est encore facturé depuis l\'application.';
 
   @override
+  String get vipRestore => 'Restaurer les achats';
+
+  @override
   String get vipStatRecorded => 'Taux de réussite enregistré';
 
   @override
   String get vipStatResolved => 'Résolus';
+
+  @override
+  String get vipStoreFailed =>
+      'Impossible de confirmer l\'achat. Nous réessaierons à la prochaine ouverture de l\'app.';
+
+  @override
+  String get vipStoreTerms =>
+      'Se renouvelle automatiquement au même prix jusqu\'à ce que vous le résiliiez dans la boutique.';
+
+  @override
+  String get vipStoreUnavailable =>
+      'La boutique n\'est pas disponible sur cet appareil.';
+
+  @override
+  String get vipSubscribe => 'M\'abonner';
+
+  @override
+  String get vipVerifying => 'Vérification de l\'achat auprès de la boutique…';
 
   @override
   String get welcome1Body =>

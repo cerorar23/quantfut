@@ -2716,6 +2716,18 @@ abstract class AppLocalizations {
   /// **'Acierto histórico'**
   String get picksTrustTitle;
 
+  /// No description provided for @prefsAdsBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Comparte con Meta datos cifrados de tu cuenta, del dispositivo y de tus compras para medir qué anuncios funcionan. En California equivale a «No compartir mis datos» cuando lo desactivas.'**
+  String get prefsAdsBody;
+
+  /// No description provided for @prefsAdsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Medición de anuncios (Meta)'**
+  String get prefsAdsTitle;
+
   /// No description provided for @prefsAnalyticsBody.
   ///
   /// In es, this message translates to:
@@ -2799,6 +2811,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Privacidad y preferencias'**
   String get prefsTitle;
+
+  /// No description provided for @privacyUpdateBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora puedes suscribirte con Google Play o App Store, y la medición de uso, el diagnóstico y la medición de anuncios con Meta vienen activados. Puedes desactivarlos en Preferencias.'**
+  String get privacyUpdateBody;
+
+  /// No description provided for @privacyUpdateOk.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get privacyUpdateOk;
+
+  /// No description provided for @privacyUpdateRead.
+  ///
+  /// In es, this message translates to:
+  /// **'Leer la política'**
+  String get privacyUpdateRead;
+
+  /// No description provided for @privacyUpdateTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizamos la privacidad'**
+  String get privacyUpdateTitle;
 
   /// No description provided for @probBarAway.
   ///
@@ -4013,6 +4049,12 @@ abstract class AppLocalizations {
   /// **'Tu cuenta tiene acceso gratuito.'**
   String get vipFreeAccess;
 
+  /// No description provided for @vipGranted.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Listo! Tu acceso VIP está activo.'**
+  String get vipGranted;
+
   /// No description provided for @vipHistoryNote.
   ///
   /// In es, this message translates to:
@@ -4030,6 +4072,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'🔒  Tu acceso VIP queda vinculado a tu cuenta'**
   String get vipLinked;
+
+  /// No description provided for @vipManage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes Plus. Cambia o cancela tu plan en la tienda.'**
+  String get vipManage;
 
   /// No description provided for @vipMonthly.
   ///
@@ -4055,6 +4103,12 @@ abstract class AppLocalizations {
   /// **'La contratación requiere un canal de pago configurado.'**
   String get vipPaymentRequired;
 
+  /// No description provided for @vipPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago pendiente. Te daremos acceso en cuanto la tienda lo confirme.'**
+  String get vipPending;
+
   /// No description provided for @vipPickLabel.
   ///
   /// In es, this message translates to:
@@ -4079,6 +4133,12 @@ abstract class AppLocalizations {
   /// **'Compras en preparación: aún no se cobra nada desde la app.'**
   String get vipPurchasesPending;
 
+  /// No description provided for @vipRestore.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar compras'**
+  String get vipRestore;
+
   /// No description provided for @vipStatRecorded.
   ///
   /// In es, this message translates to:
@@ -4090,6 +4150,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Resueltos'**
   String get vipStatResolved;
+
+  /// No description provided for @vipStoreFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo confirmar la compra. Lo reintentaremos al volver a abrir la app.'**
+  String get vipStoreFailed;
+
+  /// No description provided for @vipStoreTerms.
+  ///
+  /// In es, this message translates to:
+  /// **'Se renueva automáticamente al mismo precio hasta que la canceles en la tienda.'**
+  String get vipStoreTerms;
+
+  /// No description provided for @vipStoreUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'La tienda no está disponible en este dispositivo.'**
+  String get vipStoreUnavailable;
+
+  /// No description provided for @vipSubscribe.
+  ///
+  /// In es, this message translates to:
+  /// **'Suscribirme'**
+  String get vipSubscribe;
+
+  /// No description provided for @vipVerifying.
+  ///
+  /// In es, this message translates to:
+  /// **'Verificando la compra con la tienda…'**
+  String get vipVerifying;
 
   /// No description provided for @welcome1Body.
   ///

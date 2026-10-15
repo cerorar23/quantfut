@@ -11,6 +11,15 @@
         <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
         <meta-data android:name="firebase_performance_collection_enabled" android:value="false" />
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
+        <!-- Meta (spec 2026-10-15): sin arranque ni registro automaticos. Dart inicia el SDK solo
+             si la medicion de Meta esta activa (por defecto si, desactivable en Perfil). El registro
+             automatico de compras tambien se apaga en el panel de Meta: las compras las manda el
+             servidor por Conversions API. -->
+        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id" />
+        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token" />
+        <meta-data android:name="com.facebook.sdk.AutoInitEnabled" android:value="false" />
+        <meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled" android:value="false" />
+        <meta-data android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled" android:value="false" />
         <!-- ID de APP de AdMob. Este es el de EJEMPLO de Google (solo anuncios de prueba):
              cámbialo por el real antes de publicar con anuncios reales. -->
         <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />

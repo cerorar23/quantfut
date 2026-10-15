@@ -1,6 +1,6 @@
 # Aviso y política de privacidad de QuantFut
 
-**Versión 2026-10-12 — vigente desde el 12 de octubre de 2026. Actualizado en octubre de 2026 para informar de los videos con recompensa de Google AdMob.**
+**Versión 2026-10-16 — vigente desde su publicación. Actualizada en octubre de 2026 para informar de la medición de anuncios con Meta, de las compras en Google Play y App Store y de que la medición de uso, el diagnóstico y la medición de anuncios vienen activados.**
 
 ## 1. Responsable y contacto
 
@@ -48,24 +48,39 @@ prestar el acceso y gestionar recompensas se apoyan en la ejecución del
 contrato; las obligaciones legales, en la norma correspondiente; y las medidas
 proporcionadas de seguridad y prevención de abuso, en el interés legítimo de
 proteger el servicio y sus usuarios, sujeto a sus derechos y a la evaluación
-correspondiente. Medición y diagnóstico opcionales requieren la elección
-específica descrita a continuación. No se utiliza la aceptación global de este
-aviso como consentimiento para todo tratamiento.
+correspondiente. La medición de uso, el diagnóstico y la medición de anuncios
+vienen activados y puedes desactivarlos en cualquier momento, como se describe a
+continuación.
 
-El pago dentro de la aplicación todavía no está habilitado. Antes de hacerlo
-se identificará el proveedor y la información de pago que este procesará.
-QuantFut no debe recibir números completos de tarjeta ni sus códigos de
-seguridad cuando el pago se gestione mediante un proveedor externo.
+Las suscripciones se pagan en Google Play o en App Store. Estas tiendas cobran,
+emiten el comprobante y gestionan los reembolsos; QuantFut no recibe números de
+tarjeta ni códigos de seguridad. De la tienda recibimos el identificador del
+pedido, el producto, las fechas del periodo pagado, el importe, la moneda y el
+país de la compra, para darte acceso, renovarlo y retirarlo si hay un reembolso.
 
 ## 3. Elecciones opcionales
 
 Estas funciones se eligen por separado; rechazarlas no impide utilizar las
 funciones básicas de tu cuenta:
 
-- **Medición de uso:** si la activas, se registran pantallas visibles y eventos
-  de uso para conocer qué funciones se utilizan y mejorar la aplicación.
-- **Diagnóstico:** si lo activas, se envían informes de fallos y mediciones de
-  rendimiento, con información técnica de la aplicación y del dispositivo.
+- **Medición de uso:** viene activada. Se registran pantallas visibles y eventos
+  de uso para conocer qué funciones se utilizan y mejorar la aplicación. Puedes
+  desactivarla en Preferencias.
+- **Diagnóstico:** viene activado. Se envían informes de fallos y mediciones de
+  rendimiento, con información técnica de la aplicación y del dispositivo. Puedes
+  desactivarlo en Preferencias.
+- **Medición de anuncios (Meta):** viene activada. Para saber qué anuncios de
+  QuantFut en Facebook e Instagram atraen usuarios y suscripciones, compartimos
+  con Meta Platforms tu correo y un identificador de tu cuenta cifrados (SHA-256),
+  tu nombre cifrado si lo tenemos, identificadores del dispositivo (identificador
+  de instalación y, si el sistema lo permite, el ID de publicidad), la dirección
+  IP, datos técnicos de la aplicación y del dispositivo, y los eventos de uso y de
+  compra (registro, suscripción, renovaciones e importe, desbloqueos con monedas y
+  pantallas de contenido). En iOS solo se usa el ID de publicidad si lo autorizas
+  en el aviso de Apple; en Android, si lo limitas o lo borras en los ajustes del
+  teléfono, no se usa. Puedes desactivar esta medición en Preferencias: dejamos de
+  compartir nuevos datos con Meta desde ese momento. En California, desactivarla
+  equivale a ejercer tu derecho a que no compartamos tus datos para publicidad.
 - **Notificaciones:** si las activas, se utiliza un identificador de instalación
   y un token de envío para entregar avisos. Los ajustes del sistema operativo
   también deben permitirlas. Los avisos pueden verse en la pantalla bloqueada.
@@ -83,9 +98,10 @@ el cambio; no borra automáticamente información ya tratada lícitamente. Puede
 solicitar su eliminación cuando proceda. Al cerrar sesión se desvincula el
 dispositivo para futuros avisos de esa cuenta.
 
-La aceptación de los términos o de este aviso no equivale a aceptar todas
-estas finalidades. La aplicación mantiene la medición y el
-diagnóstico desactivados hasta que los elijas. Los anuncios solo se muestran si
+La aceptación de los términos o de este aviso no equivale a aceptar las
+funciones opcionales. La medición de uso, el diagnóstico y la medición de
+anuncios vienen activados y puedes desactivar cada uno cuando quieras en las
+preferencias de la aplicación. Los anuncios solo se muestran si
 eliges ver un video con recompensa; Google AdMob puede mostrar anuncios
 personalizados o no según tu elección en su formulario de consentimiento
 (donde se aplica) y los ajustes de anuncios de tu dispositivo y de tu cuenta de
@@ -116,6 +132,16 @@ cuenta. De la aplicación solo se envían, y únicamente si activas el diagnóst
 traza del fallo, el modelo y la versión del sistema y de la aplicación; si lo
 desactivas, el envío se detiene. Sentry no se utiliza para publicidad. Su plazo de
 conservación es el del plan contratado y no equivale a un borrado instantáneo.
+
+**Meta Platforms** (Meta Platforms Ireland Ltd. y Meta Platforms, Inc.) recibe los
+datos descritos en «Medición de anuncios (Meta)» para medir y optimizar nuestras
+campañas en Facebook e Instagram, como proveedor propio bajo sus condiciones y su
+política de privacidad. Puede tratarlos fuera de tu país, incluidos los Estados
+Unidos.
+
+**Google Play y Apple App Store** gestionan el pago de las suscripciones dentro de
+la aplicación bajo sus propias condiciones. Reciben tus datos de pago y tu cuenta
+de la tienda; QuantFut no los recibe.
 
 **Google AdMob** muestra los videos con recompensa. Para ello puede tratar el
 identificador de publicidad de tu dispositivo, la dirección IP, información
@@ -217,11 +243,12 @@ Cuando se aplique una ley estatal de privacidad de Estados Unidos, podrás
 ejercer sus derechos, incluido reclamar o recurrir una denegación cuando la
 norma lo permita, sin discriminación por ejercerlos. La aplicación de una ley
 como CCPA depende de su ámbito y umbrales; no se presupone por dirigirse a Estados
-Unidos. QuantFut no vende datos personales. Los anuncios de Google AdMob, que solo
+Unidos. QuantFut no vende datos personales a cambio de dinero. Compartir datos con Meta para medir anuncios y los anuncios de Google AdMob, que solo
 se muestran si eliges ver un video, pueden considerarse en algunas leyes estatales
-una forma de compartir datos para publicidad; puedes evitarlo no viendo videos con
-recompensa o rechazando la personalización en el formulario de consentimiento o en
-los ajustes de anuncios de tu dispositivo. También se respetarán los derechos obligatorios aplicables en cada país
+una forma de compartir datos para publicidad; puedes oponerte a la medición con Meta
+desactivando «Medición de anuncios (Meta)» en Preferencias, y evitar AdMob no viendo
+videos con recompensa o rechazando la personalización en el formulario de
+consentimiento o en los ajustes de anuncios de tu dispositivo. También se respetarán los derechos obligatorios aplicables en cada país
 latinoamericano y europeo fuera del EEE donde se preste el servicio.
 
 La eliminación debe coordinar la cuenta de QuantFut, su vínculo con Firebase

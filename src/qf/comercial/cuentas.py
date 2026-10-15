@@ -59,7 +59,8 @@ def _access_key(token: str) -> str:
     return f"qf:acc:{_hash(token).hex()}"
 
 
-_PUBLIC = "account_id, email::text AS email, display_name, status, email_verified_at, created_at"
+_PUBLIC = ("account_id, email::text AS email, display_name, status, email_verified_at, created_at, "
+           "store_account_token::text AS store_account_token")
 
 
 def create_account(email: str, password: str, display_name: str | None = None) -> dict:
@@ -72,6 +73,10 @@ def create_account(email: str, password: str, display_name: str | None = None) -
                 VALUES (%s, %s, %s) ON CONFLICT (email) DO NOTHING
                 RETURNING {_PUBLIC}""",
             (email, _ph.hash(password), name)).fetchone()
+        if row is not None:
+            from . import meta_capi
+            meta_capi.enqueue(c, row["account_id"], "CompleteRegistration",
+                              f"reg:{row['account_id']}", {"registration_method": "email"})
     if row is None:
         raise CuentaError("email_en_uso", "Ya existe una cuenta con ese correo")
     return row

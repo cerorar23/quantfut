@@ -20,6 +20,9 @@
 # is commented out by default.
 #.vscode/
 
+# Valores de Meta de cada maquina (plantilla: android/meta.properties.example)
+android/meta.properties
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

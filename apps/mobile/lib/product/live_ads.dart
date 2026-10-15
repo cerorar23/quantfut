@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../l10n/app_locale.dart';
+import '../core/meta_events.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 import 'rewards_progress.dart';
@@ -189,6 +190,7 @@ class AdMobGateway implements RewardedAdGateway {
       onAdFailedToShowFullScreenContent: (_, _) => closed.complete(),
     );
     await ad.show(onUserEarnedReward: (_, _) => earned = true);
+    MetaEvents.current?.adImpression();
     await closed.future;
     await ad.dispose();
     return earned ? AdShow.earned : AdShow.dismissed;

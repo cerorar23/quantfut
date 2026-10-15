@@ -220,6 +220,11 @@ def unlock(body: UnlockIn, account: dict = Depends(verified_account)):
             return {'unlocked':True,'charged':0}
         change(c,account['account_id'],-cfg['unlock_cost'],f"unlock:{account['account_id']}:{body.stream}:{body.pick_key}",'unlock',spend=True)
         c.execute('INSERT INTO reward_unlocks(account_id,stream,pick_key,cost) VALUES(%s,%s,%s,%s)',(account['account_id'],body.stream,body.pick_key,cfg['unlock_cost']))
+        from ..comercial import meta_capi
+        meta_capi.enqueue(c, account['account_id'], 'SpentCredits',
+                          f"spend:{account['account_id']}:{body.stream}:{body.pick_key}",
+                          {'content_ids': [body.pick_key], 'content_type': 'product',
+                           'value': cfg['unlock_cost']})
     return {'unlocked':True,'charged':cfg['unlock_cost']}
 
 

@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n/app_locale.dart';
 import 'coin_burst.dart';
 import 'live_ads.dart';
+import '../core/meta_events.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 import 'rewards_progress.dart';
@@ -961,9 +962,12 @@ class _InviteCard extends StatelessWidget {
                 side: const BorderSide(color: liveCyan),
                 minimumSize: const Size.fromHeight(44),
               ),
-              onPressed: () => SharePlus.instance.share(
-                ShareParams(text: inviteShareText(l10n, base, '$myCode')),
-              ),
+              onPressed: () {
+                MetaEvents.current?.invite();
+                SharePlus.instance.share(
+                  ShareParams(text: inviteShareText(l10n, base, '$myCode')),
+                );
+              },
               icon: const Icon(Icons.share_outlined, size: 18),
               label: Text(l10n.rewardsShare),
             ),

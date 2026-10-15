@@ -81,6 +81,18 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
                 ),
         ),
         SwitchListTile(
+          key: const ValueKey('prefs-ads'),
+          title: Text(context.l10n.prefsAdsTitle),
+          subtitle: Text(context.l10n.prefsAdsBody),
+          value: services.adsAllowed,
+          onChanged: busy
+              ? null
+              : (value) => change(() async {
+                  await services.setAdsConsent(value);
+                  await widget.api.syncPreferences();
+                }),
+        ),
+        SwitchListTile(
           title: Text(context.l10n.prefsNotificationsTitle),
           subtitle: Text(
             widget.api.firebaseConnected

@@ -92,23 +92,30 @@ class PreferencesIn(BaseModel):
     analytics: bool = False
     diagnostics: bool = False
     push_enabled: bool = False
+    # None = no tocar lo guardado (apps antiguas no lo envian). NULL en BD = activo.
+    ads_measurement: bool | None = None
 
 
 @router.get('/preferences')
 def preferences(account: dict = Depends(api.current_account)):
-    row = query_one('SELECT language, analytics, diagnostics, push_enabled FROM firebase_preferences WHERE account_id=%s',
-                    (account['account_id'],))
-    return row or PreferencesIn().model_dump()
+    row = query_one('''SELECT language, analytics, diagnostics, push_enabled,
+                              coalesce(ads_measurement, true) AS ads_measurement
+                       FROM firebase_preferences WHERE account_id=%s''', (account['account_id'],))
+    return row or {**PreferencesIn().model_dump(), 'ads_measurement': True}
 
 
 @router.post('/preferences')
 def save_preferences(body: PreferencesIn, account: dict = Depends(api.current_account)):
     with conn() as c:
-        c.execute('''INSERT INTO firebase_preferences (account_id, language, analytics, diagnostics, push_enabled)
-                     VALUES (%s,%s,%s,%s,%s) ON CONFLICT (account_id) DO UPDATE SET
+        c.execute('''INSERT INTO firebase_preferences (account_id, language, analytics, diagnostics,
+                                                       push_enabled, ads_measurement)
+                     VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (account_id) DO UPDATE SET
                      language=EXCLUDED.language, analytics=EXCLUDED.analytics, diagnostics=EXCLUDED.diagnostics,
-                     push_enabled=EXCLUDED.push_enabled, updated_at=now()''',
-                  (account['account_id'], body.language, body.analytics, body.diagnostics, body.push_enabled))
+                     push_enabled=EXCLUDED.push_enabled,
+                     ads_measurement=coalesce(EXCLUDED.ads_measurement, firebase_preferences.ads_measurement),
+                     updated_at=now()''',
+                  (account['account_id'], body.language, body.analytics, body.diagnostics,
+                   body.push_enabled, body.ads_measurement))
         if not body.push_enabled:
             c.execute('UPDATE push_devices SET enabled=false WHERE account_id=%s', (account['account_id'],))
     return body

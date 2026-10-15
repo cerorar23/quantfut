@@ -1,0 +1,5 @@
+# Copiar a meta.properties con los valores de developers.facebook.com: App ID (Configuracion
+# basica) y Client Token (Configuracion avanzada). El client token esta pensado para ir en la app;
+# el token de Conversions API NUNCA va aqui.
+appId=
+clientToken=

@@ -1,6 +1,6 @@
 # Solicitar la eliminación de tu cuenta de QuantFut
 
-**Saptain LTD — versión 2026-10-12.**
+**Saptain LTD — versión 2026-10-16.**
 
 Puedes pedir la eliminación de tu cuenta y sus datos escribiendo a
 [admin@pronosticosdeportivos.pro](mailto:admin@pronosticosdeportivos.pro?subject=Eliminar%20mi%20cuenta%20de%20QuantFut)
