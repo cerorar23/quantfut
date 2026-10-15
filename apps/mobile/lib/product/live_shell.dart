@@ -328,8 +328,6 @@ class _ProductShellState extends State<ProductShell>
         onVip: vip,
       ),
       liveButton(context.l10n.commonSeeVip, vip),
-      const SizedBox(height: 16),
-      if (!featureEnabled(d, 'nba')) training(featureMessage(d, 'nba')),
     ],
   );
 

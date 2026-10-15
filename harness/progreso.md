@@ -6012,3 +6012,10 @@ partidos con alguna línea). De las combinaciones lado/línea que elige la alta 
 partidos próximos con hándicap, el 86 % (77 de 90) ya tiene cuota; la línea +2 del local casi nunca
 se cotiza (1 de 9) y el resto cubre 8-9 de 9. El primer lote que ya sale con cuota de hándicap es el
 de las 08:00 UTC del 15-oct. Pendiente de confirmarlo con los pronósticos reales de ese lote.
+
+## 2026-10-14 — Fuera el aviso «Modelo NBA en entrenamiento» de Mercados
+
+Pedido del titular: en la pestaña Mercados de la app se quita el bloque «Modelo NBA en entrenamiento»
+(el último de la pantalla, bajo «Ver acceso VIP»). La sección `nba` sigue existiendo en
+`mobile_features` y en el servidor; solo deja de pintarse el aviso. Si NBA se activa algún día, habrá
+que decidir dónde se muestra.
