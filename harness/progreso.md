@@ -6084,3 +6084,12 @@ Fallo encontrado SOLO al verificar en producción: `/rewards/callback/{provider}
 router de anuncios y no lo veían. Corregido registrando el router de anuncios antes que el de ofertas y con una
 prueba sobre la app completa (`test_el_callback_de_admob_no_lo_captura…`). Lección: en rutas con parámetro de
 ruta genérico, probar el orden de registro con `main.app`.
+
+Privacidad con AdMob desplegada (solo API; worker intacto): imagen `quantfut-api-admob:20261014c` sobre la anterior con solo
+`legal_pages/privacidad.html` (la desplegada era idéntica a la base de la rama antes de copiar; términos y eliminar
+cuenta, sin cambios). Fijada en el compose; respaldo en `~/quantfut/releases/privacidad-admob-20261014/`. Comprobado en el
+dominio: 200, 5 menciones de AdMob, la frase «no está habilitada» ya no está, versión `2026-10-12` intacta. Decisión: NO se
+subió `CONSENT_VERSION`: el servidor la compara con la que envía la app (`live_api.dart`) y rechazaría registros de las apps ya
+instaladas. El `<script>` que se ve en las páginas públicas es la ofuscación de correo de Cloudflare (también en términos);
+el origen no sirve ninguno. Error propio al preparar: una primera comparación usó una ruta mal formada y dio «vacío»; se
+detectó antes de actuar y se repitió bien.
