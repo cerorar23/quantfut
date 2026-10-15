@@ -5992,3 +5992,16 @@ pruebas. `eval/calibracion_mercados.py` (`python -m qf.eval.calibracion_mercados
 mercado prometido y real con IC de Wilson al 95 % sobre lo liquidado y SELLADO de alta probabilidad,
 ampliada, escalera, parley y tarjetas; un pronóstico repetido en varias fuentes cuenta una vez en el
 total (el desglose no deduplica) y con menos de 30 casos no opina. Solo lectura: no bloquea nada.
+
+Desplegado el 15-oct 00:18 UTC, ANTES del job de las 08:00 (el lote del 15 es el primero que lleva el
+bloque): migración db/068 aplicada (ensayada antes en una transacción revertida, con los triggers
+rechazando UPDATE y DELETE) y worker actualizado con `docker cp` (`tarjetas_seg.py`,
+`calibracion_mercados.py`, `config.py`, `hashchain.py`, `clv.py`, `daily.py`; respaldo de los cuatro
+anteriores en `~/quantfut/releases/tarjetas-seg-20261014/*.before`; sin deriva respecto al repo).
+Ensayo en seco con datos reales: 5 partidos, líneas bajo 4,5 y bajo 5,5 con cuota de bet365/betano
+(probabilidades 54-71 %). Primer informe de calibración sobre lo ya liquidado: goles `totals` 77,5 %
+prometido frente a 60,9 % real (n 110, IC95 51,6-69,5 %, «por debajo»); `spreads` −3,8, `corners`
+−1,7, `double_chance` +2,4 y goles de equipo +3 a +8 dentro del IC; `btts` (9), `h2h` (12),
+`corners_home/away` y `cards` (2) sin muestra. Misma salvedad de siempre: la copia es solo del
+contenedor y el árbol `~/quantfut/src` del VPS está desfasado. Por qué no hay API: la API no lee la
+tabla ni necesita este código, así que su imagen no se tocó.
