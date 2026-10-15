@@ -34,6 +34,12 @@ def _o(match, prob=0.7, price=1.4):
     return Opcion(match, Candidato("totals", "over", 1.5, prob), price, "betano", "the_odds_api", AHORA)
 
 
+@pytest.fixture(autouse=True)
+def _sin_bloqueos(monkeypatch):
+    """Por defecto ningún mercado bloqueado (no se consulta el control de alta probabilidad)."""
+    monkeypatch.setattr(pd_, "mercados_bloqueados", lambda: [])
+
+
 @pytest.fixture
 def encendido(monkeypatch):
     monkeypatch.setattr(pd_, "settings", replace(pd_.settings, parley_enabled=True))
@@ -279,3 +285,39 @@ def test_ruta_publica_del_parley(monkeypatch):
     body = r.json()
     assert body["dias"] == [] and body["activo"] is False
     assert body["acceso"]["plus"] is False
+
+
+def _de(mercado, match="m", prob=0.7, price=1.4):
+    return Opcion(match, Candidato(mercado, "over", 1.5, prob), price, "betano", "the_odds_api", AHORA)
+
+
+def test_las_patas_de_un_mercado_bloqueado_no_entran():
+    patas = [_de("totals", "a"), _de("corners", "b"), _de("spreads", "c"), _de("double_chance", "d")]
+    assert [o.cand.market for o in pl.sin_bloqueados(patas, ["totals"])] == ["corners", "spreads", "double_chance"]
+    assert pl.sin_bloqueados(patas, []) == patas
+
+
+def test_el_bloqueo_se_compara_por_grupo_y_todo_no_pausa_el_parley():
+    patas = [_de("team_totals_home", "a"), _de("team_totals_away", "b"), _de("totals", "c")]
+    # «marca el local» y «marca el visitante» se vigilan como un solo grupo
+    assert [o.cand.market for o in pl.sin_bloqueados(patas, ["team_totals"])] == ["totals"]
+    assert pl.sin_bloqueados(patas, ["todo"]) == patas
+
+
+def test_el_parley_no_usa_goles_si_el_control_los_bloquea(monkeypatch, encendido):
+    monkeypatch.setattr(pd_, "query_one", lambda sql, params=(): None)
+    monkeypatch.setattr(pd_, "mercados_bloqueados", lambda: ["totals"])
+    monkeypatch.setattr(pd_, "candidatas", lambda now: ([_de("totals", "a"), _de("totals", "b"),
+                                                         _de("corners", "c"), _de("corners", "d")], 0))
+    out = pd_.select_and_persist(AHORA, dry_run=True)
+    usadas = {p["market"] for t in out["tickets"] for p in t["patas"]}
+    assert out["mercados_bloqueados"] == ["totals"] and usadas == {"corners"}
+    assert {p["match_id"] for t in out["tickets"] for p in t["patas"]} == {"c", "d"}
+
+
+def test_mercados_bloqueados_une_principal_y_ampliada_sin_todo(monkeypatch):
+    from qf.publish import alta_prob_ext as ae
+    monkeypatch.undo()                  # la función real, no la del fixture automático
+    monkeypatch.setattr(pd_.ad, "estado", lambda: {"bloqueados": ["corners", "todo"]})
+    monkeypatch.setattr(ae, "estado", lambda: {"bloqueados": ["totals", "corners"]})
+    assert pd_.mercados_bloqueados() == ["corners", "totals"]

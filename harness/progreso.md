@@ -5951,3 +5951,21 @@ Desplegado el 14-oct: API reconstruida sobre la imagen anterior con solo `api/mo
 la imagen previa en `~/quantfut/releases/tope-gratis-20261014/`. Comprobado en producción:
 `/mobile/v1/home` devuelve 4 gratis abiertos (cuotas 1,32 / 1,28 / 1,27 / 1,25) y 81 con candado, y
 `/mobile/v1/config` publica `high_probability_free_max: 4`.
+
+## 2026-10-14 — El parley respeta los mercados bloqueados de alta probabilidad
+
+Se midió el planteamiento de «mejorar el parley» (arriba-abajo, penalizar margen, anclas
+1,12-1,19, tendencia de cuotas) sobre el conjunto real de patas del día (116 patas, 9 partidos).
+La probabilidad de un ticket sale ≈ 1/cuota (1,97→52 %, 2,21→46 %, 2,79→37 %, 3,49→28 %), así
+que sin cambiar los escalones no hay forma de subir el acierto con la selección. Armar de arriba
+abajo da 3 tickets (ΣP 0,87) frente a 4 (ΣP 1,62) del orden actual, y el mejor de los 120
+órdenes posibles coincide con el actual: el cuello de botella son los partidos, no el orden. Las
+anclas dan ΣP 1,628 frente a 1,623 y peor valor esperado. Margen y calibración por mercado:
+el margen ya está en cuota frente a probabilidad justa; la calibración sí tiene respaldo.
+`alta_prob_ext` bloquea `totals` (prometía 82 %, real 67,3 % en 55 casos; z −4,3 con 80) y los
+parlays reales llevaban 7 patas de goles con 61,8 % prometido y 3 ganadas. El parley no
+consultaba ese control. Decisión del usuario: `pl.sin_bloqueados` quita las patas de los
+mercados (por grupo de control) bloqueados en la alta probabilidad principal o ampliada;
+`todo` no pausa el parlay. Con 9 partidos de muestra y 6 parlays liquidados NO se puede medir el
+efecto sobre el acierto: el control por escalón del propio parlay sigue siendo el juez. Pendiente
+de medir: tarjetas y córners, que dominan los tickets y no tienen historial de calibración propio.

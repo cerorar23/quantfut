@@ -63,6 +63,18 @@ def filtrar(opciones: list[Opcion], now: datetime) -> list[Opcion]:
             and (o.odds_as_of is None or o.odds_as_of <= now)]
 
 
+def sin_bloqueados(patas: list[Opcion], bloqueados) -> list[Opcion]:
+    """
+    Quita las patas de los mercados que el control de alta probabilidad tiene bloqueados
+    (decisión del usuario, 2026-10-14). Un parlay multiplica el sesgo de cada pata, así que
+    no puede usar un mercado que esa línea ya ha visto prometer de más (goles: 82 % prometido,
+    67 % real). Se compara por GRUPO de control (`grupo_control`: «marca el local» y «marca el
+    visitante» juntos). El bloqueo `todo` es de esa línea entera y no pausa el parlay.
+    """
+    grupos = {str(b) for b in bloqueados} - {"todo"}
+    return [o for o in patas if ap.grupo_control(o.cand.market) not in grupos]
+
+
 def _meter(estados: dict, clave: tuple[int, int], e: tuple) -> None:
     lista = estados.setdefault(clave, [])
     lista.append(e)

@@ -2657,3 +2657,5 @@ revocó sola el 14-oct).
 - [x] Cuota de la doble oportunidad en alta probabilidad (2026-10-14): `_ref_nuevos` la lee de API-Football; prueba en `tests/test_alta_prob_datos.py`.
 - [x] Hándicap sin cuota en alta probabilidad (2026-10-14): captura del bet 4 de API-Football en `af_odds` y lectura en `_ref_nuevos`. Medir en 1-2 días qué parte sale con cuota.
 - [x] Tope de 4 gratis en Inicio y Alta probabilidad (2026-10-14): `cap_free` en `api/mobile.py`; texto de la app en 6 idiomas.
+- [x] El parley excluye las patas de mercados bloqueados por el control de alta probabilidad (2026-10-14): `pl.sin_bloqueados`, `pd.mercados_bloqueados`.
+- [ ] Medir la calibración de tarjetas y córners en el parley (dominan los tickets y no tienen historial propio) antes de dar más peso a esos mercados.

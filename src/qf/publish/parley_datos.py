@@ -66,6 +66,12 @@ def candidatas(now: datetime) -> tuple[list, int]:
     return pl.filtrar(todas, now), sin_precio
 
 
+def mercados_bloqueados() -> list[str]:
+    """Grupos de mercado bloqueados por el control de la alta probabilidad, principal o ampliada."""
+    from . import alta_prob_ext as ae
+    return sorted({*ad.estado()["bloqueados"], *ae.estado()["bloqueados"]} - {"todo"})
+
+
 def _liquidados() -> list[dict]:
     """Tickets liquidados y sellados, con la hora del primer partido (semana del control)."""
     return query(
@@ -106,11 +112,14 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         return {"estado": "ya_elegido", "dia": dia.isoformat()}
 
     patas, sin_precio = candidatas(now)
+    bloqueados = mercados_bloqueados()
+    patas = pl.sin_bloqueados(patas, bloqueados)
     ctl = pl.control(_liquidados())
     plan = pl.armar_dia(patas, set(ctl["pausados"]))
     out = {"estado": "elegido" if plan else "sin_combinacion", "dia": dia.isoformat(),
            "candidatas": len(patas), "partidos": len({o.match_id for o in patas}),
            "sin_precio": sin_precio, "pausados": ctl["pausados"],
+           "mercados_bloqueados": bloqueados,
            "tickets": [_ticket_json(e, sel) for e, sel in plan]}
     if dry_run or not plan:
         return out
