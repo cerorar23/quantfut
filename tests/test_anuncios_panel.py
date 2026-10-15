@@ -89,3 +89,15 @@ def test_app_ads_txt_con_y_sin_id_de_editor(monkeypatch):
     r = client.get('/app-ads.txt')
     assert r.status_code == 200 and r.headers['content-type'].startswith('text/plain')
     assert r.text == 'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n'
+
+
+# --- orden de rutas en la aplicación completa -------------------------------------
+
+def test_el_callback_de_admob_no_lo_captura_la_ruta_generica_de_proveedores():
+    """`/rewards/callback/{provider}` (ofertas) se registra antes: sin cuidado captura `admob`."""
+    from starlette.routing import Match
+    from qf.api.main import app
+    scope = {'type': 'http', 'method': 'GET', 'path': '/rewards/callback/admob', 'root_path': '',
+             'query_string': b'', 'headers': []}
+    primera = next(r for r in app.routes if r.matches(scope)[0] == Match.FULL)
+    assert primera.endpoint.__module__ == 'qf.api.anuncios', primera.endpoint.__module__

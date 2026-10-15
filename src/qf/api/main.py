@@ -760,8 +760,10 @@ app.include_router(invitacion_router)
 app.include_router(web_router)
 app.include_router(fichas_router)
 app.include_router(mobile_router)
-app.include_router(rewards_router)
+# anuncios va ANTES: su `/rewards/callback/admob` es más específico que
+# `/rewards/callback/{provider}` de ofertas, que si no lo capturaría.
 app.include_router(anuncios_router)
+app.include_router(rewards_router)
 app.include_router(respaldo_router)
 app.include_router(firebase_router)
 app.include_router(legal_router)
