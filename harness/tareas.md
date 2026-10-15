@@ -59,14 +59,14 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
   con cuotas de última hora; toca la cadena de hashes). Luego F3, F6, F5 y F4. Fecha de control: ~10-nov, CLV en sombra a 300.
 - **Ampliación del plan (2026-10-15, documentos de recomendaciones y de revisión del usuario):** spec
   docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md. Nada antes del 1-nov. Orden nuevo:
-  F7 (+ captura de XI y bajas al ~100 %) → F9 con F8 evaluada en paralelo sin tocar picks vendidos → descanso/calendario →
+  F7 (+ bajas FotMob donde API-Football no las da) → F9 con F8 evaluada en paralelo sin tocar picks vendidos → descanso/calendario →
   archivo FotMob a tablas y F3, F6, F5, F4 → activar F8 y F10. F11 puede adelantarse (no toca el motor).
 - [ ] F8 — Conectar el modelo propio con los picks: mezcla A/B por familia de mercado sobre la distribución de marcadores (base `meta.py`); debe aportar sobre B **del mismo momento**; la mezcla no evita sola el doble conteo; predicciones honestas, peso cero válido, periodo reservado; C con su propio mercado. Evaluada en paralelo, activada al final.
 - [ ] F9 — Evaluación en dos preguntas (probabilidades sin cambiar selección; luego selección a volumen constante). Cuatro versiones: B 03:00 · B al horario de F7 · A+B al horario de F7 · más nueva selección. Puerta reforzada: magnitud con IC, estabilidad por periodo y liga, alternativa sencilla, registro de variantes probadas. Solo para cambios de probabilidad o selección.
 - [ ] F10 — Selección y exposición: alternativas de un partido contra la jornada con registro; exposición al mismo partido entre productos (medir/mostrar, no limitar); correlación en parley/escalera; volumen diario en `/control`.
 - [ ] F11 — App: etiquetar la fuente de cada cifra (modelo, mercado, pick) e indicador de calidad de datos separado de la probabilidad; 6 idiomas.
 - [ ] F12 — Factores sin fase: descanso/partidos acumulados (primero; falta calendario de copas y otras competiciones), ida/vuelta y global, necesidad de puntos, entrenador y estilos (ambos en el archivo FotMob), motor C ampliado (media y dispersión).
-- [ ] Datos (spec §5): llevar a tablas el archivo FotMob 2024→hoy (XI, minutos, bajas, entrenador, ronda, estilos); descargar calendario de copas/continentales/FIFA, altitud de 758 sedes y ERA5 (token del usuario); completar captura previa de bajas (38 %) y XI (55 %). No comprar cuotas históricas a T-60 (≈14.000–31.000 créditos por temporada).
+- [ ] Datos (spec §5): llevar a tablas el archivo FotMob 2024→hoy (XI, minutos, bajas, entrenador, ronda, estilos); descargar calendario de copas/continentales/FIFA, altitud de 758 sedes y ERA5 (token del usuario); bajas de Argentina/Liga MX/Portugal desde FotMob previo (API-Football reporta 0) y captura diaria del archivo FotMob (hoy importación puntual). No comprar cuotas históricas a T-60 (≈14.000–31.000 créditos por temporada).
 - [ ] Antes de `PUBLISH_PICKS_ENABLED=1`: `picks.select_daily()` solo ve `predictions` (13 ligas) y la sombra mide 22; alinear cobertura.
 - [ ] Vigilar la ampliada 73–95 %: en picks con cuota de referencia (n=223) real 78,0 % frente a 81,4 % prometido; ROI a referencia −7,5 % (base −3,0 %, n=91; esperado en una línea de acierto).
 - [ ] Huecos de xG desde 2024 (1.222; Serie B, LaLiga 2, Ligue 2): requieren una fuente nueva, decisión del usuario.

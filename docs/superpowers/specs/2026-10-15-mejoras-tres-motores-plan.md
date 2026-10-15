@@ -201,16 +201,27 @@ marcada como tal.
 | Cuotas Pinnacle a la hora de publicar / T-60 en temporadas pasadas | Probar «B contemporáneo» hacia atrás | The Odds API histórico | 24-25: ≈14.000 créditos (madrugada, 1X2) o ≈31.000 (T-60, 1X2). **No recomendado**: se evalúa hacia delante con la captura propia (98 % a T-60) |
 | Ya en el plan | — | — | 527 snapshots de cierres (≈5.270 créditos), 1.219 huecos de xG |
 
-**C. Captura en vivo que hay que completar antes de F7 (no es descarga):** en los
-últimos 30 días solo el 38 % de los partidos tiene bajas consultadas antes del
-inicio y el 55 % tiene el XI antes del inicio. F7 necesita ambos cerca del 100 %.
+**C. Captura en vivo (corregido el 15-oct):** el 38 % / 55 % de 30 días mezclaba
+semanas anteriores al 21-sep, cuando los partidos aún no tenían id de
+API-Football. En los últimos 18 días: bajas consultadas antes del inicio 100 %,
+XI previo 100 % salvo Argentina y Liga MX (67 %), minutos de jugador ~100 %.
+Huecos reales que quedan:
+- API-Football no reporta ninguna baja en Argentina, Liga MX ni Portugal (0 %
+  con bajas pese a consultarse el 100 %). Fuente candidata: la lista de no
+  disponibles de FotMob antes del partido, que además es la misma fuente que el
+  histórico de entrenamiento.
+- El archivo FotMob fue una importación puntual (última el 13-oct): de lo jugado
+  en 18 días cubre MLS 9 %, Argentina 10 %, Liga MX 25 %, UCL 54 %. Hace falta
+  una captura diaria posterior al partido.
+- Del 21-sep al 8-oct no hubo jornadas europeas de liga: lo confirman `matches` y
+  el archivo FotMob; no es un hueco.
 
 ## 6. Orden después del 1-nov
 
 | # | Trabajo | Condición para avanzar |
 |---|---|---|
 | 0 | Revisar el reentrenamiento; `python -m qf.model.ajuste`; 527 snapshots (visto bueno del usuario) | — |
-| 1 | **F7** con versiones, horarios y registro de lo publicado; completar captura de XI y bajas (5.C) | Trazabilidad fiel por partido, historial original intacto |
+| 1 | **F7** con versiones, horarios y registro de lo publicado; huecos de captura de 5.C | Trazabilidad fiel por partido, historial original intacto |
 | 2 | **F9** + evaluación de **F8** en paralelo, sin cambiar los picks vendidos | Incluye B actualizado al mismo momento |
 | 3 | Descanso y calendario (F12, primero descargar 5.B) | Cobertura verificada y aporte fuera de muestra |
 | 4 | Llevar el archivo FotMob (5.A) a las tablas; F3 → F6 → F5 → F4 | Orden pactado; cada aporte con la puerta reforzada |

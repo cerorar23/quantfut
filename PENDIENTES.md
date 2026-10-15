@@ -40,7 +40,7 @@ Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. 
 | F11 app: fuente de cada cifra e indicador de calidad de datos (6 idiomas) | Nueva (15-oct); no toca el motor, puede adelantarse | Tu visto bueno |
 | F12 factores sin fase: **descanso y calendario primero**; ida/vuelta, entrenador, estilos, córners/tarjetas ampliados | Nueva (15-oct) | Calendario de otras competiciones |
 
-Orden tras el 1-nov: F7 (y captura de XI y bajas completa) → F9 con F8 en paralelo → descanso/calendario → archivo FotMob a tablas y
+Orden tras el 1-nov: F7 (con bajas de FotMob donde API-Football no las da) → F9 con F8 en paralelo → descanso/calendario → archivo FotMob a tablas y
 F3, F6, F5, F4 → activar F8 y F10. Datos que faltan descargar: calendario de copas y otras competiciones, altitud de sedes y clima
 ERA5 (tu token); el XI, minutos, bajas, entrenador y estilos ya están en el archivo FotMob. Plan completo:
 `docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md`.
