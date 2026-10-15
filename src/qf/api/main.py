@@ -77,6 +77,8 @@ from .anuncios import router as anuncios_router
 from .respaldo import router as respaldo_router
 from .firebase import router as firebase_router
 from .legal import router as legal_router
+from .meta import router as meta_router
+from .compras import router as compras_router, store_router as compras_store_router
 from ..comercial.entrega import picks_for_tiers
 from ..config import settings
 from ..db import query, query_one
@@ -770,6 +772,9 @@ app.include_router(anuncios_router)
 app.include_router(rewards_router)
 app.include_router(respaldo_router)
 app.include_router(firebase_router)
+app.include_router(meta_router)
+app.include_router(compras_router)
+app.include_router(compras_store_router)
 app.include_router(legal_router)
 
 if os.path.isdir(STATIC_DIR):

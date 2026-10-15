@@ -1,0 +1,17 @@
+{
+  "kind": "androidpublisher#subscriptionPurchaseV2",
+  "regionCode": "CO",
+  "startTime": "2026-10-15T12:00:00.000Z",
+  "subscriptionState": "SUBSCRIPTION_STATE_ACTIVE",
+  "latestOrderId": "GPA.3345-1234-5678-90123",
+  "acknowledgementState": "ACKNOWLEDGEMENT_STATE_PENDING",
+  "externalAccountIdentifiers": {"obfuscatedExternalAccountId": "0b8f3a7e-1f9b-4c2e-9d55-0c6e3f1a2b3c"},
+  "lineItems": [{
+    "productId": "quantfut_plus",
+    "expiryTime": "2026-11-15T12:00:00.000Z",
+    "latestSuccessfulOrderId": "GPA.3345-1234-5678-90123",
+    "autoRenewingPlan": {"autoRenewEnabled": true,
+                         "recurringPrice": {"currencyCode": "COP", "units": "54900", "nanos": 0}},
+    "offerDetails": {"basePlanId": "plus-1m"}
+  }]
+}

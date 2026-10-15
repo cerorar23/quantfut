@@ -17,7 +17,14 @@ def clean() -> dict[str, int]:
             "DELETE FROM account_notifications WHERE expires_at < now()-interval '30 days'").rowcount
         devices = c.execute(
             "DELETE FROM push_devices WHERE updated_at < now()-interval '90 days'").rowcount
-    return {"queue": queue, "notifications": notifications, "devices": devices}
+        meta_identities = c.execute(
+            "DELETE FROM meta_identities WHERE updated_at < now()-interval '90 days'").rowcount
+        # Solo eventos ya resueltos: un pendiente se reintenta o caduca por MAX_AGE en meta_capi.
+        meta_events = c.execute(
+            """DELETE FROM meta_events WHERE status <> 'pendiente'
+               AND created_at < now()-interval '90 days'""").rowcount
+    return {"queue": queue, "notifications": notifications, "devices": devices,
+            "meta_identities": meta_identities, "meta_events": meta_events}
 
 
 if __name__ == "__main__":

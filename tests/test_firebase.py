@@ -129,3 +129,9 @@ def test_expired_notifications_cannot_be_enqueued():
         enqueue(7,"publication",datetime.now(timezone.utc)-timedelta(minutes=1))
     with pytest.raises(ValueError, match="identifier"):
         enqueue(7,"publication",datetime.now(timezone.utc)+timedelta(hours=1),"https://wrong.example")
+
+
+def test_version_anterior_de_consentimiento_se_acepta_en_la_transicion():
+    from qf.comercial import firebase
+    assert firebase.CONSENT_VERSION == "2026-10-16"
+    assert {"2026-10-12", "2026-10-16"} <= firebase.ACCEPTED_CONSENT_VERSIONS

@@ -19,7 +19,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from . import mensajes, ratelimit
-from ..comercial import correo, cuentas, suscripciones
+from ..comercial import correo, cuentas, meta_datos, suscripciones
 from ..comercial.cuentas import CuentaError
 from ..comercial.entrega import picks_for_tiers
 from ..config import settings
@@ -102,6 +102,11 @@ class MeOut(BaseModel):
     account: AccountOut
     plus: bool
     subscription: SubscriptionOut | None
+    # Lo pasa la app a la tienda (obfuscatedAccountId / appAccountToken): no es secreto
+    # ni dato personal, solo liga la compra a esta cuenta.
+    store_account_token: str | None = None
+    # SHA-256 de qf:{account_id}: el mismo external_id que manda el servidor a Meta.
+    meta_external_id: str
 
 
 class PlanOut(BaseModel):
@@ -110,6 +115,9 @@ class PlanOut(BaseModel):
     duration_days: int | None
     price_cents: int
     currency: str
+    play_product_id: str | None = None
+    play_base_plan_id: str | None = None
+    apple_product_id: str | None = None
 
 
 class PickOut(BaseModel):
@@ -310,7 +318,9 @@ def password_reset(body: ResetIn, request: Request):
 def me(acc: dict = Depends(current_account)):
     sub = suscripciones.active_subscription(acc["account_id"])
     return MeOut(account=_account_out(acc), plus=sub is not None,
-                 subscription=SubscriptionOut(**sub) if sub else None)
+                 subscription=SubscriptionOut(**sub) if sub else None,
+                 store_account_token=acc.get("store_account_token"),
+                 meta_external_id=meta_datos.external_id(acc["account_id"]))
 
 
 @router.get("/picks", response_model=PicksOut)

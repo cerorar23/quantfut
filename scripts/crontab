@@ -104,3 +104,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # sale en segundos. Misma puerta que el mensual. Se salta el dia 1 para no
 # pisarse con el mensual.
 5 1 2-31 * * cd /app && python -m qf.model.train --bootstrap >> /var/log/train.log 2>&1
+
+# Conversions API de Meta (db/071): envia la cola meta_events. Sin META_CAPI_ENABLED=1 no hace nada.
+*/5 * * * * cd /app && python -m qf.comercial.meta_capi >> /var/log/meta_capi.log 2>&1

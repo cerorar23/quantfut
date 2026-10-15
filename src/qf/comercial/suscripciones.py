@@ -14,7 +14,8 @@ _VIGENTE = ("s.revoked_at IS NULL AND s.starts_at <= now() "
 
 def plans(only_active: bool = False) -> list[dict]:
     return query(
-        """SELECT plan_code, name, duration_days, price_cents, currency, active, sort_order
+        """SELECT plan_code, name, duration_days, price_cents, currency, active, sort_order,
+                  play_product_id, play_base_plan_id, apple_product_id
            FROM plans WHERE active OR NOT %s ORDER BY sort_order, plan_code""", (only_active,))
 
 
@@ -77,20 +78,40 @@ def grant(account_id: int, plan_code: str, actor: str, *, source: str = "manual"
     return row
 
 
-def revoke(subscription_id: int, actor: str, reason: str) -> dict | None:
+def grant_store(c, account_id: int, plan_code: str, starts_at, ends_at, *, price_cents: int,
+                currency: str, note: str, actor: str = "tienda") -> dict:
+    """Periodo cobrado por una tienda: fechas reales de la tienda, en la transacción
+    del cobro (la llama tiendas.compras, que ya bloqueó la suscripción)."""
+    row = c.execute(
+        """INSERT INTO subscriptions (account_id, plan_code, starts_at, ends_at, source,
+                                      price_cents, currency, note, created_by)
+           VALUES (%s, %s, %s, %s, 'payment', %s, %s, %s, %s)
+           RETURNING subscription_id, plan_code, starts_at, ends_at""",
+        (account_id, plan_code, starts_at, ends_at, price_cents, currency, note[:300], actor)).fetchone()
+    audit(c, actor, "suscripcion.conceder", account_id,
+          {"subscription_id": row["subscription_id"], "plan": plan_code, "source": "payment",
+           "ends_at": row["ends_at"].astimezone(timezone.utc).isoformat()})
+    return row
+
+
+def revoke_in(c, subscription_id: int, actor: str, reason: str) -> dict | None:
     reason = (reason or "").strip()[:300]
     if not reason:
         raise CuentaError("motivo_requerido", "Indica el motivo de la revocación")
-    with conn() as c:
-        row = c.execute(
-            """UPDATE subscriptions SET revoked_at = now(), revoked_by = %s, revoke_reason = %s
-               WHERE subscription_id = %s AND revoked_at IS NULL
-               RETURNING subscription_id, account_id, plan_code""",
-            (actor, reason, subscription_id)).fetchone()
-        if row:
-            audit(c, actor, "suscripcion.revocar", row["account_id"],
-                  {"subscription_id": subscription_id, "motivo": reason})
+    row = c.execute(
+        """UPDATE subscriptions SET revoked_at = now(), revoked_by = %s, revoke_reason = %s
+           WHERE subscription_id = %s AND revoked_at IS NULL
+           RETURNING subscription_id, account_id, plan_code""",
+        (actor, reason, subscription_id)).fetchone()
+    if row:
+        audit(c, actor, "suscripcion.revocar", row["account_id"],
+              {"subscription_id": subscription_id, "motivo": reason})
     return row
+
+
+def revoke(subscription_id: int, actor: str, reason: str) -> dict | None:
+    with conn() as c:
+        return revoke_in(c, subscription_id, actor, reason)
 
 
 def update_plan(plan_code: str, actor: str, *, active: bool, price_cents: int) -> bool:
