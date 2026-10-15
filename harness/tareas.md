@@ -2713,3 +2713,18 @@ de pruebas internas: la lectura del referrer no se puede probar sin Play):
 **Límites a recordar.** Un código que llega por referrer es tan falsificable como uno escrito: lo que
 protege es la condición de completar ofertas. El referrer de Play solo se conserva unos 90 días y
 puede tardar en estar disponible tras instalar; reintentar en los primeros arranques.
+
+## Videos con recompensa de AdMob (2026-10-14)
+
+Detalle en `docs/admob_recompensas_20261014.md`.
+
+- [x] Migración `db/069`, verificación SSV, tickets con tope/pausa/día UTC, callback que acredita, panel
+      `/control/anuncios`, `app-ads.txt`, flujo y tarjeta en la app, 6 idiomas. Apagado y en modo prueba.
+- [ ] **Bloqueante antes de anuncios reales:** confirmar por escrito con el soporte de AdMob que una app de
+      pronósticos con cuotas puede monetizar con anuncios; bloquear la categoría de apuestas.
+- [ ] **Bloqueante antes de anuncios reales:** actualizar la política de privacidad (hoy dice que no hay
+      publicidad personalizada) — texto legal, lo decide el titular.
+- [ ] Aplicar `db/069` y desplegar solo API (con visto bueno), configurar el bloque con SSV, probar con la
+      herramienta de SSV de AdMob y en un teléfono con bloques de prueba.
+- [ ] Sustituir el ID de APP de ejemplo por el real (AndroidManifest / Info.plist); declaraciones de Play.
+- [ ] Más adelante, con datos reales: mediación (Unity Ads, AppLovin) sobre AdMob.

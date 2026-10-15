@@ -50,6 +50,8 @@ pasada del chequeo diario queda además en `health_runs` (db/037).
   xG del modelo mediante `xg_api_football.py`: primera pareja válida congelada,
   recepción real en `xg_recorded_at` y uso solo desde esa fecha. El cliente
   `api_football.py` conserva su control de cuota.
+- `src/qf/api/anuncios*.py` — videos con recompensa de AdMob (SSV); el servidor acredita, configurable en
+  `/control/anuncios`. Apagado y en modo prueba por defecto; ver `docs/admob_recompensas_20261014.md`.
 - `src/qf/model/` — Dixon-Coles, de-vig, pricing, entrenamiento, calibración
   (`calibration.py`), peso modelo/mercado (`meta.py`), GBM de residuo
   (`residual.py`) y ratings dinámicos (`kalman.py`). Todos existen.

@@ -6053,3 +6053,19 @@ la app (solo Android y solo desde la tienda, registrando el código al verificar
 `assetlinks.json` usando la huella de la clave de firma final de Play, prueba con dos cuentas reales y
 las decisiones pendientes (iOS, instalaciones por APK). No se implementa antes de tener una pista de
 pruebas de Play: el referrer no se puede probar sin instalar desde la tienda.
+
+## 2026-10-14 — Videos con recompensa de AdMob (apagado y en modo prueba)
+
+Decisión clave: **solo el servidor acredita**, y solo con el callback firmado de Google (SSV). La app pide un
+ticket, muestra el video y espera a que suba el saldo; nunca acredita ni elige el importe (se ignora el
+`reward_amount` de Google). Tope diario (5), pausa (180 s) y día UTC se deciden en el servidor y se editan en
+`/control/anuncios`. Por qué así: un cliente que acredita se falsifica, y los clics o visualizaciones
+inventados son exactamente el tráfico no válido que cuesta la cuenta de AdMob.
+
+Detalles que no son obvios: el día de un crédito es el de emisión del ticket; un rechazo tras firma válida
+responde 200 con `coins=0` para que Google no reintente; las monedas de anuncios no validan referidos; los
+callbacks ya emitidos se aceptan aunque se apaguen los anuncios. Dejado apagado y en modo prueba: la política
+de apuestas de AdMob/Play para una app de cuotas no se pudo confirmar y la política de privacidad publicada
+dice que no hay publicidad personalizada; ambos son bloqueantes (ver `tareas.md`). Nada desplegado.
+Probado con Postgres local en un esquema aislado: la prueba `test_pg_fixed_allocations_and_ladder_global_one`
+(ajena a esto) falla con `KeyError: 'kickoff_utc'` en `mobile.py` cuando hay base; antes se omitía.
