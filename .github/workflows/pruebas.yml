@@ -32,3 +32,5 @@ jobs:
         env:
           PYTHONPATH: src
           QF_TEST_PG_DSN: postgresql://postgres:ci@localhost:5432/qf_test
+          # Las pruebas anteriores usan la configuración por defecto: que apunte también a la base de pruebas
+          PG_DSN: postgresql://postgres:ci@localhost:5432/qf_test
