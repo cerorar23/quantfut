@@ -1595,6 +1595,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get picksTrustTitle => 'Hit rate to date';
 
   @override
+  String get prefsAdsBody =>
+      'Shares encrypted account, device and purchase data with Meta to measure which ads work. In California, turning it off means “Do not share my data”.';
+
+  @override
+  String get prefsAdsTitle => 'Ad measurement (Meta)';
+
+  @override
   String get prefsAnalyticsBody =>
       'Helps improve the app with data about the screens used. It is optional.';
 
@@ -1642,6 +1649,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prefsTitle => 'Privacy and preferences';
+
+  @override
+  String get privacyUpdateBody =>
+      'You can now subscribe with Google Play or the App Store, and usage measurement, diagnostics and Meta ad measurement are turned on. You can turn them off in Preferences.';
+
+  @override
+  String get privacyUpdateOk => 'Got it';
+
+  @override
+  String get privacyUpdateRead => 'Read the policy';
+
+  @override
+  String get privacyUpdateTitle => 'We updated our privacy notice';
 
   @override
   String get probBarAway => 'Away';
@@ -2411,6 +2431,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vipFreeAccess => 'Your account has free access.';
 
   @override
+  String get vipGranted => 'Done! Your VIP access is active.';
+
+  @override
   String get vipHistoryNote =>
       'Public, sealed history; samples per market are small and a prediction can fail.';
 
@@ -2420,6 +2443,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vipLinked => '🔒  Your VIP access is linked to your account';
+
+  @override
+  String get vipManage =>
+      'You already have Plus. Change or cancel your plan in the store.';
 
   @override
   String vipMonthly(String amount) {
@@ -2445,6 +2472,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Subscribing requires a configured payment channel.';
 
   @override
+  String get vipPending =>
+      'Payment pending. You will get access as soon as the store confirms it.';
+
+  @override
   String get vipPickLabel => 'VIP prediction';
 
   @override
@@ -2458,10 +2489,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'Purchases in preparation: nothing is charged from the app yet.';
 
   @override
+  String get vipRestore => 'Restore purchases';
+
+  @override
   String get vipStatRecorded => 'Recorded hit rate';
 
   @override
   String get vipStatResolved => 'Resolved';
+
+  @override
+  String get vipStoreFailed =>
+      'The purchase could not be confirmed. We will retry when you reopen the app.';
+
+  @override
+  String get vipStoreTerms =>
+      'Renews automatically at the same price until you cancel it in the store.';
+
+  @override
+  String get vipStoreUnavailable =>
+      'The store is not available on this device.';
+
+  @override
+  String get vipSubscribe => 'Subscribe';
+
+  @override
+  String get vipVerifying => 'Verifying the purchase with the store…';
 
   @override
   String get welcome1Body =>

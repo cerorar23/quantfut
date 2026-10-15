@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'dart:async';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../core/firebase_services.dart';
+import '../core/meta_events.dart';
 import '../l10n/app_locale.dart';
 
 import 'ladder_progress.dart';
 import 'live_api.dart';
+import 'store_purchases.dart';
 import 'predictions_switcher.dart';
 import 'live_ladder.dart';
 import 'live_picks.dart';
@@ -32,6 +36,7 @@ class _ProductShellState extends State<ProductShell>
   late final QuantFutApi api =
       widget.api ?? QuantFutApi.firebaseSession ?? QuantFutApi();
   final services = FirebaseServices.current;
+  late final StoreController store = StoreController(api)..listen();
   StreamSubscription<String>? tokenSubscription;
   JsonMap? data;
   String? error;
@@ -60,8 +65,41 @@ class _ProductShellState extends State<ProductShell>
       }
     });
     unawaited(services?.screen('home'));
-    WidgetsBinding.instance.addPostFrameCallback((_) => openNotification());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      openNotification();
+      await MetaEvents.current?.apply(services?.adsAllowed ?? true);
+      await api.syncMetaDevice();
+      await showPrivacyNotice();
+    });
     reload();
+  }
+
+  /// Una vez por versión de consentimiento: avisa de que la medición viene activada.
+  Future<void> showPrivacyNotice() async {
+    final prefs = services?.preferences;
+    if (prefs == null || !api.signedIn || !mounted) return;
+    if (await prefs.getString('consent_notice') == consentVersion || !mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.privacyUpdateTitle),
+        content: Text(dialogContext.l10n.privacyUpdateBody),
+        actions: [
+          TextButton(
+            onPressed: () => launchUrl(
+              Uri.parse('https://pronosticosdeportivos.pro/legal/privacidad'),
+              mode: LaunchMode.externalApplication,
+            ),
+            child: Text(dialogContext.l10n.privacyUpdateRead),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(dialogContext.l10n.privacyUpdateOk),
+          ),
+        ],
+      ),
+    );
+    await prefs.setString('consent_notice', consentVersion);
   }
 
   @override
@@ -71,6 +109,7 @@ class _ProductShellState extends State<ProductShell>
     services?.foregroundMessage.removeListener(showNotification);
     services?.removeListener(configurationChanged);
     tokenSubscription?.cancel();
+    store.dispose();
     if (widget.api == null && QuantFutApi.firebaseSession != api) api.dispose();
     super.dispose();
   }
@@ -151,7 +190,7 @@ class _ProductShellState extends State<ProductShell>
         MaterialPageRoute<void>(
           builder: (_) => Theme(
             data: liveTheme(),
-            child: LiveVipScreen(api: api, data: data ?? {}),
+            child: LiveVipScreen(api: api, data: data ?? {}, store: store),
           ),
         ),
       )

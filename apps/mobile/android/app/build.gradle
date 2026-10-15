@@ -12,6 +12,11 @@ def releaseKeys = new Properties()
 if (releaseKeyFile.exists()) {
     releaseKeyFile.withInputStream { releaseKeys.load(it) }
 }
+def metaFile = rootProject.file('meta.properties')
+def metaProps = new Properties()
+if (metaFile.exists()) {
+    metaFile.withInputStream { metaProps.load(it) }
+}
 if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') } && !releaseKeyFile.exists()) {
     throw new GradleException('Release signing requires private android/key.properties; see docs/FIRMA_ANDROID.md')
 }
@@ -23,12 +28,17 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    buildFeatures {
+        resValues true // facebook_app_id / facebook_client_token desde meta.properties
+    }
     defaultConfig {
         applicationId 'com.saptain.quantfut'
         minSdk 26 // sentry_flutter 10 (JNI) exige Android 8.0
         targetSdk 37
         versionCode flutter.versionCode
         versionName flutter.versionName
+        resValue 'string', 'facebook_app_id', metaProps.getProperty('appId', '')
+        resValue 'string', 'facebook_client_token', metaProps.getProperty('clientToken', '')
     }
     signingConfigs {
         release {
@@ -54,6 +64,7 @@ kotlin {
 }
 dependencies {
     implementation 'com.tapjoy:tapjoy-android-sdk:14.8.0'
+    implementation 'com.google.android.gms:play-services-ads-identifier:18.2.0'
 }
 flutter {
     source '../..'

@@ -4,6 +4,7 @@ import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'alerts_model.dart';
 import 'live_alerts.dart';
+import '../core/meta_events.dart';
 import 'live_api.dart';
 import 'live_forecast.dart';
 import 'live_match_markets.dart';
@@ -27,6 +28,13 @@ class LiveMatchDetail extends StatefulWidget {
 class _LiveMatchDetailState extends State<LiveMatchDetail> {
   late Future<JsonMap> future = widget.api.detail(widget.id);
   int tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    MetaEvents.current?.viewMatch(widget.id);
+  }
+
   Widget results(List<JsonMap> rows) => Column(
     children: rows
         .map(

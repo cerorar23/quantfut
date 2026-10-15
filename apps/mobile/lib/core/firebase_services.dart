@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase_options.dart';
 import '../l10n/app_locale.dart';
+import 'meta_events.dart';
 import 'sentry_reporting.dart';
 
 @pragma('vm:entry-point')
@@ -22,6 +23,10 @@ Future<void> firebaseBackgroundMessage(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Background delivery must not log tokens or download protected predictions.
 }
+
+/// Seguimiento encendido por defecto en todo el mundo (decisión del titular, 2026-10-15);
+/// lo que la persona eligió antes, incluido un «no», se respeta siempre.
+bool consentDefault(bool? stored) => stored ?? true;
 
 /// Motivo por el que no hay notificaciones; el texto se traduce al mostrarlo.
 enum NotificationStatus { permissionDenied, iosPending }
@@ -32,6 +37,7 @@ class FirebaseServices extends ChangeNotifier {
   final SharedPreferencesAsync preferences;
   bool analyticsAllowed = false;
   bool diagnosticsAllowed = false;
+  bool adsAllowed = true;
   bool notificationsAllowed = false;
   String language = 'es';
   NotificationStatus? notificationStatus;
@@ -46,10 +52,15 @@ class FirebaseServices extends ChangeNotifier {
   static Future<FirebaseServices> initialize() async {
     if (current != null) return current!;
     final services = FirebaseServices._(SharedPreferencesAsync());
-    services.analyticsAllowed =
-        await services.preferences.getBool('analytics_consent') ?? false;
-    services.diagnosticsAllowed =
-        await services.preferences.getBool('diagnostics_consent') ?? false;
+    services.analyticsAllowed = consentDefault(
+      await services.preferences.getBool('analytics_consent'),
+    );
+    services.diagnosticsAllowed = consentDefault(
+      await services.preferences.getBool('diagnostics_consent'),
+    );
+    services.adsAllowed = consentDefault(
+      await services.preferences.getBool('ads_consent'),
+    );
     services.notificationsAllowed =
         await services.preferences.getBool('push_consent') ?? false;
     // La app decide el idioma (elección guardada → dispositivo → español).
@@ -164,6 +175,13 @@ class FirebaseServices extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setAdsConsent(bool allowed) async {
+    adsAllowed = allowed;
+    await preferences.setBool('ads_consent', allowed);
+    await MetaEvents.current?.apply(allowed);
+    notifyListeners();
+  }
+
   Future<void> setLanguage(String value) async {
     if (!const ['es', 'en', 'pt', 'fr', 'it', 'de'].contains(value)) return;
     language = value;
@@ -272,6 +290,7 @@ class FirebaseServices extends ChangeNotifier {
     await FirebaseAnalytics.instance.setUserId(id: null);
     await FirebaseCrashlytics.instance.setUserIdentifier('');
     await FirebaseAnalytics.instance.resetAnalyticsData();
+    await MetaEvents.current?.forget();
   }
 }
 

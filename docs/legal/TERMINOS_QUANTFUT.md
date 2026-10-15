@@ -1,6 +1,6 @@
 # Términos de uso de QuantFut
 
-**Versión 2026-10-12 — vigente desde el 12 de octubre de 2026. Actualizado en octubre de 2026 para incluir los videos con recompensa.**
+**Versión 2026-10-16 — vigente desde su publicación. Actualizados en octubre de 2026 para incluir las suscripciones compradas en Google Play y App Store.**
 
 ## 1. Quién presta el servicio
 
@@ -60,19 +60,20 @@ El acceso VIP depende de la vigencia y condiciones del plan asociado a tu
 cuenta. QuantFut comprobará los permisos en su servidor; una notificación o un
 error visual no crea un derecho a contenido restringido.
 
-Actualmente la aplicación puede mostrar planes sin permitir su compra. No
-debes interpretar un precio de referencia como un cobro efectuado ni como la
-existencia de una prueba gratuita. Antes de habilitar una contratación de pago
-deberán mostrarse el proveedor que cobrará, precio total y moneda, impuestos,
-duración, renovación automática si existe, método de cancelación y reglas de
-reembolso. Esas condiciones deberán poder revisarse antes de confirmar.
+Las suscripciones de la aplicación se compran en Google Play o en App Store, que
+cobran el precio total que muestran antes de confirmar, con sus impuestos y en la
+moneda de tu tienda. No hay prueba gratuita. La suscripción se renueva
+automáticamente al mismo precio y por el mismo periodo hasta que la canceles en la
+tienda; la cancelación evita los cargos posteriores y conservas el acceso hasta el
+final del periodo ya pagado. Puedes cambiar o cancelar tu plan, y pedir
+reembolsos, según las reglas de la tienda. Si la tienda reembolsa o anula un pago,
+retiramos el acceso de ese periodo.
 
-No habrá cargos recurrentes sin la información y autorización exigidas por la
-normativa aplicable. Cancelar una renovación deberá impedir cargos posteriores
-conforme a las condiciones aceptadas, sin eliminar los derechos legales del
-consumidor. Las compras realizadas por una tienda, cuando se habiliten,
-también estarán sujetas a sus procedimientos de pago y devolución. No se
-excluyen los derechos irrenunciables a reparación, devolución o reclamación.
+Concedemos el acceso solo cuando la tienda confirma el pago a nuestro servidor;
+una pantalla de éxito en la aplicación no crea por sí sola ese derecho. Las
+compras también están sujetas a los procedimientos de pago y devolución de la
+tienda. No se excluyen los derechos irrenunciables a reparación, devolución o
+reclamación.
 
 ## 5. Monedas, asistencia y referidos
 
@@ -186,4 +187,4 @@ antes de contratar; este texto no los sustituye por una exclusión general.
 Cuando corresponda por ámbito de aplicación, puedes acudir a la
 [Fair Trading Commission de Seychelles](https://ftc.gov.sc/).
 
-**Versión: 2026-10-12.**
+**Versión: 2026-10-16.**

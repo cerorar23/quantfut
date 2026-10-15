@@ -7,9 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../core/firebase_services.dart';
+import '../core/meta_events.dart';
 import '../l10n/app_locale.dart';
 
 typedef JsonMap = Map<String, dynamic>;
+
+/// Versión de términos y privacidad que acepta esta app (debe estar en el servidor).
+const consentVersion = '2026-10-16';
 JsonMap jsonMap(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : {};
 List<JsonMap> jsonRows(dynamic value) =>
@@ -217,7 +221,36 @@ class QuantFutApi extends ChangeNotifier {
     if (!signedIn) return;
     account = jsonMap(await request('/app/v1/me'));
     notifyListeners();
+    await MetaEvents.current?.identify(account!);
   }
+
+  /// IDs del dispositivo para Conversions API (anon_id, madid, extinfo). Solo con sesión y
+  /// con Meta activo; un fallo no afecta al uso de la app.
+  Future<void> syncMetaDevice() async {
+    if (!signedIn) return;
+    final device = await MetaEvents.current?.device();
+    if (device == null) return;
+    try {
+      await request('/app/v1/meta/dispositivo', body: device);
+    } catch (_) {
+      /* Se reintenta en el próximo arranque. */
+    }
+  }
+
+  Future<JsonMap> verifyPurchase({
+    required String store,
+    required String productId,
+    required String token,
+  }) async => jsonMap(
+    await request(
+      '/app/v1/compras/verificar',
+      body: {
+        'store': store,
+        'product_id': productId,
+        if (store == 'google_play') 'purchase_token': token else 'jws': token,
+      },
+    ),
+  );
 
   Future<void> register(String email, String password) async {
     final tokens = jsonMap(
@@ -303,8 +336,8 @@ class QuantFutApi extends ChangeNotifier {
         body: {
           'id_token': token,
           'language': services.language,
-          if (acceptedTerms) 'terms_version': '2026-10-12',
-          if (acceptedTerms) 'privacy_version': '2026-10-12',
+          if (acceptedTerms) 'terms_version': consentVersion,
+          if (acceptedTerms) 'privacy_version': consentVersion,
         },
       ),
     );
@@ -339,6 +372,7 @@ class QuantFutApi extends ChangeNotifier {
         'analytics': services.analyticsAllowed,
         'diagnostics': services.diagnosticsAllowed,
         'push_enabled': services.notificationsAllowed,
+        'ads_measurement': services.adsAllowed,
       },
     );
   }
@@ -395,6 +429,7 @@ String apiTraceName(String path) {
   if (path.startsWith('/mobile/v1/matches/')) return 'qf_load_match';
   if (path == '/app/v1/me') return 'qf_load_profile';
   if (path.startsWith('/app/v1/firebase/')) return 'qf_firebase_request';
+  if (path.startsWith('/app/v1/compras/')) return 'qf_store_request';
   return 'qf_api_request';
 }
 

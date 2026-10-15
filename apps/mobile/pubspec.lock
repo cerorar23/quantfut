@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.77"
+  app_tracking_transparency:
+    dependency: "direct main"
+    description:
+      name: app_tracking_transparency
+      sha256: "3a52669c0645ffd7efe9a460047616de3e3f2128338f9ec7cdb681628d36238e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.7"
   archive:
     dependency: transitive
     description:
@@ -129,6 +137,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  facebook_app_events:
+    dependency: "direct main"
+    description:
+      name: facebook_app_events
+      sha256: "212a389584b0065754f48e8758de3c982b87e9c2eba66d80e2be772606e8b13c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.31.0"
   fake_async:
     dependency: transitive
     description:
@@ -501,6 +517,38 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.12.0"
+  in_app_purchase:
+    dependency: "direct main"
+    description:
+      name: in_app_purchase
+      sha256: d8317ec2ed6fe33199957d67ee67e08a4fd4871ef93b91d7611d8ee560892afc
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.1"
+  in_app_purchase_android:
+    dependency: "direct main"
+    description:
+      name: in_app_purchase_android
+      sha256: eac857f7408769a68194be99ceb233ad4e3599e55ccd6422afaf0c7fd5066738
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.4"
+  in_app_purchase_platform_interface:
+    dependency: transitive
+    description:
+      name: in_app_purchase_platform_interface
+      sha256: "0b0076cac8ce4fa7048f01e76af8b123aeb6a7c4e0dea2a5206d6664454f3e36"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.1"
+  in_app_purchase_storekit:
+    dependency: transitive
+    description:
+      name: in_app_purchase_storekit
+      sha256: "21af88fc18865a7ee4c2468b33a726101b6c034cfe79bd1a1e1d1450a6d3a3a9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.13+3"
   intl:
     dependency: "direct main"
     description:
@@ -638,7 +686,7 @@ packages:
     source: hosted
     version: "2.2.0"
   package_info_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: package_info_plus
       sha256: "73ef2cd5c11a7548f9b7f6fc2a4f6113de2e64aa2a70de63feede95548822908"

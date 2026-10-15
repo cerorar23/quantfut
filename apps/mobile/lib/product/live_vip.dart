@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
+import '../core/meta_events.dart';
 import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'store_purchases.dart';
 
 const _vipGold = Color(0xffffc61a), _vipAmber = Color(0xffff9500);
 const _vipPanel = Color(0xff11151c);
@@ -11,15 +15,61 @@ const _vipPanel = Color(0xff11151c);
 /// servidor; no hay cifras de miembros, reseñas ni periodos de prueba porque
 /// el backend no los entrega.
 class LiveVipScreen extends StatefulWidget {
-  const LiveVipScreen({super.key, required this.api, required this.data});
+  const LiveVipScreen({
+    super.key,
+    required this.api,
+    required this.data,
+    this.store,
+  });
   final QuantFutApi api;
   final JsonMap data;
+  final StoreController? store;
   @override
   State<LiveVipScreen> createState() => _LiveVipScreenState();
 }
 
 class _LiveVipScreenState extends State<LiveVipScreen> {
   int? chosen;
+
+  @override
+  void initState() {
+    super.initState();
+    MetaEvents.current?.viewVip();
+    final store = widget.store;
+    if (store != null) {
+      store.addListener(_storeChanged);
+      // load() notifica enseguida: no puede ejecutarse dentro de initState (usa el contexto).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) store.load(jsonRows(widget.data['plans']).take(3).toList());
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.store?.removeListener(_storeChanged);
+    super.dispose();
+  }
+
+  void _storeChanged() {
+    if (!mounted) return;
+    final l10n = context.l10n, s = widget.store!;
+    final text = switch (s.state) {
+      StoreState.pending => l10n.vipPending,
+      StoreState.granted => l10n.vipGranted,
+      StoreState.failed => s.error ?? l10n.vipStoreFailed,
+      StoreState.manage => l10n.vipManage,
+      _ => null,
+    };
+    if (text != null) liveNotice(context, text);
+    if (s.state == StoreState.manage) {
+      launchUrl(
+        manageSubscriptionsUri(ios: s.ios),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+    setState(() {});
+  }
 
   Future<void> checkAccess() async {
     if (!widget.api.signedIn) {
@@ -160,9 +210,14 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
               const SizedBox(height: 12),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: liveText(_price(plan), size: 21, bold: true),
+                child: liveText(
+                  widget.store?.byPlan[plan['plan_code']]?.price ?? _price(plan),
+                  size: 21,
+                  bold: true,
+                ),
               ),
-              liveText('${plan['currency'] ?? ''}', size: 10, color: liveMuted),
+              if (widget.store?.byPlan[plan['plan_code']] == null)
+                liveText('${plan['currency'] ?? ''}', size: 10, color: liveMuted),
               const SizedBox(height: 8),
               if (best) liveText(_period(plan), size: 10, color: liveMuted),
               if (monthly != null)
@@ -201,6 +256,9 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
         : -1;
     final selected = chosen ?? (bestIndex >= 0 ? bestIndex : 0);
     final purchases = featureEnabled(widget.data, 'compras');
+    final store = widget.store;
+    final canBuy = purchases && store != null && store.byPlan.isNotEmpty;
+    final verifying = store?.state == StoreState.verifying;
     final min = ((config['probability_min'] as num?) ?? .73) * 100;
     final max = ((config['probability_max'] as num?) ?? .95) * 100;
     final real = history['acierto_real'];
@@ -381,15 +439,27 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                         foregroundColor: liveBg,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      onPressed: () => liveNotice(
-                        context,
-                        purchases
-                            ? l10n.vipPaymentRequired
-                            : featureMessage(widget.data, 'compras'),
-                      ),
-                      icon: const Icon(Icons.workspace_premium),
+                      onPressed: verifying
+                          ? null
+                          : canBuy
+                          ? () => store.buy(shown[selected]['plan_code'] as String)
+                          : () => liveNotice(
+                              context,
+                              purchases
+                                  ? l10n.vipPaymentRequired
+                                  : featureMessage(widget.data, 'compras'),
+                            ),
+                      icon: verifying
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: liveBg,
+                              ),
+                            )
+                          : const Icon(Icons.workspace_premium),
                       label: Text(
-                        l10n.vipActivate,
+                        canBuy ? l10n.vipSubscribe : l10n.vipActivate,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
@@ -401,11 +471,24 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                 const SizedBox(height: 10),
                 Center(
                   child: liveText(
-                    purchases ? l10n.vipPricesNote : l10n.vipPurchasesPending,
+                    canBuy
+                        ? l10n.vipStoreTerms
+                        : purchases && store?.state == StoreState.unavailable
+                        ? l10n.vipStoreUnavailable
+                        : purchases
+                        ? l10n.vipPricesNote
+                        : l10n.vipPurchasesPending,
                     size: 11,
                     color: liveMuted,
                   ),
                 ),
+                if (canBuy)
+                  Center(
+                    child: TextButton(
+                      onPressed: verifying ? null : store.restore,
+                      child: Text(l10n.vipRestore),
+                    ),
+                  ),
                 const SizedBox(height: 14),
                 Center(
                   child: OutlinedButton.icon(

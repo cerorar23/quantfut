@@ -36,6 +36,7 @@ un envío de correo a terceros ni un borrado automático de cuentas.
   Cambio guardado en la propiedad 558571758. Google aplica a las 24 h y depura
   mensualmente; no afecta informes agregados estándar.
 - Avisos caducados y cola: retiro diario al cumplir 30 días desde caducidad.
+- Datos de dispositivo para Meta (`meta_identities`) y eventos ya enviados o descartados (`meta_events`): borrados a los 90 días por la misma tarea diaria (`firebase_mantenimiento`). Un evento pendiente se reintenta o caduca a los 7 días.
 - Dispositivos sin actualización: token retirado a los 90 días. El cliente
   vuelve a registrar su dispositivo al reanudar cuando tiene permiso.
 - Copias comerciales nuevas: privadas (carpeta 0700, archivos 0600), cada día,

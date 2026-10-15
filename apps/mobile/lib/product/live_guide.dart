@@ -1,3 +1,4 @@
+import '../core/meta_events.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
@@ -22,7 +23,12 @@ class GuideScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: liveBg,
       appBar: AppBar(backgroundColor: liveBg),
-      body: ListView(
+      body: NotificationListener<ScrollEndNotification>(
+        onNotification: (n) {
+          if (n.metrics.extentAfter == 0) MetaEvents.current?.completeTutorial();
+          return false;
+        },
+        child: ListView(
         key: const ValueKey('guide-list'),
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
         children: [
@@ -93,6 +99,7 @@ class GuideScreen extends StatelessWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }

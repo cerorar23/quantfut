@@ -10,9 +10,18 @@
     <key>CFBundleURLTypes</key>
     <array><dict><key>CFBundleURLSchemes</key><array>
         <string>com.googleusercontent.apps.68225142184-qqb1nmgj19ucmhes5mqtg3962bomoj6p</string>
+        <string>fb$(QF_FACEBOOK_APP_ID)</string>
     </array></dict></array>
     <key>UIBackgroundModes</key>
     <array><string>remote-notification</string></array>
+    <key>FacebookAppID</key><string>$(QF_FACEBOOK_APP_ID)</string>
+    <key>FacebookClientToken</key><string>$(QF_FACEBOOK_CLIENT_TOKEN)</string>
+    <key>FacebookDisplayName</key><string>QuantFut</string>
+    <key>FacebookAutoInitEnabled</key><false/>
+    <key>FacebookAutoLogAppEventsEnabled</key><false/>
+    <key>FacebookAdvertiserIDCollectionEnabled</key><false/>
+    <key>NSUserTrackingUsageDescription</key>
+    <string>QuantFut uses this identifier to measure which ads bring new users. You can turn it off at any time.</string>
     <key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key><false/>
     <key>GOOGLE_ANALYTICS_IDFA_COLLECTION_ENABLED</key><false/>
     <key>FirebaseAutomaticScreenReportingEnabled</key><false/>

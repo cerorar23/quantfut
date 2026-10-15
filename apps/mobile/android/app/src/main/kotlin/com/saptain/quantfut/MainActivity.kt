@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.tapjoy.TJActionRequest
 import com.tapjoy.TJConnectListener
 import com.tapjoy.TJError
@@ -106,6 +107,20 @@ class MainActivity: FlutterActivity() {
                     catch (e: Exception) { result.error("no_browser", "No se pudo abrir el navegador", null) }
                 }
             }
+        }
+        // ID de publicidad para Meta (madid). Nunca en el hilo principal. Si la persona limito o
+        // borro el ID en los ajustes del telefono, no se devuelve (politica de Google Play).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "quantfut/device").setMethodCallHandler { call, result ->
+            if (call.method != "advertising") { result.notImplemented(); return@setMethodCallHandler }
+            Thread {
+                val info = try { AdvertisingIdClient.getAdvertisingIdInfo(applicationContext) } catch (e: Exception) { null }
+                val limited = info?.isLimitAdTrackingEnabled ?: true
+                val id = info?.id?.takeIf { !limited && it != "00000000-0000-0000-0000-000000000000" }
+                runOnUiThread {
+                    result.success(mapOf("id" to id, "limited" to limited,
+                        "model" to Build.MODEL, "os" to Build.VERSION.RELEASE))
+                }
+            }.start()
         }
     }
 }
