@@ -21,7 +21,8 @@ pago (ver `harness/tareas.md`).
 
 1. Ejecuta `./scripts/harness_check.sh`. Si falla, tu única tarea es arreglar
    eso antes de continuar con cualquier otra cosa.
-2. Lee [harness/tareas.md](harness/tareas.md) — backlog priorizado.
+2. Lee [PENDIENTES.md](PENDIENTES.md) (lista única: qué falta, quién y cuándo) y
+   [harness/tareas.md](harness/tareas.md) — backlog priorizado con el detalle técnico.
 3. Lee [harness/progreso.md](harness/progreso.md) — decisiones y estado de
    sesiones anteriores, para no repetir trabajo ni deshacer decisiones ya
    tomadas.
