@@ -97,6 +97,10 @@ class Settings:
     # defecto: no publica nada y activarlo por entorno exigiría recrear el worker.
     tarjetas_seg_enabled: bool = os.getenv("TARJETAS_SEG_ENABLED", "1") in ("1", "true", "True")
 
+    # Dónde descargar la app, que enseña la página de invitación `/i/CODIGO`. Vacío = sin botón
+    # (la app aún no está en una tienda).
+    app_download_url: str = os.getenv("APP_DOWNLOAD_URL", "")
+
     # --- Reto escalera (publish/escalera.py, 2026-10-08) ---
     # Apagado hasta desplegar con LOTE_ESCALERA_DESDE fijado: sin bloque en el
     # lote, un escalón no quedaría sellado.

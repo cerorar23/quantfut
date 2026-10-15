@@ -1,0 +1,27 @@
+{% extends "cuenta/base.html" %}
+{% block title %}{{ t.titulo if codigo else t.invalido_titulo }}{% endblock %}
+{% block content %}
+{% if codigo %}
+<h2 class="h2 text-center mb-2">{{ t.titulo }}</h2>
+<p class="text-secondary text-center">{{ t.intro }}</p>
+<label class="form-label" for="codigo">{{ t.tu_codigo }}</label>
+<div class="input-group mb-4">
+  <input id="codigo" class="form-control form-control-lg text-center" type="text" readonly value="{{ codigo }}" autocomplete="off">
+  <button class="btn btn-primary" type="button" data-copy="codigo" data-copied="{{ t.copiado }}">{{ icon('key') }} {{ t.copiar }}</button>
+</div>
+<h3 class="h4">{{ t.como }}</h3>
+<ol class="mb-4">
+  <li>{{ t.paso1 }}</li>
+  <li>{{ t.paso2 }}</li>
+  <li>{{ t.paso3 }}</li>
+  <li>{{ t.paso4 }}</li>
+</ol>
+{% if descargar %}<a class="btn btn-primary w-100 mb-2" href="{{ descargar }}">{{ t.descargar }}</a>{% endif %}
+<a class="btn btn-outline-secondary w-100" href="/">{{ t.web }}</a>
+<script src="/static/invitacion.js" defer></script>
+{% else %}
+<h2 class="h2 text-center mb-3">{{ t.invalido_titulo }}</h2>
+<p class="text-secondary text-center">{{ t.invalido_texto }}</p>
+<a class="btn btn-outline-secondary w-100" href="/">{{ t.web }}</a>
+{% endif %}
+{% endblock %}

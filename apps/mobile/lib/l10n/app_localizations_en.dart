@@ -1885,6 +1885,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rewardsOperationDone => 'Operation confirmed.';
 
   @override
+  String get rewardsPaste => 'Paste code';
+
+  @override
+  String get rewardsPasteEmpty =>
+      'There is no invitation code on the clipboard.';
+
+  @override
   String rewardsReferralStats(Object registered, Object qualified) {
     return '$registered registered · $qualified validated';
   }
@@ -1894,6 +1901,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rewardsRegisterCode => 'Register code';
+
+  @override
+  String get rewardsShare => 'Share my code';
+
+  @override
+  String rewardsShareMessage(String code, String link) {
+    return 'Use my invitation code $code in QuantFut: in Coins, enter it under “Code of who invited you”. Everything is explained here: $link';
+  }
 
   @override
   String get rewardsSignIn => 'Sign in';

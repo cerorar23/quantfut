@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_locale.dart';
 import 'coin_burst.dart';
@@ -13,6 +14,27 @@ import 'rewards_progress.dart';
 const _purple = Color(0xff7439c5), _purpleDark = Color(0xff3d1c80);
 const _pink = Color(0xffff426f);
 const _tile = Color(0xff0e1b2a);
+
+final _inviteLink = RegExp(r'/i/([A-Za-z0-9]{6,24})');
+final _inviteCode = RegExp(r'^[A-Za-z0-9]{6,24}$');
+
+/// El código de invitación dentro de lo pegado o escrito: el propio código, o el que va en el
+/// enlace `/i/CODIGO` (también si viene dentro del mensaje compartido). Nada más: una palabra
+/// cualquiera del texto no se toma por código.
+String? inviteCodeFrom(String raw) {
+  final link = _inviteLink.firstMatch(raw);
+  if (link != null) return link.group(1)!.toUpperCase();
+  final text = raw.trim();
+  return _inviteCode.hasMatch(text) ? text.toUpperCase() : null;
+}
+
+/// Enlace a la página de invitación del servidor.
+String inviteLink(Uri base, String code) =>
+    base.resolve('/i/${Uri.encodeComponent(code)}').toString();
+
+/// Mensaje que se comparte con el código y el enlace.
+String inviteShareText(AppLocalizations l10n, Uri base, String code) =>
+    l10n.rewardsShareMessage(code, inviteLink(base, code));
 
 /// Etiqueta legible de un movimiento del historial (el servidor envía un código).
 String ledgerKindLabel(AppLocalizations l10n, Object? kind) => switch (kind) {
@@ -245,6 +267,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                         onOffer: offer,
                       ),
                       _InviteCard(
+                        base: widget.api.base,
                         cfg: cfg,
                         wallet: wallet,
                         refs: refs,
@@ -253,7 +276,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                         canRegister: !busy && cfg['referrals_enabled'] == true,
                         onRegister: () => action(
                           '/mobile/v1/rewards/referrals',
-                          body: {'code': code.text},
+                          body: {'code': inviteCodeFrom(code.text) ?? code.text.trim()},
                         ),
                       ),
                       _Ledger(
@@ -769,6 +792,7 @@ class _OffersCard extends StatelessWidget {
 /// Invitar amigos: premios, código para copiar y, si procede, dónde escribir el de quien invitó.
 class _InviteCard extends StatelessWidget {
   const _InviteCard({
+    required this.base,
     required this.cfg,
     required this.wallet,
     required this.refs,
@@ -778,6 +802,7 @@ class _InviteCard extends StatelessWidget {
     required this.onRegister,
   });
 
+  final Uri base;
   final JsonMap cfg, wallet, refs;
   final bool signedIn;
   final TextEditingController codeController;
@@ -860,6 +885,20 @@ class _InviteCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
+            OutlinedButton.icon(
+              key: const ValueKey('coins-share'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: liveCyan,
+                side: const BorderSide(color: liveCyan),
+                minimumSize: const Size.fromHeight(44),
+              ),
+              onPressed: () => SharePlus.instance.share(
+                ShareParams(text: inviteShareText(l10n, base, '$myCode')),
+              ),
+              icon: const Icon(Icons.share_outlined, size: 18),
+              label: Text(l10n.rewardsShare),
+            ),
+            const SizedBox(height: 10),
             liveText(
               l10n.rewardsReferralStats(
                 refs['registered'] ?? 0,
@@ -880,7 +919,25 @@ class _InviteCard extends StatelessWidget {
             TextField(
               controller: codeController,
               textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(labelText: l10n.rewardsInviterCode),
+              decoration: InputDecoration(
+                labelText: l10n.rewardsInviterCode,
+                suffixIcon: IconButton(
+                  key: const ValueKey('coins-paste'),
+                  tooltip: l10n.rewardsPaste,
+                  icon: const Icon(Icons.content_paste, size: 20),
+                  onPressed: () async {
+                    final pasted = await Clipboard.getData(Clipboard.kTextPlain);
+                    final found = inviteCodeFrom(pasted?.text ?? '');
+                    if (found == null) {
+                      if (context.mounted) {
+                        liveNotice(context, l10n.rewardsPasteEmpty);
+                      }
+                      return;
+                    }
+                    codeController.text = found;
+                  },
+                ),
+              ),
             ),
             const SizedBox(height: 10),
             liveButton(

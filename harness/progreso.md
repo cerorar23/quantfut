@@ -6019,3 +6019,20 @@ Pedido del titular: en la pestaña Mercados de la app se quita el bloque «Model
 (el último de la pantalla, bajo «Ver acceso VIP»). La sección `nba` sigue existiendo en
 `mobile_features` y en el servidor; solo deja de pintarse el aviso. Si NBA se activa algún día, habrá
 que decidir dónde se muestra.
+
+## 2026-10-14 — Compartir el código de referido con enlace y página de invitación
+
+Pregunta del titular: cómo llega el código de referido al invitado en una app de teléfono. Estado
+real: el código se copiaba y se escribía a mano en Coins; el botón de compartir enviaba un texto sin
+código ni enlace; la app no lee nada al instalarse. Decisión: paso 1 (sin depender de la tienda).
+«Compartir mi código» de Coins envía el código y `https://pronosticosdeportivos.pro/i/CODIGO`; la
+ruta `/i/{codigo}` (`api/invitacion.py`) es pública, sin base de datos (no confirma que el código
+exista, así que no sirve para enumerar) y muestra el código, copiar y los pasos en los 6 idiomas según
+`Accept-Language`; un código mal formado da 404 y no se repite en la página. Cumple la CSP del panel
+(`script-src 'self'`): el copiar vive en `static/invitacion.js`, sin scripts ni estilos en línea. En el
+campo de Coins, «Pegar código» extrae el código del portapapeles aunque sea el enlace o el mensaje
+entero (`inviteCodeFrom`: solo el código suelto o el de `/i/CODIGO`; una palabra cualquiera no cuenta) y
+Registrar también lo normaliza. `APP_DOWNLOAD_URL` (vacío por defecto) añade el botón de descarga
+cuando la app tenga tienda. Pendiente, a propósito: leer el referrer de Google Play al instalar
+(Android y solo desde la tienda), App Links para abrir la app desde el enlace y una solución para iOS
+(terceros: Branch, AppsFlyer o Adjust).

@@ -3202,6 +3202,18 @@ abstract class AppLocalizations {
   /// **'Operación confirmada.'**
   String get rewardsOperationDone;
 
+  /// Pega el código de invitación desde el portapapeles en el campo de Coins.
+  ///
+  /// In es, this message translates to:
+  /// **'Pegar código'**
+  String get rewardsPaste;
+
+  /// Aviso al pegar cuando el portapapeles no trae un código ni un enlace de invitación.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay un código de invitación en el portapapeles.'**
+  String get rewardsPasteEmpty;
+
   /// No description provided for @rewardsReferralStats.
   ///
   /// In es, this message translates to:
@@ -3219,6 +3231,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Registrar código'**
   String get rewardsRegisterCode;
+
+  /// Botón que comparte el código de invitación y el enlace.
+  ///
+  /// In es, this message translates to:
+  /// **'Compartir mi código'**
+  String get rewardsShare;
+
+  /// Texto que se comparte con el código de referido y el enlace a la página de invitación.
+  ///
+  /// In es, this message translates to:
+  /// **'Usa mi código de invitación {code} en QuantFut: en Coins escríbelo en «Código de quien te invitó». Todo explicado aquí: {link}'**
+  String rewardsShareMessage(String code, String link);
 
   /// No description provided for @rewardsSignIn.
   ///

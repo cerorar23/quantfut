@@ -64,6 +64,15 @@ incluido en una suscripción no cobra monedas.
 
 El código de referido puede registrarse una sola vez en los primeros siete días
 de la cuenta. No permite auto-invitación y exige un invitador verificado anterior.
+
+**Cómo llega el código al invitado (2026-10-14).** En Coins, «Compartir mi código» envía un texto
+con el código y el enlace `https://pronosticosdeportivos.pro/i/CODIGO`. Esa página del servidor
+(`src/qf/api/invitacion.py`, en es, en, pt, fr, it y de según el navegador, sin base de datos) muestra
+el código, un botón de copiar y los pasos. El invitado instala la app, crea la cuenta, verifica el
+correo y en Coins escribe o pega el código («Pegar código» acepta el código suelto o el enlace entero).
+No hay lectura automática al instalar: eso exigiría el referrer de Google Play (solo Android y solo
+con instalación desde la tienda) y la app aún se distribuye como APK. Si `APP_DOWNLOAD_URL` está
+definida, la página añade el botón «Descargar la app».
 La recompensa llega después de completar el mínimo de ofertas confirmadas.
 Las anulaciones revierten monedas y, si corresponde, el premio del referido;
 una deuda impide seguir gastando. Los eventos repetidos no duplican el saldo.

@@ -1908,6 +1908,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get rewardsOperationDone => 'Operazione confermata.';
 
   @override
+  String get rewardsPaste => 'Incolla codice';
+
+  @override
+  String get rewardsPasteEmpty =>
+      'Non c\'è nessun codice invito negli appunti.';
+
+  @override
   String rewardsReferralStats(Object registered, Object qualified) {
     return '$registered registrati · $qualified convalidati';
   }
@@ -1917,6 +1924,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get rewardsRegisterCode => 'Registra il codice';
+
+  @override
+  String get rewardsShare => 'Condividi il mio codice';
+
+  @override
+  String rewardsShareMessage(String code, String link) {
+    return 'Usa il mio codice invito $code in QuantFut: in Coins scrivilo in «Codice di chi ti ha invitato». Tutto spiegato qui: $link';
+  }
 
   @override
   String get rewardsSignIn => 'Accedi';

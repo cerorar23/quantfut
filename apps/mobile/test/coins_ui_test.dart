@@ -190,6 +190,56 @@ void main() {
     expect(find.text('2 registrados · 1 validados'), findsOneWidget);
   });
 
+  test('el código de invitación sale del propio código, del enlace o del mensaje compartido', () {
+    expect(inviteCodeFrom(r' f9b9cbe3633f '), 'F9B9CBE3633F');
+    expect(inviteCodeFrom('https://pronosticosdeportivos.pro/i/f9b9cbe3633f'), 'F9B9CBE3633F');
+    expect(
+      inviteCodeFrom('Usa mi código de invitación QF7K2P en QuantFut. Todo aquí: https://x.pro/i/qf7k2p'),
+      'QF7K2P',
+    );
+    // una palabra suelta de un texto cualquiera no se toma por código
+    expect(inviteCodeFrom('Hola, usa QuantFut conmigo'), isNull);
+    expect(inviteCodeFrom('abc'), isNull);
+    expect(inviteCodeFrom(''), isNull);
+    expect(inviteCodeFrom('QF7K2P; DROP TABLE'), isNull);
+  });
+
+  test('el enlace y el mensaje compartidos llevan el código y la página de invitación', () async {
+    await AppLocale.instance.select('es');
+    final base = Uri.parse('https://pronosticosdeportivos.pro');
+    expect(inviteLink(base, 'QF7K2P'), 'https://pronosticosdeportivos.pro/i/QF7K2P');
+    final text = inviteShareText(AppLocale.instance.l10n, base, 'QF7K2P');
+    expect(text, contains('QF7K2P'));
+    expect(text, contains('https://pronosticosdeportivos.pro/i/QF7K2P'));
+    expect(text, contains('Código de quien te invitó'));
+    for (final code in languages) {
+      await AppLocale.instance.select(code);
+      final t = inviteShareText(AppLocale.instance.l10n, base, 'QF7K2P');
+      expect(t, allOf(contains('QF7K2P'), contains('/i/QF7K2P')), reason: code);
+    }
+  });
+
+  testWidgets('compartir y pegar: el botón de compartir está y pegar rellena el campo', (tester) async {
+    var clipboard = 'Mira esto: https://pronosticosdeportivos.pro/i/ab12cd34ef56';
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.getData') return <String, dynamic>{'text': clipboard};
+      return null;
+    });
+    addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+    await open(tester, rewards(signedIn: true));
+    expect(find.byKey(const ValueKey('coins-share')), findsOneWidget);
+    expect(find.text('Compartir mi código'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('coins-paste')));
+    await tester.pump();
+    expect(find.text('AB12CD34EF56'), findsOneWidget);
+    // sin código en el portapapeles se avisa y el campo no cambia
+    clipboard = 'nada que ver';
+    await tester.tap(find.byKey(const ValueKey('coins-paste')));
+    await tester.pump();
+    expect(find.text('No hay un código de invitación en el portapapeles.'), findsOneWidget);
+    expect(find.text('AB12CD34EF56'), findsOneWidget);
+  });
+
   testWidgets('el historial enseña 5 y el resto se despliega; los términos están plegados', (tester) async {
     await open(tester, rewards(signedIn: true));
     Finder row(String label) => find.byWidgetPredicate(

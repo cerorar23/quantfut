@@ -2661,3 +2661,5 @@ revocó sola el 14-oct).
 - [ ] Medir la calibración de tarjetas y córners en el parley (dominan los tickets y no tienen historial propio) antes de dar más peso a esos mercados.
 - [x] Seguimiento sin publicar de tarjetas (db/068, `publish/tarjetas_seg.py`, sellado desde 2026-10-15) e informe `eval/calibracion_mercados.py` de prometido frente a real por mercado (2026-10-14).
 - [ ] Revisar el informe de calibración cuando `tarjetas_seg` tenga ~100 liquidadas; decidir entonces si tarjetas necesita bloqueo, calibración suave o más peso en el parley.
+- [x] Compartir el código de referido con enlace `/i/CODIGO` (página del servidor en 6 idiomas) y «Pegar código» en Coins (2026-10-14).
+- [ ] Referrer de Google Play al instalar y App Links para el enlace de invitación, cuando la app esté en la Play Store; iOS con un servicio de terceros.

@@ -1904,6 +1904,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get rewardsOperationDone => 'Operação confirmada.';
 
   @override
+  String get rewardsPaste => 'Colar código';
+
+  @override
+  String get rewardsPasteEmpty =>
+      'Não há um código de convite na área de transferência.';
+
+  @override
   String rewardsReferralStats(Object registered, Object qualified) {
     return '$registered registrados · $qualified validados';
   }
@@ -1913,6 +1920,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get rewardsRegisterCode => 'Registrar código';
+
+  @override
+  String get rewardsShare => 'Compartilhar meu código';
+
+  @override
+  String rewardsShareMessage(String code, String link) {
+    return 'Use meu código de convite $code no QuantFut: em Coins, digite-o em “Código de quem convidou você”. Tudo explicado aqui: $link';
+  }
 
   @override
   String get rewardsSignIn => 'Inicie sessão';
