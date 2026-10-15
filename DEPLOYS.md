@@ -3,6 +3,12 @@
 Una sola regla de fondo: **lo que corre en producción es lo que dice `main`**. Todo cambio en el servidor se
 anota aquí en el mismo momento, y solo despliega una sesión a la vez.
 
+## Repositorio
+Privado en GitHub: `cerorar23/quantfut` (rama `main`). Cada push ejecuta el arnés en GitHub Actions
+(`.github/workflows/pruebas.yml`, con Postgres 16 real). **GitHub no permite proteger ramas en repos privados del
+plan gratuito**, así que la regla es por costumbre: rama + pull request + arnés verde antes de fusionar a `main`.
+El servidor todavía NO despliega desde aquí (pendiente: clave de despliegue de solo lectura y `git pull` de una etiqueta).
+
 ## Estado medido el 2026-10-15 (antes de ordenar)
 Comparando cada `.py` de `src/` contra `main`:
 
