@@ -6186,3 +6186,15 @@ se movió <=30 min antes; el emparejador usa ids de equipo, no nombres de liga, 
 ascendidos tienen su fila en otra división. Huecos de modeladas: 1.861 a 697. Quedan para tras el
 1-nov los snapshots de México, LaLiga, Serie A, Eredivisie y Primeira (~5.270 créditos) y los alias
 de Champions. Detalle: docs/f2_cierres_pinnacle_20261015.md.
+
+## 2026-10-15 — F2c: el cierre ya no incluye precios de 60 minutos
+
+Las cuotas `oddspapi_reconstructed` están, en el 74 % de los partidos, cortadas a 60 minutos del inicio
+(precio a la hora del XI). Contra ellas el modelo parece mejor que el mercado y el CLV sale inflado, y el
+reentrenamiento del 1-nov las habría usado como cierre en su ventana de validación. Decisión del usuario:
+filtrarlas antes del reentrenamiento. Una sola función (`eval.cierre.es_cierre_real`) gobierna las seis
+lecturas del cierre; se descartan 1.613 cierres de las ligas modeladas y se conservan los 739 cortados al
+inicio. Desplegado solo en el worker: la API y el árbol `~/quantfut/src` del servidor llevan versiones
+antiguas de `train.py` y `clv.py` y sobrescribirlas habría revertido código ajeno. El parche vive en el
+contenedor, no en la imagen: hay que comprobarlo antes del 1-nov si se recrea. Detalle:
+docs/f2_cierres_pinnacle_20261015.md.

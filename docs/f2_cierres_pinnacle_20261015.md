@@ -53,5 +53,28 @@ tras la renovación del 1-nov. Champions y Europa League (103) esperan alias de 
   histórico antiguo, p. ej. 2017). No las creó esta carga; las consultas que toman la última fila no
   se ven afectadas. `odds_snapshots` no admite DELETE, así que se convive con ello.
 - Las cuotas `oddspapi_reconstructed` están cortadas, en el 74 % de los casos, 60 minutos antes del
-  inicio: no son cierres. Pendiente del visto bueno del usuario: filtrarlas del cierre en
-  `train.py`, `eval/clv.py` y `publish/shadow_sharp.py`.
+  inicio: no son cierres. **Filtradas el 15-oct (autorizado por el usuario, antes del reentrenamiento
+  del 1-nov)**, ver la sección siguiente.
+
+## F2c — Filtro del cierre reconstruido
+
+`qf.eval.cierre.es_cierre_real()` es la regla única de las seis lecturas del cierre (`train.py` x2,
+`eval/clv.py` x2, `model/shadow.py`, `publish/shadow_sharp.py` x2): se excluye una fila de
+`oddspapi_reconstructed` con `mins_to_kickoff > 5`. Los 739 cortes al inicio se conservan y los 2.155 de
+60 minutos quedan fuera del mercado de referencia y del CLV (siguen en la base como precio a la hora del XI,
+útil para el futuro bloque `mercado`). Pruebas de comportamiento con Postgres real (entrenamiento, CLV y
+liquidación en sombra) y una guarda sobre el código fuente; una mutación del filtro las hace fallar.
+
+Efecto medido en producción: partidos de ligas modeladas con cierre completo de Pinnacle **49.951 → 48.338**
+(se descartan 1.613 cierres de 60 min); un partido solo con cierre T-60 ya no devuelve cierre ni en CLV ni en la
+liquidación en sombra.
+
+**Despliegue (solo worker, donde corre el reentrenamiento):** `docker cp` de `eval/cierre.py`, `eval/clv.py`,
+`model/train.py`, `model/shadow.py` y `publish/shadow_sharp.py` el 15-oct; hashes verificados contra el
+repositorio. Respaldo de lo anterior y de lo nuevo en `~/quantfut/deployments/f2c-filtro-cierre/{antes,despues}`.
+Vuelta atrás: copiar `antes/` de vuelta con `docker cp`. Cambia el contenedor, no la imagen: **un
+`docker compose up --force-recreate` o una reconstrucción lo pierde.**
+
+**La API NO se tocó:** su `train.py` y su `clv.py` (y las del árbol `~/quantfut/src`) son versiones más antiguas
+que las del repositorio y el worker (faltan `alta_prob_ext`, `tarjetas_seg`, `parley` y `xg_source`). Reconstruir
+cualquier imagen desde ese árbol sin sincronizarlo antes revertiría código.
