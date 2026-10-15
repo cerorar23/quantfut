@@ -1,0 +1,76 @@
+# Pendientes de QuantFut — lista única
+
+Actualizada el **2026-10-15**. Es el punto de entrada: aquí está lo que falta, quién lo hace y de qué depende.
+El detalle técnico de cada fase vive en `harness/tareas.md` y en `docs/`; cuando una cosa se cierre, se marca aquí y allí.
+Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en el repo o el servidor (siempre con ensayo y registro en `DEPLOYS.md`).
+
+## Calendario fijo
+| Fecha | Qué ocurre |
+|---|---|
+| ~26-oct | Termina la prueba Business de Sentry: confirmar la retención del plan |
+| **1-nov, 03:00 UTC** | Reentrenamiento automático (~5 h) y reset de los 20.000 créditos de The Odds API |
+| **2-nov, 9:00 (hora local)** | Revisión automática de solo lectura (tarea programada `revisar-reentrenamiento-1-nov`) |
+| ~10-nov | El CLV en sombra llega a 300 observaciones (15-oct: 142; `ev_close` +3,46 %, IC95 +1,35 a +5,67) |
+
+## 1. Seguridad (Tú, ~15 minutos)
+- [ ] Activar la autenticación en dos pasos en la cuenta de GitHub `cerorar23`.
+- [ ] **Rotar la clave de The Odds API** (apareció en una salida de comandos de una sesión).
+- [ ] Restringir la clave de Firebase de la app por paquete en la consola de Google (`google-services.json` está en el repo).
+- [ ] Sentry: retención del plan, ajustes de organización (IPs, Data Scrubber, 2FA) y probar en un dispositivo real.
+
+## 2. Hasta el 1-nov: no tocar el motor
+- [ ] Claude: vigilar que el reentrenamiento corra limpio (worker idéntico a `main`, con el filtro de cierres de 60 min).
+
+## 3. Motor y datos (Claude)
+Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. Una señal solo entra si gana fuera de muestra.
+
+| Fase | Estado | Depende de |
+|---|---|---|
+| F0 archivo a tablas principales | **Hecha** (en producción) | — |
+| F1 capa de ajuste y línea base | **Hecha**: el XI simple pasa la puerta (ΔRPS −0,0013; 9 de 12 ligas) | Reejecutar tras el 1-nov |
+| F2 cierres de Pinnacle | A medias: faltan 2.103 (697 en ligas modeladas; antes 6.185) | Créditos tras el 1-nov |
+| **F7 sello tardío** | Sin empezar. **Siguiente fase**: deja entrar al XI al motor y usa cuotas de última hora; toca la cadena de hashes | Diseño tras el 1-nov |
+| F3 bajas como minutos perdidos | Sin empezar (poca evidencia: 173 partidos con consulta previa al inicio) | F7 |
+| F6 clima y sede | Decidido (Copernicus ERA5 para historial; Open-Meteo Standard en vivo y altitud); sin código | Guardar token cifrado |
+| F5 árbitro | Sin empezar; datos de F0 listos | Unificar identidades |
+| F4 puente FotMob/API-Football y XI con valor | Sin empezar; las variantes con valor hoy no pasan la puerta | F7 |
+
+Tareas sueltas:
+- [ ] Comprar los **527 snapshots** de The Odds API (~5.270 créditos, tras el reset): `python -m qf.ingest.cierres_odds_api fetch ...`. Necesita tu visto bueno.
+- [ ] Registrar alias de Champions y Europa League (103 partidos; Bayern München, Internazionale Milano, LOSC Lille...). Escribe en la tabla de alias: con tu visto bueno.
+- [ ] Bloque `mercado` (movimiento de cuotas): cuando haya muestra propia.
+- [ ] Resolver 379 identidades de copas y 21 conflictos; unos 250 huecos de tiros y córners.
+- [ ] **Tú decides:** fuente nueva para los **1.222 huecos de xG** (Serie B 588, LaLiga 2 236, Argentina 208, Ligue 2 144). Otra sesión está probando LanusStats y 365Scores para esto (15-oct): su resultado define la decisión.
+
+## 4. Orden del servidor (Claude, con ensayo; la API después del 1-nov)
+- [ ] Alinear la **API** con `main` (24 archivos distintos; imagen `quantfut-api-admob:20261015a`). Es lo que ven tus clientes.
+- [ ] Corregir `docker-compose.yml` del repo (fija una imagen antigua de la API, `tapjoy:20261012-msg`).
+- [ ] Corregir `requirements.txt` de `~/quantfut` (sin `cryptography` ni `firebase-admin`) y sincronizar `~/quantfut/src`, que está desactualizada.
+- [ ] Que el servidor despliegue desde GitHub (clave de despliegue de solo lectura y `git pull` de una etiqueta).
+- [ ] Ampliar `scripts/deploy.sh` con `construir`, `ensayo` y `desplegar` (hoy tiene `estado` y `congelar`).
+- [ ] **Una carpeta de trabajo por sesión** (`git worktree`): el 15-oct dos sesiones compartieron carpeta y una comiteó dentro de la rama de la otra.
+- [ ] Limpiar entradas desactualizadas de `harness/tareas.md` (por ejemplo, dice «3.267 cierres pendientes»; hoy son 2.103).
+- Ya hecho: worker alineado con `main` el 15-oct (0 archivos distintos); vuelta atrás `en-ejecucion-20261015`.
+
+## 5. Para poder vender picks
+| Qué | Responsable | Nota |
+|---|---|---|
+| Elegir **procesador de pago** | Tú | Sin esto no hay cobros; luego checkout + webhook firmado e idempotente |
+| **Avisos legales** (+18, juego responsable, privacidad/cookies, términos) y **revisión de un profesional habilitado** | Tú | Más: DPA de Contabo y Proton, atender el buzón de contacto |
+| **Publicación de la cadena: comprometer-revelar** | Claude, con tu decisión | **Prioridad alta.** El lote lleva los picks de pago; publicar el JSON antes de los partidos los regala. Publicar solo el hash antes y el JSON después del último partido, **antes** de configurar `CHAIN_GIT_REMOTE` (hoy vacío) |
+| Quitar rutas internas de `/model-card` y añadir `Content-Security-Policy` | Claude | Prioridad baja |
+| Puerta comercial (CLV ≥ 300) | Se cumple sola (~10-nov) | Aun así `PUBLISH_PICKS_ENABLED` está en 0: se enciende con tu decisión |
+
+## 6. App y otras líneas (otras sesiones; detalle en `harness/tareas.md`)
+- [ ] Cuentas de editor RevU/BitLabs para recompensas; evaluar Tapjoy/Unity, ayeT, adjoe y Torox tras el piloto.
+- [ ] iOS: necesita Mac y Apple Developer (APNs y firma).
+- [ ] Validar el acceso con Google y la entrega FCM con un usuario real; activar `FIREBASE_AUTH_ENABLED` cuando lo decidas.
+- [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
+
+## Decisiones que dependen de ti
+1. Procesador de pago.
+2. Fuente para los 1.222 xG que faltan.
+3. Comprar los 527 snapshots (~5.270 créditos) tras el 1-nov.
+4. Registrar los alias de Champions y Europa League.
+5. Pasar la cadena a comprometer-revelar y cuándo encender `PUBLISH_PICKS_ENABLED`.
+6. Revisión legal por un profesional habilitado.
