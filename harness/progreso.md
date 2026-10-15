@@ -1,5 +1,36 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-15 — Plan de mejora de los tres motores: el contexto tiene que llegar a los picks
+
+El documento de recomendaciones del usuario se contrastó con el código: F1–F7 ya
+cubren XI, bajas, árbitro, clima/sede y la revisión con el once; el anclaje de B
+usa 1X2 más la línea de goles con ρ fijo (identificable) y parley/escalera no
+repiten partido. Lo que faltaba es el porqué de fondo: los picks vendidos salen
+de B, así que mejorar A sin una mezcla aprendida (F8) no cambia nada vendido, y
+una probabilidad mejor no prueba un pick mejor sin evaluarlo a volumen constante
+(F9). Por eso F9 va antes que F8 y ambas antes de F3–F6. Medido en producción:
+alta probabilidad acierta lo prometido pero pierde a cuota de referencia
+(−3,0 % base, −7,5 % ampliada); es la línea de acierto decidida el 2026-10-05, y
+solo información ajena al mercado puede cambiar ese signo. Por decisión del
+usuario no se toca el motor antes del 1-nov. Spec:
+docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md.
+
+## 2026-10-15 — Revisión del plan: A se juzga contra B del mismo momento
+
+La revisión del usuario corrige el orden: F8 se evalúa en paralelo con F9 y se
+activa al final, porque una mezcla no evita el doble conteo por sí sola y ganar a
+un B de las 03:00 puede ser solo ventaja de hora (F7). Por eso F9 separa el efecto
+del horario, del modelo y de la selección. La regla «≥2 ligas» queda como filtro
+inicial: con muchas variantes probadas hace falta magnitud, estabilidad y
+registro de lo probado. Descanso/calendario sube por coste bajo. Hallazgo de
+datos: el archivo FotMob ya trae XI, minutos, bajas, entrenador, ronda y estilos
+de 2024 en adelante (sin pasar a las tablas del motor, donde el XI está al 0 %
+antes de 25-26); lo que de verdad falta descargar es el calendario de copas y
+otras competiciones, altitud y ERA5. El 91/223 con cuota de referencia está
+sesgado porque doble oportunidad y hándicap se capturan desde el 12 y 14-oct. No
+se compran cuotas históricas a T-60 (≈14.000–31.000 créditos por temporada): se
+evalúa hacia delante con la captura propia.
+
 ## 2026-10-15 — Carga autorizada de OddsPapi: cierre utilizable y referencia separados
 
 Confirmados 2.918 cierres reconstruidos (8.754 cuotas), más 25 referencias solo
