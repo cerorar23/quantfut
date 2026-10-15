@@ -2662,4 +2662,54 @@ revocó sola el 14-oct).
 - [x] Seguimiento sin publicar de tarjetas (db/068, `publish/tarjetas_seg.py`, sellado desde 2026-10-15) e informe `eval/calibracion_mercados.py` de prometido frente a real por mercado (2026-10-14).
 - [ ] Revisar el informe de calibración cuando `tarjetas_seg` tenga ~100 liquidadas; decidir entonces si tarjetas necesita bloqueo, calibración suave o más peso en el parley.
 - [x] Compartir el código de referido con enlace `/i/CODIGO` (página del servidor en 6 idiomas) y «Pegar código» en Coins (2026-10-14).
-- [ ] Referrer de Google Play al instalar y App Links para el enlace de invitación, cuando la app esté en la Play Store; iOS con un servicio de terceros.
+
+## Referidos al subir la app a la Play Store (anotado el 2026-10-14, para ese día)
+
+**Estado hoy.** El código se comparte con `https://pronosticosdeportivos.pro/i/CODIGO` (página del
+servidor, 6 idiomas, `api/invitacion.py`) y el invitado lo escribe o pega en Coins («Pegar código»
+acepta el código, el enlace o el mensaje entero) dentro de los 7 primeros días de su cuenta. La app
+aún se distribuye como APK y no lee nada al instalarse. Reglas del servidor sin cambios: invitador
+verificado y anterior, un código por invitado, no auto-invitación; los premios (+200 invitador,
++100 invitado) se dan cuando el invitado completa ofertas confirmadas por ≥100 monedas
+(`rewards.qualify_referral`) y se revierten si las ofertas se anulan. Detalle: `progreso.md`
+(2026-10-14, «Compartir el código de referido…») y
+`apps/mobile/docs/APP_REAL_MONEDAS_REFERIDOS_20261011.md`.
+
+**Qué se hace el día que haya app en la Play Store** (empezar con una instalación REAL desde una pista
+de pruebas internas: la lectura del referrer no se puede probar sin Play):
+
+- [ ] Poner `APP_DOWNLOAD_URL` en el `.env` de la API con el enlace de la ficha
+      (`https://play.google.com/store/apps/details?id=com.saptain.quantfut`). La página `/i/CODIGO`
+      enseña entonces «Descargar la app». Cambiarlo exige recrear solo el contenedor de la API
+      (`up -d --no-deps api`); el worker no lo lee.
+- [ ] En `api/invitacion.py`: si la URL es de Play, añadir `&referrer=invite%3DCODIGO` (codificado) para
+      que el código viaje con la instalación. Prueba: el enlace generado lleva el código bien
+      codificado y no se añade nada a URLs que no sean de Play.
+- [ ] En la app, leer el referrer de instalación de Google Play en el primer arranque (paquete
+      `android_play_install_referrer` o equivalente; solo Android y solo si se instaló desde Play), guardar
+      el código en el teléfono y registrarlo SOLO cuando la cuenta esté creada y con el correo
+      verificado (la API exige `verified_account`), dentro de los 7 días. Si el servidor lo rechaza,
+      dejar el campo de Coins relleno para que el usuario lo vea. Sin permisos nuevos que haya que
+      declarar; sí revisar la sección de seguridad de datos de la ficha.
+- [ ] App Links: servir `/.well-known/assetlinks.json` con la huella SHA-256 de la clave de firma FINAL
+      de Play (con Play App Signing NO es la de `C:/1. llave/llave.jks`: se copia de la Play Console →
+      Integridad de la app), `intent-filter` con `autoVerify` para `/i/*` en el manifiesto y leer el
+      enlace al abrir (paquete `app_links`). Efecto: quien ya tiene la app abre el enlace directo en
+      Coins con el código relleno. Registrar también la huella en Firebase (ya se hizo con las otras claves).
+- [ ] Caddy/Cloudflare: comprobar que `/.well-known/assetlinks.json` llega sin caché agresiva y con
+      `Content-Type: application/json`.
+- [ ] Probar el recorrido completo con dos cuentas reales: A comparte, B instala desde la pista de
+      pruebas, crea cuenta, verifica, completa ofertas por ≥100 y comprobar +200/+100 en el
+      movimiento de cada una y en `/control/recompensas`.
+- [ ] Traducciones en los 6 idiomas de cualquier texto nuevo de la app (regla del proyecto) y nota en
+      `progreso.md` con lo medido.
+
+**No cubierto por Play (decisión pendiente).**
+- [ ] iOS: no existe un referrer equivalente. Opciones: servicio de terceros (Branch, AppsFlyer, Adjust),
+      que añade SDK y política de privacidad, o dejarlo manual como hoy. Firebase Dynamic Links está
+      retirado por Google. Decidir cuando haya fecha para iOS.
+- [ ] Instalaciones por APK suelto: no traen referrer; seguirán con «Pegar código».
+
+**Límites a recordar.** Un código que llega por referrer es tan falsificable como uno escrito: lo que
+protege es la condición de completar ofertas. El referrer de Play solo se conserva unos 90 días y
+puede tardar en estar disponible tras instalar; reintentar en los primeros arranques.

@@ -6044,3 +6044,12 @@ la imagen previa en `~/quantfut/releases/invitacion-20261014/`. Comprobado en el
 Cloudflare): `/i/f9b9cbe3633f` → 200 con el código en mayúsculas; `Accept-Language` en/de cambian el
 idioma; `/i/abc` y un código con `<script>` → 404 sin repetirlo; `/static/invitacion.js` 200;
 cabeceras `no-store`, CSP `script-src 'self'`, `noindex` y `no-referrer`.
+
+## 2026-10-14 — Plan anotado: referidos cuando la app suba a la Play Store
+
+A petición del titular, el plan completo quedó en `tareas.md` (sección «Referidos al subir la app a la
+Play Store»): `APP_DOWNLOAD_URL` + parámetro `referrer` en el enlace de Play, lectura del referrer en
+la app (solo Android y solo desde la tienda, registrando el código al verificar el correo), App Links con
+`assetlinks.json` usando la huella de la clave de firma final de Play, prueba con dos cuentas reales y
+las decisiones pendientes (iOS, instalaciones por APK). No se implementa antes de tener una pista de
+pruebas de Play: el referrer no se puede probar sin instalar desde la tienda.
