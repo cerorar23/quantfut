@@ -691,5 +691,11 @@
   "welcomeNext": "Suivant",
   "welcomeScreenOf": "Écran {page} sur {total}",
   "welcomeSkip": "Passer",
-  "welcomeStart": "Commencer"
+  "welcomeStart": "Commencer",
+  "updateTitle": "Mise à jour disponible",
+  "updateRequired": "Mettez QuantFut à jour pour continuer.",
+  "updateOptional": "Une nouvelle version de QuantFut est disponible.",
+  "updateNow": "Mettre à jour",
+  "updateLater": "Plus tard",
+  "updateStoreError": "Impossible d’ouvrir la boutique. Réessayez."
 }

@@ -4270,6 +4270,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Empezar'**
   String get welcomeStart;
+
+  /// No description provided for @updateTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualización disponible'**
+  String get updateTitle;
+
+  /// No description provided for @updateRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualiza QuantFut para continuar.'**
+  String get updateRequired;
+
+  /// No description provided for @updateOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Hay una nueva versión de QuantFut disponible.'**
+  String get updateOptional;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar ahora'**
+  String get updateNow;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Más tarde'**
+  String get updateLater;
+
+  /// No description provided for @updateStoreError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir la tienda. Inténtalo de nuevo.'**
+  String get updateStoreError;
 }
 
 class _AppLocalizationsDelegate

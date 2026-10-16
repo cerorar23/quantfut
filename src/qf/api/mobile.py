@@ -16,7 +16,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from psycopg.errors import UndefinedTable
 
 from . import console, cuentas, fichas, panel, partido_mercados, rewards
-from ..comercial import suscripciones
+from ..comercial import suscripciones, mobile_updates
 from ..comercial.auditoria import audit
 from ..db import conn, query, query_one
 from ..config import settings
@@ -62,7 +62,7 @@ def features() -> dict:
 
 
 def config() -> dict:
-    return {'features': features(), 'probability_min': HIGH_MIN,
+    return {**mobile_updates.configuration(), 'features': features(), 'probability_min': HIGH_MIN,
             'probability_max': HIGH_MAX, 'high_probability_free_per_market': 1,
             'high_probability_free_max': FREE_MAX,
             'high_probability_free_quote_max': FREE_QUOTE_MAX,
@@ -527,7 +527,36 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
 @router.get('/control/configuracion-app', include_in_schema=False)
 def configuration_page(request: panel.Request, user: str = Depends(console.require_console)):
     return panel._render(request, 'mobile_config.html', user, 'mobile',
-                         sections=SECTIONS, features=features())
+                         sections=SECTIONS, features=features(), updates=mobile_updates.configuration())
+
+
+@router.post('/control/actualizaciones-app', include_in_schema=False)
+def updates_save(request: Request, csrf: str = Form(''),
+                 app_version_android: str = Form('', max_length=60),
+                 app_version_ios: str = Form('', max_length=60),
+                 min_build_android: int = Form(0), min_build_ios: int = Form(0),
+                 force_update_app: str = Form(''),
+                 app_link: str = Form('', max_length=500),
+                 ios_app_link: str = Form('', max_length=500),
+                 user: str = Depends(console.require_console)):
+    panel._check_post(request, user, csrf)
+    if force_update_app not in ('', '1'):
+        raise HTTPException(422, 'Estado inválido')
+    values = dict(app_version_android=app_version_android.strip(),
+                  app_version_ios=app_version_ios.strip(), min_build_android=min_build_android,
+                  min_build_ios=min_build_ios, force_update_app=force_update_app == '1',
+                  app_link=app_link.strip(), ios_app_link=ios_app_link.strip())
+    try:
+        mobile_updates.validate(values)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    with conn() as c:
+        c.execute('INSERT INTO mobile_update_settings (id) VALUES (1) ON CONFLICT DO NOTHING')
+        c.execute('UPDATE mobile_update_settings SET '
+                  + ', '.join(f'{key}=%s' for key in values)
+                  + ', updated_at=now() WHERE id=1', tuple(values.values()))
+        audit(c, panel._actor(request, user), 'mobile_updates', detail=values)
+    return panel._back('/control/configuracion-app', 'mobile_guardado')
 
 
 @router.post('/control/configuracion-app/{section}', include_in_schema=False)

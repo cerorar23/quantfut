@@ -2582,4 +2582,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Los geht\'s';
+
+  @override
+  String get updateTitle => 'Update verfügbar';
+
+  @override
+  String get updateRequired => 'Aktualisiere QuantFut, um fortzufahren.';
+
+  @override
+  String get updateOptional => 'Eine neue Version von QuantFut ist verfügbar.';
+
+  @override
+  String get updateNow => 'Jetzt aktualisieren';
+
+  @override
+  String get updateLater => 'Später';
+
+  @override
+  String get updateStoreError =>
+      'Der Store konnte nicht geöffnet werden. Versuche es erneut.';
 }
