@@ -2,6 +2,31 @@
 {% block title %}Configuración de la app{% endblock %}
 {% block heading %}Secciones de la app{% endblock %}
 {% block content %}
+<form class="card mb-4" method="post" action="/control/actualizaciones-app">
+  <div class="card-body">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h3 class="card-title">Actualizaciones de la app</h3>
+    <p>El build es el número después de +. Un mínimo de 0 permite todas las versiones. Publica primero la versión en la tienda antes de exigirla.</p>
+    <div class="row g-3">
+      {% for platform, title, link in [('android', 'Android', 'app_link'), ('ios', 'iOS', 'ios_app_link')] %}
+      <div class="col-md-6">
+        <label class="form-label" for="version-{{ platform }}">Última versión {{ title }}</label>
+        <input class="form-control mb-2" id="version-{{ platform }}" name="app_version_{{ platform }}" value="{{ updates['app_version_' ~ platform] }}" placeholder="1.0.0+71" maxlength="60">
+        <label class="form-label" for="min-{{ platform }}">Build mínimo permitido {{ title }}</label>
+        <input class="form-control mb-2" type="number" min="0" max="2147483647" id="min-{{ platform }}" name="min_build_{{ platform }}" value="{{ updates['min_build_' ~ platform] }}" required>
+        <label class="form-label" for="link-{{ platform }}">Enlace a la tienda {{ title }}</label>
+        <input class="form-control" type="url" id="link-{{ platform }}" name="{{ link }}" value="{{ updates[link] }}" maxlength="500">
+      </div>
+      {% endfor %}
+    </div>
+    <label class="form-check form-switch mt-3">
+      <input class="form-check-input" type="checkbox" name="force_update_app" value="1" {% if updates.force_update_app %}checked{% endif %}>
+      <span class="form-check-label">Exigir la última versión en ambas plataformas</span>
+    </label>
+    <p class="text-secondary">Con el interruptor apagado solo se bloquean los builds inferiores al mínimo; las demás actualizaciones son opcionales.</p>
+  </div>
+  <div class="card-footer"><button class="btn btn-primary" type="submit">Guardar actualizaciones</button></div>
+</form>
 <p>Activa o desactiva cada sección. Al desactivarla se oculta su contenido y aparece la leyenda indicada. Activarla no ejecuta el entrenamiento ni modifica las puertas de publicación del modelo.</p>
 <div class="row row-cards">
 {% for key, title in sections.items() %}

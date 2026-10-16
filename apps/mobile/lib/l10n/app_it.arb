@@ -691,5 +691,11 @@
   "welcomeNext": "Avanti",
   "welcomeScreenOf": "Schermata {page} di {total}",
   "welcomeSkip": "Salta",
-  "welcomeStart": "Inizia"
+  "welcomeStart": "Inizia",
+  "updateTitle": "Aggiornamento disponibile",
+  "updateRequired": "Aggiorna QuantFut per continuare.",
+  "updateOptional": "È disponibile una nuova versione di QuantFut.",
+  "updateNow": "Aggiorna ora",
+  "updateLater": "Più tardi",
+  "updateStoreError": "Impossibile aprire lo store. Riprova."
 }

@@ -17,6 +17,7 @@ def row(i, prob=.8, price=1.4):
 
 @pytest.fixture
 def delivery(monkeypatch):
+    monkeypatch.setattr(mobile.mobile_updates, 'configuration', lambda: dict(mobile.mobile_updates.DEFAULTS))
     flags={k:{'enabled':True,'message':'Modelo en entrenamiento'} for k in mobile.SECTIONS}
     monkeypatch.setattr(mobile,'features',lambda:flags)
     monkeypatch.setattr(mobile.alta_prob_datos,'informe_publico',lambda:{'estado':'activa','motivos':[], 'proximos':[], 'historial':{'n':0}})

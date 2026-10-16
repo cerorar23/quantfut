@@ -2568,4 +2568,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Get started';
+
+  @override
+  String get updateTitle => 'Update available';
+
+  @override
+  String get updateRequired => 'Update QuantFut to continue.';
+
+  @override
+  String get updateOptional => 'A new version of QuantFut is available.';
+
+  @override
+  String get updateNow => 'Update now';
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateStoreError => 'Could not open the store. Please try again.';
 }

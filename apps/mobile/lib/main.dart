@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'core/firebase_startup.dart';
+import 'core/app_update.dart';
 import 'core/firebase_services.dart';
 import 'core/firebase_access.dart';
 import 'l10n/app_locale.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
 
 class QuantFutApp extends StatelessWidget {
   const QuantFutApp({super.key});
+  static final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) => MultiProvider(
@@ -28,6 +30,11 @@ class QuantFutApp extends StatelessWidget {
     child: ListenableBuilder(
       listenable: AppLocale.instance,
       builder: (context, _) => MaterialApp(
+        navigatorKey: _navigatorKey,
+        builder: (context, child) => AppUpdateGate(
+          navigatorKey: _navigatorKey,
+          child: child ?? const SizedBox.shrink(),
+        ),
         theme: liveTheme(),
         locale: AppLocale.instance.locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
