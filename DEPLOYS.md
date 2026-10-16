@@ -85,6 +85,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
   nuevo `APP_DOWNLOAD_URL`; `eval/alta_prob_calibracion.py`: ampliación aditiva de un script de evaluación sin cron;
   `ingest/history_fd.py` y `model/lineup_challenger.py`: trabajo de F1/F2, probado). El resto es código de la API.
 
+### 2026-10-16 · Credenciales de Google Play y RTDN — API
+- Estado final autorizado: `STORE_PURCHASES_ENABLED=1`, misma imagen, solo API recreada. Respaldo previo: `deployments/play-credentials-20261016/docker-compose.before-enable.yml`. RTDN validado con 204; consulta real de QuantFut Plus por Publisher API con 200 y tres planes ACTIVE. Compra interna `sandbox` y acceso VIP comprobados. Meta no activado por esta sesión.
+- Conservada imagen `quantfut-api-admob:20261015b`; recreada solo API sin build. Worker intacto.
+- JSON privado con modo 600 en `/home/qf/.config/quantfut/google-play.json`, montado solo lectura en `/run/secrets/quantfut-play.json`.
+- Configuradas variables PLAY de cuenta, paquete y OIDC; instalación inicial con compras apagadas y posterior activación comprobada.
+- Respaldo de compose previo: `deployments/play-credentials-20261016/docker-compose.before.yml` en servidor.
+- Producción 1.0.0 y ficha enviadas a revisión de Google; todavía no se confirma disponibilidad pública.
+
 ### Trampas conocidas (no repetirlas)
 - **`requirements.txt` del servidor no tiene `cryptography` ni `firebase-admin`** (el de `main` sí). El worker en ejecución
   los tiene instalados a mano. Reconstruir una imagen desde `~/quantfut` tal cual **perdería `cryptography`**, que descifra
