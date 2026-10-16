@@ -20,7 +20,7 @@ def _client(monkeypatch):
     for name in ("cuentas", "suscripciones", "operacion"):
         monkeypatch.setattr(metricas, name, lambda: {})
     for name in ("ingresos_30d", "serie_diaria", "ultimas_cuentas"):
-        monkeypatch.setattr(metricas, name, lambda: [])
+        monkeypatch.setattr(metricas, name, lambda **_kw: [])
     monkeypatch.setattr(metricas, "auditoria", lambda **_kw: [])
     return TestClient(app)
 
@@ -55,6 +55,30 @@ def test_panel_falla_cerrado_sin_configuracion(monkeypatch):
     monkeypatch.delenv("ADMIN_CONSOLE_USER", raising=False)
     monkeypatch.delenv("ADMIN_CONSOLE_PASSWORD_HASH", raising=False)
     assert _client(monkeypatch).get("/control").status_code == 503
+
+
+def test_dashboard_periodos(monkeypatch):
+    client = _client(monkeypatch)
+    client.app.dependency_overrides[console.require_console] = lambda: "operador"
+    consultados = []
+
+    def serie(**kwargs):
+        consultados.append(kwargs["periodo"])
+        return [{"dia": "2026-10-16", "altas": 3, "suscripciones": 2}]
+
+    monkeypatch.setattr(metricas, "serie_diaria", serie)
+    for valor, esperado, titulo in (
+        ("30d", "30d", "30 días"),
+        ("mes", "mes", "Mes actual"),
+        ("semana", "semana", "Semana actual"),
+        ("invalido", "30d", "30 días"),
+    ):
+        response = client.get("/control", params={"periodo": valor})
+        assert response.status_code == 200
+        assert consultados[-1] == esperado
+        assert f"Altas de cuentas y planes · {titulo}" in response.text
+        assert '"altas": 3' in response.text
+        assert response.text.count('aria-current="true"') == 1
 
 
 def test_panel_exige_credenciales_y_escapa_datos(monkeypatch):

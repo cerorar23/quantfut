@@ -45,13 +45,19 @@ def ingresos_30d() -> list[dict]:
            GROUP BY currency ORDER BY currency""")
 
 
-def serie_diaria(dias: int = 30) -> list[dict]:
+def serie_diaria(dias: int = 30, *, periodo: str = "30d") -> list[dict]:
+    """Altas por día: últimos N días, mes actual o semana desde el lunes."""
     return query(
         """SELECT d::date AS dia,
                   (SELECT count(*) FROM accounts a WHERE a.created_at::date = d::date) AS altas,
                   (SELECT count(*) FROM subscriptions s WHERE s.created_at::date = d::date) AS suscripciones
-           FROM generate_series(current_date - (%s - 1), current_date, interval '1 day') AS d
-           ORDER BY d""", (dias,))
+           FROM generate_series(
+               CASE %s
+                 WHEN 'mes' THEN date_trunc('month', current_date)::date
+                 WHEN 'semana' THEN date_trunc('week', current_date)::date
+                 ELSE current_date - (%s - 1)
+               END, current_date, interval '1 day') AS d
+           ORDER BY d""", (periodo, dias))
 
 
 def operacion() -> dict:

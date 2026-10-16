@@ -151,12 +151,17 @@ def _safe(fn, default=None):
 @router.get("")
 @router.get("/")
 def dashboard(request: Request, user: str = Depends(console.require_console)):
+    periodo = request.query_params.get("periodo", "30d")
+    if periodo not in {"30d", "mes", "semana"}:
+        periodo = "30d"
+    periodo_titulo = {"30d": "30 días", "mes": "Mes actual", "semana": "Semana actual"}[periodo]
     return _render(request, "dashboard.html", user, "dashboard",
                    cuentas=_safe(metricas.cuentas, {}),
                    subs=_safe(metricas.suscripciones, {}),
                    ingresos=_safe(metricas.ingresos_30d, []),
                    op=_safe(metricas.operacion, {}),
-                   serie=_safe(metricas.serie_diaria, []),
+                   serie=_safe(lambda: metricas.serie_diaria(periodo=periodo), []),
+                   periodo=periodo, periodo_titulo=periodo_titulo,
                    ultimas=_safe(metricas.ultimas_cuentas, []),
                    acciones=_safe(lambda: metricas.auditoria(limit=8), []))
 

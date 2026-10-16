@@ -39,9 +39,17 @@
 <div class="row row-cards mt-1">
   <div class="col-lg-8">
     <div class="card">
-      <div class="card-header"><h3 class="card-title">Altas de cuentas y planes · 30 días</h3></div>
+      <div class="card-header flex-wrap gap-2">
+        <h3 class="card-title">Altas de cuentas y planes · {{ periodo_titulo }}</h3>
+        <nav class="ms-auto d-flex gap-1" aria-label="Periodo de la gráfica">
+          {% for valor, etiqueta in [('30d', '30 días'), ('mes', 'Mes'), ('semana', 'Semana')] %}
+          <a href="/control?periodo={{ valor }}" class="btn btn-sm {{ 'btn-primary' if periodo == valor else 'btn-outline-secondary' }}"{% if periodo == valor %} aria-current="true"{% endif %}>{{ etiqueta }}</a>
+          {% endfor %}
+        </nav>
+      </div>
       <div class="card-body">
-        <div class="qf-chart"><canvas id="grafico-serie" aria-label="Altas diarias de cuentas y planes" role="img"></canvas></div>
+        <p class="text-secondary small">{{ {'30d': 'Últimos 30 días, incluido hoy.', 'mes': 'Desde el primer día del mes hasta hoy.', 'semana': 'Desde el lunes de esta semana hasta hoy.'}[periodo] }}</p>
+        <div class="qf-chart"><canvas id="grafico-serie" aria-label="Altas diarias de cuentas y planes · {{ periodo_titulo }}" role="img"></canvas></div>
         <script type="application/json" id="serie-datos">{{ serie|tojson }}</script>
       </div>
     </div>
