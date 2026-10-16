@@ -34,6 +34,12 @@ Android: compilación firmada `1.0.1+2` terminada y firma verificada. AAB: `apps
 
 Comando reproducible: `flutter build appbundle --release --no-pub --build-name=1.0.1 --build-number=2`.
 
-Google Play registra previamente el build 1 en canales interno y producción. El AAB nuevo aún no se ha subido: la revisión automática del entorno exige autorización explícita del titular para publicar en Google Play, canales interno y producción de `com.saptain.quantfut`. Se solicitó esa autorización. El envío preparado se detiene si hay una revisión previa en curso.
+Google Play registra previamente el build 1 en canales interno y producción. El titular autorizó explícitamente la subida y publicación de `com.saptain.quantfut` en los canales interno y producción.
+
+Resultado del intento por API: creación de edit 200, subida del bundle 200 (build y SHA-256 comprobados), preparación de canales interno y producción 200, validación final 403 `The caller does not have permission`. No se ejecutó commit: la versión 2 no está publicada en ninguno de los dos canales. Evidencia operativa: `play-publish-result.txt` en la carpeta de la release del servidor.
+
+Alternativa por navegador: se accedió con la sesión existente de Saptain Ldt. La app muestra revisión en curso de la publicación anterior. Se creó un borrador nuevo de producción (`releases/2/prepare`), pero el selector de archivos no genera el evento necesario para subir el AAB desde la automatización. La biblioteca del borrador no ofrece el paquete nuevo. El borrador permanece abierto para continuar; no se canceló la revisión previa ni se ampliaron permisos.
+
+Pendiente: completar la carga/publicación desde Play Console con la cuenta del titular, o conceder a la cuenta de servicio los permisos adecuados para publicar y reintentar. Esa ampliación de permisos no se realizó.
 
 iOS: el código está integrado, pero este entorno es Windows; no se puede generar ni firmar un IPA sin macOS/Xcode y las credenciales de distribución correspondientes.
