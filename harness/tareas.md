@@ -2897,3 +2897,8 @@ Google Sign-In ya existe: no se rehace.
 - [x] `hashchain.py`: al repo público sube solo el compromiso (recibos y `LEDGER.md`); el JSON del lote sube cuando todos los partidos que cita terminaron y pasaron 4 h (tope de 7 días). `verify` recorre por recibos y cuenta aparte los lotes sin revelar. Pruebas: `tests/test_hashchain_revelado.py`. `CHAIN_GIT_REMOTE` sigue vacío: aún no se publica nada.
 - [ ] Antes de configurar `CHAIN_GIT_REMOTE`: desplegar este cambio (ensayo + `DEPLOYS.md`) y comprobar `verify` contra los lotes reales del servidor.
 - [ ] F7: plan en `docs/superpowers/plans/2026-10-18-f7-sello-tardio.md` (borrador; tres decisiones del titular al final).
+
+## Web: rediseño CYBERCORE en producción (2026-10-18)
+- [x] Integrar CYBERCORE CSS 0.3.0, adaptar Cyberpunk CSS, conservar el logo previo y validar 25/25 pruebas del frontend.
+- [x] Fusionar PR #12 y hotfix de assets FastAPI PR #13 con los arneses de GitHub aprobados.
+- [x] Desplegar solo la API desde una imagen derivada de la que estaba en ejecución; comprobar dominio, hashes, modelo y cadena; documentar reversión.

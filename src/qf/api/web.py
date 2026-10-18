@@ -23,6 +23,19 @@ def styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "styles.css", media_type="text/css")
 
 
+@router.get("/future.css")
+def future_styles() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "future.css", media_type="text/css")
+
+
+@router.get("/vendor/cybercore/cybercore.min.css")
+def cybercore_styles() -> FileResponse:
+    return FileResponse(
+        FRONTEND_DIR / "vendor" / "cybercore" / "cybercore.min.css",
+        media_type="text/css",
+    )
+
+
 @router.get("/app.js")
 def script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "app.js", media_type="text/javascript")

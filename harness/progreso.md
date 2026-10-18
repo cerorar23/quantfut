@@ -6427,3 +6427,13 @@ Verificacion final retrospectiva: arnes general1300aprobados/88omitidos/2avisos1
 Decisión: al repo público va solo el compromiso (recibo y `LEDGER.md`); el JSON del lote sube cuando todos los partidos que cita constan terminados y pasaron 4 h (tope de 7 días para aplazados). Por qué: el lote lleva los picks de pago y publicarlo antes de los partidos los regala. El hash no cambia, así que ningún lote ya sellado se altera; `verify` ahora recorre por recibos y cuenta aparte los lotes sin revelar, y sigue detectando JSON alterado y cadena rota. `seal()` revela los pendientes al inicio de cada pasada, sin tocar `daily.py` ni el orden predecir → seleccionar → sellar → publicar. `CHAIN_GIT_REMOTE` sigue vacío: falta desplegar con ensayo. Pruebas: `tests/test_hashchain_revelado.py` (8) y suite completa 1308 aprobadas / 88 omitidas.
 Hallazgo para F7 (`docs/superpowers/plans/2026-10-18-f7-sello-tardio.md`): con varios lotes por día, los cuatro lectores que unen `prediction_batches` por fecha contarían cada fila varias veces; hay que filtrarlos por `batch_kind = 'diario'` en el mismo cambio.
 Medición contra producción (solo lectura): cierres de Pinnacle faltantes en ligas modeladas = 697 (coincide con PENDIENTES); el CLV en sombra de +3,46 % (n=142) no se reproduce con ninguna fuente (ver PENDIENTES); el servidor dejó de responder por SSH durante la sesión.
+
+## 2026-10-18 — Rediseño CYBERCORE desplegado
+
+Los PR #12 y #13 quedaron fusionados con CI verde. El segundo fue necesario porque producción sirve la
+web desde FastAPI y debía exponer explícitamente `future.css` y el CSS vendorizado de CYBERCORE. Para no
+revertir las diferencias históricas de la API se construyó `quantfut-api-cybercore:2d8cfef` sobre la
+imagen que ya estaba en ejecución y se sustituyeron únicamente `frontend/` y `src/qf/api/web.py`.
+Dominio y assets responden 200, los hashes coinciden con `main`, la comprobación visual no mostró errores
+de consola, el modelo sigue en `2026.09.27-010508` y los 19 lotes verifican. Worker, base y flags intactos;
+respaldo y reversión en `DEPLOYS.md`.

@@ -8,6 +8,8 @@ const files = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/index.html', ['index.html', 'text/html; charset=utf-8']],
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
+  ['/future.css', ['future.css', 'text/css; charset=utf-8']],
+  ['/vendor/cybercore/cybercore.min.css', ['vendor/cybercore/cybercore.min.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/public-data.js', ['public-data.js', 'text/javascript; charset=utf-8']],
   ['/fichas-data.js', ['fichas-data.js', 'text/javascript; charset=utf-8']],
@@ -16,6 +18,7 @@ const files = new Map([
   ['/cuenta-api.js', ['cuenta-api.js', 'text/javascript; charset=utf-8']],
 ]);
 const port = Number(process.env.PORT || 5173);
+const host = process.env.HOST || '127.0.0.1';
 
 createServer(async (request, response) => {
   const pathname = new URL(request.url || '/', 'http://localhost').pathname;
@@ -38,6 +41,6 @@ createServer(async (request, response) => {
     response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     response.end('No se pudo cargar el prototipo');
   }
-}).listen(port, '127.0.0.1', () => {
-  process.stdout.write(`QuantFut demo: http://127.0.0.1:${port}\n`);
+}).listen(port, host, () => {
+  process.stdout.write(`QuantFut demo: http://${host}:${port}\n`);
 });
