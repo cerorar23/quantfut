@@ -204,19 +204,35 @@ function savePrefs() {
   try { localStorage.setItem(PREFS_KEY, JSON.stringify({ oddsFormat: state.oddsFormat, followed: state.followed })); } catch { /* sin almacenamiento: vale hasta recargar */ }
 }
 
+const cyberIcon = body => `<svg class="cyber-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" focusable="false">${body}</svg>`;
+const NAV_ICONS = {
+  home: cyberIcon('<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5M9 21v-7h6v7"/>'),
+  clock: cyberIcon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'),
+  grid: cyberIcon('<rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M9 4v16M15 4v16"/>'),
+  pick: cyberIcon('<path d="m12 3 8 9-8 9-8-9 8-9Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/>'),
+  target: cyberIcon('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v4M23 12h-4M12 23v-4M1 12h4"/>'),
+  rise: cyberIcon('<path d="M4 19V5M4 19h16M7 15l4-4 3 2 6-7"/><path d="M16 6h4v4"/>'),
+  combine: cyberIcon('<path d="M12 3v18M3 12h18"/><path d="m5 5 14 14M19 5 5 19" opacity=".35"/>'),
+  file: cyberIcon('<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 12h6M9 16h6"/>'),
+  history: cyberIcon('<path d="M4 7v5h5"/><path d="M5.5 17a8 8 0 1 0-1-8"/><path d="M12 8v5l3 2"/>'),
+  package: cyberIcon('<path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7M12 11v10"/>'),
+  shield: cyberIcon('<path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-5"/>'),
+  user: cyberIcon('<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-5 3.5-7 8-7s7.2 2 8 7"/>'),
+};
+
 const nav = [
-  { route: 'inicio', label: 'Inicio', short: 'Inicio', icon: '⌂', group: 'EXPLORAR' },
-  { route: 'partidos', label: 'Partidos', short: 'Partidos', icon: '◷', group: 'EXPLORAR' },
-  { route: 'mercados', label: 'Mercados', short: 'Mesa', icon: '▦', group: 'EXPLORAR' },
-  { route: 'picks', label: 'Picks', short: 'Picks', icon: '◇', group: 'EXPLORAR' },
-  { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: '◎', group: 'EXPLORAR' },
-  { route: 'escalera', label: 'Reto escalera', short: 'Escalera', icon: '⇧', group: 'EXPLORAR' },
-  { route: 'parley', label: 'Parley del día', short: 'Parley', icon: '✚', group: 'EXPLORAR' },
-  { route: 'partido', label: 'Ficha demo', short: 'Demo', icon: '◫', group: 'EXPLORAR' },
-  { route: 'historial', label: 'Historial', short: 'Historial', icon: '▥', group: 'EVIDENCIA' },
-  { route: 'paquetes', label: 'Paquetes de picks', short: 'Paquetes', icon: '◇', group: 'ACCESO' },
-  { route: 'planes', label: 'Suscripciones', short: 'Planes', icon: '◈', group: 'ACCESO' },
-  { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: '◉', group: 'ACCESO' },
+  { route: 'inicio', label: 'Inicio', short: 'Inicio', icon: NAV_ICONS.home, group: 'EXPLORAR' },
+  { route: 'partidos', label: 'Partidos', short: 'Partidos', icon: NAV_ICONS.clock, group: 'EXPLORAR' },
+  { route: 'mercados', label: 'Mercados', short: 'Mesa', icon: NAV_ICONS.grid, group: 'EXPLORAR' },
+  { route: 'picks', label: 'Picks', short: 'Picks', icon: NAV_ICONS.pick, group: 'EXPLORAR' },
+  { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: NAV_ICONS.target, group: 'EXPLORAR' },
+  { route: 'escalera', label: 'Reto escalera', short: 'Escalera', icon: NAV_ICONS.rise, group: 'EXPLORAR' },
+  { route: 'parley', label: 'Parley del día', short: 'Parley', icon: NAV_ICONS.combine, group: 'EXPLORAR' },
+  { route: 'partido', label: 'Ficha demo', short: 'Demo', icon: NAV_ICONS.file, group: 'EXPLORAR' },
+  { route: 'historial', label: 'Historial', short: 'Historial', icon: NAV_ICONS.history, group: 'EVIDENCIA' },
+  { route: 'paquetes', label: 'Paquetes de picks', short: 'Paquetes', icon: NAV_ICONS.package, group: 'ACCESO' },
+  { route: 'planes', label: 'Suscripciones', short: 'Planes', icon: NAV_ICONS.shield, group: 'ACCESO' },
+  { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: NAV_ICONS.user, group: 'ACCESO' },
 ];
 const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
 const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
@@ -1401,13 +1417,46 @@ function closeModal() {
   if (trigger) app.querySelector(`[data-modal="${trigger}"]`)?.focus();
 }
 
+function applyCybercoreTheme(root) {
+  const add = (selector, ...classes) => root.querySelectorAll(selector).forEach(element => element.classList.add(...classes));
+
+  add('.panel, .stat-card, .match-card, .feature-card, .plan-card, .rail-panel, .real-card, .membership-plan, .membership-club, .membership-comparison, .auth-card, .account-section, .pick-package, .delivery-card, .order-summary, .checkout-details', 'cyber-card');
+  add('.match-card, .feature-card, .real-card, .pick-card, .membership-plan, .pick-package, .quick-btn', 'cyber-card--interactive');
+  add('.hero-preview, .forecast-summary, .membership-plan.featured, .membership-plan.selected, .pod-card', 'cyber-card', 'cyber-card--holo');
+  add('.membership-plan.featured, .membership-plan.selected, .pod-card', 'cyber-card--green');
+
+  add('.primary-button', 'cyber-btn', 'cyber-btn--green', 'cyber-btn--filled');
+  add('.secondary-button, .account-button', 'cyber-btn', 'cyber-btn--ghost');
+  add('.text-link', 'cyber-text-green');
+
+  add('.badge', 'cyber-badge', 'cyber-badge--sm');
+  add('.badge.accent, .badge.good', 'cyber-badge--green');
+  add('.badge.warn', 'cyber-badge--yellow');
+  add('.badge.muted', 'cyber-badge--chrome');
+
+  add('input:not([type="checkbox"]):not([type="radio"]), select, textarea', 'cyber-input');
+  add('.table-wrap', 'cyber-table-wrapper');
+  add('table', 'cyber-table');
+  add('.top-link', 'cyber-nav__link');
+  add('.disclosure, .mode-note, .plain-callout, .board-disclaimer', 'cyber-alert');
+  add('.hero-pattern', 'cyber-scanlines', 'cyber-scanlines--fine');
+  add('.publication-strip', 'cyber-datastream');
+  add('.fixture-hero, .pod-panel, .auth-card', 'cyber-neon-border', 'cyber-neon-border--cyan');
+
+  root.querySelectorAll('.view-title h1, .membership-heading h1, .auth-story h1, .forecast-copy h1').forEach(title => {
+    title.classList.add('cyber-heading');
+    title.dataset.text = title.textContent.trim();
+  });
+}
+
 // ---------------------------------------------------------------- render
 
 function render() {
   const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, escalera: escaleraView, parley: parleyView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>En validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut · Prototipo de interfaz</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Sistema en validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  applyCybercoreTheme(app);
   app.querySelector('.app-shell').inert = overlay;
   app.querySelector('.mobile-bottom-nav').inert = overlay;
   app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {

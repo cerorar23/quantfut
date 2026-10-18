@@ -1,4 +1,32 @@
-# QuantFut · guía visual de la demo
+# QuantFut Intelligence · sistema visual
+
+## Dirección HUD 2026
+
+La interfaz adopta una estética **sports intelligence HUD**: futurista, oscura
+y técnica, pero con jerarquía editorial y controles comprensibles. La capa
+`future.css` rediseña todas las vistas sin cambiar sus contratos de datos ni
+sus estados. Los acentos tienen una función constante: cian para navegación y
+datos, verde para acciones y estados favorables, amarillo para precaución y
+magenta/rojo solo para alertas.
+
+Base de código abierto integrada y referencias revisadas:
+
+- [CYBERCORE CSS](https://github.com/sebyx07/cybercore-css) `0.3.0`: dependencia
+  exacta y base real de botones, tarjetas, insignias, formularios, tablas,
+  efectos HUD, variables, capas visuales y `prefers-reduced-motion`. Su CSS y
+  licencia MIT se sincronizan en `vendor/cybercore/` durante `npm install` para
+  que la interfaz no dependa de un CDN.
+- [Cyberpunk CSS](https://github.com/alddesign/cyberpunk-css): esquinas
+  técnicas y componentes de alto contraste.
+- [Vite vanilla](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-vanilla):
+  referencia de estructura nativa; QuantFut conserva su servidor y JavaScript
+  actuales porque no necesita migrar de herramienta para este rediseño.
+
+Cyberpunk CSS se usa como referencia visual y no se carga completo porque sus
+reglas globales de `html` y `body` colisionan con la aplicación existente. Sus
+esquinas recortadas y geometría de alto contraste se adaptaron en
+`future.css`. El resultado funciona sin red y mantiene la accesibilidad y la
+semántica del frontend existente.
 
 Esta guía toma como referencia el catálogo de patrones, tipografía, componentes
 y comprobaciones de UX de [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
@@ -18,15 +46,16 @@ premium son vistas ilustrativas, sin cobro ni autenticación real.
 
 | Papel | Token / valor | Uso |
 | --- | --- | --- |
-| Fondo | `--bg-main: #0b132b` | Azul noche de la paleta aportada por el usuario |
-| Navegación | `--sidebar: #101b35` | Cabecera y tablero |
-| Superficie | `--bg-surface: #1c2541` | Tarjetas y paneles azul pizarra |
-| Separador | `--border-color: #3a506b` | Bordes de baja intensidad |
-| Texto | `--text-primary: #f8fafc` | Titulares y cifras principales |
-| Texto secundario | `--text-muted: #94a3b8` | Metadatos y explicación |
-| Acción | `--accent-cta: #10b981`, hover `#059669` | Verde esmeralda en acciones y estados activos |
-| Comparación | `--accent-data: #38bdf8`, `--yellow: #d8b874` | Datos comparables y empate; siempre con etiqueta |
-| Riesgo | `--status-loss: #ef4444` | Token de pérdidas/riesgo; texto claro para legibilidad |
+| Fondo | `--cyber-void-900` | Grafito profundo con retícula ambiental de baja intensidad |
+| Navegación | `--cyber-void-700` | Cabecera translúcida y navegación operativa |
+| Superficie | mezcla de `--cyber-void-400` | Tarjetas con vidrio oscuro, sin perder contraste |
+| Separador | mezcla de `--cyber-cyan-500` | Bordes cian y estados de foco visibles |
+| Texto | `--cyber-chrome-100` | Titulares, contenido y cifras principales |
+| Texto secundario | `--cyber-chrome-300` | Metadatos y explicación |
+| Acción | `--cyber-green-500` (`#05ffa1`) | Acciones principales y estados positivos |
+| Datos | `--cyber-cyan-500` (`#00f0ff`) | Navegación, referencias y comparación |
+| Precaución | `--cyber-yellow-500` (`#fcee0a`) | Estados que requieren contexto |
+| Riesgo | `--cyber-magenta-500` (`#ff2a6d`) | Pérdidas y errores; siempre acompañado por texto |
 
 Tipografía: serif Georgia en titulares editoriales de portada, paquetes, suscripciones y cuenta; sans del sistema para lectura y títulos de datos; monoespaciada del sistema
 solo en porcentajes, fechas y etiquetas cortas. Escala: título de página
@@ -111,7 +140,8 @@ el FastAPI modular, no con CSS o secretos dentro de JavaScript.
 ## Límites de esta fase
 
 La web actual es HTML, CSS y JS servidos por FastAPI o por el servidor local
-de vista previa. No añade framework ni servicios. Los equipos, porcentajes,
+de vista previa. Añade solo CYBERCORE CSS como dependencia de presentación,
+sin framework JavaScript ni servicios. Los equipos, porcentajes,
 cuotas, resultados y CLV del prototipo siguen siendo ficticios. La web
 comercial y los cobros continúan condicionados a la puerta de validación
 documentada en el README principal.
