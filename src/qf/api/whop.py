@@ -31,7 +31,8 @@ def checkout(body: CheckoutIn, request: Request, account: dict = Depends(api.cur
     api._limit(request, "whop_checkout", 20, 300)
     try:
         return whop.create_checkout(
-            account, body.plan_code, fbp=body.fbp, fbc=body.fbc,
+            account, body.plan_code, fbp=body.fbp or request.cookies.get('_fbp'),
+            fbc=body.fbc or request.cookies.get('_fbc'),
             client_ip=ratelimit.client_ip(request), user_agent=request.headers.get("user-agent"),
             source_url=body.source_url)
     except whop.WhopError as error:

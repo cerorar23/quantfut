@@ -58,7 +58,8 @@ def identity_account(claims: dict) -> dict | None:
 
 def connect_identity(claims: dict, terms_version: str | None,
                      privacy_version: str | None, language: str,
-                     existing_account: dict | None = None) -> dict:
+                     existing_account: dict | None = None,
+                     web_context: dict | None = None) -> dict:
     email = normalize_email(claims.get("email", ""))
     if not claims.get("email_verified"):
         raise CuentaError("firebase_correo_no_verificado", "Verifica tu correo antes de continuar")
@@ -100,7 +101,8 @@ def connect_identity(claims: dict, terms_version: str | None,
                 account_id = row["account_id"]
                 from . import meta_capi
                 meta_capi.enqueue(c, account_id, "CompleteRegistration", f"reg:{account_id}",
-                                  {"registration_method": "google"})
+                                  {"registration_method": "google"},
+                                  **meta_capi.web_kwargs(web_context))
             c.execute(
                 """INSERT INTO firebase_identities (project_id, firebase_uid, account_id, provider)
                    VALUES (%s, %s, %s, %s)""", (project, uid, account_id, provider))

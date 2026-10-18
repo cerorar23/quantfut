@@ -63,3 +63,21 @@ def test_extinfo_exige_16_posiciones_y_version_de_plataforma():
         m.valid_extinfo(ok, "ios")              # a2 no es iOS
     with pytest.raises(ValueError):
         m.valid_extinfo(["a2"] + ["x" * 101] * 15, "android")
+
+
+def test_ciudad_estado_zip_y_telefono_se_normalizan_como_pide_meta():
+    assert m.norm_city("Ciudad de México") == "ciudaddemexico"
+    assert m.norm_state("CA") == "ca" and m.norm_state("São Paulo") == "saopaulo"
+    assert m.norm_zip("94025-1234", "us") == "94025" and m.norm_zip("M1 1AE", "gb") == "m11ae"
+    assert m.norm_phone("+52 (155) 5555-1234") == "5215555551234"
+    assert m.norm_phone("0012") is None and m.norm_phone(None) is None
+
+
+def test_user_data_cifra_los_datos_de_facturacion_y_omite_los_vacios():
+    account = {"account_id": 1, "email": "a@b.com", "display_name": "Ana"}
+    data = m.user_data(account, None, "MX", {"ct": "Monterrey", "st": "NL", "zp": "64000", "ph": "+52 81 1234 5678"})
+    assert data["ct"] == [hashlib.sha256(b"monterrey").hexdigest()]
+    assert data["ph"] == [hashlib.sha256(b"528112345678").hexdigest()]
+    assert data["zp"] == [hashlib.sha256(b"64000").hexdigest()] and "st" in data
+    vacio = m.user_data(account, None, "MX", {"ct": None, "ph": "abc"})
+    assert not {"ct", "st", "zp", "ph"} & set(vacio)
