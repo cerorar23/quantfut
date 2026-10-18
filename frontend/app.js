@@ -1,6 +1,6 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=5d460d0b0c91';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=6d8c9cd2cacf';
+import { createMembershipUI } from './membership.js?v=m1';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -1457,6 +1457,7 @@ function render() {
   document.title = `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Sistema en validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
+  membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
   app.querySelector('.mobile-bottom-nav').inert = overlay;
   app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {
@@ -1610,9 +1611,11 @@ window.addEventListener('keydown', event => {
 
 const initial = location.hash.slice(1);
 if (validRoute(initial)) state.route = initial;
+membershipUI.handleReturn();
 render();
 membershipUI.restoreSession();
 membershipUI.loadPlans();
+membershipUI.loadPaymentConfig();
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;

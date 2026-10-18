@@ -64,3 +64,18 @@ def cuenta_api_script() -> FileResponse:
 @router.get("/membership.css")
 def membership_styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "membership.css", media_type="text/css")
+
+
+@router.get("/google-auth.js")
+def google_auth_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "google-auth.js", media_type="text/javascript")
+
+
+@router.get("/meta-pixel.js")
+def meta_pixel_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "meta-pixel.js", media_type="text/javascript")
+
+
+@router.get("/whop-checkout.js")
+def whop_checkout_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "whop-checkout.js", media_type="text/javascript")

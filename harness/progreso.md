@@ -1,5 +1,37 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-18 (tarde) — FotMob en vivo como fuente previa; Open-Meteo descartada por licencia
+
+El titular autorizó la captura recurrente de FotMob (antes registrada como puntual) y entregó el token de Copernicus. La página
+previa de FotMob trae alineación probable, no disponibles con tipo y pronóstico de clima con hora de actualización: cubre las
+bajas previas y el pronóstico de F6 con una sola fuente, point-in-time, sin la clave de Open-Meteo. No se usó el plan gratuito de
+Open-Meteo porque el producto vende suscripciones (uso comercial) y el titular había contratado el plan de pago; si se quiere esa
+fuente, se carga la clave de pago. Las ventanas de captura previa se estrecharon (70 y 40 min) porque una ventana de 30 a 120 min
+habría tomado la alineación antes de que se publique la oficial. ERA5 se valida contra el clima que midió FotMob (temperatura 0,98).
+La captura se detiene 12 h ante cualquier HTTP 401/403/429 y no evita controles de acceso.
+
+## 2026-10-18 — Datos al motor: tablas propias por fuente, nunca mezclar identificadores
+
+El archivo de FotMob (20.331 partidos) pasó a tablas con `match_id` en lugar de volcarse en `lineups_historicas` y
+`estadisticas_jugador`: esas llevan ids de API-Football y mezclar los dos espacios habría roto `player_ratings` y
+`lineup_challenger` sin dar ningún error. El puente (7.834 jugadores) y la equivalencia de árbitros (54) son tablas aparte, con
+umbral de coincidencia y 1 a 1 en las dos direcciones. Hallazgos que cambian el plan: el original de FotMob ya trae entrenador,
+valor de mercado, asistencia y clima (40 %, medido en el partido); el calendario completo de API-Football muestra un partido
+intermedio que `matches` no ve en el 17,6 % de los equipo-partidos; el cruce de árbitros apenas suma porque las fuentes casi
+no se solapan. No se montó captura diaria de FotMob porque la descarga se registró como puntual: lo decide el titular.
+Una medición propia, cancelada desde el cliente, siguió ejecutándose 38 minutos en el servidor: cancelar en la base, no solo
+en el cliente. La suite completa tiene fallos previos que no son de estos cambios.
+
+## 2026-10-18 — Orden de identidades: el error real es Arsenal, no las 379 "identidades"
+
+Medido en producción sin escribir nada. Las 379 "identidades" de copas eran partidos (110 equipos); en ninguno están los
+dos equipos identificados, porque el rival es siempre un club de una liga que no cubrimos, y la regla de `eu.ucl`/`eu.uel`
+(no dar de alta equipos, solo coincidencia exacta) es la que lo impide: se cierra como no resoluble por diseño. La coincidencia
+aproximada habría dado Pafos→Paris FC y Rangers→Angers. Lo que sí estaba mal es una fila de alias (`Arsenal`, `fbref`) que apunta a
+Arsenal de Sarandí: 33 partidos de copa hasta 2024-12-11 en el club equivocado. Antes de afirmar su efecto en el modelo habría que
+medirlo (se espera pequeño por el decaimiento de 180 días). Cuatro alias de The Odds API recuperan 39 de los 103 cierres de copa con
+los snapshots ya pagados. Nada de esto se aplica sin visto bueno; ver docs/ordenar_identidades_20261018.md.
+
 ## 2026-10-16 — Tenis: extracción completa, motor local y resultados negativos conservados
 
 Por autorización nueva se completaron 171 archivos TML y 43 archivos MCP:
@@ -6439,10 +6471,29 @@ de consola, el modelo sigue en `2026.09.27-010508` y los 19 lotes verifican. Wor
 respaldo y reversión en `DEPLOYS.md`.
 
 ## 2026-10-18 — Tenis: cierre de las tres colas históricas originales
+
+Resueltas 52 ediciones individuales con evidencia de su temporada, los 17 recintos originales con WGS84/terreno/zona horaria y 233 bloques por equipos (225 Davis, dos finales BJK y seis multicidad con 178 enlaces por partido). Seis revisiones de identidad/fase preservan los originales. Registro ampliado: 466 enlaces de edición, 178 por partido, 240 entradas de sede incluidas equivalencias y 280 fuentes con SHA. De las 240 entradas, 152 tienen coordenadas; otras 88 identificadas en la ampliación siguen pendientes, distintas de los 17 recintos originales. Kempes/Jiujiang son referencias de complejo con tolerancia amplia, no coordenadas exactas de pista.
+
+Dataset separado en data/tennis/historical_coverage_20261018: identidad de sede 11240/11240, coordenadas de destino 10510/11240, variables completas ambos jugadores 6126 y cohorte apta 5798 (51,58%; 2965 desarrollo2024/2833 exploratorio2025). Sensibilidad sin referencias geográficas amplias:5569. 472 bloques originales agrupados en384competiciones indivisibles;201filasfrontera en cuarentena. Se preservan antecedentes desconocidos, ambigüedad de múltiples sedes y horas ausentes. Fuentes recibidas2026sin backdating. No ajuste ni métricas nuevas;2025exploratorio, comparación de predicciones pendiente.
+
+173pruebas tenis aprobadas en preparación y entrega; regresión con registro anterior reproduce2982aptos;12hashes congelados intactos, fuentes/canónico/CSV verificados por auditoría. Arnés general inicial1300/88/2; final1308aprobados/88omitidos/2avisos150,98s (otra sesión añadió8pruebas). Docker no disponible. Sin consultas Odds/API-Tennis ni créditos; una consulta Open-Meteo69puntos para elevación. Informe docs/tenis_cobertura_historica_completada_20261018.md; módulo, pruebas, constructores y auditoría entregados al motor aislado. Próximo paso: comparación Base/Base+Espaciales en intersección común y completar las coordenadas adicionales pendientes.
+
+## 2026-10-18 — Acceso con Google en la web
+
 Resueltas 52 ediciones individuales con evidencia de su temporada, los 17 recintos originales con WGS84/terreno/zona horaria y 233 bloques por equipos (225 Davis, dos finales BJK y seis multicidad con 178 enlaces por partido). Seis revisiones de identidad/fase preservan los originales. Registro ampliado: 466 enlaces de edición, 178 por partido, 240 entradas de sede incluidas equivalencias y 280 fuentes con SHA. De las 240 entradas, 152 tienen coordenadas; otras 88 identificadas en la ampliación siguen pendientes, distintas de los 17 recintos originales. Kempes/Jiujiang son referencias de complejo con tolerancia amplia, no coordenadas exactas de pista.
 Dataset separado en data/tennis/historical_coverage_20261018: identidad de sede 11240/11240, coordenadas de destino 10510/11240, variables completas ambos jugadores 6126 y cohorte apta 5798 (51,58%; 2965 desarrollo2024/2833 exploratorio2025). Sensibilidad sin referencias geográficas amplias:5569. 472 bloques originales agrupados en384competiciones indivisibles;201filasfrontera en cuarentena. Se preservan antecedentes desconocidos, ambigüedad de múltiples sedes y horas ausentes. Fuentes recibidas2026sin backdating. No ajuste ni métricas nuevas;2025exploratorio, comparación de predicciones pendiente.
 173pruebas tenis aprobadas en preparación y entrega; regresión con registro anterior reproduce2982aptos;12hashes congelados intactos, fuentes/canónico/CSV verificados por auditoría. Arnés general inicial1300/88/2; final1308aprobados/88omitidos/2avisos150,98s (otra sesión añadió8pruebas). Docker no disponible. Sin consultas Odds/API-Tennis ni créditos; una consulta Open-Meteo69puntos para elevación. Informe docs/tenis_cobertura_historica_completada_20261018.md; módulo, pruebas, constructores y auditoría entregados al motor aislado. Próximo paso: comparación Base/Base+Espaciales en intersección común y completar las coordenadas adicionales pendientes.
 ## 2026-10-18 — Acceso con Google en la web
+
+
+Resueltas 52 ediciones individuales con evidencia de su temporada, los 17 recintos originales con WGS84/terreno/zona horaria y 233 bloques por equipos (225 Davis, dos finales BJK y seis multicidad con 178 enlaces por partido). Seis revisiones de identidad/fase preservan los originales. Registro ampliado: 466 enlaces de edición, 178 por partido, 240 entradas de sede incluidas equivalencias y 280 fuentes con SHA. De las 240 entradas, 152 tienen coordenadas; otras 88 identificadas en la ampliación siguen pendientes, distintas de los 17 recintos originales. Kempes/Jiujiang son referencias de complejo con tolerancia amplia, no coordenadas exactas de pista.
+
+Dataset separado en data/tennis/historical_coverage_20261018: identidad de sede 11240/11240, coordenadas de destino 10510/11240, variables completas ambos jugadores 6126 y cohorte apta 5798 (51,58%; 2965 desarrollo2024/2833 exploratorio2025). Sensibilidad sin referencias geográficas amplias:5569. 472 bloques originales agrupados en384competiciones indivisibles;201filasfrontera en cuarentena. Se preservan antecedentes desconocidos, ambigüedad de múltiples sedes y horas ausentes. Fuentes recibidas2026sin backdating. No ajuste ni métricas nuevas;2025exploratorio, comparación de predicciones pendiente.
+
+173pruebas tenis aprobadas en preparación y entrega; regresión con registro anterior reproduce2982aptos;12hashes congelados intactos, fuentes/canónico/CSV verificados por auditoría. Arnés general inicial1300/88/2; final1308aprobados/88omitidos/2avisos150,98s (otra sesión añadió8pruebas). Docker no disponible. Sin consultas Odds/API-Tennis ni créditos; una consulta Open-Meteo69puntos para elevación. Informe docs/tenis_cobertura_historica_completada_20261018.md; módulo, pruebas, constructores y auditoría entregados al motor aislado. Próximo paso: comparación Base/Base+Espaciales en intersección común y completar las coordenadas adicionales pendientes.
+
+## 2026-10-18 — Acceso con Google en la web
+
 - Decisión: el navegador solo obtiene el ID token (SDK web de Firebase, `frontend/google-auth.js`) y el servidor
   lo cambia por la MISMA sesión de cookie HttpOnly del correo (`POST /app/v1/firebase/web-session`). Así Firebase no
   guarda estado en la página y el resto de la web/checkout sigue usando `cuenta-api.js`.
@@ -6453,16 +6504,25 @@ Dataset separado en data/tennis/historical_coverage_20261018: identidad de sede 
 - Pendiente del titular: registrar app Web en Firebase, añadir el dominio a «Dominios autorizados» y poner las 3 variables.
 - Verificado en local con popup real de Google: sesión creada y «Mi cuenta» abierta. Despliegue preparado, no ejecutado: `docs/despliegue_google_web_20261018.md` (producción lleva un frontend Cybercore sin comitear; comitearlo antes).
 - Siguiente: Whop (checkout embebido + webhooks `payment.succeeded`) y Pixel + CAPI web con `event_id` compartido.
+
+
 ## 2026-10-18 — Tenis: comparación espacial retrospectiva ejecutada
 Decisión: no activar la corrección espacial. Base híbrida Markov/Elo reconstruida por orígenes2023/24/25, mezclas calibradas con predicciones del año anterior y embargo35días, sin usar coeficientes actuales hacia atrás. Ajuste espacial ridge1 con2965partidos desarrollo2024, evaluación común2833en2025exploratorio(52,68% de5378). LogLoss0,6387331418→0,6386822788; delta−0,000050863, intervalo95%por116competiciones[−0,000159672;+0,000054898]. Brier0,2243935574→0,2243696603;ECE0,026213→0,026260. Intervalos incluyen cero, calibración no mejora.
 Sensibilidad sin tolerancias geográficas>1000m:2851train/2718test,deltaLL−0,0000764803,intervalo[−0,000194240;+0,000025873]. Mismos IDs entre variantes dentro de cada escenario; distintas muestras entre escenarios.2025no usado para ajustar ni elegir ridge; evidencia retrospectiva recibida2026, no validación asof real ni itinerarios/descanso exactos. Se preserva agrupación por competición completa. Intervalos descriptivos sin toda dependencia entre jugadores.
 Entrega en motor aislado: historical_comparison.py, runner y auditoría,9tests nuevos;182pruebas tenis aprobadas en preparación y entrega. Auditoría reproduce ajustes y métricas, verifica fuentes y12hashes congelados intactos. Resultados/protocolo/predicciones/calibración en data/tennis/historical_comparison_20261018; informe docs/tenis_resultados_espaciales_historicos_20261018.md.0llamadas deportivas/0créditos Odds. Próximas mejoras deben elegir especificación en entrenamiento y reservar periodo futuro nuevo; la ampliación de88sedes sigue pendiente. Arnés inicial1310/88/2aprobado; verificación final en curso.
 Verificación final comparación: arnés general1310aprobados/88omitidos/2avisos145,51s; Docker no disponible. CoincidenciaSHA de4archivos entregados y diffcheck correctos; auditoría entregada ejecutada sin errores. No trabajo de esta fase pendiente de verificación.
+
+
 ## 2026-10-18 — Tenis: carga observable por rondas
 Decisión: conservar corrección experimental, sin activarla. Ventanas3/7d siguen bloqueadas:152terminales API-Tennis de últimas revisiones archivadas tienen límite inferior desconocido; no se transformaron fechas programadas/recibos en horas reales. Nueva carga distinta: puntos de totales al saque, juegos/sets de marcadores completos y partidos decisivos de rondas anteriores del mismo cuadro individual; sin dobles, qualies, torneos previos ni tiempo transcurrido supuesto.
 Base histórica previa reutilizada porSHA. Tres variantes en intersección común: Base, Base+Cobertura, Base+Cobertura+Carga. Ajuste solo2024,ridge1,RMSentrenamiento;2130train/1957test2025exploratorio(36,39%),993ATP/964WTA. LL0,615696→0,615221;delta−0,000475307,IC95%[−0,00110306;+0,00015902];contra cobertura delta−0,000408593,ICincluyecero. Brier0,213501→0,213225;ECE0,028584→0,026355. Sensibilidad contadores observados completos1882/1700,LL0,611986→0,611413,ICincluyecero. No declarar superioridad ni rentabilidad.
 Revisión detectó pérdidas seguidas de avance en finalesBJK2024: eran partidos por equipos, una derrota individual no elimina necesariamente a la selección. Se corrigió el alcance para excluir todos los equipos y grupos; versión preliminar draw_load_20261018 retirada porSUPERSEDED.json, válida draw_load_20261018_v2. No corrección de datos originales ni selección por métricas. Auditoría reproduce10407formatoscompatibles/4378conpreviojuegoambos antesfiltros, contadores yprecedencia,coeficientes/métricas.194pruebas tenis aprobadas en entrega,12nuevas;12hashescongelados intactos. Cola88sedes/730destinos priorizada,5primeras264destinos.0APIdeportivas/0créditosOdds. Informe docs/tenis_carga_rondas_resultados_20261018.md. Arnés general inicial1310/88/2en224,53s; final1310/88/2en324,67s, Docker ausente.
+
 ## 2026-10-18 — Cobro web con Whop (checkout embebido + webhooks) y Meta web
+
+
+## 2026-10-18 — Cobro web con Whop (checkout embebido + webhooks) y Meta web
+
 - Decisión: el servidor crea la `checkout_configuration` (con `qf_account_id` en `metadata`) y el navegador solo monta `ch_…`
   en el elemento Checkout; el acceso lo concede únicamente `payment.succeeded` (firma Standard Webhooks, idempotente por
   `webhook-id` y por `payment_id`). Así ni la web ni la metadata del cliente pueden conceder acceso.
@@ -6474,11 +6534,30 @@ Revisión detectó pérdidas seguidas de avance en finalesBJK2024: eran partidos
   páginas de objetos Payment/Membership. Reembolsos: no hay evento documentado; se revoca por `membership.updated` en `canceled`/`expired`.
   Verificar con una entrega real y añadir `refund` si Whop lo emite.
 - El sandbox de Whop no cubre Elements todavía: la primera prueba real del formulario será en producción con un plan barato.
+
+
 ## 2026-10-18 — Tenis: cinco sedes prioritarias verificadas
 HuaHin por mapa enlazado porpropietario yOSMtenis71mdediferencia;Seúl porgeometría estadioOSMrel8679966 yoperador/Wikidata61m;AbuDabi objeto93051899tenis corroborado enidentidad poroperador,sin fingirsegunda medición;Carpena coordenadasJuntaAndalucía yestadioOSM18m,no parada detaxis. Yucatán punto delcomplejo enlazado porpropietario a1102mdeláreatenisOSM;1800mtolerancia ycoarseflag,no pistas2024/25precisasproyectadas. Rechazadaslocalidadhomónima,centrosgenéricosparque/estadiofútbol. Fuentes archivadasconrecibosreales,erroresdevueltosnocuentancomoevidencia.1OpenMeteopúblico5puntos,terreno5/6/23/6/20m,noalturamedidapista.
 Registroseparado data/tennis/historical_geography_top5_20261018:294fuentes,240entradas(157concoordenadas,83pendientes); enlacesdeediciónypartidointactos.11240objetivos,10774destinosconcoordenadas(+264),6651variablescompletasambos,6244aptos(+446),5943sinreferencias>1km.3226desarrollo2024/3018exploratorio2025;201frontera.264destinosy446transicionesaptas no sonlamismamétrica. Nuevosaptos261desarrollo/185exploración. Pendientes466destinos;colaactualChennai31/Palermo31/Riad30/Hengqin15/Shenzhen14.
 Auditoríavalida5cambiosdeentrada,recibos/CSV/canónico,particionesyobjetivosidénticos,los5798aptosanterioressiguenconvariablesnuméricasidénticas,experimentos/datasetsanterioresnohansidosobrescritos,12hashescongeladosintactos.194teststenisaprobados;constructoryauditorentregadosyejecutadosdesdecheckoutaislado,diffcheckcorrecto.0Odds/API-Tennis,0créditos;0ajustesymétricasnuevas,nomodificaprobabilidades. Informe docs/tenis_cinco_sedes_verificadas_20261018.md. Arnésinicial1315/94/2en119,16s;finalpendientedecierre.
 Verificación final cinco sedes: arnés general1315aprobados/94omitidos/2avisos123,15s,Docker ausente;194tenis aprobadas,2scripts entregados conSHA coincidente, auditoría desde motoraislado aprobada. Fase completada;83entradas geográficas yclocks siguenpendientes explícitos.
 
+## 2026-10-18 — Meta web con EMQ alto y envío real de CAPI
+
+- El contexto del navegador (fbp, fbc, IP, user agent, URL) se lee de las cookies y cabeceras de la propia petición web: no hace falta que el cliente lo mande y no se puede
+  confundir con el de otra sesión. Aplica a registro por correo, Google y checkout.
+- EMQ: a lo que ya había se añaden ciudad, estado, código postal y teléfono de la facturación de Whop (normalizados y cifrados). Probado en «Probar eventos»: 13 claves de cliente.
+- El token de Conversions API se generó con la opción «sin Dataset Quality API»: la otra es irreversible y no hacía falta.
+- Mientras `META_TEST_EVENT_CODE` esté puesto, nada llega a los eventos reales; el paso a producción es quitar esa línea (decisión del titular tras ver el EMQ).
+- El worker no lleva `meta_capi` (alineación pendiente): el cron del host envía cada 5 min. Es transitorio.
 ## 2026-10-18 — Aclaración de las dos cifras que no cuadraban
 CLV: la puerta comercial lee `publish.shadow_sharp.report()` (ofertas publicables de la sombra sharp). Esa medida da hoy n=213 con cierre justo, `ev_close` +3,07 % (IC95 +1,54 a +4,67); el +3,46 % (n=142) del 15-oct era la misma medida con menos muestra. `shadow.summary` y `shadow_results` miden los retadores de XI (n≈135, ev≈+0,06 %): otra cosa, y coherente con que el XI aún no aporta frente al cierre. La puerta sigue cerrada por n<300 y porque ninguna liga llega a 30 (la mayor, MLS, 18). xG: los 1.219 huecos son exactos para «terminados desde 2024-01-01, sin xG de alguno de los dos»; mi cuenta anterior usaba otra ventana.
+
+## 2026-10-18 — Meta web con EMQ alto y envío real de CAPI
+
+- El contexto del navegador (fbp, fbc, IP, user agent, URL) se lee de las cookies y cabeceras de la propia petición web: no hace falta que el cliente lo mande y no se puede
+  confundir con el de otra sesión. Aplica a registro por correo, Google y checkout.
+- EMQ: a lo que ya había se añaden ciudad, estado, código postal y teléfono de la facturación de Whop (normalizados y cifrados). Probado en «Probar eventos»: 13 claves de cliente.
+- El token de Conversions API se generó con la opción «sin Dataset Quality API»: la otra es irreversible y no hacía falta.
+- Mientras `META_TEST_EVENT_CODE` esté puesto, nada llega a los eventos reales; el paso a producción es quitar esa línea (decisión del titular tras ver el EMQ).
+- El worker no lleva `meta_capi` (alineación pendiente): el cron del host envía cada 5 min. Es transitorio.

@@ -119,7 +119,7 @@ def test_login_limitado_por_correo(monkeypatch, client):
 
 
 def test_registro_valida_y_no_duplica(monkeypatch, client):
-    def create(email, password, name):
+    def create(email, password, name, web_context=None):
         cuentas.normalize_email(email)
         cuentas.validate_password(password)
         raise CuentaError("email_en_uso", "Ya existe")

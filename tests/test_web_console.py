@@ -37,6 +37,9 @@ def test_web_demo_se_sirve_sin_secreto(monkeypatch):
     assert client.get("/public-data.js").status_code == 200
     assert client.get("/membership.js").status_code == 200
     assert client.get("/membership.css").status_code == 200
+    assert client.get("/google-auth.js").status_code == 200
+    assert client.get("/meta-pixel.js").status_code == 200
+    assert client.get("/whop-checkout.js").status_code == 200
     assert client.get("/package.json").status_code == 404
     assert client.get("/server.mjs").status_code == 404
     assert "X-Service-Token" not in Path(web.FRONTEND_DIR / "app.js").read_text(encoding="utf-8")

@@ -217,7 +217,12 @@ incorporadas. 400 originales mantienen asociación pendiente/conflicto. Modelo
 activo y puertas sin cambios; 1.007 pruebas, prueba PostgreSQL e idempotencia.
 Detalle: docs/importacion_fotmob_20261013.md.
 
-- [ ] Resolver 379 identidades de copas y revisar 21 conflictos sin forzar uniones.
+- [x] 379 «identidades» de copas = 379 partidos de 110 equipos; ninguno con ambos equipos probados, no resoluble sin dar de alta clubes externos (prohibido en `eu.*`). Medido el 18-oct, docs/ordenar_identidades_20261018.md.
+- [x] Arsenal corregido (33 partidos, `db/073`) y 4 alias de The Odds API (+45 cierres de copa), 18-oct. Quedan 20 conflictos de vinculación: 7 son de Arsenal (el partido ya tiene el equipo correcto, pero el archivo FotMob conserva su estado `conflict` hasta volver a vincularlos) y 13 por revisar uno a uno (marcador o estado, liga o prórroga).
+- [x] Datos al motor 18-oct (`docs/datos_al_motor_20261018.md`): tablas FotMob con `match_id`, altitud, calendario de equipos (cron diario), equivalencias de árbitros, puente de jugadores, vista de descanso.
+- [x] 18-oct tarde: captura de FotMob autorizada y montada (`db/081`, cron con flock, pronóstico de clima incluido); token de CDS recibido y descarga ERA5 en curso (`db/082`); Open-Meteo descartada por licencia.
+- [x] ERA5 terminado (20.193 partidos), `qf.ingest.sedes` con cron horario y ERA5 incremental (arregla el defecto de cache por celda).
+- [ ] Pendiente: regenerar el token de CDS; poner el ERA5 incremental en cron al recrear el worker (necesita la variable); estadios duplicados (182 grupos); minutos con selección nacional; convertir la captura previa en entrada de F7 (alineación y bajas a T-70/T-40).
 - [ ] Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
   respetando recepción temporal; las tablas nuevas ya están importadas.
 
@@ -2902,3 +2907,45 @@ Google Sign-In ya existe: no se rehace.
 - [x] Integrar CYBERCORE CSS 0.3.0, adaptar Cyberpunk CSS, conservar el logo previo y validar 25/25 pruebas del frontend.
 - [x] Fusionar PR #12 y hotfix de assets FastAPI PR #13 con los arneses de GitHub aprobados.
 - [x] Desplegar solo la API desde una imagen derivada de la que estaba en ejecución; comprobar dominio, hashes, modelo y cadena; documentar reversión.
+
+- [x] Resuelta la cola original de 52 ediciones individuales, 17 recintos y 233 bloques por equipos. Ampliación separada en historical_coverage_20261018; detalle abajo.
+- [x] Comparar Base/Base+Espaciales en intersección de predicciones y con ajuste solo en entrenamiento: ampliación de5798aptos,2965desarrollo/2833evaluación2025exploratoria. Métricas e intervalos entregados; sin mejora clara. Variante horaria sigue pendiente de días individuales acreditados.
+- [x] Recuperar evidencia de las 52 ediciones WTA pendientes por temporada; distinguir PDF originales, extractos y corroboración estructurada.
+- [x] Resolver 17 recintos originales con puntos WGS84 y terreno DEM; Kempes/Jiujiang conservan referencia de complejo y tolerancia amplia.
+- [x] Revisar 233 bloques por equipos: 225 Davis, dos finales BJK, seis multicidad con 178 enlaces por partido; preservar seis revisiones de identidad/fase sin reescribir originales.
+- [x] Dataset separado con 11.240 sedes identificadas, 10.510 destinos con coordenadas, 5.798 partidos aptos; 173 pruebas y regresión de 2.982 aprobadas; 12 artefactos congelados intactos. Informe docs/tenis_cobertura_historica_completada_20261018.md.
+- [ ] Verificar coordenadas de 88 entradas adicionales identificadas en la ampliación. Comparación y sensibilidad ya ejecutadas, sin evidencia clara para activar la corrección. Sin horas imputadas.
+
+## Tenis: comparación retrospectiva de variables espaciales (2026-10-18)
+- [x] Reconstruir base híbrida Markov/Elo por orígenes2023/24/25 con calibraciones anteriores y embargo35días; modelos actuales congelados no reutilizados hacia atrás.
+- [x] Corrección ridge1 en2965partidos de2024; muestra común de2833en2025exploratoria, competiciones completas y cobertura52,68%.
+- [x] Sensibilidad2851entrenamiento/2718evaluación; LogLoss/Brier/ECE y1000remuestreos por competición. Nueve pruebas nuevas;182tenis aprobadas.
+- [x] Auditoría reproduce ajustes y métricas, fuentes e identidades verificadas;12artefactos congelados intactos. Informe docs/tenis_resultados_espaciales_historicos_20261018.md. Sin activación: mejora minúscula e intervalos que incluyen cero,0créditos Odds.
+
+## Tenis: carga observable por rondas anteriores (2026-10-18)
+- [x] Auditar ventanas diarias:152observaciones terminales sin límite inferior de finalización acreditado;3/7d conservadas bloqueadas, sin imputación horaria.
+- [x] Contadores de rondas previas individuales, orden de cuadro, desconocidos explícitos y exclusión objetivo/futuro; todos los equipos y round-robin fuera del alcance. Primera versión retirada por alcance BJK; válida draw_load_20261018_v2.
+- [x] Base/Cobertura/Cobertura+Carga:2130train2024/1957test2025exploratorio, sensibilidad1882/1700; intervalos incluyen cero, sin activación. Informe docs/tenis_carga_rondas_resultados_20261018.md.
+- [x] 194pruebas tenis aprobadas (12nuevas), extracción/precedencia/ajustes/métricas reproducidos,12artefactos congelados intactos.0consultas deportivas/0créditosOdds. Cola88sedes priorizada por730destinos; primeras5afectan264.
+
+## Cobro web con Whop + Meta EMQ (2026-10-18)
+
+Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
+
+- [x] Login Google en la web (Firebase JS → `/app/v1/firebase/web-session`); probado en local. Despliegue: `docs/despliegue_google_web_20261018.md`.
+- [x] Fase A: db/083, `comercial/whop.py` (firma, checkout, aplicar pago), rutas y pruebas (11 en `tests/test_whop.py`, 8 con Postgres real).
+- [x] Fase B: CAPI web (`action_source=website`: Purchase, Subscribe, InitiateCheckout) + Pixel con advanced matching y `eventID` compartido. Pendiente: CompleteRegistration web y aviso de cookies.
+- [x] Fase C: vista de pedido con `Checkout` embebido de Whop (probada en local con clave falsa y webhook firmado simulado; el formulario real de Whop no se pudo ver sin `WHOP_API_KEY`).
+- [ ] Datos del titular: `WHOP_API_KEY`, `WHOP_WEBHOOK_SECRET`, `plan_` por plan, `META_PIXEL_ID`, token CAPI, aviso de cookies.
+
+## Tenis: cinco recintos prioritarios (2026-10-18)
+- [x] Referencias WGS84 verificadas de Hua Hin,Yucatán,Seúl,AbuDabi yMartínCarpena. Yucatán1800mreferenciadecomplejo, restotolerancias400–500m; no pistas históricas exactas simuladas.
+- [x] Una consulta pública de terrenoDEM para5puntos, enlaces históricos2024/25 yarchivos previos intactos.294fuentesSHA;157entradas con coordenadas.
+- [x] Datasetnuevo historical_geography_top5_20261018:10774destinos/11240,6244aptos(+446),5943sinreferenciasamplias;264destinosrecuperados. Cola83entradas/466destinos. Sin ajuste/activación de modelos.
+- [x] Auditoría de fuentes,identidades,particiones,oldfeatures y12artefactos congelados aprobada;194pruebas tenis. Informe docs/tenis_cinco_sedes_verificadas_20261018.md yconstructores entregados al motoraislado.
+- [x] Whop configurado (18-oct): producto QuantFut con 3 planes, clave de API (solo IP del VPS) y webhook de producción; claves en el `.env` del VPS. Pendiente al desplegar: `UPDATE plans SET whop_plan_id…` (en `docs/despliegue_google_web_20261018.md`) y `META_PIXEL_ID`.
+- [x] Reembolsos: `refund.created/updated` (status succeeded) revocan el periodo del pago; webhook de Whop ya los envía (18-oct).
+- [x] Meta web (18-oct): CompleteRegistration web, EMQ con ciudad/estado/zip/teléfono (13 claves), aviso de medición con Rechazar, envío por cron del host, probado con test_event_code.
+- [x] Meta a eventos reales: `META_TEST_EVENT_CODE` quitado del `.env` del VPS y API recreada (18-oct, DEPLOYS 21:00 UTC).
+- [ ] Alinear el worker con `meta_capi` y retirar la línea de cron del host.
+- [ ] Probar un cobro real con Whop (plan de 14,99) y ver el Purchase en Meta con el mismo event_id del Pixel.

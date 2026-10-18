@@ -40,14 +40,23 @@ def value(price_micros: int) -> float:
 
 
 def enqueue(c, account_id: int, event_name: str, event_id: str,
-            custom_data: dict | None = None) -> bool:
+            custom_data: dict | None = None, *, action_source: str = "app",
+            web_context: dict | None = None) -> bool:
     if not enabled() or not allowed(c, account_id):
         return False
     row = c.execute(
-        """INSERT INTO meta_events (event_id, account_id, event_name, custom_data)
-           VALUES (%s, %s, %s, %s) ON CONFLICT (event_id) DO NOTHING RETURNING event_id""",
-        (event_id, account_id, event_name, json.dumps(custom_data or {}))).fetchone()
+        """INSERT INTO meta_events (event_id, account_id, event_name, custom_data, action_source, web_context)
+           VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (event_id) DO NOTHING RETURNING event_id""",
+        (event_id, account_id, event_name, json.dumps(custom_data or {}), action_source,
+         json.dumps(web_context) if web_context else None)).fetchone()
     return row is not None
+
+
+def web_kwargs(web_context: dict | None) -> dict:
+    """Argumentos de `enqueue` para un hecho que ocurrió en la web (vacío si fue en la app)."""
+    if not web_context:
+        return {}
+    return {"action_source": "website", "web_context": web_context}
 
 
 def _minimal_extinfo(platform: str) -> list[str]:
@@ -57,7 +66,33 @@ def _minimal_extinfo(platform: str) -> list[str]:
     return values
 
 
+def build_web_event(row: dict, account: dict) -> dict:
+    """Evento de la web: action_source=website con el contexto del navegador (fbp, fbc, IP, UA, URL)."""
+    ctx = row.get("web_context") or {}
+    custom = dict(row["custom_data"] or {})
+    country = custom.pop("_country", None)
+    extra = {k: custom.pop(f"_{k}", None) for k in ("ct", "st", "zp", "ph")}
+    user = meta_datos.user_data(account, None, country, extra)
+    for src, dst in (("fbp", "fbp"), ("fbc", "fbc"), ("client_ip", "client_ip_address"),
+                     ("user_agent", "client_user_agent")):
+        if ctx.get(src):
+            user[dst] = ctx[src]
+    event = {
+        "event_name": row["event_name"],
+        "event_time": int(row["event_time"].timestamp()),
+        "event_id": row["event_id"],
+        "action_source": "website",
+        "user_data": user,
+        "custom_data": custom,
+    }
+    if ctx.get("source_url"):
+        event["event_source_url"] = ctx["source_url"]
+    return event
+
+
 def build_event(row: dict, account: dict, identity: dict | None) -> dict:
+    if row.get("action_source") == "website":
+        return build_web_event(row, account)
     platform = identity["platform"] if identity else "android"
     tracking = bool(identity and identity["advertiser_tracking_enabled"])
     custom = dict(row["custom_data"] or {})
@@ -111,7 +146,7 @@ def send_pending(limit: int = 500, client: httpx.Client | None = None) -> dict:
                           (row["event_id"],))
                 counts["omitidos"] += 1
                 continue
-            identity = c.execute(
+            identity = None if row["action_source"] == "website" else c.execute(
                 """SELECT * FROM meta_identities WHERE account_id = %s
                    ORDER BY updated_at DESC LIMIT 1""", (row["account_id"],)).fetchone()
             batch.append(build_event(row, row, identity))

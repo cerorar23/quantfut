@@ -2,7 +2,10 @@
 // cuenta-api.js); el pago todavía no existe y ningún botón crea una orden.
 // Importes, duración y qué planes están a la venta salen del servidor
 // (catálogo público de cuenta-api.js, editable en el panel /control): aquí solo viven los textos.
-import * as cuenta from './cuenta-api.js?v=87d3e9428389';
+import * as cuenta from './cuenta-api.js?v=w2b3c4d5e6f7';
+import { googleIdToken } from './google-auth.js?v=w2b3c4d5e6f7';
+import { init as initPixel, identify, track, browserIds } from './meta-pixel.js?v=m1';
+import { mount as mountCheckout, destroy as destroyCheckout } from './whop-checkout.js?v=w1a2b3c4d5e6';
 
 // Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
 const PLAN_COPY = Object.freeze({
@@ -67,7 +70,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
   const summary = (checkout = false) => {
     const q = selected();
     if (!q) return `<aside class="order-summary" aria-labelledby="order-title"><p class="eyebrow">TU SELECCIÓN</p><h2 id="order-title">Resumen del pedido</h2>${plansStatus()}</aside>`;
-    return `<aside class="order-summary" aria-labelledby="order-title"><p class="eyebrow">${checkout ? 'REVISIÓN' : 'TU SELECCIÓN'}</p><h2 id="order-title">Resumen del pedido</h2><div class="order-product"><span class="order-mark" aria-hidden="true">Q.</span><div><strong>QuantFut Plus</strong><small>Paquete de picks y análisis</small></div></div><dl class="order-details"><div><dt>Modalidad</dt><dd>${esc(q.name)}</dd></div><div><dt>Periodo</dt><dd>${q.period}</dd></div><div><dt>Acceso</dt><dd>Completo</dd></div><div><dt>Moneda</dt><dd>${esc(q.currency)}</dd></div></dl><details class="coupon-details" ${state.couponOpen ? 'open' : ''}><summary>¿Tienes un cupón?</summary><form data-membership-form="coupon"><label for="coupon-code">Código promocional</label><div><input id="coupon-code" name="coupon" placeholder="Código de cupón" maxlength="32" autocomplete="off" /><button type="submit" class="secondary-button">Aplicar</button></div>${state.couponMessage ? `<p role="status">${esc(state.couponMessage)}</p>` : ''}</form></details><div class="order-total"><span>Total</span><strong>${money(q)}<small> ${esc(q.currency)}</small></strong></div><p class="order-period">${q.months == null ? 'Pago único · acceso de por vida' : `${q.period} de acceso · equivalente aprox. ${membershipMoney(q.monthlyCents, q.currency)} / mes`}</p>${checkout ? '<button type="button" class="primary-button full" disabled>Cobro todavía no habilitado</button>' : `<button type="button" class="primary-button full" data-membership-action="review-order">${state.session ? 'Revisar pedido' : 'Entrar o crear cuenta'} <span aria-hidden="true">↗</span></button>`}<p class="order-footnote">Esta selección no genera una orden ni concede acceso privado.</p><button type="button" class="text-link" data-route="paquetes">Ver qué incluye el paquete ↗</button></aside>`;
+    return `<aside class="order-summary" aria-labelledby="order-title"><p class="eyebrow">${checkout ? 'REVISIÓN' : 'TU SELECCIÓN'}</p><h2 id="order-title">Resumen del pedido</h2><div class="order-product"><span class="order-mark" aria-hidden="true">Q.</span><div><strong>QuantFut Plus</strong><small>Paquete de picks y análisis</small></div></div><dl class="order-details"><div><dt>Modalidad</dt><dd>${esc(q.name)}</dd></div><div><dt>Periodo</dt><dd>${q.period}</dd></div><div><dt>Acceso</dt><dd>Completo</dd></div><div><dt>Moneda</dt><dd>${esc(q.currency)}</dd></div></dl><details class="coupon-details" ${state.couponOpen ? 'open' : ''}><summary>¿Tienes un cupón?</summary><form data-membership-form="coupon"><label for="coupon-code">Código promocional</label><div><input id="coupon-code" name="coupon" placeholder="Código de cupón" maxlength="32" autocomplete="off" /><button type="submit" class="secondary-button">Aplicar</button></div>${state.couponMessage ? `<p role="status">${esc(state.couponMessage)}</p>` : ''}</form></details><div class="order-total"><span>Total</span><strong>${money(q)}<small> ${esc(q.currency)}</small></strong></div><p class="order-period">${q.months == null ? 'Pago único · acceso de por vida' : `${q.period} de acceso · equivalente aprox. ${membershipMoney(q.monthlyCents, q.currency)} / mes`}</p>${checkout ? (state.payConfig?.enabled ? '' : '<button type="button" class="primary-button full" disabled>Cobro todavía no habilitado</button>') : `<button type="button" class="primary-button full" data-membership-action="review-order">${state.session ? 'Revisar pedido' : 'Entrar o crear cuenta'} <span aria-hidden="true">↗</span></button>`}<p class="order-footnote">${checkout && state.payConfig?.enabled ? 'El acceso se activa solo cuando se confirma el cobro.' : 'Esta selección no genera una orden ni concede acceso privado.'}</p><button type="button" class="text-link" data-route="paquetes">Ver qué incluye el paquete ↗</button></aside>`;
   };
 
   function plansView() {
@@ -96,13 +99,13 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     const intro = recovery ? 'Escribe tu correo y te enviaremos un enlace para elegir una contraseña nueva.' : registration ? 'Es gratis. Te enviaremos un correo para confirmar tu dirección.' : 'Entra con tu correo y tu contraseña.';
     const busy = state.authBusy ? ' disabled aria-busy="true"' : '';
     const password = recovery ? '' : `<label for="auth-password">Contraseña</label><div class="auth-password"><input id="auth-password" name="password" type="password" required ${registration ? 'minlength="10" autocomplete="new-password"' : 'autocomplete="current-password"'} maxlength="128" /><button type="button" data-membership-action="show-password" aria-pressed="false" aria-controls="auth-password">Mostrar</button></div>${registration ? '<p class="auth-small">Al menos 10 caracteres.</p>' : ''}`;
-    return `<div class="auth-layout"><section class="auth-story"><p class="eyebrow">TU ESPACIO / QUANTFUT</p><h1>El análisis.<br><em>A tu manera.</em></h1><p>Tus ligas, tus preferencias y el detalle de tu plan, en un mismo espacio.</p><div class="auth-story-facts"><div><span>01</span><strong>Cuotas claras</strong><small>Formato decimal o americano.</small></div><div><span>02</span><strong>Tu selección de ligas</strong><small>Un filtro que ya funciona en la mesa.</small></div><div><span>03</span><strong>Evidencia abierta</strong><small>Consulta el historial antes de elegir.</small></div></div><button type="button" class="text-link" data-route="paquetes">Conocer los paquetes ↗</button></section><section class="auth-card" aria-labelledby="auth-title"><div class="auth-card-mark" aria-hidden="true">Q.</div><div class="auth-tabs" role="group" aria-label="Tipo de acceso"><button type="button" data-auth-mode="login" aria-pressed="${mode === 'login'}">Iniciar sesión</button><button type="button" data-auth-mode="register" aria-pressed="${registration}">Registro</button></div><h2 id="auth-title" tabindex="-1">${title}</h2><p>${intro}</p><form data-membership-form="${mode}" novalidate>${registration ? `<label for="auth-name">Nombre <small>(opcional)</small></label><input id="auth-name" name="name" maxlength="80" autocomplete="nickname" value="${esc(state.authName || '')}" />` : ''}<label for="auth-email">Correo electrónico</label><input id="auth-email" name="email" type="email" required maxlength="254" autocomplete="${registration || recovery ? 'email' : 'username'}" value="${esc(state.authEmail || '')}" />${password}${!registration && !recovery ? '<div class="auth-form-links"><span></span><button type="button" class="text-link" data-auth-mode="recovery">¿Olvidaste tu contraseña?</button></div>' : ''}<button type="submit" class="primary-button full"${busy}>${state.authBusy ? 'Un momento…' : recovery ? 'Enviar enlace' : registration ? 'Crear cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button>${notice(state.authMessage, state.authError)}</form><div class="auth-footer">${recovery ? '<button type="button" class="text-link" data-auth-mode="login">Volver a iniciar sesión</button>' : `<span>${registration ? '¿Ya tienes cuenta?' : '¿Todavía no tienes cuenta?'}</span><button type="button" class="text-link" data-auth-mode="${registration ? 'login' : 'register'}">${registration ? 'Iniciar sesión' : 'Crear cuenta'}</button>`}</div><p class="auth-privacy">Tu contraseña se guarda cifrada y nunca se muestra. La sesión se mantiene con una cookie segura de este sitio.</p></section></div>`;
+    return `<div class="auth-layout"><section class="auth-story"><p class="eyebrow">TU ESPACIO / QUANTFUT</p><h1>El análisis.<br><em>A tu manera.</em></h1><p>Tus ligas, tus preferencias y el detalle de tu plan, en un mismo espacio.</p><div class="auth-story-facts"><div><span>01</span><strong>Cuotas claras</strong><small>Formato decimal o americano.</small></div><div><span>02</span><strong>Tu selección de ligas</strong><small>Un filtro que ya funciona en la mesa.</small></div><div><span>03</span><strong>Evidencia abierta</strong><small>Consulta el historial antes de elegir.</small></div></div><button type="button" class="text-link" data-route="paquetes">Conocer los paquetes ↗</button></section><section class="auth-card" aria-labelledby="auth-title"><div class="auth-card-mark" aria-hidden="true">Q.</div><div class="auth-tabs" role="group" aria-label="Tipo de acceso"><button type="button" data-auth-mode="login" aria-pressed="${mode === 'login'}">Iniciar sesión</button><button type="button" data-auth-mode="register" aria-pressed="${registration}">Registro</button></div><h2 id="auth-title" tabindex="-1">${title}</h2><p>${intro}</p>${recovery ? '' : `<button type="button" class="google-button" data-membership-action="google-signin"${busy}><svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg> Continuar con Google</button><label class="google-consent"><input type="checkbox" id="google-terms" /><span>Acepto los <a href="/legal/terminos" target="_blank" rel="noopener">términos</a> y la <a href="/legal/privacidad" target="_blank" rel="noopener">política de privacidad</a> (necesario para crear cuenta nueva).</span></label><p class="auth-or"><span>o con tu correo</span></p>`}<form data-membership-form="${mode}" novalidate>${registration ? `<label for="auth-name">Nombre <small>(opcional)</small></label><input id="auth-name" name="name" maxlength="80" autocomplete="nickname" value="${esc(state.authName || '')}" />` : ''}<label for="auth-email">Correo electrónico</label><input id="auth-email" name="email" type="email" required maxlength="254" autocomplete="${registration || recovery ? 'email' : 'username'}" value="${esc(state.authEmail || '')}" />${password}${!registration && !recovery ? '<div class="auth-form-links"><span></span><button type="button" class="text-link" data-auth-mode="recovery">¿Olvidaste tu contraseña?</button></div>' : ''}<button type="submit" class="primary-button full"${busy}>${state.authBusy ? 'Un momento…' : recovery ? 'Enviar enlace' : registration ? 'Crear cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button>${notice(state.authMessage, state.authError)}</form><div class="auth-footer">${recovery ? '<button type="button" class="text-link" data-auth-mode="login">Volver a iniciar sesión</button>' : `<span>${registration ? '¿Ya tienes cuenta?' : '¿Todavía no tienes cuenta?'}</span><button type="button" class="text-link" data-auth-mode="${registration ? 'login' : 'register'}">${registration ? 'Iniciar sesión' : 'Crear cuenta'}</button>`}</div><p class="auth-privacy">Tu contraseña se guarda cifrada y nunca se muestra. La sesión se mantiene con una cookie segura de este sitio.</p></section></div>`;
   }
 
   function checkoutView() {
     if (!state.session) { state.authReturn = 'checkout'; return authView(); }
     const { account } = state.session;
-    return `<section class="membership-heading compact"><p class="eyebrow">TU PEDIDO</p><h1>Revisa tu <em>selección.</em></h1><p>El plan elegido, su periodo y su total de referencia. El pago en línea todavía no está disponible.</p></section><ol class="checkout-steps" aria-label="Etapas de contratación"><li class="done">1 <span>Cuenta</span></li><li class="current">2 <span>Resumen del pedido</span></li><li>3 <span>Pago pendiente</span></li></ol><div class="membership-layout checkout-layout"><section class="checkout-details"><div class="checkout-identity"><p class="eyebrow">TU CUENTA</p><h2>${esc(displayName(account))}</h2><p>${esc(account.email)} · ${account.email_verified ? 'correo verificado' : 'correo sin verificar'}</p></div><section class="checkout-payment"><p class="eyebrow">PAGO / TODAVÍA NO HABILITADO</p><h2>La activación se completará aquí.</h2><p>Cuando el proveedor de pagos esté conectado, el acceso se activará al confirmarse el cobro. Por ahora no se solicita tarjeta ni se crea una orden.</p><div class="payment-placeholder"><span aria-hidden="true">▣</span><strong>Formulario de pago pendiente</strong><small>No se solicita tarjeta ni se crea una orden.</small></div><div class="checkout-gate">${publicStatus()}</div></section><div class="checkout-actions"><button type="button" class="secondary-button" data-route="planes">Cambiar plan</button><button type="button" class="text-link" data-route="cuenta">Ir a mi cuenta ↗</button></div></section>${summary(true)}</div>`;
+    return `<section class="membership-heading compact"><p class="eyebrow">TU PEDIDO</p><h1>Revisa tu <em>selección.</em></h1><p>El plan elegido, su periodo y su total.</p></section><ol class="checkout-steps" aria-label="Etapas de contratación"><li class="done">1 <span>Cuenta</span></li><li class="current">2 <span>Resumen del pedido</span></li><li>3 <span>Pago</span></li></ol><div class="membership-layout checkout-layout"><section class="checkout-details"><div class="checkout-identity"><p class="eyebrow">TU CUENTA</p><h2>${esc(displayName(account))}</h2><p>${esc(account.email)} · ${account.email_verified ? 'correo verificado' : 'correo sin verificar'}</p></div>${paymentSection(selected())}<div class="checkout-actions"><button type="button" class="secondary-button" data-route="planes">Cambiar plan</button><button type="button" class="text-link" data-route="cuenta">Ir a mi cuenta ↗</button></div></section>${summary(true)}</div>`;
   }
 
   function preferencesPanel() {
@@ -183,6 +186,13 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
         button.setAttribute('aria-pressed', String(show));
         break;
       }
+      case 'start-payment':
+        startPayment();
+        break;
+      case 'google-signin':
+        if (state.authBusy) break;
+        signInWithGoogle();
+        break;
       case 'logout':
         button.disabled = true;
         cuenta.logout().catch(() => {}).finally(() => {
@@ -207,6 +217,39 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     return true;
   }
 
+  // El servidor manda el mismo evento por la Conversions API con este eventID: Meta lo deduplica.
+  function trackRegistration(session, method) {
+    if (!session?.account) return;
+    identify(session);
+    track('CompleteRegistration', { registration_method: method }, `reg:${session.account.account_id}`);
+  }
+
+  async function signInWithGoogle() {
+    const accepted = Boolean(document.getElementById('google-terms')?.checked);
+    state.authBusy = true; state.authMessage = ''; state.authError = false;
+    render();
+    try {
+      const token = await googleIdToken(await cuenta.googleConfig());
+      if (token) {
+        state.session = await cuenta.googleLogin(token, accepted);
+        // Cuenta recién creada (el acceso de una cuenta existente no es un registro).
+        if (Date.now() - new Date(state.session.account.created_at).getTime() < 120000) trackRegistration(state.session, 'google');
+        state.accountMessage = ''; state.accountError = false; state.accountSection = 'overview';
+        state.authBusy = false; state.authMessage = '';
+        navigate(state.authReturn === 'checkout' ? 'checkout' : 'cuenta');
+        return;
+      }
+    } catch (error) {
+      state.authError = true;
+      state.authMessage = error.code === 'vinculacion_requerida'
+        ? 'Ya existe una cuenta con ese correo. Entra con tu contraseña; la vinculación con Google estará disponible en tu cuenta.'
+        : error.message;
+    }
+    state.authBusy = false;
+    render();
+    document.querySelector('#auth-title')?.focus({ preventScroll: true });
+  }
+
   async function submitAuth(form, action) {
     const fields = new FormData(form);
     const email = String(fields.get('email') || '').trim();
@@ -223,6 +266,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
         state.authMessage = 'Si existe una cuenta con ese correo, te llegará un enlace en unos minutos. Revisa también la carpeta de spam.';
       } else {
         state.session = action === 'login' ? await cuenta.login(email, password) : await cuenta.register(email, password, state.authName);
+        if (action === 'register') trackRegistration(state.session, 'email');
         state.accountMessage = action === 'register' ? 'Cuenta creada. Te enviamos un correo para confirmar tu dirección.' : '';
         state.accountError = false;
         state.accountSection = 'overview';
@@ -259,11 +303,101 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     if (['planes', 'paquetes', 'checkout', 'cuenta'].includes(state.route)) render();
   }
 
+
+  // --- Pago: checkout embebido de Whop. El servidor crea la configuración; el acceso lo concede el webhook.
+  const pay = () => state.pay || (state.pay = { phase: 'idle' });
+
+  function paymentSection(q) {
+    const config = state.payConfig;
+    const p = pay();
+    if (!config || config.status === 'loading') return '<section class="checkout-payment"><p class="eyebrow">PAGO</p><h2>Preparando el pago…</h2></section>';
+    if (!config.enabled) return `<section class="checkout-payment"><p class="eyebrow">PAGO / TODAVÍA NO HABILITADO</p><h2>La activación se completará aquí.</h2><p>Cuando el pago en línea esté conectado, el acceso se activará al confirmarse el cobro. Por ahora no se solicita tarjeta ni se crea una orden.</p><div class="payment-placeholder"><span aria-hidden="true">▣</span><strong>Pago en línea no disponible</strong><small>No se solicita tarjeta ni se crea una orden.</small></div><div class="checkout-gate">${publicStatus()}</div></section>`;
+    if (p.phase === 'paid') return `<section class="checkout-payment" aria-live="polite"><p class="eyebrow">PAGO / RECIBIDO</p><h2>${state.session?.plus ? 'Tu acceso ya está activo.' : 'Pago recibido. Activando tu acceso…'}</h2><p>${state.session?.plus ? 'Ya puedes entrar a tu cuenta para verlo.' : 'La confirmación del cobro puede tardar unos segundos. No cierres esta página.'}</p><div class="checkout-actions"><button type="button" class="primary-button" data-route="cuenta">Ir a mi cuenta <span aria-hidden="true">↗</span></button></div></section>`;
+    if (p.phase === 'ready') return '<section class="checkout-payment"><p class="eyebrow">PAGO SEGURO</p><h2>Datos de pago.</h2><div id="whop-checkout" class="whop-mount" aria-live="polite"></div><p class="auth-small">El pago lo procesa Whop; QuantFut no ve ni guarda los datos de tu tarjeta.</p></section>';
+    const busy = p.phase === 'preparing' ? ' disabled aria-busy="true"' : '';
+    return `<section class="checkout-payment"><p class="eyebrow">PAGO</p><h2>Paga y activa tu acceso.</h2><p>El acceso se activa solo cuando se confirma el cobro.</p>${q ? `<button type="button" class="primary-button full" data-membership-action="start-payment"${busy}>${p.phase === 'preparing' ? 'Preparando…' : `Continuar al pago · ${esc(membershipMoney(q.totalCents, q.currency))}`} <span aria-hidden="true">↗</span></button>` : ''}${notice(p.message, true)}</section>`;
+  }
+
+  async function startPayment() {
+    const q = selected();
+    if (!q || pay().phase === 'preparing') return;
+    state.pay = { phase: 'preparing' };
+    render();
+    try {
+      const ids = browserIds();
+      const out = await cuenta.createCheckout({ plan_code: q.id, fbp: ids.fbp, fbc: ids.fbc, source_url: `${location.origin}/#checkout` });
+      identify(state.session);
+      track('InitiateCheckout', { currency: q.currency, value: q.totalCents / 100, content_ids: [q.id], content_type: 'product', num_items: 1 }, out.initiate_event_id);
+      state.pay = { phase: 'ready', checkoutId: out.checkout_id, eventId: out.event_id, plan: q };
+    } catch (error) {
+      state.pay = { phase: 'error', message: error.message };
+    }
+    render();
+  }
+
+  // Tras el cobro, el webhook tarda unos segundos: se consulta la cuenta hasta ver el acceso.
+  async function waitForAccess() {
+    for (let i = 0; i < 20 && !state.session?.plus; i += 1) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      try { state.session = await cuenta.me(); } catch { /* se reintenta */ }
+      if (state.route === 'checkout') render();
+    }
+  }
+
+  function paid() {
+    destroyCheckout();
+    state.pay = { ...pay(), phase: 'paid' };
+    render();
+    waitForAccess();
+  }
+
+  /** Se llama tras cada pintado: el formulario de Whop vive en un nodo que `render()` recrea. */
+  function afterRender() {
+    const p = pay();
+    const node = document.getElementById('whop-checkout');
+    if (state.route !== 'checkout' || p.phase !== 'ready' || !node) return;
+    mountCheckout(node, {
+      checkoutId: p.checkoutId,
+      email: state.session?.account?.email,
+      returnUrl: `${location.origin}/?checkout=1#checkout`,
+      onComplete: result => {
+        if (result?.result !== 'payment') return;
+        const q = p.plan;
+        // Mismo eventID que el Purchase de la Conversions API (lo manda el servidor al confirmarse el pago).
+        track('Purchase', { currency: q.currency, value: q.totalCents / 100, content_ids: [q.id], content_type: 'product', num_items: 1 }, p.eventId);
+        paid();
+      },
+      onError: () => { state.pay = { phase: 'error', message: 'No se pudo mostrar el formulario de pago. Inténtalo de nuevo.' }; render(); },
+    }).catch(error => { state.pay = { phase: 'error', message: error.message }; render(); });
+  }
+
+  /** Vuelta de un paso externo (3D Secure): Whop añade ?payment=…&status=… a la URL de retorno. */
+  function handleReturn() {
+    const params = new URLSearchParams(location.search);
+    if (!params.get('checkout') || !params.get('status')) return;
+    history.replaceState(null, '', `${location.pathname}#checkout`);
+    if (params.get('status') === 'succeeded') { state.pay = { phase: 'paid' }; waitForAccess(); }
+    else state.pay = { phase: 'error', message: params.get('status') === 'canceled' ? 'Cancelaste el pago. Puedes intentarlo de nuevo.' : 'El pago no se completó. Revisa los datos e inténtalo de nuevo.' };
+    state.route = 'checkout';
+  }
+
+  async function loadPaymentConfig() {
+    state.payConfig = { status: 'loading' };
+    try {
+      const config = await cuenta.paymentConfig();
+      state.payConfig = { status: 'ready', enabled: Boolean(config.enabled), pixelId: config.pixelId };
+      initPixel(config.pixelId, state.session);
+    } catch {
+      state.payConfig = { status: 'ready', enabled: false };
+    }
+    if (state.route === 'checkout') render();
+  }
+
   /** Al cargar la página: si la cookie de sesión sigue viva, entra sin pedir contraseña. */
   async function restoreSession() {
     const session = await cuenta.restore();
-    if (session) { state.session = session; render(); }
+    if (session) { state.session = session; identify(session); render(); }
   }
 
-  return { plansView, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession, loadPlans };
+  return { plansView, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession, loadPlans, loadPaymentConfig, afterRender, handleReturn };
 }
