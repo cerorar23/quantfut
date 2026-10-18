@@ -32,7 +32,11 @@ Tablas nuevas con clave `match_id` (`db/075`, cargador `qf.ingest.fotmob_a_motor
 | `v_fotmob_jugador_partido` | vista | une los minutos y estadísticas ya archivadas |
 
 Cobertura por partido: entrenador 100 %, ronda 93 %, asistencia 93 %, árbitro 94 %, valor del once 73 %,
-**clima medido en el partido 40 %**, marcador global de eliminatoria 1,7 %.
+**clima medido en el partido 40 %** (80-93 % en Premier, LaLiga, Liga MX, MLS, Argentina y Brasil desde jul-2025;
+muy bajo antes), marcador global de eliminatoria 1,7 %.
+
+Comprobado contra `matches`: el árbitro coincide en 19.183 de 19.183 partidos con los dos y el estadio en 20.331 de 20.331;
+ninguna fila se recibió antes del saque.
 
 Advertencias que el consumidor debe respetar:
 - Todo se guardó **después** del partido (`recibido_en`). Las bajas son la reconstrucción de quién faltó, no lo que se
