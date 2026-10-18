@@ -24,7 +24,7 @@ Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en
 | ~26-oct | Termina la prueba Business de Sentry: confirmar la retención del plan |
 | **1-nov, 03:00 UTC** | Reentrenamiento automático (~5 h) y reset de los 20.000 créditos de The Odds API |
 | **2-nov, 9:00 (hora local)** | Revisión automática de solo lectura (tarea programada `revisar-reentrenamiento-1-nov`) |
-| ~10-nov | La puerta de CLV pide 300 observaciones. **Medido 18-oct:** `shadow.summary` lleva n=135 y 138 (retadores) con `ev_close` ≈ +0,06 / +0,08 %; la cifra de +3,46 % (n=142) del 15-oct no se reproduce con ninguna de las tres fuentes (`shadow_results` n=348 +0,65 %; `sharp_shadow_results` n=1.683 +3,24 %). Aclarar cuál es la oficial antes de contar con la puerta |
+| ~fin de oct–nov | **Puerta de CLV (aclarado 18-oct).** La cifra oficial es `publish.shadow_sharp.report()` (ofertas «publicables» de la sombra sharp), no `shadow.summary` ni `shadow_results`, que miden los retadores de XI. Hoy: n=213 con cierre justo (223 publicables), `ev_close` **+3,07 %, IC95 +1,54 a +4,67**; el +3,46 % (n=142) del 15-oct era esta misma medida con menos muestra. Bloquea: n<300 (a ~24/día desde el 15-oct, hacia el 22-oct) y **ninguna liga llega a 30** (la mayor, MLS, 18): ≥3 ligas con 30 pide ~460 en total, hacia finales de oct o noviembre según el ritmo |
 
 ## 1. Seguridad (Tú, ~15 minutos)
 - [ ] Activar la autenticación en dos pasos en la cuenta de GitHub `cerorar23`.
@@ -67,7 +67,7 @@ Tareas sueltas:
 - [ ] Vigilar la ampliada 73–95 %: con cuota de referencia acierta 78,0 % frente a 81,4 % prometido (n=223).
 - [ ] Resolver 379 identidades de copas y 21 conflictos; unos 250 huecos de tiros y córners.
 - [ ] Ampliar fuentes para los **1.219 huecos de xG** (Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46). LanusStats/365Scores aportó tres parejas de LaLiga 2, cargadas por petición del titular el 15-oct; su muestra no prueba cobertura completa. Ver `docs/lanusstats_carga_20261015.md`.
-  - Medido 18-oct (partidos terminados desde ago-2022, sin xG): Serie B 1.158, LaLiga 2 926, Ligue 2 705, Argentina 412 (modelada), Brasil 66, México 25, copas 26. La cifra de 1.219 no coincide con esa ventana: confirmar cuál era su criterio.
+  - Verificado 18-oct: siguen siendo **1.219** (partidos terminados desde el 1-ene-2024, sin xG de alguno de los dos equipos): Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144, Champions 14, Europa League 12, México 8, otros 12. Sin cambios desde el 15-oct. (Con una ventana desde ago-2022 salen más: Serie B 1.158, LaLiga 2 926.)
 
 ## 4. Orden del servidor (Claude, con ensayo; la API después del 1-nov)
 - [ ] Alinear la **API** con `main` (24 archivos distintos; imagen `quantfut-api-admob:20261015a`). Es lo que ven tus clientes.
@@ -104,5 +104,7 @@ Tareas sueltas:
 6. Revisión legal por un profesional habilitado.
 
 ## Tenis retrospectivo 2024/2025 (18-oct-2026)
-- Preparado:11240partidos,187ediciones enlazadas de su temporada,2982aptos para evaluacion espacial;165pruebas tenis aprobadas.2025exploratorio, modelos congelados intactos.
-- Pendiente: ampliar52edicionesindividuales sinenlace y coordenadas de17recintos(27ediciones);233bloquesporequipos/multisede necesitan sede por eliminatoria. Ejecutar comparacion probabilistica con ajuste soloentrenamiento e intersecciondepredicciones; sinROI, sinhorasficticias. Ver docs/tenis_dataset_historico_20261018.md y pending_editions.json del archivo historico.
+- Ampliado: 11.240 partidos con identidad de sede, 10.895 con coordenadas de destino y 6.414 aptos para comparación espacial; 194 pruebas de tenis aprobadas. Segundo bloque Chennai/Palermo/Riad/Hengqin/Shenzhen: 121 destinos y 170 aptos adicionales. Palermo es una referencia de complejo inferida por dirección y contexto cartográfico, tolerancia 750 m. Versiones anteriores y 12 artefactos congelados conservados. Informe docs/tenis_segundo_bloque_sedes_20261018.md.
+- Comparación repetida con protocolo fijo: entrenamiento 3.306 de 2024, evaluación 3.108 de 2025; Log-Loss base 0,635571 frente a espacial 0,635581, intervalo de diferencia incluye cero. En la misma muestra original de 2.833: base 0,638733, espacial anterior 0,638682 y ajuste ampliado 0,638764. La nueva cobertura no acredita una mejora predictiva; 2025 exploratorio, sin activar corrección. Sensibilidad y calibración archivadas en historical_geography_batch2_20261018/comparison/.
+- Carga por rondas ejecutada: entrenamiento2130/evaluación1957; LogLoss base0,615696 frente a cobertura+carga0,615221. Intervalos incluyen cero, variante experimental sin activar; no equivale a ventanas diarias. Informe docs/tenis_carga_rondas_resultados_20261018.md.
+- Pendiente: coordenadas de 78 entradas (345 destinos), cola actual data/tennis/historical_geography_batch2_20261018/geography_priority_queue.json; siguientes cinco: Taipei Tennis Center 14, SuperTennis Arena Bolonia 14, AO Arena Manchester 12, SEB Arena Vilna 10 y Swiss Tennis Arena Biel 9. Ventanas 3/7 días bloqueadas: 152 observaciones terminales archivadas sin límite inferior de finalización acreditado. Nuevas especificaciones se eligen dentro de entrenamiento y requieren periodo futuro intacto. Sin ROI ni horas ficticias.
