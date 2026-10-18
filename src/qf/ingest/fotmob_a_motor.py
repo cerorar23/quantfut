@@ -169,6 +169,18 @@ def _json(v):
     return None if v is None else Jsonb(v)
 
 
+def insertar(w, match_id: str, source_match_id: str, raw_sha256: str, recibido_en, x: dict) -> tuple[int, int]:
+    """Guarda lo extraído de un partido (cursor `w`). Devuelve (jugadores, bajas) enviados a insertar."""
+    p = x["partido"]
+    w.execute(_SQL_PARTIDO, (match_id, source_match_id, raw_sha256, recibido_en,
+                             *[_json(p[k]) if k == "ida_vuelta" else p[k] for k in COLS_PARTIDO]))
+    if x["jugadores"]:
+        w.executemany(_SQL_JUGADOR, [(match_id, *[j[k] for k in COLS_JUGADOR]) for j in x["jugadores"]])
+    if x["bajas"]:
+        w.executemany(_SQL_BAJA, [(match_id, *[b[k] for k in COLS_BAJA]) for b in x["bajas"]])
+    return len(x["jugadores"]), len(x["bajas"])
+
+
 def cargar(c, limite: int | None = None, confirmar: bool = False) -> dict:
     """Procesa los partidos aún sin cargar, por lotes ordenados por `match_id`.
 
@@ -191,20 +203,12 @@ def cargar(c, limite: int | None = None, confirmar: bool = False) -> dict:
                     r["sin_original"] += 1
                     continue
                 x = extraer(payload, fila["kickoff_utc"])
-                p = x["partido"]
-                w.execute(_SQL_PARTIDO, (fila["match_id"], fila["source_match_id"], fila["raw_sha256"],
-                                         fila["captured_at"],
-                                         *[_json(p[k]) if k == "ida_vuelta" else p[k] for k in COLS_PARTIDO]))
-                if x["jugadores"]:
-                    w.executemany(_SQL_JUGADOR, [(fila["match_id"], *[j[k] for k in COLS_JUGADOR])
-                                                 for j in x["jugadores"]])
-                if x["bajas"]:
-                    w.executemany(_SQL_BAJA, [(fila["match_id"], *[b[k] for k in COLS_BAJA])
-                                              for b in x["bajas"]])
+                n_j, n_b = insertar(w, fila["match_id"], fila["source_match_id"], fila["raw_sha256"],
+                                    fila["captured_at"], x)
                 r["partidos"] += 1
-                r["jugadores"] += len(x["jugadores"])
-                r["bajas"] += len(x["bajas"])
-                r["con_clima_en_partido"] += 1 if p["clima_en_partido"] else 0
+                r["jugadores"] += n_j
+                r["bajas"] += n_b
+                r["con_clima_en_partido"] += 1 if x["partido"]["clima_en_partido"] else 0
         if confirmar:
             c.commit()
         log.info("fotmob_a_motor: %s", r)

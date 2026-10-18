@@ -49,8 +49,8 @@ Advertencias que el consumidor debe respetar:
 | Captura | Estado |
 |---|---|
 | Calendario de cada equipo, temporada en curso | **Hecho:** cron diario 05:40 UTC (`calendario_equipos --temporadas 2026 --refrescar`, ~313 llamadas de 7.500) |
-| Lista de no disponibles de FotMob antes del partido, y el archivo de FotMob a diario | **No hecho: necesita tu decisión.** La descarga de FotMob se registró como puntual («los datos nuevos vendrán de otra API», `docs/fotmob_history.md`) y su cliente se detiene ante cualquier bloqueo. Una captura diaria cambia esa decisión |
-| Pronóstico de clima a la hora de publicar | **Bloqueado:** no hay clave de Open-Meteo guardada ni código de clima |
+| No disponibles de FotMob antes del partido y archivo de FotMob a diario | **Hecho (autorizado por el titular el 18-oct):** `qf.ingest.fotmob_captura`, `db/081`. Ver §6 |
+| Pronóstico de clima a la hora de publicar | **Hecho con la misma captura:** la página previa de FotMob trae el pronóstico (`apiUsed: forecast`, con probabilidad de lluvia y hora de actualización). Open-Meteo no se usa, ver §6 |
 
 ## 4. Descargas (grupo 3)
 
@@ -58,7 +58,7 @@ Advertencias que el consumidor debe respetar:
 |---|---|
 | Calendario de copas, continentales y amistosos desde 2023 | **Hecho:** `calendario_equipo`, 60.979 partidos, 315 equipos × 4 temporadas, 1.255 llamadas a API-Football |
 | Altitud de los estadios | **Hecho:** `estadio_altitud`, 728 de 728 con coordenadas (99,3 % de los partidos desde 2024). Toluca 2.682 m, Ciudad de México ~2.281 m |
-| Clima histórico ERA5 | **Bloqueado:** falta tu token de Copernicus CDS |
+| Clima histórico ERA5 | **En curso:** token recibido y probado; 423 celdas de 0,25° (~5 h), `clima_era5_partido`. Ver §6 |
 | Minutos con la selección nacional | **No hecho:** pesado, segunda etapa de F12 |
 
 Descanso y carga ya se pueden calcular: la vista `v_descanso_equipo` (`db/080`) da días de descanso, partidos en 14
@@ -71,3 +71,31 @@ en el **17,6 %** de los equipo-partidos desde 2024 (4.243 de 24.102), y en 2.204
   «Olímpico Universitario». No afecta a la altitud, sí a cualquier característica por sede o viaje (F6).
 - **Reentrenamiento y Arsenal:** la corrección entra sola al del 1-nov. Su efecto no está medido.
 - **Pruebas:** la suite completa tiene 9 fallos que no son de estos cambios (ver `harness/progreso.md`).
+
+## 6. Captura de FotMob, pronóstico y clima histórico (autorizado el 18-oct, tarde)
+
+**Captura de FotMob** (`db/081`, `qf.ingest.fotmob_captura`, tres cron con `flock`):
+- `referencias` (05:50 UTC): qué id de FotMob es cada partido nuestro. 503 nuevas; **todos** los partidos próximos de
+  las 13 ligas modeladas ya tienen referencia. 495 equipos de FotMob identificados con partidos de liga.
+- `previos` (cada 15 min): instantáneas de un partido futuro en cuatro ventanas, a ~24 h, ~4 h, ~70 min y ~40 min del
+  saque: alineación probable o confirmada (`predicted` / `lastStarting11` / la oficial), no disponibles con tipo y
+  regreso esperado, entrenadores, valor del once y **pronóstico de clima**. Cada fila lleva su hora real de captura.
+  Primera corrida: 8 partidos, 46 jugadores y 3 a 11 bajas por partido.
+- `posteriores` (cada hora): la página del partido terminado a las tablas de la §2. Primera corrida: 60 partidos.
+- Se conserva el original comprimido de cada captura (`fotmob_original`, ~27 kB; ~3 MB al día).
+- **Salvaguardas:** una petición cada 0,8 s en serie; HTTP 401, 403 o 429 detienen todo y dejan 12 h de enfriamiento
+  con alerta a Telegram; un id de respuesta distinto del pedido, o un partido ya empezado, se descarta. Sin evasión de
+  controles de acceso. Probado: un 404 no cuenta como bloqueo; los tres códigos de bloqueo no se reintentan.
+
+**Open-Meteo no se usa.** Se pidió usar el plan gratuito por ser un proyecto «sin fines comerciales», pero QuantFut
+vende suscripciones y el plan gratuito es solo no comercial; además el titular había contratado el plan de pago
+Standard, cuya clave nunca se entregó. Como el pronóstico de FotMob ya se guarda point-in-time, no hace falta. Si más
+adelante se quiere una segunda fuente, hay que cargar la clave del plan de pago.
+
+**Clima histórico ERA5** (`db/082`, `qf.ingest.era5_clima`): conjunto `reanalysis-era5-single-levels-timeseries` de
+Copernicus, una petición por celda de 0,25° con seis variables horarias, guardada en disco antes de tocar la base.
+Token en el `.env` del servidor (permisos 600); no está en el repositorio. Resultado por partido: temperatura, humedad
+(de punto de rocío), viento, lluvia acumulada en la ventana de 3 h y nubosidad. **Validación:** contra el clima que
+midió FotMob en 184 partidos comunes, temperatura con correlación 0,98 y error medio de 1,2 °C; humedad 0,90; viento
+0,64; nubosidad 0,58. Es clima observado (reanálisis), no pronóstico: sirve para medir el efecto del clima.
+Atribución obligatoria de la licencia: «Contains modified Copernicus Climate Change Service information».

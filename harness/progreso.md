@@ -1,5 +1,15 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-18 (tarde) — FotMob en vivo como fuente previa; Open-Meteo descartada por licencia
+
+El titular autorizó la captura recurrente de FotMob (antes registrada como puntual) y entregó el token de Copernicus. La página
+previa de FotMob trae alineación probable, no disponibles con tipo y pronóstico de clima con hora de actualización: cubre las
+bajas previas y el pronóstico de F6 con una sola fuente, point-in-time, sin la clave de Open-Meteo. No se usó el plan gratuito de
+Open-Meteo porque el producto vende suscripciones (uso comercial) y el titular había contratado el plan de pago; si se quiere esa
+fuente, se carga la clave de pago. Las ventanas de captura previa se estrecharon (70 y 40 min) porque una ventana de 30 a 120 min
+habría tomado la alineación antes de que se publique la oficial. ERA5 se valida contra el clima que midió FotMob (temperatura 0,98).
+La captura se detiene 12 h ante cualquier HTTP 401/403/429 y no evita controles de acceso.
+
 ## 2026-10-18 — Datos al motor: tablas propias por fuente, nunca mezclar identificadores
 
 El archivo de FotMob (20.331 partidos) pasó a tablas con `match_id` en lugar de volcarse en `lineups_historicas` y

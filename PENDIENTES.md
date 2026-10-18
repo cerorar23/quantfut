@@ -63,8 +63,9 @@ Tareas sueltas:
 - [ ] Comprar los **527 snapshots** de The Odds API (~5.270 créditos, tras el reset): `python -m qf.ingest.cierres_odds_api fetch ...`. Necesita tu visto bueno.
 - [x] **Hecho 18-oct:** Arsenal corregido en 33 partidos de copa (`db/073`) y 4 alias de The Odds API con **+45 cierres** de copa (quedan 58 sin cierre, todos contra clubes externos). Detalle: `docs/datos_al_motor_20261018.md`. El reentrenamiento del 1-nov los incluirá; el efecto en el modelo **no está medido**.
 - [x] **Hecho 18-oct** (`db/075`-`080`): archivo FotMob en tablas con `match_id` (20.331 partidos, 852.126 jugadores, 47.140 bajas), altitud de 728 estadios, calendario de 315 equipos × 4 temporadas (60.979 partidos, refresco diario 05:40 UTC), 54 equivalencias de árbitros, 7.834 puentes de jugadores y la vista de descanso `v_descanso_equipo`.
-- [ ] **Tú decides:** ¿captura diaria de FotMob (no disponibles antes del partido y archivo diario)? La descarga se registró como puntual y su cliente se detiene ante bloqueos; sin esa captura, Argentina, Liga MX y Portugal no tienen bajas previas (API-Football reporta 0).
-- [ ] **Tú:** clave de Open-Meteo (pronóstico a la hora de publicar, F6) y token de Copernicus CDS (clima histórico ERA5). Sin ellos, el clima solo sale de FotMob: 40 % de los partidos, medido en el partido.
+- [x] **Hecho 18-oct (autorizado):** captura recurrente de FotMob (`db/081`): referencias, instantáneas previas a ~24 h/4 h/70 min/40 min con alineación, no disponibles y **pronóstico de clima**, y archivo posterior al partido. Cron con `flock`; un bloqueo 401/403/429 la detiene 12 h.
+- [ ] **ERA5 en curso** (423 celdas, ~5 h, `/var/log/era5_clima.log` en el worker; reanudable). Al terminar: revisar `clima_era5_partido`, **regenerar el token de Copernicus** (se compartió por chat) y completar los últimos 7 días con otra pasada.
+- [x] Open-Meteo: no se usa. El plan gratuito es solo no comercial y el producto vende suscripciones; el pronóstico lo da la captura de FotMob. Si quieres una segunda fuente, hace falta la clave del plan de pago Standard.
 - [ ] Estadios duplicados por coordenadas: 182 grupos (384 estadios); revisar antes de usar sede/viaje (F6).
 - [ ] F5: usar el **nombre de árbitro de FotMob** como llave (19.183 partidos frente a 2.799 de API-Football; el cruce solo suma 125).
 - [ ] Bloque `mercado` (movimiento de cuotas): cuando haya muestra propia.
@@ -104,7 +105,7 @@ Tareas sueltas:
 ## Decisiones que dependen de ti
 1. Procesador de pago de la web (el de la app ya está decidido: tiendas).
 2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
-2b. Captura diaria de FotMob, clave de Open-Meteo y token de CDS (ver arriba).
+2b. (Resuelto el 18-oct) Captura de FotMob autorizada; token de CDS entregado; Open-Meteo descartada.
 3. Comprar los 527 snapshots (~5.270 créditos) tras el 1-nov.
 4. Registrar los alias de Champions y Europa League.
 5. Pasar la cadena a comprometer-revelar y cuándo encender `PUBLISH_PICKS_ENABLED`.

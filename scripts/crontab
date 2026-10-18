@@ -110,3 +110,10 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Calendario de cada equipo en todas las competiciones (db/078), temporada en curso: ~313 llamadas de las 7.500 diarias.
 40 5 * * * cd /app && python -m qf.ingest.calendario_equipos --temporadas 2026 --refrescar >> /var/log/calendario_equipos.log 2>&1
+
+# Captura recurrente de FotMob (db/081), autorizada el 18-oct-2026. Una sola a la vez (flock); un bloqueo HTTP 401/403/429
+# la detiene 12 h. Referencias de partidos una vez al día; instantáneas previas (24 h, 4 h, 70 y 40 min antes) cada 15 min;
+# archivo de partidos terminados cada hora.
+50 5 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura referencias >> /var/log/fotmob_captura.log 2>&1
+*/15 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
+35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
