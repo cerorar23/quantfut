@@ -1,7 +1,8 @@
 # QuantFut · frontend de demostración
 
 Prototipo navegable para revisar la dirección visual de la futura web. Usa
-HTML, CSS y JavaScript nativos; no requiere instalación. Al servirlo desde
+HTML y JavaScript nativos con CYBERCORE CSS 0.3.0; requiere `npm install` la
+primera vez. Al servirlo desde
 FastAPI, los paneles señalados como reales consultan únicamente endpoints
 públicos del mismo origen; el servidor Node local no simula la API.
 La portada adapta la jerarquía de TennisPredictions (2026-10-07): titular
@@ -15,12 +16,21 @@ accesibilidad está en [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). Se consultó el
 catálogo público de UI UX Pro Max como referencia de criterios; no se añadió
 como dependencia ni se copió una plantilla.
 
+El rediseño HUD de 2026 vive en `future.css`, cargado después de las hojas
+históricas y de CYBERCORE CSS. Así cubre portada, mercados, partidos,
+productos, acceso y cuenta sin mezclar la lógica de negocio con la
+presentación. CYBERCORE CSS es una dependencia exacta y se copia a
+`vendor/cybercore/` con su licencia durante la instalación; Cyberpunk CSS se
+usa como referencia para cortes y geometría. No se requiere conexión para
+ver la interfaz.
+
 ## Abrir
 
 Con Node.js instalado:
 
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 
