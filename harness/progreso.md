@@ -6521,3 +6521,12 @@ HuaHin por mapa enlazado porpropietario yOSMtenis71mdediferencia;Seúl porgeomet
 Registroseparado data/tennis/historical_geography_top5_20261018:294fuentes,240entradas(157concoordenadas,83pendientes); enlacesdeediciónypartidointactos.11240objetivos,10774destinosconcoordenadas(+264),6651variablescompletasambos,6244aptos(+446),5943sinreferencias>1km.3226desarrollo2024/3018exploratorio2025;201frontera.264destinosy446transicionesaptas no sonlamismamétrica. Nuevosaptos261desarrollo/185exploración. Pendientes466destinos;colaactualChennai31/Palermo31/Riad30/Hengqin15/Shenzhen14.
 Auditoríavalida5cambiosdeentrada,recibos/CSV/canónico,particionesyobjetivosidénticos,los5798aptosanterioressiguenconvariablesnuméricasidénticas,experimentos/datasetsanterioresnohansidosobrescritos,12hashescongeladosintactos.194teststenisaprobados;constructoryauditorentregadosyejecutadosdesdecheckoutaislado,diffcheckcorrecto.0Odds/API-Tennis,0créditos;0ajustesymétricasnuevas,nomodificaprobabilidades. Informe docs/tenis_cinco_sedes_verificadas_20261018.md. Arnésinicial1315/94/2en119,16s;finalpendientedecierre.
 Verificación final cinco sedes: arnés general1315aprobados/94omitidos/2avisos123,15s,Docker ausente;194tenis aprobadas,2scripts entregados conSHA coincidente, auditoría desde motoraislado aprobada. Fase completada;83entradas geográficas yclocks siguenpendientes explícitos.
+
+## 2026-10-18 — Meta web con EMQ alto y envío real de CAPI
+
+- El contexto del navegador (fbp, fbc, IP, user agent, URL) se lee de las cookies y cabeceras de la propia petición web: no hace falta que el cliente lo mande y no se puede
+  confundir con el de otra sesión. Aplica a registro por correo, Google y checkout.
+- EMQ: a lo que ya había se añaden ciudad, estado, código postal y teléfono de la facturación de Whop (normalizados y cifrados). Probado en «Probar eventos»: 13 claves de cliente.
+- El token de Conversions API se generó con la opción «sin Dataset Quality API»: la otra es irreversible y no hacía falta.
+- Mientras `META_TEST_EVENT_CODE` esté puesto, nada llega a los eventos reales; el paso a producción es quitar esa línea (decisión del titular tras ver el EMQ).
+- El worker no lleva `meta_capi` (alineación pendiente): el cron del host envía cada 5 min. Es transitorio.

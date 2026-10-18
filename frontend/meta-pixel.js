@@ -16,7 +16,30 @@ export function browserIds() {
   return { fbp: cookie('_fbp'), fbc };
 }
 
-const blocked = () => navigator.globalPrivacyControl === true || navigator.doNotTrack === '1';
+const CONSENT_KEY = 'qf_ads_consent';
+const stored = () => { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } };
+const remember = value => { try { localStorage.setItem(CONSENT_KEY, value); } catch { /* sin almacenamiento */ } };
+// Decisión del titular (15-oct): la medición está activa salvo que la persona la rechace.
+const blocked = () => navigator.globalPrivacyControl === true || navigator.doNotTrack === '1' || stored() === 'no';
+
+/** Aviso de medición con «Rechazar»; se muestra una sola vez por navegador. */
+function showNotice() {
+  if (stored() || document.getElementById('qf-ads-notice')) return;
+  const bar = document.createElement('div');
+  bar.id = 'qf-ads-notice';
+  bar.setAttribute('role', 'region');
+  bar.setAttribute('aria-label', 'Aviso de medición publicitaria');
+  bar.innerHTML = '<p>Usamos cookies y el Pixel de Meta para medir nuestros anuncios. Puedes rechazarlo cuando quieras. <a href="/legal/privacidad" target="_blank" rel="noopener">Privacidad</a></p>'
+    + '<div><button type="button" data-ads="no">Rechazar</button><button type="button" data-ads="si">Aceptar</button></div>';
+  bar.addEventListener('click', event => {
+    const choice = event.target?.dataset?.ads;
+    if (!choice) return;
+    remember(choice);
+    if (choice === 'no') { try { window.fbq?.('consent', 'revoke'); } catch { /* sin Pixel */ } }
+    bar.remove();
+  });
+  document.body.append(bar);
+}
 
 function loadSdk() {
   if (window.fbq) return;
@@ -50,6 +73,7 @@ export function init(id, session) {
     window.fbq('init', id, matchingData(session));
     if (!ready) window.fbq('track', 'PageView');
     pixelId = id; ready = true;
+    showNotice();
   } catch { return false; }
   return true;
 }

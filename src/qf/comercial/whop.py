@@ -215,9 +215,12 @@ def _enqueue_meta(c, account_id: int, plan_code: str, data: dict, checkout: dict
            if checkout and checkout.get(k)}
     if data.get("ip_address") and "client_ip" not in ctx:
         ctx["client_ip"] = data["ip_address"]
-    country = ((data.get("billing_address") or {}).get("country")) or None
+    billing = data.get("billing_address") or {}
+    country = billing.get("country") or None
     custom = {"currency": currency, "value": amount / 100, "content_ids": [plan_code],
-              "content_type": "product", "num_items": 1, "_country": country}
+              "content_type": "product", "num_items": 1, "_country": country,
+              "_ct": billing.get("city"), "_st": billing.get("state"), "_zp": billing.get("postal_code"),
+              "_ph": data.get("customer_phone")}
     # Compra inicial: mismo event_id que el Pixel. Renovación: id propio del pago (el navegador no está).
     purchase_id = (checkout["event_id"] if checkout and not is_renewal
                    else f"purchase:{data['id']}")
@@ -244,6 +247,19 @@ def apply_membership(c, data: dict, *, deactivated: bool = False) -> dict:
     return {"estado": "revocado", "periodos": n}
 
 
+def apply_refund(c, data: dict) -> dict:
+    """refund.created / refund.updated con estado `succeeded`: se revoca el periodo que dio ese pago."""
+    if data.get("status") != "succeeded":
+        return {"estado": "ignorado", "motivo": f"estado {data.get('status')}"}
+    row = c.execute("SELECT subscription_id FROM whop_payments WHERE payment_id = %s",
+                    (data.get("payment_id"),)).fetchone()
+    if not row or row["subscription_id"] is None:
+        _alert(f"Whop: reembolso {data.get('id')} de un pago desconocido ({data.get('payment_id')})")
+        return {"estado": "pago_desconocido"}
+    done = suscripciones.revoke_in(c, row["subscription_id"], ACTOR, f"whop: reembolso {data.get('id')}")
+    return {"estado": "revocado" if done else "ya_revocado"}
+
+
 def handle_event(webhook_id: str, event: dict) -> dict:
     """Una sola transacción: si algo falla, el webhook-id no queda registrado y Whop reintenta."""
     etype = event.get("type", "")
@@ -256,6 +272,8 @@ def handle_event(webhook_id: str, event: dict) -> dict:
             return {"estado": "duplicado"}
         if etype == "payment.succeeded":
             return apply_payment(c, data)
+        if etype in ("refund.created", "refund.updated"):
+            return apply_refund(c, data)
         if etype in ("membership.updated", "membership.deactivated"):
             return apply_membership(c, data, deactivated=etype == "membership.deactivated")
         return {"estado": "ignorado", "tipo": etype}

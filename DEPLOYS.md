@@ -41,6 +41,32 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Resultado: ningún partido terminado desde el 3-oct queda sin su página. Totales: 20.766 partidos, 870.608 jugadores,
   48.198 bajas en `fotmob_*`. Sin gasto de créditos. Modelo, predicciones y picks sin cambios.
 
+### 2026-10-18 21:00 UTC · Meta pasa a eventos REALES · solo configuración (sin código ni migración)
+- Orden del titular: quitada `META_TEST_EVENT_CODE` del `.env` y recreada la API (misma imagen `quantfut-api-meta-web:db24a88`). Respaldo previo: `releases/meta-web-db24a88/env.antes-produccion-meta`.
+- Desde ahora el cron del host envía a Meta eventos que SÍ cuentan para atribución y optimización: `CompleteRegistration`, `InitiateCheckout`, `Purchase`, `Subscribe` (y los de la app que ya se encolaban). El envío anterior (1 evento) fue de prueba.
+- Verificado: API sana, contenedor sin el código de prueba, `META_CAPI_ENABLED=1`, `/app/v1/whop/config` con el Pixel.
+- Vuelta atrás: añadir `META_TEST_EVENT_CODE=TEST24843` al `.env` y `docker compose up -d --no-deps --no-build api` (los eventos vuelven a ir solo a «Probar eventos»).
+
+### 2026-10-18 20:45 UTC · Meta web: registro, EMQ con facturación, reembolsos, aviso de medición + envío de CAPI · API (rama `feat/meta-web-registro-reembolsos`, commit `db24a88`, PR #17)
+- Orden del titular («resuelve lo que falta… prueba todo»). CI del PR en verde antes de desplegar. **Desplegado antes de fusionar a `main`**.
+- Antes de sobrescribir, los 13 archivos que se cambian eran idénticos a `origin/main` en el contenedor `quantfut-api-google-whop:d56577d`. Sin migración nueva.
+- **API:** imagen `quantfut-api-meta-web:db24a88` = la anterior + esos 13 archivos (118 rutas). Compose fijado en ella (copia previa: `releases/meta-web-db24a88/docker-compose.before.yml`; archivos
+  originales en `antes/`). Worker, base, Caddy y redis sin tocar.
+- **`.env`:** añadidos `META_DATASET_ID=2253839992227148`, `META_CAPI_TOKEN` (token de sistema generado SIN activar «Dataset Quality API», que Meta no deja desactivar),
+  `META_TEST_EVENT_CODE=TEST24843` y `META_CAPI_ENABLED=1`. Respaldos: `releases/google-whop-d56577d/env.antes-meta` y `releases/meta-web-db24a88/env.antes-despliegue`.
+  **Mientras exista `META_TEST_EVENT_CODE` los eventos van SOLO a «Probar eventos»: no cuentan para anuncios.**
+- **Envío:** el worker aún no lleva `qf.comercial.meta_capi`, así que el cron del HOST (usuario `qf`) ejecuta `docker compose exec -T api python -m qf.comercial.meta_capi` cada 5 min
+  (log `~/.local/share/quantfut/meta_capi.log`; copia previa en `crontab.before`). Quitar esa línea cuando el worker se alinee (no hay doble envío: `SKIP LOCKED` y estado por evento).
+- **Whop:** el webhook pasó a 5 eventos (+`refund.created`, `refund.updated`).
+- **Verificado en producción:** (1) registro web real (cuenta desechable id 7) → `CompleteRegistration` `website` con `fbp` de la cookie y URL de origen → enviado por la tubería real →
+  visible en «Probar eventos» como *Procesado · Servidor*; (2) eventos sintéticos Purchase/Subscribe/InitiateCheckout con 13 claves de cliente (correo, nombre, apellido, ciudad, estado,
+  código postal, teléfono, país, ID externo, fbp, fbc, IP, user agent); (3) Pixel `2253839992227148` carga y se registra en el navegador integrado; «Rechazar» guarda `qf_ads_consent=no` y
+  no carga nada tras recargar; (4) «Prueba» de Whop → `membership.updated` firmado por Whop → 200 `ignorado` (valida la firma real con nuestro secreto).
+- **Cuenta de prueba:** `prueba-meta-1792356322@ejemplo.com` (account_id 7) quedó creada en producción por la prueba; no tiene suscripción.
+- **Para pasar a producción real de Meta:** quitar `META_TEST_EVENT_CODE` del `.env` y `docker compose up -d --no-deps --no-build api`. Comprobar antes en Events Manager que EMQ de «Purchase» sube.
+- **Vuelta atrás:** `cp -p ~/quantfut/releases/meta-web-db24a88/docker-compose.before.yml ~/quantfut/docker-compose.yml && docker compose up -d --no-deps --no-build api` y `crontab ~/quantfut/releases/meta-web-db24a88/crontab.before`.
+- **Nota:** el Chrome del titular tiene un bloqueador de rastreadores que devuelve 503 a `fbevents.js`; allí el Pixel no se ve. Los visitantes sin bloqueador sí lo cargan.
+
 ### 2026-10-18 20:20 UTC · Acceso con Google en la web + cobro con Whop + Meta web · API + `db/083` (rama `feat/google-whop-meta`, commit `d56577d`, PR #16)
 - Orden del titular («despliega al vps»). CI del PR en verde (2/2) antes de desplegar. **Desplegado antes de fusionar a `main`**: al fusionar el PR, `main` queda igual que la API.
 - Antes de sobrescribir se comprobó que los 10 archivos existentes que se cambian eran idénticos a `origin/main` en el contenedor `quantfut-api-cybercore:2d8cfef` (los otros 6 son nuevos).

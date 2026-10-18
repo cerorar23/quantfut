@@ -165,6 +165,18 @@ def _is_web(request: Request) -> bool:
     return request.headers.get("x-qf-client") == "web"
 
 
+def web_context(request: Request) -> dict | None:
+    """fbp/fbc (cookies del Pixel, mismo dominio), IP, user agent y URL de origen: lo que Meta
+    necesita para emparejar el evento de servidor (EMQ). Solo para peticiones de la web."""
+    if not _is_web(request):
+        return None
+    source = (request.headers.get("referer") or request.headers.get("origin") or "")[:1000]
+    ctx = {"fbp": request.cookies.get("_fbp"), "fbc": request.cookies.get("_fbc"),
+           "client_ip": ratelimit.client_ip(request), "user_agent": request.headers.get("user-agent"),
+           "source_url": source or None}
+    return {k: v for k, v in ctx.items() if v} or None
+
+
 def _deliver(tokens: dict, request: Request, response: Response) -> dict:
     if not _is_web(request):
         return tokens
@@ -217,7 +229,8 @@ def _account_out(acc: dict) -> AccountOut:
 def register(body: RegisterIn, request: Request, response: Response, tasks: BackgroundTasks):
     _limit(request, "registro", 5, 3600)
     try:
-        acc = cuentas.create_account(body.email, body.password, body.display_name)
+        acc = cuentas.create_account(body.email, body.password, body.display_name,
+                                     web_context=web_context(request))
     except CuentaError as e:
         _fail(409 if e.code == "email_en_uso" else 422, e)
     tasks.add_task(correo.enviar_verificacion, acc["account_id"], acc["email"], _lang(request))
