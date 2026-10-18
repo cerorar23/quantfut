@@ -86,3 +86,22 @@ def test_cds_reintenta_un_502_pero_no_un_403():
         except urllib.error.HTTPError:
             pass
     assert op.call_count == 1
+
+
+def test_incremental_no_reutiliza_un_archivo_que_no_cubre_el_partido_nuevo(tmp_path):
+    """El defecto que había: un archivo viejo de la celda hacía creer que ya estaba todo."""
+    import gzip
+    from unittest.mock import MagicMock
+
+    from qf.ingest import era5_clima as e
+
+    viejo = _csv(_horas(datetime(2026, 3, 1, 0, tzinfo=timezone.utc), 48))
+    (tmp_path / "era5_+51.50_+0.000.csv.gz").write_bytes(gzip.compress(viejo.encode()))
+    k = (51.5, 0.0)
+    nuevo = {"match_id": "n", "stadium_id": 1, "kickoff_utc": datetime(2026, 6, 1, 15, 0, tzinfo=timezone.utc)}
+    cubierto = {"match_id": "v", "stadium_id": 1, "kickoff_utc": datetime(2026, 3, 1, 15, 0, tzinfo=timezone.utc)}
+    c = MagicMock()
+    serie = e._serie_guardada(tmp_path, k)
+    guardados, faltan = e.procesar_celda(c, k, [cubierto, nuevo], serie)
+    assert [p["match_id"] for p in faltan] == ["n"]           # el nuevo queda pendiente de pedir
+    assert e._archivos(tmp_path, k)[0].name == "era5_+51.50_+0.000.csv.gz"

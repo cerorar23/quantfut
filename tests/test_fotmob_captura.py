@@ -101,3 +101,18 @@ def test_respuesta_valida_incluye_el_original_para_guardarlo():
     with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", return_value=_Resp({"general": {"matchId": "5"}})):
         d = cli.get("matchDetails", {"matchId": 5})
     assert json.loads(d["__raw__"])["general"]["matchId"] == "5"
+
+
+def test_correr_pasa_las_opciones_de_relleno_y_respeta_el_enfriamiento():
+    from unittest.mock import MagicMock, patch
+
+    c = MagicMock()
+    with patch.object(fc, "en_enfriamiento", return_value=False), \
+            patch.object(fc, "capturar_posteriores", return_value={"guardados": 0}) as f, \
+            patch.object(fc, "_log"):
+        fc.correr(c, "posteriores", cli=object(), dias_atras=20, maximo=500)
+    assert f.call_args.kwargs == {"dias_atras": 20, "maximo": 500}
+    with patch.object(fc, "en_enfriamiento", return_value=True), \
+            patch.object(fc, "capturar_posteriores") as f:
+        assert "omitido" in fc.correr(c, "posteriores", cli=object())
+    f.assert_not_called()

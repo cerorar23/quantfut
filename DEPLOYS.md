@@ -42,6 +42,83 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Crontab cargado con `cat scripts/crontab | docker compose exec -T worker crontab -` y comprobado (5 líneas de FotMob, sedes y calendario
   más la de ERA5). Respaldo previo: `~/backups/crontab_pre_era5_20261018`. Vuelta atrás: restaurarlo y recargar.
 
+### 2026-10-18 · Meta CAPI: extinfo de reserva válido · worker (un archivo, `docker cp`), PR #29
+- `src/qf/comercial/meta_capi.py` copiado al contenedor worker. Antes de copiar se comprobó que era idéntico a `main`
+  (`56864d212f2e`); después `37a5cb600a7f` (el del PR). Respaldo: `~/quantfut/deployments/meta-extinfo-20261018/meta_capi.py.antes`.
+  **Es un parche del contenedor, no de la imagen:** se pierde si el worker se recrea hasta que el PR #29 esté en `main` y la imagen se reconstruya.
+- Causa: Meta responde 400 (subcódigo 2804043) si `extinfo` no lleva versión del SO válida. Una cuenta sin dispositivo registrado
+  habría fallado en su `Purchase`/`Subscribe`.
+- **Incidente de la prueba (reconocido):** al validar se enviaron **2 eventos `Purchase` de prueba (4,99 USD, correo `prueba@quantfut.invalid`,
+  `event_id` `test:var-1-*` y `test:var-2-*`) que Meta PROCESÓ en el dataset de producción**: el `test_event_code` TEST3656 solo desvía los
+  eventos mientras la página «Probar eventos» tiene una sesión activa, y no la tenía. No se pueden borrar desde la API; no coinciden con ningún
+  usuario real, así que su efecto en atribución es mínimo. Otros 2 intentos fallaron con 400 y no se registraron.
+- Estado del worker tras recrearse (otra sesión, 21:58 UTC): sin `/app/meta.env`; usa el `.env` del servidor. Token verificado (dataset HTTP 200),
+  `META_TEST_EVENT_CODE=TEST3656` presente.
+- **Vuelta atrás:** `docker cp ~/quantfut/deployments/meta-extinfo-20261018/meta_capi.py.antes quantfut-worker-1:/app/src/qf/comercial/meta_capi.py`.
+### 2026-10-18 · Token de Conversions API de Meta (usuario del sistema `quantfut-capi`) · SOLO configuración
+- Sin código ni imágenes nuevas. En Business Manager («Simulador Ceneval») se creó el usuario del sistema `quantfut-capi`
+  (rol Empleado) con acceso parcial al dataset QuantFut y un token con `ads_management`, sin caducidad.
+- Token verificado contra Meta: consulta del dataset `2253839992227148` con HTTP 200. El token anterior del worker (205 caracteres)
+  daba «Missing Permission» en esa misma consulta.
+- Cambiado en dos sitios: `~/quantfut/.env` (copia previa `~/backups/env.pre-meta-token-20261018`) y `/app/meta.env` del contenedor
+  worker (copia previa `/app/meta.env.bak-20261018`, dentro del contenedor; se pierde si el worker se recrea, igual que el propio `meta.env`).
+  No se recreó ningún contenedor.
+- Una pasada de `qf.comercial.meta_capi` tras el cambio: 0 enviados, 0 fallidos (cola vacía).
+- **Pendiente:** `META_TEST_EVENT_CODE` sigue vacío, así que los primeros eventos reales irán al dataset de producción. Poner el código
+  de «Probar eventos» antes de la primera compra de prueba si se quiere validar sin contar en producción.
+- **Vuelta atrás:** en el worker, `cp /app/meta.env.bak-20261018 /app/meta.env`; en el servidor, restaurar `~/backups/env.pre-meta-token-20261018` sobre `.env`.
+### 2026-10-18 22:10 UTC · Worker recreado desde `main` y registro público activado · worker
+- Orden del titular. Imagen `quantfut-worker:candidato-d2d2735` (construida desde `main` tras los PR #25 y #27 con `git archive` en `~/quantfut/releases/worker-d2d2735`), `latest` = esa imagen. Antes de recrear: sin procesos en el worker.
+- **Ensayo** (`scripts/ensayo_worker.py`, worker actual frente a candidata): 0 módulos con error, 25/25 entradas del cron importables, `verify` OK en 20 lotes, conjunto de entrenamiento idéntico (49.450 filas, 46.208 con cierre, huella `44093369780e2f31`). 8 de los 20 lotes no se regeneran desde la base (ya ocurría; ver 15-oct).
+- Lo que traía el contenedor viejo como parche (hashchain, módulos de Meta, `sedes.py`, `era5_clima.py`, crontab cargado a mano) ya está en `main`/imagen o en `.env`: comprobado que las variables `META_*` de `/app/meta.env` coinciden con las del `.env` (`env_file`) y que el crontab cargado tiene 127 líneas, como el archivo montado. Archivos de la API distintos a `main` en el worker viejo: solo código que el worker no ejecuta.
+- Compose del servidor (worker): `CHAIN_GIT_REMOTE=git@github.com:cerorar23/quantfut-registro.git`, `GIT_SSH_COMMAND` con la llave de despliegue y montaje de solo lectura de `/home/qf/.config/quantfut/registro` en `/run/secrets/registro`. Respaldo en `~/quantfut/deployments/worker-registro-20261018/`.
+- Carpeta de la cadena (volumen `quantfut_chain`): `git init`, remoto, `git reset origin/main` (conserva los archivos), usuario local. `git push --dry-run` OK. **Los JSON de los 19 lotes ya terminados se apartaron a `historico_sin_publicar/`** (decisión conservadora: no se publica el histórico sin que el titular lo decida). Sus recibos sí subirán en el primer sellado; `verify` los cuenta como «solo con compromiso» y la cadena sigue OK. Para publicarlos: mover los JSON de vuelta a `/srv/quantfut/chain/`; el siguiente sellado los revela.
+- **Prueba del compromiso (18-oct, ~22:40 UTC):** `_git_comprometer` ejecutado a mano en el worker publicó el commit `c34a04a` en `cerorar23/quantfut-registro` con `LEDGER.md` y los 20 recibos; ningún JSON de lote subió. Queda por ver la revelación.
+- Primera prueba real: el sellado de las 08:00 UTC del 19-oct (commit de compromiso en el repositorio público) y, tras el último partido del 18-oct, la revelación de su JSON. Vigilarlo.
+- Vuelta atrás: `cp ~/quantfut/deployments/worker-registro-20261018/docker-compose.before.yml ~/quantfut/docker-compose.yml && docker tag quantfut-worker:en-ejecucion-20261018 quantfut-worker:latest && docker compose up -d --no-deps --no-build --force-recreate worker`. Sin `CHAIN_GIT_REMOTE`, `seal()` no toca git.
+
+### 2026-10-18 21:25 UTC · Worker alineado con el envío a Meta · worker (2 módulos + cron), sin reiniciar
+- Orden del titular. Parche del contenedor con `docker cp` (como F2c y el comprometer-revelar): `comercial/meta_capi.py` y `comercial/meta_datos.py` (los mismos que corre la API = `main`).
+  **Es un parche del contenedor, no de la imagen**: se pierde si el worker se recrea. La alineación del 1-nov, construida desde un `main` que ya los incluye, los traerá en la imagen.
+- Las variables de Meta (`META_CAPI_ENABLED`, `META_DATASET_ID`, `META_CAPI_TOKEN`; sin código de prueba) viven en `/app/meta.env` dentro del contenedor (600), porque el entorno del worker se fijó al
+  crearlo. Al recrearlo con el `.env` actual llegarán por `env_file` y el cron seguirá valiendo (lee el archivo solo si existe).
+- Cron: línea `*/5` con `flock` (sustituye en `scripts/crontab` la de Meta que `main` ya traía, que no cargaba entorno). OJO para la próxima sesión: el contenedor veía una copia ANTIGUA del archivo
+  montado (otra sesión lo reemplazó con `sed -i`, cambiando el inodo), así que `crontab /etc/cron.d/quantfut` dentro del contenedor recargaba lo viejo; el cron del worker se cargó con
+  `docker compose exec -T worker crontab - < scripts/crontab` (127 líneas, idéntico al archivo del host). Comprobado: el worker ejecutó el envío por sí mismo a las 21:20 UTC (`enviados 0`, sin pendientes).
+- Retirada la línea transitoria del cron del HOST (queda solo `firebase_operations.py daily`); copias en `releases/worker-meta-20261018/`.
+- Vuelta atrás: `docker compose exec -T worker crontab - < ~/quantfut/releases/worker-meta-20261018/worker-crontab.before` y borrar `/app/meta.env`;
+  si hiciera falta volver al envío por el host: `*/5 * * * * cd /home/qf/quantfut && /usr/bin/docker compose exec -T api python -m qf.comercial.meta_capi`.
+
+### 2026-10-18 22:50 UTC · Sede de los partidos nuevos y clima ERA5 incremental · worker (2 archivos) + cron
+- Hallazgo: 722 de los 729 partidos de octubre no tenían `stadium_id` (los partidos nuevos llegan de `fixtures` sin sede), así que no
+  se les podía vincular altitud ni clima. Nuevo `ingest/sedes.py`: toma el estadio de la página de FotMob ya capturada, reutiliza
+  uno existente por nombre o por cercanía (<330 m) y solo da de alta si no hay ninguno; procedencia en `matches_enriquecimiento`.
+  Primera corrida: **449 partidos asignados, 2 estadios nuevos** (sin duplicar); quedan sin sede 273 próximos, que la reciben al
+  llegar su captura de 24 h. Cron nuevo cada hora a :50.
+- `ingest/era5_clima.py` corregido: antes, repetirlo reutilizaba el archivo guardado de cada celda y nunca habría pedido los
+  partidos nuevos. Ahora es incremental (une los archivos de la celda y pide solo lo que no cubren, hasta hoy−7 días).
+- Parche con `docker cp` de `sedes.py` (nuevo) y `era5_clima.py` (ya existía en el worker). Vuelta atrás: copiar los de `main`.
+- **Trampa de despliegue encontrada:** el crontab del worker es un archivo montado (`./scripts/crontab`). Un `sed -i` en el
+  servidor lo reemplaza por otro archivo y el contenedor sigue viendo el viejo: las líneas añadidas después no llegan. Se
+  resolvió cargando el archivo del servidor con `crontab -` dentro del contenedor y comprobando que lo cargado es idéntico.
+  Lección: añadir líneas con `>>` (no `sed -i`) o recargar siempre con `cat scripts/crontab | docker compose exec -T worker crontab -`.
+  Respaldo previo: `~/backups/crontab_pre_sedes_20261018`.
+- ERA5 incremental lanzado (294 celdas con partidos nuevos; 236 partidos aún sin dato de Copernicus por su retraso de ~7 días).
+
+### 2026-10-18 · Relleno puntual del archivo de FotMob · worker (un archivo) · rama `relleno-fotmob`
+- Orden del titular. `ingest/fotmob_captura.py` gana `--dias-atras` y `--maximo` (solo para relleno; los cron no cambian).
+  Parche con `docker cp` de ese único archivo, que ya existía en el worker desde `main`; vuelta atrás: copiar el de `main`.
+- Se ejecutó con `flock -w 900` (sin chocar con los cron): `referencias --dias-atras 20` (264 nuevas) y
+  `posteriores --dias-atras 20 --maximo 400` (255 partidos guardados, 0 descartados, 0 bloqueos de FotMob).
+- Resultado: ningún partido terminado desde el 3-oct queda sin su página. Totales: 20.766 partidos, 870.608 jugadores,
+  48.198 bajas en `fotmob_*`. Sin gasto de créditos. Modelo, predicciones y picks sin cambios.
+
+### 2026-10-18 21:00 UTC · Meta pasa a eventos REALES · solo configuración (sin código ni migración)
+- Orden del titular: quitada `META_TEST_EVENT_CODE` del `.env` y recreada la API (misma imagen `quantfut-api-meta-web:db24a88`). Respaldo previo: `releases/meta-web-db24a88/env.antes-produccion-meta`.
+- Desde ahora el cron del host envía a Meta eventos que SÍ cuentan para atribución y optimización: `CompleteRegistration`, `InitiateCheckout`, `Purchase`, `Subscribe` (y los de la app que ya se encolaban). El envío anterior (1 evento) fue de prueba.
+- Verificado: API sana, contenedor sin el código de prueba, `META_CAPI_ENABLED=1`, `/app/v1/whop/config` con el Pixel.
+- Vuelta atrás: añadir `META_TEST_EVENT_CODE=TEST24843` al `.env` y `docker compose up -d --no-deps --no-build api` (los eventos vuelven a ir solo a «Probar eventos»).
+
 ### 2026-10-18 20:45 UTC · Meta web: registro, EMQ con facturación, reembolsos, aviso de medición + envío de CAPI · API (rama `feat/meta-web-registro-reembolsos`, commit `db24a88`, PR #17)
 - Orden del titular («resuelve lo que falta… prueba todo»). CI del PR en verde antes de desplegar. **Desplegado antes de fusionar a `main`**.
 - Antes de sobrescribir, los 13 archivos que se cambian eran idénticos a `origin/main` en el contenedor `quantfut-api-google-whop:d56577d`. Sin migración nueva.

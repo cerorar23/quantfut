@@ -221,7 +221,8 @@ Detalle: docs/importacion_fotmob_20261013.md.
 - [x] Arsenal corregido (33 partidos, `db/073`) y 4 alias de The Odds API (+45 cierres de copa), 18-oct. Quedan 20 conflictos de vinculación: 7 son de Arsenal (el partido ya tiene el equipo correcto, pero el archivo FotMob conserva su estado `conflict` hasta volver a vincularlos) y 13 por revisar uno a uno (marcador o estado, liga o prórroga).
 - [x] Datos al motor 18-oct (`docs/datos_al_motor_20261018.md`): tablas FotMob con `match_id`, altitud, calendario de equipos (cron diario), equivalencias de árbitros, puente de jugadores, vista de descanso.
 - [x] 18-oct tarde: captura de FotMob autorizada y montada (`db/081`, cron con flock, pronóstico de clima incluido); token de CDS recibido y descarga ERA5 en curso (`db/082`); Open-Meteo descartada por licencia.
-- [ ] Pendiente: terminar y revisar ERA5; regenerar el token de CDS; estadios duplicados (182 grupos); minutos con selección nacional; convertir la captura previa en entrada de F7 (alineación y bajas a T-70/T-40).
+- [x] ERA5 terminado (20.193 partidos), `qf.ingest.sedes` con cron horario y ERA5 incremental (arregla el defecto de cache por celda).
+- [ ] Pendiente: regenerar el token de CDS; poner el ERA5 incremental en cron al recrear el worker (necesita la variable); estadios duplicados (182 grupos); minutos con selección nacional; convertir la captura previa en entrada de F7 (alineación y bajas a T-70/T-40).
 - [ ] Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
   respetando recepción temporal; las tablas nuevas ya están importadas.
 
@@ -2945,6 +2946,6 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Whop configurado (18-oct): producto QuantFut con 3 planes, clave de API (solo IP del VPS) y webhook de producción; claves en el `.env` del VPS. Pendiente al desplegar: `UPDATE plans SET whop_plan_id…` (en `docs/despliegue_google_web_20261018.md`) y `META_PIXEL_ID`.
 - [x] Reembolsos: `refund.created/updated` (status succeeded) revocan el periodo del pago; webhook de Whop ya los envía (18-oct).
 - [x] Meta web (18-oct): CompleteRegistration web, EMQ con ciudad/estado/zip/teléfono (13 claves), aviso de medición con Rechazar, envío por cron del host, probado con test_event_code.
-- [ ] Pasar Meta a eventos reales: quitar `META_TEST_EVENT_CODE` del `.env` del VPS y recrear la API (ver DEPLOYS 2026-10-18 20:45).
-- [ ] Alinear el worker con `meta_capi` y retirar la línea de cron del host.
+- [x] Meta a eventos reales: `META_TEST_EVENT_CODE` quitado del `.env` del VPS y API recreada (18-oct, DEPLOYS 21:00 UTC).
+- [x] Worker alineado con `meta_capi` (parche del contenedor, DEPLOYS 18-oct 21:25) y cron del host retirado. Pendiente: que la imagen del worker del 1-nov los lleve de serie.
 - [ ] Probar un cobro real con Whop (plan de 14,99) y ver el Purchase en Meta con el mismo event_id del Pixel.

@@ -24,7 +24,7 @@ Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en
 | ~26-oct | Termina la prueba Business de Sentry: confirmar la retención del plan |
 | **1-nov, 03:00 UTC** | Reentrenamiento automático (~5 h) y reset de los 20.000 créditos de The Odds API |
 | **2-nov, 9:00 (hora local)** | Revisión automática de solo lectura (tarea programada `revisar-reentrenamiento-1-nov`) |
-| ~10-nov | La puerta de CLV pide 300 observaciones. **Medido 18-oct:** `shadow.summary` lleva n=135 y 138 (retadores) con `ev_close` ≈ +0,06 / +0,08 %; la cifra de +3,46 % (n=142) del 15-oct no se reproduce con ninguna de las tres fuentes (`shadow_results` n=348 +0,65 %; `sharp_shadow_results` n=1.683 +3,24 %). Aclarar cuál es la oficial antes de contar con la puerta |
+| ~fin de oct–nov | **Puerta de CLV (aclarado 18-oct).** La cifra oficial es `publish.shadow_sharp.report()` (ofertas «publicables» de la sombra sharp), no `shadow.summary` ni `shadow_results`, que miden los retadores de XI. Hoy: n=213 con cierre justo (223 publicables), `ev_close` **+3,07 %, IC95 +1,54 a +4,67**; el +3,46 % (n=142) del 15-oct era esta misma medida con menos muestra. Bloquea: n<300 (a ~24/día desde el 15-oct, hacia el 22-oct) y **ninguna liga llega a 30** (la mayor, MLS, 18): ≥3 ligas con 30 pide ~460 en total, hacia finales de oct o noviembre según el ritmo |
 
 ## 1. Seguridad
 - **Decisión del titular (18-oct): no se hace por ahora** la autenticación en dos pasos de GitHub, la rotación de la clave de The Odds API ni la
@@ -60,11 +60,12 @@ ERA5 (tu token); el XI, minutos, bajas, entrenador y estilos ya están en el arc
 `docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md`.
 
 Tareas sueltas:
-- [ ] Comprar los **527 snapshots** de The Odds API (~5.270 créditos, tras el reset): `python -m qf.ingest.cierres_odds_api fetch ...`. Necesita tu visto bueno.
+- [ ] Comprar los cierres pendientes tras el reset del 1-nov. **Medido 18-oct:** 590 snapshots (5.900 créditos; 652 partidos, 1.380 créditos solo de Liga MX) y saldo 5.230. Comprarlos ya dejaría el saldo por debajo de lo que consume la captura en vivo (~300/día × 13 días ≈ 3.900). Orden: `python -m qf.ingest.cierres_odds_api fetch --presupuesto 5900`. Necesita tu visto bueno.
 - [x] **Hecho 18-oct:** Arsenal corregido en 33 partidos de copa (`db/073`) y 4 alias de The Odds API con **+45 cierres** de copa (quedan 58 sin cierre, todos contra clubes externos). Detalle: `docs/datos_al_motor_20261018.md`. El reentrenamiento del 1-nov los incluirá; el efecto en el modelo **no está medido**.
 - [x] **Hecho 18-oct** (`db/075`-`080`): archivo FotMob en tablas con `match_id` (20.331 partidos, 852.126 jugadores, 47.140 bajas), altitud de 728 estadios, calendario de 315 equipos × 4 temporadas (60.979 partidos, refresco diario 05:40 UTC), 54 equivalencias de árbitros, 7.834 puentes de jugadores y la vista de descanso `v_descanso_equipo`.
 - [x] **Hecho 18-oct (autorizado):** captura recurrente de FotMob (`db/081`): referencias, instantáneas previas a ~24 h/4 h/70 min/40 min con alineación, no disponibles y **pronóstico de clima**, y archivo posterior al partido. Cron con `flock`; un bloqueo 401/403/429 la detiene 12 h.
-- [ ] **ERA5 en curso** (423 celdas, ~5 h, `/var/log/era5_clima.log` en el worker; reanudable). Al terminar: revisar `clima_era5_partido`, **regenerar el token de Copernicus** (se compartió por chat) y completar los últimos 7 días con otra pasada.
+- [x] **ERA5 histórico terminado** (20.193 partidos, 423 celdas, ninguno con estadio sin cubrir). **Pendiente: regenerar el token de Copernicus** (se compartió por chat). Los partidos nuevos se completan con `python -m qf.ingest.era5_clima` (incremental, necesita `CDS_API_TOKEN`; no está en cron porque el worker en marcha no tiene la variable: se añade al recrear el worker el 1-nov).
+- [x] Sede de los partidos nuevos: `qf.ingest.sedes`, cron horario (449 asignados el 18-oct; 273 próximos la reciben con su captura de 24 h).
 - [x] Open-Meteo: no se usa. El plan gratuito es solo no comercial y el producto vende suscripciones; el pronóstico lo da la captura de FotMob. Si quieres una segunda fuente, hace falta la clave del plan de pago Standard.
 - [ ] Estadios duplicados por coordenadas: 182 grupos (384 estadios); revisar antes de usar sede/viaje (F6).
 - [ ] F5: usar el **nombre de árbitro de FotMob** como llave (19.183 partidos frente a 2.799 de API-Football; el cruce solo suma 125).
@@ -74,7 +75,7 @@ Tareas sueltas:
 - [x] Las «379 identidades de copas» son 379 partidos de 110 equipos: 67 tienen id probado, 43 son clubes de ligas que no cubrimos (no se vinculan por regla del proyecto) y **ningún** partido tiene sus dos equipos probados, así que no se puede unir ninguno. Cerrado como no resoluble por diseño; ver el documento. Conflictos: 18 FotMob + 2 Sofascore, por revisar.
 - [ ] Unos 250 huecos de tiros y córners.
 - [ ] Ampliar fuentes para los **1.219 huecos de xG** (Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46). LanusStats/365Scores aportó tres parejas de LaLiga 2, cargadas por petición del titular el 15-oct; su muestra no prueba cobertura completa. Ver `docs/lanusstats_carga_20261015.md`.
-  - Medido 18-oct (partidos terminados desde ago-2022, sin xG): Serie B 1.158, LaLiga 2 926, Ligue 2 705, Argentina 412 (modelada), Brasil 66, México 25, copas 26. La cifra de 1.219 no coincide con esa ventana: confirmar cuál era su criterio.
+  - Verificado 18-oct: siguen siendo **1.219** (partidos terminados desde el 1-ene-2024, sin xG de alguno de los dos equipos): Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144, Champions 14, Europa League 12, México 8, otros 12. Sin cambios desde el 15-oct. (Con una ventana desde ago-2022 salen más: Serie B 1.158, LaLiga 2 926.)
 
 ## 4. Orden del servidor (Claude, con ensayo; la API después del 1-nov)
 - [ ] Alinear la **API** con `main` (24 archivos distintos; imagen `quantfut-api-admob:20261015a`). Es lo que ven tus clientes.
@@ -92,7 +93,7 @@ Tareas sueltas:
 | Procesador de pago | Tú | **Decidido.** App: Google Play / App Store (suscripción renovable). Web: **Whop** (checkout embebido y webhooks firmados, ya desplegado) |
 | **Meta (SDK + CAPI) y compras en la app** | Tú (credenciales) y Claude | **Código hecho y API desplegada el 15-oct, apagada** (rama `feat/meta-compras`, sin fusionar a `main`). Guía: `apps/mobile/docs/META_COMPRAS_TITULAR.md`. Necesito: App ID, client token, dataset y token CAPI de Meta; suscripción `quantfut_plus` (3 planes base), cuenta de servicio y Pub/Sub en Play Console. Antes de activar CAPI hay que alinear el worker (después del 1-nov). Registrar `*.lproj/InfoPlist.strings` en Xcode cuando haya Mac |
 | **Avisos legales** y revisión de un profesional habilitado | Tú | **Revisión concluida el 18-oct, sin objeciones** (palabras del titular). Siguen siendo tareas suyas: DPA de Contabo y Proton y atender el buzón de contacto |
-| **Publicación de la cadena: comprometer-revelar** | Claude, con tu decisión | **Código y pruebas hechos el 18-oct** (`hashchain.py`, `tests/test_hashchain_revelado.py`); falta desplegar con ensayo y luego configurar `CHAIN_GIT_REMOTE` (hoy vacío). Sube solo el hash antes y el JSON al terminar los partidos |
+| **Publicación de la cadena: comprometer-revelar** | Claude, con tu decisión | **Activada el 18-oct** (worker recreado desde `main`, repositorio público `cerorar23/quantfut-registro`). Vigilar el sellado de las 08:00 UTC del 19-oct. Tu decisión pendiente: ¿publicar también el JSON de los 19 lotes históricos? Hoy están apartados en `historico_sin_publicar/`; ver `docs/registro_publico_activacion_20261018.md` |
 | Quitar rutas internas de `/model-card` y añadir `Content-Security-Policy` | Claude | Prioridad baja |
 | Puerta comercial (CLV ≥ 300) | Se cumple sola (~10-nov) | Aun así `PUBLISH_PICKS_ENABLED` está en 0: se enciende con tu decisión |
 
@@ -106,11 +107,13 @@ Tareas sueltas:
 1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
 2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
 2b. (Resuelto el 18-oct) Captura de FotMob autorizada; token de CDS entregado; Open-Meteo descartada.
-3. Comprar los 527 snapshots (~5.270 créditos) tras el 1-nov.
-4. Registrar los alias de Champions y Europa League.
+3. Comprar los 590 snapshots (~5.900 créditos) tras el 1-nov.
+4. ~~Registrar los alias de Champions y Europa League~~: hecho el 18-oct. Verificado: Bayern München, Internazionale Milano y LOSC Lille ya están, y los 134 nombres sin resolver son clubes de ligas sin modelo (se descartan por regla).
 5. Pasar la cadena a comprometer-revelar y cuándo encender `PUBLISH_PICKS_ENABLED`.
 6. (Resuelto el 18-oct) Revisión legal concluida sin objeciones.
 
 ## Tenis retrospectivo 2024/2025 (18-oct-2026)
-- Preparado:11240partidos,187ediciones enlazadas de su temporada,2982aptos para evaluacion espacial;165pruebas tenis aprobadas.2025exploratorio, modelos congelados intactos.
-- Pendiente: ampliar52edicionesindividuales sinenlace y coordenadas de17recintos(27ediciones);233bloquesporequipos/multisede necesitan sede por eliminatoria. Ejecutar comparacion probabilistica con ajuste soloentrenamiento e intersecciondepredicciones; sinROI, sinhorasficticias. Ver docs/tenis_dataset_historico_20261018.md y pending_editions.json del archivo historico.
+- Ampliado: 11.240 partidos con identidad de sede, 10.895 con coordenadas de destino y 6.414 aptos para comparación espacial; 194 pruebas de tenis aprobadas. Segundo bloque Chennai/Palermo/Riad/Hengqin/Shenzhen: 121 destinos y 170 aptos adicionales. Palermo es una referencia de complejo inferida por dirección y contexto cartográfico, tolerancia 750 m. Versiones anteriores y 12 artefactos congelados conservados. Informe docs/tenis_segundo_bloque_sedes_20261018.md.
+- Comparación repetida con protocolo fijo: entrenamiento 3.306 de 2024, evaluación 3.108 de 2025; Log-Loss base 0,635571 frente a espacial 0,635581, intervalo de diferencia incluye cero. En la misma muestra original de 2.833: base 0,638733, espacial anterior 0,638682 y ajuste ampliado 0,638764. La nueva cobertura no acredita una mejora predictiva; 2025 exploratorio, sin activar corrección. Sensibilidad y calibración archivadas en historical_geography_batch2_20261018/comparison/.
+- Carga por rondas ejecutada: entrenamiento2130/evaluación1957; LogLoss base0,615696 frente a cobertura+carga0,615221. Intervalos incluyen cero, variante experimental sin activar; no equivale a ventanas diarias. Informe docs/tenis_carga_rondas_resultados_20261018.md.
+- Pendiente: coordenadas de 78 entradas (345 destinos), cola actual data/tennis/historical_geography_batch2_20261018/geography_priority_queue.json; siguientes cinco: Taipei Tennis Center 14, SuperTennis Arena Bolonia 14, AO Arena Manchester 12, SEB Arena Vilna 10 y Swiss Tennis Arena Biel 9. Ventanas 3/7 días bloqueadas: 152 observaciones terminales archivadas sin límite inferior de finalización acreditado. Nuevas especificaciones se eligen dentro de entrenamiento y requieren periodo futuro intacto. Sin ROI ni horas ficticias.
