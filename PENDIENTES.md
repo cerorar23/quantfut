@@ -61,11 +61,13 @@ ERA5 (tu token); el XI, minutos, bajas, entrenador y estilos ya están en el arc
 
 Tareas sueltas:
 - [ ] Comprar los **527 snapshots** de The Odds API (~5.270 créditos, tras el reset): `python -m qf.ingest.cierres_odds_api fetch ...`. Necesita tu visto bueno.
-- [ ] Registrar alias de Champions y Europa League (103 partidos; Bayern München, Internazionale Milano, LOSC Lille...). Escribe en la tabla de alias: con tu visto bueno.
+- [ ] **Corregir Arsenal:** 33 partidos de Champions/Europa League (2014 → 2024-12-11) figuran como Arsenal de Sarandí por el alias `Arsenal`/`fbref`; 23 tienen xG. Mejor antes del 1-nov para que el reentrenamiento los use bien. Con respaldo y tu visto bueno. Detalle: `docs/ordenar_identidades_20261018.md`.
+- [ ] Registrar **4** alias de The Odds API (Bayern München, Internazionale Milano, LOSC Lille, Young Boys): recuperan **39 de los 103** cierres de copa sin gastar créditos (los otros 64 enfrentan a clubes externos). Escribe en alias y en `odds_snapshots`: con tu visto bueno.
 - [ ] Bloque `mercado` (movimiento de cuotas): cuando haya muestra propia.
 - [ ] Antes de encender los picks de valor: hoy solo verían las 13 ligas con modelo y la sombra mide 22; alinear.
 - [ ] Vigilar la ampliada 73–95 %: con cuota de referencia acierta 78,0 % frente a 81,4 % prometido (n=223).
-- [ ] Resolver 379 identidades de copas y 21 conflictos; unos 250 huecos de tiros y córners.
+- [x] Las «379 identidades de copas» son 379 partidos de 110 equipos: 67 tienen id probado, 43 son clubes de ligas que no cubrimos (no se vinculan por regla del proyecto) y **ningún** partido tiene sus dos equipos probados, así que no se puede unir ninguno. Cerrado como no resoluble por diseño; ver el documento. Conflictos: 18 FotMob + 2 Sofascore, por revisar.
+- [ ] Unos 250 huecos de tiros y córners.
 - [ ] Ampliar fuentes para los **1.219 huecos de xG** (Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46). LanusStats/365Scores aportó tres parejas de LaLiga 2, cargadas por petición del titular el 15-oct; su muestra no prueba cobertura completa. Ver `docs/lanusstats_carga_20261015.md`.
   - Medido 18-oct (partidos terminados desde ago-2022, sin xG): Serie B 1.158, LaLiga 2 926, Ligue 2 705, Argentina 412 (modelada), Brasil 66, México 25, copas 26. La cifra de 1.219 no coincide con esa ventana: confirmar cuál era su criterio.
 

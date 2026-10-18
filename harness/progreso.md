@@ -1,5 +1,15 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-18 — Orden de identidades: el error real es Arsenal, no las 379 "identidades"
+
+Medido en producción sin escribir nada. Las 379 "identidades" de copas eran partidos (110 equipos); en ninguno están los
+dos equipos identificados, porque el rival es siempre un club de una liga que no cubrimos, y la regla de `eu.ucl`/`eu.uel`
+(no dar de alta equipos, solo coincidencia exacta) es la que lo impide: se cierra como no resoluble por diseño. La coincidencia
+aproximada habría dado Pafos→Paris FC y Rangers→Angers. Lo que sí estaba mal es una fila de alias (`Arsenal`, `fbref`) que apunta a
+Arsenal de Sarandí: 33 partidos de copa hasta 2024-12-11 en el club equivocado. Antes de afirmar su efecto en el modelo habría que
+medirlo (se espera pequeño por el decaimiento de 180 días). Cuatro alias de The Odds API recuperan 39 de los 103 cierres de copa con
+los snapshots ya pagados. Nada de esto se aplica sin visto bueno; ver docs/ordenar_identidades_20261018.md.
+
 ## 2026-10-16 — Tenis: extracción completa, motor local y resultados negativos conservados
 
 Por autorización nueva se completaron 171 archivos TML y 43 archivos MCP:

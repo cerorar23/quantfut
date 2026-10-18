@@ -217,7 +217,8 @@ incorporadas. 400 originales mantienen asociación pendiente/conflicto. Modelo
 activo y puertas sin cambios; 1.007 pruebas, prueba PostgreSQL e idempotencia.
 Detalle: docs/importacion_fotmob_20261013.md.
 
-- [ ] Resolver 379 identidades de copas y revisar 21 conflictos sin forzar uniones.
+- [x] 379 «identidades» de copas = 379 partidos de 110 equipos; ninguno con ambos equipos probados, no resoluble sin dar de alta clubes externos (prohibido en `eu.*`). Medido el 18-oct, docs/ordenar_identidades_20261018.md.
+- [ ] Corregir Arsenal (33 partidos de copa asignados a Arsenal de Sarandí por el alias fbref) y revisar los 20 conflictos restantes uno a uno.
 - [ ] Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
   respetando recepción temporal; las tablas nuevas ya están importadas.
 
