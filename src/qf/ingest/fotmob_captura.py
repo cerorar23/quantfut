@@ -114,7 +114,7 @@ def _validar(payload: dict, fid: str) -> bool:
 
 
 # ---------------------------------------------------------------------------------------------- referencias
-def actualizar_referencias(c, cli: Cliente) -> dict:
+def actualizar_referencias(c, cli: Cliente, dias_atras: int = 4) -> dict:
     equipo = {r["fotmob_team_id"]: r["team_id"] for r in c.execute("SELECT fotmob_team_id, team_id FROM fotmob_equipo")}
     r = {"competiciones": 0, "nuevas": 0, "sin_equipo": 0, "sin_partido": 0}
     ahora = datetime.now(timezone.utc)
@@ -128,7 +128,7 @@ def actualizar_referencias(c, cli: Cliente) -> dict:
                 fx = str(m["id"])
             except (KeyError, ValueError, TypeError):
                 continue
-            if not (ahora - timedelta(days=4) <= saque <= ahora + timedelta(days=12)):
+            if not (ahora - timedelta(days=dias_atras) <= saque <= ahora + timedelta(days=12)):
                 continue
             if h is None or a is None:
                 r["sin_equipo"] += 1
@@ -237,7 +237,7 @@ def capturar_previos(c, cli: Cliente) -> dict:
 
 
 # ---------------------------------------------------------------------------------------------- posteriores
-def capturar_posteriores(c, cli: Cliente) -> dict:
+def capturar_posteriores(c, cli: Cliente, dias_atras: int = 6, maximo: int = MAX_POSTERIORES) -> dict:
     ahora = datetime.now(timezone.utc)
     filas = c.execute(
         """SELECT m.match_id, m.kickoff_utc, f.fotmob_match_id
@@ -245,7 +245,7 @@ def capturar_posteriores(c, cli: Cliente) -> dict:
            WHERE m.status = 'finished' AND m.kickoff_utc BETWEEN %s AND %s
              AND NOT EXISTS (SELECT 1 FROM fotmob_partido p WHERE p.match_id = m.match_id)
            ORDER BY m.kickoff_utc LIMIT %s""",
-        (ahora - timedelta(days=6), ahora - timedelta(minutes=150), MAX_POSTERIORES)).fetchall()
+        (ahora - timedelta(days=dias_atras), ahora - timedelta(minutes=150), maximo)).fetchall()
     r = {"candidatos": len(filas), "guardados": 0, "descartados": 0}
     for f in filas:
         payload = cli.get("matchDetails", {"matchId": f["fotmob_match_id"]})
@@ -263,14 +263,14 @@ def capturar_posteriores(c, cli: Cliente) -> dict:
 
 
 # ---------------------------------------------------------------------------------------------- CLI
-def correr(c, accion: str, cli: Cliente | None = None) -> dict:
+def correr(c, accion: str, cli: Cliente | None = None, **opciones) -> dict:
     cli = cli or Cliente()
     if en_enfriamiento(c):
         return {"omitido": f"enfriamiento de {ENFRIAMIENTO_H} h tras una denegación de FotMob"}
     funciones = {"referencias": actualizar_referencias, "previos": capturar_previos,
                  "posteriores": capturar_posteriores}
     try:
-        res = funciones[accion](c, cli)
+        res = funciones[accion](c, cli, **opciones)
     except AccesoDenegado as exc:
         c.rollback()
         _log(c, accion, {"error": str(exc)}, denegado=True)
@@ -291,10 +291,17 @@ def main(argv=None) -> None:
 
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("accion", choices=["referencias", "previos", "posteriores"])
+    ap.add_argument("--dias-atras", type=int, default=None, help="relleno puntual: hasta cuántos días atrás mirar")
+    ap.add_argument("--maximo", type=int, default=None, help="relleno puntual (posteriores): máximo de partidos")
     a = ap.parse_args(argv)
+    opc = {}
+    if a.dias_atras is not None and a.accion != "previos":
+        opc["dias_atras"] = a.dias_atras
+    if a.maximo is not None and a.accion == "posteriores":
+        opc["maximo"] = a.maximo
     logging.basicConfig(level=logging.INFO)
     with conn() as c:
-        print(json.dumps(correr(c, a.accion), indent=1, default=str, ensure_ascii=False))
+        print(json.dumps(correr(c, a.accion, **opc), indent=1, default=str, ensure_ascii=False))
 
 
 if __name__ == "__main__":
