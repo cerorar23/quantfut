@@ -76,6 +76,7 @@ from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
 from .respaldo import router as respaldo_router
 from .firebase import router as firebase_router
+from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
 from .meta import router as meta_router
 from .compras import router as compras_router, store_router as compras_store_router
@@ -772,6 +773,8 @@ app.include_router(anuncios_router)
 app.include_router(rewards_router)
 app.include_router(respaldo_router)
 app.include_router(firebase_router)
+app.include_router(whop_router)
+app.include_router(whop_webhooks)
 app.include_router(meta_router)
 app.include_router(compras_router)
 app.include_router(compras_store_router)

@@ -6,11 +6,11 @@ import os
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
-from . import cuentas as api
+from . import cuentas as api, ratelimit
 from ..comercial import cuentas, firebase
 from ..comercial.cuentas import CuentaError
 from ..db import conn, query, query_one
@@ -85,6 +85,41 @@ def connect(body: ConnectIn, request: Request,
     except CuentaError as error:
         fail(error)
     return api.me(account)
+
+
+_WEB_CONFIG_ENV = {'apiKey': 'FIREBASE_WEB_API_KEY', 'appId': 'FIREBASE_WEB_APP_ID',
+                   'authDomain': 'FIREBASE_WEB_AUTH_DOMAIN', 'projectId': 'FIREBASE_PROJECT_ID'}
+
+
+@router.get('/web-config')
+def web_config():
+    """Configuración pública del SDK web de Firebase (la apiKey web no es un secreto)."""
+    config = {key: os.getenv(env, '') for key, env in _WEB_CONFIG_ENV.items()}
+    if os.getenv('FIREBASE_AUTH_ENABLED', '0') != '1' or not all(config.values()):
+        raise HTTPException(503, {'code': 'firebase_no_configurado',
+                                  'message': 'El acceso con Google todavía no está disponible'})
+    return {**config, 'consentVersion': firebase.CONSENT_VERSION}
+
+
+class WebSessionIn(BaseModel):
+    id_token: str = Field(min_length=1, max_length=8192)
+    accepted_terms: bool = False
+    language: Language = 'es'
+
+
+@router.post('/web-session', response_model=api.TokensOut)
+def web_session(body: WebSessionIn, request: Request, response: Response):
+    """Cambia un ID token de Google por la misma sesión de cookie que el acceso con correo."""
+    api._limit(request, 'firebase_web', 15, 300)
+    version = firebase.CONSENT_VERSION if body.accepted_terms else None
+    try:
+        claims = firebase.verify_identity(body.id_token)
+        account = firebase.connect_identity(claims, version, version, body.language)
+    except CuentaError as error:
+        fail(error)
+    tokens = cuentas.open_session(api.redis_client(), account['account_id'],
+                                  request.headers.get('user-agent'), ratelimit.client_ip(request))
+    return api._deliver(tokens, request, response)
 
 
 class PreferencesIn(BaseModel):
