@@ -2949,3 +2949,12 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Meta a eventos reales: `META_TEST_EVENT_CODE` quitado del `.env` del VPS y API recreada (18-oct, DEPLOYS 21:00 UTC).
 - [x] Worker alineado con `meta_capi` (parche del contenedor, DEPLOYS 18-oct 21:25) y cron del host retirado. Pendiente: que la imagen del worker del 1-nov los lleve de serie.
 - [ ] Probar un cobro real con Whop (plan de 14,99) y ver el Purchase en Meta con el mismo event_id del Pixel.
+
+## Pronósticos bloqueados difuminados con «Acceso VIP» (2026-10-18, decisión del titular)
+
+- [x] App: la tarjeta de candados de Alta probabilidad va **desplegada por defecto** (se puede plegar); cada fila lleva una franja difuminada (`LockedBlur`, bloques, no texto real) con la cuota a la vista, y el botón pasa a **«Acceso VIP»** (nueva cadena `vipAccessButton` en los 6 idiomas) en la tarjeta de candados, en el candado genérico y en el detalle del partido. 257 pruebas de Flutter y `flutter analyze` limpios.
+- Lo gratis sin VIP ya era lo decidido y no cambia: 4 de alta probabilidad (`FREE_MAX`), 1 paso de escalera, 1 parley al día.
+- Seguridad del bloqueo: el servidor no envía selección ni probabilidad de un pronóstico bloqueado (`mobile.metadata`), así que el difuminado es solo visual.
+- El botón lleva a la pantalla VIP de la app, que compra con Play / App Store. **No** se enlaza a Whop desde la app (las tiendas exigen su sistema para suscripciones digitales); Whop es la pasarela de la web.
+- La web no pinta pronósticos reales bloqueados (solo datos liquidados y una maqueta ficticia): sin cambio.
+- [ ] Falta una compilación nueva de la app para que los usuarios lo vean (publicación en tiendas: la hace el titular).

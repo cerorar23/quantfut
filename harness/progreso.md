@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-18 (noche) — Candados difuminados: el botón VIP va a la tienda en la app, a Whop en la web
+
+El titular pidió los pronósticos bloqueados difuminados con un botón «Acceso VIP» hacia la pasarela. Lo gratis (4 / 1 / 1) ya era lo que aplica el
+código. El difuminado es seguro porque el servidor nunca manda la selección ni la probabilidad de lo bloqueado; la franja son bloques, no un
+pronóstico falso. En la app el botón abre la pantalla VIP que compra con Play / App Store y no enlaza a Whop: las tiendas exigen su sistema de
+compras para suscripciones digitales dentro de la app y un enlace de pago externo puede costar el rechazo de la ficha. Whop cubre la web, que no
+pinta pronósticos reales bloqueados. Ventana de sello y fecha de corte de F7 siguen sin responder: quedan como propuesta.
+
 ## 2026-10-18 (tarde) — FotMob en vivo como fuente previa; Open-Meteo descartada por licencia
 
 El titular autorizó la captura recurrente de FotMob (antes registrada como puntual) y entregó el token de Copernicus. La página
