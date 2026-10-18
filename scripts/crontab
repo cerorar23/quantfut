@@ -117,3 +117,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 50 5 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura referencias >> /var/log/fotmob_captura.log 2>&1
 */15 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
 35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
+
+# Clima histórico ERA5 de los partidos ya jugados (db/082), incremental: solo pide a Copernicus lo que aún no cubren
+# los archivos guardados (Copernicus publica con ~7 días de retraso). Necesita CDS_API_TOKEN en el entorno.
+20 6 * * * cd /app && flock -n /tmp/era5.lock python -m qf.ingest.era5_clima >> /var/log/era5_clima.log 2>&1

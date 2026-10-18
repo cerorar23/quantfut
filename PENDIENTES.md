@@ -26,11 +26,11 @@ Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en
 | **2-nov, 9:00 (hora local)** | Revisión automática de solo lectura (tarea programada `revisar-reentrenamiento-1-nov`) |
 | ~10-nov | La puerta de CLV pide 300 observaciones. **Medido 18-oct:** `shadow.summary` lleva n=135 y 138 (retadores) con `ev_close` ≈ +0,06 / +0,08 %; la cifra de +3,46 % (n=142) del 15-oct no se reproduce con ninguna de las tres fuentes (`shadow_results` n=348 +0,65 %; `sharp_shadow_results` n=1.683 +3,24 %). Aclarar cuál es la oficial antes de contar con la puerta |
 
-## 1. Seguridad (Tú, ~15 minutos)
-- [ ] Activar la autenticación en dos pasos en la cuenta de GitHub `cerorar23`.
-- [ ] **Rotar la clave de The Odds API** (apareció en una salida de comandos de una sesión).
-- [ ] Restringir la clave de Firebase de la app por paquete en la consola de Google (`google-services.json` está en el repo).
-- [ ] Sentry: retención del plan, ajustes de organización (IPs, Data Scrubber, 2FA) y probar en un dispositivo real.
+## 1. Seguridad
+- **Decisión del titular (18-oct): no se hace por ahora** la autenticación en dos pasos de GitHub, la rotación de la clave de The Odds API ni la
+  restricción de la clave de Firebase. Quedan como riesgos aceptados; no se vuelven a pedir. Sentry (retención del plan y ajustes) sigue abierto.
+- **Token de Copernicus:** el titular decidió **conservarlo** (se compartió por chat) para la descarga automática de clima de los partidos
+  futuros: cron diario 06:20 UTC con candado; el token está en `/etc/environment` del worker en marcha y en el `.env` del servidor.
 
 ## 2. Hasta el 1-nov: no tocar el motor
 - [ ] Claude: vigilar que el reentrenamiento corra limpio (worker idéntico a `main`, con el filtro de cierres de 60 min).
@@ -43,7 +43,7 @@ Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. 
 | F0 archivo a tablas principales | **Hecha** (en producción) | — |
 | F1 capa de ajuste y línea base | **Hecha**: el XI simple pasa la puerta (ΔRPS −0,0013; 9 de 12 ligas) | Reejecutar tras el 1-nov |
 | F2 cierres de Pinnacle | A medias: faltan 2.103 (697 en ligas modeladas; antes 6.185) | Créditos tras el 1-nov |
-| **F7 sello tardío** | Sin empezar. **Siguiente fase**: deja entrar al XI al motor y usa cuotas de última hora; toca la cadena de hashes. **Plan en borrador (18-oct):** `docs/superpowers/plans/2026-10-18-f7-sello-tardio.md` | Tus 3 decisiones del plan y diseño tras el 1-nov |
+| **F7 sello tardío** | Sin empezar. **Siguiente fase**: deja entrar al XI al motor y usa cuotas de última hora; toca la cadena de hashes. **Plan en borrador (18-oct):** `docs/superpowers/plans/2026-10-18-f7-sello-tardio.md` | Falta confirmar la ventana de sello (propuesta T-45) y el corte; lo gratis y el difuminado VIP ya están decididos (18-oct). Diseño tras el 1-nov |
 | F3 bajas como minutos perdidos | Sin empezar (poca evidencia: 173 partidos con consulta previa al inicio) | F7 |
 | F6 clima y sede | Decidido (Copernicus ERA5 para historial; Open-Meteo Standard en vivo y altitud); sin código | Guardar token cifrado |
 | F5 árbitro | Sin empezar; datos de F0 listos | Unificar identidades |
@@ -89,9 +89,9 @@ Tareas sueltas:
 ## 5. Para poder vender picks
 | Qué | Responsable | Nota |
 |---|---|---|
-| Elegir **procesador de pago** | Tú | **App: decidido el 15-oct** (Google Play / App Store, suscripción renovable). Web: sigue pendiente |
+| Procesador de pago | Tú | **Decidido.** App: Google Play / App Store (suscripción renovable). Web: **Whop** (checkout embebido y webhooks firmados, ya desplegado) |
 | **Meta (SDK + CAPI) y compras en la app** | Tú (credenciales) y Claude | **Código hecho y API desplegada el 15-oct, apagada** (rama `feat/meta-compras`, sin fusionar a `main`). Guía: `apps/mobile/docs/META_COMPRAS_TITULAR.md`. Necesito: App ID, client token, dataset y token CAPI de Meta; suscripción `quantfut_plus` (3 planes base), cuenta de servicio y Pub/Sub en Play Console. Antes de activar CAPI hay que alinear el worker (después del 1-nov). Registrar `*.lproj/InfoPlist.strings` en Xcode cuando haya Mac |
-| **Avisos legales** (+18, juego responsable, privacidad/cookies, términos) y **revisión de un profesional habilitado** | Tú | Más: DPA de Contabo y Proton, atender el buzón de contacto |
+| **Avisos legales** y revisión de un profesional habilitado | Tú | **Revisión concluida el 18-oct, sin objeciones** (palabras del titular). Siguen siendo tareas suyas: DPA de Contabo y Proton y atender el buzón de contacto |
 | **Publicación de la cadena: comprometer-revelar** | Claude, con tu decisión | **Código y pruebas hechos el 18-oct** (`hashchain.py`, `tests/test_hashchain_revelado.py`); falta desplegar con ensayo y luego configurar `CHAIN_GIT_REMOTE` (hoy vacío). Sube solo el hash antes y el JSON al terminar los partidos |
 | Quitar rutas internas de `/model-card` y añadir `Content-Security-Policy` | Claude | Prioridad baja |
 | Puerta comercial (CLV ≥ 300) | Se cumple sola (~10-nov) | Aun así `PUBLISH_PICKS_ENABLED` está en 0: se enciende con tu decisión |
@@ -103,13 +103,13 @@ Tareas sueltas:
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
 
 ## Decisiones que dependen de ti
-1. Procesador de pago de la web (el de la app ya está decidido: tiendas).
+1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
 2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
 2b. (Resuelto el 18-oct) Captura de FotMob autorizada; token de CDS entregado; Open-Meteo descartada.
 3. Comprar los 527 snapshots (~5.270 créditos) tras el 1-nov.
 4. Registrar los alias de Champions y Europa League.
 5. Pasar la cadena a comprometer-revelar y cuándo encender `PUBLISH_PICKS_ENABLED`.
-6. Revisión legal por un profesional habilitado.
+6. (Resuelto el 18-oct) Revisión legal concluida sin objeciones.
 
 ## Tenis retrospectivo 2024/2025 (18-oct-2026)
 - Preparado:11240partidos,187ediciones enlazadas de su temporada,2982aptos para evaluacion espacial;165pruebas tenis aprobadas.2025exploratorio, modelos congelados intactos.
