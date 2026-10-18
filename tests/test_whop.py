@@ -250,3 +250,76 @@ def test_checkout_rechaza_plan_sin_whop_y_pagos_apagados(pool, monkeypatch):
     with pytest.raises(whop.WhopError) as e:
         whop.create_checkout(acc, "plus_6m_sin_whop", fbp=None, fbc=None, client_ip=None, user_agent=None, source_url=None)
     assert e.value.code == "plan_inexistente"
+
+
+def _request(headers: dict, cookies: str | None = None):
+    from starlette.requests import Request
+    raw = [(k.lower().encode(), v.encode()) for k, v in headers.items()]
+    if cookies:
+        raw.append((b"cookie", cookies.encode()))
+    return Request({"type": "http", "headers": raw, "client": ("203.0.113.9", 4000), "method": "POST", "path": "/"})
+
+
+def test_contexto_web_sale_de_cookies_y_cabeceras_solo_en_la_web():
+    from qf.api import cuentas as accounts_api
+    web = _request({"x-qf-client": "web", "user-agent": "UA/1.0", "referer": "https://pronosticosdeportivos.pro/#acceso"},
+                   "_fbp=fb.1.1.2; _fbc=fb.1.1.AbC")
+    ctx = accounts_api.web_context(web)
+    assert ctx["fbp"] == "fb.1.1.2" and ctx["fbc"] == "fb.1.1.AbC" and ctx["user_agent"] == "UA/1.0"
+    assert ctx["source_url"].endswith("#acceso") and ctx["client_ip"]
+    assert accounts_api.web_context(_request({"user-agent": "app"}, "_fbp=fb.1.1.2")) is None
+    assert meta_capi.web_kwargs(None) == {}
+    assert meta_capi.web_kwargs(ctx)["action_source"] == "website"
+
+
+@pg
+def test_registro_web_encola_evento_website_y_el_de_la_app_no(pool, monkeypatch):
+    from qf import db
+    from qf.comercial import cuentas
+    monkeypatch.setenv("META_CAPI_ENABLED", "1")
+    ctx = {"fbp": "fb.1.1.2", "client_ip": "203.0.113.9", "user_agent": "UA/1.0", "source_url": "https://x.test/#acceso"}
+    web = cuentas.create_account(f"w-{uuid.uuid4().hex[:10]}@ejemplo.com", "clave-de-prueba-1", "Ana Pérez", web_context=ctx)
+    app = cuentas.create_account(f"a-{uuid.uuid4().hex[:10]}@ejemplo.com", "clave-de-prueba-1", "Beto")
+    with db.conn() as c:
+        w = c.execute("SELECT action_source, web_context, event_id FROM meta_events WHERE account_id = %s",
+                      (web["account_id"],)).fetchone()
+        a = c.execute("SELECT action_source, web_context FROM meta_events WHERE account_id = %s",
+                      (app["account_id"],)).fetchone()
+    assert w["action_source"] == "website" and w["web_context"]["fbp"] == "fb.1.1.2"
+    assert w["event_id"] == f"reg:{web['account_id']}"
+    assert a["action_source"] == "app" and a["web_context"] is None
+
+
+@pg
+def test_reembolso_exitoso_revoca_el_periodo_y_pendiente_no(pool):
+    from qf.comercial import suscripciones
+    acc, plan_id = _cuenta(), _plan()
+    pay = "pay_" + uuid.uuid4().hex[:8]
+    whop.handle_event(*_evento("payment.succeeded", _pago(plan_id, acc["account_id"], pay)))
+    assert suscripciones.active_subscription(acc["account_id"])
+    pending = whop.handle_event(*_evento("refund.created", {"id": "rf_1", "payment_id": pay, "status": "pending"}))
+    assert pending["estado"] == "ignorado" and suscripciones.active_subscription(acc["account_id"])
+    done = whop.handle_event(*_evento("refund.updated", {"id": "rf_1", "payment_id": pay, "status": "succeeded"}))
+    assert done["estado"] == "revocado" and suscripciones.active_subscription(acc["account_id"]) is None
+    again = whop.handle_event(*_evento("refund.updated", {"id": "rf_1", "payment_id": pay, "status": "succeeded"}))
+    assert again["estado"] == "ya_revocado"
+
+
+@pg
+def test_reembolso_de_pago_desconocido_alerta(pool, monkeypatch):
+    alerts = []
+    monkeypatch.setattr(whop, "_alert", lambda t: alerts.append(t))
+    out = whop.handle_event(*_evento("refund.created", {"id": "rf_9", "payment_id": "pay_nope", "status": "succeeded"}))
+    assert out["estado"] == "pago_desconocido" and len(alerts) == 1
+
+
+def test_purchase_web_lleva_ciudad_estado_zip_y_telefono_cifrados():
+    row = {"event_name": "Purchase", "event_id": "purchase:ch_2", "action_source": "website",
+           "event_time": datetime(2026, 10, 18, 12, tzinfo=timezone.utc),
+           "custom_data": {"currency": "USD", "value": 14.99, "_country": "MX", "_ct": "Monterrey", "_st": "NL",
+                           "_zp": "64000", "_ph": "+52 81 1234 5678"},
+           "web_context": {"client_ip": "203.0.113.9", "user_agent": "UA/1.0"}}
+    event = meta_capi.build_event(row, {"account_id": 7, "email": "a@b.com", "display_name": "Ana"}, None)
+    assert {"ct", "st", "zp", "ph", "em", "country", "external_id", "fn"} <= set(event["user_data"])
+    assert not any(k.startswith("_") for k in event["custom_data"])
+    assert event["user_data"]["ph"] == [hashlib.sha256(b"528112345678").hexdigest()]

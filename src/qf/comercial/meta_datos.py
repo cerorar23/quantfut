@@ -36,7 +36,35 @@ def split_name(display_name: str | None) -> tuple[str | None, str | None]:
     return first, last or None
 
 
-def user_data(account: dict, identity: dict | None, country: str | None) -> dict:
+def _latin(value: str) -> str:
+    """a-z en minúsculas, sin acentos, puntuación ni espacios (ct y st fuera de EE. UU.)."""
+    text = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z]", "", text)
+
+
+def norm_city(value: str | None) -> str | None:
+    return _latin(value) or None
+
+
+def norm_state(value: str | None) -> str | None:
+    return _latin(value) or None
+
+
+def norm_zip(value: str | None, country: str | None = None) -> str | None:
+    text = re.sub(r"[\s-]", "", (value or "").lower())
+    if (country or "").lower() == "us":
+        text = text[:5]
+    return text or None
+
+
+def norm_phone(value: str | None) -> str | None:
+    """Solo dígitos, sin ceros a la izquierda; debe incluir el código de país (E.164 sin «+»)."""
+    digits = re.sub(r"\D", "", value or "").lstrip("0")
+    return digits if 7 <= len(digits) <= 15 else None
+
+
+def user_data(account: dict, identity: dict | None, country: str | None,
+              extra: dict | None = None) -> dict:
     out: dict = {"external_id": [external_id(account["account_id"])]}
     email = (account.get("email") or "").strip().lower()
     if "@" in email:
@@ -48,6 +76,12 @@ def user_data(account: dict, identity: dict | None, country: str | None) -> dict
         out["ln"] = [sha256(last)]
     if country and re.fullmatch(r"[A-Za-z]{2}", country):
         out["country"] = [sha256(country.lower())]
+    # Datos de facturación del comprador (Whop): ciudad, estado, código postal y teléfono.
+    extra = extra or {}
+    for key, value in (("ct", norm_city(extra.get("ct"))), ("st", norm_state(extra.get("st"))),
+                       ("zp", norm_zip(extra.get("zp"), country)), ("ph", norm_phone(extra.get("ph")))):
+        if value:
+            out[key] = [sha256(value)]
     if identity:
         out["anon_id"] = identity["anon_id"]
         for src, dst in (("madid", "madid"), ("client_ip", "client_ip_address"),
