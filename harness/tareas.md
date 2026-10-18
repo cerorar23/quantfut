@@ -2760,3 +2760,8 @@ Detalle en `docs/admob_recompensas_20261014.md`.
 - [ ] Sustituir el ID de APP de ejemplo por el real (AndroidManifest / Info.plist); declaraciones de Play.
       Pendiente de que el titular consiga una cuenta de AdMob (el Chrome conectado no tiene una).
 - [ ] Más adelante, con datos reales: mediación (Unity Ads, AppLovin) sobre AdMob.
+
+## Web: rediseño CYBERCORE en producción (2026-10-18)
+- [x] Integrar CYBERCORE CSS 0.3.0, adaptar Cyberpunk CSS, conservar el logo previo y validar 25/25 pruebas del frontend.
+- [x] Fusionar PR #12 y hotfix de assets FastAPI PR #13 con los arneses de GitHub aprobados.
+- [x] Desplegar solo la API desde una imagen derivada de la que estaba en ejecución; comprobar dominio, hashes, modelo y cadena; documentar reversión.
