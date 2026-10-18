@@ -1,5 +1,23 @@
 # Backlog — QuantFut
 
+## Tenis — datos y arquitectura inicial (2026-10-16)
+
+Autorización del usuario (16-oct): extraer todo el catálogo y continuar un motor local independiente. Implementación en el checkout gestionado `C:/Users/huye/.codex/worktrees/tennis-engine/apuesta proyec`, bajo `apps/tennis`; preparación temporal en `.local/tennis_engine_build_20261016/` por permisos de escritura.
+
+- [x] Descargar catálogo completo TML y completar los originales MCP: 214/214 archivos, 593.347.344 bytes, hashes verificados, cero fallos.
+- [x] Consolidar TML: 492.251 partidos, 249.938 con conteos/formato aptos; originales y conflictos conservados, fechas sin hora inventada.
+- [x] Implementar puntuación/distribución de mercados, candidato binomial bayesiano regularizado y evaluación cronológica frente a Elo probabilístico.
+- [x] Comprobar matemática (17 pruebas, incluida simulación independiente), ajustar candidatos ATP/WTA y guardar métricas reales de 2025/2026. Sin promoción ni consumo de cuotas. Ver `docs/tenis_primera_version_y_resultados_20261016.md`.
+- [ ] Mejorar habilidades/calibración con validación separada y nueva prueba futura: el candidato inicial pierde en log-loss frente a Elo. No convertir el 2026 ya observado en prueba intacta de nuevas variantes.
+
+- [x] Revisar completa la conversación adjunta y documentar modelo bayesiano/Markov y requisitos de datos en `docs/tenis_modelo_y_datos_20261016.md`.
+- [x] Auditar la fuente Match Charting Project indicada por el usuario: versión fija, originales y hashes, contraste punto a punto con Overview y observaciones de investigación. Ver `data/tennis/mcp_20261016/AUDIT_README.md`.
+- [x] Verificar gmalbert, panaC, Live Tennis API y Apify; localizar TennisMyLife directo y auditar 11.364 filas de muestras de 2026/en curso. Ver `docs/tenis_fuentes_y_repositorios_20261016.md`.
+- [x] Descargar y consolidar TennisMyLife completo con cobertura, clasificación de cuadros por archivo, conflicto de claves y exclusiones explícitas.
+- [ ] Completar calendario próximo con IDs/hora y cronología real; no confundir resultados en curso con agenda ni semana del torneo con inicio del partido.
+- [ ] Resolver permiso comercial de MCP (licencia publicada CC BY-NC-SA 4.0), cobertura reciente completa y agenda/identidades; precisar plan/casas de The Odds API antes de gastar créditos.
+- [x] Primera implementación del motor de puntuación y comparación cronológica; modelos entrenados de investigación, sin resultados económicos ni aprobación predictiva para publicar.
+
 Orden de dependencia (ver "Huecos concretos que quedan" en README.md).
 No reordenar sin razón: cada ítem depende del anterior.
 
@@ -24,7 +42,7 @@ operativo como canal de clientes.
 
 - [x] Validar la clave OddsPapi del usuario, descargar calendarios, asociar 6.094 pendientes con nombres revisados y recuperar un primer lote de 51 ternas prepartido. Fuente, marcas horarias y originales conservados; sin carga en producción.
 - [x] Terminar y comprobar el lote OddsPapi (15-oct, 03:46 CDMX): 6.094 consultados, 2.943 ternas reconstruidas (23 requieren revisión), 3.151 sin histórico; CSV final y recibos conservados, seguimiento desactivado. Cero cargas automáticas.
-- [ ] Resolver los 3.267 cierres pendientes tras la carga: 3.151 sin histórico, 87 sin fixture, cuatro cancelados en la fuente y 25 referencias retenidas para revisión. Recorrer la cola no acredita cobertura completa ni cierre oficial.
+- [ ] (Medido 18-oct: en las ligas modeladas faltan 697 de 12.008 partidos desde 2024; quedan por comprar 527 snapshots tras el reset del 1-nov, ~5.270 créditos.) Resolver los 3.267 cierres pendientes tras la carga: 3.151 sin histórico, 87 sin fixture, cuatro cancelados en la fuente y 25 referencias retenidas para revisión. Recorrer la cola no acredita cobertura completa ni cierre oficial.
 
 - [x] Descargar y archivar 60 CSV: 14.381 ternas explícitas desde 2024, todas ya presentes.
 - [x] Ensayo Football-data de asociación sin escrituras: 0 candidatos nuevos; siguen los 6.185 huecos en producción.
@@ -34,9 +52,13 @@ operativo como canal de clientes.
 - [x] Guardar por petición del usuario las 272 candidatas y las 586 ternas con originales y hashes en `data/pinnacle_recovery/20261014/`; marcadas como cierre sin verificar, sin carga en producción.
 - [x] Reintento explícito de OddsHarvester: cuatro sesiones nuevas, dos partidos de la lista, tres payloads de todas las casas verificados, cero Pinnacle nuevo. Resultado por fila y evidencia en `data/pinnacle_recovery/20261014_oddsharvester_retry/`; no son 6.185 consultas individuales.
 - [x] Recuperar con la clave OddsPapi autorizada: catálogo y asociación exacta, cola histórica terminada, originales y corte prepartido conservados; resultado y carga documentados arriba.
-- [ ] Conseguir fuente/acceso con Pinnacle para los 3.267 cierres pendientes, validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
+- [ ] Conseguir fuente/acceso con Pinnacle para los cierres pendientes (cifra vigente: ver la línea anterior), validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
 
 ## Señales nuevas en el motor principal (2026-10-14)
+
+- [x] Prueba aislada LanusStats/365Scores (15-oct): nueve huecos reales, tres por liga; tres parejas nuevas en LaLiga 2 y cero en las muestras de Serie B/Ligue 2. Control positivo, identidad y hashes comprobados; acceso directo HTTP 200, sin gasto de proxy ni carga en la base. Granada–Albacete requiere revisar una hora de diferencia. Evidencia: data/xg_recovery/20261015_lanusstats/.
+- [x] Carga autorizada de las tres parejas 365Scores (15-oct, 16:49 UTC): identidad corroborada con FotMob, respaldo selectivo, ensayo revertido e idempotencia cero. Recepción real y seis originales verificados tras el commit; quedan 1.219 huecos, 233 de LaLiga 2. Detalle: docs/lanusstats_carga_20261015.md.
+- [ ] Ampliar la cobertura de 365Scores sobre los 233 huecos restantes de LaLiga 2, validar fechas y procedencia antes de cualquier carga; las muestras negativas de Serie B/Ligue 2 requieren otra comprobación/fuente y no acreditan una ausencia universal.
 
 Pedido del usuario: llevar al motor principal XI y valor de jugadores, bajas, tiros/PSxG,
 árbitro, sede y clima, cuotas de apertura/cierre. Spec:
@@ -70,6 +92,7 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 - [ ] Antes de `PUBLISH_PICKS_ENABLED=1`: `picks.select_daily()` solo ve `predictions` (13 ligas) y la sombra mide 22; alinear cobertura.
 - [ ] Vigilar la ampliada 73–95 %: en picks con cuota de referencia (n=223) real 78,0 % frente a 81,4 % prometido; ROI a referencia −7,5 % (base −3,0 %, n=91; esperado en una línea de acierto).
 - [ ] Huecos de xG desde 2024 (1.222; Serie B, LaLiga 2, Ligue 2): requieren una fuente nueva, decisión del usuario.
+- [ ] Huecos de xG desde 2024 (1.219 tras tres parejas 365Scores; Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46): ampliar fuentes; la muestra 365Scores no acredita cobertura completa.
 
 ## Buscar datos restantes de las 23 competiciones (2026-10-13)
 
@@ -2760,3 +2783,117 @@ Detalle en `docs/admob_recompensas_20261014.md`.
 - [ ] Sustituir el ID de APP de ejemplo por el real (AndroidManifest / Info.plist); declaraciones de Play.
       Pendiente de que el titular consiga una cuenta de AdMob (el Chrome conectado no tiene una).
 - [ ] Más adelante, con datos reales: mediación (Unity Ads, AppLovin) sobre AdMob.
+
+
+## Integracion de datos disponibles al motor — 2026-10-15
+
+Peticion del titular: cargar el archivo disponible, identidades verificadas y contexto; iniciar capturas prospectivas sin comprar cierres de cuotas.
+
+- [ ] Migracion aditiva y puente de jugadores con evidencia por partido; conservar NULL y recepcion real.
+- [ ] Incorporar XI, suplentes, estadisticas, bajas, entrenadores, ronda y estilo, con ensayo y carga idempotente.
+- [ ] Capturas FotMob previa/posterior y calendario; altitud y pronosticos con credencial contratada.
+- [ ] Derivados de descanso, eliminatorias y clasificacion; identidades arbitrales y de copas sin uniones ambiguas.
+- [ ] Verificar en produccion, documentar conteos y pendientes concretos. ERA5 requiere token; 527 snapshots expresamente pendientes.
+
+
+## Meta (App Events + CAPI) y suscripciones en la app — 2026-10-15
+
+Diseño aprobado: `docs/superpowers/specs/2026-10-15-meta-compras-design.md`. Procesador de pago de la
+APP decidido por el titular: Google Play Billing / StoreKit, suscripción renovable sin prueba gratis
+(la web sigue pendiente). Seguimiento encendido por defecto en todo el mundo, desactivable en Perfil.
+Google Sign-In ya existe: no se rehace.
+
+- [x] Leer la documentación oficial (Meta, pub.dev, Google Play, Apple) y aprobar el diseño por secciones.
+- [x] Revisar la spec (titular) y escribir el plan de implementación:
+      `docs/superpowers/plans/2026-10-15-meta-compras.md` (17 tareas, rama `feat/meta-compras`).
+- [x] `db/071`: `store_transactions`, `meta_events`, `meta_identities`, columnas de tienda en `plans`,
+      `accounts.store_account_token`. Aditiva; sin tocar triggers de `subscriptions`.
+- [x] Servidor: verificación Play (subscriptionsv2) y Apple (JWS), RTDN y notificaciones V2, `grant`/`revoke`
+      idempotentes por `order_id`; `STORE_PURCHASES_ENABLED=0`.
+- [x] Servidor: cola y envío CAPI (`action_source=app`), normalización y hash, `META_CAPI_ENABLED=0`.
+- [x] App: `in_app_purchase` en la pantalla VIP, `facebook_app_events` con inicio controlado, ATT, ID de
+      publicidad, eventos del mapa, interruptor en Perfil; 6 idiomas.
+- [x] Política, términos y `CONSENT_VERSION` nuevos (servidor acepta la anterior y la nueva en la transición).
+- [ ] Del titular: credenciales de Meta, productos y cuenta de servicio de Play, Pub/Sub, pruebas internas.
+- [x] API y `db/071` desplegadas el 2026-10-15 (apagadas); rama `feat/meta-compras`, ver `DEPLOYS.md`.
+- [ ] Tras tus credenciales: probar en «Probar eventos» y en el entorno de pruebas de Play; alinear el worker (cron `meta_capi`) ANTES de `META_CAPI_ENABLED=1`; publicar la app en Play.
+
+## API-Tennis: prueba autorizada (2026-10-17)
+- [x] Validar conexion y muestra acotada de calendario, resultados, estadisticas y precision temporal; seis respuestas correctas, originales con hashes y sin clave. Informe docs/tenis_api_tennis_prueba_20261017.md.
+
+## Tenis: evaluador comun y carga observable (2026-10-17)
+- [x] Implementar contratos tipados, evaluador de muestra comun, extractor con disponibilidad previa y limites temporales; sin viajes/clima.
+- [x] Conectar modelo actual y ajuste regularizado de carga con validaciones temporales; ajuste real pendiente de muestra valida, abstencion explicita.
+- [x] Probar fugas, duplicados, datos faltantes y simetria; 75 pruebas tenis aprobadas. Dos predicciones reales base y cero comparaciones evaluables; informe docs/tenis_carga_evaluacion_fase1_20261017.md.
+
+## Tenis: captura de estados y Weighted Elo (2026-10-17)
+- [x] Capturador API-Tennis acotado con originales, recibos, estados e historial inmutable; dos consultas reales y 113 nuevas observaciones.
+- [x] Weighted Elo con formula publicada y adaptacion por periodos; evaluado ATP/WTA, inferior al hibrido actual y conservado como referencia.
+- [x] 96 pruebas tenis aprobadas, muestra real limitada e informe docs/tenis_estados_weighted_elo_20261017.md; sin promover modelos por resultados de desarrollo.
+
+## Web: rediseño futurista integral (2026-10-17)
+- [x] Rediseñar todas las vistas del frontend con una capa HUD responsive; conservar contratos, estados y accesibilidad.
+- [x] Actualizar identidad, navegación, controles, tarjetas, tablas, productos, acceso, cuenta, modales y navegación móvil.
+- [x] Documentar la adaptación de CYBERCORE CSS / Cyberpunk CSS y verificar las 25 pruebas del frontend.
+- [x] Integrar CYBERCORE CSS 0.3.0 como dependencia exacta, vendorizar CSS/licencia para uso sin CDN y aplicar sus clases reales en toda la interfaz.
+- [x] Adoptar la paleta oficial, tarjetas recortadas, controles HUD, efectos de escaneo/datos e iconografía SVG; adaptar Cyberpunk CSS sin cargar sus reglas globales conflictivas.
+
+## Tenis: registro de sedes por edicion (2026-10-17)
+- [x] Registro de sedes con fuentes, disponibilidad, vigencia y enlaces exactos; techo real desconocido.
+- [x] Ocho recintos para siete ediciones; 102/102 encuentros ATP/WTA de la muestra enlazados. 126 restantes sin sede y 48 discrepancias de temporada marcadas.
+- [x] Calendario enriquecido, 116 pruebas tenis aprobadas y cobertura documentada sin modificar probabilidades. Altitudes pendientes por falta de fuente disponible.
+
+## Tenis: Open-Meteo sin clave, alcance no comercial (2026-10-17)
+- [x] Registrar aclaracion del titular: proyecto de tenis no monetizado; usar acceso gratuito sin clave. No trasladar condiciones comerciales de futbol a esta investigacion.
+- [x] Una consulta exitosa para ocho recintos; altitudes Copernicus GLO-90 con originales, recibo y SHA-256. Registro append-only y calendario v3 con 102 encuentros enriquecidos.
+- [x] Validar orden/coordenadas, rangos, fuentes, cobertura e invariancia temporal; 116 pruebas tenis aprobadas. Quedan 126 encuentros sin sede y 48 discrepancias; pronostico meteorologico aun no capturado.
+
+## Tenis: completar sedes y revisar temporada (2026-10-18)
+- [x] Contrastar 37 grupos pendientes con fuentes primarias, registrar sedes y coordenadas solo donde haya evidencia.
+- [x] Implementar revisiones por evento con evidencia, disponibilidad previa, original intacto y pruebas; reconstruir cobertura sin ocultar pendientes.
+
+- [x] Revisados 37 grupos y 31 ediciones: 27 recintos nuevos, 126 encuentros enlazados; total 228/228 con sede principal. Coordenadas nuevas desconocidas, sin imputacion de ciudad.
+- [x] FixtureReviews append-only por evento y digest: 48 temporadas corregidas (Guangzhou22,Lisboa18,Cali8), original conservado y disponibilidad estricta. Informe reproducido desde codigo entregado.
+- [x] 126 pruebas tenis aprobadas, arnes general1300/88omitidas/2avisos; doce hashes del modelo intactos. Auditoria real as-of previa mantiene102sedes y48discrepancias, sin retroactividad. Ver docs/tenis_sedes_temporadas_completadas_20261018.md.
+
+## Tenis: coordenadas y alcance de viajes entre torneos (2026-10-18)
+- [x] Verificar27recintos con evidencia y precision, consultar elevacion de puntos aceptados y actualizar registro sin retroactividad. Cerrado: ver fase coordenadas completas mas abajo.
+- [x] Respetar instruccion: viajes solo entre torneos; diferencia horaria con DST, transporte probable como proxy y tiempo entre salida previa/debut, sin inferir efecto deportivo ni itinerario real. Implementado; acreditacion de transiciones reales pendiente.
+
+
+## Tenis: criterios de viaje contrastados (2026-10-18)
+- [x] Contrastar ORS, OSRM, Amadeus y Arcascope; separar rutas/ofertas/simulaciones de viajes reales y rechazar score de fatiga sin calibracion. Ver docs/tenis_viajes_criterios_20261018.md.
+- [ ] Tras georreferenciar, implementar transiciones entre ediciones con incertidumbre temporal, DST, transporte candidato y evaluacion temporal; eliminacion-debut no equivale a llegada-debut.
+
+
+## Tenis: coordenadas completas y viajes experimentales (2026-10-18)
+- [x] 27 recintos nuevos WGS84 con fuentes y tolerancia espacial; elevaciones en una consulta Open-Meteo sin clave. Total35recintos/52enlaces/112fuentes,228/228 coordenadas y terreno, anteriorasof102/228 intacto.
+- [x] InterTournamentTravelExtractor entregado: solo ediciones distintas con procedencia, consecutividad/debut/cierre/dobles; distancia,DST,direccion,altitud,transporte candidato e intervalo salida-debut programado. Contexto anterior ya no infiere viaje entre partidos.
+- [x] 143 pruebas tenis aprobadas (17 nuevas), doce hashes congelados intactos; auditoria historial183/456 con candidato,0transiciones completas verificadas. Sin consultas deportivas/creditosOdds/rutas/vuelos ni cambios probabilisticos.
+- [ ] Verificar participacion por jugador/edicion y datos temporales antes de activar variables de viaje en comparacion temporal. Informe docs/tenis_coordenadas_viajes_20261018.md.
+
+
+## Tenis: comparacion espacial y sensibilidad (2026-10-18)
+- [x] Preparar comparador Base/Base+Espaciales/Experimental con interseccion comun y ajuste solo en entrenamiento; experimentos horarios separados y solo con dias verificados.
+- [x] Auditar viabilidad temporal sobre archivos reales, ejecutar comparacion o registrar abstencion por falta de muestra sin inventar metricas; mantener holdout/modelos congelados.
+
+
+- [ ] Acreditar participaciones y acumular muestra temporal antes de ajustar/comparar: ejecucion real devuelve0filascomunes, sinmetricas. Ver docs/tenis_comparacion_espacial_20261018.md.
+
+## Tenis: reconstruccion historica 2024/2025 autorizada (2026-10-18)
+- [x] Catalogar472bloques/11240partidos, enlazar187ediciones con evidencia de su temporada (160georreferenciadas,27concoordenadas pendientes);122fuentes recibidas hoy, sin disponibilidad antigua simulada.
+- [x] Rama retrospectiva separada: ultima sede observada, kilometros/deltaaltitud/deltahuso; sin descanso ni itinerario real, sin saltar antecedentes desconocidos. Guarda conservadora de7dias porperiodo de fuente.
+- [x] Dataset con2982partidos espacialmente aptos, particiones de ediciones completas,2025exploratorio;165pruebas tenis aprobadas,12hashescongelados intactos. Informe docs/tenis_dataset_historico_20261018.md.
+- [ ] Ampliar cobertura:52ediciones individuales sinenlacehistorico,17recintos identificados sincoordenadas(27ediciones);233bloquespor equipos/multisede requieren detalle por eliminatoria. Cola data/tennis/historical_venues_20261018/pending_editions.json.
+- [ ] Comparar Base/Base+Espaciales en interseccion de predicciones validas y con ajuste soloen entrenamiento;2982es cohorte con datos, nointerseccion ya puntuada. LogLoss/Brier/calibracion pendientes; variantehoraria siguependiente dediasindividuales acreditados.
+
+## Tenis: completar cobertura historica (2026-10-18)
+- [ ] Recuperar evidencia de las52ediciones WTA pendientes con archivos por temporada y revisar sedes exactas.
+- [ ] Resolver17recintos sincoordenadas con consultas refinadas, objetos revisados y elevacionDEM; no usar respuestas bloqueadas como evidencia.
+- [ ] Revisar233bloquesporequipos por eliminatoria/partido, admitir multiples sedes y conservar desconocidos justificados.
+- [ ] Reconstruir dataset ampliado separado del original, probar contratos y fuentes, reportar cobertura real restante.
+
+## Comprometer-revelar de la cadena y plan de F7 (2026-10-18)
+- [x] `hashchain.py`: al repo público sube solo el compromiso (recibos y `LEDGER.md`); el JSON del lote sube cuando todos los partidos que cita terminaron y pasaron 4 h (tope de 7 días). `verify` recorre por recibos y cuenta aparte los lotes sin revelar. Pruebas: `tests/test_hashchain_revelado.py`. `CHAIN_GIT_REMOTE` sigue vacío: aún no se publica nada.
+- [ ] Antes de configurar `CHAIN_GIT_REMOTE`: desplegar este cambio (ensayo + `DEPLOYS.md`) y comprobar `verify` contra los lotes reales del servidor.
+- [ ] F7: plan en `docs/superpowers/plans/2026-10-18-f7-sello-tardio.md` (borrador; tres decisiones del titular al final).

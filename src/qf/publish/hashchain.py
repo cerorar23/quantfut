@@ -8,11 +8,15 @@ Flujo diario, antes del primer kickoff:
   1. Serializar todas las predicciones y picks del día a JSON canónico.
   2. sha256(payload) -> payload_hash
   3. chain_hash = sha256(prev_chain_hash || payload_hash)
-  4. Escribir a disco + commit al repo público.
+  4. Escribir a disco. Al repo público va SOLO el compromiso: recibo
+     (`*.receipt.json`) y `LEDGER.md`, con los hashes.
   5. Publicar el chain_hash en un canal con timestamp externo (GitHub, X).
 
-Cualquiera puede después descargar el JSON, recalcular el hash y comprobar
-que coincide con el que publicaste antes de los partidos.
+Comprometer-revelar (decisión 2026-10-18): el JSON del lote lleva los picks de
+pago, así que publicarlo antes de los partidos los regalaría. El JSON se sube
+al repo solo cuando todos los partidos que cita ya terminaron (`revelables`).
+Entonces cualquiera puede descargarlo, recalcular el hash y comprobar que
+coincide con el compromiso publicado antes de los partidos.
 
 Verificación por terceros:  python -m qf.publish.hashchain verify
 """
@@ -23,7 +27,7 @@ import json
 import logging
 import os
 import subprocess
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from ..config import settings
@@ -32,6 +36,12 @@ from ..db import execute, query, query_one
 log = logging.getLogger(__name__)
 
 GENESIS = "0" * 64
+
+# El JSON se revela cuando pasó esto desde el último saque de los partidos que
+# cita (cubre prórroga y retrasos de datos), y todos constan como terminados.
+REVELAR_TRAS = timedelta(hours=4)
+# Tope: un partido aplazado sin fecha nueva no retiene el lote para siempre.
+REVELAR_TOPE = timedelta(days=7)
 
 
 def canonical_json(obj) -> str:
@@ -238,6 +248,9 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
     """Sella el lote del día. Idempotente por fecha."""
     batch_date = batch_date or datetime.now(timezone.utc).date()
 
+    if git_push and settings.chain_git_remote:
+        _git_revelar(Path(settings.chain_dir))
+
     existing = query_one(
         "SELECT batch_id, chain_sha256 FROM prediction_batches WHERE batch_date = %s",
         (batch_date,),
@@ -287,7 +300,7 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
     )
 
     if git_push and settings.chain_git_remote:
-        _git_publish(out_dir, batch_date, chain_hash)
+        _git_comprometer(out_dir, batch_date, chain_hash)
 
     log.info("Lote %s sellado. chain=%s", batch_date, chain_hash[:16])
     return receipt
@@ -309,52 +322,123 @@ def _append_ledger(path: Path, r: dict) -> None:
                 f"| `{r['payload_sha256'][:16]}…` | `{r['chain_sha256'][:16]}…` |\n")
 
 
-def _git_publish(out_dir: Path, batch_date: date, chain_hash: str) -> None:
+def _git(out_dir: Path, *cmd: str) -> None:
+    subprocess.run(["git", *cmd], cwd=out_dir, check=True,
+                   env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
+                   capture_output=True, timeout=120)
+
+
+def _git_comprometer(out_dir: Path, batch_date: date, chain_hash: str) -> None:
+    """Sube SOLO el compromiso (recibos y registro). El JSON del lote se queda sin versionar."""
     try:
-        env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
-        for cmd in (
-            ["git", "add", "-A"],
-            ["git", "commit", "-m",
-             f"predicciones {batch_date.isoformat()} chain={chain_hash[:16]}"],
-            ["git", "push", "origin", "HEAD"],
-        ):
-            subprocess.run(cmd, cwd=out_dir, check=True, env=env,
-                           capture_output=True, timeout=120)
-        log.info("Cadena publicada en el repo público.")
+        recibos = sorted(p.name for p in out_dir.glob("????-??-??.receipt.json"))
+        _git(out_dir, "add", "--", "LEDGER.md", *recibos)
+        _git(out_dir, "commit", "-m",
+             f"compromiso {batch_date.isoformat()} chain={chain_hash[:16]}")
+        _git(out_dir, "push", "origin", "HEAD")
+        log.info("Compromiso de la cadena publicado en el repo público.")
     except subprocess.CalledProcessError as exc:
-        log.error("Fallo al publicar la cadena: %s", exc.stderr.decode()[:400])
+        log.error("Fallo al publicar el compromiso: %s", exc.stderr.decode()[:400])
+
+
+def _ids_de_partidos(payload: dict) -> list[str]:
+    """Todos los partidos que cita el lote, de cualquier bloque."""
+    escalera = payload.get("escalera") or {}
+    parley = payload.get("parley") or {}
+    filas = [*payload.get("predictions", []), *payload.get("picks", []),
+             *payload.get("alta_probabilidad", []), *payload.get("alta_ext", []),
+             *payload.get("tarjetas_seg", []), *escalera.get("pasos", []),
+             *parley.get("patas", [])]
+    return sorted({f["match_id"] for f in filas if f.get("match_id")})
+
+
+def _estado_partidos(ids: list[str]) -> tuple[datetime | None, bool]:
+    """(último saque, ¿todos terminados?) leído de la base."""
+    if not ids:
+        return None, True
+    row = query_one(
+        """SELECT max(kickoff_utc) AS ultimo,
+                  bool_and(status IN ('finished', 'cancelled')) AS todos
+           FROM matches WHERE match_id = ANY(%s)""", (ids,))
+    return (row["ultimo"], bool(row["todos"])) if row else (None, False)
+
+
+def revelables(out_dir: Path, ahora: datetime, estado=_estado_partidos) -> list[date]:
+    """Lotes sellados cuyo JSON ya no regala picks y aún no está en el repo."""
+    try:
+        subidos = set(subprocess.run(
+            ["git", "ls-files", "--", "????-??-??.json"], cwd=out_dir, check=True,
+            capture_output=True, timeout=60).stdout.decode().split())
+    except (subprocess.CalledProcessError, OSError):
+        return []
+    due: list[date] = []
+    for f in sorted(out_dir.glob("????-??-??.json")):
+        if f.name in subidos:
+            continue
+        ultimo, terminados = estado(_ids_de_partidos(json.loads(f.read_text(encoding="utf-8"))))
+        if ultimo is None:
+            continue
+        pasado = ahora - ultimo
+        if (terminados and pasado >= REVELAR_TRAS) or pasado >= REVELAR_TOPE:
+            due.append(date.fromisoformat(f.stem))
+    return due
+
+
+def _git_revelar(out_dir: Path, ahora: datetime | None = None, estado=_estado_partidos) -> list[date]:
+    """Sube el JSON de los lotes que ya se pueden revelar."""
+    ahora = ahora or datetime.now(timezone.utc)
+    try:
+        fechas = revelables(out_dir, ahora, estado)
+        if not fechas:
+            return []
+        for d in fechas:
+            _git(out_dir, "add", "--", f"{d.isoformat()}.json")
+        _git(out_dir, "commit", "-m",
+             "revelado " + ", ".join(d.isoformat() for d in fechas))
+        _git(out_dir, "push", "origin", "HEAD")
+        log.info("Lotes revelados: %s", [d.isoformat() for d in fechas])
+        return fechas
+    except subprocess.CalledProcessError as exc:
+        log.error("Fallo al revelar lotes: %s", exc.stderr.decode()[:400])
+        return []
 
 
 def verify(chain_dir: str | None = None) -> tuple[bool, list[str]]:
-    """Recalcula toda la cadena desde los archivos en disco."""
+    """
+    Recalcula la cadena. Se recorre por recibos: un lote aún sin revelar (sin
+    JSON) enlaza igual por su compromiso y se cuenta aparte; uno revelado debe
+    cuadrar con el hash comprometido.
+    """
     d = Path(chain_dir or settings.chain_dir)
-    files = sorted(d.glob("????-??-??.json"))
-    prev, errors = GENESIS, []
+    recibos = sorted(d.glob("????-??-??.receipt.json"))
+    prev, errors, sin_revelar = GENESIS, [], 0
 
-    for f in files:
-        body = f.read_text(encoding="utf-8")
-        payload_hash = sha256_hex(body)
-        chain_hash = sha256_hex(prev + payload_hash)
-
-        rf = f.with_suffix(".receipt.json")
-        if not rf.exists():
-            errors.append(f"{f.name}: falta el recibo")
-            prev = chain_hash
-            continue
+    for rf in recibos:
         r = json.loads(rf.read_text(encoding="utf-8"))
-
-        if r["payload_sha256"] != payload_hash:
-            errors.append(f"{f.name}: CONTENIDO ALTERADO "
-                          f"(esperado {r['payload_sha256'][:16]}, "
-                          f"obtenido {payload_hash[:16]})")
+        nombre = rf.name.removesuffix(".receipt.json")
+        chain_hash = sha256_hex(prev + r["payload_sha256"])
+        body = d / f"{nombre}.json"
+        if body.exists():
+            payload_hash = sha256_hex(body.read_text(encoding="utf-8"))
+            if r["payload_sha256"] != payload_hash:
+                errors.append(f"{body.name}: CONTENIDO ALTERADO "
+                              f"(esperado {r['payload_sha256'][:16]}, "
+                              f"obtenido {payload_hash[:16]})")
+        else:
+            sin_revelar += 1
         if r["prev_sha256"] != prev:
-            errors.append(f"{f.name}: CADENA ROTA en el enlace anterior")
+            errors.append(f"{rf.name}: CADENA ROTA en el enlace anterior")
         if r["chain_sha256"] != chain_hash:
-            errors.append(f"{f.name}: hash de cadena inconsistente")
+            errors.append(f"{rf.name}: hash de cadena inconsistente")
         prev = r["chain_sha256"]
 
+    for body in sorted(d.glob("????-??-??.json")):
+        if not (d / f"{body.stem}.receipt.json").exists():
+            errors.append(f"{body.name}: falta el recibo")
+
     ok = not errors
-    print(f"{'OK' if ok else 'FALLO'}: {len(files)} lotes verificados")
+    print(f"{'OK' if ok else 'FALLO'}: {len(recibos)} lotes verificados"
+          f" ({len(recibos) - sin_revelar} revelados, {sin_revelar} solo con compromiso)")
     for e in errors:
         print("  !", e)
     return ok, errors
