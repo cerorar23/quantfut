@@ -1,5 +1,17 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-18 — Datos al motor: tablas propias por fuente, nunca mezclar identificadores
+
+El archivo de FotMob (20.331 partidos) pasó a tablas con `match_id` en lugar de volcarse en `lineups_historicas` y
+`estadisticas_jugador`: esas llevan ids de API-Football y mezclar los dos espacios habría roto `player_ratings` y
+`lineup_challenger` sin dar ningún error. El puente (7.834 jugadores) y la equivalencia de árbitros (54) son tablas aparte, con
+umbral de coincidencia y 1 a 1 en las dos direcciones. Hallazgos que cambian el plan: el original de FotMob ya trae entrenador,
+valor de mercado, asistencia y clima (40 %, medido en el partido); el calendario completo de API-Football muestra un partido
+intermedio que `matches` no ve en el 17,6 % de los equipo-partidos; el cruce de árbitros apenas suma porque las fuentes casi
+no se solapan. No se montó captura diaria de FotMob porque la descarga se registró como puntual: lo decide el titular.
+Una medición propia, cancelada desde el cliente, siguió ejecutándose 38 minutos en el servidor: cancelar en la base, no solo
+en el cliente. La suite completa tiene fallos previos que no son de estos cambios.
+
 ## 2026-10-18 — Orden de identidades: el error real es Arsenal, no las 379 "identidades"
 
 Medido en producción sin escribir nada. Las 379 "identidades" de copas eran partidos (110 equipos); en ninguno están los

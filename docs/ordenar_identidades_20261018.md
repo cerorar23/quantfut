@@ -1,8 +1,8 @@
 # Orden de identidades — medición en producción (18-oct-2026)
 
-Solo lectura: no se escribió nada en producción. Las propuestas esperan visto bueno
-del titular y, como alteran datos que entrenan el modelo, caen antes del reentrenamiento
-del 1-nov o después, según lo que se decida (ver «Decisiones»).
+Medición hecha en solo lectura el 18-oct. **Después el titular autorizó ejecutar** las correcciones de Arsenal y
+de los alias; lo aplicado, con cifras y vuelta atrás, está en `docs/datos_al_motor_20261018.md` y en `DEPLOYS.md`.
+La §6 queda como registro de las decisiones que se tomaron.
 
 ## 1. Hallazgo principal: 33 partidos de Arsenal están a nombre de Arsenal de Sarandí
 
@@ -107,12 +107,12 @@ y no cuesta créditos.
   cada `player_id` de API-Football caiga en un único `source_player_id` de FotMob en varios partidos.
   Pendiente de calcular y de umbral; es parte de F4.
 
-## 6. Decisiones
+## 6. Decisiones (resueltas el 18-oct)
 
-1. **Arsenal (§1):** ¿corregir los 33 partidos y el alias antes del 1-nov, para que el reentrenamiento
+1. **Arsenal (§1) — hecho:** ¿corregir los 33 partidos y el alias antes del 1-nov, para que el reentrenamiento
    los use bien? Cambia datos de entrenamiento; con respaldo, ensayo y anotación en `DEPLOYS.md`.
-2. **4 alias de The Odds API (§3):** ¿registrarlos y cargar los 39 cierres? Escribe en
+2. **4 alias de The Odds API (§3) — hechos (+45 cierres):** ¿registrarlos y cargar los 39 cierres? Escribe en
    `team_aliases` y en `odds_snapshots` (tabla inmutable, sin DELETE).
-3. **43 clubes externos (§2):** ¿se quedan fuera (recomendado) o se registran con una liga propia?
+3. **43 clubes externos (§2) — siguen fuera** (sin decisión contraria): se registran con una liga propia solo si se pide.
 4. Los 67 equipos de FotMob (§2) y el cruce de árbitros (§4) son ordenar sin tocar el motor; irían
    después de F7 salvo que se pidan antes.

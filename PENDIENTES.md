@@ -61,8 +61,12 @@ ERA5 (tu token); el XI, minutos, bajas, entrenador y estilos ya están en el arc
 
 Tareas sueltas:
 - [ ] Comprar los **527 snapshots** de The Odds API (~5.270 créditos, tras el reset): `python -m qf.ingest.cierres_odds_api fetch ...`. Necesita tu visto bueno.
-- [ ] **Corregir Arsenal:** 33 partidos de Champions/Europa League (2014 → 2024-12-11) figuran como Arsenal de Sarandí por el alias `Arsenal`/`fbref`; 23 tienen xG. Mejor antes del 1-nov para que el reentrenamiento los use bien. Con respaldo y tu visto bueno. Detalle: `docs/ordenar_identidades_20261018.md`.
-- [ ] Registrar **4** alias de The Odds API (Bayern München, Internazionale Milano, LOSC Lille, Young Boys): recuperan **39 de los 103** cierres de copa sin gastar créditos (los otros 64 enfrentan a clubes externos). Escribe en alias y en `odds_snapshots`: con tu visto bueno.
+- [x] **Hecho 18-oct:** Arsenal corregido en 33 partidos de copa (`db/073`) y 4 alias de The Odds API con **+45 cierres** de copa (quedan 58 sin cierre, todos contra clubes externos). Detalle: `docs/datos_al_motor_20261018.md`. El reentrenamiento del 1-nov los incluirá; el efecto en el modelo **no está medido**.
+- [x] **Hecho 18-oct** (`db/075`-`080`): archivo FotMob en tablas con `match_id` (20.331 partidos, 852.126 jugadores, 47.140 bajas), altitud de 728 estadios, calendario de 315 equipos × 4 temporadas (60.979 partidos, refresco diario 05:40 UTC), 54 equivalencias de árbitros, 7.834 puentes de jugadores y la vista de descanso `v_descanso_equipo`.
+- [ ] **Tú decides:** ¿captura diaria de FotMob (no disponibles antes del partido y archivo diario)? La descarga se registró como puntual y su cliente se detiene ante bloqueos; sin esa captura, Argentina, Liga MX y Portugal no tienen bajas previas (API-Football reporta 0).
+- [ ] **Tú:** clave de Open-Meteo (pronóstico a la hora de publicar, F6) y token de Copernicus CDS (clima histórico ERA5). Sin ellos, el clima solo sale de FotMob: 40 % de los partidos, medido en el partido.
+- [ ] Estadios duplicados por coordenadas: 182 grupos (384 estadios); revisar antes de usar sede/viaje (F6).
+- [ ] F5: usar el **nombre de árbitro de FotMob** como llave (19.183 partidos frente a 2.799 de API-Football; el cruce solo suma 125).
 - [ ] Bloque `mercado` (movimiento de cuotas): cuando haya muestra propia.
 - [ ] Antes de encender los picks de valor: hoy solo verían las 13 ligas con modelo y la sombra mide 22; alinear.
 - [ ] Vigilar la ampliada 73–95 %: con cuota de referencia acierta 78,0 % frente a 81,4 % prometido (n=223).
@@ -100,6 +104,7 @@ Tareas sueltas:
 ## Decisiones que dependen de ti
 1. Procesador de pago de la web (el de la app ya está decidido: tiendas).
 2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
+2b. Captura diaria de FotMob, clave de Open-Meteo y token de CDS (ver arriba).
 3. Comprar los 527 snapshots (~5.270 créditos) tras el 1-nov.
 4. Registrar los alias de Champions y Europa League.
 5. Pasar la cadena a comprometer-revelar y cuándo encender `PUBLISH_PICKS_ENABLED`.

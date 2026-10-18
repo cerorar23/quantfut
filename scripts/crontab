@@ -107,3 +107,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Conversions API de Meta (db/071): envia la cola meta_events. Sin META_CAPI_ENABLED=1 no hace nada.
 */5 * * * * cd /app && python -m qf.comercial.meta_capi >> /var/log/meta_capi.log 2>&1
+
+# Calendario de cada equipo en todas las competiciones (db/078), temporada en curso: ~313 llamadas de las 7.500 diarias.
+40 5 * * * cd /app && python -m qf.ingest.calendario_equipos --temporadas 2026 --refrescar >> /var/log/calendario_equipos.log 2>&1
