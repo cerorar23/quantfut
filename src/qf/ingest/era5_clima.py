@@ -83,10 +83,22 @@ class Cds:
         self.h = {"PRIVATE-TOKEN": token, "Content-Type": "application/json", "Accept": "application/json",
                   "User-Agent": "QuantFut/1.0"}
 
-    def _call(self, url: str, data: dict | None = None) -> dict:
-        req = urllib.request.Request(url, data=None if data is None else json.dumps(data).encode(), headers=self.h)
-        with urllib.request.urlopen(req, timeout=90) as r:
-            return json.load(r)
+    def _call(self, url: str, data: dict | None = None, espera_base_s: float = 5.0) -> dict:
+        """Reintenta errores 5xx y de red (3 intentos, espera creciente); un 4xx no se reintenta."""
+        for intento in range(3):
+            req = urllib.request.Request(url, data=None if data is None else json.dumps(data).encode(),
+                                         headers=self.h)
+            try:
+                with urllib.request.urlopen(req, timeout=90) as r:
+                    return json.load(r)
+            except urllib.error.HTTPError as exc:
+                if exc.code < 500 or intento == 2:
+                    raise
+            except (urllib.error.URLError, TimeoutError, ConnectionError):
+                if intento == 2:
+                    raise
+            time.sleep(espera_base_s * (intento + 1))
+        raise RuntimeError("inalcanzable")
 
     def serie(self, lat: float, lon: float, desde: date, hasta: date, max_espera_s: int = 3600) -> str:
         inp = {"variable": VARIABLES, "location": {"longitude": lon, "latitude": lat},

@@ -51,3 +51,38 @@ def test_si_falta_una_hora_no_hay_fila():
 def test_lee_con_ruido_sin_romper():
     texto = CABECERA + "2026-03-01 00:00:00,1,1,270,280,0.5,0.0,51.5,0.0\nbasura\n2026-03-01 01:00:00,1,1,NaN,280,0.5,0,51.5,0.0\n"
     assert list(leer_csv(texto)) == [datetime(2026, 3, 1, 0, 0, tzinfo=timezone.utc)]
+
+
+def test_cds_reintenta_un_502_pero_no_un_403():
+    import io
+    import json
+    import urllib.error
+    from unittest.mock import patch
+
+    from qf.ingest.era5_clima import Cds
+
+    def http(codigo):
+        return urllib.error.HTTPError("https://x", codigo, "e", {}, io.BytesIO(b""))
+
+    class Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self, *a):
+            return b'{"ok": 1}'
+
+    cds = Cds("token")
+    with patch("qf.ingest.era5_clima.urllib.request.urlopen", side_effect=[http(502), Resp()]) as op, \
+            patch("qf.ingest.era5_clima.json.load", side_effect=lambda f: {"ok": 1}):
+        assert cds._call("https://x", espera_base_s=0) == {"ok": 1}
+    assert op.call_count == 2
+    with patch("qf.ingest.era5_clima.urllib.request.urlopen", side_effect=http(403)) as op:
+        try:
+            cds._call("https://x", espera_base_s=0)
+            assert False
+        except urllib.error.HTTPError:
+            pass
+    assert op.call_count == 1
