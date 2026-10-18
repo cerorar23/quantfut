@@ -114,7 +114,8 @@ def web_session(body: WebSessionIn, request: Request, response: Response):
     version = firebase.CONSENT_VERSION if body.accepted_terms else None
     try:
         claims = firebase.verify_identity(body.id_token)
-        account = firebase.connect_identity(claims, version, version, body.language)
+        account = firebase.connect_identity(claims, version, version, body.language,
+                                            web_context=api.web_context(request))
     except CuentaError as error:
         fail(error)
     tokens = cuentas.open_session(api.redis_client(), account['account_id'],

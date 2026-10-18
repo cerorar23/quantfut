@@ -63,7 +63,8 @@ _PUBLIC = ("account_id, email::text AS email, display_name, status, email_verifi
            "store_account_token::text AS store_account_token")
 
 
-def create_account(email: str, password: str, display_name: str | None = None) -> dict:
+def create_account(email: str, password: str, display_name: str | None = None,
+                   web_context: dict | None = None) -> dict:
     email = normalize_email(email)
     validate_password(password)
     name = (display_name or "").strip()[:80] or None
@@ -76,7 +77,8 @@ def create_account(email: str, password: str, display_name: str | None = None) -
         if row is not None:
             from . import meta_capi
             meta_capi.enqueue(c, row["account_id"], "CompleteRegistration",
-                              f"reg:{row['account_id']}", {"registration_method": "email"})
+                              f"reg:{row['account_id']}", {"registration_method": "email"},
+                              **meta_capi.web_kwargs(web_context))
     if row is None:
         raise CuentaError("email_en_uso", "Ya existe una cuenta con ese correo")
     return row

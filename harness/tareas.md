@@ -2944,4 +2944,8 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Datasetnuevo historical_geography_top5_20261018:10774destinos/11240,6244aptos(+446),5943sinreferenciasamplias;264destinosrecuperados. Cola83entradas/466destinos. Sin ajuste/activación de modelos.
 - [x] Auditoría de fuentes,identidades,particiones,oldfeatures y12artefactos congelados aprobada;194pruebas tenis. Informe docs/tenis_cinco_sedes_verificadas_20261018.md yconstructores entregados al motoraislado.
 - [x] Whop configurado (18-oct): producto QuantFut con 3 planes, clave de API (solo IP del VPS) y webhook de producción; claves en el `.env` del VPS. Pendiente al desplegar: `UPDATE plans SET whop_plan_id…` (en `docs/despliegue_google_web_20261018.md`) y `META_PIXEL_ID`.
-- [ ] Reembolsos: suscribir `refund.created` y revocar el acceso cuando se vea un payload real.
+- [x] Reembolsos: `refund.created/updated` (status succeeded) revocan el periodo del pago; webhook de Whop ya los envía (18-oct).
+- [x] Meta web (18-oct): CompleteRegistration web, EMQ con ciudad/estado/zip/teléfono (13 claves), aviso de medición con Rechazar, envío por cron del host, probado con test_event_code.
+- [x] Meta a eventos reales: `META_TEST_EVENT_CODE` quitado del `.env` del VPS y API recreada (18-oct, DEPLOYS 21:00 UTC).
+- [ ] Alinear el worker con `meta_capi` y retirar la línea de cron del host.
+- [ ] Probar un cobro real con Whop (plan de 14,99) y ver el Purchase en Meta con el mismo event_id del Pixel.

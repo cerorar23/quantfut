@@ -4,7 +4,7 @@
 // (catálogo público de cuenta-api.js, editable en el panel /control): aquí solo viven los textos.
 import * as cuenta from './cuenta-api.js?v=w2b3c4d5e6f7';
 import { googleIdToken } from './google-auth.js?v=w2b3c4d5e6f7';
-import { init as initPixel, identify, track, browserIds } from './meta-pixel.js?v=w1a2b3c4d5e6';
+import { init as initPixel, identify, track, browserIds } from './meta-pixel.js?v=m1';
 import { mount as mountCheckout, destroy as destroyCheckout } from './whop-checkout.js?v=w1a2b3c4d5e6';
 
 // Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
@@ -217,6 +217,13 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     return true;
   }
 
+  // El servidor manda el mismo evento por la Conversions API con este eventID: Meta lo deduplica.
+  function trackRegistration(session, method) {
+    if (!session?.account) return;
+    identify(session);
+    track('CompleteRegistration', { registration_method: method }, `reg:${session.account.account_id}`);
+  }
+
   async function signInWithGoogle() {
     const accepted = Boolean(document.getElementById('google-terms')?.checked);
     state.authBusy = true; state.authMessage = ''; state.authError = false;
@@ -225,6 +232,8 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
       const token = await googleIdToken(await cuenta.googleConfig());
       if (token) {
         state.session = await cuenta.googleLogin(token, accepted);
+        // Cuenta recién creada (el acceso de una cuenta existente no es un registro).
+        if (Date.now() - new Date(state.session.account.created_at).getTime() < 120000) trackRegistration(state.session, 'google');
         state.accountMessage = ''; state.accountError = false; state.accountSection = 'overview';
         state.authBusy = false; state.authMessage = '';
         navigate(state.authReturn === 'checkout' ? 'checkout' : 'cuenta');
@@ -257,6 +266,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
         state.authMessage = 'Si existe una cuenta con ese correo, te llegará un enlace en unos minutos. Revisa también la carpeta de spam.';
       } else {
         state.session = action === 'login' ? await cuenta.login(email, password) : await cuenta.register(email, password, state.authName);
+        if (action === 'register') trackRegistration(state.session, 'email');
         state.accountMessage = action === 'register' ? 'Cuenta creada. Te enviamos un correo para confirmar tu dirección.' : '';
         state.accountError = false;
         state.accountSection = 'overview';

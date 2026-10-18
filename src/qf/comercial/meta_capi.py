@@ -52,6 +52,13 @@ def enqueue(c, account_id: int, event_name: str, event_id: str,
     return row is not None
 
 
+def web_kwargs(web_context: dict | None) -> dict:
+    """Argumentos de `enqueue` para un hecho que ocurrió en la web (vacío si fue en la app)."""
+    if not web_context:
+        return {}
+    return {"action_source": "website", "web_context": web_context}
+
+
 def _minimal_extinfo(platform: str) -> list[str]:
     values = [""] * meta_datos.EXTINFO_LEN
     values[0] = "i2" if platform == "ios" else "a2"
@@ -64,7 +71,8 @@ def build_web_event(row: dict, account: dict) -> dict:
     ctx = row.get("web_context") or {}
     custom = dict(row["custom_data"] or {})
     country = custom.pop("_country", None)
-    user = meta_datos.user_data(account, None, country)
+    extra = {k: custom.pop(f"_{k}", None) for k in ("ct", "st", "zp", "ph")}
+    user = meta_datos.user_data(account, None, country, extra)
     for src, dst in (("fbp", "fbp"), ("fbc", "fbc"), ("client_ip", "client_ip_address"),
                      ("user_agent", "client_user_agent")):
         if ctx.get(src):

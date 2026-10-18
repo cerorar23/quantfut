@@ -165,7 +165,7 @@ def test_web_session_sets_cookie_and_requires_consent_for_new_accounts(monkeypat
     client = _web_client(monkeypatch)
     seen = []
     monkeypatch.setattr(firebase, "verify_identity", lambda token: {"uid": "u"})
-    def connect(claims, terms, privacy, language, existing=None):
+    def connect(claims, terms, privacy, language, existing=None, web_context=None):
         seen.append((terms, privacy))
         if terms is None:
             raise CuentaError("consentimiento_requerido", "Acepta los términos")
