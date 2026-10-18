@@ -138,16 +138,26 @@ def _celdas(c) -> dict[tuple[float, float], dict]:
     return celdas
 
 
-def _archivo(carpeta: Path, k: tuple[float, float]) -> Path:
-    return carpeta / f"era5_{k[0]:+.2f}_{k[1]:+.3f}.csv.gz"
+def _archivos(carpeta: Path, k: tuple[float, float]) -> list[Path]:
+    """Todos los archivos guardados de una celda (el nombre antiguo, sin fechas, y los incrementales)."""
+    return sorted(carpeta.glob(f"era5_{k[0]:+.2f}_{k[1]:+.3f}*.csv.gz"))
 
 
-def procesar_celda(c, k, partidos, serie) -> int:
-    n = 0
+def _serie_guardada(carpeta: Path, k: tuple[float, float]) -> dict[datetime, dict[str, float]]:
+    serie: dict[datetime, dict[str, float]] = {}
+    for arch in _archivos(carpeta, k):
+        serie.update(leer_csv(gzip.decompress(arch.read_bytes()).decode("utf-8")))
+    return serie
+
+
+def procesar_celda(c, k, partidos, serie) -> tuple[int, list]:
+    """Guarda el clima de los partidos que la serie cubre. Devuelve (guardados, partidos sin cubrir)."""
+    n, faltan = 0, []
     with c.cursor() as w:
         for p in partidos:
             x = caracteristicas(serie, p["kickoff_utc"])
             if x is None:
+                faltan.append(p)
                 continue
             w.execute("""INSERT INTO clima_era5_partido (match_id, stadium_id, celda_lat, celda_lon, temperatura_c,
                              humedad_pct, viento_ms, precipitacion_mm, nubosidad_pct)
@@ -156,23 +166,25 @@ def procesar_celda(c, k, partidos, serie) -> int:
                        x["viento_ms"], x["precipitacion_mm"], x["nubosidad_pct"]))
             n += w.rowcount
     c.commit()
-    return n
+    return n, faltan
 
 
 def cargar(c, carpeta: Path, token: str | None, limite_celdas: int | None = None) -> dict:
+    """Incremental: primero lo que ya hay en disco; solo se pide a Copernicus lo que ningún archivo cubre."""
     carpeta.mkdir(parents=True, exist_ok=True)
     celdas = _celdas(c)
     hasta = date.today() - timedelta(days=RETRASO_DIAS)
-    r = {"celdas": len(celdas), "descargadas": 0, "desde_disco": 0, "partidos_guardados": 0, "errores": 0}
-    pendientes = []
+    r = {"celdas": len(celdas), "descargadas": 0, "desde_disco": 0, "partidos_guardados": 0, "errores": 0,
+         "aun_sin_dato_de_copernicus": 0}
+    pendientes: list[tuple[tuple[float, float], list]] = []
     for k, d in sorted(celdas.items()):
-        arch = _archivo(carpeta, k)
-        if arch.exists():
-            serie = leer_csv(gzip.decompress(arch.read_bytes()).decode("utf-8"))
-            r["desde_disco"] += 1
-            r["partidos_guardados"] += procesar_celda(c, k, d["partidos"], serie)
-        else:
-            pendientes.append(k)
+        guardados, faltan = procesar_celda(c, k, d["partidos"], _serie_guardada(carpeta, k))
+        r["partidos_guardados"] += guardados
+        r["desde_disco"] += 1 if guardados else 0
+        pedibles = [p for p in faltan if p["kickoff_utc"].date() <= hasta]
+        r["aun_sin_dato_de_copernicus"] += len(faltan) - len(pedibles)
+        if pedibles:
+            pendientes.append((k, pedibles))
     if limite_celdas is not None:
         pendientes = pendientes[:limite_celdas]
     if pendientes and not token:
@@ -180,23 +192,25 @@ def cargar(c, carpeta: Path, token: str | None, limite_celdas: int | None = None
     cds = Cds(token) if pendientes else None
     with ThreadPoolExecutor(max_workers=CONCURRENCIA) as ex:
         futuros = {}
-        for k in pendientes:
-            kicks = [p["kickoff_utc"].date() for p in celdas[k]["partidos"]]
+        for k, pedibles in pendientes:
+            kicks = [p["kickoff_utc"].date() for p in pedibles]
             desde = max(DESDE, min(kicks) - timedelta(days=1))
-            futuros[ex.submit(cds.serie, k[0], k[1], desde, min(max(kicks) + timedelta(days=1), hasta))] = k
+            fin = min(max(kicks) + timedelta(days=1), hasta)
+            futuros[ex.submit(cds.serie, k[0], k[1], desde, fin)] = (k, pedibles, desde, fin)
         for fut in as_completed(futuros):
-            k = futuros[fut]
+            k, pedibles, desde, fin = futuros[fut]
             try:
                 texto = fut.result()
             except Exception as exc:  # noqa: BLE001 — una celda caída no detiene las demás
                 r["errores"] += 1
                 log.warning("celda %s: %s", k, exc)
                 continue
-            tmp = _archivo(carpeta, k).with_suffix(".tmp")
+            arch = carpeta / f"era5_{k[0]:+.2f}_{k[1]:+.3f}_{desde:%Y%m%d}_{fin:%Y%m%d}.csv.gz"
+            tmp = arch.with_suffix(".tmp")
             tmp.write_bytes(gzip.compress(texto.encode("utf-8")))
-            tmp.replace(_archivo(carpeta, k))
+            tmp.replace(arch)
             r["descargadas"] += 1
-            r["partidos_guardados"] += procesar_celda(c, k, celdas[k]["partidos"], leer_csv(texto))
+            r["partidos_guardados"] += procesar_celda(c, k, pedibles, leer_csv(texto))[0]
             log.info("ERA5: %s", r)
     return r
 
