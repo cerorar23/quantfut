@@ -51,7 +51,8 @@ BEGIN
     WHERE league_id IN ('eu.ucl', 'eu.uel') AND away_team_id = 28402;
     GET DIAGNOSTICS n_visita = ROW_COUNT;
 
-    IF n_local + n_visita <> 33 THEN
+    -- 0 en una base vacía (CI, instalación nueva); 33 en producción. Cualquier otra cifra es una sorpresa.
+    IF n_local + n_visita NOT IN (0, 33) THEN
         RAISE EXCEPTION 'se esperaban 33 partidos y hay % (local %, visita %)',
             n_local + n_visita, n_local, n_visita;
     END IF;

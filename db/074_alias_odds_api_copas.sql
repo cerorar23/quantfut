@@ -11,11 +11,14 @@ SELECT '074', 'team_aliases', v.alias || '|odds_api', 'team_id', NULL, v.tid::te
        'nombre del histórico de The Odds API en Champions/Europa League'
 FROM (VALUES ('Bayern München', 61440), ('Internazionale Milano', 12102),
              ('LOSC Lille', 68864), ('Young Boys', 85077)) v(alias, tid)
-WHERE NOT EXISTS (SELECT 1 FROM team_aliases a WHERE a.alias = v.alias AND a.source = 'odds_api');
+WHERE EXISTS (SELECT 1 FROM teams t WHERE t.team_id = v.tid)
+  AND NOT EXISTS (SELECT 1 FROM team_aliases a WHERE a.alias = v.alias AND a.source = 'odds_api');
 
-INSERT INTO team_aliases (alias, source, team_id) VALUES
-    ('Bayern München', 'odds_api', 61440), ('Internazionale Milano', 'odds_api', 12102),
-    ('LOSC Lille', 'odds_api', 68864), ('Young Boys', 'odds_api', 85077)
+INSERT INTO team_aliases (alias, source, team_id)
+SELECT v.alias, 'odds_api', v.tid
+FROM (VALUES ('Bayern München', 61440), ('Internazionale Milano', 12102),
+             ('LOSC Lille', 68864), ('Young Boys', 85077)) v(alias, tid)
+WHERE EXISTS (SELECT 1 FROM teams t WHERE t.team_id = v.tid)   -- base vacía: no hay equipos que alias
 ON CONFLICT (alias, source) DO NOTHING;
 
 COMMIT;
