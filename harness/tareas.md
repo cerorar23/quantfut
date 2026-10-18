@@ -2906,3 +2906,41 @@ Google Sign-In ya existe: no se rehace.
 - [x] Integrar CYBERCORE CSS 0.3.0, adaptar Cyberpunk CSS, conservar el logo previo y validar 25/25 pruebas del frontend.
 - [x] Fusionar PR #12 y hotfix de assets FastAPI PR #13 con los arneses de GitHub aprobados.
 - [x] Desplegar solo la API desde una imagen derivada de la que estaba en ejecución; comprobar dominio, hashes, modelo y cadena; documentar reversión.
+
+- [x] Resuelta la cola original de 52 ediciones individuales, 17 recintos y 233 bloques por equipos. Ampliación separada en historical_coverage_20261018; detalle abajo.
+- [x] Comparar Base/Base+Espaciales en intersección de predicciones y con ajuste solo en entrenamiento: ampliación de5798aptos,2965desarrollo/2833evaluación2025exploratoria. Métricas e intervalos entregados; sin mejora clara. Variante horaria sigue pendiente de días individuales acreditados.
+- [x] Recuperar evidencia de las 52 ediciones WTA pendientes por temporada; distinguir PDF originales, extractos y corroboración estructurada.
+- [x] Resolver 17 recintos originales con puntos WGS84 y terreno DEM; Kempes/Jiujiang conservan referencia de complejo y tolerancia amplia.
+- [x] Revisar 233 bloques por equipos: 225 Davis, dos finales BJK, seis multicidad con 178 enlaces por partido; preservar seis revisiones de identidad/fase sin reescribir originales.
+- [x] Dataset separado con 11.240 sedes identificadas, 10.510 destinos con coordenadas, 5.798 partidos aptos; 173 pruebas y regresión de 2.982 aprobadas; 12 artefactos congelados intactos. Informe docs/tenis_cobertura_historica_completada_20261018.md.
+- [ ] Verificar coordenadas de 88 entradas adicionales identificadas en la ampliación. Comparación y sensibilidad ya ejecutadas, sin evidencia clara para activar la corrección. Sin horas imputadas.
+
+## Tenis: comparación retrospectiva de variables espaciales (2026-10-18)
+- [x] Reconstruir base híbrida Markov/Elo por orígenes2023/24/25 con calibraciones anteriores y embargo35días; modelos actuales congelados no reutilizados hacia atrás.
+- [x] Corrección ridge1 en2965partidos de2024; muestra común de2833en2025exploratoria, competiciones completas y cobertura52,68%.
+- [x] Sensibilidad2851entrenamiento/2718evaluación; LogLoss/Brier/ECE y1000remuestreos por competición. Nueve pruebas nuevas;182tenis aprobadas.
+- [x] Auditoría reproduce ajustes y métricas, fuentes e identidades verificadas;12artefactos congelados intactos. Informe docs/tenis_resultados_espaciales_historicos_20261018.md. Sin activación: mejora minúscula e intervalos que incluyen cero,0créditos Odds.
+
+## Tenis: carga observable por rondas anteriores (2026-10-18)
+- [x] Auditar ventanas diarias:152observaciones terminales sin límite inferior de finalización acreditado;3/7d conservadas bloqueadas, sin imputación horaria.
+- [x] Contadores de rondas previas individuales, orden de cuadro, desconocidos explícitos y exclusión objetivo/futuro; todos los equipos y round-robin fuera del alcance. Primera versión retirada por alcance BJK; válida draw_load_20261018_v2.
+- [x] Base/Cobertura/Cobertura+Carga:2130train2024/1957test2025exploratorio, sensibilidad1882/1700; intervalos incluyen cero, sin activación. Informe docs/tenis_carga_rondas_resultados_20261018.md.
+- [x] 194pruebas tenis aprobadas (12nuevas), extracción/precedencia/ajustes/métricas reproducidos,12artefactos congelados intactos.0consultas deportivas/0créditosOdds. Cola88sedes priorizada por730destinos; primeras5afectan264.
+
+## Cobro web con Whop + Meta EMQ (2026-10-18)
+
+Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
+
+- [x] Login Google en la web (Firebase JS → `/app/v1/firebase/web-session`); probado en local. Despliegue: `docs/despliegue_google_web_20261018.md`.
+- [x] Fase A: db/083, `comercial/whop.py` (firma, checkout, aplicar pago), rutas y pruebas (11 en `tests/test_whop.py`, 8 con Postgres real).
+- [x] Fase B: CAPI web (`action_source=website`: Purchase, Subscribe, InitiateCheckout) + Pixel con advanced matching y `eventID` compartido. Pendiente: CompleteRegistration web y aviso de cookies.
+- [x] Fase C: vista de pedido con `Checkout` embebido de Whop (probada en local con clave falsa y webhook firmado simulado; el formulario real de Whop no se pudo ver sin `WHOP_API_KEY`).
+- [ ] Datos del titular: `WHOP_API_KEY`, `WHOP_WEBHOOK_SECRET`, `plan_` por plan, `META_PIXEL_ID`, token CAPI, aviso de cookies.
+
+## Tenis: cinco recintos prioritarios (2026-10-18)
+- [x] Referencias WGS84 verificadas de Hua Hin,Yucatán,Seúl,AbuDabi yMartínCarpena. Yucatán1800mreferenciadecomplejo, restotolerancias400–500m; no pistas históricas exactas simuladas.
+- [x] Una consulta pública de terrenoDEM para5puntos, enlaces históricos2024/25 yarchivos previos intactos.294fuentesSHA;157entradas con coordenadas.
+- [x] Datasetnuevo historical_geography_top5_20261018:10774destinos/11240,6244aptos(+446),5943sinreferenciasamplias;264destinosrecuperados. Cola83entradas/466destinos. Sin ajuste/activación de modelos.
+- [x] Auditoría de fuentes,identidades,particiones,oldfeatures y12artefactos congelados aprobada;194pruebas tenis. Informe docs/tenis_cinco_sedes_verificadas_20261018.md yconstructores entregados al motoraislado.
+- [x] Whop configurado (18-oct): producto QuantFut con 3 planes, clave de API (solo IP del VPS) y webhook de producción; claves en el `.env` del VPS. Pendiente al desplegar: `UPDATE plans SET whop_plan_id…` (en `docs/despliegue_google_web_20261018.md`) y `META_PIXEL_ID`.
+- [ ] Reembolsos: suscribir `refund.created` y revocar el acceso cuando se vea un payload real.

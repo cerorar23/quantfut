@@ -135,3 +135,48 @@ def test_version_anterior_de_consentimiento_se_acepta_en_la_transicion():
     from qf.comercial import firebase
     assert firebase.CONSENT_VERSION == "2026-10-16"
     assert {"2026-10-12", "2026-10-16"} <= firebase.ACCEPTED_CONSENT_VERSIONS
+
+
+def _web_client(monkeypatch):
+    monkeypatch.setenv("ACCOUNTS_ENABLED", "1")
+    monkeypatch.setattr(accounts_api, "redis_client", lambda: object())
+    monkeypatch.setattr(accounts_api, "_limit", lambda *args: None)
+    monkeypatch.setattr(accounts_api, "settings", type("S", (), {"app_env": "development"})())
+    app = FastAPI()
+    app.include_router(api.router)
+    return TestClient(app)
+
+
+def test_web_config_closed_until_configured(monkeypatch):
+    client = _web_client(monkeypatch)
+    for name in ("FIREBASE_AUTH_ENABLED", "FIREBASE_WEB_API_KEY", "FIREBASE_WEB_APP_ID", "FIREBASE_WEB_AUTH_DOMAIN"):
+        monkeypatch.delenv(name, raising=False)
+    assert client.get("/app/v1/firebase/web-config").status_code == 503
+    monkeypatch.setenv("FIREBASE_AUTH_ENABLED", "1")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "proj")
+    monkeypatch.setenv("FIREBASE_WEB_API_KEY", "key")
+    monkeypatch.setenv("FIREBASE_WEB_APP_ID", "1:2:web:3")
+    monkeypatch.setenv("FIREBASE_WEB_AUTH_DOMAIN", "proj.firebaseapp.com")
+    body = client.get("/app/v1/firebase/web-config").json()
+    assert body["projectId"] == "proj" and body["apiKey"] == "key"
+
+
+def test_web_session_sets_cookie_and_requires_consent_for_new_accounts(monkeypatch):
+    client = _web_client(monkeypatch)
+    seen = []
+    monkeypatch.setattr(firebase, "verify_identity", lambda token: {"uid": "u"})
+    def connect(claims, terms, privacy, language, existing=None):
+        seen.append((terms, privacy))
+        if terms is None:
+            raise CuentaError("consentimiento_requerido", "Acepta los términos")
+        return {"account_id": 5}
+    monkeypatch.setattr(firebase, "connect_identity", connect)
+    monkeypatch.setattr(cuentas, "open_session", lambda *a: {"access_token": "acc", "refresh_token": "ref",
+                                                             "token_type": "bearer", "expires_in": 900})
+    headers = {"X-QF-Client": "web"}
+    refused = client.post("/app/v1/firebase/web-session", json={"id_token": "t"}, headers=headers)
+    assert refused.status_code == 409 and refused.json()["detail"]["code"] == "consentimiento_requerido"
+    ok = client.post("/app/v1/firebase/web-session", json={"id_token": "t", "accepted_terms": True}, headers=headers)
+    assert ok.status_code == 200 and ok.json()["refresh_token"] is None
+    assert "qf_refresh" in ok.cookies
+    assert seen[-1] == (firebase.CONSENT_VERSION, firebase.CONSENT_VERSION)
