@@ -32,11 +32,20 @@
 8. **Registro de lo publicado:** por partido, qué se publicó, a qué hora y con qué versión; una revisión posterior no reemplaza el historial vendido.
 9. **Ensayo:** ejecutar contra una copia de la base (esquema aislado) antes de desplegar; anotar en `DEPLOYS.md` con su vuelta atrás.
 
-## Decisiones que necesito del titular
+## Decisiones del titular
 
-1. **Ventana de disparo:** ¿T-30 como tope, o T-60 para dar más margen al usuario que apuesta? (Más cerca del saque = cuotas más informadas, menos tiempo para actuar.)
-2. **Qué ven los suscriptores gratis y de pago** cuando el pick sale 30-60 min antes: ¿notificación push al sellar?
-3. **Corte:** fecha de `LOTE_POR_PARTIDO_DESDE`. Propuesta: el primer día sin lote sellado al desplegar, como en los demás bloques.
+1. **Ventana de disparo — SIN RESPONDER (propuesta mía, no es decisión).** Sellar cuando estén confirmados los XI de los dos lados o a
+   **T-45**, lo primero. Razón: la alineación oficial suele publicarse hacia T-60 y la captura de FotMob ya toma instantáneas a ~T-70 y
+   ~T-40; T-45 deja 45 min a quien apuesta y T-30 (el tope del borrador) sería muy justo. Confirmar T-45, T-30 o T-60.
+2. **Qué ven los suscriptores — RESPONDIDO el 18-oct.** Sin VIP se ven gratis **4 de alta probabilidad, 1 de escalera y 1 de parley**
+   (es lo que el código ya aplica: `FREE_MAX = 4`, `ladder_free_count = 1`, un parley al día en `parley_acceso.py`). El resto de los
+   pronósticos bloqueados se muestra **difuminado con un botón «Acceso VIP»** que lleva a la pasarela de pago. Sigue sin responder:
+   si se manda una notificación push al sellar un pick de partido.
+   - Seguridad: el servidor ya NO envía selección ni probabilidad de un pronóstico bloqueado (solo categoría, equipos, hora y cuota, `mobile.metadata`),
+     así que el difuminado es solo visual y no se puede quitar desde el navegador o la app.
+   - Pasarela: en la **web**, Whop (checkout embebido). En la **app**, la compra de tienda (Play / App Store): Google y Apple exigen su
+     sistema de compras para suscripciones digitales dentro de la app, y enviar a un cobro externo puede costar el rechazo o la baja de la ficha.
+3. **Corte — SIN RESPONDER (propuesta mía).** `LOTE_POR_PARTIDO_DESDE` = el primer día sin lote sellado al desplegar, como en los demás bloques.
 
 ## Lo que este plan no hace
 
