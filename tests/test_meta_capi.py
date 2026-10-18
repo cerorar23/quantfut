@@ -69,3 +69,14 @@ def test_envio_en_lote_con_token_y_codigo_de_prueba(monkeypatch):
     assert seen["body"]["access_token"] == "secreto"
     assert seen["body"]["test_event_code"] == "TEST42"
     assert seen["body"]["data"][0]["event_id"] == "pur:GPA.1"
+
+
+def test_extinfo_de_reserva_lleva_version_del_so_que_meta_acepta():
+    # Meta devuelve 400 (2804043) si la versión del SO va vacía: se vio en producción el 18-oct.
+    from qf.comercial import meta_datos
+    for platform in ("android", "ios"):
+        ext = meta_capi._minimal_extinfo(platform)
+        assert ext[1] == "com.saptain.quantfut" and ext[2] and ext[4]
+        assert meta_datos.valid_extinfo(ext, platform) == ext
+    ev = meta_capi.build_event(_row(), ACC, None)
+    assert ev["app_data"]["extinfo"][4]
