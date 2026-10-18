@@ -1,5 +1,65 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-16 — Tenis: extracción completa, motor local y resultados negativos conservados
+
+Por autorización nueva se completaron 171 archivos TML y 43 archivos MCP:
+214/214, 593.347.344 bytes, cero fallos y hashes/tamaños verificados. TML se
+consolidó en 492.251 partidos (249.938 aptos para el candidato), con 15 conflictos
+de identidad apartados y 3.923 filas inválidas conservadas en cuarentena.
+MCP permanece como archivo de investigación y no alimenta los modelos ajustados.
+
+Código aislado en el checkout gestionado tennis-engine, apps/tennis. Binomial
+de saque/resto por rival/superficie, priors gaussianos, MAP/Laplace y ponderación
+de antigüedad; no es todavía un modelo dinámico de estados. Markov conserva
+saque/distribución conjunta y resuelve deuce/tie-break sin truncación. Dos
+candidatos actuales: ATP 74.029 partidos y WTA 20.614, historia desde 2018 y
+embargo de 35 días por fechas semanales. Consultas hipotéticas con incertidumbre.
+
+Evaluación anual congelada 2025/2026: candidato inferior a Elo en log-loss.
+2026 ATP 0,64466 vs 0,62855; WTA 0,65296 vs 0,62177. Hándicap A−3,5 mejora
+frecuencia de entrenamiento; totales 22,5 no. Sin cuotas/ROI/CLV ni promoción.
+El test 2026 ya observado no se usará como nueva prueba intacta tras ajustes.
+
+17 pruebas específicas aprobadas. Arnés inicial/final 1.300 pasadas, 88 omitidas;
+Docker no disponible. El primer arnés del checkout sin .env falló nueve pruebas
+heredadas de BD; se diagnosticó y repitió completo con configuración existente
+cargada solo en memoria, sin cambiar esos motores. Datos/recibos/modelos en
+data/tennis/full_20261016; informe docs/tenis_primera_version_y_resultados_20261016.md.
+Sin despliegue, apuestas ni consumo de The Odds API/ZenRows. Pendientes: tiempos
+reales y agenda/IDs, calibración y prueba prospectiva, casas/presupuesto de cuotas.
+
+## 2026-10-16 — Tenis: fuentes propuestas verificadas y muestra TennisMyLife
+
+gmalbert actualizado 16-oct, commit 3d132eec; su pipeline central es clasificador de
+ganador, selección por accuracy de test y Elo de referencia 0/1. El scraper
+Flashscore revisado deja saque/resto nulos. No se ejecutó ni incorporó ese código.
+panaC es Node/Puppeteer con último commit de 2018. Live Tennis API enlaza SDK GitLab;
+FREE para agenda/estado, estadísticas detalladas ULTRA según documentación.
+TennisMyLife directo aporta seis muestras 2026/en curso, 11.364 filas; conteos y
+hashes conservados en .local/tennis_sources_20261016/. MIT declarada por la fuente;
+WTA con aviso de fiabilidad en revisión. Fecha de torneo no es hora de partido,
+claves repetidas y enlace entre fuentes pendientes. Dos CSV iguales a gmalbert y
+blobs Git verificados. Sin cuentas/compras, cuotas API o proxy, entrenamiento ni
+despliegue. Informe: docs/tenis_fuentes_y_repositorios_20261016.md.
+
+## 2026-10-16 — Tenis: Match Charting Project auditado para investigación
+
+El usuario eligió The Odds API para cuotas y JeffSackmann/tennis_MatchChartingProject
+para datos. Descarga directa, sin proxy ni créditos API, fijada al commit
+1813a1309b7ed7ebf1c7e884b32bf675d00e4edf. Los 1.877.757 registros de puntos se
+contrastaron con Overview; S/R son puntos con ganador conocido sin detalle y
+P/Q son penalizaciones, según las instrucciones originales leídas sin macros.
+No confundir exclusión de esos códigos en Overview con inconsistencia de resultados.
+Superan los controles iniciales 7.501 partidos masculinos y 4.237 femeninos:
+23.476 observaciones de investigación. Conservados originales y cuarentena.
+Las fechas máximas son 21-may y 9-sep-2026; la muestra seleccionada por colaboradores
+no basta para actualización diaria. CC BY-NC-SA 4.0: permiso comercial sin acreditar.
+Diseño y límites en docs/tenis_modelo_y_datos_20261016.md y
+data/tennis/mcp_20261016/AUDIT_README.md. Sin entrenamiento ni despliegue.
+Verificación independiente con pandas reproduce las 23.476 observaciones;
+arnés inicial y final: 1.300 pruebas pasadas, 88 omitidas y cero fallos.
+Docker no disponible: se omitió la validación de Compose.
+
 ## 2026-10-15 — Plan de mejora de los tres motores: el contexto tiene que llegar a los picks
 
 El documento de recomendaciones del usuario se contrastó con el código: F1–F7 ya
@@ -30,6 +90,42 @@ otras competiciones, altitud y ERA5. El 91/223 con cuota de referencia está
 sesgado porque doble oportunidad y hándicap se capturan desde el 12 y 14-oct. No
 se compran cuotas históricas a T-60 (≈14.000–31.000 créditos por temporada): se
 evalúa hacia delante con la captura propia.
+## 2026-10-15 — Tres parejas xG de 365Scores cargadas por petición del titular
+
+La discrepancia horaria de Granada–Albacete no impide identificarlo: el archivo
+FotMob 4521823 también sitúa el partido a las 18:30 UTC y coincide en equipos y
+marcador 1–2. Se conservó el kickoff canónico 19:30 UTC; no se corrigieron fechas
+como efecto lateral de cargar xG. Los endpoints de 365Scores tampoco siempre
+serializan igual sus relojes: ambos originales y la discrepancia quedan guardados.
+
+Tres parejas en `matches`, tres detalles en `historical_football_matches` y tres
+estadísticas en `historical_football_observations`, fuente `365scores`. Se usa la
+recepción real del 15-oct-2026, para que el dato no entre en cortes anteriores.
+Respaldo solo de los tres registros en el servidor, ensayo revertido, repetición
+con cero escrituras y lectura independiente tras commit. Hashes de seis originales
+verificados; resto de partidos, archivo previo, modelo, flags, sellos y triggers
+conservados; API 200. Huecos 1.222→1.219 (LaLiga 2: 236→233).
+No se desplegó código de aplicación ni se reentrenó. Evidencia e instrucciones
+de reversión: `docs/lanusstats_carga_20261015.md` y `data/xg_recovery/20261015_lanusstats/carga/`.
+Arnés previo y final: 1.251 pruebas pasadas y 66 omitidas, sin fallos.
+
+## 2026-10-15 — LanusStats/365Scores aporta xG en la muestra de LaLiga 2
+
+Prueba autorizada con LanusStats 2.1.13 aislado: tres de nueve huecos aportan
+parejas de xG, todos de LaLiga 2; los tres de Serie B y tres de Ligue 2 tienen
+estadísticas sin xG publicado en las respuestas consultadas. Control positivo
+Lanús–Unión 2,22–0,64. Acceso directo HTTP 200: no hizo falta proxy y no hubo
+consumo de ZenRows. No confundir ausencia de un campo con bloqueo de acceso.
+
+Se separó explícitamente xG (`statistics.id=76`) del xG recibido (77) y xGOT
+(79), con pares completos por ID de equipo; sin estimaciones ni ceros de relleno.
+Originales/hash/recepción real e identidad comprobados. Granada–Albacete tiene
+una hora de discrepancia, señalada sin corregir la base. Los nueve casos son
+una muestra de los 1.222 pendientes; se localizaron 32 candidatos por calendario/
+enfrentamientos, no se descargaron 1.222 detalles. Sin importación ni cambios
+del motor. Entrega verificable en data/xg_recovery/20261015_lanusstats/.
+Arnés previo y final correctos: 1.251 pruebas pasadas, 66 omitidas. Paquete de
+46 archivos verificado por hash y revisado para excluir credenciales.
 
 ## 2026-10-15 — Carga autorizada de OddsPapi: cierre utilizable y referencia separados
 
@@ -6229,6 +6325,108 @@ inicio. Desplegado solo en el worker: la API y el árbol `~/quantfut/src` del se
 antiguas de `train.py` y `clv.py` y sobrescribirlas habría revertido código ajeno. El parche vive en el
 contenedor, no en la imagen: hay que comprobarlo antes del 1-nov si se recrea. Detalle:
 docs/f2_cierres_pinnacle_20261015.md.
+
+## 2026-10-15 — Meta y compras en la app: diseño aprobado (sin código aún)
+
+El titular eligió Google Play / App Store como procesador **de la app** (suscripción renovable, sin
+prueba gratis) y el enfoque «servidor fuente única»: compras, registro y desbloqueos van a Meta solo
+por Conversions API tras verificarlos, y el SDK solo manda lo que únicamente sabe la app. Así no hace
+falta deduplicar (Meta solo documenta el `event_id` del SDK en iOS) y una compra falsificada en la app
+no llega a Meta ni da acceso. La App Events API `/{app-id}/activities` se descartó: Meta ya no la
+recomienda para integraciones nuevas. Seguimiento encendido por defecto en todo el mundo por decisión
+del titular, que asume el riesgo RGPD (Meta pide consentimiento previo en la UE); se conservan las
+negativas explícitas previas y los límites de ATT y del ID de publicidad. «EMQ 10/10» no es
+garantizable: se envían todos los datos legítimos disponibles. Spec:
+docs/superpowers/specs/2026-10-15-meta-compras-design.md.
+
+## 2026-10-15 — Compras de tienda y Meta: implementadas y API desplegada (apagadas)
+
+El titular pidió ejecutar el plan y desplegarlo el mismo día, así que la API salió antes del 1-nov; el worker no se tocó.
+Decisión clave: la API se desplegó como capa sobre la imagen en ejecución con solo los 20 archivos de la rama, tras comprobar
+que los 12 modificados eran idénticos a `main` en el contenedor; así no se revirtieron las otras diferencias de la API.
+El periodo de cada cobro sale de la tienda y no de `duration_days`, y una compra de prueba concede acceso pero no va a Meta.
+Quedan apagadas las compras y el envío a Meta hasta tener credenciales. Pendiente: alinear el worker antes de activar CAPI.
+
+## 2026-10-16 — Play Console: ficha, declaraciones y RTDN preparados
+
+La prueba interna de QuantFut continúa activa. Por navegador se guardaron la ficha en español con icono y gráfico destacado, las declaraciones de funciones financieras e ID de publicidad y el borrador completo de Seguridad de datos. Faltan capturas actuales, una cuenta dedicada de revisión con Plus, Público objetivo y el cuestionario IARC; este último quedó preparado antes de aceptar sus condiciones.
+
+En Google Cloud ya existen la cuenta de servicio y el tema `quantfut-play-rtdn`. Quedaron preparados, sin confirmar, el permiso de publicación para el servicio de notificaciones de Google Play y la activación de Android Publisher API. La primera clave JSON existe en Cloud pero no apareció en Descargas, por lo que debe revocarse y sustituirse antes de habilitar compras. Estado y evidencias: `apps/mobile/docs/PLAY_CONSOLE_20261015.md`.
+
+## 2026-10-17 — API-Tennis: muestra autenticada autorizada
+Seis consultas correctas: 27 tipos, 10.360 entradas de catalogo, 445 partidos recientes, 228 futuros, 205 de una fecha 2025 y cinco en vivo. En recientes, 45 terminados ATP/WTA individuales tienen estadisticas; se comprobaron 1.138 pares numericos y consistencia saque/resto sin incidencias. No generalizar a ITF: solo 132/393 terminados globales tienen estadisticas. No hay inicio/final reales ni duracion en campos observados; por ello no habilitamos descanso horario con event_time. Originales con SHA-256 en .local/api_tennis_probe/20261017T211250Z, clave solo en configuracion ignorada, cero apariciones en artefactos. No se consulto The Odds API ni se alteraron modelos o protocolos. La integracion automatica y medicion de latencia quedan pendientes. Informe docs/tenis_api_tennis_prueba_20261017.md. Arnes inicial: 1.300 aprobadas/88 omitidas/dos avisos; Docker ausente.
+
+## 2026-10-17 — Tenis: evaluador comun y carga observable, fase 1
+Implementados BenchmarkEvaluator, RecentLoadExtractor, ModelRunner y correccion logistica ridge sobre log-odds del candidato actual. Corte estricto por disponibilidad anterior a decision; ventanas con incertidumbre y datos faltantes explicitos. Recalculo temporal de features en ajuste, control de orientacion, resultados completados y muestra comun. API-Tennis no acredita inicio/final reales: normalizador no usa fecha programada como final exacto. Muestra real sin red: 104 observaciones normalizadas, dos pronosticos base actuales, cero entrenamiento/candidato carga y cero evaluables por futuros pendientes; metricas nulas, sin simular mejora. 24 nuevas pruebas y 75 totales tenis aprobadas. Los 12 hashes del protocolo previo intactos. Informe docs/tenis_carga_evaluacion_fase1_20261017.md. Motor de futbol y apuestas intactos.
+Validacion final fase 1: 75 pruebas tenis aprobadas; arnes general 1.300 aprobadas/88 omitidas/dos avisos en 226,35 s. Los cuatro hashes de implementacion coinciden con report.json; cero apariciones de clave en los nuevos entregables.
+
+## 2026-10-17 — Tenis: captura de estados y Weighted Elo
+Captura con limite diario local, originales/recibos SHA-256, tabla append-only y consultas as-of. No inferir terminado por ausencia en vivo, ni convertir observacion en inicio/final reales sin conocer latencia. Correccion terminal->en vivo invalida carga posterior sin borrar pasado. Importadas 883 observaciones previas (incluido historial 2025), dos consultas ATP/WTA nuevas aportaron 113; total 996 observaciones/879 eventos, cero conflictos. Seis hashes de recibo validos, cero claves en resultados. No hay tarea periodica activa ni consumo nuevo de The Odds API.
+WElo original segun ecuaciones del articulo, K con conteo previo explicito y adaptacion simultanea por periodos semanales. Mismas filas de entrenamiento/embargo35 y prueba congelada2026: ATP n2451 logloss WElo0,629374 vs hibrido0,622427; WTA n2146 0,629068 vs0,618318. Mejor que Elo adaptativo no ponderado, inferior al hibrido; no se promueve. Bootstrap por periodo exploratorio, no prueba financiera ni reproduccion diaria exacta. 96 pruebas tenis aprobadas (21 nuevas), 12 hashes del protocolo anterior intactos. Informe docs/tenis_estados_weighted_elo_20261017.md.
+Verificacion final estados/WElo: 96 pruebas tenis aprobadas y arnes general 1.300 aprobadas/88 omitidas/dos avisos en 145,62 s. Fuentes/codigo de ambos reportes v2 verificados. La pagina publica de API-Tennis anuncia Starter 8.000 solicitudes/dia y prueba14dias; plan/vigencia de esta cuenta aun por confirmar para fijar frecuencia recurrente. No confundir con The Odds API de pago ya confirmado.
+
+## 2026-10-17 — Plan de API-Tennis sin confirmar
+El titular responde «Periodo de prueba / no sé». Registrado como posible prueba, sin cuota ni vencimiento acreditados, en data/tennis/state_capture_20261017/account_policy.json. Mantener tope local de 24 consultas/dia del capturador; no implica cuota de la cuenta. Programacion automatica pendiente. No cambia The Odds API de pago ni sus 2.000 creditos mensuales de tenis y reserva de 6.000. Sin nuevas consultas ni cambios de codigo.
+
+## 2026-10-17 — Web: interfaz sports intelligence HUD
+
+Decisión clave: conservar el frontend nativo y su lógica completa, y aplicar el rediseño en una capa
+`future.css` cargada al final. La separación evita mezclar presentación con contratos de datos y hace
+reversible el cambio sin reescribir las ocho vistas. Tras la revisión del usuario se integró
+CYBERCORE CSS 0.3.0 como dependencia exacta: `postinstall` copia su distribución y licencia MIT a
+`frontend/vendor/cybercore/`, por lo que producción no depende de CDN. Las vistas reciben sus clases
+reales de tarjetas, botones, insignias, entradas, tablas, alertas, bordes neón, scanlines y datastream.
+Cyberpunk CSS se mantiene como referencia porque sus reglas globales colisionan con la aplicación; se
+adaptaron sus cortes geométricos y alto contraste. La paleta ahora usa los tokens oficiales cian
+#00f0ff, magenta #ff2a6d, amarillo #fcee0a, verde #05ffa1 y void #0a0a0f, con iconografía SVG propia.
+El frontend conserva foco, texto de estados, objetivos táctiles y `prefers-reduced-motion`; no se
+desplegó ni se modificó el motor.
+
+Validación final del rediseño: 25/25 pruebas del frontend y arnés general con 1.300 aprobadas,
+88 omitidas y dos avisos en 126,80 s. `docker-compose.yml` válido; Docker no estaba disponible en
+este entorno. El servidor local inicia en `127.0.0.1:5173`; la comprobación HTTP automatizada quedó
+limitada por los permisos de sockets del entorno, no por un error de la aplicación.
+
+## 2026-10-17 — Tenis: sedes por edicion y vigencia
+Implementado VenueRegistry relacional de solo adicion, fuentes SHA-256 por campo, versiones y enlaces exactos proveedor/modalidad/temporada con vigencia local. Enriquecimiento exige UTC y recepcion previa a decision. Bruselas cambia P12->P5 el 23-oct; se resuelve por fecha local, sin heredar Marsella para Lyon ni imputar techos. Ocho recintos, siete ediciones, quince enlaces, 24 fuentes verificadas. Archivo228:102/102 ATP/WTA enlazados con coordenadas;126 sin sede y48 fechas2026 con temporada2025 marcadas. Altitudes desconocidas: servicio de elevacion no disponible, no imputar ciudad/EXIF. Sin API deportivas nuevas ni cambios al modelo; doce hashes prospectivos intactos. 116 pruebas tenis aprobadas (20 nuevas). Informe docs/tenis_sedes_verificadas_20261017.md.
+Verificacion final sedes: 116 pruebas tenis aprobadas y arnes general 1.300 aprobadas/88 omitidas/dos avisos en 116,35 s. Docker ausente. Hash del modulo y semilla coinciden con informe v2; PENDIENTES actualizado con alcance y campos externos pendientes.
+
+## 2026-10-17 — Tenis: aclaracion no comercial y Open-Meteo
+El usuario aclara que este proyecto de tenis no esta monetizado. Utilizar Open-Meteo publico sin clave; la referencia previa a Standard procede del contexto de futbol y no es requisito para tenis. No altera The Odds API de pago ni sus 2.000 creditos mensuales. Documentacion oficial de elevacion/terminos revisada. Una consulta exitosa recibida 18-oct02:59:53UTC devuelve Almaty756,LDLC194,P12:73,P5:83,Shanghai20,Wuhan48,Ningbo9,Osaka5 metros. Son estimaciones del modelo Copernicus DEM2021 GLO-90, resolucion horizontal90m, no cota medida de pista. Fuente y atribucion guardadas; no imputar altitud de ciudad.
+Semilla registry_seed_open_meteo_v2.json conserva original y enlaces, agrega fuente25 y ocho revisiones posteriores a recepcion. calendar_report_v3_open_meteo.json:102/228 con altitud, mismos102/102 ATP/WTA. Verificados hash, orden y coordenadas, valores finitos, semilla original intacta y consultas previas siguen con altitud desconocida. 126 encuentros sin sede y48 discrepancias no resueltos por elevacion. Sin consultas deportivas, cambios a probabilidades ni captura meteorologica. Informe docs/tenis_open_meteo_20261017.md. Validacion:116 pruebas tenis aprobadas; arnes general1300 aprobadas/88 omitidas/2avisos en127,80s, Docker ausente. Solo metadatos/documentacion, sin modificaciones de codigo.
+
+## 2026-10-18 — Tenis: sedes pendientes y temporada revisada
+Las 48 discrepancias eran cuatro IDs en tres ediciones: Guangzhou22, Lisboa18 y Cali8. Contrastadas fuentes ATP/WTA, ITF y organizadores; se corrige metadata de edicion2025->2026 por evento/digest, no por una regla generica de fecha. FixtureReviews exige fila exacta en original archivado, fuentes integras y registradas antes de decision, conserva original/correccion y bloquea cambios de fila, conflictos y cuarentenas. Se agregaron 27recintos/37alias para126encuentros; total35recintos52enlaces228/228con sede principal. Heraklion hombresLyttos/mujeresNANA; RoanneprincipalVacheresse, no reutilizar tabla historicaScarabee. No acreditar pista individual ni horario por esta revision.
+La cobertura espacial sigue102/228: coordenadas/altitudes desconocidas en27recintos nuevos. Extraccion OSM acotada fallo406/502/timeout; no imputar centros de ciudad. Dos consultas ZenRows existentes recuperaron paginas oficiales Cali/Jinan; cero consultas deportivas/TheOddsAPI. Originales HTTP y extracciones web diferenciadas, recibos/hash;65 fuentes verificadas. Artefactos data/tennis/venues_completion_20261017/calendar_completed_v2.json,registry_seed_completed.json,season_reviews.json,integration_audit.json. Modelos intactos,12hashes prospectivos verificados. Auditoriareal a decision anterior conserva102sedes,0correcciones y48flags: no fuga retrospectiva.
+Validacion del checkout entregado:126tests tenis aprobados, diez nuevos. Arnes general1300aprobados/88omitidos/2avisos79,88s, Docker ausente; diffcheck correcto. Pendientes de identidad de sede y revision de temporada cerrados para esta muestra; georreferenciacion nueva y variables viaje/clima siguen aparte. Informe docs/tenis_sedes_temporadas_completadas_20261018.md.
+
+## 2026-10-18 — Tenis: revision cientifica de viajes
+Revision documental de fuentes oficiales ORS/OSRM/Amadeus/Arcascope y consensos deportivos. No adoptar score 0,4/1,8/1,2 ni umbral10 como validados. Distancia/800+2,5 queda como escenario hipotetico sin respaldo ATP/NBA verificado. Entre torneos solamente; no inferir viaje directo, llegada, descanso efectivo o vuelo tomado. Intervalo ultima participacion-debut e indicadores de incertidumbre separados. Plan en docs/tenis_viajes_criterios_20261018.md; georreferenciacion27 sigue pendiente, cobertura espacial confirmada102/228. Solo documentacion, sin codigo ni nuevas consultas deportivas/rutas/vuelos.
+
+
+## 2026-10-18 — Tenis: 27 coordenadas y modulo intertorneos
+Cerrada georreferenciacion de27recintos con selecciones explicitas OSM/Nominatim/Photon, GPS oficiales y cuatro extracciones publicas de navegador etiquetadas. Rechazados bus/calle homonimos, estadio futbol y encuadres. China usaWGS84, noGCJ02. Una peticion Open-Meteo gratuita entrega27cotas DEM90m; geometria representa recinto/complejo y precision150-1100m es margen conservador, no medicion. Semilla89revisiones35recintos52enlaces112fuentes. Calendario archivado228/228 con coordenadas/altitud,48correcciones; asof previo sigue102/228. No afirmar pista, techo o horario real. Docehashes congelados intactos.
+TravelExtractor requiere evidencia previa integra y cierre de participacion incluyendo dobles; no viajes por cambio de pista. DiferenciaUTC al mismo instante conDST, direccion y linea de fecha, distancia/altitud, transporte candidato configurable; intervalo salida a debutprogramado separado de descanso/arrival. Context legacy deja de inferirviajes entre partidos. Historial879eventos,614terminados/retirados,183/456participaciones con candidato porfecha programada; cero transiciones totalmente verificadas, sin horasreales acreditadas. Datos listos no equivalen a eficacia predictiva.143tests tenis entregados aprobados,17nuevos; primer intento con temporalesdel sistema fallo porpermisos, repeticion en workspace limpia. Sinconsultas API deportivas/creditosOdds ni entrenamiento. Informe docs/tenis_coordenadas_viajes_20261018.md.
+
+Verificacion final coordenadas/viajes: arnes general1300aprobados/88omitidos/2avisos138,58s, Docker ausente;143tests tenis entregados aprobados8,60s. Diffcheck tenis correcto y hashes stage/entrega coinciden; entrega auditada en data/tennis/coordinates_20261018/delivery_audit.json.
+
+
+## 2026-10-18 — Tenis: comparador espacial y sensibilidad
+SpatialExperiment implementado: base, residualridgeespacial y nueve escenarios experimentales de intervalo. EscaladoRMS/coeficientes soloentrenamiento, interseccioncomun de tresfamilias/todosescenarios, sin seleccionarporprueba; logloss/Brier/ECE10. Horasmainintactas; experimentalrequiere diasreales verificados, conserva horasconocidas, rechaza semanas/DSTambiguo. Cierres12/18/23 perturbadosporjugador con ordenIDinvariante; aplicar igualcambioados cancela ladiferencia y no sirvecomosensibilidad. Hashesfuentes/matriz e IDs entrenamiento registrados.
+Auditoriareal ejecutada v3: archivo492251 corte16oct anterioraprimerascoordenadas; snapshot228sinresultadoscompletadosobjetivo en estados;0transicionesverificadas. Entrenamiento/pruebacomunes0,0modelosajustados,metricasnull y sensibilidadrealnoejecutada. No backfill asof ni datos sinteticos paraafirmarrendimiento. Once testsnuevos,154tenisaprobados. Doc docs/tenis_comparacion_espacial_20261018.md; protocolo/report data/tennis/spatial_trial_20261018_v3. CeroAPIsdeportivas/creditosOdds, docehashescongeladosintactos. Holdoutexistentenoreutilizadoparanuevaseleccion.
+
+Verificacion final comparador espacial:154pruebas tenis aprobadas en entrega, arnesgeneral1300/88omitidas/2avisos139,58s, Docker ausente. Diffcheck correcto; hashesdelcodigo/protocolo/reportecoinciden. Deliveryaudit registra0modelosrealesajustados, no confundir pruebas sinteticas con mejora predictiva.
+
+
+## 2026-10-18 — Tenis: reconstruccion retrospectiva 2024/2025
+Autorizada por usuario una rama retrospectiva separada, no backfill asof. Directorios ATP2024/25, notas WTA por edicion e ITF Paris2024 archivados; correcciones Dallas/Bruselas/Hangzhou/Belgrado/Atenas, Paris por temporada.187ediciones enlazadas,160georreferenciadas,27sede conocida sincoordenadas;95recintos,78concoordenadas yDEM,122fuentesSHA verificadas. Sinherencia de enlaces2026. OpenMeteo1consulta72puntos, Nominatim serialcache1,25s, candidatos ambiguos rechazados.
+HistoricalDataset: historial38936filas2023–25, objetivo11240/472bloques. Antecedente inmediato observado sin saltarunknowns, incluye Challenger/qualy, noherencia sedequaly. Variables distancia/deltaaltitud/deltaUTC; DSTambiguo queda rango, guardaconservadora7dias porperiodo. No descanso/imputaciones dehora niitinerarioreal.3155convariablescompletas antesfiltros,2982aptos(1426desarrollo2024/1556exploratorio2025);26,53%coberturaobjetivo. Particiones5661/5378/201cuarentena porfrontera, edicionescompletas.165tests tenis entregados aprobados,11nuevos,12hashescongelados intactos. Datos+proveniencia+splits+pendientes en data/tennis/historical_venues_20261018; doc docs/tenis_dataset_historico_20261018.md. CeroOdds/API-Tennis,0modelosajustados,metricaspendientes. Falta cobertura52edicionesindividuales,17recintos(27ediciones),233bloquesporequipos/multisede; no interpretarpreparacioncomo eficacia. Comparacion exigira interseccionpredicciones no simplementecohortedatos.
+Verificacion final retrospectiva: arnes general1300aprobados/88omitidos/2avisos115s; Docker no disponible. Entrega165tests tenis aprobados16,66s. Diffcheck entrega correcto, auditoria hashes/dataset/particiones aprobada.
+
+## 2026-10-18 — Comprometer-revelar de la cadena y plan de F7
+Decisión: al repo público va solo el compromiso (recibo y `LEDGER.md`); el JSON del lote sube cuando todos los partidos que cita constan terminados y pasaron 4 h (tope de 7 días para aplazados). Por qué: el lote lleva los picks de pago y publicarlo antes de los partidos los regala. El hash no cambia, así que ningún lote ya sellado se altera; `verify` ahora recorre por recibos y cuenta aparte los lotes sin revelar, y sigue detectando JSON alterado y cadena rota. `seal()` revela los pendientes al inicio de cada pasada, sin tocar `daily.py` ni el orden predecir → seleccionar → sellar → publicar. `CHAIN_GIT_REMOTE` sigue vacío: falta desplegar con ensayo. Pruebas: `tests/test_hashchain_revelado.py` (8) y suite completa 1308 aprobadas / 88 omitidas.
+Hallazgo para F7 (`docs/superpowers/plans/2026-10-18-f7-sello-tardio.md`): con varios lotes por día, los cuatro lectores que unen `prediction_batches` por fecha contarían cada fila varias veces; hay que filtrarlos por `batch_kind = 'diario'` en el mismo cambio.
+Medición contra producción (solo lectura): cierres de Pinnacle faltantes en ligas modeladas = 697 (coincide con PENDIENTES); el CLV en sombra de +3,46 % (n=142) no se reproduce con ninguna fuente (ver PENDIENTES); el servidor dejó de responder por SSH durante la sesión.
 
 ## 2026-10-18 — Rediseño CYBERCORE desplegado
 

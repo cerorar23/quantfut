@@ -1,6 +1,20 @@
 # Pendientes de QuantFut — lista única
 
-Actualizada el **2026-10-15**. Es el punto de entrada: aquí está lo que falta, quién lo hace y de qué depende.
+## Tenis local — autorizado el 16-oct-2026
+
+Extracción pública completa y candidato matemático implementados en checkout independiente `tennis-engine`; no modifica la congelación del motor de fútbol. 214 archivos, 492.251 partidos TML consolidados y 249.938 aptos para el candidato. Modelos ATP/WTA y comparación 2025/2026 ejecutados; el candidato inicial pierde en log-loss frente a Elo y no está aprobado para publicar picks. Informe: `docs/tenis_primera_version_y_resultados_20261016.md`.
+
+- [ ] Calendario futuro con IDs y horas verificadas, enlace a cuotas y casas/presupuesto compartido de The Odds API.
+- [ ] Mejorar habilidades/calibración usando validación separada y reservar prueba nueva; 2026 ya fue observado.
+- [ ] Seguimiento prospectivo y reglas de liquidación antes de afirmar valor económico.
+- [x] Registro inicial de sedes por edición y vigencia: ocho recintos, siete ediciones y 102/102 encuentros ATP/WTA de la muestra enlazados. Ver `docs/tenis_sedes_verificadas_20261017.md`.
+- [x] Altitudes de los ocho recintos verificados: Open-Meteo gratuito sin clave, uso no comercial confirmado por el usuario para tenis; 102 encuentros enriquecidos. Ver `docs/tenis_open_meteo_20261017.md`.
+- [x] Sedes y temporadas: 37 grupos revisados, 126 encuentros pendientes enlazados y 48 temporadas corregidas por evento conservando el original; muestra 228/228 con sede principal identificada. Ver `docs/tenis_sedes_temporadas_completadas_20261018.md`.
+- [x] Georreferenciados los 27 recintos nuevos y elevaciones Open-Meteo: 228/228 encuentros con coordenadas y altitud, fuentes/precision y disponibilidad sin retroactividad. Ver `docs/tenis_coordenadas_viajes_20261018.md`.
+- [ ] Viajes: calculo entre ediciones implementado y probado; falta acreditar secuencia por jugador, cierre incluyendo dobles, debut y tiempos de salida. Historial candidato183/456; cero transiciones completas verificadas. No inferir itinerarios ni descanso efectivo.
+- [x] Comparador Base/Base+Espaciales/Experimental y nueve escenarios implementados: 154 pruebas tenis. Auditoria real0filas aptas; faltan participaciones y muestra temporal, no hay mejora predictiva medida. Ver `docs/tenis_comparacion_espacial_20261018.md`.
+
+Actualizada el **2026-10-18**. Es el punto de entrada: aquí está lo que falta, quién lo hace y de qué depende.
 El detalle técnico de cada fase vive en `harness/tareas.md` y en `docs/`; cuando una cosa se cierre, se marca aquí y allí.
 Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en el repo o el servidor (siempre con ensayo y registro en `DEPLOYS.md`).
 
@@ -10,7 +24,7 @@ Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en
 | ~26-oct | Termina la prueba Business de Sentry: confirmar la retención del plan |
 | **1-nov, 03:00 UTC** | Reentrenamiento automático (~5 h) y reset de los 20.000 créditos de The Odds API |
 | **2-nov, 9:00 (hora local)** | Revisión automática de solo lectura (tarea programada `revisar-reentrenamiento-1-nov`) |
-| ~10-nov | El CLV en sombra llega a 300 observaciones (15-oct: 142; `ev_close` +3,46 %, IC95 +1,35 a +5,67) |
+| ~10-nov | La puerta de CLV pide 300 observaciones. **Medido 18-oct:** `shadow.summary` lleva n=135 y 138 (retadores) con `ev_close` ≈ +0,06 / +0,08 %; la cifra de +3,46 % (n=142) del 15-oct no se reproduce con ninguna de las tres fuentes (`shadow_results` n=348 +0,65 %; `sharp_shadow_results` n=1.683 +3,24 %). Aclarar cuál es la oficial antes de contar con la puerta |
 
 ## 1. Seguridad (Tú, ~15 minutos)
 - [ ] Activar la autenticación en dos pasos en la cuenta de GitHub `cerorar23`.
@@ -29,7 +43,7 @@ Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. 
 | F0 archivo a tablas principales | **Hecha** (en producción) | — |
 | F1 capa de ajuste y línea base | **Hecha**: el XI simple pasa la puerta (ΔRPS −0,0013; 9 de 12 ligas) | Reejecutar tras el 1-nov |
 | F2 cierres de Pinnacle | A medias: faltan 2.103 (697 en ligas modeladas; antes 6.185) | Créditos tras el 1-nov |
-| **F7 sello tardío** | Sin empezar. **Siguiente fase**: deja entrar al XI al motor y usa cuotas de última hora; toca la cadena de hashes | Diseño tras el 1-nov |
+| **F7 sello tardío** | Sin empezar. **Siguiente fase**: deja entrar al XI al motor y usa cuotas de última hora; toca la cadena de hashes. **Plan en borrador (18-oct):** `docs/superpowers/plans/2026-10-18-f7-sello-tardio.md` | Tus 3 decisiones del plan y diseño tras el 1-nov |
 | F3 bajas como minutos perdidos | Sin empezar (poca evidencia: 173 partidos con consulta previa al inicio) | F7 |
 | F6 clima y sede | Decidido (Copernicus ERA5 para historial; Open-Meteo Standard en vivo y altitud); sin código | Guardar token cifrado |
 | F5 árbitro | Sin empezar; datos de F0 listos | Unificar identidades |
@@ -52,7 +66,8 @@ Tareas sueltas:
 - [ ] Antes de encender los picks de valor: hoy solo verían las 13 ligas con modelo y la sombra mide 22; alinear.
 - [ ] Vigilar la ampliada 73–95 %: con cuota de referencia acierta 78,0 % frente a 81,4 % prometido (n=223).
 - [ ] Resolver 379 identidades de copas y 21 conflictos; unos 250 huecos de tiros y córners.
-- [ ] **Tú decides:** fuente nueva para los **1.222 huecos de xG** (Serie B 588, LaLiga 2 236, Argentina 208, Ligue 2 144). Otra sesión está probando LanusStats y 365Scores para esto (15-oct): su resultado define la decisión.
+- [ ] Ampliar fuentes para los **1.219 huecos de xG** (Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46). LanusStats/365Scores aportó tres parejas de LaLiga 2, cargadas por petición del titular el 15-oct; su muestra no prueba cobertura completa. Ver `docs/lanusstats_carga_20261015.md`.
+  - Medido 18-oct (partidos terminados desde ago-2022, sin xG): Serie B 1.158, LaLiga 2 926, Ligue 2 705, Argentina 412 (modelada), Brasil 66, México 25, copas 26. La cifra de 1.219 no coincide con esa ventana: confirmar cuál era su criterio.
 
 ## 4. Orden del servidor (Claude, con ensayo; la API después del 1-nov)
 - [ ] Alinear la **API** con `main` (24 archivos distintos; imagen `quantfut-api-admob:20261015a`). Es lo que ven tus clientes.
@@ -67,9 +82,10 @@ Tareas sueltas:
 ## 5. Para poder vender picks
 | Qué | Responsable | Nota |
 |---|---|---|
-| Elegir **procesador de pago** | Tú | Sin esto no hay cobros; luego checkout + webhook firmado e idempotente |
+| Elegir **procesador de pago** | Tú | **App: decidido el 15-oct** (Google Play / App Store, suscripción renovable). Web: sigue pendiente |
+| **Meta (SDK + CAPI) y compras en la app** | Tú (credenciales) y Claude | **Código hecho y API desplegada el 15-oct, apagada** (rama `feat/meta-compras`, sin fusionar a `main`). Guía: `apps/mobile/docs/META_COMPRAS_TITULAR.md`. Necesito: App ID, client token, dataset y token CAPI de Meta; suscripción `quantfut_plus` (3 planes base), cuenta de servicio y Pub/Sub en Play Console. Antes de activar CAPI hay que alinear el worker (después del 1-nov). Registrar `*.lproj/InfoPlist.strings` en Xcode cuando haya Mac |
 | **Avisos legales** (+18, juego responsable, privacidad/cookies, términos) y **revisión de un profesional habilitado** | Tú | Más: DPA de Contabo y Proton, atender el buzón de contacto |
-| **Publicación de la cadena: comprometer-revelar** | Claude, con tu decisión | **Prioridad alta.** El lote lleva los picks de pago; publicar el JSON antes de los partidos los regala. Publicar solo el hash antes y el JSON después del último partido, **antes** de configurar `CHAIN_GIT_REMOTE` (hoy vacío) |
+| **Publicación de la cadena: comprometer-revelar** | Claude, con tu decisión | **Código y pruebas hechos el 18-oct** (`hashchain.py`, `tests/test_hashchain_revelado.py`); falta desplegar con ensayo y luego configurar `CHAIN_GIT_REMOTE` (hoy vacío). Sube solo el hash antes y el JSON al terminar los partidos |
 | Quitar rutas internas de `/model-card` y añadir `Content-Security-Policy` | Claude | Prioridad baja |
 | Puerta comercial (CLV ≥ 300) | Se cumple sola (~10-nov) | Aun así `PUBLISH_PICKS_ENABLED` está en 0: se enciende con tu decisión |
 
@@ -80,9 +96,13 @@ Tareas sueltas:
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
 
 ## Decisiones que dependen de ti
-1. Procesador de pago.
-2. Fuente para los 1.222 xG que faltan.
+1. Procesador de pago de la web (el de la app ya está decidido: tiendas).
+2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
 3. Comprar los 527 snapshots (~5.270 créditos) tras el 1-nov.
 4. Registrar los alias de Champions y Europa League.
 5. Pasar la cadena a comprometer-revelar y cuándo encender `PUBLISH_PICKS_ENABLED`.
 6. Revisión legal por un profesional habilitado.
+
+## Tenis retrospectivo 2024/2025 (18-oct-2026)
+- Preparado:11240partidos,187ediciones enlazadas de su temporada,2982aptos para evaluacion espacial;165pruebas tenis aprobadas.2025exploratorio, modelos congelados intactos.
+- Pendiente: ampliar52edicionesindividuales sinenlace y coordenadas de17recintos(27ediciones);233bloquesporequipos/multisede necesitan sede por eliminatoria. Ejecutar comparacion probabilistica con ajuste soloentrenamiento e intersecciondepredicciones; sinROI, sinhorasficticias. Ver docs/tenis_dataset_historico_20261018.md y pending_editions.json del archivo historico.
