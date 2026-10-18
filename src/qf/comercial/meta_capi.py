@@ -60,9 +60,17 @@ def web_kwargs(web_context: dict | None) -> dict:
 
 
 def _minimal_extinfo(platform: str) -> list[str]:
+    """extinfo de reserva para una cuenta sin dispositivo registrado.
+
+    Meta rechaza (400, subcódigo 2804043) un extinfo sin versión del SO válida, y un compra o un
+    registro no pueden perderse por eso. Se mandan valores genéricos; en cuanto la app registra el
+    dispositivo (POST /app/v1/meta/dispositivo) se usa su extinfo real."""
     values = [""] * meta_datos.EXTINFO_LEN
     values[0] = "i2" if platform == "ios" else "a2"
     values[1] = "com.saptain.quantfut"
+    values[2] = "1.0.0"
+    values[3] = "1"
+    values[4] = "17.0" if platform == "ios" else "14"
     return values
 
 
