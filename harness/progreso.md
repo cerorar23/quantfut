@@ -1,5 +1,37 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-18 (tarde) — FotMob en vivo como fuente previa; Open-Meteo descartada por licencia
+
+El titular autorizó la captura recurrente de FotMob (antes registrada como puntual) y entregó el token de Copernicus. La página
+previa de FotMob trae alineación probable, no disponibles con tipo y pronóstico de clima con hora de actualización: cubre las
+bajas previas y el pronóstico de F6 con una sola fuente, point-in-time, sin la clave de Open-Meteo. No se usó el plan gratuito de
+Open-Meteo porque el producto vende suscripciones (uso comercial) y el titular había contratado el plan de pago; si se quiere esa
+fuente, se carga la clave de pago. Las ventanas de captura previa se estrecharon (70 y 40 min) porque una ventana de 30 a 120 min
+habría tomado la alineación antes de que se publique la oficial. ERA5 se valida contra el clima que midió FotMob (temperatura 0,98).
+La captura se detiene 12 h ante cualquier HTTP 401/403/429 y no evita controles de acceso.
+
+## 2026-10-18 — Datos al motor: tablas propias por fuente, nunca mezclar identificadores
+
+El archivo de FotMob (20.331 partidos) pasó a tablas con `match_id` en lugar de volcarse en `lineups_historicas` y
+`estadisticas_jugador`: esas llevan ids de API-Football y mezclar los dos espacios habría roto `player_ratings` y
+`lineup_challenger` sin dar ningún error. El puente (7.834 jugadores) y la equivalencia de árbitros (54) son tablas aparte, con
+umbral de coincidencia y 1 a 1 en las dos direcciones. Hallazgos que cambian el plan: el original de FotMob ya trae entrenador,
+valor de mercado, asistencia y clima (40 %, medido en el partido); el calendario completo de API-Football muestra un partido
+intermedio que `matches` no ve en el 17,6 % de los equipo-partidos; el cruce de árbitros apenas suma porque las fuentes casi
+no se solapan. No se montó captura diaria de FotMob porque la descarga se registró como puntual: lo decide el titular.
+Una medición propia, cancelada desde el cliente, siguió ejecutándose 38 minutos en el servidor: cancelar en la base, no solo
+en el cliente. La suite completa tiene fallos previos que no son de estos cambios.
+
+## 2026-10-18 — Orden de identidades: el error real es Arsenal, no las 379 "identidades"
+
+Medido en producción sin escribir nada. Las 379 "identidades" de copas eran partidos (110 equipos); en ninguno están los
+dos equipos identificados, porque el rival es siempre un club de una liga que no cubrimos, y la regla de `eu.ucl`/`eu.uel`
+(no dar de alta equipos, solo coincidencia exacta) es la que lo impide: se cierra como no resoluble por diseño. La coincidencia
+aproximada habría dado Pafos→Paris FC y Rangers→Angers. Lo que sí estaba mal es una fila de alias (`Arsenal`, `fbref`) que apunta a
+Arsenal de Sarandí: 33 partidos de copa hasta 2024-12-11 en el club equivocado. Antes de afirmar su efecto en el modelo habría que
+medirlo (se espera pequeño por el decaimiento de 180 días). Cuatro alias de The Odds API recuperan 39 de los 103 cierres de copa con
+los snapshots ya pagados. Nada de esto se aplica sin visto bueno; ver docs/ordenar_identidades_20261018.md.
+
 ## 2026-10-16 — Tenis: extracción completa, motor local y resultados negativos conservados
 
 Por autorización nueva se completaron 171 archivos TML y 43 archivos MCP:

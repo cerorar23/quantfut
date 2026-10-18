@@ -217,7 +217,11 @@ incorporadas. 400 originales mantienen asociación pendiente/conflicto. Modelo
 activo y puertas sin cambios; 1.007 pruebas, prueba PostgreSQL e idempotencia.
 Detalle: docs/importacion_fotmob_20261013.md.
 
-- [ ] Resolver 379 identidades de copas y revisar 21 conflictos sin forzar uniones.
+- [x] 379 «identidades» de copas = 379 partidos de 110 equipos; ninguno con ambos equipos probados, no resoluble sin dar de alta clubes externos (prohibido en `eu.*`). Medido el 18-oct, docs/ordenar_identidades_20261018.md.
+- [x] Arsenal corregido (33 partidos, `db/073`) y 4 alias de The Odds API (+45 cierres de copa), 18-oct. Quedan 20 conflictos de vinculación: 7 son de Arsenal (el partido ya tiene el equipo correcto, pero el archivo FotMob conserva su estado `conflict` hasta volver a vincularlos) y 13 por revisar uno a uno (marcador o estado, liga o prórroga).
+- [x] Datos al motor 18-oct (`docs/datos_al_motor_20261018.md`): tablas FotMob con `match_id`, altitud, calendario de equipos (cron diario), equivalencias de árbitros, puente de jugadores, vista de descanso.
+- [x] 18-oct tarde: captura de FotMob autorizada y montada (`db/081`, cron con flock, pronóstico de clima incluido); token de CDS recibido y descarga ERA5 en curso (`db/082`); Open-Meteo descartada por licencia.
+- [ ] Pendiente: terminar y revisar ERA5; regenerar el token de CDS; estadios duplicados (182 grupos); minutos con selección nacional; convertir la captura previa en entrada de F7 (alineación y bajas a T-70/T-40).
 - [ ] Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
   respetando recepción temporal; las tablas nuevas ya están importadas.
 
