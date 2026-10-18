@@ -317,7 +317,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                               children: [
                                 liveText(l10n.detailVipPickNotice, bold: true),
                                 const SizedBox(height: 12),
-                                liveButton(l10n.commonSeeVip, widget.onVip),
+                                liveButton(l10n.vipAccessButton, widget.onVip),
                               ],
                             ),
                           ),

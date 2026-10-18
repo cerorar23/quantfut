@@ -444,8 +444,9 @@ class _Chip extends StatelessWidget {
   );
 }
 
-/// Todos los pronósticos de candado en una sola tarjeta: cuántos son, qué se gana con VIP y,
-/// al desplegar, la lista con su desbloqueo por monedas.
+/// Todos los pronósticos de candado en una sola tarjeta: cuántos son, qué se gana con VIP y la lista, con
+/// el pronóstico difuminado (`LockedBlur`), su cuota a la vista y el desbloqueo por monedas. Va desplegada
+/// por defecto (decisión del titular, 18-oct-2026); se puede plegar.
 class LockedPicksGroup extends StatefulWidget {
   const LockedPicksGroup({
     super.key,
@@ -465,7 +466,7 @@ class LockedPicksGroup extends StatefulWidget {
 }
 
 class _LockedPicksGroupState extends State<LockedPicksGroup> {
-  bool _open = false;
+  bool _open = true;
 
   @override
   Widget build(BuildContext context) {
@@ -505,7 +506,7 @@ class _LockedPicksGroupState extends State<LockedPicksGroup> {
               ],
             ),
             const SizedBox(height: 12),
-            liveButton(l10n.commonSeeVip, widget.onVip),
+            liveButton(l10n.vipAccessButton, widget.onVip),
             InkWell(
               key: const ValueKey('high-locked-toggle'),
               borderRadius: BorderRadius.circular(10),
@@ -568,6 +569,8 @@ class _LockedPicksGroupState extends State<LockedPicksGroup> {
                               size: 11,
                               color: liveMuted,
                             ),
+                            const SizedBox(height: 4),
+                            const LockedBlur(),
                           ],
                         ),
                       ),

@@ -2094,6 +2094,16 @@
   "titleTotalGoals": "Goles totales",
   "titleWinner": "Ganador del partido",
   "tooltipVip": "VIP",
+  "updateLater": "Más tarde",
+  "updateNow": "Actualizar ahora",
+  "updateOptional": "Hay una nueva versión de QuantFut disponible.",
+  "updateRequired": "Actualiza QuantFut para continuar.",
+  "updateStoreError": "No se pudo abrir la tienda. Inténtalo de nuevo.",
+  "updateTitle": "Actualización disponible",
+  "vipAccessButton": "Acceso VIP",
+  "@vipAccessButton": {
+    "description": "Botón de los pronósticos bloqueados y difuminados: lleva a la compra de la suscripción VIP."
+  },
   "vipActivate": "Activar acceso VIP",
   "vipActive": "Tu acceso VIP está activo.",
   "vipBadge": "✦  ACCESO VIP",
@@ -2194,11 +2204,5 @@
     }
   },
   "welcomeSkip": "Saltar",
-  "welcomeStart": "Empezar",
-  "updateTitle": "Actualización disponible",
-  "updateRequired": "Actualiza QuantFut para continuar.",
-  "updateOptional": "Hay una nueva versión de QuantFut disponible.",
-  "updateNow": "Actualizar ahora",
-  "updateLater": "Más tarde",
-  "updateStoreError": "No se pudo abrir la tienda. Inténtalo de nuevo."
+  "welcomeStart": "Empezar"
 }

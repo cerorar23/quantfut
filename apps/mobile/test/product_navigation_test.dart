@@ -353,9 +353,9 @@ void main() {
     expect(find.text('Más de 1,5 goles'), findsOneWidget);
     // Los pronósticos de candado van en una sola tarjeta con el acceso VIP.
     expect(find.text('1 pronóstico más con VIP'), findsOneWidget);
-    expect(find.text('Ver acceso VIP'), findsOneWidget);
+    expect(find.text('Acceso VIP'), findsOneWidget);
     await capture(tester, 'predictions');
-    await tester.tap(find.text('Ver acceso VIP'));
+    await tester.tap(find.text('Acceso VIP'));
     await tester.pumpAndSettle();
     expect(find.text(r'$14,99'), findsOneWidget);
     expect(find.text('USD'), findsOneWidget);
