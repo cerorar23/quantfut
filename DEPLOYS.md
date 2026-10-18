@@ -33,6 +33,21 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-18 02:20 UTC · Rediseño CYBERCORE de la web · API
+- PR #12 (`a30c799`) y hotfix de rutas FastAPI PR #13 (`2d8cfef`), con los dos arneses de cada PR aprobados.
+- Imagen `quantfut-api-cybercore:2d8cfef` (`8d81ce9c10c6`), derivada de la imagen que ya corría
+  `quantfut-api-force-update:b8f74ae`. Solo reemplaza `frontend/` y `src/qf/api/web.py`; no reconstruye
+  desde la carpeta desactualizada del servidor ni modifica el resto del código de la API.
+- Respaldo previo de frontend, `web.py`, imagen y compose en
+  `~/quantfut/releases/cybercore-2d8cfef/backup/`. Worker, base de datos, Caddy y Grafana intactos.
+- Ensayo aislado y dominio real: `/`, `/health`, `/future.css`,
+  `/vendor/cybercore/cybercore.min.css` y `/app.js` responden 200; contenido y cinco hashes iguales a
+  `main`. Comprobación visual correcta y consola del navegador sin errores. Modelo activo
+  `2026.09.27-010508`; publicación pausada por la puerta comercial; 19 lotes de la cadena verificados.
+- Vuelta atrás: restaurar `backup/docker-compose.before.yml` como `~/quantfut/docker-compose.yml` y
+  ejecutar `docker compose up -d --no-deps --no-build --force-recreate api`. La imagen anterior es
+  `quantfut-api-force-update:b8f74ae` (`9188e2950838`).
+
 ### 2026-10-15 23:30 UTC · Compras de tienda y Meta (CAPI) · API + `db/071` (rama `feat/meta-compras`, commits `4db6616`, `ca818ce`)
 - Orden del titular: desplegar el mismo día (antes se había dejado la API para después del 1-nov). El worker NO se tocó
   (mismo contenedor `28330d835ca9`), así que no interfiere con el reentrenamiento.

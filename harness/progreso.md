@@ -6229,3 +6229,13 @@ inicio. Desplegado solo en el worker: la API y el árbol `~/quantfut/src` del se
 antiguas de `train.py` y `clv.py` y sobrescribirlas habría revertido código ajeno. El parche vive en el
 contenedor, no en la imagen: hay que comprobarlo antes del 1-nov si se recrea. Detalle:
 docs/f2_cierres_pinnacle_20261015.md.
+
+## 2026-10-18 — Rediseño CYBERCORE desplegado
+
+Los PR #12 y #13 quedaron fusionados con CI verde. El segundo fue necesario porque producción sirve la
+web desde FastAPI y debía exponer explícitamente `future.css` y el CSS vendorizado de CYBERCORE. Para no
+revertir las diferencias históricas de la API se construyó `quantfut-api-cybercore:2d8cfef` sobre la
+imagen que ya estaba en ejecución y se sustituyeron únicamente `frontend/` y `src/qf/api/web.py`.
+Dominio y assets responden 200, los hashes coinciden con `main`, la comprobación visual no mostró errores
+de consola, el modelo sigue en `2026.09.27-010508` y los 19 lotes verifican. Worker, base y flags intactos;
+respaldo y reversión en `DEPLOYS.md`.
