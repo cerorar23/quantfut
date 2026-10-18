@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-18 19:10 UTC · Comprometer-revelar de la cadena · worker (un archivo), rama `codex/force-update-deployment` (`a1e725d`, PR #11)
+- Cambio: `publish/hashchain.py` (al repo público sube solo el compromiso; el JSON se revela al terminar los partidos). **Desplegado antes de fusionar a `main`** por orden del titular; al fusionar el PR, `main` queda igual que el worker.
+- Método: `docker cp` de ese único archivo al contenedor worker (como F2c): **parche del contenedor, no de la imagen**; se pierde si el worker se recrea, así que la alineación del 1-nov debe construirse desde un `main` que ya lo incluya.
+- Antes de copiar, el `hashchain.py` del worker era idéntico a la base (`912aa8c21708`). Hash final `252693f570e9`, igual al commit.
+- Ensayo en el worker: `hashchain verify` OK en 20 lotes (0 sin revelar), importa sin error. `CHAIN_GIT_REMOTE` sigue vacío: `seal()` no ejecuta ninguna rama de git, así que el sellado de las 08:00 UTC se comporta igual. Sin reinicios; modelo, API y base intactos.
+- Falta: configurar `CHAIN_GIT_REMOTE` (decisión del titular) y probar `revelables` contra el repo real cuando exista.
+- Vuelta atrás: `docker cp ~/quantfut/deployments/hashchain-revelado-20261018/antes/hashchain.py <worker>:/app/src/qf/publish/hashchain.py`.
+- Observado de paso: el servidor se reinició a las 19:00 UTC (contenedores con 3 min de actividad al llegar) y la API corre `quantfut-api-cybercore:2d8cfef`, que no figura en este registro (otra sesión): anotarlo quien la desplegó.
+
 ### 2026-10-16 · Force Update desde el panel · API + `db/072`
 - PR #10 integrado (`b8f74ae`), arnés del PR y de `main` en verde.
 - Imagen `quantfut-api-force-update:b8f74ae`, derivada de `quantfut-api-admob:20261015b` con solo los tres archivos de Force Update. Base previa comprobada y hashes finales verificados.
@@ -63,6 +72,18 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
   La migración es aditiva: no hace falta deshacerla (las columnas y tablas nuevas no las usa el código anterior).
 - **Legal:** las páginas públicas ya describen Meta, las compras en tiendas y la medición activada por defecto (versión 2026-10-16);
   el servidor acepta también la 2026-10-12 de la app publicada. Falta la revisión del profesional habilitado.
+### 2026-10-15 16:49 UTC · LanusStats/365Scores · tres parejas xG — base de datos
+- Carga explícitamente solicitada: Granada–Albacete 1,58/1,43; Almería–Deportivo 1,89/0,84;
+  Zaragoza–Málaga 1,41/0,32. Solo cuatro campos xG de tres partidos vacíos, sin tocar fechas/resultados.
+- Tres detalles originales y tres respuestas de estadísticas conservados en el archivo existente,
+  con hashes y recepción real del 15-oct-2026. Ensayo revertido y repetición sin escrituras.
+- Respaldo selectivo: volumen del worker, `/srv/quantfut/artifacts/imports/lanusstats-xg-20261015/carga/tres_partidos_antes.json.gz`.
+  Vuelta atrás: restaurar solo los cuatro campos xG de esos tres registros, comprobando que conservan
+  exactamente esta fuente/recepción/valores; conservar el archivo de procedencia. No se deshabilitan triggers.
+- Lectura tras commit: 3/3 parejas, 6/6 hashes y API 200; 1.219 huecos restantes. Modelo/flags/sellos
+  y demás partidos conservados. Sin despliegue de aplicación, reinicios ni entrenamiento.
+- Detalle: `docs/lanusstats_carga_20261015.md`; importador auditado bajo el volumen de archivos,
+  sin modificaciones del código en ejecución.
 
 ### 2026-10-15 15:52 UTC · Worker alineado con `main` (`495053a`) — recreado
 - Imagen `quantfut-worker:candidato-495053a` (`896c5009c1ac`), construida desde `main` con el `requirements.txt` corregido
