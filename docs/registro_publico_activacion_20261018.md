@@ -1,6 +1,6 @@
 # Registro público de la cadena (comprometer-revelar) — preparación y activación
 
-Estado al 2026-10-18: **preparado, sin activar**. `CHAIN_GIT_REMOTE` sigue vacío en el worker, así que no se ha publicado nada.
+Estado al 2026-10-18 22:10 UTC: **activado** (worker recreado desde `main` por orden del titular; ver `DEPLOYS.md`). Los 19 lotes históricos están apartados en `historico_sin_publicar/` y NO se publican hasta que el titular lo decida.
 
 ## Hecho (18-oct)
 - Repositorio público **`cerorar23/quantfut-registro`** (README con el método y cómo verificarlo; ningún dato de lotes).
