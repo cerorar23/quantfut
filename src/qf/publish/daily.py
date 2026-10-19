@@ -22,6 +22,7 @@ import numpy as np
 
 from ..config import settings
 from ..db import query, query_one
+from ..model import ajuste_altitud, contexto
 from ..model.dixon_coles import DixonColes
 from ..model.devig import consensus_devig
 from . import alta_prob_datos, alta_prob_ext, tarjetas_seg
@@ -381,6 +382,33 @@ def _load_calibrator(version: str):
         return LambdaCalibrator.identity()
 
 
+def _contexto_altitud(matches: list[dict]):
+    """(ajuste de altitud, altitudes por partido) o (None, {}) si está apagado, no hay artefacto o algo falla."""
+    if settings.ajuste_altitud_modo not in ("sombra", "activo"):
+        return None, {}
+    try:
+        ajuste = ajuste_altitud.cargar_ultimo(settings.artifact_dir)
+        if ajuste is None or not matches:
+            return None, {}
+        alt = contexto.altitudes_de([m["match_id"] for m in matches])
+        return ajuste, {r.match_id: (r.sede_m, r.hab_visita_m) for r in alt.itertuples()}
+    except Exception:  # noqa: BLE001 — un ajuste opcional no puede impedir el sellado
+        log.exception("Ajuste de altitud no disponible: se predice sin él")
+        return None, {}
+
+
+def _aplicar_altitud(ajuste, altitudes: dict, match_id: str, lam: float, mu: float, modo: str):
+    """(λ, μ, constancia). En `sombra` los lambdas salen intactos y solo se devuelve lo que se habría aplicado."""
+    if ajuste is None:
+        return lam, mu, None
+    sede, habitual = altitudes.get(match_id, (None, None))
+    lam_a, mu_a, info = ajuste_altitud.aplicar(ajuste, lam, mu, sede, habitual)
+    if info is None:
+        return lam, mu, None
+    info["aplicado"] = modo == "activo"
+    return (lam_a, mu_a, info) if info["aplicado"] else (lam, mu, info)
+
+
 def generate_predictions(model_path: str | None = None) -> list[dict]:
     from ..db import conn
     from ..model.pricing import price_all_markets
@@ -407,8 +435,10 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
 
     matches = _upcoming()
     out: list[dict] = []
+    ajuste_alt, altitudes = _contexto_altitud(matches)
 
     for m in matches:
+        info_altitud = None
         try:
             # La calibración se aplica sobre las INTENSIDADES y se vuelve a
             # derivar toda la matriz de marcadores. Así el 1X2 calibrado y el
@@ -418,6 +448,8 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
                                     m["league_id"],
                                     m["home_league"], m["away_league"])
             lam_c, mu_c = calibrator.apply(lam, mu)
+            lam_c, mu_c, info_altitud = _aplicar_altitud(ajuste_alt, altitudes, m["match_id"], lam_c, mu_c,
+                                                         settings.ajuste_altitud_modo)
             markets = price_all_markets(lam_c, mu_c, model.params.rho,
                                         model.max_goals)
             markets["_meta"] = {
@@ -485,7 +517,8 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
                              "calibrated": meta_pred.get("calibrated", False),
                              "market_blend": meta_info,
                              "residual_applied": meta_pred.get("residual_applied",
-                                                               False)})),
+                                                               False),
+                             "ajuste_altitud": info_altitud})),
             )
             pid = cur.fetchone()["prediction_id"]
 
