@@ -6581,3 +6581,12 @@ F7 (migración 084, worker, API, crontab) está en producción con `LOTE_POR_PAR
 ## 2026-10-19 · Impacto por jugador: primer bloque con evidencia
 
 Se midió el apartamiento del once real respecto al habitual ponderado por rendimiento histórico (calificaciones de FotMob relativas al equipo, point-in-time). Pasa la puerta y resiste cuatro particiones y un placebo, pero el efecto (≈ −0,0005 de RPS) es ~5 % de la brecha con el mercado y solo es aplicable con el once confirmado (sello tardío, apagado). Decisión técnica: no recalibrar nada; pasarlo a producción en modo sombra como la altitud, y no activarlo hasta medir hacia adelante. No se cambia el modelo activo.
+
+## 2026-10-19 · Brecha con el mercado por momento y por liga; ajuste del once en sombra
+
+Comparado el A con Pinnacle en T-72 h, T-24 h, T-6 h, T-1 h, once confirmado y cierre (docs/brecha_mercado_20261019.md): la brecha NO se cierra
+en los momentos tempranos (+0,0140 en T-72 h, +0,0164 en el cierre sobre los mismos 181 partidos); la información posterior a T-72 h explica ~15 %.
+Descarta que el problema sea solo comparar contra el cierre. Por liga el A está más cerca en las europeas medianas y más lejos en MLS, MX y Brasil.
+Activado el sello por partido desde el 20-oct (decisión del titular) con el ajuste del once en MODO SOMBRA; gracia de 7 min porque la captura de
+FotMob y el job de sello coinciden en el minuto. Walk-forward ampliado (2024-01 a 2025-10) corriendo en el worker: unirlo con el OOS actual
+y reajustar `ajuste_xi` cuando termine.

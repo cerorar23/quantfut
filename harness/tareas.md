@@ -2996,6 +2996,8 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 ## Impacto por jugador (2026-10-19)
 
 - [x] `qf.model.jugadores` + bloques `epi_total`/`epi_grupos`/`xi_habitual_valor` en `contexto.py`; medición y robustez en `docs/impacto_jugador_20261019.md`. `epi_total` y `epi_grupos` pasan la puerta (ΔRPS −0,0005/−0,0006, 3 de 4 particiones, placebo limpio); el valor del once vs habitual no.
-- [ ] Producción: `ajuste_xi` en MODO SOMBRA en la predicción final (requiere fijar `LOTE_POR_PARTIDO_DESDE`; decisión del titular).
-- [ ] Comparar contra el mercado del mismo momento (F9) antes de juzgar el peso modelo/mercado.
+- [x] Producción: `ajuste_xi` en MODO SOMBRA en la predicción final y `LOTE_POR_PARTIDO_DESDE=2026-10-20` (19-oct; ver DEPLOYS.md).
+- [ ] Tras ~150 partidos con efecto: `python -m qf.model.ajuste_xi --medir` y decidir si pasa a `activo` (hoy ese modo no existe en el código).
+- [ ] Cuando termine el walk-forward ampliado (`/srv/quantfut/artifacts/ext/`): unirlo con el OOS de 2025-10 y repetir `python -m qf.model.contexto` y `ajuste_xi --guardar`.
+- [x] Comparado contra el mercado de cada momento: la brecha no se cierra antes del cierre (docs/brecha_mercado_20261019.md).
 - [ ] Ampliar el walk-forward del A a 2024-2026 para duplicar la potencia (tarda horas).
