@@ -309,7 +309,8 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
 
 # F7 (sello tardío): cada partido se sella solo, minutos antes del saque, con su predicción final y sus picks de valor.
 # El lote diario de las 08:00 UTC sigue igual. `None` = no hay sello por partido (nada cambia hasta fijar el corte al desplegar).
-LOTE_POR_PARTIDO_DESDE: date | None = None
+# Primer día sin lote diario sellado al activarlo (el del 19-oct ya selló a las 09:00 UTC). Decisión del titular, 2026-10-19.
+LOTE_POR_PARTIDO_DESDE: date | None = date(2026, 10, 20)
 
 
 def lote_por_partido(dia: date) -> bool:
