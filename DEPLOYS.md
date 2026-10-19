@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 19:20 UTC · Ajuste del once en MODO SOMBRA y sello por partido ACTIVO desde el 20-oct · worker (5 archivos, `docker cp`) + API (imagen nueva) + crontab, PR #42 (`a1a8dcd`)
+- Orden del titular (confirmó el modo sombra, el corte y el walk-forward ampliado). **`LOTE_POR_PARTIDO_DESDE = 2026-10-20`**: desde el 20-oct 00:00 UTC cada partido con predicción diaria se predice de nuevo (etapa `final`) y se sella solo, con las dos alineaciones capturadas (≤ 90 min) o a T-38 (T-45 menos 7 min de gracia, porque la captura de FotMob de T-45 corre en el mismo minuto). El lote diario de las 09:00 UTC sigue igual.
+- **Ajuste del once** (`model/ajuste_xi.py`, bloque `epi_total`): calcula el factor y lo anota en `data_completeness.sello_tardio.ajuste_xi`; **no cambia los lambdas**. Artefacto `ajuste_xi_2026.10.19-131830.pkl` (4.255 partidos). El once sale de la captura oficial de FotMob (`tipo_alineacion='standard'`). Medición hacia adelante: `python -m qf.model.ajuste_xi --medir`.
+- Archivos: worker `model/{jugadores,ajuste_xi}.py`, `config.py`, `publish/{sello_tardio,hashchain}.py` (idénticos a `main` previo antes de copiar). API: imagen `quantfut-api-web-vip:a1a8dcd` = `07c12bc` + `api/main.py` (`/chain` añade `batch_kind` y `match_id`), `config.py`, `hashchain.py`, `jugadores.py`, `ajuste_xi.py`, `sello_tardio.py`. Crontab recargado: solo se añade `estado_xi` cada hora (el job de sello ya estaba).
+- Verificado: `/health` 200; `/chain` lleva `batch_kind`; `hashchain verify` OK con 21 lotes; `calcular` sobre 6 partidos reales con once oficial; el estado se reconstruye en ~2 min (17.332 jugadores, 495 equipos). El primer sello real será el de un partido del 20-oct.
+- Vuelta atrás: poner `LOTE_POR_PARTIDO_DESDE = None` en `hashchain.py` del worker (apaga el sello por partido sin tocar nada más); o restaurar `releases/f7-sombra-a1a8dcd/backup/*` y el compose previo. Los lotes de partido ya sellados quedan en la cadena (inmutable).
+
 ### 2026-10-19 UTC · Impacto por jugador (solo medición) · worker (2 archivos, `docker cp`), PR #40 (`3284e6c`)
 - `model/jugadores.py` (nuevo) y `model/contexto.py` copiados al worker para poder medir los bloques `epi_*`. No los usa ningún job ni cron: no cambia el modelo, ni lo sellado, ni la API. `contexto.py` era idéntico a `main` previo a #40.
 - Verificado: importa junto con `daily`; `hashchain verify` OK con 21 lotes. Vuelta atrás: copiar de vuelta `releases/jugadores-3284e6c/backup/contexto.py` y borrar `jugadores.py`.
