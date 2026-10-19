@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 13:15 UTC · F7 sello tardío por partido (APAGADO) · migración 084 + worker (8 archivos, `docker cp`) + API (imagen nueva) + crontab, PR #38 (`07c12bc`)
+- Orden del titular («hazlo»). **El corte `LOTE_POR_PARTIDO_DESDE` sigue en `None`**: el job `sello_tardio` corre cada 5 min pero responde `apagado`, y el lote diario no cambia. Falta fijar el corte (decisión aparte, tras el reentrenamiento).
+- **Migración `db/084`** aplicada a producción (transacción con `lock_timeout 5s`): `predictions.etapa` (387 filas `diaria`), `prediction_batches.batch_kind`/`match_id` (21 lotes `diario`) y sus restricciones. Aditiva: el código anterior la ignora.
+- Antes de sobrescribir: los 7 archivos del worker eran idénticos a `main` previo a #38; en la API eran versiones anteriores (se llevan a `main`).
+- **Worker:** `model/{lineup_challenger,shadow}.py`, `publish/{alta_prob_datos,daily,escalera_datos,hashchain,parley_datos,sello_tardio}.py`. **API:** imagen `quantfut-api-web-vip:07c12bc` = `8be381b` + esos archivos; compose fijado. **Crontab** recargado por stdin: solo se añadió la línea de `sello_tardio` (el resto igual, solo reordenado).
+- Verificado: `/health` 200; `/alta-probabilidad` activa; `hashchain verify` OK con 21 lotes; el lote de las 09:00 UTC de hoy (sellado con el código anterior) lleva `ajuste_altitud` en las 9 predicciones.
+- Vuelta atrás: restaurar `releases/f7-sello-07c12bc/backup/docker-compose.before.yml` + `up -d --no-deps --no-build --force-recreate api`; copiar de vuelta `backup/worker_*.py` y cargar `backup/crontab_worker.txt`. La migración se deja (aditiva); esquema previo en `backup/esquema_antes.sql`.
+
 ### 2026-10-19 UTC · Motor B medido por partido (control del «fallo grosero») · worker (3 archivos, `docker cp`) + API (imagen nueva), PR #36 (`8be381b`)
 - Orden del titular. Sin migración. Los lotes ya sellados no cambian: solo cambia cómo el control de alta probabilidad mide el acierto (varianza por partido, la mayor de las dos) y lo que muestra el historial (`partidos`, `margen_ee` por mercado).
 - Antes de sobrescribir: los 3 `publish/alta_prob*.py` del worker eran idénticos a `main` previo a #36; en la API eran una versión anterior (se llevan a `main`), y `frontend/app.js` e `index.html` eran idénticos.

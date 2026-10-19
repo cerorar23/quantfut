@@ -2988,6 +2988,7 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 ## F7 sello tardío (2026-10-19)
 
 - [x] Fases 1-4 implementadas y ensayadas (PR #38, sin fusionar a propósito): migración `db/084`, lectores solo con lotes diarios, `hashchain.seal_partido`/verify/revelado de `partido/…`, `publish/sello_tardio.py` (cron cada 5 min, apagado con `LOTE_POR_PARTIDO_DESDE=None`).
-- [ ] Desplegar tras el reentrenamiento del 1-nov: fusionar #38, migración 084, worker (daily.py, hashchain.py, sello_tardio.py, shadow.py, lineup_challenger.py) y API, fijar `LOTE_POR_PARTIDO_DESDE`, cargar el crontab, anotar en DEPLOYS.md.
+- [x] Desplegado el 19-oct (apagado, `LOTE_POR_PARTIDO_DESDE=None`): #38, migración 084, worker, API y crontab; ver DEPLOYS.md.
+- [ ] Fijar `LOTE_POR_PARTIDO_DESDE` (primer día sin lote diario sellado) cuando algún bloque de alineación pase la puerta; hasta entonces no aporta.
 - [ ] Medir si algún bloque de alineación (`lineup_challenger`) pasa la puerta con el once confirmado; solo entonces la predicción final difiere de la diaria.
 - [ ] Decidir si se envía push al sellar un pick de partido (sigue sin responder).
