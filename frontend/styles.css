@@ -794,3 +794,7 @@ table.standings td:last-child{text-align:left}
 .sport-nav a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 @media(max-width:1180px){.header-status{display:none}}
 @media(max-width:760px){.header-main{height:auto;min-height:57px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}.header-main .sport-nav{order:3;flex-basis:100%;justify-content:flex-start;border:0;background:transparent;padding:3px 0 0}.sport-nav a{min-height:38px;padding:8px 16px;border:1px solid var(--border)}}
+.locked-blur{filter:blur(6px);user-select:none;pointer-events:none;color:#f0b429}
+.locked-pick{border-color:rgba(240,180,41,.4)}.live-pick.locked-pick>.locked-main{text-align:left;flex:1}.locked-vip{margin-top:8px}
+.locked-quote strong{font-size:18px}
+.locked-ticket{border-color:rgba(240,180,41,.4)}

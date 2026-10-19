@@ -57,3 +57,36 @@ export function isPublicationActive(gate) {
     && gate.data.puerta_comercial.sombra_criterio_sharp?.autorizada === true
     && gate.data.puerta_comercial.publicacion_de_picks === 'activa';
 }
+
+// Pronósticos bloqueados (decisión del titular, 2026-10-18): se ven difuminados, cuota incluida, con un botón «Acceso VIP» que
+// lleva a Suscripciones (Whop). El servidor NO envía la selección, la probabilidad ni la cuota de lo bloqueado en la ruta pública
+// (`mobile.metadata` y /alta-probabilidad): las franjas son bloques, no datos, así que quitar el filtro con las herramientas del
+// navegador no revela nada.
+export const LOCKED_PLACEHOLDER = '████████ · ██ %';
+export const LOCKED_QUOTE_PLACEHOLDER = '@█.██';
+export function lockedPicksHtml(vip, { esc, date, time }) {
+  if (!Array.isArray(vip) || vip.length === 0) return '';
+  const rows = vip.map(p => `<article class="live-pick alta-pick locked-pick"><div class="locked-main"><span>${esc(p.league_id ?? 'Liga')} · ${date(p.kickoff_utc)} ${esc(time(p.kickoff_utc))}</span><h3 class="locked-blur" aria-hidden="true">${LOCKED_PLACEHOLDER}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}</p></div><div class="locked-quote"><strong class="locked-blur" aria-hidden="true">${LOCKED_QUOTE_PLACEHOLDER}</strong><small>cuota</small></div></article>`).join('');
+  const n = vip.length;
+  return `<div class="live-pick-list locked-list">${rows}</div><p class="live-reason">${n} pronóstico${n === 1 ? '' : 's'} más con VIP: la selección y la probabilidad se desbloquean con la suscripción.</p><button type="button" class="primary-button locked-vip" data-route="planes">Acceso VIP</button>`;
+}
+
+// Parley bloqueado: el servidor manda solo el escalón y el rango de cuota de las reglas (`parley_acceso`), sin patas, probabilidad ni
+// cuota exacta. La franja son bloques; no se pinta nada que venga en el ticket salvo el número de escalón.
+export function lockedParleyHtml(t, { number }) {
+  return `<article class="ladder-card locked-ticket"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${number(t.escalon)} · BLOQUEADO</p><h3 class="locked-blur" aria-hidden="true">${LOCKED_PLACEHOLDER}</h3></div><strong class="ladder-balance locked-blur" aria-hidden="true">${LOCKED_QUOTE_PLACEHOLDER}</strong></div><p class="ladder-meta locked-blur" aria-hidden="true">Probabilidad ██,█% · 1 de cada ██,█</p><div class="live-pick-list"><div class="live-pick locked-blur" aria-hidden="true">████████ ██████ · ████ ████████</div></div><button type="button" class="primary-button locked-vip" data-route="planes">Acceso VIP</button></article>`;
+}
+
+// Un suscriptor VIP ve todos los pronósticos también en la web: a las rutas que dependen de la suscripción se les envía la sesión
+// (cabecera que da `getHeaders`, solo en memoria). Si el servidor la rechaza (401/403: sesión caducada), se vuelve a pedir como
+// visitante, así que una sesión mala nunca deja la web sin datos. Las demás rutas nunca llevan la cabecera.
+export function sessionFetch(fetcher, getHeaders, paths) {
+  return async (path, options = {}) => {
+    const headers = getHeaders();
+    if (headers.Authorization && paths.some(p => path.startsWith(p))) {
+      const response = await fetcher(path, { ...options, headers: { ...options.headers, ...headers } });
+      if (response.status !== 401 && response.status !== 403) return response;
+    }
+    return fetcher(path, options);
+  };
+}

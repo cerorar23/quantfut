@@ -18,6 +18,8 @@ export class ApiError extends Error {
 
 export function _setFetchForTests(fn) { fetchImpl = fn; access = null; refreshing = null; }
 export const hasAccess = () => access !== null;
+// Cabecera de la sesión para pedir al servidor lo que solo ve un suscriptor (alta probabilidad, escalera y parley).
+export const authHeaders = () => (access ? { Authorization: `Bearer ${access}` } : {});
 
 async function call(path, { method = 'GET', body, auth = false } = {}) {
   const headers = { 'X-QF-Client': 'web' };

@@ -2,7 +2,7 @@
 // cuenta-api.js); el pago todavía no existe y ningún botón crea una orden.
 // Importes, duración y qué planes están a la venta salen del servidor
 // (catálogo público de cuenta-api.js, editable en el panel /control): aquí solo viven los textos.
-import * as cuenta from './cuenta-api.js?v=w2b3c4d5e6f7';
+import * as cuenta from './cuenta-api.js?v=b298f1c04385';
 import { googleIdToken } from './google-auth.js?v=w2b3c4d5e6f7';
 import { init as initPixel, identify, track, browserIds } from './meta-pixel.js?v=m1';
 import { mount as mountCheckout, destroy as destroyCheckout } from './whop-checkout.js?v=w1a2b3c4d5e6';

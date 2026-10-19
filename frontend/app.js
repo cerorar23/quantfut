@@ -1,6 +1,7 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=5d460d0b0c91';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=m1';
+import { createMembershipUI } from './membership.js?v=8725532f95ca';
+import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -933,7 +934,7 @@ function altaView() {
   const source = publicData?.alta;
   if (!source) return `${head}<section class="live-panel"><p>Consultando pronósticos de alta probabilidad…</p></section>`;
   if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudieron consultar los pronósticos. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
-  const { estado, motivos, proximos, historial: h } = source.data;
+  const { estado, motivos, proximos, vip, historial: h } = source.data;
   const ic = Array.isArray(h.diferencia_ic95) ? h.diferencia_ic95 : null;
   const record = h.n ? `<div class="live-facts"><div><span>PROMETIDO</span><strong>${realNumber(h.acierto_prometido, 1)}%</strong><small>media de las probabilidades</small></div><div><span>REAL</span><strong>${realNumber(h.acierto_real, 1)}%</strong><small>${realNumber(h.aciertos)} de ${realNumber(h.n)} acertados</small></div><div><span>DIFERENCIA · IC95</span><strong>${ic ? `${realNumber(ic[0], 1)} a ${realNumber(ic[1], 1)}` : '—'}</strong><small>${ic ? 'puntos, real − prometido' : 'Sin intervalo todavía'}</small></div></div>` : '<p>Todavía no hay pronósticos liquidados.</p>';
   const byMarket = Object.entries(h.por_mercado ?? {});
@@ -946,7 +947,7 @@ function altaView() {
   const badgeText = estado === 'activa' ? 'Activa' : estado === 'pausada' ? 'Pausada' : 'Desactivada';
   return `${head}
     <section class="live-panel" aria-label="Historial de alta probabilidad"><div class="live-head"><div><p class="eyebrow">HISTORIAL PÚBLICO · /ALTA-PROBABILIDAD</p><h2>Prometido frente a real</h2></div>${badge(badgeText, estado === 'activa' ? 'good' : 'muted')}</div>${record}${marketTable}${roi}${note}</section>
-    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}${lockedPicksHtml(vip, { esc, date: realDate, time: realTime, number: realNumber })}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
 }
 
 // Parley del día (2026-10-11). Solo datos reales de /parley: cada parlay se
@@ -959,6 +960,7 @@ function parleyPata(p) {
 }
 
 function parleyTicket(t) {
+  if (t.locked) return lockedParleyHtml(t, { number: realNumber });
   const estado = t.outcome ? PARLEY_ESTADO[t.outcome] ?? t.outcome : 'En juego';
   return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${realNumber(t.escalon)} · ${realNumber(t.n_patas)} PATAS</p><h3>${esc(estado)}</h3></div><strong class="ladder-balance">${realNumber(t.cuota_total, 2)}</strong></div><p class="ladder-meta">Probabilidad ${realNumber(t.prob_total * 100, 1)}% · 1 de cada ${realNumber(1 / t.prob_total, 1)}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><div class="live-pick-list">${t.patas.map(parleyPata).join('')}</div></article>`;
 }
@@ -1008,7 +1010,7 @@ function escaleraReto(r) {
   const ultimo = pasos.at(-1);
   const potencial = r.estado === 'esperando' && ultimo ? Number(r.en_juego) * Number(ultimo.price) : null;
   const freeroll = r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : 'reto sin freeroll';
-  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">RETO #${realNumber(r.reto_id)} · ${realNumber(objetivo)} ESCALONES</p><h3>${ESCALERA_ESTADO[r.estado] ?? r.estado}</h3></div><strong class="ladder-balance">${unidades(r.saldo)}</strong></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(r.reto_id)}">${peldanos}</ol><p class="ladder-meta">${r.estado === 'esperando' ? `En juego ${unidades(r.en_juego)}${potencial ? ` · si se acierta: ${unidades(potencial)}` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${unidades(r.stake_inicial)} · ${Number(r.retirado) > 0 ? `retirado ${unidades(r.retirado)}: lo que queda va sin riesgo propio` : freeroll}</p>${pasos.length ? `<div class="live-pick-list">${[...pasos].reverse().map(escaleraPaso).join('')}</div>` : '<p class="ladder-meta">Esperando su primer escalón sellado.</p>'}</article>`;
+  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">RETO #${realNumber(r.reto_id)} · ${realNumber(objetivo)} ESCALONES</p><h3>${ESCALERA_ESTADO[r.estado] ?? r.estado}</h3></div><strong class="ladder-balance">${unidades(r.saldo)}</strong></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(r.reto_id)}">${peldanos}</ol><p class="ladder-meta">${r.estado === 'esperando' ? `En juego ${unidades(r.en_juego)}${potencial ? ` · si se acierta: ${unidades(potencial)}` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${unidades(r.stake_inicial)} · ${Number(r.retirado) > 0 ? `retirado ${unidades(r.retirado)}: lo que queda va sin riesgo propio` : freeroll}</p>${pasos.length ? `<div class="live-pick-list">${[...pasos].reverse().map(escaleraPaso).join('')}</div>` : '<p class="ladder-meta">Esperando su primer escalón sellado.</p>'}${lockedPicksHtml(r.vip, { esc, date: realDate, time: realTime })}</article>`;
 }
 function escaleraView() {
   const head = `<div class="view-title"><div><p class="eyebrow">RETOS / ESCALERA</p><h1>Reto escalera</h1><p class="lead">Retos de 3 a 6 escalones que empiezan con 10 unidades: cada escalón apuesta todo el saldo a un pronóstico de cuota 1,25-1,40. Ganarlos todos completa el reto; fallar uno lo cierra. Cada escalón se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
@@ -1459,6 +1461,7 @@ function render() {
   applyCybercoreTheme(app);
   membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
+  syncPublicAuth();
   app.querySelector('.mobile-bottom-nav').inert = overlay;
   app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {
     const values = bar.dataset.segments.split(',');
@@ -1616,11 +1619,22 @@ render();
 membershipUI.restoreSession();
 membershipUI.loadPlans();
 membershipUI.loadPaymentConfig();
+// Un suscriptor VIP ve todos los pronósticos también en la web (ver `sessionFetch`).
+const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/alta-probabilidad', '/escalera', '/parley']);
+// Al iniciar o cerrar sesión, o al activarse la suscripción, se recargan los datos con la sesión nueva.
+let publicAuthKey = 'visitante';
+function syncPublicAuth() {
+  const s = state.session;
+  const key = s ? `${s.account?.account_id ?? s.account?.email ?? 'cuenta'}:${s.plus ? 'vip' : 'gratis'}` : 'visitante';
+  if (key === publicAuthKey) return;
+  publicAuthKey = key;
+  refreshPublicData();
+}
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
   render();
-  const result = await loadPublicData();
+  const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;
   publicData = result;
   if (!state.modal && !state.drawer && !state.mobileMenuOpen) render();

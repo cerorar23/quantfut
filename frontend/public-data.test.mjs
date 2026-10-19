@@ -85,3 +85,69 @@ test('el parley se carga de su ruta pública y un formato roto no se enseña', a
   const roto = await loadPublicData(async path => ({ ok: true, json: async () => (path === '/parley' ? { dias: 'x' } : responses[path]) }));
   assert.equal(roto.parley.status, 'error');
 });
+
+import { LOCKED_PLACEHOLDER, LOCKED_QUOTE_PLACEHOLDER, lockedPicksHtml } from './public-data.js';
+
+const fmt = { esc: s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'), date: () => '19 oct', time: () => '15:00', number: (v, d) => Number(v).toFixed(d) };
+
+test('los pronósticos bloqueados se muestran difuminados con botón a Suscripciones', () => {
+  const html = lockedPicksHtml([
+    { league_id: 'gb.premier_league', kickoff_utc: '2026-10-19T15:00:00Z', local: 'Tottenham', visitante: 'Coventry', market: 'totals', cuota: 1.35 },
+    { league_id: 'es.laliga', kickoff_utc: '2026-10-19T17:00:00Z', local: 'Getafe', visitante: 'Rayo', cuota: null },
+  ], fmt);
+  assert.equal((html.match(/class="live-pick alta-pick locked-pick"/g) ?? []).length, 2);
+  assert.equal((html.match(/locked-blur/g) ?? []).length, 4);               // pronóstico y cuota de cada fila
+  assert.ok(html.includes(LOCKED_PLACEHOLDER));
+  assert.ok(html.includes('data-route="planes"') && html.includes('Acceso VIP'));
+  assert.equal((html.match(/@█\.██/g) ?? []).length, 2);                    // la cuota también va difuminada
+  assert.ok(html.includes(LOCKED_QUOTE_PLACEHOLDER));
+  assert.ok(!html.includes('1.35'));                                       // aunque el servidor la mande, no se pinta
+  assert.ok(html.includes('2 pronósticos más con VIP'));
+});
+
+test('lo bloqueado nunca pinta selección, probabilidad ni cuota, aunque el servidor mande campos de más', () => {
+  const html = lockedPicksHtml([{ local: 'A', visitante: 'B', texto: 'Más de 2,5 goles', prob: 0.87, selection: 'over', line: 2.5, cuota: 1.23, ref_price: 1.23 }], fmt);
+  assert.ok(!html.includes('Más de 2,5') && !html.includes('0.87') && !html.includes('over') && !html.includes('1.23'));
+});
+
+test('sin bloqueados no se pinta nada y el HTML se escapa', () => {
+  assert.equal(lockedPicksHtml([], fmt), '');
+  assert.equal(lockedPicksHtml(undefined, fmt), '');
+  assert.ok(!lockedPicksHtml([{ local: '<img src=x>', visitante: 'B' }], fmt).includes('<img'));
+});
+
+import { lockedParleyHtml } from './public-data.js';
+
+test('un parley bloqueado se pinta difuminado y solo muestra el escalón', () => {
+  const html = lockedParleyHtml({ escalon: 3, locked: true, cuota_min: 2.9, cuota_max: 3.1, cuota_total: 3.02, prob_total: 0.33, n_patas: 4,
+    patas: [{ texto: 'Más de 2,5 goles', price: 1.4 }] }, { number: v => String(v) });
+  assert.ok(html.includes('ESCALÓN 3 · BLOQUEADO') && html.includes('data-route="planes"') && html.includes('Acceso VIP'));
+  assert.ok(html.includes(LOCKED_PLACEHOLDER) && html.includes(LOCKED_QUOTE_PLACEHOLDER));
+  assert.ok(!html.includes('2.9') && !html.includes('3.02') && !html.includes('0.33') && !html.includes('Más de 2,5') && !html.includes('1.4'));
+  assert.ok((html.match(/locked-blur/g) ?? []).length >= 4);
+});
+
+import { sessionFetch } from './public-data.js';
+
+test('sessionFetch envía la sesión solo a las rutas de suscripción y nunca a las demás', async () => {
+  const vistas = [];
+  const fetcher = async (path, options = {}) => { vistas.push({ path, auth: options.headers?.Authorization }); return { ok: true, status: 200 }; };
+  const f = sessionFetch(fetcher, () => ({ Authorization: 'Bearer t' }), ['/alta-probabilidad', '/escalera', '/parley']);
+  await f('/alta-probabilidad', { cache: 'no-store' });
+  await f('/model-card', { cache: 'no-store' });
+  await f('/parley');
+  assert.deepEqual(vistas, [{ path: '/alta-probabilidad', auth: 'Bearer t' }, { path: '/model-card', auth: undefined }, { path: '/parley', auth: 'Bearer t' }]);
+});
+
+test('sessionFetch sin sesión no envía cabecera y con sesión rechazada vuelve a pedir como visitante', async () => {
+  const llamadas = [];
+  const rechaza = async (path, options = {}) => { llamadas.push(options.headers?.Authorization ?? 'visitante'); return { ok: !options.headers?.Authorization, status: options.headers?.Authorization ? 401 : 200 }; };
+  const sinSesion = sessionFetch(rechaza, () => ({}), ['/escalera']);
+  await sinSesion('/escalera');
+  assert.deepEqual(llamadas, ['visitante']);
+  llamadas.length = 0;
+  const caducada = sessionFetch(rechaza, () => ({ Authorization: 'Bearer vieja' }), ['/escalera']);
+  const r = await caducada('/escalera');
+  assert.deepEqual(llamadas, ['Bearer vieja', 'visitante']);
+  assert.equal(r.status, 200);                                   // la web no se queda sin datos
+});
