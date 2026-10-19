@@ -2978,3 +2978,9 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 
 - [x] Diagnóstico a fondo (`python -m qf.eval.corners_diagnostico`, `docs/corners_diagnostico_20261019.md`): el modelo está calibrado (41.815 partidos, a menos de 0,6 puntos en todas las líneas y ligas); el déficit de los «menos de» publicados (−5,0 ±3,6, z = −1,4) es ruido de 170 partidos con picks correlacionados. **Corrijo lo que dije el 19-oct: no hay que recalibrar.** Ninguna variable de contexto mejora la predicción del total.
 - [ ] Añadir el número de partidos distintos (y error estándar por partido) a las tablas por mercado de `/alta-probabilidad` y del panel: hoy cuentan picks, que son hasta 4 por partido.
+
+## Motor B y copas por partido (2026-10-19)
+
+- [x] Motor B medido por partido (`docs/motor_b_por_partido_20261019.md`): ningún mercado se desvía de forma significativa (|z| < 1,7): totales −1,2, ganador −1,0, ambos marcan −0,5. No hay nada que corregir en las probabilidades.
+- [x] Copas europeas: empates reales 20,3 % (Champions) y 24,1 % (Europa League) en el historial, frente a 21,9 % y 25,9 % del modelo: sin sesgo; 2025-26 fue una temporada baja. No se toca.
+- [x] **Corregido:** el «fallo grosero» de `alta_prob.control` suponía picks independientes (la ampliada tiene 2.420 picks en 222 partidos) y podía bloquear un grupo por ruido; ahora usa la varianza por partido (la mayor de las dos). Historial y tabla de la web muestran partidos distintos y margen por partido.

@@ -35,7 +35,7 @@ def sql_sellado() -> str:
 
 def _liquidados() -> list[dict]:
     return query(
-        f"""SELECT a.market, a.prob, a.ref_price, r.outcome, m.kickoff_utc
+        f"""SELECT a.match_id, a.market, a.prob, a.ref_price, r.outcome, m.kickoff_utc
             FROM alta_prob_ext a
             JOIN alta_prob_ext_results r ON r.ext_id = a.ext_id
             JOIN matches m ON m.match_id = a.match_id
