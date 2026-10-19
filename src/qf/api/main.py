@@ -302,13 +302,13 @@ def calibration():
 def chain(limit: int = Query(90, le=365)):
     return {
         "lotes": query(
-            """SELECT batch_date, n_predictions, n_picks, payload_sha256,
+            """SELECT batch_date, batch_kind, match_id, n_predictions, n_picks, payload_sha256,
                       prev_sha256, chain_sha256, created_at, published_ref
                FROM prediction_batches ORDER BY seq DESC LIMIT %s""",
             (limit,),
         ),
         "como_verificar": [
-            "1. Descarga el JSON del lote del repo público.",
+            "1. Descarga el JSON del lote del repo público (los lotes de tipo 'partido' están en partido/AAAA-MM-DD/).",
             "2. Calcula su SHA-256 y compáralo con payload_sha256.",
             "3. Comprueba que sha256(prev_sha256 || payload_sha256) == chain_sha256.",
             "Si cambiáramos una sola predicción pasada, todos los hashes "

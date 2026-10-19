@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 
 from ..config import settings
 from ..db import query, query_one
+from ..model import ajuste_xi
 from . import daily, hashchain
 from . import picks as pk
 from . import telegram as tg
@@ -40,7 +41,11 @@ def candidatos(ahora: datetime) -> list[dict]:
     """Partidos próximos con predicción diaria y sin lote de partido."""
     return query(
         """SELECT m.match_id, m.kickoff_utc,
-                  (SELECT count(DISTINCT l.side) FROM lineups l WHERE l.match_id = m.match_id) AS lados_xi
+                  GREATEST(
+                    (SELECT count(DISTINCT l.side) FROM lineups l WHERE l.match_id = m.match_id),
+                    (SELECT count(DISTINCT jp.side) FROM fotmob_jugador_previo jp
+                     JOIN fotmob_previo fp ON fp.match_id = jp.match_id AND fp.capturado_en = jp.capturado_en
+                     WHERE jp.match_id = m.match_id AND jp.titular AND fp.tipo_alineacion = 'standard')) AS lados_xi
            FROM matches m
            WHERE m.status = 'scheduled' AND m.kickoff_utc > %s AND m.kickoff_utc <= %s
              AND EXISTS (SELECT 1 FROM predictions p WHERE p.match_id = m.match_id AND p.etapa = 'diaria')
@@ -69,6 +74,8 @@ def sellar(m: dict, ahora: datetime) -> dict:
     if not ya_final:        # si una pasada anterior cayó entre predecir y sellar, se reutiliza la final ya guardada
         info = {"minutos_al_saque": round((ko - ahora).total_seconds() / 60, 1), "lados_con_alineacion": int(m["lados_xi"]),
                 "disparo": "alineacion" if m["lados_xi"] >= 2 and ko - ahora > VENTANA_SELLO else "t-45"}
+        if settings.ajuste_xi_modo != "off":      # solo sombra: anota el factor, no toca los lambdas
+            info["ajuste_xi"] = ajuste_xi.calcular(mid, settings.artifact_dir)
         preds = daily.generate_predictions(solo_partido=mid, etapa="final", hasta=ko + timedelta(hours=1), info_final=info)
         if not preds:
             log.error("Sin predicción final para %s", mid)

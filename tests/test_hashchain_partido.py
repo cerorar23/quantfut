@@ -120,5 +120,6 @@ def test_el_partido_se_revela_cuando_termina_y_pasa_el_margen(repo):
     assert hc.revelables_partido(d, ahora, estado) == []        # ya subido
 
 
-def test_el_corte_por_defecto_no_sella_por_partido():
-    assert hc.LOTE_POR_PARTIDO_DESDE is None and not hc.lote_por_partido(date(2030, 1, 1))
+def test_el_corte_de_partido_empieza_el_20_de_octubre():
+    assert hc.LOTE_POR_PARTIDO_DESDE == date(2026, 10, 20)
+    assert not hc.lote_por_partido(date(2026, 10, 19)) and hc.lote_por_partido(date(2026, 10, 20))
