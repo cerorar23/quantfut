@@ -93,6 +93,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # F7: estado de fuerzas y onces habituales del ajuste del once (se reconstruye en ~2 min; el job de sello solo lo lee).
 12 * * * * cd /app && flock -n /tmp/estado_xi.lock python -m qf.model.ajuste_xi --estado >> /var/log/estado_xi.log 2>&1
 
+# Ajuste del once en sombra: mide hacia adelante cada dia y avisa una sola vez al llegar a 150 partidos con efecto.
+30 7 * * * cd /app && python -m qf.model.ajuste_xi --medir --avisar >> /var/log/ajuste_xi.log 2>&1
+
 # Liquidacion y CLV de respaldo (results.py ya la encadena).
 30 2,10,18 * * * cd /app && python -m qf.eval.clv >> /var/log/clv.log 2>&1
 

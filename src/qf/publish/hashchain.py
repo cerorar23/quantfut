@@ -335,6 +335,8 @@ def _collect_partido(match_id: str) -> dict:
                   p.home_lambda, p.away_lambda, p.rho, p.confidence_tier,
                   p.markets -> '1x2'    AS m_1x2,
                   p.markets -> 'totals' AS m_totals,
+                  -- momento y motivo del sello y factor del once en sombra: queda en el JSON que se revela y se verifica
+                  p.data_completeness -> 'sello_tardio' AS sello_tardio,
                   m.kickoff_utc, m.league_id,
                   th.canonical_name AS home_team, ta.canonical_name AS away_team
            FROM predictions p

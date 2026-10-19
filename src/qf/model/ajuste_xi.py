@@ -188,13 +188,21 @@ def main(argv=None) -> None:
     ap.add_argument("--guardar", action="store_true", help="escribe ajuste_xi_<versión>.pkl")
     ap.add_argument("--medir", action="store_true", help="mide hacia adelante con las predicciones finales ya jugadas")
     ap.add_argument("--estado", action="store_true", help="reconstruye el estado de fuerzas y onces (cron cada hora)")
+    ap.add_argument("--avisar", action="store_true", help="con --medir: avisa por Telegram una sola vez al llegar a 150 partidos")
     a = ap.parse_args(argv)
     if a.estado:
         e = estado_xi(settings.artifact_dir, max_edad_s=0)
         print(json.dumps({"jugadores": len(e.n), "equipos": len(e.historial), "hasta": str(e.hasta)}))
         return
     if a.medir:
-        print(json.dumps(medir(), indent=2, ensure_ascii=False))
+        r = medir()
+        print(json.dumps(r, indent=2, ensure_ascii=False))
+        marca = f"{settings.artifact_dir}/ajuste_xi_150_avisado"
+        if a.avisar and r.get("listo_para_decidir") and not os.path.exists(marca):
+            from ..publish import telegram as tg
+            tg.alert(f"Ajuste del once: {r['con_efecto_mayor_0.5pct']} partidos con efecto medidos hacia adelante "
+                     f"(ΔRPS {r['delta_rps']}, p95 {r['p95']}). Toca decidir si pasa a activo.")
+            open(marca, "w").close()
         return
     from . import contexto
     rutas = a.oos or [max(glob.glob(f"{settings.artifact_dir}/oos_2*.pkl"), key=os.path.getmtime)]
