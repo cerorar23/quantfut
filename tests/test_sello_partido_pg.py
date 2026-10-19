@@ -37,8 +37,8 @@ def _partido(kickoff):
 
 def _prediccion(mid, etapa):
     return db.query_one(
-        """INSERT INTO predictions (match_id, model_version, home_lambda, away_lambda, markets, etapa)
-           VALUES (%s, 'test', 1.4, 1.1, '{"1x2": {}, "totals": {}}'::jsonb, %s) RETURNING prediction_id""",
+        """INSERT INTO predictions (match_id, model_version, fs_version, home_lambda, away_lambda, markets, etapa)
+           VALUES (%s, 'test', 'test', 1.4, 1.1, '{"1x2": {}, "totals": {}}'::jsonb, %s) RETURNING prediction_id""",
         (mid, etapa))["prediction_id"]
 
 
