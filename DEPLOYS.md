@@ -33,6 +33,10 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 UTC · Impacto por jugador (solo medición) · worker (2 archivos, `docker cp`), PR #40 (`3284e6c`)
+- `model/jugadores.py` (nuevo) y `model/contexto.py` copiados al worker para poder medir los bloques `epi_*`. No los usa ningún job ni cron: no cambia el modelo, ni lo sellado, ni la API. `contexto.py` era idéntico a `main` previo a #40.
+- Verificado: importa junto con `daily`; `hashchain verify` OK con 21 lotes. Vuelta atrás: copiar de vuelta `releases/jugadores-3284e6c/backup/contexto.py` y borrar `jugadores.py`.
+
 ### 2026-10-19 13:15 UTC · F7 sello tardío por partido (APAGADO) · migración 084 + worker (8 archivos, `docker cp`) + API (imagen nueva) + crontab, PR #38 (`07c12bc`)
 - Orden del titular («hazlo»). **El corte `LOTE_POR_PARTIDO_DESDE` sigue en `None`**: el job `sello_tardio` corre cada 5 min pero responde `apagado`, y el lote diario no cambia. Falta fijar el corte (decisión aparte, tras el reentrenamiento).
 - **Migración `db/084`** aplicada a producción (transacción con `lock_timeout 5s`): `predictions.etapa` (387 filas `diaria`), `prediction_batches.batch_kind`/`match_id` (21 lotes `diario`) y sus restricciones. Aditiva: el código anterior la ignora.
