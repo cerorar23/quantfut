@@ -6569,3 +6569,7 @@ CLV: la puerta comercial lee `publish.shadow_sharp.report()` (ofertas publicable
 - El token de Conversions API se generó con la opción «sin Dataset Quality API»: la otra es irreversible y no hacía falta.
 - Mientras `META_TEST_EVENT_CODE` esté puesto, nada llega a los eventos reales; el paso a producción es quitar esa línea (decisión del titular tras ver el EMQ).
 - El worker no lleva `meta_capi` (alineación pendiente): el cron del host envía cada 5 min. Es transitorio.
+
+## 2026-10-19 · F7 sello tardío implementado, sin desplegar
+
+Decisión del titular: ventana = alineaciones de los dos lados o T-45; corte = primer día sin lote diario al desplegar. Decisión técnica clave: el lote de partido va en la MISMA cadena (orden por `seq`), así que `verify` ya no puede ordenar por nombre de archivo y sigue `prev_sha256` desde el génesis (con vuelta al orden por nombre si hay ruptura, para que los errores sigan siendo los de siempre). Los tres lectores que deciden qué está sellado miran solo `batch_kind='diario'`: un lote de partido ni cuenta ni duplica. La predicción final no cambia la calidad por sí sola (mismos lambdas mientras ningún bloque de alineación pase la puerta); lo que cambia es el momento del sello y el precio de los picks de valor. No se fusiona hasta desplegar para no romper «producción = main».
