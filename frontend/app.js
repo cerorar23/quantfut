@@ -1,4 +1,4 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml } from './public-data.js?v=627a159af66f';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml } from './public-data.js?v=3cbbf4b70a0c';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
 import { createMembershipUI } from './membership.js?v=m1';
 
@@ -959,6 +959,7 @@ function parleyPata(p) {
 }
 
 function parleyTicket(t) {
+  if (t.locked) return lockedParleyHtml(t, { number: realNumber });
   const estado = t.outcome ? PARLEY_ESTADO[t.outcome] ?? t.outcome : 'En juego';
   return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${realNumber(t.escalon)} · ${realNumber(t.n_patas)} PATAS</p><h3>${esc(estado)}</h3></div><strong class="ladder-balance">${realNumber(t.cuota_total, 2)}</strong></div><p class="ladder-meta">Probabilidad ${realNumber(t.prob_total * 100, 1)}% · 1 de cada ${realNumber(1 / t.prob_total, 1)}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><div class="live-pick-list">${t.patas.map(parleyPata).join('')}</div></article>`;
 }
@@ -1008,7 +1009,7 @@ function escaleraReto(r) {
   const ultimo = pasos.at(-1);
   const potencial = r.estado === 'esperando' && ultimo ? Number(r.en_juego) * Number(ultimo.price) : null;
   const freeroll = r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : 'reto sin freeroll';
-  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">RETO #${realNumber(r.reto_id)} · ${realNumber(objetivo)} ESCALONES</p><h3>${ESCALERA_ESTADO[r.estado] ?? r.estado}</h3></div><strong class="ladder-balance">${unidades(r.saldo)}</strong></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(r.reto_id)}">${peldanos}</ol><p class="ladder-meta">${r.estado === 'esperando' ? `En juego ${unidades(r.en_juego)}${potencial ? ` · si se acierta: ${unidades(potencial)}` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${unidades(r.stake_inicial)} · ${Number(r.retirado) > 0 ? `retirado ${unidades(r.retirado)}: lo que queda va sin riesgo propio` : freeroll}</p>${pasos.length ? `<div class="live-pick-list">${[...pasos].reverse().map(escaleraPaso).join('')}</div>` : '<p class="ladder-meta">Esperando su primer escalón sellado.</p>'}</article>`;
+  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">RETO #${realNumber(r.reto_id)} · ${realNumber(objetivo)} ESCALONES</p><h3>${ESCALERA_ESTADO[r.estado] ?? r.estado}</h3></div><strong class="ladder-balance">${unidades(r.saldo)}</strong></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(r.reto_id)}">${peldanos}</ol><p class="ladder-meta">${r.estado === 'esperando' ? `En juego ${unidades(r.en_juego)}${potencial ? ` · si se acierta: ${unidades(potencial)}` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${unidades(r.stake_inicial)} · ${Number(r.retirado) > 0 ? `retirado ${unidades(r.retirado)}: lo que queda va sin riesgo propio` : freeroll}</p>${pasos.length ? `<div class="live-pick-list">${[...pasos].reverse().map(escaleraPaso).join('')}</div>` : '<p class="ladder-meta">Esperando su primer escalón sellado.</p>'}${lockedPicksHtml(r.vip, { esc, date: realDate, time: realTime })}</article>`;
 }
 function escaleraView() {
   const head = `<div class="view-title"><div><p class="eyebrow">RETOS / ESCALERA</p><h1>Reto escalera</h1><p class="lead">Retos de 3 a 6 escalones que empiezan con 10 unidades: cada escalón apuesta todo el saldo a un pronóstico de cuota 1,25-1,40. Ganarlos todos completa el reto; fallar uno lo cierra. Cada escalón se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;

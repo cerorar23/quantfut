@@ -70,3 +70,9 @@ export function lockedPicksHtml(vip, { esc, date, time }) {
   const n = vip.length;
   return `<div class="live-pick-list locked-list">${rows}</div><p class="live-reason">${n} pronóstico${n === 1 ? '' : 's'} más con VIP: la selección y la probabilidad se desbloquean con la suscripción.</p><button type="button" class="primary-button locked-vip" data-route="planes">Acceso VIP</button>`;
 }
+
+// Parley bloqueado: el servidor manda solo el escalón y el rango de cuota de las reglas (`parley_acceso`), sin patas, probabilidad ni
+// cuota exacta. La franja son bloques; no se pinta nada que venga en el ticket salvo el número de escalón.
+export function lockedParleyHtml(t, { number }) {
+  return `<article class="ladder-card locked-ticket"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${number(t.escalon)} · BLOQUEADO</p><h3 class="locked-blur" aria-hidden="true">${LOCKED_PLACEHOLDER}</h3></div><strong class="ladder-balance locked-blur" aria-hidden="true">${LOCKED_QUOTE_PLACEHOLDER}</strong></div><p class="ladder-meta locked-blur" aria-hidden="true">Probabilidad ██,█% · 1 de cada ██,█</p><div class="live-pick-list"><div class="live-pick locked-blur" aria-hidden="true">████████ ██████ · ████ ████████</div></div><button type="button" class="primary-button locked-vip" data-route="planes">Acceso VIP</button></article>`;
+}

@@ -235,7 +235,12 @@ def escalera(response: Response):
     """
     from .mobile import ladder
     response.headers['Cache-Control'] = 'no-store'
-    return ladder()
+    data = ladder()
+    # Igual que /alta-probabilidad: la web difumina la cuota de lo bloqueado (decisión del titular, 2026-10-18), así que
+    # esta ruta pública no la envía. La app lee /mobile/v1/home y no cambia.
+    for reto in data.get('actuales', []):
+        reto['vip'] = [{k: v for k, v in item.items() if k != 'cuota'} for item in reto.get('vip', [])]
+    return data
 
 
 @publico.get("/alta-probabilidad")

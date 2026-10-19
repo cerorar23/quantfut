@@ -797,3 +797,4 @@ table.standings td:last-child{text-align:left}
 .locked-blur{filter:blur(6px);user-select:none;pointer-events:none;color:#f0b429}
 .locked-pick{border-color:rgba(240,180,41,.4)}.live-pick.locked-pick>.locked-main{text-align:left;flex:1}.locked-vip{margin-top:8px}
 .locked-quote strong{font-size:18px}
+.locked-ticket{border-color:rgba(240,180,41,.4)}

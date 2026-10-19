@@ -115,3 +115,14 @@ test('sin bloqueados no se pinta nada y el HTML se escapa', () => {
   assert.equal(lockedPicksHtml(undefined, fmt), '');
   assert.ok(!lockedPicksHtml([{ local: '<img src=x>', visitante: 'B' }], fmt).includes('<img'));
 });
+
+import { lockedParleyHtml } from './public-data.js';
+
+test('un parley bloqueado se pinta difuminado y solo muestra el escalón', () => {
+  const html = lockedParleyHtml({ escalon: 3, locked: true, cuota_min: 2.9, cuota_max: 3.1, cuota_total: 3.02, prob_total: 0.33, n_patas: 4,
+    patas: [{ texto: 'Más de 2,5 goles', price: 1.4 }] }, { number: v => String(v) });
+  assert.ok(html.includes('ESCALÓN 3 · BLOQUEADO') && html.includes('data-route="planes"') && html.includes('Acceso VIP'));
+  assert.ok(html.includes(LOCKED_PLACEHOLDER) && html.includes(LOCKED_QUOTE_PLACEHOLDER));
+  assert.ok(!html.includes('2.9') && !html.includes('3.02') && !html.includes('0.33') && !html.includes('Más de 2,5') && !html.includes('1.4'));
+  assert.ok((html.match(/locked-blur/g) ?? []).length >= 4);
+});

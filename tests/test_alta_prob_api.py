@@ -49,3 +49,14 @@ def test_la_ruta_publica_no_envia_la_cuota_de_lo_bloqueado_pero_la_app_si(monkey
     assert not {"selection", "line", "prob", "ref_price", "fit", "texto"} & web["vip"][0].keys()
     app = mobile.high_probability()
     assert app["vip"][0]["cuota"] == 1.17            # lo que ve la app no cambia
+
+
+def test_escalera_publica_no_envia_la_cuota_de_lo_bloqueado(monkeypatch):
+    from qf.api import mobile
+    c = _client(monkeypatch)
+    falso = {"activo": True, "actuales": [{"reto_id": 1, "pasos": [{"paso": 1}],
+             "vip": [{"match_id": "m2", "locked": True, "pick_key": "1:2", "cuota": 1.3}]}]}
+    monkeypatch.setattr(mobile, "ladder", lambda *a, **k: falso)
+    web = c.get("/escalera").json()
+    assert web["actuales"][0]["vip"] == [{"match_id": "m2", "locked": True, "pick_key": "1:2"}]
+    assert web["actuales"][0]["pasos"] == [{"paso": 1}]
