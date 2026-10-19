@@ -248,7 +248,12 @@ def alta_probabilidad(response: Response):
     """
     from .mobile import high_probability
     response.headers['Cache-Control'] = 'no-store'
-    return high_probability()
+    informe = high_probability()
+    # La web difumina la cuota de lo bloqueado (decisión del titular, 2026-10-18). Difuminar un dato que sigue en la
+    # respuesta no protege nada, así que esta ruta pública no lo envía. La app NO usa esta ruta (lee /mobile/v1/home
+    # con `mobile.metadata`, que no se toca).
+    informe['vip'] = [{k: v for k, v in item.items() if k != 'cuota'} for item in informe.get('vip', [])]
+    return informe
 
 @publico.get("/parley")
 def parley(response: Response, plus: bool = Depends(member)):

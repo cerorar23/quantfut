@@ -1,4 +1,4 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml } from './public-data.js?v=a8008d8e7ce5';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml } from './public-data.js?v=627a159af66f';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
 import { createMembershipUI } from './membership.js?v=m1';
 
