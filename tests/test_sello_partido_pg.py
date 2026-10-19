@@ -61,6 +61,20 @@ def test_el_lote_de_partido_es_idempotente_y_enlaza_con_la_cadena(carpeta):
     assert db.query_one("SELECT count(*) AS n FROM prediction_batches WHERE match_id = %s", (mid,))["n"] == 1
 
 
+def test_el_lote_de_partido_lleva_el_factor_del_once_en_sombra(carpeta):
+    ko = datetime(2001, 1, 1, 20, tzinfo=timezone.utc) + timedelta(days=uuid.uuid4().int % 8000)
+    mid = _partido(ko)
+    db.execute("""INSERT INTO predictions (match_id, model_version, fs_version, home_lambda, away_lambda, markets,
+                                          etapa, data_completeness)
+                  VALUES (%s, 'test', 'test', 1.4, 1.1, '{"1x2": {}, "totals": {}}'::jsonb, 'final', %s::jsonb)""",
+               (mid, '{"sello_tardio": {"disparo": "t-38", "ajuste_xi": {"disponible": true, "factor_local": 1.0123}}}'))
+    carga = hashchain._collect_partido(mid)
+    assert carga["predictions"][0]["sello_tardio"]["ajuste_xi"]["factor_local"] == 1.0123
+    hashchain.seal_partido(mid)
+    guardado = (carpeta / f"{hashchain._ruta_partido(mid, ko.date())}.json").read_text(encoding="utf-8")
+    assert '"factor_local":1.0123' in guardado
+
+
 def test_sin_prediccion_final_no_se_sella(carpeta):
     mid = _partido(datetime.now(timezone.utc) + timedelta(days=400))
     _prediccion(mid, "diaria")
