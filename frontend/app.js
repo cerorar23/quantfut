@@ -1,4 +1,4 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=5d460d0b0c91';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml } from './public-data.js?v=a8008d8e7ce5';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
 import { createMembershipUI } from './membership.js?v=m1';
 
@@ -933,7 +933,7 @@ function altaView() {
   const source = publicData?.alta;
   if (!source) return `${head}<section class="live-panel"><p>Consultando pronósticos de alta probabilidad…</p></section>`;
   if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudieron consultar los pronósticos. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
-  const { estado, motivos, proximos, historial: h } = source.data;
+  const { estado, motivos, proximos, vip, historial: h } = source.data;
   const ic = Array.isArray(h.diferencia_ic95) ? h.diferencia_ic95 : null;
   const record = h.n ? `<div class="live-facts"><div><span>PROMETIDO</span><strong>${realNumber(h.acierto_prometido, 1)}%</strong><small>media de las probabilidades</small></div><div><span>REAL</span><strong>${realNumber(h.acierto_real, 1)}%</strong><small>${realNumber(h.aciertos)} de ${realNumber(h.n)} acertados</small></div><div><span>DIFERENCIA · IC95</span><strong>${ic ? `${realNumber(ic[0], 1)} a ${realNumber(ic[1], 1)}` : '—'}</strong><small>${ic ? 'puntos, real − prometido' : 'Sin intervalo todavía'}</small></div></div>` : '<p>Todavía no hay pronósticos liquidados.</p>';
   const byMarket = Object.entries(h.por_mercado ?? {});
@@ -946,7 +946,7 @@ function altaView() {
   const badgeText = estado === 'activa' ? 'Activa' : estado === 'pausada' ? 'Pausada' : 'Desactivada';
   return `${head}
     <section class="live-panel" aria-label="Historial de alta probabilidad"><div class="live-head"><div><p class="eyebrow">HISTORIAL PÚBLICO · /ALTA-PROBABILIDAD</p><h2>Prometido frente a real</h2></div>${badge(badgeText, estado === 'activa' ? 'good' : 'muted')}</div>${record}${marketTable}${roi}${note}</section>
-    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}${lockedPicksHtml(vip, { esc, date: realDate, time: realTime, number: realNumber })}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
 }
 
 // Parley del día (2026-10-11). Solo datos reales de /parley: cada parlay se

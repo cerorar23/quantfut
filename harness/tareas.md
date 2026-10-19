@@ -2958,3 +2958,6 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - El botón lleva a la pantalla VIP de la app, que compra con Play / App Store. **No** se enlaza a Whop desde la app (las tiendas exigen su sistema para suscripciones digitales); Whop es la pasarela de la web.
 - La web no pinta pronósticos reales bloqueados (solo datos liquidados y una maqueta ficticia): sin cambio.
 - [ ] Falta una compilación nueva de la app para que los usuarios lo vean (publicación en tiendas: la hace el titular).
+
+- [x] Web (18-oct, tras preguntar el titular si la web también los difuminaba: no lo hacía, ignoraba `vip`): la vista de Alta probabilidad pinta los bloqueados difuminados (`lockedPicksHtml` en `frontend/public-data.js`, bloques sin selección ni probabilidad) con la cuota a la vista y un botón «Acceso VIP» a Suscripciones (Whop). 28 pruebas de node, 12 de la web y comprobación visual en navegador. **Falta desplegar** (la web va en la imagen de la API: reconstruir con el procedimiento de `DEPLOYS.md`).
+- Escalera y parley siguen sin pintar sus bloqueados en la web (la vista de parley no maneja `locked`): pendiente si el titular lo quiere.

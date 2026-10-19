@@ -57,3 +57,14 @@ export function isPublicationActive(gate) {
     && gate.data.puerta_comercial.sombra_criterio_sharp?.autorizada === true
     && gate.data.puerta_comercial.publicacion_de_picks === 'activa';
 }
+
+// Pronósticos bloqueados (decisión del titular, 2026-10-18): se ven difuminados con un botón «Acceso VIP» que lleva a
+// Suscripciones (Whop). El servidor NO envía la selección ni la probabilidad de lo bloqueado (`mobile.metadata`): la franja
+// son bloques, no un pronóstico, así que quitar el filtro con las herramientas del navegador no revela nada.
+export const LOCKED_PLACEHOLDER = '████████ · ██ %';
+export function lockedPicksHtml(vip, { esc, date, time, number }) {
+  if (!Array.isArray(vip) || vip.length === 0) return '';
+  const rows = vip.map(p => `<article class="live-pick alta-pick locked-pick"><div class="locked-main"><span>${esc(p.league_id ?? 'Liga')} · ${date(p.kickoff_utc)} ${esc(time(p.kickoff_utc))}</span><h3 class="locked-blur" aria-hidden="true">${LOCKED_PLACEHOLDER}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}</p></div>${typeof p.cuota === 'number' && p.cuota > 1 ? `<div><strong>${number(p.cuota, 2)}</strong><small>cuota</small></div>` : ''}</article>`).join('');
+  const n = vip.length;
+  return `<div class="live-pick-list locked-list">${rows}</div><p class="live-reason">${n} pronóstico${n === 1 ? '' : 's'} más con VIP: la selección y la probabilidad se desbloquean con la suscripción.</p><button type="button" class="primary-button locked-vip" data-route="planes">Acceso VIP</button>`;
+}
