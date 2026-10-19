@@ -143,7 +143,7 @@ def _collect(batch_date: date) -> dict:
            -- está en UTC las dos fechas discrepan varias horas al día, el
            -- lote sale vacío, el sellado se salta y —por diseño— NO SE
            -- PUBLICA NADA. Un fallo mudo, no un error.
-           WHERE (p.generated_at AT TIME ZONE 'UTC')::date = %s
+           WHERE (p.generated_at AT TIME ZONE 'UTC')::date = %s AND p.etapa = 'diaria'
            ORDER BY p.generated_at, p.prediction_id""",
         (batch_date,),
     )
@@ -154,6 +154,7 @@ def _collect(batch_date: date) -> dict:
                   fair_prob, min_price, odds_source, odds_as_of
            FROM picks
            WHERE (published_at AT TIME ZONE 'UTC')::date = %s
+             AND prediction_id IN (SELECT prediction_id FROM predictions WHERE etapa = 'diaria')
            ORDER BY published_at, pick_id""",
         (batch_date,),
     )
@@ -252,7 +253,7 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
         _git_revelar(Path(settings.chain_dir))
 
     existing = query_one(
-        "SELECT batch_id, chain_sha256 FROM prediction_batches WHERE batch_date = %s",
+        "SELECT batch_id, chain_sha256 FROM prediction_batches WHERE batch_date = %s AND batch_kind = 'diario'",
         (batch_date,),
     )
     if existing:
@@ -306,6 +307,112 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
     return receipt
 
 
+# F7 (sello tardío): cada partido se sella solo, minutos antes del saque, con su predicción final y sus picks de valor.
+# El lote diario de las 08:00 UTC sigue igual. `None` = no hay sello por partido (nada cambia hasta fijar el corte al desplegar).
+LOTE_POR_PARTIDO_DESDE: date | None = None
+
+
+def lote_por_partido(dia: date) -> bool:
+    """¿Los partidos de `dia` (UTC) se sellan uno a uno? Única fuente de verdad del escritor y del lector."""
+    return LOTE_POR_PARTIDO_DESDE is not None and dia >= LOTE_POR_PARTIDO_DESDE
+
+
+def _ruta_partido(match_id: str, dia: date) -> str:
+    """Ruta relativa del lote de un partido. El id sale de la base, pero se valida antes de usarlo como nombre de archivo;
+    ':' (frecuente en los ids) se cambia por '_' para que el repo público se pueda clonar en Windows, y un sufijo del hash
+    del id evita que dos ids distintos acaben en el mismo archivo."""
+    seguro = (match_id or "").replace(":", "_")
+    if not seguro or not all(c.isalnum() or c in "-_." for c in seguro) or ".." in seguro:
+        raise ValueError(f"match_id no apto como nombre de archivo: {match_id!r}")
+    return f"partido/{dia.isoformat()}/{seguro}-{sha256_hex(match_id)[:6]}"
+
+
+def _collect_partido(match_id: str) -> dict:
+    """Predicción final del partido y los picks de valor que salen de ella. El pick y su precio quedan en el lote."""
+    preds = query(
+        """SELECT p.prediction_id, p.match_id, p.model_version, p.generated_at,
+                  p.home_lambda, p.away_lambda, p.rho, p.confidence_tier,
+                  p.markets -> '1x2'    AS m_1x2,
+                  p.markets -> 'totals' AS m_totals,
+                  m.kickoff_utc, m.league_id,
+                  th.canonical_name AS home_team, ta.canonical_name AS away_team
+           FROM predictions p
+           JOIN matches m USING (match_id)
+           JOIN teams th ON th.team_id = m.home_team_id
+           JOIN teams ta ON ta.team_id = m.away_team_id
+           WHERE p.match_id = %s AND p.etapa = 'final'
+           ORDER BY p.generated_at, p.prediction_id""", (match_id,))
+    picks = query(
+        """SELECT pick_id, prediction_id, match_id, market, selection, line,
+                  model_prob, advised_price, bookmaker, edge_pct, raw_edge_pct,
+                  stake_units, tier, published_at,
+                  fair_prob, min_price, odds_source, odds_as_of
+           FROM picks
+           WHERE match_id = %s AND prediction_id IN (SELECT prediction_id FROM predictions WHERE etapa = 'final')
+           ORDER BY published_at, pick_id""", (match_id,))
+    return {
+        "batch_kind": "partido",
+        "match_id": match_id,
+        "model_version": settings.model_version,
+        "fs_version": settings.fs_version,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "n_predictions": len(preds),
+        "n_picks": len(picks),
+        "predictions": preds,
+        "picks": picks,
+    }
+
+
+def seal_partido(match_id: str, git_push: bool = True) -> dict:
+    """Sella el lote de un partido. Idempotente por partido (índice único en la base). Requiere su predicción final."""
+    existing = query_one(
+        "SELECT batch_id, chain_sha256 FROM prediction_batches WHERE batch_kind = 'partido' AND match_id = %s",
+        (match_id,))
+    if existing:
+        log.warning("El lote del partido %s ya está sellado (%s).", match_id, existing["chain_sha256"][:16])
+        return existing
+
+    payload = _collect_partido(match_id)
+    if payload["n_predictions"] == 0:
+        log.info("Sin predicción final para %s, no se sella nada.", match_id)
+        return {}
+    dia = payload["predictions"][0]["kickoff_utc"].astimezone(timezone.utc).date()
+    ruta = _ruta_partido(match_id, dia)
+
+    body = canonical_json(payload)
+    payload_hash = sha256_hex(body)
+    prev = _prev_chain_hash()
+    chain_hash = sha256_hex(prev + payload_hash)
+
+    out_dir = Path(settings.chain_dir)
+    (out_dir / ruta).parent.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{ruta}.json").write_text(body, encoding="utf-8")
+    receipt = {
+        "batch_kind": "partido",
+        "batch_date": dia.isoformat(),
+        "match_id": match_id,
+        "payload_sha256": payload_hash,
+        "prev_sha256": prev,
+        "chain_sha256": chain_hash,
+        "n_predictions": payload["n_predictions"],
+        "n_picks": payload["n_picks"],
+        "sealed_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    (out_dir / f"{ruta}.receipt.json").write_text(canonical_json(receipt), encoding="utf-8")
+    _append_ledger(out_dir / "LEDGER.md", receipt)
+
+    execute(
+        """INSERT INTO prediction_batches
+             (batch_date, batch_kind, match_id, n_predictions, n_picks, payload_sha256, prev_sha256, chain_sha256)
+           VALUES (%s, 'partido', %s, %s, %s, %s, %s, %s)""",
+        (dia, match_id, payload["n_predictions"], payload["n_picks"], payload_hash, prev, chain_hash))
+
+    if git_push and settings.chain_git_remote:
+        _git_comprometer(out_dir, dia, chain_hash)
+    log.info("Lote del partido %s sellado. chain=%s", match_id, chain_hash[:16])
+    return receipt
+
+
 def _append_ledger(path: Path, r: dict) -> None:
     if not path.exists():
         path.write_text(
@@ -318,7 +425,7 @@ def _append_ledger(path: Path, r: dict) -> None:
             encoding="utf-8",
         )
     with path.open("a", encoding="utf-8") as f:
-        f.write(f"| {r['batch_date']} | {r['n_predictions']} | {r['n_picks']} "
+        f.write(f"| {r['batch_date']}{' ' + r['match_id'] if r.get('match_id') else ''} | {r['n_predictions']} | {r['n_picks']} "
                 f"| `{r['payload_sha256'][:16]}…` | `{r['chain_sha256'][:16]}…` |\n")
 
 
@@ -332,6 +439,7 @@ def _git_comprometer(out_dir: Path, batch_date: date, chain_hash: str) -> None:
     """Sube SOLO el compromiso (recibos y registro). El JSON del lote se queda sin versionar."""
     try:
         recibos = sorted(p.name for p in out_dir.glob("????-??-??.receipt.json"))
+        recibos += sorted(p.relative_to(out_dir).as_posix() for p in out_dir.glob("partido/????-??-??/*.receipt.json"))
         _git(out_dir, "add", "--", "LEDGER.md", *recibos)
         _git(out_dir, "commit", "-m",
              f"compromiso {batch_date.isoformat()} chain={chain_hash[:16]}")
@@ -384,23 +492,72 @@ def revelables(out_dir: Path, ahora: datetime, estado=_estado_partidos) -> list[
     return due
 
 
+def _jsons_de_partido(out_dir: Path) -> list[Path]:
+    return sorted(f for f in out_dir.glob("partido/????-??-??/*.json") if not f.name.endswith(".receipt.json"))
+
+
+def revelables_partido(out_dir: Path, ahora: datetime, estado=_estado_partidos) -> list[str]:
+    """Lotes de partido (ruta relativa) cuyo partido ya terminó y cuyo JSON aún no está en el repo."""
+    try:
+        subidos = set(subprocess.run(
+            ["git", "ls-files", "--", "partido"], cwd=out_dir, check=True,
+            capture_output=True, timeout=60).stdout.decode().split())
+    except (subprocess.CalledProcessError, OSError):
+        return []
+    due: list[str] = []
+    for f in _jsons_de_partido(out_dir):
+        rel = f.relative_to(out_dir).as_posix()
+        if rel in subidos:
+            continue
+        ultimo, terminados = estado(_ids_de_partidos(json.loads(f.read_text(encoding="utf-8"))))
+        if ultimo is None:
+            continue
+        pasado = ahora - ultimo
+        if (terminados and pasado >= REVELAR_TRAS) or pasado >= REVELAR_TOPE:
+            due.append(rel)
+    return due
+
+
 def _git_revelar(out_dir: Path, ahora: datetime | None = None, estado=_estado_partidos) -> list[date]:
-    """Sube el JSON de los lotes que ya se pueden revelar."""
+    """Sube el JSON de los lotes (diarios y de partido) que ya se pueden revelar. Devuelve las fechas de los diarios."""
     ahora = ahora or datetime.now(timezone.utc)
     try:
         fechas = revelables(out_dir, ahora, estado)
-        if not fechas:
+        partidos = revelables_partido(out_dir, ahora, estado)
+        if not fechas and not partidos:
             return []
         for d in fechas:
             _git(out_dir, "add", "--", f"{d.isoformat()}.json")
+        for rel in partidos:
+            _git(out_dir, "add", "--", rel)
         _git(out_dir, "commit", "-m",
-             "revelado " + ", ".join(d.isoformat() for d in fechas))
+             "revelado " + ", ".join([d.isoformat() for d in fechas] + [r.removesuffix(".json") for r in partidos]))
         _git(out_dir, "push", "origin", "HEAD")
         log.info("Lotes revelados: %s", [d.isoformat() for d in fechas])
         return fechas
     except subprocess.CalledProcessError as exc:
         log.error("Fallo al revelar lotes: %s", exc.stderr.decode()[:400])
         return []
+
+
+def _recibos_en_orden(d: Path) -> list[tuple[Path, dict]]:
+    """Recibos (diarios y de partido) en el orden de la cadena.
+
+    Con lotes de partido entre los diarios el nombre ya no da el orden: se sigue el enlace `prev_sha256` desde el génesis.
+    Si el recorrido no cubre todos los recibos (cadena rota o bifurcada) se vuelve al orden por nombre, y las comprobaciones
+    de `verify` señalan el enlace roto.
+    """
+    archivos = [*sorted(d.glob("????-??-??.receipt.json")), *sorted(d.glob("partido/????-??-??/*.receipt.json"))]
+    todos = [(f, json.loads(f.read_text(encoding="utf-8"))) for f in archivos]
+    por_prev: dict[str, list] = {}
+    for f, r in todos:
+        por_prev.setdefault(r.get("prev_sha256"), []).append((f, r))
+    orden, prev = [], GENESIS
+    while len(por_prev.get(prev, [])) == 1 and len(orden) < len(todos):
+        f, r = por_prev[prev][0]
+        orden.append((f, r))
+        prev = r["chain_sha256"]
+    return orden if len(orden) == len(todos) else todos
 
 
 def verify(chain_dir: str | None = None) -> tuple[bool, list[str]]:
@@ -410,14 +567,13 @@ def verify(chain_dir: str | None = None) -> tuple[bool, list[str]]:
     cuadrar con el hash comprometido.
     """
     d = Path(chain_dir or settings.chain_dir)
-    recibos = sorted(d.glob("????-??-??.receipt.json"))
+    recibos = _recibos_en_orden(d)
     prev, errors, sin_revelar = GENESIS, [], 0
 
-    for rf in recibos:
-        r = json.loads(rf.read_text(encoding="utf-8"))
+    for rf, r in recibos:
         nombre = rf.name.removesuffix(".receipt.json")
         chain_hash = sha256_hex(prev + r["payload_sha256"])
-        body = d / f"{nombre}.json"
+        body = rf.with_name(f"{nombre}.json")
         if body.exists():
             payload_hash = sha256_hex(body.read_text(encoding="utf-8"))
             if r["payload_sha256"] != payload_hash:
@@ -432,8 +588,8 @@ def verify(chain_dir: str | None = None) -> tuple[bool, list[str]]:
             errors.append(f"{rf.name}: hash de cadena inconsistente")
         prev = r["chain_sha256"]
 
-    for body in sorted(d.glob("????-??-??.json")):
-        if not (d / f"{body.stem}.receipt.json").exists():
+    for body in [*sorted(d.glob("????-??-??.json")), *_jsons_de_partido(d)]:
+        if not body.with_name(f"{body.stem}.receipt.json").exists():
             errors.append(f"{body.name}: falta el recibo")
 
     ok = not errors
