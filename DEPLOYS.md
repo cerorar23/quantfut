@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 UTC · Motor B medido por partido (control del «fallo grosero») · worker (3 archivos, `docker cp`) + API (imagen nueva), PR #36 (`8be381b`)
+- Orden del titular. Sin migración. Los lotes ya sellados no cambian: solo cambia cómo el control de alta probabilidad mide el acierto (varianza por partido, la mayor de las dos) y lo que muestra el historial (`partidos`, `margen_ee` por mercado).
+- Antes de sobrescribir: los 3 `publish/alta_prob*.py` del worker eran idénticos a `main` previo a #36; en la API eran una versión anterior (se llevan a `main`), y `frontend/app.js` e `index.html` eran idénticos.
+- **Worker:** `alta_prob.py`, `alta_prob_datos.py`, `alta_prob_ext.py` copiados con `docker cp` (se pierden al recrear el worker; ya están en `main`). Sin reinicio ni cambio de cron.
+- **API:** imagen `quantfut-api-web-vip:8be381b` = la anterior + esos 3 archivos + `frontend/app.js` + `frontend/index.html`. Ensayo previo en contenedor aparte (importa bien, 118 rutas). Compose fijado en ella.
+- Verificado en el dominio real: `/health` 200; `app.js` servido con el hash de `main`; `/alta-probabilidad` devuelve `partidos` y `margen_ee` por mercado.
+- Vuelta atrás: `releases/b-por-partido-8be381b/backup/docker-compose.before.yml` como `~/quantfut/docker-compose.yml` + `docker compose up -d --no-deps --no-build --force-recreate api`; para el worker, copiar de vuelta `backup/worker_*.py`.
+
 ### 2026-10-19 04:07 UTC · Herramienta de diagnóstico de córners · worker (un archivo nuevo, `docker cp`)
 - `eval/corners_diagnostico.py` copiado al worker para ejecutarlo contra la base (solo lectura). No lo importa ningún job ni cron; no
   cambia el modelo ni lo publicado. Vuelta atrás: borrar el archivo del contenedor. Detalle: `docs/corners_diagnostico_20261019.md`.
