@@ -76,3 +76,17 @@ export function lockedPicksHtml(vip, { esc, date, time }) {
 export function lockedParleyHtml(t, { number }) {
   return `<article class="ladder-card locked-ticket"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${number(t.escalon)} · BLOQUEADO</p><h3 class="locked-blur" aria-hidden="true">${LOCKED_PLACEHOLDER}</h3></div><strong class="ladder-balance locked-blur" aria-hidden="true">${LOCKED_QUOTE_PLACEHOLDER}</strong></div><p class="ladder-meta locked-blur" aria-hidden="true">Probabilidad ██,█% · 1 de cada ██,█</p><div class="live-pick-list"><div class="live-pick locked-blur" aria-hidden="true">████████ ██████ · ████ ████████</div></div><button type="button" class="primary-button locked-vip" data-route="planes">Acceso VIP</button></article>`;
 }
+
+// Un suscriptor VIP ve todos los pronósticos también en la web: a las rutas que dependen de la suscripción se les envía la sesión
+// (cabecera que da `getHeaders`, solo en memoria). Si el servidor la rechaza (401/403: sesión caducada), se vuelve a pedir como
+// visitante, así que una sesión mala nunca deja la web sin datos. Las demás rutas nunca llevan la cabecera.
+export function sessionFetch(fetcher, getHeaders, paths) {
+  return async (path, options = {}) => {
+    const headers = getHeaders();
+    if (headers.Authorization && paths.some(p => path.startsWith(p))) {
+      const response = await fetcher(path, { ...options, headers: { ...options.headers, ...headers } });
+      if (response.status !== 401 && response.status !== 403) return response;
+    }
+    return fetcher(path, options);
+  };
+}

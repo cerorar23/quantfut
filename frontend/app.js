@@ -1,6 +1,7 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml } from './public-data.js?v=3cbbf4b70a0c';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=m1';
+import { createMembershipUI } from './membership.js?v=8725532f95ca';
+import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -1460,6 +1461,7 @@ function render() {
   applyCybercoreTheme(app);
   membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
+  syncPublicAuth();
   app.querySelector('.mobile-bottom-nav').inert = overlay;
   app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {
     const values = bar.dataset.segments.split(',');
@@ -1617,11 +1619,22 @@ render();
 membershipUI.restoreSession();
 membershipUI.loadPlans();
 membershipUI.loadPaymentConfig();
+// Un suscriptor VIP ve todos los pronósticos también en la web (ver `sessionFetch`).
+const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/alta-probabilidad', '/escalera', '/parley']);
+// Al iniciar o cerrar sesión, o al activarse la suscripción, se recargan los datos con la sesión nueva.
+let publicAuthKey = 'visitante';
+function syncPublicAuth() {
+  const s = state.session;
+  const key = s ? `${s.account?.account_id ?? s.account?.email ?? 'cuenta'}:${s.plus ? 'vip' : 'gratis'}` : 'visitante';
+  if (key === publicAuthKey) return;
+  publicAuthKey = key;
+  refreshPublicData();
+}
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
   render();
-  const result = await loadPublicData();
+  const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;
   publicData = result;
   if (!state.modal && !state.drawer && !state.mobileMenuOpen) render();

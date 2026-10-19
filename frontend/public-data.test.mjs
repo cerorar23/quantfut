@@ -126,3 +126,28 @@ test('un parley bloqueado se pinta difuminado y solo muestra el escalón', () =>
   assert.ok(!html.includes('2.9') && !html.includes('3.02') && !html.includes('0.33') && !html.includes('Más de 2,5') && !html.includes('1.4'));
   assert.ok((html.match(/locked-blur/g) ?? []).length >= 4);
 });
+
+import { sessionFetch } from './public-data.js';
+
+test('sessionFetch envía la sesión solo a las rutas de suscripción y nunca a las demás', async () => {
+  const vistas = [];
+  const fetcher = async (path, options = {}) => { vistas.push({ path, auth: options.headers?.Authorization }); return { ok: true, status: 200 }; };
+  const f = sessionFetch(fetcher, () => ({ Authorization: 'Bearer t' }), ['/alta-probabilidad', '/escalera', '/parley']);
+  await f('/alta-probabilidad', { cache: 'no-store' });
+  await f('/model-card', { cache: 'no-store' });
+  await f('/parley');
+  assert.deepEqual(vistas, [{ path: '/alta-probabilidad', auth: 'Bearer t' }, { path: '/model-card', auth: undefined }, { path: '/parley', auth: 'Bearer t' }]);
+});
+
+test('sessionFetch sin sesión no envía cabecera y con sesión rechazada vuelve a pedir como visitante', async () => {
+  const llamadas = [];
+  const rechaza = async (path, options = {}) => { llamadas.push(options.headers?.Authorization ?? 'visitante'); return { ok: !options.headers?.Authorization, status: options.headers?.Authorization ? 401 : 200 }; };
+  const sinSesion = sessionFetch(rechaza, () => ({}), ['/escalera']);
+  await sinSesion('/escalera');
+  assert.deepEqual(llamadas, ['visitante']);
+  llamadas.length = 0;
+  const caducada = sessionFetch(rechaza, () => ({ Authorization: 'Bearer vieja' }), ['/escalera']);
+  const r = await caducada('/escalera');
+  assert.deepEqual(llamadas, ['Bearer vieja', 'visitante']);
+  assert.equal(r.status, 200);                                   // la web no se queda sin datos
+});

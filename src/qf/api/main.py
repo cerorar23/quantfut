@@ -228,14 +228,17 @@ def track_record():
 
 
 @publico.get("/escalera")
-def escalera(response: Response):
+def escalera(response: Response, plus: bool = Depends(member)):
     """
     Reto escalera: el reto en curso con sus escalones sellados, el historial
     de retos cerrados (también los fallidos) y la ganancia acumulada.
     """
     from .mobile import ladder
     response.headers['Cache-Control'] = 'no-store'
-    data = ladder()
+    response.headers['Vary'] = 'Authorization'
+    data = ladder(plus=plus)
+    if plus:
+        return data      # la cuenta VIP ve todos los escalones, también en la web
     # Igual que /alta-probabilidad: la web difumina la cuota de lo bloqueado (decisión del titular, 2026-10-18), así que
     # esta ruta pública no la envía. La app lee /mobile/v1/home y no cambia.
     for reto in data.get('actuales', []):
@@ -247,7 +250,7 @@ WEB_PUBLICO_GRATIS_ALTA = 1   # pronósticos de alta probabilidad gratis visible
 
 
 @publico.get("/alta-probabilidad")
-def alta_probabilidad(response: Response):
+def alta_probabilidad(response: Response, plus: bool = Depends(member)):
     """
     Línea de alta probabilidad: pronósticos sellados con probabilidad real
     (Pinnacle sin margen) filtrados al 75–90 %, 10 % gratuito por lote.
@@ -256,7 +259,10 @@ def alta_probabilidad(response: Response):
     """
     from .mobile import high_probability, metadata
     response.headers['Cache-Control'] = 'no-store'
-    informe = high_probability()
+    response.headers['Vary'] = 'Authorization'
+    informe = high_probability(plus=plus)
+    if plus:
+        return informe   # la cuenta VIP ve todos los pronósticos, también en la web
     # Al público de la web solo se le deja VER uno gratis en esta sección (decisión del titular, 2026-10-18: «uno por
     # sección»); queda el de mayor probabilidad y el resto pasa a bloqueado. La app no usa esta ruta: sus 4 gratis no cambian.
     libres = sorted(informe.get('proximos', []), key=lambda p: -float(p.get('prob') or 0))
