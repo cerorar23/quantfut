@@ -60,3 +60,22 @@ def test_escalera_publica_no_envia_la_cuota_de_lo_bloqueado(monkeypatch):
     web = c.get("/escalera").json()
     assert web["actuales"][0]["vip"] == [{"match_id": "m2", "locked": True, "pick_key": "1:2"}]
     assert web["actuales"][0]["pasos"] == [{"paso": 1}]
+
+
+def test_el_publico_de_la_web_ve_un_solo_gratis_y_la_app_conserva_sus_cuatro(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    from qf.api import mobile
+    c = _client(monkeypatch)
+    soon = datetime.now(timezone.utc) + timedelta(days=1)
+    probs = {"m1": 0.80, "m2": 0.91, "m3": 0.85, "m4": 0.78}
+    filas = [{"match_id": k, "market": "totals", "texto": f"t{k}", "selection": "over", "line": 2.5, "prob": p, "ref_price": 1.2,
+              "kickoff_utc": soon, "league_id": "gb.premier_league", "local": "A", "visitante": "B"} for k, p in probs.items()]
+    monkeypatch.setattr(mobile, "high_rows", lambda: filas)
+    monkeypatch.setattr(mobile, "allocations", lambda rows, stream: set(probs))      # los cuatro son gratis
+    web = c.get("/alta-probabilidad").json()
+    assert [p["match_id"] for p in web["proximos"]] == ["m2"]                         # queda el de mayor probabilidad
+    assert sorted(v["match_id"] for v in web["vip"]) == ["m1", "m3", "m4"]
+    for v in web["vip"]:
+        assert v["locked"] is True
+        assert not {"cuota", "texto", "selection", "line", "prob", "ref_price", "fit"} & v.keys()
+    assert len(mobile.high_probability()["proximos"]) == 4                            # la app no cambia

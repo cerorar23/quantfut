@@ -243,6 +243,9 @@ def escalera(response: Response):
     return data
 
 
+WEB_PUBLICO_GRATIS_ALTA = 1   # pronósticos de alta probabilidad gratis visibles al público de la web
+
+
 @publico.get("/alta-probabilidad")
 def alta_probabilidad(response: Response):
     """
@@ -251,9 +254,15 @@ def alta_probabilidad(response: Response):
     El historial de acierto se conserva entero. Las puertas de publicación
     y su rango original se mantienen en el pipeline.
     """
-    from .mobile import high_probability
+    from .mobile import high_probability, metadata
     response.headers['Cache-Control'] = 'no-store'
     informe = high_probability()
+    # Al público de la web solo se le deja VER uno gratis en esta sección (decisión del titular, 2026-10-18: «uno por
+    # sección»); queda el de mayor probabilidad y el resto pasa a bloqueado. La app no usa esta ruta: sus 4 gratis no cambian.
+    libres = sorted(informe.get('proximos', []), key=lambda p: -float(p.get('prob') or 0))
+    if len(libres) > WEB_PUBLICO_GRATIS_ALTA:
+        informe['proximos'] = libres[:WEB_PUBLICO_GRATIS_ALTA]
+        informe['vip'] = [*informe.get('vip', []), *[metadata(p) for p in libres[WEB_PUBLICO_GRATIS_ALTA:]]]
     # La web difumina la cuota de lo bloqueado (decisión del titular, 2026-10-18). Difuminar un dato que sigue en la
     # respuesta no protege nada, así que esta ruta pública no lo envía. La app NO usa esta ruta (lee /mobile/v1/home
     # con `mobile.metadata`, que no se toca).
