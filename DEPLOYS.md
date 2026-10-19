@@ -33,6 +33,19 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 02:12 UTC · Altitud en el motor A en MODO SOMBRA · worker (4 archivos, `docker cp`), sin reinicio
+- Orden del titular: que la información nueva entre a los motores. Se midió cada bloque (docs/contexto_en_el_motor_20261019.md): solo
+  la altitud pasa la puerta, con evidencia débil; clima, descanso, bajas y valor del once no mejoran el modelo. La altitud entra en
+  **modo sombra**: calcula el factor y lo anota en cada predicción, **sin cambiar los lambdas publicados**.
+- Archivos (idénticos a `main` antes de copiar, `daily.py` y `config.py`; los otros dos son nuevos): `publish/daily.py`, `config.py`,
+  `model/contexto.py`, `model/ajuste_altitud.py`. Originales de los dos que existían en `releases/contexto-altitud/antes/`.
+  Vuelta atrás: copiar de vuelta `daily.py` y `config.py` desde esa carpeta (los dos módulos nuevos quedan sin uso).
+- Artefacto `ajuste_altitud_2026.10.12-221104.pkl` en `/srv/quantfut/artifacts`. Sin migración, sin cambios en el cron.
+- Modo por `AJUSTE_ALTITUD_MODO` (`off`, `sombra` por defecto, `activo`); el worker en marcha no tiene la variable, así que usa `sombra`.
+- Verificado: simulación de solo lectura sobre los 145 partidos modelados de los próximos 8 días (35 con efecto > 0,5 %, lambdas
+  intactos en todos). El primer sellado con el código nuevo es el de las 08:00 UTC: comprobarlo mañana (`data_completeness.ajuste_altitud`
+  presente y lambdas iguales a los de antes). Modelo activo, API y base sin cambios.
+
 ### 2026-10-19 01:45 UTC · Web: bloqueados difuminados, un gratis por sección y VIP ve todo · API (7 archivos), PR #31 (`5f21e93`)
 - Orden del titular («si hazlo»). Sin migración. La app móvil no se toca y sus rutas (`/mobile/v1/*`) no cambian.
 - Antes de sobrescribir se comprobó que los 7 archivos eran idénticos a `origin/main` dentro de `quantfut-api-meta-web:db24a88`:

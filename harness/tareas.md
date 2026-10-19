@@ -2965,3 +2965,11 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Web pública: **un solo pronóstico gratis visible por sección** (decisión del titular, 18-oct, respuesta «uno por sección»). `/alta-probabilidad` deja visible 1 (el de mayor probabilidad) y pasa los demás a bloqueados difuminados (`WEB_PUBLICO_GRATIS_ALTA = 1` en `api/main.py`); escalera (1 paso) y parley (1 ticket) ya eran uno. **La app no cambia: sigue con 4 / 1 / 1.** Prueba: el bloque de la app conserva sus 4.
 
 - [x] Web: **la cuenta VIP ve todos los pronósticos** (decisión del titular, 18-oct). `/alta-probabilidad` y `/escalera` usan la dependencia `member` (como ya hacía `/parley`): con suscripción activa devuelven todo desbloqueado y `Vary: Authorization`; el visitante sigue viendo 1 por sección. La web envía su sesión (solo en memoria) únicamente a esas tres rutas (`sessionFetch`) y recarga los datos al iniciar o cerrar sesión o activarse la suscripción; una sesión caducada cae a visitante. 32 pruebas de node y las de las rutas con una cuenta VIP simulada. **No probado de punta a punta con una suscripción real** (no hay una cuenta de prueba con pago).
+
+## La información nueva en el motor (2026-10-19, pedido del titular)
+
+- [x] Medición bloque a bloque con el walk-forward del 12-oct (`python -m qf.model.contexto`, solo lectura): **solo la altitud pasa la puerta**, con evidencia débil (ΔRPS −0,0002 a −0,0003 con la semántica de producción, significativo en 1 de 4 particiones). Clima, descanso, bajas y valor del once no mejoran. Detalle: `docs/contexto_en_el_motor_20261019.md`.
+- [x] Altitud en el motor A en **modo sombra** (`AJUSTE_ALTITUD_MODO`): `daily.py` calcula el factor y lo anota en `data_completeness.ajuste_altitud` sin alterar los lambdas publicados.
+- [ ] Pasar la altitud a `activo` con partidos reales (≥150 con salto > 0,5 km medidos hacia adelante).
+- [ ] Reajustar el artefacto en cada reentrenamiento (hoy es del walk-forward del 12-oct) y repetir `qf.model.contexto` cuando haya semanas de `fotmob_previo`.
+- [ ] Para que algo llegue a alta probabilidad, escalera y parley (motor B) hace falta F8/F9: mezcla A + B evaluada contra el mercado del mismo momento.
