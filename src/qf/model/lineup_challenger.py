@@ -357,7 +357,7 @@ def load_training_frame(oos: pd.DataFrame | None = None) -> tuple[pd.DataFrame, 
                   p.home_lambda AS base_lam, p.away_lambda AS base_mu, p.rho,
                   p.generated_at AS base_generated_at
            FROM matches m JOIN predictions p USING (match_id)
-           WHERE m.status='finished' AND m.home_goals IS NOT NULL
+           WHERE p.etapa = 'diaria' AND m.status='finished' AND m.home_goals IS NOT NULL
              AND p.generated_at < m.kickoff_utc
            ORDER BY m.match_id, p.generated_at DESC"""
     ))
