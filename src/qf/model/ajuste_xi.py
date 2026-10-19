@@ -187,7 +187,12 @@ def main(argv=None) -> None:
     ap.add_argument("--oos", nargs="*", help="oos_*.pkl (se unen); por defecto el más reciente")
     ap.add_argument("--guardar", action="store_true", help="escribe ajuste_xi_<versión>.pkl")
     ap.add_argument("--medir", action="store_true", help="mide hacia adelante con las predicciones finales ya jugadas")
+    ap.add_argument("--estado", action="store_true", help="reconstruye el estado de fuerzas y onces (cron cada hora)")
     a = ap.parse_args(argv)
+    if a.estado:
+        e = estado_xi(settings.artifact_dir, max_edad_s=0)
+        print(json.dumps({"jugadores": len(e.n), "equipos": len(e.historial), "hasta": str(e.hasta)}))
+        return
     if a.medir:
         print(json.dumps(medir(), indent=2, ensure_ascii=False))
         return
