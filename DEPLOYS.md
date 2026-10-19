@@ -33,6 +33,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 22:06 UTC · El lote de partido lleva el factor del once · worker (2 archivos, `docker cp`) + crontab, PR #44 (`f466d94`)
+- Orden del titular («sí, despliega»), antes del primer sello real. `hashchain._collect_partido` ahora incluye `sello_tardio` (disparo, minutos al saque y `ajuste_xi`) en el JSON sellado: así el factor se puede verificar por terceros al revelarse el lote. Aún no había ningún lote de partido, así que no cambia ningún hash existente. `ajuste_xi --avisar` y su cron diario (07:30 UTC) avisan una sola vez al llegar a 150 partidos con efecto.
+- Archivos idénticos a `main` previo antes de copiar. Sin reinicio: el walk-forward ampliado siguió corriendo. Verificado: importa, `hashchain verify` OK con 21 lotes, `--medir` responde.
+- Vuelta atrás: copiar de vuelta `releases/sello-factor-f466d94/backup/*` y cargar `backup/crontab_worker.txt`. Un lote de partido ya sellado conserva su formato.
+
 ### 2026-10-19 19:20 UTC · Ajuste del once en MODO SOMBRA y sello por partido ACTIVO desde el 20-oct · worker (5 archivos, `docker cp`) + API (imagen nueva) + crontab, PR #42 (`a1a8dcd`)
 - Orden del titular (confirmó el modo sombra, el corte y el walk-forward ampliado). **`LOTE_POR_PARTIDO_DESDE = 2026-10-20`**: desde el 20-oct 00:00 UTC cada partido con predicción diaria se predice de nuevo (etapa `final`) y se sella solo, con las dos alineaciones capturadas (≤ 90 min) o a T-38 (T-45 menos 7 min de gracia, porque la captura de FotMob de T-45 corre en el mismo minuto). El lote diario de las 09:00 UTC sigue igual.
 - **Ajuste del once** (`model/ajuste_xi.py`, bloque `epi_total`): calcula el factor y lo anota en `data_completeness.sello_tardio.ajuste_xi`; **no cambia los lambdas**. Artefacto `ajuste_xi_2026.10.19-131830.pkl` (4.255 partidos). El once sale de la captura oficial de FotMob (`tipo_alineacion='standard'`). Medición hacia adelante: `python -m qf.model.ajuste_xi --medir`.
