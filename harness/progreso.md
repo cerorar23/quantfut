@@ -6577,3 +6577,7 @@ Decisión del titular: ventana = alineaciones de los dos lados o T-45; corte = p
 ## 2026-10-19 · F7 desplegado apagado y reentrenamiento manual sin promoción
 
 F7 (migración 084, worker, API, crontab) está en producción con `LOTE_POR_PARTIDO_DESDE=None`: el job responde `apagado` y el sellado diario no cambia. Reentrenamiento manual pedido por el titular (13:18-17:59 UTC): candidato `2026.10.19-131830` guardado SIN activar. La puerta lo rechazó (no mejora a Elo sobre las mismas filas, el campeón no es comparable por la ventana distinta, CLV 0 de 300). RPS 0,2042 frente a 0,1945 del mercado (n=2.056), ECE 0,0104, peso modelo/mercado ≈ 0,0001. Sigue activo `2026.09.27-010508`. Decisión: no fijar el corte del sello por partido todavía; no aporta nada mientras ningún bloque de alineación pase la puerta de medición.
+
+## 2026-10-19 · Impacto por jugador: primer bloque con evidencia
+
+Se midió el apartamiento del once real respecto al habitual ponderado por rendimiento histórico (calificaciones de FotMob relativas al equipo, point-in-time). Pasa la puerta y resiste cuatro particiones y un placebo, pero el efecto (≈ −0,0005 de RPS) es ~5 % de la brecha con el mercado y solo es aplicable con el once confirmado (sello tardío, apagado). Decisión técnica: no recalibrar nada; pasarlo a producción en modo sombra como la altitud, y no activarlo hasta medir hacia adelante. No se cambia el modelo activo.

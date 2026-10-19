@@ -20,7 +20,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from . import ajuste
+from . import ajuste, jugadores
 from . import lineup_challenger as lc
 
 BLOQUES_CONTEXTO: dict[str, tuple[str, ...]] = {
@@ -30,6 +30,10 @@ BLOQUES_CONTEXTO: dict[str, tuple[str, ...]] = {
     "clima": ("temp_c", "temp_desv2", "lluvia_log", "viento_ms", "humedad_pct"),
     "bajas": ("bajas_rel_local", "bajas_rel_visita", "n_bajas_local", "n_bajas_visita"),
     "xi_valor": ("xi_valor_log_dif", "xi_edad_dif"),
+    # impacto por jugador del once real frente al habitual (qf.model.jugadores): tres variantes, TODAS se informan
+    "epi_total": jugadores.COLUMNAS["epi_total"],
+    "epi_grupos": jugadores.COLUMNAS["epi_grupos"],
+    "xi_habitual_valor": jugadores.COLUMNAS["xi_habitual_valor"],
 }
 TOPE_DESCANSO_DIAS = 14.0
 TEMPERATURA_REFERENCIA_C = 15.0
@@ -165,10 +169,17 @@ def construir_columnas(ids: list[str]) -> pd.DataFrame:
         fm["xi_edad_dif"] = fm["edad_xi_local"].astype(float) - fm["edad_xi_visita"].astype(float)
         out = out.merge(fm[["match_id", "bajas_rel_local", "bajas_rel_visita", "n_bajas_local", "n_bajas_visita",
                             "xi_valor_log_dif", "xi_edad_dif"]], on="match_id", how="left")
+    out = out.merge(_columnas_jugadores(ids), on="match_id", how="left")
     for c in {c for cols in BLOQUES_CONTEXTO.values() for c in cols}:
         if c not in out.columns:
             out[c] = np.nan
     return out
+
+
+def _columnas_jugadores(ids: list[str]) -> pd.DataFrame:
+    """Columnas de impacto por jugador. Se calcula con TODO el historial de FotMob y se filtra a `ids`."""
+    f = jugadores.features_xi(jugadores.cargar_filas())
+    return f[f["match_id"].isin(ids)] if not f.empty else pd.DataFrame(columns=["match_id"])
 
 
 def marco_contexto(oos: pd.DataFrame) -> pd.DataFrame:
