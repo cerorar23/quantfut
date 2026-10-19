@@ -325,9 +325,24 @@ def _marco(liquidados: list[dict]) -> pd.DataFrame:
     return f
 
 
+def _varianza(g: pd.DataFrame) -> float:
+    """Varianza de Σ(acertado − prob) bajo «está calibrado».
+
+    Con picks independientes es Σ p(1−p). Pero un partido genera hasta 4 picks (córners, totales, hándicap...) que ganan o
+    pierden juntos, y entonces esa fórmula subestima la varianza (medido el 19-oct: ×1,4 en los «menos de» de córners; 601 picks eran
+    170 partidos) y el fallo grosero se dispara por ruido. Con `match_id` se usa la varianza por partido, Σ_partidos (Σ_picks diff)²,
+    y se toma la MAYOR de las dos: solo puede volver más prudente el bloqueo, nunca más estricto. Sin `match_id` es la independiente.
+    """
+    indep = float((g["prob"] * (1.0 - g["prob"])).sum())
+    if "match_id" not in g.columns or g["match_id"].isna().all():
+        return indep
+    por_partido = g.groupby("match_id")["diff"].sum()
+    return max(indep, float((por_partido ** 2).sum()))
+
+
 def _z(g: pd.DataFrame) -> float:
-    """Acertado frente a prometido, en desviaciones típicas de un acierto calibrado."""
-    var = float((g["prob"] * (1.0 - g["prob"])).sum())
+    """Acertado frente a prometido, en desviaciones típicas de un acierto calibrado (agrupando por partido si se conoce)."""
+    var = _varianza(g)
     return float(g["diff"].sum()) / var ** 0.5 if var > 0 else 0.0
 
 
@@ -372,9 +387,15 @@ def control(liquidados: list[dict], min_n: int = MIN_N_CONTROL) -> dict:
 
 
 def _bloque(g: pd.DataFrame) -> dict:
-    return {"n": int(len(g)), "aciertos": int(g["won"].sum()),
-            "acierto_prometido": round(float(g["prob"].mean()) * 100, 1),
-            "acierto_real": round(float(g["won"].mean()) * 100, 1)}
+    out = {"n": int(len(g)), "aciertos": int(g["won"].sum()),
+           "acierto_prometido": round(float(g["prob"].mean()) * 100, 1),
+           "acierto_real": round(float(g["won"].mean()) * 100, 1)}
+    if "match_id" in g.columns and g["match_id"].notna().any():
+        # `n` cuenta picks, y varios son del mismo partido: la muestra efectiva son los partidos distintos y el margen de error
+        # de «real − prometido» se mide por partido (puntos porcentuales).
+        out["partidos"] = int(g["match_id"].nunique())
+        out["margen_ee"] = round(_varianza(g) ** 0.5 / len(g) * 100, 1)
+    return out
 
 
 def historial(liquidados: list[dict]) -> dict:

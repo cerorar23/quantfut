@@ -123,7 +123,7 @@ def _liquidados(desde: str | None = "control") -> list[dict]:
     if desde == "control":
         desde = settings.alta_prob_control_desde or None
     return query(
-        f"""SELECT a.market, a.prob, a.ref_price, r.outcome, m.kickoff_utc
+        f"""SELECT a.match_id, a.market, a.prob, a.ref_price, r.outcome, m.kickoff_utc
             FROM alta_prob_picks a
             JOIN alta_prob_results r ON r.alta_id = a.alta_id
             JOIN matches m ON m.match_id = a.match_id
