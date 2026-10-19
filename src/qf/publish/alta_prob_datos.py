@@ -49,6 +49,7 @@ def _sql_sellado(desde: date | None | str = "alta") -> str:
     return f"""JOIN prediction_batches b
              ON b.batch_date = (a.decided_at AT TIME ZONE 'UTC')::date
             AND a.decided_at <= b.created_at
+            AND b.batch_kind = 'diario'
             {corte}"""
 
 
@@ -63,7 +64,7 @@ def _rho_activo() -> float | None:
 
 
 def _lote_sellado(dia: date) -> bool:
-    return query_one("SELECT 1 AS x FROM prediction_batches WHERE batch_date = %s",
+    return query_one("SELECT 1 AS x FROM prediction_batches WHERE batch_date = %s AND batch_kind = 'diario'",
                      (dia,)) is not None
 
 

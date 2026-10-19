@@ -2984,3 +2984,10 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Motor B medido por partido (`docs/motor_b_por_partido_20261019.md`): ningún mercado se desvía de forma significativa (|z| < 1,7): totales −1,2, ganador −1,0, ambos marcan −0,5. No hay nada que corregir en las probabilidades.
 - [x] Copas europeas: empates reales 20,3 % (Champions) y 24,1 % (Europa League) en el historial, frente a 21,9 % y 25,9 % del modelo: sin sesgo; 2025-26 fue una temporada baja. No se toca.
 - [x] **Corregido:** el «fallo grosero» de `alta_prob.control` suponía picks independientes (la ampliada tiene 2.420 picks en 222 partidos) y podía bloquear un grupo por ruido; ahora usa la varianza por partido (la mayor de las dos). Historial y tabla de la web muestran partidos distintos y margen por partido.
+
+## F7 sello tardío (2026-10-19)
+
+- [x] Fases 1-4 implementadas y ensayadas (PR #38, sin fusionar a propósito): migración `db/084`, lectores solo con lotes diarios, `hashchain.seal_partido`/verify/revelado de `partido/…`, `publish/sello_tardio.py` (cron cada 5 min, apagado con `LOTE_POR_PARTIDO_DESDE=None`).
+- [ ] Desplegar tras el reentrenamiento del 1-nov: fusionar #38, migración 084, worker (daily.py, hashchain.py, sello_tardio.py, shadow.py, lineup_challenger.py) y API, fijar `LOTE_POR_PARTIDO_DESDE`, cargar el crontab, anotar en DEPLOYS.md.
+- [ ] Medir si algún bloque de alineación (`lineup_challenger`) pasa la puerta con el once confirmado; solo entonces la predicción final difiere de la diaria.
+- [ ] Decidir si se envía push al sellar un pick de partido (sigue sin responder).

@@ -26,7 +26,7 @@ from ..model import ajuste_altitud, contexto
 from ..model.dixon_coles import DixonColes
 from ..model.devig import consensus_devig
 from . import alta_prob_datos, alta_prob_ext, tarjetas_seg
-from . import escalera_datos
+from . import escalera_datos, hashchain
 from . import parley_datos
 from . import picks as pk
 from . import telegram as tg
@@ -409,7 +409,10 @@ def _aplicar_altitud(ajuste, altitudes: dict, match_id: str, lam: float, mu: flo
     return (lam_a, mu_a, info) if info["aplicado"] else (lam, mu, info)
 
 
-def generate_predictions(model_path: str | None = None) -> list[dict]:
+def generate_predictions(model_path: str | None = None, solo_partido: str | None = None, etapa: str = "diaria",
+                         hasta: datetime | None = None, info_final: dict | None = None) -> list[dict]:
+    """Predice los partidos de la corrida diaria. Con `solo_partido` (F7, sello tardío) predice solo ese partido, en la
+    etapa `final`, y anota `info_final` en `data_completeness`. Sin esos argumentos es exactamente la corrida diaria."""
     from ..db import conn
     from ..model.pricing import price_all_markets
 
@@ -433,7 +436,9 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
         )
         residual = residual.__class__.disabled()
 
-    matches = _upcoming()
+    matches = _upcoming(hasta)
+    if solo_partido is not None:
+        matches = [m for m in matches if m["match_id"] == solo_partido]
     out: list[dict] = []
     ajuste_alt, altitudes = _contexto_altitud(matches)
 
@@ -503,8 +508,8 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
                 """INSERT INTO predictions
                      (match_id, model_version, fs_version, home_lambda,
                       away_lambda, rho, markets, market_consensus,
-                      confidence_tier, data_completeness)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                      confidence_tier, data_completeness, etapa)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                    RETURNING prediction_id""",
                 (m["match_id"], version, settings.fs_version,
                  meta_pred["home_lambda"], meta_pred["away_lambda"],
@@ -518,7 +523,9 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
                              "market_blend": meta_info,
                              "residual_applied": meta_pred.get("residual_applied",
                                                                False),
-                             "ajuste_altitud": info_altitud})),
+                             "ajuste_altitud": info_altitud,
+                             **({"sello_tardio": info_final} if info_final else {})}),
+                 etapa),
             )
             pid = cur.fetchone()["prediction_id"]
 
@@ -627,6 +634,11 @@ def run() -> dict:
         _shadow_gate_allows_publication() if settings.publish_picks_enabled
         else (False, ["PUBLISH_PICKS_ENABLED=0"])
     )
+    # F7: con el sello por partido en marcha, los picks de valor nacen en la predicción final de cada partido
+    # (`sello_tardio`), con las cuotas de ese momento. El lote diario sigue sin ellos.
+    por_partido = hashchain.lote_por_partido(datetime.now(timezone.utc).date())
+    if por_partido:
+        gate_ok, gate_reasons = False, ["los picks de valor se sellan por partido (sello_tardio)"]
     if not gate_ok and not preds:
         # Solo había partidos "solo sharp" y no se publica: nada que sellar.
         return {"predictions": 0, "picks": 0,
@@ -646,7 +658,7 @@ def run() -> dict:
         _alerta_sin_sellar(alta, receipt, escalera, parley)
         if not receipt:
             tg.alert("FALLO AL SELLAR LA CADENA (predicciones sin picks).")
-        if settings.publish_picks_enabled:
+        if settings.publish_picks_enabled and not por_partido:
             tg.alert("PUBLICACIÓN BLOQUEADA por la puerta de CLV: "
                      + "; ".join(gate_reasons))
         result = {"predictions": len(preds), "picks": 0,

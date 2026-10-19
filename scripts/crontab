@@ -87,6 +87,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # partidos que empiezan DESPUÉS del sellado: los de 08:00-13:00 UTC dependen del lote anterior.
 0 9 * * * cd /app && python -m qf.publish.daily >> /var/log/daily.log 2>&1
 
+# F7: sello tardio por partido (T-45 o alineaciones confirmadas). Sin efecto mientras hashchain.LOTE_POR_PARTIDO_DESDE sea None.
+*/5 * * * * cd /app && flock -n /tmp/sello_tardio.lock python -m qf.publish.sello_tardio >> /var/log/sello_tardio.log 2>&1
+
 # Liquidacion y CLV de respaldo (results.py ya la encadena).
 30 2,10,18 * * * cd /app && python -m qf.eval.clv >> /var/log/clv.log 2>&1
 
