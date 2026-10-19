@@ -2992,3 +2992,10 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [ ] Fijar `LOTE_POR_PARTIDO_DESDE` (primer día sin lote diario sellado) cuando algún bloque de alineación pase la puerta; hasta entonces no aporta.
 - [ ] Medir si algún bloque de alineación (`lineup_challenger`) pasa la puerta con el once confirmado; solo entonces la predicción final difiere de la diaria.
 - [ ] Decidir si se envía push al sellar un pick de partido (sigue sin responder).
+
+## Impacto por jugador (2026-10-19)
+
+- [x] `qf.model.jugadores` + bloques `epi_total`/`epi_grupos`/`xi_habitual_valor` en `contexto.py`; medición y robustez en `docs/impacto_jugador_20261019.md`. `epi_total` y `epi_grupos` pasan la puerta (ΔRPS −0,0005/−0,0006, 3 de 4 particiones, placebo limpio); el valor del once vs habitual no.
+- [ ] Producción: `ajuste_xi` en MODO SOMBRA en la predicción final (requiere fijar `LOTE_POR_PARTIDO_DESDE`; decisión del titular).
+- [ ] Comparar contra el mercado del mismo momento (F9) antes de juzgar el peso modelo/mercado.
+- [ ] Ampliar el walk-forward del A a 2024-2026 para duplicar la potencia (tarda horas).
