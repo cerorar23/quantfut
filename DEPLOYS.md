@@ -33,6 +33,24 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 03:45 UTC · Web: bloqueados difuminados, un gratis por sección y VIP ve todo · API (7 archivos), PR #31 (`5f21e93`)
+- Orden del titular («si hazlo»). Sin migración. La app móvil no se toca y sus rutas (`/mobile/v1/*`) no cambian.
+- Antes de sobrescribir se comprobó que los 7 archivos eran idénticos a `origin/main` dentro de `quantfut-api-meta-web:db24a88`:
+  `frontend/{app,cuenta-api,membership,public-data}.js`, `frontend/{index.html,styles.css}` y `src/qf/api/main.py`.
+- **API:** imagen `quantfut-api-web-vip:5f21e93` = la anterior + esos 7 archivos (ensayo en contenedor aparte: 118 rutas en las dos;
+  los hashes de la imagen coinciden con los fusionados). Compose fijado en ella. Worker, base de datos y Caddy sin tocar.
+- Qué cambia para el usuario: en la web, los pronósticos bloqueados salen difuminados (cuota incluida) con «Acceso VIP» a Suscripciones;
+  el visitante ve **un** gratis por sección (alta probabilidad pasa de 4 a 1); una cuenta VIP ve todos (`/alta-probabilidad` y `/escalera`
+  usan `member`, como `/parley`); parley bloqueado ya no rompe la vista.
+- Verificado en el dominio real: `/health`, `/`, `app.js`, `public-data.js`, `styles.css`, `membership.js` y `cuenta-api.js` responden 200;
+  `/alta-probabilidad` lleva `Cache-Control: no-store` y `Vary: Authorization`; con un token falso responde 401 (la web cae a visitante).
+  **No se pudo comprobar con datos en vivo** el reparto 1 visible / resto bloqueado ni lo que ve una cuenta VIP: a las 03:45 UTC no hay
+  pronósticos abiertos (alta probabilidad 0, escalera sin bloqueados) porque el lote llega a las 08:00 UTC. Repetir la comprobación
+  después de ese lote, y probar con una cuenta con suscripción real.
+- Vuelta atrás: restaurar `releases/web-vip-5f21e93/backup/docker-compose.before.yml` como `~/quantfut/docker-compose.yml` y
+  `docker compose up -d --no-deps --no-build --force-recreate api` (la imagen anterior sigue en el servidor).
+  Respaldo de los 7 archivos previos en `releases/web-vip-5f21e93/backup/archivos-antes.tar`.
+
 ### 2026-10-18 · ERA5 automático diario · worker (entorno) + cron
 - Orden del titular: conservar el token de Copernicus para la descarga automática. Cron nuevo `20 6 * * *` (06:20 UTC)
   `flock -n /tmp/era5.lock python -m qf.ingest.era5_clima` (incremental; pide solo lo que los archivos guardados no cubren).
