@@ -33,6 +33,10 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-19 04:07 UTC · Herramienta de diagnóstico de córners · worker (un archivo nuevo, `docker cp`)
+- `eval/corners_diagnostico.py` copiado al worker para ejecutarlo contra la base (solo lectura). No lo importa ningún job ni cron; no
+  cambia el modelo ni lo publicado. Vuelta atrás: borrar el archivo del contenedor. Detalle: `docs/corners_diagnostico_20261019.md`.
+
 ### 2026-10-19 02:12 UTC · Altitud en el motor A en MODO SOMBRA · worker (4 archivos, `docker cp`), sin reinicio
 - Orden del titular: que la información nueva entre a los motores. Se midió cada bloque (docs/contexto_en_el_motor_20261019.md): solo
   la altitud pasa la puerta, con evidencia débil; clima, descanso, bajas y valor del once no mejoran el modelo. La altitud entra en

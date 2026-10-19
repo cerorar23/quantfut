@@ -2973,3 +2973,8 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [ ] Pasar la altitud a `activo` con partidos reales (≥150 con salto > 0,5 km medidos hacia adelante).
 - [ ] Reajustar el artefacto en cada reentrenamiento (hoy es del walk-forward del 12-oct) y repetir `qf.model.contexto` cuando haya semanas de `fotmob_previo`.
 - [ ] Para que algo llegue a alta probabilidad, escalera y parley (motor B) hace falta F8/F9: mezcla A + B evaluada contra el mercado del mismo momento.
+
+## Córners (2026-10-19, primera mejora pedida por el titular)
+
+- [x] Diagnóstico a fondo (`python -m qf.eval.corners_diagnostico`, `docs/corners_diagnostico_20261019.md`): el modelo está calibrado (41.815 partidos, a menos de 0,6 puntos en todas las líneas y ligas); el déficit de los «menos de» publicados (−5,0 ±3,6, z = −1,4) es ruido de 170 partidos con picks correlacionados. **Corrijo lo que dije el 19-oct: no hay que recalibrar.** Ninguna variable de contexto mejora la predicción del total.
+- [ ] Añadir el número de partidos distintos (y error estándar por partido) a las tablas por mercado de `/alta-probabilidad` y del panel: hoy cuentan picks, que son hasta 4 por partido.
