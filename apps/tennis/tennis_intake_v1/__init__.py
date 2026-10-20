@@ -87,7 +87,8 @@ def fixtures(capture_root):
         receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
         if receipt.get('method') != 'get_fixtures' or receipt.get('http_status') != 200 or receipt['params'].get('event_type_key') not in TOURS:
             continue
-        body = json.loads(Path(receipt['source_path']).read_text(encoding='utf-8'))
+        # The receipt's absolute path is host-specific (Windows vs server); the response always sits beside it.
+        body = json.loads((receipt_path.parent / 'response.json').read_text(encoding='utf-8'))
         for e in body.get('result') or []:
             seen = events.get(str(e['event_key']))
             if seen is None or receipt['received_at'] >= seen['received_at']:
