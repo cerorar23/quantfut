@@ -6590,3 +6590,9 @@ Descarta que el problema sea solo comparar contra el cierre. Por liga el A está
 Activado el sello por partido desde el 20-oct (decisión del titular) con el ajuste del once en MODO SOMBRA; gracia de 7 min porque la captura de
 FotMob y el job de sello coinciden en el minuto. Walk-forward ampliado (2024-01 a 2025-10) corriendo en el worker: unirlo con el OOS actual
 y reajustar `ajuste_xi` cuando termine.
+
+## 2026-10-20 · Walk-forward ampliado: el bloque del once vale la mitad de lo medido
+
+Con 11.920 partidos (2024-01 a 2026-10) el bloque de impacto por jugador baja de ΔRPS −0,0005 a ≈ −0,0002: favorable en los 5 tramos secuenciales y
+con placebo limpio, pero solo pasa la puerta estricta en 1 de 4 particiones. Decisión: seguir en modo sombra, no activar; artefacto reajustado con la muestra
+completa. La primera estimación sobre ~1.300 partidos sobreestimó el efecto: medir con la muestra grande antes de pasar nada a producción.
