@@ -5,6 +5,7 @@ Pipeline: canonical data (identity bridge v3) -> serve/return model (MAP) -> per
 -> centre re-solved so every market comes from one coherent joint distribution.
 """
 import json
+import os
 from pathlib import Path
 import pandas as pd
 from tennis_engine.model import ServeModel
@@ -31,13 +32,16 @@ def recentre(p_serve, q_serve, rules, sigma, target):
     center = brentq(f, -1.5, 1.5) if f(-1.5) < 0 < f(1.5) else (-1.5 if f(-1.5) >= 0 else 1.5)
     return MixtureEngine(bank, weights(center, sigma))
 
-CONFIG = Path(__file__).resolve().parents[1] / 'config' / 'motor.json'
+# Runtime config lives outside the repo (the weekly refresh rewrites it); the tracked file is the template.
+CONFIG = Path(os.environ.get('TENNIS_MOTOR_CONFIG') or Path(__file__).resolve().parents[1] / 'config' / 'motor.json')
 
 
 class Motor:
     def __init__(self, config=CONFIG):
         self.config = json.loads(Path(config).read_text(encoding='utf-8'))
         self.params = json.loads(Path(self.config['params']).read_text(encoding='utf-8'))
+        fallback = self.config.get('params_norank')
+        self.params_norank = json.loads(Path(fallback).read_text(encoding='utf-8')) if fallback else None
         self.canonical = pd.read_parquet(self.config['canonical'])
         self.models, self.states = {}, {}
 
@@ -63,9 +67,16 @@ class Motor:
         # was fitted on held-out rows that include such cases, so they are kept and the count is reported.
         rules = Rules(best_of, deciding_tiebreak=deciding_tiebreak)
         day = pd.Timestamp(date).tz_localize(None).normalize() if pd.Timestamp(date).tzinfo else pd.Timestamp(date).normalize()
-        x = dict(pair_features(self.canonical, circuit, a, b, str(day.date())), **self.state(circuit).features(a, b, surface, day))
-        engine = build(point['p'], point['q'], rules, self.params[circuit], x)
-        winner = dict(engine.diagnostics, source='v7_stack')
+        dynamic = self.state(circuit).features(a, b, surface, day)
+        try:
+            x, params, source = dict(pair_features(self.canonical, circuit, a, b, str(day.date())), **dynamic), self.params[circuit], 'v7_stack'
+        except ValueError:
+            # Rank evidence stale (>60 days) or missing: stack fitted without rank/points/age (2026: ATP 67.1 %, WTA 66.6 %).
+            if not self.params_norank:
+                raise
+            x, params, source = dynamic, self.params_norank[circuit], 'v7_stack_without_rank'
+        engine = build(point['p'], point['q'], rules, params, x)
+        winner = dict(engine.diagnostics, source=source)
         live = None
         if odds is None and self.config.get('live_odds_root'):
             from tennis_odds_live_v1 import latest_market
