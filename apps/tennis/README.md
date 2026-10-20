@@ -200,3 +200,7 @@ Los paquetes `tennis_quality_v3`, `tennis_allmarkets_v1`, `tennis_markets_v2`, `
 ### Entrada automática de partidos
 
 `python -m tennis_intake_v1 --root data/tennis/intake_v1 --credential-file .env.api-tennis.local` pide el calendario a API-Tennis (2 consultas, máximo 4 al día). Resuelve jugadores con identidad estricta (apellido + inicial, un único jugador activo) y el torneo por nombre exacto. Sella con el motor vigente cada partido al menos 10 minutos antes de su hora del proveedor, una sola vez, y recoge los resultados de capturas posteriores para `evaluation_latest.json`. La tarea de Windows «QuantFut tenis cuotas h2h» lo ejecuta después de la foto de cuotas. Las horas del proveedor son estimaciones: no son horas físicas verificadas.
+
+### Actualización semanal de datos
+
+`python -m tennis_refresh_v1 plan|run --weekly-root data/tennis/weekly --config apps/tennis/config/motor.json`. `plan` solo consulta el catálogo de TennisMyLife; `run` descarga únicamente los archivos cuyo tamaño o fecha cambiaron (los demás se enlazan desde la instantánea anterior tras verificar su SHA-256), normaliza, aplica los puentes de identidad v2/v3 y, si pasan los chequeos (no se pierden filas, las fechas avanzan, ambos circuitos), cambia `canonical` en `config/motor.json` guardando el anterior en `canonical_history`. La tarea de Windows «QuantFut tenis datos semanales» lo ejecuta los lunes a las 04:00. Los estudios sellados no cambian: cada protocolo fija su propia base.
