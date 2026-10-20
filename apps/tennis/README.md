@@ -210,3 +210,7 @@ Los paquetes `tennis_quality_v3`, `tennis_allmarkets_v1`, `tennis_markets_v2`, `
 Desde el 20-oct la actualización semanal también reentrena el modelo de saque/resto (ATP y WTA, unos 20 s) con la base nueva y lo promueve en `config/motor.json` (`models_root`) solo si ambos ajustes convergen. Con la base corregida el modelo ya reconoce a jugadoras que antes quedaban fuera por alias (Rybakina, Eala). `tennis_motor` no rechaza partidos con alguna celda de saque sin entrenar: usa el valor de población, como en los datos con los que se ajustó el apilador.
 
 Match Charting Project (Jeff Sackmann, CC BY-NC-SA; 9.400 partidos, 1,4 millones de puntos): la variación del saque entre partidos es de unas 0,23 unidades logit por servidor (≈0,16 en la semidiferencia, coherente con el sigma 0,2 ajustado); dentro del partido no hay variación extra entre sets ni efecto racha punto a punto. Presión: +1,3 pp ganando el punto al saque en break point y −2 pp en tie-break; su efecto en el hold (≈0,4 pp) y en el tie-break (≈0,1 pp) es despreciable, así que no se modifica el Markov.
+
+### Ejecución en el VPS
+
+El motor corre en el VPS en una imagen propia (`apps/tennis/Dockerfile`, `python:3.12-slim`), aislada de los servicios de fútbol. Datos en `~/quantfut-tenis/data` (montado en `/data`), claves en `~/quantfut-tenis/secrets` (solo lectura) y la imagen activa en `~/quantfut-tenis/IMAGE`. El cron del usuario `qf` llama a `scripts/vps_run.sh twice-daily` (11:00 y 23:00 UTC) y `scripts/vps_run.sh weekly` (lunes 10:00 UTC). Ver `DEPLOYS.md`.
