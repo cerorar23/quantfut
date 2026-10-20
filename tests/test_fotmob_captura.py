@@ -37,6 +37,42 @@ def test_ventanas_de_captura():
         assert fc.ventana_de(fuera) is None
 
 
+def test_ventana_tarde_se_solapa_con_cierre_y_se_toma_la_primera_pendiente():
+    assert fc.ventanas_de(30) == ["cierre", "tarde"] and fc.ventanas_de(40) == ["cierre"]
+    assert fc.ventanas_de(33) == ["cierre", "tarde"] and fc.ventanas_de(24) == []
+    assert fc.ventana_de(30) == "cierre"
+
+
+class _Filas:
+    def __init__(self, filas):
+        self.filas = filas
+
+    def fetchall(self):
+        return self.filas
+
+    def fetchone(self):
+        return self.filas[0] if self.filas else None
+
+
+def test_candidatos_toma_cierre_y_despues_tarde():
+    from datetime import datetime, timedelta, timezone
+    ahora = datetime(2026, 10, 20, 12, 0, tzinfo=timezone.utc)
+    partido = {"match_id": "m1", "kickoff_utc": ahora + timedelta(minutes=30), "fotmob_match_id": "1", "mins": 30.0}
+    hechas = set()
+
+    class C:
+        def execute(self, sql, params=None):
+            if "FROM matches" in sql:
+                return _Filas([partido])
+            return _Filas([(1,)] if (params[0], params[1]) in hechas else [])
+
+    assert [x["ventana"] for x in fc.candidatos_previos(C(), ahora)] == ["cierre"]
+    hechas.add(("m1", "cierre"))
+    assert [x["ventana"] for x in fc.candidatos_previos(C(), ahora)] == ["tarde"]
+    hechas.add(("m1", "tarde"))
+    assert fc.candidatos_previos(C(), ahora) == []
+
+
 def test_datos_previo_conserva_pronostico_alineacion_y_bajas():
     d = fc.datos_previo(_previo(), KICKOFF)
     assert d["tipo_alineacion"] == "predicted" and d["clima_api"] == "forecast"

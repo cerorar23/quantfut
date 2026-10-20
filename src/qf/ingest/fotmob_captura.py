@@ -2,7 +2,7 @@
 
 Tres acciones, cada una con su cron:
   referencias  qué id de FotMob es cada partido nuestro (`leagues?id=`, una petición por competición al día).
-  previos      instantáneas de un partido futuro en cuatro ventanas (~24 h, ~4 h, ~70 min y ~40 min antes del saque):
+  previos      instantáneas de un partido futuro en cinco ventanas (~24 h, ~4 h, ~70, ~40 y ~30 min antes del saque):
                alineación probable o confirmada, no disponibles, entrenadores, valor del once y pronóstico de clima.
                Es lo ÚNICO anterior al saque; cada fila lleva la hora real de captura.
   posteriores  la página del partido terminado; llena fotmob_partido / fotmob_jugador_partido / fotmob_baja.
@@ -34,8 +34,10 @@ ENFRIAMIENTO_H = 12
 USER_AGENT = "QuantFut-Capture/1.0"
 # Ventanas de la captura previa, en minutos antes del saque: (nombre, desde, hasta).
 # La alineación oficial suele publicarse ~60 min antes: «final» la toma al abrirse la ventana (~T-75) y «cierre»
-# (~T-45) deja constancia de la confirmada. El cron corre cada 15 min, así que ninguna ventana mide menos de 20.
-VENTANAS = (("dia", 900, 1560), ("horas", 150, 300), ("final", 50, 75), ("cierre", 25, 45))
+# (~T-45) deja constancia de la confirmada. Solo ~56 % de los partidos la traen oficial a T-45 (19-oct-2026), así que
+# «tarde» (~T-33, autorizada el 19-oct) da una última oportunidad antes de sellar. Las ventanas se solapan: en cada pasada
+# se toma la primera que aún no tiene captura. El cron corre cada 5 min (solo pide a FotMob cuando hay una ventana pendiente).
+VENTANAS = (("dia", 900, 1560), ("horas", 150, 300), ("final", 50, 75), ("cierre", 25, 45), ("tarde", 25, 33))
 MAX_POSTERIORES = 60
 
 
@@ -43,11 +45,13 @@ class AccesoDenegado(RuntimeError):
     pass
 
 
+def ventanas_de(mins_to_kickoff: float) -> list[str]:
+    return [nombre for nombre, desde, hasta in VENTANAS if desde <= mins_to_kickoff <= hasta]
+
+
 def ventana_de(mins_to_kickoff: float) -> str | None:
-    for nombre, desde, hasta in VENTANAS:
-        if desde <= mins_to_kickoff <= hasta:
-            return nombre
-    return None
+    v = ventanas_de(mins_to_kickoff)
+    return v[0] if v else None
 
 
 class Cliente:
@@ -189,13 +193,12 @@ def candidatos_previos(c, ahora: datetime) -> list[dict]:
         (ahora, ahora + timedelta(minutes=20), ahora + timedelta(minutes=1560))).fetchall()
     out = []
     for f in filas:
-        v = ventana_de(float(f["mins"]))
-        if v is None:
-            continue
-        hecho = c.execute("SELECT 1 FROM fotmob_previo WHERE match_id = %s AND ventana = %s",
-                          (f["match_id"], v)).fetchone()
-        if not hecho:
-            out.append({**f, "ventana": v})
+        for v in ventanas_de(float(f["mins"])):
+            hecho = c.execute("SELECT 1 FROM fotmob_previo WHERE match_id = %s AND ventana = %s",
+                              (f["match_id"], v)).fetchone()
+            if not hecho:
+                out.append({**f, "ventana": v})
+                break           # una captura por pasada y partido: la siguiente ventana pendiente va en la próxima
     return out
 
 

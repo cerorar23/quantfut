@@ -4,8 +4,8 @@ Mismo orden de siempre, por partido: predecir (etapa `final`) -> seleccionar pic
 -> sellar (`hashchain.seal_partido`) -> publicar el compromiso. El lote diario de las 09:00 UTC no cambia y conserva sus
 productos de varios partidos.
 
-Cuándo se sella: cuando están capturadas las alineaciones de los dos lados (y faltan ≤ 90 min), o a T-45 menos una gracia de
-7 minutos para que la captura de FotMob de T-45 ya esté guardada, lo primero.
+Cuándo se sella: cuando están capturadas las alineaciones oficiales de los dos lados (y faltan ≤ 90 min), o a T-25 (después
+de la última captura de FotMob, ~T-33 a T-28), lo primero.
 Sin alineación se sella igual y queda anotado en `data_completeness.sello_tardio`. Un partido sin predicción diaria (liga sin
 modelo) no se sella aquí.
 
@@ -26,10 +26,9 @@ from . import telegram as tg
 
 log = logging.getLogger(__name__)
 
-VENTANA_SELLO = timedelta(minutes=45)       # sin alineación se sella a T-45...
-# ...menos esta gracia: la captura de FotMob de T-45 corre en el mismo minuto que este job (ticks de :00, :15, :30, :45) y
-# el once oficial aún no está guardado. Con 7 minutos más el job ve el once y el ajuste del once puede calcularse.
-GRACIA_CAPTURA = timedelta(minutes=7)
+# Sin alineación oficial se espera hasta T-25: solo ~56 % de los partidos la traen a T-45 y FotMob toma una última captura
+# («tarde», ~T-33 a T-28) para el resto. El titular lo autorizó el 19-oct-2026 (antes: T-38).
+SELLO_SIN_ONCE = timedelta(minutes=25)
 VENTANA_XI = timedelta(minutes=90)          # con las dos alineaciones se sella en cuanto entra en esta ventana
 AVISO_SIN_SELLAR = timedelta(minutes=15)    # si a T-15 sigue sin sellar, avisa
 
@@ -38,7 +37,7 @@ def toca_sellar(kickoff: datetime, ahora: datetime, lados_xi: int) -> bool:
     falta = kickoff - ahora
     if falta <= timedelta(0):
         return False
-    return falta <= VENTANA_SELLO - GRACIA_CAPTURA or (lados_xi >= 2 and falta <= VENTANA_XI)
+    return falta <= SELLO_SIN_ONCE or (lados_xi >= 2 and falta <= VENTANA_XI)
 
 
 def candidatos(ahora: datetime) -> list[dict]:
@@ -77,7 +76,7 @@ def sellar(m: dict, ahora: datetime) -> dict:
     ya_final = query_one("SELECT 1 AS x FROM predictions WHERE match_id = %s AND etapa = 'final'", (mid,))
     if not ya_final:        # si una pasada anterior cayó entre predecir y sellar, se reutiliza la final ya guardada
         info = {"minutos_al_saque": round((ko - ahora).total_seconds() / 60, 1), "lados_con_alineacion": int(m["lados_xi"]),
-                "disparo": "alineacion" if m["lados_xi"] >= 2 else "t-38"}
+                "disparo": "alineacion" if m["lados_xi"] >= 2 else "t-25"}
         if settings.ajuste_xi_modo != "off":      # solo sombra: anota el factor, no toca los lambdas
             info["ajuste_xi"] = ajuste_xi.calcular(mid, settings.artifact_dir)
         preds = daily.generate_predictions(solo_partido=mid, etapa="final", hasta=ko + timedelta(hours=1), info_final=info)
