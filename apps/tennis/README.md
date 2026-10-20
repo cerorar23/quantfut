@@ -204,3 +204,9 @@ Los paquetes `tennis_quality_v3`, `tennis_allmarkets_v1`, `tennis_markets_v2`, `
 ### Actualización semanal de datos
 
 `python -m tennis_refresh_v1 plan|run --weekly-root data/tennis/weekly --config apps/tennis/config/motor.json`. `plan` solo consulta el catálogo de TennisMyLife; `run` descarga únicamente los archivos cuyo tamaño o fecha cambiaron (los demás se enlazan desde la instantánea anterior tras verificar su SHA-256), normaliza, aplica los puentes de identidad v2/v3 y, si pasan los chequeos (no se pierden filas, las fechas avanzan, ambos circuitos), cambia `canonical` en `config/motor.json` guardando el anterior en `canonical_history`. La tarea de Windows «QuantFut tenis datos semanales» lo ejecuta los lunes a las 04:00. Los estudios sellados no cambian: cada protocolo fija su propia base.
+
+### Reentrenamiento semanal y validación punto a punto
+
+Desde el 20-oct la actualización semanal también reentrena el modelo de saque/resto (ATP y WTA, unos 20 s) con la base nueva y lo promueve en `config/motor.json` (`models_root`) solo si ambos ajustes convergen. Con la base corregida el modelo ya reconoce a jugadoras que antes quedaban fuera por alias (Rybakina, Eala). `tennis_motor` no rechaza partidos con alguna celda de saque sin entrenar: usa el valor de población, como en los datos con los que se ajustó el apilador.
+
+Match Charting Project (Jeff Sackmann, CC BY-NC-SA; 9.400 partidos, 1,4 millones de puntos): la variación del saque entre partidos es de unas 0,23 unidades logit por servidor (≈0,16 en la semidiferencia, coherente con el sigma 0,2 ajustado); dentro del partido no hay variación extra entre sets ni efecto racha punto a punto. Presión: +1,3 pp ganando el punto al saque en break point y −2 pp en tie-break; su efecto en el hold (≈0,4 pp) y en el tie-break (≈0,1 pp) es despreciable, así que no se modifica el Markov.

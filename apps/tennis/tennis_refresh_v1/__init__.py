@@ -1,4 +1,4 @@
-"""Weekly data refresh: TennisMyLife catalog -> changed files only -> normalize -> identity bridges -> promote.
+"""Weekly data refresh: TennisMyLife catalog -> changed files only -> normalize -> identity bridges -> retrain serve models -> promote.
 
 Unchanged originals (same upstream mtime and size as the previous snapshot, local SHA-256 verified) are hard-linked
 from the previous snapshot instead of downloaded again. Every snapshot is a NEW directory; the engine config is only
@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 import pandas as pd
 from tennis_engine.ingest import fetch as http_fetch, save_json
 from tennis_engine.normalize import normalize
+from tennis_engine.model import train
 import tennis_identity_v2
 import tennis_identity_v3
 
@@ -88,8 +89,15 @@ def build(new_root, as_of, previous_canonical):
     checks = dict(rows_new=len(new), rows_previous=len(old), last_period_new=new.period.max(), last_period_previous=old.period.max(),
                   rows_not_lost=len(new) >= 0.999 * len(old), dates_advanced=new.period.max() >= old.period.max(),
                   both_circuits=set(new.circuit) == {'ATP', 'WTA'})
-    checks['passed'] = checks['rows_not_lost'] and checks['dates_advanced'] and checks['both_circuits']
-    return dict(canonical=str(final.resolve()), aliases_merged=v2['aliases_merged'], birth_merged=len(v3['merged']), checks=checks)
+    models = new_root / 'models'
+    for circuit in ('ATP', 'WTA'):
+        summary = train(new_root / 'bridge_v3', models / f'{circuit}_current', circuit, as_of)
+        checks[f'model_{circuit}_converged'] = bool(summary['optimizer_success'])
+        checks[f'model_{circuit}_matches'] = summary['matches']
+    checks['passed'] = (checks['rows_not_lost'] and checks['dates_advanced'] and checks['both_circuits']
+                        and checks['model_ATP_converged'] and checks['model_WTA_converged'])
+    return dict(canonical=str(final.resolve()), models_root=str(models.resolve()), aliases_merged=v2['aliases_merged'],
+                birth_merged=len(v3['merged']), checks=checks)
 
 
 def promote(config_path, canonical, report):
@@ -98,8 +106,10 @@ def promote(config_path, canonical, report):
     if not report['checks']['passed']:
         raise ValueError('Sanity checks failed; engine config left unchanged')
     history = config.get('canonical_history', [])
-    history.append(dict(canonical=config['canonical'], replaced_at=now()))
+    history.append(dict(canonical=config['canonical'], models_root=config.get('models_root'), replaced_at=now()))
     config.update(canonical=canonical, canonical_history=history)
+    if report.get('models_root'):
+        config['models_root'] = report['models_root']
     tmp = config_path.with_suffix('.tmp')
     tmp.write_text(json.dumps(config, indent=2), encoding='utf-8')
     os.replace(tmp, config_path)

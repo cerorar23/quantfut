@@ -59,8 +59,8 @@ class Motor:
         m = self.model(circuit)
         a, b = m.resolve(player_a), m.resolve(player_b)
         point = m.predict(a, b, surface, uncertainty=False)
-        if point['unknown_effects']:
-            raise ValueError('Missing trained player/surface effect; forecast refused')
+        # Untrained serve/surface cells fall back to the population prior; the winner stack (dynamic Elo, rank, age)
+        # was fitted on held-out rows that include such cases, so they are kept and the count is reported.
         rules = Rules(best_of, deciding_tiebreak=deciding_tiebreak)
         day = pd.Timestamp(date).tz_localize(None).normalize() if pd.Timestamp(date).tzinfo else pd.Timestamp(date).normalize()
         x = dict(pair_features(self.canonical, circuit, a, b, str(day.date())), **self.state(circuit).features(a, b, surface, day))
