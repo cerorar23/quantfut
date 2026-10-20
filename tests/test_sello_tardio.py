@@ -12,10 +12,11 @@ KO = datetime(2026, 10, 20, 20, 0, tzinfo=timezone.utc)
     (120, 2, False),    # aún lejos aunque haya alineación
     (90, 2, True),      # con las dos alineaciones, en cuanto entra en la ventana
     (89, 1, False),     # una sola alineación no basta
-    (60, 0, False),     # sin alineación se espera a T-45 más la gracia de captura (T-38)
+    (60, 0, False),     # sin alineación oficial se espera a T-25 (después de la captura «tarde» de FotMob)
     (45, 0, False),
-    (39, 0, False),
-    (38, 0, True),
+    (38, 0, False),
+    (26, 0, False),
+    (25, 0, True),
     (44, 2, True),
     (1, 0, True),
     (0, 2, False),      # ya empezó: nada que sellar
@@ -33,8 +34,8 @@ def test_apagado_si_no_hay_corte(monkeypatch):
 
 def test_sella_solo_los_que_tocan_y_un_fallo_no_detiene_a_los_demas(monkeypatch):
     monkeypatch.setattr(hashchain, "LOTE_POR_PARTIDO_DESDE", date(2026, 10, 1))
-    ahora = KO - timedelta(minutes=30)
-    filas = [{"match_id": "a", "kickoff_utc": KO, "lados_xi": 0},                              # T-30: toca
+    ahora = KO - timedelta(minutes=20)
+    filas = [{"match_id": "a", "kickoff_utc": KO, "lados_xi": 0},                              # T-20: toca
              {"match_id": "b", "kickoff_utc": KO + timedelta(hours=2), "lados_xi": 0},        # lejos: no toca
              {"match_id": "c", "kickoff_utc": KO + timedelta(minutes=5), "lados_xi": 2}]      # toca y falla
     monkeypatch.setattr(st, "candidatos", lambda a: filas)

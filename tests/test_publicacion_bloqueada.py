@@ -10,7 +10,13 @@ from dataclasses import replace
 import pytest
 
 from qf.config import settings
-from qf.publish import daily
+from qf.publish import daily, hashchain
+
+
+@pytest.fixture(autouse=True)
+def _sin_sello_por_partido(monkeypatch):
+    """El corte del sello por partido depende de la fecha de hoy: estas pruebas miran el job diario sin él."""
+    monkeypatch.setattr(hashchain, "LOTE_POR_PARTIDO_DESDE", None)
 
 
 def _no_llamar(*_a, **_k):
@@ -77,3 +83,14 @@ def test_error_al_leer_puerta_falla_cerrado(monkeypatch):
     allowed, reasons = daily._shadow_gate_allows_publication()
     assert allowed is False
     assert reasons == ["Puerta de CLV no disponible"]
+
+
+def test_con_el_sello_por_partido_activo_el_diario_no_crea_picks(monkeypatch, sellados):
+    """Los picks de valor nacen en la predicción final de cada partido: el lote diario no los selecciona."""
+    from datetime import date
+    monkeypatch.setattr(hashchain, "LOTE_POR_PARTIDO_DESDE", date(2000, 1, 1))
+    monkeypatch.setattr(daily, "settings", replace(settings, publish_picks_enabled=True))
+    monkeypatch.setattr(daily, "_shadow_gate_allows_publication", lambda: (True, []))
+    out = daily.run()                 # select_daily / persist / publish_batch fallarían si se llamaran
+    assert sellados == [1]
+    assert out["picks"] == 0 and out["gate_reasons"] == ["los picks de valor se sellan por partido (sello_tardio)"]
