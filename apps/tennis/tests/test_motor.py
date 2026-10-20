@@ -16,3 +16,12 @@ def test_recentred_mixture_hits_market_winner_and_keeps_markets_normalized():
     assert engine.probabilities(Contract('winner', 'A'))['win'] == pytest.approx(.70, abs=1e-9)
     total = engine.probabilities(Contract('games_total', 'over', 22.5))
     assert sum(total.values()) == pytest.approx(1)
+
+
+def test_runtime_config_can_live_outside_the_repo(tmp_path, monkeypatch):
+    import importlib, tennis_motor
+    monkeypatch.setenv('TENNIS_MOTOR_CONFIG', str(tmp_path / 'motor_config.json'))
+    module = importlib.reload(tennis_motor)
+    assert module.CONFIG == tmp_path / 'motor_config.json'
+    monkeypatch.delenv('TENNIS_MOTOR_CONFIG')
+    importlib.reload(tennis_motor)

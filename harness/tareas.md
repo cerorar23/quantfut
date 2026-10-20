@@ -3001,3 +3001,99 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Walk-forward ampliado terminado (20-oct): efecto ≈ −0,0002, 5/5 tramos favorables, artefacto reajustado (docs/impacto_jugador_20261019.md).
 - [x] Comparado contra el mercado de cada momento: la brecha no se cierra antes del cierre (docs/brecha_mercado_20261019.md).
 - [ ] Ampliar el walk-forward del A a 2024-2026 para duplicar la potencia (tarda horas).
+
+## Tenis: segundo bloque de cinco sedes (2026-10-18)
+- [x] Chennai, Palermo, Riad, Hengqin y Shenzhen: referencias WGS84 con alcance y tolerancias explícitos. Palermo inferencia de complejo, no cancha exacta. Enlaces históricos intactos; 309 fuentes verificadas.
+- [x] Una consulta DEM de cinco puntos; nueva versión historical_geography_batch2_20261018: 10.895 destinos, 6.414 aptos (+170), 6.107 sin referencias >1 km. Cola: 78 entradas y 345 destinos.
+- [x] Protocolo espacial fijo repetido: 3.306 entrenamiento/3.108 evaluación; comparación adicional sobre 2.833 IDs originales. Sin mejora clara, sin búsqueda sobre 2025 ni activación.
+- [x] 194 pruebas tenis, auditoría desde motor aislado, seis modelos base y 12 artefactos congelados intactos; cuatro scripts e informe entregados. Comprobación general final: 1.315 aprobadas, 95 omitidas y dos avisos; Docker ausente.
+
+## Tenis: tercer bloque de sedes (2026-10-18)
+- [x] Taipei, SuperTennis BolognaFiere, AO Arena, SEB y Swiss Tennis Arena con evidencia histórica intacta y WGS84; tres husos completados. Biel referencia de complejo 600 m, huella exacta de arena no acreditada; Taipei fuente del operador mediante extracto de buscador.
+- [x] Una consulta DEM de cinco puntos; versión historical_geography_batch3_20261018: 10.954 destinos, 6.442 aptos (+28), 6.135 sin referencias >1 km. 324 fuentes verificadas; cola 73 entradas/286 destinos.
+- [x] Protocolo fijo repetido: 3.322 desarrollo/3.120 evaluación; muestras comunes de 3.108 y 2.833 IDs, sensibilidad y calibración. Sin mejora clara, sin selección/activación.
+- [x] 194 pruebas tenis, auditoría desde motor aislado, seis modelos base y 12 artefactos congelados intactos; cuatro scripts e informe entregados. Chequeo general final: 1.315 aprobadas, 95 omitidas y dos avisos en 130,60 s; Docker ausente.
+
+## Tenis: cierre integral solicitado (2026-10-18)
+- [x] Revisar las 73 entradas geográficas pendientes y sus alias, sin límite de cinco sedes por entrega.
+- [x] Consolidar todas las referencias acreditables, husos, DEM y dataset versionado; resolver o documentar individualmente cada entrada.
+- [x] Repetir evaluación fija y auditar cobertura, temporalidad y bloqueos restantes del motor.
+- [x] Entrega integral con pruebas, fuentes, métricas, límites reales y estado único actualizado.
+
+## Tenis: preparación operativa y validación financiera (18-oct-2026)
+- [x] Capturar y normalizar pronósticos Open-Meteo con disponibilidad real y vínculo a coordenadas; techo desconocido permanece desconocido.
+- [x] Incorporar registro de selecciones simuladas y evaluación financiera con cuotas archivadas, resultados y retiros, sin fabricar evidencia futura ni ejecutar apuestas.
+- [x] Definir controles por variante/mercado: datos opcionales solo bloquean si el modelo los usa; separar aptitud técnica, muestra y ventaja acreditada.
+- [x] Probar con capturas reales acotadas, pruebas de integridad/temporalidad y entregar un estado operativo único. 225 pruebas específicas y 1.315 generales aprobadas; informe docs/tenis_preparacion_apuestas_20261018.md.
+- [ ] Reunir evidencia prospectiva real bajo financial_policy_v2.json. Cero órdenes financieras; seguimiento predictivo programado por separado, sin aprobación de apuestas ni garantía de reunir la muestra mínima.
+
+## Tenis: nueva auditoría y pronósticos con evidencia (19-oct-2026 UTC)
+- [x] Reauditar integridad, pruebas, modelos y registros previos; no reinterpretar resultados futuros inexistentes como aprobados.
+- [x] Buscar evidencia específica de Palm Hills 2025 y documentar la conclusión sin inventar campus u horas. Campus no acreditado: tres exclusiones espaciales explícitas, no bloqueo general.
+- [x] Actualizar calendario API-Tennis y archivar programas oficiales actuales; resolver identidades con nombres completos contrastados. Cuatro PDF revisados visualmente; ambigüedades excluidas.
+- [x] Emitir pronósticos de investigación para encuentros futuros acreditables, con datos/modelos sellados y bloqueo explícito de apuestas, conservando el protocolo financiero congelado. Ocho ATP; 20 parejas revisadas, 12 exclusiones.
+- [x] Entregar informe único con cobertura, probabilidades y requisitos reales por variante; ejecutar las comprobaciones finales. 246 pruebas específicas, 1.315 generales; docs/tenis_auditoria_pronosticos_20261019.md.
+- [ ] Corregir en una nueva versión los puentes de identidad acreditados: 50 nombres WTA y uno ATP tienen varios IDs en el modelo congelado. No escoger automáticamente ni fusionar por similitud.
+
+## Tenis: integración completa de familias de mercados (19-oct-2026)
+- [x] Añadir una ampliación versionada sin cambiar los módulos y artefactos del estudio financiero congelado. Ocho módulos nuevos;37 anteriores/12 artefactos conservados.
+- [x] Unificar contratos, probabilidades win/push/loss y cuotas justas para ganador, sets, juegos, hándicaps, marcador por sets y tiebreak, incluidas líneas por set. Diez familias/624 filas ilustrativas.
+- [x] Conectar las claves reales documentadas de The Odds API; conservar explícitos los mercados que el proveedor no ofrezca y probar una captura acotada. Trece claves implementadas, siete observadas; seis créditos de prueba inicial y500 por cada clave suministrada después.
+- [x] Implementar comparación de líneas y liquidación por contrato, con retiros y reglas desconocidas visibles.
+- [x] Entregar un archivo utilizable de mercados, pruebas y estado verificable de integración, calibración y evidencia financiera. 294 pruebas; evaluación exploratoria3.498 encuentros/56.804 probabilidades. No hay rentabilidad demostrada.
+- [x] Corregir la identificación de la segunda clave, que coincide con la cuenta compartida; consolidar500 créditos en el registro central y añadir detección preventiva. Primeros informes conservados con corrección explícita, sin ocultar el error.
+- [ ] Resolver cobertura externa ausente, calibración completa, identidades/calendarios conflictivos y muestra financiera prospectiva antes de aprobar apuestas.
+
+## Tenis: auditoría de acreditación financiera (19-oct-2026)
+- [x] Ejecutar el evaluador congelado y auditar todos los registros originales, cuotas, órdenes, cierres y resultados sin convertir descargas repetidas en apuestas.
+- [x] Añadir un control independiente de evidencia y un procedimiento reproducible que distinga preparación, prueba simulada y ejecución real; preservar candidatos y periodos congelados.
+- [x] Probar rechazos por cronología, duplicación, evidencia ausente y costes; entregar informe con cobertura y pendientes acreditables, sin declarar beneficios futuros.
+
+## Tenis: acreditación de calidad predictiva (19-oct-2026)
+- [x] Auditar versiones y excluir identidades ambiguas sin fusionarlas por nombre; conservar los modelos congelados.
+- [x] Ejecutar comparación común de seis variantes y evaluación por mercado, con incertidumbre por bloques, calibración, cobertura y bandas de confianza.
+- [x] Entregar protocolo predictivo futuro, registro de pronósticos verificables y compuertas que impidan acreditar datos retrospectivos como confirmatorios.
+- [x] Probar controles temporales, identidad, orientación, duplicados y confianza; entregar resultados reales y requisitos que dependan de encuentros futuros.
+
+- [ ] Recuperar cobertura mediante puentes de identidad acreditados y una nueva versión reentrenada; reunir resultados confirmatorios futuros y validar los otros mercados en sus propios protocolos.
+
+- [x] Sellado externo del nuevo protocolo predictivo, autorizado explícitamente por el usuario: DigiCert19-oct16:54:10UTC, firma/nonce/digest y prueba negativa verificados. El estado pendiente del sello queda resuelto, sin cambiar los criterios de calidad.
+
+## Tenis: continuidad autónoma autorizada (19-oct-2026)
+- [x] Preparar capturador compartido con intervalo4h, máximo12consultasAPI-Tennis/día y bloqueo temporal ante401/403/429, sin consumir cuotas.
+- [x] Conectar revisiones de programas oficiales a la emisión sin cuotas y al evaluador congelado; ejecutar una pasada real y conservar exclusiones/resultados no acreditables.
+- [x] Probar idempotencia, concurrencia, presupuestos y evidencia; registrar seguimiento recurrente en este chat, sin avisos repetidos de estado idéntico.
+- [x] Entregar operación y automatización verificadas, conservando protocolos sellados y trabajos ajenos.
+
+### Tenis: validación prospectiva de los diez mercados (19-oct-2026)
+- [x] Añadir protocolo independiente e inmutable con líneas/periodos fijos, candidato Markov coherente y evaluación por contrato/circuito/formato; conservar calidad_v3 sellada.
+- [x] Probar cronología, integridad, pushes, sets no disputados, marcador multiclase, retiros y cobertura; emitir nuevos registros antes de los partidos admisibles:18partidos/990tareas/110grupos,0rechazos,367pruebas del motor entregado.
+- [x] Integrar la ampliación en la continuidad existente, entregar informe y comprobar las suites sin gastar créditos de cuotas; automatización verificadaACTIVA,25pruebas específicas nuevas.
+- [ ] Completar la muestra futura por contrato y revisión independiente: cero resultados iniciales, no acreditar calidad/rentabilidad anticipadamente. No es una tarea que se cierre con pruebas de software.
+
+### Tenis: cerrar la incorporación de resultados y explicar evidencia disponible (19-oct)
+- [x] Automatizar el cruce de resultados archivados con los eventos realmente pronosticados, conservando evidencia, pendientes y conflictos; no sustituir tiempos físicos por horas programadas. Entregado tennis_evidence_v1,29pruebas nuevas.
+- [x] Generar evaluación histórica legible de las diez familias con contratos exactos y marcador multiclase; separar muestras ya inspeccionadas de confirmación futura:2788partidosterminados/39grupos,curvas/ECE/calibración/balance de clases.
+- [x] Ejecutar reconciliación y auditoría financiera actualizadas, integrar en continuidad, probar y entregar diagnóstico fechado:18programadosfuturos/0terminalesdeellos,396pruebas motor y1315generales aprobadas.
+- [ ] Incorporar resultados futuros verificables y cumplir muestra/periodo: primeros18aúnfuturos19-oct18:35UTC,primerinicioestimado22:15México. Financiero0órdenes: no acumula ROI automáticamente sin cuotas/órdenes/autorizaciones válidas. No cerrar esos requisitos con datos históricos o pruebas de software.
+
+## Tenis: auditoría y motor v7 (2026-10-19)
+- [x] Alias de una semana en 2026_wta.csv (47) y fusiones por fecha de nacimiento (5; 14 homónimos confirmados distintos): `tennis_identity_v2/v3`, datos `identity_bridge_v3_20261019`.
+- [x] Sobredispersión por partido para todos los mercados (`tennis_core_v4`).
+- [x] Ranking, puntos y edad saneada (`tennis_core_v5.features`).
+- [x] Elo dinámico ordenado por ronda con inactividad/carga/experiencia (`tennis_dynamic_v2`) y apilador v7; protocolo `core_v7_prospective_20261019`, 17 pronósticos sellados.
+- [x] Punto de entrada único `tennis_motor` + README; 413 pruebas.
+- [ ] Cuotas de cierre históricas como entrada (pendiente de autorización del titular para descargar/gastar).
+- [ ] Apagar o actualizar la automatización de Codex que sigue usando el protocolo de diez mercados retirado.
+- [ ] Evaluar v7 con resultados reales a medida que se jueguen (`python -m tennis_motor evaluate`).
+- [x] Cuotas históricas Tennis-Data (descarga manual del titular): cruce 53.853 partidos; el mercado sin margen supera a v7; `--odds-a/--odds-b` en `tennis_motor`.
+- [ ] Fuente de cuotas previas en vivo para pronósticos automáticos (decisión del titular: The Odds API u otra).
+- [x] Cuotas previas en vivo: `tennis_odds_live_v1` (h2h, eu, 2 fotos/día, tope 400/mes, reserva para fútbol) + tarea programada + motor v8.
+- [x] Motor en git: rama `tennis/motor-v8`, PR #46.
+- [x] Entrada automática `tennis_intake_v1` en la tarea programada (cuotas -> calendario -> sello -> evaluación).
+- [ ] Apagar la automatización de Codex «continuidad-de-validaci-n-predictiva-de-tenis» (solo el titular puede hacerlo desde Codex).
+- [ ] Actualización semanal de datos (TennisMyLife -> identidades -> Elo dinámico) para que ranking y Elo no caduquen.
+- [x] Actualización semanal de datos (`tennis_refresh_v1`, lunes 04:00), PR #49.
+- [x] Pausar la automatización de Codex (archivo local).
+- [x] Reentreno semanal del modelo de saque; validación con Match Charting Project. PR #50.
+- [ ] Primeras cifras de acierto con resultados reales (`data/tennis/intake_v1/evaluation_latest.json`).
