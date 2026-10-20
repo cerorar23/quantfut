@@ -4,7 +4,7 @@
 set -u
 BASE="$HOME/quantfut-tenis"
 IMAGE="$(cat "$BASE/IMAGE")"
-run() { docker run --rm --name "tenis-$1-$$" -v "$BASE/data:/data" -v "$BASE/secrets:/secrets:ro" "$IMAGE" "$@"; }
+run() { docker run --rm --name "tenis-$$-$(date +%s)" --user "$(id -u):$(id -g)" -v "$BASE/data:/data" -v "$BASE/secrets:/secrets:ro" "$IMAGE" "$@"; }
 case "${1:-}" in
   twice-daily)
     run python -m tennis_odds_live_v1 --root /data/live_odds_v1 --workspace /secrets >> "$BASE/data/live_odds_v1/scheduler.log" 2>&1
