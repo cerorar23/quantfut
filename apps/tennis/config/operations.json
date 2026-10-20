@@ -1,0 +1,12 @@
+{
+  "provider": "the_odds_api",
+  "subscription": "paid_user_confirmed",
+  "subscription_evidence": "El titular confirmó plan de pago el 17-oct-2026",
+  "monthly_tennis_credit_cap": 2000,
+  "budget_authorization": "El titular eligió 2.000 créditos mensuales para tenis el 17-oct-2026",
+  "shared_account_reserve": 6000,
+  "paid_history_supported_by_subscription": true,
+  "regions": "eu,uk",
+  "max_bookmakers_per_group": 10,
+  "note": "Se conserva la reserva de 6.000 documentada para los otros motores. El margen adicional de 200 antes recomendado se reasigna al presupuesto de tenis autorizado. Consultar saldo antes de gastar."
+}

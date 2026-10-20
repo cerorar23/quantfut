@@ -1,0 +1,8 @@
+{
+  "version": "v8",
+  "params": "C:/Users/huye/Documents/apuesta proyec/data/tennis/core_v7_prospective_20261019/params.json",
+  "canonical": "C:/Users/huye/Documents/apuesta proyec/data/tennis/identity_bridge_v3_20261019/canonical/matches.parquet",
+  "models_root": "C:/Users/huye/Documents/apuesta proyec/data/tennis/full_20261016/models",
+  "live_odds_root": "C:/Users/huye/Documents/apuesta proyec/data/tennis/live_odds_v1",
+  "protocol": "C:/Users/huye/Documents/apuesta proyec/data/tennis/core_v8_prospective_20261019/protocol.json"
+}

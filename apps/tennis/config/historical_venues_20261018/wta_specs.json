@@ -1,0 +1,104 @@
+{
+  "sonoma": [
+    "Club Sonoma",
+    "Monterrey",
+    "mx",
+    "America/Monterrey"
+  ],
+  "porsche": [
+    "Porsche Arena",
+    "Stuttgart",
+    "de",
+    "Europe/Berlin"
+  ],
+  "jiujiang": [
+    "Jiujiang International Tennis Center",
+    "Jiujiang",
+    "cn",
+    "Asia/Shanghai"
+  ],
+  "romai": [
+    "Romai Teniszakademia",
+    "Budapest",
+    "hu",
+    "Europe/Budapest"
+  ],
+  "nautica": [
+    "Nautica Entertainment Complex",
+    "Cleveland",
+    "us",
+    "America/New_York"
+  ],
+  "strasbourg": [
+    "Tennis Club de Strasbourg",
+    "Strasbourg",
+    "fr",
+    "Europe/Paris"
+  ],
+  "bogota": [
+    "Country Club de Bogota",
+    "Bogota",
+    "co",
+    "America/Bogota"
+  ],
+  "guadalajara": [
+    "Centro Panamericano de Tenis",
+    "Zapopan",
+    "mx",
+    "America/Mexico_City"
+  ],
+  "charleston": [
+    "Credit One Stadium",
+    "Daniel Island",
+    "us",
+    "America/New_York"
+  ],
+  "rabat": [
+    "Union Sportive des Cheminots du Maroc",
+    "Rabat",
+    "ma",
+    "Africa/Casablanca"
+  ],
+  "nottingham": [
+    "Nottingham Tennis Centre",
+    "Nottingham",
+    "gb",
+    "Europe/London"
+  ],
+  "prague": [
+    "TK Sparta Praha",
+    "Praha",
+    "cz",
+    "Europe/Prague"
+  ],
+  "villa": [
+    "Parque Villa Lobos",
+    "Sao Paulo",
+    "br",
+    "America/Sao_Paulo"
+  ],
+  "berlin": [
+    "LTTC Rot Weiss",
+    "Berlin",
+    "de",
+    "Europe/Berlin"
+  ],
+  "homburg": [
+    "TC Bad Homburg",
+    "Bad Homburg",
+    "de",
+    "Europe/Berlin"
+  ],
+  "ciric": [
+    "Ciric Sport Base",
+    "Iasi",
+    "ro",
+    "Europe/Bucharest"
+  ],
+  "westwood": [
+    "Westwood Country Club",
+    "Austin Texas",
+    "us",
+    "America/Chicago"
+  ]
+}
