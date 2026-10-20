@@ -3097,3 +3097,4 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Pausar la automatización de Codex (archivo local).
 - [x] Reentreno semanal del modelo de saque; validación con Match Charting Project. PR #50.
 - [ ] Primeras cifras de acierto con resultados reales (`data/tennis/intake_v1/evaluation_latest.json`).
+- [x] Motor de tenis en el VPS (imagen propia + cron de `qf`), PR #53/#54; tareas de Windows desactivadas.

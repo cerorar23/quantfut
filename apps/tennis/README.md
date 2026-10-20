@@ -195,11 +195,11 @@ Los paquetes `tennis_quality_v3`, `tennis_allmarkets_v1`, `tennis_markets_v2`, `
 
 ### Cuotas previas en vivo (v8)
 
-`python -m tennis_odds_live_v1 --root data/tennis/live_odds_v1` toma una foto h2h (región `eu`) por torneo activo y media jornada UTC; tope 400 créditos/mes y reserva para el consumo de fútbol de la misma cuenta. La tarea de Windows «QuantFut tenis cuotas h2h» lo ejecuta a las 05:00 y 17:00. `tennis_motor forecast` usa la última foto previa si existe (`source: live_snapshot`); el estudio vigente es `core_v8_prospective_20261019`.
+`python -m tennis_odds_live_v1 --root data/tennis/live_odds_v1` toma una foto h2h (región `eu`) por torneo activo y media jornada UTC; tope 400 créditos/mes y reserva para el consumo de fútbol de la misma cuenta. En producción lo ejecuta el cron del VPS (ver «Ejecución en el VPS»); la antigua tarea de Windows «QuantFut tenis cuotas h2h» quedó desactivada a las 05:00 y 17:00. `tennis_motor forecast` usa la última foto previa si existe (`source: live_snapshot`); el estudio vigente es `core_v8_prospective_20261019`.
 
 ### Entrada automática de partidos
 
-`python -m tennis_intake_v1 --root data/tennis/intake_v1 --credential-file .env.api-tennis.local` pide el calendario a API-Tennis (2 consultas, máximo 4 al día). Resuelve jugadores con identidad estricta (apellido + inicial, un único jugador activo) y el torneo por nombre exacto. Sella con el motor vigente cada partido al menos 10 minutos antes de su hora del proveedor, una sola vez, y recoge los resultados de capturas posteriores para `evaluation_latest.json`. La tarea de Windows «QuantFut tenis cuotas h2h» lo ejecuta después de la foto de cuotas. Las horas del proveedor son estimaciones: no son horas físicas verificadas.
+`python -m tennis_intake_v1 --root data/tennis/intake_v1 --credential-file .env.api-tennis.local` pide el calendario a API-Tennis (2 consultas, máximo 4 al día). Resuelve jugadores con identidad estricta (apellido + inicial, un único jugador activo) y el torneo por nombre exacto. Sella con el motor vigente cada partido al menos 10 minutos antes de su hora del proveedor, una sola vez, y recoge los resultados de capturas posteriores para `evaluation_latest.json`. En producción lo ejecuta el cron del VPS (ver «Ejecución en el VPS»); la antigua tarea de Windows «QuantFut tenis cuotas h2h» quedó desactivada después de la foto de cuotas. Las horas del proveedor son estimaciones: no son horas físicas verificadas.
 
 ### Actualización semanal de datos
 
