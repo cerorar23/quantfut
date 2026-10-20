@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-20 01:08 UTC · Captura extra de FotMob a T-30 y sello sin once oficial a T-25 · worker (2 archivos, `docker cp`) + crontab, PR #47 (`9811b7c`)
+- Orden del titular (opción 2: captura extra a T-30). Solo ~56 % de los partidos traían el once oficial a T-45 (primer sello real, 19-oct 23:40 UTC: `sin once oficial`). Nueva ventana de captura `tarde` (~T-33 a T-28), que se solapa con `cierre` (cada pasada toma la primera pendiente), y el cron de `previos` pasa de cada 15 a cada 5 min (solo pide a FotMob si hay una ventana pendiente: ~25 % más de peticiones por partido). Sin once oficial, el sello por partido espera hasta T-25 (antes T-38).
+- Archivos idénticos a `main` previo antes de copiar: `ingest/fotmob_captura.py`, `publish/sello_tardio.py`. Solo cambió la línea de `previos` del crontab. Sin reinicio: el walk-forward ampliado siguió corriendo (segundo trozo terminado).
+- Las pruebas del job diario dejaban de pasar al cambiar la fecha (el corte del sello por partido es 2026-10-20): se fijó el corte en None en esas pruebas y se añadió una que comprueba que con el corte activo el diario no crea picks.
+- Vuelta atrás: copiar de vuelta `releases/captura-tarde-t30/backup/*` y cargar `backup/crontab_worker.txt`.
+
 ### 2026-10-19 22:06 UTC · El lote de partido lleva el factor del once · worker (2 archivos, `docker cp`) + crontab, PR #44 (`f466d94`)
 - Orden del titular («sí, despliega»), antes del primer sello real. `hashchain._collect_partido` ahora incluye `sello_tardio` (disparo, minutos al saque y `ajuste_xi`) en el JSON sellado: así el factor se puede verificar por terceros al revelarse el lote. Aún no había ningún lote de partido, así que no cambia ningún hash existente. `ajuste_xi --avisar` y su cron diario (07:30 UTC) avisan una sola vez al llegar a 150 partidos con efecto.
 - Archivos idénticos a `main` previo antes de copiar. Sin reinicio: el walk-forward ampliado siguió corriendo. Verificado: importa, `hashchain verify` OK con 21 lotes, `--medir` responde.
