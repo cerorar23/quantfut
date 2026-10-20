@@ -6794,3 +6794,10 @@ Automatización existente actualizada mediante herramienta y verificadaACTIVA mi
 - Jugadores con ranking de más de 60 días ya no se excluyen: el motor usa un apilador sin ranking/puntos/edad (Markov + Elo dinámico + inactividad/carga/experiencia), ajustado igual. En 2026 (fuera de muestra respecto a 2025): ATP log-loss 0,6052 / acierto 67,1 %, WTA 0,6026 / 66,6 %, frente a 0,5956 / 67,6 % y 0,5946 / 67,9 % con ranking. Primer caso: Uchijima-Shibahara.
 - CI: job `tenis` en `pruebas.yml` (425 pruebas de `apps/tennis`, sin base de datos).
 - Las notas de tenis de `progreso.md`, `tareas.md`, `PENDIENTES.md` y los 32 `docs/tenis_*.md` entran por fin al repo. El stash de notas de Codex se exportó a `data/tennis/codex_harness_notes_stash_20261019.patch`.
+
+## 2026-10-20 — Tenis: el motor pasa al VPS
+
+- Para no depender del PC, el tenis corre en el VPS en una imagen propia (`quantfut-tenis`) con el cron de `qf`; ver la entrada de `DEPLOYS.md`. Aislado del fútbol: no comparte contenedores, base ni crontab del worker.
+- El servidor está en Europe/Berlin: el cron usa 00:30 y 12:30 locales para que siempre caiga una ejecución en cada media jornada UTC (franjas de cuotas y cupo diario de API-Tennis), con o sin horario de verano.
+- No se lanzó una captura de prueba de API-Tennis para no gastar el cupo local del día (4 consultas UTC); la cadena se verificó con la entrada en seco y la tarea semanal real.
+- Tareas de Windows desactivadas, no borradas (vuelta atrás).

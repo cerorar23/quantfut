@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-20 03:55 UTC · Motor de tenis al VPS (servicio nuevo, aislado del fútbol) · imagen `quantfut-tenis:1d2067d` + crontab de `qf`, PR #53 y #54 (`205f62b`)
+- Orden del titular («haz lo que queda»): sacar el tenis del PC para que no dependa de que esté encendido. **No toca ningún servicio de fútbol**: ni contenedores, ni compose, ni el crontab del worker, ni la base.
+- Imagen propia `quantfut-tenis:1d2067d` construida en el servidor desde `git archive` de `apps/tennis` (`apps/tennis/Dockerfile`, `python:3.12-slim`). El código Python de la imagen es idéntico al de `main` (`205f62b` solo cambia el script del host). Datos en `~/quantfut-tenis/data` (221 MB: base semanal, modelos, parámetros, registros de cuotas y de la entrada automática traídos del PC), claves en `~/quantfut-tenis/secrets` (700/600: `ODDS_API_KEY` y `API_TENNIS_KEY`), imagen activa en `~/quantfut-tenis/IMAGE`.
+- Crontab de `qf` (hora del servidor, Europe/Berlin): `30 0,12 * * * ~/quantfut-tenis/vps_run.sh twice-daily` (foto h2h + entrada; una por media jornada UTC, también con horario de invierno) y `0 11 * * 1 ~/quantfut-tenis/vps_run.sh weekly`. Respaldo previo: `~/quantfut-tenis/backup/crontab_qf_antes_20261020.txt`.
+- Verificado: entrada en seco dentro del contenedor (34 ya sellados, sin duplicar), `tennis_motor forecast` con foto de cuotas, y la tarea semanal lanzada por el mismo script (0 descargas, 171 reutilizados, base al 20-oct, reentreno y promoción de `motor_config.json`; archivos a nombre de `qf`).
+- En el PC, las tareas de Windows «QuantFut tenis cuotas h2h» y «QuantFut tenis datos semanales» quedan **desactivadas** (no borradas) para no duplicar llamadas ni sellos.
+- Vuelta atrás: `crontab ~/quantfut-tenis/backup/crontab_qf_antes_20261020.txt` y reactivar las dos tareas de Windows; los datos del PC en `data/tennis/{intake_v1,live_odds_v1,weekly}` se quedaron como estaban a las 03:50 UTC (para volver, copiar antes los del servidor hacia el PC).
+
 ### 2026-10-20 03:00 UTC · Artefacto del ajuste del once reajustado con la muestra ampliada · worker (solo un archivo de datos)
 - `ajuste_xi_ampliado-2024-01-01_2026-10-19.pkl` (11.920 partidos) en `/srv/quantfut/artifacts`; `calcular` carga el más reciente, así que desde ahora los factores en sombra usan este y quedan marcados con `oos_version = ampliado-...`. Sin cambios de código, sin tocar los lambdas sellados. Vuelta atrás: borrar ese archivo (vuelve al de `2026.10.19-131830`).
 

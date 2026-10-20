@@ -6,7 +6,8 @@
 
 - [x] Cuotas: Tennis-Data (descarga manual, validación) y The Odds API en vivo (h2h, eu, 2 fotos/día, tope 400/mes; tarea de Windows «QuantFut tenis cuotas h2h»). Motor vigente v8: usa la cuota sin margen cuando existe.
 - [x] Automatización de Codex pausada (20-oct, `status = "PAUSED"`).
-- [ ] **Claude:** evaluar v7 con resultados reales a medida que se jueguen.
+- [x] Motor en el VPS desde el 20-oct (imagen `quantfut-tenis`, cron de `qf`); ya no depende del PC.
+- [ ] **Claude:** evaluar con resultados reales (revisión programada el 22-oct).
 
 Motor de investigación implementado y probado en checkout independiente `tennis-engine`. 214 originales, 492.251 partidos y modelos ATP/WTA conservados. The Odds API: **plan de pago, 2.000 créditos mensuales para tenis**. Estado actual: [mercados integrados y consumos](docs/tenis_mercados_integrados_20261019.md); antecedentes: [auditoría y pronósticos](docs/tenis_auditoria_pronosticos_20261019.md), [preparación operativa](docs/tenis_preparacion_apuestas_20261018.md) y [cierre geográfico](docs/tenis_cierre_integral_20261018.md). Diez familias de mercados calculables; no hay rentabilidad futura demostrada ni apuestas automáticas.
 
