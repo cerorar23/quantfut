@@ -121,3 +121,11 @@ def test_frozen_bundle_tampering_is_rejected(tmp_path):
     assert instance.load()['forecasts']==[]
     write_json(tmp_path/'bundle.json',dict(forecasts=['changed']))
     with pytest.raises(ValueError,match='bundle changed'):instance.load()
+
+
+@pytest.mark.parametrize('tipoff,expected',[
+    ('2026-10-21T00:00:00+00:00','2026-27'),('2026-12-31T23:00:00+00:00','2026-27'),
+    ('2027-01-15T01:00:00+00:00','2026-27'),('2027-04-12T00:00:00+00:00','2026-27'),
+    ('2027-10-19T23:30:00+00:00','2027-28'),('2008-11-01T00:00:00+00:00','2008-09')])
+def test_season_label_follows_nba_season_not_calendar_year(tipoff,expected):
+    assert m.season_label(tipoff)==expected

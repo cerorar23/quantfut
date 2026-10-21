@@ -120,6 +120,7 @@ Tareas sueltas:
 - [ ] iOS: necesita Mac y Apple Developer (APNs y firma).
 - [ ] Validar el acceso con Google y la entrega FCM con un usuario real; activar `FIREBASE_AUTH_ENABLED` cuando lo decidas.
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
+- [ ] NBA — cuotas históricas de partido (The Odds API): comprar 325 snapshots h2h de 2024-25 y 2025-26 (3.250 créditos) **desde el 1-nov-2026**, con `python -m nba.odds_history fetch` (tope 3.300, reserva 14.500, caché). Bloqueado por código antes de esa fecha. Detalle en docs/nba_cuotas_historicas_plan_20261021.md.
 
 ## Decisiones que dependen de ti
 1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
@@ -135,3 +136,4 @@ Tareas sueltas:
 - Comparación repetida con protocolo fijo: entrenamiento 3.306 de 2024, evaluación 3.108 de 2025; Log-Loss base 0,635571 frente a espacial 0,635581, intervalo de diferencia incluye cero. En la misma muestra original de 2.833: base 0,638733, espacial anterior 0,638682 y ajuste ampliado 0,638764. La nueva cobertura no acredita una mejora predictiva; 2025 exploratorio, sin activar corrección. Sensibilidad y calibración archivadas en historical_geography_batch2_20261018/comparison/.
 - Carga por rondas ejecutada: entrenamiento2130/evaluación1957; LogLoss base0,615696 frente a cobertura+carga0,615221. Intervalos incluyen cero, variante experimental sin activar; no equivale a ventanas diarias. Informe docs/tenis_carga_rondas_resultados_20261018.md.
 - Pendiente: coordenadas de 78 entradas (345 destinos), cola actual data/tennis/historical_geography_batch2_20261018/geography_priority_queue.json; siguientes cinco: Taipei Tennis Center 14, SuperTennis Arena Bolonia 14, AO Arena Manchester 12, SEB Arena Vilna 10 y Swiss Tennis Arena Biel 9. Ventanas 3/7 días bloqueadas: 152 observaciones terminales archivadas sin límite inferior de finalización acreditado. Nuevas especificaciones se eligen dentro de entrenamiento y requieren periodo futuro intacto. Sin ROI ni horas ficticias.
+- [ ] NBA v1.3 prospectivo: desplegar la sección nueva de /nba y programar el sellado diario (PR a `main`, confirmación del titular). Plan y vuelta atrás en docs/nba_v13_prospectivo_20261021.md.

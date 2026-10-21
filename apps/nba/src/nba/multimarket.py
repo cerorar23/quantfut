@@ -266,6 +266,13 @@ def team_samples(games, protocol):
     return dict(samples), league, histories, ratings
 
 
+def season_label(tipoff_utc):
+    """NBA season of a tipoff: August onward belongs to the season that starts that year."""
+    moment = datetime.fromisoformat(tipoff_utc)
+    start = moment.year if moment.month >= 8 else moment.year - 1
+    return f'{start}-{(start + 1) % 100:02d}'
+
+
 def apply_calibration(probability, calibration):
     p = np.clip(probability, 1e-6, 1-1e-6)
     return np.clip(expit(calibration['slope']*logit(p)+calibration['bias']), 1e-9, 1-1e-9)
@@ -371,7 +378,7 @@ def prospective(players, games, model, mappings, as_of):
                     pmf=pmf,availability='unknown')
         game=dict(date=cut,home=dict(team_id=m['home_nba_team_id']),away=dict(team_id=m['away_nba_team_id']))
         # New season ratings regress once, even before any season game is observed.
-        if games[-1]['season'] != str(datetime.fromisoformat(m['tipoff_utc']).year)+'-'+str((datetime.fromisoformat(m['tipoff_utc']).year+1)%100):
+        if games[-1]['season'] != season_label(m['tipoff_utc']):
             adjusted=defaultdict(lambda:1500.,{k:1500+(v-1500)*(1-protocol['elo_season_regression']) for k,v in ratings.items()})
         else: adjusted=ratings
         f=team_features(game,teams,adjusted,model['league'],protocol)

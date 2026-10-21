@@ -6801,6 +6801,20 @@ Automatización existente actualizada mediante herramienta y verificadaACTIVA mi
 - El servidor está en Europe/Berlin: el cron usa 00:30 y 12:30 locales para que siempre caiga una ejecución en cada media jornada UTC (franjas de cuotas y cupo diario de API-Tennis), con o sin horario de verano.
 - No se lanzó una captura de prueba de API-Tennis para no gastar el cupo local del día (4 consultas UTC); la cadena se verificó con la entrada en seco y la tarea semanal real.
 - Tareas de Windows desactivadas, no borradas (vuelta atrás).
+## 2026-10-21 — NBA: etiqueta de temporada en pronósticos prospectivos
+`multimarket.prospective` calculaba la temporada del tipoff con el año calendario ("2027-28" para un partido de enero de 2027), así que de enero a junio regresaba el Elo un 25 % hacia 1500 a mitad de temporada. Ahora `season_label()` usa la temporada NBA (agosto en adelante abre la nueva), con prueba parametrizada. El paquete sellado RUN071 no se tocó (sus 42 pronósticos de octubre no estaban afectados); como `model.json` sella el hash del código, una cohorte nueva exige `evaluate` en un directorio nuevo, no reutilizar el de RUN071.
+
+## 2026-10-21 — NBA v1.2: correcciones de la auditoría
+Se creó `multimarket_v12` (protocolo congelado antes de correr) sin tocar RUN071: recalibración móvil, Elo con margen + descanso, ventaja local de las dos temporadas previas y bootstrap por fechas. Solo el ganador mejora de forma significativa (Brier −0,006 en ambas temporadas de test, sesgo local casi eliminado); equipos, total y jugadores quedan neutros, y el peso empírico de jugadores sigue en 0,25. Porqué importa: la ventaja que faltaba en el ganador era deriva de calibración y descanso, no más complejidad. Informe docs/nba_multimarket_v12_20261021.md. Pendiente sin datos: lesiones, cuotas/CLV.
+
+## 2026-10-21 — NBA v1.3: disponibilidad desde reportes oficiales
+Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de correr) con los 816 reportes de lesiones ya descargados, regla estricta de 60 min antes del salto y partidos sin hora de salto tratados como sin información. Mejora de forma significativa el ganador (Brier −0,005), los puntos de equipo y cinco de los seis mercados de jugador; el total y tapones no cambian. No se gastó ningún crédito: The Odds API tiene 4.092 y fútbol necesita ~300/día hasta el 1-nov, así que las cuotas históricas NBA (~3.300 créditos) quedan para después del reset. Informe docs/nba_multimarket_v13_disponibilidad_20261021.md.
+
+## 2026-10-21 — NBA: plan de cuotas históricas, sin gastar
+`nba.odds_history` (plan/fetch/load) con 325 snapshots h2h (3.250 créditos) y bloqueo en código antes del 1-nov, tope y reserva. Se decidió por fases porque la bolsa de noviembre (~5.700 libres tras vivo y los 527 snapshots de fútbol) no cubre h2h+totales. Los totales van en diciembre.
+
+## 2026-10-21 — NBA v1.3 prospectivo: cohorte sellada y página
+`nba.multimarket_v13_live` + `multimarket_live_dashboard` (protocolo `multimarket_v13_live_protocol.json`). Decisión clave: solo mercados de equipo (ganador, puntos de equipo, total) porque antes del salto no existe lista verificada de jugadores, y un reporte cuenta únicamente si su sello y nuestra recepción son ≥60 min previos al salto; si no, el partido se sella como «sin reporte válido» en vez de «sano». Modelo ajustado una vez y anclado por hash (el hash del código cambió, no se reutiliza el de RUN071); la página recalcula resultados desde el recibo oficial y una cohorte rota no oculta RUN071. Ensayo: 11 partidos reales sellados 8 h antes del primer salto. De paso se corrigió el analizador del PDF (motivo partido en dos filas). No desplegado; plan en docs/nba_v13_prospectivo_20261021.md.
 
 ## 2026-10-21 — CI de tenis: prueba de cuotas en vivo dependía del reloj real
 

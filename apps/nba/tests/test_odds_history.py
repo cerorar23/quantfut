@@ -1,0 +1,89 @@
+from datetime import UTC, datetime, timedelta
+import json
+
+import pytest
+
+from nba import odds_history as oh
+
+GAMES = [
+    dict(game_id='g1', date='2025-01-14', season='2024-25', home=dict(name='Boston Celtics'), away=dict(name='Miami Heat')),
+    dict(game_id='g2', date='2025-01-14', season='2024-25', home=dict(name='Denver Nuggets'), away=dict(name='Utah Jazz')),
+    dict(game_id='g3', date='2025-01-18', season='2024-25', home=dict(name='Boston Celtics'), away=dict(name='Utah Jazz')),
+    dict(game_id='g4', date='2023-01-14', season='2022-23', home=dict(name='Boston Celtics'), away=dict(name='Utah Jazz')),
+]
+TIPS = {'g1': datetime(2025, 1, 15, 0, 30, tzinfo=UTC), 'g2': datetime(2025, 1, 15, 2, 0, tzinfo=UTC)}
+
+
+class Reply:
+    def __init__(self, body, last=10, remaining=20000, status=200):
+        self.content, self.status_code = json.dumps(body).encode(), status
+        self.headers = {'x-requests-last': str(last), 'x-requests-remaining': str(remaining)}
+
+
+class Client:
+    def __init__(self, replies):
+        self.replies, self.calls = list(replies), []
+
+    def get(self, url, params, timeout):
+        self.calls.append(params['date'])
+        return self.replies.pop(0)
+
+
+def test_plan_has_one_slot_per_game_day_and_costs_ten_credits_per_market():
+    p = oh.plan(GAMES, TIPS, {'2024-25'})
+    assert [s['day'] for s in p['slots']] == ['2025-01-14', '2025-01-18']
+    assert p['slots'][0]['time'] == '2025-01-15T00:00:00+00:00' and p['slots'][0]['time_source'] == 'tipoff'
+    assert p['slots'][1]['time_source'] == 'fallback' and p['slots'][1]['time'].endswith('16:30:00+00:00')
+    assert p['credits_per_snapshot'] == 10 and p['total_credits'] == 20
+    assert oh.plan(GAMES, TIPS, {'2024-25'}, ('h2h', 'totals'))['total_credits'] == 40
+
+
+def test_nothing_is_bought_before_november_first():
+    p = oh.plan(GAMES, TIPS, {'2024-25'})
+    client = Client([Reply({})])
+    with pytest.raises(PermissionError):
+        oh.fetch(p, '.', 'k', cap=100, reserve=0, now=datetime(2026, 10, 31, 23, 59, tzinfo=UTC), client=client)
+    assert client.calls == []
+
+
+def test_fetch_caches_each_response_respects_cap_and_never_repays(tmp_path):
+    p = oh.plan(GAMES, TIPS, {'2024-25'})
+    now = datetime(2026, 11, 2, tzinfo=UTC)
+    first = oh.fetch(p, tmp_path, 'k', cap=10, reserve=0, now=now, client=Client([Reply({'data': []})]))
+    assert first['fetched'] == 1 and first['stop'] == 'cap' and len(oh.cached(p, tmp_path)) == 1
+    again = Client([Reply({'data': []})])
+    second = oh.fetch(p, tmp_path, 'k', cap=100, reserve=0, now=now, client=again)
+    assert second['fetched'] == 1 and len(again.calls) == 1 and second['stop'] is None
+    assert len(oh.cached(p, tmp_path)) == 2 and len((tmp_path / 'manifest.jsonl').read_text().splitlines()) == 2
+
+
+def test_reserve_error_and_unexpected_cost_stop_the_run(tmp_path):
+    p = oh.plan(GAMES, TIPS, {'2024-25'})
+    now = datetime(2026, 11, 2, tzinfo=UTC)
+    r = oh.fetch(p, tmp_path / 'a', 'k', cap=100, reserve=15000, now=now, client=Client([Reply({}, remaining=15005), Reply({})]))
+    assert r['fetched'] == 1 and r['stop'] == 'reserve'
+    e = oh.fetch(p, tmp_path / 'b', 'k', cap=100, reserve=0, now=now, client=Client([Reply({}, status=429)]))
+    assert e['fetched'] == 0 and e['stop'] == 'http_429'
+    c = oh.fetch(p, tmp_path / 'c', 'k', cap=100, reserve=0, now=now, client=Client([Reply({}, last=30)]))
+    assert c['stop'] == 'unexpected_cost'
+
+
+def event(home, away, start, updated, home_price=1.5, away_price=2.7):
+    return dict(home_team=home, away_team=away, commence_time=start, bookmakers=[
+        dict(key='pinnacle', last_update=updated, markets=[dict(key='h2h', last_update=updated, outcomes=[
+            dict(name=home, price=home_price), dict(name=away, price=away_price)])])])
+
+
+def test_load_matches_games_and_rejects_started_stale_or_unmatched(tmp_path):
+    p = oh.plan(GAMES, TIPS, {'2024-25'})
+    snap = {'timestamp': '2025-01-15T00:00:00Z', 'data': [
+        event('Boston Celtics', 'Miami Heat', '2025-01-15T00:30:00Z', '2025-01-14T23:55:00Z'),
+        event('Denver Nuggets', 'Utah Jazz', '2025-01-15T02:00:00Z', '2025-01-14T10:00:00Z'),
+        event('Boston Celtics', 'Utah Jazz', '2025-01-14T23:00:00Z', '2025-01-14T22:00:00Z'),
+        event('Phoenix Suns', 'Utah Jazz', '2025-01-15T02:00:00Z', '2025-01-14T23:55:00Z')]}
+    (tmp_path / (p['slots'][0]['name'] + '.json')).write_text(json.dumps(snap))
+    rows, stats = oh.load(p, tmp_path, GAMES)
+    assert [r['game_id'] for r in rows] == ['g1']
+    assert rows[0]['home_no_vig'] == pytest.approx((1 / 1.5) / (1 / 1.5 + 1 / 2.7)) and rows[0]['minutes_to_tipoff'] == 30
+    assert stats['already_started'] == 1 and stats['invalid_or_stale_price'] == 1 and stats['unmatched_event'] == 1
+    assert stats['missing_snapshot'] == 1
