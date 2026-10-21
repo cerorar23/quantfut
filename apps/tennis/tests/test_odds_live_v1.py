@@ -39,7 +39,9 @@ def test_monthly_cap_and_football_reserve_block_paid_calls(tmp_path):
     assert len(r['captured']) == 1 and r['blocked'] is not None
 
 
-def test_latest_market_devigs_and_respects_time(tmp_path):
+def test_latest_market_devigs_and_respects_time(tmp_path, monkeypatch):
+    # Capture stamps receipts with its own module clock; pin it so the fixed dates below do not depend on today.
+    monkeypatch.setattr('tennis_engine.operations.now', lambda: '2026-10-20T01:00:00+00:00')
     transport, _ = fake()
     run(tmp_path, 'k', transport, clock=lambda: '2026-10-20T01:00:00+00:00')
     m = latest_market(tmp_path, 'Eva Sol', 'Ana Paz', '2026-10-20T11:00:00Z')
