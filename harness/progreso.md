@@ -6801,6 +6801,11 @@ Automatización existente actualizada mediante herramienta y verificadaACTIVA mi
 - El servidor está en Europe/Berlin: el cron usa 00:30 y 12:30 locales para que siempre caiga una ejecución en cada media jornada UTC (franjas de cuotas y cupo diario de API-Tennis), con o sin horario de verano.
 - No se lanzó una captura de prueba de API-Tennis para no gastar el cupo local del día (4 consultas UTC); la cadena se verificó con la entrada en seco y la tarea semanal real.
 - Tareas de Windows desactivadas, no borradas (vuelta atrás).
+
+## 2026-10-21 — CI de tenis: prueba de cuotas en vivo dependía del reloj real
+
+- `test_latest_market_devigs_and_respects_time` fallaba en `main` desde el 20-oct ~12:59 UTC. Causa: `run(..., clock=...)` solo controla el nombre de la franja; `Capture.request` sella `received_at` con `operations.now()` (reloj real). La prueba consulta `before=2026-10-20T11:00Z`, así que pasó mientras el reloj real iba antes de esa hora y falló al pasarla.
+- Decisión: el código es correcto (en producción ambos relojes coinciden); se arregla la prueba fijando `tennis_engine.operations.now` con `monkeypatch`, sin tocar lo que comprueba (de-vig, orden temporal, orientación).
 ## 2026-10-21 — NBA: etiqueta de temporada en pronósticos prospectivos
 `multimarket.prospective` calculaba la temporada del tipoff con el año calendario ("2027-28" para un partido de enero de 2027), así que de enero a junio regresaba el Elo un 25 % hacia 1500 a mitad de temporada. Ahora `season_label()` usa la temporada NBA (agosto en adelante abre la nueva), con prueba parametrizada. El paquete sellado RUN071 no se tocó (sus 42 pronósticos de octubre no estaban afectados); como `model.json` sella el hash del código, una cohorte nueva exige `evaluate` en un directorio nuevo, no reutilizar el de RUN071.
 
