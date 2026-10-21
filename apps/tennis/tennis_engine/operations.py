@@ -95,11 +95,12 @@ def select_books(inventory, limit=10):
 
 
 class Capture:
-    def __init__(self, root, api_key, cap=0, account_reserve=6000, transport=None):
+    def __init__(self, root, api_key, cap=0, account_reserve=6000, transport=None, clock=now):
         if cap<0 or account_reserve<0: raise ValueError('Nonnegative credit limits required')
         self.root=Path(root); self.root.mkdir(parents=True,exist_ok=True)
         self.key=api_key; self.cap=cap; self.reserve=account_reserve
         self.transport=transport or self._transport
+        self.clock=clock
         self.db=sqlite3.connect(self.root/'credits.sqlite',timeout=30)
         self.db.execute('CREATE TABLE IF NOT EXISTS charges(id TEXT PRIMARY KEY,month TEXT,cost INTEGER,state TEXT)')
         if 'actual_cost' not in {r[1] for r in self.db.execute('PRAGMA table_info(charges)')}:
@@ -130,7 +131,7 @@ class Capture:
         if match and match.group('kind') and match.group(2)!='events': raise ValueError('Invalid event endpoint')
         kind='sports' if sports else match.group('kind') or match.group(2)
         if historical:
-            if 'date' not in params or utc(params['date'])>utc(now()):
+            if 'date' not in params or utc(params['date'])>utc(self.clock()):
                 raise ValueError('Historical requests need a non-future date with offset')
         elif 'date' in params:raise ValueError('Date parameter is restricted to historical endpoints')
         free=not historical and (sports or kind=='events')
@@ -146,7 +147,7 @@ class Capture:
             raise ValueError('Additional markets require event odds endpoint')
         units=math.ceil(len(books)/10) if books else len(regions)
         cost=0 if free else 1 if kind in ('events','markets') else (10 if historical else 1)*units*len(markets)
-        started=now(); identity=uuid4().hex
+        started=self.clock(); identity=uuid4().hex
         self.db.execute('BEGIN IMMEDIATE')
         try:
             spent=self.db.execute('SELECT coalesce(sum(cost),0) FROM charges WHERE month=?',(started[:7],)).fetchone()[0]
@@ -158,7 +159,7 @@ class Capture:
             self.db.rollback(); raise
         self.remaining=None  # A failed request can have consumed credits; refresh before another paid call.
         raw,headers=self.transport(path,params)
-        received=now()
+        received=self.clock()
         # Persist each original before parsing it. A malformed response still has a receipt.
         folder=self.root/'snapshots'/identity; folder.mkdir(parents=True)
         (folder/'response.json').write_bytes(raw)
