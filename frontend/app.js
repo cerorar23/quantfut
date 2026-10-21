@@ -1,6 +1,7 @@
-import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate } from './public-data.js?v=5d460d0b0c91';
+import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=6d8c9cd2cacf';
+import { createMembershipUI } from './membership.js?v=a0616281d991';
+import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
 // Los precios de la demo se derivan de dos lambdas por partido (Poisson
@@ -933,11 +934,11 @@ function altaView() {
   const source = publicData?.alta;
   if (!source) return `${head}<section class="live-panel"><p>Consultando pronósticos de alta probabilidad…</p></section>`;
   if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudieron consultar los pronósticos. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
-  const { estado, motivos, proximos, historial: h } = source.data;
+  const { estado, motivos, proximos, vip, historial: h } = source.data;
   const ic = Array.isArray(h.diferencia_ic95) ? h.diferencia_ic95 : null;
   const record = h.n ? `<div class="live-facts"><div><span>PROMETIDO</span><strong>${realNumber(h.acierto_prometido, 1)}%</strong><small>media de las probabilidades</small></div><div><span>REAL</span><strong>${realNumber(h.acierto_real, 1)}%</strong><small>${realNumber(h.aciertos)} de ${realNumber(h.n)} acertados</small></div><div><span>DIFERENCIA · IC95</span><strong>${ic ? `${realNumber(ic[0], 1)} a ${realNumber(ic[1], 1)}` : '—'}</strong><small>${ic ? 'puntos, real − prometido' : 'Sin intervalo todavía'}</small></div></div>` : '<p>Todavía no hay pronósticos liquidados.</p>';
   const byMarket = Object.entries(h.por_mercado ?? {});
-  const marketTable = byMarket.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Acierto por mercado"><table><thead><tr><th>Mercado</th><th>Pronósticos</th><th>Prometido</th><th>Real</th></tr></thead><tbody>${byMarket.map(([market, row]) => `<tr><td>${esc(ALTA_MERCADO[market] ?? market)}</td><td>${realNumber(row.n)}</td><td>${realNumber(row.acierto_prometido, 1)}%</td><td>${realNumber(row.acierto_real, 1)}%</td></tr>`).join('')}</tbody></table></div>` : '';
+  const marketTable = byMarket.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Acierto por mercado"><table><thead><tr><th>Mercado</th><th>Pronósticos</th><th>Prometido</th><th>Real</th></tr></thead><tbody>${byMarket.map(([market, row]) => `<tr><td>${esc(ALTA_MERCADO[market] ?? market)}</td><td>${realNumber(row.n)}${row.partidos != null ? `<small> en ${realNumber(row.partidos)} partidos</small>` : ''}</td><td>${realNumber(row.acierto_prometido, 1)}%</td><td>${realNumber(row.acierto_real, 1)}%${row.margen_ee != null ? `<small> ±${realNumber(row.margen_ee, 1)}</small>` : ''}</td></tr>`).join('')}</tbody></table></div>${byMarket.some(([, row]) => row.partidos != null) ? '<p class="live-reason">Cuenta pronósticos, y varios son del mismo partido: por eso se indican los partidos y el margen (±, un error estándar) se mide por partido.</p>' : ''}` : '';
   const roi = h.rendimiento_ref?.n ? `<p class="live-reason">A la mejor cuota entre las casas de la lista (${realNumber(h.rendimiento_ref.n)} pronósticos con cuota): rendimiento ${realPercent(h.rendimiento_ref.roi, 2)}.</p>` : '';
   const note = '<p class="live-reason">Es una línea de acierto, no de valor. En el histórico (football-data, 7 ligas, 2019-2025), a la mejor cuota de bet365 y 1xBet, los favoritos con probabilidad de 80% o más dejaron un rendimiento de −2,4%. La doble oportunidad, «marca un equipo», el hándicap asiático y los córners no se pudieron medir en rendimiento: no hay cuotas históricas de esos mercados. Por eso se publican las dos cosas: lo que se acierta y lo que rinde. Un hándicap devuelto o unos córners sin estadística no cuentan como acierto ni como fallo.</p>';
   const motivo = esc((motivos ?? []).join(' · '));
@@ -946,7 +947,7 @@ function altaView() {
   const badgeText = estado === 'activa' ? 'Activa' : estado === 'pausada' ? 'Pausada' : 'Desactivada';
   return `${head}
     <section class="live-panel" aria-label="Historial de alta probabilidad"><div class="live-head"><div><p class="eyebrow">HISTORIAL PÚBLICO · /ALTA-PROBABILIDAD</p><h2>Prometido frente a real</h2></div>${badge(badgeText, estado === 'activa' ? 'good' : 'muted')}</div>${record}${marketTable}${roi}${note}</section>
-    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
+    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}${lockedPicksHtml(vip, { esc, date: realDate, time: realTime, number: realNumber })}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
 }
 
 // Parley del día (2026-10-11). Solo datos reales de /parley: cada parlay se
@@ -959,6 +960,7 @@ function parleyPata(p) {
 }
 
 function parleyTicket(t) {
+  if (t.locked) return lockedParleyHtml(t, { number: realNumber });
   const estado = t.outcome ? PARLEY_ESTADO[t.outcome] ?? t.outcome : 'En juego';
   return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${realNumber(t.escalon)} · ${realNumber(t.n_patas)} PATAS</p><h3>${esc(estado)}</h3></div><strong class="ladder-balance">${realNumber(t.cuota_total, 2)}</strong></div><p class="ladder-meta">Probabilidad ${realNumber(t.prob_total * 100, 1)}% · 1 de cada ${realNumber(1 / t.prob_total, 1)}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><div class="live-pick-list">${t.patas.map(parleyPata).join('')}</div></article>`;
 }
@@ -1008,7 +1010,7 @@ function escaleraReto(r) {
   const ultimo = pasos.at(-1);
   const potencial = r.estado === 'esperando' && ultimo ? Number(r.en_juego) * Number(ultimo.price) : null;
   const freeroll = r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : 'reto sin freeroll';
-  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">RETO #${realNumber(r.reto_id)} · ${realNumber(objetivo)} ESCALONES</p><h3>${ESCALERA_ESTADO[r.estado] ?? r.estado}</h3></div><strong class="ladder-balance">${unidades(r.saldo)}</strong></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(r.reto_id)}">${peldanos}</ol><p class="ladder-meta">${r.estado === 'esperando' ? `En juego ${unidades(r.en_juego)}${potencial ? ` · si se acierta: ${unidades(potencial)}` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${unidades(r.stake_inicial)} · ${Number(r.retirado) > 0 ? `retirado ${unidades(r.retirado)}: lo que queda va sin riesgo propio` : freeroll}</p>${pasos.length ? `<div class="live-pick-list">${[...pasos].reverse().map(escaleraPaso).join('')}</div>` : '<p class="ladder-meta">Esperando su primer escalón sellado.</p>'}</article>`;
+  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">RETO #${realNumber(r.reto_id)} · ${realNumber(objetivo)} ESCALONES</p><h3>${ESCALERA_ESTADO[r.estado] ?? r.estado}</h3></div><strong class="ladder-balance">${unidades(r.saldo)}</strong></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(r.reto_id)}">${peldanos}</ol><p class="ladder-meta">${r.estado === 'esperando' ? `En juego ${unidades(r.en_juego)}${potencial ? ` · si se acierta: ${unidades(potencial)}` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${unidades(r.stake_inicial)} · ${Number(r.retirado) > 0 ? `retirado ${unidades(r.retirado)}: lo que queda va sin riesgo propio` : freeroll}</p>${pasos.length ? `<div class="live-pick-list">${[...pasos].reverse().map(escaleraPaso).join('')}</div>` : '<p class="ladder-meta">Esperando su primer escalón sellado.</p>'}${lockedPicksHtml(r.vip, { esc, date: realDate, time: realTime })}</article>`;
 }
 function escaleraView() {
   const head = `<div class="view-title"><div><p class="eyebrow">RETOS / ESCALERA</p><h1>Reto escalera</h1><p class="lead">Retos de 3 a 6 escalones que empiezan con 10 unidades: cada escalón apuesta todo el saldo a un pronóstico de cuota 1,25-1,40. Ganarlos todos completa el reto; fallar uno lo cierra. Cada escalón se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
@@ -1457,7 +1459,9 @@ function render() {
   document.title = `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Sistema en validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
+  membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
+  syncPublicAuth();
   app.querySelector('.mobile-bottom-nav').inert = overlay;
   app.querySelectorAll('.prob-bar[data-segments]').forEach(bar => {
     const values = bar.dataset.segments.split(',');
@@ -1610,14 +1614,27 @@ window.addEventListener('keydown', event => {
 
 const initial = location.hash.slice(1);
 if (validRoute(initial)) state.route = initial;
+membershipUI.handleReturn();
 render();
 membershipUI.restoreSession();
 membershipUI.loadPlans();
+membershipUI.loadPaymentConfig();
+// Un suscriptor VIP ve todos los pronósticos también en la web (ver `sessionFetch`).
+const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/alta-probabilidad', '/escalera', '/parley']);
+// Al iniciar o cerrar sesión, o al activarse la suscripción, se recargan los datos con la sesión nueva.
+let publicAuthKey = 'visitante';
+function syncPublicAuth() {
+  const s = state.session;
+  const key = s ? `${s.account?.account_id ?? s.account?.email ?? 'cuenta'}:${s.plus ? 'vip' : 'gratis'}` : 'visitante';
+  if (key === publicAuthKey) return;
+  publicAuthKey = key;
+  refreshPublicData();
+}
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
   render();
-  const result = await loadPublicData();
+  const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;
   publicData = result;
   if (!state.modal && !state.drawer && !state.mobileMenuOpen) render();

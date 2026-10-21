@@ -2400,6 +2400,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooltipVip => 'VIP';
 
   @override
+  String get updateLater => 'Plus tard';
+
+  @override
+  String get updateNow => 'Mettre à jour';
+
+  @override
+  String get updateOptional =>
+      'Une nouvelle version de QuantFut est disponible.';
+
+  @override
+  String get updateRequired => 'Mettez QuantFut à jour pour continuer.';
+
+  @override
+  String get updateStoreError => 'Impossible d’ouvrir la boutique. Réessayez.';
+
+  @override
+  String get updateTitle => 'Mise à jour disponible';
+
+  @override
+  String get vipAccessButton => 'Accès VIP';
+
+  @override
   String get vipActivate => 'Activer l\'accès VIP';
 
   @override
@@ -2598,23 +2620,4 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Commencer';
-
-  @override
-  String get updateTitle => 'Mise à jour disponible';
-
-  @override
-  String get updateRequired => 'Mettez QuantFut à jour pour continuer.';
-
-  @override
-  String get updateOptional =>
-      'Une nouvelle version de QuantFut est disponible.';
-
-  @override
-  String get updateNow => 'Mettre à jour';
-
-  @override
-  String get updateLater => 'Plus tard';
-
-  @override
-  String get updateStoreError => 'Impossible d’ouvrir la boutique. Réessayez.';
 }

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
@@ -211,9 +213,11 @@ class RealPickCard extends StatelessWidget {
             liveButton(l10n.pickSeeAnalysis, onOpen, color: liveCyan),
           ] else ...[
             const SizedBox(height: 8),
+            const LockedBlur(),
+            const SizedBox(height: 6),
             liveText(l10n.pickUnlockPrompt, color: liveMuted, size: 12),
             const SizedBox(height: 12),
-            liveButton(l10n.pickUnlockVip, onVip),
+            liveButton(l10n.vipAccessButton, onVip),
             if (onUnlock != null) ...[
               const SizedBox(height: 6),
               liveButton(
@@ -270,3 +274,22 @@ Widget probabilityBars(JsonMap values) => Builder(
     }).toList(),
   ),
 );
+
+/// Franja difuminada donde iría el pronóstico de un candado. Son bloques, no un texto real: el servidor no envía
+/// la selección ni la probabilidad de un pronóstico bloqueado, así que quitar el filtro no revela nada.
+class LockedBlur extends StatelessWidget {
+  const LockedBlur({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: ClipRect(
+        child: ImageFiltered(
+          key: const ValueKey('locked-blur'),
+          imageFilter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: liveText('████████ · ██ %', size: 13, bold: true, color: liveGold),
+        ),
+      ),
+    );
+  }
+}

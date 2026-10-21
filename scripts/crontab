@@ -87,6 +87,15 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # partidos que empiezan DESPUÉS del sellado: los de 08:00-13:00 UTC dependen del lote anterior.
 0 9 * * * cd /app && python -m qf.publish.daily >> /var/log/daily.log 2>&1
 
+# F7: sello tardio por partido (T-45 o alineaciones confirmadas). Sin efecto mientras hashchain.LOTE_POR_PARTIDO_DESDE sea None.
+*/5 * * * * cd /app && flock -n /tmp/sello_tardio.lock python -m qf.publish.sello_tardio >> /var/log/sello_tardio.log 2>&1
+
+# F7: estado de fuerzas y onces habituales del ajuste del once (se reconstruye en ~2 min; el job de sello solo lo lee).
+12 * * * * cd /app && flock -n /tmp/estado_xi.lock python -m qf.model.ajuste_xi --estado >> /var/log/estado_xi.log 2>&1
+
+# Ajuste del once en sombra: mide hacia adelante cada dia y avisa una sola vez al llegar a 150 partidos con efecto.
+30 7 * * * cd /app && python -m qf.model.ajuste_xi --medir --avisar >> /var/log/ajuste_xi.log 2>&1
+
 # Liquidacion y CLV de respaldo (results.py ya la encadena).
 30 2,10,18 * * * cd /app && python -m qf.eval.clv >> /var/log/clv.log 2>&1
 
@@ -105,5 +114,23 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # pisarse con el mensual.
 5 1 2-31 * * cd /app && python -m qf.model.train --bootstrap >> /var/log/train.log 2>&1
 
-# Conversions API de Meta (db/071): envia la cola meta_events. Sin META_CAPI_ENABLED=1 no hace nada.
-*/5 * * * * cd /app && python -m qf.comercial.meta_capi >> /var/log/meta_capi.log 2>&1
+# Conversions API de Meta (db/071 y db/083): envia la cola meta_events. Sin META_CAPI_ENABLED=1 no hace nada.
+# El entorno del worker se fijo al crearlo: las variables de Meta se leen de /app/meta.env si existe.
+*/5 * * * * cd /app && set -a && { [ ! -f /app/meta.env ] || . /app/meta.env; } && set +a && flock -n /tmp/meta_capi.lock python -m qf.comercial.meta_capi >> /var/log/meta_capi.log 2>&1
+
+# Calendario de cada equipo en todas las competiciones (db/078), temporada en curso: ~313 llamadas de las 7.500 diarias.
+40 5 * * * cd /app && python -m qf.ingest.calendario_equipos --temporadas 2026 --refrescar >> /var/log/calendario_equipos.log 2>&1
+
+# Captura recurrente de FotMob (db/081), autorizada el 18-oct-2026. Una sola a la vez (flock); un bloqueo HTTP 401/403/429
+# la detiene 12 h. Referencias de partidos una vez al día; instantáneas previas (24 h, 4 h, 70 y 40 min antes) cada 15 min;
+# archivo de partidos terminados cada hora.
+50 5 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura referencias >> /var/log/fotmob_captura.log 2>&1
+*/5 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
+35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
+
+# Clima histórico ERA5 de los partidos ya jugados (db/082), incremental: solo pide a Copernicus lo que aún no cubren
+# los archivos guardados (Copernicus publica con ~7 días de retraso). Necesita CDS_API_TOKEN en el entorno.
+20 6 * * * cd /app && flock -n /tmp/era5.lock python -m qf.ingest.era5_clima >> /var/log/era5_clima.log 2>&1
+
+# Sede de los partidos nuevos desde la página de FotMob (sin duplicar estadios) y altitud de los estadios nuevos.
+50 * * * * cd /app && python -m qf.ingest.sedes >> /var/log/sedes.log 2>&1

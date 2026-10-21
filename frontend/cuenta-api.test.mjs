@@ -82,3 +82,14 @@ test('cerrar sesión olvida el acceso aunque el servidor falle', async () => {
   await assert.rejects(cuenta.logout());
   assert.equal(cuenta.hasAccess(), false);
 });
+
+test('authHeaders no envía nada sin sesión y envía el token después del login', async () => {
+  fakeServer({
+    'POST /app/v1/auth/login': () => json(200, { access_token: 'tok123', refresh_token: null }),
+    'GET /app/v1/me': () => json(200, ME),
+  });
+  assert.deepEqual(cuenta.authHeaders(), {});                 // _setFetchForTests borra la sesión: visitante
+  await cuenta.login('ana@correo.test', 'una-clave-larga');
+  assert.equal(cuenta.hasAccess(), true);
+  assert.deepEqual(cuenta.authHeaders(), { Authorization: 'Bearer tok123' });
+});

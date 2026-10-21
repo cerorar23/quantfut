@@ -45,6 +45,7 @@ def _sql_sellado() -> str:
     return f"""JOIN prediction_batches b
              ON b.batch_date = (p.decided_at AT TIME ZONE 'UTC')::date
             AND p.decided_at <= b.created_at
+            AND b.batch_kind = 'diario'
             {corte}"""
 
 

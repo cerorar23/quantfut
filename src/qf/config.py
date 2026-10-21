@@ -197,6 +197,19 @@ class Settings:
     # reporta SIEMPRE en `/model-card` aunque esto esté apagado.
     meta_blend_enabled: bool = os.getenv("META_BLEND_ENABLED", "0") in ("1", "true", "True")
 
+    # --- Ajuste de lambdas por altitud (qf.model.ajuste_altitud, 2026-10-19) ---
+    # off     no calcula nada.
+    # sombra  calcula el ajuste y lo anota en cada predicción (data_completeness.ajuste_altitud) SIN alterar los lambdas
+    #         publicados: la evidencia es débil y lo sellado es público e inmutable. Es el valor por defecto.
+    # activo  aplica el ajuste a los lambdas antes de calcular todos los mercados.
+    ajuste_altitud_modo: str = os.getenv("AJUSTE_ALTITUD_MODO", "sombra").lower()
+
+    # Ajuste por el once confirmado (impacto por jugador), solo en la predicción FINAL del sello por partido:
+    #   off     no lo calcula.
+    #   sombra  calcula el factor y lo anota en data_completeness.sello_tardio.ajuste_xi sin tocar los lambdas (por defecto).
+    # (`activo` aún no existe: hace falta medirlo hacia adelante con `python -m qf.model.ajuste_xi --medir`.)
+    ajuste_xi_modo: str = os.getenv("AJUSTE_XI_MODO", "sombra").lower()
+
     # --- Modelo de residuo (GBM sobre la diferencia modelo-mercado) ---
     # DESACTIVADO por defecto a propósito: corrige solo el 1X2, así que
     # mientras esté activo ese mercado deja de ser perfectamente coherente con

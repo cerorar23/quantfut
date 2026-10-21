@@ -639,6 +639,13 @@
   "titleTotalGoals": "Total de gols",
   "titleWinner": "Vencedor da partida",
   "tooltipVip": "VIP",
+  "updateLater": "Mais tarde",
+  "updateNow": "Atualizar agora",
+  "updateOptional": "Uma nova versão do QuantFut está disponível.",
+  "updateRequired": "Atualize o QuantFut para continuar.",
+  "updateStoreError": "Não foi possível abrir a loja. Tente novamente.",
+  "updateTitle": "Atualização disponível",
+  "vipAccessButton": "Acesso VIP",
   "vipActivate": "Ativar acesso VIP",
   "vipActive": "Seu acesso VIP está ativo.",
   "vipBadge": "✦  ACESSO VIP",
@@ -691,11 +698,5 @@
   "welcomeNext": "Próximo",
   "welcomeScreenOf": "Tela {page} de {total}",
   "welcomeSkip": "Pular",
-  "welcomeStart": "Começar",
-  "updateTitle": "Atualização disponível",
-  "updateRequired": "Atualize o QuantFut para continuar.",
-  "updateOptional": "Uma nova versão do QuantFut está disponível.",
-  "updateNow": "Atualizar agora",
-  "updateLater": "Mais tarde",
-  "updateStoreError": "Não foi possível abrir a loja. Tente novamente."
+  "welcomeStart": "Começar"
 }

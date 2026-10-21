@@ -217,7 +217,12 @@ incorporadas. 400 originales mantienen asociación pendiente/conflicto. Modelo
 activo y puertas sin cambios; 1.007 pruebas, prueba PostgreSQL e idempotencia.
 Detalle: docs/importacion_fotmob_20261013.md.
 
-- [ ] Resolver 379 identidades de copas y revisar 21 conflictos sin forzar uniones.
+- [x] 379 «identidades» de copas = 379 partidos de 110 equipos; ninguno con ambos equipos probados, no resoluble sin dar de alta clubes externos (prohibido en `eu.*`). Medido el 18-oct, docs/ordenar_identidades_20261018.md.
+- [x] Arsenal corregido (33 partidos, `db/073`) y 4 alias de The Odds API (+45 cierres de copa), 18-oct. Quedan 20 conflictos de vinculación: 7 son de Arsenal (el partido ya tiene el equipo correcto, pero el archivo FotMob conserva su estado `conflict` hasta volver a vincularlos) y 13 por revisar uno a uno (marcador o estado, liga o prórroga).
+- [x] Datos al motor 18-oct (`docs/datos_al_motor_20261018.md`): tablas FotMob con `match_id`, altitud, calendario de equipos (cron diario), equivalencias de árbitros, puente de jugadores, vista de descanso.
+- [x] 18-oct tarde: captura de FotMob autorizada y montada (`db/081`, cron con flock, pronóstico de clima incluido); token de CDS recibido y descarga ERA5 en curso (`db/082`); Open-Meteo descartada por licencia.
+- [x] ERA5 terminado (20.193 partidos), `qf.ingest.sedes` con cron horario y ERA5 incremental (arregla el defecto de cache por celda).
+- [ ] Pendiente: regenerar el token de CDS; poner el ERA5 incremental en cron al recrear el worker (necesita la variable); estadios duplicados (182 grupos); minutos con selección nacional; convertir la captura previa en entrada de F7 (alineación y bajas a T-70/T-40).
 - [ ] Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
   respetando recepción temporal; las tablas nuevas ya están importadas.
 
@@ -2902,3 +2907,194 @@ Google Sign-In ya existe: no se rehace.
 - [x] Integrar CYBERCORE CSS 0.3.0, adaptar Cyberpunk CSS, conservar el logo previo y validar 25/25 pruebas del frontend.
 - [x] Fusionar PR #12 y hotfix de assets FastAPI PR #13 con los arneses de GitHub aprobados.
 - [x] Desplegar solo la API desde una imagen derivada de la que estaba en ejecución; comprobar dominio, hashes, modelo y cadena; documentar reversión.
+
+- [x] Resuelta la cola original de 52 ediciones individuales, 17 recintos y 233 bloques por equipos. Ampliación separada en historical_coverage_20261018; detalle abajo.
+- [x] Comparar Base/Base+Espaciales en intersección de predicciones y con ajuste solo en entrenamiento: ampliación de5798aptos,2965desarrollo/2833evaluación2025exploratoria. Métricas e intervalos entregados; sin mejora clara. Variante horaria sigue pendiente de días individuales acreditados.
+- [x] Recuperar evidencia de las 52 ediciones WTA pendientes por temporada; distinguir PDF originales, extractos y corroboración estructurada.
+- [x] Resolver 17 recintos originales con puntos WGS84 y terreno DEM; Kempes/Jiujiang conservan referencia de complejo y tolerancia amplia.
+- [x] Revisar 233 bloques por equipos: 225 Davis, dos finales BJK, seis multicidad con 178 enlaces por partido; preservar seis revisiones de identidad/fase sin reescribir originales.
+- [x] Dataset separado con 11.240 sedes identificadas, 10.510 destinos con coordenadas, 5.798 partidos aptos; 173 pruebas y regresión de 2.982 aprobadas; 12 artefactos congelados intactos. Informe docs/tenis_cobertura_historica_completada_20261018.md.
+- [ ] Verificar coordenadas de 88 entradas adicionales identificadas en la ampliación. Comparación y sensibilidad ya ejecutadas, sin evidencia clara para activar la corrección. Sin horas imputadas.
+
+## Tenis: comparación retrospectiva de variables espaciales (2026-10-18)
+- [x] Reconstruir base híbrida Markov/Elo por orígenes2023/24/25 con calibraciones anteriores y embargo35días; modelos actuales congelados no reutilizados hacia atrás.
+- [x] Corrección ridge1 en2965partidos de2024; muestra común de2833en2025exploratoria, competiciones completas y cobertura52,68%.
+- [x] Sensibilidad2851entrenamiento/2718evaluación; LogLoss/Brier/ECE y1000remuestreos por competición. Nueve pruebas nuevas;182tenis aprobadas.
+- [x] Auditoría reproduce ajustes y métricas, fuentes e identidades verificadas;12artefactos congelados intactos. Informe docs/tenis_resultados_espaciales_historicos_20261018.md. Sin activación: mejora minúscula e intervalos que incluyen cero,0créditos Odds.
+
+## Tenis: carga observable por rondas anteriores (2026-10-18)
+- [x] Auditar ventanas diarias:152observaciones terminales sin límite inferior de finalización acreditado;3/7d conservadas bloqueadas, sin imputación horaria.
+- [x] Contadores de rondas previas individuales, orden de cuadro, desconocidos explícitos y exclusión objetivo/futuro; todos los equipos y round-robin fuera del alcance. Primera versión retirada por alcance BJK; válida draw_load_20261018_v2.
+- [x] Base/Cobertura/Cobertura+Carga:2130train2024/1957test2025exploratorio, sensibilidad1882/1700; intervalos incluyen cero, sin activación. Informe docs/tenis_carga_rondas_resultados_20261018.md.
+- [x] 194pruebas tenis aprobadas (12nuevas), extracción/precedencia/ajustes/métricas reproducidos,12artefactos congelados intactos.0consultas deportivas/0créditosOdds. Cola88sedes priorizada por730destinos; primeras5afectan264.
+
+## Cobro web con Whop + Meta EMQ (2026-10-18)
+
+Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
+
+- [x] Login Google en la web (Firebase JS → `/app/v1/firebase/web-session`); probado en local. Despliegue: `docs/despliegue_google_web_20261018.md`.
+- [x] Fase A: db/083, `comercial/whop.py` (firma, checkout, aplicar pago), rutas y pruebas (11 en `tests/test_whop.py`, 8 con Postgres real).
+- [x] Fase B: CAPI web (`action_source=website`: Purchase, Subscribe, InitiateCheckout) + Pixel con advanced matching y `eventID` compartido. Pendiente: CompleteRegistration web y aviso de cookies.
+- [x] Fase C: vista de pedido con `Checkout` embebido de Whop (probada en local con clave falsa y webhook firmado simulado; el formulario real de Whop no se pudo ver sin `WHOP_API_KEY`).
+- [ ] Datos del titular: `WHOP_API_KEY`, `WHOP_WEBHOOK_SECRET`, `plan_` por plan, `META_PIXEL_ID`, token CAPI, aviso de cookies.
+
+## Tenis: cinco recintos prioritarios (2026-10-18)
+- [x] Referencias WGS84 verificadas de Hua Hin,Yucatán,Seúl,AbuDabi yMartínCarpena. Yucatán1800mreferenciadecomplejo, restotolerancias400–500m; no pistas históricas exactas simuladas.
+- [x] Una consulta pública de terrenoDEM para5puntos, enlaces históricos2024/25 yarchivos previos intactos.294fuentesSHA;157entradas con coordenadas.
+- [x] Datasetnuevo historical_geography_top5_20261018:10774destinos/11240,6244aptos(+446),5943sinreferenciasamplias;264destinosrecuperados. Cola83entradas/466destinos. Sin ajuste/activación de modelos.
+- [x] Auditoría de fuentes,identidades,particiones,oldfeatures y12artefactos congelados aprobada;194pruebas tenis. Informe docs/tenis_cinco_sedes_verificadas_20261018.md yconstructores entregados al motoraislado.
+- [x] Whop configurado (18-oct): producto QuantFut con 3 planes, clave de API (solo IP del VPS) y webhook de producción; claves en el `.env` del VPS. Pendiente al desplegar: `UPDATE plans SET whop_plan_id…` (en `docs/despliegue_google_web_20261018.md`) y `META_PIXEL_ID`.
+- [x] Reembolsos: `refund.created/updated` (status succeeded) revocan el periodo del pago; webhook de Whop ya los envía (18-oct).
+- [x] Meta web (18-oct): CompleteRegistration web, EMQ con ciudad/estado/zip/teléfono (13 claves), aviso de medición con Rechazar, envío por cron del host, probado con test_event_code.
+- [x] Meta a eventos reales: `META_TEST_EVENT_CODE` quitado del `.env` del VPS y API recreada (18-oct, DEPLOYS 21:00 UTC).
+- [x] Worker alineado con `meta_capi` (parche del contenedor, DEPLOYS 18-oct 21:25) y cron del host retirado. Pendiente: que la imagen del worker del 1-nov los lleve de serie.
+- [ ] Probar un cobro real con Whop (plan de 14,99) y ver el Purchase en Meta con el mismo event_id del Pixel.
+
+## Pronósticos bloqueados difuminados con «Acceso VIP» (2026-10-18, decisión del titular)
+
+- [x] App: la tarjeta de candados de Alta probabilidad va **desplegada por defecto** (se puede plegar); cada fila lleva una franja difuminada (`LockedBlur`, bloques, no texto real) con la cuota a la vista, y el botón pasa a **«Acceso VIP»** (nueva cadena `vipAccessButton` en los 6 idiomas) en la tarjeta de candados, en el candado genérico y en el detalle del partido. 257 pruebas de Flutter y `flutter analyze` limpios.
+- Lo gratis sin VIP ya era lo decidido y no cambia: 4 de alta probabilidad (`FREE_MAX`), 1 paso de escalera, 1 parley al día.
+- Seguridad del bloqueo: el servidor no envía selección ni probabilidad de un pronóstico bloqueado (`mobile.metadata`), así que el difuminado es solo visual.
+- El botón lleva a la pantalla VIP de la app, que compra con Play / App Store. **No** se enlaza a Whop desde la app (las tiendas exigen su sistema para suscripciones digitales); Whop es la pasarela de la web.
+- La web no pinta pronósticos reales bloqueados (solo datos liquidados y una maqueta ficticia): sin cambio.
+- [ ] Falta una compilación nueva de la app para que los usuarios lo vean (publicación en tiendas: la hace el titular).
+
+- [x] Web (18-oct, tras preguntar el titular si la web también los difuminaba: no lo hacía, ignoraba `vip`): la vista de Alta probabilidad pinta los bloqueados difuminados (`lockedPicksHtml` en `frontend/public-data.js`, bloques sin selección, probabilidad ni cuota) con la **cuota también difuminada** (decisión del titular, 18-oct) y un botón «Acceso VIP» a Suscripciones (Whop). La ruta pública `/alta-probabilidad` ya no envía la `cuota` de lo bloqueado, para que el difuminado proteja algo; **la app no se toca** (lee `/mobile/v1/home` y sigue igual, con su cuota a la vista). 28 pruebas de node, 12 de la web y comprobación visual en navegador. **Falta desplegar** (la web va en la imagen de la API: reconstruir con el procedimiento de `DEPLOYS.md`).
+- [x] Escalera y parley en la web (18-oct, pedido del titular): los bloqueados de la escalera salen difuminados (`lockedPicksHtml`) y los parlays bloqueados como tarjeta difuminada con el escalón (`lockedParleyHtml`). Esto arregla además un fallo de la vista de parley: hacía `t.patas.map` sobre todos los tickets y los bloqueados llegan sin `patas`. La ruta pública `/escalera` tampoco envía ya la cuota de lo bloqueada. **La app no se toca.**
+
+- [x] Web pública: **un solo pronóstico gratis visible por sección** (decisión del titular, 18-oct, respuesta «uno por sección»). `/alta-probabilidad` deja visible 1 (el de mayor probabilidad) y pasa los demás a bloqueados difuminados (`WEB_PUBLICO_GRATIS_ALTA = 1` en `api/main.py`); escalera (1 paso) y parley (1 ticket) ya eran uno. **La app no cambia: sigue con 4 / 1 / 1.** Prueba: el bloque de la app conserva sus 4.
+
+- [x] Web: **la cuenta VIP ve todos los pronósticos** (decisión del titular, 18-oct). `/alta-probabilidad` y `/escalera` usan la dependencia `member` (como ya hacía `/parley`): con suscripción activa devuelven todo desbloqueado y `Vary: Authorization`; el visitante sigue viendo 1 por sección. La web envía su sesión (solo en memoria) únicamente a esas tres rutas (`sessionFetch`) y recarga los datos al iniciar o cerrar sesión o activarse la suscripción; una sesión caducada cae a visitante. 32 pruebas de node y las de las rutas con una cuenta VIP simulada. **No probado de punta a punta con una suscripción real** (no hay una cuenta de prueba con pago).
+
+## La información nueva en el motor (2026-10-19, pedido del titular)
+
+- [x] Medición bloque a bloque con el walk-forward del 12-oct (`python -m qf.model.contexto`, solo lectura): **solo la altitud pasa la puerta**, con evidencia débil (ΔRPS −0,0002 a −0,0003 con la semántica de producción, significativo en 1 de 4 particiones). Clima, descanso, bajas y valor del once no mejoran. Detalle: `docs/contexto_en_el_motor_20261019.md`.
+- [x] Altitud en el motor A en **modo sombra** (`AJUSTE_ALTITUD_MODO`): `daily.py` calcula el factor y lo anota en `data_completeness.ajuste_altitud` sin alterar los lambdas publicados.
+- [ ] Pasar la altitud a `activo` con partidos reales (≥150 con salto > 0,5 km medidos hacia adelante).
+- [ ] Reajustar el artefacto en cada reentrenamiento (hoy es del walk-forward del 12-oct) y repetir `qf.model.contexto` cuando haya semanas de `fotmob_previo`.
+- [ ] Para que algo llegue a alta probabilidad, escalera y parley (motor B) hace falta F8/F9: mezcla A + B evaluada contra el mercado del mismo momento.
+
+## Córners (2026-10-19, primera mejora pedida por el titular)
+
+- [x] Diagnóstico a fondo (`python -m qf.eval.corners_diagnostico`, `docs/corners_diagnostico_20261019.md`): el modelo está calibrado (41.815 partidos, a menos de 0,6 puntos en todas las líneas y ligas); el déficit de los «menos de» publicados (−5,0 ±3,6, z = −1,4) es ruido de 170 partidos con picks correlacionados. **Corrijo lo que dije el 19-oct: no hay que recalibrar.** Ninguna variable de contexto mejora la predicción del total.
+- [ ] Añadir el número de partidos distintos (y error estándar por partido) a las tablas por mercado de `/alta-probabilidad` y del panel: hoy cuentan picks, que son hasta 4 por partido.
+
+## Motor B y copas por partido (2026-10-19)
+
+- [x] Motor B medido por partido (`docs/motor_b_por_partido_20261019.md`): ningún mercado se desvía de forma significativa (|z| < 1,7): totales −1,2, ganador −1,0, ambos marcan −0,5. No hay nada que corregir en las probabilidades.
+- [x] Copas europeas: empates reales 20,3 % (Champions) y 24,1 % (Europa League) en el historial, frente a 21,9 % y 25,9 % del modelo: sin sesgo; 2025-26 fue una temporada baja. No se toca.
+- [x] **Corregido:** el «fallo grosero» de `alta_prob.control` suponía picks independientes (la ampliada tiene 2.420 picks en 222 partidos) y podía bloquear un grupo por ruido; ahora usa la varianza por partido (la mayor de las dos). Historial y tabla de la web muestran partidos distintos y margen por partido.
+
+## F7 sello tardío (2026-10-19)
+
+- [x] Fases 1-4 implementadas y ensayadas (PR #38, sin fusionar a propósito): migración `db/084`, lectores solo con lotes diarios, `hashchain.seal_partido`/verify/revelado de `partido/…`, `publish/sello_tardio.py` (cron cada 5 min, apagado con `LOTE_POR_PARTIDO_DESDE=None`).
+- [x] Desplegado el 19-oct (apagado, `LOTE_POR_PARTIDO_DESDE=None`): #38, migración 084, worker, API y crontab; ver DEPLOYS.md.
+- [ ] Fijar `LOTE_POR_PARTIDO_DESDE` (primer día sin lote diario sellado) cuando algún bloque de alineación pase la puerta; hasta entonces no aporta.
+- [ ] Medir si algún bloque de alineación (`lineup_challenger`) pasa la puerta con el once confirmado; solo entonces la predicción final difiere de la diaria.
+- [ ] Decidir si se envía push al sellar un pick de partido (sigue sin responder).
+
+## Impacto por jugador (2026-10-19)
+
+- [x] `qf.model.jugadores` + bloques `epi_total`/`epi_grupos`/`xi_habitual_valor` en `contexto.py`; medición y robustez en `docs/impacto_jugador_20261019.md`. `epi_total` y `epi_grupos` pasan la puerta (ΔRPS −0,0005/−0,0006, 3 de 4 particiones, placebo limpio); el valor del once vs habitual no.
+- [x] Producción: `ajuste_xi` en MODO SOMBRA en la predicción final y `LOTE_POR_PARTIDO_DESDE=2026-10-20` (19-oct; ver DEPLOYS.md).
+- [ ] Tras ~150 partidos con efecto: `python -m qf.model.ajuste_xi --medir` y decidir si pasa a `activo` (hoy ese modo no existe en el código).
+- [x] Walk-forward ampliado terminado (20-oct): efecto ≈ −0,0002, 5/5 tramos favorables, artefacto reajustado (docs/impacto_jugador_20261019.md).
+- [x] Comparado contra el mercado de cada momento: la brecha no se cierra antes del cierre (docs/brecha_mercado_20261019.md).
+- [ ] Ampliar el walk-forward del A a 2024-2026 para duplicar la potencia (tarda horas).
+
+## Tenis: segundo bloque de cinco sedes (2026-10-18)
+- [x] Chennai, Palermo, Riad, Hengqin y Shenzhen: referencias WGS84 con alcance y tolerancias explícitos. Palermo inferencia de complejo, no cancha exacta. Enlaces históricos intactos; 309 fuentes verificadas.
+- [x] Una consulta DEM de cinco puntos; nueva versión historical_geography_batch2_20261018: 10.895 destinos, 6.414 aptos (+170), 6.107 sin referencias >1 km. Cola: 78 entradas y 345 destinos.
+- [x] Protocolo espacial fijo repetido: 3.306 entrenamiento/3.108 evaluación; comparación adicional sobre 2.833 IDs originales. Sin mejora clara, sin búsqueda sobre 2025 ni activación.
+- [x] 194 pruebas tenis, auditoría desde motor aislado, seis modelos base y 12 artefactos congelados intactos; cuatro scripts e informe entregados. Comprobación general final: 1.315 aprobadas, 95 omitidas y dos avisos; Docker ausente.
+
+## Tenis: tercer bloque de sedes (2026-10-18)
+- [x] Taipei, SuperTennis BolognaFiere, AO Arena, SEB y Swiss Tennis Arena con evidencia histórica intacta y WGS84; tres husos completados. Biel referencia de complejo 600 m, huella exacta de arena no acreditada; Taipei fuente del operador mediante extracto de buscador.
+- [x] Una consulta DEM de cinco puntos; versión historical_geography_batch3_20261018: 10.954 destinos, 6.442 aptos (+28), 6.135 sin referencias >1 km. 324 fuentes verificadas; cola 73 entradas/286 destinos.
+- [x] Protocolo fijo repetido: 3.322 desarrollo/3.120 evaluación; muestras comunes de 3.108 y 2.833 IDs, sensibilidad y calibración. Sin mejora clara, sin selección/activación.
+- [x] 194 pruebas tenis, auditoría desde motor aislado, seis modelos base y 12 artefactos congelados intactos; cuatro scripts e informe entregados. Chequeo general final: 1.315 aprobadas, 95 omitidas y dos avisos en 130,60 s; Docker ausente.
+
+## Tenis: cierre integral solicitado (2026-10-18)
+- [x] Revisar las 73 entradas geográficas pendientes y sus alias, sin límite de cinco sedes por entrega.
+- [x] Consolidar todas las referencias acreditables, husos, DEM y dataset versionado; resolver o documentar individualmente cada entrada.
+- [x] Repetir evaluación fija y auditar cobertura, temporalidad y bloqueos restantes del motor.
+- [x] Entrega integral con pruebas, fuentes, métricas, límites reales y estado único actualizado.
+
+## Tenis: preparación operativa y validación financiera (18-oct-2026)
+- [x] Capturar y normalizar pronósticos Open-Meteo con disponibilidad real y vínculo a coordenadas; techo desconocido permanece desconocido.
+- [x] Incorporar registro de selecciones simuladas y evaluación financiera con cuotas archivadas, resultados y retiros, sin fabricar evidencia futura ni ejecutar apuestas.
+- [x] Definir controles por variante/mercado: datos opcionales solo bloquean si el modelo los usa; separar aptitud técnica, muestra y ventaja acreditada.
+- [x] Probar con capturas reales acotadas, pruebas de integridad/temporalidad y entregar un estado operativo único. 225 pruebas específicas y 1.315 generales aprobadas; informe docs/tenis_preparacion_apuestas_20261018.md.
+- [ ] Reunir evidencia prospectiva real bajo financial_policy_v2.json. Cero órdenes financieras; seguimiento predictivo programado por separado, sin aprobación de apuestas ni garantía de reunir la muestra mínima.
+
+## Tenis: nueva auditoría y pronósticos con evidencia (19-oct-2026 UTC)
+- [x] Reauditar integridad, pruebas, modelos y registros previos; no reinterpretar resultados futuros inexistentes como aprobados.
+- [x] Buscar evidencia específica de Palm Hills 2025 y documentar la conclusión sin inventar campus u horas. Campus no acreditado: tres exclusiones espaciales explícitas, no bloqueo general.
+- [x] Actualizar calendario API-Tennis y archivar programas oficiales actuales; resolver identidades con nombres completos contrastados. Cuatro PDF revisados visualmente; ambigüedades excluidas.
+- [x] Emitir pronósticos de investigación para encuentros futuros acreditables, con datos/modelos sellados y bloqueo explícito de apuestas, conservando el protocolo financiero congelado. Ocho ATP; 20 parejas revisadas, 12 exclusiones.
+- [x] Entregar informe único con cobertura, probabilidades y requisitos reales por variante; ejecutar las comprobaciones finales. 246 pruebas específicas, 1.315 generales; docs/tenis_auditoria_pronosticos_20261019.md.
+- [ ] Corregir en una nueva versión los puentes de identidad acreditados: 50 nombres WTA y uno ATP tienen varios IDs en el modelo congelado. No escoger automáticamente ni fusionar por similitud.
+
+## Tenis: integración completa de familias de mercados (19-oct-2026)
+- [x] Añadir una ampliación versionada sin cambiar los módulos y artefactos del estudio financiero congelado. Ocho módulos nuevos;37 anteriores/12 artefactos conservados.
+- [x] Unificar contratos, probabilidades win/push/loss y cuotas justas para ganador, sets, juegos, hándicaps, marcador por sets y tiebreak, incluidas líneas por set. Diez familias/624 filas ilustrativas.
+- [x] Conectar las claves reales documentadas de The Odds API; conservar explícitos los mercados que el proveedor no ofrezca y probar una captura acotada. Trece claves implementadas, siete observadas; seis créditos de prueba inicial y500 por cada clave suministrada después.
+- [x] Implementar comparación de líneas y liquidación por contrato, con retiros y reglas desconocidas visibles.
+- [x] Entregar un archivo utilizable de mercados, pruebas y estado verificable de integración, calibración y evidencia financiera. 294 pruebas; evaluación exploratoria3.498 encuentros/56.804 probabilidades. No hay rentabilidad demostrada.
+- [x] Corregir la identificación de la segunda clave, que coincide con la cuenta compartida; consolidar500 créditos en el registro central y añadir detección preventiva. Primeros informes conservados con corrección explícita, sin ocultar el error.
+- [ ] Resolver cobertura externa ausente, calibración completa, identidades/calendarios conflictivos y muestra financiera prospectiva antes de aprobar apuestas.
+
+## Tenis: auditoría de acreditación financiera (19-oct-2026)
+- [x] Ejecutar el evaluador congelado y auditar todos los registros originales, cuotas, órdenes, cierres y resultados sin convertir descargas repetidas en apuestas.
+- [x] Añadir un control independiente de evidencia y un procedimiento reproducible que distinga preparación, prueba simulada y ejecución real; preservar candidatos y periodos congelados.
+- [x] Probar rechazos por cronología, duplicación, evidencia ausente y costes; entregar informe con cobertura y pendientes acreditables, sin declarar beneficios futuros.
+
+## Tenis: acreditación de calidad predictiva (19-oct-2026)
+- [x] Auditar versiones y excluir identidades ambiguas sin fusionarlas por nombre; conservar los modelos congelados.
+- [x] Ejecutar comparación común de seis variantes y evaluación por mercado, con incertidumbre por bloques, calibración, cobertura y bandas de confianza.
+- [x] Entregar protocolo predictivo futuro, registro de pronósticos verificables y compuertas que impidan acreditar datos retrospectivos como confirmatorios.
+- [x] Probar controles temporales, identidad, orientación, duplicados y confianza; entregar resultados reales y requisitos que dependan de encuentros futuros.
+
+- [ ] Recuperar cobertura mediante puentes de identidad acreditados y una nueva versión reentrenada; reunir resultados confirmatorios futuros y validar los otros mercados en sus propios protocolos.
+
+- [x] Sellado externo del nuevo protocolo predictivo, autorizado explícitamente por el usuario: DigiCert19-oct16:54:10UTC, firma/nonce/digest y prueba negativa verificados. El estado pendiente del sello queda resuelto, sin cambiar los criterios de calidad.
+
+## Tenis: continuidad autónoma autorizada (19-oct-2026)
+- [x] Preparar capturador compartido con intervalo4h, máximo12consultasAPI-Tennis/día y bloqueo temporal ante401/403/429, sin consumir cuotas.
+- [x] Conectar revisiones de programas oficiales a la emisión sin cuotas y al evaluador congelado; ejecutar una pasada real y conservar exclusiones/resultados no acreditables.
+- [x] Probar idempotencia, concurrencia, presupuestos y evidencia; registrar seguimiento recurrente en este chat, sin avisos repetidos de estado idéntico.
+- [x] Entregar operación y automatización verificadas, conservando protocolos sellados y trabajos ajenos.
+
+### Tenis: validación prospectiva de los diez mercados (19-oct-2026)
+- [x] Añadir protocolo independiente e inmutable con líneas/periodos fijos, candidato Markov coherente y evaluación por contrato/circuito/formato; conservar calidad_v3 sellada.
+- [x] Probar cronología, integridad, pushes, sets no disputados, marcador multiclase, retiros y cobertura; emitir nuevos registros antes de los partidos admisibles:18partidos/990tareas/110grupos,0rechazos,367pruebas del motor entregado.
+- [x] Integrar la ampliación en la continuidad existente, entregar informe y comprobar las suites sin gastar créditos de cuotas; automatización verificadaACTIVA,25pruebas específicas nuevas.
+- [ ] Completar la muestra futura por contrato y revisión independiente: cero resultados iniciales, no acreditar calidad/rentabilidad anticipadamente. No es una tarea que se cierre con pruebas de software.
+
+### Tenis: cerrar la incorporación de resultados y explicar evidencia disponible (19-oct)
+- [x] Automatizar el cruce de resultados archivados con los eventos realmente pronosticados, conservando evidencia, pendientes y conflictos; no sustituir tiempos físicos por horas programadas. Entregado tennis_evidence_v1,29pruebas nuevas.
+- [x] Generar evaluación histórica legible de las diez familias con contratos exactos y marcador multiclase; separar muestras ya inspeccionadas de confirmación futura:2788partidosterminados/39grupos,curvas/ECE/calibración/balance de clases.
+- [x] Ejecutar reconciliación y auditoría financiera actualizadas, integrar en continuidad, probar y entregar diagnóstico fechado:18programadosfuturos/0terminalesdeellos,396pruebas motor y1315generales aprobadas.
+- [ ] Incorporar resultados futuros verificables y cumplir muestra/periodo: primeros18aúnfuturos19-oct18:35UTC,primerinicioestimado22:15México. Financiero0órdenes: no acumula ROI automáticamente sin cuotas/órdenes/autorizaciones válidas. No cerrar esos requisitos con datos históricos o pruebas de software.
+
+## Tenis: auditoría y motor v7 (2026-10-19)
+- [x] Alias de una semana en 2026_wta.csv (47) y fusiones por fecha de nacimiento (5; 14 homónimos confirmados distintos): `tennis_identity_v2/v3`, datos `identity_bridge_v3_20261019`.
+- [x] Sobredispersión por partido para todos los mercados (`tennis_core_v4`).
+- [x] Ranking, puntos y edad saneada (`tennis_core_v5.features`).
+- [x] Elo dinámico ordenado por ronda con inactividad/carga/experiencia (`tennis_dynamic_v2`) y apilador v7; protocolo `core_v7_prospective_20261019`, 17 pronósticos sellados.
+- [x] Punto de entrada único `tennis_motor` + README; 413 pruebas.
+- [ ] Cuotas de cierre históricas como entrada (pendiente de autorización del titular para descargar/gastar).
+- [ ] Apagar o actualizar la automatización de Codex que sigue usando el protocolo de diez mercados retirado.
+- [ ] Evaluar v7 con resultados reales a medida que se jueguen (`python -m tennis_motor evaluate`).
+- [x] Cuotas históricas Tennis-Data (descarga manual del titular): cruce 53.853 partidos; el mercado sin margen supera a v7; `--odds-a/--odds-b` en `tennis_motor`.
+- [ ] Fuente de cuotas previas en vivo para pronósticos automáticos (decisión del titular: The Odds API u otra).
+- [x] Cuotas previas en vivo: `tennis_odds_live_v1` (h2h, eu, 2 fotos/día, tope 400/mes, reserva para fútbol) + tarea programada + motor v8.
+- [x] Motor en git: rama `tennis/motor-v8`, PR #46.
+- [x] Entrada automática `tennis_intake_v1` en la tarea programada (cuotas -> calendario -> sello -> evaluación).
+- [ ] Apagar la automatización de Codex «continuidad-de-validaci-n-predictiva-de-tenis» (solo el titular puede hacerlo desde Codex).
+- [ ] Actualización semanal de datos (TennisMyLife -> identidades -> Elo dinámico) para que ranking y Elo no caduquen.
+- [x] Actualización semanal de datos (`tennis_refresh_v1`, lunes 04:00), PR #49.
+- [x] Pausar la automatización de Codex (archivo local).
+- [x] Reentreno semanal del modelo de saque; validación con Match Charting Project. PR #50.
+- [ ] Primeras cifras de acierto con resultados reales (`data/tennis/intake_v1/evaluation_latest.json`).
+- [x] Motor de tenis en el VPS (imagen propia + cron de `qf`), PR #53/#54; tareas de Windows desactivadas.

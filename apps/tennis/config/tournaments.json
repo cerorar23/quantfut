@@ -1,0 +1,24 @@
+{
+  "tennis_atp_shanghai_masters": {
+    "name": "Rolex Shanghai Masters",
+    "surface": "Hard",
+    "best_of": 3,
+    "deciding_tiebreak": 7,
+    "metadata_verified": true,
+    "valid_from": "2026-10-07",
+    "valid_to": "2026-10-18",
+    "source_url": "https://www.atptour.com/en/tournaments/shanghai/5014/overview",
+    "scope": "ATP official tournament dates and hard surface; does not verify a particular fixture or start time"
+  },
+  "tennis_wta_wuhan_open": {
+    "name": "Dongfeng Voyah Wuhan Open",
+    "surface": "Hard",
+    "best_of": 3,
+    "deciding_tiebreak": 7,
+    "metadata_verified": true,
+    "valid_from": "2026-10-12",
+    "valid_to": "2026-10-18",
+    "source_url": "https://www.wtatennis.com/tournaments/1075/x/2026",
+    "scope": "WTA official tournament page confirms dates and hard surface; exact fixture status remains separate"
+  }
+}

@@ -18,6 +18,8 @@ export class ApiError extends Error {
 
 export function _setFetchForTests(fn) { fetchImpl = fn; access = null; refreshing = null; }
 export const hasAccess = () => access !== null;
+// Cabecera de la sesión para pedir al servidor lo que solo ve un suscriptor (alta probabilidad, escalera y parley).
+export const authHeaders = () => (access ? { Authorization: `Bearer ${access}` } : {});
 
 async function call(path, { method = 'GET', body, auth = false } = {}) {
   const headers = { 'X-QF-Client': 'web' };
@@ -96,3 +98,13 @@ export async function logout() {
 export const forgotPassword = email => call('/auth/password/forgot', { method: 'POST', body: { email } });
 export const resendVerification = () => authed('/auth/verify/resend', { method: 'POST' });
 export const plans = () => call('/plans');
+export const googleConfig = () => call('/firebase/web-config');
+export const paymentConfig = () => call('/whop/config');
+export const createCheckout = body => authed('/whop/checkout', { method: 'POST', body });
+export async function googleLogin(idToken, acceptedTerms) {
+  const tokens = await call('/firebase/web-session', {
+    method: 'POST', body: { id_token: idToken, accepted_terms: acceptedTerms, language: 'es' },
+  });
+  access = tokens.access_token;
+  return me();
+}

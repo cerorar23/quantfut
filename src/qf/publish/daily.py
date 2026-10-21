@@ -22,10 +22,11 @@ import numpy as np
 
 from ..config import settings
 from ..db import query, query_one
+from ..model import ajuste_altitud, contexto
 from ..model.dixon_coles import DixonColes
 from ..model.devig import consensus_devig
 from . import alta_prob_datos, alta_prob_ext, tarjetas_seg
-from . import escalera_datos
+from . import escalera_datos, hashchain
 from . import parley_datos
 from . import picks as pk
 from . import telegram as tg
@@ -381,7 +382,37 @@ def _load_calibrator(version: str):
         return LambdaCalibrator.identity()
 
 
-def generate_predictions(model_path: str | None = None) -> list[dict]:
+def _contexto_altitud(matches: list[dict]):
+    """(ajuste de altitud, altitudes por partido) o (None, {}) si está apagado, no hay artefacto o algo falla."""
+    if settings.ajuste_altitud_modo not in ("sombra", "activo"):
+        return None, {}
+    try:
+        ajuste = ajuste_altitud.cargar_ultimo(settings.artifact_dir)
+        if ajuste is None or not matches:
+            return None, {}
+        alt = contexto.altitudes_de([m["match_id"] for m in matches])
+        return ajuste, {r.match_id: (r.sede_m, r.hab_visita_m) for r in alt.itertuples()}
+    except Exception:  # noqa: BLE001 — un ajuste opcional no puede impedir el sellado
+        log.exception("Ajuste de altitud no disponible: se predice sin él")
+        return None, {}
+
+
+def _aplicar_altitud(ajuste, altitudes: dict, match_id: str, lam: float, mu: float, modo: str):
+    """(λ, μ, constancia). En `sombra` los lambdas salen intactos y solo se devuelve lo que se habría aplicado."""
+    if ajuste is None:
+        return lam, mu, None
+    sede, habitual = altitudes.get(match_id, (None, None))
+    lam_a, mu_a, info = ajuste_altitud.aplicar(ajuste, lam, mu, sede, habitual)
+    if info is None:
+        return lam, mu, None
+    info["aplicado"] = modo == "activo"
+    return (lam_a, mu_a, info) if info["aplicado"] else (lam, mu, info)
+
+
+def generate_predictions(model_path: str | None = None, solo_partido: str | None = None, etapa: str = "diaria",
+                         hasta: datetime | None = None, info_final: dict | None = None) -> list[dict]:
+    """Predice los partidos de la corrida diaria. Con `solo_partido` (F7, sello tardío) predice solo ese partido, en la
+    etapa `final`, y anota `info_final` en `data_completeness`. Sin esos argumentos es exactamente la corrida diaria."""
     from ..db import conn
     from ..model.pricing import price_all_markets
 
@@ -405,10 +436,14 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
         )
         residual = residual.__class__.disabled()
 
-    matches = _upcoming()
+    matches = _upcoming(hasta)
+    if solo_partido is not None:
+        matches = [m for m in matches if m["match_id"] == solo_partido]
     out: list[dict] = []
+    ajuste_alt, altitudes = _contexto_altitud(matches)
 
     for m in matches:
+        info_altitud = None
         try:
             # La calibración se aplica sobre las INTENSIDADES y se vuelve a
             # derivar toda la matriz de marcadores. Así el 1X2 calibrado y el
@@ -418,6 +453,8 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
                                     m["league_id"],
                                     m["home_league"], m["away_league"])
             lam_c, mu_c = calibrator.apply(lam, mu)
+            lam_c, mu_c, info_altitud = _aplicar_altitud(ajuste_alt, altitudes, m["match_id"], lam_c, mu_c,
+                                                         settings.ajuste_altitud_modo)
             markets = price_all_markets(lam_c, mu_c, model.params.rho,
                                         model.max_goals)
             markets["_meta"] = {
@@ -471,8 +508,8 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
                 """INSERT INTO predictions
                      (match_id, model_version, fs_version, home_lambda,
                       away_lambda, rho, markets, market_consensus,
-                      confidence_tier, data_completeness)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                      confidence_tier, data_completeness, etapa)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                    RETURNING prediction_id""",
                 (m["match_id"], version, settings.fs_version,
                  meta_pred["home_lambda"], meta_pred["away_lambda"],
@@ -485,7 +522,10 @@ def generate_predictions(model_path: str | None = None) -> list[dict]:
                              "calibrated": meta_pred.get("calibrated", False),
                              "market_blend": meta_info,
                              "residual_applied": meta_pred.get("residual_applied",
-                                                               False)})),
+                                                               False),
+                             "ajuste_altitud": info_altitud,
+                             **({"sello_tardio": info_final} if info_final else {})}),
+                 etapa),
             )
             pid = cur.fetchone()["prediction_id"]
 
@@ -594,6 +634,11 @@ def run() -> dict:
         _shadow_gate_allows_publication() if settings.publish_picks_enabled
         else (False, ["PUBLISH_PICKS_ENABLED=0"])
     )
+    # F7: con el sello por partido en marcha, los picks de valor nacen en la predicción final de cada partido
+    # (`sello_tardio`), con las cuotas de ese momento. El lote diario sigue sin ellos.
+    por_partido = hashchain.lote_por_partido(datetime.now(timezone.utc).date())
+    if por_partido:
+        gate_ok, gate_reasons = False, ["los picks de valor se sellan por partido (sello_tardio)"]
     if not gate_ok and not preds:
         # Solo había partidos "solo sharp" y no se publica: nada que sellar.
         return {"predictions": 0, "picks": 0,
@@ -613,7 +658,7 @@ def run() -> dict:
         _alerta_sin_sellar(alta, receipt, escalera, parley)
         if not receipt:
             tg.alert("FALLO AL SELLAR LA CADENA (predicciones sin picks).")
-        if settings.publish_picks_enabled:
+        if settings.publish_picks_enabled and not por_partido:
             tg.alert("PUBLICACIÓN BLOQUEADA por la puerta de CLV: "
                      + "; ".join(gate_reasons))
         result = {"predictions": len(preds), "picks": 0,

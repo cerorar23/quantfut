@@ -76,6 +76,7 @@ from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
 from .respaldo import router as respaldo_router
 from .firebase import router as firebase_router
+from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
 from .meta import router as meta_router
 from .compras import router as compras_router, store_router as compras_store_router
@@ -227,27 +228,52 @@ def track_record():
 
 
 @publico.get("/escalera")
-def escalera(response: Response):
+def escalera(response: Response, plus: bool = Depends(member)):
     """
     Reto escalera: el reto en curso con sus escalones sellados, el historial
     de retos cerrados (también los fallidos) y la ganancia acumulada.
     """
     from .mobile import ladder
     response.headers['Cache-Control'] = 'no-store'
-    return ladder()
+    response.headers['Vary'] = 'Authorization'
+    data = ladder(plus=plus)
+    if plus:
+        return data      # la cuenta VIP ve todos los escalones, también en la web
+    # Igual que /alta-probabilidad: la web difumina la cuota de lo bloqueado (decisión del titular, 2026-10-18), así que
+    # esta ruta pública no la envía. La app lee /mobile/v1/home y no cambia.
+    for reto in data.get('actuales', []):
+        reto['vip'] = [{k: v for k, v in item.items() if k != 'cuota'} for item in reto.get('vip', [])]
+    return data
+
+
+WEB_PUBLICO_GRATIS_ALTA = 1   # pronósticos de alta probabilidad gratis visibles al público de la web
 
 
 @publico.get("/alta-probabilidad")
-def alta_probabilidad(response: Response):
+def alta_probabilidad(response: Response, plus: bool = Depends(member)):
     """
     Línea de alta probabilidad: pronósticos sellados con probabilidad real
     (Pinnacle sin margen) filtrados al 75–90 %, 10 % gratuito por lote.
     El historial de acierto se conserva entero. Las puertas de publicación
     y su rango original se mantienen en el pipeline.
     """
-    from .mobile import high_probability
+    from .mobile import high_probability, metadata
     response.headers['Cache-Control'] = 'no-store'
-    return high_probability()
+    response.headers['Vary'] = 'Authorization'
+    informe = high_probability(plus=plus)
+    if plus:
+        return informe   # la cuenta VIP ve todos los pronósticos, también en la web
+    # Al público de la web solo se le deja VER uno gratis en esta sección (decisión del titular, 2026-10-18: «uno por
+    # sección»); queda el de mayor probabilidad y el resto pasa a bloqueado. La app no usa esta ruta: sus 4 gratis no cambian.
+    libres = sorted(informe.get('proximos', []), key=lambda p: -float(p.get('prob') or 0))
+    if len(libres) > WEB_PUBLICO_GRATIS_ALTA:
+        informe['proximos'] = libres[:WEB_PUBLICO_GRATIS_ALTA]
+        informe['vip'] = [*informe.get('vip', []), *[metadata(p) for p in libres[WEB_PUBLICO_GRATIS_ALTA:]]]
+    # La web difumina la cuota de lo bloqueado (decisión del titular, 2026-10-18). Difuminar un dato que sigue en la
+    # respuesta no protege nada, así que esta ruta pública no lo envía. La app NO usa esta ruta (lee /mobile/v1/home
+    # con `mobile.metadata`, que no se toca).
+    informe['vip'] = [{k: v for k, v in item.items() if k != 'cuota'} for item in informe.get('vip', [])]
+    return informe
 
 @publico.get("/parley")
 def parley(response: Response, plus: bool = Depends(member)):
@@ -276,13 +302,13 @@ def calibration():
 def chain(limit: int = Query(90, le=365)):
     return {
         "lotes": query(
-            """SELECT batch_date, n_predictions, n_picks, payload_sha256,
+            """SELECT batch_date, batch_kind, match_id, n_predictions, n_picks, payload_sha256,
                       prev_sha256, chain_sha256, created_at, published_ref
                FROM prediction_batches ORDER BY seq DESC LIMIT %s""",
             (limit,),
         ),
         "como_verificar": [
-            "1. Descarga el JSON del lote del repo público.",
+            "1. Descarga el JSON del lote del repo público (los lotes de tipo 'partido' están en partido/AAAA-MM-DD/).",
             "2. Calcula su SHA-256 y compáralo con payload_sha256.",
             "3. Comprueba que sha256(prev_sha256 || payload_sha256) == chain_sha256.",
             "Si cambiáramos una sola predicción pasada, todos los hashes "
@@ -772,6 +798,8 @@ app.include_router(anuncios_router)
 app.include_router(rewards_router)
 app.include_router(respaldo_router)
 app.include_router(firebase_router)
+app.include_router(whop_router)
+app.include_router(whop_webhooks)
 app.include_router(meta_router)
 app.include_router(compras_router)
 app.include_router(compras_store_router)

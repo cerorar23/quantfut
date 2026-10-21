@@ -1,6 +1,6 @@
 # F7 — Sello tardío en producción: plan de implementación (borrador)
 
-**Estado:** diseño, sin código. Se implementa después del 1-nov (el motor está congelado hasta el reentrenamiento).
+**Estado (19-oct-2026):** implementado en la rama `f7-sello-tardio` (PR #38) y ensayado contra una copia de la base y de la cadena; **sin desplegar**: el titular aprobó la ventana y el corte, y el despliegue se hará con el motor ya reentrenado (1-nov).
 **Spec:** `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md` (sección 1) y `2026-10-15-mejoras-tres-motores-plan.md` (sección 4).
 **Depende de:** comprometer-revelar ya implementado en `hashchain.py` (18-oct): el lote por partido lleva el pick minutos antes del saque, así que su JSON solo puede subirse al repo público al terminar el partido.
 
@@ -32,11 +32,22 @@
 8. **Registro de lo publicado:** por partido, qué se publicó, a qué hora y con qué versión; una revisión posterior no reemplaza el historial vendido.
 9. **Ensayo:** ejecutar contra una copia de la base (esquema aislado) antes de desplegar; anotar en `DEPLOYS.md` con su vuelta atrás.
 
-## Decisiones que necesito del titular
+## Decisiones del titular
 
-1. **Ventana de disparo:** ¿T-30 como tope, o T-60 para dar más margen al usuario que apuesta? (Más cerca del saque = cuotas más informadas, menos tiempo para actuar.)
-2. **Qué ven los suscriptores gratis y de pago** cuando el pick sale 30-60 min antes: ¿notificación push al sellar?
-3. **Corte:** fecha de `LOTE_POR_PARTIDO_DESDE`. Propuesta: el primer día sin lote sellado al desplegar, como en los demás bloques.
+1. **Ventana de disparo — APROBADA el 19-oct.** Sellar cuando estén capturadas las alineaciones de los dos lados (y falten ≤ 90 min) o a **T-45**, lo primero. Sin alineación se sella igual y queda anotado en `data_completeness.sello_tardio`.
+2. **Qué ven los suscriptores — RESPONDIDO el 18-oct.** Sin VIP se ven gratis **4 de alta probabilidad, 1 de escalera y 1 de parley**
+   (es lo que el código ya aplica: `FREE_MAX = 4`, `ladder_free_count = 1`, un parley al día en `parley_acceso.py`). El resto de los
+   pronósticos bloqueados se muestra **difuminado con un botón «Acceso VIP»** que lleva a la pasarela de pago. Sigue sin responder:
+   si se manda una notificación push al sellar un pick de partido.
+   - Seguridad: el servidor ya NO envía selección ni probabilidad de un pronóstico bloqueado (solo categoría, equipos, hora y cuota, `mobile.metadata`),
+     así que el difuminado es solo visual y no se puede quitar desde el navegador o la app.
+   - Pasarela: en la **web**, Whop (checkout embebido). En la **app**, la compra de tienda (Play / App Store): Google y Apple exigen su
+     sistema de compras para suscripciones digitales dentro de la app, y enviar a un cobro externo puede costar el rechazo o la baja de la ficha.
+3. **Corte — APROBADO el 19-oct.** `LOTE_POR_PARTIDO_DESDE` = el primer día sin lote diario sellado al desplegar (hoy `None`: el job no hace nada y el lote diario no cambia).
+
+## Ensayo (19-oct-2026, copia de la base y de la cadena)
+
+Migración 084 aplicada a la copia; 13 predicciones diarias generadas con el código nuevo (sin cambio de comportamiento, todas `diaria`); un partido (Monza–Cagliari) predicho en etapa `final` y sellado a T-40: recibo en `partido/2026-10-19/…`, `verify` OK con 21 lotes (los 20 anteriores intactos), segundo disparo idempotente, el partido deja de ser candidato y el lote diario no recoge predicciones finales. Los lambdas de la final igualan a los de la diaria: **mientras ningún bloque de alineación pase la puerta, el sello tardío no cambia la predicción**; cambia el momento del sello y las cuotas de los picks de valor.
 
 ## Lo que este plan no hace
 

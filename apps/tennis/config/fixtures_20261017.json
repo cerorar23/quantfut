@@ -1,0 +1,25 @@
+{
+  "observed_at": "2026-10-17T16:45:00Z",
+  "fixtures": [
+    {
+      "event_id": "558c4df94e8e9d970b74c5213c82675c",
+      "status": "scheduled",
+      "observed_at": "2026-10-17T16:45:00Z",
+      "actual_start": null,
+      "participants_verified": false,
+      "provider_time_reconciled": false,
+      "source_url": "https://www.atptour.com/en/tournaments/shanghai/5014/overview",
+      "evidence": "ATP confirms tournament dates and surface, but the exact Davidovich Fokina-Jodar fixture and time were not exposed in the verified page."
+    },
+    {
+      "event_id": "6c0df7365e0bd69dc2354b2fa6434919",
+      "status": "scheduled",
+      "observed_at": "2026-10-17T16:45:00Z",
+      "actual_start": null,
+      "participants_verified": true,
+      "provider_time_reconciled": false,
+      "source_url": "https://www.wtatennis.com/news/4593447/maja-chwalinska-sonay-kartal-wuhan-open-final-2026-everything-to-know",
+      "evidence": "WTA confirms Chwalinska-Kartal in Sunday's final, but its not-before time is inconsistent with the provider commence_time and must be refreshed/reconciled before a quote can pass."
+    }
+  ]
+}

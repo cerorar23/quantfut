@@ -203,7 +203,7 @@ void main() {
       expect(opened, 'Marca Lens');
     });
 
-    testWidgets('los candados van en una tarjeta plegable y no una por pronóstico', (tester) async {
+    testWidgets('los candados van en una tarjeta con el pronóstico difuminado y no una por pronóstico', (tester) async {
       var vip = 0;
       final unlocked = <String>[];
       await pump(
@@ -220,20 +220,29 @@ void main() {
         code: 'es',
       );
       expect(find.text('2 pronósticos más con VIP'), findsOneWidget);
-      expect(find.byIcon(Icons.lock_outline), findsOneWidget); // solo el de la tarjeta
-      expect(find.text('Inter · Benfica'), findsNothing);
+      // Desplegada por defecto (decisión del titular, 18-oct-2026): cada candado trae su franja difuminada.
+      expect(find.text('Inter · Benfica'), findsOneWidget);
+      expect(find.text('Milan · Roma'), findsOneWidget);
+      expect(find.byKey(const ValueKey('locked-blur')), findsNWidgets(2));
+      expect(find.byType(ImageFiltered), findsWidgets);
+      // La franja son bloques, no un pronóstico: ni la selección ni la probabilidad salen del servidor.
+      expect(find.text('████████ · ██ %'), findsNWidgets(2));
       final toggle = find.byKey(const ValueKey('high-locked-toggle'));
       await tester.ensureVisible(toggle);
       await tester.tap(toggle);
       await tester.pump();
+      expect(find.text('Inter · Benfica'), findsNothing);   // se puede plegar
+      await tester.tap(toggle);
+      await tester.pump();
       expect(find.text('Inter · Benfica'), findsOneWidget);
-      expect(find.text('Milan · Roma'), findsOneWidget);
       // La cuota publicada se ve en el candado; si el servidor no la manda, no se inventa.
       expect(find.byKey(const ValueKey('locked-quote')), findsOneWidget);
       expect(find.text('@1,35'), findsOneWidget);
+      await tester.ensureVisible(find.text('100 monedas').first);
       await tester.tap(find.text('100 monedas').first);
       expect(unlocked, ['Inter']);
-      await tester.tap(find.text('Ver acceso VIP'));
+      await tester.ensureVisible(find.text('Acceso VIP'));
+      await tester.tap(find.text('Acceso VIP'));
       expect(vip, 1);
     });
 

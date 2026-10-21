@@ -16,6 +16,9 @@ const files = new Map([
   ['/membership.js', ['membership.js', 'text/javascript; charset=utf-8']],
   ['/membership.css', ['membership.css', 'text/css; charset=utf-8']],
   ['/cuenta-api.js', ['cuenta-api.js', 'text/javascript; charset=utf-8']],
+  ['/google-auth.js', ['google-auth.js', 'text/javascript; charset=utf-8']],
+  ['/meta-pixel.js', ['meta-pixel.js', 'text/javascript; charset=utf-8']],
+  ['/whop-checkout.js', ['whop-checkout.js', 'text/javascript; charset=utf-8']],
 ]);
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || '127.0.0.1';

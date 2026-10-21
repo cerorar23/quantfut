@@ -1,0 +1,73 @@
+qtc|Queensland Tennis Centre|Brisbane|au|Australia/Brisbane|339|Queensland Tennis Centre
+victoria|Victoria Park Tennis Stadium|Hong Kong|hk|Asia/Hong_Kong|336|Victoria Park
+memorial|Memorial Drive Tennis Centre|Adelaide|au|Australia/Adelaide|8998|Memorial Drive
+asb|ASB Tennis Arena|Auckland|nz|Pacific/Auckland|301|ASB Tennis Arena
+melbourne|Melbourne Park|Melbourne|au|Australia/Melbourne|580|Melbourne Park
+sudfrance|Sud de France Arena|Perols|fr|Europe/Paris|375|Sud de France Arena
+kempes|Estadio Mario Alberto Kempes|Cordoba|ar|America/Argentina/Cordoba|9158|Kempes Stadium
+smu|SMU Tennis Complex|Dallas Texas|us|America/Chicago|424@2024|SMU Tennis Complex
+ford|Ford Center at The Star|Frisco Texas|us|America/Chicago|424@2025|OVERRIDE
+marseille|Palais des Sports de Marseille|Marseille|fr|Europe/Paris|496|Palais des Sports
+ahoy|Rotterdam Ahoy|Rotterdam|nl|Europe/Amsterdam|407|Rotterdam Ahoy
+baltc|Buenos Aires Lawn Tennis Club|Buenos Aires|ar|America/Argentina/Buenos_Aires|506|Buenos Aires Lawn Tennis Club
+delray|Delray Beach Tennis Center|Delray Beach Florida|us|America/New_York|499|Delray Beach Stadium
+jockey|Jockey Club Brasileiro|Rio de Janeiro|br|America/Sao_Paulo|6932|Jockey Club Brasileiro
+khalifa|Khalifa International Tennis Complex|Doha|qa|Asia/Qatar|451|Khalifa Tennis Complex
+cabo|Cabo Sports Complex|Los Cabos|mx|America/Mazatlan|7480|Cabo Sports Complex
+gnp|Arena GNP Seguros|Acapulco|mx|America/Mexico_City|807|Arena GNP Seguros
+dubai|Dubai Duty Free Tennis Stadium|Dubai|ae|Asia/Dubai|495|Dubai Duty Free Tennis Stadium
+santiago|Club Deportivo Universidad Catolica San Carlos de Apoquindo|Santiago|cl|America/Santiago|8996|Club Deportivo Universidad Catolica
+indianwells|Indian Wells Tennis Garden|Indian Wells California|us|America/Los_Angeles|404|Indian Wells Tennis Garden
+hardrock|Hard Rock Stadium|Miami Gardens Florida|us|America/New_York|403|Hard Rock Stadium
+estoril|Clube de Tenis do Estoril|Estoril|pt|Europe/Lisbon|7290|Clube de Tenis do Estoril
+marrakech|Royal Tennis Club de Marrakech|Marrakech|ma|Africa/Casablanca|360|Royal Tennis Club de Marrakech
+riveroaks|River Oaks Country Club|Houston Texas|us|America/Chicago|717|River Oaks Country Club
+montecarlo|Monte Carlo Country Club|Roquebrune Cap Martin|fr|Europe/Paris|410|Monte-Carlo Country Club
+rctb|Real Club de Tenis Barcelona|Barcelona|es|Europe/Madrid|425|Real Club de Tenis Barcelona
+iphitos|MTTC Iphitos|Munich|de|Europe/Berlin|308|MTTC Iphitos
+nastase|Nastase Marica Sports Club|Bucharest|ro|Europe/Bucharest|4462|Nastase
+caja|Caja Magica|Madrid|es|Europe/Madrid|1536|Caja Magica
+foro|Foro Italico Tennis|Rome|it|Europe/Rome|416|Foro Italico
+geneva|Tennis Club de Geneve Eaux Vives|Geneva|ch|Europe/Zurich|322|Tennis Club de Geneve Eaux-Vives
+teteor|Parc de la Tete d Or Velodrome|Lyon|fr|Europe/Paris|7694|Parc de la Tete
+roland|Stade Roland Garros|Paris|fr|Europe/Paris|520,96@2024|Stade Roland Garros
+autotron|Autotron Rosmalen|Rosmalen|nl|Europe/Amsterdam|440|Autotron Rosmalen
+weissenhof|Tennisclub Weissenhof|Stuttgart|de|Europe/Berlin|321|TC Weissenhof
+owl|OWL Arena|Halle Westfalen|de|Europe/Berlin|500|OWL Arena
+queens|The Queen's Club|London|gb|Europe/London|311|Queen
+mallorca|Mallorca Country Club|Santa Ponsa|es|Europe/Madrid|8994|Mallorca Country Club
+devonshire|Devonshire Park Lawn Tennis Club|Eastbourne|gb|Europe/London|741|Devonshire Park
+aeltc|All England Lawn Tennis Club|Wimbledon London|gb|Europe/London|540|All England Lawn Tennis Club
+rothenbaum|Am Rothenbaum Tennis Stadium|Hamburg|de|Europe/Berlin|414|Rothenbaum Tennis Stadium
+bastad|Bastad Tennis Stadium|Bastad|se|Europe/Stockholm|316|Bastad Tennis Stadium
+gstaad|Roy Emerson Arena|Gstaad|ch|Europe/Zurich|314|Roy Emerson Arena
+newport|International Tennis Hall of Fame|Newport Rhode Island|us|America/New_York|315|International Tennis Hall of Fame
+atlanta|Atlantic Station|Atlanta Georgia|us|America/New_York|6116|Atlantic Station
+kitz|Kitzbuheler Tennis Club|Kitzbuhel|at|Europe/Vienna|319|Kitzbuheler Tennis Club
+umag|ATP Stadion Goran Ivanisevic|Umag|hr|Europe/Zagreb|439|Stadion Goran Ivanisevic
+rockcreek|William H G FitzGerald Tennis Center|Washington DC|us|America/New_York|418|Rock Creek Park Tennis Center
+iga|Stade IGA|Montreal|ca|America/Toronto|421@2024|Stade IGA
+sobeys|Sobeys Stadium|Toronto|ca|America/Toronto|421@2025|Sobeys Stadium
+cincy|Lindner Family Tennis Center|Mason Ohio|us|America/New_York|422|Lindner Family Tennis Center
+wake|Wake Forest Tennis Complex|Winston Salem North Carolina|us|America/New_York|6242|Wake Forest University
+usta|USTA Billie Jean King National Tennis Center|New York|us|America/New_York|560|Billie Jean King National Tennis Center
+sichuan|Sichuan International Tennis Center|Chengdu|cn|Asia/Shanghai|7581|Sichuan International Tennis Center
+hangzhou|Hangzhou Olympic Sports Center Tennis|Hangzhou|cn|Asia/Shanghai|4713|Hangzhou
+uber|Uber Arena|Berlin|de|Europe/Berlin|9210@2024|Mercedes-Benz Arena
+chase|Chase Center|San Francisco California|us|America/Los_Angeles|9210@2025|Chase Center
+ariake|Ariake Tennis Park|Tokyo|jp|Asia/Tokyo|329|Ariake Tennis Park
+beijing|National Tennis Center|Beijing|cn|Asia/Shanghai|747|National Tennis Center
+shanghai|Qizhong Tennis Center|Shanghai|cn|Asia/Shanghai|5014|Qizhong Tennis Center
+lotto|Lotto Arena|Antwerp|be|Europe/Brussels|7485@2024|Lotto Arena
+brussels|ING Arena Palais 12|Brussels|be|Europe/Brussels|7485@2025|OVERRIDE
+almaty|Almaty Arena|Almaty|kz|Asia/Almaty|9410|Almaty Arena
+stockholm|Kungliga Tennishallen|Stockholm|se|Europe/Stockholm|429|Kungliga Tennishallen
+basel|St Jakobshalle|Basel|ch|Europe/Zurich|328|Jakobshalle
+vienna|Wiener Stadthalle|Vienna|at|Europe/Vienna|337|Wiener Stadthalle
+accor|Accor Arena|Paris|fr|Europe/Paris|352@2024|AccorHotels Arena
+defense|Paris La Defense Arena|Nanterre|fr|Europe/Paris|352@2025|Paris La Defense Arena
+metz|Les Arenes de Metz|Metz|fr|Europe/Paris|341|Arenes de Metz
+belgrade|Belgrade Arena|Belgrade|rs|Europe/Belgrade|4787@2024|OVERRIDE
+athens|Telekom Center Athens OAKA Indoor Hall|Athens|gr|Europe/Athens|5100@2025|OVERRIDE
+turin|Pala Alpitour Inalpi Arena|Turin|it|Europe/Rome|605|Palaolimpico
+jeddah|King Abdullah Sports City Indoor Arena|Jeddah|sa|Asia/Riyadh|7696|King Abdullah Sports City

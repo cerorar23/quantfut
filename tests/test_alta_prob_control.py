@@ -150,3 +150,42 @@ def test_un_lado_suelto_sin_muestra_no_pausa_el_grupo():
     assert out["bloqueados"] == []
     assert any(m.startswith("team_totals: muestra insuficiente (30 < 50)")
                for m in out["motivos"])
+
+
+# --- picks del mismo partido: el control mide por partido (19-oct-2026) ---
+def _por_partido(partidos, por_partido, prob, tasa_partidos, market="corners", semanas=9):
+    """`partidos` partidos con `por_partido` picks cada uno que ganan o pierden JUNTOS; `tasa_partidos` de ellos aciertan."""
+    ganan = round(partidos * tasa_partidos)
+    return [{"match_id": f"m{i}", "market": market, "prob": prob, "ref_price": None,
+             "outcome": "win" if i < ganan else "loss", "kickoff_utc": T0 + timedelta(weeks=i % semanas)}
+            for i in range(partidos) for _ in range(por_partido)]
+
+
+def test_cuatro_picks_por_partido_no_bloquean_por_ruido():
+    filas = _por_partido(40, 4, 0.87, 0.75)                   # 160 picks = 40 partidos; z independiente < −4
+    sin_partido = [{k: v for k, v in f.items() if k != "match_id"} for f in filas]
+    assert _z(sin_partido) <= ap.Z_GROSERO                     # contando picks como independientes, parecía un fallo grosero
+    out = ap.control(filas)
+    assert out["bloqueados"] == [] and not any("grosero" in m for m in out["motivos"])
+
+
+def test_un_fallo_real_en_muchos_partidos_sigue_bloqueando_con_match_id():
+    out = ap.control(_por_partido(160, 1, 0.87, 0.60))        # 160 partidos distintos que aciertan 60 % prometiendo 87 %
+    assert "corners" in out["bloqueados"] or "todo" in out["bloqueados"]
+
+
+def test_la_varianza_por_partido_nunca_baja_de_la_independiente():
+    import pandas as pd
+    # Dentro de un partido los picks se compensan (uno gana y otro pierde): la varianza agrupada sería casi 0, pero no se toma.
+    filas = [{"match_id": "a", "market": "x", "prob": 0.5, "outcome": o, "kickoff_utc": T0} for o in ("win", "loss")] * 30
+    f = ap._marco(filas)
+    assert ap._varianza(f) == pytest.approx(float((f["prob"] * (1 - f["prob"])).sum()))
+
+
+def test_el_historial_muestra_los_partidos_distintos_y_el_margen_por_partido():
+    h = ap.historial(_por_partido(60, 4, 0.8, 0.8))
+    bloque = h["por_mercado"]["corners"]
+    assert bloque["n"] == 240 and bloque["partidos"] == 60
+    assert bloque["margen_ee"] > 0
+    sin = ap.historial([{k: v for k, v in f.items() if k != "match_id"} for f in _por_partido(60, 4, 0.8, 0.8)])
+    assert "partidos" not in sin["por_mercado"]["corners"]       # sin partido, el formato de siempre

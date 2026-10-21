@@ -197,7 +197,7 @@ def capture_lineup_shadows() -> dict:
                    WHERE l.match_id=m.match_id) AS as_of
            FROM matches m
            JOIN predictions p USING (match_id)
-           WHERE m.status='scheduled' AND m.kickoff_utc > now()
+           WHERE p.etapa = 'diaria' AND m.status='scheduled' AND m.kickoff_utc > now()
              AND m.kickoff_utc < now() + interval '100 minutes'
              AND (SELECT count(DISTINCT l.side) FROM lineups l
                   WHERE l.match_id=m.match_id) = 2

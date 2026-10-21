@@ -74,6 +74,13 @@ def test_la_consulta_de_partidos_solo_sharp(monkeypatch):
     assert "NOT lg.model_enabled" in sql[0] and "'scheduled'" in sql[0]
 
 
+@pytest.fixture(autouse=True)
+def _sin_sello_por_partido(monkeypatch):
+    """El corte del sello por partido depende de la fecha de hoy: estas pruebas miran el job diario sin él."""
+    from qf.publish import hashchain
+    monkeypatch.setattr(hashchain, "LOTE_POR_PARTIDO_DESDE", None)
+
+
 @pytest.fixture
 def job(monkeypatch):
     estado = {"seleccion": None, "persistidos": None, "sellados": 0, "alertas": []}
