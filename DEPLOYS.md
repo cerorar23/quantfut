@@ -41,6 +41,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - En el PC, las tareas de Windows «QuantFut tenis cuotas h2h» y «QuantFut tenis datos semanales» quedan **desactivadas** (no borradas) para no duplicar llamadas ni sellos.
 - Vuelta atrás: `crontab ~/quantfut-tenis/backup/crontab_qf_antes_20261020.txt` y reactivar las dos tareas de Windows; los datos del PC en `data/tennis/{intake_v1,live_odds_v1,weekly}` se quedaron como estaban a las 03:50 UTC (para volver, copiar antes los del servidor hacia el PC).
 
+### 2026-10-20 04:51 UTC · Web: los textos de pago siguen la configuración del servidor · API (imagen nueva), PR #56 (`375c720`)
+- Whop está habilitado en producción (`/app/v1/whop/config` devuelve `enabled: true`, los tres planes tienen `whop_plan_id`), pero la web decía en tres sitios (planes, paquetes, preguntas y cuenta) que el pago en línea todavía no estaba habilitado. Ahora `membership.js` usa `payOn()` (la configuración del servidor) y se vuelve a pintar al cargarla. No se añade ninguna afirmación nueva sobre renovaciones.
+- Archivos idénticos a lo esperado antes de sobrescribir (hash comprobado por el propio script de despliegue): `frontend/{app.js,membership.js,index.html}`. Imagen `quantfut-api-web-vip:web-copy-pago` = `a1a8dcd` + esos 3 archivos; compose fijado. Worker, base y Caddy sin tocar.
+- Verificado: `/health` 200; `/` referencia `app.js?v=beb802cbd502` y este `membership.js?v=0b23a539278e` (hash del servidor coincide). La URL sin versión de `membership.js` sigue en la caché de Cloudflare, pero la página no la usa.
+- Vuelta atrás: `releases/web-copy-pago/backup/docker-compose.before.yml` como `~/quantfut/docker-compose.yml` + `docker compose up -d --no-deps --no-build --force-recreate api`.
+
 ### 2026-10-20 03:00 UTC · Artefacto del ajuste del once reajustado con la muestra ampliada · worker (solo un archivo de datos)
 - `ajuste_xi_ampliado-2024-01-01_2026-10-19.pkl` (11.920 partidos) en `/srv/quantfut/artifacts`; `calcular` carga el más reciente, así que desde ahora los factores en sombra usan este y quedan marcados con `oos_version = ampliado-...`. Sin cambios de código, sin tocar los lambdas sellados. Vuelta atrás: borrar ese archivo (vuelve al de `2026.10.19-131830`).
 
