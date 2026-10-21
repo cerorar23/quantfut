@@ -6482,3 +6482,15 @@ Verificación final cinco sedes: arnés general1315aprobados/94omitidos/2avisos1
 
 ## 2026-10-18 — Aclaración de las dos cifras que no cuadraban
 CLV: la puerta comercial lee `publish.shadow_sharp.report()` (ofertas publicables de la sombra sharp). Esa medida da hoy n=213 con cierre justo, `ev_close` +3,07 % (IC95 +1,54 a +4,67); el +3,46 % (n=142) del 15-oct era la misma medida con menos muestra. `shadow.summary` y `shadow_results` miden los retadores de XI (n≈135, ev≈+0,06 %): otra cosa, y coherente con que el XI aún no aporta frente al cierre. La puerta sigue cerrada por n<300 y porque ninguna liga llega a 30 (la mayor, MLS, 18). xG: los 1.219 huecos son exactos para «terminados desde 2024-01-01, sin xG de alguno de los dos»; mi cuenta anterior usaba otra ventana.
+
+## 2026-10-21 — NBA: etiqueta de temporada en pronósticos prospectivos
+`multimarket.prospective` calculaba la temporada del tipoff con el año calendario ("2027-28" para un partido de enero de 2027), así que de enero a junio regresaba el Elo un 25 % hacia 1500 a mitad de temporada. Ahora `season_label()` usa la temporada NBA (agosto en adelante abre la nueva), con prueba parametrizada. El paquete sellado RUN071 no se tocó (sus 42 pronósticos de octubre no estaban afectados); como `model.json` sella el hash del código, una cohorte nueva exige `evaluate` en un directorio nuevo, no reutilizar el de RUN071.
+
+## 2026-10-21 — NBA v1.2: correcciones de la auditoría
+Se creó `multimarket_v12` (protocolo congelado antes de correr) sin tocar RUN071: recalibración móvil, Elo con margen + descanso, ventaja local de las dos temporadas previas y bootstrap por fechas. Solo el ganador mejora de forma significativa (Brier −0,006 en ambas temporadas de test, sesgo local casi eliminado); equipos, total y jugadores quedan neutros, y el peso empírico de jugadores sigue en 0,25. Porqué importa: la ventaja que faltaba en el ganador era deriva de calibración y descanso, no más complejidad. Informe docs/nba_multimarket_v12_20261021.md. Pendiente sin datos: lesiones, cuotas/CLV.
+
+## 2026-10-21 — NBA v1.3: disponibilidad desde reportes oficiales
+Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de correr) con los 816 reportes de lesiones ya descargados, regla estricta de 60 min antes del salto y partidos sin hora de salto tratados como sin información. Mejora de forma significativa el ganador (Brier −0,005), los puntos de equipo y cinco de los seis mercados de jugador; el total y tapones no cambian. No se gastó ningún crédito: The Odds API tiene 4.092 y fútbol necesita ~300/día hasta el 1-nov, así que las cuotas históricas NBA (~3.300 créditos) quedan para después del reset. Informe docs/nba_multimarket_v13_disponibilidad_20261021.md.
+
+## 2026-10-21 — NBA: plan de cuotas históricas, sin gastar
+`nba.odds_history` (plan/fetch/load) con 325 snapshots h2h (3.250 créditos) y bloqueo en código antes del 1-nov, tope y reserva. Se decidió por fases porque la bolsa de noviembre (~5.700 libres tras vivo y los 527 snapshots de fútbol) no cubre h2h+totales. Los totales van en diciembre.

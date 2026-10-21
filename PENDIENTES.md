@@ -94,6 +94,7 @@ Tareas sueltas:
 - [ ] iOS: necesita Mac y Apple Developer (APNs y firma).
 - [ ] Validar el acceso con Google y la entrega FCM con un usuario real; activar `FIREBASE_AUTH_ENABLED` cuando lo decidas.
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
+- [ ] NBA — cuotas históricas de partido (The Odds API): comprar 325 snapshots h2h de 2024-25 y 2025-26 (3.250 créditos) **desde el 1-nov-2026**, con `python -m nba.odds_history fetch` (tope 3.300, reserva 14.500, caché). Bloqueado por código antes de esa fecha. Detalle en docs/nba_cuotas_historicas_plan_20261021.md.
 
 ## Decisiones que dependen de ti
 1. Procesador de pago de la web (el de la app ya está decidido: tiendas).

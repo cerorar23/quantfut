@@ -1,0 +1,26 @@
+{
+  "version": "nba-multimarket-research-1.3",
+  "amends": "nba-multimarket-research-1.2 (adds official injury-report availability); RUN071 sealed and untouched",
+  "frozen_before_running": true,
+  "inherits": "multimarket_v12_protocol.json (windows, seeds, bootstrap, reference lines)",
+  "sources": {
+    "injury_reports": "apps/nba/.local/normalized/nba_complete_injury_final_20261006/reports.jsonl.gz (816 official NBA injury-report PDFs, retrospective receipt)",
+    "tipoff_times": "api-sports games_2022..2024 by (Eastern date, home, away) joined to NBA game ids; 2025-26 from the tipoff carried by the report rows themselves",
+    "boxscores": "nba_f6_run71_20261009/data/players.jsonl.gz"
+  },
+  "point_in_time_rule": "a status counts only if its report timestamp is at least 60 minutes before tipoff; the latest such report per game/player wins; games without a known tipoff contribute no availability information (treated as unobserved, not as available)",
+  "status_categories": ["Out", "Doubtful", "Questionable", "Probable", "Available", "unlisted"],
+  "play_probability": "Beta(1,1) smoothed participation rate per status over the training window, refit per target season",
+  "trailing_player_value": "mean minutes and points of the last 20 participated games within 370 days, strictly before the game date",
+  "team_features": {
+    "expected_missing_minutes": "sum over listed players of trailing_minutes * (1 - play_probability)",
+    "expected_missing_points": "sum over listed players of trailing_points * (1 - play_probability)"
+  },
+  "winner_model": "v1.2 logistic plus [missing_points_home/10, missing_points_away/10], ridge prior 0 on the new weights",
+  "team_points_model": "v1.2 ridge shift plus [missing_points_own/10, missing_points_opp/10]",
+  "player_model": "per market logistic on [logit(v1.2 probability), own_questionable_or_doubtful, own_probable, teammates_expected_missing_minutes/48] fitted on the training window, ridge toward [1,0,0,0]",
+  "availability_evaluation": "log loss of participation: status table vs trailing base rate, for rows listed in the boxscore; test seasons only",
+  "references": ["v1.2 (this protocol's predecessor) on identical rows", "v1.1 sealed"],
+  "promotion": "none; retrospective; injury-report receipt time is not proof of original availability",
+  "not_modeled": ["bookmaker prices and CLV (no historical NBA game odds locally; The Odds API credits reserved for football until the 2026-11-01 reset)", "late scratches after the last pre-T60 report", "positions"]
+}
