@@ -1,0 +1,9 @@
+ARG NBA_LIVE13_BASE
+FROM ${NBA_LIVE13_BASE}
+USER root
+RUN python -m pip install --no-cache-dir pdfplumber==0.11.9
+COPY src/nba /app/src/nba
+COPY multimarket_v12_protocol.json multimarket_v13_protocol.json multimarket_v13_live_protocol.json /app/
+USER 1001:1001
+WORKDIR /app
+CMD ["python","-m","nba.multimarket_v13_live_producer"]
