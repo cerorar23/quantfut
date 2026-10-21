@@ -33,6 +33,17 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-21 · AdMob (ID de editor y bloque) y estado de Meta · SOLO configuración en la base, sin código ni reinicios
+- `reward_settings` (vía `qf.api.anuncios.save_config`, auditado como `ssh:claude-titular`): `admob_publisher_id = pub-3902371555866850` y
+  `ad_unit_android = ca-app-pub-3902371555866850/4169479093` (bloque Recompensado, SSV con `https://pronosticosdeportivos.pro/rewards/callback/admob`).
+  Siguen `ads_enabled = true` y `ad_test_mode = true`: la app muestra bloques de prueba de Google.
+- `GET /app-ads.txt` ya responde `google.com, pub-3902371555866850, DIRECT, f08c47fec0942fa0` (antes 404). AdMob tarda hasta 24 h en verificar la app.
+- Comprobado por SSH: `META_PIXEL_ID`, `META_DATASET_ID`, `META_CAPI_TOKEN` definidos y `META_CAPI_ENABLED=1`; sin `META_TEST_EVENT_CODE`. El código de Whop y de Meta web
+  del contenedor API es el de `main`, salvo `meta_capi.py` (el de la API no trae el extinfo de reserva; el del worker sí, y es el que envía). Cola `meta_events`: 1 `CompleteRegistration` enviado, ninguna compra aún.
+- App de Meta (ID `1369265108354712`): plataforma Android con paquete y clase, tres hashes de clave y registro automático de compras apagado; app vinculada al dataset `2253839992227148`.
+- Cambio de código aparte: #67 (ID de app de AdMob de Android en el manifiesto). iOS conserva el ID de ejemplo hasta registrar esa app en AdMob.
+- **Vuelta atrás:** vaciar `admob_publisher_id` y `ad_unit_android` en `/control/anuncios` (la ruta vuelve a 404).
+
 ### 2026-10-21 17:05 UTC · Web: arreglo del arranque (la web quedaba en «Consultando…») · API (imagen nueva), commit `45fdb96`
 - Causa: `app.js` llamaba a `render()` antes de declarar `publicAuthKey`/`publicFetch` (zona muerta temporal): ReferenceError en el primer render, el script abortaba y nunca cargaba los datos públicos. Se mueven las declaraciones antes del primer `render()` y `app-order.test.mjs` lo exige.
 - Imagen `quantfut-api-web-vip:web-arranque` = `web-renovacion` + `frontend/{app.js,index.html}` (hash de ambos comprobado contra `main` previo antes de sobrescribir). `index.html` lleva el sello nuevo `app.js?v=935045b8a991`: sin re-sellar, Cloudflare sirve el script viejo bajo la URL con el sello anterior. Compose fijado; worker, base y Caddy sin tocar.
