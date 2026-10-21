@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-21 15:45 UTC · NBA: pronósticos prospectivos v1.3 en /nba · contenedor del dashboard NBA, `main` (`f99fdaf`, PR #63)
+- Imagen `nba-dashboard-live13:20261021` (`8810415bb98e`), derivada de `nba-dashboard-run71:20261009`: solo cambia `src/nba`, `web` y el `CMD` (`nba.multimarket_live_dashboard`); mismo `public-bundle` de RUN071. Nuevo montaje de solo lectura `~/nba-isolated/live13/cohorts` en `/live-cohorts`. Mismos límites y montajes que antes (read-only, usuario 1001, sin capacidades, 256 MB, sin credenciales).
+- Ensayo previo con un contenedor temporal (RUN071: 42 + 15 pronósticos; cohorte v1.3: 44). Tras el cambio: `/`, `/nba`, `/nba/app.js` 200, `/nba/.env` 404; la página muestra RUN071 intacto y la cohorte `2026-10-21_ensayo` (11 partidos sellados 14:39 UTC); consola sin errores propios. Los demás contenedores conservan su ID (API, worker, caddy, db, cache, grafana, capture, paper-pilot); Caddy sin cambios (sigue apuntando a `nba-dashboard-run69`).
+- **Sin productor aún:** nadie sella cohortes nuevas ni recoge resultados en el servidor; la cohorte se copió a mano. Pendiente decidir dónde corre (el servidor sí llega a nba.com y a los PDF de lesiones, comprobado).
+- Respaldo: `~/nba-isolated/dashboard/live13-20261021/backup/` (inspect del contenedor, ID de la imagen, lista de contenedores). El contenedor anterior quedó parado como `nba-dashboard-run71-prev` (restart=no).
+- **Vuelta atrás:** `docker rm -f nba-dashboard-run69 && docker rename nba-dashboard-run71-prev nba-dashboard-run69 && docker update --restart unless-stopped nba-dashboard-run69 && docker start nba-dashboard-run69`.
+
 ### 2026-10-20 03:55 UTC · Motor de tenis al VPS (servicio nuevo, aislado del fútbol) · imagen `quantfut-tenis:1d2067d` + crontab de `qf`, PR #53 y #54 (`205f62b`)
 - Orden del titular («haz lo que queda»): sacar el tenis del PC para que no dependa de que esté encendido. **No toca ningún servicio de fútbol**: ni contenedores, ni compose, ni el crontab del worker, ni la base.
 - Imagen propia `quantfut-tenis:1d2067d` construida en el servidor desde `git archive` de `apps/tennis` (`apps/tennis/Dockerfile`, `python:3.12-slim`). El código Python de la imagen es idéntico al de `main` (`205f62b` solo cambia el script del host). Datos en `~/quantfut-tenis/data` (221 MB: base semanal, modelos, parámetros, registros de cuotas y de la entrada automática traídos del PC), claves en `~/quantfut-tenis/secrets` (700/600: `ODDS_API_KEY` y `API_TENNIS_KEY`), imagen activa en `~/quantfut-tenis/IMAGE`.
