@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-21 17:05 UTC · Web: arreglo del arranque (la web quedaba en «Consultando…») · API (imagen nueva), commit `45fdb96`
+- Causa: `app.js` llamaba a `render()` antes de declarar `publicAuthKey`/`publicFetch` (zona muerta temporal): ReferenceError en el primer render, el script abortaba y nunca cargaba los datos públicos. Se mueven las declaraciones antes del primer `render()` y `app-order.test.mjs` lo exige.
+- Imagen `quantfut-api-web-vip:web-arranque` = `web-renovacion` + `frontend/{app.js,index.html}` (hash de ambos comprobado contra `main` previo antes de sobrescribir). `index.html` lleva el sello nuevo `app.js?v=935045b8a991`: sin re-sellar, Cloudflare sirve el script viejo bajo la URL con el sello anterior. Compose fijado; worker, base y Caddy sin tocar.
+- Verificado: `/health` 200, `/` referencia `app.js?v=935045b8a991` (hash servido igual al de `main`), la pestaña Escalera carga retos e historial reales.
+- Vuelta atrás: `releases/web-arranque/backup/docker-compose.before.yml` como `~/quantfut/docker-compose.yml` + `docker compose up -d --no-deps --no-build --force-recreate api`.
+
 ### 2026-10-21 16:43 UTC · NBA: productor diario de cohortes v1.3 · cron del usuario `qf` (PR #66)
 - Imagen `nba-live13-producer:20261021` (`7a77272bba60`), derivada de `nba-dashboard-live13:20261021` + `pdfplumber==0.11.9`; envoltorio `~/nba-isolated/live13/producer.sh` (`flock`, solo un proceso, contenedor de solo lectura salvo `cohorts`, 512 MB, sin credenciales). Datos y modelo en `~/nba-isolated/live13/{data,model}`; cohortes en `~/nba-isolated/live13/cohorts` (el dashboard las monta de solo lectura).
 - Cron nuevo: `*/10 * * * * /home/qf/nba-isolated/live13/producer.sh >> ~/.local/share/quantfut/nba_live13.log 2>&1`. Cada pasada recoge los resultados finales (≥3 h tras el salto) y, desde las 17:35 ET, sella una vez por fecha los partidos que no han empezado. Primera ejecución manual 16:43 UTC y primera por cron 16:50 UTC: sin errores, sin sellar (aún antes de las 17:35 ET).
