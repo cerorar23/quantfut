@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.mjs",
-    "check": "node --check app.js && node --check server.mjs && node --check public-data.js && node --check fichas-data.js && node --check membership.js && node --check cuenta-api.js && node --test public-data.test.mjs fichas-data.test.mjs membership.test.mjs cuenta-api.test.mjs",
+    "check": "node --check app.js && node --check server.mjs && node --check public-data.js && node --check fichas-data.js && node --check membership.js && node --check cuenta-api.js && node --test app-order.test.mjs public-data.test.mjs fichas-data.test.mjs membership.test.mjs cuenta-api.test.mjs",
     "vendor:cybercore": "node sync-cybercore.mjs",
     "postinstall": "node sync-cybercore.mjs"
   },

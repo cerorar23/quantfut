@@ -318,6 +318,11 @@ const state = {
 };
 let publicData = null;
 let publicRequest = 0;
+// Se declaran aquí, antes del primer `render()`, que ya llama a `syncPublicAuth`: más abajo caen en la zona muerta temporal y el script aborta.
+// Un suscriptor VIP ve todos los pronósticos también en la web (ver `sessionFetch`).
+const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/alta-probabilidad', '/escalera', '/parley']);
+// Al iniciar o cerrar sesión, o al activarse la suscripción, se recargan los datos con la sesión nueva.
+let publicAuthKey = 'visitante';
 
 // ---------------------------------------------------------------- formato
 
@@ -1619,10 +1624,6 @@ render();
 membershipUI.restoreSession();
 membershipUI.loadPlans();
 membershipUI.loadPaymentConfig();
-// Un suscriptor VIP ve todos los pronósticos también en la web (ver `sessionFetch`).
-const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/alta-probabilidad', '/escalera', '/parley']);
-// Al iniciar o cerrar sesión, o al activarse la suscripción, se recargan los datos con la sesión nueva.
-let publicAuthKey = 'visitante';
 function syncPublicAuth() {
   const s = state.session;
   const key = s ? `${s.account?.account_id ?? s.account?.email ?? 'cuenta'}:${s.plus ? 'vip' : 'gratis'}` : 'visitante';
