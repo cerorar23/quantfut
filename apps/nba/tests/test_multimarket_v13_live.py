@@ -272,3 +272,23 @@ def test_a_game_is_forecast_once_across_cohorts(cohort, tmp_path):
     with pytest.raises(ValueError, match='no games left'):
         live.seal(tmp_path / 'model', tmp_path / 'again', DAY, player_rows(), history_games(), PROTOCOL, V12,
                   now=datetime(2026, 10, 21, 14, 40, tzinfo=UTC), get=fake_get, first_completed_day=DAY, exclude=live.sealed_games(folder.parent))
+
+
+def test_producer_seals_after_the_afternoon_report_once_and_collects_results(tmp_path, monkeypatch):
+    from nba import multimarket_v13_live_producer as producer
+    model_dir, data = tmp_path / 'model', tmp_path / 'data'
+    model_dir.mkdir(), data.mkdir()
+    write_json(model_dir / 'model.json', model())
+    import gzip
+    with gzip.open(data / 'players.jsonl.gz', 'wt', encoding='utf8') as stream:
+        stream.writelines(json.dumps(r) + '\n' for r in player_rows())
+    (data / 'games.json').write_text(json.dumps(history_games()))
+    monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
+    cohorts = tmp_path / 'cohorts'
+    early = datetime(2026, 10, 21, 20, 0, tzinfo=UTC)  # 16:00 Eastern
+    assert producer.run(early, cohorts, model_dir, data, DAY, fake_get)['sealed'] is None
+    ready = datetime(2026, 10, 21, 21, 40, tzinfo=UTC)  # 17:40 Eastern
+    status = producer.run(ready, cohorts, model_dir, data, DAY, fake_get)
+    assert status['sealed']['games'] == 1 and (cohorts / DAY / 'bundle.seal.json').exists()
+    again = producer.run(ready + timedelta(minutes=10), cohorts, model_dir, data, DAY, fake_get)
+    assert again['sealed'] is None and again['results'] == {DAY: dict(stored=[], retry=[])}

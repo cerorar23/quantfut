@@ -46,3 +46,14 @@ Precondiciones de DEPLOYS.md: cambio en `main` con arnés verde (PR de `nba/v13-
 6. **Productor** (después, aparte): tarea programada que ejecuta `forecast` y `results` con las órdenes de arriba (contenedor con `pdfplumber`, o desde esta máquina con `scp` de la carpeta de cohorte). Se decide tras el paso 1.
 7. **Vuelta atrás:** parar `nba-dashboard-live13` y arrancar `nba-dashboard-run71:20261009` (imagen conservada); las cohortes sellada quedan en disco sin efecto.
 8. Anotar la entrada en DEPLOYS.md con la vuelta atrás.
+
+## Productor diario (preparado, sin activar)
+`nba.multimarket_v13_live_producer` (imagen `Dockerfile.live13_producer`, envoltorio `ops/live13_producer.sh`): cada ejecución recoge los resultados finales de todas las cohortes y, pasadas las 17:35 ET, sella los partidos de esa fecha que aún no empezaron (una sola vez por fecha; los ya sellados se excluyen). Decide todo en hora del Este, así que la hora del servidor (Berlín) no importa. Los datos (`players.jsonl.gz`, `games.json`) y `model.json` están en `~/nba-isolated/live13/{data,model}`; las cohortes en `~/nba-isolated/live13/cohorts`, que el dashboard ya monta en solo lectura.
+
+Ensayo en el servidor (2026-10-21 15:49 UTC, carpeta de pruebas ya borrada): 11 partidos, 44 pronósticos, reporte de las 11:45 ET, hash del modelo aceptado.
+
+Activación (pendiente de visto bueno): una línea en el crontab de `qf`:
+```
+*/10 * * * * /home/qf/nba-isolated/live13/producer.sh >> /home/qf/.local/share/quantfut/nba_live13.log 2>&1
+```
+Vuelta atrás: quitar esa línea; las cohortes selladas se quedan y el dashboard sigue igual. Límite conocido: cada sellado vuelve a leer los partidos terminados de la temporada (≈8 páginas por día transcurrido); si se vuelve pesado, cachear `completed_games.json`.
