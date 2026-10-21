@@ -29,3 +29,7 @@ Conviene empezar con `--limit 20` y revisar `load` (partidos emparejados, precio
 
 ## Pendiente después
 Cuando haya datos: exportar las probabilidades de ganador de v1.3 por partido y comparar Brier/logloss con `home_no_vig` de Pinnacle en las mismas filas, con el mismo bootstrap por fechas. Eso decide si hay algo que vender.
+
+## Comparación contra el mercado (listo, sin ejecutar)
+
+`python -m nba.market_compare --data ... --v12-protocol apps/nba/multimarket_v12_protocol.json --injuries ... --api-dir ... --plan-file ... --cache ... --output ...` carga las cuotas ya en caché (`odds_history.load`), reentrena v1.3 con la misma ventana y une por partido. Reporta Brier/logloss del modelo, del mercado (Pinnacle sin margen) y de una mezcla logit 50/50, con diferencias pareadas e IC por bloques de fecha. Solo investigación: responde si el modelo aporta información sobre el mercado, no genera apuestas. Probado con datos sintéticos; se ejecuta tras la compra del 1-nov.

@@ -6825,3 +6825,6 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 
 - `test_latest_market_devigs_and_respects_time` fallaba en `main` desde el 20-oct ~12:59 UTC. Causa: `run(..., clock=...)` solo controla el nombre de la franja; `Capture.request` sella `received_at` con `operations.now()` (reloj real). La prueba consulta `before=2026-10-20T11:00Z`, así que pasó mientras el reloj real iba antes de esa hora y falló al pasarla.
 - Decisión: el código es correcto (en producción ambos relojes coinciden); se arregla la prueba fijando `tennis_engine.operations.now` con `monkeypatch`, sin tocar lo que comprueba (de-vig, orden temporal, orientación).
+
+## 2026-10-21 — NBA: paso de comparación contra el mercado
+- Decisión: `nba.market_compare` une las probabilidades de ganador v1.3 con Pinnacle sin margen (cuotas en caché) y reporta Brier/logloss, mezcla logit 50/50 e IC por bloques de fecha. Se construye antes de la compra del 1-nov para que ese día solo haya que comprar y ejecutar; probado con datos sintéticos, sin ejecutar con cuotas reales. Es solo investigación y no se despliega en el servidor.
