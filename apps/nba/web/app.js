@@ -8,18 +8,7 @@ let data = null, market = 'all', modelMarket = 'all', loading = false;
 function node(tag, css, text) { const n = document.createElement(tag); if (css) n.className = css; if (text !== undefined) n.textContent = text; return n; }
 function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-002\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
 function isPending(row) { return !['evaluated','dnp'].includes(row.result.status); }
-function renderModels() {
-  $('models').replaceChildren();$('comparison-rows').replaceChildren();
-  if(!data?.extension){$('models-count').textContent='Nuevos modelos sin datos verificados en esta actualización';return;}
-  const extension=data.extension, rows=extension.predictions.filter(r=>modelMarket==='all'||r.market===modelMarket);
-  $('models-count').textContent=`${extension.totals.predictions} pronósticos nuevos · 9 mercados · ${extension.totals.evaluated} resultados · Piloto original conservado`;
-  for(const event of data.events) {
-    const matches=rows.filter(r=>r.event_id===event.event_id);if(!matches.length)continue;
-    const game=node('article','game'),head=node('div','game-header'),names=node('div');
-    names.append(node('h3','game-title',`${event.away_team} · ${event.home_team}`),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
-    head.append(names,link(event.official_url,'Resultado oficial ↗'));game.append(head);
-    const grid=node('div','player-grid');
-    for(const r of matches) {
+function modelCard(r,event) {
       const card=node('div','player-card');card.append(node('p','player-name',r.player),node('span','market-name',r.market_label));
       if(r.market==='winner') {
         card.append(node('p','estimate',`${number(r.probability_over*100)}%`),node('p','',`Gana ${event.home_team}`),node('p','model-note',`${number(r.probability_under*100)}% gana ${event.away_team}`));
@@ -32,8 +21,21 @@ function renderModels() {
       const actual=r.market==='winner'?(outcome.actual===1?event.home_team:event.away_team):number(outcome.actual);
       card.append(node('p','result-line',outcome.status==='evaluated'?`Resultado oficial: ${actual}`:(statusNames[outcome.status]||'Pendiente')));
       card.append(node('p','model-note',r.conditional_participation?'Condicionado a participación · Disponibilidad final sin confirmar':'Partido completo · Prórroga incluida'));
-      const details=node('details','details');details.append(node('summary','','Registro del modelo'),node('p','',`Registrado ${date(r.sealed_at_utc)}. Último partido usado: ${r.last_feature_date}. Sin cuotas como entrada.`));card.append(details);grid.append(card);
-    }
+      const details=node('details','details');details.append(node('summary','','Registro del modelo'),node('p','',`Registrado ${date(r.sealed_at_utc)}. Último partido usado: ${r.last_feature_date}. Sin cuotas como entrada.`));card.append(details);
+  return card;
+}
+function renderModels() {
+  $('models').replaceChildren();$('comparison-rows').replaceChildren();
+  if(!data?.extension){$('models-count').textContent='Nuevos modelos sin datos verificados en esta actualización';return;}
+  const extension=data.extension, rows=extension.predictions.filter(r=>modelMarket==='all'||r.market===modelMarket);
+  $('models-count').textContent=`${extension.totals.predictions} pronósticos nuevos · 9 mercados · ${extension.totals.evaluated} resultados · Piloto original conservado`;
+  for(const event of data.events) {
+    const matches=rows.filter(r=>r.event_id===event.event_id);if(!matches.length)continue;
+    const game=node('article','game'),head=node('div','game-header'),names=node('div');
+    names.append(node('h3','game-title',`${event.away_team} · ${event.home_team}`),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
+    head.append(names,link(event.official_url,'Resultado oficial ↗'));game.append(head);
+    const grid=node('div','player-grid');
+    for(const r of matches) grid.append(modelCard(r,event));
     game.append(grid);$('models').append(game);
   }
   for(const [key,m] of Object.entries(extension.comparison.markets)) {
@@ -44,9 +46,33 @@ function renderModels() {
     $('comparison-rows').append(tr);
   }
 }
+const availabilityText = (a) => a.state==='reporte_aplicado'
+  ? `Disponibilidad: reporte oficial de lesiones de ${date(a.report_timestamp_utc)} (recibido al menos 60 min antes del salto) · ${a.used} jugadores con efecto · puntos esperados perdidos: local ${number(a.missing_points_home)}, visitante ${number(a.missing_points_away)}`
+  : 'Disponibilidad: sin reporte oficial válido 60 min antes del salto; este pronóstico no incorpora lesiones';
+function renderLive() {
+  const box=$('live-v13'), cohorts=data?.live_v13?.cohorts||[];
+  box.replaceChildren();$('live-section').hidden=!cohorts.length;if(!cohorts.length)return;
+  const events=cohorts.flatMap(c=>c.events), rows=cohorts.flatMap(c=>c.predictions);
+  $('live-count').textContent=`${events.length} partidos · ${rows.length} pronósticos · ${rows.filter(r=>r.result.status==='evaluated').length} resultados oficiales · modelo ${cohorts[0].version}`;
+  for(const cohort of cohorts) {
+    const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${cohort.train_seasons.join(' y ')}`);box.append(head);
+    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
+    if(done.length) box.append(node('p','model-note',`Marcador (Brier, menor es mejor): ${done.map(([k,v])=>`${names[k]} ${number(v.brier,3)} (${v.n})`).join(' · ')}`));
+    for(const event of cohort.events) {
+      const game=node('article','game'),top=node('div','game-header'),names2=node('div'),meta=node('div','game-meta');
+      names2.append(node('h3','game-title',`${event.away_team} · ${event.home_team}`),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
+      meta.append(node('span',`badge ${event.status==='evaluated'?'done':event.status==='validation_hold'?'warn':''}`,statusNames[event.status]||'Pendiente'),link(event.official_url,'Partido en NBA.com ↗'));
+      top.append(names2,meta);game.append(top,node('p','model-note',availabilityText(event.availability)));
+      if(event.final) game.append(node('p','result-line',`Marcador oficial: ${event.away_team} ${event.final.away} · ${event.home_team} ${event.final.home}`));
+      const grid=node('div','player-grid');
+      for(const r of cohort.predictions.filter(r=>r.event_id===event.event_id)) grid.append(modelCard(r,event));
+      game.append(grid);box.append(game);
+    }
+  }
+}
 function render() {
   if (!data) return;
-  renderModels();
+  renderModels();renderLive();
   $('total-predictions').textContent=data.totals.predictions; $('total-players').textContent=`${data.totals.players} jugadores`;
   $('total-events').textContent=data.totals.events; $('total-evaluated').textContent=data.totals.evaluated;
   $('result-caption').textContent=data.totals.evaluated ? `${data.totals.predictions-data.totals.evaluated-data.totals.dnp} pendientes · ${data.totals.dnp} sin participación` : 'Pendientes del resultado oficial';
@@ -108,7 +134,7 @@ async function load() {
     $('message').hidden=false;$('message').textContent='No se pudieron comprobar los datos. Intenta actualizar de nuevo.';
     $('live-state').textContent='Datos sin actualización verificada';$('live-dot').classList.add('warn');
     // A stale previous response must not keep looking like current information.
-    data=null;$('games').replaceChildren();$('services').replaceChildren();$('models').replaceChildren();$('comparison-rows').replaceChildren();$('models-count').textContent='Nuevos modelos sin actualización verificada';
+    data=null;$('games').replaceChildren();$('services').replaceChildren();$('models').replaceChildren();$('live-v13').replaceChildren();$('live-section').hidden=true;$('comparison-rows').replaceChildren();$('models-count').textContent='Nuevos modelos sin actualización verificada';
     for(const id of ['total-predictions','total-events','total-evaluated'])$(id).textContent='—';
     $('next-game').textContent='Datos no disponibles';$('total-players').textContent='— jugadores';$('result-caption').textContent='Sin resultados verificados en esta actualización';
     $('updated').textContent='Sin conexión a los datos verificados';$('visible-count').textContent='Datos temporalmente no disponibles';

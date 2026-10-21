@@ -87,12 +87,19 @@ def report_clock(header):
     return first.astimezone(UTC).isoformat()
 
 
+def reason_only(values):
+    return not any(values[:6]) and bool(values[6]) and values[6] != "NOT YET SUBMITTED"
+
+
 def records_from_cells(pages):
     context, records, seen = {}, [], set()
     for page_number, cells in pages:
         for values in cells:
             if len(values) != 7:
                 raise ValueError("expected seven PDF columns")
+            if records and reason_only(values) and records[-1]["report_submitted"]:
+                records[-1]["reason_raw"] += " " + values[6]  # reason text wrapped onto its own row
+                continue
             date, clock, matchup, team, name, status, reason = values
             if matchup and matchup != context.get("matchup"):
                 context.pop("team", None)

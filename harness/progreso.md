@@ -6812,3 +6812,6 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 
 ## 2026-10-21 — NBA: plan de cuotas históricas, sin gastar
 `nba.odds_history` (plan/fetch/load) con 325 snapshots h2h (3.250 créditos) y bloqueo en código antes del 1-nov, tope y reserva. Se decidió por fases porque la bolsa de noviembre (~5.700 libres tras vivo y los 527 snapshots de fútbol) no cubre h2h+totales. Los totales van en diciembre.
+
+## 2026-10-21 — NBA v1.3 prospectivo: cohorte sellada y página
+`nba.multimarket_v13_live` + `multimarket_live_dashboard` (protocolo `multimarket_v13_live_protocol.json`). Decisión clave: solo mercados de equipo (ganador, puntos de equipo, total) porque antes del salto no existe lista verificada de jugadores, y un reporte cuenta únicamente si su sello y nuestra recepción son ≥60 min previos al salto; si no, el partido se sella como «sin reporte válido» en vez de «sano». Modelo ajustado una vez y anclado por hash (el hash del código cambió, no se reutiliza el de RUN071); la página recalcula resultados desde el recibo oficial y una cohorte rota no oculta RUN071. Ensayo: 11 partidos reales sellados 8 h antes del primer salto. De paso se corrigió el analizador del PDF (motivo partido en dos filas). No desplegado; plan en docs/nba_v13_prospectivo_20261021.md.

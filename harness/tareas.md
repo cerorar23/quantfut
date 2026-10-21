@@ -3098,3 +3098,10 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Reentreno semanal del modelo de saque; validación con Match Charting Project. PR #50.
 - [ ] Primeras cifras de acierto con resultados reales (`data/tennis/intake_v1/evaluation_latest.json`).
 - [x] Motor de tenis en el VPS (imagen propia + cron de `qf`), PR #53/#54; tareas de Windows desactivadas.
+### NBA — pronósticos prospectivos v1.3 con lesiones, 2026-10-21
+- [x] Forecast v1.3 con reporte oficial de lesiones (≥60 min), cohorte sellada por fecha, ajuste único anclado por hash.
+- [x] Ciclo de resultados (recibo oficial de nba.com, final, reintento) y marcador Brier por mercado.
+- [x] Página: sección v1.3 con versión, estado de disponibilidad y `actionable=false`; RUN071 intacto.
+- [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
+- [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
+- [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
