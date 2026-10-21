@@ -48,7 +48,7 @@ class SlotStore:
 
 def run(root, api_key, transport=None, clock=now, monthly_cap=MONTHLY_CAP, per_day=FOOTBALL_PER_DAY):
     root = Path(root)
-    client = Capture(root / 'ledger', api_key, cap=monthly_cap, account_reserve=0, transport=transport)
+    client = Capture(root / 'ledger', api_key, cap=monthly_cap, account_reserve=0, transport=transport, clock=clock)
     store = SlotStore(root)
     stamp = clock()
     day, slot = slot_of(stamp)

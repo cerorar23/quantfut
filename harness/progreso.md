@@ -6815,3 +6815,8 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 
 ## 2026-10-21 — NBA v1.3 prospectivo: cohorte sellada y página
 `nba.multimarket_v13_live` + `multimarket_live_dashboard` (protocolo `multimarket_v13_live_protocol.json`). Decisión clave: solo mercados de equipo (ganador, puntos de equipo, total) porque antes del salto no existe lista verificada de jugadores, y un reporte cuenta únicamente si su sello y nuestra recepción son ≥60 min previos al salto; si no, el partido se sella como «sin reporte válido» en vez de «sano». Modelo ajustado una vez y anclado por hash (el hash del código cambió, no se reutiliza el de RUN071); la página recalcula resultados desde el recibo oficial y una cohorte rota no oculta RUN071. Ensayo: 11 partidos reales sellados 8 h antes del primer salto. De paso se corrigió el analizador del PDF (motivo partido en dos filas). No desplegado; plan en docs/nba_v13_prospectivo_20261021.md.
+
+## 2026-10-21 — CI de tenis: prueba de cuotas en vivo dependía del reloj real
+
+- `test_latest_market_devigs_and_respects_time` fallaba en `main` desde el 20-oct ~12:59 UTC. Causa: `run(..., clock=...)` solo controla el nombre de la franja; `Capture.request` sella `received_at` con `operations.now()` (reloj real). La prueba consulta `before=2026-10-20T11:00Z`, así que pasó mientras el reloj real iba antes de esa hora y falló al pasarla.
+- Decisión: el código es correcto (en producción ambos relojes coinciden); se arregla la prueba fijando `tennis_engine.operations.now` con `monkeypatch`, sin tocar lo que comprueba (de-vig, orden temporal, orientación).
