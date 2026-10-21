@@ -1,0 +1,168 @@
+"""Public, read-only projection of sealed live v1.3 cohorts and their official results."""
+from datetime import UTC, datetime
+import json
+import math
+import os
+from pathlib import Path
+import threading
+import time
+
+import numpy as np
+
+from .audit import digest
+from .dashboard import Dashboard, Server, handler
+from .multimarket_dashboard import MultiDashboard
+from .multimarket_v13_live import final_game
+
+MARKETS = ('winner', 'team_points', 'game_total')
+PUBLIC = ('event_id', 'nba_game_id', 'player_id', 'player', 'market', 'market_label', 'estimate', 'range_low', 'range_high', 'line',
+          'probability_over', 'probability_under', 'sealed_at_utc', 'last_feature_date', 'reference')
+
+
+def utc(value):
+    return datetime.fromisoformat(value.replace('Z', '+00:00'))
+
+
+def official_scores(folder, game, now):
+    """Final team scores from the stored official receipt, or None while the result is absent. Raises if tampered."""
+    receipt_path = Path(folder) / 'results' / game['nba_game_id'] / 'receipt.json'
+    if not receipt_path.exists():
+        return None
+    receipt = json.loads(receipt_path.read_bytes())
+    raw = receipt_path.parent / receipt['raw_file']
+    if receipt['http_status'] != 200 or digest(raw) != receipt['raw_sha256'] or receipt['game_id'] != game['nba_game_id']:
+        raise ValueError('official receipt changed')
+    if not utc(game['tipoff_utc']) < utc(receipt['first_received_at_utc']) <= now:
+        raise ValueError('official receipt time invalid')
+    official = final_game(raw.read_bytes(), receipt)
+    if (official['gameId'] != game['nba_game_id'] or official['gameStatus'] != 3
+            or utc(official['gameTimeUTC']) != utc(game['tipoff_utc'])
+            or official['homeTeam']['teamId'] != game['home_nba_team_id'] or official['awayTeam']['teamId'] != game['away_nba_team_id']):
+        raise ValueError('official result identity mismatch')
+    scores = {}
+    for side in ('homeTeam', 'awayTeam'):
+        value = official[side]['statistics']['points']
+        if type(value) is not int or value < 0 or value != official[side]['score']:
+            raise ValueError('final team scores do not reconcile')
+        scores[side] = value
+    if scores['homeTeam'] == scores['awayTeam']:
+        raise ValueError('final team scores do not reconcile')
+    return dict(home=scores['homeTeam'], away=scores['awayTeam'], received_at_utc=receipt['first_received_at_utc'])
+
+
+def outcome(forecast, game, scores):
+    if scores is None:
+        return dict(status='pending', actual=None)
+    market = forecast['market']
+    if market == 'winner':
+        actual = int(scores['home'] > scores['away'])
+    elif market == 'team_points':
+        actual = scores['home'] if forecast['team_id'] == game['home_nba_team_id'] else scores['away']
+    else:
+        actual = scores['home'] + scores['away']
+    return dict(status='evaluated', actual=actual)
+
+
+def scorecard(rows):
+    out = {}
+    for market in MARKETS:
+        done = [r for r in rows if r['market'] == market and r['result']['status'] == 'evaluated']
+        if not done:
+            out[market] = dict(n=0)
+            continue
+        y = np.array([r['result']['actual'] if market == 'winner' else int(r['result']['actual'] > r['line']) for r in done], float)
+        p = np.clip(np.array([r['probability_over'] for r in done]), 1e-9, 1 - 1e-9)
+        out[market] = dict(n=len(done), brier=float(np.mean((p - y) ** 2)),
+                           logloss=float(np.mean(-y * np.log(p) - (1 - y) * np.log1p(-p))), hit_rate=float(np.mean((p >= .5) == (y == 1))))
+    return out
+
+
+class LiveCohort:
+    def __init__(self, folder):
+        self.folder = Path(folder)
+        self.bundle = self.load()
+
+    def load(self):
+        seal = json.loads((self.folder / 'bundle.seal.json').read_bytes())
+        if digest(self.folder / 'bundle.json') != seal['sha256']:
+            raise ValueError('live cohort bundle changed')
+        bundle = json.loads((self.folder / 'bundle.json').read_bytes())
+        for name, field in (('model.json', 'model_sha256'), ('schedule.json', 'schedule_sha256'), ('completed_games.json', 'completed_sha256')):
+            if digest(self.folder / name) != bundle[field]:
+                raise ValueError(f'live cohort {name} changed')
+        if bundle['actionable'] is not False or not bundle['version'].startswith('nba-multimarket-live-'):
+            raise ValueError('unexpected live cohort')
+        games = {g['event_id']: g for g in bundle['games']}
+        seen = set()
+        for f in bundle['forecasts']:
+            game = games[f['event_id']]
+            key = (f['event_id'], f['player_id'], f['market'])
+            if key in seen or f['market'] not in MARKETS or f['nba_game_id'] != game['nba_game_id'] or f['actionable'] is not False:
+                raise ValueError('duplicate or foreign live forecast')
+            seen.add(key)
+            if utc(f['sealed_at_utc']) >= utc(game['tipoff_utc']) or f['last_feature_date'] >= f['sealed_at_utc'][:10]:
+                raise ValueError('live forecast after tipoff/feature date')
+            if not all(math.isfinite(f[k]) for k in ('estimate', 'line', 'probability_over', 'probability_under')) or not (
+                    0 <= f['probability_over'] <= 1 and abs(f['probability_over'] + f['probability_under'] - 1) < 1e-8):
+                raise ValueError('invalid live probability')
+        return bundle
+
+    def data(self, now):
+        bundle = self.load()
+        events, rows = [], []
+        for g in bundle['games']:
+            try:
+                scores, held = official_scores(self.folder, g, now), False
+            except (ValueError, KeyError, TypeError):
+                scores, held = None, True
+            tip = utc(g['tipoff_utc'])
+            events.append(dict(event_id=g['event_id'], home_team=g['home_team'], away_team=g['away_team'], tipoff_utc=g['tipoff_utc'],
+                               official_url=g['official_url'], availability=g['availability'],
+                               status='validation_hold' if held else 'evaluated' if scores else 'pending' if now < tip else 'awaiting_result',
+                               final=scores and dict(home=scores['home'], away=scores['away'])))
+            for f in bundle['forecasts']:
+                if f['event_id'] != g['event_id']:
+                    continue
+                row = {k: f[k] for k in PUBLIC}
+                row['result'] = dict(status='validation_hold', actual=None) if held else outcome(f, g, scores)
+                row['actionable'] = False
+                rows.append(row)
+        return dict(version=bundle['version'], cohort=self.folder.name, cohort_date=bundle['cohort_date'], created_at_utc=bundle['created_at_utc'],
+                    train_seasons=bundle['train_seasons'], report=bundle['report'], events=events, predictions=rows,
+                    scorecard=scorecard(rows), actionable=False, original_pilot_unchanged=True)
+
+
+class CombinedDashboard:
+    """RUN071 view unchanged, plus every live v1.3 cohort found under `live_root`. A bad cohort never hides RUN071."""
+
+    def __init__(self, multi, live_root=None):
+        self.multi, self.live_root = multi, Path(live_root) if live_root else None
+        self.lock, self.cached, self.cached_at = threading.Lock(), None, 0
+
+    def live(self, now):
+        if self.live_root is None or not self.live_root.is_dir():
+            return dict(state='unavailable', cohorts=[], problems=0)
+        cohorts, problems = [], 0
+        for folder in sorted(p for p in self.live_root.iterdir() if (p / 'bundle.seal.json').exists()):
+            try:
+                cohorts.append(LiveCohort(folder).data(now))
+            except Exception:
+                problems += 1
+        return dict(state='ok' if not problems else 'validation_hold', cohorts=cohorts, problems=problems)
+
+    def data(self):
+        with self.lock:
+            if self.cached is None or time.monotonic() - self.cached_at >= 15:
+                self.cached = dict(self.multi.data(), live_v13=self.live(datetime.now(UTC)))
+                self.cached_at = time.monotonic()
+            return self.cached
+
+
+def main():
+    original = Dashboard('apps/nba/.local/normalized/nba_f6_run66_20261008/lifecycle', '/paper-data', '/capture-data', '/operations-data')
+    live_root = os.environ.get('NBA_LIVE_COHORTS', '/live-cohorts')
+    Server(('0.0.0.0', 8080), handler(CombinedDashboard(MultiDashboard(original, '/app/public-bundle'), live_root), '/app/web')).serve_forever()
+
+
+if __name__ == '__main__':
+    main()

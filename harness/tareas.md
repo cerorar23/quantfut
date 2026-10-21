@@ -2902,3 +2902,10 @@ Google Sign-In ya existe: no se rehace.
 - [x] Integrar CYBERCORE CSS 0.3.0, adaptar Cyberpunk CSS, conservar el logo previo y validar 25/25 pruebas del frontend.
 - [x] Fusionar PR #12 y hotfix de assets FastAPI PR #13 con los arneses de GitHub aprobados.
 - [x] Desplegar solo la API desde una imagen derivada de la que estaba en ejecución; comprobar dominio, hashes, modelo y cadena; documentar reversión.
+### NBA — pronósticos prospectivos v1.3 con lesiones, 2026-10-21
+- [x] Forecast v1.3 con reporte oficial de lesiones (≥60 min), cohorte sellada por fecha, ajuste único anclado por hash.
+- [x] Ciclo de resultados (recibo oficial de nba.com, final, reintento) y marcador Brier por mercado.
+- [x] Página: sección v1.3 con versión, estado de disponibilidad y `actionable=false`; RUN071 intacto.
+- [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
+- [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
+- [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
