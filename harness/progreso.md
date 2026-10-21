@@ -6828,3 +6828,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 
 ## 2026-10-21 — NBA: paso de comparación contra el mercado
 - Decisión: `nba.market_compare` une las probabilidades de ganador v1.3 con Pinnacle sin margen (cuotas en caché) y reporta Brier/logloss, mezcla logit 50/50 e IC por bloques de fecha. Se construye antes de la compra del 1-nov para que ese día solo haya que comprar y ejecutar; probado con datos sintéticos, sin ejecutar con cuotas reales. Es solo investigación y no se despliega en el servidor.
+
+## 2026-10-21 — AdMob y Meta app: dónde está cada pieza
+
+- Decisión: un solo bloque «Recompensado» (es lo único que implementa la app: `RewardedAd` con SSV); sin banner, intersticial ni nativo. El ID de editor se guarda en `reward_settings` para que `/app-ads.txt` lo sirva desde el propio dominio de la ficha de Play (`https://pronosticosdeportivos.pro`, sin `www`).
+- Decisión: en Meta se apaga el registro automático de compras de la app porque las compras las manda el servidor por CAPI; con él activo saldrían duplicadas. En Meta los hashes de clave van en base64 (el SHA-1 de Play App Signing, de `llave.jks` y de la clave antigua).
+- Decisión: tras subir un AAB a Play se registra la versión en `mobile_update_settings` por SSH; `min_build_android` y la obligación solo se tocan cuando esa versión ya está disponible para los usuarios.
+- Pendiente: ID de app y bloque de iOS (cuando exista la app en App Store), autorización de anuncios de apuestas en Meta/AdMob, compra de prueba web con `META_TEST_EVENT_CODE`.
