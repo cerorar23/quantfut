@@ -1,6 +1,6 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=0b23a539278e';
+import { createMembershipUI } from './membership.js?v=a0616281d991';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
