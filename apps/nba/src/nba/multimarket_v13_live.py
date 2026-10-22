@@ -104,16 +104,57 @@ def upcoming(day, now, get=http_get):
     return mappings
 
 
-def completed(first_day, last_day, get=http_get):
-    """Finished games of the target season, in the same shape as games.json (points only)."""
-    out, day = [], date.fromisoformat(first_day)
+GAME_KEYS = {'game_id', 'date', 'season', 'home', 'away', 'box_score_sha256'}
+
+
+def cached_game(cache, gid, day):
+    """A final game stored by an earlier run, or None. A stored entry that disagrees with its key is an error."""
+    path = None if cache is None else Path(cache) / 'games' / f'{gid}.json'
+    if path is None or not path.is_file():
+        return None
+    game = json.loads(path.read_bytes())
+    if set(game) != GAME_KEYS or game['game_id'] != gid or game['date'] != day or game['season'] != SEASON:
+        raise ValueError(f'corrupt completed-game cache entry {gid}')
+    return game
+
+
+def cached_day(cache, day):
+    path = None if cache is None else Path(cache) / 'days' / f'{day}.json'
+    return [tuple(c) for c in json.loads(path.read_bytes())] if path is not None and path.is_file() else None
+
+
+def store(cache, kind, key, value):
+    path = Path(cache) / kind / f'{key}.json'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(path, value)
+
+
+def completed(first_day, last_day, get=http_get, cache=None):
+    """Finished games of the target season, in the same shape as games.json (points only), plus games not final.
+
+    With `cache`, a final game is downloaded once and a day whose games are all final is never listed again.
+    Games not final are never cached; their ids and status are returned so the caller can refuse to seal."""
+    out, not_final, day = [], [], date.fromisoformat(first_day)
     while day <= date.fromisoformat(last_day):
-        for slug, gid in day_cards(day.isoformat(), get):
+        label = day.isoformat()
+        cards = cached_day(cache, label)
+        listed = cards if cards is not None else day_cards(label, get)
+        settled = True
+        for slug, gid in listed:
+            hit = cached_game(cache, gid, label)
+            if hit:
+                out.append(hit)
+                continue
             status, body = get(f'https://www.nba.com/game/{slug}/box-score')
             if status != 200:
                 raise ValueError(f'box score HTTP {status}')
             game = game_payload(body.decode('utf8'))
-            if game['gameId'] != gid or game['gameStatus'] != 3:
+            if game['gameId'] != gid:
+                raise ValueError('box score game id disagrees with the schedule card')
+            tip = datetime.fromisoformat(game['gameTimeUTC'].replace('Z', '+00:00'))
+            if game['gameStatus'] != 3:
+                not_final.append(dict(game_id=gid, date=label, status=game['gameStatus'], tipoff_utc=tip.isoformat()))
+                settled = False
                 continue
             points = {}
             for side in ('homeTeam', 'awayTeam'):
@@ -121,13 +162,19 @@ def completed(first_day, last_day, get=http_get):
                 if type(value) is not int or value != game[side]['score']:
                     raise ValueError('final team score does not reconcile')
                 points[side] = value
-            tip = datetime.fromisoformat(game['gameTimeUTC'].replace('Z', '+00:00'))
             team = lambda side, home: dict(team_id=game[side]['teamId'], points=points[side],
                                            name=f"{game[side]['teamCity']} {game[side]['teamName']}".strip(), home=home)
-            out.append(dict(game_id=gid, date=tip.astimezone(EASTERN).date().isoformat(), season=SEASON,
-                            home=team('homeTeam', True), away=team('awayTeam', False), box_score_sha256=hashlib.sha256(body).hexdigest()))
+            entry = dict(game_id=gid, date=tip.astimezone(EASTERN).date().isoformat(), season=SEASON,
+                         home=team('homeTeam', True), away=team('awayTeam', False), box_score_sha256=hashlib.sha256(body).hexdigest())
+            if entry['date'] != label:
+                raise ValueError('game date disagrees with the schedule card')
+            out.append(entry)
+            if cache is not None:
+                store(cache, 'games', gid, entry)
+        if cache is not None and cards is None and settled:
+            store(cache, 'days', label, [list(c) for c in listed])
         day += timedelta(days=1)
-    return out
+    return out, not_final
 
 
 def report_names(day, now):
@@ -337,7 +384,7 @@ def sealed_games(root):
     return {g['nba_game_id'] for p in root.glob('*/bundle.json') for g in json.loads(p.read_bytes())['games']} if root.is_dir() else set()
 
 
-def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, get=http_get, first_completed_day=None, exclude=()):
+def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, get=http_get, first_completed_day=None, exclude=(), cache=None):
     """Capture schedule + latest official report, forecast, and write a sealed cohort folder (never overwritten)."""
     now = now or datetime.now(UTC)
     model_dir, out = Path(model_dir), Path(out)
@@ -350,7 +397,11 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     if not mappings:
         raise ValueError('no games left to seal for this date')
     first = first_completed_day or protocol.get('season_first_day', '2026-10-20')
-    done = completed(first, (date.fromisoformat(day) - timedelta(days=1)).isoformat(), get) if first < day else []
+    done, not_final = completed(first, (date.fromisoformat(day) - timedelta(days=1)).isoformat(), get, cache) if first < day else ([], [])
+    stuck = [g for g in not_final if g['status'] != 1]
+    if stuck:
+        # status 1 on a past date is a postponed game (never played); anything else means the feed lags and rest/form would be wrong
+        raise ValueError(f'past games not final: {[(g["game_id"], g["status"]) for g in stuck]}')
     out.mkdir(parents=True)
     report = capture_report(day, now, out / 'reports', get)
     ids, history = history_index(players)
@@ -369,7 +420,7 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     games_out, forecasts = cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, now)
     shutil.copyfile(model_dir / 'model.json', out / 'model.json')
     write_json(out / 'schedule.json', dict(received_at_utc=stamp(now), games=mappings))
-    write_json(out / 'completed_games.json', dict(first_day=first, games=done))
+    write_json(out / 'completed_games.json', dict(first_day=first, games=done, not_final=not_final))
     bundle = dict(version=VERSION, created_at_utc=stamp(now), cohort_date=day, protocol_sha256=digest(Path(protocol['_path'])),
                   model_sha256=digest(out / 'model.json'), schedule_sha256=digest(out / 'schedule.json'),
                   completed_sha256=digest(out / 'completed_games.json'), code_sha256=digest(__file__),
@@ -426,6 +477,7 @@ def main():
     parser.add_argument('--cohort', help='results: sealed cohort folder')
     parser.add_argument('--first-day', help='forecast: first finished game day of the target season')
     parser.add_argument('--exclude-sealed', help='forecast: cohorts root; games already sealed there are skipped')
+    parser.add_argument('--cache', help='forecast: folder where finished games are stored so each box score is downloaded once')
     a = parser.parse_args()
     protocol_path = root / 'multimarket_v13_live_protocol.json'
     protocol = dict(json.loads(protocol_path.read_bytes()), _path=str(protocol_path))
@@ -452,7 +504,7 @@ def main():
         return
     players, games = m1.read_rows(data / 'players.jsonl.gz'), json.loads((data / 'games.json').read_bytes())
     print(json.dumps(seal(a.model, a.output, a.date, players, games, protocol, v12_protocol, first_completed_day=a.first_day,
-                           exclude=sealed_games(a.exclude_sealed) if a.exclude_sealed else ())))
+                           exclude=sealed_games(a.exclude_sealed) if a.exclude_sealed else (), cache=a.cache)))
 
 
 if __name__ == '__main__':

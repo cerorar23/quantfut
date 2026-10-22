@@ -3114,4 +3114,21 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Página: sección v1.3 con versión, estado de disponibilidad y `actionable=false`; RUN071 intacto.
 - [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
 - [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
-- [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
+- [x] Preparar la comparación con Pinnacle (alias Clippers, snapshot del mismo día, brazo alineado, protocolo congelado, ensayo sintético de punta a punta). docs/nba_comparacion_pinnacle_20261101.md.
+- [ ] Desde el 1-nov: comprar 20 snapshots, revisar `load`, comprar el resto (3.250 créditos) y correr `nba.market_compare`; órdenes en el documento.
+- [x] Captura del precio de Pinnacle al sellar cada cohorte (`nba.live_market`, offline, bloqueada antes del 1-nov) y comparación prospectiva con protocolo congelado. docs/nba_mercado_prospectivo_20261101.md.
+- [x] Captura del precio en el servidor, opción A aprobada: código (`live_market`: clave del servidor, carpeta de precios aparte, libro 2/día y 70/mes con `halt`, `capture-pending` con fases sello y cierre; 24 pruebas), clave copiada a `live13/private/odds_key` sin leerla, imagen y envoltorio de cron preparados. NO desplegado. docs/nba_captura_precio_servidor_propuesta_20261022.md.
+- [ ] Desplegar el paso de precios (esperar confirmación del titular): fusionar la rama con `main` (conflictos previsibles en market_compare.py y su prueba), construir `nba-live13-price`, crear la red `nba-price`, instalar `price.sh` y la línea de cron, verificar el bloqueo hasta el 1-nov y anotar la entrada en DEPLOYS.md.
+
+### NBA — mejoras de la auditoría del motor, 2026-10-21
+Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
+- [x] v1.4 (protocolo congelado): puntos perdidos relativos a la forma. Hecho: no mejora equipo (falla la regla de decisión), mejora jugadores; vivo sigue en v1.3. docs/nba_multimarket_v14_20261021.md.
+- [x] v1.4b: absoluto + relativo juntos y suelo de participación: sin mejora en equipo, el suelo empeora la participación. v1.3 se queda. docs/nba_multimarket_v14b_20261021.md.
+- [x] Separar «Available»/«Out» por motivo G League: neutro en todos los mercados (v1.4).
+- [ ] Backfill gratuito de reportes de lesiones cercanos a T-60 y tabla condicionada a horas antes del salto (hoy: un reporte/día, 13:30 o 17:30 ET).
+- [x] Caché por partido en `multimarket_v13_live.completed()` (juegos finales y días cerrados, `--cache`) y fallo explícito ante un partido pasado en curso; un aplazado (estado 1) se registra en `completed_games.json`. Modelo reajustado en `nba_f6_live13_model_20261021b` con parámetros idénticos (solo cambia el hash del módulo).
+- [x] Backfill T-60 (`nba.injury_t60`): 1.910 PDF (2023-24..2025-26) descargados, parseados y unidos; partidos con reporte a ≤1 h del corte de 2-4 % a 99,8-99,9 %. docs/nba_cache_completed_y_backfill_t60_20261021.md.
+- [x] v1.5 (protocolo congelado): v1.3 con reportes T-60. Jugadores mejoran de forma significativa (Brier −0,0003 a −0,0022) y la participación pasa de 0,45-0,49 a 0,31-0,38; equipo sin efecto probado (falla la regla de decisión), el vivo conserva sus reportes. docs/nba_multimarket_v15_20261021.md.
+- [ ] Ratings ataque/defensa ajustados por rival y ritmo, una sola distribución del marcador para ganador/puntos/total.
+- [ ] Prior de pretemporada para los primeros 15-20 partidos (oct-nov empeora el Brier del ganador ~0,01).
+- [ ] Puntos de jugador: modelo 2P/3P/TL o dispersión ajustada; rangos desde la distribución calibrada (hoy el 80 % cubre 73 %).
