@@ -278,16 +278,25 @@ Widget probabilityBars(JsonMap values) => Builder(
 /// Franja difuminada donde iría el pronóstico de un candado. Son bloques, no un texto real: el servidor no envía
 /// la selección ni la probabilidad de un pronóstico bloqueado, así que quitar el filtro no revela nada.
 class LockedBlur extends StatelessWidget {
-  const LockedBlur({super.key});
+  const LockedBlur({
+    super.key,
+    this.text = '████████ · ██ %',
+    this.size = 13,
+    this.blurKey = const ValueKey('locked-blur'),
+  });
+
+  final String text;
+  final double size;
+  final Key blurKey;
 
   @override
   Widget build(BuildContext context) {
     return ExcludeSemantics(
       child: ClipRect(
         child: ImageFiltered(
-          key: const ValueKey('locked-blur'),
+          key: blurKey,
           imageFilter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: liveText('████████ · ██ %', size: 13, bold: true, color: liveGold),
+          child: liveText(text, size: size, bold: true, color: liveGold),
         ),
       ),
     );

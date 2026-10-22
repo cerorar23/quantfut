@@ -574,17 +574,13 @@ class _LockedPicksGroupState extends State<LockedPicksGroup> {
                           ],
                         ),
                       ),
-                      // La cuota publicada es el gancho: se ve aunque la selección siga oculta.
+                      // La cuota también va difuminada: bloques, no el número, para que quitar el filtro no revele nada.
                       if (p['cuota'] is num) ...[
                         const SizedBox(width: 8),
-                        Text(
-                          '@${decimalText(p['cuota'])}',
-                          key: const ValueKey('locked-quote'),
-                          style: const TextStyle(
-                            color: liveGold,
-                            fontFamily: 'Gilroy ExtraBold',
-                            fontSize: 17,
-                          ),
+                        const LockedBlur(
+                          text: '@█.██',
+                          size: 17,
+                          blurKey: ValueKey('locked-quote'),
                         ),
                       ],
                       if (widget.onUnlock != null) ...[
