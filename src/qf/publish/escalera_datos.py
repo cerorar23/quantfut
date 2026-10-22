@@ -230,6 +230,8 @@ def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
         if lam is None:
             continue
         for lado, linea in lineas:
+            if not em.disponible(mercado, lado, linea, sup):
+                continue
             pr = em.prob(mercado, lam, lado, linea, sup)
             out.append(ap.Candidato(mercado, lado, linea, pr))
     return out
