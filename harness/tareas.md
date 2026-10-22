@@ -38,9 +38,9 @@ operativo como canal de clientes.
 
 ## Auditoría de los tres motores (2026-10-21) — `docs/auditoria_motores_20261021.md`
 Cada paso a producción requiere confirmación del titular. Orden recomendado:
-- [x] (22-oct, rama `auditoria/motores-20261021`, sin desplegar) A1-A4: `dixon_coles.fit` con gradiente analítico (prototipo `dc_rapido.py` de la auditoría), suma cero ponderada por muestra efectiva, ridge en partidos equivalentes (0,5-1), media vida 270; registrar y exigir `res.success`. Reentrenar y pasar la puerta (ΔRPS medido −0,00084 [−0,00137, −0,00031] en 11.920 partidos).
-- [x] (22-oct, sin desplegar) A5: retirar el calibrador afín del 1X2 o reajustarlo con la verosimilitud del marcador exacto; la puerta debe medir más/menos y ambos marcan, no solo el 1X2.
-- [x] (22-oct, sin desplegar) A8: agenda de la app con `both_teams_known=false` → 1X2 del mercado o sin porcentaje.
+- [x] (22-oct, #70, en producción; modelo 2026.10.22-185314) A1-A4: `dixon_coles.fit` con gradiente analítico (prototipo `dc_rapido.py` de la auditoría), suma cero ponderada por muestra efectiva, ridge en partidos equivalentes (0,5-1), media vida 270; registrar y exigir `res.success`. Reentrenar y pasar la puerta (ΔRPS medido −0,00084 [−0,00137, −0,00031] en 11.920 partidos).
+- [x] (22-oct, en producción) A5: retirar el calibrador afín del 1X2 o reajustarlo con la verosimilitud del marcador exacto; la puerta debe medir más/menos y ambos marcan, no solo el 1X2.
+- [x] (22-oct, en producción) A8: agenda de la app con `both_teams_known=false` → 1X2 del mercado o sin porcentaje.
 - [ ] B2: lista de mercados del partido con calibración empírica por mercado derivado (o solo líneas probadas); investigar cópula + conteos Weibull (Boshnakov 2017). Poisson bivariado probado: peor que DC.
 - [ ] C2: córners por equipo con el contexto del Motor A (medido sin cuotas: +0,025/+0,017 nats); repetir la prueba de líneas antes de habilitar. C3 (tarjetas): mixto con el A, no se cambia.
 - [ ] A7: escalar el xG de cada fuente a goles antes de mezclar. A6: inflación de la diagonal.
