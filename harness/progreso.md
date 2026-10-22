@@ -6835,3 +6835,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: en Meta se apaga el registro automático de compras de la app porque las compras las manda el servidor por CAPI; con él activo saldrían duplicadas. En Meta los hashes de clave van en base64 (el SHA-1 de Play App Signing, de `llave.jks` y de la clave antigua).
 - Decisión: tras subir un AAB a Play se registra la versión en `mobile_update_settings` por SSH; `min_build_android` y la obligación solo se tocan cuando esa versión ya está disponible para los usuarios.
 - Pendiente: ID de app y bloque de iOS (cuando exista la app en App Store), autorización de anuncios de apuestas en Meta/AdMob, compra de prueba web con `META_TEST_EVENT_CODE`.
+
+## 2026-10-21 — Auditoría de los tres motores (literatura + datos)
+- Hallazgo principal: el ajuste de Dixon-Coles de producción no converge (`success=False` por tope de evaluaciones; gradiente por diferencias finitas sobre 776 parámetros, 23 min) y la suma cero uniforme usa a los equipos sin datos como holgura, por lo que los que vuelven a la liga heredan fuerzas extremas. Con gradiente analítico (3-14 s), suma cero ponderada, ridge en partidos equivalentes y media vida 270, el RPS mejora −0,00084 [−0,00137, −0,00031] sobre 11.920 partidos, concentrado en inicios de temporada.
+- Decisión: el calibrador afín ajustado con el log-loss del 1X2 no identifica el nivel de goles y fuera de muestra empeora; no debe guardarse otro igual. La puerta tiene que medir también mercados de goles.
+- Decisión: el mercado sin margen sigue siendo el pronóstico más exacto donde hay cuota (peso óptimo del A en la mezcla = 0); el A se mejora por coherencia y cobertura, no para «batir» a Pinnacle.
+- Motor C: córners totales bien; córners por equipo y tarjetas ganan claramente con el contexto del partido. «Cuántico»: sin evidencia, no se persigue.
+- Nada se cambió en producción; todo queda en `docs/auditoria_motores_20261021.md` a la espera de confirmación.

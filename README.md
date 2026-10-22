@@ -1398,6 +1398,13 @@ por debajo de 1**.
 
 Sin esa medida el sistema producía su stake MÁXIMO justo donde menos sabía:
 Hull salió a 0,9061 contra un mercado de 0,4659, "edge" del 97%, tier `high`.
+
+**Causa medida en la auditoría del 2026-10-21** (`docs/auditoria_motores_20261021.md`): la suma cero por liga
+promedia también a los equipos sin datos, que el optimizador usa de holgura (por eso quedan extremos), y el ridge
+de 0,02 se diluye con la normalización de los pesos hasta valer ~0,001 partidos. Además el ajuste no converge
+(tope de evaluaciones de L-BFGS-B). La guarda de muestra efectiva los saca de los picks, pero la agenda de la app
+sigue mostrando su 1X2. La corrección propuesta (suma cero ponderada, ridge en partidos equivalentes, gradiente
+analítico) está medida en ese documento y pendiente de confirmación.
 Las tres guardas existentes miraban otra cosa —`knows()` comprobaba pertenencia
 al índice, `_confidence()` contaba partidos de toda la vida, y el encogimiento
 de edge recortaba el 97% a un 53% que seguía saturando el tope—. Ahora
