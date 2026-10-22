@@ -42,7 +42,7 @@ Cada paso a producción requiere confirmación del titular. Orden recomendado:
 - [x] (22-oct, en producción) A5: retirar el calibrador afín del 1X2 o reajustarlo con la verosimilitud del marcador exacto; la puerta debe medir más/menos y ambos marcan, no solo el 1X2.
 - [x] (22-oct, en producción) A8: agenda de la app con `both_teams_known=false` → 1X2 del mercado o sin porcentaje.
 - [ ] B2: lista de mercados del partido con calibración empírica por mercado derivado (o solo líneas probadas); investigar cópula + conteos Weibull (Boshnakov 2017). Poisson bivariado probado: peor que DC.
-- [ ] C2: córners por equipo con el contexto del Motor A (medido sin cuotas: +0,025/+0,017 nats); repetir la prueba de líneas antes de habilitar. C3 (tarjetas): mixto con el A, no se cambia.
+- [x] (22-oct) C2: córners por equipo con el contexto del Motor A (medido sin cuotas: +0,025/+0,017 nats); repetir la prueba de líneas antes de habilitar. C3 (tarjetas): mixto con el A, no se cambia.
 - [ ] A7: escalar el xG de cada fuente a goles antes de mezclar. A6: inflación de la diagonal.
 - [ ] Investigación: modelo dinámico (Koopman y Lit 2015) y prior de ascendidos, ahora viables con ajustes de segundos.
 

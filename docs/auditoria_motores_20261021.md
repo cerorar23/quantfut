@@ -296,3 +296,45 @@ prueba de la base:
 
 Los córners por equipo quedan como siguiente paso: cambian el modelo de líneas ya validadas y exigen repetir su prueba
 histórica.
+
+## Paso 4 · Córners de cada equipo con la supremacía del Motor A (22-oct-2026)
+
+**Modelo.** Cada lado se ajusta con s = log(λ/μ) del Motor A, sin cuotas:
+`local = λ_local·exp(c_l + γ_l·s)` y `visitante = λ_visit·exp(c_v − γ_v·s)`.
+- Parámetros: c_l = −0,076, γ_l = 0,248; c_v = +0,048, γ_v = 0,249.
+- Ajustado en el 60 % antiguo de 10.844 partidos de producción con el A punto en el tiempo.
+- El total de córners no cambia.
+- Antes se probó una versión de un solo parámetro que conserva el total. Era peor: con local dominante hay más córners
+  en total de lo que dice el C, y conservarlo le quitaba de más al visitante.
+
+**Prueba en el 40 % reciente (4.338 partidos):**
+- Log-verosimilitud +0,043 por partido, positiva en las dos mitades y en 10 de 11 ligas.
+- Media por quintil de supremacía:
+
+| caso | real | antes | ahora |
+|---|---|---|---|
+| local dominante, córners del local | 6,64 | 5,61 | 6,63 |
+| local dominante, córners del visitante | 3,49 | 4,08 | 3,38 |
+| visitante dominante, córners del local | 4,17 | 4,99 | 4,10 |
+
+**Líneas** (mismo criterio que `eval/alta_prob_calibracion`):
+- En 80-95 % pasan las cuatro de alta probabilidad:
+
+| línea | prometido → real |
+|---|---|
+| local más de 3,5 | 84,8 → 86,5 |
+| local menos de 7,5 | 85,9 → 86,0 |
+| visitante más de 2,5 | 84,9 → 84,8 |
+| visitante menos de 6,5 | 86,2 → 86,8 |
+
+- En la escalera salen visitante más de 3,5 (84,4 → 81,5, n=108) y más de 4,5 (78,9 → 70,3, n=37), que fallan con el
+  reparto nuevo.
+- Otras líneas que ahora pasan (local más de 1,5 y 2,5, visitante más de 1,5 y menos de 7,5) **no se añaden**: añadir
+  una línea es una decisión de producto aparte.
+
+**Dónde se aplica:**
+- en la escalera y en alta probabilidad, que eligen después de generar las predicciones del día;
+- solo si el A conoce a los dos equipos.
+
+En las ligas sin modelo propio, o con un equipo desconocido, sigue el reparto anterior. La supremacía usada queda
+guardada en el `fit` del pick.

@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import math
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -201,8 +202,26 @@ def prudente(c, rows: list[dict]):
     return None if pm is None else replace(c, prob=min(c.prob, pm))
 
 
+def supremacia_modelo(match_id: str) -> float | None:
+    """log(λ/μ) de la predicción más reciente del Motor A, o None si no hay o si el
+    modelo no conoce a alguno de los equipos. Es el contexto de los córners de cada
+    equipo (`estadisticas_mercado.CONTEXTO_EQUIPO`): nunca sale de las cuotas."""
+    row = query_one("SELECT home_lambda, away_lambda, data_completeness->>'both_teams_known' AS conocido "
+                    "FROM predictions WHERE match_id=%s ORDER BY generated_at DESC LIMIT 1", (match_id,))
+    if not row or str(row.get("conocido")).lower() == "false":
+        return None
+    try:
+        lam, mu = float(row["home_lambda"]), float(row["away_lambda"])
+    except (TypeError, ValueError):
+        return None
+    if not (math.isfinite(lam) and math.isfinite(mu)) or lam <= 0 or mu <= 0:
+        return None
+    return math.log(lam / mu)
+
+
 def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
     out = []
+    sup = supremacia_modelo(m["match_id"]) if m.get("match_id") else None
     for mercado, lineas in em.LINEAS_HABILITADAS.items():
         acc = modelos.de(m["league_id"], em.FUENTE[mercado])
         if acc is None:
@@ -211,7 +230,7 @@ def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
         if lam is None:
             continue
         for lado, linea in lineas:
-            pr = em.prob(mercado, lam, lado, linea)
+            pr = em.prob(mercado, lam, lado, linea, sup)
             out.append(ap.Candidato(mercado, lado, linea, pr))
     return out
 

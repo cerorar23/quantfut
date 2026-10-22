@@ -6849,3 +6849,8 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: un ajuste sin converger no se activa nunca.
 - Decisión: con un equipo desconocido la app muestra el mercado, no el modelo.
 - Despliegue pendiente de confirmación; el `.env` del servidor fija `DECAY_HALFLIFE_DAYS=180` y hay que cambiarlo.
+
+## 2026-10-22 — Córners de cada equipo con la supremacía del Motor A
+- Decisión: un γ y un nivel por lado, sin conservar el total. La versión que conserva el total sale peor porque, con un favorito claro, el partido tiene más córners de los que dice el C y el reparto se los quitaba al visitante. El mercado de córners totales no cambia.
+- Decisión: el contexto sale del Motor A (`predictions`) y solo si conoce a los dos equipos, por la regla del 2026-10-08 de no usar cuotas en el C.
+- Decisión: se quitan las dos líneas del visitante que fallan con el modelo nuevo. Las que ahora pasan no se añaden sin decisión de producto.
