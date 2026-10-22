@@ -6835,3 +6835,17 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: en Meta se apaga el registro automático de compras de la app porque las compras las manda el servidor por CAPI; con él activo saldrían duplicadas. En Meta los hashes de clave van en base64 (el SHA-1 de Play App Signing, de `llave.jks` y de la clave antigua).
 - Decisión: tras subir un AAB a Play se registra la versión en `mobile_update_settings` por SSH; `min_build_android` y la obligación solo se tocan cuando esa versión ya está disponible para los usuarios.
 - Pendiente: ID de app y bloque de iOS (cuando exista la app en App Store), autorización de anuncios de apuestas en Meta/AdMob, compra de prueba web con `META_TEST_EVENT_CODE`.
+
+## 2026-10-21 — Auditoría de los tres motores (literatura + datos)
+- Hallazgo principal: el ajuste de Dixon-Coles de producción no converge (`success=False` por tope de evaluaciones; gradiente por diferencias finitas sobre 776 parámetros, 23 min) y la suma cero uniforme usa a los equipos sin datos como holgura, por lo que los que vuelven a la liga heredan fuerzas extremas. Con gradiente analítico (3-14 s), suma cero ponderada, ridge en partidos equivalentes y media vida 270, el RPS mejora −0,00084 [−0,00137, −0,00031] sobre 11.920 partidos, concentrado en inicios de temporada.
+- Decisión: el calibrador afín ajustado con el log-loss del 1X2 no identifica el nivel de goles y fuera de muestra empeora; no debe guardarse otro igual. La puerta tiene que medir también mercados de goles.
+- Decisión: el mercado sin margen sigue siendo el pronóstico más exacto donde hay cuota (peso óptimo del A en la mezcla = 0); el A se mejora por coherencia y cobertura, no para «batir» a Pinnacle.
+- Motor C: córners totales bien; córners por equipo y tarjetas ganan claramente con el contexto del partido. «Cuántico»: sin evidencia, no se persigue.
+- Nada se cambió en producción; todo queda en `docs/auditoria_motores_20261021.md` a la espera de confirmación.
+
+## 2026-10-22 — Pasos 1-3 de la auditoría implementados (sin desplegar)
+- Decisión: el ridge se expresa en partidos recientes equivalentes (`RIDGE_PARTIDOS`), porque la verosimilitud normaliza los pesos por su media y cualquier ridge fijo cambia de significado al crecer el histórico. Los artefactos anteriores cargan con `ridge_partidos=0` para conservar su objetivo.
+- Decisión: el calibrador de intensidades se ajusta con la verosimilitud del marcador, que identifica el nivel de goles; la puerta exige que el 1X2 no empeore. Con el modelo corregido se rechaza: no se publica calibrado.
+- Decisión: un ajuste sin converger no se activa nunca.
+- Decisión: con un equipo desconocido la app muestra el mercado, no el modelo.
+- Despliegue pendiente de confirmación; el `.env` del servidor fija `DECAY_HALFLIFE_DAYS=180` y hay que cambiarlo.

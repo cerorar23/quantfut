@@ -210,10 +210,12 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
 # --- fuentes de lambdas ---------------------------------------------------------------------
 
 def lambdas_goles(match_id: str) -> tuple[float, float, float] | None:
-    """(lambda, mu, rho): la predicción propia o, si la liga no tiene modelo, el ajuste a Pinnacle."""
-    row = query_one('SELECT home_lambda, away_lambda, rho FROM predictions WHERE match_id=%s '
+    """(lambda, mu, rho): la predicción propia o, si la liga no tiene modelo o el modelo no
+    conoce a alguno de los equipos (`both_teams_known=false`), el ajuste a Pinnacle."""
+    row = query_one("SELECT home_lambda, away_lambda, rho, "
+                    "data_completeness->>'both_teams_known' AS conocido FROM predictions WHERE match_id=%s "
                     'ORDER BY generated_at DESC LIMIT 1', (match_id,))
-    if row:
+    if row and str(row.get('conocido')).lower() != 'false':
         vals = (float(row['home_lambda']), float(row['away_lambda']), float(row['rho'] or 0))
     else:
         row = query_one('SELECT fit FROM alta_prob_picks WHERE match_id=%s AND fit IS NOT NULL '

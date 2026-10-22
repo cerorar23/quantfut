@@ -316,3 +316,34 @@ def test_alta_probabilidad_enseña_como_mucho_cuatro_gratis_y_el_resto_con_canda
     assert {v['match_id'] for v in report['vip']} == {'m1', 'm2', 'm3', 'm4'}
     assert all(v['locked'] and v['cuota'] for v in report['vip'])          # el candado enseña su cuota
     assert mobile.config()['high_probability_free_max'] == 4
+
+
+def test_equipo_desconocido_muestra_el_mercado_y_no_el_modelo():
+    """Auditoría 2026-10-21: con `both_teams_known=false` el 1X2 propio no significa nada."""
+    cons = {'home': .30, 'draw': .26, 'away': .44}
+    probs, propio = mobile.uno_x_dos({'probabilities': {'home': .077, 'draw': .2, 'away': .723},
+                                      'market_consensus': cons, 'conocido': 'false'})
+    assert propio is False and probs == pytest.approx(cons)
+    assert mobile.uno_x_dos({'probabilities': {'home': .5}, 'market_consensus': None,
+                             'conocido': 'false'}) == (None, False)
+    # Conocido o fila anterior al campo: el del modelo.
+    assert mobile.uno_x_dos({'probabilities': {'home': .5}, 'conocido': 'true'}) == ({'home': .5}, True)
+    assert mobile.uno_x_dos({'markets': SAMPLE_MARKETS}) == (SAMPLE_MARKETS['1x2'], True)
+    assert mobile.uno_x_dos(None) == (None, False)
+
+
+def test_ficha_con_equipo_desconocido_usa_la_tarjeta_de_mercado(delivery, monkeypatch):
+    ficha = lambda: {'partido': {}, 'local': {'id': 1, 'nombre': 'A'}, 'visitante': {'id': 2, 'nombre': 'B'},
+                     'cara_a_cara': None, 'alineaciones': None, 'bajas': None, 'tabla': None}
+    monkeypatch.setattr(mobile.fichas, '_ficha', lambda mid: ficha())
+    monkeypatch.setattr(mobile.rewards, 'entitlements', lambda account: set())
+    monkeypatch.setattr(mobile, 'ladder', lambda *a, **k: {'actuales': []})
+    monkeypatch.setattr(mobile, 'live_score', lambda mid: None)
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: {
+        'markets': SAMPLE_MARKETS, 'market_consensus': {'home': .3, 'draw': .3, 'away': .4}, 'conocido': 'false'})
+    monkeypatch.setattr(mobile, 'market_card', lambda mid: {'fuente': 'mercado'})
+    monkeypatch.setattr(mobile, 'high_probability',
+                        lambda *a, **k: {'proximos': [{'match_id': 'm1'}], 'vip': []})
+    out = mobile.detail('m1', Response(), plus=False, account=None)
+    assert out['ficha']['probabilities']['home'] == pytest.approx(.3)
+    assert out['ficha']['modelo'] == {'fuente': 'mercado'}

@@ -36,6 +36,16 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Auditoría de los tres motores (2026-10-21) — `docs/auditoria_motores_20261021.md`
+Cada paso a producción requiere confirmación del titular. Orden recomendado:
+- [x] (22-oct, rama `auditoria/motores-20261021`, sin desplegar) A1-A4: `dixon_coles.fit` con gradiente analítico (prototipo `dc_rapido.py` de la auditoría), suma cero ponderada por muestra efectiva, ridge en partidos equivalentes (0,5-1), media vida 270; registrar y exigir `res.success`. Reentrenar y pasar la puerta (ΔRPS medido −0,00084 [−0,00137, −0,00031] en 11.920 partidos).
+- [x] (22-oct, sin desplegar) A5: retirar el calibrador afín del 1X2 o reajustarlo con la verosimilitud del marcador exacto; la puerta debe medir más/menos y ambos marcan, no solo el 1X2.
+- [x] (22-oct, sin desplegar) A8: agenda de la app con `both_teams_known=false` → 1X2 del mercado o sin porcentaje.
+- [ ] B2: lista de mercados del partido con calibración empírica por mercado derivado (o solo líneas probadas); investigar cópula + conteos Weibull (Boshnakov 2017). Poisson bivariado probado: peor que DC.
+- [ ] C2: córners por equipo con el contexto del Motor A (medido sin cuotas: +0,025/+0,017 nats); repetir la prueba de líneas antes de habilitar. C3 (tarjetas): mixto con el A, no se cambia.
+- [ ] A7: escalar el xG de cada fuente a goles antes de mezclar. A6: inflación de la diagonal.
+- [ ] Investigación: modelo dinámico (Koopman y Lit 2015) y prior de ascendidos, ahora viables con ajustes de segundos.
+
 ## Recuperación de cierres Pinnacle (2026-10-14)
 
 - [x] Carga OddsPapi autorizada (15-oct): 2.918 cierres reconstruidos / 8.754 cuotas y 25 referencias para revisión, los 2.943 con procedencia inmutable. Originales verificados, respaldo completo en servidor, reversión e idempotencia comprobadas; 1.237 pruebas y huecos reducidos de 6.185 a 3.267. Detalle: docs/oddspapi_carga_20261015.md.

@@ -57,15 +57,21 @@ class Settings:
     # servidos desde el propio dominio: la web no enlaza al proveedor.
     escudos_dir: str = os.getenv("ESCUDOS_DIR", "/srv/quantfut/escudos")
 
-    # Media vida del decaimiento temporal, en días.
-    # 180 = un partido de hace 6 meses pesa la mitad que uno de hoy.
-    decay_halflife_days: float = _f("DECAY_HALFLIFE_DAYS", 180.0)
+    # Media vida del decaimiento temporal, en días: un partido de hace 270 días
+    # pesa la mitad que uno de hoy. Elegida por walk-forward en la auditoría del
+    # 2026-10-21 (120/180/220/270/365 sobre 11.920 partidos; 180, el valor
+    # anterior, nunca se había medido). Ley et al. (2019) dan 360-480 con goles.
+    decay_halflife_days: float = _f("DECAY_HALFLIFE_DAYS", 270.0)
+    # Fuerza del ridge de ataque/defensa en PARTIDOS RECIENTES EQUIVALENTES
+    # (ver `DixonColes`). 0,5 = un equipo con dos partidos queda a medio camino
+    # de la media de su liga. Medido en la misma auditoría (0,5-1 lo mejor).
+    ridge_partidos: float = _f("RIDGE_PARTIDOS", 0.5)
     # Mezcla goles/xG para el objetivo del modelo de fuerza. 0 = solo goles, 1 = solo xG.
     xg_blend: float = _f("XG_BLEND", 0.65)
     max_goals_matrix: int = _i("MAX_GOALS_MATRIX", 12)
     # Muestra EFECTIVA mínima por equipo para precificar un partido, medida en
     # PARTIDOS RECIENTES EQUIVALENTES: un partido de hoy suma 1 y uno de hace
-    # una media vida (180 días) suma 0,5. Por debajo, la fuerza
+    # una media vida suma 0,5. Por debajo, la fuerza
     # del equipo no la deciden sus datos sino el ridge y el centrado de la
     # liga, y el modelo produce una probabilidad extrema con total confianza.
     # Es el caso del club que vuelve a primera tras años fuera: sigue en el

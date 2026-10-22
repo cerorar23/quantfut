@@ -342,8 +342,9 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
         raise HTTPException(422, 'Fecha inválida') from None
     agenda = visible_agenda(fichas._agenda(start, end, None)) if flags['agenda']['enabled'] else []
     if agenda and flags['estadisticas']['enabled']:
-        probabilities = {r['match_id']: r['probabilities'] for r in query(
-            "SELECT DISTINCT ON (match_id) match_id, markets->'1x2' AS probabilities "
+        probabilities = {r['match_id']: uno_x_dos(r)[0] for r in query(
+            "SELECT DISTINCT ON (match_id) match_id, markets->'1x2' AS probabilities, market_consensus, "
+            "data_completeness->>'both_teams_known' AS conocido "
             "FROM predictions WHERE match_id=ANY(%s) ORDER BY match_id,generated_at DESC",
             ([r['match_id'] for r in agenda],))}
         for row in agenda:
@@ -369,6 +370,34 @@ def pronostico_desde(kickoff) -> str | None:
     if kickoff.tzinfo is None:
         kickoff = kickoff.replace(tzinfo=timezone.utc)
     return ventana.desbloqueo(kickoff).isoformat()
+
+
+def uno_x_dos(row: dict | None) -> tuple[dict | None, bool]:
+    """(1X2 que se muestra, si es del modelo propio).
+
+    Si el modelo no conoce a alguno de los equipos (`both_teams_known=false`:
+    ascendido o club que vuelve tras años fuera) su 1X2 no significa nada —la
+    auditoría del 2026-10-21 encontró Coventry local al 7,7 % con el mercado al
+    30 %— y se muestra el consenso sin margen del mercado guardado en la misma
+    fila, o nada. `row` trae `probabilities` (o `markets`), `market_consensus` y
+    `conocido`.
+    """
+    if not row:
+        return None, False
+    if str(row.get('conocido')).lower() != 'false':
+        probs = row.get('probabilities')
+        if probs is None and isinstance(row.get('markets'), dict):
+            probs = row['markets'].get('1x2')
+        return probs, True
+    cons = row.get('market_consensus')
+    try:
+        trio = [float(cons[k]) for k in ('home', 'draw', 'away')]
+    except (TypeError, KeyError, ValueError):
+        return None, False
+    total = sum(trio)
+    if not all(math.isfinite(x) and x > 0 for x in trio) or total <= 0:
+        return None, False
+    return {k: x / total for k, x in zip(('home', 'draw', 'away'), trio)}, False
 
 
 def market_card(match_id: str) -> dict | None:
@@ -509,11 +538,13 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
         ficha['partido']['estadisticas'] = None
         ficha['partido']['xg'] = None
     else:
-        prediction = query_one("SELECT markets FROM predictions "
+        prediction = query_one("SELECT markets, market_consensus, "
+                               "data_completeness->>'both_teams_known' AS conocido FROM predictions "
                                "WHERE match_id=%s ORDER BY generated_at DESC LIMIT 1", (match_id,))
         markets = prediction['markets'] if prediction else None
-        ficha['probabilities'] = markets.get('1x2') if isinstance(markets, dict) else None
-        ficha['modelo'] = ((model_card(markets) or market_card(match_id)) if picks else None)
+        ficha['probabilities'], del_modelo = uno_x_dos(prediction)
+        propia = model_card(markets) if del_modelo else None
+        ficha['modelo'] = ((propia or market_card(match_id)) if picks else None)
         ficha['mercados'] = mercados_partido(match_id, ficha, picks, plus)
         if ficha['mercados'] is None and blocked and not (plus and flags['vip']['enabled']):
             # Sin modelo de goles: sus pronósticos VIP se avisan aparte del gratuito (solo categoría).
