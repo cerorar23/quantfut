@@ -33,6 +33,27 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-22 18:50 UTC · Auditoría de los motores, pasos 1-3 (#70, `a779e08`) · worker (imagen congelada + recreate), API (imagen nueva), `.env`
+- **Antes de desplegar.** `deploy.sh estado`: los 7 archivos tocados coincidían con `main` previo (`c57afe8`) en el worker. Había dos diferencias ajenas en el worker que se **conservan**:
+  - `api/main.py`, versión anterior, sin uso en el worker;
+  - `publish/tarjetas_seg.py`, con `LINEAS_SEGUIMIENTO`, copiado desde la rama local `tarjetas-lineas-seguimiento` (`734b50f`) sin PR ni entrada aquí. Esa sesión debe fusionarlo.
+- **Worker.**
+  - `deploy.sh congelar worker`: `en-ejecucion-20261022` = `820ebd5f4c67`; el `latest` anterior queda como `latest-previo-20261022` (`25bf76ea2f46`).
+  - `docker cp` de `config.py`, `eval/backtest.py`, `model/{calibration,dixon_coles,train}.py` y `api/{mobile,partido_mercados}.py` (hashes iguales a `main`).
+  - `docker commit` → `quantfut-worker:auditoria-a779e08` (`9db4a5780fa1`) = `latest`.
+  - En `~/quantfut/.env`: `DECAY_HALFLIFE_DAYS=180` → `270`.
+  - `up -d --no-deps --no-build --force-recreate worker`. Verificado: config 270 / `ridge_partidos` 0,5, cron en marcha, código = `main` salvo las dos diferencias ajenas, `latest` = lo que corre, y el artefacto activo anterior carga igual (ridge 0, media vida 180).
+  - Se esperó a que no hubiera sellos tardíos pendientes; los 2 partidos de UEL de las 19:00 sin sello no tenían predicción (equipos fuera del modelo).
+- **API.**
+  - Imagen `quantfut-api-web-vip:auditoria-a779e08` = `web-arranque` + `api/mobile.py`, `api/partido_mercados.py` y `config.py` de `main`; compose fijado a esa imagen.
+  - `/health` 200. En el dominio real, Tottenham-Coventry (equipo desconocido) muestra el 1X2 del mercado (visitante 15,2 %), no el del modelo (6,6 %).
+- **Reentrenamiento** (`python -m qf.model.train`, 18:53 UTC): modelo **2026.10.22-185314 activo** (18:56 UTC; antes `2026.09.27-010508`). Convergió; en la validación del último año (2.024 partidos, mismas filas) Dixon-Coles tiene RPS 0,20359, Elo 0,20412 y mercado 0,19458. El calibrador se rechazó (calibrar empeoraba el 1X2: RPS 0,20900 → 0,20959), así que se publica sin calibrar. `ready_for_commercial_picks` sigue en falso (CLV 0 < 300). Altitud y once siguen en sombra. Primer lote con este modelo: el diario del 23-oct a las 09:00 UTC; las predicciones ya selladas no cambian.
+- **Vuelta atrás.**
+  1. `cp releases/auditoria-motores/backup/env.before .env`.
+  2. `docker tag quantfut-worker:en-ejecucion-20261022 quantfut-worker:latest` + recreate del worker.
+  3. `cp releases/auditoria-motores/backup/docker-compose.before.yml docker-compose.yml` + recreate de la API.
+  4. Si el modelo nuevo quedó activo: `UPDATE model_artifacts SET is_active = (model_version = '2026.09.27-010508')`.
+
 ### 2026-10-21 · AdMob (ID de editor y bloque) y estado de Meta · SOLO configuración en la base, sin código ni reinicios
 - `reward_settings` (vía `qf.api.anuncios.save_config`, auditado como `ssh:claude-titular`): `admob_publisher_id = pub-3902371555866850` y
   `ad_unit_android = ca-app-pub-3902371555866850/4169479093` (bloque Recompensado, SSV con `https://pronosticosdeportivos.pro/rewards/callback/admob`).
