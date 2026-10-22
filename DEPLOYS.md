@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-22 20:30 UTC · Líneas nuevas de córners por equipo (#74, `0afd388`) · solo worker (`docker cp` + imagen congelada, sin recrear)
+- **Antes:** `model/estadisticas_mercado.py`, `publish/alta_prob.py`, `publish/alta_prob_datos.py` y `publish/escalera_datos.py` del worker coincidían con `main` previo (`8c9cb5e`). Respaldo en `releases/auditoria-motores/backup/worker_lineas_*.before`.
+- **Despliegue:** `docker cp` de los cuatro archivos de `main` y `docker commit` → `quantfut-worker:lineas-0afd388` (`44c280f02c98`) = `latest`. `deploy.sh estado`: worker = `main` salvo las dos diferencias ajenas ya anotadas; `latest` = lo que corre.
+- **Líneas nuevas:**
+  - Alta probabilidad tiene 12 líneas de córners. Las nuevas son local más de 4,5, menos de 5,5 y menos de 6,5, y visitante menos de 4,5 y 5,5; solo se ofrecen con la supremacía del Motor A.
+  - La escalera y la lista de mercados suman local menos de 6,5 y visitante menos de 5,5.
+- **Comprobado:** ensayo en seco de alta probabilidad y escalera sin errores (sin partidos en la ventana a esta hora). Primer uso real: el job de las 09:00 UTC del 23-oct.
+- **Vuelta atrás:** `docker cp releases/auditoria-motores/backup/worker_lineas_<archivo>.before quantfut-worker-1:/app/src/qf/<ruta>` para los cuatro y `docker tag quantfut-worker:corners-c4e6378 quantfut-worker:latest`.
+
 ### 2026-10-22 19:40 UTC · Córners de cada equipo según la supremacía del Motor A (#72, `c4e6378`) · solo worker (`docker cp` + imagen congelada, sin recrear)
 - **Antes:** `model/estadisticas_mercado.py`, `publish/escalera_datos.py` y `publish/alta_prob_datos.py` del worker coincidían con `main` previo (`9697aa1`). Respaldo en `releases/auditoria-motores/backup/worker_*.before`.
 - **Despliegue:** `docker cp` de los tres archivos de `main` y `docker commit` → `quantfut-worker:corners-c4e6378` (`b04cebc4bf97`) = `latest`. `deploy.sh estado`: worker = `main` salvo las dos diferencias ajenas ya anotadas (`api/main.py`, `publish/tarjetas_seg.py`); `latest` = lo que corre. La API no usa los córners por equipo y no se toca.
