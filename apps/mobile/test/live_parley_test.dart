@@ -170,11 +170,37 @@ void main() {
     expect(find.text('2026-10-11'), findsOneWidget);
     expect(find.textContaining('1/2 acertados'), findsOneWidget);
     expect(find.text('1 gratis al día'), findsOneWidget);
-    expect(find.text('Historial del Parley'), findsOneWidget);
-    expect(
-      find.textContaining('25,0 % real frente a 41,5 % prometido'),
-      findsOneWidget,
-    );
+    expect(find.text('Historial del Parley'), findsNothing);
+    expect(find.textContaining('prometido'), findsNothing);
+  });
+
+  testWidgets('días anteriores: solo los últimos 7 parlays', (tester) async {
+    Map<String, dynamic> day(String dia, int n) => {
+      'dia': dia,
+      'tickets': [
+        for (var i = 0; i < n; i++)
+          {'escalon': i + 1, 'outcome': i.isEven ? 'ganado' : 'perdido'},
+      ],
+    };
+    await open(tester, {
+      'activo': true,
+      'reglas': rules,
+      'resumen': {
+        'total': {'n': 15, 'aciertos': 7},
+      },
+      'dias': [
+        day('2026-10-21', 1),
+        day('2026-10-20', 4),
+        day('2026-10-19', 5),
+        day('2026-10-18', 5),
+      ],
+    });
+    expect(find.text('Días anteriores'), findsOneWidget);
+    expect(find.text('2026-10-20'), findsOneWidget);
+    expect(find.textContaining('4 parlays'), findsOneWidget);
+    expect(find.text('2026-10-19'), findsOneWidget);
+    expect(find.textContaining('3 parlays'), findsOneWidget);
+    expect(find.text('2026-10-18'), findsNothing);
   });
 
   testWidgets('si falla la carga se ofrece reintentar', (tester) async {
