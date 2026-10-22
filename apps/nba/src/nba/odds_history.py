@@ -22,6 +22,8 @@ CREDITS_PER_MARKET_REGION = 10
 LEAD = timedelta(minutes=30)
 WEEKEND_FALLBACK, WEEKDAY_FALLBACK = (16, 30), (22, 30)
 MAX_PRICE_AGE = timedelta(hours=6)
+# The provider's spelling of the one team whose name differs from games.json (checked against its 30 NBA names on 2026-10-21).
+TEAM_ALIASES = {'Los Angeles Clippers': 'LA Clippers'}
 
 
 def snapshot_cost(markets, regions=1):
@@ -104,6 +106,21 @@ def read_key(path):
     return match.group(1).strip().strip('"\'')
 
 
+def power_no_vig(home, away):
+    """Home win probability when the margin is removed with the power method: (1/h)^k + (1/a)^k = 1.
+
+    Unlike the proportional split it puts more of the margin on the longshot; used only as a sensitivity check."""
+    inv_h, inv_a = 1 / home, 1 / away
+    low, high = 1., 50.
+    for _ in range(80):
+        k = (low + high) / 2
+        if inv_h ** k + inv_a ** k > 1:
+            low = k
+        else:
+            high = k
+    return inv_h ** ((low + high) / 2)
+
+
 def pinnacle_prices(event, market='h2h'):
     for book in event.get('bookmakers', []):
         if book.get('key') != 'pinnacle':
@@ -130,7 +147,12 @@ def load(plan_, cache, games):
             if start <= snapshot:
                 stats['already_started'] += 1
                 continue
-            game = by_key.get((start.astimezone(av.EASTERN).date().isoformat(), event['home_team'], event['away_team']))
+            if start.astimezone(av.EASTERN).date() != snapshot.astimezone(av.EASTERN).date():
+                # snapshots list later days too; a price taken the evening before is not the price the plan paid for
+                stats['snapshot_other_day'] += 1
+                continue
+            home_name, away_name = (TEAM_ALIASES.get(event[k], event[k]) for k in ('home_team', 'away_team'))
+            game = by_key.get((start.astimezone(av.EASTERN).date().isoformat(), home_name, away_name))
             if game is None:
                 stats['unmatched_event'] += 1
                 continue
@@ -139,8 +161,8 @@ def load(plan_, cache, games):
                 stats['no_pinnacle'] += 1
                 continue
             updated = datetime.fromisoformat((market.get('last_update') or book['last_update']).replace('Z', '+00:00'))
-            prices = {o['name']: o['price'] for o in market['outcomes']}
-            home, away = prices.get(event['home_team']), prices.get(event['away_team'])
+            prices = {TEAM_ALIASES.get(o['name'], o['name']): o['price'] for o in market['outcomes']}
+            home, away = prices.get(home_name), prices.get(away_name)
             if (not home or not away or not all(map(math.isfinite, (home, away))) or home <= 1 or away <= 1
                     or updated > snapshot or snapshot - updated > MAX_PRICE_AGE):
                 stats['invalid_or_stale_price'] += 1
@@ -148,7 +170,8 @@ def load(plan_, cache, games):
             inv_h, inv_a = 1 / home, 1 / away
             row = dict(game_id=game, snapshot_utc=snapshot.isoformat(), book_updated_utc=updated.isoformat(),
                        minutes_to_tipoff=(start - snapshot).total_seconds() / 60, home_decimal=home, away_decimal=away,
-                       overround=inv_h + inv_a - 1, home_no_vig=inv_h / (inv_h + inv_a))
+                       overround=inv_h + inv_a - 1, home_no_vig=inv_h / (inv_h + inv_a),
+                       home_no_vig_power=power_no_vig(home, away))
             if game not in rows or snapshot > datetime.fromisoformat(rows[game]['snapshot_utc']):
                 rows[game] = row
             stats['matched'] += 1
