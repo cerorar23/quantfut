@@ -6842,3 +6842,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: el mercado sin margen sigue siendo el pronóstico más exacto donde hay cuota (peso óptimo del A en la mezcla = 0); el A se mejora por coherencia y cobertura, no para «batir» a Pinnacle.
 - Motor C: córners totales bien; córners por equipo y tarjetas ganan claramente con el contexto del partido. «Cuántico»: sin evidencia, no se persigue.
 - Nada se cambió en producción; todo queda en `docs/auditoria_motores_20261021.md` a la espera de confirmación.
+
+## 2026-10-22 — Pasos 1-3 de la auditoría implementados (sin desplegar)
+- Decisión: el ridge se expresa en partidos recientes equivalentes (`RIDGE_PARTIDOS`), porque la verosimilitud normaliza los pesos por su media y cualquier ridge fijo cambia de significado al crecer el histórico. Los artefactos anteriores cargan con `ridge_partidos=0` para conservar su objetivo.
+- Decisión: el calibrador de intensidades se ajusta con la verosimilitud del marcador, que identifica el nivel de goles; la puerta exige que el 1X2 no empeore. Con el modelo corregido se rechaza: no se publica calibrado.
+- Decisión: un ajuste sin converger no se activa nunca.
+- Decisión: con un equipo desconocido la app muestra el mercado, no el modelo.
+- Despliegue pendiente de confirmación; el `.env` del servidor fija `DECAY_HALFLIFE_DAYS=180` y hay que cambiarlo.

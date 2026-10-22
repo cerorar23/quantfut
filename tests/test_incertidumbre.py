@@ -97,8 +97,12 @@ def test_el_equipo_sin_muestra_no_puede_ser_el_mejor_conocido():
         "el equipo sin muestra NO puede tener menos error estándar "
         "que el mejor medido")
     # Y la incertidumbre tiene que ser lo bastante grande como para que la
-    # abstención se dispare sola, sin reglas aparte.
-    assert se[peor_medido] > 1.0
+    # abstención se dispare sola, sin reglas aparte. Desde 2026-10-21 el ridge
+    # es un prior de verdad (`ridge_partidos`), así que sin datos el error
+    # estándar es el del prior, 1/sqrt(2·ridge_partidos) = 1 en log-ataque (un
+    # factor e), y no infinito: muchas veces el del mejor medido.
+    assert se[peor_medido] >= 0.99 / np.sqrt(2 * m.ridge_partidos)
+    assert se[peor_medido] > 5 * se[mejor_medido]
 
 
 def test_equipo_desconocido_es_incierto_no_certero(modelo):

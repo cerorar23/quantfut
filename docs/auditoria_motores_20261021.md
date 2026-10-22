@@ -264,3 +264,35 @@ especificación y datos. No se recomienda invertir ahí.
 - Walsh, C. y Joshi, A. (2024). *Machine learning for sports betting: should model selection be based on accuracy or calibration?* MLWA 16. [Bath](https://researchportal.bath.ac.uk/en/publications/machine-learning-for-sports-betting-should-model-selection-be-bas/)
 - Dawson, P., Dobson, S., Goddard, J. y Wilson, J. (2007). *Are football referees really biased and inconsistent?* JRSS A. [PDF](https://college.holycross.edu/RePEc/spe/DawsonDobson_Referees.pdf)
 - Yip et al. (2024). *Forecasting number of corner kicks taken in association football using compound Poisson distribution*. JORS. [arXiv](https://ar5iv.labs.arxiv.org/html/2112.13001)
+
+## Implementación (22-oct-2026, rama `auditoria/motores-20261021`, sin desplegar)
+
+| Paso | Qué cambia | Verificación |
+|---|---|---|
+| 1 | `model/dixon_coles.py`: gradiente analítico, suma cero ponderada por muestra efectiva, `ridge_partidos` (0,5) y media vida 270 por defecto; `params.converged`; `train.py` no activa un ajuste que no convergió | `tests/test_dixon_coles_ajuste.py` (gradiente contra diferencias finitas a 1e-4, convergencia, fantasmas acotados, ridge invariante al histórico viejo). Walk-forward 2024-01 → 2026-10 con el código nuevo: **ΔRPS −0,00084 [−0,00137, −0,00031]**, idéntico al prototipo; el walk-forward completo tarda 2 min |
+| 2 | `model/calibration.py`: el calibrador se ajusta con la verosimilitud del marcador exacto; la puerta exige mejorar el marcador sin empeorar el RPS ni el log-loss del 1X2 | `tests/test_calibration.py`, con una prueba nueva de que identifica el nivel de goles. En el ensayo en seco el calibrador se **rechaza** (calibrar empeora el 1X2 del modelo corregido) y queda la identidad |
+| 3 | `api/mobile.py` (agenda y ficha) y `api/partido_mercados.py`: con `both_teams_known=false` se muestra el 1X2 sin margen del mercado guardado en la misma predicción (o nada), la tarjeta de mercado y las lambdas ancladas a Pinnacle | `tests/test_mobile_delivery.py`, `tests/test_partido_mercados.py` |
+
+**Ensayo en seco del reentrenamiento** (mismo flujo que `train_and_register`, sin escribir ni activar):
+- El ajuste final converge, con ρ −0,048.
+- Validación del último año: Dixon-Coles RPS 0,20328, Elo 0,20404, mercado 0,19449. La puerta promovería (bate a Elo sobre las mismas 2.025 filas); `ready_for_commercial_picks` sigue en falso por el CLV.
+- Hull, Coventry y Cambuur pasan a ataques de −0,15 a −0,25, como corresponde a recién ascendidos.
+
+**Para desplegar (requiere confirmación):**
+1. Fusionar.
+2. Cambiar `DECAY_HALFLIFE_DAYS=180` → `270` en `~/quantfut/.env`; el `.env` fija 180 y pisaría el nuevo valor por defecto.
+3. Desplegar worker y API.
+4. Reentrenar: `python -m qf.model.train` activa el modelo si pasa la puerta.
+
+Las predicciones ya selladas no cambian.
+
+**Motor C con el contexto del A (sin cuotas)**, medido con las lambdas del walk-forward nuevo sobre 4.404 partidos de
+prueba de la base:
+- **Córners por equipo:** log-verosimilitud +0,025 (local) y +0,017 (visitante). La mejora se mantiene, a la mitad de
+  la que dan las cuotas.
+- **Tarjetas:** mixto. La log-verosimilitud empeora 0,004 y el Brier mejora en las tres líneas, así que no se cambia.
+  El modelo actual promete menos de lo que pasa en «menos de 4,5» (63,0 % contra 65,6 % real), en la dirección
+  prudente.
+
+Los córners por equipo quedan como siguiente paso: cambian el modelo de líneas ya validadas y exigen repetir su prueba
+histórica.

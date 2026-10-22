@@ -1404,7 +1404,10 @@ promedia también a los equipos sin datos, que el optimizador usa de holgura (po
 de 0,02 se diluye con la normalización de los pesos hasta valer ~0,001 partidos. Además el ajuste no converge
 (tope de evaluaciones de L-BFGS-B). La guarda de muestra efectiva los saca de los picks, pero la agenda de la app
 sigue mostrando su 1X2. La corrección propuesta (suma cero ponderada, ridge en partidos equivalentes, gradiente
-analítico) está medida en ese documento y pendiente de confirmación.
+analítico) está implementada en la rama `auditoria/motores-20261021` junto con la media vida de 270 días
+(`DECAY_HALFLIFE_DAYS`), el ridge en partidos equivalentes (`RIDGE_PARTIDOS`, 0,5), un calibrador ajustado con
+la verosimilitud del marcador y la agenda de la app mostrando el mercado cuando el modelo no conoce a un equipo.
+Entra en producción con el próximo despliegue y reentrenamiento confirmados.
 Las tres guardas existentes miraban otra cosa —`knows()` comprobaba pertenencia
 al índice, `_confidence()` contaba partidos de toda la vida, y el encogimiento
 de edge recortaba el 97% a un 53% que seguía saturando el tope—. Ahora

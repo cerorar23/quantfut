@@ -118,3 +118,16 @@ def test_sin_modelo_de_goles_los_vip_salen_solo_con_su_categoria():
                             {'id': 'k2', 'grupo': 'CÓRNERS', 'locked': True}]
     assert out['marcadores'] is None and out['sin_modelo'] is True and out['abiertas'] == 0
     assert pm.solo_candados([{'market': 'raro'}]) is None and pm.solo_candados([]) is None
+
+
+def test_equipo_desconocido_toma_las_lambdas_del_mercado(monkeypatch):
+    """Auditoría 2026-10-21: si el modelo no conoce a un equipo, sus lambdas no valen."""
+    def consulta(sql, params):
+        if 'FROM predictions' in sql:
+            return {'home_lambda': 0.4, 'away_lambda': 3.1, 'rho': -0.06, 'conocido': 'false'}
+        return {'fit': {'lambda': 1.2, 'mu': 1.4, 'rho': -0.05}}
+    monkeypatch.setattr(pm, 'query_one', consulta)
+    assert pm.lambdas_goles('m1') == (1.2, 1.4, -0.05)
+    monkeypatch.setattr(pm, 'query_one', lambda sql, params: (
+        {'home_lambda': 1.5, 'away_lambda': 1.1, 'rho': -0.06, 'conocido': 'true'} if 'FROM predictions' in sql else None))
+    assert pm.lambdas_goles('m1') == (1.5, 1.1, -0.06)

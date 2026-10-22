@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 
 def walk_forward_oos(df: pd.DataFrame, start_date, step_days: int = 30,
-                     min_train: int = 500, halflife: float = 180.0,
+                     min_train: int = 500, halflife: float = 270.0,
                      xg_blend: float = 0.65) -> pd.DataFrame:
     """
     Predicciones FUERA DE MUESTRA, una fila por partido.
@@ -116,7 +116,7 @@ def walk_forward_oos(df: pd.DataFrame, start_date, step_days: int = 30,
 
 
 def walk_forward(df: pd.DataFrame, start_date, step_days: int = 30,
-                 min_train: int = 500, halflife: float = 180.0,
+                 min_train: int = 500, halflife: float = 270.0,
                  xg_blend: float = 0.65) -> dict:
     """Métricas agregadas del walk-forward. El retorno es JSON-serializable."""
     oos = walk_forward_oos(df, start_date, step_days=step_days,
