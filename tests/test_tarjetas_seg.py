@@ -8,6 +8,7 @@ import pytest
 
 from qf.config import settings
 from qf.eval import calibracion_mercados as cm
+from qf.model import estadisticas_mercado as em
 from qf.publish import daily, hashchain
 from qf.publish import escalera_datos as ed
 from qf.publish import tarjetas_seg as ts
@@ -88,11 +89,18 @@ def test_un_candidato_por_linea_con_los_dos_lados_cotizados_y_cuota_de_la_lista(
     filas = _filas((4.5, (3.0, 1.40, 3.2)), (5.5, (1.9, 1.95, 2.0)))
     cands = ts.candidatos(PARTIDO, AHORA, _Modelos(), filas)
     por_linea = {(c["selection"], c["line"]): c for c in cands}
-    assert set(por_linea) == {("under", 4.5), ("under", 5.5)}               # 6,5 sin cuotas: no entra
+    assert set(por_linea) == {("under", 4.5), ("under", 5.5), ("over", 4.5), ("over", 5.5)}   # 6,5 sin cuotas: no entra
     c = por_linea[("under", 5.5)]
     assert c["ref_book"] == "betano" and c["ref_price"] == 2.0
     assert c["prob"] <= c["fit"]["modelo"] and c["prob"] <= c["fit"]["mercado"]   # la menor de las dos
     assert c["fit"]["lambdas"] == [2.3, 2.5]
+
+
+def test_se_miden_tambien_las_lineas_de_mas_de_sin_habilitarlas():
+    cands = ts.candidatos(PARTIDO, AHORA, _Modelos(), _filas((4.5, (1.9, 1.95, 2.0)), (3.5, (3.0, 1.4, 3.2))))
+    assert {(c["selection"], c["line"]) for c in cands} >= {("over", 4.5), ("under", 4.5), ("over", 3.5)}
+    assert ("over", 4.5) not in em.LINEAS_HABILITADAS["cards"]        # medir no es habilitar
+    assert set(em.LINEAS_HABILITADAS["cards"]) <= set(ts.LINEAS_SEGUIMIENTO)
 
 
 def test_sin_modelo_o_sin_cuota_de_la_lista_no_hay_candidato():
@@ -129,8 +137,8 @@ def test_guarda_cada_candidato_con_su_cuota_y_el_ajuste(monkeypatch, encendido):
     filas = []
     monkeypatch.setattr(ts, "execute", lambda sql, params: filas.append((sql, params)) or 1)
     out = ts.select_and_persist(AHORA)
-    assert out["guardados"] == 1 and out["partidos"] == 1
-    sql, p = filas[0]
+    assert out["guardados"] == 2 and out["partidos"] == 1                   # menos de y más de 5,5
+    sql, p = next(f for f in filas if f[1][2] == "under")
     assert "INSERT INTO tarjetas_seg" in sql and "ON CONFLICT ON CONSTRAINT tarjetas_seg_uq" in sql
     assert p[:4] == ("m1", "cards", "under", 5.5) and p[7] == "betano" and p[8] == "api_football"
     assert p[6] == 2.0 and 0 < p[4] < 1 and abs(p[5] - 1 / p[4]) < 1e-3
