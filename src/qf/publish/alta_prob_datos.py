@@ -221,6 +221,8 @@ def _corners(m: dict, now: datetime, modelos, filas_af: list[dict],
     sup = ed.supremacia_modelo(m["match_id"]) if m.get("match_id") else None
     cands, fits = [], {}
     for mercado, lado, linea in lineas:
+        if not em.disponible(mercado, lado, linea, sup):
+            continue
         modelo = em.prob(mercado, lam, lado, linea, sup)
         c = ed.prudente(ap.Candidato(mercado, lado, linea, modelo), filas_af)
         if c is None:

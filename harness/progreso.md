@@ -6854,3 +6854,4 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: un γ y un nivel por lado, sin conservar el total. La versión que conserva el total sale peor porque, con un favorito claro, el partido tiene más córners de los que dice el C y el reparto se los quitaba al visitante. El mercado de córners totales no cambia.
 - Decisión: el contexto sale del Motor A (`predictions`) y solo si conoce a los dos equipos, por la regla del 2026-10-08 de no usar cuotas en el C.
 - Decisión: se quitan las dos líneas del visitante que fallan con el modelo nuevo. Las que ahora pasan no se añaden sin decisión de producto.
+- Decisión (pedido del usuario): se añaden las líneas de córners por equipo que pasan y pagan más (cuota mediana 1,43-1,78); las de 1,04-1,13 quedan fuera, como «menos de 4,5 goles» el 6-oct. Solo con supremacía del A, porque sin ella no se validaron.

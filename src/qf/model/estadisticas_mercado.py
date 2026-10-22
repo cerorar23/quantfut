@@ -176,11 +176,11 @@ LINEAS_HABILITADAS: dict[str, tuple[tuple[str, float], ...]] = {
     "corners": (("over", 7.5), ("over", 8.5),
                 ("under", 9.5), ("under", 10.5), ("under", 11.5)),
     "cards": (("under", 4.5), ("under", 5.5), ("under", 6.5)),
-    "corners_home": (("over", 1.5), ("over", 4.5), ("over", 5.5), ("under", 5.5)),
+    "corners_home": (("over", 1.5), ("over", 4.5), ("over", 5.5), ("under", 5.5), ("under", 6.5)),
     # Visitante más de 3,5 y más de 4,5 salen el 2026-10-22: con el reparto por
     # supremacía (CONTEXTO_EQUIPO) fallan la prueba en la base de producción
     # (más de 3,5 en 80-95 %: 84,4 → 81,5, n=108; más de 4,5: 78,9 → 70,3, n=37).
-    "corners_away": (("under", 4.5),),
+    "corners_away": (("under", 4.5), ("under", 5.5)),
 }
 # De qué acumulador sale cada mercado.
 FUENTE = {"corners": "corners", "cards": "cards",
@@ -205,6 +205,24 @@ FUENTE = {"corners": "corners", "cards": "cards",
 # no aporta (prueba con football-data) y su mercado sigue con λ_local + λ_visit.
 # Cambiar estos números exige repetir la prueba.
 CONTEXTO_EQUIPO = {"corners_home": (-0.0757, 0.2483), "corners_away": (0.0475, 0.2487)}
+# Líneas de córners por equipo añadidas el 2026-10-22 (pedido del usuario: las
+# que pasan con el reparto por supremacía y pagan más; fuera las de cuota
+# mediana ~1,04-1,13: local más de 1,5 y 2,5, visitante más de 1,5 y menos de
+# 7,5). Se validaron SOLO con la supremacía del Motor A, así que sin ella (liga
+# sin modelo propio o equipo desconocido) no se ofrecen.
+# Prueba en 80-95 % (40 % reciente, 4.338 partidos): local más de 4,5 83,8 →
+# 85,3 (n=116), menos de 5,5 83,6 → 86,5 (n=141), menos de 6,5 84,8 → 84,8
+# (n=745); visitante menos de 4,5 82,5 → 82,4 (n=85), menos de 5,5 84,1 → 84,5
+# (n=915). En 75-95 % también pasan todas. Cuota mediana en API-Football (45
+# días): 1,70 / 1,75 / 1,46 / 1,78 / 1,43.
+SOLO_CON_SUPREMACIA: frozenset[tuple[str, str, float]] = frozenset({
+    ("corners_home", "over", 4.5), ("corners_home", "under", 5.5), ("corners_home", "under", 6.5),
+    ("corners_away", "under", 4.5), ("corners_away", "under", 5.5)})
+
+
+def disponible(mercado: str, lado: str, linea: float, supremacia: float | None) -> bool:
+    """¿Se puede ofrecer esta línea? Las validadas solo con supremacía la necesitan."""
+    return supremacia is not None or (mercado, lado, linea) not in SOLO_CON_SUPREMACIA
 
 
 def media_equipo(mercado: str, lam: tuple[float, float],

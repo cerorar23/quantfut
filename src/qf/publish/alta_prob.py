@@ -108,11 +108,18 @@ HANDICAP_HABILITADOS: tuple[float, ...] = (-1.0, 0.0, 1.0, 1.5, 2.0)
 # Revisión 2026-10-10 con 2024/25 y la Premier 2021/22 que las pruebas
 # anteriores perdían (BOM, ver `estadisticas_mercado`): local más de 2,5 falla
 # el tramo 80-85 (82,84→81,35, n=3.368) y sale; el resto sigue pasando.
+# 2026-10-22: con el reparto por supremacía del Motor A
+# (`estadisticas_mercado.CONTEXTO_EQUIPO`) las cuatro de cada equipo siguen
+# pasando en 80-95 % y entran cinco más, las que pagan más
+# (`estadisticas_mercado.SOLO_CON_SUPREMACIA`, que no se ofrecen sin ese
+# contexto). La regla publica la de MENOR probabilidad, es decir, la de cuota
+# más alta.
 CORNERS_HABILITADOS: tuple[tuple[str, str, float], ...] = (
     ("corners", "under", 11.5), ("corners", "under", 12.5), ("corners", "over", 6.5),
-    ("corners_home", "over", 3.5),
-    ("corners_home", "under", 7.5),
-    ("corners_away", "over", 2.5), ("corners_away", "under", 6.5))
+    ("corners_home", "over", 3.5), ("corners_home", "over", 4.5),
+    ("corners_home", "under", 5.5), ("corners_home", "under", 6.5), ("corners_home", "under", 7.5),
+    ("corners_away", "over", 2.5), ("corners_away", "under", 4.5),
+    ("corners_away", "under", 5.5), ("corners_away", "under", 6.5))
 # --- Ampliación 62-95 % (tabla alta_prob_ext, 2026-10-11) -------------------
 # Prueba `eval/alta_prob_calibracion.py --amplio` (14.305 partidos, mismo
 # criterio): pasan 1X2, doble oportunidad, hándicap, "marca el local/visitante",

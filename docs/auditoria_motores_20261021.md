@@ -338,3 +338,22 @@ histórica.
 
 En las ligas sin modelo propio, o con un equipo desconocido, sigue el reparto anterior. La supremacía usada queda
 guardada en el `fit` del pick.
+
+### Líneas añadidas (22-oct, pedido del usuario: «las que dejen las cuotas más altas»)
+
+Entre las que pasan con el reparto nuevo, entran las que pagan algo. Quedan fuera las de cuota mediana de 1,04-1,13 en
+API-Football (local más de 1,5 y 2,5, visitante más de 1,5 y menos de 7,5).
+
+| línea nueva | 80-95 %: prometido → real (n) | cuota mediana |
+|---|---|---|
+| local más de 4,5 | 83,8 → 85,3 (116) | 1,70 |
+| local menos de 5,5 | 83,6 → 86,5 (141) | 1,75 |
+| local menos de 6,5 | 84,8 → 84,8 (745) | 1,46 |
+| visitante menos de 4,5 | 82,5 → 82,4 (85) | 1,78 |
+| visitante menos de 5,5 | 84,1 → 84,5 (915) | 1,43 |
+
+Dónde entran:
+- **Alta probabilidad:** las cinco. Su regla ya publica, por partido, la de menor probabilidad dentro de 80-95 %, que es
+  la de cuota más alta. El recorte a la probabilidad de la casa sigue igual.
+- **Escalera y lista de mercados:** local menos de 6,5 y visitante menos de 5,5. Las demás nuevas ya estaban.
+- Solo se ofrecen con la supremacía del Motor A (`estadisticas_mercado.SOLO_CON_SUPREMACIA`), que es como se validaron.
