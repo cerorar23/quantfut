@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-22 19:40 UTC · Córners de cada equipo según la supremacía del Motor A (#72, `c4e6378`) · solo worker (`docker cp` + imagen congelada, sin recrear)
+- **Antes:** `model/estadisticas_mercado.py`, `publish/escalera_datos.py` y `publish/alta_prob_datos.py` del worker coincidían con `main` previo (`9697aa1`). Respaldo en `releases/auditoria-motores/backup/worker_*.before`.
+- **Despliegue:** `docker cp` de los tres archivos de `main` y `docker commit` → `quantfut-worker:corners-c4e6378` (`b04cebc4bf97`) = `latest`. `deploy.sh estado`: worker = `main` salvo las dos diferencias ajenas ya anotadas (`api/main.py`, `publish/tarjetas_seg.py`); `latest` = lo que corre. La API no usa los córners por equipo y no se toca.
+- **Comprobado:** en ensayo en seco con las predicciones de hoy, los 10 partidos con modelo de córners reciben la supremacía (Real Madrid-Leipzig: córners del local 5,43 → 6,14). Primer uso real: alta probabilidad y escalera del job de las 09:00 UTC del 23-oct.
+- **Vuelta atrás:** `docker cp releases/auditoria-motores/backup/worker_<archivo>.before quantfut-worker-1:/app/src/qf/<ruta>` para los tres y `docker tag quantfut-worker:auditoria-a779e08 quantfut-worker:latest`.
+
 ### 2026-10-22 18:50 UTC · Auditoría de los motores, pasos 1-3 (#70, `a779e08`) · worker (imagen congelada + recreate), API (imagen nueva), `.env`
 - **Antes de desplegar.** `deploy.sh estado`: los 7 archivos tocados coincidían con `main` previo (`c57afe8`) en el worker. Había dos diferencias ajenas en el worker que se **conservan**:
   - `api/main.py`, versión anterior, sin uso en el worker;
