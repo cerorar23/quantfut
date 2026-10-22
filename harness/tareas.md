@@ -3118,7 +3118,8 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [ ] Desde el 1-nov: comprar 20 snapshots, revisar `load`, comprar el resto (3.250 créditos) y correr `nba.market_compare`; órdenes en el documento.
 - [x] Captura del precio de Pinnacle al sellar cada cohorte (`nba.live_market`, offline, bloqueada antes del 1-nov) y comparación prospectiva con protocolo congelado. docs/nba_mercado_prospectivo_20261101.md.
 - [x] Captura del precio en el servidor, opción A aprobada: código (`live_market`: clave del servidor, carpeta de precios aparte, libro 2/día y 70/mes con `halt`, `capture-pending` con fases sello y cierre; 24 pruebas), clave copiada a `live13/private/odds_key` sin leerla, imagen y envoltorio de cron preparados. NO desplegado. docs/nba_captura_precio_servidor_propuesta_20261022.md.
-- [ ] Desplegar el paso de precios (esperar confirmación del titular): fusionar la rama con `main` (conflictos previsibles en market_compare.py y su prueba), construir `nba-live13-price`, crear la red `nba-price`, instalar `price.sh` y la línea de cron, verificar el bloqueo hasta el 1-nov y anotar la entrada en DEPLOYS.md.
+- [x] Paso de precios desplegado (22-oct 23:05 UTC, PR #77): imagen `nba-live13-price:20261022`, red `nba-price`, `price.sh` y cron cada 5 min; bloqueado en código hasta el 2026-11-01. Entrada en DEPLOYS.md con la vuelta atrás.
+- [ ] 1-nov: comprobar el primer sellado con precio (`price/<cohorte>/seal.json`, 1 crédito) y que `ledger/` no tenga `halt`.
 
 ### NBA — mejoras de la auditoría del motor, 2026-10-21
 Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
