@@ -69,6 +69,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
   3. `cp releases/auditoria-motores/backup/docker-compose.before.yml docker-compose.yml` + recreate de la API.
   4. Si el modelo nuevo quedó activo: `UPDATE model_artifacts SET is_active = (model_version = '2026.09.27-010508')`.
 
+### 2026-10-22 03:55 UTC · Tarjetas: más líneas en el seguimiento · worker (un archivo), rama `tarjetas-lineas-seguimiento`
+- Cambio: `publish/tarjetas_seg.py` guarda también «más de» 2,5-7,5 y «menos de» 3,5/7,5 en `tarjetas_seg` (solo seguimiento, no se publica; `LINEAS_HABILITADAS` intacta).
+- Método: `docker cp` de ese único archivo al worker (parche del contenedor, no de la imagen: se pierde si se recrea). Antes era idéntico a `main` (`a1b677a39432`); ahora `bd63ecb7f9af`, igual a la rama. Sin reinicios.
+- Verificado: importa y carga 11 líneas; `preview` sin error. Los partidos que ya tenían filas hoy no se completan (solo los nuevos); se verá en la pasada diaria de las 08:00 UTC.
+- Vuelta atrás: `docker cp ~/quantfut/deployments/tarjetas-lineas-20261022/antes/tarjetas_seg.py quantfut-worker-1:/app/src/qf/publish/tarjetas_seg.py`.
+- **Fusionado en `main` el 22-oct** (rama `tarjetas/lineas-seguimiento`): el archivo del worker ya coincide con `main`; desaparece la diferencia ajena anotada en las entradas del mismo día.
+
 ### 2026-10-21 · AdMob (ID de editor y bloque) y estado de Meta · SOLO configuración en la base, sin código ni reinicios
 - `reward_settings` (vía `qf.api.anuncios.save_config`, auditado como `ssh:claude-titular`): `admob_publisher_id = pub-3902371555866850` y
   `ad_unit_android = ca-app-pub-3902371555866850/4169479093` (bloque Recompensado, SSV con `https://pronosticosdeportivos.pro/rewards/callback/admob`).

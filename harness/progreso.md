@@ -6855,3 +6855,6 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: el contexto sale del Motor A (`predictions`) y solo si conoce a los dos equipos, por la regla del 2026-10-08 de no usar cuotas en el C.
 - Decisión: se quitan las dos líneas del visitante que fallan con el modelo nuevo. Las que ahora pasan no se añaden sin decisión de producto.
 - Decisión (pedido del usuario): se añaden las líneas de córners por equipo que pasan y pagan más (cuota mediana 1,43-1,78); las de 1,04-1,13 quedan fuera, como «menos de 4,5 goles» el 6-oct. Solo con supremacía del A, porque sin ella no se validaron.
+## 2026-10-21 — Tarjetas: se miden también las líneas de «más de» (sin publicar; worker desplegado el 22-oct)
+
+Medición en producción (SQL sobre `tarjetas_seg`, 162 resueltas): «menos de» 4,5/5,5/6,5 prometen 54/61/76 % y aciertan 67/85/93 %; el modelo se queda corto, al revés de lo que se temía el 10-oct. Las líneas de «más de» nunca se midieron porque `LINEAS_HABILITADAS` solo trae «menos de». Decisión del usuario: `tarjetas_seg.LINEAS_SEGUIMIENTO` añade «más de» 2,5-7,5 y «menos de» 3,5/7,5 solo al seguimiento; escalera y parley no cambian. Publicar tarjetas espera esa muestra (las filas del mismo partido están correlacionadas).
