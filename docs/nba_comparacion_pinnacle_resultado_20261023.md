@@ -33,8 +33,8 @@ La probabilidad de ganador de la v1.3 **no supera a Pinnacle sin margen** y su p
 ## ¿Queda completo el motor?
 No. Esta compra cubre **solo el mercado de ganador** (moneyline) en 2024-25 y 2025-26.
 - **Total del partido:** requiere otros ~3.250 créditos (mercado `totals`, mismas fechas). Con la renovación se puede comprar; el código y el protocolo ya existen para el ganador y habría que extenderlos.
-- **Puntos de equipo:** no he verificado que The Odds API ofrezca líneas históricas de puntos por equipo (no están en los mercados estándar `h2h`/`totals`/`spreads`); si no las tiene, solo se podrían comparar de forma prospectiva, capturando el precio actual si el proveedor lo lista.
-- **Jugadores (puntos, rebotes, asistencias, triples, robos, tapones):** el histórico de props existe solo por partido y a 10 créditos por mercado, región y snapshot (estimación: unos 144.000 créditos para seis mercados en dos temporadas), y además el modelo no tiene una lista verificada de quién juega antes del salto. No es viable retrospectivamente; la vía es prospectiva y requiere primero esa lista. Hoy los mercados de jugador siguen siendo solo investigación.
+- **Puntos de equipo:** `team_totals` existe como mercado adicional por evento (casas de EE. UU., no Pinnacle) con histórico desde mayo de 2023; cuesta 10 créditos por partido y snapshot (≈24.000 para las dos temporadas).
+- **Jugadores (puntos, rebotes, asistencias, triples, robos, tapones):** **corrección del 23-oct:** la cifra de ~145.000 créditos (6 mercados × 2.415 partidos × 10) es correcta, pero la conclusión de «no viable» no: un mes del plan 5M de The Odds API cuesta $119 y cubre todo con margen, y no hace falta una lista verificada de jugadores (el mercado define el universo; el emparejado funcionó 17 de 17). Falta construir y correr la comparación, y es probable que el mercado gane. Detalle, coste y propuesta por fases en `docs/nba_props_jugadores_viabilidad_20261023.md`.
 - **Prospectivo:** el paso de precios desplegado el 22-oct empieza a capturar el 1-nov y es la única prueba sin sesgo de selección.
 
 ## Créditos

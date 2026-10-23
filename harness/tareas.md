@@ -3140,3 +3140,4 @@ Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
 - [x] Arreglo: la API exige la fecha con sufijo Z (HTTP 422 con +00:00), en `odds_history.api_time`, con prueba.
 - [ ] Comprar el mercado `totals` (≈3.250 créditos) tras la renovación del 1-nov para comparar el total del partido; puntos de equipo y jugadores solo de forma prospectiva.
 - [ ] Fútbol queda con 294 créditos (≈1 día) hasta el reset del 1-nov: decisión del titular (opción 3); revisar la captura en vivo de fútbol.
+- [ ] Props de jugador retrospectivos: viables con un mes del plan 5M de The Odds API ($119; ≈345.000 créditos) o, de forma barata, 100 partidos × 2 mercados (2.000 créditos); falta el módulo de comparación y su protocolo congelado. docs/nba_props_jugadores_viabilidad_20261023.md.
