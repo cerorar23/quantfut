@@ -108,7 +108,7 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             out["sin_precio"] += 1
             continue
         equipos: list[dict] = []
-        if snap.source == "the_odds_api":
+        if snap.source in ("the_odds_api", "propline"):
             totales = ad._totales(m["match_id"], snap.as_of)
         elif snap.source == "api_football":
             totales = ad._totales_af(m["match_id"], snap.as_of, now)

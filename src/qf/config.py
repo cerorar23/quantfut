@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+import json
+from pathlib import Path
 from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
@@ -17,6 +19,17 @@ def _i(key: str, default: int) -> int:
     return int(os.getenv(key, default))
 
 
+def _odds_provider() -> str:
+    selected = os.getenv("ODDS_PROVIDER")
+    policy = Path(os.getenv("PROPLINE_ARCHIVE", "/srv/quantfut/artifacts/propline_shared")) / "provider.json"
+    if selected is None and policy.is_file():
+        selected = json.loads(policy.read_text(encoding="utf8"))["provider"]
+    selected = selected or "the_odds_api"
+    if selected not in ("the_odds_api", "propline"):
+        raise ValueError("unknown odds provider")
+    return selected
+
+
 @dataclass(frozen=True)
 class Settings:
     # --- Infraestructura ---
@@ -26,6 +39,11 @@ class Settings:
     # --- APIs ---
     odds_api_key: str = os.getenv("ODDS_API_KEY", "")
     odds_api_base: str = "https://api.the-odds-api.com/v4"
+    # PropLine is captured once hourly outside the prediction worker. Consumers
+    # read its archive; the key belongs only to the collector. Legacy remains
+    # selectable for reproducing older research, not as a silent fallback.
+    odds_provider: str = _odds_provider()
+    propline_archive: str = os.getenv("PROPLINE_ARCHIVE", "/srv/quantfut/artifacts/propline_shared")
     # `eu` trae Pinnacle y Betfair Exchange, la referencia sharp. `us` solo
     # añade casas de EE. UU. y duplica el coste en créditos.
     odds_api_regions: str = os.getenv("ODDS_API_REGIONS", "eu")

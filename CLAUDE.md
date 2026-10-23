@@ -5,6 +5,15 @@ Sistema cuantitativo de predicción de fútbol (Dixon-Coles + de-vig de mercado
 FastAPI. Ver [README.md](README.md) para la arquitectura completa; este
 archivo es el arnés operativo, no repite esa documentación.
 
+Decisión del usuario (2026-10-23): PropLine es la fuente fija de **cuotas** para
+los motores y consultas nuevas. Un recolector compartido captura cada hora;
+los motores leen el archivo y no hacen peticiones duplicadas. Conservar las
+observaciones originales para reentrenamiento posterior, con recepción real,
+fuente e identidad del contrato; no reentrenar ni promover por capturar datos.
+Ver `docs/propline_compartido_20261023.md`. The Odds API queda para históricos
+ya autorizados/reproducción; no es fallback automático de las cuotas en vivo.
+Esto no sustituye estadísticas, lesiones o resultados oficiales.
+
 Actualización (2026-09-23): un único FastAPI sirve también la web demo en
 `/` y el panel interno en `/control`; el BFF separado que figura en
 decisiones históricas fue descartado. No exponer tokens de servicio o

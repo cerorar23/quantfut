@@ -86,7 +86,9 @@ def _totales(match_id: str, as_of: datetime) -> list[dict]:
     return query(
         """SELECT bookmaker, selection, line, price FROM odds_snapshots
            WHERE match_id = %s AND market = 'totals' AND source = 'the_odds_api'
-             AND captured_at = %s""",
+             AND captured_at = %s""".replace("source = 'the_odds_api'",
+                 "source = 'propline'" if getattr(settings, "odds_provider", "the_odds_api") == "propline"
+                 else "source = 'the_odds_api'"),
         (match_id, as_of))
 
 
@@ -253,7 +255,7 @@ def _ref_nuevos(c: ap.Candidato, match_id: str, snap: pk.Snapshot, filas_af: lis
     if snap.source == "api_football":
         price, book, _ = ed._ref_af(filas_af, c)
         return price, book
-    if snap.source != "the_odds_api":
+    if snap.source not in ("the_odds_api", "propline"):
         return None, None
     return ed._ref_handicap(ed._handicaps(match_id, snap.as_of), c)
 
@@ -332,7 +334,7 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         # Las cuotas de "marca un equipo" solo existen en API-Football, y de la
         # MISMA respuesta que el 1X2: con The Odds API no hay referencia.
         equipos = []
-        if snap.source == "the_odds_api":
+        if snap.source in ("the_odds_api", "propline"):
             totales = _totales(m["match_id"], snap.as_of)
         elif snap.source == "api_football":
             totales = _totales_af(m["match_id"], snap.as_of, now)
