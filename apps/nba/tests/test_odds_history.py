@@ -120,3 +120,13 @@ def test_a_game_is_never_priced_from_the_snapshot_of_the_day_before(tmp_path):
     (tmp_path / (p['slots'][0]['name'] + '.json')).write_text(json.dumps(snap))
     rows, stats = oh.load(p, tmp_path, games)
     assert [r['game_id'] for r in rows] == ['g1'] and stats['snapshot_other_day'] == 1
+
+
+def test_the_date_sent_to_the_historical_endpoint_ends_in_z_not_in_an_offset(tmp_path):
+    p = oh.plan(GAMES, TIPS, {'2024-25'})
+    client = Client([Reply({'data': []}), Reply({'data': []})])
+    oh.fetch(p, tmp_path, 'k', cap=100, reserve=0, now=datetime(2026, 11, 2, tzinfo=UTC), client=client)
+    # the provider answered 422 INVALID_HISTORICAL_TIMESTAMP to '...+00:00' on 2026-10-23
+    assert client.calls == ['2025-01-15T00:00:00Z', '2025-01-18T16:30:00Z']
+    assert oh.api_time('2025-01-15T00:00:00+00:00') == '2025-01-15T00:00:00Z'
+    assert oh.api_time('2025-01-14T19:00:00-05:00') == '2025-01-15T00:00:00Z'

@@ -26,6 +26,11 @@ MAX_PRICE_AGE = timedelta(hours=6)
 TEAM_ALIASES = {'Los Angeles Clippers': 'LA Clippers'}
 
 
+def api_time(value):
+    """The historical endpoint rejects `+00:00` (HTTP 422 INVALID_HISTORICAL_TIMESTAMP); it wants YYYY-MM-DDTHH:MM:SSZ."""
+    return datetime.fromisoformat(value).astimezone(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
 def snapshot_cost(markets, regions=1):
     return CREDITS_PER_MARKET_REGION * len(markets) * regions
 
@@ -80,7 +85,7 @@ def fetch(plan_, cache, key, *, cap, reserve, now, client, limit=None):
             break
         response = client.get(ENDPOINT.format(sport=plan_['sport']), params=dict(
             apiKey=key, regions=plan_['regions'], markets=','.join(plan_['markets']), oddsFormat='decimal',
-            date=slot['time']), timeout=60)
+            date=api_time(slot['time'])), timeout=60)
         if response.status_code != 200:
             stop = f'http_{response.status_code}'
             break
