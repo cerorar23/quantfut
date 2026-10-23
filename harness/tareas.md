@@ -3133,3 +3133,10 @@ Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
 - [ ] Ratings ataque/defensa ajustados por rival y ritmo, una sola distribución del marcador para ganador/puntos/total.
 - [ ] Prior de pretemporada para los primeros 15-20 partidos (oct-nov empeora el Brier del ganador ~0,01).
 - [ ] Puntos de jugador: modelo 2P/3P/TL o dispersión ajustada; rangos desde la distribución calibrada (hoy el 80 % cubre 73 %).
+
+### NBA — cuotas históricas de ganador compradas y comparación con Pinnacle, 2026-10-23
+- [x] Compra de los 325 snapshots h2h de 2024-25 y 2025-26 (3.250 créditos) por instrucción del titular, antes del bloqueo del 1-nov; cobertura 98,8 % y 99,8 %.
+- [x] Comparación congelada contra Pinnacle sin margen: el modelo no supera al mercado (Brier +0,0040 y +0,0057; peso de información c = 0,25 y 0,09, con IC que incluye 0). Veredicto: sin evidencia de información añadida. docs/nba_comparacion_pinnacle_resultado_20261023.md.
+- [x] Arreglo: la API exige la fecha con sufijo Z (HTTP 422 con +00:00), en `odds_history.api_time`, con prueba.
+- [ ] Comprar el mercado `totals` (≈3.250 créditos) tras la renovación del 1-nov para comparar el total del partido; puntos de equipo y jugadores solo de forma prospectiva.
+- [ ] Fútbol queda con 294 créditos (≈1 día) hasta el reset del 1-nov: decisión del titular (opción 3); revisar la captura en vivo de fútbol.
