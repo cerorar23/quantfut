@@ -260,6 +260,8 @@ def _group(rows: list[dict], source: str, as_of_key: str) -> Snapshot | None:
 
 def _af_snapshot(match_id: str, now: datetime) -> Snapshot | None:
     """Última respuesta de API-Football que ya TENÍAMOS en `now`."""
+    if getattr(settings, "odds_provider", "the_odds_api") == "propline":
+        return None
     rows = query(
         """SELECT bookmaker, selection, price, provider_updated_at
            FROM af_odds_snapshots
@@ -273,7 +275,10 @@ def _af_snapshot(match_id: str, now: datetime) -> Snapshot | None:
 
 
 def _odds_api_snapshot(match_id: str, now: datetime) -> Snapshot | None:
-    """Última captura de The Odds API anterior a `now` (todas las casas a la vez)."""
+    """Latest receipt of the configured provider; never mix sources or timestamps."""
+    source = getattr(settings, "odds_provider", "the_odds_api")
+    if source not in ("propline", "the_odds_api"):
+        raise ValueError("unknown odds provider")
     rows = query(
         """SELECT bookmaker, selection, price, captured_at
            FROM odds_snapshots
@@ -282,10 +287,11 @@ def _odds_api_snapshot(match_id: str, now: datetime) -> Snapshot | None:
              AND captured_at = (
                  SELECT max(captured_at) FROM odds_snapshots
                  WHERE match_id = %s AND market = 'h2h'
-                   AND source = 'the_odds_api' AND captured_at <= %s)""",
+                   AND source = 'the_odds_api' AND captured_at <= %s)""".replace(
+                       "source = 'the_odds_api'", "source = '" + source + "'"),
         (match_id, now, match_id, now),
     )
-    return _group(rows, "the_odds_api", "captured_at")
+    return _group(rows, source, "captured_at")
 
 
 @dataclass

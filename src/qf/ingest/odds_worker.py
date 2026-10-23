@@ -171,7 +171,7 @@ def _parse_event(ev: dict, match_id: str, window_tag: str,
                     sel = "home" if name == home_name else "away"
 
                 rows.append((match_id, book, mkey, sel, point, float(price),
-                             now, mins_to_ko, window_tag, "the_odds_api", updated))
+                             now, mins_to_ko, window_tag, ev.get("_provider", "the_odds_api"), updated))
     return rows
 
 
@@ -229,6 +229,9 @@ def run_once(solo: tuple[str, ...] | None = None) -> dict:
     quedaba sin cierre justo para siempre. Con el rescate hay dos intentos;
     si el primero funcionó, el registro de captura hace que no gaste nada.
     """
+    if settings.odds_provider == "propline":
+        from .propline_ingest import ingest_hourly
+        return ingest_hourly()
     now = datetime.now(timezone.utc)
     pending = _pending_windows(now, solo)
     if not pending:

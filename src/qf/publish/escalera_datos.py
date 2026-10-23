@@ -138,6 +138,14 @@ def _cuotas_af(match_id: str, now: datetime) -> list[dict]:
     Última cotización de cada casa para ambos anotan, doble oportunidad, hándicap,
     córners y tarjetas, ya recibida en `now` y con menos de MAX_EDAD_PRECIO.
     """
+    if getattr(settings, "odds_provider", "the_odds_api") == "propline":
+        return query("""SELECT DISTINCT ON(bookmaker,market,selection,line)
+                   bookmaker,market,selection,line,price,captured_at AS provider_updated_at
+                   FROM odds_snapshots WHERE match_id=%s AND source='propline'
+                     AND market IN ('btts','double_chance','spreads','corners','cards','corners_home','corners_away')
+                     AND captured_at<=%s AND captured_at>=%s
+                   ORDER BY bookmaker,market,selection,line,captured_at DESC""",
+                     (match_id,now,now-es.MAX_EDAD_PRECIO))
     return query(
         """SELECT DISTINCT ON (bookmaker, market, selection, line)
                   bookmaker, market, selection, line, price, provider_updated_at
@@ -257,7 +265,7 @@ def opciones(m: dict, now: datetime, rho: float | None,
     snap = ad._snapshot(match_id, kickoff, now)
     if snap is not None:
         equipos: list[dict] = []
-        if snap.source == "the_odds_api":
+        if snap.source in ("the_odds_api", "propline"):
             totales = ad._totales(match_id, snap.as_of)
         elif snap.source == "api_football":
             totales = ad._totales_af(match_id, snap.as_of, now)
@@ -282,7 +290,7 @@ def opciones(m: dict, now: datetime, rho: float | None,
                       for lado in es.BTTS_LADOS]
         # Hándicap: solo hay cuotas de las casas en The Odds API.
         lineas_ah: list[dict] = []
-        if es.LINEAS_HANDICAP and snap.source == "the_odds_api":
+        if es.LINEAS_HANDICAP and snap.source in ("the_odds_api", "propline"):
             cands += es.candidatos_handicap(p, mat)
             lineas_ah = _handicaps(match_id, snap.as_of)
         for c in cands:
@@ -310,7 +318,9 @@ def _handicaps(match_id: str, as_of: datetime) -> list[dict]:
     return query(
         """SELECT bookmaker, selection, line, price FROM odds_snapshots
            WHERE match_id = %s AND market = 'spreads' AND source = 'the_odds_api'
-             AND captured_at = %s""",
+             AND captured_at = %s""".replace("source = 'the_odds_api'",
+                 "source = 'propline'" if getattr(settings, "odds_provider", "the_odds_api") == "propline"
+                 else "source = 'the_odds_api'"),
         (match_id, as_of))
 
 
