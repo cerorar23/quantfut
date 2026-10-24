@@ -365,10 +365,17 @@
     "min_hours_after_start": 6,
     "max_attempts": 3,
     "daily_budget": {
-      "basketball_nba": 100,
-      "soccer_": 200,
+      "basketball_nba": 130,
+      "soccer_": 300,
       "tennis": 300
     },
-    "measured_20261024": "hourly capture 129 requests/hour (~3,100/day) plus ~110 daily; finished events/day observed: NBA 7-36, soccer 15-96, tennis 165-491"
-  }
+    "measured_20261024": "hourly capture 129 requests/hour (~3,100/day) plus ~110 daily; finished events/day observed: NBA 7-36, soccer 15-96, tennis 165-491",
+    "stats_prefixes": [
+      "basketball_nba",
+      "soccer_"
+    ]
+  },
+  "injuries_sports": [
+    "basketball_nba"
+  ]
 }

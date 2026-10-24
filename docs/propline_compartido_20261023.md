@@ -74,3 +74,10 @@ Las 6 claves de fútbol nuevas (`player_shots`, `player_shots_on_target`, `goali
 Los marcadores se deciden con la hora de inicio de la pasada, no con la del final.
 
 La hora de `closing_at` y `resolved_at` es de PropLine. Estos datos sirven para etiquetar y medir CLV; no son entradas point-in-time de un pronóstico. Ningún motor los lee todavía.
+
+## Box score, lesiones NBA y lectores (24-oct-2026, PR #97)
+
+- **Box score** (`/events/{id}/stats`): tercer tipo de la cola de liquidación, después de `odds/closing` y `results`, solo para los prefijos de `settlement.stats_prefixes` (NBA y fútbol). Comparte la reserva diaria (NBA 130, fútbol 300, tenis 300). En fútbol trae córners y tarjetas por equipo; el nombre del club puede llevar tildes que el evento no tiene.
+- **Lesiones NBA** (`injuries_sports`): `/v1/sports/basketball_nba/injuries` en cada pasada horaria (24/día). Segunda señal de ESPN con `status_code` y `status_since`; el protocolo v1.3 sigue con el PDF oficial.
+- **Lectores sin red, punto en el tiempo:** `read_closing` (marca `pre_kickoff_capture`, `stale_close`, DFS y bolsas), `read_results`, `read_stats` + `team_stats` (un nombre que no coincide se descarta, nunca se adivina) y `read_injuries` (con nuestra hora de recepción).
+- Ningún motor los lee todavía: la puerta CLV, la liquidación de córners y tarjetas y las lesiones en NBA van en cambios propios con fecha de corte.
