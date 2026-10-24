@@ -526,19 +526,46 @@ def _fold(name):
 TEAM_STATS = ("corners", "cards")
 
 
-def team_stats(doc):
-    """{'home'|'away': {'corners': n, 'cards': n}} from the box score's team rows.
+def _same_club(a, b):
+    """Folded names that are equal or where one contains the other ("ipswich" / "ipswichtown")."""
+    return bool(a and b) and (a == b or (min(len(a), len(b)) >= 4 and (a in b or b in a)))
 
-    Team rows name the club in `player_name`, sometimes spelled differently from the event (accents).
-    A row that matches neither side by folded name is left out rather than guessed.
+
+def team_sides(doc):
+    """{box-score team name: 'home'|'away'}; {} when the two clubs cannot be told apart for certain.
+
+    Books and the box score spell clubs differently ("Stuttgart" / "VfB Stuttgart", "Borussia
+    M'gladbach" / "Borussia Mönchengladbach"). A name matches a side when one folded name contains the
+    other; with exactly two clubs, one certain match decides the other. Anything ambiguous returns {}.
     """
-    sides = {_fold(doc.get("home_team")): "home", _fold(doc.get("away_team")): "away"}
+    names = sorted({r.get("player_name") for r in doc.get("stats", []) if r.get("stat_type") in TEAM_STATS
+                    and r.get("player_name")})
+    if len(names) != 2:
+        return {}
+    event = {"home": _fold(doc.get("home_team")), "away": _fold(doc.get("away_team"))}
+    found = {}
+    for name in names:
+        hits = [side for side, folded in event.items() if _same_club(_fold(name), folded)]
+        if len(hits) == 1:
+            found[name] = hits[0]
+    if len(set(found.values())) != len(found):
+        return {}
+    if len(found) == 1:
+        (known, side), = found.items()
+        found[next(n for n in names if n != known)] = "away" if side == "home" else "home"
+    return found if len(found) == 2 else {}
+
+
+def team_stats(doc):
+    """{'home'|'away': {'corners': n, 'cards': n}} from the box score's team rows; {} if the sides are uncertain."""
+    sides = team_sides(doc)
     out = {}
     for row in doc.get("stats", []):
-        side = sides.get(_fold(row.get("player_name")))
+        side = sides.get(row.get("player_name"))
         if side and row.get("stat_type") in TEAM_STATS and row.get("stat_value") is not None:
             out.setdefault(side, {})[row["stat_type"]] = float(row["stat_value"])
     return out
+
 
 def market_batches(sport, markets, config):
     """Provider-safe batches with a stable, auditable request count."""
