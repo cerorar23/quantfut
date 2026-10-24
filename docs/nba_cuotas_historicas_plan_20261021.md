@@ -29,3 +29,7 @@ Conviene empezar con `--limit 20` y revisar `load` (partidos emparejados, precio
 
 ## Pendiente después
 Cuando haya datos: exportar las probabilidades de ganador de v1.3 por partido y comparar Brier/logloss con `home_no_vig` de Pinnacle en las mismas filas, con el mismo bootstrap por fechas. Eso decide si hay algo que vender.
+
+## Comparación contra el mercado (listo, sin ejecutar)
+
+Ver `docs/nba_comparacion_pinnacle_20261101.md`: protocolo congelado antes de comprar, brazo alineado con la hora del snapshot, corrección del alias de los Clippers y de precios de la víspera, y las órdenes exactas para el 1-nov.
