@@ -58,13 +58,26 @@ Historia: hasta el 23-oct el estado era «implementado y probado localmente (com
 - **Tenis conectado (24-oct):** `tennis_motor` lee el ganador sin margen de `tennis_odds_propline_v1` (sobre `read_two_way`) con `odds_provider: propline`; el cron del VPS ya no toma fotos de The Odds API y no hay respaldo. Fecha de corte: los sellados de la entrada automática desde el despliegue registran `live.provider = propline`; los anteriores conservan su foto de The Odds API. `tennis_odds_live_v1` no se modifica porque el protocolo v8 congela el hash de su código. Ver `apps/tennis/README.md` y DEPLOYS.md.
 - **NBA (partido completo) sin recablear:** el productor 1.3.1 ya lee las líneas de jugador del archivo; el paso de precios de equipo sigue con The Odds API. Conectarlo exige decidir fecha de corte y no mezclar proveedores dentro de protocolos ya sellados; con la forma de The Odds API el cambio en `live_market.price_rows` es pequeño, pero ese parser exige `last_update` y deberá aceptar su ausencia.
 
-## Cierre, box score, liquidación y lesiones (24-oct-2026, sin desplegar)
+## Cierres y liquidaciones diarios (24-oct-2026)
 
-El recolector añade dos fases a cada pasada horaria, siempre **después** de las cuotas y los marcadores:
+La cuenta es Hobby (`x-daily-limit: 5000`), así que `/events/{id}/odds/closing` y `/events/{id}/results` devuelven datos completos. Cada pasada horaria, después de cuotas, marcadores, ids y futuros, el recolector pide para cada partido terminado de NBA, tenis y fútbol:
 
-- **Lesiones NBA** (`injuries_sports`): `/v1/sports/basketball_nba/injuries` una vez por hora (24 peticiones/día). Lectura: `read_injuries(root, sport, as_of)`, con nuestra hora de recepción en cada fila. Es una segunda señal (ESPN, con `status_code` y `status_since`); el protocolo v1.3 sigue usando el PDF oficial.
-- **Después del partido, una vez por evento** (`post_game`): los objetivos salen del último `/scores` archivado, así que localizarlos no cuesta peticiones. Al pasar la hora de inicio se pide `/events/{id}/odds/closing` (apertura y cierre por casa); con el partido en `final`, `retired` o `walkover`, `/events/{id}/stats` (box score) y `/events/{id}/results` (liquidación de PropLine). Mercados y casas por familia en `scripts/propline_shared_config.json` (fútbol, NBA y tenis ATP/WTA, igual que el antiguo `propline_captura.py`).
-- Comprobado con la clave el 24-oct: **`/results` y `/odds/closing` están incluidos en Hobby** (`redacted: false`). `/stats` de fútbol trae córners y tarjetas por equipo; el nombre del club puede llevar tildes que el evento no tiene.
-- **Presupuesto:** cada pasada horaria gasta ~130 peticiones (~3.350/día con marcadores, IDs y futuros); el tope local es 4.500. La fase posterior al partido tiene su propio tope (`per_run` 60, `daily_max` 600) para que nunca deje sin cuotas a las pasadas siguientes. Una petición fallida (p. ej. 404 de un evento fusionado) se reintenta en horas siguientes hasta `max_attempts` (3) y se informa aparte, en `post_game.failures`, sin marcar como fallida la pasada de cuotas. Una liquidación capturada antes de que PropLine califique todo se vuelve a pedir.
-- **Lectores sin red:** `read_closing` (filas con `closing_at`, `opening_*` y bandera `pre_kickoff_capture` si se capturó antes del inicio), `read_stats` + `team_stats` (córners y tarjetas por lado; un nombre que no coincide se descarta, nunca se adivina), `read_results`.
-- **No se recablearon los motores.** La puerta CLV, la liquidación de córners y tarjetas y el uso de lesiones en NBA deben leer estos datos en cambios propios, con fecha de corte. El emparejamiento por `player_id` de NBA ya existía (`apps/nba/src/nba/prop_lines.py`); en tenis PropLine no da `player_id`.
+- `odds/closing` con las claves de su familia y `period=all`: última cuota antes del inicio y apertura, por casa. Una vez por partido.
+- `results`: props liquidados con el valor real. Solo si el estado es `final` (en `retired`/`walkover` los props son nulos). Se repite otro día mientras queden resultados sin liquidar, hasta 3 intentos.
+
+Los partidos terminados salen de nuestros propios recibos de `/scores` (últimos 3 días) y se piden a partir de 6 h después del inicio. Con presupuesto limitado van primero los partidos con más casas en `/ids`. Si el plan devuelve 401/403 o `redacted` en un tipo de petición, ese tipo se deja de pedir el resto del día.
+
+**Presupuesto medido en el servidor (24-oct, solo lectura del índice):** 129 peticiones por hora de cuotas (≈3.100/día), más ~110 diarias de ids/futuros/mercados y ~130 de marcadores. Partidos terminados por día vistos en `/ids`: NBA 7-36, fútbol 15-96, tenis 165-491. Reserva diaria: NBA 100, fútbol 200, tenis 300 (600 en total). La captura horaria queda limitada a `daily_cap − 600` = 3.900, de modo que los cierres siempre tienen cupo; el total sigue bajo el tope de 4.500. En tenis no cabe todo en días de muchos ITF: se quedan fuera los partidos con menos casas, y `over_budget` en el informe de la pasada lo cuenta.
+
+Las 6 claves de fútbol nuevas (`player_shots`, `player_shots_on_target`, `goalie_saves`, `2plus_goals`, `3plus_goals`, `winning_margin`) **no** se añadieron a la familia horaria: costarían un lote más por competición (+31/hora, +744/día). Llegan por el descubrimiento diario por partido, que antes descartaba `2plus_goals`/`3plus_goals` porque usaba el filtro de deportes (exige empezar por letra); ahora usa `MARKET_KEY`. En tenis (`player_aces`, `player_double_faults`, `player_games_won`, `player_break_points_won`, `total_aces`) y NBA (`player_points_10plus`, `player_points_15plus`) el coste es +24/día.
+
+Los marcadores se deciden con la hora de inicio de la pasada, no con la del final.
+
+La hora de `closing_at` y `resolved_at` es de PropLine. Estos datos sirven para etiquetar y medir CLV; no son entradas point-in-time de un pronóstico. Ningún motor los lee todavía.
+
+## Box score, lesiones NBA y lectores (24-oct-2026, PR #97)
+
+- **Box score** (`/events/{id}/stats`): tercer tipo de la cola de liquidación, después de `odds/closing` y `results`, solo para los prefijos de `settlement.stats_prefixes` (NBA y fútbol). Comparte la reserva diaria (NBA 130, fútbol 300, tenis 300). En fútbol trae córners y tarjetas por equipo; el nombre del club puede llevar tildes que el evento no tiene.
+- **Lesiones NBA** (`injuries_sports`): `/v1/sports/basketball_nba/injuries` en cada pasada horaria (24/día). Segunda señal de ESPN con `status_code` y `status_since`; el protocolo v1.3 sigue con el PDF oficial.
+- **Lectores sin red, punto en el tiempo:** `read_closing` (marca `pre_kickoff_capture`, `stale_close`, DFS y bolsas), `read_results`, `read_stats` + `team_stats` (un nombre que no coincide se descarta, nunca se adivina) y `read_injuries` (con nuestra hora de recepción).
+- Ningún motor los lee todavía: la puerta CLV, la liquidación de córners y tarjetas y las lesiones en NBA van en cambios propios con fecha de corte.

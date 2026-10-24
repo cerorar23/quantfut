@@ -358,22 +358,171 @@ def test_read_two_way_is_offline_point_in_time_and_sport_limited(tmp_path):
         pl.read_two_way(tmp_path, "soccer_epl", NOW)
 
 
-# --- Post-game captures (close, box score, grading) and injury report ---------------------------
+REAL_COLLECTOR = pl.Collector
 
-def closing_doc(eid="42", kickoff="2026-10-23T19:00:00Z"):
-    return dict(id=eid, sport_key="soccer_epl", home_team="Arsenal", away_team="Chelsea", commence_time=kickoff,
+
+def settlement_run(tmp_path, monkeypatch, scores, *, results=None, budget=None, sports=("basketball_nba",),
+                   stats_prefixes=(), injuries=()):
+    """One collector run against a fake provider; returns the provider calls."""
+    calls = []
+    def get(path, params, key):
+        calls.append((path, params))
+        if path == "/v1/sports":
+            body = [dict(key=s, active=True) for s in sports]
+        elif path.endswith("/scores"):
+            body = scores
+        elif path.endswith("/ids"):
+            body = [dict(id=e["id"], books={"pinnacle": {}} if e["id"] == "2" else {}) for e in scores]
+        elif path.endswith("/odds/closing"):
+            body = dict(id=path.split("/")[5], bookmakers=[])
+        elif path.endswith("/stats"):
+            body = dict(id=path.split("/")[5], status="final", stats=[])
+        elif path.endswith("/injuries"):
+            body = dict(sport=path.split("/")[3], count=1, players=[dict(player_name="A", status_code="out")])
+        elif path.endswith("/results"):
+            body = results if results is not None else dict(bookmakers=[dict(key="fanduel", markets=[dict(
+                key="player_points", outcomes=[dict(name="Over", resolution="won", actual_value=31)])])])
+        else:
+            body = []
+        return 200, {"X-Daily-Remaining": "4900", "X-Daily-Reset": "1792800000"}, json.dumps(body).encode()
+    monkeypatch.setattr(pl, "Collector", lambda root, key, **kw: REAL_COLLECTOR(root, key, get=get, **kw))
+    key_file = tmp_path / "key"; key_file.write_text("A" * 32)
+    config = dict(sports=list(sports), daily_cap=4500, account_reserve=500, scores=True, scores_every_hours=1, identities_daily=True,
+                  markets_by_family=dict(default=["h2h"], basketball_=["h2h", "player_points"]),
+                  injuries_sports=list(injuries),
+                  settlement=dict(enabled=True, min_hours_after_start=6, daily_budget=budget or {"basketball_nba": 100},
+                                  stats_prefixes=list(stats_prefixes)))
+    config_file = tmp_path / "config.json"; config_file.write_text(json.dumps(config))
+    report = pl.run(tmp_path / "archive", key_file, config_file)
+    return calls, report
+
+
+def ago(hours):
+    return pl.stamp(datetime.now(timezone.utc) - timedelta(hours=hours))
+
+
+def settlement_paths(calls):
+    return [p for p, _ in calls if p.endswith(("/odds/closing", "/results"))]
+
+
+def test_closing_and_results_are_captured_once_for_finished_events(tmp_path, monkeypatch):
+    scores = [dict(id="1", status="final", commence_time=ago(10)), dict(id="2", status="final", commence_time=ago(2)),
+              dict(id="3", status="in_progress", commence_time=ago(9)), dict(id="4", status="retired", commence_time=ago(9)),
+              dict(id="../x", status="final", commence_time=ago(9))]
+    calls, report = settlement_run(tmp_path, monkeypatch, scores)
+    assert sorted(settlement_paths(calls)) == [
+        "/v1/sports/basketball_nba/events/1/odds/closing", "/v1/sports/basketball_nba/events/1/results",
+        "/v1/sports/basketball_nba/events/4/odds/closing"]
+    assert dict(calls)["/v1/sports/basketball_nba/events/1/odds/closing"] == dict(markets="h2h,player_points", period="all")
+    assert report["settlement"]["basketball_nba"] == dict(closing=2, results=1, stats=0, over_budget=0)
+    assert report["failures"] == 0
+    calls, _ = settlement_run(tmp_path, monkeypatch, scores)
+    assert settlement_paths(calls) == []
+
+
+def test_settlement_budget_favours_most_quoted_event_and_is_reserved(tmp_path, monkeypatch):
+    scores = [dict(id="1", status="final", commence_time=ago(20)), dict(id="2", status="final", commence_time=ago(10))]
+    calls, report = settlement_run(tmp_path, monkeypatch, scores, budget={"basketball_nba": 1})
+    assert settlement_paths(calls) == ["/v1/sports/basketball_nba/events/2/odds/closing"]
+    assert report["settlement"]["basketball_nba"]["over_budget"] == 3
+    monkeypatch.undo()
+    c, _ = client(tmp_path / "cap")
+    c.capture("/v1/sports/basketball_nba/odds", {"a": 1}, cap=1)
+    with pytest.raises(pl.BudgetStop, match="local_daily_cap"):
+        c.capture("/v1/sports/basketball_nba/odds", {"a": 2}, cap=1)
+
+
+def test_redacted_results_stop_further_results_that_day(tmp_path, monkeypatch):
+    scores = [dict(id="1", status="final", commence_time=ago(20)), dict(id="2", status="final", commence_time=ago(10))]
+    calls, _ = settlement_run(tmp_path, monkeypatch, scores, results=dict(redacted=True, bookmakers=[]))
+    assert len([p for p in settlement_paths(calls) if p.endswith("/results")]) == 1
+    assert len([p for p in settlement_paths(calls) if p.endswith("/odds/closing")]) == 2
+
+
+def test_ungraded_results_are_retried_on_a_later_day_only(tmp_path):
+    c, _ = client(tmp_path)
+    path = "/v1/sports/tennis/events/7/results"
+    pending = dict(bookmakers=[dict(markets=[dict(outcomes=[dict(name="Over", resolution=None)])])])
+    c.get = lambda p, params, key: (200, {"X-Daily-Remaining": "4900"}, json.dumps(pending).encode())
+    row, _ = c.capture(path, daily=True)
+    assert row["events"] == 1 and row["error"] is None
+    midnight = NOW.replace(hour=0, minute=0, second=0, microsecond=0)
+    today, tomorrow = pl.stamp(midnight), pl.stamp(midnight + timedelta(days=1))
+    assert not pl.settlement_due(c.db, tmp_path, path, today, 3)
+    assert pl.settlement_due(c.db, tmp_path, path, tomorrow, 3)
+    assert not pl.settlement_due(c.db, tmp_path, path, tomorrow, 1)
+    closing = "/v1/sports/tennis/events/7/odds/closing"
+    c.get = lambda p, params, key: (200, {"X-Daily-Remaining": "4900"}, b'{"bookmakers": []}')
+    c.capture(closing, daily=True)
+    assert not pl.settlement_due(c.db, tmp_path, closing, tomorrow, 3)
+
+
+def test_discovered_market_starting_with_digit_is_requested(tmp_path, monkeypatch):
+    calls = []
+    def get(path, params, key):
+        calls.append((path, params))
+        if path == "/v1/sports":
+            body = [dict(key="soccer_epl", active=True), dict(key="9bad", active=True)]
+        elif path.endswith("/markets"):
+            body = [dict(key="2plus_goals", outcomes_count=3), dict(key="h2h", outcomes_count=3)]
+        elif path.endswith("/odds"):
+            body = [event()]
+        else:
+            body = []
+        return 200, {"X-Daily-Remaining": "4900", "X-Daily-Reset": "1792800000"}, json.dumps(body).encode()
+    original = pl.Collector
+    monkeypatch.setattr(pl, "Collector", lambda root, key, **kw: original(root, key, get=get, **kw))
+    key_file = tmp_path / "key"; key_file.write_text("A" * 32)
+    config = dict(sports="all_active", daily_cap=4500, account_reserve=500,
+                  markets_by_family=dict(default=["h2h"], soccer_=["h2h", "totals"]))
+    config_file = tmp_path / "config.json"; config_file.write_text(json.dumps(config))
+    pl.run(tmp_path / "archive", key_file, config_file)
+    requested = [p["markets"] for path, p in calls if path == "/v1/sports/soccer_epl/odds"]
+    assert any("2plus_goals" in m.split(",") for m in requested)
+    assert not any("9bad" in path for path, _ in calls)
+
+
+def test_shipped_config_keeps_settlement_inside_the_daily_cap():
+    from pathlib import Path
+    config = json.loads((Path(__file__).resolve().parents[1] / "scripts" / "propline_shared_config.json").read_bytes())
+    families, settle = config["markets_by_family"], config["settlement"]
+    # server, 24-oct-2026: hourly odds, daily ids/futures/markets, scores; plus the hourly NBA injury report
+    measured_daily = 129 * 24 + 110 + 4 * 33 + 24 * len(config.get("injuries_sports", []))
+    assert measured_daily + sum(settle["daily_budget"].values()) <= config["daily_cap"]
+    assert all(len(keys) <= 50 for keys in families.values())  # one closing call per event
+    assert {"player_aces", "player_double_faults", "player_games_won", "player_break_points_won",
+            "total_aces"} <= set(families["tennis"])
+    assert {"player_points_10plus", "player_points_15plus"} <= set(families["basketball_"])
+    # Six more soccer keys would add one hourly batch per competition (+744 calls/day);
+    # they arrive through the daily per-fixture discovery instead.
+    assert len(pl.market_batches("soccer_epl", families["soccer_"], config)) == 3
+
+
+def test_hourly_cap_reserves_only_the_unspent_settlement_budget(tmp_path, monkeypatch):
+    scores = [dict(id="1", status="final", commence_time=ago(20))]
+    calls, report = settlement_run(tmp_path, monkeypatch, scores, budget={"basketball_nba": 4496})
+    # Cap 4 for hourly calls: catalog, two odds batches and scores; ids is refused.
+    assert report["stop"] == "local_daily_cap" and not [p for p, _ in calls if p.endswith("/ids")]
+    assert settlement_paths(calls) == ["/v1/sports/basketball_nba/events/1/odds/closing",
+                                       "/v1/sports/basketball_nba/events/1/results"]
+    # Next run: 6 calls today, reserve left 4494, hourly cap 6. Nothing is sent.
+    calls, report = settlement_run(tmp_path, monkeypatch, scores, budget={"basketball_nba": 4496})
+    assert report["stop"] == "local_daily_cap" and calls == []
+
+
+# --- Box score, injury report and offline readers -------------------------------------------------
+
+def closing_doc(kickoff="2026-10-23T19:00:00Z"):
+    return dict(id="42", sport_key="soccer_epl", home_team="Arsenal", away_team="Chelsea", commence_time=kickoff,
         bookmakers=[dict(key="pinnacle", markets=[dict(key="totals", period=None, team="Arsenal", line_type="main",
             outcomes=[dict(name="Over", price=-120, point=1.5, closing_at="2026-10-23T18:59:00Z", is_stale=False,
                            opening_price=105, opening_point=1.5, opening_at="2026-10-20T10:00:00Z", outcome_id=7)])])])
 
 
-def test_object_endpoints_are_archived_and_their_shape_is_checked(tmp_path):
-    c, _ = client(tmp_path, data=closing_doc())
-    r, _ = c.capture("/v1/sports/soccer_epl/events/42/odds/closing", {"markets": "totals"})
-    assert r["status"] == 200 and r["error"] is None and (r["events"], r["outcomes"]) == (1, 1)
-    c, _ = client(tmp_path / "list", data=[closing_doc()])
-    r, _ = c.capture("/v1/sports/soccer_epl/events/42/odds/closing", {"markets": "totals"})
-    assert r["error"] == "invalid_json_shape"
+def test_box_score_and_injury_report_are_archived_with_their_shape(tmp_path):
+    c, _ = client(tmp_path, data=dict(id="42", status="final", stats=[dict(stat_type="corners")]))
+    r, _ = c.capture("/v1/sports/soccer_epl/events/42/stats", daily=True)
+    assert (r["status"], r["error"], r["events"]) == (200, None, 1)
     c, _ = client(tmp_path / "inj", data=dict(sport="basketball_nba", count=2, players=[{}, {}]))
     r, _ = c.capture("/v1/sports/basketball_nba/injuries")
     assert (r["events"], r["error"]) == (2, None)
@@ -381,58 +530,45 @@ def test_object_endpoints_are_archived_and_their_shape_is_checked(tmp_path):
         c.capture("/v1/sports/basketball_nba/events/1/odds/history")
 
 
-def test_post_game_targets_close_after_kickoff_and_box_score_only_when_final():
-    scores = [dict(id="a", commence_time="2026-10-23T19:00:00Z", status="in_progress"),
-              dict(id="b", commence_time="2026-10-23T15:00:00Z", status="final"),
-              dict(id="c", commence_time="2026-10-24T19:00:00Z", status="upcoming"),
-              dict(id="d", commence_time="2026-10-23T15:00:00Z", status="postponed"),
-              dict(id="e", commence_time="2026-10-19T15:00:00Z", status="final"),
-              dict(id="f", commence_time="2026-10-23T15:00:00Z", status="walkover", tour="ITF"),
-              dict(id="../x", commence_time="2026-10-23T15:00:00Z", status="final")]
-    assert pl.post_game_targets(scores, NOW, days=2) == [
-        ("a", ["closing"]), ("b", ["closing", "stats", "results"]), ("f", ["closing", "stats", "results"])]
-    assert pl.post_game_targets(scores, NOW, days=2, tours=["ATP", "WTA"]) == []
+def test_box_score_uses_only_what_closing_and_results_leave(tmp_path, monkeypatch):
+    scores = [dict(id="1", status="final", commence_time=ago(10)), dict(id="2", status="final", commence_time=ago(12))]
+    calls, report = settlement_run(tmp_path, monkeypatch, scores, budget={"basketball_nba": 5},
+                                   stats_prefixes=["basketball_nba"])
+    paths = [p for p, _ in calls if p.endswith(("/odds/closing", "/results", "/stats"))]
+    assert paths == ["/v1/sports/basketball_nba/events/2/odds/closing", "/v1/sports/basketball_nba/events/2/results",
+                     "/v1/sports/basketball_nba/events/2/stats", "/v1/sports/basketball_nba/events/1/odds/closing",
+                     "/v1/sports/basketball_nba/events/1/results"]
+    assert report["settlement"]["basketball_nba"] == dict(closing=2, results=2, stats=1, over_budget=1)
+    (tmp_path / "off").mkdir()
+    calls, _ = settlement_run(tmp_path / "off", monkeypatch, scores)
+    assert not [p for p, _ in calls if p.endswith("/stats")]
 
 
-def test_post_game_capture_is_retried_next_hour_but_bounded(tmp_path):
-    clock = [NOW]
-    calls = []
-    def get(path, params, key):
-        calls.append(path)
-        raise TimeoutError("network")
-    c = pl.Collector(tmp_path, "SECRET_API_KEY_NOT_SAVED", get=get, clock=lambda: clock[0])
-    path = "/v1/sports/soccer_epl/events/42/stats"
-    for _ in range(3):
-        assert not c.settled(path, attempts=3)
-        c.capture(path)
-        clock[0] += timedelta(hours=1)
-    assert c.settled(path, attempts=3) and len(calls) == 3
-
-
-def test_results_captured_before_grading_are_fetched_again(tmp_path):
-    clock = [NOW]
-    body = [dict(id="42", status="final", bookmakers=[dict(key="pinnacle", markets=[dict(key="h2h",
-            outcomes=[dict(name="Arsenal", resolution=None)])])])]
-    c = pl.Collector(tmp_path, "SECRET_API_KEY_NOT_SAVED", clock=lambda: clock[0],
-                     get=lambda p, q, k: (200, {}, json.dumps(body[0]).encode()))
-    path = "/v1/sports/soccer_epl/events/42/results"
-    c.capture(path)
-    assert not c.settled(path)
-    body[0] = copy.deepcopy(body[0])
-    body[0]["bookmakers"][0]["markets"][0]["outcomes"][0]["resolution"] = "won"
-    clock[0] += timedelta(hours=1)
-    c.capture(path)
-    assert c.settled(path)
+def test_injury_report_is_captured_hourly_and_read_point_in_time(tmp_path, monkeypatch):
+    calls, report = settlement_run(tmp_path, monkeypatch, [], injuries=["basketball_nba"])
+    assert [p for p, _ in calls if p.endswith("/injuries")] == ["/v1/sports/basketball_nba/injuries"]
+    root = tmp_path / "archive"
+    players, receipt = pl.read_injuries(root, "basketball_nba", datetime.now(timezone.utc))
+    assert players[0]["status_code"] == "out" and players[0]["received_at"] == receipt["received_at"]
+    assert pl.read_injuries(root, "basketball_nba", datetime.now(timezone.utc) - timedelta(hours=1)) == (None, None)
 
 
 def test_read_closing_keeps_team_total_and_flags_a_capture_before_kickoff(tmp_path):
     c, _ = client(tmp_path, data=closing_doc(kickoff="2026-10-23T22:00:00Z"))
-    c.capture("/v1/sports/soccer_epl/events/42/odds/closing")
+    c.capture("/v1/sports/soccer_epl/events/42/odds/closing", daily=True)
     rows, receipt = pl.read_closing(tmp_path, "soccer_epl", "42", NOW + timedelta(days=3))
     assert len(rows) == 1 and rows[0]["team"] == "Arsenal" and rows[0]["opening_price"] == 105
     assert rows[0]["price_decimal"] == pytest.approx(1 + 100 / 120)
     assert "pre_kickoff_capture" in rows[0]["flags"]
     assert pl.read_closing(tmp_path, "soccer_epl", "42", NOW - timedelta(seconds=1)) == (None, None)
+
+
+def test_read_results_flattens_provider_grading(tmp_path):
+    c, _ = client(tmp_path, data=dict(id="42", status="final", bookmakers=[dict(key="pinnacle", markets=[dict(
+        key="totals", team="Arsenal", outcomes=[dict(name="Over", point=1.5, resolution="won", actual_value=2.0)])])]))
+    c.capture("/v1/sports/soccer_epl/events/42/results", daily=True)
+    rows, _ = pl.read_results(tmp_path, "soccer_epl", "42", NOW)
+    assert [(r["team"], r["resolution"], r["actual_value"]) for r in rows] == [("Arsenal", "won", 2.0)]
 
 
 def test_team_stats_match_accented_names_and_never_guess():
@@ -442,53 +578,3 @@ def test_team_stats_match_accented_names_and_never_guess():
         dict(player_name="Bruno Leyes", team_abbr="TIG", stat_type="yellow_cards", stat_value=1.0),
         dict(player_name="Club Desconocido", team_abbr="X", stat_type="corners", stat_value=9.0)])
     assert pl.team_stats(doc) == {"away": {"corners": 4.0}, "home": {"cards": 2.0}}
-
-
-def test_injuries_are_read_point_in_time_with_our_receipt(tmp_path):
-    report = dict(sport="basketball_nba", count=1, players=[dict(player_name="A", player_id="nba:1",
-                  status_code="out", status_since="2026-10-18T23:34:40Z")])
-    c, _ = client(tmp_path, data=report)
-    c.capture("/v1/sports/basketball_nba/injuries")
-    players, receipt = pl.read_injuries(tmp_path, "basketball_nba", NOW)
-    assert players[0]["status_code"] == "out" and players[0]["received_at"] == receipt["received_at"]
-    assert pl.read_injuries(tmp_path, "basketball_nba", NOW - timedelta(seconds=1)) == (None, None)
-
-
-def test_run_captures_post_game_once_and_keeps_failures_apart(tmp_path, monkeypatch):
-    responses = {
-        "/v1/sports": [dict(key="soccer_epl", active=True)],
-        "/v1/sports/soccer_epl/odds": [event()],
-        "/v1/sports/soccer_epl/scores": [dict(id="42", commence_time="2026-10-23T15:00:00Z", status="final"),
-                                         dict(id="43", commence_time="2026-10-23T15:00:00Z", status="final")],
-        "/v1/sports/soccer_epl/ids": [], "/v1/sports/soccer_epl/events/42/markets": [],
-        "/v1/sports/soccer_epl/events/42/odds/closing": closing_doc(),
-        "/v1/sports/soccer_epl/events/42/stats": dict(id="42", status="final", stats=[]),
-        "/v1/sports/soccer_epl/events/42/results": dict(id="42", status="final", bookmakers=[]),
-    }
-    calls = []
-    def get(path, params, key):
-        calls.append(path)
-        if path not in responses:
-            return 404, {}, b'{"error": "not_found"}'
-        return 200, {}, json.dumps(responses[path]).encode()
-    class Fake(pl.Collector):
-        def __init__(self, root, key, **kw):
-            super().__init__(root, key, get=get, clock=lambda: NOW, **kw)
-    monkeypatch.setattr(pl, "Collector", Fake)
-    monkeypatch.setattr(pl, "utcnow", lambda: NOW)
-    key = tmp_path / "key"
-    key.write_text("SECRET_API_KEY_NOT_SAVED")
-    config = dict(sports=[], sport_prefixes=["soccer_"], daily_cap=4500, account_reserve=500,
-                  markets_by_family={"default": ["h2h"]}, scores=True, scores_every_hours=1, identities_daily=True,
-                  post_game=dict(days=2, per_run=10, daily_max=5, families={"soccer_": dict(
-                      closing_markets=["totals"], stats=True, results_markets=["totals"])}))
-    conf = tmp_path / "config.json"
-    conf.write_text(json.dumps(config))
-    root = tmp_path / "archive"
-    report = pl.run(root, key, conf)
-    assert report["failures"] == 0 and report["stop"] is None
-    assert report["post_game"] == {"captures": 3, "failures": 2}  # daily_max=5 stops the 404s of event 43
-    assert calls.count("/v1/sports/soccer_epl/events/42/stats") == 1
-    first = len(calls)
-    pl.run(root, key, conf)  # same hour: event 42 is settled and 43 already used this hour's slot
-    assert not any("/events/42/" in p and not p.endswith("/markets") for p in calls[first:])

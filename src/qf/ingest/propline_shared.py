@@ -27,6 +27,12 @@ BASE = "https://api.prop-line.com"
 UTC = timezone.utc
 VERSION = "propline-shared-1"
 SAFE_KEY = re.compile(r"[a-z][a-z0-9_]*\Z")
+# Market keys may start with a digit ("2plus_goals"); sport keys may not.
+MARKET_KEY = re.compile(r"[a-z0-9][a-z0-9_]*\Z")
+SAFE_EVENT = re.compile(r"[A-Za-z0-9_-]{1,64}\Z")
+# Per-event bodies are one object, not a list of events.
+EVENT_OBJECT = re.compile(r"/events/[A-Za-z0-9_-]+/(?:odds/closing|results|stats)\Z")
+SETTLED = ("final", "retired", "walkover")
 SAFE_HEADERS = ("date", "content-type", "x-daily-limit", "x-daily-used",
                 "x-daily-remaining", "x-daily-reset", "retry-after",
                 "x-propline-missing-markets")
@@ -56,30 +62,6 @@ def canonical(value):
 
 class BudgetStop(Exception):
     pass
-
-
-CAPTURE_PATH = re.compile(r"/v1/sports(?:/[a-z][a-z0-9_]*(?:/(?:odds|scores|ids|futures|injuries)"
-                          r"|/events/[A-Za-z0-9_-]+/(?:markets|odds/closing|stats|results))?)?")
-# Responses that are one object rather than a list of events.
-OBJECT_PATH = re.compile(r".*/(?:injuries|odds/closing|stats|results)")
-
-
-def payload_counts(path, payload):
-    """(events, outcomes) for the receipt; raises ValueError on an unexpected shape."""
-    if OBJECT_PATH.fullmatch(path):
-        if not isinstance(payload, dict):
-            raise ValueError("object payload required")
-        if path.endswith("/injuries"):
-            return len(payload.get("players", [])), 0
-        if path.endswith("/stats"):
-            return 1, len(payload.get("stats", []))
-        events = [payload]
-    elif isinstance(payload, list):
-        events = payload
-    else:
-        raise ValueError("list payload required")
-    return len(events), sum(len(m.get("outcomes", [])) for e in events if isinstance(e, dict)
-                            for b in e.get("bookmakers", []) for m in b.get("markets", []))
 
 
 def connect(root):
@@ -187,8 +169,9 @@ class Collector:
         self.cap, self.reserve, self.get, self.clock = daily_cap, reserve, get, clock
         self.db = connect(root)
 
-    def capture(self, path, params=None, *, daily=False):
-        if not CAPTURE_PATH.fullmatch(path):
+    def capture(self, path, params=None, *, daily=False, cap=None):
+        if not re.fullmatch(r"/v1/sports(?:/[a-z][a-z0-9_]*(?:/(?:odds|scores|ids|futures|injuries)"
+                            r"|/events/[A-Za-z0-9_-]+/(?:markets|odds/closing|results|stats))?)?", path):
             raise ValueError("unsupported capture path")
         params = params or {}
         if shutil.disk_usage(self.root).free < 5 * 1024**3:
@@ -207,7 +190,7 @@ class Collector:
                 return self.db.execute("SELECT * FROM receipts WHERE request_id=?", (old["id"],)).fetchone(), False
             calls = self.db.execute("SELECT count(*) FROM requests WHERE started_at>=? AND started_at<?",
                                     (day, tomorrow)).fetchone()[0]
-            if calls >= self.cap:
+            if calls >= (self.cap if cap is None else min(self.cap, cap)):
                 raise BudgetStop("local_daily_cap")
             latest = self.db.execute("SELECT received_at,headers FROM receipts ORDER BY request_id DESC LIMIT 1").fetchone()
             if latest:
@@ -237,8 +220,16 @@ class Collector:
         error = None
         try:
             payload = json.loads(body)
+            if status == 200 and isinstance(payload, dict) and EVENT_OBJECT.search(path):
+                payload = [payload]
+            if status == 200 and isinstance(payload, dict) and path.endswith("/injuries"):
+                payload = payload.get("players", [])  # one "event" per listed player
+            if status == 200 and not isinstance(payload, list):
+                raise ValueError("list payload required")
             if status == 200:
-                events, outcomes = payload_counts(path, payload)
+                events = len(payload)
+                outcomes = sum(len(m.get("outcomes", [])) for e in payload if isinstance(e, dict)
+                               for b in e.get("bookmakers", []) for m in b.get("markets", []))
         except (ValueError, TypeError, AttributeError):
             error = "invalid_json_shape"
         self.db.execute("INSERT INTO receipts VALUES (?,?,?,?,?,?,?,?,?)",
@@ -249,16 +240,6 @@ class Collector:
         if status in (401, 403, 429):
             raise BudgetStop("provider_http_" + str(status))
         return row, True
-
-    def settled(self, path, params=None, *, attempts=3):
-        """One-off captures (post-game): done after a usable 200, or after `attempts` tries in any slot."""
-        rows = self.db.execute("""SELECT p.* FROM requests q LEFT JOIN receipts p ON p.request_id=q.id
-                                  WHERE q.path=? AND q.params=?""", (path, canonical(params or {}).decode("utf8"))).fetchall()
-        for r in rows:
-            if r["status"] == 200 and r["error"] is None:
-                if not path.endswith("/results") or not results_pending(load_object(self.root, r)):
-                    return True
-        return len(rows) >= attempts
 
 
 def newest(root, path, as_of, *, max_age_seconds=3900):
@@ -466,48 +447,7 @@ def read_two_way(root, sport, as_of, *, max_age_seconds=3900):
     return two_way_feed(events, receipt["received_at"]), receipt
 
 
-POST_GAME_FINAL = ("final", "retired", "walkover")
-POST_GAME_SKIP = ("upcoming", "postponed", "cancelled", "expired")
-POST_GAME_MAX_AGE = 45 * 86400  # a closing line or box score does not age; bound the lookup only
-
-
-def post_game_targets(scores, now, *, days, tours=None):
-    """[(event_id, kinds)] from a /scores body: the close once kickoff has passed, stats/results once final."""
-    out = []
-    for g in scores:
-        eid = str(g.get("id", ""))
-        try:
-            kickoff = parse_time(g["commence_time"])
-        except (KeyError, ValueError, TypeError):
-            continue
-        status = g.get("status") or ("final" if g.get("completed") else None)
-        if (not re.fullmatch(r"[A-Za-z0-9_-]+", eid) or kickoff > now or now - kickoff > timedelta(days=days)
-                or status in POST_GAME_SKIP or (tours is not None and g.get("tour") not in tours)):
-            continue
-        out.append((eid, ["closing"] + (["stats", "results"] if status in POST_GAME_FINAL else [])))
-    return out
-
-
-def post_game_request(sport, event_id, kind, family):
-    """(path, params) for one post-game capture, or (None, None) when the family does not ask for it."""
-    base = f"/v1/sports/{sport}/events/{event_id}"
-    def books(params):
-        if family.get("bookmakers"):
-            params["bookmakers"] = ",".join(family["bookmakers"])
-        return params
-    if kind == "closing" and family.get("closing_markets"):
-        return base + "/odds/closing", books({"markets": ",".join(family["closing_markets"])})
-    if kind == "stats" and family.get("stats"):
-        return base + "/stats", {}
-    if kind == "results" and family.get("results_markets"):
-        return base + "/results", books({"markets": ",".join(family["results_markets"])})
-    return None, None
-
-
-def results_pending(payload):
-    """A result body captured before the provider graded every outcome must be fetched again."""
-    return any(o.get("resolution") is None for b in payload.get("bookmakers", [])
-               for m in b.get("markets", []) for o in m.get("outcomes", []))
+SETTLEMENT_MAX_AGE = 45 * 86400  # a closing line or box score does not age; this only bounds the lookup
 
 
 def read_injuries(root, sport, as_of, *, max_age_seconds=3900):
@@ -525,10 +465,10 @@ def read_closing(root, sport, event_id, as_of):
     not a close and is flagged `pre_kickoff_capture`.
     """
     doc, receipt = newest(root, f"/v1/sports/{sport}/events/{event_id}/odds/closing", as_of,
-                          max_age_seconds=POST_GAME_MAX_AGE)
+                          max_age_seconds=SETTLEMENT_MAX_AGE)
     if receipt is None:
         return None, None
-    early = parse_time(receipt["received_at"]) < parse_time(doc["commence_time"])
+    early = bool(doc.get("commence_time")) and parse_time(receipt["received_at"]) < parse_time(doc["commence_time"])
     rows = []
     for b in doc.get("bookmakers", []):
         for m in b.get("markets", []):
@@ -549,8 +489,8 @@ def read_closing(root, sport, event_id, as_of):
                     flags.append("exchange_contract_requires_rules")
                 if o.get("redacted"):
                     flags.append("redacted")
-                rows.append(dict(provider="propline", received_at=receipt["received_at"], event_id=str(doc["id"]),
-                    sport_key=doc.get("sport_key"), commence_time=doc["commence_time"], bookmaker=b["key"],
+                rows.append(dict(provider="propline", received_at=receipt["received_at"], event_id=str(doc.get("id")),
+                    sport_key=doc.get("sport_key"), commence_time=doc.get("commence_time"), bookmaker=b["key"],
                     market=m["key"], period=m.get("period"), team=m.get("team"), line_type=m.get("line_type"),
                     name=o.get("name"), description=o.get("description"), player_id=o.get("player_id"),
                     outcome_id=o.get("outcome_id"), point=o.get("point"), price_american=o.get("price"),
@@ -562,10 +502,10 @@ def read_closing(root, sport, event_id, as_of):
 def read_results(root, sport, event_id, as_of):
     """Provider grading per (book, market, outcome): resolution won/lost/push/void (None = not graded yet)."""
     doc, receipt = newest(root, f"/v1/sports/{sport}/events/{event_id}/results", as_of,
-                          max_age_seconds=POST_GAME_MAX_AGE)
+                          max_age_seconds=SETTLEMENT_MAX_AGE)
     if receipt is None:
         return None, None
-    return [dict(event_id=str(doc["id"]), status=doc.get("status"), bookmaker=b["key"], market=m["key"],
+    return [dict(event_id=str(doc.get("id")), status=doc.get("status"), bookmaker=b["key"], market=m["key"],
                  period=m.get("period"), team=m.get("team"), name=o.get("name"), description=o.get("description"),
                  player_id=o.get("player_id"), point=o.get("point"), price_american=o.get("price"),
                  resolution=o.get("resolution"), actual_value=o.get("actual_value"),
@@ -575,7 +515,7 @@ def read_results(root, sport, event_id, as_of):
 
 def read_stats(root, sport, event_id, as_of):
     """Box score as captured: (body, receipt). Official only when body['status'] is final."""
-    return newest(root, f"/v1/sports/{sport}/events/{event_id}/stats", as_of, max_age_seconds=POST_GAME_MAX_AGE)
+    return newest(root, f"/v1/sports/{sport}/events/{event_id}/stats", as_of, max_age_seconds=SETTLEMENT_MAX_AGE)
 
 
 def _fold(name):
@@ -599,7 +539,6 @@ def team_stats(doc):
         if side and row.get("stat_type") in TEAM_STATS and row.get("stat_value") is not None:
             out.setdefault(side, {})[row["stat_type"]] = float(row["stat_value"])
     return out
-
 
 def market_batches(sport, markets, config):
     """Provider-safe batches with a stable, auditable request count."""
@@ -629,16 +568,78 @@ def select_sports(catalog, config):
                  or (prefixes and s["key"].startswith(prefixes)))]
 
 
+def finished_events(db, root, sport, now, settle):
+    """Finished events from our own score receipts; the most-quoted first."""
+    since = stamp(now - timedelta(days=int(settle.get("lookback_days", 3))))
+    latest = {}
+    for r in db.execute("""SELECT p.* FROM receipts p JOIN requests q ON q.id=p.request_id
+            WHERE q.path=? AND p.status=200 AND p.error IS NULL AND p.received_at>=?
+            ORDER BY p.received_at,p.request_id""", (f"/v1/sports/{sport}/scores", since)):
+        latest.update({str(e.get("id")): e for e in load_object(root, r) if isinstance(e, dict)})
+    books = {}
+    ids = db.execute("""SELECT p.* FROM receipts p JOIN requests q ON q.id=p.request_id
+            WHERE q.path=? AND p.status=200 AND p.error IS NULL ORDER BY p.received_at DESC LIMIT 1""",
+            (f"/v1/sports/{sport}/ids",)).fetchone()
+    if ids:
+        books = {str(e.get("id")): len(e.get("books") or {}) for e in load_object(root, ids) if isinstance(e, dict)}
+    cutoff = now - timedelta(hours=float(settle.get("min_hours_after_start", 6)))
+    done = [e for i, e in latest.items() if SAFE_EVENT.fullmatch(i) and e.get("status") in SETTLED
+            and e.get("commence_time") and parse_time(e["commence_time"]) <= cutoff]
+    return sorted(done, key=lambda e: (-books.get(str(e["id"]), 0), e["commence_time"], str(e["id"])))
+
+
+def unresolved(payload):
+    """True while a results body still holds ungraded outcomes."""
+    if not isinstance(payload, dict) or payload.get("redacted"):
+        return False
+    return any(o.get("resolution") is None for b in payload.get("bookmakers", [])
+               for m in b.get("markets", []) for o in m.get("outcomes", []))
+
+
+def settlement_due(db, root, path, today, max_attempts):
+    """One attempt per event and UTC day. A closing line is final once
+    received; results are retried while outcomes remain ungraded."""
+    rows = db.execute("""SELECT q.slot,p.* FROM requests q LEFT JOIN receipts p ON p.request_id=q.id
+                         WHERE q.path=? ORDER BY q.id""", (path,)).fetchall()
+    if any(r["slot"] == today for r in rows) or len(rows) >= max_attempts:
+        return False
+    ok = [r for r in rows if r["status"] == 200 and not r["error"]]
+    if not ok:
+        return True
+    return path.endswith("/results") and unresolved(load_object(root, ok[-1]))
+
+
+def settlement_blocked(db, root, kind, today):
+    """The plan cannot serve this endpoint today: stop paying for it."""
+    r = db.execute("""SELECT p.* FROM receipts p JOIN requests q ON q.id=p.request_id
+                      WHERE q.path LIKE ? AND q.started_at>=? ORDER BY p.request_id DESC LIMIT 1""",
+                   ("%/" + kind, today)).fetchone()
+    if r is None:
+        return False
+    if r["status"] in (401, 403):
+        return True
+    return r["status"] == 200 and not r["error"] and bool(load_object(root, r).get("redacted"))
+
+
 def run(root, key_file, config_file, *, limit=None):
     config = json.loads(Path(config_file).read_bytes())
     client = Collector(root, read_key(key_file), daily_cap=config["daily_cap"], reserve=config["account_reserve"])
     calls = captures = events = outcomes = failures = 0
-    report = {"version": VERSION, "started_at": stamp(utcnow()), "provider": "propline"}
-    def capture(path, params=None, daily=False):
+    started = utcnow()
+    report = {"version": VERSION, "started_at": stamp(started), "provider": "propline"}
+    settle = config.get("settlement") or {}
+    settle_budget = sum(int(v) for v in settle.get("daily_budget", {}).values()) if settle.get("enabled") else 0
+    # Hourly odds may not eat the part of the closing/results reserve still unspent today.
+    midnight = stamp(started.replace(hour=0, minute=0, second=0, microsecond=0))
+    settled_today = client.db.execute("""SELECT count(*) FROM requests WHERE started_at>=?
+        AND (path LIKE '%/odds/closing' OR path LIKE '%/results' OR path LIKE '%/events/%/stats')""",
+        (midnight,)).fetchone()[0]
+    hourly_cap = config["daily_cap"] - max(0, settle_budget - settled_today)
+    def capture(path, params=None, daily=False, cap=hourly_cap):
         nonlocal calls, captures, events, outcomes, failures
         if limit is not None and calls >= limit:
             raise BudgetStop("run_limit")
-        r, called = client.capture(path, params, daily=daily)
+        r, called = client.capture(path, params, daily=daily, cap=cap)
         calls += int(called)
         if r is None:
             failures += 1
@@ -652,6 +653,39 @@ def run(root, key_file, config_file, *, limit=None):
             failures += 1
             return None
         return load_object(root, r)
+    def settlement():
+        if not settle.get("enabled"):
+            return
+        report["settlement"] = settled = {}
+        now = utcnow()
+        today = stamp(now.replace(hour=0, minute=0, second=0, microsecond=0))
+        for prefix, budget in settle["daily_budget"].items():
+            spent = client.db.execute("""SELECT count(*) FROM requests WHERE started_at>=?
+                AND (path LIKE ? OR path LIKE ? OR path LIKE ?)""", (today, f"/v1/sports/{prefix}%/odds/closing",
+                f"/v1/sports/{prefix}%/results", f"/v1/sports/{prefix}%/events/%/stats")).fetchone()[0]
+            for sport in [s for s in selected if s.startswith(prefix)]:
+                family = next((k for k in config["markets_by_family"] if sport.startswith(k)), "default")
+                markets = ",".join(config["markets_by_family"][family][:50])
+                counts = settled.setdefault(sport, dict(closing=0, results=0, stats=0, over_budget=0))
+                for e in finished_events(client.db, root, sport, now, settle):
+                    base = f"/v1/sports/{sport}/events/{e['id']}"
+                    wanted = [("odds/closing", dict(markets=markets, period="all"))]
+                    if e["status"] == "final":  # retired/walkover props are void, not graded
+                        wanted.append(("results", {}))
+                    # Box score last: it only uses what closing and results leave of the reserve.
+                    if any(sport.startswith(p) for p in settle.get("stats_prefixes", [])):
+                        wanted.append(("stats", {}))
+                    for kind, params in wanted:
+                        if (settlement_blocked(client.db, root, kind, today) or not settlement_due(
+                                client.db, root, f"{base}/{kind}", today, int(settle.get("max_attempts", 3)))):
+                            continue
+                        if spent >= int(budget):
+                            counts["over_budget"] += 1
+                            continue
+                        spent += 1
+                        capture(f"{base}/{kind}", params, daily=True, cap=config["daily_cap"])
+                        counts["closing" if kind == "odds/closing" else kind] += 1
+    selected = []
     try:
         sports = capture("/v1/sports")
         if sports is None:
@@ -664,7 +698,7 @@ def run(root, key_file, config_file, *, limit=None):
             requested = list(config["markets_by_family"].get(family, config["markets_by_family"]["default"]))
             for r in client.db.execute("""SELECT p.* FROM receipts p JOIN requests q ON q.id=p.request_id
                        WHERE q.path LIKE ? AND p.status=200 AND p.error IS NULL""", (f"/v1/sports/{sport}/events/%/markets",)):
-                requested.extend(m["key"] for m in load_object(root,r) if SAFE_KEY.fullmatch(m.get("key", "")))
+                requested.extend(m["key"] for m in load_object(root,r) if MARKET_KEY.fullmatch(m.get("key", "")))
             requested = list(dict.fromkeys(requested))
             planned = set(requested)
             batch_size = min(50,max(1,int(config.get("max_markets_per_request",50))))
@@ -685,11 +719,12 @@ def run(root, key_file, config_file, *, limit=None):
             if candidates and not discovered:
                 richest = max(candidates, key=lambda e: sum(len(m.get("outcomes", [])) for b in e.get("bookmakers", []) for m in b.get("markets", [])))
                 extra = capture(f"/v1/sports/{sport}/events/{richest['id']}/markets",daily=True) or []
-                missing = sorted({m["key"] for m in extra if SAFE_KEY.fullmatch(m.get("key", ""))} - planned)
+                missing = sorted({m["key"] for m in extra if MARKET_KEY.fullmatch(m.get("key", ""))} - planned)
                 for offset in range(0,len(missing),batch_size):
                     odds(missing[offset:offset+batch_size])
         for sport in selected:
-            if config.get("scores") and utcnow().hour % config.get("scores_every_hours",1) == 0:
+            # The run start decides: a long run must not slide into the next hour.
+            if config.get("scores") and started.hour % config.get("scores_every_hours",1) == 0:
                 capture(f"/v1/sports/{sport}/scores", {"days_from": 3})
             if config.get("identities_daily"):
                 capture(f"/v1/sports/{sport}/ids", daily=True)
@@ -697,40 +732,16 @@ def run(root, key_file, config_file, *, limit=None):
                 capture(f"/v1/sports/{sport}/futures", daily=True)
             if sport in config.get("injuries_sports", []):
                 capture(f"/v1/sports/{sport}/injuries")
-        # Post-game, once per event: close, box score and grading. Targets come from the archived
-        # /scores body, so finding them costs no request. A failed post-game call (e.g. a 404 on an
-        # event the provider merged) is retried in later hours up to `max_attempts` and is reported
-        # apart: it must not mark the hourly odds capture as failed.
-        # Its own daily ceiling keeps the hourly odds of later hours from being starved by the shared cap.
-        post = config.get("post_game") or {}
-        midnight = stamp(utcnow().replace(hour=0, minute=0, second=0, microsecond=0))
-        spent = client.db.execute("""SELECT count(*) FROM requests WHERE started_at>=? AND (path LIKE '%/odds/closing'
-                                     OR path LIKE '%/events/%/stats' OR path LIKE '%/events/%/results')""",
-                                  (midnight,)).fetchone()[0]
-        budget = min(int(post.get("per_run", 0)), int(post.get("daily_max", 0)) - spent)
-        report["post_game"] = done = {"captures": 0, "failures": 0}
-        for sport in selected:
-            family = next((v for k, v in post.get("families", {}).items() if sport.startswith(k)), None)
-            if family is None or budget <= 0:
-                continue
-            scores, _ = newest(root, f"/v1/sports/{sport}/scores", utcnow(),
-                               max_age_seconds=int(post.get("scores_max_age_seconds", 7 * 3600)))
-            for eid, kinds in post_game_targets(scores or [], utcnow(), days=post.get("days", 2), tours=family.get("tours")):
-                for kind in kinds:
-                    path, params = post_game_request(sport, eid, kind, family)
-                    if path is None or client.settled(path, params, attempts=int(post.get("max_attempts", 3))):
-                        continue
-                    if budget <= 0 or (limit is not None and calls >= limit):
-                        break
-                    budget -= 1
-                    r, called = client.capture(path, params)
-                    calls += int(called)
-                    ok = r is not None and r["status"] == 200 and r["error"] is None
-                    done["captures" if ok else "failures"] += 1
-                    print(json.dumps({"path": path, "status": r["status"] if r else None}), flush=True)
+        settlement()
         report["stop"] = None
     except BudgetStop as exc:
         report["stop"] = str(exc)
+        if str(exc) == "local_daily_cap":
+            # The hourly cap leaves the settlement reserve untouched; use it.
+            try:
+                settlement()
+            except BudgetStop as again:
+                report["settlement_stop"] = str(again)
     finally:
         report.update(finished_at=stamp(utcnow()), requests=calls, receipts=captures,
                       event_observations=events, outcome_observations=outcomes, failures=failures)
