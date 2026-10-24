@@ -382,6 +382,34 @@ def football_feed(events, received_at):
     return result
 
 
+def market_batches(sport, markets, config):
+    """Provider-safe batches with a stable, auditable request count."""
+    requested = list(dict.fromkeys(markets))
+    default_size = min(50,max(1,int(config.get("max_markets_per_request",50))))
+    featured = [m for m in requested if m in ("h2h","spreads","totals")]
+    extended = [m for m in requested if m not in featured]
+    if sport.startswith("basketball_"):
+        core = [m for m in extended if m in ("player_points","player_rebounds","player_assists")]
+        other = [m for m in extended if m not in core]
+        return ([featured] if featured else []) + [[m] for m in core] + [other[i:i+5] for i in range(0,len(other),5)]
+    if sport.startswith("soccer_"):
+        size = min(50,max(1,int(config.get("soccer_markets_per_request",13))))
+        return ([featured] if featured else []) + [extended[i:i+size] for i in range(0,len(extended),size)]
+    if sport.startswith(("football_","americanfootball_")):
+        size = min(50,max(1,int(config.get("football_markets_per_request",11))))
+        return ([featured] if featured else []) + [extended[i:i+size] for i in range(0,len(extended),size)]
+    return [requested[i:i+default_size] for i in range(0,len(requested),default_size)]
+
+
+def select_sports(catalog, config):
+    excluded = set(config.get("exclude_sports", []))
+    prefixes = tuple(config.get("sport_prefixes", []))
+    return [s["key"] for s in catalog if s.get("active") and SAFE_KEY.fullmatch(s["key"])
+            and s["key"] not in excluded
+            and (config["sports"] == "all_active" or s["key"] in config["sports"]
+                 or (prefixes and s["key"].startswith(prefixes)))]
+
+
 def run(root, key_file, config_file, *, limit=None):
     config = json.loads(Path(config_file).read_bytes())
     client = Collector(root, read_key(key_file), daily_cap=config["daily_cap"], reserve=config["account_reserve"])
@@ -409,8 +437,7 @@ def run(root, key_file, config_file, *, limit=None):
         sports = capture("/v1/sports")
         if sports is None:
             raise BudgetStop("catalog_unavailable")
-        selected = [s["key"] for s in sports if s.get("active") and SAFE_KEY.fullmatch(s["key"])
-                    and (config["sports"] == "all_active" or s["key"] in config["sports"])]
+        selected = select_sports(sports, config)
         report["sports"] = selected
         # Odds first: a slow result feed must not consume the capture window.
         for sport in selected:
@@ -426,35 +453,10 @@ def run(root, key_file, config_file, *, limit=None):
             def odds(batch):
                 return capture(f"/v1/sports/{sport}/odds", dict(markets=",".join(batch),
                         period="all", includeLinks="true", includeBookIds="true", includeDepth="true" if config.get("include_depth") else "false",
-                        includePregameOnly="true", includeRestricted="true"))
-            if sport.startswith("basketball_"):
-                # The live API times out on a combined basketball lines+props
-                # board. Keep featured markets in their own smaller query.
-                featured = [m for m in requested if m in ("h2h","spreads","totals")]
-                requested = [m for m in requested if m not in featured]
-                payload.extend(odds(featured) or [])
-                batch_size = min(batch_size,5)
-                if not any(e.get("away_team") and not e.get("is_outright") for e in payload):
-                    requested = []
-                # High-volume core props still time out as a five-key batch.
-                # Each gets a separate request, without increasing consumer calls.
-                core = [m for m in requested if m in ("player_points","player_rebounds","player_assists")]
-                for market in core:
-                    payload.extend(odds([market]) or [])
-                requested = [m for m in requested if m not in core]
-            elif sport.startswith("soccer_"):
-                # Mixing the high-volume featured board with player/team props
-                # produced 504 responses in production. Keep main lines hourly
-                # and use two larger batches for the remaining documented keys,
-                # preserving the daily request budget.
-                featured = [m for m in requested if m in ("h2h","spreads","totals")]
-                requested = [m for m in requested if m not in featured]
-                payload.extend(odds(featured) or [])
-                batch_size = min(50,max(1,int(config.get("soccer_markets_per_request",13))))
-                if not any(e.get("away_team") and not e.get("is_outright") for e in payload):
-                    requested = []
-            for offset in range(0,len(requested),batch_size):
-                payload.extend(odds(requested[offset:offset+batch_size]) or [])
+                        includePregameOnly="true", includeRestricted="true",
+                        max_age=str(config.get("provider_max_age_seconds",3600))))
+            for batch in market_batches(sport, requested, config):
+                payload.extend(odds(batch) or [])
             # Once per competition/day, learn additional keys from an actual
             # fixture. The full documented family is always requested as well.
             today = stamp(utcnow().replace(hour=0,minute=0,second=0,microsecond=0))

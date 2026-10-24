@@ -2,7 +2,13 @@
   "version": "propline-shared-1",
   "provider": "propline",
   "capture_interval_seconds": 3600,
-  "sports": "all_active",
+  "sports": [
+    "basketball_nba",
+    "tennis"
+  ],
+  "sport_prefixes": [
+    "soccer_"
+  ],
   "markets": [
     "h2h",
     "spreads",
@@ -331,6 +337,8 @@
   },
   "max_markets_per_request": 10,
   "soccer_markets_per_request": 13,
+  "football_markets_per_request": 11,
+  "provider_max_age_seconds": 3600,
   "scores_every_hours": 6,
   "include_depth": false
 }
