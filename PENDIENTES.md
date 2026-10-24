@@ -121,7 +121,9 @@ Tareas sueltas:
 - [ ] iOS: necesita Mac y Apple Developer (APNs y firma).
 - [ ] Validar el acceso con Google y la entrega FCM con un usuario real; activar `FIREBASE_AUTH_ENABLED` cuando lo decidas.
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
-- [ ] NBA — cuotas históricas de partido (The Odds API): comprar 325 snapshots h2h de 2024-25 y 2025-26 (3.250 créditos) **desde el 1-nov-2026**, con `python -m nba.odds_history fetch` (tope 3.300, reserva 14.500, caché). Bloqueado por código antes de esa fecha. Detalle en docs/nba_cuotas_historicas_plan_20261021.md.
+- [x] NBA — cuotas históricas h2h (The Odds API): los 325 snapshots de 2024-25 y 2025-26 ya se compraron el 23-oct (manifest en `apps/nba/.local/raw/nba_odds_h2h_202611`) y se compararon (`nba_f6_market_20261101`).
+- [x] NBA — normalizado ampliado (tiros, pérdidas, rebote ofensivo, posesiones, play-in y playoffs 2022-23..2025-26): `nba_extended_box_20261024`, docs/nba_normalizado_ampliado_20261024.md.
+- [ ] NBA — datos para entrenar todos los mercados: cuotas de hándicap/total (BetsAPI en VPS sin conectar), props sin precio (robos, tapones, combinados) y postemporada 2021-22 sin fecha. Ver docs/nba_auditoria_datos_entrenamiento_20261024.md.
 
 ## Decisiones que dependen de ti
 1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
