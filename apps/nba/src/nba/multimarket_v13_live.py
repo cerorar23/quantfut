@@ -136,12 +136,15 @@ CLOCK = re.compile(r'(\d{1,2}):(\d{2})|PT(\d{1,2})M(\d{2})(?:\.\d+)?S')
 
 
 def box_minutes(value):
-    """Minutes played from the web box score: 'MM:SS' (archived pages) or 'PTmmMss.ssS' (current pages); '' = did not play."""
+    """Minutes played from the web box score: 'MM:SS' (archived pages) or 'PTmmMss.ssS' (current pages); '' = did not play.
+
+    nba.com rounds seconds and sometimes publishes a full minute as ':60' (seen 2026-10-24: '10:60'); that is read as the next
+    minute. Anything above 60 seconds is still rejected."""
     if value == '':
         return 0.
     match = CLOCK.fullmatch(value)
     minutes, seconds = ((match[1], match[2]) if match[1] else (match[3], match[4])) if match else (None, '0')
-    if minutes is None or int(seconds) >= 60:
+    if minutes is None or int(seconds) > 60:
         raise ValueError(f'invalid box score minutes {value!r}')
     return int(minutes) + int(seconds) / 60
 
