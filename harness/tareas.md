@@ -3159,5 +3159,5 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 
 ## PropLine: cobertura de mercados (24-oct-2026)
 - [x] Medir en el archivo horario qué mercados trae PropLine por deporte y liga, con y sin Pinnacle. docs/propline_cobertura_20261024.md.
-- [ ] Goles por equipo: PropLine no tiene `team_totals`; decidir otra fuente de precio para ese escalón o dejarlo sin `prudente`.
+- [x] Goles por equipo: sí está, en `totals` con `team`, con Pinnacle; el ingestor ya lo separa.
 - [ ] Remedir props NBA el día del partido (primer sellado 1.3.1) y Champions/Europa League en semana de copa.

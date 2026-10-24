@@ -17,16 +17,16 @@ Partidos cerca con el mercado / de ellos con Pinnacle.
 
 | Liga | Cerca | 1X2 | Totales | Hándicap | BTTS | Doble op. | Córners tot. | Córners equipo | Tarjetas tot. | Tarjetas equipo | Goles equipo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Premier League | 8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 0 |
-| LaLiga | 6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/4 | 6/4 | 0 |
-| Serie A | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 0 |
-| Bundesliga | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 0 |
-| Ligue 1 | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/6 | 6/6 | 7/7 | 7/7 | 0 |
-| Primeira Liga | 4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 3/0 | 0 | 0 |
-| Liga MX | 3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/0 | 0 | 0 |
-| Brasileirão | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 0 |
-| Argentina | 4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/0 | 4/0 | 0 |
-| MLS | 14 | 14/14 | 14/14 | 14/14 | 14/12 | 14/14 | 14/14 | 14/14 | 14/14 | 14/14 | 0 |
+| Premier League | 8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 |
+| LaLiga | 6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/4 | 6/4 | 6/6 |
+| Serie A | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 |
+| Bundesliga | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 |
+| Ligue 1 | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/6 | 6/6 | 7/7 | 7/7 | 7/7 |
+| Primeira Liga | 4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 3/0 | 0 | 4/4 |
+| Liga MX | 3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/0 | 0 | 3/3 |
+| Brasileirão | 7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 |
+| Argentina | 4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/0 | 4/0 | 4/4 |
+| MLS | 14 | 14/14 | 14/14 | 14/14 | 14/12 | 14/14 | 14/14 | 14/14 | 14/14 | 14/14 | 14/14 |
 
 Champions y Europa League no tenían partidos cerca. Lejos, Champions trae 1X2, totales,
 hándicap y doble oportunidad con Pinnacle en 18 partidos y córners totales sin Pinnacle; Europa
@@ -37,9 +37,13 @@ Además existen en casi todas las ligas: resultado exacto, primer equipo en marc
 victoria, hándicap europeo, sin empate, combinados (resultado+goles, BTTS+goles), goleador, tiros
 y tiros a puerta de jugador, y periodos `h1`/`h2`.
 
-**Goles por equipo (`team_totals`) no existe en PropLine**: no está en `openapi.json` ni en
-`prop-line.com/docs`, y no aparece en ninguna respuesta. La escalera usa ese mercado; su precio
-de mercado tiene que salir de otra fuente o el escalón queda sin `prudente`.
+**Goles por equipo no tiene clave propia: viaja en `totals` con el campo `team` relleno**
+(`team: null` = total del partido; ver `prop-line.com/llms-full.txt`, sección de `totals`). Una
+primera versión de esta medición buscó una clave `team_totals`, no la encontró y concluyó que
+faltaba; era un error de método. Recontado con `team`: está en todos los partidos cercanos de las
+diez ligas, con Pinnacle, y en 22-32 casas por liga (Eliteserien: 7 de 9). El ingestor ya lo
+separa bien (`propline_ingest.py`, `totals` con `team` → `team_totals_home`/`team_totals_away`).
+Lo mismo vale para los periodos: un `totals` con `period` es el total de esa mitad.
 
 ## NBA
 
@@ -65,11 +69,12 @@ archivo; lo está conectando otra sesión (`tenis/propline-cuotas`).
 
 ## Conclusiones
 
-- Para fútbol, PropLine trae Pinnacle en 1X2, totales, hándicap, BTTS, doble oportunidad y
-  córners en las diez ligas, y tarjetas con Pinnacle en seis. Tarjetas sin Pinnacle en Primeira,
-  Liga MX y Argentina.
-- Hueco firme: goles por equipo. Huecos por confirmar: props NBA el día del partido, y
-  Champions/Europa League en semana de copa.
+- Para fútbol, PropLine trae Pinnacle en 1X2, totales, goles por equipo, hándicap, BTTS, doble
+  oportunidad y córners en las diez ligas, y tarjetas con Pinnacle en siete. Tarjetas sin
+  Pinnacle en Primeira, Liga MX y Argentina.
+- Sin huecos firmes en los mercados de la escalera. Por confirmar: props NBA el día del partido,
+  y Champions/Europa League en semana de copa.
+- Al contar mercados en el archivo, agrupar por `(key, period, team)`, nunca solo por `key`.
 - Segunda División, Serie B, Ligue 2 y Superliga danesa siguen sin catálogo (ver
   `docs/propline_compartido_20261023.md`).
 
