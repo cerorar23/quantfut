@@ -254,3 +254,28 @@ def test_alternate_lines_do_not_collapse_when_merging_batches(tmp_path):
     c,_=client(tmp_path,data=[e]);c.capture("/v1/sports/soccer_epl/odds")
     data,_=pl.newest(tmp_path,"/v1/sports/soccer_epl/odds",NOW)
     assert {m["outcomes"][0]["point"] for m in data[0]["bookmakers"][0]["markets"]}=={2.5,3.5}
+
+
+def test_high_volume_sports_separate_featured_without_extra_planned_calls():
+    config = dict(max_markets_per_request=10, soccer_markets_per_request=13,
+                  football_markets_per_request=11)
+    featured = ["h2h","spreads","totals"]
+    soccer = featured + [f"soccer_{i}" for i in range(26)]
+    nfl = featured + [f"nfl_{i}" for i in range(33)]
+    nba = featured + ["player_points","player_rebounds","player_assists"] + [f"nba_{i}" for i in range(18)]
+    assert list(map(len,pl.market_batches("soccer_epl",soccer,config))) == [3,13,13]
+    assert list(map(len,pl.market_batches("football_nfl",nfl,config))) == [3,11,11,11]
+    assert list(map(len,pl.market_batches("basketball_nba",nba,config))) == [3,1,1,1,5,5,5,3]
+    assert sum(pl.market_batches("football_nfl",nfl,config),[]) == nfl
+
+
+def test_explicitly_excluded_sport_is_never_selected():
+    catalog = [dict(key="football_nfl",active=True),dict(key="basketball_nba",active=True)]
+    assert pl.select_sports(catalog,dict(sports="all_active",exclude_sports=["football_nfl"])) == ["basketball_nba"]
+
+
+def test_only_soccer_tennis_and_nba_are_selected_for_hourly_capture():
+    catalog = [dict(key=k,active=True) for k in
+               ("football_nfl","soccer_epl","soccer_mexico_ligamx","tennis","basketball_nba","hockey_nhl")]
+    config = dict(sports=["basketball_nba","tennis"],sport_prefixes=["soccer_"])
+    assert pl.select_sports(catalog,config) == ["soccer_epl","soccer_mexico_ligamx","tennis","basketball_nba"]
