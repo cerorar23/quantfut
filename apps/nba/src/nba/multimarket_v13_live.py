@@ -25,15 +25,22 @@ from .audit import digest, write_json
 from .context import name_key
 from .injury_t60 import CONTROL, MISSING
 
-VERSION = 'nba-multimarket-live-1.3.1'
+VERSION = 'nba-multimarket-live-1.3.2'
 SEASON = '2026-27'
 EASTERN = ZoneInfo('America/New_York')
 HEADERS = {'User-Agent': 'Mozilla/5.0 NBA research receipt capture', 'Accept': 'application/json,text/html'}
 LABELS = dict(winner='Ganador', team_points='Puntos de equipo', game_total='Total del partido', player_points='Puntos de jugador',
-              player_rebounds='Rebotes de jugador', player_assists='Asistencias de jugador')
+              player_rebounds='Rebotes de jugador', player_assists='Asistencias de jugador',
+              player_points_rebounds='Puntos + rebotes', player_points_assists='Puntos + asistencias',
+              player_rebounds_assists='Rebotes + asistencias', player_points_rebounds_assists='Puntos + rebotes + asistencias')
 REFERENCE = 'Umbral estadístico; no es una línea de una casa'
 PLAYER_MARKETS = prop_lines.MARKETS
 PLAYER_WEIGHT = .25  # empirical weight of the player model, chosen by v1.2 on its selection season (2023-24)
+# Sums of the three counts the live box-score rows carry. Same v1 law and the same live calibration as the single counts; the
+# prior rate per minute of a sum is the sum of its parts (nba_live_combos_protocol.json, amendment 2026-10-24).
+COMBOS = {'player_points_rebounds': ('points', 'rebounds'), 'player_points_assists': ('points', 'assists'),
+          'player_rebounds_assists': ('rebounds', 'assists'), 'player_points_rebounds_assists': ('points', 'rebounds', 'assists')}
+COMBO_RATES = {'points_rebounds': .85, 'points_assists': .80, 'rebounds_assists': .35, 'points_rebounds_assists': 1.0}
 # Recalibration thresholds around floor(mean of last 10)+0.5. A book line can sit anywhere relative to that point; fitted at
 # the single synthetic threshold the recalibration was off by 5-9 points of over-rate two lines away (2025-26 out of sample).
 LINE_OFFSETS = (-4, -2, -1, 0, 1, 2, 4)
@@ -363,10 +370,32 @@ def predict_team(test, fit):
     return out
 
 
+def with_combinations(rows):
+    """Copies of the player rows with the summed counts of COMBOS added (the box-score rows carry only the parts)."""
+    out = []
+    for r in rows:
+        r = dict(r)
+        for market, parts in COMBOS.items():
+            r[market.removeprefix('player_')] = sum(r[p] for p in parts)
+        out.append(r)
+    return out
+
+
+def with_combo_rates(protocol):
+    """The protocol with the prior rate per minute of every summed count added (the single counts keep theirs)."""
+    return dict(protocol, player_prior_rates=dict(protocol['player_prior_rates'], **COMBO_RATES))
+
+
+def player_protocol(v12_protocol):
+    """The v1.2 player protocol with the live empirical weight and the prior rates of the summed counts."""
+    return with_combo_rates(dict(v12_protocol, empirical_weight=PLAYER_WEIGHT))
+
+
 def player_training_rows(players, protocol, start, end):
     """Player samples of [start, end) at every LINE_OFFSETS threshold, each forecast from strictly earlier games."""
+    protocol = with_combo_rates(protocol)
     days = defaultdict(list)
-    for r in players:
+    for r in with_combinations(players):
         days[r['date']].append(r)
     history, out = defaultdict(lambda: deque(maxlen=protocol['history_window'])), defaultdict(list)
     for cut in sorted(days):
@@ -377,9 +406,10 @@ def player_training_rows(players, protocol, start, end):
             for market in PLAYER_MARKETS:
                 stat = market.removeprefix('player_')
                 par = m1.player_parameters(hist, stat, protocol)
-                for line in np.floor(par['baseline']) + .5 + np.array(LINE_OFFSETS):
+                for offset in LINE_OFFSETS:
+                    line = np.floor(par['baseline']) + .5 + offset
                     if line >= .5:
-                        out[market].append(dict(date=cut, game_id=r['game_id'], unit=r['player_id'], line=float(line),
+                        out[market].append(dict(date=cut, game_id=r['game_id'], unit=r['player_id'], line=float(line), offset=offset,
                                                 probability=m1.player_over(par, line, protocol), y=int(r[stat] > line)))
         # every forecast of a date precedes every outcome of that date
         for r in days[cut]:
@@ -405,7 +435,7 @@ def fit_model(players, games, protocol, v12_protocol, injury_path, api_dir, sour
     v13.attach(train, entries, table)
     # player markets: the v1.3 player model (calibration on logit p + own status + teammates' missing minutes), same window,
     # with the recalibration fitted over a grid of thresholds instead of the single synthetic one
-    samples = player_training_rows(players, dict(v12_protocol, empirical_weight=PLAYER_WEIGHT), start, end)
+    samples = player_training_rows(players, player_protocol(v12_protocol), start, end)
     player_fit = {}
     for market in PLAYER_MARKETS:
         rows = samples[market]
@@ -470,7 +500,7 @@ def cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, seal
 def player_history(rows):
     """player id (str) -> rows in which the player took the floor, by date."""
     out = defaultdict(list)
-    for r in rows:
+    for r in with_combinations(rows):
         if r['participated'] and r['minutes'] > 0:
             out[str(r['player_id'])].append(r)
     for value in out.values():
@@ -479,11 +509,11 @@ def player_history(rows):
 
 
 def player_forecasts(model, v12_protocol, mappings, lines, history, entries):
-    """Points, rebounds and assists over the PropLine consensus line, conditional on playing (books void a DNP).
+    """Points, rebounds, assists and their sums over the PropLine consensus line, conditional on playing (books void a DNP).
 
     Only players with a line, at least `min_history` recent games and a last team in this game; players listed Out are
     skipped. Same features as the retrospective v1.3 player model; rows get `sealed_at_utc` when the cohort is sealed."""
-    protocol = dict(v12_protocol, empirical_weight=model['player_empirical_weight'])
+    protocol = dict(player_protocol(v12_protocol), empirical_weight=model['player_empirical_weight'])
     table = model['play_probability']
     out, summary = [], {}
     for m in mappings:
@@ -492,6 +522,9 @@ def player_forecasts(model, v12_protocol, mappings, lines, history, entries):
         status_of = {player: status for rows in listed.values() for player, status, _, _ in rows}
         counts = Counter()
         for (market, pid), quote in sorted(lines.get(gid, {}).items(), key=lambda kv: (kv[0][1], kv[0][0])):
+            if market not in model['player_fit']:  # a model fitted before this market existed: it is left out, not guessed
+                counts['market_not_in_model'] += 1
+                continue
             hist = m1.eligible(history.get(str(pid), []), m['et_date'], protocol)
             if len(hist) < protocol['min_history']:
                 counts['insufficient_history'] += 1

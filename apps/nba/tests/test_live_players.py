@@ -219,3 +219,101 @@ def test_a_cached_game_with_old_player_rows_is_rejected(tmp_path):
     write_json(path, dict(entry, players=[{k: v for k, v in r.items() if k != 'assists'} for r in entry['players']]))
     with pytest.raises(ValueError, match='corrupt completed-game cache'):
         live.completed('2026-10-20', '2026-10-20', Site(), tmp_path)
+
+
+# ---- sums of points, rebounds and assists (nba_live_combos_protocol.json) -----------------------------------------------
+
+COMBO_BOOKS = [two_sided('draftkings', 1, 'player_points_rebounds_assists', 30.5), two_sided('fanduel', 1, 'player_points_rebounds_assists', 30.5),
+               two_sided('draftkings', 1, 'player_points_assists', 20.5), two_sided('fanduel', 1, 'player_points_assists', 20.5)]
+COMBO_PROTOCOL = dict(V12, empirical_weight=.25, player_prior_rates=dict(V12['player_prior_rates'], **live.COMBO_RATES))
+
+
+def seal_with_combos(tmp_path, monkeypatch, archive, base=None):
+    archive['events'] = [event(BOOKS + COMBO_BOOKS)]
+    model_dir = tmp_path / 'model'
+    model_dir.mkdir()
+    write_json(model_dir / 'model.json', base or model())
+    monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
+    live.seal(model_dir, tmp_path / 'cohort', DAY, player_rows(), history_games(), PROTOCOL, V12, now=NOW, get=fake_get,
+              first_completed_day=DAY, props_root='archive')
+    return tmp_path / 'cohort', json.loads((tmp_path / 'cohort' / 'bundle.json').read_bytes())
+
+
+def test_combination_rows_add_the_sums_and_leave_the_originals_alone():
+    rows = player_rows()
+    out = live.with_combinations(rows)
+    assert 'points_rebounds' not in rows[0]
+    for r, o in zip(rows, out):
+        assert o['points_rebounds'] == r['points'] + r['rebounds'] and o['points_assists'] == r['points'] + r['assists']
+        assert o['rebounds_assists'] == r['rebounds'] + r['assists']
+        assert o['points_rebounds_assists'] == r['points'] + r['rebounds'] + r['assists']
+    assert set(live.COMBOS) <= set(live.PLAYER_MARKETS) and set(live.COMBOS) <= set(live.LABELS)
+
+
+def test_combination_lines_come_from_the_archive_like_the_single_counts(archive):
+    archive['events'] = [event(BOOKS + COMBO_BOOKS)]
+    lines, _ = prop_lines.lines('archive', NOW, [mapping()])
+    game = lines[GID]
+    assert game[('player_points_rebounds_assists', 1)] == dict(line=30.5, books=2, book_lines=dict(draftkings=30.5, fanduel=30.5))
+    assert game[('player_points_assists', 1)]['line'] == 20.5 and ('player_points', 1) in game
+
+
+def test_a_combination_is_sealed_with_the_summed_law_and_the_live_calibration(tmp_path, monkeypatch, archive):
+    base = model()
+    base['player_fit']['player_points_rebounds_assists'] = dict(weights=[1., 0., -1., 0., 0.])  # Questionable lowers the over
+    _, bundle = seal_with_combos(tmp_path, monkeypatch, archive, base)
+    pra, = [f for f in bundle['forecasts'] if f['market'] == 'player_points_rebounds_assists']
+    pa, = [f for f in bundle['forecasts'] if f['market'] == 'player_points_assists']
+    assert pra['market_label'] == 'Puntos + rebotes + asistencias' and pra['line'] == 30.5 and pra['books'] == 2
+    assert pra['conditional_participation'] and pra['report_status'] == 'Questionable' and pra['sealed_at_utc'] == bundle['created_at_utc']
+    hist = m1.eligible(live.player_history(player_rows())['1'], DAY, COMBO_PROTOCOL)
+    raw = m1.player_over(m1.player_parameters(hist, 'points_rebounds_assists', COMBO_PROTOCOL), 30.5, COMBO_PROTOCOL)
+    assert pra['probability_over'] == pytest.approx(1 / (1 + np.exp(-(np.log(raw / (1 - raw)) - 1))))
+    raw_pa = m1.player_over(m1.player_parameters(hist, 'points_assists', COMBO_PROTOCOL), 20.5, COMBO_PROTOCOL)
+    assert pa['probability_over'] == pytest.approx(raw_pa)  # identity weights for the other combination
+    points, = [f for f in bundle['forecasts'] if f['market'] == 'player_points']
+    assert pra['estimate'] > points['estimate']  # the mean of the sum exceeds the mean of one part
+
+
+def test_a_model_fitted_before_the_combinations_leaves_them_out(tmp_path, monkeypatch, archive):
+    base = model()
+    base['player_fit'] = {m: v for m, v in base['player_fit'].items() if m in ('player_points', 'player_rebounds', 'player_assists')}
+    _, bundle = seal_with_combos(tmp_path, monkeypatch, archive, base)
+    assert not [f for f in bundle['forecasts'] if f['market'] in live.COMBOS]
+    assert bundle['games'][0]['player_lines']['market_not_in_model'] == 2 and bundle['games'][0]['player_lines']['forecast'] == 2
+
+
+def test_training_rows_cover_the_combinations_and_record_the_offset():
+    protocol = dict(V12, empirical_weight=live.PLAYER_WEIGHT)  # no combination rates in it: the function adds them
+    samples = live.player_training_rows(player_rows(), protocol, '2025-01-01', '2026-08-01')
+    assert set(samples) == set(live.PLAYER_MARKETS)
+    rows = samples['player_points_rebounds_assists']
+    assert rows and {r['offset'] for r in rows} <= set(live.LINE_OFFSETS) and all(0 < r['probability'] < 1 for r in rows)
+    actual = {(r['game_id'], r['player_id']): r for r in player_rows()}
+    assert all(r['y'] == int(sum(actual[(r['game_id'], r['unit'])][k] for k in ('points', 'rebounds', 'assists')) > r['line']) for r in rows)
+
+
+def test_combination_results_sum_the_official_counts(tmp_path, monkeypatch, archive):
+    folder, _ = seal_with_combos(tmp_path, monkeypatch, archive)
+    now = TIP + timedelta(hours=4)
+    body = json.loads(box_html(3).decode().split('application/json">')[1].split('</script>')[0])
+    body['props']['pageProps']['game']['homeTeam']['players'].append(dict(
+        personId=1, firstName='Jaren', familyName='Jackson Jr.', comment='',
+        statistics=dict(minutes='PT31M05.00S', points=21, reboundsTotal=6, assists=2)))
+    html = ('<script id="__NEXT_DATA__" type="application/json">' + json.dumps(body) + '</script>').encode()
+
+    def capture(game_id, destination, game_slug=None):
+        destination.mkdir(parents=True)
+        (destination / 'boxscore.html').write_bytes(html)
+        write_json(destination / 'receipt.json', dict(
+            url=f'https://www.nba.com/game/{game_slug}/box-score', game_id=game_id, http_status=200, error=None,
+            raw_sha256=digest(destination / 'boxscore.html'), requested_at_utc=now.isoformat(),
+            first_received_at_utc=now.isoformat(), raw_file='boxscore.html'))
+        return destination / 'receipt.json'
+    monkeypatch.setattr('nba.paper.capture_official_result', capture)
+    live.capture_results(folder, now)
+    data = board.LiveCohort(folder).data(now + timedelta(minutes=1))
+    results = {r['market']: r['result'] for r in data['predictions'] if r['player_id'] == 1}
+    assert results['player_points_assists'] == dict(status='evaluated', actual=23)
+    assert results['player_points_rebounds_assists'] == dict(status='evaluated', actual=29)
+    assert data['scorecard']['player_points_rebounds_assists']['n'] == 1 and data['scorecard']['player_points_assists']['n'] == 1

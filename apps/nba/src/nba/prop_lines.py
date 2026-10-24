@@ -12,7 +12,8 @@ import importlib.util
 from pathlib import Path
 import statistics
 
-MARKETS = ('player_points', 'player_rebounds', 'player_assists')
+MARKETS = ('player_points', 'player_rebounds', 'player_assists', 'player_points_rebounds', 'player_points_assists',
+           'player_rebounds_assists', 'player_points_rebounds_assists')
 MIN_BOOKS = 2
 MAX_AGE = timedelta(minutes=65)  # hourly capture: the newest observation is at most one cycle old
 MATCH_WINDOW = timedelta(hours=3)  # PropLine commence_time vs official tipoff
