@@ -820,6 +820,12 @@ abstract class AppLocalizations {
   /// **'Alineaciones todavía no confirmadas.'**
   String get detailLineupsPending;
 
+  /// No description provided for @detailNoFeatured.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay un pronóstico destacado con cuota entre 1.20 y 1.60 y probabilidad entre 74 % y 85 %.'**
+  String get detailNoFeatured;
+
   /// No description provided for @detailNoH2h.
   ///
   /// In es, this message translates to:

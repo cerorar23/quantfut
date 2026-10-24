@@ -441,6 +441,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get detailLineupsPending => 'Escalações ainda não confirmadas.';
 
   @override
+  String get detailNoFeatured =>
+      'Não há prognóstico em destaque com odds entre 1.20 e 1.60 e probabilidade entre 74% e 85%.';
+
+  @override
   String get detailNoH2h => 'Não há confrontos registrados para este jogo.';
 
   @override

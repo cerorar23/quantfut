@@ -438,6 +438,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailLineupsPending => 'Lineups not confirmed yet.';
 
   @override
+  String get detailNoFeatured =>
+      'No featured prediction has odds between 1.20 and 1.60 and probability between 74% and 85%.';
+
+  @override
   String get detailNoH2h => 'There are no recorded meetings for this match.';
 
   @override

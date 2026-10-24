@@ -440,6 +440,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get detailLineupsPending => 'Aufstellungen noch nicht bestätigt.';
 
   @override
+  String get detailNoFeatured =>
+      'Kein hervorgehobener Tipp mit einer Quote zwischen 1.20 und 1.60 und einer Wahrscheinlichkeit zwischen 74 % und 85 %.';
+
+  @override
   String get detailNoH2h => 'Für dieses Spiel sind keine Begegnungen erfasst.';
 
   @override
