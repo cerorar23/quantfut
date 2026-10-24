@@ -11,12 +11,15 @@ from .propline_shared import newest, football_feed, parse_time, quotes
 
 ALIASES = {
     "soccer_epl": "soccer_epl", "soccer_england_efl_champ": "soccer_championship",
+    "soccer_efl_champ": "soccer_championship",
     "soccer_spain_la_liga": "soccer_la_liga", "soccer_italy_serie_a": "soccer_serie_a",
     "soccer_germany_bundesliga": "soccer_bundesliga", "soccer_france_ligue_one": "soccer_ligue_1",
     "soccer_netherlands_eredivisie": "soccer_eredivisie", "soccer_portugal_primeira_liga": "soccer_primeira_liga",
     "soccer_mexico_ligamx": "soccer_liga_mx", "soccer_usa_mls": "soccer_mls",
     "soccer_brazil_campeonato": "soccer_brasileirao", "soccer_argentina_primera_division": "soccer_argentina_primera",
     "soccer_turkey_super_league": "soccer_turkey_super_lig", "soccer_germany_bundesliga2": "soccer_germany_bundesliga2",
+    "soccer_switzerland_superleague": "soccer_swiss_super_league",
+    "soccer_norway_eliteserien": "soccer_eliteserien",
     "soccer_uefa_champs_league": "soccer_uefa_champions_league",
     "soccer_uefa_europa_league": "soccer_uefa_europa_league",
 }
