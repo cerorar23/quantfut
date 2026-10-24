@@ -340,5 +340,112 @@
   "football_markets_per_request": 11,
   "provider_max_age_seconds": 3600,
   "scores_every_hours": 6,
-  "include_depth": false
+  "include_depth": false,
+  "injuries_sports": [
+    "basketball_nba"
+  ],
+  "post_game": {
+    "days": 2,
+    "per_run": 60,
+    "daily_max": 600,
+    "max_attempts": 3,
+    "scores_max_age_seconds": 25200,
+    "families": {
+      "soccer_": {
+        "closing_markets": [
+          "h2h",
+          "spreads",
+          "totals",
+          "european_handicap",
+          "both_teams_to_score",
+          "double_chance",
+          "draw_no_bet",
+          "total_corners",
+          "team_corners",
+          "total_cards",
+          "team_cards"
+        ],
+        "bookmakers": [
+          "pinnacle",
+          "bovada",
+          "matchbook",
+          "kalshi",
+          "draftkings",
+          "fanduel"
+        ],
+        "stats": true,
+        "results_markets": [
+          "h2h",
+          "spreads",
+          "totals",
+          "both_teams_to_score",
+          "double_chance",
+          "total_corners",
+          "team_corners",
+          "total_cards",
+          "team_cards"
+        ]
+      },
+      "basketball_nba": {
+        "closing_markets": [
+          "h2h",
+          "spreads",
+          "totals",
+          "player_points",
+          "player_rebounds",
+          "player_assists",
+          "player_threes"
+        ],
+        "bookmakers": [
+          "pinnacle",
+          "bovada",
+          "draftkings",
+          "fanduel",
+          "betmgm",
+          "betrivers",
+          "unibet"
+        ],
+        "stats": true,
+        "results_markets": [
+          "h2h",
+          "spreads",
+          "totals",
+          "player_points",
+          "player_rebounds",
+          "player_assists",
+          "player_threes"
+        ]
+      },
+      "tennis": {
+        "closing_markets": [
+          "h2h",
+          "spreads",
+          "totals",
+          "total_sets",
+          "player_games_won",
+          "player_aces"
+        ],
+        "bookmakers": [
+          "pinnacle",
+          "bovada",
+          "matchbook",
+          "kalshi",
+          "draftkings"
+        ],
+        "stats": true,
+        "tours": [
+          "ATP",
+          "WTA"
+        ],
+        "results_markets": [
+          "h2h",
+          "spreads",
+          "totals",
+          "total_sets",
+          "player_games_won",
+          "player_aces"
+        ]
+      }
+    }
+  }
 }

@@ -17,6 +17,7 @@ import re
 import sqlite3
 import shutil
 import tempfile
+import unicodedata
 from datetime import datetime, timedelta, timezone
 import urllib.error
 import urllib.parse
@@ -55,6 +56,30 @@ def canonical(value):
 
 class BudgetStop(Exception):
     pass
+
+
+CAPTURE_PATH = re.compile(r"/v1/sports(?:/[a-z][a-z0-9_]*(?:/(?:odds|scores|ids|futures|injuries)"
+                          r"|/events/[A-Za-z0-9_-]+/(?:markets|odds/closing|stats|results))?)?")
+# Responses that are one object rather than a list of events.
+OBJECT_PATH = re.compile(r".*/(?:injuries|odds/closing|stats|results)")
+
+
+def payload_counts(path, payload):
+    """(events, outcomes) for the receipt; raises ValueError on an unexpected shape."""
+    if OBJECT_PATH.fullmatch(path):
+        if not isinstance(payload, dict):
+            raise ValueError("object payload required")
+        if path.endswith("/injuries"):
+            return len(payload.get("players", [])), 0
+        if path.endswith("/stats"):
+            return 1, len(payload.get("stats", []))
+        events = [payload]
+    elif isinstance(payload, list):
+        events = payload
+    else:
+        raise ValueError("list payload required")
+    return len(events), sum(len(m.get("outcomes", [])) for e in events if isinstance(e, dict)
+                            for b in e.get("bookmakers", []) for m in b.get("markets", []))
 
 
 def connect(root):
@@ -163,7 +188,7 @@ class Collector:
         self.db = connect(root)
 
     def capture(self, path, params=None, *, daily=False):
-        if not re.fullmatch(r"/v1/sports(?:/[a-z][a-z0-9_]*(?:/(?:odds|scores|ids|futures)|/events/[A-Za-z0-9_-]+/markets)?)?", path):
+        if not CAPTURE_PATH.fullmatch(path):
             raise ValueError("unsupported capture path")
         params = params or {}
         if shutil.disk_usage(self.root).free < 5 * 1024**3:
@@ -212,12 +237,8 @@ class Collector:
         error = None
         try:
             payload = json.loads(body)
-            if status == 200 and not isinstance(payload, list):
-                raise ValueError("list payload required")
             if status == 200:
-                events = len(payload)
-                outcomes = sum(len(m.get("outcomes", [])) for e in payload if isinstance(e, dict)
-                               for b in e.get("bookmakers", []) for m in b.get("markets", []))
+                events, outcomes = payload_counts(path, payload)
         except (ValueError, TypeError, AttributeError):
             error = "invalid_json_shape"
         self.db.execute("INSERT INTO receipts VALUES (?,?,?,?,?,?,?,?,?)",
@@ -228,6 +249,16 @@ class Collector:
         if status in (401, 403, 429):
             raise BudgetStop("provider_http_" + str(status))
         return row, True
+
+    def settled(self, path, params=None, *, attempts=3):
+        """One-off captures (post-game): done after a usable 200, or after `attempts` tries in any slot."""
+        rows = self.db.execute("""SELECT p.* FROM requests q LEFT JOIN receipts p ON p.request_id=q.id
+                                  WHERE q.path=? AND q.params=?""", (path, canonical(params or {}).decode("utf8"))).fetchall()
+        for r in rows:
+            if r["status"] == 200 and r["error"] is None:
+                if not path.endswith("/results") or not results_pending(load_object(self.root, r)):
+                    return True
+        return len(rows) >= attempts
 
 
 def newest(root, path, as_of, *, max_age_seconds=3900):
@@ -435,6 +466,141 @@ def read_two_way(root, sport, as_of, *, max_age_seconds=3900):
     return two_way_feed(events, receipt["received_at"]), receipt
 
 
+POST_GAME_FINAL = ("final", "retired", "walkover")
+POST_GAME_SKIP = ("upcoming", "postponed", "cancelled", "expired")
+POST_GAME_MAX_AGE = 45 * 86400  # a closing line or box score does not age; bound the lookup only
+
+
+def post_game_targets(scores, now, *, days, tours=None):
+    """[(event_id, kinds)] from a /scores body: the close once kickoff has passed, stats/results once final."""
+    out = []
+    for g in scores:
+        eid = str(g.get("id", ""))
+        try:
+            kickoff = parse_time(g["commence_time"])
+        except (KeyError, ValueError, TypeError):
+            continue
+        status = g.get("status") or ("final" if g.get("completed") else None)
+        if (not re.fullmatch(r"[A-Za-z0-9_-]+", eid) or kickoff > now or now - kickoff > timedelta(days=days)
+                or status in POST_GAME_SKIP or (tours is not None and g.get("tour") not in tours)):
+            continue
+        out.append((eid, ["closing"] + (["stats", "results"] if status in POST_GAME_FINAL else [])))
+    return out
+
+
+def post_game_request(sport, event_id, kind, family):
+    """(path, params) for one post-game capture, or (None, None) when the family does not ask for it."""
+    base = f"/v1/sports/{sport}/events/{event_id}"
+    def books(params):
+        if family.get("bookmakers"):
+            params["bookmakers"] = ",".join(family["bookmakers"])
+        return params
+    if kind == "closing" and family.get("closing_markets"):
+        return base + "/odds/closing", books({"markets": ",".join(family["closing_markets"])})
+    if kind == "stats" and family.get("stats"):
+        return base + "/stats", {}
+    if kind == "results" and family.get("results_markets"):
+        return base + "/results", books({"markets": ",".join(family["results_markets"])})
+    return None, None
+
+
+def results_pending(payload):
+    """A result body captured before the provider graded every outcome must be fetched again."""
+    return any(o.get("resolution") is None for b in payload.get("bookmakers", [])
+               for m in b.get("markets", []) for o in m.get("outcomes", []))
+
+
+def read_injuries(root, sport, as_of, *, max_age_seconds=3900):
+    """Injury report as observed at our receipt (point in time): (players, receipt) or (None, None)."""
+    doc, receipt = newest(root, f"/v1/sports/{sport}/injuries", as_of, max_age_seconds=max_age_seconds)
+    if receipt is None:
+        return None, None
+    return [dict(p, received_at=receipt["received_at"]) for p in doc.get("players", [])], receipt
+
+
+def read_closing(root, sport, event_id, as_of):
+    """Opening and closing line per (book, market, outcome) for one event, with explicit price semantics.
+
+    `closing_at` is the provider's last snapshot at or before kickoff. A capture made before kickoff is
+    not a close and is flagged `pre_kickoff_capture`.
+    """
+    doc, receipt = newest(root, f"/v1/sports/{sport}/events/{event_id}/odds/closing", as_of,
+                          max_age_seconds=POST_GAME_MAX_AGE)
+    if receipt is None:
+        return None, None
+    early = parse_time(receipt["received_at"]) < parse_time(doc["commence_time"])
+    rows = []
+    for b in doc.get("bookmakers", []):
+        for m in b.get("markets", []):
+            for o in m.get("outcomes", []):
+                flags = []
+                try:
+                    price = decimal_price(o)
+                except (KeyError, ValueError, TypeError):
+                    price = None
+                    flags.append("invalid_price")
+                if o.get("is_stale"):
+                    flags.append("stale_close")
+                if early:
+                    flags.append("pre_kickoff_capture")
+                if b["key"] in DFS_BOOKS or o.get("dfs_odds_type"):
+                    flags.append("dfs_not_single_bet")
+                if b["key"] in EXCHANGES:
+                    flags.append("exchange_contract_requires_rules")
+                if o.get("redacted"):
+                    flags.append("redacted")
+                rows.append(dict(provider="propline", received_at=receipt["received_at"], event_id=str(doc["id"]),
+                    sport_key=doc.get("sport_key"), commence_time=doc["commence_time"], bookmaker=b["key"],
+                    market=m["key"], period=m.get("period"), team=m.get("team"), line_type=m.get("line_type"),
+                    name=o.get("name"), description=o.get("description"), player_id=o.get("player_id"),
+                    outcome_id=o.get("outcome_id"), point=o.get("point"), price_american=o.get("price"),
+                    price_decimal=price, closing_at=o.get("closing_at"), opening_price=o.get("opening_price"),
+                    opening_point=o.get("opening_point"), opening_at=o.get("opening_at"), flags=flags))
+    return rows, receipt
+
+
+def read_results(root, sport, event_id, as_of):
+    """Provider grading per (book, market, outcome): resolution won/lost/push/void (None = not graded yet)."""
+    doc, receipt = newest(root, f"/v1/sports/{sport}/events/{event_id}/results", as_of,
+                          max_age_seconds=POST_GAME_MAX_AGE)
+    if receipt is None:
+        return None, None
+    return [dict(event_id=str(doc["id"]), status=doc.get("status"), bookmaker=b["key"], market=m["key"],
+                 period=m.get("period"), team=m.get("team"), name=o.get("name"), description=o.get("description"),
+                 player_id=o.get("player_id"), point=o.get("point"), price_american=o.get("price"),
+                 resolution=o.get("resolution"), actual_value=o.get("actual_value"),
+                 resolved_at=o.get("resolved_at"), redacted=bool(o.get("redacted")), received_at=receipt["received_at"])
+            for b in doc.get("bookmakers", []) for m in b.get("markets", []) for o in m.get("outcomes", [])], receipt
+
+
+def read_stats(root, sport, event_id, as_of):
+    """Box score as captured: (body, receipt). Official only when body['status'] is final."""
+    return newest(root, f"/v1/sports/{sport}/events/{event_id}/stats", as_of, max_age_seconds=POST_GAME_MAX_AGE)
+
+
+def _fold(name):
+    plain = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", plain.lower())
+
+
+TEAM_STATS = ("corners", "cards")
+
+
+def team_stats(doc):
+    """{'home'|'away': {'corners': n, 'cards': n}} from the box score's team rows.
+
+    Team rows name the club in `player_name`, sometimes spelled differently from the event (accents).
+    A row that matches neither side by folded name is left out rather than guessed.
+    """
+    sides = {_fold(doc.get("home_team")): "home", _fold(doc.get("away_team")): "away"}
+    out = {}
+    for row in doc.get("stats", []):
+        side = sides.get(_fold(row.get("player_name")))
+        if side and row.get("stat_type") in TEAM_STATS and row.get("stat_value") is not None:
+            out.setdefault(side, {})[row["stat_type"]] = float(row["stat_value"])
+    return out
+
+
 def market_batches(sport, markets, config):
     """Provider-safe batches with a stable, auditable request count."""
     requested = list(dict.fromkeys(markets))
@@ -529,6 +695,39 @@ def run(root, key_file, config_file, *, limit=None):
                 capture(f"/v1/sports/{sport}/ids", daily=True)
             if config.get("futures_daily"):
                 capture(f"/v1/sports/{sport}/futures", daily=True)
+            if sport in config.get("injuries_sports", []):
+                capture(f"/v1/sports/{sport}/injuries")
+        # Post-game, once per event: close, box score and grading. Targets come from the archived
+        # /scores body, so finding them costs no request. A failed post-game call (e.g. a 404 on an
+        # event the provider merged) is retried in later hours up to `max_attempts` and is reported
+        # apart: it must not mark the hourly odds capture as failed.
+        # Its own daily ceiling keeps the hourly odds of later hours from being starved by the shared cap.
+        post = config.get("post_game") or {}
+        midnight = stamp(utcnow().replace(hour=0, minute=0, second=0, microsecond=0))
+        spent = client.db.execute("""SELECT count(*) FROM requests WHERE started_at>=? AND (path LIKE '%/odds/closing'
+                                     OR path LIKE '%/events/%/stats' OR path LIKE '%/events/%/results')""",
+                                  (midnight,)).fetchone()[0]
+        budget = min(int(post.get("per_run", 0)), int(post.get("daily_max", 0)) - spent)
+        report["post_game"] = done = {"captures": 0, "failures": 0}
+        for sport in selected:
+            family = next((v for k, v in post.get("families", {}).items() if sport.startswith(k)), None)
+            if family is None or budget <= 0:
+                continue
+            scores, _ = newest(root, f"/v1/sports/{sport}/scores", utcnow(),
+                               max_age_seconds=int(post.get("scores_max_age_seconds", 7 * 3600)))
+            for eid, kinds in post_game_targets(scores or [], utcnow(), days=post.get("days", 2), tours=family.get("tours")):
+                for kind in kinds:
+                    path, params = post_game_request(sport, eid, kind, family)
+                    if path is None or client.settled(path, params, attempts=int(post.get("max_attempts", 3))):
+                        continue
+                    if budget <= 0 or (limit is not None and calls >= limit):
+                        break
+                    budget -= 1
+                    r, called = client.capture(path, params)
+                    calls += int(called)
+                    ok = r is not None and r["status"] == 200 and r["error"] is None
+                    done["captures" if ok else "failures"] += 1
+                    print(json.dumps({"path": path, "status": r["status"] if r else None}), flush=True)
         report["stop"] = None
     except BudgetStop as exc:
         report["stop"] = str(exc)
