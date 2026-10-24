@@ -235,9 +235,10 @@ void main() {
       await tester.tap(toggle);
       await tester.pump();
       expect(find.text('Inter · Benfica'), findsOneWidget);
-      // La cuota publicada se ve en el candado; si el servidor no la manda, no se inventa.
+      // La cuota del candado va difuminada (bloques, no el número); si el servidor no la manda, no se inventa.
       expect(find.byKey(const ValueKey('locked-quote')), findsOneWidget);
-      expect(find.text('@1,35'), findsOneWidget);
+      expect(find.text('@█.██'), findsOneWidget);
+      expect(find.text('@1,35'), findsNothing);
       await tester.ensureVisible(find.text('100 monedas').first);
       await tester.tap(find.text('100 monedas').first);
       expect(unlocked, ['Inter']);

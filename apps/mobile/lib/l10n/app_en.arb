@@ -119,6 +119,7 @@
   "detailInjuries": "Reported absences",
   "detailLineups": "Lineups",
   "detailLineupsPending": "Lineups not confirmed yet.",
+  "detailNoFeatured": "No featured prediction has odds between 1.20 and 1.60 and probability between 74% and 85%.",
   "detailNoH2h": "There are no recorded meetings for this match.",
   "detailNoInjuries": "No absences in the available report.",
   "detailNoInjuriesCheck": "No absence check is available.",

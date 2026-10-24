@@ -441,6 +441,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get detailLineupsPending => 'Compositions pas encore confirmées.';
 
   @override
+  String get detailNoFeatured =>
+      'Aucun pronostic à la une avec une cote entre 1.20 et 1.60 et une probabilité entre 74 % et 85 %.';
+
+  @override
   String get detailNoH2h => 'Aucune confrontation enregistrée pour ce match.';
 
   @override

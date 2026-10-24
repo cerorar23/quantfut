@@ -440,6 +440,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get detailLineupsPending => 'Alineaciones todavía no confirmadas.';
 
   @override
+  String get detailNoFeatured =>
+      'No hay un pronóstico destacado con cuota entre 1.20 y 1.60 y probabilidad entre 74 % y 85 %.';
+
+  @override
   String get detailNoH2h =>
       'No hay enfrentamientos registrados para este partido.';
 

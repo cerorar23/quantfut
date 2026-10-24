@@ -114,26 +114,30 @@ class LiveScoreStrip extends StatelessWidget {
   }
 }
 
-/// El único pronóstico destacado de un partido: el de mayor probabilidad; si empatan,
-/// el de la cuota más alta. Los que no traen probabilidad numérica no compiten (si ninguno
-/// la trae, se muestra el primero).
+/// Destacado: mayor probabilidad entre 74–85 % y cuota publicada entre 1.20–1.60,
+/// incluidos los extremos. En empate gana la cuota más alta.
+/// Sin candidatos válidos no se destaca un pronóstico fuera de los límites.
 JsonMap? featuredPick(List<JsonMap> picks) {
-  double number(dynamic value) =>
-      value is num && value.isFinite ? value.toDouble() : double.negativeInfinity;
+  double number(dynamic value) => value is num && value.isFinite
+      ? value.toDouble()
+      : double.negativeInfinity;
   JsonMap? best;
   for (final pick in picks) {
-    if (number(pick['prob']) == double.negativeInfinity) continue;
+    final prob = number(pick['prob']);
+    final price = number(pick['ref_price'] ?? pick['price']);
+    if (prob < .74 || prob > .85 || price < 1.20 || price > 1.60) {
+      continue;
+    }
     if (best == null) {
       best = pick;
       continue;
     }
     final byProb = number(pick['prob']).compareTo(number(best['prob']));
-    final byPrice = number(pick['ref_price'] ?? pick['price']).compareTo(
-      number(best['ref_price'] ?? best['price']),
-    );
+    final byPrice = number(pick['ref_price'] ?? pick['price'])
+        .compareTo(number(best['ref_price'] ?? best['price']));
     if (byProb > 0 || (byProb == 0 && byPrice > 0)) best = pick;
   }
-  return best ?? (picks.isEmpty ? null : picks.first);
+  return best;
 }
 
 /// Pronóstico destacado + indicadores + dictamen, todo con datos entregados
@@ -390,7 +394,7 @@ class ForecastPanel extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _Tile(
-                      icon: '🎯',
+                      icon: Icons.track_changes,
                       label: l10n.tileProbability,
                       value: realPercent(prob),
                       color: liveCyan,
@@ -402,7 +406,7 @@ class ForecastPanel extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _Tile(
-                      icon: '⚽',
+                      icon: Icons.sports_soccer,
                       label: l10n.tileXg,
                       value: decimalText(xg['total']),
                       color: liveGold,
@@ -421,7 +425,7 @@ class ForecastPanel extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _Tile(
-                      icon: '⚔',
+                      icon: Icons.compare_arrows,
                       label: l10n.tileFavorite,
                       value: side.isEmpty ? '—' : realPercent(side.first.$2),
                       color: statsPurple,
@@ -438,7 +442,7 @@ class ForecastPanel extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _Tile(
-                      icon: '📊',
+                      icon: Icons.bar_chart,
                       label: l10n.tileGoalsTrend,
                       value: over25 == null ? '—' : realPercent(over25 / 100),
                       color: statsLime,
@@ -516,7 +520,8 @@ class _Tile extends StatelessWidget {
     required this.color,
     required this.caption,
   });
-  final String icon, label, value, caption;
+  final IconData icon;
+  final String label, value, caption;
   final Color color;
 
   @override
@@ -531,8 +536,16 @@ class _Tile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          '$icon  ${label.toUpperCase()}',
+        Text.rich(
+          TextSpan(
+            children: [
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: Icon(icon, size: 12, color: liveMuted),
+              ),
+              TextSpan(text: '  ${label.toUpperCase()}'),
+            ],
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(

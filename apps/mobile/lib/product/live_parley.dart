@@ -71,7 +71,7 @@ class _ParleyTabState extends State<ParleyTab> {
     final tickets = [
       for (final t in (latest?['tickets'] as List? ?? const [])) jsonMap(t),
     ];
-    final total = jsonMap(jsonMap(d['resumen'])['total']);
+    final past = _lastParleys(days.skip(1), 7);
     final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,14 +107,11 @@ class _ParleyTabState extends State<ParleyTab> {
                 ? _LockedTicket(ticket: t, onVip: widget.onVip)
                 : _TicketCard(key: ValueKey('parley-ticket-$i'), ticket: t),
         ],
-        if (days.length > 1) ...[
+        if (past.isNotEmpty) ...[
           liveHeading(l10n.parleyPastDays),
-          for (final day in days.skip(1).take(7)) _PastDay(day: day),
+          for (final day in past) _PastDay(day: day),
         ],
-        if ((total['n'] as num? ?? 0) > 0)
-          _Summary(total: total)
-        else if (days.isEmpty)
-          _NoHistory(message: l10n.parleyNoHistory),
+        if (days.isEmpty) _NoHistory(message: l10n.parleyNoHistory),
         const SizedBox(height: 18),
       ],
     );
@@ -581,6 +578,23 @@ class _Leg extends StatelessWidget {
   }
 }
 
+/// Los últimos [max] parlays de los días anteriores (más recientes primero); el
+/// día en que se llega al tope se recorta para no pasarse.
+List<JsonMap> _lastParleys(Iterable<JsonMap> days, int max) {
+  final out = <JsonMap>[];
+  var left = max;
+  for (final day in days) {
+    if (left <= 0) break;
+    final tickets = [
+      for (final t in (day['tickets'] as List? ?? const [])) jsonMap(t),
+    ];
+    if (tickets.isEmpty) continue;
+    out.add({...day, 'tickets': tickets.take(left).toList()});
+    left -= tickets.length;
+  }
+  return out;
+}
+
 class _PastDay extends StatelessWidget {
   const _PastDay({required this.day});
   final JsonMap day;
@@ -604,46 +618,6 @@ class _PastDay extends StatelessWidget {
             size: 11,
             color: liveMuted,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Summary extends StatelessWidget {
-  const _Summary({required this.total});
-  final JsonMap total;
-
-  @override
-  Widget build(BuildContext context) {
-    final real = total['acierto_real'];
-    final promised = total['prob_media'];
-    return liveCard(
-      border: liveGold.withValues(alpha: .3),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          liveText(context.l10n.parleyHistoryTitle, bold: true, size: 15),
-          const SizedBox(height: 8),
-          liveText(
-            context.l10n.parleySummary(
-                  total['aciertos'] ?? 0,
-                  total['n'] ?? 0,
-                ) +
-                (real is num
-                    ? context.l10n.parleySummaryReal(decimalText(real, 1))
-                    : '') +
-                (promised is num
-                    ? context.l10n.parleySummaryPromised(
-                        decimalText(promised, 1),
-                      )
-                    : ''),
-            size: 12,
-            color: liveGreen,
-            bold: true,
-          ),
-          const SizedBox(height: 6),
-          liveText(context.l10n.parleyFewNote, size: 10, color: liveMuted),
         ],
       ),
     );
