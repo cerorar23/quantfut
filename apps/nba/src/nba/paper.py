@@ -242,8 +242,8 @@ def run_pilot(output, key, cap, identity_path, labels_path, boxes_path, *, maxim
 
 def capture_official_result(game_id, destination, game_slug=None):
     """One free public NBA request; never retry or alter a prior receipt."""
-    if not re.fullmatch(r'002\d{7}',game_id):
-        raise ValueError('regular NBA game ID required')
+    if not re.fullmatch(r'00[2456]\d{7}',game_id):
+        raise ValueError('regular, play-in, playoff or Cup final NBA game ID required')
     root = Path(destination);root.mkdir(parents=True,exist_ok=False)
     url = f'https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json'
     if game_slug:

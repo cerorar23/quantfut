@@ -37,7 +37,7 @@ def player_rows():
     for g in history_games():
         for pid, name, minutes, points in ((1, 'Jaren Jackson Jr.', 30., 18.), (2, 'Ana Díaz', 20., 8.)):
             rows.append(dict(game_id=g['game_id'], date=g['date'], player_id=pid, name=name, participated=True,
-                             minutes=minutes, points=points, team_id=HOME))
+                             minutes=minutes, points=points, rebounds=pid * 3 + len(rows) % 4, assists=pid + len(rows) % 3, team_id=HOME))
     return rows
 
 
@@ -48,7 +48,8 @@ def cards(day=DAY):
 def box_html(status, home_points=110, away_points=104, tip='2026-10-21T23:00:00Z'):
     team = lambda tid, pts, city: dict(teamId=tid, teamCity=city, teamName='Club', teamTricode=city[:3].upper(), score=pts,
         statistics=dict(points=pts, reboundsTotal=0, assists=0), inactives=[],
-        players=[dict(personId=tid, played='1', statistics=dict(minutes='30:00', points=pts, reboundsTotal=0, assists=0))])
+        players=[dict(personId=tid, firstName='Ana', familyName=city, comment='', played='1',
+                      statistics=dict(minutes='30:00', points=pts, reboundsTotal=0, assists=0))])
     game = dict(gameId=GID, gameStatus=status, gameTimeUTC=tip, homeTeamId=HOME, awayTeamId=AWAY,
                 homeTeam=team(HOME, home_points, 'Bbb'), awayTeam=team(AWAY, away_points, 'Aaa'))
     game['homeTeam']['teamTricode'], game['awayTeam']['teamTricode'] = 'BBB', 'AAA'
@@ -78,7 +79,9 @@ def model():
     games, table = history_games(), dict.fromkeys(av.STATUSES, .5)
     train = [dict(r) for r in v12.team_games(games, V12)]
     v13.attach(train, {}, table)
+    identity = dict(weights=[1., 0., 0., 0., 0.])  # recalibration that returns the raw model probability
     return dict(version=live.VERSION, train_seasons=['2024-25', '2025-26'], fit=live.fit_team(train), play_probability=table,
+                player_fit={m: identity for m in live.PLAYER_MARKETS}, player_empirical_weight=live.PLAYER_WEIGHT,
                 inputs=dict(live_module_sha256=digest(live.__file__)))
 
 
@@ -274,21 +277,104 @@ def test_a_game_is_forecast_once_across_cohorts(cohort, tmp_path):
                   now=datetime(2026, 10, 21, 14, 40, tzinfo=UTC), get=fake_get, first_completed_day=DAY, exclude=live.sealed_games(folder.parent))
 
 
-def test_producer_seals_after_the_afternoon_report_once_and_collects_results(tmp_path, monkeypatch):
-    from nba import multimarket_v13_live_producer as producer
+def test_seal_and_receipts_are_stamped_when_they_happen(tmp_path, monkeypatch):
+    model_dir = tmp_path / 'model'
+    model_dir.mkdir()
+    write_json(model_dir / 'model.json', model())
+    monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
+    ticks = iter(datetime(2026, 10, 21, 14, 30, tzinfo=UTC) + timedelta(minutes=i) for i in range(10))
+    out = tmp_path / 'cohort'
+    result = live.seal(model_dir, out, DAY, player_rows(), history_games(), PROTOCOL, V12, now=datetime(2026, 10, 21, 14, 29, tzinfo=UTC),
+                       get=fake_get, first_completed_day=DAY, clock=lambda: next(ticks))
+    bundle = json.loads((out / 'bundle.json').read_bytes())
+    # game page, then report, then the seal itself: each stamped by the clock when it happens, not at the start of the run
+    assert json.loads((out / 'schedule.json').read_bytes())['games'][0]['first_received_at_utc'] == '2026-10-21T14:30:00+00:00'
+    assert bundle['report']['first_received_at_utc'] == '2026-10-21T14:31:00+00:00'
+    assert bundle['created_at_utc'] == result['sealed_at_utc'] == '2026-10-21T14:32:00+00:00'
+    assert {f['sealed_at_utc'] for f in bundle['forecasts']} == {bundle['created_at_utc']}
+
+
+def test_lead_window_keeps_only_games_close_to_tipoff(cohort, tmp_path):
+    with pytest.raises(ValueError, match='no games left'):
+        live.seal(tmp_path / 'model', tmp_path / 'far', DAY, player_rows(), history_games(), PROTOCOL, V12,
+                  now=datetime(2026, 10, 21, 14, 29, tzinfo=UTC), get=fake_get, first_completed_day=DAY,
+                  lead=(timedelta(minutes=65), timedelta(minutes=90)))
+
+
+def test_missing_report_slot_is_told_apart_from_a_blocked_source(tmp_path, monkeypatch):
+    monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
+    now = datetime(2026, 10, 21, 14, 29, tzinfo=UTC)  # 10:29 Eastern: newest slot 10:15
+
+    def site(control):
+        def get(url):
+            if url == live.CONTROL:
+                return control, b'%PDF-1.4' if control == 200 else b''
+            if url.endswith('10_15AM.pdf'):
+                return 403, b''
+            return 200, b'%PDF-1.4 fake'
+        return get
+    assert live.capture_report(DAY, now, tmp_path / 'a', site(200))['pdf_file'] == 'Injury-Report_2026-10-21_10_00AM.pdf'
+    with pytest.raises(ValueError, match='blocked'):
+        live.capture_report(DAY, now, tmp_path / 'b', site(403))
+    with pytest.raises(ValueError, match='HTTP 500'):
+        live.capture_report(DAY, now, tmp_path / 'c', lambda url: (500, b''))
+
+
+def producer_inputs(tmp_path, monkeypatch):
     model_dir, data = tmp_path / 'model', tmp_path / 'data'
-    model_dir.mkdir(), data.mkdir()
+    model_dir.mkdir(parents=True), data.mkdir()
     write_json(model_dir / 'model.json', model())
     import gzip
     with gzip.open(data / 'players.jsonl.gz', 'wt', encoding='utf8') as stream:
         stream.writelines(json.dumps(r) + '\n' for r in player_rows())
     (data / 'games.json').write_text(json.dumps(history_games()))
     monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
-    cohorts = tmp_path / 'cohorts'
-    early = datetime(2026, 10, 21, 20, 0, tzinfo=UTC)  # 16:00 Eastern
-    assert producer.run(early, cohorts, model_dir, data, DAY, fake_get)['sealed'] is None
-    ready = datetime(2026, 10, 21, 21, 40, tzinfo=UTC)  # 17:40 Eastern
-    status = producer.run(ready, cohorts, model_dir, data, DAY, fake_get)
-    assert status['sealed']['games'] == 1 and (cohorts / DAY / 'bundle.seal.json').exists()
-    again = producer.run(ready + timedelta(minutes=10), cohorts, model_dir, data, DAY, fake_get)
-    assert again['sealed'] is None and again['results'] == {DAY: dict(stored=[], retry=[])}
+    return tmp_path / 'cohorts', model_dir, data, tmp_path / 'cache'
+
+
+class Counting:
+    def __init__(self, tip='2026-10-21T23:00:00Z'):
+        self.tip, self.calls = tip, []
+
+    def __call__(self, url):
+        self.calls.append(url)
+        if '/game/' in url and not url.endswith('/box-score'):
+            return 200, box_html(1, tip=self.tip)
+        return fake_get(url)
+
+
+def test_producer_seals_each_game_shortly_before_its_own_tipoff(tmp_path, monkeypatch):
+    from nba import multimarket_v13_live_producer as producer
+    cohorts, model_dir, data, cache = producer_inputs(tmp_path, monkeypatch)
+    site = Counting()
+    early = TIP - timedelta(minutes=120)
+    assert producer.run(early, cohorts, model_dir, data, DAY, cache, site)['sealed'] is None
+    ready = TIP - timedelta(minutes=80)  # 17:40 Eastern
+    status = producer.run(ready, cohorts, model_dir, data, DAY, cache, site)
+    folder = cohorts / f'{DAY}_1740'
+    assert status['sealed']['games'] == 1 and (folder / 'bundle.seal.json').exists()
+    assert json.loads((folder / 'bundle.json').read_bytes())['version'] == live.VERSION
+    site.calls.clear()
+    again = producer.run(ready + timedelta(minutes=10), cohorts, model_dir, data, DAY, cache, site)
+    assert again['sealed'] is None and again['results'] == {folder.name: dict(stored=[], retry=[])}
+    assert site.calls == []  # schedule from the cache, the game already sealed: no request at all
+
+
+def test_afternoon_and_early_evening_games_are_sealed_with_their_report(tmp_path, monkeypatch):
+    from nba import multimarket_v13_live_producer as producer
+    # 13:00 Eastern was never sealed by the old 17:35 run; 18:30 Eastern got a report received too late to count
+    for tip in ('2026-10-21T17:00:00Z', '2026-10-21T22:30:00Z'):
+        cohorts, model_dir, data, cache = producer_inputs(tmp_path / tip[11:13], monkeypatch)
+        when = datetime.fromisoformat(tip.replace('Z', '+00:00')) - timedelta(minutes=75)
+        status = producer.run(when, cohorts, model_dir, data, DAY, cache, Counting(tip))
+        assert status['sealed']['games'] == 1 and status['sealed']['availability'] == {GID: 'reporte_aplicado'}
+
+
+def test_schedule_is_read_again_after_its_lifetime(tmp_path):
+    from nba import multimarket_v13_live_producer as producer
+    site, start = Counting(), datetime(2026, 10, 21, 14, 0, tzinfo=UTC)
+    assert producer.schedule(DAY, start, tmp_path, site) == {GID: TIP.isoformat()}
+    producer.schedule(DAY, start + producer.SCHEDULE_TTL - timedelta(minutes=1), tmp_path, site)
+    assert len(site.calls) == 2  # card + game page, once
+    producer.schedule(DAY, start + producer.SCHEDULE_TTL, tmp_path, site)
+    assert len(site.calls) == 4

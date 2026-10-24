@@ -12,11 +12,12 @@ import numpy as np
 from .audit import digest
 from .dashboard import Dashboard, Server, handler
 from .multimarket_dashboard import MultiDashboard
-from .multimarket_v13_live import final_game
+from .multimarket_v13_live import PLAYER_MARKETS, box_minutes, final_game
 
-MARKETS = ('winner', 'team_points', 'game_total')
+MARKETS = ('winner', 'team_points', 'game_total', *PLAYER_MARKETS)
 PUBLIC = ('event_id', 'nba_game_id', 'player_id', 'player', 'market', 'market_label', 'estimate', 'range_low', 'range_high', 'line',
-          'probability_over', 'probability_under', 'sealed_at_utc', 'last_feature_date', 'reference')
+          'probability_over', 'probability_under', 'sealed_at_utc', 'last_feature_date', 'reference', 'conditional_participation')
+PLAYER_PUBLIC = ('report_status', 'probability_play', 'books')
 
 
 def utc(value):
@@ -47,13 +48,25 @@ def official_scores(folder, game, now):
         scores[side] = value
     if scores['homeTeam'] == scores['awayTeam']:
         raise ValueError('final team scores do not reconcile')
-    return dict(home=scores['homeTeam'], away=scores['awayTeam'], received_at_utc=receipt['first_received_at_utc'])
+    players = {}
+    for side in ('homeTeam', 'awayTeam'):
+        for person in official[side]['players']:
+            stats = person['statistics']
+            players[person['personId']] = dict(minutes=box_minutes(stats['minutes']), points=stats['points'],
+                                               rebounds=stats['reboundsTotal'], assists=stats['assists'])
+    return dict(home=scores['homeTeam'], away=scores['awayTeam'], players=players, received_at_utc=receipt['first_received_at_utc'])
 
 
 def outcome(forecast, game, scores):
     if scores is None:
         return dict(status='pending', actual=None)
     market = forecast['market']
+    if market in PLAYER_MARKETS:
+        # conditional on playing, as books void a player who does not take the floor
+        player = scores['players'].get(forecast['player_id'])
+        if player is None or player['minutes'] <= 0:
+            return dict(status='dnp', actual=None)
+        return dict(status='evaluated', actual=player[market.removeprefix('player_')])
     if market == 'winner':
         actual = int(scores['home'] > scores['away'])
     elif market == 'team_points':
@@ -124,6 +137,7 @@ class LiveCohort:
                 if f['event_id'] != g['event_id']:
                     continue
                 row = {k: f[k] for k in PUBLIC}
+                row.update({k: f[k] for k in PLAYER_PUBLIC if k in f})
                 row['result'] = dict(status='validation_hold', actual=None) if held else outcome(f, g, scores)
                 row['actionable'] = False
                 rows.append(row)

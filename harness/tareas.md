@@ -3142,3 +3142,17 @@ Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
 - [ ] Fútbol queda con 294 créditos (≈1 día) hasta el reset del 1-nov: decisión del titular (opción 3); revisar la captura en vivo de fútbol.
 - [ ] Props de jugador retrospectivos: viables con un mes del plan 5M de The Odds API ($119; ≈345.000 créditos) o, de forma barata, 100 partidos × 2 mercados (2.000 créditos); falta el módulo de comparación y su protocolo congelado. docs/nba_props_jugadores_viabilidad_20261023.md.
 - [ ] Paquete de The Odds API para el retrospectivo de props (decisión del titular): recomendado un mes del plan 5M ($119) desde el 1-nov y hacer el escenario E (~249.000 créditos: 4 mercados × 2 temporadas × 2 snapshots + team_totals + totals/spreads de Pinnacle); antes, piloto de 2.000 créditos. docs/nba_props_sonda_y_paquete_20261023.md.
+
+### NBA — segunda auditoría del motor, 2026-10-23
+Enfoque del titular: probabilidad estadística calibrada frente al resultado real, no ganar a las cuotas. Detalle en docs/nba_auditoria_motor_20261023.md.
+- [x] Auditoría del vivo, de v1.4-v1.5 y del piloto PropLine (0 créditos, servidor sin tocar).
+- [x] Errores 1-6 del productor corregidos en `nba/productor-correcciones` (sellado por partido 65-90 min antes del salto, horas reales, caché, control de bloqueo, filas de jugador de 2026-27); modelo reajustado con parámetros idénticos. docs/nba_productor_correcciones_20261023.md.
+- [ ] Desplegar el productor corregido (PR a `main`, confirmación del titular; runbook y vuelta atrás en el documento).
+- [ ] Decidir antes del 1-nov si se retira la captura de precios `nba-live13-price` (desplegada el 22-oct; con varias cohortes por día su libro de 2 peticiones/día rechazará la mayoría).
+- [x] Play-in y playoffs (004/005/006) en el productor, resultados y página.
+- [x] Reloj de `tests/test_paper_bundle.py` fijado (`paper_bundle.DEADLINE_UTC`, mismo valor).
+- [x] Mercados de jugador en vivo: puntos, rebotes y asistencias a la línea de PropLine (moda de ≥2 casas), condicionados a jugar, modelo de jugador v1.3 con recalibración en rejilla de umbrales (mejor Brier fuera de muestra en los tres). docs/nba_productor_correcciones_20261023.md.
+- [ ] Desplegar productor y panel 1.3.1 (montaje `readonly` del volumen de PropLine, caché, modelo `…20261023`); runbook en el documento.
+- [ ] Recalibración móvil de total y puntos de equipo (sesgo ±0,04 por temporada) y prior de pretemporada por plantilla.
+- [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
+- [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.
