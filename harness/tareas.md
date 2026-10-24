@@ -3153,7 +3153,7 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [x] Reloj de `tests/test_paper_bundle.py` fijado (`paper_bundle.DEADLINE_UTC`, mismo valor).
 - [x] Mercados de jugador en vivo: puntos, rebotes y asistencias a la línea de PropLine (moda de ≥2 casas), condicionados a jugar, modelo de jugador v1.3 con recalibración en rejilla de umbrales (mejor Brier fuera de muestra en los tres). docs/nba_productor_correcciones_20261023.md.
 - [ ] Desplegar productor y panel 1.3.1 (montaje `readonly` del volumen de PropLine, caché, modelo `…20261023`); runbook en el documento.
-- [ ] PropLine: cierres y liquidaciones diarios de NBA/tenis/fútbol en el recolector (rama `propline/cierres-liquidaciones`, sin desplegar). Pendiente: PR, despliegue con anotación en DEPLOYS.md y un lector para los motores.
+- [x] PropLine: cierres y liquidaciones diarios de NBA/tenis/fútbol en el recolector (PR #96, desplegado el 24-oct 13:51 UTC por otra sesión). Pendiente: PR, despliegue con anotación en DEPLOYS.md y un lector para los motores.
 - [ ] Recalibración móvil de total y puntos de equipo (sesgo ±0,04 por temporada) y prior de pretemporada por plantilla.
 - [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
 - [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.
@@ -3170,6 +3170,6 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [x] Goles por equipo: sí está, en `totals` con `team`, con Pinnacle; el ingestor ya lo separa.
 - [ ] Remedir props NBA el día del partido (primer sellado 1.3.1) y Champions/Europa League en semana de copa.
 - [x] Leer toda la referencia de PropLine (`llms-full.txt`) y listar las funciones útiles por deporte. docs/propline_funciones_utiles_20261024.md.
-- [ ] Añadir al recolector `/odds/closing` (cierre real) para fútbol y NBA.
-- [ ] Emparejar props NBA por `player_id` (`/players?search=`) en vez de por nombre.
-- [ ] Confirmar con una petición si `/results` está en Hobby o exige Pro.
+- [x] Añadir al recolector `/odds/closing` (cierre real) para fútbol y NBA: lo hizo el PR #96 (también tenis).
+- [x] Emparejar props NBA por `player_id`: ya lo hacía `apps/nba/src/nba/prop_lines.py`. En tenis PropLine no da `player_id`.
+- [x] `/results` y `/odds/closing` están en Hobby (petición real del 24-oct, `redacted: false`).
