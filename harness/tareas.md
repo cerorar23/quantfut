@@ -3161,7 +3161,7 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 ## PropLine: capturas posteriores al partido (24-oct-2026)
 - [x] Recolector (sobre la liquidación del PR #96): box score `/stats` de NBA y fútbol al final de la cola de liquidación; lesiones NBA cada hora; lectores sin red `read_closing`, `read_results`, `read_stats` + `team_stats`, `read_injuries`.
 - [x] Desplegar el recolector nuevo: release `5a9cde0` activa desde el 24-oct 14:18 UTC (DEPLOYS.md).
-- [ ] Verificar la primera pasada real de `5a9cde0` en cuanto PropLine acepte de nuevo la clave (hoy `401 invalid_api_key`).
+- [x] Verificada la release `5a9cde0` con la clave nueva (pasadas 15:07-17:07 UTC); `team_stats` corregido y desplegado en `fc20390` (DEPLOYS.md).
 - [ ] Puerta CLV de fútbol con el cierre de `read_closing` (fecha de corte).
 - [ ] Liquidar córners y tarjetas con `team_stats`.
 - [ ] Decidir si las lesiones de ESPN entran en NBA como segunda señal (nuevo protocolo, no el sellado 1.3.1).
