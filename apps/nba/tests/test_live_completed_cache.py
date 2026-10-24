@@ -141,6 +141,10 @@ def test_seal_records_a_postponed_game_and_uses_the_cache(tmp_path, monkeypatch)
 def test_box_score_minutes_and_player_rows():
     assert live.box_minutes('') == 0 and live.box_minutes('33:15') == pytest.approx(33.25)
     assert live.box_minutes('PT23M56.00S') == pytest.approx(23 + 56 / 60) and live.box_minutes('PT00M00.00S') == 0
+    # nba.com rounding: a full minute written as :60 (the producer stopped on '10:60' on 2026-10-24)
+    assert live.box_minutes('10:60') == pytest.approx(11.) and live.box_minutes('PT10M60.00S') == pytest.approx(11.)
+    with pytest.raises(ValueError):
+        live.box_minutes('10:61')
     for bad in ('PT33M75.00S', '33', '33:75'):
         with pytest.raises(ValueError):
             live.box_minutes(bad)
