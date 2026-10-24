@@ -662,6 +662,7 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
 
 ## NBA 2026-27 — investigación y experimentos (2026-10-03)
 - [x] NBA: normalizado ampliado (tiros, pérdidas, rebotes ofensivos, posesiones, play-in/playoffs) con protocolo congelado; docs/nba_normalizado_ampliado_20261024.md.
+- [x] NBA: modelo de props anclado en el mercado con protocolo congelado (nba.props_residual); docs/nba_props_residual_20261024.md.
 
 - [x] Revisar arquitectura y contrastar literatura académica, doctorados,
       maestrías y el texto aportado. Plan integrado con fuentes, modelos,

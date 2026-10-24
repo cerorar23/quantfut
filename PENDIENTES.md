@@ -121,6 +121,7 @@ Tareas sueltas:
 - [ ] iOS: necesita Mac y Apple Developer (APNs y firma).
 - [ ] Validar el acceso con Google y la entrega FCM con un usuario real; activar `FIREBASE_AUTH_ENABLED` cuando lo decidas.
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
+- [x] NBA — modelo de props anclado en el mercado (protocolo congelado, 2024-25 → 2025-26): sin evidencia de información sobre el consenso de las casas de EE. UU.; rebotes y triples solo calibración (el control del placebo del protocolo falla y necesita un v1.1). docs/nba_props_residual_20261024.md.
 - [x] NBA — cuotas históricas h2h (The Odds API): los 325 snapshots de 2024-25 y 2025-26 ya se compraron el 23-oct (manifest en `apps/nba/.local/raw/nba_odds_h2h_202611`) y se compararon (`nba_f6_market_20261101`).
 - [x] NBA — normalizado ampliado (tiros, pérdidas, rebote ofensivo, posesiones, play-in y playoffs 2022-23..2025-26): `nba_extended_box_20261024`, docs/nba_normalizado_ampliado_20261024.md.
 - [ ] NBA — datos para entrenar todos los mercados: cuotas de hándicap/total (BetsAPI en VPS sin conectar), props sin precio (robos, tapones, combinados) y postemporada 2021-22 sin fecha. Ver docs/nba_auditoria_datos_entrenamiento_20261024.md.
