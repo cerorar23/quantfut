@@ -17,6 +17,7 @@ import re
 import sqlite3
 import shutil
 import tempfile
+import unicodedata
 from datetime import datetime, timedelta, timezone
 import urllib.error
 import urllib.parse
@@ -30,7 +31,7 @@ SAFE_KEY = re.compile(r"[a-z][a-z0-9_]*\Z")
 MARKET_KEY = re.compile(r"[a-z0-9][a-z0-9_]*\Z")
 SAFE_EVENT = re.compile(r"[A-Za-z0-9_-]{1,64}\Z")
 # Per-event bodies are one object, not a list of events.
-EVENT_OBJECT = re.compile(r"/events/[A-Za-z0-9_-]+/(?:odds/closing|results)\Z")
+EVENT_OBJECT = re.compile(r"/events/[A-Za-z0-9_-]+/(?:odds/closing|results|stats)\Z")
 SETTLED = ("final", "retired", "walkover")
 SAFE_HEADERS = ("date", "content-type", "x-daily-limit", "x-daily-used",
                 "x-daily-remaining", "x-daily-reset", "retry-after",
@@ -169,8 +170,8 @@ class Collector:
         self.db = connect(root)
 
     def capture(self, path, params=None, *, daily=False, cap=None):
-        if not re.fullmatch(r"/v1/sports(?:/[a-z][a-z0-9_]*(?:/(?:odds|scores|ids|futures)"
-                            r"|/events/[A-Za-z0-9_-]+/(?:markets|odds/closing|results))?)?", path):
+        if not re.fullmatch(r"/v1/sports(?:/[a-z][a-z0-9_]*(?:/(?:odds|scores|ids|futures|injuries)"
+                            r"|/events/[A-Za-z0-9_-]+/(?:markets|odds/closing|results|stats))?)?", path):
             raise ValueError("unsupported capture path")
         params = params or {}
         if shutil.disk_usage(self.root).free < 5 * 1024**3:
@@ -221,6 +222,8 @@ class Collector:
             payload = json.loads(body)
             if status == 200 and isinstance(payload, dict) and EVENT_OBJECT.search(path):
                 payload = [payload]
+            if status == 200 and isinstance(payload, dict) and path.endswith("/injuries"):
+                payload = payload.get("players", [])  # one "event" per listed player
             if status == 200 and not isinstance(payload, list):
                 raise ValueError("list payload required")
             if status == 200:
@@ -444,6 +447,99 @@ def read_two_way(root, sport, as_of, *, max_age_seconds=3900):
     return two_way_feed(events, receipt["received_at"]), receipt
 
 
+SETTLEMENT_MAX_AGE = 45 * 86400  # a closing line or box score does not age; this only bounds the lookup
+
+
+def read_injuries(root, sport, as_of, *, max_age_seconds=3900):
+    """Injury report as observed at our receipt (point in time): (players, receipt) or (None, None)."""
+    doc, receipt = newest(root, f"/v1/sports/{sport}/injuries", as_of, max_age_seconds=max_age_seconds)
+    if receipt is None:
+        return None, None
+    return [dict(p, received_at=receipt["received_at"]) for p in doc.get("players", [])], receipt
+
+
+def read_closing(root, sport, event_id, as_of):
+    """Opening and closing line per (book, market, outcome) for one event, with explicit price semantics.
+
+    `closing_at` is the provider's last snapshot at or before kickoff. A capture made before kickoff is
+    not a close and is flagged `pre_kickoff_capture`.
+    """
+    doc, receipt = newest(root, f"/v1/sports/{sport}/events/{event_id}/odds/closing", as_of,
+                          max_age_seconds=SETTLEMENT_MAX_AGE)
+    if receipt is None:
+        return None, None
+    early = bool(doc.get("commence_time")) and parse_time(receipt["received_at"]) < parse_time(doc["commence_time"])
+    rows = []
+    for b in doc.get("bookmakers", []):
+        for m in b.get("markets", []):
+            for o in m.get("outcomes", []):
+                flags = []
+                try:
+                    price = decimal_price(o)
+                except (KeyError, ValueError, TypeError):
+                    price = None
+                    flags.append("invalid_price")
+                if o.get("is_stale"):
+                    flags.append("stale_close")
+                if early:
+                    flags.append("pre_kickoff_capture")
+                if b["key"] in DFS_BOOKS or o.get("dfs_odds_type"):
+                    flags.append("dfs_not_single_bet")
+                if b["key"] in EXCHANGES:
+                    flags.append("exchange_contract_requires_rules")
+                if o.get("redacted"):
+                    flags.append("redacted")
+                rows.append(dict(provider="propline", received_at=receipt["received_at"], event_id=str(doc.get("id")),
+                    sport_key=doc.get("sport_key"), commence_time=doc.get("commence_time"), bookmaker=b["key"],
+                    market=m["key"], period=m.get("period"), team=m.get("team"), line_type=m.get("line_type"),
+                    name=o.get("name"), description=o.get("description"), player_id=o.get("player_id"),
+                    outcome_id=o.get("outcome_id"), point=o.get("point"), price_american=o.get("price"),
+                    price_decimal=price, closing_at=o.get("closing_at"), opening_price=o.get("opening_price"),
+                    opening_point=o.get("opening_point"), opening_at=o.get("opening_at"), flags=flags))
+    return rows, receipt
+
+
+def read_results(root, sport, event_id, as_of):
+    """Provider grading per (book, market, outcome): resolution won/lost/push/void (None = not graded yet)."""
+    doc, receipt = newest(root, f"/v1/sports/{sport}/events/{event_id}/results", as_of,
+                          max_age_seconds=SETTLEMENT_MAX_AGE)
+    if receipt is None:
+        return None, None
+    return [dict(event_id=str(doc.get("id")), status=doc.get("status"), bookmaker=b["key"], market=m["key"],
+                 period=m.get("period"), team=m.get("team"), name=o.get("name"), description=o.get("description"),
+                 player_id=o.get("player_id"), point=o.get("point"), price_american=o.get("price"),
+                 resolution=o.get("resolution"), actual_value=o.get("actual_value"),
+                 resolved_at=o.get("resolved_at"), redacted=bool(o.get("redacted")), received_at=receipt["received_at"])
+            for b in doc.get("bookmakers", []) for m in b.get("markets", []) for o in m.get("outcomes", [])], receipt
+
+
+def read_stats(root, sport, event_id, as_of):
+    """Box score as captured: (body, receipt). Official only when body['status'] is final."""
+    return newest(root, f"/v1/sports/{sport}/events/{event_id}/stats", as_of, max_age_seconds=SETTLEMENT_MAX_AGE)
+
+
+def _fold(name):
+    plain = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", plain.lower())
+
+
+TEAM_STATS = ("corners", "cards")
+
+
+def team_stats(doc):
+    """{'home'|'away': {'corners': n, 'cards': n}} from the box score's team rows.
+
+    Team rows name the club in `player_name`, sometimes spelled differently from the event (accents).
+    A row that matches neither side by folded name is left out rather than guessed.
+    """
+    sides = {_fold(doc.get("home_team")): "home", _fold(doc.get("away_team")): "away"}
+    out = {}
+    for row in doc.get("stats", []):
+        side = sides.get(_fold(row.get("player_name")))
+        if side and row.get("stat_type") in TEAM_STATS and row.get("stat_value") is not None:
+            out.setdefault(side, {})[row["stat_type"]] = float(row["stat_value"])
+    return out
+
 def market_batches(sport, markets, config):
     """Provider-safe batches with a stable, auditable request count."""
     requested = list(dict.fromkeys(markets))
@@ -536,7 +632,8 @@ def run(root, key_file, config_file, *, limit=None):
     # Hourly odds may not eat the part of the closing/results reserve still unspent today.
     midnight = stamp(started.replace(hour=0, minute=0, second=0, microsecond=0))
     settled_today = client.db.execute("""SELECT count(*) FROM requests WHERE started_at>=?
-        AND (path LIKE '%/odds/closing' OR path LIKE '%/results')""", (midnight,)).fetchone()[0]
+        AND (path LIKE '%/odds/closing' OR path LIKE '%/results' OR path LIKE '%/events/%/stats')""",
+        (midnight,)).fetchone()[0]
     hourly_cap = config["daily_cap"] - max(0, settle_budget - settled_today)
     def capture(path, params=None, daily=False, cap=hourly_cap):
         nonlocal calls, captures, events, outcomes, failures
@@ -564,17 +661,20 @@ def run(root, key_file, config_file, *, limit=None):
         today = stamp(now.replace(hour=0, minute=0, second=0, microsecond=0))
         for prefix, budget in settle["daily_budget"].items():
             spent = client.db.execute("""SELECT count(*) FROM requests WHERE started_at>=?
-                AND (path LIKE ? OR path LIKE ?)""", (today, f"/v1/sports/{prefix}%/odds/closing",
-                f"/v1/sports/{prefix}%/results")).fetchone()[0]
+                AND (path LIKE ? OR path LIKE ? OR path LIKE ?)""", (today, f"/v1/sports/{prefix}%/odds/closing",
+                f"/v1/sports/{prefix}%/results", f"/v1/sports/{prefix}%/events/%/stats")).fetchone()[0]
             for sport in [s for s in selected if s.startswith(prefix)]:
                 family = next((k for k in config["markets_by_family"] if sport.startswith(k)), "default")
                 markets = ",".join(config["markets_by_family"][family][:50])
-                counts = settled.setdefault(sport, dict(closing=0, results=0, over_budget=0))
+                counts = settled.setdefault(sport, dict(closing=0, results=0, stats=0, over_budget=0))
                 for e in finished_events(client.db, root, sport, now, settle):
                     base = f"/v1/sports/{sport}/events/{e['id']}"
                     wanted = [("odds/closing", dict(markets=markets, period="all"))]
                     if e["status"] == "final":  # retired/walkover props are void, not graded
                         wanted.append(("results", {}))
+                    # Box score last: it only uses what closing and results leave of the reserve.
+                    if any(sport.startswith(p) for p in settle.get("stats_prefixes", [])):
+                        wanted.append(("stats", {}))
                     for kind, params in wanted:
                         if (settlement_blocked(client.db, root, kind, today) or not settlement_due(
                                 client.db, root, f"{base}/{kind}", today, int(settle.get("max_attempts", 3)))):
@@ -584,7 +684,7 @@ def run(root, key_file, config_file, *, limit=None):
                             continue
                         spent += 1
                         capture(f"{base}/{kind}", params, daily=True, cap=config["daily_cap"])
-                        counts["closing" if kind == "odds/closing" else "results"] += 1
+                        counts["closing" if kind == "odds/closing" else kind] += 1
     selected = []
     try:
         sports = capture("/v1/sports")
@@ -630,6 +730,8 @@ def run(root, key_file, config_file, *, limit=None):
                 capture(f"/v1/sports/{sport}/ids", daily=True)
             if config.get("futures_daily"):
                 capture(f"/v1/sports/{sport}/futures", daily=True)
+            if sport in config.get("injuries_sports", []):
+                capture(f"/v1/sports/{sport}/injuries")
         settlement()
         report["stop"] = None
     except BudgetStop as exc:

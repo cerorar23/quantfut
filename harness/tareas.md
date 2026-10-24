@@ -3157,3 +3157,10 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [ ] Recalibración móvil de total y puntos de equipo (sesgo ±0,04 por temporada) y prior de pretemporada por plantilla.
 - [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
 - [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.
+
+## PropLine: capturas posteriores al partido (24-oct-2026)
+- [x] Recolector (sobre la liquidación del PR #96): box score `/stats` de NBA y fútbol al final de la cola de liquidación; lesiones NBA cada hora; lectores sin red `read_closing`, `read_results`, `read_stats` + `team_stats`, `read_injuries`.
+- [ ] Desplegar el recolector nuevo (copiar `propline_shared.py` y la configuración a una release nueva de `~/propline-shared`) y anotarlo en DEPLOYS.md.
+- [ ] Puerta CLV de fútbol con el cierre de `read_closing` (fecha de corte).
+- [ ] Liquidar córners y tarjetas con `team_stats`.
+- [ ] Decidir si las lesiones de ESPN entran en NBA como segunda señal (nuevo protocolo, no el sellado 1.3.1).
