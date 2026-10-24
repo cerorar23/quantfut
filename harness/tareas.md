@@ -3153,6 +3153,7 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [x] Reloj de `tests/test_paper_bundle.py` fijado (`paper_bundle.DEADLINE_UTC`, mismo valor).
 - [x] Mercados de jugador en vivo: puntos, rebotes y asistencias a la línea de PropLine (moda de ≥2 casas), condicionados a jugar, modelo de jugador v1.3 con recalibración en rejilla de umbrales (mejor Brier fuera de muestra en los tres). docs/nba_productor_correcciones_20261023.md.
 - [ ] Desplegar productor y panel 1.3.1 (montaje `readonly` del volumen de PropLine, caché, modelo `…20261023`); runbook en el documento.
+- [ ] PropLine: cierres y liquidaciones diarios de NBA/tenis/fútbol en el recolector (rama `propline/cierres-liquidaciones`, sin desplegar). Pendiente: PR, despliegue con anotación en DEPLOYS.md y un lector para los motores.
 - [ ] Recalibración móvil de total y puntos de equipo (sesgo ±0,04 por temporada) y prior de pretemporada por plantilla.
 - [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
 - [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.

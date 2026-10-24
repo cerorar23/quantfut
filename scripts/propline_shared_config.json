@@ -119,7 +119,18 @@
     "total_games",
     "total_sets",
     "set_spread",
-    "total_tiebreaks"
+    "total_tiebreaks",
+    "player_points_rebounds",
+    "player_points_assists",
+    "player_rebounds_assists",
+    "player_triple_double",
+    "player_points_10plus",
+    "player_points_15plus",
+    "player_aces",
+    "player_double_faults",
+    "player_games_won",
+    "player_break_points_won",
+    "total_aces"
   ],
   "bookmakers": "all_available",
   "periods": "all",
@@ -190,7 +201,9 @@
       "player_points_rebounds",
       "player_points_assists",
       "player_rebounds_assists",
-      "player_triple_double"
+      "player_triple_double",
+      "player_points_10plus",
+      "player_points_15plus"
     ],
     "hockey_": [
       "h2h",
@@ -332,7 +345,12 @@
       "total_games",
       "total_sets",
       "set_spread",
-      "total_tiebreaks"
+      "total_tiebreaks",
+      "player_aces",
+      "player_double_faults",
+      "player_games_won",
+      "player_break_points_won",
+      "total_aces"
     ]
   },
   "max_markets_per_request": 10,
@@ -340,5 +358,17 @@
   "football_markets_per_request": 11,
   "provider_max_age_seconds": 3600,
   "scores_every_hours": 6,
-  "include_depth": false
+  "include_depth": false,
+  "settlement": {
+    "enabled": true,
+    "lookback_days": 3,
+    "min_hours_after_start": 6,
+    "max_attempts": 3,
+    "daily_budget": {
+      "basketball_nba": 100,
+      "soccer_": 200,
+      "tennis": 300
+    },
+    "measured_20261024": "hourly capture 129 requests/hour (~3,100/day) plus ~110 daily; finished events/day observed: NBA 7-36, soccer 15-96, tennis 165-491"
+  }
 }
