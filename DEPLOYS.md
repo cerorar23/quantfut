@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 · Recolector SofaScore (Apify, actor rl1987) · SOLO host, sin imágenes ni contenedores
+- Nuevo `~/sofascore-apify/` (700): `current/sofascore_apify.py` (= `src/qf/ingest/sofascore_apify.py`, sha256 `1f442dc4400d`), `current/config.json`, `.env.apify` (600, token Apify), `data/` (índice SQLite + objetos gzip inmutables con la hora real de recepción) y `logs/`.
+- Cron `40 7 * * *` con flock. Alcance: NBA (torneo 132) + 23 competiciones de `sofascore_history.TOURNAMENTS`; detalle (estadísticas, alineaciones, incidencias) solo de partidos terminados, una vez. **Tenis: ATP/WTA individuales, torneos localizados cada 6 días barriendo un día de calendario (~0,6 USD); hash vigente `07357f42a43d`.
+- Topes: 15 USD/mes (gasto de la cuenta Apify), 1,20 USD por corrida, 40 detalles por corrida. El arranque (jornadas de las 24 ligas) cuesta ~1 USD y cubre ~2 días.
+- **Vuelta atrás:** `crontab -e` y quitar la línea de sofascore-apify; los datos archivados no se borran.
+
 ### 2026-10-24 14:18 UTC · PropLine: box score, lesiones NBA y lectores (PR #97) · release `~/propline-shared/releases/5a9cde0` (`main` `5a9cde0`)
 - Estado previo comprobado: `current` → `releases/6d459be`, cuyos tres archivos coinciden byte a byte con `main` `6d459be` (sha256 `47a7e3cd…`, `8a367cab…`, `3f4f4745…`).
 - Release nueva desde `git archive 5a9cde0` con `core.autocrlf=false`: `propline_shared.py` `b162d8ea…`, `propline_shared_config.json` `c3694385…`, `propline_shared_runner.py` `3f4f4745…` (sin cambios) y `runtime.json` copiado de `6d459be` (misma imagen fijada por digest, mismo usuario, red, volumen y archivo de clave). Sin imagen nueva: el módulo solo usa la biblioteca estándar.
