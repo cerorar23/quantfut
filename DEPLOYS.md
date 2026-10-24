@@ -33,6 +33,21 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 18:11 UTC · PropLine: `team_stats` empareja clubes escritos distinto (PR #100) · release `~/propline-shared/releases/fc20390` (`main` `fc20390`)
+- Estado previo comprobado: `current` → `releases/5a9cde0`, idéntica a `main` `5a9cde0`. De `5a9cde0` a `fc20390` solo cambia `propline_shared.py` (el PR #99 no toca el recolector).
+- Release desde `git archive fc20390` con `core.autocrlf=false`: `propline_shared.py` `a10df212…`, config `c3694385…` y runner `3f4f4745…` (sin cambios), `runtime.json` copiado de `5a9cde0`.
+- Ensayo antes de activar (imagen fijada, `--network none`, volumen en solo lectura): `team_stats` empareja los dos equipos en **95 de 98** box scores de fútbol del archivo (antes 46); los 3 restantes no traen filas de equipo o no se pueden distinguir con seguridad. Lesiones (75) y tenis (182) se leen igual.
+- Activación: `ln -sfn … current.tmp && mv -T current.tmp current` a las 18:11 UTC, con la pasada de las 18:07 en curso (fija su release al arrancar, así que termina con `5a9cde0`). Primera pasada con `fc20390`: 19:07 UTC.
+- Respaldo: `~/propline-shared/backups/20261024-fc20390/` (`current.before`, `crontab.txt`).
+- **Vuelta atrás:** `cd ~/propline-shared && ln -sfn /home/qf/propline-shared/releases/5a9cde0 current.tmp && mv -T current.tmp current`.
+
+### 2026-10-24 · Verificación de la release `5a9cde0` (PR #97) y cambio de clave de PropLine
+- **Clave:** desde las 14:11:49 UTC PropLine respondía `401 invalid_api_key` a la clave de `~/betsapi/.env.propline`. El titular dio una clave nueva; a las 14:24 UTC se escribió en ese archivo por SSH (600, `qf`; la anterior queda en `~/betsapi/.env.propline.bak-20261024-401`). Comprobada con `/v1/sports`: 200.
+- **Pasada 15:07 UTC** (primera con `5a9cde0` y clave válida): 33 min, `stop: null`, 672 peticiones. Liquidación de los 3 días atrasados: 212 cierres, 205 liquidaciones y 124 box scores (NBA 25/25/25; fútbol 100 de cada uno, justo la reserva de 300; tenis 88 cierres y 81 liquidaciones). Informe de lesiones NBA con 75 jugadores. 6 fallos, todos `504` de PropLine (cierres y un box score), que se reintentan otro día; por ellos el `exit_code` fue 1.
+- **Pasadas 16:07 y 17:07 UTC:** `stop: null`, 135 y 131 peticiones (solo 2 cierres y 2 liquidaciones nuevas), 1 y 0 fallos; la de 17:07 terminó con `exit_code 0`. Cuota de la cuenta a las 17:15: 3.599 de 5.000 usadas.
+- **Lectores sobre el archivo real:** un cierre de fútbol con 3.170 filas (200 de Pinnacle, ninguna capturada antes del inicio) y su liquidación con 2.958 filas, todas calificadas. `team_stats` solo emparejaba 46 de 98 partidos: corregido en la release `fc20390` (entrada anterior).
+
+
 ### 2026-10-24 · Recolector SofaScore (Apify, actor rl1987) · SOLO host, sin imágenes ni contenedores
 - Nuevo `~/sofascore-apify/` (700): `current/sofascore_apify.py` (= `src/qf/ingest/sofascore_apify.py`, sha256 `c29386542180`), `current/config.json`, `.env.apify` (600, token Apify), `data/` (índice SQLite + objetos gzip inmutables con la hora real de recepción) y `logs/`.
 - Cron `40 7 * * *` con flock. Alcance: NBA (torneo 132) + 23 competiciones de `sofascore_history.TOURNAMENTS`; detalle (estadísticas, alineaciones, incidencias) solo de partidos terminados, una vez. **Tenis: ATP/WTA individuales, torneos localizados cada 6 días barriendo un día de calendario (~0,6 USD); hash vigente `c29386542180`.
