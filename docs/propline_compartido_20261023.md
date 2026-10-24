@@ -46,8 +46,8 @@ Arnés inicial del checkout: 1.316 aprobadas, 95 omitidas. Primer arnés con el 
 
 - **Activado.** `provider.json` (`{"provider": "propline"}`) está en el volumen `artifacts` (`/srv/quantfut/artifacts/propline_shared`); el worker y la API corren `quantfut-{worker,api}-propline:3babeb4` (recreados 01:35 UTC). Captura horaria: cron `7 * * * *` del usuario `qf` con `flock`, en un contenedor aislado `propline-shared-capture` (última pasada 02:18 UTC, `exit_code 0`, todo 200).
 - El worker lee el archivo sin HTTP: `odds_worker` informa `source: propline, calls: 0` y las ráfagas de API-Football `consultas: 0` (`shared_hourly_capture`).
-- **Pendiente 1 — alias de ligas (PR #86, `a521569`).** El servidor sigue en `3babeb4` (PR #85), así que siete ligas salen como `stale_sports` (Segunda, Championship, Serie B, Ligue 2, Suiza, Noruega, Dinamarca; ~128 eventos sin emparejar). Está construida la imagen `quantfut-worker-propline:a521569` (su `propline_ingest.py` coincide con `main`), pero `docker-compose.yml` sigue apuntando a `3babeb4`: falta ejecutar `releases/a521569/update_compose.py` y recrear el worker.
-- **Pendiente 2 — adaptadores de consultas de NBA y tenis:** los motores de NBA y tenis aún leen sus propias fuentes; el archivo ya guarda esas capturas.
+- **Alias de ligas (PR #86) desplegado el 24-oct** (worker `a521569`): `stale_sports` baja de 7 a 4. Siguen sin emparejar Segunda División, Serie B, Ligue 2 y Superliga danesa; causa pendiente de investigar.
+- **Pendiente — adaptadores de consultas de NBA y tenis:** los motores de NBA y tenis aún leen sus propias fuentes; el archivo ya guarda esas capturas.
 - Los pilotos no acreditan cobertura continua de todos los mercados.
 
 Historia: hasta el 23-oct el estado era «implementado y probado localmente (commit `5ff66cf`), no activado».
