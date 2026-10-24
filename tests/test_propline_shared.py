@@ -571,10 +571,36 @@ def test_read_results_flattens_provider_grading(tmp_path):
     assert [(r["team"], r["resolution"], r["actual_value"]) for r in rows] == [("Arsenal", "won", 2.0)]
 
 
+def team_rows(*pairs):
+    return [dict(player_name=n, team_abbr="", stat_type=t, stat_value=v) for n, t, v in pairs]
+
+
 def test_team_stats_match_accented_names_and_never_guess():
-    doc = dict(home_team="Tigre", away_team="Atletico Tucuman", stats=[
-        dict(player_name="Atlético Tucumán", team_abbr="CAT", stat_type="corners", stat_value=4.0),
-        dict(player_name="Tigre", team_abbr="TIG", stat_type="cards", stat_value=2.0),
-        dict(player_name="Bruno Leyes", team_abbr="TIG", stat_type="yellow_cards", stat_value=1.0),
-        dict(player_name="Club Desconocido", team_abbr="X", stat_type="corners", stat_value=9.0)])
+    doc = dict(home_team="Tigre", away_team="Atletico Tucuman", stats=team_rows(
+        ("Atlético Tucumán", "corners", 4.0), ("Tigre", "cards", 2.0)) + [
+        dict(player_name="Bruno Leyes", team_abbr="TIG", stat_type="yellow_cards", stat_value=1.0)])
     assert pl.team_stats(doc) == {"away": {"corners": 4.0}, "home": {"cards": 2.0}}
+    third = dict(doc, stats=doc["stats"] + team_rows(("Club Desconocido", "corners", 9.0)))
+    assert pl.team_stats(third) == {}
+
+
+@pytest.mark.parametrize("home, away, names", [
+    ("Ipswich", "Nottingham Forest", ("Ipswich Town", "Nottingham Forest")),
+    ("Brisbane Roar", "Perth Glory", ("Brisbane Roar FC", "Perth Glory FC")),
+    ("Stuttgart", "Borussia M'gladbach", ("VfB Stuttgart", "Borussia Mönchengladbach")),
+    ("Western Sydney", "Auckland FC", ("Western Sydney Wanderers FC", "Auckland FC")),
+    ("Gimnasia y Esgrima La Plata", "CA Sarmiento Junin", ("Gimnasia La Plata", "Sarmiento (Junín)")),
+])
+def test_team_stats_pairs_differently_spelled_clubs(home, away, names):
+    doc = dict(home_team=home, away_team=away, stats=team_rows((names[0], "corners", 5.0), (names[1], "corners", 3.0)))
+    assert pl.team_stats(doc) == {"home": {"corners": 5.0}, "away": {"corners": 3.0}}
+
+
+def test_team_stats_refuses_when_both_names_fit_one_side_or_none_fits():
+    # "Real Madrid" contains "Madrid" and so does "Atletico Madrid" for an event side "Madrid": ambiguous.
+    doc = dict(home_team="Madrid", away_team="Getafe", stats=team_rows(("Real Madrid", "corners", 5.0),
+                                                                       ("Atletico Madrid", "corners", 3.0)))
+    assert pl.team_stats(doc) == {}
+    doc = dict(home_team="Palmeiras-SP", away_team="Fluminense-RJ", stats=team_rows(("Alpha", "corners", 1.0),
+                                                                                     ("Beta", "corners", 2.0)))
+    assert pl.team_stats(doc) == {}
