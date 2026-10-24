@@ -6926,3 +6926,6 @@ Medición de solo lectura del archivo horario (5 h, 667 respuestas). Decisión c
 
 ## 2026-10-24 — Recolector SofaScore (Apify, rl1987) en el VPS
 Decisión: `azzouzana/sofascore-scraper-pro` está roto (3 de 3 URLs fallan); se usa `rl1987`. El coste real es ~0,01 USD por partido con detalle, no los 3 USD/mes estimados; el titular autorizó hasta 15 USD/mes. `listRounds` cuesta ~0,12 USD por liga, así que la jornada actual se toma del próximo partido. El tenis se localiza cada 6 días barriendo un día de calendario y filtrando categoría ATP/WTA. Cada respuesta se archiva con la hora real de recepción (SofaScore no la entrega). Cron 07:40 UTC en `~/sofascore-apify/`; ver DEPLOYS.md.
+
+## 2026-10-24 — PropLine: team_stats empareja clubes escritos distinto
+La verificación de la primera pasada real (release 5a9cde0) mostró que `team_stats` solo casaba los dos equipos en 46 de 98 box scores de fútbol: las casas y la fuente del acta escriben distinto («Ipswich» / «Ipswich Town»). Decisión: aceptar que un nombre plegado contenga al otro y, con exactamente dos clubes, deducir el segundo del primero; cualquier ambigüedad devuelve vacío. Medido sobre el archivo real: 95 de 98. Lección: probar los lectores contra datos reales antes de darlos por buenos, no solo contra un caso inventado.
