@@ -32,6 +32,17 @@ def recentre(p_serve, q_serve, rules, sigma, target):
     center = brentq(f, -1.5, 1.5) if f(-1.5) < 0 < f(1.5) else (-1.5 if f(-1.5) >= 0 else 1.5)
     return MixtureEngine(bank, weights(center, sigma))
 
+
+def live_market(config, player_a, player_b, before):
+    """The configured source only: `odds_provider: propline` reads the shared archive, never The Odds API as a fallback."""
+    if config.get('odds_provider') == 'propline':
+        from tennis_odds_propline_v1 import latest_market
+        return latest_market(config['propline_root'], player_a, player_b, before)
+    if config.get('live_odds_root'):
+        from tennis_odds_live_v1 import latest_market
+        return latest_market(config['live_odds_root'], player_a, player_b, before)
+    return None
+
 # Runtime config lives outside the repo (the weekly refresh rewrites it); the tracked file is the template.
 CONFIG = Path(os.environ.get('TENNIS_MOTOR_CONFIG') or Path(__file__).resolve().parents[1] / 'config' / 'motor.json')
 
@@ -77,10 +88,7 @@ class Motor:
             x, params, source = dynamic, self.params_norank[circuit], 'v7_stack_without_rank'
         engine = build(point['p'], point['q'], rules, params, x)
         winner = dict(engine.diagnostics, source=source)
-        live = None
-        if odds is None and self.config.get('live_odds_root'):
-            from tennis_odds_live_v1 import latest_market
-            live = latest_market(self.config['live_odds_root'], m.names[a], m.names[b], pd.Timestamp.now(tz='UTC').isoformat())
+        live = None if odds is not None else live_market(self.config, m.names[a], m.names[b], pd.Timestamp.now(tz='UTC').isoformat())
         if odds is not None or live is not None:
             market = devig(*odds) if odds is not None else live['probability_a']
             engine = recentre(point['p'], point['q'], rules, self.params[circuit]['sigma'], market)

@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-24 — Tenis: cuotas del archivo de PropLine, sin The Odds API
+
+El titular pidió conectar el motor de tenis al archivo compartido. Se hizo con un paquete nuevo (`tennis_odds_propline_v1`) en vez de
+modificar `tennis_odds_live_v1`: el protocolo v8 congela el hash de ese código y tocarlo invalidaría su carga. Solo cuenta la observación
+horaria más reciente (máximo 65 min), no la ventana de 36 h de antes: con una foto por hora no hace falta tirar de precios viejos. Se
+retiró la foto de The Odds API del cron en lugar de dejarla como respaldo, por la decisión del 23-oct (sin fallback ni peticiones
+duplicadas). Si la pareja sale dos veces en la misma observación no hay mercado: es preferible caer al apilador v7 que adivinar.
+
 ## 2026-10-18 (noche) — Candados difuminados: el botón VIP va a la tienda en la app, a Whop en la web
 
 El titular pidió los pronósticos bloqueados difuminados con un botón «Acceso VIP» hacia la pasarela. Lo gratis (4 / 1 / 1) ya era lo que aplica el

@@ -5,6 +5,7 @@
 **Motor vigente v7 (19-oct):** `python -m tennis_motor` en el checkout `tennis-engine`. Corrige alias de identidad, sobredispersión por partido en todos los mercados, ranking/edad, Elo dinámico por ronda e inactividad/carga. 2026 exploratorio: acierto ATP 67,6 % y WTA 67,9 % (Elo 64,2 %/64,8 %). 17 pronósticos sellados en `data/tennis/core_v7_prospective_20261019/`. Los 990 pronósticos del estudio de diez mercados se retiraron (archivados, no borrados).
 
 - [x] Cuotas: Tennis-Data (descarga manual, validación) y The Odds API en vivo (h2h, eu, 2 fotos/día, tope 400/mes; tarea de Windows «QuantFut tenis cuotas h2h»). Motor vigente v8: usa la cuota sin margen cuando existe.
+- [x] **24-oct: cuotas de PropLine** (archivo horario compartido, solo lectura); se retiró la foto de The Odds API del cron del VPS, sin respaldo. Pendiente: comprobar en los sellados de los próximos días qué parte sale con `live_snapshot` de PropLine (nombres abreviados como «J. Vandromme» no emparejan y caen al apilador v7).
 - [x] Automatización de Codex pausada (20-oct, `status = "PAUSED"`).
 - [x] Motor en el VPS desde el 20-oct (imagen `quantfut-tenis`, cron de `qf`); ya no depende del PC.
 - [ ] **Claude:** evaluar con resultados reales (revisión programada el 22-oct).
