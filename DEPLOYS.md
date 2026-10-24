@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 04:45 UTC · Tenis: cuotas del archivo de PropLine, sin The Odds API · imagen `quantfut-tenis:f391b1f` (PR #93, `main` `f391b1f`)
+- Estado previo comprobado: la imagen activa `quantfut-tenis:1d2067d` coincidía con `main` anterior salvo `tennis_engine/operations.py` y `tennis_odds_live_v1/__init__.py`, a los que les faltaba el PR #61 (reloj inyectado en `Capture`, sin efecto en producción). El despliegue lo incluye. `vps_run.sh` del servidor coincidía con el del repositorio.
+- Imagen construida desde `git archive` de `apps/tennis` con `core.autocrlf=false`, más `src/qf/ingest/propline_shared.py` (sha256 `d95d4661…`) en el contexto (`~/quantfut-tenis/build/66850b1/ctx`). Etiquetada `66850b1` (cabeza del PR) y `f391b1f` (fusión squash, contenido idéntico en `apps/tennis` y `propline_shared.py`).
+- `vps_run.sh` nuevo (sha256 `36eaf610…`, igual a `main`): monta `quantfut_artifacts` con `volume-subpath=propline_shared` de solo lectura en `/propline` y **ya no ejecuta `tennis_odds_live_v1`**, así que deja de gastar créditos de The Odds API en tenis. Mismo crontab (`30 0,12 * * *` y `0 11 * * 1`).
+- `data/motor_config.json`: añade `odds_provider: propline`, `propline_root: /propline` y `odds_provider_since: 2026-10-24`. `live_odds_root` se queda, pero no se lee con PropLine activo. La actualización semanal conserva las claves que no toca.
+- Ensayo previo sin red con el archivo de las 04:08 UTC: 143 eventos, 134 partidos individuales; 60 resueltos por el modelo y los 60 con mercado; 74 sin resolver (nombres abreviados y circuitos menores) caen al apilador v7. Tras activar, con la configuración real: `Motor().forecast` de Schoolkate–Cui da `source: live_snapshot`, `provider: propline`.
+- Pendiente de observar: la primera pasada de la entrada automática (22:30 UTC del 24-oct) y qué parte de los sellados sale con `live.provider = propline`.
+- Respaldos en `~/quantfut-tenis/backup/20261024-propline/`: `vps_run.sh`, `IMAGE`, `motor_config.json`, `crontab.txt`.
+- **Vuelta atrás:** `B=~/quantfut-tenis/backup/20261024-propline; cp -p $B/vps_run.sh $B/IMAGE ~/quantfut-tenis/ && cp -p $B/motor_config.json ~/quantfut-tenis/data/`. La imagen `1d2067d` sigue en el servidor y vuelve la foto de The Odds API, que estará bloqueada por créditos hasta el 1-nov. Los sellados hechos con PropLine se quedan.
+
 ### 2026-10-24 04:00 UTC · NBA: productor y panel 1.3.1 (sellado por partido, jugadores con líneas de PropLine) · `main` `62decf6` (PR #91)
 - Estado previo comprobado: el código NBA del servidor (`build-price/src/nba`) coincidía con `main` anterior (`3bbf4d2`) salvo `odds_history.py` (no lo usa el productor ni el panel); productor `nba-live13-producer:20261021` y panel `nba-dashboard-live13:20261021`.
 - Imágenes nuevas desde `git archive 62decf6` con `core.autocrlf=false` (contexto en `~/nba-isolated/live13/build-producer/`, más `propline_shared.py` de `main`): `nba-live13-producer:20261023` (`7f94bb6154c9`, derivada de `nba-dashboard-live13:20261021` + pdfplumber) y `nba-dashboard-live13:20261024` (`17b301520449`, solo `src/nba` y `web`). Hash del módulo vivo `0663ced1…` = el del modelo.
