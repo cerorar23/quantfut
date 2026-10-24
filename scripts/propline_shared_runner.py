@@ -6,6 +6,7 @@ Run this file under flock. No API credentials are passed on command lines.
 """
 import json
 from pathlib import Path
+import re
 import subprocess
 from datetime import datetime, timezone
 
@@ -19,8 +20,11 @@ def main():
     key = Path(runtime["key_file"]).resolve()
     if not key.is_file():
         raise ValueError("private key file missing")
+    user = str(runtime["user"])
+    if not re.fullmatch(r"[1-9][0-9]*:[1-9][0-9]*", user):
+        raise ValueError("runtime user must be a numeric non-root uid:gid")
     cmd = ["docker", "run", "--rm", "--name", "propline-shared-capture", "--read-only",
-           "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=64",
+           "--user", user, "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=64",
            "--memory=1536m", "--cpus=1", "--tmpfs", "/tmp:rw,nosuid,noexec,size=32m",
            "--network", runtime["network"], "-v", runtime["volume"] + ":/archive",
            "-v", str(key) + ":/run/secrets/propline:ro",

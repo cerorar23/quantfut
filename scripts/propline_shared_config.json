@@ -330,6 +330,7 @@
     ]
   },
   "max_markets_per_request": 10,
+  "soccer_markets_per_request": 13,
   "scores_every_hours": 6,
   "include_depth": false
 }
