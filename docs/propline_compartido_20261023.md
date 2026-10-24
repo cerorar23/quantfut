@@ -57,3 +57,20 @@ Historia: hasta el 23-oct el estado era «implementado y probado localmente (com
 - **Adaptadores de NBA y tenis:** `propline_shared.two_way_feed` y `read_two_way(root, sport, as_of)` (solo `basketball_nba` y `tennis`; lectura sin red, punto en el tiempo, misma ventana de edad que el resto). Devuelven eventos con la forma de The Odds API para moneyline, hándicap y totales del partido completo y línea principal; sin periodos, props de jugador, bandas marcadas (en juego, suspendidas, DFS, bolsas) ni mercados de un solo lado. `last_update` solo si la casa publicó `book_updated_at` (nunca la hora de recepción). Comprobado contra el archivo real: NBA 29 eventos/68 casas, tenis 145 eventos/37 casas.
 - **Tenis conectado (24-oct):** `tennis_motor` lee el ganador sin margen de `tennis_odds_propline_v1` (sobre `read_two_way`) con `odds_provider: propline`; el cron del VPS ya no toma fotos de The Odds API y no hay respaldo. Fecha de corte: los sellados de la entrada automática desde el despliegue registran `live.provider = propline`; los anteriores conservan su foto de The Odds API. `tennis_odds_live_v1` no se modifica porque el protocolo v8 congela el hash de su código. Ver `apps/tennis/README.md` y DEPLOYS.md.
 - **NBA (partido completo) sin recablear:** el productor 1.3.1 ya lee las líneas de jugador del archivo; el paso de precios de equipo sigue con The Odds API. Conectarlo exige decidir fecha de corte y no mezclar proveedores dentro de protocolos ya sellados; con la forma de The Odds API el cambio en `live_market.price_rows` es pequeño, pero ese parser exige `last_update` y deberá aceptar su ausencia.
+
+## Cierres y liquidaciones diarios (24-oct-2026)
+
+La cuenta es Hobby (`x-daily-limit: 5000`), así que `/events/{id}/odds/closing` y `/events/{id}/results` devuelven datos completos. Cada pasada horaria, después de cuotas, marcadores, ids y futuros, el recolector pide para cada partido terminado de NBA, tenis y fútbol:
+
+- `odds/closing` con las claves de su familia y `period=all`: última cuota antes del inicio y apertura, por casa. Una vez por partido.
+- `results`: props liquidados con el valor real. Solo si el estado es `final` (en `retired`/`walkover` los props son nulos). Se repite otro día mientras queden resultados sin liquidar, hasta 3 intentos.
+
+Los partidos terminados salen de nuestros propios recibos de `/scores` (últimos 3 días) y se piden a partir de 6 h después del inicio. Con presupuesto limitado van primero los partidos con más casas en `/ids`. Si el plan devuelve 401/403 o `redacted` en un tipo de petición, ese tipo se deja de pedir el resto del día.
+
+**Presupuesto medido en el servidor (24-oct, solo lectura del índice):** 129 peticiones por hora de cuotas (≈3.100/día), más ~110 diarias de ids/futuros/mercados y ~130 de marcadores. Partidos terminados por día vistos en `/ids`: NBA 7-36, fútbol 15-96, tenis 165-491. Reserva diaria: NBA 100, fútbol 200, tenis 300 (600 en total). La captura horaria queda limitada a `daily_cap − 600` = 3.900, de modo que los cierres siempre tienen cupo; el total sigue bajo el tope de 4.500. En tenis no cabe todo en días de muchos ITF: se quedan fuera los partidos con menos casas, y `over_budget` en el informe de la pasada lo cuenta.
+
+Las 6 claves de fútbol nuevas (`player_shots`, `player_shots_on_target`, `goalie_saves`, `2plus_goals`, `3plus_goals`, `winning_margin`) **no** se añadieron a la familia horaria: costarían un lote más por competición (+31/hora, +744/día). Llegan por el descubrimiento diario por partido, que antes descartaba `2plus_goals`/`3plus_goals` porque usaba el filtro de deportes (exige empezar por letra); ahora usa `MARKET_KEY`. En tenis (`player_aces`, `player_double_faults`, `player_games_won`, `player_break_points_won`, `total_aces`) y NBA (`player_points_10plus`, `player_points_15plus`) el coste es +24/día.
+
+Los marcadores se deciden con la hora de inicio de la pasada, no con la del final.
+
+La hora de `closing_at` y `resolved_at` es de PropLine. Estos datos sirven para etiquetar y medir CLV; no son entradas point-in-time de un pronóstico. Ningún motor los lee todavía.
