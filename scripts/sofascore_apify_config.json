@@ -1,0 +1,94 @@
+{
+ "provider": "sofascore_apify",
+ "monthly_cap_usd": 15,
+ "run_cap_usd": 1.2,
+ "max_details_per_run": 40,
+ "targets": {
+  "gb.premier_league": {
+   "utid": 17
+  },
+  "gb.championship": {
+   "utid": 18
+  },
+  "es.laliga": {
+   "utid": 8
+  },
+  "es.laliga2": {
+   "utid": 54
+  },
+  "it.serie_a": {
+   "utid": 23
+  },
+  "it.serie_b": {
+   "utid": 53
+  },
+  "fr.ligue_1": {
+   "utid": 34
+  },
+  "fr.ligue_2": {
+   "utid": 182
+  },
+  "de.bundesliga": {
+   "utid": 35
+  },
+  "de.bundesliga2": {
+   "utid": 44
+  },
+  "nl.eredivisie": {
+   "utid": 37
+  },
+  "pt.primeira": {
+   "utid": 238
+  },
+  "ar.primera": {
+   "utid": 155
+  },
+  "br.serie_a": {
+   "utid": 325
+  },
+  "mx.liga_mx": {
+   "utid": 11620
+  },
+  "us.mls": {
+   "utid": 242
+  },
+  "ch.super_league": {
+   "utid": 215
+  },
+  "dk.superliga": {
+   "utid": 39
+  },
+  "no.eliteserien": {
+   "utid": 20
+  },
+  "se.allsvenskan": {
+   "utid": 40
+  },
+  "tr.super_lig": {
+   "utid": 52
+  },
+  "eu.ucl": {
+   "utid": 7
+  },
+  "eu.uel": {
+   "utid": 679
+  },
+  "nba": {
+   "utid": 132,
+   "rounds": false
+  }
+ },
+ "tennis": {
+  "categories": [
+   "ATP",
+   "WTA"
+  ],
+  "exclude": [
+   "Doubles"
+  ],
+  "every_days": 6,
+  "active_days": 10,
+  "max_items": 220,
+  "discovery_cap_usd": 0.9
+ }
+}
