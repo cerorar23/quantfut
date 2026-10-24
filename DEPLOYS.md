@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 (corrección de registro) · PropLine como proveedor fijo de cuotas · API + worker (imágenes `*-propline:3babeb4`), cron del usuario `qf`
+- Entrada reconstruida el 24-oct desde el servidor (solo lectura); la activación original no se anotó aquí. Contenedores recreados a las 01:35 UTC con `quantfut-{api,worker}-propline:3babeb4` (PR #85); `provider.json` = `propline` en `/srv/quantfut/artifacts/propline_shared`.
+- Captura horaria: `7 * * * * flock -n ~/propline-shared/capture.lock python3 ~/propline-shared/current/propline_shared_runner.py` (contenedor aislado, release `~/propline-shared/releases/3babeb4`). **Sustituye** al cron `40 */2 * * * propline_captura.py` de la entrada de abajo, que ya no está en el crontab.
+- Estado medido 02:20 UTC: `odds_worker` con `source: propline, calls: 0`; 7 ligas en `stale_sports` por falta del PR #86.
+- **Alias de ligas (PR #86) desplegado 2026-10-24 ~02:35 UTC, solo worker:** `update_compose.py` (respaldo en `~/propline-shared/backups/20261024-a521569/docker-compose.yml`) cambió la etiqueta a `quantfut-worker-propline:a521569` y `up -d --no-deps --no-build --force-recreate worker`. API sin tocar (`3babeb4`). Verificado: hash de `propline_ingest.py` = `2e5ae8cd54c3` (igual a `main`), `provider.json` = `propline`, cron del worker cargado (127 líneas).
+- **Resultado:** `stale_sports` baja de 7 a 4. Resueltas: Championship, Suiza y Noruega. **Siguen:** Segunda División, Serie B, Ligue 2 y Superliga danesa (207 eventos sin emparejar); causa sin investigar (¿alias distintos o sin partidos en la ventana?).
+- **Vuelta atrás:** copiar ese `docker-compose.yml` a `~/quantfut/` y `docker compose up -d --no-deps --no-build --force-recreate worker` (la imagen `3babeb4` sigue en el servidor).
+- Respaldos de la activación original: `~/propline-shared/backups/20261023-42d6e2a/` (compose, crontab, `.env` previo, contenedores).
+
 ### 2026-10-24 01:50 UTC · Descarga de cuotas (BetsAPI) y captura PropLine · solo VPS (usuario `qf`), sin imagen ni base de datos
 - Scripts `scripts/betsapi_descarga.py` y `scripts/propline_captura.py` copiados a `~/`; datos en `~/betsapi/data` y `~/propline_data` (no en el repo, no en Docker).
 - Cron nuevo: `40 */2 * * * cd $HOME && python3 propline_captura.py --env betsapi/.env.propline --out propline_data`.
