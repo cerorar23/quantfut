@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 (corrección de registro) · PropLine como proveedor fijo de cuotas · API + worker (imágenes `*-propline:3babeb4`), cron del usuario `qf`
+- Entrada reconstruida el 24-oct desde el servidor (solo lectura); la activación original no se anotó aquí. Contenedores recreados a las 01:35 UTC con `quantfut-{api,worker}-propline:3babeb4` (PR #85); `provider.json` = `propline` en `/srv/quantfut/artifacts/propline_shared`.
+- Captura horaria: `7 * * * * flock -n ~/propline-shared/capture.lock python3 ~/propline-shared/current/propline_shared_runner.py` (contenedor aislado, release `~/propline-shared/releases/3babeb4`). **Sustituye** al cron `40 */2 * * * propline_captura.py` de la entrada de abajo, que ya no está en el crontab.
+- Estado medido 02:20 UTC: `odds_worker` con `source: propline, calls: 0`; 7 ligas en `stale_sports` por falta del PR #86.
+- **Pendiente (no desplegado):** imagen `quantfut-worker-propline:a521569` ya construida (PR #86, alias de ligas); falta `releases/a521569/update_compose.py` (respalda el compose y cambia la etiqueta del worker) y `up -d --no-deps --no-build --force-recreate worker`. Vuelta atrás: `~/propline-shared/backups/20261024-a521569/docker-compose.yml` y recrear el worker con `3babeb4`.
+- Respaldos de la activación original: `~/propline-shared/backups/20261023-42d6e2a/` (compose, crontab, `.env` previo, contenedores).
+
 ### 2026-10-24 01:50 UTC · Descarga de cuotas (BetsAPI) y captura PropLine · solo VPS (usuario `qf`), sin imagen ni base de datos
 - Scripts `scripts/betsapi_descarga.py` y `scripts/propline_captura.py` copiados a `~/`; datos en `~/betsapi/data` y `~/propline_data` (no en el repo, no en Docker).
 - Cron nuevo: `40 */2 * * * cd $HOME && python3 propline_captura.py --env betsapi/.env.propline --out propline_data`.

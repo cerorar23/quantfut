@@ -42,6 +42,12 @@ Antes de entrenar: crear un conjunto versionado con tiempos de recepción y reso
 
 Arnés inicial del checkout: 1.316 aprobadas, 95 omitidas. Primer arnés con el archivo y adaptadores: 1.339 aprobadas, 95 omitidas. Pruebas específicas cubren reserva de cuota, fallos/duplicados, integridad, lectura punto en el tiempo, conversión Americana, exclusión de contratos incompatibles y separación de fuentes. Arnés de la rama limpia basada en main: **1.468 aprobadas, 104 omitidas** (incluye las 27 pruebas del proveedor compartido). El último piloto NBA obtuvo cinco respuestas 200, 55 observaciones de eventos y 112.154 observaciones de cuotas, sin errores; son observaciones entre lotes, no partidos únicos. Los pilotos y fallos reales quedan en `.local/propline_shared_pilot_20261023`; el estado operativo final se registra en DEPLOYS.md.
 
-## Estado al cerrar la preparación
+## Estado en producción (verificado el 2026-10-24 02:20 UTC, solo lectura)
 
-Implementado y probado localmente (commit de código `5ff66cf`). **Captura horaria y proveedor fijo todavía no activados en el servidor.** La revisión automática bloqueó la subida de la rama a `cerorar23/quantfut` por requerir autorización explícita del destino. No se cambió cron, contenedores ni base operativa. Pendientes: publicación autorizada, PR/main, despliegue y verificación completa, además de completar los adaptadores de consultas NBA/tenis. Los pilotos no acreditan cobertura continua de todos los mercados.
+- **Activado.** `provider.json` (`{"provider": "propline"}`) está en el volumen `artifacts` (`/srv/quantfut/artifacts/propline_shared`); el worker y la API corren `quantfut-{worker,api}-propline:3babeb4` (recreados 01:35 UTC). Captura horaria: cron `7 * * * *` del usuario `qf` con `flock`, en un contenedor aislado `propline-shared-capture` (última pasada 02:18 UTC, `exit_code 0`, todo 200).
+- El worker lee el archivo sin HTTP: `odds_worker` informa `source: propline, calls: 0` y las ráfagas de API-Football `consultas: 0` (`shared_hourly_capture`).
+- **Pendiente 1 — alias de ligas (PR #86, `a521569`).** El servidor sigue en `3babeb4` (PR #85), así que siete ligas salen como `stale_sports` (Segunda, Championship, Serie B, Ligue 2, Suiza, Noruega, Dinamarca; ~128 eventos sin emparejar). Está construida la imagen `quantfut-worker-propline:a521569` (su `propline_ingest.py` coincide con `main`), pero `docker-compose.yml` sigue apuntando a `3babeb4`: falta ejecutar `releases/a521569/update_compose.py` y recrear el worker.
+- **Pendiente 2 — adaptadores de consultas de NBA y tenis:** los motores de NBA y tenis aún leen sus propias fuentes; el archivo ya guarda esas capturas.
+- Los pilotos no acreditan cobertura continua de todos los mercados.
+
+Historia: hasta el 23-oct el estado era «implementado y probado localmente (commit `5ff66cf`), no activado».
