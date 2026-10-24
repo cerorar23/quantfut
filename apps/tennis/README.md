@@ -195,7 +195,9 @@ Los paquetes `tennis_quality_v3`, `tennis_allmarkets_v1`, `tennis_markets_v2`, `
 
 ### Cuotas previas en vivo (v8)
 
-`python -m tennis_odds_live_v1 --root data/tennis/live_odds_v1` toma una foto h2h (región `eu`) por torneo activo y media jornada UTC; tope 400 créditos/mes y reserva para el consumo de fútbol de la misma cuenta. En producción lo ejecuta el cron del VPS (ver «Ejecución en el VPS»); la antigua tarea de Windows «QuantFut tenis cuotas h2h» quedó desactivada a las 05:00 y 17:00. `tennis_motor forecast` usa la última foto previa si existe (`source: live_snapshot`); el estudio vigente es `core_v8_prospective_20261019`.
+**Desde el 24-oct-2026 la fuente es PropLine** (decisión del titular del 23-oct: proveedor fijo de cuotas, una captura horaria compartida por todos los motores). Con `odds_provider: propline` y `propline_root` en la configuración del motor, `tennis_motor forecast` lee con `tennis_odds_propline_v1` la observación más reciente del archivo común recibida antes del pronóstico (como mucho un ciclo, 65 min) y solo si cotiza esa pareja exacta: h2h del partido completo, línea principal, sin cuotas en juego, suspendidas, DFS ni de bolsas; si la pareja aparece dos veces en la misma observación, no hay mercado. El motor no hace peticiones de cuotas y The Odds API no es respaldo: sin cotización en el archivo se usa el apilador v7 (`source: v7_stack`). Cada sellado guarda `live.provider`, recepción, hash y petición del archivo.
+
+Hasta el 24-oct: `python -m tennis_odds_live_v1 --root data/tennis/live_odds_v1` toma una foto h2h (región `eu`) por torneo activo y media jornada UTC; tope 400 créditos/mes y reserva para el consumo de fútbol de la misma cuenta. En producción lo ejecuta el cron del VPS (ver «Ejecución en el VPS»); la antigua tarea de Windows «QuantFut tenis cuotas h2h» quedó desactivada a las 05:00 y 17:00. `tennis_motor forecast` usa la última foto previa si existe (`source: live_snapshot`); el estudio vigente es `core_v8_prospective_20261019`.
 
 ### Entrada automática de partidos
 
@@ -213,4 +215,4 @@ Match Charting Project (Jeff Sackmann, CC BY-NC-SA; 9.400 partidos, 1,4 millones
 
 ### Ejecución en el VPS
 
-El motor corre en el VPS en una imagen propia (`apps/tennis/Dockerfile`, `python:3.12-slim`), aislada de los servicios de fútbol. Datos en `~/quantfut-tenis/data` (montado en `/data`), claves en `~/quantfut-tenis/secrets` (solo lectura) y la imagen activa en `~/quantfut-tenis/IMAGE`. El cron del usuario `qf` llama a `scripts/vps_run.sh twice-daily` (11:00 y 23:00 UTC) y `scripts/vps_run.sh weekly` (lunes 10:00 UTC). Ver `DEPLOYS.md`.
+El motor corre en el VPS en una imagen propia (`apps/tennis/Dockerfile`, `python:3.12-slim`), aislada de los servicios de fútbol. Datos en `~/quantfut-tenis/data` (montado en `/data`), claves en `~/quantfut-tenis/secrets` (solo lectura) y la imagen activa en `~/quantfut-tenis/IMAGE`. El archivo de PropLine (volumen `quantfut_artifacts`, subcarpeta `propline_shared`) se monta de solo lectura en `/propline`; la imagen lleva `propline_shared.py` de `src/qf/ingest/` copiado al contexto de construcción. El cron del usuario `qf` llama a `scripts/vps_run.sh twice-daily` (11:00 y 23:00 UTC; solo entrada, ya sin foto de The Odds API) y `scripts/vps_run.sh weekly` (lunes 10:00 UTC). Ver `DEPLOYS.md`.
