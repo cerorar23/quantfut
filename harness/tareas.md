@@ -3149,8 +3149,10 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [x] Errores 1-6 del productor corregidos en `nba/productor-correcciones` (sellado por partido 65-90 min antes del salto, horas reales, caché, control de bloqueo, filas de jugador de 2026-27); modelo reajustado con parámetros idénticos. docs/nba_productor_correcciones_20261023.md.
 - [ ] Desplegar el productor corregido (PR a `main`, confirmación del titular; runbook y vuelta atrás en el documento).
 - [ ] Decidir antes del 1-nov si se retira la captura de precios `nba-live13-price` (desplegada el 22-oct; con varias cohortes por día su libro de 2 peticiones/día rechazará la mayoría).
-- [ ] Play-in y playoffs (identificadores 004/005/006) antes de mediados de abril.
-- [ ] Fijar el reloj de `tests/test_paper_bundle.py` (3 pruebas caducadas desde el 22-oct por `deadline_utc` fijo).
+- [x] Play-in y playoffs (004/005/006) en el productor, resultados y página.
+- [x] Reloj de `tests/test_paper_bundle.py` fijado (`paper_bundle.DEADLINE_UTC`, mismo valor).
+- [x] Mercados de jugador en vivo: puntos, rebotes y asistencias a la línea de PropLine (moda de ≥2 casas), condicionados a jugar, modelo de jugador v1.3 con recalibración en rejilla de umbrales (mejor Brier fuera de muestra en los tres). docs/nba_productor_correcciones_20261023.md.
+- [ ] Desplegar productor y panel 1.3.1 (montaje `readonly` del volumen de PropLine, caché, modelo `…20261023`); runbook en el documento.
 - [ ] Recalibración móvil de total y puntos de equipo (sesgo ±0,04 por temporada) y prior de pretemporada por plantilla.
 - [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
-- [ ] Jugadores en vivo con probabilidad de jugar explícita + distribución condicionada corregida (puntos 2P/3P/TL o dispersión ajustada); cobertura de rangos publicada.
+- [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.

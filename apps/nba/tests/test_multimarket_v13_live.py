@@ -37,7 +37,7 @@ def player_rows():
     for g in history_games():
         for pid, name, minutes, points in ((1, 'Jaren Jackson Jr.', 30., 18.), (2, 'Ana Díaz', 20., 8.)):
             rows.append(dict(game_id=g['game_id'], date=g['date'], player_id=pid, name=name, participated=True,
-                             minutes=minutes, points=points, team_id=HOME))
+                             minutes=minutes, points=points, rebounds=pid * 3 + len(rows) % 4, assists=pid + len(rows) % 3, team_id=HOME))
     return rows
 
 
@@ -79,7 +79,9 @@ def model():
     games, table = history_games(), dict.fromkeys(av.STATUSES, .5)
     train = [dict(r) for r in v12.team_games(games, V12)]
     v13.attach(train, {}, table)
+    identity = dict(weights=[1., 0., 0., 0., 0.])  # recalibration that returns the raw model probability
     return dict(version=live.VERSION, train_seasons=['2024-25', '2025-26'], fit=live.fit_team(train), play_probability=table,
+                player_fit={m: identity for m in live.PLAYER_MARKETS}, player_empirical_weight=live.PLAYER_WEIGHT,
                 inputs=dict(live_module_sha256=digest(live.__file__)))
 
 

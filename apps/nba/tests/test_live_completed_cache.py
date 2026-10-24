@@ -17,7 +17,7 @@ def page(gid, status, tip='2026-10-21T23:00:00Z', home=110, away=104):
     team = lambda tid, pts, city: dict(teamId=tid, teamCity=city, teamName='Club', teamTricode=city[:3].upper(), score=pts,
                                        statistics=dict(points=pts),
                                        players=[dict(personId=tid + 1, firstName='Ana', familyName=city, comment='',
-                                                     statistics=dict(minutes='30:00', points=pts))])
+                                                     statistics=dict(minutes='30:00', points=pts, reboundsTotal=7, assists=4))])
     game = dict(gameId=gid, gameStatus=status, gameTimeUTC=tip, homeTeamId=HOME, awayTeamId=AWAY,
                 homeTeam=team(HOME, home, 'Bbb'), awayTeam=team(AWAY, away, 'Aaa'))
     return ('<script id="__NEXT_DATA__" type="application/json">'
@@ -145,11 +145,12 @@ def test_box_score_minutes_and_player_rows():
         with pytest.raises(ValueError):
             live.box_minutes(bad)
     game = dict(homeTeam=dict(teamId=HOME, players=[
-                    dict(personId=7, firstName='Ana', familyName='Uno', comment='', statistics=dict(minutes='12:30', points=9)),
-                    dict(personId=8, firstName='Eva', familyName='Dos', comment="DNP - Coach's Decision", statistics=dict(minutes='', points=0))]),
+                    dict(personId=7, firstName='Ana', familyName='Uno', comment='', statistics=dict(minutes='12:30', points=9, reboundsTotal=3, assists=2)),
+                    dict(personId=8, firstName='Eva', familyName='Dos', comment="DNP - Coach's Decision", statistics=dict(minutes='', points=0, reboundsTotal=0, assists=0))]),
                 awayTeam=dict(teamId=AWAY, players=[]))
     played, rested = live.player_rows(game, '0022600001', '2026-10-20')
     assert (played['participated'], played['minutes'], played['name'], played['team_id']) == (True, 12.5, 'Ana Uno', HOME)
+    assert (played['points'], played['rebounds'], played['assists']) == (9, 3, 2)
     assert (rested['participated'], rested['minutes']) == (False, 0.)
 
 

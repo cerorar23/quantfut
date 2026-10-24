@@ -2,7 +2,7 @@
 
 Frozen protocol: multimarket_v13_live_protocol.json. Research only (actionable=False); RUN071 is untouched.
 """
-from collections import defaultdict
+from collections import Counter, defaultdict, deque
 from datetime import UTC, date, datetime, timedelta
 import hashlib
 import json
@@ -12,7 +12,7 @@ import shutil
 from zoneinfo import ZoneInfo
 
 import numpy as np
-from scipy.special import expit
+from scipy.special import expit, logit
 from scipy.stats import norm
 
 from . import availability as av
@@ -20,6 +20,7 @@ from . import injury_pdf
 from . import multimarket as m1
 from . import multimarket_v12 as v12
 from . import multimarket_v13 as v13
+from . import prop_lines
 from .audit import digest, write_json
 from .context import name_key
 from .injury_t60 import CONTROL, MISSING
@@ -28,11 +29,19 @@ VERSION = 'nba-multimarket-live-1.3.1'
 SEASON = '2026-27'
 EASTERN = ZoneInfo('America/New_York')
 HEADERS = {'User-Agent': 'Mozilla/5.0 NBA research receipt capture', 'Accept': 'application/json,text/html'}
-LABELS = dict(winner='Ganador', team_points='Puntos de equipo', game_total='Total del partido')
+LABELS = dict(winner='Ganador', team_points='Puntos de equipo', game_total='Total del partido', player_points='Puntos de jugador',
+              player_rebounds='Rebotes de jugador', player_assists='Asistencias de jugador')
 REFERENCE = 'Umbral estadístico; no es una línea de una casa'
+PLAYER_MARKETS = prop_lines.MARKETS
+PLAYER_WEIGHT = .25  # empirical weight of the player model, chosen by v1.2 on its selection season (2023-24)
+# Recalibration thresholds around floor(mean of last 10)+0.5. A book line can sit anywhere relative to that point; fitted at
+# the single synthetic threshold the recalibration was off by 5-9 points of over-rate two lines away (2025-26 out of sample).
+LINE_OFFSETS = (-4, -2, -1, 0, 1, 2, 4)
+# regular season, playoffs, play-in and the NBA Cup final; preseason (001) and All-Star (003) stay out
+GAME_TYPES = {'2': 'regular', '4': 'playoffs', '5': 'play_in', '6': 'cup_final'}
 NEXT_DATA = re.compile(r'<script[^>]*id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)
-CARD = re.compile(r'href="/game/([a-z]{2,3}-vs-[a-z]{2,3}-(002\d{7}))"[^>]*data-content="[^"]*?, (\d{4}-\d{2}-\d{2})"')
-SLUG = re.compile(r'[a-z]{2,3}-vs-[a-z]{2,3}-002\d{7}')
+CARD = re.compile(r'href="/game/([a-z]{2,3}-vs-[a-z]{2,3}-(00[2456]\d{7}))"[^>]*data-content="[^"]*?, (\d{4}-\d{2}-\d{2})"')
+SLUG = re.compile(r'[a-z]{2,3}-vs-[a-z]{2,3}-00[2456]\d{7}')
 
 
 def http_get(url):
@@ -83,7 +92,7 @@ def parse_game(html, slug, received):
         raise ValueError('slug and NBA game id disagree')
     home, away = game['homeTeam'], game['awayTeam']
     tip = datetime.fromisoformat(game['gameTimeUTC'].replace('Z', '+00:00'))
-    return dict(nba_game_id=gid, slug=slug, status=game['gameStatus'], tipoff_utc=tip.isoformat(),
+    return dict(nba_game_id=gid, slug=slug, game_type=GAME_TYPES[gid[2]], status=game['gameStatus'], tipoff_utc=tip.isoformat(),
                 et_date=tip.astimezone(EASTERN).date().isoformat(),
                 home_team=f"{home['teamCity']} {home['teamName']}".strip(), away_team=f"{away['teamCity']} {away['teamName']}".strip(),
                 home_tricode=home['teamTricode'], away_tricode=away['teamTricode'],
@@ -107,6 +116,7 @@ def upcoming(day, now, get=http_get, clock=None):
 
 
 GAME_KEYS = {'game_id', 'date', 'season', 'home', 'away', 'box_score_sha256', 'players'}
+PLAYER_KEYS = {'game_id', 'date', 'player_id', 'team_id', 'name', 'participated', 'minutes', 'points', 'rebounds', 'assists'}
 CLOCK = re.compile(r'(\d{1,2}):(\d{2})|PT(\d{1,2})M(\d{2})(?:\.\d+)?S')
 
 
@@ -126,12 +136,14 @@ def player_rows(game, gid, day):
     rows = []
     for side in ('homeTeam', 'awayTeam'):
         for p in game[side]['players']:
-            minutes, points = box_minutes(p['statistics']['minutes']), p['statistics']['points']
-            if type(points) is not int or points < 0:
-                raise ValueError('invalid box score points')
+            stats = p['statistics']
+            counts = dict(points=stats['points'], rebounds=stats['reboundsTotal'], assists=stats['assists'])
+            if any(type(v) is not int or v < 0 for v in counts.values()):
+                raise ValueError('invalid box score counts')
+            minutes = box_minutes(stats['minutes'])
             rows.append(dict(game_id=gid, date=day, player_id=p['personId'], team_id=game[side]['teamId'],
                              name=f"{p['firstName']} {p['familyName']}".strip(), participated=minutes > 0,
-                             minutes=minutes, points=points))
+                             minutes=minutes, **counts))
     return rows
 
 
@@ -141,7 +153,8 @@ def cached_game(cache, gid, day):
     if path is None or not path.is_file():
         return None
     game = json.loads(path.read_bytes())
-    if set(game) != GAME_KEYS or game['game_id'] != gid or game['date'] != day or game['season'] != SEASON:
+    if (set(game) != GAME_KEYS or game['game_id'] != gid or game['date'] != day or game['season'] != SEASON
+            or any(set(r) != PLAYER_KEYS for r in game['players'])):
         raise ValueError(f'corrupt completed-game cache entry {gid}')
     return game
 
@@ -350,6 +363,31 @@ def predict_team(test, fit):
     return out
 
 
+def player_training_rows(players, protocol, start, end):
+    """Player samples of [start, end) at every LINE_OFFSETS threshold, each forecast from strictly earlier games."""
+    days = defaultdict(list)
+    for r in players:
+        days[r['date']].append(r)
+    history, out = defaultdict(lambda: deque(maxlen=protocol['history_window'])), defaultdict(list)
+    for cut in sorted(days):
+        for r in days[cut] if start <= cut < end else ():
+            hist = m1.eligible(history[r['player_id']], cut, protocol)
+            if not (r['participated'] and r['minutes'] > 0) or len(hist) < protocol['min_history']:
+                continue
+            for market in PLAYER_MARKETS:
+                stat = market.removeprefix('player_')
+                par = m1.player_parameters(hist, stat, protocol)
+                for line in np.floor(par['baseline']) + .5 + np.array(LINE_OFFSETS):
+                    if line >= .5:
+                        out[market].append(dict(date=cut, game_id=r['game_id'], unit=r['player_id'], line=float(line),
+                                                probability=m1.player_over(par, line, protocol), y=int(r[stat] > line)))
+        # every forecast of a date precedes every outcome of that date
+        for r in days[cut]:
+            if r['participated'] and r['minutes'] > 0:
+                history[r['player_id']].append(r)
+    return out
+
+
 def fit_model(players, games, protocol, v12_protocol, injury_path, api_dir, sources):
     """Fit once on the scored seasons before the target season. `sources` = file hashes to pin."""
     seasons = sorted({g['season'] for g in games})
@@ -365,9 +403,19 @@ def fit_model(players, games, protocol, v12_protocol, injury_path, api_dir, sour
     table = av.play_table(statuses, index, {g for g in observed if game_season.get(g) in train_seasons})
     train = [dict(r) for r in v12.team_games(games, v12_protocol) if r['season'] in train_seasons]
     v13.attach(train, entries, table)
+    # player markets: the v1.3 player model (calibration on logit p + own status + teammates' missing minutes), same window,
+    # with the recalibration fitted over a grid of thresholds instead of the single synthetic one
+    samples = player_training_rows(players, dict(v12_protocol, empirical_weight=PLAYER_WEIGHT), start, end)
+    player_fit = {}
+    for market in PLAYER_MARKETS:
+        rows = samples[market]
+        w = v13.fit_player(rows, v13.player_features(rows, index, entries, table), protocol)
+        player_fit[market] = dict(weights=w.tolist(), observations=len(rows), line_offsets=list(LINE_OFFSETS),
+                                  features=['logit_probability', 'bias', 'own_questionable_or_doubtful', 'own_probable',
+                                            'teammates_missing_minutes_per_48'])
     return dict(version=VERSION, protocol_version=protocol['version'], train_seasons=train_seasons,
                 fit=fit_team(train), play_probability=table, observed_share=float(np.mean([r['observed'] for r in train])),
-                inputs=sources)
+                player_fit=player_fit, player_empirical_weight=PLAYER_WEIGHT, inputs=sources)
 
 
 def feature_rows(games, completed_games, mappings, v12_protocol):
@@ -419,6 +467,64 @@ def cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, seal
     return games_out, forecasts
 
 
+def player_history(rows):
+    """player id (str) -> rows in which the player took the floor, by date."""
+    out = defaultdict(list)
+    for r in rows:
+        if r['participated'] and r['minutes'] > 0:
+            out[str(r['player_id'])].append(r)
+    for value in out.values():
+        value.sort(key=lambda r: r['date'])
+    return out
+
+
+def player_forecasts(model, v12_protocol, mappings, lines, history, entries):
+    """Points, rebounds and assists over the PropLine consensus line, conditional on playing (books void a DNP).
+
+    Only players with a line, at least `min_history` recent games and a last team in this game; players listed Out are
+    skipped. Same features as the retrospective v1.3 player model; rows get `sealed_at_utc` when the cohort is sealed."""
+    protocol = dict(v12_protocol, empirical_weight=model['player_empirical_weight'])
+    table = model['play_probability']
+    out, summary = [], {}
+    for m in mappings:
+        gid, teams = m['nba_game_id'], (m['home_nba_team_id'], m['away_nba_team_id'])
+        listed = entries.get(gid) or {}
+        status_of = {player: status for rows in listed.values() for player, status, _, _ in rows}
+        counts = Counter()
+        for (market, pid), quote in sorted(lines.get(gid, {}).items(), key=lambda kv: (kv[0][1], kv[0][0])):
+            hist = m1.eligible(history.get(str(pid), []), m['et_date'], protocol)
+            if len(hist) < protocol['min_history']:
+                counts['insufficient_history'] += 1
+                continue
+            team = hist[-1]['team_id']
+            if team not in teams:
+                counts['last_team_not_in_game'] += 1
+                continue
+            status = status_of.get(str(pid))
+            if status == 'Out':
+                counts['listed_out'] += 1
+                continue
+            par = m1.player_parameters(hist, market.removeprefix('player_'), protocol)
+            pmf = np.asarray(m1.player_distribution(par, protocol))
+            cdf = np.cumsum(pmf)
+            teammates = sum(mm * (1 - table[s]) for p, s, mm, _ in listed.get(team, []) if p != str(pid)) / 48
+            x = [float(logit(np.clip(m1.player_over(par, quote['line'], protocol), 1e-6, 1 - 1e-6))), 1.,
+                 int(status in ('Questionable', 'Doubtful')), int(status == 'Probable'), teammates]
+            prob = float(expit(np.dot(model['player_fit'][market]['weights'], x)))
+            out.append(dict(event_id=gid, nba_game_id=gid, actionable=False, conditional_participation=True,
+                            reference=f"Línea principal de PropLine (la más repetida en {quote['books']} casas)",
+                            last_feature_date=hist[-1]['date'], market=market, market_label=LABELS[market],
+                            estimate=float(np.dot(np.arange(len(pmf)), pmf)), range_low=float(np.searchsorted(cdf, .1)),
+                            range_high=float(np.searchsorted(cdf, .9)), line=float(quote['line']), probability_over=prob,
+                            probability_under=1 - prob, player_id=int(pid), player=hist[-1]['name'], team_id=team,
+                            report_status=status or 'no_listado', probability_play=table[status] if status else None,
+                            books=quote['books'], book_lines=quote['book_lines'], projected_minutes=par['projected_minutes'],
+                            history_games=len(hist)))
+            counts['forecast'] += 1
+        summary[gid] = dict(counts)
+    return out, summary
+
+
 def sealed_games(root):
     """NBA game ids already sealed in any cohort under `root` (a game is forecast once)."""
     root = Path(root)
@@ -426,17 +532,20 @@ def sealed_games(root):
 
 
 def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, get=http_get, first_completed_day=None, exclude=(), cache=None,
-         clock=None, lead=None):
+         clock=None, lead=None, props_root=None):
     """Capture schedule + latest official report, forecast, and write a sealed cohort folder (never overwritten).
 
     `now` decides which games and which report; `clock` stamps receipts and the seal when they really happen (default:
-    `now`). With `lead=(low, high)` only games whose tipoff is more than `low` and at most `high` after `now` are sealed."""
+    `now`). With `lead=(low, high)` only games whose tipoff is more than `low` and at most `high` after `now` are sealed.
+    With `props_root` (the shared PropLine archive) player points/rebounds/assists are forecast at the consensus line."""
     now = now or datetime.now(UTC)
     clock = clock or (lambda: now)
     model_dir, out = Path(model_dir), Path(out)
     model = json.loads((model_dir / 'model.json').read_bytes())
     if model['inputs'].get('live_module_sha256') != digest(__file__):
         raise ValueError('model was fitted by a different live module')
+    if props_root is not None and 'player_fit' not in model:
+        raise ValueError('player markets need a model with player_fit')
     if out.exists():
         raise ValueError('cohort folder already exists')
     mappings = [m for m in upcoming(day, now, get, clock) if m['nba_game_id'] not in set(exclude)]
@@ -453,7 +562,8 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     out.mkdir(parents=True)
     report = capture_report(day, now, out / 'reports', get, clock)
     # target-season box scores join the historical rows, so player values follow the current season
-    ids, history = history_index([*players, *(r for g in done for r in g['players'])])
+    rows_all = [*players, *(r for g in done for r in g['players'])]
+    ids, history = history_index(rows_all)
     entries, summaries = {}, []
     for m in mappings:
         e, s = game_report_entries(report, m, ids, history)
@@ -465,8 +575,14 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
         previous = [g['date'] for g in (*games, *done) if m['home_nba_team_id'] in (g['home']['team_id'], g['away']['team_id'])
                     or m['away_nba_team_id'] in (g['home']['team_id'], g['away']['team_id'])]
         last_dates[m['nba_game_id']] = max(previous)
+    lines, prop_summary = prop_lines.lines(props_root, now, mappings)
+    players_out, player_summary = player_forecasts(model, v12_protocol, mappings, lines, player_history(rows_all), entries) \
+        if prop_summary['state'] == 'archivo_aplicado' else ([], {})
     sealed_at = clock()
     games_out, forecasts = cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, sealed_at)
+    forecasts += [dict(f, sealed_at_utc=stamp(sealed_at)) for f in players_out]
+    for g in games_out:
+        g['player_lines'] = player_summary.get(g['nba_game_id'], {})
     shutil.copyfile(model_dir / 'model.json', out / 'model.json')
     write_json(out / 'schedule.json', dict(received_at_utc=max(m['first_received_at_utc'] for m in mappings), games=mappings))
     # player rows are not repeated here: each game keeps the hash of the box score they were read from
@@ -478,10 +594,10 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
                   availability_sha256=digest(Path(av.__file__)), games=games_out, forecasts=forecasts,
                   report=None if report is None else {k: report[k] for k in ('pdf_file', 'source_url', 'report_timestamp_utc',
                                                                              'first_received_at_utc', 'pdf_sha256', 'named_players')},
-                  train_seasons=model['train_seasons'], actionable=False, original_pilot_unchanged=True)
+                  prop_lines=prop_summary, train_seasons=model['train_seasons'], actionable=False, original_pilot_unchanged=True)
     write_json(out / 'bundle.json', bundle)
     write_json(out / 'bundle.seal.json', dict(sha256=digest(out / 'bundle.json'), created_at_utc=stamp(sealed_at), external_anchor=False))
-    return dict(games=len(games_out), sealed_at_utc=stamp(sealed_at), forecasts=len(forecasts), report=bundle['report'] and bundle['report']['pdf_file'],
+    return dict(games=len(games_out), sealed_at_utc=stamp(sealed_at), forecasts=len(forecasts), player_forecasts=len(players_out), report=bundle['report'] and bundle['report']['pdf_file'],
                 availability={g['event_id']: g['availability']['state'] for g in games_out})
 
 
@@ -529,6 +645,7 @@ def main():
     parser.add_argument('--first-day', help='forecast: first finished game day of the target season')
     parser.add_argument('--exclude-sealed', help='forecast: cohorts root; games already sealed there are skipped')
     parser.add_argument('--cache', help='forecast: folder where finished games are stored so each box score is downloaded once')
+    parser.add_argument('--propline', help='forecast: shared PropLine archive root (player points/rebounds/assists)')
     a = parser.parse_args()
     protocol_path = root / 'multimarket_v13_live_protocol.json'
     protocol = dict(json.loads(protocol_path.read_bytes()), _path=str(protocol_path))
@@ -556,7 +673,8 @@ def main():
     players, games = m1.read_rows(data / 'players.jsonl.gz'), json.loads((data / 'games.json').read_bytes())
     clock = lambda: datetime.now(UTC)
     print(json.dumps(seal(a.model, a.output, a.date, players, games, protocol, v12_protocol, now=clock(), first_completed_day=a.first_day,
-                           exclude=sealed_games(a.exclude_sealed) if a.exclude_sealed else (), cache=a.cache, clock=clock)))
+                           exclude=sealed_games(a.exclude_sealed) if a.exclude_sealed else (), cache=a.cache, clock=clock,
+                           props_root=a.propline)))
 
 
 if __name__ == '__main__':

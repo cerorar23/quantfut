@@ -28,7 +28,7 @@ def schedule(day, now, cache, get):
     return games
 
 
-def run(now, cohorts, model, data, first_day, cache, get=live.http_get, clock=None):
+def run(now, cohorts, model, data, first_day, cache, get=live.http_get, clock=None, propline=None):
     """Returns a status dict; raises only on unexpected failures (so cron mail/log shows them).
 
     `now` is when the run starts and drives every decision; `clock` stamps receipts and the seal (default: `now`)."""
@@ -49,7 +49,8 @@ def run(now, cohorts, model, data, first_day, cache, get=live.http_get, clock=No
     players, games = m1.read_rows(data / 'players.jsonl.gz'), json.loads((data / 'games.json').read_bytes())
     try:
         status['sealed'] = live.seal(model, cohorts / f"{day}_{local:%H%M}", day, players, games, protocol, v12_protocol, now=now,
-                                     get=get, first_completed_day=first_day, exclude=sealed, cache=cache, clock=clock, lead=SEAL_LEAD)
+                                     get=get, first_completed_day=first_day, exclude=sealed, cache=cache, clock=clock, lead=SEAL_LEAD,
+                                     props_root=propline)
     except ValueError as error:
         if str(error) != 'no games left to seal for this date':
             raise
@@ -64,10 +65,11 @@ def main():
     parser.add_argument('--model', default='/live13/model')
     parser.add_argument('--data', default='/live13/data')
     parser.add_argument('--cache', default='/live13/cache', help='finished games and the day schedule, kept between runs')
+    parser.add_argument('--propline', default='/live13/propline', help='shared PropLine archive (read-only): player lines')
     parser.add_argument('--first-day', default='2026-10-20')
     a = parser.parse_args()
     clock = lambda: datetime.now(UTC)
-    print(json.dumps(run(clock(), a.cohorts, a.model, a.data, a.first_day, a.cache, clock=clock), default=str))
+    print(json.dumps(run(clock(), a.cohorts, a.model, a.data, a.first_day, a.cache, clock=clock, propline=a.propline), default=str))
 
 
 if __name__ == '__main__':

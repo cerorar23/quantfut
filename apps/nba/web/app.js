@@ -6,7 +6,7 @@ const number = (n, places=1) => new Intl.NumberFormat('es-MX', { minimumFraction
 const statusNames = { pending: 'Pendiente', awaiting_result: 'Esperando resultado', evaluated: 'Evaluado', dnp: 'No participó', validation_hold: 'Resultado en revisión', result_unavailable: 'Resultado no disponible' };
 let data = null, market = 'all', modelMarket = 'all', loading = false;
 function node(tag, css, text) { const n = document.createElement(tag); if (css) n.className = css; if (text !== undefined) n.textContent = text; return n; }
-function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-002\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
+function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-00[2456]\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
 function isPending(row) { return !['evaluated','dnp'].includes(row.result.status); }
 function modelCard(r,event) {
       const card=node('div','player-card');card.append(node('p','player-name',r.player),node('span','market-name',r.market_label));
@@ -15,12 +15,13 @@ function modelCard(r,event) {
       } else {
         card.append(node('p','estimate',number(r.estimate)),node('p','model-note',`Rango central 80%: ${number(r.range_low)}–${number(r.range_high)}`));
         const over=r.probability_over>=r.probability_under;
-        card.append(node('p','probability',`${number(Math.max(r.probability_over,r.probability_under)*100)}% ${over?'más':'menos'} de ${number(r.line)}`),node('p','line-reference','Umbral estadístico de referencia'));
+        card.append(node('p','probability',`${number(Math.max(r.probability_over,r.probability_under)*100)}% ${over?'más':'menos'} de ${number(r.line)}`),node('p','line-reference',r.reference||'Umbral estadístico de referencia'));
       }
       const outcome=r.result;
       const actual=r.market==='winner'?(outcome.actual===1?event.home_team:event.away_team):number(outcome.actual);
       card.append(node('p','result-line',outcome.status==='evaluated'?`Resultado oficial: ${actual}`:(statusNames[outcome.status]||'Pendiente')));
-      card.append(node('p','model-note',r.conditional_participation?'Condicionado a participación · Disponibilidad final sin confirmar':'Partido completo · Prórroga incluida'));
+      const status=r.report_status&&r.report_status!=='no_listado'?` · Reporte oficial: ${r.report_status}${r.probability_play===null||r.probability_play===undefined?'':` (juega ${number(r.probability_play*100,0)}% de las veces)`}`:'';
+      card.append(node('p','model-note',r.conditional_participation?`Condicionado a participación (si no juega, no cuenta)${status}`:'Partido completo · Prórroga incluida'));
       const details=node('details','details');details.append(node('summary','','Registro del modelo'),node('p','',`Registrado ${date(r.sealed_at_utc)}. Último partido usado: ${r.last_feature_date}. Sin cuotas como entrada.`));card.append(details);
   return card;
 }
@@ -56,7 +57,7 @@ function renderLive() {
   $('live-count').textContent=`${events.length} partidos · ${rows.length} pronósticos · ${rows.filter(r=>r.result.status==='evaluated').length} resultados oficiales · modelo ${cohorts[0].version}`;
   for(const cohort of cohorts) {
     const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${cohort.train_seasons.join(' y ')}`);box.append(head);
-    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
+    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total',player_points:'Puntos de jugador',player_rebounds:'Rebotes',player_assists:'Asistencias'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
     if(done.length) box.append(node('p','model-note',`Marcador (Brier, menor es mejor): ${done.map(([k,v])=>`${names[k]} ${number(v.brier,3)} (${v.n})`).join(' · ')}`));
     for(const event of cohort.events) {
       const game=node('article','game'),top=node('div','game-header'),names2=node('div'),meta=node('div','game-meta');
