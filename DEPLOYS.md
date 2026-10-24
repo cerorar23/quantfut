@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 01:50 UTC · Descarga de cuotas (BetsAPI) y captura PropLine · solo VPS (usuario `qf`), sin imagen ni base de datos
+- Scripts `scripts/betsapi_descarga.py` y `scripts/propline_captura.py` copiados a `~/`; datos en `~/betsapi/data` y `~/propline_data` (no en el repo, no en Docker).
+- Cron nuevo: `40 */2 * * * cd $HOME && python3 propline_captura.py --env betsapi/.env.propline --out propline_data`.
+- Descarga BetsAPI en segundo plano (`~/betsapi/cadena2.sh`), sin tocar la API, el worker ni la base. Detalle: `docs/datos_cuotas_betsapi_propline_20261024.md`.
+- Vuelta atrás: quitar la línea `propline_captura.py` del crontab y `pkill -f betsapi_descarga`; borrar `~/betsapi` y `~/propline_data`.
+
 ### 2026-10-22 23:05 UTC · NBA: paso de precios de Pinnacle (captura al sellar cada cohorte) · cron del usuario `qf` (PR #77, `main` `2b09b56`)
 - Imagen `nba-live13-price:20261022` (`f4774fb18cbd`), derivada de `nba-live13-producer:20261021`; solo cambia `src/nba`. El contexto de construcción sale de `git archive` de `main` con `core.autocrlf=false` (con el `autocrlf` de Windows exportaba CRLF y habría roto el `.sh`); los 69 archivos del servidor se comprobaron byte a byte contra los blobs de `main`. Envoltorio `~/nba-isolated/live13/price.sh` (`flock` propio, sin tocar `producer.sh`).
 - Contenedor de corta vida (segundos): usuario 1001, raíz de solo lectura, `--cap-drop ALL`, `no-new-privileges`, 64 procesos, 256 MB, red propia `nba-price`. Montajes: `cohorts` solo lectura, `price` y `ledger` escribibles, `private/odds_key` solo lectura en `/run/secrets/odds_key` (nunca como variable de entorno). Comprobado dentro del contenedor con los montajes reales: clave legible (600, 32 bytes) y no escribible, cohortes no escribibles, `price`/`ledger` escribibles, salida TCP a `api.the-odds-api.com:443` (sin petición).
