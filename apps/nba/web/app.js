@@ -4,6 +4,7 @@ const dateOptions = { timeZone: 'America/Mexico_City', day: 'numeric', month: 's
 const date = (value) => value ? new Intl.DateTimeFormat('es-MX', dateOptions).format(new Date(value)) : 'Sin actualización verificada';
 const number = (n, places=1) => new Intl.NumberFormat('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: places }).format(n);
 const statusNames = { pending: 'Pendiente', awaiting_result: 'Esperando resultado', evaluated: 'Evaluado', dnp: 'No participó', validation_hold: 'Resultado en revisión', result_unavailable: 'Resultado no disponible' };
+const MARKET_ORDER = ['player_points','player_rebounds','player_assists','player_points_rebounds','player_points_assists','player_rebounds_assists','player_points_rebounds_assists'];
 let data = null, market = 'all', modelMarket = 'all', loading = false;
 function node(tag, css, text) { const n = document.createElement(tag); if (css) n.className = css; if (text !== undefined) n.textContent = text; return n; }
 function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-00[2456]\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
@@ -57,7 +58,7 @@ function renderLive() {
   $('live-count').textContent=`${events.length} partidos · ${rows.length} pronósticos · ${rows.filter(r=>r.result.status==='evaluated').length} resultados oficiales · modelo ${cohorts[0].version}`;
   for(const cohort of cohorts) {
     const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${cohort.train_seasons.join(' y ')}`);box.append(head);
-    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total',player_points:'Puntos de jugador',player_rebounds:'Rebotes',player_assists:'Asistencias'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
+    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total',player_points:'Puntos de jugador',player_rebounds:'Rebotes',player_assists:'Asistencias',player_points_rebounds:'Puntos + rebotes',player_points_assists:'Puntos + asistencias',player_rebounds_assists:'Rebotes + asistencias',player_points_rebounds_assists:'Puntos + rebotes + asistencias'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
     if(done.length) box.append(node('p','model-note',`Marcador (Brier, menor es mejor): ${done.map(([k,v])=>`${names[k]} ${number(v.brier,3)} (${v.n})`).join(' · ')}`));
     for(const event of cohort.events) {
       const game=node('article','game'),top=node('div','game-header'),names2=node('div'),meta=node('div','game-meta');
@@ -100,7 +101,7 @@ function render() {
       const predictions=matches.filter(r=>r.player_id===id), first=predictions[0], card=node('div','player-card'), head=node('div','player-head'), names=node('div');
       names.append(node('p','player-name',first.player),node('p','player-sub','Partido completo · Prórroga incluida'));
       head.append(node('span','avatar',first.player.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('')),names); card.append(head);
-      for (const r of predictions.sort((a,b)=>Object.keys({player_points:1,player_rebounds:1,player_assists:1}).indexOf(a.market)-Object.keys({player_points:1,player_rebounds:1,player_assists:1}).indexOf(b.market))) {
+      for (const r of predictions.sort((a,b)=>MARKET_ORDER.indexOf(a.market)-MARKET_ORDER.indexOf(b.market))) {
         const forecast=node('div','forecast-row'), estimate=node('div'), display=node('div','estimate',number(r.estimate));
         display.append(node('small','',`Rango ${r.range_low}–${r.range_high}`)); estimate.append(node('span','market-name',r.market_label),display);
         const probabilities=node('div'), above=r.probability_over>=r.probability_under, probability=above?r.probability_over:r.probability_under;

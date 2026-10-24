@@ -12,7 +12,7 @@ import numpy as np
 from .audit import digest
 from .dashboard import Dashboard, Server, handler
 from .multimarket_dashboard import MultiDashboard
-from .multimarket_v13_live import PLAYER_MARKETS, box_minutes, final_game
+from .multimarket_v13_live import COMBOS, PLAYER_MARKETS, box_minutes, final_game
 
 MARKETS = ('winner', 'team_points', 'game_total', *PLAYER_MARKETS)
 PUBLIC = ('event_id', 'nba_game_id', 'player_id', 'player', 'market', 'market_label', 'estimate', 'range_low', 'range_high', 'line',
@@ -52,8 +52,11 @@ def official_scores(folder, game, now):
     for side in ('homeTeam', 'awayTeam'):
         for person in official[side]['players']:
             stats = person['statistics']
-            players[person['personId']] = dict(minutes=box_minutes(stats['minutes']), points=stats['points'],
-                                               rebounds=stats['reboundsTotal'], assists=stats['assists'])
+            row = dict(minutes=box_minutes(stats['minutes']), points=stats['points'], rebounds=stats['reboundsTotal'],
+                       assists=stats['assists'])
+            for market, parts in COMBOS.items():
+                row[market.removeprefix('player_')] = sum(row[p] for p in parts)
+            players[person['personId']] = row
     return dict(home=scores['homeTeam'], away=scores['awayTeam'], players=players, received_at_utc=receipt['first_received_at_utc'])
 
 

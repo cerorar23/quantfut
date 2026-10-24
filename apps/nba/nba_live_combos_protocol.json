@@ -1,0 +1,27 @@
+{
+  "version": "nba-live-combos-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-24 after nba-engine-calibration-1.0 showed that the v1 player law is overconfident on sums of points, rebounds and assists and that availability features correct it, and before the live producer was changed or any number of this check existed",
+  "question": "May the live producer (nba-multimarket-live-1.3.1: points, rebounds, assists over the PropLine consensus line) also forecast points+rebounds, points+assists, rebounds+assists and points+rebounds+assists with the SAME live calibration mechanism (logit of the v1 probability, bias, own Questionable/Doubtful, own Probable, teammates' missing minutes per 48, fitted over the LINE_OFFSETS grid)? Research only: nothing is deployed, the forecasts stay non-actionable and no price is an input.",
+  "procedure": {
+    "fit": "nba.multimarket_v13_live.fit_model, unchanged except for the new markets, run as the producer would for target season 2025-26 on the games and player rows of the seasons before it; training window = the two scored seasons before the target (2023-24, 2024-25)",
+    "test": "the 2025-26 regular-season player rows scored at the same threshold grid (floor(mean of the last 10) + 0.5 + {-4, -2, -1, 0, 1, 2, 4}, lines >= 0.5) by player_training_rows, features from the same injury reports and the play table fitted on the training window, weights applied unchanged",
+    "combos": {"player_points_rebounds": ["points", "rebounds"], "player_points_assists": ["points", "assists"], "player_rebounds_assists": ["rebounds", "assists"], "player_points_rebounds_assists": ["points", "rebounds", "assists"]},
+    "prior_rates_per_minute": {"points_rebounds": 0.85, "points_assists": 0.80, "rebounds_assists": 0.35, "points_rebounds_assists": 1.0},
+    "unchanged": "negative binomial plus 25% empirical weight, window 20, minimum history 10, 370 days, prior minutes 90, conditional on playing"
+  },
+  "arms": {"raw": "the v1 probability at the line", "live": "the fitted live calibration (the candidate that would be sealed)"},
+  "metrics": {
+    "scores": ["Brier", "log loss", "bias", "calibration slope and intercept (y on logit p)", "reliability table in 10 equal-count bins"],
+    "difference": "Brier(live) - Brier(raw), mean over units, date bootstrap (400 replicates, seed 20261028)",
+    "interval": "98.75% (Bonferroni over the four markets)",
+    "descriptive": ["the same by threshold offset", "the engine-calibration reference of 2025-26 (F with environment features) for the same markets, quoted not recomputed"]
+  },
+  "decision_rule": {
+    "enable_in_live": "per market: the upper bound of (live - raw) is below 0 AND the test slope of live is in [0.9, 1.1] AND |intercept| <= 0.10",
+    "otherwise": "the market is left out of PLAYER_MARKETS; the check is reported either way",
+    "scope": "calibration against realised results at statistical thresholds; the PropLine consensus line can sit anywhere, so the grid, not one threshold, is what is judged; no claim about value against a bookmaker"
+  },
+  "limits": ["there is no historical bookmaker line for these combinations; the first real test is the prospective record", "only availability enters the live model; the environment features of the engine-calibration run are not available at sealing time in the live producer", "steals, blocks and turnovers are not included: the live box-score rows do not carry them"],
+  "outputs": {"report": "live_combos_report.json", "model_check": "weights per market of the fitted live calibration"}
+}
