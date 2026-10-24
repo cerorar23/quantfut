@@ -442,6 +442,17 @@ def run(root, key_file, config_file, *, limit=None):
                 for market in core:
                     payload.extend(odds([market]) or [])
                 requested = [m for m in requested if m not in core]
+            elif sport.startswith("soccer_"):
+                # Mixing the high-volume featured board with player/team props
+                # produced 504 responses in production. Keep main lines hourly
+                # and use two larger batches for the remaining documented keys,
+                # preserving the daily request budget.
+                featured = [m for m in requested if m in ("h2h","spreads","totals")]
+                requested = [m for m in requested if m not in featured]
+                payload.extend(odds(featured) or [])
+                batch_size = min(50,max(1,int(config.get("soccer_markets_per_request",13))))
+                if not any(e.get("away_team") and not e.get("is_outright") for e in payload):
+                    requested = []
             for offset in range(0,len(requested),batch_size):
                 payload.extend(odds(requested[offset:offset+batch_size]) or [])
             # Once per competition/day, learn additional keys from an actual
