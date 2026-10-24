@@ -664,6 +664,7 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
 - [x] NBA: cuotas de bet365 (BetsAPI) normalizadas y unidas a game_id con protocolo v1.1 congelado; docs/nba_cuotas_betsapi_normalizadas_20261024.md.
 - [x] NBA: normalizado ampliado (tiros, pérdidas, rebotes ofensivos, posesiones, play-in/playoffs) con protocolo congelado; docs/nba_normalizado_ampliado_20261024.md.
 - [x] NBA: modelo de props anclado en el mercado con protocolo congelado (nba.props_residual); docs/nba_props_residual_20261024.md.
+- [x] NBA: entrenamiento y calibración de todos los mercados con protocolos congelados (nba.team_markets, nba.engine_calibration); docs/nba_calibracion_motor_20261024.md.
 
 - [x] Revisar arquitectura y contrastar literatura académica, doctorados,
       maestrías y el texto aportado. Plan integrado con fuentes, modelos,
