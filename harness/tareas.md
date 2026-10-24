@@ -661,6 +661,7 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       permiso del usuario; vuelve a pedir credenciales tras Access.
 
 ## NBA 2026-27 — investigación y experimentos (2026-10-03)
+- [x] NBA: cuotas de bet365 (BetsAPI) normalizadas y unidas a game_id con protocolo v1.1 congelado; docs/nba_cuotas_betsapi_normalizadas_20261024.md.
 - [x] NBA: normalizado ampliado (tiros, pérdidas, rebotes ofensivos, posesiones, play-in/playoffs) con protocolo congelado; docs/nba_normalizado_ampliado_20261024.md.
 
 - [x] Revisar arquitectura y contrastar literatura académica, doctorados,
