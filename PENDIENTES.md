@@ -123,6 +123,7 @@ Tareas sueltas:
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
 - [x] NBA — cuotas históricas h2h (The Odds API): los 325 snapshots de 2024-25 y 2025-26 ya se compraron el 23-oct (manifest en `apps/nba/.local/raw/nba_odds_h2h_202611`) y se compararon (`nba_f6_market_20261101`).
 - [x] NBA — normalizado ampliado (tiros, pérdidas, rebote ofensivo, posesiones, play-in y playoffs 2022-23..2025-26): `nba_extended_box_20261024`, docs/nba_normalizado_ampliado_20261024.md.
+- [x] NBA — cuotas históricas de bet365 (BetsAPI) normalizadas: 34.713 filas, 3.867 partidos de 3 temporadas, ganador/hándicap/total de partido, mitad y Q1 con apertura, cierre y trayectoria (`nba_betsapi_odds_20261024`, docs/nba_cuotas_betsapi_normalizadas_20261024.md). Matriz por mercado y continuidad pasado→futuro: docs/nba_matriz_mercados_y_estudios_20261024.md.
 - [ ] NBA — datos para entrenar todos los mercados: cuotas de hándicap/total (BetsAPI en VPS sin conectar), props sin precio (robos, tapones, combinados) y postemporada 2021-22 sin fecha. Ver docs/nba_auditoria_datos_entrenamiento_20261024.md.
 
 ## Decisiones que dependen de ti
