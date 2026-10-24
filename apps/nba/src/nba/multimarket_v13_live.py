@@ -57,6 +57,14 @@ def http_get(url):
     return response.status_code, response.content
 
 
+def module_digest(path=None):
+    """sha256 of this module with line endings normalised, so a checkout with CRLF and one with LF give the same value.
+
+    The model records it when fitted and the sealer refuses a model fitted by a different module; hashing raw bytes made that
+    check depend on how the files were checked out."""
+    return hashlib.sha256(Path(path or __file__).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+
+
 def stamp(value):
     return value.astimezone(UTC).isoformat()
 
@@ -448,6 +456,26 @@ def fit_model(players, games, protocol, v12_protocol, injury_path, api_dir, sour
                 player_fit=player_fit, player_empirical_weight=PLAYER_WEIGHT, inputs=sources)
 
 
+# What a refit may change relative to the deployed model: the live module, the protocol file and the markets the amendment adds.
+SAME_FIELDS = ('train_seasons', 'fit', 'play_probability', 'observed_share', 'player_empirical_weight')
+MAY_DIFFER = ('live_module_sha256', 'protocol_sha256')
+
+
+def compare_models(new, old):
+    """Checks that a freshly fitted model changes only what the amendment says. Returns (checks, detail); all checks must be True."""
+    checks = {f'{key}_identical': new.get(key) == old.get(key) for key in SAME_FIELDS}
+    shared = sorted(set(old['player_fit']) & set(new['player_fit']))
+    checks['shared_player_markets_identical'] = bool(shared) and all(
+        new['player_fit'][m]['weights'] == old['player_fit'][m]['weights']
+        and new['player_fit'][m].get('observations') == old['player_fit'][m].get('observations') for m in shared)
+    checks['all_player_markets_present'] = set(PLAYER_MARKETS) <= set(new['player_fit'])
+    changed = sorted(k for k in set(old['inputs']) | set(new['inputs']) if old['inputs'].get(k) != new['inputs'].get(k))
+    checks['inputs_changed_only_module_and_protocol'] = set(changed) <= set(MAY_DIFFER)
+    checks['fitted_by_this_module'] = new['inputs'].get('live_module_sha256') == module_digest()
+    checks['version_matches'] = new['version'] == VERSION
+    return checks, dict(inputs_changed=changed, shared_markets=shared, new_markets=sorted(set(new['player_fit']) - set(old['player_fit'])))
+
+
 def feature_rows(games, completed_games, mappings, v12_protocol):
     """One v1.2 feature row per upcoming game; ratings, form and rest come only from strictly earlier days."""
     if len({m['et_date'] for m in mappings}) != 1:
@@ -575,7 +603,7 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     clock = clock or (lambda: now)
     model_dir, out = Path(model_dir), Path(out)
     model = json.loads((model_dir / 'model.json').read_bytes())
-    if model['inputs'].get('live_module_sha256') != digest(__file__):
+    if model['inputs'].get('live_module_sha256') != module_digest():
         raise ValueError('model was fitted by a different live module')
     if props_root is not None and 'player_fit' not in model:
         raise ValueError('player markets need a model with player_fit')
@@ -623,7 +651,7 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
                                                   not_final=not_final))
     bundle = dict(version=VERSION, created_at_utc=stamp(sealed_at), cohort_date=day, protocol_sha256=digest(Path(protocol['_path'])),
                   model_sha256=digest(out / 'model.json'), schedule_sha256=digest(out / 'schedule.json'),
-                  completed_sha256=digest(out / 'completed_games.json'), code_sha256=digest(__file__),
+                  completed_sha256=digest(out / 'completed_games.json'), code_sha256=module_digest(),
                   availability_sha256=digest(Path(av.__file__)), games=games_out, forecasts=forecasts,
                   report=None if report is None else {k: report[k] for k in ('pdf_file', 'source_url', 'report_timestamp_utc',
                                                                              'first_received_at_utc', 'pdf_sha256', 'named_players')},
@@ -667,12 +695,13 @@ def main():
     import argparse
     root = Path(__file__).parents[2]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['fit', 'forecast', 'results'])
+    parser.add_argument('command', choices=['fit', 'forecast', 'results', 'compare'])
     parser.add_argument('--output', help='new folder (fit: model folder; forecast: cohort folder)')
     parser.add_argument('--data', help='fit: folder with players.jsonl.gz and games.json')
     parser.add_argument('--injuries', help='fit: retrospective reports.jsonl.gz')
     parser.add_argument('--api-dir', help='fit: api-sports games_*.json folder')
-    parser.add_argument('--model', help='forecast: model folder from fit')
+    parser.add_argument('--model', help='forecast: model folder from fit; compare: the freshly fitted model folder')
+    parser.add_argument('--reference', help='compare: the model folder currently deployed')
     parser.add_argument('--date', help='forecast: Eastern date YYYY-MM-DD of the games')
     parser.add_argument('--cohort', help='results: sealed cohort folder')
     parser.add_argument('--first-day', help='forecast: first finished game day of the target season')
@@ -686,12 +715,19 @@ def main():
     if a.command == 'results':
         print(json.dumps(capture_results(a.cohort)))
         return
+    if a.command == 'compare':
+        if not (a.model and a.reference):
+            parser.error('compare needs --model and --reference')
+        checks, detail = compare_models(json.loads((Path(a.model) / 'model.json').read_bytes()),
+                                        json.loads((Path(a.reference) / 'model.json').read_bytes()))
+        print(json.dumps(dict(ok=all(checks.values()), checks=checks, **detail), indent=2))
+        raise SystemExit(0 if all(checks.values()) else 1)
     if not a.output:
         parser.error('--output is required')
     data = Path(a.data) if a.data else None
     if a.command == 'fit':
         players, games = m1.read_rows(data / 'players.jsonl.gz'), json.loads((data / 'games.json').read_bytes())
-        sources = dict(live_module_sha256=digest(__file__), availability_sha256=digest(Path(av.__file__)),
+        sources = dict(live_module_sha256=module_digest(), availability_sha256=digest(Path(av.__file__)),
                        multimarket_v13_sha256=digest(Path(v13.__file__)), multimarket_v12_sha256=digest(Path(v12.__file__)),
                        protocol_sha256=digest(protocol_path), v12_protocol_sha256=digest(root / 'multimarket_v12_protocol.json'),
                        players_sha256=digest(data / 'players.jsonl.gz'), games_sha256=digest(data / 'games.json'),

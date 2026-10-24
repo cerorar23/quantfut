@@ -38,13 +38,15 @@ Se ajustó un modelo de verificación (`apps/nba/.local/normalized/nba_f6_live13
   (343.541 / 341.078 / 331.052 / 344.769 muestras de rejilla).
 - Pruebas: suite NBA completa en verde (incluye 6 nuevas del productor y 3 del chequeo).
 
-**Ese modelo no es el que se despliega.** El productor se niega a sellar con un modelo ajustado por otro módulo (`live_module_sha256`), y el módulo fusionado en `main` tiene
-otros saltos de línea que el de la prueba. Al desplegar hay que ajustar el modelo con el módulo exacto de `main` y repetir las comprobaciones de arriba:
+**El modelo se reajusta con el módulo de `main` y se comprueba con un comando.** El productor se niega a sellar con un modelo ajustado por otro módulo
+(`live_module_sha256`). Antes ese hash era el de los bytes del archivo y cambiaba con los saltos de línea de cada copia; ahora es el del contenido con los
+saltos normalizados (`module_digest`), así que un modelo ajustado en Windows vale en el servidor. Al desplegar:
 ```bash
 python -m nba.multimarket_v13_live fit --output apps/nba/.local/normalized/nba_f6_live13_model_<fecha>   --data apps/nba/.local/normalized/nba_f6_run71_20261009/data   --injuries apps/nba/.local/normalized/nba_complete_injury_final_20261006/reports.jsonl.gz   --api-dir apps/nba/.local/raw/api_nba_20261006
+python -m nba.multimarket_v13_live compare --model apps/nba/.local/normalized/nba_f6_live13_model_<fecha>   --reference apps/nba/.local/normalized/nba_f6_live13_model_20261023     # sale con código 1 si algo no coincide
 ```
-Cuatro condiciones: `fit`, `play_probability`, `observed_share` y `train_seasons` iguales al modelo desplegado; los pesos de `player_points`, `player_rebounds` y `player_assists` iguales;
-las cuatro sumas presentes; y los hashes de insumos iguales salvo `live_module_sha256` y `protocol_sha256`.
+`compare` exige, y solo entonces termina con éxito: `fit`, `play_probability`, `observed_share`, `train_seasons` y peso empírico idénticos al desplegado; los pesos y muestras de
+puntos, rebotes y asistencias idénticos; las cuatro sumas presentes; los insumos iguales salvo el módulo y el protocolo; modelo ajustado por el módulo que lo va a leer; y versión `1.3.2`.
 
 ## Límites
 - No hay líneas históricas de casas para las sumas: el chequeo es contra resultados a umbrales estadísticos. La prueba real es el registro prospectivo que empieza al desplegar.
@@ -66,7 +68,7 @@ cp -a $L/model $L/model.before-20261024-combos && cp -a $L/producer.sh $L/produc
 #    imagen nueva nba-dashboard-live13:<fecha>, sustituir el contenedor guardando el anterior (docker rename) para volver atrás.
 #    Comprobar /nba/api/data: live_v13 ok, 0 problemas, las cohortes 1.3.1 y RUN071 intactas.
 # 2. PRODUCTOR: contexto desde main (+ propline_shared.py de main), imagen nba-live13-producer:<fecha>;
-#    modelo ajustado con el módulo de main (comando de arriba) y comprobado contra el desplegado, copiado a $L/model/model.json;
+#    modelo ajustado con el módulo de main y con `compare` en verde (comandos de arriba), copiado a $L/model/model.json;
 #    producer.sh apuntando a la imagen nueva.
 install -m 755 $L/build-producer/ops/live13_producer.sh $L/producer.sh
 ```

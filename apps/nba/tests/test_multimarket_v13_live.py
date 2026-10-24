@@ -82,7 +82,7 @@ def model():
     identity = dict(weights=[1., 0., 0., 0., 0.])  # recalibration that returns the raw model probability
     return dict(version=live.VERSION, train_seasons=['2024-25', '2025-26'], fit=live.fit_team(train), play_probability=table,
                 player_fit={m: identity for m in live.PLAYER_MARKETS}, player_empirical_weight=live.PLAYER_WEIGHT,
-                inputs=dict(live_module_sha256=digest(live.__file__)))
+                inputs=dict(live_module_sha256=live.module_digest()))
 
 
 def test_fit_and_predict_match_the_frozen_v13_function():

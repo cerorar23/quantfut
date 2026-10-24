@@ -666,6 +666,7 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
 - [x] NBA: modelo de props anclado en el mercado con protocolo congelado (nba.props_residual); docs/nba_props_residual_20261024.md.
 - [x] NBA: entrenamiento y calibración de todos los mercados con protocolos congelados (nba.team_markets, nba.engine_calibration); docs/nba_calibracion_motor_20261024.md.
 - [x] NBA: productor vivo 1.3.2 con las sumas de puntos, rebotes y asistencias, chequeo previo con protocolo congelado y runbook de despliegue (no desplegado); docs/nba_productor_combinaciones_20261024.md.
+- [x] NBA: hash del módulo vivo independiente de los saltos de línea y comando `compare` para validar el modelo antes de desplegar; docs/nba_productor_combinaciones_20261024.md.
 
 - [x] Revisar arquitectura y contrastar literatura académica, doctorados,
       maestrías y el texto aportado. Plan integrado con fuentes, modelos,
