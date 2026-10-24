@@ -33,6 +33,19 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 04:00 UTC · NBA: productor y panel 1.3.1 (sellado por partido, jugadores con líneas de PropLine) · `main` `62decf6` (PR #91)
+- Estado previo comprobado: el código NBA del servidor (`build-price/src/nba`) coincidía con `main` anterior (`3bbf4d2`) salvo `odds_history.py` (no lo usa el productor ni el panel); productor `nba-live13-producer:20261021` y panel `nba-dashboard-live13:20261021`.
+- Imágenes nuevas desde `git archive 62decf6` con `core.autocrlf=false` (contexto en `~/nba-isolated/live13/build-producer/`, más `propline_shared.py` de `main`): `nba-live13-producer:20261023` (`7f94bb6154c9`, derivada de `nba-dashboard-live13:20261021` + pdfplumber) y `nba-dashboard-live13:20261024` (`17b301520449`, solo `src/nba` y `web`). Hash del módulo vivo `0663ced1…` = el del modelo.
+- Modelo `~/nba-isolated/live13/model/model.json` (sha256 `ded93f16…`): parte de equipo idéntica a la anterior; añade `player_fit` (puntos, rebotes, asistencias). Carpeta nueva `~/nba-isolated/live13/cache` (box scores finales y calendario).
+- `producer.sh` nuevo: monta de solo lectura el volumen `quantfut_artifacts` con `volume-subpath=propline_shared` (archivo horario de PropLine) y la caché. Mismo cron `*/10`. Sella cada partido 65-90 min antes de su salto en carpetas `AAAA-MM-DD_HHMM`.
+- Panel: contenedor `nba-dashboard-run69` recreado con la imagen nueva y la misma configuración (solo lectura, 256 MB, usuario 1001, mismos montajes); el anterior quedó parado como `nba-dashboard-run71-prev2` (`restart=no`).
+- Ensayos previos al cambio: panel nuevo contra las 3 cohortes reales (11+2+11 partidos, sin errores) y productor con carpetas temporales (leyó calendario y archivo). Tras el cambio: `/nba/api/data` con `live_v13` `ok`, 0 problemas, las 3 cohortes y RUN071 intacto; primera pasada de cron 04:00 UTC sin errores (escribió `cache/schedule/2026-10-24.json`).
+- Pendiente de observar: primer sellado real (partidos del 24-oct desde ~20:40 UTC); comprobar `prop_lines.state = archivo_aplicado` y pronósticos `player_*` en esa cohorte.
+- Respaldos en `~/nba-isolated/live13/`: `crontab.before-20261024`, `model.before-20261024`, `producer.sh.before-20261024`, `dashboard.inspect.before-20261024.json`, `containers.before-20261024.txt`.
+- **Vuelta atrás:** `cp producer.sh.before-20261024 producer.sh; rm -r model && cp -a model.before-20261024 model` (la imagen `nba-live13-producer:20261021` sigue en el servidor y `producer.sh` anterior la usa); panel: `docker rm -f nba-dashboard-run69 && docker rename nba-dashboard-run71-prev2 nba-dashboard-run69 && docker update --restart unless-stopped nba-dashboard-run69 && docker start nba-dashboard-run69`. Las cohortes 1.3.1 se quedan; el panel anterior no las lee.
+- **Sin tocar:** `nba-live13-price` (captura de precios con The Odds API, bloqueada hasta el 1-nov): pendiente decidir si se retira, porque con varios sellados al día su libro de 2 peticiones/día rechazará la mayoría.
+
+
 ### 2026-10-24 (corrección de registro) · PropLine como proveedor fijo de cuotas · API + worker (imágenes `*-propline:3babeb4`), cron del usuario `qf`
 - Entrada reconstruida el 24-oct desde el servidor (solo lectura); la activación original no se anotó aquí. Contenedores recreados a las 01:35 UTC con `quantfut-{api,worker}-propline:3babeb4` (PR #85); `provider.json` = `propline` en `/srv/quantfut/artifacts/propline_shared`.
 - Captura horaria: `7 * * * * flock -n ~/propline-shared/capture.lock python3 ~/propline-shared/current/propline_shared_runner.py` (contenedor aislado, release `~/propline-shared/releases/3babeb4`). **Sustituye** al cron `40 */2 * * * propline_captura.py` de la entrada de abajo, que ya no está en el crontab.
