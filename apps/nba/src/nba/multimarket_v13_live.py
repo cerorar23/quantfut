@@ -22,8 +22,9 @@ from . import multimarket_v12 as v12
 from . import multimarket_v13 as v13
 from .audit import digest, write_json
 from .context import name_key
+from .injury_t60 import CONTROL, MISSING
 
-VERSION = 'nba-multimarket-live-1.3'
+VERSION = 'nba-multimarket-live-1.3.1'
 SEASON = '2026-27'
 EASTERN = ZoneInfo('America/New_York')
 HEADERS = {'User-Agent': 'Mozilla/5.0 NBA research receipt capture', 'Accept': 'application/json,text/html'}
@@ -90,21 +91,48 @@ def parse_game(html, slug, received):
                 official_url=f'https://www.nba.com/game/{slug}', first_received_at_utc=received)
 
 
-def upcoming(day, now, get=http_get):
-    """Games of Eastern date `day` still not started at `now`, one official page each."""
+def upcoming(day, now, get=http_get, clock=None):
+    """Games of Eastern date `day` still not started at `now`, one official page each, stamped when received."""
+    clock = clock or (lambda: now)
     mappings = []
     for slug, _ in day_cards(day, get):
         status, body = get(f'https://www.nba.com/game/{slug}')
         if status != 200:
             raise ValueError(f'game page HTTP {status}')
-        mapping = parse_game(body.decode('utf8'), slug, stamp(now))
+        mapping = parse_game(body.decode('utf8'), slug, stamp(clock()))
         mapping['page_sha256'] = hashlib.sha256(body).hexdigest()
         if mapping['et_date'] == day and mapping['status'] == 1 and datetime.fromisoformat(mapping['tipoff_utc']) > now:
             mappings.append(mapping)
     return mappings
 
 
-GAME_KEYS = {'game_id', 'date', 'season', 'home', 'away', 'box_score_sha256'}
+GAME_KEYS = {'game_id', 'date', 'season', 'home', 'away', 'box_score_sha256', 'players'}
+CLOCK = re.compile(r'(\d{1,2}):(\d{2})|PT(\d{1,2})M(\d{2})(?:\.\d+)?S')
+
+
+def box_minutes(value):
+    """Minutes played from the web box score: 'MM:SS' (archived pages) or 'PTmmMss.ssS' (current pages); '' = did not play."""
+    if value == '':
+        return 0.
+    match = CLOCK.fullmatch(value)
+    minutes, seconds = ((match[1], match[2]) if match[1] else (match[3], match[4])) if match else (None, '0')
+    if minutes is None or int(seconds) >= 60:
+        raise ValueError(f'invalid box score minutes {value!r}')
+    return int(minutes) + int(seconds) / 60
+
+
+def player_rows(game, gid, day):
+    """Player rows of one final web box score, in the shape of players.jsonl.gz (the fields availability needs)."""
+    rows = []
+    for side in ('homeTeam', 'awayTeam'):
+        for p in game[side]['players']:
+            minutes, points = box_minutes(p['statistics']['minutes']), p['statistics']['points']
+            if type(points) is not int or points < 0:
+                raise ValueError('invalid box score points')
+            rows.append(dict(game_id=gid, date=day, player_id=p['personId'], team_id=game[side]['teamId'],
+                             name=f"{p['firstName']} {p['familyName']}".strip(), participated=minutes > 0,
+                             minutes=minutes, points=points))
+    return rows
 
 
 def cached_game(cache, gid, day):
@@ -168,6 +196,7 @@ def completed(first_day, last_day, get=http_get, cache=None):
                          home=team('homeTeam', True), away=team('awayTeam', False), box_score_sha256=hashlib.sha256(body).hexdigest())
             if entry['date'] != label:
                 raise ValueError('game date disagrees with the schedule card')
+            entry['players'] = player_rows(game, gid, label)
             out.append(entry)
             if cache is not None:
                 store(cache, 'games', gid, entry)
@@ -187,16 +216,28 @@ def report_names(day, now):
         cursor -= timedelta(minutes=15)
 
 
-def capture_report(day, now, folder, get=http_get):
-    """Newest official report of `day` published by `now`. Returns the parsed report or None."""
+def capture_report(day, now, folder, get=http_get, clock=None):
+    """Newest official report of `day` published by `now`. Returns the parsed report or None.
+
+    403/404 is how the bucket answers for a slot without a file; the first one is checked against a control file known
+    to exist, so a real block stops the seal instead of passing for "no report". The receipt is stamped after download."""
+    clock = clock or (lambda: now)
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
+    checked = False
     for name in report_names(day, now):
         url = 'https://ak-static.cms.nba.com/referee/injury/' + name
         status, body = get(url)
-        if status != 200 or not body.startswith(b'%PDF-'):
+        if status in MISSING:
+            if not checked:
+                control, proof = get(CONTROL)
+                if control != 200 or not proof.startswith(b'%PDF-'):
+                    raise ValueError(f'injury report source blocked (control file HTTP {control})')
+                checked = True
             continue
-        received = stamp(now)
+        if status != 200 or not body.startswith(b'%PDF-'):
+            raise ValueError(f'injury report HTTP {status}')
+        received = stamp(clock())
         path = folder / name
         if path.exists():
             raise ValueError('refuse to overwrite a captured report')
@@ -384,16 +425,23 @@ def sealed_games(root):
     return {g['nba_game_id'] for p in root.glob('*/bundle.json') for g in json.loads(p.read_bytes())['games']} if root.is_dir() else set()
 
 
-def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, get=http_get, first_completed_day=None, exclude=(), cache=None):
-    """Capture schedule + latest official report, forecast, and write a sealed cohort folder (never overwritten)."""
+def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, get=http_get, first_completed_day=None, exclude=(), cache=None,
+         clock=None, lead=None):
+    """Capture schedule + latest official report, forecast, and write a sealed cohort folder (never overwritten).
+
+    `now` decides which games and which report; `clock` stamps receipts and the seal when they really happen (default:
+    `now`). With `lead=(low, high)` only games whose tipoff is more than `low` and at most `high` after `now` are sealed."""
     now = now or datetime.now(UTC)
+    clock = clock or (lambda: now)
     model_dir, out = Path(model_dir), Path(out)
     model = json.loads((model_dir / 'model.json').read_bytes())
     if model['inputs'].get('live_module_sha256') != digest(__file__):
         raise ValueError('model was fitted by a different live module')
     if out.exists():
         raise ValueError('cohort folder already exists')
-    mappings = [m for m in upcoming(day, now, get) if m['nba_game_id'] not in set(exclude)]
+    mappings = [m for m in upcoming(day, now, get, clock) if m['nba_game_id'] not in set(exclude)]
+    if lead:
+        mappings = [m for m in mappings if lead[0] < datetime.fromisoformat(m['tipoff_utc']) - now <= lead[1]]
     if not mappings:
         raise ValueError('no games left to seal for this date')
     first = first_completed_day or protocol.get('season_first_day', '2026-10-20')
@@ -403,9 +451,9 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
         # status 1 on a past date is a postponed game (never played); anything else means the feed lags and rest/form would be wrong
         raise ValueError(f'past games not final: {[(g["game_id"], g["status"]) for g in stuck]}')
     out.mkdir(parents=True)
-    report = capture_report(day, now, out / 'reports', get)
-    ids, history = history_index(players)
-    # players from completed 2026-27 games are not in the box-score table; availability uses 2025-26 history only
+    report = capture_report(day, now, out / 'reports', get, clock)
+    # target-season box scores join the historical rows, so player values follow the current season
+    ids, history = history_index([*players, *(r for g in done for r in g['players'])])
     entries, summaries = {}, []
     for m in mappings:
         e, s = game_report_entries(report, m, ids, history)
@@ -417,11 +465,14 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
         previous = [g['date'] for g in (*games, *done) if m['home_nba_team_id'] in (g['home']['team_id'], g['away']['team_id'])
                     or m['away_nba_team_id'] in (g['home']['team_id'], g['away']['team_id'])]
         last_dates[m['nba_game_id']] = max(previous)
-    games_out, forecasts = cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, now)
+    sealed_at = clock()
+    games_out, forecasts = cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, sealed_at)
     shutil.copyfile(model_dir / 'model.json', out / 'model.json')
-    write_json(out / 'schedule.json', dict(received_at_utc=stamp(now), games=mappings))
-    write_json(out / 'completed_games.json', dict(first_day=first, games=done, not_final=not_final))
-    bundle = dict(version=VERSION, created_at_utc=stamp(now), cohort_date=day, protocol_sha256=digest(Path(protocol['_path'])),
+    write_json(out / 'schedule.json', dict(received_at_utc=max(m['first_received_at_utc'] for m in mappings), games=mappings))
+    # player rows are not repeated here: each game keeps the hash of the box score they were read from
+    write_json(out / 'completed_games.json', dict(first_day=first, games=[{k: v for k, v in g.items() if k != 'players'} for g in done],
+                                                  not_final=not_final))
+    bundle = dict(version=VERSION, created_at_utc=stamp(sealed_at), cohort_date=day, protocol_sha256=digest(Path(protocol['_path'])),
                   model_sha256=digest(out / 'model.json'), schedule_sha256=digest(out / 'schedule.json'),
                   completed_sha256=digest(out / 'completed_games.json'), code_sha256=digest(__file__),
                   availability_sha256=digest(Path(av.__file__)), games=games_out, forecasts=forecasts,
@@ -429,8 +480,8 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
                                                                              'first_received_at_utc', 'pdf_sha256', 'named_players')},
                   train_seasons=model['train_seasons'], actionable=False, original_pilot_unchanged=True)
     write_json(out / 'bundle.json', bundle)
-    write_json(out / 'bundle.seal.json', dict(sha256=digest(out / 'bundle.json'), created_at_utc=stamp(now), external_anchor=False))
-    return dict(games=len(games_out), forecasts=len(forecasts), report=bundle['report'] and bundle['report']['pdf_file'],
+    write_json(out / 'bundle.seal.json', dict(sha256=digest(out / 'bundle.json'), created_at_utc=stamp(sealed_at), external_anchor=False))
+    return dict(games=len(games_out), sealed_at_utc=stamp(sealed_at), forecasts=len(forecasts), report=bundle['report'] and bundle['report']['pdf_file'],
                 availability={g['event_id']: g['availability']['state'] for g in games_out})
 
 
@@ -503,8 +554,9 @@ def main():
         print(json.dumps(dict(train_seasons=model['train_seasons'], play_probability=model['play_probability'])))
         return
     players, games = m1.read_rows(data / 'players.jsonl.gz'), json.loads((data / 'games.json').read_bytes())
-    print(json.dumps(seal(a.model, a.output, a.date, players, games, protocol, v12_protocol, first_completed_day=a.first_day,
-                           exclude=sealed_games(a.exclude_sealed) if a.exclude_sealed else (), cache=a.cache)))
+    clock = lambda: datetime.now(UTC)
+    print(json.dumps(seal(a.model, a.output, a.date, players, games, protocol, v12_protocol, now=clock(), first_completed_day=a.first_day,
+                           exclude=sealed_games(a.exclude_sealed) if a.exclude_sealed else (), cache=a.cache, clock=clock)))
 
 
 if __name__ == '__main__':

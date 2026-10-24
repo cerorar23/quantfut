@@ -3142,3 +3142,15 @@ Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
 - [ ] Fútbol queda con 294 créditos (≈1 día) hasta el reset del 1-nov: decisión del titular (opción 3); revisar la captura en vivo de fútbol.
 - [ ] Props de jugador retrospectivos: viables con un mes del plan 5M de The Odds API ($119; ≈345.000 créditos) o, de forma barata, 100 partidos × 2 mercados (2.000 créditos); falta el módulo de comparación y su protocolo congelado. docs/nba_props_jugadores_viabilidad_20261023.md.
 - [ ] Paquete de The Odds API para el retrospectivo de props (decisión del titular): recomendado un mes del plan 5M ($119) desde el 1-nov y hacer el escenario E (~249.000 créditos: 4 mercados × 2 temporadas × 2 snapshots + team_totals + totals/spreads de Pinnacle); antes, piloto de 2.000 créditos. docs/nba_props_sonda_y_paquete_20261023.md.
+
+### NBA — segunda auditoría del motor, 2026-10-23
+Enfoque del titular: probabilidad estadística calibrada frente al resultado real, no ganar a las cuotas. Detalle en docs/nba_auditoria_motor_20261023.md.
+- [x] Auditoría del vivo, de v1.4-v1.5 y del piloto PropLine (0 créditos, servidor sin tocar).
+- [x] Errores 1-6 del productor corregidos en `nba/productor-correcciones` (sellado por partido 65-90 min antes del salto, horas reales, caché, control de bloqueo, filas de jugador de 2026-27); modelo reajustado con parámetros idénticos. docs/nba_productor_correcciones_20261023.md.
+- [ ] Desplegar el productor corregido (PR a `main`, confirmación del titular; runbook y vuelta atrás en el documento).
+- [ ] Decidir antes del 1-nov si se retira la captura de precios `nba-live13-price` (desplegada el 22-oct; con varias cohortes por día su libro de 2 peticiones/día rechazará la mayoría).
+- [ ] Play-in y playoffs (identificadores 004/005/006) antes de mediados de abril.
+- [ ] Fijar el reloj de `tests/test_paper_bundle.py` (3 pruebas caducadas desde el 22-oct por `deadline_utc` fijo).
+- [ ] Recalibración móvil de total y puntos de equipo (sesgo ±0,04 por temporada) y prior de pretemporada por plantilla.
+- [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
+- [ ] Jugadores en vivo con probabilidad de jugar explícita + distribución condicionada corregida (puntos 2P/3P/TL o dispersión ajustada); cobertura de rangos publicada.
