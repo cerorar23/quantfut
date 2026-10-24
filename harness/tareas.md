@@ -3161,3 +3161,7 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [x] Medir en el archivo horario qué mercados trae PropLine por deporte y liga, con y sin Pinnacle. docs/propline_cobertura_20261024.md.
 - [x] Goles por equipo: sí está, en `totals` con `team`, con Pinnacle; el ingestor ya lo separa.
 - [ ] Remedir props NBA el día del partido (primer sellado 1.3.1) y Champions/Europa League en semana de copa.
+- [x] Leer toda la referencia de PropLine (`llms-full.txt`) y listar las funciones útiles por deporte. docs/propline_funciones_utiles_20261024.md.
+- [ ] Añadir al recolector `/odds/closing` (cierre real) para fútbol y NBA.
+- [ ] Emparejar props NBA por `player_id` (`/players?search=`) en vez de por nombre.
+- [ ] Confirmar con una petición si `/results` está en Hobby o exige Pro.
