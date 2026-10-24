@@ -279,3 +279,80 @@ def test_only_soccer_tennis_and_nba_are_selected_for_hourly_capture():
                ("football_nfl","soccer_epl","soccer_mexico_ligamx","tennis","basketball_nba","hockey_nhl")]
     config = dict(sports=["basketball_nba","tennis"],sport_prefixes=["soccer_"])
     assert pl.select_sports(catalog,config) == ["soccer_epl","soccer_mexico_ligamx","tennis","basketball_nba"]
+
+
+def test_league_outside_provider_catalog_is_uncovered_not_stale(monkeypatch):
+    from types import SimpleNamespace
+    from qf.ingest import propline_ingest as pi, odds_worker
+    rows = [dict(match_id="m1", odds_api_key="soccer_epl"), dict(match_id="m2", odds_api_key="soccer_denmark_superliga"),
+            dict(match_id="m3", odds_api_key="soccer_la_liga")]
+    monkeypatch.setattr(pi, "query", lambda *a, **k: rows)
+    monkeypatch.setattr(pi, "settings", SimpleNamespace(propline_archive="x"))
+    monkeypatch.setattr(odds_worker, "match_meta", lambda ids: {})
+    catalog = [dict(key="soccer_epl"), dict(key="soccer_la_liga")]
+    def newest(root, path, as_of, **kw):
+        if path == "/v1/sports":
+            return (catalog, {"received_at": "x"}) if catalog is not None else (None, None)
+        return None, None
+    monkeypatch.setattr(pi, "newest", newest)
+    result = pi._ingest_hourly(None, NOW)
+    assert result["sin_cobertura"] == ["soccer_denmark_superliga"]
+    assert sorted(result["stale_sports"]) == ["soccer_epl", "soccer_la_liga"]
+    catalog = None  # sin catálogo no se puede afirmar cobertura: todo cuenta como atrasado
+    result = pi._ingest_hourly(None, NOW)
+    assert result["sin_cobertura"] == [] and len(result["stale_sports"]) == 3
+
+
+def two_way_event(sport, home, away, **extra):
+    def market(key, outcomes):
+        return dict(key=key, period=None, team=None, line_type="main", outcomes=outcomes)
+    def out(name, side, price, point=None, updated="2026-10-23T21:20:00Z"):
+        return dict(name=name, side=side, price=price, point=point, player_id=None,
+                    book_updated_at=updated, last_seen_at="2026-10-23T21:29:00Z")
+    return dict(id="g1", sport_key=sport, commence_time="2026-10-24T01:00:00Z", home_team=home, away_team=away,
+        bookmakers=[dict(key="pinnacle", markets=[
+            market("h2h", [out(home, "home", -150), out(away, "away", 130)]),
+            market("spreads", [out(home, "home", -110, -3.5), out(away, "away", -110, 3.5)]),
+            market("totals", [out("Over", None, -105, 221.5), out("Under", None, -115, 221.5)]),
+            market("totals", [out("Over", None, -110, 230.5)]),
+        ])], **extra)
+
+
+def test_two_way_feed_nba_keeps_main_pairs_and_drops_one_sided_markets():
+    feed = pl.two_way_feed([two_way_event("basketball_nba", "Boston Celtics", "New York Knicks")],
+                           "2026-10-23T21:30:00Z")
+    markets = {(m["key"], m["outcomes"][0].get("point")): m for m in feed[0]["bookmakers"][0]["markets"]}
+    assert set(m for m, _ in markets) == {"h2h", "spreads", "totals"} and (("totals", 230.5) not in markets)
+    h2h = markets[("h2h", None)]
+    assert [o["name"] for o in h2h["outcomes"]] == ["Boston Celtics", "New York Knicks"]
+    assert round(h2h["outcomes"][0]["price"], 3) == 1.667 and h2h["last_update"] == "2026-10-23T21:20:00Z"
+    assert feed[0]["_provider"] == "propline" and feed[0]["bookmakers"][0]["last_update"] == "2026-10-23T21:20:00Z"
+
+
+def test_two_way_feed_never_invents_last_update():
+    e = two_way_event("tennis", "Player A", "Player B")
+    for market in e["bookmakers"][0]["markets"]:
+        for o in market["outcomes"]:
+            o["book_updated_at"] = None
+    feed = pl.two_way_feed([e], "2026-10-23T21:30:00Z")
+    book = feed[0]["bookmakers"][0]
+    assert "last_update" not in book and all("last_update" not in m for m in book["markets"])
+
+
+def test_two_way_feed_skips_periods_player_props_and_started_games():
+    e = two_way_event("basketball_nba", "A", "B")
+    e["bookmakers"][0]["markets"][0]["period"] = "1h"
+    e["bookmakers"][0]["markets"][1]["outcomes"][0]["player_id"] = "p1"
+    keys = {m["key"] for m in pl.two_way_feed([e], "2026-10-23T21:30:00Z")[0]["bookmakers"][0]["markets"]}
+    assert keys == {"totals"}
+    assert pl.two_way_feed([e], "2026-10-24T01:30:00Z") == []
+
+
+def test_read_two_way_is_offline_point_in_time_and_sport_limited(tmp_path):
+    c, calls = client(tmp_path, data=[two_way_event("basketball_nba", "Boston Celtics", "New York Knicks")])
+    c.capture("/v1/sports/basketball_nba/odds")
+    feed, receipt = pl.read_two_way(tmp_path, "basketball_nba", NOW)
+    assert receipt is not None and feed[0]["home_team"] == "Boston Celtics" and len(calls) == 1
+    assert pl.read_two_way(tmp_path, "basketball_nba", NOW - timedelta(seconds=1)) == (None, None)
+    with pytest.raises(ValueError):
+        pl.read_two_way(tmp_path, "soccer_epl", NOW)

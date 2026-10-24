@@ -25,6 +25,14 @@ ALIASES = {
 }
 
 
+def catalog_keys(now):
+    """Claves de deporte del último catálogo `/v1/sports` archivado (hasta 3 días), o None si no hay."""
+    sports, receipt = newest(settings.propline_archive, "/v1/sports", now, max_age_seconds=3 * 86400)
+    if receipt is None:
+        return None
+    return {s.get("key") for s in sports}
+
+
 def football_rows(event, match_id, observed, kickoff, tag, allowed_books=None):
     from ..publish.picks import canonical_book
     rows = []
@@ -89,11 +97,15 @@ def _ingest_hourly(connection, now=None):
     by_sport = {}
     for row in pending:
         by_sport.setdefault(ALIASES.get(row["odds_api_key"], row["odds_api_key"]), []).append(row["match_id"])
-    result = dict(source="propline", calls=0, rows=0, matches=0, stale_sports=[], unmatched_events=0)
+    result = dict(source="propline", calls=0, rows=0, matches=0, stale_sports=[], sin_cobertura=[], unmatched_events=0)
+    catalog = catalog_keys(now)
     for sport, ids in by_sport.items():
         events, receipt = newest(settings.propline_archive, f"/v1/sports/{sport}/odds", now)
         if receipt is None:
-            result["stale_sports"].append(sport)
+            # Fuera del catálogo de PropLine no hay captura posible: no es un archivo atrasado.
+            # The Odds API no es fallback automático (decisión del 23-oct-2026); queda sin cuotas.
+            (result["sin_cobertura"] if catalog is not None and sport not in catalog
+             else result["stale_sports"]).append(sport)
             continue
         observed = parse_time(receipt["received_at"])
         tag = "hourly:" + str(receipt["request_id"])

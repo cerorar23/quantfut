@@ -46,8 +46,13 @@ Arnés inicial del checkout: 1.316 aprobadas, 95 omitidas. Primer arnés con el 
 
 - **Activado.** `provider.json` (`{"provider": "propline"}`) está en el volumen `artifacts` (`/srv/quantfut/artifacts/propline_shared`); el worker y la API corren `quantfut-{worker,api}-propline:3babeb4` (recreados 01:35 UTC). Captura horaria: cron `7 * * * *` del usuario `qf` con `flock`, en un contenedor aislado `propline-shared-capture` (última pasada 02:18 UTC, `exit_code 0`, todo 200).
 - El worker lee el archivo sin HTTP: `odds_worker` informa `source: propline, calls: 0` y las ráfagas de API-Football `consultas: 0` (`shared_hourly_capture`).
-- **Alias de ligas (PR #86) desplegado el 24-oct** (worker `a521569`): `stale_sports` baja de 7 a 4. Siguen sin emparejar Segunda División, Serie B, Ligue 2 y Superliga danesa; causa pendiente de investigar.
-- **Pendiente — adaptadores de consultas de NBA y tenis:** los motores de NBA y tenis aún leen sus propias fuentes; el archivo ya guarda esas capturas.
+- **Alias de ligas (PR #86) desplegado el 24-oct** (worker `a521569`): `stale_sports` baja de 7 a 4; las cuatro restantes no están en el catálogo de PropLine (ver abajo).
+- Adaptadores de NBA y tenis: lectura disponible (ver abajo); los motores aún no están conectados.
 - Los pilotos no acreditan cobertura continua de todos los mercados.
 
 Historia: hasta el 23-oct el estado era «implementado y probado localmente (commit `5ff66cf`), no activado».
+## Ligas fuera del catálogo y adaptadores de NBA y tenis (24-oct-2026)
+
+- **Segunda División, Serie B, Ligue 2 y Superliga danesa no están en el catálogo de PropLine** (59 deportes, 31 de fútbol; verificado en `/v1/sports` archivado). No era un fallo de alias: no hay captura posible. `ingest_hourly` las informa ahora en `sin_cobertura` (solo si hay catálogo archivado de ≤3 días) y deja `stale_sports` para archivos realmente atrasados. The Odds API no es fallback automático (decisión del 23-oct): esas ligas siguen sin cuotas del archivo hasta que el titular decida otra fuente.
+- **Adaptadores de NBA y tenis:** `propline_shared.two_way_feed` y `read_two_way(root, sport, as_of)` (solo `basketball_nba` y `tennis`; lectura sin red, punto en el tiempo, misma ventana de edad que el resto). Devuelven eventos con la forma de The Odds API para moneyline, hándicap y totales del partido completo y línea principal; sin periodos, props de jugador, bandas marcadas (en juego, suspendidas, DFS, bolsas) ni mercados de un solo lado. `last_update` solo si la casa publicó `book_updated_at` (nunca la hora de recepción). Comprobado contra el archivo real: NBA 29 eventos/68 casas, tenis 145 eventos/37 casas.
+- **No se recablearon los motores:** `apps/nba` y `apps/tennis` siguen leyendo sus fuentes. Conectarlos exige decidir fecha de corte y no mezclar proveedores dentro de protocolos ya sellados; con la forma de The Odds API el cambio en `live_market.price_rows` es pequeño, pero ese parser exige `last_update` y deberá aceptar su ausencia.

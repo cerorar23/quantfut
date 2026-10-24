@@ -382,6 +382,59 @@ def football_feed(events, received_at):
     return result
 
 
+def two_way_feed(events, received_at):
+    """Líneas completas de casas de apuestas de NBA y tenis, con la forma de The Odds API.
+
+    Solo moneyline (`h2h`), hándicap (`spreads`) y totales (`totals`) del partido completo y línea
+    principal. Dos resultados: NBA y tenis no tienen empate. `last_update` aparece solo si la casa
+    publicó `book_updated_at`; nunca se rellena con la hora de recepción (desconocido ≠ reciente).
+    """
+    result = []
+    for e in events:
+        books = {}
+        for q in quotes([e], received_at):
+            if (q["flags"] or q["period"] is not None or q["team"] is not None or q["player_id"] is not None
+                    or q["line_type"] not in (None, "main") or q["market"] not in ("h2h", "spreads", "totals")):
+                continue
+            if q["market"] == "totals":
+                if q["name"] not in ("Over", "Under") or q["point"] is None:
+                    continue
+                name = q["name"]
+            elif q["side"] in ("home", "away"):
+                name = e["home_team"] if q["side"] == "home" else e["away_team"]
+                if q["market"] == "spreads" and q["point"] is None:
+                    continue
+            else:
+                continue
+            book = books.setdefault(q["bookmaker"], {})
+            market = book.setdefault((q["market"], q["point"] if q["market"] == "totals" else None),
+                                     {"key": q["market"], "outcomes": []})
+            outcome = dict(name=name, price=q["price_decimal"], point=q["point"])
+            if q["book_updated_at"]:
+                outcome["last_update"] = q["book_updated_at"]
+                market["last_update"] = max(market.get("last_update", ""), q["book_updated_at"])
+            market["outcomes"].append(outcome)
+        # Un mercado con solo un lado no sirve para quitar el margen.
+        books = {k: {m: v for m, v in b.items() if len(v["outcomes"]) == 2} for k, b in books.items()}
+        books = {k: b for k, b in books.items() if b}
+        if books:
+            result.append(dict(e, bookmakers=[dict(key=k, markets=list(b.values()),
+                    **({"last_update": max(m["last_update"] for m in b.values() if "last_update" in m)}
+                       if any("last_update" in m for m in b.values()) else {})) for k, b in books.items()],
+                _provider="propline", _received_at=received_at))
+    return result
+
+
+def read_two_way(root, sport, as_of, *, max_age_seconds=3900):
+    """Lectura sin red y punto en el tiempo para `basketball_nba` o `tennis`: (eventos, recibo) o (None, None)."""
+    if sport != "basketball_nba" and not sport.startswith("tennis"):
+        raise ValueError("solo NBA y tenis")
+    events, receipt = newest(root, f"/v1/sports/{sport}/odds", as_of, max_age_seconds=max_age_seconds)
+    if receipt is None:
+        return None, None
+    return two_way_feed(events, receipt["received_at"]), receipt
+
+
 def market_batches(sport, markets, config):
     """Provider-safe batches with a stable, auditable request count."""
     requested = list(dict.fromkeys(markets))
