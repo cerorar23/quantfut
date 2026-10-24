@@ -33,6 +33,22 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-24 14:18 UTC · PropLine: box score, lesiones NBA y lectores (PR #97) · release `~/propline-shared/releases/5a9cde0` (`main` `5a9cde0`)
+- Estado previo comprobado: `current` → `releases/6d459be`, cuyos tres archivos coinciden byte a byte con `main` `6d459be` (sha256 `47a7e3cd…`, `8a367cab…`, `3f4f4745…`).
+- Release nueva desde `git archive 5a9cde0` con `core.autocrlf=false`: `propline_shared.py` `b162d8ea…`, `propline_shared_config.json` `c3694385…`, `propline_shared_runner.py` `3f4f4745…` (sin cambios) y `runtime.json` copiado de `6d459be` (misma imagen fijada por digest, mismo usuario, red, volumen y archivo de clave). Sin imagen nueva: el módulo solo usa la biblioteca estándar.
+- Ensayo antes de activar, dentro de la imagen fijada, `--network none` y el volumen en solo lectura: el módulo carga, la configuración nueva se lee (reserva NBA 130 / fútbol 300 / tenis 300, `stats_prefixes` NBA y fútbol, lesiones NBA) y los lectores devuelven el archivo real (71 eventos NBA, 161 partidos de tenis).
+- Activación: `ln -sfn releases/5a9cde0 current.tmp && mv -T current.tmp current` a las 14:18 UTC, entre pasadas. Cron sin cambios (`7 * * * *` con `flock`).
+- **Sin verificar con una pasada real:** desde las 14:11:49 UTC PropLine responde `401 invalid_api_key` (ver la entrada siguiente). Pendiente: con la clave arreglada, comprobar en el informe `stop: null`, `settlement` con `stats`, un recibo de `/v1/sports/basketball_nba/injuries` y la cuota (`x-daily-used`).
+- Respaldo: `~/propline-shared/backups/20261024-5a9cde0/` (`current.before`, `crontab.txt`).
+- **Vuelta atrás:** `cd ~/propline-shared && ln -sfn /home/qf/propline-shared/releases/6d459be current.tmp && mv -T current.tmp current`.
+
+### 2026-10-24 13:51 UTC (corrección de registro) · PropLine: cierres y liquidaciones (PR #96) · release `~/propline-shared/releases/6d459be` (`main` `6d459be`)
+- Entrada reconstruida a las 14:20 UTC desde el servidor y desde el aviso de la sesión que desplegó; esa sesión terminó sin anotarla.
+- `current` pasó de `releases/3babeb4` a `releases/6d459be` (`propline_shared.py` `47a7e3cd…`, config `8a367cab…`, runner `3f4f4745…`, `runtime.json` copiado de `3babeb4`). Coincide con `main` `6d459be`.
+- Primera pasada (14:07 UTC, `release: 6d459be`): 36 peticiones correctas y después **`401 invalid_api_key`** a las 14:11:49 UTC en `/v1/sports/soccer_championship/odds`; `stop: provider_http_401`, `exit_code 1`. La clave dejó de valer a mitad de la pasada: no es un fallo del código. Con la clave rechazada, cada pasada se detiene en la primera petición y el archivo no recibe cuotas nuevas.
+- **Vuelta atrás:** `ln -sfn /home/qf/propline-shared/releases/3babeb4 current.tmp && mv -T current.tmp current`.
+
+
 ### 2026-10-24 04:45 UTC · Tenis: cuotas del archivo de PropLine, sin The Odds API · imagen `quantfut-tenis:f391b1f` (PR #93, `main` `f391b1f`)
 - Estado previo comprobado: la imagen activa `quantfut-tenis:1d2067d` coincidía con `main` anterior salvo `tennis_engine/operations.py` y `tennis_odds_live_v1/__init__.py`, a los que les faltaba el PR #61 (reloj inyectado en `Capture`, sin efecto en producción). El despliegue lo incluye. `vps_run.sh` del servidor coincidía con el del repositorio.
 - Imagen construida desde `git archive` de `apps/tennis` con `core.autocrlf=false`, más `src/qf/ingest/propline_shared.py` (sha256 `d95d4661…`) en el contexto (`~/quantfut-tenis/build/66850b1/ctx`). Etiquetada `66850b1` (cabeza del PR) y `f391b1f` (fusión squash, contenido idéntico en `apps/tennis` y `propline_shared.py`).
