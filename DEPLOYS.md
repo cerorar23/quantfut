@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-25 17:41 UTC · Captura horaria de PropLine con imagen sin etiquetas de compose · solo `runtime.json` del recolector, sin código ni cron
+- **Motivo:** visto bueno del titular para el arreglo de fondo de la trampa del 25-oct 16:22: la imagen `9db4a578…` heredaba las etiquetas `com.docker.compose.*` del servicio worker, y `docker compose up --force-recreate worker` (y `docker compose cp worker`) tomaba la captura por una réplica del worker y la mataba a mitad de pasada.
+- **Estado previo comprobado (17:41 UTC):** ninguna captura en marcha; `~/propline-shared/current` → `releases/2f343ce`, `runtime.json` con `sha256:9db4a578…`.
+- **Hecho:** imagen `propline-shared-capture:sin-etiquetas` (`sha256:0599acdba462…`) = `FROM` la anterior (etiquetada `propline-shared-capture:base-9db4a578`) con las once etiquetas `com.docker.compose.*` vacías; mismo Python 3.12.15. `runtime.json` de `releases/2f343ce` apunta a ella (escritura atómica, mismos campos). Código del recolector, configuración y cron sin cambios.
+- **Verificado:** pasada de las 18:07 UTC con la imagen `0599acdba462` (visto en `docker ps` a las 18:15), 196 peticiones, 0 fallos, código 0. Pasada de las 19:07: 150 peticiones, un 504 de PropLine en `basketball_nba/odds` (error del proveedor) y código 1; el resto, 200.
+- **Presupuesto (dato, sin cambio):** a las 19:14 UTC quedaban 790 de 5.000 peticiones diarias con ~150-200 por pasada: la captura llegará a la reserva de 500 antes de medianoche y se detendrá sola (`account_reserve`), como ya prevé el recolector.
+- Respaldo: `~/quantfut/backups/20261025-vivo-clasificacion/propline_runtime_antes_cambio.json`.
+- **Vuelta atrás** (fuera de :07-:25): `cp -p ~/quantfut/backups/20261025-vivo-clasificacion/propline_runtime_antes_cambio.json ~/propline-shared/releases/2f343ce/runtime.json`. La imagen anterior sigue en el servidor (`propline-shared-capture:base-9db4a578`).
+
 ### 2026-10-25 17:35 UTC · Clasificación calculada y marcador en vivo de FotMob · worker `quantfut-worker-propline:d2a1b5e` (`main` `d2a1b5e`, PR #130) + cron + carpeta `~/quantfut`
 - **Motivo:** orden del titular («limpia y arregla»): clasificación y marcador en vivo estaban parados desde el 22-oct (API-Football). La clasificación se calcula con nuestros resultados; el vivo sale del listado diario de FotMob (una petición cada 5 min).
 - **Estado previo comprobado (17:34 UTC):** worker `ffe42ee` (= entrada anterior), `scripts/crontab` = `main` anterior (`beab2c30…`); ninguna captura de PropLine en marcha; nadie más desplegando.
@@ -669,9 +678,9 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
   desde un contenedor de compose) conserva las etiquetas `com.docker.compose.*` del servicio worker: `docker compose up
   --force-recreate worker` mata `propline-shared-capture` a mitad de pasada y deja el worker en «Created» con nombre
   temporal (25-oct 16:22). Si pasa: `docker compose up -d --no-deps --no-build worker` y `docker rename <id>_quantfut-worker-1
-  quantfut-worker-1`. Arreglo de fondo preparado el 25-oct: imagen `propline-shared-capture:sin-etiquetas`
-  (`sha256:0599acdb…`, la misma con las etiquetas `com.docker.compose.*` vacías); falta apuntar a ella el `runtime.json`
-  de `~/propline-shared/current`, que espera el visto bueno del titular.
+  quantfut-worker-1`. **Resuelto el 25-oct 17:41 UTC:** la captura usa `propline-shared-capture:sin-etiquetas`
+  (`sha256:0599acdb…`, etiquetas `com.docker.compose.*` vacías). Una release nueva del recolector debe fijar esa imagen (o
+  una igual de limpia) en su `runtime.json`, nunca una imagen hecha desde un contenedor de compose.
 - **`docker compose cp worker …` también copia al contenedor de la captura de PropLine** (por las mismas etiquetas). Usar
   `docker cp quantfut-worker-1:…` y `docker exec quantfut-worker-1 …` con el nombre exacto.
 - (Resuelto el 25-oct) `requirements.txt`, `Dockerfile` y `~/quantfut/src` del servidor ya son los de `main`, y el
