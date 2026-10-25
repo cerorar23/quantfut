@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Fuera del cron las tareas de API-Football, FotMob, PitchAPI y worldfootball
+
+Orden del titular: en el servidor solo deben correr las fuentes nuevas. Se comentan (prefijo «RETIRADO», reversible) 14
+tareas: bajas, alineaciones, clasificación, en vivo, xG, cuotas y calendario de equipos de API-Football; las tres
+capturas de FotMob y sus sedes; el respaldo de PitchAPI; xG y copas de worldfootball/FBref. Quedan sin fuente hasta
+conectar SofaScore/PropLine: bajas, once previo, clasificación y marcador en vivo; el sello por partido sigue a T-38 sin
+once. El chequeo de bajas deja de alarmar con `RESULTS_PROVIDER=propline` porque no informaría de nada nuevo.
+
 ## 2026-10-25 — Ligue 2 y Superliga danesa fuera de los motores; fuentes: solo SofaScore y PropLine
 
 El titular fijó las fuentes: SofaScore vía Apify (actor por deporte del 24-oct: rl1987 fútbol, scrapesage NBA y

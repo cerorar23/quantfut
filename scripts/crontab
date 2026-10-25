@@ -1,4 +1,6 @@
 SHELL=/bin/sh
+# 2026-10-25: las tareas de API-Football, FotMob, PitchAPI y worldfootball/FBref quedan comentadas
+# con «RETIRADO»; para volver atrás basta quitar ese prefijo.
 PYTHONPATH=/app/src
 # En python:3.12-slim el intérprete está en /usr/local/bin y el PATH por
 # defecto de cron es /usr/bin:/bin: sin esta línea cada job acababa en
@@ -20,7 +22,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Cada hora: el proveedor actualiza cada liga cuando le toca y solo guarda 7
 # días. Cada 3 h, una actualización de las 06:10 no llegaría al job de las
 # 08:00. Una petición por partido en las próximas 72 h (~50/h de 7.500/día).
-20 * * * * cd /app && python -m qf.ingest.af_odds >> /var/log/af_odds.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 20 * * * * cd /app && python -m qf.ingest.af_odds >> /var/log/af_odds.log 2>&1
 # Sombra del criterio de picks: registra lo que se HABRÍA recomendado con las
 # cuotas recién capturadas. No publica. Se liquida desde qf.eval.clv.
 25 * * * * cd /app && python -m qf.publish.shadow_sharp capture >> /var/log/shadow_sharp.log 2>&1
@@ -32,11 +34,11 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Clasificacion de cada liga para las fichas de la web. Contenido, no criterio.
 # Dos veces al dia (tras la madrugada americana y tras la tarde europea):
 # ~14 peticiones por pasada de 7.500/dia.
-40 6,22 * * * cd /app && python -m qf.ingest.standings >> /var/log/standings.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 40 6,22 * * * cd /app && python -m qf.ingest.standings >> /var/log/standings.log 2>&1
 
 # Marcador en juego para la app (db/056). UNA peticion `live=all` por pasada y solo
 # si hay algun partido en ventana; cada 45 min por decision del usuario (menos cuota).
-*/45 * * * * cd /app && python -m qf.ingest.live >> /var/log/live.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): */45 * * * * cd /app && python -m qf.ingest.live >> /var/log/live.log 2>&1
 
 # Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
 # Con RESULTS_PROVIDER=propline lee el archivo de PropLine (/scores cada 3 h, a las :07).
@@ -48,23 +50,23 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # xG API-Football tardío: reconsulta hasta 35 días, máximo 100 partidos/día,
 # reserva el 15% de cuota. Primera observación congelada para entrenamiento.
-10 12 * * * cd /app && python -m qf.ingest.xg_api_football >> /var/log/xg_api_football.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 10 12 * * * cd /app && python -m qf.ingest.xg_api_football >> /var/log/xg_api_football.log 2>&1
 
 # PitchAPI: verificador y respaldo de API-Football (db/065). Cotejo de los
 # ultimos 10 dias (avisa, no corrige) y xG de respaldo tras las 48 h de gracia
 # de API-Football. Sin clave o desactivado desde /control/respaldo: no hace nada.
-40 12 * * * cd /app && python -m qf.ingest.pitchapi_respaldo >> /var/log/pitchapi.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 40 12 * * * cd /app && python -m qf.ingest.pitchapi_respaldo >> /var/log/pitchapi.log 2>&1
 
 # xG historico desde los releases de worldfootballR_data. Semanal: esos
 # datasets se publican por lotes, no cambian a diario.
 # No se raspa FBref en vivo: esta detras de Cloudflare y devuelve 403.
-0 4 * * 2 cd /app && python -m qf.ingest.xg_worldfootball >> /var/log/xg.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 0 4 * * 2 cd /app && python -m qf.ingest.xg_worldfootball >> /var/log/xg.log 2>&1
 
 # Historico de Champions y Europa League. Mismo release por lotes, misma
 # cadencia. Va DESPUES del xG y no antes: si algun dia se da de alta una liga
 # nueva, sus equipos tienen que existir ya cuando las copas intenten
 # resolverlos (uefa_cups nunca crea equipos, descarta el partido).
-30 4 * * 2 cd /app && python -m qf.ingest.uefa_cups >> /var/log/xg.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 30 4 * * 2 cd /app && python -m qf.ingest.uefa_cups >> /var/log/xg.log 2>&1
 
 # Chequeo de salud. Diario, alerta si algo falla.
 0 7 * * * cd /app && python -m qf.ingest.health >> /var/log/health.log 2>&1
@@ -74,7 +76,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # se publica sin horario fijo, asi que hay que estar mirando. Solo llama a la
 # API por partidos DENTRO de la ventana y sin alineacion guardada, asi que el
 # coste de cuota es bajo aunque corra a menudo.
-*/5 * * * * cd /app && python -m qf.ingest.lineups >> /var/log/lineups.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): */5 * * * * cd /app && python -m qf.ingest.lineups >> /var/log/lineups.log 2>&1
 # Un minuto después, evalúa el ajuste de XI en sombra. No publica ni apuesta;
 # si todavía no hay muestra/artefacto validado termina como no-op.
 1-56/5 * * * * cd /app && python -m qf.model.shadow >> /var/log/shadow.log 2>&1
@@ -83,7 +85,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # de antelacion y cambia (duda -> confirmado), asi que hace falta releer, no
 # una sola captura por partido. El propio modulo evita reconsultar el mismo
 # partido antes de MIN_HOURS_BETWEEN_CHECKS.
-0 */4 * * * cd /app && python -m qf.ingest.injuries >> /var/log/injuries.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 0 */4 * * * cd /app && python -m qf.ingest.injuries >> /var/log/injuries.log 2>&1
 
 # --- FASE 3 ---
 # Job diario: predecir, seleccionar picks, sellar cadena, publicar. 13:00 UTC = 07:00 en
@@ -124,18 +126,18 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 */5 * * * * cd /app && set -a && { [ ! -f /app/meta.env ] || . /app/meta.env; } && set +a && flock -n /tmp/meta_capi.lock python -m qf.comercial.meta_capi >> /var/log/meta_capi.log 2>&1
 
 # Calendario de cada equipo en todas las competiciones (db/078), temporada en curso: ~313 llamadas de las 7.500 diarias.
-40 5 * * * cd /app && python -m qf.ingest.calendario_equipos --temporadas 2026 --refrescar >> /var/log/calendario_equipos.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 40 5 * * * cd /app && python -m qf.ingest.calendario_equipos --temporadas 2026 --refrescar >> /var/log/calendario_equipos.log 2>&1
 
 # Captura recurrente de FotMob (db/081), autorizada el 18-oct-2026. Una sola a la vez (flock); un bloqueo HTTP 401/403/429
 # la detiene 12 h. Referencias de partidos una vez al día; instantáneas previas (24 h, 4 h, 70 y 40 min antes) cada 15 min;
 # archivo de partidos terminados cada hora.
-50 5 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura referencias >> /var/log/fotmob_captura.log 2>&1
-*/5 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
-35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 50 5 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura referencias >> /var/log/fotmob_captura.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): */5 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
 
 # Clima histórico ERA5 de los partidos ya jugados (db/082), incremental: solo pide a Copernicus lo que aún no cubren
 # los archivos guardados (Copernicus publica con ~7 días de retraso). Necesita CDS_API_TOKEN en el entorno.
 20 6 * * * cd /app && flock -n /tmp/era5.lock python -m qf.ingest.era5_clima >> /var/log/era5_clima.log 2>&1
 
 # Sede de los partidos nuevos desde la página de FotMob (sin duplicar estadios) y altitud de los estadios nuevos.
-50 * * * * cd /app && python -m qf.ingest.sedes >> /var/log/sedes.log 2>&1
+# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 50 * * * * cd /app && python -m qf.ingest.sedes >> /var/log/sedes.log 2>&1

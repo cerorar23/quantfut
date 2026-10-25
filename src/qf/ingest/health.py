@@ -192,6 +192,11 @@ def check_injuries_coverage() -> tuple[bool, str]:
     confirmadas como huecas (`KNOWN_INJURY_COVERAGE_GAPS`) no alertan de
     nuevo cada día, solo se cuentan en el mensaje.
     """
+    from ..config import settings
+    if settings.results_provider == "propline":
+        # 25-oct-2026: el titular retiró API-Football; las bajas aún no tienen fuente
+        # conectada (SofaScore las da, pendiente). Avisar cada día por eso no informa.
+        return True, "Bajas sin fuente: API-Football retirado, SofaScore pendiente de conectar"
     rows = query(
         """SELECT m.league_id,
                   count(DISTINCT c.match_id) AS checked,
