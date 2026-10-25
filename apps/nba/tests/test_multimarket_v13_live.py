@@ -231,6 +231,26 @@ def test_results_are_scored_from_the_official_receipt(cohort, monkeypatch):
     assert board.LiveCohort(folder).data(now + timedelta(minutes=1))['events'][0]['status'] == 'validation_hold'
 
 
+@pytest.mark.parametrize('official_tip, status', [('2026-10-22T00:00:00Z', 'evaluated'), ('2026-10-21T22:00:00Z', 'validation_hold')])
+def test_a_tipoff_moved_later_still_scores_and_one_moved_earlier_is_held(cohort, monkeypatch, official_tip, status):
+    """HOU@SAS (0022600009, 23-oct): sealed for 01:30 UTC, the final page says 02:30. The forecast still precedes the real
+    tipoff, so it is scored; a tipoff moved earlier than the sealed one could fall before the seal and stays held."""
+    folder, _ = cohort
+    now = TIP + timedelta(hours=5)
+
+    def capture(game_id, destination, game_slug=None):
+        destination.mkdir(parents=True)
+        (destination / 'boxscore.html').write_bytes(box_html(3, tip=official_tip))
+        write_json(destination / 'receipt.json', dict(
+            url=f'https://www.nba.com/game/{game_slug}/box-score', game_id=game_id, http_status=200, error=None,
+            raw_sha256=digest(destination / 'boxscore.html'), requested_at_utc=now.isoformat(),
+            first_received_at_utc=now.isoformat(), raw_file='boxscore.html'))
+        return destination / 'receipt.json'
+    monkeypatch.setattr('nba.paper.capture_official_result', capture)
+    assert live.capture_results(folder, now) == dict(stored=[GID], retry=[])
+    assert board.LiveCohort(folder).data(now + timedelta(minutes=1))['events'][0]['status'] == status
+
+
 def test_non_final_capture_is_discarded_and_retried(cohort, monkeypatch):
     folder, _ = cohort
 

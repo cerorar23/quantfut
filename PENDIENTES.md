@@ -24,7 +24,7 @@ Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (c
 - Comprar, tras la renovación del 1-nov, los cierres históricos que faltan: 590 snapshots (~5.900 créditos) con `python -m qf.ingest.cierres_odds_api fetch --presupuesto 5900`. Los partidos nuevos ya traen su cierre de PropLine.
 - `SOFT_BOOKS` frente a las casas de PropLine: solo 1xbet coincide, así que la sombra sharp ve 0 ofertas de casas blandas.
 - Licencia de BetsAPI, fuente del calendario de copas y tope mensual de Apify (el ritmo del 24-25 oct supera los 15 USD/mes).
-- NBA: lesiones de ESPN, retirar o no la captura `nba-live13-price` (sin créditos hasta el 1-nov), desplegar el productor y el paquete de The Odds API para props (plan 5M, 119 USD).
+- NBA: lesiones de ESPN y el paquete de The Odds API para props (plan 5M, 119 USD). (Productor 1.4b desplegado y captura `nba-live13-price` retirada el 25-oct: `docs/nba_auditoria_20261025.md`.)
 - Tenis: cuotas de cierre y apagar la automatización de Codex «continuidad-de-validaci-n-predictiva-de-tenis» (solo desde Codex).
 - Aviso push al sellar.
 

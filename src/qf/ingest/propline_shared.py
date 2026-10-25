@@ -749,13 +749,25 @@ def run(root, key_file, config_file, *, limit=None):
             planned = set(requested)
             batch_size = min(50,max(1,int(config.get("max_markets_per_request",50))))
             payload = []
-            def odds(batch):
-                return capture(f"/v1/sports/{sport}/odds", dict(markets=",".join(batch),
-                        period="all", includeLinks="true", includeBookIds="true", includeDepth="true" if config.get("include_depth") else "false",
-                        includePregameOnly="true", includeRestricted="true",
-                        max_age=str(config.get("provider_max_age_seconds",3600))))
-            for batch in market_batches(sport, requested, config):
-                payload.extend(odds(batch) or [])
+            def odds(batch, period="all"):
+                params = dict(markets=",".join(batch), includeLinks="true", includeBookIds="true",
+                              includeDepth="true" if config.get("include_depth") else "false",
+                              includePregameOnly="true", includeRestricted="true",
+                              max_age=str(config.get("provider_max_age_seconds",3600)))
+                if period:
+                    params["period"] = period
+                return capture(f"/v1/sports/{sport}/odds", params)
+            for number, batch in enumerate(market_batches(sport, requested, config)):
+                featured = set(batch) <= {"h2h", "spreads", "totals"}
+                got = odds(batch)
+                if got is None and featured:
+                    # The all-periods featured request carries every listed game (NBA: ~120 events, 64k outcomes) and
+                    # timed out (504) in 9 of 47 NBA hours on 23-25 oct, mostly 19-01 UTC: the game spread/total the
+                    # NBA producer seals with were missing. Full game only is a fraction of it.
+                    got = odds(batch, period=None)
+                if number == 0 and featured and got == []:
+                    break  # no listed game (off-season or futures-only): the other batches would come back empty too
+                payload.extend(got or [])
             # Once per competition/day, learn additional keys from an actual
             # fixture. The full documented family is always requested as well.
             today = stamp(utcnow().replace(hour=0,minute=0,second=0,microsecond=0))
@@ -769,8 +781,10 @@ def run(root, key_file, config_file, *, limit=None):
                 for offset in range(0,len(missing),batch_size):
                     odds(missing[offset:offset+batch_size])
         for sport in selected:
-            # The run start decides: a long run must not slide into the next hour.
-            if config.get("scores") and started.hour % config.get("scores_every_hours",1) == 0:
+            # The run start decides: a long run must not slide into the next hour. Scores of competitions no model
+            # reads follow their odds cadence (25-oct: 252 soccer score calls a day, most for leagues nobody settles).
+            other_off = not priority_sport(sport, config) and started.hour % int(config.get("other_sports_every_hours", 1))
+            if config.get("scores") and started.hour % config.get("scores_every_hours",1) == 0 and not other_off:
                 capture(f"/v1/sports/{sport}/scores", {"days_from": 3})
             if config.get("identities_daily"):
                 capture(f"/v1/sports/{sport}/ids", daily=True)
