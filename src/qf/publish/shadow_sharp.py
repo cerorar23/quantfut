@@ -16,8 +16,9 @@ TRES PIEZAS
   sigue contando solo las de la lista (filtro al informar, así se puede
   recalcular para otra lista sin volver a capturar).
 - `settle_pending`: al terminar el partido, encadenada desde
-  `eval/clv.settle_pending`. Sin cierre de Pinnacle (`window_tag='close'` de
-  The Odds API) la oferta se liquida sin `ev_close_pct` y no cuenta.
+  `eval/clv.settle_pending`. Espera al cierre de Pinnacle (`window_tag='close'`;
+  el de PropLine llega horas después del partido) hasta `cierre.ESPERA_CIERRE_H`;
+  sin él la oferta se liquida sin `ev_close_pct` y no cuenta.
 - `report`: dos vistas.
     * "publicables": por partido, la PRIMERA vez que el criterio habría dado un
       pick con stake, y de esa pasada la oferta de mayor edge esperado. Es lo
@@ -45,7 +46,7 @@ import pandas as pd
 from ..config import settings
 from ..db import execute, executemany, query
 from ..eval import clv
-from ..eval.cierre import es_cierre_real
+from ..eval.cierre import cierre_o_vencido, es_cierre_real
 from ..eval.soft_vs_sharp import _weekly_ci
 from . import picks as pk
 
@@ -161,13 +162,13 @@ def settle_row(selection: str, price: float, close_quotes: dict,
 
 def settle_pending() -> dict:
     rows = query(
-        """SELECT o.offer_id, o.match_id, o.selection, o.price,
+        f"""SELECT o.offer_id, o.match_id, o.selection, o.price,
                   m.home_goals, m.away_goals
            FROM sharp_shadow_offers o
            JOIN matches m USING (match_id)
            LEFT JOIN sharp_shadow_results r USING (offer_id)
            WHERE r.offer_id IS NULL AND m.status = 'finished'
-             AND m.home_goals IS NOT NULL"""
+             AND m.home_goals IS NOT NULL AND {cierre_o_vencido()}"""
     )
     closes: dict[str, dict] = {}
     with_ev = 0

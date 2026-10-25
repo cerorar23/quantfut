@@ -205,7 +205,15 @@ def test_completar_rellena_solo_lo_vacio_con_procedencia_y_xg_de_fotmob():
     xg = next(p for s, p in c.escrituras if "xg_source = 'fotmob'" in s)
     assert xg[:3] == (1.4, 0.6, KICKOFF)                        # hora real de captura de la página
     campos = {p[1] for s, p in c.escrituras if "matches_enriquecimiento" in s}
-    assert campos == {"home_yellow", "away_yellow", "xg"}
+    assert campos == {"home_yellow", "away_yellow", "stats", "xg"}
+    assert update["stats"].obj["home"] == {"amarillas": 3, "corners": 7, "xg": 1.4, "rojas": 0}
+
+
+def test_completar_no_pisa_stats_de_otra_fuente():
+    c = _Completar([_fila("m1", _posterior(), stats={"home": {"faltas": 9}, "away": {"faltas": 8}})])
+    fc.completar(c)
+    update = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert "stats" not in update
 
 
 def test_completar_no_aplica_con_marcador_distinto_ni_inventa_xg():

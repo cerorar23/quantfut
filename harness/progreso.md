@@ -1,5 +1,18 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Cierres de PropLine, Liga MX/MLS en SofaScore y `stats` desde SofaScore y FotMob
+
+Orden del titular tras la auditoría de datos: arreglar lo que falla y usar FotMob para completar. Decisión clave: el
+cierre de PropLine llega horas DESPUÉS del partido, y la liquidación con CLV es inmutable; cargar los cierres sin más
+habría dejado igual la sombra y la puerta comercial, porque los resultados se liquidan antes. Por eso la liquidación
+(picks, sombra sharp y sombra XI) espera al cierre sharp hasta 48 h (`cierre.cierre_o_vencido`). Cada línea del cierre
+trae su propia hora y el de-vig exige un único momento por grupo: todas se fechan en el último instante en que todas
+seguían a la vista (≤ 10 min del inicio); ensayo en producción: 79 partidos, 25.437 filas, diferencia mediana con la
+última foto horaria 0,7 puntos y ningún lado invertido. Liga MX pedía el torneo del Clausura (vacío) y la MLS en
+eliminatorias trae `round: null`: el recolector abandonaba sin avisar; ahora lista sin jornada. `matches.stats` vuelve a
+llenarse (fichas de la web y faltas/centros para el Motor C) desde SofaScore y, si falta, FotMob; solo donde está NULL.
+Los 10 fallos del arnés local son de entorno (Postgres sin contraseña en el worktree); en CI pasan.
+
 ## 2026-10-25 — Respaldo de resultados con FotMob
 
 PropLine deja partidos sin resultado (`expired`: toda la liga suiza, y partidos sueltos de Noruega, Turquía, MLS, y

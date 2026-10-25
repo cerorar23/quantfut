@@ -59,6 +59,79 @@ def normalizar_estadisticas(crudo: list[dict], home_af_id: int, away_af_id: int)
     return out
 
 
+# Las mismas claves de la web desde SofaScore (`statistics` de rl1987) y FotMob (`stat_pairs`), que sustituyen a
+# API-Football desde el 22-oct-2026. Los centros (precisos y totales) son nuevos: el Motor C los pide.
+CLAVES_SOFASCORE = {
+    "shotsOnGoal": "tiros_puerta", "shotsOffGoal": "tiros_fuera", "totalShotsOnGoal": "tiros",
+    "blockedScoringAttempt": "tiros_bloqueados", "totalShotsInsideBox": "tiros_dentro_area",
+    "totalShotsOutsideBox": "tiros_fuera_area", "fouls": "faltas", "cornerKicks": "corners",
+    "offsides": "fueras_de_juego", "ballPossession": "posesion", "yellowCards": "amarillas", "redCards": "rojas",
+    "goalkeeperSaves": "paradas", "passes": "pases", "accuratePasses": "pases_precisos",
+    "expectedGoals": "xg", "accurateCross": "centros_precisos",
+}
+CLAVES_FOTMOB = {
+    "ShotsOnTarget": "tiros_puerta", "ShotsOffTarget": "tiros_fuera", "total_shots": "tiros",
+    "blocked_shots": "tiros_bloqueados", "shots_inside_box": "tiros_dentro_area",
+    "shots_outside_box": "tiros_fuera_area", "fouls": "faltas", "corners": "corners", "Offsides": "fueras_de_juego",
+    "BallPossesion": "posesion", "yellow_cards": "amarillas", "red_cards": "rojas", "keeper_saves": "paradas",
+    "passes": "pases", "accurate_passes": "pases_precisos", "expected_goals": "xg",
+    "accurate_crosses": "centros_precisos",
+}
+CERO_SI_FALTA = ("amarillas", "rojas")   # ambos proveedores omiten la tarjeta que no hubo
+
+
+def _cerrar(out: dict) -> dict | None:
+    """Completa tarjetas a cero y el % de pases; None si no quedó ninguna estadística."""
+    if not out["home"] and not out["away"]:
+        return None
+    for lado in out.values():
+        for clave in CERO_SI_FALTA:
+            lado.setdefault(clave, 0)
+        if lado.get("pases") and lado.get("pases_precisos") is not None:
+            lado["pct_pases"] = round(100 * lado["pases_precisos"] / lado["pases"])
+    return out
+
+
+def desde_sofascore(statistics: list | None) -> dict | None:
+    """`statistics` de SofaScore (periodos ALL/1ST/2ND) -> {"home": {...}, "away": {...}} del partido completo."""
+    out: dict[str, dict] = {"home": {}, "away": {}}
+    vistos: dict[str, set] = {}
+    for seccion in statistics or []:
+        if seccion.get("period") != "ALL":
+            continue
+        for grupo in seccion.get("groups") or []:
+            for item in grupo.get("statisticsItems") or []:
+                clave = CLAVES_SOFASCORE.get(item.get("key"))
+                if not clave:
+                    continue
+                par = (_numero(item.get("homeValue")), _numero(item.get("awayValue")))
+                if None in par:
+                    continue
+                vistos.setdefault(clave, set()).add(par)
+                if item.get("key") == "accurateCross":
+                    tot = (_numero(item.get("homeTotal")), _numero(item.get("awayTotal")))
+                    if None not in tot:
+                        vistos.setdefault("centros", set()).add(tot)
+    for clave, pares in vistos.items():
+        if len(pares) == 1:              # una repetición con otro valor no se adivina
+            out["home"][clave], out["away"][clave] = next(iter(pares))
+    return _cerrar(out)
+
+
+def desde_fotmob(pares: dict) -> dict | None:
+    """`stat_pairs` de una página posterior de FotMob -> {"home": {...}, "away": {...}}."""
+    out: dict[str, dict] = {"home": {}, "away": {}}
+    for origen, clave in CLAVES_FOTMOB.items():
+        valor = pares.get(origen)
+        if not isinstance(valor, (list, tuple)) or len(valor) != 2:
+            continue
+        h, a = _numero(valor[0]), _numero(valor[1])
+        if h is None or a is None:
+            continue
+        out["home"][clave], out["away"][clave] = h, a
+    return _cerrar(out)
+
+
 def arbitro(v) -> str | None:
     """
     Nombre del árbitro en una sola forma para las dos fuentes, porque es la

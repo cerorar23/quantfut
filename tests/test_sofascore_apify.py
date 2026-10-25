@@ -68,6 +68,25 @@ def test_captura_terminados_una_sola_vez_con_recepcion_real(tmp_path):
     assert len(f.calls) == n
 
 
+def test_eliminatorias_sin_jornada_se_listan_sin_jornada(tmp_path):
+    f = Fake([ev(7, None, "finished")])
+
+    def call(method, url, token, payload=None, timeout=0):
+        if payload and payload.get("eventsSpan") == "next" and payload.get("maxItems") == 1:
+            f.calls.append(payload)
+            return 200, json.dumps([ev(8, None, "notstarted", 1793000000)]).encode()
+        if payload and payload.get("eventsSpan") == "last" and "tournamentRound" not in payload:
+            f.calls.append(payload)
+            return 200, json.dumps([ev(7, None, "finished")]).encode()
+        return f(method, url, token, payload, timeout)
+    c = sa.Collector(tmp_path, "tok", {**CFG, "targets": {"us.mls": {"utid": 242}}}, call=call, clock=lambda: T0)
+    assert c.capture() == "ok"
+    spans = [p.get("eventsSpan") for p in f.calls if p.get("mode") == "tournament" and "maxItems" not in p]
+    assert spans == ["last", "next"]
+    assert c.db.execute("SELECT count(*) FROM rounds").fetchone()[0] == 0
+    assert {r[0] for r in c.db.execute("SELECT id FROM events WHERE target='us.mls'")} == {7, 9}
+
+
 def test_jornada_terminada_avanza_y_recibo_es_inmutable(tmp_path):
     c, _ = collector(tmp_path, [ev(1, 3, "finished"), ev(2, 3, "finished")])
     c.capture()

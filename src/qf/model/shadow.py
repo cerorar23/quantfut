@@ -11,7 +11,7 @@ import pandas as pd
 from ..config import settings
 from ..db import conn, execute, query, query_one
 from ..ingest.lineups import availability
-from ..eval.cierre import es_cierre_real
+from ..eval.cierre import cierre_o_vencido, es_cierre_real
 from .devig import consensus_devig, devig
 from .lineup_challenger import LINEUP_FEATURES, LineupLambdaChallenger
 from .market_anchor import anchor_from_consensus
@@ -290,12 +290,12 @@ def _closing(match_id: str) -> dict[str, float]:
 
 def settle_pending() -> dict:
     rows = query(
-        """SELECT sp.shadow_pick_id, sp.match_id, sp.selection,
+        f"""SELECT sp.shadow_pick_id, sp.match_id, sp.selection,
                   sp.observed_price, m.home_goals, m.away_goals
            FROM shadow_picks sp JOIN matches m USING (match_id)
            LEFT JOIN shadow_results sr USING (shadow_pick_id)
            WHERE sr.shadow_pick_id IS NULL AND m.status='finished'
-             AND m.home_goals IS NOT NULL"""
+             AND m.home_goals IS NOT NULL AND {cierre_o_vencido()}"""
     )
     settled, clvs = 0, []
     for row in rows:

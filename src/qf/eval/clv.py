@@ -20,7 +20,7 @@ import numpy as np
 
 from ..config import settings
 from ..db import execute, query
-from .cierre import es_cierre_real
+from .cierre import cierre_o_vencido, es_cierre_real
 from ..model.devig import devig
 
 log = logging.getLogger(__name__)
@@ -179,7 +179,7 @@ def settle_pending(lookback_hours: int = 96) -> dict:
     """Liquida picks de partidos terminados que aún no tienen resultado."""
     since = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
     rows = query(
-        """SELECT p.pick_id, p.match_id, p.market, p.selection, p.line,
+        f"""SELECT p.pick_id, p.match_id, p.market, p.selection, p.line,
                   p.advised_price, p.stake_units,
                   m.home_goals, m.away_goals
            FROM picks p
@@ -188,7 +188,7 @@ def settle_pending(lookback_hours: int = 96) -> dict:
            WHERE r.pick_id IS NULL
              AND m.status = 'finished'
              AND m.home_goals IS NOT NULL
-             AND m.kickoff_utc > %s""",
+             AND m.kickoff_utc > %s AND {cierre_o_vencido()}""",
         (since,),
     )
 
