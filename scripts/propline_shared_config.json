@@ -380,8 +380,8 @@
     "soccer_uefa_champions_league",
     "soccer_uefa_europa_league"
   ],
-  "other_sports_every_hours": 3,
-  "priority_measured_20261025": "other soccer competitions took ~1,650 of ~3,700 requests/day (24-25 oct) and the 500 account reserve stopped the late UTC runs; they are still archived, every 3 h",
+  "other_sports_every_hours": 6,
+  "priority_measured_20261025": "other soccer competitions took ~1,650 of ~3,700 requests/day (24-25 oct) and the 500 account reserve stopped the late UTC runs; they are still archived, every 6 h (25-oct 20:07: 93 requests per priority-only run; 3 h still left the late runs short)",
   "include_depth": false,
   "settlement": {
     "enabled": true,
