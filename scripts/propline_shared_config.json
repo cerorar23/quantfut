@@ -373,7 +373,33 @@
     "stats_prefixes": [
       "basketball_nba",
       "soccer_"
-    ]
+    ],
+    "results_prefixes": [
+      "basketball_nba",
+      "tennis"
+    ],
+    "sports_by_prefix": {
+      "soccer_": [
+        "soccer_epl",
+        "soccer_championship",
+        "soccer_la_liga",
+        "soccer_serie_a",
+        "soccer_bundesliga",
+        "soccer_germany_bundesliga2",
+        "soccer_ligue_1",
+        "soccer_eredivisie",
+        "soccer_primeira_liga",
+        "soccer_turkey_super_lig",
+        "soccer_eliteserien",
+        "soccer_brasileirao",
+        "soccer_argentina_primera",
+        "soccer_liga_mx",
+        "soccer_mls",
+        "soccer_uefa_champions_league",
+        "soccer_uefa_europa_league"
+      ]
+    },
+    "measured_20261025": "soccer closings only for the 15 leagues + 2 cups the models use, and no graded soccer props (nobody reads them): 2 requests per finished game instead of 3. On 24-oct the 300 budget ran out on J-League, Conference and Saudi games before EPL"
   },
   "injuries_sports": [
     "basketball_nba"
