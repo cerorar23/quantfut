@@ -457,6 +457,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Für dieses Spiel gibt es keine veröffentlichten Prognosen.';
 
   @override
+  String get detailNoSealedModel =>
+      'Für dieses Spiel gibt es keine versiegelte Prognose. Unten findest du die Schätzungen des Modells.';
+
+  @override
+  String get detailNoSealedModelVip =>
+      'Für dieses Spiel gibt es keine versiegelte Prognose. Unten stehen die Schätzungen des Modells, mit VIP.';
+
+  @override
   String get detailNoStarters => 'Keine bestätigten Starter.';
 
   @override

@@ -458,6 +458,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get detailNoPicks => 'Não há prognósticos publicados para este jogo.';
 
   @override
+  String get detailNoSealedModel =>
+      'Não há prognóstico selado para este jogo. Abaixo estão as estimativas do modelo.';
+
+  @override
+  String get detailNoSealedModelVip =>
+      'Não há prognóstico selado para este jogo. Abaixo estão as estimativas do modelo, com VIP.';
+
+  @override
   String get detailNoStarters => 'Sem titulares confirmados.';
 
   @override

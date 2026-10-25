@@ -124,6 +124,8 @@
   "detailNoInjuries": "No absences in the available report.",
   "detailNoInjuriesCheck": "No absence check is available.",
   "detailNoPicks": "There are no published predictions for this match.",
+  "detailNoSealedModel": "There is no sealed prediction for this match. The model's estimates are below.",
+  "detailNoSealedModelVip": "There is no sealed prediction for this match. The model's estimates are below, with VIP.",
   "detailNoStarters": "No confirmed starters.",
   "detailReferee": "Referee",
   "detailRefereePending": "Referee to be confirmed.",

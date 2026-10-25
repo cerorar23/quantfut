@@ -379,6 +379,14 @@
   "detailNoInjuries": "Sin bajas en el reporte disponible.",
   "detailNoInjuriesCheck": "No hay una comprobación de bajas disponible.",
   "detailNoPicks": "No hay pronósticos publicados para este partido.",
+  "detailNoSealedModel": "No hay pronóstico sellado para este partido. Abajo tienes las estimaciones del modelo.",
+  "@detailNoSealedModel": {
+    "description": "Detalle del partido sin pronóstico sellado, con mercados del modelo abiertos debajo."
+  },
+  "detailNoSealedModelVip": "No hay pronóstico sellado para este partido. Abajo están las estimaciones del modelo, con VIP.",
+  "@detailNoSealedModelVip": {
+    "description": "Detalle del partido sin pronóstico sellado; los mercados del modelo de debajo están con candado VIP."
+  },
   "detailNoStarters": "Sin titulares confirmados.",
   "detailReferee": "Árbitro",
   "detailRefereePending": "Árbitro pendiente de confirmar.",

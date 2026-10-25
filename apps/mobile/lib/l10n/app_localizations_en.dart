@@ -455,6 +455,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'There are no published predictions for this match.';
 
   @override
+  String get detailNoSealedModel =>
+      'There is no sealed prediction for this match. The model\'s estimates are below.';
+
+  @override
+  String get detailNoSealedModelVip =>
+      'There is no sealed prediction for this match. The model\'s estimates are below, with VIP.';
+
+  @override
   String get detailNoStarters => 'No confirmed starters.';
 
   @override

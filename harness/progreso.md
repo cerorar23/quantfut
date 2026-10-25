@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 (noche) — Aviso «sin pronóstico sellado» en el detalle del partido
+
+El titular leyó «No hay pronósticos publicados» encima de 25 mercados y lo tomó por un fallo. No lo era (pronóstico =
+pick sellado; los mercados son estimaciones del modelo al momento), pero el texto inducía a error. Decisión: con
+mercados debajo, el aviso dice que no hay pronóstico **sellado** y que abajo están las estimaciones del modelo (o que
+están con VIP si todos llevan candado); sin mercados se mantiene el aviso de siempre. No se mezclan los dos conceptos:
+un mercado del modelo nunca pasa a contar como pronóstico publicado.
+
 ## 2026-10-25 (noche) — Alta probabilidad: solo pronósticos con cuota
 
 Decisión del titular tras ver «LAFC +1,5 asiático @—» en la app: no se publica ningún pronóstico sin cuota de una casa

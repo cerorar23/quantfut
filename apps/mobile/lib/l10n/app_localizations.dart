@@ -850,6 +850,18 @@ abstract class AppLocalizations {
   /// **'No hay pronósticos publicados para este partido.'**
   String get detailNoPicks;
 
+  /// Detalle del partido sin pronóstico sellado, con mercados del modelo abiertos debajo.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay pronóstico sellado para este partido. Abajo tienes las estimaciones del modelo.'**
+  String get detailNoSealedModel;
+
+  /// Detalle del partido sin pronóstico sellado; los mercados del modelo de debajo están con candado VIP.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay pronóstico sellado para este partido. Abajo están las estimaciones del modelo, con VIP.'**
+  String get detailNoSealedModelVip;
+
   /// No description provided for @detailNoStarters.
   ///
   /// In es, this message translates to:

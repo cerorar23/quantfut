@@ -124,6 +124,8 @@
   "detailNoInjuries": "Sem desfalques no relatório disponível.",
   "detailNoInjuriesCheck": "Não há verificação de desfalques disponível.",
   "detailNoPicks": "Não há prognósticos publicados para este jogo.",
+  "detailNoSealedModel": "Não há prognóstico selado para este jogo. Abaixo estão as estimativas do modelo.",
+  "detailNoSealedModelVip": "Não há prognóstico selado para este jogo. Abaixo estão as estimativas do modelo, com VIP.",
   "detailNoStarters": "Sem titulares confirmados.",
   "detailReferee": "Árbitro",
   "detailRefereePending": "Árbitro a confirmar.",
