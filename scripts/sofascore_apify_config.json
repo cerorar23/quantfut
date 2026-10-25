@@ -45,7 +45,8 @@
   },
   "nba": {
    "utid": 132,
-   "rounds": false
+   "rounds": false,
+   "provider": "scrapesage"
   }
  },
  "tennis": {
@@ -59,6 +60,8 @@
   "every_days": 6,
   "active_days": 10,
   "max_items": 220,
-  "discovery_cap_usd": 0.9
- }
+  "discovery_cap_usd": 0.9,
+  "provider": "scrapesage"
+ },
+ "list_max": 100
 }

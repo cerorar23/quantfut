@@ -1119,7 +1119,11 @@ de paso verifica a PropLine. Comprobado con peticiones reales el 25-oct:
   0,77 – Defensa y Justicia 0,78, 24-oct); partidos de abril de 2026 no lo tenían.
   El histórico SofaScore cargado tiene 0/30 con xG en Premier, LaLiga, Serie A,
   Bundesliga, Ligue 1, Eredivisie y Primeira pese a que la fuente lo publica: revisar esa carga.
-- PropLine no tiene Ligue 2 ni la Superliga danesa (catálogo de 36 competiciones).
+- PropLine no tiene Ligue 2 ni la Superliga danesa (catálogo de 36 competiciones): el titular las retiró de los
+  motores el 25-oct (db/086, desactivadas con su historial sellado intacto).
+- Fuentes desde el 25-oct (decisión del titular): solo SofaScore vía Apify (rl1987 fútbol, scrapesage NBA y tenis;
+  `azzouzana` sigue roto) y PropLine. SofaScore da once previsto y bajas ~12 h antes y clasificación (`standings`);
+  PropLine da el marcador en vivo (`/scores`). Falta conectarlos; los jobs de API-Football y FotMob siguen en el cron.
 
 **xG de API-Football habilitado el 12-oct-2026, por decisión del usuario.**
 La exclusión anterior queda revocada. Su cobertura sigue siendo variable:

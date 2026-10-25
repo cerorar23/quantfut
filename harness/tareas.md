@@ -48,6 +48,10 @@ operativo como canal de clientes.
 - [ ] Cargar los cierres de PropLine a `odds_snapshots` como `close` (CLV, sombra y entrenamiento sin cierres desde el 22-oct).
 - [ ] **Titular:** `SOFT_BOOKS` frente a las casas de PropLine (solo 1xbet coincide).
 - [ ] Chequeo diario: detectar plan gratuito y calendario sin altas; `httpx` a WARNING (el token del bot sale en los registros).
+- [x] (25-oct) Ligue 2 y Superliga danesa fuera de los motores (db/086; sin cuotas en PropLine). Historial conservado.
+- [ ] Sustituir lo que aún lee API-Football/FotMob: once previsto y bajas (SofaScore, ~8 USD/mes más), clasificación
+  (calculada con nuestros resultados), marcador en vivo (PropLine `/scores`); después quitar esos jobs del cron. F7 usa
+  hoy el once de FotMob.
 
 ## Auditoría de los tres motores (2026-10-21) — `docs/auditoria_motores_20261021.md`
 Cada paso a producción requiere confirmación del titular. Orden recomendado:

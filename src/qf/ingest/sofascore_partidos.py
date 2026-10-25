@@ -27,6 +27,7 @@ from psycopg.types.json import Jsonb
 from rapidfuzz import fuzz
 
 from ..db import conn, query
+from ..league_policy import RETIRED_LEAGUES
 from ..normalize import slugify
 from . import api_football as af
 from .estadisticas import arbitro
@@ -34,7 +35,7 @@ from .sofascore_history import TOURNAMENTS, stat_pair
 
 log = logging.getLogger(__name__)
 
-LIGA_DE_TORNEO = {v: k for k, v in TOURNAMENTS.items()} | {11621: "mx.liga_mx"}
+LIGA_DE_TORNEO = {v: k for k, v in TOURNAMENTS.items() if k not in RETIRED_LEAGUES} | {11621: "mx.liga_mx"}
 VENTANA = timedelta(hours=36)
 PARECIDO_MIN = 70
 LOCK_ID = 61024085

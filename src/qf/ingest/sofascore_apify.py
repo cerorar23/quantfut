@@ -1,4 +1,8 @@
-"""Recolector diario SofaScore vía Apify (actor rl1987/sofascore-api-scraper).
+"""Recolector diario SofaScore vía Apify.
+
+Actor por deporte (decisión del titular, 2026-10-24): fútbol con
+rl1987/sofascore-api-scraper; NBA y tenis con scrapesage/sofascore-scraper.
+El actor de cada objetivo se fija con "provider" en la configuración.
 
 Solo biblioteca estándar; corre en el host por cron. Las respuestas originales
 se archivan sin tocar (gzip por hash) con la hora REAL de recepción: SofaScore
@@ -18,11 +22,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 API = "https://api.apify.com/v2"
-ACTOR = "rl1987~sofascore-api-scraper"
+ACTORS = {"rl1987": "rl1987~sofascore-api-scraper",
+          "scrapesage": "scrapesage~sofascore-scraper"}
+DEFAULT_PROVIDER = "rl1987"
 UTC = timezone.utc
 FINAL = {"finished", "canceled", "cancelled", "postponed", "abandoned"}
-DETAIL = {"mode": "event_detail", "includeStatistics": True,
-          "includeLineups": True, "includeIncidents": True}
+ENRICH = {"includeStatistics": True, "includeLineups": True, "includeIncidents": True}
+DETAIL = {"mode": "event_detail", **ENRICH}
+DETAIL_SCRAPESAGE = {"mode": "event", **ENRICH}
+LIST_MAX = 100
 BATCH = 20
 # Margen tras el inicio antes de esperar un partido terminado.
 GRACE = timedelta(hours=3)
@@ -93,6 +101,12 @@ def http(method, url, token, payload=None, timeout=330):
         return exc.code, exc.read()
 
 
+def normalize_scrapesage(r):
+    """Fila de scrapesage al formato común del índice (id = matchId)."""
+    return {"kind": "event", "id": r["matchId"], "round": r.get("round"),
+            "startTimestamp": r.get("startTimestamp"), "statusType": r.get("statusType")}
+
+
 def month_usd(token, call=http):
     status, body = call("GET", API + "/users/me/limits", token, timeout=60)
     if status != 200:
@@ -114,23 +128,35 @@ class Collector:
         return min(self.cfg["monthly_cap_usd"] - used,
                    self.cfg["run_cap_usd"] - self.spent)
 
-    def run(self, kind, params, cap):
-        """Una corrida del actor; archiva el original y devuelve las filas."""
+    def provider(self, target):
+        if target.startswith("tennis."):
+            return (self.cfg.get("tennis") or {}).get("provider", DEFAULT_PROVIDER)
+        return (self.cfg["targets"].get(target) or {}).get("provider", DEFAULT_PROVIDER)
+
+    def run(self, kind, params, cap, provider=DEFAULT_PROVIDER):
+        """Una corrida del actor; archiva el original y devuelve las filas.
+
+        Las filas de scrapesage vuelven normalizadas (kind/id/round/startTimestamp/
+        statusType); el cuerpo original se archiva tal cual y el recibo anota el actor.
+        """
         before = month_usd(self.token, self.call)
         url = "%s/acts/%s/run-sync-get-dataset-items?timeout=300&maxTotalChargeUsd=%.2f" % (
-            API, ACTOR, max(cap, 0.10))
+            API, ACTORS[provider], max(cap, 0.10))
         status, body = self.call("POST", url, self.token, params)
         received = self.clock()
         sha, rel = put_object(self.root, body)
         rows = json.loads(body) if status in (200, 201) else []
         if not isinstance(rows, list):
             rows = []
+        if provider == "scrapesage":
+            rows = [normalize_scrapesage(r) for r in rows if r.get("matchId")]
         usd = max(month_usd(self.token, self.call) - before, 0.0)
         with self.db:
             cur = self.db.execute(
                 "INSERT INTO receipts(received_at,kind,params,status,sha256,body_path,rows,usd)"
                 " VALUES(?,?,?,?,?,?,?,?)",
-                (received.isoformat(), kind, json.dumps(params, sort_keys=True),
+                (received.isoformat(), kind,
+                 json.dumps({**params, "_actor": provider}, sort_keys=True),
                  status, sha, rel, len(rows), usd))
         return cur.lastrowid, rows
 
@@ -147,10 +173,13 @@ class Collector:
 
     def due(self, target, spec=None):
         """¿Hay que volver a listar? Solo si algo pudo terminar o no hay datos."""
-        if spec and spec.get("rounds") is False:  # sin jornadas: una vez cada ~20 h
+        if spec and (spec.get("rounds") is False or spec.get("provider") == "scrapesage"):
+            # sin jornadas: una vez cada ~20 h
             last = self.db.execute(
-                "SELECT max(received_at) FROM receipts WHERE kind='list' AND params LIKE ?",
-                ('%%"uniqueTournamentId": %d}' % spec["utid"],)).fetchone()[0]
+                "SELECT max(received_at) FROM receipts WHERE kind='list' AND"
+                " (params LIKE ? OR params LIKE ?)",
+                ('%%"uniqueTournamentId": %d}' % spec["utid"],
+                 '%%"tournamentIds": [%d]}' % spec["utid"])).fetchone()[0]
             return last is None or self.clock() - datetime.fromisoformat(last) > timedelta(hours=20)
         row = self.db.execute("SELECT round FROM rounds WHERE target=?", (target,)).fetchone()
         if row is None:
@@ -168,7 +197,15 @@ class Collector:
         cap = self.budget_left()
         if cap < 0.10:
             raise Stop("presupuesto agotado")
-        if spec.get("rounds") is False:  # competición sin jornadas (NBA)
+        if spec.get("provider") == "scrapesage":
+            # NBA y tenis: terminados recientes de la temporada en curso, sin jornadas.
+            params = {"mode": "tournament", "tournamentIds": [spec["utid"]],
+                      "onlyFinished": True,
+                      "maxResults": self.cfg.get("list_max", LIST_MAX)}
+            _, rows = self.run("list", params, min(cap, 0.50), "scrapesage")
+            self.upsert(target, rows)
+            return
+        if spec.get("rounds") is False:  # competición sin jornadas
             params = {"mode": "tournament", "uniqueTournamentId": spec["utid"],
                       "eventsSpan": "last"}
         else:
@@ -211,29 +248,37 @@ class Collector:
         # (API-Football en plan gratuito). Con 40 detalles al día, empezar por la jornada 1
         # tardaba semanas en llegar a los partidos de ayer.
         since = int((self.clock() - timedelta(days=self.cfg.get("detail_days", 14))).timestamp())
-        ids = [r[0] for r in self.db.execute(
-            "SELECT id FROM events WHERE captured_receipt IS NULL AND status='finished' AND start_ts>=?"
-            " ORDER BY (target LIKE 'tennis.%' OR target = 'nba'), start_ts DESC LIMIT ?",
-            (since, self.cfg["max_details_per_run"]))]
-        for i in range(0, len(ids), BATCH):
-            chunk = ids[i:i + BATCH]
-            cap = self.budget_left()
-            if cap < 0.10:
-                raise Stop("presupuesto agotado")
-            rid, rows = self.run("detail", {**DETAIL, "eventIds": [str(x) for x in chunk]},
-                                 min(cap, 0.01 * len(chunk) + 0.10))
-            got = {e["id"] for e in rows if e.get("id")}
-            with self.db:
-                for x in chunk:
-                    if x in got:
-                        self.db.execute("UPDATE events SET captured_receipt=? WHERE id=?",
-                                        (rid, x))
+        by_provider = {}
+        for eid, target in self.db.execute(
+                "SELECT id, target FROM events WHERE captured_receipt IS NULL AND"
+                " status='finished' AND start_ts>=?"
+                " ORDER BY (target LIKE 'tennis.%' OR target = 'nba'), start_ts DESC LIMIT ?",
+                (since, self.cfg["max_details_per_run"])).fetchall():
+            by_provider.setdefault(self.provider(target), []).append(eid)
+        for provider, ids in by_provider.items():
+            base = DETAIL_SCRAPESAGE if provider == "scrapesage" else DETAIL
+            for i in range(0, len(ids), BATCH):
+                chunk = ids[i:i + BATCH]
+                cap = self.budget_left()
+                if cap < 0.10:
+                    raise Stop("presupuesto agotado")
+                send = [int(x) for x in chunk] if provider == "scrapesage" else [str(x) for x in chunk]
+                rid, rows = self.run("detail", {**base, "eventIds": send},
+                                     min(cap, 0.01 * len(chunk) + 0.10), provider)
+                got = {e["id"] for e in rows if e.get("id")}
+                with self.db:
+                    for x in chunk:
+                        if x in got:
+                            self.db.execute("UPDATE events SET captured_receipt=? WHERE id=?",
+                                            (rid, x))
 
     def discover_tennis(self):
         """Cada semana localiza los torneos ATP/WTA (individuales) en juego.
 
         SofaScore no lista torneos activos: se barre un día de calendario y se
-        filtra por categoría. Los partidos hallados se registran de paso.
+        filtra por categoría. Solo rl1987 tiene modo por fecha (scrapesage no),
+        así que el descubrimiento sigue con rl1987 aunque los datos vengan de
+        scrapesage. Los partidos hallados se registran de paso.
         """
         cfg = self.cfg.get("tennis")
         if cfg is None:
@@ -246,7 +291,8 @@ class Collector:
             raise Stop("presupuesto agotado")
         day = self.clock().date().isoformat()
         _, rows = self.run("discover", {"mode": "scheduled", "sport": "tennis", "dateFrom": day,
-                                        "dateTo": day, "maxItems": cfg.get("max_items", 220)}, cap)
+                                        "dateTo": day, "maxItems": cfg.get("max_items", 220)},
+                           cap, "rl1987")
         keep = [e for e in rows if e.get("kind") == "event"
                 and e.get("category") in cfg.get("categories", ["ATP", "WTA"])
                 and not any(x in (e.get("uniqueTournament") or "") for x in cfg.get("exclude", ["Doubles"]))]
@@ -262,7 +308,8 @@ class Collector:
     def active_tennis(self):
         cfg = self.cfg.get("tennis") or {}
         limit = (self.clock() - timedelta(days=cfg.get("active_days", 10))).isoformat()
-        return {"tennis.%d" % r[0]: {"utid": r[0], "rounds": False}
+        prov = cfg.get("provider", DEFAULT_PROVIDER)
+        return {"tennis.%d" % r[0]: {"utid": r[0], "rounds": False, "provider": prov}
                 for r in self.db.execute("SELECT utid FROM tournaments WHERE last_seen>=?", (limit,))}
 
     def capture(self):

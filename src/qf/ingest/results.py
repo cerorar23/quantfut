@@ -219,12 +219,12 @@ def find_orphans(days: int = 14) -> list[dict]:
     está roto en la ingesta y no te vas a enterar por ningún error.
     """
     return query(
-        """SELECT match_id, league_id, kickoff_utc, status
-           FROM matches
-           WHERE status IN ('scheduled', 'live')
-             AND kickoff_utc < now() - interval '6 hours'
-             AND kickoff_utc > now() - make_interval(days => %s)
-           ORDER BY kickoff_utc""",
+        """SELECT m.match_id, m.league_id, m.kickoff_utc, m.status
+           FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
+           WHERE m.status IN ('scheduled', 'live')
+             AND m.kickoff_utc < now() - interval '6 hours'
+             AND m.kickoff_utc > now() - make_interval(days => %s)
+           ORDER BY m.kickoff_utc""",
         (days,),
     )
 

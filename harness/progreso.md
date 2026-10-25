@@ -1,5 +1,16 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Ligue 2 y Superliga danesa fuera de los motores; fuentes: solo SofaScore y PropLine
+
+El titular fijó las fuentes: SofaScore vía Apify (actor por deporte del 24-oct: rl1987 fútbol, scrapesage NBA y
+tenis) y PropLine; ya no API-Football ni FotMob. PropLine no cotiza Ligue 2 ni la Superliga danesa, así que el titular
+las retiró (db/086). Se desactivan en vez de borrarlas como Chile y Brasil B: tienen 205 pronósticos de alta
+probabilidad, 7 patas de escalera/parley y 55 ofertas en sombra sellados, y borrar historial sellado necesita una
+autorización aparte. Tampoco entran en `retired_leagues`: su trigger rechazaría cualquier UPDATE de los partidos que se
+conservan. `RETIRED_LEAGUES` impide reimportarlas desde archivos. El recolector SofaScore de este PR se rehízo sobre la
+versión por deporte que corría en el servidor y no estaba en `main`; desplegar la de `main` habría devuelto NBA y tenis
+a rl1987.
+
 ## 2026-10-25 — Resultados y calendario desde PropLine; xG desde SofaScore
 
 API-Football volvió al plan gratuito el 22-oct y el titular eligió sustituirlo en vez de renovarlo. Se lee lo que ya

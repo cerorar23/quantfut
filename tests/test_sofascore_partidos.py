@@ -114,3 +114,9 @@ def test_detalles_verifica_hash_y_filtra_futbol(tmp_path):
     out = sp.detalles(tmp_path, KO - timedelta(days=1))
     assert [f["id"] for r, f in out] == [15269947]
     assert sp.detalles(tmp_path, KO + timedelta(days=1)) == []
+
+
+def test_ligas_retiradas_no_se_cargan(monkeypatch):
+    candidatos(monkeypatch, [], {})
+    for torneo in (182, 39):   # Ligue 2 y Superliga danesa: sin cuotas, fuera de los motores (25-oct)
+        assert sp.emparejar(fila(uniqueTournamentId=torneo))[1] == "competicion_fuera_de_catalogo"

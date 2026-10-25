@@ -69,12 +69,12 @@ def check_fixtures_horizon() -> tuple[bool, str]:
 
 
 def check_orphan_matches() -> tuple[bool, str]:
-    """Partidos que pasaron hace rato y siguen sin cerrar."""
+    """Partidos que pasaron hace rato y siguen sin cerrar (solo de competiciones activas)."""
     n = query(
-        """SELECT count(*) AS n FROM matches
-           WHERE status IN ('scheduled', 'live')
-             AND kickoff_utc < now() - interval '8 hours'
-             AND kickoff_utc > now() - interval '30 days'"""
+        """SELECT count(*) AS n FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
+           WHERE m.status IN ('scheduled', 'live')
+             AND m.kickoff_utc < now() - interval '8 hours'
+             AND m.kickoff_utc > now() - interval '30 days'"""
     )[0]["n"]
     if n > 3:
         return False, f"{n} partidos terminaron hace >8h y siguen abiertos"
