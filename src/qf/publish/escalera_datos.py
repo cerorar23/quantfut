@@ -264,14 +264,7 @@ def opciones(m: dict, now: datetime, rho: float | None,
     filas_af = _cuotas_af(match_id, now)
     snap = ad._snapshot(match_id, kickoff, now)
     if snap is not None:
-        equipos: list[dict] = []
-        if snap.source in ("the_odds_api", "propline"):
-            totales = ad._totales(match_id, snap.as_of)
-        elif snap.source == "api_football":
-            totales = ad._totales_af(match_id, snap.as_of, now)
-            equipos = ad._equipos_af(match_id, snap.as_of, now)
-        else:
-            totales = []
+        totales, equipos = ad._referencias(match_id, snap, now)
         q = snap.books[settings.sharp_book]
         fair = devig([q[s] for s in ad.SEL], settings.devig_method)
         p = {s: float(fair[i]) for i, s in enumerate(ad.SEL)}

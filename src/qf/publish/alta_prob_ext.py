@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from datetime import datetime, timezone
 
 from ..config import settings
@@ -64,9 +65,11 @@ def _partidos(now: datetime) -> list[dict]:
 
 
 def candidatos(snap: pk.Snapshot, totales: list[dict], rho: float | None,
-               corners: list[ap.Candidato], excluir: set[str]
+               corners: list[ap.Candidato], excluir: set[str],
+               cuota: Callable[[ap.Candidato], tuple] | None = None
                ) -> tuple[list[ap.Candidato], dict | None]:
-    """Candidatos aprobados de un partido (62-95 %) y el ajuste de goles que los respalda."""
+    """Candidatos aprobados de un partido (62-95 %) y el ajuste de goles que los respalda.
+    Con `cuota` (`ad.cotizador`), solo los que tienen cuota de referencia."""
     q = snap.books[settings.sharp_book]
     fair = devig([q[s] for s in ad.SEL], settings.devig_method)
     p = {s: float(fair[i]) for i, s in enumerate(ad.SEL)}
@@ -81,6 +84,8 @@ def candidatos(snap: pk.Snapshot, totales: list[dict], rho: float | None,
     cands += ap.candidatos_btts(ajuste, ap.BTTS_EXT)
     cands += ap.candidatos_handicap(p, ajuste, ap.HANDICAP_HABILITADOS)
     cands += corners
+    if cuota is not None:
+        cands = [c for c in cands if cuota(c)[0] is not None]
     return ap.elegir_ext(cands, excluir), ajuste
 
 
@@ -107,27 +112,18 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         if snap is None:
             out["sin_precio"] += 1
             continue
-        equipos: list[dict] = []
-        if snap.source in ("the_odds_api", "propline"):
-            totales = ad._totales(m["match_id"], snap.as_of)
-        elif snap.source == "api_football":
-            totales = ad._totales_af(m["match_id"], snap.as_of, now)
-            equipos = ad._equipos_af(m["match_id"], snap.as_of, now)
-        else:
-            totales = []
+        totales, equipos = ad._referencias(m["match_id"], snap, now)
         filas_af = ed._cuotas_af(m["match_id"], now)
         corners, fits_corners = ad._corners(m, now, modelos, filas_af, ap.CORNERS_EXT)
-        elegidos, ajuste = candidatos(snap, totales, rho, corners, excluir)
+        cuota = ad.cotizador(m["match_id"], snap, totales, equipos, filas_af)
+        elegidos, ajuste = candidatos(snap, totales, rho, corners, excluir, cuota)
         if not elegidos:
             out["sin_candidato"] += 1
             continue
         for c in elegidos:
             fit = (fits_corners[(c.market, c.selection, c.line)] if c.market in ad.CORNERS
                    else ajuste if c.market in ap.MERCADOS_CON_AJUSTE else None)
-            if c.market in ("btts", "double_chance", "spreads", *ad.CORNERS):
-                ref_price, ref_book = ad._ref_nuevos(c, m["match_id"], snap, filas_af)
-            else:
-                ref_price, ref_book = ad._ref(snap, totales, c, equipos)
+            ref_price, ref_book = cuota(c)
             fila = (m["match_id"], c.market, c.selection, c.line, round(c.prob, 6),
                     round(1.0 / c.prob, 4), ref_price, ref_book, snap.source, snap.as_of,
                     json.dumps(fit) if fit else None)
