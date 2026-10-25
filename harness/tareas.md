@@ -3199,3 +3199,11 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [x] Añadir al recolector `/odds/closing` (cierre real) para fútbol y NBA: lo hizo el PR #96 (también tenis).
 - [x] Emparejar props NBA por `player_id`: ya lo hacía `apps/nba/src/nba/prop_lines.py`. En tenis PropLine no da `player_id`.
 - [x] `/results` y `/odds/closing` están en Hobby (petición real del 24-oct, `redacted: false`).
+
+## Bajas y once previo desde SofaScore (25-oct-2026)
+Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScore (rl1987 `event_detail` con `includeLineups`) trae, para partidos futuros, el once previsto (`lineups.confirmed=false`, formación y 11 titulares) y las bajas (`missingPlayers`: tipo missing/doubtful, motivo, fecha de regreso). Medido el 25-oct en la Premier (3 partidos).
+- [ ] db/087: `injuries.source`/`expected_return` y tabla `lineups_previstas` (once previsto y oficial con recepción real).
+- [ ] Recolector: orden `lineups` (cron cada 10 min): captura «previa» una vez por partido entre T-30 h y T-65 min, y «oficial» entre T-65 y T-20 min hasta que `confirmed=true` (máx. 5 intentos).
+- [ ] Cargador del worker `qf.ingest.sofascore_alineaciones`: bajas → `injuries`; once previsto → `lineups_previstas`; once confirmado → `lineups` (lo que lee `sello_tardio`).
+- [ ] `availability()` solo compara contra historia de la misma fuente de ids (SofaScore ≠ API-Football): sin historia suficiente devuelve «insuficiente», no basura.
+- [ ] Ensayo, respaldo, despliegue (worker + cron host) y entrada en DEPLOYS.md. Pendiente aparte: historia de once SofaScore para que `availability` funcione.

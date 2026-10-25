@@ -63,5 +63,14 @@
   "discovery_cap_usd": 0.9,
   "provider": "scrapesage"
  },
- "list_max": 100
+ "list_max": 100,
+ "lineups": {
+  "previa_horas": 30,
+  "oficial_min": [
+   20,
+   65
+  ],
+  "max_intentos": 5,
+  "max_por_corrida": 40
+ }
 }
