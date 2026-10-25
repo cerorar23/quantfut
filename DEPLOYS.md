@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-25 17:35 UTC · Clasificación calculada y marcador en vivo de FotMob · worker `quantfut-worker-propline:d2a1b5e` (`main` `d2a1b5e`, PR #130) + cron + carpeta `~/quantfut`
+- **Motivo:** orden del titular («limpia y arregla»): clasificación y marcador en vivo estaban parados desde el 22-oct (API-Football). La clasificación se calcula con nuestros resultados; el vivo sale del listado diario de FotMob (una petición cada 5 min).
+- **Estado previo comprobado (17:34 UTC):** worker `ffe42ee` (= entrada anterior), `scripts/crontab` = `main` anterior (`beab2c30…`); ninguna captura de PropLine en marcha; nadie más desplegando.
+- **Worker:** imagen `FROM quantfut-worker-propline:ffe42ee` + `src/` de `git archive d2a1b5e` (`~/quantfut/build/d2a1b5e`); 162/162 `.py` idénticos a `main`. Compose con la etiqueta `d2a1b5e`. `scripts/crontab` = `main` (`d856401d…`): `qf.ingest.standings` cada hora a las :50 y `qf.ingest.live` cada 5 min. Recreado fuera de :07-:25 y sin captura en marcha (trampa de abajo): sin incidencias.
+- **Carpeta del servidor:** `~/quantfut/src`, `requirements.txt`, `requirements-dev.txt` y `Dockerfile` = `main` `d2a1b5e` (162/162 `.py`). Quedan 6 `.pyc` de root en `src/qf/__pycache__` y `src/qf/ingest/__pycache__` que `qf` no puede borrar; Python los ignora al no coincidir con su fuente.
+- **Ensayo previo sin escrituras (≈17:20 UTC):** vivo 36 candidatos, 20 en juego enlazados; clasificación de las 19 ligas; contra la foto de API-Football del 22-oct 06:40 coincide equipo a equipo salvo Southampton (−4, en `SANCIONES`).
+- **Verificado:** pasadas reales 17:36 UTC: vivo 18 en juego; clasificación 19 ligas (406 filas antes, mismas ligas). En `https://pronosticosdeportivos.pro/mobile/v1/matches/gb.premier_league:2627:sunderland-leeds:20261025`: vivo 0-0, minuto 50, `2H`; tabla de 20 equipos actualizada a las 17:36. API sin tocar (`3babeb4`).
+- Respaldo: `~/quantfut/backups/20261025-vivo-clasificacion/` (`docker-compose.yml`, `crontab`, `worker_image.txt`, `src_servidor.tgz`, `requirements*.txt`, `Dockerfile`, `standings_antes.csv`, `propline_runtime.json`).
+- **Vuelta atrás** (fuera de :07-:25): `B=~/quantfut/backups/20261025-vivo-clasificacion; cp -p $B/docker-compose.yml ~/quantfut/ && cp -p $B/crontab ~/quantfut/scripts/crontab && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate worker`. La tabla anterior: `\copy standings FROM` de `standings_antes.csv` tras vaciarla. La carpeta: `rm -rf src && tar -xzf $B/src_servidor.tgz` (no hace falta: no la monta ningún contenedor).
+
 ### 2026-10-25 16:22 UTC · Cierres de PropLine, Liga MX/MLS en SofaScore y `stats` · worker `quantfut-worker-propline:ffe42ee` (`main` `ffe42ee`, PR #127) + cron + recolector SofaScore
 - **Motivo:** auditoría de datos (`docs/auditoria_datos_motores_20261025.md`, PR #125): sin cierres desde el 22-oct 18:50 aunque PropLine los archiva; MLS y Liga MX sin ningún partido en SofaScore; `matches.stats` vacío desde el 22-oct. Orden del titular: fusionar #125 y #127, desplegar worker, cron y recolector con respaldo, cargar los cierres y verificar.
 - **Estado previo comprobado (16:20 UTC):** worker `2db3f61` (= entrada anterior) con 161/161 `.py` idénticos a `main`; `scripts/crontab` (`8e7ad146…`), `config.json` (`9304fda1…`) y `sofascore_apify.py` (`4960defa…`) del recolector = `main`; ningún trabajo en curso en el worker; nadie más desplegando. La 088 sigue programada en el cron del host (01:30 UTC del 26-oct) y no se toca.
@@ -659,13 +669,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
   desde un contenedor de compose) conserva las etiquetas `com.docker.compose.*` del servicio worker: `docker compose up
   --force-recreate worker` mata `propline-shared-capture` a mitad de pasada y deja el worker en «Created» con nombre
   temporal (25-oct 16:22). Si pasa: `docker compose up -d --no-deps --no-build worker` y `docker rename <id>_quantfut-worker-1
-  quantfut-worker-1`. Arreglo de fondo pendiente: reconstruir esa imagen sin las etiquetas.
-- **`requirements.txt` del servidor no tiene `cryptography` ni `firebase-admin`** (el de `main` sí). El worker en ejecución
-  los tiene instalados a mano. Reconstruir una imagen desde `~/quantfut` tal cual **perdería `cryptography`**, que descifra
-  la clave de PitchAPI guardada en la base.
-- **`docker-compose.yml` de `main` fija una imagen antigua de la API** (`quantfut-api-tapjoy:20261012-msg`); el servidor usa
-  `quantfut-api-admob:20261015a`. Desplegar con el compose del repo retrocedería la API.
-- La API (`api`) y la carpeta `~/quantfut/src` llevan código antiguo (ver tabla de arriba); la API no se ha alineado.
+  quantfut-worker-1`. Arreglo de fondo preparado el 25-oct: imagen `propline-shared-capture:sin-etiquetas`
+  (`sha256:0599acdb…`, la misma con las etiquetas `com.docker.compose.*` vacías); falta apuntar a ella el `runtime.json`
+  de `~/propline-shared/current`, que espera el visto bueno del titular.
+- **`docker compose cp worker …` también copia al contenedor de la captura de PropLine** (por las mismas etiquetas). Usar
+  `docker cp quantfut-worker-1:…` y `docker exec quantfut-worker-1 …` con el nombre exacto.
+- (Resuelto el 25-oct) `requirements.txt`, `Dockerfile` y `~/quantfut/src` del servidor ya son los de `main`, y el
+  `docker-compose.yml` del repo es igual al del servidor. La API corre `3babeb4` de `main`: solo difiere `config.py`, con
+  ajustes que usa el worker.
 
 ### 2026-10-15 · F2c · filtro del cierre reconstruido — worker
 - Commit `976b448`. `docker cp` de `eval/cierre.py`, `eval/clv.py`, `model/train.py`, `model/shadow.py`,
