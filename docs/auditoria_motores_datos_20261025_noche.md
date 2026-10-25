@@ -53,10 +53,17 @@ Medido en producción con SELECT en transacción de solo lectura, los registros 
 | F7 sello tardío | Funciona: 32 lotes por partido hoy, sin fallos |
 | F9, F12, F5, F4 | Sin empezar (sin cambios) |
 
+## Decisiones del titular aplicadas después (25-oct, 20:30 UTC)
+
+- **Marcador final al pitido** y **resultado con la primera fuente que lo tenga.** `qf.ingest.live` (cada 5 min) cierra
+  el partido en cuanto el listado de FotMob lo da por terminado en el tiempo reglamentario, con las validaciones del
+  respaldo (`fotmob_captura.cerrar_partido`: misma página, mismos equipos, `FT`) y liquida. Solo escribe marcador y
+  página; córners, tarjetas y estadísticas siguen viniendo de SofaScore y de `completar`, y su liquidación espera a
+  tenerlos. La app ya muestra «2–1 · Finalizado» en cuanto el partido está cerrado (la ficha no tiene caché), así que no
+  hace falta versión nueva. Prórroga, penaltis y suspendidos quedan para PropLine o el respaldo, que ahora actúa a las
+  2 h 30 min (antes 6 h) y cada hora. Solo ligas activas. Ensayo sin escrituras a las 20:52: 8 partidos terminados,
+  todos validados (Real Sociedad–Levante 2-1, Lecce–Juventus 0-2, Molde–Fredrikstad 5-1…).
+
 ## Lo que no se cambia y por qué
 
-- **Marcador final en la app entre el pitido y el resultado oficial:** mostrarlo exige un estado `FT` que la app actual
-  no sabe pintar (lo pondría como «en juego»); va con la próxima versión de la app.
-- **Cierre de resultados desde FotMob antes de las 6 h:** FotMob es respaldo por decisión del titular; adelantar la
-  fuente es una decisión, no un error.
 - **`SOFT_BOOKS`, licencia de BetsAPI, tope de Apify:** dependen del titular (PENDIENTES.md).

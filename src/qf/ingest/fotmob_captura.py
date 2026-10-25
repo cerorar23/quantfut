@@ -8,7 +8,8 @@ Cinco acciones, cada una con su cron:
                Es lo ÚNICO anterior al saque; cada fila lleva la hora real de captura.
   posteriores  la página del partido terminado; llena fotmob_partido / fotmob_jugador_partido / fotmob_baja.
   completar    sin peticiones: con esas páginas rellena en `matches` lo que SofaScore y PropLine dejaron vacío.
-  resultados   respaldo: cierra y liquida con FotMob los partidos que PropLine deja abiertos más de 6 h.
+  resultados   respaldo: cierra y liquida con FotMob los partidos que siguen abiertos más de 2 h 30 min tras el saque.
+               El cierre normal es al pitido, desde `qf.ingest.live` (`cerrar_partido`); PropLine cierra si llega antes.
 
 Límites de uso (no se evitan controles de acceso):
 - Una petición cada `ESPERA_S` segundos, en serie.
@@ -46,8 +47,10 @@ MAX_POSTERIORES = 60
 # «completar» espera a que la fuente principal haya tenido su oportunidad: el detalle de SofaScore llega con
 # mediana 12 h, p90 19 h y máximo 33 h tras el saque (medido el 25-oct-2026).
 ESPERA_COMPLETAR = timedelta(hours=36)
-# «resultados» deja a PropLine dos pasadas (/scores cada 3 h, cierre a las :45) antes de cerrar con FotMob.
-ESPERA_RESULTADO = timedelta(hours=6)
+# Decisión del titular (25-oct-2026): el resultado se cierra con la primera fuente que lo tenga. El vivo cierra al
+# pitido; este respaldo recoge, a partir de las 2 h 30 min del saque, lo que el vivo no vio (enfriamiento, fuera
+# del listado). Antes esperaba 6 h a que PropLine tuviera dos pasadas.
+ESPERA_RESULTADO = timedelta(hours=2, minutes=30)
 
 
 class AccesoDenegado(RuntimeError):
@@ -370,6 +373,46 @@ def _marcador_final(payload: dict) -> tuple[int, int] | None:
     return vals[0], vals[1]
 
 
+def cerrar_partido(c, cli: Cliente, f: dict, rellenar: bool = True) -> str:
+    """Cierra un partido con su página de FotMob: 'cerrados', 'abiertos', 'equipos_distintos', 'descartados' o 'ya_cerrado'.
+
+    `f` trae match_id, kickoff_utc, home_team_id, away_team_id y fotmob_match_id. Solo si la página es de ese partido,
+    de los mismos dos equipos (por `fotmob_equipo`, en el mismo orden) y terminó en el tiempo reglamentario. Con
+    `rellenar=False` (cierre al pitido) solo se escriben el marcador y la página: el resto de columnas lo llenan
+    SofaScore y, a las 36 h, `completar`.
+    """
+    payload = cli.get("matchDetails", {"matchId": f["fotmob_match_id"]})
+    if not _validar(payload, f["fotmob_match_id"]):
+        return "descartados"
+    marcador = _marcador_final(payload)
+    if marcador is None:
+        return "abiertos"
+    ids = [e.get("id") for e in payload["header"]["teams"][:2]]
+    equipo = {x["fotmob_team_id"]: x["team_id"] for x in c.execute(
+        "SELECT fotmob_team_id, team_id FROM fotmob_equipo WHERE fotmob_team_id = ANY(%s)",
+        ([i for i in ids if isinstance(i, int)],)).fetchall()}
+    if (equipo.get(ids[0]), equipo.get(ids[1])) != (f["home_team_id"], f["away_team_id"]):
+        return "equipos_distintos"
+    oid, cap = _guardar_original(c, f["match_id"], f["fotmob_match_id"], "posterior", payload["__raw__"], None)
+    with c.cursor() as w:
+        fm.insertar(w, f["match_id"], f["fotmob_match_id"], hashlib.sha256(payload["__raw__"]).hexdigest(), cap,
+                    fm.extraer(payload, f["kickoff_utc"]))
+    cerrado = c.execute(
+        """UPDATE matches SET status = 'finished', home_goals = %s, away_goals = %s,
+                  external_ids = external_ids || jsonb_build_object('fotmob', %s::text), result_recorded_at = now()
+           WHERE match_id = %s AND status <> 'finished'""",
+        (*marcador, str(f["fotmob_match_id"]), f["match_id"])).rowcount
+    c.commit()
+    if not cerrado:
+        return "ya_cerrado"
+    if rellenar:
+        actual = c.execute(f"""SELECT m.match_id, m.home_goals, m.away_goals, m.home_xg, m.away_xg, {_columnas()}
+                               FROM matches m WHERE m.match_id = %s""", (f["match_id"],)).fetchone()
+        _rellenar(c, {**actual, "fotmob_match_id": f["fotmob_match_id"], "capturado_en": cap}, payload)
+        c.commit()
+    return "cerrados"
+
+
 def cerrar_huerfanos(c, cli: Cliente, dias_atras: int = 10) -> dict:
     """Respaldo de resultados: cierra con FotMob lo que PropLine deja abierto más de ESPERA_RESULTADO.
 
@@ -387,38 +430,9 @@ def cerrar_huerfanos(c, cli: Cliente, dias_atras: int = 10) -> dict:
         (ahora - timedelta(days=dias_atras), ahora - ESPERA_RESULTADO)).fetchall()
     r = {"candidatos": len(filas), "cerrados": 0, "abiertos": 0, "equipos_distintos": 0, "descartados": 0}
     for f in filas:
-        payload = cli.get("matchDetails", {"matchId": f["fotmob_match_id"]})
-        if not _validar(payload, f["fotmob_match_id"]):
-            r["descartados"] += 1
-            continue
-        marcador = _marcador_final(payload)
-        if marcador is None:
-            r["abiertos"] += 1
-            continue
-        ids = [e.get("id") for e in payload["header"]["teams"][:2]]
-        equipo = {x["fotmob_team_id"]: x["team_id"] for x in c.execute(
-            "SELECT fotmob_team_id, team_id FROM fotmob_equipo WHERE fotmob_team_id = ANY(%s)",
-            ([i for i in ids if isinstance(i, int)],)).fetchall()}
-        if (equipo.get(ids[0]), equipo.get(ids[1])) != (f["home_team_id"], f["away_team_id"]):
-            r["equipos_distintos"] += 1
-            continue
-        oid, cap = _guardar_original(c, f["match_id"], f["fotmob_match_id"], "posterior", payload["__raw__"], None)
-        with c.cursor() as w:
-            fm.insertar(w, f["match_id"], f["fotmob_match_id"], hashlib.sha256(payload["__raw__"]).hexdigest(), cap,
-                        fm.extraer(payload, f["kickoff_utc"]))
-        cerrado = c.execute(
-            """UPDATE matches SET status = 'finished', home_goals = %s, away_goals = %s,
-                      external_ids = external_ids || jsonb_build_object('fotmob', %s::text), result_recorded_at = now()
-               WHERE match_id = %s AND status <> 'finished'""",
-            (*marcador, str(f["fotmob_match_id"]), f["match_id"])).rowcount
-        c.commit()
-        if not cerrado:
-            continue
-        r["cerrados"] += 1
-        actual = c.execute(f"""SELECT m.match_id, m.home_goals, m.away_goals, m.home_xg, m.away_xg, {_columnas()}
-                               FROM matches m WHERE m.match_id = %s""", (f["match_id"],)).fetchone()
-        _rellenar(c, {**actual, "fotmob_match_id": f["fotmob_match_id"], "capturado_en": cap}, payload)
-        c.commit()
+        estado = cerrar_partido(c, cli, f)
+        if estado in r:
+            r[estado] += 1
     if r["cerrados"]:
         from ..eval.clv import settle_pending
         r["settled"] = settle_pending()

@@ -1,5 +1,14 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 (noche) — Resultado al pitido con la primera fuente disponible
+
+Decisión del titular: la app muestra el marcador final al pitido y el resultado se cierra con la fuente que lo tenga
+primero. FotMob lo tiene a los ~5 min (el vivo ya lee su listado); PropLine, a las 3-6 h. Por eso el vivo cierra al
+pitido con las validaciones del respaldo (mismo partido, mismos equipos, `FT`) y no se adelanta nada más: córners,
+tarjetas y estadísticas siguen con SofaScore como fuente principal, porque sus recuentos no coinciden con los de otras
+fuentes (las amarillas de BetsAPI difieren hasta un 45 %) y mezclar fuentes por llegar antes falsearía el Motor C.
+Prórroga y penaltis quedan fuera: el marcador de los 90 minutos sale de otra fuente.
+
 ## 2026-10-25 (noche) — Auditoría de motores y datos: lo que quedó parado con el cambio de fuente
 
 Orden del titular: auditar los tres motores y las fases del A, comprobar vivo, cierres y completitud, y arreglar en el
