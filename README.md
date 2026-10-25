@@ -1235,11 +1235,13 @@ probabilidades de tarjetas en ligas con poco historial. Detalle y reversión:
 parte de México, FotMob deja el bloque de estadísticas de tarjetas en `[0, 0]` en
 2026 aunque la cronología trae cada tarjeta: el relleno guardó ceros falsos (media de
 la liga argentina de 5,0 a 0,5 tarjetas) y el modelo de tarjetas llegó a dar 1,7 en
-un Independiente–Boca, con «menos de 6,5» al 100 %. Ahora, si el bloque viene con las
-cuatro a cero, `extraer` cuenta la cronología (sin las del cuerpo técnico; doble
-amarilla = roja), y si la cronología no tiene descanso o trae un tipo desconocido deja
-NULL. `--reparar-tarjetas` corrigió 607 partidos ya guardados (ar 330, br 217, mx 59);
-134 siguen en 0 porque la cronología tampoco tiene tarjetas. Contra API-Football, la
+un Independiente–Boca, con «menos de 6,5» al 100 %. Ahora, si el bloque trae las
+amarillas a cero (a veces con la roja bien), `extraer` cuenta la cronología para las
+cuatro columnas (sin las del cuerpo técnico; doble amarilla = roja), y si la cronología
+no tiene descanso o trae un tipo desconocido deja NULL. `--reparar-tarjetas` corrigió 776
+partidos ya guardados (ar 409, br 279, mx 83 y 5 de otras ligas) en dos pasadas: 607 con
+las cuatro a cero y 169 con amarillas a cero y alguna roja; 150 siguen igual porque la
+cronología coincide (sin amarillas). Contra API-Football, la
 cronología sin cuerpo técnico coincide en amarillas en ~92-97 % de partidos y en rojas
 en ~99 %.
 

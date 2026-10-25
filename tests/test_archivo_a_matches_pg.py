@@ -142,6 +142,15 @@ def test_reparar_tarjetas_aplica_la_cronologia_y_el_ensayo_revierte():
         assert mid not in {x["match_id"] for x in reparar_tarjetas(c)["cambios"]}
 
 
+def test_reparar_tarjetas_con_amarillas_a_cero_y_una_roja():
+    mid = _con_tarjetas_de_fotmob_a_cero(_cronologia((True, "Yellow", False), (True, "Red", False)))
+    db.execute("UPDATE matches SET home_red = 1 WHERE match_id = %s", (mid,))
+    with db.conn() as c:
+        reparar_tarjetas(c)
+    f = _fila(mid)
+    assert (f["home_yellow"], f["away_yellow"], f["home_red"], f["away_red"]) == (1, 0, 1, 0)
+
+
 def test_reparar_tarjetas_sin_cronologia_fiable_deja_null():
     sin_descanso = {"content": {"matchFacts": {"events": {"events": []}}}}
     mid = _con_tarjetas_de_fotmob_a_cero(sin_descanso)

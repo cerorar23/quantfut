@@ -85,6 +85,13 @@ def test_bloque_a_cero_manda_la_cronologia_sin_el_cuerpo_tecnico():
     assert (r["home_red"], r["away_red"]) == (1, 1)
 
 
+def test_amarillas_a_cero_con_rojas_tambien_manda_la_cronologia():
+    # El bloque trae la roja pero deja las amarillas a [0, 0].
+    p = con_tarjetas(tarjeta(True, "Yellow"), tarjeta(False, "Yellow"), tarjeta(False, "Yellow"), tarjeta(True, "Red"))
+    r = extraer(p, {**CERO, "red_cards": [1.0, 0.0]}, 2, 3)
+    assert (r["home_yellow"], r["away_yellow"], r["home_red"], r["away_red"]) == (1, 2, 1, 0)
+
+
 def test_bloque_a_cero_y_cronologia_sin_tarjetas_es_cero():
     r = extraer(payload(), CERO, 2, 3)
     assert (r["home_yellow"], r["away_yellow"], r["home_red"], r["away_red"]) == (0, 0, 0, 0)
