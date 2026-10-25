@@ -64,14 +64,19 @@ def _features_from_availability(data: dict) -> dict | None:
 
 
 def _quotes(match_id: str, lineup_as_of) -> list[dict]:
+    # Desde el 23-oct-2026 las cuotas son de PropLine, que captura una vez por hora
+    # (`hourly:*`) y nunca etiqueta `post_xi`: sin admitirlas la sombra no registró nada
+    # desde ese día. Sigue valiendo solo una foto posterior al XI y anterior a T-15; la
+    # horaria se admite hasta 75 min de antigüedad porque no hay otra más reciente.
     return query(
         """SELECT DISTINCT ON (bookmaker, selection)
                   bookmaker, selection, price, captured_at
            FROM odds_snapshots
-           WHERE match_id=%s AND market='h2h' AND window_tag='post_xi'
+           WHERE match_id=%s AND market='h2h'
+             AND ((window_tag='post_xi' AND captured_at >= now() - interval '15 minutes')
+               OR (window_tag LIKE 'hourly:%%' AND captured_at >= now() - interval '75 minutes'))
              AND mins_to_kickoff >= 15
              AND captured_at >= %s
-             AND captured_at >= now() - interval '15 minutes'
            ORDER BY bookmaker, selection, captured_at DESC""",
         (match_id, lineup_as_of),
     )

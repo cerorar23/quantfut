@@ -123,7 +123,7 @@ def _ingest_hourly(connection, now=None):
         if not meta:
             continue
         feed = football_feed(events, receipt["received_at"])
-        pairs = match_events(feed, meta)
+        pairs = match_events(feed, meta, otras_fuentes=("propline",))
         result["unmatched_events"] += len(feed) - len(pairs)
         for event, mid in pairs:
             kickoff = meta[mid]["kickoff_utc"]

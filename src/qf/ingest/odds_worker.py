@@ -35,7 +35,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..config import settings
 from ..db import copy_rows, execute, query, query_one
-from ..normalize import resolve_team
+from ..normalize import match_team, resolve_team
 
 log = logging.getLogger(__name__)
 
@@ -190,15 +190,32 @@ def match_meta(match_ids: list[str]) -> dict[str, dict]:
     }
 
 
-def match_events(events: list[dict], meta: dict[str, dict]) -> list[tuple[dict, str]]:
+def _resolver(nombre: str, seen_in: str | None, otras_fuentes: tuple[str, ...]) -> str | None:
+    """
+    Alias exacto de `otras_fuentes` y, si no hay, `odds_api` (que registra el fallo en
+    `unresolved_names`). El calendario y los resultados de PropLine aprenden sus alias con la
+    fuente `propline`; sin mirarlos, cada nombre nuevo dejaba el partido sin cuotas (25-oct-2026:
+    19 de 63 partidos del diario sin precio hasta dar de alta 150 alias a mano).
+    """
+    for fuente in otras_fuentes:
+        tid, _, score = match_team(nombre, fuente)
+        if tid and score >= 100.0:
+            fila = query_one("SELECT canonical_name FROM teams WHERE team_id = %s", (tid,))
+            if fila:
+                return fila["canonical_name"]
+    return resolve_team(nombre, "odds_api", seen_in=seen_in)
+
+
+def match_events(events: list[dict], meta: dict[str, dict],
+                 otras_fuentes: tuple[str, ...] = ()) -> list[tuple[dict, str]]:
     """Empareja cada evento del feed con su partido de `meta` (nombres resueltos, ±2 h)."""
     # Un sport_key es una sola competición: la de cualquiera de sus partidos.
     seen_in = next(iter(meta.values()))["league_id"] if meta else None
     out = []
     for ev in events:
         ko = datetime.fromisoformat(ev["commence_time"].replace("Z", "+00:00"))
-        home = resolve_team(ev.get("home_team", ""), "odds_api", seen_in=seen_in)
-        away = resolve_team(ev.get("away_team", ""), "odds_api", seen_in=seen_in)
+        home = _resolver(ev.get("home_team", ""), seen_in, otras_fuentes)
+        away = _resolver(ev.get("away_team", ""), seen_in, otras_fuentes)
         if not home or not away:
             continue  # ya quedó registrado en unresolved_names
 
