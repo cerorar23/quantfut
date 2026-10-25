@@ -34,7 +34,7 @@ def test_a_refit_that_only_adds_the_sums_passes_every_check():
     fresh, old = deployed_and_fresh()
     checks, detail = live.compare_models(fresh, old)
     assert all(checks.values()), checks
-    assert detail['inputs_changed'] == ['live_module_sha256', 'protocol_sha256'] and detail['new_markets'] == sorted(live.COMBOS)
+    assert detail['inputs_changed'] == ['live_module_sha256', 'protocol_sha256'] and detail['new_markets'] == sorted(set(live.PLAYER_MARKETS) - set(SINGLES))
 
 
 @pytest.mark.parametrize('change, failing', [

@@ -4,7 +4,7 @@ const dateOptions = { timeZone: 'America/Mexico_City', day: 'numeric', month: 's
 const date = (value) => value ? new Intl.DateTimeFormat('es-MX', dateOptions).format(new Date(value)) : 'Sin actualización verificada';
 const number = (n, places=1) => new Intl.NumberFormat('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: places }).format(n);
 const statusNames = { pending: 'Pendiente', awaiting_result: 'Esperando resultado', evaluated: 'Evaluado', dnp: 'No participó', validation_hold: 'Resultado en revisión', result_unavailable: 'Resultado no disponible' };
-const MARKET_ORDER = ['player_points','player_rebounds','player_assists','player_points_rebounds','player_points_assists','player_rebounds_assists','player_points_rebounds_assists'];
+const MARKET_ORDER = ['player_points','player_rebounds','player_assists','player_points_rebounds','player_points_assists','player_rebounds_assists','player_points_rebounds_assists','player_threes','player_steals','player_blocks','player_blocks_steals'];
 let data = null, market = 'all', modelMarket = 'all', loading = false;
 function node(tag, css, text) { const n = document.createElement(tag); if (css) n.className = css; if (text !== undefined) n.textContent = text; return n; }
 function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-00[2456]\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
@@ -58,7 +58,7 @@ function renderLive() {
   $('live-count').textContent=`${events.length} partidos · ${rows.length} pronósticos · ${rows.filter(r=>r.result.status==='evaluated').length} resultados oficiales · modelo ${cohorts[0].version}`;
   for(const cohort of cohorts) {
     const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${cohort.train_seasons.join(' y ')}`);box.append(head);
-    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total',player_points:'Puntos de jugador',player_rebounds:'Rebotes',player_assists:'Asistencias',player_points_rebounds:'Puntos + rebotes',player_points_assists:'Puntos + asistencias',player_rebounds_assists:'Rebotes + asistencias',player_points_rebounds_assists:'Puntos + rebotes + asistencias'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
+    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total',player_points:'Puntos de jugador',player_rebounds:'Rebotes',player_assists:'Asistencias',player_points_rebounds:'Puntos + rebotes',player_points_assists:'Puntos + asistencias',player_rebounds_assists:'Rebotes + asistencias',player_points_rebounds_assists:'Puntos + rebotes + asistencias',player_threes:'Triples',player_steals:'Robos',player_blocks:'Tapones',player_turnovers:'Pérdidas',player_blocks_steals:'Robos + tapones'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
     if(done.length) box.append(node('p','model-note',`Marcador (Brier, menor es mejor): ${done.map(([k,v])=>`${names[k]} ${number(v.brier,3)} (${v.n})`).join(' · ')}`));
     for(const event of cohort.events) {
       const game=node('article','game'),top=node('div','game-header'),names2=node('div'),meta=node('div','game-meta');

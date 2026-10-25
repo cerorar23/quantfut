@@ -286,7 +286,8 @@ def test_a_model_fitted_before_the_combinations_leaves_them_out(tmp_path, monkey
 def test_training_rows_cover_the_combinations_and_record_the_offset():
     protocol = dict(V12, empirical_weight=live.PLAYER_WEIGHT)  # no combination rates in it: the function adds them
     samples = live.player_training_rows(player_rows(), protocol, '2025-01-01', '2026-08-01')
-    assert set(samples) == set(live.PLAYER_MARKETS)
+    # the fixture rows carry points, rebounds and assists only: the markets of the other counts are not sampled
+    assert {'player_points', 'player_rebounds', 'player_assists', *[m for m in live.COMBOS if m != 'player_blocks_steals']} <= set(samples) <= set(live.PLAYER_MARKETS)
     rows = samples['player_points_rebounds_assists']
     assert rows and {r['offset'] for r in rows} <= set(live.LINE_OFFSETS) and all(0 < r['probability'] < 1 for r in rows)
     actual = {(r['game_id'], r['player_id']): r for r in player_rows()}
