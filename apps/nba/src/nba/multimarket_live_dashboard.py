@@ -36,8 +36,10 @@ def official_scores(folder, game, now):
     if not utc(game['tipoff_utc']) < utc(receipt['first_received_at_utc']) <= now:
         raise ValueError('official receipt time invalid')
     official = final_game(raw.read_bytes(), receipt)
+    # nba.com can move a tipoff after the seal (0022600009, 23-oct: 01:30 -> 02:30 UTC). Later still means the forecast came
+    # first; earlier could put the real tipoff before the seal, so that result is held.
     if (official['gameId'] != game['nba_game_id'] or official['gameStatus'] != 3
-            or utc(official['gameTimeUTC']) != utc(game['tipoff_utc'])
+            or utc(official['gameTimeUTC']) < utc(game['tipoff_utc'])
             or official['homeTeam']['teamId'] != game['home_nba_team_id'] or official['awayTeam']['teamId'] != game['away_nba_team_id']):
         raise ValueError('official result identity mismatch')
     scores = {}

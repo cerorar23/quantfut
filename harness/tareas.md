@@ -3204,13 +3204,21 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Ciclo de resultados (recibo oficial de nba.com, final, reintento) y marcador Brier por mercado.
 - [x] Página: sección v1.3 con versión, estado de disponibilidad y `actionable=false`; RUN071 intacto.
 - [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
-- [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
+- [x] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static. (Hecho el 21-oct; hoy 1.4b, ver DEPLOYS.md.)
 - [x] Preparar la comparación con Pinnacle (alias Clippers, snapshot del mismo día, brazo alineado, protocolo congelado, ensayo sintético de punta a punta). docs/nba_comparacion_pinnacle_20261101.md.
-- [ ] Desde el 1-nov: comprar 20 snapshots, revisar `load`, comprar el resto (3.250 créditos) y correr `nba.market_compare`; órdenes en el documento.
+- [x] Desde el 1-nov: comprar 20 snapshots, revisar `load`, comprar el resto (3.250 créditos) y correr `nba.market_compare`; órdenes en el documento. (Comprado y comparado el 23-oct por decisión del titular.)
 - [x] Captura del precio de Pinnacle al sellar cada cohorte (`nba.live_market`, offline, bloqueada antes del 1-nov) y comparación prospectiva con protocolo congelado. docs/nba_mercado_prospectivo_20261101.md.
 - [x] Captura del precio en el servidor, opción A aprobada: código (`live_market`: clave del servidor, carpeta de precios aparte, libro 2/día y 70/mes con `halt`, `capture-pending` con fases sello y cierre; 24 pruebas), clave copiada a `live13/private/odds_key` sin leerla, imagen y envoltorio de cron preparados. NO desplegado. docs/nba_captura_precio_servidor_propuesta_20261022.md.
 - [x] Paso de precios desplegado (22-oct 23:05 UTC, PR #77): imagen `nba-live13-price:20261022`, red `nba-price`, `price.sh` y cron cada 5 min; bloqueado en código hasta el 2026-11-01. Entrada en DEPLOYS.md con la vuelta atrás.
-- [ ] 1-nov: comprobar el primer sellado con precio (`price/<cohorte>/seal.json`, 1 crédito) y que `ledger/` no tenga `halt`.
+- [x] (cerrada 25-oct: cron de `price.sh` retirado; PropLine es la fuente fija de cuotas en vivo y ya trae Pinnacle, ver docs/nba_auditoria_20261025.md) 1-nov: comprobar el primer sellado con precio.
+
+### NBA — tercera auditoría (motor, props, vivo, cierres y créditos), 2026-10-25
+Detalle en docs/nba_auditoria_20261025.md; todo corregido y desplegado en la misma sesión.
+- [x] Completar el despliegue 1.4b a medias (datos RUN071 + columnas, modelo `5314c9ef…`, imagen `20261025b`) tras ensayo con la hora real.
+- [x] Productor con 1 GB (1.4b pica ~573 MB; el límite era 512 MB).
+- [x] Panel: un salto movido más tarde ya no deja el resultado en `validation_hold` (Rockets–Spurs, 23-oct).
+- [x] PropLine: reintento sin periodos cuando la petición principal da 5xx (hándicap/total al sellar), lotes saltados tras una principal vacía y marcadores de competiciones sin motor cada 6 h.
+- [x] Retirar el cron de `price.sh` (The Odds API en vivo desde el 1-nov).
 
 ### NBA — mejoras de la auditoría del motor, 2026-10-21
 Detalle y medidas en docs/nba_auditoria_motor_20261021.md.

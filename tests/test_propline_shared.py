@@ -382,6 +382,8 @@ def settlement_run(tmp_path, monkeypatch, scores, *, results=None, budget=None, 
         elif path.endswith("/results"):
             body = results if results is not None else dict(bookmakers=[dict(key="fanduel", markets=[dict(
                 key="player_points", outcomes=[dict(name="Over", resolution="won", actual_value=31)])])])
+        elif path.endswith("/odds"):
+            body = [dict(id="o1", is_outright=True, bookmakers=[])]  # a listed event (no per-fixture discovery)
         else:
             body = []
         return 200, {"X-Daily-Remaining": "4900", "X-Daily-Reset": "1792800000"}, json.dumps(body).encode()
@@ -472,6 +474,69 @@ def test_hourly_run_skips_other_competitions_off_the_hour(tmp_path, monkeypatch)
 
 
 REAL_RUN = pl.run
+
+
+def odds_run(tmp_path, monkeypatch, answer, *, sports=("basketball_nba",), **extra):
+    """One run where `answer(path, params)` gives (status, body) for every /odds call; returns the /odds calls."""
+    calls = []
+    def get(path, params, key):
+        calls.append((path, dict(params)))
+        if path == "/v1/sports":
+            status, body = 200, [dict(key=s, active=True) for s in sports]
+        elif path.endswith("/odds"):
+            status, body = answer(path, params)
+        else:
+            status, body = 200, []
+        return status, {"X-Daily-Remaining": "4900", "X-Daily-Reset": "1792800000"}, json.dumps(body).encode()
+    monkeypatch.setattr(pl, "Collector", lambda root, key, **kw: REAL_COLLECTOR(root, key, get=get, **kw))
+    key_file = tmp_path / "key"; key_file.write_text("A" * 32)
+    config = dict(sports=list(sports), daily_cap=4500, account_reserve=500, scores=True, scores_every_hours=1,
+                  markets_by_family=dict(default=["h2h"], basketball_=["h2h", "spreads", "totals", "player_points", "player_rebounds"]),
+                  **extra)
+    config_file = tmp_path / "config.json"; config_file.write_text(json.dumps(config))
+    report = pl.run(tmp_path / "archive", key_file, config_file)
+    return [(p, c) for p, c in calls if p.endswith("/odds")], calls, report
+
+
+def nba_event(*markets):
+    return dict(id="9", sport_key="basketball_nba", commence_time="2026-10-26T00:00:00Z", home_team="A", away_team="B",
+                home_team_id="nba:1", away_team_id="nba:2", bookmakers=[dict(key="fanduel", markets=[
+                    dict(key=m, period=None, team=None, line_type="main", outcomes=[]) for m in markets])])
+
+
+def test_featured_timeout_is_retried_once_for_the_full_game_only(tmp_path, monkeypatch):
+    """24-25 oct: the all-periods NBA featured request gave 504 at the hours the producer seals; the spread and total it
+    needs come back with the full-game request, which the reader merges into the same hourly observation."""
+    def answer(path, params):
+        if params["markets"].startswith("h2h"):
+            return (504, dict(error="timeout")) if params.get("period") == "all" else (200, [nba_event("spreads", "totals")])
+        return 200, [nba_event(params["markets"])]
+    odds, _, report = odds_run(tmp_path, monkeypatch, answer)
+    featured = [c for _, c in odds if c["markets"] == "h2h,spreads,totals"]
+    assert [c.get("period") for c in featured] == ["all", None]
+    assert len(odds) == 4 and report["failures"] == 1
+    events, receipt = pl.newest(tmp_path / "archive", "/v1/sports/basketball_nba/odds", datetime.now(timezone.utc))
+    keys = {m["key"] for m in events[0]["bookmakers"][0]["markets"]}
+    assert keys == {"spreads", "totals", "player_points", "player_rebounds"} and len(receipt["component_receipts"]) == 3
+
+
+def test_successful_featured_is_not_repeated_and_an_empty_one_stops_the_batches(tmp_path, monkeypatch):
+    odds, _, _ = odds_run(tmp_path, monkeypatch, lambda path, params: (200, [nba_event(params["markets"])]))
+    assert [c["markets"] for _, c in odds] == ["h2h,spreads,totals", "player_points", "player_rebounds"]
+    assert all(c["period"] == "all" for _, c in odds)
+    (tmp_path / "empty").mkdir()
+    odds, _, report = odds_run(tmp_path / "empty", monkeypatch, lambda path, params: (200, []))
+    assert [c["markets"] for _, c in odds] == ["h2h,spreads,totals"] and report["failures"] == 0
+
+
+def test_scores_of_other_competitions_follow_their_odds_cadence(tmp_path, monkeypatch):
+    hora = datetime.now(timezone.utc).hour
+    if hora == 0:
+        pytest.skip("a las 00 UTC toca cualquier cadencia")
+    cada = 3 if hora % 3 else 7 if hora % 7 else 5           # una cadencia que NO toca esta hora
+    _, calls, _ = odds_run(tmp_path, monkeypatch, lambda path, params: (200, []), sports=("soccer_epl", "soccer_japan_j_league"),
+                           priority_sports=["soccer_epl"], other_sports_every_hours=cada)
+    assert [p for p, _ in calls if p.endswith("/scores")] == ["/v1/sports/soccer_epl/scores"]
 
 
 def _con(config_file, **extra):
