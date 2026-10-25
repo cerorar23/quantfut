@@ -13,6 +13,16 @@ eliminatorias trae `round: null`: el recolector abandonaba sin avisar; ahora lis
 llenarse (fichas de la web y faltas/centros para el Motor C) desde SofaScore y, si falta, FotMob; solo donde está NULL.
 Los 10 fallos del arnés local son de entorno (Postgres sin contraseña en el worktree); en CI pasan.
 
+## 2026-10-25 — Limpieza de pendientes y fin de la pausa del motor
+
+En 12 días se cerraron 297 tareas, pero las abiertas pasaron de 128 a 250: cada auditoría apuntaba ideas al mismo nivel
+que los fallos, y los cambios de fuente dejaban tareas muertas. Se cerraron 134 en su sitio con el motivo (hechas,
+duplicadas, de fuentes o ligas retiradas, estados viejos de NBA) y quedan 116 con un índice al principio de
+`harness/tareas.md`: 3 fallos (los cierres de PropLine se resolvieron el mismo día en el PR #127), 27 del titular,
+31 en espera, 55 mejoras. Regla nueva: solo bloquea lo que hace
+perder dinero o datos. El mismo día el titular levantó la pausa del motor hasta el 1-nov: se toca cuando convenga,
+sin desplegar el worker durante el reentrenamiento del 1-nov.
+
 ## 2026-10-25 — Respaldo de resultados con FotMob
 
 PropLine deja partidos sin resultado (`expired`: toda la liga suiza, y partidos sueltos de Noruega, Turquía, MLS, y
