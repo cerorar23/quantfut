@@ -9,7 +9,9 @@ día que se había retirado, pero como complemento: el nuevo paso `completar` so
 saque, porque el detalle de SofaScore llega con p90 de 19 h y máximo de 33 h; sin esa espera FotMob (captura a las
 ~2,5 h) se adelantaría siempre y dejaría de ser complemento. Su xG entra como primera pareja válida con la hora real
 de captura de la página. Championship, 2. Bundesliga, Turquía y Noruega se añaden al recolector SofaScore: sin
-API-Football se habrían quedado sin xG.
+API-Football se habrían quedado sin xG. Desplegado el 25-oct (worker `e5a29a7`). La 088 se aplica de forma
+programada a las 22:30 UTC y no al desplegar: `results.py` solo cierra partidos de ligas activas, y desactivarlas
+antes habría dejado sin liquidar los productos del día en esas ligas.
 
 ## 2026-10-25 — Bajas y once desde SofaScore
 
