@@ -1107,9 +1107,19 @@ del box score) y el xG, tiros, tarjetas y árbitro salen de SofaScore vía Apify
 invertidos: el calendario nunca crea un partido si ese cruce ya existe en
 cualquier sentido, y un resultado solo se aplica a un evento con los dos equipos
 en su lado. SofaScore solo escribe si su marcador coincide con el nuestro, lo que
-de paso verifica a PropLine. Siguen dependiendo de API-Football y están parados:
-alineaciones previas (cubre FotMob), bajas, clasificación y marcador en vivo.
-SofaScore no publica xG de Argentina.
+de paso verifica a PropLine. Comprobado con peticiones reales el 25-oct:
+- API-Football responde `Free plans do not have access to this season` y agota
+  sus 100 peticiones diarias: clasificación parada desde el 22-oct 06:40 UTC y
+  marcador en vivo desde el 22-oct 20:00; las bajas solo entran en la primera
+  pasada tras el reinicio del cupo (40-70 partidos al día).
+- FotMob cubre alineaciones y bajas previas en las 13 ligas con modelo (63/63
+  partidos del 23-24 oct con captura previa, 53 con el once oficial antes del
+  inicio) y en ninguna de las otras 10.
+- SofaScore sí publica xG de las ligas con modelo, Argentina incluida (Talleres
+  0,77 – Defensa y Justicia 0,78, 24-oct); partidos de abril de 2026 no lo tenían.
+  El histórico SofaScore cargado tiene 0/30 con xG en Premier, LaLiga, Serie A,
+  Bundesliga, Ligue 1, Eredivisie y Primeira pese a que la fuente lo publica: revisar esa carga.
+- PropLine no tiene Ligue 2 ni la Superliga danesa (catálogo de 36 competiciones).
 
 **xG de API-Football habilitado el 12-oct-2026, por decisión del usuario.**
 La exclusión anterior queda revocada. Su cobertura sigue siendo variable:

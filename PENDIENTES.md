@@ -132,8 +132,9 @@ Tareas sueltas:
 
 ## Decisiones que dependen de ti
 0. ~~API-Football en plan gratuito~~ **Decidido 24-oct: sustituido** por PropLine (resultados, calendario) y SofaScore
-   (xG, estadísticas; 15 USD/mes, 40 partidos/día). Siguen parados por API-Football: bajas, clasificación y marcador en
-   vivo (las alineaciones previas las cubre FotMob). Decidir si se sustituyen también.
+   (xG, estadísticas; 15 USD/mes, 40 partidos/día). Comprobado el 25-oct: clasificación y marcador en vivo parados
+   (API-Football); bajas parciales, y FotMob cubre bajas y alineaciones previas solo en las 13 ligas con modelo.
+   Decidir si se sustituyen clasificación y marcador en vivo.
 1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
 2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
 2b. (Resuelto el 18-oct) Captura de FotMob autorizada; token de CDS entregado; Open-Meteo descartada.
