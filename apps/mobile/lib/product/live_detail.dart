@@ -190,6 +190,13 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
         final picks = jsonRows(data['picks']);
         final l10n = context.l10n;
         final featured = featuredPick(picks);
+        // Sin pronóstico sellado, los «Mercados del partido» siguen siendo estimaciones del modelo.
+        final marketRows = jsonRows(jsonMap(ficha['mercados'])['filas']);
+        final noPicks = marketRows.isEmpty
+            ? l10n.detailNoPicks
+            : marketRows.any((r) => r['locked'] != true)
+            ? l10n.detailNoSealedModel
+            : l10n.detailNoSealedModelVip;
         final alertCount = MatchAlerts.fromFicha(ficha)?.total ?? 0;
         return Column(
           children: [
@@ -322,7 +329,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                             ),
                           ),
                         if (picks.isEmpty && data['locked'] != true)
-                          training(l10n.detailNoPicks),
+                          training(noPicks),
                         if (picks.isNotEmpty && featured == null)
                           training(l10n.detailNoFeatured),
                         const SizedBox(height: 12),

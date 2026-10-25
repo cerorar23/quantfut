@@ -459,6 +459,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'No hay pronósticos publicados para este partido.';
 
   @override
+  String get detailNoSealedModel =>
+      'No hay pronóstico sellado para este partido. Abajo tienes las estimaciones del modelo.';
+
+  @override
+  String get detailNoSealedModelVip =>
+      'No hay pronóstico sellado para este partido. Abajo están las estimaciones del modelo, con VIP.';
+
+  @override
   String get detailNoStarters => 'Sin titulares confirmados.';
 
   @override

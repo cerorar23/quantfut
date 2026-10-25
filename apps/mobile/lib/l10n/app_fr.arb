@@ -124,6 +124,8 @@
   "detailNoInjuries": "Aucune absence dans le rapport disponible.",
   "detailNoInjuriesCheck": "Aucune vérification des absences disponible.",
   "detailNoPicks": "Aucun pronostic publié pour ce match.",
+  "detailNoSealedModel": "Aucun pronostic scellé pour ce match. Les estimations du modèle sont ci-dessous.",
+  "detailNoSealedModelVip": "Aucun pronostic scellé pour ce match. Les estimations du modèle sont ci-dessous, avec le VIP.",
   "detailNoStarters": "Aucun titulaire confirmé.",
   "detailReferee": "Arbitre",
   "detailRefereePending": "Arbitre à confirmer.",

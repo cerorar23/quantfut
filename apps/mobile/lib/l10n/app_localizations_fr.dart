@@ -458,6 +458,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get detailNoPicks => 'Aucun pronostic publié pour ce match.';
 
   @override
+  String get detailNoSealedModel =>
+      'Aucun pronostic scellé pour ce match. Les estimations du modèle sont ci-dessous.';
+
+  @override
+  String get detailNoSealedModelVip =>
+      'Aucun pronostic scellé pour ce match. Les estimations du modèle sont ci-dessous, avec le VIP.';
+
+  @override
   String get detailNoStarters => 'Aucun titulaire confirmé.';
 
   @override

@@ -458,6 +458,14 @@ class AppLocalizationsIt extends AppLocalizations {
       'Non ci sono pronostici pubblicati per questa partita.';
 
   @override
+  String get detailNoSealedModel =>
+      'Non c\'è un pronostico sigillato per questa partita. Qui sotto trovi le stime del modello.';
+
+  @override
+  String get detailNoSealedModelVip =>
+      'Non c\'è un pronostico sigillato per questa partita. Qui sotto ci sono le stime del modello, con il VIP.';
+
+  @override
   String get detailNoStarters => 'Nessun titolare confermato.';
 
   @override

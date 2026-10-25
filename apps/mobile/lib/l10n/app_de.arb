@@ -124,6 +124,8 @@
   "detailNoInjuries": "Keine Ausfälle im vorliegenden Bericht.",
   "detailNoInjuriesCheck": "Es liegt keine Ausfallprüfung vor.",
   "detailNoPicks": "Für dieses Spiel gibt es keine veröffentlichten Prognosen.",
+  "detailNoSealedModel": "Für dieses Spiel gibt es keine versiegelte Prognose. Unten findest du die Schätzungen des Modells.",
+  "detailNoSealedModelVip": "Für dieses Spiel gibt es keine versiegelte Prognose. Unten stehen die Schätzungen des Modells, mit VIP.",
   "detailNoStarters": "Keine bestätigten Starter.",
   "detailReferee": "Schiedsrichter",
   "detailRefereePending": "Schiedsrichter noch nicht bestätigt.",
