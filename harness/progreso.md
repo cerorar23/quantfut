@@ -11,6 +11,10 @@ rechaza las peticiones simultáneas de una cuenta; de una en una salen todas. La
 porque la imagen `3babeb4` se construyó sobre la API anterior en vez de sobre `main`: se despliega entera desde `main`.
 El chequeo de salud mira ahora el dato (cierres, cobertura de xG, once) y no solo la última fecha, que es lo que lo dejó
 en verde con 3 días sin cierres.
+Cuota de PropLine (5.000/día, reserva 500): ~40 % se iba en competiciones sin motor y la liquidación de fútbol en el orden
+del catálogo; por eso faltaban cierres de la Premier y se cortaban las pasadas de la noche UTC. Decisión: no dejar de
+archivar esas competiciones (observaciones originales para el futuro), solo bajarlas a cada 6 h y liquidar solo las
+nuestras; NBA y tenis no cambian.
 
 ## 2026-10-25 — Clasificación y vivo sin API-Football; regla de arreglar al momento
 
