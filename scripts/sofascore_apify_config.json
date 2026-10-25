@@ -43,6 +43,18 @@
   "eu.uel": {
    "utid": 679
   },
+  "gb.championship": {
+   "utid": 18
+  },
+  "de.bundesliga2": {
+   "utid": 44
+  },
+  "tr.super_lig": {
+   "utid": 52
+  },
+  "no.eliteserien": {
+   "utid": 20
+  },
   "nba": {
    "utid": 132,
    "rounds": false,

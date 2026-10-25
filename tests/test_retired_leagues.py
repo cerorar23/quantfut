@@ -9,7 +9,8 @@ from qf.ingest.sofascore_history import normalize_bundle
 from qf.ingest.fotmob_import import Matcher
 
 
-@pytest.mark.parametrize('league',['cl.primera','br.serie_b','fr.ligue_2','dk.superliga'])
+@pytest.mark.parametrize('league',['cl.primera','br.serie_b','fr.ligue_2','dk.superliga',
+                                    'it.serie_b','es.laliga2','se.allsvenskan','ch.super_league'])
 def test_retired_archives_are_rejected_before_normalization_or_matching(league):
     with pytest.raises(ValueError,match='retired_league'):
         fm.collect_fixtures({},league,'2026',date(2024,1,1),date(2026,10,13))

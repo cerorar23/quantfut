@@ -1,5 +1,16 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Quedan 15 ligas + 2 copas; FotMob vuelve como complemento diario
+
+Orden del titular tras medir la cobertura combinada de PropLine y SofaScore
+(`docs/cobertura_ligas_propline_sofascore_20261025.md`): fuera Serie B, LaLiga 2, Allsvenskan y Super League suiza
+(db/088, mismo trato que db/086: `active=false`, historial intacto, sin `retired_leagues`). FotMob se reactiva el mismo
+día que se había retirado, pero como complemento: el nuevo paso `completar` solo rellena NULL y espera 36 h desde el
+saque, porque el detalle de SofaScore llega con p90 de 19 h y máximo de 33 h; sin esa espera FotMob (captura a las
+~2,5 h) se adelantaría siempre y dejaría de ser complemento. Su xG entra como primera pareja válida con la hora real
+de captura de la página. Championship, 2. Bundesliga, Turquía y Noruega se añaden al recolector SofaScore: sin
+API-Football se habrían quedado sin xG.
+
 ## 2026-10-25 — Bajas y once desde SofaScore
 
 Al retirar API-Football y FotMob los pronósticos quedaron sin bajas ni once. SofaScore (rl1987 `event_detail` con `includeLineups`) trae en partidos futuros el once previsto (`confirmed=false`) y las bajas con tipo, motivo y fecha de regreso, así que no hace falta otra fuente. Decisión clave: el once previsto va a una tabla propia (`lineups_previstas`) y SOLO el oficial y completo se copia a `lineups`, porque `sello_tardio` lee esa tabla como «alineación confirmada» y un previsto la falsearía y adelantaría el sellado. Los ids de SofaScore no son los de API-Football: cada titular lleva `src` y `availability()` solo compara contra historia de su fuente, así que de momento da «insuficiente» en vez de decir que faltan todos los habituales. Las bajas se guardan pero aún no alimentan al modelo (antes tampoco: solo las fichas). Desplegado el 25-oct (PR #118, worker `117feb7`, migración 087).
