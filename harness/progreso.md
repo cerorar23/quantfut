@@ -28,6 +28,20 @@ eliminatorias trae `round: null`: el recolector abandonaba sin avisar; ahora lis
 llenarse (fichas de la web y faltas/centros para el Motor C) desde SofaScore y, si falta, FotMob; solo donde está NULL.
 Los 10 fallos del arnés local son de entorno (Postgres sin contraseña en el worktree); en CI pasan.
 
+## 2026-10-25 — Auditoría de datos de los tres motores (PropLine, SofaScore, BetsAPI)
+
+Pedido del titular: comprobar si los motores reciben bien los datos nuevos, si hay cierres y alineaciones, si se sigue lo
+recomendado en los documentos del 15-oct, qué ligas están completas para entrenar y qué data disponible conviene acoplar.
+Solo lectura. Decisión clave: el cuello de botella de los cierres no es la fuente sino la carga. El archivo de PropLine ya
+guarda `/odds/closing` de 185 partidos del 21 al 25-oct (Pinnacle 1X2 a una mediana de 11 min del inicio, con córners y
+tarjetas), pero nada lo pasa a `odds_snapshots`: sin cierres desde el 22-oct 18:50, la puerta de frescura del
+reentrenamiento pasa el 1-nov y falla hacia el 21-nov. Otros hallazgos: SofaScore no tiene ningún evento de MLS ni Liga MX;
+bajas y once llegan pero ningún motor los lee; las estadísticas de SofaScore no llegan a `matches.stats`; casi no hay
+cierres históricos de totales, córners ni tarjetas (0–6 %). BetsAPI (~25.600 partidos desde jul-2023) tiene xG con r ≈
+0,95–0,97 frente al nuestro y cuotas bet365 de 8 mercados, pero sus amarillas no coinciden con las nuestras (55 % en
+Brasil/Argentina), su recepción original es desconocida y la licencia no está leída: acoplar en tabla propia, no encima de
+lo sellado. docs/auditoria_datos_motores_20261025.md.
+
 ## 2026-10-25 — Limpieza de pendientes y fin de la pausa del motor
 
 En 12 días se cerraron 297 tareas, pero las abiertas pasaron de 128 a 250: cada auditoría apuntaba ideas al mismo nivel
