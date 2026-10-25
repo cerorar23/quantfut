@@ -88,6 +88,9 @@ datos. Regla desde el 25-oct: el error que aparece al desplegar o probar se arre
 - [x] `matches.stats` (fichas de la web y serie del Motor C) desde SofaScore y, si falta, FotMob, con las claves de
   `estadisticas.TIPOS` más centros; relleno de lo ya cargado. Solo donde está NULL.
 - [x] FotMob como complemento: además de xG/córners/tarjetas, `completar` rellena `stats`.
+- [x] (25-oct) Tarjetas a cero de FotMob: en Argentina, Brasil y parte de México el bloque de estadísticas trae
+  `[0, 0]` aunque la cronología tiene cada tarjeta. `extraer` cuenta la cronología cuando el bloque viene a cero
+  (sin cuerpo técnico) y `--reparar-tarjetas` corrigió lo guardado. Ver README «Tarjetas a cero de FotMob».
 - [ ] Sin cambios (decisión del titular): `SOFT_BOOKS`, licencia de BetsAPI, fuente de calendario de copas, tope
   mensual de Apify (el ritmo medido el 24–25 oct supera los 15 USD/mes).
 
