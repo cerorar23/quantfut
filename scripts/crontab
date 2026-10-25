@@ -41,6 +41,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Marcador en juego para la app (db/056) desde el listado diario de FotMob: UNA peticion
 # por pasada y solo si hay algun partido en ventana. Respeta el enfriamiento de 12 h de FotMob.
+# Al pitido final cierra el partido con su pagina de FotMob (una peticion por partido terminado) y liquida.
 */5 * * * * cd /app && python -m qf.ingest.live >> /var/log/live.log 2>&1
 
 # Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
@@ -142,9 +143,10 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 */5 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
 35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
 15 9 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura completar >> /var/log/fotmob_captura.log 2>&1
-# Respaldo de resultados: lo que PropLine deja abierto más de 6 h (p. ej. `expired`) se cierra con FotMob si terminó
-# en el tiempo reglamentario y con los mismos dos equipos; después liquida. 10 min tras cada cierre de PropLine.
-55 */3 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura resultados >> /var/log/fotmob_captura.log 2>&1
+# Resultados con la primera fuente que los tenga (titular, 25-oct-2026): `qf.ingest.live` cierra al pitido con FotMob.
+# Este respaldo, cada hora, cierra lo que siga abierto a las 2 h 30 min del saque (enfriamiento, fuera del listado) si
+# terminó en el tiempo reglamentario y con los mismos dos equipos; después liquida.
+55 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura resultados >> /var/log/fotmob_captura.log 2>&1
 
 # Clima histórico ERA5 de los partidos ya jugados (db/082), incremental: solo pide a Copernicus lo que aún no cubren
 # los archivos guardados (Copernicus publica con ~7 días de retraso). Necesita CDS_API_TOKEN en el entorno.
