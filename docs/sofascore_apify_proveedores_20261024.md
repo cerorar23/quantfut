@@ -36,7 +36,13 @@ devuelven `NO ND script found` (comprobado en consola Apify el 24-oct, 4 ejecuci
 
 ## Pendiente
 
-- Probar histórico de NBA y tenis por temporada con `scrapesage` en un lote pequeño.
-- Probar histórico de fútbol con `rl1987` (`seasonId`).
+- Correr temporadas completas (hasta ahora solo muestras de histórico, ver abajo).
 - Normalizar a nuestro esquema y registrar recepción real; no entrena ni promueve nada por capturar.
 - Recolector del VPS adaptado y desplegado el 24-oct (ver DEPLOYS.md); no conectado a motores.
+
+## Histórico comprobado (2026-10-25, 1–40 partidos por prueba)
+
+- NBA, `scrapesage` con `seasonIds=[65360]` (NBA 24/25): finales OKC–IND de junio 2025 con estadísticas de equipo.
+- Tenis, `scrapesage` modo `team` (jugador 14882, 40 partidos): historial desde octubre 2025, con ~211 campos de estadística (ganadores, errores no forzados, saque, resto). Incluye dobles y mixtos: filtrarlos.
+- Fútbol, `rl1987` con `seasonId=61627` (Premier 24/25): partidos de mayo 2025.
+- Límite: son muestras; no se han corrido temporadas completas.
