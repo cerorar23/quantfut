@@ -61,6 +61,10 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
     Cierra los partidos cuyo kickoff ya pasó y que siguen marcados como
     scheduled. Se ejecuta varias veces al día.
     """
+    from ..config import settings
+    if settings.results_provider == "propline" and leagues is None:
+        from .propline_partidos import resultados
+        return resultados(hours_back=hours_back)
     since = datetime.now(timezone.utc) - timedelta(hours=hours_back)
     pending = query(
         """SELECT m.match_id, m.league_id, m.kickoff_utc,

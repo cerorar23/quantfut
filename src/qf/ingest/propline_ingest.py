@@ -33,6 +33,16 @@ def catalog_keys(now):
     return {s.get("key") for s in sports}
 
 
+def soft_allowed(observed, kickoff):
+    """Casas que se guardan de esta observación: la sharp siempre; las demás cerca del inicio y cada pocas horas."""
+    from ..publish.picks import canonical_book
+    allowed = {canonical_book(settings.sharp_book)}
+    near = (kickoff - observed).total_seconds() <= settings.propline_soft_horizon_hours * 3600
+    if near and observed.hour % max(1, settings.propline_soft_every_hours) == 0:
+        allowed |= {canonical_book(b) for b in settings.soft_books}
+    return allowed
+
+
 def football_rows(event, match_id, observed, kickoff, tag, allowed_books=None):
     from ..publish.picks import canonical_book
     rows = []
@@ -89,7 +99,6 @@ def ingest_hourly(now=None):
 
 def _ingest_hourly(connection, now=None):
     from .odds_worker import match_meta, match_events
-    from ..publish.picks import canonical_book
     now = now or datetime.now(timezone.utc)
     pending = query("""SELECT m.match_id,l.odds_api_key FROM matches m JOIN leagues l USING(league_id)
         WHERE m.status='scheduled' AND l.active AND l.odds_api_key IS NOT NULL
@@ -121,7 +130,7 @@ def _ingest_hourly(connection, now=None):
             if observed >= kickoff or abs((parse_time(event["commence_time"]) - kickoff).total_seconds()) > 900:
                 continue
             original = next(e for e in events if str(e["id"]) == str(event["id"]))
-            allowed = {canonical_book(b) for b in (*settings.soft_books,settings.sharp_book)}
+            allowed = soft_allowed(observed, kickoff)
             rows = football_rows(original, mid, observed, kickoff, tag, allowed)
             if not rows:
                 continue

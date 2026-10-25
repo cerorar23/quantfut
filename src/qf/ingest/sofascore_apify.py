@@ -207,9 +207,14 @@ class Collector:
                 self.db.execute("UPDATE rounds SET round=round+1 WHERE target=?", (target,))
 
     def details(self):
+        # Fútbol primero y lo más reciente primero: su xG alimenta el modelo desde el 24-oct
+        # (API-Football en plan gratuito). Con 40 detalles al día, empezar por la jornada 1
+        # tardaba semanas en llegar a los partidos de ayer.
+        since = int((self.clock() - timedelta(days=self.cfg.get("detail_days", 14))).timestamp())
         ids = [r[0] for r in self.db.execute(
-            "SELECT id FROM events WHERE captured_receipt IS NULL AND status='finished'"
-            " ORDER BY start_ts LIMIT ?", (self.cfg["max_details_per_run"],))]
+            "SELECT id FROM events WHERE captured_receipt IS NULL AND status='finished' AND start_ts>=?"
+            " ORDER BY (target LIKE 'tennis.%' OR target = 'nba'), start_ts DESC LIMIT ?",
+            (since, self.cfg["max_details_per_run"]))]
         for i in range(0, len(ids), BATCH):
             chunk = ids[i:i + BATCH]
             cap = self.budget_left()

@@ -44,6 +44,16 @@ class Settings:
     # selectable for reproducing older research, not as a silent fallback.
     odds_provider: str = _odds_provider()
     propline_archive: str = os.getenv("PROPLINE_ARCHIVE", "/srv/quantfut/artifacts/propline_shared")
+    # Casas que no son la sharp: solo partidos a menos de estas horas y una
+    # observación de cada tantas (diez casas cada hora a 8 días eran ~100 MB/día
+    # de `odds_snapshots`, medido el 24-oct). La cuota de referencia admite 6 h.
+    propline_soft_horizon_hours: int = _i("PROPLINE_SOFT_HORIZON_HOURS", 48)
+    propline_soft_every_hours: int = _i("PROPLINE_SOFT_EVERY_HOURS", 3)
+    # Resultados y calendario. API-Football pasó al plan gratuito el 22-oct-2026
+    # y el titular decidió sustituirlo por el archivo de PropLine (24-oct).
+    results_provider: str = os.getenv("RESULTS_PROVIDER", "api_football")
+    # Archivo del recolector SofaScore vía Apify (host), montado en solo lectura.
+    sofascore_archive: str = os.getenv("SOFASCORE_ARCHIVE", "/srv/quantfut/sofascore")
     # `eu` trae Pinnacle y Betfair Exchange, la referencia sharp. `us` solo
     # añade casas de EE. UU. y duplica el coste en créditos.
     odds_api_regions: str = os.getenv("ODDS_API_REGIONS", "eu")
@@ -142,10 +152,14 @@ class Settings:
     # 2026-09-28: + Betsson y Coolbet, confirmadas por el usuario (sus
     # clientes apuestan ahí). LeoVegas y Unibet NO: la sombra las mide igual
     # (todas las casas del snapshot), pero no cuentan para la puerta.
+    # 2026-10-24: PropLine solo trae 1xbet de esas; el titular añadió las de
+    # México (Codere MX, Strendus), España (Codere, Marca Apuestas, Sportium) y
+    # las internacionales que aceptan clientes de Latinoamérica.
     soft_books: tuple[str, ...] = tuple(
         b.strip() for b in os.getenv(
             "SOFT_BOOKS", "bet365,betano,1xbet,william_hill,888sport,betway,"
-            "betsson,coolbet"
+            "betsson,coolbet,coderemx,strendus,codere,marcaapuestas,sportium,"
+            "bovada,betonlineag,bookmaker_eu,heritage,jazzsports"
         ).split(",") if b.strip())
     # Edge BRUTO mínimo contra el precio justo de Pinnacle. 2% es el umbral
     # validado en los dos backtests (eval/soft_vs_sharp, ingest/odds_history).

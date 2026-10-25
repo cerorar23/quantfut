@@ -231,6 +231,10 @@ def ingest_league(league: dict, days_ahead: int = 21,
 
 
 def run(days_ahead: int = 21) -> dict:
+    from ..config import settings
+    if settings.results_provider == "propline":
+        from .propline_partidos import calendario
+        return calendario()
     leagues = query(
         """SELECT league_id, name, country, api_football_id, season_style,
                   cross_league

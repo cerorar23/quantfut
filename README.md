@@ -1096,6 +1096,21 @@ Consumo real de la ingesta operativa, muy por debajo del plan: 13 llamadas por
 pasada de calendario (2/día), 1 por partido terminado y 1 por partido en la
 ventana de alineaciones.
 
+**22-oct-2026: el plan volvió al Free** y desde entonces no entraron resultados
+ni calendario (76 partidos sin cerrar al detectarlo el 24-oct; el chequeo diario
+seguía en verde). Decisión del titular (24-oct): **sustituirlo**. Con
+`RESULTS_PROVIDER=propline`, `fixtures` y `results` leen `/scores` del archivo
+compartido de PropLine (`ingest/propline_partidos.py`, sin peticiones; córners
+del box score) y el xG, tiros, tarjetas y árbitro salen de SofaScore vía Apify
+(`ingest/sofascore_partidos.py`, solo las 13 ligas con modelo, tope 15 USD/mes y
+40 partidos/día). PropLine publica a veces el mismo cruce con local y visitante
+invertidos: el calendario nunca crea un partido si ese cruce ya existe en
+cualquier sentido, y un resultado solo se aplica a un evento con los dos equipos
+en su lado. SofaScore solo escribe si su marcador coincide con el nuestro, lo que
+de paso verifica a PropLine. Siguen dependiendo de API-Football y están parados:
+alineaciones previas (cubre FotMob), bajas, clasificación y marcador en vivo.
+SofaScore no publica xG de Argentina.
+
 **xG de API-Football habilitado el 12-oct-2026, por decisión del usuario.**
 La exclusión anterior queda revocada. Su cobertura sigue siendo variable:
 una respuesta vacía o un valor null no se convierte en cero. Se conserva

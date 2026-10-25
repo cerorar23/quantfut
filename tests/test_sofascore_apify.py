@@ -86,3 +86,18 @@ def test_tenis_descubre_semanal_solo_atp_wta_individual(tmp_path):
     n = len([p for p in f.calls if p["mode"] == "scheduled"])
     c.capture()  # misma semana: no vuelve a barrer el calendario
     assert len([p for p in f.calls if p["mode"] == "scheduled"]) == n
+
+
+def test_detalles_futbol_reciente_primero_y_sin_jornadas_viejas(tmp_path):
+    c, f = collector(tmp_path, [])
+    c.cfg = {**CFG, "max_details_per_run": 2}
+    hora = int(T0.timestamp())
+    with c.db:
+        c.db.executemany("INSERT INTO events(id,target,round,start_ts,status) VALUES(?,?,?,?,?)", [
+            (1, "es.laliga", 1, hora - 200 * 86400, "finished"),     # jornada de abril: fuera
+            (2, "es.laliga", 9, hora - 2 * 86400, "finished"),
+            (3, "es.laliga", 10, hora - 86400, "finished"),
+            (4, "tennis.2428", None, hora - 3600, "finished")])
+    c.details()
+    pedidos = [p["eventIds"] for p in f.calls if p.get("mode") == "event_detail"]
+    assert pedidos == [["3", "2"]]

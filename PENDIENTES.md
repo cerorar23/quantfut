@@ -131,6 +131,9 @@ Tareas sueltas:
 - [ ] NBA — ampliar el lector del box score vivo con robos, tapones y pérdidas para llevar esos mercados y el doble-doble al vivo. Pendiente además: Q3/Q4 y margen por rangos (faltan en el archivo normalizado), recalibración móvil de totales (deriva de anotación) y postemporada 2021-22 sin fecha.
 
 ## Decisiones que dependen de ti
+0. ~~API-Football en plan gratuito~~ **Decidido 24-oct: sustituido** por PropLine (resultados, calendario) y SofaScore
+   (xG, estadísticas; 15 USD/mes, 40 partidos/día). Siguen parados por API-Football: bajas, clasificación y marcador en
+   vivo (las alineaciones previas las cubre FotMob). Decidir si se sustituyen también.
 1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
 2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
 2b. (Resuelto el 18-oct) Captura de FotMob autorizada; token de CDS entregado; Open-Meteo descartada.
