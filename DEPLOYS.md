@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-25 04:25 UTC · Bajas y once desde SofaScore · worker `quantfut-worker-propline:117feb7` (`main` `117feb7`, PR #118) + migración 087 + recolector
+- **Estado previo comprobado:** worker `ab82dcb`; `src/db/scripts` de `main` sin cambios desde entonces; recolector `a8da9388…` con `config.json` `1861f119…`; nadie más había desplegado.
+- **Migración `db/087`** (aditiva; ensayada antes con ROLLBACK): `injuries.source` y `injuries.expected_return`, tabla `lineups_previstas`. 36.489 filas previas en `injuries`, intactas.
+- **Worker:** imagen `FROM quantfut-worker-propline:ab82dcb` + `src/` de `git archive 117feb7`; 0 archivos distintos de `main`. Compose con la etiqueta `117feb7`; `scripts/crontab` = `main` (suma `qf.ingest.sofascore_alineaciones` cada 10 min, minutos 3-59/10).
+- **Recolector (host):** `sofascore_apify.py` `4960defa0bc4` y `config.json` `bc054cb0e24e` (sección `lineups`). Cron nuevo `*/10` con `flock` (`lineups.lock`) y log `logs/lineups.log`; el diario de las 07:40 no cambia.
+- **Verificado:** primera captura real 0,16 USD (40 partidos, previa). Carga: 37 partidos, 193 bajas (con motivo y fecha de regreso), 70 onces previstos, 0 oficiales (aún no había partidos en T-65..T-20). Copia a `lineups` solo para oficial completo; se vigila el primer partido real.
+- **Pendiente:** primer once oficial real en `lineups` y que `sello_tardio` lo use; historia de onces SofaScore para que `availability` deje de dar «insuficiente».
+- Respaldos: `~/quantfut/backups/20261025-bajas-once/` (`docker-compose.yml`, `crontab`, `crontab_qf.txt`, `sofascore_current/`, `worker_image.txt`).
+- **Vuelta atrás:** `B=~/quantfut/backups/20261025-bajas-once; cp -p $B/docker-compose.yml ~/quantfut/ && cp -p $B/crontab ~/quantfut/scripts/crontab && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate worker`; `cp $B/sofascore_current/* ~/sofascore-apify/current/`; `crontab $B/crontab_qf.txt`. Las columnas/tablas de 087 se pueden dejar (no estorban).
+
 ### 2026-10-25 02:23 UTC · Resultados y calendario desde PropLine, xG desde SofaScore, cron sin API-Football ni FotMob · worker `quantfut-worker-propline:ab82dcb` (`main` `ab82dcb`, PR #113 y #115) + migraciones 085/086 + recolectores
 - **Motivo:** API-Football en plan gratuito desde el 22-oct (sin resultados ni calendario; 76 partidos sin cerrar) y el worker `a521569` mezclaba versiones (`estadisticas_mercado.py` de `ba66746`, `alta_prob.py` de `8be381b`): el diario del 24-oct no produjo alta probabilidad, escalera ni parley (`AttributeError: … 'disponible'`). Además el crontab montado era del 18-oct y había perdido el sello por partido (F7). Orden del titular: sustituir las fuentes por PropLine y SofaScore y retirar las tareas de API-Football y FotMob.
 - Estado previo comprobado: worker `a521569` con 6 archivos distintos de `main` y 1 ausente; `~/propline-shared/current` → `releases/fc20390` (igual a `main` salvo la configuración); `~/sofascore-apify/current` = versión por deporte (rl1987 fútbol, scrapesage NBA y tenis) que no estaba en `main` y que el PR #113 incorporó.
