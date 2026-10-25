@@ -1,11 +1,13 @@
-"""Captura recurrente de FotMob (db/081), autorizada por el titular el 18-oct-2026.
+"""Captura recurrente de FotMob (db/081), autorizada por el titular el 18-oct-2026; reactivada el 25-oct como
+complemento diario de SofaScore y PropLine, solo en las competiciones activas.
 
-Tres acciones, cada una con su cron:
+Cuatro acciones, cada una con su cron:
   referencias  qué id de FotMob es cada partido nuestro (`leagues?id=`, una petición por competición al día).
   previos      instantáneas de un partido futuro en cinco ventanas (~24 h, ~4 h, ~70, ~40 y ~30 min antes del saque):
                alineación probable o confirmada, no disponibles, entrenadores, valor del once y pronóstico de clima.
                Es lo ÚNICO anterior al saque; cada fila lleva la hora real de captura.
   posteriores  la página del partido terminado; llena fotmob_partido / fotmob_jugador_partido / fotmob_baja.
+  completar    sin peticiones: con esas páginas rellena en `matches` lo que SofaScore y PropLine dejaron vacío.
 
 Límites de uso (no se evitan controles de acceso):
 - Una petición cada `ESPERA_S` segundos, en serie.
@@ -23,6 +25,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
+from ..league_policy import RETIRED_LEAGUES
 from . import fotmob_a_motor as fm
 from .fotmob_history import COMPETITIONS
 
@@ -39,6 +42,9 @@ USER_AGENT = "QuantFut-Capture/1.0"
 # se toma la primera que aún no tiene captura. El cron corre cada 5 min (solo pide a FotMob cuando hay una ventana pendiente).
 VENTANAS = (("dia", 900, 1560), ("horas", 150, 300), ("final", 50, 75), ("cierre", 25, 45), ("tarde", 25, 33))
 MAX_POSTERIORES = 60
+# «completar» espera a que la fuente principal haya tenido su oportunidad: el detalle de SofaScore llega con
+# mediana 12 h, p90 19 h y máximo 33 h tras el saque (medido el 25-oct-2026).
+ESPERA_COMPLETAR = timedelta(hours=36)
 
 
 class AccesoDenegado(RuntimeError):
@@ -123,6 +129,8 @@ def actualizar_referencias(c, cli: Cliente, dias_atras: int = 4) -> dict:
     r = {"competiciones": 0, "nuevas": 0, "sin_equipo": 0, "sin_partido": 0}
     ahora = datetime.now(timezone.utc)
     for liga, (fid_liga, _, _) in COMPETITIONS.items():
+        if liga in RETIRED_LEAGUES:
+            continue
         hub = cli.get("leagues", {"id": fid_liga})
         r["competiciones"] += 1
         for m in (hub.get("fixtures") or {}).get("allMatches") or []:
@@ -187,7 +195,7 @@ def candidatos_previos(c, ahora: datetime) -> list[dict]:
         """SELECT m.match_id, m.kickoff_utc, f.fotmob_match_id,
                   extract(epoch FROM m.kickoff_utc - %s) / 60 AS mins
            FROM matches m JOIN leagues l USING (league_id) JOIN fotmob_referencia f USING (match_id)
-           WHERE m.status = 'scheduled' AND l.model_enabled
+           WHERE m.status = 'scheduled' AND l.active
              AND m.kickoff_utc BETWEEN %s AND %s
            ORDER BY m.kickoff_utc""",
         (ahora, ahora + timedelta(minutes=20), ahora + timedelta(minutes=1560))).fetchall()
@@ -244,8 +252,8 @@ def capturar_posteriores(c, cli: Cliente, dias_atras: int = 6, maximo: int = MAX
     ahora = datetime.now(timezone.utc)
     filas = c.execute(
         """SELECT m.match_id, m.kickoff_utc, f.fotmob_match_id
-           FROM matches m JOIN fotmob_referencia f USING (match_id)
-           WHERE m.status = 'finished' AND m.kickoff_utc BETWEEN %s AND %s
+           FROM matches m JOIN leagues l USING (league_id) JOIN fotmob_referencia f USING (match_id)
+           WHERE m.status = 'finished' AND l.active AND m.kickoff_utc BETWEEN %s AND %s
              AND NOT EXISTS (SELECT 1 FROM fotmob_partido p WHERE p.match_id = m.match_id)
            ORDER BY m.kickoff_utc LIMIT %s""",
         (ahora - timedelta(days=dias_atras), ahora - timedelta(minutes=150), maximo)).fetchall()
@@ -265,13 +273,70 @@ def capturar_posteriores(c, cli: Cliente, dias_atras: int = 6, maximo: int = MAX
     return r
 
 
+# ------------------------------------------------------------------------------------------------ completar
+def completar(c, cli: Cliente | None = None, dias_atras: int = 10) -> dict:
+    """Rellena en `matches`, con la página posterior ya guardada, lo que sigue NULL tras SofaScore y PropLine.
+
+    Solo partidos con más de ESPERA_COMPLETAR desde el saque, solo columnas en NULL, el marcador de FotMob tiene que
+    coincidir con el nuestro y la procedencia queda en `matches_enriquecimiento`. El xG solo si el partido no tiene
+    ninguno (primera pareja válida), con la hora real de captura de la página. No hace peticiones.
+    """
+    from .archivo_a_matches import COLUMNAS_MATCHES, extraer as extraer_partido
+    from .fotmob_history import stat_pairs
+
+    ahora = datetime.now(timezone.utc)
+    faltan = " OR ".join(f"m.{k} IS NULL" for k in COLUMNAS_MATCHES)
+    filas = c.execute(
+        f"""SELECT DISTINCT ON (m.match_id) m.match_id, m.home_goals, m.away_goals, m.home_xg, m.away_xg,
+                   o.fotmob_match_id, o.capturado_en, o.payload_gz, {", ".join("m." + k for k in COLUMNAS_MATCHES)}
+            FROM matches m JOIN leagues l USING (league_id) JOIN fotmob_original o USING (match_id)
+            WHERE o.fase = 'posterior' AND l.active AND m.status = 'finished'
+              AND m.kickoff_utc BETWEEN %s AND %s
+              AND (m.home_xg IS NULL OR m.away_xg IS NULL OR {faltan})
+            ORDER BY m.match_id, o.capturado_en""",
+        (ahora - timedelta(days=dias_atras), ahora - ESPERA_COMPLETAR)).fetchall()
+    r = {"candidatos": len(filas), "completados": 0, "con_xg": 0, "conflicto_marcador": 0, "sin_datos": 0}
+    for f in filas:
+        payload = json.loads(gzip.decompress(bytes(f["payload_gz"])))
+        equipos = (payload.get("header") or {}).get("teams") or [{}, {}]
+        if tuple(e.get("score") for e in equipos[:2]) != (f["home_goals"], f["away_goals"]):
+            r["conflicto_marcador"] += 1
+            continue
+        stats = stat_pairs((((payload.get("content") or {}).get("stats") or {}).get("Periods") or {}).get("All", {}))
+        datos = extraer_partido(payload, stats, f["home_goals"], f["away_goals"])
+        nuevos = {k: datos[k] for k in COLUMNAS_MATCHES if f[k] is None and datos[k] is not None}
+        xg = stats.get("expected_goals") or [None, None]
+        con_xg = f["home_xg"] is None and f["away_xg"] is None and len(xg) == 2 and None not in xg
+        if not nuevos and not con_xg:
+            r["sin_datos"] += 1
+            continue
+        with c.transaction():
+            if nuevos:
+                sets = ", ".join(f"{k} = COALESCE({k}, %({k})s)" for k in nuevos)
+                c.execute(f"UPDATE matches SET {sets} WHERE match_id = %(match_id)s",
+                          {**nuevos, "match_id": f["match_id"]})
+            if con_xg:
+                con_xg = c.execute(
+                    """UPDATE matches SET home_xg = %s, away_xg = %s, xg_source = 'fotmob', xg_recorded_at = %s
+                       WHERE match_id = %s AND status = 'finished' AND home_xg IS NULL AND away_xg IS NULL""",
+                    (xg[0], xg[1], f["capturado_en"], f["match_id"])).rowcount > 0
+            for campo in list(nuevos) + (["xg"] if con_xg else []):
+                c.execute("""INSERT INTO matches_enriquecimiento (match_id, campo, provider, source_match_id, captured_at)
+                             VALUES (%s, %s, 'fotmob', %s, %s) ON CONFLICT DO NOTHING""",
+                          (f["match_id"], campo, f["fotmob_match_id"], f["capturado_en"]))
+        r["completados"] += 1
+        r["con_xg"] += bool(con_xg)
+    c.commit()
+    return r
+
+
 # ---------------------------------------------------------------------------------------------- CLI
 def correr(c, accion: str, cli: Cliente | None = None, **opciones) -> dict:
     cli = cli or Cliente()
-    if en_enfriamiento(c):
+    if en_enfriamiento(c) and accion != "completar":
         return {"omitido": f"enfriamiento de {ENFRIAMIENTO_H} h tras una denegación de FotMob"}
     funciones = {"referencias": actualizar_referencias, "previos": capturar_previos,
-                 "posteriores": capturar_posteriores}
+                 "posteriores": capturar_posteriores, "completar": completar}
     try:
         res = funciones[accion](c, cli, **opciones)
     except AccesoDenegado as exc:
@@ -293,7 +358,7 @@ def main(argv=None) -> None:
     from ..db import conn
 
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("accion", choices=["referencias", "previos", "posteriores"])
+    ap.add_argument("accion", choices=["referencias", "previos", "posteriores", "completar"])
     ap.add_argument("--dias-atras", type=int, default=None, help="relleno puntual: hasta cuántos días atrás mirar")
     ap.add_argument("--maximo", type=int, default=None, help="relleno puntual (posteriores): máximo de partidos")
     a = ap.parse_args(argv)

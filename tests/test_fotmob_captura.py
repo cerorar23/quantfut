@@ -152,3 +152,105 @@ def test_correr_pasa_las_opciones_de_relleno_y_respeta_el_enfriamiento():
             patch.object(fc, "capturar_posteriores") as f:
         assert "omitido" in fc.correr(c, "posteriores", cli=object())
     f.assert_not_called()
+
+
+def _posterior(goles=(2, 1), xg=(1.4, 0.6)):
+    items = [{"key": "yellow_cards", "stats": [3, 1]}, {"key": "corners", "stats": [7, 2]}]
+    if xg:
+        items.append({"key": "expected_goals", "stats": list(xg)})
+    return {"general": {"matchId": "9"},
+            "header": {"teams": [{"score": goles[0]}, {"score": goles[1]}]},
+            "content": {"stats": {"Periods": {"All": {"stats": [{"title": "Top", "stats": items}]}}}}}
+
+
+class _Completar:
+    """Conexión falsa: devuelve las filas pedidas y guarda cada escritura."""
+
+    def __init__(self, filas):
+        self.filas, self.escrituras = filas, []
+
+    def execute(self, sql, params=None):
+        if sql.lstrip().startswith("SELECT"):
+            return _Filas(self.filas)
+        self.escrituras.append((sql, params))
+
+        class R:
+            rowcount = 1
+        return R()
+
+    def transaction(self):
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def commit(self):
+        pass
+
+
+def _fila(match_id, payload, goles=(2, 1), **ya):
+    from qf.ingest.archivo_a_matches import COLUMNAS_MATCHES
+    fila = {k: None for k in COLUMNAS_MATCHES}
+    fila.update(match_id=match_id, home_goals=goles[0], away_goals=goles[1], home_xg=None, away_xg=None,
+                fotmob_match_id="9", capturado_en=KICKOFF, payload_gz=gzip.compress(json.dumps(payload).encode()))
+    fila.update(ya)
+    return fila
+
+
+def test_completar_rellena_solo_lo_vacio_con_procedencia_y_xg_de_fotmob():
+    c = _Completar([_fila("m1", _posterior(), home_corners=4, away_corners=2)])
+    r = fc.completar(c)
+    assert r["completados"] == 1 and r["con_xg"] == 1
+    update = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert update["home_yellow"] == 3 and update["away_yellow"] == 1
+    assert "home_corners" not in update                         # ya tenía dato: no se toca
+    xg = next(p for s, p in c.escrituras if "xg_source = 'fotmob'" in s)
+    assert xg[:3] == (1.4, 0.6, KICKOFF)                        # hora real de captura de la página
+    campos = {p[1] for s, p in c.escrituras if "matches_enriquecimiento" in s}
+    assert campos == {"home_yellow", "away_yellow", "xg"}
+
+
+def test_completar_no_aplica_con_marcador_distinto_ni_inventa_xg():
+    c = _Completar([_fila("m1", _posterior(goles=(0, 0))), _fila("m2", _posterior(xg=None), home_xg=1.1, away_xg=0.3)])
+    r = fc.completar(c)
+    assert r["conflicto_marcador"] == 1 and r["con_xg"] == 0
+    assert not any("xg_source" in s for s, _ in c.escrituras)
+    assert all(p.get("match_id") != "m1" for s, p in c.escrituras if "COALESCE" in s)
+
+
+def test_completar_espera_36_horas_desde_el_saque():
+    c = _Completar([])
+    vistos = []
+    c.execute = lambda sql, params=None: vistos.append(params) or _Filas([])
+    fc.completar(c)
+    desde, hasta = vistos[0]
+    assert (datetime.now(timezone.utc) - hasta).total_seconds() >= 36 * 3600 - 5
+
+
+def test_referencias_no_pide_competiciones_retiradas():
+    from qf.league_policy import RETIRED_LEAGUES
+
+    pedidas = []
+
+    class Cli:
+        def get(self, endpoint, params):
+            pedidas.append(params["id"])
+            return {"fixtures": {"allMatches": []}}
+
+    class C:
+        def execute(self, sql, params=None):
+            return iter([])
+
+        def commit(self):
+            pass
+
+    fc.actualizar_referencias(C(), Cli())
+    retiradas = {fc.COMPETITIONS[l][0] for l in RETIRED_LEAGUES if l in fc.COMPETITIONS}
+    assert pedidas and not retiradas & set(pedidas)
+
+
+def test_completar_no_depende_del_enfriamiento_porque_no_pide_nada():
+    from unittest.mock import MagicMock
+
+    with patch.object(fc, "en_enfriamiento", return_value=True), \
+            patch.object(fc, "completar", return_value={"completados": 0}) as f, patch.object(fc, "_log"):
+        assert fc.correr(MagicMock(), "completar", cli=object()) == {"completados": 0}
+    f.assert_called_once()

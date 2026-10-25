@@ -49,6 +49,12 @@ operativo como canal de clientes.
 - [ ] **Titular:** `SOFT_BOOKS` frente a las casas de PropLine (solo 1xbet coincide).
 - [ ] Chequeo diario: detectar plan gratuito y calendario sin altas; `httpx` a WARNING (el token del bot sale en los registros).
 - [x] (25-oct) Ligue 2 y Superliga danesa fuera de los motores (db/086; sin cuotas en PropLine). Historial conservado.
+- [x] (25-oct) Serie B, LaLiga 2, Allsvenskan y Super League suiza fuera (db/088). Quedan 15 ligas + 2 copas.
+  Ver `docs/cobertura_ligas_propline_sofascore_20261025.md`.
+- [x] (25-oct) FotMob reactivado como complemento diario en las ligas activas (`referencias`, `previos`,
+  `posteriores`, `sedes`) y nuevo `fotmob_captura completar` (09:15 UTC, solo NULL, > 36 h tras el saque).
+- [x] (25-oct) Championship, 2. Bundesliga, Turquía y Noruega añadidas al recolector SofaScore.
+- [ ] SofaScore: recuperar del ~20-sep al 25-oct en las 17 competiciones (~6 USD), repartido por el tope de Apify.
 - [ ] Sustituir lo que aún lee API-Football/FotMob: once previsto y bajas (SofaScore, ~8 USD/mes más), clasificación
   (calculada con nuestros resultados), marcador en vivo (PropLine `/scores`); después quitar esos jobs del cron. F7 usa
   hoy el once de FotMob.
