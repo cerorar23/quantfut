@@ -84,7 +84,10 @@ def test_aplicar_escribe_xg_con_hora_de_recepcion_y_tarjetas_en_cero():
     c = FakeConn()
     assert sp.aplicar(c, RECIBO, fila(), "ar:1")
     upd = [p for q, p in c.sql if q.startswith("UPDATE matches SET home_shots")][0]
-    assert upd == (12, 7, 5, 2, 6, 4, 2, 3, 0, 0, "D Zamora", "ar:1")
+    assert upd[:11] + upd[12:] == (12, 7, 5, 2, 6, 4, 2, 3, 0, 0, "D Zamora", "ar:1")
+    web = upd[11].obj
+    assert web["home"]["tiros"] == 12 and web["away"]["corners"] == 4
+    assert web["home"]["xg"] == 1.4 and web["home"]["rojas"] == 0
     xg = [p for q, p in c.sql if "xg_source = 'sofascore'" in q][0]
     assert xg == (1.4, 0.6, RECIBO["received_at"], "ar:1")
 

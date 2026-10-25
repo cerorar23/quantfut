@@ -282,10 +282,14 @@ def _rellenar(c, f: dict, payload: dict) -> str:
 
     `f` trae match_id, fotmob_match_id, capturado_en, el marcador, el xG y las COLUMNAS_MATCHES actuales.
     El marcador de FotMob tiene que coincidir con el nuestro; la procedencia queda en `matches_enriquecimiento`. El xG
-    solo si el partido no tiene ninguno (primera pareja válida), con la hora real de captura de la página.
+    solo si el partido no tiene ninguno (primera pareja válida), con la hora real de captura de la página. `stats` (las
+    fichas de la web y la serie del Motor C) con las claves de `estadisticas.CLAVES_FOTMOB`, solo si sigue NULL.
     Devuelve 'conflicto_marcador', 'sin_datos', 'xg' u 'ok'.
     """
+    from psycopg.types.json import Jsonb
+
     from .archivo_a_matches import COLUMNAS_MATCHES, extraer as extraer_partido
+    from .estadisticas import desde_fotmob
     from .fotmob_history import stat_pairs
 
     equipos = (payload.get("header") or {}).get("teams") or [{}, {}]
@@ -294,6 +298,9 @@ def _rellenar(c, f: dict, payload: dict) -> str:
     stats = stat_pairs((((payload.get("content") or {}).get("stats") or {}).get("Periods") or {}).get("All", {}))
     datos = extraer_partido(payload, stats, f["home_goals"], f["away_goals"])
     nuevos = {k: datos[k] for k in COLUMNAS_MATCHES if f[k] is None and datos[k] is not None}
+    web = desde_fotmob(stats) if f.get("stats") is None else None
+    if web is not None:
+        nuevos["stats"] = Jsonb(web)
     xg = stats.get("expected_goals") or [None, None]
     con_xg = f["home_xg"] is None and f["away_xg"] is None and len(xg) == 2 and None not in xg
     if not nuevos and not con_xg:
@@ -317,7 +324,7 @@ def _rellenar(c, f: dict, payload: dict) -> str:
 
 def _columnas() -> str:
     from .archivo_a_matches import COLUMNAS_MATCHES
-    return ", ".join("m." + k for k in COLUMNAS_MATCHES)
+    return ", ".join("m." + k for k in COLUMNAS_MATCHES + ["stats"])
 
 
 def completar(c, cli: Cliente | None = None, dias_atras: int = 10) -> dict:
@@ -328,7 +335,7 @@ def completar(c, cli: Cliente | None = None, dias_atras: int = 10) -> dict:
     from .archivo_a_matches import COLUMNAS_MATCHES
 
     ahora = datetime.now(timezone.utc)
-    faltan = " OR ".join(f"m.{k} IS NULL" for k in COLUMNAS_MATCHES)
+    faltan = " OR ".join(f"m.{k} IS NULL" for k in COLUMNAS_MATCHES + ["stats"])
     filas = c.execute(
         f"""SELECT DISTINCT ON (m.match_id) m.match_id, m.home_goals, m.away_goals, m.home_xg, m.away_xg,
                    o.fotmob_match_id, o.capturado_en, o.payload_gz, {_columnas()}
