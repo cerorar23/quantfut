@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-25 15:20 UTC · Respaldo de resultados con FotMob · worker `quantfut-worker-propline:2db3f61` (`main` `2db3f61`, PR #123) + cron
+- **Motivo:** 19 partidos de ligas activas seguían abiertos más de 6 h después del saque porque PropLine no les dio resultado (`expired`: liga suiza entera y partidos sueltos de Serie B, LaLiga 2, Noruega, Turquía, MLS y Europa League). Hoffenheim–Lyon (UEL, 22-oct) tenía alta probabilidad, escalera y parley sin liquidar. Orden del titular: fusionar, desplegar y cerrar los atascados.
+- **Estado previo comprobado:** worker `e5a29a7` (= entrada anterior) y `scripts/crontab` = `main` (`d874a026…`); nadie más había desplegado.
+- **Worker:** imagen `FROM quantfut-worker-propline:e5a29a7` + `src/` de `git archive 7e27331` (árbol idéntico a `main` `2db3f61` tras el squash; etiquetada también `2db3f61`); 161/161 `.py` idénticos. Compose con la etiqueta `2db3f61`. `scripts/crontab` = `main` (`8e7ad146…`): suma `fotmob_captura resultados` cada 3 h a las :55.
+- **Ensayo de solo lectura antes de cerrar:** 18 de 18 candidatos con página FotMob del mismo partido, terminados en el tiempo reglamentario (FT) y con los dos equipos en el mismo orden.
+- **Verificado (pasada manual 15:23 UTC):** 18 cerrados, 0 abiertos, 0 equipos distintos; liquidación encadenada: alta probabilidad 1 (Hoffenheim–Lyon, ganada), escalera 1 (perdida, 3-0), sombra sharp 23, sombra XI 2. 0 partidos atascados después. La pata de parley de Hoffenheim–Lyon ya se había anulado a las 02:24 UTC por el margen de aplazado y se queda así (inmutable); el ticket ya estaba perdido por la otra pata (Juventus–Rennes 2-2).
+- Respaldo: `~/quantfut/backups/20261025-resultados-fotmob/` (`docker-compose.yml`, `crontab`, `worker_image.txt`).
+- **Vuelta atrás:** `B=~/quantfut/backups/20261025-resultados-fotmob; cp -p $B/docker-compose.yml ~/quantfut/ && cp -p $B/crontab ~/quantfut/scripts/crontab && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate worker`. Los cierres y liquidaciones hechos se quedan (resultados inmutables); cada cierre lleva `external_ids.fotmob` y su página en `fotmob_original`.
+
 ### 2026-10-25 15:00 UTC · Retiro de 4 ligas y FotMob como complemento diario · worker `quantfut-worker-propline:e5a29a7` (`main` `e5a29a7`, PR #121) + cron + recolector SofaScore; migración 088 programada
 - **Motivo:** orden del titular tras `docs/cobertura_ligas_propline_sofascore_20261025.md`: quedan 15 ligas + 2 copas; fuera Serie B, LaLiga 2, Allsvenskan y Super League suiza; FotMob vuelve como complemento diario.
 - **Estado previo comprobado:** worker `117feb7` con 0 archivos distintos de `main` salvo los dos del PR; `scripts/crontab` (`8c8c0493…`), `config.json` del recolector (`bc054cb0…`) y `sofascore_apify.py` (`4960defa…`) iguales a `main`; nadie más había desplegado.
