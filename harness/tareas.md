@@ -36,6 +36,23 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Auditoría de fuentes y backtest (2026-10-24) — `docs/auditoria_motores_20261024.md`
+- [x] Auditoría de solo lectura: uso de PropLine por motor, backtest temporal del A (RPS, log-loss, Brier, ECE, Kelly), calibración real de B y C.
+- [x] **Titular (24-oct):** API-Football en plan gratuito desde el 22-oct → se sustituye: resultados y calendario con PropLine, xG y estadísticas con SofaScore/Apify (tope 15 USD/mes y 40 partidos/día, solo las 13 ligas con modelo, fútbol antes que tenis/NBA).
+  Plan: `qf.ingest.propline_partidos` (lee `/scores` del archivo, sin HTTP; enlaza `external_ids.propline`; cierra con
+  marcador y córners del box score; nunca da de alta equipos) tras `RESULTS_PROVIDER=propline` en `results`/`fixtures`;
+  `qf.ingest.sofascore_partidos` (lee el archivo Apify montado en el worker; empareja por liga, ±36 h, nombres y MISMO
+  marcador; xG con la hora real de recepción; tabla inmutable `sofascore_detalles`); salud que mire resultados y la
+  fuente de cuotas activa. Casas nuevas solo a ≤ 48 h y cada 3 h (volumen).
+- [ ] Worker con `estadisticas_mercado.py` y `alta_prob.py` de `main` (alta probabilidad, escalera y parley fallan desde el 24-oct). Con visto bueno.
+- [ ] Cargar los cierres de PropLine a `odds_snapshots` como `close` (CLV, sombra y entrenamiento sin cierres desde el 22-oct).
+- [ ] **Titular:** `SOFT_BOOKS` frente a las casas de PropLine (solo 1xbet coincide).
+- [ ] Chequeo diario: detectar plan gratuito y calendario sin altas; `httpx` a WARNING (el token del bot sale en los registros).
+- [x] (25-oct) Ligue 2 y Superliga danesa fuera de los motores (db/086; sin cuotas en PropLine). Historial conservado.
+- [ ] Sustituir lo que aún lee API-Football/FotMob: once previsto y bajas (SofaScore, ~8 USD/mes más), clasificación
+  (calculada con nuestros resultados), marcador en vivo (PropLine `/scores`); después quitar esos jobs del cron. F7 usa
+  hoy el once de FotMob.
+
 ## Auditoría de los tres motores (2026-10-21) — `docs/auditoria_motores_20261021.md`
 Cada paso a producción requiere confirmación del titular. Orden recomendado:
 - [x] (22-oct, #70, en producción; modelo 2026.10.22-185314) A1-A4: `dixon_coles.fit` con gradiente analítico (prototipo `dc_rapido.py` de la auditoría), suma cero ponderada por muestra efectiva, ridge en partidos equivalentes (0,5-1), media vida 270; registrar y exigir `res.success`. Reentrenar y pasar la puerta (ΔRPS medido −0,00084 [−0,00137, −0,00031] en 11.920 partidos).

@@ -131,6 +131,10 @@ Tareas sueltas:
 - [ ] NBA — robos, tapones, triples y pérdidas ya están en el vivo (1.4.0; pérdidas con RUN071 + columnas nuevas, docs/nba_productor_14b_20261025.md). Pendiente: doble-doble, Q3/Q4 y margen por rangos (faltan en el archivo normalizado), recalibración de totales por la deriva de anotación (el ajuste dentro de la temporada se probó y empeora) y postemporada 2021-22 sin fecha.
 
 ## Decisiones que dependen de ti
+0. ~~API-Football en plan gratuito~~ **Decidido 24-oct: sustituido** por PropLine (resultados, calendario) y SofaScore
+   (xG, estadísticas; 15 USD/mes, 40 partidos/día). Comprobado el 25-oct: clasificación y marcador en vivo parados
+   (API-Football); bajas parciales, y FotMob cubre bajas y alineaciones previas solo en las 13 ligas con modelo.
+   Decidir si se sustituyen clasificación y marcador en vivo.
 1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
 2. Ampliar fuentes para los 1.219 xG que faltan; 365Scores ya aportó tres parejas verificadas.
 2b. (Resuelto el 18-oct) Captura de FotMob autorizada; token de CDS entregado; Open-Meteo descartada.

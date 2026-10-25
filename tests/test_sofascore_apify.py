@@ -11,16 +11,26 @@ def ev(i, rnd, status, ts=1792800000):
     return {"kind": "event", "id": i, "round": rnd, "startTimestamp": ts, "statusType": status}
 
 
+def sage(i, status, ts=1792800000):
+    return {"matchId": i, "round": None, "startTimestamp": ts, "statusType": status}
+
+
 class Fake:
     """Apify simulado: cada corrida suma 0,02 USD al gasto mensual."""
     def __init__(self, round_rows, detail_ids=None):
-        self.usd, self.calls, self.round_rows = 1.0, [], round_rows
+        self.usd, self.calls, self.urls, self.round_rows = 1.0, [], [], round_rows
 
     def __call__(self, method, url, token, payload=None, timeout=0):
         if url.endswith("/users/me/limits"):
             return 200, json.dumps({"data": {"current": {"monthlyUsageUsd": self.usd}}}).encode()
         self.calls.append(payload)
+        self.urls.append(url)
         self.usd += 0.02
+        if payload["mode"] == "tournament" and "tournamentIds" in payload:
+            rows = [sage(101, "finished"), sage(102, "notstarted", 1793000000)]
+            return 200, json.dumps(rows).encode()
+        if payload["mode"] == "event":
+            return 200, json.dumps([{"matchId": i, "statistics": {}} for i in payload["eventIds"]]).encode()
         if payload.get("eventsSpan") == "next":
             rows = [ev(9, 3, "notstarted", 1793000000)]
         elif payload["mode"] == "event_detail":
@@ -86,3 +96,48 @@ def test_tenis_descubre_semanal_solo_atp_wta_individual(tmp_path):
     n = len([p for p in f.calls if p["mode"] == "scheduled"])
     c.capture()  # misma semana: no vuelve a barrer el calendario
     assert len([p for p in f.calls if p["mode"] == "scheduled"]) == n
+
+
+def test_nba_con_scrapesage_y_futbol_con_rl1987(tmp_path):
+    f = Fake([ev(1, 3, "finished")])
+    cfg = {**CFG, "targets": {"es.laliga": {"utid": 8},
+                              "nba": {"utid": 132, "rounds": False, "provider": "scrapesage"}}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    assert c.capture() == "ok"
+    sage_calls = [(u, p) for u, p in zip(f.urls, f.calls) if "scrapesage" in u]
+    assert [p["mode"] for _, p in sage_calls] == ["tournament", "event"]
+    assert sage_calls[0][1]["tournamentIds"] == [132] and sage_calls[0][1]["onlyFinished"]
+    assert sage_calls[1][1]["eventIds"] == [101] and all(isinstance(x, int) for x in sage_calls[1][1]["eventIds"])
+    assert any("rl1987" in u for u in f.urls)  # LaLiga sigue con rl1987
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=101 AND target='nba'").fetchone()[0]
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=102").fetchone()[0] is None
+    actors = {json.loads(r[0])["_actor"] for r in c.db.execute("SELECT params FROM receipts")}
+    assert actors == {"rl1987", "scrapesage"}
+    n = len([u for u in f.urls if "scrapesage" in u])
+    c.capture()  # NBA relistada hace menos de 20 h y sin pendientes: cero gasto
+    assert len([u for u in f.urls if "scrapesage" in u]) == n
+
+
+def test_tenis_descubre_con_rl1987_y_detalla_con_scrapesage(tmp_path):
+    f = Fake([])
+    cfg = {**CFG, "targets": {}, "tennis": {"provider": "scrapesage"}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    assert c.capture() == "ok"
+    by = {p["mode"]: u for u, p in zip(f.urls, f.calls)}
+    assert "rl1987" in by["scheduled"] and "scrapesage" in by["tournament"] and "scrapesage" in by["event"]
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=50").fetchone()[0]
+
+
+def test_detalles_futbol_reciente_primero_y_sin_jornadas_viejas(tmp_path):
+    c, f = collector(tmp_path, [])
+    c.cfg = {**CFG, "max_details_per_run": 2}
+    hora = int(T0.timestamp())
+    with c.db:
+        c.db.executemany("INSERT INTO events(id,target,round,start_ts,status) VALUES(?,?,?,?,?)", [
+            (1, "es.laliga", 1, hora - 200 * 86400, "finished"),     # jornada de abril: fuera
+            (2, "es.laliga", 9, hora - 2 * 86400, "finished"),
+            (3, "es.laliga", 10, hora - 86400, "finished"),
+            (4, "tennis.2428", None, hora - 3600, "finished")])
+    c.details()
+    pedidos = [p["eventIds"] for p in f.calls if p.get("mode") == "event_detail"]
+    assert pedidos == [["3", "2"]]

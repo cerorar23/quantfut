@@ -1096,6 +1096,35 @@ Consumo real de la ingesta operativa, muy por debajo del plan: 13 llamadas por
 pasada de calendario (2/día), 1 por partido terminado y 1 por partido en la
 ventana de alineaciones.
 
+**22-oct-2026: el plan volvió al Free** y desde entonces no entraron resultados
+ni calendario (76 partidos sin cerrar al detectarlo el 24-oct; el chequeo diario
+seguía en verde). Decisión del titular (24-oct): **sustituirlo**. Con
+`RESULTS_PROVIDER=propline`, `fixtures` y `results` leen `/scores` del archivo
+compartido de PropLine (`ingest/propline_partidos.py`, sin peticiones; córners
+del box score) y el xG, tiros, tarjetas y árbitro salen de SofaScore vía Apify
+(`ingest/sofascore_partidos.py`, solo las 13 ligas con modelo, tope 15 USD/mes y
+40 partidos/día). PropLine publica a veces el mismo cruce con local y visitante
+invertidos: el calendario nunca crea un partido si ese cruce ya existe en
+cualquier sentido, y un resultado solo se aplica a un evento con los dos equipos
+en su lado. SofaScore solo escribe si su marcador coincide con el nuestro, lo que
+de paso verifica a PropLine. Comprobado con peticiones reales el 25-oct:
+- API-Football responde `Free plans do not have access to this season` y agota
+  sus 100 peticiones diarias: clasificación parada desde el 22-oct 06:40 UTC y
+  marcador en vivo desde el 22-oct 20:00; las bajas solo entran en la primera
+  pasada tras el reinicio del cupo (40-70 partidos al día).
+- FotMob cubre alineaciones y bajas previas en las 13 ligas con modelo (63/63
+  partidos del 23-24 oct con captura previa, 53 con el once oficial antes del
+  inicio) y en ninguna de las otras 10.
+- SofaScore sí publica xG de las ligas con modelo, Argentina incluida (Talleres
+  0,77 – Defensa y Justicia 0,78, 24-oct); partidos de abril de 2026 no lo tenían.
+  El histórico SofaScore cargado tiene 0/30 con xG en Premier, LaLiga, Serie A,
+  Bundesliga, Ligue 1, Eredivisie y Primeira pese a que la fuente lo publica: revisar esa carga.
+- PropLine no tiene Ligue 2 ni la Superliga danesa (catálogo de 36 competiciones): el titular las retiró de los
+  motores el 25-oct (db/086, desactivadas con su historial sellado intacto).
+- Fuentes desde el 25-oct (decisión del titular): solo SofaScore vía Apify (rl1987 fútbol, scrapesage NBA y tenis;
+  `azzouzana` sigue roto) y PropLine. SofaScore da once previsto y bajas ~12 h antes y clasificación (`standings`);
+  PropLine da el marcador en vivo (`/scores`). Falta conectarlos; los jobs de API-Football y FotMob siguen en el cron.
+
 **xG de API-Football habilitado el 12-oct-2026, por decisión del usuario.**
 La exclusión anterior queda revocada. Su cobertura sigue siendo variable:
 una respuesta vacía o un valor null no se convierte en cero. Se conserva

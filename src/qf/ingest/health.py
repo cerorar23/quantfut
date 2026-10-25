@@ -69,12 +69,12 @@ def check_fixtures_horizon() -> tuple[bool, str]:
 
 
 def check_orphan_matches() -> tuple[bool, str]:
-    """Partidos que pasaron hace rato y siguen sin cerrar."""
+    """Partidos que pasaron hace rato y siguen sin cerrar (solo de competiciones activas)."""
     n = query(
-        """SELECT count(*) AS n FROM matches
-           WHERE status IN ('scheduled', 'live')
-             AND kickoff_utc < now() - interval '8 hours'
-             AND kickoff_utc > now() - interval '30 days'"""
+        """SELECT count(*) AS n FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
+           WHERE m.status IN ('scheduled', 'live')
+             AND m.kickoff_utc < now() - interval '8 hours'
+             AND m.kickoff_utc > now() - interval '30 days'"""
     )[0]["n"]
     if n > 3:
         return False, f"{n} partidos terminaron hace >8h y siguen abiertos"
@@ -82,10 +82,11 @@ def check_orphan_matches() -> tuple[bool, str]:
 
 
 def check_odds_freshness() -> tuple[bool, str]:
-    """El worker de cuotas tiene que haber escrito algo recientemente."""
+    """El worker de cuotas tiene que haber escrito algo recientemente, del proveedor activo."""
+    from ..config import settings
     row = query(
-        "SELECT max(captured_at) AS last FROM odds_snapshots "
-        "WHERE source = 'the_odds_api'"
+        "SELECT max(captured_at) AS last FROM odds_snapshots WHERE source = %s",
+        (settings.odds_provider,),
     )[0]
     if not row["last"]:
         return False, "Nunca se han capturado cuotas en vivo"
@@ -95,6 +96,30 @@ def check_odds_freshness() -> tuple[bool, str]:
     if hrs > 24:
         return False, f"Última captura de cuotas hace {hrs:.0f} horas"
     return True, f"Cuotas frescas (hace {hrs:.1f} h)"
+
+
+def check_results_freshness() -> tuple[bool, str]:
+    """
+    Con partidos jugados hace más de 8 h tiene que haber resultados recientes.
+    El 22-oct-2026 API-Football pasó al plan gratuito: cada consulta devolvía
+    200 con un error de plan y el chequeo seguía diciendo «liquidación al día»,
+    porque sin partidos cerrados no hay nada que liquidar.
+    """
+    row = query(
+        """SELECT (SELECT max(result_recorded_at) FROM matches) AS ultimo,
+                  (SELECT count(*) FROM matches
+                    WHERE kickoff_utc BETWEEN now() - interval '3 days'
+                                          AND now() - interval '8 hours') AS jugados"""
+    )[0]
+    if not row["jugados"]:
+        return True, "Sin partidos jugados en los últimos 3 días"
+    if row["ultimo"] is None:
+        return False, "Nunca se ha registrado un resultado"
+    hrs = query("SELECT EXTRACT(EPOCH FROM (now() - %s)) / 3600 AS h", (row["ultimo"],))[0]["h"]
+    if hrs > 24:
+        return False, (f"Ningún resultado nuevo en {hrs:.0f} h con {row['jugados']} partidos "
+                       "jugados: revisar el proveedor de resultados")
+    return True, f"Resultados al día (último hace {hrs:.1f} h)"
 
 
 def check_unresolved_names() -> tuple[bool, str]:
@@ -275,6 +300,7 @@ def check_model_freshness() -> tuple[bool, str]:
 CHECKS = [
     ("calendario", check_fixtures_horizon),
     ("partidos huérfanos", check_orphan_matches),
+    ("resultados", check_results_freshness),
     ("frescura de cuotas", check_odds_freshness),
     ("nombres sin emparejar", check_unresolved_names),
     ("cobertura de bajas", check_injuries_coverage),

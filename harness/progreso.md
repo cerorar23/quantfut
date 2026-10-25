@@ -1,5 +1,37 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Ligue 2 y Superliga danesa fuera de los motores; fuentes: solo SofaScore y PropLine
+
+El titular fijó las fuentes: SofaScore vía Apify (actor por deporte del 24-oct: rl1987 fútbol, scrapesage NBA y
+tenis) y PropLine; ya no API-Football ni FotMob. PropLine no cotiza Ligue 2 ni la Superliga danesa, así que el titular
+las retiró (db/086). Se desactivan en vez de borrarlas como Chile y Brasil B: tienen 205 pronósticos de alta
+probabilidad, 7 patas de escalera/parley y 55 ofertas en sombra sellados, y borrar historial sellado necesita una
+autorización aparte. Tampoco entran en `retired_leagues`: su trigger rechazaría cualquier UPDATE de los partidos que se
+conservan. `RETIRED_LEAGUES` impide reimportarlas desde archivos. El recolector SofaScore de este PR se rehízo sobre la
+versión por deporte que corría en el servidor y no estaba en `main`; desplegar la de `main` habría devuelto NBA y tenis
+a rl1987.
+
+## 2026-10-25 — Resultados y calendario desde PropLine; xG desde SofaScore
+
+API-Football volvió al plan gratuito el 22-oct y el titular eligió sustituirlo en vez de renovarlo. Se lee lo que ya
+capturan los recolectores (cero peticiones nuevas). El emparejamiento es lo delicado: PropLine escribe los clubes de otra
+forma y a veces publica el mismo cruce al revés o dos veces. Por eso un evento se enlaza solo si los DOS equipos se
+parecen, a ±36 h y como único candidato (entonces se aprenden los alias, fuente `propline`, no `odds_api`), y un
+partido nuevo solo se crea con nombres exactos y sin el cruce ya presente en ningún sentido. SofaScore exige además el
+mismo marcador: es la comprobación independiente de PropLine. Casas nuevas de PropLine solo a ≤ 48 h y cada 3 h por
+volumen (~100 MB/día si no). Ensayo en seco en producción: 83 cierres de 111 pendientes, 61 alias aprendidos todos
+correctos, 3 altas, 10 cruces invertidos rechazados; 15/15 detalles SofaScore con marcador igual.
+
+## 2026-10-24 — Auditoría de fuentes y backtest: no recalibrar el Motor A
+
+El titular pidió calibrar y validar los tres motores con la data nueva. No se calibró ni reentrenó nada: la data nueva aún
+no está en las tablas (PropLine solo entra como cuota horaria desde el 24-oct; cierres, box score y SofaScore solo en el
+archivo) y los resultados están parados desde el 22-oct por el plan gratuito de API-Football. El backtest con ventana
+creciente muestra que el A está calibrado (la mejor recalibración coherente da ΔRPS −0,00016, en el límite del ruido) y
+que su brecha con el cierre es de información: peso óptimo en la mezcla 0 y Kelly con P_modelo > P_mercado −11 % (IC95
+−15/−7). Recalibrar sería ajustar ruido. Lo urgente son las fuentes: plan de API-Football, worker con dos archivos viejos
+y cierres de PropLine sin cargar. Detalle: `docs/auditoria_motores_20261024.md`.
+
 ## 2026-10-24 — Tenis: cuotas del archivo de PropLine, sin The Odds API
 
 El titular pidió conectar el motor de tenis al archivo compartido. Se hizo con un paquete nuevo (`tennis_odds_propline_v1`) en vez de
