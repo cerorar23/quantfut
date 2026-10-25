@@ -76,8 +76,8 @@ datos. Regla desde el 25-oct: el error que aparece al desplegar o probar se arre
 - [x] Recolector SofaScore: Liga MX pedía el Clausura (`11620`, vacío); el Apertura es `11621`. MLS en eliminatorias
   trae `round: null` y el recolector abandonaba: sin jornada se lista sin jornada (último y próximo).
 - [x] (25-oct, worker `ffe42ee`) Desplegado; cierres de 79 partidos cargados, MLS y Liga MX ya en SofaScore.
-- [ ] Reconstruir la imagen de la captura de PropLine sin etiquetas `com.docker.compose.*` (un despliegue del worker
-  la mata; ver «Trampas conocidas» en DEPLOYS.md).
+- [ ] **Titular:** visto bueno para apuntar la captura de PropLine a la imagen sin etiquetas `com.docker.compose.*`
+  (ya construida el 25-oct, `propline-shared-capture:sin-etiquetas`); hasta entonces el worker se recrea fuera de :07-:25.
 - [ ] **Enero de 2027:** volver Liga MX a `11620` (Clausura) en `scripts/sofascore_apify_config.json` y en el VPS.
 - [x] `matches.stats` (fichas de la web y serie del Motor C) desde SofaScore y, si falta, FotMob, con las claves de
   `estadisticas.TIPOS` más centros; relleno de lo ya cargado. Solo donde está NULL.
