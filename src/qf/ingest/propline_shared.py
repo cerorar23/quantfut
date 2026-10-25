@@ -595,6 +595,14 @@ def select_sports(catalog, config):
                  or (prefixes and s["key"].startswith(prefixes)))]
 
 
+def priority_sport(sport, config):
+    """Captured every hour: listed exactly, or under a listed prefix ending in '_'. No list: all of them."""
+    listed = config.get("priority_sports")
+    if not listed:
+        return True
+    return sport in listed or any(p.endswith("_") and sport.startswith(p) for p in listed)
+
+
 def finished_events(db, root, sport, now, settle):
     """Finished events from our own score receipts; the most-quoted first."""
     since = stamp(now - timedelta(days=int(settle.get("lookback_days", 3))))
@@ -728,6 +736,10 @@ def run(root, key_file, config_file, *, limit=None):
         report["sports"] = selected
         # Odds first: a slow result feed must not consume the capture window.
         for sport in selected:
+            # Competitions no model reads are kept, but less often: hourly they took ~40 % of the daily
+            # quota and the account reserve cut the 22:07-23:07 UTC runs (Americas kick-offs) on 24-oct-2026.
+            if not priority_sport(sport, config) and started.hour % int(config.get("other_sports_every_hours", 1)):
+                continue
             family = next((k for k in config["markets_by_family"] if sport.startswith(k)), "default")
             requested = list(config["markets_by_family"].get(family, config["markets_by_family"]["default"]))
             for r in client.db.execute("""SELECT p.* FROM receipts p JOIN requests q ON q.id=p.request_id
