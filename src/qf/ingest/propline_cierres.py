@@ -171,7 +171,8 @@ def cargar(now=None, dias=45, dry_run=False):
                     continue          # capturado antes del saque: no es un cierre
                 docs.append(doc)
             pares = match_events([{"id": d["id"], "home_team": d["home_team"], "away_team": d["away_team"],
-                                   "commence_time": d["commence_time"]} for d in docs], meta)
+                                   "commence_time": d["commence_time"]} for d in docs], meta,
+                                 otras_fuentes=("propline",))
             por_id = {str(d["id"]): d for d in docs}
             emparejados = set()
             for ev, mid in pares:

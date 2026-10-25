@@ -14,6 +14,9 @@ hace perder dinero o datos; una idea nueva va a «Mejoras», no a «Fallos».
   clasificación se calcula con nuestros resultados y el vivo sale del listado diario de FotMob.
 - ~~`estadisticas_jugador` convierte un dato ausente en 0~~ → cerrada: solo la escribía API-Football (última, 22-oct);
   las fuentes vivas (FotMob, SofaScore) guardan NULL.
+- ~~Sombra del XI parada desde el 22-oct (solo cuotas `post_xi`), ERA5 con 175 celdas rechazadas al día, API con
+  código anterior al 22-oct, lector de cuotas sin los alias `propline`~~ → resueltos el 25-oct (noche),
+  `docs/auditoria_motores_datos_20261025_noche.md`.
 
 **Del titular (27):** credenciales y cuentas (Meta, Whop, AdMob, RevU/BitLabs, Tapjoy, Apple/iOS), revisión legal y
 avisos legales en la web, Sentry, copia de seguridad fuera del servidor (destino), compilar y publicar la app,

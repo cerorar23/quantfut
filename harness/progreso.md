@@ -1,5 +1,17 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 (noche) — Auditoría de motores y datos: lo que quedó parado con el cambio de fuente
+
+Orden del titular: auditar los tres motores y las fases del A, comprobar vivo, cierres y completitud, y arreglar en el
+momento (`docs/auditoria_motores_datos_20261025_noche.md`). Lo que se encontró no eran datos que faltaran, sino
+consumidores que seguían esperando la forma de The Odds API: la sombra del XI solo aceptaba `post_xi` (PropLine nunca lo
+fabrica, y no debe) y el lector de cuotas solo miraba alias `odds_api`. Decisión: adaptar el consumidor (foto horaria
+posterior al XI, ≤ 75 min, ≥ T-15) en vez de inventar etiquetas en la ingesta. ERA5 no estaba roto por datos: Copernicus
+rechaza las peticiones simultáneas de una cuenta; de una en una salen todas. La API llevaba código de antes del 22-oct
+porque la imagen `3babeb4` se construyó sobre la API anterior en vez de sobre `main`: se despliega entera desde `main`.
+El chequeo de salud mira ahora el dato (cierres, cobertura de xG, once) y no solo la última fecha, que es lo que lo dejó
+en verde con 3 días sin cierres.
+
 ## 2026-10-25 — Clasificación y vivo sin API-Football; regla de arreglar al momento
 
 Pregunta del titular: ¿por qué cada auditoría deja más pendientes? Porque eran de solo lectura (apuntaban sin cerrar), los

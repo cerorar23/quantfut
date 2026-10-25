@@ -362,7 +362,7 @@ REAL_COLLECTOR = pl.Collector
 
 
 def settlement_run(tmp_path, monkeypatch, scores, *, results=None, budget=None, sports=("basketball_nba",),
-                   stats_prefixes=(), injuries=()):
+                   stats_prefixes=(), injuries=(), settle_extra=None):
     """One collector run against a fake provider; returns the provider calls."""
     calls = []
     def get(path, params, key):
@@ -391,7 +391,7 @@ def settlement_run(tmp_path, monkeypatch, scores, *, results=None, budget=None, 
                   markets_by_family=dict(default=["h2h"], basketball_=["h2h", "player_points"]),
                   injuries_sports=list(injuries),
                   settlement=dict(enabled=True, min_hours_after_start=6, daily_budget=budget or {"basketball_nba": 100},
-                                  stats_prefixes=list(stats_prefixes)))
+                                  stats_prefixes=list(stats_prefixes), **(settle_extra or {})))
     config_file = tmp_path / "config.json"; config_file.write_text(json.dumps(config))
     report = pl.run(tmp_path / "archive", key_file, config_file)
     return calls, report
@@ -430,6 +430,21 @@ def test_settlement_budget_favours_most_quoted_event_and_is_reserved(tmp_path, m
     c.capture("/v1/sports/basketball_nba/odds", {"a": 1}, cap=1)
     with pytest.raises(pl.BudgetStop, match="local_daily_cap"):
         c.capture("/v1/sports/basketball_nba/odds", {"a": 2}, cap=1)
+
+
+def test_soccer_settlement_only_for_listed_leagues_and_without_graded_props(tmp_path, monkeypatch):
+    """24-oct-2026: J-League, Conference y Saudí gastaban el presupuesto antes de llegar a la Premier."""
+    scores = [dict(id="1", status="final", commence_time=ago(10))]
+    calls, report = settlement_run(
+        tmp_path, monkeypatch, scores, sports=("soccer_japan_j_league", "soccer_epl"), budget={"soccer_": 100},
+        settle_extra=dict(sports_by_prefix={"soccer_": ["soccer_epl"]}, results_prefixes=["basketball_nba"]))
+    assert settlement_paths(calls) == ["/v1/sports/soccer_epl/events/1/odds/closing"]
+    assert "soccer_japan_j_league" not in report["settlement"]
+    # Sin las claves nuevas se comporta como antes: todas las del prefijo, con resultados.
+    (tmp_path / "antes").mkdir()
+    calls, _ = settlement_run(tmp_path / "antes", monkeypatch, scores, sports=("soccer_japan_j_league", "soccer_epl"),
+                              budget={"soccer_": 100})
+    assert len(settlement_paths(calls)) == 4
 
 
 def test_redacted_results_stop_further_results_that_day(tmp_path, monkeypatch):

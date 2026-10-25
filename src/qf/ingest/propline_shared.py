@@ -686,18 +686,25 @@ def run(root, key_file, config_file, *, limit=None):
         report["settlement"] = settled = {}
         now = utcnow()
         today = stamp(now.replace(hour=0, minute=0, second=0, microsecond=0))
+        # Optional allowlist per budget prefix: the hourly capture keeps every soccer_* competition,
+        # but settling all of them (J-League, Conference, Saudi...) in catalogue order spent the soccer
+        # budget before reaching the leagues the models use (24-oct-2026: no closing for EPL games).
+        only = settle.get("sports_by_prefix") or {}
+        results_prefixes = settle.get("results_prefixes")
         for prefix, budget in settle["daily_budget"].items():
             spent = client.db.execute("""SELECT count(*) FROM requests WHERE started_at>=?
                 AND (path LIKE ? OR path LIKE ? OR path LIKE ?)""", (today, f"/v1/sports/{prefix}%/odds/closing",
                 f"/v1/sports/{prefix}%/results", f"/v1/sports/{prefix}%/events/%/stats")).fetchone()[0]
-            for sport in [s for s in selected if s.startswith(prefix)]:
+            for sport in [s for s in selected if s.startswith(prefix) and (prefix not in only or s in only[prefix])]:
                 family = next((k for k in config["markets_by_family"] if sport.startswith(k)), "default")
                 markets = ",".join(config["markets_by_family"][family][:50])
                 counts = settled.setdefault(sport, dict(closing=0, results=0, stats=0, over_budget=0))
                 for e in finished_events(client.db, root, sport, now, settle):
                     base = f"/v1/sports/{sport}/events/{e['id']}"
                     wanted = [("odds/closing", dict(markets=markets, period="all"))]
-                    if e["status"] == "final":  # retired/walkover props are void, not graded
+                    # retired/walkover props are void, not graded; graded props only where someone reads them
+                    if e["status"] == "final" and (results_prefixes is None
+                                                   or any(sport.startswith(p) for p in results_prefixes)):
                         wanted.append(("results", {}))
                     # Box score last: it only uses what closing and results leave of the reserve.
                     if any(sport.startswith(p) for p in settle.get("stats_prefixes", [])):
