@@ -53,9 +53,11 @@ def official_scores(folder, game, now):
         for person in official[side]['players']:
             stats = person['statistics']
             row = dict(minutes=box_minutes(stats['minutes']), points=stats['points'], rebounds=stats['reboundsTotal'],
-                       assists=stats['assists'])
+                       assists=stats['assists'], threes=stats.get('threePointersMade'), steals=stats.get('steals'),
+                       blocks=stats.get('blocks'), turnovers=stats.get('turnovers'))
             for market, parts in COMBOS.items():
-                row[market.removeprefix('player_')] = sum(row[p] for p in parts)
+                values = [row[p] for p in parts]
+                row[market.removeprefix('player_')] = None if None in values else sum(values)
             players[person['personId']] = row
     return dict(home=scores['homeTeam'], away=scores['awayTeam'], players=players, received_at_utc=receipt['first_received_at_utc'])
 
@@ -69,7 +71,10 @@ def outcome(forecast, game, scores):
         player = scores['players'].get(forecast['player_id'])
         if player is None or player['minutes'] <= 0:
             return dict(status='dnp', actual=None)
-        return dict(status='evaluated', actual=player[market.removeprefix('player_')])
+        actual = player.get(market.removeprefix('player_'))
+        if actual is None:
+            return dict(status='result_unavailable', actual=None)
+        return dict(status='evaluated', actual=actual)
     if market == 'winner':
         actual = int(scores['home'] > scores['away'])
     elif market == 'team_points':

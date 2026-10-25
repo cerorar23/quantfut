@@ -13,7 +13,9 @@ from pathlib import Path
 import statistics
 
 MARKETS = ('player_points', 'player_rebounds', 'player_assists', 'player_points_rebounds', 'player_points_assists',
-           'player_rebounds_assists', 'player_points_rebounds_assists')
+           'player_rebounds_assists', 'player_points_rebounds_assists', 'player_threes', 'player_steals', 'player_blocks',
+           'player_turnovers', 'player_blocks_steals')
+GAME_MARKETS = ('spreads', 'totals')
 MIN_BOOKS = 2
 MAX_AGE = timedelta(minutes=65)  # hourly capture: the newest observation is at most one cycle old
 MATCH_WINDOW = timedelta(hours=3)  # PropLine commence_time vs official tipoff
@@ -100,3 +102,50 @@ def lines(root, now, mappings):
                    sha256=receipt.get('sha256'), component_requests=receipt.get('component_receipts'),
                    events_matched=len(games))
     return dict(out), summary
+
+
+def game_line_books(quotes):
+    """(event, 'spread_home' | 'total') -> {book: point} from usable full-game main lines; spreads keep the home side's point."""
+    sides = defaultdict(lambda: defaultdict(set))
+    for q in quotes:
+        if (q['market'] not in GAME_MARKETS or q['flags'] or q['dfs_odds_type'] or q['payout_multiplier'] is not None
+                or q['period'] is not None or q['team'] is not None or q['line_type'] not in (None, 'main') or q['point'] is None):
+            continue
+        if q['market'] == 'spreads' and q['side'] in ('home', 'away'):
+            point = float(q['point']) if q['side'] == 'home' else -float(q['point'])
+            sides[(q['event_id'], 'spread_home', q['bookmaker'])][point].add(q['side'])
+        elif q['market'] == 'totals' and q['name'] in ('Over', 'Under'):
+            sides[(q['event_id'], 'total', q['bookmaker'])][float(q['point'])].add(q['name'])
+    out = defaultdict(dict)
+    for (event, kind, book), points in sides.items():
+        complete = [p for p, names in points.items() if len(names) == 2]
+        if len(complete) == 1:  # both sides of exactly one main line
+            out[(event, kind)][book] = complete[0]
+    return out
+
+
+def game_lines(root, now, mappings):
+    """(game id -> dict(spread_home, total, books), summary): consensus full-game spread (home side) and total at sealing.
+
+    Same archive, freshness and matching rules as the player lines; a value needs MIN_BOOKS sportsbooks."""
+    if root is None:
+        return {}, dict(state='sin_fuente')
+    module = archive_module()
+    events, receipt = module.newest(root, PATH, now, max_age_seconds=int(MAX_AGE.total_seconds()))
+    if receipt is None:
+        return {}, dict(state='sin_archivo_reciente')
+    by_teams = {(m['home_nba_team_id'], m['away_nba_team_id']): m for m in mappings}
+    games = {}
+    for e in events:
+        m = by_teams.get((nba_id(e.get('home_team_id')), nba_id(e.get('away_team_id'))))
+        if m is None:
+            continue
+        commence = datetime.fromisoformat(e['commence_time'].replace('Z', '+00:00'))
+        if abs(commence - datetime.fromisoformat(m['tipoff_utc'])) <= MATCH_WINDOW:
+            games[str(e['id'])] = m['nba_game_id']
+    out = defaultdict(dict)
+    for (event, kind), books in game_line_books(module.quotes([e for e in events if str(e['id']) in games], receipt['received_at'])).items():
+        if len(books) >= MIN_BOOKS:
+            out[games[event]][kind] = consensus(list(books.values()))
+            out[games[event]].setdefault('books', {})[kind] = len(books)
+    return dict(out), dict(state='archivo_aplicado', received_at_utc=receipt['received_at'], events_matched=len(games))
