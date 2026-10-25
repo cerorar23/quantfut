@@ -254,3 +254,90 @@ def test_completar_no_depende_del_enfriamiento_porque_no_pide_nada():
             patch.object(fc, "completar", return_value={"completados": 0}) as f, patch.object(fc, "_log"):
         assert fc.correr(MagicMock(), "completar", cli=object()) == {"completados": 0}
     f.assert_called_once()
+
+
+def _final(razon="FT", local=8226, visita=9748, goles=(3, 0)):
+    return {"general": {"matchId": "6112350", "finished": True},
+            "header": {"status": {"finished": True, "cancelled": False, "awarded": False, "reason": {"short": razon}},
+                       "teams": [{"id": local, "score": goles[0]}, {"id": visita, "score": goles[1]}]},
+            "content": {"stats": {"Periods": {"All": {"stats": [{"title": "Top", "stats": [
+                {"key": "corners", "stats": [6, 4]}]}]}}}}}
+
+
+class _Huerfanos:
+    """Conexión falsa para el respaldo de resultados."""
+
+    def __init__(self):
+        from qf.ingest.archivo_a_matches import COLUMNAS_MATCHES
+        self.escrituras = []
+        self.partido = {"match_id": "eu.uel:hoffenheim-lyon", "kickoff_utc": KICKOFF, "home_team_id": 61452,
+                        "away_team_id": 68872, "fotmob_match_id": "6112350"}
+        self.actual = {k: None for k in COLUMNAS_MATCHES}
+        self.actual.update(match_id="eu.uel:hoffenheim-lyon", home_goals=3, away_goals=0, home_xg=None, away_xg=None)
+
+    def execute(self, sql, params=None):
+        if "JOIN fotmob_referencia" in sql:
+            return _Filas([self.partido])
+        if "FROM fotmob_equipo" in sql:
+            return _Filas([{"fotmob_team_id": 8226, "team_id": 61452}, {"fotmob_team_id": 9748, "team_id": 68872}])
+        if "INSERT INTO fotmob_original" in sql:
+            return _Filas([{"id": 1, "capturado_en": KICKOFF}])
+        if sql.lstrip().startswith("SELECT m.match_id, m.home_goals"):
+            return _Filas([self.actual])
+        self.escrituras.append((sql, params))
+
+        class R:
+            rowcount = 1
+        return R()
+
+    def cursor(self):
+        from contextlib import nullcontext
+        return nullcontext(None)
+
+    def transaction(self):
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def commit(self):
+        pass
+
+
+def _cli(payload):
+    class Cli:
+        def get(self, endpoint, params):
+            return {**payload, "__raw__": json.dumps(payload).encode()}
+    return Cli()
+
+
+def test_resultados_cierra_con_fotmob_y_liquida():
+    c = _Huerfanos()
+    with patch.object(fc.fm, "insertar"), patch("qf.eval.clv.settle_pending", return_value={"picks": 1}) as liq, \
+            patch("qf.ingest.api_football.record_health"):
+        r = fc.cerrar_huerfanos(c, _cli(_final()))
+    assert r["cerrados"] == 1 and r["settled"] == {"picks": 1}
+    cierre = next(p for s, p in c.escrituras if "status = 'finished'" in s)
+    assert cierre[:3] == (3, 0, "6112350")
+    liq.assert_called_once()
+    corners = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert (corners["home_corners"], corners["away_corners"]) == (6, 4)
+
+
+@pytest.mark.parametrize("payload,motivo", [(_final(razon="AET"), "abiertos"), (_final(razon="Pen"), "abiertos"),
+                                            (_final(local=9748, visita=8226), "equipos_distintos")])
+def test_resultados_no_cierra_prorroga_penaltis_ni_equipos_cambiados(payload, motivo):
+    c = _Huerfanos()
+    with patch.object(fc.fm, "insertar"), patch("qf.eval.clv.settle_pending") as liq, \
+            patch("qf.ingest.api_football.record_health"):
+        r = fc.cerrar_huerfanos(c, _cli(payload))
+    assert r[motivo] == 1 and r["cerrados"] == 0
+    assert not any("status = 'finished'" in s for s, _ in c.escrituras)
+    liq.assert_not_called()
+
+
+def test_marcador_final_rechaza_valores_raros():
+    assert fc._marcador_final(_final()) == (3, 0)
+    assert fc._marcador_final(_final(goles=(True, 0))) is None
+    assert fc._marcador_final(_final(goles=("3", 0))) is None
+    p = _final()
+    p["header"]["status"]["cancelled"] = True
+    assert fc._marcador_final(p) is None

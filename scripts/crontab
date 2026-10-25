@@ -140,6 +140,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 */5 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
 35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
 15 9 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura completar >> /var/log/fotmob_captura.log 2>&1
+# Respaldo de resultados: lo que PropLine deja abierto más de 6 h (p. ej. `expired`) se cierra con FotMob si terminó
+# en el tiempo reglamentario y con los mismos dos equipos; después liquida. 10 min tras cada cierre de PropLine.
+55 */3 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura resultados >> /var/log/fotmob_captura.log 2>&1
 
 # Clima histórico ERA5 de los partidos ya jugados (db/082), incremental: solo pide a Copernicus lo que aún no cubren
 # los archivos guardados (Copernicus publica con ~7 días de retraso). Necesita CDS_API_TOKEN en el entorno.

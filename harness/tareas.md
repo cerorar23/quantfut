@@ -54,7 +54,11 @@ operativo como canal de clientes.
 - [x] (25-oct) FotMob reactivado como complemento diario en las ligas activas (`referencias`, `previos`,
   `posteriores`, `sedes`) y nuevo `fotmob_captura completar` (09:15 UTC, solo NULL, > 36 h tras el saque).
 - [x] (25-oct) Championship, 2. Bundesliga, Turquía y Noruega añadidas al recolector SofaScore.
-- [ ] SofaScore: recuperar del ~20-sep al 25-oct en las 17 competiciones (~6 USD), repartido por el tope de Apify.
+- [x] (25-oct) Hueco del ~20-sep al 25-oct: no hacía falta SofaScore (~6 USD). La captura FotMob del 18-oct ya lo
+  cubría; `posteriores --dias-atras 46` guardó los 39 que faltaban y `completar` rellenó 261. Los 15 sin xG son de
+  las últimas 36 h y entran con la carga diaria.
+- [x] (25-oct) Respaldo de resultados con FotMob (`fotmob_captura resultados`, cada 3 h a las :55): cierra y liquida lo
+  que PropLine deja abierto más de 6 h, solo si terminó en el tiempo reglamentario y con los mismos dos equipos.
 - [ ] Sustituir lo que aún lee API-Football/FotMob: once previsto y bajas (SofaScore, ~8 USD/mes más), clasificación
   (calculada con nuestros resultados), marcador en vivo (PropLine `/scores`); después quitar esos jobs del cron. F7 usa
   hoy el once de FotMob.
