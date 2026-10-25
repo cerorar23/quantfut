@@ -1,0 +1,34 @@
+{
+  "version": "nba-vs-pinnacle-live-1.0",
+  "frozen_before_data": true,
+  "frozen_note": "written on 2026-10-21; no live price had been captured and the capture is blocked in code until 2026-11-01",
+  "question": "On sealed, prospective forecasts, does the live v1.3 winner probability add information beyond the Pinnacle no-vig price taken at the moment of sealing? It never produces a bet, stake or pick.",
+  "why_prospective": "the retrospective comparison (nba_vs_market_protocol.json) uses seasons already inspected; here the forecast is sealed with a hash before tipoff and the price is captured by a separate step that cannot influence it",
+  "units": "winner forecasts of cohorts sealed by nba.multimarket_v13_live, one per game, never re-forecast",
+  "capture": {
+    "source": "The Odds API current odds, sport basketball_nba, bookmakers=pinnacle, markets=h2h, decimal odds; one request returns every listed game; expected cost 1 credit",
+    "seal_phase": "taken right after the cohort is sealed; accepted only if received_at - sealed_at is between 0 and 15 minutes. A later capture is refused before spending a credit, so the price and the forecast describe the same moment",
+    "close_phase": "optional second capture before the first tipoff of the cohort (about 1 more credit); gives a price near the close for the CLV description only",
+    "write_once": "each phase is stored once per cohort with the raw response, its sha256, the reception time and the credits reported; a failed request is logged and never retried automatically; the stored price is never replaced",
+    "independence": "the capture step only reads the sealed bundle; the forecast code does not import it; no price enters the model",
+    "team_names": "the provider's 'Los Angeles Clippers' is read as 'LA Clippers'; an event must carry the same two names and a start time within 10 minutes of the sealed tipoff",
+    "price_rules": "event not started at reception; book update not after reception nor more than 30 minutes before it; both decimal prices finite and > 1",
+    "devig": "proportional primary; power method as sensitivity"
+  },
+  "inclusion": "a winner forecast counts if it has a valid seal-phase price and an official final result (receipt verified by LiveCohort)",
+  "coverage_rule": "valid-price games / sealed games >= 0.85, otherwise the evaluation is inconclusive",
+  "minimum_games": 400,
+  "metrics": {
+    "same_as_retrospective": "Brier and log loss of model, market and equal logit blend; paired Brier difference and information weight c (logit p = logit(market) + c*(logit(model) - logit(market))) with 95% intervals that resample whole cohort dates (400 replicates, seed 20261101)",
+    "clv_description": "for games with both phases: edge = model - open price, move = close price - open price; share of games with |edge| > 0.02 where edge and move have the same sign, and the slope of move on edge with the same date bootstrap. Description only, not part of the decision"
+  },
+  "decision_rule": {
+    "when": "once when the valid evaluated games reach 400, and once more at the end of the 2026-27 regular season; the final one supersedes. Looks in between are interim and carry no verdict",
+    "better_than_market": "upper 95% bound of (model Brier - market Brier) < 0",
+    "adds_information": "lower 95% bound of c > 0",
+    "otherwise": "no evidence that the NBA winner probability adds information over Pinnacle; it is not used as a pick. A valid, expected result",
+    "scope": "necessary, not sufficient, for any commercial use"
+  },
+  "descriptive_only": ["minutes between price and tipoff", "average overround", "power de-vig sensitivity", "CLV block"],
+  "not_modeled": ["totals and team points", "player markets", "stakes, edges, ROI", "prices available to a customer"]
+}

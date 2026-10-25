@@ -441,6 +441,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get detailLineupsPending => 'Escalações ainda não confirmadas.';
 
   @override
+  String get detailNoFeatured =>
+      'Não há prognóstico em destaque com odds de 1.40 ou mais.';
+
+  @override
   String get detailNoH2h => 'Não há confrontos registrados para este jogo.';
 
   @override
@@ -953,23 +957,8 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String ladderHistoryRate(String rate) {
-    return 'Taxa de concluídos: $rate';
-  }
-
-  @override
-  String ladderHistoryResult(String roi) {
-    return 'Resultado acumulado: $roi';
-  }
-
-  @override
   String get ladderHistoryShown =>
       'Mostrando os últimos desafios concluídos e o último falhado.';
-
-  @override
-  String ladderHistorySummary(int done, int closed) {
-    return '$done concluídos de $closed encerrados';
-  }
 
   @override
   String get ladderHistoryTitle => 'Histórico de desafios';

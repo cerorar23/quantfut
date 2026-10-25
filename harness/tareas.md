@@ -1,5 +1,20 @@
 # Backlog — QuantFut
 
+## App: pronóstico destacado del detalle — decisión del usuario, 25-oct-2026
+
+- [x] La tarjeta «Análisis estadístico» destaca, entre todos los pronósticos del partido, el de mayor probabilidad con cuota publicada >= 1,40 (sin tope de probabilidad; empate → cuota más alta; sin candidato no hay tarjeta). `featuredPick` en `apps/mobile/lib/product/live_forecast.dart`, aviso `detailNoFeatured` en 6 idiomas, pruebas Flutter 260/260. AAB 1.0.0+3 compilado el 25-oct; falta subirlo a Play.
+- [x] Historial de retos (Reto Escalera): fuera el resumen «N cumplidos de M cerrados», la tasa de cumplidos y el resultado acumulado; queda el título y la lista. Cadenas retiradas de los 6 ARB. Va en el mismo AAB 1.0.0+3.
+
+## PropLine compartido — decisión del usuario, 23-oct-2026
+
+- [ ] Sustituir la captura aislada de cierres cada dos horas por un recolector compartido cada hora; cuotas agrupadas por deporte/competición, todas las casas y mercados disponibles, sin descargas por motor.
+- [x] Conservar respuestas originales comprimidas, recepción real UTC, hashes, contexto de partido/periodo/jugador, cuota y presupuesto; archivo acumulativo sin sobrescribir observaciones y lectura punto en el tiempo para consumidores.
+- [ ] (Presupuesto e idempotencia probados; falta activación) Verificar presupuesto global de 5.000 solicitudes/día, reserva mínima, concurrencia e idempotencia. Ensayar con datos reales antes de programar; conservar el archivo anterior y registrar despliegue/reversión.
+- [ ] Exponer lectura común para los motores y documentar las conexiones que todavía requieren identidad/contrato validados; no confundir archivo prospectivo con reentrenamiento ni alterar predicciones ya selladas.
+- [x] Compatibilidad con fútbol/NBA/tenis (`docs/propline_compatibilidad_motores_20261023.md`): alias de Championship corregido y Noruega/Suecia/Suiza añadidas; claves vistas en partidos reales añadidas a la configuración; el descubrimiento ya acepta claves que empiezan por dígito.
+- [ ] Adaptador de tenis PropLine → `tennis_markets_v2` (periodo `s1/s2` y `line_type`), y adaptadores de fútbol para marcador exacto, hándicap europeo, empate no válido y mitades (solo evaluación).
+
+
 ## Tenis — datos y arquitectura inicial (2026-10-16)
 
 Autorización del usuario (16-oct): extraer todo el catálogo y continuar un motor local independiente. Implementación en el checkout gestionado `C:/Users/huye/.codex/worktrees/tennis-engine/apuesta proyec`, bajo `apps/tennis`; preparación temporal en `.local/tennis_engine_build_20261016/` por permisos de escritura.
@@ -651,6 +666,7 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       permiso del usuario; vuelve a pedir credenciales tras Access.
 
 ## NBA 2026-27 — investigación y experimentos (2026-10-03)
+- [x] NBA: normalizado ampliado (tiros, pérdidas, rebotes ofensivos, posesiones, play-in/playoffs) con protocolo congelado; docs/nba_normalizado_ampliado_20261024.md.
 
 - [x] Revisar arquitectura y contrastar literatura académica, doctorados,
       maestrías y el texto aportado. Plan integrado con fuentes, modelos,
@@ -2889,14 +2905,15 @@ Google Sign-In ya existe: no se rehace.
 - [x] Catalogar472bloques/11240partidos, enlazar187ediciones con evidencia de su temporada (160georreferenciadas,27concoordenadas pendientes);122fuentes recibidas hoy, sin disponibilidad antigua simulada.
 - [x] Rama retrospectiva separada: ultima sede observada, kilometros/deltaaltitud/deltahuso; sin descanso ni itinerario real, sin saltar antecedentes desconocidos. Guarda conservadora de7dias porperiodo de fuente.
 - [x] Dataset con2982partidos espacialmente aptos, particiones de ediciones completas,2025exploratorio;165pruebas tenis aprobadas,12hashescongelados intactos. Informe docs/tenis_dataset_historico_20261018.md.
-- [ ] Ampliar cobertura:52ediciones individuales sinenlacehistorico,17recintos identificados sincoordenadas(27ediciones);233bloquespor equipos/multisede requieren detalle por eliminatoria. Cola data/tennis/historical_venues_20261018/pending_editions.json.
-- [ ] Comparar Base/Base+Espaciales en interseccion de predicciones validas y con ajuste soloen entrenamiento;2982es cohorte con datos, nointerseccion ya puntuada. LogLoss/Brier/calibracion pendientes; variantehoraria siguependiente dediasindividuales acreditados.
+- [x] Resuelta la cola original de 52 ediciones individuales, 17 recintos y 233 bloques por equipos. Ampliación separada en historical_coverage_20261018; detalle abajo.
+- [x] Comparar Base/Base+Espaciales en intersección de predicciones y con ajuste solo en entrenamiento: ampliación de5798aptos,2965desarrollo/2833evaluación2025exploratoria. Métricas e intervalos entregados; sin mejora clara. Variante horaria sigue pendiente de días individuales acreditados.
 
 ## Tenis: completar cobertura historica (2026-10-18)
-- [ ] Recuperar evidencia de las52ediciones WTA pendientes con archivos por temporada y revisar sedes exactas.
-- [ ] Resolver17recintos sincoordenadas con consultas refinadas, objetos revisados y elevacionDEM; no usar respuestas bloqueadas como evidencia.
-- [ ] Revisar233bloquesporequipos por eliminatoria/partido, admitir multiples sedes y conservar desconocidos justificados.
-- [ ] Reconstruir dataset ampliado separado del original, probar contratos y fuentes, reportar cobertura real restante.
+- [x] Recuperar evidencia de las 52 ediciones WTA pendientes por temporada; distinguir PDF originales, extractos y corroboración estructurada.
+- [x] Resolver 17 recintos originales con puntos WGS84 y terreno DEM; Kempes/Jiujiang conservan referencia de complejo y tolerancia amplia.
+- [x] Revisar 233 bloques por equipos: 225 Davis, dos finales BJK, seis multicidad con 178 enlaces por partido; preservar seis revisiones de identidad/fase sin reescribir originales.
+- [x] Dataset separado con 11.240 sedes identificadas, 10.510 destinos con coordenadas, 5.798 partidos aptos; 173 pruebas y regresión de 2.982 aprobadas; 12 artefactos congelados intactos. Informe docs/tenis_cobertura_historica_completada_20261018.md.
+- [ ] Verificar coordenadas de 88 entradas adicionales identificadas en la ampliación. Comparación y sensibilidad ya ejecutadas, sin evidencia clara para activar la corrección. Sin horas imputadas.
 
 ## Comprometer-revelar de la cadena y plan de F7 (2026-10-18)
 - [x] `hashchain.py`: al repo público sube solo el compromiso (recibos y `LEDGER.md`); el JSON del lote sube cuando todos los partidos que cita terminaron y pasaron 4 h (tope de 7 días). `verify` recorre por recibos y cuenta aparte los lotes sin revelar. Pruebas: `tests/test_hashchain_revelado.py`. `CHAIN_GIT_REMOTE` sigue vacío: aún no se publica nada.
@@ -3098,3 +3115,39 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Reentreno semanal del modelo de saque; validación con Match Charting Project. PR #50.
 - [ ] Primeras cifras de acierto con resultados reales (`data/tennis/intake_v1/evaluation_latest.json`).
 - [x] Motor de tenis en el VPS (imagen propia + cron de `qf`), PR #53/#54; tareas de Windows desactivadas.
+
+### NBA — pronósticos prospectivos v1.3 con lesiones, 2026-10-21
+- [x] Forecast v1.3 con reporte oficial de lesiones (≥60 min), cohorte sellada por fecha, ajuste único anclado por hash.
+- [x] Ciclo de resultados (recibo oficial de nba.com, final, reintento) y marcador Brier por mercado.
+- [x] Página: sección v1.3 con versión, estado de disponibilidad y `actionable=false`; RUN071 intacto.
+- [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
+- [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
+- [x] Preparar la comparación con Pinnacle (alias Clippers, snapshot del mismo día, brazo alineado, protocolo congelado, ensayo sintético de punta a punta). docs/nba_comparacion_pinnacle_20261101.md.
+- [ ] Desde el 1-nov: comprar 20 snapshots, revisar `load`, comprar el resto (3.250 créditos) y correr `nba.market_compare`; órdenes en el documento.
+- [x] Captura del precio de Pinnacle al sellar cada cohorte (`nba.live_market`, offline, bloqueada antes del 1-nov) y comparación prospectiva con protocolo congelado. docs/nba_mercado_prospectivo_20261101.md.
+- [x] Captura del precio en el servidor, opción A aprobada: código (`live_market`: clave del servidor, carpeta de precios aparte, libro 2/día y 70/mes con `halt`, `capture-pending` con fases sello y cierre; 24 pruebas), clave copiada a `live13/private/odds_key` sin leerla, imagen y envoltorio de cron preparados. NO desplegado. docs/nba_captura_precio_servidor_propuesta_20261022.md.
+- [ ] Desplegar el paso de precios (esperar confirmación del titular): fusionar la rama con `main` (conflictos previsibles en market_compare.py y su prueba), construir `nba-live13-price`, crear la red `nba-price`, instalar `price.sh` y la línea de cron, verificar el bloqueo hasta el 1-nov y anotar la entrada en DEPLOYS.md.
+
+### NBA — mejoras de la auditoría del motor, 2026-10-21
+Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
+- [x] v1.4 (protocolo congelado): puntos perdidos relativos a la forma. Hecho: no mejora equipo (falla la regla de decisión), mejora jugadores; vivo sigue en v1.3. docs/nba_multimarket_v14_20261021.md.
+- [x] v1.4b: absoluto + relativo juntos y suelo de participación: sin mejora en equipo, el suelo empeora la participación. v1.3 se queda. docs/nba_multimarket_v14b_20261021.md.
+- [x] Separar «Available»/«Out» por motivo G League: neutro en todos los mercados (v1.4).
+- [ ] Backfill gratuito de reportes de lesiones cercanos a T-60 y tabla condicionada a horas antes del salto (hoy: un reporte/día, 13:30 o 17:30 ET).
+- [x] Caché por partido en `multimarket_v13_live.completed()` (juegos finales y días cerrados, `--cache`) y fallo explícito ante un partido pasado en curso; un aplazado (estado 1) se registra en `completed_games.json`. Modelo reajustado en `nba_f6_live13_model_20261021b` con parámetros idénticos (solo cambia el hash del módulo).
+- [x] Backfill T-60 (`nba.injury_t60`): 1.910 PDF (2023-24..2025-26) descargados, parseados y unidos; partidos con reporte a ≤1 h del corte de 2-4 % a 99,8-99,9 %. docs/nba_cache_completed_y_backfill_t60_20261021.md.
+- [x] v1.5 (protocolo congelado): v1.3 con reportes T-60. Jugadores mejoran de forma significativa (Brier −0,0003 a −0,0022) y la participación pasa de 0,45-0,49 a 0,31-0,38; equipo sin efecto probado (falla la regla de decisión), el vivo conserva sus reportes. docs/nba_multimarket_v15_20261021.md.
+- [ ] Ratings ataque/defensa ajustados por rival y ritmo, una sola distribución del marcador para ganador/puntos/total.
+- [ ] Prior de pretemporada para los primeros 15-20 partidos (oct-nov empeora el Brier del ganador ~0,01).
+- [ ] Puntos de jugador: modelo 2P/3P/TL o dispersión ajustada; rangos desde la distribución calibrada (hoy el 80 % cubre 73 %).
+
+### NBA — segunda auditoría del motor, 2026-10-23
+Detalle y medidas en docs/nba_auditoria_motor_20261023.md.
+- [x] Auditoría del vivo, de v1.4-v1.5 y del piloto PropLine (0 créditos, servidor sin tocar). Enfoque del titular: probabilidad estadística calibrada frente al resultado real, no ganar a las cuotas.
+- [ ] Productor: sellar por partido (último reporte ≤ salto − 60 por partido) para cubrir los partidos antes de 17:35 ET (87-97/temporada) y los de 18:00-18:45 que hoy se sellan sin lesiones (45-56/temporada). Enmienda de protocolo + reajuste del modelo + despliegue, con confirmación.
+- [ ] Productor: tomar `sealed_at_utc` al escribir el bundle y la recepción del reporte tras descargarlo; archivo de control para distinguir bloqueo de «no existe»; desplegar la caché de `completed()`; guardar filas de jugador de 2026-27 para la historia de disponibilidad.
+- [ ] Play-in y playoffs (identificadores 004/005/006) antes de mediados de abril.
+- [ ] Fijar el reloj de `tests/test_paper_bundle.py` (3 pruebas caducadas desde el 22-oct por `deadline_utc` fijo).
+- [ ] Recalibración móvil de total y puntos de equipo (sesgo ±0,04 por temporada) y prior de pretemporada por plantilla.
+- [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
+- [ ] Jugadores en vivo con probabilidad de jugar explícita + distribución condicionada corregida (puntos 2P/3P/TL o dispersión ajustada); cobertura de rangos publicada.

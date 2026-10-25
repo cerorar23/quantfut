@@ -820,6 +820,12 @@ abstract class AppLocalizations {
   /// **'Alineaciones todavía no confirmadas.'**
   String get detailLineupsPending;
 
+  /// No description provided for @detailNoFeatured.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay un pronóstico destacado con cuota de 1.40 o más.'**
+  String get detailNoFeatured;
+
   /// No description provided for @detailNoH2h.
   ///
   /// In es, this message translates to:
@@ -1714,29 +1720,11 @@ abstract class AppLocalizations {
   /// **'Falló en el escalón {step}'**
   String ladderHistoryFailedAt(int step);
 
-  /// Porcentaje de retos cerrados que se cumplieron.
-  ///
-  /// In es, this message translates to:
-  /// **'Tasa de cumplidos: {rate}'**
-  String ladderHistoryRate(String rate);
-
-  /// Retorno acumulado sobre lo invertido en los retos cerrados.
-  ///
-  /// In es, this message translates to:
-  /// **'Resultado acumulado: {roi}'**
-  String ladderHistoryResult(String roi);
-
   /// Aviso bajo la lista del historial de retos: qué retos se enseñan.
   ///
   /// In es, this message translates to:
   /// **'Se muestran los últimos cumplidos y el último fallido.'**
   String get ladderHistoryShown;
-
-  /// Resumen del historial de retos.
-  ///
-  /// In es, this message translates to:
-  /// **'{done} cumplidos de {closed} cerrados'**
-  String ladderHistorySummary(int done, int closed);
 
   /// Título de la tarjeta de retos cerrados.
   ///

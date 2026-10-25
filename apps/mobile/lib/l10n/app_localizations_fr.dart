@@ -441,6 +441,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get detailLineupsPending => 'Compositions pas encore confirmées.';
 
   @override
+  String get detailNoFeatured =>
+      'Aucun pronostic à la une avec une cote de 1.40 ou plus.';
+
+  @override
   String get detailNoH2h => 'Aucune confrontation enregistrée pour ce match.';
 
   @override
@@ -955,23 +959,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String ladderHistoryRate(String rate) {
-    return 'Taux de réussite : $rate';
-  }
-
-  @override
-  String ladderHistoryResult(String roi) {
-    return 'Résultat cumulé : $roi';
-  }
-
-  @override
   String get ladderHistoryShown =>
       'Affichage des derniers défis réussis et du dernier échoué.';
-
-  @override
-  String ladderHistorySummary(int done, int closed) {
-    return '$done réussis sur $closed clos';
-  }
 
   @override
   String get ladderHistoryTitle => 'Historique des défis';

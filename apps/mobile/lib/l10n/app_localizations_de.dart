@@ -440,6 +440,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get detailLineupsPending => 'Aufstellungen noch nicht bestätigt.';
 
   @override
+  String get detailNoFeatured =>
+      'Kein hervorgehobener Tipp mit einer Quote von 1.40 oder höher.';
+
+  @override
   String get detailNoH2h => 'Für dieses Spiel sind keine Begegnungen erfasst.';
 
   @override
@@ -955,23 +959,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String ladderHistoryRate(String rate) {
-    return 'Erfolgsquote: $rate';
-  }
-
-  @override
-  String ladderHistoryResult(String roi) {
-    return 'Gesamtergebnis: $roi';
-  }
-
-  @override
   String get ladderHistoryShown =>
       'Angezeigt werden die zuletzt geschafften Challenges und die letzte gescheiterte.';
-
-  @override
-  String ladderHistorySummary(int done, int closed) {
-    return '$done geschafft von $closed beendeten';
-  }
 
   @override
   String get ladderHistoryTitle => 'Challenge-Verlauf';

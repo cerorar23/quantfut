@@ -1,5 +1,11 @@
 # Pendientes de QuantFut — lista única
 
+## PropLine compartido — 23-oct-2026
+
+Implementación preparada en `codex/propline-hourly`, commit `5ff66cf`: archivo horario común, originales comprimidos, lecturas sin HTTP, conversión de cuotas y adaptadores de fútbol. Arnés de main: 1.468 aprobadas, 104 omitidas; 27 pruebas específicas. Piloto NBA: cinco respuestas 200, 112.154 observaciones, cero fallos en esa pasada. Límite 4.500 solicitudes/día y reserva global 500; detener captura con menos de 5 GiB libres.
+
+**Sin activar aún en producción.** La revisión automática rechazó subir esta rama al repositorio remoto por falta de autorización explícita del destino. No se cambió cron, imágenes, proveedor activo ni base del servidor. Pendientes: autorización de subida a `cerorar23/quantfut`, PR/main, despliegue y primera pasada completa; terminar de conectar los lectores NBA/tenis al archivo común conservando los protocolos sellados. Auditoría del servidor por hashes, sin exportar su código; parche de API preparado desde las versiones verificadas del repositorio.
+
 ## Tenis local — estado consolidado 19-oct-2026
 
 **Motor vigente v7 (19-oct):** `python -m tennis_motor` en el checkout `tennis-engine`. Corrige alias de identidad, sobredispersión por partido en todos los mercados, ranking/edad, Elo dinámico por ronda e inactividad/carga. 2026 exploratorio: acierto ATP 67,6 % y WTA 67,9 % (Elo 64,2 %/64,8 %). 17 pronósticos sellados en `data/tennis/core_v7_prospective_20261019/`. Los 990 pronósticos del estudio de diez mercados se retiraron (archivados, no borrados).
@@ -120,7 +126,9 @@ Tareas sueltas:
 - [ ] iOS: necesita Mac y Apple Developer (APNs y firma).
 - [ ] Validar el acceso con Google y la entrega FCM con un usuario real; activar `FIREBASE_AUTH_ENABLED` cuando lo decidas.
 - [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
-- [ ] NBA — cuotas históricas de partido (The Odds API): comprar 325 snapshots h2h de 2024-25 y 2025-26 (3.250 créditos) **desde el 1-nov-2026**, con `python -m nba.odds_history fetch` (tope 3.300, reserva 14.500, caché). Bloqueado por código antes de esa fecha. Detalle en docs/nba_cuotas_historicas_plan_20261021.md.
+- [x] NBA — cuotas históricas h2h (The Odds API): los 325 snapshots de 2024-25 y 2025-26 ya se compraron el 23-oct (manifest en `apps/nba/.local/raw/nba_odds_h2h_202611`) y se compararon (`nba_f6_market_20261101`).
+- [x] NBA — normalizado ampliado (tiros, pérdidas, rebote ofensivo, posesiones, play-in y playoffs 2022-23..2025-26): `nba_extended_box_20261024`, docs/nba_normalizado_ampliado_20261024.md.
+- [ ] NBA — datos para entrenar todos los mercados: cuotas de hándicap/total (BetsAPI en VPS sin conectar), props sin precio (robos, tapones, combinados) y postemporada 2021-22 sin fecha. Ver docs/nba_auditoria_datos_entrenamiento_20261024.md.
 
 ## Decisiones que dependen de ti
 1. (Resuelto) Procesador de pago: Whop en la web, tiendas en la app.
@@ -132,7 +140,10 @@ Tareas sueltas:
 6. (Resuelto el 18-oct) Revisión legal concluida sin objeciones.
 
 ## Tenis retrospectivo 2024/2025 (18-oct-2026)
-- Ampliado: 11.240 partidos con identidad de sede, 10.895 con coordenadas de destino y 6.414 aptos para comparación espacial; 194 pruebas de tenis aprobadas. Segundo bloque Chennai/Palermo/Riad/Hengqin/Shenzhen: 121 destinos y 170 aptos adicionales. Palermo es una referencia de complejo inferida por dirección y contexto cartográfico, tolerancia 750 m. Versiones anteriores y 12 artefactos congelados conservados. Informe docs/tenis_segundo_bloque_sedes_20261018.md.
-- Comparación repetida con protocolo fijo: entrenamiento 3.306 de 2024, evaluación 3.108 de 2025; Log-Loss base 0,635571 frente a espacial 0,635581, intervalo de diferencia incluye cero. En la misma muestra original de 2.833: base 0,638733, espacial anterior 0,638682 y ajuste ampliado 0,638764. La nueva cobertura no acredita una mejora predictiva; 2025 exploratorio, sin activar corrección. Sensibilidad y calibración archivadas en historical_geography_batch2_20261018/comparison/.
-- Carga por rondas ejecutada: entrenamiento2130/evaluación1957; LogLoss base0,615696 frente a cobertura+carga0,615221. Intervalos incluyen cero, variante experimental sin activar; no equivale a ventanas diarias. Informe docs/tenis_carga_rondas_resultados_20261018.md.
-- Pendiente: coordenadas de 78 entradas (345 destinos), cola actual data/tennis/historical_geography_batch2_20261018/geography_priority_queue.json; siguientes cinco: Taipei Tennis Center 14, SuperTennis Arena Bolonia 14, AO Arena Manchester 12, SEB Arena Vilna 10 y Swiss Tennis Arena Biel 9. Ventanas 3/7 días bloqueadas: 152 observaciones terminales archivadas sin límite inferior de finalización acreditado. Nuevas especificaciones se eligen dentro de entrenamiento y requieren periodo futuro intacto. Sin ROI ni horas ficticias.
+Estado y pendientes en la sección de tenis al inicio de este archivo. Versión actual: `data/tennis/historical_geography_complete_20261018/`; los bloques anteriores se conservan como evidencia. 73 entradas revisadas; única ambigüedad de campus: Palm Hills septiembre de 2025. Correcciones espacial y carga por rondas siguen experimentales; intervalos de mejora incluyen cero. No ROI ni horas ficticias.
+
+### Ampliación de mercados — 19-oct-2026
+
+- [x] Seguimiento prospectivo de las diez familias implementado y conectado al mismo chat:18partidos(11ATP/7WTA),990tareas relacionadas,110grupos, cero resultados/rechazos iniciales;367pruebasaprobadas. Protocolo independiente y horas nuevas; no hereda el sello DigiCert. Ver docs/tenis_validacion_todos_mercados_20261019.md.
+- [ ] Evidencia futura por cada mercado/línea/formato: mínimos y calibración fijados antes de resultados, cobertura y retiros visibles. Ningún grupo acreditado todavía; se requieren resultados verificables y cierre del periodo. El financiero no se amplía ni se consumen créditos de cuotas.
+- [ ] NBA v1.3 prospectivo: desplegar la sección nueva de /nba y programar el sellado diario (PR a `main`, confirmación del titular). Plan y vuelta atrás en docs/nba_v13_prospectivo_20261021.md.

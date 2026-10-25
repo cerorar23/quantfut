@@ -22,7 +22,7 @@
         <meta-data android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled" android:value="false" />
         <!-- ID de APP de AdMob. Este es el de EJEMPLO de Google (solo anuncios de prueba):
              cámbialo por el real antes de publicar con anuncios reales. -->
-        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />
+        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3902371555866850~8333839408" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="quantfut_predictions" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_quantfut" />
         <activity

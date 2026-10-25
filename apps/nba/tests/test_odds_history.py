@@ -87,3 +87,46 @@ def test_load_matches_games_and_rejects_started_stale_or_unmatched(tmp_path):
     assert rows[0]['home_no_vig'] == pytest.approx((1 / 1.5) / (1 / 1.5 + 1 / 2.7)) and rows[0]['minutes_to_tipoff'] == 30
     assert stats['already_started'] == 1 and stats['invalid_or_stale_price'] == 1 and stats['unmatched_event'] == 1
     assert stats['missing_snapshot'] == 1
+
+
+def test_the_providers_clippers_spelling_matches_the_history_and_the_price_side_is_right(tmp_path):
+    games = GAMES + [dict(game_id='g5', date='2025-01-14', season='2024-25', home=dict(name='LA Clippers'), away=dict(name='Miami Heat'))]
+    p = oh.plan(games, TIPS, {'2024-25'})
+    snap = {'timestamp': '2025-01-15T00:00:00Z', 'data': [
+        event('Los Angeles Clippers', 'Miami Heat', '2025-01-15T00:30:00Z', '2025-01-14T23:55:00Z', home_price=1.4, away_price=3.2)]}
+    (tmp_path / (p['slots'][0]['name'] + '.json')).write_text(json.dumps(snap))
+    rows, stats = oh.load(p, tmp_path, games)
+    assert [r['game_id'] for r in rows] == ['g5'] and stats.get('unmatched_event', 0) == 0
+    assert rows[0]['home_decimal'] == 1.4 and rows[0]['home_no_vig'] > .5
+
+
+def test_power_devig_sums_to_one_and_loads_more_margin_on_the_longshot():
+    home, away = 1.25, 4.4  # clear favourite
+    p = oh.power_no_vig(home, away)
+    q = oh.power_no_vig(away, home)
+    assert p + q == pytest.approx(1, abs=1e-9)
+    proportional = (1 / home) / (1 / home + 1 / away)
+    assert p > proportional  # the favourite keeps more probability than under the proportional split
+    assert oh.power_no_vig(1.9, 1.9) == pytest.approx(.5)
+
+
+def test_a_game_is_never_priced_from_the_snapshot_of_the_day_before(tmp_path):
+    games = GAMES + [dict(game_id='g6', date='2025-01-15', season='2024-25', home=dict(name='Boston Celtics'), away=dict(name='Utah Jazz'))]
+    p = oh.plan(games, TIPS, {'2024-25'})
+    # the 2025-01-14 snapshot also lists the next day's game, with a price a day old
+    snap = {'timestamp': '2025-01-15T00:00:00Z', 'data': [
+        event('Boston Celtics', 'Miami Heat', '2025-01-15T00:30:00Z', '2025-01-14T23:55:00Z'),
+        event('Boston Celtics', 'Utah Jazz', '2025-01-15T19:00:00Z', '2025-01-14T23:55:00Z')]}
+    (tmp_path / (p['slots'][0]['name'] + '.json')).write_text(json.dumps(snap))
+    rows, stats = oh.load(p, tmp_path, games)
+    assert [r['game_id'] for r in rows] == ['g1'] and stats['snapshot_other_day'] == 1
+
+
+def test_the_date_sent_to_the_historical_endpoint_ends_in_z_not_in_an_offset(tmp_path):
+    p = oh.plan(GAMES, TIPS, {'2024-25'})
+    client = Client([Reply({'data': []}), Reply({'data': []})])
+    oh.fetch(p, tmp_path, 'k', cap=100, reserve=0, now=datetime(2026, 11, 2, tzinfo=UTC), client=client)
+    # the provider answered 422 INVALID_HISTORICAL_TIMESTAMP to '...+00:00' on 2026-10-23
+    assert client.calls == ['2025-01-15T00:00:00Z', '2025-01-18T16:30:00Z']
+    assert oh.api_time('2025-01-15T00:00:00+00:00') == '2025-01-15T00:00:00Z'
+    assert oh.api_time('2025-01-14T19:00:00-05:00') == '2025-01-15T00:00:00Z'

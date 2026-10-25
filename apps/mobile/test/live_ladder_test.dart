@@ -249,15 +249,14 @@ void main() {
   testWidgets('historial vacío: invita en vez de disculparse', (tester) async {
     await pump(tester, cards(emptyReport), code: 'es');
     expect(find.text('Historial de retos'), findsOneWidget);
-    expect(find.text('0 cumplidos de 0 cerrados'), findsOneWidget);
     expect(find.textContaining('Aún no hay retos cerrados'), findsOneWidget);
   });
 
-  testWidgets('historial con cerrados: tasa, resultado y los fallidos también', (tester) async {
+  testWidgets('historial con cerrados: sin resumen, tasa ni resultado; los fallidos también', (tester) async {
     await pump(tester, cards(closedReport), code: 'es');
-    expect(find.text('1 cumplidos de 2 cerrados'), findsOneWidget);
-    expect(find.text('Tasa de cumplidos: 50 %'), findsOneWidget);
-    expect(find.text('Resultado acumulado: +30,0 %'), findsOneWidget);
+    expect(find.textContaining('cumplidos de'), findsNothing);
+    expect(find.textContaining('Tasa de cumplidos'), findsNothing);
+    expect(find.textContaining('Resultado acumulado'), findsNothing);
     final header = find.text('Historial de retos');
     await tester.ensureVisible(header);
     await tester.tap(header);
@@ -332,7 +331,6 @@ void main() {
     expect([20, 19, 18, 17, 16].map(shown), everyElement(isFalse));
     expect(find.byKey(const ValueKey('ladder-history-row-30')), findsOneWidget);
     expect(find.text('Se muestran los últimos cumplidos y el último fallido.'), findsNothing);
-    expect(find.text('12 cumplidos de 15 cerrados'), findsOneWidget); // el resumen cuenta todos
   });
 
   testWidgets('el fallido sale en su sitio por fecha, no al final', (tester) async {
