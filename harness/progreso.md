@@ -1,5 +1,20 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Clasificación y vivo sin API-Football; regla de arreglar al momento
+
+Pregunta del titular: ¿por qué cada auditoría deja más pendientes? Porque eran de solo lectura (apuntaban sin cerrar), los
+cambios de fuente abrían huecos nuevos y el punto de entrada estaba desactualizado (F7 figuraba «sin empezar» y corre cada
+5 min). Regla nueva del titular: el error que aparece al desplegar o probar se arregla en la misma sesión; `PENDIENTES.md`
+solo guarda lo que depende de él o de una fecha o muestra. Ya no hay ninguna pausa del motor.
+Clasificación: se calcula con nuestros resultados en vez de pedirla a SofaScore (dinero) o PropLine (no la tiene). Contra
+la última foto de API-Football (22-oct 06:40) coincide equipo a equipo en las 19 ligas salvo una sanción de puntos
+(Southampton −4), que va a mano en `SANCIONES`; la forma de API-Football iba del más reciente al más viejo. Las
+eliminatorias se excluyen con el tope de partidos de fase regular por equipo, no adivinando la jornada. Vivo: FotMob y no
+PropLine `/scores`, porque PropLine cobra cada consulta del presupuesto diario compartido y ese día quedaban 1.237 a las
+17:12 UTC frente a ~1.330 que necesita la captura horaria hasta medianoche; FotMob da todos los partidos del día en una
+petición. Trampa vista: `docker compose cp worker` también apunta al contenedor de la captura de PropLine; usar
+`docker cp quantfut-worker-1`.
+
 ## 2026-10-25 — Cierres de PropLine, Liga MX/MLS en SofaScore y `stats` desde SofaScore y FotMob
 
 Orden del titular tras la auditoría de datos: arreglar lo que falla y usar FotMob para completar. Decisión clave: el

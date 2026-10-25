@@ -10,8 +10,10 @@ hace perder dinero o datos; una idea nueva va a «Mejoras», no a «Fallos».
 **Fallos que afectan a dinero o datos (Claude, primero):**
 - ~~Cierres: desde el 22-oct 18:50 UTC no entraba ningún `close` en `odds_snapshots`~~ → resuelto en el PR #127
   (`qf.ingest.propline_cierres`, la liquidación espera al cierre hasta 48 h).
-- Clasificación y marcador en vivo sin fuente desde que se retiró API-Football. → misma sección.
-- `estadisticas_jugador` convierte un dato ausente en 0. → «Auditoría de datos y entradas del motor».
+- ~~Clasificación y marcador en vivo sin fuente desde que se retiró API-Football~~ → resuelto el 25-oct: la
+  clasificación se calcula con nuestros resultados y el vivo sale del listado diario de FotMob.
+- ~~`estadisticas_jugador` convierte un dato ausente en 0~~ → cerrada: solo la escribía API-Football (última, 22-oct);
+  las fuentes vivas (FotMob, SofaScore) guardan NULL.
 
 **Del titular (27):** credenciales y cuentas (Meta, Whop, AdMob, RevU/BitLabs, Tapjoy, Apple/iOS), revisión legal y
 avisos legales en la web, Sentry, copia de seguridad fuera del servidor (destino), compilar y publicar la app,
@@ -66,7 +68,7 @@ operativo como canal de clientes.
 
 ## Arreglos de la auditoría de datos (2026-10-25) — `docs/auditoria_datos_motores_20261025.md`
 Orden del titular (25-oct): arreglar lo que falla, aplicar las recomendaciones y usar FotMob para completar partidos y
-datos. Sin tocar el modelo hasta el 1-nov (decisión vigente): solo datos.
+datos. Regla desde el 25-oct: el error que aparece al desplegar o probar se arregla en la misma sesión, no se apunta.
 - [x] `qf.ingest.propline_cierres`: cierres archivados (`/odds/closing`) a `odds_snapshots` como `close`, fuente
   `propline`. Un único `captured_at` por partido (el de-vig del CLV no mezcla momentos): el último instante en que
   todas las líneas usadas seguían a la vista, a ≤ 10 min del inicio; fuera `is_stale`, periodos y recibos previos al
@@ -106,9 +108,12 @@ datos. Sin tocar el modelo hasta el 1-nov (decisión vigente): solo datos.
   las últimas 36 h y entran con la carga diaria.
 - [x] (25-oct) Respaldo de resultados con FotMob (`fotmob_captura resultados`, cada 3 h a las :55): cierra y liquida lo
   que PropLine deja abierto más de 6 h, solo si terminó en el tiempo reglamentario y con los mismos dos equipos.
-- [ ] Sustituir lo que aún lee API-Football/FotMob: once previsto y bajas (SofaScore, ~8 USD/mes más), clasificación
-  (calculada con nuestros resultados), marcador en vivo (PropLine `/scores`); después quitar esos jobs del cron. F7 usa
-  hoy el once de FotMob.
+- [x] (25-oct) Sustituir lo que aún leía API-Football: once previsto y bajas de SofaScore (#118); clasificación calculada
+  con nuestros resultados (`ingest/standings.py`: coincide equipo a equipo con la última foto de API-Football en las 19
+  ligas salvo la sanción de Southampton, que va en `SANCIONES`); marcador en vivo desde el listado diario de FotMob (una
+  petición por pasada; `/scores` de PropLine gastaría del presupuesto diario que necesitan las cuotas). Calendario y
+  resultados van por PropLine (`RESULTS_PROVIDER=propline`); en el cron ya no queda ningún job de API-Football.
+- [x] (25-oct) `docker-compose.yml` del repo igual al del servidor (imágenes, montajes y variables; sin secretos).
 
 ## Auditoría de los tres motores (2026-10-21) — `docs/auditoria_motores_20261021.md`
 Cada paso a producción requiere confirmación del titular. Orden recomendado:
@@ -159,9 +164,8 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 - [ ] F5 — Árbitro: penaltis, expulsiones y tarjetas; unificar identidades (bloque `arbitro`).
 - [ ] F6 — Sede, viaje, altitud y clima (bloque `sede_clima`): historial desde Copernicus ERA5 (decisión del usuario), pronóstico en vivo y altitud con Open-Meteo Standard. Requiere antes: cuenta CDS, licencia aceptada y token personal del usuario.
 - [x] (cerrada 25-oct: hecho: F7 en producción (qf.publish.sello_tardio en el cron)) F7 — Sello tardío en producción (un lote por partido, `batch_kind`).
-- **Orden acordado con el usuario (2026-10-15), levantado el 25-oct:** ya no hay que esperar al 1-nov para tocar el motor;
-  Claude lo hace cuando lo vea conveniente (decisión del titular, 25-oct). Se mantiene: no desplegar el worker durante el
-  reentrenamiento del 1-nov (03:00-08:00 UTC) y cualquier cambio de probabilidad o selección pasa la puerta de evaluación. Orden: reejecutar `python -m qf.model.ajuste` sobre el nuevo OOS, comprar
+- **Orden:** cualquier cambio de probabilidad o selección pasa la puerta de evaluación; el worker no se recrea mientras
+  corre el reentrenamiento (1-nov, 03:00-08:00 UTC). Reejecutar `python -m qf.model.ajuste` sobre el nuevo OOS, comprar
   los 527 snapshots de The Odds API (~5.270 créditos) y diseñar **F7** (es lo que deja entrar al XI en el motor y mejora los picks
   con cuotas de última hora; toca la cadena de hashes). Luego F3, F6, F5 y F4. Fecha de control: ~10-nov, CLV en sombra a 300.
 - **Ampliación del plan (2026-10-15, documentos de recomendaciones y de revisión del usuario):** spec
@@ -2782,7 +2786,8 @@ revocó sola el 14-oct).
   próximos siete días, XI, jugadores, bajas, clima, sede, árbitro y cuotas;
   distinguir disponibilidad archivada, integración y recepción previa al partido.
   Informe: `docs/auditoria_datos_modelo_20261014.md`. Solo lectura; modelo intacto.
-- [ ] Preservar dato ausente frente a cero en estadísticas individuales antes
+- [x] (cerrada 25-oct: `estadisticas_jugador` solo la escribía API-Football, retirada; FotMob y SofaScore guardan NULL)
+  Preservar dato ausente frente a cero en estadísticas individuales antes
   de ampliar los ratings; integrar identidades y campos archivados y evaluar
   cualquier nuevo modelo antes de promoverlo (propuesta, sin implementación).
 

@@ -635,14 +635,15 @@ no las haya.
 |---|---|---|
 | Captura de cuotas (desde 2026-10-03 guarda también `book_updated_at`, cuándo cambió cada casa su precio) | cada 10 min | `qf.ingest.odds_worker` |
 | Ráfagas 1X2 para medir la latencia de las casas blandas: T-6 h a T-15 min, ligas de `RAFAGAS_LIGAS`, tabla aparte `odds_rafagas`, tope `RAFAGAS_MAX_CREDITOS_MES` (3.000); se leen con `python -m qf.eval.latencia` | cada 5 min | `qf.ingest.rafagas` |
-| Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | cada hora, :20 | `qf.ingest.af_odds` |
+| Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | retirado el 25-oct (API-Football) | `qf.ingest.af_odds` |
 | Sombra del criterio de picks: registra lo que se habría recomendado (no publica); se liquida con `qf.eval.clv` | cada hora, :25 | `qf.publish.shadow_sharp capture` |
 | Calendario de partidos | 05:15 y 17:15 | `qf.ingest.fixtures` |
 | Cierre de partidos + liquidación (guarda también `matches.stats` completo para las fichas, misma petición) | cada 3 h | `qf.ingest.results` |
-| Clasificación de cada liga para las fichas de la web (1 petición por liga) y escudos nuevos (una vez por equipo, volumen `escudos`, servidos en `/web/escudos/{team_id}.png`) | 06:40 y 22:40 | `qf.ingest.standings` |
-| xG histórico | martes 04:00 | `qf.ingest.xg_worldfootball` |
-| Histórico de copas europeas | martes 04:30 | `qf.ingest.uefa_cups` |
-| Alineaciones a T-60 | cada 5 min | `qf.ingest.lineups` |
+| Clasificación de cada liga para las fichas de la web, calculada con nuestros resultados (sin peticiones), y escudos nuevos (una vez por equipo, volumen `escudos`, servidos en `/web/escudos/{team_id}.png`) | cada hora, :50 | `qf.ingest.standings` |
+| Marcador en juego para la app: listado diario de FotMob, una petición por pasada y solo con partidos en ventana | cada 5 min | `qf.ingest.live` |
+| xG histórico | retirado el 25-oct | `qf.ingest.xg_worldfootball` |
+| Histórico de copas europeas | retirado el 25-oct | `qf.ingest.uefa_cups` |
+| Alineaciones a T-60 (API-Football; las sustituye `sofascore_alineaciones`) | retirado el 25-oct | `qf.ingest.lineups` |
 | Challenger de XI en sombra | cada 5 min, después de la captura | `qf.model.shadow` |
 | Chequeo de salud | 07:00 | `qf.ingest.health` |
 | Predicciones, picks, sellado, publicación (picks apagados con `PUBLISH_PICKS_ENABLED=0`: solo predice y sella) | 08:00 | `qf.publish.daily` |
@@ -1121,9 +1122,12 @@ de paso verifica a PropLine. Comprobado con peticiones reales el 25-oct:
   Bundesliga, Ligue 1, Eredivisie y Primeira pese a que la fuente lo publica: revisar esa carga.
 - PropLine no tiene Ligue 2 ni la Superliga danesa (catálogo de 36 competiciones): el titular las retiró de los
   motores el 25-oct (db/086, desactivadas con su historial sellado intacto).
-- Fuentes desde el 25-oct (decisión del titular): solo SofaScore vía Apify (rl1987 fútbol, scrapesage NBA y tenis;
-  `azzouzana` sigue roto) y PropLine. SofaScore da once previsto y bajas ~12 h antes y clasificación (`standings`);
-  PropLine da el marcador en vivo (`/scores`). Falta conectarlos; los jobs de API-Football y FotMob siguen en el cron.
+- Fuentes desde el 25-oct (decisión del titular): SofaScore vía Apify (rl1987 fútbol, scrapesage NBA y tenis;
+  `azzouzana` sigue roto), PropLine y FotMob como complemento. Conectado el 25-oct: once previsto y bajas de SofaScore;
+  clasificación calculada con nuestros resultados (contra la última foto de API-Football coincide equipo a equipo en las
+  19 ligas, salvo las sanciones de puntos, que van a mano en `standings.SANCIONES`); marcador en vivo del listado diario
+  de FotMob (una petición cada 5 min: el `/scores` de PropLine también lo tiene, pero cada consulta sale del presupuesto
+  diario compartido, que ya va justo con las cuotas). Ningún job de API-Football queda en el cron.
 
 **xG de API-Football habilitado el 12-oct-2026, por decisión del usuario.**
 La exclusión anterior queda revocada. Su cobertura sigue siendo variable:
