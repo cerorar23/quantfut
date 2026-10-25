@@ -33,7 +33,7 @@ Motor de investigación implementado y probado en checkout independiente `tennis
 - [x] Evaluación financiera simulada: código entregado, cuotas originales y predicciones selladas, retiros incluidos, cobertura, ROI/CLV por bloques y comparación probabilística frente al mercado sin margen. Protocolo adicional v2 futuro 20-oct-2026 a 1-jul-2027, sin modificar el protocolo anterior.
 - [ ] Operación financiera real: cobertura oficial fresca de eventos, cuotas/cierres/resultados prospectivos y muestra suficiente; después verificar ejecución, costes y límites de exposición. Cero selecciones prospectivas actuales, ROI desconocido, sin publicación de picks. El evaluador no coloca apuestas.
 
-Actualizada el **2026-10-18**. Es el punto de entrada: aquí está lo que falta, quién lo hace y de qué depende.
+Actualizada el **2026-10-25** (limpieza: el índice de lo que sigue vivo está al principio de `harness/tareas.md`, «Pendientes vivos»). Es el punto de entrada: aquí está lo que falta, quién lo hace y de qué depende.
 El detalle técnico de cada fase vive en `harness/tareas.md` y en `docs/`; cuando una cosa se cierre, se marca aquí y allí.
 Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en el repo o el servidor (siempre con ensayo y registro en `DEPLOYS.md`).
 
@@ -51,8 +51,10 @@ Responsable: **Tú** = decisión o gestión del titular; **Claude** = trabajo en
 - **Token de Copernicus:** el titular decidió **conservarlo** (se compartió por chat) para la descarga automática de clima de los partidos
   futuros: cron diario 06:20 UTC con candado; el token está en `/etc/environment` del worker en marcha y en el `.env` del servidor.
 
-## 2. Hasta el 1-nov: no tocar el motor
-- [ ] Claude: vigilar que el reentrenamiento corra limpio (worker idéntico a `main`, con el filtro de cierres de 60 min).
+## 2. Motor: sin esperar al 1-nov (decisión del titular, 25-oct)
+La pausa del motor hasta el 1-nov queda levantada: Claude lo toca cuando lo vea conveniente. Se mantiene no desplegar el worker
+durante el reentrenamiento del 1-nov (03:00-08:00 UTC) y la puerta de evaluación para cualquier cambio de probabilidad o selección.
+- [ ] Claude: vigilar que el reentrenamiento del 1-nov corra limpio (worker idéntico a `main`, con el filtro de cierres de 60 min).
 
 ## 3. Motor y datos (Claude)
 Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. Una señal solo entra si gana fuera de muestra.
@@ -73,7 +75,7 @@ Fases de `docs/superpowers/specs/2026-10-14-senales-motor-principal-design.md`. 
 | F11 app: fuente de cada cifra e indicador de calidad de datos (6 idiomas) | Nueva (15-oct); no toca el motor, puede adelantarse | Tu visto bueno |
 | F12 factores sin fase: **descanso y calendario primero**; ida/vuelta, entrenador, estilos, córners/tarjetas ampliados | Nueva (15-oct) | Calendario de otras competiciones |
 
-Orden tras el 1-nov: F7 (con bajas de FotMob donde API-Football no las da) → F9 con F8 en paralelo → descanso/calendario → archivo FotMob a tablas y
+Orden (ya sin esperar al 1-nov): F7 (con bajas de FotMob donde API-Football no las da) → F9 con F8 en paralelo → descanso/calendario → archivo FotMob a tablas y
 F3, F6, F5, F4 → activar F8 y F10. Datos que faltan descargar: calendario de copas y otras competiciones, altitud de sedes y clima
 ERA5 (tu token); el XI, minutos, bajas, entrenador y estilos ya están en el archivo FotMob. Plan completo:
 `docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md`.
@@ -92,8 +94,8 @@ Tareas sueltas:
 - [ ] Antes de encender los picks de valor: hoy solo verían las 13 ligas con modelo y la sombra mide 22; alinear.
 - [ ] Vigilar la ampliada 73–95 %: con cuota de referencia acierta 78,0 % frente a 81,4 % prometido (n=223).
 - [x] Las «379 identidades de copas» son 379 partidos de 110 equipos: 67 tienen id probado, 43 son clubes de ligas que no cubrimos (no se vinculan por regla del proyecto) y **ningún** partido tiene sus dos equipos probados, así que no se puede unir ninguno. Cerrado como no resoluble por diseño; ver el documento. Conflictos: 18 FotMob + 2 Sofascore, por revisar.
-- [ ] Unos 250 huecos de tiros y córners.
-- [ ] Ampliar fuentes para los **1.219 huecos de xG** (Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46). LanusStats/365Scores aportó tres parejas de LaLiga 2, cargadas por petición del titular el 15-oct; su muestra no prueba cobertura completa. Ver `docs/lanusstats_carga_20261015.md`.
+- [x] (cerrada 25-oct: tiros y córners al 99-100 % desde 2024 en las ligas activas; el completado diario de FotMob cubre lo nuevo) Unos 250 huecos de tiros y córners.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas; lo de Argentina es de ene-abr 2024) Ampliar fuentes para los **1.219 huecos de xG** (Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46). LanusStats/365Scores aportó tres parejas de LaLiga 2, cargadas por petición del titular el 15-oct; su muestra no prueba cobertura completa. Ver `docs/lanusstats_carga_20261015.md`.
   - Verificado 18-oct: siguen siendo **1.219** (partidos terminados desde el 1-ene-2024, sin xG de alguno de los dos equipos): Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144, Champions 14, Europa League 12, México 8, otros 12. Sin cambios desde el 15-oct. (Con una ventana desde ago-2022 salen más: Serie B 1.158, LaLiga 2 926.)
 
 ## 4. Orden del servidor (Claude, con ensayo; la API después del 1-nov)
@@ -102,8 +104,8 @@ Tareas sueltas:
 - [ ] Corregir `requirements.txt` de `~/quantfut` (sin `cryptography` ni `firebase-admin`) y sincronizar `~/quantfut/src`, que está desactualizada.
 - [ ] Que el servidor despliegue desde GitHub (clave de despliegue de solo lectura y `git pull` de una etiqueta).
 - [ ] Ampliar `scripts/deploy.sh` con `construir`, `ensayo` y `desplegar` (hoy tiene `estado` y `congelar`).
-- [ ] **Una carpeta de trabajo por sesión** (`git worktree`): el 15-oct dos sesiones compartieron carpeta y una comiteó dentro de la rama de la otra.
-- [ ] Limpiar entradas desactualizadas de `harness/tareas.md` (por ejemplo, dice «3.267 cierres pendientes»; hoy son 2.103).
+- [x] (cerrada 25-oct: las sesiones ya trabajan en su propio `git worktree`) **Una carpeta de trabajo por sesión** (`git worktree`): el 15-oct dos sesiones compartieron carpeta y una comiteó dentro de la rama de la otra.
+- [x] (hecho 25-oct: 134 cerradas, índice «Pendientes vivos» arriba del archivo) Limpiar entradas desactualizadas de `harness/tareas.md` (por ejemplo, dice «3.267 cierres pendientes»; hoy son 2.103).
 - Ya hecho: worker alineado con `main` el 15-oct (0 archivos distintos); vuelta atrás `en-ejecucion-20261015`.
 
 ## 5. Para poder vender picks
@@ -120,7 +122,7 @@ Tareas sueltas:
 - [ ] Cuentas de editor RevU/BitLabs para recompensas; evaluar Tapjoy/Unity, ayeT, adjoe y Torox tras el piloto.
 - [ ] iOS: necesita Mac y Apple Developer (APNs y firma).
 - [ ] Validar el acceso con Google y la entrega FCM con un usuario real; activar `FIREBASE_AUTH_ENABLED` cuando lo decidas.
-- [ ] Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
+- [x] (cerrada 25-oct: superada; el motor NBA va por v1.3-1.5 con productor vivo) Proyecto NBA 2026-27: fases F0 a F9 sin empezar.
 - [x] NBA — modelo de props anclado en el mercado (protocolo congelado, 2024-25 → 2025-26): sin evidencia de información sobre el consenso de las casas de EE. UU.; rebotes y triples solo calibración (el control del placebo del protocolo falla y necesita un v1.1). docs/nba_props_residual_20261024.md.
 - [x] NBA — cuotas históricas h2h (The Odds API): los 325 snapshots de 2024-25 y 2025-26 ya se compraron el 23-oct (manifest en `apps/nba/.local/raw/nba_odds_h2h_202611`) y se compararon (`nba_f6_market_20261101`).
 - [x] NBA — normalizado ampliado (tiros, pérdidas, rebote ofensivo, posesiones, play-in y playoffs 2022-23..2025-26): `nba_extended_box_20261024`, docs/nba_normalizado_ampliado_20261024.md.
