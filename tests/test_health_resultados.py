@@ -38,3 +38,11 @@ def test_frescura_de_cuotas_usa_el_proveedor_activo(monkeypatch):
     monkeypatch.setattr(health, "query", q)
     assert health.check_odds_freshness()[0]
     assert vistos[0] == ("propline",)
+
+
+def test_bajas_sin_fuente_no_alarman_con_propline(monkeypatch):
+    import qf.config as cfg
+    monkeypatch.setattr(cfg, "settings", SimpleNamespace(results_provider="propline"))
+    monkeypatch.setattr(health, "query", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debe consultar")))
+    ok, msg = health.check_injuries_coverage()
+    assert ok and "sin fuente" in msg
