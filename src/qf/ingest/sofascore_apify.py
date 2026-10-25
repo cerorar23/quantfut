@@ -209,29 +209,39 @@ class Collector:
             self.upsert(target, rows)
             return
         if spec.get("rounds") is False:  # competición sin jornadas
-            params = {"mode": "tournament", "uniqueTournamentId": spec["utid"],
-                      "eventsSpan": "last"}
+            self.list_spans(target, spec)
+            return
+        row = self.db.execute("SELECT round FROM rounds WHERE target=?", (target,)).fetchone()
+        if row is None:
+            # listRounds cuesta ~0,12 USD por liga; el próximo partido da la jornada.
+            _, nxt = self.run("rounds", {"mode": "tournament",
+                                         "uniqueTournamentId": spec["utid"],
+                                         "eventsSpan": "next", "maxItems": 1},
+                              min(cap, 0.10))
+            cur = [r["round"] for r in nxt if r.get("kind") == "event" and r.get("round")]
+            if not cur:
+                # Eliminatorias (MLS desde el 25-oct-2026): hay partidos pero `round` viene null.
+                # Antes se abandonaba y la liga se quedaba sin un solo partido.
+                if any(r.get("kind") == "event" for r in nxt):
+                    self.list_spans(target, spec)
+                return
+            with self.db:
+                self.db.execute("INSERT INTO rounds VALUES(?,?)", (target, cur[0]))
+            rnd = cur[0]
         else:
-            row = self.db.execute("SELECT round FROM rounds WHERE target=?", (target,)).fetchone()
-            if row is None:
-                # listRounds cuesta ~0,12 USD por liga; el próximo partido da la jornada.
-                _, nxt = self.run("rounds", {"mode": "tournament",
-                                             "uniqueTournamentId": spec["utid"],
-                                             "eventsSpan": "next", "maxItems": 1},
-                                  min(cap, 0.10))
-                cur = [r["round"] for r in nxt if r.get("kind") == "event" and r.get("round")]
-                if not cur:
-                    return
-                with self.db:
-                    self.db.execute("INSERT INTO rounds VALUES(?,?)", (target, cur[0]))
-                rnd = cur[0]
-            else:
-                rnd = row["round"]
-            params = {"mode": "tournament", "uniqueTournamentId": spec["utid"],
-                      "eventsSpan": "last", "tournamentRound": str(rnd)}
+            rnd = row["round"]
+        params = {"mode": "tournament", "uniqueTournamentId": spec["utid"],
+                  "eventsSpan": "last", "tournamentRound": str(rnd)}
         _, rows = self.run("list", params, min(self.budget_left(), 0.20))
         self.upsert(target, rows)
         self.advance(target)
+
+    def list_spans(self, target, spec):
+        """Sin jornadas: últimos (para el detalle) y próximos (para once y bajas)."""
+        for span in ("last", "next"):
+            _, rows = self.run("list", {"mode": "tournament", "uniqueTournamentId": spec["utid"],
+                                        "eventsSpan": span}, min(self.budget_left(), 0.20))
+            self.upsert(target, rows)
 
     def advance(self, target):
         row = self.db.execute("SELECT round FROM rounds WHERE target=?", (target,)).fetchone()

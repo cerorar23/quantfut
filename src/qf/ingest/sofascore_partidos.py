@@ -30,7 +30,7 @@ from ..db import conn, query
 from ..league_policy import RETIRED_LEAGUES
 from ..normalize import slugify
 from . import api_football as af
-from .estadisticas import arbitro
+from .estadisticas import arbitro, desde_sofascore
 from .sofascore_history import TOURNAMENTS, stat_pair
 
 log = logging.getLogger(__name__)
@@ -145,15 +145,33 @@ def aplicar(c, recibo: dict, fila: dict, match_id: str) -> bool:
                home_corners = COALESCE(home_corners, %s), away_corners = COALESCE(away_corners, %s),
                home_yellow = COALESCE(home_yellow, %s), away_yellow = COALESCE(away_yellow, %s),
                home_red = COALESCE(home_red, %s), away_red = COALESCE(away_red, %s),
-               referee = COALESCE(referee, %s)
+               referee = COALESCE(referee, %s), stats = COALESCE(stats, %s)
            WHERE match_id = %s AND status = 'finished'""",
-        (*tiros, *a_puerta, *corners, *amarillas, *rojas, arbitro(fila.get("referee")), match_id))
+        (*tiros, *a_puerta, *corners, *amarillas, *rojas, arbitro(fila.get("referee")),
+         _stats_web(fila.get("statistics")), match_id))
     if xg[0] is not None:
         c.execute("""UPDATE matches SET home_xg = %s, away_xg = %s, xg_source = 'sofascore',
                          xg_recorded_at = %s
                      WHERE match_id = %s AND status = 'finished' AND home_xg IS NULL AND away_xg IS NULL""",
                   (xg[0], xg[1], recibo["received_at"], match_id))
     return True
+
+
+def _stats_web(statistics):
+    s = desde_sofascore(statistics)
+    return None if s is None else Jsonb(s)
+
+
+def rellenar_stats(c) -> int:
+    """`matches.stats` de los detalles ya cargados antes de que existiera (solo donde sigue NULL)."""
+    n = 0
+    for f in c.execute("""SELECT d.match_id, d.statistics FROM sofascore_detalles d JOIN matches m USING (match_id)
+                          WHERE m.stats IS NULL AND m.status = 'finished'""").fetchall():
+        s = _stats_web(f["statistics"])
+        if s is not None:
+            n += c.execute("UPDATE matches SET stats = %s WHERE match_id = %s AND stats IS NULL",
+                           (s, f["match_id"])).rowcount
+    return n
 
 
 def run(dias: int = 10) -> dict:
@@ -188,6 +206,8 @@ def run(dias: int = 10) -> dict:
                     out["aplicados"] += 1
                     out["con_xg"] += None not in stat_pair({"statistics": fila.get("statistics") or []},
                                                            "expectedGoals")
+            with c.transaction():
+                out["stats_rellenadas"] = rellenar_stats(c)
         finally:
             c.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
     af.record_health("sofascore_partidos", out["aplicados"], not out["motivos"].get("conflicto_marcador"), out)

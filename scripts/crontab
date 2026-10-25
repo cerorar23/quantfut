@@ -16,6 +16,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # caía en UNA sola pasada; si fallaba, la oferta quedaba sin cierre justo. Solo
 # mira `close` y no gasta créditos si la pasada principal ya lo capturó.
 5-59/10 * * * * cd /app && python -m qf.ingest.odds_worker --solo-cierre >> /var/log/odds.log 2>&1
+# Cierres de PropLine (`/odds/closing`, ya archivados por el recolector a las :07, >= 6 h tras el saque) como
+# `close`: CLV, sombra y entrenamiento. Sin peticiones. La liquidación espera al cierre hasta 48 h.
+40 */3 * * * cd /app && flock -n /tmp/propline_cierres.lock python -m qf.ingest.propline_cierres >> /var/log/propline_cierres.log 2>&1
 # Ráfagas para medir la latencia de las casas blandas (db/038), con tope de créditos
 */5 * * * * cd /app && python -m qf.ingest.rafagas >> /var/log/rafagas.log 2>&1
 

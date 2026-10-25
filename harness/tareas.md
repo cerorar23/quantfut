@@ -8,8 +8,8 @@ fuentes retiradas (API-Football, PitchAPI, soccerdata/ZenRows), de ligas retirad
 hace perder dinero o datos; una idea nueva va a «Mejoras», no a «Fallos».
 
 **Fallos que afectan a dinero o datos (Claude, primero):**
-- Cierres: desde el 22-oct 18:50 UTC no entra ningún `close` en `odds_snapshots` (PropLine captura pero no se guarda
-  como cierre): CLV, sombra y entrenamiento sin cierres. → «Auditoría de fuentes y backtest».
+- ~~Cierres: desde el 22-oct 18:50 UTC no entraba ningún `close` en `odds_snapshots`~~ → resuelto en el PR #127
+  (`qf.ingest.propline_cierres`, la liquidación espera al cierre hasta 48 h).
 - Clasificación y marcador en vivo sin fuente desde que se retiró API-Football. → misma sección.
 - `estadisticas_jugador` convierte un dato ausente en 0. → «Auditoría de datos y entradas del motor».
 
@@ -64,6 +64,22 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Arreglos de la auditoría de datos (2026-10-25) — `docs/auditoria_datos_motores_20261025.md`
+Orden del titular (25-oct): arreglar lo que falla, aplicar las recomendaciones y usar FotMob para completar partidos y
+datos. Sin tocar el modelo hasta el 1-nov (decisión vigente): solo datos.
+- [x] `qf.ingest.propline_cierres`: cierres archivados (`/odds/closing`) a `odds_snapshots` como `close`, fuente
+  `propline`. Un único `captured_at` por partido (el de-vig del CLV no mezcla momentos): el último instante en que
+  todas las líneas usadas seguían a la vista, a ≤ 10 min del inicio; fuera `is_stale`, periodos y recibos previos al
+  saque. Mismas casas y mercados que la captura horaria. Cron cada 3 h tras el recolector.
+- [x] Recolector SofaScore: Liga MX pedía el Clausura (`11620`, vacío); el Apertura es `11621`. MLS en eliminatorias
+  trae `round: null` y el recolector abandonaba: sin jornada se lista sin jornada (último y próximo).
+- [ ] **Enero de 2027:** volver Liga MX a `11620` (Clausura) en `scripts/sofascore_apify_config.json` y en el VPS.
+- [x] `matches.stats` (fichas de la web y serie del Motor C) desde SofaScore y, si falta, FotMob, con las claves de
+  `estadisticas.TIPOS` más centros; relleno de lo ya cargado. Solo donde está NULL.
+- [x] FotMob como complemento: además de xG/córners/tarjetas, `completar` rellena `stats`.
+- [ ] Sin cambios (decisión del titular): `SOFT_BOOKS`, licencia de BetsAPI, fuente de calendario de copas, tope
+  mensual de Apify (el ritmo medido el 24–25 oct supera los 15 USD/mes).
+
 ## Auditoría de fuentes y backtest (2026-10-24) — `docs/auditoria_motores_20261024.md`
 - [x] Auditoría de solo lectura: uso de PropLine por motor, backtest temporal del A (RPS, log-loss, Brier, ECE, Kelly), calibración real de B y C.
 - [x] **Titular (24-oct):** API-Football en plan gratuito desde el 22-oct → se sustituye: resultados y calendario con PropLine, xG y estadísticas con SofaScore/Apify (tope 15 USD/mes y 40 partidos/día, solo las 13 ligas con modelo, fútbol antes que tenis/NBA).
@@ -73,7 +89,7 @@ operativo como canal de clientes.
   marcador; xG con la hora real de recepción; tabla inmutable `sofascore_detalles`); salud que mire resultados y la
   fuente de cuotas activa. Casas nuevas solo a ≤ 48 h y cada 3 h (volumen).
 - [x] (cerrada 25-oct: hecho: worker alineado con main desde el 25-oct (ab82dcb y siguientes)) Worker con `estadisticas_mercado.py` y `alta_prob.py` de `main` (alta probabilidad, escalera y parley fallan desde el 24-oct). Con visto bueno.
-- [ ] Cargar los cierres de PropLine a `odds_snapshots` como `close` (CLV, sombra y entrenamiento sin cierres desde el 22-oct).
+- [x] (25-oct) Cargar los cierres de PropLine a `odds_snapshots` como `close`: `qf.ingest.propline_cierres`.
 - [ ] **Titular:** `SOFT_BOOKS` frente a las casas de PropLine (solo 1xbet coincide).
 - [ ] Chequeo diario: detectar plan gratuito y calendario sin altas; `httpx` a WARNING (el token del bot sale en los registros).
 - [x] (25-oct) Ligue 2 y Superliga danesa fuera de los motores (db/086; sin cuotas en PropLine). Historial conservado.
