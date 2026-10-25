@@ -9,7 +9,7 @@ import pytest
 from psycopg_pool import ConnectionPool
 
 from qf import db
-from qf.ingest.archivo_a_matches import aplicar
+from qf.ingest.archivo_a_matches import aplicar, reparar_tarjetas
 
 DSN = os.getenv("QF_TEST_PG_DSN")
 pytestmark = pytest.mark.skipif(not DSN, reason="sin QF_TEST_PG_DSN")
@@ -32,7 +32,7 @@ def _pool():
     pool.close()
 
 
-def _partido(hg=2, ag=3, **columnas):
+def _partido(hg=2, ag=3, payload=PAYLOAD, **columnas):
     s = uuid.uuid4().hex[:8]
     liga = db.query_one("SELECT league_id FROM leagues ORDER BY league_id LIMIT 1")["league_id"]
     ids = [db.query_one("INSERT INTO teams (league_id, canonical_name) VALUES (%s,%s) RETURNING team_id",
@@ -49,7 +49,7 @@ def _partido(hg=2, ag=3, **columnas):
          raw_metadata, home_source_team_id, away_source_team_id, home_name, away_name, home_goals, away_goals,
          statistics, match_id, mapping_status)
         VALUES ('fotmob', %s, %s, 't', %s, now(), %s, %s, '{}', '1', '2', 'L', 'V', %s, %s, %s, %s, 'matched')""",
-               (s, liga, ko, "0" * 64, gzip.compress(json.dumps(PAYLOAD).encode()), hg, ag,
+               (s, liga, ko, "0" * 64, gzip.compress(json.dumps(payload).encode()), hg, ag,
                 json.dumps(STATS), mid))
     return mid
 
@@ -105,3 +105,54 @@ def test_ensayo_revierte():
     with db.conn() as c:
         aplicar(c, desde="2000-01-01", rollback=True)
     assert _fila(mid)["home_yellow"] is None
+
+
+def _con_tarjetas_de_fotmob_a_cero(payload):
+    """Como quedaban antes del arreglo: las cuatro a 0, rellenadas desde el archivo de FotMob."""
+    mid = _partido(payload=payload, home_yellow=0, away_yellow=0, home_red=0, away_red=0)
+    db.execute("""INSERT INTO matches_enriquecimiento (match_id, campo, provider, source_match_id, captured_at)
+                  SELECT match_id, 'home_yellow', 'fotmob', source_match_id, captured_at
+                  FROM historical_football_matches WHERE match_id = %s""", (mid,))
+    return mid
+
+
+def _cronologia(*tarjetas):
+    p = json.loads(json.dumps(PAYLOAD))
+    p["content"]["matchFacts"]["events"]["events"] += [
+        {"type": "Card", "isHome": local, "card": tipo,
+         "cardDescription": {"localizedKey": "coach"} if tecnico else None} for local, tipo, tecnico in tarjetas]
+    return p
+
+
+def test_reparar_tarjetas_aplica_la_cronologia_y_el_ensayo_revierte():
+    mid = _con_tarjetas_de_fotmob_a_cero(_cronologia((True, "Yellow", False), (False, "Yellow", False),
+                                                     (False, "YellowRed", False), (True, "Yellow", True)))
+    limpio = _con_tarjetas_de_fotmob_a_cero(PAYLOAD)
+    with db.conn() as c:
+        ensayo = reparar_tarjetas(c, rollback=True)
+    assert mid in {x["match_id"] for x in ensayo["cambios"]}
+    assert (_fila(mid)["home_yellow"], _fila(mid)["away_yellow"]) == (0, 0)
+    with db.conn() as c:
+        reparar_tarjetas(c)
+    f = _fila(mid)
+    assert (f["home_yellow"], f["away_yellow"], f["home_red"], f["away_red"]) == (1, 1, 0, 1)
+    g = _fila(limpio)
+    assert (g["home_yellow"], g["away_yellow"], g["home_red"], g["away_red"]) == (0, 0, 0, 0)
+    with db.conn() as c:
+        assert mid not in {x["match_id"] for x in reparar_tarjetas(c)["cambios"]}
+
+
+def test_reparar_tarjetas_sin_cronologia_fiable_deja_null():
+    sin_descanso = {"content": {"matchFacts": {"events": {"events": []}}}}
+    mid = _con_tarjetas_de_fotmob_a_cero(sin_descanso)
+    with db.conn() as c:
+        reparar_tarjetas(c)
+    f = _fila(mid)
+    assert all(f[k] is None for k in ("home_yellow", "away_yellow", "home_red", "away_red"))
+
+
+def test_reparar_tarjetas_no_toca_ceros_de_otra_fuente():
+    mid = _partido(payload=_cronologia((True, "Yellow", False)), home_yellow=0, away_yellow=0, home_red=0, away_red=0)
+    with db.conn() as c:
+        reparar_tarjetas(c)
+    assert _fila(mid)["home_yellow"] == 0
