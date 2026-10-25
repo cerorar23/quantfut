@@ -955,23 +955,8 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String ladderHistoryRate(String rate) {
-    return 'Tasso di completamento: $rate';
-  }
-
-  @override
-  String ladderHistoryResult(String roi) {
-    return 'Risultato cumulato: $roi';
-  }
-
-  @override
   String get ladderHistoryShown =>
       'Mostrate le ultime sfide completate e l\'ultima fallita.';
-
-  @override
-  String ladderHistorySummary(int done, int closed) {
-    return '$done completate su $closed chiuse';
-  }
 
   @override
   String get ladderHistoryTitle => 'Storico delle sfide';
@@ -2613,4 +2598,8 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get updateStoreError => 'Impossibile aprire lo store. Riprova.';
+
+  @override
+  String get detailNoFeatured =>
+      'Nessun pronostico in evidenza con quota pari o superiore a 1.40.';
 }

@@ -812,39 +812,9 @@
       }
     }
   },
-  "ladderHistoryRate": "Tasa de cumplidos: {rate}",
-  "@ladderHistoryRate": {
-    "description": "Porcentaje de retos cerrados que se cumplieron.",
-    "placeholders": {
-      "rate": {
-        "type": "String"
-      }
-    }
-  },
-  "ladderHistoryResult": "Resultado acumulado: {roi}",
-  "@ladderHistoryResult": {
-    "description": "Retorno acumulado sobre lo invertido en los retos cerrados.",
-    "placeholders": {
-      "roi": {
-        "type": "String"
-      }
-    }
-  },
   "ladderHistoryShown": "Se muestran los últimos cumplidos y el último fallido.",
   "@ladderHistoryShown": {
     "description": "Aviso bajo la lista del historial de retos: qué retos se enseñan."
-  },
-  "ladderHistorySummary": "{done} cumplidos de {closed} cerrados",
-  "@ladderHistorySummary": {
-    "description": "Resumen del historial de retos.",
-    "placeholders": {
-      "done": {
-        "type": "int"
-      },
-      "closed": {
-        "type": "int"
-      }
-    }
   },
   "ladderHistoryTitle": "Historial de retos",
   "@ladderHistoryTitle": {
@@ -2200,5 +2170,6 @@
   "updateOptional": "Hay una nueva versión de QuantFut disponible.",
   "updateNow": "Actualizar ahora",
   "updateLater": "Más tarde",
-  "updateStoreError": "No se pudo abrir la tienda. Inténtalo de nuevo."
+  "updateStoreError": "No se pudo abrir la tienda. Inténtalo de nuevo.",
+  "detailNoFeatured": "No hay un pronóstico destacado con cuota de 1.40 o más."
 }

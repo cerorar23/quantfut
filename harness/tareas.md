@@ -1,5 +1,10 @@
 # Backlog — QuantFut
 
+## App: pronóstico destacado del detalle — decisión del usuario, 25-oct-2026
+
+- [x] La tarjeta «Análisis estadístico» destaca, entre todos los pronósticos del partido, el de mayor probabilidad con cuota publicada >= 1,40 (sin tope de probabilidad; empate → cuota más alta; sin candidato no hay tarjeta). `featuredPick` en `apps/mobile/lib/product/live_forecast.dart`, aviso `detailNoFeatured` en 6 idiomas, pruebas Flutter 260/260. AAB 1.0.0+3 compilado el 25-oct; falta subirlo a Play.
+- [x] Historial de retos (Reto Escalera): fuera el resumen «N cumplidos de M cerrados», la tasa de cumplidos y el resultado acumulado; queda el título y la lista. Cadenas retiradas de los 6 ARB. Va en el mismo AAB 1.0.0+3.
+
 ## PropLine compartido — decisión del usuario, 23-oct-2026
 
 - [ ] Sustituir la captura aislada de cierres cada dos horas por un recolector compartido cada hora; cuotas agrupadas por deporte/competición, todas las casas y mercados disponibles, sin descargas por motor.

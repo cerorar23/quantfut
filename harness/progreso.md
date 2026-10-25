@@ -1,5 +1,11 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Destacado del detalle: cuota mínima 1,40
+
+Decisión del usuario: el destacado era un 93 % a cuota 1,08 (hándicap +1,5), sin valor para quien lo ve. Ahora es el de mayor probabilidad con cuota publicada >= 1,40 entre los pronósticos sellados del partido; sustituye la banda 74-85 % / 1,20-1,60 que estaba sin confirmar en el árbol. Solo compiten picks sellados (alta probabilidad 73-95 % y escalera), nunca las filas de `partido_mercados`, que son análisis con cuota justa y no tienen cuota de mercado al publicar: destacarlas rompería predecir → sellar → publicar. Consecuencia: con el piso 1,40 habrá partidos sin destacado (el detalle lo avisa). Solo app; el servidor no cambia.
+
+Mismo día, decisión del usuario: el historial de retos ya no muestra el resumen «N cumplidos de M cerrados», la tasa de cumplidos ni el resultado acumulado; solo el título y la lista (9 últimos cumplidos + último fallido). El servidor sigue enviando `resumen` (se usa `cerrados` para saber si está vacío); no se tocó la API ni la web.
+
 ## PropLine compartido — 23-oct-2026
 
 Implementación preparada en `codex/propline-hourly`, commit `5ff66cf`: archivo horario común, originales comprimidos, lecturas sin HTTP, conversión de cuotas y adaptadores de fútbol. Arnés de main: 1.468 aprobadas, 104 omitidas; 27 pruebas específicas. Piloto NBA: cinco respuestas 200, 112.154 observaciones, cero fallos en esa pasada. Límite 4.500 solicitudes/día y reserva global 500; detener captura con menos de 5 GiB libres.

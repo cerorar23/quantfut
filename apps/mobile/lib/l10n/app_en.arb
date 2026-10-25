@@ -267,10 +267,7 @@
   "ladderHistoryDone": "Completed",
   "ladderHistoryEmpty": "No challenges have closed yet. When one ends, it will show up here with its result.",
   "ladderHistoryFailedAt": "Failed at step {step}",
-  "ladderHistoryRate": "Completion rate: {rate}",
-  "ladderHistoryResult": "Cumulative result: {roi}",
   "ladderHistoryShown": "Showing the latest completed challenges and the latest failed one.",
-  "ladderHistorySummary": "{done} completed of {closed} closed",
   "ladderHistoryTitle": "Challenge history",
   "ladderNoteInPlay": "A step is waiting for its result. The challenge is still alive.",
   "ladderNoteToPick": "The next step is yet to be picked; it can take days. The challenge is still alive.",
@@ -697,5 +694,6 @@
   "updateOptional": "A new version of QuantFut is available.",
   "updateNow": "Update now",
   "updateLater": "Later",
-  "updateStoreError": "Could not open the store. Please try again."
+  "updateStoreError": "Could not open the store. Please try again.",
+  "detailNoFeatured": "No featured prediction has odds of 1.40 or higher."
 }

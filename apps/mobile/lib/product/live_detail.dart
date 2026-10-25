@@ -323,6 +323,8 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                           ),
                         if (picks.isEmpty && data['locked'] != true)
                           training(l10n.detailNoPicks),
+                        if (picks.isNotEmpty && featured == null)
+                          training(l10n.detailNoFeatured),
                         const SizedBox(height: 12),
                         LiveScoreStrip(ficha: ficha),
                         if (featured != null)

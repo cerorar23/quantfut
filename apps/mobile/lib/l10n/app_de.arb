@@ -267,10 +267,7 @@
   "ladderHistoryDone": "Geschafft",
   "ladderHistoryEmpty": "Noch keine beendeten Challenges. Sobald eine endet, erscheint sie hier mit ihrem Ergebnis.",
   "ladderHistoryFailedAt": "Gescheitert an Stufe {step}",
-  "ladderHistoryRate": "Erfolgsquote: {rate}",
-  "ladderHistoryResult": "Gesamtergebnis: {roi}",
   "ladderHistoryShown": "Angezeigt werden die zuletzt geschafften Challenges und die letzte gescheiterte.",
-  "ladderHistorySummary": "{done} geschafft von {closed} beendeten",
   "ladderHistoryTitle": "Challenge-Verlauf",
   "ladderNoteInPlay": "Eine Stufe wartet auf ihr Ergebnis. Die Challenge läuft weiter.",
   "ladderNoteToPick": "Die nächste Stufe steht noch aus; das kann Tage dauern. Die Challenge läuft weiter.",
@@ -697,5 +694,6 @@
   "updateOptional": "Eine neue Version von QuantFut ist verfügbar.",
   "updateNow": "Jetzt aktualisieren",
   "updateLater": "Später",
-  "updateStoreError": "Der Store konnte nicht geöffnet werden. Versuche es erneut."
+  "updateStoreError": "Der Store konnte nicht geöffnet werden. Versuche es erneut.",
+  "detailNoFeatured": "Kein hervorgehobener Tipp mit einer Quote von 1.40 oder höher."
 }

@@ -267,10 +267,7 @@
   "ladderHistoryDone": "Réussi",
   "ladderHistoryEmpty": "Aucun défi n'est encore clos. Quand l'un se termine, il apparaît ici avec son résultat.",
   "ladderHistoryFailedAt": "Échec au palier {step}",
-  "ladderHistoryRate": "Taux de réussite : {rate}",
-  "ladderHistoryResult": "Résultat cumulé : {roi}",
   "ladderHistoryShown": "Affichage des derniers défis réussis et du dernier échoué.",
-  "ladderHistorySummary": "{done} réussis sur {closed} clos",
   "ladderHistoryTitle": "Historique des défis",
   "ladderNoteInPlay": "Un palier attend son résultat. Le défi est toujours en cours.",
   "ladderNoteToPick": "Le prochain palier reste à choisir ; cela peut prendre des jours. Le défi est toujours en cours.",
@@ -697,5 +694,6 @@
   "updateOptional": "Une nouvelle version de QuantFut est disponible.",
   "updateNow": "Mettre à jour",
   "updateLater": "Plus tard",
-  "updateStoreError": "Impossible d’ouvrir la boutique. Réessayez."
+  "updateStoreError": "Impossible d’ouvrir la boutique. Réessayez.",
+  "detailNoFeatured": "Aucun pronostic à la une avec une cote de 1.40 ou plus."
 }

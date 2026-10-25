@@ -410,7 +410,7 @@ class LadderHistoryCard extends StatefulWidget {
 
 class _LadderHistoryCardState extends State<LadderHistoryCard> {
   /// Qué se enseña (decisión del titular, 2026-10-14): los 9 últimos retos cumplidos y el
-  /// último fallido, del más reciente al más antiguo. El resumen de arriba cuenta todos.
+  /// último fallido, del más reciente al más antiguo.
   static const _maxDone = 9;
   static const _maxFailed = 1;
 
@@ -437,9 +437,6 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
     final l10n = context.l10n;
     final summary = jsonMap(widget.report['resumen']);
     final closed = (summary['cerrados'] as num?)?.toInt() ?? 0;
-    final done = (summary['completados'] as num?)?.toInt() ?? 0;
-    final rate = summary['tasa_completados'];
-    final roi = summary['roi'];
     final rows = _selection(jsonRows(widget.report['historial']));
     final empty = closed == 0;
     return Container(
@@ -463,18 +460,7 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
                   const Icon(Icons.emoji_events_outlined, color: liveGold, size: 26),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        liveText(l10n.ladderHistoryTitle, size: 15, bold: true),
-                        const SizedBox(height: 2),
-                        liveText(
-                          l10n.ladderHistorySummary(done, closed),
-                          size: 12,
-                          color: liveMuted,
-                        ),
-                      ],
-                    ),
+                    child: liveText(l10n.ladderHistoryTitle, size: 15, bold: true),
                   ),
                   if (!empty)
                     Icon(
@@ -490,51 +476,26 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: liveText(l10n.ladderHistoryEmpty, size: 12, color: liveMuted),
             )
-          else ...[
+          else if (_open)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Wrap(
-                spacing: 16,
-                runSpacing: 4,
+              key: const ValueKey('ladder-history-list'),
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (rate is num)
-                    liveText(
-                      l10n.ladderHistoryRate(percentText(rate)),
-                      size: 12,
-                      color: liveMuted,
-                    ),
-                  if (roi is num)
-                    liveText(
-                      l10n.ladderHistoryResult(
-                        '${roi > 0 ? '+' : ''}${percentText(roi, 1)}',
+                  for (final r in rows)
+                    _HistoryRow(
+                      challenge: r,
+                      expanded: _expanded == r['reto_id'],
+                      onTap: () => setState(
+                        () => _expanded = _expanded == r['reto_id']
+                            ? null
+                            : r['reto_id'],
                       ),
-                      size: 12,
-                      color: liveMuted,
                     ),
                 ],
               ),
             ),
-            if (_open)
-              Padding(
-                key: const ValueKey('ladder-history-list'),
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final r in rows)
-                      _HistoryRow(
-                        challenge: r,
-                        expanded: _expanded == r['reto_id'],
-                        onTap: () => setState(
-                          () => _expanded = _expanded == r['reto_id']
-                              ? null
-                              : r['reto_id'],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-          ],
         ],
       ),
     );
