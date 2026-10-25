@@ -297,6 +297,7 @@
   "artStats": "ESTADÍSTICAS",
   "artTagline": "ANALIZA. COMPARA. EXPLORA.",
   "artTransparency": "TRANSPARENCIA",
+  "bannerAwaiting": "PARTIDO JUGADO · esperando el resultado oficial",
   "bannerLive": "PARTIDO EN JUEGO · pronóstico sellado antes del inicio",
   "bannerLost": "FALLADO{score} · pronóstico sellado antes del inicio",
   "@bannerLost": {
@@ -374,7 +375,7 @@
   "detailInjuries": "Bajas reportadas",
   "detailLineups": "Alineaciones",
   "detailLineupsPending": "Alineaciones todavía no confirmadas.",
-  "detailNoFeatured": "No hay un pronóstico destacado con cuota entre 1.20 y 1.60 y probabilidad entre 74 % y 85 %.",
+  "detailNoFeatured": "Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60 y probabilidad de 74 % a 85 %). Los abiertos están en la lista de abajo.",
   "detailNoH2h": "No hay enfrentamientos registrados para este partido.",
   "detailNoInjuries": "Sin bajas en el reporte disponible.",
   "detailNoInjuriesCheck": "No hay una comprobación de bajas disponible.",
@@ -1035,6 +1036,7 @@
     }
   },
   "marketsRadarNote": "El anillo es el acierto histórico de la mejor línea validada de cada mercado; «Publicado» son los pronósticos ya resueltos. Son pronósticos previos al partido, no alertas en vivo, y ninguna probabilidad garantiza un resultado.",
+  "matchAwaitingResult": "Esperando resultado",
   "mdCornersTotal": "córners · total {total}",
   "@mdCornersTotal": {
     "placeholders": {
@@ -1873,6 +1875,21 @@
   },
   "selHtBttsNo": "No marcan los dos en el 1T",
   "selHtGoalYes": "Habrá gol en el 1T",
+  "selTeamGoalsLine": "{side, select, over{Más de {line} goles de {team}} other{Menos de {line} goles de {team}}}",
+  "@selTeamGoalsLine": {
+    "description": "Goles de un equipo con línea distinta de «marca» (más de 0,5).",
+    "placeholders": {
+      "side": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      },
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "selTeamOrDraw": "{team} o empate",
   "@selTeamOrDraw": {
     "placeholders": {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 
@@ -413,6 +414,16 @@ class MatchRow extends StatelessWidget {
                       color: liveMuted,
                       size: 12,
                     ),
+                  )
+                else if (match['estado'] != 'finished' &&
+                    awaitingResult(match['kickoff_utc']))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: liveText(
+                      l10n.matchAwaitingResult,
+                      color: liveMuted,
+                      size: 12,
+                    ),
                   ),
                 if (pending) ...[
                   const SizedBox(height: 8),
@@ -432,7 +443,7 @@ class MatchRow extends StatelessWidget {
                   const SizedBox(height: 8),
                   _PickTag(
                     text:
-                        '${public.first['texto']} @ ${decimalText(public.first['ref_price'])}',
+                        '${pickText(public.first, home: local['nombre'], away: away['nombre'])} @ ${decimalText(public.first['ref_price'] ?? public.first['price'])}',
                     color: liveGreen,
                     icon: Icons.verified_outlined,
                   ),

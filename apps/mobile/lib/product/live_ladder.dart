@@ -206,7 +206,7 @@ class _SettledStep extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: liveText(
-              '${step['local']} · ${step['visitante']}\n${step['texto']} · $outcome\n${step['marcador'] ?? ''}'
+              '${step['local']} · ${step['visitante']}\n${pickText(step)} · $outcome\n${step['marcador'] ?? ''}'
                   .trim(),
               size: 12,
             ),

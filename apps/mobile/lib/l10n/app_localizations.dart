@@ -646,6 +646,12 @@ abstract class AppLocalizations {
   /// **'TRANSPARENCIA'**
   String get artTransparency;
 
+  /// No description provided for @bannerAwaiting.
+  ///
+  /// In es, this message translates to:
+  /// **'PARTIDO JUGADO · esperando el resultado oficial'**
+  String get bannerAwaiting;
+
   /// No description provided for @bannerLive.
   ///
   /// In es, this message translates to:
@@ -823,7 +829,7 @@ abstract class AppLocalizations {
   /// No description provided for @detailNoFeatured.
   ///
   /// In es, this message translates to:
-  /// **'No hay un pronóstico destacado con cuota entre 1.20 y 1.60 y probabilidad entre 74 % y 85 %.'**
+  /// **'Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60 y probabilidad de 74 % a 85 %). Los abiertos están en la lista de abajo.'**
   String get detailNoFeatured;
 
   /// No description provided for @detailNoH2h.
@@ -2121,6 +2127,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El anillo es el acierto histórico de la mejor línea validada de cada mercado; «Publicado» son los pronósticos ya resueltos. Son pronósticos previos al partido, no alertas en vivo, y ninguna probabilidad garantiza un resultado.'**
   String get marketsRadarNote;
+
+  /// No description provided for @matchAwaitingResult.
+  ///
+  /// In es, this message translates to:
+  /// **'Esperando resultado'**
+  String get matchAwaitingResult;
 
   /// No description provided for @mdCornersTotal.
   ///
@@ -3471,6 +3483,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Habrá gol en el 1T'**
   String get selHtGoalYes;
+
+  /// Goles de un equipo con línea distinta de «marca» (más de 0,5).
+  ///
+  /// In es, this message translates to:
+  /// **'{side, select, over{Más de {line} goles de {team}} other{Menos de {line} goles de {team}}}'**
+  String selTeamGoalsLine(String side, String line, String team);
 
   /// No description provided for @selTeamOrDraw.
   ///

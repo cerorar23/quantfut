@@ -1,7 +1,7 @@
 name: gobet
 description: QuantFut mobile app connected to the football data and prediction API.
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+4
 
 environment:
   sdk: '>=3.13.5 <4.0.0'

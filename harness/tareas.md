@@ -3287,3 +3287,14 @@ Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScor
 - [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7)) Cargador del worker `qf.ingest.sofascore_alineaciones`: bajas → `injuries`; once previsto → `lineups_previstas`; once confirmado → `lineups` (lo que lee `sello_tardio`).
 - [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7)) `availability()` solo compara contra historia de la misma fuente de ids (SofaScore ≠ API-Football): sin historia suficiente devuelve «insuficiente», no basura.
 - [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7); la historia de once SofaScore queda en «espera datos») Ensayo, respaldo, despliegue (worker + cron host) y entrada en DEPLOYS.md. Pendiente aparte: historia de once SofaScore para que `availability` funcione.
+
+## App — auditoría de datos, pronósticos y ergonomía (2026-10-25)
+
+- [x] Pick abierto con otro lado o línea que el análisis (Barcelona o empate frente a «12» del modelo) desaparecía de «Mercados del partido»: `partido_mercados.aplicar_acceso` lo añade como fila propia.
+- [x] La fila de un pick abierto enseñaba la probabilidad del análisis (79 %) y el destacado la sellada (76 %): ahora ambas son la sellada.
+- [x] Patas del Parley sin `selection`/`line` (siempre en español en la app) y con `canonical_name`: `parley_datos._pata_publica` las envía y usa el nombre visible.
+- [x] Textos en español fijos en la app: etiqueta del pronóstico en Inicio, escalones del historial de la Escalera y patas del Parley pasan por `pickText`.
+- [x] «Goles de equipo» decía «Marca X» con cualquier línea o lado (app y `alta_prob.texto`); tarjetas y córners por equipo traducidos.
+- [x] Partido con el saque pasado y sin resultado: «Esperando resultado» (Inicio, cabecera y banner del pronóstico) en lugar de «Hora local»/«En juego» a las 3 h. Clave nueva en 6 idiomas.
+- [x] Casas con nombre comercial (`bookName`: BetOnline, Bovada…), fecha del historial del Parley en el idioma del usuario, textos de 8 px a 10 px y aviso «sin destacado» con coma decimal.
+- [ ] Desplegar la API (`partido_mercados.py`, `parley_datos.py`, `alta_prob.py`) y un nuevo build de la app con código de versión subido. Necesita el visto bueno del titular.

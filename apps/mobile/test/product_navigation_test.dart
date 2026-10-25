@@ -445,7 +445,7 @@ void main() {
       ];
     await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
     expect(find.byType(ForecastPanel), findsNothing);
-    expect(find.textContaining('No hay un pronóstico destacado con cuota entre 1.20 y 1.60'), findsOneWidget);
+    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

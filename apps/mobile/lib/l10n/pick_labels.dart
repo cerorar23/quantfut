@@ -84,9 +84,19 @@ String pickText(JsonMap pick, {Object? home, Object? away}) {
           ? fallback
           : l10n.selGoals('$selection', lineText(line));
     case 'team_totals_home':
-      return l10n.selTeamScores(homeName);
     case 'team_totals_away':
-      return l10n.selTeamScores(awayName);
+      final team = market == 'team_totals_home' ? homeName : awayName;
+      // «Marca X» solo equivale a «más de 0,5»; otra línea o el «menos» se dicen enteros.
+      if (selection == 'over' && (line == null || line == 0.5)) {
+        return l10n.selTeamScores(team);
+      }
+      return line == null
+          ? fallback
+          : l10n.selTeamGoalsLine('$selection', lineText(line), team);
+    case 'cards':
+      return line == null
+          ? fallback
+          : l10n.selCards('$selection', lineText(line));
     case 'btts':
       return selection == 'yes' ? l10n.selBttsYes : l10n.selBttsNo;
     case 'spreads':
@@ -140,6 +150,8 @@ String rowSelection(JsonMap row, String home, String away) {
     case 'totals':
     case 'btts':
     case 'corners':
+    case 'corners_home':
+    case 'corners_away':
       return pickText({
         ...row,
         'local': home,
@@ -167,9 +179,41 @@ String rowTitle(JsonMap row, String home, String away) {
     'ht_btts' => l10n.marketHtBtts,
     'ht_goal' => l10n.marketHtGoal,
     'corners' => l10n.titleTotalCorners,
+    'corners_home' => l10n.marketCornersHome,
+    'corners_away' => l10n.marketCornersAway,
     'cards' => l10n.titleTotalCards,
     _ => fallback,
   };
+}
+
+/// Nombre comercial de la casa de la cuota. El servidor manda la clave del proveedor
+/// («betonlineag», «williamhill_us»); una clave desconocida se enseña tal cual.
+String bookName(Object? book) {
+  final key = '$book'.trim().toLowerCase();
+  // l10n-ignore-start
+  return switch (key) {
+    'betonlineag' || 'betonline' => 'BetOnline',
+    'bovada' => 'Bovada',
+    'bet365' => 'bet365',
+    'pinnacle' => 'Pinnacle',
+    'betano' => 'Betano',
+    'betfair' || 'betfair_ex_eu' || 'betfair_ex_uk' => 'Betfair',
+    'williamhill' || 'williamhill_us' => 'William Hill',
+    'draftkings' => 'DraftKings',
+    'fanduel' => 'FanDuel',
+    'betmgm' => 'BetMGM',
+    'caesars' || 'williamhill_us_caesars' => 'Caesars',
+    'unibet' || 'unibet_eu' => 'Unibet',
+    'marathonbet' => 'Marathonbet',
+    'onexbet' || '1xbet' => '1xBet',
+    'sport888' || '888sport' => '888sport',
+    'betway' => 'Betway',
+    'mybookieag' => 'MyBookie',
+    'lowvig' => 'LowVig',
+    'betrivers' => 'BetRivers',
+    _ => '$book',
+  };
+  // l10n-ignore-end
 }
 
 /// Categoría de una fila. El servidor usa el nombre en español como identificador.

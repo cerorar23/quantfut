@@ -125,6 +125,9 @@ def test_desempate_con_goles_de_un_equipo():
 def test_texto_marca_un_equipo():
     assert ap.texto("team_totals_home", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Cruzeiro"
     assert ap.texto("team_totals_away", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Sao Paulo"
+    # Otra línea u otro lado no es «marca»: decirlo así cambiaba el pronóstico.
+    assert ap.texto("team_totals_home", "over", 1.5, "Cruzeiro", "Sao Paulo") == "Más de 1,5 goles de Cruzeiro"
+    assert ap.texto("team_totals_away", "under", 1.5, "Cruzeiro", "Sao Paulo") == "Menos de 1,5 goles de Sao Paulo"
 
 
 def test_bloquear_el_grupo_team_totals_excluye_los_dos_lados():

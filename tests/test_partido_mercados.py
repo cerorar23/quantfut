@@ -86,6 +86,37 @@ def test_vip_sees_everything_and_marks_real_value_only_with_a_published_quote(li
     assert high['oportunidad'] is True                      # prob × cuota publicada > 1,02
 
 
+def test_open_pick_row_shows_the_sealed_probability_not_the_analysis(lista):
+    """Auditoría 2026-10-25: el destacado decía 76 % y la lista 79 % para la misma selección."""
+    filas, marcadores = lista
+    row = pm.clave('totals', 'over', 1.5)
+    out, _ = pm.aplicar_acceso(filas, marcadores, {row: {'prob': .76, 'ref_price': 1.25}}, plus=False)
+    abierta = next(f for f in out if f['id'] == row)
+    assert abierta['prob'] == .76 and abierta['nivel'] == 'alta'
+    assert abierta['cuota'] == 1.25 and abierta['cuota_tipo'] == 'publicada'
+    assert abierta['oportunidad'] is False                 # 0,76 × 1,25 = 0,95
+
+
+def test_open_pick_missing_from_the_analysis_is_added_not_lost(lista):
+    """El análisis da «12» en doble oportunidad; el pick gratis era «1X» y desaparecía."""
+    filas, marcadores = lista
+    assert pm.clave('double_chance', 'X2', None) not in {f['id'] for f in filas}
+    pick = {'market': 'double_chance', 'selection': 'X2', 'line': None, 'prob': .74,
+            'ref_price': 1.29, 'texto': 'Visita FC o empate'}
+    out, marc = pm.aplicar_acceso(filas, marcadores, {pm.clave('double_chance', 'X2', None): pick}, plus=False)
+    abiertas = [f for f in out if not f['locked']]
+    assert [f['id'] for f in abiertas] == [pm.clave('double_chance', 'X2', None)]
+    assert abiertas[0]['grupo'] == 'DOBLE OPORTUNIDAD' and abiertas[0]['seleccion'] == 'Visita FC o empate'
+    assert abiertas[0]['prob'] == .74 and abiertas[0]['cuota'] == 1.29 and marc == marcadores
+    assert len([f for f in out if f['locked']]) == len(filas)   # las del análisis siguen con candado
+    dnb = {'market': 'spreads', 'selection': 'away', 'line': 0.0, 'prob': .7, 'price': 1.4}
+    out, _ = pm.aplicar_acceso([], [], {pm.clave('spreads', 'away', 0.0): dnb}, plus=False)
+    assert out[0]['grupo'] == 'EMPATE NO ACCIÓN' and out[0]['cuota'] == 1.4
+    # Sin probabilidad o de un mercado desconocido no se inventa una fila.
+    out, _ = pm.aplicar_acceso([], [], {'x': {'market': 'raro', 'prob': .8}, 'y': {'market': 'btts'}}, plus=False)
+    assert out == []
+
+
 def test_nivel_boundaries():
     assert [pm.nivel(p) for p in (.75, .7499, .60, .5999)] == ['alta', 'solida', 'solida', 'moderada']
     assert pm.clave('totals', 'over', 1.5) == 'totals:over:1.5' and pm.clave('h2h', 'home', None) == 'h2h:home:None'

@@ -302,7 +302,11 @@ def texto(market: str, selection: str, line: float | None,
     if market == "totals":
         return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} goles"
     if market in ("team_totals_home", "team_totals_away"):
-        return f"Marca {local if market.endswith('home') else visitante}"
+        equipo = local if market.endswith("home") else visitante
+        # «Marca X» solo equivale a «más de 0,5»; otra línea o el «menos» se dicen enteros.
+        if selection == "over" and (line is None or float(line) == 0.5):
+            return f"Marca {equipo}"
+        return f"{'Más' if selection == 'over' else 'Menos'} de {_goles(line)} goles de {equipo}"
     if market == "btts":
         return "Marcan los dos" if selection == "yes" else "No marcan los dos"
     if market == "spreads":

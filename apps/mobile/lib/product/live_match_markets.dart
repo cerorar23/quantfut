@@ -216,7 +216,7 @@ class _OpenRow extends StatelessWidget {
                     ),
                     liveText(
                       published ? l10n.mmPublishedOdds : l10n.mmFairOdds,
-                      size: 8,
+                      size: 10,
                       color: liveMuted,
                     ),
                   ],
