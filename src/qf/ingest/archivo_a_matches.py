@@ -122,9 +122,10 @@ def extraer(payload: dict, statistics: dict, goles_local: int, goles_visita: int
     out: dict = {}
     for local, visita, clave, entero in CAMPOS_PARES.values():
         out[local], out[visita] = _par(statistics, clave, entero)
-    # En Argentina, Brasil y parte de México (2026) FotMob deja el bloque de tarjetas a [0, 0] aunque la
-    # cronología trae cada una (medido el 25-oct-2026): con el bloque a cero manda la cronología.
-    if all(out[k] == 0 for k in ("home_yellow", "away_yellow", "home_red", "away_red")):
+    # En Argentina, Brasil y parte de México (2026) FotMob deja las amarillas del bloque a [0, 0] (a veces con
+    # la roja bien) aunque la cronología trae cada tarjeta (medido el 25-oct-2026): con las amarillas a cero
+    # manda la cronología, también para las rojas, para que el total salga de una sola cuenta.
+    if out["home_yellow"] == 0 and out["away_yellow"] == 0:
         (out["home_yellow"], out["away_yellow"]), (out["home_red"], out["away_red"]) = (
             _tarjetas_cronologia(payload) or ((None, None), (None, None)))
     out["home_goals_ht"], out["away_goals_ht"] = _descanso(payload, goles_local, goles_visita)
@@ -231,17 +232,17 @@ TARJETAS = ("home_yellow", "away_yellow", "home_red", "away_red")
 def reparar_tarjetas(c, rollback: bool = False) -> dict:
     """Corrige las tarjetas que el bloque a cero de FotMob dejó en `matches` antes del arreglo de `extraer`.
 
-    Solo partidos cuyas tarjetas rellenó FotMob y que siguen con las cuatro a cero. Lee el mismo original que se
-    usó (misma página y hora de captura, del archivo histórico o de `fotmob_original`) y aplica la cronología;
-    si no es fiable, las cuatro vuelven a NULL (un cero que no consta no se conserva). `rollback=True` es el ensayo.
+    Solo partidos cuyas tarjetas rellenó FotMob y que siguen con las amarillas a cero. Lee el mismo original que se
+    usó (misma página y hora de captura, del archivo histórico o de `fotmob_original`) y aplica la cronología a las
+    cuatro; si no es fiable, vuelven a NULL (un cero que no consta no se conserva). `rollback=True` es el ensayo.
     """
     from psycopg import Rollback
 
     informe = {"candidatos": 0, "corregidos": 0, "a_null": 0, "sin_cambio": 0, "sin_original": 0, "cambios": []}
-    ceros = " AND ".join(f"m.{k} = 0" for k in TARJETAS)
+    ceros = "m.home_yellow = 0 AND m.away_yellow = 0"
     with c.transaction():
         filas = c.execute(f"""
-            SELECT m.match_id,
+            SELECT m.match_id, m.home_red, m.away_red,
                    COALESCE((SELECT h.raw_payload_gzip FROM historical_football_matches h
                              WHERE h.provider = %(p)s AND h.match_id = m.match_id
                                AND h.source_match_id = e.source_match_id AND h.captured_at = e.captured_at LIMIT 1),
@@ -262,12 +263,14 @@ def reparar_tarjetas(c, rollback: bool = False) -> dict:
                 informe["sin_original"] += 1
                 continue
             cronologia = _tarjetas_cronologia(payload)
-            if cronologia == ((0, 0), (0, 0)):
+            if cronologia == ((0, 0), (f["home_red"], f["away_red"])):
                 informe["sin_cambio"] += 1
                 continue
             valores = (*cronologia[0], *cronologia[1]) if cronologia else (None,) * 4
             sets = ", ".join(f"{k} = %s" for k in TARJETAS)
-            c.execute(f"UPDATE matches m SET {sets} WHERE m.match_id = %s AND {ceros}", (*valores, f["match_id"]))
+            c.execute(f"""UPDATE matches m SET {sets} WHERE m.match_id = %s AND {ceros}
+                           AND m.home_red IS NOT DISTINCT FROM %s AND m.away_red IS NOT DISTINCT FROM %s""",
+                      (*valores, f["match_id"], f["home_red"], f["away_red"]))
             informe["corregidos" if cronologia else "a_null"] += 1
             informe["cambios"].append({"match_id": f["match_id"], **dict(zip(TARJETAS, valores))})
         if rollback:
