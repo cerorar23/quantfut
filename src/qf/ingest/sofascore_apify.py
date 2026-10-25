@@ -69,6 +69,9 @@ def connect(root):
         last_seen TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS rounds (
         target TEXT PRIMARY KEY, round INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS lineup_captures (
+        id INTEGER PRIMARY KEY, event_id INTEGER NOT NULL, kind TEXT NOT NULL,
+        receipt_id INTEGER NOT NULL, confirmed INTEGER NOT NULL, at TEXT NOT NULL);
       CREATE TRIGGER IF NOT EXISTS immutable_receipts_u BEFORE UPDATE ON receipts
         BEGIN SELECT RAISE(ABORT,'immutable receipt'); END;
       CREATE TRIGGER IF NOT EXISTS immutable_receipts_d BEFORE DELETE ON receipts
@@ -272,6 +275,69 @@ class Collector:
                             self.db.execute("UPDATE events SET captured_receipt=? WHERE id=?",
                                             (rid, x))
 
+    def lineup_due(self):
+        """Partidos de fútbol por empezar a los que toca capturar once y bajas.
+
+        «previa»: una vez por partido desde T-30 h (bajas y once previsto).
+        «oficial»: entre T-65 y T-20 min, en cada pasada, hasta que SofaScore lo marque
+        confirmado (máx. `max_intentos`): es el once que lee `sello_tardio`.
+        """
+        cfg = self.cfg.get("lineups") or {}
+        now_ts = int(self.clock().timestamp())
+        previa_h = cfg.get("previa_horas", 30)
+        lo, hi = cfg.get("oficial_min", [20, 65])
+        intentos = cfg.get("max_intentos", 5)
+        out = []
+        rows = self.db.execute(
+            "SELECT id, target, start_ts FROM events WHERE status NOT IN (%s)"
+            " AND start_ts > ? AND start_ts <= ? ORDER BY start_ts"
+            % ",".join("?" * len(FINAL)),
+            (*sorted(FINAL), now_ts + lo * 60, now_ts + previa_h * 3600)).fetchall()
+        for r in rows:
+            if self.provider(r["target"]) != "rl1987" or r["target"].startswith("tennis."):
+                continue
+            done = {k: n for k, n in self.db.execute(
+                "SELECT kind || ':' || confirmed, count(*) FROM lineup_captures"
+                " WHERE event_id=? GROUP BY 1", (r["id"],))}
+            en_oficial = r["start_ts"] <= now_ts + hi * 60
+            if en_oficial:
+                if done.get("oficial:1") or sum(v for k, v in done.items()
+                                                 if k.startswith("oficial:")) >= intentos:
+                    continue
+                out.append(r["id"])
+            elif not any(k.startswith("previa:") for k in done):
+                out.append(r["id"])
+        return out[: cfg.get("max_por_corrida", 40)]
+
+    def capture_lineups(self):
+        """Una corrida del actor con los once/bajas de los partidos vencidos; archiva el original."""
+        cfg = self.cfg.get("lineups")
+        if cfg is None:
+            return "sin configuración"
+        ids = self.lineup_due()
+        if not ids:
+            return "nada vencido"
+        cap = self.budget_left()
+        if cap < 0.10:
+            raise Stop("presupuesto agotado")
+        now_ts = int(self.clock().timestamp())
+        hi = cfg.get("oficial_min", [20, 65])[1]
+        start = {r["id"]: r["start_ts"] for r in self.db.execute(
+            "SELECT id, start_ts FROM events WHERE id IN (%s)" % ",".join("?" * len(ids)), ids)}
+        rid, rows = self.run("lineup", {"mode": "event_detail", "includeLineups": True,
+                                        "eventIds": [str(i) for i in ids]},
+                             min(cap, 0.01 * len(ids) + 0.10))
+        at = self.clock().isoformat()
+        got = {e["id"]: bool((e.get("lineups") or {}).get("confirmed")) for e in rows
+               if isinstance(e, dict) and e.get("id") in start}
+        with self.db:
+            for i, confirmed in got.items():
+                kind = "oficial" if start[i] <= now_ts + hi * 60 else "previa"
+                self.db.execute(
+                    "INSERT INTO lineup_captures(event_id,kind,receipt_id,confirmed,at) VALUES(?,?,?,?,?)",
+                    (i, kind, rid, int(confirmed), at))
+        return "ok"
+
     def discover_tennis(self):
         """Cada semana localiza los torneos ATP/WTA (individuales) en juego.
 
@@ -327,18 +393,21 @@ class Collector:
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("command", choices=["capture"])
+    ap.add_argument("command", choices=["capture", "lineups"])
     ap.add_argument("--root", required=True)
     ap.add_argument("--key-file", required=True)
     ap.add_argument("--config", required=True)
     a = ap.parse_args(argv)
     cfg = json.loads(Path(a.config).read_text(encoding="utf8"))
     c = Collector(a.root, read_token(a.key_file), cfg)
-    result = c.capture()
+    try:
+        result = c.capture() if a.command == "capture" else c.capture_lineups()
+    except Stop as exc:
+        result = str(exc)
     c.budget_left()
     print(json.dumps({"at": now().isoformat(), "result": result,
                       "spent_usd": round(c.spent, 4)}))
-    return 0 if result == "ok" else 1
+    return 0 if result in ("ok", "nada vencido") else 1
 
 
 if __name__ == "__main__":

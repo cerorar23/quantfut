@@ -141,6 +141,11 @@ def ingest_match(match: dict) -> dict:
             "pending": int((complete or {}).get("n") or 0) < 2}
 
 
+def _fuente(starters: list[dict]) -> str:
+    """Fuente de los ids de jugador de un XI: SofaScore los marca con `src`; el resto es API-Football."""
+    return "sofascore" if any(p.get("src") == "sofascore" for p in starters or []) else "api"
+
+
 def availability(match_id: str, lookback: int = 5) -> dict | None:
     """
     Cuántos titulares habituales faltan en el XI de hoy.
@@ -204,6 +209,9 @@ def availability(match_id: str, lookback: int = 5) -> dict | None:
                LIMIT %s""",
             (team_id, team_id, match_id, match_id, lookback),
         )
+        # Los ids de SofaScore no son los de API-Football: se compara solo contra historia de la misma fuente
+        # (si no, todos los habituales parecerían ausentes). Sin historia suficiente queda «insuficiente».
+        hist = [h for h in hist if _fuente(h["starters"]) == _fuente(r["starters"])]
         if len(hist) < 3:
             out[r["side"]] = {"missing_regulars": None,
                               "reason": "historia insuficiente"}

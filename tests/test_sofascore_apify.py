@@ -141,3 +141,66 @@ def test_detalles_futbol_reciente_primero_y_sin_jornadas_viejas(tmp_path):
     c.details()
     pedidos = [p["eventIds"] for p in f.calls if p.get("mode") == "event_detail"]
     assert pedidos == [["3", "2"]]
+
+
+# --- once y bajas de partidos por jugar (25-oct-2026) -------------------------------------------
+
+def con_eventos(tmp_path, eventos, lineups_cfg=None):
+    """Colector con eventos futuros sembrados; Fake devuelve la captura de once por cada id pedido."""
+    class FakeLineups(Fake):
+        def __call__(self, method, url, token, payload=None, timeout=0):
+            if payload and payload.get("includeLineups") and payload["mode"] == "event_detail":
+                self.calls.append(payload)
+                self.urls.append(url)
+                self.usd += 0.02
+                rows = [{"kind": "event_detail", "id": int(i), "lineups": {"confirmed": self.confirmado}}
+                        for i in payload["eventIds"]]
+                return 200, json.dumps(rows).encode()
+            return super().__call__(method, url, token, payload, timeout)
+
+    f = FakeLineups([])
+    f.confirmado = False
+    cfg = {**CFG, "targets": {"es.laliga": {"utid": 8}, "nba": {"utid": 132, "provider": "scrapesage"}},
+           "lineups": lineups_cfg or {}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    for i, target, minutos in eventos:
+        c.db.execute("INSERT INTO events(id,target,round,start_ts,status) VALUES(?,?,?,?,?)",
+                     (i, target, 1, int(T0.timestamp()) + minutos * 60, "notstarted"))
+    c.db.commit()
+    return c, f
+
+
+def test_previa_una_sola_vez_desde_30_horas(tmp_path):
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 600), (2, "es.laliga", 60 * 40), (3, "nba", 600)])
+    assert c.capture_lineups() == "ok"
+    assert f.calls[-1]["eventIds"] == ["1"]            # el de 40 h aún no; la NBA nunca
+    assert c.capture_lineups() == "nada vencido"       # la previa no se repite
+
+
+def test_oficial_reintenta_hasta_confirmar_y_para(tmp_path):
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 50)])
+    assert c.capture_lineups() == "ok"
+    assert c.db.execute("SELECT kind, confirmed FROM lineup_captures").fetchone()[:] == ("oficial", 0)
+    assert c.capture_lineups() == "ok"                 # sigue sin confirmar: reintenta
+    f.confirmado = True
+    assert c.capture_lineups() == "ok"
+    assert c.capture_lineups() == "nada vencido"       # confirmado: no se vuelve a pedir
+    assert c.db.execute("SELECT count(*) FROM lineup_captures").fetchone()[0] == 3
+
+
+def test_oficial_se_detiene_en_el_maximo_de_intentos(tmp_path):
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 50)], {"max_intentos": 2})
+    c.capture_lineups(); c.capture_lineups()
+    assert c.capture_lineups() == "nada vencido"
+
+
+def test_a_menos_de_20_minutos_ya_no_se_pide(tmp_path):
+    c, _ = con_eventos(tmp_path, [(1, "es.laliga", 15)])
+    assert c.capture_lineups() == "nada vencido"
+
+
+def test_el_recibo_de_once_se_archiva_con_recepcion_real(tmp_path):
+    c, _ = con_eventos(tmp_path, [(1, "es.laliga", 50)])
+    c.capture_lineups()
+    got = c.db.execute("SELECT received_at, kind FROM receipts WHERE kind='lineup'").fetchone()
+    assert got["received_at"] == T0.isoformat()
