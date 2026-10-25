@@ -447,6 +447,40 @@ def test_soccer_settlement_only_for_listed_leagues_and_without_graded_props(tmp_
     assert len(settlement_paths(calls)) == 4
 
 
+def test_competitions_outside_priority_are_captured_every_few_hours():
+    config = dict(priority_sports=["basketball_nba", "tennis_", "soccer_epl"])
+    assert pl.priority_sport("soccer_epl", config) and pl.priority_sport("tennis_atp_paris", config)
+    assert not pl.priority_sport("soccer_japan_j_league", config)
+    assert not pl.priority_sport("soccer_epl_women", config)      # exacto, no prefijo
+    assert pl.priority_sport("soccer_japan_j_league", {})         # sin lista: todas cada hora
+
+
+def test_hourly_run_skips_other_competitions_off_the_hour(tmp_path, monkeypatch):
+    calls, _ = settlement_run(tmp_path, monkeypatch, [], sports=("soccer_epl", "soccer_japan_j_league"),
+                              budget={"soccer_": 10})
+    assert {p.split("/")[3] for p, _ in calls if p.endswith("/odds")} == {"soccer_epl", "soccer_japan_j_league"}
+    hora = datetime.now(timezone.utc).hour
+    if hora == 0:
+        pytest.skip("a las 00 UTC toca cualquier cadencia")
+    cada = 3 if hora % 3 else 7 if hora % 7 else 5           # una cadencia que NO toca esta hora
+    (tmp_path / "b").mkdir()
+    monkeypatch.setattr(pl, "run", lambda root, key_file, config_file, **kw: REAL_RUN(
+        root, key_file, _con(config_file, priority_sports=["soccer_epl"], other_sports_every_hours=cada), **kw))
+    calls, _ = settlement_run(tmp_path / "b", monkeypatch, [], sports=("soccer_epl", "soccer_japan_j_league"),
+                              budget={"soccer_": 10})
+    assert {p.split("/")[3] for p, _ in calls if p.endswith("/odds")} == {"soccer_epl"}
+
+
+REAL_RUN = pl.run
+
+
+def _con(config_file, **extra):
+    config = json.loads(config_file.read_text())
+    config.update(extra)
+    config_file.write_text(json.dumps(config))
+    return config_file
+
+
 def test_redacted_results_stop_further_results_that_day(tmp_path, monkeypatch):
     scores = [dict(id="1", status="final", commence_time=ago(20)), dict(id="2", status="final", commence_time=ago(10))]
     calls, _ = settlement_run(tmp_path, monkeypatch, scores, results=dict(redacted=True, bookmakers=[]))
