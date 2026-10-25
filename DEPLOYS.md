@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-25 16:22 UTC · Cierres de PropLine, Liga MX/MLS en SofaScore y `stats` · worker `quantfut-worker-propline:ffe42ee` (`main` `ffe42ee`, PR #127) + cron + recolector SofaScore
+- **Motivo:** auditoría de datos (`docs/auditoria_datos_motores_20261025.md`, PR #125): sin cierres desde el 22-oct 18:50 aunque PropLine los archiva; MLS y Liga MX sin ningún partido en SofaScore; `matches.stats` vacío desde el 22-oct. Orden del titular: fusionar #125 y #127, desplegar worker, cron y recolector con respaldo, cargar los cierres y verificar.
+- **Estado previo comprobado (16:20 UTC):** worker `2db3f61` (= entrada anterior) con 161/161 `.py` idénticos a `main`; `scripts/crontab` (`8e7ad146…`), `config.json` (`9304fda1…`) y `sofascore_apify.py` (`4960defa…`) del recolector = `main`; ningún trabajo en curso en el worker; nadie más desplegando. La 088 sigue programada en el cron del host (01:30 UTC del 26-oct) y no se toca.
+- **Worker:** imagen `FROM quantfut-worker-propline:2db3f61` + `src/` de `git archive ffe42ee` (`~/quantfut/build/ffe42ee`); `.py` idénticos a `main`. Compose con la etiqueta `ffe42ee`. `scripts/crontab` = `main` (`beab2c30…`): suma `propline_cierres` a las :40 cada 3 h.
+- **Recolector SofaScore:** `config.json` (`a1ae2f77…`, Liga MX al Apertura `11621`) y `sofascore_apify.py` (`26ba76f2…`, competiciones sin jornada) = `main`.
+- **Incidencia:** `docker compose up --force-recreate worker` tomó por réplica del worker el contenedor de la captura horaria de PropLine (`propline-shared-capture`, que corría desde las 16:07) y lo mató: la pasada de las 16:07 terminó con código 137 (lo recibido hasta entonces queda archivado; la siguiente es a las 17:07). El worker quedó en «Created» con nombre temporal: se arrancó con `docker compose up -d --no-deps --no-build worker` y se renombró a `quantfut-worker-1`. Ver «Trampas conocidas».
+- **Verificado:** `propline_cierres` real 16:24 UTC: 79 partidos y 25.437 filas de 17 ligas (Pinnacle 1X2, hándicap, goles, córners, tarjetas, totales por equipo, ambos marcan, doble oportunidad), un solo `captured_at` por partido, 0–9 min antes del inicio. Último partido con cierre sharp: 22-oct → 25-oct 03:00 (frescura del reentrenamiento). Desde el 22-oct, 89 de 132 terminados con cierre. Las ofertas de esos partidos ya estaban liquidadas sin cierre (inmutable): no ganan CLV; las nuevas esperan al cierre hasta 48 h. Recolector SofaScore (pasada manual 16:25–16:31, 1,14 USD): MLS 111 partidos descubiertos (antes 0), Liga MX 9 (antes 0); tras cargar: MLS 13/14 con xG y 14/14 con tarjetas, árbitro y `stats`; Liga MX 10/10. `stats` rellenado en 80 partidos ya cargados; 107 de 132 desde el 22-oct.
+- Respaldo: `~/quantfut/backups/20261025-cierres-propline/` (`docker-compose.yml`, `crontab`, `sofascore_current/`, `worker_image.txt`).
+- **Vuelta atrás** (fuera de :07–:25 por la trampa de abajo): `B=~/quantfut/backups/20261025-cierres-propline; cp -p $B/docker-compose.yml ~/quantfut/ && cp -p $B/crontab ~/quantfut/scripts/crontab && cp -p $B/sofascore_current/config.json $B/sofascore_current/sofascore_apify.py ~/sofascore-apify/current/ && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate worker`. Las filas de cierre (`window_tag='close'`, `source='propline'`) son inmutables y se quedan; con el código anterior no se cargan más.
+
 ### 2026-10-25 15:20 UTC · Respaldo de resultados con FotMob · worker `quantfut-worker-propline:2db3f61` (`main` `2db3f61`, PR #123) + cron
 - **Motivo:** 19 partidos de ligas activas seguían abiertos más de 6 h después del saque porque PropLine no les dio resultado (`expired`: liga suiza entera y partidos sueltos de Serie B, LaLiga 2, Noruega, Turquía, MLS y Europa League). Hoffenheim–Lyon (UEL, 22-oct) tenía alta probabilidad, escalera y parley sin liquidar. Orden del titular: fusionar, desplegar y cerrar los atascados.
 - **Estado previo comprobado:** worker `e5a29a7` (= entrada anterior) y `scripts/crontab` = `main` (`d874a026…`); nadie más había desplegado.
@@ -645,6 +655,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Producción 1.0.0 y ficha enviadas a revisión de Google; todavía no se confirma disponibilidad pública.
 
 ### Trampas conocidas (no repetirlas)
+- **No recrear el worker entre las :07 y las ~:25.** La imagen de la captura horaria de PropLine (`9db4a578…`, hecha
+  desde un contenedor de compose) conserva las etiquetas `com.docker.compose.*` del servicio worker: `docker compose up
+  --force-recreate worker` mata `propline-shared-capture` a mitad de pasada y deja el worker en «Created» con nombre
+  temporal (25-oct 16:22). Si pasa: `docker compose up -d --no-deps --no-build worker` y `docker rename <id>_quantfut-worker-1
+  quantfut-worker-1`. Arreglo de fondo pendiente: reconstruir esa imagen sin las etiquetas.
 - **`requirements.txt` del servidor no tiene `cryptography` ni `firebase-admin`** (el de `main` sí). El worker en ejecución
   los tiene instalados a mano. Reconstruir una imagen desde `~/quantfut` tal cual **perdería `cryptography`**, que descifra
   la clave de PitchAPI guardada en la base.
