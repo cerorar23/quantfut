@@ -1,5 +1,9 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Bajas y once desde SofaScore
+
+Al retirar API-Football y FotMob los pronósticos quedaron sin bajas ni once. SofaScore (rl1987 `event_detail` con `includeLineups`) trae en partidos futuros el once previsto (`confirmed=false`) y las bajas con tipo, motivo y fecha de regreso, así que no hace falta otra fuente. Decisión clave: el once previsto va a una tabla propia (`lineups_previstas`) y SOLO el oficial y completo se copia a `lineups`, porque `sello_tardio` lee esa tabla como «alineación confirmada» y un previsto la falsearía y adelantaría el sellado. Los ids de SofaScore no son los de API-Football: cada titular lleva `src` y `availability()` solo compara contra historia de su fuente, así que de momento da «insuficiente» en vez de decir que faltan todos los habituales. Las bajas se guardan pero aún no alimentan al modelo (antes tampoco: solo las fichas). Desplegado el 25-oct (PR #118, worker `117feb7`, migración 087).
+
 ## 2026-10-25 — Fuera del cron las tareas de API-Football, FotMob, PitchAPI y worldfootball
 
 Orden del titular: en el servidor solo deben correr las fuentes nuevas. Se comentan (prefijo «RETIRADO», reversible) 14
