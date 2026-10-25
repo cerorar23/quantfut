@@ -44,12 +44,45 @@ def _par(statistics: dict, clave: str, entero: bool):
     return a, b
 
 
-def _descanso(payload: dict, goles_local: int, goles_visita: int):
+def _eventos(payload: dict) -> list:
     hechos = ((payload.get("content") or {}).get("matchFacts") or {})
     eventos = hechos.get("events")
     eventos = eventos.get("events") if isinstance(eventos, dict) else None
-    for e in eventos or []:
-        if e.get("type") == "Half" and e.get("halfStrShort") == "HT":
+    return eventos if isinstance(eventos, list) else []
+
+
+def _es_descanso(e: dict) -> bool:
+    return e.get("type") == "Half" and e.get("halfStrShort") == "HT"
+
+
+def _tarjetas_cronologia(payload: dict):
+    """((amarillas), (rojas)) de jugadores según la cronología, o None si no es fiable.
+
+    Sin las del cuerpo técnico (cardDescription «coach»); la doble amarilla cuenta como roja, igual
+    que el bloque de estadísticas. Sin descanso en la cronología o con un tipo desconocido, None.
+    """
+    eventos = _eventos(payload)
+    if not any(_es_descanso(e) for e in eventos):
+        return None
+    amarillas, rojas = [0, 0], [0, 0]
+    for e in eventos:
+        if e.get("type") != "Card" or (e.get("cardDescription") or {}).get("localizedKey") == "coach":
+            continue
+        if not isinstance(e.get("isHome"), bool):
+            return None
+        lado = 0 if e["isHome"] else 1
+        if e.get("card") == "Yellow":
+            amarillas[lado] += 1
+        elif e.get("card") in ("Red", "YellowRed"):
+            rojas[lado] += 1
+        else:
+            return None
+    return tuple(amarillas), tuple(rojas)
+
+
+def _descanso(payload: dict, goles_local: int, goles_visita: int):
+    for e in _eventos(payload):
+        if _es_descanso(e):
             h, a = e.get("homeScore"), e.get("awayScore")
             validos = all(isinstance(x, int) and not isinstance(x, bool) and x >= 0 for x in (h, a))
             if validos and h <= goles_local and a <= goles_visita:
@@ -89,6 +122,11 @@ def extraer(payload: dict, statistics: dict, goles_local: int, goles_visita: int
     out: dict = {}
     for local, visita, clave, entero in CAMPOS_PARES.values():
         out[local], out[visita] = _par(statistics, clave, entero)
+    # En Argentina, Brasil y parte de México (2026) FotMob deja el bloque de tarjetas a [0, 0] aunque la
+    # cronología trae cada una (medido el 25-oct-2026): con el bloque a cero manda la cronología.
+    if all(out[k] == 0 for k in ("home_yellow", "away_yellow", "home_red", "away_red")):
+        (out["home_yellow"], out["away_yellow"]), (out["home_red"], out["away_red"]) = (
+            _tarjetas_cronologia(payload) or ((None, None), (None, None)))
     out["home_goals_ht"], out["away_goals_ht"] = _descanso(payload, goles_local, goles_visita)
     arbitro = _info(payload).get("Referee")
     out["referee_fotmob"] = _texto(arbitro.get("text")) if isinstance(arbitro, dict) else None
@@ -187,6 +225,56 @@ def aplicar(c, desde: str = "2024-01-01", rollback: bool = False) -> dict:
     return informe
 
 
+TARJETAS = ("home_yellow", "away_yellow", "home_red", "away_red")
+
+
+def reparar_tarjetas(c, rollback: bool = False) -> dict:
+    """Corrige las tarjetas que el bloque a cero de FotMob dejó en `matches` antes del arreglo de `extraer`.
+
+    Solo partidos cuyas tarjetas rellenó FotMob y que siguen con las cuatro a cero. Lee el mismo original que se
+    usó (misma página y hora de captura, del archivo histórico o de `fotmob_original`) y aplica la cronología;
+    si no es fiable, las cuatro vuelven a NULL (un cero que no consta no se conserva). `rollback=True` es el ensayo.
+    """
+    from psycopg import Rollback
+
+    informe = {"candidatos": 0, "corregidos": 0, "a_null": 0, "sin_cambio": 0, "sin_original": 0, "cambios": []}
+    ceros = " AND ".join(f"m.{k} = 0" for k in TARJETAS)
+    with c.transaction():
+        filas = c.execute(f"""
+            SELECT m.match_id,
+                   COALESCE((SELECT h.raw_payload_gzip FROM historical_football_matches h
+                             WHERE h.provider = %(p)s AND h.match_id = m.match_id
+                               AND h.source_match_id = e.source_match_id AND h.captured_at = e.captured_at LIMIT 1),
+                            (SELECT o.payload_gz FROM fotmob_original o
+                             WHERE o.match_id = m.match_id AND o.fotmob_match_id = e.source_match_id
+                               AND o.capturado_en = e.captured_at ORDER BY o.id DESC LIMIT 1)) AS gz
+            FROM matches m JOIN matches_enriquecimiento e
+              ON e.match_id = m.match_id AND e.campo = 'home_yellow' AND e.provider = %(p)s
+            WHERE {ceros} ORDER BY m.kickoff_utc""", {"p": PROVIDER}).fetchall()
+        for f in filas:
+            informe["candidatos"] += 1
+            if f["gz"] is None:
+                informe["sin_original"] += 1
+                continue
+            try:
+                payload = json.loads(gzip.decompress(bytes(f["gz"])))
+            except (OSError, ValueError):
+                informe["sin_original"] += 1
+                continue
+            cronologia = _tarjetas_cronologia(payload)
+            if cronologia == ((0, 0), (0, 0)):
+                informe["sin_cambio"] += 1
+                continue
+            valores = (*cronologia[0], *cronologia[1]) if cronologia else (None,) * 4
+            sets = ", ".join(f"{k} = %s" for k in TARJETAS)
+            c.execute(f"UPDATE matches m SET {sets} WHERE m.match_id = %s AND {ceros}", (*valores, f["match_id"]))
+            informe["corregidos" if cronologia else "a_null"] += 1
+            informe["cambios"].append({"match_id": f["match_id"], **dict(zip(TARJETAS, valores))})
+        if rollback:
+            raise Rollback()
+    return informe
+
+
 def huecos_xg(c, desde: str) -> list[dict]:
     """Partidos terminados sin la pareja de xG, por competición. Solo lectura."""
     return c.execute("""
@@ -204,9 +292,14 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--desde", default="2024-01-01")
     p.add_argument("--aplicar", action="store_true", help="sin esto es un ensayo que se revierte")
+    p.add_argument("--reparar-tarjetas", action="store_true",
+                   help="corrige las tarjetas a cero del bloque de FotMob (ver reparar_tarjetas)")
     args = p.parse_args(argv)
     with conn() as c:
-        informe = aplicar(c, desde=args.desde, rollback=not args.aplicar)
+        if args.reparar_tarjetas:
+            informe = reparar_tarjetas(c, rollback=not args.aplicar)
+        else:
+            informe = aplicar(c, desde=args.desde, rollback=not args.aplicar)
     print(json.dumps(informe, ensure_ascii=False, default=str, indent=2))
 
 

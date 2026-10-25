@@ -62,6 +62,51 @@ def test_estadio_con_coordenadas_fuera_de_rango_no_se_guarda_con_ellas():
     assert r["estadio"]["lat"] is None and r["estadio"]["lon"] is None
 
 
+def tarjeta(local: bool, tipo: str, tecnico: bool = False) -> dict:
+    return {"type": "Card", "isHome": local, "card": tipo,
+            "cardDescription": {"localizedKey": "coach", "defaultText": "Coach"} if tecnico else None}
+
+
+def con_tarjetas(*tarjetas):
+    p = payload()
+    p["content"]["matchFacts"]["events"]["events"] += list(tarjetas)
+    return p
+
+
+CERO = {**STATS, "yellow_cards": [0.0, 0.0], "red_cards": [0.0, 0.0]}
+
+
+def test_bloque_a_cero_manda_la_cronologia_sin_el_cuerpo_tecnico():
+    # Argentina, Brasil y parte de México en 2026: FotMob deja [0, 0] aunque hubo tarjetas.
+    p = con_tarjetas(tarjeta(True, "Yellow"), tarjeta(True, "Yellow"), tarjeta(False, "Yellow"),
+                     tarjeta(False, "YellowRed"), tarjeta(True, "Red"), tarjeta(False, "Yellow", tecnico=True))
+    r = extraer(p, CERO, 2, 3)
+    assert (r["home_yellow"], r["away_yellow"]) == (2, 1)
+    assert (r["home_red"], r["away_red"]) == (1, 1)
+
+
+def test_bloque_a_cero_y_cronologia_sin_tarjetas_es_cero():
+    r = extraer(payload(), CERO, 2, 3)
+    assert (r["home_yellow"], r["away_yellow"], r["home_red"], r["away_red"]) == (0, 0, 0, 0)
+
+
+def test_bloque_a_cero_sin_cronologia_completa_es_none():
+    p = con_tarjetas(tarjeta(True, "Yellow"))
+    p["content"]["matchFacts"]["events"]["events"] = p["content"]["matchFacts"]["events"]["events"][1:]
+    r = extraer(p, CERO, 2, 3)
+    assert all(r[k] is None for k in ("home_yellow", "away_yellow", "home_red", "away_red"))
+
+
+def test_bloque_a_cero_con_tarjeta_desconocida_es_none():
+    r = extraer(con_tarjetas(tarjeta(True, "Blue")), CERO, 2, 3)
+    assert all(r[k] is None for k in ("home_yellow", "away_yellow", "home_red", "away_red"))
+
+
+def test_bloque_con_tarjetas_se_respeta():
+    r = extraer(con_tarjetas(tarjeta(True, "Yellow")), STATS, 2, 3)
+    assert (r["home_yellow"], r["away_yellow"], r["home_red"], r["away_red"]) == (2, 1, 0, 1)
+
+
 def test_arbitro_vacio_es_none():
     p = payload()
     p["content"]["matchFacts"]["infoBox"]["Referee"] = {"text": "   "}

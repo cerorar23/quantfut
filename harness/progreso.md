@@ -1,5 +1,14 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 (noche) — Tarjetas a cero de FotMob: manda la cronología
+
+El titular vio «menos de 6,5 tarjetas» al 100 % (media 1,7) en Independiente–Boca. Causa: en Argentina, Brasil y parte
+de México FotMob deja el bloque de tarjetas en `[0, 0]` en 2026, y el relleno lo tomó por dato válido (~790 partidos).
+Decisión: no descartar FotMob para tarjetas, sino leer su cronología cuando el bloque viene con las cuatro a cero; la
+cronología, sin las tarjetas al cuerpo técnico, coincide con API-Football en ~92-97 % de amarillas. Solo se toca el caso
+medido (bloque a cero): con el bloque con datos se respeta, para no cambiar la convención del historial. Si la
+cronología no es fiable, NULL antes que un cero que no consta.
+
 ## 2026-10-25 (noche) — Resultado al pitido con la primera fuente disponible
 
 Decisión del titular: la app muestra el marcador final al pitido y el resultado se cierra con la fuente que lo tenga
