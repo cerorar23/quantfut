@@ -859,6 +859,14 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   más informativo); el tope evita obviedades. Precio de Pinnacle de ≤ 6 h y
   ≥ 15 min antes del inicio; horizonte 36 h; un pronóstico por partido para
   siempre (`UNIQUE`).
+- **Solo con cuota (desde 2026-10-25, decisión del usuario):** un candidato
+  sin cuota de una casa de `SOFT_BOOKS` para ese mercado, lado y línea no
+  entra, ni aquí ni en la ampliada; se descarta ANTES de elegir, así que el
+  partido se queda con el siguiente que sí cotiza. La captura usada es la más
+  reciente (≤ 6 h) que trae a Pinnacle y a alguna casa de los suscriptores:
+  PropLine trae solo a Pinnacle casi todas las horas y las casas cada ~3 h, y
+  la del 25-oct a las 08:00 UTC dejó 18 de 22 pronósticos sin cuota. "Marca
+  un equipo" toma su cuota de la misma captura de PropLine (`_equipos`).
 - **Prueba histórica** (`eval/alta_prob_calibracion.py`, 14.305 partidos,
   firma `d5cbc3151164`), con la regla desplegada el 2026-10-07 (sin "menos
   de 4,5", con "marca un equipo"): pronóstico en 9.021 de 14.216 partidos

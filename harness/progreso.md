@@ -1,5 +1,16 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 (noche) — Alta probabilidad: solo pronósticos con cuota
+
+Decisión del titular tras ver «LAFC +1,5 asiático @—» en la app: no se publica ningún pronóstico sin cuota de una casa
+de los suscriptores. Había dos causas. La primera: la selección tomaba la última captura de PropLine, y casi todas las
+horas trae solo a Pinnacle (las casas llegan cada ~3 h). La segunda: el modelo proponía líneas que nadie ofrece; el
++1,5 de LAFC no lo cotizó ninguna casa, ni Pinnacle, en 49 capturas. Ahora `_snapshot` elige la captura más reciente
+(≤ 6 h) que trae a Pinnacle y a alguna casa de los suscriptores, y los candidatos sin cuota se descartan antes de
+elegir. Así el partido se queda con el siguiente que sí cotiza, en vez de perder el pronóstico o publicarlo vacío.
+Repetido en seco sobre el 25-oct: alta 5/28 → 27/27 con cuota; ampliada 62/385 → 303/303. Lo ya sellado no cambia
+(es inmutable). La escalera y el parley comparten `_snapshot` y `_referencias`, y ganan las mismas cuotas.
+
 ## 2026-10-25 (noche) — Resultado al pitido con la primera fuente disponible
 
 Decisión del titular: la app muestra el marcador final al pitido y el resultado se cierra con la fuente que lo tenga

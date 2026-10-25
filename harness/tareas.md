@@ -17,6 +17,9 @@ hace perder dinero o datos; una idea nueva va a «Mejoras», no a «Fallos».
 - ~~Sombra del XI parada desde el 22-oct (solo cuotas `post_xi`), ERA5 con 175 celdas rechazadas al día, API con
   código anterior al 22-oct, lector de cuotas sin los alias `propline`~~ → resueltos el 25-oct (noche),
   `docs/auditoria_motores_datos_20261025_noche.md`.
+- ~~Alta probabilidad publicada sin cuota (25-oct: 18 de 22; ampliada 323 de 385)~~ → resuelto el 25-oct (noche):
+  captura con casas de los suscriptores y solo candidatos con cuota (`alta_prob_datos.cotizador`). Falta desplegar
+  en el worker antes de la selección de las 08:00 UTC.
 
 **Del titular (27):** credenciales y cuentas (Meta, Whop, AdMob, RevU/BitLabs, Tapjoy, Apple/iOS), revisión legal y
 avisos legales en la web, Sentry, copia de seguridad fuera del servidor (destino), compilar y publicar la app,
