@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-25 — Respaldo de resultados con FotMob
+
+PropLine deja partidos sin resultado (`expired`: toda la liga suiza, y partidos sueltos de Noruega, Turquía, MLS, y
+Hoffenheim–Lyon con alta probabilidad, escalera y parley), y sin resultado no se liquida ningún producto: había 19
+atascados en ligas activas. FotMob ya está reactivado, así que cierra esos partidos tras 6 h (dos pasadas de PropLine).
+Solo con `reason.short == 'FT'` (prórroga y penaltis cambian el marcador de los mercados a 90 min) y con los dos
+equipos en el mismo orden por `fotmob_equipo`; lo demás se queda abierto para revisión manual en vez de adivinar.
+
 ## 2026-10-25 — Quedan 15 ligas + 2 copas; FotMob vuelve como complemento diario
 
 Orden del titular tras medir la cobertura combinada de PropLine y SofaScore
