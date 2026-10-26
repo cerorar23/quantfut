@@ -10,6 +10,7 @@ import time
 import numpy as np
 
 from .audit import digest
+from . import current_rosters as cr
 from .dashboard import Dashboard, Server, handler
 from .multimarket_dashboard import MultiDashboard
 from .multimarket_v13_live import COMBOS, PLAYER_MARKETS, box_minutes, final_game
@@ -116,6 +117,12 @@ class LiveCohort:
         if bundle['actionable'] is not False or not bundle['version'].startswith('nba-multimarket-live-'):
             raise ValueError('unexpected live cohort')
         games = {g['event_id']: g for g in bundle['games']}
+        memberships = None
+        if bundle.get('roster') is not None:
+            roster = bundle['roster']
+            teams = {g[side + '_nba_team_id'] for g in games.values() for side in ('home', 'away')}
+            memberships = cr.verify(self.folder / 'rosters', roster['snapshot_sha256'], utc(bundle['created_at_utc']),
+                                    roster['season'], teams)
         seen = set()
         for f in bundle['forecasts']:
             game = games[f['event_id']]
@@ -123,6 +130,10 @@ class LiveCohort:
             if key in seen or f['market'] not in MARKETS or f['nba_game_id'] != game['nba_game_id'] or f['actionable'] is not False:
                 raise ValueError('duplicate or foreign live forecast')
             seen.add(key)
+            if memberships is not None and f['market'] in PLAYER_MARKETS and (
+                    memberships.get(str(f['player_id'])) != f['team_id']
+                    or f['team_id'] not in (game['home_nba_team_id'], game['away_nba_team_id'])):
+                raise ValueError('forecast player disagrees with official current roster')
             if utc(f['sealed_at_utc']) >= utc(game['tipoff_utc']) or f['last_feature_date'] >= f['sealed_at_utc'][:10]:
                 raise ValueError('live forecast after tipoff/feature date')
             if not all(math.isfinite(f[k]) for k in ('estimate', 'line', 'probability_over', 'probability_under')) or not (
