@@ -75,7 +75,7 @@ Una señal solo entra si gana fuera de muestra. Orden: F9 con F8 en paralelo →
 - Quitar rutas internas de `/model-card` y añadir `Content-Security-Policy` (prioridad baja).
 
 ## 5. NBA y tenis (otras sesiones; detalle en `harness/tareas.md`)
-- NBA: 86 partidos recuperados con `nba_api` por proxy (`docs/nba_api_proxy_recuperacion_20261026.md`) esperan fusión en el próximo reajuste; quedan 9 en cuarentena y 8 rotaciones sin fuente.
+- NBA: 86 partidos recuperados con `nba_api` por proxy (`docs/nba_api_proxy_recuperacion_20261026.md`) esperan fusión en el próximo reajuste; quedan 9 en cuarentena (siete con minutos `:60`), 8 rotaciones sin fuente y la cobertura de traspasados de verano sin plantillas (detalle en `harness/tareas.md`).
 - NBA: doble-doble, Q3/Q4 y margen por rangos (faltan en el archivo normalizado), modelo único del marcador, prior de
   plantilla y postemporada 2021-22 sin fecha. La recalibración de totales se probó y no entra (`docs/nba_live15_recalibracion_20261026.md`).
 - Tenis (motor en el VPS desde el 20-oct, checkout `quantfut-tenis`): evidencia prospectiva por mercado con mínimos fijados antes
