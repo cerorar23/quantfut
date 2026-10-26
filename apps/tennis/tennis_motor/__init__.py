@@ -5,6 +5,7 @@ Pipeline: canonical data (identity bridge v3) -> serve/return model (MAP) -> per
 -> centre re-solved so every market comes from one coherent joint distribution.
 """
 import json
+import math
 import os
 from pathlib import Path
 import pandas as pd
@@ -43,6 +44,36 @@ def live_market(config, player_a, player_b, before):
         return latest_market(config['live_odds_root'], player_a, player_b, before)
     return None
 
+def dynamic_features(state, a, b, surface, day):
+    """tennis_dynamic_v2.State.features with gaps clamped at zero (that module is frozen by the v7/v8 protocols).
+
+    Round days are estimated from the draw, so a match already played can carry an estimated day after the forecast
+    day; the frozen version then took log1p of a negative gap (crash below -1 day, negative layoff otherwise) and
+    dropped that match from the 14-day workload.
+    """
+    def side(p):
+        gap = max(0, (day - state.last[p]).days) if p in state.last else 365
+        load = sum(1 for d in state.recent[p] if (day - d).days <= 14)
+        return math.log1p(min(gap, 365)), load, math.log1p(state.n[p])
+    sa, sb = side(a), side(b)
+    return dict(dyn_p=state.prob(a, b, surface), d_layoff=sa[0] - sb[0], d_load14=sa[1] - sb[1], d_experience=sa[2] - sb[2])
+
+
+def board_with_model(engine, board):
+    """Model probability on exactly the contract each book quotes (push removed), next to the margin-free price."""
+    rows, impossible = [], 0
+    for row in board['rows']:
+        try:
+            p = engine.probabilities(Contract(**row['contract']).validate(engine.rules))
+        except ValueError:
+            impossible += 1
+            continue
+        if p['win'] <= 0 or p.get('loss', 0) <= 0:
+            impossible += 1  # a line this format cannot reach (3.5 sets in best of 3): the listing disagrees with our rules
+            continue
+        rows.append(dict(row, model=p['win'] / max(1e-12, 1 - p.get('push', 0))))
+    return dict(board, rows=rows, impossible_for_format=impossible)
+
 # Runtime config lives outside the repo (the weekly refresh rewrites it); the tracked file is the template.
 CONFIG = Path(os.environ.get('TENNIS_MOTOR_CONFIG') or Path(__file__).resolve().parents[1] / 'config' / 'motor.json')
 
@@ -54,7 +85,7 @@ class Motor:
         fallback = self.config.get('params_norank')
         self.params_norank = json.loads(Path(fallback).read_text(encoding='utf-8')) if fallback else None
         self.canonical = pd.read_parquet(self.config['canonical'])
-        self.models, self.states = {}, {}
+        self.models, self.states, self.names_cache = {}, {}, {}
 
     def model(self, circuit):
         if circuit not in self.models:
@@ -66,19 +97,44 @@ class Motor:
             self.states[circuit] = replay(self.canonical, circuit, since='2005-01-01')[1]
         return self.states[circuit]
 
+    def canonical_name(self, circuit, pid):
+        if (circuit, pid) not in self.names_cache:
+            c, found = self.canonical[self.canonical.circuit.eq(circuit)], None
+            for side in ('winner', 'loser'):
+                names = c.loc[c[side + '_id'].eq(pid), side + '_name']
+                if len(names):
+                    found = names.iloc[-1]
+                    break
+            self.names_cache[(circuit, pid)] = found
+        return self.names_cache[(circuit, pid)]
+
+    def resolve(self, circuit, value):
+        """Serve-model player, or a canonical ID the serve model never saw (its rows carry no serve statistics).
+
+        Such a player gets the population serve level (predict() already treats unknown effects that way); dynamic Elo,
+        rank and the market still describe them, so the match is forecast instead of dropped.
+        """
+        try:
+            return self.model(circuit).resolve(value)
+        except ValueError:
+            if self.canonical_name(circuit, value) is None:
+                raise
+            return value
+
     def forecast(self, circuit, player_a, player_b, surface, date, best_of=3, deciding_tiebreak=7, odds=None):
         """odds=(decimal A, decimal B), typed pre-match from any bookmaker: the de-vigged price becomes the winner
         target (2025-2026 check: it beats the v7 stack and v7 adds nothing on top), markets stay Markov-coherent."""
         if circuit not in ('ATP', 'WTA'):
             raise ValueError('Circuit must be ATP or WTA')
         m = self.model(circuit)
-        a, b = m.resolve(player_a), m.resolve(player_b)
+        a, b = self.resolve(circuit, player_a), self.resolve(circuit, player_b)
+        name = lambda pid: m.names.get(pid) or self.canonical_name(circuit, pid)
         point = m.predict(a, b, surface, uncertainty=False)
         # Untrained serve/surface cells fall back to the population prior; the winner stack (dynamic Elo, rank, age)
         # was fitted on held-out rows that include such cases, so they are kept and the count is reported.
         rules = Rules(best_of, deciding_tiebreak=deciding_tiebreak)
         day = pd.Timestamp(date).tz_localize(None).normalize() if pd.Timestamp(date).tzinfo else pd.Timestamp(date).normalize()
-        dynamic = self.state(circuit).features(a, b, surface, day)
+        dynamic = dynamic_features(self.state(circuit), a, b, surface, day)
         try:
             x, params, source = dict(pair_features(self.canonical, circuit, a, b, str(day.date())), **dynamic), self.params[circuit], 'v7_stack'
         except ValueError:
@@ -88,12 +144,18 @@ class Motor:
             x, params, source = dynamic, self.params_norank[circuit], 'v7_stack_without_rank'
         engine = build(point['p'], point['q'], rules, params, x)
         winner = dict(engine.diagnostics, source=source)
-        live = None if odds is not None else live_market(self.config, m.names[a], m.names[b], pd.Timestamp.now(tz='UTC').isoformat())
+        decided_at = pd.Timestamp.now(tz='UTC').isoformat()
+        live = None if odds is not None else live_market(self.config, name(a), name(b), decided_at)
         if odds is not None or live is not None:
             market = devig(*odds) if odds is not None else live['probability_a']
             engine = recentre(point['p'], point['q'], rules, self.params[circuit]['sigma'], market)
             winner.update(source='devigged_odds' if odds is not None else 'live_snapshot', odds=list(odds) if odds else None, live=live, market_winner=market,
                           final_winner=engine.probabilities(Contract('winner', 'A'))['win'])
-        return dict(circuit=circuit, players=[m.names[a], m.names[b]], player_ids=[a, b], surface=surface, date=str(day.date()),
+        board = None
+        if odds is None and self.config.get('odds_provider') == 'propline':
+            from tennis_odds_propline_v1 import market_board
+            board = market_board(self.config['propline_root'], name(a), name(b), decided_at)
+        return dict(circuit=circuit, players=[name(a), name(b)], player_ids=[a, b], surface=surface, date=str(day.date()),
                     best_of=best_of, deciding_tiebreak=deciding_tiebreak, serve=point, winner=winner,
-                    markets=forecast_board(engine), odds_used=odds is not None or live is not None, research_only=True)
+                    markets=forecast_board(engine), market_board=board_with_model(engine, board) if board else None,
+                    odds_used=odds is not None or live is not None, research_only=True)
