@@ -26,7 +26,7 @@ from .audit import digest, write_json
 from .context import name_key
 from .injury_t60 import CONTROL, MISSING
 
-VERSION = 'nba-multimarket-live-1.4.0'
+VERSION = 'nba-multimarket-live-1.5.0'
 SEASON = '2026-27'
 EASTERN = ZoneInfo('America/New_York')
 HEADERS = {'User-Agent': 'Mozilla/5.0 NBA research receipt capture', 'Accept': 'application/json,text/html'}
@@ -37,6 +37,8 @@ LABELS = dict(winner='Ganador', team_points='Puntos de equipo', game_total='Tota
               player_threes='Triples de jugador', player_steals='Robos de jugador', player_blocks='Tapones de jugador',
               player_turnovers='Pérdidas de jugador', player_blocks_steals='Robos + tapones')
 REFERENCE = 'Umbral estadístico; no es una línea de una casa'
+STATISTICAL_REFERENCE = 'Umbral estadístico (media de los últimos 10); sin línea de PropLine para este mercado'
+STATISTICAL_MIN_MINUTES = 12  # rotation players only (nba_live15 L1): mean minutes of the eligible history
 PLAYER_MARKETS = prop_lines.MARKETS
 PLAYER_WEIGHT = .25  # empirical weight of the player model, chosen by v1.2 on its selection season (2023-24)
 # Sums of the three counts the live box-score rows carry. Same v1 law and the same live calibration as the single counts; the
@@ -643,11 +645,14 @@ def season_shift(model, games, done, v12_protocol):
     return lf.team_shift(pairs, n0), len(pairs)
 
 
-def player_forecasts(model, v12_protocol, mappings, lines, history, entries, team_history=None, game_lines=None):
-    """Points, rebounds, assists and their sums over the PropLine consensus line, conditional on playing (books void a DNP).
+def player_forecasts(model, v12_protocol, mappings, lines, history, entries, team_history=None, game_lines=None, roster_since=None):
+    """Player counts and their sums, conditional on playing (books void a DNP), over the PropLine consensus line or, for a
+    rotation player with no line for a market, over the statistical threshold floor(last-10 mean) + 0.5 (nba_live15 L1).
 
-    Only players with a line, at least `min_history` recent games and a last team in this game; players listed Out are
-    skipped. Same features as the retrospective v1.3 player model; rows get `sealed_at_utc` when the cohort is sealed."""
+    Only players with at least `min_history` recent games and a last team in this game; players listed Out are skipped.
+    A statistical threshold also needs the player's last game on or after `roster_since` (the season's first day): a player
+    who has not played this season may have left the team in the off-season (a book's line already says he is on the roster).
+    Same features as the retrospective v1.3 player model; rows get `sealed_at_utc` when the cohort is sealed."""
     protocol = dict(player_protocol(v12_protocol), empirical_weight=model['player_empirical_weight'])
     table = model['play_probability']
     out, summary = [], {}
@@ -656,45 +661,74 @@ def player_forecasts(model, v12_protocol, mappings, lines, history, entries, tea
         listed = entries.get(gid) or {}
         status_of = {player: status for rows in listed.values() for player, status, _, _ in rows}
         counts = Counter()
-        for (market, pid), quote in sorted(lines.get(gid, {}).items(), key=lambda kv: (kv[0][1], kv[0][0])):
-            if market not in model['player_fit']:  # a model fitted before this market existed: it is left out, not guessed
-                counts['market_not_in_model'] += 1
-                continue
+
+        def eligible_player(pid):
+            """(history, team, status) of a player who may be forecast in this game, else the reason he is skipped."""
             hist = m1.eligible(history.get(str(pid), []), m['et_date'], protocol)
             if len(hist) < protocol['min_history']:
-                counts['insufficient_history'] += 1
-                continue
+                return 'insufficient_history'
             team = hist[-1]['team_id']
             if team not in teams:
-                counts['last_team_not_in_game'] += 1
-                continue
+                return 'last_team_not_in_game'
             status = status_of.get(str(pid))
             if status == 'Out':
-                counts['listed_out'] += 1
-                continue
-            if not has_stat(hist, stat_of(market)):
-                counts['missing_count_in_history'] += 1
-                continue
-            par = m1.player_parameters(hist, stat_of(market), protocol)
+                return 'listed_out'
+            return hist, team, status
+
+        def forecast(market, pid, hist, team, status, line, quote, par):
             pmf = np.asarray(m1.player_distribution(par, protocol))
             cdf = np.cumsum(pmf)
             teammates = sum(mm * (1 - table[s]) for p, s, mm, _ in listed.get(team, []) if p != str(pid)) / 48
-            x = [float(logit(np.clip(m1.player_over(par, quote['line'], protocol), 1e-6, 1 - 1e-6))), 1.,
+            x = [float(logit(np.clip(m1.player_over(par, line, protocol), 1e-6, 1 - 1e-6))), 1.,
                  int(status in ('Questionable', 'Doubtful')), int(status == 'Probable'), teammates]
             if len(model['player_fit'][market].get('features', lf.BASE)) > len(lf.BASE):
                 x += lf.environment(team, m['home_nba_team_id'], m['away_nba_team_id'], m['et_date'], (game_lines or {}).get(gid),
                                     team_history, hist)
             prob = float(expit(np.dot(model['player_fit'][market]['weights'], x)))
             out.append(dict(event_id=gid, nba_game_id=gid, actionable=False, conditional_participation=True,
-                            reference=f"Línea principal de PropLine (la más repetida en {quote['books']} casas)",
+                            reference=(f"Línea principal de PropLine (la más repetida en {quote['books']} casas)" if quote
+                                       else STATISTICAL_REFERENCE),
                             last_feature_date=hist[-1]['date'], market=market, market_label=LABELS[market],
                             estimate=float(np.dot(np.arange(len(pmf)), pmf)), range_low=float(np.searchsorted(cdf, .1)),
-                            range_high=float(np.searchsorted(cdf, .9)), line=float(quote['line']), probability_over=prob,
+                            range_high=float(np.searchsorted(cdf, .9)), line=float(line), probability_over=prob,
                             probability_under=1 - prob, player_id=int(pid), player=hist[-1]['name'], team_id=team,
                             report_status=status or 'no_listado', probability_play=table[status] if status else None,
-                            books=quote['books'], book_lines=quote['book_lines'], projected_minutes=par['projected_minutes'],
+                            books=quote['books'] if quote else 0, book_lines=quote['book_lines'] if quote else {},
+                            line_source='propline' if quote else 'statistical', projected_minutes=par['projected_minutes'],
                             history_games=len(hist)))
+
+        quoted = set()
+        for (market, pid), quote in sorted(lines.get(gid, {}).items(), key=lambda kv: (kv[0][1], kv[0][0])):
+            if market not in model['player_fit']:  # a model fitted before this market existed: it is left out, not guessed
+                counts['market_not_in_model'] += 1
+                continue
+            found = eligible_player(pid)
+            if isinstance(found, str):
+                counts[found] += 1
+                continue
+            hist, team, status = found
+            if not has_stat(hist, stat_of(market)):
+                counts['missing_count_in_history'] += 1
+                continue
+            forecast(market, pid, hist, team, status, quote['line'], quote, m1.player_parameters(hist, stat_of(market), protocol))
+            quoted.add((market, str(pid)))
             counts['forecast'] += 1
+        # L1: every rotation player of both teams, at the statistical threshold, in the markets PropLine did not give him
+        for pid in sorted(history, key=int):
+            if history[pid][-1]['team_id'] not in teams:  # every history row is before the cohort date: this is his last team
+                continue
+            found = eligible_player(pid)
+            if isinstance(found, str):
+                continue
+            hist, team, status = found
+            if roster_since is None or hist[-1]['date'] < roster_since or np.mean([r['minutes'] for r in hist]) < STATISTICAL_MIN_MINUTES:
+                continue
+            for market in model['player_fit']:
+                if (market, pid) in quoted or not has_stat(hist, stat_of(market)):
+                    continue
+                par = m1.player_parameters(hist, stat_of(market), protocol)
+                forecast(market, pid, hist, team, status, float(np.floor(par['baseline']) + .5), None, par)
+                counts['statistical_threshold'] += 1
         summary[gid] = dict(counts)
     return out, summary
 
@@ -752,8 +786,10 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     lines, prop_summary = prop_lines.lines(props_root, now, mappings)
     glines, game_line_summary = prop_lines.game_lines(props_root, now, mappings)
     team_history = lf.TeamHistory(lf.game_records(games, done))
+    # with no recent archive the players still get the statistical thresholds (L1); without an archive root, no player markets
     players_out, player_summary = player_forecasts(model, v12_protocol, mappings, lines, player_history(rows_all), entries,
-                                                   team_history, glines) if prop_summary['state'] == 'archivo_aplicado' else ([], {})
+                                                   team_history, glines, protocol.get('season_first_day', '2026-10-20')
+                                                   ) if props_root is not None else ([], {})
     shift, shift_games = season_shift(model, games, done, v12_protocol)
     sealed_at = clock()
     games_out, forecasts = cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, sealed_at, shift)
