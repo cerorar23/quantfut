@@ -25,6 +25,11 @@ ajustada la calibración de jugadores, así que la probabilidad sale del mismo m
 Las líneas de PropLine siguen teniendo prioridad (`line_source = 'propline'`). Resultado: ninguna cohorte vuelve a quedarse sin
 jugadores y entran pérdidas, robos y tapones de toda la rotación.
 
+**Enmienda tras el ensayo (no cambia el protocolo congelado, que no puntúa L1):** el umbral estadístico exige además que el último
+partido del jugador sea de esta temporada (desde el 20-oct). En el ensayo con los 9 partidos del 26-oct salían jugadores cuyo último
+equipo era el de la temporada pasada y que ya no están en la plantilla (p. ej. Kevin Love o Santi Aldama en Jazz–Grizzlies). Un
+jugador con línea de una casa no lo necesita: la casa ya dice que está en la plantilla.
+
 ## Recalibración de equipo: validación congelada (`nba.live15_check`)
 Diseño mirado solo en 2023-24 y 2024-25 (cada una con el modelo ajustado para ella): en las líneas del vivo el sesgo del total
 cambia de signo (−0,041 y +0,034; puntos de equipo −0,028 y +0,015), la pendiente del total es baja (0,70 y 0,84) y octubre es lo

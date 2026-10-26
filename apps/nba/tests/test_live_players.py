@@ -103,12 +103,11 @@ def test_player_forecasts_use_the_line_history_and_report(sealed):
     folder, result = sealed
     bundle = json.loads((folder / 'bundle.json').read_bytes())
     players = [f for f in bundle['forecasts'] if f['market'].startswith('player_')]
-    # two PropLine lines; the other markets of both rotation players at the statistical threshold (L1)
-    statistical = 2 * (7 - 1)  # the rows carry points, rebounds and assists: 3 counts + 4 sums, minus each player's quoted one
-    assert result['player_forecasts'] == 2 + statistical and len(bundle['forecasts']) == 4 + 2 + statistical
+    # no statistical thresholds: neither player has played this season (L1 needs a game on or after the season's first day)
+    assert result['player_forecasts'] == 2 and len(bundle['forecasts']) == 6
     assert bundle['prop_lines']['state'] == 'archivo_aplicado' and bundle['games'][0]['player_lines'] == dict(
-        forecast=2, insufficient_history=1, statistical_threshold=statistical)
-    players = [f for f in players if f['line_source'] == 'propline']
+        forecast=2, insufficient_history=1)
+    assert all(f['line_source'] == 'propline' for f in players)
     points, = [f for f in players if f['market'] == 'player_points']
     assert (points['player_id'], points['line'], points['books'], points['player']) == (1, 17.5, 3, 'Jaren Jackson Jr.')
     assert points['report_status'] == 'Questionable' and points['probability_play'] == .5 and points['conditional_participation']
@@ -121,16 +120,34 @@ def test_player_forecasts_use_the_line_history_and_report(sealed):
     assert assists['report_status'] == 'no_listado' and assists['probability_play'] is None
 
 
-def test_without_a_recent_archive_rotation_players_get_the_statistical_threshold(tmp_path, monkeypatch):
+def this_season(rows, players, minutes=None):
+    """Rows plus one game on the season's first day for each of `players` (as the producer gets from finished box scores)."""
+    extra = [dict(r, game_id='0022600001', date='2026-10-20', **({} if minutes is None else dict(minutes=minutes.get(r['player_id'], r['minutes']))))
+             for r in rows[-2:] if r['player_id'] in players]
+    return [dict(r, minutes=minutes.get(r['player_id'], r['minutes'])) if minutes else r for r in rows] + extra
+
+
+def seal_statistical(tmp_path, monkeypatch, rows):
     monkeypatch.setattr(prop_lines, 'archive_module', lambda: SimpleNamespace(newest=lambda *a, **k: (None, None)))
     monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
     (tmp_path / 'model').mkdir()
     write_json(tmp_path / 'model' / 'model.json', model())
-    rows = [dict(r, minutes=11.) if r['player_id'] == 2 else r for r in player_rows()]  # player 2 is below the rotation floor
     live.seal(tmp_path / 'model', tmp_path / 'c', DAY, rows, history_games(), PROTOCOL, V12, now=NOW, get=fake_get,
               first_completed_day=DAY, props_root='archive')
-    bundle = json.loads((tmp_path / 'c' / 'bundle.json').read_bytes())
+    return json.loads((tmp_path / 'c' / 'bundle.json').read_bytes())
+
+
+def test_a_player_who_has_not_played_this_season_gets_no_statistical_threshold(tmp_path, monkeypatch):
+    bundle = seal_statistical(tmp_path, monkeypatch, this_season(player_rows(), {1}))  # player 2 may have left in the off-season
     players = [f for f in bundle['forecasts'] if f['market'].startswith('player_')]
+    assert {f['player_id'] for f in players} == {1} and bundle['games'][0]['player_lines'] == dict(statistical_threshold=7)
+
+
+def test_without_a_recent_archive_rotation_players_get_the_statistical_threshold(tmp_path, monkeypatch):
+    rows = this_season(player_rows(), {1, 2}, minutes={2: 11.})  # player 2 is below the rotation floor
+    bundle = seal_statistical(tmp_path, monkeypatch, rows)
+    players = [f for f in bundle['forecasts'] if f['market'].startswith('player_')]
+    # points, rebounds, assists and their 4 sums (the only counts the rows carry)
     assert bundle['prop_lines']['state'] == 'sin_archivo_reciente' and bundle['games'][0]['player_lines'] == dict(statistical_threshold=7)
     assert {f['player_id'] for f in players} == {1} and all(f['line_source'] == 'statistical' and f['books'] == 0 for f in players)
     points, = [f for f in players if f['market'] == 'player_points']
@@ -204,9 +221,7 @@ def test_player_results_are_scored_conditional_on_playing(sealed, monkeypatch):
     assert results[('player_points', 1)]['result'] == dict(status='evaluated', actual=21)
     assert results[('player_points', 1)]['report_status'] == 'Questionable' and results[('player_points', 1)]['books'] == 3
     assert results[('player_assists', 2)]['result'] == dict(status='dnp', actual=None)
-    assert results[('player_points', 2)]['result'] == dict(status='dnp', actual=None)  # statistical threshold, same rule
-    # points: player 1 (player 2 did not play); assists: player 1's statistical threshold (player 2's PropLine line is void)
-    assert data['scorecard']['player_points']['n'] == 1 and data['scorecard']['player_assists']['n'] == 1
+    assert data['scorecard']['player_points']['n'] == 1 and data['scorecard']['player_assists'] == dict(n=0)
 
 
 def test_play_in_playoff_and_cup_final_games_are_recognised():

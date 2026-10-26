@@ -645,11 +645,13 @@ def season_shift(model, games, done, v12_protocol):
     return lf.team_shift(pairs, n0), len(pairs)
 
 
-def player_forecasts(model, v12_protocol, mappings, lines, history, entries, team_history=None, game_lines=None):
+def player_forecasts(model, v12_protocol, mappings, lines, history, entries, team_history=None, game_lines=None, roster_since=None):
     """Player counts and their sums, conditional on playing (books void a DNP), over the PropLine consensus line or, for a
     rotation player with no line for a market, over the statistical threshold floor(last-10 mean) + 0.5 (nba_live15 L1).
 
     Only players with at least `min_history` recent games and a last team in this game; players listed Out are skipped.
+    A statistical threshold also needs the player's last game on or after `roster_since` (the season's first day): a player
+    who has not played this season may have left the team in the off-season (a book's line already says he is on the roster).
     Same features as the retrospective v1.3 player model; rows get `sealed_at_utc` when the cohort is sealed."""
     protocol = dict(player_protocol(v12_protocol), empirical_weight=model['player_empirical_weight'])
     table = model['play_probability']
@@ -719,7 +721,7 @@ def player_forecasts(model, v12_protocol, mappings, lines, history, entries, tea
             if isinstance(found, str):
                 continue
             hist, team, status = found
-            if np.mean([r['minutes'] for r in hist]) < STATISTICAL_MIN_MINUTES:
+            if roster_since is None or hist[-1]['date'] < roster_since or np.mean([r['minutes'] for r in hist]) < STATISTICAL_MIN_MINUTES:
                 continue
             for market in model['player_fit']:
                 if (market, pid) in quoted or not has_stat(hist, stat_of(market)):
@@ -786,7 +788,8 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     team_history = lf.TeamHistory(lf.game_records(games, done))
     # with no recent archive the players still get the statistical thresholds (L1); without an archive root, no player markets
     players_out, player_summary = player_forecasts(model, v12_protocol, mappings, lines, player_history(rows_all), entries,
-                                                   team_history, glines) if props_root is not None else ([], {})
+                                                   team_history, glines, protocol.get('season_first_day', '2026-10-20')
+                                                   ) if props_root is not None else ([], {})
     shift, shift_games = season_shift(model, games, done, v12_protocol)
     sealed_at = clock()
     games_out, forecasts = cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, sealed_at, shift)
