@@ -18,6 +18,11 @@ Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (c
 | Cuando llegue la muestra | **Puerta de CLV.** Cifra oficial: `publish.shadow_sharp.report()`. Medido el 25-oct, 17:30 UTC: 235 ofertas publicables con cierre justo (290 publicables), `ev_close` **+2,68 %**. Falta n ≥ 300 y al menos 3 ligas con 30 (la mayor, Champions, tiene 21). Los cierres vuelven a entrar desde el 25-oct (PropLine, #127), así que la muestra vuelve a crecer |
 
 ## 1. Depende de ti
+**Cuenta de GitHub (26-oct, 21:47 UTC):** el CI no arranca en ningún repositorio: «recent account payments have failed or your spending
+limit needs to be increased». Revisar *Billing & plans*. Revisado por el titular a las 21:55 UTC, pero los reintentos de las 21:52-21:56
+siguieron fallando. Mientras tanto queda abierto el PR #163 (solo anota en `DEPLOYS.md` la imagen de tenis `7b974ed`, ya activa en el VPS).
+Cuando el CI vuelva: relanzarlo y fusionar el #163 (**Claude**).
+
 **Decisiones**
 - Encender `PUBLISH_PICKS_ENABLED` cuando se cumpla la puerta de CLV.
 - ¿Publicar el JSON de los 19 lotes históricos de la cadena? Hoy están apartados en `historico_sin_publicar/` (`docs/registro_publico_activacion_20261018.md`).
@@ -25,7 +30,7 @@ Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (c
 - `SOFT_BOOKS` frente a las casas de PropLine: solo 1xbet coincide, así que la sombra sharp ve 0 ofertas de casas blandas.
 - Licencia de BetsAPI, fuente del calendario de copas y tope mensual de Apify (el ritmo del 24-25 oct supera los 15 USD/mes).
 - NBA: decidir si las lesiones de ESPN entran como segunda señal. (Props históricos descargados con el plan de 100K; productor 1.5.0 con umbral estadístico para jugadores: `docs/nba_live15_recalibracion_20261026.md`.)
-- Tenis: cuotas de cierre y apagar la automatización de Codex «continuidad-de-validaci-n-predictiva-de-tenis» (solo desde Codex).
+- Tenis: apagar la automatización de Codex «continuidad-de-validaci-n-predictiva-de-tenis» (solo desde Codex). Las cuotas de cierre ya están: la evaluación las lee del archivo de PropLine desde el 26-oct.
 - Aviso push al sellar.
 
 **Credenciales, cuentas y trámites**
