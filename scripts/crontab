@@ -119,13 +119,10 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 0 6 * * * cd /app && python -m qf.publish.hashchain verify >> /var/log/chain.log 2>&1
 
 # --- FASE 2 ---
-# Reentrenamiento mensual (dia 1, 03:00 UTC). No despliega si empeora.
-0 3 1 * * cd /app && python -m qf.model.train >> /var/log/train.log 2>&1
-# Arranque: mientras NO haya modelo activo, el job de las 08:00 no sella nada.
-# Diario, pero solo entrena (~3,5 h) si el cierre sharp ya es reciente; si no,
-# sale en segundos. Misma puerta que el mensual. Se salta el dia 1 para no
-# pisarse con el mensual.
-5 1 2-31 * * cd /app && python -m qf.model.train --bootstrap >> /var/log/train.log 2>&1
+# RETIRADO 2026-10-26 (titular: el Motor A se entrena en local y se sube con scripts/entrenamiento_local/; el servidor
+# no entrena). Mensual y arranque quedan comentados; el chequeo diario avisa si el modelo pasa de 45 días.
+# RETIRADO 2026-10-26: 0 3 1 * * cd /app && python -m qf.model.train >> /var/log/train.log 2>&1
+# RETIRADO 2026-10-26: 5 1 2-31 * * cd /app && python -m qf.model.train --bootstrap >> /var/log/train.log 2>&1
 
 # Conversions API de Meta (db/071 y db/083): envia la cola meta_events. Sin META_CAPI_ENABLED=1 no hace nada.
 # El entorno del worker se fijo al crearlo: las variables de Meta se leen de /app/meta.env si existe.
