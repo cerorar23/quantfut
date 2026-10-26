@@ -132,7 +132,8 @@ Cada paso a producción requiere confirmación del titular. Orden recomendado:
 - [ ] B2: lista de mercados del partido con calibración empírica por mercado derivado (o solo líneas probadas); investigar cópula + conteos Weibull (Boshnakov 2017). Poisson bivariado probado: peor que DC.
 - [x] (22-oct) C2: córners por equipo con el contexto del Motor A (medido sin cuotas: +0,025/+0,017 nats); repetir la prueba de líneas antes de habilitar. C3 (tarjetas): mixto con el A, no se cambia.
 - [ ] A7: escalar el xG de cada fuente a goles antes de mezclar. A6: inflación de la diagonal.
-- [ ] Investigación: modelo dinámico (Koopman y Lit 2015) y prior de ascendidos, ahora viables con ajustes de segundos.
+- [x] (26-oct) Investigación: modelo dinámico y prior de ascendidos medidos en local (`docs/modelo_dinamico_y_ascendidos_20261026.md`). Prior: sin señal. Dinámico: mezcla DC multi-vida + Kalman −0,0008 de RPS en el año de producción; despliegue pendiente de decisión del titular (estado de Kalman diario + 3 DC).
+- [ ] Repetir `apilado_mercado.py`/`estaca.py` sobre totales, córners y tarjetas cuando haya ~2.000 partidos con cierre de Pinnacle (hoy 459 de totales, 127 de córners, 75 de tarjetas): `docs/investigacion_modelos_y_factores_20261026.md`.
 
 ## Recuperación de cierres Pinnacle (2026-10-14)
 
