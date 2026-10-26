@@ -90,7 +90,11 @@ class Directory:
 
     def player(self, circuit, provider_name, level=None):
         parsed = provider_initials(provider_name)
-        found = self.players.get(circuit, {}).get((parsed[0], parsed[1][:1]), set()) if parsed else set()
+        index = self.players.get(circuit, {})
+        found = index.get((parsed[0], parsed[1][:1]), set()) if parsed else set()
+        if not found and parsed and ' ' in parsed[0]:
+            # 'D. Merida Aguilar' with both surnames where the data keeps only the first ('Daniel Merida').
+            found = index.get((parsed[0].split()[0], parsed[1][:1]), set())
         if len(found) > 1 and len(parsed[1]) > 1:
             # 'Xin. Wang': a written-out first-name prefix separates Xinyu from Xiyu.
             prefix = [p for p in found if any(n.replace(' ', '').startswith(parsed[1]) for n in self.names[p])]
