@@ -43,3 +43,23 @@ def test_dynamic_features_clamp_estimated_future_round_days():
     rows = board_with_model(engine, board)['rows']
     p = engine.probabilities(Contract('games_handicap', 'A', -2))
     assert len(rows) == 1 and rows[0]['model'] == pytest.approx(p['win'] / (1 - p['push']))  # 3.5 sets is not a best-of-3 line
+
+
+def test_players_without_serve_statistics_are_forecast_not_dropped():
+    import pandas as pd
+    from tennis_motor import Motor
+
+    class Serve:
+        names = {'wta:1': 'Ana Paz'}
+
+        def resolve(self, value):
+            if value in self.names:
+                return value
+            raise ValueError('Player name absent or ambiguous; use a canonical ID: ' + value)
+    m = Motor.__new__(Motor)
+    m.models, m.names_cache = {'WTA': Serve()}, {}
+    m.canonical = pd.DataFrame([dict(circuit='WTA', winner_id='wta:9', winner_name='Xinran Sun', loser_id='wta:1', loser_name='Ana Paz')])
+    assert m.resolve('WTA', 'wta:1') == 'wta:1' and m.resolve('WTA', 'wta:9') == 'wta:9'
+    assert m.canonical_name('WTA', 'wta:9') == 'Xinran Sun'
+    with pytest.raises(ValueError):
+        m.resolve('WTA', 'wta:404')

@@ -85,7 +85,7 @@ class Motor:
         fallback = self.config.get('params_norank')
         self.params_norank = json.loads(Path(fallback).read_text(encoding='utf-8')) if fallback else None
         self.canonical = pd.read_parquet(self.config['canonical'])
-        self.models, self.states = {}, {}
+        self.models, self.states, self.names_cache = {}, {}, {}
 
     def model(self, circuit):
         if circuit not in self.models:
@@ -97,13 +97,38 @@ class Motor:
             self.states[circuit] = replay(self.canonical, circuit, since='2005-01-01')[1]
         return self.states[circuit]
 
+    def canonical_name(self, circuit, pid):
+        if (circuit, pid) not in self.names_cache:
+            c, found = self.canonical[self.canonical.circuit.eq(circuit)], None
+            for side in ('winner', 'loser'):
+                names = c.loc[c[side + '_id'].eq(pid), side + '_name']
+                if len(names):
+                    found = names.iloc[-1]
+                    break
+            self.names_cache[(circuit, pid)] = found
+        return self.names_cache[(circuit, pid)]
+
+    def resolve(self, circuit, value):
+        """Serve-model player, or a canonical ID the serve model never saw (its rows carry no serve statistics).
+
+        Such a player gets the population serve level (predict() already treats unknown effects that way); dynamic Elo,
+        rank and the market still describe them, so the match is forecast instead of dropped.
+        """
+        try:
+            return self.model(circuit).resolve(value)
+        except ValueError:
+            if self.canonical_name(circuit, value) is None:
+                raise
+            return value
+
     def forecast(self, circuit, player_a, player_b, surface, date, best_of=3, deciding_tiebreak=7, odds=None):
         """odds=(decimal A, decimal B), typed pre-match from any bookmaker: the de-vigged price becomes the winner
         target (2025-2026 check: it beats the v7 stack and v7 adds nothing on top), markets stay Markov-coherent."""
         if circuit not in ('ATP', 'WTA'):
             raise ValueError('Circuit must be ATP or WTA')
         m = self.model(circuit)
-        a, b = m.resolve(player_a), m.resolve(player_b)
+        a, b = self.resolve(circuit, player_a), self.resolve(circuit, player_b)
+        name = lambda pid: m.names.get(pid) or self.canonical_name(circuit, pid)
         point = m.predict(a, b, surface, uncertainty=False)
         # Untrained serve/surface cells fall back to the population prior; the winner stack (dynamic Elo, rank, age)
         # was fitted on held-out rows that include such cases, so they are kept and the count is reported.
@@ -120,7 +145,7 @@ class Motor:
         engine = build(point['p'], point['q'], rules, params, x)
         winner = dict(engine.diagnostics, source=source)
         decided_at = pd.Timestamp.now(tz='UTC').isoformat()
-        live = None if odds is not None else live_market(self.config, m.names[a], m.names[b], decided_at)
+        live = None if odds is not None else live_market(self.config, name(a), name(b), decided_at)
         if odds is not None or live is not None:
             market = devig(*odds) if odds is not None else live['probability_a']
             engine = recentre(point['p'], point['q'], rules, self.params[circuit]['sigma'], market)
@@ -129,8 +154,8 @@ class Motor:
         board = None
         if odds is None and self.config.get('odds_provider') == 'propline':
             from tennis_odds_propline_v1 import market_board
-            board = market_board(self.config['propline_root'], m.names[a], m.names[b], decided_at)
-        return dict(circuit=circuit, players=[m.names[a], m.names[b]], player_ids=[a, b], surface=surface, date=str(day.date()),
+            board = market_board(self.config['propline_root'], name(a), name(b), decided_at)
+        return dict(circuit=circuit, players=[name(a), name(b)], player_ids=[a, b], surface=surface, date=str(day.date()),
                     best_of=best_of, deciding_tiebreak=deciding_tiebreak, serve=point, winner=winner,
                     markets=forecast_board(engine), market_board=board_with_model(engine, board) if board else None,
                     odds_used=odds is not None or live is not None, research_only=True)
