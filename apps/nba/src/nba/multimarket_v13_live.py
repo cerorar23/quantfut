@@ -16,6 +16,8 @@ from scipy.special import expit, logit
 from scipy.stats import norm
 
 from . import availability as av
+from . import current_rosters as cr
+from . import roster_strength as rs
 from . import injury_pdf
 from . import multimarket as m1
 from . import multimarket_v12 as v12
@@ -26,7 +28,7 @@ from .audit import digest, write_json
 from .context import name_key
 from .injury_t60 import CONTROL, MISSING
 
-VERSION = 'nba-multimarket-live-1.5.0'
+VERSION = 'nba-multimarket-live-1.6.0'
 SEASON = '2026-27'
 EASTERN = ZoneInfo('America/New_York')
 HEADERS = {'User-Agent': 'Mozilla/5.0 NBA research receipt capture', 'Accept': 'application/json,text/html'}
@@ -498,6 +500,17 @@ def fit_model(players, games, protocol, v12_protocol, injury_path, api_dir, sour
     `options` (stored in the model): features = live_features.BASE or BASE + ENV; team_shift_n0 = None or the in-season shift
     prior; markets = player markets to fit. `bets_rows` (nba_betsapi_odds) gives the pre-game lines of the environment features."""
     options = {**DEFAULT_OPTIONS, 'markets': list(PLAYER_MARKETS), **(options or {})}
+    sources = dict(sources)
+    if options.get('official_rosters'):
+        sources['current_rosters_sha256'] = cr.code_digest()
+    shadow = None
+    if options.get('roster_strength_shadow'):
+        if not options.get('official_rosters'):
+            raise ValueError('roster-strength shadow needs official current membership')
+        config = options['roster_strength_shadow']
+        sources['roster_strength_sha256'] = rs.code_digest()
+        shadow = dict(experimental=True, accepted=False, weight=float(config['weight']),
+                      ratings=rs.fit_ratings(games, players, protocol['target_season'][:4] + '-08-01', float(config['ridge'])))
     features = list(options['features'])
     seasons = sorted({g['season'] for g in games})
     if protocol['target_season'] in seasons:
@@ -528,12 +541,13 @@ def fit_model(players, games, protocol, v12_protocol, injury_path, api_dir, sour
         player_fit[market] = dict(weights=w.tolist(), observations=len(rows), line_offsets=list(LINE_OFFSETS), features=features)
     return dict(version=VERSION, protocol_version=protocol['version'], train_seasons=train_seasons,
                 fit=fit_team(train), play_probability=table, observed_share=float(np.mean([r['observed'] for r in train])),
-                player_fit=player_fit, player_empirical_weight=PLAYER_WEIGHT, options=options, inputs=sources)
+                player_fit=player_fit, player_empirical_weight=PLAYER_WEIGHT, options=options, inputs=sources,
+                roster_strength_shadow=shadow)
 
 
 # What a refit may change relative to the deployed model: the live module, the protocol file and the markets the amendment adds.
 SAME_FIELDS = ('train_seasons', 'fit', 'play_probability', 'observed_share', 'player_empirical_weight')
-MAY_DIFFER = ('live_module_sha256', 'protocol_sha256')
+MAY_DIFFER = ('live_module_sha256', 'protocol_sha256', 'current_rosters_sha256', 'roster_strength_sha256')
 
 
 RETRAIN_MAY_DIFFER = MAY_DIFFER + ('players_sha256', 'games_sha256', 'injuries_sha256', 'bets_sha256', 'options_sha256')
@@ -562,6 +576,17 @@ def compare_models(new, old, retrain=False):
     checks['all_player_markets_present'] = set(PLAYER_MARKETS) <= set(new['player_fit'])
     changed = sorted(k for k in set(old['inputs']) | set(new['inputs']) if old['inputs'].get(k) != new['inputs'].get(k))
     checks['inputs_changed_only_module_and_protocol'] = set(changed) <= set(MAY_DIFFER)
+    if new.get('options', {}).get('official_rosters'):
+        allowed = set(MAY_DIFFER) | {'options_sha256'}
+        checks['inputs_changed_only_module_and_protocol'] = set(changed) <= allowed
+        checks['roster_module_pinned'] = new['inputs'].get('current_rosters_sha256') == cr.code_digest()
+    if new.get('roster_strength_shadow') is not None:
+        checks['shadow_module_pinned'] = new['inputs'].get('roster_strength_sha256') == rs.code_digest()
+        checks['shadow_experimental_only'] = (new['roster_strength_shadow'].get('experimental') is True
+                                             and new['roster_strength_shadow'].get('accepted') is False)
+    checks['options_stable_except_official_rosters'] = (
+        {k: v for k, v in new.get('options', {}).items() if k not in ('official_rosters', 'roster_strength_shadow')}
+        == {k: v for k, v in old.get('options', {}).items() if k not in ('official_rosters', 'roster_strength_shadow')})
     checks['fitted_by_this_module'] = new['inputs'].get('live_module_sha256') == module_digest()
     checks['version_matches'] = new['version'] == VERSION
     return checks, dict(inputs_changed=changed, shared_markets=shared, new_markets=sorted(set(new['player_fit']) - set(old['player_fit'])))
@@ -645,21 +670,23 @@ def season_shift(model, games, done, v12_protocol):
     return lf.team_shift(pairs, n0), len(pairs)
 
 
-def player_forecasts(model, v12_protocol, mappings, lines, history, entries, team_history=None, game_lines=None, roster_since=None):
+def player_forecasts(model, v12_protocol, mappings, lines, history, entries, team_history=None, game_lines=None, roster_since=None,
+                     memberships=None):
     """Player counts and their sums, conditional on playing (books void a DNP), over the PropLine consensus line or, for a
     rotation player with no line for a market, over the statistical threshold floor(last-10 mean) + 0.5 (nba_live15 L1).
 
-    Only players with at least `min_history` recent games and a last team in this game; players listed Out are skipped.
-    A statistical threshold also needs the player's last game on or after `roster_since` (the season's first day): a player
-    who has not played this season may have left the team in the off-season (a book's line already says he is on the roster).
+    With `memberships`, the current official roster establishes the team even before a debut. Without it the legacy policy
+    uses the last team and requires a current-season appearance for a statistical threshold. Players listed Out are skipped.
     Same features as the retrospective v1.3 player model; rows get `sealed_at_utc` when the cohort is sealed."""
+    if model.get('options', {}).get('official_rosters') and memberships is None:
+        raise ValueError('official current membership required by this model')
     protocol = dict(player_protocol(v12_protocol), empirical_weight=model['player_empirical_weight'])
     table = model['play_probability']
     out, summary = [], {}
     for m in mappings:
         gid, teams = m['nba_game_id'], (m['home_nba_team_id'], m['away_nba_team_id'])
         listed = entries.get(gid) or {}
-        status_of = {player: status for rows in listed.values() for player, status, _, _ in rows}
+        status_of = {(tid, str(player)): status for tid, rows in listed.items() for player, status, _, _ in rows}
         counts = Counter()
 
         def eligible_player(pid):
@@ -667,10 +694,10 @@ def player_forecasts(model, v12_protocol, mappings, lines, history, entries, tea
             hist = m1.eligible(history.get(str(pid), []), m['et_date'], protocol)
             if len(hist) < protocol['min_history']:
                 return 'insufficient_history'
-            team = hist[-1]['team_id']
+            team = hist[-1]['team_id'] if memberships is None else memberships.get(str(pid))
             if team not in teams:
-                return 'last_team_not_in_game'
-            status = status_of.get(str(pid))
+                return 'last_team_not_in_game' if memberships is None else 'not_on_current_roster'
+            status = status_of.get((team, str(pid)))
             if status == 'Out':
                 return 'listed_out'
             return hist, team, status
@@ -695,7 +722,8 @@ def player_forecasts(model, v12_protocol, mappings, lines, history, entries, tea
                             report_status=status or 'no_listado', probability_play=table[status] if status else None,
                             books=quote['books'] if quote else 0, book_lines=quote['book_lines'] if quote else {},
                             line_source='propline' if quote else 'statistical', projected_minutes=par['projected_minutes'],
-                            history_games=len(hist)))
+                            history_games=len(hist), membership_source='last_box_score' if memberships is None else 'official_nba_roster',
+                            previous_team_id=hist[-1]['team_id'], transferred=hist[-1]['team_id'] != team))
 
         quoted = set()
         for (market, pid), quote in sorted(lines.get(gid, {}).items(), key=lambda kv: (kv[0][1], kv[0][0])):
@@ -715,13 +743,12 @@ def player_forecasts(model, v12_protocol, mappings, lines, history, entries, tea
             counts['forecast'] += 1
         # L1: every rotation player of both teams, at the statistical threshold, in the markets PropLine did not give him
         for pid in sorted(history, key=int):
-            if history[pid][-1]['team_id'] not in teams:  # every history row is before the cohort date: this is his last team
-                continue
             found = eligible_player(pid)
             if isinstance(found, str):
                 continue
             hist, team, status = found
-            if roster_since is None or hist[-1]['date'] < roster_since or np.mean([r['minutes'] for r in hist]) < STATISTICAL_MIN_MINUTES:
+            if ((memberships is None and (roster_since is None or hist[-1]['date'] < roster_since))
+                    or np.mean([r['minutes'] for r in hist]) < STATISTICAL_MIN_MINUTES):
                 continue
             for market in model['player_fit']:
                 if (market, pid) in quoted or not has_stat(hist, stat_of(market)):
@@ -752,6 +779,11 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     model = json.loads((model_dir / 'model.json').read_bytes())
     if model['inputs'].get('live_module_sha256') != module_digest():
         raise ValueError('model was fitted by a different live module')
+    use_rosters = model.get('options', {}).get('official_rosters', False)
+    if use_rosters and model['inputs'].get('current_rosters_sha256') != cr.code_digest():
+        raise ValueError('model was fitted by a different roster module')
+    if model.get('roster_strength_shadow') is not None and model['inputs'].get('roster_strength_sha256') != rs.code_digest():
+        raise ValueError('model was fitted by a different roster-strength module')
     if props_root is not None and 'player_fit' not in model:
         raise ValueError('player markets need a model with player_fit')
     if out.exists():
@@ -768,6 +800,15 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
         # status 1 on a past date is a postponed game (never played); anything else means the feed lags and rest/form would be wrong
         raise ValueError(f'past games not final: {[(g["game_id"], g["status"]) for g in stuck]}')
     out.mkdir(parents=True)
+    memberships, roster_snapshot = None, None
+    if use_rosters:
+        teams = {m[side + '_nba_team_id'] for m in mappings for side in ('home', 'away')}
+        roster_snapshot = cr.capture(teams, SEASON, out / 'rosters', get, clock, cache)
+        memberships = cr.membership(roster_snapshot, clock(), SEASON, teams)
+        if any(cr.utc(r['first_received_at_utc']) > datetime.fromisoformat(m['tipoff_utc']) - av.LEAD
+               for m in mappings for r in roster_snapshot['players'] if r['team_id'] in
+               (m['home_nba_team_id'], m['away_nba_team_id'])):
+            raise ValueError('roster received too close to tipoff')
     report = capture_report(day, now, out / 'reports', get, clock)
     # target-season box scores join the historical rows, so player values follow the current season
     rows_all = [*players, *(r for g in done for r in g['players'])]
@@ -775,6 +816,10 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     entries, summaries = {}, []
     for m in mappings:
         e, s = game_report_entries(report, m, ids, history)
+        if e is not None and memberships is not None:
+            conflicts = [(tid, p) for tid, listed in e.items() for p, *_ in listed if memberships.get(str(p)) != tid]
+            e = {tid: [item for item in listed if memberships.get(str(item[0])) == tid] for tid, listed in e.items()}
+            s['roster_conflicts'] = len(conflicts)
         entries[m['nba_game_id']] = e
         summaries.append(s)
     rows = feature_rows(games, done, mappings, v12_protocol)
@@ -788,10 +833,24 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
     team_history = lf.TeamHistory(lf.game_records(games, done))
     # with no recent archive the players still get the statistical thresholds (L1); without an archive root, no player markets
     players_out, player_summary = player_forecasts(model, v12_protocol, mappings, lines, player_history(rows_all), entries,
-                                                   team_history, glines, protocol.get('season_first_day', '2026-10-20')
+                                                   team_history, glines, protocol.get('season_first_day', '2026-10-20'), memberships
                                                    ) if props_root is not None else ([], {})
     shift, shift_games = season_shift(model, games, done, v12_protocol)
+    shadow = None
+    if model.get('roster_strength_shadow') is not None:
+        if memberships is None:
+            raise ValueError('roster-strength shadow cannot use last-game membership')
+        config = model['roster_strength_shadow']
+        changes = rs.live_changes([*games, *done], rows_all, mappings, memberships, config['ratings'])
+        shadow = dict(experimental=True, accepted=False, affects_published_forecasts=False, games=[])
+        v13.attach(rows, entries, model['play_probability'])
+        for m, base in zip(mappings, [lf.apply_shift(p, shift) for p in predict_team(rows, model['fit'])]):
+            change = changes[m['nba_game_id']]
+            shadow['games'].append(dict(nba_game_id=m['nba_game_id'], changes=change,
+                reference=base, candidate=rs.adjust(base, change, model['fit']['covariance'], config['weight'])))
     sealed_at = clock()
+    if roster_snapshot is not None:
+        cr.membership(roster_snapshot, sealed_at, SEASON, roster_snapshot['teams'])
     games_out, forecasts = cohort_forecasts(model, mappings, rows, summaries, entries, last_dates, sealed_at, shift)
     forecasts += [dict(f, sealed_at_utc=stamp(sealed_at)) for f in players_out]
     for g in games_out:
@@ -808,6 +867,9 @@ def seal(model_dir, out, day, players, games, protocol, v12_protocol, now=None, 
                   report=None if report is None else {k: report[k] for k in ('pdf_file', 'source_url', 'report_timestamp_utc',
                                                                              'first_received_at_utc', 'pdf_sha256', 'named_players')},
                   prop_lines=prop_summary, game_lines=dict(game_line_summary, lines=glines),
+                  roster=None if roster_snapshot is None else dict(season=SEASON, teams=roster_snapshot['teams'],
+                      snapshot_sha256=digest(out / 'rosters' / 'snapshot.json'), players=len(memberships)),
+                  roster_strength_shadow=shadow,
                   team_shift=dict(home=shift[0], away=shift[1], games=shift_games,
                                   n0=model.get('options', DEFAULT_OPTIONS).get('team_shift_n0')),
                   train_seasons=model['train_seasons'], actionable=False, original_pilot_unchanged=True)

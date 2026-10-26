@@ -1,5 +1,14 @@
 # Backlog — QuantFut
 
+## NBA: plantillas actuales y fuerza individual — solicitud del 26-oct-2026
+
+- [x] Capturar y validar las 30 plantillas oficiales actuales: 521 identidades únicas; 121 difieren del último equipo del historial local (no equivale a 121 traspasos fechados esta temporada).
+- [x] Implementar pertenencia por plantilla oficial, independiente del último partido o una cotización; conservar historia individual tras traspasos y verificar recibos, antigüedad, temporada e integridad al sellar y leer.
+- [x] Implementar y medir un candidato de fuerza individual y rotación, sin transportar el Elo del antiguo equipo. Selección 2024-25 y evaluación 2025-26: mejora pequeña, no concluyente; no supera la regla de aceptación.
+- [x] Separar el candidato experimental de las probabilidades publicadas y preparar su registro prospectivo con plantillas verificadas.
+- [ ] Completar reajuste exacto, comparación dentro del servidor, ensayo y despliegue de la corrección de pertenencia; registrar resultados y reversión. No promover el ajuste de fuerza rechazado.
+
+
 ## Pendientes vivos — limpieza del 25-oct-2026
 
 De 250 tareas abiertas, 134 se cerraron en su sitio con el motivo «(cerrada 25-oct: …)»: hechas, duplicadas, de
