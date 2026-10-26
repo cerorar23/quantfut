@@ -3307,3 +3307,22 @@ Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScor
 - [x] Casas con nombre comercial (`bookName`: BetOnline, Bovada…), fecha del historial del Parley en el idioma del usuario, textos de 8 px a 10 px y aviso «sin destacado» con coma decimal.
 - [x] API desplegada el 26-oct 00:53 UTC (`98bdfcc-app-8c57b05`, `main` `f227fd9`).
 - [ ] Compilar y publicar el APK 1.0.0+4 (la app nueva trae los textos traducidos y «Esperando resultado").
+
+## App: pronóstico destacado del detalle — decisión del usuario, 25-oct-2026
+
+- [x] La tarjeta «Análisis estadístico» destaca, entre todos los pronósticos del partido, el de mayor probabilidad con cuota publicada >= 1,40 (sin tope de probabilidad; empate → cuota más alta; sin candidato no hay tarjeta). `featuredPick` en `apps/mobile/lib/product/live_forecast.dart`, aviso `detailNoFeatured` en 6 idiomas, pruebas Flutter 260/260. AAB 1.0.0+3 compilado el 25-oct (26-oct: lo sustituye el 1.0.0+4 pendiente en «App — auditoría de datos, pronósticos y ergonomía»).
+- [x] Historial de retos (Reto Escalera): fuera el resumen «N cumplidos de M cerrados», la tasa de cumplidos y el resultado acumulado; queda el título y la lista. Cadenas retiradas de los 6 ARB. Va en el mismo AAB 1.0.0+3.
+
+## PropLine compartido — decisión del usuario, 23-oct-2026
+
+- [x] (cerrada 26-oct: hecho: recolector compartido horario en el VPS, `~/propline-shared/current`, ver DEPLOYS.md) Sustituir la captura aislada de cierres cada dos horas por un recolector compartido cada hora; cuotas agrupadas por deporte/competición, todas las casas y mercados disponibles, sin descargas por motor.
+- [x] Conservar respuestas originales comprimidas, recepción real UTC, hashes, contexto de partido/periodo/jugador, cuota y presupuesto; archivo acumulativo sin sobrescribir observaciones y lectura punto en el tiempo para consumidores.
+- [x] (cerrada 26-oct: hecho: activado en producción el 24-oct, ver DEPLOYS.md) (Presupuesto e idempotencia probados) Verificar presupuesto global de 5.000 solicitudes/día, reserva mínima, concurrencia e idempotencia. Ensayar con datos reales antes de programar; conservar el archivo anterior y registrar despliegue/reversión.
+- [x] (cerrada 26-oct: hecho: `propline_ingest`, `propline_partidos` y `propline_cierres` leen el archivo sin HTTP con `propline_shared`) Exponer lectura común para los motores y documentar las conexiones que todavía requieren identidad/contrato validados; no confundir archivo prospectivo con reentrenamiento ni alterar predicciones ya selladas.
+- [x] Compatibilidad con fútbol/NBA/tenis (`docs/propline_compatibilidad_motores_20261023.md`): alias de Championship corregido y Noruega/Suecia/Suiza añadidas; claves vistas en partidos reales añadidas a la configuración; el descubrimiento ya acepta claves que empiezan por dígito.
+- [ ] (26-oct: tenis hecho, `apps/tennis` lee el archivo de PropLine, `test_odds_propline_v1.py`; queda la parte de fútbol) Adaptador de tenis PropLine → `tennis_markets_v2` (periodo `s1/s2` y `line_type`), y adaptadores de fútbol para marcador exacto, hándicap europeo, empate no válido y mitades (solo evaluación).
+
+## SofaScore vía Apify — proveedor por deporte, decidido 2026-10-24
+- [x] Comparar actores con 2-3 partidos de fútbol, NBA y tenis; decisión: scrapesage (NBA, tenis), rl1987 (fútbol). Ver `docs/sofascore_apify_proveedores_20261024.md`.
+- [x] Probar histórico por temporada (muestras): NBA 24/25 y tenis por jugador con scrapesage, Premier 24/25 con rl1987. Falta correr temporadas completas.
+- [x] (cerrada 26-oct: hecho: `sofascore_apify.py` guarda `received_at` real en `receipts` y SofaScore alimenta a los motores desde el 25-oct) Normalizar y registrar recepción real (`fetched_at`) antes de conectar a ningún motor.

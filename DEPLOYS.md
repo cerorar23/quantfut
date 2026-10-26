@@ -250,6 +250,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - **Lectores sobre el archivo real:** un cierre de fútbol con 3.170 filas (200 de Pinnacle, ninguna capturada antes del inicio) y su liquidación con 2.958 filas, todas calificadas. `team_stats` solo emparejaba 46 de 98 partidos: corregido en la release `fc20390` (entrada anterior).
 
 
+### 2026-10-24 (noche) · Recolector SofaScore: NBA y tenis pasan a scrapesage · SOLO host
+- Decisión del titular: `scrapesage/sofascore-scraper` para NBA y tenis, `rl1987` para fútbol. `current/sofascore_apify.py` (sha256 `273a61fedc7f`, = `src/qf/ingest/sofascore_apify.py` con finales LF) y `current/config.json` (`provider` por objetivo, `list_max` 100; sha256 `60b020855`). Cron sin cambios.
+- Probado antes: 6 pruebas unitarias; corrida real en carpeta temporal del VPS (NBA, 5 partidos listados, 3 detalles; tope 0,30 USD). Descubrimiento de torneos de tenis sigue con rl1987 (scrapesage no tiene modo por fecha). Cada recibo anota el actor en `params._actor`.
+- **Respaldo y vuelta atrás:** `~/sofascore-apify/respaldo_20261024_antes_scrapesage/` (`current/`, `index.sqlite`, `crontab.txt`). Para volver: copiar `current/*` de ahí a `~/sofascore-apify/current/`.
+
 ### 2026-10-24 · Recolector SofaScore (Apify, actor rl1987) · SOLO host, sin imágenes ni contenedores
 - Nuevo `~/sofascore-apify/` (700): `current/sofascore_apify.py` (= `src/qf/ingest/sofascore_apify.py`, sha256 `c29386542180`), `current/config.json`, `.env.apify` (600, token Apify), `data/` (índice SQLite + objetos gzip inmutables con la hora real de recepción) y `logs/`.
 - Cron `40 7 * * *` con flock. Alcance: NBA (torneo 132) + 23 competiciones de `sofascore_history.TOURNAMENTS`; detalle (estadísticas, alineaciones, incidencias) solo de partidos terminados, una vez. **Tenis: ATP/WTA individuales, torneos localizados cada 6 días barriendo un día de calendario (~0,6 USD); hash vigente `c29386542180`.
@@ -365,6 +370,22 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Verificado: importa y carga 11 líneas; `preview` sin error. Los partidos que ya tenían filas hoy no se completan (solo los nuevos); se verá en la pasada diaria de las 08:00 UTC.
 - Vuelta atrás: `docker cp ~/quantfut/deployments/tarjetas-lineas-20261022/antes/tarjetas_seg.py quantfut-worker-1:/app/src/qf/publish/tarjetas_seg.py`.
 - **Fusionado en `main` el 22-oct** (rama `tarjetas/lineas-seguimiento`): el archivo del worker ya coincide con `main`; desaparece la diferencia ajena anotada en las entradas del mismo día.
+
+### 2026-10-21 · Anuncios con recompensa a producción (modo prueba apagado) · SOLO configuración en base, sin imágenes nuevas
+- `reward_settings`: `ad_test_mode` de true a false (con `save_config`, auditado como `admin:claude-code`). Ya estaban el bloque real de Android
+  `ca-app-pub-3902371555866850/4169479093` y el editor `pub-3902371555866850`; iOS sin bloque. `app-ads.txt` responde 200. Sigue 10 monedas, 5/día, pausa 180 s.
+- App: `AndroidManifest.xml` con el ID de app real `ca-app-pub-3902371555866850~8333839408` y versión `1.0.0+2`; AAB release compilado
+  (`apps/mobile/build/app/outputs/bundle/release/app-release.aab`). **Aún no subido a Play**: hasta que lo esté, las versiones con el ID de ejemplo no cargarán el bloque real.
+- Con el modo prueba apagado, `/test-credit` queda desactivado: el único crédito es el callback firmado de Google.
+- **Vuelta atrás:** en `/control/anuncios` encender «modo prueba» (usa los bloques de prueba de Google y reactiva el crédito simulado para los correos de `QF_ADS_TEST_CREDIT_EMAILS`).
+
+### 2026-10-21 21:18 UTC · Crédito simulado de anuncios para `ceo@saptain.ru` · SOLO configuración + recrear la API
+- Con el modo prueba encendido, el video de prueba no acreditaba porque el correo del titular no estaba en `QF_ADS_TEST_CREDIT_EMAILS`
+  (solo había un gmail). Añadido `ceo@saptain.ru` al final de esa variable en `~/quantfut/.env`.
+- Recreada solo la API (`docker compose up -d --no-deps --force-recreate --no-build api`), misma imagen `quantfut-api-web-vip:web-arranque`.
+  Salud local y del dominio: 200. Variable verificada dentro del contenedor.
+- Respaldo previo: `~/quantfut/releases/ads-test-credit-20261021/env.before`.
+- **Vuelta atrás:** `cp -p` ese archivo sobre `.env` y recrear la API con el mismo comando. Apagar el modo prueba en `/control/anuncios` desactiva igualmente la vía simulada.
 
 ### 2026-10-21 · AdMob (ID de editor y bloque) y estado de Meta · SOLO configuración en la base, sin código ni reinicios
 - `reward_settings` (vía `qf.api.anuncios.save_config`, auditado como `ssh:claude-titular`): `admob_publisher_id = pub-3902371555866850` y
