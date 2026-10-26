@@ -7,4 +7,6 @@ Python del entorno (`source scripts/entrenamiento_local/entorno.sh` y `$PY -X ut
 - `diagonal.py <oos.pkl>`: inflación diagonal (Karlis y Ntzoufras, 2003) y corrección del nivel de goles sobre el OOS.
 - `altitud_adelante.py`: RPS con y sin el factor de altitud en sombra sobre las predicciones ya jugadas (copia local).
 
-Informe: `docs/fases_motor_a_20261026.md`.
+- `wf.py`, `kalman_var.py`, `dinamico.py`, `dinamico_puerta.py`, `ascendidos.py` (modelo dinámico y prior de ascendidos; ver docstrings).
+
+Informes: `docs/fases_motor_a_20261026.md` y `docs/modelo_dinamico_y_ascendidos_20261026.md`.
