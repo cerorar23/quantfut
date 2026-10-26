@@ -1,5 +1,14 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-26 — Tenis: sellado cerca del inicio y todas las líneas de las casas
+
+Auditoría del motor de tenis (`docs/tenis_auditoria_20261026.md`). El sellado pasa de dos veces al día a cada hora, 1,5-2,5 h
+antes del partido: el precio sin margen es la mejor entrada del ganador y es más preciso cuanto más cerca del inicio, y además
+un cron en hora de Berlín dejó la pasada nocturna en la hora en que PropLine no captura. Cada sellado guarda todas las líneas
+ofrecidas con la probabilidad del motor en la misma línea, porque comparar en líneas fijas no mide nada frente al mercado. Con
+27 partidos con cierre, el motor bate al cierre en totales de juegos (el mercado sobrevalora el «más de»): por eso solo se
+ancla al mercado el ganador, no los totales. La superficie del torneo sale de la edición de la misma época del año.
+
 ## 2026-10-26 — El Motor A se entrena en local y se sube
 
 Decisión del titular: el entrenamiento se hace en local y luego se sube (`scripts/entrenamiento_local/`). La copia
