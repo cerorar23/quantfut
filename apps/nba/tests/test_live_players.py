@@ -103,9 +103,12 @@ def test_player_forecasts_use_the_line_history_and_report(sealed):
     folder, result = sealed
     bundle = json.loads((folder / 'bundle.json').read_bytes())
     players = [f for f in bundle['forecasts'] if f['market'].startswith('player_')]
-    assert result['player_forecasts'] == 2 and len(bundle['forecasts']) == 6
+    # two PropLine lines; the other markets of both rotation players at the statistical threshold (L1)
+    statistical = 2 * (7 - 1)  # the rows carry points, rebounds and assists: 3 counts + 4 sums, minus each player's quoted one
+    assert result['player_forecasts'] == 2 + statistical and len(bundle['forecasts']) == 4 + 2 + statistical
     assert bundle['prop_lines']['state'] == 'archivo_aplicado' and bundle['games'][0]['player_lines'] == dict(
-        forecast=2, insufficient_history=1)
+        forecast=2, insufficient_history=1, statistical_threshold=statistical)
+    players = [f for f in players if f['line_source'] == 'propline']
     points, = [f for f in players if f['market'] == 'player_points']
     assert (points['player_id'], points['line'], points['books'], points['player']) == (1, 17.5, 3, 'Jaren Jackson Jr.')
     assert points['report_status'] == 'Questionable' and points['probability_play'] == .5 and points['conditional_participation']
@@ -118,6 +121,24 @@ def test_player_forecasts_use_the_line_history_and_report(sealed):
     assert assists['report_status'] == 'no_listado' and assists['probability_play'] is None
 
 
+def test_without_a_recent_archive_rotation_players_get_the_statistical_threshold(tmp_path, monkeypatch):
+    monkeypatch.setattr(prop_lines, 'archive_module', lambda: SimpleNamespace(newest=lambda *a, **k: (None, None)))
+    monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
+    (tmp_path / 'model').mkdir()
+    write_json(tmp_path / 'model' / 'model.json', model())
+    rows = [dict(r, minutes=11.) if r['player_id'] == 2 else r for r in player_rows()]  # player 2 is below the rotation floor
+    live.seal(tmp_path / 'model', tmp_path / 'c', DAY, rows, history_games(), PROTOCOL, V12, now=NOW, get=fake_get,
+              first_completed_day=DAY, props_root='archive')
+    bundle = json.loads((tmp_path / 'c' / 'bundle.json').read_bytes())
+    players = [f for f in bundle['forecasts'] if f['market'].startswith('player_')]
+    assert bundle['prop_lines']['state'] == 'sin_archivo_reciente' and bundle['games'][0]['player_lines'] == dict(statistical_threshold=7)
+    assert {f['player_id'] for f in players} == {1} and all(f['line_source'] == 'statistical' and f['books'] == 0 for f in players)
+    points, = [f for f in players if f['market'] == 'player_points']
+    hist = m1.eligible(live.player_history(rows)['1'], DAY, dict(V12, empirical_weight=.25))
+    assert points['line'] == np.floor(np.mean([r['points'] for r in hist[-10:]])) + .5 == 18.5
+    assert points['reference'] == live.STATISTICAL_REFERENCE and points['conditional_participation']
+
+
 def test_report_status_moves_the_probability_through_the_fitted_weights(tmp_path, monkeypatch, archive):
     base = model()
     base['player_fit'] = {m: dict(weights=[1., 0., -1., 0., 0.]) for m in live.PLAYER_MARKETS}  # Questionable lowers the over
@@ -127,7 +148,8 @@ def test_report_status_moves_the_probability_through_the_fitted_weights(tmp_path
     monkeypatch.setattr(injury_pdf, 'extract_report', lambda path, url, received: parsed_report(received))
     live.seal(model_dir, tmp_path / 'c', DAY, player_rows(), history_games(), PROTOCOL, V12, now=NOW, get=fake_get,
               first_completed_day=DAY, props_root='archive')
-    points, = [f for f in json.loads((tmp_path / 'c' / 'bundle.json').read_bytes())['forecasts'] if f['market'] == 'player_points']
+    points, = [f for f in json.loads((tmp_path / 'c' / 'bundle.json').read_bytes())['forecasts']
+               if f['market'] == 'player_points' and f['player_id'] == 1]
     hist = m1.eligible(live.player_history(player_rows())['1'], DAY, dict(V12, empirical_weight=.25))
     raw = m1.player_over(m1.player_parameters(hist, 'points', dict(V12, empirical_weight=.25)), 17.5, dict(V12, empirical_weight=.25))
     assert points['probability_over'] == pytest.approx(1 / (1 + np.exp(-(np.log(raw / (1 - raw)) - 1))))
@@ -178,11 +200,13 @@ def test_player_results_are_scored_conditional_on_playing(sealed, monkeypatch):
     monkeypatch.setattr('nba.paper.capture_official_result', capture)
     assert live.capture_results(folder, now) == dict(stored=[GID], retry=[])
     data = board.LiveCohort(folder).data(now + timedelta(minutes=1))
-    results = {r['market']: r for r in data['predictions'] if r['market'].startswith('player_')}
-    assert results['player_points']['result'] == dict(status='evaluated', actual=21)
-    assert results['player_points']['report_status'] == 'Questionable' and results['player_points']['books'] == 3
-    assert results['player_assists']['result'] == dict(status='dnp', actual=None)
-    assert data['scorecard']['player_points']['n'] == 1 and data['scorecard']['player_assists'] == dict(n=0)
+    results = {(r['market'], r['player_id']): r for r in data['predictions'] if r['market'].startswith('player_')}
+    assert results[('player_points', 1)]['result'] == dict(status='evaluated', actual=21)
+    assert results[('player_points', 1)]['report_status'] == 'Questionable' and results[('player_points', 1)]['books'] == 3
+    assert results[('player_assists', 2)]['result'] == dict(status='dnp', actual=None)
+    assert results[('player_points', 2)]['result'] == dict(status='dnp', actual=None)  # statistical threshold, same rule
+    # points: player 1 (player 2 did not play); assists: player 1's statistical threshold (player 2's PropLine line is void)
+    assert data['scorecard']['player_points']['n'] == 1 and data['scorecard']['player_assists']['n'] == 1
 
 
 def test_play_in_playoff_and_cup_final_games_are_recognised():
@@ -262,8 +286,9 @@ def test_a_combination_is_sealed_with_the_summed_law_and_the_live_calibration(tm
     base = model()
     base['player_fit']['player_points_rebounds_assists'] = dict(weights=[1., 0., -1., 0., 0.])  # Questionable lowers the over
     _, bundle = seal_with_combos(tmp_path, monkeypatch, archive, base)
-    pra, = [f for f in bundle['forecasts'] if f['market'] == 'player_points_rebounds_assists']
-    pa, = [f for f in bundle['forecasts'] if f['market'] == 'player_points_assists']
+    first = [f for f in bundle['forecasts'] if f.get('player_id') == 1]
+    pra, = [f for f in first if f['market'] == 'player_points_rebounds_assists']
+    pa, = [f for f in first if f['market'] == 'player_points_assists']
     assert pra['market_label'] == 'Puntos + rebotes + asistencias' and pra['line'] == 30.5 and pra['books'] == 2
     assert pra['conditional_participation'] and pra['report_status'] == 'Questionable' and pra['sealed_at_utc'] == bundle['created_at_utc']
     hist = m1.eligible(live.player_history(player_rows())['1'], DAY, COMBO_PROTOCOL)
@@ -271,7 +296,7 @@ def test_a_combination_is_sealed_with_the_summed_law_and_the_live_calibration(tm
     assert pra['probability_over'] == pytest.approx(1 / (1 + np.exp(-(np.log(raw / (1 - raw)) - 1))))
     raw_pa = m1.player_over(m1.player_parameters(hist, 'points_assists', COMBO_PROTOCOL), 20.5, COMBO_PROTOCOL)
     assert pa['probability_over'] == pytest.approx(raw_pa)  # identity weights for the other combination
-    points, = [f for f in bundle['forecasts'] if f['market'] == 'player_points']
+    points, = [f for f in first if f['market'] == 'player_points']
     assert pra['estimate'] > points['estimate']  # the mean of the sum exceeds the mean of one part
 
 

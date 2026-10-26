@@ -1,0 +1,25 @@
+{
+  "version": "nba-live15-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-26 before any number of this check existed on 2025-26. The design looked only at 2023-24 and 2024-25 (each predicted by the team model fitted for that target): the bias of team points and game total at the live lines changes sign between seasons (team points -0.028 and +0.015, total -0.041 and +0.034), the calibration slope of the total is low in both (0.70 and 0.84; team points 0.94 and 0.91) and October misses most (total residual -8.1 points in 2023-10). The in-season mean shift of nba_live14 (C4) was rejected and is not tried again",
+  "question": "Do a season-start prior on the team form, a rolling per-season logistic recalibration and an in-season intercept make the live probabilities of team points and game total closer to the realised results than the deployed 1.4.0 team model?",
+  "data": "the deployed 1.4.0 inputs: nba_live14b_20261025 (RUN071 + columns, regular season), reports old + T-60 (nba_reports_old_t60_20261024), api-sports games of raw/api_nba_20261006",
+  "units": "regular-season games of the season, in date order, at the live lines: team points of each side at floor(mean of the last 10) + 0.5 and game total at the floor of the sum + 0.5; the lines are the same in every arm (the prior never changes them). The winner does not use the form and is not scored",
+  "reference": "REF = the deployed team model: nba.multimarket_v13_live.fit_team on the two scored seasons before the target, predictions with the T-60 availability of the target game",
+  "candidates": {
+    "P_prior": "season-start prior on the form means (points scored and allowed of the last 20 eligible games): an entry from an earlier season is regressed toward that season's league mean points per team-game by rho, and entries in the last drop_days days of their season are left out before the last 20 are taken; the model (shift regression and covariance) is refitted on training rows built the same way. (rho, drop_days) chosen on 2024-25 (fit on 2022-23 and 2023-24) from rho in {0.25, 0.5} x drop_days in {0, 10} by the pooled Brier and applied unchanged to 2025-26",
+    "R1_rolling": "per-market logistic recalibration p' = expit(a + b * logit p), team points (home and away pooled) and game total separately, fitted by maximum likelihood on the units of the previous season as predicted by the model fitted for that season (for 2025-26: 2024-25 units of the model fitted on 2022-23 and 2023-24); refitted every season",
+    "R2_in_season": "R1 plus an in-season intercept c per market: before each date, c maximises the log-likelihood of the season's earlier units under expit(a + b * logit p + c) minus c^2 / (2 tau^2); the earlier units are predicted without availability (as season_shift does live, no report is kept for past games). tau chosen on 2024-25 (with R1 fitted on 2023-24 units of the model fitted on 2022-23) from {0.05, 0.1, 0.2} by the pooled Brier and applied unchanged to 2025-26"
+  },
+  "acceptance": "P, R1 and R2 are tried in that order, each on top of the configuration accepted so far. A candidate is accepted if the paired Brier difference pooled over team points and game total on 2025-26 has a 95% upper bound below 0 AND neither market is worse with a lower bound above 0 at 97.5% (Bonferroni over 2). Calibration slope and intercept, and the first 30 days of the season, are reported for every arm but do not decide",
+  "bootstrap": "paired differences resampled by whole dates, 400 replicates, seed 20261031",
+  "live_amendments": {
+    "L1_statistical_player_thresholds": "players with no PropLine consensus line for a market (or no recent archive) are forecast at the statistical threshold floor(baseline) + 0.5, the offset 0 of the grid the player calibration is fitted on, if their projected minutes are at least 12 and they are not listed Out; reference text says it is a statistical threshold. Probabilities come from the same fitted model; nothing is rescored retrospectively. Motivation: on 2026-10-25 the 19:30 ET cohort was sealed with no player forecast because the shared PropLine collector skipped the 23:00 UTC capture (account reserve), and player_turnovers is quoted by fewer than two books, so no turnover forecast was ever sealed",
+    "deployment_rule": "the accepted configuration is fitted for 2026-27 on 2024-25 and 2025-26 (R1 on 2025-26 units of the model fitted for 2025-26), compared with the deployed model (player markets must be identical), rehearsed on a real cohort and deployed with its rollback in DEPLOYS.md; if nothing is accepted the team model stays as it is and only L1 is deployed"
+  },
+  "limits": [
+    "retrospective on one test season; 2025-26 was already looked at against bet365 lines in docs/nba_calibracion_motor_20261024.md (other lines, other question)",
+    "the prior is statistical (form regressed toward the league), not a roster prior: trades and rookies are not valued",
+    "the live register is the real test"
+  ]
+}
