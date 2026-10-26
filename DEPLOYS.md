@@ -33,6 +33,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-26 21:50 UTC · Tenis: doble apellido · imagen `quantfut-tenis:7b974ed` (PR #161)
+- Misma construcción que la entrada de las 19:40 (`git archive 7b974ed:apps/tennis`, `propline_shared.py` idéntico, `vps_run.sh` igual al activo). Solo cambia `tennis_intake_v1`: «D. Merida Aguilar» resuelve a «Daniel Merida».
+- Comprobado con los 3 partidos en espera del 27-oct: Sun–Sawangkaew y Griekspoor–Nakashima con precio de PropLine, Merida–Medvedev con el apilador; los tres se habrían excluido antes de la auditoría.
+- **Vuelta atrás:** `echo quantfut-tenis:5b3040b > ~/quantfut-tenis/IMAGE`.
+
 ### 2026-10-26 19:50 UTC · NBA: productor vivo 1.5.0 (umbral estadístico para jugadores sin línea de PropLine) · imagen `nba-live13-producer:20261026` (`main` `926daee`, PR #152) + modelo `e48da3bb…`
 - **Motivo:** el titular pidió recalibración, corregir los errores del vivo y dejarlo en producción. La recalibración de equipo no entra (protocolo congelado `nba_live15`, `docs/nba_live15_recalibracion_20261026.md`). Errores corregidos: la cohorte `2026-10-25_1930` se selló sin jugadores porque el recolector de PropLine se saltó la captura de las 23:00 UTC (reserva de cuota) y `player_turnovers` nunca se sellaba (menos de 2 casas).
 - **Estado previo comprobado (19:47 UTC):** `producer.sh` con `nba-live13-producer:20261025b` y `--memory 1g`, modelo 1.4.0 `5314c9ef…`, datos `e5326b7f…`/`c2c13b36…` (no cambian); panel `nba-dashboard-run69` (`nba-dashboard-live13:20261025c`, no cambia). Nadie más desplegando NBA (la entrada de tenis de las 19:40 tocó solo su imagen y su crontab).
