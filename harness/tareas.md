@@ -3261,6 +3261,8 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [x] PropLine: cierres y liquidaciones diarios de NBA/tenis/fútbol en el recolector (PR #96, desplegado el 24-oct 13:51 UTC por otra sesión). Pendiente: PR, despliegue con anotación en DEPLOYS.md y un lector para los motores.
 - [x] Recalibración móvil de total y puntos de equipo y prior de arranque: protocolo congelado `nba_live15`, ningún candidato entra (el modelo ya está calibrado en sus líneas en 2025-26; recalibrar con la temporada anterior empeora). docs/nba_live15_recalibracion_20261026.md.
 - [x] Jugadores sin línea de PropLine (o sin archivo reciente): umbral estadístico para la rotación (L1, productor 1.5.0); arregla la cohorte del 25-oct 19:30 ET sellada sin jugadores y las pérdidas que nunca se sellaban.
+- [x] `nba_api` por proxy (ZenRows, tope 450 créditos, gasto 106): 86 de los 95 partidos regulares sin conteos extendidos recuperados y validados; rotaciones 1 de 9 (el resto da 422). docs/nba_api_proxy_recuperacion_20261026.md.
+- [ ] Fusionar los 86 partidos recuperados (`.local/normalized/nba_stats_proxy_recovery_20261026`) en el conjunto extendido en el próximo reajuste con protocolo congelado; decidir el caso `0:00` con tiros libres (0022100151).
 - [ ] Prior de pretemporada por plantilla (traspasos y novatos por minutos esperados): el prior estadístico de `nba_live15` no mostró evidencia.
 - [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
 - [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.
