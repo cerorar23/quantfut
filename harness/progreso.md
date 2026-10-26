@@ -1,5 +1,15 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-26 — El Motor A se entrena en local y se sube
+
+Decisión del titular: el entrenamiento se hace en local y luego se sube (`scripts/entrenamiento_local/`). La copia
+trae solo las 19 tablas que lee `train.py` a un esquema `entreno` aparte, para no tocar la base local de pruebas. La
+configuración del modelo se fija a la del worker, no a la del `.env` local, que tenía otra vida media (180 frente a
+270 días): sin eso se habría entrenado y subido un modelo distinto del que se cree. Se sube solo lo que la misma puerta
+de `train.py` deja activo. Como esa puerta casi nunca puede comparar con el modelo anterior (la ventana cambia con
+cada dato nuevo), antes de subir se compara también sobre los partidos fuera de muestra comunes. El entrenamiento
+tarda ~2 min desde el gradiente exacto del 22-oct (antes 4 h 44 min).
+
 ## 2026-10-25 (noche) — Aviso «sin pronóstico sellado» en el detalle del partido
 
 El titular leyó «No hay pronósticos publicados» encima de 25 mercados y lo tomó por un fallo. No lo era (pronóstico =
