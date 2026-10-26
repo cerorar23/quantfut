@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-26 19:40 UTC · Tenis: auditoría (sellado horario, todas las líneas de PropLine, superficie, nombres, jugadores sin saque) · imagen `quantfut-tenis:5b3040b` + crontab de `qf` (PR #153 `9231dbe`, PR #155 `5b3040b`)
+- Estado previo comprobado: imagen activa `quantfut-tenis:f391b1f`, `vps_run.sh` igual al de la imagen; `propline_shared.py` de la imagen (`d95d4661…`) anterior a los cierres de PropLine, la nueva lleva el de `main` (`54387ff6…`, tiene `read_closing`).
+- Imagen construida desde `git archive 5b3040b:apps/tennis` con `core.autocrlf=false` más `src/qf/ingest/propline_shared.py` de `5b3040b` (`~/quantfut-tenis/build/5b3040b/ctx`). Hubo una intermedia `quantfut-tenis:9231dbe` (19:28 UTC, solo PR #153).
+- `vps_run.sh` nuevo (sha256 `2119c1f4…`, igual a `main`): modo `hourly` con `flock`; el calendario de API-Tennis solo en las pasadas de las 00 y 12 UTC (`date -u`), el resto `--no-capture`.
+- Crontab: `30 0,12 * * * … twice-daily` → `25 * * * * /home/qf/quantfut-tenis/vps_run.sh hourly` (la línea `weekly` no cambia). Motivo: tras el cambio de horario la pasada de las 00:30 de Berlín caía a las 23:30 UTC, sin foto de PropLine (cupo diario agotado), y 15 partidos se sellaron sin precio.
+- Pasada manual 19:28 UTC: código 0, 0 sellados (3 en espera de su ventana), evaluación al día. Ensayo con el archivo real: 41-48 líneas por partido en `market_board`.
+- Respaldos en `~/quantfut-tenis/backup/20261026-auditoria/`: `vps_run.sh`, `IMAGE` (`f391b1f`), `motor_config.json`, `crontab.txt`.
+- **Vuelta atrás:** `B=~/quantfut-tenis/backup/20261026-auditoria; cp -p $B/vps_run.sh $B/IMAGE ~/quantfut-tenis/ && crontab $B/crontab.txt`. Los sellados nuevos se quedan.
+
 ### 2026-10-26 14:33 UTC · Cron del worker sin reentrenamientos del Motor A · solo `scripts/crontab` (`main` `6bce572`, PR #150), sin imagen ni recreación
 - **Motivo:** orden del titular: el Motor A se entrena en local y se sube; el servidor no entrena. Comentados («RETIRADO») el mensual `0 3 1 * *` y el arranque diario `--bootstrap`.
 - **Estado previo comprobado (14:32 UTC):** `scripts/crontab` del servidor e instalado = `e3e8a7b0…` (entrada de las 01:41); worker `98bdfcc-pitido-ef6f4b3`; nadie más desplegando.
