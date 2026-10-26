@@ -20,6 +20,7 @@ del motor (`tenis_recomendaciones_mejora_20261017.md`, `tenis_calidad_predictiva
 | 15 sellados sin cuota la noche del 25-oct | El cron está en hora de Berlín: tras el cambio de horario la pasada de las 00:30 cayó a las 23:30 UTC, la hora en que el recolector de PropLine ya agotó su cupo diario y no captura | Pasada horaria en el minuto 25; calendario de API-Tennis solo a las 00 y 12 UTC (decidido con `date -u`); sin precio, el sellado espera a la siguiente pasada |
 | `math domain error` en el cálculo de inactividad (Birrell–Kasatkina) | Los días de ronda son estimados: un partido ya jugado puede tener día posterior al del pronóstico y el hueco salía negativo | `dynamic_features` en `tennis_motor` recorta el hueco a 0 y cuenta esos partidos en la carga de 14 días (`tennis_dynamic_v2` no se toca: lo congelan los protocolos v7/v8) |
 | Jugadores excluidos por nombre: «Xin. Wang», «B. Nakashima» | La inicial solo admitía una letra; dos homónimos activos | Iniciales largas con prefijo del nombre; homónimos separados por el nivel del torneo (gira o Challenger) |
+| 46 jugadores activos (8 WTA, 38 ATP; p. ej. Xinran Sun) excluidos con «use a canonical ID» | Sus partidos no traen estadísticas de saque y el modelo de saque no los incluye | `Motor.resolve` acepta el ID canónico: saque de población (como cualquier efecto sin entrenar), Elo, ranking y precio del mercado propios |
 | Mercados evaluados solo en líneas fijas (18,5 … 26,5) | Contrario a la recomendación de comparar en la misma línea ofrecida | Ver «Todos los mercados» |
 
 Las 7 predicciones de Lyon en arcilla y las del 25-oct sin cuota quedan selladas tal cual (los sellados no se reescriben).
@@ -62,4 +63,4 @@ dentro de cada partido: es una medida, no una acreditación.
 
 ## Pruebas y despliegue
 
-433 pruebas del motor (4 nuevas). Imagen y crontab: ver `DEPLOYS.md` (26-oct).
+434 pruebas del motor (5 nuevas). Imagen y crontab: ver `DEPLOYS.md` (26-oct).
