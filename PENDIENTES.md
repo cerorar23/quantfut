@@ -13,7 +13,7 @@ Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (c
 |---|---|
 | 26-oct, 01:30 UTC | Migración 088 (retiro de Serie B, LaLiga 2, Allsvenskan y Super League suiza), programada en el cron del host |
 | ~26-oct | Termina la prueba Business de Sentry: confirmar la retención del plan (**Tú**) |
-| **1-nov, 03:00 UTC** | Reentrenamiento automático (~5 h) y renovación de los 20.000 créditos de The Odds API. Mientras corre (03:00-08:00 UTC) no se recrea el worker: lo mataría |
+| **1-nov** | Reentrenamiento mensual del Motor A **en local** (`scripts/entrenamiento_local/`, ~2 min; el servidor ya no entrena) y renovación de los 20.000 créditos de The Odds API |
 | **2-nov, 9:00 (hora local)** | Revisión automática de solo lectura (tarea programada `revisar-reentrenamiento-1-nov`) |
 | Cuando llegue la muestra | **Puerta de CLV.** Cifra oficial: `publish.shadow_sharp.report()`. Medido el 25-oct, 17:30 UTC: 235 ofertas publicables con cierre justo (290 publicables), `ev_close` **+2,68 %**. Falta n ≥ 300 y al menos 3 ligas con 30 (la mayor, Champions, tiene 21). Los cierres vuelven a entrar desde el 25-oct (PropLine, #127), así que la muestra vuelve a crecer |
 
@@ -40,7 +40,7 @@ Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (c
 - Riesgos aceptados el 18-oct, no se vuelven a pedir: 2FA de GitHub, rotar la clave de The Odds API y restringir la clave de Firebase.
 
 ## 2. Claude: esperan una fecha o una muestra
-- **1-nov:** vigilar que el reentrenamiento corra limpio y reejecutar `python -m qf.model.ajuste` sobre el OOS nuevo.
+- **1-nov:** reentrenar en local y subir (`scripts/entrenamiento_local/`), y reejecutar `python -m qf.model.ajuste` sobre el OOS nuevo.
 - **Enero de 2027:** pasar Liga MX a `11620` (Clausura) en `scripts/sofascore_apify_config.json` y en el VPS.
 - Puertas que esperan muestra: calibración, residuo, cuatro brazos, `ajuste_xi`, alineación en F7, altitud, tarjetas y córners del parley,
   1xBet y la ampliada 73-95 % (acierta 78,0 % frente a 81,4 % prometido, n=223).
