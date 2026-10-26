@@ -25,7 +25,7 @@ services:
   # credenciales del host, fuera del repo.
   api:
     build: .
-    image: quantfut-api-propline:98bdfcc
+    image: quantfut-api-propline:98bdfcc-app-8c57b05
     env_file: .env
     depends_on:
       db: {condition: service_healthy}
@@ -50,7 +50,7 @@ services:
 
   worker:
     build: .
-    image: quantfut-worker-propline:98bdfcc
+    image: quantfut-worker-propline:98bdfcc-pitido-ef6f4b3
     env_file: .env
     environment:
       # Registro público de la cadena (comprometer-revelar, 18-oct).
