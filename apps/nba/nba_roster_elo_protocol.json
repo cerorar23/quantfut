@@ -1,0 +1,25 @@
+{
+  "version": "nba-roster-elo-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-26 before any number of this check existed on any season. Motivation: on 2026-10-26 the sealed 1.5.0 winner gave Milwaukee 69 % at home against Indiana while the market gave 41 %; Giannis Antetokounmpo now plays for Miami and Milwaukee's rotation is mostly players who played last season for other teams, but the margin Elo carries 75 % of Milwaukee's 2025-26 rating. Nothing about this correction was tried on 2023-24, 2024-25 or 2025-26 before freezing",
+  "question": "Does weighting each team's margin Elo by the teams its current rotation played its recent minutes for make the live winner probability closer to the realised results than the deployed 1.5.0 team model?",
+  "data": "the deployed 1.5.0 inputs: nba_live14b_20261025 (players sha256 e5326b7f..., games sha256 c2c13b36...), reports old + T-60 (nba_reports_old_t60_20261024), api-sports games of raw/api_nba_20261006",
+  "units": "regular-season games of the season, in date order: y = home win, p = the winner probability of predict_team with the T-60 availability of the game. Team points and game total do not use the Elo and are not scored",
+  "reference": "REF = the deployed team model: nba.multimarket_v13_live.fit_team on the two scored seasons before the target, predictions with the T-60 availability of the target game (identical to nba.live15_check REF)",
+  "correction": {
+    "rotation": "for team T on date d: the players with minutes > 0 for T in T's last K = 5 games of the current season strictly before d, whose most recent appearance before d (any team) was for T; expected minutes m_p = their minutes summed over those games / number of those games. A team with no game of the current season before d has no rotation and keeps its Elo",
+    "carried_rating": "c_p = minutes-weighted mean, over p's last N = 30 appearances strictly before d within history_max_days (370), of the margin Elo AT THE START OF d of the team he played each appearance for (season regression already applied). A player who played all those minutes for T carries exactly T's Elo",
+    "weights": "minutes: w_p = m_p; production: w_p = m_p * max(0, (points + rebounds + assists + steals + blocks - turnovers) / minutes over the same N appearances)",
+    "effective_elo": "E_T = sum w_p c_p / sum w_p; Elo_eff = (1 - alpha) * Elo_T + alpha * E_T; the winner feature elo_gap_mov becomes Elo_eff(home) - Elo_eff(away), in training rows and target rows alike. The Elo updates themselves are not changed",
+    "grid": "weights in {minutes, production} x alpha in {0.5, 1.0}; chosen on 2024-25 (model fitted on 2022-23 and 2023-24 with the same correction) by the winner Brier, ties to minutes and the smaller alpha, and applied unchanged to 2025-26. K, N and the value formula are fixed here and not tuned"
+  },
+  "acceptance": "the chosen configuration is accepted if the paired winner Brier difference against REF on 2025-26 has a 95 % upper bound below 0. Log loss, calibration slope and intercept, the first 30 days of the season and the games where the correction moves the Elo gap by at least 25 points are reported but do not decide; the other three configurations are reported on 2025-26 for transparency and never decide",
+  "bootstrap": "paired differences resampled by whole dates, 400 replicates, seed 20261027",
+  "deployment_rule": "if accepted: fitted for 2026-27 on 2024-25 and 2025-26 with the 2026-27 games the producer already has, compared with the deployed model (player markets, team points and total must be identical; only the winner may change), rehearsed on a real cohort and deployed with its rollback in DEPLOYS.md after the user's go-ahead. If not accepted the producer does not change",
+  "limits": [
+    "retrospective on one test season; 2025-26 was looked at for other questions (bet365 lines, nba_live15 team points and total), never for the winner with a roster correction",
+    "the carried rating is a team rating, not a player value: a star traded away carries his old team's Elo, not his own worth; the production weight only gives stars a larger share",
+    "the first game of a season has no rotation (no roster source before the first game), so it is never corrected; summer trades are seen from the team's first game on",
+    "the live register is the real test"
+  ]
+}

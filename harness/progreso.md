@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-26 — NBA: el Elo ponderado por la plantilla actual no mejora el ganador
+Encargo tras IND @ MIL (modelo 69 % Milwaukee, mercado 41 %; Giannis ya en Miami): cada jugador de la rotación arrastra el Elo de los equipos con los que jugó sus últimos minutos. Protocolo congelado antes de calcular (`nba_roster_elo_protocol.json`). Decisión clave: no entra; las cuatro configuraciones empeoran en el ajuste (2024-25) y en la prueba (2025-26: la elegida +0,00038 [−0,00005; +0,00082]; con α 1 empeora con significación) y donde más mueve el Elo más empeora. El rating que arrastra un jugador es el de su equipo anterior, no lo que vale él; valorar traspasos exige un rating por jugador, que es otro modelo. El productor no cambia. `docs/nba_elo_plantilla_20261026.md`.
+
 ## 2026-10-26 — Notas recuperadas de una copia local desactualizada
 La carpeta principal seguía en `nba/v13-disponibilidad` (197 commits por detrás de `main`) con notas sin commitear y otras que se perdieron al fusionar sus commits: el código sí llegó a `main`, las notas no. Se copiaron tal cual 3 entradas de DEPLOYS.md, 7 de este registro y 3 secciones de tareas; no se copió lo que `main` ya cuenta con otra redacción (segunda auditoría NBA, props 100K, bet365 normalizadas). Las tareas que quedaban abiertas se cierran con su motivo verificado contra `main`, según la regla de la limpieza del 25-oct.
 

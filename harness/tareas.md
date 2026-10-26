@@ -3268,6 +3268,7 @@ Enfoque del titular: probabilidad estadística calibrada frente al resultado rea
 - [ ] Ocho rotaciones oficiales sin fuente (0022100074, 0022100353, 0022200793, 0022201007, 0022201040, 0022201205, 0022400831, 0022401211): `GameRotation` da 422 por ZenRows con proxy básico y premium. El motor en vivo no las usa; reintentar solo si cambia el origen. Gasto de la prueba: 106 de 1.212 créditos (tope 450), ciclo hasta el 6-nov.
 - [ ] Traspasos de verano: un jugador cambiado de equipo sin partidos de temporada regular se descarta del vivo aunque PropLine lo cotice (el archivo no trae su equipo). Cobertura medida el 26-oct: 0 descartados de 28. Solo si vuelve a ser un problema: añadir una fuente de plantillas y reajustar. docs/nba_live15_recalibracion_20261026.md.
 - [ ] Prior de pretemporada por plantilla (traspasos y novatos por minutos esperados): el prior estadístico de `nba_live15` no mostró evidencia.
+  - [x] (26-oct) Elo del ganador ponderado por la rotación actual (`nba_roster_elo_protocol.json`, `docs/nba_elo_plantilla_20261026.md`): rechazado, las cuatro configuraciones empeoran el Brier en 2024-25 y 2025-26. Queda abierto valorar traspasos con un rating propio de cada jugador (modelo nuevo).
 - [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
 - [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.
 
