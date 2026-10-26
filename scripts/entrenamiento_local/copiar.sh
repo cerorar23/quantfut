@@ -8,7 +8,7 @@ SSH=${QF_SSH:-quantfut}
 mkdir -p "$CARPETA"
 TABLAS="leagues teams estadios estadio_altitud matches odds_snapshots lineups lineups_historicas predictions
 prediction_batches model_artifacts picks pick_results estadisticas_jugador fotmob_partido fotmob_baja
-clima_era5_partido calendario_equipo calibration_runs"
+clima_era5_partido calendario_equipo calibration_runs fotmob_jugador_partido"
 T=$(for t in $TABLAS; do printf -- "-t public.%s " "$t"; done)
 ssh "$SSH" "set -e; cd ~/quantfut
   docker compose exec -T db pg_dump -U qf -d quantfut --schema-only --no-owner --no-privileges -n public | gzip > /tmp/entreno_schema.sql.gz
