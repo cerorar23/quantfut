@@ -25,3 +25,21 @@ def test_runtime_config_can_live_outside_the_repo(tmp_path, monkeypatch):
     assert module.CONFIG == tmp_path / 'motor_config.json'
     monkeypatch.delenv('TENNIS_MOTOR_CONFIG')
     importlib.reload(tennis_motor)
+
+
+def test_dynamic_features_clamp_estimated_future_round_days():
+    import math
+    import pandas as pd
+    from tennis_dynamic_v2 import State
+    from tennis_motor import dynamic_features, board_with_model
+    s, day = State(), pd.Timestamp('2026-10-25')
+    s.last['a'], s.recent['a'] = pd.Timestamp('2026-10-27'), [pd.Timestamp('2026-10-27')]  # estimated final day of this week
+    s.last['b'], s.recent['b'] = pd.Timestamp('2026-10-20'), [pd.Timestamp('2026-10-20')]
+    f = dynamic_features(s, 'a', 'b', 'Hard', day)  # the frozen State.features raised "math domain error" here
+    assert f['d_layoff'] == pytest.approx(-math.log1p(5)) and f['d_load14'] == 0
+    engine = recentre(.66, .62, Rules(3), .2, .70)
+    board = dict(rows=[dict(contract=dict(kind='games_handicap', selection='A', line=-2, set_number=None, score=None), market=.5, books=1),
+                       dict(contract=dict(kind='sets_total', selection='over', line=3.5, set_number=None, score=None), market=.5, books=1)])
+    rows = board_with_model(engine, board)['rows']
+    p = engine.probabilities(Contract('games_handicap', 'A', -2))
+    assert len(rows) == 1 and rows[0]['model'] == pytest.approx(p['win'] / (1 - p['push']))  # 3.5 sets is not a best-of-3 line
