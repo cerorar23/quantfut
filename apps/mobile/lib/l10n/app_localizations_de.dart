@@ -329,6 +329,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get artTransparency => 'TRANSPARENZ';
 
   @override
+  String get bannerAwaiting =>
+      'SPIEL BEENDET · offizielles Ergebnis ausstehend';
+
+  @override
   String get bannerLive => 'SPIEL LÄUFT · Prognose vor Anpfiff versiegelt';
 
   @override
@@ -441,7 +445,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Kein hervorgehobener Tipp mit einer Quote zwischen 1.20 und 1.60 und einer Wahrscheinlichkeit zwischen 74 % und 85 %.';
+      'Kein Tipp dieses Spiels kommt in die Hervorhebung (Quote 1,20 bis 1,60 und Wahrscheinlichkeit 74 % bis 85 %). Die offenen Tipps stehen in der Liste unten.';
 
   @override
   String get detailNoH2h => 'Für dieses Spiel sind keine Begegnungen erfasst.';
@@ -1207,6 +1211,9 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'Der Ring ist die historische Trefferquote der besten validierten Linie jedes Marktes; „Veröffentlicht“ sind die bereits ausgewerteten Prognosen. Es sind Prognosen vor dem Spiel, keine Live-Hinweise, und keine Wahrscheinlichkeit garantiert ein Ergebnis.';
+
+  @override
+  String get matchAwaitingResult => 'Ergebnis ausstehend';
 
   @override
   String mdCornersTotal(Object total) {
@@ -2092,6 +2099,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get selHtGoalYes => 'In der 1. Halbzeit fällt ein Tor';
+
+  @override
+  String selTeamGoalsLine(String side, String line, String team) {
+    String _temp0 = intl.Intl.selectLogic(side, {
+      'over': 'Über $line Tore von $team',
+      'other': 'Unter $line Tore von $team',
+    });
+    return '$_temp0';
+  }
 
   @override
   String selTeamOrDraw(String team) {

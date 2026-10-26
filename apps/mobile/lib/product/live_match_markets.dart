@@ -197,31 +197,37 @@ class _OpenRow extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: liveGreen.withValues(alpha: .13),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    liveText(
-                      '@${decimalText(row['cuota'])}',
-                      size: 15,
-                      bold: true,
-                      color: liveGreen,
-                    ),
-                    liveText(
-                      published ? l10n.mmPublishedOdds : l10n.mmFairOdds,
-                      size: 8,
-                      color: liveMuted,
-                    ),
-                  ],
+              // Flexible: «Veröffentlichte Quote» a 10 px no cabe en una línea en
+              // pantallas estrechas; parte en dos en vez de desbordar.
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: liveGreen.withValues(alpha: .13),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      liveText(
+                        '@${decimalText(row['cuota'])}',
+                        size: 15,
+                        bold: true,
+                        color: liveGreen,
+                      ),
+                      Text(
+                        published ? l10n.mmPublishedOdds : l10n.mmFairOdds,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 10, color: liveMuted),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(width: 12),
               const Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,

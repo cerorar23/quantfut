@@ -760,7 +760,7 @@ class MatchFixtureHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 if (future && match['estado'] == 'scheduled') ...[
-                  liveText(l10n.fixtureStartsIn, size: 8, color: liveMuted),
+                  liveText(l10n.fixtureStartsIn, size: 10, color: liveMuted),
                   const SizedBox(height: 5),
                   CountdownTimer(
                     endTime: kickoff.millisecondsSinceEpoch,
@@ -771,14 +771,17 @@ class MatchFixtureHeader extends StatelessWidget {
                     ),
                   ),
                 ] else
-                  liveText(
+                  Text(
                     match['estado'] == 'finished'
                         ? l10n.fixtureFinished
-                        : match['estado'] == 'live'
+                        : match['estado'] == 'live' || match['vivo'] is Map
                         ? l10n.fixtureLive
+                        // El saque ya pasó y no consta el resultado: no se dice «hora local».
+                        : !future && awaitingResult(match['kickoff_utc'])
+                        ? l10n.matchAwaitingResult.toUpperCase()
                         : l10n.fixtureLocalTime,
-                    size: 8,
-                    color: liveMuted,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 10, color: liveMuted),
                   ),
               ],
             ),

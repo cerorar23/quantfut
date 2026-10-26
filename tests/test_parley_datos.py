@@ -203,8 +203,12 @@ def test_informe_agrupa_por_dia_y_solo_sellados(monkeypatch):
     monkeypatch.setattr(hashchain, "LOTE_PARLEY_DESDE", date(2026, 10, 12))
     inf = pd_.informe_publico()
     assert inf["dias"][0]["dia"] == date(2026, 10, 12) and inf["dias"][0]["chain_sha256"] == "abc"
-    assert inf["dias"][0]["tickets"][0]["patas"][0]["texto"] == "Más de 1,5 goles"
+    leg = inf["dias"][0]["tickets"][0]["patas"][0]
+    assert leg["texto"] == "Más de 1,5 goles"
+    # La app traduce la pata desde estos campos; sin ellos salía siempre en español.
+    assert (leg["market"], leg["selection"], leg["line"]) == ("totals", "over", 1.5)
     assert all("prediction_batches" in s for s in sqls)
+    assert any("COALESCE(th.display_name" in s for s in sqls)   # el mismo nombre que en el resto
 
 
 def test_informe_sin_corte_no_enseña_nada(monkeypatch):

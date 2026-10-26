@@ -329,6 +329,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get artTransparency => 'TRANSPARÊNCIA';
 
   @override
+  String get bannerAwaiting =>
+      'JOGO DISPUTADO · aguardando o resultado oficial';
+
+  @override
   String get bannerLive =>
       'JOGO EM ANDAMENTO · prognóstico selado antes do início';
 
@@ -442,7 +446,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Não há prognóstico em destaque com odds entre 1.20 e 1.60 e probabilidade entre 74% e 85%.';
+      'Nenhum prognóstico deste jogo entra no destaque (odds de 1,20 a 1,60 e probabilidade de 74% a 85%). Os abertos estão na lista abaixo.';
 
   @override
   String get detailNoH2h => 'Não há confrontos registrados para este jogo.';
@@ -1205,6 +1209,9 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'O anel é o acerto histórico da melhor linha validada de cada mercado; «Publicado» são os prognósticos já resolvidos. São prognósticos pré-jogo, não alertas ao vivo, e nenhuma probabilidade garante um resultado.';
+
+  @override
+  String get matchAwaitingResult => 'Aguardando resultado';
 
   @override
   String mdCornersTotal(Object total) {
@@ -2101,6 +2108,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get selHtGoalYes => 'Haverá gol no 1T';
+
+  @override
+  String selTeamGoalsLine(String side, String line, String team) {
+    String _temp0 = intl.Intl.selectLogic(side, {
+      'over': 'Mais de $line gols de $team',
+      'other': 'Menos de $line gols de $team',
+    });
+    return '$_temp0';
+  }
 
   @override
   String selTeamOrDraw(String team) {

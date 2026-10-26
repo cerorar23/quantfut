@@ -179,6 +179,47 @@ def solo_candados(bloqueados: list[dict]) -> dict | None:
     return {'filas': filas, 'marcadores': None, 'abiertas': 0, 'total': len(filas), 'sin_modelo': True}
 
 
+def _prob_pick(pick: dict | None) -> float | None:
+    try:
+        p = float((pick or {})['prob'])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return p if math.isfinite(p) and 0 < p < 1 else None
+
+
+def _con_pick(f: dict, pick: dict | None) -> dict:
+    """Fila abierta con la probabilidad sellada y la cuota publicada del pick, si las trae."""
+    prob = _prob_pick(pick)
+    if prob is not None:
+        f['prob'], f['nivel'], f['cuota'] = round(prob, 4), nivel(prob), round(1.0 / prob, 2)
+    price = (pick or {}).get('ref_price', (pick or {}).get('price'))
+    if isinstance(price, (int, float)) and price > 1:
+        f['cuota'], f['cuota_tipo'] = round(float(price), 2), 'publicada'
+        f['oportunidad'] = f['prob'] * float(price) > 1.02
+    return f
+
+
+_TITULO_DE_MERCADO = {'h2h': 'Ganador del partido', 'double_chance': 'Doble oportunidad',
+                      'totals': 'Goles totales', 'team_totals_home': 'Goles del local',
+                      'team_totals_away': 'Goles del visitante', 'btts': 'Ambos marcan',
+                      'spreads': 'Hándicap asiático', 'win_to_nil': 'Gana a cero',
+                      'ht_btts': 'Ambos anotan en el 1er tiempo', 'ht_goal': 'Gol en el 1er tiempo',
+                      'corners': 'Córners totales', 'corners_home': 'Córners del local',
+                      'corners_away': 'Córners del visitante', 'cards': 'Tarjetas totales'}
+
+
+def _fila_de_pick(pick: dict) -> dict | None:
+    """Fila para un pick abierto que el análisis no lista (otro lado u otra línea)."""
+    market, prob = pick.get('market'), _prob_pick(pick)
+    if market not in GRUPO_DE_MERCADO or prob is None:
+        return None
+    line = None if pick.get('line') is None else float(pick['line'])
+    grupo = 'EMPATE NO ACCIÓN' if market == 'spreads' and line == 0 else GRUPO_DE_MERCADO[market]
+    titulo = 'Empate no acción' if grupo == 'EMPATE NO ACCIÓN' else _TITULO_DE_MERCADO[market]
+    return _fila(grupo, titulo, market, str(pick.get('selection')), line,
+                 str(pick.get('texto') or ''), prob)
+
+
 def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
                    plus: bool) -> tuple[list[dict], list[dict] | None]:
     """
@@ -189,19 +230,27 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
     Las filas sin acceso salen con candado y SOLO su categoría: sin línea, selección,
     probabilidad, nivel ni cuota, y en orden canónico (el orden por probabilidad
     filtraría cuál es más probable). Las abiertas llevan la cuota publicada del pick.
+
+    Una fila que es un pick abierto enseña la probabilidad SELLADA del pick, no la del
+    análisis: la misma selección no puede salir con dos porcentajes en la misma pantalla
+    (auditoría 2026-10-25: 76 % en el destacado y 79 % en la lista). Y un pick abierto
+    cuyo lado no es el más probable del análisis («Barcelona o empate» cuando la lista da
+    «Barcelona o Real Madrid») no desaparece: se añade como fila propia.
     """
     abiertas_f, cerradas = [], []
+    usadas: set[str] = set()
     for f in filas:
         pick = abiertas.get(f['id'])
         if plus or pick is not None:
-            f = dict(f)
-            price = (pick or {}).get('ref_price', (pick or {}).get('price'))
-            if isinstance(price, (int, float)) and price > 1:
-                f['cuota'], f['cuota_tipo'] = round(float(price), 2), 'publicada'
-                f['oportunidad'] = f['prob'] * float(price) > 1.02
+            f = _con_pick(dict(f), pick)
+            if pick is not None:
+                usadas.add(f['id'])
             abiertas_f.append(f)
         else:
             cerradas.append({'id': f['id'], 'grupo': f['grupo'], 'locked': True})
+    for key, pick in abiertas.items():
+        if key not in usadas and (fila := _fila_de_pick(pick)) is not None:
+            abiertas_f.append(_con_pick(fila, pick))
     abiertas_f.sort(key=lambda f: -f['prob'])
     cerradas.sort(key=lambda f: GRUPOS.index(f['grupo']) if f['grupo'] in GRUPOS else len(GRUPOS))
     return abiertas_f + cerradas, (marcadores if plus or abiertas else None)

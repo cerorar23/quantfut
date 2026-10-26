@@ -196,7 +196,9 @@ class ForecastPanel extends StatelessWidget {
         : '';
     final l10n = AppLocale.instance.l10n;
     final label = outcome == null
-        ? l10n.bannerLive
+        ? (awaitingResult(pick['kickoff_utc'])
+              ? l10n.bannerAwaiting
+              : l10n.bannerLive)
         : won
         ? l10n.bannerWon(score)
         : l10n.bannerLost(score);
@@ -225,7 +227,8 @@ class ForecastPanel extends StatelessWidget {
     final probs = jsonMap(ficha['probabilities']);
     final local = jsonMap(ficha['local']), away = jsonMap(ficha['visitante']);
     final free = pick['free'] == true;
-    final book = pick['ref_book'] ?? pick['book'];
+    final rawBook = pick['ref_book'] ?? pick['book'];
+    final book = rawBook == null ? null : bookName(rawBook);
     // Favorito 1X2: del modelo (o del 1X2 guardado), el lado con más probabilidad.
     final side = <(String, num)>[
       if ((modelo['local'] ?? probs['home']) is num)
@@ -506,7 +509,7 @@ class ForecastPanel extends StatelessWidget {
       text,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: color),
+      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color),
     ),
   );
 }
@@ -549,7 +552,7 @@ class _Tile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            fontSize: 9,
+            fontSize: 10,
             letterSpacing: .4,
             fontWeight: FontWeight.w700,
             color: liveMuted,

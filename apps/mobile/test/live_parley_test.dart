@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_parley.dart';
 import 'package:gobet/l10n/app_locale.dart';
@@ -48,6 +49,10 @@ Future<_Api> open(
   await tester.pump(const Duration(milliseconds: 300));
   return api;
 }
+
+/// Fecha de un día anterior como la enseña la app (idioma actual, no «2026-10-11»).
+String dayText(String iso) =>
+    toBeginningOfSentenceCase(localDate(DateFormat.yMMMEd, DateTime.parse(iso)));
 
 const rules = {
   'escalones': [
@@ -167,7 +172,7 @@ void main() {
     expect(find.text('Pumas · Cruz Azul'), findsOneWidget);
     expect(find.text('Resultado 2-1'), findsOneWidget);
     expect(find.text('Días anteriores'), findsOneWidget);
-    expect(find.text('2026-10-11'), findsOneWidget);
+    expect(find.text(dayText('2026-10-11')), findsOneWidget);
     expect(find.textContaining('1/2 acertados'), findsOneWidget);
     expect(find.text('1 gratis al día'), findsOneWidget);
     expect(find.text('Historial del Parley'), findsNothing);
@@ -196,11 +201,11 @@ void main() {
       ],
     });
     expect(find.text('Días anteriores'), findsOneWidget);
-    expect(find.text('2026-10-20'), findsOneWidget);
+    expect(find.text(dayText('2026-10-20')), findsOneWidget);
     expect(find.textContaining('4 parlays'), findsOneWidget);
-    expect(find.text('2026-10-19'), findsOneWidget);
+    expect(find.text(dayText('2026-10-19')), findsOneWidget);
     expect(find.textContaining('3 parlays'), findsOneWidget);
-    expect(find.text('2026-10-18'), findsNothing);
+    expect(find.text(dayText('2026-10-18')), findsNothing);
   });
 
   testWidgets('si falla la carga se ofrece reintentar', (tester) async {

@@ -446,6 +446,16 @@ String kickoffText(dynamic value) {
   return '${localDate(DateFormat.Md, date)} · ${localDate(DateFormat.Hm, date)}';
 }
 
+/// Duración con la que un partido ya debería haber terminado (90' + descanso + añadido).
+const matchSpan = Duration(minutes: 130);
+
+/// El partido ya debería haber terminado y el resultado aún no consta. El resultado
+/// llega por ciclos: pasado [matchSpan] se dice «esperando resultado», no «en juego».
+bool awaitingResult(dynamic kickoff, [DateTime? now]) {
+  final ko = dateValue(kickoff);
+  return ko != null && (now ?? DateTime.now()).difference(ko) >= matchSpan;
+}
+
 /// Formatea una fecha con el idioma actual. Si los datos de ese idioma aún no
 /// están cargados, usa inglés (siempre disponible) en lugar de fallar.
 String localDate(DateFormat Function(String locale) pattern, DateTime date) {

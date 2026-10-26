@@ -329,6 +329,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get artTransparency => 'TRANSPARENCE';
 
   @override
+  String get bannerAwaiting => 'MATCH JOUÉ · en attente du résultat officiel';
+
+  @override
   String get bannerLive =>
       'MATCH EN COURS · pronostic scellé avant le coup d\'envoi';
 
@@ -442,7 +445,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Aucun pronostic à la une avec une cote entre 1.20 et 1.60 et une probabilité entre 74 % et 85 %.';
+      'Aucun pronostic de ce match n’entre dans la une (cote de 1,20 à 1,60 et probabilité de 74 % à 85 %). Les pronostics ouverts sont dans la liste ci-dessous.';
 
   @override
   String get detailNoH2h => 'Aucune confrontation enregistrée pour ce match.';
@@ -1208,6 +1211,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'L\'anneau est le taux de réussite historique de la meilleure ligne validée de chaque marché ; « Publié » désigne les pronostics déjà résolus. Ce sont des pronostics d\'avant-match, pas des alertes en direct, et aucune probabilité ne garantit un résultat.';
+
+  @override
+  String get matchAwaitingResult => 'Résultat en attente';
 
   @override
   String mdCornersTotal(Object total) {
@@ -2108,6 +2114,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get selHtGoalYes => 'Il y aura un but en 1re mi-temps';
+
+  @override
+  String selTeamGoalsLine(String side, String line, String team) {
+    String _temp0 = intl.Intl.selectLogic(side, {
+      'over': 'Plus de $line buts de $team',
+      'other': 'Moins de $line buts de $team',
+    });
+    return '$_temp0';
+  }
 
   @override
   String selTeamOrDraw(String team) {

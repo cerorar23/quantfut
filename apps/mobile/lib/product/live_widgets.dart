@@ -198,7 +198,9 @@ class RealPickCard extends StatelessWidget {
             const SizedBox(height: 5),
             liveText(
               l10n.pickOddsAtPublish(
-                pick['ref_book'] ?? pick['book'] ?? l10n.pickSourceNA,
+                (pick['ref_book'] ?? pick['book']) == null
+                    ? l10n.pickSourceNA
+                    : bookName(pick['ref_book'] ?? pick['book']),
               ),
               size: 11,
               color: liveMuted,
