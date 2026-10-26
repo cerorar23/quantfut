@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-26 — Modelo dinámico y prior de ascendidos medidos: el prior no tiene señal; la mezcla dinámica gana poco y no se despliega
+Decisión clave: con 3 años de walk-forward (12.878 partidos), el prior de ascendidos no mejora (ΔRPS −0,00002; el sesgo del último año era ruido) y el Kalman del repo solo empata con el DC una vez quitada su reversión a la media, que lo empeoraba. La mezcla log-lineal DC 270/90/730 + Kalman, con pesos ajustados en dos años, da −0,0008 en el tercero (p95 −0,0003) y −0,0006 en los tres, mejora la calibración y se suma al contexto (altitud + once), pero el año 2 queda en cero, las copas empeoran y exige un estado de Kalman diario y tres DC en producción: no se despliega sin decisión del titular. Informe: `docs/modelo_dinamico_y_ascendidos_20261026.md`.
+
 ## 2026-10-26 — NBA 1.5.0: no se recalibra el equipo; los jugadores ya no dependen de una sola captura de PropLine
 
 La recalibración de total y puntos de equipo se probó con protocolo congelado (`nba_live15`) y no entra: en sus propias
