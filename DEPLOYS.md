@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-26 00:53 UTC · API: mercados del partido y patas del Parley desde `main` · API `quantfut-api-propline:98bdfcc-app-8c57b05` (`main` `f227fd9`, PR #146)
+- **Motivo:** auditoría de la app (`harness/progreso.md`, 25-oct): la fila de un pick abierto enseñaba otra probabilidad que el destacado (76 % frente a 79 %), un pick gratis de lado distinto al del análisis desaparecía de «Mercados del partido», y las patas del Parley no traían `selection`/`line` (la app no podía traducirlas).
+- **Estado previo comprobado (00:52 UTC):** API `98bdfcc`; `partido_mercados.py` `b396d4bf…`, `parley_datos.py` `f9788ab4…` y `alta_prob.py` `f59a8832…` = `main` `bf1204e`; worker `98bdfcc-alta-a53dfd3` sin tocar; nadie más desplegando.
+- **API:** imagen `FROM quantfut-api-propline:98bdfcc` + solo esos tres archivos de `git archive` (sha256 `276ca189…`, `dfdc1b53…`, `baee7a8b…`, idénticos a `main` `f227fd9`). Ensayo previo en contenedor desechable sin puertos: Barcelona–Real Madrid y Central Córdoba–Vélez con una sola probabilidad por selección y el pick gratis presente en la lista; pata del Parley con `market/selection/line`. Compose: solo cambia la etiqueta de la API; recreado solo `api`.
+- **Verificado en el dominio real:** `/health`, `/parley`, `/mobile/v1/home`, `/mobile/v1/config`, `/model-card` y `/mobile/v1/markets/history` 200; ficha de Barcelona–Real Madrid con «Barcelona o empate» 75 % cuota 1,29 en la lista; sin errores en el registro de la API.
+- **No incluye:** el APK `1.0.0+4` (la app lee estos datos igual con la versión anterior; los textos nuevos llegan al compilarlo).
+- Respaldo: `~/quantfut/backups/20261026-api-app-auditoria/` (`docker-compose.yml`, `api_image.txt`).
+- **Vuelta atrás:** `cp -p ~/quantfut/backups/20261026-api-app-auditoria/docker-compose.yml ~/quantfut/ && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate api` (vuelve a `98bdfcc`; la imagen sigue en el servidor).
+
 ### 2026-10-25 23:39 UTC · Alta probabilidad solo con cuota · worker `quantfut-worker-propline:98bdfcc-alta-a53dfd3` (`main` `a53dfd3`, PR #142)
 - **Motivo:** el 25-oct se sellaron 18 de 22 pronósticos de alta probabilidad (323 de 385 en la ampliada) sin cuota. La selección tomaba la última captura de PropLine, que casi siempre trae solo a Pinnacle, y el modelo proponía líneas que nadie cotiza. Orden del titular: no publicar nada sin cuota y desplegar antes de la selección diaria (`qf.publish.daily`, 09:00 UTC).
 - **Estado previo comprobado (23:35 UTC):** worker `98bdfcc-tarjetas-3b8e342` (entrada de abajo; la sesión que lo desplegó confirmó que había terminado). `alta_prob_datos.py`, `alta_prob_ext.py` y `escalera_datos.py` en el worker = `main` `a3b7168` (antes del #142). Ningún proceso Python ni captura de PropLine en marcha. Sin reentrenamiento hoy.

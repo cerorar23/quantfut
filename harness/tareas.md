@@ -3297,4 +3297,5 @@ Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScor
 - [x] «Goles de equipo» decía «Marca X» con cualquier línea o lado (app y `alta_prob.texto`); tarjetas y córners por equipo traducidos.
 - [x] Partido con el saque pasado y sin resultado: «Esperando resultado» (Inicio, cabecera y banner del pronóstico) en lugar de «Hora local»/«En juego» a las 3 h. Clave nueva en 6 idiomas.
 - [x] Casas con nombre comercial (`bookName`: BetOnline, Bovada…), fecha del historial del Parley en el idioma del usuario, textos de 8 px a 10 px y aviso «sin destacado» con coma decimal.
-- [ ] Desplegar la API (`partido_mercados.py`, `parley_datos.py`, `alta_prob.py`) y un nuevo build de la app con código de versión subido. Necesita el visto bueno del titular.
+- [x] API desplegada el 26-oct 00:53 UTC (`98bdfcc-app-8c57b05`, `main` `f227fd9`).
+- [ ] Compilar y publicar el APK 1.0.0+4 (la app nueva trae los textos traducidos y «Esperando resultado").
