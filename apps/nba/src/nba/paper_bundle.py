@@ -7,7 +7,8 @@ import tarfile
 from .audit import digest, write_json
 from .paper_followup import verify_plan
 
-DEADLINE_UTC = '2026-10-22T12:00:00+00:00'  # end of the RUN071 paper follow-up
+
+DEADLINE_UTC = '2026-10-22T12:00:00+00:00'
 
 
 def build_bundle(plan_folder, initial_state, destination, workspace=None):
