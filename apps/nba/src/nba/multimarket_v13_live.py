@@ -26,7 +26,7 @@ from .audit import digest, write_json
 from .context import name_key
 from .injury_t60 import CONTROL, MISSING
 
-VERSION = 'nba-multimarket-live-1.4.0'
+VERSION = 'nba-multimarket-live-1.5.0'
 SEASON = '2026-27'
 EASTERN = ZoneInfo('America/New_York')
 HEADERS = {'User-Agent': 'Mozilla/5.0 NBA research receipt capture', 'Accept': 'application/json,text/html'}

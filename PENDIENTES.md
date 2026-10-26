@@ -24,7 +24,7 @@ Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (c
 - Comprar, tras la renovación del 1-nov, los cierres históricos que faltan: 590 snapshots (~5.900 créditos) con `python -m qf.ingest.cierres_odds_api fetch --presupuesto 5900`. Los partidos nuevos ya traen su cierre de PropLine.
 - `SOFT_BOOKS` frente a las casas de PropLine: solo 1xbet coincide, así que la sombra sharp ve 0 ofertas de casas blandas.
 - Licencia de BetsAPI, fuente del calendario de copas y tope mensual de Apify (el ritmo del 24-25 oct supera los 15 USD/mes).
-- NBA: lesiones de ESPN y el paquete de The Odds API para props (plan 5M, 119 USD). (Productor 1.4b desplegado y captura `nba-live13-price` retirada el 25-oct: `docs/nba_auditoria_20261025.md`.)
+- NBA: decidir si las lesiones de ESPN entran como segunda señal. (Props históricos descargados con el plan de 100K; productor 1.5.0 con umbral estadístico para jugadores: `docs/nba_live15_recalibracion_20261026.md`.)
 - Tenis: cuotas de cierre y apagar la automatización de Codex «continuidad-de-validaci-n-predictiva-de-tenis» (solo desde Codex).
 - Aviso push al sellar.
 
@@ -75,8 +75,8 @@ Una señal solo entra si gana fuera de muestra. Orden: F9 con F8 en paralelo →
 - Quitar rutas internas de `/model-card` y añadir `Content-Security-Policy` (prioridad baja).
 
 ## 5. NBA y tenis (otras sesiones; detalle en `harness/tareas.md`)
-- NBA: doble-doble, Q3/Q4 y margen por rangos (faltan en el archivo normalizado), recalibración de totales por la deriva de
-  anotación y postemporada 2021-22 sin fecha (`docs/nba_productor_14b_20261025.md`).
+- NBA: doble-doble, Q3/Q4 y margen por rangos (faltan en el archivo normalizado), modelo único del marcador, prior de
+  plantilla y postemporada 2021-22 sin fecha. La recalibración de totales se probó y no entra (`docs/nba_live15_recalibracion_20261026.md`).
 - Tenis (motor en el VPS desde el 20-oct, checkout `quantfut-tenis`): evidencia prospectiva por mercado con mínimos fijados antes
   de los resultados; identidades WTA/ATP con varios IDs; cobertura externa de seis claves; Palm Hills septiembre de 2025; viajes y
   descanso con historial completo; techo y muestra para el clima. Sin ROI demostrado ni picks de tenis

@@ -1,5 +1,15 @@
 # Registro de decisiones — QuantFut
 
+## 2026-10-26 — NBA 1.5.0: no se recalibra el equipo; los jugadores ya no dependen de una sola captura de PropLine
+
+La recalibración de total y puntos de equipo se probó con protocolo congelado (`nba_live15`) y no entra: en sus propias
+líneas el modelo ya está calibrado en 2025-26 y el sesgo de una temporada no sirve para la siguiente (cambia de signo).
+El intercepto dentro de la temporada salió peor porque aprende de partidos predichos sin disponibilidad; aprender de las
+cohortes selladas solo se puede medir hacia delante. En vivo, una captura de PropLine perdida (cuota diaria en reserva)
+dejó una cohorte entera sin jugadores y las pérdidas no se sellaban nunca (menos de 2 casas). Decisión: la línea de una
+casa sigue mandando cuando existe, y si no, el jugador de rotación se pronostica en el umbral estadístico sobre el que
+ya está calibrado el modelo; así la cobertura no depende del proveedor y no se reajusta ningún parámetro.
+
 ## 2026-10-26 — El Motor A se entrena en local y se sube
 
 Decisión del titular: el entrenamiento se hace en local y luego se sube (`scripts/entrenamiento_local/`). La copia
