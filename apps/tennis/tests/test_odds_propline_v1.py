@@ -59,3 +59,36 @@ def test_motor_reads_only_the_configured_source(tmp_path):
     empty = dict(config, propline_root=str(tmp_path / 'empty'))
     assert live_market(empty, 'Ana Paz', 'Eva Sol', before) is None  # The Odds API ledger is never a fallback
     assert live_market({}, 'Ana Paz', 'Eva Sol', before) is None
+
+
+def test_market_board_maps_every_offered_line_to_engine_contracts(tmp_path):
+    from tennis_odds_propline_v1 import market_board, consensus
+
+    def o(name, side, price, point=None):
+        return dict(name=name, side=side, price=price, point=point, player_id=None, book_updated_at=None, last_seen_at='2026-10-24T10:00:00Z')
+
+    def m(key, outcomes, period=None, line_type='main'):
+        return dict(key=key, period=period, team=None, line_type=line_type, outcomes=outcomes)
+    e = event()
+    e['bookmakers'] = [dict(key='pinnacle', markets=[
+        m('h2h', [o('Ana Paz', 'home', -200), o('Eva Sol', 'away', 160)]),
+        m('spreads', [o('Ana Paz', 'home', -110, -3.5), o('Eva Sol', 'away', -110, 3.5)]),
+        m('totals', [o('Over', None, 100, 21.5), o('Under', None, -120, 21.5)]),
+        m('totals', [o('Over', None, -110, 9.5), o('Under', None, -110, 9.5)], period='s1'),
+        m('h2h', [o('Ana Paz', 'home', -150), o('Eva Sol', 'away', 120)], period='s1'),
+        m('set_spread', [o('Ana Paz', 'home', 150, -1.5), o('Eva Sol', 'away', -180, 1.5)]),
+        m('player_aces', [o('Over', None, -110, 5.5)]),
+        m('totals', [o('Over', None, 130, 23.5)], line_type='alternate')])]  # one side only: no margin-free price
+    archive(tmp_path, [e])
+    board = market_board(tmp_path, 'Eva Sol', 'Ana Paz', (NOW + timedelta(minutes=20)).isoformat())
+    rows = {(r['contract']['kind'], r['contract']['line'], r['contract']['set_number']): r for r in board['rows']}
+    assert set(rows) == {('winner', None, None), ('games_handicap', 3.5, None), ('games_total', 21.5, None), ('set_games_total', 9.5, 1),
+                         ('set_winner', None, 1), ('sets_handicap', 1.5, None)}  # oriented to player A = Eva Sol
+    assert rows[('games_handicap', 3.5, None)]['market'] == pytest.approx(.5)
+    assert rows[('winner', None, None)]['market'] == pytest.approx(1 - (2 / 3) / (2 / 3 + 1 / 2.6))
+    assert board['event_id'] == 't1' and board['unsupported_quotes'] == 1
+    assert market_board(tmp_path, 'Ana Paz', 'Nobody', NOW.isoformat()) is None
+    tb, _ = consensus([dict(market='total_tiebreaks', period=None, name='Over', point=.5, bookmaker='x', price=2.0),
+                       dict(market='total_tiebreaks', period=None, name='Under', point=.5, bookmaker='x', price=2.0),
+                       dict(market='total_tiebreaks', period=None, name='Over', point=1.5, bookmaker='x', price=5.0)], 'A', 'B')
+    assert [r['contract']['kind'] for r in tb] == ['tiebreak'] and tb[0]['contract']['selection'] == 'yes'

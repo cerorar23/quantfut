@@ -10,6 +10,25 @@ dejó una cohorte entera sin jugadores y las pérdidas no se sellaban nunca (men
 casa sigue mandando cuando existe, y si no, el jugador de rotación se pronostica en el umbral estadístico sobre el que
 ya está calibrado el modelo; así la cobertura no depende del proveedor y no se reajusta ningún parámetro.
 
+## 2026-10-26 — Tenis: sellado cerca del inicio y todas las líneas de las casas
+
+Auditoría del motor de tenis (`docs/tenis_auditoria_20261026.md`). El sellado pasa de dos veces al día a cada hora, 1,5-2,5 h
+antes del partido: el precio sin margen es la mejor entrada del ganador y es más preciso cuanto más cerca del inicio, y además
+un cron en hora de Berlín dejó la pasada nocturna en la hora en que PropLine no captura. Cada sellado guarda todas las líneas
+ofrecidas con la probabilidad del motor en la misma línea, porque comparar en líneas fijas no mide nada frente al mercado. Con
+27 partidos con cierre, el motor bate al cierre en totales de juegos (el mercado sobrevalora el «más de»): por eso solo se
+ancla al mercado el ganador, no los totales. La superficie del torneo sale de la edición de la misma época del año.
+
+## 2026-10-26 — Fases del Motor A medidas con el modelo nuevo: lo robusto es pequeño y no se activa nada
+
+Con el modelo entrenado en local se repitió la medición de cada fase (`docs/fases_motor_a_20261026.md`). Decisión clave: no
+activar nada. Lo único estable en cuatro particiones de validación es la combinación altitud + impacto del once (ΔRPS −0,0007
+a −0,0010, una décima parte de los 0,0096 que separan al modelo del mercado), y hacia adelante la altitud en sombra no lo
+confirma todavía (32 partidos, +0,0010, p95 +0,0057). Descanso, clima, bajas, valor del once, tres ligas más (la Süper Lig
+queda a +0,0187 del mercado) y las correcciones de empate y de nivel de goles (−0,00007, no significativa) no pasan. Los
+artefactos de sombra regenerados no se subieron: el del once vigente se ajustó con 11.920 filas y el nuevo con 4.264. Las
+mediciones quedan como scripts en `scripts/entrenamiento_local/` para repetirlas tras cada reentrenamiento.
+
 ## 2026-10-26 — El Motor A se entrena en local y se sube
 
 Decisión del titular: el entrenamiento se hace en local y luego se sube (`scripts/entrenamiento_local/`). La copia
