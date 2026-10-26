@@ -71,6 +71,7 @@ def test_editions_by_calendar_initials_and_level_separate_namesakes():
     with pytest.raises(ValueError, match='ambiguous'):
         d.player('WTA', 'X. Wang')
     assert d.player('ATP', 'B. Nakashima', '500') == 'a1' and d.player('ATP', 'B. Nakashima', 'C') == 'a3'
+    assert d.player('ATP', 'L. Ruiz Garcia') == 'a4'  # second surname absent from the data
     with pytest.raises(ValueError, match='ambiguous'):
         d.player('ATP', 'B. Nakashima')
 
