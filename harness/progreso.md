@@ -4,6 +4,8 @@
 
 El titular pidió los pronósticos de jugadores de tenis. PropLine cotiza aces, dobles faltas, puntos de quiebre y juegos ganados por jugador (125-225 partidos por hora). Solo los juegos ganados salen de lo que el motor ya calcula (la misma distribución conjunta de juegos que da el total y el hándicap); los otros tres exigirían otro modelo y quedan fuera. El contrato vive en un paquete nuevo porque añadirlo al catálogo cambiaría los hashes del estudio multi-mercado congelado. En el mismo cambio, un partido sellado sin precio por un nombre intermedio en PropLine: se acepta solo el mismo nombre y apellido con nombres intermedios de más, nunca un parecido, porque un falso emparejamiento sellaría el precio de otro partido.
 
+Desplegado a las 15:45:35 UTC: imagen `quantfut-tenis:45f5876` (`main` `45f5876`, PR #177). Ensayo y vuelta atrás en `DEPLOYS.md`. Los «más de» de juegos por jugador heredan la diferencia que el motor ya tiene en el total de juegos (−0,04 frente al mercado); se mide fuera de muestra, no se corrige a mano.
+
 ## 27-oct-2026 · Ergonomía significa acomodo, sin cambiar el CSS
 
 El titular corrigió el alcance: mantener obligatoriamente el diseño anterior, sin cambiar colores, tarjetas ni botones. Se retira la hoja `ergonomia.css`; fútbol, NBA y tenis reutilizan `live-pick`, paneles, cabecera, controles y planes anteriores. El menú de escritorio deja de abrir un cajón diseñado solo para móvil; las herramientas adicionales quedan agrupadas con componentes ya existentes. Se añaden huellas fijas de los cuatro CSS anteriores para impedir que otro cambio visual vuelva a sustituirlos. La integración de datos reales se conserva.
