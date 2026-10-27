@@ -14,7 +14,6 @@ const files = new Map([
   ['/real-views.js', ['real-views.js', 'text/javascript; charset=utf-8']],
   ['/sports-data.js', ['sports-data.js', 'text/javascript; charset=utf-8']],
   ['/ergonomic-views.js', ['ergonomic-views.js', 'text/javascript; charset=utf-8']],
-  ['/ergonomia.css', ['ergonomia.css', 'text/css; charset=utf-8']],
   ['/public-data.js', ['public-data.js', 'text/javascript; charset=utf-8']],
   ['/fichas-data.js', ['fichas-data.js', 'text/javascript; charset=utf-8']],
   ['/membership.js', ['membership.js', 'text/javascript; charset=utf-8']],

@@ -31,11 +31,6 @@ def ergonomic_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "ergonomic-views.js", media_type="text/javascript")
 
 
-@router.get("/ergonomia.css")
-def ergonomic_styles() -> FileResponse:
-    return FileResponse(FRONTEND_DIR / "ergonomia.css", media_type="text/css")
-
-
 @router.get("/real-views.js")
 def real_views_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "real-views.js", media_type="text/javascript")
@@ -43,7 +38,7 @@ def real_views_script() -> FileResponse:
 
 @router.get("/")
 def index() -> FileResponse:
-    return FileResponse(FRONTEND_DIR / "index.html")
+    return FileResponse(FRONTEND_DIR / "index.html", headers={"Cache-Control": "no-cache, must-revalidate"})
 
 
 @router.get("/styles.css")
