@@ -432,7 +432,7 @@
   "picksLockedHint": "With VIP you see the pick, the probability and the analysis",
   "picksLockedShow": "Show the list",
   "picksLockedTitle": "{count, plural, one{1 more prediction with VIP} other{{count} more predictions with VIP}}",
-  "picksRangeHint": "{min}–{max}% probability · up to {free} free",
+  "picksRangeHint": "{min}–{max}% probability · {free}% free",
   "picksSeeAnalysis": "See analysis",
   "picksTomorrow": "Tomorrow",
   "picksTrainingReasons": "Model in training · {reasons}",

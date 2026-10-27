@@ -1416,9 +1416,9 @@
       }
     }
   },
-  "picksRangeHint": "{min}–{max} % de probabilidad · hasta {free} gratis",
+  "picksRangeHint": "{min}–{max} % de probabilidad · {free} % gratis",
   "@picksRangeHint": {
-    "description": "Rango de probabilidad de Alta probabilidad y tope de gratis; los límites los manda el servidor.",
+    "description": "Rango de probabilidad de Alta probabilidad y porcentaje de los pronósticos del día que son gratis; los límites los manda el servidor.",
     "placeholders": {
       "min": {
         "type": "int"

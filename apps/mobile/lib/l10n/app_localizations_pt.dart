@@ -1604,7 +1604,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String picksRangeHint(int min, int max, int free) {
-    return '$min–$max% de probabilidade · até $free grátis';
+    return '$min–$max% de probabilidade · $free% grátis';
   }
 
   @override

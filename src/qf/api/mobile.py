@@ -31,15 +31,11 @@ PROB_MIN, PROB_MAX = .75, .90          # escalera
 HIGH_MIN, HIGH_MAX = .73, .95
 # Días de agenda que recibe la app (decisión del titular, 2026-10-12): una semana, agrupada por día.
 DIAS_AGENDA = 7
-# Gratis: un pronóstico por mercado, el de MAYOR cuota publicada (decisión del
-# usuario, 2026-10-12: la cuota manda sobre la probabilidad), con tope 1,60. Con
-# 75-90 % de probabilidad las cuotas reales van de 1,01 a 1,25: un piso de 1,40
-# o 1,20 deja el escaparate vacío casi siempre, así que no hay piso (solo > 1).
-FREE_QUOTE_MIN, FREE_QUOTE_MAX = 1.0, 1.60
-# Tope de gratis abiertos a la vez en Inicio y en Alta probabilidad (decisión del usuario,
-# 2026-10-14): como mucho 4 pronósticos sin empezar. Es un filtro de lectura sobre el reparto
-# por lote, que no se toca. Entre los candidatos manda la misma regla de siempre: mayor cuota.
-FREE_MAX = 4
+# Gratis (decisión del usuario, 2026-10-27; sustituye «uno por mercado, hasta 4, cuota
+# ≤ 1,60»): el 10 % de los pronósticos publicados en el lote del día, redondeado hacia
+# arriba, los de mayor probabilidad, sin rango de cuota. Un rango 1,40-1,50 se probó el
+# mismo día y se descartó: con 73-95 % de probabilidad no se publica ninguna cuota ahí.
+FREE_FRACTION = .10
 SECTIONS = {
     'agenda': 'Calendario de partidos', 'alta_probabilidad': 'Alta probabilidad',
     'escalera': 'Reto Escalera', 'estadisticas': 'Estadísticas del partido',
@@ -63,9 +59,7 @@ def features() -> dict:
 
 def config() -> dict:
     return {**mobile_updates.configuration(), 'features': features(), 'probability_min': HIGH_MIN,
-            'probability_max': HIGH_MAX, 'high_probability_free_per_market': 1,
-            'high_probability_free_max': FREE_MAX,
-            'high_probability_free_quote_max': FREE_QUOTE_MAX,
+            'probability_max': HIGH_MAX, 'high_probability_free_fraction': FREE_FRACTION,
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
 
@@ -90,59 +84,76 @@ def probability(row: dict) -> float:
     return float(row.get('_prob_exact', row.get('prob')) or 0)
 
 
+def free_quota(published: int) -> int:
+    """Cuántos gratis le tocan a un lote de `published` pronósticos: el 10 %, hacia arriba."""
+    return math.ceil(round(published * FREE_FRACTION, 9))
+
+
+def free_eligible(row: dict) -> bool:
+    """Sin rango de cuota, pero con cuota publicada real: sin ella no se regala."""
+    return quote_of({'ref_price': row.get('ref_price')}) is not None
+
+
+def _free_rank(row: dict) -> tuple:
+    # Mayor probabilidad; el empate lo decide la cuota más alta.
+    return -probability(row), -float(row['ref_price']), pick_key(row)
+
+
 def choose_free(rows: list[dict], stream: str) -> list[dict]:
     """Only sealed eligible rows enter. Odds are publication quotes, not live."""
     lo, hi = (HIGH_MIN, HIGH_MAX) if stream == 'alta_probabilidad' else (PROB_MIN, PROB_MAX)
     valid = [r for r in rows if lo <= probability(r) <= hi]
     if stream == 'alta_probabilidad':
-        priced = [r for r in valid if r.get('ref_price') is not None
-                  and math.isfinite(float(r['ref_price']))
-                  and FREE_QUOTE_MIN < float(r['ref_price']) <= FREE_QUOTE_MAX]
-        # UNO por mercado, el de mayor cuota publicada; el empate lo decide la
-        # probabilidad.
-        priced.sort(key=lambda r: (-float(r['ref_price']), -probability(r), pick_key(r)))
-        chosen, seen = [], set()
-        for r in priced:
-            if r.get('market') not in seen:
-                seen.add(r.get('market'))
-                chosen.append(r)
-        return chosen
+        return sorted(filter(free_eligible, valid), key=_free_rank)[:free_quota(len(valid))]
     if stream == 'escalera':
         valid.sort(key=lambda r: (-probability(r), -float(r.get('price') or 0), pick_key(r)))
         return valid[:1]
     raise ValueError('Unknown stream')
 
 
+def _by_batch(rows: list[dict]) -> dict[str, list[dict]]:
+    grouped = defaultdict(list)
+    for row in rows:
+        grouped[str(row['batch_date'])].append(row)
+    return grouped
+
+
 def top_up(rows: list[dict], free_keys: set[str], now: datetime) -> list[dict]:
     """Pronósticos sin empezar que deben pasar a gratis aunque el lote ya esté repartido.
 
-    Regla permanente (decisión del usuario, 2026-10-12): siempre queda gratis el de
-    mayor cuota de cada mercado. Solo AÑADE: nunca quita uno que el usuario ya vio, y
-    no toca los que ya empezaron. Un mercado que ya tiene uno abierto gratis no suma otro.
+    `rows` es un lote completo. Completa el cupo del 10 % cuando falta (p. ej. un lote
+    repartido con la regla anterior): cuentan los gratis que ya empezaron y los abiertos
+    que cumplen la regla. Solo AÑADE y no toca los que ya empezaron.
     """
-    pending = [r for r in rows if r['kickoff_utc'] > now]
-    open_markets = {r.get('market') for r in pending if pick_key(r) in free_keys}
-    return [r for r in choose_free(pending, 'alta_probabilidad')
-            if pick_key(r) not in free_keys and r.get('market') not in open_markets]
+    valid = [r for r in rows if HIGH_MIN <= probability(r) <= HIGH_MAX]
+    held = sum(1 for r in valid if pick_key(r) in free_keys
+               and (r['kickoff_utc'] <= now or free_eligible(r)))
+    missing = free_quota(len(valid)) - held
+    if missing <= 0:
+        return []
+    pending = [r for r in valid if r['kickoff_utc'] > now and pick_key(r) not in free_keys
+               and free_eligible(r)]
+    return sorted(pending, key=_free_rank)[:missing]
 
 
 def cap_free(rows: list[dict], free: set[str], now: datetime) -> set[str]:
     """
-    Deja como mucho FREE_MAX gratis entre los pronósticos que aún no han empezado, los de
-    mayor cuota publicada (a igualdad, mayor probabilidad). Los que ya empezaron no cuentan:
-    siguen visibles con su resultado. Los que sobran pasan a candado, con su cuota a la vista.
+    Por lote, como mucho el 10 % (hacia arriba) gratis. Los que ya empezaron siguen visibles
+    con su resultado y cuentan dentro del cupo; de los abiertos quedan los de mayor
+    probabilidad. Los que sobran pasan a candado, con su cuota a la vista.
     """
-    pending = [r for r in rows if pick_key(r) in free and r['kickoff_utc'] > now]
-    if len(pending) <= FREE_MAX:
-        return free
-    pending.sort(key=lambda r: (-float(r.get('ref_price') or 0), -probability(r), pick_key(r)))
-    return free - {pick_key(r) for r in pending[FREE_MAX:]}
+    kept = set()
+    for batch in _by_batch(rows).values():
+        begun = {pick_key(r) for r in batch if pick_key(r) in free and r['kickoff_utc'] <= now}
+        pending = sorted((r for r in batch if pick_key(r) in free and r['kickoff_utc'] > now
+                          and free_eligible(r)), key=_free_rank)
+        room = max(free_quota(len(batch)) - len(begun), 0)
+        kept |= begun | {pick_key(r) for r in pending[:room]}
+    return kept
 
 
 def allocations(rows: list[dict], stream: str) -> set[str]:
-    grouped = defaultdict(list)
-    for row in rows:
-        grouped[str(row['batch_date'])].append(row)
+    grouped = _by_batch(rows)
     if stream == 'escalera' and rows:
         # One free pending step across all active challenges, not one per
         # challenge or historical batch. Freeze the choice until a new batch.
@@ -180,7 +191,7 @@ def allocations(rows: list[dict], stream: str) -> set[str]:
                               'WHERE stream=%s AND batch_date=%s', (len(have) + len(added), stream, batch))
                     audit(c, 'mobile:allocation_topup', 'mobile_free_batch', detail={
                         'stream': stream, 'batch_date': batch, 'added': [pick_key(r) for r in added],
-                        'rule': 'highest_quote_per_market'})
+                        'rule': 'ten_percent_by_probability'})
             selected_rows = c.execute('SELECT pick_key FROM mobile_free_allocations '
                                       'WHERE stream=%s AND batch_date=%s', (stream, batch)).fetchall()
             result.update(r['pick_key'] for r in selected_rows)

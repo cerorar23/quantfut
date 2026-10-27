@@ -25,42 +25,34 @@ def delivery(monkeypatch):
     return flags
 
 
-@pytest.mark.parametrize('n,expected',[(0,0),(1,1),(9,1),(21,1)])
-def test_one_free_per_market_highest_probability(n,expected):
-    rows=[row(i,prob=.75+i/200,price=1.4) for i in range(1,n+1)]
+@pytest.mark.parametrize('n,expected',[(0,0),(1,1),(10,1),(11,2),(20,2),(21,3),(23,3)])
+def test_free_is_ten_percent_rounded_up(n,expected):
+    assert mobile.free_quota(n)==expected
+    rows=[row(i,prob=.75+i/200,price=1.45) for i in range(1,n+1)]
     selected=mobile.choose_free(rows,'alta_probabilidad')
-    assert len(selected)==expected
-    assert [r['match_id'] for r in selected]==([f'm{n}'] if n else [])
+    assert [r['match_id'] for r in selected]==[f'm{i}' for i in range(n,n-expected,-1)]  # más probables
 
 
-def test_one_free_per_market_across_markets():
-    rows=[{**row(i,prob=.75+i/100),'market':'totals'} for i in range(1,12)]
-    rows+=[{**row(100+i,prob=.80+i/100),'market':'spreads'} for i in range(1,4)]
-    rows+=[{**row(200,prob=.78),'market':'corners'}]
-    ids={r['match_id'] for r in mobile.choose_free(rows,'alta_probabilidad')}
-    assert ids=={'m11','m103','m200'}  # la mejor probabilidad de cada mercado
-
-
-def test_free_pick_is_highest_quote_capped_at_1_60():
-    rows=[row(1,.88,1.10),row(2,.80,1.25),row(3,.79,1.60),row(4,.78,1.61),row(5,.85,None)]
+def test_free_is_highest_probability_whatever_the_quote():
+    rows=[row(1,.92,1.05),row(2,.80,1.40),row(3,.85,1.25),row(4,.94,None)]
+    rows+=[row(i,.75,1.30) for i in range(6,17)]  # 15 publicados -> 2 gratis
     ids=[r['match_id'] for r in mobile.choose_free(rows,'alta_probabilidad')]
-    assert ids==['m3']  # manda la cuota (1,60 dentro del tope; 1,61 fuera; sin cuota no entra)
-    assert [r['match_id'] for r in mobile.choose_free([row(1,.9,1.10),row(2,.8,1.65)],'alta_probabilidad')]==['m1']
+    assert ids==['m1','m3']  # sin rango de cuota; sin cuota publicada no se regala
+    # Mismo mercado no excluye: ya no es «uno por mercado».
+    same=[row(i,.8+i/100,1.15) for i in range(1,12)]
+    assert len(mobile.choose_free(same,'alta_probabilidad'))==2
 
 
-def test_top_up_adds_best_quote_of_markets_without_an_open_free():
+def test_top_up_completes_the_quota_of_a_batch():
     now=datetime.now(timezone.utc)
     soon=now+timedelta(hours=2); started=now-timedelta(hours=1)
-    rows=[{**row(1,.8,1.18),'market':'totals','kickoff_utc':soon},
-          {**row(2,.8,1.10),'market':'totals','kickoff_utc':soon},
-          {**row(3,.8,1.25),'market':'corners','kickoff_utc':soon},
-          {**row(4,.8,1.30),'market':'spreads','kickoff_utc':started},   # ya empezó: no cuenta
-          {**row(5,.8,None),'market':'double_chance','kickoff_utc':soon}]  # sin cuota: no entra
-    assert {r['match_id'] for r in mobile.top_up(rows,set(),now)}=={'m1','m3'}
-    # un mercado con gratis abierto no suma otro; el que ya empezó no cuenta como abierto
-    assert {r['match_id'] for r in mobile.top_up(rows,{'m2'},now)}=={'m3'}
-    assert {r['match_id'] for r in mobile.top_up(rows,{'m4'},now)}=={'m1','m3'}
-    assert mobile.top_up(rows,{'m1','m3'},now)==[]  # idempotente
+    rows=[{**row(i,.75,1.30),'kickoff_utc':soon} for i in range(1,12)]
+    rows+=[{**row(20,.80,1.20),'kickoff_utc':soon},{**row(21,.85,1.15),'kickoff_utc':soon},
+           {**row(22,.90,1.10),'kickoff_utc':started}]                     # 14 publicados -> 2
+    assert [r['match_id'] for r in mobile.top_up(rows,set(),now)]==['m21','m20']  # el empezado no entra
+    assert [r['match_id'] for r in mobile.top_up(rows,{'m22'},now)]==['m21']       # el empezado cuenta
+    assert [r['match_id'] for r in mobile.top_up(rows,{'m1'},now)]==['m21']        # un abierto ya gratis cuenta
+    assert mobile.top_up(rows,{'m20','m21'},now)==[]  # idempotente
 
 
 def test_probability_bounds_and_no_fake_quote():
@@ -81,15 +73,15 @@ def test_ladder_uses_exact_probability_not_rounded():
 def test_anonymous_does_not_receive_vip_selection(delivery,monkeypatch):
     monkeypatch.setattr(mobile,'high_rows',lambda:[row(i,price=1+i/100) for i in range(1,21)])
     report=mobile.high_probability()
-    assert len(report['proximos'])==1 and len(report['vip'])==19  # uno por mercado
+    assert len(report['proximos'])==2 and len(report['vip'])==18  # 10 % de 20
     for r in report['vip']:
         assert not {'selection','line','texto','prob','ref_price','fit'} & r.keys()
         assert r['market']=='totals'  # solo la categoría, para ubicar el candado
         assert 1.01<=r["cuota"]<=1.2  # la cuota publicada sí sale: es el gancho del candado
     assert len(mobile.high_probability(True)['proximos'])==20
     owned=mobile.high_probability(unlocks={('alta_probabilidad','m1')})
-    assert len(owned['proximos'])==2
-    assert len(owned['vip'])==18
+    assert len(owned['proximos'])==3
+    assert len(owned['vip'])==17
 
 
 def test_disabled_feature_and_disabled_vip(delivery,monkeypatch):
@@ -289,33 +281,38 @@ def test_quote_of_accepts_both_price_names_and_rejects_garbage():
     assert meta['cuota'] == 1.4 and not {'selection', 'line', 'prob', 'ref_price', 'fit'} & meta.keys()
 
 
-def test_cap_free_deja_cuatro_los_de_mayor_cuota():
+def test_cap_free_deja_el_diez_por_ciento_por_lote():
     now = datetime.now(timezone.utc)
-    rows = [{**row(i, price=1.0 + i / 100), 'market': f'mk{i}'} for i in range(1, 8)]
+    rows = [row(i, prob=.75 + i / 100, price=1.45) for i in range(1, 13)]   # 12 publicados -> 2
     free = {mobile.pick_key(r) for r in rows}
-    kept = mobile.cap_free(rows, free, now)
-    assert kept == {'m7', 'm6', 'm5', 'm4'}          # las cuatro cuotas más altas
-    assert mobile.cap_free(rows, {'m1', 'm2', 'm3', 'm4'}, now) == {'m1', 'm2', 'm3', 'm4'}  # no toca si caben
+    assert mobile.cap_free(rows, free, now) == {'m12', 'm11'}               # los más probables
+    # Uno abierto sin cuota publicada no se regala aunque estuviera repartido.
+    assert mobile.cap_free([*rows, row(13, .95, None)], {'m13', 'm1'}, now) == {'m1'}
+    # Cada lote tiene su propio cupo.
+    other = [{**row(i, price=1.45), 'batch_date': '2026-10-12'} for i in range(20, 23)]
+    assert mobile.cap_free(rows + other, free | {'m20', 'm21'}, now) == {'m12', 'm11', 'm20'}
 
 
-def test_cap_free_no_cuenta_los_que_ya_empezaron():
+def test_cap_free_mantiene_los_que_ya_empezaron_y_cuentan_en_el_cupo():
     now = datetime.now(timezone.utc)
-    empezados = [{**row(i, price=1.5), 'kickoff_utc': now - timedelta(hours=1)} for i in range(10, 14)]
-    abiertos = [row(i, price=1.2) for i in range(1, 5)]
+    empezados = [{**row(i, price=1.20), 'kickoff_utc': now - timedelta(hours=1)} for i in range(10, 13)]
+    abiertos = [row(i, price=1.45) for i in range(1, 20)]                     # 22 publicados -> 3
     free = {mobile.pick_key(r) for r in empezados + abiertos}
-    assert mobile.cap_free(empezados + abiertos, free, now) == free      # 4 abiertos + 4 ya empezados
+    assert mobile.cap_free(empezados + abiertos, free, now) == {'m10', 'm11', 'm12'}
 
 
-def test_alta_probabilidad_enseña_como_mucho_cuatro_gratis_y_el_resto_con_candado(monkeypatch, delivery):
-    rows = [{**row(i, price=1.0 + i / 100), 'market': f'mk{i}'} for i in range(1, 9)]
+def test_alta_probabilidad_enseña_el_diez_por_ciento_y_el_resto_con_candado(monkeypatch, delivery):
+    rows = [row(i, prob=.75 + i / 100, price=1.45) for i in range(1, 16)]    # 15 publicados -> 2
     monkeypatch.setattr(mobile, 'high_rows', lambda: rows)
     monkeypatch.setattr(mobile, 'allocations', lambda r, stream: {mobile.pick_key(p) for p in r})
     report = mobile.high_probability()
-    assert sorted(p['match_id'] for p in report['proximos']) == ['m5', 'm6', 'm7', 'm8']
+    assert sorted(p['match_id'] for p in report['proximos']) == ['m14', 'm15']
     assert all(p['free'] for p in report['proximos'])
-    assert {v['match_id'] for v in report['vip']} == {'m1', 'm2', 'm3', 'm4'}
+    assert len(report['vip']) == 13
     assert all(v['locked'] and v['cuota'] for v in report['vip'])          # el candado enseña su cuota
-    assert mobile.config()['high_probability_free_max'] == 4
+    cfg = mobile.config()
+    assert cfg['high_probability_free_fraction'] == .10
+    assert not {'high_probability_free_max', 'high_probability_free_quote_max'} & cfg.keys()
 
 
 def test_equipo_desconocido_muestra_el_mercado_y_no_el_modelo():
