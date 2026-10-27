@@ -181,3 +181,17 @@ def test_cli_writes_a_valid_feed_atomically(tmp_path, monkeypatch):
     feed = json.loads(out.read_text(encoding='utf8'))
     assert list(feed['events']) == ['0022600130'] and feed['games_used'] == 2
     assert not list(out.parent.glob('*.tmp'))
+
+
+def test_cli_can_print_the_feed_to_stdout(tmp_path, monkeypatch, capsys):
+    fake_dashboard(monkeypatch, {})
+    data = tmp_path / 'data'
+    data.mkdir()
+    (data / 'games.json').write_text('[]')
+    cohorts = tmp_path / 'cohorts'
+    cohorts.mkdir()
+    import sys
+    monkeypatch.setattr(sys, 'argv', ['web_stats', '--cohorts', str(cohorts), '--data', str(data), '--output', '-'])
+    ws.main()
+    feed = json.loads(capsys.readouterr().out)
+    assert feed['events'] == {} and feed['games_used'] == 0

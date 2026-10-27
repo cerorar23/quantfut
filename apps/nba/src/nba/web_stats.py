@@ -212,14 +212,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--cohorts', required=True)
     parser.add_argument('--data', required=True)
-    parser.add_argument('--output', required=True, help='archivo JSON de salida (se reemplaza de forma atómica)')
+    parser.add_argument('--output', required=True, help='archivo JSON de salida (se reemplaza de forma atómica); «-» lo imprime por stdout')
     a = parser.parse_args()
     now = datetime.now(UTC)
     cohort_games, events = read_cohorts(a.cohorts, now)
     feed = build_feed([*read_history(a.data), *cohort_games], events, now)
+    payload = json.dumps(feed, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+    if a.output == '-':
+        print(payload)
+        return
     target = Path(a.output)
     temp = target.with_suffix('.tmp')
-    temp.write_text(json.dumps(feed, ensure_ascii=False, separators=(',', ':'), allow_nan=False), encoding='utf8')
+    temp.write_text(payload, encoding='utf8')
     os.replace(temp, target)
     print(json.dumps(dict(events=len(feed['events']), games_used=feed['games_used'])))
 
