@@ -17,7 +17,7 @@ class HighProbabilityView extends StatelessWidget {
     required this.report,
     required this.minPercent,
     required this.maxPercent,
-    this.freeMax = 4,
+    this.freePercent = 10,
     required this.onOpen,
     required this.onVip,
     this.onUnlock,
@@ -27,8 +27,8 @@ class HighProbabilityView extends StatelessWidget {
   final JsonMap report;
   final int minPercent, maxPercent;
 
-  /// Tope de pronósticos gratis abiertos a la vez; lo manda el servidor.
-  final int freeMax;
+  /// Porcentaje de los pronósticos del día que son gratis; lo manda el servidor.
+  final int freePercent;
   final void Function(JsonMap pick) onOpen;
   final VoidCallback onVip;
   final void Function(JsonMap pick)? onUnlock;
@@ -92,7 +92,7 @@ class HighProbabilityView extends StatelessWidget {
         else ...[
           _TrustCard(history: jsonMap(report['historial'])),
           liveText(
-            l10n.picksRangeHint(minPercent, maxPercent, freeMax),
+            l10n.picksRangeHint(minPercent, maxPercent, freePercent),
             color: liveMuted,
             size: 12,
           ),

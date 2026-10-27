@@ -53,7 +53,11 @@ raise SystemExit(pytest.main(["-p", "no:cacheprovider", "--basetemp", temp,
 
 Push-Location $qfRoot
 try {
-    & $PythonPath -c $qfBootstrap $qfRoot $qfPackages $qfTemp
+    # Windows PowerShell 5.1 quita las comillas dobles internas de `-c`; el
+    # bootstrap va en un archivo para que corra igual en 5.1 y en 7.
+    $qfBootstrapFile = $qfTemp + '-bootstrap.py'
+    [IO.File]::WriteAllText($qfBootstrapFile, $qfBootstrap, [Text.UTF8Encoding]::new($false))
+    & $PythonPath -u $qfBootstrapFile $qfRoot $qfPackages $qfTemp
     $qfExitCode = $LASTEXITCODE
 } finally {
     Pop-Location

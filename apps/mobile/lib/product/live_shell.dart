@@ -301,7 +301,9 @@ class _ProductShellState extends State<ProductShell>
       report: report,
       minPercent: minPercent,
       maxPercent: maxPercent,
-      freeMax: ((config['high_probability_free_max'] as num?) ?? 4).toInt(),
+      freePercent:
+          (((config['high_probability_free_fraction'] as num?) ?? .10) * 100)
+              .round(),
       onOpen: (p) => detail(p['match_id']),
       onVip: vip,
       unlockCost: rewards['unlock_cost'],
