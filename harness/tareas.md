@@ -1,5 +1,13 @@
 # Backlog — QuantFut
 
+## 27-oct-2026 · Rediseño ergonómico multideporte
+
+Orden del titular: reorganizar la web y añadir fútbol, NBA y tenis a una misma experiencia con CYBERCORE CSS 0.3.0. Aplicar el orden portada → pronósticos → resultados → planes; cuatro accesos principales y herramientas agrupadas, tarjetas legibles y adaptación móvil. Datos, precios, bloqueos y resultados reales; conservar pérdidas y distinguir probabilidades estadísticas de selecciones comercializadas. Integrar el contrato público NBA y una proyección limitada de los archivos sellados de tenis, sin modificar motores, cron ni puertas de publicación. Verificar navegación, fuentes, vacío/fallo, teclado y tamaños móviles; commit, PR, CI y publicación con respaldo y registro.
+
+- [x] Implementar la portada, la navegación y la vista unificada de los tres deportes.
+- [x] Verificar las fuentes reales, la accesibilidad y el diseño en escritorio y móvil (390 px, búsqueda, fechas y acceso a jornada NBA publicada).
+- [ ] Integrar y publicar con respaldo, comprobación de producción y registro de reversión.
+
 ## 27-oct-2026 · Web con pronósticos reales, diseño conservado
 
 Orden del titular: retirar los pronósticos ficticios y activar la web real. El motor de fútbol ya genera y sella pronósticos; la API pública móvil entrega cuatro gratuitos y sus bloqueos VIP. Conectar ese mismo contrato a la web conservando CYBERCORE CSS 0.3.0, el diseño anterior y las reglas del servidor. Eliminar todos los generadores/archivos simulados de las vistas públicas; probar visitante, suscriptor, vacío y fallo; publicar únicamente los archivos frontend después de verificar main y respaldar. No alterar modelos ni saltar la puerta de los picks de valor.

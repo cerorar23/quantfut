@@ -7,10 +7,33 @@ from pathlib import Path
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
+from fastapi import Response
 
 
 router = APIRouter(include_in_schema=False)
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
+
+
+@router.get("/web/deportes/tenis")
+def tennis_forecasts(response: Response):
+    from .tenis_publico import public_data
+    response.headers["Cache-Control"] = "no-store"
+    return public_data()
+
+
+@router.get("/sports-data.js")
+def sports_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "sports-data.js", media_type="text/javascript")
+
+
+@router.get("/ergonomic-views.js")
+def ergonomic_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "ergonomic-views.js", media_type="text/javascript")
+
+
+@router.get("/ergonomia.css")
+def ergonomic_styles() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "ergonomia.css", media_type="text/css")
 
 
 @router.get("/real-views.js")

@@ -9,9 +9,9 @@ import { mount as mountCheckout, destroy as destroyCheckout } from './whop-check
 
 // Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
 const PLAN_COPY = Object.freeze({
-  plus_1m: Object.freeze({ name: 'Básico', tag: 'Empieza por un mes' }),
-  plus_3m: Object.freeze({ name: 'Estándar', tag: 'Plan destacado' }),
-  plus_6m: Object.freeze({ name: 'Premium', tag: 'Mayor ahorro mensual' }),
+  plus_1m: Object.freeze({ name: 'Mensual', tag: 'Para empezar' }),
+  plus_3m: Object.freeze({ name: 'Trimestral', tag: 'Plan destacado' }),
+  plus_6m: Object.freeze({ name: 'Semestral', tag: 'Más tiempo de acceso' }),
   club: Object.freeze({ name: 'Club QuantFut', tag: 'Acceso de por vida' }),
 });
 export const DEFAULT_PLAN = 'plus_3m';
@@ -56,7 +56,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     : '<p class="membership-note" role="status">Cargando precios…</p>';
   // El servidor dice si el pago en línea está habilitado; los textos no lo dan por hecho en ningún sentido.
   const payOn = () => state.payConfig?.enabled === true;
-  const demoNote = () => payOn()
+  const demoNote = () => !state.payConfig || state.payConfig.status==='loading' ? '<p class="membership-note" role="status">Consultando las opciones de pago…</p>' : payOn()
     ? '<p class="membership-note">Precios vigentes. El pago se procesa en línea con Whop y el acceso se activa al confirmarse el cobro.</p>'
     : '<p class="membership-note">Precios vigentes. El pago en línea todavía no está habilitado: no hay cargos ni renovaciones automáticas.</p>';
   const includes = () => '<ul class="membership-includes"><li>Acceso completo al paquete QuantFut Plus</li><li>Pick del día y detalle de mercados</li><li>Cuota registrada, precio justo y mínimo</li><li>Fichas de partido y combinadas</li><li>Historial público y evidencia de publicación</li></ul>';
@@ -82,6 +82,12 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     const lifetime = plans().filter(plan => plan.duration_days == null);
     const grid = periodic.length ? `<div class="membership-plan-grid">${periodic.map(planButton).join('')}</div>${lifetime.map(lifetimeButton).join('')}` : plansStatus();
     return `<section class="membership-heading"><p class="eyebrow">SUSCRIPCIONES / QUANTFUT PLUS</p><h1>Elige tu <em>plan.</em></h1><p>Un mismo paquete de picks, análisis y herramientas. Elige cuánto tiempo quieres explorar el servicio.</p><div class="membership-benefits"><span>✓ Acceso completo</span><span>✓ Historial abierto</span><span>✓ Precio y mínimo visibles</span></div>${demoNote()}</section><div class="membership-layout"><div>${grid}<section class="membership-comparison"><p class="eyebrow">EL MISMO CONTENIDO / DISTINTO PERIODO</p><h2>Todos los planes incluyen</h2>${includes()}<p>El historial y los partidos públicos seguirán disponibles sin contratar. Los pronósticos dependen del criterio de publicación: un plan no implica un número garantizado de picks.</p></section></div>${summary()}</div><section class="membership-faq"><h2>Antes de elegir</h2><details><summary>¿Qué cambia entre Básico, Estándar y Premium?</summary><p>El periodo de acceso y su precio. El paquete de contenido es el mismo en todas las modalidades.</p></details><details><summary>¿Puedo contratarlo ahora?</summary><p>${payOn() ? 'Sí. Crea tu cuenta, elige un plan y paga en línea: el acceso se activa en cuanto se confirma el cobro.' : 'Ya puedes crear tu cuenta. El pago en línea todavía no está habilitado: ningún botón realiza cargos.'}</p></details><details><summary>¿Se renueva automáticamente?</summary><p>Sí. Los planes se renuevan solos al terminar cada periodo, al mismo precio, hasta que cancelas la renovación desde tu cuenta de Whop.</p></details><details><summary>¿Qué pasa si no hay picks que cumplan el criterio?</summary><p>El sistema debe dejar la lista vacía. La suscripción no cambia el criterio de publicación ni obliga a recomendar un partido.</p></details><details><summary>¿Incluye una garantía de resultados?</summary><p>No. Las probabilidades y los precios no garantizan un resultado.</p></details></section>`;
+  }
+
+  function plansPreview() {
+    const items=plans().filter(p=>p.duration_days!=null);
+    const q=selected();
+    return `<section class="hub-section hub-plans" id="planes" aria-labelledby="hub-plans-title"><div class="hub-section-head"><div><p class="eyebrow">ELIGE CÓMO QUIERES SEGUIR</p><h2 id="hub-plans-title">Tu acceso <em>Plus.</em></h2></div><button type="button" class="text-link" data-route="paquetes">Ver qué incluye ↗</button></div><p class="hub-section-intro">Amplía tu acceso a los pronósticos reservados de fútbol. Los análisis públicos de NBA y tenis se pueden consultar sin contratar.</p>${items.length?`<div class="membership-plan-grid hub-plan-grid">${items.map(planButton).join('')}</div><div class="hub-plan-action"><p>${q?`${money(q)} ${esc(q.currency)} por ${q.period.toLowerCase()}. `:''}Consulta el alcance y la renovación antes de confirmar.</p><button type="button" class="primary-button" data-membership-action="review-order">${state.session?'Continuar con este plan':'Elegir plan y continuar'} <span aria-hidden="true">↗</span></button></div>`:plansStatus()}${demoNote()}<p class="hub-caption">La suscripción amplía el acceso al contenido disponible; no garantiza resultados ni un número fijo de pronósticos.</p></section>`;
   }
 
   function packagesView() {
@@ -302,7 +308,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     } catch {
       state.plans = { status: 'error' };
     }
-    if (['planes', 'paquetes', 'checkout', 'cuenta'].includes(state.route)) render();
+    if (['inicio', 'planes', 'paquetes', 'checkout', 'cuenta'].includes(state.route)) render();
   }
 
 
@@ -392,7 +398,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     } catch {
       state.payConfig = { status: 'ready', enabled: false };
     }
-    if (['checkout', 'planes', 'paquetes', 'cuenta'].includes(state.route)) render();
+    if (['inicio', 'checkout', 'planes', 'paquetes', 'cuenta'].includes(state.route)) render();
   }
 
   /** Al cargar la página: si la cookie de sesión sigue viva, entra sin pedir contraseña. */
@@ -401,5 +407,5 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     if (session) { state.session = session; identify(session); render(); }
   }
 
-  return { plansView, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession, loadPlans, loadPaymentConfig, afterRender, handleReturn };
+  return { plansView, plansPreview, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession, loadPlans, loadPaymentConfig, afterRender, handleReturn };
 }

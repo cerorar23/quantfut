@@ -26,7 +26,7 @@ test('format errors and unavailable sources never become invented forecasts',asy
  const empty=await loadForecastHome(day,async()=>({ok:true,json:async()=>({agenda:[],alta_probabilidad:{proximos:[],vip:[]}})}));
  assert.equal(empty.status,'ready');
  assert.deepEqual(publicForecasts(empty.data),[]);
- assert.ok(view({status:'error'}).home().includes('No se pudieron consultar'));
+ assert.ok(view({status:'error'}).home().toLowerCase().includes('no se pudieron consultar'));
 });
 test('only server-authorized and sealed predictions are displayed',()=>{
  assert.deepEqual(publicForecasts(home),[pick]);
@@ -52,7 +52,7 @@ test('match identity is encoded and source strings are escaped',async()=>{
  let requested;
  await loadForecastMatch(game.match_id,async path=>{requested=path;return {ok:true,json:async()=>({ficha:{partido:{},local:game.local,visitante:game.visitante},picks:[]})};});
  assert.ok(requested.includes('it.serie_a%3A2627'));
- const html=view({status:'ready',data:{...home,agenda:[{...game,local:{nombre:'<script>bad</script>'}}]}}).home();
+ const html=view({status:'ready',data:{...home,agenda:[{...game,liga:{id:'real',nombre:'<script>bad</script>'}}]}}).home();
  assert.ok(html.includes('&lt;script&gt;'));
  assert.ok(!html.includes('<script>bad'));
 });

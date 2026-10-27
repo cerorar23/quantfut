@@ -1,6 +1,7 @@
 // Presentación del contrato real de la app con las clases del diseño existente.
 // No genera probabilidades, cuotas, selecciones ni resultados.
 import { forecastGames, publicForecasts, modelProbabilities } from './fichas-data.js?v=real-20261027';
+import { createHubViews } from './ergonomic-views.js?v=ergonomia-20261027';
 
 export function createRealViews(ctx) {
   const { state, esc, badge, ensureHome, ensureMatch, addDays, localDay, dayLabel,
@@ -69,5 +70,6 @@ export function createRealViews(ctx) {
   function history() {
     return `<div class="view-title"><div><p class="eyebrow">EVIDENCIA / REGISTRO REAL</p><h1>Historial verificable</h1><p class="lead">Resultados, calibración y sellos publicados por el servidor, sin filas simuladas.</p></div></div>${liveEvidence()}`;
   }
-  return { home, markets, picks, history };
+  const hub=createHubViews(ctx);
+  return { home:hub.home, markets, picks:hub.picks, history:hub.history, detail:hub.detail };
 }
