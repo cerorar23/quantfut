@@ -1,7 +1,8 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay } from './fichas-data.js?v=real-20261027';
-import { createMembershipUI } from './membership.js?v=real-20261027';
-import { createRealViews } from './real-views.js?v=real-20261027';
+import { createMembershipUI } from './membership.js?v=ergonomia-20261027';
+import { createRealViews } from './real-views.js?v=ergonomia-20261027';
+import { loadSport, loadResults } from './sports-data.js?v=ergonomia-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
@@ -63,9 +64,10 @@ const nav = [
   { route: 'planes', label: 'Suscripciones', short: 'Planes', icon: NAV_ICONS.shield, group: 'ACCESO' },
   { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: NAV_ICONS.user, group: 'ACCESO' },
 ];
-const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
+const MOBILE_PRIMARY = ['inicio', 'historial', 'planes', 'cuenta'];
 const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Análisis del partido', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
 const validRoute = route => Object.hasOwn(routeTitle, route);
+routeTitle.analisis = 'Análisis deportivo';
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
 // por probabilidad justa, que no dice nada de si la cuota compensa.
@@ -103,8 +105,12 @@ const state = {
   statsSplit: 'todos',
   matchTab: 'resumen',
   dayOffset: 0,
+  sport: 'todos',
+  resultSport: 'todos',
+  sportEvent: '',
+  sportMarket: 'partido',
   homeSearch: '',
-  homeStatus: 'todos',
+  homeStatus: 'proximos',
   homeLeague: 'Todas',
   homeSort: 'hora',
   pickLeague: 'Todas',
@@ -153,7 +159,22 @@ const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/al
 // Al iniciar o cerrar sesión, o al activarse la suscripción, se recargan los datos con la sesión nueva.
 let publicAuthKey = 'visitante';
 const realHomeCache = new Map(), realMatchCache = new Map();
+const sportsCache = new Map();
+let resultsCache = null;
 let realGeneration = 0;
+function ensureSport(sport) {
+  if(sportsCache.has(sport))return sportsCache.get(sport);
+  const entry={status:'loading',events:[]},generation=realGeneration;
+  sportsCache.set(sport,entry);
+  loadSport(sport).then(result=>{if(generation!==realGeneration)return;sportsCache.set(sport,result);rerenderIfIdle();});
+  return entry;
+}
+function ensureResults() {
+  if(resultsCache)return resultsCache;
+  resultsCache={status:'loading',items:[]}; const generation=realGeneration;
+  loadResults().then(result=>{if(generation!==realGeneration)return;resultsCache=result;rerenderIfIdle();});
+  return resultsCache;
+}
 function ensureRealHome(offset) {
   const key = localDay(addDays(offset,12));
   if (realHomeCache.has(key)) return realHomeCache.get(key);
@@ -269,21 +290,20 @@ function openMatch(id, tab = 'resumen') {
 }
 
 function sportNavMarkup() {
-  return '<nav class="sport-nav" aria-label="Deporte"><a href="/" class="active" aria-current="page">Fútbol</a><a href="/nba">NBA</a></nav>';
+  return `<nav class="header-sports" aria-label="Deportes disponibles">${[['futbol','Fútbol'],['nba','NBA'],['tenis','Tenis']].map(([id,label])=>`<button type="button" data-sport="${id}" aria-pressed="${state.sport===id}">${label}</button>`).join('')}</nav>`;
 }
 
 function navMarkup() {
-  const groups = [...new Set(nav.map(item => item.group))];
-  return groups.map(group => `<div class="top-nav-group" role="group" aria-label="${group.charAt(0)}${group.slice(1).toLowerCase()}"><span class="top-nav-label" aria-hidden="true">${group}</span>${nav.filter(item => item.group === group).map(item => {
-    const active = state.route === item.route;
-    return `<button type="button" class="top-link ${active ? 'active' : ''}" data-route="${item.route}" ${active ? 'aria-current="page"' : ''}><span class="nav-icon" aria-hidden="true">${item.icon}</span><span>${item.label}</span></button>`;
-  }).join('')}</div>`).join('');
+  return [['inicio','Pronósticos de hoy'],['historial','Resultados'],['planes','Planes y precios']].map(([route,label])=>{
+    const active=route===state.route||(route==='inicio'&&['picks','analisis','mercados','partido'].includes(state.route));
+    return `<button type="button" class="top-link ${active?'active':''}" data-route="${route}" ${active?'aria-current="page"':''}>${label}</button>`;
+  }).join('')+`<button type="button" class="top-link hub-more" data-action="toggle-menu" aria-expanded="${state.mobileMenuOpen}">Herramientas <span aria-hidden="true">⌄</span></button>`;
 }
 
 function mobileNavMarkup() {
   const primary = nav.filter(item => MOBILE_PRIMARY.includes(item.route));
   const extra = nav.filter(item => !MOBILE_PRIMARY.includes(item.route));
-  const link = item => `<button type="button" class="mobile-nav-link ${state.route === item.route ? 'active' : ''}" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><small>${item.short}</small></button>`;
+  const link = item => `<button type="button" class="mobile-nav-link ${state.route === item.route ? 'active' : ''}" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><small>${{inicio:'Hoy',historial:'Resultados',planes:'Planes',cuenta:'Cuenta'}[item.route]}</small></button>`;
   const drawer = state.mobileMenuOpen ? `<div class="mobile-menu-layer"><button type="button" class="mobile-menu-backdrop" data-action="close-menu" aria-label="Cerrar menú adicional"></button><div id="mobile-extra-menu" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Más secciones"><div class="mobile-drawer-head"><div><p class="eyebrow">QUANTFUT / EXPLORAR</p><h2>Más secciones</h2></div><button type="button" class="mobile-drawer-close" data-action="close-menu" aria-label="Cerrar menú">×</button></div>${extra.map(item => `<button type="button" class="mobile-drawer-link" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><span>${item.label}</span><span aria-hidden="true">↗</span></button>`).join('')}<p>Las cuentas y los pronósticos se consultan en el servidor.</p></div></div>` : '';
   return `<nav class="mobile-bottom-nav" aria-label="Navegación móvil">${primary.map(link).join('')}<button type="button" class="mobile-nav-link mobile-more ${extra.some(item => item.route === state.route) ? 'active' : ''}" data-action="toggle-menu" aria-expanded="${state.mobileMenuOpen}"><span aria-hidden="true">☰</span><small>Más</small></button></nav>${drawer}`;
 }
@@ -1018,14 +1038,14 @@ function statsView() {
 const membershipUI = createMembershipUI({
   state, esc, badge, oddsToggle, leagues: LEAGUES, fixtures, matchCard, navigate, render,
   publicStatus: () => {
-    const gate = publicData?.gate;
-    const active = isPublicationActive(gate);
-    return `<strong>${!gate ? 'Consultando publicación…' : gate.status !== 'ready' ? 'Estado de publicación no disponible' : active ? 'Publicación autorizada por el servidor' : 'Publicación pausada'}</strong><p>La selección de un plan no cambia el estado del servidor. El servidor comprueba tu acceso antes de entregar contenido privado.</p>`;
+    const source = ensureRealHome(0);
+    return `<strong>${source.status==='ready'?'Contenido y acceso verificados por el servidor':source.status==='error'?'No se pudo consultar el contenido':'Consultando el contenido disponible…'}</strong><p>La suscripción amplía tu acceso a los pronósticos de fútbol disponibles. NBA y tenis ofrecen análisis estadísticos públicos.</p>`;
   },
 });
 
 const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
-  addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail });
+  addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
+  ensureSport, ensureResults, plansPreview:()=>membershipUI.plansPreview() });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1124,10 +1144,10 @@ function applyCybercoreTheme(root) {
 // ---------------------------------------------------------------- render
 
 function render() {
-  const views = { inicio: realViews.home, partidos: statsView, mercados: realViews.markets, picks: realViews.picks, alta: altaView, escalera: escaleraView, parley: parleyView, partido: realViews.markets, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
+  const views = { inicio: realViews.home, partidos: statsView, mercados: realViews.markets, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: realViews.markets, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout ergonomic-shell"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut<span class="brand-word-dot">.</span></strong><small>SPORTS INTELLIGENCE</small></span></button><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav><div class="top-actions"><button type="button" class="header-login" data-route="${state.session?'cuenta':'acceso'}">${state.session?'Mi cuenta':'Entrar'}</button><button type="button" class="primary-button header-plus" data-route="planes">Acceso Plus <span aria-hidden="true">↗</span></button></div></div><div class="header-secondary"><div>${sportNavMarkup()}<span class="header-source"><span class="hub-live-dot" aria-hidden="true"></span>Publicaciones de los motores</span><details class="header-preferences"><summary>Formato de cuota ⌄</summary>${oddsToggle('top-odds')}</details></div></div></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><div><strong>QuantFut.</strong><p>Fútbol, NBA y tenis. Análisis y resultados a la vista.</p><small>Las probabilidades no garantizan resultados. +18.</small></div><nav aria-label="Enlaces del pie de página"><button type="button" data-route="historial">Resultados y metodología</button><button type="button" data-route="planes">Planes</button><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a></nav><small>© ${new Date().getFullYear()} QuantFut</small></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
@@ -1172,6 +1192,12 @@ app.addEventListener('click', event => {
   }
   const data = button.dataset;
   if (membershipUI.handleClick(button)) return;
+  if (data.scrollTo) { app.querySelector(`#${CSS.escape(data.scrollTo)}`)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'}); return; }
+  if (data.sport) { const fromHeader=Boolean(button.closest('.header-sports'));state.sport=data.sport; state.homeSearch=''; if(!['inicio','picks'].includes(state.route))navigate('picks');else rerenderKeepingFocus(`[data-sport="${data.sport}"]`);if(fromHeader)app.querySelector('#pronosticos-hoy')?.scrollIntoView({block:'start',behavior:'instant'}); return; }
+  if (data.resultSport) {state.resultSport=data.resultSport;rerenderKeepingFocus(`[data-result-sport="${data.resultSport}"]`);return;}
+  if (data.sportEvent) {state.sportEvent=data.sportEvent;state.sportMarket='partido';navigate('analisis');return;}
+  if (data.sportMarket) {state.sportMarket=data.sportMarket;rerenderKeepingFocus(`[data-sport-market="${data.sportMarket}"]`);return;}
+  if (data.availableDay) {const target=new Date(`${data.availableDay}T12:00:00`);const current=new Date();current.setHours(12,0,0,0);state.dayOffset=Math.round((target-current)/86400000);state.homeStatus='todos';render();return;}
   if (data.realMatch) {
     const game=[...realHomeCache.values()].flatMap(e=>e.data?.agenda||[]).find(g=>g.match_id===data.realMatch);
     if(game){ const date=new Date(game.kickoff_utc); date.setHours(0,0,0,0); const current=new Date(); current.setHours(0,0,0,0); state.dayOffset=Math.round((date-current)/86400000); }
@@ -1309,7 +1335,7 @@ function syncPublicAuth() {
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
-  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); }
+  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); resultsCache=null; }
   render();
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;
