@@ -1401,3 +1401,359 @@
     height: auto;
   }
 }
+
+/* ================= Planes y paquetes: tarjetas CYBERCORE =================
+ * Solo disposición. La etiqueta del plan vive dentro de la tarjeta (antes sobresalía y el recorte
+ * de esquinas de cyber-card la cortaba) y las tarjetas ocupan todo el ancho: ya no comparten fila
+ * con el resumen del pedido, que sigue en el paso de revisión. */
+
+.win-plans {
+  display: grid;
+  gap: var(--space-2xl);
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+.win-plans-hero {
+  margin-bottom: 0;
+}
+
+.win-plans-trust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+}
+
+.win-plans-section {
+  display: grid;
+  gap: var(--space-lg);
+  min-width: 0;
+}
+
+.win-plans-h2 {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-2xl);
+}
+
+.win-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-lg);
+  align-items: stretch;
+}
+
+.win-plans-duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-lg);
+  align-items: stretch;
+}
+
+.win-plans-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-lg);
+}
+
+.win-plans-card.is-featured {
+  background: color-mix(in srgb, var(--cyber-green-500) 8%, var(--color-bg-secondary));
+}
+
+.win-plans-card-head {
+  display: grid;
+  gap: var(--space-xs);
+  justify-items: start;
+}
+
+.win-plans-card-head h2,
+.win-plans-card-head h3 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.win-plans-period {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.win-plans-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  margin: var(--space-xs) 0 0;
+}
+
+.win-plans-price strong {
+  font-size: var(--text-4xl);
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.win-plans-price span {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.win-plans-day {
+  margin: 0;
+  color: var(--cyber-green-500);
+  font-size: var(--text-sm);
+}
+
+.win-plans-saving {
+  justify-self: start;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.win-plans-total,
+.win-plans-fine {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+
+.win-plans-center {
+  text-align: center;
+}
+
+.win-plans-list {
+  display: grid;
+  gap: var(--space-xs);
+  margin: var(--space-xs) 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.win-plans-list li {
+  position: relative;
+  padding-left: 22px;
+  line-height: 1.5;
+}
+
+.win-plans-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--cyber-green-500);
+}
+
+.win-plans-cta {
+  width: 100%;
+  min-height: 48px;
+  margin-top: auto;
+}
+
+.win-plans-club {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.win-plans-club h3 {
+  margin: var(--space-xs) 0;
+  font-size: var(--text-2xl);
+}
+
+.win-plans-club p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.win-plans-club-buy {
+  display: grid;
+  gap: var(--space-sm);
+  min-width: min(100%, 260px);
+}
+
+.win-plans-club-buy .win-plans-price {
+  margin: 0;
+}
+
+.win-plans-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.win-plans-feature {
+  display: grid;
+  gap: var(--space-xs);
+  align-content: start;
+  min-width: 0;
+}
+
+.win-plans-feature h3 {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--text-lg);
+}
+
+.win-plans-feature p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.win-plans-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.win-plans-steps--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.win-plans-steps li {
+  display: grid;
+  gap: var(--space-xs);
+  align-content: start;
+  min-width: 0;
+}
+
+.win-plans-steps h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.win-plans-steps p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.win-plans-steps .cyber-badge {
+  justify-self: start;
+}
+
+.win-plans-honest p {
+  margin: var(--space-2xs) 0 0;
+  line-height: 1.7;
+}
+
+.win-plans-honest p.cyber-alert__title {
+  margin-top: 0;
+}
+
+.win-plans-faq {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  gap: var(--space-xs);
+}
+
+.win-plans-faq .win-plans-h2 {
+  margin-bottom: var(--space-sm);
+}
+
+.win-plans-q {
+  border: 1px solid var(--line);
+  background: var(--color-bg-secondary);
+}
+
+.win-plans-q summary {
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.win-plans-q p {
+  margin: 0;
+  padding: 0 var(--space-md) var(--space-md);
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.win-plans-final {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.win-plans-final h2 {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-2xl);
+}
+
+.win-plans-final p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.win-plans-final .win-plans-cta {
+  width: auto;
+  min-width: 220px;
+  margin-top: 0;
+}
+
+@media (max-width: 960px) {
+  .win-plans-grid,
+  .win-plans-duo {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .win-plans-card.is-featured {
+    order: -1;
+  }
+
+  .win-plans-features,
+  .win-plans-steps,
+  .win-plans-steps--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .win-plans {
+    gap: var(--space-xl);
+  }
+
+  .win-plans-card,
+  .win-plans-club,
+  .win-plans-final {
+    padding: var(--space-md);
+  }
+
+  .win-plans-features,
+  .win-plans-steps,
+  .win-plans-steps--four {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .win-plans-final .win-plans-cta {
+    width: 100%;
+  }
+
+  .win-plans-price strong {
+    font-size: var(--text-3xl);
+  }
+}
