@@ -16,4 +16,6 @@ No hace falta encender ni reentrenar el modelo: ya generó y selló la jornada. 
 
 - 44 pruebas frontend aprobadas, incluidas las de inicialización, fuentes reales, vacío/error, probabilidades, sellos, escapes y bloqueo VIP.
 - Vista local conectada solo a los endpoints públicos reales: cuatro selecciones visibles, cuatro filas de agenda del día con probabilidades, ficha con un mercado abierto y los restantes protegidos; consola sin errores.
-- Publicación prevista únicamente de los archivos frontend afectados y la ruta estática de `real-views.js` en `web.py`, sobre la imagen API actual. Antes: verificar hashes contra main y respaldar. Ensayo aislado y vuelta atrás según `DEPLOYS.md`.
+- 52 pruebas de rutas estáticas, entrega móvil y publicación bloqueada aprobadas; los tres controles de GitHub (arnés, NBA y tenis) verdes antes de integrar el PR #170.
+- Publicado a las 14:14:55 UTC: imagen API `quantfut-api-real:138b2ab`, archivos iguales a `main` `b05e085`. Base verificada (162 Python y cuatro frontend), respaldo y ensayo aislado con consultas de solo lectura. Solo se recreó la API; worker y NBA conservan sus identificadores.
+- Dominio público `https://pronosticosdeportivos.pro/#picks` comprobado visualmente: cuatro selecciones reales, cuotas y probabilidades del servidor y registros desplegables; cinco pronósticos protegidos. Salud 200, agenda de 180 partidos. Respaldo y vuelta atrás en `DEPLOYS.md`.
