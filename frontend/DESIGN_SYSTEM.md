@@ -92,7 +92,7 @@ Las líneas de cancha son una textura sutil, nunca decoración sobre datos.
    secciones, navegación horizontal en móvil y preferencias existentes.
    Los campos de identidad son ficticios y de solo lectura; la selección
    nunca se presenta como pago o suscripción activa.
-6. **Ventana única (2026-10-28):** Partidos y Mercados son una sola vista (`partidos`; `mercados` y `partido` son alias). Lista de partidos con escudos a la izquierda; a la derecha cabecera compacta del partido y dos zonas con desplazamiento propio: pronóstico (destacado = mayor probabilidad entre los sellados con cuota de 1,40 a 1,80, tabla de mercados con los reservados como VIP y un solo «Acceso VIP» a planes) y estadísticas en pestañas. Bajo 1180px la lista pasa a un selector con flechas; bajo 900px una zona a la vez. La disposición vive en `window.css` (sin colores ni fuentes propios).
+6. **Ventana única (2026-10-28):** Partidos y Mercados son una sola vista (`partidos`; `mercados` y `partido` son alias). Lista de partidos con escudos a la izquierda; a la derecha cabecera compacta del partido y dos zonas con desplazamiento propio: pronóstico (destacado = mayor probabilidad entre los sellados con cuota de 1,30 a 1,80, tabla de mercados con los reservados como VIP y un solo «Acceso VIP» a planes) y estadísticas en pestañas. Bajo 1180px la lista pasa a un selector con flechas; bajo 900px una zona a la vez. La disposición vive en `window.css` (sin colores ni fuentes propios).
    *(Histórico)* **Mesa de mercados:** lista de partidos → tabla densa → detalle lateral.
    Se ordena por defecto por diferencia con el precio justo, con las
    candidatas primero y lo excluido o cerrado siempre al final. El modelo

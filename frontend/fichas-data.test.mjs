@@ -34,14 +34,14 @@ test('un fallo de red no se convierte en una agenda vacía', async () => {
 
 const pick = (id, prob, ref_price, extra = {}) => ({ pick_key: id, match_id: 'm', chain_sha256: 'a'.repeat(64), prob, ref_price, ...extra });
 
-test('el destacado es el de mayor probabilidad con cuota de 1,40 a 1,80', () => {
+test('el destacado es el de mayor probabilidad con cuota de 1,30 a 1,80', () => {
   const chosen = featuredPick([pick('a', .90, 1.08), pick('b', .74, 1.43), pick('c', .70, 1.55), pick('d', .60, 1.77)]);
   assert.equal(chosen.pick_key, 'b');
 });
 
-test('los extremos 1,40 y 1,80 cuentan y lo que queda fuera no', () => {
-  assert.equal(featuredPick([pick('lo', .71, 1.40), pick('hi', .60, 1.80)]).pick_key, 'lo');
-  assert.equal(featuredPick([pick('bajo', .90, 1.39), pick('alto', .55, 1.81)]), null);
+test('los extremos 1,30 y 1,80 cuentan y lo que queda fuera no', () => {
+  assert.equal(featuredPick([pick('lo', .71, 1.30), pick('hi', .60, 1.80)]).pick_key, 'lo');
+  assert.equal(featuredPick([pick('bajo', .90, 1.29), pick('alto', .55, 1.81)]), null);
 });
 
 test('un pronóstico bloqueado o sin sello nunca es el destacado', () => {
