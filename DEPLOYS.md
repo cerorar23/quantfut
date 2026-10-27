@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-27 15:42 UTC · App: gratis de Alta probabilidad al 10 % del día · API `quantfut-api-gratis10:cf88564` (`main` `4494869`, PR #174)
+- **Motivo:** decisión del titular: es gratis el 10 % de los pronósticos publicados en el lote del día (hacia arriba), los de mayor probabilidad, sin rango de cuota. Sustituye «uno por mercado, cuota ≤ 1,60, hasta 4 abiertos». Un rango 1,40-1,50 pedido antes se descartó tras el ensayo: 0 pronósticos de la semana en ese rango.
+- **Base comprobada:** API `quantfut-api-original:5ba3375` (entrada de la otra sesión, PR #176, ya cerrada); `scripts/deploy.sh estado` daba como única diferencia con la rama `api/mobile.py`. Nadie más desplegando (sin builds ni compose en curso).
+- **Imagen:** `FROM quantfut-api-original:5ba3375` + solo `src/qf/api/mobile.py` (sha256 `dcf03f92460f`, = `main` `4494869`). Importa sin red.
+- **Ensayo** con la imagen candidata y la base en solo lectura (`default_transaction_read_only=on`, sin escribir repartos): lote del 27-oct, 9 publicados → cupo 1 → 1 gratis (prob 0,90, cuota 1,08) en vez de 6; lotes anteriores sin cambios (ya empezados, siguen visibles).
+- **Verificado en el dominio real:** `/health`, `/`, `/alta-probabilidad` y `/mobile/v1/config` 200; config con `high_probability_free_fraction: 0.1`; `/mobile/v1/home` → Alta probabilidad con 1 gratis y 8 con candado; web pública 1 gratis. Hash de `mobile.py` en el contenedor = `main`. 0 errores y 0 reinicios en los registros. Worker intacto (mismo contenedor `0f994ebb5e20`).
+- **Pendiente:** la app instalada sigue diciendo «hasta 4 gratis» hasta publicar una build nueva (el texto «10 % gratis» ya está en `main`).
+- **Respaldo:** `~/quantfut/releases/gratis10-cf88564/backup/` (`docker-compose.yml`, `mobile.py` anterior, `state.txt`).
+- **Vuelta atrás:** `cp -p ~/quantfut/releases/gratis10-cf88564/backup/docker-compose.yml ~/quantfut/docker-compose.yml && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate api` (vuelve `quantfut-api-original:5ba3375`). Los repartos que `top_up` haya añadido en `mobile_free_allocations` pueden quedarse: la regla anterior los recorta al leer.
+
 ### 2026-10-27 15:33:52 UTC · Restaurado el CSS anterior: solo acomodo multideporte · API `quantfut-api-original:5ba3375` (`main` `1866c9b`, PR #175)
 - **Orden del titular:** conservar obligatoriamente el CSS anterior, incluidos colores, tarjetas y botones; el cambio solicitado es solo de acomodo. Se elimina la hoja añadida `ergonomia.css`, su carga y su ruta, y se reutilizan cabecera, tarjetas `live-pick`, paneles, botones, tablas y planes anteriores. El cajón móvil no se abre desde escritorio; las herramientas se agrupan con componentes existentes.
 - **CSS idéntico a la versión previa `18f5604`:** `styles.css` `9cebbf1d…`, `future.css` `eff42cf8…`, `membership.css` `57201c52…` y CYBERCORE CSS 0.3.0 `8c4bc2fc…`. Comparación completa de hashes en servidor y pruebas; exactamente las cuatro hojas anteriores en HTML, sin capas ni estilos inline añadidos. La regla queda en `CLAUDE.md` y el CI ejecuta las 54 pruebas frontend, incluida la protección del CSS.
