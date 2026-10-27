@@ -6,7 +6,7 @@
 - [x] Implementar pertenencia por plantilla oficial, independiente del último partido o una cotización; conservar historia individual tras traspasos y verificar recibos, antigüedad, temporada e integridad al sellar y leer.
 - [x] Implementar y medir un candidato de fuerza individual y rotación, sin transportar el Elo del antiguo equipo. Selección 2024-25 y evaluación 2025-26: mejora pequeña, no concluyente; no supera la regla de aceptación.
 - [x] Separar el candidato experimental de las probabilidades publicadas y preparar su registro prospectivo con plantillas verificadas.
-- [ ] Completar reajuste exacto, comparación dentro del servidor, ensayo y despliegue de la corrección de pertenencia; registrar resultados y reversión. No promover el ajuste de fuerza rechazado.
+- [x] Reajuste exacto, comparación dentro del servidor, ensayo y despliegue de pertenencia 1.6.0 completados a las 23:32 UTC; respaldo y reversión en DEPLOYS.md. La instrucción posterior del titular activa el ajuste de fuerza y los recálculos versionados en la siguiente versión.
 
 
 ## Pendientes vivos — limpieza del 25-oct-2026

@@ -141,13 +141,20 @@ def player_parameters(history, stat, protocol):
 
 
 def player_over(parameters, line, protocol):
-    w = protocol['empirical_weight']
+    w = parameters.get('empirical_weight', protocol['empirical_weight'])
     empirical = np.mean(np.asarray(parameters['sample']) > line)
     return float((1-w)*nbinom.sf(np.floor(line), parameters['n'], parameters['p']) + w*empirical)
 
 
+def player_over_lines(parameters, lines, protocol):
+    lines = np.asarray(lines, float)
+    w = parameters.get('empirical_weight', protocol['empirical_weight'])
+    empirical = (np.asarray(parameters['sample'])[:, None] > lines).mean(axis=0)
+    return (1 - w) * nbinom.sf(np.floor(lines), parameters['n'], parameters['p']) + w * empirical
+
+
 def player_distribution(parameters, protocol):
-    w = protocol['empirical_weight']
+    w = parameters.get('empirical_weight', protocol['empirical_weight'])
     limit = max(int(nbinom.ppf(1-1e-12, parameters['n'], parameters['p'])),
                 max(map(int, parameters['sample'])), 80)
     if limit > 4096:

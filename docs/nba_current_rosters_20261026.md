@@ -36,4 +36,4 @@ Las pruebas cubren transferencia al rival, salida de ambos equipos, equipo cambi
 
 La revisión automática rechazó copiar desde el servidor el modelo desplegado y sus partidos a esta carpeta por considerar esa exportación no autorizada. No se realizó. La comparación y el ensayo se preparan para ejecutarse dentro del servidor.
 
-Estado: implementación y medición local; el despliegue debe confirmarse por separado en `DEPLOYS.md`. No se considera recalibrado todo el motor ni corregido todavía el exceso de peso del Elo histórico del ganador.
+Desplegado como 1.6.0 el 26-oct a las 23:32 UTC, main `74a05cc`, con comparación exacta y ensayo de 542 pronósticos. Registro y reversión en `DEPLOYS.md`. La instrucción posterior del titular requiere activar la fuerza individual, entrenar con la temporada actual y recalcular las publicaciones con nueva versión y fecha; la condición de sombra de este documento describe exclusivamente la 1.6.0.
