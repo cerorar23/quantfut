@@ -67,8 +67,7 @@ export function createSportWindow(ctx) {
     const more = all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, de mayor a menor probabilidad.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
     return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>
       <section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${families.map(f => `<button type="button" class="chip ${fam === f ? 'selected' : ''}" data-win-sport-fam="${esc(f)}" aria-pressed="${fam === f}">${esc(f)}</button>`).join('')}</div></div>
-      <div class="win-table" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}</section>
-      <p class="bottom-note">Probabilidades estadísticas del motor; la cuota del modelo es 1 ÷ probabilidad y no una cuota de casa. Una estimación estadística no acredita rentabilidad.</p>`;
+      <div class="win-table" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}</section>${event.sport === 'nba' ? '' : '<p class="bottom-note">Probabilidades estadísticas del motor; la cuota del modelo es 1 ÷ probabilidad y no una cuota de casa. Una estimación estadística no acredita rentabilidad.</p>'}`;
   }
 
   // ---- estadísticas (derecha)
@@ -243,7 +242,7 @@ export function createSportWindow(ctx) {
       ${versus('Racha actual', h.streak, a.streak, { shown: [streakText(h.streak), streakText(a.streak)] })}
       ${versus('Descanso antes del partido', h.back_to_back ? -1 : h.rest_days, a.back_to_back ? -1 : a.rest_days, { shown: [restText(h), restText(a)] })}
       ${versus('Récord de la temporada pasada', h.last_season.rate, a.last_season.rate, { shown: [recRate(h.last_season), recRate(a.last_season)] })}
-      <p class="win-sub">Marcadores finales de la NBA. Con pocos partidos jugados las cifras son muy volátiles: fíjate en cuántos hay detrás de cada una.</p></div>`;
+      </div>`;
   }
 
   function nbaForm(event) {
@@ -262,7 +261,7 @@ export function createSportWindow(ctx) {
         ${kv('Puntos a favor · en contra', `${avg('points')} · ${avg('opponent_points')} <small>por partido</small>`)}
         <ul class="win-list win-list--dated">${list}</ul>` : '<p class="win-sub">Sin partidos registrados con este filtro.</p>'}</div>`;
     };
-    return `<div class="win-panel-box"><p class="eyebrow">FORMA RECIENTE</p>${filter}</div>${block(n.teams[0], event.home)}${block(n.teams[1], event.away)}<p class="win-sub">Hasta los últimos 6 partidos oficiales de cada equipo (temporada regular, play-in y eliminatorias), del más reciente al más antiguo. Al inicio de la temporada incluyen partidos del año pasado; la fecha de cada uno va a la vista.</p>`;
+    return `<div class="win-panel-box"><p class="eyebrow">FORMA RECIENTE</p>${filter}</div>${block(n.teams[0], event.home)}${block(n.teams[1], event.away)}`;
   }
 
   function nbaH2H(event) {
@@ -276,7 +275,7 @@ export function createSportWindow(ctx) {
     const list = h.matches.map(m => `<li><span class="win-d">${esc(shortDate(m.date))}</span><span>${esc(m.home)}<small>vs ${esc(m.away)}</small></span><span class="win-sc">${m.home_points}-${m.away_points}</span><span class="win-res ${m.home_points > m.away_points ? 'is-win' : 'is-loss'}" title="Ganó ${esc(m.home_points > m.away_points ? m.home : m.away)}">${m.home_points > m.away_points ? 'L' : 'V'}</span></li>`).join('');
     return `<div class="win-panel-box"><p class="eyebrow">CARA A CARA · ÚLTIMOS ${h.matches.length}</p><div class="win-duelscore"><strong>${winsHome}</strong><span>${esc(event.home)}</span><span>${esc(event.away)}</span><strong>${winsAway}</strong></div>
       ${h.average_total != null ? kv('Total medio de puntos', num(h.average_total)) : ''}<ul class="win-list win-list--dated">${list}</ul>
-      <p class="win-sub">Cada marcador va con el local de ese partido primero. La marca final indica si ganó el local (L) o el visitante (V). Incluye temporadas anteriores.</p></div>`;
+      </div>`;
   }
 
   function nbaStandings(event) {
@@ -285,7 +284,7 @@ export function createSportWindow(ctx) {
     const conf = t => (t.standing.conference === 'este' ? 'Conferencia Este' : t.standing.conference === 'oeste' ? 'Conferencia Oeste' : '');
     const row = t => `<tr><td class="n">${t.standing.rank == null ? '—' : t.standing.rank}</td><td>${esc(t.name)}<small class="win-cell-note">${conf(t)}</small></td><td class="n">${t.season.won + t.season.lost}</td><td class="n">${t.season.won}</td><td class="n">${t.season.lost}</td><td class="n">${rate(t.season)}</td><td class="n">${num(t.scoring.points_for)}</td><td class="n">${num(t.scoring.points_against)}</td><td class="n">${t.streak > 0 ? `${t.streak}V` : t.streak < 0 ? `${-t.streak}D` : '—'}</td></tr>`;
     return `<div class="win-panel-box"><p class="eyebrow">CLASIFICACIÓN</p><div class="win-table win-table--all"><table class="cyber-table cyber-table--compact"><thead><tr><th class="n">Pos.</th><th>Equipo</th><th class="n">J</th><th class="n">V</th><th class="n">D</th><th class="n">%</th><th class="n">PF</th><th class="n">PC</th><th class="n">Racha</th></tr></thead><tbody>${n.teams.map(row).join('')}</tbody></table></div>
-      <p class="win-sub">Temporada regular en curso. La posición ordena su conferencia por porcentaje de victorias y luego por victorias, sin los desempates oficiales de la NBA. PF y PC: puntos a favor y en contra por partido.</p></div>`;
+      </div>`;
   }
 
   const TABS = { tenis: [['resumen', 'Resumen'], ['forma', 'Forma'], ['superficie', 'Superficie'], ['h2h', 'Cara a cara'], ['modelo', 'Modelo'], ['resultado', 'Resultado']],
@@ -318,7 +317,7 @@ export function createSportWindow(ctx) {
     const a = event.availability;
     if (!a) return '<div class="win-panel-box"><p class="eyebrow">DISPONIBILIDAD</p><p class="win-sub">Este partido no trae reporte de lesiones del motor.</p></div>';
     const label = a.state === 'reporte_aplicado' ? 'Reporte oficial aplicado' : String(a.state || 'Sin dato').replace(/_/g, ' ');
-    return `<div class="win-panel-box"><p class="eyebrow">REPORTE OFICIAL DE LESIONES</p>${kv('Estado', esc(label))}${kv('Jugadores listados', num(a.listed, 0))}${kv('Jugadores con historial usado', num(a.used, 0))}${a.report_timestamp_utc ? kv('Reporte de', `${realDate(a.report_timestamp_utc)} ${realTime(a.report_timestamp_utc)}`) : ''}${typeof a.report_url === 'string' && a.report_url.startsWith('https://') ? kv('Documento', `<a class="text-link" href="${esc(a.report_url)}" target="_blank" rel="noopener noreferrer">PDF oficial ↗</a>`) : ''}</div><div class="win-panel-box"><p class="eyebrow">LO QUE FALTA POR BAJAS</p>${kv(`Puntos · ${esc(event.home)}`, num(a.missing_points_home))}${kv(`Puntos · ${esc(event.away)}`, num(a.missing_points_away))}${kv(`Minutos · ${esc(event.home)}`, num(a.missing_minutes_home))}${kv(`Minutos · ${esc(event.away)}`, num(a.missing_minutes_away))}<p class="win-sub">Producción individual y minutos que se esperaba aportaran los jugadores listados como baja.</p></div>`;
+    return `<div class="win-panel-box"><p class="eyebrow">REPORTE OFICIAL DE LESIONES</p>${kv('Estado', esc(label))}${kv('Jugadores listados', num(a.listed, 0))}${kv('Jugadores con historial usado', num(a.used, 0))}${a.report_timestamp_utc ? kv('Reporte de', `${realDate(a.report_timestamp_utc)} ${realTime(a.report_timestamp_utc)}`) : ''}${typeof a.report_url === 'string' && a.report_url.startsWith('https://') ? kv('Documento', `<a class="text-link" href="${esc(a.report_url)}" target="_blank" rel="noopener noreferrer">PDF oficial ↗</a>`) : ''}</div><div class="win-panel-box"><p class="eyebrow">LO QUE FALTA POR BAJAS</p>${kv(`Puntos · ${esc(event.home)}`, num(a.missing_points_home))}${kv(`Puntos · ${esc(event.away)}`, num(a.missing_points_away))}${kv(`Minutos · ${esc(event.home)}`, num(a.missing_minutes_home))}${kv(`Minutos · ${esc(event.away)}`, num(a.missing_minutes_away))}</div>`;
   }
 
   function result(event) {
