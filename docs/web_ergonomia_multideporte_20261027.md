@@ -4,7 +4,9 @@
 
 El titular rechazó expresamente los cambios de colores, tarjetas y botones: solo autorizó el acomodo. La corrección retira `ergonomia.css` y restaura la cabecera, tarjetas `live-pick`, paneles, botones, tablas y planes con los componentes anteriores. `styles.css`, `future.css`, `membership.css` y CYBERCORE CSS 0.3.0 conservan exactamente sus huellas anteriores (`18f5604`). Las fuentes de los tres deportes permanecen integradas. En escritorio se agrupan las herramientas con controles existentes; el cajón móvil solo se abre en su tamaño correspondiente. Probados 54 casos frontend y el menú real a 390 px; las huellas CSS y las cuatro hojas cargadas se comprueban también en CI. No se añade CSS ni estilos inline.
 
-El titular pidió reorganizar la web siguiendo sus ideas de lectura y venta, e incluir los tres deportes de forma ergonómica. Se aplica la jerarquía portada → pronósticos → resultados → planes con una sola navegación y filtros por deporte, fecha y estado. CYBERCORE CSS 0.3.0 sigue siendo la biblioteca instalada y servida; `ergonomia.css` mejora jerarquía, legibilidad, contraste y adaptación móvil. Se mantienen las cuentas y el checkout real.
+La versión final aplica la jerarquía portada → pronósticos → resultados → planes con filtros por deporte, fecha y estado y los componentes visuales anteriores. CYBERCORE CSS 0.3.0 y las tres hojas del sitio permanecen idénticos a la versión previa. No se añade CSS ni una capa que lo sobrescriba. Se mantienen las cuentas y el checkout real.
+
+La corrección del aspecto se publicó a las 15:33:52 UTC: `quantfut-api-original:5ba3375`, igual a `main` `1866c9b` (PR #175), 179 hashes finales comprobados y las cuatro hojas originales verificadas en el servidor. El HTML obliga a revalidar la versión en cada recarga; el CSS rechazado ya no se sirve. No se alteraron los motores, su cron ni la salida pública de tenis. Respaldo y reversión en `DEPLOYS.md`.
 
 ## Contenido y acceso
 

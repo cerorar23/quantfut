@@ -6,7 +6,7 @@ El titular rechaza expresamente los cambios de colores, tarjetas y botones. Rest
 
 - [x] Retirar la hoja añadida y volver a las tarjetas, botones, cabecera y planes anteriores, con comprobación de las cuatro huellas CSS originales.
 - [x] Verificar la navegación con el CSS original: 54 pruebas frontend, siete del lector público; menú móvil de 390 px correcto, cuatro hojas originales sin cambios y sin el menú de escritorio roto.
-- [ ] Publicar la corrección con respaldo y registro.
+- [x] Publicar la corrección con respaldo y registro: PR #175, `main` `1866c9b`, API `quantfut-api-original:5ba3375`, 15:33:52 UTC. Cuatro CSS originales comprobados por hash, sin la hoja rechazada; los tres deportes y los motores se conservan. Ver `DEPLOYS.md`.
 
 ## 27-oct-2026 · Rediseño ergonómico multideporte
 
