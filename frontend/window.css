@@ -559,47 +559,11 @@
   color: var(--muted);
 }
 
-/* ---- escritorio ancho: la ventana ocupa el alto visible y cada zona se desplaza sola */
+/* ---- escritorio ancho: la ventana ocupa el alto visible bajo la cabecera de siempre (alto medido por app.js en --win-head)
+   y cada zona se desplaza sola. La cabecera es la misma de todas las páginas. */
 @media (min-width: 1000px) {
-  .is-win .site-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    height: 56px;
-    padding: 0 16px;
-  }
-
-  .is-win .header-main,
-  .is-win .top-nav {
-    display: contents;
-  }
-
-  .is-win .header-brand {
-    order: 1;
-  }
-
-  .is-win .sport-nav {
-    order: 2;
-  }
-
-  .is-win .top-nav-group {
-    order: 3;
-  }
-
-  .is-win .top-actions {
-    order: 9;
-    margin-left: auto;
-  }
-
-  .is-win .header-status,
-  .is-win .demo-flag,
-  .is-win .top-nav-label,
-  .is-win .top-link .nav-icon {
-    display: none;
-  }
-
   .is-win .win {
-    height: calc(100dvh - 56px);
+    height: calc(100dvh - var(--win-head, 117px));
   }
 
   .win-work {
@@ -622,10 +586,10 @@
   }
 }
 
-/* El selector de deporte desbordaba la cabecera móvil y tapaba la franja; esta vista es de fútbol. */
+/* La cabecera móvil de siempre deja el selector de deporte colgando bajo ella: se deja ese espacio. */
 @media (max-width: 999px) {
-  .is-win .sport-nav {
-    display: none;
+  .is-win .win {
+    margin-top: 40px;
   }
 }
 

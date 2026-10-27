@@ -1278,6 +1278,8 @@ function render() {
 
 // La lista de partidos solo queda fija si cabe entera bajo la cabecera.
 function fitDeskSide() {
+  const head = app.querySelector('.site-header');
+  if (head) app.style.setProperty('--win-head', `${head.offsetHeight}px`);
   const side = app.querySelector('.desk-side');
   const header = app.querySelector('.site-header');
   if (!side || !header) return;
