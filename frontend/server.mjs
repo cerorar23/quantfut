@@ -9,6 +9,7 @@ const files = new Map([
   ['/index.html', ['index.html', 'text/html; charset=utf-8']],
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/future.css', ['future.css', 'text/css; charset=utf-8']],
+  ['/window.css', ['window.css', 'text/css; charset=utf-8']],
   ['/vendor/cybercore/cybercore.min.css', ['vendor/cybercore/cybercore.min.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/real-views.js', ['real-views.js', 'text/javascript; charset=utf-8']],

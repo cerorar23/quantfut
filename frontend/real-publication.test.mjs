@@ -59,6 +59,6 @@ test('match identity is encoded and source strings are escaped',async()=>{
 test('production boot has no simulated catalog and maps all old data views to real sources',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  for(const name of ['Puerto Norte','Estrella Azul','function seeded','function buildFixture','qf-101','DEMO + DATOS PÚBLICOS']) assert.ok(!app.includes(name));
- for(const route of ['inicio: realViews.home','mercados: realViews.markets','picks: realViews.picks','historial: realViews.history']) assert.ok(app.includes(route));
+ for(const route of ['inicio: realViews.home','mercados: windowView','picks: realViews.picks','historial: realViews.history']) assert.ok(app.includes(route));
  assert.ok(app.includes('applyCybercoreTheme(app)'));
 });
