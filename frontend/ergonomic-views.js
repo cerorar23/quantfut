@@ -1,4 +1,4 @@
-import { publicForecasts, forecastGames } from './fichas-data.js?v=real-20261027';
+import { publicForecasts, forecastGames } from './fichas-data.js?v=real-20261028';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;

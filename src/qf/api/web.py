@@ -51,6 +51,11 @@ def future_styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "future.css", media_type="text/css")
 
 
+@router.get("/window.css")
+def window_styles() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "window.css", media_type="text/css")
+
+
 @router.get("/vendor/cybercore/cybercore.min.css")
 def cybercore_styles() -> FileResponse:
     return FileResponse(

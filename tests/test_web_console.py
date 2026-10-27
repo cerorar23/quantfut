@@ -32,6 +32,7 @@ def test_web_demo_se_sirve_sin_secreto(monkeypatch):
     assert "QuantFut" in response.text
     assert client.get("/styles.css").status_code == 200
     assert client.get("/future.css").status_code == 200
+    assert client.get("/window.css").status_code == 200
     assert client.get("/vendor/cybercore/cybercore.min.css").status_code == 200
     assert client.get("/app.js").status_code == 200
     assert client.get("/real-views.js").status_code == 200

@@ -72,3 +72,15 @@ export function modelProbabilities(game) {
       || Math.abs(p.home + p.draw + p.away - 1) > .005) return null;
   return p;
 }
+
+// Pronóstico destacado: entre los publicados y abiertos con cuota de 1,40 a 1,80,
+// el de mayor probabilidad. No genera nada: solo elige entre lo que envía el servidor.
+export const FEATURED_ODDS = Object.freeze({ min: 1.4, max: 1.8 });
+
+export function featuredPick(picks) {
+  const open = (Array.isArray(picks) ? picks : []).filter(p => p && p.locked !== true && p.chain_sha256
+    && typeof p.prob === 'number' && Number.isFinite(p.prob) && p.prob > 0 && p.prob < 1
+    && typeof p.ref_price === 'number' && Number.isFinite(p.ref_price)
+    && p.ref_price >= FEATURED_ODDS.min && p.ref_price <= FEATURED_ODDS.max);
+  return open.reduce((best, p) => (!best || p.prob > best.prob ? p : best), null);
+}
