@@ -430,6 +430,10 @@
   font: 700 13px var(--font-mono);
 }
 
+.win-feat td {
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+}
+
 .win-lock td {
   color: var(--faint);
   background: color-mix(in srgb, var(--bg) 55%, transparent);
@@ -485,47 +489,201 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* ---- escritorio ancho: la ventana ocupa el alto visible y cada zona se desplaza sola */
+/* ---- NBA y tenis: bloques de estadística */
+.win-panel-box {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.win-panel-box .eyebrow {
+  margin-bottom: 8px;
+}
+
+.win-bar {
+  display: grid;
+  grid-template-columns: minmax(96px, 1.2fr) minmax(0, 2fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13px;
+}
+
+.win-bar small,
+.win-cell-note {
+  display: block;
+  font: 10px var(--font-mono);
+  color: var(--faint);
+}
+
+.win-bar b {
+  font: 700 12px var(--font-mono);
+  color: var(--cyan);
+}
+
+.win-kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.win-kv:last-of-type {
+  border-bottom: 0;
+}
+
+.win-kv span {
+  color: var(--muted);
+}
+
+.win-kv strong {
+  text-align: right;
+  font: 700 13px var(--font-mono);
+  color: var(--text);
+}
+
+.win-kv small {
+  font: 11px var(--font-mono);
+  color: var(--muted);
+}
+
+.win-code {
+  display: block;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+  font: 11px var(--font-mono);
+  color: var(--muted);
+}
+
+
+/* ---- tenis: estadísticas de los jugadores */
+.win-vshead,
+.win-vsrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.win-vshead {
+  padding-bottom: 6px;
+  font: 700 12px var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.win-vshead strong:first-child {
+  grid-column: 1;
+}
+
+.win-vshead strong:last-child {
+  grid-column: 3;
+}
+
+.win-vsrow {
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.win-vsrow span {
+  color: var(--muted);
+}
+
+.win-vsrow b {
+  font: 700 13px var(--font-mono);
+  color: var(--text);
+}
+
+.win-vsrow b.is-better {
+  color: var(--green);
+}
+
+.win-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 12px;
+}
+
+.win-chipline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.win-res {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  font: 700 11px var(--font-mono);
+  font-style: normal;
+  color: var(--bg);
+}
+
+.win-res.is-win {
+  background: var(--green);
+}
+
+.win-res.is-loss {
+  background: var(--magenta);
+}
+
+.win-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.win-list li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto 24px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.win-list small {
+  display: block;
+  font: 10px var(--font-mono);
+  color: var(--faint);
+}
+
+.win-d,
+.win-sc {
+  font: 11px var(--font-mono);
+  color: var(--muted);
+}
+
+.win-duelscore {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+  font-size: 12px;
+}
+
+.win-duelscore strong {
+  font: 800 26px var(--font-mono);
+  color: var(--cyan);
+}
+
+/* ---- escritorio ancho: la ventana ocupa el alto visible bajo la cabecera de siempre (alto medido por app.js en --win-head)
+   y cada zona se desplaza sola. La cabecera es la misma de todas las páginas. */
 @media (min-width: 1000px) {
-  .is-win .site-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    height: 56px;
-    padding: 0 16px;
-  }
-
-  .is-win .header-main,
-  .is-win .top-nav {
-    display: contents;
-  }
-
-  .is-win .header-brand {
-    order: 1;
-  }
-
-  .is-win .sport-nav {
-    order: 2;
-  }
-
-  .is-win .top-nav-group {
-    order: 3;
-  }
-
-  .is-win .top-actions {
-    order: 9;
-    margin-left: auto;
-  }
-
-  .is-win .header-status,
-  .is-win .demo-flag,
-  .is-win .top-nav-label,
-  .is-win .top-link .nav-icon {
-    display: none;
-  }
-
   .is-win .win {
-    height: calc(100dvh - 56px);
+    height: calc(100dvh - var(--win-head, 117px));
   }
 
   .win-work {
@@ -548,10 +706,10 @@
   }
 }
 
-/* El selector de deporte desbordaba la cabecera móvil y tapaba la franja; esta vista es de fútbol. */
+/* La cabecera móvil de siempre deja el selector de deporte colgando bajo ella: se deja ese espacio. */
 @media (max-width: 999px) {
-  .is-win .sport-nav {
-    display: none;
+  .is-win .win {
+    margin-top: 40px;
   }
 }
 

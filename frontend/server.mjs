@@ -14,6 +14,7 @@ const files = new Map([
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/real-views.js', ['real-views.js', 'text/javascript; charset=utf-8']],
   ['/sports-data.js', ['sports-data.js', 'text/javascript; charset=utf-8']],
+  ['/sports-window.js', ['sports-window.js', 'text/javascript; charset=utf-8']],
   ['/ergonomic-views.js', ['ergonomic-views.js', 'text/javascript; charset=utf-8']],
   ['/public-data.js', ['public-data.js', 'text/javascript; charset=utf-8']],
   ['/fichas-data.js', ['fichas-data.js', 'text/javascript; charset=utf-8']],

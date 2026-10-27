@@ -429,13 +429,13 @@ def market_card(match_id: str) -> dict | None:
     return model_card(pricing.price_all_markets(lam, mu, rho), fuente='mercado')
 
 
-def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool) -> dict | None:
+def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool, web: bool = False) -> dict | None:
     """Lista de mercados del partido con el acceso aplicado (ver partido_mercados)."""
     abiertas = {partido_mercados.clave(p.get('market'), p.get('selection'), p.get('line')): p
                 for p in picks if p.get('market')}
     try:
         return partido_mercados.construir(match_id, jsonable_name(ficha, 'local', 'Local'),
-                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus)
+                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus, web)
     except Exception:  # noqa: BLE001 - la lista es un extra: si falla, el detalle sigue
         logging.getLogger(__name__).exception('mercados del partido %s', match_id)
         return None
@@ -525,7 +525,7 @@ def model_card(markets, fuente: str = 'modelo') -> dict | None:
 
 
 @router.get('/mobile/v1/matches/{match_id}')
-def detail(match_id: str, response: Response, plus: bool = Depends(member),
+def detail(match_id: str, response: Response, web: bool = Query(False), plus: bool = Depends(member),
            account: dict | None = Depends(rewards.optional_account)):
     response.headers['Cache-Control'] = 'no-store'
     cfg = config()
@@ -556,7 +556,7 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
         ficha['probabilities'], del_modelo = uno_x_dos(prediction)
         propia = model_card(markets) if del_modelo else None
         ficha['modelo'] = ((propia or market_card(match_id)) if picks else None)
-        ficha['mercados'] = mercados_partido(match_id, ficha, picks, plus)
+        ficha['mercados'] = mercados_partido(match_id, ficha, picks, plus, web)
         if ficha['mercados'] is None and blocked and not (plus and flags['vip']['enabled']):
             # Sin modelo de goles: sus pronósticos VIP se avisan aparte del gratuito (solo categoría).
             ficha['mercados'] = partido_mercados.solo_candados(vip_picks)
