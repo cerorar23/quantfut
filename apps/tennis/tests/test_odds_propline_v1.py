@@ -120,3 +120,16 @@ def test_player_games_won_maps_to_each_player_and_reads_the_closing_line(tmp_pat
     close = closing_board(tmp_path / 'close', 't1', 'Eva Sol', 'Ana Paz', (NOW + timedelta(hours=8)).isoformat())
     assert [r['contract'] for r in close['rows']] == [rows[('B', 10.5)]['contract']]
     assert close['rows'][0]['market'] == pytest.approx(fair(1 + 100 / 120, 2.0))
+
+
+def test_a_listed_middle_name_still_finds_the_match_but_no_similarity_guess(tmp_path):
+    from tennis_odds_propline_v1 import same_player, market_board
+    assert same_player('Leylah Annie Fernandez', 'Leylah Fernandez') and same_player('leylah fernández', 'Leylah Fernandez')
+    assert same_player('Ana María Luz Paz', 'Ana Luz Paz') and not same_player('Ana Luz Paz', 'Ana María Paz')
+    assert not same_player('Sara Sorribes Tormo', 'Sara Sorribes') and not same_player('Ana Paz', 'Eva Paz') and not same_player('', '')
+    tmp = tmp_path
+    archive(tmp, [event(home='Leylah Annie Fernandez', away='Himeno Sakatsume')])
+    m = latest_market(tmp, 'Himeno Sakatsume', 'Leylah Fernandez', (NOW + timedelta(minutes=30)).isoformat())
+    assert m['probability_a'] == pytest.approx(1 - (2 / 3) / (2 / 3 + 1 / 2.6))  # 27-oct: sealed without a price
+    board = market_board(tmp, 'Leylah Fernandez', 'Himeno Sakatsume', (NOW + timedelta(minutes=30)).isoformat())
+    assert board['rows'][0]['contract']['kind'] == 'winner' and board['rows'][0]['market'] == pytest.approx((2 / 3) / (2 / 3 + 1 / 2.6))
