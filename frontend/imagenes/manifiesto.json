@@ -1,0 +1,1670 @@
+{
+ "generado": "2026-10-27",
+ "nba": {
+  "ATL": {
+   "f": "ATL.png",
+   "fuente": "TheSportsDB",
+   "n": "Atlanta Hawks"
+  },
+  "BKN": {
+   "f": "BKN.png",
+   "fuente": "TheSportsDB",
+   "n": "Brooklyn Nets"
+  },
+  "BOS": {
+   "f": "BOS.png",
+   "fuente": "TheSportsDB",
+   "n": "Boston Celtics"
+  },
+  "CHA": {
+   "f": "CHA.png",
+   "fuente": "TheSportsDB",
+   "n": "Charlotte Hornets"
+  },
+  "CHI": {
+   "f": "CHI.png",
+   "fuente": "TheSportsDB",
+   "n": "Chicago Bulls"
+  },
+  "CLE": {
+   "f": "CLE.png",
+   "fuente": "TheSportsDB",
+   "n": "Cleveland Cavaliers"
+  },
+  "DAL": {
+   "f": "DAL.png",
+   "fuente": "TheSportsDB",
+   "n": "Dallas Mavericks"
+  },
+  "DEN": {
+   "f": "DEN.png",
+   "fuente": "TheSportsDB",
+   "n": "Denver Nuggets"
+  },
+  "DET": {
+   "f": "DET.png",
+   "fuente": "TheSportsDB",
+   "n": "Detroit Pistons"
+  },
+  "GSW": {
+   "f": "GSW.png",
+   "fuente": "TheSportsDB",
+   "n": "Golden State Warriors"
+  },
+  "HOU": {
+   "f": "HOU.png",
+   "fuente": "TheSportsDB",
+   "n": "Houston Rockets"
+  },
+  "IND": {
+   "f": "IND.png",
+   "fuente": "TheSportsDB",
+   "n": "Indiana Pacers"
+  },
+  "LAC": {
+   "f": "LAC.png",
+   "fuente": "TheSportsDB",
+   "n": "Los Angeles Clippers"
+  },
+  "LAL": {
+   "f": "LAL.png",
+   "fuente": "TheSportsDB",
+   "n": "Los Angeles Lakers"
+  },
+  "MEM": {
+   "f": "MEM.png",
+   "fuente": "TheSportsDB",
+   "n": "Memphis Grizzlies"
+  },
+  "MIA": {
+   "f": "MIA.png",
+   "fuente": "TheSportsDB",
+   "n": "Miami Heat"
+  },
+  "MIL": {
+   "f": "MIL.png",
+   "fuente": "TheSportsDB",
+   "n": "Milwaukee Bucks"
+  },
+  "MIN": {
+   "f": "MIN.png",
+   "fuente": "TheSportsDB",
+   "n": "Minnesota Timberwolves"
+  },
+  "NOP": {
+   "f": "NOP.png",
+   "fuente": "TheSportsDB",
+   "n": "New Orleans Pelicans"
+  },
+  "NYK": {
+   "f": "NYK.png",
+   "fuente": "TheSportsDB",
+   "n": "New York Knicks"
+  },
+  "OKC": {
+   "f": "OKC.png",
+   "fuente": "TheSportsDB",
+   "n": "Oklahoma City Thunder"
+  },
+  "ORL": {
+   "f": "ORL.png",
+   "fuente": "TheSportsDB",
+   "n": "Orlando Magic"
+  },
+  "PHI": {
+   "f": "PHI.png",
+   "fuente": "TheSportsDB",
+   "n": "Philadelphia 76ers"
+  },
+  "PHX": {
+   "f": "PHX.png",
+   "fuente": "TheSportsDB",
+   "n": "Phoenix Suns"
+  },
+  "POR": {
+   "f": "POR.png",
+   "fuente": "TheSportsDB",
+   "n": "Portland Trail Blazers"
+  },
+  "SAC": {
+   "f": "SAC.png",
+   "fuente": "TheSportsDB",
+   "n": "Sacramento Kings"
+  },
+  "SAS": {
+   "f": "SAS.png",
+   "fuente": "TheSportsDB",
+   "n": "San Antonio Spurs"
+  },
+  "TOR": {
+   "f": "TOR.png",
+   "fuente": "TheSportsDB",
+   "n": "Toronto Raptors"
+  },
+  "UTA": {
+   "f": "UTA.png",
+   "fuente": "TheSportsDB",
+   "n": "Utah Jazz"
+  },
+  "WAS": {
+   "f": "WAS.png",
+   "fuente": "TheSportsDB",
+   "n": "Washington Wizards"
+  }
+ },
+ "tenis": {
+  "adrian mannarino": {
+   "a": "Carine06 from UK",
+   "f": "adrian-mannarino.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Adrian Mannarino",
+   "p": "https://commons.wikimedia.org/wiki/File:Adrian_Mannarino_in_sepia_(14444726508).jpg",
+   "q": "Q373522"
+  },
+  "alejandro tabilo": {
+   "a": "si.robi",
+   "f": "alejandro-tabilo.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Alejandro Tabilo",
+   "p": "https://commons.wikimedia.org/wiki/File:Tabilo_RGQ23_(52942983162).jpg",
+   "q": "Q65159701"
+  },
+  "aleksandar kovacevic": {
+   "a": "Hameltion",
+   "f": "aleksandar-kovacevic.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Aleksandar Kovacevic",
+   "p": "https://commons.wikimedia.org/wiki/File:Aleksandar_Kovacevic_(Roland_Garros_2023)_01_(cropped).jpg",
+   "q": "Q108523625"
+  },
+  "alevtina ibragimova": {
+   "a": "Hameltion",
+   "f": "alevtina-ibragimova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Alevtina Ibragimova",
+   "p": "https://commons.wikimedia.org/wiki/File:Alevtina_Ibragimova_(2026_US_Open)_02_(cropped).jpg",
+   "q": "Q124441835"
+  },
+  "alex de minaur": {
+   "a": "si.robi",
+   "f": "alex-de-minaur.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Alex de Minaur",
+   "p": "https://commons.wikimedia.org/wiki/File:De_Minaur_RG19_(23)_(48199315646).jpg",
+   "q": "Q22958938"
+  },
+  "alex michelsen": {
+   "a": "Hameltion",
+   "f": "alex-michelsen.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Alex Michelsen",
+   "p": "https://commons.wikimedia.org/wiki/File:Alex_Michelsen_(2023_Cary_2)_01.jpg",
+   "q": "Q112995784"
+  },
+  "alex molcan": {
+   "a": "si.robi",
+   "f": "alex-molcan.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Alex Molcan",
+   "p": "https://commons.wikimedia.org/wiki/File:Molcan_RG22_(24)_(52144316774).jpg",
+   "q": "Q73247665"
+  },
+  "alexander bublik": {
+   "a": "Hameltion",
+   "f": "alexander-bublik.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Alexander Bublik",
+   "p": "https://commons.wikimedia.org/wiki/File:Sascha_Bublik_(2023_DC_Open)_05_(cropped).jpg",
+   "q": "Q23678983"
+  },
+  "alexander zverev": {
+   "a": "Keith Allison from Hanover, MD, USA",
+   "f": "alexander-zverev.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Alexander Zverev",
+   "p": "https://commons.wikimedia.org/wiki/File:Alexander_Zverev_(30004409818).jpg",
+   "q": "Q13990552"
+  },
+  "alexandra eala": {
+   "a": "Philippine Sports Commission",
+   "f": "alexandra-eala.jpg",
+   "l": "Public domain",
+   "lu": "https://commons.wikimedia.org/wiki/File:Ealas_and_Patrick_Gregorio_(cropped_Alexandra_Eala).jpg",
+   "n": "Alexandra Eala",
+   "p": "https://commons.wikimedia.org/wiki/File:Ealas_and_Patrick_Gregorio_(cropped_Alexandra_Eala).jpg",
+   "q": "Q67088022"
+  },
+  "aliaksandra sasnovich": {
+   "a": "si.robi",
+   "f": "aliaksandra-sasnovich.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Aliaksandra Sasnovich",
+   "p": "https://commons.wikimedia.org/wiki/File:Sasnovich_RG21_(24)_(51376296148).jpg",
+   "q": "Q4725560"
+  },
+  "alycia parks": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "alycia-parks.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Alycia Parks",
+   "p": "https://commons.wikimedia.org/wiki/File:Transylvania_Open_2024_-_Ana_Bogdan_vs_Alycia_Parks_(_7-5,_7-5)_(53511538506).jpg",
+   "q": "Q105745525"
+  },
+  "anastasia zakharova": {
+   "a": "si.robi",
+   "f": "anastasia-zakharova.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Anastasia Zakharova",
+   "p": "https://commons.wikimedia.org/wiki/File:Zakharova_WMQ23_(53062168833).jpg",
+   "q": "Q88048339"
+  },
+  "andrey rublev": {
+   "a": "Hameltion",
+   "f": "andrey-rublev.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Andrey Rublev",
+   "p": "https://commons.wikimedia.org/wiki/File:Andrey_Rublev_(2023_US_Open)_12.jpg",
+   "q": "Q17373391"
+  },
+  "ann li": {
+   "a": "si.robi",
+   "f": "ann-li.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Ann Li",
+   "p": "https://commons.wikimedia.org/wiki/File:Li_RG21_(10)_(51376168176).jpg",
+   "q": "Q39074494"
+  },
+  "anna bondar": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "anna-bondar.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Anna Bondar",
+   "p": "https://commons.wikimedia.org/wiki/File:Transylvania_Open_2026_-_Anna_Bondar_v_Ella_Seidel_4-6,_7-6_(8-6),_6-0_01.01.2026_(55078278088)_(cropped).jpg",
+   "q": "Q19281715"
+  },
+  "antonia ruzic": {
+   "a": "DarDarCH",
+   "f": "antonia-ruzic.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Antonia Ruzic",
+   "p": "https://commons.wikimedia.org/wiki/File:2023_Roland_Garros_Qualifying_Tournament_-_37_(cropped2).jpg",
+   "q": "Q84599634"
+  },
+  "arthur fery": {
+   "a": "si.robi",
+   "f": "arthur-fery.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Arthur Fery",
+   "p": "https://commons.wikimedia.org/wiki/File:Fery_WMQ22_(13)_(52191184348).jpg",
+   "q": "Q107406917"
+  },
+  "arthur fils": {
+   "a": "Gordons203",
+   "f": "arthur-fils.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Arthur Fils",
+   "p": "https://commons.wikimedia.org/wiki/File:Arthur_Fils_at_EFG_Swiss_Open_Gstaad_2023_Pic_Gordon_Simmonds.jpg",
+   "q": "Q107207693"
+  },
+  "arthur rinderknech": {
+   "a": "si.robi",
+   "f": "arthur-rinderknech.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Arthur Rinderknech",
+   "p": "https://commons.wikimedia.org/wiki/File:Rinderknech_RG18_(42978781661).jpg",
+   "q": "Q54007388"
+  },
+  "ashlyn krueger": {
+   "a": "Hameltion",
+   "f": "ashlyn-krueger.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Ashlyn Krueger",
+   "p": "https://commons.wikimedia.org/wiki/File:Ashlyn_Krueger_(2023_DC_Open)_01_(cropped).jpg",
+   "q": "Q105825572"
+  },
+  "ben shelton": {
+   "a": "si.robi",
+   "f": "ben-shelton.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Ben Shelton",
+   "p": "https://commons.wikimedia.org/wiki/File:Shelton_MCM23_(27)_(52883150181).jpg",
+   "q": "Q108532383"
+  },
+  "benjamin bonzi": {
+   "a": "si.robi",
+   "f": "benjamin-bonzi.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Benjamin Bonzi",
+   "p": "https://commons.wikimedia.org/wiki/File:Bonzi_RG18_(7)_(42260485824).jpg",
+   "q": "Q18125349"
+  },
+  "borna gojo": {
+   "a": "si.robi",
+   "f": "borna-gojo.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Borna Gojo",
+   "p": "https://commons.wikimedia.org/wiki/File:Gojo_MLC21.jpg",
+   "q": "Q56223431"
+  },
+  "botic van de zandschulp": {
+   "a": "si.robi",
+   "f": "botic-van-de-zandschulp.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Botic van de Zandschulp",
+   "p": "https://commons.wikimedia.org/wiki/File:Van_de_Zandschulp_RG21_(29)_(51375315497).jpg",
+   "q": "Q28038578"
+  },
+  "cameron norrie": {
+   "a": "si.robi",
+   "f": "cameron-norrie.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Cameron Norrie",
+   "p": "https://commons.wikimedia.org/wiki/File:Norrie_WM17_(2)_(36143094896).jpg",
+   "q": "Q23668736"
+  },
+  "carlos alcaraz": {
+   "a": "Like tears in rain derivative work: Kacir",
+   "f": "carlos-alcaraz.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Carlos Alcaraz",
+   "p": "https://commons.wikimedia.org/wiki/File:Carlos_Alcaraz_Roland_Garros_2025_(cropped).jpg",
+   "q": "Q85518537"
+  },
+  "carol young suh lee": {
+   "a": "Hameltion",
+   "f": "carol-young-suh-lee.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Carol Young Suh Lee",
+   "p": "https://commons.wikimedia.org/wiki/File:Carol_Lee_(2023_Wolfpack_Invite)_05.jpg",
+   "q": "Q61637694"
+  },
+  "casper ruud": {
+   "a": "si.robi",
+   "f": "casper-ruud.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Casper Ruud",
+   "p": "https://commons.wikimedia.org/wiki/File:Ruud_MCM22_(31)_(52036646944).jpg",
+   "q": "Q18810082"
+  },
+  "claire liu": {
+   "a": "Hameltion",
+   "f": "claire-liu.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Claire Liu",
+   "p": "https://commons.wikimedia.org/wiki/File:Claire_Liu_(2026_US_Open)_01_(cropped).jpg",
+   "q": "Q20898017"
+  },
+  "clement chidekh": {
+   "a": "si.robi",
+   "f": "clement-chidekh.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Clement Chidekh",
+   "p": "https://commons.wikimedia.org/wiki/File:Chidekh_REN21_(1)_(51601832766).jpg",
+   "q": "Q116694201"
+  },
+  "corentin moutet": {
+   "a": "Carine06 from UK",
+   "f": "corentin-moutet.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Corentin Moutet",
+   "p": "https://commons.wikimedia.org/wiki/File:Corentin_Moutet_(45135594272)_(cropped).jpg",
+   "q": "Q30078104"
+  },
+  "cristina bucsa": {
+   "a": "Peter Menzel",
+   "f": "cristina-bucsa.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Cristina Bucsa",
+   "p": "https://commons.wikimedia.org/wiki/File:Cristina_Buc%C8%99a_(53002855843)_(cropped).jpg",
+   "q": "Q56702741"
+  },
+  "damir dzumhur": {
+   "a": "Dacoucou",
+   "f": "damir-dzumhur.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Damir Dzumhur",
+   "p": "https://commons.wikimedia.org/wiki/File:Damir_Dzumhur_Nice_2016.JPG",
+   "q": "Q1158544"
+  },
+  "daniel altmaier": {
+   "a": "si.robi",
+   "f": "daniel-altmaier.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Daniel Altmaier",
+   "p": "https://commons.wikimedia.org/wiki/File:Altmaier_RG22_(24)_(52144567090).jpg",
+   "q": "Q30005211"
+  },
+  "daniil medvedev": {
+   "a": "LacosteWiki",
+   "f": "daniil-medvedev.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Daniil Medvedev",
+   "p": "https://commons.wikimedia.org/wiki/File:Danill_Medvedev_Miami_2019_(cropped).jpg",
+   "q": "Q21622022"
+  },
+  "daria kasatkina": {
+   "a": "Наталия Вечера",
+   "f": "daria-kasatkina.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Daria Kasatkina",
+   "p": "https://commons.wikimedia.org/wiki/File:Daria_Kasatkina_2025.jpg",
+   "q": "Q17144642"
+  },
+  "daria snigur": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "daria-snigur.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Daria Snigur",
+   "p": "https://commons.wikimedia.org/wiki/File:Daria_Snigur_Transylvania_Open_2026_(cropped).jpg",
+   "q": "Q65553008"
+  },
+  "david goffin": {
+   "a": "Hameltion",
+   "f": "david-goffin.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "David Goffin",
+   "p": "https://commons.wikimedia.org/wiki/File:David_Goffin_(2024_DC_Open)_03_(cropped).jpg",
+   "q": "Q19406"
+  },
+  "dayana yastremska": {
+   "a": "si.robi",
+   "f": "dayana-yastremska.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Dayana Yastremska",
+   "p": "https://commons.wikimedia.org/wiki/File:Yastremska_WMQ23_(53061681226).jpg",
+   "q": "Q23888026"
+  },
+  "denis shapovalov": {
+   "a": "si.robi",
+   "f": "denis-shapovalov.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Denis Shapovalov",
+   "p": "https://commons.wikimedia.org/wiki/File:Shapovalov_RG22_(26)_(52144052686).jpg",
+   "q": "Q20979382"
+  },
+  "diana shnaider": {
+   "a": "si.robi",
+   "f": "diana-shnaider.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Diana Shnaider",
+   "p": "https://commons.wikimedia.org/wiki/File:Shnaider_WMQ23_(53062168393).jpg",
+   "q": "Q107183075"
+  },
+  "diane parry": {
+   "a": "Raffaele Di Buono derivative work: Kacir",
+   "f": "diane-parry.jpg",
+   "l": "CC0",
+   "lu": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+   "n": "Diane Parry",
+   "p": "https://commons.wikimedia.org/wiki/File:Diane_Parry,_Roma_2026_(cropped3).jpg",
+   "q": "Q30082774"
+  },
+  "dominic stricker": {
+   "a": "si.robi",
+   "f": "dominic-stricker.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Dominic Stricker",
+   "p": "https://commons.wikimedia.org/wiki/File:Stricker_WMQ23_(53061681041).jpg",
+   "q": "Q100257508"
+  },
+  "ekaterina alexandrova": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "ekaterina-alexandrova.png",
+   "l": "CC BY 2.0",
+   "lu": "https://creativecommons.org/licenses/by/2.0",
+   "n": "Ekaterina Alexandrova",
+   "p": "https://commons.wikimedia.org/wiki/File:Ekaterina_Alexandrova_BJK_Cup_2020-21_(cropped)_(cropped).png",
+   "q": "Q23719121"
+  },
+  "ekaterine gorgodze": {
+   "a": "si.robi",
+   "f": "ekaterine-gorgodze.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Ekaterine Gorgodze",
+   "p": "https://commons.wikimedia.org/wiki/File:Gorgodze_RGQ22_(7)_(52129856904).jpg",
+   "q": "Q5350353"
+  },
+  "elena pridankina": {
+   "a": "Hameltion",
+   "f": "elena-pridankina.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Elena Pridankina",
+   "p": "https://commons.wikimedia.org/wiki/File:Elena_Pridankina_(2026_US_Open)_01_(cropped).jpg",
+   "q": "Q123482835"
+  },
+  "elena rybakina": {
+   "a": "Hameltion derivative work: Kacir",
+   "f": "elena-rybakina.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Elena Rybakina",
+   "p": "https://commons.wikimedia.org/wiki/File:Elena_Rybakina_(2025_DC_Open)_07_(cropped2).jpg",
+   "q": "Q42055714"
+  },
+  "elise mertens": {
+   "a": "Hameltion",
+   "f": "elise-mertens.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Elise Mertens",
+   "p": "https://commons.wikimedia.org/wiki/File:Elise_Mertens_(2023_US_Open)_23_(cropped)_2.jpg",
+   "q": "Q17381675"
+  },
+  "emerson jones": {
+   "a": "Hameltion",
+   "f": "emerson-jones.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Emerson Jones",
+   "p": "https://commons.wikimedia.org/wiki/File:Emerson_Jones_(2026_US_Open)_01_(cropped).jpg",
+   "q": "Q116046394"
+  },
+  "en shuo liang": {
+   "a": "si.robi",
+   "f": "en-shuo-liang.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "En Shuo Liang",
+   "p": "https://commons.wikimedia.org/wiki/File:Liang_WMQ22_(18)_(52191176028)_(cropped).jpg",
+   "q": "Q47500277"
+  },
+  "ena shibahara": {
+   "a": "Hameltion",
+   "f": "ena-shibahara.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Ena Shibahara",
+   "p": "https://commons.wikimedia.org/wiki/File:Ena_Shibahara_(2024_US_Open)_02_(cropped).jpg",
+   "q": "Q26721334"
+  },
+  "fabian marozsan": {
+   "a": "si.robi",
+   "f": "fabian-marozsan.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Fabian Marozsan",
+   "p": "https://commons.wikimedia.org/wiki/File:Marozs%C3%A1n_WMQ23_(53062093200).jpg",
+   "q": "Q109771291"
+  },
+  "flavio cobolli": {
+   "a": "si.robi",
+   "f": "flavio-cobolli.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Flavio Cobolli",
+   "p": "https://commons.wikimedia.org/wiki/File:Cobolli_WMQ23_(53061712891).jpg",
+   "q": "Q64347071"
+  },
+  "frances tiafoe": {
+   "a": "si.robi",
+   "f": "frances-tiafoe.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Frances Tiafoe",
+   "p": "https://commons.wikimedia.org/wiki/File:Tiafoe_EBN17_(3)_(35716381482).jpg",
+   "q": "Q17305299"
+  },
+  "francisco cerundolo": {
+   "a": "si.robi",
+   "f": "francisco-cerundolo.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Francisco Cerundolo",
+   "p": "https://commons.wikimedia.org/wiki/File:Cerundolo_MCM23_(21)_(52883527185)_(cropped).jpg",
+   "q": "Q61709770"
+  },
+  "gauthier onclin": {
+   "a": "si.robi",
+   "f": "gauthier-onclin.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Gauthier Onclin",
+   "p": "https://commons.wikimedia.org/wiki/File:Onclin_RGQ23_(52943582556).jpg",
+   "q": "Q123071120"
+  },
+  "giovanni mpetshi perricard": {
+   "a": "Hameltion",
+   "f": "giovanni-mpetshi-perricard.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Giovanni Mpetshi Perricard",
+   "p": "https://commons.wikimedia.org/wiki/File:Giovanni_Mpetshi_Perricard_(2023_US_Open)_01_(cropped).jpg",
+   "q": "Q107207704"
+  },
+  "grigor dimitrov": {
+   "a": "Hameltion",
+   "f": "grigor-dimitrov.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Grigor Dimitrov",
+   "p": "https://commons.wikimedia.org/wiki/File:Grigor_Dimitrov_(2023_DC_Open)_01.jpg",
+   "q": "Q337681"
+  },
+  "hamad medjedovic": {
+   "a": "si.robi",
+   "f": "hamad-medjedovic.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Hamad Medjedovic",
+   "p": "https://commons.wikimedia.org/wiki/File:Medjedovic_RGQ23.jpg",
+   "q": "Q106962940"
+  },
+  "harriet dart": {
+   "a": "si.robi",
+   "f": "harriet-dart.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Harriet Dart",
+   "p": "https://commons.wikimedia.org/wiki/File:Dart_WM19_(9)_(48521880041).jpg",
+   "q": "Q20026221"
+  },
+  "heather watson": {
+   "a": "Peter Menzel",
+   "f": "heather-watson.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Heather Watson",
+   "p": "https://commons.wikimedia.org/wiki/File:Heather_Watson_(49810069577)_(cropped2).jpg",
+   "q": "Q239605"
+  },
+  "henry bernet": {
+   "a": "Skyscraper2010",
+   "f": "henry-bernet.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Henry Bernet",
+   "p": "https://commons.wikimedia.org/wiki/File:Henry_Bernet,_Swiss_tennis_player_(cropped).jpg",
+   "q": "Q130607009"
+  },
+  "himeno sakatsume": {
+   "a": "si.robi",
+   "f": "himeno-sakatsume.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Himeno Sakatsume",
+   "p": "https://commons.wikimedia.org/wiki/File:Sakatsume_WMQ23_(53062186333).jpg",
+   "q": "Q106368473"
+  },
+  "holger rune": {
+   "a": "si.robi",
+   "f": "holger-rune.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Holger Rune",
+   "p": "https://commons.wikimedia.org/wiki/File:Rune_RG22_(4)_(52144534990).jpg",
+   "q": "Q48200561"
+  },
+  "hubert hurkacz": {
+   "a": "si.robi",
+   "f": "hubert-hurkacz.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Hubert Hurkacz",
+   "p": "https://commons.wikimedia.org/wiki/File:Hurkacz_RG19_(10)_(48199235282).jpg",
+   "q": "Q18927958"
+  },
+  "jacob fearnley": {
+   "a": "Cazza3012",
+   "f": "jacob-fearnley.jpg",
+   "l": "CC0",
+   "lu": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+   "n": "Jacob Fearnley",
+   "p": "https://commons.wikimedia.org/wiki/File:Jacob_Fearnley.jpg",
+   "q": "Q119628465"
+  },
+  "jakub mensik": {
+   "a": "Hameltion",
+   "f": "jakub-mensik.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Jakub Mensik",
+   "p": "https://commons.wikimedia.org/wiki/File:Jakub_Men%C5%A1%C3%ADk_(2023_US_Open)_02_(cropped).jpg",
+   "q": "Q102228055"
+  },
+  "jakub paul": {
+   "a": "LHC88",
+   "f": "jakub-paul.png",
+   "l": "CC BY 4.0",
+   "lu": "https://creativecommons.org/licenses/by/4.0",
+   "n": "Jakub Paul",
+   "p": "https://commons.wikimedia.org/wiki/File:Jakub_Paul_Basel_2025_(cropped).png",
+   "q": "Q55760449"
+  },
+  "james duckworth": {
+   "a": "si.robi",
+   "f": "james-duckworth.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "James Duckworth",
+   "p": "https://commons.wikimedia.org/wiki/File:Duckworth_WMQ14_(3)_(14420344920).jpg",
+   "q": "Q1336011"
+  },
+  "jan-lennard struff": {
+   "a": "si.robi",
+   "f": "jan-lennard-struff.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Jan-Lennard Struff",
+   "p": "https://commons.wikimedia.org/wiki/File:Struff_RG18_(6)_(42260262224).jpg",
+   "q": "Q1681537"
+  },
+  "jasmine paolini": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "jasmine-paolini.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Jasmine Paolini",
+   "p": "https://commons.wikimedia.org/wiki/File:Transylvania_Open_2022_WTA_250_(52503041088)_(Paolini).jpg",
+   "q": "Q19973674"
+  },
+  "jeline vandromme": {
+   "a": "Hameltion",
+   "f": "jeline-vandromme.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Jeline Vandromme",
+   "p": "https://commons.wikimedia.org/wiki/File:Jeline_Vandromme_(2026_US_Open)_01_(cropped).jpg",
+   "q": "Q126364874"
+  },
+  "jerome kym": {
+   "a": "Peter Arnold",
+   "f": "jerome-kym.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Jerome Kym",
+   "p": "https://commons.wikimedia.org/wiki/File:J%C3%A9r%C3%B4me_Kym,_Swiss_Indoors_Basel_2024.jpg",
+   "q": "Q61415282"
+  },
+  "jil teichmann": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "jil-teichmann.jpg",
+   "l": "CC BY 2.0",
+   "lu": "https://creativecommons.org/licenses/by/2.0",
+   "n": "Jil Teichmann",
+   "p": "https://commons.wikimedia.org/wiki/File:Fed_Cup_2018_(40825850135)_(cropped).jpg",
+   "q": "Q18011082"
+  },
+  "jiri lehecka": {
+   "a": "si.robi",
+   "f": "jiri-lehecka.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Jiri Lehecka",
+   "p": "https://commons.wikimedia.org/wiki/File:Lehecka_MCM22_(44)_(52035368427).jpg",
+   "q": "Q61415365"
+  },
+  "joanna garland": {
+   "a": "si.robi",
+   "f": "joanna-garland.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Joanna Garland",
+   "p": "https://commons.wikimedia.org/wiki/File:Garland_RGQ23_(cropped).jpg",
+   "q": "Q106293815"
+  },
+  "joel schwaerzler": {
+   "a": "Hameltion",
+   "f": "joel-schwaerzler.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Joel Schwaerzler",
+   "p": "https://commons.wikimedia.org/wiki/File:Joel_Schw%C3%A4rzler_(2026_US_Open)_01_(cropped).jpg",
+   "q": "Q123146295"
+  },
+  "juan manuel cerundolo": {
+   "a": "si.robi",
+   "f": "juan-manuel-cerundolo.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Juan Manuel Cerundolo",
+   "p": "https://commons.wikimedia.org/wiki/File:Cerundolo_JM._RGQ22_(3)_(52128606242).jpg",
+   "q": "Q105636111"
+  },
+  "jurij rodionov": {
+   "a": "si.robi",
+   "f": "jurij-rodionov.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Jurij Rodionov",
+   "p": "https://commons.wikimedia.org/wiki/File:Rodionov_RGQ19_(28)_(48002671148).jpg",
+   "q": "Q30148749"
+  },
+  "kaitlin quevedo": {
+   "a": "si.robi",
+   "f": "kaitlin-quevedo.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Kaitlin Quevedo",
+   "p": "https://commons.wikimedia.org/wiki/File:Quevedo_WMQ26_(6).jpg",
+   "q": "Q121826235"
+  },
+  "kamilla rakhimova": {
+   "a": "Hameltion",
+   "f": "kamilla-rakhimova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Kamilla Rakhimova",
+   "p": "https://commons.wikimedia.org/wiki/File:Kamilla_Rakhimova_(2024_DC_Open)_05_(cropped).jpg",
+   "q": "Q65769637"
+  },
+  "karen khachanov": {
+   "a": "si.robi",
+   "f": "karen-khachanov.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Karen Khachanov",
+   "p": "https://commons.wikimedia.org/wiki/File:Khachanov_WMQ15_(11)_(19944440142).jpg",
+   "q": "Q16568576"
+  },
+  "katarzyna kawa": {
+   "a": "si.robi",
+   "f": "katarzyna-kawa.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Katarzyna Kawa",
+   "p": "https://commons.wikimedia.org/wiki/File:Kawa_RGQ22_(4)_(52129558436)_(cropped).jpg",
+   "q": "Q15770368"
+  },
+  "katerina siniakova": {
+   "a": "Pulv",
+   "f": "katerina-siniakova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Katerina Siniakova",
+   "p": "https://commons.wikimedia.org/wiki/File:2021-06_Kate%C5%99ina_Siniakov%C3%A1_(cropped).jpg",
+   "q": "Q3720044"
+  },
+  "katie boulter": {
+   "a": "Robkeating66",
+   "f": "katie-boulter.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Katie Boulter",
+   "p": "https://commons.wikimedia.org/wiki/File:00001Canberra-_7_January_2023_%E2%80%93_Britain%27s_Katie_Boulter_after_winning_the_final_at_the_Canberra_International_tournament._Photo_by_Rob_Keating,_http---robiciatennisphotography.com2023_(cropped).jpg",
+   "q": "Q16979848"
+  },
+  "katie volynets": {
+   "a": "Hameltion",
+   "f": "katie-volynets.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Katie Volynets",
+   "p": "https://commons.wikimedia.org/wiki/File:Katie_Volynets_(2023_US_Open)_11_(cropped).jpg",
+   "q": "Q61889608"
+  },
+  "kayla day": {
+   "a": "si.robi",
+   "f": "kayla-day.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Kayla Day",
+   "p": "https://commons.wikimedia.org/wiki/File:Day_RGQ23_(cropped).jpg",
+   "q": "Q26696206"
+  },
+  "kimberly birrell": {
+   "a": "Hameltion",
+   "f": "kimberly-birrell.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Kimberly Birrell",
+   "p": "https://commons.wikimedia.org/wiki/File:Kim_Birrell_(2023_US_Open)_02_(cropped).jpg",
+   "q": "Q15635268"
+  },
+  "lanlana tararudee": {
+   "a": "Hameltion",
+   "f": "lanlana-tararudee.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Lanlana Tararudee",
+   "p": "https://commons.wikimedia.org/wiki/File:Lanlana_Tararudee_(2024_Cary)_01_(cropped).jpg",
+   "q": "Q113162452"
+  },
+  "learner tien": {
+   "a": "Hameltion",
+   "f": "learner-tien.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Learner Tien",
+   "p": "https://commons.wikimedia.org/wiki/File:Learner_Tien_(2024_US_Open)_04.jpg",
+   "q": "Q113548256"
+  },
+  "leylah fernandez": {
+   "a": "Hameltion",
+   "f": "leylah-fernandez.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Leylah Fernandez",
+   "p": "https://commons.wikimedia.org/wiki/File:Leylah_Fernandez_(2023_DC_Open)_06_(cropped).jpg",
+   "q": "Q50329570"
+  },
+  "lilli tagger": {
+   "a": "Karney Hatch",
+   "f": "lilli-tagger.jpg",
+   "l": "CC BY 2.0",
+   "lu": "https://creativecommons.org/licenses/by/2.0",
+   "n": "Lilli Tagger",
+   "p": "https://commons.wikimedia.org/wiki/File:French_Open_Juniors_Champion_Lilli_Tagger_(cropped).jpg",
+   "q": "Q128688561"
+  },
+  "linda fruhvirtova": {
+   "a": "Hameltion",
+   "f": "linda-fruhvirtova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Linda Fruhvirtova",
+   "p": "https://commons.wikimedia.org/wiki/File:Linda_Fruhvirtova_(Roland_Garros_2023)_07_(cropped).jpg",
+   "q": "Q95568176"
+  },
+  "liudmila samsonova": {
+   "a": "Hameltion",
+   "f": "liudmila-samsonova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Liudmila Samsonova",
+   "p": "https://commons.wikimedia.org/wiki/File:Liudmila_Samsonova_(2023_DC_Open)_01.jpg",
+   "q": "Q26416429"
+  },
+  "lorenzo musetti": {
+   "a": "si.robi",
+   "f": "lorenzo-musetti.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Lorenzo Musetti",
+   "p": "https://commons.wikimedia.org/wiki/File:Musetti_MCM22_(52)_(52036662724).jpg",
+   "q": "Q54813043"
+  },
+  "lorenzo sonego": {
+   "a": "si.robi",
+   "f": "lorenzo-sonego.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Lorenzo Sonego",
+   "p": "https://commons.wikimedia.org/wiki/File:Sonego_MCM22_(22)_(52035355412).jpg",
+   "q": "Q24061220"
+  },
+  "luca van assche": {
+   "a": "si.robi",
+   "f": "luca-van-assche.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Luca Van Assche",
+   "p": "https://commons.wikimedia.org/wiki/File:Van_Assche_RGQ22_(26)_(52129515531).jpg",
+   "q": "Q107205896"
+  },
+  "luciano darderi": {
+   "a": "si.robi",
+   "f": "luciano-darderi.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Luciano Darderi",
+   "p": "https://commons.wikimedia.org/wiki/File:Darderi_WMQ23_(53062101185).jpg",
+   "q": "Q109144854"
+  },
+  "lukas neumayer": {
+   "a": "Hameltion",
+   "f": "lukas-neumayer.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Lukas Neumayer",
+   "p": "https://commons.wikimedia.org/wiki/File:Lukas_Neumayer_(2026_US_Open)_02_(cropped).jpg",
+   "q": "Q107641373"
+  },
+  "maddison inglis": {
+   "a": "si.robi",
+   "f": "maddison-inglis.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Maddison Inglis",
+   "p": "https://commons.wikimedia.org/wiki/File:Inglis_WMQ22_(18)_(52191635135)_(cropped).jpg",
+   "q": "Q18810491"
+  },
+  "magda linette": {
+   "a": "si.robi",
+   "f": "magda-linette.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Magda Linette",
+   "p": "https://commons.wikimedia.org/wiki/File:Linette_RG21_(31)_(51376169766)_(cropped).jpg",
+   "q": "Q722311"
+  },
+  "mai hontama": {
+   "a": "si.robi",
+   "f": "mai-hontama.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Mai Hontama",
+   "p": "https://commons.wikimedia.org/wiki/File:Hontama_WMQ23_(53062191893)_(cropped).jpg",
+   "q": "Q66495445"
+  },
+  "mananchaya sawangkaew": {
+   "a": "Hameltion",
+   "f": "mananchaya-sawangkaew.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Mananchaya Sawangkaew",
+   "p": "https://commons.wikimedia.org/wiki/File:Mananchaya_Sawangkaew_(2024_Cary)_01_(cropped).jpg",
+   "q": "Q61559705"
+  },
+  "maria sakkari": {
+   "a": "Hameltion",
+   "f": "maria-sakkari.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Maria Sakkari",
+   "p": "https://commons.wikimedia.org/wiki/File:Maria_Sakkari_(2023_DC_Open)_01a_(cropped).jpg",
+   "q": "Q6761562"
+  },
+  "maria timofeeva": {
+   "a": "Hameltion",
+   "f": "maria-timofeeva.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Maria Timofeeva",
+   "p": "https://commons.wikimedia.org/wiki/File:Maria_Timofeeva_(2023_US_Open)_01_(cropped).jpg",
+   "q": "Q106367605"
+  },
+  "mariano navone": {
+   "a": "BugWarp",
+   "f": "mariano-navone.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Mariano Navone",
+   "p": "https://commons.wikimedia.org/wiki/File:Road_2_Australia_-_Navone_V_Burruchaga_Final_-_BugWarp_206_(cropped).jpg",
+   "q": "Q119892451"
+  },
+  "marie bouzkova": {
+   "a": "Hameltion derivative work: Kacir",
+   "f": "marie-bouzkova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Marie Bouzkova",
+   "p": "https://commons.wikimedia.org/wiki/File:Marie_Bouzkov%C3%A1_(2024_DC_Open)_01_(cropped2).jpg",
+   "q": "Q18003204"
+  },
+  "marta kostyuk": {
+   "a": "Hameltion",
+   "f": "marta-kostyuk.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Marta Kostyuk",
+   "p": "https://commons.wikimedia.org/wiki/File:Marta_Kostyuk_(2023_US_Open)_20_(cropped).jpg",
+   "q": "Q28535267"
+  },
+  "matteo arnaldi": {
+   "a": "si.robi",
+   "f": "matteo-arnaldi.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Matteo Arnaldi",
+   "p": "https://commons.wikimedia.org/wiki/File:Arnaldi_BLO22_(68)_(52157038811).jpg",
+   "q": "Q111903012"
+  },
+  "maya joint": {
+   "a": "Hameltion",
+   "f": "maya-joint.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Maya Joint",
+   "p": "https://commons.wikimedia.org/wiki/File:Maya_Joint_(2024_Cary)_01.jpg",
+   "q": "Q123615700"
+  },
+  "mei yamaguchi": {
+   "a": "Hameltion",
+   "f": "mei-yamaguchi.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Mei Yamaguchi",
+   "p": "https://commons.wikimedia.org/wiki/File:Mei_Yamaguchi_(2026_Cary)_02.jpg",
+   "q": "Q106294428"
+  },
+  "mika brunold": {
+   "a": "Peter Arnold Skyscraper2010",
+   "f": "mika-brunold.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Mika Brunold",
+   "p": "https://commons.wikimedia.org/wiki/File:Mika_Brunold_Basel_2024.jpg",
+   "q": "Q106101619"
+  },
+  "mika stojsavljevic": {
+   "a": "Daniel Cooper",
+   "f": "mika-stojsavljevic.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Mika Stojsavljevic",
+   "p": "https://commons.wikimedia.org/wiki/File:Mika_Stojsavljevic_2026_Birmingham_Open_2_(cropped).jpg",
+   "q": "Q126378212"
+  },
+  "mikhail kukushkin": {
+   "a": "Carine06 from UK",
+   "f": "mikhail-kukushkin.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Mikhail Kukushkin",
+   "p": "https://commons.wikimedia.org/wiki/File:Mikhail_Kukushkin_(20011199086).jpg",
+   "q": "Q459166"
+  },
+  "moise kouame": {
+   "a": "Xavierheraud",
+   "f": "moise-kouame.jpg",
+   "l": "CC BY 4.0",
+   "lu": "https://creativecommons.org/licenses/by/4.0",
+   "n": "Moise Kouame",
+   "p": "https://commons.wikimedia.org/wiki/File:Mo%C3%AFse_Kaoum%C3%A9_(James_Tamim_crop).jpg",
+   "q": "Q133191418"
+  },
+  "moyuka uchijima": {
+   "a": "si.robi",
+   "f": "moyuka-uchijima.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Moyuka Uchijima",
+   "p": "https://commons.wikimedia.org/wiki/File:Uchijima_WMQ23_(53062168653).jpg",
+   "q": "Q56651209"
+  },
+  "naomi osaka": {
+   "a": "si.robi",
+   "f": "naomi-osaka.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Naomi Osaka",
+   "p": "https://commons.wikimedia.org/wiki/File:Naomi_Osaka_2017_Wimbledon.jpg",
+   "q": "Q17466583"
+  },
+  "nikola bartunkova": {
+   "a": "Daniel Cooper derivative work: Kacir",
+   "f": "nikola-bartunkova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Nikola Bartunkova",
+   "p": "https://commons.wikimedia.org/wiki/File:Nikola_Bart%C5%AF%C5%88kov%C3%A1_Birmingham_2026_(cropped).jpg",
+   "q": "Q106522281"
+  },
+  "nikoloz basilashvili": {
+   "a": "si.robi",
+   "f": "nikoloz-basilashvili.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Nikoloz Basilashvili",
+   "p": "https://commons.wikimedia.org/wiki/File:Basilashvili_RG18_(28110477447).jpg",
+   "q": "Q16297666"
+  },
+  "novak djokovic": {
+   "a": "Andymiah",
+   "f": "novak-djokovic.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Novak Djokovic",
+   "p": "https://commons.wikimedia.org/wiki/File:Novak_Djokovic_Paris_2024_Olympic_Games_(cropped).jpg",
+   "q": "Q5812"
+  },
+  "nuno borges": {
+   "a": "si.robi",
+   "f": "nuno-borges.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Nuno Borges",
+   "p": "https://commons.wikimedia.org/wiki/File:Borges_BOR22_(52082935912).jpg",
+   "q": "Q106238976"
+  },
+  "oleksandra oliynykova": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania derivative work: Kacir",
+   "f": "oleksandra-oliynykova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Oleksandra Oliynykova",
+   "p": "https://commons.wikimedia.org/wiki/File:Oleksandra_Oliynykova_Transylvania_Open_2026_(cropped).jpg",
+   "q": "Q105711730"
+  },
+  "pablo carreno busta": {
+   "a": "si.robi",
+   "f": "pablo-carreno-busta.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Pablo Carreno Busta",
+   "p": "https://commons.wikimedia.org/wiki/File:Carreno_Busta_RG19_(11)_(48199369451).jpg",
+   "q": "Q7121592"
+  },
+  "panna udvardy": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "panna-udvardy.jpg",
+   "l": "CC BY 2.0",
+   "lu": "https://creativecommons.org/licenses/by/2.0",
+   "n": "Panna Udvardy",
+   "p": "https://commons.wikimedia.org/wiki/File:Winners_Open_WTA250_-_Day_3_(51368518043)_(cropped).jpg",
+   "q": "Q28815694"
+  },
+  "paula badosa": {
+   "a": "Hameltion",
+   "f": "paula-badosa.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Paula Badosa",
+   "p": "https://commons.wikimedia.org/wiki/File:Paula_Badosa_(2024_DC_Open)_04_(cropped).jpg",
+   "q": "Q19560013"
+  },
+  "pierre-hugues herbert": {
+   "a": "Carine06 from UK",
+   "f": "pierre-hugues-herbert.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Pierre-Hugues Herbert",
+   "p": "https://commons.wikimedia.org/wiki/File:Pierre-Hugues_Herbert_(19047575640).jpg",
+   "q": "Q2093033"
+  },
+  "polina iatcenko": {
+   "a": "Hameltion",
+   "f": "polina-iatcenko.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Polina Iatcenko",
+   "p": "https://commons.wikimedia.org/wiki/File:Polina_Iatcenko_(2026_US_Open)_02_(cropped).jpg",
+   "q": "Q116447990"
+  },
+  "polina kudermetova": {
+   "a": "Hameltion",
+   "f": "polina-kudermetova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Polina Kudermetova",
+   "p": "https://commons.wikimedia.org/wiki/File:Polina_Kudermetova_(2025_DC_Open)_01_(cropped).jpg",
+   "q": "Q105967693"
+  },
+  "quentin halys": {
+   "a": "si.robi",
+   "f": "quentin-halys.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Quentin Halys",
+   "p": "https://commons.wikimedia.org/wiki/File:Halys_RG15_(22)_(18685208034).jpg",
+   "q": "Q18001228"
+  },
+  "rafael jodar": {
+   "a": "Crosscourt View",
+   "f": "rafael-jodar.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Rafael Jodar",
+   "p": "https://commons.wikimedia.org/wiki/File:Rafael_J%C3%B3dar_Roland_Garros_2026_(cropped).jpg",
+   "q": "Q130255645"
+  },
+  "raphael collignon": {
+   "a": "si.robi",
+   "f": "raphael-collignon.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Raphael Collignon",
+   "p": "https://commons.wikimedia.org/wiki/File:Collignon_RGQ23_(52944022815).jpg",
+   "q": "Q124250909"
+  },
+  "remy bertola": {
+   "a": "Hameltion",
+   "f": "remy-bertola.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Remy Bertola",
+   "p": "https://commons.wikimedia.org/wiki/File:R%C3%A9my_Bertola_(2026_US_Open)_04_(cropped).jpg",
+   "q": "Q124883666"
+  },
+  "rinky hijikata": {
+   "a": "Hameltion",
+   "f": "rinky-hijikata.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Rinky Hijikata",
+   "p": "https://commons.wikimedia.org/wiki/File:Rinky_Hijikata_(2023_Cary)_01a_(cropped).jpg",
+   "q": "Q60227425"
+  },
+  "sara bejlek": {
+   "a": "Hameltion",
+   "f": "sara-bejlek.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Sara Bejlek",
+   "p": "https://commons.wikimedia.org/wiki/File:S%C3%A1ra_Bejlek_(2023_US_Open)_10_(cropped3).jpg",
+   "q": "Q107640117"
+  },
+  "sara sorribes tormo": {
+   "a": "si.robi",
+   "f": "sara-sorribes-tormo.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Sara Sorribes Tormo",
+   "p": "https://commons.wikimedia.org/wiki/File:Sorribes_Tormo_RG21_(20)_(51376076476)_(cropped).jpg",
+   "q": "Q17750103"
+  },
+  "sebastian baez": {
+   "a": "si.robi",
+   "f": "sebastian-baez.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Sebastian Baez",
+   "p": "https://commons.wikimedia.org/wiki/File:Baez_RG22_(6)_(52144105338).jpg",
+   "q": "Q47396310"
+  },
+  "sho shimabukuro": {
+   "a": "si.robi",
+   "f": "sho-shimabukuro.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Sho Shimabukuro",
+   "p": "https://commons.wikimedia.org/wiki/File:Shimabukuro_WMQ23_(53062069285).jpg",
+   "q": "Q105776866"
+  },
+  "shuai zhang": {
+   "a": "si.robi",
+   "f": "shuai-zhang.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Shuai Zhang",
+   "p": "https://commons.wikimedia.org/wiki/File:Zhang_RG22_(64)_(52144542380).jpg",
+   "q": "Q197291"
+  },
+  "simona waltert": {
+   "a": "Peter Menzel",
+   "f": "simona-waltert.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Simona Waltert",
+   "p": "https://commons.wikimedia.org/wiki/File:Simona_Waltert_(53823868550)_Wimbledon_qualifying_2024_(cropped).jpg",
+   "q": "Q33011749"
+  },
+  "sinja kraus": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania",
+   "f": "sinja-kraus.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Sinja Kraus",
+   "p": "https://commons.wikimedia.org/wiki/File:Transylvania_Open_2024_-_Sinja_Kraus_(53513849714)_(cropped).jpg",
+   "q": "Q57192958"
+  },
+  "sofia kenin": {
+   "a": "Hameltion",
+   "f": "sofia-kenin.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Sofia Kenin",
+   "p": "https://commons.wikimedia.org/wiki/File:Sofia_Kenin_(2025_DC_Open)_05_(edited_and_cropped).jpg",
+   "q": "Q18679122"
+  },
+  "sorana cirstea": {
+   "a": "Nuță Lucian from Cluj-Napoca, Romania derivative work: Kacir",
+   "f": "sorana-cirstea.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Sorana Cirstea",
+   "p": "https://commons.wikimedia.org/wiki/File:Sorana_C%C3%AErstea_2025_Transylvania_Open_(cropped).jpg",
+   "q": "Q230242"
+  },
+  "stan wawrinka": {
+   "a": "Peter Arnold",
+   "f": "stan-wawrinka.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Stan Wawrinka",
+   "p": "https://commons.wikimedia.org/wiki/File:Stan_Wawrinka,_Basel_2024.jpg",
+   "q": "Q193661"
+  },
+  "stefanos tsitsipas": {
+   "a": "si.robi",
+   "f": "stefanos-tsitsipas.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Stefanos Tsitsipas",
+   "p": "https://commons.wikimedia.org/wiki/File:Tsitsipas_S._MCM22_(20)_(52036915350).jpg",
+   "q": "Q24450982"
+  },
+  "talia gibson": {
+   "a": "Hameltion",
+   "f": "talia-gibson.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Talia Gibson",
+   "p": "https://commons.wikimedia.org/wiki/File:Talia_Gibson_(2024_Cary)_01.jpg",
+   "q": "Q110523703"
+  },
+  "tallon griekspoor": {
+   "a": "si.robi",
+   "f": "tallon-griekspoor.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Tallon Griekspoor",
+   "p": "https://commons.wikimedia.org/wiki/File:Griekspoor_RG22_(1)_(52144112028).jpg",
+   "q": "Q28777443"
+  },
+  "tatiana prozorova": {
+   "a": "Hameltion",
+   "f": "tatiana-prozorova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Tatiana Prozorova",
+   "p": "https://commons.wikimedia.org/wiki/File:Tatiana_Prozorova_(2023_US_Open)_01_(cropped).jpg",
+   "q": "Q118612698"
+  },
+  "taylor fritz": {
+   "a": "si.robi",
+   "f": "taylor-fritz.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Taylor Fritz",
+   "p": "https://commons.wikimedia.org/wiki/File:Fritz_RG19_(23)_(48199372707).jpg",
+   "q": "Q17660516"
+  },
+  "teodora kostovic": {
+   "a": "ZooTennis.com",
+   "f": "teodora-kostovic.png",
+   "l": "CC BY 4.0",
+   "lu": "https://creativecommons.org/licenses/by/4.0",
+   "n": "Teodora Kostovic",
+   "p": "https://commons.wikimedia.org/wiki/File:Teodora_Kostovi%C4%87_ITF_J300_College_Park_girls_singles_final_2_(cropped).png",
+   "q": "Q134031429"
+  },
+  "tereza valentova": {
+   "a": "Profesorreen",
+   "f": "tereza-valentova.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Tereza Valentova",
+   "p": "https://commons.wikimedia.org/wiki/File:Tereza_Valentov%C3%A1_junior_French_Open_(cropped).jpg",
+   "q": "Q113218343"
+  },
+  "thiago agustin tirante": {
+   "a": "si.robi",
+   "f": "thiago-agustin-tirante.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Thiago Agustin Tirante",
+   "p": "https://commons.wikimedia.org/wiki/File:Tirante_WMQ23_(53062069430).jpg",
+   "q": "Q64747475"
+  },
+  "titouan droguet": {
+   "a": "Hameltion",
+   "f": "titouan-droguet.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Titouan Droguet",
+   "p": "https://commons.wikimedia.org/wiki/File:Titouan_Droguet_(2026_US_Open)_01_(cropped).jpg",
+   "q": "Q111905058"
+  },
+  "tomas machac": {
+   "a": "si.robi",
+   "f": "tomas-machac.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Tomas Machac",
+   "p": "https://commons.wikimedia.org/wiki/File:Machac_MLC22.jpg",
+   "q": "Q61594997"
+  },
+  "tomas martin etcheverry": {
+   "a": "Jmmuguerza",
+   "f": "tomas-martin-etcheverry.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Tomas Martin Etcheverry",
+   "p": "https://commons.wikimedia.org/wiki/File:Cordoba_Open_2021_13_(cropped).jpg",
+   "q": "Q104728520"
+  },
+  "tommy paul": {
+   "a": "si.robi",
+   "f": "tommy-paul.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Tommy Paul",
+   "p": "https://commons.wikimedia.org/wiki/File:Paul_RG21_(2)_(51376841649).jpg",
+   "q": "Q20050871"
+  },
+  "tyra caterina grant": {
+   "a": "Hameltion",
+   "f": "tyra-caterina-grant.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Tyra Caterina Grant",
+   "p": "https://commons.wikimedia.org/wiki/File:Tyra_Caterina_Grant_(2023_French_Open)_01.jpg",
+   "q": "Q119296001"
+  },
+  "ugo humbert": {
+   "a": "si.robi",
+   "f": "ugo-humbert.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Ugo Humbert",
+   "p": "https://commons.wikimedia.org/wiki/File:Humbert_RG19_(7)_(48199190756).jpg",
+   "q": "Q54007306"
+  },
+  "valentin vacherot": {
+   "a": "Peter Arnold",
+   "f": "valentin-vacherot.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Valentin Vacherot",
+   "p": "https://commons.wikimedia.org/wiki/File:Valentin_Vacherot_Basel_2025_(cropped).jpg",
+   "q": "Q107314093"
+  },
+  "venus williams": {
+   "a": "Tatiana from Moscow, Russia",
+   "f": "venus-williams.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Venus Williams",
+   "p": "https://commons.wikimedia.org/wiki/File:Venus_Williams_(14948553428).jpg",
+   "q": "Q11578"
+  },
+  "viktorija golubic": {
+   "a": "si.robi",
+   "f": "viktorija-golubic.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Viktorija Golubic",
+   "p": "https://commons.wikimedia.org/wiki/File:Golubic_RG22_(10)_(52144330099)_(cropped).jpg",
+   "q": "Q7929924"
+  },
+  "vit kopriva": {
+   "a": "si.robi",
+   "f": "vit-kopriva.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Vit Kopriva",
+   "p": "https://commons.wikimedia.org/wiki/File:Kopriva_BLO22_(14)_(52157049388).jpg",
+   "q": "Q102423530"
+  },
+  "xiaodi you": {
+   "a": "Tatiana from Moscow, Russia",
+   "f": "xiaodi-you.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Xiaodi You",
+   "p": "https://commons.wikimedia.org/wiki/File:You_Xiaodi_(14938798868).jpg",
+   "q": "Q15634509"
+  },
+  "yannick hanfmann": {
+   "a": "si.robi",
+   "f": "yannick-hanfmann.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Yannick Hanfmann",
+   "p": "https://commons.wikimedia.org/wiki/File:Hanfmann_RGQ19_(23)_(48002696768).jpg",
+   "q": "Q29628209"
+  },
+  "yulia putintseva": {
+   "a": "si.robi",
+   "f": "yulia-putintseva.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Yulia Putintseva",
+   "p": "https://commons.wikimedia.org/wiki/File:Putintseva_RG22_(45)_(52143028257).jpg",
+   "q": "Q2429984"
+  },
+  "yuliia starodubtseva": {
+   "a": "Hameltion",
+   "f": "yuliia-starodubtseva.jpg",
+   "l": "CC BY-SA 4.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+   "n": "Yuliia Starodubtseva",
+   "p": "https://commons.wikimedia.org/wiki/File:Yuliia_Starodubtseva_(2023_US_Open)_07_(cropped).jpg",
+   "q": "Q120734490"
+  },
+  "zeynep sonmez": {
+   "a": "Peter Menzel",
+   "f": "zeynep-sonmez.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Zeynep Sonmez",
+   "p": "https://commons.wikimedia.org/wiki/File:Zeynep_S%C3%B6nmez_Wimbledon_qualifying_2024_(cropped).jpg",
+   "q": "Q65599731"
+  },
+  "zizou bergs": {
+   "a": "si.robi",
+   "f": "zizou-bergs.jpg",
+   "l": "CC BY-SA 2.0",
+   "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+   "n": "Zizou Bergs",
+   "p": "https://commons.wikimedia.org/wiki/File:Bergs_MLC21_(2).jpg",
+   "q": "Q100700157"
+  }
+ },
+ "version": 1
+}

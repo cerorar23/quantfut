@@ -869,3 +869,535 @@
     display: none;
   }
 }
+
+/* ================= Pronósticos (hub de deportes): tarjetas con CYBERCORE =================
+ * Solo disposición: colores, tipografías y componentes salen de los tokens y las clases
+ * de CYBERCORE (cyber-card, cyber-tab, cyber-badge, cyber-progress, cyber-btn). */
+
+.win-pk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  min-width: 0;
+}
+
+.win-pk-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.win-pk-hero.has-featured {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.win-pk-hero-copy {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 22px;
+}
+
+.win-pk-hero-copy h1 {
+  margin: 0;
+  font: 800 clamp(28px, 4vw, 44px) / 1.05 var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.win-pk-hero-copy .lead {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted);
+}
+
+.win-pk-links {
+  margin: 0;
+}
+
+.win-pk-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.win-pk-stat {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.win-pk-stat small {
+  font: 700 10px var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.win-pk-stat strong {
+  font: 800 26px / 1 var(--font-mono);
+  color: var(--cyan);
+}
+
+.win-pk-stat span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.win-pk-featured {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: 18px;
+}
+
+.win-pk-featured .eyebrow {
+  margin: 0;
+}
+
+/* ---- barra de deporte y fecha (queda fija bajo la cabecera) */
+.win-pk-bar {
+  position: sticky;
+  top: var(--win-head, 117px);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--cyber-void-800) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.win-pk-bar-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.win-pk-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.win-pk-tabs .cyber-tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 14px;
+  white-space: nowrap;
+}
+
+.win-pk-count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font: 700 11px var(--font-mono);
+  color: var(--cyan);
+  background: color-mix(in srgb, var(--cyan) 14%, transparent);
+}
+
+.win-pk-icon {
+  flex: none;
+}
+
+.win-pk-refresh {
+  flex: none;
+  min-height: 44px;
+}
+
+.win-pk-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+.win-pk-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.win-pk-heading h2 {
+  margin: 0;
+  font: 800 22px var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.win-pk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.win-pk-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+}
+
+.win-pk-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font: 700 14px var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.win-pk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 14px;
+}
+
+/* ---- tarjeta de pronóstico */
+.win-pk-card {
+  --pk-accent: var(--cyan);
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+  padding: 16px;
+  box-shadow: inset 0 3px 0 var(--pk-accent);
+}
+
+.win-pk-card.is-futbol {
+  --pk-accent: var(--green);
+}
+
+.win-pk-card.is-nba {
+  --pk-accent: var(--magenta);
+}
+
+.win-pk-card.is-tenis {
+  --pk-accent: var(--cyan);
+}
+
+.win-pk-card.is-locked {
+  --pk-accent: var(--yellow);
+}
+
+.win-pk-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.win-pk-sport {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 11px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pk-accent);
+}
+
+.win-pk-league {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.win-pk-time {
+  margin-left: auto;
+  font: 700 12px var(--font-mono);
+  color: var(--text);
+}
+
+.win-pk-teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.win-pk-side {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  text-align: center;
+}
+
+.win-pk-side strong {
+  font: 700 15px / 1.2 var(--font-display);
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.win-pk-vs {
+  align-self: center;
+  font: 800 12px var(--font-mono);
+  letter-spacing: 0.14em;
+  color: var(--pk-accent, var(--cyan));
+}
+
+.win-pk-vs.is-score {
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.win-pk-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+
+.win-pk-avatar.is-big {
+  width: 64px;
+  height: 64px;
+}
+
+.win-pk-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px var(--cyber-void-900));
+}
+
+.win-pk-avatar.is-photo {
+  overflow: hidden;
+  border: 2px solid var(--pk-accent, var(--cyan));
+  border-radius: 50%;
+}
+
+.win-pk-avatar.is-photo img {
+  object-fit: cover;
+  object-position: center top;
+  filter: none;
+}
+
+.win-pk-avatar.is-logo img {
+  padding: 2px;
+}
+
+.win-pk-credits {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.win-pk-avatar.is-mono {
+  --tone: var(--cyan);
+  border: 2px solid var(--tone);
+  border-radius: 50%;
+  font: 800 14px var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+}
+
+.win-pk-avatar.is-big.is-mono {
+  font-size: 18px;
+}
+
+.win-pk-avatar.is-tone-1 {
+  --tone: var(--green);
+}
+
+.win-pk-avatar.is-tone-2 {
+  --tone: var(--magenta);
+}
+
+.win-pk-avatar.is-tone-3 {
+  --tone: var(--yellow);
+}
+
+.win-pk-pick {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--pk-accent, var(--green)) 7%, transparent);
+}
+
+.win-pk-pick.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.win-pk-sel,
+.win-pk-odds {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.win-pk-sel small,
+.win-pk-odds small {
+  font: 700 10px var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.win-pk-sel strong {
+  font: 800 19px / 1.15 var(--font-display);
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.win-pk-odds {
+  text-align: right;
+}
+
+.win-pk-odds strong {
+  font: 800 30px / 1 var(--font-mono);
+  color: var(--green);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--green) 40%, transparent);
+}
+
+.win-pk-odds.is-prob strong {
+  font-size: 26px;
+  color: var(--cyan);
+  text-shadow: none;
+}
+
+.win-pk-odds em {
+  font: 11px var(--font-mono);
+  font-style: normal;
+  color: var(--muted);
+}
+
+.win-pk-card.is-locked .win-pk-pick {
+  border-style: dashed;
+}
+
+.win-pk-masked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.win-pk-prob {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.win-pk-prob b {
+  font: 800 18px var(--font-mono);
+  color: var(--cyan);
+}
+
+.win-pk-prob .cyber-progress {
+  flex-basis: 100%;
+}
+
+.win-pk-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--yellow);
+}
+
+.win-pk-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.win-pk-foot .win-pk-go,
+.win-pk-foot .cyber-btn--yellow {
+  flex: 1 1 100%;
+}
+
+.win-pk-more {
+  min-height: 44px;
+  margin-left: auto;
+}
+
+.win-pk-card .cyber-btn,
+.win-pk-featured .cyber-btn {
+  min-height: 44px;
+}
+
+.win-pk-seal {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.win-pk-seal summary {
+  min-height: 32px;
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.win-pk-seal code {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 960px) {
+  .win-pk-hero.has-featured {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  /* En el móvil la cabecera ya ocupa mucho alto: la barra de deporte y fecha no se fija. */
+  .win-pk-bar {
+    position: static;
+  }
+
+  .win-pk-hero-copy {
+    padding: 16px;
+  }
+
+  .win-pk-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .win-pk-refresh {
+    display: none;
+  }
+
+  .win-pk-filters {
+    width: 100%;
+  }
+}
+
+/* future.css fija la cabecera en 66px y anula el height:auto de styles.css: en móvil el selector de deporte (fila 2)
+   se salía de la cabecera y tapaba la página de Pronósticos. */
+@media (max-width: 760px) {
+  .is-win-picks .header-main {
+    height: auto;
+  }
+}

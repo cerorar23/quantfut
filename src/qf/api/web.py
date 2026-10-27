@@ -3,6 +3,7 @@
 Se exponen archivos concretos: no se publica README, package.json ni el
 servidor de desarrollo de frontend/.
 """
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -12,6 +13,10 @@ from fastapi import Response
 
 router = APIRouter(include_in_schema=False)
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
+IMAGES_DIR = FRONTEND_DIR / "imagenes"
+_IMAGE_FOLDERS = {"nba", "tenis"}
+_IMAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}\.(png|jpg)$", re.IGNORECASE)
+_IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg"}
 
 
 @router.get("/web/deportes/tenis")
@@ -132,3 +137,29 @@ def meta_pixel_script() -> FileResponse:
 @router.get("/whop-checkout.js")
 def whop_checkout_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "whop-checkout.js", media_type="text/javascript")
+
+
+# Logos NBA y fotos de tenis, descargados una vez a `frontend/imagenes/` (scripts/imagenes/): la web
+# no enlaza a dominios externos. Las rutas fijas van antes que la de archivos.
+@router.get("/web/imagenes/manifiesto.json")
+def images_manifest() -> FileResponse:
+    return FileResponse(IMAGES_DIR / "manifiesto.json", media_type="application/json",
+                        headers={"Cache-Control": "public, max-age=300"})
+
+
+@router.get("/web/imagenes/creditos")
+def images_credits() -> FileResponse:
+    return FileResponse(IMAGES_DIR / "creditos.html", media_type="text/html",
+                        headers={"Cache-Control": "public, max-age=300",
+                                 "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"})
+
+
+@router.get("/web/imagenes/{carpeta}/{archivo}")
+def image_file(carpeta: str, archivo: str) -> FileResponse:
+    if carpeta not in _IMAGE_FOLDERS or not _IMAGE_NAME.match(archivo):
+        raise HTTPException(404, "Sin imagen")
+    ruta = IMAGES_DIR / carpeta / archivo
+    if not ruta.is_file():
+        raise HTTPException(404, "Sin imagen")
+    return FileResponse(ruta, media_type=_IMAGE_TYPES[archivo.rsplit(".", 1)[1].lower()],
+                        headers={"Cache-Control": "public, max-age=86400"})

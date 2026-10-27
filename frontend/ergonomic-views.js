@@ -14,6 +14,7 @@ export function createHubViews(ctx) {
     for(const pick of publicForecasts(entry.data)) {
       const game=agenda.find(g=>g.match_id===pick.match_id);
       if(!events.has(pick.match_id)) events.set(pick.match_id,{id:pick.match_id,sport:'futbol',home:pick.local,away:pick.visitante,start:pick.kickoff_utc,
+        home_img:game?.local?.escudo||null,away_img:game?.visitante?.escudo||null,
         league:game?.liga?.nombre||pick.league_id,status:game?.estado||'scheduled',seal:pick.chain_sha256,sealed_at:pick.batch_date,markets:[],locked_count:0});
       events.get(pick.match_id).markets.push({id:pick.pick_key,label:'Pronóstico publicado',selection:pick.texto,probability:pick.prob,price:pick.ref_price,
         reference:pick.ref_book,odds_at:pick.odds_as_of,seal:pick.chain_sha256});
@@ -22,6 +23,7 @@ export function createHubViews(ctx) {
     for(const p of entry.data.alta_probabilidad?.vip||[]) {
       if(!p.match_id||!p.local||!p.visitante||!p.kickoff_utc)continue;
       if(!events.has(p.match_id))events.set(p.match_id,{id:p.match_id,sport:'futbol',home:p.local,away:p.visitante,start:p.kickoff_utc,
+        home_img:agenda.find(g=>g.match_id===p.match_id)?.local?.escudo||null,away_img:agenda.find(g=>g.match_id===p.match_id)?.visitante?.escudo||null,
         league:agenda.find(g=>g.match_id===p.match_id)?.liga?.nombre||p.league_id,status:'scheduled',markets:[],locked_count:0});
       events.get(p.match_id).locked_count++;
     }
@@ -34,12 +36,102 @@ export function createHubViews(ctx) {
   const eventKey=e=>`${e.sport}:${e.id}`;
   const featured=e=>e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];
   const timing=e=>e.status==='finished'?'Finalizado':e.status==='awaiting_result'?'Esperando resultado':new Date(e.start)<=new Date()?'Hora prevista superada':'Próximo';
-  const sportTabs=events=>`<div class="chip-row" role="group" aria-label="Filtrar pronósticos por deporte">${Object.entries(names).map(([id,label])=>`<button type="button" data-sport="${id}" class="chip ${(state.sport||'todos')===id?'selected':''}" aria-pressed="${(state.sport||'todos')===id}">${label} · ${id==='todos'?events.length:events.filter(e=>e.sport===id).length}</button>`).join('')}</div>`;
   const action=e=>e.sport==='futbol'?`data-real-match="${esc(e.id)}"`:`data-sport-event="${esc(eventKey(e))}"`;
+
+  // ---- piezas visuales (clases de CYBERCORE + disposición .win-pk-* en window.css)
+  const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const svg=body=>`<svg class="win-pk-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
+  const sportIcon={
+    futbol:svg('<circle cx="12" cy="12" r="9"/><path d="M12 7.5l3.8 2.8-1.5 4.4H9.7L8.2 10.3z"/><path d="M12 3v4.5M20.3 9.2l-4.5 1.1M17.3 19l-3-4.3M6.7 19l3-4.3M3.7 9.2l4.5 1.1"/>'),
+    nba:svg('<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/><path d="M5.6 5.6c3.5 3.2 3.5 9.6 0 12.8M18.4 5.6c-3.5 3.2-3.5 9.6 0 12.8"/>'),
+    tenis:svg('<circle cx="12" cy="12" r="9"/><path d="M5.2 5.5c4.2 2.2 4.2 10.8 0 13M18.8 5.5c-4.2 2.2-4.2 10.8 0 13"/>'),
+    todos:svg('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>')
+  };
+  const lockIcon=svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>');
+  const NBA_CODES=[['hawks','ATL'],['celtics','BOS'],['nets','BKN'],['hornets','CHA'],['bulls','CHI'],['cavaliers','CLE'],['mavericks','DAL'],['nuggets','DEN'],['pistons','DET'],['warriors','GSW'],['rockets','HOU'],['pacers','IND'],['clippers','LAC'],['lakers','LAL'],['grizzlies','MEM'],['heat','MIA'],['bucks','MIL'],['timberwolves','MIN'],['pelicans','NOP'],['knicks','NYK'],['thunder','OKC'],['magic','ORL'],['76ers','PHI'],['suns','PHX'],['blazers','POR'],['kings','SAC'],['spurs','SAS'],['raptors','TOR'],['jazz','UTA'],['wizards','WAS']];
+  const words=name=>String(name||'?').replace(/[.()]/g,' ').split(/\s+/).filter(Boolean);
+  const monogram=(name,sport)=>{
+    const w=words(name);
+    if(sport==='nba'){const n=norm(name);const hit=NBA_CODES.find(([k])=>n.includes(k));if(hit)return hit[1];}
+    if(sport==='tenis'||w.length>1)return ((w[0]?.[0]||'?')+(w.length>1?w[w.length-1][0]:'')).toUpperCase();
+    return String(name||'?').slice(0,3).toUpperCase();
+  };
+  const tone=name=>{let h=0;for(const ch of String(name||''))h=(h*31+ch.charCodeAt(0))>>>0;return h%4;};
+  // Solo imágenes del propio servidor (la política de contenido no admite dominios externos).
+  const ownImage=src=>typeof src==='string'&&/^\/web\/[\w./-]+\.(png|jpe?g|webp|svg)$/i.test(src)?src:null;
+  // Imagen de cada lado: escudo de fútbol (de la agenda), logo NBA o foto de tenis (manifiesto alojado en el servidor).
+  const images=()=>ctx.ensureImages?.()||{status:'loading',nba:{},tenis:{}};
+  function imageOf(event,side) {
+    const name=side==='home'?event.home:event.away,own=side==='home'?event.home_img:event.away_img;
+    if(own)return {src:own};
+    const index=images();
+    if(event.sport==='nba'){const hit=index.nba[monogram(name,'nba')];return hit?{src:`/web/imagenes/nba/${hit.f}`,logo:true}:{};}
+    if(event.sport==='tenis'){const hit=index.tenis[norm(name)];return hit?{src:`/web/imagenes/tenis/${hit.f}`,photo:true,credit:`Foto: ${hit.a} · ${hit.l} (Wikimedia Commons)`}:{};}
+    return {};
+  }
+  function avatar(name,sport,image={},big=false) {
+    const url=ownImage(image.src);
+    const kind=image.photo?'is-photo':image.logo?'is-logo':'';
+    return url?`<span class="win-pk-avatar ${kind} ${big?'is-big':''}"><img src="${esc(url)}" alt="" loading="lazy" decoding="async"${image.credit?` title="${esc(image.credit)}"`:''}></span>`
+      :`<span class="win-pk-avatar is-mono is-tone-${tone(name)} ${big?'is-big':''}" aria-hidden="true">${esc(monogram(name,sport))}</span>`;
+  }
+  const surfaceName=raw=>{const n=norm(raw);return /clay|arcilla|tierra/.test(n)?'Arcilla':/grass|hierba|cesped/.test(n)?'Hierba':/hard|dura|cemento/.test(n)?'Pista dura':String(raw||'');};
+  const badgeFor=e=>{
+    const t=timing(e);
+    const kind=e.status==='finished'?'':t==='Próximo'?'cyber-badge--green':'cyber-badge--yellow';
+    return `<span class="cyber-badge cyber-badge--sm ${kind}">${esc(t)}</span>`;
+  };
+  const sportLabel=e=>`${esc(names[e.sport])}`;
+  const leagueLabel=e=>`${esc(e.league||'')}${e.sport==='tenis'&&e.surface?` · ${esc(surfaceName(e.surface))}`:''}`;
+  const progress=value=>{const pct=Math.max(0,Math.min(100,Math.round(value*100)));return `<div class="cyber-progress cyber-progress--green cyber-progress--sm" data-value="${pct}" role="progressbar" aria-label="Probabilidad publicada ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="cyber-progress__bar"></div></div>`;};
+  const teamsRow=(e,big=false)=>`<div class="win-pk-teams"><div class="win-pk-side">${avatar(e.home,e.sport,imageOf(e,'home'),big)}<strong>${esc(e.home)}</strong></div><span class="win-pk-vs ${e.score?'is-score':''}">${e.score?esc(e.score):'VS'}</span><div class="win-pk-side is-away">${avatar(e.away,e.sport,imageOf(e,'away'),big)}<strong>${esc(e.away)}</strong></div></div>`;
+  // Sin cuota publicada (NBA, tenis) no hay bloque de cuota: la probabilidad ya sale en su barra.
+  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>Cuota publicada</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
 
   function card(event) {
     const m=featured(event),locked=!m;
-    return `<article class="live-pick ${locked?'locked-pick':''}"><div><span>${names[event.sport]} · ${esc(event.league)} · ${realDate(event.start)} ${realTime(event.start)}</span><h3>${esc(event.home)} <small>vs</small> ${esc(event.away)}</h3><p><strong>${locked?'Pronóstico con acceso Plus':esc(m.selection)}</strong></p><small>${locked?'La selección está reservada.':`Probabilidad publicada: ${fmtPct(m.probability)}`} · ${esc(timing(event))}</small><p><button type="button" class="text-link" ${locked?'data-route="planes"':action(event)}>${locked?'Consultar acceso Plus':'Ver análisis y mercados'} ↗</button></p>${event.locked_count?`<p><button type="button" class="text-link" data-route="planes">${event.locked_count} análisis adicional${event.locked_count===1?'':'es'} con Plus ↗</button></p>`:''}${m?.revised?'<p class="bottom-note">Revisión posterior al inicio. No cuenta como pronóstico previo.</p>':''}${!locked?`<details><summary>Registro del pronóstico</summary><p>Publicación: ${realDate(event.sealed_at)} ${realTime(event.sealed_at)}.</p><code>${esc(m.seal||event.seal||'Registro del motor')}</code>${m.odds_at?`<p>Cuota capturada: ${realDate(m.odds_at)} ${realTime(m.odds_at)}. Puede haber cambiado.</p>`:''}<p>${esc(m.reference||'Probabilidad estadística del motor')}</p></details>`:''}</div><div><span>${locked?'Acceso':m.price?'Cuota publicada':'Probabilidad estimada'}</span><strong>${locked?'Plus':m.price?fmtOdds(m.price):fmtPct(m.probability)}</strong><small>${locked?'Contenido reservado':m.price?esc(m.reference||'Cuota registrada'):'Análisis estadístico'}</small></div></article>`;
+    const extra=event.locked_count?`<button type="button" class="text-link win-pk-more" data-route="planes">+${event.locked_count} análisis con Plus ↗</button>`:'';
+    const head=`<header class="win-pk-top"><span class="win-pk-sport">${sportIcon[event.sport]}<b>${sportLabel(event)}</b></span><span class="win-pk-league">${leagueLabel(event)}</span><time class="win-pk-time" datetime="${esc(event.start)}">${realDate(event.start)} · ${realTime(event.start)}</time></header>`;
+    if(locked)return `<article class="cyber-card cyber-card--yellow win-pk-card is-locked is-${event.sport}">${head}${teamsRow(event)}<div class="win-pk-pick"><div class="win-pk-sel"><small>Pronóstico</small><strong class="win-pk-masked">${lockIcon}<span>Contenido reservado</span></strong></div><div class="win-pk-odds is-prob"><small>Acceso</small><strong>Plus</strong><em>Selección y cuota privadas</em></div></div><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--yellow" data-route="planes">Consultar acceso Plus ↗</button></footer></article>`;
+    const seal=`<details class="win-pk-seal"><summary>Registro del pronóstico</summary><p>Publicación: ${realDate(event.sealed_at)} ${realTime(event.sealed_at)}.</p><code>${esc(m.seal||event.seal||'Registro del motor')}</code>${m.odds_at?`<p>Cuota capturada: ${realDate(m.odds_at)} ${realTime(m.odds_at)}. Puede haber cambiado.</p>`:''}<p>${esc(m.reference||'Probabilidad estadística del motor')}</p></details>`;
+    return `<article class="cyber-card cyber-card--interactive win-pk-card is-${event.sport}">${head}${teamsRow(event)}<div class="win-pk-pick ${m.price?'':'is-single'}"><div class="win-pk-sel"><small>Pronóstico</small><strong>${esc(m.selection)}</strong></div>${oddsBlock(m)}</div><div class="win-pk-prob"><span>Probabilidad del modelo</span><b>${fmtPct(m.probability)}</b>${progress(m.probability)}</div>${m.revised?'<p class="win-pk-note">Revisión posterior al inicio. No cuenta como pronóstico previo.</p>':''}<footer class="win-pk-foot">${badgeFor(event)}${extra}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer>${seal}</article>`;
+  }
+
+  function sportTabs(events) {
+    const current=state.sport||'todos';
+    return `<div class="cyber-tabs cyber-tabs--pills win-pk-tabs" role="group" aria-label="Filtrar pronósticos por deporte">${Object.entries(names).map(([id,label])=>{
+      const count=id==='todos'?events.length:events.filter(e=>e.sport===id).length;
+      return `<button type="button" data-sport="${id}" class="cyber-tab ${current===id?'cyber-tab--active':''}" aria-pressed="${current===id}">${sportIcon[id]}<span>${label}</span><b class="win-pk-count">${count}</b></button>`;
+    }).join('')}</div>`;
+  }
+
+  // Cifras del encabezado: solo cuentan lo que ya publicó el servidor.
+  function summary(onDay,source) {
+    const published=onDay.filter(e=>e.markets.length);
+    const upcoming=published.filter(e=>e.status!=='finished'&&new Date(e.start)>new Date()).length;
+    const plus=onDay.reduce((n,e)=>n+(e.locked_count||0),0);
+    const resolved=resultRows(source).slice(0,50),wins=resolved.filter(r=>r.outcome==='win').length;
+    const tile=(label,value,hint)=>`<li class="win-pk-stat"><small>${label}</small><strong>${value}</strong><span>${hint}</span></li>`;
+    return `<ul class="win-pk-stats" aria-label="Resumen del día">${tile('Publicados',source.home.status==='ready'||published.length?published.length:'—','pronósticos del día')}${tile('Próximos',source.home.status==='ready'||published.length?upcoming:'—','aún sin empezar')}${tile('Con Plus',plus,'análisis reservados')}${tile('Aciertos',resolved.length?`${wins}/${resolved.length}`:'—','últimos resueltos')}</ul>`;
+  }
+
+  // Destacado del día: la regla de la web (`partido_mercados`: mayor probabilidad con cuota de 1,40 a 1,80) aplicada solo
+  // a los pronósticos ya publicados y abiertos. No genera nada: elige entre lo que envía el servidor.
+  const FEATURED_RANGE=[1.4,1.8];
+  const featuredPick=picks=>picks.filter(p=>p&&p.locked!==true&&p.chain_sha256&&typeof p.ref_price==='number'&&Number.isFinite(p.ref_price)
+    &&p.ref_price>=FEATURED_RANGE[0]&&p.ref_price<=FEATURED_RANGE[1]).reduce((best,p)=>(!best||p.prob>best.prob?p:best),null);
+
+  function featuredCard(onDay,source,date) {
+    if(source.home.status!=='ready')return '';
+    const todays=publicForecasts(source.home.data).filter(p=>localDay(new Date(p.kickoff_utc))===date);
+    const pick=featuredPick(todays);
+    const event=pick&&source.events.find(e=>e.sport==='futbol'&&e.id===pick.match_id);
+    if(!pick||!event)return '';
+    return `<aside class="cyber-card cyber-card--green win-pk-featured" aria-label="Pronóstico destacado"><p class="eyebrow">Pronóstico destacado</p><span class="win-pk-league">${leagueLabel(event)} · ${realDate(event.start)} ${realTime(event.start)}</span>${teamsRow(event,true)}<div class="win-pk-pick"><div class="win-pk-sel"><small>Selección</small><strong>${esc(pick.texto)}</strong></div>${oddsBlock({price:pick.ref_price,probability:pick.prob,reference:pick.ref_book})}</div><div class="win-pk-prob"><span>Probabilidad del modelo</span><b>${fmtPct(pick.prob)}</b>${progress(pick.prob)}</div><button type="button" class="cyber-btn cyber-btn--green win-pk-go" data-real-match="${esc(event.id)}">Ver análisis y mercados ↗</button></aside>`;
+  }
+
+  function skeleton() {
+    return `<div class="win-pk-grid" aria-hidden="true">${[1,2,3].map(()=>'<div class="cyber-skeleton-card"><div class="cyber-skeleton-card__header"><div class="cyber-skeleton cyber-skeleton--avatar"></div><div class="cyber-skeleton cyber-skeleton--title"></div></div><div class="cyber-skeleton-card__body"><div class="cyber-skeleton cyber-skeleton--text"></div><div class="cyber-skeleton cyber-skeleton--text"></div></div></div>').join('')}</div>`;
   }
 
   function board(source) {
@@ -47,13 +139,24 @@ export function createHubViews(ctx) {
     const onDay=source.events.filter(e=>localDay(new Date(e.start))===date);
     const status=state.homeStatus||'proximos';
     const byStatus=onDay.filter(e=>status==='todos'||(status==='cerrados'?e.status==='finished':new Date(e.start)>new Date()&&e.status!=='finished'));
-    const sport=state.sport||'todos',query=String(state.homeSearch||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-    const rows=byStatus.filter(e=>(sport==='todos'||e.sport===sport)&&(!query||`${e.home} ${e.away} ${e.league}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query)))
+    const sport=state.sport||'todos',query=norm(state.homeSearch);
+    const rows=byStatus.filter(e=>(sport==='todos'||e.sport===sport)&&(!query||norm(`${e.home} ${e.away} ${e.league}`).includes(query)))
       .sort((a,b)=>new Date(a.start)-new Date(b.start));
-    const errors=[['futbol',source.home],['nba',source.nba],['tenis',source.tenis]].filter(([id,e])=>(sport==='todos'||sport===id)&&e.status==='error');
-    const loading=[['futbol',source.home],['nba',source.nba],['tenis',source.tenis]].some(([id,e])=>(sport==='todos'||sport===id)&&e.status==='loading');
+    const shown=[['futbol',source.home],['nba',source.nba],['tenis',source.tenis]].filter(([id])=>sport==='todos'||sport===id);
+    const errors=shown.filter(([,e])=>e.status==='error');
+    const loading=shown.some(([,e])=>e.status==='loading');
     const latest=source.events.filter(e=>sport==='todos'||e.sport===sport).sort((a,b)=>new Date(b.start)-new Date(a.start))[0];
-    return `<section class="live-panel" id="pronosticos-hoy" aria-labelledby="hub-picks-title"><div class="live-head"><div><p class="eyebrow">PRONÓSTICOS / DATOS REALES</p><h2 id="hub-picks-title">Pronósticos ${esc(dayLabel(state.dayOffset).toLowerCase())}</h2></div><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></div>${sportTabs(byStatus)}${ctx.dayRail()}<div class="board-toolbar"><div class="chip-row" role="group" aria-label="Estado de los partidos">${[['proximos','Próximos'],['todos','Todos'],['cerrados','Finalizados']].map(([id,label])=>`<button type="button" class="chip ${status===id?'selected':''}" data-home-status="${id}" aria-pressed="${status===id}">${label}</button>`).join('')}</div><label class="search-field"><span class="sr-only">Buscar equipo, jugador o torneo</span><input type="search" id="home-search" data-input="home-search" value="${esc(state.homeSearch||'')}" placeholder="Equipo, jugador o torneo" /></label></div>${errors.map(([id])=>`<p class="bottom-note" role="status">${names[id]}: no se pudieron consultar los pronósticos. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p>`).join('')}${rows.length?`<div class="live-pick-list">${rows.map(e=>card(e)).join('')}</div>`:loading?empty('Consultando los motores…','Estamos cargando las publicaciones de cada deporte.'):empty('Sin pronósticos para esta búsqueda','Prueba otro deporte o fecha. Los análisis aparecen cuando el motor los publica.')}${!rows.length&&!loading&&latest?`<p class="bottom-note">Última jornada publicada${sport!=='todos'?` de ${names[sport]}`:''}: ${realDate(latest.start)}. <button type="button" class="text-link" data-available-day="${localDay(new Date(latest.start))}">Consultar esa jornada ↗</button></p>`:''}<p class="live-reason">Hora de tu dispositivo. Las cuotas corresponden a la captura registrada y pueden cambiar. Una probabilidad no garantiza el resultado.</p><details class="publication-details"><summary>Más herramientas de fútbol</summary><div class="forecast-shortcuts"><button type="button" data-route="alta">Alta probabilidad ↗</button><button type="button" data-route="parley">Parley del día ↗</button><button type="button" data-route="escalera">Reto escalera ↗</button><button type="button" data-route="partidos">Agenda y estadísticas ↗</button></div></details></section>`;
+    const groups=sport==='todos'?['futbol','nba','tenis'].map(id=>[id,rows.filter(e=>e.sport===id)]).filter(([,list])=>list.length):[[sport,rows]];
+    const list=groups.map(([id,items])=>`<section class="win-pk-group" aria-label="${esc(names[id])}">${sport==='todos'?`<h3 class="win-pk-group-title">${sportIcon[id]}<span>${esc(names[id])}</span><b class="win-pk-count">${items.length}</b></h3>`:''}<div class="win-pk-grid">${items.map(card).join('')}</div></section>`).join('');
+    const body=rows.length?list:loading?skeleton():empty('Sin pronósticos para esta búsqueda','Prueba otro deporte o fecha. Los análisis aparecen cuando el motor los publica.');
+    return `<section class="win-pk-board" id="pronosticos-hoy" aria-labelledby="hub-picks-title"><div class="win-pk-bar"><div class="win-pk-bar-row">${sportTabs(byStatus)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--ghost win-pk-refresh" data-action="refresh-public">Actualizar ↻</button></div>${ctx.dayRail()}</div><div class="win-pk-heading"><h2 id="hub-picks-title">Pronósticos ${esc(dayLabel(state.dayOffset).toLowerCase())}</h2><div class="win-pk-filters"><div class="chip-row" role="group" aria-label="Estado de los partidos">${[['proximos','Próximos'],['todos','Todos'],['cerrados','Finalizados']].map(([id,label])=>`<button type="button" class="chip ${status===id?'selected':''}" data-home-status="${id}" aria-pressed="${status===id}">${label}</button>`).join('')}</div><label class="search-field"><span class="sr-only">Buscar equipo, jugador o torneo</span><input type="search" id="home-search" data-input="home-search" value="${esc(state.homeSearch||'')}" placeholder="Equipo, jugador o torneo" /></label></div></div>${errors.map(([id])=>`<p class="bottom-note" role="status">${names[id]}: no se pudieron consultar los pronósticos. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p>`).join('')}${body}${!rows.length&&!loading&&latest?`<p class="bottom-note">Última jornada publicada${sport!=='todos'?` de ${names[sport]}`:''}: ${realDate(latest.start)}. <button type="button" class="text-link" data-available-day="${localDay(new Date(latest.start))}">Consultar esa jornada ↗</button></p>`:''}<p class="win-pk-credits">Escudos de fútbol de API-Football, logos NBA de TheSportsDB y fotos de tenis de Wikimedia Commons con licencia Creative Commons. <a class="text-link" href="/web/imagenes/creditos" target="_blank" rel="noopener">Créditos de imágenes ↗</a></p><p class="live-reason">Hora de tu dispositivo. Las cuotas corresponden a la captura registrada y pueden cambiar. Una probabilidad no garantiza el resultado.</p><details class="publication-details"><summary>Más herramientas de fútbol</summary><div class="forecast-shortcuts"><button type="button" data-route="alta">Alta probabilidad ↗</button><button type="button" data-route="parley">Parley del día ↗</button><button type="button" data-route="escalera">Reto escalera ↗</button><button type="button" data-route="partidos">Agenda y estadísticas ↗</button></div></details></section>`;
+  }
+
+  function picksPage(source) {
+    const date=localDay(addDays(state.dayOffset,12));
+    const onDay=source.events.filter(e=>localDay(new Date(e.start))===date);
+    const feat=featuredCard(onDay,source,date);
+    return `<div class="win-pk"><section class="win-pk-hero ${feat?'has-featured':''}" aria-labelledby="picks-title"><div class="cyber-card cyber-card--holo win-pk-hero-copy"><p class="eyebrow">Fútbol / NBA / Tenis</p><h1 id="picks-title">Pronósticos del día</h1><p class="lead">Selecciones calculadas y selladas por el motor, con su probabilidad y su registro. Elige deporte y fecha para ver lo publicado.</p>${summary(onDay,source)}<p class="win-pk-links"><button type="button" class="text-link" data-route="historial">Ver historial verificable ↗</button></p></div>${feat}</section>${board(source)}</div>`;
   }
 
   function resultRows(source) {
@@ -75,7 +178,7 @@ export function createHubViews(ctx) {
     const upcoming=events.filter(e=>e.markets.length&&e.status!=='finished'&&new Date(e.start)>new Date()).length;
     return `<section class="forecast-hero" aria-labelledby="forecast-title"><div class="forecast-copy"><p class="eyebrow">FÚTBOL / NBA / TENIS</p><h1 id="forecast-title">Lee el partido.<br><em>Entiende la cuota.</em></h1><p>El contexto del encuentro, las probabilidades y los pronósticos publicados. Los tres deportes en un mismo lugar, con datos reales de los motores.</p><div class="hero-actions"><button type="button" class="primary-button" data-scroll-to="pronosticos-hoy">Ver pronósticos reales <span aria-hidden="true">↗</span></button><button type="button" class="text-link" data-route="historial">Ver historial verificable ↗</button></div></div><aside class="forecast-summary" aria-label="Resumen de publicaciones reales"><span class="summary-icon" aria-hidden="true">Q.</span><div><span class="eyebrow">PUBLICACIONES REALES / HOY</span><strong>${source.home.status==='ready'?upcoming:'—'}<small> análisis próximos</small></strong><p>Fútbol, NBA y tenis. Los análisis aparecen cuando están calculados y publicados.</p></div><div class="summary-bottom"><span>Tres deportes</span><span>Fuente: QuantFut</span></div></aside></section><div class="publication-strip"><span class="publication-dot ${source.home.status==='ready'?'active':''}" aria-hidden="true"></span><strong>Datos reales de los motores</strong><span>Pronósticos y resultados registrados.</span><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></div><div class="forecast-shortcuts"><button type="button" data-route="picks">Pronósticos publicados ↗</button><button type="button" data-route="historial">Resultados reales ↗</button><button type="button" data-route="partidos">Agenda y estadísticas ↗</button><button type="button" data-route="planes">Planes y acceso ↗</button></div>${board(source)}${recent(source)}${ctx.plansPreview?.()||''}`;
   }
-  function picks(){return `<div class="view-title"><div><p class="eyebrow">FÚTBOL / NBA / TENIS</p><h1>Pronósticos</h1><p class="lead">Selecciona un deporte y una fecha para consultar las publicaciones reales.</p></div></div>${board(sources())}`;}
+  function picks(){return picksPage(sources());}
   function history(){return `<div class="view-title"><div><p class="eyebrow">EVIDENCIA / REGISTRO REAL</p><h1>Historial verificable</h1><p class="lead">Resultados publicados por el servidor, con aciertos y fallos a la vista.</p></div></div>${recent(sources(),true)}<details class="publication-details"><summary>Metodología y registros de verificación</summary>${ctx.liveEvidence()}</details>`;}
 
   function detail(){

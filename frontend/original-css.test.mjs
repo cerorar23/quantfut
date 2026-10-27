@@ -24,9 +24,9 @@ test('el HTML solo carga las hojas originales más la disposición de la ventana
  const views=readFileSync(new URL('./ergonomic-views.js',import.meta.url),'utf8');
  assert.ok(!views.includes('style='));assert.ok(!views.includes('<style'));
 });
-test('las tarjetas y los botones del hub usan los componentes visuales anteriores',()=>{
+test('las tarjetas de pronósticos del hub usan componentes CYBERCORE y los botones del hub los anteriores',()=>{
  const views=readFileSync(new URL('./ergonomic-views.js',import.meta.url),'utf8');
- for(const cls of ['live-pick','live-pick-list','live-panel','forecast-hero','forecast-summary','primary-button','text-link','chip'])assert.ok(views.includes(cls));
+ for(const cls of ['win-pk-card','win-pk-grid','win-pk-hero','cyber-card','cyber-tab','cyber-progress','cyber-btn','live-panel','forecast-hero','forecast-summary','primary-button','text-link','chip'])assert.ok(views.includes(cls),cls);
  for(const cls of ['hub-pick','hub-hero','hub-market-card'])assert.ok(!views.includes(`class="${cls}`));
 });
 
