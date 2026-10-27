@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-27 16:53 UTC · Ventana única Partidos+Mercados (pronóstico destacado 1,30–1,80) · API (frontend + `web.py`)
+- PR #180 (`c7a21e4`, que entró con el rango 1,40 antes de llegar el cambio) y #181 (`cf08c32`, rango 1,30), con el arnés de cada PR en verde; `main` = imagen (hashes de app, fichas-data, window.css y web.py iguales). Imagen `quantfut-api-ventana:c6c6fc2` (`0748393335c0`), derivada de `quantfut-api-gratis10:cf88564` (la que corría) con solo 12 archivos: `frontend/{app,ergonomic-views,fichas-data,real-views}.js`, `index.html`, `window.css` (nuevo), `server.mjs`, `DESIGN_SYSTEM.md`, tres pruebas y `src/qf/api/web.py` (ruta `/window.css`). No se tocan worker, base, Caddy ni el resto de la API.
+- Antes de reemplazar se comprobó que los archivos de frontend y `web.py` del contenedor eran idénticos a `main` (`ce40c6f`); `cf88564` no está en `main`, no se tocó nada más de esa imagen. Hashes de los archivos de la imagen = hashes del commit.
+- Respaldo previo (frontend, `web.py`, compose, id de imagen) en `~/quantfut/releases/ventana-unica-865f925/backup/`.
+- Excepción a «solo hojas originales»: `window.css` es solo disposición (sin colores ni fuentes), `original-css.test.mjs` la admite y mantiene las cuatro hojas originales idénticas por hash. Revertir la ventana = volver al compose anterior.
+- Vuelta atrás: `cp -p ~/quantfut/releases/ventana-unica-865f925/backup/docker-compose.before.yml ~/quantfut/docker-compose.yml && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate api` (imagen anterior `quantfut-api-gratis10:cf88564`).
+- Verificado en el dominio real: `/`, `/health`, `/window.css`, `/web/partidos`, `/mobile/v1/home`, `/app/v1/plans` y `/alta-probabilidad` en 200; hashes de las hojas y de los `.js` iguales a `main`; cuatro hojas originales idénticas; sin errores en logs ni en la consola del navegador. Worker, base y Caddy sin reinicios. Nota: Cloudflare conserva `/app.js` sin versión hasta 4 h, pero `index.html` pide `app.js?v=acomodo-20261028`, que ya sirve el archivo nuevo.
+
 ### 2026-10-27 15:45:35 UTC · Tenis: juegos ganados por jugador y nombres con nombre intermedio · imagen `quantfut-tenis:45f5876` (`main` `45f5876`, PR #177)
 - **Motivo:** orden del titular: añadir `player_games_won` de PropLine al adaptador de tenis, con pruebas, y desplegarlo. Además, Leylah Fernandez – Himeno Sakatsume se selló hoy sin precio porque PropLine la lista como «Leylah Annie Fernandez».
 - **Estado previo comprobado:** `IMAGE` = `quantfut-tenis:7b974ed`, `vps_run.sh` y crontab iguales a la entrada del 26-oct 19:40; `apps/tennis` y `propline_shared.py` de `7b974ed` idénticos a `main` antes del PR, así que la imagen nueva solo añade este cambio. Nadie más desplegando tenis.
