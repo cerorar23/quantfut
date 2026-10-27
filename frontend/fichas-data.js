@@ -73,9 +73,9 @@ export function modelProbabilities(game) {
   return p;
 }
 
-// Pronóstico destacado: entre los publicados y abiertos con cuota de 1,40 a 1,80,
+// Pronóstico destacado: entre los publicados y abiertos con cuota de 1,30 a 1,80,
 // el de mayor probabilidad. No genera nada: solo elige entre lo que envía el servidor.
-export const FEATURED_ODDS = Object.freeze({ min: 1.4, max: 1.8 });
+export const FEATURED_ODDS = Object.freeze({ min: 1.3, max: 1.8 });
 
 export function featuredPick(picks) {
   const open = (Array.isArray(picks) ? picks : []).filter(p => p && p.locked !== true && p.chain_sha256
