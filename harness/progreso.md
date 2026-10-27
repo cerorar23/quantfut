@@ -1,5 +1,9 @@
 # Registro de decisiones — QuantFut
 
+## 27-oct-2026 · Tenis: juegos por jugador sí, aces y dobles faltas no
+
+El titular pidió los pronósticos de jugadores de tenis. PropLine cotiza aces, dobles faltas, puntos de quiebre y juegos ganados por jugador (125-225 partidos por hora). Solo los juegos ganados salen de lo que el motor ya calcula (la misma distribución conjunta de juegos que da el total y el hándicap); los otros tres exigirían otro modelo y quedan fuera. El contrato vive en un paquete nuevo porque añadirlo al catálogo cambiaría los hashes del estudio multi-mercado congelado. En el mismo cambio, un partido sellado sin precio por un nombre intermedio en PropLine: se acepta solo el mismo nombre y apellido con nombres intermedios de más, nunca un parecido, porque un falso emparejamiento sellaría el precio de otro partido.
+
 ## 27-oct-2026 · La navegación reúne fútbol, NBA y tenis
 
 El titular pidió ordenar ergonómicamente la web e incluir los tres deportes. La nueva portada prioriza encontrar un análisis real y mantiene resultados y planes próximos, con cuatro accesos principales y herramientas agrupadas. Los números del texto adjunto se sustituyen por las cifras del servidor: no se inventan rentabilidad, popularidad ni escasez. NBA conserva su distinción estadística y las revisiones posteriores al inicio no cuentan como pronósticos previos. Para tenis, la API recibe solo una proyección pública de campos permitidos; no se montan los originales privados. Ver `docs/web_ergonomia_multideporte_20261027.md`.
