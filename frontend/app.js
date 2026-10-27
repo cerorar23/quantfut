@@ -1,191 +1,19 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
-import { loadAgenda, loadFicha } from './fichas-data.js?v=ab675b7ad4ad';
-import { createMembershipUI } from './membership.js?v=a0616281d991';
+import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay } from './fichas-data.js?v=real-20261027';
+import { createMembershipUI } from './membership.js?v=real-20261027';
+import { createRealViews } from './real-views.js?v=real-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
-// Datos intencionalmente ficticios. Nunca se mezclan con la API de producción.
-// Los precios de la demo se derivan de dos lambdas por partido (Poisson
-// independiente) para que la mesa, los picks y la ficha cuadren entre sí.
+// Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();
-const today = new Date(now);
-today.setHours(0, 0, 0, 0);
-const HOUR = 3600e3;
-
-const addDays = (offset, hour = 20) => {
-  const date = new Date(today);
-  date.setDate(date.getDate() + offset);
-  date.setHours(hour, 0, 0, 0);
-  return date;
-};
-const inHours = hours => new Date(Math.floor((now.getTime() + hours * HOUR) / (15 * 60e3)) * 15 * 60e3);
-const dayOf = date => { const start = new Date(date); start.setHours(0, 0, 0, 0); return Math.round((start - today) / 864e5); };
-
-// Mismo criterio que publish/picks.py, con los valores por defecto de config.py.
-const SOFT_MIN_EDGE = 0.02;
-const MAX_SHARP_DEVIATION = 0.03;
-const SHARP_MARGIN = 0.025;
-const BOOKS = [
-  { id: 'bet365', name: 'Bet365', margin: 0.052, persistence: 0.62 },
-  { id: 'betano', name: 'Betano', margin: 0.061, persistence: 0.48 },
-  { id: '1xbet', name: '1xBet', margin: 0.047, persistence: 0.35 },
-  { id: 'william_hill', name: 'William Hill', margin: 0.068, persistence: 0.55 },
-  { id: '888sport', name: '888sport', margin: 0.064, persistence: 0.41 },
-  { id: 'betway', name: 'Betway', margin: 0.058, persistence: 0.44 },
-];
-const LEAGUES = ['Liga Atlántica · demo', 'Liga Continental · demo', 'Copa Europa · demo'];
-
-const fixtures = [
-  { id: 'qf-099', kickoff: addDays(-1, 20), league: 'Liga Continental · demo', home: 'Estrella Azul', away: 'Real Bahía', xg: [1.35, 1.22], note: 'Partido ya disputado: la mesa conserva el último snapshot antes del inicio, que es contra el que se mide el CLV.' },
-  { id: 'qf-098', kickoff: inHours(-2), league: 'Liga Atlántica · demo', home: 'Club Faro', away: 'Deportivo Vega', xg: [1.08, 1.41], note: 'El visitante llega con más goles esperados; el mercado ya se cerró al empezar el partido.' },
-  { id: 'qf-101', kickoff: inHours(1.5), league: 'Liga Atlántica · demo', home: 'Puerto Norte', away: 'Unión del Sur', xg: [1.64, 0.98], note: 'El modelo favorece al local, pero su opinión no elige picks: manda el precio justo de Pinnacle.' },
-  { id: 'qf-106', kickoff: inHours(3), league: 'Copa Europa · demo', home: 'Olímpico Brisa', away: 'Ciudad Alta', xg: [1.52, 1.26], sharpDistort: true, note: 'Pinnacle se aparta del consenso de las demás casas. El criterio trata ese precio como roto y descarta el partido.' },
-  { id: 'qf-102', kickoff: inHours(4.5), league: 'Liga Continental · demo', home: 'Real Bahía', away: 'Atlético Sierra', xg: [1.30, 1.11], note: 'Partido de márgenes estrechos: el empate conserva una probabilidad relevante.' },
-  { id: 'qf-103', kickoff: addDays(1, 19), league: 'Copa Europa · demo', home: 'Aurora FC', away: 'Sporting Prado', xg: [1.78, 0.91], note: 'La lectura dependerá de las alineaciones confirmadas y del precio disponible antes del inicio.' },
-  { id: 'qf-104', kickoff: addDays(1, 21), league: 'Liga Atlántica · demo', home: 'Deportivo Cumbre', away: 'Marina CF', xg: [1.21, 1.18], note: 'Las tres salidas son cercanas; una pantalla real debe comunicar esta incertidumbre.' },
-  { id: 'qf-105', kickoff: addDays(2, 18), league: 'Liga Continental · demo', home: 'Río Central', away: 'Estrella Azul', xg: [1.48, 1.07], note: 'Ejemplo de cómo se presentaría el desglose de un mercado de goles.' },
-  { id: 'qf-107', kickoff: addDays(2, 20), league: 'Liga Atlántica · demo', home: 'Deportivo Vega', away: 'Puerto Norte', xg: [1.12, 1.36], note: 'Con dos días de antelación los precios aún se moverán; el snapshot manda.' },
-];
-
-const archive = [
-  { date: addDays(-2, 19), publishedAt: addDays(-3, 13), league: 'Liga Atlántica · demo', match: 'Marina CF · Puerto Norte', market: '1X2', selection: 'Marina CF', book: 'Bet365', price: 2.10, minPrice: 2.04, closePrice: 2.06, result: 'Ganado' },
-  { date: addDays(-3, 21), publishedAt: addDays(-4, 14), league: 'Liga Continental · demo', match: 'Atlético Sierra · Río Central', market: '1X2', selection: 'Empate', book: 'Betano', price: 3.45, minPrice: 3.36, closePrice: 3.52, result: 'Perdido' },
-  { date: addDays(-4, 20), publishedAt: addDays(-5, 12), league: 'Copa Europa · demo', match: 'Sporting Prado · Aurora FC', market: '1X2', selection: 'Empate', book: 'William Hill', price: 3.30, minPrice: 3.22, closePrice: 3.27, result: 'Perdido' },
-  { date: addDays(-5, 18), publishedAt: addDays(-6, 11), league: 'Liga Atlántica · demo', match: 'Unión del Sur · Deportivo Cumbre', market: '1X2', selection: 'Unión del Sur', book: '1xBet', price: 2.05, minPrice: 2.00, closePrice: 2.04, result: 'Ganado' },
-  { date: addDays(-6, 20), publishedAt: addDays(-7, 15), league: 'Liga Continental · demo', match: 'Real Bahía · Estrella Azul', market: '1X2', selection: 'Estrella Azul', book: 'Bet365', price: 3.10, minPrice: 3.02, closePrice: 2.95, result: 'Perdido' },
-  { date: addDays(-7, 19), publishedAt: addDays(-8, 12), league: 'Copa Europa · demo', match: 'Ciudad Alta · Olímpico Brisa', market: '1X2', selection: 'Ciudad Alta', book: 'Betway', price: 2.62, minPrice: 2.55, closePrice: 2.66, result: 'Perdido' },
-  { date: addDays(-8, 21), publishedAt: addDays(-9, 14), league: 'Liga Atlántica · demo', match: 'Deportivo Vega · Club Faro', market: '1X2', selection: 'Deportivo Vega', book: 'Betano', price: 2.38, minPrice: 2.31, closePrice: 2.30, result: 'Ganado' },
-];
-
-// ---------------------------------------------------------------- precios
-
-// Generador determinista: la demo enseña los mismos números en cada visita.
-function seeded(key) {
-  let h = 2166136261;
-  for (const char of key) h = Math.imul(h ^ char.charCodeAt(0), 16777619);
-  return () => {
-    h += 0x6D2B79F5;
-    let t = h;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const sum = values => values.reduce((total, value) => total + value, 0);
-const round2 = value => Math.round(value * 100) / 100;
-
-function scoreGrid([lh, la], size = 11) {
-  const pmf = lambda => { const out = [Math.exp(-lambda)]; for (let k = 1; k < size; k++) out.push(out[k - 1] * lambda / k); return out; };
-  const home = pmf(lh);
-  const away = pmf(la);
-  return home.map(ph => away.map(pa => ph * pa));
-}
-const gridProb = (grid, test) => sum(grid.flatMap((row, i) => row.map((p, j) => (test(i, j) ? p : 0))));
-
-function marketGroups(fx, grid) {
-  const p = test => gridProb(grid, test);
-  const [h, d, a] = [p((i, j) => i > j), p((i, j) => i === j), p((i, j) => i < j)];
-  const groups = [
-    { family: '1X2', market: '1X2', total: 1, sels: [[fx.home, h], ['Empate', d], [fx.away, a]] },
-    { family: 'Doble oportunidad', market: 'Doble oportunidad', total: 2, derived: true, sels: [['1X', h + d], ['12', h + a], ['X2', d + a]] },
-  ];
-  for (const line of [1.5, 2.5, 3.5]) {
-    const over = p((i, j) => i + j > line);
-    groups.push({ family: 'Goles', market: `Total ${line}`, total: 1, sels: [[`Más de ${line}`, over], [`Menos de ${line}`, 1 - over]] });
-  }
-  const btts = p((i, j) => i > 0 && j > 0);
-  groups.push({ family: 'Ambos marcan', market: 'Ambos marcan', total: 1, sels: [['Sí', btts], ['No', 1 - btts]] });
-  [[fx.home, 0], [fx.away, 1]].forEach(([team, side]) => {
-    const line = fx.xg[side] >= 1.3 ? 1.5 : 0.5;
-    const over = p((i, j) => (side ? j : i) > line);
-    groups.push({ family: 'Por equipo', market: `Goles ${team} ${line}`, total: 1, sels: [[`Más de ${line}`, over], [`Menos de ${line}`, 1 - over]] });
-  });
-  // Hándicap asiático ±1: ganar por uno exacto devuelve la apuesta.
-  const fav = fx.xg[0] >= fx.xg[1] ? 0 : 1;
-  const margin = (i, j) => (fav ? j - i : i - j);
-  const win = p((i, j) => margin(i, j) >= 2);
-  const lose = p((i, j) => margin(i, j) <= 0);
-  const [favName, dogName] = fav ? [fx.away, fx.home] : [fx.home, fx.away];
-  groups.push({ family: 'Hándicap', market: 'Hándicap asiático ±1', total: 1, sels: [[`${favName} −1`, win / (win + lose)], [`${dogName} +1`, lose / (win + lose)]] });
-  return groups;
-}
-
-function buildFixture(fx) {
-  const rnd = seeded(fx.id);
-  fx.grid = scoreGrid(fx.xg);
-  fx.closed = fx.kickoff <= now;
-  fx.day = dayOf(fx.kickoff);
-  fx.snapshot = fx.closed ? new Date(fx.kickoff.getTime() - 5 * 60e3) : new Date(now.getTime() - (4 + Math.floor(rnd() * 30)) * 60e3);
-  const rows = [];
-  let sharp1x2;
-  for (const group of marketGroups(fx, fx.grid)) {
-    const model = group.sels.map(sel => sel[1]);
-    let truth;
-    if (group.derived) {
-      truth = [sharp1x2[0] + sharp1x2[1], sharp1x2[0] + sharp1x2[2], sharp1x2[1] + sharp1x2[2]];
-    } else {
-      const raw = model.map(q => q * Math.exp(0.16 * (rnd() - 0.5)));
-      truth = raw.map(q => q / sum(raw) * group.total);
-    }
-    if (group.market === '1X2') sharp1x2 = truth;
-    const pinnacle = truth.map((q, i) => round2(1 / (q * (1 + SHARP_MARGIN)) * (fx.sharpDistort && group.market === '1X2' && i === 0 ? 1.22 : 1)));
-    const implied = pinnacle.map(price => 1 / price);
-    const fair = implied.map(q => q / sum(implied) * group.total);
-    group.sels.forEach(([selection], i) => {
-      const quotes = BOOKS.map(book => {
-        if (rnd() < 0.14) return { book, price: null };
-        const lag = 0.14 * ((rnd() + rnd() + rnd()) / 3 - 0.5) * 2;
-        return { book, price: Math.max(1.01, round2(1 / (truth[i] * (1 + book.margin)) * (1 + lag))) };
-      });
-      rows.push({ key: `${fx.id}:${group.market}:${i}`, fx, family: group.family, market: group.market, selection, pModel: model[i], pFair: fair[i], pinnacle: pinnacle[i], quotes });
-    });
-  }
-
-  // Pinnacle contra el consenso de las demás casas del mismo snapshot.
-  const x12 = rows.filter(row => row.market === '1X2');
-  const complete = BOOKS.filter(book => x12.every(row => row.quotes.find(q => q.book === book).price));
-  const consensus = x12.map((row, i) => sum(complete.map(book => {
-    const inv = x12.map(r => 1 / r.quotes.find(q => q.book === book).price);
-    return inv[i] / sum(inv);
-  })) / complete.length);
-  fx.sharpDeviation = Math.max(...x12.map((row, i) => Math.abs(row.pFair - consensus[i])));
-  fx.excluded = fx.sharpDeviation > MAX_SHARP_DEVIATION;
-
-  for (const row of rows) {
-    row.best = row.quotes.filter(q => q.price).sort((a, b) => b.price - a.price)[0] || null;
-    row.edge = row.best ? row.best.price * row.pFair - 1 : null;
-    row.expectedEdge = row.best ? row.edge * row.best.book.persistence : null;
-    row.minPrice = (1 + SOFT_MIN_EDGE) / row.pFair;
-    row.history = [];
-    if (row.best) {
-      const start = row.best.price * (1 + 0.07 * (rnd() - 0.5));
-      for (let k = 0; k < 8; k++) row.history.push(k === 7 ? row.best.price : start + (row.best.price - start) * k / 7 + 0.012 * (rnd() - 0.5) * row.best.price);
-    }
-    row.status = fx.closed ? 'cerrado'
-      : fx.excluded ? 'excluido'
-        : !row.best ? 'sin-cuota'
-          : row.family !== '1X2' ? 'referencia'
-            : row.edge >= SOFT_MIN_EDGE ? 'candidata' : 'debajo';
-  }
-  const pct = values => { const out = values.map(v => Math.round(v * 100)); out[1] += 100 - sum(out); return out; };
-  fx.probs = pct(x12.map(row => row.pModel));
-  fx.marketProbs = pct(x12.map(row => row.pFair));
-  fx.rows = rows;
-  return rows;
-}
-
-const allRows = fixtures.flatMap(buildFixture);
-const rowByKey = new Map(allRows.map(row => [row.key, row]));
-const fixtureById = new Map(fixtures.map(fx => [fx.id, fx]));
-
-// Sombra del criterio: un pick por partido, la mejor candidata 1X2. El reparto
-// gratis/Plus es ilustrativo; el real lo decide picks.assign_tiers() en servidor.
-const shadowPicks = fixtures
-  .map(fx => fx.rows.filter(row => row.status === 'candidata').sort((a, b) => b.edge - a.edge)[0])
-  .filter(Boolean)
-  .sort((a, b) => a.fx.kickoff - b.fx.kickoff)
-  .map((row, index) => ({ row, tier: index % 2 ? 'plus' : 'free' }));
-const pickFor = fx => shadowPicks.find(pick => pick.row.fx === fx);
+const today = new Date(now); today.setHours(0, 0, 0, 0);
+const addDays = (offset, hour = 20) => { const date = new Date(); date.setDate(date.getDate() + offset); date.setHours(hour,0,0,0); return date; };
+const LEAGUES = [], fixtures = [], archive = [], allRows = [], shadowPicks = [];
+const rowByKey = new Map(), fixtureById = new Map();
+const sum = values => values.reduce((total,value)=>total+value,0);
+const round2 = value => Math.round(value*100)/100;
+const SOFT_MIN_EDGE = .02, MAX_SHARP_DEVIATION = .03;
+const pickFor = () => null;
 
 // ---------------------------------------------------------------- estado
 
@@ -225,18 +53,18 @@ const nav = [
   { route: 'inicio', label: 'Inicio', short: 'Inicio', icon: NAV_ICONS.home, group: 'EXPLORAR' },
   { route: 'partidos', label: 'Partidos', short: 'Partidos', icon: NAV_ICONS.clock, group: 'EXPLORAR' },
   { route: 'mercados', label: 'Mercados', short: 'Mesa', icon: NAV_ICONS.grid, group: 'EXPLORAR' },
-  { route: 'picks', label: 'Picks', short: 'Picks', icon: NAV_ICONS.pick, group: 'EXPLORAR' },
+  { route: 'picks', label: 'Pronósticos', short: 'Picks', icon: NAV_ICONS.pick, group: 'EXPLORAR' },
   { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: NAV_ICONS.target, group: 'EXPLORAR' },
   { route: 'escalera', label: 'Reto escalera', short: 'Escalera', icon: NAV_ICONS.rise, group: 'EXPLORAR' },
   { route: 'parley', label: 'Parley del día', short: 'Parley', icon: NAV_ICONS.combine, group: 'EXPLORAR' },
-  { route: 'partido', label: 'Ficha demo', short: 'Demo', icon: NAV_ICONS.file, group: 'EXPLORAR' },
+  { route: 'partido', label: 'Ficha', short: 'Demo', icon: NAV_ICONS.file, group: 'EXPLORAR' },
   { route: 'historial', label: 'Historial', short: 'Historial', icon: NAV_ICONS.history, group: 'EVIDENCIA' },
   { route: 'paquetes', label: 'Paquetes de picks', short: 'Paquetes', icon: NAV_ICONS.package, group: 'ACCESO' },
   { route: 'planes', label: 'Suscripciones', short: 'Planes', icon: NAV_ICONS.shield, group: 'ACCESO' },
   { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: NAV_ICONS.user, group: 'ACCESO' },
 ];
 const MOBILE_PRIMARY = ['inicio', 'partidos', 'mercados', 'picks'];
-const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Ficha de mercado · demo', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
+const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Análisis del partido', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
 const validRoute = route => Object.hasOwn(routeTitle, route);
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
@@ -266,7 +94,8 @@ const DRAWER_TABS = [['resumen', 'Resumen'], ['casas', 'Casas'], ['modelo', 'Mod
 const prefs = loadPrefs();
 const state = {
   route: 'inicio',
-  selectedMatch: 'qf-101',
+  selectedMatch: '',
+  realMatch: '',
   statsDay: 0,
   statsLeague: 'Todas',
   statsMatch: null,
@@ -320,9 +149,35 @@ let publicData = null;
 let publicRequest = 0;
 // Se declaran aquí, antes del primer `render()`, que ya llama a `syncPublicAuth`: más abajo caen en la zona muerta temporal y el script aborta.
 // Un suscriptor VIP ve todos los pronósticos también en la web (ver `sessionFetch`).
-const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/alta-probabilidad', '/escalera', '/parley']);
+const publicFetch = sessionFetch((...args) => fetch(...args), authHeaders, ['/alta-probabilidad', '/escalera', '/parley', '/mobile/v1/home', '/mobile/v1/matches/']);
 // Al iniciar o cerrar sesión, o al activarse la suscripción, se recargan los datos con la sesión nueva.
 let publicAuthKey = 'visitante';
+const realHomeCache = new Map(), realMatchCache = new Map();
+let realGeneration = 0;
+function ensureRealHome(offset) {
+  const key = localDay(addDays(offset,12));
+  if (realHomeCache.has(key)) return realHomeCache.get(key);
+  const entry = {status:'loading',data:null}, generation=realGeneration;
+  realHomeCache.set(key,entry);
+  loadForecastHome(addDays(offset,12),publicFetch).then(result=>{
+    if(generation!==realGeneration)return;
+    realHomeCache.set(key,result);
+    if(result.status==='ready')LEAGUES.splice(0,LEAGUES.length,...new Set(result.data.agenda.map(g=>g.liga.nombre)));
+    rerenderIfIdle();
+  });
+  return entry;
+}
+function ensureRealMatch(id) {
+  if(realMatchCache.has(id))return realMatchCache.get(id);
+  const entry={status:'loading',data:null},generation=realGeneration;
+  realMatchCache.set(id,entry);
+  loadForecastMatch(id,publicFetch).then(result=>{
+    if(generation!==realGeneration)return;
+    realMatchCache.set(id,result); if(state.realMatch===id)rerenderIfIdle();
+  });
+  return entry;
+}
+
 
 // ---------------------------------------------------------------- formato
 
@@ -407,6 +262,7 @@ function navigate(route) {
 }
 
 function openMatch(id, tab = 'resumen') {
+  state.realMatch = id;
   state.selectedMatch = id;
   state.matchTab = tab;
   navigate('partido');
@@ -428,7 +284,7 @@ function mobileNavMarkup() {
   const primary = nav.filter(item => MOBILE_PRIMARY.includes(item.route));
   const extra = nav.filter(item => !MOBILE_PRIMARY.includes(item.route));
   const link = item => `<button type="button" class="mobile-nav-link ${state.route === item.route ? 'active' : ''}" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><small>${item.short}</small></button>`;
-  const drawer = state.mobileMenuOpen ? `<div class="mobile-menu-layer"><button type="button" class="mobile-menu-backdrop" data-action="close-menu" aria-label="Cerrar menú adicional"></button><div id="mobile-extra-menu" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Más secciones"><div class="mobile-drawer-head"><div><p class="eyebrow">QUANTFUT / EXPLORAR</p><h2>Más secciones</h2></div><button type="button" class="mobile-drawer-close" data-action="close-menu" aria-label="Cerrar menú">×</button></div>${extra.map(item => `<button type="button" class="mobile-drawer-link" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><span>${item.label}</span><span aria-hidden="true">↗</span></button>`).join('')}<p>Planes y acceso son demostraciones. No hay pagos ni cuentas reales.</p></div></div>` : '';
+  const drawer = state.mobileMenuOpen ? `<div class="mobile-menu-layer"><button type="button" class="mobile-menu-backdrop" data-action="close-menu" aria-label="Cerrar menú adicional"></button><div id="mobile-extra-menu" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Más secciones"><div class="mobile-drawer-head"><div><p class="eyebrow">QUANTFUT / EXPLORAR</p><h2>Más secciones</h2></div><button type="button" class="mobile-drawer-close" data-action="close-menu" aria-label="Cerrar menú">×</button></div>${extra.map(item => `<button type="button" class="mobile-drawer-link" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><span>${item.label}</span><span aria-hidden="true">↗</span></button>`).join('')}<p>Las cuentas y los pronósticos se consultan en el servidor.</p></div></div>` : '';
   return `<nav class="mobile-bottom-nav" aria-label="Navegación móvil">${primary.map(link).join('')}<button type="button" class="mobile-nav-link mobile-more ${extra.some(item => item.route === state.route) ? 'active' : ''}" data-action="toggle-menu" aria-expanded="${state.mobileMenuOpen}"><span aria-hidden="true">☰</span><small>Más</small></button></nav>${drawer}`;
 }
 
@@ -791,54 +647,6 @@ function liveEvidence() {
     <p class="live-reason">El historial de picks publicados es distinto de la muestra en sombra que evalúa la puerta comercial. El CLV con margen no sustituye al EV al cierre sin margen.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar evidencia ↻</button></section>`;
 }
 
-function homeView() {
-  return redesignedHome();
-}
-
-// Agenda editorial: adapta la jerarquía de TennisPredictions al criterio propio.
-function redesignedHome() {
-  const dayFixtures = fixtures.filter(fx => fx.day === state.dayOffset);
-  const query = fold(state.homeSearch.trim());
-  const visible = dayFixtures.filter(fx =>
-    (state.homeLeague === 'Todas' || fx.league === state.homeLeague)
-    && (state.homeStatus === 'todos' || (state.homeStatus === 'proximos' ? !fx.closed : fx.closed))
-    && (!query || fold(`${fx.home} ${fx.away} ${fx.league}`).includes(query)));
-  const bestRow = fx => [...fx.rows.filter(row => row.family === '1X2')].sort((a, b) => (b.edge ?? -Infinity) - (a.edge ?? -Infinity))[0];
-  visible.sort((a, b) => state.homeSort === 'precio'
-    ? (bestRow(b)?.edge ?? -Infinity) - (bestRow(a)?.edge ?? -Infinity)
-    : a.kickoff - b.kickoff);
-  const open = dayFixtures.filter(fx => !fx.closed).length;
-  const count = status => status === 'todos' ? dayFixtures.length : status === 'proximos' ? open : dayFixtures.length - open;
-  const rowMarkup = fx => {
-    const row = bestRow(fx);
-    return `<article class="schedule-row"><div class="schedule-time"><strong>${timeLabel(fx.kickoff)}</strong><small>${fx.closed ? 'Cerrado' : 'Próximo'}</small></div>
-      <button type="button" class="schedule-teams" data-match="${fx.id}" aria-label="Ver análisis de ${esc(fx.home)} contra ${esc(fx.away)}"><span>${teamMark(fx.home)}<strong>${esc(fx.home)}</strong></span><span>${teamMark(fx.away, true)}<strong>${esc(fx.away)}</strong></span></button>
-      <div class="schedule-prob"><span>1 <b>${fx.probs[0]}%</b></span><span>X <b>${fx.probs[1]}%</b></span><span>2 <b>${fx.probs[2]}%</b></span><small>Probabilidad del modelo</small></div>
-      <div class="schedule-price"><strong>${fmtOdds(row.best?.price)}</strong><small>${esc(row.best?.book.name ?? 'Sin cuota')}</small></div>
-      <div class="schedule-selection"><strong>${esc(row.selection)}</strong><small>Justo ${fmtOdds(1 / row.pFair)} · ${fmtEdge(row.edge)} bruto</small></div>
-      <div class="schedule-state">${statusBadge(row.status)}</div><button type="button" class="schedule-arrow" data-match="${fx.id}" aria-label="Abrir ficha de ${esc(fx.home)} contra ${esc(fx.away)}">↗</button></article>`;
-  };
-  const leagues = [...new Set(visible.map(fx => fx.league))];
-  const matchCountLabel = n => `${n} ${n === 1 ? 'partido' : 'partidos'}`;
-  const latest = dayFixtures.length ? new Date(Math.max(...dayFixtures.map(fx => fx.snapshot))) : null;
-  const gate = publicData?.gate;
-  const active = isPublicationActive(gate);
-  const systemLabel = !gate ? 'Consultando publicación' : gate.status !== 'ready' ? 'Publicación sin verificar' : active ? 'Publicación activa' : 'Publicación pausada';
-  return `<section class="forecast-hero" aria-labelledby="forecast-title"><div class="forecast-copy"><p class="eyebrow">FÚTBOL / ANÁLISIS Y PRECIO JUSTO</p><h1 id="forecast-title">Lee el partido.<br><em>Entiende la cuota.</em></h1><p>El contexto del encuentro, la probabilidad del modelo y el precio de mercado. Todo a la vista, antes de decidir.</p><div class="hero-actions"><button type="button" class="primary-button" data-route="partidos">Explorar partidos <span aria-hidden="true">↗</span></button><button type="button" class="text-link" data-route="historial">Ver historial verificable ↗</button></div></div>
-    <aside class="forecast-summary" aria-label="Resumen de la agenda ficticia"><span class="summary-icon" aria-hidden="true">Q.</span><div><span class="eyebrow">AGENDA DE DEMOSTRACIÓN</span><strong>${dayFixtures.length}<small> partidos · ${dayLabel(state.dayOffset).toLowerCase()}</small></strong><p>Ejemplos ficticios para explorar la nueva interfaz.</p></div><div class="summary-bottom"><span>${open} mercados abiertos</span><span>${latest ? `Captura ${timeLabel(latest)}` : 'Sin captura'} · demo</span></div></aside></section>
-    <div class="publication-strip"><span class="publication-dot ${active ? 'active' : ''}" aria-hidden="true"></span><strong>${systemLabel}</strong><span>Los ejemplos de esta agenda no son picks publicados.</span><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></div>
-    <div class="forecast-shortcuts" aria-label="Accesos rápidos"><button type="button" class="active" data-route="inicio" aria-current="page">Todos los partidos <span>↗</span></button><button type="button" data-route="mercados" data-home-market-mode="dia">Pick del día <span>↗</span></button><button type="button" data-route="mercados" data-home-market-mode="ventaja">Comparar cuotas <span>↗</span></button><button type="button" data-route="mercados" data-home-market-mode="combinadas">Combinadas <span>↗</span></button></div>
-    <section class="forecast-board" aria-labelledby="forecast-board-title"><div class="board-heading"><div><p class="eyebrow">EL TABLERO / DATOS FICTICIOS</p><h2 id="forecast-board-title">Agenda de partidos</h2></div><span>${dateFmt(addDays(state.dayOffset), { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
-      ${dayRail()}
-      <div class="board-toolbar"><div class="board-status" aria-label="Estado de los partidos">${[['todos', 'Todos'], ['proximos', 'Próximos'], ['cerrados', 'Cerrados']].map(([key, label]) => `<button type="button" data-home-status="${key}" aria-pressed="${state.homeStatus === key}" class="${state.homeStatus === key ? 'active' : ''}">${label}<span>${count(key)}</span></button>`).join('')}</div><label class="board-search"><span aria-hidden="true">⌕</span><input id="home-search" type="search" data-input="home-search" aria-label="Buscar equipo o liga en la agenda demo" placeholder="Buscar equipo o liga…" value="${esc(state.homeSearch)}" /></label><label class="sr-only" for="home-sort">Ordenar partidos</label><select id="home-sort"><option value="hora" ${state.homeSort === 'hora' ? 'selected' : ''}>Por hora</option><option value="precio" ${state.homeSort === 'precio' ? 'selected' : ''}>Por diferencia de precio</option></select></div>
-      <div class="board-layout"><aside class="board-leagues" aria-label="Filtrar agenda por liga"><p class="eyebrow">COMPETICIONES</p>${['Todas', ...LEAGUES].map((league, i) => `<button type="button" data-home-league="${esc(league)}" aria-pressed="${state.homeLeague === league}" class="${state.homeLeague === league ? 'active' : ''}"><span class="league-symbol" aria-hidden="true">${i === 0 ? '◎' : '◇'}</span><span>${i === 0 ? 'Todas las ligas' : esc(league.replace(' · demo', ''))}</span><b>${i === 0 ? dayFixtures.length : dayFixtures.filter(fx => fx.league === league).length}</b></button>`).join('')}<div class="league-note"><strong>Tu evidencia, abierta.</strong><p>Revisa resultados, precio de cierre y validación desde el historial público.</p><button type="button" class="text-link" data-route="historial">Consultar historial ↗</button></div></aside>
-      <div class="board-matches"><div class="schedule-columns" aria-hidden="true"><span>HORA</span><span>PARTIDO</span><span>MODELO · 1X2</span><span>MEJOR CUOTA¹</span><span>SELECCIÓN · REFERENCIA</span><span>ESTADO</span><span></span></div>
-      ${visible.length ? leagues.map(league => `<section class="schedule-group" aria-label="${esc(league)}"><h3><span aria-hidden="true">◇</span>${esc(league)}<small>${matchCountLabel(visible.filter(fx => fx.league === league).length)}</small></h3>${visible.filter(fx => fx.league === league).map(rowMarkup).join('')}</section>`).join('') : '<div class="empty-state"><h3>No hay partidos con estos filtros</h3><p>Cambia la fecha o limpia los filtros para seguir explorando.</p></div>'}
-      <div class="board-foot"><span role="status">${visible.length} de ${dayFixtures.length} partidos de ejemplo</span><button type="button" class="text-link" data-action="clear-home">Limpiar filtros ↻</button></div></div></div><p class="board-disclaimer">¹ Mejor cuota entre las casas de la demo para la selección mostrada. Modelo, precio justo y diferencia de precio son medidas distintas. «Cerrado» significa que el partido ya empezó; no acredita su resultado.</p></section>
-    <div class="home-public-data">${homeRealStrip()}<details class="publication-details"><summary>Ver el estado de publicación y su evidencia</summary>${liveStatus()}</details></div>
-    <div class="proof-rail" aria-label="Cómo se presentará la evidencia"><div><span>01 / CONTEXTO</span><strong>El partido completo</strong><small>Forma, cara a cara, estadísticas y alineaciones.</small></div><div><span>02 / PRECIO</span><strong>Una referencia comparable</strong><small>Cuota, justo y mínimo del mismo instante.</small></div><div><span>03 / EVIDENCIA</span><strong>Resultados a la vista</strong><small>Historial, muestra y validación del servidor.</small></div></div>`;
-}
-
 function deskFilteredRows() {
   const query = fold(state.deskSearch.trim());
   return allRows.filter(row => row.fx.day === state.deskDay
@@ -848,87 +656,6 @@ function deskFilteredRows() {
     && (!state.deskOnlyCandidates || row.status === 'candidata')
     && (!state.deskMine || state.followed.includes(row.fx.league))
     && (!query || fold(`${row.fx.home} ${row.fx.away} ${row.fx.league} ${row.market} ${row.selection}`).includes(query)));
-}
-
-function deskView() {
-  const days = [...new Set(fixtures.map(fx => fx.day))].sort((a, b) => a - b);
-  const dayIndex = days.indexOf(state.deskDay);
-  const dayFixtures = fixtures.filter(fx => fx.day === state.deskDay).sort((a, b) => a.kickoff - b.kickoff);
-  const visibleFixtures = dayFixtures.filter(fx => state.deskStatus === 'todos' || (state.deskStatus === 'abiertos' ? !fx.closed : fx.closed));
-  const rows = deskRowsForMode();
-  const showTable = ['todas', 'ventaja', 'probables'].includes(state.deskMode) || (state.deskMode === 'combinadas' && state.comboTab === 'manual');
-  const statusChip = (value, label, count) => `<button type="button" class="chip ${state.deskStatus === value ? 'selected' : ''}" data-desk-status="${value}" aria-pressed="${state.deskStatus === value}">${label} <b>${count}</b></button>`;
-  const matchButton = fx => {
-    const candidates = fx.rows.filter(row => row.status === 'candidata').length;
-    const tag = fx.closed ? '<small class="tag muted">Cerrado</small>'
-      : fx.excluded ? '<small class="tag warn">Excluido</small>'
-        : candidates ? `<small class="tag good">${candidates} cand.</small>`
-          : `<small class="tag plain">${fx.rows.length} precios</small>`;
-    const team = (name, away) => `<span>${teamMark(name, away)}<span class="team-name">${name}</span></span>`;
-    return `<button type="button" class="desk-match ${state.deskMatch === fx.id ? 'active' : ''}" data-desk-match="${fx.id}" aria-pressed="${state.deskMatch === fx.id}"><span class="desk-when"><span class="desk-time">${timeLabel(fx.kickoff)}</span>${tag}</span><span class="desk-teams">${team(fx.home)}${team(fx.away, true)}</span></button>`;
-  };
-  const byLeague = LEAGUES.map(league => [league, visibleFixtures.filter(fx => fx.league === league)]).filter(([, list]) => list.length);
-  const matchLabel = state.deskMatch ? (fx => `${fx.home} × ${fx.away}`)(fixtureById.get(state.deskMatch)) : 'todos los partidos';
-  return `<div class="view-title compact"><div><p class="eyebrow">MESA DE MERCADOS / PRECIO JUSTO CONTRA CASAS</p><h1>Mesa de mercados</h1><p class="lead">Cada fila compara la mejor casa de la lista con el precio justo de Pinnacle en el mismo snapshot. El modelo aparece como diagnóstico; no ordena ni elige.</p></div>${badge('Precios ficticios', 'accent')}</div>
-    ${quickBar()}
-    <div class="desk">
-      <aside class="desk-side" aria-label="Partidos">
-        <div class="side-head"><span>PARTIDOS</span><b>${dayFixtures.length}</b></div>
-        <div class="day-stepper"><button type="button" data-desk-day="${days[dayIndex - 1] ?? ''}" aria-label="Día anterior" ${dayIndex <= 0 ? 'disabled' : ''}>‹</button><strong>${dayLabel(state.deskDay)} · ${dateFmt(addDays(state.deskDay), { day: 'numeric', month: 'short' })}</strong><button type="button" data-desk-day="${days[dayIndex + 1] ?? ''}" aria-label="Día siguiente" ${dayIndex >= days.length - 1 ? 'disabled' : ''}>›</button></div>
-        <div class="chip-row" role="group" aria-label="Estado de los partidos">${statusChip('todos', 'Todos', dayFixtures.length)}${statusChip('abiertos', 'Abiertos', dayFixtures.filter(fx => !fx.closed).length)}${statusChip('cerrados', 'Cerrados', dayFixtures.filter(fx => fx.closed).length)}</div>
-        <div class="desk-match-list"><button type="button" class="desk-match all ${state.deskMatch ? '' : 'active'}" data-desk-match="" aria-pressed="${!state.deskMatch}"><span>Todos los partidos</span><b>${visibleFixtures.length}</b></button>
-        ${byLeague.map(([league, list]) => `<p class="desk-league">${league}</p>${list.map(matchButton).join('')}`).join('') || '<p class="rail-empty">No hay partidos con este filtro.</p>'}</div>
-      </aside>
-      <section class="desk-main" aria-label="Mercados">
-        ${state.deskMode === 'dia' ? pickOfDayPanel() : state.deskMode === 'combinadas' ? comboPanel() : kpiStrip(dayFixtures)}
-        ${showTable ? `<div class="desk-toolbar">
-          <div class="chip-row scroll" role="group" aria-label="Familia de mercado">${FAMILIES.map(family => `<button type="button" class="chip ${state.deskFamily === family ? 'selected' : ''}" data-desk-family="${family}" aria-pressed="${state.deskFamily === family}">${family}</button>`).join('')}</div>
-          <div class="toolbar-line">
-            <label class="search"><span class="sr-only">Buscar equipo, liga o mercado</span><input id="desk-search" type="search" placeholder="Buscar equipo, liga o mercado" value="${esc(state.deskSearch)}" data-input="desk-search" autocomplete="off"></label>
-            <button type="button" class="chip ${state.deskOnlyCandidates ? 'selected' : ''}" data-desk-toggle="deskOnlyCandidates" aria-pressed="${state.deskOnlyCandidates}">Solo candidatas</button>
-            <button type="button" class="chip ${state.deskMine ? 'selected' : ''}" data-desk-toggle="deskMine" aria-pressed="${state.deskMine}">Mis ligas</button>
-            <span class="result-count" aria-live="polite">${rows.length} filas · ${matchLabel}</span>
-          </div>
-        </div>
-        ${rows.length ? marketTable(rows, { caption: 'Mercados del día: modelo, precio justo de Pinnacle, mejor casa, diferencia y estado.' }) : '<div class="empty-state"><span class="empty-symbol">◇</span><h3>Ninguna fila con estos filtros</h3><p>Quita «Solo candidatas» o cambia de día: que no haya candidatas es un resultado normal.</p></div>'}
-        <p class="bottom-note">Justo = Pinnacle sin margen. «vs justo» = mejor cuota × probabilidad justa − 1. Mínimo = cuota a partir de la cual el pick sigue superando el 2%. Solo el 1X2 entra en el criterio; el resto es referencia.</p>` : ''}
-      </section>
-      <aside class="desk-rail">${shadowList(shadowPicks.filter(pick => pick.row.fx.day === state.deskDay))}
-        <section class="rail-panel legend-panel"><p class="eyebrow">CÓMO LEER LA MESA</p><dl>
-          <div><dt>${badge('Candidata ≥ +2%', 'good')}</dt><dd>Casa de la lista que paga al menos un 2% sobre el justo. Solo 1X2.</dd></div>
-          <div><dt>${badge('Excluido · Pinnacle', 'warn')}</dt><dd>Pinnacle se aparta más de un 3% del consenso: precio roto, partido fuera.</dd></div>
-          <div><dt>${badge('Solo referencia', 'muted')}</dt><dd>Mercado con precio justo calculado, fuera del criterio de picks.</dd></div>
-        </dl></section>
-      </aside>
-    </div>`;
-}
-
-function picksView() {
-  const leagues = ['Todas', ...LEAGUES];
-  const visible = shadowPicks.filter(pick => state.pickLeague === 'Todas' || pick.row.fx.league === state.pickLeague);
-  const free = visible.filter(pick => pick.tier === 'free');
-  const plus = visible.filter(pick => pick.tier === 'plus');
-  const card = ({ row }) => `<article class="pick-card">
-    <div class="pick-main"><div class="pick-meta"><span>${row.fx.league}</span><span>Inicio ${stamp(row.fx.kickoff)}</span></div>
-      <h2>${row.fx.home} <span>vs</span> ${row.fx.away}</h2>
-      <div class="pick-tags">${badge(row.market)}${badge('Gratis · demo', 'accent')}${badge(row.fx.closed ? 'Pendiente de liquidar' : 'En sombra · no publicado', 'muted')}</div>
-      <p class="pick-published">Snapshot ${stamp(row.fx.snapshot)} · Pinnacle y ${row.best.book.name} en la misma respuesta</p></div>
-    <div class="pick-detail">
-      <div><span class="metric-label">SELECCIÓN</span><strong>${row.selection}</strong></div>
-      <div><span class="metric-label">${row.best.book.name.toUpperCase()}</span><strong>${fmtOdds(row.best.price)}</strong></div>
-      <div><span class="metric-label">PROBABILIDAD REAL</span><strong>${fmtPct(row.pFair, 0)}</strong><small>sale ${probabilityLabel(row.pFair)?.frequency ?? '—'}</small></div>
-      <div><span class="metric-label">PRECIO MÍNIMO</span><strong>${fmtOdds(row.minPrice)}</strong></div>
-      <div><span class="metric-label">VS JUSTO · AL CIERRE</span><strong class="pos">${fmtEdge(row.edge)}</strong><small>${fmtEdge(row.expectedEdge)} esperado</small></div>
-    </div>
-    <div class="pick-actions"><button type="button" class="pick-open" data-row="${row.key}">Ver precios <span aria-hidden="true">↗</span></button><button type="button" class="text-link" data-match="${row.fx.id}">Ficha</button></div>
-  </article>`;
-  return `<div class="view-title"><div><p class="eyebrow">PRONÓSTICOS / CRITERIO EN SOMBRA</p><h1>Picks</h1><p class="lead">Un pick nace cuando una casa de la lista paga al menos un 2% por encima del precio justo de Pinnacle. Cada uno lleva su cuota mínima: por debajo de ella, ya no vale.</p></div>${badge('API pública + demo señalada', 'accent')}</div>
-    ${livePicks()}
-    <div class="disclosure"><span class="disclosure-icon">ⓘ</span><div><strong>Maqueta ficticia bajo esta línea</strong><span>Estas tarjetas son lo que el criterio habría elegido sobre precios de demostración. No son recomendaciones reales ni se enviará ninguna apuesta.</span></div></div>
-    <div class="chip-row filter-chips" role="group" aria-label="Competición">${leagues.map(league => `<button type="button" class="chip ${state.pickLeague === league ? 'selected' : ''}" data-pick-league="${league}" aria-pressed="${state.pickLeague === league}">${league.replace(' · demo', '')}</button>`).join('')}<span class="result-count" aria-live="polite">${free.length} gratis · ${plus.length} Plus · solo demo</span></div>
-    <div class="picks-list">${free.map(card).join('') || '<div class="empty-state"><span class="empty-symbol">◇</span><h3>Sin picks abiertos en esta competición</h3><p>Si ninguna casa supera el umbral, no hay pick. El sistema no rellena huecos.</p></div>'}
-    ${plus.map(({ row }) => `<article class="pick-card locked"><div class="pick-main"><div class="pick-meta"><span>${row.fx.league}</span><span>Inicio ${stamp(row.fx.kickoff)}</span></div><h2>Pick Plus <span>·</span> ${row.fx.home} vs ${row.fx.away}</h2><p class="pick-published">Selección, casa y precio se entregarían solo tras autorizar la suscripción en el servidor.</p></div><button type="button" class="secondary-button" data-modal="premium">Cómo funcionaría</button></article>`).join('')}</div>
-    <div class="bottom-note">El bloque real consulta únicamente /picks/free y verifica la puerta comercial. Ningún pick privado ni token de servicio llega al navegador.</div>`;
 }
 
 // Línea de alta probabilidad (diseño 2026-10-05). Solo datos reales de
@@ -1035,54 +762,6 @@ function escaleraView() {
     <section class="live-panel" aria-label="Retos abiertos"><div class="live-head"><div><p class="eyebrow">RETOS ABIERTOS · ${realNumber(actuales.length)}</p><h2>En curso</h2></div>${badge(activo ? 'Activo' : 'Inactivo', activo ? 'good' : 'muted')}</div>${abiertos}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>
     <section class="live-panel" aria-label="Seguimiento de ganancias"><div class="live-head"><div><p class="eyebrow">SEGUIMIENTO · /ESCALERA</p><h2>Historial y ganancias</h2></div></div>${stats}${tablaLongitud}${tabla}</section>
     <section class="live-panel" aria-label="La regla del reto"><div class="live-head"><div><p class="eyebrow">LA REGLA</p><h2>Cómo se elige cada escalón</h2></div></div>${regla}</section>`;
-}
-
-function matchView() {
-  const fx = fixtureById.get(state.selectedMatch) || fixtures[0];
-  const outcomes = ['Local', 'Empate', 'Visita'];
-  const probabilityCells = values => values.map((value, index) => `<div><span>${outcomes[index]}</span><strong>${value}%</strong></div>`).join('');
-  const pick = pickFor(fx);
-  const tabs = `<div class="tab-bar" role="tablist" aria-label="Secciones de la ficha">${MATCH_TABS.map(([id, label]) => `<button type="button" role="tab" id="match-tab-${id}" aria-controls="match-panel" aria-selected="${state.matchTab === id}" class="${state.matchTab === id ? 'selected' : ''}" data-match-tab="${id}">${label}</button>`).join('')}</div>`;
-  const panels = {
-    resumen: () => `<div class="analysis-grid comparison-grid"><section class="panel"><div class="panel-heading"><div><p class="eyebrow">MODELO / 1X2</p><h2>Estimación deportiva</h2></div><span class="small-tag">Diagnóstico</span></div><div class="prob-matrix">${probabilityCells(fx.probs)}</div>${probBar(fx.probs, 'Modelo')}<p class="panel-foot">Goles esperados: ${fx.xg[0].toFixed(2)} local · ${fx.xg[1].toFixed(2)} visitante. Alineaciones: no confirmadas en esta simulación.</p></section><section class="panel"><div class="panel-heading"><div><p class="eyebrow">MERCADO / 1X2</p><h2>Pinnacle sin margen</h2></div><span class="small-tag">Demo</span></div><div class="prob-matrix">${probabilityCells(fx.marketProbs)}</div>${probBar(fx.marketProbs, 'Pinnacle sin margen')}<p class="panel-foot">Precio simulado, no procede de Pinnacle. Es la referencia con la que se miden las demás casas.</p></section></div>
-      <div class="analysis-grid below"><section class="panel"><p class="eyebrow">LECTURA / CONTEXTO</p><h2>Qué dicen los números</h2><p class="body-copy">${fx.note}</p><div class="context-tags">${badge('XI pendiente', 'muted')}${badge(fx.excluded ? 'Pinnacle fuera de consenso' : 'Pinnacle en consenso', fx.excluded ? 'warn' : 'muted')}</div></section>
-      <section class="panel"><p class="eyebrow">CRITERIO / SOMBRA</p><h2>${pick ? 'Candidata del partido' : 'Sin candidata'}</h2>${pick ? `<div class="detail-line"><span>Selección</span><strong>${pick.row.selection}</strong></div><div class="detail-line"><span>Mejor casa</span><strong>${pick.row.best.book.name} · ${fmtOdds(pick.row.best.price)}</strong></div><div class="detail-line"><span>Probabilidad real</span><strong>${probText(pick.row.pFair)}</strong></div><div class="detail-line"><span>Justo · mínimo</span><strong>${fmtOdds(1 / pick.row.pFair)} · ${fmtOdds(pick.row.minPrice)}</strong></div><div class="detail-line"><span>vs justo · esperado al cierre</span><strong class="pos">${fmtEdge(pick.row.edge)} · ${fmtEdge(pick.row.expectedEdge)}</strong></div><button type="button" class="secondary-button full" data-row="${pick.row.key}">Ver todas las casas</button>` : `<p class="body-copy muted">${fx.closed ? 'El mercado ya cerró.' : fx.excluded ? statusText(fx.rows[0]) : 'Ninguna casa de la lista paga un 2% sobre el justo en el 1X2. No se publica nada.'}</p><button type="button" class="secondary-button full" data-match-tab="casas">Ver precios por casa</button>`}</section></div>`,
-    mercados: () => `<section class="panel flush"><div class="panel-heading padded"><div><p class="eyebrow">MERCADOS / ${fx.rows.length} SELECCIONES</p><h2>Todo lo que sale de dos lambdas</h2></div><button type="button" class="text-link" data-desk-open="${fx.id}">Abrir en la mesa ↗</button></div>${marketTable(sortedRows(fx.rows), { showMatch: false, caption: `Mercados de ${fx.home} contra ${fx.away}` })}</section>`,
-    casas: () => bookMatrix(fx),
-    modelo: () => modelPanel(fx),
-    registro: () => `<section class="panel trace-panel"><div class="panel-heading"><div><p class="eyebrow">TRAZABILIDAD</p><h2>El orden de los hechos importa</h2></div>${badge('Cronología ficticia', 'muted')}</div>${traceSteps(fx)}</section>`,
-  };
-  return `<div class="view-title"><div><p class="eyebrow">FICHA DE PARTIDO / ${fx.league.toUpperCase()}</p><h1>Un encuentro, todas sus capas.</h1><p class="lead">Modelo, precio justo, casas y registro se muestran por separado. Ninguna diferencia representa una ventaja demostrada.</p></div>${badge('Datos ilustrativos', 'accent')}</div>
-    <div class="match-picker"><label for="match-select">Elegir partido de ejemplo</label><select id="match-select" data-filter="match">${fixtures.map(item => `<option value="${item.id}" ${item.id === fx.id ? 'selected' : ''}>${kickoffLabel(item)} · ${item.home} vs ${item.away}</option>`).join('')}</select></div>
-    <div class="fixture-hero"><div class="fixture-meta"><span>${fx.league}</span><span>${dateFmt(fx.kickoff, { weekday: 'long', day: 'numeric', month: 'long' })} · ${timeLabel(fx.kickoff)}</span></div><div class="fixture-teams"><div>${teamMark(fx.home, false, true)}<h2>${fx.home}</h2><small>Local</small></div><span class="fixture-vs">VS</span><div>${teamMark(fx.away, true, true)}<h2>${fx.away}</h2><small>Visitante</small></div></div><div class="fixture-bottom">${badge(fx.closed ? 'Mercado cerrado' : fx.excluded ? 'Excluido del criterio' : 'Programado', fx.excluded ? 'warn' : 'muted')}<span>Los datos no corresponden a un partido real.</span></div></div>
-    ${tabs}<div id="match-panel" role="tabpanel" aria-labelledby="match-tab-${state.matchTab}" class="tab-panel">${panels[state.matchTab]()}</div>`;
-}
-
-function clvChart(items) {
-  const chronological = [...items].sort((a, b) => a.publishedAt - b.publishedAt);
-  let running = 0;
-  const points = chronological.map(item => (running += clvValue(item) * 100));
-  const values = [0, ...points];
-  const min = Math.min(...values, 0);
-  const span = Math.max(...values, 0) - min || 1;
-  const x = i => 8 + i / (values.length - 1) * 284;
-  const y = v => 72 - (v - min) / span * 60;
-  return `<svg class="clv-chart" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="CLV acumulado de la muestra ficticia: ${points.at(-1).toFixed(1)} puntos tras ${points.length} registros"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg>`;
-}
-
-function historyView() {
-  const filtered = archive.filter(item => (state.recordFilter === 'Todos' || item.result === state.recordFilter) && (state.recordLeague === 'Todas' || item.league === state.recordLeague));
-  const averageClv = sum(archive.map(clvValue)) / archive.length;
-  const beatClose = archive.filter(item => clvValue(item) > 0).length;
-  const period = `${dateFmt(archive.at(-1).date, { day: 'numeric', month: 'short' })}–${dateFmt(archive[0].date, { day: 'numeric', month: 'short' })}`;
-  return `<div class="view-title"><div><p class="eyebrow">EVIDENCIA / REGISTRO REAL Y MAQUETA</p><h1>Historial verificable</h1><p class="lead">Arriba se muestra el estado real de la API; debajo, un ejemplo de cómo revisar aciertos, pérdidas y cierres. Ninguna fila de la maqueta pertenece al historial real.</p></div>${badge('API pública + demo señalada', 'accent')}</div>
-    ${liveEvidence()}
-    <div class="disclosure"><span class="disclosure-icon">ⓘ</span><div><strong>Maqueta ficticia bajo esta línea; no es prueba de rendimiento.</strong><span>Estas filas se pueden cambiar en el navegador y no tienen cadena de hashes. El historial real está en el panel anterior y procede del servidor.</span></div></div>
-    <div class="history-context"><div><span>PERIODO ILUSTRATIVO</span><strong>${period}</strong></div><div><span>COBERTURA</span><strong>${archive.length} registros inventados · todas las ligas de muestra</strong></div><div><span>ESTADO DE VERIFICACIÓN</span><strong>Sin publicación ni hash reales</strong></div></div>
-    <div class="stat-grid"><div class="stat-card"><span>CLV medio · demo</span><strong>${fmtEdge(averageClv)}</strong><small>${beatClose} de ${archive.length} batieron el cierre · no es evidencia</small>${clvChart(archive)}</div><div class="stat-card"><span>Resultados de ejemplo</span><strong>${archive.length}</strong><small>${archive.filter(item => item.result === 'Ganado').length} ganados · ${archive.filter(item => item.result === 'Perdido').length} perdidos · sin selección favorable</small></div><div class="stat-card"><span>Métricas reales</span><strong>↑</strong><small>Consulta el registro público anterior; nunca se calculan con estas filas ficticias</small></div></div>
-    <section class="panel record-panel"><div class="panel-heading"><div><p class="eyebrow">ARCHIVO DE MUESTRA</p><h2>Resultados, incluido lo que falla</h2><p class="record-count" aria-live="polite">${filtered.length} de ${archive.length} registros visibles</p></div><div class="record-filters"><div class="segmented" role="group" aria-label="Filtrar por competición">${['Todas', ...LEAGUES].map(league => `<button type="button" data-record-league="${league}" class="${state.recordLeague === league ? 'selected' : ''}" aria-pressed="${state.recordLeague === league}">${league.replace(' · demo', '')}</button>`).join('')}</div><div class="segmented" role="group" aria-label="Filtrar resultados">${['Todos', 'Ganado', 'Perdido'].map(filter => `<button type="button" data-record="${filter}" class="${state.recordFilter === filter ? 'selected' : ''}" aria-pressed="${state.recordFilter === filter}">${filter}</button>`).join('')}</div></div></div>
-      <div class="table-wrap" tabindex="0" role="region" aria-label="Tabla de resultados de demostración, desplazable horizontalmente"><table><caption>Datos ficticios; CLV calculado como cuota registrada dividida por cuota de cierre, menos uno.</caption><thead><tr><th scope="col">Inicio</th><th scope="col">Publicado · demo</th><th scope="col">Partido</th><th scope="col">Selección</th><th scope="col">Casa</th><th scope="col">Cuota · mín.</th><th scope="col">Cierre</th><th scope="col">Resultado</th><th scope="col">CLV · demo</th></tr></thead><tbody>${filtered.map(item => `<tr><td>${stamp(item.date)}</td><td>${stamp(item.publishedAt)}</td><td><strong>${item.match}</strong><small>${item.league}</small></td><td><strong>${item.selection}</strong><small>${item.market}</small></td><td>${item.book}</td><td>${fmtOdds(item.price)}<small>mín. ${fmtOdds(item.minPrice)}</small></td><td>${fmtOdds(item.closePrice)}</td><td><span class="result ${item.result === 'Ganado' ? 'won' : 'lost'}">${item.result}</span></td><td class="edge ${clvValue(item) >= 0 ? 'pos' : 'neg'}">${fmtEdge(clvValue(item))}</td></tr>`).join('') || '<tr><td colspan="9">Ningún registro con estos filtros.</td></tr>'}</tbody></table></div></section>
-    <div class="evidence-grid"><div class="panel"><span class="evidence-icon">▥</span><h3>Calibración pública</h3><p>El panel real anterior consulta las corridas registradas por el servidor, con muestra y periodo.</p></div><div class="panel"><span class="evidence-icon">⌁</span><h3>Cadena de hashes</h3><p>Los lotes reales aparecen arriba cuando existan. Esta maqueta no genera huellas válidas.</p></div><div class="panel"><span class="evidence-icon">↗</span><h3>CLV con intervalo</h3><p>La cuota publicada se comparará con el cierre; el promedio deberá ir acompañado de tamaño de muestra e incertidumbre.</p></div></div>`;
 }
 
 function plansView() { return membershipUI.plansView(); }
@@ -1336,31 +1015,17 @@ function statsView() {
 }
 
 // Portada: lo real primero, con enlace a la ficha.
-function homeRealStrip() {
-  const agenda = ensureAgenda(0);
-  if (agenda.status === 'error') return `<section class="real-strip real-unavailable"><div><p class="eyebrow">PARTIDOS REALES · API PÚBLICA</p><h2>Agenda real no disponible</h2><p>No se pudo consultar el servidor. Los partidos del tablero superior son ejemplos ficticios.</p></div><button type="button" class="secondary-button" data-route="partidos">Reintentar en Partidos ↗</button></section>`;
-  const games = agenda.status === 'ready' ? agenda.data.partidos : [];
-  const upcoming = [...games.filter(p => p.estado !== 'finished'), ...games.filter(p => p.estado === 'finished')].slice(0, 6);
-  const card = p => {
-    const st = estadoPartido(p);
-    const team = (t, away) => `<div class="real-team">${realMark(t.nombre, away, false, t.escudo)}<strong>${esc(t.nombre)}</strong>${t.posicion ? `<small>${posLabel(t.posicion)}</small>` : ''}${rachaDots(t.racha)}</div>`;
-    return `<button type="button" class="real-card" data-open-ficha="${esc(p.match_id)}"><span class="real-card-top"><span>${esc(p.liga.nombre)}</span><span>${st.tag ? `${st.tag} · ` : ''}${esc(st.main)}</span></span>${team(p.local)}${team(p.visitante, true)}<span class="real-card-link">Ver ficha ↗</span></button>`;
-  };
-  const body = agenda.status === 'loading' ? '<p class="rail-empty">Cargando partidos de hoy…</p>'
-    : upcoming.length ? `<div class="real-grid">${upcoming.map(card).join('')}</div>` : '<p class="rail-empty">Hoy no juega ninguna de las ligas seguidas.</p>';
-  return `<section class="real-strip"><div class="section-head"><div><p class="eyebrow">HOY EN LAS LIGAS · DATOS REALES</p><h2>${games.length ? `${games.length} partidos hoy` : 'Partidos de hoy'}</h2></div><button type="button" class="text-link" data-route="partidos">Todos los partidos y estadísticas ↗</button></div>${body}</section>`;
-}
-
-// ---------------------------------------------------------------- capas
-
 const membershipUI = createMembershipUI({
   state, esc, badge, oddsToggle, leagues: LEAGUES, fixtures, matchCard, navigate, render,
   publicStatus: () => {
     const gate = publicData?.gate;
     const active = isPublicationActive(gate);
-    return `<strong>${!gate ? 'Consultando publicación…' : gate.status !== 'ready' ? 'Estado de publicación no disponible' : active ? 'Publicación autorizada por el servidor' : 'Publicación pausada'}</strong><p>La selección de un plan no cambia el estado del servidor. Esta demo no entrega picks privados ni habilita cobros.</p>`;
+    return `<strong>${!gate ? 'Consultando publicación…' : gate.status !== 'ready' ? 'Estado de publicación no disponible' : active ? 'Publicación autorizada por el servidor' : 'Publicación pausada'}</strong><p>La selección de un plan no cambia el estado del servidor. El servidor comprueba tu acceso antes de entregar contenido privado.</p>`;
   },
 });
+
+const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
+  addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1459,10 +1124,10 @@ function applyCybercoreTheme(root) {
 // ---------------------------------------------------------------- render
 
 function render() {
-  const views = { inicio: homeView, partidos: statsView, mercados: deskView, picks: picksView, alta: altaView, escalera: escaleraView, parley: parleyView, partido: matchView, historial: historyView, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
+  const views = { inicio: realViews.home, partidos: statsView, mercados: realViews.markets, picks: realViews.picks, alta: altaView, escalera: escaleraView, parley: parleyView, partido: realViews.markets, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Sistema en validación <small>· Transparencia por diseño</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DEMO + DATOS PÚBLICOS</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Datos reales señalados; el resto es demo. Sin apuestas ni pagos.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>FOOTBALL INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
@@ -1507,12 +1172,22 @@ app.addEventListener('click', event => {
   }
   const data = button.dataset;
   if (membershipUI.handleClick(button)) return;
+  if (data.realMatch) {
+    const game=[...realHomeCache.values()].flatMap(e=>e.data?.agenda||[]).find(g=>g.match_id===data.realMatch);
+    if(game){ const date=new Date(game.kickoff_utc); date.setHours(0,0,0,0); const current=new Date(); current.setHours(0,0,0,0); state.dayOffset=Math.round((date-current)/86400000); }
+    state.realMatch=data.realMatch; if(state.route==='mercados')render(); else navigate('mercados'); return;
+  }
   if (data.action === 'refresh-public') { refreshPublicData(); return; }
   if (data.route) { if (data.homeMarketMode) { state.deskMode = data.homeMarketMode; state.deskDay = state.dayOffset; state.deskSort = { key: 'edge', dir: 'desc' }; } if (data.route === 'acceso') { state.authReturn = 'cuenta'; state.authMode = 'login'; state.authMessage = ''; } navigate(data.route); return; }
   if (data.homeStatus) { state.homeStatus = data.homeStatus; rerenderKeepingFocus(`[data-home-status="${data.homeStatus}"]`); return; }
   if (data.homeLeague) { state.homeLeague = data.homeLeague; rerenderKeepingFocus(`[data-home-league="${CSS.escape(data.homeLeague)}"]`); return; }
   if (data.action === 'clear-home') { state.homeSearch = ''; state.homeStatus = 'todos'; state.homeLeague = 'Todas'; state.homeSort = 'hora'; rerenderKeepingFocus('[data-action="clear-home"]'); return; }
-  if (data.openFicha) { state.statsDay = 0; state.statsLeague = 'Todas'; state.statsMatch = data.openFicha; state.statsTab = 'resumen'; navigate('partidos'); return; }
+  if (data.openFicha) {
+    const game = ensureRealHome(0).data?.agenda.find(g=>g.match_id===data.openFicha);
+    const date = game ? new Date(game.kickoff_utc) : new Date(); date.setHours(0,0,0,0);
+    const current = new Date(); current.setHours(0,0,0,0);
+    state.statsDay = Math.round((date-current)/86400000); state.statsLeague = 'Todas'; state.statsMatch = data.openFicha; state.statsTab = 'resumen'; navigate('partidos'); return;
+  }
   if (data.statsMatch) { state.statsMatch = data.statsMatch; rerenderKeepingFocus(`[data-stats-match="${CSS.escape(data.statsMatch)}"]`); return; }
   if (data.statsDay !== undefined && data.statsDay !== '') { state.statsDay = Number(data.statsDay); state.statsMatch = null; rerenderKeepingFocus('.stats-desk .day-stepper strong'); return; }
   if (data.statsLeague) { state.statsLeague = data.statsLeague; state.statsMatch = null; rerenderKeepingFocus(`[data-stats-league="${CSS.escape(data.statsLeague)}"]`); return; }
@@ -1634,6 +1309,7 @@ function syncPublicAuth() {
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
+  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); }
   render();
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;
@@ -1641,3 +1317,10 @@ async function refreshPublicData() {
   if (!state.modal && !state.drawer && !state.mobileMenuOpen) render();
 }
 refreshPublicData();
+
+// Actualiza las publicaciones reales cuando la web está visible, sin alterar motores.
+setInterval(()=>{
+  if(document.visibilityState==='visible' && !state.modal && !state.drawer && !state.authBusy
+      && !['acceso','checkout','cuenta'].includes(state.route)
+      && !document.activeElement?.matches('input,textarea,select,[contenteditable="true"]'))refreshPublicData();
+},90000);

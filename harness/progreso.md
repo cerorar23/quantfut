@@ -1,5 +1,9 @@
 # Registro de decisiones — QuantFut
 
+## 27-oct-2026 · La web consume el motor real
+
+El titular pidió conservar el diseño anterior y retirar los pronósticos ficticios. El motor ya corre: la jornada del 27-oct está calculada y sellada. La corrección conecta la web al contrato real de la app, con el mismo recorte gratis/VIP, en lugar de modificar modelos o evitar la puerta de CLV. Los archivos CSS y CYBERCORE 0.3.0 permanecen intactos. Ver `docs/web_pronosticos_reales_20261027.md`.
+
 ## 2026-10-26 — NBA 1.7.0: la fuerza individual entra al vivo y lo publicado se revisa sin reescribirse
 Por instrucción del titular la fuerza individual se activa aunque su mejora histórica no sea concluyente, y lo ya publicado se recalcula. Decisión clave: el recálculo es una revisión sellada aparte, nunca una edición del original; un partido ya iniciado se recalcula solo con información anterior a su fecha (la primera versión usaba todo hasta hoy, incluido el resultado del propio partido, y la fuerza ajustada con partidos futuros: lo detectaron las verificaciones) y no cuenta en el marcador, que usa la última versión previa al salto. Al consolidar playoffs, el historial individual de inicio de temporada quedó lleno de playoffs (Brunson 19 de 20) y empeoraba las combinaciones; un partido regular usa solo partidos regulares. Ensayo con 1.061 resultados: Brier 0,2490 frente a 0,2482 del original (0,2518 antes de esa corrección); total del partido mejora, ganador empeora; una semana no lo distingue del azar. Detalle: `docs/nba_recalibracion_17_20261026.md`.
 

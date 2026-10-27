@@ -1,5 +1,9 @@
 # Backlog — QuantFut
 
+## 27-oct-2026 · Web con pronósticos reales, diseño conservado
+
+Orden del titular: retirar los pronósticos ficticios y activar la web real. El motor de fútbol ya genera y sella pronósticos; la API pública móvil entrega cuatro gratuitos y sus bloqueos VIP. Conectar ese mismo contrato a la web conservando CYBERCORE CSS 0.3.0, el diseño anterior y las reglas del servidor. Eliminar todos los generadores/archivos simulados de las vistas públicas; probar visitante, suscriptor, vacío y fallo; publicar únicamente los archivos frontend después de verificar main y respaldar. No alterar modelos ni saltar la puerta de los picks de valor.
+
 ## NBA: plantillas actuales y fuerza individual — solicitud del 26-oct-2026
 
 - [x] Capturar y validar las 30 plantillas oficiales actuales: 521 identidades únicas; 121 difieren del último equipo del historial local (no equivale a 121 traspasos fechados esta temporada).
