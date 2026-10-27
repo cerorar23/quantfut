@@ -37,3 +37,38 @@ export function loadFicha(matchId, fetcher = fetch) {
   return getJson(`/web/partidos/${encodeURIComponent(matchId)}`,
     value => value && value.partido && value.local && value.visitante && value.cara_a_cara, fetcher);
 }
+
+// La web usa la misma asignación real gratis/VIP que la app. El servidor
+// omite los datos bloqueados antes de enviarlos; el navegador no los inventa.
+export function loadForecastHome(date, fetcher = fetch) {
+  const params = new URLSearchParams({ fecha: localDay(date), tz: String(tzMinutes(date)) });
+  return getJson(`/mobile/v1/home?${params}`,
+    value => value && Array.isArray(value.agenda)
+      && value.agenda.every(g => typeof g.match_id === 'string' && g.kickoff_utc && g.liga?.nombre && g.local?.nombre && g.visitante?.nombre)
+      && value.alta_probabilidad
+      && Array.isArray(value.alta_probabilidad.proximos) && Array.isArray(value.alta_probabilidad.vip), fetcher);
+}
+
+export function loadForecastMatch(matchId, fetcher = fetch) {
+  return getJson(`/mobile/v1/matches/${encodeURIComponent(matchId)}`,
+    value => value && value.ficha && value.ficha.partido && value.ficha.local && value.ficha.visitante && Array.isArray(value.picks), fetcher);
+}
+
+export function forecastGames(home, date) {
+  const day = localDay(date);
+  return (home?.agenda || []).filter(game => game.kickoff_utc
+    && localDay(new Date(game.kickoff_utc)) === day);
+}
+
+export function publicForecasts(home) {
+  return (home?.alta_probabilidad?.proximos || []).filter(p => p.locked !== true
+    && typeof p.prob === 'number' && Number.isFinite(p.prob) && p.prob > 0 && p.prob < 1
+    && p.chain_sha256 && p.pick_key);
+}
+
+export function modelProbabilities(game) {
+  const p = game?.probabilities;
+  if (!p || ['home','draw','away'].some(k => typeof p[k] !== 'number' || !Number.isFinite(p[k]) || p[k] < 0 || p[k] > 1)
+      || Math.abs(p.home + p.draw + p.away - 1) > .005) return null;
+  return p;
+}

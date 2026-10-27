@@ -13,6 +13,11 @@ router = APIRouter(include_in_schema=False)
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
 
 
+@router.get("/real-views.js")
+def real_views_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "real-views.js", media_type="text/javascript")
+
+
 @router.get("/")
 def index() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "index.html")
