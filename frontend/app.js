@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createMembershipUI } from './membership.js?v=acomodo-20261027';
-import { createRealViews } from './real-views.js?v=imagenes-20261029';
+import { createMembershipUI } from './membership.js?v=planes-20261027';
+import { createRealViews } from './real-views.js?v=planes-20261027';
 import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket } from './sports-data.js?v=imagenes-20261029';
-import { createSportWindow } from './sports-window.js?v=imagenes-20261029';
+import { createSportWindow } from './sports-window.js?v=planes-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
@@ -55,10 +55,10 @@ const nav = [
   { route: 'inicio', label: 'Inicio', short: 'Inicio', icon: NAV_ICONS.home, group: 'EXPLORAR' },
   { route: 'partidos', label: 'Partidos', short: 'Partidos', icon: NAV_ICONS.clock, group: 'EXPLORAR' },
   { route: 'picks', label: 'Pronósticos', short: 'Picks', icon: NAV_ICONS.pick, group: 'EXPLORAR' },
-  { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: NAV_ICONS.target, group: 'EXPLORAR' },
-  { route: 'escalera', label: 'Reto escalera', short: 'Escalera', icon: NAV_ICONS.rise, group: 'EXPLORAR' },
-  { route: 'parley', label: 'Parley del día', short: 'Parley', icon: NAV_ICONS.combine, group: 'EXPLORAR' },
   { route: 'historial', label: 'Historial', short: 'Historial', icon: NAV_ICONS.history, group: 'EVIDENCIA' },
+  { route: 'alta', label: 'Alta probabilidad', short: 'Alta prob.', icon: NAV_ICONS.target, group: 'HERRAMIENTAS' },
+  { route: 'parley', label: 'Parley del día', short: 'Parley', icon: NAV_ICONS.combine, group: 'HERRAMIENTAS' },
+  { route: 'escalera', label: 'Reto escalera', short: 'Escalera', icon: NAV_ICONS.rise, group: 'HERRAMIENTAS' },
   { route: 'paquetes', label: 'Paquetes de picks', short: 'Paquetes', icon: NAV_ICONS.package, group: 'ACCESO' },
   { route: 'planes', label: 'Suscripciones', short: 'Planes', icon: NAV_ICONS.shield, group: 'ACCESO' },
   { route: 'cuenta', label: 'Mi cuenta', short: 'Mi cuenta', icon: NAV_ICONS.user, group: 'ACCESO' },
@@ -336,7 +336,7 @@ function sportNavMarkup() {
 
 function navMarkup() {
   const groups = [...new Set(nav.map(item => item.group))];
-  return groups.map(group => `<div class="top-nav-group" role="group" aria-label="${group.charAt(0)}${group.slice(1).toLowerCase()}"><span class="top-nav-label" aria-hidden="true">${group}</span>${nav.filter(item => item.group === group && ['inicio','picks','historial','planes'].includes(item.route)).map(item => {
+  return groups.map(group => `<div class="top-nav-group" role="group" aria-label="${group.charAt(0)}${group.slice(1).toLowerCase()}"><span class="top-nav-label" aria-hidden="true">${group}</span>${nav.filter(item => item.group === group && ['inicio','picks','historial','alta','parley','escalera','planes'].includes(item.route)).map(item => {
     const active = state.route === item.route;
     return `<button type="button" class="top-link ${active ? 'active' : ''}" data-route="${item.route}" ${active ? 'aria-current="page"' : ''}><span class="nav-icon" aria-hidden="true">${item.icon}</span><span>${item.label}</span></button>`;
   }).join('')}</div>`).join('');
@@ -1282,7 +1282,7 @@ function render() {
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span><span>Escudos de fútbol de API-Football, logos NBA de TheSportsDB y fotos de tenis de Wikimedia Commons con licencia Creative Commons. <a class="text-link" href="/web/imagenes/creditos" target="_blank" rel="noopener">Créditos de imágenes ↗</a></span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
