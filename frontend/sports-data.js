@@ -71,6 +71,22 @@ export async function loadTennisStats(eventId, fetcher = fetch) {
   } catch { return { status: 'error', data: null }; } finally { clearTimeout(timer); }
 }
 
+// Estadísticas de equipos de un partido de NBA (forma, cara a cara y clasificación; el servidor resume marcadores finales).
+const isForm = f => f && ['all', 'home', 'away'].every(k => Array.isArray(f[k]));
+export async function loadNbaStats(eventId, fetcher = fetch) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`/web/deportes/nba/estadisticas/${encodeURIComponent(eventId)}`, { signal: controller.signal, cache: 'no-store' });
+    if (!response.ok) throw new Error('Sin estadísticas');
+    const data = await response.json();
+    const valid = Array.isArray(data?.teams) && data.teams.length === 2
+      && data.teams.every(t => t && typeof t.name === 'string' && t.season && t.last6 && t.scoring && t.standing && isForm(t.form))
+      && data.h2h && Array.isArray(data.h2h.matches);
+    if (!valid) throw new Error('Formato inesperado');
+    return { status: 'ready', data };
+  } catch { return { status: 'error', data: null }; } finally { clearTimeout(timer); }
+}
+
 export async function loadResults(fetcher=fetch) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {
