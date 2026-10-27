@@ -430,6 +430,10 @@
   font: 700 13px var(--font-mono);
 }
 
+.win-feat td {
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+}
+
 .win-lock td {
   color: var(--faint);
   background: color-mix(in srgb, var(--bg) 55%, transparent);

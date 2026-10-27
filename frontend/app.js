@@ -1,7 +1,7 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
-import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredPick, FEATURED_ODDS } from './fichas-data.js?v=real-20261028';
+import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=acomodo-20261027';
-import { createRealViews } from './real-views.js?v=acomodo-20261028';
+import { createRealViews } from './real-views.js?v=acomodo-20261029';
 import { loadSport, loadResults } from './sports-data.js?v=acomodo-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
@@ -1068,12 +1068,12 @@ function winForecast(game, entry) {
   if (entry.status === 'loading') return '<div class="panel loading-panel"><p class="eyebrow">PRONÓSTICO</p><h2>Consultando pronósticos…</h2></div>';
   if (entry.status !== 'ready') return '<div class="empty-state"><h3>No se pudo consultar el pronóstico</h3><p>El servidor no respondió. <button type="button" class="text-link" data-action="retry-real">Reintentar ↻</button></p></div>';
   const { ficha, picks } = entry.data;
-  const feat = featuredPick(picks);
-  const hidden = picks.filter(p => p.locked === true).length;
-  const range = `${FEATURED_ODDS.min.toFixed(2).replace('.', ',')} a ${FEATURED_ODDS.max.toFixed(2).replace('.', ',')}`;
+  const feat = featuredMarket(ficha.mercados);
+  const sealed = feat?.pick_key ? picks.find(p => p.pick_key === feat.pick_key && p.chain_sha256) : null;
+  const range = (ficha.mercados?.rango || [1.4, 1.8]).map(x => Number(x).toFixed(2).replace('.', ',')).join(' a ');
   const card = feat
-    ? `<p class="eyebrow">PRONÓSTICO DESTACADO · LOTE ${esc(feat.batch_date)}</p><div class="win-pick-grid"><div><h2>${esc(feat.texto)}</h2><p class="win-sub">${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>Cuota publicada</small><strong>${fmtOdds(feat.ref_price)}</strong><em>${esc(feat.ref_book || 'Sin casa publicada')}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad publicada" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-rule">Criterio: mayor probabilidad entre los pronósticos publicados con cuota de ${range}.</p><details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(feat.ref_book || 'No disponible')} · Cuota capturada ${realDate(feat.odds_as_of)} ${realTime(feat.odds_as_of)}.</p><code>${esc(feat.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>`
-    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${picks.length - hidden ? `Ningún pronóstico publicado de este partido tiene cuota de ${range}.` : 'Este partido no tiene pronósticos publicados abiertos.'}${hidden ? ` Hay ${hidden} con acceso VIP.` : ''}</p>`;
+    ? `<p class="eyebrow">PRONÓSTICO DESTACADO${sealed ? ` · LOTE ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(feat.seleccion)}</h2><p class="win-sub">${esc(feat.titulo || feat.grupo)} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : 'Cuota del modelo'}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || 'Casa registrada') : '1 ÷ probabilidad'}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-rule">Criterio: mayor probabilidad entre todos los mercados del partido con cuota de ${range}.</p>${sealed ? `<details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(sealed.ref_book || 'No disponible')} · Cuota capturada ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>` : '<p class="win-rule">Estimación del modelo: no es un pronóstico sellado en la cadena.</p>'}`
+    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">Ningún mercado de este partido tiene cuota de ${range}.</p>`;
   const rows = ficha.mercados?.filas || [];
   const groups = [...new Set(rows.map(r => r.grupo))];
   const fam = groups.includes(state.winFam) ? state.winFam : 'Todos';
@@ -1081,7 +1081,7 @@ function winForecast(game, entry) {
   const locked = rows.filter(r => r.locked === true).length;
   const line = r => (r.locked
     ? `<tr class="win-lock"><td>${esc(r.grupo)}</td><td>Contenido reservado</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`
-    : `<tr><td>${esc(r.titulo || r.grupo)}</td><td>${esc(r.seleccion)}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? fmtOdds(r.cuota) : '—'}</td><td>${r.cuota_tipo === 'publicada' ? badge('Cuota registrada', 'good') : badge('Referencia', 'muted')}</td></tr>`);
+    : `<tr${r.destacado ? ' class="win-feat"' : ''}><td>${esc(r.titulo || r.grupo)}</td><td>${esc(r.seleccion)}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? fmtOdds(r.cuota) : '—'}</td><td>${r.destacado ? badge('Destacado', 'good') : r.cuota_tipo === 'publicada' ? badge('Cuota registrada', 'good') : badge('Cuota del modelo', 'muted')}</td></tr>`);
   const market = rows.length
     ? `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${['Todos', ...groups].map(g => `<button type="button" class="chip ${fam === g ? 'selected' : ''}" data-win-fam="${esc(g)}" aria-pressed="${fam === g}">${esc(g)}</button>`).join('')}</div></div><div class="win-table" tabindex="0" role="region" aria-label="Mercados del partido"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Acceso</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${locked ? `<div class="win-vipbar"><p><strong>${locked} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>` : ''}</section>`
     : '<p class="win-sub">No hay mercados disponibles para este encuentro.</p>';

@@ -1,5 +1,11 @@
 # Registro de decisiones — QuantFut
 
+## 28-oct-2026 · La web tiene su propia regla de destacado y de mercados gratis
+
+El titular aclaró que la web es independiente de la regla de la app: necesita siempre un pronóstico destacado visible y gratis, y al menos 3 mercados abiertos sin VIP. Decisión: el destacado es, de TODOS los mercados del partido (también los que sin VIP salen con candado), el de mayor probabilidad con cuota entre 1,40 y 1,80, y se enseña abierto. La cuota es la del modelo (1 ÷ probabilidad; la publicada si el mercado coincide con un pick sellado abierto), rotulada «Cuota del modelo» para no confundirla con una cuota de casa. Gratis = el destacado + los siguientes más probables del rango hasta 3; si el rango no da para 3, se completa con los más probables. El resto sigue con candado (solo categoría) y los marcadores no se regalan.
+
+Implementación: `partido_mercados.aplicar_acceso_web`, activada solo con `GET /mobile/v1/matches/{id}?web=1`; sin ese parámetro (la app) todo queda igual, con prueba. La elección vive en el servidor porque los mercados bloqueados nunca llegan al navegador. Quien tiene VIP ve todo abierto y el mismo destacado. Un destacado derivado del análisis no es un pronóstico sellado: la tarjeta lo dice y solo enseña el registro de cadena si coincide con un pick sellado. Sustituye el criterio anterior de la web (1,30–1,80 sobre picks sellados).
+
 ## 28-oct-2026 · Partidos y Mercados pasan a una sola ventana: pronóstico y estadísticas del mismo partido
 
 El titular pidió ver el pronóstico y las estadísticas de un partido en una sola ventana, con lectura fácil y CYBERCORE CSS 0.3.0 como base. `Partidos` y `Mercados` (que repetían la lista de partidos) se fusionan en la ruta `partidos`; `mercados` y `partido` quedan como alias, así que los enlaces viejos siguen funcionando. Cabecera de una fila, franja de fecha/liga, lista de partidos con escudos, y dos zonas con desplazamiento propio: pronóstico (destacado, mercados) y estadísticas en pestañas (resumen, forma, cara a cara, estadísticas, tabla, alineaciones). En móvil una zona a la vez con selector Pronóstico | Estadísticas.

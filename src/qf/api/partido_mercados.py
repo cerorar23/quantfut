@@ -256,6 +256,45 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
     return abiertas_f + cerradas, (marcadores if plus or abiertas else None)
 
 
+# --- acceso de la WEB (independiente del de la app) -----------------------------------------
+
+RANGO_DESTACADO = (1.40, 1.80)   # cuota del modelo: 1/prob (o la publicada si el pick abierto la trae)
+GRATIS_WEB = 3                   # mercados abiertos para quien no tiene VIP
+
+
+def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
+                       plus: bool) -> tuple[list[dict], list[dict] | None, dict | None]:
+    """
+    Regla de la web (decisión del titular, 2026-10-28), distinta de la de la app:
+    - Destacado: de TODOS los mercados del partido, también los que sin VIP salen con candado,
+      el de mayor probabilidad con cuota entre 1,40 y 1,80. Se enseña abierto y gratis.
+    - Gratis: el destacado y los siguientes de mayor probabilidad dentro de ese rango hasta
+      sumar `GRATIS_WEB`; si el rango no da para tanto, se completa con los más probables.
+    - El resto sigue con candado (solo categoría) y los picks sellados ya abiertos se conservan.
+    Con VIP todo va abierto. Los marcadores no se regalan por esto: solo con VIP o con un pick abierto.
+    """
+    efectivas = {f['id']: _con_pick(dict(f), abiertas.get(f['id'])) for f in filas}
+    en_rango = sorted((f for f in efectivas.values()
+                       if f.get('cuota') and RANGO_DESTACADO[0] <= f['cuota'] <= RANGO_DESTACADO[1]),
+                      key=lambda f: -f['prob'])
+    elegidas = [f['id'] for f in en_rango[:GRATIS_WEB]]
+    if len(elegidas) < GRATIS_WEB:
+        resto = sorted((f for f in efectivas.values() if f['id'] not in elegidas), key=lambda f: -f['prob'])
+        elegidas += [f['id'] for f in resto[:GRATIS_WEB - len(elegidas)]]
+    gratis = {key: abiertas.get(key) or {} for key in elegidas}
+    filas_out, marcadores_out = aplicar_acceso(filas, marcadores, {**abiertas, **{k: v for k, v in gratis.items() if k not in abiertas}}, plus)
+    destacado = None
+    if en_rango:
+        destacado = dict(efectivas[en_rango[0]['id']], destacado=True, locked=False)
+        pick = abiertas.get(destacado['id'])
+        if pick and pick.get('pick_key'):
+            destacado['pick_key'] = pick['pick_key']
+        for fila in filas_out:
+            if fila['id'] == destacado['id']:
+                fila['destacado'] = True
+    return filas_out, (marcadores if plus or abiertas else None), destacado
+
+
 # --- fuentes de lambdas ---------------------------------------------------------------------
 
 def lambdas_goles(match_id: str) -> tuple[float, float, float] | None:
@@ -312,8 +351,10 @@ def lambdas_estadisticas(match_id: str) -> tuple[tuple[float, float] | None, tup
 
 
 def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dict],
-              plus: bool) -> dict | None:
-    """Lista completa del partido con el acceso ya aplicado; None si no hay modelo de goles."""
+              plus: bool, web: bool = False) -> dict | None:
+    """Lista completa del partido con el acceso ya aplicado; None si no hay modelo de goles.
+
+    `web=True` aplica la regla de la web (`aplicar_acceso_web`); la app sigue con `aplicar_acceso`."""
     lam = lambdas_goles(match_id)
     if lam is None:
         return None
@@ -321,6 +362,11 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     filas += filas_primer_tiempo(lam[0], lam[1])
     corners, tarjetas = lambdas_estadisticas(match_id)
     filas += filas_estadisticas(corners, tarjetas)
+    if web:
+        filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus)
+        return {'filas': filas, 'marcadores': marcadores, 'destacado': destacado,
+                'rango': list(RANGO_DESTACADO), 'abiertas': sum(not f['locked'] for f in filas),
+                'total': len(filas)}
     filas, marcadores = aplicar_acceso(filas, marcadores, abiertas, plus)
     return {'filas': filas, 'marcadores': marcadores,
             'abiertas': sum(not f['locked'] for f in filas), 'total': len(filas)}
