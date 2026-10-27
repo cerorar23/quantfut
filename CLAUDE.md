@@ -121,6 +121,8 @@ Consecuencias que hay que respetar:
 
 ## Reglas estrictas
 
+- **Web, decisión del titular (27-oct-2026):** el trabajo de ergonomía es solo acomodo. Mantener obligatoriamente el CSS anterior (`styles.css`, `future.css`, `membership.css` y CYBERCORE CSS 0.3.0), incluidos colores, tarjetas y botones. No añadir una hoja que lo sustituya o sobrescriba. Reutilizar los componentes anteriores para fútbol, NBA y tenis; `frontend/original-css.test.mjs` comprueba sus huellas.
+
 - **Traducciones de la app (decisión del usuario, 2026-10-12):** cualquier texto visible que se añada o cambie en `apps/mobile` (o mensaje del servidor que la app muestre) se traduce a los 6 idiomas (es, en, pt, fr, it, de) en el MISMO cambio. Sin cadenas fijas en los widgets: `context.l10n` + `python apps/mobile/tool/l10n_add.py`; mensajes de API en `src/qf/api/mensajes.py`. Ver `apps/mobile/docs/TRADUCCIONES.md`; las pruebas `test/l10n_test.dart` y `tests/test_mensajes.py` lo exigen.
 - No inventes que existe un archivo o módulo sin verificarlo (`ls`, `grep`).
   Este repo mezcla partes completas (Fase 0-1) con partes que no existen

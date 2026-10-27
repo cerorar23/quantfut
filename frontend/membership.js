@@ -9,9 +9,9 @@ import { mount as mountCheckout, destroy as destroyCheckout } from './whop-check
 
 // Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
 const PLAN_COPY = Object.freeze({
-  plus_1m: Object.freeze({ name: 'Mensual', tag: 'Para empezar' }),
-  plus_3m: Object.freeze({ name: 'Trimestral', tag: 'Plan destacado' }),
-  plus_6m: Object.freeze({ name: 'Semestral', tag: 'Más tiempo de acceso' }),
+  plus_1m: Object.freeze({ name: 'Básico', tag: 'Empieza por un mes' }),
+  plus_3m: Object.freeze({ name: 'Estándar', tag: 'Plan destacado' }),
+  plus_6m: Object.freeze({ name: 'Premium', tag: 'Mayor ahorro mensual' }),
   club: Object.freeze({ name: 'Club QuantFut', tag: 'Acceso de por vida' }),
 });
 export const DEFAULT_PLAN = 'plus_3m';
@@ -85,9 +85,8 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
   }
 
   function plansPreview() {
-    const items=plans().filter(p=>p.duration_days!=null);
-    const q=selected();
-    return `<section class="hub-section hub-plans" id="planes" aria-labelledby="hub-plans-title"><div class="hub-section-head"><div><p class="eyebrow">ELIGE CÓMO QUIERES SEGUIR</p><h2 id="hub-plans-title">Tu acceso <em>Plus.</em></h2></div><button type="button" class="text-link" data-route="paquetes">Ver qué incluye ↗</button></div><p class="hub-section-intro">Amplía tu acceso a los pronósticos reservados de fútbol. Los análisis públicos de NBA y tenis se pueden consultar sin contratar.</p>${items.length?`<div class="membership-plan-grid hub-plan-grid">${items.map(planButton).join('')}</div><div class="hub-plan-action"><p>${q?`${money(q)} ${esc(q.currency)} por ${q.period.toLowerCase()}. `:''}Consulta el alcance y la renovación antes de confirmar.</p><button type="button" class="primary-button" data-membership-action="review-order">${state.session?'Continuar con este plan':'Elegir plan y continuar'} <span aria-hidden="true">↗</span></button></div>`:plansStatus()}${demoNote()}<p class="hub-caption">La suscripción amplía el acceso al contenido disponible; no garantiza resultados ni un número fijo de pronósticos.</p></section>`;
+    const items=plans().filter(p=>p.duration_days!=null),q=selected();
+    return `<section class="live-panel" id="planes"><div class="live-head"><div><p class="eyebrow">SUSCRIPCIONES / QUANTFUT PLUS</p><h2>Elige tu plan</h2></div><button type="button" class="text-link" data-route="paquetes">Ver qué incluye ↗</button></div><p class="body-copy">Amplía tu acceso a los pronósticos reservados de fútbol. Los análisis públicos de NBA y tenis se pueden consultar sin contratar.</p>${items.length?`<div class="membership-plan-grid">${items.map(planButton).join('')}</div><div class="hero-actions"><button type="button" class="primary-button" data-membership-action="review-order">${state.session?'Revisar pedido':'Elegir plan y continuar'} ↗</button><button type="button" class="text-link" data-route="planes">Ver planes y condiciones ↗</button></div><p class="membership-note">${q?`${money(q)} ${esc(q.currency)} por ${q.period.toLowerCase()}. `:''}Consulta el alcance y la renovación antes de confirmar.</p>`:plansStatus()}${demoNote()}<p class="membership-note">La suscripción amplía el acceso al contenido disponible; no garantiza resultados ni un número fijo de pronósticos.</p></section>`;
   }
 
   function packagesView() {

@@ -4,9 +4,17 @@
 
 El titular pidió los pronósticos de jugadores de tenis. PropLine cotiza aces, dobles faltas, puntos de quiebre y juegos ganados por jugador (125-225 partidos por hora). Solo los juegos ganados salen de lo que el motor ya calcula (la misma distribución conjunta de juegos que da el total y el hándicap); los otros tres exigirían otro modelo y quedan fuera. El contrato vive en un paquete nuevo porque añadirlo al catálogo cambiaría los hashes del estudio multi-mercado congelado. En el mismo cambio, un partido sellado sin precio por un nombre intermedio en PropLine: se acepta solo el mismo nombre y apellido con nombres intermedios de más, nunca un parecido, porque un falso emparejamiento sellaría el precio de otro partido.
 
+## 27-oct-2026 · Ergonomía significa acomodo, sin cambiar el CSS
+
+El titular corrigió el alcance: mantener obligatoriamente el diseño anterior, sin cambiar colores, tarjetas ni botones. Se retira la hoja `ergonomia.css`; fútbol, NBA y tenis reutilizan `live-pick`, paneles, cabecera, controles y planes anteriores. El menú de escritorio deja de abrir un cajón diseñado solo para móvil; las herramientas adicionales quedan agrupadas con componentes ya existentes. Se añaden huellas fijas de los cuatro CSS anteriores para impedir que otro cambio visual vuelva a sustituirlos. La integración de datos reales se conserva.
+
+Corrección publicada a las 15:33:52 UTC en `quantfut-api-original:5ba3375`, igual a `main` `1866c9b` (PR #175). CI verde, ensayo aislado y 179 archivos finales verificados. El dominio carga únicamente las cuatro hojas originales, con hashes idénticos a `18f5604`, y sirve el HTML con revalidación para evitar una versión visual anterior en caché. Sin cambios en motores ni cron.
+
 ## 27-oct-2026 · La navegación reúne fútbol, NBA y tenis
 
 El titular pidió ordenar ergonómicamente la web e incluir los tres deportes. La nueva portada prioriza encontrar un análisis real y mantiene resultados y planes próximos, con cuatro accesos principales y herramientas agrupadas. Los números del texto adjunto se sustituyen por las cifras del servidor: no se inventan rentabilidad, popularidad ni escasez. NBA conserva su distinción estadística y las revisiones posteriores al inicio no cuentan como pronósticos previos. Para tenis, la API recibe solo una proyección pública de campos permitidos; no se montan los originales privados. Ver `docs/web_ergonomia_multideporte_20261027.md`.
+
+Publicado a las 15:16:36 UTC sobre `main` `de06ab6` (PR #172), con CI verde, ensayo aislado y 180 hashes finales coincidentes. Se conservaron todos los montajes de la API, el worker y el panel NBA. Solo se añade al host un exportador de JSON público de tenis, cada cinco minutos, sin llamadas a proveedores ni cambios en sus pronósticos originales. Verificados en el dominio cuatro pronósticos abiertos y cinco reservados de fútbol, 155 eventos de tenis sin problemas de integridad y las 18 cohortes NBA.
 
 ## 27-oct-2026 · La web consume el motor real
 

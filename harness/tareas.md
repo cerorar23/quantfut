@@ -6,13 +6,21 @@
 - [x] Nombres de PropLine con nombre intermedio («Leylah Annie Fernandez»): Fernandez–Sakatsume se selló sin precio el 27-oct. Emparejamiento determinista, sin parecido.
 - [x] Aces, dobles faltas y puntos de quiebre: PropLine los cotiza, el motor no los modela; fuera de la primera versión.
 
+## 27-oct-2026 · Corrección: solo acomodo, CSS anterior obligatorio
+
+El titular rechaza expresamente los cambios de colores, tarjetas y botones. Restaurar los componentes visuales anteriores, retirar `ergonomia.css` y conservar el CSS original sin modificaciones. Mantener las fuentes reales de fútbol, NBA y tenis y el acomodo de pronósticos, resultados y planes. El menú adicional de escritorio no debe reutilizar el cajón móvil fuera de su breakpoint.
+
+- [x] Retirar la hoja añadida y volver a las tarjetas, botones, cabecera y planes anteriores, con comprobación de las cuatro huellas CSS originales.
+- [x] Verificar la navegación con el CSS original: 54 pruebas frontend, siete del lector público; menú móvil de 390 px correcto, cuatro hojas originales sin cambios y sin el menú de escritorio roto.
+- [x] Publicar la corrección con respaldo y registro: PR #175, `main` `1866c9b`, API `quantfut-api-original:5ba3375`, 15:33:52 UTC. Cuatro CSS originales comprobados por hash, sin la hoja rechazada; los tres deportes y los motores se conservan. Ver `DEPLOYS.md`.
+
 ## 27-oct-2026 · Rediseño ergonómico multideporte
 
 Orden del titular: reorganizar la web y añadir fútbol, NBA y tenis a una misma experiencia con CYBERCORE CSS 0.3.0. Aplicar el orden portada → pronósticos → resultados → planes; cuatro accesos principales y herramientas agrupadas, tarjetas legibles y adaptación móvil. Datos, precios, bloqueos y resultados reales; conservar pérdidas y distinguir probabilidades estadísticas de selecciones comercializadas. Integrar el contrato público NBA y una proyección limitada de los archivos sellados de tenis, sin modificar motores, cron ni puertas de publicación. Verificar navegación, fuentes, vacío/fallo, teclado y tamaños móviles; commit, PR, CI y publicación con respaldo y registro.
 
 - [x] Implementar la portada, la navegación y la vista unificada de los tres deportes.
 - [x] Verificar las fuentes reales, la accesibilidad y el diseño en escritorio y móvil (390 px, búsqueda, fechas y acceso a jornada NBA publicada).
-- [ ] Integrar y publicar con respaldo, comprobación de producción y registro de reversión.
+- [x] Integrar y publicar con respaldo, comprobación de producción y registro de reversión: PR #172, `main` `de06ab6`, API `quantfut-api-hub:67ecddf`, 15:16:36 UTC. Los tres deportes responden en el dominio; montajes y contenedores de los motores sin cambios. Exportación de tenis solo de campos públicos, sin montar originales en la API. Ver `DEPLOYS.md`.
 
 ## 27-oct-2026 · Web con pronósticos reales, diseño conservado
 
