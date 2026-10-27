@@ -56,7 +56,7 @@ def test_public_endpoint_does_not_expose_arbitrary_paths(monkeypatch,tmp_path):
     response=client.get('/web/deportes/tenis?path=/etc/passwd')
     assert response.status_code==200 and response.json()['state']=='unavailable'
     assert response.headers['cache-control']=='no-store'
-    for path in ['/sports-data.js','/ergonomic-views.js','/ergonomia.css']:
+    for path in ['/sports-data.js','/ergonomic-views.js']:
         assert client.get(path).status_code==200
 
 def test_api_reads_only_public_feed_and_discards_unknown_fields(tmp_path):

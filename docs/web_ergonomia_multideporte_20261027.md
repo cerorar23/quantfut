@@ -1,5 +1,9 @@
 # Web ergonómica: fútbol, NBA y tenis — 27-oct-2026
 
+## Corrección de alcance del titular: CSS anterior obligatorio
+
+El titular rechazó expresamente los cambios de colores, tarjetas y botones: solo autorizó el acomodo. La corrección retira `ergonomia.css` y restaura la cabecera, tarjetas `live-pick`, paneles, botones, tablas y planes con los componentes anteriores. `styles.css`, `future.css`, `membership.css` y CYBERCORE CSS 0.3.0 conservan exactamente sus huellas anteriores (`18f5604`). Las fuentes de los tres deportes permanecen integradas. En escritorio se agrupan las herramientas con controles existentes; el cajón móvil solo se abre en su tamaño correspondiente. Probados 54 casos frontend y el menú real a 390 px; las huellas CSS y las cuatro hojas cargadas se comprueban también en CI. No se añade CSS ni estilos inline.
+
 El titular pidió reorganizar la web siguiendo sus ideas de lectura y venta, e incluir los tres deportes de forma ergonómica. Se aplica la jerarquía portada → pronósticos → resultados → planes con una sola navegación y filtros por deporte, fecha y estado. CYBERCORE CSS 0.3.0 sigue siendo la biblioteca instalada y servida; `ergonomia.css` mejora jerarquía, legibilidad, contraste y adaptación móvil. Se mantienen las cuentas y el checkout real.
 
 ## Contenido y acceso

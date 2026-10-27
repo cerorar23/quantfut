@@ -1,5 +1,13 @@
 # Backlog — QuantFut
 
+## 27-oct-2026 · Corrección: solo acomodo, CSS anterior obligatorio
+
+El titular rechaza expresamente los cambios de colores, tarjetas y botones. Restaurar los componentes visuales anteriores, retirar `ergonomia.css` y conservar el CSS original sin modificaciones. Mantener las fuentes reales de fútbol, NBA y tenis y el acomodo de pronósticos, resultados y planes. El menú adicional de escritorio no debe reutilizar el cajón móvil fuera de su breakpoint.
+
+- [x] Retirar la hoja añadida y volver a las tarjetas, botones, cabecera y planes anteriores, con comprobación de las cuatro huellas CSS originales.
+- [x] Verificar la navegación con el CSS original: 54 pruebas frontend, siete del lector público; menú móvil de 390 px correcto, cuatro hojas originales sin cambios y sin el menú de escritorio roto.
+- [ ] Publicar la corrección con respaldo y registro.
+
 ## 27-oct-2026 · Rediseño ergonómico multideporte
 
 Orden del titular: reorganizar la web y añadir fútbol, NBA y tenis a una misma experiencia con CYBERCORE CSS 0.3.0. Aplicar el orden portada → pronósticos → resultados → planes; cuatro accesos principales y herramientas agrupadas, tarjetas legibles y adaptación móvil. Datos, precios, bloqueos y resultados reales; conservar pérdidas y distinguir probabilidades estadísticas de selecciones comercializadas. Integrar el contrato público NBA y una proyección limitada de los archivos sellados de tenis, sin modificar motores, cron ni puertas de publicación. Verificar navegación, fuentes, vacío/fallo, teclado y tamaños móviles; commit, PR, CI y publicación con respaldo y registro.
