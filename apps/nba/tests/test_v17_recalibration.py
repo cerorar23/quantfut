@@ -172,21 +172,36 @@ def test_a_publication_recalculated_after_tipoff_is_versioned_and_never_scored(a
     refit = json.loads((model_dir / 'model.json').read_bytes())
     refit['fit']['covariance'][0][0] *= 2  # a refit with different residual spread
     write_json(model_dir / 'model.json', refit)
-    now = datetime(2026, 10, 22, 3, tzinfo=UTC)
-    result = revisions.recalculate(folder, model_dir, rotation_rows(), history_games(), V12, tmp_path / 'cache', None,
-                                   now=now, get=get)
+    now = datetime(2026, 10, 23, 3, tzinfo=UTC)
+    # The game's own result and a later game exist by now; neither may inform its recalculation.
+    later = [dict(game_id=gid, date=day, season=live.SEASON, home=dict(team_id=HOME, points=150), away=dict(team_id=AWAY, points=80))
+             for gid, day in ((GID, DAY), ('0022600200', '2026-10-22'))]
+    later_rows = [dict(r, game_id=g['game_id'], date=g['date'], points=(150 if r['team_id'] == HOME else 80) // 5 + 0,
+                       minutes=48.) for g in later for r in rotation_rows()[:10]]
+    result = revisions.recalculate(folder, model_dir, rotation_rows() + later_rows, history_games() + later, V12,
+                                   tmp_path / 'cache', None, now=now, get=get)
     assert result['forecasts'] == len(original['forecasts']) - result['withdrawn'] + result['added'] == 4
     assert json.loads((folder / 'bundle.json').read_bytes()) == original  # the sealed original is never rewritten
     revision = revisions.latest(folder, original, now)
     assert revision['recalculated_at_utc'] == now.isoformat() and revision['model_training_cutoff'] == DAY
     assert all(f['performance_eligible'] is False and f['calculation_kind'] == 'recalculated_after_tipoff'
                and f['original_sealed_at_utc'] == original['created_at_utc'] for f in revision['forecasts'])
+    assert all(f['last_feature_date'] < DAY and f['information_before'] == DAY for f in revision['forecasts'])
+    assert {revisions.key(f) for f in revision['forecasts']} == {revisions.key(f) for f in original['forecasts']}
     shown = LiveCohort(folder).data(now)
     assert shown['recalculated_at_utc'] == now.isoformat() and shown['active_strength'] is True
     assert all(r['performance_eligible'] is False for r in shown['predictions'])
+    assert shown['scorecard'] == LiveCohort(folder).data(now)['scorecard']
     with pytest.raises(ValueError, match='information time'):
         revisions.latest(folder, original, datetime(2026, 10, 22, 2, tzinfo=UTC))
     path = next(folder.glob('updates/*/revision.json'))
+    from nba.audit import digest
+    sneaked = json.loads(path.read_bytes())
+    sneaked['forecasts'].append(dict(sneaked['forecasts'][-1], player_id='other'))
+    write_json(path, sneaked)
+    write_json(path.parent / 'revision.seal.json', dict(sha256=digest(path), recalculated_at_utc=now.isoformat()))
+    with pytest.raises(ValueError, match='added after tipoff'):
+        revisions.latest(folder, original, now)
     changed = json.loads(path.read_bytes())
     changed['forecasts'][0]['performance_eligible'] = True
     write_json(path, changed)

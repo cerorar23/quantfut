@@ -65,7 +65,7 @@ def verify(folder, root, original, now=None):
     games = {str(g['event_id']): g for g in original['games']}
     teams = {g[s + '_nba_team_id'] for g in games.values() for s in ('home', 'away')}
     memberships = cr.verify(root / 'rosters', revision['roster_sha256'], as_of, revision['season'], teams)
-    seen = set()
+    seen, published = set(), {key(f) for f in original['forecasts']}
     for forecast in revision['forecasts']:
         identity = key(forecast)
         if identity in seen or forecast['market'] not in live.LABELS or str(forecast['event_id']) not in games:
@@ -75,8 +75,11 @@ def verify(folder, root, original, now=None):
         eligible = as_of < cr.utc(game['tipoff_utc'])
         if forecast['performance_eligible'] is not eligible:
             raise ValueError('post-tipoff recalculation cannot claim prospective eligibility')
-        if forecast['last_feature_date'] >= revision['information_day']:
+        game_day = cr.utc(game['tipoff_utc']).astimezone(live.EASTERN).date().isoformat()
+        if forecast['last_feature_date'] >= min(revision['information_day'], game_day):
             raise ValueError('revision uses same-day or future statistical outcomes')
+        if not eligible and identity not in published:
+            raise ValueError('a forecast cannot be added after tipoff')
         if forecast['market'] in live.PLAYER_MARKETS and memberships.get(str(forecast['player_id'])) != forecast['team_id']:
             raise ValueError('revised player disagrees with current official membership')
         if not all(math.isfinite(forecast[k]) for k in ('estimate', 'line', 'range_low', 'range_high', 'probability_over', 'probability_under')):
@@ -114,7 +117,9 @@ def recalculate(folder, model_dir, players, games, v12_protocol, cache, props_ro
     information_day = now.astimezone(live.EASTERN).date().isoformat()
     schedule = json.loads((folder / 'schedule.json').read_bytes())['games']
     mappings = [m for m in schedule if m['nba_game_id'] in {g['nba_game_id'] for g in bundle['games']}]
-    context = [dict(m, et_date=max(m['et_date'], information_day)) for m in mappings]
+    # Point in time per game: outcomes strictly before the game's own date, never its result or later games.
+    # A pending game is today's or a future date, so it still receives every completed game up to now.
+    context = [dict(m) for m in mappings]
     parents = folder / 'updates'
     parents.mkdir(exist_ok=True)
     tag = now.astimezone(UTC).strftime('%Y%m%dT%H%M%S%fZ')
@@ -183,6 +188,9 @@ def recalculate(folder, model_dir, players, games, v12_protocol, cache, props_ro
         forecast['sealed_at_utc'] = live.stamp(as_of)
         forecast['performance_eligible'] = as_of < cr.utc(mapping_by_id[forecast['nba_game_id']]['tipoff_utc'])
         forecast['calculation_kind'] = 'updated_before_tipoff' if forecast['performance_eligible'] else 'recalculated_after_tipoff'
+        forecast['information_before'] = mapping_by_id[forecast['nba_game_id']]['et_date']
+    # A game that already started keeps exactly what was published: its forecasts are revised, never added afterwards.
+    forecasts = [f for f in forecasts if f['performance_eligible'] or key(f) in originals]
     cr.membership(roster, as_of, live.SEASON, teams)
     previous = latest(folder, bundle, as_of)
     if signature(forecasts) == signature(previous['forecasts'] if previous else bundle['forecasts']):
