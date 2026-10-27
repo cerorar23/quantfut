@@ -3376,5 +3376,5 @@ Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScor
 ## 27-oct-2026 · NBA: estadísticas de equipos en la ventana de la web
 
 - [x] Pestañas Comparativa, Forma, Cara a cara y Clasificación en la ventana de NBA (`frontend/sports-window.js`, CYBERCORE), con filtro Todos / En casa / Fuera; constructor `apps/nba/src/nba/web_stats.py`, lector `src/qf/api/nba_estadisticas.py` y ruta `/web/deportes/nba/estadisticas/{id}`. Detalle y plan de despliegue: `docs/nba_estadisticas_web_20261027.md`.
-- [ ] Desplegar (rama `web/nba-estadisticas`, sin PR ni despliegue): PR a `main`, imagen de la API y exportador del host que escriba `nba_stats.json` (cron sugerido cada 30 min). Sin el exportador la web dice que aún no hay estadísticas.
+- [x] Desplegado el 27-oct 21:23 UTC (PR #185): imagen de la API, exportador del host y cron cada 30 min; ver DEPLOYS.md.
 - [ ] Decidir si se añaden alineaciones, estadio y cuotas por cuarto: ninguna fuente validada las trae hoy; hace falta elegir proveedor.
