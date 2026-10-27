@@ -7,6 +7,9 @@
 - [x] Implementar y medir un candidato de fuerza individual y rotación, sin transportar el Elo del antiguo equipo. Selección 2024-25 y evaluación 2025-26: mejora pequeña, no concluyente; no supera la regla de aceptación.
 - [x] Separar el candidato experimental de las probabilidades publicadas y preparar su registro prospectivo con plantillas verificadas.
 - [x] Reajuste exacto, comparación dentro del servidor, ensayo y despliegue de pertenencia 1.6.0 completados a las 23:32 UTC; respaldo y reversión en DEPLOYS.md. La instrucción posterior del titular activa el ajuste de fuerza y los recálculos versionados en la siguiente versión.
+- [x] 1.7.0: fuerza individual activa en el vivo, entrenamiento con la temporada actual (43 partidos, 524 jugadores) y base consolidada sin columnas faltantes; 95 cajas recuperadas o reparadas, nombres con sufijo separado.
+- [x] Revisiones versionadas de todo lo publicado: punto en el tiempo por partido, sin añadir tras el salto, marcador con la última versión previa, revisiones idénticas descartadas. Detalle: `docs/nba_recalibracion_17_20261026.md`.
+- [x] Corregido: los playoffs consolidados sustituían el historial de temporada regular al inicio de temporada (`regular_season_roles`).
 
 
 ## Pendientes vivos — limpieza del 25-oct-2026
