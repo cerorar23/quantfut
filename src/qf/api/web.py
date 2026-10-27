@@ -5,7 +5,7 @@ servidor de desarrollo de frontend/.
 """
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from fastapi import Response
 
@@ -19,6 +19,16 @@ def tennis_forecasts(response: Response):
     from .tenis_publico import public_data
     response.headers["Cache-Control"] = "no-store"
     return public_data()
+
+
+@router.get("/web/deportes/tenis/estadisticas/{event_id}")
+def tennis_event_stats(event_id: str, response: Response):
+    from .tenis_estadisticas import public_event
+    response.headers["Cache-Control"] = "no-store"
+    data = public_event(event_id) if event_id.isdigit() and len(event_id) <= 12 else None
+    if data is None:
+        raise HTTPException(404, "Sin estadísticas para este partido")
+    return data
 
 
 @router.get("/sports-data.js")

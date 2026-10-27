@@ -55,6 +55,22 @@ export async function loadSport(sport, fetcher=fetch) {
   finally {clearTimeout(timer);}
 }
 
+// Estadísticas de jugadores de un partido de tenis (las resume el servidor a partir de API-Tennis).
+const finiteNumber = v => v == null || (typeof v === 'number' && Number.isFinite(v));
+export async function loadTennisStats(eventId, fetcher = fetch) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`/web/deportes/tenis/estadisticas/${encodeURIComponent(eventId)}`, { signal: controller.signal, cache: 'no-store' });
+    if (!response.ok) throw new Error('Sin estadísticas');
+    const data = await response.json();
+    const valid = Array.isArray(data?.players) && data.players.length === 2
+      && data.players.every(p => p && typeof p === 'object' && p.surfaces && Array.isArray(p.ranking_history) && finiteNumber(p.rank))
+      && data.h2h && Array.isArray(data.h2h.matches);
+    if (!valid) throw new Error('Formato inesperado');
+    return { status: 'ready', data };
+  } catch { return { status: 'error', data: null }; } finally { clearTimeout(timer); }
+}
+
 export async function loadResults(fetcher=fetch) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {

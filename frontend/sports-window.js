@@ -72,7 +72,140 @@ export function createSportWindow(ctx) {
   }
 
   // ---- estadísticas (derecha)
-  const TABS = { tenis: [['resumen', 'Resumen'], ['juegos', 'Juegos y sets'], ['resultado', 'Resultado'], ['registro', 'Registro']],
+  // ---- tenis: estadísticas de los jugadores (API-Tennis, resumidas por el servidor)
+  const rate = r => (r && r.rate != null ? fmtPct(r.rate) : '—');
+  const rec = r => (r && (r.won || r.lost) ? `${r.won}-${r.lost}` : '—');
+  const ROUNDS = [[/Qualification/g, 'Clasificación'], [/Semi-?finals?/gi, 'Semifinales'], [/Quarter-?finals?/gi, 'Cuartos de final'], [/1\/8-finals/g, 'Octavos de final'],
+    [/1\/16-finals/g, 'Dieciseisavos'], [/1\/32-finals/g, 'Ronda de 64'], [/1\/64-finals/g, 'Ronda de 128'], [/\bRound\b/g, 'Ronda']];
+  const es = text => ROUNDS.reduce((out, [pattern, word]) => out.replace(pattern, word), String(text || ''));
+  const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const normal = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+
+  // El servidor entrega [primer jugador, segundo jugador]; se comprueba contra los nombres del evento.
+  function sides(event, data) {
+    const [a, b] = data.players;
+    const swapped = normal(a.name) === normal(event.away) && normal(b.name) === normal(event.home);
+    return swapped ? [b, a] : [a, b];
+  }
+
+  function tennisStats(event) {
+    const entry = ctx.ensureTennisStats(event.id);
+    if (entry.status === 'loading') return { note: '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS DE LOS JUGADORES</p><p class="win-sub">Consultando los datos de los jugadores…</p></div>' };
+    if (entry.status !== 'ready') return { note: '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS DE LOS JUGADORES</p><p class="win-sub">Todavía no hay estadísticas publicadas para este partido. Se actualizan varias veces al día para los partidos de ayer a pasado mañana.</p></div>' };
+    return { data: entry.data, players: sides(event, entry.data) };
+  }
+
+  function badges(player, surface) {
+    const out = [];
+    const f = player.form;
+    if (f && f.streak >= 3) out.push(['En racha: ' + f.streak + ' victorias', 'good']);
+    if (f && f.streak <= -3) out.push(['Racha negativa: ' + Math.abs(f.streak) + ' derrotas', 'warn']);
+    if (f && f.matches.length >= 6 && f.index >= 70) out.push(['En buena forma', 'good']);
+    if (f && f.matches.length >= 6 && f.index <= 30) out.push(['Bajo de forma', 'warn']);
+    const s = player.surfaces?.[surface];
+    const n = s ? s.career.won + s.career.lost : 0;
+    if (s && n >= 15 && s.career.rate >= 0.65) out.push(['Fuerte en esta superficie', 'good']);
+    if (s && n >= 15 && s.career.rate <= 0.45) out.push(['Débil en esta superficie', 'warn']);
+    const early = f?.stages?.inicial;
+    if (early && early.matches >= 3 && early.rate <= 0.4) out.push(['Sufre en primeras rondas', 'warn']);
+    return out;
+  }
+  const surfaceKey = event => ({ hard: 'hard', clay: 'clay', grass: 'grass' })[String(event.surface || '').toLowerCase()] || null;
+  const SURFACE_NAME = { hard: 'Pista dura', clay: 'Tierra batida', grass: 'Hierba' };
+
+  // Fila «valor · etiqueta · valor» con el mejor lado resaltado (`lower`: gana el número menor, como el ranking).
+  function versus(label, a, b, { lower = false, text = v => (v == null ? '—' : String(v)) } = {}) {
+    const better = a == null || b == null || a === b ? '' : (lower ? a < b : a > b) ? 'a' : 'b';
+    return `<div class="win-vsrow"><b class="${better === 'a' ? 'is-better' : ''}">${text(a)}</b><span>${esc(label)}</span><b class="${better === 'b' ? 'is-better' : ''}">${text(b)}</b></div>`;
+  }
+
+  function tennisSummary(event) {
+    const t = tennisStats(event);
+    if (!t.players) return duel(event) + t.note;
+    const [a, b] = t.players;
+    const surface = surfaceKey(event);
+    const badgeRow = p => `<div class="win-badges" aria-label="Etiquetas de ${esc(p.name || '')}">${badges(p, surface).map(([text, kind]) => badge(esc(text), kind)).join('') || '<span class="win-sub">Sin etiquetas destacadas.</span>'}</div>`;
+    const rank = p => (p.rank != null ? `#${p.rank}` : '—');
+    const hist = [...new Set([...a.ranking_history.map(h => h.season), ...b.ranking_history.map(h => h.season)])].sort((x, y) => y - x).slice(0, 5);
+    const rankIn = (p, season) => p.ranking_history.find(h => h.season === season)?.rank;
+    return `${duel(event)}
+      <div class="win-panel-box"><p class="eyebrow">COMPARATIVA</p><div class="win-vshead"><strong>${esc(event.home)}</strong><strong>${esc(event.away)}</strong></div>
+        ${versus('Ranking', a.rank, b.rank, { lower: true, text: v => (v == null ? '—' : `#${v}`) })}
+        ${versus('Puntos', a.points, b.points, { text: v => (v == null ? '—' : num(v, 0)) })}
+        ${versus('Edad', a.age, b.age, { text: v => (v == null ? '—' : `${v} años`) })}
+        ${versus('Récord de la temporada', a.season?.rate, b.season?.rate, { text: v => (v == null ? '—' : fmtPct(v)) })}
+        ${versus('Títulos esta temporada', a.season?.titles, b.season?.titles)}
+        ${versus('Récord de carrera', a.career.rate, b.career.rate, { text: v => (v == null ? '—' : fmtPct(v)) })}
+        ${versus('Índice de forma (0–100)', a.form?.index, b.form?.index)}
+        <p class="win-sub">${esc(a.country || '—')} · ${esc(b.country || '—')}</p></div>
+      <div class="win-panel-box"><p class="eyebrow">ETIQUETAS</p><p class="win-sub"><strong>${esc(event.home)}</strong></p>${badgeRow(a)}<p class="win-sub"><strong>${esc(event.away)}</strong></p>${badgeRow(b)}</div>
+      ${hist.length ? `<div class="win-panel-box"><p class="eyebrow">RANKING POR TEMPORADA</p><div class="win-vshead"><strong>${esc(event.home)}</strong><strong>${esc(event.away)}</strong></div>${hist.map(season => versus(String(season), rankIn(a, season), rankIn(b, season), { lower: true, text: v => (v == null ? '—' : `#${v}`) })).join('')}<p class="win-sub">Mejor posición de cada temporada en individuales. Actual: ${rank(a)} · ${rank(b)}.</p></div>` : ''}`;
+  }
+
+  function formBlock(event, player, side) {
+    const f = player.form;
+    const title = `<p class="eyebrow">${esc(side)}</p>`;
+    if (!f) return `<div class="win-panel-box">${title}<p class="win-sub">Sin partidos recientes registrados.</p></div>`;
+    const chips = f.matches.map(m => `<i class="win-res ${m.won ? 'is-win' : 'is-loss'}" title="${esc(m.date)} · ${esc(m.opponent)}">${m.won ? 'G' : 'P'}</i>`).join('');
+    const w = f.windows;
+    const stage = (name, label) => (f.stages[name].matches ? kv(label, `${rec(f.stages[name])} <small>${rate(f.stages[name])} · ${count(f.stages[name].matches, 'partido', 'partidos')}</small>`) : '');
+    const last = f.matches.slice(0, 5).map(m => `<li><span class="win-d">${esc(m.date.slice(5))}</span><span>${esc(m.opponent || '—')}<small>${esc(es(m.tournament))} · ${esc(es(m.round))}${m.qualification && !/Clasificaci/.test(es(m.tournament) + es(m.round)) ? ' · Clasificación' : ''}</small></span><span class="win-sc">${esc(m.score || '—')}</span><span class="win-res ${m.won ? 'is-win' : 'is-loss'}">${m.won ? 'G' : 'P'}</span></li>`).join('');
+    return `<div class="win-panel-box">${title}
+      ${bar('Índice de forma', f.index / 100, `Últimos ${f.matches.length} partidos, los recientes pesan más`)}
+      <div class="win-chipline" aria-label="Últimos partidos, del más reciente al más antiguo">${chips}</div>
+      ${kv('Racha actual', f.streak > 0 ? `${f.streak} ${f.streak === 1 ? 'victoria' : 'victorias'}` : `${Math.abs(f.streak)} ${f.streak === -1 ? 'derrota' : 'derrotas'}`)}
+      ${kv('Últimos 30 días', `${rec(w['30'])} <small>${rate(w['30'])} · ${count(w['30'].matches, 'partido', 'partidos')}</small>`)}
+      ${kv('Últimos 90 días', `${rec(w['90'])} <small>${rate(w['90'])} · ${count(w['90'].matches, 'partido', 'partidos')}</small>`)}
+      ${kv('Últimos 360 días', `${rec(w['360'])} <small>${rate(w['360'])} · ${count(w['360'].matches, 'partido', 'partidos')}</small>`)}
+      ${f.over_2_5_sets != null ? kv('Partidos de más de 2,5 sets', `${fmtPct(f.over_2_5_sets)} <small>de ${f.complete_matches}</small>`) : ''}
+      ${f.tiebreaks != null ? kv('Partidos con tie-break', `${fmtPct(f.tiebreaks)} <small>de ${f.complete_matches}</small>`) : ''}
+      ${stage('inicial', 'Primeras rondas')}${stage('avanzada', 'Cuartos, semifinal y final')}
+      ${f.qualification.matches ? kv('Clasificación', `${rec(f.qualification)} <small>${rate(f.qualification)} · ${count(f.qualification.matches, 'partido', 'partidos')}</small>`) : ''}
+      <ul class="win-list">${last}</ul></div>`;
+  }
+
+  function tennisForm(event) {
+    const t = tennisStats(event);
+    if (!t.players) return t.note;
+    return `${formBlock(event, t.players[0], event.home)}${formBlock(event, t.players[1], event.away)}<p class="win-sub">Resumen de los últimos 10 partidos de individuales que entrega la fuente (API-Tennis); las ventanas de 30, 90 y 360 días cuentan solo los que caen dentro. Partidos suspendidos no cuentan para sets ni tie-breaks.</p>`;
+  }
+
+  function tennisSurface(event) {
+    const t = tennisStats(event);
+    if (!t.players) return t.note;
+    const [a, b] = t.players;
+    const current = surfaceKey(event);
+    const rows = ['hard', 'clay', 'grass'].map(name => {
+      const row = (p, kind) => {
+        const r = p.surfaces[name][kind];
+        return r && r.rate != null ? bar(`${p === a ? event.home : event.away}`, r.rate, `${rec(r)} (${kind === 'career' ? 'carrera' : 'temporada'})`) : '';
+      };
+      return `<div class="win-panel-box"><p class="eyebrow">${SURFACE_NAME[name].toUpperCase()}${current === name ? ' · ESTE PARTIDO' : ''}</p>${row(a, 'career')}${row(b, 'career')}${row(a, 'season')}${row(b, 'season')}${!a.surfaces[name].career.rate && !b.surfaces[name].career.rate ? '<p class="win-sub">Sin partidos registrados en esta superficie.</p>' : ''}</div>`;
+    });
+    return `${rows.join('')}<p class="win-sub">Récord en individuales por superficie. La pista cubierta no viene separada en la fuente.</p>`;
+  }
+
+  function tennisH2H(event) {
+    const t = tennisStats(event);
+    if (!t.players) return t.note;
+    const swapped = t.players[0] !== t.data.players[0];
+    const h = t.data.h2h;
+    const winsHome = swapped ? h.second_wins : h.first_wins;
+    const winsAway = swapped ? h.first_wins : h.second_wins;
+    if (!h.matches.length) return '<div class="win-panel-box"><p class="eyebrow">CARA A CARA</p><p class="win-sub">Sin enfrentamientos previos registrados entre estos jugadores.</p></div>';
+    const list = h.matches.map(m => {
+      const homeWon = swapped ? !m.won : m.won;
+      const score = swapped ? String(m.score || '').split(' ').map(set => set.split('-').reverse().join('-')).join(' ') : m.score;
+      return `<li><span class="win-d">${esc(m.date.slice(0, 7))}</span><span>${esc(homeWon ? event.home : event.away)}<small>${esc(es(m.tournament))} · ${esc(es(m.round))}</small></span><span class="win-sc">${esc(score || '—')}</span><span></span></li>`;
+    }).join('');
+    return `<div class="win-panel-box"><p class="eyebrow">CARA A CARA</p><div class="win-duelscore"><strong>${winsHome}</strong><span>${esc(event.home)}</span><span>${esc(event.away)}</span><strong>${winsAway}</strong></div><ul class="win-list">${list}</ul><p class="win-sub">El marcador va desde el punto de vista del jugador que figura primero en la fuente.</p></div>`;
+  }
+
+  function tennisModel(event) {
+    return `${games(event)}${registry(event)}`;
+  }
+
+  const TABS = { tenis: [['resumen', 'Resumen'], ['forma', 'Forma'], ['superficie', 'Superficie'], ['h2h', 'Cara a cara'], ['modelo', 'Modelo'], ['resultado', 'Resultado']],
     nba: [['resumen', 'Resumen'], ['disponibilidad', 'Disponibilidad'], ['resultado', 'Resultado'], ['registro', 'Registro']] };
 
   function summary(event) {
@@ -118,7 +251,8 @@ export function createSportWindow(ctx) {
   function stats(event) {
     const tabs = TABS[event.sport];
     const tab = tabs.some(([id]) => id === state.winSportTab) ? state.winSportTab : 'resumen';
-    const body = { resumen: () => summary(event), juegos: () => games(event), disponibilidad: () => availability(event), resultado: () => result(event), registro: () => registry(event) }[tab]();
+    const tennis = { resumen: () => tennisSummary(event), forma: () => tennisForm(event), superficie: () => tennisSurface(event), h2h: () => tennisH2H(event), modelo: () => tennisModel(event), resultado: () => result(event) };
+    const body = (event.sport === 'tenis' ? tennis : { resumen: () => summary(event), disponibilidad: () => availability(event), resultado: () => result(event), registro: () => registry(event) })[tab]();
     return `<div class="win-tabs-wrap"><div class="cyber-tabs cyber-tabs--pills cyber-tabs--scrollable" role="tablist" aria-label="Secciones de estadísticas">${tabs.map(([id, label]) => `<button type="button" role="tab" id="win-stab-${id}" aria-controls="win-stats-panel" aria-selected="${tab === id}" class="cyber-tab ${tab === id ? 'cyber-tab--active' : ''}" data-win-sport-tab="${id}">${label}</button>`).join('')}</div></div><div id="win-stats-panel" role="tabpanel" aria-labelledby="win-stab-${tab}" class="win-panel">${body}</div>`;
   }
 

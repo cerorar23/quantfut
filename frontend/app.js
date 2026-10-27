@@ -2,8 +2,8 @@ import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate,
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=acomodo-20261027';
 import { createRealViews } from './real-views.js?v=acomodo-20261029';
-import { loadSport, loadResults, featuredModelMarket } from './sports-data.js?v=acomodo-20261030';
-import { createSportWindow } from './sports-window.js?v=ventana-20261030';
+import { loadSport, loadResults, loadTennisStats, featuredModelMarket } from './sports-data.js?v=acomodo-20261031';
+import { createSportWindow } from './sports-window.js?v=ventana-20261031';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
@@ -181,6 +181,14 @@ function ensureSport(sport) {
   const entry={status:'loading',events:[]},generation=realGeneration;
   sportsCache.set(sport,entry);
   loadSport(sport).then(result=>{if(generation!==realGeneration)return;sportsCache.set(sport,result);rerenderIfIdle();});
+  return entry;
+}
+const tennisStatsCache = new Map();
+function ensureTennisStats(id) {
+  if (tennisStatsCache.has(id)) return tennisStatsCache.get(id);
+  const entry = { status: 'loading', data: null }, generation = realGeneration;
+  tennisStatsCache.set(id, entry);
+  loadTennisStats(id).then(result => { if (generation !== realGeneration) return; tennisStatsCache.set(id, result); rerenderIfIdle(); });
   return entry;
 }
 function ensureResults() {
@@ -1154,7 +1162,7 @@ const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
   ensureSport, ensureResults, plansPreview:()=>membershipUI.plansPreview() });
 
-const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, featuredModelMarket });
+const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, featuredModelMarket });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1465,7 +1473,7 @@ function syncPublicAuth() {
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
-  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); resultsCache=null; }
+  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); resultsCache=null; }
   render();
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;
