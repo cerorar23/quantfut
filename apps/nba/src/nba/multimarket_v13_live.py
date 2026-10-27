@@ -476,7 +476,19 @@ def player_protocol(v12_protocol, options=None):
     options = options or {}
     return with_combo_rates(dict(v12_protocol, empirical_weight=PLAYER_WEIGHT,
         min_history=options.get('player_min_history', v12_protocol['min_history']),
-        role_projection=options.get('role_projection', False)))
+        role_projection=options.get('role_projection', False), regular_season_roles=options.get('regular_season_roles', False)))
+
+
+def postseason_game(game_id):
+    return str(game_id).startswith(('004', '005'))
+
+
+def phase_history(rows, game_id, protocol):
+    """With regular_season_roles, a regular-season game reads only regular-season games: playoff rotations, minutes and
+    roles differ, and at the start of a season they would otherwise fill the whole recent window."""
+    if not protocol.get('regular_season_roles') or postseason_game(game_id):
+        return rows
+    return [r for r in rows if not postseason_game(r['game_id'])]
 
 
 def player_training_rows(players, protocol, start, end, markets=None):
@@ -490,9 +502,11 @@ def player_training_rows(players, protocol, start, end, markets=None):
     for r in with_combinations(players):
         days[r['date']].append(r)
     history, out = defaultdict(lambda: deque(maxlen=protocol['history_window'])), defaultdict(list)
+    regular = defaultdict(lambda: deque(maxlen=protocol['history_window']))
     for cut in sorted(days):
         for r in days[cut] if start <= cut < end else ():
-            hist = m1.eligible(history[r['player_id']], cut, protocol)
+            phase = regular if protocol.get('regular_season_roles') and not postseason_game(r['game_id']) else history
+            hist = m1.eligible(phase[r['player_id']], cut, protocol)
             if not (r['participated'] and r['minutes'] > 0) or len(hist) < protocol['min_history']:
                 continue
             min10, usage = lf.player_recent(hist)
@@ -518,6 +532,8 @@ def player_training_rows(players, protocol, start, end, markets=None):
         for r in days[cut]:
             if r['participated'] and r['minutes'] > 0:
                 history[r['player_id']].append(r)
+                if not postseason_game(r['game_id']):
+                    regular[r['player_id']].append(r)
     return out
 
 
@@ -802,7 +818,7 @@ def player_forecasts(model, v12_protocol, mappings, lines, history, entries, tea
 
         def eligible_player(pid):
             """(history, team, status) of a player who may be forecast in this game, else the reason he is skipped."""
-            hist = m1.eligible(history.get(str(pid), []), m['et_date'], protocol)
+            hist = m1.eligible(phase_history(history.get(str(pid), []), gid, protocol), m['et_date'], protocol)
             if len(hist) < protocol['min_history']:
                 return 'insufficient_history'
             team = hist[-1]['team_id'] if memberships is None else memberships.get(str(pid))

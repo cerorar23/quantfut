@@ -294,3 +294,24 @@ def test_one_cohort_with_broken_evidence_never_stops_the_others(active_cohort, t
     out = revisions.refresh(folder.parent, model_dir, data, tmp_path / 'cache', None, now=datetime(2026, 10, 21, 20, tzinfo=UTC),
                             get=get, all_publications=True)
     assert [(r['cohort'], 'error' in r) for r in out] == [('cohort', True), ('cohort-b', False)]
+
+
+def test_a_regular_season_game_reads_regular_season_roles_only():
+    protocol = live.player_protocol(V12, dict(regular_season_roles=True))
+    rows = [dict(game_id='0022500900', date='2026-04-10'), dict(game_id='0042500101', date='2026-04-20'),
+            dict(game_id='0052500001', date='2026-04-15'), dict(game_id='0022600001', date='2026-10-21')]
+    assert [r['game_id'] for r in live.phase_history(rows, '0022600050', protocol)] == ['0022500900', '0022600001']
+    assert live.phase_history(rows, '0042600101', protocol) == rows
+    assert live.phase_history(rows, '0022600050', live.player_protocol(V12)) == rows
+
+
+def test_training_samples_of_regular_games_skip_playoff_history():
+    protocol = dict(live.player_protocol(V12, dict(regular_season_roles=True, player_min_history=1)), min_history=1)
+    rows = []
+    for gid, day, points in (('0022500001', '2026-04-01', 10), ('0042500101', '2026-04-20', 40), ('0022600001', '2026-10-21', 12)):
+        rows.append(dict(game_id=gid, date=day, player_id=5, team_id=HOME, participated=True, minutes=30., points=points,
+                         rebounds=3, assists=2))
+    with_roles = live.player_training_rows(rows, protocol, '2026-10-01', '2026-11-01', ['player_points'])['player_points']
+    without = live.player_training_rows(rows, dict(protocol, regular_season_roles=False), '2026-10-01', '2026-11-01',
+                                        ['player_points'])['player_points']
+    assert with_roles and without and with_roles[0]['raw_mean'] < without[0]['raw_mean']

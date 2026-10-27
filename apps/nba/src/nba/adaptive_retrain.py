@@ -104,7 +104,7 @@ def run(args, now=None, get=live.http_get):
     v12p = json.loads(v12_path.read_bytes())
     options = dict(features=[*lf.BASE, *lf.ENV, 'postseason'], markets=list(live.PLAYER_MARKETS),
                    team_shift_n0=None, official_rosters=True, train_current_season=True, training_cutoff=cut,
-                   player_min_history=1, role_projection=True, postseason_feature=True,
+                   player_min_history=1, role_projection=True, postseason_feature=True, regular_season_roles=True,
                    roster_strength=dict(ridge=25., weight=.25), online_strength_update=True, recalculate_published=True)
     write_json(out / 'options.json', options)
     sources = dict(live_module_sha256=live.module_digest(), availability_sha256=digest(av.__file__),
