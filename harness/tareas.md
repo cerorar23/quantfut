@@ -6,7 +6,7 @@ Orden del titular: reorganizar la web y añadir fútbol, NBA y tenis a una misma
 
 - [x] Implementar la portada, la navegación y la vista unificada de los tres deportes.
 - [x] Verificar las fuentes reales, la accesibilidad y el diseño en escritorio y móvil (390 px, búsqueda, fechas y acceso a jornada NBA publicada).
-- [ ] Integrar y publicar con respaldo, comprobación de producción y registro de reversión.
+- [x] Integrar y publicar con respaldo, comprobación de producción y registro de reversión: PR #172, `main` `de06ab6`, API `quantfut-api-hub:67ecddf`, 15:16:36 UTC. Los tres deportes responden en el dominio; montajes y contenedores de los motores sin cambios. Exportación de tenis solo de campos públicos, sin montar originales en la API. Ver `DEPLOYS.md`.
 
 ## 27-oct-2026 · Web con pronósticos reales, diseño conservado
 

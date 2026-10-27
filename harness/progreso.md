@@ -4,6 +4,8 @@
 
 El titular pidió ordenar ergonómicamente la web e incluir los tres deportes. La nueva portada prioriza encontrar un análisis real y mantiene resultados y planes próximos, con cuatro accesos principales y herramientas agrupadas. Los números del texto adjunto se sustituyen por las cifras del servidor: no se inventan rentabilidad, popularidad ni escasez. NBA conserva su distinción estadística y las revisiones posteriores al inicio no cuentan como pronósticos previos. Para tenis, la API recibe solo una proyección pública de campos permitidos; no se montan los originales privados. Ver `docs/web_ergonomia_multideporte_20261027.md`.
 
+Publicado a las 15:16:36 UTC sobre `main` `de06ab6` (PR #172), con CI verde, ensayo aislado y 180 hashes finales coincidentes. Se conservaron todos los montajes de la API, el worker y el panel NBA. Solo se añade al host un exportador de JSON público de tenis, cada cinco minutos, sin llamadas a proveedores ni cambios en sus pronósticos originales. Verificados en el dominio cuatro pronósticos abiertos y cinco reservados de fútbol, 155 eventos de tenis sin problemas de integridad y las 18 cohortes NBA.
+
 ## 27-oct-2026 · La web consume el motor real
 
 El titular pidió conservar el diseño anterior y retirar los pronósticos ficticios. El motor ya corre: la jornada del 27-oct está calculada y sellada. La corrección conecta la web al contrato real de la app, con el mismo recorte gratis/VIP, en lugar de modificar modelos o evitar la puerta de CLV. Los archivos CSS y CYBERCORE 0.3.0 permanecen intactos. Ver `docs/web_pronosticos_reales_20261027.md`.
