@@ -36,3 +36,31 @@ test('la portada conserva el bloqueo aunque el payload traiga datos privados',()
  const views=createHubViews({state:{dayOffset:0,sport:'todos',homeSearch:'',homeStatus:'todos'},esc:x=>String(x??''),ensureHome:()=>home,addDays:()=>date,localDay:d=>d.toISOString().slice(0,10),dayLabel:()=> 'Hoy',realDate:()=> '27 oct',realTime:()=> '14:00',fmtOdds:String,fmtPct:String,dayRail:()=>'',liveEvidence:()=>''});
  const html=views.home();assert.ok(html.includes('acceso Plus'));assert.ok(!html.includes('PRIVATE_SELECTION'));assert.ok(!html.includes('99%'));
 });
+
+import { featuredModelMarket } from './sports-data.js';
+import { createSportWindow } from './sports-window.js';
+
+test('el destacado de NBA y tenis usa la cuota del modelo (1 ÷ prob.) de 1,40 a 1,80 y la mayor probabilidad', () => {
+  const m = (id, probability) => ({ id, probability });
+  assert.equal(featuredModelMarket([m('a', .95), m('b', .70), m('c', .60), m('d', .30)]).id, 'b');
+  assert.equal(featuredModelMarket([m('lo', 1 / 1.4), m('hi', 1 / 1.8)]).id, 'lo');          // extremos incluidos
+  assert.equal(featuredModelMarket([m('x', .75), m('y', .5)]), null);                           // 1,33 y 2,00 quedan fuera
+  assert.equal(featuredModelMarket([{ id: 'z', probability: 'alta' }, null]), null);
+  assert.equal(featuredModelMarket(undefined), null);
+});
+
+test('la ventana de tenis y NBA renderiza pronóstico y estadísticas sin cuotas inventadas', () => {
+  const st = { sport: 'tenis', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false };
+  const start = new Date().toISOString();
+  const event = { id: 'e1', sport: 'tenis', home: 'Ana Perez', away: 'Bea <b>Luz</b>', start, league: 'WTA · Test', surface: 'Hard', status: 'scheduled', seal: 'abc123', sealed_at: start,
+    markets: [{ id: 'winner', label: 'Ganador del partido', selection: 'Ana Perez', probability: .65, price: null },
+      { id: 'games_total-2', label: 'Juegos totales', selection: 'Más de 20.5', probability: .52, price: null }] };
+  const pass = v => String(v);
+  const w = createSportWindow({ state: st, esc: pass, badge: (t) => `<i>${t}</i>`, fmtPct: p => `${(p * 100).toFixed(1)}%`, fmtOdds: o => o.toFixed(2),
+    realDate: pass, realTime: pass, dateFmt: pass, addDays: () => new Date(), localDay: d => new Date(d).toISOString().slice(0, 10),
+    dayLabel: () => 'Hoy', ensureSport: () => ({ status: 'ready', events: [event] }), featuredModelMarket });
+  const html = w.view();
+  assert.ok(html.includes('Cuota del modelo') && html.includes('1.54'));                        // 1 ÷ 0,65
+  assert.ok(html.includes('Resumen') && html.includes('Juegos y sets') && html.includes('Registro'));
+  assert.ok(!html.includes('Cuota publicada'));
+});

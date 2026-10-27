@@ -489,6 +489,76 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* ---- NBA y tenis: bloques de estadística */
+.win-panel-box {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.win-panel-box .eyebrow {
+  margin-bottom: 8px;
+}
+
+.win-bar {
+  display: grid;
+  grid-template-columns: minmax(96px, 1.2fr) minmax(0, 2fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13px;
+}
+
+.win-bar small,
+.win-cell-note {
+  display: block;
+  font: 10px var(--font-mono);
+  color: var(--faint);
+}
+
+.win-bar b {
+  font: 700 12px var(--font-mono);
+  color: var(--cyan);
+}
+
+.win-kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.win-kv:last-of-type {
+  border-bottom: 0;
+}
+
+.win-kv span {
+  color: var(--muted);
+}
+
+.win-kv strong {
+  text-align: right;
+  font: 700 13px var(--font-mono);
+  color: var(--text);
+}
+
+.win-kv small {
+  font: 11px var(--font-mono);
+  color: var(--muted);
+}
+
+.win-code {
+  display: block;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+  font: 11px var(--font-mono);
+  color: var(--muted);
+}
+
 /* ---- escritorio ancho: la ventana ocupa el alto visible y cada zona se desplaza sola */
 @media (min-width: 1000px) {
   .is-win .site-header {

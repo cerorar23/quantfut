@@ -26,6 +26,11 @@ def sports_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "sports-data.js", media_type="text/javascript")
 
 
+@router.get("/sports-window.js")
+def sports_window_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "sports-window.js", media_type="text/javascript")
+
+
 @router.get("/ergonomic-views.js")
 def ergonomic_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "ergonomic-views.js", media_type="text/javascript")
