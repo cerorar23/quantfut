@@ -14,6 +14,7 @@ from . import injury_pdf
 from . import live_features as lf
 from . import multimarket_v13 as v13
 from . import multimarket_v13_live as live
+from . import roster_strength as rs
 from . import training_data as td
 from .audit import digest, write_json
 
@@ -148,6 +149,11 @@ def recalculate(folder, model_dir, players, games, v12_protocol, cache, props_ro
         summaries.append(summary)
     rows = live.feature_rows(past_games, [], context, v12_protocol)
     v13.attach(rows, entries, model['play_probability'])
+    ratings = model['roster_strength']['ratings']
+    if ratings['before'] > before:
+        # The fitted ratings include games after this one: refit them from earlier games only.
+        model = dict(model, roster_strength=dict(model['roster_strength'],
+                                                 ratings=rs.fit_ratings(past_games, past_players, before, ratings['ridge'])))
     predictions, strength = live.strength_predictions(model, context, rows, past_games, past_players, memberships,
                                                        information_day=before)
     old_lines, originals = defaultdict(dict), {key(f): f for f in bundle['forecasts']}
@@ -248,8 +254,11 @@ def refresh(cohorts, model_dir, data, cache, props_root=None, now=None, get=live
     v12p = json.loads((root / 'multimarket_v12_protocol.json').read_bytes())
     output = []
     for folder in selected:
-        output.append(recalculate(folder, model_dir, players, games, v12p, cache, props_root, now=now,
-                                  get=get, clock=clock, refresh_report=not all_publications, first_day=first_day))
+        try:
+            output.append(recalculate(folder, model_dir, players, games, v12p, cache, props_root, now=now,
+                                      get=get, clock=clock, refresh_report=not all_publications, first_day=first_day))
+        except ValueError as error:  # one cohort's failed evidence never stops the others; the run reports it
+            output.append(dict(cohort=folder.name, error=str(error)))
     return output
 
 

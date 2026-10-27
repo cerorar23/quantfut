@@ -169,15 +169,18 @@ def test_a_publication_recalculated_after_tipoff_is_versioned_and_never_scored(a
     folder, model_dir, get = active_cohort
     original = json.loads((folder / 'bundle.json').read_bytes())
     assert original['roster_strength']['affects_published_forecasts'] is True
-    refit = json.loads((model_dir / 'model.json').read_bytes())
-    refit['fit']['covariance'][0][0] *= 2  # a refit with different residual spread
-    write_json(model_dir / 'model.json', refit)
+    from nba import roster_strength as rs
     now = datetime(2026, 10, 23, 3, tzinfo=UTC)
     # The game's own result and a later game exist by now; neither may inform its recalculation.
     later = [dict(game_id=gid, date=day, season=live.SEASON, home=dict(team_id=HOME, points=150), away=dict(team_id=AWAY, points=80))
              for gid, day in ((GID, DAY), ('0022600200', '2026-10-22'))]
     later_rows = [dict(r, game_id=g['game_id'], date=g['date'], points=(150 if r['team_id'] == HOME else 80) // 5 + 0,
                        minutes=48.) for g in later for r in rotation_rows()[:10]]
+    refit = json.loads((model_dir / 'model.json').read_bytes())
+    refit['fit']['covariance'][0][0] *= 2  # a refit with different residual spread
+    # ...whose individual strength was fitted after this game was played
+    refit['roster_strength']['ratings'] = rs.fit_ratings(history_games() + later, rotation_rows() + later_rows, '2026-10-23', 25.)
+    write_json(model_dir / 'model.json', refit)
     result = revisions.recalculate(folder, model_dir, rotation_rows() + later_rows, history_games() + later, V12,
                                    tmp_path / 'cache', None, now=now, get=get)
     assert result['forecasts'] == len(original['forecasts']) - result['withdrawn'] + result['added'] == 4
@@ -187,6 +190,7 @@ def test_a_publication_recalculated_after_tipoff_is_versioned_and_never_scored(a
     assert all(f['performance_eligible'] is False and f['calculation_kind'] == 'recalculated_after_tipoff'
                and f['original_sealed_at_utc'] == original['created_at_utc'] for f in revision['forecasts'])
     assert all(f['last_feature_date'] < DAY and f['information_before'] == DAY for f in revision['forecasts'])
+    assert revision['roster_strength']['ratings_before'] == DAY and revision['roster_strength']['ratings_last_date'] < DAY
     assert {revisions.key(f) for f in revision['forecasts']} == {revisions.key(f) for f in original['forecasts']}
     shown = LiveCohort(folder).data(now)
     assert shown['recalculated_at_utc'] == now.isoformat() and shown['active_strength'] is True
@@ -269,3 +273,24 @@ def test_report_names_with_a_separated_suffix_reach_the_official_player():
     assert live.report_name('Udeh, Jr., Ernest') == name_key('Ernest Udeh Jr.')
     assert live.report_name('Jackson Jr., Jaren') == name_key('Jaren Jackson Jr.')
     assert live.report_name('Smith, Jalen') == name_key('Jalen Smith')
+
+
+def test_one_cohort_with_broken_evidence_never_stops_the_others(active_cohort, tmp_path):
+    from datetime import UTC, datetime
+    import shutil
+    from nba import revisions
+    from test_multimarket_v13_live import history_games
+    folder, model_dir, cohort_get = active_cohort
+    get = lambda url: (200, b'') if 'games?date=' in url and not url.endswith(DAY) else cohort_get(url)
+    shutil.copytree(folder, folder.parent / 'cohort-b')
+    (folder / 'bundle.json').write_bytes((folder / 'bundle.json').read_bytes() + b' ')
+    refit = json.loads((model_dir / 'model.json').read_bytes())
+    refit['fit']['covariance'][0][0] *= 2
+    write_json(model_dir / 'model.json', refit)
+    data = tmp_path / 'data'
+    data.mkdir()
+    td.write_players(data / 'players.jsonl.gz', rotation_rows())
+    write_json(data / 'games.json', history_games())
+    out = revisions.refresh(folder.parent, model_dir, data, tmp_path / 'cache', None, now=datetime(2026, 10, 21, 20, tzinfo=UTC),
+                            get=get, all_publications=True)
+    assert [(r['cohort'], 'error' in r) for r in out] == [('cohort', True), ('cohort-b', False)]
