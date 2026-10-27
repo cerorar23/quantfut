@@ -114,9 +114,11 @@ export function createSportWindow(ctx) {
   const SURFACE_NAME = { hard: 'Pista dura', clay: 'Tierra batida', grass: 'Hierba' };
 
   // Fila «valor · etiqueta · valor» con el mejor lado resaltado (`lower`: gana el número menor, como el ranking).
-  function versus(label, a, b, { lower = false, text = v => (v == null ? '—' : String(v)) } = {}) {
-    const better = a == null || b == null || a === b ? '' : (lower ? a < b : a > b) ? 'a' : 'b';
-    return `<div class="win-vsrow"><b class="${better === 'a' ? 'is-better' : ''}">${text(a)}</b><span>${esc(label)}</span><b class="${better === 'b' ? 'is-better' : ''}">${text(b)}</b></div>`;
+  // `shown`: texto a mostrar de cada lado cuando no es el propio valor comparado; `neutral`: no resalta a nadie.
+  function versus(label, a, b, { lower = false, text = v => (v == null ? '—' : String(v)), shown = null, neutral = false } = {}) {
+    const better = neutral || a == null || b == null || a === b ? '' : (lower ? a < b : a > b) ? 'a' : 'b';
+    const show = (v, i) => (shown ? shown[i] : text(v));
+    return `<div class="win-vsrow"><b class="${better === 'a' ? 'is-better' : ''}">${show(a, 0)}</b><span>${esc(label)}</span><b class="${better === 'b' ? 'is-better' : ''}">${show(b, 1)}</b></div>`;
   }
 
   function tennisSummary(event) {
@@ -205,8 +207,90 @@ export function createSportWindow(ctx) {
     return `${games(event)}${registry(event)}`;
   }
 
+  // ---- estadísticas de equipos de NBA: marcadores finales oficiales, resumidos por el servidor «a la fecha» del partido.
+  // No hay alineaciones, estadio ni cuotas por cuarto en ninguna fuente validada: no se inventan.
+  function nbaStats(event) {
+    const entry = ctx.ensureNbaStats(event.id);
+    const head = '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS DE LOS EQUIPOS</p>';
+    if (entry.status === 'loading') return { note: `${head}<p class="win-sub">Consultando los marcadores de la temporada…</p></div>` };
+    if (entry.status !== 'ready') return { note: `${head}<p class="win-sub">Todavía no hay estadísticas publicadas para este partido. Se calculan con los marcadores finales de la NBA.</p></div>` };
+    const [a, b] = entry.data.teams;
+    const swapped = normal(a.name) === normal(event.away) && normal(b.name) === normal(event.home);
+    return { data: entry.data, teams: swapped ? [b, a] : [a, b] };
+  }
+  const shortDate = date => { const [y, m, d] = String(date).split('-'); return `${d}/${m}/${String(y).slice(2)}`; };
+  const streakText = n => (!n ? '—' : n > 0 ? `${n} ${n === 1 ? 'victoria' : 'victorias'}` : `${-n} ${n === -1 ? 'derrota' : 'derrotas'}`);
+  const restText = t => (t.rest_days == null ? '—' : t.back_to_back ? 'Back-to-back' : `${t.rest_days} ${t.rest_days === 1 ? 'día libre' : 'días libres'}`);
+  const recRate = r => `${rec(r)} · ${rate(r)}`;
+
+  function nbaCompare(event) {
+    const n = nbaStats(event);
+    if (!n.teams) return n.note;
+    const [h, a] = n.teams;
+    const played = t => t.season.won + t.season.lost;
+    const diff = t => (t.scoring.points_for == null ? null : Math.round((t.scoring.points_for - t.scoring.points_against) * 10) / 10);
+    const place = t => (t.standing.rank == null ? '—' : `#${t.standing.rank} ${t.standing.conference === 'este' ? 'Este' : 'Oeste'}`);
+    const pts = v => (v == null ? '—' : num(v));
+    return `<div class="win-panel-box"><p class="eyebrow">COMPARATIVA</p><div class="win-vshead"><strong>${esc(event.home)}</strong><strong>${esc(event.away)}</strong></div>
+      ${versus('Partidos jugados', played(h), played(a), { neutral: true })}
+      ${versus('Récord de la temporada', h.season.rate, a.season.rate, { shown: [recRate(h.season), recRate(a.season)] })}
+      ${versus('Posición en su conferencia', h.standing.rank, a.standing.rank, { lower: true, shown: [place(h), place(a)] })}
+      ${versus('Últimos 6 partidos', h.last6.rate, a.last6.rate, { shown: [recRate(h.last6), recRate(a.last6)] })}
+      ${versus('Local en casa · visitante fuera', h.home.rate, a.away.rate, { shown: [recRate(h.home), recRate(a.away)] })}
+      ${versus('Puntos a favor por partido', h.scoring.points_for, a.scoring.points_for, { text: pts })}
+      ${versus('Puntos en contra por partido', h.scoring.points_against, a.scoring.points_against, { lower: true, text: pts })}
+      ${versus('Diferencial por partido', diff(h), diff(a), { text: v => (v == null ? '—' : `${v > 0 ? '+' : ''}${num(v)}`) })}
+      ${versus('Racha actual', h.streak, a.streak, { shown: [streakText(h.streak), streakText(a.streak)] })}
+      ${versus('Descanso antes del partido', h.back_to_back ? -1 : h.rest_days, a.back_to_back ? -1 : a.rest_days, { shown: [restText(h), restText(a)] })}
+      ${versus('Récord de la temporada pasada', h.last_season.rate, a.last_season.rate, { shown: [recRate(h.last_season), recRate(a.last_season)] })}
+      <p class="win-sub">Marcadores finales de la NBA. Con pocos partidos jugados las cifras son muy volátiles: fíjate en cuántos hay detrás de cada una.</p></div>`;
+  }
+
+  function nbaForm(event) {
+    const n = nbaStats(event);
+    if (!n.teams) return n.note;
+    const scope = ['all', 'home', 'away'].includes(state.winFormScope) ? state.winFormScope : 'all';
+    const filter = `<div class="win-chips" role="group" aria-label="Partidos a mostrar">${[['all', 'Todos'], ['home', 'En casa'], ['away', 'Fuera']].map(([id, label]) => `<button type="button" class="chip ${scope === id ? 'selected' : ''}" data-win-form-scope="${id}" aria-pressed="${scope === id}">${label}</button>`).join('')}</div>`;
+    const block = (t, name) => {
+      const rows = t.form[scope];
+      const won = rows.filter(r => r.won).length;
+      const avg = key => (rows.length ? num(rows.reduce((sum, r) => sum + r[key], 0) / rows.length) : '—');
+      const chips = rows.map(r => `<i class="win-res ${r.won ? 'is-win' : 'is-loss'}" title="${esc(shortDate(r.date))} · ${esc(r.opponent)}">${r.won ? 'G' : 'P'}</i>`).join('');
+      const list = rows.map(r => `<li><span class="win-d">${esc(shortDate(r.date))}</span><span>${r.home ? 'vs' : '@'} ${esc(r.opponent)}<small>${r.home ? 'En casa' : 'Fuera'}</small></span><span class="win-sc">${r.points}-${r.opponent_points}</span><span class="win-res ${r.won ? 'is-win' : 'is-loss'}">${r.won ? 'G' : 'P'}</span></li>`).join('');
+      return `<div class="win-panel-box"><p class="eyebrow">${esc(String(name).toUpperCase())}</p>${rows.length ? `<div class="win-chipline" aria-label="Partidos, del más reciente al más antiguo">${chips}</div>
+        ${kv('Victorias · derrotas', `${won}-${rows.length - won} <small>${count(rows.length, 'partido', 'partidos')}</small>`)}
+        ${kv('Puntos a favor · en contra', `${avg('points')} · ${avg('opponent_points')} <small>por partido</small>`)}
+        <ul class="win-list win-list--dated">${list}</ul>` : '<p class="win-sub">Sin partidos registrados con este filtro.</p>'}</div>`;
+    };
+    return `<div class="win-panel-box"><p class="eyebrow">FORMA RECIENTE</p>${filter}</div>${block(n.teams[0], event.home)}${block(n.teams[1], event.away)}<p class="win-sub">Hasta los últimos 6 partidos oficiales de cada equipo (temporada regular, play-in y eliminatorias), del más reciente al más antiguo. Al inicio de la temporada incluyen partidos del año pasado; la fecha de cada uno va a la vista.</p>`;
+  }
+
+  function nbaH2H(event) {
+    const n = nbaStats(event);
+    if (!n.teams) return n.note;
+    const h = n.data.h2h;
+    // `home_wins` cuenta al primer equipo del feed; si la ficha los pone en el orden contrario, se intercambian.
+    const swapped = n.teams[0] !== n.data.teams[0];
+    const winsHome = swapped ? h.away_wins : h.home_wins, winsAway = swapped ? h.home_wins : h.away_wins;
+    if (!h.matches.length) return '<div class="win-panel-box"><p class="eyebrow">CARA A CARA</p><p class="win-sub">Sin enfrentamientos registrados entre estos equipos en las últimas temporadas.</p></div>';
+    const list = h.matches.map(m => `<li><span class="win-d">${esc(shortDate(m.date))}</span><span>${esc(m.home)}<small>vs ${esc(m.away)}</small></span><span class="win-sc">${m.home_points}-${m.away_points}</span><span class="win-res ${m.home_points > m.away_points ? 'is-win' : 'is-loss'}" title="Ganó ${esc(m.home_points > m.away_points ? m.home : m.away)}">${m.home_points > m.away_points ? 'L' : 'V'}</span></li>`).join('');
+    return `<div class="win-panel-box"><p class="eyebrow">CARA A CARA · ÚLTIMOS ${h.matches.length}</p><div class="win-duelscore"><strong>${winsHome}</strong><span>${esc(event.home)}</span><span>${esc(event.away)}</span><strong>${winsAway}</strong></div>
+      ${h.average_total != null ? kv('Total medio de puntos', num(h.average_total)) : ''}<ul class="win-list win-list--dated">${list}</ul>
+      <p class="win-sub">Cada marcador va con el local de ese partido primero. La marca final indica si ganó el local (L) o el visitante (V). Incluye temporadas anteriores.</p></div>`;
+  }
+
+  function nbaStandings(event) {
+    const n = nbaStats(event);
+    if (!n.teams) return n.note;
+    const conf = t => (t.standing.conference === 'este' ? 'Conferencia Este' : t.standing.conference === 'oeste' ? 'Conferencia Oeste' : '');
+    const row = t => `<tr><td class="n">${t.standing.rank == null ? '—' : t.standing.rank}</td><td>${esc(t.name)}<small class="win-cell-note">${conf(t)}</small></td><td class="n">${t.season.won + t.season.lost}</td><td class="n">${t.season.won}</td><td class="n">${t.season.lost}</td><td class="n">${rate(t.season)}</td><td class="n">${num(t.scoring.points_for)}</td><td class="n">${num(t.scoring.points_against)}</td><td class="n">${t.streak > 0 ? `${t.streak}V` : t.streak < 0 ? `${-t.streak}D` : '—'}</td></tr>`;
+    return `<div class="win-panel-box"><p class="eyebrow">CLASIFICACIÓN</p><div class="win-table win-table--all"><table class="cyber-table cyber-table--compact"><thead><tr><th class="n">Pos.</th><th>Equipo</th><th class="n">J</th><th class="n">V</th><th class="n">D</th><th class="n">%</th><th class="n">PF</th><th class="n">PC</th><th class="n">Racha</th></tr></thead><tbody>${n.teams.map(row).join('')}</tbody></table></div>
+      <p class="win-sub">Temporada regular en curso. La posición ordena su conferencia por porcentaje de victorias y luego por victorias, sin los desempates oficiales de la NBA. PF y PC: puntos a favor y en contra por partido.</p></div>`;
+  }
+
   const TABS = { tenis: [['resumen', 'Resumen'], ['forma', 'Forma'], ['superficie', 'Superficie'], ['h2h', 'Cara a cara'], ['modelo', 'Modelo'], ['resultado', 'Resultado']],
-    nba: [['resumen', 'Resumen'], ['disponibilidad', 'Disponibilidad'], ['resultado', 'Resultado'], ['registro', 'Registro']] };
+    nba: [['resumen', 'Resumen'], ['comparativa', 'Comparativa'], ['forma', 'Forma'], ['h2h', 'Cara a cara'], ['clasificacion', 'Clasificación'],
+      ['disponibilidad', 'Disponibilidad'], ['resultado', 'Resultado'], ['registro', 'Registro']] };
 
   function summary(event) {
     const parts = [duel(event)];
@@ -252,7 +336,8 @@ export function createSportWindow(ctx) {
     const tabs = TABS[event.sport];
     const tab = tabs.some(([id]) => id === state.winSportTab) ? state.winSportTab : 'resumen';
     const tennis = { resumen: () => tennisSummary(event), forma: () => tennisForm(event), superficie: () => tennisSurface(event), h2h: () => tennisH2H(event), modelo: () => tennisModel(event), resultado: () => result(event) };
-    const body = (event.sport === 'tenis' ? tennis : { resumen: () => summary(event), disponibilidad: () => availability(event), resultado: () => result(event), registro: () => registry(event) })[tab]();
+    const body = (event.sport === 'tenis' ? tennis : { resumen: () => summary(event), comparativa: () => nbaCompare(event), forma: () => nbaForm(event), h2h: () => nbaH2H(event), clasificacion: () => nbaStandings(event),
+      disponibilidad: () => availability(event), resultado: () => result(event), registro: () => registry(event) })[tab]();
     return `<div class="win-tabs-wrap"><div class="cyber-tabs cyber-tabs--pills cyber-tabs--scrollable" role="tablist" aria-label="Secciones de estadísticas">${tabs.map(([id, label]) => `<button type="button" role="tab" id="win-stab-${id}" aria-controls="win-stats-panel" aria-selected="${tab === id}" class="cyber-tab ${tab === id ? 'cyber-tab--active' : ''}" data-win-sport-tab="${id}">${label}</button>`).join('')}</div></div><div id="win-stats-panel" role="tabpanel" aria-labelledby="win-stab-${tab}" class="win-panel">${body}</div>`;
   }
 

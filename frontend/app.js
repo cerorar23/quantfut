@@ -2,8 +2,8 @@ import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate,
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=acomodo-20261027';
 import { createRealViews } from './real-views.js?v=acomodo-20261029';
-import { loadSport, loadResults, loadTennisStats, featuredModelMarket } from './sports-data.js?v=acomodo-20261031';
-import { createSportWindow } from './sports-window.js?v=ventana-20261031';
+import { loadSport, loadResults, loadTennisStats, loadNbaStats, featuredModelMarket } from './sports-data.js?v=nbaestad-20261027';
+import { createSportWindow } from './sports-window.js?v=nbaestad-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
@@ -111,6 +111,7 @@ const state = {
   winEvList: [],
   winSportTab: 'resumen',
   winSportFam: '',
+  winFormScope: 'all',
   winAll: false,
   winResetFlag: false,
   winDayPinned: false,
@@ -189,6 +190,14 @@ function ensureTennisStats(id) {
   const entry = { status: 'loading', data: null }, generation = realGeneration;
   tennisStatsCache.set(id, entry);
   loadTennisStats(id).then(result => { if (generation !== realGeneration) return; tennisStatsCache.set(id, result); rerenderIfIdle(); });
+  return entry;
+}
+const nbaStatsCache = new Map();
+function ensureNbaStats(id) {
+  if (nbaStatsCache.has(id)) return nbaStatsCache.get(id);
+  const entry = { status: 'loading', data: null }, generation = realGeneration;
+  nbaStatsCache.set(id, entry);
+  loadNbaStats(id).then(result => { if (generation !== realGeneration) return; nbaStatsCache.set(id, result); rerenderIfIdle(); });
   return entry;
 }
 function ensureResults() {
@@ -1162,7 +1171,7 @@ const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
   ensureSport, ensureResults, plansPreview:()=>membershipUI.plansPreview() });
 
-const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, featuredModelMarket });
+const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, featuredModelMarket });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1343,6 +1352,7 @@ app.addEventListener('click', event => {
   if (data.winEvStep) { const next = state.winEvList[state.winEvList.indexOf(state.winEvent) + Number(data.winEvStep)]; if (next) { state.winEvent = next; rerenderKeepingFocus(`[data-win-ev-step="${data.winEvStep}"]`); } return; }
   if (data.winDay !== undefined && data.winDay !== '') { state.winDay = Number(data.winDay); state.winDayPinned = true; state.winEvent = ''; rerenderKeepingFocus('.win-day strong'); return; }
   if (data.winSportTab) { state.winSportTab = data.winSportTab; rerenderKeepingFocus(`[data-win-sport-tab="${data.winSportTab}"]`); return; }
+  if (data.winFormScope) { state.winFormScope = data.winFormScope; rerenderKeepingFocus(`[data-win-form-scope="${data.winFormScope}"]`); return; }
   if (data.winSportFam) { state.winSportFam = data.winSportFam; state.winAll = false; rerenderKeepingFocus(`[data-win-sport-fam="${CSS.escape(data.winSportFam)}"]`); return; }
   if (data.winAll) { state.winAll = !state.winAll; rerenderKeepingFocus('[data-win-all]'); return; }
   if (data.winPane) { state.winPane = data.winPane; rerenderKeepingFocus(`[data-win-pane="${data.winPane}"]`); return; }
@@ -1473,7 +1483,7 @@ function syncPublicAuth() {
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
-  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); resultsCache=null; }
+  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); resultsCache=null; }
   render();
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;

@@ -836,3 +836,36 @@
     animation: none !important;
   }
 }
+
+/* ---- estadísticas de equipos de NBA: listas con fecha completa y clasificación sin ocultar columnas en móvil */
+.win-list--dated li {
+  grid-template-columns: 62px minmax(0, 1fr) auto 24px;
+}
+
+.win-table--all .cyber-table .win-cell-note {
+  display: block;
+  font: 10px var(--font-mono);
+  color: var(--faint);
+}
+
+@media (max-width: 1180px) {
+  .win-table--all .cyber-table th:last-child,
+  .win-table--all .cyber-table td:last-child {
+    display: table-cell;
+  }
+
+  .win-table--all .cyber-table th,
+  .win-table--all .cyber-table td {
+    padding-inline: 5px;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 560px) {
+  .win-table--all .cyber-table th:nth-child(7),
+  .win-table--all .cyber-table td:nth-child(7),
+  .win-table--all .cyber-table th:nth-child(8),
+  .win-table--all .cyber-table td:nth-child(8) {
+    display: none;
+  }
+}

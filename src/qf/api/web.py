@@ -31,6 +31,16 @@ def tennis_event_stats(event_id: str, response: Response):
     return data
 
 
+@router.get("/web/deportes/nba/estadisticas/{event_id}")
+def nba_event_stats(event_id: str, response: Response):
+    from .nba_estadisticas import public_event
+    response.headers["Cache-Control"] = "no-store"
+    data = public_event(event_id) if event_id.isdigit() and len(event_id) == 10 else None
+    if data is None:
+        raise HTTPException(404, "Sin estadísticas para este partido")
+    return data
+
+
 @router.get("/sports-data.js")
 def sports_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "sports-data.js", media_type="text/javascript")
