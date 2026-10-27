@@ -307,8 +307,8 @@ interna, no inmutabilidad frente a terceros.
 
 **Qué ve el usuario de la app** [código `mobile.py`]:
 - *Alta probabilidad gratis* (desde 2026-10-27): el **10 % de los publicados en el lote del día, redondeado hacia
-  arriba** (`FREE_FRACTION`), elegidos entre los de **cuota publicada 1,40–1,50** por **mayor probabilidad**; si en
-  ese rango no hay suficientes, salen menos. Se fija por lote en `mobile_free_allocations`; `top_up` completa el
+  arriba** (`FREE_FRACTION`), los de **mayor probabilidad**, sin rango de cuota (solo exige cuota
+  publicada). Se fija por lote en `mobile_free_allocations`; `top_up` completa el
   cupo y `cap_free` lo recorta al leer (los ya empezados siguen visibles y cuentan en el cupo). El resto va con
   candado y solo muestra categoría y cuota. Antes: uno por mercado, mayor cuota ≤ 1,60, hasta 4 abiertos.
 - *VIP* (`plus` o desbloqueo por recompensa): ve todo, con probabilidad a 2 decimales, cuota de publicación,
@@ -357,7 +357,7 @@ interna, no inmutabilidad frente a terceros.
 
 1. **Hora del pipeline diario**: un comentario menciona las 13:00; el cron real es `0 9 * * *` (**09:00 UTC**).
 2. **Docstring de `/alta-probabilidad`** (`api/main.py`) dice «filtrados al 75–90 %, 10 % gratuito por lote». El
-   código usa **73–95 %**; el gratis vuelve a ser el **10 % por lote** (desde 2026-10-27), con cuota 1,40–1,50.
+   código usa **73–95 %**; el gratis vuelve a ser el **10 % por lote** (desde 2026-10-27), por mayor probabilidad.
 3. **«El modelo predice los picks»**: falso hoy. Los picks de valor usan `model_prob` solo como diagnóstico y
    están apagados; los productos activos salen del Motor B.
 4. **Mezcla modelo/mercado**: el peso medido (0,108) existe, pero la mezcla está **apagada**.

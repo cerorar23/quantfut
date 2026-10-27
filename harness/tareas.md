@@ -3364,5 +3364,5 @@ Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScor
 - [x] (cerrada 26-oct: hecho: `sofascore_apify.py` guarda `received_at` real en `receipts` y SofaScore alimenta a los motores desde el 25-oct) Normalizar y registrar recepción real (`fetched_at`) antes de conectar a ningún motor.
 
 ### App: gratis de Alta probabilidad al 10 % del día, 2026-10-27
-- [x] Sustituir «uno por mercado, cuota ≤ 1,60, hasta 4 abiertos» por el 10 % del lote del día (hacia arriba), cuota 1,40-1,50, mayor probabilidad (`api/mobile.py`: `free_quota`, `choose_free`, `top_up`, `cap_free`); `/mobile/v1/config` publica `high_probability_free_fraction`; texto «{free} % gratis» en 6 idiomas.
+- [x] Sustituir «uno por mercado, cuota ≤ 1,60, hasta 4 abiertos» por el 10 % del lote del día (hacia arriba), los de mayor probabilidad, sin rango de cuota (`api/mobile.py`: `free_quota`, `choose_free`, `top_up`, `cap_free`); `/mobile/v1/config` publica `high_probability_free_fraction`; texto «{free} % gratis» en 6 idiomas.
 - [ ] Subir una build de la app con código de versión nuevo; hasta entonces la app instalada sigue diciendo «hasta 4 gratis» aunque el servidor ya reparta el 10 %.

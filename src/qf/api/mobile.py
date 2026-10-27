@@ -33,10 +33,9 @@ HIGH_MIN, HIGH_MAX = .73, .95
 DIAS_AGENDA = 7
 # Gratis (decisión del usuario, 2026-10-27; sustituye «uno por mercado, hasta 4, cuota
 # ≤ 1,60»): el 10 % de los pronósticos publicados en el lote del día, redondeado hacia
-# arriba, elegidos entre los de cuota publicada de 1,40 a 1,50 (ambas incluidas) por mayor
-# probabilidad. Si en ese rango no hay suficientes, salen menos: no se rellena con otros.
+# arriba, los de mayor probabilidad, sin rango de cuota. Un rango 1,40-1,50 se probó el
+# mismo día y se descartó: con 73-95 % de probabilidad no se publica ninguna cuota ahí.
 FREE_FRACTION = .10
-FREE_QUOTE_MIN, FREE_QUOTE_MAX = 1.40, 1.50
 SECTIONS = {
     'agenda': 'Calendario de partidos', 'alta_probabilidad': 'Alta probabilidad',
     'escalera': 'Reto Escalera', 'estadisticas': 'Estadísticas del partido',
@@ -61,8 +60,6 @@ def features() -> dict:
 def config() -> dict:
     return {**mobile_updates.configuration(), 'features': features(), 'probability_min': HIGH_MIN,
             'probability_max': HIGH_MAX, 'high_probability_free_fraction': FREE_FRACTION,
-            'high_probability_free_quote_min': FREE_QUOTE_MIN,
-            'high_probability_free_quote_max': FREE_QUOTE_MAX,
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
 
@@ -93,11 +90,8 @@ def free_quota(published: int) -> int:
 
 
 def free_eligible(row: dict) -> bool:
-    try:
-        price = float(row.get('ref_price'))
-    except (TypeError, ValueError):
-        return False
-    return math.isfinite(price) and FREE_QUOTE_MIN <= price <= FREE_QUOTE_MAX
+    """Sin rango de cuota, pero con cuota publicada real: sin ella no se regala."""
+    return quote_of({'ref_price': row.get('ref_price')}) is not None
 
 
 def _free_rank(row: dict) -> tuple:
@@ -145,8 +139,8 @@ def top_up(rows: list[dict], free_keys: set[str], now: datetime) -> list[dict]:
 def cap_free(rows: list[dict], free: set[str], now: datetime) -> set[str]:
     """
     Por lote, como mucho el 10 % (hacia arriba) gratis. Los que ya empezaron siguen visibles
-    con su resultado y cuentan dentro del cupo; de los abiertos quedan los de cuota 1,40-1,50
-    con mayor probabilidad. Los que sobran pasan a candado, con su cuota a la vista.
+    con su resultado y cuentan dentro del cupo; de los abiertos quedan los de mayor
+    probabilidad. Los que sobran pasan a candado, con su cuota a la vista.
     """
     kept = set()
     for batch in _by_batch(rows).values():
@@ -197,7 +191,7 @@ def allocations(rows: list[dict], stream: str) -> set[str]:
                               'WHERE stream=%s AND batch_date=%s', (len(have) + len(added), stream, batch))
                     audit(c, 'mobile:allocation_topup', 'mobile_free_batch', detail={
                         'stream': stream, 'batch_date': batch, 'added': [pick_key(r) for r in added],
-                        'rule': 'ten_percent_quote_1_40_1_50_by_probability'})
+                        'rule': 'ten_percent_by_probability'})
             selected_rows = c.execute('SELECT pick_key FROM mobile_free_allocations '
                                       'WHERE stream=%s AND batch_date=%s', (stream, batch)).fetchall()
             result.update(r['pick_key'] for r in selected_rows)
