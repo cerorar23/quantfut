@@ -1,8 +1,8 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredPick, FEATURED_ODDS } from './fichas-data.js?v=real-20261028';
 import { createMembershipUI } from './membership.js?v=acomodo-20261027';
-import { createRealViews } from './real-views.js?v=acomodo-20261028';
-import { loadSport, loadResults } from './sports-data.js?v=acomodo-20261027';
+import { createRealViews } from './real-views.js?v=picks-20261027';
+import { loadSport, loadResults, loadImages } from './sports-data.js?v=picks-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
@@ -165,6 +165,7 @@ let publicAuthKey = 'visitante';
 const realHomeCache = new Map(), realMatchCache = new Map();
 const sportsCache = new Map();
 let resultsCache = null;
+let imagesCache = null;
 let realGeneration = 0;
 function ensureSport(sport) {
   if(sportsCache.has(sport))return sportsCache.get(sport);
@@ -178,6 +179,12 @@ function ensureResults() {
   resultsCache={status:'loading',items:[]}; const generation=realGeneration;
   loadResults().then(result=>{if(generation!==realGeneration)return;resultsCache=result;rerenderIfIdle();});
   return resultsCache;
+}
+function ensureImages() {
+  if(imagesCache)return imagesCache;
+  imagesCache={status:'loading',nba:{},tenis:{}};
+  loadImages().then(result=>{imagesCache=result;rerenderIfIdle();});
+  return imagesCache;
 }
 function ensureRealHome(offset) {
   const key = localDay(addDays(offset,12));
@@ -1139,7 +1146,7 @@ const membershipUI = createMembershipUI({
 
 const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
-  ensureSport, ensureResults, plansPreview:()=>membershipUI.plansPreview() });
+  ensureSport, ensureResults, ensureImages, plansPreview:()=>membershipUI.plansPreview() });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1243,7 +1250,7 @@ function render() {
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
@@ -1261,10 +1268,23 @@ function render() {
   if (state.modal) app.querySelector('.modal-close')?.focus();
 }
 
+// La ventana única mide su alto contra la cabecera de siempre: se vuelve a medir
+// cuando carga el CSS o las fuentes, no solo al pintar.
+let headerWatcher = null;
+function watchHeaderHeight(header) {
+  const set = () => document.documentElement.style.setProperty('--site-header-h', `${header.offsetHeight}px`);
+  set();
+  headerWatcher?.disconnect();
+  if (typeof ResizeObserver === 'undefined') return;
+  headerWatcher = new ResizeObserver(set);
+  headerWatcher.observe(header);
+}
+
 // La lista de partidos solo queda fija si cabe entera bajo la cabecera.
 function fitDeskSide() {
   const side = app.querySelector('.desk-side');
   const header = app.querySelector('.site-header');
+  if (header) watchHeaderHeight(header);
   if (!side || !header) return;
   side.classList.remove('is-tall');
   side.classList.toggle('is-tall', side.offsetHeight > window.innerHeight - header.offsetHeight - 24);

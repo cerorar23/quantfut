@@ -63,3 +63,16 @@ export async function loadResults(fetcher=fetch) {
   } catch {return {status:'error',items:[]};}
   finally {clearTimeout(timer);}
 }
+
+// Logos NBA y fotos de tenis alojados en el servidor (scripts/imagenes). Si el manifiesto falla, las tarjetas usan iniciales.
+export async function loadImages(fetcher=fetch) {
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+  try {
+    const response=await fetcher('/web/imagenes/manifiesto.json',{signal:controller.signal});
+    if(!response.ok)throw new Error();
+    const data=await response.json();
+    if(!data||typeof data.nba!=='object'||typeof data.tenis!=='object')throw new Error();
+    return {status:'ready',nba:data.nba,tenis:data.tenis};
+  } catch {return {status:'error',nba:{},tenis:{}};}
+  finally {clearTimeout(timer);}
+}
