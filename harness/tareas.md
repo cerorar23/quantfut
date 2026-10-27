@@ -1,5 +1,11 @@
 # Backlog — QuantFut
 
+## 27-oct-2026 · Tenis: juegos ganados por jugador desde PropLine
+
+- [x] `player_games_won` → contrato `player_games` (`tennis_player_games_v1`): precio desde la distribución conjunta del motor, liquidación de partido completo, foto horaria y cierre de PropLine, `market_board` y `offered_markets`. Fuera de `tennis_markets_v2` y `tennis_allmarkets_v1` porque el protocolo multi-mercado congelado hashea esos paquetes.
+- [x] Nombres de PropLine con nombre intermedio («Leylah Annie Fernandez»): Fernandez–Sakatsume se selló sin precio el 27-oct. Emparejamiento determinista, sin parecido.
+- [x] Aces, dobles faltas y puntos de quiebre: PropLine los cotiza, el motor no los modela; fuera de la primera versión.
+
 ## 27-oct-2026 · Corrección: solo acomodo, CSS anterior obligatorio
 
 El titular rechaza expresamente los cambios de colores, tarjetas y botones. Restaurar los componentes visuales anteriores, retirar `ergonomia.css` y conservar el CSS original sin modificaciones. Mantener las fuentes reales de fútbol, NBA y tenis y el acomodo de pronósticos, resultados y planes. El menú adicional de escritorio no debe reutilizar el cajón móvil fuera de su breakpoint.

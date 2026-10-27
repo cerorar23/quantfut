@@ -92,3 +92,44 @@ def test_market_board_maps_every_offered_line_to_engine_contracts(tmp_path):
                        dict(market='total_tiebreaks', period=None, name='Under', point=.5, bookmaker='x', price=2.0),
                        dict(market='total_tiebreaks', period=None, name='Over', point=1.5, bookmaker='x', price=5.0)], 'A', 'B')
     assert [r['contract']['kind'] for r in tb] == ['tiebreak'] and tb[0]['contract']['selection'] == 'yes'
+
+
+def test_player_games_won_maps_to_each_player_and_reads_the_closing_line(tmp_path):
+    from tennis_odds_propline_v1 import market_board, closing_board
+
+    def games(book, player, over, under, line=10.5):
+        outcomes = [dict(name=n, description=player, side=None, price=p, point=line, player_id=None, book_updated_at=None,
+                         last_seen_at='2026-10-24T10:00:00Z') for n, p in (('Over', over), ('Under', under)) if p is not None]
+        return dict(key=book, markets=[dict(key='player_games_won', description=player, period=None, team=None, line_type='main', outcomes=outcomes)])
+    e = event()
+    e['bookmakers'] += [games('betmgm', 'Ana Paz', -150, 120), games('fanduel', 'Ana Paz', -130, 100),
+                        games('betmgm', 'Eva Sol', 110, -140, 8.5), games('betrivers', 'Eva Sol', -110, None, 8.5),  # one side only
+                        games('betmgm', 'Isa Rey', -110, -110)]  # not in this match
+    archive(tmp_path, [e])
+    board = market_board(tmp_path, 'Eva Sol', 'Ana Paz', (NOW + timedelta(minutes=20)).isoformat())
+    rows = {(r['contract']['player'], r['contract']['line']): r for r in board['rows'] if r['contract']['kind'] == 'player_games'}
+    assert set(rows) == {('B', 10.5), ('A', 8.5)}  # oriented to player A = Eva Sol
+    fair = lambda o, u: (1 / o) / (1 / o + 1 / u)
+    assert rows[('B', 10.5)]['books'] == 2 and rows[('B', 10.5)]['market'] == pytest.approx((fair(1 + 100 / 150, 2.2) + fair(1 + 100 / 130, 2.0)) / 2)
+    assert rows[('A', 8.5)]['contract'] == dict(kind='player_games', selection='over', line=8.5, set_number=None, score=None, player='A')
+    assert board['unsupported_quotes'] == 2  # the two Isa Rey quotes; an unpaired side is simply never priced
+    closing = dict(id='t1', sport_key='tennis', commence_time='2026-10-24T14:00:00Z', bookmakers=[games('betmgm', 'Ana Paz', -120, 100)])
+    pl = archive_module()
+    get = lambda path, params, key: (200, {'X-Daily-Remaining': '4000'}, json.dumps(closing).encode())
+    pl.Collector(tmp_path / 'close', 'not-a-key', get=get, clock=lambda: NOW + timedelta(hours=7)).capture('/v1/sports/tennis/events/t1/odds/closing', {})
+    close = closing_board(tmp_path / 'close', 't1', 'Eva Sol', 'Ana Paz', (NOW + timedelta(hours=8)).isoformat())
+    assert [r['contract'] for r in close['rows']] == [rows[('B', 10.5)]['contract']]
+    assert close['rows'][0]['market'] == pytest.approx(fair(1 + 100 / 120, 2.0))
+
+
+def test_a_listed_middle_name_still_finds_the_match_but_no_similarity_guess(tmp_path):
+    from tennis_odds_propline_v1 import same_player, market_board
+    assert same_player('Leylah Annie Fernandez', 'Leylah Fernandez') and same_player('leylah fernández', 'Leylah Fernandez')
+    assert same_player('Ana María Luz Paz', 'Ana Luz Paz') and not same_player('Ana Luz Paz', 'Ana María Paz')
+    assert not same_player('Sara Sorribes Tormo', 'Sara Sorribes') and not same_player('Ana Paz', 'Eva Paz') and not same_player('', '')
+    tmp = tmp_path
+    archive(tmp, [event(home='Leylah Annie Fernandez', away='Himeno Sakatsume')])
+    m = latest_market(tmp, 'Himeno Sakatsume', 'Leylah Fernandez', (NOW + timedelta(minutes=30)).isoformat())
+    assert m['probability_a'] == pytest.approx(1 - (2 / 3) / (2 / 3 + 1 / 2.6))  # 27-oct: sealed without a price
+    board = market_board(tmp, 'Leylah Fernandez', 'Himeno Sakatsume', (NOW + timedelta(minutes=30)).isoformat())
+    assert board['rows'][0]['contract']['kind'] == 'winner' and board['rows'][0]['market'] == pytest.approx((2 / 3) / (2 / 3 + 1 / 2.6))
