@@ -33,6 +33,17 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-27 15:45:35 UTC · Tenis: juegos ganados por jugador y nombres con nombre intermedio · imagen `quantfut-tenis:45f5876` (`main` `45f5876`, PR #177)
+- **Motivo:** orden del titular: añadir `player_games_won` de PropLine al adaptador de tenis, con pruebas, y desplegarlo. Además, Leylah Fernandez – Himeno Sakatsume se selló hoy sin precio porque PropLine la lista como «Leylah Annie Fernandez».
+- **Estado previo comprobado:** `IMAGE` = `quantfut-tenis:7b974ed`, `vps_run.sh` y crontab iguales a la entrada del 26-oct 19:40; `apps/tennis` y `propline_shared.py` de `7b974ed` idénticos a `main` antes del PR, así que la imagen nueva solo añade este cambio. Nadie más desplegando tenis.
+- **Imagen:** `git archive 45f5876:apps/tennis` (`core.autocrlf=false`) + `src/qf/ingest/propline_shared.py` de `45f5876` (sha256 `54387ff6…`, el mismo de la imagen anterior y del recolector) en `~/quantfut-tenis/build/45f5876/ctx`. Cambio activado escribiendo `IMAGE` con `hourly.lock` tomado; `vps_run.sh`, crontab y `motor_config.json` sin cambios.
+- **Ensayo antes de activar (imagen de `main`, datos en solo lectura):** los 7 partidos sellados con tablero en las últimas 24 h, recalculados con la foto de PropLine de su hora de sellado: 17 líneas de juegos por jugador, todas con probabilidad del motor, y las otras 364 líneas idénticas a lo sellado. Fernandez – Sakatsume habría tenido 55 líneas con precio.
+- **Verificado:** pasada manual `vps_run.sh hourly` 15:45 UTC con código 0, evaluación recalculada (`offered_markets` sin errores). Sellado completo ejercido en una copia temporal de `ledger.sqlite` y `predictions` (borrada después): 5 partidos del 28-oct sellados, 29–51 líneas cada uno y 2–4 de juegos por jugador. Primer sellado real con la imagen: Rakhimova – Alexandrova, pasada de las 23:25 UTC.
+- **Observación:** en los «más de» de juegos por jugador el motor queda por debajo del mercado, igual que en el total de juegos (−0,04 de media en 137 líneas; hándicap +0,001). No es de este cambio; lo mide `offered_markets` por familia.
+- **No cambia:** la web y la app (leen `forecast.markets`, no `market_board`), el recolector de PropLine y los protocolos congelados (`tennis_markets_v2` y `tennis_allmarkets_v1` sin tocar).
+- Respaldo: `~/quantfut-tenis/backup/20261027-player-games/` (`IMAGE`, `vps_run.sh`, `motor_config.json`, `crontab.txt`).
+- **Vuelta atrás:** `echo quantfut-tenis:7b974ed > ~/quantfut-tenis/IMAGE` (fuera de :25-:30 hora del servidor). Los sellados nuevos se quedan (inmutables); con la imagen anterior sus filas `player_games` no se evalúan.
+
 ### 2026-10-27 15:42 UTC · App: gratis de Alta probabilidad al 10 % del día · API `quantfut-api-gratis10:cf88564` (`main` `4494869`, PR #174)
 - **Motivo:** decisión del titular: es gratis el 10 % de los pronósticos publicados en el lote del día (hacia arriba), los de mayor probabilidad, sin rango de cuota. Sustituye «uno por mercado, cuota ≤ 1,60, hasta 4 abiertos». Un rango 1,40-1,50 pedido antes se descartó tras el ensayo: 0 pronósticos de la semana en ese rango.
 - **Base comprobada:** API `quantfut-api-original:5ba3375` (entrada de la otra sesión, PR #176, ya cerrada); `scripts/deploy.sh estado` daba como única diferencia con la rama `api/mobile.py`. Nadie más desplegando (sin builds ni compose en curso).

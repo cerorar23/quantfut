@@ -87,3 +87,8 @@ Una señal solo entra si gana fuera de muestra. Orden: F9 con F8 en paralelo →
   de los resultados; identidades WTA/ATP con varios IDs; cobertura externa de seis claves; Palm Hills septiembre de 2025; viajes y
   descanso con historial completo; techo y muestra para el clima. Sin ROI demostrado ni picks de tenis
   (`docs/tenis_mercados_integrados_20261019.md`, `docs/tenis_resultados_y_evidencia_20261019.md`).
+- [ ] Tenis, juegos ganados por jugador (en producción desde el 27-oct, imagen `45f5876`, PR #177): la web y la app no lo muestran
+  porque `tenis_publico` solo lee `forecast.markets` y el mercado va en `market_board`. Mostrarlo, con textos en los 6 idiomas, es
+  parte de la integración de NBA y tenis en la app (Claude).
+- [ ] Tenis: en los «más de» el motor queda por debajo del mercado, en el total de juegos (−0,04 de media en 137 líneas; hándicap
+  +0,001) y por tanto en los juegos por jugador. Medirlo fuera de muestra con `offered_markets` por familia antes de corregir nada (Claude).
