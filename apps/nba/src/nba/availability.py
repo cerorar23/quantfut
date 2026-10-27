@@ -58,7 +58,7 @@ def status_map(reports, tips):
     return {k: (v[1], v[2]) for k, v in best.items()}, observed
 
 
-def trailing_entries(players, games, statuses, observed, max_days=370, window=20, minimum=5):
+def trailing_entries(players, games, statuses, observed, max_days=370, window=20, minimum=5, trust_report_team=False):
     """game id -> team id -> [(player, status, mean minutes, mean points)], using only earlier dates."""
     listed = defaultdict(list)
     for (game, player), (status, team) in statuses.items():
@@ -81,7 +81,7 @@ def trailing_entries(players, games, statuses, observed, max_days=370, window=20
                 recent = [h for h in history[player] if 0 < (cut - h[0]).days <= max_days]
                 if len(recent) < minimum:
                     continue
-                team = team_of.get(player, team)
+                team = team if trust_report_team and team is not None else team_of.get(player, team)
                 if team not in teams[g['game_id']]:
                     continue
                 per_team[team].append((player, status, float(np.mean([h[1] for h in recent])),
@@ -94,14 +94,14 @@ def trailing_entries(players, games, statuses, observed, max_days=370, window=20
     return out
 
 
-def play_table(statuses, players_index, games_in_window):
+def play_table(statuses, players_index, games_in_window, include_zero_time=False):
     """Beta(1,1)-smoothed participation rate by status over the given game ids."""
     counts = {s: [1., 2.] for s in STATUSES}
     for (game, player), (status, _) in statuses.items():
         if game not in games_in_window:
             continue
         row = players_index.get((game, player))
-        counts[status][0] += int(bool(row and row['participated'] and row['minutes'] > 0))
+        counts[status][0] += int(bool(row and row['participated'] and (include_zero_time or row['minutes'] > 0)))
         counts[status][1] += 1
     return {s: a / b for s, (a, b) in counts.items()}
 

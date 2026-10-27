@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-26 23:32 UTC · NBA 1.6.0: pertenencia oficial y fuerza individual en sombra · main `74a05cc` (PR #166)
+- Autorización explícita del titular: «Sí, subir, integrar y desplegar». CI de main y PR en verde (fútbol, NBA y tenis); 838 pruebas NBA locales, 18 omitidas por Postgres aislado/permisos de Windows.
+- Base verificada por hashes: productor `nba-live13-producer:20261026` y panel `nba-dashboard-live13:20261025c` coinciden con `03f4ada` en los componentes activos. Imágenes `nba-live13-producer:rosters-7d87fe1` y `nba-dashboard-live13:rosters-7d87fe1`, código de `7d87fe1` idéntico a main `74a05cc` para NBA; misma base y configuración. Datos, cron y otros servicios sin cambios.
+- Modelo reajustado con código exacto, hash `a3bf6b5b4a1a1c6852a2625c738587cf56d82c1c3fdf552a6957e5391d2737c4`. Comparación dentro del servidor: 14 comprobaciones aprobadas, equipo, participación y los 12 mercados de jugador idénticos. Se activa `official_rosters`; el candidato de fuerza permanece separado en esta versión.
+- Ensayo real: 2 partidos, 542 pronósticos (534 de jugador), 71 pertenencias verificadas; ningún valor experimental se publica. Panel compatible con todas las cohortes previas. Activación panel primero, modelo/productor después; `/nba/api/data` 200, 17 cohortes, 0 problemas. Pasada manual sin errores, sin nuevos partidos por sellar.
+- Un primer activador falló antes de modificar servicios por Python 3.10 del host; después una ruta de salud equivocada provocó reversión automática correcta. Ambos problemas se corrigieron antes de la activación final. Respaldo final `~/nba-isolated/live13/backup-rosters-74a05cc-b/`; panel anterior `nba-dashboard-before-rosters-74a05cc-b`; modelo anterior `model.before-rosters-74a05cc-b`.
+- Vuelta atrás bajo `producer.lock`: restaurar `producer.sh` del respaldo, renombrar el modelo actual a otra carpeta y devolver `model.before-rosters-74a05cc-b` a `model`; detener/eliminar el panel nuevo, renombrar el panel anterior a `nba-dashboard-run69`, restablecer `restart=unless-stopped` e iniciarlo. No borrar cohortes.
+- Instrucción posterior del titular, 26-oct: activar también el ajuste de fuerza, entrenar con los datos actuales y recalcular lo publicado. Autoriza revisiones con nueva fecha/versionado; no presentar un recálculo posterior al resultado como un pronóstico anterior al partido.
+
 ### 2026-10-26 21:50 UTC · Tenis: doble apellido · imagen `quantfut-tenis:7b974ed` (PR #161)
 - Misma construcción que la entrada de las 19:40 (`git archive 7b974ed:apps/tennis`, `propline_shared.py` idéntico, `vps_run.sh` igual al activo). Solo cambia `tennis_intake_v1`: «D. Merida Aguilar» resuelve a «Daniel Merida».
 - Comprobado con los 3 partidos en espera del 27-oct: Sun–Sawangkaew y Griekspoor–Nakashima con precio de PropLine, Merida–Medvedev con el apilador; los tres se habrían excluido antes de la auditoría.

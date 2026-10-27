@@ -23,7 +23,10 @@ function modelCard(r,event) {
       card.append(node('p','result-line',outcome.status==='evaluated'?`Resultado oficial: ${actual}`:(statusNames[outcome.status]||'Pendiente')));
       const status=r.report_status&&r.report_status!=='no_listado'?` · Reporte oficial: ${r.report_status}${r.probability_play===null||r.probability_play===undefined?'':` (juega ${number(r.probability_play*100,0)}% de las veces)`}`:'';
       card.append(node('p','model-note',r.conditional_participation?`Condicionado a participación (si no juega, no cuenta)${status}`:'Partido completo · Prórroga incluida'));
-      const details=node('details','details');details.append(node('summary','','Registro del modelo'),node('p','',`Registrado ${date(r.sealed_at_utc)}. Último partido usado: ${r.last_feature_date}. Sin cuotas como entrada.`));card.append(details);
+      if(r.recalculated_at_utc) card.append(node('p','model-note',r.performance_eligible===false?`Recalculado ${date(r.recalculated_at_utc)}, después del inicio: no cuenta en el marcador`:`Actualizado ${date(r.recalculated_at_utc)}, antes del inicio`));
+      const details=node('details','details');details.append(node('summary','','Registro del modelo'),node('p','',`Registrado ${date(r.sealed_at_utc)}. Último partido usado: ${r.last_feature_date}. Sin cuotas como entrada.`));
+      if(r.original_sealed_at_utc&&r.original_probability_over!==undefined) details.append(node('p','',`Publicación original ${date(r.original_sealed_at_utc)}: ${number(r.original_probability_over*100)}% más${r.market==='winner'?' (gana local)':''}, estimación ${number(r.original_estimate)}.`));
+      card.append(details);
   return card;
 }
 function renderModels() {
@@ -57,7 +60,8 @@ function renderLive() {
   const events=cohorts.flatMap(c=>c.events), rows=cohorts.flatMap(c=>c.predictions);
   $('live-count').textContent=`${events.length} partidos · ${rows.length} pronósticos · ${rows.filter(r=>r.result.status==='evaluated').length} resultados oficiales · modelo ${cohorts[0].version}`;
   for(const cohort of cohorts) {
-    const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${cohort.train_seasons.join(' y ')}`);box.append(head);
+    const recalculated=cohort.recalculated_at_utc?` · recalculada ${date(cohort.recalculated_at_utc)} con ${cohort.current_season_games} partidos de esta temporada${cohort.active_strength?' y fuerza individual de las plantillas actuales':''}`:'';
+    const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${new Intl.ListFormat('es',{type:'conjunction'}).format(cohort.train_seasons)}${recalculated}`);box.append(head);
     const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total',player_points:'Puntos de jugador',player_rebounds:'Rebotes',player_assists:'Asistencias',player_points_rebounds:'Puntos + rebotes',player_points_assists:'Puntos + asistencias',player_rebounds_assists:'Rebotes + asistencias',player_points_rebounds_assists:'Puntos + rebotes + asistencias',player_threes:'Triples',player_steals:'Robos',player_blocks:'Tapones',player_turnovers:'Pérdidas',player_blocks_steals:'Robos + tapones'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
     if(done.length) box.append(node('p','model-note',`Marcador (Brier, menor es mejor): ${done.map(([k,v])=>`${names[k]} ${number(v.brier,3)} (${v.n})`).join(' · ')}`));
     for(const event of cohort.events) {

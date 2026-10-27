@@ -40,8 +40,18 @@ def run(now, cohorts, model, data, first_day, cache, get=live.http_get, clock=No
     sealed = live.sealed_games(cohorts)
     due = [g for g, tip in schedule(day, now, cache, get).items()
            if g not in sealed and SEAL_LEAD[0] < datetime.fromisoformat(tip) - now <= SEAL_LEAD[1]]
-    if not due:
-        return status
+    if due:
+        seal_due(status, now, cohorts, model, data, first_day, cache, get, clock, propline, day, local, sealed)
+    model_path = Path(model) / 'model.json'
+    # After sealing: a failed revision is reported by the run but never delays a new publication.
+    if model_path.is_file() and json.loads(model_path.read_bytes()).get('options', {}).get('recalculate_published'):
+        from .revisions import refresh
+        status['revisions'] = refresh(cohorts, model, data, cache, propline, now=now, get=get, clock=clock,
+                                     first_day=first_day)
+    return status
+
+
+def seal_due(status, now, cohorts, model, data, first_day, cache, get, clock, propline, day, local, sealed):
     protocol_path = ROOT / 'multimarket_v13_live_protocol.json'
     protocol = dict(json.loads(protocol_path.read_bytes()), _path=str(protocol_path))
     v12_protocol = json.loads((ROOT / 'multimarket_v12_protocol.json').read_bytes())
@@ -55,7 +65,6 @@ def run(now, cohorts, model, data, first_day, cache, get=live.http_get, clock=No
         if str(error) != 'no games left to seal for this date':
             raise
         status['sealed'] = 'no_games_left'  # the fresh pages moved or started every game the cached schedule had due
-    return status
 
 
 def main():
