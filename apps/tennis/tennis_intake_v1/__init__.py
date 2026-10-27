@@ -21,6 +21,7 @@ import pandas as pd
 from tennis_engine.operations import now, utc
 from tennis_engine.benchmark import probability_metrics
 from tennis_allmarkets_v1.contracts import outcome
+import tennis_player_games_v1 as player_games
 
 TOURS = {'265': 'ATP', '266': 'WTA'}
 LEAD_MINUTES = 10
@@ -281,7 +282,8 @@ def offered_markets(sealed, propline_root=None, as_of=None):
             closing = {json.dumps(row['contract'], sort_keys=True): row['market'] for row in (close or {}).get('rows', [])}
         for row in board['rows']:
             try:
-                o = outcome(row['contract'], result)
+                c = row['contract']
+                o = player_games.outcome(c, result) if c['kind'] == player_games.KIND else outcome(c, result)
             except ValueError:
                 continue
             if o not in ('win', 'loss'):

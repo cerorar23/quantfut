@@ -56,7 +56,7 @@ def latest_market(root, player_a, player_b, before, max_age_seconds=MAX_AGE_SECO
 FAMILIES = {('h2h', None): 'winner', ('spreads', None): 'games_handicap', ('totals', None): 'games_total',
             ('total_games', None): 'games_total', ('total_sets', None): 'sets_total', ('set_spread', None): 'sets_handicap',
             ('total_tiebreaks', None): 'tiebreak', ('h2h', 's'): 'set_winner', ('spreads', 's'): 'set_games_handicap',
-            ('totals', 's'): 'set_games_total'}
+            ('totals', 's'): 'set_games_total', ('player_games_won', None): 'player_games'}
 
 
 def family(market, period):
@@ -68,11 +68,12 @@ def family(market, period):
 
 
 def consensus(rows, player_a, player_b):
-    """Margin-free probability per engine contract from quote rows (market, period, name, point, bookmaker, price).
+    """Margin-free probability per engine contract from quote rows (market, period, name, description, point, bookmaker,
+    price).
 
     Each book contributes one two-way pair at an identical line (Over/Under at the same total, A at +x with B at -x);
-    the contract probability is the mean over books. Unpaired sides, unknown names and unsupported markets are counted,
-    never filled in.
+    the contract probability is the mean over books. Games won by a player is Over/Under with the player in
+    `description`. Unpaired sides, unknown names and unsupported markets are counted, never filled in.
     """
     a, b = norm(player_a), norm(player_b)
     pairs, skipped = {}, 0
@@ -83,7 +84,13 @@ def consensus(rows, player_a, player_b):
             skipped += 1
             continue
         point = r['point']
-        if kind in ('winner', 'set_winner', 'games_handicap', 'set_games_handicap', 'sets_handicap'):
+        if kind == 'player_games':
+            who = norm(r.get('description') or '')
+            if who not in (a, b) or name not in ('over', 'under') or point is None:
+                skipped += 1
+                continue
+            pairs.setdefault((kind, 'A' if who == a else 'B', point, r['bookmaker']), {})[name] = price
+        elif kind in ('winner', 'set_winner', 'games_handicap', 'set_games_handicap', 'sets_handicap'):
             if name not in (a, b) or (kind in ('winner', 'set_winner')) != (point is None):
                 skipped += 1
                 continue
@@ -100,10 +107,14 @@ def consensus(rows, player_a, player_b):
         if first in sides and second in sides:
             values.setdefault((kind, number, line), []).append((1 / sides[first]) / (1 / sides[first] + 1 / sides[second]))
     out = []
+    # For player games the second key is the player ('A'/'B'), not a set number.
     for (kind, number, line), ps in sorted(values.items(), key=lambda kv: (kv[0][0], kv[0][1] or 0, kv[0][2] if kv[0][2] is not None else 0)):
-        selection = 'yes' if kind == 'tiebreak' else 'over' if 'total' in kind else 'A'
-        out.append(dict(contract=dict(kind=kind, selection=selection, line=line, set_number=number, score=None),
-                        market=sum(ps) / len(ps), books=len(ps)))
+        if kind == 'player_games':
+            contract = dict(kind=kind, selection='over', line=line, set_number=None, score=None, player=number)
+        else:
+            selection = 'yes' if kind == 'tiebreak' else 'over' if 'total' in kind else 'A'
+            contract = dict(kind=kind, selection=selection, line=line, set_number=number, score=None)
+        out.append(dict(contract=contract, market=sum(ps) / len(ps), books=len(ps)))
     return out, skipped
 
 
@@ -117,7 +128,8 @@ def market_board(root, player_a, player_b, before, max_age_seconds=MAX_AGE_SECON
              and utc(receipt['received_at']) < utc(e['commence_time'])]
     if len(found) != 1:
         return None  # absent, or two listings of the same pair: no guess
-    rows = [dict(market=q['market'], period=q['period'], name=q['name'], point=q['point'], bookmaker=q['bookmaker'], price=q['price_decimal'])
+    rows = [dict(market=q['market'], period=q['period'], name=q['name'], description=q['description'], point=q['point'],
+                 bookmaker=q['bookmaker'], price=q['price_decimal'])
             for q in module.quotes(found, receipt['received_at'])
             if not q['flags'] and q['team'] is None and q['player_id'] is None]
     board, skipped = consensus(rows, player_a, player_b)
@@ -131,7 +143,8 @@ def closing_board(root, event_id, player_a, player_b, as_of):
     rows, receipt = module.read_closing(root, SPORT, event_id, utc(as_of))
     if receipt is None:
         return None
-    usable = [dict(market=r['market'], period=r['period'], name=r['name'], point=r['point'], bookmaker=r['bookmaker'], price=r['price_decimal'])
+    usable = [dict(market=r['market'], period=r['period'], name=r['name'], description=r['description'], point=r['point'],
+                   bookmaker=r['bookmaker'], price=r['price_decimal'])
               for r in rows if not r['flags'] and r['team'] is None and r['player_id'] is None]
     board, _ = consensus(usable, player_a, player_b)
     return dict(received_at=receipt['received_at'], rows=board)

@@ -13,6 +13,7 @@ from tennis_engine.model import ServeModel
 from tennis_engine.scoring import Rules
 from tennis_allmarkets_v1.contracts import forecast_board
 from tennis_markets_v2.catalog import Contract
+import tennis_player_games_v1 as player_games
 from tennis_core_v5.features import pair_features
 from tennis_core_v7.prospective import build
 from tennis_dynamic_v2 import replay
@@ -64,7 +65,8 @@ def board_with_model(engine, board):
     rows, impossible = [], 0
     for row in board['rows']:
         try:
-            p = engine.probabilities(Contract(**row['contract']).validate(engine.rules))
+            c = row['contract']
+            p = player_games.probabilities(engine.joint, c) if c['kind'] == player_games.KIND else engine.probabilities(Contract(**c).validate(engine.rules))
         except ValueError:
             impossible += 1
             continue
