@@ -50,7 +50,7 @@ export function loadForecastHome(date, fetcher = fetch) {
 }
 
 export function loadForecastMatch(matchId, fetcher = fetch) {
-  return getJson(`/mobile/v1/matches/${encodeURIComponent(matchId)}`,
+  return getJson(`/mobile/v1/matches/${encodeURIComponent(matchId)}?web=1`,
     value => value && value.ficha && value.ficha.partido && value.ficha.local && value.ficha.visitante && Array.isArray(value.picks), fetcher);
 }
 
@@ -73,14 +73,12 @@ export function modelProbabilities(game) {
   return p;
 }
 
-// Pronóstico destacado: entre los publicados y abiertos con cuota de 1,30 a 1,80,
-// el de mayor probabilidad. No genera nada: solo elige entre lo que envía el servidor.
-export const FEATURED_ODDS = Object.freeze({ min: 1.3, max: 1.8 });
-
-export function featuredPick(picks) {
-  const open = (Array.isArray(picks) ? picks : []).filter(p => p && p.locked !== true && p.chain_sha256
-    && typeof p.prob === 'number' && Number.isFinite(p.prob) && p.prob > 0 && p.prob < 1
-    && typeof p.ref_price === 'number' && Number.isFinite(p.ref_price)
-    && p.ref_price >= FEATURED_ODDS.min && p.ref_price <= FEATURED_ODDS.max);
-  return open.reduce((best, p) => (!best || p.prob > best.prob ? p : best), null);
+// El pronóstico destacado de la WEB lo elige el servidor con regla propia (independiente de la app):
+// de todos los mercados del partido, el de mayor probabilidad con cuota de 1,40 a 1,80
+// (`partido_mercados.aplicar_acceso_web`). Aquí solo se valida lo recibido; no se calcula nada.
+export function featuredMarket(mercados) {
+  const m = mercados?.destacado;
+  return m && m.locked !== true && m.seleccion
+    && typeof m.prob === 'number' && Number.isFinite(m.prob) && m.prob > 0 && m.prob < 1
+    && typeof m.cuota === 'number' && Number.isFinite(m.cuota) && m.cuota > 1 ? m : null;
 }

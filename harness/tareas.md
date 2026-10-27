@@ -3372,3 +3372,9 @@ Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScor
 ### App: gratis de Alta probabilidad al 10 % del día, 2026-10-27
 - [x] Sustituir «uno por mercado, cuota ≤ 1,60, hasta 4 abiertos» por el 10 % del lote del día (hacia arriba), los de mayor probabilidad, sin rango de cuota (`api/mobile.py`: `free_quota`, `choose_free`, `top_up`, `cap_free`); `/mobile/v1/config` publica `high_probability_free_fraction`; texto «{free} % gratis» en 6 idiomas.
 - [ ] Subir una build de la app con código de versión nuevo; hasta entonces la app instalada sigue diciendo «hasta 4 gratis» aunque el servidor ya reparta el 10 %.
+
+## 27-oct-2026 · NBA: estadísticas de equipos en la ventana de la web
+
+- [x] Pestañas Comparativa, Forma, Cara a cara y Clasificación en la ventana de NBA (`frontend/sports-window.js`, CYBERCORE), con filtro Todos / En casa / Fuera; constructor `apps/nba/src/nba/web_stats.py`, lector `src/qf/api/nba_estadisticas.py` y ruta `/web/deportes/nba/estadisticas/{id}`. Detalle y plan de despliegue: `docs/nba_estadisticas_web_20261027.md`.
+- [ ] Desplegar (rama `web/nba-estadisticas`, sin PR ni despliegue): PR a `main`, imagen de la API y exportador del host que escriba `nba_stats.json` (cron sugerido cada 30 min). Sin el exportador la web dice que aún no hay estadísticas.
+- [ ] Decidir si se añaden alineaciones, estadio y cuotas por cuarto: ninguna fuente validada las trae hoy; hace falta elegir proveedor.

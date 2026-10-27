@@ -23,13 +23,15 @@ export function nbaEvents(data) {
           probability:winner && row.probability_over<.5 ? 1-row.probability_over:row.probability_over,
           price:null, reference:row.reference || 'Probabilidad estadística', estimate:row.estimate,
           sealed_at:row.sealed_at_utc, eligible, revised:!eligible, outcome:result,
-          conditional:row.conditional_participation===true, market:row.market};
+          conditional:row.conditional_participation===true, market:row.market,
+          player:winner?null:row.player, line:typeof row.line==='number'?row.line:null};
       });
       if (!markets.length) continue;
       events.set(game.event_id,{id:game.event_id,sport:'nba',home:game.home_team,away:game.away_team,start:game.tipoff_utc,league:'NBA',
         status:game.status==='evaluated'?'finished':game.status==='awaiting_result'?'awaiting_result':'scheduled',
         markets,sealed_at:cohort.created_at_utc,seal:cohort.cohort,actionable:false,
-        score:game.final?`${game.final.home} – ${game.final.away}`:null});
+        score:game.final?`${game.final.home} – ${game.final.away}`:null,
+        availability:game.availability||null, official_url:typeof game.official_url==='string'&&game.official_url.startsWith('https://')?game.official_url:null});
     }
   }
   return [...events.values()].sort((a,b)=>Date.parse(a.start)-Date.parse(b.start));
@@ -51,6 +53,38 @@ export async function loadSport(sport, fetcher=fetch) {
     return {status:'ready',events:sport==='nba'?nbaEvents(data):tennisEvents(data)};
   } catch {return {status:'error',events:[]};}
   finally {clearTimeout(timer);}
+}
+
+// Estadísticas de jugadores de un partido de tenis (las resume el servidor a partir de API-Tennis).
+const finiteNumber = v => v == null || (typeof v === 'number' && Number.isFinite(v));
+export async function loadTennisStats(eventId, fetcher = fetch) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`/web/deportes/tenis/estadisticas/${encodeURIComponent(eventId)}`, { signal: controller.signal, cache: 'no-store' });
+    if (!response.ok) throw new Error('Sin estadísticas');
+    const data = await response.json();
+    const valid = Array.isArray(data?.players) && data.players.length === 2
+      && data.players.every(p => p && typeof p === 'object' && p.surfaces && Array.isArray(p.ranking_history) && finiteNumber(p.rank))
+      && data.h2h && Array.isArray(data.h2h.matches);
+    if (!valid) throw new Error('Formato inesperado');
+    return { status: 'ready', data };
+  } catch { return { status: 'error', data: null }; } finally { clearTimeout(timer); }
+}
+
+// Estadísticas de equipos de un partido de NBA (forma, cara a cara y clasificación; el servidor resume marcadores finales).
+const isForm = f => f && ['all', 'home', 'away'].every(k => Array.isArray(f[k]));
+export async function loadNbaStats(eventId, fetcher = fetch) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`/web/deportes/nba/estadisticas/${encodeURIComponent(eventId)}`, { signal: controller.signal, cache: 'no-store' });
+    if (!response.ok) throw new Error('Sin estadísticas');
+    const data = await response.json();
+    const valid = Array.isArray(data?.teams) && data.teams.length === 2
+      && data.teams.every(t => t && typeof t.name === 'string' && t.season && t.last6 && t.scoring && t.standing && isForm(t.form))
+      && data.h2h && Array.isArray(data.h2h.matches);
+    if (!valid) throw new Error('Formato inesperado');
+    return { status: 'ready', data };
+  } catch { return { status: 'error', data: null }; } finally { clearTimeout(timer); }
 }
 
 export async function loadResults(fetcher=fetch) {
@@ -75,4 +109,14 @@ export async function loadImages(fetcher=fetch) {
     return {status:'ready',nba:data.nba,tenis:data.tenis};
   } catch {return {status:'error',nba:{},tenis:{}};}
   finally {clearTimeout(timer);}
+}
+
+// Destacado de NBA y tenis: de los mercados publicados, el de mayor probabilidad con «cuota del modelo»
+// (1 ÷ probabilidad) de 1,40 a 1,80. Ninguna casa publica estas cuotas; no se inventa ninguna.
+export function featuredModelMarket(markets, range = [1.4, 1.8]) {
+  return (Array.isArray(markets) ? markets : []).reduce((best, m) => {
+    if (!m || !probability(m.probability)) return best;
+    const odds = 1 / m.probability;
+    return odds >= range[0] && odds <= range[1] && (!best || m.probability > best.probability) ? m : best;
+  }, null);
 }

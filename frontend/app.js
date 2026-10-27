@@ -1,8 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
-import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredPick, FEATURED_ODDS } from './fichas-data.js?v=real-20261028';
+import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=acomodo-20261027';
-import { createRealViews } from './real-views.js?v=picks-20261027';
-import { loadSport, loadResults, loadImages } from './sports-data.js?v=picks-20261027';
+import { createRealViews } from './real-views.js?v=imagenes-20261029';
+import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket } from './sports-data.js?v=imagenes-20261029';
+import { createSportWindow } from './sports-window.js?v=imagenes-20261029';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
@@ -104,6 +105,16 @@ const state = {
   statsTab: 'resumen',
   statsSplit: 'todos',
   winPane: 'pron',
+  winDay: 0,
+  winEvent: '',
+  winLastEvent: null,
+  winEvList: [],
+  winSportTab: 'resumen',
+  winSportFam: '',
+  winFormScope: 'all',
+  winAll: false,
+  winResetFlag: false,
+  winDayPinned: false,
   winFam: 'Todos',
   winLast: null,
   winList: [],
@@ -172,6 +183,22 @@ function ensureSport(sport) {
   const entry={status:'loading',events:[]},generation=realGeneration;
   sportsCache.set(sport,entry);
   loadSport(sport).then(result=>{if(generation!==realGeneration)return;sportsCache.set(sport,result);rerenderIfIdle();});
+  return entry;
+}
+const tennisStatsCache = new Map();
+function ensureTennisStats(id) {
+  if (tennisStatsCache.has(id)) return tennisStatsCache.get(id);
+  const entry = { status: 'loading', data: null }, generation = realGeneration;
+  tennisStatsCache.set(id, entry);
+  loadTennisStats(id).then(result => { if (generation !== realGeneration) return; tennisStatsCache.set(id, result); rerenderIfIdle(); });
+  return entry;
+}
+const nbaStatsCache = new Map();
+function ensureNbaStats(id) {
+  if (nbaStatsCache.has(id)) return nbaStatsCache.get(id);
+  const entry = { status: 'loading', data: null }, generation = realGeneration;
+  nbaStatsCache.set(id, entry);
+  loadNbaStats(id).then(result => { if (generation !== realGeneration) return; nbaStatsCache.set(id, result); rerenderIfIdle(); });
   return entry;
 }
 function ensureResults() {
@@ -301,8 +328,10 @@ function openMatch(id, tab = 'resumen') {
   navigate('partido');
 }
 
+const sportActive = id => state.sport === id || (id === 'futbol' && state.sport === 'todos' && state.route === 'partidos');
+
 function sportNavMarkup() {
-  return `<nav class="sport-nav" aria-label="Deporte">${[['futbol','Fútbol'],['nba','NBA'],['tenis','Tenis']].map(([id,label])=>`<a href="#picks" data-sport="${id}" class="${state.sport===id?'active':''}" ${state.sport===id?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`;
+  return `<nav class="sport-nav" aria-label="Deporte">${[['futbol','Fútbol'],['nba','NBA'],['tenis','Tenis']].map(([id,label])=>`<a href="#picks" data-sport="${id}" class="${sportActive(id)?'active':''}" ${sportActive(id)?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`;
 }
 
 function navMarkup() {
@@ -1075,12 +1104,12 @@ function winForecast(game, entry) {
   if (entry.status === 'loading') return '<div class="panel loading-panel"><p class="eyebrow">PRONÓSTICO</p><h2>Consultando pronósticos…</h2></div>';
   if (entry.status !== 'ready') return '<div class="empty-state"><h3>No se pudo consultar el pronóstico</h3><p>El servidor no respondió. <button type="button" class="text-link" data-action="retry-real">Reintentar ↻</button></p></div>';
   const { ficha, picks } = entry.data;
-  const feat = featuredPick(picks);
-  const hidden = picks.filter(p => p.locked === true).length;
-  const range = `${FEATURED_ODDS.min.toFixed(2).replace('.', ',')} a ${FEATURED_ODDS.max.toFixed(2).replace('.', ',')}`;
+  const feat = featuredMarket(ficha.mercados);
+  const sealed = feat?.pick_key ? picks.find(p => p.pick_key === feat.pick_key && p.chain_sha256) : null;
+  const range = (ficha.mercados?.rango || [1.4, 1.8]).map(x => Number(x).toFixed(2).replace('.', ',')).join(' a ');
   const card = feat
-    ? `<p class="eyebrow">PRONÓSTICO DESTACADO · LOTE ${esc(feat.batch_date)}</p><div class="win-pick-grid"><div><h2>${esc(feat.texto)}</h2><p class="win-sub">${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>Cuota publicada</small><strong>${fmtOdds(feat.ref_price)}</strong><em>${esc(feat.ref_book || 'Sin casa publicada')}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad publicada" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-rule">Criterio: mayor probabilidad entre los pronósticos publicados con cuota de ${range}.</p><details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(feat.ref_book || 'No disponible')} · Cuota capturada ${realDate(feat.odds_as_of)} ${realTime(feat.odds_as_of)}.</p><code>${esc(feat.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>`
-    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${picks.length - hidden ? `Ningún pronóstico publicado de este partido tiene cuota de ${range}.` : 'Este partido no tiene pronósticos publicados abiertos.'}${hidden ? ` Hay ${hidden} con acceso VIP.` : ''}</p>`;
+    ? `<p class="eyebrow">PRONÓSTICO DESTACADO${sealed ? ` · LOTE ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(feat.seleccion)}</h2><p class="win-sub">${esc(feat.titulo || feat.grupo)} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : 'Cuota del modelo'}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || 'Casa registrada') : '1 ÷ probabilidad'}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div>${sealed ? `<details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(sealed.ref_book || 'No disponible')} · Cuota capturada ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>` : ''}`
+    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">Ningún mercado de este partido tiene cuota de ${range}.</p>`;
   const rows = ficha.mercados?.filas || [];
   const groups = [...new Set(rows.map(r => r.grupo))];
   const fam = groups.includes(state.winFam) ? state.winFam : 'Todos';
@@ -1088,7 +1117,7 @@ function winForecast(game, entry) {
   const locked = rows.filter(r => r.locked === true).length;
   const line = r => (r.locked
     ? `<tr class="win-lock"><td>${esc(r.grupo)}</td><td>Contenido reservado</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`
-    : `<tr><td>${esc(r.titulo || r.grupo)}</td><td>${esc(r.seleccion)}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? fmtOdds(r.cuota) : '—'}</td><td>${r.cuota_tipo === 'publicada' ? badge('Cuota registrada', 'good') : badge('Referencia', 'muted')}</td></tr>`);
+    : `<tr${r.destacado ? ' class="win-feat"' : ''}><td>${esc(r.titulo || r.grupo)}</td><td>${esc(r.seleccion)}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? fmtOdds(r.cuota) : '—'}</td><td>${r.destacado ? badge('Destacado', 'good') : r.cuota_tipo === 'publicada' ? badge('Cuota registrada', 'good') : badge('Cuota del modelo', 'muted')}</td></tr>`);
   const market = rows.length
     ? `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${['Todos', ...groups].map(g => `<button type="button" class="chip ${fam === g ? 'selected' : ''}" data-win-fam="${esc(g)}" aria-pressed="${fam === g}">${esc(g)}</button>`).join('')}</div></div><div class="win-table" tabindex="0" role="region" aria-label="Mercados del partido"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Acceso</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${locked ? `<div class="win-vipbar"><p><strong>${locked} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>` : ''}</section>`
     : '<p class="win-sub">No hay mercados disponibles para este encuentro.</p>';
@@ -1103,6 +1132,7 @@ function winStats(entry) {
 }
 
 function windowView() {
+  if (state.sport === 'nba' || state.sport === 'tenis') { const markup = sportWindow.view(); winResetScroll = state.winResetFlag; return markup; }
   const agenda = ensureAgenda(state.statsDay);
   const all = agenda.status === 'ready' ? agenda.data.partidos : [];
   const leagues = [...new Map(all.map(p => [p.liga.id, p.liga.nombre])).entries()];
@@ -1147,6 +1177,8 @@ const membershipUI = createMembershipUI({
 const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
   ensureSport, ensureResults, ensureImages, plansPreview:()=>membershipUI.plansPreview() });
+
+const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, featuredModelMarket });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1268,11 +1300,11 @@ function render() {
   if (state.modal) app.querySelector('.modal-close')?.focus();
 }
 
-// La ventana única mide su alto contra la cabecera de siempre: se vuelve a medir
-// cuando carga el CSS o las fuentes, no solo al pintar.
+// --win-head (alto de la cabecera de siempre) se vuelve a medir cuando carga el CSS o las fuentes, no solo al pintar:
+// lo usan la ventana única y la barra fija de Pronósticos.
 let headerWatcher = null;
 function watchHeaderHeight(header) {
-  const set = () => document.documentElement.style.setProperty('--site-header-h', `${header.offsetHeight}px`);
+  const set = () => app.style.setProperty('--win-head', `${header.offsetHeight}px`);
   set();
   headerWatcher?.disconnect();
   if (typeof ResizeObserver === 'undefined') return;
@@ -1282,6 +1314,8 @@ function watchHeaderHeight(header) {
 
 // La lista de partidos solo queda fija si cabe entera bajo la cabecera.
 function fitDeskSide() {
+  const head = app.querySelector('.site-header');
+  if (head) app.style.setProperty('--win-head', `${head.offsetHeight}px`);
   const side = app.querySelector('.desk-side');
   const header = app.querySelector('.site-header');
   if (header) watchHeaderHeight(header);
@@ -1313,15 +1347,15 @@ app.addEventListener('click', event => {
   const data = button.dataset;
   if (membershipUI.handleClick(button)) return;
   if (data.scrollTo) { app.querySelector(`#${CSS.escape(data.scrollTo)}`)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'}); return; }
-  if (data.sport) { const fromHeader=Boolean(button.closest('.sport-nav'));state.sport=data.sport; state.homeSearch=''; if(!['inicio','picks'].includes(state.route))navigate('picks');else rerenderKeepingFocus(`[data-sport="${data.sport}"]`);if(fromHeader)app.querySelector('#pronosticos-hoy')?.scrollIntoView({block:'start',behavior:'instant'}); return; }
+  if (data.sport) { const fromHeader=Boolean(button.closest('.sport-nav'));state.sport=data.sport; state.homeSearch=''; if(fromHeader&&state.route==='partidos'){state.winDay=0;state.winDayPinned=false;state.winEvent='';state.winLastEvent=null;state.winPane='pron';render();app.querySelector(`.sport-nav [data-sport="${data.sport}"]`)?.focus();return;} if(!['inicio','picks'].includes(state.route))navigate('picks');else rerenderKeepingFocus(`[data-sport="${data.sport}"]`);if(fromHeader)app.querySelector('#pronosticos-hoy')?.scrollIntoView({block:'start',behavior:'instant'}); return; }
   if (data.resultSport) {state.resultSport=data.resultSport;rerenderKeepingFocus(`[data-result-sport="${data.resultSport}"]`);return;}
-  if (data.sportEvent) {state.sportEvent=data.sportEvent;state.sportMarket='partido';navigate('analisis');return;}
+  if (data.sportEvent) {const [sport]=data.sportEvent.split(':');const found=ensureSport(sport).events?.find(e=>`${e.sport}:${e.id}`===data.sportEvent);const day=found?new Date(found.start):new Date();day.setHours(0,0,0,0);const current=new Date();current.setHours(0,0,0,0);state.sport=sport;state.winEvent=data.sportEvent;state.winDay=Math.max(-3,Math.min(3,Math.round((day-current)/86400000)));state.winDayPinned=true;state.winSportTab='resumen';state.winPane='pron';navigate('partidos');return;}
   if (data.sportMarket) {state.sportMarket=data.sportMarket;rerenderKeepingFocus(`[data-sport-market="${data.sportMarket}"]`);return;}
   if (data.availableDay) {const target=new Date(`${data.availableDay}T12:00:00`);const current=new Date();current.setHours(12,0,0,0);state.dayOffset=Math.round((target-current)/86400000);state.homeStatus='todos';render();return;}
   if (data.realMatch) {
     const game=[...realHomeCache.values()].flatMap(e=>e.data?.agenda||[]).find(g=>g.match_id===data.realMatch);
     if(game){ const date=new Date(game.kickoff_utc); date.setHours(0,0,0,0); const current=new Date(); current.setHours(0,0,0,0); state.dayOffset=Math.round((date-current)/86400000); }
-    state.statsDay = STATS_DAYS.includes(state.dayOffset) ? state.dayOffset : 0; state.statsLeague = 'Todas'; state.statsMatch = data.realMatch; state.statsTab = 'resumen'; state.winPane = 'pron'; navigate('partidos'); return;
+    state.statsDay = STATS_DAYS.includes(state.dayOffset) ? state.dayOffset : 0; state.statsLeague = 'Todas'; state.statsMatch = data.realMatch; state.statsTab = 'resumen'; state.winPane = 'pron'; state.sport = 'futbol'; navigate('partidos'); return;
   }
   if (data.action === 'refresh-public') { refreshPublicData(); return; }
   if (data.route) { if (data.homeMarketMode) { state.deskMode = data.homeMarketMode; state.deskDay = state.dayOffset; state.deskSort = { key: 'edge', dir: 'desc' }; } if (data.route === 'acceso') { state.authReturn = 'cuenta'; state.authMode = 'login'; state.authMessage = ''; } navigate(data.route); return; }
@@ -1334,6 +1368,13 @@ app.addEventListener('click', event => {
     const current = new Date(); current.setHours(0,0,0,0);
     state.statsDay = Math.round((date-current)/86400000); state.statsLeague = 'Todas'; state.statsMatch = data.openFicha; state.statsTab = 'resumen'; navigate('partidos'); return;
   }
+  if (data.winEvent) { state.winEvent = data.winEvent; rerenderKeepingFocus(`[data-win-event="${CSS.escape(data.winEvent)}"]`); return; }
+  if (data.winEvStep) { const next = state.winEvList[state.winEvList.indexOf(state.winEvent) + Number(data.winEvStep)]; if (next) { state.winEvent = next; rerenderKeepingFocus(`[data-win-ev-step="${data.winEvStep}"]`); } return; }
+  if (data.winDay !== undefined && data.winDay !== '') { state.winDay = Number(data.winDay); state.winDayPinned = true; state.winEvent = ''; rerenderKeepingFocus('.win-day strong'); return; }
+  if (data.winSportTab) { state.winSportTab = data.winSportTab; rerenderKeepingFocus(`[data-win-sport-tab="${data.winSportTab}"]`); return; }
+  if (data.winFormScope) { state.winFormScope = data.winFormScope; rerenderKeepingFocus(`[data-win-form-scope="${data.winFormScope}"]`); return; }
+  if (data.winSportFam) { state.winSportFam = data.winSportFam; state.winAll = false; rerenderKeepingFocus(`[data-win-sport-fam="${CSS.escape(data.winSportFam)}"]`); return; }
+  if (data.winAll) { state.winAll = !state.winAll; rerenderKeepingFocus('[data-win-all]'); return; }
   if (data.winPane) { state.winPane = data.winPane; rerenderKeepingFocus(`[data-win-pane="${data.winPane}"]`); return; }
   if (data.winFam) { state.winFam = data.winFam; rerenderKeepingFocus(`[data-win-fam="${CSS.escape(data.winFam)}"]`); return; }
   if (data.winStep) { const next = state.winList[state.winList.indexOf(state.statsMatch) + Number(data.winStep)]; if (next) { state.statsMatch = next; rerenderKeepingFocus(`[data-win-step="${data.winStep}"]`); } return; }
@@ -1383,6 +1424,7 @@ app.addEventListener('click', event => {
 
 app.addEventListener('change', event => {
   const target = event.target;
+  if (target.id === 'win-event-select') { state.winEvent = target.value; rerenderKeepingFocus('#win-event-select'); return; }
   if (target.id === 'win-select') { state.statsMatch = target.value; rerenderKeepingFocus('#win-select'); return; }
   if (target.id === 'home-sort') { state.homeSort = target.value; rerenderKeepingFocus('#home-sort'); return; }
   if (target.dataset.filter === 'match') { state.selectedMatch = target.value; rerenderKeepingFocus('#match-select'); }
@@ -1461,7 +1503,7 @@ function syncPublicAuth() {
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
-  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); resultsCache=null; }
+  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); resultsCache=null; }
   render();
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;

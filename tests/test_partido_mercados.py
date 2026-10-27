@@ -162,3 +162,88 @@ def test_equipo_desconocido_toma_las_lambdas_del_mercado(monkeypatch):
     monkeypatch.setattr(pm, 'query_one', lambda sql, params: (
         {'home_lambda': 1.5, 'away_lambda': 1.1, 'rho': -0.06, 'conocido': 'true'} if 'FROM predictions' in sql else None))
     assert pm.lambdas_goles('m1') == (1.5, 1.1, -0.06)
+
+
+# --- regla de la WEB: destacado de 1,40 a 1,80 y 3 mercados gratis -----------------------------
+
+def _en_rango(filas):
+    return sorted((f for f in filas if pm.RANGO_DESTACADO[0] <= f['cuota'] <= pm.RANGO_DESTACADO[1]),
+                  key=lambda f: -f['prob'])
+
+
+def test_web_destacado_sale_de_todos_los_mercados_aunque_sean_vip(lista):
+    filas, marcadores = lista
+    esperado = _en_rango(filas)
+    assert len(esperado) >= 3
+    out, _, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
+    assert destacado['id'] == esperado[0]['id']
+    assert 1.40 <= destacado['cuota'] <= 1.80 and destacado['locked'] is False
+    assert destacado['prob'] == max(f['prob'] for f in filas if 1.40 <= f['cuota'] <= 1.80)
+
+
+def test_web_gratis_tiene_tres_abiertas_las_mas_probables_del_rango_y_el_resto_con_candado(lista):
+    filas, marcadores = lista
+    out, marcadores_out, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
+    abiertas = [f for f in out if not f['locked']]
+    assert [f['id'] for f in abiertas] == [f['id'] for f in _en_rango(filas)[:3]]
+    assert abiertas[0]['id'] == destacado['id'] and abiertas[0]['destacado'] is True
+    candados = [f for f in out if f['locked']]
+    assert len(abiertas) + len(candados) == len(filas)
+    assert all(set(f) == {'id', 'grupo', 'locked'} for f in candados)      # sin selección, prob ni cuota
+    assert marcadores_out is None                                          # los marcadores no se regalan
+
+
+def test_web_con_vip_todo_va_abierto_y_el_destacado_es_el_mismo(lista):
+    filas, marcadores = lista
+    _, _, gratis = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
+    out, marcadores_out, vip = pm.aplicar_acceso_web(filas, marcadores, {}, plus=True)
+    assert not any(f['locked'] for f in out) and marcadores_out == marcadores
+    assert vip['id'] == gratis['id']
+
+
+def test_web_si_el_rango_no_da_para_tres_se_completa_con_las_mas_probables():
+    def fila(i, prob):
+        return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
+    filas = [fila(1, .60), fila(2, .90), fila(3, .85), fila(4, .80)]   # solo la primera tiene cuota 1,40–1,80
+    out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
+    assert destacado['id'] == filas[0]['id']
+    assert {f['id'] for f in out if not f['locked']} == {filas[0]['id'], filas[1]['id'], filas[2]['id']}
+
+
+def test_web_sin_ningun_mercado_en_rango_no_hay_destacado_pero_si_tres_gratis():
+    def fila(i, prob):
+        return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
+    filas = [fila(1, .95), fila(2, .90), fila(3, .85), fila(4, .30)]
+    out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
+    assert destacado is None and sum(not f['locked'] for f in out) == 3
+
+
+def test_web_un_pick_sellado_abierto_conserva_su_probabilidad_y_no_se_duplica(lista):
+    filas, marcadores = lista
+    objetivo = _en_rango(filas)[0]
+    pick = {'pick_key': 'k1', 'market': objetivo['market'], 'selection': objetivo['selection'],
+            'line': objetivo['line'], 'prob': .66, 'ref_price': 1.52}
+    out, marcadores_out, destacado = pm.aplicar_acceso_web(filas, marcadores, {objetivo['id']: pick}, plus=False)
+    fila = next(f for f in out if f['id'] == objetivo['id'])
+    assert fila['prob'] == .66 and fila['cuota'] == 1.52 and fila['cuota_tipo'] == 'publicada'
+    assert sum(f['id'] == objetivo['id'] for f in out) == 1
+    assert marcadores_out == marcadores                                    # hay pick abierto: mismo trato que la app
+    assert destacado['pick_key'] == 'k1'
+
+
+def test_la_app_conserva_su_regla_sin_destacado_ni_gratis_extra(lista):
+    filas, marcadores = lista
+    out, marcadores_out = pm.aplicar_acceso(filas, marcadores, {}, plus=False)
+    assert all(f['locked'] for f in out) and marcadores_out is None
+
+
+def test_mercados_partido_pasa_la_regla_web_solo_cuando_se_pide(monkeypatch):
+    from qf.api import mobile
+    visto = []
+    monkeypatch.setattr(pm, 'construir', lambda *a, **k: visto.append(a[-1] if len(a) > 5 else None) or {'ok': True})
+    ficha = {'local': {'nombre': 'A'}, 'visitante': {'nombre': 'B'}}
+    mobile.mercados_partido('m', ficha, [], False)
+    mobile.mercados_partido('m', ficha, [], False, True)
+    assert visto == [False, True]                 # la app (por defecto) nunca activa la regla de la web
+    import inspect
+    assert inspect.signature(mobile.detail).parameters['web'].default.default is False
