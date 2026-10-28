@@ -66,14 +66,16 @@ def sport_images_styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "sport-images.css", media_type="text/css")
 
 
-@router.get("/web/imagenes/jugadores/{sport}/{player_id}.png")
-def player_portrait(sport: str, player_id: str):
-    from .imagenes import cached_portrait
+@router.get("/web/imagenes/jugadores/{sport}/{player_id}.{extension}")
+def player_portrait(sport: str, player_id: str, extension: str):
+    from .imagenes import cached_portrait, EXTENSIONS
     from ..config import settings
+    if EXTENSIONS.get(sport) != extension:
+        raise HTTPException(404, "Foto no disponible", headers={"Cache-Control": "no-store"})
     path = cached_portrait(sport, player_id, Path(settings.artifact_dir) / "public-images" / "jugadores")
     if path is None:
         raise HTTPException(404, "Foto no disponible", headers={"Cache-Control": "no-store"})
-    return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+    return FileResponse(path, media_type="image/" + extension, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.get("/ergonomic-views.js")
