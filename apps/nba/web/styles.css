@@ -2,3 +2,5 @@
 
 .expanded-tabs{flex-wrap:wrap;margin-bottom:16px}.model-note{color:var(--muted,#9dacbe);font-size:.85rem;line-height:1.6;margin:12px 0}.comparison{margin-top:24px;color:var(--muted,#9dacbe);font-size:.9rem;line-height:1.7}.comparison summary{cursor:pointer;color:var(--text,#eef4fa);font-weight:600}.table-scroll{overflow-x:auto;max-width:100%}.comparison table{width:100%;border-collapse:collapse;min-width:760px}.comparison td,.comparison th{padding:12px;text-align:left;border-bottom:1px solid #283449;vertical-align:top}.comparison th{color:#eef4fa}.expanded-tabs button{white-space:nowrap}
 
+
+img.avatar.player-photo{object-fit:cover;object-position:center 20%;flex:none}.player-card>img.player-photo{float:left;margin:0 10px 8px 0}

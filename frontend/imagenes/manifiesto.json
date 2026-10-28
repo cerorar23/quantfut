@@ -1,5 +1,13 @@
 {
- "generado": "2026-10-27",
+ "futbol": {
+  "85064": {
+   "f": "85064.png",
+   "fuente": "API-Football",
+   "n": "Eyüpspor",
+   "provider_id": 3588
+  }
+ },
+ "generado": "2026-10-28",
  "nba": {
   "ATL": {
    "f": "ATL.png",
@@ -306,6 +314,15 @@
    "p": "https://commons.wikimedia.org/wiki/File:2023_Roland_Garros_Qualifying_Tournament_-_37_(cropped2).jpg",
    "q": "Q84599634"
   },
+  "aoi ito": {
+   "a": "API-Tennis",
+   "f": "aoi-ito.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Aoi Ito",
+   "p": "https://api.api-tennis.com/logo-tennis/13618_a-ito.jpg"
+  },
   "arthur fery": {
    "a": "si.robi",
    "f": "arthur-fery.jpg",
@@ -377,6 +394,15 @@
    "n": "Botic van de Zandschulp",
    "p": "https://commons.wikimedia.org/wiki/File:Van_de_Zandschulp_RG21_(29)_(51375315497).jpg",
    "q": "Q28038578"
+  },
+  "brandon nakashima": {
+   "a": "API-Tennis",
+   "f": "brandon-nakashima.jpg",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Brandon Nakashima",
+   "p": "https://api.api-tennis.com/logo-tennis/2838_b-nakashima.jpg"
   },
   "cameron norrie": {
    "a": "si.robi",
@@ -467,6 +493,15 @@
    "n": "Daniel Altmaier",
    "p": "https://commons.wikimedia.org/wiki/File:Altmaier_RG22_(24)_(52144567090).jpg",
    "q": "Q30005211"
+  },
+  "daniel merida": {
+   "a": "API-Tennis",
+   "f": "daniel-merida.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Daniel Merida",
+   "p": "https://api.api-tennis.com/logo-tennis/978_d-merida-aguilar.jpg"
   },
   "daniil medvedev": {
    "a": "LacosteWiki",
@@ -693,6 +728,15 @@
    "p": "https://commons.wikimedia.org/wiki/File:Medjedovic_RGQ23.jpg",
    "q": "Q106962940"
   },
+  "han shi": {
+   "a": "API-Tennis",
+   "f": "han-shi.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Han Shi",
+   "p": "https://api.api-tennis.com/logo-tennis/38097_h-shi.jpg"
+  },
   "harriet dart": {
    "a": "si.robi",
    "f": "harriet-dart.jpg",
@@ -747,6 +791,15 @@
    "p": "https://commons.wikimedia.org/wiki/File:Hurkacz_RG19_(10)_(48199235282).jpg",
    "q": "Q18927958"
   },
+  "ignacio buse": {
+   "a": "API-Tennis",
+   "f": "ignacio-buse.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Ignacio Buse",
+   "p": "https://api.api-tennis.com/logo-tennis/9514_i-buse.jpg"
+  },
   "jacob fearnley": {
    "a": "Cazza3012",
    "f": "jacob-fearnley.jpg",
@@ -791,6 +844,15 @@
    "n": "Jan-Lennard Struff",
    "p": "https://commons.wikimedia.org/wiki/File:Struff_RG18_(6)_(42260262224).jpg",
    "q": "Q1681537"
+  },
+  "janice tjen": {
+   "a": "API-Tennis",
+   "f": "janice-tjen.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Janice Tjen",
+   "p": "https://api.api-tennis.com/logo-tennis/28551_j-tjen.jpg"
   },
   "jasmine paolini": {
    "a": "Nuță Lucian from Cluj-Napoca, Romania",
@@ -1134,6 +1196,15 @@
    "p": "https://commons.wikimedia.org/wiki/File:Marta_Kostyuk_(2023_US_Open)_20_(cropped).jpg",
    "q": "Q28535267"
   },
+  "martin landaluce": {
+   "a": "API-Tennis",
+   "f": "martin-landaluce.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Martin Landaluce",
+   "p": "https://api.api-tennis.com/logo-tennis/39864_m-landaluce.jpg"
+  },
   "matteo arnaldi": {
    "a": "si.robi",
    "f": "matteo-arnaldi.jpg",
@@ -1142,6 +1213,15 @@
    "n": "Matteo Arnaldi",
    "p": "https://commons.wikimedia.org/wiki/File:Arnaldi_BLO22_(68)_(52157038811).jpg",
    "q": "Q111903012"
+  },
+  "matteo berrettini": {
+   "a": "API-Tennis",
+   "f": "matteo-berrettini.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Matteo Berrettini",
+   "p": "https://api.api-tennis.com/logo-tennis/2844_m-berrettini.jpg"
   },
   "maya joint": {
    "a": "Hameltion",
@@ -1160,6 +1240,15 @@
    "n": "Mei Yamaguchi",
    "p": "https://commons.wikimedia.org/wiki/File:Mei_Yamaguchi_(2026_Cary)_02.jpg",
    "q": "Q106294428"
+  },
+  "mia pohankova": {
+   "a": "API-Tennis",
+   "f": "mia-pohankova.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Mia Pohankova",
+   "p": "https://api.api-tennis.com/logo-tennis/61034_m-pohankova.jpg"
   },
   "mika brunold": {
    "a": "Peter Arnold Skyscraper2010",
@@ -1359,6 +1448,15 @@
    "p": "https://commons.wikimedia.org/wiki/File:Rinky_Hijikata_(2023_Cary)_01a_(cropped).jpg",
    "q": "Q60227425"
   },
+  "ruien zhang": {
+   "a": "API-Tennis",
+   "f": "ruien-zhang.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Ruien Zhang",
+   "p": "https://api.api-tennis.com/logo-tennis/37270_r-zhang.jpg"
+  },
   "sara bejlek": {
    "a": "Hameltion",
    "f": "sara-bejlek.jpg",
@@ -1385,6 +1483,15 @@
    "n": "Sebastian Baez",
    "p": "https://commons.wikimedia.org/wiki/File:Baez_RG22_(6)_(52144105338).jpg",
    "q": "Q47396310"
+  },
+  "sebastian sorger": {
+   "a": "API-Tennis",
+   "f": "sebastian-sorger.png",
+   "fuente": "API-Tennis",
+   "l": "Imagen del proveedor",
+   "lu": "https://api-tennis.com/documentation",
+   "n": "Sebastian Sorger",
+   "p": "https://api.api-tennis.com/logo-tennis/22921_s-sorger.jpg"
   },
   "sho shimabukuro": {
    "a": "si.robi",

@@ -41,6 +41,10 @@ def test_every_manifest_entry_has_its_file_with_real_image_bytes():
 def test_every_tennis_photo_credits_author_and_a_cc_licence():
     for clave, entry in manifest()["tenis"].items():
         assert entry["a"].strip(), clave
+        if entry.get("fuente") == "API-Tennis":
+            assert entry["l"] == "Imagen del proveedor"
+            assert entry["p"].startswith("https://api.api-tennis.com/logo-tennis/")
+            continue
         assert entry["l"].startswith(("CC BY", "CC0", "Public domain", "Dominio")), (clave, entry["l"])
         assert entry["p"].startswith("https://commons.wikimedia.org/"), clave
 
@@ -53,3 +57,19 @@ def test_only_known_folders_and_plain_file_names_are_served():
     assert client.get("/web/imagenes/nba/manifiesto.json").status_code == 404
     assert client.get("/web/imagenes/nba/NO-EXISTE.png").status_code == 404
     assert client.get("/web/imagenes/nba/script.js").status_code == 404
+
+
+def test_portrait_route_uses_only_fixed_providers_and_serves_the_new_assets(monkeypatch, tmp_path):
+    from qf.api import imagenes
+    calls = []
+    def image(sport, player_id, directory):
+        calls.append((sport, player_id))
+        return web.IMAGES_DIR / "nba" / "BOS.png" if (sport, player_id) == ("nba", "2544") else None
+    monkeypatch.setattr(imagenes, "cached_portrait", image)
+    portrait = client.get("/web/imagenes/jugadores/nba/2544.png")
+    assert portrait.status_code == 200 and portrait.headers["content-type"] == "image/png"
+    assert calls == [("nba", "2544")]
+    missing = client.get("/web/imagenes/jugadores/nba/0.png")
+    assert missing.status_code == 404 and missing.headers["cache-control"] == "no-store"
+    for path in ("/sport-images.js", "/sport-images.css", "/web/imagenes/futbol/85064.png"):
+        assert client.get(path).status_code == 200

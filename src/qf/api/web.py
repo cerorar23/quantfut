@@ -14,7 +14,7 @@ from fastapi import Response
 router = APIRouter(include_in_schema=False)
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
 IMAGES_DIR = FRONTEND_DIR / "imagenes"
-_IMAGE_FOLDERS = {"nba", "tenis"}
+_IMAGE_FOLDERS = {"nba", "tenis", "futbol"}
 _IMAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}\.(png|jpg)$", re.IGNORECASE)
 _IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg"}
 
@@ -54,6 +54,26 @@ def sports_script() -> FileResponse:
 @router.get("/sports-window.js")
 def sports_window_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "sports-window.js", media_type="text/javascript")
+
+
+@router.get("/sport-images.js")
+def sport_images_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "sport-images.js", media_type="text/javascript")
+
+
+@router.get("/sport-images.css")
+def sport_images_styles() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "sport-images.css", media_type="text/css")
+
+
+@router.get("/web/imagenes/jugadores/{sport}/{player_id}.png")
+def player_portrait(sport: str, player_id: str):
+    from .imagenes import cached_portrait
+    from ..config import settings
+    path = cached_portrait(sport, player_id, Path(settings.artifact_dir) / "public-images" / "jugadores")
+    if path is None:
+        raise HTTPException(404, "Foto no disponible", headers={"Cache-Control": "no-store"})
+    return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.get("/ergonomic-views.js")

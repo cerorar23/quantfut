@@ -158,6 +158,13 @@
   object-fit: contain;
 }
 
+.win-crest.is-photo {
+  object-fit: cover;
+  object-position: center 20%;
+  border-radius: 50%;
+}
+
+
 .win-crest.is-initial {
   display: inline-grid;
   place-items: center;

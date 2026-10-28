@@ -66,7 +66,7 @@ export function createHubViews(ctx) {
     if(own)return {src:own};
     const index=images();
     if(event.sport==='nba'){const hit=index.nba[monogram(name,'nba')];return hit?{src:`/web/imagenes/nba/${hit.f}`,logo:true}:{};}
-    if(event.sport==='tenis'){const hit=index.tenis[norm(name)];return hit?{src:`/web/imagenes/tenis/${hit.f}`,photo:true,credit:`Foto: ${hit.a} · ${hit.l} (Wikimedia Commons)`}:{};}
+    if(event.sport==='tenis'){const hit=index.tenis[norm(name)];return hit?{src:`/web/imagenes/tenis/${hit.f}`,photo:true,credit:`Foto: ${hit.a} · ${hit.l} (${hit.fuente || "Wikimedia Commons"})`}:{};}
     return {};
   }
   function avatar(name,sport,image={},big=false) {

@@ -8,9 +8,16 @@ const MARKET_ORDER = ['player_points','player_rebounds','player_assists','player
 let data = null, market = 'all', modelMarket = 'all', loading = false;
 function node(tag, css, text) { const n = document.createElement(tag); if (css) n.className = css; if (text !== undefined) n.textContent = text; return n; }
 function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-00[2456]\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
+function portrait(row) {
+  const name=String(row.player||''),fallback=node('span','avatar',name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join(''));
+  fallback.title=`Foto no disponible: ${name}`;
+  if(!/^[1-9][0-9]{0,7}$/.test(String(row.player_id)))return fallback;
+  const photo=node('img','avatar player-photo');photo.src=`/web/imagenes/jugadores/nba/${row.player_id}.png`;photo.alt='';photo.loading='lazy';photo.decoding='async';
+  photo.addEventListener('error',()=>photo.replaceWith(fallback),{once:true});return photo;
+}
 function isPending(row) { return !['evaluated','dnp'].includes(row.result.status); }
 function modelCard(r,event) {
-      const card=node('div','player-card');card.append(node('p','player-name',r.player),node('span','market-name',r.market_label));
+      const card=node('div','player-card');if(String(r.market).startsWith('player_'))card.append(portrait(r));card.append(node('p','player-name',r.player),node('span','market-name',r.market_label));
       if(r.market==='winner') {
         card.append(node('p','estimate',`${number(r.probability_over*100)}%`),node('p','',`Gana ${event.home_team}`),node('p','model-note',`${number(r.probability_under*100)}% gana ${event.away_team}`));
       } else {
@@ -104,7 +111,7 @@ function render() {
     for (const id of [...new Set(matches.map(r=>r.player_id))]) {
       const predictions=matches.filter(r=>r.player_id===id), first=predictions[0], card=node('div','player-card'), head=node('div','player-head'), names=node('div');
       names.append(node('p','player-name',first.player),node('p','player-sub','Partido completo · Prórroga incluida'));
-      head.append(node('span','avatar',first.player.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('')),names); card.append(head);
+      head.append(portrait(first),names); card.append(head);
       for (const r of predictions.sort((a,b)=>MARKET_ORDER.indexOf(a.market)-MARKET_ORDER.indexOf(b.market))) {
         const forecast=node('div','forecast-row'), estimate=node('div'), display=node('div','estimate',number(r.estimate));
         display.append(node('small','',`Rango ${r.range_low}–${r.range_high}`)); estimate.append(node('span','market-name',r.market_label),display);
