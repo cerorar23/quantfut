@@ -3418,3 +3418,5 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [ ] Pedir estadísticas ya en la lista de scrapesage (NBA y tenis), que cobra por partido igual que el detalle.
 - [ ] Probar `soccer_markets_per_request` 20 en una sola liga con medición antes de generalizar.
 - [ ] Alerta si `soccer_*/odds` supera 1.600 llamadas/día o si Apify pasa un día sin pedir detalles con terminados pendientes.
+- [x] xG: hora mínima de captura de 20 h (`XG_MIN_HORAS`) en SofaScore y FotMob, con segunda página de FotMob; desplegado el 28-oct.
+- [ ] Decidir si se corrigen los xG provisionales ya guardados (≈10 % de los partidos de las últimas semanas) antes del reentrenamiento del 1-nov.

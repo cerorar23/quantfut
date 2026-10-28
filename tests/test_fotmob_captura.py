@@ -262,6 +262,64 @@ def test_correr_pasa_las_opciones_de_relleno_y_respeta_el_enfriamiento():
     f.assert_not_called()
 
 
+class _Refresco:
+    """Conexión falsa de `refrescar_xg`: devuelve los candidatos y anota cada consulta."""
+
+    def __init__(self, filas):
+        self.filas, self.sql = filas, []
+
+    def execute(self, sql, params=None):
+        self.sql.append((" ".join(sql.split()), params))
+        return _Filas(self.filas)
+
+    def commit(self):
+        pass
+
+
+class _Cli:
+    def __init__(self, payload):
+        self.payload, self.pedidos = payload, []
+
+    def get(self, endpoint, params):
+        self.pedidos.append((endpoint, params))
+        return self.payload
+
+
+def test_refrescar_xg_pide_otra_pagina_a_quien_solo_tiene_una_temprana():
+    c = _Refresco([{"match_id": "m1", "fotmob_match_id": "9"}])
+    cli = _Cli({"general": {"matchId": "9", "finished": True}, "__raw__": b"{}"})
+    with patch.object(fc, "_guardar_original", return_value=(1, KICKOFF)) as g:
+        r = fc.refrescar_xg(c, cli)
+    assert r == {"candidatos": 1, "guardados": 1, "descartados": 0}
+    assert cli.pedidos == [("matchDetails", {"matchId": "9"})]
+    assert g.call_args.args[1:4] == ("m1", "9", "posterior")       # otra página original; fotmob_partido no se toca
+    sql, params = c.sql[0]
+    assert "home_xg IS NULL" in sql and "capturado_en >= m.kickoff_utc + %s * interval '1 hour'" in sql
+    assert params[2] == fc.XG_MIN_HORAS == 20.0
+
+
+def test_refrescar_xg_descarta_la_pagina_de_otro_partido_o_sin_terminar():
+    c = _Refresco([{"match_id": "m1", "fotmob_match_id": "9"}, {"match_id": "m2", "fotmob_match_id": "10"}])
+    cli = _Cli({"general": {"matchId": "9", "finished": False}, "__raw__": b"{}"})
+    with patch.object(fc, "_guardar_original") as g:
+        r = fc.refrescar_xg(c, cli)
+    assert r["guardados"] == 0 and r["descartados"] == 2
+    g.assert_not_called()
+
+
+def test_completar_solo_usa_paginas_tomadas_pasada_la_hora_minima():
+    class Registra(_Completar):
+        def execute(self, sql, params=None):
+            if sql.lstrip().startswith("SELECT"):
+                self.consulta = (" ".join(sql.split()), params)
+            return super().execute(sql, params)
+    c = Registra([_fila("m1", _posterior())])
+    fc.completar(c)
+    sql, params = c.consulta
+    assert "o.capturado_en >= m.kickoff_utc + %s * interval '1 hour'" in sql
+    assert params[-1] == 20.0
+
+
 def _posterior(goles=(2, 1), xg=(1.4, 0.6)):
     items = [{"key": "yellow_cards", "stats": [3, 1]}, {"key": "corners", "stats": [7, 2]}]
     if xg:
@@ -337,7 +395,8 @@ def test_completar_espera_36_horas_desde_el_saque():
     vistos = []
     c.execute = lambda sql, params=None: vistos.append(params) or _Filas([])
     fc.completar(c)
-    desde, hasta = vistos[0]
+    desde, hasta, horas_min_xg = vistos[0]
+    assert horas_min_xg == 20.0
     assert (datetime.now(timezone.utc) - hasta).total_seconds() >= 36 * 3600 - 5
 
 

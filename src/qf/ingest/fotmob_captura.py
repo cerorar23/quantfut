@@ -36,6 +36,7 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 from ..league_policy import RETIRED_LEAGUES
+from .estadisticas import XG_MIN_HORAS
 from . import fotmob_a_motor as fm
 from .fotmob_history import COMPETITIONS
 
@@ -376,6 +377,36 @@ def capturar_posteriores(c, cli: Cliente, dias_atras: int = 6, maximo: int = MAX
             fm.insertar(w, f["match_id"], f["fotmob_match_id"], hashlib.sha256(raw).hexdigest(), cap, x)
         c.commit()
         r["guardados"] += 1
+    r["refresco_xg"] = refrescar_xg(c, cli, dias_atras=dias_atras)
+    return r
+
+
+def refrescar_xg(c, cli: Cliente, dias_atras: int = 6, maximo: int = 30) -> dict:
+    """Otra página posterior para los partidos sin xG cuya única página se tomó antes de XG_MIN_HORAS del saque.
+
+    Solo guarda el original (`fotmob_partido` se queda con la primera página): `completar` toma el xG de la primera página
+    tomada pasada la hora mínima.
+    """
+    ahora = datetime.now(timezone.utc)
+    filas = c.execute(
+        """SELECT m.match_id, f.fotmob_match_id
+           FROM matches m JOIN leagues l USING (league_id) JOIN fotmob_referencia f USING (match_id)
+           WHERE m.status = 'finished' AND l.active AND m.home_xg IS NULL AND m.away_xg IS NULL
+             AND m.kickoff_utc BETWEEN %s AND %s
+             AND EXISTS (SELECT 1 FROM fotmob_partido p WHERE p.match_id = m.match_id)
+             AND NOT EXISTS (SELECT 1 FROM fotmob_original o WHERE o.match_id = m.match_id AND o.fase = 'posterior'
+                             AND o.capturado_en >= m.kickoff_utc + %s * interval '1 hour')
+           ORDER BY m.kickoff_utc LIMIT %s""",
+        (ahora - timedelta(days=dias_atras), ahora - timedelta(hours=XG_MIN_HORAS), XG_MIN_HORAS, maximo)).fetchall()
+    r = {"candidatos": len(filas), "guardados": 0, "descartados": 0}
+    for f in filas:
+        payload = cli.get("matchDetails", {"matchId": f["fotmob_match_id"]})
+        if not _validar(payload, f["fotmob_match_id"]) or not (payload.get("general") or {}).get("finished"):
+            r["descartados"] += 1
+            continue
+        _guardar_original(c, f["match_id"], f["fotmob_match_id"], "posterior", payload["__raw__"], None)
+        c.commit()
+        r["guardados"] += 1
     return r
 
 
@@ -433,7 +464,8 @@ def _columnas() -> str:
 def completar(c, cli: Cliente | None = None, dias_atras: int = 10) -> dict:
     """Rellena en `matches`, con la página posterior ya guardada, lo que sigue NULL tras SofaScore y PropLine.
 
-    Solo partidos con más de ESPERA_COMPLETAR desde el saque (ver `_rellenar`). No hace peticiones.
+    Solo partidos con más de ESPERA_COMPLETAR desde el saque (ver `_rellenar`) y con una página tomada al menos
+    XG_MIN_HORAS después del saque (el xG se corrige tras el partido; `refrescar_xg` pide esa página). No hace peticiones.
     """
     from .archivo_a_matches import COLUMNAS_MATCHES
 
@@ -446,8 +478,9 @@ def completar(c, cli: Cliente | None = None, dias_atras: int = 10) -> dict:
             WHERE o.fase = 'posterior' AND l.active AND m.status = 'finished'
               AND m.kickoff_utc BETWEEN %s AND %s
               AND (m.home_xg IS NULL OR m.away_xg IS NULL OR {faltan})
+              AND o.capturado_en >= m.kickoff_utc + %s * interval '1 hour'
             ORDER BY m.match_id, o.capturado_en""",
-        (ahora - timedelta(days=dias_atras), ahora - ESPERA_COMPLETAR)).fetchall()
+        (ahora - timedelta(days=dias_atras), ahora - ESPERA_COMPLETAR, XG_MIN_HORAS)).fetchall()
     r = {"candidatos": len(filas), "completados": 0, "con_xg": 0, "conflicto_marcador": 0, "sin_datos": 0}
     for f in filas:
         estado = _rellenar(c, f, json.loads(gzip.decompress(bytes(f["payload_gz"]))))
