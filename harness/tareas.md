@@ -3413,7 +3413,7 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [x] SofaScore/Apify: detalles con presupuesto reservado, reparto diario hasta el fin del ciclo y reserva para alineaciones (3 pruebas); desplegado en el host el 28-oct.
 - [x] PropLine: horizonte de 48 h para mercados ampliados y futuros apagados (1 prueba); desplegado el 28-oct (`releases/8861347`).
 - [x] `db/090`: alias `propline` de Racing de Santander y Tromsoe; aplicada en producción.
-- [ ] Verificar el ahorro con una jornada completa: `soccer_*/odds` ≤ 1.300 llamadas/día (base 1.909) y primera petición de cada liga sin huecos.
+- [x] Ahorro de PropLine verificado la tarde del 28-oct: 19:07 UTC = 41 llamadas de fútbol frente a 68 (−40 %), 0 fallos. Queda medir un día completo (≤ 1.300 llamadas/día de fútbol; depende de cuántas ligas jueguen) a partir del 29-oct.
 - [ ] Decidir el tope mensual de Apify (hoy 15 USD, cuenta en 13,2): listas y detalles de NBA/tenis/MLS esperan hasta el 24-nov o hasta subirlo.
 - [ ] Pedir estadísticas ya en la lista de scrapesage (NBA y tenis), que cobra por partido igual que el detalle.
 - [ ] Probar `soccer_markets_per_request` 20 en una sola liga con medición antes de generalizar.
