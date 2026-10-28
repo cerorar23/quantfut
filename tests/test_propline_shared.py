@@ -491,8 +491,8 @@ def odds_run(tmp_path, monkeypatch, answer, *, sports=("basketball_nba",), **ext
     monkeypatch.setattr(pl, "Collector", lambda root, key, **kw: REAL_COLLECTOR(root, key, get=get, **kw))
     key_file = tmp_path / "key"; key_file.write_text("A" * 32)
     config = dict(sports=list(sports), daily_cap=4500, account_reserve=500, scores=True, scores_every_hours=1,
-                  markets_by_family=dict(default=["h2h"], basketball_=["h2h", "spreads", "totals", "player_points", "player_rebounds"]),
-                  **extra)
+                  markets_by_family=dict(default=["h2h"], basketball_=["h2h", "spreads", "totals", "player_points", "player_rebounds"]))
+    config.update(extra)
     config_file = tmp_path / "config.json"; config_file.write_text(json.dumps(config))
     report = pl.run(tmp_path / "archive", key_file, config_file)
     return [(p, c) for p, c in calls if p.endswith("/odds")], calls, report
@@ -527,6 +527,30 @@ def test_successful_featured_is_not_repeated_and_an_empty_one_stops_the_batches(
     (tmp_path / "empty").mkdir()
     odds, _, report = odds_run(tmp_path / "empty", monkeypatch, lambda path, params: (200, []))
     assert [c["markets"] for _, c in odds] == ["h2h,spreads,totals"] and report["failures"] == 0
+
+
+def soccer_odds_run(tmp_path, monkeypatch, hours_to_kickoff, **extra):
+    ko = pl.stamp(datetime.now(timezone.utc) + timedelta(hours=hours_to_kickoff))
+    event = dict(id="7", sport_key="soccer_epl", commence_time=ko, home_team="A", away_team="B", bookmakers=[])
+    family = dict(default=["h2h"], soccer_=["h2h", "spreads", "totals", "corners_a", "corners_b"])
+    odds, _, _ = odds_run(tmp_path, monkeypatch, lambda path, params: (200, [event]), sports=("soccer_epl",),
+                          markets_by_family=family, soccer_markets_per_request=1, extended_horizon_hours=48, **extra)
+    return [c["markets"] for _, c in odds]
+
+
+def test_extended_markets_wait_for_the_horizon_and_then_follow_a_slow_cadence(tmp_path, monkeypatch):
+    """Una liga sin partido en las próximas 48 h no gasta 3 de cada 4 llamadas en córners y tarjetas cada hora."""
+    hora = datetime.now(timezone.utc).hour
+    if hora == 0:
+        pytest.skip("a las 00 UTC toca cualquier cadencia")
+    cada = 3 if hora % 3 else 7 if hora % 7 else 5           # una cadencia que NO toca esta hora
+    assert soccer_odds_run(tmp_path, monkeypatch, 5, extended_far_every_hours=cada) == [
+        "h2h,spreads,totals", "corners_a", "corners_b"]
+    (tmp_path / "far").mkdir()
+    assert soccer_odds_run(tmp_path / "far", monkeypatch, 100, extended_far_every_hours=cada) == ["h2h,spreads,totals"]
+    (tmp_path / "slow").mkdir()
+    assert soccer_odds_run(tmp_path / "slow", monkeypatch, 100, extended_far_every_hours=1) == [
+        "h2h,spreads,totals", "corners_a", "corners_b"]
 
 
 def test_scores_of_other_competitions_follow_their_odds_cadence(tmp_path, monkeypatch):

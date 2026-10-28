@@ -22,7 +22,10 @@ class Fake:
 
     def __call__(self, method, url, token, payload=None, timeout=0):
         if url.endswith("/users/me/limits"):
-            return 200, json.dumps({"data": {"current": {"monthlyUsageUsd": self.usd}}}).encode()
+            data = {"current": {"monthlyUsageUsd": self.usd}}
+            if getattr(self, "cycle_end", None):
+                data["monthlyUsageCycle"] = {"endAt": self.cycle_end}
+            return 200, json.dumps({"data": data}).encode()
         self.calls.append(payload)
         self.urls.append(url)
         self.usd += 0.02
@@ -102,6 +105,30 @@ def test_tope_de_presupuesto_detiene(tmp_path):
     c, f = collector(tmp_path, [ev(1, 3, "finished")])
     c.cfg = {**CFG, "monthly_cap_usd": 1.05}
     assert c.capture() == "presupuesto agotado"
+
+
+def test_las_listas_no_dejan_los_detalles_sin_presupuesto(tmp_path):
+    """26-28-oct-2026: las listas gastaban el tope de la corrida y `details()` no llegaba a pedir nada."""
+    f = Fake([ev(1, 3, "finished"), ev(2, 3, "notstarted", 1793000000)])
+    cfg = {**CFG, "run_cap_usd": 0.30, "targets": {"t%d" % i: {"utid": i} for i in range(1, 7)}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    with c.db:
+        c.db.execute("INSERT INTO events(id,target,round,start_ts,status) VALUES(900,'t1',3,?,'finished')",
+                     (int(T0.timestamp()) - 86400,))
+    assert c.capture() == "presupuesto agotado"
+    kinds = [r["kind"] for r in c.db.execute("SELECT kind FROM receipts ORDER BY id")]
+    assert kinds[-1] == "detail"
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=900").fetchone()[0]
+
+
+def test_el_gasto_diario_se_reparte_hasta_el_fin_del_ciclo(tmp_path):
+    """Con 1 USD de margen y 2 días de ciclo, una corrida no gasta más de ~0,5 USD."""
+    f = Fake([ev(1, 3, "finished")])
+    f.usd, f.cycle_end = 14.0, "2026-10-26T23:59:59.999Z"
+    cfg = {**CFG, "run_cap_usd": 5, "targets": {"t%d" % i: {"utid": i} for i in range(1, 21)}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    c.capture()
+    assert f.usd - 14.0 <= 0.5 + 0.02
 
 
 def test_tenis_descubre_semanal_solo_atp_wta_individual(tmp_path):
@@ -223,3 +250,11 @@ def test_el_recibo_de_once_se_archiva_con_recepcion_real(tmp_path):
     c.capture_lineups()
     got = c.db.execute("SELECT received_at, kind FROM receipts WHERE kind='lineup'").fetchone()
     assert got["received_at"] == T0.isoformat()
+
+
+def test_el_resto_de_capturas_no_toca_la_reserva_de_las_alineaciones(tmp_path):
+    """El once oficial lo lee `sello_tardio`: si las listas gastan hasta el tope mensual, deja de llegar."""
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 50)])
+    f.usd = c.start_usd = 14.2                     # tope 15, reserva de las alineaciones 1,0
+    assert c.capture() == "presupuesto agotado" and not f.calls
+    assert c.capture_lineups() == "ok" and f.calls
