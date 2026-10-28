@@ -89,7 +89,16 @@ def test_aplicar_escribe_xg_con_hora_de_recepcion_y_tarjetas_en_cero():
     assert web["home"]["tiros"] == 12 and web["away"]["corners"] == 4
     assert web["home"]["xg"] == 1.4 and web["home"]["rojas"] == 0
     xg = [p for q, p in c.sql if "xg_source = 'sofascore'" in q][0]
-    assert xg == (1.4, 0.6, RECIBO["received_at"], "ar:1")
+    assert xg == (1.4, 0.6, RECIBO["received_at"], "ar:1", RECIBO["received_at"], 20.0)
+
+
+def test_el_xg_solo_se_escribe_pasada_la_hora_minima_tras_el_saque():
+    """El xG se corrige después del partido (Houston 0-0 se guardó como 0,00-0,03): antes de 20 h queda vacío."""
+    c = FakeConn()
+    sp.aplicar(c, RECIBO, fila(), "ar:1")
+    sql = [q for q, p in c.sql if "xg_source = 'sofascore'" in q][0]
+    assert "%s::timestamptz >= kickoff_utc + %s * interval '1 hour'" in sql
+    assert sp.XG_MIN_HORAS == 20.0
 
 
 def test_sin_xg_no_toca_el_xg_y_repetido_no_reescribe():

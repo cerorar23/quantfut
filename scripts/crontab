@@ -134,12 +134,13 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Captura recurrente de FotMob (db/081), autorizada el 18-oct-2026 y reactivada el 25-oct como complemento diario de
 # SofaScore y PropLine, solo en las competiciones activas. Una sola a la vez (flock); un bloqueo HTTP 401/403/429
 # la detiene 12 h. Referencias de partidos una vez al día; instantáneas previas (24 h, 4 h, 70, 40 y 30 min antes)
-# cada 5 min; archivo de partidos terminados cada hora; a las 09:15, tras la carga de SofaScore de las 08:30, rellena
-# en `matches` lo que siga vacío en partidos de hace más de 36 h (sin peticiones).
+# cada 5 min; archivo de partidos terminados cada hora; y cada hora, a :50 y sin peticiones, `completar` rellena en
+# `matches` las estadísticas vacías (córners, tarjetas, tiros...) con la página ya guardada; el xG sigue su regla propia
+# (página de ≥ 20 h y partido de más de 36 h).
 50 5 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura referencias >> /var/log/fotmob_captura.log 2>&1
 */5 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura previos >> /var/log/fotmob_captura.log 2>&1
 35 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura posteriores >> /var/log/fotmob_captura.log 2>&1
-15 9 * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura completar >> /var/log/fotmob_captura.log 2>&1
+50 * * * * cd /app && flock -n /tmp/fotmob_captura.lock python -m qf.ingest.fotmob_captura completar >> /var/log/fotmob_captura.log 2>&1
 # Resultados con la primera fuente que los tenga (titular, 25-oct-2026): `qf.ingest.live` cierra al pitido con FotMob.
 # Este respaldo, cada hora, cierra lo que siga abierto a las 2 h 30 min del saque (enfriamiento, fuera del listado) si
 # terminó en el tiempo reglamentario y con los mismos dos equipos; después liquida.
