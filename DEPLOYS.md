@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 · Fotos y logos de los tres deportes · API `quantfut-api:37b1646`, NBA `nba-dashboard-images:37b1646`
+- PR #200 y #201 integradas con todas las comprobaciones aprobadas. Once fotos nuevas de API-Tennis y escudo Eyüpspor; retratos NBA y de fútbol; fotos de tenis en lista y encabezado; logos en el panel NBA independiente. Créditos por proveedor y sustitución accesible si falta foto.
+- La primera imagen API `5aafe38` se retiró al detectar IDs SofaScore en las alineaciones. Se restauró `ed566f7`; la corrección respeta `src` y se probó aislada contra los datos reales: Maignan → SofaScore WebP, Skorupski → API-Football PNG. Fuentes desconocidas no producen fotos.
+- Ensayos: módulos importables, 135 rutas, pruebas de frontend/API y panel NBA aislado. API final con salud 200. Solo presentación; motores y datos deportivos sin cambios. Xinran Sun no tiene foto de proveedor y usa iniciales.
+- API: respaldo `~/quantfut/releases/compose-antes-20261028-100914.yml`; restaurarlo y recrear solo API para volver a `ed566f7`.
+- NBA: copia exacta de configuración con montajes de solo lectura, usuario 1001 y límite de 256 MB. Respaldo `~/nba-isolated/releases/images-37b1646/dashboard.before.json`; contenedor anterior guardado como `nba-dashboard-before-images-37b1646` (imagen `5aafe38`). Original `v17-6c17f23` retenido en `nba-dashboard-before-images-5aafe38`. Para volver: parar el panel actual, renombrar el respaldo al nombre `nba-dashboard-run69`, restituir `restart=unless-stopped` e iniciarlo; no eliminar volúmenes.
+
+
 ### 2026-10-28 09:32 UTC · #historial rediseñado para convertir · API `quantfut-api:ed566f7` (`main` `ed566f7`, PR #198)
 - Orden del titular: «fusionar y desplegar». Cambios: nuevo `historial-views.js` (resumen con intervalo de Wilson, prometido frente a real, curva de beneficio con cuotas registradas, acierto por día y por deporte, registro día por día con cuota y marcador), cableado en `ergonomic-views.js`, estilos `.cv-hist-*` en `conversion.css` y ruta `/historial-views.js` en `web.py`. Sin cambios de API de datos ni de base. `?v=hist-20261028` en `app.js`, `index.html`, `real-views.js` y los imports.
 - Antes de construir: `deploy.sh estado` con la API distinta de `main` solo en `api/web.py` (mi cambio) y el worker sin tocar; `index.html`, `app.js`, `real-views.js`, `ergonomic-views.js`, `conversion.css` y `conversion-views.js` servidos idénticos a la base previa (`7ba7a49`).
