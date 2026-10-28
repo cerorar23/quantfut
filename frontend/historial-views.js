@@ -227,7 +227,7 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
       : '<p class="cv-hist-nota">Ningún resultado con estos filtros.</p>';
     const mas = visibles.length > limite ? `<button type="button" class="secondary-button cv-hist-more" data-result-more="1">Mostrar ${num(Math.min(PAGINA, visibles.length - limite))} más ↓</button>` : '';
     return `<section class="cv-section" id="cv-hist-lista" tabindex="-1" aria-label="Todos los resultados"><div class="cv-section-head"><p class="eyebrow">CADA RESULTADO, CON SU CUOTA</p><h2>El registro completo, día por día</h2></div>${filtros}<p class="cv-hist-count" aria-live="polite">Mostrando ${num(cortados.length)} de ${num(visibles.length)} resultados</p>${cuerpo}${mas}
-      <p class="cv-hist-foot">Cuota: la de la casa de referencia en el momento del sello (fútbol). En NBA y tenis ninguna casa publica estas cuotas: se muestra la «justa» del modelo (1 ÷ probabilidad), marcada con ≈, y nunca cuenta para el beneficio. Las revisiones NBA posteriores al inicio no cuentan como pronósticos previos.</p></section>`;
+</section>`;
   }
 
   function sello() {

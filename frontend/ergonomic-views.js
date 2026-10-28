@@ -1,5 +1,5 @@
 import { publicForecasts, forecastGames } from './fichas-data.js?v=real-20261029';
-import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028';
+import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;

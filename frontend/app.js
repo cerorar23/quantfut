@@ -1,7 +1,7 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=hist-limpio-20261028';
+import { createRealViews } from './real-views.js?v=hist-limpio-20261028b';
 import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=imagenes-20261028b';
 import { createSportWindow } from './sports-window.js?v=imagenes-20261028b';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
