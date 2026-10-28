@@ -405,3 +405,13 @@
   .cv-dot { width: 24px; height: 24px; font-size: 12px; }
   .cv-bigfacts { grid-template-columns: 1fr 1fr; gap: 8px; }
 }
+
+/* Las tres vistas van centradas en la columna: el ancho máximo solo no basta, con él el bloque quedaba pegado a la izquierda. */
+.cv-hero,
+.cv-section,
+.cv-cta,
+.cv-streak,
+.cv-state,
+.cv-legal {
+  margin-inline: auto;
+}

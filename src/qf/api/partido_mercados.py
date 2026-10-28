@@ -17,7 +17,8 @@ import math
 import time
 from datetime import datetime, timezone
 
-from ..db import query_one
+from ..db import query, query_one
+from ..eval.clv import _settle_outcome
 from ..model import estadisticas_mercado as em
 from ..model import primer_tiempo as modelo_1t
 from ..model import pricing
@@ -295,6 +296,76 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     return filas_out, (marcadores if plus or abiertas else None), destacado
 
 
+# --- resultado de cada mercado (estado Acertó / Falló / Devolución) --------------------------
+
+def _entero(v) -> int | None:
+    return None if v is None else int(v)
+
+
+def resultado_fila(fila: dict, partido: dict) -> str | None:
+    """
+    'win' | 'loss' | 'push' de una fila contra el resultado del partido, o None si falta el dato.
+    Marcador, doble oportunidad, ambos marcan, totales, hándicap y empate no acción reutilizan la
+    liquidación de los picks (`eval.clv`); gana a cero, 1ª mitad, córners y tarjetas se liquidan
+    aquí con la misma regla que la escalera (tarjetas = amarillas + rojas, rojas nulas = 0).
+    """
+    market, sel = fila.get('market'), fila.get('selection')
+    line = None if fila.get('line') is None else float(fila['line'])
+    hg, ag = _entero(partido.get('home_goals')), _entero(partido.get('away_goals'))
+
+    def contra_linea(total: int) -> str:
+        if total == line:
+            return 'push'
+        return 'win' if (total > line) == (sel == 'over') else 'loss'
+
+    try:
+        if market == 'corners' or market == 'cards':
+            if market == 'corners':
+                lado = (partido.get('home_corners'), partido.get('away_corners'))
+                total = None if None in lado else int(lado[0]) + int(lado[1])
+            else:
+                amarillas = (partido.get('home_yellow'), partido.get('away_yellow'))
+                total = None if None in amarillas else sum(int(x or 0) for x in (
+                    *amarillas, partido.get('home_red'), partido.get('away_red')))
+            return None if total is None or line is None else contra_linea(total)
+        if hg is None or ag is None:
+            return None
+        if market == 'win_to_nil':
+            gana = hg > ag and ag == 0 if sel == 'home' else ag > hg and hg == 0
+            return 'win' if gana else 'loss'
+        if market in ('ht_btts', 'ht_goal'):
+            h1, a1 = _entero(partido.get('home_goals_ht')), _entero(partido.get('away_goals_ht'))
+            if h1 is None or a1 is None:
+                return None
+            hecho = (h1 > 0 and a1 > 0) if market == 'ht_btts' else h1 + a1 > 0
+            return 'win' if hecho == (sel == 'yes') else 'loss'
+        outcome = _settle_outcome(market, str(sel), line, hg, ag)[0]
+    except (ValueError, KeyError, TypeError):
+        return None
+    return outcome if outcome in ('win', 'loss', 'push') else None
+
+
+def datos_partido(match_id: str) -> dict | None:
+    """Resultado del partido si ya terminó; None si no (entonces ninguna fila lleva resultado)."""
+    rows = query("SELECT status, home_goals, away_goals, home_goals_ht, away_goals_ht, home_corners, "
+                 "away_corners, home_yellow, away_yellow, home_red, away_red FROM matches "
+                 "WHERE match_id=%s", (match_id,))
+    row = rows[0] if rows else None
+    return row if row and row.get('status') == 'finished' and row.get('home_goals') is not None else None
+
+
+def con_resultados(filas: list[dict], partido: dict | None) -> list[dict]:
+    """Añade `resultado` a las filas abiertas de un partido terminado. Las bloqueadas no cambian:
+    su contenido (y por tanto su acierto) sigue reservado."""
+    if not partido or partido.get('status') != 'finished':
+        return filas
+    out = []
+    for f in filas:
+        r = None if f.get('locked') else resultado_fila(f, partido)
+        out.append(dict(f, resultado=r) if r else f)
+    return out
+
+
 # --- fuentes de lambdas ---------------------------------------------------------------------
 
 def lambdas_goles(match_id: str) -> tuple[float, float, float] | None:
@@ -364,9 +435,14 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     filas += filas_estadisticas(corners, tarjetas)
     if web:
         filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus)
+        partido = datos_partido(match_id)
+        filas = con_resultados(filas, partido)
+        if destacado:
+            destacado = con_resultados([destacado], partido)[0]
         return {'filas': filas, 'marcadores': marcadores, 'destacado': destacado,
                 'rango': list(RANGO_DESTACADO), 'abiertas': sum(not f['locked'] for f in filas),
                 'total': len(filas)}
     filas, marcadores = aplicar_acceso(filas, marcadores, abiertas, plus)
+    filas = con_resultados(filas, datos_partido(match_id))
     return {'filas': filas, 'marcadores': marcadores,
             'abiertas': sum(not f['locked'] for f in filas), 'total': len(filas)}
