@@ -48,11 +48,10 @@ export function createHubViews(ctx) {
     todos:svg('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>')
   };
   const lockIcon=svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>');
-  const NBA_CODES=[['hawks','ATL'],['celtics','BOS'],['nets','BKN'],['hornets','CHA'],['bulls','CHI'],['cavaliers','CLE'],['mavericks','DAL'],['nuggets','DEN'],['pistons','DET'],['warriors','GSW'],['rockets','HOU'],['pacers','IND'],['clippers','LAC'],['lakers','LAL'],['grizzlies','MEM'],['heat','MIA'],['bucks','MIL'],['timberwolves','MIN'],['pelicans','NOP'],['knicks','NYK'],['thunder','OKC'],['magic','ORL'],['76ers','PHI'],['suns','PHX'],['blazers','POR'],['kings','SAC'],['spurs','SAS'],['raptors','TOR'],['jazz','UTA'],['wizards','WAS']];
   const words=name=>String(name||'?').replace(/[.()]/g,' ').split(/\s+/).filter(Boolean);
   const monogram=(name,sport)=>{
     const w=words(name);
-    if(sport==='nba'){const n=norm(name);const hit=NBA_CODES.find(([k])=>n.includes(k));if(hit)return hit[1];}
+    if(sport==='nba'){const code=ctx.nbaCode(name);if(code)return code;}
     if(sport==='tenis'||w.length>1)return ((w[0]?.[0]||'?')+(w.length>1?w[w.length-1][0]:'')).toUpperCase();
     return String(name||'?').slice(0,3).toUpperCase();
   };

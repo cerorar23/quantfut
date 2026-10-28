@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=planes-20261027';
-import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket } from './sports-data.js?v=imagenes-20261029';
-import { createSportWindow } from './sports-window.js?v=planes-20261027';
+import { createRealViews } from './real-views.js?v=logos-20261027';
+import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=logos-20261027';
+import { createSportWindow } from './sports-window.js?v=logos-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=conv-20261027';
 
@@ -1076,9 +1076,9 @@ const membershipUI = createMembershipUI({
 
 const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
-  ensureSport, ensureResults, ensureImages, plansPreview:()=>membershipUI.plansPreview() });
+  ensureSport, ensureResults, ensureImages, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
 
-const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, featuredModelMarket });
+const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, featuredModelMarket, ensureImages, nbaCode });
 
 function modalMarkup() {
   if (!state.modal) return '';

@@ -98,6 +98,14 @@ export async function loadResults(fetcher=fetch) {
   finally {clearTimeout(timer);}
 }
 
+// Código de tres letras del manifiesto de logos a partir del nombre que publican las cuotas («Los Angeles Lakers» → LAL).
+const NBA_CODES=[['hawks','ATL'],['celtics','BOS'],['nets','BKN'],['hornets','CHA'],['bulls','CHI'],['cavaliers','CLE'],['mavericks','DAL'],['nuggets','DEN'],['pistons','DET'],['warriors','GSW'],['rockets','HOU'],['pacers','IND'],['clippers','LAC'],['lakers','LAL'],['grizzlies','MEM'],['heat','MIA'],['bucks','MIL'],['timberwolves','MIN'],['pelicans','NOP'],['knicks','NYK'],['thunder','OKC'],['magic','ORL'],['76ers','PHI'],['suns','PHX'],['blazers','POR'],['kings','SAC'],['spurs','SAS'],['raptors','TOR'],['jazz','UTA'],['wizards','WAS']];
+export function nbaCode(name) {
+  const n=String(name||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const hit=NBA_CODES.find(([k])=>n.includes(k));
+  return hit?hit[1]:null;
+}
+
 // Logos NBA y fotos de tenis alojados en el servidor (scripts/imagenes). Si el manifiesto falla, las tarjetas usan iniciales.
 export async function loadImages(fetcher=fetch) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
