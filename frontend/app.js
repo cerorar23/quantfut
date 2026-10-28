@@ -1,8 +1,8 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=imagenes-20261028';
-import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=imagenes-20261028b';
+import { createRealViews } from './real-views.js?v=hist-desde26-20261029';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=hist-desde26-20261029';
 import { createSportWindow } from './sports-window.js?v=imagenes-20261028b';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
@@ -208,7 +208,11 @@ function ensureNbaStats(id) {
 function ensureResults() {
   if(resultsCache)return resultsCache;
   resultsCache={status:'loading',items:[]}; const generation=realGeneration;
-  loadResults().then(result=>{if(generation!==realGeneration)return;resultsCache=result;rerenderIfIdle();});
+  Promise.all([loadResults(),loadFootballFeatured()]).then(([alta,featured])=>{
+    if(generation!==realGeneration)return;
+    resultsCache=alta.status==='ready'&&featured.status==='ready'?{status:'ready',items:alta.items,featured:featured.items}:{status:'error',items:[],featured:[]};
+    rerenderIfIdle();
+  });
   return resultsCache;
 }
 function ensureImages() {
@@ -1023,7 +1027,7 @@ function winForecast(game, entry) {
   const sealed = feat?.pick_key ? picks.find(p => p.pick_key === feat.pick_key && p.chain_sha256) : null;
   const range = (ficha.mercados?.rango || [1.4, 1.8]).map(x => Number(x).toFixed(2).replace('.', ',')).join(' a ');
   const card = feat
-    ? `<p class="eyebrow">PRONÓSTICO DESTACADO${sealed ? ` · LOTE ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(feat.seleccion)}</h2><p class="win-sub">${esc(feat.titulo || feat.grupo)} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : 'Cuota del modelo'}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || 'Casa registrada') : '1 ÷ probabilidad'}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div>${sealed ? `<details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(sealed.ref_book || 'No disponible')} · Cuota capturada ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>` : ''}`
+    ? `<p class="eyebrow">PRONÓSTICO DESTACADO${sealed ? ` · LOTE ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(feat.seleccion)}</h2><p class="win-sub">${esc(feat.titulo || feat.grupo)} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : 'Cuota del modelo'}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || 'Casa registrada') : '1 ÷ probabilidad'}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${marketState(feat.resultado)}</p>${sealed ? `<details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(sealed.ref_book || 'No disponible')} · Cuota capturada ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>` : ''}`
     : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">Ningún mercado de este partido tiene cuota de ${range}.</p>`;
   const rows = ficha.mercados?.filas || [];
   const groups = [...new Set(rows.map(r => r.grupo))];
@@ -1197,7 +1201,7 @@ function render() {
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span><span>Escudos de fútbol de API-Football, logos NBA de TheSportsDB y retratos de NBA.com, API-Football, SofaScore, API-Tennis y Wikimedia Commons. <a class="text-link" href="/web/imagenes/creditos" target="_blank" rel="noopener">Créditos de imágenes ↗</a></span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   conversionViews.applyMeters(app);
   membershipUI.afterRender();

@@ -69,14 +69,14 @@ test('la vista enseña los fallos, la cuota real y marca la del modelo con ≈',
   assert.ok(html.includes('1.28') && html.includes('1.21'));
   assert.ok(html.includes('≈ 1.47') && html.includes('justa del modelo'));
   assert.ok(html.includes('Muestra en construcción'), 'con 4 resultados la muestra es pequeña');
-  assert.ok(html.includes('<p>evidencia</p>'));
+  assert.ok(!html.includes('Metodología y registros de verificación'));
 });
 
 test('la vista no usa estilos en línea ni promesas', () => {
   const html = views().historyView(muestra, false);
   assert.ok(!/style=/.test(html));
   assert.ok(!/garantizad|certer|infalible|sin riesgo/i.test(html), 'sin lenguaje de certeza');
-  assert.ok(html.includes('no garantizan resultados futuros'));
+  assert.ok(!html.includes('Los pronósticos son estimaciones, no garantías'));
 });
 
 test('el beneficio nunca usa la cuota del modelo de NBA o tenis', () => {
@@ -110,7 +110,7 @@ test('los textos de partidos se escapan', () => {
 
 test('el HTML y los módulos están registrados con el mismo identificador de versión', () => {
   const ergo = readFileSync(new URL('./ergonomic-views.js', import.meta.url), 'utf8');
-  assert.match(ergo, /historial-views\.js\?v=hist-20261028/);
+  assert.match(ergo, /historial-views\.js\?v=hist-limpio-20261028b/);
   const web = readFileSync(new URL('../src/qf/api/web.py', import.meta.url), 'utf8');
   assert.ok(web.includes('/historial-views.js'));
 });

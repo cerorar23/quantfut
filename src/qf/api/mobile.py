@@ -9,7 +9,7 @@ import copy
 import logging
 import math
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -498,6 +498,13 @@ def markets_history(response: Response,
         row['texto'] = ap.texto(row['market'], row['selection'], row['line'], row['local'], row['visitante'])
         row['prob'] = round(float(row['prob']), 2)
     return {'items': rows}
+
+
+@router.get('/mobile/v1/markets/destacados')
+def markets_destacados(response: Response, desde: date = Query(...)):
+    """Destacado de fútbol de cada partido terminado desde `desde`, ya resuelto (acertó/falló)."""
+    response.headers['Cache-Control'] = 'no-store'
+    return {'items': partido_mercados.destacados_resueltos(desde)}
 
 
 def model_card(markets, fuente: str = 'modelo') -> dict | None:

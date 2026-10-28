@@ -18,3 +18,8 @@ for (const name of ['publicData', 'publicRequest', 'publicAuthKey', 'publicFetch
     assert.ok(at < firstRender, `${name} se declara después del primer render()`);
   });
 }
+
+test('el pronóstico destacado de fútbol muestra si acertó o falló, como tenis y NBA', () => {
+  const card = source.slice(source.indexOf('function winForecast'), source.indexOf('const rows = ficha.mercados'));
+  assert.match(card, /<p class="win-sub">\$\{marketState\(feat\.resultado\)\}<\/p>/);
+});

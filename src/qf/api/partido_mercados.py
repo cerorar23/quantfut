@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import math
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from ..db import query, query_one
 from ..eval.clv import _settle_outcome
@@ -446,3 +446,45 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     filas = con_resultados(filas, datos_partido(match_id))
     return {'filas': filas, 'marcadores': marcadores,
             'abiertas': sum(not f['locked'] for f in filas), 'total': len(filas)}
+
+
+# --- historial: el destacado de cada partido terminado ----------------------------------------
+
+_TTL_DESTACADOS = 600.0
+_destacados: dict[str, tuple[float, list[dict]]] = {}
+
+
+def destacados_resueltos(desde: date) -> list[dict]:
+    """El destacado de la web de cada partido terminado desde `desde` (acertó o falló).
+
+    Definición fija y reproducible: la de `aplicar_acceso_web` sobre el análisis del modelo, SIN
+    picks abiertos ni VIP. La cuota es siempre la del modelo (1 ÷ prob.); un pick abierto la
+    cambiaría por la publicada y el destacado dependería de quién mira. Un partido sin modelo,
+    sin mercado en rango o sin resultado no entra. Se pide un día antes de `desde` para que el
+    cliente corte por su día local; en caché diez minutos porque recorre cada partido.
+    """
+    clave_ = desde.isoformat()
+    hit = _destacados.get(clave_)
+    if hit and time.monotonic() - hit[0] < _TTL_DESTACADOS:
+        return hit[1]
+    corte = datetime.combine(desde, datetime.min.time(), tzinfo=timezone.utc) - timedelta(days=1)
+    partidos = query("SELECT m.match_id, m.league_id, m.kickoff_utc, "
+                     "COALESCE(th.display_name, th.canonical_name) AS local, "
+                     "COALESCE(ta.display_name, ta.canonical_name) AS visitante, m.home_goals, m.away_goals "
+                     "FROM matches m JOIN teams th ON th.team_id=m.home_team_id "
+                     "JOIN teams ta ON ta.team_id=m.away_team_id "
+                     "WHERE m.status='finished' AND m.home_goals IS NOT NULL AND m.kickoff_utc >= %s "
+                     "ORDER BY m.kickoff_utc, m.match_id LIMIT 600", (corte,))
+    out = []
+    for p in partidos:
+        lista = construir(p['match_id'], p['local'], p['visitante'], {}, False, web=True)
+        d = lista and lista.get('destacado')
+        if not d or d.get('resultado') not in ('win', 'loss'):
+            continue
+        out.append({'match_id': p['match_id'], 'league_id': p['league_id'], 'kickoff_utc': p['kickoff_utc'],
+                    'local': p['local'], 'visitante': p['visitante'], 'market': d['market'],
+                    'selection': d['selection'], 'line': d.get('line'), 'texto': d['seleccion'],
+                    'prob': round(float(d['prob']), 4), 'ref_price': None, 'outcome': d['resultado'],
+                    'home_goals': p['home_goals'], 'away_goals': p['away_goals']})
+    _destacados[clave_] = (time.monotonic(), out)
+    return out
