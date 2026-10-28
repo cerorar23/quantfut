@@ -24,7 +24,9 @@ from ..publish import alta_prob_datos, alta_prob_ext, escalera_datos, ventana
 
 router = APIRouter(tags=["mobile"])
 _bearer = HTTPBearer(auto_error=False)
-PROB_MIN, PROB_MAX = .75, .90          # escalera
+# Escalera: el escalón gratis sale del rango que puede elegir la regla del 80 % en 7 días
+# (84-95 %; antes 75-90 %, el de la cuota 1,25-1,40, que ya casi no se daría).
+PROB_MIN, PROB_MAX = .75, .97
 # Alta probabilidad: lo que se MUESTRA es 73-95 % (decisión del usuario, 2026-10-12; el 11-oct
 # se había ampliado a 62-95 %). Es un filtro de lectura: `alta_prob_ext` sigue sellando
 # candidatos desde 62 % y sus filas inmutables no se tocan; solo dejan de mostrarse.

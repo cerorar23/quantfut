@@ -966,6 +966,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Noch keine beendeten Challenges. Sobald eine endet, erscheint sie hier mit ihrem Ergebnis.';
 
   @override
+  String get ladderHistoryExpired => 'Abgelaufen, nicht abgeschlossen';
+
+  @override
   String ladderHistoryFailedAt(int step) {
     return 'Gescheitert an Stufe $step';
   }

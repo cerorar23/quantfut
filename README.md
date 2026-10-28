@@ -834,6 +834,49 @@ verlo: football-data no trae cuotas de esos mercados. Desde entonces cuenta
 cotiza los dos lados, si no la media de las casas de la lista) y sin los dos
 lados cotizados el candidato no entra. Tarjetas y árbitro históricos: `python -m qf.ingest.history_fd tarjetas`.
 
+### Reto al 80 % en 7 días, con NBA y tenis (desde 2026-10-28, decisión del usuario)
+
+El usuario pide que el reto ENTERO se cumpla al menos el 80 % de las veces, buscando
+el acierto y no la cuota, con hasta 7 días para completarlo. Con escalones
+independientes y calibrados, P(completar) = ∏ p, y con el mercado calibrado
+probabilidad × cobro ≈ 1 − margen: un 80 % paga ≈ ×1,15. Regla (`escalera.py`):
+2 escalones; cada uno exige p ≥ (0,80 / ∏ p elegidos)^(1/faltan) (89,4 % el primero;
+con un 95 % el segundo basta con 84,2 %); como mucho 95 % en fútbol y NBA y 97 % en
+tenis (lo calibrado); el más probable primero; cuota ≥ 1,03, sin freeroll; hasta 2
+el mismo día en partidos distintos; 7 días como máximo y luego «expirado» (cobra su
+saldo, no cuenta como cumplido). Un reto a la vez. `db/089`: `prob_objetivo` y
+`dias_max` en `escalera_retos`; los retos anteriores (NULL) terminan con su regla.
+
+NBA y tenis (`publish/escalera_ext.py`): ganador del partido leído del archivo
+PropLine compartido sin peticiones nuevas; probabilidad de Pinnacle sin margen (sin
+Pinnacle en la observación, el partido no entra); cuota, la mejor de `SOFT_BOOKS`;
+liquidación con la calificación de PropLine de la casa del escalón (cada casa aplica
+su regla de retiradas en tenis) y, sin ella, la de Pinnacle; nulo a las 72 h sin
+calificar. El escalón guarda el evento de PropLine (`escalera_pasos.deporte`,
+`evento_*`, sin `match_id`) y su resultado va con `fuente = 'propline'`, sin
+marcador. En el archivo de prueba del 23-oct Pinnacle cotizaba 74 de 146 partidos de
+tenis; de la lista, Bovada, Strendus y BetOnline (bet365 no está en PropLine).
+
+Medido (`python -m qf.eval.escalera_multideporte`: football-data, NBA ganador al
+cierre de bet365 vía BetsAPI, Tennis-Data ATP/WTA con Pinnacle sin margen y cuota de
+bet365; el plazo cuenta desde el primer escalón):
+
+| Datos | Retos | Cumplidos | Fallidos | Expirados | Días | Cobro | Por reto |
+|---|---|---|---|---|---|---|---|
+| Fútbol + tenis 2019-2025 | 539 | **85,9 %** | 10,6 % | 3,5 % | 2,0 | ×1,14 | +1,8 % |
+| Fútbol + NBA + tenis oct-23 a may-25 | 230 | **84,3 %** | 14,8 % | 0,9 % | 1,6 | ×1,14 | −3,3 % |
+| Solo fútbol (1X2 y goles 2,5) | 29 | 41,4 % | 6,9 % | 51,7 % | 5,0 | ×1,19 | +5,7 % |
+| 3 escalones (fútbol + tenis) | 195 | 63,1 % | 7,7 % | 29,2 % | 4,2 | ×1,15 | +3,8 % |
+
+Calibración del tenis (Pinnacle sin margen, 2019-2026): 90-95 % prometido 92,3 %, real
+94,1 % (n=1.128); 95-100 %: 95,8 % y 98,0 % (n=201). Lo que más resta no son los
+fallos sino quedarse sin segundo escalón: con solo fútbol expira la mitad. Ningún
+resultado demuestra ganancia (−3 % a +2 % por reto). Literatura: Dubins y Savage
+(apuesta audaz en juegos desfavorables), sesgo favorito-longshot (Snowberg y Wolfers
+2010; tenis: Forrest y McHale 2007, Lahvička 2014; fútbol: Angelini y De Angelis 2019);
+ninguno encuentra beneficio en cuotas bajas sin ventaja sobre el precio (Kaunitz et al.
+2017).
+
 ## Línea de alta probabilidad (desde 2026-10-06)
 
 Una línea aparte de los picks de valor, pedida por el usuario: los clientes

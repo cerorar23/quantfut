@@ -4,3 +4,5 @@
 
 
 img.avatar.player-photo{object-fit:cover;object-position:center 20%;flex:none}.player-card>img.player-photo{float:left;margin:0 10px 8px 0}
+
+.team-with-logo{display:inline-flex;align-items:center;gap:6px;max-width:100%}.team-with-logo img{width:24px;height:24px;object-fit:contain}

@@ -1,4 +1,4 @@
-const ownImage = src => typeof src === 'string' && /^\/web\/[a-zA-Z0-9_./-]+\.(?:png|jpg)$/.test(src) && !src.includes('..');
+const ownImage = src => typeof src === 'string' && /^\/web\/[a-zA-Z0-9_./-]+\.(?:png|jpg|webp)$/.test(src) && !src.includes('..');
 
 export function playerPhoto(sport, id) {
   return ['nba', 'futbol'].includes(sport) && /^[1-9][0-9]{0,7}$/.test(String(id))

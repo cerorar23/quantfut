@@ -12,7 +12,9 @@ import httpx
 SOURCES = {
     "futbol": "https://media.api-sports.io/football/players/{}.png",
     "nba": "https://cdn.nba.com/headshots/nba/latest/260x190/{}.png",
+    "sofascore": "https://img.sofascore.com/api/v1/player/{}/image",
 }
+EXTENSIONS = {"futbol": "png", "nba": "png", "sofascore": "webp"}
 MAX_BYTES = 512_000
 _slots = threading.BoundedSemaphore(4)
 _missing = {}
@@ -23,7 +25,14 @@ def photo_url(sport, player_id):
     value = str(player_id)
     if sport not in SOURCES or not re.fullmatch(r"[1-9][0-9]{0,7}", value):
         return None
-    return f"/web/imagenes/jugadores/{sport}/{value}.png"
+    return f"/web/imagenes/jugadores/{sport}/{value}.{EXTENSIONS[sport]}"
+
+
+def lineup_photo(player):
+    # IDs belong to their source. In particular, SofaScore's IDs are NOT API-Football IDs.
+    source = player.get("src") or "api_football"
+    sport = {"api_football": "futbol", "sofascore": "sofascore"}.get(source)
+    return photo_url(sport, player.get("player_id")) if sport else None
 
 
 def valid_png(body):
@@ -35,12 +44,20 @@ def valid_png(body):
     return 0 < width <= 2048 and 0 < height <= 2048 and body[-8:-4] == b"IEND"
 
 
+def valid_image(body, extension):
+    if extension == "png":
+        return valid_png(body)
+    return (32 <= len(body) <= MAX_BYTES and body[:4] == b"RIFF" and body[8:12] == b"WEBP"
+            and int.from_bytes(body[4:8], "little") + 8 == len(body))
+
+
 def cached_portrait(sport, player_id, directory):
     """Only fixed providers and numeric IDs; no caller-supplied URLs or redirects."""
     if photo_url(sport, player_id) is None:
         return None
-    target = Path(directory) / sport / f"{player_id}.png"
-    if target.is_file() and valid_png(target.read_bytes()):
+    extension = EXTENSIONS[sport]
+    target = Path(directory) / sport / f"{player_id}.{extension}"
+    if target.is_file() and valid_image(target.read_bytes(), extension):
         return target
     key = sport, str(player_id)
     with _lock:
@@ -53,8 +70,8 @@ def cached_portrait(sport, player_id, directory):
         with httpx.Client(timeout=httpx.Timeout(8, connect=3), follow_redirects=False) as client:
             with client.stream("GET", SOURCES[sport].format(player_id), headers={"User-Agent": "QuantFutImages/1.0"}) as response:
                 response.raise_for_status()
-                if response.headers.get("content-type", "").split(";")[0] != "image/png":
-                    raise ValueError("Not a PNG")
+                if response.headers.get("content-type", "").split(";")[0] != "image/" + extension:
+                    raise ValueError("Unexpected image type")
                 chunks, size = [], 0
                 for chunk in response.iter_bytes():
                     size += len(chunk)
@@ -62,8 +79,8 @@ def cached_portrait(sport, player_id, directory):
                         raise ValueError("Image too large")
                     chunks.append(chunk)
         body = b"".join(chunks)
-        if not valid_png(body):
-            raise ValueError("Invalid PNG")
+        if not valid_image(body, extension):
+            raise ValueError("Invalid image")
         target.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(dir=target.parent, suffix=".tmp", delete=False) as stream:
             temporary = Path(stream.name)

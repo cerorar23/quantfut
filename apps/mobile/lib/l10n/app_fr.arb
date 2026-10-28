@@ -270,6 +270,7 @@
   "ladderHideSteps": "Masquer les paliers",
   "ladderHistoryDone": "Réussi",
   "ladderHistoryEmpty": "Aucun défi n'est encore clos. Quand l'un se termine, il apparaît ici avec son résultat.",
+  "ladderHistoryExpired": "Expiré sans être terminé",
   "ladderHistoryFailedAt": "Échec au palier {step}",
   "ladderHistoryRate": "Taux de réussite : {rate}",
   "ladderHistoryResult": "Résultat cumulé : {roi}",

@@ -964,6 +964,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Aún no hay retos cerrados. Cuando uno termine, aparecerá aquí con su resultado.';
 
   @override
+  String get ladderHistoryExpired => 'Expiró sin completarse';
+
+  @override
   String ladderHistoryFailedAt(int step) {
     return 'Falló en el escalón $step';
   }

@@ -270,6 +270,7 @@
   "ladderHideSteps": "Ocultar degraus",
   "ladderHistoryDone": "Concluído",
   "ladderHistoryEmpty": "Ainda não há desafios encerrados. Quando um terminar, aparecerá aqui com o resultado.",
+  "ladderHistoryExpired": "Expirou sem ser concluído",
   "ladderHistoryFailedAt": "Falhou no degrau {step}",
   "ladderHistoryRate": "Taxa de concluídos: {rate}",
   "ladderHistoryResult": "Resultado acumulado: {roi}",

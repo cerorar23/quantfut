@@ -24,7 +24,7 @@ from fastapi.responses import FileResponse
 
 from ..config import settings
 from ..db import query, query_one
-from .imagenes import photo_url
+from .imagenes import lineup_photo
 from ..ingest.estadisticas import normalizar_estadisticas  # noqa: F401  (re-export)
 
 router = APIRouter(prefix="/web", tags=["web pública"])
@@ -226,7 +226,7 @@ def _formatear_once(row: dict | None) -> dict | None:
     if not row or not row.get("starters"):
         return None
     titulares = [{"nombre": j.get("name"), "pos": j.get("pos"), "numero": j.get("number"),
-                  "foto": photo_url("futbol", j.get("player_id"))}
+                  "foto": lineup_photo(j)}
                  for j in row["starters"] if isinstance(j, dict) and j.get("name")]
     if not titulares:
         return None
@@ -270,7 +270,7 @@ def _alineaciones(match_id: str) -> dict:
         (match_id,),
     )
     return {f["side"]: {"formacion": f["formation"], "titulares": [
-                        {**p, "foto": photo_url("futbol", p.get("player_id"))}
+                        {**p, "foto": lineup_photo(p)}
                         for p in (f["starters"] or []) if isinstance(p, dict)],
                         "capturada": f["captured_at"]} for f in filas}
 
