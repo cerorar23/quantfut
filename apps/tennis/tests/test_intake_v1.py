@@ -2,7 +2,7 @@
 import json
 import pandas as pd
 import pytest
-from tennis_intake_v1 import provider_key, Directory, rules_for, result_of, fixtures
+from tennis_intake_v1 import provider_key, Directory, rules_for, result_of, fixtures, circuits_awaiting_results
 
 
 def canon():
@@ -112,3 +112,43 @@ def test_sealing_waits_for_the_window_and_for_a_market_price(tmp_path):
     assert len(r['sealed']) == 1  # last run: sealed without a price rather than not at all
     r = seal_new(tmp_path / 'b', cap, FakeMotor(priced=True), at('2026-10-26T12:25:00+00:00'))
     assert len(r['sealed']) == 1
+
+
+def archive(root, circuit_key, rows, received_at, name):
+    folder = root / 'api_tennis' / 'originals' / name; folder.mkdir(parents=True)
+    (folder / 'response.json').write_text(json.dumps(dict(result=rows)))
+    (folder / 'receipt.json').write_text(json.dumps(dict(method='get_fixtures', http_status=200, params=dict(event_type_key=circuit_key),
+        source_path=str(folder / 'response.json'), received_at=received_at, sha256='x')))
+
+
+def seal(root, key, circuit, start):
+    folder = root / 'predictions'; folder.mkdir(exist_ok=True)
+    (folder / f'{key}.json').write_text(json.dumps(dict(event_key=key, circuit=circuit, provider_start=start)))
+
+
+def fixture(key, status, date, time):
+    return dict(event_key=key, event_status=status, event_date=date, event_time=time, event_winner=None)
+
+
+def test_results_are_refreshed_only_for_circuits_with_matches_that_should_be_over(tmp_path):
+    seal(tmp_path, '1', 'WTA', '2026-10-28T11:00:00+00:00')
+    seal(tmp_path, '2', 'ATP', '2026-10-28T11:00:00+00:00')
+    seal(tmp_path, '3', 'ATP', '2026-10-28T13:30:00+00:00')
+    archive(tmp_path, '266', [fixture(1, 'Set 2', '2026-10-28', '11:00')], '2026-10-28T08:00:00+00:00', 'a')
+    archive(tmp_path, '265', [fixture(2, 'Finished', '2026-10-28', '11:00'), fixture(3, '', '2026-10-28', '13:30')], '2026-10-28T08:00:00+00:00', 'b')
+    root, now = tmp_path / 'api_tennis', '2026-10-28T14:00:00+00:00'
+    # WTA 1 has no final state 3 h after its start; ATP 2 is finished and ATP 3 started only 30 min ago.
+    assert circuits_awaiting_results(tmp_path, root, now) == ['WTA']
+    # The same circuit is not asked twice within two hours.
+    archive(tmp_path, '266', [fixture(1, 'Set 3', '2026-10-28', '11:00')], '2026-10-28T12:30:00+00:00', 'c')
+    assert circuits_awaiting_results(tmp_path, root, now) == []
+    assert circuits_awaiting_results(tmp_path, root, '2026-10-28T14:35:00+00:00') == ['WTA']
+
+
+def test_postponed_stale_and_cancelled_matches_do_not_trigger_a_refresh(tmp_path):
+    seal(tmp_path, '1', 'WTA', '2026-10-27T09:00:00+00:00')   # moved to tomorrow
+    seal(tmp_path, '2', 'WTA', '2026-10-26T09:00:00+00:00')   # more than a day and a half old, never closed
+    seal(tmp_path, '3', 'WTA', '2026-10-28T09:00:00+00:00')   # cancelled
+    archive(tmp_path, '266', [fixture(1, '', '2026-10-29', '10:00'), fixture(2, 'Set 1', '2026-10-26', '09:00'), fixture(3, 'Cancelled', '2026-10-28', '09:00')],
+            '2026-10-28T00:25:00+00:00', 'a')
+    assert circuits_awaiting_results(tmp_path, tmp_path / 'api_tennis', '2026-10-28T14:00:00+00:00') == []

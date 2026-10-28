@@ -11,9 +11,10 @@ run() { docker run --rm --name "tenis-$$-$(date +%s)" --user "$(id -u):$(id -g)"
 case "${1:-}" in
   hourly)
     # Cron at minute 25 of every hour (server clock is Europe/Berlin; minutes do not move with daylight saving).
-    # API-Tennis fixtures (2 requests) only in the 00 and 12 UTC runs; the other runs seal from the archived fixtures
-    # so each match is sealed 1.5-2.5 h before its start with the freshest hourly PropLine observation.
-    case "$(date -u +%H)" in 00|12) capture="" ;; *) capture="--no-capture" ;; esac
+    # API-Tennis fixtures (2 requests, yesterday to +2 days) only in the 00 and 12 UTC runs; the other runs seal from the
+    # archived fixtures so each match is sealed 1.5-2.5 h before its start with the freshest hourly PropLine observation,
+    # and ask for results (yesterday and today, only circuits with a match that should be over, ~2 h apart per circuit).
+    case "$(date -u +%H)" in 00|12) capture="" ;; *) capture="--results-refresh" ;; esac
     exec 9>"$BASE/data/intake_v1/hourly.lock"; flock -n 9 || exit 0
     run python -m tennis_intake_v1 --root /data/intake_v1 --credential-file /secrets/.env.api-tennis.local $capture >> "$BASE/data/intake_v1/scheduler.log" 2>&1 ;;
   twice-daily)

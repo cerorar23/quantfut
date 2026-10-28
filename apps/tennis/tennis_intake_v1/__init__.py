@@ -29,6 +29,10 @@ SEAL_AHEAD_MINUTES = 150  # hourly runs at :25 seal each fixture 1.5-2.5 h befor
 RETRY_MINUTES = 60  # without a market price, wait for the next hourly run while one is still due before the start
 ACTIVE_DAYS = 400
 SCHEMA = 'tennis-intake-sealed-v1'
+TERMINAL_STATES = ('Finished', 'Retired', 'Walk Over', 'Cancelled')
+RESULT_WAIT_MINUTES = 90  # a match is worth asking about this long after its start
+RESULT_GIVE_UP_HOURS = 36  # after this the provider is not going to close it; the public feed flags it
+RESULT_GAP_MINUTES = 110  # at most one results request per circuit about every two hours
 
 
 def norm(s):
@@ -147,6 +151,32 @@ def fixtures(capture_root):
                 events[str(e['event_key'])] = dict(e, circuit=TOURS[receipt['params']['event_type_key']], received_at=receipt['received_at'],
                                                    receipt_sha256=receipt['sha256'])
     return events
+
+
+def circuits_awaiting_results(root, capture_root, as_of):
+    """Circuits to ask API-Tennis for results: a sealed match should be over and the provider still shows no final state.
+
+    The start is the provider's latest one (a postponed match is not due); the last request of that circuit must be old
+    enough. A request is a narrow window (yesterday and today), two per hour at most when everything is pending.
+    """
+    events = fixtures(capture_root)
+    last = {}
+    for receipt_path in Path(capture_root).glob('originals/*/receipt.json'):
+        receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
+        key = receipt['params'].get('event_type_key')
+        if receipt.get('method') == 'get_fixtures' and receipt.get('http_status') == 200 and key in TOURS:
+            last[TOURS[key]] = max(last.get(TOURS[key], ''), receipt['received_at'])
+    moment, due = utc(as_of), set()
+    for path in sorted((Path(root) / 'predictions').glob('*.json')):
+        sealed = json.loads(path.read_text(encoding='utf-8'))
+        seen = events.get(str(sealed['event_key']))
+        if seen is not None and seen.get('event_status') in TERMINAL_STATES:
+            continue
+        begins = start_time(seen) if seen is not None and seen.get('event_date') else utc(sealed['provider_start'])
+        age = moment - begins
+        if timedelta(minutes=RESULT_WAIT_MINUTES) <= age <= timedelta(hours=RESULT_GIVE_UP_HOURS):
+            due.add(sealed['circuit'])
+    return sorted(c for c in due if c not in last or moment - utc(last[c]) >= timedelta(minutes=RESULT_GAP_MINUTES))
 
 
 def start_time(e):
