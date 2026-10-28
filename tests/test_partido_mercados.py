@@ -298,3 +298,28 @@ def test_con_resultados_solo_marca_las_abiertas_y_nunca_las_bloqueadas():
     assert out[0]['resultado'] == 'win' and 'resultado' not in out[1]
     assert 'resultado' not in pm.con_resultados(filas, dict(PARTIDO, status='scheduled'))[0]
     assert pm.con_resultados(filas, None)[0].get('resultado') is None
+
+
+def test_destacados_resueltos_usa_el_analisis_sin_picks_y_solo_cuenta_los_resueltos(monkeypatch):
+    from datetime import date, datetime, timezone
+    kick = datetime(2026, 10, 26, 18, tzinfo=timezone.utc)
+    base = {'league_id': 'it.serie_a', 'kickoff_utc': kick, 'home_goals': 2, 'away_goals': 1}
+    partidos = [dict(base, match_id=m, local='A', visitante='B') for m in 'abcd']
+    vistos = {}
+
+    def construir(match_id, local, visitante, abiertas, plus, web=False):
+        vistos[match_id] = (abiertas, plus, web)
+        dest = {'market': 'totals', 'selection': 'over', 'line': 1.5, 'seleccion': 'Más de 1,5 goles',
+                'prob': 0.69561, 'resultado': 'win'}
+        return {'a': {'destacado': dest}, 'b': {'destacado': None},
+                'c': {'destacado': dict(dest, resultado=None)}, 'd': None}[match_id]
+
+    pedido = {}
+    monkeypatch.setattr(pm, 'query', lambda sql, params=(): pedido.update(params=params) or partidos)
+    monkeypatch.setattr(pm, 'construir', construir)
+    pm._destacados.clear()
+    items = pm.destacados_resueltos(date(2026, 10, 26))
+    assert [i['match_id'] for i in items] == ['a']
+    assert items[0]['outcome'] == 'win' and items[0]['prob'] == 0.6956 and items[0]['ref_price'] is None
+    assert all(v == ({}, False, True) for v in vistos.values())
+    assert pedido['params'][0] == datetime(2026, 10, 25, tzinfo=timezone.utc)

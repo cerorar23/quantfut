@@ -1,5 +1,11 @@
 # Registro de decisiones — QuantFut
 
+## 29-oct-2026 · #historial desde el 26 de octubre, solo Destacados y Alta probabilidad
+
+Decisión del titular: el historial de la web empieza el 26 de octubre (día local) y de ahí hacia atrás no se muestra nada. Cuenta solo los Destacados de fútbol, NBA y tenis y Alta probabilidad (fútbol); la regla de qué es destacado no cambia y no se añade ninguna leyenda (orden del titular). Medido antes de aplicar, con la web en producción: destacados 54 de 69 (78,3 %) y Alta probabilidad 51 de 60 (85 %), 105 de 129 (81,4 %) juntos; antes del 26, 65,4 % y 80 %.
+
+Por qué en servidor: el destacado de fútbol no se guarda, se recalcula del análisis del modelo y pedir una ficha por partido desde el navegador da 429. `GET /mobile/v1/markets/destacados?desde=` (`partido_mercados.destacados_resueltos`) lo devuelve ya resuelto, con definición fija: `aplicar_acceso_web` sin picks abiertos ni VIP, cuota siempre la del modelo. La ficha de un partido puede enseñar otro destacado a quien tenga un pick abierto (su cuota publicada saca la fila del rango 1,40–1,80), así que las cifras pueden diferir levemente de las medidas en la web. Tenis y NBA usan `featuredModelMarket` sin revisiones; antes el historial contaba el mercado «ganador» de cada evento. Sin desplegar: la API va antes que el frontend.
+
 ## 28-oct-2026 · #historial rediseñado para convertir: la prueba es verlo todo, con cuota y resultado
 
 El titular pidió rediseñar `#historial` porque es donde el visitante decide si el sistema da resultado y si compra la membresía. La versión anterior era una tabla plana de 50 filas sin cifras resumen. Decisión: el nuevo `historial-views.js` aplica el mismo patrón de prueba que ya usaban #alta/#parley/#escalera (cifra grande, racha, sello, planes, preguntas) y añade lo que faltaba: resumen con intervalo de Wilson, prometido frente a real, curva de beneficio, acierto por día y por deporte, y la lista día por día con cuota y marcador de cada pronóstico.
