@@ -28,6 +28,7 @@ from rapidfuzz import fuzz
 
 from ..db import conn, query
 from ..league_policy import RETIRED_LEAGUES
+from .estadisticas import XG_MIN_HORAS
 from ..normalize import slugify
 from . import api_football as af
 from .estadisticas import arbitro, desde_sofascore
@@ -152,8 +153,9 @@ def aplicar(c, recibo: dict, fila: dict, match_id: str) -> bool:
     if xg[0] is not None:
         c.execute("""UPDATE matches SET home_xg = %s, away_xg = %s, xg_source = 'sofascore',
                          xg_recorded_at = %s
-                     WHERE match_id = %s AND status = 'finished' AND home_xg IS NULL AND away_xg IS NULL""",
-                  (xg[0], xg[1], recibo["received_at"], match_id))
+                     WHERE match_id = %s AND status = 'finished' AND home_xg IS NULL AND away_xg IS NULL
+                       AND %s::timestamptz >= kickoff_utc + %s * interval '1 hour'""",
+                  (xg[0], xg[1], recibo["received_at"], match_id, recibo["received_at"], XG_MIN_HORAS))
     return True
 
 

@@ -8,6 +8,7 @@ ninguna petición más.
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
 # Tipos del proveedor -> claves de la web.
@@ -22,6 +23,10 @@ TIPOS = {
     "expected_goals": "xg",
 }
 SIN_CERO = {"xg"}   # null en xG es "no hay dato", no "cero"
+# Horas mínimas tras el saque para guardar el xG de un partido. Se corrige después del partido (28-oct-2026: Houston 0-0
+# se guardó como 0,00-0,03 a las 16 h y hoy da 0,81-1,38; Palmeiras 3,35 a las 4,9 h y 3,82 después), así que una
+# captura anterior fijaría un valor provisional en la regla de «primera pareja congelada».
+XG_MIN_HORAS = float(os.environ.get("XG_MIN_HORAS", "20"))
 
 
 def _numero(v: Any) -> float | int | None:
