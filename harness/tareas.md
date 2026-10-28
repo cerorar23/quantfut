@@ -3407,3 +3407,14 @@ El usuario pide el reto entero al 80 %, buscando el acierto y no la cuota, con h
       `en_rango_por_deporte` (¿hay escalón ≥ 89,4 % cada día?) y cuántos expiran.
 - [ ] Si Pinnacle falta en muchos partidos de tenis en vivo, decidir otra referencia
       sharp (no se cambia sola).
+
+## Auditoría de consumo de APIs (28-oct-2026)
+Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
+- [x] SofaScore/Apify: detalles con presupuesto reservado, reparto diario hasta el fin del ciclo y reserva para alineaciones (3 pruebas); desplegado en el host el 28-oct.
+- [x] PropLine: horizonte de 48 h para mercados ampliados y futuros apagados (1 prueba); desplegado el 28-oct (`releases/8861347`).
+- [x] `db/090`: alias `propline` de Racing de Santander y Tromsoe; aplicada en producción.
+- [ ] Verificar el ahorro con una jornada completa: `soccer_*/odds` ≤ 1.300 llamadas/día (base 1.909) y primera petición de cada liga sin huecos.
+- [ ] Decidir el tope mensual de Apify (hoy 15 USD, cuenta en 13,2): listas y detalles de NBA/tenis/MLS esperan hasta el 24-nov o hasta subirlo.
+- [ ] Pedir estadísticas ya en la lista de scrapesage (NBA y tenis), que cobra por partido igual que el detalle.
+- [ ] Probar `soccer_markets_per_request` 20 en una sola liga con medición antes de generalizar.
+- [ ] Alerta si `soccer_*/odds` supera 1.600 llamadas/día o si Apify pasa un día sin pedir detalles con terminados pendientes.

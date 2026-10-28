@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 17:16 UTC · Consumo de APIs: SofaScore con detalles reservados y PropLine con horizonte · SOLO host (dos carpetas) + `db/090`; commit `8861347`
+- Nada de imágenes ni contenedores. **PropLine:** nueva `~/propline-shared/releases/8861347` (`propline_shared.py` sha `a12ba4e01b9f`, config `3174a1d0aa6c`, mismo runner y `runtime.json`); `current` apunta ahí. Base comprobada antes: `propline_shared.py` `54387ff6d135` (= `main`). **Vuelta atrás:** `ln -sfn /home/qf/propline-shared/releases/a6dcb96 /home/qf/propline-shared/current`.
+- **Apify:** `~/sofascore-apify/current/sofascore_apify.py` (sha `c7c0dbf6263f`; base `26ba76f290b5` = `main`). Respaldo en `~/sofascore-apify/respaldo_20261028_antes_reparto/` (código, config, índice). Prueba en el host: `capture` → «presupuesto agotado», gasto 0,00; `lineups` → «nada vencido». **Vuelta atrás:** copiar `sofascore_apify.py` del respaldo a `current/`.
+- **Base de datos:** `db/090` (alias `propline` de `Racing de Santander` y `Tromsoe`) aplicada en transacción tras ensayo con ROLLBACK; reversión en el propio archivo.
+- Por qué: detalles de partidos sin pedir desde el 26-oct (433 terminados sin estadísticas) y 70 % de las llamadas de PropLine en fútbol. Medición y plan: `docs/auditoria_consumo_apis_20261028.md`. Pruebas: 1.696 aprobadas, 111 omitidas.
+- Pendiente de verificar con la corrida de las 18:07 UTC: llamadas de fútbol/hora y 0 fallos (ver `harness/progreso.md`).
+
 ### 2026-10-28 16:37 UTC · Tenis: todos los mercados liquidados y resultados cada ~2 h · imagen `quantfut-tenis:bea262b` (`main` `bea262b`, PR #202)
 - Orden del titular: «despliega y fusiona». Causa: el «Pendiente» de tenis tenía dos orígenes. La proyección pública solo liquidaba el ganador (juegos, sets, hándicaps, ganador de set y tie-break quedaban abiertos aunque el partido hubiera terminado) y el calendario con resultados solo se pedía a las 00 y 12 UTC.
 - Antes de construir: `main` difería del servidor solo en los archivos de este cambio (`README.md`, `scripts/vps_run.sh`, `tennis_intake_v1/__init__.py` y `__main__.py`, `tests/test_intake_v1.py`), comparados archivo por archivo con el contexto `45f5876`. `scripts/publicar_tenis_web.py` idéntico a `main` (`8a948c47…`). `propline_shared.py` de `main` (`54387ff6…`).
