@@ -129,6 +129,11 @@ def conversion_views_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "conversion-views.js", media_type="text/javascript")
 
 
+@router.get("/historial-views.js")
+def historial_views_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "historial-views.js", media_type="text/javascript")
+
+
 @router.get("/membership.css")
 def membership_styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "membership.css", media_type="text/css")
