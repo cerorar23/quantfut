@@ -119,6 +119,16 @@ def cuenta_api_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "cuenta-api.js", media_type="text/javascript")
 
 
+@router.get("/conversion.css")
+def conversion_styles() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "conversion.css", media_type="text/css")
+
+
+@router.get("/conversion-views.js")
+def conversion_views_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "conversion-views.js", media_type="text/javascript")
+
+
 @router.get("/membership.css")
 def membership_styles() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "membership.css", media_type="text/css")
