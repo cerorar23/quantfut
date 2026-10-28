@@ -40,7 +40,8 @@ pago (ver `harness/tareas.md`).
 
 Antes de tocar el servidor lee [DEPLOYS.md](DEPLOYS.md). Lo que corre en producción debe ser lo que dice `main`;
 solo despliega una sesión a la vez, se compara lo desplegado con `main` antes de sobrescribir, y cada despliegue
-se anota en DEPLOYS.md con su vuelta atrás. No reconstruyas imágenes desde `~/quantfut/src` del servidor:
+se anota en DEPLOYS.md con su vuelta atrás. Cada sesión trabaja en su propio `git worktree` (el 15-oct dos sesiones
+compartieron carpeta y una comiteó en la rama de la otra) y despliega con `scripts/deploy.sh construir|ensayo|desplegar`. No reconstruyas imágenes desde `~/quantfut/src` del servidor:
 está desactualizada.
 
 ## Alcance del negocio (decisión del usuario, 2026-09-21)
