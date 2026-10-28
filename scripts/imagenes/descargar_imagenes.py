@@ -114,7 +114,7 @@ Los retratos de API-Tennis no se atribuyen una licencia Creative Commons. Se rec
 <h2>Escudos de fútbol</h2>
 <p>Escudos de clubes de <a href="https://www.api-football.com" rel="noopener">API-Football</a>, descargados una vez y servidos desde este servidor.</p>
 <h2>Retratos de futbolistas y jugadores NBA</h2>
-<p>Retratos de API-Football y del CDN oficial de <a href="https://www.nba.com" rel="noopener">NBA.com</a>, vinculados por el identificador del jugador y guardados en caché.
+<p>Retratos de API-Football, <a href="https://www.sofascore.com" rel="noopener">SofaScore</a> y del CDN oficial de <a href="https://www.nba.com" rel="noopener">NBA.com</a>, vinculados por el identificador de cada proveedor y guardados en caché.
 No se atribuye una licencia Creative Commons a estas imágenes. Si la fuente no proporciona foto, se muestra una marca de imagen no disponible.</p>
 <h2>Logos de equipos NBA</h2>
 <p>Logos obtenidos de <a href="https://www.thesportsdb.com" rel="noopener">TheSportsDB</a>: {equipos}.

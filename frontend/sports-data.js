@@ -112,7 +112,7 @@ export function nbaCode(name) {
 export async function loadImages(fetcher=fetch) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {
-    const response=await fetcher('/web/imagenes/manifiesto.json',{signal:controller.signal});
+    const response=await fetcher('/web/imagenes/manifiesto.json',{signal:controller.signal,cache:'no-store'});
     if(!response.ok)throw new Error();
     const data=await response.json();
     const dictionary=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
