@@ -3401,7 +3401,7 @@ El usuario pide el reto entero al 80 %, buscando el acierto y no la cuota, con h
       `match_id`; `escalera_resultados.fuente` (el fútbol sigue exigiendo marcador).
 - [x] Sello del lote con las columnas nuevas; web (expirado, plazo, NBA/tenis); app
       («Expiró sin completarse» en 6 idiomas); escalón gratis 75-97 % en `mobile.py`.
-- [ ] Desplegar con visto bueno: `db/089` ANTES de api y worker (hashchain y la
+- [x] Desplegar con visto bueno: `db/089` ANTES de api y worker (hashchain y la
       escalera leen las columnas nuevas); anotar en DEPLOYS.md con vuelta atrás.
 - [ ] Primera semana en vivo: `python -m qf.publish.escalera_datos preview` →
       `en_rango_por_deporte` (¿hay escalón ≥ 89,4 % cada día?) y cuántos expiran.
