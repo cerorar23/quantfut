@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 · FotMob con respaldo por ZenRows ante un bloqueo · SOLO worker (un archivo) + `.env`; rama `deploys/auditoria-api-20261028`
+- Orden del titular: si FotMob bloquea, usar los proxy de ZenRows. `ingest/fotmob_captura.py` (worker, sha `9099a3faf4dc` = `main` antes de copiar; ahora `ca50931f0f4f`): con HTTP 401/403 y `ZENROWS_API_KEY` presente repite la petición por ZenRows (proxy básico 1 crédito; si falla, premium 10), tope `FOTMOB_ZENROWS_MAX_DIA` = 150 créditos al día, sin insistir en directo durante 60 min y con aviso por Telegram. **Un 429 sigue siendo pausa de 12 h** (es límite de ritmo, no se esquiva). Estado en `$ARTIFACT_DIR/fotmob_zenrows_estado.json`.
+- Clave en `~/quantfut/.env` (permisos 600, copia previa `~/backups/env.pre-zenrows-20261028`) y en `/etc/environment` del worker en ejecución (lo que lee el cron); no se imprimió en ningún momento. Parche del contenedor, no de la imagen: se pierde el archivo si se recrea, la clave no.
+- Probado en el worker: una petición real FotMob → ZenRows (72 ligas, 269 partidos; ZenRows cobró 1 crédito, 3.894 → 3.895 de 5.000, plan Free hasta el 6-nov). Hallazgo: la cabecera `X-Request-Cost` viene en dólares (0,001 = 1 crédito); el contador cuenta como mínimo el nivel pedido.
+- **Vuelta atrás:** `docker cp ~/quantfut/deployments/fotmob-zenrows-20261028/antes/fotmob_captura.py quantfut-worker-1:/app/src/qf/ingest/`; o `FOTMOB_ZENROWS=0` en el entorno para apagarlo sin tocar código.
+
 ### 2026-10-28 · Retirar leyenda inferior del historial · API `quantfut-api-hist-leyenda:cbbfba4` (PR #209)
 - Retirada la leyenda de cuotas bajo la lista del historial, por solicitud del titular. Verificado en el historial público: leyenda, aviso, metodología y pie ausentes; la lista carga.
 - CI de PR #209: 8 comprobaciones aprobadas; 91 pruebas del frontend. Ensayo: 0 módulos con error, 135 rutas; salud API 200. Imagen derivada de `quantfut-api-hist-limpio:04f6bae` con solo cinco archivos de interfaz actualizados.

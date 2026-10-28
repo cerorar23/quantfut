@@ -139,6 +139,114 @@ def test_respuesta_valida_incluye_el_original_para_guardarlo():
     assert json.loads(d["__raw__"])["general"]["matchId"] == "5"
 
 
+# --- respaldo con ZenRows ante un bloqueo de FotMob (28-oct-2026) -------------------------------
+
+class _ZResp:
+    """Respuesta de ZenRows: JSON sin comprimir y el coste de la petición en la cabecera."""
+    def __init__(self, cuerpo, coste="1"):
+        self.cuerpo, self.headers = json.dumps(cuerpo).encode(), {"X-Request-Cost": coste}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def read(self):
+        return self.cuerpo
+
+
+def _con_zenrows(monkeypatch, tmp_path, **extra):
+    monkeypatch.setenv("ZENROWS_API_KEY", "k" * 32)
+    monkeypatch.setenv("FOTMOB_ZENROWS_ESTADO", str(tmp_path / "estado.json"))
+    for k, v in extra.items():
+        monkeypatch.setenv(k, str(v))
+    return fc.Cliente(espera_s=0)
+
+
+def _red(zenrows, directo=403):
+    """urlopen simulado: FotMob directo da `directo`; ZenRows responde con lo que diga la lista `zenrows`."""
+    llamadas = {"fotmob": [], "zenrows": []}
+
+    def urlopen(req, timeout=0):
+        url = req.full_url
+        if "api.zenrows.com" in url:
+            llamadas["zenrows"].append(url)
+            r = zenrows.pop(0)
+            if isinstance(r, Exception):
+                raise r
+            return r
+        llamadas["fotmob"].append(url)
+        raise _http_error(directo)
+    return urlopen, llamadas
+
+
+def test_un_bloqueo_se_resuelve_por_zenrows_basico_si_hay_clave(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([_ZResp({"general": {"matchId": "5"}})])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        d = cli.get("matchDetails", {"matchId": 5})
+    assert d["__via__"] == "zenrows" and json.loads(d["__raw__"])["general"]["matchId"] == "5"
+    assert len(llamadas["zenrows"]) == 1 and "premium_proxy" not in llamadas["zenrows"][0]
+    assert "fotmob.com%2Fapi%2Fdata%2FmatchDetails" in llamadas["zenrows"][0]
+
+
+def test_zenrows_escala_a_proxy_premium_si_el_basico_falla(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([_http_error(422), _ZResp({"general": {"matchId": "5"}}, coste="10")])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        d = cli.get("matchDetails", {"matchId": 5})
+    assert d["__via__"] == "zenrows"
+    assert "premium_proxy" not in llamadas["zenrows"][0] and "premium_proxy=true" in llamadas["zenrows"][1]
+
+
+def test_tras_un_bloqueo_no_se_insiste_en_directo_durante_la_pausa(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([_ZResp({"general": {}}), _ZResp({"general": {}})])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        cli.get("matchDetails", {"matchId": 5})
+        fc.Cliente(espera_s=0).get("matchDetails", {"matchId": 6})     # otra pasada del cron: el estado persiste
+    assert len(llamadas["fotmob"]) == 1 and len(llamadas["zenrows"]) == 2
+
+
+def test_el_tope_diario_de_creditos_de_zenrows_vuelve_a_ser_un_bloqueo(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path, FOTMOB_ZENROWS_MAX_DIA=1)
+    # ZenRows informa el coste en dólares (0,001 = 1 crédito): contar 0 dejaría el tope sin efecto.
+    red, llamadas = _red([_ZResp({"general": {}}, coste="0.001"), _ZResp({"general": {}})])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        cli.get("matchDetails", {"matchId": 5})                          # gasta el crédito del día
+        with pytest.raises(fc.AccesoDenegado):
+            cli.get("matchDetails", {"matchId": 6})
+    assert len(llamadas["zenrows"]) == 1
+
+
+def test_si_zenrows_tampoco_responde_es_un_bloqueo_y_la_clave_no_se_filtra(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, _ = _red([_http_error(422), _http_error(422)])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        with pytest.raises(fc.AccesoDenegado) as exc:
+            cli.get("matchDetails", {"matchId": 5})
+    assert "k" * 32 not in str(exc.value)
+
+
+def test_un_429_es_limite_de_ritmo_y_no_se_esquiva_con_zenrows(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([], directo=429)
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        with pytest.raises(fc.AccesoDenegado):
+            cli.get("matchDetails", {"matchId": 5})
+    assert llamadas["zenrows"] == [] and len(llamadas["fotmob"]) == 1
+
+
+def test_zenrows_apagado_por_configuracion_no_se_usa(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path, FOTMOB_ZENROWS="0")
+    red, llamadas = _red([])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        with pytest.raises(fc.AccesoDenegado):
+            cli.get("matchDetails", {"matchId": 5})
+    assert llamadas["zenrows"] == []
+
+
 def test_correr_pasa_las_opciones_de_relleno_y_respeta_el_enfriamiento():
     from unittest.mock import MagicMock, patch
 

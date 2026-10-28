@@ -11,9 +11,13 @@ Cinco acciones, cada una con su cron:
   resultados   respaldo: cierra y liquida con FotMob los partidos que siguen abiertos más de 2 h 30 min tras el saque.
                El cierre normal es al pitido, desde `qf.ingest.live` (`cerrar_partido`); PropLine cierra si llega antes.
 
-Límites de uso (no se evitan controles de acceso):
+Límites de uso:
 - Una petición cada `ESPERA_S` segundos, en serie.
-- HTTP 401, 403 o 429: se registra, se alerta y NO se vuelve a pedir nada durante `ENFRIAMIENTO_H` horas.
+- HTTP 429 (límite de ritmo): se registra, se alerta y NO se vuelve a pedir nada durante `ENFRIAMIENTO_H` horas.
+- HTTP 401 o 403 (bloqueo): decisión del titular (28-oct-2026), con `ZENROWS_API_KEY` presente la misma petición se
+  repite por ZenRows (proxy básico, 1 crédito; si falla, proxy premium, 10), con tope diario de créditos
+  (`FOTMOB_ZENROWS_MAX_DIA`, 150) y sin volver a insistir en directo durante `ZENROWS_PAUSA_DIRECTO_MIN` minutos.
+  Sin clave, con `FOTMOB_ZENROWS=0` o sin créditos, es un bloqueo como antes (pausa de `ENFRIAMIENTO_H` horas).
 - Una respuesta cuyo id no coincide con el pedido, o de un partido ya empezado en la captura previa, se descarta.
 """
 from __future__ import annotations
@@ -22,9 +26,13 @@ import gzip
 import hashlib
 import json
 import logging
+import os
+import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 from ..league_policy import RETIRED_LEAGUES
@@ -37,6 +45,9 @@ BASE = "https://www.fotmob.com/api/data/"
 ESPERA_S = 0.8
 ENFRIAMIENTO_H = 12
 USER_AGENT = "QuantFut-Capture/1.0"
+ZENROWS_URL = "https://api.zenrows.com/v1/"
+ZENROWS_PAUSA_DIRECTO_MIN = 60
+ZENROWS_MAX_DIA = 150
 # Ventanas de la captura previa, en minutos antes del saque: (nombre, desde, hasta).
 # La alineación oficial suele publicarse ~60 min antes: «final» la toma al abrirse la ventana (~T-75) y «cierre»
 # (~T-45) deja constancia de la confirmada. Solo ~56 % de los partidos la traen oficial a T-45 (19-oct-2026), así que
@@ -66,13 +77,88 @@ def ventana_de(mins_to_kickoff: float) -> str | None:
     return v[0] if v else None
 
 
+class _EstadoZenRows:
+    """Estado que sobrevive entre pasadas del cron: cuándo se bloqueó el acceso directo y los créditos del día."""
+
+    def __init__(self):
+        base = os.environ.get("FOTMOB_ZENROWS_ESTADO")
+        self.ruta = Path(base) if base else Path(os.environ.get("ARTIFACT_DIR") or tempfile.gettempdir()) / "fotmob_zenrows_estado.json"
+
+    def _leer(self) -> dict:
+        try:
+            return json.loads(self.ruta.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+
+    def _guardar(self, estado: dict) -> None:
+        try:
+            tmp = self.ruta.with_suffix(".tmp")
+            tmp.write_text(json.dumps(estado), encoding="utf-8")
+            tmp.replace(self.ruta)
+        except OSError:
+            log.warning("no se pudo guardar el estado de ZenRows en %s", self.ruta)
+
+    def directo_bloqueado(self, ahora: datetime) -> bool:
+        hasta = self._leer().get("directo_hasta")
+        return bool(hasta) and ahora < datetime.fromisoformat(hasta)
+
+    def bloquear_directo(self, ahora: datetime) -> bool:
+        """Anota el bloqueo; True si es el primero de las últimas horas (para avisar una sola vez)."""
+        estado = self._leer()
+        primero = not (estado.get("directo_hasta") and ahora < datetime.fromisoformat(estado["directo_hasta"]))
+        estado["directo_hasta"] = (ahora + timedelta(minutes=ZENROWS_PAUSA_DIRECTO_MIN)).isoformat()
+        self._guardar(estado)
+        return primero
+
+    def creditos_hoy(self, ahora: datetime) -> int:
+        estado = self._leer()
+        return int(estado.get("creditos", 0)) if estado.get("dia") == ahora.date().isoformat() else 0
+
+    def sumar(self, ahora: datetime, creditos: int) -> None:
+        estado = self._leer()
+        estado["creditos"] = self.creditos_hoy(ahora) + creditos
+        estado["dia"] = ahora.date().isoformat()
+        self._guardar(estado)
+
+
 class Cliente:
     def __init__(self, espera_s: float = ESPERA_S):
         self.espera_s = espera_s
         self._ultimo = 0.0
+        clave = os.environ.get("ZENROWS_API_KEY", "").strip()
+        self._zenrows = clave if clave and os.environ.get("FOTMOB_ZENROWS", "1") != "0" else None
+        self._estado = _EstadoZenRows()
+
+    def _via_zenrows(self, url: str) -> dict:
+        """La misma petición por ZenRows: proxy básico y, si no llega, premium; nunca más del tope diario de créditos."""
+        tope = int(os.environ.get("FOTMOB_ZENROWS_MAX_DIA", ZENROWS_MAX_DIA))
+        for premium, costo in ((False, 1), (True, 10)):
+            ahora = datetime.now(timezone.utc)
+            if self._estado.creditos_hoy(ahora) + costo > tope:
+                break
+            params = {"apikey": self._zenrows, "url": url}
+            if premium:
+                params["premium_proxy"] = "true"
+            req = urllib.request.Request(ZENROWS_URL + "?" + urllib.parse.urlencode(params),
+                                         headers={"Accept": "application/json", "User-Agent": USER_AGENT})
+            try:
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    raw = r.read()
+                    informado = float(r.headers.get("X-Request-Cost") or 0)
+                # La cabecera viene en dólares (0,001 = 1 crédito): nunca se cuenta menos que el nivel pedido.
+                self._estado.sumar(ahora, max(costo, int(informado)))
+                datos = json.loads(raw)
+            except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError):
+                continue        # sin cobro o sin JSON: se prueba el siguiente nivel; la clave nunca se registra
+            if isinstance(datos, dict) and not datos.get("error"):
+                datos["__raw__"], datos["__via__"] = raw, "zenrows"
+                return datos
+        raise AccesoDenegado(f"bloqueado y ZenRows sin respuesta o sin créditos: {url}")
 
     def get(self, endpoint: str, params: dict) -> dict:
         url = BASE + endpoint + "?" + "&".join(f"{k}={v}" for k, v in params.items())
+        if self._zenrows and self._estado.directo_bloqueado(datetime.now(timezone.utc)):
+            return self._via_zenrows(url)
         error: Exception | None = None
         for intento in range(3):
             espera = self.espera_s - (time.monotonic() - self._ultimo)
@@ -92,6 +178,10 @@ class Cliente:
                 datos["__raw__"] = raw
                 return datos
             except urllib.error.HTTPError as exc:
+                if exc.code in (401, 403) and self._zenrows:
+                    if self._estado.bloquear_directo(datetime.now(timezone.utc)):
+                        self._avisar_bloqueo(exc.code)
+                    return self._via_zenrows(url)
                 if exc.code in (401, 403, 429):
                     raise AccesoDenegado(f"HTTP {exc.code}: {url}") from exc
                 if exc.code < 500:
@@ -101,6 +191,16 @@ class Cliente:
                 error = exc
             time.sleep(2 ** intento)
         raise error  # type: ignore[misc]
+
+    @staticmethod
+    def _avisar_bloqueo(codigo: int) -> None:
+        try:
+            from ..publish import telegram
+            telegram.alert(f"FotMob bloqueó el acceso directo (HTTP {codigo}). Las peticiones pasan por ZenRows "
+                           f"(tope {os.environ.get('FOTMOB_ZENROWS_MAX_DIA', ZENROWS_MAX_DIA)} créditos al día); "
+                           f"se reintenta en directo en {ZENROWS_PAUSA_DIRECTO_MIN} min.")
+        except Exception:  # noqa: BLE001 - un aviso fallido no debe frenar la captura
+            log.warning("aviso de bloqueo de FotMob no enviado", exc_info=True)
 
 
 def _log(c, accion: str, detalle: dict, denegado: bool = False) -> None:
