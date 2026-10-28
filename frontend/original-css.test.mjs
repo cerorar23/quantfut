@@ -16,10 +16,10 @@ test('las cuatro hojas CSS son exactamente las anteriores al rediseño',()=>{
   assert.equal(createHash('sha256').update(css).digest('hex'),digest,file);
  }
 });
-test('el HTML solo carga las hojas originales más la disposición de la ventana única y no introduce estilos inline',()=>{
+test('el HTML solo carga las hojas originales, la disposición de la ventana única y la hoja aditiva de las vistas de conversión, sin estilos inline',()=>{
  const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
  const sheets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map(m=>m[1].replace(/^\.\//,'').split('?')[0]);
- assert.deepEqual(sheets.sort(),[...Object.keys(original),'window.css'].sort());
+ assert.deepEqual(sheets.sort(),[...Object.keys(original),'window.css','conversion.css'].sort());
  assert.ok(!html.includes('<style'));
  const views=readFileSync(new URL('./ergonomic-views.js',import.meta.url),'utf8');
  assert.ok(!views.includes('style='));assert.ok(!views.includes('<style'));

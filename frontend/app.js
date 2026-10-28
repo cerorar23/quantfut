@@ -5,6 +5,7 @@ import { createRealViews } from './real-views.js?v=planes-20261027';
 import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket } from './sports-data.js?v=imagenes-20261029';
 import { createSportWindow } from './sports-window.js?v=planes-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
+import { createConversionViews } from './conversion-views.js?v=conv-20261027';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();
@@ -720,111 +721,10 @@ function deskFilteredRows() {
     && (!query || fold(`${row.fx.home} ${row.fx.away} ${row.fx.league} ${row.market} ${row.selection}`).includes(query)));
 }
 
-// Línea de alta probabilidad (diseño 2026-10-05). Solo datos reales de
-// /alta-probabilidad: es una línea de acierto, no de valor, y se dice.
-const ALTA_MERCADO = { h2h: 'Ganador (1X2)', double_chance: 'Doble oportunidad', totals: 'Goles', team_totals_home: 'Marca el local', team_totals_away: 'Marca el visitante', btts: 'Ambos marcan', spreads: 'Hándicap asiático', corners: 'Córners', corners_home: 'Córners del local', corners_away: 'Córners del visitante' };
-function altaView() {
-  const head = `<div class="view-title"><div><p class="eyebrow">PRONÓSTICOS / ALTA PROBABILIDAD</p><h1>Alta probabilidad</h1><p class="lead">Un pronóstico por partido, solo si su probabilidad real está entre el 80% y el 95%: Pinnacle sin margen o, en córners, el modelo de córners sin pasar nunca de lo que da la casa. Cada uno se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
-  const source = publicData?.alta;
-  if (!source) return `${head}<section class="live-panel"><p>Consultando pronósticos de alta probabilidad…</p></section>`;
-  if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudieron consultar los pronósticos. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
-  const { estado, motivos, proximos, vip, historial: h } = source.data;
-  const ic = Array.isArray(h.diferencia_ic95) ? h.diferencia_ic95 : null;
-  const record = h.n ? `<div class="live-facts"><div><span>PROMETIDO</span><strong>${realNumber(h.acierto_prometido, 1)}%</strong><small>media de las probabilidades</small></div><div><span>REAL</span><strong>${realNumber(h.acierto_real, 1)}%</strong><small>${realNumber(h.aciertos)} de ${realNumber(h.n)} acertados</small></div><div><span>DIFERENCIA · IC95</span><strong>${ic ? `${realNumber(ic[0], 1)} a ${realNumber(ic[1], 1)}` : '—'}</strong><small>${ic ? 'puntos, real − prometido' : 'Sin intervalo todavía'}</small></div></div>` : '<p>Todavía no hay pronósticos liquidados.</p>';
-  const byMarket = Object.entries(h.por_mercado ?? {});
-  const marketTable = byMarket.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Acierto por mercado"><table><thead><tr><th>Mercado</th><th>Pronósticos</th><th>Prometido</th><th>Real</th></tr></thead><tbody>${byMarket.map(([market, row]) => `<tr><td>${esc(ALTA_MERCADO[market] ?? market)}</td><td>${realNumber(row.n)}${row.partidos != null ? `<small> en ${realNumber(row.partidos)} partidos</small>` : ''}</td><td>${realNumber(row.acierto_prometido, 1)}%</td><td>${realNumber(row.acierto_real, 1)}%${row.margen_ee != null ? `<small> ±${realNumber(row.margen_ee, 1)}</small>` : ''}</td></tr>`).join('')}</tbody></table></div>${byMarket.some(([, row]) => row.partidos != null) ? '<p class="live-reason">Cuenta pronósticos, y varios son del mismo partido: por eso se indican los partidos y el margen (±, un error estándar) se mide por partido.</p>' : ''}` : '';
-  const roi = h.rendimiento_ref?.n ? `<p class="live-reason">A la mejor cuota entre las casas de la lista (${realNumber(h.rendimiento_ref.n)} pronósticos con cuota): rendimiento ${realPercent(h.rendimiento_ref.roi, 2)}.</p>` : '';
-  const note = '<p class="live-reason">Es una línea de acierto, no de valor. En el histórico (football-data, 7 ligas, 2019-2025), a la mejor cuota de bet365 y 1xBet, los favoritos con probabilidad de 80% o más dejaron un rendimiento de −2,4%. La doble oportunidad, «marca un equipo», el hándicap asiático y los córners no se pudieron medir en rendimiento: no hay cuotas históricas de esos mercados. Por eso se publican las dos cosas: lo que se acierta y lo que rinde. Un hándicap devuelto o unos córners sin estadística no cuentan como acierto ni como fallo.</p>';
-  const motivo = esc((motivos ?? []).join(' · '));
-  const paused = estado === 'pausada' ? `<p class="live-reason">Línea pausada: ${motivo || 'sin motivo informado'}</p>` : estado !== 'activa' ? `<p class="live-reason">${motivo || 'Línea desactivada'}</p>` : '';
-  const cards = proximos.length ? `<div class="live-pick-list">${proximos.map(p => `<article class="live-pick alta-pick"><div><span>${esc(p.league_id ?? 'Liga')} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}</p><small class="live-prob">Probabilidad real: ${esc(probabilityLabel(p.prob)?.text ?? 'sin dato')}</small></div><div><span>Cuota justa</span><strong>${realNumber(p.fair_price, 2)}</strong><small>${p.ref_price ? `${esc(p.ref_book ?? 'Casa')} ${realNumber(p.ref_price, 2)}` : 'Sin cuota de referencia'}</small><small>Lote ${esc(p.batch_date ?? '—')} · ${esc(String(p.chain_sha256 ?? '').slice(0, 12))}</small></div></article>`).join('')}</div>` : '<p>No hay pronósticos de alta probabilidad para los próximos partidos. Si ningún resultado llega al 80%, no se fuerza uno.</p>';
-  const badgeText = estado === 'activa' ? 'Activa' : estado === 'pausada' ? 'Pausada' : 'Desactivada';
-  return `${head}
-    <section class="live-panel" aria-label="Historial de alta probabilidad"><div class="live-head"><div><p class="eyebrow">HISTORIAL PÚBLICO · /ALTA-PROBABILIDAD</p><h2>Prometido frente a real</h2></div>${badge(badgeText, estado === 'activa' ? 'good' : 'muted')}</div>${record}${marketTable}${roi}${note}</section>
-    <section class="live-panel" aria-label="Próximos pronósticos de alta probabilidad"><div class="live-head"><div><p class="eyebrow">PRÓXIMOS PARTIDOS</p><h2>Pronósticos sellados</h2></div></div>${paused}${cards}${lockedPicksHtml(vip, { esc, date: realDate, time: realTime, number: realNumber })}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
-}
-
-// Parley del día (2026-10-11). Solo datos reales de /parley: cada parlay se
-// sella en la cadena antes de los partidos; el historial incluye los perdidos.
-const PARLEY_ESTADO = { ganado: 'Ganado', perdido: 'Perdido', nulo: 'Nulo' };
-const PATA_ESTADO = { win: '✓', loss: '✗', push: '↺', void: '—' };
-
-function parleyPata(p) {
-  return `<div class="live-pick"><div><strong>${esc(p.texto)}</strong><small>${esc(p.local)} – ${esc(p.visitante)} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</small></div><div><strong>${realNumber(p.price, 2)}</strong><small>${realNumber(p.prob * 100, 0)}% · ${esc(p.book)} ${p.outcome ? PATA_ESTADO[p.outcome] ?? '' : ''}${p.marcador ? ` · ${esc(p.marcador)}` : ''}</small></div></div>`;
-}
-
-function parleyTicket(t) {
-  if (t.locked) return lockedParleyHtml(t, { number: realNumber });
-  const estado = t.outcome ? PARLEY_ESTADO[t.outcome] ?? t.outcome : 'En juego';
-  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">ESCALÓN ${realNumber(t.escalon)} · ${realNumber(t.n_patas)} PATAS</p><h3>${esc(estado)}</h3></div><strong class="ladder-balance">${realNumber(t.cuota_total, 2)}</strong></div><p class="ladder-meta">Probabilidad ${realNumber(t.prob_total * 100, 1)}% · 1 de cada ${realNumber(1 / t.prob_total, 1)}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><div class="live-pick-list">${t.patas.map(parleyPata).join('')}</div></article>`;
-}
-
-function parleyView() {
-  const head = `<div class="view-title"><div><p class="eyebrow">COMBINADAS / PARLEY</p><h1>Parley del día</h1><p class="lead">De 1 a 5 parlays al día, uno por escalón de cuota (≈2,0 · 2,5 · 3,0 · 4,0 · 5,0), con la combinación más probable de todos los mercados. Se elige por probabilidad, no por valor: el margen de la casa se paga en cada pata. Cada parlay se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
-  const source = publicData?.parley;
-  if (!source) return `${head}<section class="live-panel"><p>Consultando el parley del día…</p></section>`;
-  if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudo consultar el parley. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
-  const { activo, dias, resumen, control } = source.data;
-  const [ultimo, ...anteriores] = dias;
-  const hoy = ultimo ? `<p class="eyebrow">${esc(String(ultimo.dia))} · lote ${esc(String(ultimo.chain_sha256 ?? '').slice(0, 12))}</p><div class="ladder-grid">${ultimo.tickets.map(parleyTicket).join('')}</div>` : `<p>${activo ? 'Hoy no hay combinación que cumpla la regla.' : 'El parley del día todavía no está activo.'}</p>`;
-  const filas = Object.entries(resumen?.por_escalon ?? {}).map(([e, b]) => `<div><span>ESCALÓN ${esc(e)}</span><strong>${realNumber(b.aciertos)} de ${realNumber(b.n)}</strong><small>prometido ${realNumber(b.prob_media, 1)}% · real ${realNumber(b.acierto_real, 1)}% · ${realNumber(b.unidades, 2)} u</small></div>`).join('');
-  const stats = `<div class="live-facts">${filas || '<div><span>HISTORIAL</span><strong>—</strong><small>Sin parlays liquidados todavía</small></div>'}</div><p class="ladder-meta">${(control?.motivos ?? []).map(esc).join(' · ')}</p>`;
-  const historial = anteriores.length ? anteriores.map(d => `<details class="live-panel"><summary>${esc(String(d.dia))} · ${d.tickets.map(t => `${realNumber(t.cuota_total, 2)} ${t.outcome ? PARLEY_ESTADO[t.outcome] ?? '' : '…'}`).join(' · ')}</summary><div class="ladder-grid">${d.tickets.map(parleyTicket).join('')}</div></details>`).join('') : '<p>El historial empieza con el primer día sellado.</p>';
-  return `${head}<section class="live-panel">${hoy}</section><section class="live-panel"><h2>Prometido frente a real</h2>${stats}</section><section><h2>Historial</h2>${historial}</section>`;
-}
-
-// Reto escalera (2026-10-08). Solo datos reales de /escalera: cada escalón
-// se sella antes del partido y el historial enseña también los retos fallidos.
-// Puede haber varios retos abiertos a la vez, de 3 a 6 escalones.
-const ESCALERA_ESTADO = { en_curso: 'Buscando escalón', esperando: 'Esperando resultado', completado: 'Completado', fallido: 'Fallido' };
-const unidades = value => `${realNumber(value, 2)} u`;
-function escaleraSerie(serie) {
-  if (!serie.length) return '';
-  const values = [0, ...serie.map(r => Number(r.acumulado))];
-  const min = Math.min(...values, 0);
-  const span = Math.max(...values, 0) - min || 1;
-  const x = i => 8 + i / Math.max(values.length - 1, 1) * 284;
-  const y = v => 72 - (v - min) / span * 60;
-  const last = values.at(-1);
-  return `<svg class="clv-chart ${last < 0 ? 'neg' : ''}" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Ganancia acumulada: ${realNumber(last, 2)} unidades tras ${serie.length} retos"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg>`;
-}
-function escaleraPaso(p) {
-  const estado = p.outcome === 'win' ? ['won', 'Ganado'] : p.outcome === 'loss' ? ['lost', 'Perdido'] : p.outcome === 'push' ? ['void', 'Devuelto (no cuenta)'] : p.outcome === 'void' ? ['void', 'Nulo (aplazado)'] : ['pending', 'Pendiente'];
-  return `<article class="live-pick ladder-pick ${estado[0]}"><div><span>Escalón ${realNumber(p.paso)} · ${esc(p.league_id ?? 'Liga')} · ${realDate(p.kickoff_utc)} ${esc(realTime(p.kickoff_utc))}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''}</p><small class="live-prob">Probabilidad real: ${esc(probabilityLabel(p.prob)?.text ?? 'sin dato')}</small></div><div><span>Cuota</span><strong>${realNumber(p.price, 2)}</strong><small>${esc(p.book ?? 'Casa')}</small><small class="result ${estado[0] === 'won' ? 'won' : estado[0] === 'lost' ? 'lost' : ''}">${estado[1]}</small><small>Lote ${esc(p.batch_date ?? '—')} · ${esc(String(p.chain_sha256 ?? '').slice(0, 12))}</small></div></article>`;
-}
-function escaleraReto(r) {
-  const objetivo = r.pasos_objetivo;
-  const ganados = r.ganados ?? 0;
-  const pasos = r.pasos ?? [];
-  const peldanos = Array.from({ length: objetivo }, (_, i) => {
-    const n = i + 1;
-    const cls = n <= ganados ? 'won' : n === ganados + 1 && r.estado === 'esperando' ? 'pending' : '';
-    return `<li class="ladder-step ${cls}"><span>${n}</span><small>${n <= ganados ? '✓' : cls === 'pending' ? 'en juego' : ''}</small></li>`;
-  }).join('');
-  const ultimo = pasos.at(-1);
-  const potencial = r.estado === 'esperando' && ultimo ? Number(r.en_juego) * Number(ultimo.price) : null;
-  const freeroll = r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : 'reto sin freeroll';
-  return `<article class="ladder-card"><div class="live-head"><div><p class="eyebrow">RETO #${realNumber(r.reto_id)} · ${realNumber(objetivo)} ESCALONES</p><h3>${ESCALERA_ESTADO[r.estado] ?? r.estado}</h3></div><strong class="ladder-balance">${unidades(r.saldo)}</strong></div><ol class="ladder" aria-label="Escalones del reto ${realNumber(r.reto_id)}">${peldanos}</ol><p class="ladder-meta">${r.estado === 'esperando' ? `En juego ${unidades(r.en_juego)}${potencial ? ` · si se acierta: ${unidades(potencial)}` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${unidades(r.stake_inicial)} · ${Number(r.retirado) > 0 ? `retirado ${unidades(r.retirado)}: lo que queda va sin riesgo propio` : freeroll}</p>${pasos.length ? `<div class="live-pick-list">${[...pasos].reverse().map(escaleraPaso).join('')}</div>` : '<p class="ladder-meta">Esperando su primer escalón sellado.</p>'}${lockedPicksHtml(r.vip, { esc, date: realDate, time: realTime })}</article>`;
-}
-function escaleraView() {
-  const head = `<div class="view-title"><div><p class="eyebrow">RETOS / ESCALERA</p><h1>Reto escalera</h1><p class="lead">Retos de 3 a 6 escalones que empiezan con 10 unidades: cada escalón apuesta todo el saldo a un pronóstico de cuota 1,25-1,40. Ganarlos todos completa el reto; fallar uno lo cierra. Cada escalón se sella en la cadena antes del partido.</p></div>${badge('Datos del servidor', 'accent')}</div>`;
-  const source = publicData?.escalera;
-  if (!source) return `${head}<section class="live-panel"><p>Consultando el reto escalera…</p></section>`;
-  if (source.status !== 'ready') return `${head}<section class="live-panel"><p>No se pudo consultar el reto escalera. Inténtalo de nuevo más tarde.</p><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>`;
-  const { activo, reglas, actuales = [], historial, resumen, por_longitud: porLongitud = {}, serie, escalones } = source.data;
-  const abiertos = actuales.length ? `<div class="ladder-grid">${actuales.map(escaleraReto).join('')}</div>` : `<p>${activo ? 'No hay retos abiertos: el próximo empieza en cuanto un partido cumpla la regla.' : 'El reto escalera todavía no está activo.'}</p>`;
-  const r = resumen ?? {};
-  const stats = `<div class="live-facts"><div><span>RETOS CERRADOS</span><strong>${realNumber(r.cerrados ?? 0)}</strong><small>${r.cerrados ? `${realNumber(r.completados)} completados · ${realNumber(r.tasa_completados, 1)}%` : 'Aún no se cerró ninguno'}</small></div><div><span>GANANCIA ACUMULADA</span><strong>${unidades(r.ganancia ?? 0)}</strong><small>${r.cerrados ? `sobre ${unidades(r.invertido)} invertidas · ${realPercent(r.roi, 1)}` : 'contando también los fallidos'}</small></div><div><span>ESCALONES ACERTADOS</span><strong>${escalones?.n ? `${realNumber(escalones.aciertos)} de ${realNumber(escalones.n)}` : '—'}</strong><small>${escalones?.n ? `probabilidad media prometida ${realNumber(escalones.prob_media, 1)}%` : 'sin escalones liquidados'}</small></div></div>${escaleraSerie(serie ?? [])}`;
-  const longitudes = (reglas.longitudes ?? []).map(n => [n, porLongitud[String(n)] ?? {}]);
-  const tablaLongitud = longitudes.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Resultados por longitud"><table><thead><tr><th>Escalones</th><th>Retos cerrados</th><th>Completados</th><th>Ganancia</th><th>Rendimiento</th></tr></thead><tbody>${longitudes.map(([n, l]) => `<tr><td>${realNumber(n)}</td><td>${realNumber(l.cerrados ?? 0)}</td><td>${l.cerrados ? `${realNumber(l.completados)} · ${realNumber(l.tasa_completados, 1)}%` : '—'}</td><td>${l.cerrados ? unidades(l.ganancia) : '—'}</td><td>${l.cerrados ? realPercent(l.roi, 1) : '—'}</td></tr>`).join('')}</tbody></table></div>` : '';
-  const tabla = historial?.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Historial de retos"><table><thead><tr><th>Reto</th><th>Inicio</th><th>Escalones</th><th>Retirado</th><th>Estado</th><th>Ganancia</th></tr></thead><tbody>${historial.map(h => `<tr><td>#${realNumber(h.reto_id)}</td><td>${realDate(h.inicio)}</td><td>${realNumber(h.ganados)} de ${realNumber(h.pasos_objetivo)}</td><td>${unidades(h.retirado)}</td><td><span class="result ${h.estado === 'completado' ? 'won' : 'lost'}">${ESCALERA_ESTADO[h.estado] ?? h.estado}</span></td><td class="edge ${Number(h.ganancia) >= 0 ? 'pos' : 'neg'}">${Number(h.ganancia) > 0 ? '+' : ''}${unidades(h.ganancia)}</td></tr>`).join('')}</tbody></table></div>` : '<p>El historial aparecerá cuando se cierre el primer reto. Los fallidos se quedan, igual que los completados.</p>';
-  const handicap = reglas.lineas_handicap?.length ? `<li><strong>Hándicap asiático protector</strong> (${reglas.lineas_handicap.map(l => `${l > 0 ? '+' : ''}${realNumber(l, l % 1 ? 1 : 0)}`).join(', ')}), con la probabilidad sacada de Pinnacle y medida en el histórico.</li>` : '';
-  const regla = `<ul class="ladder-rules"><li><strong>Cuota ${realNumber(reglas.cuota_min, 2)}-${realNumber(reglas.cuota_max, 2)}</strong> en las casas de la lista, la mejor del momento.</li><li><strong>Se elige el pronóstico más probable</strong> de todos los partidos y mercados: ganador, goles, ambos marcan, hándicap asiático y córners. La probabilidad sale de Pinnacle sin margen o, en córners y tarjetas, del histórico de cada equipo, de la liga y del árbitro, y nunca por encima de la que da el mercado sin margen: si el modelo es más optimista que la casa, cuenta la de la casa. Solo entran las líneas que pasaron la prueba de calibración.</li><li><strong>Retos de 3 escalones por defecto</strong>; uno de 6 como mucho ${realNumber(reglas.max_seis_mes)} veces al mes, y de 4 o 5 cuando ya hay otro abierto. Cada reto tiene un escalón al día como máximo y dos retos nunca dependen del mismo partido.</li>${handicap}<li><strong>Freeroll a ×${realNumber(reglas.freeroll_x, 1)}</strong>: se retiran las ${realNumber(reglas.stake, 0)} unidades iniciales y se sigue con la ganancia.</li></ul><p class="live-reason">Lo que hay que saber: elegir el más probable sube el acierto de cada escalón, pero no quita el margen de la casa, y la escalera lo multiplica. En el histórico (football-data, 7 ligas, 2019-2025) esta forma de elegir dejó −11,5% por reto a 3 escalones y −26% a 6, aunque se completaran el 40% y el 15% de los retos. Por eso se enseña todo: cada escalón con su probabilidad, su cuota y su resultado, también los retos fallidos. Tarjetas: amarillas + rojas, una por tarjeta; algunas casas cuentan la roja como 2. En el histórico el modelo de tarjetas solo pasó la prueba en «menos de 6,5».</p>`;
-  return `${head}
-    <section class="live-panel" aria-label="Retos abiertos"><div class="live-head"><div><p class="eyebrow">RETOS ABIERTOS · ${realNumber(actuales.length)}</p><h2>En curso</h2></div>${badge(activo ? 'Activo' : 'Inactivo', activo ? 'good' : 'muted')}</div>${abiertos}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>
-    <section class="live-panel" aria-label="Seguimiento de ganancias"><div class="live-head"><div><p class="eyebrow">SEGUIMIENTO · /ESCALERA</p><h2>Historial y ganancias</h2></div></div>${stats}${tablaLongitud}${tabla}</section>
-    <section class="live-panel" aria-label="La regla del reto"><div class="live-head"><div><p class="eyebrow">LA REGLA</p><h2>Cómo se elige cada escalón</h2></div></div>${regla}</section>`;
-}
+// #alta, #parley y #escalera: vistas de conversión en conversion-views.js
+// (solo datos reales de /alta-probabilidad, /parley y /escalera).
+const conversionViews = createConversionViews({ esc, realNumber, realPercent, realDate, realTime, badge, probabilityLabel, getData: () => publicData });
+const { altaView, parleyView, escaleraView } = conversionViews;
 
 function plansView() { return membershipUI.plansView(); }
 
@@ -1284,6 +1184,7 @@ function render() {
   document.title = `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span><span>Escudos de fútbol de API-Football, logos NBA de TheSportsDB y fotos de tenis de Wikimedia Commons con licencia Creative Commons. <a class="text-link" href="/web/imagenes/creditos" target="_blank" rel="noopener">Créditos de imágenes ↗</a></span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
+  conversionViews.applyMeters(app);
   membershipUI.afterRender();
   app.querySelector('.app-shell').inert = overlay;
   syncPublicAuth();
@@ -1358,6 +1259,7 @@ app.addEventListener('click', event => {
     state.statsDay = STATS_DAYS.includes(state.dayOffset) ? state.dayOffset : 0; state.statsLeague = 'Todas'; state.statsMatch = data.realMatch; state.statsTab = 'resumen'; state.winPane = 'pron'; state.sport = 'futbol'; navigate('partidos'); return;
   }
   if (data.action === 'refresh-public') { refreshPublicData(); return; }
+  if (data.action === 'cv-scroll') { const target = app.querySelector(`#${CSS.escape(data.target)}`); target?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); target?.focus({ preventScroll: true }); return; }
   if (data.route) { if (data.homeMarketMode) { state.deskMode = data.homeMarketMode; state.deskDay = state.dayOffset; state.deskSort = { key: 'edge', dir: 'desc' }; } if (data.route === 'acceso') { state.authReturn = 'cuenta'; state.authMode = 'login'; state.authMessage = ''; } navigate(data.route); return; }
   if (data.homeStatus) { state.homeStatus = data.homeStatus; rerenderKeepingFocus(`[data-home-status="${data.homeStatus}"]`); return; }
   if (data.homeLeague) { state.homeLeague = data.homeLeague; rerenderKeepingFocus(`[data-home-league="${CSS.escape(data.homeLeague)}"]`); return; }
