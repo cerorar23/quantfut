@@ -1,8 +1,8 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=hist-limpio-20261028b';
-import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=imagenes-20261028b';
+import { createRealViews } from './real-views.js?v=hist-desde26-20261029';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=hist-desde26-20261029';
 import { createSportWindow } from './sports-window.js?v=imagenes-20261028b';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
@@ -208,7 +208,11 @@ function ensureNbaStats(id) {
 function ensureResults() {
   if(resultsCache)return resultsCache;
   resultsCache={status:'loading',items:[]}; const generation=realGeneration;
-  loadResults().then(result=>{if(generation!==realGeneration)return;resultsCache=result;rerenderIfIdle();});
+  Promise.all([loadResults(),loadFootballFeatured()]).then(([alta,featured])=>{
+    if(generation!==realGeneration)return;
+    resultsCache=alta.status==='ready'&&featured.status==='ready'?{status:'ready',items:alta.items,featured:featured.items}:{status:'error',items:[],featured:[]};
+    rerenderIfIdle();
+  });
   return resultsCache;
 }
 function ensureImages() {
