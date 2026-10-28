@@ -5,7 +5,7 @@ import { createRealViews } from './real-views.js?v=logos-20261027';
 import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=logos-20261027';
 import { createSportWindow } from './sports-window.js?v=logos-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=conv-20261027';
+import { createConversionViews } from './conversion-views.js?v=conv-20261028';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();
