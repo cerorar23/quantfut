@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 · Historial sin aviso ni metodología y web sin pie · API `quantfut-api-hist-limpio:04f6bae` (PR #207)
+- Solicitud del titular: quitar del historial el aviso y el desplegable de metodología, y quitar el pie de página de la web. Cinco archivos de interfaz, con versiones nuevas para evitar la caché.
+- CI de PR #207: 8 comprobaciones aprobadas; 91 pruebas del frontend. Verificado el historial público cargado, sin ambos bloques ni el pie; salud API 200.
+- Imagen construida sobre `quantfut-api:4907a0d` con solo los cinco archivos de interfaz; se compararon previamente con la base en ejecución. Ensayo: 0 módulos con error, 135 rutas. Solo se recreó la API.
+- Vuelta atrás: restaurar `~/quantfut/releases/compose-antes-20261028-110205.yml` a `~/quantfut/docker-compose.yml` y recrear solo la API; imagen anterior `quantfut-api:4907a0d`.
+
+
 ### 2026-10-28 16:37 UTC · Tenis: todos los mercados liquidados y resultados cada ~2 h · imagen `quantfut-tenis:bea262b` (`main` `bea262b`, PR #202)
 - Orden del titular: «despliega y fusiona». Causa: el «Pendiente» de tenis tenía dos orígenes. La proyección pública solo liquidaba el ganador (juegos, sets, hándicaps, ganador de set y tie-break quedaban abiertos aunque el partido hubiera terminado) y el calendario con resultados solo se pedía a las 00 y 12 UTC.
 - Antes de construir: `main` difería del servidor solo en los archivos de este cambio (`README.md`, `scripts/vps_run.sh`, `tennis_intake_v1/__init__.py` y `__main__.py`, `tests/test_intake_v1.py`), comparados archivo por archivo con el contexto `45f5876`. `scripts/publicar_tenis_web.py` idéntico a `main` (`8a948c47…`). `propline_shared.py` de `main` (`54387ff6…`).
