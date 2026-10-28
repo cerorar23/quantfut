@@ -52,7 +52,7 @@ Fútbol son 1.909 de 2.742 (70 %). De sus 4 lotes por liga y hora, el primero (`
 ## 3. Ahorro de llamadas aplicado
 
 `scripts/propline_shared_config.json` + `propline_shared.py`:
-- `extended_horizon_hours: 48` y `extended_far_every_hours: 6`: córners, tarjetas y jugadores solo se piden cada hora en ligas con un partido en las próximas 48 h (o ya empezado); sin partido cercano, cada 6 h. La primera petición (cuotas principales) sigue cada hora y es la que leen los motores. Estimación: 40-60 % de las ~1.430 llamadas de los lotes ampliados de fútbol (~600-850 al día).
+- `extended_horizon_hours: 48` y `extended_far_every_hours: 6`: córners, tarjetas y jugadores solo se piden cada hora en ligas con un partido en las próximas 48 h (o ya empezado); sin partido cercano, cada 6 h. La primera petición (cuotas principales) sigue cada hora y es la que leen los motores. Estimación revisada con los partidos programados: un martes (27-oct) el 71 % de las ligas-hora no tenía partido en 48 h (242 de 340 fuera de las horas de cada 6 h), es decir ~730 llamadas menos al día (~38 % de las 1.912 de fútbol); en fin de semana, con casi todas las ligas jugando, el ahorro es menor. La primera corrida con la regla (18:07 UTC) cayó en una hora completa (139 llamadas de fútbol, como ayer); la prueba es 19:07 en adelante, donde ayer hubo 68.
 - `futures_daily: false`: 36 llamadas al día que ningún código lee.
 - Prueba nueva: `test_extended_markets_wait_for_the_horizon_and_then_follow_a_slow_cadence`.
 
