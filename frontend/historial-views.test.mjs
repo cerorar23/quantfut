@@ -110,7 +110,7 @@ test('los textos de partidos se escapan', () => {
 
 test('el HTML y los módulos están registrados con el mismo identificador de versión', () => {
   const ergo = readFileSync(new URL('./ergonomic-views.js', import.meta.url), 'utf8');
-  assert.match(ergo, /historial-views\.js\?v=hist-limpio-20261028/);
+  assert.match(ergo, /historial-views\.js\?v=hist-limpio-20261028b/);
   const web = readFileSync(new URL('../src/qf/api/web.py', import.meta.url), 'utf8');
   assert.ok(web.includes('/historial-views.js'));
 });
