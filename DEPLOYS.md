@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 · Retirar leyenda inferior del historial · API `quantfut-api-hist-leyenda:cbbfba4` (PR #209)
+- Retirada la leyenda de cuotas bajo la lista del historial, por solicitud del titular. Verificado en el historial público: leyenda, aviso, metodología y pie ausentes; la lista carga.
+- CI de PR #209: 8 comprobaciones aprobadas; 91 pruebas del frontend. Ensayo: 0 módulos con error, 135 rutas; salud API 200. Imagen derivada de `quantfut-api-hist-limpio:04f6bae` con solo cinco archivos de interfaz actualizados.
+- Vuelta atrás: restaurar `~/quantfut/releases/compose-antes-20261028-110927.yml` a `~/quantfut/docker-compose.yml` y recrear solo la API; imagen anterior `quantfut-api-hist-limpio:04f6bae`.
+
+
 ### 2026-10-28 · Historial sin aviso ni metodología y web sin pie · API `quantfut-api-hist-limpio:04f6bae` (PR #207)
 - Solicitud del titular: quitar del historial el aviso y el desplegable de metodología, y quitar el pie de página de la web. Cinco archivos de interfaz, con versiones nuevas para evitar la caché.
 - CI de PR #207: 8 comprobaciones aprobadas; 91 pruebas del frontend. Verificado el historial público cargado, sin ambos bloques ni el pie; salud API 200.
