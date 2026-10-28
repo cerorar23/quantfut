@@ -1,4 +1,5 @@
 import { publicForecasts, forecastGames } from './fichas-data.js?v=real-20261029';
+import { createHistorialViews } from './historial-views.js?v=hist-20261028';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -158,14 +159,17 @@ export function createHubViews(ctx) {
     return `<div class="win-pk"><section class="win-pk-hero ${feat?'has-featured':''}" aria-labelledby="picks-title"><div class="cyber-card cyber-card--holo win-pk-hero-copy"><p class="eyebrow">Fútbol / NBA / Tenis</p><h1 id="picks-title">Pronósticos del día</h1><p class="lead">Selecciones calculadas y selladas por el motor, con su probabilidad y su registro. Elige deporte y fecha para ver lo publicado.</p>${summary(onDay,source)}<p class="win-pk-links"><button type="button" class="text-link" data-route="historial">Ver historial verificable ↗</button></p></div>${feat}</section>${board(source)}</div>`;
   }
 
-  function resultRows(source) {
+  function allResults(source) {
     const footballRows=results().items||[];
-    const items=footballRows.map(r=>({sport:'futbol',home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,score:`${r.home_goals} – ${r.away_goals}`}));
+    const items=footballRows.map(r=>({sport:'futbol',home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,prob:r.prob,score:`${r.home_goals} – ${r.away_goals}`}));
     for(const e of source.events.filter(e=>e.sport!=='futbol')) {
       const m=featured(e);
-      if(m&&['win','loss'].includes(m.outcome))items.push({sport:e.sport,home:e.home,away:e.away,start:e.start,text:m.selection,outcome:m.outcome,price:m.price,score:e.score});
+      if(m&&['win','loss'].includes(m.outcome))items.push({sport:e.sport,home:e.home,away:e.away,start:e.start,text:m.selection,outcome:m.outcome,price:m.price,prob:m.probability,score:e.score});
     }
-    return items.sort((a,b)=>new Date(b.start)-new Date(a.start)).filter(r=>(state.resultSport||'todos')==='todos'||r.sport===state.resultSport);
+    return items.sort((a,b)=>new Date(b.start)-new Date(a.start));
+  }
+  function resultRows(source) {
+    return allResults(source).filter(r=>(state.resultSport||'todos')==='todos'||r.sport===state.resultSport);
   }
   function recent(source,full=false) {
     const items=resultRows(source), shown=items.slice(0,full?50:5);
@@ -178,7 +182,12 @@ export function createHubViews(ctx) {
     return `<section class="forecast-hero" aria-labelledby="forecast-title"><div class="forecast-copy"><p class="eyebrow">FÚTBOL / NBA / TENIS</p><h1 id="forecast-title">Lee el partido.<br><em>Entiende la cuota.</em></h1><p>El contexto del encuentro, las probabilidades y los pronósticos publicados. Los tres deportes en un mismo lugar, con datos reales de los motores.</p><div class="hero-actions"><button type="button" class="primary-button" data-scroll-to="pronosticos-hoy">Ver pronósticos reales <span aria-hidden="true">↗</span></button><button type="button" class="text-link" data-route="historial">Ver historial verificable ↗</button></div></div><aside class="forecast-summary" aria-label="Resumen de publicaciones reales"><span class="summary-icon" aria-hidden="true">Q.</span><div><span class="eyebrow">PUBLICACIONES REALES / HOY</span><strong>${source.home.status==='ready'?upcoming:'—'}<small> análisis próximos</small></strong><p>Fútbol, NBA y tenis. Los análisis aparecen cuando están calculados y publicados.</p></div><div class="summary-bottom"><span>Tres deportes</span><span>Fuente: QuantFut</span></div></aside></section><div class="publication-strip"><span class="publication-dot ${source.home.status==='ready'?'active':''}" aria-hidden="true"></span><strong>Datos reales de los motores</strong><span>Pronósticos y resultados registrados.</span><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></div><div class="forecast-shortcuts"><button type="button" data-route="picks">Pronósticos publicados ↗</button><button type="button" data-route="historial">Resultados reales ↗</button><button type="button" data-route="partidos">Agenda y estadísticas ↗</button><button type="button" data-route="planes">Planes y acceso ↗</button></div>${board(source)}${recent(source)}${ctx.plansPreview?.()||''}`;
   }
   function picks(){return picksPage(sources());}
-  function history(){return `<div class="view-title"><div><p class="eyebrow">EVIDENCIA / REGISTRO REAL</p><h1>Historial verificable</h1><p class="lead">Resultados publicados por el servidor, con aciertos y fallos a la vista.</p></div></div>${recent(sources(),true)}<details class="publication-details"><summary>Metodología y registros de verificación</summary>${ctx.liveEvidence()}</details>`;}
+  const historial=createHistorialViews({esc,state,fmtOdds,realTime,localDay:d=>localDay(d),getEvidence:()=>ctx.liveEvidence()});
+  function history(){
+    const source=sources();
+    const loading=results().status==='loading'||source.nba.status==='loading'||source.tenis.status==='loading';
+    return historial.historyView(allResults(source),loading);
+  }
 
   function detail(){
     const source=sources(),e=source.events.find(e=>eventKey(e)===state.sportEvent);

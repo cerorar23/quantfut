@@ -415,3 +415,134 @@
 .cv-legal {
   margin-inline: auto;
 }
+
+/* ------------------------------------------------------------------------
+ * #historial (historial-views.js). Gráficas SVG con color por clase: la CSP no
+ * admite `style=""`. El color nunca es la única señal (glifo ✓/✗ y texto).
+ * ---------------------------------------------------------------------- */
+
+.cv-hist-ringbox { position: relative; width: min(180px, 52vw); aspect-ratio: 1; }
+.cv-hist-ring { width: 100%; height: 100%; display: block; }
+.cv-hist-ring .track { stroke: color-mix(in srgb, var(--cyber-chrome-500) 22%, transparent); stroke-width: 10; }
+.cv-hist-ring .fill { stroke: var(--green); stroke-width: 10; stroke-linecap: butt; }
+.cv-hist-ringnum {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 700 clamp(30px, 4.4vw, 44px) var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Indicadores clave: de mayor a menor prioridad, de izquierda a derecha. */
+.cv-hist-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; max-width: 1120px; margin: 0 auto 28px; }
+.cv-hist-kpi { padding: 14px 16px; border: 1px solid var(--border); background: var(--panel); min-width: 0; display: grid; gap: 6px; align-content: start; }
+.cv-hist-kpi span { font: 600 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.cv-hist-kpi strong { font: 700 clamp(20px, 2.2vw, 28px) var(--font-display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cv-hist-kpi small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.cv-hist-kpi strong.pos { color: var(--green); }
+.cv-hist-kpi strong.neg { color: var(--magenta); }
+
+/* Gráficas */
+.cv-hist-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.cv-hist-card { padding: 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.cv-hist-wide { grid-column: 1 / -1; }
+.cv-hist-card h3 { margin: 0; font-size: 18px; }
+.cv-hist-sub { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.cv-hist-foot { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.cv-hist-nota { margin: 12px 0; color: var(--muted); font-size: 14px; }
+.cv-hist-chart { width: 100%; height: auto; display: block; }
+.cv-hist-grid { stroke: color-mix(in srgb, var(--cyber-chrome-500) 28%, transparent); stroke-width: 1; stroke-dasharray: 3 4; }
+.cv-hist-axis { fill: var(--muted); font: 600 11px var(--font-mono); }
+.cv-hist-val { fill: var(--text); font: 700 12px var(--font-mono); }
+.cv-hist-line { stroke-width: 2.5; stroke-linejoin: round; }
+.cv-hist-line.win, .cv-hist-end.win { stroke: var(--green); }
+.cv-hist-line.loss, .cv-hist-end.loss { stroke: var(--magenta); }
+.cv-hist-end { fill: var(--cyber-void-900); stroke-width: 2.5; }
+.cv-hist-area.win { fill: color-mix(in srgb, var(--green) 14%, transparent); }
+.cv-hist-area.loss { fill: color-mix(in srgb, var(--magenta) 14%, transparent); }
+.cv-hist-bar.win { fill: var(--green); }
+.cv-hist-bar.loss { fill: var(--magenta); }
+
+.cv-hist-sports { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.cv-hist-sports li { display: grid; grid-template-columns: 96px minmax(0, 1fr) 56px; align-items: center; gap: 4px 12px; }
+.cv-hist-sport-name { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.cv-hist-sport-name i { font-style: normal; color: var(--cyan); }
+.cv-hist-sports strong { text-align: right; font: 700 16px var(--font-mono); font-variant-numeric: tabular-nums; }
+.cv-hist-sports small { grid-column: 2 / -1; color: var(--muted); font-size: 12px; }
+.cv-hist-meter { width: 100%; height: 8px; display: block; }
+.cv-hist-meter .track { fill: color-mix(in srgb, var(--cyber-chrome-500) 22%, transparent); }
+.cv-hist-meter .fill { fill: var(--green); }
+.cv-hist-card .cv-streak { margin: 6px 0 0; padding: 12px 0 0; border: 0; border-top: 1px solid var(--line); background: none; }
+
+/* Lista de resultados */
+.cv-hist-filters { display: grid; gap: 10px; margin-bottom: 12px; }
+.cv-hist-count { margin: 0 0 12px; color: var(--muted); font: 600 12px var(--font-mono); letter-spacing: 0.04em; }
+.cv-hist-day { margin: 0 0 18px; }
+.cv-hist-day > header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--cyber-void-700) 94%, transparent);
+  backdrop-filter: blur(6px);
+}
+.cv-hist-day > header h3 { margin: 0; font-size: 15px; text-transform: none; }
+.cv-hist-day > header h3::first-letter { text-transform: uppercase; }
+.cv-hist-day > header span { font: 600 12px var(--font-mono); color: var(--muted); align-self: center; }
+.cv-hist-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+
+.cv-hist-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) 96px 84px;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-left: 3px solid transparent;
+  background: var(--panel);
+}
+.cv-hist-row.win { border-left-color: var(--green); }
+.cv-hist-row.loss { border-left-color: var(--magenta); background: color-mix(in srgb, var(--magenta) 5%, var(--panel)); }
+
+.cv-hist-state { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; font: 700 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.cv-hist-state b { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid currentColor; font-size: 13px; }
+.cv-hist-state.win { color: var(--green); }
+.cv-hist-state.loss { color: var(--magenta); }
+
+.cv-hist-match { display: grid; gap: 2px; min-width: 0; }
+.cv-hist-tag { color: var(--muted); font: 600 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.cv-hist-match strong { font-size: 15px; overflow-wrap: anywhere; }
+.cv-hist-pick { color: var(--cyan); font-size: 14px; overflow-wrap: anywhere; }
+.cv-hist-pick i { font-style: normal; color: var(--muted); font-size: 12px; }
+
+.cv-hist-cuota, .cv-hist-score { display: grid; gap: 2px; text-align: right; }
+.cv-hist-cuota small, .cv-hist-score small { color: var(--muted); font-size: 11px; }
+.cv-hist-odds { font: 700 20px var(--font-display); font-variant-numeric: tabular-nums; color: var(--yellow); }
+.cv-hist-odds.model { color: var(--muted); font-size: 17px; }
+.cv-hist-odds.none { color: var(--faint); }
+.cv-hist-score strong { font: 700 16px var(--font-mono); font-variant-numeric: tabular-nums; }
+.cv-hist-more { display: block; margin: 8px auto 4px; min-height: 48px; }
+
+@media (max-width: 900px) {
+  .cv-hist-charts { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .cv-hist-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "state cuota" "match match" "score score"; }
+  .cv-hist-state { grid-area: state; flex-direction: row; justify-content: flex-start; gap: 8px; }
+  .cv-hist-cuota { grid-area: cuota; grid-template-columns: auto auto; align-items: baseline; justify-content: end; gap: 6px; }
+  .cv-hist-match { grid-area: match; }
+  .cv-hist-score { grid-area: score; grid-template-columns: auto auto; justify-content: start; align-items: baseline; gap: 8px; text-align: left; }
+  .cv-hist-sports li { grid-template-columns: 78px minmax(0, 1fr) 48px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cv-hist-ring .fill { transition: stroke-dasharray 0.8s ease-out; }
+}

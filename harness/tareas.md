@@ -1,5 +1,11 @@
 # Backlog — QuantFut
 
+## 28-oct-2026 · Rediseño de #historial para convertir
+
+- [x] `frontend/historial-views.js` (lógica pura + vista), cableado en `ergonomic-views.js`, estilos `.cv-hist-*` en `conversion.css`, ruta en `web.py`, 13 pruebas nuevas (`historial-views.test.mjs`) y arnés del frontend en verde (85).
+- [ ] Desplegar: la base (`027e536`) no está en `main`; seguir `DEPLOYS.md` (solo `frontend/` y `src/qf/api/web.py`, respaldo previo, sin tocar el worker). Subir los `?v=hist-20261028`.
+- [ ] Cuando haya más historia (hoy ~8 días), añadir vista mensual y comparar acierto por mercado.
+
 ## 27-oct-2026 · Tenis: juegos ganados por jugador desde PropLine
 
 - [x] `player_games_won` → contrato `player_games` (`tennis_player_games_v1`): precio desde la distribución conjunta del motor, liquidación de partido completo, foto horaria y cierre de PropLine, `market_board` y `offered_markets`. Fuera de `tennis_markets_v2` y `tennis_allmarkets_v1` porque el protocolo multi-mercado congelado hashea esos paquetes.

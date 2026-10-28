@@ -1,5 +1,15 @@
 # Registro de decisiones — QuantFut
 
+## 28-oct-2026 · #historial rediseñado para convertir: la prueba es verlo todo, con cuota y resultado
+
+El titular pidió rediseñar `#historial` porque es donde el visitante decide si el sistema da resultado y si compra la membresía. La versión anterior era una tabla plana de 50 filas sin cifras resumen. Decisión: el nuevo `historial-views.js` aplica el mismo patrón de prueba que ya usaban #alta/#parley/#escalera (cifra grande, racha, sello, planes, preguntas) y añade lo que faltaba: resumen con intervalo de Wilson, prometido frente a real, curva de beneficio, acierto por día y por deporte, y la lista día por día con cuota y marcador de cada pronóstico.
+
+Reglas de honestidad que mandan sobre el marketing (y tienen prueba en `historial-views.test.mjs`): (1) la muestra y el rango probable van siempre junto al porcentaje, con aviso bajo 50 liquidados; (2) el beneficio usa solo cuotas realmente registradas (fútbol, 1 u por pronóstico) y no se esconde aunque sea modesto (+0,96 u en 64 con cuota medio 1,19: se acierta mucho y se gana poco); (3) en NBA y tenis ninguna casa publica cuota, así que se enseña la «justa del modelo» (1 ÷ prob.) marcada con ≈ y NUNCA entra en el beneficio; (4) los fallos tienen el mismo peso visual que los aciertos y hay filtro de «fallados»; (5) sin «segura», «garantizada» ni «certera».
+
+Datos: sin cambios en la API (`/mobile/v1/markets/history`, `/web/deportes/*`); `resultRows` pasó a `allResults` y ahora lleva `prob`. Solo SVG propio y clases de CYBERCORE 0.3.0 ya vendorizadas (sin CDN nuevo: la CSP no lo admite y `cybercore-charts` añadiría una dependencia sin necesidad); el CSS nuevo es aditivo en `conversion.css` con prefijo `.cv-hist-` (la prueba de CSS existente lo exige y sigue verde). El orden `predecir → sellar → publicar` no se toca.
+
+Base: la producción de la web NO coincide con `main` (el hub `ergonomic-views.js` y la ventana única viven en `docs/deploy-estado-mercados`, `027e536`); esta rama sale de ahí. Antes de desplegar hay que fusionar esa base a `main` o desplegar desde esta rama siguiendo `DEPLOYS.md`. Verificado con datos reales (246 resultados) en escritorio y 375 px, CSP estricta sin estilos en línea.
+
 ## 28-oct-2026 · Estado real en cada mercado de fútbol; #alta, #parley y #escalera centradas y sin avisos
 
 El titular pidió que la columna «Acceso» de los mercados de fútbol diga el estado de la apuesta, como en NBA. Decisión: el servidor decide el resultado, no el navegador. `partido_mercados.resultado_fila` liquida cada fila abierta de un partido terminado con la misma regla de los picks (`eval.clv._settle_outcome`) y, para gana a cero, 1ª mitad, córners y tarjetas, con la de la escalera (tarjetas = amarillas + rojas). Si falta el dato (p. ej. córners sin estadística) la fila queda «Pendiente»: no se inventa un resultado. Las filas con candado VIP no llevan resultado, para no filtrar su contenido. La web muestra Acertó / Falló / Devolución / Pendiente; el tipo de cuota (registrada o del modelo) pasa a una nota bajo la cuota y el destacado a una nota bajo la selección.

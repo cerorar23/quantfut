@@ -1,7 +1,7 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=logos-20261027';
+import { createRealViews } from './real-views.js?v=hist-20261028';
 import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=logos-20261027';
 import { createSportWindow } from './sports-window.js?v=logos-20261027';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
@@ -123,6 +123,8 @@ const state = {
   dayOffset: 0,
   sport: 'todos',
   resultSport: 'todos',
+  resultOutcome: 'todos',
+  resultLimit: 30,
   sportEvent: '',
   sportMarket: 'partido',
   homeSearch: '',
@@ -1257,7 +1259,9 @@ app.addEventListener('click', event => {
   if (membershipUI.handleClick(button)) return;
   if (data.scrollTo) { app.querySelector(`#${CSS.escape(data.scrollTo)}`)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'}); return; }
   if (data.sport) { const fromHeader=Boolean(button.closest('.sport-nav'));state.sport=data.sport; state.homeSearch=''; if(fromHeader&&state.route==='partidos'){state.winDay=0;state.winDayPinned=false;state.winEvent='';state.winLastEvent=null;state.winPane='pron';render();app.querySelector(`.sport-nav [data-sport="${data.sport}"]`)?.focus();return;} if(!['inicio','picks'].includes(state.route))navigate('picks');else rerenderKeepingFocus(`[data-sport="${data.sport}"]`);if(fromHeader)app.querySelector('#pronosticos-hoy')?.scrollIntoView({block:'start',behavior:'instant'}); return; }
-  if (data.resultSport) {state.resultSport=data.resultSport;rerenderKeepingFocus(`[data-result-sport="${data.resultSport}"]`);return;}
+  if (data.resultSport) {state.resultSport=data.resultSport;state.resultLimit=30;rerenderKeepingFocus(`[data-result-sport="${data.resultSport}"]`);return;}
+  if (data.resultOutcome) {state.resultOutcome=data.resultOutcome;state.resultLimit=30;rerenderKeepingFocus(`[data-result-outcome="${data.resultOutcome}"]`);return;}
+  if (data.resultMore) {state.resultLimit=(state.resultLimit||30)+30;rerenderKeepingFocus('[data-result-more]');return;}
   if (data.sportEvent) {const [sport]=data.sportEvent.split(':');const found=ensureSport(sport).events?.find(e=>`${e.sport}:${e.id}`===data.sportEvent);const day=found?new Date(found.start):new Date();day.setHours(0,0,0,0);const current=new Date();current.setHours(0,0,0,0);state.sport=sport;state.winEvent=data.sportEvent;state.winDay=Math.max(-3,Math.min(3,Math.round((day-current)/86400000)));state.winDayPinned=true;state.winSportTab='resumen';state.winPane='pron';navigate('partidos');return;}
   if (data.sportMarket) {state.sportMarket=data.sportMarket;rerenderKeepingFocus(`[data-sport-market="${data.sportMarket}"]`);return;}
   if (data.availableDay) {const target=new Date(`${data.availableDay}T12:00:00`);const current=new Date();current.setHours(12,0,0,0);state.dayOffset=Math.round((target-current)/86400000);state.homeStatus='todos';render();return;}

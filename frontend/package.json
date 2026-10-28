@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.mjs",
-    "check": "node --check app.js && node --check server.mjs && node --check public-data.js && node --check fichas-data.js && node --check membership.js && node --check cuenta-api.js && node --check real-views.js && node --check ergonomic-views.js && node --check sports-data.js && node --check sports-window.js && node --test original-css.test.mjs sports-data.test.mjs imagenes.test.mjs nba-stats.test.mjs real-publication.test.mjs app-order.test.mjs public-data.test.mjs fichas-data.test.mjs membership.test.mjs cuenta-api.test.mjs",
+    "check": "node --check app.js && node --check server.mjs && node --check public-data.js && node --check fichas-data.js && node --check membership.js && node --check cuenta-api.js && node --check real-views.js && node --check ergonomic-views.js && node --check historial-views.js && node --check sports-data.js && node --check sports-window.js && node --test original-css.test.mjs historial-views.test.mjs sports-data.test.mjs imagenes.test.mjs nba-stats.test.mjs real-publication.test.mjs app-order.test.mjs public-data.test.mjs fichas-data.test.mjs membership.test.mjs cuenta-api.test.mjs",
     "vendor:cybercore": "node sync-cybercore.mjs",
     "postinstall": "node sync-cybercore.mjs"
   },
