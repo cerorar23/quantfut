@@ -75,8 +75,8 @@ Una señal solo entra si gana fuera de muestra. Orden: F9 con F8 en paralelo →
 | Bloque `mercado` (movimiento de cuotas) | Cuando haya muestra propia |
 
 ## 4. Servidor (Claude, mejoras)
-- Que el servidor despliegue desde GitHub (clave de despliegue de solo lectura y `git pull` de una etiqueta).
-- Ampliar `scripts/deploy.sh` con `construir`, `ensayo` y `desplegar` (hoy tiene `estado` y `congelar`).
+- [x] Despliegue desde `main` sin credenciales nuevas en el servidor y `scripts/deploy.sh construir|ensayo|desplegar` (28-oct; ver DEPLOYS.md). El `docker-compose.yml` del repo ya fija las imágenes que corren.
+- Cada sesión despliega desde su propio `git worktree` y anota en DEPLOYS.md lo que despliega; la API corre hoy una imagen (`conversion:002ffcd-v2`) cuyo commit no está en el repositorio remoto: fusionar esa rama.
 - Quitar rutas internas de `/model-card` y añadir `Content-Security-Policy` (prioridad baja).
 
 ## 5. NBA y tenis (otras sesiones; detalle en `harness/tareas.md`)
