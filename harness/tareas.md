@@ -3421,3 +3421,4 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [x] xG: hora mínima de captura de 20 h (`XG_MIN_HORAS`) en SofaScore y FotMob, con segunda página de FotMob; desplegado el 28-oct.
 - [x] xG provisionales: no se reescriben; `db/091` `xg_corregido` guarda el corregido de FotMob junto al original (375 partidos el 28-oct).
 - [ ] Medir en validación si entrenar con `xg_corregido` en lugar del original cambia el resultado (fuera del reentrenamiento del 1-nov).
+- [ ] PropLine: medir el día completo con la regla de 48 h: jueves 29-oct y domingo 1-nov (jornada llena, el caso menos favorable). Un comando desde el PC: `ssh quantfut python3 - 2026-10-27 2026-10-29 2026-11-01 < scripts/medir_ahorro_propline.py` (a partir de las 00:00 UTC del día siguiente). Criterio: fútbol <= 1.300 en día laborable, 0 fallos ni paradas.
