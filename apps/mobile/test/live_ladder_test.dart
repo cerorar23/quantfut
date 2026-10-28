@@ -268,6 +268,21 @@ void main() {
     expect(find.text('×0,00'), findsOneWidget); // reto fallido sin nada retirado
   });
 
+  testWidgets('un reto expirado dice que expiró, no que falló, y conserva su saldo', (tester) async {
+    final report = {
+      'resumen': {'cerrados': 1, 'completados': 0, 'expirados': 1},
+      'historial': [challenge(40, goal: 2, won: 1, estado: 'expirado', saldo: '10.60', ganancia: '0.60')],
+    };
+    await pump(tester, cards(report), code: 'es');
+    final header = find.text('Historial de retos');
+    await tester.ensureVisible(header);
+    await tester.tap(header);
+    await tester.pump();
+    expect(find.text('Expiró sin completarse · 1 de 2 ganados'), findsOneWidget);
+    expect(find.textContaining('Falló'), findsNothing);
+    expect(find.text('×1,06'), findsOneWidget);
+  });
+
   Future<void> openHistory(WidgetTester tester) async {
     // Entre dos `pump` seguidos el estado de la tarjeta se conserva: no la cierres.
     if (find.byKey(const ValueKey('ladder-history-list')).evaluate().isNotEmpty) return;

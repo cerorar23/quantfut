@@ -44,10 +44,10 @@ def _num(x) -> float | None:
 
 def candidatos(raw: pd.DataFrame, cuota_min: float = es.CUOTA_MIN,
                cuota_max: float = es.CUOTA_MAX) -> pd.DataFrame:
-    """Una fila por selección cuya mejor cuota de la lista cae en el rango."""
+    """Una fila por selección cuya mejor cuota de la lista cae en el rango (`evento`: el partido)."""
     casas = [c for c, b in CASAS_1X2.items() if b in settings.soft_books]
     rows = []
-    for d in raw.to_dict("records"):
+    for n, d in enumerate(raw.to_dict("records")):
         fecha = pd.to_datetime(d.get("Date"), dayfirst=True, errors="coerce")
         q = [_num(d.get(k)) for k in ("PSH", "PSD", "PSA")]
         if pd.isna(fecha) or None in q or pd.isna(d.get("FTHG")) or pd.isna(d.get("FTAG")):
@@ -59,7 +59,7 @@ def candidatos(raw: pd.DataFrame, cuota_min: float = es.CUOTA_MIN,
             precios = [x for x in (_num(d.get(f"{c}{'HDA'[i]}")) for c in casas) if x]
             if precios and cuota_min <= max(precios) <= cuota_max:
                 rows.append({"fecha": fecha, "market": "h2h", "sel": sel, "p": float(p[i]),
-                             "price": max(precios), "won": ganador == i})
+                             "price": max(precios), "won": ganador == i, "evento": f"f{n}"})
         o, u = _num(d.get("B365>2.5")), _num(d.get("B365<2.5"))
         po, pu = _num(d.get("P>2.5")), _num(d.get("P<2.5"))
         if "bet365" in settings.soft_books and None not in (o, u, po, pu):
@@ -68,20 +68,25 @@ def candidatos(raw: pd.DataFrame, cuota_min: float = es.CUOTA_MIN,
                                           ("under", u, p_under, hg + ag < 2.5)):
                 if cuota_min <= price <= cuota_max:
                     rows.append({"fecha": fecha, "market": "totals", "sel": sel,
-                                 "p": float(prob), "price": price, "won": won})
+                                 "p": float(prob), "price": price, "won": won,
+                                 "evento": f"f{n}"})
     c = pd.DataFrame(rows)
     if not c.empty:
         c["ev"] = c["p"] * c["price"] - 1.0
     return c
 
 
+# Umbral de la regla "valor": cuota ≥ justa aunque escalera.py ya no filtre
+# (EV_MIN = None desde el 2026-10-08; comparar contra None hacía fallar `run`).
+EV_VALOR = 0.0 if es.EV_MIN is None else es.EV_MIN
+
 REGLAS = {
     # La regla de partida: dentro del rango, el más probable del día.
     "rango_mas_probable": lambda g: g.sort_values("p", ascending=False),
     # La regla de partida eligiendo la cuota más baja.
     "rango_cuota_minima": lambda g: g.sort_values("price"),
-    # La de escalera.py: además cuota ≥ justa, el de mayor valor esperado.
-    "valor": lambda g: g[g["ev"] >= es.EV_MIN].sort_values(["ev", "p"], ascending=False),
+    # Además cuota ≥ justa, el de mayor valor esperado.
+    "valor": lambda g: g[g["ev"] >= EV_VALOR].sort_values(["ev", "p"], ascending=False),
 }
 
 
@@ -109,9 +114,40 @@ def simular(c: pd.DataFrame, regla: str, pasos: int = 3,
             "roi_pct": float(round(ganancia / (stake * len(retos)) * 100, 1))}
 
 
+def simular_80(c: pd.DataFrame, pasos: int, prob_reto: float = es.PROB_RETO) -> dict:
+    """
+    La regla del 2026-10-28 (`escalera.elegir` con `prob_objetivo`): cada
+    escalón exige `es.umbral` sobre lo ya ganado y como mucho `es.PROB_MAX`;
+    entre los que pasan, el de más valor. Devuelve también lo prometido (∏ p).
+    """
+    retos, actual, prob = [], [], 1.0
+    for _, g in sorted(c.groupby(c["fecha"].dt.date), key=lambda kv: kv[0]):
+        minimo = es.umbral(prob_reto, prob, pasos - len(actual))
+        g = g[(g["p"] >= minimo) & (g["p"] <= es.PROB_MAX)]
+        if g.empty:
+            continue
+        e = g.sort_values(["ev", "p"], ascending=False).iloc[0]
+        prob *= float(e["p"])
+        actual.append(es.Paso(len(actual) + 1, float(e["price"]), "win" if e["won"] else "loss"))
+        st = es.estado(es.STAKE, pasos, None, actual)
+        if st["estado"] in ("completado", "fallido"):
+            retos.append((st, prob))
+            actual, prob = [], 1.0
+    if not retos:
+        return {"retos": 0}
+    ganancia = sum(st["ganancia"] for st, _ in retos)
+    return {"retos": len(retos),
+            "prometido_pct": round(float(np.mean([p for _, p in retos])) * 100, 1),
+            "completados_pct": round(sum(st["estado"] == "completado" for st, _ in retos)
+                                     / len(retos) * 100, 1),
+            "roi_pct": float(round(ganancia / (es.STAKE * len(retos)) * 100, 1))}
+
+
 def run(cache_dir: Path = Path(".local/fd_cache")) -> dict:
     raw, dataset = sv.load_csvs(apc.LIGAS, sv.DEFAULT_SEASONS, cache_dir)
-    c = candidatos(raw)
+    # Las reglas anteriores se comparan en su rango de partida (1,25-1,40).
+    c = candidatos(raw, 1.25, 1.40)
+    c80 = candidatos(raw, es.CUOTA_MIN, es.CUOTA_MAX)
 
     def bloque(g: pd.DataFrame) -> dict:
         return {"n": int(len(g)), "prob_media": round(float(g["p"].mean()) * 100, 1),
@@ -122,10 +158,12 @@ def run(cache_dir: Path = Path(".local/fd_cache")) -> dict:
 
     return {
         "dataset": dataset,
-        "rango": [es.CUOTA_MIN, es.CUOTA_MAX],
-        "escalones": {"todos": bloque(c), "con_valor": bloque(c[c["ev"] >= es.EV_MIN])},
+        "rango": [1.25, 1.40],
+        "escalones": {"todos": bloque(c), "con_valor": bloque(c[c["ev"] >= EV_VALOR])},
         "escaleras": {f"{regla}_{n}_pasos{'_freeroll' if fr else ''}": simular(c, regla, n, fr)
-                      for regla in REGLAS for n in es.LONGITUDES for fr in (None, es.FREEROLL_X)},
+                      for regla in REGLAS for n in (3, 4, 5, 6) for fr in (None, 2.5)},
+        "regla_80": {"rango": [es.CUOTA_MIN, es.CUOTA_MAX],
+                     **{f"{n}_pasos": simular_80(c80, n) for n in es.LONGITUDES}},
     }
 
 

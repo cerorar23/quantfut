@@ -270,6 +270,7 @@
   "ladderHideSteps": "Hide steps",
   "ladderHistoryDone": "Completed",
   "ladderHistoryEmpty": "No challenges have closed yet. When one ends, it will show up here with its result.",
+  "ladderHistoryExpired": "Expired before completion",
   "ladderHistoryFailedAt": "Failed at step {step}",
   "ladderHistoryRate": "Completion rate: {rate}",
   "ladderHistoryResult": "Cumulative result: {roi}",

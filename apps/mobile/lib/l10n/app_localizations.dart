@@ -1732,6 +1732,12 @@ abstract class AppLocalizations {
   /// **'Aún no hay retos cerrados. Cuando uno termine, aparecerá aquí con su resultado.'**
   String get ladderHistoryEmpty;
 
+  /// Un reto cerrado porque pasó su plazo (7 días) sin completar todos los escalones.
+  ///
+  /// In es, this message translates to:
+  /// **'Expiró sin completarse'**
+  String get ladderHistoryExpired;
+
   /// Un reto cerrado por perder un escalón.
   ///
   /// In es, this message translates to:

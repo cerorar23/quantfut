@@ -813,6 +813,10 @@
   "@ladderHistoryEmpty": {
     "description": "Estado vacío del historial de retos."
   },
+  "ladderHistoryExpired": "Expiró sin completarse",
+  "@ladderHistoryExpired": {
+    "description": "Un reto cerrado porque pasó su plazo (7 días) sin completar todos los escalones."
+  },
   "ladderHistoryFailedAt": "Falló en el escalón {step}",
   "@ladderHistoryFailedAt": {
     "description": "Un reto cerrado por perder un escalón.",

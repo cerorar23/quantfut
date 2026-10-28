@@ -966,6 +966,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'Non ci sono ancora sfide chiuse. Quando una finisce, comparirà qui con il suo risultato.';
 
   @override
+  String get ladderHistoryExpired => 'Scaduto senza essere completato';
+
+  @override
   String ladderHistoryFailedAt(int step) {
     return 'Fallita al gradino $step';
   }

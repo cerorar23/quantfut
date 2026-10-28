@@ -562,7 +562,9 @@ class _HistoryRow extends StatelessWidget {
     final won = (challenge['ganados'] as num?)?.toInt() ?? 0;
     final detail = done
         ? '${l10n.ladderHistoryDone} · ${l10n.ladderWonOf(won, goal)}'
-        : l10n.ladderHistoryFailedAt(won + 1);
+        : challenge['estado'] == 'expirado'
+            ? '${l10n.ladderHistoryExpired} · ${l10n.ladderWonOf(won, goal)}'
+            : l10n.ladderHistoryFailedAt(won + 1);
     final multiplier = LadderProgress.multiplierOf(challenge);
     final steps = jsonRows(challenge['pasos']).toList()
       ..sort(
