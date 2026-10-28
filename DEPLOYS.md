@@ -33,6 +33,18 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 · Retirar leyenda inferior del historial · API `quantfut-api-hist-leyenda:cbbfba4` (PR #209)
+- Retirada la leyenda de cuotas bajo la lista del historial, por solicitud del titular. Verificado en el historial público: leyenda, aviso, metodología y pie ausentes; la lista carga.
+- CI de PR #209: 8 comprobaciones aprobadas; 91 pruebas del frontend. Ensayo: 0 módulos con error, 135 rutas; salud API 200. Imagen derivada de `quantfut-api-hist-limpio:04f6bae` con solo cinco archivos de interfaz actualizados.
+- Vuelta atrás: restaurar `~/quantfut/releases/compose-antes-20261028-110927.yml` a `~/quantfut/docker-compose.yml` y recrear solo la API; imagen anterior `quantfut-api-hist-limpio:04f6bae`.
+
+
+### 2026-10-28 · Historial sin aviso ni metodología y web sin pie · API `quantfut-api-hist-limpio:04f6bae` (PR #207)
+- Solicitud del titular: quitar del historial el aviso y el desplegable de metodología, y quitar el pie de página de la web. Cinco archivos de interfaz, con versiones nuevas para evitar la caché.
+- CI de PR #207: 8 comprobaciones aprobadas; 91 pruebas del frontend. Verificado el historial público cargado, sin ambos bloques ni el pie; salud API 200.
+- Imagen construida sobre `quantfut-api:4907a0d` con solo los cinco archivos de interfaz; se compararon previamente con la base en ejecución. Ensayo: 0 módulos con error, 135 rutas. Solo se recreó la API.
+- Vuelta atrás: restaurar `~/quantfut/releases/compose-antes-20261028-110205.yml` a `~/quantfut/docker-compose.yml` y recrear solo la API; imagen anterior `quantfut-api:4907a0d`.
+
 ### 2026-10-28 17:16 UTC · Consumo de APIs: SofaScore con detalles reservados y PropLine con horizonte · SOLO host (dos carpetas) + `db/090`; commit `8861347`
 - Nada de imágenes ni contenedores. **PropLine:** nueva `~/propline-shared/releases/8861347` (`propline_shared.py` sha `a12ba4e01b9f`, config `3174a1d0aa6c`, mismo runner y `runtime.json`); `current` apunta ahí. Base comprobada antes: `propline_shared.py` `54387ff6d135` (= `main`). **Vuelta atrás:** `ln -sfn /home/qf/propline-shared/releases/a6dcb96 /home/qf/propline-shared/current`.
 - **Apify:** `~/sofascore-apify/current/sofascore_apify.py` (sha `c7c0dbf6263f`; base `26ba76f290b5` = `main`). Respaldo en `~/sofascore-apify/respaldo_20261028_antes_reparto/` (código, config, índice). Prueba en el host: `capture` → «presupuesto agotado», gasto 0,00; `lineups` → «nada vencido». **Vuelta atrás:** copiar `sofascore_apify.py` del respaldo a `current/`.
