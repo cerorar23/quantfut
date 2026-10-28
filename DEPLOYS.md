@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 · Historial desde el 26 de octubre, solo Destacados y Alta probabilidad · API `quantfut-api:0287a0d` (`main` `0287a0d`, PR #212)
+- Orden del titular. El historial público empieza el 26 de octubre y cuenta solo los Destacados (fútbol, NBA y tenis) y Alta probabilidad; sin leyenda nueva. Endpoint nuevo `GET /mobile/v1/markets/destacados?desde=` (destacado de fútbol de cada partido terminado, caché de 10 min). CI del PR: 8 comprobaciones aprobadas; 93 pruebas del frontend y 77 de Python.
+- Antes: `deploy.sh estado` distinto a `main` en `api/mobile.py` y `api/partido_mercados.py` (mis cambios) y en `api/tenis_publico.py`: la API llevaba la copia de `4907a0d`; la de `main` es `9fa096c8…`, la misma que ya corre el proyector de tenis desde las 16:37 UTC (PR #202), así que no cambia nada en el servicio.
+- Construido `quantfut-api:0287a0d`; ensayo: 0 módulos con error, 136 rutas (135 + la nueva). Solo se recreó la API; salud 200.
+- Verificado en el dominio: `/mobile/v1/markets/destacados?desde=2026-10-26` responde 200 en ~1,2 s con 67 filas (incluye el día de margen; el cliente corta por día local) y el historial muestra «105 de 129 pronósticos acertados», 26 oct – 28 oct, 81 %, igual a lo medido antes de aplicar. Web con `app.js?v=hist-desde26-20261029`.
+- Pendiente: la ficha de un partido puede enseñar otro destacado a quien tenga un pick abierto; el historial usa la definición fija del modelo.
+- **Vuelta atrás:** restaurar `~/quantfut/releases/compose-antes-20261028-122621.yml` a `~/quantfut/docker-compose.yml` y recrear solo la API; imagen anterior `quantfut-api-hist-leyenda:cbbfba4`.
 ### 2026-10-28 · Hora mínima de captura del xG (20 h tras el saque) · SOLO worker (tres archivos); rama `deploys/auditoria-api-20261028`
 - Decisión del titular: el xG solo se guarda si la captura es ≥ `XG_MIN_HORAS` (20 por defecto, variable de entorno) después del saque; se corrige tras el partido y la regla de «primera pareja congelada» fijaba valores provisionales (Houston 0-0 como 0,00–0,03).
 - `ingest/estadisticas.py` (`4f2d62289806` → `924a82913d3e`), `ingest/sofascore_partidos.py` (`889c3f460ebe` → `9fed2c40145c`, el xG ya no se escribe antes de la hora mínima; el resto de columnas sí) e `ingest/fotmob_captura.py` (`ca50931f0f4f` → `cd0b5e91c8de`: `completar` solo usa páginas tomadas pasada la hora mínima y `refrescar_xg` pide una segunda página a los partidos sin xG cuya única página fue temprana). Las tres bases coincidían con `main`/lo desplegado antes de copiar. Parche del contenedor: se pierde si se recrea el worker.

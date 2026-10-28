@@ -92,7 +92,22 @@ export async function loadNbaStats(eventId, fetcher = fetch) {
 export async function loadResults(fetcher=fetch) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {
-    const response=await fetcher('/mobile/v1/markets/history?limit=100',{signal:controller.signal,cache:'no-store'});
+    const response=await fetcher('/mobile/v1/markets/history?limit=500',{signal:controller.signal,cache:'no-store'});
+    if(!response.ok)throw new Error();
+    const data=await response.json();if(!Array.isArray(data.items))throw new Error();
+    return {status:'ready',items:data.items.filter(r=>['win','loss'].includes(r.outcome)&&r.local&&r.visitante&&stamp(r.kickoff_utc))};
+  } catch {return {status:'error',items:[]};}
+  finally {clearTimeout(timer);}
+}
+
+// El historial de la web empieza el 26 de octubre (día local): de ahí hacia atrás no se muestra nada.
+export const HISTORY_SINCE='2026-10-26';
+
+// Destacado de fútbol de cada partido terminado (lo calcula el servidor: recorre cada partido).
+export async function loadFootballFeatured(fetcher=fetch) {
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+  try {
+    const response=await fetcher(`/mobile/v1/markets/destacados?desde=${HISTORY_SINCE}`,{signal:controller.signal,cache:'no-store'});
     if(!response.ok)throw new Error();
     const data=await response.json();if(!Array.isArray(data.items))throw new Error();
     return {status:'ready',items:data.items.filter(r=>['win','loss'].includes(r.outcome)&&r.local&&r.visitante&&stamp(r.kickoff_utc))};

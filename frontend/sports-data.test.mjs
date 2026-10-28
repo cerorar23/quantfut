@@ -119,3 +119,35 @@ test('la ventana de NBA pinta el logo de cada equipo si el manifiesto lo trae y 
   const loading = build({ status: 'loading', nba: {}, tenis: {} }).view();      // manifiesto aún sin cargar o caído: iniciales, sin imágenes rotas
   assert.ok(loading.includes('is-initial') && !loading.includes('/web/imagenes/'));
 });
+
+import { loadFootballFeatured, HISTORY_SINCE } from './sports-data.js';
+
+test('el historial arranca el 26 de octubre y pide al servidor el destacado de fútbol desde esa fecha', async () => {
+  assert.equal(HISTORY_SINCE, '2026-10-26');
+  let url = '';
+  const rows = [{ local: 'A', visitante: 'B', kickoff_utc: event.tipoff_utc, outcome: 'win' }, { local: 'A', visitante: 'B', kickoff_utc: event.tipoff_utc, outcome: null }];
+  const r = await loadFootballFeatured(async u => { url = u; return { ok: true, json: async () => ({ items: rows }) }; });
+  assert.equal(url, '/mobile/v1/markets/destacados?desde=2026-10-26');
+  assert.equal(r.status, 'ready'); assert.equal(r.items.length, 1);
+  assert.equal((await loadFootballFeatured(async () => ({ ok: false }))).status, 'error');
+});
+
+test('el historial solo junta destacados (fútbol, NBA y tenis) y Alta probabilidad desde el 26 de octubre', () => {
+  const m = (id, probability, outcome, extra = {}) => ({ id, selection: id, probability, outcome, price: null, ...extra });
+  const tenis = (start, markets) => ({ sport: 'tenis', id: start, home: 'T1', away: 'T2', start, score: '2 - 0', markets });
+  const events = [
+    tenis('2026-10-26T15:00:00Z', [m('winner', .9, 'win'), m('destacado', .7, 'loss'), m('revisado', .72, 'win', { revised: true })]),
+    tenis('2026-10-25T15:00:00Z', [m('viejo', .7, 'win')]),
+    tenis('2026-10-27T15:00:00Z', [m('sin-rango', .95, 'win')]),
+  ];
+  const results = { status: 'ready',
+    items: [{ local: 'A', visitante: 'B', kickoff_utc: '2026-10-26T18:00:00Z', outcome: 'win', texto: 'alta', prob: .8, ref_price: 1.25, home_goals: 1, away_goals: 0 },
+            { local: 'A', visitante: 'B', kickoff_utc: '2026-10-25T18:00:00Z', outcome: 'win', texto: 'vieja', prob: .8, ref_price: 1.25, home_goals: 1, away_goals: 0 }],
+    featured: [{ local: 'C', visitante: 'D', kickoff_utc: '2026-10-27T18:00:00Z', outcome: 'loss', texto: 'dest', prob: .65, ref_price: null, home_goals: 0, away_goals: 1 }] };
+  const views = createHubViews({ state: { dayOffset: 0, sport: 'todos', resultSport: 'todos' }, esc: x => String(x ?? ''), ensureHome: () => ({ status: 'ready', data: { agenda: [] } }), ensureSport: s => (s === 'tenis' ? { status: 'ready', events } : { status: 'ready', events: [] }), ensureResults: () => results,
+    addDays: () => new Date('2026-10-27T12:00:00Z'), localDay: d => d.toISOString().slice(0, 10), dayLabel: () => 'Hoy', realDate: () => '27 oct', realTime: () => '14:00', fmtOdds: String, fmtPct: String, dayRail: () => '', liveEvidence: () => '' });
+  const html = views.history();
+  assert.match(html, /1 de 3 pronósticos acertados/);
+  for (const fuera of ['vieja', 'viejo', 'winner', 'revisado', 'sin-rango']) assert.ok(!html.includes(fuera), fuera);
+  for (const dentro of ['alta', 'dest', 'T1 vs T2', 'C vs D']) assert.ok(html.includes(dentro), dentro);
+});
