@@ -293,6 +293,14 @@ function statusText(row) {
 }
 
 function badge(text, kind = '') { return `<span class="badge ${kind}">${text}</span>`; }
+
+// Estado de un mercado: el servidor solo manda `resultado` cuando el partido terminó y la fila está abierta.
+function marketState(resultado) {
+  if (resultado === 'win') return badge('Acertó', 'good');
+  if (resultado === 'loss') return badge('Falló', 'warn');
+  if (resultado === 'push') return badge('Devolución', 'muted');
+  return badge('Pendiente', 'muted');
+}
 const statusBadge = status => badge(STATUS[status].label, STATUS[status].kind);
 const teamMark = (name, away = false, large = false) => `<span class="${large ? 'large-team-mark' : 'team-mark'} ${away ? 'away' : ''}" aria-hidden="true">${name.charAt(0)}</span>`;
 
@@ -1017,9 +1025,9 @@ function winForecast(game, entry) {
   const locked = rows.filter(r => r.locked === true).length;
   const line = r => (r.locked
     ? `<tr class="win-lock"><td>${esc(r.grupo)}</td><td>Contenido reservado</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`
-    : `<tr${r.destacado ? ' class="win-feat"' : ''}><td>${esc(r.titulo || r.grupo)}</td><td>${esc(r.seleccion)}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? fmtOdds(r.cuota) : '—'}</td><td>${r.destacado ? badge('Destacado', 'good') : r.cuota_tipo === 'publicada' ? badge('Cuota registrada', 'good') : badge('Cuota del modelo', 'muted')}</td></tr>`);
+    : `<tr${r.destacado ? ' class="win-feat"' : ''}><td>${esc(r.titulo || r.grupo)}</td><td>${esc(r.seleccion)}${r.destacado ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? `${fmtOdds(r.cuota)}<small class="win-cell-note">${r.cuota_tipo === 'publicada' ? 'Registrada' : 'Del modelo'}</small>` : '—'}</td><td>${marketState(r.resultado)}</td></tr>`);
   const market = rows.length
-    ? `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${['Todos', ...groups].map(g => `<button type="button" class="chip ${fam === g ? 'selected' : ''}" data-win-fam="${esc(g)}" aria-pressed="${fam === g}">${esc(g)}</button>`).join('')}</div></div><div class="win-table" tabindex="0" role="region" aria-label="Mercados del partido"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Acceso</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${locked ? `<div class="win-vipbar"><p><strong>${locked} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>` : ''}</section>`
+    ? `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${['Todos', ...groups].map(g => `<button type="button" class="chip ${fam === g ? 'selected' : ''}" data-win-fam="${esc(g)}" aria-pressed="${fam === g}">${esc(g)}</button>`).join('')}</div></div><div class="win-table" tabindex="0" role="region" aria-label="Mercados del partido"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${locked ? `<div class="win-vipbar"><p><strong>${locked} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>` : ''}</section>`
     : '<p class="win-sub">No hay mercados disponibles para este encuentro.</p>';
   return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>${market}<p class="bottom-note">El servidor decide qué mercados se abren según tu acceso; los bloqueados no llevan selección ni cuota. Una estimación estadística no acredita rentabilidad.</p>`;
 }

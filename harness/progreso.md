@@ -1,5 +1,11 @@
 # Registro de decisiones — QuantFut
 
+## 28-oct-2026 · Estado real en cada mercado de fútbol; #alta, #parley y #escalera centradas y sin avisos
+
+El titular pidió que la columna «Acceso» de los mercados de fútbol diga el estado de la apuesta, como en NBA. Decisión: el servidor decide el resultado, no el navegador. `partido_mercados.resultado_fila` liquida cada fila abierta de un partido terminado con la misma regla de los picks (`eval.clv._settle_outcome`) y, para gana a cero, 1ª mitad, córners y tarjetas, con la de la escalera (tarjetas = amarillas + rojas). Si falta el dato (p. ej. córners sin estadística) la fila queda «Pendiente»: no se inventa un resultado. Las filas con candado VIP no llevan resultado, para no filtrar su contenido. La web muestra Acertó / Falló / Devolución / Pendiente; el tipo de cuota (registrada o del modelo) pasa a una nota bajo la cuota y el destacado a una nota bajo la selección.
+
+Las tres vistas de `conversion-views.js` tenían ancho máximo de 1120 px pero sin `margin-inline: auto`, así que en pantallas anchas quedaban pegadas a la izquierda (medido en producción a 1800 px: 157–1277 de 1800). Se centran en `conversion.css`. Por decisión del titular se quitan: en #alta el aviso «Acertar no es lo mismo que ganar dinero»; en #escalera el aviso del margen de la casa, «Cómo se elige cada escalón», el bloque «Cadena · último lote» y la lista «Todos los retos cerrados». El historial por longitud y las preguntas frecuentes se conservan.
+
 ## 28-oct-2026 · La web tiene su propia regla de destacado y de mercados gratis
 
 El titular aclaró que la web es independiente de la regla de la app: necesita siempre un pronóstico destacado visible y gratis, y al menos 3 mercados abiertos sin VIP. Decisión: el destacado es, de TODOS los mercados del partido (también los que sin VIP salen con candado), el de mayor probabilidad con cuota entre 1,40 y 1,80, y se enseña abierto. La cuota es la del modelo (1 ÷ probabilidad; la publicada si el mercado coincide con un pick sellado abierto), rotulada «Cuota del modelo» para no confundirla con una cuota de casa. Gratis = el destacado + los siguientes más probables del rango hasta 3; si el rango no da para 3, se completa con los más probables. El resto sigue con candado (solo categoría) y los marcadores no se regalan.

@@ -247,3 +247,54 @@ def test_mercados_partido_pasa_la_regla_web_solo_cuando_se_pide(monkeypatch):
     assert visto == [False, True]                 # la app (por defecto) nunca activa la regla de la web
     import inspect
     assert inspect.signature(mobile.detail).parameters['web'].default.default is False
+
+
+# --- resultado de cada mercado (estado Acertó / Falló / Devolución) --------------------------
+
+PARTIDO = {'home_goals': 2, 'away_goals': 0, 'home_goals_ht': 1, 'away_goals_ht': 0,
+           'home_corners': 6, 'away_corners': 3, 'home_yellow': 2, 'away_yellow': 1,
+           'home_red': 0, 'away_red': 1}
+
+
+def _res(market, selection, line=None, partido=PARTIDO):
+    return pm.resultado_fila({'market': market, 'selection': selection, 'line': line}, partido)
+
+
+def test_resultado_de_los_mercados_de_marcador():
+    assert _res('h2h', 'home') == 'win' and _res('h2h', 'draw') == 'loss'
+    assert _res('totals', 'over', 1.5) == 'win' and _res('totals', 'under', 1.5) == 'loss'
+    assert _res('btts', 'no') == 'win' and _res('btts', 'yes') == 'loss'
+    assert _res('double_chance', 'X2') == 'loss' and _res('double_chance', '1X') == 'win'
+    assert _res('team_totals_away', 'under', .5) == 'win'
+    assert _res('win_to_nil', 'home') == 'win' and _res('win_to_nil', 'away') == 'loss'
+
+
+def test_empate_no_accion_devuelve_en_empate_y_el_handicap_entero_tambien():
+    empate = dict(PARTIDO, home_goals=1, away_goals=1)
+    assert _res('spreads', 'home', 0.0, empate) == 'push'
+    assert _res('spreads', 'home', -1.0) == 'win' and _res('spreads', 'home', -2.0) == 'push'
+    assert _res('spreads', 'away', 1.5) == 'loss'
+
+
+def test_primer_tiempo_corners_y_tarjetas_usan_sus_propias_estadisticas():
+    assert _res('ht_btts', 'no') == 'win' and _res('ht_goal', 'yes') == 'win'
+    assert _res('corners', 'over', 8.5) == 'win' and _res('corners', 'under', 8.5) == 'loss'
+    assert _res('cards', 'under', 3.5) == 'loss' and _res('cards', 'over', 3.5) == 'win'  # 2+1+0+1 = 4
+
+
+def test_sin_dato_no_se_inventa_resultado():
+    sin = dict(PARTIDO, home_goals_ht=None, home_corners=None, home_yellow=None)
+    assert _res('ht_goal', 'yes', None, sin) is None
+    assert _res('corners', 'over', 8.5, sin) is None
+    assert _res('cards', 'over', 3.5, sin) is None
+    assert _res('h2h', 'home', None, dict(PARTIDO, home_goals=None)) is None
+    assert pm.resultado_fila({'market': 'raro', 'selection': 'x', 'line': None}, PARTIDO) is None
+
+
+def test_con_resultados_solo_marca_las_abiertas_y_nunca_las_bloqueadas():
+    filas = [{'id': 'a', 'market': 'h2h', 'selection': 'home', 'line': None, 'locked': False},
+             {'id': 'b', 'grupo': 'GOLES', 'locked': True}]
+    out = pm.con_resultados(filas, dict(PARTIDO, status='finished'))
+    assert out[0]['resultado'] == 'win' and 'resultado' not in out[1]
+    assert 'resultado' not in pm.con_resultados(filas, dict(PARTIDO, status='scheduled'))[0]
+    assert pm.con_resultados(filas, None)[0].get('resultado') is None
