@@ -24,7 +24,9 @@ export function nbaEvents(data) {
           price:null, reference:row.reference || 'Probabilidad estadística', estimate:row.estimate,
           sealed_at:row.sealed_at_utc, eligible, revised:!eligible, outcome:result,
           conditional:row.conditional_participation===true, market:row.market,
-          player:winner?null:row.player, line:typeof row.line==='number'?row.line:null};
+          player:row.market.startsWith('player_')?row.player:null,
+          player_id:row.market.startsWith('player_')?row.player_id:null,
+          line:typeof row.line==='number'?row.line:null};
       });
       if (!markets.length) continue;
       events.set(game.event_id,{id:game.event_id,sport:'nba',home:game.home_team,away:game.away_team,start:game.tipoff_utc,league:'NBA',
@@ -113,7 +115,8 @@ export async function loadImages(fetcher=fetch) {
     const response=await fetcher('/web/imagenes/manifiesto.json',{signal:controller.signal});
     if(!response.ok)throw new Error();
     const data=await response.json();
-    if(!data||typeof data.nba!=='object'||typeof data.tenis!=='object')throw new Error();
+    const dictionary=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+    if(!data||!dictionary(data.nba)||!dictionary(data.tenis))throw new Error();
     return {status:'ready',nba:data.nba,tenis:data.tenis};
   } catch {return {status:'error',nba:{},tenis:{}};}
   finally {clearTimeout(timer);}

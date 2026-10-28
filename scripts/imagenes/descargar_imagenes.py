@@ -95,7 +95,7 @@ def escribir_creditos(m):
     e = html.escape
     filas = "".join(
         f'<tr><td>{e(v["n"])}</td><td>{e(v["a"])}</td><td><a href="{e(v["lu"])}" rel="noopener">{e(v["l"])}</a></td>'
-        f'<td><a href="{e(v["p"])}" rel="noopener">Commons</a></td></tr>'
+        f'<td><a href="{e(v["p"])}" rel="noopener">{e(v.get("fuente", "Wikimedia Commons"))}</a></td></tr>'
         for _, v in sorted(m["tenis"].items(), key=lambda kv: kv[1]["n"]))
     equipos = ", ".join(e(v["n"]) for _, v in sorted(m["nba"].items()))
     doc = f"""<!doctype html>
@@ -105,14 +105,17 @@ def escribir_creditos(m):
 a{{color:#38bdf8}}table{{border-collapse:collapse;width:100%;font-size:14px}}th,td{{border-bottom:1px solid #3a506b;padding:6px 8px;text-align:left;vertical-align:top}}
 small{{color:#94a3b8}}</style></head><body>
 <h1>Créditos de imágenes</h1>
-<p>QuantFut es un proyecto sin fines de lucro. Las imágenes se descargaron una vez y se sirven desde este servidor.</p>
+<p>Imágenes alojadas en este servidor para identificar a los equipos y deportistas de cada encuentro.</p>
 <h2>Fotos de tenistas</h2>
-<p>Fotografías de <a href="https://commons.wikimedia.org" rel="noopener">Wikimedia Commons</a> con licencia Creative Commons.
-Se muestran reducidas de tamaño (ancho {ANCHO_TENIS} px) y recortadas por la hoja de estilos; no se han modificado de otro modo.
-Cada foto conserva la licencia de su autor.</p>
+<p>Fotografías de <a href="https://commons.wikimedia.org" rel="noopener">Wikimedia Commons</a> con sus licencias Creative Commons indicadas por fila,
+y retratos de <a href="https://api-tennis.com/documentation" rel="noopener">API-Tennis</a>, identificados como imágenes del proveedor.
+Los retratos de API-Tennis no se atribuyen una licencia Creative Commons. Se recortan visualmente en la interfaz.</p>
 <table><thead><tr><th>Jugador</th><th>Autor</th><th>Licencia</th><th>Fuente</th></tr></thead><tbody>{filas}</tbody></table>
 <h2>Escudos de fútbol</h2>
 <p>Escudos de clubes de <a href="https://www.api-football.com" rel="noopener">API-Football</a>, descargados una vez y servidos desde este servidor.</p>
+<h2>Retratos de futbolistas y jugadores NBA</h2>
+<p>Retratos de API-Football y del CDN oficial de <a href="https://www.nba.com" rel="noopener">NBA.com</a>, vinculados por el identificador del jugador y guardados en caché.
+No se atribuye una licencia Creative Commons a estas imágenes. Si la fuente no proporciona foto, se muestra una marca de imagen no disponible.</p>
 <h2>Logos de equipos NBA</h2>
 <p>Logos obtenidos de <a href="https://www.thesportsdb.com" rel="noopener">TheSportsDB</a>: {equipos}.
 Los nombres y logos de la NBA y de sus equipos son marcas de NBA Properties, Inc. y de los equipos; QuantFut no está afiliado ni respaldado por ellos

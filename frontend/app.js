@@ -1,9 +1,10 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=hist-20261028';
-import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=logos-20261027';
-import { createSportWindow } from './sports-window.js?v=logos-20261027';
+import { createRealViews } from './real-views.js?v=imagenes-20261028';
+import { loadSport, loadResults, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=imagenes-20261028';
+import { createSportWindow } from './sports-window.js?v=imagenes-20261028';
+import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=conv-20261028';
 
@@ -212,8 +213,9 @@ function ensureResults() {
 }
 function ensureImages() {
   if(imagesCache)return imagesCache;
-  imagesCache={status:'loading',nba:{},tenis:{}};
-  loadImages().then(result=>{imagesCache=result;rerenderIfIdle();});
+  const entry={status:'loading',nba:{},tenis:{}};
+  imagesCache=entry;
+  loadImages().then(result=>{if(imagesCache!==entry)return;imagesCache=result;rerenderIfIdle();});
   return imagesCache;
 }
 function ensureRealHome(offset) {
@@ -244,6 +246,7 @@ function ensureRealMatch(id) {
 // ---------------------------------------------------------------- formato
 
 const app = document.getElementById('app');
+installImageFallback(app);
 const esc = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const fold = text => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const dateFmt = (date, options = {}) => new Intl.DateTimeFormat('es-MX', options).format(date);
@@ -925,7 +928,9 @@ function lineupsPanel(f) {
   const side = (key, team) => {
     const l = f.alineaciones[key];
     const out = f.bajas?.[key] || [];
-    const xi = l ? `<p class="lineup-formation">${esc(l.formacion || 'Formación sin datos')}</p><ol class="lineup">${(l.titulares || []).map(p => `<li><span>${esc(p.number ?? '')}</span><strong>${esc(p.name ?? '')}</strong><small>${esc(p.pos ?? '')}</small></li>`).join('')}</ol>` : '<p class="body-copy muted">XI sin confirmar. Se publica entre 60 y 20 minutos antes del inicio.</p>';
+    const last = !l ? team.ultimo_once : null;
+    const lineup = l || last;
+    const xi = `${!l ? '<p class="body-copy muted">XI sin confirmar. Se publica entre 60 y 20 minutos antes del inicio.</p>' : ''}${last ? `<p class="eyebrow">Última alineación registrada · ${realDate(last.fecha)}</p><p class="win-sub">Corresponde al partido anterior, no es el once confirmado de hoy.</p>` : ''}${lineup ? `<p class="lineup-formation">${esc(lineup.formacion || 'Formación sin datos')}</p><ol class="lineup has-photos">${(lineup.titulares || []).map(p => `<li><span>${esc(p.number ?? p.numero ?? '')}</span>${imageMarkup(p.foto, p.name ?? p.nombre ?? '', esc)}<strong>${esc(p.name ?? p.nombre ?? '')}</strong><small>${esc(p.pos ?? '')}</small></li>`).join('')}</ol>` : ''}`;
     const bajas = f.bajas ? (out.length ? `<ul class="bajas">${out.map(b => `<li><strong>${esc(b.jugador)}</strong><small>${esc(BAJA_LABEL[b.tipo] || b.tipo)}${b.motivo ? ` · ${esc(b.motivo)}` : ''}</small></li>`).join('')}</ul>` : '<p class="body-copy muted">Sin bajas reportadas.</p>') : '<p class="body-copy muted">Bajas aún no comprobadas.</p>';
     return `<section class="panel"><p class="eyebrow">${esc(team.nombre.toUpperCase())}</p><h2>Alineación</h2>${xi}<h3 class="sub-h">Bajas y dudas</h3>${bajas}</section>`;
   };
@@ -1192,7 +1197,7 @@ function render() {
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
   document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span><span>Escudos de fútbol de API-Football, logos NBA de TheSportsDB y fotos de tenis de Wikimedia Commons con licencia Creative Commons. <a class="text-link" href="/web/imagenes/creditos" target="_blank" rel="noopener">Créditos de imágenes ↗</a></span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main><footer class="footer"><span>© QuantFut Intelligence · Sports Lab</span><span>Pronósticos y cuotas registrados por el servidor. Sin resultados garantizados.</span><span>Escudos de fútbol de API-Football, logos NBA de TheSportsDB y retratos de NBA.com, API-Football, API-Tennis y Wikimedia Commons. <a class="text-link" href="/web/imagenes/creditos" target="_blank" rel="noopener">Créditos de imágenes ↗</a></span></footer></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   conversionViews.applyMeters(app);
   membershipUI.afterRender();
@@ -1417,7 +1422,7 @@ function syncPublicAuth() {
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
-  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); resultsCache=null; }
+  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
   render();
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;

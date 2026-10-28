@@ -1,3 +1,4 @@
+import { imageMarkup, playerPhoto } from './sport-images.js?v=imagenes-20261028';
 // Ventana única de NBA y tenis: pronóstico y estadísticas del mismo evento, con el diseño de la de fútbol.
 // Solo presenta lo que publican los motores; no calcula probabilidades ni inventa cuotas.
 // La «cuota del modelo» es 1 ÷ probabilidad y se rotula como tal: ninguna casa publica estos mercados.
@@ -10,10 +11,14 @@ export function createSportWindow(ctx) {
   const keyOf = event => `${event.sport}:${event.id}`;
   const num = (value, digits = 1) => (Number.isFinite(value) ? Number(value).toLocaleString('es-MX', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—');
   const marks = name => esc(String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || '?');
-  // Logo del servidor para los equipos de NBA cuando el manifiesto ya cargó; si no, las iniciales (nunca una imagen rota).
+  // Imágenes del manifiesto para NBA y tenis, tanto en la lista como en el encabezado.
   const mark = (name, sport) => {
-    const hit = sport === 'nba' ? ensureImages?.().nba?.[nbaCode?.(name)] : null;
-    return hit ? `<img class="win-crest is-logo" src="/web/imagenes/nba/${esc(hit.f)}" alt="" loading="lazy" decoding="async">`
+    const index = ensureImages?.();
+    const key = sport === 'nba' ? nbaCode?.(name) : String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const hit = sport === 'nba' ? index?.nba?.[key] : index?.tenis?.[key];
+    const file = typeof hit?.f === 'string' && /^[a-z0-9][a-z0-9-]*\.(png|jpg)$/i.test(hit.f) ? hit.f : null;
+    const credit = sport === 'tenis' && hit ? ` title="${esc(`Foto: ${hit.a} · ${hit.l} (${hit.fuente || 'Wikimedia Commons'})`)}"` : '';
+    return file ? `<img class="win-crest ${sport === 'tenis' ? 'is-photo' : 'is-logo'}" src="/web/imagenes/${sport}/${esc(file)}" alt="" data-image-name="${esc(name)}" loading="lazy" decoding="async"${credit}>`
       : `<span class="win-crest is-initial" aria-hidden="true">${marks(name)}</span>`;
   };
   const statusText = event => (event.status === 'finished' ? 'Final' : event.status === 'awaiting_result' ? 'Esperando resultado' : new Date(event.start) <= new Date() ? 'En curso o por confirmar' : 'Programado');
@@ -62,13 +67,13 @@ export function createSportWindow(ctx) {
     const feat = featuredModelMarket(event.markets.filter(m => !m.revised));
     const range = '1,40 a 1,80';
     const card = feat
-      ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div><h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>Cuota del modelo</small><strong>${fmtOdds(1 / feat.probability)}</strong><em>1 ÷ probabilidad</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
+      ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(playerPhoto("nba", feat.player_id), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>Cuota del modelo</small><strong>${fmtOdds(1 / feat.probability)}</strong><em>1 ÷ probabilidad</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
       : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado de este evento tiene cuota del modelo de ${range}.`}</p>`;
     const families = [...new Set(event.markets.map(m => family(event, m)))].sort((a, b) => FAMILY_ORDER.indexOf(a) - FAMILY_ORDER.indexOf(b));
     const fam = families.includes(state.winSportFam) ? state.winSportFam : families[0];
     const all = event.markets.filter(m => family(event, m) === fam).sort((a, b) => b.probability - a.probability);
     const shown = state.winAll ? all : all.slice(0, ROW_LIMIT);
-    const line = m => `<tr${feat && m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${esc(m.selection)}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${fmtOdds(1 / m.probability)}</td><td>${feat && m === feat ? badge('Destacado', 'good') : outcomeBadge(m)}</td></tr>`;
+    const line = m => `<tr${feat && m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${m.player ? imageMarkup(playerPhoto("nba", m.player_id), m.player, esc) : ""}${esc(m.selection)}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${fmtOdds(1 / m.probability)}</td><td>${feat && m === feat ? badge('Destacado', 'good') : outcomeBadge(m)}</td></tr>`;
     const more = all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, de mayor a menor probabilidad.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
     return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>
       <section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${families.map(f => `<button type="button" class="chip ${fam === f ? 'selected' : ''}" data-win-sport-fam="${esc(f)}" aria-pressed="${fam === f}">${esc(f)}</button>`).join('')}</div></div>
