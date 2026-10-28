@@ -92,3 +92,30 @@ test('las estadísticas de tenis rechazan respuestas incompletas o con números 
   assert.equal((await loadTennisStats('1', async () => ({ ok: false, status: 404 }))).status, 'error');
   assert.equal((await loadTennisStats('1', async () => { throw new Error('red'); })).status, 'error');
 });
+
+test('nbaCode reconoce a los 30 equipos por su nombre de las cuotas y no inventa códigos', async () => {
+  const { nbaCode } = await import('./sports-data.js');
+  assert.equal(nbaCode('Los Angeles Lakers'), 'LAL');
+  assert.equal(nbaCode('LA Clippers'), 'LAC');
+  assert.equal(nbaCode('Portland Trail Blazers'), 'POR');
+  assert.equal(nbaCode('Philadelphia 76ers'), 'PHI');
+  assert.equal(nbaCode('Equipo Inexistente'), null);
+  assert.equal(nbaCode(undefined), null);
+});
+
+test('la ventana de NBA pinta el logo de cada equipo si el manifiesto lo trae y las iniciales si no', async () => {
+  const { nbaCode } = await import('./sports-data.js');
+  const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false };
+  const start = new Date().toISOString();
+  const event = { id: 'n1', sport: 'nba', home: 'Los Angeles Lakers', away: 'Portland Trail Blazers', start, league: 'NBA', status: 'scheduled', seal: 'abc123', sealed_at: start,
+    markets: [{ id: 'winner', label: 'Ganador', selection: 'Los Angeles Lakers', probability: .65, price: null }] };
+  const pass = v => String(v);
+  const build = images => createSportWindow({ state: st, esc: pass, badge: t => `<i>${t}</i>`, fmtPct: p => `${(p * 100).toFixed(1)}%`, fmtOdds: o => o.toFixed(2),
+    realDate: pass, realTime: pass, dateFmt: pass, addDays: () => new Date(), localDay: d => new Date(d).toISOString().slice(0, 10), dayLabel: () => 'Hoy',
+    ensureSport: () => ({ status: 'ready', events: [event] }), ensureNbaStats: () => ({ status: 'loading' }), featuredModelMarket, ensureImages: () => images, nbaCode });
+  const ready = build({ status: 'ready', tenis: {}, nba: { LAL: { f: 'LAL.png' }, POR: { f: 'POR.png' } } }).view();
+  assert.ok(ready.includes('src="/web/imagenes/nba/LAL.png"') && ready.includes('src="/web/imagenes/nba/POR.png"'));
+  assert.ok(!ready.includes('is-initial'));
+  const loading = build({ status: 'loading', nba: {}, tenis: {} }).view();      // manifiesto aún sin cargar o caído: iniciales, sin imágenes rotas
+  assert.ok(loading.includes('is-initial') && !loading.includes('/web/imagenes/'));
+});

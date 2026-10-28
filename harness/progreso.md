@@ -7297,3 +7297,9 @@ Petición del usuario: leer las notas de DEPLOYS, resolver todo lo que quede y n
 
 ## 28-oct-2026 · Rediseño de conversión de #alta, #parley y #escalera (desplegado como parche)
 Decisión clave: la rama de trabajo original (`nba/v13-disponibilidad`) no incluía el frontend que corría en producción, así que se desplegó un parche de cinco archivos sobre la imagen `planes-d788025` y esta rama parte de `main` (que ya tenía ese `app.js`) para que el repositorio vuelva a coincidir con producción. Lo bloqueado se muestra con la cuota difuminada (decisión del titular, 2026-10-18) y Cloudflare cachea 4 h por URL completa: cada estático modificado necesita un `?v=` nuevo.
+
+## 27-oct-2026 · Logos de NBA en la ventana única (rama `web/logos-ventana-nba`, sin desplegar)
+Decisión clave: los logos NBA ya estaban en producción (`/web/imagenes/nba/*.png` y el manifiesto devuelven 200) pero la ventana de NBA y tenis
+(`sports-window.js`) pintaba siempre iniciales: solo las tarjetas de `ergonomic-views.js` consultaban el manifiesto. Ahora `mark()` usa el logo cuando
+el manifiesto ya cargó y, si no, las iniciales (nunca una imagen rota). La tabla nombre→código se movió a `nbaCode()` en `sports-data.js` para tener una
+sola fuente; se pasa por contexto desde `app.js`. Pendiente: las fotos de tenis en la ventana siguen con iniciales (llevan crédito de licencia).
