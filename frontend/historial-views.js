@@ -94,7 +94,7 @@ export function porDia(rows, dia) {
 
 // ------------------------------------------------------------ vistas
 
-export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, getResults, getEvidence }) {
+export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, getResults }) {
   const num = (v, d = 0) => Number(v).toLocaleString('es-MX', { minimumFractionDigits: d, maximumFractionDigits: d });
   const pct = (v, d = 0) => `${num(v * 100, d)} %`;
   const signo = v => (v > 0 ? '+' : v < 0 ? '−' : '');
@@ -244,7 +244,6 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
     ];
     return `<section class="cv-cta cyber-card cyber-card--green" aria-label="Acceso VIP"><div><p class="eyebrow">DE LA PRUEBA A LA DECISIÓN</p><h2>Ya viste el registro entero. ¿Quieres los pronósticos antes del partido?</h2><p>Con VIP ves todos los pronósticos de cada lote, con su probabilidad, cuota y casa de referencia, sellados antes de empezar.</p></div><button type="button" class="primary-button" data-route="planes">Ver planes VIP</button></section>
       <section class="cv-section" aria-label="Preguntas frecuentes"><div class="cv-section-head"><p class="eyebrow">LAS DUDAS DE SIEMPRE</p><h2>Preguntas, con respuestas sin maquillar</h2></div><div class="cv-faq">${preguntas.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div></section>
-      <p class="cv-legal">Los pronósticos son estimaciones, no garantías: se pierde a menudo y ninguna racha asegura la siguiente. Los resultados pasados no garantizan resultados futuros. Solo para mayores de 18 años. Juega con responsabilidad y solo con dinero que puedas perder.</p>
       <div class="cv-sticky" role="complementary" aria-label="Acceso VIP"><span>${pct(r.acierto)} · ${num(r.n)} liquidados</span><button type="button" class="primary-button" data-route="planes">Ver planes VIP</button></div>`;
   }
 
@@ -256,12 +255,11 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
   function historyView(rows, cargando) {
     const lista_ = ordenar(rows);
     const cabecera = '<div class="view-title"><div><p class="eyebrow">EVIDENCIA / REGISTRO REAL</p><h1>Historial verificable</h1></div></div>';
-    const evidencia = getEvidence ? `<details class="publication-details"><summary>Metodología y registros de verificación</summary>${getEvidence()}</details>` : '';
     if (!lista_.length) {
-      return `${cabecera}${estado(cargando ? 'Consultando resultados…' : 'Sin resultados disponibles', cargando ? 'Un momento: cargamos el historial.' : 'El historial aparece cuando los resultados están confirmados.', !cargando)}${evidencia}`;
+      return `${cabecera}${estado(cargando ? 'Consultando resultados…' : 'Sin resultados disponibles', cargando ? 'Un momento: cargamos el historial.' : 'El historial aparece cuando los resultados están confirmados.', !cargando)}`;
     }
     const r = resumir(lista_);
-    return `${hero(r)}${kpis(r)}${graficas(r, lista_)}${lista(lista_)}${sello()}${cierre(r)}${evidencia}`;
+    return `${hero(r)}${kpis(r)}${graficas(r, lista_)}${lista(lista_)}${sello()}${cierre(r)}`;
   }
 
   return { historyView, PAGINA };

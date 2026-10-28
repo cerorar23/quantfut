@@ -1,5 +1,5 @@
 import { publicForecasts, forecastGames } from './fichas-data.js?v=real-20261029';
-import { createHistorialViews } from './historial-views.js?v=hist-20261028';
+import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -182,7 +182,7 @@ export function createHubViews(ctx) {
     return `<section class="forecast-hero" aria-labelledby="forecast-title"><div class="forecast-copy"><p class="eyebrow">FÚTBOL / NBA / TENIS</p><h1 id="forecast-title">Lee el partido.<br><em>Entiende la cuota.</em></h1><p>El contexto del encuentro, las probabilidades y los pronósticos publicados. Los tres deportes en un mismo lugar, con datos reales de los motores.</p><div class="hero-actions"><button type="button" class="primary-button" data-scroll-to="pronosticos-hoy">Ver pronósticos reales <span aria-hidden="true">↗</span></button><button type="button" class="text-link" data-route="historial">Ver historial verificable ↗</button></div></div><aside class="forecast-summary" aria-label="Resumen de publicaciones reales"><span class="summary-icon" aria-hidden="true">Q.</span><div><span class="eyebrow">PUBLICACIONES REALES / HOY</span><strong>${source.home.status==='ready'?upcoming:'—'}<small> análisis próximos</small></strong><p>Fútbol, NBA y tenis. Los análisis aparecen cuando están calculados y publicados.</p></div><div class="summary-bottom"><span>Tres deportes</span><span>Fuente: QuantFut</span></div></aside></section><div class="publication-strip"><span class="publication-dot ${source.home.status==='ready'?'active':''}" aria-hidden="true"></span><strong>Datos reales de los motores</strong><span>Pronósticos y resultados registrados.</span><button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></div><div class="forecast-shortcuts"><button type="button" data-route="picks">Pronósticos publicados ↗</button><button type="button" data-route="historial">Resultados reales ↗</button><button type="button" data-route="partidos">Agenda y estadísticas ↗</button><button type="button" data-route="planes">Planes y acceso ↗</button></div>${board(source)}${recent(source)}${ctx.plansPreview?.()||''}`;
   }
   function picks(){return picksPage(sources());}
-  const historial=createHistorialViews({esc,state,fmtOdds,realTime,localDay:d=>localDay(d),getEvidence:()=>ctx.liveEvidence()});
+  const historial=createHistorialViews({esc,state,fmtOdds,realTime,localDay:d=>localDay(d)});
   function history(){
     const source=sources();
     const loading=results().status==='loading'||source.nba.status==='loading'||source.tenis.status==='loading';
