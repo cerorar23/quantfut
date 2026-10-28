@@ -431,6 +431,48 @@ def test_completar_espera_36_horas_desde_el_saque():
     assert (datetime.now(timezone.utc) - hasta).total_seconds() >= 36 * 3600 - 5
 
 
+def test_estadisticas_no_esperan_ni_exigen_pagina_tardia():
+    class Registra(_Completar):
+        def execute(self, sql, params=None):
+            if sql.lstrip().startswith("SELECT"):
+                self.consulta = (" ".join(sql.split()), params)
+            return super().execute(sql, params)
+    c = Registra([])
+    fc.completar_estadisticas(c)
+    sql, params = c.consulta
+    assert "interval '1 hour'" not in sql                       # sin el margen de XG_MIN_HORAS
+    assert "home_xg IS NULL" not in sql                         # un xG vacío no hace candidato al partido
+    desde, hasta = params
+    assert (datetime.now(timezone.utc) - hasta).total_seconds() < 5
+
+
+def test_estadisticas_rellenan_corners_y_tarjetas_de_una_pagina_reciente_sin_tocar_el_xg():
+    c = _Completar([_fila("m1", _posterior(), home_yellow=3, away_yellow=1)])
+    r = fc.completar_estadisticas(c)
+    assert r["completados"] == 1
+    update = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert update["home_corners"] == 7 and update["away_corners"] == 2
+    assert "home_yellow" not in update                          # ya tenía dato: no se toca
+    assert not any("xg_source" in s for s, _ in c.escrituras)
+    campos = {p[1] for s, p in c.escrituras if "matches_enriquecimiento" in s}
+    assert "xg" not in campos and "home_corners" in campos
+
+
+def test_estadisticas_no_aplican_con_marcador_distinto():
+    c = _Completar([_fila("m1", _posterior(goles=(0, 0)))])
+    r = fc.completar_estadisticas(c)
+    assert r["conflicto_marcador"] == 1 and r["completados"] == 0
+    assert not c.escrituras
+
+
+def test_correr_completar_incluye_las_estadisticas():
+    from unittest.mock import MagicMock
+    c = MagicMock()
+    with patch.object(fc, "en_enfriamiento", return_value=False),             patch.object(fc, "completar", return_value={"completados": 0}),             patch.object(fc, "revisar_xg", return_value={"registrados": 0}),             patch.object(fc, "completar_estadisticas", return_value={"completados": 5}), patch.object(fc, "_log"):
+        res = fc.correr(c, "completar", cli=object())
+    assert res["estadisticas"] == {"completados": 5}
+
+
 def test_referencias_no_pide_competiciones_retiradas():
     from qf.league_policy import RETIRED_LEAGUES
 

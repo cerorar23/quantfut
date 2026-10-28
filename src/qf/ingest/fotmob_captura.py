@@ -7,7 +7,8 @@ Cinco acciones, cada una con su cron:
                alineación probable o confirmada, no disponibles, entrenadores, valor del once y pronóstico de clima.
                Es lo ÚNICO anterior al saque; cada fila lleva la hora real de captura.
   posteriores  la página del partido terminado; llena fotmob_partido / fotmob_jugador_partido / fotmob_baja.
-  completar    sin peticiones: con esas páginas rellena en `matches` lo que SofaScore y PropLine dejaron vacío.
+  completar    sin peticiones: con esas páginas rellena en `matches` lo que SofaScore y PropLine dejaron vacío
+               (estadísticas al momento con `completar_estadisticas`; el xG, a las 20 h y 36 h).
   resultados   respaldo: cierra y liquida con FotMob los partidos que siguen abiertos más de 2 h 30 min tras el saque.
                El cierre normal es al pitido, desde `qf.ingest.live` (`cerrar_partido`); PropLine cierra si llega antes.
 
@@ -451,13 +452,14 @@ def revisar_xg(c) -> dict:
 
 
 # ------------------------------------------------------------------------------------------------ completar
-def _rellenar(c, f: dict, payload: dict) -> str:
+def _rellenar(c, f: dict, payload: dict, con_xg_permitido: bool = True) -> str:
     """Rellena en `matches` lo que siga NULL con una página posterior de FotMob (sin peticiones).
 
     `f` trae match_id, fotmob_match_id, capturado_en, el marcador, el xG y las COLUMNAS_MATCHES actuales.
     El marcador de FotMob tiene que coincidir con el nuestro; la procedencia queda en `matches_enriquecimiento`. El xG
     solo si el partido no tiene ninguno (primera pareja válida), con la hora real de captura de la página. `stats` (las
     fichas de la web y la serie del Motor C) con las claves de `estadisticas.CLAVES_FOTMOB`, solo si sigue NULL.
+    Con `con_xg_permitido=False` no toca el xG (lo decide `completar`, con la hora mínima de captura).
     Devuelve 'conflicto_marcador', 'sin_datos', 'xg' u 'ok'.
     """
     from psycopg.types.json import Jsonb
@@ -476,7 +478,8 @@ def _rellenar(c, f: dict, payload: dict) -> str:
     if web is not None:
         nuevos["stats"] = Jsonb(web)
     xg = stats.get("expected_goals") or [None, None]
-    con_xg = f["home_xg"] is None and f["away_xg"] is None and len(xg) == 2 and None not in xg
+    con_xg = (con_xg_permitido and f["home_xg"] is None and f["away_xg"] is None
+              and len(xg) == 2 and None not in xg)
     if not nuevos and not con_xg:
         return "sin_datos"
     with c.transaction():
@@ -533,6 +536,38 @@ def completar(c, cli: Cliente | None = None, dias_atras: int = 10) -> dict:
     return r
 
 
+def completar_estadisticas(c, dias_atras: int = 10) -> dict:
+    """Córners, tarjetas, tiros y demás estadísticas desde la primera página posterior de FotMob, sin esperar.
+
+    Decisión del titular (28-oct-2026): estadísticas de la primera fuente que las tenga, FotMob o SofaScore, y la otra
+    solo rellena lo que siga vacío (SofaScore ya lo hace con `COALESCE`). Antes `completar` esperaba 36 h y las fichas
+    de mercado quedaban «Pendiente». Solo marcador coincidente y solo NULL; el xG no se toca aquí: sigue la regla de
+    `completar` (hora mínima de captura y ESPERA_COMPLETAR). No hace peticiones.
+    """
+    from .archivo_a_matches import COLUMNAS_MATCHES
+
+    ahora = datetime.now(timezone.utc)
+    faltan = " OR ".join(f"m.{k} IS NULL" for k in COLUMNAS_MATCHES + ["stats"])
+    filas = c.execute(
+        f"""SELECT DISTINCT ON (m.match_id) m.match_id, m.home_goals, m.away_goals, m.home_xg, m.away_xg,
+                   o.fotmob_match_id, o.capturado_en, o.payload_gz, {_columnas()}
+            FROM matches m JOIN leagues l USING (league_id) JOIN fotmob_original o USING (match_id)
+            WHERE o.fase = 'posterior' AND l.active AND m.status = 'finished'
+              AND m.kickoff_utc BETWEEN %s AND %s
+              AND ({faltan})
+            ORDER BY m.match_id, o.capturado_en""",
+        (ahora - timedelta(days=dias_atras), ahora)).fetchall()
+    r = {"candidatos": len(filas), "completados": 0, "conflicto_marcador": 0, "sin_datos": 0}
+    for f in filas:
+        estado = _rellenar(c, f, json.loads(gzip.decompress(bytes(f["payload_gz"]))), con_xg_permitido=False)
+        if estado in ("conflicto_marcador", "sin_datos"):
+            r[estado] += 1
+            continue
+        r["completados"] += 1
+    c.commit()
+    return r
+
+
 # ----------------------------------------------------------------------------------------------- resultados
 def _marcador_final(payload: dict) -> tuple[int, int] | None:
     """Marcador de un partido terminado en el tiempo reglamentario; None si no lo es o no es un entero válido."""
@@ -552,7 +587,7 @@ def cerrar_partido(c, cli: Cliente, f: dict, rellenar: bool = True) -> str:
     `f` trae match_id, kickoff_utc, home_team_id, away_team_id y fotmob_match_id. Solo si la página es de ese partido,
     de los mismos dos equipos (por `fotmob_equipo`, en el mismo orden) y terminó en el tiempo reglamentario. Con
     `rellenar=False` (cierre al pitido) solo se escriben el marcador y la página: el resto de columnas lo llenan
-    SofaScore y, a las 36 h, `completar`.
+    SofaScore y `completar` (cada hora; el xG, a las 36 h).
     """
     payload = cli.get("matchDetails", {"matchId": f["fotmob_match_id"]})
     if not _validar(payload, f["fotmob_match_id"]):
@@ -633,6 +668,7 @@ def correr(c, accion: str, cli: Cliente | None = None, **opciones) -> dict:
             log.exception("no se pudo enviar la alerta")
         return {"denegado": str(exc)}
     if accion == "completar":
+        res["estadisticas"] = completar_estadisticas(c)
         res["xg_corregido"] = revisar_xg(c)
     _log(c, accion, res)
     return res
