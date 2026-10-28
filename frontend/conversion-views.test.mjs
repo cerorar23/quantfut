@@ -126,3 +126,27 @@ test('conversion.css solo actúa sobre sus propias clases .cv-', async () => {
   const fuera = selectors.flatMap(group => group.split(',')).map(t => t.trim()).filter(t => !t.startsWith('.cv-'));
   assert.deepEqual(fuera, []);
 });
+
+test('escalera al 80 % en 7 días: plazo, expirados, NBA y tenis con su nombre', () => {
+  const escalera = {
+    status: 'ready',
+    data: {
+      activo: true,
+      reglas: { cuota_min: 1.03, cuota_max: 1.4, stake: '10.00', freeroll_x: null, longitudes: [2], prob_reto: 0.8, por_dia: 2, dias_max: 7, lineas_handicap: [] },
+      actuales: [{ reto_id: 30, estado: 'esperando', ganados: 1, pasos_objetivo: 2, saldo: '10.60', en_juego: '10.60', stake_inicial: '10.00', retirado: '0.00', freeroll_x: null, prob_objetivo: 0.8,
+        pasos: [{ paso: 1, league_id: 'tenis', deporte: 'tenis', kickoff_utc: '2026-10-28T09:00:00Z', local: 'Jannik Sinner', visitante: 'Qualifier X', texto: 'Gana Jannik Sinner', market: 'h2h', selection: 'home', prob: 0.95, price: 1.06, book: 'bovada', outcome: 'win' }],
+        vip: [{ league_id: 'nba', kickoff_utc: '2026-10-28T23:00:00Z', local: 'Boston Celtics', visitante: 'Washington Wizards', market: 'h2h' }] }],
+      historial: [{ reto_id: 29, estado: 'expirado', ganados: 1, pasos_objetivo: 2, retirado: '0.00', ganancia: '0.60', inicio: '2026-10-20T09:00:00Z' }],
+      resumen: { cerrados: 1, completados: 0, expirados: 1 },
+      por_longitud: {},
+      serie: [],
+    },
+  };
+  const e = createConversionViews(helpers({ escalera })).escaleraView();
+  assert.match(e, /Retos de 2 escalones en 7 días como máximo, elegidos para que el reto entero se cumpla al menos el 80%/);
+  assert.match(e, /Escalón 1 · Tenis/);
+  assert.match(e, /Escalón 2 · NBA/);
+  assert.match(e, /en 7 días no aparece el segundo escalón/);
+  assert.match(e, /Por qué un reto tan seguro paga poco/);
+  assert.doesNotMatch(e, /Qué es el freeroll/);
+});

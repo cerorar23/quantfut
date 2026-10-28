@@ -15,7 +15,10 @@ const MERCADO = {
   corners_home: 'Córners del local', corners_away: 'Córners del visitante', cards: 'Tarjetas',
 };
 const PARLEY_ESTADO = { ganado: 'Ganado', perdido: 'Perdido', nulo: 'Nulo' };
-const ESCALERA_ESTADO = { en_curso: 'Buscando escalón', esperando: 'Esperando resultado', completado: 'Completado', fallido: 'Fallido' };
+const ESCALERA_ESTADO = { en_curso: 'Buscando escalón', esperando: 'Esperando resultado', completado: 'Completado', fallido: 'Fallido', expirado: 'Expirado' };
+// Los escalones de NBA y tenis traen el deporte como liga (publish/escalera_ext.py).
+const LIGA_ESCALON = { nba: 'NBA', tenis: 'Tenis' };
+const ligaEscalon = p => LIGA_ESCALON[p.league_id] ?? p.league_id ?? 'Liga';
 const RESULTADO_TEXTO = { win: 'acertado', loss: 'fallado', push: 'devuelto', open: 'en juego' };
 
 // ------------------------------------------------------------ lógica pura
@@ -266,7 +269,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
   function escaleraPaso(p) {
     const est = p.outcome === 'win' ? ['win', 'Ganado'] : p.outcome === 'loss' ? ['loss', 'Perdido'] : p.outcome === 'push' ? ['push', 'Devuelto (no cuenta)'] : p.outcome === 'void' ? ['push', 'Nulo (aplazado)'] : ['open', 'Pendiente'];
     const prob = probabilityLabel(p.prob);
-    return `<article class="cv-pick cyber-card ${est[0]}"><div class="cv-pick-main"><span class="cv-kicker">${p.free ? badge('Gratis', 'good') : ''} Escalón ${realNumber(p.paso)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''}</p><small class="cv-prob">${prob ? `Probabilidad real ${esc(prob.pct)} · sale ${esc(prob.frequency)}` : 'Sin probabilidad'}</small></div>
+    return `<article class="cv-pick cyber-card ${est[0]}"><div class="cv-pick-main"><span class="cv-kicker">${p.free ? badge('Gratis', 'good') : ''} Escalón ${realNumber(p.paso)} · ${esc(ligaEscalon(p))} · ${fecha(p.kickoff_utc)}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''}</p><small class="cv-prob">${prob ? `Probabilidad real ${esc(prob.pct)} · sale ${esc(prob.frequency)}` : 'Sin probabilidad'}</small></div>
       <div class="cv-pick-side"><span>Cuota</span><strong>${realNumber(p.price, 2)}</strong><small>${esc(p.book ?? 'Casa')}</small><small class="cv-res ${est[0]}">${est[1]}</small><small>Sello ${hash(p.chain_sha256)}</small></div></article>`;
   }
 
@@ -279,7 +282,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const ultimo = pasos.at(-1);
     const potencial = enJuego && ultimo ? Number(r.en_juego) * Number(ultimo.price) : null;
     const freeroll = r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : 'reto sin freeroll';
-    const cerrados = (r.vip ?? []).map(p => lockedCard({ kicker: `Escalón ${realNumber(ganados + 1)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}`, title: esc(nombreMercado(p.market)), sub: `${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}`, cuotaLabel: 'Cuota · VIP', cuota: CUOTA_OCULTA }));
+    const cerrados = (r.vip ?? []).map(p => lockedCard({ kicker: `Escalón ${realNumber(ganados + 1)} · ${esc(ligaEscalon(p))} · ${fecha(p.kickoff_utc)}`, title: esc(nombreMercado(p.market)), sub: `${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}`, cuotaLabel: 'Cuota · VIP', cuota: CUOTA_OCULTA }));
     return `<article class="cv-reto cyber-card"><div class="cv-reto-head"><div><span class="cv-kicker">Reto #${realNumber(r.reto_id)} · ${realNumber(objetivo)} escalones</span><h3>${esc(ESCALERA_ESTADO[r.estado] ?? r.estado)}</h3></div><div class="cv-ticket-odds"><span>Saldo</span><strong>${unidades(r.saldo).replace('+', '')}</strong></div></div>
       <div class="cyber-progress cyber-progress--green cyber-progress--segmented cv-stair" role="img" aria-label="${realNumber(ganados)} de ${realNumber(objetivo)} escalones ganados">${segmentos}</div>
       <p class="cv-ticket-meta">${enJuego ? `En juego ${realNumber(r.en_juego, 2)} u${potencial ? ` · si se acierta: ${realNumber(potencial, 2)} u` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${realNumber(r.stake_inicial, 2)} u · ${Number(r.retirado) > 0 ? `retirado ${realNumber(r.retirado, 2)} u: lo que queda va sin riesgo propio` : freeroll}</p>
@@ -311,7 +314,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const heroCard = hero({
       eyebrow: 'RETOS · ESCALERA',
       title: r.cerrados ? `<em>${realNumber(r.completados)} de ${realNumber(r.cerrados)}</em> retos completados, y los fallidos también se ven` : 'Reto escalera',
-      lead: `Retos de ${realNumber(Math.min(...(reglas.longitudes ?? [3])))} a ${realNumber(Math.max(...(reglas.longitudes ?? [6])))} escalones que empiezan con ${realNumber(reglas.stake, 0)} unidades: cada escalón juega todo el saldo a un pronóstico de cuota ${realNumber(reglas.cuota_min, 2)}–${realNumber(reglas.cuota_max, 2)}. Ganarlos todos completa el reto; fallar uno lo cierra.`,
+      lead: `Retos de ${(reglas.longitudes ?? [2]).map(n => realNumber(n)).join(' o ')} escalones${reglas.dias_max ? ` en ${realNumber(reglas.dias_max)} días como máximo` : ''}${reglas.prob_reto ? `, elegidos para que el reto entero se cumpla al menos el ${realNumber(reglas.prob_reto * 100, 0)}% de las veces (fútbol, NBA y tenis)` : ''}, que empiezan con ${realNumber(reglas.stake, 0)} unidades: cada escalón juega todo el saldo a un pronóstico de cuota ${realNumber(reglas.cuota_min, 2)}–${realNumber(reglas.cuota_max, 2)}. Ganarlos todos completa el reto; fallar uno lo cierra.`,
       big: r.cerrados ? unidades(r.ganancia) : '—',
       bigLabel: 'ganancia acumulada',
       bigSub: r.cerrados ? `sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% completados` : 'Aún no se cerró ningún reto',
@@ -334,7 +337,10 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       ${planCompare(['Los escalones ya liquidados, con su resultado', 'Una parte de los escalones abiertos', 'El historial completo y la comprobación en la cadena'], ['Todos los escalones abiertos de cada reto', 'Probabilidad real, cuota y casa de cada escalón', 'Todo sellado antes del partido'])}
       ${faq([
         ['¿Se puede perder el reto?', 'Sí. Basta un escalón fallado para cerrarlo: pierdes las unidades en juego. Está en el historial como «Fallido».'],
-        ['¿Qué es el freeroll?', `Al llegar a ×${realNumber(reglas.freeroll_x, 1)} se retiran las unidades iniciales y se sigue con la ganancia: lo que queda va sin riesgo propio.`],
+        reglas.freeroll_x
+          ? ['¿Qué es el freeroll?', `Al llegar a ×${realNumber(reglas.freeroll_x, 1)} se retiran las unidades iniciales y se sigue con la ganancia: lo que queda va sin riesgo propio.`]
+          : ['¿Por qué un reto tan seguro paga poco?', 'Porque la probabilidad de completarlo es la de sus escalones multiplicadas, y la cuota también se multiplica. Si las cuotas son justas, probabilidad × cobro ≈ 1: un reto al 80% cobra alrededor de ×1,15, menos el margen de la casa. Ninguna mezcla de deportes ni de mercados sube la probabilidad sin bajar el cobro.'],
+        ...(reglas.dias_max ? [[`¿Y si en ${realNumber(reglas.dias_max)} días no aparece el segundo escalón?`, 'Si un día no hay un pronóstico lo bastante seguro, se espera; si hay dos, pueden ir el mismo día. Pasado el plazo el reto queda «Expirado»: conservas el saldo, pero no cuenta como cumplido, y se publica igual que los fallidos.']] : []),
         ['¿Con 13 retos ya se puede concluir algo?', `Todavía no. Es una muestra pequeña (pedimos ${MUESTRA_MIN}). La cifra de arriba es real, pero puede moverse mucho.`],
         ['¿Pueden cambiar un escalón después?', 'No. Se sella en la cadena antes del partido; tocarlo rompería la cadena.'],
       ])}

@@ -270,6 +270,7 @@
   "ladderHideSteps": "Nascondi i gradini",
   "ladderHistoryDone": "Completata",
   "ladderHistoryEmpty": "Non ci sono ancora sfide chiuse. Quando una finisce, comparirà qui con il suo risultato.",
+  "ladderHistoryExpired": "Scaduto senza essere completato",
   "ladderHistoryFailedAt": "Fallita al gradino {step}",
   "ladderHistoryRate": "Tasso di completamento: {rate}",
   "ladderHistoryResult": "Risultato cumulato: {roi}",

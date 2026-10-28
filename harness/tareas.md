@@ -3384,3 +3384,26 @@ Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScor
 - [x] Pestañas Comparativa, Forma, Cara a cara y Clasificación en la ventana de NBA (`frontend/sports-window.js`, CYBERCORE), con filtro Todos / En casa / Fuera; constructor `apps/nba/src/nba/web_stats.py`, lector `src/qf/api/nba_estadisticas.py` y ruta `/web/deportes/nba/estadisticas/{id}`. Detalle y plan de despliegue: `docs/nba_estadisticas_web_20261027.md`.
 - [x] Desplegado el 27-oct 21:23 UTC (PR #185): imagen de la API, exportador del host y cron cada 30 min; ver DEPLOYS.md.
 - [ ] Decidir si se añaden alineaciones, estadio y cuotas por cuarto: ninguna fuente validada las trae hoy; hace falta elegir proveedor.
+
+
+## Reto escalera al 80 % en 7 días con NBA y tenis (2026-10-28, decisión del usuario)
+
+El usuario pide el reto entero al 80 %, buscando el acierto y no la cuota, con hasta
+7 días, y dice «conéctalos» (NBA y tenis). Matemática: P(reto) = ∏ p; un 80 % paga ≈ ×1,15.
+
+- [x] `eval/escalera_prueba.py`: `run` fallaba con `EV_MIN = None`; bloque `regla_80`.
+- [x] `eval/escalera_multideporte.py`: fútbol + NBA + tenis (Tennis-Data, BetsAPI).
+- [x] `escalera.py`: 2 escalones con presupuesto de probabilidad, hasta 2 el mismo día,
+      7 días y «expirado», el más probable, cuota ≥ 1,03, tope 95 % (tenis 97 %).
+- [x] `escalera_ext.py`: NBA y tenis desde el archivo PropLine (Pinnacle sin margen,
+      mejor cuota de la lista, liquidación de la casa del escalón).
+- [x] `db/089`: `prob_objetivo`, `dias_max`; `escalera_pasos.deporte/evento_*` sin
+      `match_id`; `escalera_resultados.fuente` (el fútbol sigue exigiendo marcador).
+- [x] Sello del lote con las columnas nuevas; web (expirado, plazo, NBA/tenis); app
+      («Expiró sin completarse» en 6 idiomas); escalón gratis 75-97 % en `mobile.py`.
+- [ ] Desplegar con visto bueno: `db/089` ANTES de api y worker (hashchain y la
+      escalera leen las columnas nuevas); anotar en DEPLOYS.md con vuelta atrás.
+- [ ] Primera semana en vivo: `python -m qf.publish.escalera_datos preview` →
+      `en_rango_por_deporte` (¿hay escalón ≥ 89,4 % cada día?) y cuántos expiran.
+- [ ] Si Pinnacle falta en muchos partidos de tenis en vivo, decidir otra referencia
+      sharp (no se cambia sola).

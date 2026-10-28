@@ -19,6 +19,8 @@ const _leagueNames = <String, String>{
   'it.serie_a': 'Serie A',
   'it.serie_b': 'Serie B',
   'mx.liga_mx': 'Liga MX',
+  // Escalones de la NBA en el reto escalera (league_id = deporte).
+  'nba': 'NBA',
   'nl.eredivisie': 'Eredivisie',
   'no.eliteserien': 'Eliteserien',
   'pt.primeira': 'Primeira Liga',

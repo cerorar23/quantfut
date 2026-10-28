@@ -270,6 +270,7 @@
   "ladderHideSteps": "Stufen ausblenden",
   "ladderHistoryDone": "Geschafft",
   "ladderHistoryEmpty": "Noch keine beendeten Challenges. Sobald eine endet, erscheint sie hier mit ihrem Ergebnis.",
+  "ladderHistoryExpired": "Abgelaufen, nicht abgeschlossen",
   "ladderHistoryFailedAt": "Gescheitert an Stufe {step}",
   "ladderHistoryRate": "Erfolgsquote: {rate}",
   "ladderHistoryResult": "Gesamtergebnis: {roi}",

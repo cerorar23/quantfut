@@ -965,6 +965,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun défi n\'est encore clos. Quand l\'un se termine, il apparaît ici avec son résultat.';
 
   @override
+  String get ladderHistoryExpired => 'Expiré sans être terminé';
+
+  @override
   String ladderHistoryFailedAt(int step) {
     return 'Échec au palier $step';
   }

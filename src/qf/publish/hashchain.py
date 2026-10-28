@@ -179,7 +179,7 @@ def _collect(batch_date: date) -> dict:
     con_escalera = lote_lleva_escalera(batch_date)
     retos = query(
         """SELECT reto_id, stake_inicial, pasos_objetivo, cuota_min, cuota_max, ev_min,
-                  freeroll_x, created_at
+                  freeroll_x, created_at, prob_objetivo, dias_max
            FROM escalera_retos
            WHERE (created_at AT TIME ZONE 'UTC')::date = %s
            ORDER BY reto_id""",
@@ -187,7 +187,8 @@ def _collect(batch_date: date) -> dict:
     ) if con_escalera else []
     escalones = query(
         """SELECT paso_id, reto_id, paso, match_id, market, selection, line, prob,
-                  fair_price, price, book, odds_source, odds_as_of, decided_at
+                  fair_price, price, book, odds_source, odds_as_of, decided_at,
+                  deporte, evento_id, evento_sport, evento_inicio, evento_local, evento_visitante
            FROM escalera_pasos
            WHERE (decided_at AT TIME ZONE 'UTC')::date = %s
            ORDER BY decided_at, paso_id""",
