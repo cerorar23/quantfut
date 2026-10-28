@@ -307,6 +307,29 @@ def test_refrescar_xg_descarta_la_pagina_de_otro_partido_o_sin_terminar():
     g.assert_not_called()
 
 
+def test_refrescar_xg_tambien_cubre_los_xg_guardados_antes_de_la_hora_minima():
+    c = _Refresco([])
+    fc.refrescar_xg(c, _Cli({}))
+    sql, params = c.sql[0]
+    assert "m.xg_recorded_at < m.kickoff_utc + %s * interval '1 hour'" in sql
+    assert params[2] == params[3] == fc.XG_MIN_HORAS == 20.0
+
+
+def _provisional(match_id, payload, original=(1.0, 0.5)):
+    return {"match_id": match_id, "xg_source": "sofascore", "home_xg": original[0], "away_xg": original[1],
+            "xg_recorded_at": KICKOFF, "capturado_en": KICKOFF, "payload_gz": gzip.compress(json.dumps(payload).encode())}
+
+
+def test_revisar_xg_registra_el_corregido_junto_al_original_sin_tocar_matches():
+    c = _Completar([_provisional("m1", _posterior(xg=(1.4, 0.6))), _provisional("m2", _posterior(xg=None))])
+    r = fc.revisar_xg(c)
+    assert r == {"candidatos": 2, "registrados": 1, "sin_xg": 1}
+    insert = [(s, p) for s, p in c.escrituras if "INSERT INTO xg_corregido" in s]
+    assert len(insert) == 1
+    assert insert[0][1] == ("m1", 1.4, 0.6, KICKOFF, "sofascore", 1.0, 0.5, KICKOFF)
+    assert not any(s.lstrip().startswith("UPDATE matches") for s, _ in c.escrituras)
+
+
 def test_completar_solo_usa_paginas_tomadas_pasada_la_hora_minima():
     class Registra(_Completar):
         def execute(self, sql, params=None):
@@ -318,6 +341,14 @@ def test_completar_solo_usa_paginas_tomadas_pasada_la_hora_minima():
     sql, params = c.consulta
     assert "o.capturado_en >= m.kickoff_utc + %s * interval '1 hour'" in sql
     assert params[-1] == 20.0
+
+
+def test_correr_completar_registra_tambien_el_xg_corregido():
+    from unittest.mock import MagicMock
+    c = MagicMock()
+    with patch.object(fc, "en_enfriamiento", return_value=False),             patch.object(fc, "completar", return_value={"completados": 0}),             patch.object(fc, "revisar_xg", return_value={"registrados": 3}), patch.object(fc, "_log"):
+        res = fc.correr(c, "completar", cli=object())
+    assert res["xg_corregido"] == {"registrados": 3}
 
 
 def _posterior(goles=(2, 1), xg=(1.4, 0.6)):
@@ -426,8 +457,8 @@ def test_completar_no_depende_del_enfriamiento_porque_no_pide_nada():
     from unittest.mock import MagicMock
 
     with patch.object(fc, "en_enfriamiento", return_value=True), \
-            patch.object(fc, "completar", return_value={"completados": 0}) as f, patch.object(fc, "_log"):
-        assert fc.correr(MagicMock(), "completar", cli=object()) == {"completados": 0}
+            patch.object(fc, "completar", return_value={"completados": 0}) as f,             patch.object(fc, "revisar_xg", return_value={}), patch.object(fc, "_log"):
+        assert fc.correr(MagicMock(), "completar", cli=object())["completados"] == 0
     f.assert_called_once()
 
 

@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-28 · `xg_corregido`: xG corregido junto al original, sin tocar `matches` · `db/091` + worker (un archivo); rama `deploys/auditoria-api-20261028`
+- Decisión del titular (recomendación aceptada): lo ya guardado en `matches` no se reescribe; por cada partido cuyo xG se guardó antes de 20 h del saque, `xg_corregido` guarda la primera lectura de FotMob tomada pasadas 20 h junto al original (fuente, valores y hora de recepción). Tabla inmutable (`deny_mutation`).
+- **Base de datos:** `db/091` aplicada tras ensayo con ROLLBACK (solo crea la tabla y su disparador). **Worker:** `ingest/fotmob_captura.py` (`cd0b5e91c8de` → `6a146643a948`; respaldo en `~/quantfut/deployments/xg-corregido-20261028/antes/`): `revisar_xg` (corre con la acción `completar`, 09:15 UTC, sin peticiones) y `refrescar_xg` ampliado a los xG guardados antes de la hora mínima. Parche del contenedor.
+- Relleno de 14 días: 170 páginas de FotMob pedidas a ritmo normal (136 s, directo, 0 denegaciones) y 375 partidos registrados (12 al 26-oct). Pruebas: 1.711 aprobadas.
+- **Vuelta atrás:** `DROP TABLE xg_corregido;` y restaurar `fotmob_captura.py` del respaldo.
+
 ### 2026-10-28 · Historial desde el 26 de octubre, solo Destacados y Alta probabilidad · API `quantfut-api:0287a0d` (`main` `0287a0d`, PR #212)
 - Orden del titular. El historial público empieza el 26 de octubre y cuenta solo los Destacados (fútbol, NBA y tenis) y Alta probabilidad; sin leyenda nueva. Endpoint nuevo `GET /mobile/v1/markets/destacados?desde=` (destacado de fútbol de cada partido terminado, caché de 10 min). CI del PR: 8 comprobaciones aprobadas; 93 pruebas del frontend y 77 de Python.
 - Antes: `deploy.sh estado` distinto a `main` en `api/mobile.py` y `api/partido_mercados.py` (mis cambios) y en `api/tenis_publico.py`: la API llevaba la copia de `4907a0d`; la de `main` es `9fa096c8…`, la misma que ya corre el proyector de tenis desde las 16:37 UTC (PR #202), así que no cambia nada en el servicio.

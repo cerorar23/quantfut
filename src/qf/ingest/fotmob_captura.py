@@ -382,7 +382,8 @@ def capturar_posteriores(c, cli: Cliente, dias_atras: int = 6, maximo: int = MAX
 
 
 def refrescar_xg(c, cli: Cliente, dias_atras: int = 6, maximo: int = 30) -> dict:
-    """Otra página posterior para los partidos sin xG cuya única página se tomó antes de XG_MIN_HORAS del saque.
+    """Otra página posterior para los partidos sin xG, o con un xG guardado antes de XG_MIN_HORAS, cuya única página
+    se tomó antes de esa hora.
 
     Solo guarda el original (`fotmob_partido` se queda con la primera página): `completar` toma el xG de la primera página
     tomada pasada la hora mínima.
@@ -391,13 +392,16 @@ def refrescar_xg(c, cli: Cliente, dias_atras: int = 6, maximo: int = 30) -> dict
     filas = c.execute(
         """SELECT m.match_id, f.fotmob_match_id
            FROM matches m JOIN leagues l USING (league_id) JOIN fotmob_referencia f USING (match_id)
-           WHERE m.status = 'finished' AND l.active AND m.home_xg IS NULL AND m.away_xg IS NULL
+           WHERE m.status = 'finished' AND l.active
              AND m.kickoff_utc BETWEEN %s AND %s
+             AND ((m.home_xg IS NULL AND m.away_xg IS NULL)
+                  OR (m.home_xg IS NOT NULL AND m.xg_recorded_at < m.kickoff_utc + %s * interval '1 hour'))
              AND EXISTS (SELECT 1 FROM fotmob_partido p WHERE p.match_id = m.match_id)
              AND NOT EXISTS (SELECT 1 FROM fotmob_original o WHERE o.match_id = m.match_id AND o.fase = 'posterior'
                              AND o.capturado_en >= m.kickoff_utc + %s * interval '1 hour')
            ORDER BY m.kickoff_utc LIMIT %s""",
-        (ahora - timedelta(days=dias_atras), ahora - timedelta(hours=XG_MIN_HORAS), XG_MIN_HORAS, maximo)).fetchall()
+        (ahora - timedelta(days=dias_atras), ahora - timedelta(hours=XG_MIN_HORAS), XG_MIN_HORAS, XG_MIN_HORAS,
+         maximo)).fetchall()
     r = {"candidatos": len(filas), "guardados": 0, "descartados": 0}
     for f in filas:
         payload = cli.get("matchDetails", {"matchId": f["fotmob_match_id"]})
@@ -407,6 +411,42 @@ def refrescar_xg(c, cli: Cliente, dias_atras: int = 6, maximo: int = 30) -> dict
         _guardar_original(c, f["match_id"], f["fotmob_match_id"], "posterior", payload["__raw__"], None)
         c.commit()
         r["guardados"] += 1
+    return r
+
+
+# ------------------------------------------------------------------------------------------------ xg corregido
+def revisar_xg(c) -> dict:
+    """Registra en `xg_corregido` (db/091) el xG de la primera página de FotMob tomada pasadas XG_MIN_HORAS, junto al
+    xG que `matches` guardó antes de esa hora. No toca `matches`: lo guardado es un dato con fecha de recepción que usa
+    el entrenamiento. Sin peticiones.
+    """
+    filas = c.execute(
+        """SELECT DISTINCT ON (m.match_id) m.match_id, m.xg_source, m.home_xg, m.away_xg, m.xg_recorded_at,
+                  o.capturado_en, o.payload_gz
+           FROM matches m JOIN fotmob_original o USING (match_id)
+           WHERE o.fase = 'posterior' AND m.status = 'finished' AND m.home_xg IS NOT NULL AND m.away_xg IS NOT NULL
+             AND m.xg_recorded_at < m.kickoff_utc + %s * interval '1 hour'
+             AND o.capturado_en >= m.kickoff_utc + %s * interval '1 hour'
+             AND NOT EXISTS (SELECT 1 FROM xg_corregido x WHERE x.match_id = m.match_id)
+           ORDER BY m.match_id, o.capturado_en""", (XG_MIN_HORAS, XG_MIN_HORAS)).fetchall()
+    from .fotmob_history import stat_pairs
+
+    r = {"candidatos": len(filas), "registrados": 0, "sin_xg": 0}
+    for f in filas:
+        payload = json.loads(gzip.decompress(bytes(f["payload_gz"])))
+        stats = stat_pairs((((payload.get("content") or {}).get("stats") or {}).get("Periods") or {}).get("All", {}))
+        xg = stats.get("expected_goals") or [None, None]
+        if len(xg) != 2 or None in xg:
+            r["sin_xg"] += 1
+            continue
+        c.execute(
+            """INSERT INTO xg_corregido (match_id, home_xg, away_xg, capturado_en, fuente, original_fuente,
+                                         original_home_xg, original_away_xg, original_recibido)
+               VALUES (%s, %s, %s, %s, 'fotmob', %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
+            (f["match_id"], float(xg[0]), float(xg[1]), f["capturado_en"], f["xg_source"], f["home_xg"], f["away_xg"],
+             f["xg_recorded_at"]))
+        r["registrados"] += 1
+    c.commit()
     return r
 
 
@@ -592,6 +632,8 @@ def correr(c, accion: str, cli: Cliente | None = None, **opciones) -> dict:
         except Exception:  # noqa: BLE001 — avisar no puede tumbar el job
             log.exception("no se pudo enviar la alerta")
         return {"denegado": str(exc)}
+    if accion == "completar":
+        res["xg_corregido"] = revisar_xg(c)
     _log(c, accion, res)
     return res
 
