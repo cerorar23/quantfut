@@ -82,3 +82,15 @@ def test_sofascore_uses_its_own_url_and_webp_cache(tmp_path, monkeypatch):
     path = imagenes.cached_portrait("sofascore", 191210, tmp_path)
     assert path.suffix == ".webp" and path.read_bytes() == body
     assert calls == ["https://img.sofascore.com/api/v1/player/191210/image"]
+
+
+def test_confirmed_and_historical_lineups_keep_the_provider_when_creating_photo_urls(monkeypatch):
+    from qf.api import fichas
+    players = [{"name": "Sofa player", "player_id": 191210, "src": "sofascore"},
+               {"name": "Legacy player", "player_id": 874}]
+    row = {"side": "home", "match_id": "test", "kickoff_utc": "2026-10-28", "competicion": "test",
+           "rival": "test", "formation": "4-4-2", "starters": players, "captured_at": "2026-10-28"}
+    monkeypatch.setattr(fichas, "query", lambda *args: [row])
+    expected = ["/web/imagenes/jugadores/sofascore/191210.webp", "/web/imagenes/jugadores/futbol/874.png"]
+    assert [p["foto"] for p in fichas._formatear_once(row)["titulares"]] == expected
+    assert [p["foto"] for p in fichas._alineaciones("test")["home"]["titulares"]] == expected
