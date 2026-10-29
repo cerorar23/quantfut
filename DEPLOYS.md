@@ -33,6 +33,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-29 01:56 UTC · Retiro de leyendas · API `quantfut-api-sin-leyendas:36de48b` (PR #216)
+- Se retiraron las leyendas indicadas de mercados, parley y las vistas de conversión. CI del PR: 8 comprobaciones aprobadas; 94 pruebas de frontend y 9 de conversión aprobadas. Ensayo de imagen: 0 módulos con error, 136 rutas.
+- Imagen basada en la API en ejecución `quantfut-api:0287a0d`, sustituyendo solo `app.js`, `conversion-views.js` e `index.html`. Se conservó el código anterior de `app.js` en producción: `main` contiene una línea adicional de resultado destacado pendiente de despliegue. Solo se recreó la API; salud 200 y archivos públicos verificados.
+- Vuelta atrás: restaurar `~/quantfut/releases/compose-antes-20261029-015602.yml` como `~/quantfut/docker-compose.yml` y recrear solo la API.
+
 ### 2026-10-28 23:19 UTC · Córners y tarjetas de FotMob sin esperar 36 h · worker `quantfut-worker:408c43f` (rama `fix/completar-fotmob-inmediato`, sin fusionar a `main`)
 - Orden del titular: usar los datos de FotMob cuando falten los de SofaScore y viceversa. Los 5 partidos de Serie A del 28-oct estaban terminados y con la página de FotMob guardada, pero sin córners ni tarjetas en `matches`, y sus fichas en «Pendiente». Cambio: `completar_estadisticas` (solo NULL, marcador coincidente, sin tocar el xG) dentro de la acción `completar`, y el cron de `completar` pasa de una vez al día (09:15) a cada hora (:50).
 - **Base distinta de `4907a0d`:** antes de construir, el `src` del worker en ejecución difería de `4907a0d` en tres archivos (`estadisticas.py`, `fotmob_captura.py`, `sofascore_partidos.py`): el parche de contenedor de la sesión `deploys/auditoria-api-20261028` (hora mínima del xG y `xg_corregido`, db/091). Recrear el worker desde `quantfut-worker:4907a0d` lo habría perdido. La imagen nueva es `4907a0d` + ese parche (confirmado por hashes: 168 archivos idénticos al worker en ejecución) + este cambio (commits `a3cb429` y `408c43f`). Entre la imagen nueva y el worker anterior solo difiere `fotmob_captura.py`. `main` no contiene ni esta rama ni el parche de la otra. El `docker-compose.yml` del repo ya estaba desincronizado con el del servidor (lleva otra imagen del worker) y no se tocó.
