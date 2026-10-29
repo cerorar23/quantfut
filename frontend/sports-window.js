@@ -77,7 +77,7 @@ export function createSportWindow(ctx) {
     const more = all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, de mayor a menor probabilidad.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
     return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>
       <section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${families.map(f => `<button type="button" class="chip ${fam === f ? 'selected' : ''}" data-win-sport-fam="${esc(f)}" aria-pressed="${fam === f}">${esc(f)}</button>`).join('')}</div></div>
-      <div class="win-table" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}</section>${event.sport === 'nba' ? '' : '<p class="bottom-note">Probabilidades estadísticas del motor; la cuota del modelo es 1 ÷ probabilidad y no una cuota de casa. Una estimación estadística no acredita rentabilidad.</p>'}`;
+      <div class="win-table" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}</section>`;
   }
 
   // ---- estadísticas (derecha)
@@ -178,7 +178,7 @@ export function createSportWindow(ctx) {
   function tennisForm(event) {
     const t = tennisStats(event);
     if (!t.players) return t.note;
-    return `${formBlock(event, t.players[0], event.home)}${formBlock(event, t.players[1], event.away)}<p class="win-sub">Resumen de los últimos 10 partidos de individuales que entrega la fuente (API-Tennis); las ventanas de 30, 90 y 360 días cuentan solo los que caen dentro. Partidos suspendidos no cuentan para sets ni tie-breaks.</p>`;
+    return `${formBlock(event, t.players[0], event.home)}${formBlock(event, t.players[1], event.away)}`;
   }
 
   function tennisSurface(event) {
@@ -193,7 +193,7 @@ export function createSportWindow(ctx) {
       };
       return `<div class="win-panel-box"><p class="eyebrow">${SURFACE_NAME[name].toUpperCase()}${current === name ? ' · ESTE PARTIDO' : ''}</p>${row(a, 'career')}${row(b, 'career')}${row(a, 'season')}${row(b, 'season')}${!a.surfaces[name].career.rate && !b.surfaces[name].career.rate ? '<p class="win-sub">Sin partidos registrados en esta superficie.</p>' : ''}</div>`;
     });
-    return `${rows.join('')}<p class="win-sub">Récord en individuales por superficie. La pista cubierta no viene separada en la fuente.</p>`;
+    return `${rows.join('')}`;
   }
 
   function tennisH2H(event) {
@@ -338,7 +338,7 @@ export function createSportWindow(ctx) {
   }
 
   function registry(event) {
-    return `<div class="win-panel-box"><p class="eyebrow">REGISTRO DEL ANÁLISIS</p>${kv('Publicado', `${realDate(event.sealed_at)} ${realTime(event.sealed_at)}`)}<code class="win-code">${esc(event.seal)}</code><p class="win-sub">Sello de la publicación del motor. Lo publicado antes del inicio no se edita: una revisión posterior se marca aparte y no cuenta como pronóstico previo.</p></div>`;
+    return `<div class="win-panel-box"><p class="eyebrow">REGISTRO DEL ANÁLISIS</p>${kv('Publicado', `${realDate(event.sealed_at)} ${realTime(event.sealed_at)}`)}<code class="win-code">${esc(event.seal)}</code></div>`;
   }
 
   function stats(event) {
