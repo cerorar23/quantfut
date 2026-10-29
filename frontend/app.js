@@ -6,7 +6,7 @@ import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisSta
 import { createSportWindow } from './sports-window.js?v=imagenes-20261028b';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=conv-20261028';
+import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();
@@ -1040,7 +1040,7 @@ function winForecast(game, entry) {
   const market = rows.length
     ? `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${['Todos', ...groups].map(g => `<button type="button" class="chip ${fam === g ? 'selected' : ''}" data-win-fam="${esc(g)}" aria-pressed="${fam === g}">${esc(g)}</button>`).join('')}</div></div><div class="win-table" tabindex="0" role="region" aria-label="Mercados del partido"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${locked ? `<div class="win-vipbar"><p><strong>${locked} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>` : ''}</section>`
     : '<p class="win-sub">No hay mercados disponibles para este encuentro.</p>';
-  return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>${market}<p class="bottom-note">El servidor decide qué mercados se abren según tu acceso; los bloqueados no llevan selección ni cuota. Una estimación estadística no acredita rentabilidad.</p>`;
+  return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>${market}`;
 }
 
 function winStats(entry) {
