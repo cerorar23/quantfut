@@ -110,11 +110,22 @@ def normalize_scrapesage(r):
             "startTimestamp": r.get("startTimestamp"), "statusType": r.get("statusType")}
 
 
-def month_usd(token, call=http):
+def month_state(token, call=http):
+    """(gasto del ciclo en USD, fin del ciclo de facturación o None) de la cuenta Apify."""
     status, body = call("GET", API + "/users/me/limits", token, timeout=60)
     if status != 200:
         raise Stop("no se pudo leer el gasto Apify: HTTP %d" % status)
-    return float(json.loads(body)["data"]["current"]["monthlyUsageUsd"])
+    data = json.loads(body)["data"]
+    end = (data.get("monthlyUsageCycle") or {}).get("endAt")
+    try:
+        end = datetime.fromisoformat(end.replace("Z", "+00:00")) if end else None
+    except ValueError:
+        end = None
+    return float(data["current"]["monthlyUsageUsd"]), end
+
+
+def month_usd(token, call=http):
+    return month_state(token, call)[0]
 
 
 class Collector:
@@ -122,14 +133,36 @@ class Collector:
         self.root, self.token, self.cfg = Path(root), token, cfg
         self.call, self.clock = call, clock
         self.db = connect(root)
-        self.start_usd = month_usd(token, call)
+        self.start_usd, self.cycle_end = month_state(token, call)
         self.spent = 0.0
+        self.run_cap = cfg["run_cap_usd"]
+        self.monthly_cap = cfg["monthly_cap_usd"]
 
-    def budget_left(self):
+    def budget_left(self, reserve=0.0):
         used = month_usd(self.token, self.call)
         self.spent = used - self.start_usd
-        return min(self.cfg["monthly_cap_usd"] - used,
-                   self.cfg["run_cap_usd"] - self.spent)
+        return min(self.monthly_cap - used, self.run_cap - self.spent - reserve)
+
+    def list_budget(self):
+        """Presupuesto de las listas: deja `detail_reserve` del tope de la corrida para los detalles.
+
+        26-28-oct-2026: las listas gastaban el tope entero (~1 USD al día) y `details()` nunca llegaba
+        a pedir nada: 433 partidos terminados en 14 días sin estadísticas ni xG.
+        """
+        return self.budget_left(self.run_cap * self.cfg.get("detail_reserve", 0.5))
+
+    def pace_run_cap(self):
+        """Tope de la corrida de hoy: lo que queda del tope mensual entre los días que quedan del ciclo.
+
+        Sin esto, 1 USD al día agota el tope mensual a mitad de ciclo y el resto del mes no se captura nada.
+        """
+        end = self.cycle_end
+        if end is None:
+            t = self.clock()
+            end = (t.replace(day=28) + timedelta(days=4)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        days = max(1, -(-int((end - self.clock()).total_seconds()) // 86400))
+        left = max(self.monthly_cap - self.start_usd, 0.0)
+        return min(self.cfg["run_cap_usd"], left / days)
 
     def provider(self, target):
         if target.startswith("tennis."):
@@ -197,7 +230,7 @@ class Collector:
         return bool(pending) or not known
 
     def refresh(self, target, spec):
-        cap = self.budget_left()
+        cap = self.list_budget()
         if cap < 0.10:
             raise Stop("presupuesto agotado")
         if spec.get("provider") == "scrapesage":
@@ -232,7 +265,7 @@ class Collector:
             rnd = row["round"]
         params = {"mode": "tournament", "uniqueTournamentId": spec["utid"],
                   "eventsSpan": "last", "tournamentRound": str(rnd)}
-        _, rows = self.run("list", params, min(self.budget_left(), 0.20))
+        _, rows = self.run("list", params, min(self.list_budget(), 0.20))
         self.upsert(target, rows)
         self.advance(target)
 
@@ -240,7 +273,7 @@ class Collector:
         """Sin jornadas: últimos (para el detalle) y próximos (para once y bajas)."""
         for span in ("last", "next"):
             _, rows = self.run("list", {"mode": "tournament", "uniqueTournamentId": spec["utid"],
-                                        "eventsSpan": span}, min(self.budget_left(), 0.20))
+                                        "eventsSpan": span}, min(self.list_budget(), 0.20))
             self.upsert(target, rows)
 
     def advance(self, target):
@@ -324,6 +357,7 @@ class Collector:
         cfg = self.cfg.get("lineups")
         if cfg is None:
             return "sin configuración"
+        self.monthly_cap, self.run_cap = self.cfg["monthly_cap_usd"], self.cfg["run_cap_usd"]  # sin ritmo diario ni reserva
         ids = self.lineup_due()
         if not ids:
             return "nada vencido"
@@ -362,7 +396,7 @@ class Collector:
         last = self.db.execute("SELECT max(received_at) FROM receipts WHERE kind='discover'").fetchone()[0]
         if last and self.clock() - datetime.fromisoformat(last) < timedelta(days=cfg.get("every_days", 6)):
             return
-        cap = min(self.budget_left(), cfg.get("discovery_cap_usd", 0.9))
+        cap = min(self.list_budget(), cfg.get("discovery_cap_usd", 0.9))
         if cap < 0.10:
             raise Stop("presupuesto agotado")
         day = self.clock().date().isoformat()
@@ -389,16 +423,25 @@ class Collector:
                 for r in self.db.execute("SELECT utid FROM tournaments WHERE last_seen>=?", (limit,))}
 
     def capture(self):
+        # Una parte del tope mensual queda para las alineaciones (~0,01 USD al día): sin su once oficial
+        # `sello_tardio` no sella. Las listas, detalles y descubrimiento no pueden gastarla.
+        self.monthly_cap = self.cfg["monthly_cap_usd"] - self.cfg.get("lineups_reserve_usd", 1.0)
+        self.run_cap = self.pace_run_cap()
+        stop = None
         try:
             self.discover_tennis()
             targets = {**self.cfg["targets"], **self.active_tennis()}
             for target, spec in targets.items():
                 if self.due(target, spec):
                     self.refresh(target, spec)
+        except Stop as exc:
+            stop = str(exc)
+        # Los detalles (estadísticas, xG) se piden aunque las listas se hayan cortado: tienen presupuesto reservado.
+        try:
             self.details()
         except Stop as exc:
-            return str(exc)
-        return "ok"
+            stop = stop or str(exc)
+        return stop or "ok"
 
 
 def main(argv=None):

@@ -136,7 +136,7 @@
   "periods": "all",
   "scores": true,
   "identities_daily": true,
-  "futures_daily": true,
+  "futures_daily": false,
   "daily_cap": 4500,
   "account_reserve": 500,
   "retention_days": null,
@@ -358,6 +358,9 @@
   "football_markets_per_request": 11,
   "provider_max_age_seconds": 3600,
   "scores_every_hours": 3,
+  "extended_horizon_hours": 48,
+  "extended_far_every_hours": 6,
+  "measured_20261028": "futures were archived daily for 36 sports and nothing reads them (36 calls/day); corners, cards and props are asked every hour only for leagues with a game in the next 48 h, otherwise every 6 h (soccer odds were ~1,900 of ~2,750 calls/day, 3 of every 4 for extended markets)",
   "priority_sports": [
     "basketball_nba",
     "tennis",

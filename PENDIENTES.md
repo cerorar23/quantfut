@@ -8,6 +8,12 @@ Aquí solo entra lo que depende de ti (decisión, credencial, pago) o de algo qu
 Fuentes de fútbol: **SofaScore** (Apify), **PropLine** y **FotMob**; API-Football está fuera desde el 22-oct.
 Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (con ensayo y registro en `DEPLOYS.md`).
 
+## Consumo de APIs — 28-oct-2026
+
+- [x] Corregidos: detalles de SofaScore sin pedir desde el 26-oct, alias de Racing de Santander y Tromsoe, y 40-60 % de las llamadas ampliadas de fútbol en PropLine. Ver `docs/auditoria_consumo_apis_20261028.md`.
+- [ ] **Tú:** tope mensual de Apify (15 USD, cuenta en 13,2 USD de un límite de 19): hasta decidirlo, listas y detalles de partidos esperan al 24-nov; las alineaciones siguen.
+- [ ] Claude: confirmar el ahorro de PropLine tras una jornada completa y decidir si se amplían los lotes de fútbol.
+
 ## Calendario
 | Fecha | Qué ocurre |
 |---|---|

@@ -586,6 +586,21 @@ def market_batches(sport, markets, config):
     return [requested[i:i+default_size] for i in range(0,len(requested),default_size)]
 
 
+def near_kickoff(events, now, config):
+    """True when a listed game starts (or already started) inside `extended_horizon_hours`; no setting: always."""
+    horizon = config.get("extended_horizon_hours")
+    if horizon is None:
+        return True
+    limit = now + timedelta(hours=float(horizon))
+    for e in events:
+        try:
+            if not e.get("is_outright") and parse_time(e["commence_time"]) <= limit:
+                return True
+        except (KeyError, ValueError, TypeError):
+            return True  # an unreadable time is never a reason to skip a market
+    return False
+
+
 def select_sports(catalog, config):
     excluded = set(config.get("exclude_sports", []))
     prefixes = tuple(config.get("sport_prefixes", []))
@@ -768,6 +783,11 @@ def run(root, key_file, config_file, *, limit=None):
                 if number == 0 and featured and got == []:
                     break  # no listed game (off-season or futures-only): the other batches would come back empty too
                 payload.extend(got or [])
+                if number == 0 and featured and got is not None and not near_kickoff(got, started, config):
+                    # Corners, cards and props matter close to the game. With nothing inside the horizon they
+                    # were 3 of every 4 calls of a league (28-oct-2026: ~1,900 soccer odds calls a day).
+                    if started.hour % int(config.get("extended_far_every_hours", 6)):
+                        break
             # Once per competition/day, learn additional keys from an actual
             # fixture. The full documented family is always requested as well.
             today = stamp(utcnow().replace(hour=0,minute=0,second=0,microsecond=0))
