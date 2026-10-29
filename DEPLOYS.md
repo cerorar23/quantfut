@@ -33,6 +33,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-10-29 02:33 UTC · Retiro de leyendas de tenis · API `quantfut-api-sin-leyendas-tenis:7c1892f` (PR #218)
+- Se retiraron las cuatro leyendas señaladas de la ventana de tenis. CI: 8 comprobaciones aprobadas; 94 pruebas del frontend aprobadas. Ensayo de imagen: módulos importables y 136 rutas.
+- Imagen basada en la API en ejecución `quantfut-api-sin-leyendas:36de48b`, sustituyendo solo `sports-window.js`, `app.js` e `index.html` y conservando el resto de la versión en producción. Solo se recreó la API; salud 200 y archivos públicos verificados.
+- Vuelta atrás: restaurar `~/quantfut/releases/compose-antes-20261029-023334.yml` como `~/quantfut/docker-compose.yml` y recrear solo la API.
+
 ### 2026-10-29 01:56 UTC · Retiro de leyendas · API `quantfut-api-sin-leyendas:36de48b` (PR #216)
 - Se retiraron las leyendas indicadas de mercados, parley y las vistas de conversión. CI del PR: 8 comprobaciones aprobadas; 94 pruebas de frontend y 9 de conversión aprobadas. Ensayo de imagen: 0 módulos con error, 136 rutas.
 - Imagen basada en la API en ejecución `quantfut-api:0287a0d`, sustituyendo solo `app.js`, `conversion-views.js` e `index.html`. Se conservó el código anterior de `app.js` en producción: `main` contiene una línea adicional de resultado destacado pendiente de despliegue. Solo se recreó la API; salud 200 y archivos públicos verificados.
