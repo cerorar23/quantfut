@@ -3,7 +3,7 @@ import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, f
 import { createMembershipUI } from './membership.js?v=planes-20261027';
 import { createRealViews } from './real-views.js?v=hist-desde26-20261029';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=hist-desde26-20261029';
-import { createSportWindow } from './sports-window.js?v=imagenes-20261028b';
+import { createSportWindow } from './sports-window.js?v=sin-leyendas-tenis-20261028';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
