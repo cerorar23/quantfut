@@ -141,7 +141,6 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       <div class="cv-sticky" role="complementary" aria-label="Acceso VIP"><span>${esc(String(bloqueados))} en VIP</span><button type="button" class="primary-button" data-route="planes">Desbloquear</button></div>`;
   }
 
-  const legal = '<p class="cv-legal">Los pronósticos son estimaciones, no garantías: se pierde a menudo y ninguna racha asegura la siguiente. Solo para mayores de 18 años. Juega con responsabilidad y solo con dinero que puedas perder.</p>';
 
   // ------------------------------------------------------------ alta
   function altaView() {
@@ -193,7 +192,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         ['¿Cuánto es suficiente muestra?', `Pedimos al menos ${MUESTRA_MIN} pronósticos por mercado para fiarnos de su cifra. Los que no llegan se marcan «muestra pequeña».`],
         ['¿Cómo se cuenta un hándicap devuelto o unos córners sin estadística?', 'No cuentan como acierto ni como fallo.'],
       ])}
-      ${legal}`;
+      `;
   }
 
   // ------------------------------------------------------------ parley
@@ -213,7 +212,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const source = getData()?.parley;
     if (!source) return status('Consultando el parley del día…', 'Un momento: cargamos los escalones y el historial.', false);
     if (source.status !== 'ready') return status('No se pudo consultar el parley', 'El servidor no respondió. Inténtalo de nuevo en unos minutos.');
-    const { activo, dias = [], resumen, control, reglas } = source.data;
+    const { activo, dias = [], resumen, reglas } = source.data;
     const total = resumen?.total;
     const porEscalon = resumen?.por_escalon ?? {};
     const [ultimo, ...anteriores] = dias;
@@ -244,7 +243,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const hoy = ultimo ? `<p class="cv-sub">${esc(String(ultimo.dia))}${huella ? ` · lote sellado <code>${hash(huella)}</code>` : ''}. Un parley se juega entero en una casa: una pata que falla lo pierde.</p><div class="cv-list">${escalera}</div>` : `<div class="cv-empty cyber-card"><h3>${activo ? 'Hoy no hay combinación que cumpla la regla' : 'El parley del día todavía no está activo'}</h3><p>No se fuerza ninguna.</p></div>`;
 
     const filas = Object.entries(porEscalon).sort((a, b) => Number(a[0]) - Number(b[0])).map(([e, b]) => `<div class="cv-row" role="listitem"><span class="cv-row-name">Escalón ${esc(e)}${b.n < MUESTRA_MIN ? ' <small class="cv-flag">muestra pequeña</small>' : ''}</span>${meter(b.acierto_real, 'cyber-progress--green')}<strong>${realNumber(b.aciertos)} de ${realNumber(b.n)}</strong><small>real ${pct(b.acierto_real, 0)} · prometido ${pct(b.prob_media, 0)} · <span class="${Number(b.unidades) >= 0 ? 'cv-pos' : 'cv-neg'}">${unidades(b.unidades)}</span></small></div>`).join('');
-    const prueba = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Historial del parley"><div class="cv-section-head"><p class="eyebrow">HISTORIAL PÚBLICO</p><h2>Prometido frente a real, escalón por escalón</h2></div>${filas ? `<div class="cv-rows" role="list">${filas}</div>` : '<p>El historial empieza con el primer día sellado.</p>'}<div class="cv-honest cyber-alert cyber-alert--warning"><strong>No todo escalón gana.</strong> Hay escalones en pérdida y todos tienen pocos casos. ${(control?.motivos ?? []).length ? `El control interno lo dice con estas palabras: ${esc((control.motivos ?? []).join(' · '))}.` : ''} Se elige por probabilidad, no por valor: el margen de la casa se paga en cada pata.</div></section>`;
+    const prueba = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Historial del parley"><div class="cv-section-head"><p class="eyebrow">HISTORIAL PÚBLICO</p><h2>Prometido frente a real, escalón por escalón</h2></div>${filas ? `<div class="cv-rows" role="list">${filas}</div>` : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 
     const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${d.tickets.filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${d.tickets.filter(t => !t.locked).map(ticket).join('')}</div></details>`;
     const historial = `<section class="cv-section" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${anteriores.length ? anteriores.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
@@ -262,7 +261,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         ['¿Qué significa «1 de cada X»?', 'Es la probabilidad conjunta en frecuencia: 1 de cada 2 es 50 %. A cuota más alta, sale menos a menudo.'],
         ['¿Hay garantía de ganancia?', 'No. Ninguna racha asegura la siguiente. Hay escalones en pérdida y muestras pequeñas, y se dice.'],
       ])}
-      ${legal}`;
+      `;
   }
 
   // ------------------------------------------------------------ escalera
@@ -344,7 +343,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         ['¿Con 13 retos ya se puede concluir algo?', `Todavía no. Es una muestra pequeña (pedimos ${MUESTRA_MIN}). La cifra de arriba es real, pero puede moverse mucho.`],
         ['¿Pueden cambiar un escalón después?', 'No. Se sella en la cadena antes del partido; tocarlo rompería la cadena.'],
       ])}
-      ${legal}`;
+      `;
   }
 
   // Las barras usan `--progress-value` de CyberCore: se fija por CSSOM tras pintar
