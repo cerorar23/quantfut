@@ -30,6 +30,8 @@ class FixtureApi extends QuantFutApi {
   JsonMap? modelo, mercados;
   int homes = 0;
   final paths = <String>[];
+  // Feeds de NBA y tenis; null: responde otra cosa y el feed queda «no listo».
+  JsonMap? nbaFeed, tennisFeed;
   final flags = {
     for (final k in [
       'agenda',
@@ -164,6 +166,8 @@ class FixtureApi extends QuantFutApi {
     bool retry = true,
   }) async {
     paths.add(path);
+    if (path == '/nba/api/data' && nbaFeed != null) return nbaFeed;
+    if (path == '/web/deportes/tenis' && tennisFeed != null) return tennisFeed;
     return _rewards;
   }
 
@@ -443,6 +447,62 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sport-nba')));
     await tester.pumpAndSettle();
     expect(api.paths.where((p) => p == '/nba/api/data').length, 2);
+    // Tenis carga su propio feed sin heredar el aviso de NBA.
+    api.tennisFeed = jsonMap(
+      jsonDecode(File('test/fixtures/tennis_feed.json').readAsStringSync()),
+    );
+    await tester.tap(find.byKey(const ValueKey('sport-tenis')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('home-sport-tenis')), findsOneWidget);
+    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
+    expect(find.byKey(const ValueKey('sport-feed-retry')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('un refresco fallido conserva el feed NBA bueno', (tester) async {
+    final soon = DateTime.now().add(const Duration(hours: 3)).toUtc().toIso8601String();
+    final now = DateTime.now().toUtc().toIso8601String();
+    final api = FixtureApi()
+      ..nbaFeed = {
+        'live_v13': {
+          'cohorts': [
+            {
+              'cohort': 'c1',
+              'created_at_utc': now,
+              'events': [
+                {
+                  'event_id': 'g1',
+                  'home_team': 'Miami Heat',
+                  'away_team': 'New York Knicks',
+                  'tipoff_utc': soon,
+                  'status': 'scheduled',
+                },
+              ],
+              'predictions': [
+                {
+                  'event_id': 'g1',
+                  'player_id': 'winner',
+                  'market': 'winner',
+                  'market_label': 'Ganador',
+                  'probability_over': .61,
+                  'sealed_at_utc': now,
+                  'result': {'status': 'pending'},
+                },
+              ],
+            },
+          ],
+        },
+      };
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sport-event-g1')), findsOneWidget);
+    api.nbaFeed = null; // el siguiente refresco falla
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(api.paths.where((p) => p == '/nba/api/data').length, 2);
+    expect(find.byKey(const ValueKey('sport-event-g1')), findsOneWidget);
+    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

@@ -54,8 +54,9 @@ Widget sportAvatar(
   );
 }
 
+// Terminado, en juego o esperando resultado: ya empezó.
 bool _upcoming(SportEvent e) =>
-    e.status != 'finished' && e.status != 'awaiting_result';
+    !const {'finished', 'awaiting_result', 'live'}.contains(e.status);
 
 /// Evento cuyo mercado destacado tiene la mayor probabilidad entre los de hoy en adelante
 /// que aún no empezaron.
@@ -139,7 +140,9 @@ class _HomeSportState extends State<HomeSport> {
       Scrollable.ensureVisible(
         target,
         alignment: viewport <= 0 ? 0 : (_stripHeight + 4) / viewport,
-        duration: const Duration(milliseconds: 350),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 350),
         curve: Curves.easeOutCubic,
       ),
     );

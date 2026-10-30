@@ -139,8 +139,8 @@ String nbaPlayerPhoto(String playerId) =>
     ? '/web/imagenes/jugadores/nba/$playerId.png'
     : '';
 
-// Las 30 siglas NBA con su nombre completo (el feed da nombres, el logo va por sigla).
-const _nbaTeams = <String, String>{
+/// Las 30 siglas NBA con su nombre completo (el feed da nombres, el logo va por sigla).
+const nbaTeams = <String, String>{
   'ATL': 'atlanta hawks', 'BOS': 'boston celtics', 'BKN': 'brooklyn nets',
   'CHA': 'charlotte hornets', 'CHI': 'chicago bulls', 'CLE': 'cleveland cavaliers',
   'DAL': 'dallas mavericks', 'DEN': 'denver nuggets', 'DET': 'detroit pistons',
@@ -155,7 +155,7 @@ const _nbaTeams = <String, String>{
 
 final _nbaByName = () {
   final m = <String, String>{};
-  for (final e in _nbaTeams.entries) {
+  for (final e in nbaTeams.entries) {
     m[e.value] = e.key;
     // Nombre corto: lo que sigue a la ciudad («knicks», «trail blazers», «76ers»).
     final words = e.value.split(' ');

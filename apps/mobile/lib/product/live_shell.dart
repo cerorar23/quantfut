@@ -130,7 +130,8 @@ class _ProductShellState extends State<ProductShell>
       ).wait;
       if (!mounted) return;
       setState(() {
-        feeds[kind] = feed;
+        // Un refresco fallido no borra un feed bueno: se conserva el anterior.
+        if (feed.ready || feeds[kind]?.ready != true) feeds[kind] = feed;
         if (!identical(catalog, ImageCatalog.empty)) images = catalog;
       });
     } finally {

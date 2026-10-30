@@ -169,6 +169,20 @@ void main() {
   });
   tearDown(() => AppLocale.instance.reset());
 
+  test('tabla NBA: 30 siglas únicas y cada nombre completo da la suya', () {
+    const expected = {
+      'ATL', 'BKN', 'BOS', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', //
+      'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK',
+      'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS',
+    };
+    expect(nbaTeams.length, 30);
+    expect(nbaTeams.keys.toSet(), expected);
+    expect(nbaTeams.values.toSet().length, 30);
+    for (final MapEntry(:key, :value) in nbaTeams.entries) {
+      expect(nbaTricode(value), key, reason: value);
+    }
+  });
+
   test('siglas NBA por nombre completo o corto; desconocido sin sigla', () {
     expect(nbaTricode('New York Knicks'), 'NYK');
     expect(nbaTricode('  new york   KNICKS '), 'NYK');
@@ -267,19 +281,35 @@ void main() {
     expect(find.byType(HomeHero), findsNothing);
   });
 
-  test('partido 23:30 local del día 30 que en UTC es el 31 se agrupa el 30', () {
-    // En una zona por detrás de UTC (México) las 23:30 del 30 son el 31 en UTC.
-    final late = event('late', DateTime(2026, 10, 30, 23, 30), [market('w', .6)]);
-    final early = event('early', DateTime(2026, 10, 30, 19), [market('w', .6)]);
-    final next = event('next', DateTime(2026, 10, 31, 1), [market('w', .6)]);
-    final days = groupSportAgenda([late, next, early]);
+  // Zona fija, independiente de la de la máquina (en CI suele ser UTC).
+  DateTime Function(DateTime) zone(int hours) =>
+      (d) => d.toUtc().add(Duration(hours: hours));
+
+  test('partido 23:30 local del día 30 que en UTC es el 31 se agrupa el 30 (UTC-6)', () {
+    // 23:30 del 30 en UTC-6 = 05:30 UTC del 31.
+    final late = event('late', DateTime.utc(2026, 10, 31, 5, 30), [market('w', .6)]);
+    final early = event('early', DateTime.utc(2026, 10, 31, 1), [market('w', .6)]); // 19:00 del 30
+    final next = event('next', DateTime.utc(2026, 10, 31, 7), [market('w', .6)]); // 01:00 del 31
+    final days = groupSportAgenda([late, next, early], toLocal: zone(-6));
     expect(days.map((d) => d.key).toList(), ['2026-10-30', '2026-10-31']);
     expect(days.first.groups.expand((g) => g.events).map((e) => e.id), ['early', 'late']);
     // NBA: un grupo por hora local.
     expect(days.first.groups.map((g) => g.hour?.hour), [19, 23]);
+    // Con agrupación en UTC los tres caerían el 31: la prueba lo distingue en cualquier máquina.
+    expect(groupSportAgenda([late, next, early], toLocal: zone(0)).map((d) => d.key), [
+      '2026-10-31',
+    ]);
   });
 
-  testWidgets('partido 23:30 local del día 30 que en UTC es el 31 se agrupa el 30 (tira)', (
+  test('por delante de UTC (UTC+9): las 08:00 del 31 (23:00 UTC del 30) van el 31', () {
+    final morning = event('m', DateTime.utc(2026, 10, 30, 23), [market('w', .6)]);
+    final days = groupSportAgenda([morning], toLocal: zone(9));
+    expect(days.single.key, '2026-10-31');
+    expect(days.single.groups.single.hour?.hour, 8);
+  });
+
+  // Camino real (zona de la máquina): la tira cuenta por día local.
+  testWidgets('partido 23:30 local del día 30 se cuenta el 30 en la tira', (
     tester,
   ) async {
     await pump(
@@ -315,13 +345,15 @@ void main() {
       market('w', .58),
       market('t', .81, market: 'game_total', selection: 'Total', line: 221.5),
     ], home: 'Boston Celtics', away: 'Los Angeles Lakers');
-    // Terminado: no puede ser el destacado aunque tenga más probabilidad.
+    // Terminado o en juego: no pueden ser el destacado aunque tengan más probabilidad.
     final done = event('done', DateTime(2026, 10, 30, 7), [market('w', .95)],
         status: 'finished');
+    final live = event('live', DateTime(2026, 10, 30, 9), [market('w', .93)],
+        status: 'live');
     await pump(
       tester,
       sport: SportKind.nba,
-      feed: SportFeed(ready: true, events: [low, best, done]),
+      feed: SportFeed(ready: true, events: [low, best, done, live]),
       now: now,
       onOpen: (e) => opened = e,
     );

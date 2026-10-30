@@ -59,12 +59,16 @@ class SportAgendaDay {
 }
 
 /// Agrupa por día LOCAL (como `groupAgenda`): NBA por hora y tenis por torneo, en orden
-/// cronológico. El feed de tenis no trae ronda, así que no se agrupa por ella.
-List<SportAgendaDay> groupSportAgenda(Iterable<SportEvent> events) {
+/// cronológico. El feed de tenis no trae ronda, así que no se agrupa por ella. `toLocal`
+/// solo se cambia en pruebas, para fijar una zona horaria distinta de la de la máquina.
+List<SportAgendaDay> groupSportAgenda(
+  Iterable<SportEvent> events, {
+  DateTime Function(DateTime utc) toLocal = _deviceLocal,
+}) {
   final sorted = [...events]..sort((a, b) => a.start.compareTo(b.start));
   final days = <SportAgendaDay>[];
   for (final e in sorted) {
-    final t = e.start.toLocal();
+    final t = toLocal(e.start);
     final day = DateTime(t.year, t.month, t.day);
     if (days.isEmpty || days.last.key != dateKey(day)) {
       days.add(SportAgendaDay(day));
@@ -85,6 +89,8 @@ List<SportAgendaDay> groupSportAgenda(Iterable<SportEvent> events) {
   }
   return days;
 }
+
+DateTime _deviceLocal(DateTime d) => d.toLocal();
 
 /// «Hoy · jue, 15 oct», «Mañana · vie, 16 oct» o solo la fecha.
 String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
