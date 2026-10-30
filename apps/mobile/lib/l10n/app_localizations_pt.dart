@@ -2218,7 +2218,42 @@ class AppLocalizationsPt extends AppLocalizations {
   String get splashTagline => 'FUTEBOL · NBA · ESTATÍSTICA';
 
   @override
+  String get sportAlertsNone => 'Sem avisos para esta partida.';
+
+  @override
+  String get sportAvailApplied => 'Relatório de lesões aplicado';
+
+  @override
+  String sportAvailListed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jogadores no relatório',
+      one: '$count jogador no relatório',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sportAvailMissingMinutes(String team, String minutes) {
+    return '$team: $minutes min de desfalques';
+  }
+
+  @override
+  String sportAvailNotSubmitted(String team) {
+    return '$team não enviou o relatório';
+  }
+
+  @override
+  String get sportAvailPending => 'Relatório de lesões pendente';
+
+  @override
   String get sportFootball => 'Futebol';
+
+  @override
+  String sportH2hRecord(String home, String away, int homeWins, int awayWins) {
+    return '$home $homeWins – $awayWins $away';
+  }
 
   @override
   String get sportMore => 'Mais';
@@ -2227,7 +2262,70 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sportNba => 'NBA';
 
   @override
+  String sportPhotoCredit(String name, String author, String license) {
+    return 'Foto de $name: $author · $license';
+  }
+
+  @override
   String get sportSelectorLabel => 'Esporte';
+
+  @override
+  String get sportStatAge => 'Idade';
+
+  @override
+  String get sportStatAway => 'Fora';
+
+  @override
+  String get sportStatBackToBack => 'Jogo em dias seguidos';
+
+  @override
+  String get sportStatCareer => 'Carreira';
+
+  @override
+  String get sportStatFormIndex => 'Índice de forma';
+
+  @override
+  String get sportStatHome => 'Em casa';
+
+  @override
+  String get sportStatLast6 => 'Últimos 6';
+
+  @override
+  String get sportStatPointsAgainst => 'Pontos contra';
+
+  @override
+  String get sportStatPointsFor => 'Pontos a favor';
+
+  @override
+  String get sportStatRank => 'Ranking';
+
+  @override
+  String get sportStatRest => 'Dias de descanso';
+
+  @override
+  String get sportStatSeason => 'Temporada';
+
+  @override
+  String get sportStatStanding => 'Posição';
+
+  @override
+  String get sportStatStreak => 'Sequência';
+
+  @override
+  String get sportStatSurface => 'Neste piso';
+
+  @override
+  String get sportStatsUnavailable =>
+      'Ainda não há estatísticas para esta partida.';
+
+  @override
+  String get sportSurfaceClay => 'Saibro';
+
+  @override
+  String get sportSurfaceGrass => 'Grama';
+
+  @override
+  String get sportSurfaceHard => 'Rápida';
 
   @override
   String get sportTennis => 'Tênis';

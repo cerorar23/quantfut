@@ -3652,11 +3652,53 @@ abstract class AppLocalizations {
   /// **'FÚTBOL · NBA · ESTADÍSTICA'**
   String get splashTagline;
 
+  /// No description provided for @sportAlertsNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin avisos para este partido.'**
+  String get sportAlertsNone;
+
+  /// No description provided for @sportAvailApplied.
+  ///
+  /// In es, this message translates to:
+  /// **'Reporte de lesiones aplicado'**
+  String get sportAvailApplied;
+
+  /// No description provided for @sportAvailListed.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{{count} jugador en el reporte} other{{count} jugadores en el reporte}}'**
+  String sportAvailListed(int count);
+
+  /// No description provided for @sportAvailMissingMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{team}: {minutes} min de bajas'**
+  String sportAvailMissingMinutes(String team, String minutes);
+
+  /// No description provided for @sportAvailNotSubmitted.
+  ///
+  /// In es, this message translates to:
+  /// **'{team} no envió su reporte'**
+  String sportAvailNotSubmitted(String team);
+
+  /// No description provided for @sportAvailPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Reporte de lesiones pendiente'**
+  String get sportAvailPending;
+
   /// Nombre del deporte fútbol en el selector
   ///
   /// In es, this message translates to:
   /// **'Fútbol'**
   String get sportFootball;
+
+  /// No description provided for @sportH2hRecord.
+  ///
+  /// In es, this message translates to:
+  /// **'{home} {homeWins} – {awayWins} {away}'**
+  String sportH2hRecord(String home, String away, int homeWins, int awayWins);
 
   /// Último chip del selector cuando hay más de 4 deportes
   ///
@@ -3670,11 +3712,131 @@ abstract class AppLocalizations {
   /// **'NBA'**
   String get sportNba;
 
+  /// No description provided for @sportPhotoCredit.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto de {name}: {author} · {license}'**
+  String sportPhotoCredit(String name, String author, String license);
+
   /// Etiqueta accesible del selector de deporte
   ///
   /// In es, this message translates to:
   /// **'Deporte'**
   String get sportSelectorLabel;
+
+  /// No description provided for @sportStatAge.
+  ///
+  /// In es, this message translates to:
+  /// **'Edad'**
+  String get sportStatAge;
+
+  /// No description provided for @sportStatAway.
+  ///
+  /// In es, this message translates to:
+  /// **'Como visitante'**
+  String get sportStatAway;
+
+  /// No description provided for @sportStatBackToBack.
+  ///
+  /// In es, this message translates to:
+  /// **'Juega día seguido'**
+  String get sportStatBackToBack;
+
+  /// No description provided for @sportStatCareer.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrera'**
+  String get sportStatCareer;
+
+  /// No description provided for @sportStatFormIndex.
+  ///
+  /// In es, this message translates to:
+  /// **'Índice de forma'**
+  String get sportStatFormIndex;
+
+  /// No description provided for @sportStatHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Como local'**
+  String get sportStatHome;
+
+  /// No description provided for @sportStatLast6.
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos 6'**
+  String get sportStatLast6;
+
+  /// No description provided for @sportStatPointsAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos en contra'**
+  String get sportStatPointsAgainst;
+
+  /// No description provided for @sportStatPointsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos a favor'**
+  String get sportStatPointsFor;
+
+  /// No description provided for @sportStatRank.
+  ///
+  /// In es, this message translates to:
+  /// **'Ranking'**
+  String get sportStatRank;
+
+  /// No description provided for @sportStatRest.
+  ///
+  /// In es, this message translates to:
+  /// **'Días de descanso'**
+  String get sportStatRest;
+
+  /// No description provided for @sportStatSeason.
+  ///
+  /// In es, this message translates to:
+  /// **'Temporada'**
+  String get sportStatSeason;
+
+  /// No description provided for @sportStatStanding.
+  ///
+  /// In es, this message translates to:
+  /// **'Puesto'**
+  String get sportStatStanding;
+
+  /// No description provided for @sportStatStreak.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha'**
+  String get sportStatStreak;
+
+  /// No description provided for @sportStatSurface.
+  ///
+  /// In es, this message translates to:
+  /// **'En esta superficie'**
+  String get sportStatSurface;
+
+  /// No description provided for @sportStatsUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay estadísticas para este partido.'**
+  String get sportStatsUnavailable;
+
+  /// No description provided for @sportSurfaceClay.
+  ///
+  /// In es, this message translates to:
+  /// **'Arcilla'**
+  String get sportSurfaceClay;
+
+  /// No description provided for @sportSurfaceGrass.
+  ///
+  /// In es, this message translates to:
+  /// **'Hierba'**
+  String get sportSurfaceGrass;
+
+  /// No description provided for @sportSurfaceHard.
+  ///
+  /// In es, this message translates to:
+  /// **'Dura'**
+  String get sportSurfaceHard;
 
   /// Nombre del deporte tenis en el selector
   ///

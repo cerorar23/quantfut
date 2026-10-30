@@ -2002,9 +2002,56 @@
   "shellUnlockTitle": "Desbloquear pronóstico",
   "shellView": "Ver",
   "splashTagline": "FÚTBOL · NBA · ESTADÍSTICA",
+  "sportAlertsNone": "Sin avisos para este partido.",
+  "sportAvailApplied": "Reporte de lesiones aplicado",
+  "sportAvailListed": "{count, plural, one{{count} jugador en el reporte} other{{count} jugadores en el reporte}}",
+  "@sportAvailListed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sportAvailMissingMinutes": "{team}: {minutes} min de bajas",
+  "@sportAvailMissingMinutes": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "sportAvailNotSubmitted": "{team} no envió su reporte",
+  "@sportAvailNotSubmitted": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "sportAvailPending": "Reporte de lesiones pendiente",
   "sportFootball": "Fútbol",
   "@sportFootball": {
     "description": "Nombre del deporte fútbol en el selector"
+  },
+  "sportH2hRecord": "{home} {homeWins} – {awayWins} {away}",
+  "@sportH2hRecord": {
+    "placeholders": {
+      "home": {
+        "type": "String"
+      },
+      "away": {
+        "type": "String"
+      },
+      "homeWins": {
+        "type": "int"
+      },
+      "awayWins": {
+        "type": "int"
+      }
+    }
   },
   "sportMore": "Más",
   "@sportMore": {
@@ -2014,10 +2061,43 @@
   "@sportNba": {
     "description": "Nombre del deporte baloncesto (NBA) en el selector"
   },
+  "sportPhotoCredit": "Foto de {name}: {author} · {license}",
+  "@sportPhotoCredit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      },
+      "license": {
+        "type": "String"
+      }
+    }
+  },
   "sportSelectorLabel": "Deporte",
   "@sportSelectorLabel": {
     "description": "Etiqueta accesible del selector de deporte"
   },
+  "sportStatAge": "Edad",
+  "sportStatAway": "Como visitante",
+  "sportStatBackToBack": "Juega día seguido",
+  "sportStatCareer": "Carrera",
+  "sportStatFormIndex": "Índice de forma",
+  "sportStatHome": "Como local",
+  "sportStatLast6": "Últimos 6",
+  "sportStatPointsAgainst": "Puntos en contra",
+  "sportStatPointsFor": "Puntos a favor",
+  "sportStatRank": "Ranking",
+  "sportStatRest": "Días de descanso",
+  "sportStatSeason": "Temporada",
+  "sportStatStanding": "Puesto",
+  "sportStatStreak": "Racha",
+  "sportStatSurface": "En esta superficie",
+  "sportStatsUnavailable": "Aún no hay estadísticas para este partido.",
+  "sportSurfaceClay": "Arcilla",
+  "sportSurfaceGrass": "Hierba",
+  "sportSurfaceHard": "Dura",
   "sportTennis": "Tenis",
   "@sportTennis": {
     "description": "Nombre del deporte tenis en el selector"

@@ -25,6 +25,7 @@ import 'live_home.dart';
 import 'home_sport.dart';
 import 'live_more.dart';
 import 'qf_theme.dart';
+import 'sport_detail.dart';
 import 'sport_images.dart';
 import 'sport_markets.dart';
 import 'sport_predictions.dart';
@@ -141,8 +142,9 @@ class _ProductShellState extends State<ProductShell>
     }
   }
 
-  // TODO(T9): ficha del partido de NBA y tenis; por ahora tocar no hace nada.
-  void openSportEvent(SportEvent event) {}
+  /// Ficha del partido de NBA o tenis (hoja inferior; fútbol usa `detail`).
+  void openSportEvent(SportEvent event) =>
+      showSportDetail(context, api: api, event: event, images: images);
 
   List<String> get sportStreams => [
     for (final s in PredictionsSwitcher.order)

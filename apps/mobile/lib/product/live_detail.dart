@@ -10,6 +10,7 @@ import 'live_forecast.dart';
 import 'live_match_markets.dart';
 import 'live_widgets.dart';
 import 'live_statistics.dart';
+import 'qf_theme.dart';
 
 class LiveMatchDetail extends StatefulWidget {
   const LiveMatchDetail({
@@ -227,7 +228,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                   const SizedBox(height: 24),
                   Container(
                     decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.white12)),
+                      border: Border(bottom: BorderSide(color: QfColors.border)),
                     ),
                     child: Row(
                       children: [
@@ -263,7 +264,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
                                                 color: tab == item.$1
-                                                    ? statsLime
+                                                    ? QfColors.primary
                                                     : liveMuted,
                                               ),
                                             ),
@@ -279,14 +280,14 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                                 vertical: 1,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xffe85667),
+                                                color: QfColors.danger,
                                                 borderRadius:
                                                     BorderRadius.circular(99),
                                               ),
                                               child: Text(
                                                 '$alertCount',
                                                 style: const TextStyle(
-                                                  color: Colors.white,
+                                                  color: QfColors.bg,
                                                   fontSize: 9,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -299,7 +300,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                     Container(
                                       height: 3,
                                       color: tab == item.$1
-                                          ? statsLime
+                                          ? QfColors.primary
                                           : Colors.transparent,
                                     ),
                                   ],

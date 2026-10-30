@@ -1,0 +1,48 @@
+{
+  "state": "ok",
+  "generated_at": "2026-10-23T09:00:00+00:00",
+  "source": "API-Tennis",
+  "event_id": "12173711",
+  "surface": "Clay",
+  "circuit": "WTA",
+  "players": [
+    {
+      "key": 101, "name": "Liudmila Samsonova", "country": "Russia", "age": 27,
+      "rank": "12", "points": 2900, "movement": "same",
+      "season": {"season": 2026, "titles": 1, "won": 30, "lost": 15, "rate": 0.6667},
+      "career": {"won": 300, "lost": 190, "rate": 0.6122},
+      "surfaces": {
+        "clay": {"career": {"won": 80, "lost": 50, "rate": 0.6154}, "season": {"won": 8, "lost": 5, "rate": 0.6154}},
+        "hard": {"career": {"won": 180, "lost": 100, "rate": 0.6429}, "season": null},
+        "grass": {"career": {"won": 40, "lost": 30, "rate": 0.5714}, "season": null}
+      },
+      "ranking_history": [],
+      "form": {"matches": [], "windows": {}, "streak": 2, "index": 72, "complete_matches": 8,
+               "over_2_5_sets": 0.4, "tiebreaks": 0.2, "stages": {}, "qualification": {"won": 0, "lost": 0, "rate": null, "matches": 0}}
+    },
+    {
+      "key": 102, "name": "Heather Watson", "country": "Great Britain", "age": 34,
+      "rank": "180", "points": 400, "movement": "down",
+      "season": null,
+      "career": {"won": 250, "lost": 240, "rate": 0.5102},
+      "surfaces": {
+        "clay": {"career": {"won": 30, "lost": 45, "rate": 0.4}, "season": null},
+        "hard": {"career": {"won": 150, "lost": 120, "rate": 0.5556}, "season": null},
+        "grass": {"career": {"won": 50, "lost": 40, "rate": 0.5556}, "season": null}
+      },
+      "ranking_history": [],
+      "form": null
+    }
+  ],
+  "h2h": {
+    "first_wins": 2, "second_wins": 1,
+    "matches": [
+      {"date": "2025-08-10", "won": true, "opponent": "Heather Watson", "opponent_key": 102,
+       "tournament": "WTA Cincinnati", "round": "1/16-finals", "stage": "inicial",
+       "qualification": false, "score": "6-3 6-4", "sets": 2, "tiebreak": false, "retired": false, "complete": true},
+      {"date": "2024-03-02", "won": false, "opponent": "Heather Watson", "opponent_key": 102,
+       "tournament": "WTA Indian Wells", "round": "1/32-finals", "stage": "inicial",
+       "qualification": false, "score": "4-6 6-3 3-6", "sets": 3, "tiebreak": false, "retired": false, "complete": true}
+    ]
+  }
+}
