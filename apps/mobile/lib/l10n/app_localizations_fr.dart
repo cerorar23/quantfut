@@ -2046,6 +2046,15 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get sealLabel => 'SCEAU';
+
+  @override
+  String get sealPublished => 'PUBLIÉ';
+
+  @override
+  String get sealVerified => 'VÉRIFIÉ';
+
+  @override
   String get selBttsNo => 'Les deux équipes ne marquent pas';
 
   @override

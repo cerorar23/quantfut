@@ -2031,6 +2031,15 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get sealLabel => 'SIEGEL';
+
+  @override
+  String get sealPublished => 'VERÖFFENTLICHT';
+
+  @override
+  String get sealVerified => 'GEPRÜFT';
+
+  @override
   String get selBttsNo => 'Nicht beide Teams treffen';
 
   @override

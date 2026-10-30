@@ -2044,6 +2044,15 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get sealLabel => 'SIGILLO';
+
+  @override
+  String get sealPublished => 'PUBBLICATO';
+
+  @override
+  String get sealVerified => 'VERIFICATO';
+
+  @override
   String get selBttsNo => 'Non segnano entrambe';
 
   @override

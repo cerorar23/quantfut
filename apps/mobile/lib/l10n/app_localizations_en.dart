@@ -2020,6 +2020,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get sealLabel => 'SEAL';
+
+  @override
+  String get sealPublished => 'PUBLISHED';
+
+  @override
+  String get sealVerified => 'VERIFIED';
+
+  @override
   String get selBttsNo => 'Both teams do not score';
 
   @override

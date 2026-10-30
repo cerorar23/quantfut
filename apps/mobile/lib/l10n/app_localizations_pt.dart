@@ -2040,6 +2040,15 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get sealLabel => 'SELO';
+
+  @override
+  String get sealPublished => 'PUBLICADO';
+
+  @override
+  String get sealVerified => 'VERIFICADO';
+
+  @override
   String get selBttsNo => 'Ambos não marcam';
 
   @override

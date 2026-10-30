@@ -2035,6 +2035,15 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get sealLabel => 'SELLO';
+
+  @override
+  String get sealPublished => 'PUBLICADO';
+
+  @override
+  String get sealVerified => 'VERIFICADO';
+
+  @override
   String get selBttsNo => 'No marcan los dos';
 
   @override

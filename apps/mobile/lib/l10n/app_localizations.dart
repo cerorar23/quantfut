@@ -3412,6 +3412,24 @@ abstract class AppLocalizations {
   /// **'Desbloquea un pronóstico por {cost} monedas'**
   String rewardsUnlockFor(Object cost);
 
+  /// Etiqueta de protocolo de la línea de sello (hash) de un pick
+  ///
+  /// In es, this message translates to:
+  /// **'SELLO'**
+  String get sealLabel;
+
+  /// Etiqueta de protocolo: hora de publicación del pick
+  ///
+  /// In es, this message translates to:
+  /// **'PUBLICADO'**
+  String get sealPublished;
+
+  /// Etiqueta de protocolo: el sello del pick fue verificado
+  ///
+  /// In es, this message translates to:
+  /// **'VERIFICADO'**
+  String get sealVerified;
+
   /// No description provided for @selBttsNo.
   ///
   /// In es, this message translates to:

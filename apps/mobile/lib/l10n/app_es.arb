@@ -1779,6 +1779,18 @@
       }
     }
   },
+  "sealLabel": "SELLO",
+  "@sealLabel": {
+    "description": "Etiqueta de protocolo de la línea de sello (hash) de un pick"
+  },
+  "sealPublished": "PUBLICADO",
+  "@sealPublished": {
+    "description": "Etiqueta de protocolo: hora de publicación del pick"
+  },
+  "sealVerified": "VERIFICADO",
+  "@sealVerified": {
+    "description": "Etiqueta de protocolo: el sello del pick fue verificado"
+  },
   "selBttsNo": "No marcan los dos",
   "selBttsYes": "Marcan los dos",
   "selCards": "{side, select, over{Más de {line} tarjetas} other{Menos de {line} tarjetas}}",
