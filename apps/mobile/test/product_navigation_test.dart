@@ -15,6 +15,8 @@ import 'package:gobet/product/live_vip.dart';
 import 'package:gobet/product/live_forecast.dart';
 import 'package:gobet/product/live_widgets.dart';
 import 'package:gobet/l10n/app_locale.dart';
+import 'package:gobet/product/sport_selector.dart';
+import 'package:gobet/product/sports.dart';
 
 class FixtureApi extends QuantFutApi {
   bool fail = false;
@@ -245,6 +247,123 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  SportPrefs memoryPrefs([Map<String, String>? store]) {
+    final map = store ?? <String, String>{};
+    return SportPrefs(
+      read: (k) async => map[k],
+      write: (k, v) async => map[k] = v,
+    );
+  }
+
+  Finder selectedMark(String id) => find.descendant(
+    of: find.byKey(ValueKey('sport-$id')),
+    matching: find.byKey(const ValueKey('sport-selected-mark')),
+  );
+
+  testWidgets('el selector aparece en Inicio, Predicciones y Mercados y no en Coins ni Perfil', (
+    tester,
+  ) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    for (final (label, shown) in [
+      ('Inicio', true),
+      ('Predicciones', true),
+      ('Mercados', true),
+      ('Coins', false),
+      ('Perfil', false),
+    ]) {
+      await navigate(tester, label);
+      expect(
+        find.byType(SportSelector),
+        shown ? findsOneWidget : findsNothing,
+        reason: label,
+      );
+    }
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('en NBA el switcher solo muestra Alta prob.', (tester) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    await navigate(tester, 'Predicciones');
+    expect(find.byKey(const ValueKey('streams-ladder')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('streams-high')), findsOneWidget);
+    expect(find.byKey(const ValueKey('streams-ladder')), findsNothing);
+    expect(find.byKey(const ValueKey('streams-parley')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('cambiar de deporte no cambia de pestaña y se recuerda', (tester) async {
+    final api = FixtureApi();
+    final store = <String, String>{};
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
+    await navigate(tester, 'Predicciones');
+    await tester.tap(find.byKey(const ValueKey('sport-tenis')));
+    await tester.pumpAndSettle();
+    expect(store['sports_last'], 'tenis');
+    expect(find.byKey(const ValueKey('streams-switcher')), findsOneWidget);
+    expect(selectedMark('tenis'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('al abrir se elige el último deporte guardado', (tester) async {
+    final api = FixtureApi();
+    await open(
+      tester,
+      ProductShell(api: api, sportPrefs: memoryPrefs({'sports_last': 'nba'})),
+    );
+    expect(selectedMark('nba'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('deslizar cambia de tipo, no de deporte', (tester) async {
+    final api = FixtureApi();
+    final store = <String, String>{};
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
+    await navigate(tester, 'Predicciones');
+    final indicator = find.byKey(const ValueKey('streams-indicator'));
+    final before = tester.getTopLeft(indicator).dx;
+    await tester.fling(find.byType(RefreshIndicator), const Offset(-300, 0), 1500);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(indicator).dx, greaterThan(before + 50));
+    expect(selectedMark('futbol'), findsOneWidget);
+    expect(store.containsKey('sports_last'), isFalse);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  for (final code in ['es', 'en', 'pt', 'fr', 'it', 'de']) {
+    testWidgets('a 360 dp las etiquetas del selector no se recortan ($code)', (tester) async {
+      await AppLocale.instance.select(code);
+      addTearDown(AppLocale.instance.reset);
+      for (final active in SportKind.values) {
+        await open(
+          tester,
+          Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SportSelector(
+                sports: SportKind.values,
+                value: active,
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        );
+        tester.view.physicalSize = const Size(360, 640);
+        await tester.pumpAndSettle();
+        for (final sport in SportKind.values) {
+          final text = find.descendant(
+            of: find.byKey(ValueKey('sport-${sport.id}')),
+            matching: find.byType(Text),
+          );
+          final paragraph = tester.renderObject<RenderParagraph>(text.first);
+          expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active ${sport.id}');
+        }
+      }
+    });
+  }
   testWidgets('home uses API calendar and all five tabs including Coins', (
     tester,
   ) async {

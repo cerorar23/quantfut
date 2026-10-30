@@ -66,7 +66,8 @@ class SportSelector extends StatelessWidget {
                 children: [
                   for (final (i, chip) in chips.indexed) ...[
                     if (i > 0) const SizedBox(width: 8),
-                    Expanded(child: chip),
+                    // El activo es más ancho (lleva marca extra) para que la etiqueta quepa a 360 dp.
+                    Expanded(flex: sports[i] == value ? 4 : 3, child: chip),
                   ],
                 ],
               ),
@@ -117,7 +118,7 @@ class _Chip extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -133,18 +134,21 @@ class _Chip extends StatelessWidget {
                       const SizedBox(width: 4),
                     ],
                     Icon(icon, size: 18, color: color),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Flexible(
-                      child: Text(
-                        label.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: color,
-                          fontFamily: qfDisplay,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          letterSpacing: 0.6,
+                      // Nunca se recorta con «…»: si no cabe, se reduce un poco.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label.toUpperCase(),
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: color,
+                            fontFamily: qfDisplay,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            letterSpacing: 0.6,
+                          ),
                         ),
                       ),
                     ),

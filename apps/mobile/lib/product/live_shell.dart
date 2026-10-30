@@ -23,10 +23,16 @@ import 'live_profile.dart';
 import 'live_rewards.dart';
 import 'live_home.dart';
 import 'live_more.dart';
+import 'qf_theme.dart';
+import 'sport_selector.dart';
+import 'sports.dart';
 
 class ProductShell extends StatefulWidget {
-  const ProductShell({super.key, this.api});
+  const ProductShell({super.key, this.api, this.sportPrefs});
   final QuantFutApi? api;
+
+  /// Preferencias de deporte; por defecto las de la app (o memoria si no hay servicios).
+  final SportPrefs? sportPrefs;
   @override
   State<ProductShell> createState() => _ProductShellState();
 }
@@ -48,9 +54,64 @@ class _ProductShellState extends State<ProductShell>
   String search = '';
   // Identificadores estables de la pestaña Predicciones (no son texto visible).
   String stream = 'high';
+  // Deporte global: lo comparten Inicio, Predicciones y Mercados.
+  SportKind sport = SportKind.football;
+  List<SportKind> visibleSports = SportKind.values;
+  final _memory = <String, String>{};
+  late final SportPrefs sportPrefs =
+      widget.sportPrefs ??
+      SportPrefs(
+        read: (key) async => services == null
+            ? _memory[key]
+            : services!.preferences.getString(key),
+        write: (key, value) async => services == null
+            ? _memory[key] = value
+            : services!.preferences.setString(key, value),
+      );
+
+  /// Orden, ocultos y último deporte guardados.
+  Future<void> loadSports() async {
+    try {
+      final order = await sportPrefs.order();
+      final hidden = await sportPrefs.hidden();
+      final initial = await sportPrefs.initial();
+      if (!mounted) return;
+      setState(() {
+        visibleSports = [
+          for (final k in order)
+            if (!hidden.contains(k)) k,
+        ];
+        sport = initial;
+        _fitStream();
+      });
+    } catch (_) {
+      /* Se queda en fútbol con los tres deportes. */
+    }
+  }
+
+  /// Si la sección actual no existe en el deporte, vuelve a Alta probabilidad.
+  void _fitStream() {
+    if (!sportSpecs[sport]!.streams.contains(stream)) stream = 'high';
+  }
+
+  void changeSport(SportKind value) {
+    if (value == sport) return;
+    setState(() {
+      sport = value;
+      _fitStream();
+    });
+    unawaited(sportPrefs.remember(value));
+  }
+
+  List<String> get sportStreams => [
+    for (final s in PredictionsSwitcher.order)
+      if (sportSpecs[sport]!.streams.contains(s)) s,
+  ];
+
   @override
   void initState() {
     super.initState();
+    unawaited(loadSports());
     WidgetsBinding.instance.addObserver(this);
     services?.openedMatch.addListener(openNotification);
     services?.foregroundMessage.addListener(showNotification);
@@ -405,7 +466,54 @@ class _ProductShellState extends State<ProductShell>
     onOpenCoins: () => setState(() => tab = 3),
   );
 
-  Widget mainBody() {
+  /// Selector de deporte fijo arriba de Inicio, Predicciones y Mercados.
+  Widget withSelector(Widget content) => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: SportSelector(
+          sports: visibleSports,
+          value: sport,
+          onChanged: changeSport,
+        ),
+      ),
+      Expanded(child: content),
+    ],
+  );
+
+  Widget mainBody() => withSelector(
+    sport == SportKind.football ? footballBody() : sportBody(),
+  );
+
+  /// Contenido de NBA y tenis: vacío hasta que las tareas 7 y 8 lo conecten.
+  Widget sportBody() {
+    if (tab == 1) {
+      return Column(
+        children: [
+          predictionsSwitcher(),
+          const Expanded(child: SportPlaceholder()),
+        ],
+      );
+    }
+    return const SportPlaceholder();
+  }
+
+  Widget predictionsSwitcher() => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+    child: PredictionsSwitcher(
+      value: stream,
+      onChanged: (value) => setState(() => stream = value),
+      streams: sportStreams,
+      badges: sport == SportKind.football
+          ? {
+              'high': jsonRows(jsonMap(data!['alta_probabilidad'])['proximos']).length,
+              'ladder': jsonRows(jsonMap(data!['escalera'])['actuales']).length,
+            }
+          : const {},
+    ),
+  );
+
+  Widget footballBody() {
     if (tab == 0) return homeBody();
     final list = RefreshIndicator(
       onRefresh: reload,
@@ -424,19 +532,9 @@ class _ProductShellState extends State<ProductShell>
       ),
     );
     if (tab != 1) return list;
-    final report = jsonMap(data!['alta_probabilidad']);
-    final open = jsonRows(report['proximos']).length;
-    final retos = jsonRows(jsonMap(data!['escalera'])['actuales']).length;
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-          child: PredictionsSwitcher(
-            value: stream,
-            onChanged: (value) => setState(() => stream = value),
-            badges: {'high': open, 'ladder': retos},
-          ),
-        ),
+        predictionsSwitcher(),
         Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
@@ -444,6 +542,7 @@ class _ProductShellState extends State<ProductShell>
               final next = PredictionsSwitcher.swipe(
                 stream,
                 details.primaryVelocity ?? 0,
+                sportStreams,
               );
               if (next != stream) setState(() => stream = next);
             },
@@ -457,9 +556,9 @@ class _ProductShellState extends State<ProductShell>
   @override
   Widget build(BuildContext context) => Theme(
     data: ThemeData.dark(useMaterial3: true).copyWith(
-      scaffoldBackgroundColor: liveBg,
+      scaffoldBackgroundColor: QfColors.bg,
       colorScheme: const ColorScheme.dark(
-        primary: liveCyan,
+        primary: QfColors.primary,
         secondary: liveGold,
         surface: livePanel,
       ),
@@ -469,14 +568,23 @@ class _ProductShellState extends State<ProductShell>
       appBar: tab == 3
           ? null
           : AppBar(
-              backgroundColor: liveBg,
+              backgroundColor: QfColors.bg,
               leading: IconButton(
                 key: const ValueKey('home-menu'),
                 tooltip: context.l10n.homeMenuTooltip,
                 onPressed: () => showMoreSheet(context),
                 icon: const Icon(Icons.menu),
               ),
-              title: liveText('QuantFut', bold: true, size: 22),
+              title: Text(
+                '// ${_brand.toUpperCase()}',
+                style: const TextStyle(
+                  color: QfColors.text,
+                  fontFamily: qfDisplay,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 22,
+                  letterSpacing: 1.2,
+                ),
+              ),
               actions: [
                 _CoinsChip(
                   coins: coins,
@@ -490,7 +598,7 @@ class _ProductShellState extends State<ProductShell>
                 IconButton(
                   tooltip: context.l10n.commonRefresh,
                   onPressed: busy ? null : reload,
-                  icon: const Icon(Icons.refresh, color: liveCyan),
+                  icon: const Icon(Icons.refresh, color: QfColors.primary),
                 ),
               ],
             ),
@@ -524,11 +632,15 @@ class _ProductShellState extends State<ProductShell>
           : mainBody(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: livePanel,
-        selectedItemColor: liveCyan,
-        unselectedItemColor: liveMuted,
+        backgroundColor: QfColors.surface,
+        selectedItemColor: QfColors.primary,
+        unselectedItemColor: QfColors.muted,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
         selectedFontSize: 11,
         unselectedFontSize: 10,
+        selectedLabelStyle: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w600),
         currentIndex: tab,
         onTap: (i) {
           if (i == tab) return;
@@ -594,4 +706,18 @@ class _CoinsChip extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Marca de la cabecera; no se traduce.
+const _brand = 'QuantFut';
+
+/// Hueco donde las tareas 7 y 8 conectan el contenido de NBA y tenis.
+class SportPlaceholder extends StatelessWidget {
+  const SportPlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO(T7/T8): Inicio, Predicciones y Mercados de NBA y tenis.
+    return const SizedBox.expand(key: ValueKey('sport-placeholder'));
+  }
 }
