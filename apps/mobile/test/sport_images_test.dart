@@ -3,12 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/sport_images.dart';
-
-class _Http404 extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) => _Client404();
-}
 
 class _Client404 implements HttpClient {
   @override
@@ -91,6 +87,41 @@ void main() {
     expect(c.nbaLogo('XXX'), isNull);
   });
 
+  test('normaliza como el servidor (NFD sin marcas, sin transliterar)', () {
+    final pl = String.fromCharCodes([73, 103, 97, 32, 0x15a, 119, 105, 0x105, 116, 101, 107]);
+    final dj = String.fromCharCodes([78, 111, 118, 97, 107, 32, 0x110, 111, 107, 111, 118, 105, 0x107]);
+    final cz = String.fromCharCodes([80, 101, 116, 114, 97, 32, 75, 118, 105, 116, 111, 118, 0xe1]);
+    final m = <String, dynamic>{
+      'tenis': {
+        'iga swiatek': {'f': 'iga.jpg'},
+        // el servidor no transcribe la d cruzada: queda como esta en su clave
+        'novak ${String.fromCharCode(0x111)}okovic': {'f': 'nd.jpg'},
+        'petra kvitova': {'f': 'pk.jpg'},
+      },
+    };
+    final cat = ImageCatalog.fromManifest(m);
+    expect(cat.tennisPhoto(pl)?.path, '/web/imagenes/tenis/iga.jpg');
+    expect(cat.tennisPhoto(dj)?.path, '/web/imagenes/tenis/nd.jpg');
+    expect(cat.tennisPhoto(cz)?.path, '/web/imagenes/tenis/pk.jpg');
+    expect(cat.tennisPhoto('Novak Djokovic'), isNull);
+  });
+
+  test('serverImageUrl y archivos inseguros', () {
+    final api = QuantFutApi(base: Uri.parse('https://x.test'));
+    expect(serverImageUrl(api, null), isNull);
+    expect(serverImageUrl(api, ''), isNull);
+    expect(
+      serverImageUrl(api, '/web/imagenes/nba/NYK.png'),
+      'https://x.test/web/imagenes/nba/NYK.png',
+    );
+    expect(
+      ImageCatalog.fromManifest({
+        'tenis': {'a b': {'f': '..'}, 'c d': {'f': '.'}},
+      }),
+      same(ImageCatalog.empty),
+    );
+  });
+
   test('id NBA inválido no produce URL', () {
     expect(nbaPlayerPhoto('0'), '');
     expect(nbaPlayerPhoto('../x'), '');
@@ -121,9 +152,15 @@ void main() {
   ) async {
     await t.pumpWidget(
       const MaterialApp(
-        home: QfAvatar(name: 'Boston Celtics', countryCode: 'ZZZ'),
+        home: Column(
+          children: [
+            QfAvatar(name: 'Boston Celtics', countryCode: 'ZZZ'),
+            QfAvatar(name: 'Dane', countryCode: 'DEN'),
+          ],
+        ),
       ),
     );
+    expect(find.byKey(const ValueKey('qf-flag-DEN')), findsNothing);
     expect(find.text('BC'), findsOneWidget);
     expect(find.byKey(const ValueKey('qf-flag-ZZZ')), findsNothing);
   });

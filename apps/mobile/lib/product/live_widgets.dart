@@ -92,9 +92,7 @@ class TeamCrest extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = team['escudo'];
     return QfAvatar(
-      url: url is String && url.isNotEmpty
-          ? api.base.resolve(url).toString()
-          : null,
+      url: serverImageUrl(api, url is String ? url : null),
       name: '${team['name'] ?? team['nombre'] ?? ''}',
       size: size,
     );
