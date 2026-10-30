@@ -26,6 +26,8 @@ import 'home_sport.dart';
 import 'live_more.dart';
 import 'qf_theme.dart';
 import 'sport_images.dart';
+import 'sport_markets.dart';
+import 'sport_predictions.dart';
 import 'sport_selector.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
@@ -551,18 +553,39 @@ class _ProductShellState extends State<ProductShell>
     return data == null ? const SizedBox() : content();
   }
 
-  /// Contenido de NBA y tenis: Inicio ya conectado; Predicciones y Mercados, tarea 8.
+  /// Contenido de NBA y tenis: Inicio, Predicciones y Mercados, cada uno con su feed.
   Widget sportBody() {
     if (tab == 0) return sportHome();
+    final feed = feeds[sport];
+    final loading = const Center(child: CircularProgressIndicator());
     if (tab == 1) {
       return Column(
         children: [
           predictionsSwitcher(),
-          const Expanded(child: SportPlaceholder()),
+          Expanded(
+            child: feed == null
+                ? loading
+                : SportPredictions(
+                    key: ValueKey('sport-predictions-${sport.id}'),
+                    api: api,
+                    sport: sport,
+                    feed: feed,
+                    images: images,
+                    onOpen: openSportEvent,
+                    onRetry: () => loadFeed(sport),
+                  ),
+          ),
         ],
       );
     }
-    return const SportPlaceholder();
+    return feed == null
+        ? loading
+        : SportMarkets(
+            key: ValueKey('sport-markets-${sport.id}'),
+            sport: sport,
+            feed: feed,
+            onRetry: () => loadFeed(sport),
+          );
   }
 
   /// Inicio de NBA o tenis en su propio hueco: cargando, error con reintento o contenido.
@@ -780,14 +803,3 @@ class _CoinsChip extends StatelessWidget {
 
 /// Marca de la cabecera; no se traduce.
 const _brand = 'QuantFut';
-
-/// Hueco donde la tarea 8 conecta Predicciones y Mercados de NBA y tenis.
-class SportPlaceholder extends StatelessWidget {
-  const SportPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // TODO(T8): Predicciones y Mercados de NBA y tenis.
-    return const SizedBox.expand(key: ValueKey('sport-placeholder'));
-  }
-}

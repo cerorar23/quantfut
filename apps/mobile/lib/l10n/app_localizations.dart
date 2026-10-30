@@ -2122,6 +2122,12 @@ abstract class AppLocalizations {
   /// **'acierto histórico {percent}'**
   String marketsHistoricHit(String percent);
 
+  /// Aciertos sobre pronósticos publicados y resueltos.
+  ///
+  /// In es, this message translates to:
+  /// **'{won}/{resolved} publicados'**
+  String marketsHitCount(int won, int resolved);
+
   /// No description provided for @marketsInReview.
   ///
   /// In es, this message translates to:
@@ -2169,6 +2175,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El anillo es el acierto histórico de la mejor línea validada de cada mercado; «Publicado» son los pronósticos ya resueltos. Son pronósticos previos al partido, no alertas en vivo, y ninguna probabilidad garantiza un resultado.'**
   String get marketsRadarNote;
+
+  /// No description provided for @marketsTabGame.
+  ///
+  /// In es, this message translates to:
+  /// **'Partido'**
+  String get marketsTabGame;
+
+  /// No description provided for @marketsTabGames.
+  ///
+  /// In es, this message translates to:
+  /// **'Juegos'**
+  String get marketsTabGames;
+
+  /// No description provided for @marketsTabPlayers.
+  ///
+  /// In es, this message translates to:
+  /// **'Jugadores'**
+  String get marketsTabPlayers;
 
   /// No description provided for @matchAwaitingResult.
   ///
@@ -2787,6 +2811,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Acierto histórico'**
   String get picksTrustTitle;
+
+  /// Fecha y hora en que se selló el pronóstico.
+  ///
+  /// In es, this message translates to:
+  /// **'Sellado {when}'**
+  String predictionsSealedAt(String when);
 
   /// No description provided for @prefsAdsBody.
   ///

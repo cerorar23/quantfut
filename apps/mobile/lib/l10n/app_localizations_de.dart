@@ -1209,6 +1209,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String marketsHitCount(int won, int resolved) {
+    return '$won/$resolved veröffentlicht';
+  }
+
+  @override
   String get marketsInReview => 'In Prüfung: keine bestätigte Linie';
 
   @override
@@ -1236,6 +1241,15 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'Der Ring ist die historische Trefferquote der besten validierten Linie jedes Marktes; „Veröffentlicht“ sind die bereits ausgewerteten Prognosen. Es sind Prognosen vor dem Spiel, keine Live-Hinweise, und keine Wahrscheinlichkeit garantiert ein Ergebnis.';
+
+  @override
+  String get marketsTabGame => 'Spiel';
+
+  @override
+  String get marketsTabGames => 'Spiele';
+
+  @override
+  String get marketsTabPlayers => 'Spieler';
 
   @override
   String get matchAwaitingResult => 'Ergebnis ausstehend';
@@ -1646,6 +1660,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get picksTrustTitle => 'Bisherige Trefferquote';
+
+  @override
+  String predictionsSealedAt(String when) {
+    return 'Versiegelt $when';
+  }
 
   @override
   String get prefsAdsBody =>

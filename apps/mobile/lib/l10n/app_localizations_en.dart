@@ -1199,6 +1199,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String marketsHitCount(int won, int resolved) {
+    return '$won/$resolved published';
+  }
+
+  @override
   String get marketsInReview => 'Under review: no confirmed line';
 
   @override
@@ -1226,6 +1231,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'The ring is the historical hit rate of each market\'s best validated line; “Published” are the predictions already resolved. They are pre-match predictions, not live alerts, and no probability guarantees a result.';
+
+  @override
+  String get marketsTabGame => 'Match';
+
+  @override
+  String get marketsTabGames => 'Games';
+
+  @override
+  String get marketsTabPlayers => 'Players';
 
   @override
   String get matchAwaitingResult => 'Awaiting result';
@@ -1635,6 +1649,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get picksTrustTitle => 'Hit rate to date';
+
+  @override
+  String predictionsSealedAt(String when) {
+    return 'Sealed $when';
+  }
 
   @override
   String get prefsAdsBody =>

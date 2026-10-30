@@ -1208,6 +1208,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String marketsHitCount(int won, int resolved) {
+    return '$won/$resolved publiés';
+  }
+
+  @override
   String get marketsInReview => 'En cours de révision : aucune ligne confirmée';
 
   @override
@@ -1235,6 +1240,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'L\'anneau est le taux de réussite historique de la meilleure ligne validée de chaque marché ; « Publié » désigne les pronostics déjà résolus. Ce sont des pronostics d\'avant-match, pas des alertes en direct, et aucune probabilité ne garantit un résultat.';
+
+  @override
+  String get marketsTabGame => 'Match';
+
+  @override
+  String get marketsTabGames => 'Jeux';
+
+  @override
+  String get marketsTabPlayers => 'Joueurs';
 
   @override
   String get matchAwaitingResult => 'Résultat en attente';
@@ -1658,6 +1672,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get picksTrustTitle => 'Taux de réussite historique';
+
+  @override
+  String predictionsSealedAt(String when) {
+    return 'Scellé $when';
+  }
 
   @override
   String get prefsAdsBody =>

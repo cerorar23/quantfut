@@ -1032,6 +1032,18 @@
       }
     }
   },
+  "marketsHitCount": "{won}/{resolved} publicados",
+  "@marketsHitCount": {
+    "description": "Aciertos sobre pronósticos publicados y resueltos.",
+    "placeholders": {
+      "won": {
+        "type": "int"
+      },
+      "resolved": {
+        "type": "int"
+      }
+    }
+  },
   "marketsInReview": "En revisión: sin línea confirmada",
   "marketsModelActive": "MODELO ACTIVO",
   "marketsNoLineLabel": "sin línea confirmada",
@@ -1063,6 +1075,9 @@
     }
   },
   "marketsRadarNote": "El anillo es el acierto histórico de la mejor línea validada de cada mercado; «Publicado» son los pronósticos ya resueltos. Son pronósticos previos al partido, no alertas en vivo, y ninguna probabilidad garantiza un resultado.",
+  "marketsTabGame": "Partido",
+  "marketsTabGames": "Juegos",
+  "marketsTabPlayers": "Jugadores",
   "matchAwaitingResult": "Esperando resultado",
   "mdCornersTotal": "córners · total {total}",
   "@mdCornersTotal": {
@@ -1498,6 +1513,15 @@
   "picksTrustTitle": "Acierto histórico",
   "@picksTrustTitle": {
     "description": "Título de la tarjeta con el acierto real de Alta probabilidad."
+  },
+  "predictionsSealedAt": "Sellado {when}",
+  "@predictionsSealedAt": {
+    "description": "Fecha y hora en que se selló el pronóstico.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
   },
   "prefsAdsBody": "Comparte con Meta datos cifrados de tu cuenta, del dispositivo y de tus compras para medir qué anuncios funcionan. En California equivale a «No compartir mis datos» cuando lo desactivas.",
   "prefsAdsTitle": "Medición de anuncios (Meta)",

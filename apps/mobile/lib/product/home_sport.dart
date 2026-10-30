@@ -75,6 +75,45 @@ bool _upcoming(SportEvent e) =>
   return best;
 }
 
+/// Aviso de feed caído con «Reintentar»; vive solo en el hueco del deporte afectado.
+class SportFeedError extends StatelessWidget {
+  const SportFeedError({super.key, required this.onRetry});
+
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) => RefreshIndicator(
+    onRefresh: onRetry,
+    child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 40),
+        const Icon(Icons.cloud_off, color: QfColors.muted, size: 40),
+        const SizedBox(height: 12),
+        Text(
+          context.l10n.homeFeedError,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: QfColors.text2, fontSize: 14),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: FilledButton(
+            key: const ValueKey('sport-feed-retry'),
+            style: FilledButton.styleFrom(
+              backgroundColor: QfColors.primary,
+              foregroundColor: QfColors.onPrimary,
+              minimumSize: const Size(120, 44),
+            ),
+            onPressed: onRetry,
+            child: Text(context.l10n.commonRetry),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Inicio de NBA y tenis: destacado, jugadores con pronóstico (NBA), tira de días y agenda
 /// agrupada por día local (NBA por hora, tenis por torneo). Un feed caído solo afecta a
 /// este deporte: aviso y «Reintentar» en su hueco.
@@ -257,36 +296,8 @@ class _HomeSportState extends State<HomeSport> {
     );
   }
 
-  Widget _error(BuildContext context) => RefreshIndicator(
-    onRefresh: widget.onRetry,
-    child: ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(24),
-      children: [
-        const SizedBox(height: 40),
-        const Icon(Icons.cloud_off, color: QfColors.muted, size: 40),
-        const SizedBox(height: 12),
-        Text(
-          context.l10n.homeFeedError,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: QfColors.text2, fontSize: 14),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: FilledButton(
-            key: const ValueKey('sport-feed-retry'),
-            style: FilledButton.styleFrom(
-              backgroundColor: QfColors.primary,
-              foregroundColor: QfColors.onPrimary,
-              minimumSize: const Size(120, 44),
-            ),
-            onPressed: widget.onRetry,
-            child: Text(context.l10n.commonRetry),
-          ),
-        ),
-      ],
-    ),
-  );
+  Widget _error(BuildContext context) =>
+      SportFeedError(onRetry: widget.onRetry);
 
   Widget _top(BuildContext context, List<SportEvent> shown) {
     final l10n = context.l10n;

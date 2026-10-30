@@ -1207,6 +1207,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String marketsHitCount(int won, int resolved) {
+    return '$won/$resolved publicados';
+  }
+
+  @override
   String get marketsInReview => 'Em revisão: sem linha confirmada';
 
   @override
@@ -1234,6 +1239,15 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'O anel é o acerto histórico da melhor linha validada de cada mercado; «Publicado» são os prognósticos já resolvidos. São prognósticos pré-jogo, não alertas ao vivo, e nenhuma probabilidade garante um resultado.';
+
+  @override
+  String get marketsTabGame => 'Partida';
+
+  @override
+  String get marketsTabGames => 'Games';
+
+  @override
+  String get marketsTabPlayers => 'Jogadores';
 
   @override
   String get matchAwaitingResult => 'Aguardando resultado';
@@ -1655,6 +1669,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get picksTrustTitle => 'Taxa de acerto histórica';
+
+  @override
+  String predictionsSealedAt(String when) {
+    return 'Selado $when';
+  }
 
   @override
   String get prefsAdsBody =>
