@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/product/home_agenda.dart';
+import 'package:gobet/product/home_hero.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_home.dart';
 import 'package:gobet/product/live_more.dart';
@@ -319,8 +320,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Boletos del día'), findsOneWidget);
     // De los abiertos gana el de 91 %, no el bloqueado ni el de 78 %.
-    expect(find.text('91 %'), findsOneWidget);
-    expect(find.text('Más de 1,5 goles'), findsOneWidget);
+    Finder inTicket(String t) =>
+        find.descendant(of: find.byKey(const ValueKey('ticket-high')), matching: find.text(t));
+    expect(inTicket('91 %'), findsOneWidget);
+    expect(inTicket('Más de 1,5 goles'), findsOneWidget);
     expect(find.text('Cuota 3,20'), findsOneWidget);
     expect(find.text('2 selecciones'), findsOneWidget);
     expect(find.text('Prob. conjunta 45 %'), findsOneWidget);
@@ -330,6 +333,24 @@ void main() {
     expect(stream, 'parley');
     await tester.tap(find.text('Ver todo'));
     expect(stream, 'high');
+  });
+
+  testWidgets('fútbol: el destacado del día es el mejor pronóstico abierto y abre su partido', (
+    tester,
+  ) async {
+    String? opened;
+    await pump(tester, onMatch: (id) => opened = id);
+    final hero = find.byType(HomeHero);
+    expect(hero, findsOneWidget);
+    expect(find.descendant(of: hero, matching: find.text('91 %')), findsOneWidget);
+    expect(find.descendant(of: hero, matching: find.text('Destacado del día'.toUpperCase())), findsOneWidget);
+    await tester.tap(hero);
+    expect(opened, 'b1');
+  });
+
+  testWidgets('fútbol: sin pronóstico abierto no hay destacado', (tester) async {
+    await pump(tester, data: homeData(picks: [pick('b2', .85, locked: true)]));
+    expect(find.byType(HomeHero), findsNothing);
   });
 
   testWidgets('sin parley ni pronósticos las tarjetas lo dicen', (tester) async {

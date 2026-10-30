@@ -868,6 +868,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeByDate => 'Partite per data e orario';
 
   @override
+  String get homeFeatured => 'In evidenza oggi';
+
+  @override
+  String get homeFeedError => 'Impossibile caricare i dati di questo sport.';
+
+  @override
   String homeForecastAt(String when, String mexico) {
     return 'Pronostico il $when ($mexico ora del Messico)';
   }
@@ -880,6 +886,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get homeNoMatchesDay => 'Nessuna partita in questo giorno.';
+
+  @override
+  String get homePlayersWithPicks => 'Giocatori con pronostico';
 
   @override
   String get homeSeeAll => 'Vedi tutto';
@@ -1167,6 +1176,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get marketHtGoal => 'Gol nel 1º tempo';
+
+  @override
+  String marketOverLine(String line) {
+    return 'Più di $line';
+  }
 
   @override
   String get marketResult1x2 => 'Risultato 1X2';

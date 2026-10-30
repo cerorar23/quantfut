@@ -1588,6 +1588,18 @@ abstract class AppLocalizations {
   /// **'Partidos por fecha y horario'**
   String get homeByDate;
 
+  /// Antetítulo de la tarjeta grande de Inicio con el pronóstico de mayor probabilidad del deporte elegido.
+  ///
+  /// In es, this message translates to:
+  /// **'Destacado del día'**
+  String get homeFeatured;
+
+  /// Aviso en Inicio cuando falla el feed de NBA o tenis; solo afecta a ese deporte y va con el botón Reintentar.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los datos de este deporte.'**
+  String get homeFeedError;
+
   /// Aviso de un partido cuyo pronóstico aún no se calcula: se calcula el mismo día a las 05:00 de México.
   ///
   /// In es, this message translates to:
@@ -1611,6 +1623,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No hay partidos este día.'**
   String get homeNoMatchesDay;
+
+  /// Título de la fila horizontal de jugadores NBA con pronóstico en Inicio.
+  ///
+  /// In es, this message translates to:
+  /// **'Jugadores con pronóstico'**
+  String get homePlayersWithPicks;
 
   /// Lleva a la pestaña Predicciones.
   ///
@@ -2055,6 +2073,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Gol en el 1er tiempo'**
   String get marketHtGoal;
+
+  /// Selección de un mercado de línea (puntos, asistencias, total). {line} es la línea ya formateada, p. ej. 24,5.
+  ///
+  /// In es, this message translates to:
+  /// **'Más de {line}'**
+  String marketOverLine(String line);
 
   /// No description provided for @marketResult1x2.
   ///

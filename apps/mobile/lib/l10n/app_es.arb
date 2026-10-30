@@ -699,6 +699,14 @@
     "description": "Cierra el aviso de la parte superior."
   },
   "homeByDate": "Partidos por fecha y horario",
+  "homeFeatured": "Destacado del día",
+  "@homeFeatured": {
+    "description": "Antetítulo de la tarjeta grande de Inicio con el pronóstico de mayor probabilidad del deporte elegido."
+  },
+  "homeFeedError": "No se pudieron cargar los datos de este deporte.",
+  "@homeFeedError": {
+    "description": "Aviso en Inicio cuando falla el feed de NBA o tenis; solo afecta a ese deporte y va con el botón Reintentar."
+  },
   "homeForecastAt": "Pronóstico el {when} ({mexico} en México)",
   "@homeForecastAt": {
     "description": "Aviso de un partido cuyo pronóstico aún no se calcula: se calcula el mismo día a las 05:00 de México.",
@@ -722,6 +730,10 @@
   "homeNoMatchesDay": "No hay partidos este día.",
   "@homeNoMatchesDay": {
     "description": "Aviso al tocar un día sin partidos."
+  },
+  "homePlayersWithPicks": "Jugadores con pronóstico",
+  "@homePlayersWithPicks": {
+    "description": "Título de la fila horizontal de jugadores NBA con pronóstico en Inicio."
   },
   "homeSeeAll": "Ver todo",
   "@homeSeeAll": {
@@ -990,6 +1002,15 @@
   "marketHomeScores": "Marca el local",
   "marketHtBtts": "Ambos anotan en el 1er tiempo",
   "marketHtGoal": "Gol en el 1er tiempo",
+  "marketOverLine": "Más de {line}",
+  "@marketOverLine": {
+    "description": "Selección de un mercado de línea (puntos, asistencias, total). {line} es la línea ya formateada, p. ej. 24,5.",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
   "marketResult1x2": "Resultado 1X2",
   "marketUnknown": "Mercado",
   "marketWinToNil": "Gana a cero",

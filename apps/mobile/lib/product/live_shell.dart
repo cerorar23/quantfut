@@ -22,10 +22,13 @@ import 'live_detail.dart';
 import 'live_profile.dart';
 import 'live_rewards.dart';
 import 'live_home.dart';
+import 'home_sport.dart';
 import 'live_more.dart';
 import 'qf_theme.dart';
+import 'sport_images.dart';
 import 'sport_selector.dart';
 import 'sports.dart';
+import 'sports_feed.dart';
 
 class ProductShell extends StatefulWidget {
   const ProductShell({super.key, this.api, this.sportPrefs});
@@ -57,6 +60,11 @@ class _ProductShellState extends State<ProductShell>
   // Deporte global: lo comparten Inicio, Predicciones y Mercados.
   SportKind sport = SportKind.football;
   List<SportKind> visibleSports = SportKind.values;
+  // Feeds de NBA y tenis: se piden la primera vez que se elige el deporte. Cada uno tiene su
+  // propio estado; un fallo solo se ve en su hueco.
+  final feeds = <SportKind, SportFeed>{};
+  final _feedLoading = <SportKind>{};
+  ImageCatalog images = ImageCatalog.empty;
   final _memory = <String, String>{};
   late final SportPrefs sportPrefs =
       widget.sportPrefs ??
@@ -84,6 +92,7 @@ class _ProductShellState extends State<ProductShell>
         if (!sportChosen) sport = initial; // una elección del usuario gana a la lectura inicial
         _fitStream();
       });
+      _ensureFeed(sport);
     } catch (_) {
       /* Se queda en fútbol con los tres deportes. */
     }
@@ -103,8 +112,34 @@ class _ProductShellState extends State<ProductShell>
       sport = value;
       _fitStream();
     });
+    _ensureFeed(value);
     unawaited(sportPrefs.remember(value));
   }
+
+  void _ensureFeed(SportKind kind) {
+    if (!feeds.containsKey(kind)) unawaited(loadFeed(kind));
+  }
+
+  /// Pide el feed del deporte y, de paso, el catálogo de imágenes (una vez, con caché).
+  Future<void> loadFeed(SportKind kind) async {
+    if (kind == SportKind.football || !_feedLoading.add(kind)) return;
+    try {
+      final (feed, catalog) = await (
+        loadSport(api, kind),
+        loadImageCatalog(api),
+      ).wait;
+      if (!mounted) return;
+      setState(() {
+        feeds[kind] = feed;
+        if (!identical(catalog, ImageCatalog.empty)) images = catalog;
+      });
+    } finally {
+      _feedLoading.remove(kind);
+    }
+  }
+
+  // TODO(T9): ficha del partido de NBA y tenis; por ahora tocar no hace nada.
+  void openSportEvent(SportEvent event) {}
 
   List<String> get sportStreams => [
     for (final s in PredictionsSwitcher.order)
@@ -218,6 +253,7 @@ class _ProductShellState extends State<ProductShell>
   }
 
   Future<void> reload() async {
+    if (feeds.containsKey(sport)) unawaited(loadFeed(sport));
     if (busy) return;
     setState(() {
       busy = true;
@@ -492,7 +528,9 @@ class _ProductShellState extends State<ProductShell>
   /// Cargando / error con reintento / contenido del fútbol (`data` ya cargado).
   Widget footballGate(Widget Function() content) {
     if (busy && data == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(key: ValueKey('football-loading')),
+      );
     }
     if (error != null) {
       return Center(
@@ -512,8 +550,9 @@ class _ProductShellState extends State<ProductShell>
     return data == null ? const SizedBox() : content();
   }
 
-  /// Contenido de NBA y tenis: vacío hasta que las tareas 7 y 8 lo conecten.
+  /// Contenido de NBA y tenis: Inicio ya conectado; Predicciones y Mercados, tarea 8.
   Widget sportBody() {
+    if (tab == 0) return sportHome();
     if (tab == 1) {
       return Column(
         children: [
@@ -523,6 +562,25 @@ class _ProductShellState extends State<ProductShell>
       );
     }
     return const SportPlaceholder();
+  }
+
+  /// Inicio de NBA o tenis en su propio hueco: cargando, error con reintento o contenido.
+  Widget sportHome() {
+    final feed = feeds[sport];
+    return KeyedSubtree(
+      key: ValueKey('sport-home-${sport.id}'),
+      child: feed == null
+          ? const Center(child: CircularProgressIndicator())
+          : HomeSport(
+              key: ValueKey('home-sport-${sport.id}'),
+              api: api,
+              sport: sport,
+              feed: feed,
+              images: images,
+              onOpen: openSportEvent,
+              onRetry: () => loadFeed(sport),
+            ),
+    );
   }
 
   Widget predictionsSwitcher() => Padding(
@@ -722,13 +780,13 @@ class _CoinsChip extends StatelessWidget {
 /// Marca de la cabecera; no se traduce.
 const _brand = 'QuantFut';
 
-/// Hueco donde las tareas 7 y 8 conectan el contenido de NBA y tenis.
+/// Hueco donde la tarea 8 conecta Predicciones y Mercados de NBA y tenis.
 class SportPlaceholder extends StatelessWidget {
   const SportPlaceholder({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // TODO(T7/T8): Inicio, Predicciones y Mercados de NBA y tenis.
+    // TODO(T8): Predicciones y Mercados de NBA y tenis.
     return const SizedBox.expand(key: ValueKey('sport-placeholder'));
   }
 }

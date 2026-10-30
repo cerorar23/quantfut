@@ -29,6 +29,7 @@ class FixtureApi extends QuantFutApi {
   List<JsonMap> extraAgenda = [];
   JsonMap? modelo, mercados;
   int homes = 0;
+  final paths = <String>[];
   final flags = {
     for (final k in [
       'agenda',
@@ -161,7 +162,12 @@ class FixtureApi extends QuantFutApi {
     JsonMap? query,
     JsonMap? body,
     bool retry = true,
-  }) async => {
+  }) async {
+    paths.add(path);
+    return _rewards;
+  }
+
+  JsonMap get _rewards => {
     'settings': {
       'enabled': true,
       'unlock_cost': 100,
@@ -250,6 +256,18 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  // El destacado del día ocupa la parte alta de Inicio: la agenda queda más abajo.
+  Future<void> scrollToAgenda(WidgetTester tester) => tester.scrollUntilVisible(
+    find.text('Equipo A'),
+    200,
+    scrollable: find
+        .descendant(
+          of: find.byKey(const ValueKey('home-scroll')),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
 
   SportPrefs memoryPrefs([Map<String, String>? store]) {
     final map = store ?? <String, String>{};
@@ -377,9 +395,9 @@ void main() {
     expect(find.text('Reintentar'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('sport-nba')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('sport-placeholder')), findsOneWidget);
+    // El Inicio de NBA tiene su propio hueco: sin el error del fútbol.
+    expect(find.byKey(const ValueKey('sport-home-nba')), findsOneWidget);
     expect(find.text('Sin conexión'), findsNothing);
-    expect(find.text('Reintentar'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('sport-futbol')));
     await tester.pumpAndSettle();
     expect(find.text('Sin conexión'), findsOneWidget);
@@ -394,10 +412,37 @@ void main() {
     expect(find.byType(SportSelector), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('sport-nba')));
     await tester.pump();
-    expect(find.byKey(const ValueKey('sport-placeholder')), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('sport-home-nba')), findsOneWidget);
+    expect(find.byKey(const ValueKey('football-loading')), findsNothing);
     api.gate!.complete();
     await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('feed NBA caído: aviso y reintento solo en NBA; fútbol y tenis siguen', (
+    tester,
+  ) async {
+    // FixtureApi no sirve el feed NBA (responde otra cosa): loadSport lo da por no listo.
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    expect(api.paths.where((p) => p == '/nba/api/data'), isEmpty); // carga perezosa
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pumpAndSettle();
+    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsOneWidget);
+    expect(api.paths.where((p) => p == '/nba/api/data').length, 1);
+    await tester.tap(find.byKey(const ValueKey('sport-feed-retry')));
+    await tester.pumpAndSettle();
+    expect(api.paths.where((p) => p == '/nba/api/data').length, 2);
+    await tester.tap(find.byKey(const ValueKey('sport-futbol')));
+    await tester.pumpAndSettle();
+    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
+    await scrollToAgenda(tester);
+    expect(find.text('Equipo A'), findsWidgets);
+    // Volver a NBA no repite la petición: el estado se guarda por deporte.
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pumpAndSettle();
+    expect(api.paths.where((p) => p == '/nba/api/data').length, 2);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
@@ -426,6 +471,7 @@ void main() {
     final api = FixtureApi();
     await open(tester, ProductShell(api: api));
     expect(api.homes, 1);
+    await scrollToAgenda(tester);
     expect(find.text('Equipo A'), findsOneWidget);
     expect(find.text('Liga de prueba'), findsOneWidget);
     await capture(tester, 'home');
@@ -806,6 +852,7 @@ void main() {
     await tester.tap(find.text('Reintentar'));
     await tester.pumpAndSettle();
     expect(api.homes, 2);
+    await scrollToAgenda(tester);
     expect(find.text('Equipo A'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.dispose();

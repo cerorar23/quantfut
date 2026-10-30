@@ -139,6 +139,39 @@ String nbaPlayerPhoto(String playerId) =>
     ? '/web/imagenes/jugadores/nba/$playerId.png'
     : '';
 
+// Las 30 siglas NBA con su nombre completo (el feed da nombres, el logo va por sigla).
+const _nbaTeams = <String, String>{
+  'ATL': 'atlanta hawks', 'BOS': 'boston celtics', 'BKN': 'brooklyn nets',
+  'CHA': 'charlotte hornets', 'CHI': 'chicago bulls', 'CLE': 'cleveland cavaliers',
+  'DAL': 'dallas mavericks', 'DEN': 'denver nuggets', 'DET': 'detroit pistons',
+  'GSW': 'golden state warriors', 'HOU': 'houston rockets', 'IND': 'indiana pacers',
+  'LAC': 'los angeles clippers', 'LAL': 'los angeles lakers', 'MEM': 'memphis grizzlies',
+  'MIA': 'miami heat', 'MIL': 'milwaukee bucks', 'MIN': 'minnesota timberwolves',
+  'NOP': 'new orleans pelicans', 'NYK': 'new york knicks', 'OKC': 'oklahoma city thunder',
+  'ORL': 'orlando magic', 'PHI': 'philadelphia 76ers', 'PHX': 'phoenix suns',
+  'POR': 'portland trail blazers', 'SAC': 'sacramento kings', 'SAS': 'san antonio spurs',
+  'TOR': 'toronto raptors', 'UTA': 'utah jazz', 'WAS': 'washington wizards',
+};
+
+final _nbaByName = () {
+  final m = <String, String>{};
+  for (final e in _nbaTeams.entries) {
+    m[e.value] = e.key;
+    // Nombre corto: lo que sigue a la ciudad («knicks», «trail blazers», «76ers»).
+    final words = e.value.split(' ');
+    m[words.last] = e.key;
+    if (words.length > 2) m[words.sublist(words.length - 2).join(' ')] = e.key;
+  }
+  m['la clippers'] = 'LAC';
+  m['la lakers'] = 'LAL';
+  m['blazers'] = 'POR';
+  m['sixers'] = 'PHI';
+  return m;
+}();
+
+/// Sigla NBA de un nombre de equipo (completo o corto); desconocido: null (avatar con iniciales).
+String? nbaTricode(String name) => _nbaByName[_norm(name)];
+
 /// URL absoluta de una ruta del servidor; nula o vacía da null. Toda pantalla debe usarla
 /// para cada ruta de imagen (así un '' de `nbaPlayerPhoto` nunca pide la raíz de la API).
 String? serverImageUrl(QuantFutApi api, String? path) =>

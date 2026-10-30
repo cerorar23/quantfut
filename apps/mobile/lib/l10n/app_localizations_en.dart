@@ -859,6 +859,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeByDate => 'Matches by date and time';
 
   @override
+  String get homeFeatured => 'Pick of the day';
+
+  @override
+  String get homeFeedError => 'We couldn\'t load this sport\'s data.';
+
+  @override
   String homeForecastAt(String when, String mexico) {
     return 'Forecast on $when ($mexico Mexico time)';
   }
@@ -871,6 +877,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeNoMatchesDay => 'No matches on this day.';
+
+  @override
+  String get homePlayersWithPicks => 'Players with forecasts';
 
   @override
   String get homeSeeAll => 'See all';
@@ -1158,6 +1167,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get marketHtGoal => 'Goal in the 1st half';
+
+  @override
+  String marketOverLine(String line) {
+    return 'Over $line';
+  }
 
   @override
   String get marketResult1x2 => '1X2 result';
