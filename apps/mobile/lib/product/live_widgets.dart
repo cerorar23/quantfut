@@ -6,6 +6,7 @@ import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'qf_theme.dart';
+import 'sport_images.dart';
 
 const liveBg = QfColors.bg,
     livePanel = QfColors.surface,
@@ -90,17 +91,12 @@ class TeamCrest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = team['escudo'];
-    final fallback = Icon(Icons.shield_outlined, size: size, color: liveMuted);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: url is String
-          ? Image.network(
-              api.base.resolve(url).toString(),
-              headers: const {'User-Agent': 'QuantFut/1.0 (Android; Flutter)'},
-              errorBuilder: (_, error, stack) => fallback,
-            )
-          : fallback,
+    return QfAvatar(
+      url: url is String && url.isNotEmpty
+          ? api.base.resolve(url).toString()
+          : null,
+      name: '${team['name'] ?? team['nombre'] ?? ''}',
+      size: size,
     );
   }
 }

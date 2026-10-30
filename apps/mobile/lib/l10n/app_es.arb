@@ -770,6 +770,8 @@
   "@homeTomorrow": {
     "description": "Encabezado del día de mañana en la agenda."
   },
+  "imageCredits": "Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.",
+  "imageUnavailable": "Imagen no disponible",
   "inboxEmpty": "Todavía no tienes avisos.",
   "inboxMatch": "Partido",
   "inboxTitle": "Avisos",

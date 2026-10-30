@@ -1660,6 +1660,18 @@ abstract class AppLocalizations {
   /// **'Mañana'**
   String get homeTomorrow;
 
+  /// No description provided for @imageCredits.
+  ///
+  /// In es, this message translates to:
+  /// **'Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.'**
+  String get imageCredits;
+
+  /// No description provided for @imageUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Imagen no disponible'**
+  String get imageUnavailable;
+
   /// No description provided for @inboxEmpty.
   ///
   /// In es, this message translates to:

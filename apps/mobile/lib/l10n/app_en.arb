@@ -258,6 +258,8 @@
   "homeTicketsTitle": "Tickets of the day",
   "homeToday": "Today",
   "homeTomorrow": "Tomorrow",
+  "imageCredits": "Photos: Wikimedia Commons (CC BY-SA). Authors are listed on each match page.",
+  "imageUnavailable": "Image unavailable",
   "inboxEmpty": "You have no alerts yet.",
   "inboxMatch": "Match",
   "inboxTitle": "Alerts",

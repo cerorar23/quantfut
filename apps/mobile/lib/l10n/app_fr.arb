@@ -258,6 +258,8 @@
   "homeTicketsTitle": "Tickets du jour",
   "homeToday": "Aujourd'hui",
   "homeTomorrow": "Demain",
+  "imageCredits": "Photos : Wikimedia Commons (CC BY-SA). Auteurs indiqués sur la fiche de chaque match.",
+  "imageUnavailable": "Image indisponible",
   "inboxEmpty": "Vous n'avez pas encore d'alertes.",
   "inboxMatch": "Match",
   "inboxTitle": "Alertes",

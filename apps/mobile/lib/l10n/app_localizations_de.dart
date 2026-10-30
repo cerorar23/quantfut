@@ -918,6 +918,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get homeTomorrow => 'Morgen';
 
   @override
+  String get imageCredits =>
+      'Fotos: Wikimedia Commons (CC BY-SA). Urheber stehen auf der Seite jedes Spiels.';
+
+  @override
+  String get imageUnavailable => 'Bild nicht verfügbar';
+
+  @override
   String get inboxEmpty => 'Du hast noch keine Hinweise.';
 
   @override

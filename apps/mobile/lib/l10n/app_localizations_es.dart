@@ -917,6 +917,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeTomorrow => 'Mañana';
 
   @override
+  String get imageCredits =>
+      'Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.';
+
+  @override
+  String get imageUnavailable => 'Imagen no disponible';
+
+  @override
   String get inboxEmpty => 'Todavía no tienes avisos.';
 
   @override

@@ -917,6 +917,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeTomorrow => 'Demain';
 
   @override
+  String get imageCredits =>
+      'Photos : Wikimedia Commons (CC BY-SA). Auteurs indiqués sur la fiche de chaque match.';
+
+  @override
+  String get imageUnavailable => 'Image indisponible';
+
+  @override
   String get inboxEmpty => 'Vous n\'avez pas encore d\'alertes.';
 
   @override
