@@ -2183,6 +2183,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get splashTagline => 'FOOTBALL · NBA · STATISTIQUES';
 
   @override
+  String get sportFootball => 'Football';
+
+  @override
+  String get sportMore => 'Plus';
+
+  @override
+  String get sportNba => 'NBA';
+
+  @override
+  String get sportSelectorLabel => 'Sport';
+
+  @override
+  String get sportTennis => 'Tennis';
+
+  @override
   String get startupFailed =>
       'Impossible de démarrer QuantFut. Veuillez réessayer.';
 

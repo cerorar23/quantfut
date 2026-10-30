@@ -3586,6 +3586,36 @@ abstract class AppLocalizations {
   /// **'FÚTBOL · NBA · ESTADÍSTICA'**
   String get splashTagline;
 
+  /// Nombre del deporte fútbol en el selector
+  ///
+  /// In es, this message translates to:
+  /// **'Fútbol'**
+  String get sportFootball;
+
+  /// Último chip del selector cuando hay más de 4 deportes
+  ///
+  /// In es, this message translates to:
+  /// **'Más'**
+  String get sportMore;
+
+  /// Nombre del deporte baloncesto (NBA) en el selector
+  ///
+  /// In es, this message translates to:
+  /// **'NBA'**
+  String get sportNba;
+
+  /// Etiqueta accesible del selector de deporte
+  ///
+  /// In es, this message translates to:
+  /// **'Deporte'**
+  String get sportSelectorLabel;
+
+  /// Nombre del deporte tenis en el selector
+  ///
+  /// In es, this message translates to:
+  /// **'Tenis'**
+  String get sportTennis;
+
   /// No description provided for @startupFailed.
   ///
   /// In es, this message translates to:

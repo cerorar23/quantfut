@@ -1955,6 +1955,26 @@
   "shellUnlockTitle": "Desbloquear pronóstico",
   "shellView": "Ver",
   "splashTagline": "FÚTBOL · NBA · ESTADÍSTICA",
+  "sportFootball": "Fútbol",
+  "@sportFootball": {
+    "description": "Nombre del deporte fútbol en el selector"
+  },
+  "sportMore": "Más",
+  "@sportMore": {
+    "description": "Último chip del selector cuando hay más de 4 deportes"
+  },
+  "sportNba": "NBA",
+  "@sportNba": {
+    "description": "Nombre del deporte baloncesto (NBA) en el selector"
+  },
+  "sportSelectorLabel": "Deporte",
+  "@sportSelectorLabel": {
+    "description": "Etiqueta accesible del selector de deporte"
+  },
+  "sportTennis": "Tenis",
+  "@sportTennis": {
+    "description": "Nombre del deporte tenis en el selector"
+  },
   "startupFailed": "No pudimos iniciar QuantFut. Inténtalo de nuevo.",
   "startupLoading": "Iniciando QuantFut",
   "statAveragesNote": "Promedios de {homeN} partidos del local y {awayN} del visitante. La cobertura de remates, córners y xG puede ser parcial.",
