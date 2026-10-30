@@ -5,22 +5,15 @@ import 'package:flutter/material.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
+import 'qf_theme.dart';
 
-const liveBg = Color(0xff090f1a),
-    livePanel = Color(0xff132333),
-    liveCyan = Color(0xff00d5ee),
-    liveGold = Color(0xffffbd00),
-    liveGreen = Color(0xff00d58b),
-    liveMuted = Color(0xffa0adbd);
-ThemeData liveTheme() => ThemeData.dark(useMaterial3: true).copyWith(
-  scaffoldBackgroundColor: liveBg,
-  colorScheme: const ColorScheme.dark(
-    primary: liveCyan,
-    secondary: liveGold,
-    surface: livePanel,
-  ),
-  textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Gilroy Medium'),
-);
+const liveBg = QfColors.bg,
+    livePanel = QfColors.surface,
+    liveCyan = QfColors.primary,
+    liveGold = QfColors.cta,
+    liveGreen = QfColors.success,
+    liveMuted = QfColors.text2;
+ThemeData liveTheme() => qfTheme();
 Widget liveText(
   String text, {
   double size = 14,
