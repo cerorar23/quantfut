@@ -81,7 +81,7 @@ class _ProductShellState extends State<ProductShell>
           for (final k in order)
             if (!hidden.contains(k)) k,
         ];
-        sport = initial;
+        if (!sportChosen) sport = initial; // una elección del usuario gana a la lectura inicial
         _fitStream();
       });
     } catch (_) {
@@ -94,7 +94,10 @@ class _ProductShellState extends State<ProductShell>
     if (!sportSpecs[sport]!.streams.contains(stream)) stream = 'high';
   }
 
+  bool sportChosen = false;
+
   void changeSport(SportKind value) {
+    sportChosen = true;
     if (value == sport) return;
     setState(() {
       sport = value;
@@ -481,9 +484,33 @@ class _ProductShellState extends State<ProductShell>
     ],
   );
 
+  /// El selector va siempre; la carga o el error del fútbol solo afectan a su hueco.
   Widget mainBody() => withSelector(
-    sport == SportKind.football ? footballBody() : sportBody(),
+    sport == SportKind.football ? footballGate(footballBody) : sportBody(),
   );
+
+  /// Cargando / error con reintento / contenido del fútbol (`data` ya cargado).
+  Widget footballGate(Widget Function() content) {
+    if (busy && data == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              liveText(error!, color: liveMuted),
+              const SizedBox(height: 16),
+              liveButton(context.l10n.commonRetry, reload),
+            ],
+          ),
+        ),
+      );
+    }
+    return data == null ? const SizedBox() : content();
+  }
 
   /// Contenido de NBA y tenis: vacío hasta que las tareas 7 y 8 lo conecten.
   Widget sportBody() {
@@ -604,30 +631,14 @@ class _ProductShellState extends State<ProductShell>
             ),
       body: tab == 3
           ? RewardsScreen(api: api, embedded: true)
-          : busy && data == null
-          ? const Center(child: CircularProgressIndicator())
-          : error != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    liveText(error!, color: liveMuted),
-                    const SizedBox(height: 16),
-                    liveButton(context.l10n.commonRetry, reload),
-                  ],
-                ),
-              ),
-            )
-          : data == null
-          ? const SizedBox()
           : tab == 4
-          ? LiveProfileScreen(
-              api: api,
-              data: data!,
-              onVip: vip,
-              onChanged: reload,
+          ? footballGate(
+              () => LiveProfileScreen(
+                api: api,
+                data: data!,
+                onVip: vip,
+                onChanged: reload,
+              ),
             )
           : mainBody(),
       bottomNavigationBar: BottomNavigationBar(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:ui' as ui;
@@ -19,6 +20,7 @@ import 'package:gobet/product/sport_selector.dart';
 import 'package:gobet/product/sports.dart';
 
 class FixtureApi extends QuantFutApi {
+  Completer<void>? gate;
   bool fail = false;
   bool richDetail = false;
   bool detailLocked = false;
@@ -42,6 +44,7 @@ class FixtureApi extends QuantFutApi {
   @override
   Future<JsonMap> home(DateTime date) async {
     homes++;
+    if (gate != null) await gate!.future;
     if (fail) throw const ApiFailure('Sin conexión');
     return {
       'config': config,
@@ -192,6 +195,7 @@ void main() {
     WidgetTester tester,
     Widget child, {
     double scale = 1,
+    bool settle = true,
   }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -218,7 +222,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) await tester.pumpAndSettle();
   }
 
   Future<void> capture(WidgetTester tester, String name) async {
@@ -351,6 +355,7 @@ void main() {
             ),
           ),
         );
+        addTearDown(tester.view.resetPhysicalSize);
         tester.view.physicalSize = const Size(360, 640);
         await tester.pumpAndSettle();
         for (final sport in SportKind.values) {
@@ -364,6 +369,57 @@ void main() {
       }
     });
   }
+  testWidgets('si el fútbol falla, el selector sigue y NBA no muestra el error', (tester) async {
+    final api = FixtureApi()..fail = true;
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    expect(find.byType(SportSelector), findsOneWidget);
+    expect(find.text('Sin conexión'), findsOneWidget);
+    expect(find.text('Reintentar'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sport-placeholder')), findsOneWidget);
+    expect(find.text('Sin conexión'), findsNothing);
+    expect(find.text('Reintentar'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('sport-futbol')));
+    await tester.pumpAndSettle();
+    expect(find.text('Sin conexión'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('mientras carga el fútbol, el selector se ve y NBA se puede tocar', (tester) async {
+    final api = FixtureApi()..gate = Completer<void>();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()), settle: false);
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(SportSelector), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('sport-placeholder')), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    api.gate!.complete();
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('una lectura inicial tardía no pisa la elección del usuario', (tester) async {
+    final api = FixtureApi();
+    final read = Completer<String?>();
+    final store = <String, String>{};
+    final prefs = SportPrefs(
+      read: (k) => k == 'sports_last' ? read.future : Future.value(store[k]),
+      write: (k, v) async => store[k] = v,
+    );
+    await open(tester, ProductShell(api: api, sportPrefs: prefs), settle: false);
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('sport-tenis')));
+    await tester.pump();
+    read.complete('nba');
+    await tester.pumpAndSettle();
+    expect(selectedMark('tenis'), findsOneWidget);
+    expect(selectedMark('nba'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
   testWidgets('home uses API calendar and all five tabs including Coins', (
     tester,
   ) async {
