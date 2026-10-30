@@ -46,6 +46,7 @@ class SportSelector extends StatelessWidget {
           accent: QfColors.muted,
           selected: false,
           count: 0,
+          // Marcador de posición: una tarea posterior define qué abre «Más».
           onTap: () {},
         ),
     ];
@@ -99,12 +100,16 @@ class _Chip extends StatelessWidget {
       button: true,
       selected: selected,
       label: count > 0 ? '$label, $count' : label,
+      onTap: onTap,
       child: ExcludeSemantics(
         child: Material(
           color: selected ? accent.withValues(alpha: 0.14) : QfColors.surface,
           shape: CutCornerBorder(
             cut: 8,
-            side: BorderSide(color: selected ? accent : QfColors.border),
+            side: BorderSide(
+              color: selected ? accent : QfColors.border,
+              width: selected ? 2 : 1,
+            ),
           ),
           child: InkWell(
             customBorder: const CutCornerBorder(cut: 8),
@@ -117,6 +122,16 @@ class _Chip extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    if (selected) ...[
+                      // Marca no cromática: el color nunca es la única señal.
+                      Icon(
+                        Icons.check,
+                        key: const ValueKey('sport-selected-mark'),
+                        size: 16,
+                        color: color,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     Icon(icon, size: 18, color: color),
                     const SizedBox(width: 6),
                     Flexible(

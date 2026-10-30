@@ -62,4 +62,47 @@ void main() {
     await tester.tap(find.text('TENIS'));
     expect(tapped, SportKind.tennis);
   });
+
+  Widget host(SportKind value, ValueChanged<SportKind> on) => MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('es'),
+    home: Scaffold(
+      body: SportSelector(
+        sports: SportKind.values,
+        value: value,
+        onChanged: on,
+      ),
+    ),
+  );
+
+  testWidgets('un chip se activa por accesibilidad (acción táctil)', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    SportKind? tapped;
+    await tester.pumpWidget(host(SportKind.nba, (s) => tapped = s));
+    tester.semantics.tap(find.semantics.byLabel(RegExp('Tenis')));
+    expect(tapped, SportKind.tennis);
+    handle.dispose();
+  });
+
+  testWidgets('la marca no cromática existe solo en el chip activo', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host(SportKind.nba, (_) {}));
+    final mark = find.byKey(const ValueKey('sport-selected-mark'));
+    expect(mark, findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('sport-nba')),
+        matching: mark,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('sport-nba'))).height,
+      greaterThanOrEqualTo(44),
+    );
+  });
 }
