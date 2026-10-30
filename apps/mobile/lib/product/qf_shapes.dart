@@ -166,6 +166,85 @@ class QfBadge extends StatelessWidget {
   }
 }
 
+/// Título de sección (Rajdhani 700 en mayúsculas).
+Widget qfTitle(String text, {double size = 15, Color color = QfColors.text}) => Padding(
+  padding: const EdgeInsets.only(top: 16, bottom: 4),
+  child: Text(
+    text.toUpperCase(),
+    style: TextStyle(
+      fontFamily: qfDisplay,
+      fontWeight: FontWeight.w700,
+      fontSize: size,
+      letterSpacing: .9,
+      color: color,
+    ),
+  ),
+);
+
+/// Diálogo de la piel v3: hoja `surface2`, esquina cortada y título en Rajdhani.
+AlertDialog qfAlert({
+  required String title,
+  required Widget content,
+  required List<Widget> actions,
+  IconData? icon,
+  Color iconColor = QfColors.primary,
+}) => AlertDialog(
+  backgroundColor: QfColors.surface2,
+  shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+  icon: icon == null ? null : Icon(icon, color: iconColor),
+  title: Text(
+    title.toUpperCase(),
+    style: const TextStyle(
+      fontFamily: qfDisplay,
+      fontWeight: FontWeight.w700,
+      fontSize: 20,
+      letterSpacing: .6,
+      color: QfColors.text,
+    ),
+  ),
+  content: DefaultTextStyle.merge(
+    style: const TextStyle(color: QfColors.text2, height: 1.4),
+    child: content,
+  ),
+  actions: actions,
+);
+
+/// Botón relleno de la piel v3: ámbar solo para VIP, desbloquear y monedas (`cta`),
+/// azul (`primary`) para lo demás. Texto oscuro de la paleta y 44 dp de alto.
+ButtonStyle qfFilled(Color color) => FilledButton.styleFrom(
+  backgroundColor: color,
+  foregroundColor: color == QfColors.cta ? QfColors.onCta : QfColors.onPrimary,
+  minimumSize: const Size(64, 44),
+  shape: const CutCornerBorder(cut: 8),
+  textStyle: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: .6),
+);
+
+/// Botón de texto azul con 44 dp de alto.
+ButtonStyle qfText() => TextButton.styleFrom(
+  foregroundColor: QfColors.primary,
+  minimumSize: const Size(64, 44),
+);
+
+/// Barra superior de la piel v3 (fondo `bg`, título en Rajdhani).
+AppBar qfAppBar(String title) => AppBar(
+  backgroundColor: QfColors.bg,
+  foregroundColor: QfColors.text,
+  title: Text(
+    title,
+    style: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w700, fontSize: 21),
+  ),
+);
+
+/// Mensaje de error: icono y texto en `danger` (el color nunca va solo).
+Widget qfError(String message) => Row(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    const Icon(Icons.error_outline, size: 16, color: QfColors.danger),
+    const SizedBox(width: 6),
+    Expanded(child: Text(message, style: const TextStyle(fontSize: 13, color: QfColors.danger))),
+  ],
+);
+
 /// `total` segmentos, los `filled` primeros en `color`; `current` (opcional)
 /// marca el segmento en curso con borde.
 class SegmentedBar extends StatelessWidget {

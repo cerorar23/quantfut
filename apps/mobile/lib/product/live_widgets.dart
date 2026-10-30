@@ -67,7 +67,9 @@ Widget liveButton(
   child: FilledButton(
     style: FilledButton.styleFrom(
       backgroundColor: color,
-      foregroundColor: liveBg,
+      // Texto oscuro de la paleta: nunca blanco sobre azul ni sobre ámbar.
+      foregroundColor: color == QfColors.primary ? QfColors.onPrimary : QfColors.onCta,
+      minimumSize: const Size(44, 48),
       padding: const EdgeInsets.all(14),
     ),
     onPressed: action,

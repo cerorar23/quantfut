@@ -433,9 +433,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Aprende a leer los datos antes de decidir.'), findsOneWidget);
     expect(find.text('Una probabilidad no es una certeza'), findsOneWidget);
+    // Acordeón: el primer tema abierto, el resto plegado hasta tocarlo.
+    expect(find.textContaining('3 de cada 4'), findsOneWidget);
+    expect(find.textContaining('no es una casa de apuestas'), findsNothing);
+    await tester.scrollUntilVisible(find.text('Es información y entretenimiento'), 300);
+    await tester.tap(find.text('Es información y entretenimiento'));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.textContaining('no es una casa de apuestas'), 300);
     expect(find.textContaining('no es una casa de apuestas'), findsOneWidget);
-    expect(find.textContaining('garantiza'), findsNothing); // la guía no promete ganancias
+    // La guía no promete ganancias: «garantiza» solo aparece negado («Ningún dato garantiza»).
+    for (final t in tester.widgetList<Text>(find.textContaining('garantiza'))) {
+      expect(t.data, contains('Ningún dato garantiza'));
+    }
   });
 
   for (final code in languages) {

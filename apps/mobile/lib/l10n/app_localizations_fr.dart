@@ -44,6 +44,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get accessConsentNeeded => 'Cochez la case pour continuer.';
 
   @override
+  String get accessConsentRequired =>
+      'Cochez la case pour continuer avec Google.';
+
+  @override
   String accessConsentRich(String terms, String privacy) {
     return 'J\'ai 18 ans ou plus et j\'accepte les $terms et la $privacy.';
   }
@@ -939,6 +943,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inboxMatch => 'Match';
 
   @override
+  String inboxSportTag(String sport) {
+    return 'Sport : $sport';
+  }
+
+  @override
   String get inboxTitle => 'Alertes';
 
   @override
@@ -1381,6 +1390,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get moreLegal => 'Mentions légales';
 
   @override
+  String get moreMySportsSub => 'Réordonnez et choisissez les sports affichés';
+
+  @override
   String get moreRate => 'Noter l\'app';
 
   @override
@@ -1763,6 +1775,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileBalance => 'Solde et suivi';
 
   @override
+  String get profileCheckUpdate => 'Rechercher une mise à jour';
+
+  @override
   String get profileConnected => 'QuantFut · Connecté au serveur';
 
   @override
@@ -1803,6 +1818,38 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileMeasurement => 'Mesure et erreurs';
 
   @override
+  String get profileMySports => 'Mes sports';
+
+  @override
+  String get profileMySportsDefault => 'par défaut';
+
+  @override
+  String profileMySportsDown(String sport) {
+    return 'Descendre $sport';
+  }
+
+  @override
+  String get profileMySportsHint =>
+      'Utilisez les flèches pour réordonner · le premier s\'ouvre par défaut';
+
+  @override
+  String get profileMySportsLastVisible => 'Gardez au moins un sport visible.';
+
+  @override
+  String get profileMySportsSaveError =>
+      'La modification n\'a pas pu être enregistrée. Réessayez.';
+
+  @override
+  String profileMySportsShow(String sport) {
+    return 'Afficher $sport';
+  }
+
+  @override
+  String profileMySportsUp(String sport) {
+    return 'Monter $sport';
+  }
+
+  @override
   String get profileNotifications => 'Notifications';
 
   @override
@@ -1835,6 +1882,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileTitle => 'Profil et paramètres';
+
+  @override
+  String get profileUpToDate => 'Vous avez déjà la dernière version.';
+
+  @override
+  String get profileUpdateCheckFailed =>
+      'Impossible de vérifier les mises à jour. Réessayez plus tard.';
 
   @override
   String profileValidUntil(String date) {
@@ -2083,6 +2137,17 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String rewardsUnlockFor(Object cost) {
     return 'Débloquez un pronostic pour $cost pièces';
+  }
+
+  @override
+  String rewardsUnlocksAvailable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Vous avez des pièces pour $count déblocages.',
+      one: 'Vous avez des pièces pour 1 déblocage.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2650,6 +2715,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipBenefit4Title => 'Cotes et analyse du match';
 
   @override
+  String get vipBenefitSportsBody => 'Matchs et joueurs, avec les mêmes sceaux';
+
+  @override
+  String get vipBenefitSportsTitle => 'NBA et tennis inclus';
+
+  @override
   String get vipBestPrice => '★ MEILLEUR PRIX';
 
   @override
@@ -2682,7 +2753,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'Tous les pronostics Haute probabilité et du Défi Escalier tant que votre abonnement est en cours.';
+      'Tous les pronostics Haute probabilité et du Défi Escalier en football, NBA et tennis tant que votre abonnement est en cours.';
 
   @override
   String get vipLinked => '🔒  Votre accès VIP est lié à votre compte';
@@ -2736,6 +2807,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipRestore => 'Restaurer les achats';
 
   @override
+  String get vipSportsNote =>
+      'Chaque pronostic est scellé avant le match. « — » : pas encore de résultats pour le calculer.';
+
+  @override
+  String get vipSportsTitle => 'Taux de réussite enregistré par sport';
+
+  @override
   String get vipStatRecorded => 'Taux de réussite enregistré';
 
   @override
@@ -2764,7 +2842,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Découvrez le côté statistique du sport : matchs, analyses et pronostics du projet que vous connaissez déjà sur le web.';
 
   @override
-  String get welcome1Title => 'Football et NBA,\nsous un autre angle';
+  String get welcome1Title => 'Football, NBA et tennis,\nsous un autre angle';
 
   @override
   String get welcome2Body =>
@@ -2775,7 +2853,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get welcome3Body =>
-      'Buts, corners, handicap et statistiques de la NBA. Découvrez ce que mesure chaque analyse avant d\'interpréter une sélection.';
+      'Buts, corners et handicap au football, props de joueurs en NBA et jeux au tennis. Découvrez ce que mesure chaque analyse avant d\'interpréter une sélection.';
 
   @override
   String get welcome3Title => 'Plus de marchés.\nPlus d\'informations.';

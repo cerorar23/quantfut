@@ -525,6 +525,29 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
+  testWidgets('el menú abre Mis deportes en Perfil y ocultar el deporte actual lo cambia', (
+    tester,
+  ) async {
+    final api = FixtureApi();
+    final store = {'sports_last': 'nba'};
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
+    expect(selectedMark('nba'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('home-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('more-sports')));
+    await tester.pumpAndSettle();
+    final section = find.byKey(const ValueKey('my-sports'));
+    expect(section, findsOneWidget);
+    expect(tester.getTopLeft(section).dy, lessThan(844));
+    await tester.tap(find.byKey(const ValueKey('my-sport-switch-nba')));
+    await tester.pumpAndSettle();
+    expect(store['sports_hidden'], 'nba');
+    await navigate(tester, 'Inicio');
+    expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
+    expect(selectedMark('futbol'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
   testWidgets('home uses API calendar and all five tabs including Coins', (
     tester,
   ) async {

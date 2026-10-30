@@ -24,6 +24,7 @@ import 'live_rewards.dart';
 import 'live_home.dart';
 import 'home_sport.dart';
 import 'live_more.dart';
+import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'sport_detail.dart';
 import 'sport_images.dart';
@@ -100,6 +101,33 @@ class _ProductShellState extends State<ProductShell>
       /* Se queda en fútbol con los tres deportes. */
     }
   }
+
+  /// Tras guardar en Perfil → «Mis deportes»: relee orden y ocultos. Si el deporte actual
+  /// quedó oculto se pasa al primero visible.
+  Future<void> sportsChanged() async {
+    final order = await sportPrefs.order();
+    final hidden = await sportPrefs.hidden();
+    if (!mounted) return;
+    setState(() {
+      visibleSports = [
+        for (final k in order)
+          if (!hidden.contains(k)) k,
+      ];
+      if (!visibleSports.contains(sport)) {
+        sport = visibleSports.first;
+        _fitStream();
+      }
+    });
+    _ensureFeed(sport);
+  }
+
+  /// Sube cada vez que el menú pide «Mis deportes»: el Perfil se desplaza a la sección.
+  int sportsFocus = 0;
+
+  void openMySports() => setState(() {
+    tab = 4;
+    sportsFocus++;
+  });
 
   /// Si la sección actual no existe en el deporte, vuelve a Alta probabilidad.
   void _fitStream() {
@@ -185,11 +213,13 @@ class _ProductShellState extends State<ProductShell>
     if (await prefs.getString('consent_notice') == consentVersion || !mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(dialogContext.l10n.privacyUpdateTitle),
+      builder: (dialogContext) => qfAlert(
+        icon: Icons.privacy_tip_outlined,
+        title: dialogContext.l10n.privacyUpdateTitle,
         content: Text(dialogContext.l10n.privacyUpdateBody),
         actions: [
           TextButton(
+            style: qfText(),
             onPressed: () => launchUrl(
               Uri.parse('https://pronosticosdeportivos.pro/legal/privacidad'),
               mode: LaunchMode.externalApplication,
@@ -197,6 +227,7 @@ class _ProductShellState extends State<ProductShell>
             child: Text(dialogContext.l10n.privacyUpdateRead),
           ),
           FilledButton(
+            style: qfFilled(QfColors.primary),
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(dialogContext.l10n.privacyUpdateOk),
           ),
@@ -329,15 +360,21 @@ class _ProductShellState extends State<ProductShell>
     final cost = jsonMap(data?['rewards'])['unlock_cost'];
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: Text(context.l10n.shellUnlockTitle),
+      builder: (c) => qfAlert(
+        icon: Icons.lock_open,
+        iconColor: QfColors.cta,
+        title: context.l10n.shellUnlockTitle,
         content: Text(context.l10n.shellUnlockBody(cost ?? '—')),
         actions: [
           TextButton(
+            style: qfText(),
             onPressed: () => Navigator.pop(c, false),
             child: Text(context.l10n.commonCancel),
           ),
-          TextButton(
+          // La única acción ámbar del diálogo.
+          FilledButton(
+            key: const ValueKey('unlock-confirm'),
+            style: qfFilled(QfColors.cta),
             onPressed: () => Navigator.pop(c, true),
             child: Text(context.l10n.commonConfirm),
           ),
@@ -372,15 +409,20 @@ class _ProductShellState extends State<ProductShell>
     final l10n = context.l10n;
     final go = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: Text(l10n.shellNeedCoinsTitle),
+      builder: (c) => qfAlert(
+        icon: Icons.toll,
+        iconColor: QfColors.cta,
+        title: l10n.shellNeedCoinsTitle,
         content: Text(l10n.shellNeedCoinsBody),
         actions: [
           TextButton(
+            style: qfText(),
             onPressed: () => Navigator.pop(c, false),
             child: Text(l10n.commonCancel),
           ),
           FilledButton(
+            key: const ValueKey('need-coins-go'),
+            style: qfFilled(QfColors.cta),
             onPressed: () => Navigator.pop(c, true),
             child: Text(l10n.shellNeedCoinsCta),
           ),
@@ -666,15 +708,7 @@ class _ProductShellState extends State<ProductShell>
 
   @override
   Widget build(BuildContext context) => Theme(
-    data: ThemeData.dark(useMaterial3: true).copyWith(
-      scaffoldBackgroundColor: QfColors.bg,
-      colorScheme: const ColorScheme.dark(
-        primary: QfColors.primary,
-        secondary: liveGold,
-        surface: livePanel,
-      ),
-      textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Gilroy Medium'),
-    ),
+    data: qfTheme(),
     child: Scaffold(
       appBar: tab == 3
           ? null
@@ -683,7 +717,7 @@ class _ProductShellState extends State<ProductShell>
               leading: IconButton(
                 key: const ValueKey('home-menu'),
                 tooltip: context.l10n.homeMenuTooltip,
-                onPressed: () => showMoreSheet(context),
+                onPressed: () => showMoreSheet(context, onMySports: openMySports),
                 icon: const Icon(Icons.menu),
               ),
               title: Text(
@@ -722,6 +756,9 @@ class _ProductShellState extends State<ProductShell>
                 data: data!,
                 onVip: vip,
                 onChanged: reload,
+                sportPrefs: sportPrefs,
+                onSportsChanged: sportsChanged,
+                focusSports: sportsFocus,
               ),
             )
           : mainBody(),

@@ -33,6 +33,7 @@
   "@accessConsentNeeded": {
     "description": "Aviso al pulsar Google sin aceptar los términos."
   },
+  "accessConsentRequired": "Marca la casilla para continuar con Google.",
   "accessConsentRich": "Tengo 18 años o más y acepto los {terms} y la {privacy}.",
   "@accessConsentRich": {
     "description": "Consentimiento con los dos enlaces legales dentro de la frase.",
@@ -786,6 +787,15 @@
   "imageUnavailable": "Imagen no disponible",
   "inboxEmpty": "Todavía no tienes avisos.",
   "inboxMatch": "Partido",
+  "inboxSportTag": "Deporte: {sport}",
+  "@inboxSportTag": {
+    "description": "Etiqueta accesible del deporte de un aviso.",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
   "inboxTitle": "Avisos",
   "ladderActiveCount": "{count, plural, one{1 reto en marcha} other{{count} retos en marcha}}",
   "@ladderActiveCount": {
@@ -1170,6 +1180,7 @@
   "@moreLegal": {
     "description": "Sección del menú Más con términos y privacidad."
   },
+  "moreMySportsSub": "Ordena y elige qué deportes ves",
   "moreRate": "Evaluar la app",
   "@moreRate": {
     "description": "Abre la ficha de la app en la tienda."
@@ -1548,6 +1559,7 @@
   "probBarHome": "Local",
   "profileAppVersion": "Versión de la app",
   "profileBalance": "Balance y seguimiento",
+  "profileCheckUpdate": "Buscar actualización",
   "profileConnected": "QuantFut · Conectada al servidor",
   "profileCreateAccount": "Crear cuenta",
   "profileCreateOne": "Crear una cuenta",
@@ -1561,6 +1573,38 @@
   "profileHaveAccount": "Ya tengo cuenta",
   "profileLanguage": "Idioma",
   "profileMeasurement": "Medición y errores",
+  "profileMySports": "Mis deportes",
+  "profileMySportsDefault": "por defecto",
+  "profileMySportsDown": "Bajar {sport}",
+  "@profileMySportsDown": {
+    "description": "Botón de flecha para bajar un deporte en «Mis deportes».",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMySportsHint": "Usa las flechas para ordenar · el primero se abre por defecto",
+  "profileMySportsLastVisible": "Deja al menos un deporte visible.",
+  "profileMySportsSaveError": "No se pudo guardar el cambio. Inténtalo de nuevo.",
+  "profileMySportsShow": "Mostrar {sport}",
+  "@profileMySportsShow": {
+    "description": "Interruptor para mostrar u ocultar un deporte.",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMySportsUp": "Subir {sport}",
+  "@profileMySportsUp": {
+    "description": "Botón de flecha para subir un deporte en «Mis deportes».",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
   "profileNotifications": "Notificaciones",
   "profileOddsFormat": "Formato de cuotas",
   "profileOddsFormatValue": "Decimal · Cuotas registradas al publicar",
@@ -1572,6 +1616,8 @@
   "profileSignIn": "Iniciar sesión",
   "profileSignOut": "Cerrar sesión",
   "profileTitle": "Perfil y configuración",
+  "profileUpToDate": "Ya tienes la última versión.",
+  "profileUpdateCheckFailed": "No se pudo comprobar si hay actualización. Inténtalo más tarde.",
   "profileValidUntil": "Vigencia: {date}",
   "@profileValidUntil": {
     "placeholders": {
@@ -1823,6 +1869,15 @@
     "placeholders": {
       "cost": {
         "type": "Object"
+      }
+    }
+  },
+  "rewardsUnlocksAvailable": "{count, plural, one{Tienes monedas para 1 desbloqueo.} other{Tienes monedas para {count} desbloqueos.}}",
+  "@rewardsUnlocksAvailable": {
+    "description": "Saldo de monedas expresado en desbloqueos posibles.",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },
@@ -2314,6 +2369,8 @@
   "vipBenefit3Title": "Reto Escalera completo",
   "vipBenefit4Body": "Cuota publicada, probabilidad y xG de cada pick",
   "vipBenefit4Title": "Cuotas y análisis del partido",
+  "vipBenefitSportsBody": "Partidos y jugadores, con los mismos sellos",
+  "vipBenefitSportsTitle": "NBA y tenis incluidos",
   "vipBestPrice": "★ MEJOR PRECIO",
   "vipCheckAccess": "Comprobar mi acceso",
   "vipCheckSignIn": "Inicia sesión en Perfil para comprobar tu acceso.",
@@ -2328,7 +2385,7 @@
   "vipFreeAccess": "Tu cuenta tiene acceso gratuito.",
   "vipGranted": "¡Listo! Tu acceso VIP está activo.",
   "vipHistoryNote": "Historial público y sellado; las muestras por mercado son pequeñas y un pronóstico puede fallar.",
-  "vipIntro": "Todos los pronósticos de Alta Probabilidad y del Reto Escalera mientras tu suscripción esté vigente.",
+  "vipIntro": "Todos los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol, NBA y tenis mientras tu suscripción esté vigente.",
   "vipLinked": "🔒  Tu acceso VIP queda vinculado a tu cuenta",
   "vipManage": "Ya tienes Plus. Cambia o cancela tu plan en la tienda.",
   "vipMonthly": "≈ {amount}/mes",
@@ -2355,6 +2412,8 @@
   "vipPricesNote": "Precios del catálogo del servidor.",
   "vipPurchasesPending": "Compras en preparación: aún no se cobra nada desde la app.",
   "vipRestore": "Restaurar compras",
+  "vipSportsNote": "Cada pick sellado antes del partido. «—»: aún sin resultados para calcularlo.",
+  "vipSportsTitle": "Acierto registrado por deporte",
   "vipStatRecorded": "Acierto registrado",
   "vipStatResolved": "Resueltos",
   "vipStoreFailed": "No se pudo confirmar la compra. Lo reintentaremos al volver a abrir la app.",
@@ -2363,10 +2422,10 @@
   "vipSubscribe": "Suscribirme",
   "vipVerifying": "Verificando la compra con la tienda…",
   "welcome1Body": "Descubre el lado estadístico del deporte: partidos, análisis y pronósticos del proyecto que ya conoces en la web.",
-  "welcome1Title": "Fútbol y NBA,\ncon otra perspectiva",
+  "welcome1Title": "Fútbol, NBA y tenis,\ncon otra perspectiva",
   "welcome2Body": "La forma reciente, el cara a cara y las estadísticas ayudan a entender lo que puede pasar. Empieza por los datos.",
   "welcome2Title": "Cada partido,\ncon más contexto",
-  "welcome3Body": "Goles, córners, hándicap y estadísticas de la NBA. Conoce qué mide cada análisis antes de interpretar una selección.",
+  "welcome3Body": "Goles, córners y hándicap en fútbol, props de jugadores en la NBA y juegos en el tenis. Conoce qué mide cada análisis antes de interpretar una selección.",
   "welcome3Title": "Más mercados.\nMás información.",
   "welcome4Body": "Un pronóstico también se entiende después del partido. El historial permite comparar estimaciones con resultados.",
   "welcome4Title": "Los resultados,\na la vista",

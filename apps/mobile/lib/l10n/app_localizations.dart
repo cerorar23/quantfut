@@ -160,6 +160,12 @@ abstract class AppLocalizations {
   /// **'Marca la casilla para continuar.'**
   String get accessConsentNeeded;
 
+  /// No description provided for @accessConsentRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca la casilla para continuar con Google.'**
+  String get accessConsentRequired;
+
   /// Consentimiento con los dos enlaces legales dentro de la frase.
   ///
   /// In es, this message translates to:
@@ -1702,6 +1708,12 @@ abstract class AppLocalizations {
   /// **'Partido'**
   String get inboxMatch;
 
+  /// Etiqueta accesible del deporte de un aviso.
+  ///
+  /// In es, this message translates to:
+  /// **'Deporte: {sport}'**
+  String inboxSportTag(String sport);
+
   /// No description provided for @inboxTitle.
   ///
   /// In es, this message translates to:
@@ -2386,6 +2398,12 @@ abstract class AppLocalizations {
   /// **'Legal'**
   String get moreLegal;
 
+  /// No description provided for @moreMySportsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Ordena y elige qué deportes ves'**
+  String get moreMySportsSub;
+
   /// Abre la ficha de la app en la tienda.
   ///
   /// In es, this message translates to:
@@ -2968,6 +2986,12 @@ abstract class AppLocalizations {
   /// **'Balance y seguimiento'**
   String get profileBalance;
 
+  /// No description provided for @profileCheckUpdate.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar actualización'**
+  String get profileCheckUpdate;
+
   /// No description provided for @profileConnected.
   ///
   /// In es, this message translates to:
@@ -3046,6 +3070,54 @@ abstract class AppLocalizations {
   /// **'Medición y errores'**
   String get profileMeasurement;
 
+  /// No description provided for @profileMySports.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis deportes'**
+  String get profileMySports;
+
+  /// No description provided for @profileMySportsDefault.
+  ///
+  /// In es, this message translates to:
+  /// **'por defecto'**
+  String get profileMySportsDefault;
+
+  /// Botón de flecha para bajar un deporte en «Mis deportes».
+  ///
+  /// In es, this message translates to:
+  /// **'Bajar {sport}'**
+  String profileMySportsDown(String sport);
+
+  /// No description provided for @profileMySportsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Usa las flechas para ordenar · el primero se abre por defecto'**
+  String get profileMySportsHint;
+
+  /// No description provided for @profileMySportsLastVisible.
+  ///
+  /// In es, this message translates to:
+  /// **'Deja al menos un deporte visible.'**
+  String get profileMySportsLastVisible;
+
+  /// No description provided for @profileMySportsSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el cambio. Inténtalo de nuevo.'**
+  String get profileMySportsSaveError;
+
+  /// Interruptor para mostrar u ocultar un deporte.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar {sport}'**
+  String profileMySportsShow(String sport);
+
+  /// Botón de flecha para subir un deporte en «Mis deportes».
+  ///
+  /// In es, this message translates to:
+  /// **'Subir {sport}'**
+  String profileMySportsUp(String sport);
+
   /// No description provided for @profileNotifications.
   ///
   /// In es, this message translates to:
@@ -3111,6 +3183,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Perfil y configuración'**
   String get profileTitle;
+
+  /// No description provided for @profileUpToDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes la última versión.'**
+  String get profileUpToDate;
+
+  /// No description provided for @profileUpdateCheckFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo comprobar si hay actualización. Inténtalo más tarde.'**
+  String get profileUpdateCheckFailed;
 
   /// No description provided for @profileValidUntil.
   ///
@@ -3477,6 +3561,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Desbloquea un pronóstico por {cost} monedas'**
   String rewardsUnlockFor(Object cost);
+
+  /// Saldo de monedas expresado en desbloqueos posibles.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{Tienes monedas para 1 desbloqueo.} other{Tienes monedas para {count} desbloqueos.}}'**
+  String rewardsUnlocksAvailable(int count);
 
   /// Etiqueta de protocolo de la línea de sello (hash) de un pick
   ///
@@ -4379,6 +4469,18 @@ abstract class AppLocalizations {
   /// **'Cuotas y análisis del partido'**
   String get vipBenefit4Title;
 
+  /// No description provided for @vipBenefitSportsBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Partidos y jugadores, con los mismos sellos'**
+  String get vipBenefitSportsBody;
+
+  /// No description provided for @vipBenefitSportsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'NBA y tenis incluidos'**
+  String get vipBenefitSportsTitle;
+
   /// No description provided for @vipBestPrice.
   ///
   /// In es, this message translates to:
@@ -4424,7 +4526,7 @@ abstract class AppLocalizations {
   /// No description provided for @vipIntro.
   ///
   /// In es, this message translates to:
-  /// **'Todos los pronósticos de Alta Probabilidad y del Reto Escalera mientras tu suscripción esté vigente.'**
+  /// **'Todos los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol, NBA y tenis mientras tu suscripción esté vigente.'**
   String get vipIntro;
 
   /// No description provided for @vipLinked.
@@ -4499,6 +4601,18 @@ abstract class AppLocalizations {
   /// **'Restaurar compras'**
   String get vipRestore;
 
+  /// No description provided for @vipSportsNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada pick sellado antes del partido. «—»: aún sin resultados para calcularlo.'**
+  String get vipSportsNote;
+
+  /// No description provided for @vipSportsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Acierto registrado por deporte'**
+  String get vipSportsTitle;
+
   /// No description provided for @vipStatRecorded.
   ///
   /// In es, this message translates to:
@@ -4550,7 +4664,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcome1Title.
   ///
   /// In es, this message translates to:
-  /// **'Fútbol y NBA,\ncon otra perspectiva'**
+  /// **'Fútbol, NBA y tenis,\ncon otra perspectiva'**
   String get welcome1Title;
 
   /// No description provided for @welcome2Body.
@@ -4568,7 +4682,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcome3Body.
   ///
   /// In es, this message translates to:
-  /// **'Goles, córners, hándicap y estadísticas de la NBA. Conoce qué mide cada análisis antes de interpretar una selección.'**
+  /// **'Goles, córners y hándicap en fútbol, props de jugadores en la NBA y juegos en el tenis. Conoce qué mide cada análisis antes de interpretar una selección.'**
   String get welcome3Body;
 
   /// No description provided for @welcome3Title.
