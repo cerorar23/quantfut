@@ -1,7 +1,7 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=hist-desde26-20261029';
+import { createRealViews } from './real-views.js?v=destacado-20261030';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=hist-desde26-20261029';
 import { createSportWindow } from './sports-window.js?v=imagenes-20261028b';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
@@ -241,9 +241,16 @@ function ensureRealMatch(id) {
   realMatchCache.set(id,entry);
   loadForecastMatch(id,publicFetch).then(result=>{
     if(generation!==realGeneration)return;
-    realMatchCache.set(id,result); if(state.realMatch===id)rerenderIfIdle();
+    realMatchCache.set(id,result);
+    if(state.realMatch===id)rerenderIfIdle(); else scheduleCardsRerender();
   });
   return entry;
+}
+// Las tarjetas de Pronósticos piden la ficha de cada partido para enseñar su destacado: se agrupan las respuestas en un solo repintado.
+let cardsRerender=null;
+function scheduleCardsRerender() {
+  if(cardsRerender)return;
+  cardsRerender=setTimeout(()=>{cardsRerender=null;rerenderIfIdle();},80);
 }
 
 
