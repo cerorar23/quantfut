@@ -162,6 +162,8 @@ def _obtener(clave: str, calcula) -> Cuerpo:
             arranca = True
         elif rancio:
             return rancio  # ya se está recalculando: no esperar
+    if not arranca and not rancio:
+        return _cuerpo(_no_disponible())  # solo espera quien lanza el cálculo: no agotar el threadpool compartido
     if arranca:
         threading.Thread(target=_ejecuta, args=(clave, calcula, trabajo), daemon=True).start()
     trabajo.fin.wait(ESPERA_MAX)

@@ -306,6 +306,20 @@ def test_calculo_lento_sin_resultado_previo_no_cuelga(tmp_path, monkeypatch):
     assert _espera(lambda: client.get(NBA).json()["state"] == "ok")
 
 
+def test_en_frio_solo_espera_quien_lanza_el_calculo(tmp_path, monkeypatch):
+    monta_nba(tmp_path)
+    monkeypatch.setattr(cw, "ESPERA_MAX", 5)
+    libera, llamadas = _bloqueable(monkeypatch)
+    primero = threading.Thread(target=lambda: client.get(NBA), daemon=True)
+    primero.start()
+    assert _espera(lambda: len(llamadas) == 1)
+    t0 = time.time()
+    r = client.get(NBA)  # no ocupa un hilo esperando: responde al instante
+    assert time.time() - t0 < 1 and r.json()["state"] == "unavailable" and len(llamadas) == 1
+    libera.set()
+    primero.join(5)
+
+
 def test_se_sirve_la_ultima_buena_mientras_recalcula(tmp_path, monkeypatch, entorno):
     monta_nba(tmp_path)
     buena = client.get(NBA).json()
