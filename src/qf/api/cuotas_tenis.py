@@ -18,8 +18,11 @@ snapshot_id, received_at}}. Un documento solo se usa si su hash coincide con el 
 """
 from __future__ import annotations
 
+import gzip
 import math
+import threading
 import unicodedata
+import zlib
 from collections import OrderedDict
 from collections.abc import Mapping
 from datetime import datetime, timezone
@@ -45,18 +48,24 @@ _CAMPOS = ("bookmaker", "market", "period", "name", "side", "point", "price_deci
            "dfs_odds_type", "payout_multiplier", "line_type")
 
 _cache: OrderedDict = OrderedDict()
-_ilegibles: OrderedDict = OrderedDict()  # recibos ausentes o corruptos: inmutables, no se releen
+# Solo fallos DEFINITIVOS (recibo inmutable): hash o hora distintos, gzip/JSON ilegible. Lo transitorio
+# (índice sin el recibo todavía, SQLite bloqueado, E/S) no se guarda y se reintenta en la siguiente llamada.
+_ilegibles: OrderedDict = OrderedDict()
+_lock = threading.Lock()  # FastAPI ejecuta endpoints síncronos en un threadpool
+_DEFINITIVOS = (gzip.BadGzipFile, EOFError, zlib.error, ValueError, KeyError, TypeError, AttributeError)
 
 
 def clear_cache():
-    _cache.clear()
-    _ilegibles.clear()
+    with _lock:
+        _cache.clear()
+        _ilegibles.clear()
 
 
 def _guarda(cache, key, value):
-    cache[key] = value
-    while len(cache) > MAX_RECEIPTS:
-        cache.popitem(last=False)
+    with _lock:
+        cache[key] = value
+        while len(cache) > MAX_RECEIPTS:
+            cache.popitem(last=False)
 
 
 # norm/same_player/side_of: copia exacta de tennis_odds_live_v1.norm y tennis_odds_propline_v1 (la API no lleva apps/).
@@ -83,26 +92,34 @@ def _side_of(name, a, b):
 
 def _filas(archive: Path, snapshot_id: str, received_at: str, event_id: str):
     """Filas de partido completo del evento en el recibo sellado; None si no se puede leer tal cual."""
-    key = (snapshot_id, received_at)
-    if key in _cache:
-        _cache.move_to_end(key)
-        return _cache[key].get(event_id)
-    if key in _ilegibles:
-        return None
+    key = (str(archive), snapshot_id, received_at)
+    with _lock:
+        if key in _cache:
+            _cache.move_to_end(key)
+            return _cache[key].get(event_id)
+        if key in _ilegibles:
+            return None
     try:
         # Con as_of = received_at sellado, newest() elige el mismo recibo y los mismos lotes de la hora que al sellar.
         events, receipt = pl.newest(archive, PATH, pl.parse_time(received_at), max_age_seconds=0)
-        if receipt is None or receipt["sha256"] != snapshot_id or receipt["received_at"] != received_at:
-            _guarda(_ilegibles, key, True)
-            return None
-        por_evento = {}
-        for e in events:
+    except _DEFINITIVOS:  # BadGzipFile antes que OSError: es corrupción, no E/S pasajera
+        _guarda(_ilegibles, key, True)
+        return None
+    except Exception:  # sqlite3.Error, OSError…: transitorio, no se cachea
+        return None
+    if receipt is None:  # la copia del archivo aún no tiene el recibo: transitorio
+        return None
+    if receipt["sha256"] != snapshot_id or receipt["received_at"] != received_at:
+        _guarda(_ilegibles, key, True)
+        return None
+    por_evento = {}
+    for e in events:
+        try:  # un evento malformado solo se pierde a sí mismo
             por_evento[str(e["id"])] = dict(event=dict(home=e.get("home_team"), away=e.get("away_team")), rows=[
                 {k: q[k] for k in _CAMPOS} for q in pl.quotes([e], received_at)
                 if q["market"] in _KEYS and q["team"] is None and q["player_id"] is None])
-    except Exception:  # recibo ausente, truncado o con hash distinto: sin precio, nunca error
-        _guarda(_ilegibles, key, True)
-        return None
+        except Exception:
+            continue
     _guarda(_cache, key, por_evento)
     return por_evento.get(event_id)
 

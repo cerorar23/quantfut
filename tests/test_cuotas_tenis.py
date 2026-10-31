@@ -24,7 +24,7 @@ def m(key, outcomes, period=None, line_type="main"):
     return dict(key=key, period=period, team=None, line_type=line_type, outcomes=outcomes)
 
 
-def evento():
+def evento(tiebreak=False):
     return dict(id="T1", sport_key="tennis", commence_time="2026-10-30T14:00:00Z",
                 home_team=B, away_team=A, bookmakers=[
         dict(key="pinnacle", markets=[
@@ -42,6 +42,10 @@ def evento():
         # Orientación opuesta: Alcaraz -3,5 / Sinner +3,5. No es el contrato A -3,5.
         dict(key="fanduel", markets=[m("spreads", [o(B, 2.50, -3.5, "home"), o(A, 1.50, 3.5, "away")])]),
         dict(key="prizepicks", markets=[m("h2h", [o(A, 3.0, side="away"), o(B, 3.0, side="home")])]),
+        dict(key="betway", markets=[
+            m("total_sets", [o("Over", 2.60, 2.5), o("Under", 1.50, 2.5)]),
+            m("set_spread", [o(B, 2.40, 1.5, "home"), o(A, 1.55, -1.5, "away")]),
+        ] + ([m("total_tiebreaks", [o("Over", 2.20, 0.5), o("Under", 1.65, 0.5)])] if tiebreak else [])),
     ])
 
 
@@ -210,3 +214,60 @@ def test_datos_malos_no_lanzan(tmp_path):
     q = ct.tennis_quotes(dict(pronostico(r), markets=[None, 3]), SEALED, tmp_path / "arch")
     assert list(q) == ["winner"] and q["winner"]["price"] == 1.83
     assert ct.tennis_overlay(tmp_path / "arch", {"events": "x"}, sealed={}, now=NOW)["state"] == "partial"
+
+
+def test_sets_y_tiebreak_con_precio(tmp_path):
+    r = archivo(tmp_path / "arch", data=[evento(tiebreak=True)])
+    f = pronostico(r)
+    f["markets"] = [mercado("sets_total", "over", 2.5), mercado("sets_handicap", "A", -1.5),
+                    mercado("sets_handicap", "A", 1.5), mercado("tiebreak", "yes"), mercado("tiebreak", "no")]
+    q = ct.tennis_quotes(f, SEALED, tmp_path / "arch")
+    cuota = lambda p, s: dict(price=p, book="betway", as_of=r["received_at"], books=1, side=s)
+    assert q["sets_total-0"] == cuota(2.60, "over")
+    assert q["sets_handicap-1"] == cuota(1.55, "A")   # A visitante a -1,5
+    assert q["sets_handicap-2"] is None                # A +1,5 no se cotiza
+    assert q["tiebreak-3"] == cuota(2.20, "yes") and q["tiebreak-4"] == cuota(1.65, "no")
+
+
+def test_sealed_at_sin_zona_falla_cerrado(tmp_path):
+    r = archivo(tmp_path / "arch")
+    q = ct.tennis_quotes(pronostico(r), SEALED.replace(tzinfo=None), tmp_path / "arch")
+    assert q and set(q.values()) == {None}
+
+
+def test_sqlite_bloqueado_no_se_cachea(tmp_path, monkeypatch):
+    import sqlite3
+    r = archivo(tmp_path / "arch")
+    v = sellado(tmp_path, pronostico(r))
+    feed = tp.projection(tmp_path, NOW + timedelta(hours=1))
+    real, fallos = pl.newest, [sqlite3.OperationalError("database is locked")]
+
+    def newest(*a, **k):
+        if fallos:
+            raise fallos.pop()
+        return real(*a, **k)
+    monkeypatch.setattr(pl, "newest", newest)
+    out = ct.tennis_overlay(tmp_path / "arch", feed, sealed={"1": v}, now=NOW)
+    assert out["state"] == "partial" and set(out["events"]["1"].values()) == {None}
+    out = ct.tennis_overlay(tmp_path / "arch", feed, sealed={"1": v}, now=NOW)
+    assert out["state"] == "ok" and out["events"]["1"]["winner"]["price"] == 1.83
+
+
+def test_recibo_aun_no_copiado_no_se_cachea(tmp_path, monkeypatch):
+    r = archivo(tmp_path / "arch")
+    real, vacio = pl.newest, [True]
+    monkeypatch.setattr(pl, "newest", lambda *a, **k: (None, None) if vacio and vacio.pop() else real(*a, **k))
+    assert ct.tennis_quotes(pronostico(r), SEALED, tmp_path / "arch")["winner"] is None
+    assert ct.tennis_quotes(pronostico(r), SEALED, tmp_path / "arch")["winner"]["price"] == 1.83
+
+
+def test_evento_malformado_no_tumba_los_demas(tmp_path):
+    malo = dict(id="T0", home_team="X", away_team="Y", bookmakers=[])  # sin commence_time
+    r = archivo(tmp_path / "arch", data=[malo, evento()])
+    assert ct.tennis_quotes(pronostico(r), SEALED, tmp_path / "arch")["winner"]["price"] == 1.83
+
+
+def test_cache_por_ruta_de_archivo(tmp_path):
+    r = archivo(tmp_path / "arch")
+    assert ct.tennis_quotes(pronostico(r), SEALED, tmp_path / "arch")["winner"] is not None
+    assert ct.tennis_quotes(pronostico(r), SEALED, tmp_path / "otro")["winner"] is None
