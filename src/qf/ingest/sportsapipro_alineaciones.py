@@ -149,11 +149,11 @@ def event_id(db, hueco: dict) -> int | None:
 
 def refrescar_calendario(raiz, db, key, call, clock) -> int:
     """3 fechas (ayer, hoy, mañana UTC); como mucho cada 6 h."""
+    ahora = clock()
     ultimo = db.execute("SELECT max(received_at) FROM receipts WHERE kind='calendario'").fetchone()[0]
     if ultimo and ahora - datetime.fromisoformat(ultimo) < CALENDARIO_CADA:
         return 0
     n = 0
-    ahora = clock()
     for d in (-1, 0, 1):
         fecha = (ahora + timedelta(days=d)).date().isoformat()
         if usadas_hoy(db, ahora) >= DIARIO:

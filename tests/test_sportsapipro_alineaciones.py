@@ -124,3 +124,23 @@ def test_la_peticion_lleva_user_agent_de_navegador(monkeypatch):
     monkeypatch.setattr(sp.urllib.request, "urlopen", lambda req, timeout=0: visto.update(h=dict(req.header_items())) or R())
     sp.http("https://x", "k")
     assert "urllib" not in visto["h"]["User-agent"].lower()
+
+
+def test_el_calendario_no_se_repite_antes_de_6_horas_y_si_despues(mundo, monkeypatch):
+    """Regresión (CI del PR 223): con un calendario ya archivado, `refrescar_calendario` usaba `ahora` sin definir."""
+    f = Fake([evento(555)])
+    db = sp.abrir(mundo.ruta)
+    assert sp.refrescar_calendario(mundo.ruta, db, "k", f, lambda: T0) == 3      # 3 fechas x 1 evento
+    assert sp.refrescar_calendario(mundo.ruta, db, "k", f, lambda: T0 + timedelta(hours=5)) == 0
+    n = len(f.urls)
+    assert sp.refrescar_calendario(mundo.ruta, db, "k", f, lambda: T0 + timedelta(hours=7)) == 3
+    assert len(f.urls) == n + 3
+
+
+def test_hueco_sin_evento_en_cache_refresca_aunque_ya_haya_calendario_archivado(mundo):
+    f = Fake([evento(556, local="Otro")])
+    sp.run(call=f, clock=lambda: T0)                                   # primer calendario
+    f.eventos = [evento(555)]
+    n = len(f.urls)
+    r = sp.run(call=f, clock=lambda: T0 + timedelta(hours=7))          # evento nuevo, calendario viejo: hay que pedirlo
+    assert r["consultados"] == 1 and len(f.urls) > n
