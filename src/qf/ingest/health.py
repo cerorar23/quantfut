@@ -271,7 +271,7 @@ ONCE_MIN_COBERTURA = 0.5
 
 def check_sofascore_lineups() -> tuple[bool, str]:
     """
-    Bajas y once de SofaScore (db/087): los partidos de las próximas 36 h tienen que tener
+    Bajas y once de SofaScore o FotMob (db/087): los partidos de las próximas 36 h tienen que tener
     bajas u once previsto, y los ya empezados en las últimas 24 h su once oficial.
     Con muestra pequeña (día sin partidos) no se alarma.
     """
@@ -282,7 +282,7 @@ def check_sofascore_lineups() -> tuple[bool, str]:
                                      AND m.status = 'scheduled'
                                      AND (EXISTS (SELECT 1 FROM lineups_previstas p WHERE p.match_id = m.match_id)
                                           OR EXISTS (SELECT 1 FROM injuries i WHERE i.match_id = m.match_id
-                                                                                AND i.source = 'sofascore')))
+                                                                                AND i.source IN ('sofascore', 'fotmob'))))
                       AS prox_con,
                   count(*) FILTER (WHERE m.kickoff_utc BETWEEN now() - interval '24 hours'
                                                            AND now() - interval '15 minutes') AS emp,
@@ -298,7 +298,7 @@ def check_sofascore_lineups() -> tuple[bool, str]:
     bajo = [n >= ONCE_MIN_PARTIDOS and con / n < ONCE_MIN_COBERTURA
             for con, n in ((prox_con, prox), (emp_con, emp))]
     if any(bajo):
-        return False, msg + " (revisar el cron sofascore_apify lineups del host y sofascore_alineaciones)"
+        return False, msg + " (revisar fotmob_captura previos y fotmob_alineaciones; Apify está cortado desde el 31-oct)"
     return True, msg
 
 

@@ -1,5 +1,9 @@
 """Actualiza el JSON público de estadísticas de jugadores de tenis. Ejecutar en el HOST (cron).
 
+31-oct-2026: API-Tennis vence y no se renueva. Si no responde (o con `QF_AT_CAIDO=1`) la clasificación sale de
+SportsAPIPro (`/api/rankings`), el H2H y la forma reciente del archivo propio de partidos y los perfiles de la caché
+(ver `tenis_estadisticas_respaldo.py`, en `~/tenis-equivalencias/current/`).
+
 Consulta API-Tennis (`get_standings`, `get_players`, `get_H2H`) solo para los partidos que la web ya publica
 (ventana: de ayer a +2 días), con caché en disco y un tope diario de llamadas. Luego resume las respuestas con
 `tenis_estadisticas.py` (copia revisada de src/qf/api/tenis_estadisticas.py, en la misma carpeta) y escribe
@@ -26,11 +30,19 @@ from pathlib import Path
 
 UTC = timezone.utc
 HOME = Path.home()
+sys.path.insert(0, str(HOME / "tenis-equivalencias" / "current"))
+import tenis_estadisticas_respaldo as respaldo          # noqa: E402
+import tenis_formato_api_tennis as formato               # noqa: E402
 BASE = HOME / "quantfut-public-sports" / "stats"
 CACHE = BASE / "cache"
 SECRET = HOME / "quantfut-tenis" / "secrets" / ".env.api-tennis.local"
 FIXTURES = HOME / "quantfut-tenis" / "data" / "intake_v1" / "api_tennis" / "originals"
 API = "https://api.api-tennis.com/tennis/"
+SP_SECRET = HOME / "tenis-equivalencias" / ".env.sportsapipro"
+SP_API = "https://api.sportsapipro.com/v2/tennis/api/"
+EQUIVALENCIAS = HOME / "tenis-equivalencias" / "data"
+SP_DIARIO = 6           # peticiones a SportsAPIPro al día (clasificaciones); el resto de su cuota es de fútbol y del motor
+AT_CAIDO = os.environ.get("QF_AT_CAIDO") == "1"
 TTL = {"standings": 12 * 3600, "players": 24 * 3600, "h2h": 6 * 3600}
 DAILY_BUDGET = 600      # llamadas por día UTC
 RUN_BUDGET = 140        # llamadas por corrida
@@ -81,7 +93,8 @@ def _cached(path, ttl):
 
 
 def call(key, budget, method, **params):
-    if not budget.allow():
+    global AT_CAIDO
+    if AT_CAIDO or not budget.allow():
         return None
     budget.spend()
     time.sleep(PAUSE)
@@ -90,8 +103,42 @@ def call(key, budget, method, **params):
         with urllib.request.urlopen(f"{API}?{query}", timeout=30) as response:
             value = json.load(response)
     except (urllib.error.URLError, ValueError, OSError):
+        AT_CAIDO = True                                  # no insistir en esta corrida: el resto va por el respaldo
         return None
-    return value if value.get("success") in (1, "1", True) else None
+    if value.get("success") not in (1, "1", True):
+        AT_CAIDO = True
+        return None
+    return value
+
+
+def sp_key():
+    match = re.search(r"SPORTSAPIPRO_KEY=\s*(\S+)", SP_SECRET.read_text(encoding="utf-8"))
+    return match.group(1).strip("\"'") if match else None
+
+
+def sp_rankings(circuit):
+    """Clasificación del circuito desde SportsAPIPro (1 petición), con tope diario propio."""
+    path = CACHE / "budget_sp.json"
+    today = datetime.now(UTC).date().isoformat()
+    try:
+        used = json.loads(path.read_text(encoding="utf-8"))
+        used = used.get("used", 0) if used.get("day") == today else 0
+    except (OSError, ValueError):
+        used = 0
+    key = sp_key()
+    if not key or used >= SP_DIARIO:
+        return None
+    path.write_text(json.dumps({"day": today, "used": used + 1}), encoding="utf-8")
+    # ATP: tipo 5 = clasificación oficial (`/rankings` es la «live»: Zverev 9.550 frente a los 9.750 oficiales); WTA: `/rankings/wta` coincide
+    url = SP_API + ("rankings/type/5" if circuit == "ATP" else "rankings/wta")
+    request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 qf-tenis", "x-api-key": key})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            rows = ((json.load(response).get("data") or {}).get("rankings")) or []
+    except (urllib.error.URLError, ValueError, OSError):
+        return None
+    jugadores = formato.indice(EQUIVALENCIAS)["jugadores"]
+    return respaldo.clasificacion(rows, circuit, jugadores) or None
 
 
 def public_events():
@@ -108,17 +155,22 @@ def public_events():
     return rows
 
 
-def fixture_keys(wanted):
-    """event_key -> fila de fixture con las claves de jugador, de los originales de API-Tennis ya archivados."""
+def archive_rows():
+    """event_key -> última fila archivada (API-Tennis o convertida de SportsAPIPro, mismo formato) de cada partido."""
     found = {}
     for path in sorted(glob.glob(str(FIXTURES / "*" / "response.json")), key=os.path.getmtime):
         try:
             for row in json.loads(Path(path).read_text(encoding="utf-8")).get("result") or []:
-                if str(row.get("event_key")) in wanted and row.get("first_player_key") and row.get("second_player_key"):
+                if row.get("event_key") is not None:
                     found[str(row["event_key"])] = row
         except (OSError, ValueError, AttributeError):
             continue
     return found
+
+
+def fixture_keys(wanted, rows):
+    """event_key -> fila de fixture con las claves de jugador, de los originales ya archivados."""
+    return {k: r for k, r in rows.items() if k in wanted and r.get("first_player_key") and r.get("second_player_key")}
 
 
 def main():
@@ -131,14 +183,16 @@ def main():
         stats = _module()
         key, budget, today = _key(), Budget(), datetime.now(UTC).date()
         events = public_events()
-        fixtures = fixture_keys(set(events))
+        rows = archive_rows()
+        fixtures = fixture_keys(set(events), rows)
+        partidos = respaldo.indice_partidos(rows.values())
         standings = {}
         for circuit in sorted({e["circuit"] for e in events.values() if e["circuit"] in ("ATP", "WTA")}):
             path = CACHE / f"standings_{circuit}.json"
             rows = _cached(path, TTL["standings"])
             if rows is None:
                 reply = call(key, budget, "get_standings", event_type=circuit)
-                rows = (reply or {}).get("result")
+                rows = (reply or {}).get("result") or sp_rankings(circuit)
                 if rows:
                     path.write_text(json.dumps(rows), encoding="utf-8")
                 else:
@@ -170,9 +224,10 @@ def main():
                 h2h = call(key, budget, "get_H2H", first_player_key=first, second_player_key=second)
                 if h2h:
                     path.write_text(json.dumps(h2h), encoding="utf-8")
-                elif path.exists():
-                    h2h = json.loads(path.read_text(encoding="utf-8"))
-            if not h2h and not any(players.values()):
+                else:   # sin API-Tennis: archivo propio + lo que hubiera en la caché (más historia), sin escribir la caché
+                    viejo = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+                    h2h = respaldo.h2h_local(partidos, first, second, viejo)
+            if not any((h2h or {}).get("result", {}).values()) and not any(players.values()):
                 missing += 1
                 continue
             circuit = events[event_id]["circuit"]
