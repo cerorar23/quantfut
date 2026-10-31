@@ -68,7 +68,7 @@ def ev_celtics():
                                                  o("New York Knicks", 2.70, side="away")])])])
 
 
-def archivo(root, clock=NOW, events=None):
+def archivo(root, clock=NOW, events=None, lotes=None):
     """Una observación horaria en dos lotes (como el recolector) y su identidad sellada, como prop_lines.lines()."""
     events = events or [ev_lakers()]
     juego = [dict(e, bookmakers=[dict(b, markets=[x for x in b["markets"] if x["key"] in ("h2h", "totals")])
@@ -78,7 +78,7 @@ def archivo(root, clock=NOW, events=None):
     cuerpos = {"h2h,totals": juego, "player_points": jugadores}
     c = pl.Collector(root, "k", get=lambda path, params, key: (200, {}, json.dumps(cuerpos[params["markets"]]).encode()),
                      clock=lambda: clock)
-    for markets in cuerpos:
+    for markets in lotes or cuerpos:
         c.capture(PATH, {"markets": markets})
     c.db.close()
     _, receipt = pl.newest(root, PATH, clock + timedelta(minutes=1))
@@ -154,7 +154,7 @@ def test_sin_la_linea_publicada_ni_la_mas_cercana(tmp_path):
     assert out[f"player_rebounds|{CURRY}|5.5"] == dict(over=None, under=None)
     rows = [fila("game_total", "total", 221.0, None)]  # hay 220,5 y 221,5: ninguna vale
     out = cn.nba_quotes(cohorte(prop, forecasts=rows), tmp_path / "arch")["0022600100"]
-    assert out["game_total||221"] == dict(over=None, under=None)
+    assert out["game_total||221"] == dict(over=None, under=None)  # entera: "221", no "221.0"
 
 
 def test_dfs_y_jugador_sin_id_nba_sin_precio(tmp_path):
@@ -168,14 +168,14 @@ def test_overlay_ok(tmp_path):
     prop = archivo(tmp_path / "arch")
     out = cn.nba_overlay(tmp_path / "arch", [cohorte(prop)], now=NOW)
     assert out["state"] == "ok" and out["source"] == "PropLine" and out["generated_at"] == NOW.isoformat()
-    assert out["events"]["0022600100"]["winner||"]["home"]["price"] == 1.62
+    assert out["events"]["0022600100"]["quotes"]["winner||"]["home"]["price"] == 1.62
 
 
 def test_cohorte_sin_archivo_reciente_todo_null_y_parcial(tmp_path):
     archivo(tmp_path / "arch")
     out = cn.nba_overlay(tmp_path / "arch", [cohorte(dict(state="sin_archivo_reciente"))], now=NOW)
     assert out["state"] == "partial"
-    filas = out["events"]["0022600100"]
+    filas = out["events"]["0022600100"]["quotes"]
     assert len(filas) == 8 and all(v is None for lados in filas.values() for v in lados.values())
 
 
@@ -197,7 +197,7 @@ def test_recalculo_posterior_sustituye_al_anterior(tmp_path):
                  forecasts=[fila("player_points", LEBRON, 24.5, LAL, SEALED + timedelta(minutes=20))])
     for orden in ([original, nueva], [nueva, original]):
         out = cn.nba_overlay(tmp_path / "arch", orden, now=NOW)
-        assert list(out["events"]["0022600100"]) == [f"player_points|{LEBRON}|24.5"]
+        assert list(out["events"]["0022600100"]["quotes"]) == [f"player_points|{LEBRON}|24.5"]
 
 
 def test_recibo_posterior_al_sello_se_rechaza(tmp_path):
@@ -212,7 +212,7 @@ def test_identidad_distinta_del_sello_no_se_usa(tmp_path):
                    dict(slot="2026-10-31T00:00:00+00:00")):
         out = cn.nba_overlay(tmp_path / "arch", [cohorte(dict(prop, **cambio))], now=NOW)
         assert out["state"] == "partial"
-        assert all(v is None for lados in out["events"]["0022600100"].values() for v in lados.values())
+        assert all(v is None for lados in out["events"]["0022600100"]["quotes"].values() for v in lados.values())
 
 
 def test_recibo_corrupto_solo_afecta_a_su_cohorte(tmp_path):
@@ -227,8 +227,8 @@ def test_recibo_corrupto_solo_afecta_a_su_cohorte(tmp_path):
         (root / ruta).write_bytes(b"no es gzip")
     out = cn.nba_overlay(root, [cohorte(lakers), cohorte_celtics(celtics)], now=NOW)
     assert out["state"] == "partial"
-    assert all(v is None for lados in out["events"]["0022600100"].values() for v in lados.values())
-    assert out["events"]["0022600099"]["winner||"]["away"] == q(2.70, "pinnacle", celtics, "away", 1)
+    assert all(v is None for lados in out["events"]["0022600100"]["quotes"].values() for v in lados.values())
+    assert out["events"]["0022600099"]["quotes"]["winner||"]["away"] == q(2.70, "pinnacle", celtics, "away", 1)
 
 
 def test_archivo_ausente_no_disponible(tmp_path):
@@ -240,7 +240,7 @@ def test_archivo_ausente_no_disponible(tmp_path):
 def test_datos_malos_no_lanzan(tmp_path):
     prop = archivo(tmp_path / "arch")
     out = cn.nba_overlay(tmp_path / "arch", [None, {}, {"games": "x"}, cohorte(prop)], now=NOW)
-    assert out["state"] == "partial" and out["events"]["0022600100"]["winner||"]["home"]["price"] == 1.62
+    assert out["state"] == "partial" and out["events"]["0022600100"]["quotes"]["winner||"]["home"]["price"] == 1.62
     c = cohorte(prop)
     c["forecasts"] = [None, dict(market="player_points"), *c["forecasts"]]
     assert cn.nba_quotes(c, tmp_path / "arch")["0022600100"]["winner||"]["home"]["price"] == 1.62
@@ -270,7 +270,7 @@ def test_partido_sin_evento_propline_queda_parcial(tmp_path):
     c["games"][0]["tipoff_utc"] = "2026-10-31T07:00:00+00:00"  # más de 3 h del commence_time
     out = cn.nba_overlay(tmp_path / "arch", [c], now=NOW)
     assert out["state"] == "partial"
-    assert all(v is None for lados in out["events"]["0022600100"].values() for v in lados.values())
+    assert all(v is None for lados in out["events"]["0022600100"]["quotes"].values() for v in lados.values())
 
 
 def _escribe(path, value):
@@ -296,12 +296,15 @@ def test_cargador_lee_cohortes_y_su_ultimo_recalculo(tmp_path):
     # Cohorte alterada: no se usa, y el overlay lo marca como parcial.
     _escribe(raiz / "20261030-z" / "bundle.json", bundle)
     _escribe(raiz / "20261030-z" / "bundle.seal.json", dict(sha256="0" * 64))
-    cohorts = cn.load_cohorts(raiz)
+    cohorts = cn.load_cohorts(raiz, now=NOW)
     assert [c.get("cohort") for c in cohorts] == ["20261030-a", "20261030-z"]
     assert cohorts[0]["forecasts"] == nuevas and cohorts[0]["prop_lines"] == prop
     assert "games" not in cohorts[1]
     out = cn.nba_overlay(tmp_path / "arch", cohorts, now=NOW)
-    assert out["state"] == "partial" and list(out["events"]["0022600100"]) == [f"player_points|{LEBRON}|24.5"]
+    assert out["state"] == "partial" and list(out["events"]["0022600100"]["quotes"]) == [f"player_points|{LEBRON}|24.5"]
+    # Fuera de la ventana de 3 días se omite; la alterada sigue marcada.
+    assert [c["cohort"] for c in cn.load_cohorts(raiz, now=NOW + timedelta(days=4))] == ["20261030-z"]
+    assert len(cn.load_cohorts(raiz, dias=None, now=NOW + timedelta(days=4))) == 2
     assert cn.load_cohorts(None) == [] and cn.load_cohorts(tmp_path / "no-existe") == []
 
 
@@ -309,3 +312,87 @@ def test_ajuste_de_carpeta_de_cohortes(monkeypatch):
     from qf.config import Settings
     monkeypatch.delenv("NBA_COHORTS_DIR", raising=False)
     assert Settings().nba_cohorts_dir is None
+
+
+def test_mas_cohortes_que_recibos_en_cache_no_relee(tmp_path, monkeypatch):
+    root = tmp_path / "arch"
+    cohorts = []
+    for i in range(cn.MAX_RECEIPTS + 3):
+        prop = archivo(root, clock=NOW - timedelta(hours=i), events=[ev_lakers(bump=i / 100)])
+        cohorts.append(dict(cohorte(prop, created=SEALED - timedelta(hours=i)), cohort=f"c{i}"))
+    primera = cn.nba_overlay(root, cohorts, now=NOW)
+    cuotas = [cn.nba_quotes(c, root) for c in cohorts]  # cada recibo leído una vez; solo 4 índices en caché
+    lecturas = []
+    real = pl.load_object
+    monkeypatch.setattr(pl, "load_object", lambda r, rec: lecturas.append(rec["request_id"]) or real(r, rec))
+    for _ in range(2):
+        assert cn.nba_overlay(root, cohorts, now=NOW) == primera
+        assert [cn.nba_quotes(c, root) for c in cohorts] == cuotas
+    assert lecturas == [] and primera["state"] == "ok" and primera["events"]["0022600100"]["cohort"] == "c0"
+
+
+def test_copia_parcial_del_archivo_no_se_cachea(tmp_path):
+    prop = archivo(tmp_path / "completo")
+    parcial = tmp_path / "parcial"
+    archivo(parcial, lotes=["h2h,totals"])  # solo el primer lote de la hora
+    out = cn.nba_overlay(parcial, [cohorte(prop)], now=NOW)
+    assert out["state"] == "partial" and out["events"]["0022600100"]["quotes"]["winner||"]["home"] is None
+    archivo(parcial, lotes=["player_points"])  # llega el lote que faltaba
+    out = cn.nba_overlay(parcial, [cohorte(prop)], now=NOW)
+    assert out["state"] == "ok" and out["events"]["0022600100"]["quotes"]["winner||"]["home"]["price"] == 1.62
+
+
+def test_cohorte_nueva_que_el_cliente_descarta_no_gana(tmp_path):
+    vieja_prop = archivo(tmp_path / "arch", clock=NOW - timedelta(hours=1))
+    nueva_prop = archivo(tmp_path / "arch", events=[ev_lakers(bump=.10)])
+    vieja = dict(cohorte(vieja_prop, created=SEALED - timedelta(hours=1)), cohort="vieja")
+    for cambio in ("hold_evento", "hold_fila", "probabilidad", "sello"):
+        nueva = dict(cohorte(nueva_prop, created=SEALED), cohort="nueva")
+        if cambio == "hold_evento":
+            nueva["games"][0]["status"] = "validation_hold"
+        for f in nueva["forecasts"]:
+            if cambio == "hold_fila":
+                f["result"] = dict(status="validation_hold")
+            elif cambio == "probabilidad":
+                f["probability_over"] = 1.0
+            elif cambio == "sello":
+                f["sealed_at_utc"] = "no es fecha"
+        entry = cn.nba_overlay(tmp_path / "arch", [vieja, nueva], now=NOW)["events"]["0022600100"]
+        assert entry["cohort"] == "vieja" and entry["sealed_at"] == vieja["created_at_utc"], cambio
+        assert entry["quotes"]["winner||"]["home"] == q(1.62, "bet365", vieja_prop, "home", 2), cambio
+    nueva = dict(cohorte(nueva_prop, created=SEALED), cohort="nueva")
+    entry = cn.nba_overlay(tmp_path / "arch", [vieja, nueva], now=NOW)["events"]["0022600100"]
+    assert entry["cohort"] == "nueva" and entry["recalculated_at"] is None
+    assert entry["quotes"]["winner||"]["home"] == q(1.70, "pinnacle", nueva_prop, "home", 2)
+
+
+def test_cohorte_sin_hora_cuenta_como_la_mas_antigua(tmp_path):
+    prop = archivo(tmp_path / "arch")
+    sin_hora = {k: v for k, v in dict(cohorte(prop), cohort="sin").items() if k != "created_at_utc"}
+    con_hora = dict(cohorte(prop), cohort="con")
+    for orden in ([sin_hora, con_hora], [con_hora, sin_hora]):
+        assert cn.nba_overlay(tmp_path / "arch", orden, now=NOW)["events"]["0022600100"]["cohort"] == "con"
+
+
+def test_alias_de_elegible():
+    from qf.ingest import cuotas_referencia as cr
+    assert cr._elegible is cr.elegible
+
+
+def test_peticiones_simultaneas_analizan_el_recibo_una_vez(tmp_path, monkeypatch):
+    import threading
+    import time
+    prop = archivo(tmp_path / "arch")
+    real, llamadas = pl.newest, []
+
+    def lento(*a, **k):
+        llamadas.append(1)
+        time.sleep(.2)
+        return real(*a, **k)
+    monkeypatch.setattr(pl, "newest", lento)
+    hilos = [threading.Thread(target=cn.nba_quotes, args=(cohorte(prop), tmp_path / "arch")) for _ in range(4)]
+    for h in hilos:
+        h.start()
+    for h in hilos:
+        h.join()
+    assert len(llamadas) == 1

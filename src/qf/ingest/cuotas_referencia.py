@@ -59,11 +59,14 @@ def _precio(fila: Mapping):
     return p if math.isfinite(p) and p > 1.0 else None
 
 
-def _elegible(fila: Mapping) -> bool:
+def elegible(fila: Mapping) -> bool:
     # Mismos criterios que apps/nba/src/nba/prop_lines.py:book_lines (flags, DFS por campos, periodo).
     return (not fila.get("flags") and fila.get("period") is None and not fila.get("dfs_odds_type")
             and fila.get("payout_multiplier") is None
             and fila.get("bookmaker") not in DFS_BOOKS and fila.get("bookmaker") not in EXCHANGES)
+
+
+_elegible = elegible  # nombre anterior
 
 
 def best_quote(outcomes: Iterable[Mapping], *, line: float | None, side: str,
@@ -75,7 +78,7 @@ def best_quote(outcomes: Iterable[Mapping], *, line: float | None, side: str,
     propios: dict[str, float] = {}
     con_contra: set[str] = set()
     for fila in outcomes:
-        if not _elegible(fila) or _precio(fila) is None or not fila.get("bookmaker"):
+        if not elegible(fila) or _precio(fila) is None or not fila.get("bookmaker"):
             continue
         casa = fila["bookmaker"]
         if _es_lado(fila, side) and _misma_linea(fila.get("point"), line):
