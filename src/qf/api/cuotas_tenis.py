@@ -5,6 +5,16 @@ Por cada pronóstico sellado (`tennis-intake-sealed-v1`) se relee SOLO el recibo
 mejor casa no DFS con `best_quote` en la misma línea y el mismo lado que muestra el feed. Sin recibo,
 sin board, sin línea o sin casas: None (nunca se inventa ni se usa la línea más cercana).
 Sin red: solo lee objetos ya archivados. Las claves son los `id` de `tenis_publico.projection`.
+
+Mercados con línea (juegos/sets totales y hándicaps): vale cualquier línea de la casa, principal o
+alternativa, si es EXACTAMENTE la publicada y tiene los dos lados (el board sellado también usa
+alternativas). Ganador, ganador de set y tie-break: solo la línea principal.
+
+Sellos: `tennis_overlay` recibe `sealed={event_key: documento}` sin globales ocultos. El llamador los lee
+de la carpeta de sellos del motor montada en solo lectura (misma estructura que `tenis_publico.projection`):
+`<raíz>/predictions/<event_key>.json`, cada uno `tennis-intake-sealed-v1` con `payload_sha256`, `event_key`,
+`sealed_at` y `forecast` {players, winner.final_winner, markets[].contract, market_board {event_id,
+snapshot_id, received_at}}. Un documento solo se usa si su hash coincide con el `seal` del evento del feed.
 """
 from __future__ import annotations
 
@@ -30,14 +40,23 @@ _KEYS = {k for v in MARKETS.values() for k in v}
 # Mercados con jugador como lado (se etiquetan A/B por nombre, como consensus()).
 _POR_JUGADOR = {"winner", "games_handicap", "sets_handicap", "set_winner"}
 _SELECCIONES = {"A", "B", "over", "under", "yes", "no"}  # las que tenis_publico publica
+_LINEA = {"games_total", "games_handicap", "sets_total", "sets_handicap"}  # aceptan alternativas exactas
 _CAMPOS = ("bookmaker", "market", "period", "name", "side", "point", "price_decimal", "flags",
-           "dfs_odds_type", "payout_multiplier")
+           "dfs_odds_type", "payout_multiplier", "line_type")
 
 _cache: OrderedDict = OrderedDict()
+_ilegibles: OrderedDict = OrderedDict()  # recibos ausentes o corruptos: inmutables, no se releen
 
 
 def clear_cache():
     _cache.clear()
+    _ilegibles.clear()
+
+
+def _guarda(cache, key, value):
+    cache[key] = value
+    while len(cache) > MAX_RECEIPTS:
+        cache.popitem(last=False)
 
 
 # norm/same_player/side_of: copia exacta de tennis_odds_live_v1.norm y tennis_odds_propline_v1 (la API no lleva apps/).
@@ -68,22 +87,23 @@ def _filas(archive: Path, snapshot_id: str, received_at: str, event_id: str):
     if key in _cache:
         _cache.move_to_end(key)
         return _cache[key].get(event_id)
+    if key in _ilegibles:
+        return None
     try:
         # Con as_of = received_at sellado, newest() elige el mismo recibo y los mismos lotes de la hora que al sellar.
         events, receipt = pl.newest(archive, PATH, pl.parse_time(received_at), max_age_seconds=0)
         if receipt is None or receipt["sha256"] != snapshot_id or receipt["received_at"] != received_at:
+            _guarda(_ilegibles, key, True)
             return None
         por_evento = {}
         for e in events:
             por_evento[str(e["id"])] = dict(event=dict(home=e.get("home_team"), away=e.get("away_team")), rows=[
                 {k: q[k] for k in _CAMPOS} for q in pl.quotes([e], received_at)
-                if q["market"] in _KEYS and q["team"] is None and q["player_id"] is None
-                and q["line_type"] in (None, "main")])
+                if q["market"] in _KEYS and q["team"] is None and q["player_id"] is None])
     except Exception:  # recibo ausente, truncado o con hash distinto: sin precio, nunca error
+        _guarda(_ilegibles, key, True)
         return None
-    _cache[key] = por_evento
-    while len(_cache) > MAX_RECEIPTS:
-        _cache.popitem(last=False)
+    _guarda(_cache, key, por_evento)
     return por_evento.get(event_id)
 
 
@@ -94,6 +114,8 @@ def _cuota(filas, players, kind, selection, line, set_number, sealed_at, receive
     elegidas = []
     for f in filas:
         if f["market"] not in MARKETS[kind] or f["period"] != period:
+            continue
+        if kind not in _LINEA and f["line_type"] not in (None, "main"):
             continue
         f = dict(f, period=None)  # el periodo ya se filtró arriba; best_quote solo admite partido completo
         if kind in _POR_JUGADOR:

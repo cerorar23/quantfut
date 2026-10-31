@@ -31,7 +31,10 @@ def evento():
             m("h2h", [o(A, 1.80, side="away"), o(B, 2.10, side="home")]),
             m("spreads", [o(A, 1.95, -3.5, "away"), o(B, 1.90, 3.5, "home")]),
             m("totals", [o("Over", 1.85, 22.5), o("Under", 2.00, 22.5)]),
-            m("h2h", [o(A, 1.70, side="away"), o(B, 2.20, side="home")], period="s1")]),
+            m("h2h", [o(A, 1.70, side="away"), o(B, 2.20, side="home")], period="s1"),
+            m("totals", [o("Over", 1.45, 21.5), o("Under", 2.70, 21.5)], line_type="alternate"),
+            # Ganador alternativo: no es el mercado publicado.
+            m("h2h", [o(A, 9.0, side="away"), o(B, 9.0, side="home")], line_type="alternate")]),
         dict(key="bet365", markets=[
             m("h2h", [o(A, 1.83, side="away"), o(B, 2.05, side="home")]),
             m("spreads", [o(A, 1.92, -3.5, "away"), o(B, 1.93, 3.5, "home")]),
@@ -97,6 +100,27 @@ def test_cada_mercado_toma_la_mejor_casa_de_su_familia(tmp_path):
     assert q["tiebreak-3"] is None
     assert q["set_winner-4"] == dict(price=1.70, book="pinnacle", as_of=r["received_at"], books=1, side="A")
     assert q["games_handicap-5"] == dict(price=1.50, book="fanduel", as_of=r["received_at"], books=1, side="A")
+
+
+def test_linea_alternativa_exacta_si_cercana_no(tmp_path):
+    r = archivo(tmp_path / "arch")
+    f = pronostico(r)
+    f["markets"][3] = mercado("games_total", "over", 21.5)
+    assert ct.tennis_quotes(f, SEALED, tmp_path / "arch")["games_total-3"] == dict(
+        price=1.45, book="pinnacle", as_of=r["received_at"], books=1, side="over")
+    f["markets"][3] = mercado("games_total", "over", 21.0)  # solo hay 21,5 y 22,5: sin la más cercana
+    assert ct.tennis_quotes(f, SEALED, tmp_path / "arch")["games_total-3"] is None
+
+
+def test_recibo_corrupto_no_se_relee(tmp_path, monkeypatch):
+    r = archivo(tmp_path / "arch")
+    (tmp_path / "arch" / r["body_path"]).write_bytes(b"no es gzip")
+    lecturas = []
+    real = pl.load_object
+    monkeypatch.setattr(pl, "load_object", lambda root, rec: lecturas.append(rec["sha256"]) or real(root, rec))
+    for _ in range(3):
+        assert set(ct.tennis_quotes(pronostico(r), SEALED, tmp_path / "arch").values()) == {None}
+    assert lecturas == [r["sha256"]]
 
 
 def test_favorito_b_recibe_el_precio_de_b(tmp_path):
