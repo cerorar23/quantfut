@@ -6,7 +6,7 @@ servidor de desarrollo de frontend/.
 import re
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi import Response
 
@@ -24,6 +24,18 @@ def tennis_forecasts(response: Response):
     from .tenis_publico import public_data
     response.headers["Cache-Control"] = "no-store"
     return public_data()
+
+
+@router.get("/web/deportes/tenis/cuotas")
+def tennis_quotes(request: Request):
+    from .cuotas_web import tennis_response
+    return tennis_response(request.headers.get("accept-encoding"))
+
+
+@router.get("/web/deportes/nba/cuotas")
+def nba_quotes(request: Request):
+    from .cuotas_web import nba_response
+    return nba_response(request.headers.get("accept-encoding"))
 
 
 @router.get("/web/deportes/tenis/estadisticas/{event_id}")

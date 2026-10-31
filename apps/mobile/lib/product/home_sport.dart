@@ -10,10 +10,12 @@ import 'home_hero.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 import 'qf_shapes.dart';
+import 'quote_label.dart';
 import 'qf_theme.dart';
 import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sports_quotes.dart';
 
 const _stripHeight = 136.0;
 
@@ -130,12 +132,16 @@ class HomeSport extends StatefulWidget {
     required this.images,
     required this.onOpen,
     required this.onRetry,
+    this.quotes = QuotesOverlay.empty,
     this.now,
   });
 
   final QuantFutApi api;
   final SportKind sport;
   final SportFeed feed;
+
+  /// Cuotas de referencia del deporte; vacías si no llegaron (la interfaz las pinta aparte).
+  final QuotesOverlay quotes;
   final ImageCatalog images;
   final ValueChanged<SportEvent> onOpen;
   final Future<void> Function() onRetry;
@@ -346,7 +352,7 @@ class _HomeSportState extends State<HomeSport> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 172,
+              height: 204,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: players.length,
@@ -355,6 +361,7 @@ class _HomeSportState extends State<HomeSport> {
                   api: widget.api,
                   event: players[i].$1,
                   market: players[i].$2,
+                  quote: quoteFor(players[i].$1, players[i].$2, widget.quotes),
                   onOpen: () => widget.onOpen(players[i].$1),
                 ),
               ),
@@ -535,18 +542,20 @@ class _EventRow extends StatelessWidget {
 }
 
 /// Tarjeta de 112 dp: retrato (aro neutro: el feed no dice el equipo del jugador),
-/// nombre, línea y probabilidad.
+/// nombre, línea, probabilidad y cuota de referencia.
 class _PlayerCard extends StatelessWidget {
   const _PlayerCard({
     required this.api,
     required this.event,
     required this.market,
+    required this.quote,
     required this.onOpen,
   });
 
   final QuantFutApi api;
   final SportEvent event;
   final SportMarket market;
+  final SportQuote? quote;
   final VoidCallback onOpen;
 
   @override
@@ -602,6 +611,8 @@ class _PlayerCard extends StatelessWidget {
                 color: QfColors.primary,
               ),
             ),
+            const SizedBox(height: 4),
+            QuoteLabel(quote: quote, align: CrossAxisAlignment.center),
           ],
         ),
       ),

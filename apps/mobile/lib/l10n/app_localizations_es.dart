@@ -1893,6 +1893,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileYourAccount => 'Tu cuenta QuantFut';
 
   @override
+  String quoteBookAt(String book, String time) {
+    return '$book · $time';
+  }
+
+  @override
+  String get quoteNone => 'Sin cuota';
+
+  @override
+  String get quoteReference =>
+      'Cuota de referencia de la captura usada al sellar el pronóstico';
+
+  @override
   String resultLabel(String score) {
     return 'Resultado: $score';
   }

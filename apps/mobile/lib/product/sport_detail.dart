@@ -1,5 +1,5 @@
 // Ficha de partido de NBA y tenis (hoja inferior): Pronósticos, Análisis, H2H y Alertas.
-// Los feeds son públicos: sin candado VIP ni desbloqueo con monedas, y nunca se muestran cuotas.
+// Los feeds son públicos: sin candado VIP ni desbloqueo con monedas, y la cuota es solo de referencia (overlay fuera del sello).
 import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
@@ -8,10 +8,12 @@ import 'live_api.dart';
 import 'live_widgets.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
+import 'quote_label.dart';
 import 'sport_detail_tabs.dart';
 import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sports_quotes.dart';
 
 /// Abre la ficha del partido como hoja inferior (misma forma que la de fútbol).
 Future<void> showSportDetail(
@@ -19,6 +21,7 @@ Future<void> showSportDetail(
   required QuantFutApi api,
   required SportEvent event,
   required ImageCatalog images,
+  QuotesOverlay quotes = QuotesOverlay.empty,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -28,7 +31,7 @@ Future<void> showSportDetail(
     heightFactor: .96,
     child: Theme(
       data: liveTheme(),
-      child: SportDetail(api: api, event: event, images: images),
+      child: SportDetail(api: api, event: event, images: images, quotes: quotes),
     ),
   ),
 );
@@ -39,10 +42,14 @@ class SportDetail extends StatefulWidget {
     required this.api,
     required this.event,
     required this.images,
+    this.quotes = QuotesOverlay.empty,
   });
   final QuantFutApi api;
   final SportEvent event;
   final ImageCatalog images;
+
+  /// Cuotas de referencia del deporte; vacías si no llegaron.
+  final QuotesOverlay quotes;
   @override
   State<SportDetail> createState() => _SportDetailState();
 }
@@ -122,6 +129,7 @@ class _SportDetailState extends State<SportDetail> {
                     event: e,
                     images: widget.images,
                     accent: accent,
+                    quotes: widget.quotes,
                   ),
                   1 => SportAnalysis(stats: stats, event: e),
                   2 => SportH2h(stats: stats, event: e),
@@ -353,11 +361,13 @@ class _Predictions extends StatelessWidget {
     required this.event,
     required this.images,
     required this.accent,
+    required this.quotes,
   });
   final QuantFutApi api;
   final SportEvent event;
   final ImageCatalog images;
   final Color accent;
+  final QuotesOverlay quotes;
 
   @override
   Widget build(BuildContext context) {
@@ -384,6 +394,7 @@ class _Predictions extends StatelessWidget {
             child: _MarketRow(
               api: api,
               market: featured,
+              quote: quoteFor(event, featured, quotes),
               l10n: l10n,
               big: true,
             ),
@@ -395,9 +406,16 @@ class _Predictions extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: QfCard(
-                child: _MarketRow(api: api, market: m, l10n: l10n),
+                child: _MarketRow(
+                  api: api,
+                  market: m,
+                  quote: quoteFor(event, m, quotes),
+                  l10n: l10n,
+                ),
               ),
             ),
+        const SizedBox(height: 4),
+        const QuoteReferenceCaption(),
         const SizedBox(height: 8),
         SealLine(seal: event.seal, publishedAt: event.sealedAt),
       ],
@@ -409,11 +427,13 @@ class _MarketRow extends StatelessWidget {
   const _MarketRow({
     required this.api,
     required this.market,
+    required this.quote,
     required this.l10n,
     this.big = false,
   });
   final QuantFutApi api;
   final SportMarket market;
+  final SportQuote? quote;
   final AppLocalizations l10n;
   final bool big;
 
@@ -461,13 +481,21 @@ class _MarketRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
         ],
-        Text(
-          realPercent(m.probability),
-          style: TextStyle(
-            fontFamily: qfMono,
-            fontSize: big ? 20 : 16,
-            color: QfColors.primary,
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              realPercent(m.probability),
+              style: TextStyle(
+                fontFamily: qfMono,
+                fontSize: big ? 20 : 16,
+                color: QfColors.primary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            QuoteLabel(quote: quote),
+          ],
         ),
       ],
     );

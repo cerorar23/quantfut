@@ -84,6 +84,20 @@ class Settings:
     # Escudos descargados una vez de API-Football (ingest/standings.py) y
     # servidos desde el propio dominio: la web no enlaza al proveedor.
     escudos_dir: str = os.getenv("ESCUDOS_DIR", "/srv/quantfut/escudos")
+    # Cohortes NBA v1.3 del productor (live13/cohorts) montadas en solo lectura para la
+    # cuota de referencia (api/cuotas_nba.py). Sin valor: no hay cuotas de NBA.
+    nba_cohorts_dir: str | None = os.getenv("NBA_COHORTS_DIR") or None
+    # Sellos de tenis del motor (`<raíz>/predictions/<event_key>.json`) montados en solo lectura para la
+    # cuota de referencia (api/cuotas_tenis.py). Sin valor: no hay cuotas de tenis.
+    tennis_sealed_dir: str | None = os.getenv("TENNIS_SEALED_DIR") or None
+    # Respaldo de cuotas NBA/tenis con The Odds API histórico (ingest/cuotas_respaldo.py). La clave es la del plan
+    # dedicado a NBA: solo la usa el comando por lotes, nunca la API web. La caché es un JSON que el overlay solo lee.
+    odds_api_respaldo_key: str | None = os.getenv("ODDS_API_RESPALDO_KEY") or None
+    cuotas_respaldo_cache: str | None = os.getenv("CUOTAS_RESPALDO_CACHE") or None
+    # Pasada automática (`cuotas_respaldo --auto`, cron): apagada por defecto. Topes en créditos.
+    cuotas_respaldo_auto: bool = os.getenv("CUOTAS_RESPALDO_AUTO", "0") == "1"
+    cuotas_respaldo_auto_max: int = int(os.getenv("CUOTAS_RESPALDO_AUTO_MAX", "100"))
+    cuotas_respaldo_diario: int = int(os.getenv("CUOTAS_RESPALDO_DIARIO", "300"))
 
     # Media vida del decaimiento temporal, en días: un partido de hace 270 días
     # pesa la mitad que uno de hoy. Elegida por walk-forward en la auditoría del

@@ -3214,6 +3214,24 @@ abstract class AppLocalizations {
   /// **'Tu cuenta QuantFut'**
   String get profileYourAccount;
 
+  /// Casa de apuestas y hora local de la cuota de referencia.
+  ///
+  /// In es, this message translates to:
+  /// **'{book} · {time}'**
+  String quoteBookAt(String book, String time);
+
+  /// No description provided for @quoteNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cuota'**
+  String get quoteNone;
+
+  /// No description provided for @quoteReference.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuota de referencia de la captura usada al sellar el pronóstico'**
+  String get quoteReference;
+
   /// No description provided for @resultLabel.
   ///
   /// In es, this message translates to:

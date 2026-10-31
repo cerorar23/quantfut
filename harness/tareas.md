@@ -1,5 +1,17 @@
 # Backlog — QuantFut
 
+## 31-oct-2026 · Cuotas de referencia en NBA y tenis (rama `cuotas-nba-tenis`, sin desplegar)
+- [x] Selección de la mejor cuota no DFS de la observación usada al sellar (`ingest/cuotas_referencia.py`), overlays de tenis y NBA (`api/cuotas_tenis.py`, `api/cuotas_nba.py`), endpoints `GET /web/deportes/{tenis,nba}/cuotas` (`api/cuotas_web.py`), carga y unión en la app (`sports_quotes.dart`) y `QuoteLabel` en Predicciones, ficha e Inicio.
+- [ ] Desplegar (decisión del titular): montajes de solo lectura y variables `NBA_COHORTS_DIR`/`TENNIS_SEALED_DIR`; ver DEPLOYS.md. Medir cobertura y tamaño reales después.
+- [ ] Revisar los términos de PropLine para mostrar cuotas públicamente (titular).
+- [ ] Medición con datos reales de solo lectura (no hecha: el código aún no está en el servidor).
+- Plan: `docs/superpowers/plans/2026-10-31-cuotas-nba-tenis.md`; reconocimiento: `docs/cuotas_nba_tenis_reconocimiento_20261031.md`.
+
+## 31-oct-2026 · Respaldo de cuotas con The Odds API histórico (rama `cuotas-nba-tenis`, sin desplegar)
+- [x] `ingest/cuotas_respaldo.py`: comando por lotes (seco por defecto, `--ejecutar`, `--max-creditos` 300, suelo de saldo 500), caché JSON y `aplica_nba`/`aplica_tenis` en `api/cuotas_web.py`. Pruebas: `tests/test_cuotas_respaldo.py`.
+- [ ] Jugadores NBA: las filas selladas no traen nombre (`player_name`), así que no se piden hasta que el productor lo añada.
+- [ ] Probar `--ejecutar` en el servidor con un solo evento y comparar el coste real (`x-requests-last`) con la estimación (titular).
+
 ## 30-oct-2026 · App: NBA y tenis + rediseño v3
 
 - [x] Implementado en la rama `app/nba-tenis-rediseno` (app 1.1.0+5): selector global de deporte, feeds de NBA y tenis, ficha de partido, «Mis deportes», pantallas de acceso en piel v3.
@@ -3428,3 +3440,4 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [x] xG provisionales: no se reescriben; `db/091` `xg_corregido` guarda el corregido de FotMob junto al original (375 partidos el 28-oct).
 - [ ] Medir en validación si entrenar con `xg_corregido` en lugar del original cambia el resultado (fuera del reentrenamiento del 1-nov).
 - [ ] PropLine: medir el día completo con la regla de 48 h: jueves 29-oct y domingo 1-nov (jornada llena, el caso menos favorable). Un comando desde el PC: `ssh quantfut python3 - 2026-10-27 2026-10-29 2026-11-01 < scripts/medir_ahorro_propline.py` (a partir de las 00:00 UTC del día siguiente). Criterio: fútbol <= 1.300 en día laborable, 0 fallos ni paradas.
+- [x] Respaldo de cuotas NBA/tenis automático tras el sellado (`--auto`, `CUOTAS_RESPALDO_AUTO=1` en el `.env` del servidor; vuelta atrás: ponerla a 0). Sin desplegar.

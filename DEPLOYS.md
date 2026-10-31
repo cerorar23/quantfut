@@ -33,6 +33,20 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### PROPUESTA (sin desplegar) · Cuotas de referencia de NBA y tenis · API + app · rama `cuotas-nba-tenis`
+- Qué cambia: nuevos `GET /web/deportes/tenis/cuotas` y `/web/deportes/nba/cuotas` en la API (solo lectura, `no-store`, caché 60 s). No toca sellos, hashes, worker ni base de datos.
+- Antes: la API necesita montar en solo lectura (a) el archivo `propline_shared` del volumen `quantfut_artifacts`, (b) las cohortes NBA (`live13/cohorts`) y (c) los sellos de tenis, y las variables `NBA_COHORTS_DIR` y `TENNIS_SEALED_DIR`. Sin ellas los endpoints responden `unavailable` y la app muestra «—».
+- Riesgos no verificados: SQLite en modo WAL con `?mode=ro` sobre un montaje de solo lectura (si falla, `unavailable`, sin 500); tamaño real de la respuesta NBA (tope 2 MB con poda de cohortes antiguas). Medir tras el despliegue.
+- Comprobar antes de sobrescribir: `deploy.sh estado` y comparar con `main`; la rama parte de `app/nba-tenis-rediseno` (PR #220), que debe estar fusionada primero.
+- Vuelta atrás: reinstalar la imagen anterior de la API; los montajes extra son inertes sin el código.
+- Pendiente del titular: términos de PropLine para mostrar cuotas públicamente.
+
+### PROPUESTA (sin desplegar) · Respaldo de cuotas NBA/tenis con The Odds API histórico · comando por lotes · rama `cuotas-nba-tenis`
+- Qué: `python -m qf.ingest.cuotas_respaldo` escribe `CUOTAS_RESPALDO_CACHE` (JSON, escritura atómica) y el overlay de `/web/deportes/{nba,tenis}/cuotas` solo la lee; los lados sin cuota de PropLine salen con `src: "the-odds-api"`.
+- Variables: `ODDS_API_RESPALDO_KEY` (ya en el `.env` del servidor) y `CUOTAS_RESPALDO_CACHE` (ruta en un volumen que la API monte en solo lectura). Sin ellas no hace nada.
+- Uso: seco por defecto (plan y coste); `--ejecutar --max-creditos 300` pide; para si el saldo quedaría bajo 500. A mano: tras cada sellado. Automático (apagado por defecto): `python -m qf.ingest.cuotas_respaldo --auto`, en `scripts/crontab` cada 10 min con `flock`; solo actúa con `CUOTAS_RESPALDO_AUTO=1` en el `.env` del servidor, y los únicos peticionables son los huecos de pronósticos ya sellados que PropLine dejó sin cuota (sin huecos: 0 peticiones, ni la lectura del saldo). Topes: `CUOTAS_RESPALDO_AUTO_MAX` (100 por corrida) y `CUOTAS_RESPALDO_DIARIO` (300/día, persistido en `<CACHE>.gasto.json`), más el suelo de 500; alerta de Telegram solo si el saldo cae bajo el suelo. Un fallo se registra y se ignora. El sellado de NBA y tenis vive en contenedores propios, así que el respaldo corre fuera de su camino crítico, nunca dentro. Vuelta atrás: `CUOTAS_RESPALDO_AUTO=0`. Saldo medido el 31-oct: 2.855 créditos hasta el 23-nov.
+- Vuelta atrás: borrar el JSON o vaciar `CUOTAS_RESPALDO_CACHE`; el overlay vuelve a PropLine puro.
+
 ### 2026-10-29 02:33 UTC · Retiro de leyendas de tenis · API `quantfut-api-sin-leyendas-tenis:7c1892f` (PR #218)
 - Se retiraron las cuatro leyendas señaladas de la ventana de tenis. CI: 8 comprobaciones aprobadas; 94 pruebas del frontend aprobadas. Ensayo de imagen: módulos importables y 136 rutas.
 - Imagen basada en la API en ejecución `quantfut-api-sin-leyendas:36de48b`, sustituyendo solo `sports-window.js`, `app.js` e `index.html` y conservando el resto de la versión en producción. Solo se recreó la API; salud 200 y archivos públicos verificados.

@@ -458,6 +458,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('No se pudieron cargar los datos de este deporte.'), findsOneWidget);
     expect(api.paths.where((p) => p == '/nba/api/data').length, 1);
+    // Las cuotas se piden junto al feed; si no llegan (aqui, respuesta ajena) no cambia nada.
+    expect(api.paths.where((p) => p == '/web/deportes/nba/cuotas').length, 1);
     await tester.tap(find.byKey(const ValueKey('sport-feed-retry')));
     await tester.pumpAndSettle();
     expect(api.paths.where((p) => p == '/nba/api/data').length, 2);
