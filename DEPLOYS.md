@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### PROPUESTA (sin desplegar) · Cuotas de referencia de NBA y tenis · API + app · rama `cuotas-nba-tenis`
+- Qué cambia: nuevos `GET /web/deportes/tenis/cuotas` y `/web/deportes/nba/cuotas` en la API (solo lectura, `no-store`, caché 60 s). No toca sellos, hashes, worker ni base de datos.
+- Antes: la API necesita montar en solo lectura (a) el archivo `propline_shared` del volumen `quantfut_artifacts`, (b) las cohortes NBA (`live13/cohorts`) y (c) los sellos de tenis, y las variables `NBA_COHORTS_DIR` y `TENNIS_SEALED_DIR`. Sin ellas los endpoints responden `unavailable` y la app muestra «—».
+- Riesgos no verificados: SQLite en modo WAL con `?mode=ro` sobre un montaje de solo lectura (si falla, `unavailable`, sin 500); tamaño real de la respuesta NBA (tope 2 MB con poda de cohortes antiguas). Medir tras el despliegue.
+- Comprobar antes de sobrescribir: `deploy.sh estado` y comparar con `main`; la rama parte de `app/nba-tenis-rediseno` (PR #220), que debe estar fusionada primero.
+- Vuelta atrás: reinstalar la imagen anterior de la API; los montajes extra son inertes sin el código.
+- Pendiente del titular: términos de PropLine para mostrar cuotas públicamente.
+
 ### 2026-10-29 02:33 UTC · Retiro de leyendas de tenis · API `quantfut-api-sin-leyendas-tenis:7c1892f` (PR #218)
 - Se retiraron las cuatro leyendas señaladas de la ventana de tenis. CI: 8 comprobaciones aprobadas; 94 pruebas del frontend aprobadas. Ensayo de imagen: módulos importables y 136 rutas.
 - Imagen basada en la API en ejecución `quantfut-api-sin-leyendas:36de48b`, sustituyendo solo `sports-window.js`, `app.js` e `index.html` y conservando el resto de la versión en producción. Solo se recreó la API; salud 200 y archivos públicos verificados.

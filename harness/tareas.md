@@ -1,5 +1,12 @@
 # Backlog — QuantFut
 
+## 31-oct-2026 · Cuotas de referencia en NBA y tenis (rama `cuotas-nba-tenis`, sin desplegar)
+- [x] Selección de la mejor cuota no DFS de la observación usada al sellar (`ingest/cuotas_referencia.py`), overlays de tenis y NBA (`api/cuotas_tenis.py`, `api/cuotas_nba.py`), endpoints `GET /web/deportes/{tenis,nba}/cuotas` (`api/cuotas_web.py`), carga y unión en la app (`sports_quotes.dart`) y `QuoteLabel` en Predicciones, ficha e Inicio.
+- [ ] Desplegar (decisión del titular): montajes de solo lectura y variables `NBA_COHORTS_DIR`/`TENNIS_SEALED_DIR`; ver DEPLOYS.md. Medir cobertura y tamaño reales después.
+- [ ] Revisar los términos de PropLine para mostrar cuotas públicamente (titular).
+- [ ] Medición con datos reales de solo lectura (no hecha: el código aún no está en el servidor).
+- Plan: `docs/superpowers/plans/2026-10-31-cuotas-nba-tenis.md`; reconocimiento: `docs/cuotas_nba_tenis_reconocimiento_20261031.md`.
+
 ## 30-oct-2026 · App: NBA y tenis + rediseño v3
 
 - [x] Implementado en la rama `app/nba-tenis-rediseno` (app 1.1.0+5): selector global de deporte, feeds de NBA y tenis, ficha de partido, «Mis deportes», pantallas de acceso en piel v3.
