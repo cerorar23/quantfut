@@ -7,6 +7,7 @@ import 'live_api.dart';
 import 'live_widgets.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
+import 'quote_label.dart';
 import 'sport_images.dart';
 import 'sport_markets.dart';
 import 'sports.dart';
@@ -14,7 +15,7 @@ import 'sports_feed.dart';
 import 'sports_quotes.dart';
 
 /// Alta probabilidad de NBA y tenis: pronósticos elegibles agrupados por día local, con
-/// avatares, selección, probabilidad y fecha de sello; nunca cuota. Arriba, la tarjeta de
+/// avatares, selección, probabilidad, fecha de sello y cuota de referencia (o «—»). Arriba, la tarjeta de
 /// acierto (solo si hay al menos un resuelto). Un feed caído solo avisa en este hueco.
 class SportPredictions extends StatelessWidget {
   const SportPredictions({
@@ -81,6 +82,7 @@ class SportPredictions extends StatelessWidget {
             images: images,
             event: e,
             market: m,
+            quote: quoteFor(e, m, quotes),
             onOpen: () => onOpen(e),
           ),
       ],
@@ -205,6 +207,7 @@ class _PickCard extends StatelessWidget {
     required this.images,
     required this.event,
     required this.market,
+    required this.quote,
     required this.onOpen,
   });
 
@@ -212,6 +215,7 @@ class _PickCard extends StatelessWidget {
   final ImageCatalog images;
   final SportEvent event;
   final SportMarket market;
+  final SportQuote? quote;
   final VoidCallback onOpen;
 
   @override
@@ -269,14 +273,22 @@ class _PickCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              realPercent(market.probability),
-              style: const TextStyle(
-                fontFamily: qfMono,
-                fontWeight: FontWeight.w500,
-                fontSize: 18,
-                color: QfColors.primary,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  realPercent(market.probability),
+                  style: const TextStyle(
+                    fontFamily: qfMono,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    color: QfColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                QuoteLabel(quote: quote),
+              ],
             ),
           ],
         ),

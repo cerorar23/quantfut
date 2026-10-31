@@ -131,6 +131,43 @@ void main() {
       expect(quoteFor(e144, _teamPoints(base, '1610612740'), overlay), isNull);
     });
 
+    test('ganador cuya seleccion no es local ni visitante: sin cuota', () {
+      final w = _mk(e144, 'winner');
+      final raro = SportMarket(
+        id: w.id,
+        label: w.label,
+        selection: 'Otro equipo',
+        probability: w.probability,
+        sealedAt: w.sealedAt,
+        eligible: true,
+        market: 'winner',
+      );
+      expect(quoteFor(e144, raro, overlay), isNull);
+    });
+
+    test('as_of == sealedAt se acepta (limite inclusivo)', () {
+      final w = _mk(e144, 'winner');
+      final igual = QuotesOverlay.fromJson(SportKind.nba, {
+        'state': 'ok',
+        'events': {
+          e144.id: {
+            'cohort': e144.seal,
+            'quotes': {
+              'winner||': {
+                'away': {
+                  'price': 2.35,
+                  'book': 'fanduel',
+                  'as_of': w.sealedAt.toIso8601String(),
+                  'books': 4,
+                },
+              },
+            },
+          },
+        },
+      });
+      expect(quoteFor(e144, w, igual)!.price, 2.35);
+    });
+
     test('cuota posterior al sello de la fila se descarta', () {
       final e145 = _ev(events, '0022600145');
       final m = _mk(e145, 'player_assists');

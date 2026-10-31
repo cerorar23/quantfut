@@ -1625,6 +1625,20 @@
   "profileVerificationSent": "Correo de verificación enviado.",
   "profileVipActive": "Acceso VIP activo",
   "profileYourAccount": "Tu cuenta QuantFut",
+  "quoteBookAt": "{book} · {time}",
+  "@quoteBookAt": {
+    "description": "Casa de apuestas y hora local de la cuota de referencia.",
+    "placeholders": {
+      "book": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "quoteNone": "Sin cuota",
+  "quoteReference": "Cuota de referencia de la captura usada al sellar el pronóstico",
   "resultLabel": "Resultado: {score}",
   "@resultLabel": {
     "placeholders": {

@@ -108,7 +108,7 @@ class QuotesOverlay {
 
 /// Cuota de referencia del mercado mostrado, o null. Reglas del cliente:
 /// - NBA: solo si la cohorte de las cuotas es el `seal` del evento; «Más de» -> `over`;
-///   ganador -> `home` si la selección mostrada es el local, si no `away`.
+///   ganador -> `home`/`away` si la selección mostrada es exactamente el local/visitante; si no, nada.
 /// - Tenis: por id de mercado (cada id tiene una única selección en el feed).
 /// - Una cuota recibida DESPUÉS del sello de la fila mostrada se descarta (no es la del sello).
 SportQuote? quoteFor(SportEvent e, SportMarket m, QuotesOverlay overlay) {
@@ -123,9 +123,13 @@ SportQuote? quoteFor(SportEvent e, SportMarket m, QuotesOverlay overlay) {
       'game_total' => 'game_total||${lineKey(m.line)}',
       _ => '$market|${m.rowPlayerId ?? ''}|${lineKey(m.line)}',
     };
-    final side = market == 'winner'
-        ? (m.selection == e.home ? 'home' : 'away')
-        : 'over';
+    final String? side;
+    if (market == 'winner') {
+      side = m.selection == e.home ? 'home' : (m.selection == e.away ? 'away' : null);
+    } else {
+      side = 'over';
+    }
+    if (side == null) return null;
     q = entry.rows[key]?[side];
   } else if (e.sport == SportKind.tennis) {
     q = entry.rows[m.id]?['-'];

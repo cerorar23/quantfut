@@ -1,5 +1,5 @@
 // Predicciones y Mercados de NBA y tenis: acierto por familia (solo eligible win/loss),
-// nunca cuota, pestaña Jugadores solo con player_*, y error de feed solo en su hueco.
+// cuota solo con overlay (ver quote_label_test), pestaña Jugadores solo con player_*, y error de feed solo en su hueco.
 import 'dart:convert';
 import 'dart:io';
 
@@ -136,7 +136,7 @@ void main() {
     expect(tennis['winner'], (won: 1, resolved: 1));
   });
 
-  testWidgets('Predicciones y Mercados de NBA/tenis nunca muestran cuota', (tester) async {
+  testWidgets('Predicciones y Mercados de NBA/tenis sin overlay: «—» y nunca un @ inventado', (tester) async {
     for (final (sport, file) in [
       (SportKind.nba, 'nba_feed.json'),
       (SportKind.tennis, 'tennis_feed.json'),

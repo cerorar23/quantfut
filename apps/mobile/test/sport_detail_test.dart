@@ -374,7 +374,7 @@ void main() {
     }, createHttpClient: (_) => _Client404());
   });
 
-  testWidgets('cabecera NBA «VIS @ LOC»; nunca texto de precio con @', (
+  testWidgets('cabecera NBA «VIS @ LOC»; sin overlay no hay texto de precio con @', (
     tester,
   ) async {
     await HttpOverrides.runZoned(() async {
