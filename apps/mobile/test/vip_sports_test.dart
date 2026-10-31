@@ -92,8 +92,13 @@ void main() {
     expect(find.descendant(of: card('nba'), matching: find.text('67 %')), findsOneWidget);
     expect(find.descendant(of: card('nba'), matching: find.text('2/3')), findsOneWidget);
     expect(find.descendant(of: card('tenis'), matching: find.text('—')), findsOneWidget);
-    expect(find.textContaining('fútbol, NBA y tenis'), findsOneWidget);
-    expect(find.text('NBA y tenis incluidos'), findsOneWidget);
+    expect(find.textContaining('NBA y tenis son abiertos para todos'), findsOneWidget);
+    expect(find.textContaining('fútbol, NBA y tenis'), findsNothing);
+    expect(find.text('NBA y tenis abiertos para todos'), findsOneWidget);
+    expect(find.text('NBA y tenis incluidos'), findsNothing);
+    // Ventana: cuántos resueltos sostienen la cifra.
+    expect(find.descendant(of: card('nba'), matching: find.text('Sobre los últimos 3 resueltos')), findsOneWidget);
+    expect(find.descendant(of: card('tenis'), matching: find.textContaining('Sobre los últimos')), findsNothing);
   });
 
   testWidgets('un feed sin cargar o caído no inventa acierto', (tester) async {
@@ -134,5 +139,43 @@ void main() {
     await pump(tester, const {});
     expect(find.text('≈ 9,00/mes'), findsOneWidget);
     expect(find.textContaining(RegExp(r'≈ \$')), findsNothing);
+  });
+
+  testWidgets('al abrir VIP sin haber abierto NBA se pide su feed y luego aparece el acierto', (tester) async {
+    tester.view.physicalSize = const Size(390, 2600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await AppLocale.instance.select('es');
+    final api = QuantFutApi();
+    addTearDown(api.dispose);
+    final live = ValueNotifier<Map<SportKind, SportFeed>>(const {});
+    addTearDown(live.dispose);
+    var requests = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: AppLocale.instance.locale,
+        theme: liveTheme(),
+        home: LiveVipScreen(
+          api: api,
+          data: data,
+          feedsListenable: live,
+          onNeedFeeds: () => requests++,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(requests, 1);
+    expect(find.descendant(of: card('nba'), matching: find.text('—')), findsOneWidget);
+    live.value = {
+      SportKind.nba: SportFeed(ready: true, events: [
+        ev(SportKind.nba, [mk('1', 'win'), mk('2', 'loss')]),
+      ]),
+    };
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: card('nba'), matching: find.text('50 %')), findsOneWidget);
+    expect(find.descendant(of: card('nba'), matching: find.text('Sobre los últimos 2 resueltos')), findsOneWidget);
   });
 }

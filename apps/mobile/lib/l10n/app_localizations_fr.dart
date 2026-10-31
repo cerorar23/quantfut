@@ -2323,6 +2323,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String sportHitWindow(int n) {
+    return 'Sur les $n derniers résolus';
+  }
+
+  @override
   String get sportMore => 'Plus';
 
   @override
@@ -2712,10 +2717,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipBenefit4Title => 'Cotes et analyse du match';
 
   @override
-  String get vipBenefitSportsBody => 'Matchs et joueurs, avec les mêmes sceaux';
+  String get vipBenefitSportsBody =>
+      'Les mêmes sceaux et le même historique, sans abonnement';
 
   @override
-  String get vipBenefitSportsTitle => 'NBA et tennis inclus';
+  String get vipBenefitSportsTitle => 'NBA et tennis ouverts à tous';
 
   @override
   String get vipBestPrice => '★ MEILLEUR PRIX';
@@ -2750,7 +2756,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'Tous les pronostics Haute probabilité et du Défi Escalier en football, NBA et tennis tant que votre abonnement est en cours.';
+      'Débloque les pronostics Haute probabilité et du Défi Escalier en football tant que votre abonnement est en cours. NBA et tennis sont ouverts à tous.';
 
   @override
   String get vipLinked => '🔒  Votre accès VIP est lié à votre compte';

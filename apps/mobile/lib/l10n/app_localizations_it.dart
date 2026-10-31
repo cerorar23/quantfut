@@ -2321,6 +2321,11 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String sportHitWindow(int n) {
+    return 'Sugli ultimi $n risolti';
+  }
+
+  @override
   String get sportMore => 'Altro';
 
   @override
@@ -2710,10 +2715,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get vipBenefitSportsBody =>
-      'Partite e giocatori, con gli stessi sigilli';
+      'Gli stessi sigilli e lo stesso storico, senza abbonamento';
 
   @override
-  String get vipBenefitSportsTitle => 'NBA e tennis inclusi';
+  String get vipBenefitSportsTitle => 'NBA e tennis aperti a tutti';
 
   @override
   String get vipBestPrice => '★ MIGLIOR PREZZO';
@@ -2748,7 +2753,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'Tutti i pronostici Alta probabilità e della Sfida Scala in calcio, NBA e tennis finché il tuo abbonamento è attivo.';
+      'Sblocca i pronostici Alta probabilità e della Sfida Scala nel calcio finché il tuo abbonamento è attivo. NBA e tennis sono aperti a tutti.';
 
   @override
   String get vipLinked => '🔒  Il tuo accesso VIP è collegato al tuo account';

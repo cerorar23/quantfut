@@ -65,8 +65,8 @@ class _SportDetailState extends State<SportDetail> {
   Future<JsonMap?> _loadStats() async {
     try {
       final path = nba
-          ? '/web/deportes/nba/estadisticas/${e.id}'
-          : '/web/deportes/tenis/estadisticas/${e.id}';
+          ? '/web/deportes/nba/estadisticas/${Uri.encodeComponent(e.id)}'
+          : '/web/deportes/tenis/estadisticas/${Uri.encodeComponent(e.id)}';
       final r = await widget.api.request(path);
       return r is Map<String, dynamic> ? r : null;
     } catch (_) {
@@ -199,12 +199,12 @@ String _surname(String name) {
   return w.length > 1 ? w.sublist(1).join(' ') : name;
 }
 
-String _surfaceLabel(AppLocalizations l10n, String surface) =>
+String? _surfaceLabel(AppLocalizations l10n, String surface) =>
     switch (surface.trim().toLowerCase()) {
       'clay' => l10n.sportSurfaceClay,
       'hard' => l10n.sportSurfaceHard,
       'grass' => l10n.sportSurfaceGrass,
-      _ => surface,
+      _ => null,
     };
 
 class _Header extends StatelessWidget {
@@ -262,8 +262,8 @@ class _Header extends StatelessWidget {
             runSpacing: 6,
             children: [
               QfBadge(event.league, color: accent),
-              if (!nba && surface != null && surface.isNotEmpty)
-                QfBadge(_surfaceLabel(l10n, surface), color: QfColors.text2),
+              if (!nba && surface != null && _surfaceLabel(l10n, surface) != null)
+                QfBadge(_surfaceLabel(l10n, surface)!, color: QfColors.text2),
             ],
           ),
           const SizedBox(height: 12),

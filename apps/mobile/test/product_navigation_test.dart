@@ -17,6 +17,7 @@ import 'package:gobet/product/live_vip.dart';
 import 'package:gobet/product/live_forecast.dart';
 import 'package:gobet/product/live_widgets.dart';
 import 'package:gobet/l10n/app_locale.dart';
+import 'package:gobet/product/qf_theme.dart';
 import 'package:gobet/product/sport_selector.dart';
 import 'package:gobet/product/sports.dart';
 
@@ -398,6 +399,9 @@ void main() {
     expect(find.byType(SportSelector), findsOneWidget);
     expect(find.text('Sin conexión'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
+    // Acción que no compra: primary, nunca ámbar.
+    final retry = tester.widget<FilledButton>(find.ancestor(of: find.text('Reintentar'), matching: find.byType(FilledButton)));
+    expect(retry.style?.backgroundColor?.resolve(<WidgetState>{}), QfColors.primary);
     await tester.tap(find.byKey(const ValueKey('sport-nba')));
     await tester.pumpAndSettle();
     // El Inicio de NBA tiene su propio hueco: sin el error del fútbol.

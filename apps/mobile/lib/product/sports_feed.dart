@@ -142,7 +142,7 @@ List<SportEvent> nbaEvents(JsonMap data) {
             eligible: eligible,
             outcome: outcome,
             market: market,
-            player: isPlayer ? row['player'] as String? : null,
+            player: isPlayer && row['player'] is String ? row['player'] as String : null,
             playerId: isPlayer && row['player_id'] != null
                 ? '${row['player_id']}'
                 : null,

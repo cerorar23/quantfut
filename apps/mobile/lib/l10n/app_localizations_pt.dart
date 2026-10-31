@@ -2319,6 +2319,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String sportHitWindow(int n) {
+    return 'Sobre os últimos $n resolvidos';
+  }
+
+  @override
   String get sportMore => 'Mais';
 
   @override
@@ -2709,10 +2714,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get vipBenefitSportsBody =>
-      'Partidas e jogadores, com os mesmos selos';
+      'Os mesmos selos e o mesmo histórico, sem assinatura';
 
   @override
-  String get vipBenefitSportsTitle => 'NBA e tênis incluídos';
+  String get vipBenefitSportsTitle => 'NBA e tênis abertos a todos';
 
   @override
   String get vipBestPrice => '★ MELHOR PREÇO';
@@ -2747,7 +2752,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'Todos os prognósticos de Alta Probabilidade e do Desafio Escada em futebol, NBA e tênis enquanto sua assinatura estiver vigente.';
+      'Desbloqueia os prognósticos de Alta Probabilidade e do Desafio Escada no futebol enquanto sua assinatura estiver vigente. NBA e tênis são abertos a todos.';
 
   @override
   String get vipLinked => '🔒  Seu acesso VIP fica vinculado à sua conta';

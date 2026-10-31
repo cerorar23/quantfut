@@ -175,6 +175,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                 () => setState(
                                   () => future = widget.api.detail(widget.id),
                                 ),
+                                color: QfColors.primary,
                               ),
                             ],
                           ),

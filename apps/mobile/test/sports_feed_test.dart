@@ -237,4 +237,17 @@ void main() {
     expect(f.probability, .8);
     expect(f.eligible, isTrue);
   });
+
+  test('NBA: un jugador que no es texto no tumba el feed; el resto se lee', () {
+    final events = nbaEvents(
+      _nba([
+        {..._row, 'market': 'player_points', 'market_label': 'Puntos', 'player': 123, 'player_id': 'p1', 'line': 20.5},
+        _row,
+      ]),
+    );
+    expect(events, hasLength(1));
+    final markets = events.single.markets;
+    expect(markets, hasLength(2));
+    expect(markets.where((m) => m.player != null), isEmpty);
+  });
 }

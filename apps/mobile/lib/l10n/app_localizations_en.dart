@@ -2295,6 +2295,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String sportHitWindow(int n) {
+    return 'Based on the latest $n resolved';
+  }
+
+  @override
   String get sportMore => 'More';
 
   @override
@@ -2682,10 +2687,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vipBenefit4Title => 'Odds and match analysis';
 
   @override
-  String get vipBenefitSportsBody => 'Games and players, with the same seals';
+  String get vipBenefitSportsBody =>
+      'The same seals and the same sealed record, no subscription needed';
 
   @override
-  String get vipBenefitSportsTitle => 'NBA and tennis included';
+  String get vipBenefitSportsTitle => 'NBA and tennis open to everyone';
 
   @override
   String get vipBestPrice => '★ BEST PRICE';
@@ -2719,7 +2725,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'All High Probability and Ladder Challenge predictions in football, NBA and tennis while your subscription is active.';
+      'Unlocks the High Probability and Ladder Challenge football predictions while your subscription is active. NBA and tennis are open to everyone.';
 
   @override
   String get vipLinked => '🔒  Your VIP access is linked to your account';

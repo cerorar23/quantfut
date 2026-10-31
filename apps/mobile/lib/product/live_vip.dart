@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -23,6 +24,8 @@ class LiveVipScreen extends StatefulWidget {
     required this.data,
     this.store,
     this.sportFeeds = const {},
+    this.feedsListenable,
+    this.onNeedFeeds,
   });
   final QuantFutApi api;
   final JsonMap data;
@@ -30,6 +33,12 @@ class LiveVipScreen extends StatefulWidget {
 
   /// Feeds de NBA y tenis ya cargados por el shell: de ahí sale su acierto (sin pedir nada).
   final Map<SportKind, SportFeed> sportFeeds;
+
+  /// Feeds vivos del shell: si viene, manda sobre `sportFeeds` y la pantalla se redibuja al llegar.
+  final ValueListenable<Map<SportKind, SportFeed>>? feedsListenable;
+
+  /// Al abrir la pantalla pide los feeds de NBA y tenis que el usuario aún no abrió.
+  final VoidCallback? onNeedFeeds;
   @override
   State<LiveVipScreen> createState() => _LiveVipScreenState();
 }
@@ -41,6 +50,12 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
   void initState() {
     super.initState();
     MetaEvents.current?.viewVip();
+    widget.feedsListenable?.addListener(_feedsChanged);
+    if (widget.onNeedFeeds != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onNeedFeeds!();
+      });
+    }
     final store = widget.store;
     if (store != null) {
       store.addListener(_storeChanged);
@@ -51,8 +66,15 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
     }
   }
 
+  void _feedsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Map<SportKind, SportFeed> get _feeds => widget.feedsListenable?.value ?? widget.sportFeeds;
+
   @override
   void dispose() {
+    widget.feedsListenable?.removeListener(_feedsChanged);
     widget.store?.removeListener(_storeChanged);
     super.dispose();
   }
@@ -140,7 +162,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
   }
 
   /// Tarjeta pequeña con el acento del deporte y la cifra en azul (o «—» sin datos).
-  Widget _sportCard(SportKind sport, String value, String? count) {
+  Widget _sportCard(SportKind sport, String value, String? count, {int? window}) {
     final spec = sportSpecs[sport]!;
     return Expanded(
       child: QfCard(
@@ -166,6 +188,12 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
             ),
             if (count != null)
               Text(count, style: const TextStyle(fontFamily: qfMono, fontSize: 11, color: QfColors.muted)),
+            if (window != null)
+              Text(
+                context.l10n.sportHitWindow(window),
+                key: ValueKey('vip-window-${sport.id}'),
+                style: const TextStyle(fontSize: 10, color: QfColors.muted),
+              ),
           ],
         ),
       ),
@@ -288,8 +316,8 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
     final min = ((config['probability_min'] as num?) ?? .73) * 100;
     final max = ((config['probability_max'] as num?) ?? .95) * 100;
     final real = history['acierto_real'];
-    final nba = _feedRate(widget.sportFeeds[SportKind.nba]);
-    final tennis = _feedRate(widget.sportFeeds[SportKind.tennis]);
+    final nba = _feedRate(_feeds[SportKind.nba]);
+    final tennis = _feedRate(_feeds[SportKind.tennis]);
     String? count(({int won, int resolved})? r) => r == null ? null : '${r.won}/${r.resolved}';
     String rate(({int won, int resolved})? r) =>
         r == null ? '—' : percentText(r.won * 100 / r.resolved);
@@ -330,9 +358,9 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                       history['n'] == null ? null : '${history['aciertos'] ?? '—'}/${history['n']}',
                     ),
                     const SizedBox(width: 6),
-                    _sportCard(SportKind.nba, rate(nba), count(nba)),
+                    _sportCard(SportKind.nba, rate(nba), count(nba), window: nba?.resolved),
                     const SizedBox(width: 6),
-                    _sportCard(SportKind.tennis, rate(tennis), count(tennis)),
+                    _sportCard(SportKind.tennis, rate(tennis), count(tennis), window: tennis?.resolved),
                   ],
                 ),
                 const SizedBox(height: 6),

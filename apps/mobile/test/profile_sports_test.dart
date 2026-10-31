@@ -4,10 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/core/app_update.dart';
 import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/product/live_api.dart';
+import 'package:gobet/product/live_detail.dart';
 import 'package:gobet/product/live_profile.dart';
 import 'package:gobet/product/live_widgets.dart';
+import 'package:gobet/product/qf_theme.dart';
 import 'package:gobet/product/my_sports.dart';
 import 'package:gobet/product/sports.dart';
+
+class _SignedIn extends QuantFutApi {
+  @override
+  bool get signedIn => true;
+}
+
+class _DetailFails extends QuantFutApi {
+  @override
+  Future<JsonMap> detail(String id) async => throw const ApiFailure('Sin conexión');
+}
 
 SportPrefs prefsOn(Map<String, String> store) => SportPrefs(
   read: (key) async => store[key],
@@ -181,5 +193,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(store['sports_hidden'], '');
     expect(find.descendant(of: row('futbol'), matching: find.text('por defecto')), findsOneWidget);
+  });
+
+  testWidgets('Actualizar mi acceso es una acción primary, no ámbar', (tester) async {
+    tester.view.physicalSize = const Size(390, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await AppLocale.instance.select('es');
+    final api = _SignedIn()..account = {'email': 'a@b.c', 'email_verified': true};
+    addTearDown(api.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: AppLocale.instance.locale,
+        theme: liveTheme(),
+        home: Scaffold(
+          body: LiveProfileScreen(
+            api: api,
+            data: const {},
+            onVip: () {},
+            onChanged: () async {},
+            sportPrefs: prefsOn({}),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final button = tester.widget<FilledButton>(
+      find.ancestor(of: find.text('Actualizar mi acceso'), matching: find.byType(FilledButton)),
+    );
+    expect(button.style?.backgroundColor?.resolve(<WidgetState>{}), QfColors.primary);
+  });
+
+  testWidgets('Reintentar del detalle del partido es primary, no ámbar', (tester) async {
+    await AppLocale.instance.select('es');
+    final api = _DetailFails();
+    addTearDown(api.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: AppLocale.instance.locale,
+        theme: liveTheme(),
+        home: Scaffold(body: LiveMatchDetail(api: api, id: 'x', onVip: () {})),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final button = tester.widget<FilledButton>(
+      find.ancestor(of: find.text('Reintentar'), matching: find.byType(FilledButton)),
+    );
+    expect(button.style?.backgroundColor?.resolve(<WidgetState>{}), QfColors.primary);
   });
 }

@@ -204,8 +204,9 @@ void main() {
     expect(find.text('Ganador del partido'), findsOneWidget);
     expect(find.text('Tie-break'), findsOneWidget);
     expect(find.text('Juegos totales'), findsNothing);
-    // Tie-break sin resueltos: sin barra y con «En revisión».
-    expect(find.textContaining('En revisión'), findsOneWidget);
+    // Tie-break sin resueltos: sin barra y con texto neutro (sin semántica de «línea»).
+    expect(find.text('Sin pronósticos resueltos'), findsOneWidget);
+    expect(find.textContaining('línea confirmada'), findsNothing);
     await tester.tap(find.text('Juegos'));
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Juegos totales'), findsOneWidget);
@@ -235,5 +236,23 @@ void main() {
       ),
     );
     expect(find.text('Reintentar'), findsOneWidget);
+  });
+
+  testWidgets('Predicciones y Mercados rotulan la ventana de resueltos sobre la que se calcula', (tester) async {
+    final feed = SportFeed(
+      ready: true,
+      events: [
+        ev('1', [
+          mk('a', market: 'winner', outcome: 'win'),
+          mk('b', market: 'winner', outcome: 'loss'),
+          mk('c', market: 'winner', outcome: 'win'),
+          mk('d', market: 'winner', outcome: 'win', eligible: false),
+        ]),
+      ],
+    );
+    await pump(tester, predictions(SportKind.nba, feed));
+    expect(find.text('Sobre los últimos 3 resueltos'), findsOneWidget);
+    await pump(tester, SportMarkets(sport: SportKind.nba, feed: feed));
+    expect(find.text('Sobre los últimos 3 resueltos'), findsOneWidget);
   });
 }

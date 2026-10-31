@@ -93,6 +93,14 @@ class _SportMarketsState extends State<SportMarkets> {
             ],
           ),
           const SizedBox(height: 12),
+          if (rates.values.fold<int>(0, (s, r) => s + r.resolved) > 0) ...[
+            Text(
+              l10n.sportHitWindow(rates.values.fold<int>(0, (s, r) => s + r.resolved)),
+              key: const ValueKey('sport-hit-window'),
+              style: const TextStyle(fontSize: 11, color: QfColors.muted),
+            ),
+            const SizedBox(height: 8),
+          ],
           if (keys.isEmpty)
             Padding(
               padding: const EdgeInsets.all(16),
@@ -205,7 +213,7 @@ class _FamilyCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    l10n.marketsInReview,
+                    l10n.marketsNoResolved,
                     style: const TextStyle(color: QfColors.muted, fontSize: 12),
                   ),
                 ),

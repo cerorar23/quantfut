@@ -386,4 +386,22 @@ void main() {
       }
     });
   }
+
+  testWidgets('el destacado y los jugadores excluyen un partido ya empezado aunque no esté marcado en juego', (tester) async {
+    final now = DateTime(2026, 10, 30, 20);
+    final started = event('started', DateTime(2026, 10, 30, 19), [
+      market('w', .95),
+      market('p', .9, market: 'player_points', player: 'Ana', playerId: 'p9', line: 20.5),
+    ]);
+    final next = event('next', DateTime(2026, 10, 30, 22), [market('w', .6)]);
+    await pump(
+      tester,
+      sport: SportKind.nba,
+      feed: SportFeed(ready: true, events: [started, next]),
+      now: now,
+    );
+    expect(find.descendant(of: find.byType(HomeHero), matching: find.text('60 %')), findsOneWidget);
+    expect(find.descendant(of: find.byType(HomeHero), matching: find.text('95 %')), findsNothing);
+    expect(find.textContaining('Ana'), findsNothing);
+  });
 }

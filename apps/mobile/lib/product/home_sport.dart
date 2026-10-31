@@ -62,12 +62,16 @@ bool _upcoming(SportEvent e) =>
 /// que aún no empezaron.
 (SportEvent, SportMarket)? featuredEvent(
   Iterable<SportEvent> events,
-  DateTime today,
-) {
+  DateTime today, {
+  required DateTime now,
+}) {
   (SportEvent, SportMarket)? best;
   for (final e in events) {
     final m = featuredMarket(e);
-    if (m == null || !_upcoming(e) || e.start.toLocal().isBefore(today)) {
+    if (m == null ||
+        !_upcoming(e) ||
+        e.start.toLocal().isBefore(today) ||
+        !e.start.isAfter(now)) {
       continue;
     }
     if (best == null || m.probability > best.$2.probability) best = (e, m);
@@ -301,7 +305,7 @@ class _HomeSportState extends State<HomeSport> {
 
   Widget _top(BuildContext context, List<SportEvent> shown) {
     final l10n = context.l10n;
-    final featured = featuredEvent(widget.feed.events, _today);
+    final featured = featuredEvent(widget.feed.events, _today, now: widget.now ?? DateTime.now());
     final players = widget.sport == SportKind.nba ? _players(shown) : const <(SportEvent, SportMarket)>[];
     final nba = widget.sport == SportKind.nba;
     Widget big(String name) => sportAvatar(
@@ -383,7 +387,7 @@ class _HomeSportState extends State<HomeSport> {
   List<(SportEvent, SportMarket)> _players(List<SportEvent> events) {
     final best = <String, (SportEvent, SportMarket)>{};
     for (final e in events) {
-      if (!_upcoming(e)) continue;
+      if (!_upcoming(e) || !e.start.isAfter(widget.now ?? DateTime.now())) continue;
       for (final m in e.markets) {
         final id = m.playerId;
         if (id == null || !m.eligible || m.line == null) continue;

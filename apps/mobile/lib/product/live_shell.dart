@@ -67,6 +67,8 @@ class _ProductShellState extends State<ProductShell>
   // Feeds de NBA y tenis: se piden la primera vez que se elige el deporte. Cada uno tiene su
   // propio estado; un fallo solo se ve en su hueco.
   final feeds = <SportKind, SportFeed>{};
+  // La pantalla VIP lo escucha para pintar el acierto cuando llegan los feeds.
+  final _feedsNotifier = ValueNotifier<Map<SportKind, SportFeed>>(const {});
   final _feedLoading = <SportKind>{};
   ImageCatalog images = ImageCatalog.empty;
   final _memory = <String, String>{};
@@ -164,6 +166,7 @@ class _ProductShellState extends State<ProductShell>
       setState(() {
         // Un refresco fallido no borra un feed bueno: se conserva el anterior.
         if (feed.ready || feeds[kind]?.ready != true) feeds[kind] = feed;
+        _feedsNotifier.value = Map.of(feeds);
         if (!identical(catalog, ImageCatalog.empty)) images = catalog;
       });
     } finally {
@@ -246,6 +249,7 @@ class _ProductShellState extends State<ProductShell>
     services?.removeListener(configurationChanged);
     tokenSubscription?.cancel();
     store.dispose();
+    _feedsNotifier.dispose();
     if (widget.api == null && QuantFutApi.firebaseSession != api) api.dispose();
     super.dispose();
   }
@@ -322,7 +326,9 @@ class _ProductShellState extends State<ProductShell>
     } catch (_) {}
   }
 
-  void vip() => Navigator.of(context)
+  void vip() {
+    _feedsNotifier.value = Map.of(feeds);
+    Navigator.of(context)
       .push(
         MaterialPageRoute<void>(
           builder: (_) => Theme(
@@ -332,11 +338,18 @@ class _ProductShellState extends State<ProductShell>
               data: data ?? {},
               store: store,
               sportFeeds: Map.of(feeds),
+              feedsListenable: _feedsNotifier,
+              onNeedFeeds: () {
+                _ensureFeed(SportKind.nba);
+                _ensureFeed(SportKind.tennis);
+              },
             ),
           ),
         ),
       )
       .then((_) => reload());
+  }
+
   void detail(String id) => showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -594,7 +607,7 @@ class _ProductShellState extends State<ProductShell>
             children: [
               liveText(error!, color: liveMuted),
               const SizedBox(height: 16),
-              liveButton(context.l10n.commonRetry, reload),
+              liveButton(context.l10n.commonRetry, reload, color: QfColors.primary),
             ],
           ),
         ),

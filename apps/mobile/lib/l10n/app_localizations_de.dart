@@ -2310,6 +2310,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String sportHitWindow(int n) {
+    return 'Basierend auf den letzten $n ausgewerteten';
+  }
+
+  @override
   String get sportMore => 'Mehr';
 
   @override
@@ -2700,10 +2705,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vipBenefitSportsBody =>
-      'Spiele und Spieler, mit denselben Siegeln';
+      'Dieselben Siegel und derselbe Verlauf, ohne Abonnement';
 
   @override
-  String get vipBenefitSportsTitle => 'NBA und Tennis inklusive';
+  String get vipBenefitSportsTitle => 'NBA und Tennis für alle offen';
 
   @override
   String get vipBestPrice => '★ BESTER PREIS';
@@ -2738,7 +2743,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'Alle Prognosen für Hohe Wahrscheinlichkeit und die Treppen-Challenge in Fußball, NBA und Tennis, solange dein Abonnement gültig ist.';
+      'Schaltet die Prognosen für Hohe Wahrscheinlichkeit und die Treppen-Challenge im Fußball frei, solange dein Abonnement gültig ist. NBA und Tennis sind für alle offen.';
 
   @override
   String get vipLinked => '🔒  Dein VIP-Zugang ist mit deinem Konto verknüpft';

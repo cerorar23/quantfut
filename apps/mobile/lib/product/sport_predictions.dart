@@ -150,6 +150,12 @@ class _HitRateCard extends StatelessWidget {
                 color: QfColors.text2,
               ),
             ),
+            const SizedBox(height: 2),
+            Text(
+              l10n.sportHitWindow(resolved),
+              key: const ValueKey('sport-hit-window'),
+              style: const TextStyle(fontSize: 11, color: QfColors.muted),
+            ),
           ],
         ),
       ),

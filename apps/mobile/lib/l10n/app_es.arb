@@ -2104,6 +2104,15 @@
       }
     }
   },
+  "sportHitWindow": "Sobre los últimos {n} resueltos",
+  "@sportHitWindow": {
+    "description": "Ventana del acierto de NBA y tenis",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "sportMore": "Más",
   "@sportMore": {
     "description": "Último chip del selector cuando hay más de 4 deportes"
@@ -2365,8 +2374,8 @@
   "vipBenefit3Title": "Reto Escalera completo",
   "vipBenefit4Body": "Cuota publicada, probabilidad y xG de cada pick",
   "vipBenefit4Title": "Cuotas y análisis del partido",
-  "vipBenefitSportsBody": "Partidos y jugadores, con los mismos sellos",
-  "vipBenefitSportsTitle": "NBA y tenis incluidos",
+  "vipBenefitSportsBody": "Los mismos sellos y el mismo historial, sin suscripción",
+  "vipBenefitSportsTitle": "NBA y tenis abiertos para todos",
   "vipBestPrice": "★ MEJOR PRECIO",
   "vipCheckAccess": "Comprobar mi acceso",
   "vipCheckSignIn": "Inicia sesión en Perfil para comprobar tu acceso.",
@@ -2381,7 +2390,7 @@
   "vipFreeAccess": "Tu cuenta tiene acceso gratuito.",
   "vipGranted": "¡Listo! Tu acceso VIP está activo.",
   "vipHistoryNote": "Historial público y sellado; las muestras por mercado son pequeñas y un pronóstico puede fallar.",
-  "vipIntro": "Todos los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol, NBA y tenis mientras tu suscripción esté vigente.",
+  "vipIntro": "Desbloquea los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol mientras tu suscripción esté vigente. NBA y tenis son abiertos para todos.",
   "vipLinked": "🔒  Tu acceso VIP queda vinculado a tu cuenta",
   "vipManage": "Ya tienes Plus. Cambia o cancela tu plan en la tienda.",
   "vipMonthly": "≈ {amount}/mes",

@@ -3784,6 +3784,12 @@ abstract class AppLocalizations {
   /// **'{home} {homeWins} – {awayWins} {away}'**
   String sportH2hRecord(String home, String away, int homeWins, int awayWins);
 
+  /// Ventana del acierto de NBA y tenis
+  ///
+  /// In es, this message translates to:
+  /// **'Sobre los últimos {n} resueltos'**
+  String sportHitWindow(int n);
+
   /// Último chip del selector cuando hay más de 4 deportes
   ///
   /// In es, this message translates to:
@@ -4466,13 +4472,13 @@ abstract class AppLocalizations {
   /// No description provided for @vipBenefitSportsBody.
   ///
   /// In es, this message translates to:
-  /// **'Partidos y jugadores, con los mismos sellos'**
+  /// **'Los mismos sellos y el mismo historial, sin suscripción'**
   String get vipBenefitSportsBody;
 
   /// No description provided for @vipBenefitSportsTitle.
   ///
   /// In es, this message translates to:
-  /// **'NBA y tenis incluidos'**
+  /// **'NBA y tenis abiertos para todos'**
   String get vipBenefitSportsTitle;
 
   /// No description provided for @vipBestPrice.
@@ -4520,7 +4526,7 @@ abstract class AppLocalizations {
   /// No description provided for @vipIntro.
   ///
   /// In es, this message translates to:
-  /// **'Todos los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol, NBA y tenis mientras tu suscripción esté vigente.'**
+  /// **'Desbloquea los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol mientras tu suscripción esté vigente. NBA y tenis son abiertos para todos.'**
   String get vipIntro;
 
   /// No description provided for @vipLinked.

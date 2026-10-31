@@ -445,4 +445,55 @@ void main() {
       expect(find.text('HOU @ DAL'), findsOneWidget);
     }, createHttpClient: (_) => _Client404());
   });
+
+  testWidgets('el id del evento va codificado en la URL de estadísticas', (tester) async {
+    await HttpOverrides.runZoned(() async {
+      final api = _Api();
+      final e = nbaEvent();
+      await pump(
+        tester,
+        SportEvent(
+          id: 'a b/c?d',
+          sport: e.sport,
+          home: e.home,
+          away: e.away,
+          league: e.league,
+          start: e.start,
+          status: e.status,
+          seal: e.seal,
+          sealedAt: e.sealedAt,
+          markets: e.markets,
+        ),
+        api: api,
+      );
+      expect(api.paths, ['/web/deportes/nba/estadisticas/a%20b%2Fc%3Fd']);
+    }, createHttpClient: (_) => _Client404());
+  });
+
+  testWidgets('una superficie desconocida no se muestra en crudo; las conocidas, traducidas', (tester) async {
+    await HttpOverrides.runZoned(() async {
+      SportEvent withSurface(String s) {
+        final e = tennisEvent();
+        return SportEvent(
+          id: e.id,
+          sport: e.sport,
+          home: e.home,
+          away: e.away,
+          league: e.league,
+          surface: s,
+          start: e.start,
+          status: e.status,
+          seal: e.seal,
+          sealedAt: e.sealedAt,
+          markets: e.markets,
+        );
+      }
+
+      await pump(tester, withSurface('Carpet'));
+      expect(find.text('Carpet'), findsNothing);
+      await pump(tester, withSurface('Clay'));
+      expect(find.text('Clay'), findsNothing);
+      expect(find.text('ARCILLA'), findsOneWidget);
+    }, createHttpClient: (_) => _Client404());
+  });
 }
