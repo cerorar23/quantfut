@@ -4613,18 +4613,6 @@ abstract class AppLocalizations {
   /// **'Acierto registrado por deporte'**
   String get vipSportsTitle;
 
-  /// No description provided for @vipStatRecorded.
-  ///
-  /// In es, this message translates to:
-  /// **'Acierto registrado'**
-  String get vipStatRecorded;
-
-  /// No description provided for @vipStatResolved.
-  ///
-  /// In es, this message translates to:
-  /// **'Resueltos'**
-  String get vipStatResolved;
-
   /// No description provided for @vipStoreFailed.
   ///
   /// In es, this message translates to:

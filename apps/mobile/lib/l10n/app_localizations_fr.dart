@@ -2814,12 +2814,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipSportsTitle => 'Taux de réussite enregistré par sport';
 
   @override
-  String get vipStatRecorded => 'Taux de réussite enregistré';
-
-  @override
-  String get vipStatResolved => 'Résolus';
-
-  @override
   String get vipStoreFailed =>
       'Impossible de confirmer l\'achat. Nous réessaierons à la prochaine ouverture de l\'app.';
 

@@ -326,7 +326,12 @@ class _ProductShellState extends State<ProductShell>
         MaterialPageRoute<void>(
           builder: (_) => Theme(
             data: liveTheme(),
-            child: LiveVipScreen(api: api, data: data ?? {}, store: store),
+            child: LiveVipScreen(
+              api: api,
+              data: data ?? {},
+              store: store,
+              sportFeeds: Map.of(feeds),
+            ),
           ),
         ),
       )

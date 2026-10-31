@@ -6,10 +6,12 @@ import '../core/meta_events.dart';
 import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
+import 'sport_markets.dart';
+import 'sports.dart';
+import 'sports_feed.dart';
 import 'store_purchases.dart';
-
-const _vipGold = Color(0xffffc61a), _vipAmber = Color(0xffff9500);
-const _vipPanel = Color(0xff11151c);
 
 /// Pantalla de acceso VIP. Planes, precios, aciertos y permisos salen del
 /// servidor; no hay cifras de miembros, reseñas ni periodos de prueba porque
@@ -20,10 +22,14 @@ class LiveVipScreen extends StatefulWidget {
     required this.api,
     required this.data,
     this.store,
+    this.sportFeeds = const {},
   });
   final QuantFutApi api;
   final JsonMap data;
   final StoreController? store;
+
+  /// Feeds de NBA y tenis ya cargados por el shell: de ahí sale su acierto (sin pedir nada).
+  final Map<SportKind, SportFeed> sportFeeds;
   @override
   State<LiveVipScreen> createState() => _LiveVipScreenState();
 }
@@ -110,131 +116,139 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
         : l10n.vipDays(days.toInt());
   }
 
-  Widget _stat(String value, String label, IconData icon) => Expanded(
-    child: Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+  /// Aciertos y resueltos de un feed listo; null si no cargó, falló o no hay resueltos.
+  static ({int won, int resolved})? _feedRate(SportFeed? feed) {
+    if (feed == null || !feed.ready) return null;
+    var won = 0, resolved = 0;
+    for (final r in hitRateByFamily(feed.events).values) {
+      won += r.won;
+      resolved += r.resolved;
+    }
+    return resolved == 0 ? null : (won: won, resolved: resolved);
+  }
+
+  /// Tarjeta pequeña con el acento del deporte y la cifra en azul (o «—» sin datos).
+  Widget _sportCard(SportKind sport, String value, String? count) {
+    final spec = sportSpecs[sport]!;
+    return Expanded(
+      child: QfCard(
+        key: ValueKey('vip-sport-${sport.id}'),
+        accent: spec.accent,
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: liveGreen, size: 17),
-            const SizedBox(width: 5),
-            Flexible(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: liveText(value, size: 20, color: liveGreen, bold: true),
+            Text(
+              spec.label(context.l10n),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11, color: QfColors.text2),
+            ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: const TextStyle(fontFamily: qfMono, fontSize: 20, color: QfColors.primary),
               ),
             ),
+            if (count != null)
+              Text(count, style: const TextStyle(fontFamily: qfMono, fontSize: 11, color: QfColors.muted)),
           ],
         ),
-        const SizedBox(height: 4),
-        liveText(label.toUpperCase(), size: 9, color: liveMuted),
+      ),
+    );
+  }
+
+  Widget _benefit(IconData icon, String title, String detail) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 9),
+    decoration: const BoxDecoration(border: Border(top: BorderSide(color: QfColors.border))),
+    child: Row(
+      children: [
+        Icon(icon, color: QfColors.primary, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              liveText(title, bold: true, size: 14, color: QfColors.text),
+              const SizedBox(height: 2),
+              liveText(detail, size: 12, color: QfColors.text2),
+            ],
+          ),
+        ),
+        const Icon(Icons.check, color: QfColors.primary, size: 18),
       ],
     ),
   );
 
-  Widget _benefit(IconData icon, Color color, String title, String detail) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 9),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: .15),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Icon(icon, color: color, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  liveText(title, bold: true, size: 14),
-                  const SizedBox(height: 2),
-                  liveText(detail, size: 11, color: liveMuted),
-                ],
-              ),
-            ),
-            const Icon(Icons.check_circle, color: liveGreen, size: 18),
-          ],
-        ),
-      );
-
   Widget _plan(
+    int index,
     JsonMap plan,
     bool selected,
     bool best,
     VoidCallback onTap,
     double? monthly,
-  ) => Expanded(
-    child: GestureDetector(
-      onTap: onTap,
+  ) {
+    final l10n = AppLocale.instance.l10n;
+    final side = best
+        ? BorderSide(color: QfColors.cta, width: selected ? 2 : 1.5)
+        : selected
+        ? const BorderSide(color: QfColors.primary, width: 2)
+        : const BorderSide(color: QfColors.border);
+    return Expanded(
       child: Semantics(
         button: true,
         selected: selected,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
-          decoration: BoxDecoration(
-            color: selected ? _vipGold.withValues(alpha: .08) : _vipPanel,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected ? _vipGold : Colors.white12,
-              width: selected ? 2 : 1,
+        child: Material(
+          key: ValueKey(best ? 'vip-plan-best' : 'vip-plan-$index'),
+          color: selected ? QfColors.surface2 : QfColors.surface,
+          shape: CutCornerBorder(side: side),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    best ? l10n.vipBestPrice : _period(plan).toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      color: best ? QfColors.cta : QfColors.text2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.store?.byPlan[plan['plan_code']]?.price ?? _price(plan),
+                      style: const TextStyle(fontFamily: qfMono, fontSize: 19, color: QfColors.text),
+                    ),
+                  ),
+                  if (widget.store?.byPlan[plan['plan_code']] == null)
+                    liveText('${plan['currency'] ?? ''}', size: 10, color: QfColors.text2),
+                  const SizedBox(height: 6),
+                  if (best) liveText(_period(plan), size: 11, color: QfColors.text2),
+                  if (monthly != null)
+                    liveText(
+                      l10n.vipMonthly('\$${decimalText(monthly)}'),
+                      size: 11,
+                      color: QfColors.text2,
+                    ),
+                ],
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: best
-                      ? _vipGold.withValues(alpha: .16)
-                      : Colors.white10,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  best
-                      ? AppLocale.instance.l10n.vipBestPrice
-                      : _period(plan).toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    color: best ? _vipGold : liveMuted,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: liveText(
-                  widget.store?.byPlan[plan['plan_code']]?.price ?? _price(plan),
-                  size: 21,
-                  bold: true,
-                ),
-              ),
-              if (widget.store?.byPlan[plan['plan_code']] == null)
-                liveText('${plan['currency'] ?? ''}', size: 10, color: liveMuted),
-              const SizedBox(height: 8),
-              if (best) liveText(_period(plan), size: 10, color: liveMuted),
-              if (monthly != null)
-                liveText(
-                  AppLocale.instance.l10n.vipMonthly(
-                    '\$${decimalText(monthly)}',
-                  ),
-                  size: 10,
-                  color: selected ? _vipGold : liveMuted,
-                  bold: true,
-                ),
-            ],
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,150 +276,72 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
     final min = ((config['probability_min'] as num?) ?? .73) * 100;
     final max = ((config['probability_max'] as num?) ?? .95) * 100;
     final real = history['acierto_real'];
+    final nba = _feedRate(widget.sportFeeds[SportKind.nba]);
+    final tennis = _feedRate(widget.sportFeeds[SportKind.tennis]);
+    String? count(({int won, int resolved})? r) => r == null ? null : '${r.won}/${r.resolved}';
+    String rate(({int won, int resolved})? r) =>
+        r == null ? '—' : percentText(r.won * 100 / r.resolved);
     return Scaffold(
-      backgroundColor: liveBg,
+      backgroundColor: QfColors.bg,
       body: SafeArea(
         child: Stack(
           children: [
             ListView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _vipGold.withValues(alpha: .1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _vipGold.withValues(alpha: .5)),
-                    ),
-                    child: liveText(
-                      l10n.vipBadge,
-                      size: 10,
-                      color: _vipGold,
-                      bold: true,
-                    ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: QfBadge(l10n.vipBadge, color: QfColors.cta),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'QuantFut VIP',
+                  style: TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 28,
+                    color: QfColors.text,
                   ),
                 ),
-                const SizedBox(height: 20),
-                Center(
-                  child: Container(
-                    width: 74,
-                    height: 74,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: const LinearGradient(
-                        colors: [_vipGold, _vipAmber],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _vipGold.withValues(alpha: .35),
-                          blurRadius: 24,
-                        ),
-                      ],
+                const SizedBox(height: 6),
+                Text(
+                  l10n.vipIntro,
+                  style: const TextStyle(fontSize: 14, color: QfColors.text2, height: 1.45),
+                ),
+                qfTitle(l10n.vipSportsTitle),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _sportCard(
+                      SportKind.football,
+                      real is num ? '${decimalText(real, 1)} %' : '—',
+                      history['n'] == null ? null : '${history['aciertos'] ?? '—'}/${history['n']}',
                     ),
-                    child: const Icon(
-                      Icons.workspace_premium,
-                      color: liveBg,
-                      size: 42,
-                    ),
-                  ),
+                    const SizedBox(width: 6),
+                    _sportCard(SportKind.nba, rate(nba), count(nba)),
+                    const SizedBox(width: 6),
+                    _sportCard(SportKind.tennis, rate(tennis), count(tennis)),
+                  ],
                 ),
-                const SizedBox(height: 14),
-                const Center(
-                  child: Text(
-                    'QuantFut VIP',
-                    style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    l10n.vipIntro,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: liveMuted,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: liveGreen.withValues(alpha: .08),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: liveGreen.withValues(alpha: .35)),
-                  ),
-                  child: Row(
-                    children: [
-                      _stat(
-                        real is num ? '${decimalText(real, 1)} %' : '—',
-                        l10n.vipStatRecorded,
-                        Icons.trending_up,
-                      ),
-                      Container(width: 1, height: 34, color: Colors.white12),
-                      _stat(
-                        '${history['aciertos'] ?? '—'}/${history['n'] ?? '—'}',
-                        l10n.vipStatResolved,
-                        Icons.fact_check_outlined,
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 6),
+                liveText(l10n.vipSportsNote, size: 11, color: QfColors.text2),
                 const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: liveText(
-                    l10n.vipHistoryNote,
-                    size: 10,
-                    color: liveMuted,
-                  ),
+                liveText(l10n.vipHistoryNote, size: 11, color: QfColors.muted),
+                const SizedBox(height: 12),
+                _benefit(Icons.verified_outlined, l10n.vipBenefit1Title, l10n.vipBenefit1Body),
+                _benefit(
+                  Icons.star_outline,
+                  l10n.vipBenefit2Title,
+                  l10n.vipBenefit2Body(min.round(), max.round()),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _vipPanel,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Column(
-                    children: [
-                      _benefit(
-                        Icons.verified_outlined,
-                        liveGreen,
-                        l10n.vipBenefit1Title,
-                        l10n.vipBenefit1Body,
-                      ),
-                      _benefit(
-                        Icons.star_outline,
-                        _vipGold,
-                        l10n.vipBenefit2Title,
-                        l10n.vipBenefit2Body(min.round(), max.round()),
-                      ),
-                      _benefit(
-                        Icons.stairs_outlined,
-                        const Color(0xffa78bfa),
-                        l10n.vipBenefit3Title,
-                        l10n.vipBenefit3Body,
-                      ),
-                      _benefit(
-                        Icons.bolt_outlined,
-                        const Color(0xffff4d6d),
-                        l10n.vipBenefit4Title,
-                        l10n.vipBenefit4Body,
-                      ),
-                    ],
-                  ),
+                _benefit(
+                  Icons.sports_basketball_outlined,
+                  l10n.vipBenefitSportsTitle,
+                  l10n.vipBenefitSportsBody,
                 ),
-                const SizedBox(height: 18),
+                _benefit(Icons.stairs_outlined, l10n.vipBenefit3Title, l10n.vipBenefit3Body),
+                _benefit(Icons.bolt_outlined, l10n.vipBenefit4Title, l10n.vipBenefit4Body),
+                const SizedBox(height: 16),
                 if (shown.isEmpty)
                   training(l10n.vipPlansSoon)
                 else
@@ -415,6 +351,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                       for (var i = 0; i < shown.length; i++) ...[
                         if (i > 0) const SizedBox(width: 8),
                         _plan(
+                          i,
                           shown[i],
                           selected == i,
                           i == bestIndex,
@@ -424,47 +361,41 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                       ],
                     ],
                   ),
-                const SizedBox(height: 18),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_vipGold, _vipAmber],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        foregroundColor: liveBg,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      onPressed: verifying
-                          ? null
-                          : canBuy
-                          ? () => store.buy(shown[selected]['plan_code'] as String)
-                          : () => liveNotice(
-                              context,
-                              purchases
-                                  ? l10n.vipPaymentRequired
-                                  : featureMessage(widget.data, 'compras'),
-                            ),
-                      icon: verifying
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: liveBg,
-                              ),
-                            )
-                          : const Icon(Icons.workspace_premium),
-                      label: Text(
-                        canBuy ? l10n.vipSubscribe : l10n.vipActivate,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
+                const SizedBox(height: 16),
+                // La única acción ámbar de la pantalla.
+                SizedBox(
+                  height: 52,
+                  child: FilledButton(
+                    key: const ValueKey('vip-subscribe'),
+                    style: qfFilled(QfColors.cta),
+                    onPressed: verifying
+                        ? null
+                        : canBuy
+                        ? () => store.buy(shown[selected]['plan_code'] as String)
+                        : () => liveNotice(
+                            context,
+                            purchases
+                                ? l10n.vipPaymentRequired
+                                : featureMessage(widget.data, 'compras'),
+                          ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (verifying)
+                          const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: QfColors.onCta),
+                          )
+                        else
+                          const Icon(Icons.workspace_premium, size: 20),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            canBuy ? l10n.vipSubscribe : l10n.vipActivate,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -479,19 +410,26 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                         ? l10n.vipPricesNote
                         : l10n.vipPurchasesPending,
                     size: 11,
-                    color: liveMuted,
+                    color: QfColors.text2,
                   ),
                 ),
                 if (canBuy)
                   Center(
                     child: TextButton(
+                      style: qfText(),
                       onPressed: verifying ? null : store.restore,
                       child: Text(l10n.vipRestore),
                     ),
                   ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 Center(
                   child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: QfColors.primary,
+                      side: const BorderSide(color: QfColors.primary),
+                      minimumSize: const Size(64, 44),
+                      shape: const CutCornerBorder(cut: 8),
+                    ),
                     onPressed: checkAccess,
                     icon: const Icon(Icons.refresh, size: 16),
                     label: Text(
@@ -503,7 +441,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                 ),
                 const SizedBox(height: 10),
                 Center(
-                  child: liveText(l10n.vipLinked, size: 10, color: liveMuted),
+                  child: liveText(l10n.vipLinked, size: 11, color: QfColors.text2),
                 ),
               ],
             ),
@@ -513,7 +451,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
               child: IconButton(
                 tooltip: l10n.commonClose,
                 onPressed: () => Navigator.maybePop(context),
-                icon: const Icon(Icons.close, color: liveMuted),
+                icon: const Icon(Icons.close, color: QfColors.text2),
               ),
             ),
           ],

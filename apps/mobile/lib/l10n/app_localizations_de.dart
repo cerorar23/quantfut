@@ -2802,12 +2802,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get vipSportsTitle => 'Erfasste Trefferquote je Sportart';
 
   @override
-  String get vipStatRecorded => 'Erfasste Trefferquote';
-
-  @override
-  String get vipStatResolved => 'Ausgewertet';
-
-  @override
   String get vipStoreFailed =>
       'Der Kauf konnte nicht bestätigt werden. Wir versuchen es beim nächsten Öffnen der App erneut.';
 

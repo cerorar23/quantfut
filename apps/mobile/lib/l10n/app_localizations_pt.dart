@@ -2811,12 +2811,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get vipSportsTitle => 'Acerto registrado por esporte';
 
   @override
-  String get vipStatRecorded => 'Taxa de acerto registrada';
-
-  @override
-  String get vipStatResolved => 'Resolvidos';
-
-  @override
   String get vipStoreFailed =>
       'Não foi possível confirmar a compra. Tentaremos de novo quando você reabrir o app.';
 

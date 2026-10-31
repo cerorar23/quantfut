@@ -749,8 +749,6 @@
   "vipRestore": "Restaurer les achats",
   "vipSportsNote": "Chaque pronostic est scellé avant le match. « — » : pas encore de résultats pour le calculer.",
   "vipSportsTitle": "Taux de réussite enregistré par sport",
-  "vipStatRecorded": "Taux de réussite enregistré",
-  "vipStatResolved": "Résolus",
   "vipStoreFailed": "Impossible de confirmer l'achat. Nous réessaierons à la prochaine ouverture de l'app.",
   "vipStoreTerms": "Se renouvelle automatiquement au même prix jusqu'à ce que vous le résiliiez dans la boutique.",
   "vipStoreUnavailable": "La boutique n'est pas disponible sur cet appareil.",

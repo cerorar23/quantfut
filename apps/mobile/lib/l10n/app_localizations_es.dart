@@ -2805,12 +2805,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vipSportsTitle => 'Acierto registrado por deporte';
 
   @override
-  String get vipStatRecorded => 'Acierto registrado';
-
-  @override
-  String get vipStatResolved => 'Resueltos';
-
-  @override
   String get vipStoreFailed =>
       'No se pudo confirmar la compra. Lo reintentaremos al volver a abrir la app.';
 
