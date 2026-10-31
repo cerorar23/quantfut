@@ -7,6 +7,11 @@
 - [ ] Medición con datos reales de solo lectura (no hecha: el código aún no está en el servidor).
 - Plan: `docs/superpowers/plans/2026-10-31-cuotas-nba-tenis.md`; reconocimiento: `docs/cuotas_nba_tenis_reconocimiento_20261031.md`.
 
+## 31-oct-2026 · Respaldo de cuotas con The Odds API histórico (rama `cuotas-nba-tenis`, sin desplegar)
+- [x] `ingest/cuotas_respaldo.py`: comando por lotes (seco por defecto, `--ejecutar`, `--max-creditos` 300, suelo de saldo 500), caché JSON y `aplica_nba`/`aplica_tenis` en `api/cuotas_web.py`. Pruebas: `tests/test_cuotas_respaldo.py`.
+- [ ] Jugadores NBA: las filas selladas no traen nombre (`player_name`), así que no se piden hasta que el productor lo añada.
+- [ ] Probar `--ejecutar` en el servidor con un solo evento y comparar el coste real (`x-requests-last`) con la estimación (titular).
+
 ## 30-oct-2026 · App: NBA y tenis + rediseño v3
 
 - [x] Implementado en la rama `app/nba-tenis-rediseno` (app 1.1.0+5): selector global de deporte, feeds de NBA y tenis, ficha de partido, «Mis deportes», pantallas de acceso en piel v3.

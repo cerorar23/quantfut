@@ -30,6 +30,7 @@ from qf.api import tenis_publico
 from qf.api.cuotas_nba import load_cohorts, nba_overlay
 from qf.api.cuotas_tenis import load_sealed, tennis_overlay
 from qf.config import settings
+from qf.ingest import cuotas_respaldo
 
 log = logging.getLogger(__name__)
 TTL = timedelta(seconds=60)
@@ -118,14 +119,18 @@ def _tenis() -> Cuerpo:
     feed = tenis_publico.public_data()
     ids = [e.get("id") for e in feed.get("events", []) if isinstance(e, dict)]
     sellos = load_sealed(settings.tennis_sealed_dir, [i for i in ids if i is not None])
-    return _cuerpo(_poda_tenis(tennis_overlay(settings.propline_archive, feed, sealed=sellos, now=_ahora())))
+    out = tennis_overlay(settings.propline_archive, feed, sealed=sellos, now=_ahora())
+    return _cuerpo(_poda_tenis(cuotas_respaldo.aplica_tenis(out, cuotas_respaldo.leer_cache(settings.cuotas_respaldo_cache))))
 
 
 def _nba() -> Cuerpo:
     if not settings.propline_archive or not settings.nba_cohorts_dir:
         return _cuerpo(_no_disponible())
     cohortes = load_cohorts(settings.nba_cohorts_dir, dias=DIAS_NBA, now=_ahora())
-    return _cuerpo(_tope_nba(_poda_nba(nba_overlay(settings.propline_archive, cohortes, now=_ahora()))))
+    out = nba_overlay(settings.propline_archive, cohortes, now=_ahora())
+    # Respaldo: solo lee la caché que escribe el comando por lotes; PropLine gana siempre (rellena lados en None).
+    out = cuotas_respaldo.aplica_nba(out, cuotas_respaldo.leer_cache(settings.cuotas_respaldo_cache))
+    return _cuerpo(_tope_nba(_poda_nba(out)))
 
 
 def _ejecuta(clave: str, calcula, trabajo: _Trabajo):

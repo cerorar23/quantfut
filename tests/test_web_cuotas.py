@@ -42,7 +42,7 @@ def entorno(monkeypatch, tmp_path):
     reloj = Reloj()
     monkeypatch.setattr(cw, "_ahora", reloj)
     cfg = SimpleNamespace(propline_archive=str(tmp_path / "arch"), nba_cohorts_dir=str(tmp_path / "cohorts"),
-                          tennis_sealed_dir=str(tmp_path / "sellos"))
+                          tennis_sealed_dir=str(tmp_path / "sellos"), cuotas_respaldo_cache=None)
     monkeypatch.setattr(cw, "settings", cfg)
     yield reloj
     ct.clear_cache()

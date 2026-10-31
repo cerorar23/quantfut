@@ -90,6 +90,10 @@ class Settings:
     # Sellos de tenis del motor (`<raíz>/predictions/<event_key>.json`) montados en solo lectura para la
     # cuota de referencia (api/cuotas_tenis.py). Sin valor: no hay cuotas de tenis.
     tennis_sealed_dir: str | None = os.getenv("TENNIS_SEALED_DIR") or None
+    # Respaldo de cuotas NBA/tenis con The Odds API histórico (ingest/cuotas_respaldo.py). La clave es la del plan
+    # dedicado a NBA: solo la usa el comando por lotes, nunca la API web. La caché es un JSON que el overlay solo lee.
+    odds_api_respaldo_key: str | None = os.getenv("ODDS_API_RESPALDO_KEY") or None
+    cuotas_respaldo_cache: str | None = os.getenv("CUOTAS_RESPALDO_CACHE") or None
 
     # Media vida del decaimiento temporal, en días: un partido de hace 270 días
     # pesa la mitad que uno de hoy. Elegida por walk-forward en la auditoría del

@@ -41,6 +41,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Vuelta atrás: reinstalar la imagen anterior de la API; los montajes extra son inertes sin el código.
 - Pendiente del titular: términos de PropLine para mostrar cuotas públicamente.
 
+### PROPUESTA (sin desplegar) · Respaldo de cuotas NBA/tenis con The Odds API histórico · comando por lotes · rama `cuotas-nba-tenis`
+- Qué: `python -m qf.ingest.cuotas_respaldo` escribe `CUOTAS_RESPALDO_CACHE` (JSON, escritura atómica) y el overlay de `/web/deportes/{nba,tenis}/cuotas` solo la lee; los lados sin cuota de PropLine salen con `src: "the-odds-api"`.
+- Variables: `ODDS_API_RESPALDO_KEY` (ya en el `.env` del servidor) y `CUOTAS_RESPALDO_CACHE` (ruta en un volumen que la API monte en solo lectura). Sin ellas no hace nada.
+- Uso: seco por defecto (plan y coste); `--ejecutar --max-creditos 300` pide; para si el saldo quedaría bajo 500. Ejecutar a mano tras cada sellado de cohorte, no con cron hasta medir el consumo. Saldo medido el 31-oct: 2.855 créditos hasta el 23-nov.
+- Vuelta atrás: borrar el JSON o vaciar `CUOTAS_RESPALDO_CACHE`; el overlay vuelve a PropLine puro.
+
 ### 2026-10-29 02:33 UTC · Retiro de leyendas de tenis · API `quantfut-api-sin-leyendas-tenis:7c1892f` (PR #218)
 - Se retiraron las cuatro leyendas señaladas de la ventana de tenis. CI: 8 comprobaciones aprobadas; 94 pruebas del frontend aprobadas. Ensayo de imagen: módulos importables y 136 rutas.
 - Imagen basada en la API en ejecución `quantfut-api-sin-leyendas:36de48b`, sustituyendo solo `sports-window.js`, `app.js` e `index.html` y conservando el resto de la versión en producción. Solo se recreó la API; salud 200 y archivos públicos verificados.

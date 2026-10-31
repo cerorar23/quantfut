@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 31-oct-2026 · El respaldo de cuotas es un comando por lotes, no una llamada del endpoint
+Decisión: The Odds API solo se consulta desde `python -m qf.ingest.cuotas_respaldo` y el overlay lee una caché en disco. Un endpoint público que gastara créditos sería un vector de abuso, y el presupuesto (2.855 créditos hasta el 23-nov) es la restricción principal. Se usa el histórico a la hora del sello para que `as_of <= sealed_at`; PropLine gana siempre y el respaldo solo rellena lados en None, con emparejamiento por nombre exacto y comienzo a ±30 min (ante duda, «—»).
+
 ## 30-oct-2026 · App: NBA y tenis con selector global (1.1.0+5)
 
 Por qué un selector global de deporte y no pestañas por deporte: la barra inferior ya está llena y el deporte condiciona Inicio, Predicciones y Mercados a la vez; un solo estado evita duplicar pantallas. Los feeds públicos de NBA y tenis se muestran sin candado VIP porque en la web son públicos (`actionable:false`): un candado en la app no protegería nada; venderlos exige que el servidor aplique acceso, como hace con fútbol. No se muestran cuotas porque los feeds no las publican (`price: null`). Escudos, logos y fotos vienen del servidor, con respaldo a iniciales si falta la imagen. Decidido por el titular: el deporte inicial es el primero visible de Mis deportes («por defecto»), siempre; dentro de la sesión manda lo que toque el usuario, pero no se guarda como deporte de arranque (se eliminó `sports_last`/`SportPrefs.remember`). Versión 1.1.0+5. Verificado: `flutter analyze` limpio, 376 pruebas de Flutter y `tests/test_mensajes.py` en verde; APK de depuración compilado, la firma de release no está disponible en el worktree y la prueba en emulador no se hizo (emulador apagado).
