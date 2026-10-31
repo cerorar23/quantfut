@@ -14,7 +14,12 @@ SportPrefs prefsOn(Map<String, String> store) => SportPrefs(
   write: (key, value) async => store[key] = value,
 );
 
-Future<int Function()> pump(WidgetTester tester, Map<String, String> store) async {
+Future<int Function()> pump(
+  WidgetTester tester,
+  Map<String, String> store, {
+  SportPrefs? prefs,
+  bool shellFails = false,
+}) async {
   var changes = 0;
   await AppLocale.instance.select('es');
   await tester.pumpWidget(
@@ -25,7 +30,15 @@ Future<int Function()> pump(WidgetTester tester, Map<String, String> store) asyn
       theme: liveTheme(),
       home: Scaffold(
         body: ListView(
-          children: [MySportsSection(prefs: prefsOn(store), onChanged: () async => changes++)],
+          children: [
+            MySportsSection(
+              prefs: prefs ?? prefsOn(store),
+              onChanged: () async {
+                changes++;
+                if (shellFails) throw StateError('refresco');
+              },
+            ),
+          ],
         ),
       ),
     ),
@@ -122,6 +135,36 @@ void main() {
     await tester.tap(row);
     await tester.pumpAndSettle();
     expect(find.byType(AppUpdateDialog), findsOneWidget);
+  });
+
+  testWidgets('si falla el refresco del shell, lo guardado se queda y no hay aviso de error', (tester) async {
+    final store = <String, String>{};
+    final changes = await pump(tester, store, shellFails: true);
+    await tester.tap(find.byKey(const ValueKey('my-sport-switch-nba')));
+    await tester.pumpAndSettle();
+    expect(changes(), 1);
+    expect(store['sports_hidden'], 'nba');
+    expect(switchOn(tester, 'nba'), isFalse);
+    expect(find.text('No se pudo guardar el cambio. Inténtalo de nuevo.'), findsNothing);
+    // Sigue operativo: se puede volver a cambiar.
+    await tester.tap(find.byKey(const ValueKey('my-sport-switch-nba')));
+    await tester.pumpAndSettle();
+    expect(store['sports_hidden'], '');
+  });
+
+  testWidgets('si falla el guardado, se revierte, se avisa y el shell no se entera', (tester) async {
+    final store = <String, String>{};
+    final failing = SportPrefs(
+      read: (key) async => store[key],
+      write: (key, value) async => throw StateError('disco'),
+    );
+    final changes = await pump(tester, store, prefs: failing);
+    await tester.tap(find.byKey(const ValueKey('my-sport-down-futbol')));
+    await tester.pumpAndSettle();
+    expect(changes(), 0);
+    expect(find.text('No se pudo guardar el cambio. Inténtalo de nuevo.'), findsOneWidget);
+    expect(tester.getTopLeft(row('futbol')).dy, lessThan(tester.getTopLeft(row('nba')).dy));
+    expect(find.descendant(of: row('futbol'), matching: find.text('por defecto')), findsOneWidget);
   });
 
   testWidgets('ocultar el primero pasa «por defecto» al siguiente visible y avisa al shell', (tester) async {

@@ -54,15 +54,22 @@ class _MySportsSectionState extends State<MySportsSection> {
     });
     try {
       await widget.prefs.save(order: newOrder, hidden: newHidden);
-      await widget.onChanged();
     } catch (_) {
+      // Solo un fallo al guardar revierte: lo que se ve es lo guardado.
       if (mounted) {
         setState(() {
           order = oldOrder;
           hidden = oldHidden;
+          saving = false;
         });
         liveNotice(context, context.l10n.profileMySportsSaveError);
       }
+      return;
+    }
+    try {
+      await widget.onChanged();
+    } catch (_) {
+      /* Ya está guardado: el shell lo relee en su próxima carga. */
     } finally {
       if (mounted) setState(() => saving = false);
     }

@@ -442,7 +442,10 @@ void main() {
     await tester.scrollUntilVisible(find.textContaining('no es una casa de apuestas'), 300);
     expect(find.textContaining('no es una casa de apuestas'), findsOneWidget);
     // La guía no promete ganancias: «garantiza» solo aparece negado («Ningún dato garantiza»).
-    for (final t in tester.widgetList<Text>(find.textContaining('garantiza'))) {
+    await tester.scrollUntilVisible(find.textContaining('3 de cada 4'), -300);
+    final matches = tester.widgetList<Text>(find.textContaining('garantiza')).toList();
+    expect(matches, isNotEmpty);
+    for (final t in matches) {
       expect(t.data, contains('Ningún dato garantiza'));
     }
   });

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:gobet/product/live_api.dart';
+import 'package:gobet/product/live_profile.dart';
 import 'package:gobet/product/live_shell.dart';
 import 'package:gobet/product/live_detail.dart';
 import 'package:gobet/product/live_rewards.dart';
@@ -548,6 +549,54 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
+  testWidgets('el foco de Mis deportes se consume: volver a Perfil lo abre arriba', (
+    tester,
+  ) async {
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    ScrollPosition profileScroll() => tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(LiveProfileScreen),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        )
+        .position;
+    final title = find.text('Perfil y configuración');
+    final section = find.byKey(const ValueKey('my-sports'));
+    Future<void> viaMenu() async {
+      await tester.tap(find.byKey(const ValueKey('home-menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('more-sports')));
+      await tester.pumpAndSettle();
+    }
+
+    await viaMenu();
+    // El menú desplaza: la sección queda arriba y el título del Perfil fuera de la vista.
+    expect(profileScroll().pixels, greaterThan(0));
+    expect(tester.getTopLeft(section).dy, lessThan(200));
+    expect(title.hitTestable(), findsNothing);
+
+    for (final other in ['Inicio', 'Coins']) {
+      await navigate(tester, other);
+      await navigate(tester, 'Perfil');
+      expect(profileScroll().pixels, 0, reason: 'tras $other');
+      expect(title.hitTestable(), findsOneWidget, reason: 'tras $other');
+    }
+
+    // Una petición nueva del menú vuelve a desplazar, también estando ya en Perfil.
+    await viaMenu();
+    expect(profileScroll().pixels, greaterThan(0));
+    profileScroll().jumpTo(0);
+    await tester.pump();
+    await viaMenu();
+    expect(profileScroll().pixels, greaterThan(0));
+    expect(tester.getTopLeft(section).dy, lessThan(200));
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
   testWidgets('home uses API calendar and all five tabs including Coins', (
     tester,
   ) async {
@@ -914,7 +963,9 @@ void main() {
     expect(find.text('\$14,99'), findsOneWidget);
     expect(find.text('\$53,99'), findsOneWidget);
     expect(find.text('★ MEJOR PRECIO'), findsOneWidget);
-    expect(find.text('≈ \$9,00/mes'), findsOneWidget);
+    // Equivalente mensual con la moneda del servidor, sin suponer «$».
+    expect(find.text('≈ 9,00 USD/mes'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'≈ \$')), findsNothing);
     await capture(tester, 'vip_screen');
     await tester.ensureVisible(find.text('Activar acceso VIP'));
     await tester.pumpAndSettle();

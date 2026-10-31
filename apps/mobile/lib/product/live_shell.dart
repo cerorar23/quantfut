@@ -121,12 +121,13 @@ class _ProductShellState extends State<ProductShell>
     _ensureFeed(sport);
   }
 
-  /// Sube cada vez que el menú pide «Mis deportes»: el Perfil se desplaza a la sección.
-  int sportsFocus = 0;
+  /// Petición pendiente del menú «Mis deportes». El Perfil la consume una vez (la retira con
+  /// `onFocusHandled`), así que volver luego a Perfil lo abre arriba.
+  bool focusSports = false;
 
   void openMySports() => setState(() {
     tab = 4;
-    sportsFocus++;
+    focusSports = true;
   });
 
   /// Si la sección actual no existe en el deporte, vuelve a Alta probabilidad.
@@ -763,7 +764,10 @@ class _ProductShellState extends State<ProductShell>
                 onChanged: reload,
                 sportPrefs: sportPrefs,
                 onSportsChanged: sportsChanged,
-                focusSports: sportsFocus,
+                focusSports: focusSports,
+                onFocusHandled: () {
+                  if (mounted) setState(() => focusSports = false);
+                },
               ),
             )
           : mainBody(),

@@ -118,6 +118,21 @@ void main() {
     // Precios del servidor, nunca escritos en la app.
     expect(find.text('\$14,99'), findsOneWidget);
     expect(find.text('\$53,99'), findsOneWidget);
+    expect(find.text('≈ 9,00 USD/mes'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sin moneda del servidor el equivalente mensual va sin símbolo', (tester) async {
+    for (final plan in data['plans'] as List) {
+      (plan as Map).remove('currency');
+    }
+    addTearDown(() {
+      for (final plan in data['plans'] as List) {
+        (plan as Map)['currency'] = 'USD';
+      }
+    });
+    await pump(tester, const {});
+    expect(find.text('≈ 9,00/mes'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'≈ \$')), findsNothing);
   });
 }

@@ -103,6 +103,18 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
         : null;
   }
 
+  /// Equivalente mensual sin suponer moneda: con producto de la tienda, su símbolo y su
+  /// precio; si no, la cifra del servidor con el código de `currency` (o sola si no viene).
+  String _monthlyText(JsonMap plan, double monthly) {
+    final product = widget.store?.byPlan[plan['plan_code']];
+    final days = plan['duration_days'];
+    if (product != null && days is num && days > 0) {
+      return '${product.currencySymbol}${decimalText(product.rawPrice / (days / 30))}';
+    }
+    final currency = '${plan['currency'] ?? ''}'.trim();
+    return currency.isEmpty ? decimalText(monthly) : '${decimalText(monthly)} $currency';
+  }
+
   static String _price(JsonMap plan) =>
       '\$${decimalText((plan['price_cents'] as num?) == null ? null : (plan['price_cents'] as num) / 100)}';
 
@@ -237,7 +249,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                   if (best) liveText(_period(plan), size: 11, color: QfColors.text2),
                   if (monthly != null)
                     liveText(
-                      l10n.vipMonthly('\$${decimalText(monthly)}'),
+                      l10n.vipMonthly(_monthlyText(plan, monthly)),
                       size: 11,
                       color: QfColors.text2,
                     ),

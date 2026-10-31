@@ -22,7 +22,8 @@ class LiveProfileScreen extends StatefulWidget {
     required this.onChanged,
     this.sportPrefs,
     this.onSportsChanged,
-    this.focusSports = 0,
+    this.focusSports = false,
+    this.onFocusHandled,
     this.checkUpdate,
   });
   final QuantFutApi api;
@@ -34,8 +35,10 @@ class LiveProfileScreen extends StatefulWidget {
   final SportPrefs? sportPrefs;
   final Future<void> Function()? onSportsChanged;
 
-  /// Cada vez que cambia (menú «Más» → «Mis deportes») la sección se desplaza a la vista.
-  final int focusSports;
+  /// Petición de foco del menú «Más» → «Mis deportes»: la sección se desplaza a la vista
+  /// una vez y se avisa con [onFocusHandled] para que el shell la retire.
+  final bool focusSports;
+  final VoidCallback? onFocusHandled;
 
   /// Comprobación de versión; por defecto la del arranque ([checkAppUpdate]).
   final Future<AppUpdate?> Function()? checkUpdate;
@@ -52,7 +55,7 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.focusSports > 0) _focusSports();
+    if (widget.focusSports) _focusSports();
     PackageInfo.fromPlatform()
         .then((p) {
           if (mounted) setState(() => version = '${p.version} (${p.buildNumber})');
@@ -63,12 +66,14 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
   @override
   void didUpdateWidget(LiveProfileScreen old) {
     super.didUpdateWidget(old);
-    if (widget.focusSports != old.focusSports) _focusSports();
+    if (widget.focusSports && !old.focusSports) _focusSports();
   }
 
   void _focusSports() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!mounted) return;
+    widget.onFocusHandled?.call();
     final target = _sportsKey.currentContext;
-    if (target == null || !mounted) return;
+    if (target == null) return;
     Scrollable.ensureVisible(
       target,
       duration: MediaQuery.of(context).disableAnimations
