@@ -142,8 +142,11 @@ def ingest_match(match: dict) -> dict:
 
 
 def _fuente(starters: list[dict]) -> str:
-    """Fuente de los ids de jugador de un XI: SofaScore los marca con `src`; el resto es API-Football."""
-    return "sofascore" if any(p.get("src") == "sofascore" for p in starters or []) else "api"
+    """Fuente de los ids de jugador de un XI: SofaScore y FotMob los marcan con `src`; el resto es API-Football."""
+    for fuente in ("sofascore", "fotmob"):
+        if any(p.get("src") == fuente for p in starters or []):
+            return fuente
+    return "api"
 
 
 def availability(match_id: str, lookback: int = 5) -> dict | None:
