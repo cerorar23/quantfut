@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import sys
 import unicodedata
@@ -38,6 +39,7 @@ from qf.config import settings
 from qf.ingest import propline_shared as pl
 from qf.ingest.cuotas_referencia import best_quote
 
+log = logging.getLogger(__name__)
 HOST = "https://api.the-odds-api.com"
 SRC = "the-odds-api"
 SUELO = 500                         # no gastar si el saldo quedaría por debajo
@@ -381,7 +383,7 @@ def aplica_tenis(overlay: dict, cache: Mapping) -> dict:
 # --- comando -------------------------------------------------------------------------------------------------------
 
 def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", regiones="us", get=None, now=None,
-           salida=print, key=None, cache_path=None) -> int:
+           salida=print, key=None, cache_path=None, info=None) -> int:
     key = key if key is not None else settings.odds_api_respaldo_key
     cache_path = cache_path if cache_path is not None else settings.cuotas_respaldo_cache
     if not key:
@@ -409,19 +411,71 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
     if not ejecutar:
         salida("modo seco: no se hizo ninguna petición (use --ejecutar)")
         return 0
+    if not huecos:
+        return 0  # sin hueco no hay ni una petición (ni siquiera la lectura gratuita del saldo)
     cli = Cliente(get or _transporte(key), Presupuesto(max_creditos), regiones)
     claves_tenis = cli.saldo()  # lectura gratuita: fija el saldo y lista los torneos de tenis activos
-    memo, entries, nuevas = {}, dict(cache), 0
+    memo, entries, nuevas, suelo = {}, dict(cache), 0, False
     try:
         for h in huecos:
             nuevas += _procesa(cli, h, claves_tenis, memo, entries)
     except Parar as e:
         salida(f"parado: {e}")
+        suelo = "suelo" in str(e)
     if nuevas:
         escribir_cache(cache_path, entries, now)
+    if info is not None:
+        info.update(gastado=cli.p.gastado, saldo=cli.p.saldo, peticiones=cli.peticiones, nuevas=nuevas, suelo=suelo)
     salida(f"entradas nuevas: {nuevas}; peticiones de pago: {cli.peticiones}; créditos gastados: "
            f"{cli.p.gastado}; saldo: {cli.p.saldo}")
     return 0
+
+
+# --- ejecución automática tras el sellado (apagada por defecto) ------------------------------------------------
+
+def _gasto_hoy(path: Path, now: datetime) -> int:
+    try:
+        d = json.loads(path.read_bytes())
+        return int(d["gastado"]) if d.get("dia") == now.date().isoformat() else 0
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return 0
+
+
+def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None) -> dict:
+    """Pasada automática: solo si CUOTAS_RESPALDO_AUTO=1. Pide únicamente los huecos de pronósticos ya sellados
+    que PropLine dejó sin cuota; sin huecos no hay peticiones. Tope por corrida y tope diario (persistido junto a
+    la caché) para que varias pasadas no lo superen. NUNCA lanza: un fallo se registra y no toca el sellado."""
+    info: dict = {"estado": "desactivado"}
+    if not settings.cuotas_respaldo_auto:
+        return info
+    try:
+        cache_path = cache_path if cache_path is not None else settings.cuotas_respaldo_cache
+        if not cache_path:
+            return {"estado": "sin_cache"}
+        now = now or datetime.now(timezone.utc)
+        estado = Path(str(cache_path) + ".gasto.json")
+        hoy = _gasto_hoy(estado, now)
+        tope = min(settings.cuotas_respaldo_auto_max, settings.cuotas_respaldo_diario - hoy)
+        if tope <= 0:
+            return {"estado": "tope_diario", "gastado_hoy": hoy}
+        run: dict = {}
+        correr(ejecutar=True, max_creditos=tope, get=get, now=now, salida=log.info, key=key,
+               cache_path=cache_path, info=run)
+        gastado = int(run.get("gastado", 0))
+        if gastado:
+            tmp = estado.with_name(estado.name + ".tmp")
+            tmp.write_text(json.dumps(dict(dia=now.date().isoformat(), gastado=hoy + gastado)), encoding="utf-8")
+            os.replace(tmp, estado)
+        saldo = run.get("saldo")
+        if run.get("suelo") or (saldo is not None and saldo < SUELO):
+            if alerta is None:
+                from qf.publish import telegram
+                alerta = telegram.alert
+            alerta(f"Respaldo de cuotas: el saldo de The Odds API ({saldo}) cayó bajo el suelo {SUELO}")
+        return {"estado": "ok", **run, "gastado_hoy": hoy + gastado}
+    except Exception:  # noqa: BLE001 — el respaldo nunca rompe ni retrasa el sellado ni la publicación
+        log.exception("respaldo de cuotas: fallo (ignorado)")
+        return {"estado": "error"}
 
 
 def main(argv=None) -> int:
@@ -430,7 +484,12 @@ def main(argv=None) -> int:
     ap.add_argument("--max-creditos", type=int, default=MAX_CREDITOS)
     ap.add_argument("--deporte", choices=("nba", "tenis", "todos"), default="todos")
     ap.add_argument("--regiones", default="us")
+    ap.add_argument("--auto", action="store_true", help="pasada automática (solo si CUOTAS_RESPALDO_AUTO=1)")
     a = ap.parse_args(argv)
+    if a.auto:
+        logging.basicConfig(level=logging.INFO)
+        print(auto())
+        return 0
     return correr(ejecutar=a.ejecutar, max_creditos=a.max_creditos, deporte=a.deporte, regiones=a.regiones)
 
 

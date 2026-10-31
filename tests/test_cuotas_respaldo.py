@@ -216,3 +216,80 @@ def test_cache_atomica_y_poda(tmp_path):
     cr.escribir_cache(p, {"a|k": vieja, "b|k": dict(vieja, sealed_at=STAMP)}, NOW)
     assert list(cr.leer_cache(p)) == ["b|k"] and not (tmp_path / "c.json.tmp").exists()
     assert cr.leer_cache(tmp_path / "no.json") == {} and cr.leer_cache(None) == {}
+
+
+# --- pasada automática (auto) ------------------------------------------------------------------------------------
+
+def activa(monkeypatch, cache, **kw):
+    s = cr.settings
+    s.cuotas_respaldo_auto, s.cuotas_respaldo_auto_max, s.cuotas_respaldo_diario = True, 100, 300
+    s.cuotas_respaldo_cache = str(cache)
+    for k, v in kw.items():
+        setattr(s, k, v)
+
+
+def llama(cache, red, alertas=None, **kw):
+    return cr.auto(key="no-es-una-clave", get=red, now=NOW, alerta=(alertas.append if alertas is not None else None), **kw)
+
+
+def test_auto_desactivado_no_hace_nada(entorno, monkeypatch):
+    archive, cs, cache = entorno
+    s = cr.settings
+    s.cuotas_respaldo_auto, s.cuotas_respaldo_auto_max, s.cuotas_respaldo_diario = False, 100, 300
+    s.cuotas_respaldo_cache = str(cache)
+    red = Red()
+    assert llama(cache, red)["estado"] == "desactivado"
+    assert red.llamadas == [] and not cache.exists()
+
+
+def test_auto_sin_huecos_no_pide(entorno, monkeypatch):
+    archive, cs, cache = entorno
+    activa(monkeypatch, cache)
+    monkeypatch.setattr(cn, "load_cohorts", lambda *a, **k: [])
+    red = Red()
+    llama(cache, red)
+    assert red.llamadas == []
+
+
+def test_auto_con_hueco_pide_una_vez(entorno, monkeypatch):
+    archive, cs, cache = entorno
+    activa(monkeypatch, cache)
+    red = Red()
+    r = llama(cache, red)
+    assert r["estado"] == "ok" and len(red.de_pago()) == 2 and cache.exists()
+    n = len(red.llamadas)
+    llama(cache, red)  # segunda pasada: el hueco ya está en la caché
+    assert len(red.llamadas) == n
+
+
+def test_auto_tope_diario_entre_pasadas(entorno, monkeypatch):
+    archive, cs, cache = entorno
+    activa(monkeypatch, cache, cuotas_respaldo_diario=0)
+    red = Red()
+    assert llama(cache, red)["estado"] == "tope_diario" and red.llamadas == []
+    activa(monkeypatch, cache, cuotas_respaldo_diario=15)
+    llama(cache, red)  # listado (1) + evento (10) = 11 créditos; el gasto queda persistido
+    assert len(red.de_pago()) == 2
+    assert cr._gasto_hoy(cache.with_name("cache.json.gasto.json"), NOW) == 11
+    activa(monkeypatch, cache, cuotas_respaldo_diario=11)
+    otra = Red()
+    assert llama(cache, otra)["estado"] == "tope_diario" and otra.llamadas == []
+
+
+def test_auto_excepcion_no_se_propaga_y_saldo_bajo_alerta(entorno, monkeypatch):
+    archive, cs, cache = entorno
+    activa(monkeypatch, cache)
+
+    def rota(*a, **k):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(cr, "correr", rota)
+    assert llama(cache, Red())["estado"] == "error"
+
+
+def test_auto_saldo_bajo_el_suelo_alerta(entorno, monkeypatch):
+    archive, cs, cache = entorno
+    activa(monkeypatch, cache)
+    alertas = []
+    llama(cache, Red(saldo=505), alertas)
+    assert len(alertas) == 1

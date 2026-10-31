@@ -20,6 +20,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # `close`: CLV, sombra y entrenamiento. Sin peticiones. La liquidación espera al cierre hasta 48 h.
 40 */3 * * * cd /app && flock -n /tmp/propline_cierres.lock python -m qf.ingest.propline_cierres >> /var/log/propline_cierres.log 2>&1
 # Ráfagas para medir la latencia de las casas blandas (db/038), con tope de créditos
+# Respaldo de cuotas NBA/tenis tras el sellado: no hace nada si CUOTAS_RESPALDO_AUTO != 1 y, sin huecos, 0 peticiones.
+7-57/10 * * * * cd /app && flock -n /tmp/cuotas_respaldo.lock python -m qf.ingest.cuotas_respaldo --auto >> /var/log/cuotas_respaldo.log 2>&1
+
 */5 * * * * cd /app && python -m qf.ingest.rafagas >> /var/log/rafagas.log 2>&1
 
 # Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle).

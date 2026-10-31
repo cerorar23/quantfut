@@ -94,6 +94,10 @@ class Settings:
     # dedicado a NBA: solo la usa el comando por lotes, nunca la API web. La caché es un JSON que el overlay solo lee.
     odds_api_respaldo_key: str | None = os.getenv("ODDS_API_RESPALDO_KEY") or None
     cuotas_respaldo_cache: str | None = os.getenv("CUOTAS_RESPALDO_CACHE") or None
+    # Pasada automática (`cuotas_respaldo --auto`, cron): apagada por defecto. Topes en créditos.
+    cuotas_respaldo_auto: bool = os.getenv("CUOTAS_RESPALDO_AUTO", "0") == "1"
+    cuotas_respaldo_auto_max: int = int(os.getenv("CUOTAS_RESPALDO_AUTO_MAX", "100"))
+    cuotas_respaldo_diario: int = int(os.getenv("CUOTAS_RESPALDO_DIARIO", "300"))
 
     # Media vida del decaimiento temporal, en días: un partido de hace 270 días
     # pesa la mitad que uno de hoy. Elegida por walk-forward en la auditoría del
