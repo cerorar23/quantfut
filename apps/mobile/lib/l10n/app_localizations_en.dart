@@ -41,9 +41,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'I am at least 18 years old and I accept the terms and the privacy policy.';
 
   @override
-  String get accessConsentNeeded => 'Tick the box to continue.';
-
-  @override
   String get accessConsentRequired => 'Tick the box to continue with Google.';
 
   @override

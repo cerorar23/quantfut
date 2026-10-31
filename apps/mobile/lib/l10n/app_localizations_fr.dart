@@ -41,9 +41,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'J\'ai au moins 18 ans et j\'accepte les conditions et la politique de confidentialité.';
 
   @override
-  String get accessConsentNeeded => 'Cochez la case pour continuer.';
-
-  @override
   String get accessConsentRequired =>
       'Cochez la case pour continuer avec Google.';
 

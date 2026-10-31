@@ -154,12 +154,6 @@ abstract class AppLocalizations {
   /// **'Tengo al menos 18 años y acepto los términos y la política de privacidad.'**
   String get accessConsent;
 
-  /// Aviso al pulsar Google sin aceptar los términos.
-  ///
-  /// In es, this message translates to:
-  /// **'Marca la casilla para continuar.'**
-  String get accessConsentNeeded;
-
   /// No description provided for @accessConsentRequired.
   ///
   /// In es, this message translates to:

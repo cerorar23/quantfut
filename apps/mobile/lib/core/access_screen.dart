@@ -7,12 +7,11 @@ import 'package:flutter/services.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/language_picker.dart';
 import '../product/live_widgets.dart';
+import '../product/qf_shapes.dart';
+import '../product/qf_theme.dart';
 import 'access_illustrations.dart';
 
 const _slides = 5;
-const _googleDark = Color(0xff131314);
-const _googleBorder = Color(0xff8e918f);
-const _alertRed = Color(0xffe85667);
 
 /// Pantalla de acceso: presentación en carrusel (arriba) y tarjeta con el botón de Google, el
 /// consentimiento y los avisos (abajo, a la altura del pulgar). No conoce Firebase: la puerta de
@@ -93,11 +92,13 @@ class _AccessScreenState extends State<AccessScreen>
     super.dispose();
   }
 
+  /// Sin la casilla no se inicia sesión: el botón sigue activo y el error aparece junto a
+  /// la casilla (nunca un botón apagado sin explicación).
   void _google() {
     if (!widget.consent) {
       HapticFeedback.lightImpact();
       setState(() => _hint = true);
-      _shake.forward(from: 0);
+      if (!MediaQuery.of(context).disableAnimations) _shake.forward(from: 0);
       return;
     }
     widget.onGoogle();
@@ -112,16 +113,10 @@ class _AccessScreenState extends State<AccessScreen>
   Widget build(BuildContext context) {
     final linking = widget.linkingForm != null;
     return Scaffold(
-      backgroundColor: liveBg,
+      backgroundColor: QfColors.bg,
       resizeToAvoidBottomInset: true,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -.85),
-            radius: 1.1,
-            colors: [Color(0x3300d58b), Color(0x00090f1a)],
-          ),
-        ),
+      body: ColoredBox(
+        color: QfColors.bg,
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, box) => SingleChildScrollView(
@@ -154,25 +149,33 @@ class _AccessScreenState extends State<AccessScreen>
     padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
     child: Row(
       children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: liveGreen.withValues(alpha: .16),
-            borderRadius: BorderRadius.circular(10),
+        const Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: '// ', style: TextStyle(color: QfColors.primary)), // l10n-ignore (marca)
+                TextSpan(text: 'QUANTFUT'), // l10n-ignore (marca)
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: qfDisplay,
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              letterSpacing: 1.2,
+              color: QfColors.text,
+            ),
           ),
-          child: const Icon(Icons.insights, size: 20, color: liveGreen),
         ),
-        const SizedBox(width: 10),
-        liveText('QuantFut', size: 20, bold: true),
-        const Spacer(),
+        const SizedBox(width: 8),
         OutlinedButton.icon(
           key: const ValueKey('language-button'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white,
-            side: const BorderSide(color: Color(0xff243447)),
-            shape: const StadiumBorder(),
-            minimumSize: const Size(48, 40),
+            foregroundColor: QfColors.text,
+            side: const BorderSide(color: QfColors.border),
+            shape: const CutCornerBorder(cut: 8),
+            minimumSize: const Size(48, 44),
           ),
           onPressed: widget.busy ? null : () => showLanguagePicker(context),
           icon: const Icon(Icons.language_rounded, size: 18),
@@ -229,51 +232,67 @@ class _AccessScreenState extends State<AccessScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  liveText(kickers[i], size: 12, bold: true, color: liveGreen),
+                  Text(
+                    kickers[i],
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      letterSpacing: .9,
+                      color: QfColors.primary,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     titles[i],
                     key: ValueKey('access-title-$i'),
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'Gilroy ExtraBold',
-                      fontSize: 22,
-                      height: 1.15,
+                      color: QfColors.text,
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 26,
+                      height: 1.1,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  liveText(bodies[i], size: 14, color: liveMuted),
+                  liveText(bodies[i], size: 14, color: QfColors.text2),
                 ],
               ),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 2),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               for (var i = 0; i < _slides; i++)
-                GestureDetector(
-                  key: ValueKey('access-dot-$i'),
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _pages.animateToPage(
-                    i,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 10,
-                    ),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      width: i == _page ? 22 : 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: i == _page ? liveGreen : const Color(0xff33465c),
-                        borderRadius: BorderRadius.circular(99),
+                Semantics(
+                  button: true,
+                  selected: i == _page,
+                  label: context.l10n.welcomeGoTo(i + 1),
+                  child: GestureDetector(
+                    key: ValueKey('access-dot-$i'),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => MediaQuery.of(context).disableAnimations
+                        ? _pages.jumpToPage(i)
+                        : _pages.animateToPage(
+                            i,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          ),
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: MediaQuery.of(context).disableAnimations
+                              ? Duration.zero
+                              : const Duration(milliseconds: 250),
+                          width: i == _page ? 24 : 6,
+                          height: 6,
+                          color: i == _page ? QfColors.primary : QfColors.border,
+                        ),
                       ),
                     ),
                   ),
@@ -290,19 +309,26 @@ class _AccessScreenState extends State<AccessScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xff1f3347)),
+      decoration: const ShapeDecoration(
+        color: QfColors.surface,
+        shape: CutCornerBorder(side: BorderSide(color: QfColors.border)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (!linking) ...[
-            liveText(l10n.accessCardTitle, size: 18, bold: true),
+            Text(
+              l10n.accessCardTitle,
+              style: const TextStyle(
+                fontFamily: qfDisplay,
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                color: QfColors.text,
+              ),
+            ),
             const SizedBox(height: 4),
-            liveText(l10n.accessCardBody, size: 13, color: liveMuted),
+            liveText(l10n.accessCardBody, size: 13, color: QfColors.text2),
             const SizedBox(height: 14),
             _googleButton(context),
           ] else
@@ -312,12 +338,19 @@ class _AccessScreenState extends State<AccessScreen>
           if (!widget.docsReady)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: liveText(l10n.accessPreparingDocs, size: 12, color: liveMuted),
+              child: liveText(l10n.accessPreparingDocs, size: 12, color: QfColors.text2),
             ),
           if (widget.error != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: liveText(widget.error!, size: 13, color: liveGold),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error_outline, size: 16, color: QfColors.danger),
+                  const SizedBox(width: 6),
+                  Expanded(child: liveText(widget.error!, size: 13, color: QfColors.danger)),
+                ],
+              ),
             ),
           ...widget.actions,
         ],
@@ -332,11 +365,11 @@ class _AccessScreenState extends State<AccessScreen>
       child: OutlinedButton(
         key: const ValueKey('google-button'),
         style: OutlinedButton.styleFrom(
-          backgroundColor: _googleDark,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: _googleDark,
-          side: const BorderSide(color: _googleBorder),
-          shape: const StadiumBorder(),
+          backgroundColor: QfColors.text,
+          foregroundColor: QfColors.bg,
+          disabledBackgroundColor: QfColors.text2,
+          side: BorderSide.none,
+          shape: const CutCornerBorder(cut: 8),
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
         onPressed: widget.busy || !widget.docsReady ? null : _google,
@@ -347,7 +380,7 @@ class _AccessScreenState extends State<AccessScreen>
               const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2.4, color: liveGreen),
+                child: CircularProgressIndicator(strokeWidth: 2.4, color: QfColors.primary),
               )
             else
               const GoogleLogo(size: 22),
@@ -360,7 +393,7 @@ class _AccessScreenState extends State<AccessScreen>
                 style: const TextStyle(
                   fontFamily: 'Gilroy Bold',
                   fontSize: 15,
-                  color: Colors.white,
+                  color: QfColors.bg,
                 ),
               ),
             ),
@@ -375,10 +408,10 @@ class _AccessScreenState extends State<AccessScreen>
     const termsMark = '\u0001', privacyMark = '\u0002';
     final template = l10n.accessConsentRich(termsMark, privacyMark);
     final spans = <InlineSpan>[];
-    final link = TextStyle(
-      color: liveGreen,
+    const link = TextStyle(
+      color: QfColors.primary,
       decoration: TextDecoration.underline,
-      decorationColor: liveGreen,
+      decorationColor: QfColors.primary,
       fontFamily: 'Gilroy Bold',
     );
     for (final part in template.split(RegExp('(?=[$termsMark$privacyMark])|(?<=[$termsMark$privacyMark])'))) {
@@ -400,14 +433,12 @@ class _AccessScreenState extends State<AccessScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            borderRadius: BorderRadius.circular(12),
             onTap: widget.busy || !widget.docsReady ? null : () => _toggle(!widget.consent),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: _hint
-                  ? BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _alertRed.withValues(alpha: .7)),
+                  ? const ShapeDecoration(
+                      shape: CutCornerBorder(cut: 8, side: BorderSide(color: QfColors.danger)),
                     )
                   : null,
               child: Row(
@@ -416,16 +447,15 @@ class _AccessScreenState extends State<AccessScreen>
                   Checkbox(
                     key: const ValueKey('consent'),
                     value: widget.consent,
-                    activeColor: liveGreen,
-                    checkColor: liveBg,
-                    side: const BorderSide(color: liveMuted, width: 1.6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    activeColor: QfColors.primary,
+                    checkColor: QfColors.onPrimary,
+                    side: BorderSide(color: _hint ? QfColors.danger : QfColors.text2, width: 1.6),
                     onChanged: widget.busy || !widget.docsReady ? null : (v) => _toggle(v ?? false),
                   ),
                   Expanded(
                     child: Text.rich(
                       TextSpan(
-                        style: const TextStyle(color: liveMuted, fontSize: 12, height: 1.3),
+                        style: const TextStyle(color: QfColors.text2, fontSize: 12, height: 1.3),
                         children: spans,
                       ),
                     ),
@@ -435,9 +465,24 @@ class _AccessScreenState extends State<AccessScreen>
             ),
           ),
           if (_hint)
-            Padding(
-              padding: const EdgeInsets.only(left: 12, top: 4),
-              child: liveText(l10n.accessConsentNeeded, size: 12, color: _alertRed),
+            Semantics(
+              liveRegion: true,
+              child: Padding(
+                key: const ValueKey('consent-error'),
+                padding: const EdgeInsets.only(left: 12, top: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, size: 16, color: QfColors.danger),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        l10n.accessConsentRequired,
+                        style: const TextStyle(fontSize: 12, color: QfColors.danger),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
         ],
       ),
@@ -449,7 +494,7 @@ class _AccessScreenState extends State<AccessScreen>
     child: Text(
       context.l10n.accessDisclaimer,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: liveMuted, fontSize: 11, height: 1.3),
+      style: const TextStyle(color: QfColors.muted, fontSize: 11, height: 1.3),
     ),
   );
 }

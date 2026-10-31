@@ -41,9 +41,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tengo al menos 18 años y acepto los términos y la política de privacidad.';
 
   @override
-  String get accessConsentNeeded => 'Marca la casilla para continuar.';
-
-  @override
   String get accessConsentRequired =>
       'Marca la casilla para continuar con Google.';
 

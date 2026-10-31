@@ -29,10 +29,6 @@
     "description": "Título de la tarjeta de acceso."
   },
   "accessConsent": "Tengo al menos 18 años y acepto los términos y la política de privacidad.",
-  "accessConsentNeeded": "Marca la casilla para continuar.",
-  "@accessConsentNeeded": {
-    "description": "Aviso al pulsar Google sin aceptar los términos."
-  },
   "accessConsentRequired": "Marca la casilla para continuar con Google.",
   "accessConsentRich": "Tengo 18 años o más y acepto los {terms} y la {privacy}.",
   "@accessConsentRich": {

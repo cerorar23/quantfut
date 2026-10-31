@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../bottombar.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/language_picker.dart';
+import '../product/qf_shapes.dart';
+import '../product/qf_theme.dart';
 import '../product/welcome_art.dart';
 
 class WelcomePage {
@@ -17,27 +19,27 @@ final welcomePages = [
   WelcomePage(
     (l10n) => l10n.welcome1Title,
     (l10n) => l10n.welcome1Body,
-    const Color(0xff00d5ee),
+    QfColors.football,
   ),
   WelcomePage(
     (l10n) => l10n.welcome2Title,
     (l10n) => l10n.welcome2Body,
-    const Color(0xffffb600),
+    QfColors.primary,
   ),
   WelcomePage(
     (l10n) => l10n.welcome3Title,
     (l10n) => l10n.welcome3Body,
-    const Color(0xff00d58b),
+    QfColors.success,
   ),
   WelcomePage(
     (l10n) => l10n.welcome4Title,
     (l10n) => l10n.welcome4Body,
-    const Color(0xffbd81ff),
+    QfColors.nba,
   ),
   WelcomePage(
     (l10n) => l10n.welcome5Title,
     (l10n) => l10n.welcome5Body,
-    const Color(0xff00d5ee),
+    QfColors.tennis,
   ),
 ];
 
@@ -86,22 +88,15 @@ class _SecondScreenState extends State<SecondScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final accent = welcomePages[_page].color;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xff0c1926),
+        systemNavigationBarColor: QfColors.bg,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xff090f1a),
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xff090f1a), Color(0xff0c1926)],
-            ),
-          ),
+        backgroundColor: QfColors.bg,
+        body: ColoredBox(
+          color: QfColors.bg,
           child: SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -113,28 +108,30 @@ class _SecondScreenState extends State<SecondScreen> {
                       child: Row(
                         children: [
                           const Text(
-                            'Q.',
+                            '// ', // l10n-ignore (marca)
                             style: TextStyle(
-                              fontFamily: 'Gilroy ExtraBold',
-                              fontSize: 25,
-                              color: Color(0xff00d58b),
+                              fontFamily: qfDisplay,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              color: QfColors.primary,
                             ),
                           ),
-                          const SizedBox(width: 8),
                           const Text(
-                            'QuantFut',
+                            'QUANTFUT', // l10n-ignore (marca)
                             style: TextStyle(
-                              color: Color(0xffc0cad7),
-                              fontSize: 13,
-                              fontFamily: 'Gilroy Bold',
+                              fontFamily: qfDisplay,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                              letterSpacing: 1.2,
+                              color: QfColors.text,
                             ),
                           ),
                           const Spacer(),
-                          const LanguageButton(),
+                          const LanguageButton(color: QfColors.text2),
                           TextButton(
                             onPressed: _finish,
                             style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xffb4bfce),
+                              foregroundColor: QfColors.primary,
                               minimumSize: const Size(64, 48),
                             ),
                             child: Text(l10n.welcomeSkip),
@@ -185,10 +182,11 @@ class _SecondScreenState extends State<SecondScreen> {
                                         key: ValueKey('welcome-title-$index'),
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                          color: Color(0xffe9edf5),
-                                          fontFamily: 'Gilroy ExtraBold',
-                                          fontSize: 27,
-                                          height: 1.12,
+                                          color: QfColors.text,
+                                          fontFamily: qfDisplay,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 30,
+                                          height: 1.08,
                                         ),
                                       ),
                                       const SizedBox(height: 16),
@@ -196,7 +194,7 @@ class _SecondScreenState extends State<SecondScreen> {
                                         page.description(l10n),
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                          color: Color(0xffa0adbd),
+                                          color: QfColors.text2,
                                           fontFamily: 'Gilroy Medium',
                                           fontSize: 15,
                                           height: 1.55,
@@ -223,7 +221,7 @@ class _SecondScreenState extends State<SecondScreen> {
                               children: List.generate(
                                 5,
                                 (index) => SizedBox(
-                                  width: 40,
+                                  width: 44,
                                   height: 44,
                                   child: IconButton(
                                     tooltip: l10n.welcomeGoTo(index + 1),
@@ -237,13 +235,10 @@ class _SecondScreenState extends State<SecondScreen> {
                                           ? Duration.zero
                                           : const Duration(milliseconds: 200),
                                       height: 6,
-                                      width: _page == index ? 22 : 6,
-                                      decoration: BoxDecoration(
-                                        color: _page == index
-                                            ? accent
-                                            : const Color(0xff425060),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
+                                      width: _page == index ? 24 : 6,
+                                      color: _page == index
+                                          ? QfColors.primary
+                                          : QfColors.border,
                                     ),
                                   ),
                                 ),
@@ -256,17 +251,7 @@ class _SecondScreenState extends State<SecondScreen> {
                             child: FilledButton(
                               onPressed: () =>
                                   _page == 4 ? _finish() : _goTo(_page + 1),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: accent,
-                                foregroundColor: const Color(0xff07121a),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontFamily: 'Gilroy ExtraBold',
-                                  fontSize: 16,
-                                ),
-                              ),
+                              style: qfFilled(QfColors.primary),
                               child: Text(_page == 4 ? l10n.welcomeStart : l10n.welcomeNext),
                             ),
                           ),

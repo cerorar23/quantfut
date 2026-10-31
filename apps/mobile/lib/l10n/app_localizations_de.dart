@@ -41,9 +41,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ich bin mindestens 18 Jahre alt und akzeptiere die Nutzungsbedingungen und die Datenschutzerklärung.';
 
   @override
-  String get accessConsentNeeded => 'Setze den Haken, um fortzufahren.';
-
-  @override
   String get accessConsentRequired =>
       'Setze den Haken, um mit Google fortzufahren.';
 

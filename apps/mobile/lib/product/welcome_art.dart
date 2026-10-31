@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
+import 'qf_theme.dart';
 
 /// Original offline illustrations. Shapes are decorative, not real statistics.
 class WelcomeArt extends StatefulWidget {
@@ -90,9 +91,7 @@ class _ArtPainter extends CustomPainter {
   final int index;
   final Color accent;
   final double phase;
-  static const ink = Color(0xffe9edf5),
-      track = Color(0xff293a4b),
-      muted = Color(0xff8496aa);
+  static const ink = QfColors.text, track = QfColors.border, muted = QfColors.muted;
 
   /// Texto dibujado. Si la traducción es más larga que el espacio disponible
   /// (borde de la tarjeta menos margen), reduce el cuerpo para que no se corte.
@@ -164,11 +163,11 @@ class _ArtPainter extends CustomPainter {
       const Rect.fromLTWH(28, 28, 204, 204),
       const Radius.circular(16),
     );
-    c.drawRRect(card, Paint()..color = const Color(0xff132333));
+    c.drawRRect(card, Paint()..color = QfColors.surface2);
     c.drawRRect(
       card,
       Paint()
-        ..color = const Color(0xff2b506a)
+        ..color = QfColors.border
         ..style = PaintingStyle.stroke,
     );
     final headings = [
@@ -200,7 +199,7 @@ class _ArtPainter extends CustomPainter {
         c,
         l10n.artNba,
         const Offset(160, 186),
-        color: const Color(0xffffb600),
+        color: QfColors.nba,
       );
     } else if (index == 1) {
       final rect = Rect.fromCircle(center: const Offset(130, 116), radius: 40);
@@ -236,7 +235,7 @@ class _ArtPainter extends CustomPainter {
         Icons.schedule_rounded,
       ];
       final labels = [l10n.artGoals, l10n.artCorners, l10n.artNba];
-      const colors = [Color(0xff00d5ee), Color(0xff00d58b), Color(0xffffb600)];
+      const colors = [QfColors.football, QfColors.success, QfColors.nba];
       for (var i = 0; i < 3; i++) {
         final y = 90.0 + i * 39;
         c.drawRRect(
@@ -293,7 +292,7 @@ class _ArtPainter extends CustomPainter {
         c.drawCircle(
           Offset(130 + math.cos(a) * 57, 132 + math.sin(a) * 57),
           4,
-          Paint()..color = i == 1 ? const Color(0xffffb600) : accent,
+          Paint()..color = i == 1 ? QfColors.primary : accent,
         );
       }
       text(c, l10n.artTagline, const Offset(47, 205), size: 8, color: muted);
@@ -308,7 +307,7 @@ class _ArtPainter extends CustomPainter {
     c.drawCircle(
       Offset.zero,
       29,
-      Paint()..color = basketball ? const Color(0xffffb600) : ink,
+      Paint()..color = basketball ? QfColors.nba : ink,
     );
     if (basketball) {
       line(c, const Offset(-28, 0), const Offset(28, 0), track, 2);

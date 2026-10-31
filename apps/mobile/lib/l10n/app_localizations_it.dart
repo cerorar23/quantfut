@@ -41,9 +41,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Ho almeno 18 anni e accetto i termini e l\'informativa sulla privacy.';
 
   @override
-  String get accessConsentNeeded => 'Seleziona la casella per continuare.';
-
-  @override
   String get accessConsentRequired =>
       'Seleziona la casella per continuare con Google.';
 
