@@ -19,7 +19,9 @@ snapshot_id, received_at}}. Un documento solo se usa si su hash coincide con el 
 from __future__ import annotations
 
 import gzip
+import json
 import math
+import re
 import threading
 import unicodedata
 import zlib
@@ -199,6 +201,28 @@ def _quotes(forecast, sealed_at, archive):
         return out, True
     except Exception:
         return {mid: None for mid, _ in contratos}, False
+
+
+def load_sealed(root, ids=None) -> dict[str, dict]:
+    """Sellos de `<root>/predictions/<event_key>.json` como {event_key: documento}. Con `ids` solo se leen los de
+    esos eventos (el feed público); un archivo ilegible se omite y el evento queda sin precio (`partial`)."""
+    if root is None:
+        return {}
+    carpeta = Path(root) / "predictions"
+    try:
+        archivos = ([carpeta / f"{i}.json" for i in ids if re.fullmatch(r"[A-Za-z0-9][\w.-]{0,127}", str(i))]
+                    if ids is not None else sorted(carpeta.glob("*.json")))
+    except (TypeError, OSError):
+        return {}
+    out = {}
+    for p in archivos:
+        try:
+            doc = json.loads(p.read_bytes())
+        except (OSError, ValueError):
+            continue
+        if isinstance(doc, dict):
+            out[p.stem] = doc
+    return out
 
 
 def tennis_overlay(archive, feed: Mapping, *, sealed: Mapping | None = None, now: datetime | None = None) -> dict:

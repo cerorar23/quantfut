@@ -26,6 +26,20 @@ def tennis_forecasts(response: Response):
     return public_data()
 
 
+@router.get("/web/deportes/tenis/cuotas")
+def tennis_quotes(response: Response):
+    from .cuotas_web import tennis_response
+    response.headers["Cache-Control"] = "no-store"
+    return tennis_response()
+
+
+@router.get("/web/deportes/nba/cuotas")
+def nba_quotes(response: Response):
+    from .cuotas_web import nba_response
+    response.headers["Cache-Control"] = "no-store"
+    return nba_response()
+
+
 @router.get("/web/deportes/tenis/estadisticas/{event_id}")
 def tennis_event_stats(event_id: str, response: Response):
     from .tenis_estadisticas import public_event
