@@ -1,5 +1,11 @@
 # Backlog — QuantFut
 
+## 30-oct-2026 · App: NBA y tenis + rediseño v3
+
+- [x] Implementado en la rama `app/nba-tenis-rediseno` (app 1.1.0+5): selector global de deporte, feeds de NBA y tenis, ficha de partido, «Mis deportes», pantallas de acceso en piel v3.
+- [ ] Pendiente: PR a `main`, AAB firmado con la clave del titular (no se pudo producir en el worktree) y publicación en Play; la versión mínima se activa desde `/control/configuracion-app`.
+- [ ] Fuera de alcance (decisión del titular): VIP/monedas para NBA y tenis, cuotas, notificaciones por deporte, Escalera/Parley fuera de fútbol, chip «HOY», archivar pantallas heredadas. Detalle en `apps/mobile/docs/REDISENO_NBA_TENIS_20261030.md`.
+
 ## 28-oct-2026 · Rediseño de #historial para convertir
 
 - [x] `frontend/historial-views.js` (lógica pura + vista), cableado en `ergonomic-views.js`, estilos `.cv-hist-*` en `conversion.css`, ruta en `web.py`, 13 pruebas nuevas (`historial-views.test.mjs`) y arnés del frontend en verde (85).

@@ -1,6 +1,6 @@
 # Rediseño de la app para sumar NBA y tenis (propuesta v3, 30-oct-2026)
 
-Estado: **propuesta para aprobar**. No se ha tocado código de la app. Al aprobarla, el siguiente paso es el plan de implementación.
+Estado: **implementado en la rama `app/nba-tenis-rediseno`, pendiente de PR**.
 
 Historial de decisiones del titular (30-oct):
 - v2: **NBA y tenis aprobados para publicar picks**; nada de etiquetas «En validación». Estética de referencia: **CyberCore CSS** ([demo](https://sebyx07.github.io/cybercore-css/#/), [repo](https://github.com/sebyx07/cybercore-css), MIT) y skill **ui-ux-pro-max**.
