@@ -84,6 +84,9 @@ class Settings:
     # Escudos descargados una vez de API-Football (ingest/standings.py) y
     # servidos desde el propio dominio: la web no enlaza al proveedor.
     escudos_dir: str = os.getenv("ESCUDOS_DIR", "/srv/quantfut/escudos")
+    # Cohortes NBA v1.3 del productor (live13/cohorts) montadas en solo lectura para la
+    # cuota de referencia (api/cuotas_nba.py). Sin valor: no hay cuotas de NBA.
+    nba_cohorts_dir: str | None = os.getenv("NBA_COHORTS_DIR") or None
 
     # Media vida del decaimiento temporal, en días: un partido de hace 270 días
     # pesa la mitad que uno de hoy. Elegida por walk-forward en la auditoría del
