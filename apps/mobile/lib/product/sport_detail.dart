@@ -12,6 +12,7 @@ import 'sport_detail_tabs.dart';
 import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sports_quotes.dart';
 
 /// Abre la ficha del partido como hoja inferior (misma forma que la de fútbol).
 Future<void> showSportDetail(
@@ -19,6 +20,7 @@ Future<void> showSportDetail(
   required QuantFutApi api,
   required SportEvent event,
   required ImageCatalog images,
+  QuotesOverlay quotes = QuotesOverlay.empty,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -28,7 +30,7 @@ Future<void> showSportDetail(
     heightFactor: .96,
     child: Theme(
       data: liveTheme(),
-      child: SportDetail(api: api, event: event, images: images),
+      child: SportDetail(api: api, event: event, images: images, quotes: quotes),
     ),
   ),
 );
@@ -39,10 +41,14 @@ class SportDetail extends StatefulWidget {
     required this.api,
     required this.event,
     required this.images,
+    this.quotes = QuotesOverlay.empty,
   });
   final QuantFutApi api;
   final SportEvent event;
   final ImageCatalog images;
+
+  /// Cuotas de referencia del deporte; vacías si no llegaron.
+  final QuotesOverlay quotes;
   @override
   State<SportDetail> createState() => _SportDetailState();
 }

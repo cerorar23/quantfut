@@ -15,6 +15,7 @@ class SportMarket {
     this.market,
     this.player,
     this.playerId,
+    this.rowPlayerId,
     this.line,
     this.outcome,
   });
@@ -22,6 +23,10 @@ class SportMarket {
   final String id, label, selection;
   final double probability;
   final String? market, player, playerId;
+
+  /// `player_id` CRUDO de la fila de la cohorte (en `team_points` es el id del EQUIPO). Solo sirve para
+  /// unir la cuota de referencia (`sports_quotes.dart`); no se muestra ni cambia `playerId`.
+  final String? rowPlayerId;
   final double? line;
 
   /// Instante en que se selló el pronóstico.
@@ -146,6 +151,7 @@ List<SportEvent> nbaEvents(JsonMap data) {
             playerId: isPlayer && row['player_id'] != null
                 ? '${row['player_id']}'
                 : null,
+            rowPlayerId: row['player_id'] != null ? '${row['player_id']}' : null,
             line: line,
           ),
         );

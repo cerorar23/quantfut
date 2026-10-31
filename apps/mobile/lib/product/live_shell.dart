@@ -33,6 +33,7 @@ import 'sport_predictions.dart';
 import 'sport_selector.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sports_quotes.dart';
 
 class ProductShell extends StatefulWidget {
   const ProductShell({super.key, this.api, this.sportPrefs});
@@ -69,6 +70,8 @@ class _ProductShellState extends State<ProductShell>
   final feeds = <SportKind, SportFeed>{};
   // La pantalla VIP lo escucha para pintar el acierto cuando llegan los feeds.
   final _feedsNotifier = ValueNotifier<Map<SportKind, SportFeed>>(const {});
+  // Cuotas de referencia por deporte: overlay aparte del feed; sin ellas todo se ve igual.
+  final quotes = <SportKind, QuotesOverlay>{};
   final _feedLoading = <SportKind>{};
   ImageCatalog images = ImageCatalog.empty;
   final _memory = <String, String>{};
@@ -157,14 +160,17 @@ class _ProductShellState extends State<ProductShell>
   Future<void> loadFeed(SportKind kind) async {
     if (kind == SportKind.football || !_feedLoading.add(kind)) return;
     try {
-      final (feed, catalog) = await (
+      final (feed, catalog, overlay) = await (
         loadSport(api, kind),
         loadImageCatalog(api),
+        loadQuotes(api, kind),
       ).wait;
       if (!mounted) return;
       setState(() {
         // Un refresco fallido no borra un feed bueno: se conserva el anterior.
         if (feed.ready || feeds[kind]?.ready != true) feeds[kind] = feed;
+        // Igual con las cuotas: un overlay vacío (fallo) no pisa uno bueno.
+        quotes[kind] = mergeQuotes(quotes[kind], overlay);
         _feedsNotifier.value = Map.of(feeds);
         if (!identical(catalog, ImageCatalog.empty)) images = catalog;
       });
@@ -175,7 +181,13 @@ class _ProductShellState extends State<ProductShell>
 
   /// Ficha del partido de NBA o tenis (hoja inferior; fútbol usa `detail`).
   void openSportEvent(SportEvent event) =>
-      showSportDetail(context, api: api, event: event, images: images);
+      showSportDetail(
+        context,
+        api: api,
+        event: event,
+        images: images,
+        quotes: quotes[event.sport] ?? QuotesOverlay.empty,
+      );
 
   List<String> get sportStreams => [
     for (final s in PredictionsSwitcher.order)
@@ -632,6 +644,7 @@ class _ProductShellState extends State<ProductShell>
                     api: api,
                     sport: sport,
                     feed: feed,
+                    quotes: quotes[sport] ?? QuotesOverlay.empty,
                     images: images,
                     onOpen: openSportEvent,
                     onRetry: () => loadFeed(sport),
@@ -662,6 +675,7 @@ class _ProductShellState extends State<ProductShell>
               api: api,
               sport: sport,
               feed: feed,
+              quotes: quotes[sport] ?? QuotesOverlay.empty,
               images: images,
               onOpen: openSportEvent,
               onRetry: () => loadFeed(sport),

@@ -1,0 +1,23 @@
+{
+  "state": "ok",
+  "generated_at": "2026-10-23T11:00:00+00:00",
+  "source": "PropLine",
+  "events": {
+    "12173711": {
+      "winner": {
+        "price": 1.21,
+        "book": "pinnacle",
+        "as_of": "2026-10-23T10:00:00+00:00",
+        "books": 7,
+        "side": "A"
+      },
+      "games_total-2": {
+        "price": 1.88,
+        "book": "betmgm",
+        "as_of": "2026-10-23T10:00:00+00:00",
+        "books": 4,
+        "side": "over"
+      }
+    }
+  }
+}

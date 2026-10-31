@@ -11,6 +11,7 @@ import 'sport_images.dart';
 import 'sport_markets.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sports_quotes.dart';
 
 /// Alta probabilidad de NBA y tenis: pronósticos elegibles agrupados por día local, con
 /// avatares, selección, probabilidad y fecha de sello; nunca cuota. Arriba, la tarjeta de
@@ -24,12 +25,16 @@ class SportPredictions extends StatelessWidget {
     required this.images,
     required this.onOpen,
     this.onRetry,
+    this.quotes = QuotesOverlay.empty,
     this.now,
   });
 
   final QuantFutApi api;
   final SportKind sport;
   final SportFeed feed;
+
+  /// Cuotas de referencia del deporte; vacías si no llegaron.
+  final QuotesOverlay quotes;
   final ImageCatalog images;
   final ValueChanged<SportEvent> onOpen;
   final Future<void> Function()? onRetry;

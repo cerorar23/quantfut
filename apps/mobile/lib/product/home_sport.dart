@@ -14,6 +14,7 @@ import 'qf_theme.dart';
 import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sports_quotes.dart';
 
 const _stripHeight = 136.0;
 
@@ -130,12 +131,16 @@ class HomeSport extends StatefulWidget {
     required this.images,
     required this.onOpen,
     required this.onRetry,
+    this.quotes = QuotesOverlay.empty,
     this.now,
   });
 
   final QuantFutApi api;
   final SportKind sport;
   final SportFeed feed;
+
+  /// Cuotas de referencia del deporte; vacías si no llegaron (la interfaz las pinta aparte).
+  final QuotesOverlay quotes;
   final ImageCatalog images;
   final ValueChanged<SportEvent> onOpen;
   final Future<void> Function() onRetry;
