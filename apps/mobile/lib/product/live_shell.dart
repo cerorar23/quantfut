@@ -83,7 +83,7 @@ class _ProductShellState extends State<ProductShell>
             : services!.preferences.setString(key, value),
       );
 
-  /// Orden, ocultos y último deporte guardados.
+  /// Orden y ocultos guardados; abre el primer deporte visible.
   Future<void> loadSports() async {
     try {
       final order = await sportPrefs.order();
@@ -147,7 +147,6 @@ class _ProductShellState extends State<ProductShell>
       _fitStream();
     });
     _ensureFeed(value);
-    unawaited(sportPrefs.remember(value));
   }
 
   void _ensureFeed(SportKind kind) {

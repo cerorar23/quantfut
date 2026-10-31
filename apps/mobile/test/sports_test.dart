@@ -12,11 +12,21 @@ SportPrefs prefsOn(Map<String, String> store) => SportPrefs(
 );
 
 void main() {
-  test('id desconocido vuelve a fútbol', () async {
-    final store = {'sports_last': 'baloncesto'};
-    expect(await prefsOn(store).initial(), SportKind.football);
+  test('id desconocido o orden corrupto vuelve a fútbol', () async {
+    expect(await prefsOn({'sports_order': 'baloncesto,???'}).initial(), SportKind.football);
+    expect(await prefsOn({}).initial(), SportKind.football);
     expect(SportKind.fromId('nba'), SportKind.nba);
     expect(SportKind.fromId(null), isNull);
+  });
+
+  test('abre el primer deporte del orden, no el último usado', () async {
+    final store = {'sports_last': 'tenis'};
+    final prefs = prefsOn(store);
+    await prefs.save(
+      order: [SportKind.nba, SportKind.football, SportKind.tennis],
+      hidden: {},
+    );
+    expect(await prefs.initial(), SportKind.nba);
   });
 
   test('no se pueden ocultar todos', () async {
@@ -37,6 +47,11 @@ void main() {
       hidden: {SportKind.nba},
     );
     expect(await prefs.initial(), SportKind.football);
+    await prefs.save(
+      order: [SportKind.nba, SportKind.football, SportKind.tennis],
+      hidden: {SportKind.nba, SportKind.football},
+    );
+    expect(await prefs.initial(), SportKind.tennis);
   });
 
   testWidgets('SportSelector marca el seleccionado y avisa al tocar', (

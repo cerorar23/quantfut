@@ -64,7 +64,7 @@ const sportSpecs = <SportKind, SportSpec>{
   ),
 };
 
-/// Orden, ocultos y último deporte. No conoce el almacenamiento: recibe `read`/`write`.
+/// Orden y ocultos. No conoce el almacenamiento: recibe `read`/`write`.
 class SportPrefs {
   SportPrefs({required this.read, required this.write});
 
@@ -73,7 +73,6 @@ class SportPrefs {
 
   static const orderKey = 'sports_order';
   static const hiddenKey = 'sports_hidden';
-  static const lastKey = 'sports_last';
 
   List<SportKind> _parse(String? raw) => [
     for (final id in (raw ?? '').split(','))
@@ -98,12 +97,9 @@ class SportPrefs {
     return hidden;
   }
 
-  /// Último deporte si sigue visible; si no, fútbol o el primer visible.
+  /// Deporte con el que abre la app: el primero visible del orden de «Mis deportes».
   Future<SportKind> initial() async {
     final hiddenNow = await hidden();
-    final last = SportKind.fromId(await read(lastKey));
-    if (last != null && !hiddenNow.contains(last)) return last;
-    if (!hiddenNow.contains(SportKind.football)) return SportKind.football;
     return (await order()).firstWhere((k) => !hiddenNow.contains(k));
   }
 
@@ -114,6 +110,4 @@ class SportPrefs {
     await write(orderKey, order.map((k) => k.id).join(','));
     await write(hiddenKey, hidden.map((k) => k.id).join(','));
   }
-
-  Future<void> remember(SportKind last) => write(lastKey, last.id);
 }

@@ -323,26 +323,44 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('cambiar de deporte no cambia de pestaña y se recuerda', (tester) async {
+  testWidgets('cambiar de deporte no cambia de pestaña ni se guarda como deporte de arranque', (tester) async {
     final api = FixtureApi();
     final store = <String, String>{};
     await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
     await navigate(tester, 'Predicciones');
     await tester.tap(find.byKey(const ValueKey('sport-tenis')));
     await tester.pumpAndSettle();
-    expect(store['sports_last'], 'tenis');
+    expect(store.keys.where((k) => k.contains('last')), isEmpty);
+    expect(await memoryPrefs(store).initial(), SportKind.football);
     expect(find.byKey(const ValueKey('streams-switcher')), findsOneWidget);
     expect(selectedMark('tenis'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('al abrir se elige el último deporte guardado', (tester) async {
+  testWidgets('al abrir se elige el primer deporte del orden de Mis deportes', (tester) async {
     final api = FixtureApi();
     await open(
       tester,
-      ProductShell(api: api, sportPrefs: memoryPrefs({'sports_last': 'nba'})),
+      ProductShell(
+        api: api,
+        sportPrefs: memoryPrefs({'sports_order': 'nba,futbol,tenis'}),
+      ),
     );
     expect(selectedMark('nba'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('tras tocar otro deporte y reiniciar el shell abre el primero del orden', (tester) async {
+    final api = FixtureApi();
+    final store = {'sports_order': 'nba,futbol,tenis'};
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
+    await tester.tap(find.byKey(const ValueKey('sport-tenis')));
+    await tester.pumpAndSettle();
+    expect(selectedMark('tenis'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
+    expect(selectedMark('nba'), findsOneWidget);
+    expect(selectedMark('tenis'), findsNothing);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
@@ -357,7 +375,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(indicator).dx, greaterThan(before + 50));
     expect(selectedMark('futbol'), findsOneWidget);
-    expect(store.containsKey('sports_last'), isFalse);
+    expect(store, isEmpty);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
@@ -516,14 +534,14 @@ void main() {
     final read = Completer<String?>();
     final store = <String, String>{};
     final prefs = SportPrefs(
-      read: (k) => k == 'sports_last' ? read.future : Future.value(store[k]),
+      read: (k) => k == SportPrefs.orderKey ? read.future : Future.value(store[k]),
       write: (k, v) async => store[k] = v,
     );
     await open(tester, ProductShell(api: api, sportPrefs: prefs), settle: false);
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('sport-tenis')));
     await tester.pump();
-    read.complete('nba');
+    read.complete('nba,futbol,tenis');
     await tester.pumpAndSettle();
     expect(selectedMark('tenis'), findsOneWidget);
     expect(selectedMark('nba'), findsNothing);
@@ -534,7 +552,7 @@ void main() {
     tester,
   ) async {
     final api = FixtureApi();
-    final store = {'sports_last': 'nba'};
+    final store = {'sports_order': 'nba,futbol,tenis'};
     await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
     expect(selectedMark('nba'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('home-menu')));
