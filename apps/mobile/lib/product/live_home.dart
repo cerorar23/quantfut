@@ -6,9 +6,13 @@ import 'package:flutter/rendering.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'home_agenda.dart';
+import 'home_hero.dart';
 import '../core/meta_events.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
+import 'sports.dart';
 
 const _stripHeight = 136.0;
 
@@ -178,6 +182,34 @@ class _HomeTabState extends State<HomeTab> {
     return pool.first;
   }
 
+  /// Destacado del día: el mejor pronóstico abierto (el bloqueado no se enseña aquí).
+  Widget? _hero(BuildContext context) {
+    final pick = _topPick();
+    if (pick == null || pick['locked'] == true) return null;
+    final id = pick['match_id'];
+    JsonMap? match;
+    for (final m in jsonRows(widget.data['agenda'])) {
+      if (id != null && '${m['match_id']}' == '$id') match = m;
+    }
+    // Escudo desde la agenda; si el partido no está en ella, iniciales del nombre del pick.
+    JsonMap side(String key) {
+      final team = jsonMap(match?[key]);
+      return team.isEmpty ? {'nombre': pick[key] ?? ''} : team;
+    }
+
+    return HomeHero(
+      key: const ValueKey('home-hero'),
+      sport: SportKind.football,
+      left: TeamCrest(team: side('local'), api: widget.api, size: 66),
+      right: TeamCrest(team: side('visitante'), api: widget.api, size: 66),
+      title: '${pick['local'] ?? ''} · ${pick['visitante'] ?? ''}',
+      probability: realPercent(pick['prob']),
+      pick: pickText(pick),
+      kicker: context.l10n.homeFeatured,
+      onTap: id == null ? null : () => widget.onOpenMatch('$id'),
+    );
+  }
+
   JsonMap? _parleyTicket() {
     final days = jsonRows(parley?['dias']);
     if (days.isEmpty) return null;
@@ -320,6 +352,10 @@ class _HomeTabState extends State<HomeTab> {
               icon: Icons.build_circle_outlined,
               color: liveGold,
             ),
+          if (_hero(context) case final hero?) ...[
+            hero,
+            const SizedBox(height: 12),
+          ],
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -451,11 +487,13 @@ class _HomeTabState extends State<HomeTab> {
                       bold: true,
                     ),
                     const Spacer(),
-                    liveText(
+                    Text(
                       '@ ${decimalText(pick['ref_price'] ?? pick['price'])}',
-                      size: 13,
-                      color: liveGold,
-                      bold: true,
+                      style: const TextStyle(
+                        fontFamily: qfMono,
+                        fontSize: 13,
+                        color: QfColors.text,
+                      ),
                     ),
                   ],
                 ),
@@ -482,9 +520,9 @@ class _HomeTabState extends State<HomeTab> {
               Text(
                 l10n.homeTicketOdds(decimalText(ticket['cuota_total'])),
                 style: const TextStyle(
-                  color: liveGold,
-                  fontFamily: 'Gilroy ExtraBold',
-                  fontSize: 20,
+                  color: QfColors.text,
+                  fontFamily: qfMono,
+                  fontSize: 18,
                 ),
               ),
               const SizedBox(height: 4),
@@ -587,10 +625,10 @@ class _CoinsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: livePanel,
-    borderRadius: BorderRadius.circular(18),
+    shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+    clipBehavior: Clip.antiAlias,
     child: InkWell(
       key: const ValueKey('home-coins'),
-      borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -648,10 +686,10 @@ class _HitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: livePanel,
-    borderRadius: BorderRadius.circular(18),
+    shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+    clipBehavior: Clip.antiAlias,
     child: InkWell(
       key: const ValueKey('home-hit'),
-      borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -728,18 +766,21 @@ class _TicketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: Colors.transparent,
+    shape: const CutCornerBorder(),
+    clipBehavior: Clip.antiAlias,
     child: Ink(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color.withValues(alpha: .24), livePanel],
+          colors: [color.withValues(alpha: .16), livePanel],
         ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: .35)),
+        shape: CutCornerBorder(
+          side: BorderSide(color: color.withValues(alpha: .35)),
+        ),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        customBorder: const CutCornerBorder(),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),

@@ -41,7 +41,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'I am at least 18 years old and I accept the terms and the privacy policy.';
 
   @override
-  String get accessConsentNeeded => 'Tick the box to continue.';
+  String get accessConsentRequired => 'Tick the box to continue with Google.';
 
   @override
   String accessConsentRich(String terms, String privacy) {
@@ -859,6 +859,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeByDate => 'Matches by date and time';
 
   @override
+  String get homeFeatured => 'Pick of the day';
+
+  @override
+  String get homeFeedError => 'We couldn\'t load this sport\'s data.';
+
+  @override
   String homeForecastAt(String when, String mexico) {
     return 'Forecast on $when ($mexico Mexico time)';
   }
@@ -871,6 +877,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeNoMatchesDay => 'No matches on this day.';
+
+  @override
+  String get homePlayersWithPicks => 'Players with forecasts';
 
   @override
   String get homeSeeAll => 'See all';
@@ -909,10 +918,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTomorrow => 'Tomorrow';
 
   @override
+  String get imageCredits =>
+      'Photos: Wikimedia Commons (CC BY-SA). Authors are listed on each match page.';
+
+  @override
+  String get imageUnavailable => 'Image unavailable';
+
+  @override
   String get inboxEmpty => 'You have no alerts yet.';
 
   @override
   String get inboxMatch => 'Match';
+
+  @override
+  String inboxSportTag(String sport) {
+    return 'Sport: $sport';
+  }
 
   @override
   String get inboxTitle => 'Alerts';
@@ -1153,6 +1174,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get marketHtGoal => 'Goal in the 1st half';
 
   @override
+  String marketOverLine(String line) {
+    return 'Over $line';
+  }
+
+  @override
   String get marketResult1x2 => '1X2 result';
 
   @override
@@ -1175,6 +1201,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String marketsHistoricHit(String percent) {
     return 'historical hit rate $percent';
+  }
+
+  @override
+  String marketsHitCount(int won, int resolved) {
+    return '$won/$resolved published';
   }
 
   @override
@@ -1205,6 +1236,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'The ring is the historical hit rate of each market\'s best validated line; “Published” are the predictions already resolved. They are pre-match predictions, not live alerts, and no probability guarantees a result.';
+
+  @override
+  String get marketsTabGame => 'Match';
+
+  @override
+  String get marketsTabGames => 'Games';
+
+  @override
+  String get marketsTabPlayers => 'Players';
 
   @override
   String get matchAwaitingResult => 'Awaiting result';
@@ -1322,6 +1362,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreLegal => 'Legal';
+
+  @override
+  String get moreMySportsSub => 'Reorder and choose which sports you see';
 
   @override
   String get moreRate => 'Rate the app';
@@ -1616,6 +1659,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get picksTrustTitle => 'Hit rate to date';
 
   @override
+  String predictionsSealedAt(String when) {
+    return 'Sealed $when';
+  }
+
+  @override
   String get prefsAdsBody =>
       'Shares encrypted account, device and purchase data with Meta to measure which ads work. In California, turning it off means “Do not share my data”.';
 
@@ -1700,6 +1748,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileBalance => 'Balance and tracking';
 
   @override
+  String get profileCheckUpdate => 'Check for updates';
+
+  @override
   String get profileConnected => 'QuantFut · Connected to the server';
 
   @override
@@ -1740,6 +1791,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileMeasurement => 'Measurement and errors';
 
   @override
+  String get profileMySports => 'My sports';
+
+  @override
+  String get profileMySportsDefault => 'default';
+
+  @override
+  String profileMySportsDown(String sport) {
+    return 'Move $sport down';
+  }
+
+  @override
+  String get profileMySportsHint =>
+      'Use the arrows to reorder · the first one opens by default';
+
+  @override
+  String get profileMySportsLastVisible => 'Keep at least one sport visible.';
+
+  @override
+  String get profileMySportsSaveError =>
+      'The change could not be saved. Try again.';
+
+  @override
+  String profileMySportsShow(String sport) {
+    return 'Show $sport';
+  }
+
+  @override
+  String profileMySportsUp(String sport) {
+    return 'Move $sport up';
+  }
+
+  @override
   String get profileNotifications => 'Notifications';
 
   @override
@@ -1771,6 +1854,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTitle => 'Profile and settings';
+
+  @override
+  String get profileUpToDate => 'You already have the latest version.';
+
+  @override
+  String get profileUpdateCheckFailed =>
+      'Could not check for updates. Try again later.';
 
   @override
   String profileValidUntil(String date) {
@@ -2020,6 +2110,26 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String rewardsUnlocksAvailable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You have coins for $count unlocks.',
+      one: 'You have coins for 1 unlock.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sealLabel => 'SEAL';
+
+  @override
+  String get sealPublished => 'PUBLISHED';
+
+  @override
+  String get sealVerified => 'VERIFIED';
+
+  @override
   String get selBttsNo => 'Both teams do not score';
 
   @override
@@ -2145,6 +2255,124 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get splashTagline => 'FOOTBALL · NBA · STATISTICS';
+
+  @override
+  String get sportAlertsNone => 'No alerts for this match.';
+
+  @override
+  String get sportAvailApplied => 'Injury report applied';
+
+  @override
+  String sportAvailListed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count players in the report',
+      one: '$count player in the report',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sportAvailMissingMinutes(String team, String minutes) {
+    return '$team: $minutes min missing';
+  }
+
+  @override
+  String sportAvailNotSubmitted(String team) {
+    return '$team did not submit a report';
+  }
+
+  @override
+  String get sportAvailPending => 'Injury report pending';
+
+  @override
+  String get sportFootball => 'Football';
+
+  @override
+  String sportH2hRecord(String home, String away, int homeWins, int awayWins) {
+    return '$home $homeWins – $awayWins $away';
+  }
+
+  @override
+  String sportHitWindow(int n) {
+    return 'Based on the latest $n resolved';
+  }
+
+  @override
+  String get sportMore => 'More';
+
+  @override
+  String get sportNba => 'NBA';
+
+  @override
+  String sportPhotoCredit(String name, String author, String license) {
+    return 'Photo of $name: $author · $license';
+  }
+
+  @override
+  String get sportSelectorLabel => 'Sport';
+
+  @override
+  String get sportStatAge => 'Age';
+
+  @override
+  String get sportStatAway => 'Away';
+
+  @override
+  String get sportStatBackToBack => 'Back-to-back';
+
+  @override
+  String get sportStatCareer => 'Career';
+
+  @override
+  String get sportStatFormIndex => 'Form index';
+
+  @override
+  String get sportStatHome => 'At home';
+
+  @override
+  String get sportStatLast6 => 'Last 6';
+
+  @override
+  String get sportStatPointsAgainst => 'Points against';
+
+  @override
+  String get sportStatPointsFor => 'Points for';
+
+  @override
+  String get sportStatRank => 'Ranking';
+
+  @override
+  String get sportStatRest => 'Rest days';
+
+  @override
+  String get sportStatSeason => 'Season';
+
+  @override
+  String get sportStatStanding => 'Standing';
+
+  @override
+  String get sportStatStreak => 'Streak';
+
+  @override
+  String get sportStatSurface => 'On this surface';
+
+  @override
+  String get sportStatsUnavailable =>
+      'There are no statistics for this match yet.';
+
+  @override
+  String get sportSurfaceClay => 'Clay';
+
+  @override
+  String get sportSurfaceGrass => 'Grass';
+
+  @override
+  String get sportSurfaceHard => 'Hard court';
+
+  @override
+  String get sportTennis => 'Tennis';
 
   @override
   String get startupFailed => 'We could not start QuantFut. Please try again.';
@@ -2459,6 +2687,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vipBenefit4Title => 'Odds and match analysis';
 
   @override
+  String get vipBenefitSportsBody =>
+      'The same seals and the same sealed record, no subscription needed';
+
+  @override
+  String get vipBenefitSportsTitle => 'NBA and tennis open to everyone';
+
+  @override
   String get vipBestPrice => '★ BEST PRICE';
 
   @override
@@ -2490,7 +2725,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'All High Probability and Ladder Challenge predictions while your subscription is active.';
+      'Unlocks the High Probability and Ladder Challenge football predictions while your subscription is active. NBA and tennis are open to everyone.';
 
   @override
   String get vipLinked => '🔒  Your VIP access is linked to your account';
@@ -2543,10 +2778,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vipRestore => 'Restore purchases';
 
   @override
-  String get vipStatRecorded => 'Recorded hit rate';
+  String get vipSportsNote =>
+      'Every pick is sealed before the game. “—”: no results yet to calculate it.';
 
   @override
-  String get vipStatResolved => 'Resolved';
+  String get vipSportsTitle => 'Recorded hit rate by sport';
 
   @override
   String get vipStoreFailed =>
@@ -2571,7 +2807,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Discover the statistical side of sport: matches, analysis and predictions from the project you already know on the web.';
 
   @override
-  String get welcome1Title => 'Football and NBA,\nfrom a new angle';
+  String get welcome1Title => 'Football, NBA and tennis,\nfrom a new angle';
 
   @override
   String get welcome2Body =>
@@ -2582,7 +2818,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcome3Body =>
-      'Goals, corners, handicap and NBA statistics. Learn what each analysis measures before interpreting a selection.';
+      'Goals, corners and handicap in football, NBA player props and tennis games. Learn what each analysis measures before interpreting a selection.';
 
   @override
   String get welcome3Title => 'More markets.\nMore information.';

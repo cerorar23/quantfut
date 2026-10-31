@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/core/access_screen.dart';
 import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/product/live_widgets.dart';
+import 'package:gobet/product/qf_theme.dart';
 
 const languages = ['es', 'en', 'pt', 'fr', 'it', 'de'];
 
@@ -68,6 +69,11 @@ void main() {
     }.entries) {
       await (FontLoader(f.key)..addFont(rootBundle.load(f.value))).load();
     }
+    // Titulares de la piel v3 con su fuente real (con la de prueba todo desborda).
+    await (FontLoader('Rajdhani')
+          ..addFont(rootBundle.load('fonts/Rajdhani-Medium.ttf'))
+          ..addFont(rootBundle.load('fonts/Rajdhani-Bold.ttf')))
+        .load();
   });
   tearDown(() => AppLocale.instance.reset());
 
@@ -106,13 +112,39 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('google-button')));
     await tester.pump(const Duration(milliseconds: 500));
     expect(google, 0);
-    expect(find.text('Marca la casilla para continuar.'), findsOneWidget);
+    expect(find.text('Marca la casilla para continuar con Google.'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('consent')));
     await tester.pump();
-    expect(find.text('Marca la casilla para continuar.'), findsNothing);
+    expect(find.text('Marca la casilla para continuar con Google.'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('google-button')));
     await tester.pump();
     expect(google, 1);
+  });
+
+  testWidgets('Acceso sin consentimiento muestra el error junto a la casilla y no inicia sesión', (tester) async {
+    var google = 0;
+    await pump(tester, _Host(onGoogle: () => google++));
+    // El botón no está apagado: se puede pulsar y explica qué falta.
+    final button = tester.widget<OutlinedButton>(find.byKey(const ValueKey('google-button')));
+    expect(button.onPressed, isNotNull);
+    expect(find.byKey(const ValueKey('consent-error')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('google-button')));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(google, 0);
+    final error = find.byKey(const ValueKey('consent-error'));
+    expect(error, findsOneWidget);
+    // Texto e icono, no solo color, y anunciado como región viva.
+    expect(find.descendant(of: error, matching: find.text('Marca la casilla para continuar con Google.')), findsOneWidget);
+    expect(find.descendant(of: error, matching: find.byIcon(Icons.error_outline)), findsOneWidget);
+    expect(
+      find.ancestor(of: error, matching: find.byWidgetPredicate((w) => w is Semantics && w.properties.liveRegion == true)),
+      findsOneWidget,
+    );
+    // Junto a la casilla: justo debajo de ella, sin nada en medio.
+    final box = tester.getRect(find.byKey(const ValueKey('consent')));
+    final message = tester.getRect(error);
+    expect(message.top - box.bottom, lessThan(24));
+    expect(tester.widget<Text>(find.text('Marca la casilla para continuar con Google.')).style?.color, QfColors.danger);
   });
 
   testWidgets('los enlaces legales de la frase abren cada documento', (tester) async {

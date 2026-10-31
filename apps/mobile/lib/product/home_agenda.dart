@@ -5,6 +5,10 @@ import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
+import 'sports.dart';
+import 'sports_feed.dart';
 
 /// Partidos de un mismo día local, en orden cronológico.
 class AgendaDay {
@@ -33,6 +37,60 @@ List<AgendaDay> groupAgenda(Iterable<JsonMap> rows) {
   }
   return days;
 }
+
+/// Grupo de la agenda de NBA (`hour`, hora local en punto) o de tenis (`tournament`).
+class SportAgendaGroup {
+  SportAgendaGroup({this.hour, this.tournament});
+
+  final DateTime? hour;
+  final String? tournament;
+  final events = <SportEvent>[];
+}
+
+/// Eventos de NBA o tenis de un mismo día local.
+class SportAgendaDay {
+  SportAgendaDay(this.day);
+
+  final DateTime day;
+  final groups = <SportAgendaGroup>[];
+
+  String get key => dateKey(day);
+  int get count => groups.fold(0, (n, g) => n + g.events.length);
+}
+
+/// Agrupa por día LOCAL (como `groupAgenda`): NBA por hora y tenis por torneo, en orden
+/// cronológico. El feed de tenis no trae ronda, así que no se agrupa por ella. `toLocal`
+/// solo se cambia en pruebas, para fijar una zona horaria distinta de la de la máquina.
+List<SportAgendaDay> groupSportAgenda(
+  Iterable<SportEvent> events, {
+  DateTime Function(DateTime utc) toLocal = _deviceLocal,
+}) {
+  final sorted = [...events]..sort((a, b) => a.start.compareTo(b.start));
+  final days = <SportAgendaDay>[];
+  for (final e in sorted) {
+    final t = toLocal(e.start);
+    final day = DateTime(t.year, t.month, t.day);
+    if (days.isEmpty || days.last.key != dateKey(day)) {
+      days.add(SportAgendaDay(day));
+    }
+    final groups = days.last.groups;
+    SportAgendaGroup? group;
+    if (e.sport == SportKind.tennis) {
+      for (final g in groups) {
+        if (g.tournament == e.league) group = g;
+      }
+      if (group == null) groups.add(group = SportAgendaGroup(tournament: e.league));
+    } else {
+      final hour = DateTime(t.year, t.month, t.day, t.hour);
+      group = groups.isNotEmpty && groups.last.hour == hour ? groups.last : null;
+      if (group == null) groups.add(group = SportAgendaGroup(hour: hour));
+    }
+    group.events.add(e);
+  }
+  return days;
+}
+
+DateTime _deviceLocal(DateTime d) => d.toLocal();
 
 /// «Hoy · jue, 15 oct», «Mañana · vie, 16 oct» o solo la fecha.
 String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
@@ -316,9 +374,9 @@ class MatchRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: livePanel,
-        borderRadius: BorderRadius.circular(18),
+        shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
           onTap: onOpen,
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -359,7 +417,7 @@ class MatchRow extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
                                 children: [
-                                  TeamCrest(team: team, api: api, size: 24),
+                                  TeamCrest(team: team, api: api, size: 32),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(

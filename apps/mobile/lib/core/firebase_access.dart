@@ -10,6 +10,7 @@ import '../onbonding_screen/splesh_screen.dart';
 import '../product/live_api.dart';
 import '../product/live_shell.dart';
 import '../product/live_widgets.dart';
+import '../product/qf_theme.dart';
 import 'access_screen.dart';
 import 'firebase_services.dart';
 
@@ -236,6 +237,7 @@ class _FirebaseAccountGateState extends State<FirebaseAccountGate> {
       liveButton(
         busy ? l10n.commonConnecting : l10n.accessLinkButton,
         busy ? null : link,
+        color: QfColors.primary, // el ámbar queda para VIP, desbloquear y monedas
       ),
       TextButton(
         onPressed: busy

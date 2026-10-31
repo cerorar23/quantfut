@@ -1,5 +1,9 @@
 # Registro de decisiones — QuantFut
 
+## 30-oct-2026 · App: NBA y tenis con selector global (1.1.0+5)
+
+Por qué un selector global de deporte y no pestañas por deporte: la barra inferior ya está llena y el deporte condiciona Inicio, Predicciones y Mercados a la vez; un solo estado evita duplicar pantallas. Los feeds públicos de NBA y tenis se muestran sin candado VIP porque en la web son públicos (`actionable:false`): un candado en la app no protegería nada; venderlos exige que el servidor aplique acceso, como hace con fútbol. No se muestran cuotas porque los feeds no las publican (`price: null`). Escudos, logos y fotos vienen del servidor, con respaldo a iniciales si falta la imagen. Decidido por el titular: el deporte inicial es el primero visible de Mis deportes («por defecto»), siempre; dentro de la sesión manda lo que toque el usuario, pero no se guarda como deporte de arranque (se eliminó `sports_last`/`SportPrefs.remember`). Versión 1.1.0+5. Verificado: `flutter analyze` limpio, 376 pruebas de Flutter y `tests/test_mensajes.py` en verde; APK de depuración compilado, la firma de release no está disponible en el worktree y la prueba en emulador no se hizo (emulador apagado).
+
 ## 29-oct-2026 · #historial desde el 26 de octubre, solo Destacados y Alta probabilidad
 
 Decisión del titular: el historial de la web empieza el 26 de octubre (día local) y de ahí hacia atrás no se muestra nada. Cuenta solo los Destacados de fútbol, NBA y tenis y Alta probabilidad (fútbol); la regla de qué es destacado no cambia y no se añade ninguna leyenda (orden del titular). Medido antes de aplicar, con la web en producción: destacados 54 de 69 (78,3 %) y Alta probabilidad 51 de 60 (85 %), 105 de 129 (81,4 %) juntos; antes del 26, 65,4 % y 80 %.

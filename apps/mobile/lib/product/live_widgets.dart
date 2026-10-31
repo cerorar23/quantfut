@@ -5,22 +5,16 @@ import 'package:flutter/material.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
+import 'qf_theme.dart';
+import 'sport_images.dart';
 
-const liveBg = Color(0xff090f1a),
-    livePanel = Color(0xff132333),
-    liveCyan = Color(0xff00d5ee),
-    liveGold = Color(0xffffbd00),
-    liveGreen = Color(0xff00d58b),
-    liveMuted = Color(0xffa0adbd);
-ThemeData liveTheme() => ThemeData.dark(useMaterial3: true).copyWith(
-  scaffoldBackgroundColor: liveBg,
-  colorScheme: const ColorScheme.dark(
-    primary: liveCyan,
-    secondary: liveGold,
-    surface: livePanel,
-  ),
-  textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Gilroy Medium'),
-);
+const liveBg = QfColors.bg,
+    livePanel = QfColors.surface,
+    liveCyan = QfColors.primary,
+    liveGold = QfColors.cta,
+    liveGreen = QfColors.success,
+    liveMuted = QfColors.text2;
+ThemeData liveTheme() => qfTheme();
 Widget liveText(
   String text, {
   double size = 14,
@@ -73,7 +67,9 @@ Widget liveButton(
   child: FilledButton(
     style: FilledButton.styleFrom(
       backgroundColor: color,
-      foregroundColor: liveBg,
+      // Texto oscuro de la paleta: nunca blanco sobre azul ni sobre ámbar.
+      foregroundColor: color == QfColors.primary ? QfColors.onPrimary : QfColors.onCta,
+      minimumSize: const Size(44, 48),
       padding: const EdgeInsets.all(14),
     ),
     onPressed: action,
@@ -97,17 +93,10 @@ class TeamCrest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = team['escudo'];
-    final fallback = Icon(Icons.shield_outlined, size: size, color: liveMuted);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: url is String
-          ? Image.network(
-              api.base.resolve(url).toString(),
-              headers: const {'User-Agent': 'QuantFut/1.0 (Android; Flutter)'},
-              errorBuilder: (_, error, stack) => fallback,
-            )
-          : fallback,
+    return QfAvatar(
+      url: serverImageUrl(api, url is String ? url : null),
+      name: '${team['name'] ?? team['nombre'] ?? ''}',
+      size: size,
     );
   }
 }

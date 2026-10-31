@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_locale.dart';
 import 'live_guide.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
 // l10n-ignore-start (direcciones de la tienda y de los documentos legales: son datos)
 const _storeApp = 'market://details?id=com.saptain.quantfut';
@@ -14,26 +16,27 @@ const _terms = 'https://pronosticosdeportivos.pro/legal/terminos';
 const _privacy = 'https://pronosticosdeportivos.pro/legal/privacidad';
 // l10n-ignore-end
 
-/// Menú «Más»: guía, evaluar y compartir la app, y los documentos legales.
-Future<void> showMoreSheet(BuildContext context) => showModalBottomSheet<void>(
-  context: context,
-  isScrollControlled: true,
-  useSafeArea: true,
-  backgroundColor: const Color(0xff0f1a28),
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-  ),
-  builder: (sheet) => Theme(
-    data: liveTheme(),
-    child: _MoreSheet(host: context),
-  ),
-);
+/// Menú «Más»: guía, mis deportes, evaluar y compartir la app, y los documentos legales.
+/// `onMySports` lleva al Perfil, a la sección «Mis deportes» (solo dentro del shell).
+Future<void> showMoreSheet(BuildContext context, {VoidCallback? onMySports}) =>
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: QfColors.surface,
+      shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+      builder: (sheet) => Theme(
+        data: liveTheme(),
+        child: _MoreSheet(host: context, onMySports: onMySports),
+      ),
+    );
 
 class _MoreSheet extends StatelessWidget {
-  const _MoreSheet({required this.host});
+  const _MoreSheet({required this.host, this.onMySports});
 
   /// Contexto de la pantalla que abrió la hoja: sigue vivo cuando la hoja se cierra.
   final BuildContext host;
+  final VoidCallback? onMySports;
 
   Future<void> _open(String url) async {
     if (!await launchUrl(
@@ -78,28 +81,32 @@ class _MoreSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+            Container(width: 40, height: 4, color: QfColors.border),
             const SizedBox(height: 14),
             Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: liveGreen.withValues(alpha: .16),
-                    borderRadius: BorderRadius.circular(14),
+                const Text(
+                  '//', // l10n-ignore (marca)
+                  style: TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                    color: QfColors.primary,
                   ),
-                  child: const Icon(Icons.insights, color: liveGreen),
                 ),
-                const SizedBox(width: 12),
-                Expanded(child: liveText('QuantFut', size: 20, bold: true)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'QUANTFUT', // l10n-ignore (marca)
+                    style: TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      letterSpacing: 1.2,
+                      color: QfColors.text,
+                    ),
+                  ),
+                ),
                 IconButton(
                   key: const ValueKey('more-close'),
                   tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
@@ -112,7 +119,6 @@ class _MoreSheet extends StatelessWidget {
               _Item(
                 key: const ValueKey('more-guide'),
                 icon: Icons.menu_book_outlined,
-                color: liveGold,
                 title: l10n.moreGuide,
                 subtitle: l10n.moreGuideSub,
                 onTap: () {
@@ -125,12 +131,22 @@ class _MoreSheet extends StatelessWidget {
                   );
                 },
               ),
+              if (onMySports != null)
+                _Item(
+                  key: const ValueKey('more-sports'),
+                  icon: Icons.tune,
+                  title: l10n.profileMySports,
+                  subtitle: l10n.moreMySportsSub,
+                  onTap: () {
+                    close();
+                    onMySports!();
+                  },
+                ),
             ]),
             _Section(l10n.moreApp, [
               _Item(
                 key: const ValueKey('more-rate'),
                 icon: Icons.star_outline,
-                color: liveGreen,
                 title: l10n.moreRate,
                 subtitle: l10n.moreRateSub,
                 onTap: () {
@@ -141,7 +157,6 @@ class _MoreSheet extends StatelessWidget {
               _Item(
                 key: const ValueKey('more-share'),
                 icon: Icons.share_outlined,
-                color: liveCyan,
                 title: l10n.moreShare,
                 subtitle: l10n.moreShareSub,
                 onTap: () {
@@ -156,7 +171,6 @@ class _MoreSheet extends StatelessWidget {
               _Item(
                 key: const ValueKey('more-terms'),
                 icon: Icons.description_outlined,
-                color: liveMuted,
                 title: l10n.accessTerms,
                 onTap: () {
                   close();
@@ -166,7 +180,6 @@ class _MoreSheet extends StatelessWidget {
               _Item(
                 key: const ValueKey('more-privacy'),
                 icon: Icons.privacy_tip_outlined,
-                color: liveMuted,
                 title: l10n.accessPrivacy,
                 onTap: () {
                   close();
@@ -189,75 +202,70 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
+        padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
         child: Text(
           title.toUpperCase(),
           style: const TextStyle(
-            color: liveMuted,
-            fontFamily: 'Gilroy Bold',
-            fontSize: 11,
+            color: QfColors.text2,
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            letterSpacing: .9,
           ),
         ),
       ),
-      Container(
-        decoration: BoxDecoration(
-          color: livePanel,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(children: items),
-      ),
+      ...items,
     ],
   );
 }
 
+/// Fila del menú: icono azul, título y subtítulo, 56 dp, separador superior.
 class _Item extends StatelessWidget {
   const _Item({
     super.key,
     required this.icon,
-    required this.color,
     required this.title,
     required this.onTap,
     this.subtitle,
   });
 
   final IconData icon;
-  final Color color;
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => InkWell(
-    borderRadius: BorderRadius.circular(18),
     onTap: onTap,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    child: Container(
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: QfColors.border)),
+      ),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: .16),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
+            color: QfColors.surface2,
+            child: Icon(icon, color: QfColors.primary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                liveText(title, bold: true),
+                liveText(title, bold: true, color: QfColors.text),
                 if (subtitle != null)
-                  liveText(subtitle!, size: 12, color: liveMuted),
+                  liveText(subtitle!, size: 12, color: QfColors.text2),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: liveMuted),
+          const Icon(Icons.chevron_right, color: QfColors.muted),
         ],
       ),
     ),
