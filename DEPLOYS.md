@@ -33,13 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
-### PROPUESTA (sin desplegar) · Cuotas de referencia de NBA y tenis · API + app · rama `cuotas-nba-tenis`
-- Qué cambia: nuevos `GET /web/deportes/tenis/cuotas` y `/web/deportes/nba/cuotas` en la API (solo lectura, `no-store`, caché 60 s). No toca sellos, hashes, worker ni base de datos.
-- Antes: la API necesita montar en solo lectura (a) el archivo `propline_shared` del volumen `quantfut_artifacts`, (b) las cohortes NBA (`live13/cohorts`) y (c) los sellos de tenis, y las variables `NBA_COHORTS_DIR` y `TENNIS_SEALED_DIR`. Sin ellas los endpoints responden `unavailable` y la app muestra «—».
-- Riesgos no verificados: SQLite en modo WAL con `?mode=ro` sobre un montaje de solo lectura (si falla, `unavailable`, sin 500); tamaño real de la respuesta NBA (tope 2 MB con poda de cohortes antiguas). Medir tras el despliegue.
-- Comprobar antes de sobrescribir: `deploy.sh estado` y comparar con `main`; la rama parte de `app/nba-tenis-rediseno` (PR #220), que debe estar fusionada primero.
-- Vuelta atrás: reinstalar la imagen anterior de la API; los montajes extra son inertes sin el código.
-- Pendiente del titular: términos de PropLine para mostrar cuotas públicamente.
+### 2026-10-31 15:44 UTC · Cuotas de referencia de NBA y tenis · API `quantfut-api-cuotas:5b6f545` (PR #220 y #221)
+- Imagen basada en la API en ejecución `quantfut-api-destacado-tarjeta:3bb42c1`, sustituyendo solo `api/web.py`, `config.py`, `ingest/propline_shared.py` y añadiendo `api/cuotas_{nba,tenis,web}.py`, `ingest/cuotas_{referencia,respaldo}.py`. NO se tocó `frontend/`: el de `main` difiere del de producción en 5 archivos (`app.js`, `index.html`, `ergonomic-views.js`, `real-views.js`, `app-order.test.mjs`) y no se despliega aquí. Las diferencias de `web.py`/`config.py`/`propline_shared.py` frente a producción eran solo añadidos de estos PR. Ensayo: 0 módulos con error, 138 rutas (+2).
+- Compose del servidor: montajes de solo lectura `/home/qf/nba-isolated/live13/cohorts` -> `/srv/quantfut/nba_cohorts` y `/home/qf/quantfut-tenis/data/intake_v1` -> `/srv/quantfut/tenis_sellos`; variables `NBA_COHORTS_DIR`, `TENNIS_SEALED_DIR`, `CUOTAS_RESPALDO_CACHE=/srv/quantfut/artifacts/cuotas_respaldo.json`. El archivo PropLine ya estaba en el volumen `quantfut_artifacts`. `ODDS_API_RESPALDO_KEY` está en `~/quantfut/.env` (copia `.env.bak_respaldo_20261031`).
+- Medido tras desplegar: SQLite en solo lectura sobre el archivo funciona. NBA: estado `ok`, 25 eventos, 7.252 lados con precio, 970 KB sin comprimir / ~60 KB gzip, primer cálculo en frío ~49 s (la primera petición tras un reinicio devuelve `unavailable` a los 20 s; el cálculo termina en segundo plano y las siguientes ya sirven). Tenis: `partial`, 72 eventos, 1.368 mercados con precio. Respaldo de The Odds API: 0 filas (cron apagado, no se ha ejecutado). Salud API 200; dominio público sirve ambos endpoints.
+- Vuelta atrás: restaurar `~/quantfut/releases/compose-antes-20261031-154355.yml` como `~/quantfut/docker-compose.yml` y recrear solo la API (`docker compose up -d --no-deps --no-build --force-recreate api`).
+- Pendiente: el cron del respaldo (`scripts/crontab`) no está instalado en el servidor y `CUOTAS_RESPALDO_AUTO` está en 0; la app Flutter con cuotas llega con la próxima versión publicada; términos de PropLine (titular).
 
 ### PROPUESTA (sin desplegar) · Respaldo de cuotas NBA/tenis con The Odds API histórico · comando por lotes · rama `cuotas-nba-tenis`
 - Qué: `python -m qf.ingest.cuotas_respaldo` escribe `CUOTAS_RESPALDO_CACHE` (JSON, escritura atómica) y el overlay de `/web/deportes/{nba,tenis}/cuotas` solo la lee; los lados sin cuota de PropLine salen con `src: "the-odds-api"`.
