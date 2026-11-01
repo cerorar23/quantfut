@@ -19,7 +19,7 @@ import logging
 import re
 
 from ..db import conn, execute, query
-from . import api_football as af
+from .salud import record_health
 from . import fotmob_captura as fc
 
 log = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ def run(cli: fc.Cliente | None = None) -> dict:
     if cierres["cerrados"]:
         from ..eval.clv import settle_pending
         summary["liquidado"] = settle_pending()
-    af.record_health("live", len(vivos), True, summary)
+    record_health("live", len(vivos), True, summary)
     log.info("Marcador en vivo: %s", summary)
     return summary
 

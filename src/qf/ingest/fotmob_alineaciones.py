@@ -21,7 +21,7 @@ from datetime import date, datetime, timedelta, timezone
 from psycopg.types.json import Jsonb
 
 from ..db import conn, query
-from . import api_football as af
+from .salud import record_health
 
 log = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ def run(horas: int = 48) -> dict:
                 out["previstas"] += int(r["previsto"])
         finally:
             c.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
-    af.record_health("fotmob_alineaciones", out["capturas"], True, out)
+    record_health("fotmob_alineaciones", out["capturas"], True, out)
     log.info("FotMob alineaciones/bajas: %s", out)
     return out
 

@@ -1,5 +1,19 @@
 # Registro de decisiones — QuantFut
 
+## 1-nov-2026 · Retirada completa de las fuentes antiguas en un solo PR (`retirar/fuentes-todo`)
+
+Decisión del titular: hacerlo todo de una vez en un PR nuevo, y fusionar y desplegar al final. Lo que se añade a las fases 1-2c: las tres piezas que quedaban enganchadas, separando siempre lo vivo de lo retirable. `sofascore_alineaciones` y `sofascore_partidos` mezclaban la lectura del archivo de Apify con las funciones que escriben bajas y once (`emparejar`, `aplicar`, `titulares`, `bajas`) y que sigue usando SportsAPIPro: esas pasan a `sofascore_carga.py` y el resto se borra. `history_fd.py` mezclaba el cargador de CSV de football-data con `insertar_cierre` (lo usa `cierres_odds_api`) y `_parse_date` (lo usa `early_vs_close`): se extraen y el cargador se borra. El chequeo de frescura del xG ya no lee los assets de worldfootballR.
+
+Descanso: `db/093` hace que `v_descanso_equipo` use `calendario_equipo` hasta su última carga y los partidos terminados de `matches` después; antes la vista sobrestimaba el descanso 8,2 días de media. Verificado en un esquema aislado con partidos antes y después del corte. Límite declarado: copas domésticas y selecciones posteriores al 22-oct no están.
+
+Además, la prueba de tenis `test_shadow_paid_path_uses_post_receipt_time_and_preseals` dependía del mes real (parcheaba `shadow.now`, pero `Capture` usa su propio reloj): desde el 1-nov fallaba en `main` limpio. Se fija el reloj de `Capture` (mismo criterio que #64).
+
+## 1-nov-2026 · Las fuentes retiradas se quitan del código por fases, no de golpe
+
+Decisión del titular: retirar API-Football, Apify, PitchAPI, BetsAPI, worldfootballR/FBref, football-data y soccerway/365scores conservando los datos ya cargados. Por qué por fases: el grafo de imports mostró que `api_football.py` no es solo un cliente, también aloja `record_health`, que usan 20 módulos (PropLine, FotMob y SportsAPIPro incluidos), y que football-data sostiene la base estadística, los cierres de 1X2 y 24 archivos de `src`. Borrarlos de golpe habría roto jobs activos sin avisar.
+
+Fase 1 (esta rama): solo lo que no tiene importadores ni cron activo: PitchAPI completo con su panel, `calendario_equipos`, `injuries`, los dos puentes AF↔FotMob, el descargador de BetsAPI y 6 pruebas. Las bajas siguen entrando por FotMob y SportsAPIPro. Los datos y migraciones no se tocan; el panel `/control/respaldo` desaparece y la clave de PitchAPI ya estaba vacía en `pitchapi_settings`. Vuelta atrás: `git revert` del commit de la rama (el código vive también en `e097691`). Lo que queda y por qué está en `harness/tareas.md`.
+
 ## 31-oct-2026 · El respaldo de cuotas es un comando por lotes, no una llamada del endpoint
 Decisión: The Odds API solo se consulta desde `python -m qf.ingest.cuotas_respaldo` y el overlay lee una caché en disco. Un endpoint público que gastara créditos sería un vector de abuso, y el presupuesto (2.855 créditos hasta el 23-nov) es la restricción principal. Se usa el histórico a la hora del sello para que `as_of <= sealed_at`; PropLine gana siempre y el respaldo solo rellena lados en None, con emparejamiento por nombre exacto y comienzo a ±30 min (ante duda, «—»).
 

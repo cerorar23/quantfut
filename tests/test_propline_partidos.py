@@ -26,7 +26,7 @@ def test_marcador_solo_enteros(hs, as_, esperado):
 def sql(monkeypatch):
     log = []
     monkeypatch.setattr(pp, "execute", lambda q, p=(): log.append((" ".join(q.split()), p)) or 1)
-    monkeypatch.setattr(pp.af, "record_health", lambda *a, **k: None)
+    monkeypatch.setattr(pp, "record_health", lambda *a, **k: None)
     monkeypatch.setattr(pp, "_ligas", lambda: [dict(LIGA)])
     return log
 
@@ -160,10 +160,8 @@ def test_copa_solo_acepta_nombre_exacto(monkeypatch):
     assert pp.equipo(copa, "Olympique Lyonnais") == 9
 
 
-def test_proveedor_de_resultados_desvia_los_jobs(monkeypatch):
+def test_los_jobs_de_resultados_y_calendario_usan_propline(monkeypatch):
     from qf.ingest import fixtures, results
-    import qf.config as cfg
-    monkeypatch.setattr(cfg, "settings", SimpleNamespace(results_provider="propline"))
     monkeypatch.setattr(pp, "resultados", lambda hours_back=72: {"via": "propline", "h": hours_back})
     monkeypatch.setattr(pp, "calendario", lambda: {"via": "propline"})
     assert results.close_recent() == {"via": "propline", "h": 72}

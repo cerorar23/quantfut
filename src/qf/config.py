@@ -51,21 +51,10 @@ class Settings:
     propline_soft_every_hours: int = _i("PROPLINE_SOFT_EVERY_HOURS", 3)
     # Resultados y calendario. API-Football pasó al plan gratuito el 22-oct-2026
     # y el titular decidió sustituirlo por el archivo de PropLine (24-oct).
-    results_provider: str = os.getenv("RESULTS_PROVIDER", "api_football")
-    # Archivo del recolector SofaScore vía Apify (host), montado en solo lectura.
-    sofascore_archive: str = os.getenv("SOFASCORE_ARCHIVE", "/srv/quantfut/sofascore")
     # `eu` trae Pinnacle y Betfair Exchange, la referencia sharp. `us` solo
     # añade casas de EE. UU. y duplica el coste en créditos.
     odds_api_regions: str = os.getenv("ODDS_API_REGIONS", "eu")
     odds_api_markets: str = os.getenv("ODDS_API_MARKETS", "h2h,totals,spreads")
-    api_football_key: str = os.getenv("API_FOOTBALL_KEY", "")
-    # Peticiones por minuto del plan de API-Football. El plan Free son 10 y
-    # devuelve 429 al superarlo; los de pago suben mucho. Es el valor del que
-    # el cliente deriva su intervalo entre llamadas.
-    api_football_rpm: int = _i("API_FOOTBALL_RPM", 10)
-    # Cuota DIARIA del plan. Free = 100. Se usa para presupuestar el calendario
-    # de ingesta, no solo para avisar cuando ya se agotó.
-    api_football_daily: int = _i("API_FOOTBALL_DAILY", 100)
 
     # --- Telegram ---
     tg_bot_token: str = os.getenv("TG_BOT_TOKEN", "")

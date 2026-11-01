@@ -119,8 +119,7 @@ def capture(now: datetime | None = None) -> dict:
         # y el cierre se capturaría antes de la decisión (auditoría 3-oct).
         if m["kickoff_utc"] - now < MIN_LEAD:
             continue
-        for snap in (pk._af_snapshot(m["match_id"], now),
-                     pk._odds_api_snapshot(m["match_id"], now)):
+        for snap in (pk._odds_api_snapshot(m["match_id"], now),):
             if snap is None or m["kickoff_utc"] - snap.as_of < MIN_LEAD:
                 continue
             snaps += 1

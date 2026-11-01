@@ -1,7 +1,7 @@
 """Bajas y once de SofaScore: parseo, emparejamiento, solo el oficial a `lineups`, y fuente de ids."""
 from datetime import datetime, timezone
 
-from qf.ingest import lineups, sofascore_alineaciones as sa
+from qf.ingest import lineups, sofascore_carga as sa
 
 KO = datetime(2026, 10, 25, 14, 0, tzinfo=timezone.utc)
 RECIBO = {"id": 7, "received_at": "2026-10-25T13:10:00+00:00", "sha256": "x"}
@@ -120,6 +120,11 @@ def test_partido_ya_empezado_no_se_toca(monkeypatch):
 
 def test_competicion_fuera_de_catalogo(monkeypatch):
     assert sa.emparejar({**fila(), "uniqueTournamentId": 999999}) == (None, "competicion_fuera_de_catalogo")
+
+
+def test_ligas_retiradas_no_se_cargan():
+    for torneo in (182, 39):   # Ligue 2 y Superliga danesa: sin cuotas, fuera de los motores (25-oct)
+        assert sa.emparejar({**fila(), "uniqueTournamentId": torneo})[1] == "competicion_fuera_de_catalogo"
 
 
 def test_disponibilidad_no_mezcla_ids_de_sofascore_con_los_de_api_football(monkeypatch):

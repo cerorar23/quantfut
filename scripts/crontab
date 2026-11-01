@@ -25,11 +25,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 
 */5 * * * * cd /app && python -m qf.ingest.rafagas >> /var/log/rafagas.log 2>&1
 
-# Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle).
-# Cada hora: el proveedor actualiza cada liga cuando le toca y solo guarda 7
-# días. Cada 3 h, una actualización de las 06:10 no llegaría al job de las
-# 08:00. Una petición por partido en las próximas 72 h (~50/h de 7.500/día).
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 20 * * * * cd /app && python -m qf.ingest.af_odds >> /var/log/af_odds.log 2>&1
 # Sombra del criterio de picks: registra lo que se HABRÍA recomendado con las
 # cuotas recién capturadas. No publica. Se liquida desde qf.eval.clv.
 25 * * * * cd /app && python -m qf.publish.shadow_sharp capture >> /var/log/shadow_sharp.log 2>&1
@@ -48,58 +43,25 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 */5 * * * * cd /app && python -m qf.ingest.live >> /var/log/live.log 2>&1
 
 # Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
-# Con RESULTS_PROVIDER=propline lee el archivo de PropLine (/scores cada 3 h, a las :07).
+# Lee el archivo de PropLine (/scores cada 3 h, a las :07).
 45 */3 * * * cd /app && python -m qf.ingest.results >> /var/log/results.log 2>&1
 
-# xG, tiros, córners, tarjetas y alineaciones de SofaScore (archivo Apify del host,
-# recolector a las 07:40). Antes del diario de las 09:00; segunda pasada por los rezagados.
-# RETIRADO 2026-10-31: Apify devuelve 403 (tope del plan gratuito) y el titular no vuelve a pagarlo; el xG y las
-# estadísticas ya salían de FotMob. Para volver atrás basta quitar el prefijo «RETIRADO».
-# RETIRADO 30 8,20 * * * cd /app && python -m qf.ingest.sofascore_partidos >> /var/log/sofascore_partidos.log 2>&1
-# RETIRADO 3-59/10 * * * * cd /app && flock -n /tmp/sofascore_alineaciones.lock python -m qf.ingest.sofascore_alineaciones >> /var/log/sofascore_alineaciones.log 2>&1
 # Bajas y once desde FotMob (31-oct-2026): copia lo que `fotmob_captura previos` (cada 5 min) guarda a lineups,
 # lineups_previstas e injuries, 2 minutos después de cada captura.
 2-59/5 * * * * cd /app && flock -n /tmp/fotmob_alineaciones.lock python -m qf.ingest.fotmob_alineaciones >> /var/log/fotmob_alineaciones.log 2>&1
+# Huecos de once y bajas con SportsAPIPro (31-oct-2026): solo si faltan lineups a 15-45 min del saque; tope 40 peticiones/dia.
+4-59/5 * * * * cd /app && flock -n /tmp/sportsapipro_alineaciones.lock python -m qf.ingest.sportsapipro_alineaciones >> /var/log/sportsapipro_alineaciones.log 2>&1
 
-# xG API-Football tardío: reconsulta hasta 35 días, máximo 100 partidos/día,
-# reserva el 15% de cuota. Primera observación congelada para entrenamiento.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 10 12 * * * cd /app && python -m qf.ingest.xg_api_football >> /var/log/xg_api_football.log 2>&1
-
-# PitchAPI: verificador y respaldo de API-Football (db/065). Cotejo de los
-# ultimos 10 dias (avisa, no corrige) y xG de respaldo tras las 48 h de gracia
-# de API-Football. Sin clave o desactivado desde /control/respaldo: no hace nada.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 40 12 * * * cd /app && python -m qf.ingest.pitchapi_respaldo >> /var/log/pitchapi.log 2>&1
+# Testigo de calendario y resultados con football-data.org (solo avisa, nunca escribe en `matches`).
 10 1,13 * * * cd /app && python -m qf.ingest.fdorg_respaldo >> /var/log/fdorg.log 2>&1
-
-# xG historico desde los releases de worldfootballR_data. Semanal: esos
-# datasets se publican por lotes, no cambian a diario.
-# No se raspa FBref en vivo: esta detras de Cloudflare y devuelve 403.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 0 4 * * 2 cd /app && python -m qf.ingest.xg_worldfootball >> /var/log/xg.log 2>&1
-
-# Historico de Champions y Europa League. Mismo release por lotes, misma
-# cadencia. Va DESPUES del xG y no antes: si algun dia se da de alta una liga
-# nueva, sus equipos tienen que existir ya cuando las copas intenten
-# resolverlos (uefa_cups nunca crea equipos, descarta el partido).
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 30 4 * * 2 cd /app && python -m qf.ingest.uefa_cups >> /var/log/xg.log 2>&1
 
 # Chequeo de salud. Diario, alerta si algo falla.
 0 7 * * * cd /app && python -m qf.ingest.health >> /var/log/health.log 2>&1
 
 # --- FASE 4 ---
-# Alineaciones confirmadas. Cada 5 min: la ventana util es T-90..T-20 y el XI
-# se publica sin horario fijo, asi que hay que estar mirando. Solo llama a la
-# API por partidos DENTRO de la ventana y sin alineacion guardada, asi que el
-# coste de cuota es bajo aunque corra a menudo.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): */5 * * * * cd /app && python -m qf.ingest.lineups >> /var/log/lineups.log 2>&1
 # Un minuto después, evalúa el ajuste de XI en sombra. No publica ni apuesta;
 # si todavía no hay muestra/artefacto validado termina como no-op.
 1-56/5 * * * * cd /app && python -m qf.model.shadow >> /var/log/shadow.log 2>&1
-
-# Bajas/lesiones. Cada 4h: a diferencia del XI, el estado se conoce con dias
-# de antelacion y cambia (duda -> confirmado), asi que hace falta releer, no
-# una sola captura por partido. El propio modulo evita reconsultar el mismo
-# partido antes de MIN_HOURS_BETWEEN_CHECKS.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 0 */4 * * * cd /app && python -m qf.ingest.injuries >> /var/log/injuries.log 2>&1
 
 # --- FASE 3 ---
 # Job diario: predecir, seleccionar picks, sellar cadena, publicar. 13:00 UTC = 07:00 en
@@ -135,9 +97,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Conversions API de Meta (db/071 y db/083): envia la cola meta_events. Sin META_CAPI_ENABLED=1 no hace nada.
 # El entorno del worker se fijo al crearlo: las variables de Meta se leen de /app/meta.env si existe.
 */5 * * * * cd /app && set -a && { [ ! -f /app/meta.env ] || . /app/meta.env; } && set +a && flock -n /tmp/meta_capi.lock python -m qf.comercial.meta_capi >> /var/log/meta_capi.log 2>&1
-
-# Calendario de cada equipo en todas las competiciones (db/078), temporada en curso: ~313 llamadas de las 7.500 diarias.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 40 5 * * * cd /app && python -m qf.ingest.calendario_equipos --temporadas 2026 --refrescar >> /var/log/calendario_equipos.log 2>&1
 
 # Captura recurrente de FotMob (db/081), autorizada el 18-oct-2026 y reactivada el 25-oct como complemento diario de
 # SofaScore y PropLine, solo en las competiciones activas. Una sola a la vez (flock); un bloqueo HTTP 401/403/429

@@ -208,7 +208,7 @@ def cargar(now=None, dias=45, dry_run=False):
     if r["partidos"]:
         from ..eval.clv import settle_pending
         r["settled"] = settle_pending()
-    from .api_football import record_health
+    from .salud import record_health
     record_health("propline_cierres", r["filas"], True, {k: v for k, v in r.items() if k != "settled"})
     log.info("Cierres PropLine: %s", r)
     return r

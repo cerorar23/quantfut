@@ -996,7 +996,7 @@ function statsView() {
       </aside>
       <section class="desk-main" aria-label="Ficha del partido">${main}</section>
     </div>
-    <p class="bottom-note">Horarios en tu zona horaria. Resultados, estadísticas, alineaciones y bajas: API-Football; histórico: football-data y bases públicas. La clasificación se actualiza dos veces al día.</p>`;
+    <p class="bottom-note">Horarios en tu zona horaria. Resultados, estadísticas, alineaciones y bajas: PropLine, FotMob y SofaScore; histórico: football-data y bases públicas. La clasificación se actualiza dos veces al día.</p>`;
 }
 
 // ---- ventana única: pronóstico + estadísticas del mismo partido

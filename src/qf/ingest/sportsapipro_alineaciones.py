@@ -9,7 +9,7 @@ Qué hace, cada pocos minutos y SIN peticiones si no hay hueco:
   * Cada hueco se consulta como mucho 2 veces, con 7 min de separación, y como mucho 40 peticiones al día en total.
   * Calendario del día (`/schedule/{fecha}`, 3 fechas porque SportsAPIPro agrupa por día de Nueva York) cada 6 h como
     mucho, y solo si hace falta para encontrar el id del partido; archivado en `artifact_dir/sportsapipro`.
-  * Con el id se pide `/api/match/{id}/lineups` y se carga con `sofascore_alineaciones.aplicar` (misma estructura,
+  * Con el id se pide `/api/match/{id}/lineups` y se carga con `sofascore_carga.aplicar` (misma estructura,
     `source = 'sofascore'`, ids de SofaScore): escribe `injuries`, `lineups_previstas` y `lineups` si es oficial.
 
 La clave va en `SPORTSAPIPRO_KEY` (entorno del worker). Con el User-Agent de urllib Cloudflare responde 403 (error 1010).
@@ -28,9 +28,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ..db import conn, query
-from . import api_football as af
-from .sofascore_alineaciones import aplicar, emparejar
-from .sofascore_partidos import LIGA_DE_TORNEO
+from .salud import record_health
+from .sofascore_carga import LIGA_DE_TORNEO, aplicar, emparejar
 
 log = logging.getLogger(__name__)
 
@@ -213,7 +212,7 @@ def run(call=http, clock=now) -> dict:
         finally:
             c.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
     out["peticiones_hoy"] = usadas_hoy(db, ahora)
-    af.record_health("sportsapipro_alineaciones", out["consultados"], True, out)
+    record_health("sportsapipro_alineaciones", out["consultados"], True, out)
     log.info("SportsAPIPro alineaciones: %s", out)
     return out
 

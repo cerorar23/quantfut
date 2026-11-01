@@ -28,7 +28,7 @@ def _partidos(n: int, hacia_modelo: float, seed: int = 0) -> pd.DataFrame:
     return d
 
 
-def test_match_id_igual_que_history_fd():
+def test_match_id_igual_que_el_del_historico():
     ko = datetime(2023, 8, 19, 17, 30, tzinfo=timezone.utc)
     assert (evc.match_id("es.laliga", "2324", "Almeria", "Real Madrid", ko)
             == "es.laliga:2324:almeria-realmadrid:20230819")
@@ -68,3 +68,20 @@ def test_ligas_params_solo_con_el_pasado():
     m = evc._KalmanSinFuturo(corte)
     m._estimate_league_params(df)
     assert m.leagues["x"].home_adv == 0.0
+
+
+def test_la_fecha_del_extra_se_parsea():
+    fila = pd.Series({"Date": "12/07/2025", "Time": "19:00"})
+    ko = evc._parse_date(fila)
+    assert ko is not None
+    assert (ko.year, ko.month, ko.day, ko.hour) == (2025, 7, 12, 19)
+    assert ko.tzinfo is not None
+
+
+def test_fecha_sin_hora_cae_a_las_19_utc():
+    ko = evc._parse_date(pd.Series({"Date": "12/07/2025", "Time": ""}))
+    assert ko is not None and ko.hour == 19
+
+
+def test_fecha_invalida_devuelve_none():
+    assert evc._parse_date(pd.Series({"Date": "no es fecha", "Time": ""})) is None

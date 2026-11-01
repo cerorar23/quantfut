@@ -5,13 +5,12 @@ Actualizada el **2026-10-25** (limpieza a fondo: solo queda lo que sigue abierto
 
 **Regla del titular (25-oct):** un error que aparece al desplegar o al probar se arregla en esa misma sesión, no se apunta.
 Aquí solo entra lo que depende de ti (decisión, credencial, pago) o de algo que todavía no ha ocurrido (una fecha, una muestra).
-Fuentes de fútbol: **SofaScore** (Apify), **PropLine** y **FotMob**; API-Football está fuera desde el 22-oct.
+Fuentes de fútbol: **PropLine**, **FotMob**, **SportsAPIPro** y el scraper de SofaScore del VPS; API-Football, Apify, PitchAPI y BetsAPI están fuera (1-nov). El código se retira por fases: ver `harness/tareas.md`.
 Responsable: **Tú** = titular; **Claude** = trabajo en el repo o el servidor (con ensayo y registro en `DEPLOYS.md`).
 
 ## Consumo de APIs — 28-oct-2026
 
 - [x] Corregidos: detalles de SofaScore sin pedir desde el 26-oct, alias de Racing de Santander y Tromsoe, y 40-60 % de las llamadas ampliadas de fútbol en PropLine. Ver `docs/auditoria_consumo_apis_20261028.md`.
-- [ ] **Tú:** tope mensual de Apify (15 USD, cuenta en 13,2 USD de un límite de 19): hasta decidirlo, listas y detalles de partidos esperan al 24-nov; las alineaciones siguen.
 - [ ] Claude: confirmar el ahorro de PropLine tras una jornada completa y decidir si se amplían los lotes de fútbol.
 
 ## Calendario
@@ -34,7 +33,7 @@ Cuando el CI vuelva: relanzarlo y fusionar el #163 (**Claude**).
 - ¿Publicar el JSON de los 19 lotes históricos de la cadena? Hoy están apartados en `historico_sin_publicar/` (`docs/registro_publico_activacion_20261018.md`).
 - Comprar, tras la renovación del 1-nov, los cierres históricos que faltan: 590 snapshots (~5.900 créditos) con `python -m qf.ingest.cierres_odds_api fetch --presupuesto 5900`. Los partidos nuevos ya traen su cierre de PropLine.
 - `SOFT_BOOKS` frente a las casas de PropLine: solo 1xbet coincide, así que la sombra sharp ve 0 ofertas de casas blandas.
-- Licencia de BetsAPI, fuente del calendario de copas y tope mensual de Apify (el ritmo del 24-25 oct supera los 15 USD/mes).
+- Fuente del calendario de copas y de otras competiciones (descanso).
 - NBA: decidir si las lesiones de ESPN entran como segunda señal. (Props históricos descargados con el plan de 100K; productor 1.5.0 con umbral estadístico para jugadores: `docs/nba_live15_recalibracion_20261026.md`.)
 - Tenis: apagar la automatización de Codex «continuidad-de-validaci-n-predictiva-de-tenis» (solo desde Codex). Las cuotas de cierre ya están: la evaluación las lee del archivo de PropLine desde el 26-oct.
 - Aviso push al sellar.
@@ -52,7 +51,7 @@ Cuando el CI vuelva: relanzarlo y fusionar el #163 (**Claude**).
 
 ## 2. Claude: esperan una fecha o una muestra
 - **1-nov:** reentrenar en local y subir (`scripts/entrenamiento_local/`), y reejecutar `python -m qf.model.ajuste` sobre el OOS nuevo.
-- **Enero de 2027:** pasar Liga MX a `11620` (Clausura) en `scripts/sofascore_apify_config.json` y en el VPS.
+- **Enero de 2027:** pasar Liga MX a `11620` (Clausura) en `LIGA_DE_TORNEO` (`sofascore_carga.py`) y en el scraper del VPS.
 - Puertas que esperan muestra: calibración, residuo, cuatro brazos, `ajuste_xi`, alineación en F7, altitud, tarjetas y córners del parley,
   1xBet y la ampliada 73-95 % (acierta 78,0 % frente a 81,4 % prometido, n=223).
 - Historia de onces de SofaScore para `availability`, y que las bajas de SofaScore alimenten al modelo (F3).

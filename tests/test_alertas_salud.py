@@ -54,13 +54,6 @@ def test_alerta_sin_telegram_queda_como_error_con_su_texto(monkeypatch, caplog):
     assert registro and registro[0].levelno == logging.ERROR
 
 
-def test_el_mensaje_de_bajas_no_da_por_hecho_que_es_el_proveedor(monkeypatch):
-    monkeypatch.setattr(health, "query", lambda sql, params=None: [
-        {"league_id": "us.mls", "checked": 17, "total_reported": 0}])
-    ok, msg = health.check_injuries_coverage()
-    assert not ok and "us.mls" in msg
-    assert "error nuestro" in msg
-
 
 def test_la_alerta_escapa_html(monkeypatch):
     enviados = []

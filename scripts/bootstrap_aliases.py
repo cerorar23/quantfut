@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
-Bootstrap del emparejamiento de nombres entre las tres fuentes.
+Bootstrap del emparejamiento de nombres entre las fuentes.
 
 EJECUTAR UNA VEZ tras el backfill histórico, y de nuevo al empezar cada
 temporada (los ascensos traen nombres nuevos).
 
 Qué hace:
   1. Lee los nombres canónicos que dejó football-data.co.uk (la base).
-  2. Pide a API-Football sus equipos por liga y los empareja.
-  3. Pide a The Odds API sus eventos próximos y empareja esos nombres.
-  4. Auto-registra lo que supera el umbral, y saca un reporte de lo que no.
+  2. Pide a The Odds API sus eventos próximos y empareja esos nombres.
+  3. Auto-registra lo que supera el umbral, y saca un reporte de lo que no.
 
 Uso:
     python scripts/bootstrap_aliases.py                 # ejecuta y reporta
@@ -32,45 +31,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from qf.config import settings                                    # noqa: E402
 from qf.db import execute, query, query_one                       # noqa: E402
-from qf.ingest import api_football as af                          # noqa: E402
 from qf.normalize import (AUTO_ACCEPT, SUGGEST_FLOOR, clear_cache,  # noqa: E402
                           match_team, pending_report, register_alias, slugify)
 
 log = logging.getLogger("bootstrap")
-
-
-def collect_api_football(season_override: int | None = None
-                         ) -> list[tuple[str, str, str | None]]:
-    """[(raw_name, source, league_id)] desde API-Football.
-
-    `season_override` existe por los planes con ventana de temporadas cerrada
-    (el Free solo da 2022-2024): sin él, la temporada en curso devuelve un
-    error de plan y no se recoge ni un nombre. Los nombres de los clubes
-    apenas cambian de año a año, así que una temporada reciente accesible
-    sirve igual para construir los alias.
-    """
-    out: list[tuple[str, str, str | None]] = []
-    for lg in query("SELECT league_id, api_football_id, season_style, cross_league "
-                    "FROM leagues WHERE active AND api_football_id IS NOT NULL"):
-        from qf.ingest.fixtures import current_season
-        season = season_override or current_season(lg["season_style"])
-        try:
-            resp, meta = af.get("teams", {"league": lg["api_football_id"],
-                                          "season": season})
-            af.check_quota(meta)
-        except Exception as exc:  # noqa: BLE001
-            log.error("API-Football %s: %s", lg["league_id"], exc)
-            continue
-        # En una competición cross_league el equipo NO pertenece a esa
-        # competición: pasar 'eu.ucl' como liga restringiría la búsqueda a un
-        # conjunto vacío. Se pasa None para buscar en todo el catálogo, y el
-        # umbral exacto de `run()` impide que el difuso cruce continentes.
-        target = None if lg["cross_league"] else lg["league_id"]
-        for item in resp:
-            out.append((item["team"]["name"], "api_football", target))
-        log.info("API-Football %s: %d equipos (season=%s)",
-                 lg["league_id"], len(resp), season)
-    return out
 
 
 def collect_odds_api() -> list[tuple[str, str, str]]:
@@ -92,7 +56,7 @@ def collect_odds_api() -> list[tuple[str, str, str]]:
         for ev in events:
             names.add(ev.get("home_team", ""))
             names.add(ev.get("away_team", ""))
-        # Mismo criterio que en API-Football: en una copa el equipo no
+        # En una copa el equipo no
         # pertenece a la competición, así que acotar por ella daría un
         # conjunto vacío y ni siquiera un candidato que revisar.
         target = None if lg["cross_league"] else lg["league_id"]
@@ -107,12 +71,11 @@ def run(dry_run: bool = False, season: int | None = None) -> dict:
     base = query("SELECT count(*) AS n FROM teams")[0]["n"]
     if base == 0:
         raise SystemExit(
-            "No hay equipos en la base. Ejecuta primero el backfill histórico:\n"
-            "  python -m qf.ingest.history_fd"
+            "No hay equipos en la base. Restaura primero una copia (scripts/restore_db.sh)."
         )
     log.info("Equipos canónicos en base: %d", base)
 
-    candidates = collect_api_football(season) + collect_odds_api()
+    candidates = collect_odds_api()
     auto, manual, already = 0, [], 0
 
     for raw, source, league_id in candidates:

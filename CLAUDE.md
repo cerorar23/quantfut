@@ -64,10 +64,13 @@ pasada del chequeo diario queda además en `health_runs` (db/037).
 ## Dónde vive cada cosa (no lo derives, ya está aquí)
 
 - `src/qf/ingest/` — captura de datos (cuotas, calendario, resultados, xG).
-  Desde el 12-oct-2026, por decisión del usuario, API-Football SÍ alimenta el
-  xG del modelo mediante `xg_api_football.py`: primera pareja válida congelada,
-  recepción real en `xg_recorded_at` y uso solo desde esa fecha. El cliente
-  `api_football.py` conserva su control de cuota.
+  Fuentes vigentes desde el 1-nov-2026: PropLine (cuotas, cierres, resultados y
+  calendario), FotMob (xG, once, bajas, árbitro, sedes, clima y marcador en vivo),
+  SportsAPIPro (huecos de once y bajas) y el scraper de SofaScore del VPS.
+  API-Football, Apify, PitchAPI y BetsAPI se retiraron por decisión del usuario: su
+  código se borró y los datos ya cargados se conservan (`matches.xg_source`,
+  `af_odds_snapshots`, etc.). El xG de cualquier fuente se guarda con su recepción
+  real en `xg_recorded_at` y se usa solo desde esa fecha.
 - `src/qf/api/anuncios*.py` — videos con recompensa de AdMob (SSV); el servidor acredita, configurable en
   `/control/anuncios`. Apagado y en modo prueba por defecto; ver `docs/admob_recompensas_20261014.md`.
 - `src/qf/model/` — Dixon-Coles, de-vig, pricing, entrenamiento, calibración
@@ -132,8 +135,8 @@ Consecuencias que hay que respetar:
   point-in-time, ni el orden `predecir → sellar → publicar` sin pedir
   confirmación explícita: son las garantías que hacen creíble el producto.
 - No añadas manejo de errores o fallback para escenarios de proveedor que el
-  README ya descarta. La antigua exclusión del xG de API-Football fue revocada
-  por el usuario el 12-oct-2026; el histórico previo no acredita su recepción original.
+  README ya descarta. El histórico de xG anterior a `xg_recorded_at` no acredita su
+  recepción original.
 - Sé directo, sin explicar código que ya es legible por sí mismo.
 - Al terminar una tarea: márcala en `harness/tareas.md` y añade la decisión
   clave (el porqué, no el qué) a `harness/progreso.md`.

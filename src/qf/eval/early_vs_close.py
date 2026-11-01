@@ -30,7 +30,7 @@ Cuotas: los CSV del formato principal de football-data.co.uk ya cacheados en
 viernes por la tarde (fin de semana) o el martes (entre semana): entre uno y
 tres días antes del inicio. Modelo: `kalman.predict_sequential` sobre
 `train.load_training_data()`, con xG, prediciendo cada partido antes de
-aprenderlo. Se cruzan por `match_id`, que `history_fd.py` construye de forma
+aprenderlo. Se cruzan por `match_id`, que el cargador del histórico construye de forma
 determinista desde las mismas filas.
 
 FUGAS
@@ -49,13 +49,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from ..config import settings
-from ..ingest.history_fd import _parse_date
 from ..model.kalman import DynamicRatings
 from ..model.meta import _fit_weight
 from ..normalize import slugify
@@ -75,8 +75,32 @@ SEL = ("home", "draw", "away")
 EPS = 1e-6
 
 
+def _parse_date(row) -> datetime | None:
+    d = str(row.get("Date", "")).strip()
+    t = str(row.get("Time", "")).strip()
+    for fmt in ("%d/%m/%Y", "%d/%m/%y", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(d, fmt)
+            break
+        except ValueError:
+            continue
+    else:
+        return None
+    if t and ":" in t:
+        try:
+            hh, mm = t.split(":")[:2]
+            dt = dt.replace(hour=int(hh), minute=int(mm))
+        except ValueError:
+            dt = dt.replace(hour=19)
+    else:
+        # Sin hora: se marca a las 19:00 UTC. El backtest debe saber que el
+        # orden intra-jornada es arbitrario (ver check_leakage).
+        dt = dt.replace(hour=19)
+    return dt.replace(tzinfo=timezone.utc)
+
+
 def match_id(league_id: str, season: str, home: str, away: str, ko) -> str:
-    """El mismo identificador que `history_fd._ingest_rows`."""
+    """El mismo identificador de partido que usa el cargador del histórico."""
     return (f"{league_id}:{season}:"
             f"{slugify(home)[:12].replace(' ', '')}-"
             f"{slugify(away)[:12].replace(' ', '')}:"

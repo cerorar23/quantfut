@@ -201,68 +201,12 @@ def check_settlement_lag() -> tuple[bool, str]:
     return True, "Liquidación al día"
 
 
-INJURIES_LOOKBACK_DAYS = 30
-
-# Bajo esta muestra, cero bajas reportadas es normal (racha de suerte, liga
-# recién arrancada). A partir de aquí, cero en TODOS los partidos comprobados
-# de una liga entera dentro de un mes deja de ser plausible y es la misma
-# firma de "array vacío con status 200" que ya se documentó para el xG de
-# este proveedor.
-INJURIES_MIN_MATCHES = 15
-
-# Confirmado 2026-09-22 (ver README.md): estas tres devuelven 0 en la
-# temporada 2026 en curso pese a tener partidos de sobra terminados, con
-# season=2025 sí hay datos. Es un hueco de cobertura del proveedor, no un
-# fallo de ingesta, así que no tiene sentido alertar cada día por algo que
-# ya se investigó y no se puede arreglar desde este lado.
-KNOWN_INJURY_COVERAGE_GAPS = {"mx.liga_mx", "ar.primera", "pt.primeira"}
-
-
 def check_injuries_coverage() -> tuple[bool, str]:
     """
-    Detecta el mismo fallo silencioso de API-Football ya visto en el xG:
-    una liga sin cobertura para `/injuries` no da error, da 0 resultados con
-    status 200. Sin este chequeo, una liga nueva con ese mismo hueco pasaría
-    desapercibida hasta que alguien note que su feature de disponibilidad
-    siempre está vacía.
-
-    No se dispara con muestra pequeña (`INJURIES_MIN_MATCHES`): un partido o
-    dos sin bajas es lo normal, no un indicio de nada. Las ligas ya
-    confirmadas como huecas (`KNOWN_INJURY_COVERAGE_GAPS`) no alertan de
-    nuevo cada día, solo se cuentan en el mensaje.
+    Cobertura de bajas y once de los partidos próximos. Desde el 25-oct-2026 llegan
+    de SofaScore y FotMob (db/087); ver `check_sofascore_lineups`.
     """
-    from ..config import settings
-    if settings.results_provider == "propline":
-        # 25-oct-2026: el titular retiró API-Football; bajas y once llegan de SofaScore (db/087).
-        return check_sofascore_lineups()
-    rows = query(
-        """SELECT m.league_id,
-                  count(DISTINCT c.match_id) AS checked,
-                  coalesce(sum(c.n_reported), 0) AS total_reported
-           FROM injuries_capture_log c
-           JOIN matches m ON m.match_id = c.match_id
-           WHERE c.captured_at > now() - make_interval(days => %s)
-           GROUP BY m.league_id""",
-        (INJURIES_LOOKBACK_DAYS,),
-    )
-    nuevos = [r["league_id"] for r in rows
-              if r["checked"] >= INJURIES_MIN_MATCHES and r["total_reported"] == 0
-              and r["league_id"] not in KNOWN_INJURY_COVERAGE_GAPS]
-    if nuevos:
-        # Del 22-sep al 2-oct-2026 esta alerta saltó por un error nuestro
-        # (las bajas se descartaban al asignarlas a un lado), no del
-        # proveedor: el mensaje no debe dar por hecho ninguna de las dos.
-        return False, (f"Sin NINGUNA baja guardada en {INJURIES_MIN_MATCHES}+ "
-                       "partidos comprobados de: " + ", ".join(nuevos)
-                       + ". Antes de darlo por hueco del proveedor, descartar "
-                       "un error nuestro: pedir /injuries de un partido y "
-                       "comparar con lo guardado en `injuries`")
-    activos = {r["league_id"] for r in rows}
-    conocidos = KNOWN_INJURY_COVERAGE_GAPS & activos
-    msg = "Cobertura de bajas OK"
-    if conocidos:
-        msg += f" ({len(conocidos)} liga(s) con hueco ya conocido, ver README.md)"
-    return True, msg
+    return check_sofascore_lineups()
 
 
 ONCE_MIN_PARTIDOS = 10
@@ -329,12 +273,12 @@ def check_xg_coverage() -> tuple[bool, str]:
 
 
 # Una liga con partidos jugados en los últimos XG_RECENT_DAYS cuyo último xG
-# es más viejo que XG_MAX_GAP_DAYS está "parada". La fuente publica por lotes
-# semanales, así que tres semanas ya no son un retraso normal.
+# es más viejo que XG_MAX_GAP_DAYS está "parada": tres semanas ya no son un
+# retraso normal.
 XG_RECENT_DAYS = 30
 XG_MAX_GAP_DAYS = 21
 
-# Paradas ya el 2-oct-2026 (worldfootballR_data sin actualizar desde el
+# Paradas ya el 2-oct-2026 (su fuente de entonces dejó de publicar el
 # 18-sep-2025; ver README). Reconocidas, no olvidadas: dejan de fallar solo
 # hasta esta fecha, para que la decisión sobre la fuente de xG (tareas.md) no
 # se quede sin tomar. Una liga que se pare DESPUÉS falla en el acto.
@@ -364,8 +308,7 @@ def check_xg_freshness(now: datetime | None = None) -> tuple[bool, str]:
     )
     # Una liga que nunca tuvo xG y no tiene fuente no se ha "parado": no hay
     # nada que vigilar (las 10 activadas el 2026-10-11 se entrenan con goles).
-    from .xg_worldfootball import ASSETS, RDS_ASSETS
-    con_fuente = set(ASSETS) | set(RDS_ASSETS) | XG_PARADO_CONOCIDO
+    con_fuente = XG_PARADO_CONOCIDO
     parados = []
     for r in rows:
         jugado, xg = r["ult_jugado"], r["ult_xg"]

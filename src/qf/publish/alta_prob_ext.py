@@ -113,9 +113,9 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             out["sin_precio"] += 1
             continue
         totales, equipos = ad._referencias(m["match_id"], snap, now)
-        filas_af = ed._cuotas_af(m["match_id"], now)
-        corners, fits_corners = ad._corners(m, now, modelos, filas_af, ap.CORNERS_EXT)
-        cuota = ad.cotizador(m["match_id"], snap, totales, equipos, filas_af)
+        filas_mercados = ed._cuotas_mercados(m["match_id"], now)
+        corners, fits_corners = ad._corners(m, now, modelos, filas_mercados, ap.CORNERS_EXT)
+        cuota = ad.cotizador(m["match_id"], snap, totales, equipos, filas_mercados)
         elegidos, ajuste = candidatos(snap, totales, rho, corners, excluir, cuota)
         if not elegidos:
             out["sin_candidato"] += 1
