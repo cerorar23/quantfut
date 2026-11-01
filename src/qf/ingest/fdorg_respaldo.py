@@ -5,7 +5,7 @@ diferencia se registra en `fdorg_discrepancies` y alguien la revisa. Cada respue
 queda como original con hash y recepción real en `fdorg_originals`.
 
 Cubre las 10 competiciones con `leagues.fdorg_code`. Reutiliza `compare()` y
-`promote()` de `pitchapi_respaldo` mediante un adaptador (`to_common`), sin tocarlas.
+`promote()` de `cotejo` mediante un adaptador (`to_common`), sin tocarlas.
 Prórroga y penales no se comparan: la convención de goles puede diferir de la base.
 
 Desactivado (`fdorg_settings.enabled`) o sin clave no hace nada y no falla. Una clave
@@ -27,7 +27,8 @@ import httpx
 from psycopg.types.json import Jsonb
 
 from ..db import conn, query, query_one
-from .pitchapi_respaldo import _same_day, compare, promote
+from .cotejo import _same_day, compare, promote
+from .salud import record_health
 
 log = logging.getLogger(__name__)
 BASE = 'https://api.football-data.org/v4'
@@ -53,7 +54,7 @@ class Fail(Exception):
 # ---- lógica pura (probada sin base de datos) --------------------------------
 
 def to_common(m: dict):
-    """Partido de football-data.org -> forma que entiende `pitchapi_respaldo.compare()`.
+    """Partido de football-data.org -> forma que entiende `cotejo.compare()`.
 
     Devuelve None para lo que no se compara: aplazados, en juego, anulados y los
     terminados que no son de tiempo reglamentario.
@@ -200,14 +201,13 @@ def _alert(text: str) -> None:
 
 
 def run(now: datetime | None = None, client: Client | None = None) -> dict:
-    from . import api_football as af
     now = now or datetime.now(timezone.utc)
     row = settings_row()
     if not row.get('enabled'):
         return {'skipped': 'desactivado'}
     key = os.getenv(KEY_ENV, '')
     if not key:
-        af.record_health('fdorg', 0, False, {'error': 'sin clave'})
+        record_health('fdorg', 0, False, {'error': 'sin clave'})
         return {'skipped': 'sin clave'}
     client = client or Client(key)
     previous = row.get('last_detail') or {}
@@ -236,7 +236,7 @@ def run(now: datetime | None = None, client: Client | None = None) -> dict:
     with conn() as c:
         c.execute('UPDATE fdorg_settings SET last_run_at = now(), last_ok = %s, last_detail = %s WHERE id = 1',
                   (ok, Jsonb(detail)))
-    af.record_health('fdorg', detail.get('discrepancies_new', 0), ok, detail)
+    record_health('fdorg', detail.get('discrepancies_new', 0), ok, detail)
     return detail
 
 

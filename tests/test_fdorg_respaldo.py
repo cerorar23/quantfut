@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, timezone
 
 from qf.ingest import fdorg_respaldo as f
-from qf.ingest.pitchapi_respaldo import compare
+from qf.ingest.cotejo import compare
 
 NOW = datetime(2026, 10, 31, 13, 10, tzinfo=timezone.utc)
 LEAGUES = {'PL': 'gb.premier_league'}
