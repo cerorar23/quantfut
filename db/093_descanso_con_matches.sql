@@ -1,4 +1,4 @@
--- 092: el descanso y la carga de cada equipo vuelven a calcularse con lo jugado DESPUÉS de la última carga de
+-- 093: el descanso y la carga de cada equipo vuelven a calcularse con lo jugado DESPUÉS de la última carga de
 -- calendario_equipo. La fuente de ese calendario (API-Football) se retiró y la tabla no se refresca desde el 22-oct-2026:
 -- sin esto, v_descanso_equipo no veía ningún partido posterior y sobrestimaba el descanso (+8,2 días de media el 1-nov).
 --

@@ -9,7 +9,7 @@ Decisión del titular (1-nov): API-Football, Apify, PitchAPI, BetsAPI, worldfoot
 - [x] Fase 2d: borrados `xg_worldfootball`, `uefa_cups`, `sofascore_apify`, `sofascore_alineaciones`, `sofascore_partidos`, el montaje `sofascore-apify` de `docker-compose.yml`, `SOFASCORE_ARCHIVE`, `pyreadr` de `requirements.txt` y las líneas «RETIRADO» del crontab. Lo que seguía vivo de los dos módulos de SofaScore (`emparejar`, `aplicar`, `titulares`, `bajas`, `LIGA_DE_TORNEO`) está en `ingest/sofascore_carga.py`, que usa `sportsapipro_alineaciones`. `health.check_xg_freshness` ya no depende de los assets de worldfootballR (solo del conjunto «parado reconocido»).
 - [x] football-data: `history_fd.py` borrado; `insertar_cierre` pasa a `ingest/cierres.py` (lo usa `cierres_odds_api`) y `_parse_date` a `eval/early_vs_close.py`. Las evaluaciones `soft_vs_sharp` y `early_vs_close` siguen leyendo CSV de football-data si se ejecutan; los datos ya cargados se conservan. Borradas las pruebas del cargador de CSV (`test_history_fd`, `test_historial_sin_duplicados`).
 - [x] Docs: `README.md` (sección «Fuentes de datos vigentes», diagrama, costes, estructura) y `CLAUDE.md` actualizados; pie de la web (`frontend/app.js`) corregido en el repo (el despliegue de la web va por su propia rama).
-- [x] Descanso: `db/092_descanso_con_matches.sql` redefine `v_descanso_equipo` con `calendario_equipo` hasta su última carga y `matches` después (la vista nueva `v_partidos_jugados_equipo`). Idéntico al histórico anterior; validado en un esquema aislado con partidos antes y después del corte. Límite: copas domésticas y selecciones posteriores al 22-oct no están. **Migración sin aplicar en el servidor.**
+- [x] Descanso: `db/093_descanso_con_matches.sql` redefine `v_descanso_equipo` con `calendario_equipo` hasta su última carga y `matches` después (la vista nueva `v_partidos_jugados_equipo`). Idéntico al histórico anterior; validado en un esquema aislado con partidos antes y después del corte. Límite: copas domésticas y selecciones posteriores al 22-oct no están. **Migración sin aplicar en el servidor.**
 
 ## 31-oct-2026 · Sustituir Apify sin pagar (plan, rama `plan/sustituir-apify`, nada desplegado)
 Plan completo y mediciones: `docs/plan_sustituir_apify_20261031.md`. Apify devuelve 403 (tope del plan gratuito) desde las 19:40 UTC del 31-oct. Solo el once y las bajas de fútbol tienen consumidor; NBA y tenis de Apify no los lee nadie.
@@ -3469,3 +3469,11 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [ ] Medir en validación si entrenar con `xg_corregido` en lugar del original cambia el resultado (fuera del reentrenamiento del 1-nov).
 - [ ] PropLine: medir el día completo con la regla de 48 h: jueves 29-oct y domingo 1-nov (jornada llena, el caso menos favorable). Un comando desde el PC: `ssh quantfut python3 - 2026-10-27 2026-10-29 2026-11-01 < scripts/medir_ahorro_propline.py` (a partir de las 00:00 UTC del día siguiente). Criterio: fútbol <= 1.300 en día laborable, 0 fallos ni paradas.
 - [x] Respaldo de cuotas NBA/tenis automático tras el sellado (`--auto`, `CUOTAS_RESPALDO_AUTO=1` en el `.env` del servidor; vuelta atrás: ponerla a 0). Sin desplegar.
+- [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
+- [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
+
+## Respaldo football-data.org (2026-11-01)
+- [x] Diseño, migración db/092, `qf.ingest.fdorg_respaldo`, pruebas y cron (rama `futbol/fdorg-respaldo`, desplegada el 1-nov).
+- [ ] Revisar los términos del plan gratuito de football-data.org antes de activar.
+- [x] Desplegar según DEPLOYS.md: clave en el `.env` del VPS (visible al worker), activar `fdorg_settings.enabled`, vigilar la primera pasada.
+- [ ] Decisión del titular: fase 2 (rellenar resultados con plazo de gracia) y/o sección en `/control/respaldo`.

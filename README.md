@@ -23,9 +23,10 @@ titular; sus datos ya cargados se conservan).
 | **SportsAPIPro** | Huecos de once y bajas, con ids de SofaScore. |
 | **Scraper SofaScore del VPS** | Archivo de partidos en disco (no escribe en tablas). |
 | **Copernicus ERA5** y **OpenTopoData** | Clima histórico por partido y altitud de estadios. |
+| **football-data.org** | Testigo de calendario y resultados en 10 ligas (`fdorg_respaldo`): solo avisa, nunca escribe en `matches`. |
 | **The Odds API** | Solo respaldo manual por lotes (huecos de cuotas de NBA y tenis, históricos ya autorizados). |
 
-El descanso y la carga (`v_descanso_equipo`, db/092) se calculan con `calendario_equipo` hasta su última carga (22-oct-2026) y
+El descanso y la carga (`v_descanso_equipo`, db/093) se calculan con `calendario_equipo` hasta su última carga (22-oct-2026) y
 con los partidos terminados de `matches` después.
 
 ## Estado de las fases
@@ -1103,6 +1104,7 @@ Dos cosas que cambian por tener Cloudflare delante, ambas en el `Caddyfile`:
 |---|---|---|---|
 | The Odds API | 20K créditos | $30/mes | Cuotas, Pinnacle, Betfair Exchange |
 | Fuentes vigentes | ver «Fuentes de datos vigentes» | — | PropLine, FotMob, SportsAPIPro, SofaScore, ERA5 |
+| football-data.org (v4) | `qf.ingest.fdorg_respaldo` | gratis, 10 peticiones/min | testigo de calendario y resultados en 10 ligas; solo avisa, nunca escribe en `matches` |
 | VPS Contabo | 4 vCPU / 8 GB | ~$9/mes | Todo |
 | Dominio + backups | — | ~$2/mes | — |
 | **Total** | | _pendiente de recalcular_ | Las fuentes de pago retiradas ya no cuentan |

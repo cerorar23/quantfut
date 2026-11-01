@@ -50,6 +50,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # lineups_previstas e injuries, 2 minutos después de cada captura.
 2-59/5 * * * * cd /app && flock -n /tmp/fotmob_alineaciones.lock python -m qf.ingest.fotmob_alineaciones >> /var/log/fotmob_alineaciones.log 2>&1
 
+# Testigo de calendario y resultados con football-data.org (solo avisa, nunca escribe en `matches`).
+10 1,13 * * * cd /app && python -m qf.ingest.fdorg_respaldo >> /var/log/fdorg.log 2>&1
+
 # Chequeo de salud. Diario, alerta si algo falla.
 0 7 * * * cd /app && python -m qf.ingest.health >> /var/log/health.log 2>&1
 
