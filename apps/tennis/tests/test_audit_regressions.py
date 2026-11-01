@@ -95,7 +95,7 @@ def scenario(tmp_path,monkeypatch,missing_metadata=False,fail_odds=False,flip_si
             cost=1
         return json.dumps(data).encode(),{'x-requests-last':str(cost),'x-requests-remaining':'100'}
     class Client(Capture):
-        def __init__(self,*args):super().__init__(*args,transport=transport)
+        def __init__(self,*args):super().__init__(*args,transport=transport,clock=lambda:clock[0])
         def request(self,*args,**kwargs):
             data,receipt=super().request(*args,**kwargs)
             if args[0].endswith('/odds'):
