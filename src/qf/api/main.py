@@ -74,7 +74,6 @@ from .mobile import member, router as mobile_router
 from . import mensajes
 from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
-from .respaldo import router as respaldo_router
 from .firebase import router as firebase_router
 from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
@@ -797,7 +796,6 @@ app.include_router(mobile_router)
 # `/rewards/callback/{provider}` de ofertas, que si no lo capturaría.
 app.include_router(anuncios_router)
 app.include_router(rewards_router)
-app.include_router(respaldo_router)
 app.include_router(firebase_router)
 app.include_router(whop_router)
 app.include_router(whop_webhooks)

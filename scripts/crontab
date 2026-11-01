@@ -65,11 +65,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # reserva el 15% de cuota. Primera observación congelada para entrenamiento.
 # RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 10 12 * * * cd /app && python -m qf.ingest.xg_api_football >> /var/log/xg_api_football.log 2>&1
 
-# PitchAPI: verificador y respaldo de API-Football (db/065). Cotejo de los
-# ultimos 10 dias (avisa, no corrige) y xG de respaldo tras las 48 h de gracia
-# de API-Football. Sin clave o desactivado desde /control/respaldo: no hace nada.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 40 12 * * * cd /app && python -m qf.ingest.pitchapi_respaldo >> /var/log/pitchapi.log 2>&1
-
 # xG historico desde los releases de worldfootballR_data. Semanal: esos
 # datasets se publican por lotes, no cambian a diario.
 # No se raspa FBref en vivo: esta detras de Cloudflare y devuelve 403.
@@ -93,12 +88,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Un minuto después, evalúa el ajuste de XI en sombra. No publica ni apuesta;
 # si todavía no hay muestra/artefacto validado termina como no-op.
 1-56/5 * * * * cd /app && python -m qf.model.shadow >> /var/log/shadow.log 2>&1
-
-# Bajas/lesiones. Cada 4h: a diferencia del XI, el estado se conoce con dias
-# de antelacion y cambia (duda -> confirmado), asi que hace falta releer, no
-# una sola captura por partido. El propio modulo evita reconsultar el mismo
-# partido antes de MIN_HOURS_BETWEEN_CHECKS.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 0 */4 * * * cd /app && python -m qf.ingest.injuries >> /var/log/injuries.log 2>&1
 
 # --- FASE 3 ---
 # Job diario: predecir, seleccionar picks, sellar cadena, publicar. 13:00 UTC = 07:00 en
@@ -134,9 +123,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Conversions API de Meta (db/071 y db/083): envia la cola meta_events. Sin META_CAPI_ENABLED=1 no hace nada.
 # El entorno del worker se fijo al crearlo: las variables de Meta se leen de /app/meta.env si existe.
 */5 * * * * cd /app && set -a && { [ ! -f /app/meta.env ] || . /app/meta.env; } && set +a && flock -n /tmp/meta_capi.lock python -m qf.comercial.meta_capi >> /var/log/meta_capi.log 2>&1
-
-# Calendario de cada equipo en todas las competiciones (db/078), temporada en curso: ~313 llamadas de las 7.500 diarias.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 40 5 * * * cd /app && python -m qf.ingest.calendario_equipos --temporadas 2026 --refrescar >> /var/log/calendario_equipos.log 2>&1
 
 # Captura recurrente de FotMob (db/081), autorizada el 18-oct-2026 y reactivada el 25-oct como complemento diario de
 # SofaScore y PropLine, solo en las competiciones activas. Una sola a la vez (flock); un bloqueo HTTP 401/403/429

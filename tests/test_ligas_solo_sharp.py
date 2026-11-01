@@ -75,7 +75,7 @@ def test_la_frescura_del_bootstrap_mira_lo_mismo_que_el_entrenamiento(monkeypatc
         "si no, un cierre de LaLiga 2 daría por fresco un mercado que el modelo no ve"
 
 
-@pytest.mark.parametrize("modulo", ["lineups", "injuries"])
+@pytest.mark.parametrize("modulo", ["lineups"])
 def test_alineaciones_y_bajas_no_gastan_cuota_en_ligas_sin_modelo(monkeypatch, modulo):
     import importlib
     m = importlib.import_module(f"qf.ingest.{modulo}")
