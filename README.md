@@ -1545,6 +1545,12 @@ expresar. En la medición de arriba empatan en precisión; Kalman gana por
 velocidad (51 s frente a 4.888 s para la misma evaluación fuera de muestra),
 lo que convierte el ajuste de hiperparámetros en rutina.
 
+Remedición desde cero con la tabla única `futbol.dato` (1-nov-2026, 8 ligas, 24/25–25/26):
+el *score-driven* con xG empata con Dixon-Coles (−0,0021 de log-loss, no significativo), el
+mercado les gana a ambos (≈ 0,016–0,019) y el peso óptimo del modelo en la mezcla con el
+mercado es 0; el apilado con LightGBM, la inflación diagonal y el calibrador afín no mejoran.
+Detalle y estudios en `docs/futbol_rediseno_desde_cero_20261101.md`.
+
 ### Antes de tocar código
 
 ```bash
