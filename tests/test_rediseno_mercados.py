@@ -67,3 +67,22 @@ def test_cuotas_reales_handicap_y_liquidacion():
     M = np.zeros((3, 3)); M[2, 1] = 1.0  # 2-1 seguro
     assert m.probs_motor("spreads", "home", -1.0, M, None, None, None, None) == pytest.approx((0.0, 1.0))
     assert m.probs_motor("spreads", "away", 1.5, M, None, None, None, None)[0] == pytest.approx(1.0)
+
+
+def test_sin_margen_empareja_handicap_local_con_visitante_opuesto():
+    import importlib.util
+    import pandas as pd
+    from pathlib import Path
+    ruta = Path(__file__).resolve().parents[1] / "scripts" / "rediseno_futbol" / "cuotas_reales.py"
+    spec = importlib.util.spec_from_file_location("cuotas_reales", ruta)
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    c = pd.DataFrame({"match_id": 1, "bookmaker": "pinnacle", "market": "spreads",
+                      "selection": ["home", "away", "home", "away"], "line": [-0.5, 0.5, 0.5, -0.5],
+                      "price": [2.72, 1.50, 1.56, 2.55]})
+    q = m.sin_margen(c).set_index(["seleccion", "linea"])["q"]
+    assert q[("home", -0.5)] + q[("away", 0.5)] == pytest.approx(1)
+    assert q[("home", -0.5)] == pytest.approx((1 / 2.72) / (1 / 2.72 + 1 / 1.50))
+    h2h = pd.DataFrame({"match_id": 2, "bookmaker": "x", "market": "h2h", "selection": ["home", "draw", "away"],
+                        "line": np.nan, "price": [2.0, 3.5, 4.0]})
+    d = m.sin_margen(h2h).set_index(["mercado", "seleccion"])["q"]
+    assert d[("double_chance", "1X")] == pytest.approx(d[("h2h", "home")] + d[("h2h", "draw")])

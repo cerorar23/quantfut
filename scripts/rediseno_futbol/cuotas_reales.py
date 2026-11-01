@@ -8,8 +8,10 @@ Una opción es cada (partido, mercado, selección, línea) con precio en alguna 
 casas. Fuentes de probabilidad:
 - `motor`: A0 con xG (1X2, doble, hándicap, totales, ambos marcan, goles por equipo), Yip (córners) y Dawson
   (tarjetas = amarillas + rojas a tasa de liga);
-- `mercado`: Pinnacle sin margen en ese mismo mercado y línea (Shin en 1X2, proporcional en dos vías);
-- `produccion`: mercado en 1X2, doble y hándicap; motor en el resto (lo elegido en el §9 del informe).
+- `pinnacle`: Pinnacle sin margen en ese mismo mercado y línea (Shin en 1X2, proporcional en dos vías; la doble
+  oportunidad sale de su 1X2);
+- `otras_casas`: mediana de la probabilidad sin margen de las demás casas que cotizan ese mercado y línea;
+- `mercado_p` (= `produccion`): Pinnacle y, donde no cotiza, las demás casas.
 Las líneas de cuarto (x,25 / x,75) se dejan fuera. Por partido se toma la opción más probable con cuota ≥ 1,28 y
 cada día se publica el top de partidos. Liga MX fuera (no está en los modelos).
 """
@@ -34,7 +36,6 @@ DESDE = "2026-10-23"
 CUOTA_MIN = 1.28
 MERCADOS = ["h2h", "double_chance", "spreads", "totals", "btts", "team_totals_home", "team_totals_away", "corners",
             "corners_home", "corners_away", "cards"]
-DE_MERCADO = {"h2h", "double_chance", "spreads"}
 
 
 def probs_motor(mk, sel, linea, M, Pc, Ph, Pa, Pt):
@@ -86,25 +87,31 @@ def resultado(mk, sel, linea, r):
     return str(liquidar(np.array([float(valor)]), linea, "mas" if sel == "over" else "menos")[0])
 
 
-def mercado_sin_margen(c: pd.DataFrame) -> pd.Series:
-    """Probabilidad sin margen de Pinnacle por opción, normalizando dentro de (partido, mercado, línea)."""
-    p = c[c["bookmaker"].eq("pinnacle")].copy()
-    p["clave_linea"] = np.where(p["market"].eq("spreads"), p["line"].abs() * np.where(
-        p["selection"].eq("home"), 1, -1), p["line"].fillna(-999))
-    out = {}
-    for (mid, mk, cl), g in p.groupby(["match_id", "market", "clave_linea"]):
-        tam = 3 if mk in ("h2h", "double_chance") else 2
-        if len(g) != tam:
+def sin_margen(c: pd.DataFrame) -> pd.DataFrame:
+    """
+    Probabilidad sin margen de cada casa por opción: (partido, mercado, selección, línea, casa, q). Se normaliza
+    dentro del mismo mercado y línea de la misma casa (Shin en 1X2, proporcional en dos vías). En el hándicap el
+    local con línea L se empareja con el visitante con −L. La doble oportunidad se deduce del 1X2 de la casa
+    (P(1X) = local + empate), que es más fiable que la doble que cotizan pocas casas.
+    """
+    p = c.copy()
+    p["clave_linea"] = np.where(p["market"].eq("spreads"), np.where(p["selection"].eq("home"), p["line"], -p["line"]),
+                                p["line"].fillna(-999))
+    filas = []
+    for (casa, mid, mk, cl), g in p.groupby(["bookmaker", "match_id", "market", "clave_linea"]):
+        if mk == "double_chance":
             continue
-        if mk == "h2h":
-            q = devig(g["price"].to_numpy(), "shin")
-        elif mk == "double_chance":  # la doble se deduce del 1X2 de la misma casa; aquí basta normalizar a 2
-            q = 2 * (1 / g["price"]) / (1 / g["price"]).sum()
-        else:
-            q = (1 / g["price"]) / (1 / g["price"]).sum()
+        tam = 3 if mk == "h2h" else 2
+        if len(g) != tam or g["selection"].nunique() != tam:
+            continue
+        q = devig(g["price"].to_numpy(), "shin") if mk == "h2h" else (1 / g["price"]) / (1 / g["price"]).sum()
         for (sel, ln), v in zip(g[["selection", "line"]].itertuples(index=False), np.asarray(q)):
-            out[(mid, mk, sel, -999 if pd.isna(ln) else ln)] = float(v)
-    return pd.Series(out)
+            filas.append((mid, mk, sel, -999 if pd.isna(ln) else ln, casa, float(v)))
+        if mk == "h2h":
+            h = dict(zip(g["selection"], np.asarray(q)))
+            for sel, v in (("1X", h["home"] + h["draw"]), ("X2", h["away"] + h["draw"]), ("12", h["home"] + h["away"])):
+                filas.append((mid, "double_chance", sel, -999, casa, float(v)))
+    return pd.DataFrame(filas, columns=["match_id", "mercado", "seleccion", "linea", "casa", "q"])
 
 
 def main() -> None:
@@ -157,7 +164,10 @@ def main() -> None:
         c = pd.read_csv(d / archivo, low_memory=False)
         c = c[c["source"].eq("propline") & c["market"].isin(MERCADOS) & c["match_id"].isin(dist)]
         c = c[c["line"].isna() | ((c["line"] * 2) % 1 == 0)]  # sin líneas de cuarto
-        mk_p = mercado_sin_margen(c)
+        sm = sin_margen(c)
+        pin = sm[sm["casa"].eq("pinnacle")].set_index(["match_id", "mercado", "seleccion", "linea"])["q"]
+        resto = sm[~sm["casa"].eq("pinnacle")].groupby(["match_id", "mercado", "seleccion", "linea"])["q"].median()
+        por_casa = sm.pivot_table(index=["match_id", "mercado", "seleccion", "linea"], columns="casa", values="q")
         c["linea"] = c["line"].fillna(-999)
         o = c.groupby(["match_id", "market", "selection", "linea"]).agg(cuota=("price", "max")).reset_index()
         filas = []
@@ -165,12 +175,15 @@ def main() -> None:
             r = reales.loc[mid]
             res = resultado(mk, sel, ln, r)
             pm = probs_motor(mk, sel, ln, *dist[mid])
-            q = mk_p.get((mid, mk, sel, ln), np.nan)
+            k = (mid, mk, sel, ln)
             filas.append({"match_id": mid, "mercado": mk, "seleccion": sel, "linea": ln, "cuota": cuota, "resultado": res,
                           "motor": np.nan if pm is None else pm[0] / max(1 - pm[1], 1e-9),
-                          "devuelve_motor": np.nan if pm is None else pm[1], "mercado_p": q})
+                          "devuelve_motor": np.nan if pm is None else pm[1], "pinnacle": pin.get(k, np.nan),
+                          "otras_casas": resto.get(k, np.nan)})
         o = pd.DataFrame(filas)
-        o["produccion"] = np.where(o["mercado"].isin(DE_MERCADO), o["mercado_p"], o["motor"])
+        o["mercado_p"] = o["pinnacle"].fillna(o["otras_casas"])  # Pinnacle y, donde no cotiza, la mediana de las demás
+        o["produccion"] = o["mercado_p"]
+        o = o.merge(por_casa.add_prefix("casa_").reset_index(), on=["match_id", "mercado", "seleccion", "linea"], how="left")
         o = o.merge(df[["match_id", "kickoff_utc"]], on="match_id")
         o["dia"] = o["kickoff_utc"].dt.strftime("%Y-%m-%d")
         o = o[o["resultado"].isin(["gana", "pierde"])]  # el acierto no cuenta devoluciones
@@ -178,7 +191,7 @@ def main() -> None:
         o.to_csv(d / f"opciones_{nombre.lower().replace('-', '')}.csv.gz", index=False)
         print(f"\n######## {nombre}: {o['match_id'].nunique()} partidos, {len(o)} opciones, "
               f"{(o['cuota'] >= CUOTA_MIN).mean():.1%} con cuota ≥ {CUOTA_MIN}")
-        for fuente in ("produccion", "motor", "mercado_p"):
+        for fuente in ("mercado_p", "pinnacle", "otras_casas", "motor"):
             x = o[(o["cuota"] >= CUOTA_MIN) & o[fuente].notna()]
             mejor = x.sort_values(fuente, ascending=False).drop_duplicates("match_id")
             sel = seleccion_diaria(mejor.assign(prob=mejor[fuente]), coberturas=(0.1, 0.3, 0.5, 1.0))
@@ -190,6 +203,15 @@ def main() -> None:
             print("   calibración de TODAS las opciones con cuota ≥ 1,28:")
             print(calibracion_alta(x[fuente].to_numpy(), x["acierto"].to_numpy(), cortes=(0.5, 0.6, 0.7, 0.8, 1.0001))
                   .round(3).to_string(index=False))
+        # honestidad de cada casa: todas las opciones que cotiza (cualquier cuota), tramo 0,6–0,8 y Brier
+        print("\n   honestidad por casa (opciones 0,6–0,8 y Brier en las opciones comunes con Pinnacle):")
+        for col in sorted(x for x in o.columns if x.startswith("casa_")):
+            v = o[o[col].notna()]
+            alta = v[v[col].between(0.6, 0.8)]
+            com = v[v["casa_pinnacle"].notna()] if col != "casa_pinnacle" else v
+            print(f"   {col[5:]:14s} opciones {len(v):5d}  0,6–0,8: n {len(alta):4d} anuncia {alta[col].mean():.3f} ocurre "
+                  f"{alta['acierto'].mean():.3f}  Brier {((com[col] - com['acierto']) ** 2).mean():.4f} frente a Pinnacle "
+                  f"{((com['casa_pinnacle'] - com['acierto']) ** 2).mean():.4f} (n {len(com)})")
         # ¿el tope aproximado (p ≤ 74,4 %) acierta con la cuota real?
         t = o[o["produccion"].notna()]
         tope = 1 / (CUOTA_MIN * 1.05)

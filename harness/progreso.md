@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 1-nov-2026 · Donde Pinnacle no cotiza, la mediana de las demás casas
+Decisión del titular: usar las demás casas de PropLine en los mercados que Pinnacle no cotiza. **Por qué la mediana y no una casa:** en estas ligas, a una o dos horas del saque, cada casa común tiene el mismo Brier que Pinnacle en las opciones compartidas (diferencia < 0,0007) y cumple lo anunciado en el tramo 60–80 %; la mediana no depende de que una casa concreta cotice o se equivoque. Sube la cobertura del mercado del 78–80 % al 99–99,5 % de las opciones con cuota ≥ 1,28 sin perder honestidad (cierre: anuncia 74,8 %, acierta 74,7 %). El motor queda para el ≈ 1 % que no cotiza nadie. De paso se corrigió el emparejamiento del hándicap de Pinnacle (local L con visitante −L). Informe §12.
+
 ## 1-nov-2026 · Con cuota real ≥ 1,28 la probabilidad publicada debe ser la de Pinnacle, no la del motor
 Medido con las cuotas reales de PropLine (23-oct → 1-nov, 128 partidos a T-60, 150 al cierre). **Por qué:** exigir cuota ≥ 1,28 a una opción que el motor ve por encima de 74 % selecciona justo los casos en que el motor discrepa del mercado, y en ellos acierta lo que dice Pinnacle (motor 54 %, Pinnacle 46 %, real 46–47 %). Elegir entre muchas líneas con el motor infla lo anunciado 5–8 puntos; Pinnacle sin margen cumple lo anunciado (cierre 74,7 % frente a 74,4 %). El motor queda para mercados que Pinnacle no cotiza, con el tope de 74,4 %. Muestra corta (±8 puntos): remedir cada semana. Informe §12.
 
