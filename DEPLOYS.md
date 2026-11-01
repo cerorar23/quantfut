@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-01 02:10 UTC · Respaldo football-data.org (calendario y resultados) · worker (imagen derivada) + db/089, commit `e808239` (rama `futbol/fdorg-respaldo`, aún sin fusionar a `main`)
+- Orden del titular («sí, despliega»). Solo avisa: no escribe en `matches` ni crea equipos. Diseño: `docs/superpowers/specs/2026-11-01-football-data-org-respaldo-design.md`.
+- Imagen `quantfut-worker:fdorg-e808239` = `quantfut-worker:sportsapipro-fix-fc0fda7` + `src/qf/ingest/fdorg_respaldo.py` (hash comparado con el commit). Compose fijado a esa imagen; la API no se tocó. Worker recreado (unos segundos, sin trabajos en curso; los crons de entrenamiento están retirados).
+- `db/089` aplicada (aditiva: `fdorg_*` y `leagues.fdorg_code` en 10 ligas). `FOOTBALL_DATA_ORG_KEY` añadida al `.env` del servidor (600). Cron `10 1,13 * * *` añadido en sitio a `scripts/crontab` (el archivo es un montaje; mismo inodo). `fdorg_settings.enabled = true`.
+- Siembra única de equivalencias con la temporada completa de las 10 competiciones (10 peticiones, originales guardados): 173 clubes emparejados por fecha y marcador. Primera pasada real: 253 partidos, **0 diferencias** frente a 103 terminados de los últimos 7 días; `ingest_health` en verde.
+- Pendiente: fusionar la rama a `main` (el servidor ya corre este código); términos del plan gratuito sin publicar (su plan muestra marcadores y horarios con retraso, posible falsa alarma de `kickoff_shift`); el módulo importa `compare`/`promote` de `pitchapi_respaldo` (cron retirado el 25-oct, archivo aún en la imagen).
+- **Vuelta atrás:** `UPDATE fdorg_settings SET enabled = false` (lo apaga sin reiniciar) o restaurar `releases/fdorg-20261101/backup/docker-compose.antes.yml` y `crontab.antes` y recrear el worker. Las tablas nuevas son aditivas y pueden quedarse.
+
 ### 2026-10-21 · AdMob (ID de editor y bloque) y estado de Meta · SOLO configuración en la base, sin código ni reinicios
 - `reward_settings` (vía `qf.api.anuncios.save_config`, auditado como `ssh:claude-titular`): `admob_publisher_id = pub-3902371555866850` y
   `ad_unit_android = ca-app-pub-3902371555866850/4169479093` (bloque Recompensado, SSV con `https://pronosticosdeportivos.pro/rewards/callback/admob`).
