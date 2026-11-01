@@ -3458,3 +3458,11 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [ ] Medir en validación si entrenar con `xg_corregido` en lugar del original cambia el resultado (fuera del reentrenamiento del 1-nov).
 - [ ] PropLine: medir el día completo con la regla de 48 h: jueves 29-oct y domingo 1-nov (jornada llena, el caso menos favorable). Un comando desde el PC: `ssh quantfut python3 - 2026-10-27 2026-10-29 2026-11-01 < scripts/medir_ahorro_propline.py` (a partir de las 00:00 UTC del día siguiente). Criterio: fútbol <= 1.300 en día laborable, 0 fallos ni paradas.
 - [x] Respaldo de cuotas NBA/tenis automático tras el sellado (`--auto`, `CUOTAS_RESPALDO_AUTO=1` en el `.env` del servidor; vuelta atrás: ponerla a 0). Sin desplegar.
+- [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
+- [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
+
+## Respaldo football-data.org (2026-11-01)
+- [x] Diseño, migración db/092, `qf.ingest.fdorg_respaldo`, pruebas y cron (rama `futbol/fdorg-respaldo`, desplegada el 1-nov).
+- [ ] Revisar los términos del plan gratuito de football-data.org antes de activar.
+- [x] Desplegar según DEPLOYS.md: clave en el `.env` del VPS (visible al worker), activar `fdorg_settings.enabled`, vigilar la primera pasada.
+- [ ] Decisión del titular: fase 2 (rellenar resultados con plazo de gracia) y/o sección en `/control/respaldo`.

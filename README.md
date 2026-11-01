@@ -1086,6 +1086,7 @@ Dos cosas que cambian por tener Cloudflare delante, ambas en el `Caddyfile`:
 | API-Football | Básico | $19/mes | Calendario y alineaciones a T-60 |
 | worldfootballR_data | — | gratis | xG histórico (datos de FBref ya raspados) |
 | football-data.co.uk | — | gratis | 12 años de resultados y cuotas de cierre |
+| football-data.org (v4) | `qf.ingest.fdorg_respaldo` | gratis, 10 peticiones/min | testigo de calendario y resultados en 10 ligas; solo avisa, nunca escribe en `matches` |
 | VPS Contabo | 4 vCPU / 8 GB | ~$9/mes | Todo |
 | Dominio + backups | — | ~$2/mes | — |
 | **Total** | | **~$60/mes** | **~$720/año** |
