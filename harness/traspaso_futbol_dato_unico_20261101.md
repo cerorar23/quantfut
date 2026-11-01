@@ -1,0 +1,60 @@
+# Traspaso de sesión — tabla única de fútbol `futbol.dato` (1-nov-2026)
+
+Documento para continuar en otra sesión de Claude o en otra IA. Lee primero `CLAUDE.md`, `PENDIENTES.md` y `harness/progreso.md`. Responder siempre en español. Proyecto sin fines de lucro. No relajar triggers de inmutabilidad ni el orden predecir → sellar → publicar. Todo cambio en el servidor se anota en `DEPLOYS.md`.
+
+## 1. Qué se pidió y qué quedó hecho
+El titular quiere **UNA sola tabla** donde caiga todo lo que se capture de fútbol (APIs, servicios, scrapers), con nombres de campo unificados, y que **solo esa tabla alimente al motor**. Cada fuente tiene un adaptador que traduce sus nombres y formatos.
+
+Hecho en producción (VPS `ssh quantfut`, base `quantfut` en el contenedor `quantfut-db-1`):
+- Tabla `futbol.dato` (db/094): una fila por hecho (`tipo`), columnas tipadas esparcidas con nombre unificado, clave primaria `(match_id, tipo, side, jugador_id, evento)` que impide repetidos. Tipos: `jugador, equipo, baja, alineacion, entrenador, contexto, tiro, incidencia, clima, estadio, momentum, posicion` (db/096 añadió los dos últimos y 100 columnas).
+- Una fuente por tipo y partido; la prioridad sale de `futbol.prioridad_entidad` (jugador/baja/alineación/entrenador: FotMob 1 > SofaScore 2 > API-Football 3; clima: ERA5 > FotMob; estadio: OpenTopoData). Una fuente peor nunca pisa a una mejor; un tipo sin filas no se adueña del partido.
+- Donde manda FotMob, SofaScore **completa solo columnas vacías** (xG del jugador, pases clave, penaltis…) y lo anota en `fuente_extra`; **nunca** completa `nota`, `valor_mercado` ni `posicion_id` (entradas del motor con sentido propio de FotMob).
+- Identidad única de jugador: `jugador_id` = id de SofaScore; sin pareja → id negativo determinista (`futbol.id_sintetico`: FotMob −id, API-Football −(1e9+id)); `futbol.vincular_jugador` mueve filas cuando aparece la pareja. Tablas de apoyo: `futbol.jugador`, `jugador_fuente_id`, `partido_fuente`, `original` (índice de hashes), `fuente`, `prioridad_entidad`.
+- Cobertura del scraper de SofaScore medida con Fulham–Bournemouth: entran las 82 estadísticas de jugador, las 46 de equipo por periodo (evento 0/1/2), tiros e incidencias completos (red de pases del gol en JSONB), asistencia, momentum y posiciones medias. Fuera a propósito: `h2h`, `pregame_form`, `team_streaks` (no verificables como previos al partido) y `best_players`/`player_ranking` (derivados).
+- Estado medido el 1-nov-2026: ~3,01 M filas, 1,2 GB, 0 repetidos, 0 tipos con dos fuentes en un partido, 0 ids sin ficha; base 4,8 GB; ~42 GB libres. 10 ligas cargadas: Serie A, Premier, LaLiga, Ligue 1, Bundesliga, Eredivisie, Primeira, Brasileirão, Liga MX y Argentina.
+- API-Football: **sin datos nuevos** (jugadores hasta 22-oct, bajas hasta 25-oct); solo historia. Apify: en desuso.
+
+## 2. Qué NO está en la tabla, y por qué
+- `matches` (registro del partido; 36 tablas lo referencian) y `odds_snapshots` (cuotas de PropLine, The Odds API, football-data.org: ya es una tabla con columna `source`, pero es **inmutable por trigger** y de ella depende la cadena de hashes de los picks). Moverla exige quitar garantías: solo con confirmación explícita del titular.
+- Lo conocido **antes** del partido (once previsto de SportsAPIPro/FotMob, bajas previas, `lineups_previstas`, `injuries`): **fase 2**, sin hacer. Necesita `pit` y hora de cada captura porque el motor usa lo último conocido a T-60.
+
+## 3. Dónde está el código (nada en commit)
+- Worktree `C:\Users\huye\Documents\apuesta proyec\.claude\worktrees\futbol-dato-unico`, rama `futbol/dato-unico`, creada desde `origin/main` (bd58d4f). **Es el trabajo vigente.**
+  - `db/094_futbol_dato_unico.sql`, `db/095_futbol_dato_absorbe_tablas.sql` (absorbió y retiró las tablas por tipo del esquema anterior; comprueba fila por fila y se deshace si no cuadra), `db/096_futbol_dato_ampliado.sql`.
+  - `src/qf/ingest/futbol_sofascore.py` (cargador/adaptador del archivo SofaScore), `futbol_identidad.py` (puente de ids FotMob↔SofaScore por evidencia de partido, API-Football por `puente_jugador` si existe, `register_orphans`), `sofascore_local.py` (lee el archivo v3, verifica hashes, rechaza provisionales <72 h, nunca crea partidos), parches en `sofascore_history.py` y `fotmob_import.py` (`canonical_season`, proveedor `sofascore_local`).
+  - `src/qf/model/jugadores.py` y `ajuste_xi.py`: interruptor `FUTBOL_LECTURA=canonica` (**apagado por defecto**).
+  - `scripts/subir_archivo_sofascore.py`, `futbol_correr.sh`, `futbol_diario.sh`.
+  - `tests/test_futbol_sofascore.py` (24 pruebas, con Postgres), `test_sofascore_local*.py`. Docs: `docs/futbol_modelo_canonico_20261101.md` (diseño vigente) y `futbol_duplicados_base_unica_20261031.md` (auditoría; plan A–E superado). Entradas ya añadidas a `DEPLOYS.md`, `harness/progreso.md`, `harness/tareas.md` de ese worktree.
+- Worktree viejo `.claude/worktrees/futbol-base-unica` (rama `futbol/base-unica`, desde un `main` obsoleto): **superado**; sus migraciones 085–090 se aplicaron en producción pero las absorbió la 095. No usar.
+- El checkout principal (`nba/v13-disponibilidad`) va ~101 commits por detrás de `main` y tiene copias sin commit de los módulos viejos: ignorar.
+- Scraper local `C:\Users\huye\Documents\SOFASCORE` (repo propio, `.venv` propio): añadí `sofascore_scraper/client/zenrows.py` (respaldo ZenRows antes de Scrapfly: 1 crédito simple, 10 con proxy premium, libro de gasto propio, ciclo de 30 días desde 2026-11-06T19:22:25Z), ajustes, cadena en `transport.py` y `tests/test_zenrows.py`. **No desplegado al VPS, apagado, sin clave guardada.** `tests/characterization/test_cli_goldens.py::test_usage_errors` falla también sin mis cambios.
+
+## 4. Servidor (VPS) — objetos y rutas
+- `~/sofascore-scraper` (scraper `ssc`): 10 torneos con `follows add --seasons current` (Argentina fuera); cron `30 6,18 * * *` con `flock` y `nice` (**solo 2 pasadas al día**: el titular lo decidió porque saturan peticiones y el VPS; no añadir carga). Árbol único de originales `data/v3` (10.707 partidos al 1-nov). Tras copiar archivos hay que correr `ssc catalog reconcile` y `verify`. Scrapfly: tope local `total_budget=100` agotado; el plan real es 1.000 créditos/mes (25 por petición), renueva el 30.
+- `~/futbol_base_unica`: `src/` (copias de los módulos que `futbol_correr.sh` monta sobre la imagen del worker en un contenedor desechable; el DSN va por entorno, no por argumento), `dato/` (copias de las migraciones), `futbol_diario.sh`, `recarga_ampliada.sh`, `work/` (logs: `diario.log`, etc.). Cron `15 8 * * *` con `flock` ejecuta `futbol_diario.sh`: identidad → FotMob (3 días) → SofaScore de los últimos 4 días (sin forzar), 10 ligas → clima y estadio.
+- Respaldos: `~/backups/futbol_pre_087_20261101.sql.gz`, `futbol_pre_088…`, `futbol_pre_094…`, `futbol_pre_096…`, `matches_pre_086_20261101.sql.gz`; crontabs: `~/crontab_antes_sofascore_20261101.txt`, `~/crontab_antes_futbol_diario_20261101.txt`. Vuelta atrás de la tabla única: `DROP SCHEMA futbol CASCADE` + restaurar `futbol_pre_094`.
+- No se tocó el worker ni la API. El reentrenamiento automático es a las 03:00 UTC.
+
+## 5. Cómo operar
+- Subir historial nuevo al VPS (idempotente, 6 conexiones, verifica hashes, no sube provisionales): `python scripts/subir_archivo_sofascore.py [--aplicar]` desde **Git Bash** (el `tar` de Windows falla). Después `ssc catalog reconcile`.
+- Cargar una liga: `~/futbol_base_unica/futbol_correr.sh LIGA [--since AAAA-MM-DD] [--forzar] [--aplicar]` (simulacro si no hay `--aplicar`); puente de identidad: `MODULO=qf.ingest.futbol_identidad ./futbol_correr.sh "" --aplicar`.
+- Pruebas: desde el worktree, `PYTHONPATH="src;C:/Users/huye/Documents/apuesta proyec/.venv/Lib/site-packages"`, `PG_DSN` del `.env` del proyecto y `QF_TEST_POSTGRES=1`, `python -m pytest tests/test_futbol_sofascore.py`. Las pruebas con Postgres aplican las migraciones dentro de una transacción con tablas simuladas y hacen ROLLBACK. Suite completa del proyecto (sin Postgres): 1.686 aprobadas antes de las últimas ampliaciones (no se repitió después). `scripts/test_local_windows.ps1` de `main` está roto (error de sintaxis del bootstrap).
+- Antes de aplicar una migración en producción: `pg_dump -n futbol`, ensayo con `BEGIN … ROLLBACK` sobre los datos reales, registro en `DEPLOYS.md`.
+
+## 6. Pendiente (en este orden)
+1. **PR** de `futbol/dato-unico` a `main` (renumerar si `main` avanzó; las migraciones de producción ya están aplicadas como 094–096) y commit. Nada está en commit.
+2. **Duración de la pasada diaria** (aclarado en parte): el 1-nov tardó 37 min (07:15→07:52 UTC), pero medida después, a las 15:00 UTC, cada paso es rápido: una liga forzada de 14 días 3 s (×10 ligas ≈ 30 s), identidad 80 s, `cargar_fotmob` 3 días 4 s, clima y estadio 4 s; en total ≈ 2 min. Hipótesis sin verificar: a las 07:15 UTC coincidió con el reentrenamiento automático del worker (03:00 UTC, unas 5 h) y compitió por CPU y disco. Si la pasada vuelve a pasar de 5 min, mirar `~/futbol_base_unica/work/diario.log` y mover el cron a una hora sin reentrenamiento (p. ej. 14:15 UTC). Resuelto el 1-nov (15:35 UTC): `cargar_fotmob` ya conserva lo que SofaScore completó (UPSERT), así que la pasada diaria ya no recarga a la fuerza y usa una ventana de 4 días.
+3. **Fase 2**: hecha en db/099 (sin aplicar); falta que el motor la lea a T-60.
+4. **Comparar el modelo** con `FUTBOL_LECTURA=origen` y `canonica` (mismas filas de FotMob, solo cambia el id), regenerar el estado guardado de `ajuste_xi` (archivo `.canonica` aparte) y solo entonces activar. `contexto.py` (bajas y valor del once: `fotmob_baja`, `fotmob_partido`) y `player_value.py` (lee `estadisticas_jugador`, congelada desde el 22-oct) se evalúan aparte.
+4b. **db/097–099 + recarga `--forzar` de las 10 ligas** (097 mitades y árbitro; 098 umbrales de sanción y derbis; 099 fase 2 con `cargar_previo()`; `futbol_diario.sh` ya los llama) (córners, tiros, xG y tarjetas por mitad; árbitro): código y pruebas hechos, sin aplicar. El rediseño de los motores ya está adaptado a la tabla única y a las 8 ligas del núcleo (`docs/serie_a_sofascore_rediseno_20261031.md` §0).
+5. **Retirar lo redundante** (plan R1–R4 en §0.4 de ese documento) de las tablas de origen (p. ej. el JSONB de `historical_football_player_stats`, 1,1 GB: **no es duplicado seguro**, la vista `v_fotmob_jugador_partido` lo usa) con respaldo y confirmación del titular.
+6. **Descargas incompletas en el PC del titular**: Argentina 2023 completo y 214 de 2024 (bloqueo 403 y presupuesto de Scrapfly; ver `Codex/2026-10-29/fun/outputs/sofascore/ARGENTINA-BLOQUEO-PRESUPUESTO.md`), Premier y LaLiga 2023/24. Cola `COLA-LIGAS.md`: MLS y diez ligas más, deshabilitadas; al descargarlas hay que añadirlas a las listas de `futbol_diario.sh`/`recarga_ampliada.sh` (el cargador ya conoce los torneos en `sofascore_history.TOURNAMENTS`).
+7. **ZenRows** como respaldo del scraper: desplegar `zenrows.py` al VPS y poner la clave en el `.env` (modo 600). Cuenta Free de 5.000 créditos/mes compartida con el NBA (`stats_proxy`), renueva el 6-nov 19:22 UTC; una petición simple a SofaScore cuesta 1 crédito.
+8. Revisar términos de uso de SofaScore antes de ampliar la carga.
+
+## 7. Trampas conocidas
+- El sistema de permisos rechaza **instalar crons** como «persistencia» salvo que el titular lo autorice en el chat con palabras explícitas; ya se autorizaron los dos de arriba.
+- `ssh quantfut '… $$ …'`: la shell remota expande `$$`; pasar el SQL por stdin desde un archivo. `python -I` ignora `PYTHONPATH`. Los `.txt` de listas para `tar` deben llevar finales LF. No imprimir `pgrep -fa` de contenedores (muestra el DSN).
+- Esperas largas por SSH se mueven solas a segundo plano y avisan con código 255 al cortarse: no indican fallo; verificar el estado real.
+- `fotmob_import` y `historical_football_*` siguen siendo el archivo inmutable de FotMob; `cargar_fotmob` lo traduce a la tabla única con UPSERT: conserva lo que otra fuente completó (`fuente_extra`) y deja `nota`, `valor_mercado` y `posicion_id` exactamente como los da FotMob.
+- Premier y LaLiga no tienen 2023/24 en el archivo local.

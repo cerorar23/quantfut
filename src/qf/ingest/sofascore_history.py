@@ -58,7 +58,14 @@ def normalize_bundle(league, raw, metadata):
     require_supported_league(league)
     if hashlib.sha256(raw).hexdigest() != metadata['sha256']:
         raise ValueError('original_hash_mismatch')
-    payload = json.loads(raw)
+    return normalize_payload(league, json.loads(raw), metadata['sha256'],
+                             metadata['captured_at'], 'sofascore')
+
+
+def normalize_payload(league, payload, sha256, captured_at, provider, strict_team_id=True):
+    """Reglas comunes a cualquier origen de un partido SofaScore: `payload` trae
+    `event`, `statistics` y `lineups`; el llamador ya verificó el hash del original.
+    `strict_team_id=False` solo para descargas hechas mucho después del partido."""
     event = payload['event']
     tid = ((event.get('tournament') or {}).get('uniqueTournament') or {}).get('id')
     allowed = {TOURNAMENTS[league]}
@@ -89,7 +96,7 @@ def normalize_bundle(league, raw, metadata):
     if not positive_id(event.get('id')) or not isinstance(event.get('startTimestamp'),int) or isinstance(event['startTimestamp'],bool):
         raise ValueError('invalid_event_identity')
     kickoff = datetime.fromtimestamp(event['startTimestamp'],timezone.utc)
-    captured = timestamp(metadata['captured_at'])
+    captured = timestamp(captured_at)
     if historical_arg_cup and kickoff.year != 2024:
         raise ValueError('wrong_historical_competition_year')
     if not kickoff <= captured <= datetime.now(timezone.utc):
@@ -103,10 +110,10 @@ def normalize_bundle(league, raw, metadata):
         first = stat_pair(statistics,'expectedGoals','1ST')
         second = stat_pair(statistics,'expectedGoals','2ND')
         xg = tuple(first[i]+second[i] if first[i] is not None and second[i] is not None else None for i in range(2))
-    row = {'provider':'sofascore','source_match_id':str(event['id']),
+    row = {'provider':provider,'source_match_id':str(event['id']),
            'league_id':league,'season':str((event.get('season') or {}).get('year') or (event.get('season') or {}).get('name') or kickoff.year),
            'kickoff_utc':kickoff.isoformat(),'captured_at':captured.isoformat(),
-           'raw_sha256':metadata['sha256'],'home_xg':xg[0],'away_xg':xg[1],
+           'raw_sha256':sha256,'home_xg':xg[0],'away_xg':xg[1],
            'statistics':{'response':statistics,'normal_time_only':code!=100},
            'counts':{},'lineups':[],'players':[],'absences':[]}
     for side in ('home','away'):
@@ -136,11 +143,16 @@ def normalize_bundle(league, raw, metadata):
             if pid in seen:
                 raise ValueError('player_team_or_identity_conflict')
             if entry.get('teamId') != teams[side]['id']:
-                # Some academy substitutes carry their current U21 team ID.
-                # Preserve the original and omit only this unverified player.
-                row['statistics']['player_identity_issues'].append({
+                if strict_team_id:
+                    # Some academy substitutes carry their current U21 team ID.
+                    # Preserve the original and omit only this unverified player.
+                    row['statistics']['player_identity_issues'].append({
+                        'side':side,'source_player_id':pid,'reported_team_id':entry.get('teamId')})
+                    continue
+                # Descarga posterior al partido: `teamId` es el club actual del jugador, no el de ese
+                # día. El bloque home/away es la autoridad; se conserva y se deja constancia.
+                row['statistics'].setdefault('player_team_id_differs',[]).append({
                     'side':side,'source_player_id':pid,'reported_team_id':entry.get('teamId')})
-                continue
             seen.add(pid)
             if entry.get('substitute') is False:
                 starters.append(entry)
