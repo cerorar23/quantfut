@@ -49,6 +49,8 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Bajas y once desde FotMob (31-oct-2026): copia lo que `fotmob_captura previos` (cada 5 min) guarda a lineups,
 # lineups_previstas e injuries, 2 minutos después de cada captura.
 2-59/5 * * * * cd /app && flock -n /tmp/fotmob_alineaciones.lock python -m qf.ingest.fotmob_alineaciones >> /var/log/fotmob_alineaciones.log 2>&1
+# Huecos de once y bajas con SportsAPIPro (31-oct-2026): solo si faltan lineups a 15-45 min del saque; tope 40 peticiones/dia.
+4-59/5 * * * * cd /app && flock -n /tmp/sportsapipro_alineaciones.lock python -m qf.ingest.sportsapipro_alineaciones >> /var/log/sportsapipro_alineaciones.log 2>&1
 
 # Testigo de calendario y resultados con football-data.org (solo avisa, nunca escribe en `matches`).
 10 1,13 * * * cd /app && python -m qf.ingest.fdorg_respaldo >> /var/log/fdorg.log 2>&1
