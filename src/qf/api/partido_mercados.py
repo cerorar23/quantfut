@@ -15,9 +15,10 @@ from __future__ import annotations
 
 import math
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
-from ..db import query_one
+from ..db import query, query_one
+from ..eval.clv import _settle_outcome
 from ..model import estadisticas_mercado as em
 from ..model import primer_tiempo as modelo_1t
 from ..model import pricing
@@ -179,6 +180,47 @@ def solo_candados(bloqueados: list[dict]) -> dict | None:
     return {'filas': filas, 'marcadores': None, 'abiertas': 0, 'total': len(filas), 'sin_modelo': True}
 
 
+def _prob_pick(pick: dict | None) -> float | None:
+    try:
+        p = float((pick or {})['prob'])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return p if math.isfinite(p) and 0 < p < 1 else None
+
+
+def _con_pick(f: dict, pick: dict | None) -> dict:
+    """Fila abierta con la probabilidad sellada y la cuota publicada del pick, si las trae."""
+    prob = _prob_pick(pick)
+    if prob is not None:
+        f['prob'], f['nivel'], f['cuota'] = round(prob, 4), nivel(prob), round(1.0 / prob, 2)
+    price = (pick or {}).get('ref_price', (pick or {}).get('price'))
+    if isinstance(price, (int, float)) and price > 1:
+        f['cuota'], f['cuota_tipo'] = round(float(price), 2), 'publicada'
+        f['oportunidad'] = f['prob'] * float(price) > 1.02
+    return f
+
+
+_TITULO_DE_MERCADO = {'h2h': 'Ganador del partido', 'double_chance': 'Doble oportunidad',
+                      'totals': 'Goles totales', 'team_totals_home': 'Goles del local',
+                      'team_totals_away': 'Goles del visitante', 'btts': 'Ambos marcan',
+                      'spreads': 'Hándicap asiático', 'win_to_nil': 'Gana a cero',
+                      'ht_btts': 'Ambos anotan en el 1er tiempo', 'ht_goal': 'Gol en el 1er tiempo',
+                      'corners': 'Córners totales', 'corners_home': 'Córners del local',
+                      'corners_away': 'Córners del visitante', 'cards': 'Tarjetas totales'}
+
+
+def _fila_de_pick(pick: dict) -> dict | None:
+    """Fila para un pick abierto que el análisis no lista (otro lado u otra línea)."""
+    market, prob = pick.get('market'), _prob_pick(pick)
+    if market not in GRUPO_DE_MERCADO or prob is None:
+        return None
+    line = None if pick.get('line') is None else float(pick['line'])
+    grupo = 'EMPATE NO ACCIÓN' if market == 'spreads' and line == 0 else GRUPO_DE_MERCADO[market]
+    titulo = 'Empate no acción' if grupo == 'EMPATE NO ACCIÓN' else _TITULO_DE_MERCADO[market]
+    return _fila(grupo, titulo, market, str(pick.get('selection')), line,
+                 str(pick.get('texto') or ''), prob)
+
+
 def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
                    plus: bool) -> tuple[list[dict], list[dict] | None]:
     """
@@ -189,31 +231,150 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
     Las filas sin acceso salen con candado y SOLO su categoría: sin línea, selección,
     probabilidad, nivel ni cuota, y en orden canónico (el orden por probabilidad
     filtraría cuál es más probable). Las abiertas llevan la cuota publicada del pick.
+
+    Una fila que es un pick abierto enseña la probabilidad SELLADA del pick, no la del
+    análisis: la misma selección no puede salir con dos porcentajes en la misma pantalla
+    (auditoría 2026-10-25: 76 % en el destacado y 79 % en la lista). Y un pick abierto
+    cuyo lado no es el más probable del análisis («Barcelona o empate» cuando la lista da
+    «Barcelona o Real Madrid») no desaparece: se añade como fila propia.
     """
     abiertas_f, cerradas = [], []
+    usadas: set[str] = set()
     for f in filas:
         pick = abiertas.get(f['id'])
         if plus or pick is not None:
-            f = dict(f)
-            price = (pick or {}).get('ref_price', (pick or {}).get('price'))
-            if isinstance(price, (int, float)) and price > 1:
-                f['cuota'], f['cuota_tipo'] = round(float(price), 2), 'publicada'
-                f['oportunidad'] = f['prob'] * float(price) > 1.02
+            f = _con_pick(dict(f), pick)
+            if pick is not None:
+                usadas.add(f['id'])
             abiertas_f.append(f)
         else:
             cerradas.append({'id': f['id'], 'grupo': f['grupo'], 'locked': True})
+    for key, pick in abiertas.items():
+        if key not in usadas and (fila := _fila_de_pick(pick)) is not None:
+            abiertas_f.append(_con_pick(fila, pick))
     abiertas_f.sort(key=lambda f: -f['prob'])
     cerradas.sort(key=lambda f: GRUPOS.index(f['grupo']) if f['grupo'] in GRUPOS else len(GRUPOS))
     return abiertas_f + cerradas, (marcadores if plus or abiertas else None)
 
 
+# --- acceso de la WEB (independiente del de la app) -----------------------------------------
+
+RANGO_DESTACADO = (1.40, 1.80)   # cuota del modelo: 1/prob (o la publicada si el pick abierto la trae)
+GRATIS_WEB = 3                   # mercados abiertos para quien no tiene VIP
+
+
+def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
+                       plus: bool) -> tuple[list[dict], list[dict] | None, dict | None]:
+    """
+    Regla de la web (decisión del titular, 2026-10-28), distinta de la de la app:
+    - Destacado: de TODOS los mercados del partido, también los que sin VIP salen con candado,
+      el de mayor probabilidad con cuota entre 1,40 y 1,80. Se enseña abierto y gratis.
+    - Gratis: el destacado y los siguientes de mayor probabilidad dentro de ese rango hasta
+      sumar `GRATIS_WEB`; si el rango no da para tanto, se completa con los más probables.
+    - El resto sigue con candado (solo categoría) y los picks sellados ya abiertos se conservan.
+    Con VIP todo va abierto. Los marcadores no se regalan por esto: solo con VIP o con un pick abierto.
+    """
+    efectivas = {f['id']: _con_pick(dict(f), abiertas.get(f['id'])) for f in filas}
+    en_rango = sorted((f for f in efectivas.values()
+                       if f.get('cuota') and RANGO_DESTACADO[0] <= f['cuota'] <= RANGO_DESTACADO[1]),
+                      key=lambda f: -f['prob'])
+    elegidas = [f['id'] for f in en_rango[:GRATIS_WEB]]
+    if len(elegidas) < GRATIS_WEB:
+        resto = sorted((f for f in efectivas.values() if f['id'] not in elegidas), key=lambda f: -f['prob'])
+        elegidas += [f['id'] for f in resto[:GRATIS_WEB - len(elegidas)]]
+    gratis = {key: abiertas.get(key) or {} for key in elegidas}
+    filas_out, marcadores_out = aplicar_acceso(filas, marcadores, {**abiertas, **{k: v for k, v in gratis.items() if k not in abiertas}}, plus)
+    destacado = None
+    if en_rango:
+        destacado = dict(efectivas[en_rango[0]['id']], destacado=True, locked=False)
+        pick = abiertas.get(destacado['id'])
+        if pick and pick.get('pick_key'):
+            destacado['pick_key'] = pick['pick_key']
+        for fila in filas_out:
+            if fila['id'] == destacado['id']:
+                fila['destacado'] = True
+    return filas_out, (marcadores if plus or abiertas else None), destacado
+
+
+# --- resultado de cada mercado (estado Acertó / Falló / Devolución) --------------------------
+
+def _entero(v) -> int | None:
+    return None if v is None else int(v)
+
+
+def resultado_fila(fila: dict, partido: dict) -> str | None:
+    """
+    'win' | 'loss' | 'push' de una fila contra el resultado del partido, o None si falta el dato.
+    Marcador, doble oportunidad, ambos marcan, totales, hándicap y empate no acción reutilizan la
+    liquidación de los picks (`eval.clv`); gana a cero, 1ª mitad, córners y tarjetas se liquidan
+    aquí con la misma regla que la escalera (tarjetas = amarillas + rojas, rojas nulas = 0).
+    """
+    market, sel = fila.get('market'), fila.get('selection')
+    line = None if fila.get('line') is None else float(fila['line'])
+    hg, ag = _entero(partido.get('home_goals')), _entero(partido.get('away_goals'))
+
+    def contra_linea(total: int) -> str:
+        if total == line:
+            return 'push'
+        return 'win' if (total > line) == (sel == 'over') else 'loss'
+
+    try:
+        if market == 'corners' or market == 'cards':
+            if market == 'corners':
+                lado = (partido.get('home_corners'), partido.get('away_corners'))
+                total = None if None in lado else int(lado[0]) + int(lado[1])
+            else:
+                amarillas = (partido.get('home_yellow'), partido.get('away_yellow'))
+                total = None if None in amarillas else sum(int(x or 0) for x in (
+                    *amarillas, partido.get('home_red'), partido.get('away_red')))
+            return None if total is None or line is None else contra_linea(total)
+        if hg is None or ag is None:
+            return None
+        if market == 'win_to_nil':
+            gana = hg > ag and ag == 0 if sel == 'home' else ag > hg and hg == 0
+            return 'win' if gana else 'loss'
+        if market in ('ht_btts', 'ht_goal'):
+            h1, a1 = _entero(partido.get('home_goals_ht')), _entero(partido.get('away_goals_ht'))
+            if h1 is None or a1 is None:
+                return None
+            hecho = (h1 > 0 and a1 > 0) if market == 'ht_btts' else h1 + a1 > 0
+            return 'win' if hecho == (sel == 'yes') else 'loss'
+        outcome = _settle_outcome(market, str(sel), line, hg, ag)[0]
+    except (ValueError, KeyError, TypeError):
+        return None
+    return outcome if outcome in ('win', 'loss', 'push') else None
+
+
+def datos_partido(match_id: str) -> dict | None:
+    """Resultado del partido si ya terminó; None si no (entonces ninguna fila lleva resultado)."""
+    rows = query("SELECT status, home_goals, away_goals, home_goals_ht, away_goals_ht, home_corners, "
+                 "away_corners, home_yellow, away_yellow, home_red, away_red FROM matches "
+                 "WHERE match_id=%s", (match_id,))
+    row = rows[0] if rows else None
+    return row if row and row.get('status') == 'finished' and row.get('home_goals') is not None else None
+
+
+def con_resultados(filas: list[dict], partido: dict | None) -> list[dict]:
+    """Añade `resultado` a las filas abiertas de un partido terminado. Las bloqueadas no cambian:
+    su contenido (y por tanto su acierto) sigue reservado."""
+    if not partido or partido.get('status') != 'finished':
+        return filas
+    out = []
+    for f in filas:
+        r = None if f.get('locked') else resultado_fila(f, partido)
+        out.append(dict(f, resultado=r) if r else f)
+    return out
+
+
 # --- fuentes de lambdas ---------------------------------------------------------------------
 
 def lambdas_goles(match_id: str) -> tuple[float, float, float] | None:
-    """(lambda, mu, rho): la predicción propia o, si la liga no tiene modelo, el ajuste a Pinnacle."""
-    row = query_one('SELECT home_lambda, away_lambda, rho FROM predictions WHERE match_id=%s '
+    """(lambda, mu, rho): la predicción propia o, si la liga no tiene modelo o el modelo no
+    conoce a alguno de los equipos (`both_teams_known=false`), el ajuste a Pinnacle."""
+    row = query_one("SELECT home_lambda, away_lambda, rho, "
+                    "data_completeness->>'both_teams_known' AS conocido FROM predictions WHERE match_id=%s "
                     'ORDER BY generated_at DESC LIMIT 1', (match_id,))
-    if row:
+    if row and str(row.get('conocido')).lower() != 'false':
         vals = (float(row['home_lambda']), float(row['away_lambda']), float(row['rho'] or 0))
     else:
         row = query_one('SELECT fit FROM alta_prob_picks WHERE match_id=%s AND fit IS NOT NULL '
@@ -261,8 +422,10 @@ def lambdas_estadisticas(match_id: str) -> tuple[tuple[float, float] | None, tup
 
 
 def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dict],
-              plus: bool) -> dict | None:
-    """Lista completa del partido con el acceso ya aplicado; None si no hay modelo de goles."""
+              plus: bool, web: bool = False) -> dict | None:
+    """Lista completa del partido con el acceso ya aplicado; None si no hay modelo de goles.
+
+    `web=True` aplica la regla de la web (`aplicar_acceso_web`); la app sigue con `aplicar_acceso`."""
     lam = lambdas_goles(match_id)
     if lam is None:
         return None
@@ -270,6 +433,58 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     filas += filas_primer_tiempo(lam[0], lam[1])
     corners, tarjetas = lambdas_estadisticas(match_id)
     filas += filas_estadisticas(corners, tarjetas)
+    if web:
+        filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus)
+        partido = datos_partido(match_id)
+        filas = con_resultados(filas, partido)
+        if destacado:
+            destacado = con_resultados([destacado], partido)[0]
+        return {'filas': filas, 'marcadores': marcadores, 'destacado': destacado,
+                'rango': list(RANGO_DESTACADO), 'abiertas': sum(not f['locked'] for f in filas),
+                'total': len(filas)}
     filas, marcadores = aplicar_acceso(filas, marcadores, abiertas, plus)
+    filas = con_resultados(filas, datos_partido(match_id))
     return {'filas': filas, 'marcadores': marcadores,
             'abiertas': sum(not f['locked'] for f in filas), 'total': len(filas)}
+
+
+# --- historial: el destacado de cada partido terminado ----------------------------------------
+
+_TTL_DESTACADOS = 600.0
+_destacados: dict[str, tuple[float, list[dict]]] = {}
+
+
+def destacados_resueltos(desde: date) -> list[dict]:
+    """El destacado de la web de cada partido terminado desde `desde` (acertó o falló).
+
+    Definición fija y reproducible: la de `aplicar_acceso_web` sobre el análisis del modelo, SIN
+    picks abiertos ni VIP. La cuota es siempre la del modelo (1 ÷ prob.); un pick abierto la
+    cambiaría por la publicada y el destacado dependería de quién mira. Un partido sin modelo,
+    sin mercado en rango o sin resultado no entra. Se pide un día antes de `desde` para que el
+    cliente corte por su día local; en caché diez minutos porque recorre cada partido.
+    """
+    clave_ = desde.isoformat()
+    hit = _destacados.get(clave_)
+    if hit and time.monotonic() - hit[0] < _TTL_DESTACADOS:
+        return hit[1]
+    corte = datetime.combine(desde, datetime.min.time(), tzinfo=timezone.utc) - timedelta(days=1)
+    partidos = query("SELECT m.match_id, m.league_id, m.kickoff_utc, "
+                     "COALESCE(th.display_name, th.canonical_name) AS local, "
+                     "COALESCE(ta.display_name, ta.canonical_name) AS visitante, m.home_goals, m.away_goals "
+                     "FROM matches m JOIN teams th ON th.team_id=m.home_team_id "
+                     "JOIN teams ta ON ta.team_id=m.away_team_id "
+                     "WHERE m.status='finished' AND m.home_goals IS NOT NULL AND m.kickoff_utc >= %s "
+                     "ORDER BY m.kickoff_utc, m.match_id LIMIT 600", (corte,))
+    out = []
+    for p in partidos:
+        lista = construir(p['match_id'], p['local'], p['visitante'], {}, False, web=True)
+        d = lista and lista.get('destacado')
+        if not d or d.get('resultado') not in ('win', 'loss'):
+            continue
+        out.append({'match_id': p['match_id'], 'league_id': p['league_id'], 'kickoff_utc': p['kickoff_utc'],
+                    'local': p['local'], 'visitante': p['visitante'], 'market': d['market'],
+                    'selection': d['selection'], 'line': d.get('line'), 'texto': d['seleccion'],
+                    'prob': round(float(d['prob']), 4), 'ref_price': None, 'outcome': d['resultado'],
+                    'home_goals': p['home_goals'], 'away_goals': p['away_goals']})
+    _destacados[clave_] = (time.monotonic(), out)
+    return out

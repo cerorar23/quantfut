@@ -86,6 +86,37 @@ def test_vip_sees_everything_and_marks_real_value_only_with_a_published_quote(li
     assert high['oportunidad'] is True                      # prob × cuota publicada > 1,02
 
 
+def test_open_pick_row_shows_the_sealed_probability_not_the_analysis(lista):
+    """Auditoría 2026-10-25: el destacado decía 76 % y la lista 79 % para la misma selección."""
+    filas, marcadores = lista
+    row = pm.clave('totals', 'over', 1.5)
+    out, _ = pm.aplicar_acceso(filas, marcadores, {row: {'prob': .76, 'ref_price': 1.25}}, plus=False)
+    abierta = next(f for f in out if f['id'] == row)
+    assert abierta['prob'] == .76 and abierta['nivel'] == 'alta'
+    assert abierta['cuota'] == 1.25 and abierta['cuota_tipo'] == 'publicada'
+    assert abierta['oportunidad'] is False                 # 0,76 × 1,25 = 0,95
+
+
+def test_open_pick_missing_from_the_analysis_is_added_not_lost(lista):
+    """El análisis da «12» en doble oportunidad; el pick gratis era «1X» y desaparecía."""
+    filas, marcadores = lista
+    assert pm.clave('double_chance', 'X2', None) not in {f['id'] for f in filas}
+    pick = {'market': 'double_chance', 'selection': 'X2', 'line': None, 'prob': .74,
+            'ref_price': 1.29, 'texto': 'Visita FC o empate'}
+    out, marc = pm.aplicar_acceso(filas, marcadores, {pm.clave('double_chance', 'X2', None): pick}, plus=False)
+    abiertas = [f for f in out if not f['locked']]
+    assert [f['id'] for f in abiertas] == [pm.clave('double_chance', 'X2', None)]
+    assert abiertas[0]['grupo'] == 'DOBLE OPORTUNIDAD' and abiertas[0]['seleccion'] == 'Visita FC o empate'
+    assert abiertas[0]['prob'] == .74 and abiertas[0]['cuota'] == 1.29 and marc == marcadores
+    assert len([f for f in out if f['locked']]) == len(filas)   # las del análisis siguen con candado
+    dnb = {'market': 'spreads', 'selection': 'away', 'line': 0.0, 'prob': .7, 'price': 1.4}
+    out, _ = pm.aplicar_acceso([], [], {pm.clave('spreads', 'away', 0.0): dnb}, plus=False)
+    assert out[0]['grupo'] == 'EMPATE NO ACCIÓN' and out[0]['cuota'] == 1.4
+    # Sin probabilidad o de un mercado desconocido no se inventa una fila.
+    out, _ = pm.aplicar_acceso([], [], {'x': {'market': 'raro', 'prob': .8}, 'y': {'market': 'btts'}}, plus=False)
+    assert out == []
+
+
 def test_nivel_boundaries():
     assert [pm.nivel(p) for p in (.75, .7499, .60, .5999)] == ['alta', 'solida', 'solida', 'moderada']
     assert pm.clave('totals', 'over', 1.5) == 'totals:over:1.5' and pm.clave('h2h', 'home', None) == 'h2h:home:None'
@@ -118,3 +149,177 @@ def test_sin_modelo_de_goles_los_vip_salen_solo_con_su_categoria():
                             {'id': 'k2', 'grupo': 'CÓRNERS', 'locked': True}]
     assert out['marcadores'] is None and out['sin_modelo'] is True and out['abiertas'] == 0
     assert pm.solo_candados([{'market': 'raro'}]) is None and pm.solo_candados([]) is None
+
+
+def test_equipo_desconocido_toma_las_lambdas_del_mercado(monkeypatch):
+    """Auditoría 2026-10-21: si el modelo no conoce a un equipo, sus lambdas no valen."""
+    def consulta(sql, params):
+        if 'FROM predictions' in sql:
+            return {'home_lambda': 0.4, 'away_lambda': 3.1, 'rho': -0.06, 'conocido': 'false'}
+        return {'fit': {'lambda': 1.2, 'mu': 1.4, 'rho': -0.05}}
+    monkeypatch.setattr(pm, 'query_one', consulta)
+    assert pm.lambdas_goles('m1') == (1.2, 1.4, -0.05)
+    monkeypatch.setattr(pm, 'query_one', lambda sql, params: (
+        {'home_lambda': 1.5, 'away_lambda': 1.1, 'rho': -0.06, 'conocido': 'true'} if 'FROM predictions' in sql else None))
+    assert pm.lambdas_goles('m1') == (1.5, 1.1, -0.06)
+
+
+# --- regla de la WEB: destacado de 1,40 a 1,80 y 3 mercados gratis -----------------------------
+
+def _en_rango(filas):
+    return sorted((f for f in filas if pm.RANGO_DESTACADO[0] <= f['cuota'] <= pm.RANGO_DESTACADO[1]),
+                  key=lambda f: -f['prob'])
+
+
+def test_web_destacado_sale_de_todos_los_mercados_aunque_sean_vip(lista):
+    filas, marcadores = lista
+    esperado = _en_rango(filas)
+    assert len(esperado) >= 3
+    out, _, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
+    assert destacado['id'] == esperado[0]['id']
+    assert 1.40 <= destacado['cuota'] <= 1.80 and destacado['locked'] is False
+    assert destacado['prob'] == max(f['prob'] for f in filas if 1.40 <= f['cuota'] <= 1.80)
+
+
+def test_web_gratis_tiene_tres_abiertas_las_mas_probables_del_rango_y_el_resto_con_candado(lista):
+    filas, marcadores = lista
+    out, marcadores_out, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
+    abiertas = [f for f in out if not f['locked']]
+    assert [f['id'] for f in abiertas] == [f['id'] for f in _en_rango(filas)[:3]]
+    assert abiertas[0]['id'] == destacado['id'] and abiertas[0]['destacado'] is True
+    candados = [f for f in out if f['locked']]
+    assert len(abiertas) + len(candados) == len(filas)
+    assert all(set(f) == {'id', 'grupo', 'locked'} for f in candados)      # sin selección, prob ni cuota
+    assert marcadores_out is None                                          # los marcadores no se regalan
+
+
+def test_web_con_vip_todo_va_abierto_y_el_destacado_es_el_mismo(lista):
+    filas, marcadores = lista
+    _, _, gratis = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
+    out, marcadores_out, vip = pm.aplicar_acceso_web(filas, marcadores, {}, plus=True)
+    assert not any(f['locked'] for f in out) and marcadores_out == marcadores
+    assert vip['id'] == gratis['id']
+
+
+def test_web_si_el_rango_no_da_para_tres_se_completa_con_las_mas_probables():
+    def fila(i, prob):
+        return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
+    filas = [fila(1, .60), fila(2, .90), fila(3, .85), fila(4, .80)]   # solo la primera tiene cuota 1,40–1,80
+    out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
+    assert destacado['id'] == filas[0]['id']
+    assert {f['id'] for f in out if not f['locked']} == {filas[0]['id'], filas[1]['id'], filas[2]['id']}
+
+
+def test_web_sin_ningun_mercado_en_rango_no_hay_destacado_pero_si_tres_gratis():
+    def fila(i, prob):
+        return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
+    filas = [fila(1, .95), fila(2, .90), fila(3, .85), fila(4, .30)]
+    out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
+    assert destacado is None and sum(not f['locked'] for f in out) == 3
+
+
+def test_web_un_pick_sellado_abierto_conserva_su_probabilidad_y_no_se_duplica(lista):
+    filas, marcadores = lista
+    objetivo = _en_rango(filas)[0]
+    pick = {'pick_key': 'k1', 'market': objetivo['market'], 'selection': objetivo['selection'],
+            'line': objetivo['line'], 'prob': .66, 'ref_price': 1.52}
+    out, marcadores_out, destacado = pm.aplicar_acceso_web(filas, marcadores, {objetivo['id']: pick}, plus=False)
+    fila = next(f for f in out if f['id'] == objetivo['id'])
+    assert fila['prob'] == .66 and fila['cuota'] == 1.52 and fila['cuota_tipo'] == 'publicada'
+    assert sum(f['id'] == objetivo['id'] for f in out) == 1
+    assert marcadores_out == marcadores                                    # hay pick abierto: mismo trato que la app
+    assert destacado['pick_key'] == 'k1'
+
+
+def test_la_app_conserva_su_regla_sin_destacado_ni_gratis_extra(lista):
+    filas, marcadores = lista
+    out, marcadores_out = pm.aplicar_acceso(filas, marcadores, {}, plus=False)
+    assert all(f['locked'] for f in out) and marcadores_out is None
+
+
+def test_mercados_partido_pasa_la_regla_web_solo_cuando_se_pide(monkeypatch):
+    from qf.api import mobile
+    visto = []
+    monkeypatch.setattr(pm, 'construir', lambda *a, **k: visto.append(a[-1] if len(a) > 5 else None) or {'ok': True})
+    ficha = {'local': {'nombre': 'A'}, 'visitante': {'nombre': 'B'}}
+    mobile.mercados_partido('m', ficha, [], False)
+    mobile.mercados_partido('m', ficha, [], False, True)
+    assert visto == [False, True]                 # la app (por defecto) nunca activa la regla de la web
+    import inspect
+    assert inspect.signature(mobile.detail).parameters['web'].default.default is False
+
+
+# --- resultado de cada mercado (estado Acertó / Falló / Devolución) --------------------------
+
+PARTIDO = {'home_goals': 2, 'away_goals': 0, 'home_goals_ht': 1, 'away_goals_ht': 0,
+           'home_corners': 6, 'away_corners': 3, 'home_yellow': 2, 'away_yellow': 1,
+           'home_red': 0, 'away_red': 1}
+
+
+def _res(market, selection, line=None, partido=PARTIDO):
+    return pm.resultado_fila({'market': market, 'selection': selection, 'line': line}, partido)
+
+
+def test_resultado_de_los_mercados_de_marcador():
+    assert _res('h2h', 'home') == 'win' and _res('h2h', 'draw') == 'loss'
+    assert _res('totals', 'over', 1.5) == 'win' and _res('totals', 'under', 1.5) == 'loss'
+    assert _res('btts', 'no') == 'win' and _res('btts', 'yes') == 'loss'
+    assert _res('double_chance', 'X2') == 'loss' and _res('double_chance', '1X') == 'win'
+    assert _res('team_totals_away', 'under', .5) == 'win'
+    assert _res('win_to_nil', 'home') == 'win' and _res('win_to_nil', 'away') == 'loss'
+
+
+def test_empate_no_accion_devuelve_en_empate_y_el_handicap_entero_tambien():
+    empate = dict(PARTIDO, home_goals=1, away_goals=1)
+    assert _res('spreads', 'home', 0.0, empate) == 'push'
+    assert _res('spreads', 'home', -1.0) == 'win' and _res('spreads', 'home', -2.0) == 'push'
+    assert _res('spreads', 'away', 1.5) == 'loss'
+
+
+def test_primer_tiempo_corners_y_tarjetas_usan_sus_propias_estadisticas():
+    assert _res('ht_btts', 'no') == 'win' and _res('ht_goal', 'yes') == 'win'
+    assert _res('corners', 'over', 8.5) == 'win' and _res('corners', 'under', 8.5) == 'loss'
+    assert _res('cards', 'under', 3.5) == 'loss' and _res('cards', 'over', 3.5) == 'win'  # 2+1+0+1 = 4
+
+
+def test_sin_dato_no_se_inventa_resultado():
+    sin = dict(PARTIDO, home_goals_ht=None, home_corners=None, home_yellow=None)
+    assert _res('ht_goal', 'yes', None, sin) is None
+    assert _res('corners', 'over', 8.5, sin) is None
+    assert _res('cards', 'over', 3.5, sin) is None
+    assert _res('h2h', 'home', None, dict(PARTIDO, home_goals=None)) is None
+    assert pm.resultado_fila({'market': 'raro', 'selection': 'x', 'line': None}, PARTIDO) is None
+
+
+def test_con_resultados_solo_marca_las_abiertas_y_nunca_las_bloqueadas():
+    filas = [{'id': 'a', 'market': 'h2h', 'selection': 'home', 'line': None, 'locked': False},
+             {'id': 'b', 'grupo': 'GOLES', 'locked': True}]
+    out = pm.con_resultados(filas, dict(PARTIDO, status='finished'))
+    assert out[0]['resultado'] == 'win' and 'resultado' not in out[1]
+    assert 'resultado' not in pm.con_resultados(filas, dict(PARTIDO, status='scheduled'))[0]
+    assert pm.con_resultados(filas, None)[0].get('resultado') is None
+
+
+def test_destacados_resueltos_usa_el_analisis_sin_picks_y_solo_cuenta_los_resueltos(monkeypatch):
+    from datetime import date, datetime, timezone
+    kick = datetime(2026, 10, 26, 18, tzinfo=timezone.utc)
+    base = {'league_id': 'it.serie_a', 'kickoff_utc': kick, 'home_goals': 2, 'away_goals': 1}
+    partidos = [dict(base, match_id=m, local='A', visitante='B') for m in 'abcd']
+    vistos = {}
+
+    def construir(match_id, local, visitante, abiertas, plus, web=False):
+        vistos[match_id] = (abiertas, plus, web)
+        dest = {'market': 'totals', 'selection': 'over', 'line': 1.5, 'seleccion': 'Más de 1,5 goles',
+                'prob': 0.69561, 'resultado': 'win'}
+        return {'a': {'destacado': dest}, 'b': {'destacado': None},
+                'c': {'destacado': dict(dest, resultado=None)}, 'd': None}[match_id]
+
+    pedido = {}
+    monkeypatch.setattr(pm, 'query', lambda sql, params=(): pedido.update(params=params) or partidos)
+    monkeypatch.setattr(pm, 'construir', construir)
+    pm._destacados.clear()
+    items = pm.destacados_resueltos(date(2026, 10, 26))
+    assert [i['match_id'] for i in items] == ['a']
+    assert items[0]['outcome'] == 'win' and items[0]['prob'] == 0.6956 and items[0]['ref_price'] is None
+    assert all(v == ({}, False, True) for v in vistos.values())
+    assert pedido['params'][0] == datetime(2026, 10, 25, tzinfo=timezone.utc)

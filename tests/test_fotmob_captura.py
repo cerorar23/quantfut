@@ -139,6 +139,114 @@ def test_respuesta_valida_incluye_el_original_para_guardarlo():
     assert json.loads(d["__raw__"])["general"]["matchId"] == "5"
 
 
+# --- respaldo con ZenRows ante un bloqueo de FotMob (28-oct-2026) -------------------------------
+
+class _ZResp:
+    """Respuesta de ZenRows: JSON sin comprimir y el coste de la petición en la cabecera."""
+    def __init__(self, cuerpo, coste="1"):
+        self.cuerpo, self.headers = json.dumps(cuerpo).encode(), {"X-Request-Cost": coste}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def read(self):
+        return self.cuerpo
+
+
+def _con_zenrows(monkeypatch, tmp_path, **extra):
+    monkeypatch.setenv("ZENROWS_API_KEY", "k" * 32)
+    monkeypatch.setenv("FOTMOB_ZENROWS_ESTADO", str(tmp_path / "estado.json"))
+    for k, v in extra.items():
+        monkeypatch.setenv(k, str(v))
+    return fc.Cliente(espera_s=0)
+
+
+def _red(zenrows, directo=403):
+    """urlopen simulado: FotMob directo da `directo`; ZenRows responde con lo que diga la lista `zenrows`."""
+    llamadas = {"fotmob": [], "zenrows": []}
+
+    def urlopen(req, timeout=0):
+        url = req.full_url
+        if "api.zenrows.com" in url:
+            llamadas["zenrows"].append(url)
+            r = zenrows.pop(0)
+            if isinstance(r, Exception):
+                raise r
+            return r
+        llamadas["fotmob"].append(url)
+        raise _http_error(directo)
+    return urlopen, llamadas
+
+
+def test_un_bloqueo_se_resuelve_por_zenrows_basico_si_hay_clave(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([_ZResp({"general": {"matchId": "5"}})])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        d = cli.get("matchDetails", {"matchId": 5})
+    assert d["__via__"] == "zenrows" and json.loads(d["__raw__"])["general"]["matchId"] == "5"
+    assert len(llamadas["zenrows"]) == 1 and "premium_proxy" not in llamadas["zenrows"][0]
+    assert "fotmob.com%2Fapi%2Fdata%2FmatchDetails" in llamadas["zenrows"][0]
+
+
+def test_zenrows_escala_a_proxy_premium_si_el_basico_falla(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([_http_error(422), _ZResp({"general": {"matchId": "5"}}, coste="10")])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        d = cli.get("matchDetails", {"matchId": 5})
+    assert d["__via__"] == "zenrows"
+    assert "premium_proxy" not in llamadas["zenrows"][0] and "premium_proxy=true" in llamadas["zenrows"][1]
+
+
+def test_tras_un_bloqueo_no_se_insiste_en_directo_durante_la_pausa(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([_ZResp({"general": {}}), _ZResp({"general": {}})])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        cli.get("matchDetails", {"matchId": 5})
+        fc.Cliente(espera_s=0).get("matchDetails", {"matchId": 6})     # otra pasada del cron: el estado persiste
+    assert len(llamadas["fotmob"]) == 1 and len(llamadas["zenrows"]) == 2
+
+
+def test_el_tope_diario_de_creditos_de_zenrows_vuelve_a_ser_un_bloqueo(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path, FOTMOB_ZENROWS_MAX_DIA=1)
+    # ZenRows informa el coste en dólares (0,001 = 1 crédito): contar 0 dejaría el tope sin efecto.
+    red, llamadas = _red([_ZResp({"general": {}}, coste="0.001"), _ZResp({"general": {}})])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        cli.get("matchDetails", {"matchId": 5})                          # gasta el crédito del día
+        with pytest.raises(fc.AccesoDenegado):
+            cli.get("matchDetails", {"matchId": 6})
+    assert len(llamadas["zenrows"]) == 1
+
+
+def test_si_zenrows_tampoco_responde_es_un_bloqueo_y_la_clave_no_se_filtra(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, _ = _red([_http_error(422), _http_error(422)])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        with pytest.raises(fc.AccesoDenegado) as exc:
+            cli.get("matchDetails", {"matchId": 5})
+    assert "k" * 32 not in str(exc.value)
+
+
+def test_un_429_es_limite_de_ritmo_y_no_se_esquiva_con_zenrows(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path)
+    red, llamadas = _red([], directo=429)
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        with pytest.raises(fc.AccesoDenegado):
+            cli.get("matchDetails", {"matchId": 5})
+    assert llamadas["zenrows"] == [] and len(llamadas["fotmob"]) == 1
+
+
+def test_zenrows_apagado_por_configuracion_no_se_usa(monkeypatch, tmp_path):
+    cli = _con_zenrows(monkeypatch, tmp_path, FOTMOB_ZENROWS="0")
+    red, llamadas = _red([])
+    with patch("qf.ingest.fotmob_captura.urllib.request.urlopen", side_effect=red):
+        with pytest.raises(fc.AccesoDenegado):
+            cli.get("matchDetails", {"matchId": 5})
+    assert llamadas["zenrows"] == []
+
+
 def test_correr_pasa_las_opciones_de_relleno_y_respeta_el_enfriamiento():
     from unittest.mock import MagicMock, patch
 
@@ -152,3 +260,332 @@ def test_correr_pasa_las_opciones_de_relleno_y_respeta_el_enfriamiento():
             patch.object(fc, "capturar_posteriores") as f:
         assert "omitido" in fc.correr(c, "posteriores", cli=object())
     f.assert_not_called()
+
+
+class _Refresco:
+    """Conexión falsa de `refrescar_xg`: devuelve los candidatos y anota cada consulta."""
+
+    def __init__(self, filas):
+        self.filas, self.sql = filas, []
+
+    def execute(self, sql, params=None):
+        self.sql.append((" ".join(sql.split()), params))
+        return _Filas(self.filas)
+
+    def commit(self):
+        pass
+
+
+class _Cli:
+    def __init__(self, payload):
+        self.payload, self.pedidos = payload, []
+
+    def get(self, endpoint, params):
+        self.pedidos.append((endpoint, params))
+        return self.payload
+
+
+def test_refrescar_xg_pide_otra_pagina_a_quien_solo_tiene_una_temprana():
+    c = _Refresco([{"match_id": "m1", "fotmob_match_id": "9"}])
+    cli = _Cli({"general": {"matchId": "9", "finished": True}, "__raw__": b"{}"})
+    with patch.object(fc, "_guardar_original", return_value=(1, KICKOFF)) as g:
+        r = fc.refrescar_xg(c, cli)
+    assert r == {"candidatos": 1, "guardados": 1, "descartados": 0}
+    assert cli.pedidos == [("matchDetails", {"matchId": "9"})]
+    assert g.call_args.args[1:4] == ("m1", "9", "posterior")       # otra página original; fotmob_partido no se toca
+    sql, params = c.sql[0]
+    assert "home_xg IS NULL" in sql and "capturado_en >= m.kickoff_utc + %s * interval '1 hour'" in sql
+    assert params[2] == fc.XG_MIN_HORAS == 20.0
+
+
+def test_refrescar_xg_descarta_la_pagina_de_otro_partido_o_sin_terminar():
+    c = _Refresco([{"match_id": "m1", "fotmob_match_id": "9"}, {"match_id": "m2", "fotmob_match_id": "10"}])
+    cli = _Cli({"general": {"matchId": "9", "finished": False}, "__raw__": b"{}"})
+    with patch.object(fc, "_guardar_original") as g:
+        r = fc.refrescar_xg(c, cli)
+    assert r["guardados"] == 0 and r["descartados"] == 2
+    g.assert_not_called()
+
+
+def test_refrescar_xg_tambien_cubre_los_xg_guardados_antes_de_la_hora_minima():
+    c = _Refresco([])
+    fc.refrescar_xg(c, _Cli({}))
+    sql, params = c.sql[0]
+    assert "m.xg_recorded_at < m.kickoff_utc + %s * interval '1 hour'" in sql
+    assert params[2] == params[3] == fc.XG_MIN_HORAS == 20.0
+
+
+def _provisional(match_id, payload, original=(1.0, 0.5)):
+    return {"match_id": match_id, "xg_source": "sofascore", "home_xg": original[0], "away_xg": original[1],
+            "xg_recorded_at": KICKOFF, "capturado_en": KICKOFF, "payload_gz": gzip.compress(json.dumps(payload).encode())}
+
+
+def test_revisar_xg_registra_el_corregido_junto_al_original_sin_tocar_matches():
+    c = _Completar([_provisional("m1", _posterior(xg=(1.4, 0.6))), _provisional("m2", _posterior(xg=None))])
+    r = fc.revisar_xg(c)
+    assert r == {"candidatos": 2, "registrados": 1, "sin_xg": 1}
+    insert = [(s, p) for s, p in c.escrituras if "INSERT INTO xg_corregido" in s]
+    assert len(insert) == 1
+    assert insert[0][1] == ("m1", 1.4, 0.6, KICKOFF, "sofascore", 1.0, 0.5, KICKOFF)
+    assert not any(s.lstrip().startswith("UPDATE matches") for s, _ in c.escrituras)
+
+
+def test_completar_solo_usa_paginas_tomadas_pasada_la_hora_minima():
+    class Registra(_Completar):
+        def execute(self, sql, params=None):
+            if sql.lstrip().startswith("SELECT"):
+                self.consulta = (" ".join(sql.split()), params)
+            return super().execute(sql, params)
+    c = Registra([_fila("m1", _posterior())])
+    fc.completar(c)
+    sql, params = c.consulta
+    assert "o.capturado_en >= m.kickoff_utc + %s * interval '1 hour'" in sql
+    assert params[-1] == 20.0
+
+
+def test_correr_completar_registra_tambien_el_xg_corregido():
+    from unittest.mock import MagicMock
+    c = MagicMock()
+    with patch.object(fc, "en_enfriamiento", return_value=False),             patch.object(fc, "completar", return_value={"completados": 0}),             patch.object(fc, "revisar_xg", return_value={"registrados": 3}), patch.object(fc, "_log"):
+        res = fc.correr(c, "completar", cli=object())
+    assert res["xg_corregido"] == {"registrados": 3}
+
+
+def _posterior(goles=(2, 1), xg=(1.4, 0.6)):
+    items = [{"key": "yellow_cards", "stats": [3, 1]}, {"key": "corners", "stats": [7, 2]}]
+    if xg:
+        items.append({"key": "expected_goals", "stats": list(xg)})
+    return {"general": {"matchId": "9"},
+            "header": {"teams": [{"score": goles[0]}, {"score": goles[1]}]},
+            "content": {"stats": {"Periods": {"All": {"stats": [{"title": "Top", "stats": items}]}}}}}
+
+
+class _Completar:
+    """Conexión falsa: devuelve las filas pedidas y guarda cada escritura."""
+
+    def __init__(self, filas):
+        self.filas, self.escrituras = filas, []
+
+    def execute(self, sql, params=None):
+        if sql.lstrip().startswith("SELECT"):
+            return _Filas(self.filas)
+        self.escrituras.append((sql, params))
+
+        class R:
+            rowcount = 1
+        return R()
+
+    def transaction(self):
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def commit(self):
+        pass
+
+
+def _fila(match_id, payload, goles=(2, 1), **ya):
+    from qf.ingest.archivo_a_matches import COLUMNAS_MATCHES
+    fila = {k: None for k in COLUMNAS_MATCHES}
+    fila.update(match_id=match_id, home_goals=goles[0], away_goals=goles[1], home_xg=None, away_xg=None,
+                fotmob_match_id="9", capturado_en=KICKOFF, payload_gz=gzip.compress(json.dumps(payload).encode()))
+    fila.update(ya)
+    return fila
+
+
+def test_completar_rellena_solo_lo_vacio_con_procedencia_y_xg_de_fotmob():
+    c = _Completar([_fila("m1", _posterior(), home_corners=4, away_corners=2)])
+    r = fc.completar(c)
+    assert r["completados"] == 1 and r["con_xg"] == 1
+    update = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert update["home_yellow"] == 3 and update["away_yellow"] == 1
+    assert "home_corners" not in update                         # ya tenía dato: no se toca
+    xg = next(p for s, p in c.escrituras if "xg_source = 'fotmob'" in s)
+    assert xg[:3] == (1.4, 0.6, KICKOFF)                        # hora real de captura de la página
+    campos = {p[1] for s, p in c.escrituras if "matches_enriquecimiento" in s}
+    assert campos == {"home_yellow", "away_yellow", "stats", "xg"}
+    assert update["stats"].obj["home"] == {"amarillas": 3, "corners": 7, "xg": 1.4, "rojas": 0}
+
+
+def test_completar_no_pisa_stats_de_otra_fuente():
+    c = _Completar([_fila("m1", _posterior(), stats={"home": {"faltas": 9}, "away": {"faltas": 8}})])
+    fc.completar(c)
+    update = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert "stats" not in update
+
+
+def test_completar_no_aplica_con_marcador_distinto_ni_inventa_xg():
+    c = _Completar([_fila("m1", _posterior(goles=(0, 0))), _fila("m2", _posterior(xg=None), home_xg=1.1, away_xg=0.3)])
+    r = fc.completar(c)
+    assert r["conflicto_marcador"] == 1 and r["con_xg"] == 0
+    assert not any("xg_source" in s for s, _ in c.escrituras)
+    assert all(p.get("match_id") != "m1" for s, p in c.escrituras if "COALESCE" in s)
+
+
+def test_completar_espera_36_horas_desde_el_saque():
+    c = _Completar([])
+    vistos = []
+    c.execute = lambda sql, params=None: vistos.append(params) or _Filas([])
+    fc.completar(c)
+    desde, hasta, horas_min_xg = vistos[0]
+    assert horas_min_xg == 20.0
+    assert (datetime.now(timezone.utc) - hasta).total_seconds() >= 36 * 3600 - 5
+
+
+def test_estadisticas_no_esperan_ni_exigen_pagina_tardia():
+    class Registra(_Completar):
+        def execute(self, sql, params=None):
+            if sql.lstrip().startswith("SELECT"):
+                self.consulta = (" ".join(sql.split()), params)
+            return super().execute(sql, params)
+    c = Registra([])
+    fc.completar_estadisticas(c)
+    sql, params = c.consulta
+    assert "interval '1 hour'" not in sql                       # sin el margen de XG_MIN_HORAS
+    assert "home_xg IS NULL" not in sql                         # un xG vacío no hace candidato al partido
+    desde, hasta = params
+    assert (datetime.now(timezone.utc) - hasta).total_seconds() < 5
+
+
+def test_estadisticas_rellenan_corners_y_tarjetas_de_una_pagina_reciente_sin_tocar_el_xg():
+    c = _Completar([_fila("m1", _posterior(), home_yellow=3, away_yellow=1)])
+    r = fc.completar_estadisticas(c)
+    assert r["completados"] == 1
+    update = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert update["home_corners"] == 7 and update["away_corners"] == 2
+    assert "home_yellow" not in update                          # ya tenía dato: no se toca
+    assert not any("xg_source" in s for s, _ in c.escrituras)
+    campos = {p[1] for s, p in c.escrituras if "matches_enriquecimiento" in s}
+    assert "xg" not in campos and "home_corners" in campos
+
+
+def test_estadisticas_no_aplican_con_marcador_distinto():
+    c = _Completar([_fila("m1", _posterior(goles=(0, 0)))])
+    r = fc.completar_estadisticas(c)
+    assert r["conflicto_marcador"] == 1 and r["completados"] == 0
+    assert not c.escrituras
+
+
+def test_correr_completar_incluye_las_estadisticas():
+    from unittest.mock import MagicMock
+    c = MagicMock()
+    with patch.object(fc, "en_enfriamiento", return_value=False),             patch.object(fc, "completar", return_value={"completados": 0}),             patch.object(fc, "revisar_xg", return_value={"registrados": 0}),             patch.object(fc, "completar_estadisticas", return_value={"completados": 5}), patch.object(fc, "_log"):
+        res = fc.correr(c, "completar", cli=object())
+    assert res["estadisticas"] == {"completados": 5}
+
+
+def test_referencias_no_pide_competiciones_retiradas():
+    from qf.league_policy import RETIRED_LEAGUES
+
+    pedidas = []
+
+    class Cli:
+        def get(self, endpoint, params):
+            pedidas.append(params["id"])
+            return {"fixtures": {"allMatches": []}}
+
+    class C:
+        def execute(self, sql, params=None):
+            return iter([])
+
+        def commit(self):
+            pass
+
+    fc.actualizar_referencias(C(), Cli())
+    retiradas = {fc.COMPETITIONS[l][0] for l in RETIRED_LEAGUES if l in fc.COMPETITIONS}
+    assert pedidas and not retiradas & set(pedidas)
+
+
+def test_completar_no_depende_del_enfriamiento_porque_no_pide_nada():
+    from unittest.mock import MagicMock
+
+    with patch.object(fc, "en_enfriamiento", return_value=True), \
+            patch.object(fc, "completar", return_value={"completados": 0}) as f,             patch.object(fc, "revisar_xg", return_value={}), patch.object(fc, "_log"):
+        assert fc.correr(MagicMock(), "completar", cli=object())["completados"] == 0
+    f.assert_called_once()
+
+
+def _final(razon="FT", local=8226, visita=9748, goles=(3, 0)):
+    return {"general": {"matchId": "6112350", "finished": True},
+            "header": {"status": {"finished": True, "cancelled": False, "awarded": False, "reason": {"short": razon}},
+                       "teams": [{"id": local, "score": goles[0]}, {"id": visita, "score": goles[1]}]},
+            "content": {"stats": {"Periods": {"All": {"stats": [{"title": "Top", "stats": [
+                {"key": "corners", "stats": [6, 4]}]}]}}}}}
+
+
+class _Huerfanos:
+    """Conexión falsa para el respaldo de resultados."""
+
+    def __init__(self):
+        from qf.ingest.archivo_a_matches import COLUMNAS_MATCHES
+        self.escrituras = []
+        self.partido = {"match_id": "eu.uel:hoffenheim-lyon", "kickoff_utc": KICKOFF, "home_team_id": 61452,
+                        "away_team_id": 68872, "fotmob_match_id": "6112350"}
+        self.actual = {k: None for k in COLUMNAS_MATCHES}
+        self.actual.update(match_id="eu.uel:hoffenheim-lyon", home_goals=3, away_goals=0, home_xg=None, away_xg=None)
+
+    def execute(self, sql, params=None):
+        if "JOIN fotmob_referencia" in sql:
+            return _Filas([self.partido])
+        if "FROM fotmob_equipo" in sql:
+            return _Filas([{"fotmob_team_id": 8226, "team_id": 61452}, {"fotmob_team_id": 9748, "team_id": 68872}])
+        if "INSERT INTO fotmob_original" in sql:
+            return _Filas([{"id": 1, "capturado_en": KICKOFF}])
+        if sql.lstrip().startswith("SELECT m.match_id, m.home_goals"):
+            return _Filas([self.actual])
+        self.escrituras.append((sql, params))
+
+        class R:
+            rowcount = 1
+        return R()
+
+    def cursor(self):
+        from contextlib import nullcontext
+        return nullcontext(None)
+
+    def transaction(self):
+        from contextlib import nullcontext
+        return nullcontext()
+
+    def commit(self):
+        pass
+
+
+def _cli(payload):
+    class Cli:
+        def get(self, endpoint, params):
+            return {**payload, "__raw__": json.dumps(payload).encode()}
+    return Cli()
+
+
+def test_resultados_cierra_con_fotmob_y_liquida():
+    c = _Huerfanos()
+    with patch.object(fc.fm, "insertar"), patch("qf.eval.clv.settle_pending", return_value={"picks": 1}) as liq, \
+            patch("qf.ingest.api_football.record_health"):
+        r = fc.cerrar_huerfanos(c, _cli(_final()))
+    assert r["cerrados"] == 1 and r["settled"] == {"picks": 1}
+    cierre = next(p for s, p in c.escrituras if "status = 'finished'" in s)
+    assert cierre[:3] == (3, 0, "6112350")
+    liq.assert_called_once()
+    corners = next(p for s, p in c.escrituras if "COALESCE" in s)
+    assert (corners["home_corners"], corners["away_corners"]) == (6, 4)
+
+
+@pytest.mark.parametrize("payload,motivo", [(_final(razon="AET"), "abiertos"), (_final(razon="Pen"), "abiertos"),
+                                            (_final(local=9748, visita=8226), "equipos_distintos")])
+def test_resultados_no_cierra_prorroga_penaltis_ni_equipos_cambiados(payload, motivo):
+    c = _Huerfanos()
+    with patch.object(fc.fm, "insertar"), patch("qf.eval.clv.settle_pending") as liq, \
+            patch("qf.ingest.api_football.record_health"):
+        r = fc.cerrar_huerfanos(c, _cli(payload))
+    assert r[motivo] == 1 and r["cerrados"] == 0
+    assert not any("status = 'finished'" in s for s, _ in c.escrituras)
+    liq.assert_not_called()
+
+
+def test_marcador_final_rechaza_valores_raros():
+    assert fc._marcador_final(_final()) == (3, 0)
+    assert fc._marcador_final(_final(goles=(True, 0))) is None
+    assert fc._marcador_final(_final(goles=("3", 0))) is None
+    p = _final()
+    p["header"]["status"]["cancelled"] = True
+    assert fc._marcador_final(p) is None

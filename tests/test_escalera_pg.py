@@ -155,3 +155,87 @@ def test_reto_sin_filtro_de_valor_y_escalon_de_corners_se_liquida_con_el_total()
     (p,) = r["pasos"]
     assert (p["outcome"], p["valor"], p["texto"]) == ("win", 11, "Más de 8,5 córners")
     assert r["saldo"] == "13.30"
+
+
+def test_reto_al_80_se_crea_con_su_objetivo_y_publica_su_probabilidad(monkeypatch):
+    from dataclasses import replace
+    from qf.publish import alta_prob_datos as ad
+    from qf.publish import escalera as es
+    from qf.publish.alta_prob import Candidato
+
+    ahora = _dia()
+    mid, *_ = _partido(status="scheduled", kickoff=ahora + timedelta(hours=5))
+    monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
+    monkeypatch.setattr(ed, "_retos", lambda: [])
+    monkeypatch.setattr(ed, "_partidos", lambda now: [{"match_id": mid}])
+    monkeypatch.setattr(ad, "_rho_activo", lambda: None)
+    monkeypatch.setattr(ed, "opciones", lambda m, now, rho, modelos: [es.Opcion(
+        m["match_id"], Candidato("spreads", "home", 1.5, 0.95), 1.06, "betano", "propline",
+        now - timedelta(minutes=5))])
+    out = ed.select_and_persist(ahora)
+    (plan,) = out["plan"]
+    assert plan["nuevo_de"] == 2 and out["en_rango"] == 1
+    reto = db.query_one("""SELECT r.* FROM escalera_retos r JOIN escalera_pasos p USING (reto_id)
+                           WHERE p.match_id = %s""", (mid,))
+    assert reto["prob_objetivo"] == pytest.approx(0.80) and reto["freeroll_x"] is None
+    assert reto["dias_max"] == 7
+    assert ed.prob_reto(ed._pasos(reto["reto_id"])) == pytest.approx(0.95)
+    # El escalón aún no está sellado (decided_at es la hora real): no se enseña.
+    r = _reto_publico(reto["reto_id"])
+    assert r["prob_objetivo"] == pytest.approx(0.80) and r["prob_reto"] is None
+    assert ed.informe_publico()["reglas"]["umbrales"] == {"2": 0.8944}
+
+
+def test_reto_con_plazo_vencido_pasa_al_historial_como_expirado():
+    reto = db.query_one("""INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min,
+                                                       cuota_max, ev_min, prob_objetivo, dias_max,
+                                                       created_at)
+                           VALUES (10, 2, 1.03, 1.40, NULL, 0.8, 7, now() - interval '8 days')
+                           RETURNING *""")
+    assert ed.vencido(reto) and not ed.vencido(reto, reto["created_at"] + timedelta(days=6))
+    r = _reto_publico(reto["reto_id"])
+    assert r["estado"] == "expirado" and r["ganancia"] == "0.00" and r["dias_max"] == 7
+
+
+def test_escalon_de_tenis_se_guarda_sin_partido_de_futbol_y_se_liquida_con_propline(monkeypatch):
+    from dataclasses import replace
+    from qf.publish import alta_prob_datos as ad
+    from qf.publish import escalera as es
+    from qf.publish import escalera_ext as ext
+    from qf.publish.alta_prob import Candidato
+
+    ahora = _dia()
+    evento = (uuid.uuid4().hex[:10], "tennis_atp_paris", ahora + timedelta(hours=2),
+              "Jannik Sinner", "Qualifier X")
+    tenis = es.Opcion(f"tenis:{evento[0]}", Candidato("h2h", "home", None, 0.95), 1.06, "bovada",
+                      "propline", ahora - timedelta(minutes=20), "tenis", evento)
+    monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
+    monkeypatch.setattr(ed, "_retos", lambda: [])
+    monkeypatch.setattr(ed, "_partidos", lambda now: [])
+    monkeypatch.setattr(ad, "_rho_activo", lambda: None)
+    monkeypatch.setattr(ext, "opciones", lambda now: [tenis])
+    out = ed.select_and_persist(ahora)
+    assert out["en_rango_por_deporte"]["tenis"] == 1 and out["plan"][0]["deporte"] == "tenis"
+    paso = db.query_one("SELECT * FROM escalera_pasos WHERE evento_id = %s", (evento[0],))
+    assert paso["match_id"] is None and paso["deporte"] == "tenis" and paso["evento_local"] == "Jannik Sinner"
+    (publico,) = ed._pasos(paso["reto_id"])
+    assert publico["match_id"] == f"tenis:{evento[0]}" and publico["league_id"] == "tenis"
+    assert ed.texto(publico["market"], publico["selection"], None, publico["local"],
+                    publico["visitante"]) == "Gana Jannik Sinner"
+    # Un escalón de fútbol sin partido o uno de tenis sin evento no entran.
+    with pytest.raises(psycopg.errors.CheckViolation):
+        db.execute("""INSERT INTO escalera_pasos (reto_id, paso, market, selection, prob, fair_price,
+                                                  price, book, odds_source, odds_as_of)
+                      VALUES (%s, 9, 'h2h', 'home', 0.9, 1.11, 1.05, 'bovada', 'propline', now())""",
+                   (paso["reto_id"],))
+    monkeypatch.setattr(ext, "resultado", lambda r, now: ("win", None, None, None))
+    ed.settle_pending(evento[2] + timedelta(hours=5))
+    res = db.query_one("SELECT * FROM escalera_resultados WHERE paso_id = %s", (paso["paso_id"],))
+    assert (res["outcome"], res["fuente"], res["home_goals"]) == ("win", "propline", None)
+    # Un resultado de fútbol sigue necesitando marcador.
+    with pytest.raises(psycopg.errors.CheckViolation):
+        mid, *_ = _partido()
+        r = _reto()
+        _paso(r, 1, mid, ahora)
+        pid = db.query_one("SELECT paso_id FROM escalera_pasos WHERE reto_id = %s", (r,))["paso_id"]
+        db.execute("INSERT INTO escalera_resultados (paso_id, outcome) VALUES (%s, 'win')", (pid,))

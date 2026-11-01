@@ -9,7 +9,7 @@ import copy
 import logging
 import math
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -24,22 +24,20 @@ from ..publish import alta_prob_datos, alta_prob_ext, escalera_datos, ventana
 
 router = APIRouter(tags=["mobile"])
 _bearer = HTTPBearer(auto_error=False)
-PROB_MIN, PROB_MAX = .75, .90          # escalera
+# Escalera: el escalón gratis sale del rango que puede elegir la regla del 80 % en 7 días
+# (84-95 %; antes 75-90 %, el de la cuota 1,25-1,40, que ya casi no se daría).
+PROB_MIN, PROB_MAX = .75, .97
 # Alta probabilidad: lo que se MUESTRA es 73-95 % (decisión del usuario, 2026-10-12; el 11-oct
 # se había ampliado a 62-95 %). Es un filtro de lectura: `alta_prob_ext` sigue sellando
 # candidatos desde 62 % y sus filas inmutables no se tocan; solo dejan de mostrarse.
 HIGH_MIN, HIGH_MAX = .73, .95
 # Días de agenda que recibe la app (decisión del titular, 2026-10-12): una semana, agrupada por día.
 DIAS_AGENDA = 7
-# Gratis: un pronóstico por mercado, el de MAYOR cuota publicada (decisión del
-# usuario, 2026-10-12: la cuota manda sobre la probabilidad), con tope 1,60. Con
-# 75-90 % de probabilidad las cuotas reales van de 1,01 a 1,25: un piso de 1,40
-# o 1,20 deja el escaparate vacío casi siempre, así que no hay piso (solo > 1).
-FREE_QUOTE_MIN, FREE_QUOTE_MAX = 1.0, 1.60
-# Tope de gratis abiertos a la vez en Inicio y en Alta probabilidad (decisión del usuario,
-# 2026-10-14): como mucho 4 pronósticos sin empezar. Es un filtro de lectura sobre el reparto
-# por lote, que no se toca. Entre los candidatos manda la misma regla de siempre: mayor cuota.
-FREE_MAX = 4
+# Gratis (decisión del usuario, 2026-10-27; sustituye «uno por mercado, hasta 4, cuota
+# ≤ 1,60»): el 10 % de los pronósticos publicados en el lote del día, redondeado hacia
+# arriba, los de mayor probabilidad, sin rango de cuota. Un rango 1,40-1,50 se probó el
+# mismo día y se descartó: con 73-95 % de probabilidad no se publica ninguna cuota ahí.
+FREE_FRACTION = .10
 SECTIONS = {
     'agenda': 'Calendario de partidos', 'alta_probabilidad': 'Alta probabilidad',
     'escalera': 'Reto Escalera', 'estadisticas': 'Estadísticas del partido',
@@ -63,9 +61,7 @@ def features() -> dict:
 
 def config() -> dict:
     return {**mobile_updates.configuration(), 'features': features(), 'probability_min': HIGH_MIN,
-            'probability_max': HIGH_MAX, 'high_probability_free_per_market': 1,
-            'high_probability_free_max': FREE_MAX,
-            'high_probability_free_quote_max': FREE_QUOTE_MAX,
+            'probability_max': HIGH_MAX, 'high_probability_free_fraction': FREE_FRACTION,
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
 
@@ -90,59 +86,76 @@ def probability(row: dict) -> float:
     return float(row.get('_prob_exact', row.get('prob')) or 0)
 
 
+def free_quota(published: int) -> int:
+    """Cuántos gratis le tocan a un lote de `published` pronósticos: el 10 %, hacia arriba."""
+    return math.ceil(round(published * FREE_FRACTION, 9))
+
+
+def free_eligible(row: dict) -> bool:
+    """Sin rango de cuota, pero con cuota publicada real: sin ella no se regala."""
+    return quote_of({'ref_price': row.get('ref_price')}) is not None
+
+
+def _free_rank(row: dict) -> tuple:
+    # Mayor probabilidad; el empate lo decide la cuota más alta.
+    return -probability(row), -float(row['ref_price']), pick_key(row)
+
+
 def choose_free(rows: list[dict], stream: str) -> list[dict]:
     """Only sealed eligible rows enter. Odds are publication quotes, not live."""
     lo, hi = (HIGH_MIN, HIGH_MAX) if stream == 'alta_probabilidad' else (PROB_MIN, PROB_MAX)
     valid = [r for r in rows if lo <= probability(r) <= hi]
     if stream == 'alta_probabilidad':
-        priced = [r for r in valid if r.get('ref_price') is not None
-                  and math.isfinite(float(r['ref_price']))
-                  and FREE_QUOTE_MIN < float(r['ref_price']) <= FREE_QUOTE_MAX]
-        # UNO por mercado, el de mayor cuota publicada; el empate lo decide la
-        # probabilidad.
-        priced.sort(key=lambda r: (-float(r['ref_price']), -probability(r), pick_key(r)))
-        chosen, seen = [], set()
-        for r in priced:
-            if r.get('market') not in seen:
-                seen.add(r.get('market'))
-                chosen.append(r)
-        return chosen
+        return sorted(filter(free_eligible, valid), key=_free_rank)[:free_quota(len(valid))]
     if stream == 'escalera':
         valid.sort(key=lambda r: (-probability(r), -float(r.get('price') or 0), pick_key(r)))
         return valid[:1]
     raise ValueError('Unknown stream')
 
 
+def _by_batch(rows: list[dict]) -> dict[str, list[dict]]:
+    grouped = defaultdict(list)
+    for row in rows:
+        grouped[str(row['batch_date'])].append(row)
+    return grouped
+
+
 def top_up(rows: list[dict], free_keys: set[str], now: datetime) -> list[dict]:
     """Pronósticos sin empezar que deben pasar a gratis aunque el lote ya esté repartido.
 
-    Regla permanente (decisión del usuario, 2026-10-12): siempre queda gratis el de
-    mayor cuota de cada mercado. Solo AÑADE: nunca quita uno que el usuario ya vio, y
-    no toca los que ya empezaron. Un mercado que ya tiene uno abierto gratis no suma otro.
+    `rows` es un lote completo. Completa el cupo del 10 % cuando falta (p. ej. un lote
+    repartido con la regla anterior): cuentan los gratis que ya empezaron y los abiertos
+    que cumplen la regla. Solo AÑADE y no toca los que ya empezaron.
     """
-    pending = [r for r in rows if r['kickoff_utc'] > now]
-    open_markets = {r.get('market') for r in pending if pick_key(r) in free_keys}
-    return [r for r in choose_free(pending, 'alta_probabilidad')
-            if pick_key(r) not in free_keys and r.get('market') not in open_markets]
+    valid = [r for r in rows if HIGH_MIN <= probability(r) <= HIGH_MAX]
+    held = sum(1 for r in valid if pick_key(r) in free_keys
+               and (r['kickoff_utc'] <= now or free_eligible(r)))
+    missing = free_quota(len(valid)) - held
+    if missing <= 0:
+        return []
+    pending = [r for r in valid if r['kickoff_utc'] > now and pick_key(r) not in free_keys
+               and free_eligible(r)]
+    return sorted(pending, key=_free_rank)[:missing]
 
 
 def cap_free(rows: list[dict], free: set[str], now: datetime) -> set[str]:
     """
-    Deja como mucho FREE_MAX gratis entre los pronósticos que aún no han empezado, los de
-    mayor cuota publicada (a igualdad, mayor probabilidad). Los que ya empezaron no cuentan:
-    siguen visibles con su resultado. Los que sobran pasan a candado, con su cuota a la vista.
+    Por lote, como mucho el 10 % (hacia arriba) gratis. Los que ya empezaron siguen visibles
+    con su resultado y cuentan dentro del cupo; de los abiertos quedan los de mayor
+    probabilidad. Los que sobran pasan a candado, con su cuota a la vista.
     """
-    pending = [r for r in rows if pick_key(r) in free and r['kickoff_utc'] > now]
-    if len(pending) <= FREE_MAX:
-        return free
-    pending.sort(key=lambda r: (-float(r.get('ref_price') or 0), -probability(r), pick_key(r)))
-    return free - {pick_key(r) for r in pending[FREE_MAX:]}
+    kept = set()
+    for batch in _by_batch(rows).values():
+        begun = {pick_key(r) for r in batch if pick_key(r) in free and r['kickoff_utc'] <= now}
+        pending = sorted((r for r in batch if pick_key(r) in free and r['kickoff_utc'] > now
+                          and free_eligible(r)), key=_free_rank)
+        room = max(free_quota(len(batch)) - len(begun), 0)
+        kept |= begun | {pick_key(r) for r in pending[:room]}
+    return kept
 
 
 def allocations(rows: list[dict], stream: str) -> set[str]:
-    grouped = defaultdict(list)
-    for row in rows:
-        grouped[str(row['batch_date'])].append(row)
+    grouped = _by_batch(rows)
     if stream == 'escalera' and rows:
         # One free pending step across all active challenges, not one per
         # challenge or historical batch. Freeze the choice until a new batch.
@@ -180,7 +193,7 @@ def allocations(rows: list[dict], stream: str) -> set[str]:
                               'WHERE stream=%s AND batch_date=%s', (len(have) + len(added), stream, batch))
                     audit(c, 'mobile:allocation_topup', 'mobile_free_batch', detail={
                         'stream': stream, 'batch_date': batch, 'added': [pick_key(r) for r in added],
-                        'rule': 'highest_quote_per_market'})
+                        'rule': 'ten_percent_by_probability'})
             selected_rows = c.execute('SELECT pick_key FROM mobile_free_allocations '
                                       'WHERE stream=%s AND batch_date=%s', (stream, batch)).fetchall()
             result.update(r['pick_key'] for r in selected_rows)
@@ -342,8 +355,9 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
         raise HTTPException(422, 'Fecha inválida') from None
     agenda = visible_agenda(fichas._agenda(start, end, None)) if flags['agenda']['enabled'] else []
     if agenda and flags['estadisticas']['enabled']:
-        probabilities = {r['match_id']: r['probabilities'] for r in query(
-            "SELECT DISTINCT ON (match_id) match_id, markets->'1x2' AS probabilities "
+        probabilities = {r['match_id']: uno_x_dos(r)[0] for r in query(
+            "SELECT DISTINCT ON (match_id) match_id, markets->'1x2' AS probabilities, market_consensus, "
+            "data_completeness->>'both_teams_known' AS conocido "
             "FROM predictions WHERE match_id=ANY(%s) ORDER BY match_id,generated_at DESC",
             ([r['match_id'] for r in agenda],))}
         for row in agenda:
@@ -371,6 +385,34 @@ def pronostico_desde(kickoff) -> str | None:
     return ventana.desbloqueo(kickoff).isoformat()
 
 
+def uno_x_dos(row: dict | None) -> tuple[dict | None, bool]:
+    """(1X2 que se muestra, si es del modelo propio).
+
+    Si el modelo no conoce a alguno de los equipos (`both_teams_known=false`:
+    ascendido o club que vuelve tras años fuera) su 1X2 no significa nada —la
+    auditoría del 2026-10-21 encontró Coventry local al 7,7 % con el mercado al
+    30 %— y se muestra el consenso sin margen del mercado guardado en la misma
+    fila, o nada. `row` trae `probabilities` (o `markets`), `market_consensus` y
+    `conocido`.
+    """
+    if not row:
+        return None, False
+    if str(row.get('conocido')).lower() != 'false':
+        probs = row.get('probabilities')
+        if probs is None and isinstance(row.get('markets'), dict):
+            probs = row['markets'].get('1x2')
+        return probs, True
+    cons = row.get('market_consensus')
+    try:
+        trio = [float(cons[k]) for k in ('home', 'draw', 'away')]
+    except (TypeError, KeyError, ValueError):
+        return None, False
+    total = sum(trio)
+    if not all(math.isfinite(x) and x > 0 for x in trio) or total <= 0:
+        return None, False
+    return {k: x / total for k, x in zip(('home', 'draw', 'away'), trio)}, False
+
+
 def market_card(match_id: str) -> dict | None:
     """Tarjeta para ligas sin modelo propio: probabilidades del ajuste de goles a las
     cuotas sin margen de Pinnacle (lambda, mu, rho del pick), con la misma matriz de
@@ -389,13 +431,13 @@ def market_card(match_id: str) -> dict | None:
     return model_card(pricing.price_all_markets(lam, mu, rho), fuente='mercado')
 
 
-def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool) -> dict | None:
+def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool, web: bool = False) -> dict | None:
     """Lista de mercados del partido con el acceso aplicado (ver partido_mercados)."""
     abiertas = {partido_mercados.clave(p.get('market'), p.get('selection'), p.get('line')): p
                 for p in picks if p.get('market')}
     try:
         return partido_mercados.construir(match_id, jsonable_name(ficha, 'local', 'Local'),
-                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus)
+                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus, web)
     except Exception:  # noqa: BLE001 - la lista es un extra: si falla, el detalle sigue
         logging.getLogger(__name__).exception('mercados del partido %s', match_id)
         return None
@@ -458,6 +500,13 @@ def markets_history(response: Response,
     return {'items': rows}
 
 
+@router.get('/mobile/v1/markets/destacados')
+def markets_destacados(response: Response, desde: date = Query(...)):
+    """Destacado de fútbol de cada partido terminado desde `desde`, ya resuelto (acertó/falló)."""
+    response.headers['Cache-Control'] = 'no-store'
+    return {'items': partido_mercados.destacados_resueltos(desde)}
+
+
 def model_card(markets, fuente: str = 'modelo') -> dict | None:
     """Probabilidades del modelo para la tarjeta del pronóstico, a 2 decimales.
 
@@ -485,7 +534,7 @@ def model_card(markets, fuente: str = 'modelo') -> dict | None:
 
 
 @router.get('/mobile/v1/matches/{match_id}')
-def detail(match_id: str, response: Response, plus: bool = Depends(member),
+def detail(match_id: str, response: Response, web: bool = Query(False), plus: bool = Depends(member),
            account: dict | None = Depends(rewards.optional_account)):
     response.headers['Cache-Control'] = 'no-store'
     cfg = config()
@@ -509,12 +558,14 @@ def detail(match_id: str, response: Response, plus: bool = Depends(member),
         ficha['partido']['estadisticas'] = None
         ficha['partido']['xg'] = None
     else:
-        prediction = query_one("SELECT markets FROM predictions "
+        prediction = query_one("SELECT markets, market_consensus, "
+                               "data_completeness->>'both_teams_known' AS conocido FROM predictions "
                                "WHERE match_id=%s ORDER BY generated_at DESC LIMIT 1", (match_id,))
         markets = prediction['markets'] if prediction else None
-        ficha['probabilities'] = markets.get('1x2') if isinstance(markets, dict) else None
-        ficha['modelo'] = ((model_card(markets) or market_card(match_id)) if picks else None)
-        ficha['mercados'] = mercados_partido(match_id, ficha, picks, plus)
+        ficha['probabilities'], del_modelo = uno_x_dos(prediction)
+        propia = model_card(markets) if del_modelo else None
+        ficha['modelo'] = ((propia or market_card(match_id)) if picks else None)
+        ficha['mercados'] = mercados_partido(match_id, ficha, picks, plus, web)
         if ficha['mercados'] is None and blocked and not (plus and flags['vip']['enabled']):
             # Sin modelo de goles: sus pronósticos VIP se avisan aparte del gratuito (solo categoría).
             ficha['mercados'] = partido_mercados.solo_candados(vip_picks)

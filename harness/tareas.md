@@ -1,5 +1,123 @@
 # Backlog — QuantFut
 
+## 31-oct-2026 · Sustituir Apify sin pagar (plan, rama `plan/sustituir-apify`, nada desplegado)
+Plan completo y mediciones: `docs/plan_sustituir_apify_20261031.md`. Apify devuelve 403 (tope del plan gratuito) desde las 19:40 UTC del 31-oct. Solo el once y las bajas de fútbol tienen consumidor; NBA y tenis de Apify no los lee nadie.
+- [x] F0.1 Quitadas del crontab del host las dos líneas de `sofascore-apify` el 31-oct (copia en `~/sofascore-apify/crontab_antes_quitar_20261031.txt`; vuelta atrás: restaurarlas de ahí).
+- [x] F0.2 (DESPLEGADO en el worker el 31-oct, imagen `fotmob-alin-e2ff6a6`; primera pasada: 436 capturas, 138 oficiales, 298 previstas, 3.269 bajas; código y 7 pruebas; las 138 capturas `standard` completas de 48 h encajan con el esquema, INSERT sin probar contra la base) `fotmob_alineaciones`: escribir `lineups` (once `standard`, `src='fotmob'`), `lineups_previstas` e `injuries` (`source='fotmob'`) desde `fotmob_previo`/`fotmob_jugador_previo`/`fotmob_baja_previa`; `lineups._fuente` reconoce `fotmob`.
+- [x] F0.3 `health.check_sofascore_lineups` cuenta `sofascore` y `fotmob`; el aviso nombra FotMob (código, sin desplegar: hasta entonces la alerta de las 07:00 UTC puede saltar).
+- [x] F0.4 `scripts/crontab`: `sofascore_partidos` y `sofascore_alineaciones` con «RETIRADO» y nueva línea `2-59/5` de `fotmob_alineaciones` (el worker lee ese archivo montado: falta recrearlo).
+- [ ] F1 (código y 8 pruebas en `src/qf/ingest/sportsapipro_alineaciones.py`; DESPLEGADO el 31-oct en el worker, imagen `sportsapipro-6256290`; primera pasada: 0 huecos, 0 peticiones; falta verlo con partidos) Huecos de once con SportsAPIPro (`SPORTSAPIPRO_KEY`; calendario 06:00 UTC + 2 intentos a T-30/T-22 de los partidos sin once `standard` de FotMob; tope 40/día; `source='sofascore'`).
+- [ ] F1b Scraper local: archivo diario 05:30 UTC (una ejecución, `flock` + `nice`) de los terminados de ayer de las 17 competiciones con todos los bloques; ids del calendario de SportsAPIPro; solo desde el 31-oct (el historial lo sube el titular); no escribe en la base. Reserva manual del once si FotMob y SportsAPIPro fallan.
+- [ ] F2 Respaldo de xG a 36 h con SportsAPIPro (tope 20/día). API-Football solo si el titular reabre la decisión de fuentes únicas (y bajar `API_FOOTBALL_DAILY`/`RPM` a 100/10).
+- [~] FT-T3 web de estadísticas de tenis (31-oct, noche): `scripts/publicar_tenis_estadisticas.py` (cambiado) + `src/qf/ingest/tenis_estadisticas_respaldo.py` (nuevo; 4 pruebas). API-Tennis sigue primero; si falla o con `QF_AT_CAIDO=1` (corta la corrida al primer error): clasificación desde SportsAPIPro (ATP `/rankings/type/5` = oficial; `/rankings` es la «live» y NO coincide; WTA `/rankings/wta`, que coincide arriba y difiere unas posiciones más abajo), con tope propio de 6 peticiones/día; H2H y forma reciente del archivo propio de partidos unido a la caché antigua; perfiles de la caché (los jugadores nuevos salen sin temporada ni carrera). Probado en el VPS con una copia de la carpeta y la caché vencida: 25 de 25 eventos publicados, perfiles, forma, superficies y edad presentes igual que con API-Tennis; ranking, puntos y movimiento idénticos en 26 de 50 jugadores, distintos en 13 (clasificación más reciente o «live»), sin ranking en 1 (fuera del top 500). Límite conocido: SportsAPIPro solo da 500 jugadores por circuito (API-Tennis ~2.400). `respaldo` ya está copiado en `~/tenis-equivalencias/current/` (aditivo). DESPLEGADO el 31-oct tras autorización del titular (ver `DEPLOYS.md`; antes se había denegado): se copió el publicador a `~/quantfut-public-sports/stats/` con respaldo `.antes_20261031_9fe4499d42c7` (hash actual del host = el del repo `9fe4499d42c7`), y lanzarlo una vez. Vuelta atrás: restaurar ese `.antes_…`. Nota: la API (`api/tenis_estadisticas.py`) sigue rotulando `source: "API-Tennis"`.
+- [~] FT-T2b cableado del motor (31-oct, noche): `src/qf/ingest/tenis_transporte_sportsapipro.py` (transporte de `TennisStateCapture`, modo `auto` = API-Tennis primero y SportsAPIPro al fallar; 12 pruebas) y `scripts/tenis_overlay/tennis_intake_v1__main__.py` (opciones `--source api-tennis|sportsapipro|auto`, `--sportsapipro-key-file`, `--equivalencias`, `--capture-only`). Imagen delgada `quantfut-tenis:sp-258629e` CONSTRUIDA en el VPS (no activa; `IMAGE` sigue en `bea262b`). Pruebas en sombra en el VPS, raíz aparte `data/intake_sombra`: (1) modo auto con API-Tennis activo → contesta API-Tennis; (2) con clave inválida (vencimiento simulado) → contesta SportsAPIPro (5 peticiones); (3) `--source sportsapipro`: 115 observaciones aceptadas por el almacén estricto, 84 de 84 partidos comunes con el MISMO `event_key`, jugadores y orden que la captura viva, y 48 de 48 terminados con mismo estado y ganador; 18 de 115 con algún jugador sin equivalencia (sin historia). CORTE HECHO el 31-oct (autorizado por el titular; ver `DEPLOYS.md`; antes se había denegado): editar `~/quantfut-tenis/vps_run.sh` (montajes `/equivalencias` y `/sp.env`, `--source auto --sportsapipro-key-file /sp.env`) y poner `quantfut-tenis:sp-258629e` en `IMAGE`, con respaldo de ambos y del crontab. Vuelta atrás: restaurar `vps_run.sh` e `IMAGE` desde `~/quantfut-tenis/backup/`. Pendiente aparte: la web de estadísticas de tenis (rankings, perfiles, H2H) sigue llamando a API-Tennis.
+- [~] FT-T2 conversor `src/qf/ingest/tenis_formato_api_tennis.py` (SportsAPIPro → `get_fixtures`; 7 pruebas) hecho y validado el 31-oct contra API-Tennis: en 60 partidos terminados en ambas fuentes coinciden estado, ganador, resultado, jugadores y torneo (60/60), juegos 47/60 (el resto: puntos de desempate que API-Tennis anota solo a veces); la hora de inicio difiere (mediana 10 min, máx 60). Hosts actualizados (`DEPLOYS.md`). FALTA el cableado en el motor: `TennisStateCapture(transport=…)` en `tennis_intake_v1` (imagen `quantfut-tenis`, rama `tennis/reentreno-semanal`), montar `~/tenis-equivalencias` y la clave en `vps_run.sh`, y arrancar en sombra (raíz aparte) antes de cortar API-Tennis. Claves sintéticas (jugador/torneo sin equivalencia) entran sin historia ni sede.
+- [x] FT-T1 (código y prueba real, sin desplegar): `src/qf/ingest/tenis_equivalencias.py` (`capture`/`match`/`status`, 6 pruebas). Prueba en el VPS el 31-oct en carpeta temporal: 3 calendarios (847 eventos), 96 partidos emparejados, 134 de 271 `player_key` (49 %), 0 conflictos en ningún sentido. Cloudflare bloquea el User-Agent de urllib (error 1010): el script usa otro. DESPLEGADO en el host el 31-oct (`~/tenis-equivalencias/`, cron 04:20 y 16:20 UTC, ver `DEPLOYS.md`); falta fusionar la rama a `main`.
+- [ ] FT Tenis: sustituir API-Tennis (el plan vence; falta la fecha exacta del titular). T1 YA: captura paralela de SportsAPIPro (3 fechas/día) y tabla `player_key` ↔ id SofaScore (30-oct: 15/16 por nombre corto, 16/16 con apellido+inicial, ganador igual 8/8). T2 adaptador de `get_fixtures` en `tennis_intake_v1`. T3 web de estadísticas: rankings, perfiles con caché de 7 días, H2H del archivo propio (de 121 a 10-15 peticiones/día). T4 liquidación con `winnerCode` y sets. Desborde de resultados a SportsAPI365.
+- [ ] F3 (opcional) NBA con Highlightly NBA, solo si un modelo pide box score de SofaScore.
+- [ ] Medir 7 días después de cada fase: once oficial antes del saque ≥ 90 %, bajas ≥ 95 %, xG a 36 h ≥ 98 %.
+
+## 31-oct-2026 · Cuotas de referencia en NBA y tenis (rama `cuotas-nba-tenis`, sin desplegar)
+- [x] Selección de la mejor cuota no DFS de la observación usada al sellar (`ingest/cuotas_referencia.py`), overlays de tenis y NBA (`api/cuotas_tenis.py`, `api/cuotas_nba.py`), endpoints `GET /web/deportes/{tenis,nba}/cuotas` (`api/cuotas_web.py`), carga y unión en la app (`sports_quotes.dart`) y `QuoteLabel` en Predicciones, ficha e Inicio.
+- [ ] Desplegar (decisión del titular): montajes de solo lectura y variables `NBA_COHORTS_DIR`/`TENNIS_SEALED_DIR`; ver DEPLOYS.md. Medir cobertura y tamaño reales después.
+- [ ] Revisar los términos de PropLine para mostrar cuotas públicamente (titular).
+- [ ] Medición con datos reales de solo lectura (no hecha: el código aún no está en el servidor).
+- Plan: `docs/superpowers/plans/2026-10-31-cuotas-nba-tenis.md`; reconocimiento: `docs/cuotas_nba_tenis_reconocimiento_20261031.md`.
+
+## 31-oct-2026 · Respaldo de cuotas con The Odds API histórico (rama `cuotas-nba-tenis`, sin desplegar)
+- [x] `ingest/cuotas_respaldo.py`: comando por lotes (seco por defecto, `--ejecutar`, `--max-creditos` 300, suelo de saldo 500), caché JSON y `aplica_nba`/`aplica_tenis` en `api/cuotas_web.py`. Pruebas: `tests/test_cuotas_respaldo.py`.
+- [ ] Jugadores NBA: las filas selladas no traen nombre (`player_name`), así que no se piden hasta que el productor lo añada.
+- [ ] Probar `--ejecutar` en el servidor con un solo evento y comparar el coste real (`x-requests-last`) con la estimación (titular).
+
+## 30-oct-2026 · App: NBA y tenis + rediseño v3
+
+- [x] Implementado en la rama `app/nba-tenis-rediseno` (app 1.1.0+5): selector global de deporte, feeds de NBA y tenis, ficha de partido, «Mis deportes», pantallas de acceso en piel v3.
+- [ ] Pendiente: PR a `main`, AAB firmado con la clave del titular (no se pudo producir en el worktree) y publicación en Play; la versión mínima se activa desde `/control/configuracion-app`.
+- [ ] Fuera de alcance (decisión del titular): VIP/monedas para NBA y tenis, cuotas, notificaciones por deporte, Escalera/Parley fuera de fútbol, chip «HOY», archivar pantallas heredadas. Detalle en `apps/mobile/docs/REDISENO_NBA_TENIS_20261030.md`.
+
+## 28-oct-2026 · Rediseño de #historial para convertir
+
+- [x] `frontend/historial-views.js` (lógica pura + vista), cableado en `ergonomic-views.js`, estilos `.cv-hist-*` en `conversion.css`, ruta en `web.py`, 13 pruebas nuevas (`historial-views.test.mjs`) y arnés del frontend en verde (85).
+- [ ] Desplegar: la base (`027e536`) no está en `main`; seguir `DEPLOYS.md` (solo `frontend/` y `src/qf/api/web.py`, respaldo previo, sin tocar el worker). Subir los `?v=hist-20261028`.
+- [ ] Cuando haya más historia (hoy ~8 días), añadir vista mensual y comparar acierto por mercado.
+
+## 27-oct-2026 · Tenis: juegos ganados por jugador desde PropLine
+
+- [x] `player_games_won` → contrato `player_games` (`tennis_player_games_v1`): precio desde la distribución conjunta del motor, liquidación de partido completo, foto horaria y cierre de PropLine, `market_board` y `offered_markets`. Fuera de `tennis_markets_v2` y `tennis_allmarkets_v1` porque el protocolo multi-mercado congelado hashea esos paquetes.
+- [x] Nombres de PropLine con nombre intermedio («Leylah Annie Fernandez»): Fernandez–Sakatsume se selló sin precio el 27-oct. Emparejamiento determinista, sin parecido.
+- [x] Aces, dobles faltas y puntos de quiebre: PropLine los cotiza, el motor no los modela; fuera de la primera versión.
+
+## 27-oct-2026 · Corrección: solo acomodo, CSS anterior obligatorio
+
+El titular rechaza expresamente los cambios de colores, tarjetas y botones. Restaurar los componentes visuales anteriores, retirar `ergonomia.css` y conservar el CSS original sin modificaciones. Mantener las fuentes reales de fútbol, NBA y tenis y el acomodo de pronósticos, resultados y planes. El menú adicional de escritorio no debe reutilizar el cajón móvil fuera de su breakpoint.
+
+- [x] Retirar la hoja añadida y volver a las tarjetas, botones, cabecera y planes anteriores, con comprobación de las cuatro huellas CSS originales.
+- [x] Verificar la navegación con el CSS original: 54 pruebas frontend, siete del lector público; menú móvil de 390 px correcto, cuatro hojas originales sin cambios y sin el menú de escritorio roto.
+- [x] Publicar la corrección con respaldo y registro: PR #175, `main` `1866c9b`, API `quantfut-api-original:5ba3375`, 15:33:52 UTC. Cuatro CSS originales comprobados por hash, sin la hoja rechazada; los tres deportes y los motores se conservan. Ver `DEPLOYS.md`.
+
+## 27-oct-2026 · Rediseño ergonómico multideporte
+
+Orden del titular: reorganizar la web y añadir fútbol, NBA y tenis a una misma experiencia con CYBERCORE CSS 0.3.0. Aplicar el orden portada → pronósticos → resultados → planes; cuatro accesos principales y herramientas agrupadas, tarjetas legibles y adaptación móvil. Datos, precios, bloqueos y resultados reales; conservar pérdidas y distinguir probabilidades estadísticas de selecciones comercializadas. Integrar el contrato público NBA y una proyección limitada de los archivos sellados de tenis, sin modificar motores, cron ni puertas de publicación. Verificar navegación, fuentes, vacío/fallo, teclado y tamaños móviles; commit, PR, CI y publicación con respaldo y registro.
+
+- [x] Implementar la portada, la navegación y la vista unificada de los tres deportes.
+- [x] Verificar las fuentes reales, la accesibilidad y el diseño en escritorio y móvil (390 px, búsqueda, fechas y acceso a jornada NBA publicada).
+- [x] Integrar y publicar con respaldo, comprobación de producción y registro de reversión: PR #172, `main` `de06ab6`, API `quantfut-api-hub:67ecddf`, 15:16:36 UTC. Los tres deportes responden en el dominio; montajes y contenedores de los motores sin cambios. Exportación de tenis solo de campos públicos, sin montar originales en la API. Ver `DEPLOYS.md`.
+
+## 27-oct-2026 · Web con pronósticos reales, diseño conservado
+
+Orden del titular: retirar los pronósticos ficticios y activar la web real. El motor de fútbol ya genera y sella pronósticos; la API pública móvil entrega cuatro gratuitos y sus bloqueos VIP. Conectar ese mismo contrato a la web conservando CYBERCORE CSS 0.3.0, el diseño anterior y las reglas del servidor. Eliminar todos los generadores/archivos simulados de las vistas públicas; probar visitante, suscriptor, vacío y fallo; publicar únicamente los archivos frontend después de verificar main y respaldar. No alterar modelos ni saltar la puerta de los picks de valor.
+
+- [x] Conexión al contrato real, retirada del catálogo simulado y conservación del diseño/CYBERCORE; PR #170 integrado en `main` `b05e085` con CI verde.
+- [x] Ensayo aislado, respaldo y despliegue de frontend y ruta estática en la API a las 14:14:55 UTC. Cuatro pronósticos reales visibles en el dominio público; worker/NBA sin recrear. Ver `DEPLOYS.md` y `docs/web_pronosticos_reales_20261027.md`.
+
+## NBA: plantillas actuales y fuerza individual — solicitud del 26-oct-2026
+
+- [x] Capturar y validar las 30 plantillas oficiales actuales: 521 identidades únicas; 121 difieren del último equipo del historial local (no equivale a 121 traspasos fechados esta temporada).
+- [x] Implementar pertenencia por plantilla oficial, independiente del último partido o una cotización; conservar historia individual tras traspasos y verificar recibos, antigüedad, temporada e integridad al sellar y leer.
+- [x] Implementar y medir un candidato de fuerza individual y rotación, sin transportar el Elo del antiguo equipo. Selección 2024-25 y evaluación 2025-26: mejora pequeña, no concluyente; no supera la regla de aceptación.
+- [x] Separar el candidato experimental de las probabilidades publicadas y preparar su registro prospectivo con plantillas verificadas.
+- [x] Reajuste exacto, comparación dentro del servidor, ensayo y despliegue de pertenencia 1.6.0 completados a las 23:32 UTC; respaldo y reversión en DEPLOYS.md. La instrucción posterior del titular activa el ajuste de fuerza y los recálculos versionados en la siguiente versión.
+- [x] 1.7.0: fuerza individual activa en el vivo, entrenamiento con la temporada actual (43 partidos, 524 jugadores) y base consolidada sin columnas faltantes; 95 cajas recuperadas o reparadas, nombres con sufijo separado.
+- [x] Revisiones versionadas de todo lo publicado: punto en el tiempo por partido, sin añadir tras el salto, marcador con la última versión previa, revisiones idénticas descartadas. Detalle: `docs/nba_recalibracion_17_20261026.md`.
+- [x] Corregido: los playoffs consolidados sustituían el historial de temporada regular al inicio de temporada (`regular_season_roles`).
+
+
+## Pendientes vivos — limpieza del 25-oct-2026
+
+De 250 tareas abiertas, 134 se cerraron en su sitio con el motivo «(cerrada 25-oct: …)»: hechas, duplicadas, de
+fuentes retiradas (API-Football, PitchAPI, soccerdata/ZenRows), de ligas retiradas o estados viejos de NBA. Quedan
+116, todas en su sección original; esta lista es el índice. Regla para no volver a inflarla: solo bloquea lo que
+hace perder dinero o datos; una idea nueva va a «Mejoras», no a «Fallos».
+
+**Fallos que afectan a dinero o datos (Claude, primero):**
+- ~~Cierres: desde el 22-oct 18:50 UTC no entraba ningún `close` en `odds_snapshots`~~ → resuelto en el PR #127
+  (`qf.ingest.propline_cierres`, la liquidación espera al cierre hasta 48 h).
+- ~~Clasificación y marcador en vivo sin fuente desde que se retiró API-Football~~ → resuelto el 25-oct: la
+  clasificación se calcula con nuestros resultados y el vivo sale del listado diario de FotMob.
+- ~~`estadisticas_jugador` convierte un dato ausente en 0~~ → cerrada: solo la escribía API-Football (última, 22-oct);
+  las fuentes vivas (FotMob, SofaScore) guardan NULL.
+- ~~Sombra del XI parada desde el 22-oct (solo cuotas `post_xi`), ERA5 con 175 celdas rechazadas al día, API con
+  código anterior al 22-oct, lector de cuotas sin los alias `propline`~~ → resueltos el 25-oct (noche),
+  `docs/auditoria_motores_datos_20261025_noche.md`.
+- ~~Alta probabilidad publicada sin cuota (25-oct: 18 de 22; ampliada 323 de 385)~~ → resuelto el 25-oct (noche):
+  captura con casas de los suscriptores y solo candidatos con cuota (`alta_prob_datos.cotizador`). Falta desplegar
+  en el worker antes de la selección de las 08:00 UTC.
+
+**Del titular (27):** credenciales y cuentas (Meta, Whop, AdMob, RevU/BitLabs, Tapjoy, Apple/iOS), revisión legal y
+avisos legales en la web, Sentry, copia de seguridad fuera del servidor (destino), compilar y publicar la app,
+decisiones abiertas (`SOFT_BOOKS`, push al sellar, cuotas de cierre de tenis, paquete de The Odds API para props,
+lesiones ESPN en NBA, captura `nba-live13-price`, desplegar el productor NBA, apagar la automatización de Codex).
+
+**Esperan datos, fecha o condición (31, y aparte la historia de once SofaScore):** compras y comprobaciones del 1-nov (cierres de Pinnacle, NBA); muestras
+para puertas (calibración, residuo, cuatro brazos, `ajuste_xi`, alineación en F7, altitud, tarjetas y córners del
+parley, 1xBet y la ampliada); tenis prospectivo; referidos cuando la app esté en Play; compromiso-revelación antes de
+`CHAIN_GIT_REMOTE`; alinear `select_daily` antes de publicar picks; historia de once SofaScore para `availability`.
+
+**Mejoras e ideas (55):** fases del motor F3-F6 y F8-F12, ideas de la literatura, mejoras NBA de la segunda auditoría,
+tenis (viajes, cobertura histórica, identidades externas), app y web (contenidos, iOS, CSP, rutas internas en
+`/model-card`), estadios duplicados.
+
+
 ## Tenis — datos y arquitectura inicial (2026-10-16)
 
 Autorización del usuario (16-oct): extraer todo el catálogo y continuar un motor local independiente. Implementación en el checkout gestionado `C:/Users/huye/.codex/worktrees/tennis-engine/apuesta proyec`, bajo `apps/tennis`; preparación temporal en `.local/tennis_engine_build_20261016/` por permisos de escritura.
@@ -8,7 +126,7 @@ Autorización del usuario (16-oct): extraer todo el catálogo y continuar un mot
 - [x] Consolidar TML: 492.251 partidos, 249.938 con conteos/formato aptos; originales y conflictos conservados, fechas sin hora inventada.
 - [x] Implementar puntuación/distribución de mercados, candidato binomial bayesiano regularizado y evaluación cronológica frente a Elo probabilístico.
 - [x] Comprobar matemática (17 pruebas, incluida simulación independiente), ajustar candidatos ATP/WTA y guardar métricas reales de 2025/2026. Sin promoción ni consumo de cuotas. Ver `docs/tenis_primera_version_y_resultados_20261016.md`.
-- [ ] Mejorar habilidades/calibración con validación separada y nueva prueba futura: el candidato inicial pierde en log-loss frente a Elo. No convertir el 2026 ya observado en prueba intacta de nuevas variantes.
+- [x] (cerrada 25-oct: superada por el motor v7 (19-oct), que ya gana a Elo en acierto) Mejorar habilidades/calibración con validación separada y nueva prueba futura: el candidato inicial pierde en log-loss frente a Elo. No convertir el 2026 ya observado en prueba intacta de nuevas variantes.
 
 - [x] Revisar completa la conversación adjunta y documentar modelo bayesiano/Markov y requisitos de datos en `docs/tenis_modelo_y_datos_20261016.md`.
 - [x] Auditar la fuente Match Charting Project indicada por el usuario: versión fija, originales y hashes, contraste punto a punto con Overview y observaciones de investigación. Ver `data/tennis/mcp_20261016/AUDIT_README.md`.
@@ -36,6 +154,69 @@ operativo como canal de clientes.
 
 ## Pendientes 🔴
 
+## Arreglos de la auditoría de datos (2026-10-25) — `docs/auditoria_datos_motores_20261025.md`
+Orden del titular (25-oct): arreglar lo que falla, aplicar las recomendaciones y usar FotMob para completar partidos y
+datos. Regla desde el 25-oct: el error que aparece al desplegar o probar se arregla en la misma sesión, no se apunta.
+- [x] `qf.ingest.propline_cierres`: cierres archivados (`/odds/closing`) a `odds_snapshots` como `close`, fuente
+  `propline`. Un único `captured_at` por partido (el de-vig del CLV no mezcla momentos): el último instante en que
+  todas las líneas usadas seguían a la vista, a ≤ 10 min del inicio; fuera `is_stale`, periodos y recibos previos al
+  saque. Mismas casas y mercados que la captura horaria. Cron cada 3 h tras el recolector.
+- [x] Recolector SofaScore: Liga MX pedía el Clausura (`11620`, vacío); el Apertura es `11621`. MLS en eliminatorias
+  trae `round: null` y el recolector abandonaba: sin jornada se lista sin jornada (último y próximo).
+- [x] (25-oct, worker `ffe42ee`) Desplegado; cierres de 79 partidos cargados, MLS y Liga MX ya en SofaScore.
+- [x] (25-oct 17:41 UTC) La captura de PropLine usa la imagen sin etiquetas `com.docker.compose.*`
+  (`propline-shared-capture:sin-etiquetas`): un despliegue del worker ya no la toma por réplica.
+- [ ] **Enero de 2027:** volver Liga MX a `11620` (Clausura) en `scripts/sofascore_apify_config.json` y en el VPS.
+- [x] `matches.stats` (fichas de la web y serie del Motor C) desde SofaScore y, si falta, FotMob, con las claves de
+  `estadisticas.TIPOS` más centros; relleno de lo ya cargado. Solo donde está NULL.
+- [x] FotMob como complemento: además de xG/córners/tarjetas, `completar` rellena `stats`.
+- [x] (25-oct) Tarjetas a cero de FotMob: en Argentina, Brasil y parte de México el bloque de estadísticas trae
+  `[0, 0]` aunque la cronología tiene cada tarjeta. `extraer` cuenta la cronología cuando el bloque viene a cero
+  (sin cuerpo técnico) y `--reparar-tarjetas` corrigió lo guardado. Ver README «Tarjetas a cero de FotMob».
+- [ ] Sin cambios (decisión del titular): `SOFT_BOOKS`, licencia de BetsAPI, fuente de calendario de copas, tope
+  mensual de Apify (el ritmo medido el 24–25 oct supera los 15 USD/mes).
+
+## Auditoría de fuentes y backtest (2026-10-24) — `docs/auditoria_motores_20261024.md`
+- [x] Auditoría de solo lectura: uso de PropLine por motor, backtest temporal del A (RPS, log-loss, Brier, ECE, Kelly), calibración real de B y C.
+- [x] **Titular (24-oct):** API-Football en plan gratuito desde el 22-oct → se sustituye: resultados y calendario con PropLine, xG y estadísticas con SofaScore/Apify (tope 15 USD/mes y 40 partidos/día, solo las 13 ligas con modelo, fútbol antes que tenis/NBA).
+  Plan: `qf.ingest.propline_partidos` (lee `/scores` del archivo, sin HTTP; enlaza `external_ids.propline`; cierra con
+  marcador y córners del box score; nunca da de alta equipos) tras `RESULTS_PROVIDER=propline` en `results`/`fixtures`;
+  `qf.ingest.sofascore_partidos` (lee el archivo Apify montado en el worker; empareja por liga, ±36 h, nombres y MISMO
+  marcador; xG con la hora real de recepción; tabla inmutable `sofascore_detalles`); salud que mire resultados y la
+  fuente de cuotas activa. Casas nuevas solo a ≤ 48 h y cada 3 h (volumen).
+- [x] (cerrada 25-oct: hecho: worker alineado con main desde el 25-oct (ab82dcb y siguientes)) Worker con `estadisticas_mercado.py` y `alta_prob.py` de `main` (alta probabilidad, escalera y parley fallan desde el 24-oct). Con visto bueno.
+- [x] (25-oct) Cargar los cierres de PropLine a `odds_snapshots` como `close`: `qf.ingest.propline_cierres`.
+- [ ] **Titular:** `SOFT_BOOKS` frente a las casas de PropLine (solo 1xbet coincide).
+- [ ] Chequeo diario: detectar plan gratuito y calendario sin altas; `httpx` a WARNING (el token del bot sale en los registros).
+- [x] (25-oct) Ligue 2 y Superliga danesa fuera de los motores (db/086; sin cuotas en PropLine). Historial conservado.
+- [x] (25-oct) Serie B, LaLiga 2, Allsvenskan y Super League suiza fuera (db/088). Quedan 15 ligas + 2 copas.
+  Ver `docs/cobertura_ligas_propline_sofascore_20261025.md`.
+- [x] (25-oct) FotMob reactivado como complemento diario en las ligas activas (`referencias`, `previos`,
+  `posteriores`, `sedes`) y nuevo `fotmob_captura completar` (09:15 UTC, solo NULL, > 36 h tras el saque).
+- [x] (25-oct) Championship, 2. Bundesliga, Turquía y Noruega añadidas al recolector SofaScore.
+- [x] (25-oct) Hueco del ~20-sep al 25-oct: no hacía falta SofaScore (~6 USD). La captura FotMob del 18-oct ya lo
+  cubría; `posteriores --dias-atras 46` guardó los 39 que faltaban y `completar` rellenó 261. Los 15 sin xG son de
+  las últimas 36 h y entran con la carga diaria.
+- [x] (25-oct) Respaldo de resultados con FotMob (`fotmob_captura resultados`, cada 3 h a las :55): cierra y liquida lo
+  que PropLine deja abierto más de 6 h, solo si terminó en el tiempo reglamentario y con los mismos dos equipos.
+- [x] (25-oct) Sustituir lo que aún leía API-Football: once previsto y bajas de SofaScore (#118); clasificación calculada
+  con nuestros resultados (`ingest/standings.py`: coincide equipo a equipo con la última foto de API-Football en las 19
+  ligas salvo la sanción de Southampton, que va en `SANCIONES`); marcador en vivo desde el listado diario de FotMob (una
+  petición por pasada; `/scores` de PropLine gastaría del presupuesto diario que necesitan las cuotas). Calendario y
+  resultados van por PropLine (`RESULTS_PROVIDER=propline`); en el cron ya no queda ningún job de API-Football.
+- [x] (25-oct) `docker-compose.yml` del repo igual al del servidor (imágenes, montajes y variables; sin secretos).
+
+## Auditoría de los tres motores (2026-10-21) — `docs/auditoria_motores_20261021.md`
+Cada paso a producción requiere confirmación del titular. Orden recomendado:
+- [x] (22-oct, #70, en producción; modelo 2026.10.22-185314) A1-A4: `dixon_coles.fit` con gradiente analítico (prototipo `dc_rapido.py` de la auditoría), suma cero ponderada por muestra efectiva, ridge en partidos equivalentes (0,5-1), media vida 270; registrar y exigir `res.success`. Reentrenar y pasar la puerta (ΔRPS medido −0,00084 [−0,00137, −0,00031] en 11.920 partidos).
+- [x] (22-oct, en producción) A5: retirar el calibrador afín del 1X2 o reajustarlo con la verosimilitud del marcador exacto; la puerta debe medir más/menos y ambos marcan, no solo el 1X2.
+- [x] (22-oct, en producción) A8: agenda de la app con `both_teams_known=false` → 1X2 del mercado o sin porcentaje.
+- [ ] B2: lista de mercados del partido con calibración empírica por mercado derivado (o solo líneas probadas); investigar cópula + conteos Weibull (Boshnakov 2017). Poisson bivariado probado: peor que DC.
+- [x] (22-oct) C2: córners por equipo con el contexto del Motor A (medido sin cuotas: +0,025/+0,017 nats); repetir la prueba de líneas antes de habilitar. C3 (tarjetas): mixto con el A, no se cambia.
+- [ ] A7: escalar el xG de cada fuente a goles antes de mezclar. A6: inflación de la diagonal.
+- [x] (26-oct) Investigación: modelo dinámico y prior de ascendidos medidos en local (`docs/modelo_dinamico_y_ascendidos_20261026.md`). Prior: sin señal. Dinámico: mezcla DC multi-vida + Kalman −0,0008 de RPS en el año de producción; despliegue pendiente de decisión del titular (estado de Kalman diario + 3 DC).
+- [ ] Repetir `apilado_mercado.py`/`estaca.py` sobre totales, córners y tarjetas cuando haya ~2.000 partidos con cierre de Pinnacle (hoy 459 de totales, 127 de córners, 75 de tarjetas): `docs/investigacion_modelos_y_factores_20261026.md`.
+
 ## Recuperación de cierres Pinnacle (2026-10-14)
 
 - [x] Carga OddsPapi autorizada (15-oct): 2.918 cierres reconstruidos / 8.754 cuotas y 25 referencias para revisión, los 2.943 con procedencia inmutable. Originales verificados, respaldo completo en servidor, reversión e idempotencia comprobadas; 1.237 pruebas y huecos reducidos de 6.185 a 3.267. Detalle: docs/oddspapi_carga_20261015.md.
@@ -52,13 +233,13 @@ operativo como canal de clientes.
 - [x] Guardar por petición del usuario las 272 candidatas y las 586 ternas con originales y hashes en `data/pinnacle_recovery/20261014/`; marcadas como cierre sin verificar, sin carga en producción.
 - [x] Reintento explícito de OddsHarvester: cuatro sesiones nuevas, dos partidos de la lista, tres payloads de todas las casas verificados, cero Pinnacle nuevo. Resultado por fila y evidencia en `data/pinnacle_recovery/20261014_oddsharvester_retry/`; no son 6.185 consultas individuales.
 - [x] Recuperar con la clave OddsPapi autorizada: catálogo y asociación exacta, cola histórica terminada, originales y corte prepartido conservados; resultado y carga documentados arriba.
-- [ ] Conseguir fuente/acceso con Pinnacle para los cierres pendientes (cifra vigente: ver la línea anterior), validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
+- [x] (cerrada 25-oct: duplicada de la anterior (cierres de Pinnacle pendientes)) Conseguir fuente/acceso con Pinnacle para los cierres pendientes (cifra vigente: ver la línea anterior), validar muestra y coste antes del lote. Detalle: docs/pinnacle_recuperacion_20261014.md.
 
 ## Señales nuevas en el motor principal (2026-10-14)
 
 - [x] Prueba aislada LanusStats/365Scores (15-oct): nueve huecos reales, tres por liga; tres parejas nuevas en LaLiga 2 y cero en las muestras de Serie B/Ligue 2. Control positivo, identidad y hashes comprobados; acceso directo HTTP 200, sin gasto de proxy ni carga en la base. Granada–Albacete requiere revisar una hora de diferencia. Evidencia: data/xg_recovery/20261015_lanusstats/.
 - [x] Carga autorizada de las tres parejas 365Scores (15-oct, 16:49 UTC): identidad corroborada con FotMob, respaldo selectivo, ensayo revertido e idempotencia cero. Recepción real y seis originales verificados tras el commit; quedan 1.219 huecos, 233 de LaLiga 2. Detalle: docs/lanusstats_carga_20261015.md.
-- [ ] Ampliar la cobertura de 365Scores sobre los 233 huecos restantes de LaLiga 2, validar fechas y procedencia antes de cualquier carga; las muestras negativas de Serie B/Ligue 2 requieren otra comprobación/fuente y no acreditan una ausencia universal.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088)) Ampliar la cobertura de 365Scores sobre los 233 huecos restantes de LaLiga 2, validar fechas y procedencia antes de cualquier carga; las muestras negativas de Serie B/Ligue 2 requieren otra comprobación/fuente y no acreditan una ausencia universal.
 
 Pedido del usuario: llevar al motor principal XI y valor de jugadores, bajas, tiros/PSxG,
 árbitro, sede y clima, cuotas de apertura/cierre. Spec:
@@ -74,13 +255,13 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 - [ ] F4 — Puente de identidades FotMob/API-Football; XI con valor de jugador (bloque `xi`).
 - [ ] F5 — Árbitro: penaltis, expulsiones y tarjetas; unificar identidades (bloque `arbitro`).
 - [ ] F6 — Sede, viaje, altitud y clima (bloque `sede_clima`): historial desde Copernicus ERA5 (decisión del usuario), pronóstico en vivo y altitud con Open-Meteo Standard. Requiere antes: cuenta CDS, licencia aceptada y token personal del usuario.
-- [ ] F7 — Sello tardío en producción (un lote por partido, `batch_kind`).
-- **Orden acordado con el usuario (2026-10-15):** hasta el 1-nov no se toca código del motor (reentrenamiento automático con el
-  filtro de cierres y el worker alineado con `main`). Después: reejecutar `python -m qf.model.ajuste` sobre el nuevo OOS, comprar
+- [x] (cerrada 25-oct: hecho: F7 en producción (qf.publish.sello_tardio en el cron)) F7 — Sello tardío en producción (un lote por partido, `batch_kind`).
+- **Orden:** cualquier cambio de probabilidad o selección pasa la puerta de evaluación; el worker no se recrea mientras
+  corre el reentrenamiento (1-nov, 03:00-08:00 UTC). Reejecutar `python -m qf.model.ajuste` sobre el nuevo OOS, comprar
   los 527 snapshots de The Odds API (~5.270 créditos) y diseñar **F7** (es lo que deja entrar al XI en el motor y mejora los picks
   con cuotas de última hora; toca la cadena de hashes). Luego F3, F6, F5 y F4. Fecha de control: ~10-nov, CLV en sombra a 300.
 - **Ampliación del plan (2026-10-15, documentos de recomendaciones y de revisión del usuario):** spec
-  docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md. Nada antes del 1-nov. Orden nuevo:
+  docs/superpowers/specs/2026-10-15-mejoras-tres-motores-plan.md. Ya no espera al 1-nov (25-oct). Orden nuevo:
   F7 (+ bajas FotMob donde API-Football no las da) → F9 con F8 evaluada en paralelo sin tocar picks vendidos → descanso/calendario →
   archivo FotMob a tablas y F3, F6, F5, F4 → activar F8 y F10. F11 puede adelantarse (no toca el motor).
 - [ ] F8 — Conectar el modelo propio con los picks: mezcla A/B por familia de mercado sobre la distribución de marcadores (base `meta.py`); debe aportar sobre B **del mismo momento**; la mezcla no evita sola el doble conteo; predicciones honestas, peso cero válido, periodo reservado; C con su propio mercado. Evaluada en paralelo, activada al final.
@@ -88,11 +269,11 @@ de lambdas. Clima: Open-Meteo plan Standard (sin APIs históricas).
 - [ ] F10 — Selección y exposición: alternativas de un partido contra la jornada con registro; exposición al mismo partido entre productos (medir/mostrar, no limitar); correlación en parley/escalera; volumen diario en `/control`.
 - [ ] F11 — App: etiquetar la fuente de cada cifra (modelo, mercado, pick) e indicador de calidad de datos separado de la probabilidad; 6 idiomas.
 - [ ] F12 — Factores sin fase: descanso/partidos acumulados (primero; falta calendario de copas y otras competiciones), ida/vuelta y global, necesidad de puntos, entrenador y estilos (ambos en el archivo FotMob), motor C ampliado (media y dispersión).
-- [ ] Datos (spec §5): llevar a tablas el archivo FotMob 2024→hoy (XI, minutos, bajas, entrenador, ronda, estilos); descargar calendario de copas/continentales/FIFA, altitud de 758 sedes y ERA5 (token del usuario); bajas de Argentina/Liga MX/Portugal desde FotMob previo (API-Football reporta 0) y captura diaria del archivo FotMob (hoy importación puntual). No comprar cuotas históricas a T-60 (≈14.000–31.000 créditos por temporada).
+- [x] (cerrada 25-oct: hecho: archivo FotMob en tablas (db/075), altitud (db/076), calendario (db/078) y ERA5 (db/082); lo que falta está en F12) Datos (spec §5): llevar a tablas el archivo FotMob 2024→hoy (XI, minutos, bajas, entrenador, ronda, estilos); descargar calendario de copas/continentales/FIFA, altitud de 758 sedes y ERA5 (token del usuario); bajas de Argentina/Liga MX/Portugal desde FotMob previo (API-Football reporta 0) y captura diaria del archivo FotMob (hoy importación puntual). No comprar cuotas históricas a T-60 (≈14.000–31.000 créditos por temporada).
 - [ ] Antes de `PUBLISH_PICKS_ENABLED=1`: `picks.select_daily()` solo ve `predictions` (13 ligas) y la sombra mide 22; alinear cobertura.
 - [ ] Vigilar la ampliada 73–95 %: en picks con cuota de referencia (n=223) real 78,0 % frente a 81,4 % prometido; ROI a referencia −7,5 % (base −3,0 %, n=91; esperado en una línea de acierto).
-- [ ] Huecos de xG desde 2024 (1.222; Serie B, LaLiga 2, Ligue 2): requieren una fuente nueva, decisión del usuario.
-- [ ] Huecos de xG desde 2024 (1.219 tras tres parejas 365Scores; Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46): ampliar fuentes; la muestra 365Scores no acredita cobertura completa.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088); los huecos de Argentina son de ene-abr 2024) Huecos de xG desde 2024 (1.222; Serie B, LaLiga 2, Ligue 2): requieren una fuente nueva, decisión del usuario.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088); duplicada de la anterior) Huecos de xG desde 2024 (1.219 tras tres parejas 365Scores; Serie B 588, LaLiga 2 233, Argentina 208, Ligue 2 144 y otros 46): ampliar fuentes; la muestra 365Scores no acredita cobertura completa.
 
 ## Buscar datos restantes de las 23 competiciones (2026-10-13)
 
@@ -101,11 +282,11 @@ Saldo nuevo verificado 4.012; sin compras, entrenamiento o reintroducción de
 ligas retiradas. Autoriza la recuperación/importación ya acordada en este chat.
 
 - [x] Auditar huecos vigentes y fuente/temporada; arnés previo 1.049/24.
-- [ ] Reutilizar originales y muestrear fuentes históricas con soccerdata y
+- [x] (cerrada 25-oct: fuentes decididas el 25-oct (PropLine, SofaScore, FotMob); soccerdata/ZenRows ya no se usan) Reutilizar originales y muestrear fuentes históricas con soccerdata y
   ZenRows CLI/MCP; separar métrica no publicada de errores de acceso.
-- [ ] Descargar datos faltantes acreditados con presupuesto/concurrencia
+- [x] (cerrada 25-oct: fuentes decididas el 25-oct; soccerdata/ZenRows ya no se usan) Descargar datos faltantes acreditados con presupuesto/concurrencia
   compartidos, revisar identidades y conservar recibos/reloj por observación.
-- [ ] Importar lo recuperado sin reemplazar originales/xG congelados; verificar
+- [x] (cerrada 25-oct: fuentes decididas el 25-oct; soccerdata/ZenRows ya no se usan) Importar lo recuperado sin reemplazar originales/xG congelados; verificar
   reversión, repetición, modelo y servicios; documentar cobertura y pendientes.
 
 ## Eliminar Chile y Brasil B (2026-10-13)
@@ -176,13 +357,13 @@ Diez identidades de copas pendientes y dos conflictos conservados; sin nuevos
 partidos/clubes canónicos. 1.033 pruebas, transacción reversible e idempotencia;
 modelo/API verificados. Detalle: docs/soccerdata_zenrows_20261013.md.
 
-- [ ] Completar los 2.073 huecos xG de las 23 ligas restantes cuando una fuente acredite cobertura:
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088); el resto de huecos se cubre con SofaScore y FotMob) Completar los 2.073 huecos xG de las 23 ligas restantes cuando una fuente acredite cobertura:
   muestras 2024 sin xG o con error; no convertir ausencia/bloqueo en cero.
 - [x] Recuperar calendarios actuales antes bloqueados de Brasil B, Bundesliga 2, Dinamarca,
   Suecia y Europa League; conservar cuota y originales de cada configuración.
-- [ ] Extender esos calendarios a toda la historia cuando respondan los originales;
+- [x] (cerrada 25-oct: fuentes decididas el 25-oct; soccerdata ya no se usa) Extender esos calendarios a toda la historia cuando respondan los originales;
   la recuperación de jornadas actuales no acredita temporadas anteriores.
-- [ ] Resolver identidades de copas pendientes y adaptar consumidores históricos
+- [x] (cerrada 25-oct: duplicada de F4 (puente de identidades) y F3 (bajas)) Resolver identidades de copas pendientes y adaptar consumidores históricos
   de XI/jugadores/bajas; los datos almacenados no activan modelos por sí solos.
 
 ## Viabilidad de recuperar fútbol con ZenRows (2026-10-13)
@@ -222,8 +403,8 @@ Detalle: docs/importacion_fotmob_20261013.md.
 - [x] Datos al motor 18-oct (`docs/datos_al_motor_20261018.md`): tablas FotMob con `match_id`, altitud, calendario de equipos (cron diario), equivalencias de árbitros, puente de jugadores, vista de descanso.
 - [x] 18-oct tarde: captura de FotMob autorizada y montada (`db/081`, cron con flock, pronóstico de clima incluido); token de CDS recibido y descarga ERA5 en curso (`db/082`); Open-Meteo descartada por licencia.
 - [x] ERA5 terminado (20.193 partidos), `qf.ingest.sedes` con cron horario y ERA5 incremental (arregla el defecto de cache por celda).
-- [ ] Pendiente: regenerar el token de CDS; poner el ERA5 incremental en cron al recrear el worker (necesita la variable); estadios duplicados (182 grupos); minutos con selección nacional; convertir la captura previa en entrada de F7 (alineación y bajas a T-70/T-40).
-- [ ] Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
+- [x] (cerrada 25-oct: token de Copernicus conservado por decisión del titular, ERA5 en cron 06:20; F7 hecho; estadios duplicados pasa a mejoras) Pendiente: regenerar el token de CDS; poner el ERA5 incremental en cron al recrear el worker (necesita la variable); estadios duplicados (182 grupos); minutos con selección nacional; convertir la captura previa en entrada de F7 (alineación y bajas a T-70/T-40).
+- [x] (cerrada 25-oct: duplicada de F4) Adaptar consumidores de jugadores/XI/bajas a IDs FotMob y validar sus modelos
   respetando recepción temporal; las tablas nuevas ya están importadas.
 
 ## App Flutter + Firebase — contenido real y monedas (2026-10-11)
@@ -422,10 +603,10 @@ Referencia: `apps/mobile/docs/MERCADOS_MODELO_APP_20261011.md`.
   Detalle: `apps/mobile/docs/IDIOMAS_APP_BACKEND_FIREBASE_20261011.md`.
 - [x] Fase 0: recibir ideas de pantallas, contrastarlas con fútbol/NBA y web,
   proponer mejoras y acordar navegación y alcance de la primera versión.
-- [ ] Convertir el diseño acordado en fases con entregables y criterios de
+- [x] (cerrada 25-oct: genérica, sustituida por las tareas concretas de la app) Convertir el diseño acordado en fases con entregables y criterios de
   aceptación: base Firebase, identidad compartida, contenido real, avisos,
   medición/control, cobros y lanzamiento.
-- [ ] Implementar las fases según sus dependencias y validar cada entrega.
+- [x] (cerrada 25-oct: genérica, sustituida por las tareas concretas de la app) Implementar las fases según sus dependencias y validar cada entrega.
 
 Estado actual: integración real autorizada y desplegada. Firebase Core instalado
 y configurado; identidad Firebase, traducciones, notificaciones y cobros siguen
@@ -564,7 +745,7 @@ del usuario (cuota 1,25-1,40, 5-7 pasos, retirar la inversión al llegar a
       `eval/escalera_handicap.py`; −1,5 fuera.
 - [x] Desplegado 2026-10-08 21:08 UTC (commit 37aa902): `db/045`,
       `LOTE_ESCALERA_DESDE = 2026-10-09`, `ESCALERA_ENABLED=1`, api y worker.
-- [ ] Revisar el primer sellado con escalera (09-oct, 08:00 UTC): reto creado,
+- [x] (cerrada 25-oct: fecha pasada; la escalera funciona y se liquida) Revisar el primer sellado con escalera (09-oct, 08:00 UTC): reto creado,
       escalón en el lote y visible en `/escalera`.
 
 ## Escalera por probabilidad con córners, tarjetas, goles y ambos anotan (2026-10-08, decisión del usuario)
@@ -600,8 +781,8 @@ pasos y −26 % a 6. Se publica igual que antes, con su historial entero.
 - [x] Repetida la prueba de las líneas en producción con datos completos:
       escalera sin más de 6,5 / 9,5 córners ni visitante menos de 7,5, con
       menos de 4,5 / 5,5 tarjetas; alta probabilidad sin local más de 2,5.
-- [ ] Desplegar (api + worker), con autorización del usuario.
-- [ ] Tarjetas en alta probabilidad: NO por ahora (alta va 71,9 % real frente
+- [x] (cerrada 25-oct: hecho: tarjetas desplegadas en el worker (DEPLOYS 22-oct)) Desplegar (api + worker), con autorización del usuario.
+- [x] (cerrada 25-oct: decisión registrada (no meter tarjetas en alta probabilidad), sin acción) Tarjetas en alta probabilidad: NO por ahora (alta va 71,9 % real frente
       a 82,9 % prometido en sus primeros 57; antes entender eso). Necesitaría
       prueba con los tramos 80-95, migración y liquidación.
 
@@ -625,7 +806,7 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       planes, auditoría y la vista de sistema anterior. Acciones
       comerciales con CSRF y auditadas; el pipeline sigue siendo de solo
       lectura desde el panel (no lanza jobs ni publica).
-- [ ] Elegir procesador de pago (decisión del usuario) → checkout + webhook
+- [x] (cerrada 25-oct: hecho: procesador elegido (Whop, código en main)) Elegir procesador de pago (decisión del usuario) → checkout + webhook
       firmado e idempotente (contrato en `frontend/ACCESS_FLOW.md`).
 - [x] Envío de correo con Proton Mail (decisión del usuario, 2026-10-07):
       `comercial/correo.py` por SMTP, `db/044` (enlaces de un solo uso,
@@ -651,6 +832,14 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       permiso del usuario; vuelve a pedir credenciales tras Access.
 
 ## NBA 2026-27 — investigación y experimentos (2026-10-03)
+- [x] NBA: cuotas de bet365 (BetsAPI) normalizadas y unidas a game_id con protocolo v1.1 congelado; docs/nba_cuotas_betsapi_normalizadas_20261024.md.
+- [x] NBA: normalizado ampliado (tiros, pérdidas, rebotes ofensivos, posesiones, play-in/playoffs) con protocolo congelado; docs/nba_normalizado_ampliado_20261024.md.
+- [x] NBA: modelo de props anclado en el mercado con protocolo congelado (nba.props_residual); docs/nba_props_residual_20261024.md.
+- [x] NBA: entrenamiento y calibración de todos los mercados con protocolos congelados (nba.team_markets, nba.engine_calibration); docs/nba_calibracion_motor_20261024.md.
+- [x] NBA: productor vivo 1.3.2 con las sumas de puntos, rebotes y asistencias, chequeo previo con protocolo congelado y runbook de despliegue (no desplegado); docs/nba_productor_combinaciones_20261024.md.
+- [x] NBA: hash del módulo vivo independiente de los saltos de línea y comando `compare` para validar el modelo antes de desplegar; docs/nba_productor_combinaciones_20261024.md.
+- [x] NBA: productor vivo 1.4.0 validado pieza por pieza con protocolo congelado (nba_live14_protocol.json); docs/nba_productor_14_20261025.md.
+- [x] NBA: datos del vivo = RUN071 + columnas nuevas (pérdidas, tiros, rebote ofensivo, posesiones) y mercado de pérdidas, validados con nba_live14b_protocol.json; docs/nba_productor_14b_20261025.md.
 
 - [x] Revisar arquitectura y contrastar literatura académica, doctorados,
       maestrías y el texto aportado. Plan integrado con fuentes, modelos,
@@ -685,28 +874,28 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       comparable; liderazgo por mercado/latencia observada; minutos separados
       de USG%. Sin garantizar ventaja de props o modelos cuánticos.
 - [x] Integrar correcciones en plan maestro NBA 1.1 y registro: CLV complementario, cierre comparable, latencia/linaje, USG y pretemporada. Versiones previas preservadas; fases de implementacion pendientes.
-- [ ] **F0 / G0:** alcance, decisiones y protocolo preregistrado. Presupuesto,
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F0 / G0:** alcance, decisiones y protocolo preregistrado. Presupuesto,
       operadores/proveedor y canal de pruebas pendientes de definición.
-- [ ] **F1 / G1:** aplicación `apps/nba/`, dependencias/despliegue, Postgres/
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F1 / G1:** aplicación `apps/nba/`, dependencias/despliegue, Postgres/
       Redis, configuración y recuperación propios. Aplicación/entorno/config
       locales implementados; Postgres/Redis y recuperación aún pendientes.
       Arnés resuelto y verificado; no importar `qf`.
-- [ ] **F2 / G2:** cobertura E0, identidad, contratos/reglas, gasto y familia
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F2 / G2:** cobertura E0, identidad, contratos/reglas, gasto y familia
       prepartido inicial elegida por datos. Puede avanzar con F1 después de F0.
-- [ ] **F3 / G3:** ingesta versionada, raw, cuarentena, reconciliación y PIT.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F3 / G3:** ingesta versionada, raw, cuarentena, reconciliación y PIT.
       E18 continúa en todas las fases; referencias/hash y anclaje de evidencia.
-- [ ] **F4 / G4:** baselines y distribución de minutos E1, priors encogidos,
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F4 / G4:** baselines y distribución de minutos E1, priors encogidos,
       roles/carga y coherencia deportiva; no usar minutos reales como feature.
-- [ ] **F5 / G5:** tasa/distribución de estadística, E8 básico, E21 cuando
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F5 / G5:** tasa/distribución de estadística, E8 básico, E21 cuando
       proceda y E22/E23 básicos. Candidato y criterios congelados antes del test.
-- [ ] **F6 / G6:** Telegram de pruebas, sellado/outbox, caducidad, revalidación,
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F6 / G6:** Telegram de pruebas, sellado/outbox, caducidad, revalidación,
       disponibilidad E5/E17 y resiliencia E19. Resolución y demoras explícitas.
-- [ ] **F7 / G7:** confirmación prospectiva E26 y revisión de promoción propia.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F7 / G7:** confirmación prospectiva E26 y revisión de promoción propia.
       300 partidos/60 días/3 bloques son piso propuesto, no prueba suficiente
       de ROI. Separar métricas deportivas, simulación y datos informados.
-- [ ] **F8 / G8:** challengers de lesiones/rol/oportunidades E2/E3/E7/E8/
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F8 / G8:** challengers de lesiones/rol/oportunidades E2/E3/E7/E8/
       E9/E13. Núcleo F6 y datos suficientes; cada candidato nuevo vuelve a F7.
-- [ ] **F9 / G9:** operación evaluada, capacidad/utilidad del producto y
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) **F9 / G9:** operación evaluada, capacidad/utilidad del producto y
       extensiones a periodos/live/modelos avanzados con validación específica.
       No heredar puertas de fútbol ni operar apuestas/cuentas de clientes.
 
@@ -733,19 +922,19 @@ Un único FastAPI sirve a la web, a la futura app Flutter y al panel.
       primeras diez apariciones observadas, protocolo separado, 8.264 casos
       históricos y escenario 2026-27; abstiene sin prior suficiente. Resultado
       exploratorio, condicional a participación, sin promoción ni publicación.
-- [ ] Verificar correspondencias ESPN/NBA y disponibilidad actual; incorporar
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Verificar correspondencias ESPN/NBA y disponibilidad actual; incorporar
       rol/rotación, calibración/abstención y coherencia conjunta de minutos al
       arranque. Rookies y ausencia de datos no se convierten en ceros.
-- [ ] Validar lesiones históricas contra PDFs, IDs y corte temporal; muestras
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Validar lesiones históricas contra PDFs, IDs y corte temporal; muestras
       de props siguen sin contratos/PIT suficientes para ROI o CLV.
-- [ ] Recuperar registros en cuarentena contrastando otra fuente; unir IDs
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Recuperar registros en cuarentena contrastando otra fuente; unir IDs
       ESPN→NBA con evidencia y cubrir 2023-24 individual incompleto.
-- [ ] Captura gratuita actual con rosters, calendario y disponibilidad PIT;
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Captura gratuita actual con rosters, calendario y disponibilidad PIT;
       contratos/cuotas y destino NBA privado de pruebas siguen pendientes.
 
 ## Histórico FotMob (2026-10-03, alcance del usuario)
 
-- [ ] Descargar a archivos locales el histórico del 1-ene-2024 al 3-oct-2026
+- [x] (cerrada 25-oct: hecho: archivo FotMob 2024-oct 2026 importado (db/075, 20.331 partidos)) Descargar a archivos locales el histórico del 1-ene-2024 al 3-oct-2026
       de las 23 ligas y Champions/Europa League. Inventariar temporadas reales,
       filtrar partidos terminados y deduplicar por ID de FotMob. Conservar JSON
       comprimido y hora de captura, exportar xG/estadísticas y cobertura por
@@ -925,7 +1114,7 @@ Cruzadas con lo ya medido (2.D, 2.E): solo entra lo que no se ha probado.
       Los anteriores conservan su formato: el del 2-oct regenerado desde la
       base da el mismo JSON que el sellado.
 - [x] **HECHO (3-oct) — `/openapi.json` ya no se sirve** (`openapi_url=None`).
-- [ ] **ALTA antes de publicar la cadena — el lote lleva también los PICKS,
+- [x] (cerrada 25-oct: resuelto por compromiso-revelación de la cadena; su despliegue está en «Comprometer-revelar de la cadena») **ALTA antes de publicar la cadena — el lote lleva también los PICKS,
       de pago incluidos** (`advised_price`, `bookmaker`, `min_price`,
       `fair_prob`). El flujo documentado en `hashchain.py` hace commit del
       JSON a un repo público "antes del primer kickoff": eso regalaría cada
@@ -1003,15 +1192,15 @@ picks de valor y sin tocar su puerta. Es una línea de acierto, no de valor.
 - [x] `GET /alta-probabilidad`, sección web y estado en `/control`.
 - [x] Despliegue con `ALTA_PROB_ENABLED=0` (2026-10-06 18:12 UTC): db/040 aplicada y
       verificada (bordes, UNIQUE, inmutabilidad), ensayo de SQL, verify 8 lotes.
-- [ ] Tras el sellado del 7-oct (08:00 UTC): verify y recibo con `n_alta_prob: 0`;
+- [x] (cerrada 25-oct: hecho: alta probabilidad activa y liquidándose) Tras el sellado del 7-oct (08:00 UTC): verify y recibo con `n_alta_prob: 0`;
       luego activar `ALTA_PROB_ENABLED=1` con visto bueno del usuario.
 - [x] Más goles (2026-10-06): `af_odds` guarda las líneas de goles de la misma
       petición (db/041) y la línea las lee de la misma respuesta. Desplegado
       19:58 UTC; vista previa 9 de 15 partidos (7 de goles, antes 0).
-- [ ] Vigilar a las 24 h: filas/día de `af_odds_snapshots` y duración de la
+- [x] (cerrada 25-oct: af_odds (API-Football) retirado el 25-oct) Vigilar a las 24 h: filas/día de `af_odds_snapshots` y duración de la
       pasada (hoy 15 s, ~40 filas por partido). Chequeo de frescura de
       `af_odds` en `health.py` (hoy un fallo de escritura solo queda en el log).
-- [ ] Antes de configurar `CHAIN_GIT_REMOTE`: el lote lleva `prob` exacta y el
+- [x] (cerrada 25-oct: cubierto por compromiso-revelación de la cadena) Antes de configurar `CHAIN_GIT_REMOTE`: el lote lleva `prob` exacta y el
       ajuste de goles (anula el redondeo público). Decidir.
 
 ## Más picks sin relajar la puerta comercial (2026-09-25)
@@ -1056,7 +1245,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       se habrían publicado en la sombra sharp (`shadow_sharp.publishable_list`).
 - [x] (2026-10-05, pedido del usuario) Probabilidad real de cada pick en la
       web (`fair_prob`, Pinnacle sin margen) y acierto esperado de la lista.
-- [ ] Fase comercial posterior: cuentas, sesiones, suscripciones y cobros
+- [x] (cerrada 25-oct: hecho: cuentas en /app/v1 y cobro con Whop) Fase comercial posterior: cuentas, sesiones, suscripciones y cobros
       dentro de este mismo backend, solo tras superar la puerta de CLV.
 
 - [x] **API — sin cuentas de usuario, servicio único para el frontend
@@ -1090,7 +1279,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       `subscribers` de `db/001_schema.sql` (con `email`, `tier`, `telegram_id`)
       ya no tiene ningún consumidor en esta API — si vas a manejar cuentas de
       pago, esa base de datos vive en tu backend de frontend, no aquí.
-- [ ] **API — cobros.** Webhook del procesador de pago → `UPDATE subscribers`.
+- [x] (cerrada 25-oct: hecho: webhook de Whop (api/whop.py)) **API — cobros.** Webhook del procesador de pago → `UPDATE subscribers`.
       Cero código hoy. Pospuesto.
 - [x] **API — rate limiting** en las rutas públicas (revisado 2026-09-24).
       Ya existía como middleware global (todas las rutas, 60/min, Redis).
@@ -1113,7 +1302,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       **Corregido y desplegado el 2-oct-2026:** hasta entonces no guardó
       NINGUNA baja (comparaba el id de API-Football con el `team_id`
       interno). La muestra point-in-time empieza el 2-oct.
-- [ ] **Feature de disponibilidad a partir de bajas.** `injuries.py` solo
+- [x] (cerrada 25-oct: duplicada de F3 (bajas como minutos perdidos)) **Feature de disponibilidad a partir de bajas.** `injuries.py` solo
       ingiere y almacena, igual que hizo `lineups.py` en su fase inicial.
       Falta un equivalente a `lineups.availability()` que combine bajas +
       XI confirmado en una feature de `residual.py`. Requiere haber
@@ -1163,7 +1352,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       4. [x] La sombra usa el último challenger validado si el del modelo
          activo no existe (un reentreno no promovido dejaba el brazo sin
          artefacto).
-- [ ] **Fuerza por jugador (diseño aprobado 2026-09-29,
+- [x] (cerrada 25-oct: sustituida por «Impacto por jugador» (ajuste_xi, 19-oct)) **Fuerza por jugador (diseño aprobado 2026-09-29,
       `docs/superpowers/specs/2026-09-29-fuerza-por-jugador-design.md`).**
       - [x] Fase A, datos (plan `docs/superpowers/plans/2026-09-29-fuerza-por-jugador-fase-a-datos.md`):
         db/035, `ingest/estadisticas_jugador.py`, captura al cerrar en
@@ -1175,7 +1364,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
         0,21912) y no gana al XI simple: no se valida. La comparación queda
         en el reentreno mensual (`val["player_value"]`) por si la muestra
         cambia la lectura.
-      - [ ] ~~Fase B2, sombra en vivo~~ DESCARTADA mientras el reentreno
+      - [x] (cerrada 25-oct: descartada (tachada)) ~~Fase B2, sombra en vivo~~ DESCARTADA mientras el reentreno
         mensual no muestre `player_value.valor.gana_al_simple = true`.
 - [x] **HECHO (1-oct, decisión del usuario: opción B) — criterio de ECE
       del XI.** Ahora la calibración no puede empeorar más allá de su propio
@@ -1189,7 +1378,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       257 de 262 equipos con partido en 14 días ya tienen ≥3 XI previos
       (faltan 5 de copas), así que los brazos de XI miden desde el 9-oct y
       no desde finales de octubre.
-- [ ] **El XI llega tarde: medir antes de comprar otra fuente (2026-10-01).**
+- [x] (cerrada 25-oct: medido el 25-oct: SofaScore da el XI confirmado 29-65 min antes) **El XI llega tarde: medir antes de comprar otra fuente (2026-10-01).**
       API-Football publica el once a T-25 (22 de 22 partidos de MLS/Liga MX;
       su propia guía dice 20-40 min). Los clubes lo anuncian ~T-60 y
       Pinnacle se mueve en minutos: la ventaja de "reaccionar antes que las
@@ -1200,7 +1389,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       `lineup_lambda_market`: aplica el ajuste de XI sobre cuotas de T-20 que
       ya incorporan el XI, así que mide doble efecto por diseño; leerlo
       como cota inferior, no como el valor del XI.
-- [ ] **Validar el ajuste de XI con datos nuevos.** El challenger que estima
+- [x] (cerrada 25-oct: duplicada de «Impacto por jugador» (medir ajuste_xi tras ~150 partidos)) **Validar el ajuste de XI con datos nuevos.** El challenger que estima
       ajustes separados sobre `log(lambda_home)` y `log(lambda_away)` y su
       ejecución en sombra ya existen, pero las tablas de predicciones y XI
       locales están vacías. Activar la captura, acumular muestra y exigir
@@ -1213,7 +1402,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       reentrenamientos; no copiar constantes de otros sistemas ni confundir
       este filtro con el `edge_shrinkage` existente. Requiere suficiente
       histórico de predicciones point-in-time y cierres.
-- [ ] **Fase 2 — superar el mercado sharp actual.** Elo ya está implementado
+- [x] (cerrada 25-oct: cubierta por F8/F9) **Fase 2 — superar el mercado sharp actual.** Elo ya está implementado
       y medido sobre las mismas 1.907 observaciones que Dixon-Coles/Pinnacle:
       RPS 0,20533 / 0,20245 / 0,19561. El baseline mejora, pero el mercado
       sigue delante y sus últimas cuotas locales son de enero de 2026.
@@ -1236,7 +1425,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       `w_model≈0` no cambia nada publicable. Reabrir solo si se vuelve a
       querer AH en el criterio sharp (entonces es trabajo de `find_candidates`,
       no de `_apply_blend`).
-- [ ] **Frontend de la web (Fase 3, posterior).** El prototipo visual vive en
+- [x] (cerrada 25-oct: hecho: web en producción) **Frontend de la web (Fase 3, posterior).** El prototipo visual vive en
       `frontend/`; la aplicación comercial todavía no existe y consumirá la
       API cuando los pendientes de las fases anteriores estén estabilizados.
       Se tomó Pitchverse como referencia de composición visual y navegación,
@@ -1265,7 +1454,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
         El modelo aparece como diagnóstico, no como selector. Los precios
         demo salen de dos lambdas (Poisson) para que todas las vistas
         cuadren entre sí. Sigue siendo demo: sin API, sin cobros.
-      - [ ] Integración comercial posterior: suscriptores, pagos y
+      - [x] (cerrada 25-oct: hecho: cuentas, suscripciones y cobro en el mismo FastAPI) Integración comercial posterior: suscriptores, pagos y
         autorización en módulos del mismo FastAPI; condicionada a la puerta
         de validación del producto. El BFF separado de la decisión anterior
         queda sustituido por el plan 2026-09-23 de esta página.
@@ -1297,7 +1486,7 @@ el navegador nunca verá `SERVICE_TOKEN` ni `ADMIN_TOKEN`.
       ResolutionImpossible. Queda comentado. Solo lo usa `xg_fbref.py`, que el
       README ya da por inservible (Cloudflare). O se borra el módulo o se
       afloja el pin.
-- [ ] **¿Bélgica, Rusia, Ucrania, Turquía, Grecia?** Sumarían ~1.160 cruces
+- [x] (cerrada 25-oct: alcance cerrado el 25-oct: 15 ligas + 2 copas) **¿Bélgica, Rusia, Ucrania, Turquía, Grecia?** Sumarían ~1.160 cruces
       europeos más, pero son cinco ligas para menos muestra de la que dieron
       tres. Rendimientos decrecientes claros: hacerlo solo si se quieren esas
       ligas por sí mismas, no por el término `strength`.
@@ -1386,7 +1575,7 @@ no "el modelo no sirve", sino "el modelo sirve para la forma, no para el nivel".
 
 Es lo único que puede cerrar el hueco, por el propio diagnóstico:
 
-- [ ] **XI a T-60** (ya construido, sin muestra). Ya no lo bloquea el plan
+- [x] (cerrada 25-oct: duplicada de F7 (hecho)) **XI a T-60** (ya construido, sin muestra). Ya no lo bloquea el plan
       (Pro desde 2026-09-22; `lineups` corre cada 5 min en el servidor). Lo
       bloquean la muestra y, como a 2.B, la falta de modelo activo. Es el de
       mejor relación valor/esfuerzo del proyecto.
@@ -1395,7 +1584,7 @@ Es lo único que puede cerrar el hueco, por el propio diagnóstico:
       baja, motivo) con el mismo proveedor ya contratado. Ingesta en
       `src/qf/ingest/injuries.py`, sellada con `captured_at`. Falta la
       feature de disponibilidad que entra en 2.B (ver Pendientes 🔴 arriba).
-- [ ] **Movimiento de línea (fase 5).** Predecir la dirección del movimiento
+- [x] (cerrada 25-oct: duplicada de «Fase 5 — movimiento de línea») **Movimiento de línea (fase 5).** Predecir la dirección del movimiento
       T-72 -> cierre es modelar un proceso MECÁNICO (flujo de dinero, cambios
       de límite), no uno caótico, y es donde un operador pequeño puede ganar de
       verdad. Necesita los 12 meses de snapshots: empezar a acumular hoy.
@@ -1472,7 +1661,7 @@ Lo que sí es matemática valiosa y NO está construido:
       el edge crudo del modelo correlaciona **−0,123** con el acierto. Es una
       anti-señal, y filtrar más fuerte sobre ella no puede ayudar. Queda
       `UNCERTAINTY_ENABLED=0` por medición, no por prudencia.
-- [ ] **PLAN (2026-09-23) — sustituir el criterio de selección por "casa blanda
+- [x] (cerrada 25-oct: hecho: criterio sharp en producción (shadow_sharp)) **PLAN (2026-09-23) — sustituir el criterio de selección por "casa blanda
       contra precio sharp".** Piloto en `progreso.md`. Orden obligatorio:
       0. [x] Bloquear la publicación con el criterio viejo (2026-09-23).
          `PUBLISH_PICKS_ENABLED=0` por defecto: `daily.py` predice y sella,
@@ -1556,7 +1745,7 @@ Lo que sí es matemática valiosa y NO está construido:
          de todas las ofertas por antelación, casa, fuente y liga. Estado
          publicado en `/model-card` (`sombra_criterio_sharp`). 7 tests.
          Verificado contra el Postgres local: 0 ofertas hoy.
-- [ ] **PLAN (2026-09-25) — Más mercados en el criterio sharp: goles y
+- [x] (cerrada 25-oct: probado sin valor y archivado (harness/archivo)) **PLAN (2026-09-25) — Más mercados en el criterio sharp: goles y
       hándicap asiático.** Decisión del usuario: necesita picks todos los días
       y el 1X2 solo da pick en ~1 de cada 5 partidos (medido en vivo 24-25
       sep). Mismo criterio, más mercados; no se baja el umbral.
@@ -1696,7 +1885,7 @@ Lo que sí es matemática valiosa y NO está construido:
          medida = EV al cierre / edge bruto de la primera oferta por partido
          y casa, suelo 0. Solo afecta a capturas futuras (cada oferta guarda
          la persistencia con la que se decidió).
-- [ ] **Idea aparcada (2026-09-27, el usuario prefirió no hacerlo): medir más
+- [x] (cerrada 25-oct: superada: la sombra mide todas las casas desde el 28-sep) **Idea aparcada (2026-09-27, el usuario prefirió no hacerlo): medir más
       casas en sombra.** Con TODAS las casas del feed, los partidos con oferta
       desde el 24-sep pasarían de 8 a 25; las que más aportan: LeoVegas (22),
       BetVictor (14), Unibet (13), Coolbet (7; +4,4% al cierre en el histórico
@@ -1707,7 +1896,7 @@ Lo que sí es matemática valiosa y NO está construido:
       Sportium, Luckia, Kirolbet, Strendus y Playdoit no los da ningún
       proveedor. Propuesta que quedó sin hacer: registrar esas ofertas en la
       sombra marcadas "en medición", fuera de la puerta y sin publicar.
-- [ ] **PLAN (2026-09-25) — Más ligas en 1X2 para tener picks a diario.**
+- [x] (cerrada 25-oct: hecho: ligas añadidas (db/023, db/033) y alcance cerrado el 25-oct) **PLAN (2026-09-25) — Más ligas en 1X2 para tener picks a diario.**
       Sondeo real (API-Football `odds?date=`, 1X2, 26-28 sep, parón de
       selecciones en Europa, una foto por partido): 823 partidos con cuotas
       en 176 ligas; 491 con Pinnacle y casas de la lista en la misma
@@ -1786,7 +1975,7 @@ Lo que sí es matemática valiosa y NO está construido:
          seleccionar → sellar → publicar no cambia. Con la publicación
          cerrada no se elige nada, igual que antes. Verificado: 43 partidos
          solo sharp elegibles a 30 días, 0 en la predicción sellada.
-- [ ] **Desplegar y esperar la muestra.** Nada de lo anterior produce datos
+- [x] (cerrada 25-oct: hecho: desplegado y con muestra) **Desplegar y esperar la muestra.** Nada de lo anterior produce datos
       hasta que el contenedor corra el cron: `odds_worker` (cierres de
       Pinnacle), `af_odds` y `shadow_sharp capture`.
       Preparado en local (2026-09-23), falta ejecutarlo en el servidor:
@@ -1851,7 +2040,7 @@ Lo que sí es matemática valiosa y NO está construido:
             `odds_worker`/`af_odds`/`shadow_sharp` acumulen cierres frescos
             (ya corriendo desde el fix del cron).
       - [ ] Backup fuera del servidor (sin destino rclone todavía).
-      - [ ] **Resultados de la temporada en curso sin cargar (revisado
+      - [x] (cerrada 25-oct: resuelto: resultados al día (PropLine + respaldo FotMob)) **Resultados de la temporada en curso sin cargar (revisado
             2026-09-24, 01:50 UTC del 25).** Último partido terminado en la
             base: Premier, LaLiga, Serie A, Eredivisie y Liga MX en mayo de
             2026; Brasil en diciembre de 2025. Bundesliga, Ligue 1, Portugal
@@ -1912,7 +2101,7 @@ Lo que sí es matemática valiosa y NO está construido:
       Resuelto el 2026-09-23 con el paso 4: el criterio del modelo se sustituyó
       por el de precio sharp (punto 2.A), y la publicación sigue pausada hasta
       pasar la puerta.
-- [ ] ~~Calibrar `UNCERTAINTY_Z` contra ROI~~
+- [x] (cerrada 25-oct: descartada (tachada)) ~~Calibrar `UNCERTAINTY_Z` contra ROI~~
 - [~] **Medir la incertidumbre RELATIVA al mercado, no la absoluta.**
       Superado (2026-09-24) por el mismo motivo: servía para decidir apuestas
       a partir del edge del modelo, y ese criterio ya no existe. Reabrir solo
@@ -1967,7 +2156,7 @@ Ya hay Postgres local con 50.079 partidos reales (11 ligas + 2 copas). Queda:
       Comprobados además los 305 equipos de las 13 ligas domésticas contra
       la lista de partidos de The Odds API (gratuita): Racing era el único.
       Texto original:
-- [ ] ~~**Cerrar los 163 alias que siguen sin emparejar.**~~ Tras el bootstrap con
+- [x] (cerrada 25-oct: descartada (tachada)) ~~**Cerrar los 163 alias que siguen sin emparejar.**~~ Tras el bootstrap con
       las dos claves quedan en `aliases_pendientes.csv`. Se reparten en tres
       grupos y solo uno es trabajo de verdad:
       1. Clubes de ligas que el catálogo NO cubre (Celtic, Rangers,
@@ -1982,7 +2171,7 @@ Ya hay Postgres local con 50.079 partidos reales (11 ligas + 2 copas). Queda:
 
 ## En progreso 🟡
 
-- [ ] **Fase 2–4 — evaluación y challengers point-in-time (orden solicitado
+- [x] (cerrada 25-oct: cubierta por F9) **Fase 2–4 — evaluación y challengers point-in-time (orden solicitado
       2026-09-22).** Implementar sin saltarse dependencias:
       1. Elo secuencial point-in-time con 1X2 completo.
       2. Comparación Elo / Dixon-Coles / Pinnacle sobre las mismas filas.
@@ -2134,22 +2323,22 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] F5: diagnóstico discreto del replay comprobado, sin ajustar ni promover parámetros.
 - [x] F6: contrato/revalidación de cuotas y outbox NBA; prueba local y rechazo de picks insuficientes. Enlace explícito al bot y chat de alertas de fútbol elegido por el usuario.
 - [x] Evidencia NBA-EV-035–050, ejecuciones NBA-RUN-011–015, código congelado; 79 NBA/606 fútbol aprobadas, puertas pendientes.
-- [ ] Configuración activa del bot/chat de fútbol disponible en el entorno/ruta autorizados; ejecutar prueba técnica real y medir entrega.
-- [ ] Disponibilidad por partido y rol/minutos validados; diez identidades no resueltas y rookies sin historial conservan abstención.
-- [ ] Fuente de props, contratos y frescura utilizables; supervivencia de precio, límites compartidos del bot y confirmación prospectiva antes de promover/publicar.
+- [x] (cerrada 25-oct: los canales de picks de Telegram están vacíos a propósito) Configuración activa del bot/chat de fútbol disponible en el entorno/ruta autorizados; ejecutar prueba técnica real y medir entrega.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Disponibilidad por partido y rol/minutos validados; diez identidades no resueltas y rookies sin historial conservan abstención.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Fuente de props, contratos y frescura utilizables; supervivencia de precio, límites compartidos del bot y confirmación prospectiva antes de promover/publicar.
 
 ### Scrapers y datos adicionales NBA — 2026-10-05
 - [x] Inventariar repos públicos, fijar commits y revisar código/datos reales sin ejecutar proyectos de terceros: diez repos y 52 archivos verificados.
 - [x] Auditar horarios históricos y muestras de reportes de lesiones: calendarios sin horas; PDF actual 403. No se acredita PIT histórico.
 - [x] Integrar observaciones con namespace/captura explícitos y auditoría: alineaciones previstas RotoWire y piloto de quintetos PBP Stats; ninguna promoción médica o comercial.
 - [x] Ejecutar pruebas relevantes, conservar evidencia y actualizar registro de fases: 100 NBA y 606 fútbol pasan.
-- [ ] Ampliar quintetos en lotes auditados y obtener sustituciones cronológicas del PBP; validar reloj/IDs de alineaciones y publicación médica por partido antes de usar contexto en pronósticos.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Ampliar quintetos en lotes auditados y obtener sustituciones cronológicas del PBP; validar reloj/IDs de alineaciones y publicación médica por partido antes de usar contexto en pronósticos.
 
 ### NBA — The Odds API existente, revisión 2026-10-05
 
 - [x] Comprobar con la clave existente deportes NBA/pretemporada, eventos y muestra real de cuotas; cuatro créditos usados, sin guardar clave o activar polling.
 - [x] Documentar mercados, latencia efectiva, acceso histórico todavía no probado y presupuesto compartido con fútbol.
-- [ ] Implementar cliente NBA persistente con reserva coordinada de créditos y evaluación específica de props alternativos; verificar reglas, reloj e identidades antes de promover contratos.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Implementar cliente NBA persistente con reserva coordinada de créditos y evaluación específica de props alternativos; verificar reglas, reloj e identidades antes de promover contratos.
 - [x] Verificar acceso histórico tras confirmar el usuario su plan de pago: muestra NBA `player_rebounds`, 242 cuotas, ocho casas; once créditos. Conservar discrepancias del reloj de snapshot.
 
 ### NBA — austin-pesina/nba_scrapes, 2026-10-05
@@ -2164,7 +2353,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Inventariar 365 archivos del commit y descargar 14 referencias verificadas; CSV vacío, base no publicada en main.
 - [x] Revisar descarga masiva nba_api y límites de temporada/caché/PIT; separar cuotas reales de backfill con precios supuestos.
 - [x] Registrar NBA-RUN-022, informe y documento; 80 evidencias verificadas, 33 archivos propios sin cambios, puertas pendientes.
-- [ ] Completar huecos estadísticos con consultas por temporada y competición, sin importar el proyecto externo o sus precios supuestos.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Completar huecos estadísticos con consultas por temporada y competición, sin importar el proyecto externo o sus precios supuestos.
 - [x] Auditar ahorro/cobertura: 320 partidos regulares pendientes en cinco temporadas; prueba oficial gratuita terminó en ReadTimeout, cero filas o créditos nuevos.
 - [x] Documentar uso de fuentes gratuitas y presupuesto separado para precios reales; sin activar descarga masiva de cuotas.
 
@@ -2175,9 +2364,9 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Probar boxscores y GameRotation en muestra real: API oficial ReadTimeout y CDN 403; cero partidos o stints importados. Validadores conservan las restricciones existentes.
 - [x] Probar lesiones históricas: tres PDF oficiales, ocho páginas verificadas, 84 observaciones de 30 jugadores; usar hora de cabecera, no nombre del archivo. Identidades y disponibilidad original siguen sin acreditar.
 - [x] Validar con 136 pruebas NBA y 609 de harness; congelar 37 archivos propios y registrar NBA-RUN-024–026, 100 evidencias verificadas y 60 eventos de ledger; puertas pendientes.
-- [ ] Recuperar físicamente los 395 pendientes con una fuente accesible y validar cada partido antes de importar; certificar calendarios de playoffs anteriores.
-- [ ] Obtener rotaciones reales y conciliar tiempos, quintetos y minutos; los validadores probados con fixtures no acreditan cobertura real.
-- [ ] Resolver IDs y horarios oficiales de las lesiones; ampliar archivo histórico y capturar disponibilidad prospectiva antes de habilitar señales médicas en picks.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Recuperar físicamente los 395 pendientes con una fuente accesible y validar cada partido antes de importar; certificar calendarios de playoffs anteriores.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Obtener rotaciones reales y conciliar tiempos, quintetos y minutos; los validadores probados con fixtures no acreditan cobertura real.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Resolver IDs y horarios oficiales de las lesiones; ampliar archivo histórico y capturar disponibilidad prospectiva antes de habilitar señales médicas en picks.
 
 ### NBA — contraste de alternativas propuesto por el usuario, 2026-10-05
 
@@ -2186,7 +2375,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Probar fuente independiente Basketball Reference y conciliar un partido pendiente: 20 participantes, 240 minutos por equipo y estadísticas concordantes, sin errores del validador.
 - [x] Documentar candidatos ESPN para 88 pendientes recientes, ausencia de pretemporada y límites de precisión/IDs/PIT; sin cuotas de apuestas o créditos The Odds API.
 - [x] Formalizar adaptador Basketball Reference y cruce de IDs con caché/validación: ampliación de 159 partidos y 3,317 filas a versión nueva, linaje conservado; recuperación completa sigue pendiente.
-- [ ] Recuperar pretemporada por separado; no equiparar tipo de temporada ESPN a prefijos NBA sin contraste del calendario.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Recuperar pretemporada por separado; no equiparar tipo de temporada ESPN a prefijos NBA sin contraste del calendario.
 
 ### NBA — ampliación Basketball Reference autorizada 2026-10-05
 
@@ -2194,22 +2383,22 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Capturar con caché, lotes de hasta 20 y seis segundos entre solicitudes: 140 páginas válidas, parada y respuesta conservada ante 403 del 2024-03-11; fechas posteriores no solicitadas.
 - [x] Probar identidad/estadística/reloj/caché/integridad: 172 NBA y 609 harness aprobadas. Nueva versión con 159 partidos/3,317 filas; código propio congelado en 39 archivos.
 - [x] Verificar todos los nuevos valores contra páginas raw y volver a conciliar los 159 partidos; 597 identidades consistentes, 154,058 filas previas conservadas; dataset ampliado 157,375 filas, modelo/fútbol/puertas preservados.
-- [ ] Corroborar los nueve casos recibidos separados (siete diferencias de REB/AST, una referencia parcial y un estado desconocido) sin forzar aceptación.
-- [ ] Recuperar los 152 regulares sin página válida tras el 403 y pendientes de otras competiciones: total restante 161 regulares, 71 pretemporada, tres playoffs y un play-in.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Corroborar los nueve casos recibidos separados (siete diferencias de REB/AST, una referencia parcial y un estado desconocido) sin forzar aceptación.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Recuperar los 152 regulares sin página válida tras el 403 y pendientes de otras competiciones: total restante 161 regulares, 71 pretemporada, tres playoffs y un play-in.
 
 ### NBA — Black Falcon / Apify, autorizado 2026-10-05
 
 - [x] Preparar piloto de diez pendientes con IDs ESPN candidatos y referencias NBA; seis regulares, dos playoffs, un play-in y uno de pretemporada.
 - [x] Ejecutar desde la sesión Apify existente: 282 filas descargadas, US$0.142 mostrado, máximo US$0.25; entrada/log/recibo/screenshot/JSON íntegro y hashes conservados, cero créditos The Odds API.
 - [x] Validar identidad, estadística, DNP y precisión temporal: 247 candidatos NBA, cero diferencias P/R/A entre participantes; 53 diferencias null/cero DNP preservadas. Enteros de minutos no importados, pretemporada sin localía/IDs corroborados; dataset aceptado preservado.
-- [ ] Recuperar segundos de minutos y referencias faltantes mediante fuente adecuada: Black Falcon repite los nueve partidos del ESPN previo; no ampliar ese flujo para solucionar precisión que no ofrece.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Recuperar segundos de minutos y referencias faltantes mediante fuente adecuada: Black Falcon repite los nueve partidos del ESPN previo; no ampliar ese flujo para solucionar precisión que no ofrece.
 
 ### NBA — servicios auxiliares para completar datos, autorizado 2026-10-05
 
 - [x] Verificar cobertura real y precisión de servicios Apify; promedios de temporada/minutos enteros descartados; Flashscore decimal condicionado a concordancia individual y calendario NBA contrastado.
 - [x] Ejecutar tres capturas Flashscore y dos de calendario NBA con límites: 6,631 registros Flashscore y 100 de calendario; US$2.064 mostrado, cero créditos Odds API; originales/entradas/logs/recibos conservados.
 - [x] Ampliar fuentes útiles y conciliar íntegramente: 67 partidos/1,713 filas agregados, 157,375 filas previas conservadas; 6,052/6,150 regulares, 98 regulares y 71 pretemporada aún pendientes.
-- [ ] Resolver identidades y discrepancias de los 169 boxscores restantes; 62 candidatos de pretemporada y calendario de sus 71 IDs ya capturados. No repetir descarga masiva para corregir problemas de conciliación.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Resolver identidades y discrepancias de los 169 boxscores restantes; 62 candidatos de pretemporada y calendario de sus 71 IDs ya capturados. No repetir descarga masiva para corregir problemas de conciliación.
 
 ### NBA — continuación de pendientes autorizada 2026-10-05
 
@@ -2218,14 +2407,14 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Recuperar rotaciones cronológicas:5161partidos/217334tramos; cinco jugadores, períodos/prórrogas, continuidad y minutos con cuantización por intervalo continuo del jugador;891partidos separados.
 - [x] Ampliar props históricos acotados:20partidos/40snapshots de rebotes/2961pares válidos,420créditos de límite500; originales/temporalidad/cortes preservados, sin picks ni ROI.
 - [x] Verificar datasets y preservación:19controles,6replaysPBP,40replayscuotas,486PDFs con segundo motor;609pruebas antes/después,39archivos NBA congelados y152evidencias previas verificados; NBA-RUN-033.
-- [ ] Completar95regular/58pretemporada,330fechas médicas/cortes intradía y13nombres sin ID,891rotaciones separadas; ampliar puntos/asistencias/temporadas de props tras definir próximo presupuesto y reglas de liquidación. Informe:docs/nba_pendientes_recuperacion_20261005.md.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Completar95regular/58pretemporada,330fechas médicas/cortes intradía y13nombres sin ID,891rotaciones separadas; ampliar puntos/asistencias/temporadas de props tras definir próximo presupuesto y reglas de liquidación. Informe:docs/nba_pendientes_recuperacion_20261005.md.
 
 ### NBA — fuentes Apify adicionales, autorizado 2026-10-06
 
 - [x] Verificar cobertura y saldo; seis capturas de dos actores, US$2.341 del crédito gratuito. PBP sin acreditación de quintetos; cuotas sin timestamp original. Sin suscripciones/recargas ni créditos Odds API.
 - [x] Conservar JSON completos, entradas, recibos, IDs y hashes; agregar Clippers–Nuggets 0012500052, 40 filas/30 participantes y diez DNP explícitos. Segundos exactos por equipo y PRA corroborados; 13 etiquetas de equipo contradictorias conservadas sin uso.
 - [x] Sellar NBA-RUN-034: 159643 filas, 95 regulares/57 pretemporada pendientes; 71 calendarios/68 cruces exactos, 385 precios sin tiempo y 19 lesiones no históricas excluidos. 181 evidencias verificadas, 39 archivos NBA intactos, 609 pruebas antes/después. Informe: docs/nba_apify_fuentes_adicionales_20261006.md.
-- [ ] Ampliar boxscores después de definir saldo/límite: diez partidos de 30 filas cuestan aproximadamente US$5 al precio observado, tope propuesto US$6; saldo disponible aproximado US$0.45. Resolver identidades y conflictos antes de importar. Props con timestamps, lesiones archivadas y rotaciones siguen requiriendo fuentes adecuadas.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Ampliar boxscores después de definir saldo/límite: diez partidos de 30 filas cuestan aproximadamente US$5 al precio observado, tope propuesto US$6; saldo disponible aproximado US$0.45. Resolver identidades y conflictos antes de importar. Props con timestamps, lesiones archivadas y rotaciones siguen requiriendo fuentes adecuadas.
 
 ### NBA — recuperación API-NBA autorizada 2026-10-06
 
@@ -2233,7 +2422,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Descubrir temporadas y calendario del proveedor; cruzar sus IDs con los 95 regulares y 57 de pretemporada pendientes. 72cruces únicos;80pendientes2025-26rechazados por plan. Sin contratación o exceso del límite local95.
 - [x] Recuperar candidatos mediante consultas acotadas/reanudables; conservar originales, fechas y hashes.72boxscores/1543filas con minutos enteros;0partidos nuevos aceptados.159643filas previas preservadas. No inventar segundos ni resolver discrepancias por votación de fuentes.
 - [x] Verificar el lote, documentar recuperación y bloqueos reales, ejecutar harness posterior y registrar evidencia NBA aislada sin modificar el modelo, fútbol, puertas o publicación.693pruebas antes/después;10controles;194evidencias,81eventos deledger; NBA-RUN-035.
-- [ ] Obtener segundos individuales verificables y resolver discrepancias estadísticas/IDs para los72candidatos; acceso2025bloqueado para23regulares/57pretemporadas. Ampliar un plan no garantiza precisión ni recuperación; informe docs/nba_api_nba_recuperacion_20261006.md.
+- [x] (cerrada 25-oct: superada por el motor NBA v1.3-1.5 (21-25 oct); lo vigente está en docs/nba_auditoria_datos_entrenamiento_20261024.md) Obtener segundos individuales verificables y resolver discrepancias estadísticas/IDs para los72candidatos; acceso2025bloqueado para23regulares/57pretemporadas. Ampliar un plan no garantiza precisión ni recuperación; informe docs/nba_api_nba_recuperacion_20261006.md.
 
 ### NBA — auditoría de lineups Ramiro / pbpstats autorizada 2026-10-06
 
@@ -2250,7 +2439,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Verificar preservación, cobertura incremental, pruebas e informe final; registrar lo ejecutado y las dependencias/accesos que impidan completar una fuente.
 
 - [x] Instalar Java portátil y toolkit/MCP ZenRows solicitado para Claude Code; handshake stdio/44 herramientas, cero llamadas de proveedor.
-- [ ] Pendientes actualizados en NBA-RUN-039: una excepción de boxscore regular, 37 rotaciones del censo y props históricos; pretemporada y censo médico diario completados. Véase docs/nba_completar_validar_20261006.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) Pendientes actualizados en NBA-RUN-039: una excepción de boxscore regular, 37 rotaciones del censo y props históricos; pretemporada y censo médico diario completados. Véase docs/nba_completar_validar_20261006.md.
 
 
 ### NBA — transporte ZenRows para fuentes públicas bloqueadas, autorizado 2026-10-06
@@ -2267,7 +2456,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Ampliar puntos/asistencias con los80créditos restantes del límite500 de TheOddsAPI, sujeto a captura/validación; documentar presupuesto adicional que requiera el histórico completo.
 - [x] Verificar preservación, cobertura, controles adversariales y harness posterior; sellar nueva corrida e informe sin promover datos rechazados.
 
-- [ ] Pendientes verificados de NBA-RUN-039: excepción MM:SS subsegundo 0022400942; 37 rotaciones; intradía médico/PIT original; props multitemporada y reglas de liquidación. Véase docs/nba_completar_validar_20261006.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) Pendientes verificados de NBA-RUN-039: excepción MM:SS subsegundo 0022400942; 37 rotaciones; intradía médico/PIT original; props multitemporada y reglas de liquidación. Véase docs/nba_completar_validar_20261006.md.
 
 ### NBA — segundos oficiales y rotaciones pendientes, autorizado 2026-10-06
 
@@ -2277,7 +2466,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Buscar fuentes alternativas acotadas para las capturas aún ausentes dentro de los límites vigentes, sin compras ni llamadas a props.
 - [x] Ejecutar pruebas NBA, arnés posterior y verificación de las 2105 evidencias anteriores; registrar nueva corrida, informe y pendientes reales.
 
-- [ ] Pendientes de NBA-RUN-040: nueve rotaciones con eventos/titulares sin corroborar; intradía médico/PIT original; props multitemporada y reglas de liquidación antes del backtest. Véase docs/nba_segundos_y_rotaciones_20261006.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) Pendientes de NBA-RUN-040: nueve rotaciones con eventos/titulares sin corroborar; intradía médico/PIT original; props multitemporada y reglas de liquidación antes del backtest. Véase docs/nba_segundos_y_rotaciones_20261006.md.
 
 ### NBA — continuar pendientes de RUN-040, autorizado 2026-10-06
 
@@ -2286,7 +2475,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Revisar históricos de props públicos fijando commits y contratos de datos; conservar límite local500 agotado y preparar una ampliación concreta si las fuentes gratuitas no contienen precios/cortes históricos.
 - [x] Verificar preservación, controles, pruebas y arnés posterior; registrar nueva corrida y pendientes con cobertura real.
 
-- [ ] Estado histórico de NBA-RUN-041 (sustituido por RUN-042): tres rotaciones; corte médico24-oct-2023, intradía completo/recepción original; autorización720créditos para piloto de props y reglas históricas. Véase docs/nba_pendientes_intradia_20261006.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) Estado histórico de NBA-RUN-041 (sustituido por RUN-042): tres rotaciones; corte médico24-oct-2023, intradía completo/recepción original; autorización720créditos para piloto de props y reglas históricas. Véase docs/nba_pendientes_intradia_20261006.md.
 
 
 ### NBA — continuar pendientes de RUN-041, autorizado 2026-10-06
@@ -2296,7 +2485,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Inventariar cortes del primer día2023-24 y versiones intradía de fechas de muestra; distinguir ausencia de publicación/acceso de un bloqueo deIP y conservar límites de recepción histórica.
 - [x] Verificar evidencias4939,41corridas y89eventos previos, presupuestos/pruebas/arnés posterior; sellar nuevas versiones y pendientes reales.
 
-- [ ] Pendientes de NBA-RUN-042: props de rebotes/asistencias e historia/cortes faltantes; intradía de otras fechas, recepción original y reglas de liquidación. Rotaciones regulares6150/6150. Véase docs/nba_props_y_rotaciones_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) Pendientes de NBA-RUN-042: props de rebotes/asistencias e historia/cortes faltantes; intradía de otras fechas, recepción original y reglas de liquidación. Rotaciones regulares6150/6150. Véase docs/nba_props_y_rotaciones_20261007.md.
 
 ### NBA — continuar pendientes de RUN-042, autorizado 2026-10-07
 
@@ -2313,7 +2502,7 @@ inicial del proyecto, sin secretos), se conserva en
 - [x] Conservar datos demo separados, fichas existentes y estados de error reales.
 - [x] Revisar móvil/escritorio e integración pública; propuesta documentada en
       `docs/web_diseno_tennispredictions_20261007.md`.
-- [ ] Fase posterior propuesta: alimentar el nuevo tablero con la agenda real,
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) Fase posterior propuesta: alimentar el nuevo tablero con la agenda real,
       sin cambiar el criterio de publicación. No se desplegó esta versión.
 
 ## Web — acceso, cuenta y suscripciones (2026-10-07)
@@ -2336,7 +2525,7 @@ paquetes/suscripciones de TennisPredictions; no su algoritmo predictivo.
 - [x] Comprobar hashes, salud y recorrido desde el dominio público; mantener
       los demás servicios sin recrear. Evidencia en docs/web_despliegue_20261007.md.
 
-- [ ] NBA-RUN-043: 21 juegos sin selección médica T−60 concordante; versiones intradía adicionales, props/cortes faltantes, relojes de 27.151 candidatos, recepción histórica y liquidación. Informe: docs/nba_recuperacion_medica_y_props_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-043: 21 juegos sin selección médica T−60 concordante; versiones intradía adicionales, props/cortes faltantes, relojes de 27.151 candidatos, recepción histórica y liquidación. Informe: docs/nba_recuperacion_medica_y_props_20261007.md.
 
 ### NBA — continuar pendientes de RUN-043, autorizado 2026-10-07
 
@@ -2345,7 +2534,7 @@ paquetes/suscripciones de TennisPredictions; no su algoritmo predictivo.
 - [x] Validar selecciones retrospectivas nuevas y controles adversariales, preservando versiones selladas, recepción histórica y gates.
 - [x] Verificar evidencias, cadena y arnés real antes/después; sellar NBA-RUN-044 y documentar pendientes reales.
 
-- [ ] NBA-RUN-044: contexto médico BOS@NYK ausente en diez PDFs; versiones intradía, props/cortes, relojes de candidatos, recepción original y liquidación. Informe: docs/nba_horarios_medicos_corroborados_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-044: contexto médico BOS@NYK ausente en diez PDFs; versiones intradía, props/cortes, relojes de candidatos, recepción original y liquidación. Informe: docs/nba_horarios_medicos_corroborados_20261007.md.
 
 ### NBA — props, recepción y liquidación tras RUN-044, autorizado 2026-10-07
 
@@ -2354,7 +2543,7 @@ paquetes/suscripciones de TennisPredictions; no su algoritmo predictivo.
 - [x] Recuperar reglas primarias versionadas por casa/jurisdicción; documentar participación, prórroga, push, abandono, correcciones y vigencia, conservando aplicabilidad desconocida.
 - [x] Verificar los datos y evidencias previos, controles y arnés posterior; sellar NBA-RUN-045 y el informe con presupuestos actuales sin compras.
 
-- [ ] NBA-RUN-045: rebotes/asistencias y cortes faltantes; cuotas de casas LATAM, otros países/casas, recepción original/vigencia por ticket, relojes de candidatos y pendientes médicos. Informe: docs/nba_props_y_reglas_latam_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-045: rebotes/asistencias y cortes faltantes; cuotas de casas LATAM, otros países/casas, recepción original/vigencia por ticket, relojes de candidatos y pendientes médicos. Informe: docs/nba_props_y_reglas_latam_20261007.md.
 
 ### NBA — aplicación de reglas y recepción tras RUN-045, autorizado 2026-10-07
 
@@ -2363,7 +2552,7 @@ paquetes/suscripciones de TennisPredictions; no su algoritmo predictivo.
 - [x] Preparar evaluación reproducible por ticket/mercado/periodo con estados desconocidos explícitos; probar participación, prórroga, push, integridad y jurisdicción sin atribuir contratos históricos inexistentes.
 - [x] Validar datasets/gates y arnés posterior; sellar NBA-RUN-046 y documentar las entradas que todavía falten.
 
-- [ ] NBA-RUN-046: aplicar únicamente con tickets/contratos reales; recepción histórica original ausente según usuario; cuotas LATAM, otras casas/países, rebotes/asistencias/cortes y pendientes médicos. Informe: docs/nba_reglas_archivadas_y_liquidacion_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-046: aplicar únicamente con tickets/contratos reales; recepción histórica original ausente según usuario; cuotas LATAM, otras casas/países, rebotes/asistencias/cortes y pendientes médicos. Informe: docs/nba_reglas_archivadas_y_liquidacion_20261007.md.
 
 - [x] NBA — corregir en una versión documental nueva el total final de pruebas RUN-046 usando el log y verificación sellados; conservar informe y corridas originales.
 
@@ -2376,7 +2565,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Consultar historia archivada de forma acotada; verificar replays recuperables y no inferir recepción original ni vigencia contractual de tickets.
 - [x] Crear catálogo y matriz completa con procedencia, hashes y desconocidos; validar preservación, arnés posterior y checkpoint NBA-RUN-048 sin liquidaciones ni créditos pagados nuevos.
 
-- [ ] NBA-RUN-048: recuperar reglamentos NBA pendientes (BetPlay, Apuesta Total, BetMéxico, DoradoBet, Betsson Perú, Inkabet, Sportium Colombia), validar Te Apuesto online/Luckia y push/correcciones; obtener tickets/contratos y ampliar props LATAM/REB/AST. Matriz: docs/nba_casas_hispanohablantes_reglas_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-048: recuperar reglamentos NBA pendientes (BetPlay, Apuesta Total, BetMéxico, DoradoBet, Betsson Perú, Inkabet, Sportium Colombia), validar Te Apuesto online/Luckia y push/correcciones; obtener tickets/contratos y ampliar props LATAM/REB/AST. Matriz: docs/nba_casas_hispanohablantes_reglas_20261007.md.
 
 ### NBA — recuperación acotada con MCP tras RUN-048, autorizado 2026-10-07
 
@@ -2385,7 +2574,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Auditar dos repositorios adicionales fijando commits y blobs; separar recomendaciones y líneas sintéticas de cuotas históricas verificables, sin llamadas OddsAPI.
 - [x] Validar nuevas pruebas y preservación, ejecutar arnés posterior y sellar NBA-RUN-049 con los pendientes reales.
 
-- [ ] NBA-RUN-049: Apuesta Total/BetMéxico/DoradoBet/Betsson Perú/Inkabet específicos NBA; Te Apuesto online/Luckia, ambigüedades BetPlay/Sportium CO y push/correcciones; contratos por ticket, cuotas LATAM/REB/AST/cortes, relojes de candidatos y contexto médico BOS–NYK. BetPlay y Sportium Colombia avanzaron con18 cláusulas. Informe: docs/nba_reglas_colombia_y_props_candidatos_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-049: Apuesta Total/BetMéxico/DoradoBet/Betsson Perú/Inkabet específicos NBA; Te Apuesto online/Luckia, ambigüedades BetPlay/Sportium CO y push/correcciones; contratos por ticket, cuotas LATAM/REB/AST/cortes, relojes de candidatos y contexto médico BOS–NYK. BetPlay y Sportium Colombia avanzaron con18 cláusulas. Informe: docs/nba_reglas_colombia_y_props_candidatos_20261007.md.
 
 ### NBA — consolidación deportiva y validación F4, autorizado 2026-10-07
 
@@ -2394,7 +2583,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Comparar distribución histórica de diez apariciones con referencia reciente de cinco encogida hacia veinte; evaluar tres temporadas/tres bloques, intervalos por fecha, abstenciones y estratos definidos por historial.
 - [x] Probar exclusión de resultados del día/futuro e invariantes; ejecutar suite NBA/arnés, sellar RUN-050 y documentar avances y requisitos pendientes de F4.
 
-- [ ] NBA-RUN-050: completar F4.1 por rol/contexto, F4.2 disponibilidad y minutos jerárquicos con variables as-of, F4.3 escenarios y conservación conjunta; calibrar/confirmar en cortes separados. G0–G9 pendientes. Informe: docs/nba_f4_minutos_regulacion_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-050: completar F4.1 por rol/contexto, F4.2 disponibilidad y minutos jerárquicos con variables as-of, F4.3 escenarios y conservación conjunta; calibrar/confirmar en cortes separados. G0–G9 pendientes. Informe: docs/nba_f4_minutos_regulacion_20261007.md.
 
 ### NBA — corregir calibración y coherencia F4, autorizado 2026-10-07
 
@@ -2403,7 +2592,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Implementar distribuciones conjuntas de minutos que sumen 240 por equipo y respeten activo/DNP, con abstención ante escenarios inviables; separar escenario de disponibilidad acreditada.
 - [x] Probar separación temporal y restricciones, evaluar datos y escenarios completos sin atribuir información prepartido inexistente, ejecutar arnés posterior y sellar RUN-051 con límites y siguiente fase.
 
-- [ ] NBA-RUN-051: continuar F5 en investigación con protocolo de tasa por minuto y splits congelados; excluir OT sin estadísticas por periodo. Conservar RUN-050 como referencia CRPS. Disponibilidad/rol y dependencia de rotación prospectiva de F4 siguen pendientes; G0–G9 no aprobados. Informe: docs/nba_f4_calibracion_y_coherencia_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-051: continuar F5 en investigación con protocolo de tasa por minuto y splits congelados; excluir OT sin estadísticas por periodo. Conservar RUN-050 como referencia CRPS. Disponibilidad/rol y dependencia de rotación prospectiva de F4 siguen pendientes; G0–G9 no aprobados. Informe: docs/nba_f4_calibracion_y_coherencia_20261007.md.
 
 ### NBA — distribución de rebotes F5, autorizado 2026-10-07
 
@@ -2412,7 +2601,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Evaluar CRPS/NLL/Brier/PIT discreto y masa central por fecha/temporada/bloques; separar diagnóstico de minutos ampliados y push/void sin contratos ni disponibilidad inventados.
 - [x] Probar probabilidades, colas, temporalidad y contaminación; ejecutar suite NBA/arnés posterior, verificar evidencias y sellar RUN-052 con la referencia elegida y pendientes reales de F5/F6.
 
-- [ ] NBA-RUN-052: F6 auditoría PIT/fugas/contexto y protocolo de confirmación futura; F5 calibración completa/rol/ritmo y OT con estadísticas por periodo. Disponibilidad/recepción/contratos y G0–G9 siguen pendientes. Informe: docs/nba_f5_distribucion_rebotes_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-052: F6 auditoría PIT/fugas/contexto y protocolo de confirmación futura; F5 calibración completa/rol/ritmo y OT con estadísticas por periodo. Disponibilidad/recepción/contratos y G0–G9 siguen pendientes. Informe: docs/nba_f5_distribucion_rebotes_20261007.md.
 
 ### NBA — ensayos locales de entrega y observación F6, autorizado 2026-10-07
 
@@ -2421,7 +2610,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Evaluar demoras 0/15/30/60/120/300 segundos con snapshots de contrato/versionado; excluir revisiones recibidas después del corte y reportar observaciones censuradas sin interpolar cuotas.
 - [x] Ejecutar suite NBA y arnés, revisar/sellar NBA-RUN-053 y documentar requisitos reales de Postgres, canal, recepción/contratos y confirmación F7. Ensayos sintéticos locales, cero mensajes externos y cero APIs pagadas; G6 pendiente.
 
-- [ ] NBA-RUN-053: integrar outbox/ledger NBA aislados en Postgres, ensayar canal con configuración privada y medir contratos/acuse reales; completar F6 antes de activar F7. Propuesta F7 sin iniciar; disponibilidad/OT/recepción externa y G0–G9 pendientes. Informe: docs/nba_f6_entrega_y_observaciones_20261007.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-053: integrar outbox/ledger NBA aislados en Postgres, ensayar canal con configuración privada y medir contratos/acuse reales; completar F6 antes de activar F7. Propuesta F7 sin iniciar; disponibilidad/OT/recepción externa y G0–G9 pendientes. Informe: docs/nba_f6_entrega_y_observaciones_20261007.md.
 
 ### NBA — outbox Postgres aislado F6, autorizado 2026-10-08
 
@@ -2430,7 +2619,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Probar transacciones reales, concurrencia, rollback, interrupción, caducidad y reinicio del servidor; exportar evidencia sin credenciales y detener el clúster de ensayo.
 - [x] Ejecutar suite NBA/arnés posterior, revisar y sellar RUN-054; conservar G6 pendiente hasta canal y cuotas reales, sin cambios en fútbol ni mensajes externos.
 
-- [ ] NBA-RUN-054: configurar canal operativo privado y medir acuses/contratos reales para cerrar F6; operación/backup/rendimiento Postgres por validar antes de desplegar. F7 no iniciado, disponibilidad/OT/recepción anclada y gates pendientes. Informe: docs/nba_f6_postgres_durable_20261008.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-054: configurar canal operativo privado y medir acuses/contratos reales para cerrar F6; operación/backup/rendimiento Postgres por validar antes de desplegar. F7 no iniciado, disponibilidad/OT/recepción anclada y gates pendientes. Informe: docs/nba_f6_postgres_durable_20261008.md.
 
 ### NBA — restauración y métricas de entrega F6, autorizado 2026-10-08
 
@@ -2439,7 +2628,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Preparar métricas comunes de ledger con acuses faltantes y anomalías temporales explícitas; usar credenciales de fútbol en el VPS según respuesta directa, con un único mensaje operativo NBA y sin copiar secretos al equipo local.
 - [x] Ejecutar suite NBA en la base restaurada y arnés posterior, detener servidor, revisar/sellar RUN-055; canal/cuotas reales y F7 permanecen pendientes si no llegan credenciales.
 
-- [ ] NBA-RUN-055: mejorar recorrido de entrega desde VPS y reunir muestra de acuses; capturar disponibilidad/contratos reales y anclar recepción. Backup en otro servidor/roles/retención y operación continua pendientes. Un mensaje aceptado no aprueba G6; F7 sin iniciar. Informe: docs/nba_f6_backup_y_canal_vps_20261008.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-055: mejorar recorrido de entrega desde VPS y reunir muestra de acuses; capturar disponibilidad/contratos reales y anclar recepción. Backup en otro servidor/roles/retención y operación continua pendientes. Un mensaje aceptado no aprueba G6; F7 sin iniciar. Informe: docs/nba_f6_backup_y_canal_vps_20261008.md.
 
 ### NBA — entrega reutilizable, recuperación fuera del equipo y captura F6, autorizado 2026-10-08
 
@@ -2449,7 +2638,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Preparar captura propia de respuestas/contratos/contexto con procedencia, desconocidos y operación prospectiva; recuperar contexto NBA público si disponible sin retrofechar históricos.
 - [x] Probar controles, verificar evidencias, ejecutar arnés posterior y sellar RUN-056; documentar entradas reales pendientes sin iniciar F7 por suposición.
 
-- [ ] NBA-RUN-056: fuente funcional de cuotas/contratos LATAM y disponibilidad/rol previos, prórroga compatible, anclaje independiente, control de relojes, muestra operativa completa y backups periódicos/retención. Dos acuses calientes0,42/0,48s no aprueban p95. Copia/restauración VPS del ledger de ensayo verificadas; no respaldo integral histórico. Tres capturasNBA403. F7 draft_not_started. Informe: docs/nba_f6_transporte_y_recuperacion_vps_20261008.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-056: fuente funcional de cuotas/contratos LATAM y disponibilidad/rol previos, prórroga compatible, anclaje independiente, control de relojes, muestra operativa completa y backups periódicos/retención. Dos acuses calientes0,42/0,48s no aprueban p95. Copia/restauración VPS del ledger de ensayo verificadas; no respaldo integral histórico. Tres capturasNBA403. F7 draft_not_started. Informe: docs/nba_f6_transporte_y_recuperacion_vps_20261008.md.
 
 ### NBA — fuentes accesibles, anclaje y operación de captura, autorizado 2026-10-08
 
@@ -2459,7 +2648,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Preparar operación de captura NBA aislada y respaldos verificables con retención explícita; corregir controles de reloj/prórroga según evidencia disponible.
 - [x] Validar controles y preservación, ejecutar arnés final, sellar RUN057 y señalar únicamente los requisitos reales aún no satisfechos.
 
-- [ ] NBA-RUN-057: props individuales LATAM con contratos/reglas completos; disponibilidad/rol por partido y membresía oficial actual; modelo compatible con prórroga; muestra operativa completa/p95 y caducidad entre relojes; respaldo integral y copia periódica fuera del VPS. Captura de investigación activa cada 15 minutos, siete archivos diarios configurados, dos manifiestos RFC3161 verificados; Caliente VPS403. F7 draft_not_started. Informe: docs/nba_f6_captura_anclada_y_operacion_20261008.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-057: props individuales LATAM con contratos/reglas completos; disponibilidad/rol por partido y membresía oficial actual; modelo compatible con prórroga; muestra operativa completa/p95 y caducidad entre relojes; respaldo integral y copia periódica fuera del VPS. Captura de investigación activa cada 15 minutos, siete archivos diarios configurados, dos manifiestos RFC3161 verificados; Caliente VPS403. F7 draft_not_started. Informe: docs/nba_f6_captura_anclada_y_operacion_20261008.md.
 
 ### NBA — partido completo, contexto oficial y contratos, autorizado 2026-10-08
 
@@ -2469,7 +2658,7 @@ Informe canónico corregido de RUN-046: docs/nba_reglas_archivadas_y_liquidacion
 - [x] Revisar contratos/reglas aplicables y controles de reloj/caducidad; mantener desconocidos y límites de fuente, sin habilitar compras, apuestas o publicación comercial.
 - [x] Validar cambios, verificar preservación y arnés final, actualizar propuesta F7 y sellar RUN058; dejar fuera nuevas copias periódicas.
 
-- [ ] NBA-RUN-058: contratos reales de props LATAM, disponibilidad/rol y universo previo, dos identidades actuales, confirmación F7/revisión independiente, muestra operativa p95 y prueba real de caducidad. Referencia fullgame conserva OT y mejora CRPS retrospectivo; no promoción. Copias periódicas excluidas por el usuario. Nuevo manifiesto local preparado; envío de hash a DigiCert rechazado por revisión automática, requiere autorización específica. Informe: docs/nba_f6_partido_completo_y_contexto_oficial_20261008.md.
+- [x] (cerrada 25-oct: estado de un run NBA antiguo, sustituido por el estado NBA del 24-25 oct) NBA-RUN-058: contratos reales de props LATAM, disponibilidad/rol y universo previo, dos identidades actuales, confirmación F7/revisión independiente, muestra operativa p95 y prueba real de caducidad. Referencia fullgame conserva OT y mejora CRPS retrospectivo; no promoción. Copias periódicas excluidas por el usuario. Nuevo manifiesto local preparado; envío de hash a DigiCert rechazado por revisión automática, requiere autorización específica. Informe: docs/nba_f6_partido_completo_y_contexto_oficial_20261008.md.
 
 ### NBA — sello externo autorizado del manifiesto RUN058, 2026-10-08
 
@@ -2644,16 +2833,16 @@ justa (1/prob) etiquetada donde no hay cuota publicada.
 ## Continuar recuperación xG LaLiga 2 y Ligue 2 — 2026-10-13
 
 - [x] Revisar estado, arnés y nuevas fuentes públicas históricas.
-- [ ] Incorporar únicamente parejas verificadas de archivos FBref con recepción real, resultados e identidades corroboradas.
-- [ ] Verificar y terminar la carga SofaScore pendiente; conservar modelo activo.
-- [ ] Completar los huecos restantes con fuentes por partido verificables, sin promedios ni valores inventados.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088)) Incorporar únicamente parejas verificadas de archivos FBref con recepción real, resultados e identidades corroboradas.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088)) Verificar y terminar la carga SofaScore pendiente; conservar modelo activo.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088)) Completar los huecos restantes con fuentes por partido verificables, sin promedios ni valores inventados.
 
 ## PitchAPI — histórico de las 23 competiciones (2026-10-14)
 
 - [x] Descargar listas y estadísticas de PitchAPI con recibos y hash; sin fallos.
 - [x] Importar xG emparejados con identidad corroborada (5.355), con ensayo revertido.
-- [ ] Huecos restantes desde 2024: Serie B 588, LaLiga 2 236, Argentina 208, Ligue 2 144; PitchAPI no los cubre.
-- [ ] PitchAPI aún no se usa para alineaciones, jugadores ni eventos (`/lineups`, `/players`); no se descargaron.
+- [x] (cerrada 25-oct: Serie B, LaLiga 2 y Ligue 2 retiradas (db/086, db/088)) Huecos restantes desde 2024: Serie B 588, LaLiga 2 236, Argentina 208, Ligue 2 144; PitchAPI no los cubre.
+- [x] (cerrada 25-oct: PitchAPI retirado el 25-oct) PitchAPI aún no se usa para alineaciones, jugadores ni eventos (`/lineups`, `/players`); no se descargaron.
 
 ## PitchAPI como respaldo y cotejo de API-Football (2026-10-14)
 
@@ -2681,7 +2870,7 @@ revocó sola el 14-oct).
   discrepancias abiertas con "marcar revisada", xG rellenados.
 - [x] Pruebas (18) y arnés 1.067 aprobadas; commit hecho.
 - [x] Desplegado el 14-oct (migraciones, worker, API, cron) con la clave cifrada en la base y el respaldo activo; ver docs/pitchapi_respaldo_20261014.md.
-- [ ] Clave `pk_live_` y consulta al proveedor sobre uso comercial y almacenamiento.
+- [x] (cerrada 25-oct: PitchAPI retirado el 25-oct) Clave `pk_live_` y consulta al proveedor sobre uso comercial y almacenamiento.
 
 ## Auditoría de datos y entradas del motor — 2026-10-14
 
@@ -2689,7 +2878,8 @@ revocó sola el 14-oct).
   próximos siete días, XI, jugadores, bajas, clima, sede, árbitro y cuotas;
   distinguir disponibilidad archivada, integración y recepción previa al partido.
   Informe: `docs/auditoria_datos_modelo_20261014.md`. Solo lectura; modelo intacto.
-- [ ] Preservar dato ausente frente a cero en estadísticas individuales antes
+- [x] (cerrada 25-oct: `estadisticas_jugador` solo la escribía API-Football, retirada; FotMob y SofaScore guardan NULL)
+  Preservar dato ausente frente a cero en estadísticas individuales antes
   de ampliar los ratings; integrar identidades y campos archivados y evaluar
   cualquier nuevo modelo antes de promoverlo (propuesta, sin implementación).
 
@@ -2755,7 +2945,7 @@ de pruebas internas: la lectura del referrer no se puede probar sin Play):
 - [ ] iOS: no existe un referrer equivalente. Opciones: servicio de terceros (Branch, AppsFlyer, Adjust),
       que añade SDK y política de privacidad, o dejarlo manual como hoy. Firebase Dynamic Links está
       retirado por Google. Decidir cuando haya fecha para iOS.
-- [ ] Instalaciones por APK suelto: no traen referrer; seguirán con «Pegar código».
+- [x] (cerrada 25-oct: nota, no tarea) Instalaciones por APK suelto: no traen referrer; seguirán con «Pegar código».
 
 **Límites a recordar.** Un código que llega por referrer es tan falsificable como uno escrito: lo que
 protege es la condición de completar ofertas. El referrer de Play solo se conserva unos 90 días y
@@ -2794,11 +2984,11 @@ Detalle en `docs/admob_recompensas_20261014.md`.
 
 Peticion del titular: cargar el archivo disponible, identidades verificadas y contexto; iniciar capturas prospectivas sin comprar cierres de cuotas.
 
-- [ ] Migracion aditiva y puente de jugadores con evidencia por partido; conservar NULL y recepcion real.
-- [ ] Incorporar XI, suplentes, estadisticas, bajas, entrenadores, ronda y estilo, con ensayo y carga idempotente.
-- [ ] Capturas FotMob previa/posterior y calendario; altitud y pronosticos con credencial contratada.
-- [ ] Derivados de descanso, eliminatorias y clasificacion; identidades arbitrales y de copas sin uniones ambiguas.
-- [ ] Verificar en produccion, documentar conteos y pendientes concretos. ERA5 requiere token; 527 snapshots expresamente pendientes.
+- [x] (cerrada 25-oct: duplicada de F4) Migracion aditiva y puente de jugadores con evidencia por partido; conservar NULL y recepcion real.
+- [x] (cerrada 25-oct: hecho: XI, jugadores, bajas, entrenadores y ronda en tablas (db/075)) Incorporar XI, suplentes, estadisticas, bajas, entrenadores, ronda y estilo, con ensayo y carga idempotente.
+- [x] (cerrada 25-oct: hecho: captura FotMob previa y posterior (db/081, reactivada el 25-oct)) Capturas FotMob previa/posterior y calendario; altitud y pronosticos con credencial contratada.
+- [x] (cerrada 25-oct: duplicada de F12) Derivados de descanso, eliminatorias y clasificacion; identidades arbitrales y de copas sin uniones ambiguas.
+- [x] (cerrada 25-oct: ERA5 hecho; los 527 snapshots están en «Recuperación de cierres Pinnacle») Verificar en produccion, documentar conteos y pendientes concretos. ERA5 requiere token; 527 snapshots expresamente pendientes.
 
 
 ## Meta (App Events + CAPI) y suscripciones en la app — 2026-10-15
@@ -2901,7 +3091,7 @@ Google Sign-In ya existe: no se rehace.
 ## Comprometer-revelar de la cadena y plan de F7 (2026-10-18)
 - [x] `hashchain.py`: al repo público sube solo el compromiso (recibos y `LEDGER.md`); el JSON del lote sube cuando todos los partidos que cita terminaron y pasaron 4 h (tope de 7 días). `verify` recorre por recibos y cuenta aparte los lotes sin revelar. Pruebas: `tests/test_hashchain_revelado.py`. `CHAIN_GIT_REMOTE` sigue vacío: aún no se publica nada.
 - [ ] Antes de configurar `CHAIN_GIT_REMOTE`: desplegar este cambio (ensayo + `DEPLOYS.md`) y comprobar `verify` contra los lotes reales del servidor.
-- [ ] F7: plan en `docs/superpowers/plans/2026-10-18-f7-sello-tardio.md` (borrador; tres decisiones del titular al final).
+- [x] (cerrada 25-oct: hecho: F7 implementado y en producción (19-oct)) F7: plan en `docs/superpowers/plans/2026-10-18-f7-sello-tardio.md` (borrador; tres decisiones del titular al final).
 
 ## Web: rediseño CYBERCORE en producción (2026-10-18)
 - [x] Integrar CYBERCORE CSS 0.3.0, adaptar Cyberpunk CSS, conservar el logo previo y validar 25/25 pruebas del frontend.
@@ -2972,7 +3162,7 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Altitud en el motor A en **modo sombra** (`AJUSTE_ALTITUD_MODO`): `daily.py` calcula el factor y lo anota en `data_completeness.ajuste_altitud` sin alterar los lambdas publicados.
 - [ ] Pasar la altitud a `activo` con partidos reales (≥150 con salto > 0,5 km medidos hacia adelante).
 - [ ] Reajustar el artefacto en cada reentrenamiento (hoy es del walk-forward del 12-oct) y repetir `qf.model.contexto` cuando haya semanas de `fotmob_previo`.
-- [ ] Para que algo llegue a alta probabilidad, escalera y parley (motor B) hace falta F8/F9: mezcla A + B evaluada contra el mercado del mismo momento.
+- [x] (cerrada 25-oct: duplicada de F8/F9) Para que algo llegue a alta probabilidad, escalera y parley (motor B) hace falta F8/F9: mezcla A + B evaluada contra el mercado del mismo momento.
 
 ## Córners (2026-10-19, primera mejora pedida por el titular)
 
@@ -3033,7 +3223,7 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Actualizar calendario API-Tennis y archivar programas oficiales actuales; resolver identidades con nombres completos contrastados. Cuatro PDF revisados visualmente; ambigüedades excluidas.
 - [x] Emitir pronósticos de investigación para encuentros futuros acreditables, con datos/modelos sellados y bloqueo explícito de apuestas, conservando el protocolo financiero congelado. Ocho ATP; 20 parejas revisadas, 12 exclusiones.
 - [x] Entregar informe único con cobertura, probabilidades y requisitos reales por variante; ejecutar las comprobaciones finales. 246 pruebas específicas, 1.315 generales; docs/tenis_auditoria_pronosticos_20261019.md.
-- [ ] Corregir en una nueva versión los puentes de identidad acreditados: 50 nombres WTA y uno ATP tienen varios IDs en el modelo congelado. No escoger automáticamente ni fusionar por similitud.
+- [x] (cerrada 25-oct: corregido en el motor v7 (alias de identidad)) Corregir en una nueva versión los puentes de identidad acreditados: 50 nombres WTA y uno ATP tienen varios IDs en el modelo congelado. No escoger automáticamente ni fusionar por similitud.
 
 ## Tenis: integración completa de familias de mercados (19-oct-2026)
 - [x] Añadir una ampliación versionada sin cambiar los módulos y artefactos del estudio financiero congelado. Ocho módulos nuevos;37 anteriores/12 artefactos conservados.
@@ -3055,7 +3245,7 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Entregar protocolo predictivo futuro, registro de pronósticos verificables y compuertas que impidan acreditar datos retrospectivos como confirmatorios.
 - [x] Probar controles temporales, identidad, orientación, duplicados y confianza; entregar resultados reales y requisitos que dependan de encuentros futuros.
 
-- [ ] Recuperar cobertura mediante puentes de identidad acreditados y una nueva versión reentrenada; reunir resultados confirmatorios futuros y validar los otros mercados en sus propios protocolos.
+- [x] (cerrada 25-oct: corregido en el motor v7 (alias de identidad)) Recuperar cobertura mediante puentes de identidad acreditados y una nueva versión reentrenada; reunir resultados confirmatorios futuros y validar los otros mercados en sus propios protocolos.
 
 - [x] Sellado externo del nuevo protocolo predictivo, autorizado explícitamente por el usuario: DigiCert19-oct16:54:10UTC, firma/nonce/digest y prueba negativa verificados. El estado pendiente del sello queda resuelto, sin cambiar los criterios de calidad.
 
@@ -3084,10 +3274,10 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Elo dinámico ordenado por ronda con inactividad/carga/experiencia (`tennis_dynamic_v2`) y apilador v7; protocolo `core_v7_prospective_20261019`, 17 pronósticos sellados.
 - [x] Punto de entrada único `tennis_motor` + README; 413 pruebas.
 - [ ] Cuotas de cierre históricas como entrada (pendiente de autorización del titular para descargar/gastar).
-- [ ] Apagar o actualizar la automatización de Codex que sigue usando el protocolo de diez mercados retirado.
+- [x] (cerrada 25-oct: automatización de Codex pausada el 20-oct) Apagar o actualizar la automatización de Codex que sigue usando el protocolo de diez mercados retirado.
 - [ ] Evaluar v7 con resultados reales a medida que se jueguen (`python -m tennis_motor evaluate`).
 - [x] Cuotas históricas Tennis-Data (descarga manual del titular): cruce 53.853 partidos; el mercado sin margen supera a v7; `--odds-a/--odds-b` en `tennis_motor`.
-- [ ] Fuente de cuotas previas en vivo para pronósticos automáticos (decisión del titular: The Odds API u otra).
+- [x] (cerrada 25-oct: decidido: cuotas de tenis de PropLine (24-oct)) Fuente de cuotas previas en vivo para pronósticos automáticos (decisión del titular: The Odds API u otra).
 - [x] Cuotas previas en vivo: `tennis_odds_live_v1` (h2h, eu, 2 fotos/día, tope 400/mes, reserva para fútbol) + tarea programada + motor v8.
 - [x] Motor en git: rama `tennis/motor-v8`, PR #46.
 - [x] Entrada automática `tennis_intake_v1` en la tarea programada (cuotas -> calendario -> sello -> evaluación).
@@ -3103,11 +3293,176 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Ciclo de resultados (recibo oficial de nba.com, final, reintento) y marcador Brier por mercado.
 - [x] Página: sección v1.3 con versión, estado de disponibilidad y `actionable=false`; RUN071 intacto.
 - [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
+- [x] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static. (Hecho el 21-oct; hoy 1.4b, ver DEPLOYS.md.)
+- [x] Preparar la comparación con Pinnacle (alias Clippers, snapshot del mismo día, brazo alineado, protocolo congelado, ensayo sintético de punta a punta). docs/nba_comparacion_pinnacle_20261101.md.
+- [x] Desde el 1-nov: comprar 20 snapshots, revisar `load`, comprar el resto (3.250 créditos) y correr `nba.market_compare`; órdenes en el documento. (Comprado y comparado el 23-oct por decisión del titular.)
+- [x] Captura del precio de Pinnacle al sellar cada cohorte (`nba.live_market`, offline, bloqueada antes del 1-nov) y comparación prospectiva con protocolo congelado. docs/nba_mercado_prospectivo_20261101.md.
+- [x] Captura del precio en el servidor, opción A aprobada: código (`live_market`: clave del servidor, carpeta de precios aparte, libro 2/día y 70/mes con `halt`, `capture-pending` con fases sello y cierre; 24 pruebas), clave copiada a `live13/private/odds_key` sin leerla, imagen y envoltorio de cron preparados. NO desplegado. docs/nba_captura_precio_servidor_propuesta_20261022.md.
+- [x] Paso de precios desplegado (22-oct 23:05 UTC, PR #77): imagen `nba-live13-price:20261022`, red `nba-price`, `price.sh` y cron cada 5 min; bloqueado en código hasta el 2026-11-01. Entrada en DEPLOYS.md con la vuelta atrás.
+- [x] (cerrada 25-oct: cron de `price.sh` retirado; PropLine es la fuente fija de cuotas en vivo y ya trae Pinnacle, ver docs/nba_auditoria_20261025.md) 1-nov: comprobar el primer sellado con precio.
+
+### NBA — tercera auditoría (motor, props, vivo, cierres y créditos), 2026-10-25
+Detalle en docs/nba_auditoria_20261025.md; todo corregido y desplegado en la misma sesión.
+- [x] Completar el despliegue 1.4b a medias (datos RUN071 + columnas, modelo `5314c9ef…`, imagen `20261025b`) tras ensayo con la hora real.
+- [x] Productor con 1 GB (1.4b pica ~573 MB; el límite era 512 MB).
+- [x] Panel: un salto movido más tarde ya no deja el resultado en `validation_hold` (Rockets–Spurs, 23-oct).
+- [x] PropLine: reintento sin periodos cuando la petición principal da 5xx (hándicap/total al sellar), lotes saltados tras una principal vacía y marcadores de competiciones sin motor cada 6 h.
+- [x] Retirar el cron de `price.sh` (The Odds API en vivo desde el 1-nov).
+
+### NBA — mejoras de la auditoría del motor, 2026-10-21
+Detalle y medidas en docs/nba_auditoria_motor_20261021.md.
+- [x] v1.4 (protocolo congelado): puntos perdidos relativos a la forma. Hecho: no mejora equipo (falla la regla de decisión), mejora jugadores; vivo sigue en v1.3. docs/nba_multimarket_v14_20261021.md.
+- [x] v1.4b: absoluto + relativo juntos y suelo de participación: sin mejora en equipo, el suelo empeora la participación. v1.3 se queda. docs/nba_multimarket_v14b_20261021.md.
+- [x] Separar «Available»/«Out» por motivo G League: neutro en todos los mercados (v1.4).
+- [ ] Backfill gratuito de reportes de lesiones cercanos a T-60 y tabla condicionada a horas antes del salto (hoy: un reporte/día, 13:30 o 17:30 ET).
+- [x] Caché por partido en `multimarket_v13_live.completed()` (juegos finales y días cerrados, `--cache`) y fallo explícito ante un partido pasado en curso; un aplazado (estado 1) se registra en `completed_games.json`. Modelo reajustado en `nba_f6_live13_model_20261021b` con parámetros idénticos (solo cambia el hash del módulo).
+- [x] Backfill T-60 (`nba.injury_t60`): 1.910 PDF (2023-24..2025-26) descargados, parseados y unidos; partidos con reporte a ≤1 h del corte de 2-4 % a 99,8-99,9 %. docs/nba_cache_completed_y_backfill_t60_20261021.md.
+- [x] v1.5 (protocolo congelado): v1.3 con reportes T-60. Jugadores mejoran de forma significativa (Brier −0,0003 a −0,0022) y la participación pasa de 0,45-0,49 a 0,31-0,38; equipo sin efecto probado (falla la regla de decisión), el vivo conserva sus reportes. docs/nba_multimarket_v15_20261021.md.
+- [x] (cerrada 25-oct: duplicada de «Modelo único del marcador» (segunda auditoría NBA)) Ratings ataque/defensa ajustados por rival y ritmo, una sola distribución del marcador para ganador/puntos/total.
+- [x] (cerrada 25-oct: duplicada de «Recalibración móvil… prior de pretemporada» (segunda auditoría NBA)) Prior de pretemporada para los primeros 15-20 partidos (oct-nov empeora el Brier del ganador ~0,01).
+- [x] (cerrada 25-oct: duplicada de «Jugadores: distribución de puntos corregida» (segunda auditoría NBA)) Puntos de jugador: modelo 2P/3P/TL o dispersión ajustada; rangos desde la distribución calibrada (hoy el 80 % cubre 73 %).
+
+### NBA — cuotas históricas de ganador compradas y comparación con Pinnacle, 2026-10-23
+- [x] Compra de los 325 snapshots h2h de 2024-25 y 2025-26 (3.250 créditos) por instrucción del titular, antes del bloqueo del 1-nov; cobertura 98,8 % y 99,8 %.
+- [x] Comparación congelada contra Pinnacle sin margen: el modelo no supera al mercado (Brier +0,0040 y +0,0057; peso de información c = 0,25 y 0,09, con IC que incluye 0). Veredicto: sin evidencia de información añadida. docs/nba_comparacion_pinnacle_resultado_20261023.md.
+- [x] Arreglo: la API exige la fecha con sufijo Z (HTTP 422 con +00:00), en `odds_history.api_time`, con prueba.
+- [x] (cerrada 25-oct: duplicada de «Desde el 1-nov: comprar 20 snapshots…» (3.250 créditos)) Comprar el mercado `totals` (≈3.250 créditos) tras la renovación del 1-nov para comparar el total del partido; puntos de equipo y jugadores solo de forma prospectiva.
+- [x] (cerrada 25-oct: las cuotas de fútbol en vivo salen de PropLine desde el 23-oct) Fútbol queda con 294 créditos (≈1 día) hasta el reset del 1-nov: decisión del titular (opción 3); revisar la captura en vivo de fútbol.
+- [x] (cerrada 25-oct: duplicada de la siguiente (paquete de The Odds API para props)) Props de jugador retrospectivos: viables con un mes del plan 5M de The Odds API ($119; ≈345.000 créditos) o, de forma barata, 100 partidos × 2 mercados (2.000 créditos); falta el módulo de comparación y su protocolo congelado. docs/nba_props_jugadores_viabilidad_20261023.md.
+- [ ] Paquete de The Odds API para el retrospectivo de props (decisión del titular): recomendado un mes del plan 5M ($119) desde el 1-nov y hacer el escenario E (~249.000 créditos: 4 mercados × 2 temporadas × 2 snapshots + team_totals + totals/spreads de Pinnacle); antes, piloto de 2.000 créditos. docs/nba_props_sonda_y_paquete_20261023.md.
+
+### NBA — segunda auditoría del motor, 2026-10-23
+Enfoque del titular: probabilidad estadística calibrada frente al resultado real, no ganar a las cuotas. Detalle en docs/nba_auditoria_motor_20261023.md.
+- [x] Auditoría del vivo, de v1.4-v1.5 y del piloto PropLine (0 créditos, servidor sin tocar).
+- [x] Errores 1-6 del productor corregidos en `nba/productor-correcciones` (sellado por partido 65-90 min antes del salto, horas reales, caché, control de bloqueo, filas de jugador de 2026-27); modelo reajustado con parámetros idénticos. docs/nba_productor_correcciones_20261023.md.
+- [x] (cerrada 25-oct: duplicada de «Desplegar (PR a main…) y programar el productor diario») Desplegar el productor corregido (PR a `main`, confirmación del titular; runbook y vuelta atrás en el documento).
+- [ ] Decidir antes del 1-nov si se retira la captura de precios `nba-live13-price` (desplegada el 22-oct; con varias cohortes por día su libro de 2 peticiones/día rechazará la mayoría).
+- [x] Play-in y playoffs (004/005/006) en el productor, resultados y página.
+- [x] Reloj de `tests/test_paper_bundle.py` fijado (`paper_bundle.DEADLINE_UTC`, mismo valor).
+- [x] Mercados de jugador en vivo: puntos, rebotes y asistencias a la línea de PropLine (moda de ≥2 casas), condicionados a jugar, modelo de jugador v1.3 con recalibración en rejilla de umbrales (mejor Brier fuera de muestra en los tres). docs/nba_productor_correcciones_20261023.md.
+- [x] (cerrada 25-oct: duplicada de «Desplegar (PR a main…) y programar el productor diario») Desplegar productor y panel 1.3.1 (montaje `readonly` del volumen de PropLine, caché, modelo `…20261023`); runbook en el documento.
+- [x] PropLine: cierres y liquidaciones diarios de NBA/tenis/fútbol en el recolector (PR #96, desplegado el 24-oct 13:51 UTC por otra sesión). Pendiente: PR, despliegue con anotación en DEPLOYS.md y un lector para los motores.
+- [x] Recalibración móvil de total y puntos de equipo y prior de arranque: protocolo congelado `nba_live15`, ningún candidato entra (el modelo ya está calibrado en sus líneas en 2025-26; recalibrar con la temporada anterior empeora). docs/nba_live15_recalibracion_20261026.md.
+- [x] Jugadores sin línea de PropLine (o sin archivo reciente): umbral estadístico para la rotación (L1, productor 1.5.0); arregla la cohorte del 25-oct 19:30 ET sellada sin jugadores y las pérdidas que nunca se sellaban.
+- [x] `nba_api` por proxy (ZenRows, tope 450 créditos, gasto 106): 86 de los 95 partidos regulares sin conteos extendidos recuperados y validados; rotaciones 1 de 9 (el resto da 422). docs/nba_api_proxy_recuperacion_20261026.md.
+- [ ] Fusionar los 86 partidos recuperados (`.local/normalized/nba_stats_proxy_recovery_20261026`) en el conjunto extendido en el próximo reajuste con protocolo congelado; decidir el caso `0:00` con tiros libres (0022100151).
+- [ ] Siete partidos con minutos `:60` en la fuente oficial siguen en cuarentena (0022300176, 0022300835, 0022400802, 0022400919, 0022400928, 0022500802, 0022500835): el contrato prohíbe convertir `:60`; hace falta otra fuente de segundos o una regla nueva decidida por el titular. Además 0022300860 (Quiñones sin minutos en el oficial y 22,6 min en la base).
+- [ ] Ocho rotaciones oficiales sin fuente (0022100074, 0022100353, 0022200793, 0022201007, 0022201040, 0022201205, 0022400831, 0022401211): `GameRotation` da 422 por ZenRows con proxy básico y premium. El motor en vivo no las usa; reintentar solo si cambia el origen. Gasto de la prueba: 106 de 1.212 créditos (tope 450), ciclo hasta el 6-nov.
+- [ ] Traspasos de verano: un jugador cambiado de equipo sin partidos de temporada regular se descarta del vivo aunque PropLine lo cotice (el archivo no trae su equipo). Cobertura medida el 26-oct: 0 descartados de 28. Solo si vuelve a ser un problema: añadir una fuente de plantillas y reajustar. docs/nba_live15_recalibracion_20261026.md.
+- [ ] Prior de pretemporada por plantilla (traspasos y novatos por minutos esperados): el prior estadístico de `nba_live15` no mostró evidencia.
+  - [x] (26-oct) Elo del ganador ponderado por la rotación actual (`nba_roster_elo_protocol.json`, `docs/nba_elo_plantilla_20261026.md`): rechazado, las cuatro configuraciones empeoran el Brier en 2024-25 y 2025-26. Queda abierto valorar traspasos con un rating propio de cada jugador (modelo nuevo).
+- [ ] Modelo único del marcador (posesiones × eficiencia, ajuste por rival y ritmo): ganador, margen, total y puntos de equipo coherentes y a varios umbrales; medias partes.
+- [ ] Jugadores: distribución de puntos corregida (2P/3P/TL o dispersión ajustada) y rangos recalibrados con su cobertura publicada.
+
+## PropLine: capturas posteriores al partido (24-oct-2026)
+- [x] Recolector (sobre la liquidación del PR #96): box score `/stats` de NBA y fútbol al final de la cola de liquidación; lesiones NBA cada hora; lectores sin red `read_closing`, `read_results`, `read_stats` + `team_stats`, `read_injuries`.
+- [x] Desplegar el recolector nuevo: release `5a9cde0` activa desde el 24-oct 14:18 UTC (DEPLOYS.md).
+- [x] Verificada la release `5a9cde0` con la clave nueva (pasadas 15:07-17:07 UTC); `team_stats` corregido y desplegado en `fc20390` (DEPLOYS.md).
+- [x] (cerrada 25-oct: duplicada de «Cargar los cierres de PropLine a odds_snapshots») Puerta CLV de fútbol con el cierre de `read_closing` (fecha de corte).
+- [x] (cerrada 25-oct: cubierta: córners y tarjetas llegan de SofaScore y del completado de FotMob) Liquidar córners y tarjetas con `team_stats`.
+- [ ] Decidir si las lesiones de ESPN entran en NBA como segunda señal (nuevo protocolo, no el sellado 1.3.1).
+
+## PropLine: cobertura de mercados (24-oct-2026)
+- [x] Medir en el archivo horario qué mercados trae PropLine por deporte y liga, con y sin Pinnacle. docs/propline_cobertura_20261024.md.
+- [x] Goles por equipo: sí está, en `totals` con `team`, con Pinnacle; el ingestor ya lo separa.
+- [ ] Remedir props NBA el día del partido (primer sellado 1.3.1) y Champions/Europa League en semana de copa.
+- [x] Leer toda la referencia de PropLine (`llms-full.txt`) y listar las funciones útiles por deporte. docs/propline_funciones_utiles_20261024.md.
+- [x] Añadir al recolector `/odds/closing` (cierre real) para fútbol y NBA: lo hizo el PR #96 (también tenis).
+- [x] Emparejar props NBA por `player_id`: ya lo hacía `apps/nba/src/nba/prop_lines.py`. En tenis PropLine no da `player_id`.
+- [x] `/results` y `/odds/closing` están en Hobby (petición real del 24-oct, `redacted: false`).
+
+## Bajas y once previo desde SofaScore (25-oct-2026)
+Las fuentes de API-Football y FotMob quedaron fuera del cron el 25-oct; SofaScore (rl1987 `event_detail` con `includeLineups`) trae, para partidos futuros, el once previsto (`lineups.confirmed=false`, formación y 11 titulares) y las bajas (`missingPlayers`: tipo missing/doubtful, motivo, fecha de regreso). Medido el 25-oct en la Premier (3 partidos).
+- [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7)) db/087: `injuries.source`/`expected_return` y tabla `lineups_previstas` (once previsto y oficial con recepción real).
+- [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7)) Recolector: orden `lineups` (cron cada 10 min): captura «previa» una vez por partido entre T-30 h y T-65 min, y «oficial» entre T-65 y T-20 min hasta que `confirmed=true` (máx. 5 intentos).
+- [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7)) Cargador del worker `qf.ingest.sofascore_alineaciones`: bajas → `injuries`; once previsto → `lineups_previstas`; once confirmado → `lineups` (lo que lee `sello_tardio`).
+- [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7)) `availability()` solo compara contra historia de la misma fuente de ids (SofaScore ≠ API-Football): sin historia suficiente devuelve «insuficiente», no basura.
+- [x] (cerrada 25-oct: hecho (PR #118, worker 117feb7); la historia de once SofaScore queda en «espera datos») Ensayo, respaldo, despliegue (worker + cron host) y entrada en DEPLOYS.md. Pendiente aparte: historia de once SofaScore para que `availability` funcione.
+
+## App — auditoría de datos, pronósticos y ergonomía (2026-10-25)
+
+- [x] Pick abierto con otro lado o línea que el análisis (Barcelona o empate frente a «12» del modelo) desaparecía de «Mercados del partido»: `partido_mercados.aplicar_acceso` lo añade como fila propia.
+- [x] La fila de un pick abierto enseñaba la probabilidad del análisis (79 %) y el destacado la sellada (76 %): ahora ambas son la sellada.
+- [x] Patas del Parley sin `selection`/`line` (siempre en español en la app) y con `canonical_name`: `parley_datos._pata_publica` las envía y usa el nombre visible.
+- [x] Textos en español fijos en la app: etiqueta del pronóstico en Inicio, escalones del historial de la Escalera y patas del Parley pasan por `pickText`.
+- [x] «Goles de equipo» decía «Marca X» con cualquier línea o lado (app y `alta_prob.texto`); tarjetas y córners por equipo traducidos.
+- [x] Partido con el saque pasado y sin resultado: «Esperando resultado» (Inicio, cabecera y banner del pronóstico) en lugar de «Hora local»/«En juego» a las 3 h. Clave nueva en 6 idiomas.
+- [x] Casas con nombre comercial (`bookName`: BetOnline, Bovada…), fecha del historial del Parley en el idioma del usuario, textos de 8 px a 10 px y aviso «sin destacado» con coma decimal.
+- [x] API desplegada el 26-oct 00:53 UTC (`98bdfcc-app-8c57b05`, `main` `f227fd9`).
+- [ ] Compilar y publicar el APK 1.0.0+4 (la app nueva trae los textos traducidos y «Esperando resultado").
+
+## App: pronóstico destacado del detalle — decisión del usuario, 25-oct-2026
+
+- [x] La tarjeta «Análisis estadístico» destaca, entre todos los pronósticos del partido, el de mayor probabilidad con cuota publicada >= 1,40 (sin tope de probabilidad; empate → cuota más alta; sin candidato no hay tarjeta). `featuredPick` en `apps/mobile/lib/product/live_forecast.dart`, aviso `detailNoFeatured` en 6 idiomas, pruebas Flutter 260/260. AAB 1.0.0+3 compilado el 25-oct (26-oct: lo sustituye el 1.0.0+4 pendiente en «App — auditoría de datos, pronósticos y ergonomía»).
+- [x] Historial de retos (Reto Escalera): fuera el resumen «N cumplidos de M cerrados», la tasa de cumplidos y el resultado acumulado; queda el título y la lista. Cadenas retiradas de los 6 ARB. Va en el mismo AAB 1.0.0+3.
+
+## PropLine compartido — decisión del usuario, 23-oct-2026
+
+- [x] (cerrada 26-oct: hecho: recolector compartido horario en el VPS, `~/propline-shared/current`, ver DEPLOYS.md) Sustituir la captura aislada de cierres cada dos horas por un recolector compartido cada hora; cuotas agrupadas por deporte/competición, todas las casas y mercados disponibles, sin descargas por motor.
+- [x] Conservar respuestas originales comprimidas, recepción real UTC, hashes, contexto de partido/periodo/jugador, cuota y presupuesto; archivo acumulativo sin sobrescribir observaciones y lectura punto en el tiempo para consumidores.
+- [x] (cerrada 26-oct: hecho: activado en producción el 24-oct, ver DEPLOYS.md) (Presupuesto e idempotencia probados) Verificar presupuesto global de 5.000 solicitudes/día, reserva mínima, concurrencia e idempotencia. Ensayar con datos reales antes de programar; conservar el archivo anterior y registrar despliegue/reversión.
+- [x] (cerrada 26-oct: hecho: `propline_ingest`, `propline_partidos` y `propline_cierres` leen el archivo sin HTTP con `propline_shared`) Exponer lectura común para los motores y documentar las conexiones que todavía requieren identidad/contrato validados; no confundir archivo prospectivo con reentrenamiento ni alterar predicciones ya selladas.
+- [x] Compatibilidad con fútbol/NBA/tenis (`docs/propline_compatibilidad_motores_20261023.md`): alias de Championship corregido y Noruega/Suecia/Suiza añadidas; claves vistas en partidos reales añadidas a la configuración; el descubrimiento ya acepta claves que empiezan por dígito.
+- [ ] (26-oct: tenis hecho, `apps/tennis` lee el archivo de PropLine, `test_odds_propline_v1.py`; queda la parte de fútbol) Adaptador de tenis PropLine → `tennis_markets_v2` (periodo `s1/s2` y `line_type`), y adaptadores de fútbol para marcador exacto, hándicap europeo, empate no válido y mitades (solo evaluación).
+
+## SofaScore vía Apify — proveedor por deporte, decidido 2026-10-24
+- [x] Comparar actores con 2-3 partidos de fútbol, NBA y tenis; decisión: scrapesage (NBA, tenis), rl1987 (fútbol). Ver `docs/sofascore_apify_proveedores_20261024.md`.
+- [x] Probar histórico por temporada (muestras): NBA 24/25 y tenis por jugador con scrapesage, Premier 24/25 con rl1987. Falta correr temporadas completas.
+- [x] (cerrada 26-oct: hecho: `sofascore_apify.py` guarda `received_at` real en `receipts` y SofaScore alimenta a los motores desde el 25-oct) Normalizar y registrar recepción real (`fetched_at`) antes de conectar a ningún motor.
+
+### App: gratis de Alta probabilidad al 10 % del día, 2026-10-27
+- [x] Sustituir «uno por mercado, cuota ≤ 1,60, hasta 4 abiertos» por el 10 % del lote del día (hacia arriba), los de mayor probabilidad, sin rango de cuota (`api/mobile.py`: `free_quota`, `choose_free`, `top_up`, `cap_free`); `/mobile/v1/config` publica `high_probability_free_fraction`; texto «{free} % gratis» en 6 idiomas.
+- [ ] Subir una build de la app con código de versión nuevo; hasta entonces la app instalada sigue diciendo «hasta 4 gratis» aunque el servidor ya reparta el 10 %.
+
+## 27-oct-2026 · NBA: estadísticas de equipos en la ventana de la web
+
+- [x] Pestañas Comparativa, Forma, Cara a cara y Clasificación en la ventana de NBA (`frontend/sports-window.js`, CYBERCORE), con filtro Todos / En casa / Fuera; constructor `apps/nba/src/nba/web_stats.py`, lector `src/qf/api/nba_estadisticas.py` y ruta `/web/deportes/nba/estadisticas/{id}`. Detalle y plan de despliegue: `docs/nba_estadisticas_web_20261027.md`.
+- [x] Desplegado el 27-oct 21:23 UTC (PR #185): imagen de la API, exportador del host y cron cada 30 min; ver DEPLOYS.md.
+- [ ] Decidir si se añaden alineaciones, estadio y cuotas por cuarto: ninguna fuente validada las trae hoy; hace falta elegir proveedor.
+
+
+## Reto escalera al 80 % en 7 días con NBA y tenis (2026-10-28, decisión del usuario)
+
+El usuario pide el reto entero al 80 %, buscando el acierto y no la cuota, con hasta
+7 días, y dice «conéctalos» (NBA y tenis). Matemática: P(reto) = ∏ p; un 80 % paga ≈ ×1,15.
+
+- [x] `eval/escalera_prueba.py`: `run` fallaba con `EV_MIN = None`; bloque `regla_80`.
+- [x] `eval/escalera_multideporte.py`: fútbol + NBA + tenis (Tennis-Data, BetsAPI).
+- [x] `escalera.py`: 2 escalones con presupuesto de probabilidad, hasta 2 el mismo día,
+      7 días y «expirado», el más probable, cuota ≥ 1,03, tope 95 % (tenis 97 %).
+- [x] `escalera_ext.py`: NBA y tenis desde el archivo PropLine (Pinnacle sin margen,
+      mejor cuota de la lista, liquidación de la casa del escalón).
+- [x] `db/089`: `prob_objetivo`, `dias_max`; `escalera_pasos.deporte/evento_*` sin
+      `match_id`; `escalera_resultados.fuente` (el fútbol sigue exigiendo marcador).
+- [x] Sello del lote con las columnas nuevas; web (expirado, plazo, NBA/tenis); app
+      («Expiró sin completarse» en 6 idiomas); escalón gratis 75-97 % en `mobile.py`.
+- [x] Desplegar con visto bueno: `db/089` ANTES de api y worker (hashchain y la
+      escalera leen las columnas nuevas); anotar en DEPLOYS.md con vuelta atrás.
+- [ ] Primera semana en vivo: `python -m qf.publish.escalera_datos preview` →
+      `en_rango_por_deporte` (¿hay escalón ≥ 89,4 % cada día?) y cuántos expiran.
+- [ ] Si Pinnacle falta en muchos partidos de tenis en vivo, decidir otra referencia
+      sharp (no se cambia sola).
+
+## Auditoría de consumo de APIs (28-oct-2026)
+Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
+- [x] SofaScore/Apify: detalles con presupuesto reservado, reparto diario hasta el fin del ciclo y reserva para alineaciones (3 pruebas); desplegado en el host el 28-oct.
+- [x] PropLine: horizonte de 48 h para mercados ampliados y futuros apagados (1 prueba); desplegado el 28-oct (`releases/8861347`).
+- [x] `db/090`: alias `propline` de Racing de Santander y Tromsoe; aplicada en producción.
+- [x] Ahorro de PropLine verificado la tarde del 28-oct: 19:07 UTC = 41 llamadas de fútbol frente a 68 (−40 %), 0 fallos. Queda medir un día completo (≤ 1.300 llamadas/día de fútbol; depende de cuántas ligas jueguen) a partir del 29-oct.
+- [ ] Decidir el tope mensual de Apify (hoy 15 USD, cuenta en 13,2): listas y detalles de NBA/tenis/MLS esperan hasta el 24-nov o hasta subirlo.
+- [ ] Pedir estadísticas ya en la lista de scrapesage (NBA y tenis), que cobra por partido igual que el detalle.
+- [ ] Probar `soccer_markets_per_request` 20 en una sola liga con medición antes de generalizar.
+- [ ] Alerta si `soccer_*/odds` supera 1.600 llamadas/día o si Apify pasa un día sin pedir detalles con terminados pendientes.
+- [x] xG: hora mínima de captura de 20 h (`XG_MIN_HORAS`) en SofaScore y FotMob, con segunda página de FotMob; desplegado el 28-oct.
+- [x] xG provisionales: no se reescriben; `db/091` `xg_corregido` guarda el corregido de FotMob junto al original (375 partidos el 28-oct).
+- [ ] Medir en validación si entrenar con `xg_corregido` en lugar del original cambia el resultado (fuera del reentrenamiento del 1-nov).
+- [ ] PropLine: medir el día completo con la regla de 48 h: jueves 29-oct y domingo 1-nov (jornada llena, el caso menos favorable). Un comando desde el PC: `ssh quantfut python3 - 2026-10-27 2026-10-29 2026-11-01 < scripts/medir_ahorro_propline.py` (a partir de las 00:00 UTC del día siguiente). Criterio: fútbol <= 1.300 en día laborable, 0 fallos ni paradas.
+- [x] Respaldo de cuotas NBA/tenis automático tras el sellado (`--auto`, `CUOTAS_RESPALDO_AUTO=1` en el `.env` del servidor; vuelta atrás: ponerla a 0). Sin desplegar.
 - [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
 - [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
 
 ## Respaldo football-data.org (2026-11-01)
-- [x] Diseño, migración db/089, `qf.ingest.fdorg_respaldo`, pruebas y cron (rama `futbol/fdorg-respaldo`, sin desplegar).
+- [x] Diseño, migración db/092, `qf.ingest.fdorg_respaldo`, pruebas y cron (rama `futbol/fdorg-respaldo`, desplegada el 1-nov).
 - [ ] Revisar los términos del plan gratuito de football-data.org antes de activar.
-- [ ] Desplegar según DEPLOYS.md: clave en el `.env` del VPS (visible al worker), aplicar db/089, activar `fdorg_settings.enabled`, vigilar la primera pasada.
+- [x] Desplegar según DEPLOYS.md: clave en el `.env` del VPS (visible al worker), activar `fdorg_settings.enabled`, vigilar la primera pasada.
 - [ ] Decisión del titular: fase 2 (rellenar resultados con plazo de gracia) y/o sección en `/control/respaldo`.

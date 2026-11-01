@@ -1,0 +1,88 @@
+{
+ "provider": "sofascore_apify",
+ "monthly_cap_usd": 15,
+ "run_cap_usd": 1.2,
+ "max_details_per_run": 40,
+ "targets": {
+  "gb.premier_league": {
+   "utid": 17
+  },
+  "es.laliga": {
+   "utid": 8
+  },
+  "it.serie_a": {
+   "utid": 23
+  },
+  "fr.ligue_1": {
+   "utid": 34
+  },
+  "de.bundesliga": {
+   "utid": 35
+  },
+  "nl.eredivisie": {
+   "utid": 37
+  },
+  "pt.primeira": {
+   "utid": 238
+  },
+  "ar.primera": {
+   "utid": 155
+  },
+  "br.serie_a": {
+   "utid": 325
+  },
+  "mx.liga_mx": {
+   "utid": 11621
+  },
+  "us.mls": {
+   "utid": 242
+  },
+  "eu.ucl": {
+   "utid": 7
+  },
+  "eu.uel": {
+   "utid": 679
+  },
+  "gb.championship": {
+   "utid": 18
+  },
+  "de.bundesliga2": {
+   "utid": 44
+  },
+  "tr.super_lig": {
+   "utid": 52
+  },
+  "no.eliteserien": {
+   "utid": 20
+  },
+  "nba": {
+   "utid": 132,
+   "rounds": false,
+   "provider": "scrapesage"
+  }
+ },
+ "tennis": {
+  "categories": [
+   "ATP",
+   "WTA"
+  ],
+  "exclude": [
+   "Doubles"
+  ],
+  "every_days": 6,
+  "active_days": 10,
+  "max_items": 220,
+  "discovery_cap_usd": 0.9,
+  "provider": "scrapesage"
+ },
+ "list_max": 100,
+ "lineups": {
+  "previa_horas": 30,
+  "oficial_min": [
+   20,
+   65
+  ],
+  "max_intentos": 5,
+  "max_por_corrida": 40
+ }
+}

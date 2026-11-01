@@ -32,4 +32,4 @@ Cuando haya datos: exportar las probabilidades de ganador de v1.3 por partido y 
 
 ## Comparación contra el mercado (listo, sin ejecutar)
 
-`python -m nba.market_compare --data ... --v12-protocol apps/nba/multimarket_v12_protocol.json --injuries ... --api-dir ... --plan-file ... --cache ... --output ...` carga las cuotas ya en caché (`odds_history.load`), reentrena v1.3 con la misma ventana y une por partido. Reporta Brier/logloss del modelo, del mercado (Pinnacle sin margen) y de una mezcla logit 50/50, con diferencias pareadas e IC por bloques de fecha. Solo investigación: responde si el modelo aporta información sobre el mercado, no genera apuestas. Probado con datos sintéticos; se ejecuta tras la compra del 1-nov.
+Ver `docs/nba_comparacion_pinnacle_20261101.md`: protocolo congelado antes de comprar, brazo alineado con la hora del snapshot, corrección del alias de los Clippers y de precios de la víspera, y las órdenes exactas para el 1-nov.

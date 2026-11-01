@@ -29,10 +29,7 @@
     "description": "Título de la tarjeta de acceso."
   },
   "accessConsent": "Tengo al menos 18 años y acepto los términos y la política de privacidad.",
-  "accessConsentNeeded": "Marca la casilla para continuar.",
-  "@accessConsentNeeded": {
-    "description": "Aviso al pulsar Google sin aceptar los términos."
-  },
+  "accessConsentRequired": "Marca la casilla para continuar con Google.",
   "accessConsentRich": "Tengo 18 años o más y acepto los {terms} y la {privacy}.",
   "@accessConsentRich": {
     "description": "Consentimiento con los dos enlaces legales dentro de la frase.",
@@ -297,6 +294,7 @@
   "artStats": "ESTADÍSTICAS",
   "artTagline": "ANALIZA. COMPARA. EXPLORA.",
   "artTransparency": "TRANSPARENCIA",
+  "bannerAwaiting": "PARTIDO JUGADO · esperando el resultado oficial",
   "bannerLive": "PARTIDO EN JUEGO · pronóstico sellado antes del inicio",
   "bannerLost": "FALLADO{score} · pronóstico sellado antes del inicio",
   "@bannerLost": {
@@ -374,10 +372,19 @@
   "detailInjuries": "Bajas reportadas",
   "detailLineups": "Alineaciones",
   "detailLineupsPending": "Alineaciones todavía no confirmadas.",
+  "detailNoFeatured": "Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60 y probabilidad de 74 % a 85 %). Los abiertos están en la lista de abajo.",
   "detailNoH2h": "No hay enfrentamientos registrados para este partido.",
   "detailNoInjuries": "Sin bajas en el reporte disponible.",
   "detailNoInjuriesCheck": "No hay una comprobación de bajas disponible.",
   "detailNoPicks": "No hay pronósticos publicados para este partido.",
+  "detailNoSealedModel": "No hay pronóstico sellado para este partido. Abajo tienes las estimaciones del modelo.",
+  "@detailNoSealedModel": {
+    "description": "Detalle del partido sin pronóstico sellado, con mercados del modelo abiertos debajo."
+  },
+  "detailNoSealedModelVip": "No hay pronóstico sellado para este partido. Abajo están las estimaciones del modelo, con VIP.",
+  "@detailNoSealedModelVip": {
+    "description": "Detalle del partido sin pronóstico sellado; los mercados del modelo de debajo están con candado VIP."
+  },
   "detailNoStarters": "Sin titulares confirmados.",
   "detailReferee": "Árbitro",
   "detailRefereePending": "Árbitro pendiente de confirmar.",
@@ -689,6 +696,14 @@
     "description": "Cierra el aviso de la parte superior."
   },
   "homeByDate": "Partidos por fecha y horario",
+  "homeFeatured": "Destacado del día",
+  "@homeFeatured": {
+    "description": "Antetítulo de la tarjeta grande de Inicio con el pronóstico de mayor probabilidad del deporte elegido."
+  },
+  "homeFeedError": "No se pudieron cargar los datos de este deporte.",
+  "@homeFeedError": {
+    "description": "Aviso en Inicio cuando falla el feed de NBA o tenis; solo afecta a ese deporte y va con el botón Reintentar."
+  },
   "homeForecastAt": "Pronóstico el {when} ({mexico} en México)",
   "@homeForecastAt": {
     "description": "Aviso de un partido cuyo pronóstico aún no se calcula: se calcula el mismo día a las 05:00 de México.",
@@ -712,6 +727,10 @@
   "homeNoMatchesDay": "No hay partidos este día.",
   "@homeNoMatchesDay": {
     "description": "Aviso al tocar un día sin partidos."
+  },
+  "homePlayersWithPicks": "Jugadores con pronóstico",
+  "@homePlayersWithPicks": {
+    "description": "Título de la fila horizontal de jugadores NBA con pronóstico en Inicio."
   },
   "homeSeeAll": "Ver todo",
   "@homeSeeAll": {
@@ -760,8 +779,19 @@
   "@homeTomorrow": {
     "description": "Encabezado del día de mañana en la agenda."
   },
+  "imageCredits": "Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.",
+  "imageUnavailable": "Imagen no disponible",
   "inboxEmpty": "Todavía no tienes avisos.",
   "inboxMatch": "Partido",
+  "inboxSportTag": "Deporte: {sport}",
+  "@inboxSportTag": {
+    "description": "Etiqueta accesible del deporte de un aviso.",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
   "inboxTitle": "Avisos",
   "ladderActiveCount": "{count, plural, one{1 reto en marcha} other{{count} retos en marcha}}",
   "@ladderActiveCount": {
@@ -802,6 +832,10 @@
   "ladderHistoryEmpty": "Aún no hay retos cerrados. Cuando uno termine, aparecerá aquí con su resultado.",
   "@ladderHistoryEmpty": {
     "description": "Estado vacío del historial de retos."
+  },
+  "ladderHistoryExpired": "Expiró sin completarse",
+  "@ladderHistoryExpired": {
+    "description": "Un reto cerrado porque pasó su plazo (7 días) sin completar todos los escalones."
   },
   "ladderHistoryFailedAt": "Falló en el escalón {step}",
   "@ladderHistoryFailedAt": {
@@ -974,6 +1008,15 @@
   "marketHomeScores": "Marca el local",
   "marketHtBtts": "Ambos anotan en el 1er tiempo",
   "marketHtGoal": "Gol en el 1er tiempo",
+  "marketOverLine": "Más de {line}",
+  "@marketOverLine": {
+    "description": "Selección de un mercado de línea (puntos, asistencias, total). {line} es la línea ya formateada, p. ej. 24,5.",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
   "marketResult1x2": "Resultado 1X2",
   "marketUnknown": "Mercado",
   "marketWinToNil": "Gana a cero",
@@ -992,6 +1035,18 @@
     "placeholders": {
       "percent": {
         "type": "String"
+      }
+    }
+  },
+  "marketsHitCount": "{won}/{resolved} publicados",
+  "@marketsHitCount": {
+    "description": "Aciertos sobre pronósticos publicados y resueltos.",
+    "placeholders": {
+      "won": {
+        "type": "int"
+      },
+      "resolved": {
+        "type": "int"
       }
     }
   },
@@ -1026,6 +1081,10 @@
     }
   },
   "marketsRadarNote": "El anillo es el acierto histórico de la mejor línea validada de cada mercado; «Publicado» son los pronósticos ya resueltos. Son pronósticos previos al partido, no alertas en vivo, y ninguna probabilidad garantiza un resultado.",
+  "marketsTabGame": "Partido",
+  "marketsTabGames": "Juegos",
+  "marketsTabPlayers": "Jugadores",
+  "matchAwaitingResult": "Esperando resultado",
   "mdCornersTotal": "córners · total {total}",
   "@mdCornersTotal": {
     "placeholders": {
@@ -1117,6 +1176,7 @@
   "@moreLegal": {
     "description": "Sección del menú Más con términos y privacidad."
   },
+  "moreMySportsSub": "Ordena y elige qué deportes ves",
   "moreRate": "Evaluar la app",
   "@moreRate": {
     "description": "Abre la ficha de la app en la tienda."
@@ -1405,9 +1465,9 @@
       }
     }
   },
-  "picksRangeHint": "{min}–{max} % de probabilidad · hasta {free} gratis",
+  "picksRangeHint": "{min}–{max} % de probabilidad · {free} % gratis",
   "@picksRangeHint": {
-    "description": "Rango de probabilidad de Alta probabilidad y tope de gratis; los límites los manda el servidor.",
+    "description": "Rango de probabilidad de Alta probabilidad y porcentaje de los pronósticos del día que son gratis; los límites los manda el servidor.",
     "placeholders": {
       "min": {
         "type": "int"
@@ -1461,6 +1521,15 @@
   "@picksTrustTitle": {
     "description": "Título de la tarjeta con el acierto real de Alta probabilidad."
   },
+  "predictionsSealedAt": "Sellado {when}",
+  "@predictionsSealedAt": {
+    "description": "Fecha y hora en que se selló el pronóstico.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "prefsAdsBody": "Comparte con Meta datos cifrados de tu cuenta, del dispositivo y de tus compras para medir qué anuncios funcionan. En California equivale a «No compartir mis datos» cuando lo desactivas.",
   "prefsAdsTitle": "Medición de anuncios (Meta)",
   "prefsAnalyticsBody": "Ayuda a mejorar la app con datos sobre las pantallas utilizadas. Es opcional.",
@@ -1486,6 +1555,7 @@
   "probBarHome": "Local",
   "profileAppVersion": "Versión de la app",
   "profileBalance": "Balance y seguimiento",
+  "profileCheckUpdate": "Buscar actualización",
   "profileConnected": "QuantFut · Conectada al servidor",
   "profileCreateAccount": "Crear cuenta",
   "profileCreateOne": "Crear una cuenta",
@@ -1499,6 +1569,38 @@
   "profileHaveAccount": "Ya tengo cuenta",
   "profileLanguage": "Idioma",
   "profileMeasurement": "Medición y errores",
+  "profileMySports": "Mis deportes",
+  "profileMySportsDefault": "por defecto",
+  "profileMySportsDown": "Bajar {sport}",
+  "@profileMySportsDown": {
+    "description": "Botón de flecha para bajar un deporte en «Mis deportes».",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMySportsHint": "Usa las flechas para ordenar · el primero se abre por defecto",
+  "profileMySportsLastVisible": "Deja al menos un deporte visible.",
+  "profileMySportsSaveError": "No se pudo guardar el cambio. Inténtalo de nuevo.",
+  "profileMySportsShow": "Mostrar {sport}",
+  "@profileMySportsShow": {
+    "description": "Interruptor para mostrar u ocultar un deporte.",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMySportsUp": "Subir {sport}",
+  "@profileMySportsUp": {
+    "description": "Botón de flecha para subir un deporte en «Mis deportes».",
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
   "profileNotifications": "Notificaciones",
   "profileOddsFormat": "Formato de cuotas",
   "profileOddsFormatValue": "Decimal · Cuotas registradas al publicar",
@@ -1510,6 +1612,8 @@
   "profileSignIn": "Iniciar sesión",
   "profileSignOut": "Cerrar sesión",
   "profileTitle": "Perfil y configuración",
+  "profileUpToDate": "Ya tienes la última versión.",
+  "profileUpdateCheckFailed": "No se pudo comprobar si hay actualización. Inténtalo más tarde.",
   "profileValidUntil": "Vigencia: {date}",
   "@profileValidUntil": {
     "placeholders": {
@@ -1521,6 +1625,20 @@
   "profileVerificationSent": "Correo de verificación enviado.",
   "profileVipActive": "Acceso VIP activo",
   "profileYourAccount": "Tu cuenta QuantFut",
+  "quoteBookAt": "{book} · {time}",
+  "@quoteBookAt": {
+    "description": "Casa de apuestas y hora local de la cuota de referencia.",
+    "placeholders": {
+      "book": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "quoteNone": "Sin cuota",
+  "quoteReference": "Cuota de referencia de la captura usada al sellar el pronóstico",
   "resultLabel": "Resultado: {score}",
   "@resultLabel": {
     "placeholders": {
@@ -1764,6 +1882,27 @@
       }
     }
   },
+  "rewardsUnlocksAvailable": "{count, plural, one{Tienes monedas para 1 desbloqueo.} other{Tienes monedas para {count} desbloqueos.}}",
+  "@rewardsUnlocksAvailable": {
+    "description": "Saldo de monedas expresado en desbloqueos posibles.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sealLabel": "SELLO",
+  "@sealLabel": {
+    "description": "Etiqueta de protocolo de la línea de sello (hash) de un pick"
+  },
+  "sealPublished": "PUBLICADO",
+  "@sealPublished": {
+    "description": "Etiqueta de protocolo: hora de publicación del pick"
+  },
+  "sealVerified": "VERIFICADO",
+  "@sealVerified": {
+    "description": "Etiqueta de protocolo: el sello del pick fue verificado"
+  },
   "selBttsNo": "No marcan los dos",
   "selBttsYes": "Marcan los dos",
   "selCards": "{side, select, over{Más de {line} tarjetas} other{Menos de {line} tarjetas}}",
@@ -1864,6 +2003,21 @@
   },
   "selHtBttsNo": "No marcan los dos en el 1T",
   "selHtGoalYes": "Habrá gol en el 1T",
+  "selTeamGoalsLine": "{side, select, over{Más de {line} goles de {team}} other{Menos de {line} goles de {team}}}",
+  "@selTeamGoalsLine": {
+    "description": "Goles de un equipo con línea distinta de «marca» (más de 0,5).",
+    "placeholders": {
+      "side": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      },
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "selTeamOrDraw": "{team} o empate",
   "@selTeamOrDraw": {
     "placeholders": {
@@ -1913,6 +2067,115 @@
   "shellUnlockTitle": "Desbloquear pronóstico",
   "shellView": "Ver",
   "splashTagline": "FÚTBOL · NBA · ESTADÍSTICA",
+  "sportAlertsNone": "Sin avisos para este partido.",
+  "sportAvailApplied": "Reporte de lesiones aplicado",
+  "sportAvailListed": "{count, plural, one{{count} jugador en el reporte} other{{count} jugadores en el reporte}}",
+  "@sportAvailListed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sportAvailMissingMinutes": "{team}: {minutes} min de bajas",
+  "@sportAvailMissingMinutes": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "sportAvailNotSubmitted": "{team} no envió su reporte",
+  "@sportAvailNotSubmitted": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "sportAvailPending": "Reporte de lesiones pendiente",
+  "sportFootball": "Fútbol",
+  "@sportFootball": {
+    "description": "Nombre del deporte fútbol en el selector"
+  },
+  "sportH2hRecord": "{home} {homeWins} – {awayWins} {away}",
+  "@sportH2hRecord": {
+    "placeholders": {
+      "home": {
+        "type": "String"
+      },
+      "away": {
+        "type": "String"
+      },
+      "homeWins": {
+        "type": "int"
+      },
+      "awayWins": {
+        "type": "int"
+      }
+    }
+  },
+  "sportHitWindow": "Sobre los últimos {n} resueltos",
+  "@sportHitWindow": {
+    "description": "Ventana del acierto de NBA y tenis",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sportMore": "Más",
+  "@sportMore": {
+    "description": "Último chip del selector cuando hay más de 4 deportes"
+  },
+  "sportNba": "NBA",
+  "@sportNba": {
+    "description": "Nombre del deporte baloncesto (NBA) en el selector"
+  },
+  "sportPhotoCredit": "Foto de {name}: {author} · {license}",
+  "@sportPhotoCredit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      },
+      "license": {
+        "type": "String"
+      }
+    }
+  },
+  "sportSelectorLabel": "Deporte",
+  "@sportSelectorLabel": {
+    "description": "Etiqueta accesible del selector de deporte"
+  },
+  "sportStatAge": "Edad",
+  "sportStatAway": "Como visitante",
+  "sportStatBackToBack": "Juega día seguido",
+  "sportStatCareer": "Carrera",
+  "sportStatFormIndex": "Índice de forma",
+  "sportStatHome": "Como local",
+  "sportStatLast6": "Últimos 6",
+  "sportStatPointsAgainst": "Puntos en contra",
+  "sportStatPointsFor": "Puntos a favor",
+  "sportStatRank": "Ranking",
+  "sportStatRest": "Días de descanso",
+  "sportStatSeason": "Temporada",
+  "sportStatStanding": "Puesto",
+  "sportStatStreak": "Racha",
+  "sportStatSurface": "En esta superficie",
+  "sportStatsUnavailable": "Aún no hay estadísticas para este partido.",
+  "sportSurfaceClay": "Arcilla",
+  "sportSurfaceGrass": "Hierba",
+  "sportSurfaceHard": "Dura",
+  "sportTennis": "Tenis",
+  "@sportTennis": {
+    "description": "Nombre del deporte tenis en el selector"
+  },
   "startupFailed": "No pudimos iniciar QuantFut. Inténtalo de nuevo.",
   "startupLoading": "Iniciando QuantFut",
   "statAveragesNote": "Promedios de {homeN} partidos del local y {awayN} del visitante. La cobertura de remates, córners y xG puede ser parcial.",
@@ -2125,6 +2388,8 @@
   "vipBenefit3Title": "Reto Escalera completo",
   "vipBenefit4Body": "Cuota publicada, probabilidad y xG de cada pick",
   "vipBenefit4Title": "Cuotas y análisis del partido",
+  "vipBenefitSportsBody": "Los mismos sellos y el mismo historial, sin suscripción",
+  "vipBenefitSportsTitle": "NBA y tenis abiertos para todos",
   "vipBestPrice": "★ MEJOR PRECIO",
   "vipCheckAccess": "Comprobar mi acceso",
   "vipCheckSignIn": "Inicia sesión en Perfil para comprobar tu acceso.",
@@ -2139,7 +2404,7 @@
   "vipFreeAccess": "Tu cuenta tiene acceso gratuito.",
   "vipGranted": "¡Listo! Tu acceso VIP está activo.",
   "vipHistoryNote": "Historial público y sellado; las muestras por mercado son pequeñas y un pronóstico puede fallar.",
-  "vipIntro": "Todos los pronósticos de Alta Probabilidad y del Reto Escalera mientras tu suscripción esté vigente.",
+  "vipIntro": "Desbloquea los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol mientras tu suscripción esté vigente. NBA y tenis son abiertos para todos.",
   "vipLinked": "🔒  Tu acceso VIP queda vinculado a tu cuenta",
   "vipManage": "Ya tienes Plus. Cambia o cancela tu plan en la tienda.",
   "vipMonthly": "≈ {amount}/mes",
@@ -2166,18 +2431,18 @@
   "vipPricesNote": "Precios del catálogo del servidor.",
   "vipPurchasesPending": "Compras en preparación: aún no se cobra nada desde la app.",
   "vipRestore": "Restaurar compras",
-  "vipStatRecorded": "Acierto registrado",
-  "vipStatResolved": "Resueltos",
+  "vipSportsNote": "Cada pick sellado antes del partido. «—»: aún sin resultados para calcularlo.",
+  "vipSportsTitle": "Acierto registrado por deporte",
   "vipStoreFailed": "No se pudo confirmar la compra. Lo reintentaremos al volver a abrir la app.",
   "vipStoreTerms": "Se renueva automáticamente al mismo precio hasta que la canceles en la tienda.",
   "vipStoreUnavailable": "La tienda no está disponible en este dispositivo.",
   "vipSubscribe": "Suscribirme",
   "vipVerifying": "Verificando la compra con la tienda…",
   "welcome1Body": "Descubre el lado estadístico del deporte: partidos, análisis y pronósticos del proyecto que ya conoces en la web.",
-  "welcome1Title": "Fútbol y NBA,\ncon otra perspectiva",
+  "welcome1Title": "Fútbol, NBA y tenis,\ncon otra perspectiva",
   "welcome2Body": "La forma reciente, el cara a cara y las estadísticas ayudan a entender lo que puede pasar. Empieza por los datos.",
   "welcome2Title": "Cada partido,\ncon más contexto",
-  "welcome3Body": "Goles, córners, hándicap y estadísticas de la NBA. Conoce qué mide cada análisis antes de interpretar una selección.",
+  "welcome3Body": "Goles, córners y hándicap en fútbol, props de jugadores en la NBA y juegos en el tenis. Conoce qué mide cada análisis antes de interpretar una selección.",
   "welcome3Title": "Más mercados.\nMás información.",
   "welcome4Body": "Un pronóstico también se entiende después del partido. El historial permite comparar estimaciones con resultados.",
   "welcome4Title": "Los resultados,\na la vista",

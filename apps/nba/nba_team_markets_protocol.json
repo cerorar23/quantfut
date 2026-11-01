@@ -1,0 +1,104 @@
+{
+  "version": "nba-team-markets-1.1",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-24 after the bet365 odds were normalised (nba_betsapi_odds_20261024) and after the props residual run, and before any team-market model-versus-market number was computed. Lesson carried over from the props run: the placebo control is not compared against the raw market because recalibration alone can beat it (see amendment 1.1 for the arm it is compared with)",
+  "question": "For the nine bet365 team markets (full game, first half and first quarter: moneyline, spread, total), is the engine's own probability, recalibrated and anchored on the no-vig bet365 closing price, better calibrated than that price, and does it add information beyond recalibrating the price? Research only: no bet, no stake, no pick, nothing promoted, nothing retrained in production.",
+  "seasons": {
+    "anchor_train": [
+      "2023-24",
+      "2024-25"
+    ],
+    "test": "2025-26",
+    "period_markets_anchor_train": [
+      "2024-25"
+    ],
+    "note": "h1 and q1 need earlier seasons of period scores to fit their relation to the full-game mean, so 2023-24 has no h1/q1 units"
+  },
+  "markets": [
+    "ml_game",
+    "spread_game",
+    "total_game",
+    "ml_h1",
+    "spread_h1",
+    "total_h1",
+    "ml_q1",
+    "spread_q1",
+    "total_q1"
+  ],
+  "market_input": {
+    "source": "apps/nba nba_betsapi_odds_20261024/odds.jsonl.gz, bet365 through BetsAPI, oriented to the official home team",
+    "line": "close.line (home line for spreads, points line for totals)",
+    "market_probability": "close.p1_novig = proportional no-vig probability of the home side (moneyline, spread) or of the over (total)",
+    "outcome": "y_close; pushes (null) are dropped and counted",
+    "lines": "only lines whose fractional part is 0 or 0.5 are scored; quarter lines are dropped and counted",
+    "close_note": "the close is the last bet365 price before the scheduled start, later than the T-60 injury report the model sees, so the model has less information than the price"
+  },
+  "score_model": {
+    "reuse": "nba.multimarket_v12 / v13 / v15 candidate arm: Elo with margin (winner logistic with rest and missing-points features), v1 team means plus ridge shift, residual covariance of home and away points; fitted per target season on the previous two scored seasons (one for 2023-24), exactly as v1.5",
+    "winner": "p_win from the v1.5 winner logistic",
+    "margin": "home margin ~ Normal(mu_m, sigma_m); sigma_m^2 = var_home + var_away - 2 cov; mu_m = sigma_m * Phi^-1(p_win), so the full-game moneyline equals the Elo-based winner probability",
+    "total": "game total ~ Normal(mu_t, sigma_t) with mu_t = home mean + away mean and sigma_t^2 = var_home + var_away + 2 cov, both from the shifted means",
+    "periods": "for h1 and q1: period total = a + b*mu_t + e and period margin = c + d*mu_m + e', coefficients and residual sd by least squares on earlier seasons' games with period scores (BetsAPI scores), predicted by each season's own out-of-sample score model; applies the same Normal model to the period",
+    "integer_scores": "points are integers: probabilities use the continuity correction, a push at an integer line is excluded by conditioning on no push, and a moneyline of a period is conditioned on no tie"
+  },
+  "anchor_model": {
+    "form": "per market: logit p = a + b*lk + theta . x, x standardised on the anchor-training units, ridge lambda*||w - prior||^2 on the mean log loss, prior a = 0, b = 1, theta = 0; lk = logit of the market probability",
+    "lambda_grid": [
+      0.0001,
+      0.001,
+      0.01,
+      0.1
+    ],
+    "lambda_choice": "5 contiguous date blocks inside the anchor-training units, held-out log loss, one lambda per arm and market",
+    "arms": {
+      "Q_model_only": "the score model's own probability at the line, no anchor (standalone calibration)",
+      "market": "the raw no-vig close",
+      "A_recalibration": "a, b only",
+      "B_model": "A + model_delta = logit(q) - lk",
+      "C_full": "B + b2b_home, b2b_away, missing points of both teams / 10 (v1.5 availability) (primary candidate)"
+    },
+    "fit": "all anchor-training units, applied unchanged to 2025-26",
+    "walk_forward_secondary": "arm C refit monthly through 2025-26 with the same lambda"
+  },
+  "controls": {
+    "placebo_permutation": "arm C refit after permuting the four non-model features among games of the same date and market (seed 20261026); it is compared with B_model and must not beat it with an upper bound below 0, otherwise the run is void for that market (permuted extra features cannot carry information, so an improvement over the model-only arm means a leak)",
+    "reproduction_invariant": "the winner probability of the score model reproduces the published v1.5 candidate Brier of comparison_v15.json for 2024-25 and 2025-26 to 1e-9, otherwise the run aborts",
+    "as_of": "every feature uses games of earlier dates only and injury reports at least 60 minutes before tipoff; periods are fit only on games before the target season"
+  },
+  "metrics": {
+    "scores": [
+      "Brier",
+      "log loss",
+      "bias",
+      "calibration slope and intercept on the test season",
+      "reliability table in 10 equal-count bins"
+    ],
+    "difference": "paired Brier difference arm - raw market, mean over games, date bootstrap (400 replicates, seed 20261026)",
+    "interval": "99.44% (Bonferroni over the nine markets)"
+  },
+  "decision_rule": {
+    "better_calibrated_than_market": "per market: upper bound of (C_full - raw market) is below 0 AND the walk-forward pooled Brier of C is below the market's AND the test calibration slope of C is in [0.9, 1.1]",
+    "adds_information": "better_calibrated_than_market AND the interval of (C_full - A_recalibration) is entirely below 0 AND the placebo against B_model is clean",
+    "calibration_only": "better_calibrated_than_market but the interval of (C_full - A_recalibration) contains 0",
+    "otherwise": "no evidence that the engine improves the bet365 close; the close stays the reference and this is a valid result",
+    "scope": "necessary, not sufficient; one bookmaker, close price, three seasons; says nothing about prices a customer can get"
+  },
+  "outputs": {
+    "report": "team_markets_report.json (arms, intervals, reliability tables, walk-forward, placebo, drops, reproduction)",
+    "coefficients": "team_markets_coefficients.json per market: arm C weights and lambda, promoted false",
+    "also_saved": "the score model's per-game predictions (mu_m, sigma_m, mu_t, sigma_t, p_win) for 2023-24..2025-26 so later work does not refit"
+  },
+  "amendments": [
+    {
+      "version": "1.1",
+      "amended_at_utc": "2026-10-24T21:17:22.472873+00:00",
+      "supersedes_sha256": "30e5824505483ab63fc00e6bc8ed0085b71ef32677686a0367b1fe658675db68",
+      "made_before_any_real_run": true,
+      "why": "The unit test with synthetic data showed that the placebo (non-model features permuted, model_delta kept) always beats the recalibration arm when the model is informative, because it still carries model_delta. Comparing it with A_recalibration would flag every informative model as a leak. The correct control compares the placebo with B_model: permuted extra features must not improve on the model-only arm. No real-data number had been computed.",
+      "changes": [
+        "controls.placebo_permutation is compared with B_model instead of A_recalibration",
+        "decision_rule.adds_information uses the placebo against B_model"
+      ]
+    }
+  ]
+}

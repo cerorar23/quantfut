@@ -5,6 +5,15 @@ Sistema cuantitativo de predicción de fútbol (Dixon-Coles + de-vig de mercado
 FastAPI. Ver [README.md](README.md) para la arquitectura completa; este
 archivo es el arnés operativo, no repite esa documentación.
 
+Decisión del usuario (2026-10-23): PropLine es la fuente fija de **cuotas** para
+los motores y consultas nuevas. Un recolector compartido captura cada hora;
+los motores leen el archivo y no hacen peticiones duplicadas. Conservar las
+observaciones originales para reentrenamiento posterior, con recepción real,
+fuente e identidad del contrato; no reentrenar ni promover por capturar datos.
+Ver `docs/propline_compartido_20261023.md`. The Odds API queda para históricos
+ya autorizados/reproducción; no es fallback automático de las cuotas en vivo.
+Esto no sustituye estadísticas, lesiones o resultados oficiales.
+
 Actualización (2026-09-23): un único FastAPI sirve también la web demo en
 `/` y el panel interno en `/control`; el BFF separado que figura en
 decisiones históricas fue descartado. No exponer tokens de servicio o
@@ -31,7 +40,8 @@ pago (ver `harness/tareas.md`).
 
 Antes de tocar el servidor lee [DEPLOYS.md](DEPLOYS.md). Lo que corre en producción debe ser lo que dice `main`;
 solo despliega una sesión a la vez, se compara lo desplegado con `main` antes de sobrescribir, y cada despliegue
-se anota en DEPLOYS.md con su vuelta atrás. No reconstruyas imágenes desde `~/quantfut/src` del servidor:
+se anota en DEPLOYS.md con su vuelta atrás. Cada sesión trabaja en su propio `git worktree` (el 15-oct dos sesiones
+compartieron carpeta y una comiteó en la rama de la otra) y despliega con `scripts/deploy.sh construir|ensayo|desplegar`. No reconstruyas imágenes desde `~/quantfut/src` del servidor:
 está desactualizada.
 
 ## Alcance del negocio (decisión del usuario, 2026-09-21)
@@ -111,6 +121,8 @@ Consecuencias que hay que respetar:
   movió nada de lo ya medido en las ocho ligas.
 
 ## Reglas estrictas
+
+- **Web, decisión del titular (27-oct-2026):** el trabajo de ergonomía es solo acomodo. Mantener obligatoriamente el CSS anterior (`styles.css`, `future.css`, `membership.css` y CYBERCORE CSS 0.3.0), incluidos colores, tarjetas y botones. No añadir una hoja que lo sustituya o sobrescriba. Reutilizar los componentes anteriores para fútbol, NBA y tenis; `frontend/original-css.test.mjs` comprueba sus huellas.
 
 - **Traducciones de la app (decisión del usuario, 2026-10-12):** cualquier texto visible que se añada o cambie en `apps/mobile` (o mensaje del servidor que la app muestre) se traduce a los 6 idiomas (es, en, pt, fr, it, de) en el MISMO cambio. Sin cadenas fijas en los widgets: `context.l10n` + `python apps/mobile/tool/l10n_add.py`; mensajes de API en `src/qf/api/mensajes.py`. Ver `apps/mobile/docs/TRADUCCIONES.md`; las pruebas `test/l10n_test.dart` y `tests/test_mensajes.py` lo exigen.
 - No inventes que existe un archivo o módulo sin verificarlo (`ls`, `grep`).

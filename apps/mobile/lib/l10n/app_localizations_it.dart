@@ -41,7 +41,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'Ho almeno 18 anni e accetto i termini e l\'informativa sulla privacy.';
 
   @override
-  String get accessConsentNeeded => 'Seleziona la casella per continuare.';
+  String get accessConsentRequired =>
+      'Seleziona la casella per continuare con Google.';
 
   @override
   String accessConsentRich(String terms, String privacy) {
@@ -327,6 +328,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get artTransparency => 'TRASPARENZA';
 
   @override
+  String get bannerAwaiting =>
+      'PARTITA GIOCATA · in attesa del risultato ufficiale';
+
+  @override
   String get bannerLive =>
       'PARTITA IN CORSO · pronostico sigillato prima dell\'inizio';
 
@@ -439,6 +444,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get detailLineupsPending => 'Formazioni non ancora confermate.';
 
   @override
+  String get detailNoFeatured =>
+      'Nessun pronostico di questa partita rientra in evidenza (quota da 1,20 a 1,60 e probabilità dal 74% all’85%). Quelli aperti sono nell’elenco qui sotto.';
+
+  @override
   String get detailNoH2h =>
       'Non ci sono scontri registrati per questa partita.';
 
@@ -452,6 +461,14 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get detailNoPicks =>
       'Non ci sono pronostici pubblicati per questa partita.';
+
+  @override
+  String get detailNoSealedModel =>
+      'Non c\'è un pronostico sigillato per questa partita. Qui sotto trovi le stime del modello.';
+
+  @override
+  String get detailNoSealedModelVip =>
+      'Non c\'è un pronostico sigillato per questa partita. Qui sotto ci sono le stime del modello, con il VIP.';
 
   @override
   String get detailNoStarters => 'Nessun titolare confermato.';
@@ -852,6 +869,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeByDate => 'Partite per data e orario';
 
   @override
+  String get homeFeatured => 'In evidenza oggi';
+
+  @override
+  String get homeFeedError => 'Impossibile caricare i dati di questo sport.';
+
+  @override
   String homeForecastAt(String when, String mexico) {
     return 'Pronostico il $when ($mexico ora del Messico)';
   }
@@ -864,6 +887,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get homeNoMatchesDay => 'Nessuna partita in questo giorno.';
+
+  @override
+  String get homePlayersWithPicks => 'Giocatori con pronostico';
 
   @override
   String get homeSeeAll => 'Vedi tutto';
@@ -902,10 +928,22 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeTomorrow => 'Domani';
 
   @override
+  String get imageCredits =>
+      'Foto: Wikimedia Commons (CC BY-SA). Autori nella scheda di ogni partita.';
+
+  @override
+  String get imageUnavailable => 'Immagine non disponibile';
+
+  @override
   String get inboxEmpty => 'Non hai ancora avvisi.';
 
   @override
   String get inboxMatch => 'Partita';
+
+  @override
+  String inboxSportTag(String sport) {
+    return 'Sport: $sport';
+  }
 
   @override
   String get inboxTitle => 'Avvisi';
@@ -948,6 +986,9 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get ladderHistoryEmpty =>
       'Non ci sono ancora sfide chiuse. Quando una finisce, comparirà qui con il suo risultato.';
+
+  @override
+  String get ladderHistoryExpired => 'Scaduto senza essere completato';
 
   @override
   String ladderHistoryFailedAt(int step) {
@@ -1143,6 +1184,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get marketHtGoal => 'Gol nel 1º tempo';
 
   @override
+  String marketOverLine(String line) {
+    return 'Più di $line';
+  }
+
+  @override
   String get marketResult1x2 => 'Risultato 1X2';
 
   @override
@@ -1165,6 +1211,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String marketsHistoricHit(String percent) {
     return 'successo storico $percent';
+  }
+
+  @override
+  String marketsHitCount(int won, int resolved) {
+    return '$won/$resolved pubblicati';
   }
 
   @override
@@ -1195,6 +1246,18 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get marketsRadarNote =>
       'L\'anello è la percentuale storica di successo della migliore linea convalidata di ogni mercato; «Pubblicati» sono i pronostici già risolti. Sono pronostici pre-partita, non avvisi in diretta, e nessuna probabilità garantisce un risultato.';
+
+  @override
+  String get marketsTabGame => 'Partita';
+
+  @override
+  String get marketsTabGames => 'Giochi';
+
+  @override
+  String get marketsTabPlayers => 'Giocatori';
+
+  @override
+  String get matchAwaitingResult => 'Risultato in attesa';
 
   @override
   String mdCornersTotal(Object total) {
@@ -1321,6 +1384,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get moreLegal => 'Note legali';
+
+  @override
+  String get moreMySportsSub => 'Ordina e scegli quali sport vedere';
 
   @override
   String get moreRate => 'Valuta l\'app';
@@ -1587,7 +1653,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String picksRangeHint(int min, int max, int free) {
-    return '$min–$max% di probabilità · fino a $free gratis';
+    return '$min–$max% di probabilità · $free% gratis';
   }
 
   @override
@@ -1613,6 +1679,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get picksTrustTitle => 'Tasso di successo storico';
+
+  @override
+  String predictionsSealedAt(String when) {
+    return 'Sigillato $when';
+  }
 
   @override
   String get prefsAdsBody =>
@@ -1699,6 +1770,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get profileBalance => 'Saldo e monitoraggio';
 
   @override
+  String get profileCheckUpdate => 'Cerca aggiornamenti';
+
+  @override
   String get profileConnected => 'QuantFut · Connesso al server';
 
   @override
@@ -1739,6 +1813,38 @@ class AppLocalizationsIt extends AppLocalizations {
   String get profileMeasurement => 'Misurazione ed errori';
 
   @override
+  String get profileMySports => 'I miei sport';
+
+  @override
+  String get profileMySportsDefault => 'predefinito';
+
+  @override
+  String profileMySportsDown(String sport) {
+    return 'Sposta giù $sport';
+  }
+
+  @override
+  String get profileMySportsHint =>
+      'Usa le frecce per ordinare · il primo si apre come predefinito';
+
+  @override
+  String get profileMySportsLastVisible => 'Lascia almeno uno sport visibile.';
+
+  @override
+  String get profileMySportsSaveError =>
+      'Non è stato possibile salvare la modifica. Riprova.';
+
+  @override
+  String profileMySportsShow(String sport) {
+    return 'Mostra $sport';
+  }
+
+  @override
+  String profileMySportsUp(String sport) {
+    return 'Sposta su $sport';
+  }
+
+  @override
   String get profileNotifications => 'Notifiche';
 
   @override
@@ -1773,6 +1879,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get profileTitle => 'Profilo e impostazioni';
 
   @override
+  String get profileUpToDate => 'Hai già l\'ultima versione.';
+
+  @override
+  String get profileUpdateCheckFailed =>
+      'Impossibile verificare gli aggiornamenti. Riprova più tardi.';
+
+  @override
   String profileValidUntil(String date) {
     return 'Validità: $date';
   }
@@ -1785,6 +1898,18 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get profileYourAccount => 'Il tuo account QuantFut';
+
+  @override
+  String quoteBookAt(String book, String time) {
+    return '$book · $time';
+  }
+
+  @override
+  String get quoteNone => 'Nessuna quota';
+
+  @override
+  String get quoteReference =>
+      'Quota di riferimento della rilevazione usata al sigillo del pronostico';
 
   @override
   String resultLabel(String score) {
@@ -2022,6 +2147,26 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String rewardsUnlocksAvailable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Hai monete per $count sblocchi.',
+      one: 'Hai monete per 1 sblocco.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sealLabel => 'SIGILLO';
+
+  @override
+  String get sealPublished => 'PUBBLICATO';
+
+  @override
+  String get sealVerified => 'VERIFICATO';
+
+  @override
   String get selBttsNo => 'Non segnano entrambe';
 
   @override
@@ -2095,6 +2240,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get selHtGoalYes => 'Ci sarà un gol nel 1T';
 
   @override
+  String selTeamGoalsLine(String side, String line, String team) {
+    String _temp0 = intl.Intl.selectLogic(side, {
+      'over': 'Più di $line gol di $team',
+      'other': 'Meno di $line gol di $team',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String selTeamOrDraw(String team) {
     return '$team o pareggio';
   }
@@ -2139,6 +2293,124 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get splashTagline => 'CALCIO · NBA · STATISTICA';
+
+  @override
+  String get sportAlertsNone => 'Nessun avviso per questa partita.';
+
+  @override
+  String get sportAvailApplied => 'Report infortuni applicato';
+
+  @override
+  String sportAvailListed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count giocatori nel report',
+      one: '$count giocatore nel report',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sportAvailMissingMinutes(String team, String minutes) {
+    return '$team: $minutes min di assenze';
+  }
+
+  @override
+  String sportAvailNotSubmitted(String team) {
+    return '$team non ha inviato il report';
+  }
+
+  @override
+  String get sportAvailPending => 'Report infortuni in attesa';
+
+  @override
+  String get sportFootball => 'Calcio';
+
+  @override
+  String sportH2hRecord(String home, String away, int homeWins, int awayWins) {
+    return '$home $homeWins – $awayWins $away';
+  }
+
+  @override
+  String sportHitWindow(int n) {
+    return 'Sugli ultimi $n risolti';
+  }
+
+  @override
+  String get sportMore => 'Altro';
+
+  @override
+  String get sportNba => 'NBA';
+
+  @override
+  String sportPhotoCredit(String name, String author, String license) {
+    return 'Foto di $name: $author · $license';
+  }
+
+  @override
+  String get sportSelectorLabel => 'Sport';
+
+  @override
+  String get sportStatAge => 'Età';
+
+  @override
+  String get sportStatAway => 'In trasferta';
+
+  @override
+  String get sportStatBackToBack => 'Gioca due giorni di fila';
+
+  @override
+  String get sportStatCareer => 'Carriera';
+
+  @override
+  String get sportStatFormIndex => 'Indice di forma';
+
+  @override
+  String get sportStatHome => 'In casa';
+
+  @override
+  String get sportStatLast6 => 'Ultime 6';
+
+  @override
+  String get sportStatPointsAgainst => 'Punti subiti';
+
+  @override
+  String get sportStatPointsFor => 'Punti fatti';
+
+  @override
+  String get sportStatRank => 'Ranking';
+
+  @override
+  String get sportStatRest => 'Giorni di riposo';
+
+  @override
+  String get sportStatSeason => 'Stagione';
+
+  @override
+  String get sportStatStanding => 'Posizione';
+
+  @override
+  String get sportStatStreak => 'Serie';
+
+  @override
+  String get sportStatSurface => 'Su questa superficie';
+
+  @override
+  String get sportStatsUnavailable =>
+      'Non ci sono ancora statistiche per questa partita.';
+
+  @override
+  String get sportSurfaceClay => 'Terra rossa';
+
+  @override
+  String get sportSurfaceGrass => 'Erba';
+
+  @override
+  String get sportSurfaceHard => 'Cemento';
+
+  @override
+  String get sportTennis => 'Tennis';
 
   @override
   String get startupFailed => 'Impossibile avviare QuantFut. Riprova.';
@@ -2454,6 +2726,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get vipBenefit4Title => 'Quote e analisi della partita';
 
   @override
+  String get vipBenefitSportsBody =>
+      'Gli stessi sigilli e lo stesso storico, senza abbonamento';
+
+  @override
+  String get vipBenefitSportsTitle => 'NBA e tennis aperti a tutti';
+
+  @override
   String get vipBestPrice => '★ MIGLIOR PREZZO';
 
   @override
@@ -2486,7 +2765,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get vipIntro =>
-      'Tutti i pronostici Alta probabilità e della Sfida Scala finché il tuo abbonamento è attivo.';
+      'Sblocca i pronostici Alta probabilità e della Sfida Scala nel calcio finché il tuo abbonamento è attivo. NBA e tennis sono aperti a tutti.';
 
   @override
   String get vipLinked => '🔒  Il tuo accesso VIP è collegato al tuo account';
@@ -2540,10 +2819,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get vipRestore => 'Ripristina acquisti';
 
   @override
-  String get vipStatRecorded => 'Percentuale di successo registrata';
+  String get vipSportsNote =>
+      'Ogni pronostico è sigillato prima della partita. «—»: ancora nessun risultato per calcolarlo.';
 
   @override
-  String get vipStatResolved => 'Risolti';
+  String get vipSportsTitle => 'Precisione registrata per sport';
 
   @override
   String get vipStoreFailed =>
@@ -2568,7 +2848,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'Scopri il lato statistico dello sport: partite, analisi e pronostici del progetto che già conosci sul web.';
 
   @override
-  String get welcome1Title => 'Calcio e NBA,\ncon un\'altra prospettiva';
+  String get welcome1Title =>
+      'Calcio, NBA e tennis,\ncon un\'altra prospettiva';
 
   @override
   String get welcome2Body =>
@@ -2579,7 +2860,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get welcome3Body =>
-      'Gol, corner, handicap e statistiche dell\'NBA. Scopri cosa misura ogni analisi prima di interpretare una selezione.';
+      'Gol, corner e handicap nel calcio, prop dei giocatori in NBA e game nel tennis. Scopri cosa misura ogni analisi prima di interpretare una selezione.';
 
   @override
   String get welcome3Title => 'Più mercati.\nPiù informazioni.';

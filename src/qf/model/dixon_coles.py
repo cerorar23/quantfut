@@ -70,6 +70,7 @@ incertidumbre por equipo. Es lo único de este stack que justifica GPU.
 from __future__ import annotations
 
 import json
+import logging
 import math
 import pickle
 from dataclasses import dataclass, asdict, field
@@ -80,6 +81,8 @@ from scipy.optimize import minimize
 
 from ..config import settings
 from .pricing import price_all_markets
+
+log = logging.getLogger(__name__)
 
 # Peso de las penalizaciones de pooling parcial. Cuanto mayor, más se parecen
 # las ligas entre sí. Calibrados para que una liga con ~2.000 partidos quede
@@ -95,7 +98,19 @@ POOL_STRENGTH = 300.0
 # liga. Sin esto, el nivel de una liga y las fuerzas de sus equipos son
 # intercambiables (se puede sumar c a todos los ataques y a todas las defensas
 # de una liga sin cambiar ninguna predicción).
+#
+# La media es PONDERADA por la muestra efectiva (auditoría 2026-10-21). Con la
+# media simple, los equipos sin datos recientes (91 en el modelo de producción)
+# no aportan nada a la verosimilitud y el optimizador los usaba de holgura para
+# cumplir la restricción: acababan con ataques de hasta ±2,4, y un club que
+# volvía a la liga (Hull, Coventry, Cambuur) heredaba ese valor. Ponderando, la
+# restricción la fijan los equipos que juegan y los que no, se quedan donde los
+# deja el ridge.
 SUM_ZERO = 1000.0
+# Tolerancias del optimizador. Con el gradiente analítico L-BFGS-B converge en
+# unos cientos de iteraciones; antes, con diferencias finitas sobre ~800
+# parámetros, agotaba el tope de evaluaciones sin converger (23 min).
+MAXITER = 5000
 
 
 @dataclass
@@ -137,6 +152,10 @@ class DCParams:
     # Con default: los artefactos anteriores no lo traen.
     se_attack: list[float] = field(default_factory=list)
     se_defence: list[float] = field(default_factory=list)
+    # Fuerza del ridge en PARTIDOS RECIENTES EQUIVALENTES (None en artefactos
+    # anteriores, que usaban `ridge` a secas) y si el optimizador convergió.
+    ridge_partidos: float | None = None
+    converged: bool | None = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -155,12 +174,24 @@ def team_key(league_id: str | None, team: str) -> str:
 
 
 class DixonColes:
-    def __init__(self, halflife_days: float = 180.0, xg_blend: float = 0.65,
-                 ridge: float = 0.02, max_goals: int = 12):
+    """
+    `ridge` es la penalización en la escala de la verosimilitud normalizada
+    (la de los artefactos anteriores). `ridge_partidos` la expresa en PARTIDOS
+    RECIENTES EQUIVALENTES y es la que se usa: la verosimilitud se pondera con
+    pesos divididos por su media, así que un partido de hoy pesa 1/media (~17
+    con 12 años y media vida de 180 días) y un ridge de 0,02 equivalía a una
+    milésima de partido, es decir, a no encoger nada. Las dos se suman.
+    """
+
+    def __init__(self, halflife_days: float = 270.0, xg_blend: float = 0.65,
+                 ridge: float = 0.0, max_goals: int = 12,
+                 ridge_partidos: float | None = None):
         self.halflife = halflife_days
         self.xg_blend = xg_blend
         self.ridge = ridge
         self.max_goals = max_goals
+        self.ridge_partidos = (settings.ridge_partidos if ridge_partidos is None
+                               else ridge_partidos)
         self.params: DCParams | None = None
         self._idx: dict[str, int] = {}
         self._lidx: dict[str, int] = {}
@@ -255,9 +286,24 @@ class DixonColes:
         np.add.at(eff, ai, w_raw)
 
         w = w_raw / w_raw.mean()
+        # Ridge efectivo en la escala de `w`: `ridge_partidos` partidos
+        # recientes equivalentes más el `ridge` heredado.
+        ridge = self.ridge + self.ridge_partidos / float(w_raw.mean())
 
-        hg_i, ag_i = hg.astype(int), ag.astype(int)
+        # Pesos de la suma cero: muestra efectiva normalizada dentro de cada
+        # liga (ver SUM_ZERO). El 1e-9 solo evita dividir por cero en una liga
+        # sin ningún partido reciente.
+        pz = eff + 1e-9
+        for m_ in league_masks:
+            if m_.any():
+                pz[m_] = pz[m_] / pz[m_].sum()
+
+        m00 = (hg == 0) & (ag == 0)
+        m01 = (hg == 0) & (ag == 1)
+        m10 = (hg == 1) & (ag == 0)
+        m11 = (hg == 1) & (ag == 1)
         base0 = math.log(max(float(np.mean([y_h.mean(), y_a.mean()])), 0.2))
+        log_min, log_max = math.log(1e-6), math.log(25.0)
 
         def unpack(p: np.ndarray):
             atk = p[:n]
@@ -268,40 +314,82 @@ class DixonColes:
             rho = np.clip(p[-1], -0.25, 0.25)
             return atk, dfn, ha, base, stg, rho
 
-        def nll(p: np.ndarray) -> float:
+        def nll(p: np.ndarray) -> tuple[float, np.ndarray]:
+            """Objetivo y su gradiente EXACTO (L-BFGS-B con `jac=True`)."""
             atk, dfn, ha, base, stg, rho = unpack(p)
 
             # `stg` entra con signo opuesto en las dos intensidades, así que en
             # un partido doméstico (lh == la) se cancela exactamente.
-            lam = np.exp(base[ci] + ha[ci]
-                         + (atk[hi] + stg[lh]) - (dfn[ai] + stg[la]))
-            mu = np.exp(base[ci]
-                        + (atk[ai] + stg[la]) - (dfn[hi] + stg[lh]))
-            lam = np.clip(lam, 1e-6, 25.0)
-            mu = np.clip(mu, 1e-6, 25.0)
+            eta_h = np.clip(base[ci] + ha[ci] + (atk[hi] + stg[lh]) - (dfn[ai] + stg[la]),
+                            log_min, log_max)
+            eta_a = np.clip(base[ci] + (atk[ai] + stg[la]) - (dfn[hi] + stg[lh]),
+                            log_min, log_max)
+            lam, mu = np.exp(eta_h), np.exp(eta_a)
+
+            # Corrección tau sobre los goles REALES (enteros) y sus derivadas
+            # respecto a lam, mu y rho.
+            tau = np.ones_like(lam)
+            d_lam = np.zeros_like(lam)
+            d_mu = np.zeros_like(lam)
+            d_rho = np.zeros_like(lam)
+            tau[m00] = 1.0 - lam[m00] * mu[m00] * rho
+            d_lam[m00], d_mu[m00], d_rho[m00] = -mu[m00] * rho, -lam[m00] * rho, -lam[m00] * mu[m00]
+            tau[m01] = 1.0 + lam[m01] * rho
+            d_lam[m01], d_rho[m01] = rho, lam[m01]
+            tau[m10] = 1.0 + mu[m10] * rho
+            d_mu[m10], d_rho[m10] = rho, mu[m10]
+            tau[m11] = 1.0 - rho
+            d_rho[m11] = -1.0
+            tau = np.clip(tau, 1e-9, None)
 
             # Cuasi-verosimilitud de Poisson (válida con objetivo continuo;
             # equivale a Poisson salvo constante cuando y es entero)
-            ll = y_h * np.log(lam) - lam + y_a * np.log(mu) - mu
-            # La corrección tau se evalúa sobre los goles REALES (enteros)
-            ll = ll + np.log(np.clip(_tau_vec(hg_i, ag_i, lam, mu, rho), 1e-9, None))
+            ll = y_h * eta_h - lam + y_a * eta_a - mu + np.log(tau)
+            # Derivada del objetivo respecto a cada predictor lineal.
+            g_h = -w * (y_h - lam + lam * d_lam / tau)
+            g_a = -w * (y_a - mu + mu * d_mu / tau)
 
-            penalty = self.ridge * (np.sum(atk ** 2) + np.sum(dfn ** 2))
-            # Identificación: suma cero por liga, no global.
+            grad = np.zeros_like(p)
+            g_atk, g_dfn = grad[:n], grad[n:2 * n]
+            np.add.at(g_atk, hi, g_h)
+            np.add.at(g_dfn, ai, -g_h)
+            np.add.at(g_atk, ai, g_a)
+            np.add.at(g_dfn, hi, -g_a)
+            g_ha, g_base, g_stg = np.zeros(n_lg), np.zeros(n_lg), np.zeros(n_lg)
+            np.add.at(g_ha, ci, g_h)
+            np.add.at(g_base, ci, g_h + g_a)
+            np.add.at(g_stg, lh, g_h - g_a)
+            np.add.at(g_stg, la, g_a - g_h)
+            grad[2 * n:2 * n + n_lg] = g_ha
+            grad[2 * n + n_lg:2 * n + 2 * n_lg] = g_base
+            grad[2 * n + 2 * n_lg:2 * n + 3 * n_lg] = g_stg
+            grad[-1] = -float(np.sum(w * d_rho / tau))
+
+            penalty = ridge * (np.sum(atk ** 2) + np.sum(dfn ** 2))
+            g_atk += 2.0 * ridge * atk
+            g_dfn += 2.0 * ridge * dfn
+            # Identificación: suma cero por liga (no global), ponderada.
             for m_ in league_masks:
                 if m_.any():
-                    penalty += SUM_ZERO * (atk[m_].mean() ** 2 + dfn[m_].mean() ** 2)
+                    ma = float(np.sum(pz[m_] * atk[m_]))
+                    md = float(np.sum(pz[m_] * dfn[m_]))
+                    penalty += SUM_ZERO * (ma ** 2 + md ** 2)
+                    g_atk[m_] += 2.0 * SUM_ZERO * ma * pz[m_]
+                    g_dfn[m_] += 2.0 * SUM_ZERO * md * pz[m_]
             # Pooling parcial: cada liga hacia la media de las ligas.
             if n_lg > 1:
-                penalty += POOL_HOME_ADV * float(np.sum((ha - ha.mean()) ** 2))
-                penalty += POOL_BASE * float(np.sum((base - base.mean()) ** 2))
                 # Un desplazamiento común a todas las ligas se cancela en TODOS
-                # los partidos, así que solo las diferencias están
+                # los partidos, así que solo las diferencias de `stg` están
                 # identificadas: hay que anclar la media o el optimizador
                 # deriva libremente por una dirección plana.
-                penalty += POOL_STRENGTH * float(np.sum((stg - stg.mean()) ** 2))
-            return float(-np.sum(w * ll) + penalty)
+                for off, peso, x in ((2 * n, POOL_HOME_ADV, ha),
+                                     (2 * n + n_lg, POOL_BASE, base),
+                                     (2 * n + 2 * n_lg, POOL_STRENGTH, stg)):
+                    penalty += peso * float(np.sum((x - x.mean()) ** 2))
+                    grad[off:off + n_lg] += 2.0 * peso * (x - x.mean())
+            return float(-np.sum(w * ll) + penalty), grad
 
+        self._objetivo = nll
         x0 = np.concatenate([
             np.zeros(n), np.zeros(n),
             np.full(n_lg, 0.25), np.full(n_lg, base0), np.zeros(n_lg), [-0.03],
@@ -311,8 +399,12 @@ class DixonColes:
                   + [(-1.5, 1.8)] * n_lg
                   + [(-1.0, 1.0)] * n_lg
                   + [(-0.25, 0.25)])
-        res = minimize(nll, x0, method="L-BFGS-B", bounds=bounds,
-                       options={"maxiter": 2000, "maxfun": 300000})
+        res = minimize(nll, x0, jac=True, method="L-BFGS-B", bounds=bounds,
+                       options={"maxiter": MAXITER, "maxfun": 10 * MAXITER,
+                                "ftol": 1e-12, "gtol": 1e-6})
+        if not res.success:
+            log.warning("Dixon-Coles NO convergió (%s) tras %d iteraciones",
+                        res.message, res.nit)
 
         atk, dfn, ha, base, stg, rho = unpack(res.x)
         counts = {lg: int((ci == j).sum()) for lg, j in self._lidx.items()}
@@ -370,7 +462,7 @@ class DixonColes:
         mu_f = np.clip(mu_f, 1e-6, 25.0)
 
         # Todo con pesos CRUDOS: así `I_prior` y `I_datos` hablan de lo mismo.
-        I_prior = 2.0 * self.ridge * float(w_raw.mean())
+        I_prior = 2.0 * ridge * float(w_raw.mean())
         I_atk, I_dfn = np.full(n, I_prior), np.full(n, I_prior)
         # El ataque de un equipo mueve la intensidad que PRODUCE; su defensa,
         # la que CONCEDE, que es la del rival.
@@ -398,6 +490,8 @@ class DixonColes:
             fitted_at=as_of.isoformat(),
             n_matches=int(len(df)),
             n_matches_by_league=counts,
+            ridge_partidos=self.ridge_partidos,
+            converged=bool(res.success),
         )
         return self
 
@@ -549,28 +643,18 @@ class DixonColes:
             pickle.dump({"params": asdict(self.params), "idx": self._idx,
                          "lidx": self._lidx,
                          "halflife": self.halflife, "xg_blend": self.xg_blend,
-                         "ridge": self.ridge, "max_goals": self.max_goals}, f)
+                         "ridge": self.ridge, "max_goals": self.max_goals,
+                         "ridge_partidos": self.ridge_partidos}, f)
 
     @classmethod
     def load(cls, path: str) -> "DixonColes":
         with open(path, "rb") as f:
             d = pickle.load(f)
-        m = cls(d["halflife"], d["xg_blend"], d["ridge"], d["max_goals"])
+        # Los artefactos anteriores no traen `ridge_partidos`: se cargan con 0
+        # para que conserven exactamente su objetivo original.
+        m = cls(d["halflife"], d["xg_blend"], d["ridge"], d["max_goals"],
+                ridge_partidos=d.get("ridge_partidos", 0.0))
         m.params = DCParams(**d["params"])
         m._idx = d["idx"]
         m._lidx = d["lidx"]
         return m
-
-
-def _tau_vec(hg, ag, lam, mu, rho):
-    """tau vectorizado con lambda/mu por partido."""
-    t = np.ones_like(lam, dtype=float)
-    m00 = (hg == 0) & (ag == 0)
-    m01 = (hg == 0) & (ag == 1)
-    m10 = (hg == 1) & (ag == 0)
-    m11 = (hg == 1) & (ag == 1)
-    t = np.where(m00, 1.0 - lam * mu * rho, t)
-    t = np.where(m01, 1.0 + lam * rho, t)
-    t = np.where(m10, 1.0 + mu * rho, t)
-    t = np.where(m11, 1.0 - rho, t)
-    return t

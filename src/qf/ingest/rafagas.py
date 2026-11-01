@@ -93,6 +93,8 @@ def filas(ev: dict, match_id: str, now: datetime) -> list[tuple]:
 
 
 def run_once(now: datetime | None = None) -> dict:
+    if getattr(settings, "odds_provider", "the_odds_api") == "propline":
+        return {"consultas": 0, "source": "propline", "reason": "shared_hourly_capture"}
     now = now or datetime.now(timezone.utc)
     tope = settings.rafagas_max_creditos_mes
     objetivos = _objetivos(now) if tope > 0 else {}

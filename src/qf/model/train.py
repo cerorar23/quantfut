@@ -252,7 +252,8 @@ def train_and_register(new_version: str | None = None,
     # que es el resultado correcto cuando el modelo ya estaba bien calibrado.
     cal, cal_report = fit_and_validate(
         oos["lam"].to_numpy(), oos["mu"].to_numpy(),
-        oos["outcome"].to_numpy(), rho=model.params.rho,
+        oos["home_goals"].to_numpy(), oos["away_goals"].to_numpy(),
+        rho=model.params.rho,
     )
     cal_path = f"{settings.artifact_dir}/cal_{version}.pkl"
     cal.save(cal_path)
@@ -382,7 +383,13 @@ def train_and_register(new_version: str | None = None,
     decision = evaluate_base_promotion(candidate_common, champion_common,
                                        comparison, clv_real)
     val["promotion"] = decision.as_dict()
-    activate = bool(decision.promote)
+    # Un ajuste que no convergió no se activa nunca (auditoría 2026-10-21: el
+    # de producción llevaba meses parándose por el tope de evaluaciones y nadie
+    # miraba `success`).
+    val["converged"] = model.params.converged
+    if model.params.converged is False:
+        val["promotion"]["blocked_by"] = "El ajuste final de Dixon-Coles no convergió"
+    activate = bool(decision.promote) and model.params.converged is not False
 
     if activate:
         execute("UPDATE model_artifacts SET is_active = FALSE WHERE is_active")

@@ -8,6 +8,9 @@ from .audit import digest, write_json
 from .paper_followup import verify_plan
 
 
+DEADLINE_UTC = '2026-10-22T12:00:00+00:00'
+
+
 def build_bundle(plan_folder, initial_state, destination, workspace=None):
     workspace=Path(workspace or Path.cwd()).resolve();folder=Path(plan_folder)
     plan=verify_plan(folder)
@@ -38,7 +41,7 @@ def build_bundle(plan_folder, initial_state, destination, workspace=None):
     state_copy=root/'initial_state.sqlite';state_copy.write_bytes(Path(initial_state).read_bytes())
     files['initial_state.sqlite']=state_copy
     config=dict(plan=relative(folder/'plan.json')[0].removesuffix('/plan.json'),
-        deadline_utc='2026-10-22T12:00:00+00:00',total_closing_credit_cap=2,
+        deadline_utc=DEADLINE_UTC,total_closing_credit_cap=2,
         maximum_jobs_per_run=3,production_ready=False,periodic_copies=False)
     write_json(root/'worker_config.json',config);files['worker_config.json']=root/'worker_config.json'
     manifest=dict(version='nba-paper-vps-bundle-1',files={n:digest(p) for n,p in sorted(files.items())},

@@ -1,0 +1,87 @@
+{
+  "state": "ok",
+  "generated_at": "2026-10-29T23:59:00+00:00",
+  "source": "PropLine",
+  "events": {
+    "0022600144": {
+      "cohort": "2026-10-29_1830",
+      "sealed_at": "2026-10-29T22:30:39.068163+00:00",
+      "recalculated_at": null,
+      "quotes": {
+        "winner||": {
+          "home": {
+            "price": 1.62,
+            "book": "draftkings",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 5
+          },
+          "away": {
+            "price": 2.35,
+            "book": "fanduel",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 4
+          }
+        },
+        "game_total||219.5": {
+          "over": {
+            "price": 1.91,
+            "book": "betmgm",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 6
+          },
+          "under": {
+            "price": 1.89,
+            "book": "fanduel",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 6
+          }
+        },
+        "player_assists|201935|6.5": {
+          "over": {
+            "price": 1.87,
+            "book": "fanduel",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 3
+          }
+        },
+        "team_points|1610612737|110": {
+          "over": {
+            "price": 1.95,
+            "book": "betmgm",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 2
+          }
+        }
+      }
+    },
+    "0022600145": {
+      "cohort": "2026-10-29_1830",
+      "sealed_at": "2026-10-29T22:30:39.068163+00:00",
+      "recalculated_at": null,
+      "quotes": {
+        "winner||": {
+          "home": {
+            "price": 1.5,
+            "book": "draftkings",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 5
+          },
+          "away": {
+            "price": 2.6,
+            "book": "fanduel",
+            "as_of": "2026-10-29T22:50:00+00:00",
+            "books": 4
+          }
+        },
+        "player_assists|201599|1.5": {
+          "over": {
+            "price": 2.05,
+            "book": "fanduel",
+            "as_of": "2026-10-29T23:55:00+00:00",
+            "books": 3
+          }
+        }
+      }
+    }
+  }
+}

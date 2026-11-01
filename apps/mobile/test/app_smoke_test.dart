@@ -40,7 +40,7 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(SecondScreen), findsOneWidget);
-    expect(find.text('Fútbol y NBA,\ncon otra perspectiva'), findsOneWidget);
+    expect(find.text('Fútbol, NBA y tenis,\ncon otra perspectiva'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });

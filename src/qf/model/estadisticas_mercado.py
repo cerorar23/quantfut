@@ -176,20 +176,74 @@ LINEAS_HABILITADAS: dict[str, tuple[tuple[str, float], ...]] = {
     "corners": (("over", 7.5), ("over", 8.5),
                 ("under", 9.5), ("under", 10.5), ("under", 11.5)),
     "cards": (("under", 4.5), ("under", 5.5), ("under", 6.5)),
-    "corners_home": (("over", 1.5), ("over", 4.5), ("over", 5.5), ("under", 5.5)),
-    "corners_away": (("over", 3.5), ("over", 4.5), ("under", 4.5)),
+    "corners_home": (("over", 1.5), ("over", 4.5), ("over", 5.5), ("under", 5.5), ("under", 6.5)),
+    # Visitante más de 3,5 y más de 4,5 salen el 2026-10-22: con el reparto por
+    # supremacía (CONTEXTO_EQUIPO) fallan la prueba en la base de producción
+    # (más de 3,5 en 80-95 %: 84,4 → 81,5, n=108; más de 4,5: 78,9 → 70,3, n=37).
+    "corners_away": (("under", 4.5), ("under", 5.5)),
 }
 # De qué acumulador sale cada mercado.
 FUENTE = {"corners": "corners", "cards": "cards",
           "corners_home": "corners", "corners_away": "corners"}
 
 
-def prob(mercado: str, lam: tuple[float, float], lado: str, linea: float) -> float:
-    """Probabilidad de `lado` en `linea` desde las lambdas (local, visitante)."""
+# Córners de CADA equipo según quién domina el partido (auditoría, 2026-10-22).
+# El modelo de arriba reparte por ataque y defensa medios e ignora la
+# supremacía: el favorito saca más córners. Con s = log(λ/μ) del Motor A
+# (sin cuotas, decisión del 2026-10-08):
+#     local     = λ_local · exp(c_l + γ_l·s)
+#     visitante = λ_visit · exp(c_v − γ_v·s)
+# Ajustado por verosimilitud binomial negativa (φ de `corners_equipo`) en el 60 %
+# antiguo de 10.844 partidos de producción con el Motor A punto en el tiempo
+# (walk-forward 2024-01 → 2026-10, ambos equipos conocidos); en el 40 % reciente
+# la log-verosimilitud sube +0,043 por partido (positiva en las dos mitades y en
+# 10 de 11 ligas) y la media por quintil de supremacía cuadra (local dominante:
+# real 6,64, antes 5,61, ahora 6,63). Prueba de líneas (mismo criterio que
+# eval/alta_prob_calibracion) en 80-95 %: las cuatro de `alta_prob` pasan
+# (local más de 3,5 84,8 → 86,5; menos de 7,5 85,9 → 86,0; visitante más de 2,5
+# 84,9 → 84,8; menos de 6,5 86,2 → 86,8). El total NO cambia: aquí la supremacía
+# no aporta (prueba con football-data) y su mercado sigue con λ_local + λ_visit.
+# Cambiar estos números exige repetir la prueba.
+CONTEXTO_EQUIPO = {"corners_home": (-0.0757, 0.2483), "corners_away": (0.0475, 0.2487)}
+# Líneas de córners por equipo añadidas el 2026-10-22 (pedido del usuario: las
+# que pasan con el reparto por supremacía y pagan más; fuera las de cuota
+# mediana ~1,04-1,13: local más de 1,5 y 2,5, visitante más de 1,5 y menos de
+# 7,5). Se validaron SOLO con la supremacía del Motor A, así que sin ella (liga
+# sin modelo propio o equipo desconocido) no se ofrecen.
+# Prueba en 80-95 % (40 % reciente, 4.338 partidos): local más de 4,5 83,8 →
+# 85,3 (n=116), menos de 5,5 83,6 → 86,5 (n=141), menos de 6,5 84,8 → 84,8
+# (n=745); visitante menos de 4,5 82,5 → 82,4 (n=85), menos de 5,5 84,1 → 84,5
+# (n=915). En 75-95 % también pasan todas. Cuota mediana en API-Football (45
+# días): 1,70 / 1,75 / 1,46 / 1,78 / 1,43.
+SOLO_CON_SUPREMACIA: frozenset[tuple[str, str, float]] = frozenset({
+    ("corners_home", "over", 4.5), ("corners_home", "under", 5.5), ("corners_home", "under", 6.5),
+    ("corners_away", "under", 4.5), ("corners_away", "under", 5.5)})
+
+
+def disponible(mercado: str, lado: str, linea: float, supremacia: float | None) -> bool:
+    """¿Se puede ofrecer esta línea? Las validadas solo con supremacía la necesitan."""
+    return supremacia is not None or (mercado, lado, linea) not in SOLO_CON_SUPREMACIA
+
+
+def media_equipo(mercado: str, lam: tuple[float, float],
+                 supremacia: float | None = None) -> float:
+    """Córners esperados de un equipo; con `supremacia` (log λ/μ del Motor A), repartidos por ella."""
+    c, g = CONTEXTO_EQUIPO[mercado]
     if mercado == "corners_home":
-        return prob_total(lam[0], PARAMETROS["corners_equipo"]["phi"], linea)[lado]
-    if mercado == "corners_away":
-        return prob_total(lam[1], PARAMETROS["corners_equipo"]["phi"], linea)[lado]
+        return lam[0] if supremacia is None else lam[0] * math.exp(c + g * supremacia)
+    return lam[1] if supremacia is None else lam[1] * math.exp(c - g * supremacia)
+
+
+def prob(mercado: str, lam: tuple[float, float], lado: str, linea: float,
+         supremacia: float | None = None) -> float:
+    """Probabilidad de `lado` en `linea` desde las lambdas (local, visitante).
+
+    `supremacia` solo afecta a los córners de cada equipo; sin ella (liga sin
+    modelo propio o equipo que el modelo no conoce) se usa el reparto anterior.
+    """
+    if mercado in CONTEXTO_EQUIPO:
+        return prob_total(media_equipo(mercado, lam, supremacia),
+                          PARAMETROS["corners_equipo"]["phi"], linea)[lado]
     return prob_total(lam[0] + lam[1], PARAMETROS[mercado]["phi"], linea)[lado]
 
 

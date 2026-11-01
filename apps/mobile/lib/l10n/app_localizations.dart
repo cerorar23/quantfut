@@ -154,11 +154,11 @@ abstract class AppLocalizations {
   /// **'Tengo al menos 18 años y acepto los términos y la política de privacidad.'**
   String get accessConsent;
 
-  /// Aviso al pulsar Google sin aceptar los términos.
+  /// No description provided for @accessConsentRequired.
   ///
   /// In es, this message translates to:
-  /// **'Marca la casilla para continuar.'**
-  String get accessConsentNeeded;
+  /// **'Marca la casilla para continuar con Google.'**
+  String get accessConsentRequired;
 
   /// Consentimiento con los dos enlaces legales dentro de la frase.
   ///
@@ -646,6 +646,12 @@ abstract class AppLocalizations {
   /// **'TRANSPARENCIA'**
   String get artTransparency;
 
+  /// No description provided for @bannerAwaiting.
+  ///
+  /// In es, this message translates to:
+  /// **'PARTIDO JUGADO · esperando el resultado oficial'**
+  String get bannerAwaiting;
+
   /// No description provided for @bannerLive.
   ///
   /// In es, this message translates to:
@@ -820,6 +826,12 @@ abstract class AppLocalizations {
   /// **'Alineaciones todavía no confirmadas.'**
   String get detailLineupsPending;
 
+  /// No description provided for @detailNoFeatured.
+  ///
+  /// In es, this message translates to:
+  /// **'Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60 y probabilidad de 74 % a 85 %). Los abiertos están en la lista de abajo.'**
+  String get detailNoFeatured;
+
   /// No description provided for @detailNoH2h.
   ///
   /// In es, this message translates to:
@@ -843,6 +855,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No hay pronósticos publicados para este partido.'**
   String get detailNoPicks;
+
+  /// Detalle del partido sin pronóstico sellado, con mercados del modelo abiertos debajo.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay pronóstico sellado para este partido. Abajo tienes las estimaciones del modelo.'**
+  String get detailNoSealedModel;
+
+  /// Detalle del partido sin pronóstico sellado; los mercados del modelo de debajo están con candado VIP.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay pronóstico sellado para este partido. Abajo están las estimaciones del modelo, con VIP.'**
+  String get detailNoSealedModelVip;
 
   /// No description provided for @detailNoStarters.
   ///
@@ -1564,6 +1588,18 @@ abstract class AppLocalizations {
   /// **'Partidos por fecha y horario'**
   String get homeByDate;
 
+  /// Antetítulo de la tarjeta grande de Inicio con el pronóstico de mayor probabilidad del deporte elegido.
+  ///
+  /// In es, this message translates to:
+  /// **'Destacado del día'**
+  String get homeFeatured;
+
+  /// Aviso en Inicio cuando falla el feed de NBA o tenis; solo afecta a ese deporte y va con el botón Reintentar.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los datos de este deporte.'**
+  String get homeFeedError;
+
   /// Aviso de un partido cuyo pronóstico aún no se calcula: se calcula el mismo día a las 05:00 de México.
   ///
   /// In es, this message translates to:
@@ -1587,6 +1623,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No hay partidos este día.'**
   String get homeNoMatchesDay;
+
+  /// Título de la fila horizontal de jugadores NBA con pronóstico en Inicio.
+  ///
+  /// In es, this message translates to:
+  /// **'Jugadores con pronóstico'**
+  String get homePlayersWithPicks;
 
   /// Lleva a la pestaña Predicciones.
   ///
@@ -1636,6 +1678,18 @@ abstract class AppLocalizations {
   /// **'Mañana'**
   String get homeTomorrow;
 
+  /// No description provided for @imageCredits.
+  ///
+  /// In es, this message translates to:
+  /// **'Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.'**
+  String get imageCredits;
+
+  /// No description provided for @imageUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Imagen no disponible'**
+  String get imageUnavailable;
+
   /// No description provided for @inboxEmpty.
   ///
   /// In es, this message translates to:
@@ -1647,6 +1701,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Partido'**
   String get inboxMatch;
+
+  /// Etiqueta accesible del deporte de un aviso.
+  ///
+  /// In es, this message translates to:
+  /// **'Deporte: {sport}'**
+  String inboxSportTag(String sport);
 
   /// No description provided for @inboxTitle.
   ///
@@ -1707,6 +1767,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Aún no hay retos cerrados. Cuando uno termine, aparecerá aquí con su resultado.'**
   String get ladderHistoryEmpty;
+
+  /// Un reto cerrado porque pasó su plazo (7 días) sin completar todos los escalones.
+  ///
+  /// In es, this message translates to:
+  /// **'Expiró sin completarse'**
+  String get ladderHistoryExpired;
 
   /// Un reto cerrado por perder un escalón.
   ///
@@ -2014,6 +2080,12 @@ abstract class AppLocalizations {
   /// **'Gol en el 1er tiempo'**
   String get marketHtGoal;
 
+  /// Selección de un mercado de línea (puntos, asistencias, total). {line} es la línea ya formateada, p. ej. 24,5.
+  ///
+  /// In es, this message translates to:
+  /// **'Más de {line}'**
+  String marketOverLine(String line);
+
   /// No description provided for @marketResult1x2.
   ///
   /// In es, this message translates to:
@@ -2055,6 +2127,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'acierto histórico {percent}'**
   String marketsHistoricHit(String percent);
+
+  /// Aciertos sobre pronósticos publicados y resueltos.
+  ///
+  /// In es, this message translates to:
+  /// **'{won}/{resolved} publicados'**
+  String marketsHitCount(int won, int resolved);
 
   /// No description provided for @marketsInReview.
   ///
@@ -2103,6 +2181,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El anillo es el acierto histórico de la mejor línea validada de cada mercado; «Publicado» son los pronósticos ya resueltos. Son pronósticos previos al partido, no alertas en vivo, y ninguna probabilidad garantiza un resultado.'**
   String get marketsRadarNote;
+
+  /// No description provided for @marketsTabGame.
+  ///
+  /// In es, this message translates to:
+  /// **'Partido'**
+  String get marketsTabGame;
+
+  /// No description provided for @marketsTabGames.
+  ///
+  /// In es, this message translates to:
+  /// **'Juegos'**
+  String get marketsTabGames;
+
+  /// No description provided for @marketsTabPlayers.
+  ///
+  /// In es, this message translates to:
+  /// **'Jugadores'**
+  String get marketsTabPlayers;
+
+  /// No description provided for @matchAwaitingResult.
+  ///
+  /// In es, this message translates to:
+  /// **'Esperando resultado'**
+  String get matchAwaitingResult;
 
   /// No description provided for @mdCornersTotal.
   ///
@@ -2289,6 +2391,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Legal'**
   String get moreLegal;
+
+  /// No description provided for @moreMySportsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Ordena y elige qué deportes ves'**
+  String get moreMySportsSub;
 
   /// Abre la ficha de la app en la tienda.
   ///
@@ -2674,10 +2782,10 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{1 pronóstico más con VIP} other{{count} pronósticos más con VIP}}'**
   String picksLockedTitle(int count);
 
-  /// Rango de probabilidad de Alta probabilidad y tope de gratis; los límites los manda el servidor.
+  /// Rango de probabilidad de Alta probabilidad y porcentaje de los pronósticos del día que son gratis; los límites los manda el servidor.
   ///
   /// In es, this message translates to:
-  /// **'{min}–{max} % de probabilidad · hasta {free} gratis'**
+  /// **'{min}–{max} % de probabilidad · {free} % gratis'**
   String picksRangeHint(int min, int max, int free);
 
   /// Pie de la tarjeta de pronóstico que abre el análisis.
@@ -2715,6 +2823,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Acierto histórico'**
   String get picksTrustTitle;
+
+  /// Fecha y hora en que se selló el pronóstico.
+  ///
+  /// In es, this message translates to:
+  /// **'Sellado {when}'**
+  String predictionsSealedAt(String when);
 
   /// No description provided for @prefsAdsBody.
   ///
@@ -2866,6 +2980,12 @@ abstract class AppLocalizations {
   /// **'Balance y seguimiento'**
   String get profileBalance;
 
+  /// No description provided for @profileCheckUpdate.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar actualización'**
+  String get profileCheckUpdate;
+
   /// No description provided for @profileConnected.
   ///
   /// In es, this message translates to:
@@ -2944,6 +3064,54 @@ abstract class AppLocalizations {
   /// **'Medición y errores'**
   String get profileMeasurement;
 
+  /// No description provided for @profileMySports.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis deportes'**
+  String get profileMySports;
+
+  /// No description provided for @profileMySportsDefault.
+  ///
+  /// In es, this message translates to:
+  /// **'por defecto'**
+  String get profileMySportsDefault;
+
+  /// Botón de flecha para bajar un deporte en «Mis deportes».
+  ///
+  /// In es, this message translates to:
+  /// **'Bajar {sport}'**
+  String profileMySportsDown(String sport);
+
+  /// No description provided for @profileMySportsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Usa las flechas para ordenar · el primero se abre por defecto'**
+  String get profileMySportsHint;
+
+  /// No description provided for @profileMySportsLastVisible.
+  ///
+  /// In es, this message translates to:
+  /// **'Deja al menos un deporte visible.'**
+  String get profileMySportsLastVisible;
+
+  /// No description provided for @profileMySportsSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el cambio. Inténtalo de nuevo.'**
+  String get profileMySportsSaveError;
+
+  /// Interruptor para mostrar u ocultar un deporte.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar {sport}'**
+  String profileMySportsShow(String sport);
+
+  /// Botón de flecha para subir un deporte en «Mis deportes».
+  ///
+  /// In es, this message translates to:
+  /// **'Subir {sport}'**
+  String profileMySportsUp(String sport);
+
   /// No description provided for @profileNotifications.
   ///
   /// In es, this message translates to:
@@ -3010,6 +3178,18 @@ abstract class AppLocalizations {
   /// **'Perfil y configuración'**
   String get profileTitle;
 
+  /// No description provided for @profileUpToDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes la última versión.'**
+  String get profileUpToDate;
+
+  /// No description provided for @profileUpdateCheckFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo comprobar si hay actualización. Inténtalo más tarde.'**
+  String get profileUpdateCheckFailed;
+
   /// No description provided for @profileValidUntil.
   ///
   /// In es, this message translates to:
@@ -3033,6 +3213,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Tu cuenta QuantFut'**
   String get profileYourAccount;
+
+  /// Casa de apuestas y hora local de la cuota de referencia.
+  ///
+  /// In es, this message translates to:
+  /// **'{book} · {time}'**
+  String quoteBookAt(String book, String time);
+
+  /// No description provided for @quoteNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cuota'**
+  String get quoteNone;
+
+  /// No description provided for @quoteReference.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuota de referencia de la captura usada al sellar el pronóstico'**
+  String get quoteReference;
 
   /// No description provided for @resultLabel.
   ///
@@ -3376,6 +3574,30 @@ abstract class AppLocalizations {
   /// **'Desbloquea un pronóstico por {cost} monedas'**
   String rewardsUnlockFor(Object cost);
 
+  /// Saldo de monedas expresado en desbloqueos posibles.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{Tienes monedas para 1 desbloqueo.} other{Tienes monedas para {count} desbloqueos.}}'**
+  String rewardsUnlocksAvailable(int count);
+
+  /// Etiqueta de protocolo de la línea de sello (hash) de un pick
+  ///
+  /// In es, this message translates to:
+  /// **'SELLO'**
+  String get sealLabel;
+
+  /// Etiqueta de protocolo: hora de publicación del pick
+  ///
+  /// In es, this message translates to:
+  /// **'PUBLICADO'**
+  String get sealPublished;
+
+  /// Etiqueta de protocolo: el sello del pick fue verificado
+  ///
+  /// In es, this message translates to:
+  /// **'VERIFICADO'**
+  String get sealVerified;
+
   /// No description provided for @selBttsNo.
   ///
   /// In es, this message translates to:
@@ -3454,6 +3676,12 @@ abstract class AppLocalizations {
   /// **'Habrá gol en el 1T'**
   String get selHtGoalYes;
 
+  /// Goles de un equipo con línea distinta de «marca» (más de 0,5).
+  ///
+  /// In es, this message translates to:
+  /// **'{side, select, over{Más de {line} goles de {team}} other{Menos de {line} goles de {team}}}'**
+  String selTeamGoalsLine(String side, String line, String team);
+
   /// No description provided for @selTeamOrDraw.
   ///
   /// In es, this message translates to:
@@ -3525,6 +3753,204 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'FÚTBOL · NBA · ESTADÍSTICA'**
   String get splashTagline;
+
+  /// No description provided for @sportAlertsNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin avisos para este partido.'**
+  String get sportAlertsNone;
+
+  /// No description provided for @sportAvailApplied.
+  ///
+  /// In es, this message translates to:
+  /// **'Reporte de lesiones aplicado'**
+  String get sportAvailApplied;
+
+  /// No description provided for @sportAvailListed.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{{count} jugador en el reporte} other{{count} jugadores en el reporte}}'**
+  String sportAvailListed(int count);
+
+  /// No description provided for @sportAvailMissingMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{team}: {minutes} min de bajas'**
+  String sportAvailMissingMinutes(String team, String minutes);
+
+  /// No description provided for @sportAvailNotSubmitted.
+  ///
+  /// In es, this message translates to:
+  /// **'{team} no envió su reporte'**
+  String sportAvailNotSubmitted(String team);
+
+  /// No description provided for @sportAvailPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Reporte de lesiones pendiente'**
+  String get sportAvailPending;
+
+  /// Nombre del deporte fútbol en el selector
+  ///
+  /// In es, this message translates to:
+  /// **'Fútbol'**
+  String get sportFootball;
+
+  /// No description provided for @sportH2hRecord.
+  ///
+  /// In es, this message translates to:
+  /// **'{home} {homeWins} – {awayWins} {away}'**
+  String sportH2hRecord(String home, String away, int homeWins, int awayWins);
+
+  /// Ventana del acierto de NBA y tenis
+  ///
+  /// In es, this message translates to:
+  /// **'Sobre los últimos {n} resueltos'**
+  String sportHitWindow(int n);
+
+  /// Último chip del selector cuando hay más de 4 deportes
+  ///
+  /// In es, this message translates to:
+  /// **'Más'**
+  String get sportMore;
+
+  /// Nombre del deporte baloncesto (NBA) en el selector
+  ///
+  /// In es, this message translates to:
+  /// **'NBA'**
+  String get sportNba;
+
+  /// No description provided for @sportPhotoCredit.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto de {name}: {author} · {license}'**
+  String sportPhotoCredit(String name, String author, String license);
+
+  /// Etiqueta accesible del selector de deporte
+  ///
+  /// In es, this message translates to:
+  /// **'Deporte'**
+  String get sportSelectorLabel;
+
+  /// No description provided for @sportStatAge.
+  ///
+  /// In es, this message translates to:
+  /// **'Edad'**
+  String get sportStatAge;
+
+  /// No description provided for @sportStatAway.
+  ///
+  /// In es, this message translates to:
+  /// **'Como visitante'**
+  String get sportStatAway;
+
+  /// No description provided for @sportStatBackToBack.
+  ///
+  /// In es, this message translates to:
+  /// **'Juega día seguido'**
+  String get sportStatBackToBack;
+
+  /// No description provided for @sportStatCareer.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrera'**
+  String get sportStatCareer;
+
+  /// No description provided for @sportStatFormIndex.
+  ///
+  /// In es, this message translates to:
+  /// **'Índice de forma'**
+  String get sportStatFormIndex;
+
+  /// No description provided for @sportStatHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Como local'**
+  String get sportStatHome;
+
+  /// No description provided for @sportStatLast6.
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos 6'**
+  String get sportStatLast6;
+
+  /// No description provided for @sportStatPointsAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos en contra'**
+  String get sportStatPointsAgainst;
+
+  /// No description provided for @sportStatPointsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos a favor'**
+  String get sportStatPointsFor;
+
+  /// No description provided for @sportStatRank.
+  ///
+  /// In es, this message translates to:
+  /// **'Ranking'**
+  String get sportStatRank;
+
+  /// No description provided for @sportStatRest.
+  ///
+  /// In es, this message translates to:
+  /// **'Días de descanso'**
+  String get sportStatRest;
+
+  /// No description provided for @sportStatSeason.
+  ///
+  /// In es, this message translates to:
+  /// **'Temporada'**
+  String get sportStatSeason;
+
+  /// No description provided for @sportStatStanding.
+  ///
+  /// In es, this message translates to:
+  /// **'Puesto'**
+  String get sportStatStanding;
+
+  /// No description provided for @sportStatStreak.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha'**
+  String get sportStatStreak;
+
+  /// No description provided for @sportStatSurface.
+  ///
+  /// In es, this message translates to:
+  /// **'En esta superficie'**
+  String get sportStatSurface;
+
+  /// No description provided for @sportStatsUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay estadísticas para este partido.'**
+  String get sportStatsUnavailable;
+
+  /// No description provided for @sportSurfaceClay.
+  ///
+  /// In es, this message translates to:
+  /// **'Arcilla'**
+  String get sportSurfaceClay;
+
+  /// No description provided for @sportSurfaceGrass.
+  ///
+  /// In es, this message translates to:
+  /// **'Hierba'**
+  String get sportSurfaceGrass;
+
+  /// No description provided for @sportSurfaceHard.
+  ///
+  /// In es, this message translates to:
+  /// **'Dura'**
+  String get sportSurfaceHard;
+
+  /// Nombre del deporte tenis en el selector
+  ///
+  /// In es, this message translates to:
+  /// **'Tenis'**
+  String get sportTennis;
 
   /// No description provided for @startupFailed.
   ///
@@ -4061,6 +4487,18 @@ abstract class AppLocalizations {
   /// **'Cuotas y análisis del partido'**
   String get vipBenefit4Title;
 
+  /// No description provided for @vipBenefitSportsBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Los mismos sellos y el mismo historial, sin suscripción'**
+  String get vipBenefitSportsBody;
+
+  /// No description provided for @vipBenefitSportsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'NBA y tenis abiertos para todos'**
+  String get vipBenefitSportsTitle;
+
   /// No description provided for @vipBestPrice.
   ///
   /// In es, this message translates to:
@@ -4106,7 +4544,7 @@ abstract class AppLocalizations {
   /// No description provided for @vipIntro.
   ///
   /// In es, this message translates to:
-  /// **'Todos los pronósticos de Alta Probabilidad y del Reto Escalera mientras tu suscripción esté vigente.'**
+  /// **'Desbloquea los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol mientras tu suscripción esté vigente. NBA y tenis son abiertos para todos.'**
   String get vipIntro;
 
   /// No description provided for @vipLinked.
@@ -4181,17 +4619,17 @@ abstract class AppLocalizations {
   /// **'Restaurar compras'**
   String get vipRestore;
 
-  /// No description provided for @vipStatRecorded.
+  /// No description provided for @vipSportsNote.
   ///
   /// In es, this message translates to:
-  /// **'Acierto registrado'**
-  String get vipStatRecorded;
+  /// **'Cada pick sellado antes del partido. «—»: aún sin resultados para calcularlo.'**
+  String get vipSportsNote;
 
-  /// No description provided for @vipStatResolved.
+  /// No description provided for @vipSportsTitle.
   ///
   /// In es, this message translates to:
-  /// **'Resueltos'**
-  String get vipStatResolved;
+  /// **'Acierto registrado por deporte'**
+  String get vipSportsTitle;
 
   /// No description provided for @vipStoreFailed.
   ///
@@ -4232,7 +4670,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcome1Title.
   ///
   /// In es, this message translates to:
-  /// **'Fútbol y NBA,\ncon otra perspectiva'**
+  /// **'Fútbol, NBA y tenis,\ncon otra perspectiva'**
   String get welcome1Title;
 
   /// No description provided for @welcome2Body.
@@ -4250,7 +4688,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcome3Body.
   ///
   /// In es, this message translates to:
-  /// **'Goles, córners, hándicap y estadísticas de la NBA. Conoce qué mide cada análisis antes de interpretar una selección.'**
+  /// **'Goles, córners y hándicap en fútbol, props de jugadores en la NBA y juegos en el tenis. Conoce qué mide cada análisis antes de interpretar una selección.'**
   String get welcome3Body;
 
   /// No description provided for @welcome3Title.

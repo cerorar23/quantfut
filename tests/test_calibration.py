@@ -9,6 +9,7 @@ código corra si falla cualquiera de ellas:
    una probabilidad distinta de la que luego se publica.
 2. Que la puerta de validación RECHAZA la calibración cuando no hay nada que
    corregir. Un calibrador que siempre dice "mejoré" es peor que no tenerlo.
+3. Que identifica el nivel de goles, que el 1X2 solo no identifica.
 """
 from __future__ import annotations
 
@@ -20,17 +21,23 @@ from qf.model.calibration import (
     LambdaCalibrator,
     fit_and_validate,
     probs_1x2,
+    score_matrices,
 )
 from qf.model.pricing import market_1x2, score_matrix
 
 
-def simulate_outcomes(lam: np.ndarray, mu: np.ndarray, rho: float,
-                      rng: np.random.Generator) -> np.ndarray:
-    """Muestrea resultados 1X2 desde las probabilidades verdaderas."""
-    p = probs_1x2(lam, mu, rho)
-    u = rng.random(len(p))
-    cum = np.cumsum(p, axis=1)
-    return (u[:, None] > cum).sum(axis=1).clip(0, 2)
+def simulate_scores(lam: np.ndarray, mu: np.ndarray, rho: float,
+                    rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
+    """Muestrea marcadores desde la matriz verdadera (con la corrección tau)."""
+    m = score_matrices(lam, mu, rho)
+    g = m.shape[1]
+    flat = m.reshape(len(m), -1).cumsum(axis=1)
+    k = (rng.random(len(m))[:, None] > flat).sum(axis=1).clip(0, g * g - 1)
+    return k // g, k % g
+
+
+def outcomes_of(hg: np.ndarray, ag: np.ndarray) -> np.ndarray:
+    return np.where(hg > ag, 0, np.where(hg == ag, 1, 2))
 
 
 # ---------------------------------------------------------------------------
@@ -77,9 +84,9 @@ def test_muestra_insuficiente_es_error_explicito():
     rng = np.random.default_rng(2)
     lam = rng.uniform(0.8, 2.0, 50)
     mu = rng.uniform(0.8, 2.0, 50)
-    oc = rng.integers(0, 3, 50)
+    hg, ag = rng.integers(0, 3, 50), rng.integers(0, 3, 50)
     with pytest.raises(ValueError, match="insuficiente"):
-        LambdaCalibrator().fit(lam, mu, oc)
+        LambdaCalibrator().fit(lam, mu, hg, ag)
 
 
 # ---------------------------------------------------------------------------
@@ -97,13 +104,14 @@ def test_corrige_modelo_sistematicamente_inflado():
 
     lam_true = rng.uniform(0.6, 2.6, n)
     mu_true = rng.uniform(0.5, 2.2, n)
-    outcomes = simulate_outcomes(lam_true, mu_true, rho, rng)
+    hg, ag = simulate_scores(lam_true, mu_true, rho, rng)
+    outcomes = outcomes_of(hg, ag)
 
     # Lo que "cree" el modelo: intensidades infladas.
     lam_model = lam_true * 1.30
     mu_model = mu_true * 1.30
 
-    cal = LambdaCalibrator().fit(lam_model, mu_model, outcomes, rho=rho)
+    cal = LambdaCalibrator().fit(lam_model, mu_model, hg, ag, rho=rho)
 
     p_antes = probs_1x2(lam_model, mu_model, rho)
     l2, m2 = cal.apply_vec(lam_model, mu_model)
@@ -119,19 +127,37 @@ def test_corrige_modelo_sistematicamente_inflado():
     assert np.mean(l2) < np.mean(lam_model)
 
 
+def test_identifica_el_nivel_de_goles():
+    """
+    El defecto que tenía el calibrador ajustado con el 1X2 (auditoría
+    2026-10-21): escalar juntas las dos intensidades casi no cambia el 1X2, así
+    que el nivel de goles quedaba sin identificar. Con el marcador sí: el total
+    esperado calibrado tiene que volver al real.
+    """
+    rng = np.random.default_rng(7)
+    n = 6000
+    lam_true = rng.uniform(0.8, 2.2, n)
+    mu_true = rng.uniform(0.6, 1.8, n)
+    hg, ag = simulate_scores(lam_true, mu_true, -0.05, rng)
+    cal = LambdaCalibrator().fit(lam_true * 0.85, mu_true * 0.85, hg, ag, rho=-0.05)
+    l2, m2 = cal.apply_vec(lam_true * 0.85, mu_true * 0.85)
+    assert np.mean(l2 + m2) == pytest.approx(np.mean(lam_true + mu_true), rel=0.03)
+
+
 def test_puerta_de_validacion_acepta_cuando_hay_sesgo_real():
     rng = np.random.default_rng(99)
     n = 5000
     rho = -0.03
     lam_true = rng.uniform(0.6, 2.6, n)
     mu_true = rng.uniform(0.5, 2.2, n)
-    outcomes = simulate_outcomes(lam_true, mu_true, rho, rng)
+    hg, ag = simulate_scores(lam_true, mu_true, rho, rng)
 
     cal, report = fit_and_validate(lam_true * 1.35, mu_true * 1.35,
-                                   outcomes, rho=rho)
+                                   hg, ag, rho=rho)
     assert report["ok"], report.get("reason")
     assert cal.params.validated
-    assert report["log_loss_after"] < report["log_loss_before"]
+    assert report["score_log_loss_after"] < report["score_log_loss_before"]
+    assert report["log_loss_after"] <= report["log_loss_before"] + 1e-4
 
 
 def test_puerta_de_validacion_rechaza_modelo_ya_calibrado():
@@ -144,13 +170,13 @@ def test_puerta_de_validacion_rechaza_modelo_ya_calibrado():
     rho = -0.03
     lam = rng.uniform(0.6, 2.6, n)
     mu = rng.uniform(0.5, 2.2, n)
-    outcomes = simulate_outcomes(lam, mu, rho, rng)   # sin sesgo alguno
+    hg, ag = simulate_scores(lam, mu, rho, rng)   # sin sesgo alguno
 
-    cal, report = fit_and_validate(lam, mu, outcomes, rho=rho)
+    cal, report = fit_and_validate(lam, mu, hg, ag, rho=rho)
     if report["ok"]:
         # Si la acepta, la mejora debe ser marginal: nunca una "gran mejora"
         # sobre un modelo que ya era correcto (eso indicaría sobreajuste).
-        mejora = report["log_loss_before"] - report["log_loss_after"]
+        mejora = report["score_log_loss_before"] - report["score_log_loss_after"]
         assert mejora < 0.005, f"Mejora sospechosa sobre modelo ya calibrado: {mejora}"
     else:
         assert cal.params.is_identity
@@ -162,8 +188,8 @@ def test_datos_insuficientes_para_validar_devuelve_identidad():
     n = 300          # el corte deja <200 para ajustar
     lam = rng.uniform(0.8, 2.0, n)
     mu = rng.uniform(0.8, 2.0, n)
-    oc = simulate_outcomes(lam, mu, 0.0, rng)
-    cal, report = fit_and_validate(lam, mu, oc)
+    hg, ag = simulate_scores(lam, mu, 0.0, rng)
+    cal, report = fit_and_validate(lam, mu, hg, ag)
     assert not report["ok"]
     assert cal.params.is_identity
     assert "insuficientes" in report["reason"]
@@ -174,8 +200,8 @@ def test_persistencia_conserva_los_parametros(tmp_path):
     n = 3000
     lam = rng.uniform(0.6, 2.6, n)
     mu = rng.uniform(0.5, 2.2, n)
-    oc = simulate_outcomes(lam, mu, 0.0, rng)
-    cal = LambdaCalibrator().fit(lam * 1.2, mu * 1.2, oc)
+    hg, ag = simulate_scores(lam, mu, 0.0, rng)
+    cal = LambdaCalibrator().fit(lam * 1.2, mu * 1.2, hg, ag)
 
     path = str(tmp_path / "cal.pkl")
     cal.save(path)

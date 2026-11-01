@@ -69,12 +69,12 @@ def check_fixtures_horizon() -> tuple[bool, str]:
 
 
 def check_orphan_matches() -> tuple[bool, str]:
-    """Partidos que pasaron hace rato y siguen sin cerrar."""
+    """Partidos que pasaron hace rato y siguen sin cerrar (solo de competiciones activas)."""
     n = query(
-        """SELECT count(*) AS n FROM matches
-           WHERE status IN ('scheduled', 'live')
-             AND kickoff_utc < now() - interval '8 hours'
-             AND kickoff_utc > now() - interval '30 days'"""
+        """SELECT count(*) AS n FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
+           WHERE m.status IN ('scheduled', 'live')
+             AND m.kickoff_utc < now() - interval '8 hours'
+             AND m.kickoff_utc > now() - interval '30 days'"""
     )[0]["n"]
     if n > 3:
         return False, f"{n} partidos terminaron hace >8h y siguen abiertos"
@@ -82,19 +82,79 @@ def check_orphan_matches() -> tuple[bool, str]:
 
 
 def check_odds_freshness() -> tuple[bool, str]:
-    """El worker de cuotas tiene que haber escrito algo recientemente."""
+    """El worker de cuotas tiene que haber escrito algo recientemente, del proveedor activo."""
+    from ..config import settings
     row = query(
-        "SELECT max(captured_at) AS last FROM odds_snapshots "
-        "WHERE source = 'the_odds_api'"
+        "SELECT max(captured_at) AS last FROM odds_snapshots WHERE source = %s",
+        (settings.odds_provider,),
     )[0]
     if not row["last"]:
         return False, "Nunca se han capturado cuotas en vivo"
     hrs = query(
         "SELECT EXTRACT(EPOCH FROM (now() - %s)) / 3600 AS h", (row["last"],)
     )[0]["h"]
-    if hrs > 24:
+    # PropLine archiva cada hora: seis horas sin filas ya es un recolector parado.
+    limite = 6 if settings.odds_provider == "propline" else 24
+    if hrs > limite:
         return False, f"Última captura de cuotas hace {hrs:.0f} horas"
     return True, f"Cuotas frescas (hace {hrs:.1f} h)"
+
+
+CIERRE_MIN_PARTIDOS = 10
+CIERRE_MIN_COBERTURA = 0.5
+
+
+def check_closing_coverage() -> tuple[bool, str]:
+    """
+    Los partidos ya jugados tienen que tener el cierre de Pinnacle (`window_tag='close'`).
+    Del 22 al 25-oct-2026 no entró ninguno (PropLine los archivaba, nadie los cargaba) y el
+    chequeo seguía en verde: CLV, sombra y la puerta comercial se quedaron sin muestra.
+    La ventana empieza a las 12 h porque `propline_cierres` espera 6 h tras el saque.
+    """
+    from ..config import settings
+    from ..eval.cierre import es_cierre_real
+    row = query(
+        f"""SELECT count(*) AS n,
+                   count(*) FILTER (WHERE EXISTS (
+                       SELECT 1 FROM odds_snapshots o
+                       WHERE o.match_id = m.match_id AND o.bookmaker = %s AND o.market = 'h2h'
+                         AND o.window_tag = 'close' AND {es_cierre_real("o")})) AS con_cierre
+            FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
+            WHERE m.status = 'finished'
+              AND m.kickoff_utc BETWEEN now() - interval '3 days' AND now() - interval '12 hours'""",
+        (settings.sharp_book,),
+    )[0]
+    n, con = int(row["n"] or 0), int(row["con_cierre"] or 0)
+    if n < CIERRE_MIN_PARTIDOS:
+        return True, f"Cierres: solo {n} partidos jugados en la ventana"
+    if con / n < CIERRE_MIN_COBERTURA:
+        return False, (f"Cierre de {settings.sharp_book} en {con} de {n} partidos jugados (12 h a 3 días): "
+                       "revisar propline_cierres")
+    return True, f"Cierre de {settings.sharp_book} en {con} de {n} partidos jugados"
+
+
+def check_results_freshness() -> tuple[bool, str]:
+    """
+    Con partidos jugados hace más de 8 h tiene que haber resultados recientes.
+    El 22-oct-2026 API-Football pasó al plan gratuito: cada consulta devolvía
+    200 con un error de plan y el chequeo seguía diciendo «liquidación al día»,
+    porque sin partidos cerrados no hay nada que liquidar.
+    """
+    row = query(
+        """SELECT (SELECT max(result_recorded_at) FROM matches) AS ultimo,
+                  (SELECT count(*) FROM matches
+                    WHERE kickoff_utc BETWEEN now() - interval '3 days'
+                                          AND now() - interval '8 hours') AS jugados"""
+    )[0]
+    if not row["jugados"]:
+        return True, "Sin partidos jugados en los últimos 3 días"
+    if row["ultimo"] is None:
+        return False, "Nunca se ha registrado un resultado"
+    hrs = query("SELECT EXTRACT(EPOCH FROM (now() - %s)) / 3600 AS h", (row["ultimo"],))[0]["h"]
+    if hrs > 24:
+        return False, (f"Ningún resultado nuevo en {hrs:.0f} h con {row['jugados']} partidos "
+                       "jugados: revisar el proveedor de resultados")
+    return True, f"Resultados al día (último hace {hrs:.1f} h)"
 
 
 def check_unresolved_names() -> tuple[bool, str]:
@@ -104,6 +164,9 @@ def check_unresolved_names() -> tuple[bool, str]:
     diseño (nunca se da de alta bajo `eu.ucl`/`eu.uel`). Contarlo dejaba la
     alarma en rojo para siempre. Sin competición anotada, alarma: no se sabe.
     """
+    # Solo competiciones activas y nombres vistos en las dos últimas semanas: un nombre de una
+    # liga retirada (Ligue 2, Superliga danesa...) o que ya no aparece en ningún feed no se
+    # puede ni hace falta arreglar, y mantenía la alarma en rojo cada día.
     rows = query(
         """SELECT count(*) FILTER (WHERE NOT coalesce(l.cross_league, FALSE)) AS n,
                   sum(u.occurrences) FILTER (WHERE NOT coalesce(l.cross_league, FALSE))
@@ -111,7 +174,8 @@ def check_unresolved_names() -> tuple[bool, str]:
                   count(*) FILTER (WHERE l.cross_league) AS copa
            FROM unresolved_names u
            LEFT JOIN leagues l USING (league_id)
-           WHERE NOT u.resolved"""
+           WHERE NOT u.resolved AND (l.league_id IS NULL OR l.active)
+             AND u.last_seen > now() - interval '14 days'"""
     )[0]
     copa = int(rows["copa"] or 0)
     nota = (f"; {copa} de clubes fuera del catálogo en copas europeas "
@@ -167,6 +231,10 @@ def check_injuries_coverage() -> tuple[bool, str]:
     confirmadas como huecas (`KNOWN_INJURY_COVERAGE_GAPS`) no alertan de
     nuevo cada día, solo se cuentan en el mensaje.
     """
+    from ..config import settings
+    if settings.results_provider == "propline":
+        # 25-oct-2026: el titular retiró API-Football; bajas y once llegan de SofaScore (db/087).
+        return check_sofascore_lineups()
     rows = query(
         """SELECT m.league_id,
                   count(DISTINCT c.match_id) AS checked,
@@ -195,6 +263,69 @@ def check_injuries_coverage() -> tuple[bool, str]:
     if conocidos:
         msg += f" ({len(conocidos)} liga(s) con hueco ya conocido, ver README.md)"
     return True, msg
+
+
+ONCE_MIN_PARTIDOS = 10
+ONCE_MIN_COBERTURA = 0.5
+
+
+def check_sofascore_lineups() -> tuple[bool, str]:
+    """
+    Bajas y once de SofaScore o FotMob (db/087): los partidos de las próximas 36 h tienen que tener
+    bajas u once previsto, y los ya empezados en las últimas 24 h su once oficial.
+    Con muestra pequeña (día sin partidos) no se alarma.
+    """
+    row = query(
+        """SELECT count(*) FILTER (WHERE m.kickoff_utc BETWEEN now() AND now() + interval '36 hours'
+                                     AND m.status = 'scheduled') AS prox,
+                  count(*) FILTER (WHERE m.kickoff_utc BETWEEN now() AND now() + interval '36 hours'
+                                     AND m.status = 'scheduled'
+                                     AND (EXISTS (SELECT 1 FROM lineups_previstas p WHERE p.match_id = m.match_id)
+                                          OR EXISTS (SELECT 1 FROM injuries i WHERE i.match_id = m.match_id
+                                                                                AND i.source IN ('sofascore', 'fotmob'))))
+                      AS prox_con,
+                  count(*) FILTER (WHERE m.kickoff_utc BETWEEN now() - interval '24 hours'
+                                                           AND now() - interval '15 minutes') AS emp,
+                  count(*) FILTER (WHERE m.kickoff_utc BETWEEN now() - interval '24 hours'
+                                                           AND now() - interval '15 minutes'
+                                     AND EXISTS (SELECT 1 FROM lineups x WHERE x.match_id = m.match_id))
+                      AS emp_con
+           FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active"""
+    )[0]
+    prox, prox_con, emp, emp_con = (int(row[k] or 0) for k in ("prox", "prox_con", "emp", "emp_con"))
+    msg = (f"SofaScore: bajas u once previsto en {prox_con} de {prox} partidos de las próximas 36 h; "
+           f"once oficial en {emp_con} de {emp} empezados en 24 h")
+    bajo = [n >= ONCE_MIN_PARTIDOS and con / n < ONCE_MIN_COBERTURA
+            for con, n in ((prox_con, prox), (emp_con, emp))]
+    if any(bajo):
+        return False, msg + " (revisar fotmob_captura previos y fotmob_alineaciones; Apify está cortado desde el 31-oct)"
+    return True, msg
+
+
+XG_COBERTURA_MIN = 0.7
+XG_COBERTURA_MIN_PARTIDOS = 5
+
+
+def check_xg_coverage() -> tuple[bool, str]:
+    """
+    Cuántos partidos terminados de cada liga con modelo tienen xG. `check_xg_freshness` solo
+    mira el ÚLTIMO xG de la liga: el 25-oct-2026 decía «xG al día» con el 26 % de los partidos
+    del día con xG. Ventana de 36 h a 10 días: SofaScore lo da ~14 h tras el partido y FotMob
+    rellena a las 36 h.
+    """
+    rows = query(
+        """SELECT m.league_id, count(*) AS n, count(*) FILTER (WHERE m.home_xg IS NOT NULL) AS con
+           FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active AND l.model_enabled
+           WHERE m.status = 'finished'
+             AND m.kickoff_utc BETWEEN now() - interval '10 days' AND now() - interval '36 hours'
+           GROUP BY m.league_id"""
+    )
+    bajas = [f"{r['league_id']} {r['con']}/{r['n']}" for r in rows
+             if r["n"] >= XG_COBERTURA_MIN_PARTIDOS and r["con"] / r["n"] < XG_COBERTURA_MIN]
+    total, con = sum(r["n"] for r in rows), sum(r["con"] for r in rows)
+    if bajas:
+        return False, f"xG en menos del {XG_COBERTURA_MIN:.0%} de los partidos de: " + ", ".join(bajas)
+    return True, f"xG en {con} de {total} partidos terminados (36 h a 10 días)"
 
 
 # Una liga con partidos jugados en los últimos XG_RECENT_DAYS cuyo último xG
@@ -275,10 +406,13 @@ def check_model_freshness() -> tuple[bool, str]:
 CHECKS = [
     ("calendario", check_fixtures_horizon),
     ("partidos huérfanos", check_orphan_matches),
+    ("resultados", check_results_freshness),
     ("frescura de cuotas", check_odds_freshness),
+    ("cierres", check_closing_coverage),
     ("nombres sin emparejar", check_unresolved_names),
     ("cobertura de bajas", check_injuries_coverage),
     ("frescura del xG", check_xg_freshness),
+    ("cobertura del xG", check_xg_coverage),
     ("liquidación", check_settlement_lag),
     ("modelo activo", check_model_freshness),
 ]

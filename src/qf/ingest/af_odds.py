@@ -266,6 +266,8 @@ def _pending(now: datetime) -> list[dict]:
 
 
 def run_once() -> dict:
+    if getattr(settings, "odds_provider", "the_odds_api") == "propline":
+        return {"calls": 0, "rows": 0, "source": "propline", "reason": "shared_hourly_capture"}
     now = datetime.now(timezone.utc)
     pending = _pending(now)
     calls = rows_new = with_odds = 0

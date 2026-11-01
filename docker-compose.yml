@@ -20,9 +20,12 @@ services:
     volumes: [redisdata:/data]
     restart: unless-stopped
 
+  # Las imágenes son las que corren en el servidor (DEPLOYS.md); cada despliegue
+  # actualiza aquí su etiqueta. Los archivos de /home/qf/.config/quantfut son
+  # credenciales del host, fuera del repo.
   api:
     build: .
-    image: quantfut-api-tapjoy:20261012-msg
+    image: quantfut-api-sin-leyendas-tenis:7c1892f
     env_file: .env
     depends_on:
       db: {condition: service_healthy}
@@ -31,21 +34,41 @@ services:
       - chain:/srv/quantfut/chain
       - artifacts:/srv/quantfut/artifacts
       - escudos:/srv/quantfut/escudos:ro
+      - /home/qf/.config/quantfut/firebase-backend.json:/run/secrets/quantfut-firebase.json:ro
+      - /home/qf/.config/quantfut/google-play.json:/run/secrets/quantfut-play.json:ro
+    environment:
+      FIREBASE_PROJECT_ID: pronosticos-deportivos-85ffa
+      FIREBASE_AUTH_ENABLED: '1'
+      FIREBASE_APPCHECK_ENFORCE: '0'
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/quantfut-firebase.json
+      PLAY_SERVICE_ACCOUNT_FILE: /run/secrets/quantfut-play.json
+      PLAY_PACKAGE_NAME: com.saptain.quantfut
+      PLAY_RTDN_AUDIENCE: https://pronosticosdeportivos.pro/app/v1/compras/google/rtdn
+      PLAY_RTDN_SERVICE_ACCOUNT: quantfut-play@pronosticos-deportivos-85ffa.iam.gserviceaccount.com
+      STORE_PURCHASES_ENABLED: '1'
     restart: unless-stopped
 
   worker:
     build: .
+    image: quantfut-worker:4907a0d
     env_file: .env
+    environment:
+      # Registro público de la cadena (comprometer-revelar, 18-oct).
+      CHAIN_GIT_REMOTE: git@github.com:cerorar23/quantfut-registro.git
+      GIT_SSH_COMMAND: ssh -i /run/secrets/registro/id_ed25519 -o IdentitiesOnly=yes -o UserKnownHostsFile=/run/secrets/registro/known_hosts -o StrictHostKeyChecking=yes
     depends_on:
       db: {condition: service_healthy}
     volumes:
       - chain:/srv/quantfut/chain
+      - /home/qf/.config/quantfut/registro:/run/secrets/registro:ro
       - artifacts:/srv/quantfut/artifacts
       - escudos:/srv/quantfut/escudos
       - ./scripts/crontab:/etc/cron.d/quantfut:ro
       # Los logs del cron (>> /var/log/*.log) se perdían en cada
       # despliegue: así se borró la salida del chequeo diario (oct-2026).
       - workerlogs:/var/log
+      # Archivo del recolector SofaScore (Apify) del host, solo lectura.
+      - /home/qf/sofascore-apify/data:/srv/quantfut/sofascore:ro
     # cron no hereda el entorno del contenedor: se lo pasa pam_env leyendo
     # /etc/environment. Se vuelca ENTERO. La versión anterior filtraba por
     # prefijos y dejaba fuera API_FOOTBALL_*, así que calendario, resultados,

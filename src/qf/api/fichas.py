@@ -24,6 +24,7 @@ from fastapi.responses import FileResponse
 
 from ..config import settings
 from ..db import query, query_one
+from .imagenes import lineup_photo
 from ..ingest.estadisticas import normalizar_estadisticas  # noqa: F401  (re-export)
 
 router = APIRouter(prefix="/web", tags=["web pública"])
@@ -41,7 +42,10 @@ VENTANA_FORMA_DIAS = 270
 def escudo(team_id: int) -> str | None:
     """URL del escudo si ya se descargó (`ingest/standings.py`); si no, None."""
     ruta = Path(settings.escudos_dir) / f"{int(team_id)}.png"
-    return f"/web/escudos/{int(team_id)}.png" if ruta.is_file() else None
+    if ruta.is_file():
+        return f"/web/escudos/{int(team_id)}.png"
+    bundled = Path(__file__).resolve().parents[3] / "frontend" / "imagenes" / "futbol" / f"{int(team_id)}.png"
+    return f"/web/imagenes/futbol/{int(team_id)}.png" if bundled.is_file() else None
 
 
 # --------------------------------------------------------------------------
@@ -221,7 +225,8 @@ def _formatear_once(row: dict | None) -> dict | None:
     """Último once conocido de un equipo, tal como se guardó (sin proyectar nada)."""
     if not row or not row.get("starters"):
         return None
-    titulares = [{"nombre": j.get("name"), "pos": j.get("pos"), "numero": j.get("number")}
+    titulares = [{"nombre": j.get("name"), "pos": j.get("pos"), "numero": j.get("number"),
+                  "foto": lineup_photo(j)}
                  for j in row["starters"] if isinstance(j, dict) and j.get("name")]
     if not titulares:
         return None
@@ -264,7 +269,9 @@ def _alineaciones(match_id: str) -> dict:
            ORDER BY side, captured_at DESC""",
         (match_id,),
     )
-    return {f["side"]: {"formacion": f["formation"], "titulares": f["starters"],
+    return {f["side"]: {"formacion": f["formation"], "titulares": [
+                        {**p, "foto": lineup_photo(p)}
+                        for p in (f["starters"] or []) if isinstance(p, dict)],
                         "capturada": f["captured_at"]} for f in filas}
 
 

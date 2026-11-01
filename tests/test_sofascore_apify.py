@@ -1,0 +1,260 @@
+import gzip
+import json
+from datetime import datetime, timezone
+
+from qf.ingest import sofascore_apify as sa
+
+T0 = datetime(2026, 10, 25, 12, tzinfo=timezone.utc)
+
+
+def ev(i, rnd, status, ts=1792800000):
+    return {"kind": "event", "id": i, "round": rnd, "startTimestamp": ts, "statusType": status}
+
+
+def sage(i, status, ts=1792800000):
+    return {"matchId": i, "round": None, "startTimestamp": ts, "statusType": status}
+
+
+class Fake:
+    """Apify simulado: cada corrida suma 0,02 USD al gasto mensual."""
+    def __init__(self, round_rows, detail_ids=None):
+        self.usd, self.calls, self.urls, self.round_rows = 1.0, [], [], round_rows
+
+    def __call__(self, method, url, token, payload=None, timeout=0):
+        if url.endswith("/users/me/limits"):
+            data = {"current": {"monthlyUsageUsd": self.usd}}
+            if getattr(self, "cycle_end", None):
+                data["monthlyUsageCycle"] = {"endAt": self.cycle_end}
+            return 200, json.dumps({"data": data}).encode()
+        self.calls.append(payload)
+        self.urls.append(url)
+        self.usd += 0.02
+        if payload["mode"] == "tournament" and "tournamentIds" in payload:
+            rows = [sage(101, "finished"), sage(102, "notstarted", 1793000000)]
+            return 200, json.dumps(rows).encode()
+        if payload["mode"] == "event":
+            return 200, json.dumps([{"matchId": i, "statistics": {}} for i in payload["eventIds"]]).encode()
+        if payload.get("eventsSpan") == "next":
+            rows = [ev(9, 3, "notstarted", 1793000000)]
+        elif payload["mode"] == "event_detail":
+            rows = [{"id": int(i), "statistics": []} for i in payload["eventIds"]]
+        elif payload["mode"] == "scheduled":
+            rows = [dict(ev(50, 1, "finished"), category="ATP", uniqueTournamentId=2428, uniqueTournament="Vienna"),
+                    dict(ev(51, 1, "finished"), category="ATP", uniqueTournamentId=2471, uniqueTournament="Vienna, Doubles"),
+                    dict(ev(52, 1, "finished"), category="ITF Men", uniqueTournamentId=9, uniqueTournament="ITF M15")]
+        else:
+            rows = self.round_rows
+        return 200, json.dumps(rows).encode()
+
+
+CFG = {"monthly_cap_usd": 15, "run_cap_usd": 1, "max_details_per_run": 50,
+       "targets": {"es.laliga": {"utid": 8}}}
+
+
+def collector(tmp_path, rows):
+    f = Fake(rows)
+    return sa.Collector(tmp_path, "tok", CFG, call=f, clock=lambda: T0), f
+
+
+def test_captura_terminados_una_sola_vez_con_recepcion_real(tmp_path):
+    c, f = collector(tmp_path, [ev(1, 3, "finished"), ev(2, 3, "notstarted", 1793000000)])
+    assert c.capture() == "ok"
+    kinds = [r["kind"] for r in c.db.execute("SELECT kind FROM receipts ORDER BY id")]
+    assert kinds == ["rounds", "list", "detail"]
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=1").fetchone()[0]
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=2").fetchone()[0] is None
+    got = c.db.execute("SELECT received_at,body_path FROM receipts WHERE kind='detail'").fetchone()
+    assert got["received_at"] == T0.isoformat()
+    assert gzip.decompress((tmp_path / got["body_path"]).read_bytes())
+    n = len(f.calls)
+    assert c.capture() == "ok"  # no hay nada vencido: cero gasto nuevo
+    assert len(f.calls) == n
+
+
+def test_eliminatorias_sin_jornada_se_listan_sin_jornada(tmp_path):
+    f = Fake([ev(7, None, "finished")])
+
+    def call(method, url, token, payload=None, timeout=0):
+        if payload and payload.get("eventsSpan") == "next" and payload.get("maxItems") == 1:
+            f.calls.append(payload)
+            return 200, json.dumps([ev(8, None, "notstarted", 1793000000)]).encode()
+        if payload and payload.get("eventsSpan") == "last" and "tournamentRound" not in payload:
+            f.calls.append(payload)
+            return 200, json.dumps([ev(7, None, "finished")]).encode()
+        return f(method, url, token, payload, timeout)
+    c = sa.Collector(tmp_path, "tok", {**CFG, "targets": {"us.mls": {"utid": 242}}}, call=call, clock=lambda: T0)
+    assert c.capture() == "ok"
+    spans = [p.get("eventsSpan") for p in f.calls if p.get("mode") == "tournament" and "maxItems" not in p]
+    assert spans == ["last", "next"]
+    assert c.db.execute("SELECT count(*) FROM rounds").fetchone()[0] == 0
+    assert {r[0] for r in c.db.execute("SELECT id FROM events WHERE target='us.mls'")} == {7, 9}
+
+
+def test_jornada_terminada_avanza_y_recibo_es_inmutable(tmp_path):
+    c, _ = collector(tmp_path, [ev(1, 3, "finished"), ev(2, 3, "finished")])
+    c.capture()
+    assert c.db.execute("SELECT round FROM rounds").fetchone()[0] == 4
+    try:
+        c.db.execute("DELETE FROM receipts")
+        assert False
+    except Exception as exc:
+        assert "immutable" in str(exc)
+
+
+def test_tope_de_presupuesto_detiene(tmp_path):
+    c, f = collector(tmp_path, [ev(1, 3, "finished")])
+    c.cfg = {**CFG, "monthly_cap_usd": 1.05}
+    assert c.capture() == "presupuesto agotado"
+
+
+def test_las_listas_no_dejan_los_detalles_sin_presupuesto(tmp_path):
+    """26-28-oct-2026: las listas gastaban el tope de la corrida y `details()` no llegaba a pedir nada."""
+    f = Fake([ev(1, 3, "finished"), ev(2, 3, "notstarted", 1793000000)])
+    cfg = {**CFG, "run_cap_usd": 0.30, "targets": {"t%d" % i: {"utid": i} for i in range(1, 7)}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    with c.db:
+        c.db.execute("INSERT INTO events(id,target,round,start_ts,status) VALUES(900,'t1',3,?,'finished')",
+                     (int(T0.timestamp()) - 86400,))
+    assert c.capture() == "presupuesto agotado"
+    kinds = [r["kind"] for r in c.db.execute("SELECT kind FROM receipts ORDER BY id")]
+    assert kinds[-1] == "detail"
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=900").fetchone()[0]
+
+
+def test_el_gasto_diario_se_reparte_hasta_el_fin_del_ciclo(tmp_path):
+    """Con 1 USD de margen y 2 días de ciclo, una corrida no gasta más de ~0,5 USD."""
+    f = Fake([ev(1, 3, "finished")])
+    f.usd, f.cycle_end = 14.0, "2026-10-26T23:59:59.999Z"
+    cfg = {**CFG, "run_cap_usd": 5, "targets": {"t%d" % i: {"utid": i} for i in range(1, 21)}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    c.capture()
+    assert f.usd - 14.0 <= 0.5 + 0.02
+
+
+def test_tenis_descubre_semanal_solo_atp_wta_individual(tmp_path):
+    f = Fake([])
+    cfg = {**CFG, "targets": {}, "tennis": {}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    assert c.capture() == "ok"
+    assert [r[0] for r in c.db.execute("SELECT utid FROM tournaments")] == [2428]
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=50").fetchone()[0]
+    assert c.db.execute("SELECT count(*) FROM events WHERE id IN (51,52)").fetchone()[0] == 0
+    n = len([p for p in f.calls if p["mode"] == "scheduled"])
+    c.capture()  # misma semana: no vuelve a barrer el calendario
+    assert len([p for p in f.calls if p["mode"] == "scheduled"]) == n
+
+
+def test_nba_con_scrapesage_y_futbol_con_rl1987(tmp_path):
+    f = Fake([ev(1, 3, "finished")])
+    cfg = {**CFG, "targets": {"es.laliga": {"utid": 8},
+                              "nba": {"utid": 132, "rounds": False, "provider": "scrapesage"}}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    assert c.capture() == "ok"
+    sage_calls = [(u, p) for u, p in zip(f.urls, f.calls) if "scrapesage" in u]
+    assert [p["mode"] for _, p in sage_calls] == ["tournament", "event"]
+    assert sage_calls[0][1]["tournamentIds"] == [132] and sage_calls[0][1]["onlyFinished"]
+    assert sage_calls[1][1]["eventIds"] == [101] and all(isinstance(x, int) for x in sage_calls[1][1]["eventIds"])
+    assert any("rl1987" in u for u in f.urls)  # LaLiga sigue con rl1987
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=101 AND target='nba'").fetchone()[0]
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=102").fetchone()[0] is None
+    actors = {json.loads(r[0])["_actor"] for r in c.db.execute("SELECT params FROM receipts")}
+    assert actors == {"rl1987", "scrapesage"}
+    n = len([u for u in f.urls if "scrapesage" in u])
+    c.capture()  # NBA relistada hace menos de 20 h y sin pendientes: cero gasto
+    assert len([u for u in f.urls if "scrapesage" in u]) == n
+
+
+def test_tenis_descubre_con_rl1987_y_detalla_con_scrapesage(tmp_path):
+    f = Fake([])
+    cfg = {**CFG, "targets": {}, "tennis": {"provider": "scrapesage"}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    assert c.capture() == "ok"
+    by = {p["mode"]: u for u, p in zip(f.urls, f.calls)}
+    assert "rl1987" in by["scheduled"] and "scrapesage" in by["tournament"] and "scrapesage" in by["event"]
+    assert c.db.execute("SELECT captured_receipt FROM events WHERE id=50").fetchone()[0]
+
+
+def test_detalles_futbol_reciente_primero_y_sin_jornadas_viejas(tmp_path):
+    c, f = collector(tmp_path, [])
+    c.cfg = {**CFG, "max_details_per_run": 2}
+    hora = int(T0.timestamp())
+    with c.db:
+        c.db.executemany("INSERT INTO events(id,target,round,start_ts,status) VALUES(?,?,?,?,?)", [
+            (1, "es.laliga", 1, hora - 200 * 86400, "finished"),     # jornada de abril: fuera
+            (2, "es.laliga", 9, hora - 2 * 86400, "finished"),
+            (3, "es.laliga", 10, hora - 86400, "finished"),
+            (4, "tennis.2428", None, hora - 3600, "finished")])
+    c.details()
+    pedidos = [p["eventIds"] for p in f.calls if p.get("mode") == "event_detail"]
+    assert pedidos == [["3", "2"]]
+
+
+# --- once y bajas de partidos por jugar (25-oct-2026) -------------------------------------------
+
+def con_eventos(tmp_path, eventos, lineups_cfg=None):
+    """Colector con eventos futuros sembrados; Fake devuelve la captura de once por cada id pedido."""
+    class FakeLineups(Fake):
+        def __call__(self, method, url, token, payload=None, timeout=0):
+            if payload and payload.get("includeLineups") and payload["mode"] == "event_detail":
+                self.calls.append(payload)
+                self.urls.append(url)
+                self.usd += 0.02
+                rows = [{"kind": "event_detail", "id": int(i), "lineups": {"confirmed": self.confirmado}}
+                        for i in payload["eventIds"]]
+                return 200, json.dumps(rows).encode()
+            return super().__call__(method, url, token, payload, timeout)
+
+    f = FakeLineups([])
+    f.confirmado = False
+    cfg = {**CFG, "targets": {"es.laliga": {"utid": 8}, "nba": {"utid": 132, "provider": "scrapesage"}},
+           "lineups": lineups_cfg or {}}
+    c = sa.Collector(tmp_path, "tok", cfg, call=f, clock=lambda: T0)
+    for i, target, minutos in eventos:
+        c.db.execute("INSERT INTO events(id,target,round,start_ts,status) VALUES(?,?,?,?,?)",
+                     (i, target, 1, int(T0.timestamp()) + minutos * 60, "notstarted"))
+    c.db.commit()
+    return c, f
+
+
+def test_previa_una_sola_vez_desde_30_horas(tmp_path):
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 600), (2, "es.laliga", 60 * 40), (3, "nba", 600)])
+    assert c.capture_lineups() == "ok"
+    assert f.calls[-1]["eventIds"] == ["1"]            # el de 40 h aún no; la NBA nunca
+    assert c.capture_lineups() == "nada vencido"       # la previa no se repite
+
+
+def test_oficial_reintenta_hasta_confirmar_y_para(tmp_path):
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 50)])
+    assert c.capture_lineups() == "ok"
+    assert c.db.execute("SELECT kind, confirmed FROM lineup_captures").fetchone()[:] == ("oficial", 0)
+    assert c.capture_lineups() == "ok"                 # sigue sin confirmar: reintenta
+    f.confirmado = True
+    assert c.capture_lineups() == "ok"
+    assert c.capture_lineups() == "nada vencido"       # confirmado: no se vuelve a pedir
+    assert c.db.execute("SELECT count(*) FROM lineup_captures").fetchone()[0] == 3
+
+
+def test_oficial_se_detiene_en_el_maximo_de_intentos(tmp_path):
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 50)], {"max_intentos": 2})
+    c.capture_lineups(); c.capture_lineups()
+    assert c.capture_lineups() == "nada vencido"
+
+
+def test_a_menos_de_20_minutos_ya_no_se_pide(tmp_path):
+    c, _ = con_eventos(tmp_path, [(1, "es.laliga", 15)])
+    assert c.capture_lineups() == "nada vencido"
+
+
+def test_el_recibo_de_once_se_archiva_con_recepcion_real(tmp_path):
+    c, _ = con_eventos(tmp_path, [(1, "es.laliga", 50)])
+    c.capture_lineups()
+    got = c.db.execute("SELECT received_at, kind FROM receipts WHERE kind='lineup'").fetchone()
+    assert got["received_at"] == T0.isoformat()
+
+
+def test_el_resto_de_capturas_no_toca_la_reserva_de_las_alineaciones(tmp_path):
+    """El once oficial lo lee `sello_tardio`: si las listas gastan hasta el tope mensual, deja de llegar."""
+    c, f = con_eventos(tmp_path, [(1, "es.laliga", 50)])
+    f.usd = c.start_usd = 14.2                     # tope 15, reserva de las alineaciones 1,0
+    assert c.capture() == "presupuesto agotado" and not f.calls
+    assert c.capture_lineups() == "ok" and f.calls

@@ -1,0 +1,24 @@
+{
+  "version": "nba-multimarket-research-1.5",
+  "amends": "nba-multimarket-research-1.3 (same model, same code path; only the injury reports that feed it change); RUN071, v1.2-v1.4b and the live v1.3 cohort untouched",
+  "frozen_before_running": true,
+  "inherits": "multimarket_v13_protocol.json and multimarket_v12_protocol.json (windows, ridge, categories, T-60 rule, seeds, bootstrap, reference lines)",
+  "hypothesis": "v1.3 was trained and evaluated with one report per day (13:30 or 17:30 ET), so a listed status was on average 5.5 h older than at the live cutoff; with the report closest before tipoff minus 60 min the statuses are sharper (Out plays 0.8% instead of 4.3%), the participation table and the missing-value terms carry more signal, and the team and player markets should improve",
+  "arms": {
+    "reference": "v1.3 exactly as published: reports = nba_complete_injury_final_20261006/reports.jsonl.gz",
+    "candidate": "the same v1.3 code with reports = the reference reports plus nba_injury_t60_20261021/reports.jsonl.gz; the latest report at least 60 minutes before tipoff wins per game and player (unchanged status_map); training and test both use the candidate reports"
+  },
+  "no_other_change": "no new feature, category, floor or window; G League stays inside the v1.3 statuses",
+  "reproduction_check": "the reference arm must reproduce the candidate Brier stored in nba_f6_v13_20261021/comparison_v13.json to 1e-9 for every market and test season, or the run aborts",
+  "test_seasons": ["2024-25", "2025-26"],
+  "season_roles": {
+    "2025-26": "primary: both training seasons (2023-24, 2024-25) have T-60 reports",
+    "2024-25": "secondary: its training window includes 2022-23, whose reports stay at the old quality (the old parser for that layout is not in the repo), so the candidate is only partly upgraded in training"
+  },
+  "primary_comparison": "candidate vs reference on identical rows, paired Brier difference with 95% date bootstrap (400 replicates, seed 20261021), per market and test season",
+  "markets": ["winner", "team_points", "game_total", "player_points", "player_rebounds", "player_assists", "player_threes", "player_steals", "player_blocks"],
+  "secondary": ["participation log loss of each arm's status table on the listed rows present in both arms with a box score", "number of listed rows and observed games per arm", "fitted weights of the missing-value terms per arm"],
+  "decision_rule": "adopt the T-60 reports for training and for the next refit of the live model if, in 2025-26, the upper 95% bound of the paired Brier difference is <= 0 for winner or for team_points, AND in neither test season does a team market (winner, team_points, game_total) have an upper bound above +0.0010. Otherwise v1.3 keeps its current reports. Player markets are reported, not decisive.",
+  "promotion": "none; retrospective, seasons already inspected with v1.1-v1.4b, exploratory; the live module is not changed by this run",
+  "not_modeled": ["bookmaker prices and CLV", "late scratches after the cutoff", "2022-23 at T-60 quality", "positions"]
+}

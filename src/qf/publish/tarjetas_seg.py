@@ -3,7 +3,8 @@ Seguimiento SIN PUBLICAR de los candidatos de tarjetas (decisión del usuario, 2
 
 Las tarjetas dominan los tickets del parley y casi no tienen historial propio. Cada día se
 guardan en `tarjetas_seg` (db/068) TODOS los candidatos de tarjetas de los partidos con precio:
-las líneas habilitadas de `estadisticas_mercado.LINEAS_HABILITADAS["cards"]`, con la misma
+las líneas de `LINEAS_SEGUIMIENTO` (las habilitadas más «más de» y otras que no pasaron la
+prueba, para medirlas en real), con la misma
 probabilidad que usaría el parley (la menor entre modelo y mercado, `escalera_datos.prudente`)
 y la mejor cuota de las casas de la lista. Así la muestra crece con decenas de filas al día en
 vez de las 2-3 patas del parley, y `eval/calibracion_mercados.py` mide prometido frente a real.
@@ -31,6 +32,14 @@ from . import ventana
 log = logging.getLogger(__name__)
 
 MERCADO = "cards"
+
+# Líneas que se MIDEN (2026-10-21, decisión del usuario): las habilitadas más las que no pasaron
+# la prueba histórica, para ver en producción si el «más de» merece habilitarse. Solo seguimiento:
+# `LINEAS_HABILITADAS` sigue mandando en la escalera y el parley.
+LINEAS_SEGUIMIENTO = tuple(dict.fromkeys(
+    em.LINEAS_HABILITADAS[MERCADO]
+    + (("under", 3.5), ("under", 7.5))
+    + tuple(("over", x) for x in (2.5, 3.5, 4.5, 5.5, 6.5, 7.5))))
 
 
 def sql_sellado() -> str:
@@ -63,7 +72,7 @@ def candidatos(m: dict, now: datetime, modelos, filas_af: list[dict]) -> list[di
     if lam is None:
         return []
     out = []
-    for lado, linea in em.LINEAS_HABILITADAS[MERCADO]:
+    for lado, linea in LINEAS_SEGUIMIENTO:
         modelo = em.prob(MERCADO, lam, lado, linea)
         c = ed.prudente(ap.Candidato(MERCADO, lado, linea, modelo), filas_af)
         if c is None:

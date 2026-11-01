@@ -1,7 +1,7 @@
 -- football-data.org (v4) como testigo independiente de calendario y resultados
 -- (decisión del titular, 2026-11-01). Solo compara y avisa: nunca escribe en matches.
 -- Diseño: docs/superpowers/specs/2026-11-01-football-data-org-respaldo-design.md
--- El número 089 deja libres 085-088, usados por la rama futbol/base-unica.
+-- Número 092: el 089 ya lo ocupa otra migración de main. En producción se aplicó el 1-nov-2026 con el nombre 089_fdorg_respaldo.sql (mismo contenido; todo es IF NOT EXISTS, reaplicar no cambia nada).
 BEGIN;
 
 -- Un único registro. La clave sale del entorno (FOOTBALL_DATA_ORG_KEY), no de la base.

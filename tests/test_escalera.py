@@ -16,24 +16,49 @@ def _o(prob, price, market="h2h", match="m1"):
 
 # --- Elección ------------------------------------------------------------------
 
-def test_entra_lo_que_esta_en_rango_aunque_el_margen_vaya_en_contra():
-    assert es.elegir([_o(0.75, 1.30)]).price == 1.30       # 0,975: con la regla nueva entra
-    assert es.elegir([_o(0.80, 1.20)]) is None            # fuera de rango por abajo
-    assert es.elegir([_o(0.70, 1.45)]) is None            # fuera de rango por arriba
-    # El filtro de valor sigue disponible si se vuelve a poner EV_MIN.
-    assert es.elegir([_o(0.75, 1.30)], ev_min=0.0) is None
-    assert es.elegir([_o(0.75, 1.34)], ev_min=0.0).price == 1.34
+NUEVO_2 = es.Abierto(None, 0, 2)
+# Reto abierto con la regla del 2026-10-08 (prob_objetivo NULL en la base).
+ANTERIOR = es.Abierto(5, 1, 3, prob_ganada=0.74, prob_objetivo=None,
+                      cuota_min=1.25, cuota_max=1.40)
 
 
-def test_elige_el_mas_probable_y_desempata_por_valor():
-    a, b, c = _o(0.74, 1.36, match="a"), _o(0.77, 1.32, match="b"), _o(0.76, 1.34, match="c")
-    assert es.elegir([a, b, c]).match_id == "b"
+def test_umbral_reparte_el_presupuesto_entre_los_escalones_que_faltan():
+    assert es.umbral(0.80, 1.0, 2) == pytest.approx(0.8944, abs=1e-4)
+    assert es.umbral(0.80, 1.0, 3) == pytest.approx(0.9283, abs=1e-4)
+    # Un primer escalón muy seguro deja margen al segundo.
+    assert es.umbral(0.80, 0.95, 1) == pytest.approx(0.8421, abs=1e-4)
+
+
+def test_regla_80_exige_el_umbral_y_elige_el_mas_probable():
+    ops = [_o(0.90, 1.10, match="a"),          # pasa
+           _o(0.95, 1.06, match="b"),          # pasa, el más probable
+           _o(0.89, 1.15, match="c"),          # 89 % < 89,4 %: no pasa
+           _o(0.94, 1.02, match="d"),          # cuota < 1,03: casi no paga
+           _o(0.96, 1.08, match="e")]          # > 95 %: fuera de lo calibrado
+    assert es.elegir(ops, NUEVO_2).match_id == "b"
+    assert es.elegir(ops, NUEVO_2, usados={"b"}).match_id == "a"
+    assert es.elegir([_o(0.95, 1.06, market="double_chance")], NUEVO_2) is None
+
+
+def test_el_reto_entero_queda_en_el_80_por_ciento():
+    segundo = es.Abierto(1, 1, 2, prob_ganada=0.95)
+    o = es.elegir([_o(0.84, 1.17, match="a"), _o(0.85, 1.15, match="b")], segundo)
+    assert o.match_id == "b" and 0.95 * o.cand.prob >= es.PROB_RETO
+    # Con un primer escalón justo en el umbral, el segundo también tiene que serlo.
+    justo = es.Abierto(1, 1, 2, prob_ganada=0.90)
+    assert es.elegir([_o(0.88, 1.12)], justo) is None
+
+
+def test_reto_de_la_regla_anterior_sigue_con_su_rango_y_el_mas_probable():
+    ops = [_o(0.74, 1.36, match="a"), _o(0.77, 1.32, match="b"), _o(0.95, 1.06, match="c")]
+    assert es.elegir(ops, ANTERIOR).match_id == "b"
     d, e = _o(0.77, 1.30, match="d"), _o(0.77, 1.33, match="e")    # misma probabilidad
-    assert es.elegir([d, e]).match_id == "e"
+    assert es.elegir([d, e], ANTERIOR).match_id == "e"
 
 
-def test_doble_oportunidad_no_entra_porque_no_hay_cuota_que_tomar():
-    assert es.elegir([_o(0.80, 1.30, market="double_chance")]) is None
+def test_filtro_de_valor_sigue_disponible():
+    assert not es.valida(_o(0.75, 1.30), 1.25, 1.40, ev_min=0.0)
+    assert es.valida(_o(0.75, 1.34), 1.25, 1.40, ev_min=0.0)
 
 
 # --- Cuentas del saldo ---------------------------------------------------------
@@ -122,37 +147,55 @@ def test_apagada_no_elige_nada(monkeypatch):
     assert escalera_datos.select_and_persist()["estado"] == "desactivado"
 
 
-# --- Retos de 3 a 6, varios a la vez ------------------------------------------
+# --- Retos de 2 escalones en 7 días ----------------------------------------------
 
-def test_longitud_del_reto_nuevo():
-    assert es.longitud_nuevo([], 0) == 3
-    assert es.longitud_nuevo([3], 0) == 6
-    assert es.longitud_nuevo([3], es.MAX_SEIS_MES) == 4      # tope de 6 en el mes
-    assert es.longitud_nuevo([3, 6], 0) == 4
-    assert es.longitud_nuevo([3, 6, 4], 0) == 5
-    assert es.longitud_nuevo([3, 4, 5, 6], 0) is None         # uno de cada longitud
-    assert es.longitud_nuevo([6, 4], 0) == 3                  # el de 3 vuelve primero
+def _ids(plan):
+    return [(r, n, [o.match_id for o in escalones]) for r, n, escalones in plan]
+
+
+def test_un_reto_de_2_abierto_a_la_vez():
+    assert es.longitud_nuevo([]) == 2
+    assert es.longitud_nuevo([2]) is None
+
+
+def test_dos_escalones_el_mismo_dia_si_juntos_llegan_al_80():
+    # 0,95 primero; el segundo necesita 0,80 / 0,95 = 84,2 %: entra el 0,90.
+    ops = [_o(0.95, 1.06, match="a"), _o(0.90, 1.10, match="b"), _o(0.88, 1.12, match="c")]
+    assert _ids(es.planificar([], [], ops)) == [(None, 2, ["a", "b"])]
+    # Con un primero justo en el umbral (0,90), el segundo necesita 88,9 %: hoy solo uno.
+    ops = [_o(0.90, 1.10, match="a"), _o(0.88, 1.12, match="b")]
+    assert _ids(es.planificar([], [], ops)) == [(None, 2, ["a"])]
 
 
 def test_plan_sirve_primero_a_los_retos_abiertos_y_no_repite_partido():
-    ops = [_o(0.76, 1.34, match="a"), _o(0.75, 1.36, match="b"), _o(0.80, 1.26, match="c"),
-           _o(0.77, 1.35, match="a"),                         # otro mercado del mismo partido
-           _o(0.70, 1.30, match="d"), _o(0.90, 1.10, match="e")]   # e: fuera de rango
-    plan = es.planificar(en_curso=[(7, 1), (9, 3)], abiertos=[3, 6], seis_en_mes=1,
-                         opciones=ops, ocupados={"c"})
-    # El más avanzado (reto 9) recibe la opción más probable; c está ocupado por
-    # un escalón pendiente; lo que sobra abre un reto de 4.
-    assert [(r, n, o.match_id) for r, n, o in plan] == [(9, None, "a"), (7, None, "b"),
-                                                         (None, 4, "d")]
-    assert plan[0][2].cand.prob == 0.77
+    ops = [_o(0.96, 1.07, match="a"), _o(0.93, 1.10, match="b"), _o(0.97, 1.06, match="c"),
+           _o(0.95, 1.09, match="a"),                         # otro mercado del mismo partido
+           _o(0.76, 1.34, match="d")]
+    plan = es.planificar(en_curso=[es.Abierto(9, 1, 2, prob_ganada=0.95), ANTERIOR],
+                         abiertos=[2], opciones=ops, ocupados={"c"})
+    # El reto 9 recibe a (0,96 pasa del tope de 95 %: el de 0,95); c está ocupado por un
+    # escalón pendiente; el reto anterior, uno solo y en su rango 1,25-1,40 (d).
+    assert _ids(plan) == [(9, None, ["a"]), (5, None, ["d"])]
+    assert plan[0][2][0].cand.prob == 0.95
 
 
-def test_plan_abre_retos_nuevos_con_lo_que_sobra():
-    ops = [_o(0.76, 1.34, match=m) for m in "abcdef"]
-    plan = es.planificar(en_curso=[], abiertos=[], seis_en_mes=es.MAX_SEIS_MES, opciones=ops)
-    assert [n for _, n, _ in plan] == [3, 4, 5]               # sin hueco para otro de 6
-    plan = es.planificar(en_curso=[], abiertos=[], seis_en_mes=0, opciones=ops)
-    assert [n for _, n, _ in plan] == [3, 6, 4, 5]
+def test_si_un_reto_se_queda_sin_escalon_no_se_abre_otro():
+    ops = [_o(0.95, 1.06, match=m) for m in "abc"]
+    sin = es.Abierto(4, 1, 2, prob_ganada=0.80001)            # necesitaría ~100 %
+    assert es.planificar([sin], [], ops) == []
+
+
+def test_pasado_el_plazo_expira_y_cobra_el_saldo():
+    st = es.estado(Decimal("10"), 2, None, _pasos((1.06, "win")), vencido=True)
+    assert st["estado"] == "expirado" and st["ganancia"] == Decimal("0.60")
+    # Con un escalón pendiente se espera su resultado aunque haya vencido.
+    st = es.estado(Decimal("10"), 2, None, _pasos((1.06, "win"), (1.08, None)), vencido=True)
+    assert st["estado"] == "esperando"
+    st = es.estado(Decimal("10"), 2, None, _pasos((1.06, "win"), (1.08, "win")), vencido=True)
+    assert st["estado"] == "completado"
+    r = es.resumen([{"estado": "expirado", "stake_inicial": "10", "ganancia": "0.60"},
+                    {"estado": "completado", "stake_inicial": "10", "ganancia": "1.45"}])
+    assert (r["cerrados"], r["completados"], r["expirados"], r["tasa_completados"]) == (2, 1, 1, 50.0)
 
 
 def test_push_del_handicap_no_cuenta_ni_mueve_el_saldo():

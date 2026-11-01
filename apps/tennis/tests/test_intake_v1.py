@@ -2,7 +2,7 @@
 import json
 import pandas as pd
 import pytest
-from tennis_intake_v1 import provider_key, Directory, rules_for, result_of, fixtures
+from tennis_intake_v1 import provider_key, Directory, rules_for, result_of, fixtures, circuits_awaiting_results
 
 
 def canon():
@@ -53,3 +53,102 @@ def test_results_are_oriented_and_latest_fixture_wins(tmp_path):
         (folder / 'receipt.json').write_text(json.dumps(dict(method='get_fixtures', http_status=200, params=dict(event_type_key='266'),
             source_path=str(folder / 'response.json'), received_at=at, sha256='x')))
     assert fixtures(tmp_path)['1']['event_status'] == 'Finished'
+
+
+def test_editions_by_calendar_initials_and_level_separate_namesakes():
+    rows = [dict(circuit='ATP', period='2026-05-18', tourney_date=20260518, tourney_name='Lyon', surface='Clay', tourney_level='250',
+                 winner_id='a1', winner_name='Brandon Nakashima', loser_id='a2', loser_name='Alex Paz'),
+            dict(circuit='ATP', period='2025-10-20', tourney_date=20251020, tourney_name='Lyon', surface='Hard', tourney_level='C',
+                 winner_id='a3', winner_name='Bryce Nakashima', loser_id='a4', loser_name='Leo Ruiz'),
+            dict(circuit='WTA', period='2026-09-01', tourney_date=20260901, tourney_name='Ningbo', surface='Hard', tourney_level='500',
+                 winner_id='w1', winner_name='Xinyu Wang', loser_id='w2', loser_name='Xiyu Wang')]
+    d = Directory(pd.DataFrame(rows), '2026-10-26')
+    assert d.tournament('ATP', 'Lyon (France) - Qualification', pd.Timestamp('2026-10-21')).surface == 'Hard'
+    assert d.tournament('ATP', 'Lyon', pd.Timestamp('2026-05-20')).surface == 'Clay'
+    with pytest.raises(ValueError, match='edition unknown'):
+        d.tournament('ATP', 'Lyon', pd.Timestamp('2026-08-01'))
+    assert d.player('WTA', 'Xin. Wang') == 'w1'
+    with pytest.raises(ValueError, match='ambiguous'):
+        d.player('WTA', 'X. Wang')
+    assert d.player('ATP', 'B. Nakashima', '500') == 'a1' and d.player('ATP', 'B. Nakashima', 'C') == 'a3'
+    assert d.player('ATP', 'L. Ruiz Garcia') == 'a4'  # second surname absent from the data
+    with pytest.raises(ValueError, match='ambiguous'):
+        d.player('ATP', 'B. Nakashima')
+
+
+class FakeMotor:
+    def __init__(self, priced):
+        self.priced, self.config = priced, dict(odds_provider='propline')
+        self.canonical = pd.DataFrame([dict(circuit='WTA', period='2026-10-05', tourney_date=20261005, tourney_name='Tokyo', surface='Hard',
+                                            tourney_level='500', winner_id='w1', winner_name='Ana Paz', loser_id='w2', loser_name='Eva Sol')])
+
+    def forecast(self, circuit, a, b, surface, date, best_of, tiebreak):
+        return dict(players=['Ana Paz', 'Eva Sol'], winner=dict(final_winner=.6, source='live_snapshot' if self.priced else 'v7_stack'),
+                    odds_used=self.priced)
+
+
+def fixture_archive(tmp_path, start):
+    folder = tmp_path / 'cap' / 'originals' / '0'
+    folder.mkdir(parents=True)
+    e = dict(event_key=7, event_date=start[:10], event_time=start[11:16], event_status='', event_first_player='A. Paz',
+             event_second_player='E. Sol', tournament_name='Tokyo', tournament_round='R16')
+    (folder / 'response.json').write_text(json.dumps(dict(result=[e])))
+    (folder / 'receipt.json').write_text(json.dumps(dict(method='get_fixtures', http_status=200, params=dict(event_type_key='266'),
+                                                         received_at='2026-10-26T00:00:00+00:00', sha256='x')))
+    return tmp_path / 'cap'
+
+
+def test_sealing_waits_for_the_window_and_for_a_market_price(tmp_path):
+    from tennis_intake_v1 import seal_new
+    cap = fixture_archive(tmp_path, '2026-10-26T14:00')
+    at = lambda stamp: (lambda: stamp)
+    built = []
+    factory = lambda: built.append(1) or FakeMotor(priced=False)
+    r = seal_new(tmp_path / 'a', cap, factory, at('2026-10-26T10:25:00+00:00'))
+    assert r['waiting'] == 1 and not r['sealed'] and not built  # the motor is not even loaded
+    r = seal_new(tmp_path / 'a', cap, factory, at('2026-10-26T12:25:00+00:00'))
+    assert r['deferred_no_market'] == 1 and not r['sealed']  # one more hourly run remains before the start
+    r = seal_new(tmp_path / 'a', cap, factory, at('2026-10-26T13:25:00+00:00'))
+    assert len(r['sealed']) == 1  # last run: sealed without a price rather than not at all
+    r = seal_new(tmp_path / 'b', cap, FakeMotor(priced=True), at('2026-10-26T12:25:00+00:00'))
+    assert len(r['sealed']) == 1
+
+
+def archive(root, circuit_key, rows, received_at, name):
+    folder = root / 'api_tennis' / 'originals' / name; folder.mkdir(parents=True)
+    (folder / 'response.json').write_text(json.dumps(dict(result=rows)))
+    (folder / 'receipt.json').write_text(json.dumps(dict(method='get_fixtures', http_status=200, params=dict(event_type_key=circuit_key),
+        source_path=str(folder / 'response.json'), received_at=received_at, sha256='x')))
+
+
+def seal(root, key, circuit, start):
+    folder = root / 'predictions'; folder.mkdir(exist_ok=True)
+    (folder / f'{key}.json').write_text(json.dumps(dict(event_key=key, circuit=circuit, provider_start=start)))
+
+
+def fixture(key, status, date, time):
+    return dict(event_key=key, event_status=status, event_date=date, event_time=time, event_winner=None)
+
+
+def test_results_are_refreshed_only_for_circuits_with_matches_that_should_be_over(tmp_path):
+    seal(tmp_path, '1', 'WTA', '2026-10-28T11:00:00+00:00')
+    seal(tmp_path, '2', 'ATP', '2026-10-28T11:00:00+00:00')
+    seal(tmp_path, '3', 'ATP', '2026-10-28T13:30:00+00:00')
+    archive(tmp_path, '266', [fixture(1, 'Set 2', '2026-10-28', '11:00')], '2026-10-28T08:00:00+00:00', 'a')
+    archive(tmp_path, '265', [fixture(2, 'Finished', '2026-10-28', '11:00'), fixture(3, '', '2026-10-28', '13:30')], '2026-10-28T08:00:00+00:00', 'b')
+    root, now = tmp_path / 'api_tennis', '2026-10-28T14:00:00+00:00'
+    # WTA 1 has no final state 3 h after its start; ATP 2 is finished and ATP 3 started only 30 min ago.
+    assert circuits_awaiting_results(tmp_path, root, now) == ['WTA']
+    # The same circuit is not asked twice within two hours.
+    archive(tmp_path, '266', [fixture(1, 'Set 3', '2026-10-28', '11:00')], '2026-10-28T12:30:00+00:00', 'c')
+    assert circuits_awaiting_results(tmp_path, root, now) == []
+    assert circuits_awaiting_results(tmp_path, root, '2026-10-28T14:35:00+00:00') == ['WTA']
+
+
+def test_postponed_stale_and_cancelled_matches_do_not_trigger_a_refresh(tmp_path):
+    seal(tmp_path, '1', 'WTA', '2026-10-27T09:00:00+00:00')   # moved to tomorrow
+    seal(tmp_path, '2', 'WTA', '2026-10-26T09:00:00+00:00')   # more than a day and a half old, never closed
+    seal(tmp_path, '3', 'WTA', '2026-10-28T09:00:00+00:00')   # cancelled
+    archive(tmp_path, '266', [fixture(1, '', '2026-10-29', '10:00'), fixture(2, 'Set 1', '2026-10-26', '09:00'), fixture(3, 'Cancelled', '2026-10-28', '09:00')],
+            '2026-10-28T00:25:00+00:00', 'a')
+    assert circuits_awaiting_results(tmp_path, tmp_path / 'api_tennis', '2026-10-28T14:00:00+00:00') == []

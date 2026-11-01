@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+import json
+from pathlib import Path
 from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
@@ -17,6 +19,17 @@ def _i(key: str, default: int) -> int:
     return int(os.getenv(key, default))
 
 
+def _odds_provider() -> str:
+    selected = os.getenv("ODDS_PROVIDER")
+    policy = Path(os.getenv("PROPLINE_ARCHIVE", "/srv/quantfut/artifacts/propline_shared")) / "provider.json"
+    if selected is None and policy.is_file():
+        selected = json.loads(policy.read_text(encoding="utf8"))["provider"]
+    selected = selected or "the_odds_api"
+    if selected not in ("the_odds_api", "propline"):
+        raise ValueError("unknown odds provider")
+    return selected
+
+
 @dataclass(frozen=True)
 class Settings:
     # --- Infraestructura ---
@@ -26,6 +39,21 @@ class Settings:
     # --- APIs ---
     odds_api_key: str = os.getenv("ODDS_API_KEY", "")
     odds_api_base: str = "https://api.the-odds-api.com/v4"
+    # PropLine is captured once hourly outside the prediction worker. Consumers
+    # read its archive; the key belongs only to the collector. Legacy remains
+    # selectable for reproducing older research, not as a silent fallback.
+    odds_provider: str = _odds_provider()
+    propline_archive: str = os.getenv("PROPLINE_ARCHIVE", "/srv/quantfut/artifacts/propline_shared")
+    # Casas que no son la sharp: solo partidos a menos de estas horas y una
+    # observación de cada tantas (diez casas cada hora a 8 días eran ~100 MB/día
+    # de `odds_snapshots`, medido el 24-oct). La cuota de referencia admite 6 h.
+    propline_soft_horizon_hours: int = _i("PROPLINE_SOFT_HORIZON_HOURS", 48)
+    propline_soft_every_hours: int = _i("PROPLINE_SOFT_EVERY_HOURS", 3)
+    # Resultados y calendario. API-Football pasó al plan gratuito el 22-oct-2026
+    # y el titular decidió sustituirlo por el archivo de PropLine (24-oct).
+    results_provider: str = os.getenv("RESULTS_PROVIDER", "api_football")
+    # Archivo del recolector SofaScore vía Apify (host), montado en solo lectura.
+    sofascore_archive: str = os.getenv("SOFASCORE_ARCHIVE", "/srv/quantfut/sofascore")
     # `eu` trae Pinnacle y Betfair Exchange, la referencia sharp. `us` solo
     # añade casas de EE. UU. y duplica el coste en créditos.
     odds_api_regions: str = os.getenv("ODDS_API_REGIONS", "eu")
@@ -56,16 +84,36 @@ class Settings:
     # Escudos descargados una vez de API-Football (ingest/standings.py) y
     # servidos desde el propio dominio: la web no enlaza al proveedor.
     escudos_dir: str = os.getenv("ESCUDOS_DIR", "/srv/quantfut/escudos")
+    # Cohortes NBA v1.3 del productor (live13/cohorts) montadas en solo lectura para la
+    # cuota de referencia (api/cuotas_nba.py). Sin valor: no hay cuotas de NBA.
+    nba_cohorts_dir: str | None = os.getenv("NBA_COHORTS_DIR") or None
+    # Sellos de tenis del motor (`<raíz>/predictions/<event_key>.json`) montados en solo lectura para la
+    # cuota de referencia (api/cuotas_tenis.py). Sin valor: no hay cuotas de tenis.
+    tennis_sealed_dir: str | None = os.getenv("TENNIS_SEALED_DIR") or None
+    # Respaldo de cuotas NBA/tenis con The Odds API histórico (ingest/cuotas_respaldo.py). La clave es la del plan
+    # dedicado a NBA: solo la usa el comando por lotes, nunca la API web. La caché es un JSON que el overlay solo lee.
+    odds_api_respaldo_key: str | None = os.getenv("ODDS_API_RESPALDO_KEY") or None
+    cuotas_respaldo_cache: str | None = os.getenv("CUOTAS_RESPALDO_CACHE") or None
+    # Pasada automática (`cuotas_respaldo --auto`, cron): apagada por defecto. Topes en créditos.
+    cuotas_respaldo_auto: bool = os.getenv("CUOTAS_RESPALDO_AUTO", "0") == "1"
+    cuotas_respaldo_auto_max: int = int(os.getenv("CUOTAS_RESPALDO_AUTO_MAX", "100"))
+    cuotas_respaldo_diario: int = int(os.getenv("CUOTAS_RESPALDO_DIARIO", "300"))
 
-    # Media vida del decaimiento temporal, en días.
-    # 180 = un partido de hace 6 meses pesa la mitad que uno de hoy.
-    decay_halflife_days: float = _f("DECAY_HALFLIFE_DAYS", 180.0)
+    # Media vida del decaimiento temporal, en días: un partido de hace 270 días
+    # pesa la mitad que uno de hoy. Elegida por walk-forward en la auditoría del
+    # 2026-10-21 (120/180/220/270/365 sobre 11.920 partidos; 180, el valor
+    # anterior, nunca se había medido). Ley et al. (2019) dan 360-480 con goles.
+    decay_halflife_days: float = _f("DECAY_HALFLIFE_DAYS", 270.0)
+    # Fuerza del ridge de ataque/defensa en PARTIDOS RECIENTES EQUIVALENTES
+    # (ver `DixonColes`). 0,5 = un equipo con dos partidos queda a medio camino
+    # de la media de su liga. Medido en la misma auditoría (0,5-1 lo mejor).
+    ridge_partidos: float = _f("RIDGE_PARTIDOS", 0.5)
     # Mezcla goles/xG para el objetivo del modelo de fuerza. 0 = solo goles, 1 = solo xG.
     xg_blend: float = _f("XG_BLEND", 0.65)
     max_goals_matrix: int = _i("MAX_GOALS_MATRIX", 12)
     # Muestra EFECTIVA mínima por equipo para precificar un partido, medida en
     # PARTIDOS RECIENTES EQUIVALENTES: un partido de hoy suma 1 y uno de hace
-    # una media vida (180 días) suma 0,5. Por debajo, la fuerza
+    # una media vida suma 0,5. Por debajo, la fuerza
     # del equipo no la deciden sus datos sino el ridge y el centrado de la
     # liga, y el modelo produce una probabilidad extrema con total confianza.
     # Es el caso del club que vuelve a primera tras años fuera: sigue en el
@@ -118,10 +166,14 @@ class Settings:
     # 2026-09-28: + Betsson y Coolbet, confirmadas por el usuario (sus
     # clientes apuestan ahí). LeoVegas y Unibet NO: la sombra las mide igual
     # (todas las casas del snapshot), pero no cuentan para la puerta.
+    # 2026-10-24: PropLine solo trae 1xbet de esas; el titular añadió las de
+    # México (Codere MX, Strendus), España (Codere, Marca Apuestas, Sportium) y
+    # las internacionales que aceptan clientes de Latinoamérica.
     soft_books: tuple[str, ...] = tuple(
         b.strip() for b in os.getenv(
             "SOFT_BOOKS", "bet365,betano,1xbet,william_hill,888sport,betway,"
-            "betsson,coolbet"
+            "betsson,coolbet,coderemx,strendus,codere,marcaapuestas,sportium,"
+            "bovada,betonlineag,bookmaker_eu,heritage,jazzsports"
         ).split(",") if b.strip())
     # Edge BRUTO mínimo contra el precio justo de Pinnacle. 2% es el umbral
     # validado en los dos backtests (eval/soft_vs_sharp, ingest/odds_history).
