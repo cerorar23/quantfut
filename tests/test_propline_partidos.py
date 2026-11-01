@@ -26,7 +26,7 @@ def test_marcador_solo_enteros(hs, as_, esperado):
 def sql(monkeypatch):
     log = []
     monkeypatch.setattr(pp, "execute", lambda q, p=(): log.append((" ".join(q.split()), p)) or 1)
-    monkeypatch.setattr(pp.af, "record_health", lambda *a, **k: None)
+    monkeypatch.setattr(pp, "record_health", lambda *a, **k: None)
     monkeypatch.setattr(pp, "_ligas", lambda: [dict(LIGA)])
     return log
 

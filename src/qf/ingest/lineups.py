@@ -40,6 +40,7 @@ from datetime import datetime, timedelta, timezone
 
 from ..db import execute, query, query_one
 from . import api_football as af
+from .salud import record_health
 
 log = logging.getLogger(__name__)
 
@@ -254,7 +255,7 @@ def run() -> dict:
     matches = pending_matches()
     if not matches:
         log.info("Ningún partido en la ventana de alineaciones.")
-        af.record_health("lineups", 0, True, {"in_window": 0})
+        record_health("lineups", 0, True, {"in_window": 0})
         return {"checked": 0, "stored": 0, "pending": 0}
 
     stored = pending = 0
@@ -271,7 +272,7 @@ def run() -> dict:
         pending += int(r["pending"])
 
     ok = not problems
-    af.record_health("lineups", stored, ok,
+    record_health("lineups", stored, ok,
                      {"checked": len(matches), "pending": pending,
                       "problems": problems})
 

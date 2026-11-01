@@ -19,7 +19,7 @@ def _run(monkeypatch, sin_emparejar: dict[str, int]) -> tuple[dict, list]:
     monkeypatch.setattr(fixtures, "ingest_league", lambda lg, days: {
         "league": lg["league_id"], "inserted": 0, "updated": 0, "duplicated": 0,
         "unresolved": sin_emparejar.get(lg["league_id"], 0), "empty": False})
-    monkeypatch.setattr(fixtures.af, "record_health", lambda *a, **k: None)
+    monkeypatch.setattr(fixtures, "record_health", lambda *a, **k: None)
     import qf.publish.telegram as tg
     monkeypatch.setattr(tg, "alert", avisos.append)
     return fixtures.run(), avisos

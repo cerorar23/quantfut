@@ -30,7 +30,7 @@ from ..db import conn, query
 from ..league_policy import RETIRED_LEAGUES
 from .estadisticas import XG_MIN_HORAS
 from ..normalize import slugify
-from . import api_football as af
+from .salud import record_health
 from .estadisticas import arbitro, desde_sofascore
 from .sofascore_history import TOURNAMENTS, stat_pair
 
@@ -212,7 +212,7 @@ def run(dias: int = 10) -> dict:
                 out["stats_rellenadas"] = rellenar_stats(c)
         finally:
             c.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
-    af.record_health("sofascore_partidos", out["aplicados"], not out["motivos"].get("conflicto_marcador"), out)
+    record_health("sofascore_partidos", out["aplicados"], not out["motivos"].get("conflicto_marcador"), out)
     log.info("SofaScore a partidos: %s", out)
     return out
 

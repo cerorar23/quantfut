@@ -24,6 +24,7 @@ from ..normalize import (
     slugify,
 )
 from . import api_football as af
+from .salud import record_health
 from .estadisticas import arbitro
 
 log = logging.getLogger(__name__)
@@ -260,7 +261,7 @@ def run(days_ahead: int = 21) -> dict:
             (notes if lg.get("cross_league") else problems).append(msg)
 
     ok = not problems
-    af.record_health("fixtures", total, ok,
+    record_health("fixtures", total, ok,
                      {"results": results, "problems": problems, "notes": notes})
 
     if problems:

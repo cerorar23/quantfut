@@ -25,6 +25,7 @@ from datetime import datetime, timedelta, timezone
 from ..db import execute, query
 from ..normalize import match_team
 from . import api_football as af
+from .salud import record_health
 from .fixtures import current_season
 from .lineups import _parse_side
 
@@ -145,7 +146,7 @@ def descargar(lista: list[tuple[str, int]], reserva: int = RESERVA_CUOTA) -> dic
 def run(dias: int = 400, reserva: int = RESERVA_CUOTA) -> dict:
     lista = pares(dias)
     resultado = {"pendientes": len(lista), **descargar(lista, reserva)}
-    af.record_health("lineups_historicas", resultado["con_xi"], True, resultado)
+    record_health("lineups_historicas", resultado["con_xi"], True, resultado)
     log.info("Alineaciones históricas: %s", resultado)
     return resultado
 

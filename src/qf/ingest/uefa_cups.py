@@ -52,7 +52,7 @@ import pandas as pd
 
 from ..db import execute, query
 from ..normalize import match_team, slugify
-from .api_football import record_health
+from .salud import record_health
 
 log = logging.getLogger(__name__)
 

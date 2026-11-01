@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ..db import conn, query
-from . import api_football as af
+from .salud import record_health
 from .sofascore_alineaciones import aplicar, emparejar
 from .sofascore_partidos import LIGA_DE_TORNEO
 
@@ -213,7 +213,7 @@ def run(call=http, clock=now) -> dict:
         finally:
             c.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
     out["peticiones_hoy"] = usadas_hoy(db, ahora)
-    af.record_health("sportsapipro_alineaciones", out["consultados"], True, out)
+    record_health("sportsapipro_alineaciones", out["consultados"], True, out)
     log.info("SportsAPIPro alineaciones: %s", out)
     return out
 

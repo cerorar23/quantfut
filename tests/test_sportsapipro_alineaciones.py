@@ -53,7 +53,7 @@ def mundo(tmp_path, monkeypatch):
     monkeypatch.setattr(sp, "emparejar", lambda fila: ("m1", "ok") if fila["homeTeam"] == "Chelsea" else (None, "sin_partido"))
     aplicados = []
     monkeypatch.setattr(sp, "aplicar", lambda c, rec, fila, mid: aplicados.append((rec, mid)) or {"oficial": True})
-    monkeypatch.setattr(sp.af, "record_health", lambda *a, **k: None)
+    monkeypatch.setattr(sp, "record_health", lambda *a, **k: None)
     return SimpleNamespace(aplicados=aplicados, ruta=tmp_path / "sportsapipro")
 
 

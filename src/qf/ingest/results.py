@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 
 from ..db import execute, query
 from . import api_football as af
+from .salud import record_health
 from .estadisticas import arbitro, normalizar_estadisticas
 from .estadisticas_jugador import capturar as capturar_jugadores
 from .xg_api_football import record_capture as capturar_xg
@@ -84,7 +85,7 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
         (since, leagues, leagues),
     )
     if not pending:
-        af.record_health("results", 0, True, {"note": "nada pendiente"})
+        record_health("results", 0, True, {"note": "nada pendiente"})
         return {"closed": 0, "voided": 0, "still_open": 0}
 
     by_id = {r["af_id"]: r for r in pending}
@@ -197,7 +198,7 @@ def close_recent(hours_back: int = 72, with_stats: bool = True,
 
     result = {"closed": closed, "voided": voided, "still_open": still_open,
               "jugadores": jugadores, "settled": settled}
-    af.record_health("results", closed, True, result)
+    record_health("results", closed, True, result)
     log.info("Cierre de partidos: %s", result)
     return result
 

@@ -304,7 +304,7 @@ def run_once(solo: tuple[str, ...] | None = None) -> dict:
         except (TypeError, ValueError):
             pass
 
-    from .api_football import record_health
+    from .salud import record_health
     record_health("odds", total_rows, calls > 0 or not pending, result)
     log.info("Captura de cuotas: %s", result)
     return result

@@ -12,6 +12,7 @@ import logging
 
 from ..db import execute, executemany, query
 from . import api_football as af
+from .salud import record_health
 from .lineups_historicas import RESERVA_CUOTA, _cuota
 
 log = logging.getLogger(__name__)
@@ -130,7 +131,7 @@ def run_historico(reserva: int = RESERVA_CUOTA) -> dict:
             break
     resultado = {"pendientes": len(pendientes), "partidos": partidos,
                  "jugadores": jugadores}
-    af.record_health("estadisticas_jugador", jugadores, True, resultado)
+    record_health("estadisticas_jugador", jugadores, True, resultado)
     log.info("Estadísticas por jugador (histórico): %s", resultado)
     return resultado
 

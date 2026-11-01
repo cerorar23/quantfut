@@ -119,16 +119,6 @@ def check_quota(meta: dict, threshold_pct: float = 15.0) -> None:
               "Cuando llegue a cero el feed se corta sin aviso.")
 
 
-def record_health(source: str, rows: int, ok: bool, detail: dict | None = None) -> None:
-    from ..db import execute
-    import json
-    execute(
-        """INSERT INTO ingest_health (source, rows_written, ok, detail)
-           VALUES (%s, %s, %s, %s)""",
-        (source, rows, ok, json.dumps(detail or {})),
-    )
-
-
 def verify_league_ids() -> list[dict]:
     """
     Comprueba que los api_football_id del seed siguen apuntando a la liga

@@ -90,7 +90,7 @@ def test_el_historico_para_en_la_reserva(monkeypatch):
         hechos.append(match_id)
         return 20, {"quota_remaining": "2400" if match_id == "m1" else "3000"}
     monkeypatch.setattr(ej, "capturar", capturar)
-    monkeypatch.setattr(ej.af, "record_health", lambda *a, **k: None)
+    monkeypatch.setattr(ej, "record_health", lambda *a, **k: None)
     r = ej.run_historico(reserva=2500)
     assert hechos == ["m0", "m1"] and r["partidos"] == 2 and r["pendientes"] == 5
 
@@ -116,7 +116,7 @@ def test_al_cerrar_se_capturan_solo_ligas_con_modelo(monkeypatch):
     monkeypatch.setattr(results.af, "get", lambda ep, p: ([fx(10), fx(11)], {})
                         if ep == "fixtures" else ([], {}))
     monkeypatch.setattr(results.af, "check_quota", lambda meta: None)
-    monkeypatch.setattr(results.af, "record_health", lambda *a, **k: None)
+    monkeypatch.setattr(results, "record_health", lambda *a, **k: None)
     capturados = []
     monkeypatch.setattr(results, "capturar_jugadores",
                         lambda m, f, h, a: capturados.append((m, f, h, a)) or (11, {}))

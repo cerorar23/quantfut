@@ -13,6 +13,7 @@ import math
 
 from ..db import conn, execute, query
 from . import api_football as af
+from .salud import record_health
 
 log = logging.getLogger(__name__)
 LOCK_ID = 61012026
@@ -128,7 +129,7 @@ def run(days: int = 35, limit: int = 100) -> dict:
             return {"skipped": "otra captura xG está en marcha"}
         try:
             report = _run(days, limit)
-            af.record_health("xg_api_football", report["captured"],
+            record_health("xg_api_football", report["captured"],
                              report["errors"] == 0 and not report["quota_stopped"], report)
             return report
         finally:

@@ -644,7 +644,7 @@ def cerrar_huerfanos(c, cli: Cliente, dias_atras: int = 10) -> dict:
     if r["cerrados"]:
         from ..eval.clv import settle_pending
         r["settled"] = settle_pending()
-    from .api_football import record_health
+    from .salud import record_health
     record_health("results_fotmob", r["cerrados"], True, r)
     return r
 

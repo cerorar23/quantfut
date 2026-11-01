@@ -28,7 +28,7 @@ def entorno(monkeypatch):
 
     monkeypatch.setattr(live, "conn", conn)
     monkeypatch.setattr(live.fc, "en_enfriamiento", lambda c: False)
-    monkeypatch.setattr(live.af, "record_health", lambda *a, **k: None)
+    monkeypatch.setattr(live, "record_health", lambda *a, **k: None)
     monkeypatch.setattr(live, "execute", lambda sql, p=(): calls.append(p) or 1)
     return calls, pedidos, Cli()
 

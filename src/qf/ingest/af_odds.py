@@ -67,6 +67,7 @@ from datetime import datetime, timedelta, timezone
 from ..config import settings
 from ..db import executemany, query
 from . import api_football as af
+from .salud import record_health
 
 log = logging.getLogger(__name__)
 
@@ -298,7 +299,7 @@ def run_once() -> dict:
         af.check_quota(meta)
     result = {"fixtures": len(pending), "calls": calls, "with_odds": with_odds,
               "rows_new": rows_new, "quota_remaining": meta.get("quota_remaining")}
-    af.record_health("af_odds", rows_new, calls > 0 or not pending, result)
+    record_health("af_odds", rows_new, calls > 0 or not pending, result)
     log.info("Cuotas API-Football: %s", result)
     return result
 

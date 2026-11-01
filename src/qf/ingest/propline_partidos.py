@@ -22,7 +22,7 @@ from rapidfuzz import fuzz
 
 from ..db import execute, query, query_one
 from ..normalize import _record_unresolved, match_team, register_alias, slugify
-from . import api_football as af
+from .salud import record_health
 from .fixtures import _build_match_id, _season_label
 from .propline_ingest import ALIASES
 from .propline_shared import newest, parse_time, read_stats, team_stats
@@ -227,7 +227,7 @@ def calendario(now: datetime | None = None) -> dict:
                    VALUES (%s, %s, %s, %s, %s, %s, 'scheduled', jsonb_build_object('propline', %s::text))
                    ON CONFLICT (match_id) DO NOTHING""",
                 (match_id, liga["league_id"], _season_label(liga, ko), ko, home, away, str(ev["id"])))
-    af.record_health("fixtures_propline", out["insertados"] + out["reprogramados"],
+    record_health("fixtures_propline", out["insertados"] + out["reprogramados"],
                      not out["problemas"], out)
     log.info("Calendario PropLine: %s", out)
     return out
@@ -270,7 +270,7 @@ def resultados(now: datetime | None = None, hours_back: int = 72) -> dict:
         (now, now - timedelta(hours=hours_back)))
     out = {"cerrados": 0, "anulados": 0, "abiertos": 0, "sin_evento": 0, "corners": 0}
     if not pendientes:
-        af.record_health("results_propline", 0, True, {"note": "nada pendiente"})
+        record_health("results_propline", 0, True, {"note": "nada pendiente"})
         return out
     ligas = {l["league_id"]: l for l in _ligas()}
     por_liga: dict[str, list[dict]] = {}
@@ -318,7 +318,7 @@ def resultados(now: datetime | None = None, hours_back: int = 72) -> dict:
         from ..eval.clv import settle_pending
         settled = settle_pending()
     out["settled"] = settled
-    af.record_health("results_propline", out["cerrados"], True, out)
+    record_health("results_propline", out["cerrados"], True, out)
     log.info("Resultados PropLine: %s", out)
     return out
 

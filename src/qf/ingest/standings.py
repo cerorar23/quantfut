@@ -27,7 +27,7 @@ import httpx
 
 from ..config import settings
 from ..db import execute, executemany, query
-from . import api_football as af
+from .salud import record_health
 from .fixtures import _season_label
 
 log = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ def run(ahora: datetime | None = None) -> dict:
     execute("""DELETE FROM standings s USING leagues l
                WHERE l.league_id = s.league_id AND NOT l.active""")
     resultado = {"ligas": resumen, "escudos_nuevos": descargar_escudos()}
-    af.record_health("standings", sum(resumen.values()), True, resultado)
+    record_health("standings", sum(resumen.values()), True, resultado)
     log.info("Clasificación: %s", resultado)
     return resultado
 

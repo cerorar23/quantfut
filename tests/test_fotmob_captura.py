@@ -560,7 +560,7 @@ def _cli(payload):
 def test_resultados_cierra_con_fotmob_y_liquida():
     c = _Huerfanos()
     with patch.object(fc.fm, "insertar"), patch("qf.eval.clv.settle_pending", return_value={"picks": 1}) as liq, \
-            patch("qf.ingest.api_football.record_health"):
+            patch("qf.ingest.salud.record_health"):
         r = fc.cerrar_huerfanos(c, _cli(_final()))
     assert r["cerrados"] == 1 and r["settled"] == {"picks": 1}
     cierre = next(p for s, p in c.escrituras if "status = 'finished'" in s)
@@ -575,7 +575,7 @@ def test_resultados_cierra_con_fotmob_y_liquida():
 def test_resultados_no_cierra_prorroga_penaltis_ni_equipos_cambiados(payload, motivo):
     c = _Huerfanos()
     with patch.object(fc.fm, "insertar"), patch("qf.eval.clv.settle_pending") as liq, \
-            patch("qf.ingest.api_football.record_health"):
+            patch("qf.ingest.salud.record_health"):
         r = fc.cerrar_huerfanos(c, _cli(payload))
     assert r[motivo] == 1 and r["cerrados"] == 0
     assert not any("status = 'finished'" in s for s, _ in c.escrituras)

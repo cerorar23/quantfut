@@ -30,7 +30,7 @@ from pathlib import Path
 from psycopg.types.json import Jsonb
 
 from ..db import conn, query
-from . import api_football as af
+from .salud import record_health
 from .sofascore_partidos import LIGA_DE_TORNEO, PARECIDO_MIN, VENTANA, _nombres, parecido
 
 log = logging.getLogger(__name__)
@@ -190,7 +190,7 @@ def run(horas: int = 48) -> dict:
         finally:
             c.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
     sin_empate = out["motivos"].get("ambiguo", 0)
-    af.record_health("sofascore_alineaciones", out["nuevas"], not sin_empate, out)
+    record_health("sofascore_alineaciones", out["nuevas"], not sin_empate, out)
     log.info("SofaScore alineaciones/bajas: %s", out)
     return out
 
