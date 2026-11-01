@@ -33,6 +33,58 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-01 17:00 UTC · db/097, 098 y 099 y recarga de las 10 ligas — base de datos y scripts, rama `futbol/dato-unico`
+- Respaldo previo: `~/backups/futbol_pre_097_20261101.sql.gz` (133 MB, `gzip -t` correcto; copia local en
+  `Documents/respaldos_quantfut_20261101`). Ensayo con `BEGIN … ROLLBACK` sobre los datos reales antes de aplicar.
+- db/097 (córners, tiros, xG y tarjetas por mitad; árbitro), db/098 (`regla_sancion`, `derbi`, `cargar_derbis()`) y
+  db/099 (`baja_previa`, `once_previo`, `alineacion_previa`, `cargar_previo()`, `pit = 'previo'`). Copias en
+  `~/futbol_base_unica/dato/`; `src/futbol_sofascore.py` y `futbol_diario.sh` actualizados (hashes iguales a la rama).
+- Recarga `--forzar` de las 10 ligas con `~/futbol_base_unica/recarga_097.sh` (16:51–17:04 UTC): 42.520 filas de equipo
+  con córners por mitad, 10.625 de 10.629 partidos con árbitro. `cargar_previo()`: ≈105.000 filas, todas `previo`;
+  `cargar_derbis()`: 26 por ciudad + 26 manuales. Tabla: 3,12 M filas, 1.381 MB; base 5.109 MB.
+- Vuelta atrás: `DROP SCHEMA futbol CASCADE` y restaurar el respaldo (borraría lo cargado después).
+- El cron diario (08:15) ya llama a `cargar_previo` y `cargar_derbis`.
+- **Retiro R1–R3 ejecutado (17:30 UTC, autorizado por el titular en el chat)**. Respaldos antes: las cinco tablas en
+  `~/backups/retiro_*_20261101.sql.gz` con manifiesto de recuentos y sha256, y copia local verificada en
+  `Documents/respaldos_quantfut_20261101`.
+  - R1/R2: `DELETE` de lo ya cargado en `futbol.dato` y de más de 14 días: `historical_football_player_stats`
+    850.899 filas (quedan 22.999), `historical_football_lineups` 40.662 (quedan 1.098) e
+    `historical_football_absences` 47.140 (quedan 1.529); después `VACUUM FULL`. Se regeneran desde el original
+    `historical_football_matches.raw_payload_gzip`. La vista `v_fotmob_jugador_partido` y `cargar_fotmob` siguen
+    funcionando (prueba en `tests/test_futbol_sofascore.py`).
+  - R3 (db/100): `DROP TABLE af_odds_snapshots` (1.537.120 filas) y `sofascore_detalles` (225), sin CASCADE.
+  - Base: de 5.109 MB a 3.418 MB.
+  - Vuelta atrás: restaurar el volcado de la tabla correspondiente con `gunzip -c … | psql`.
+
+### 2026-11-01 15:35 UTC · `cargar_fotmob` conserva lo que SofaScore completó; la pasada diaria ya no recarga a la fuerza — base de datos y script
+- Causa de fondo: cada carga de FotMob borraba y reescribía sus filas, y con ellas lo que SofaScore había completado (xG del jugador, pases clave, penaltis…), por eso la pasada diaria recargaba SofaScore a la fuerza. Ahora `futbol.cargar_fotmob` hace UPSERT: prepara las filas en una tabla temporal, borra solo las que FotMob ya no informa y actualiza el resto conservando las columnas que FotMob no trae y `fuente_extra`. Las entradas del motor `nota`, `valor_mercado` y `posicion_id` quedan exactamente como las da FotMob (si FotMob las pierde, quedan vacías; no se rellenan con otra fuente). Si FotMob toma un partido que tenía SofaScore, conserva lo de SofaScore como complemento (`fuente_extra`). Bajas: igual, y conservan `motivo_codigo` y `descripcion`. Función reaplicada en producción (db/094 actualizada).
+- Comprobado en producción: antes y después de recargar FotMob (3 días) las filas completadas por SofaScore siguen en 345.460, el xG de jugador en 109.427 y las bajas completadas en 24.702; las filas de FotMob subieron de 886.628 a 886.668 (partidos nuevos).
+- `scripts/futbol_diario.sh`: sin `--forzar` y con ventana de 4 días para SofaScore (antes 7 días forzados). Probado con el entorno mínimo de cron: 64 s. Sin cambios en el cron.
+- Pruebas: 25 con Postgres; dos nuevas: conserva lo completado y `nota` siempre de FotMob.
+
+### 2026-11-01 03:35 UTC · Argentina sube al VPS y entra en `futbol.dato` — archivos y base de datos
+- Revisión del historial de hoy: las 9 ligas ya subidas estaban completas y al día en el servidor (0 faltantes); solo faltaba Argentina (torneo 155): 612 partidos en el PC que no habían llegado al VPS. Subidos con `scripts/subir_archivo_sofascore.py` (6 conexiones, 617 partidos, 22 MB): servidor 10.707 partidos, 0 dañados, 44 GB libres; catálogo del scraper reindexado (`catalog reconcile` y `verify` limpios).
+- `ar.primera` no estaba en la lista de ligas del cargador ni de la pasada diaria: añadida (`scripts/futbol_diario.sh`). Primera carga: 1.138 partidos emparejados con `matches` (plan sin problemas); 597 rechazados: 592 sin descargar en el PC (2023 completo y 214 de 2024; la nota del PC dice que quedó bloqueado por 403 y presupuesto), 4 provisionales y 1 sin alineación.
+- Donde FotMob ya cubría el partido (3.780 tipos), SofaScore completó 234.088 columnas vacías sin pisarlo; aportó 230 filas de jugador, 280 de baja y todo lo que FotMob no trae (tiros 27.826, incidencias 24.062, momentum 104.012, posiciones 35.282, equipo por periodo 6.828). `futbol.dato`: 3.013.027 filas, 1.183 MB, 0 repetidos, 0 ids sin ficha.
+- Premier y LaLiga siguen sin 2023/24 (no descargado en el PC).
+
+### 2026-11-01 03:00 UTC · `futbol.dato` cubre el partido completo del scraper de SofaScore (db/096) — base de datos, rama `futbol/dato-unico`
+- Medido con el partido Fulham-Bournemouth (12 bloques) que la tabla guardaba lo esencial: 34 de 82 estadísticas de jugador, 28 de 46 de equipo y solo el periodo completo, sin momentum ni posiciones medias. `db/096_futbol_dato_ampliado.sql` añade 100 columnas (181 en total) y los tipos `momentum` y `posicion`; el cargador lee ahora las 82 estadísticas de jugador, las 46 de equipo por periodo (evento 0/1/2), los campos de tiro (bloqueo, tipo de gol, portero), de incidencia (lesión, descuento, VAR, red de pases del gol), la asistencia, el momentum y las posiciones medias. Respaldo: `~/backups/futbol_pre_096_20261101.sql.gz` (74 MB).
+- Donde manda otra fuente (FotMob), SofaScore solo COMPLETA las columnas vacías y lo anota en `fuente_extra`; nunca `nota`, `valor_mercado` ni `posicion_id`.
+- Recarga forzada de los 9.489 partidos (14 min, con `nice`): 2.813.517 filas, 0 repetidos, 0 tipos con dos fuentes, 0 ids sin ficha; 338.696 filas de FotMob completadas por SofaScore; equipo 56.934 (3 periodos), momentum 868.701, posicion 294.411, 20.314 incidencias con red de pases. `futbol.dato` 1.147 MB; base 4,82 GB; 42 GB libres.
+- Corregido en `cargar_fotmob`: borraba las bajas de otra fuente aunque FotMob no informara ninguna en el partido; ahora solo sustituye cuando FotMob sí informa. Función reaplicada en producción (db/094 actualizada).
+- La pasada diaria corre ahora identidad -> FotMob -> SofaScore forzado de 14 días -> clima/estadio, para que SofaScore vuelva a completar lo que FotMob reescribe.
+- Vuelta atrás: restaurar `futbol_pre_096_20261101.sql.gz` (las columnas nuevas son aditivas y pueden quedarse).
+
+### 2026-11-01 02:20 UTC · Tabla única de fútbol `futbol.dato` (db/094 y db/095) — base de datos, rama `futbol/dato-unico`
+- Orden del titular: todo lo que se capture de fútbol se junta en UNA tabla con nombres de campo unificados y solo ella alimenta al motor. `db/094_futbol_dato_unico.sql` crea `futbol.dato` (10 tipos: jugador, equipo, baja, alineacion, entrenador, contexto, tiro, incidencia, clima, estadio; clave `(match_id, tipo, side, jugador_id, evento)`), la identidad única de jugador y los adaptadores SQL `cargar_fotmob`, `cargar_clima` y `cargar_estadio`. `db/095_futbol_dato_absorbe_tablas.sql` pasó a la tabla única las nueve tablas por tipo de las migraciones 085-090 de la rama anterior (aplicadas el 1-nov sin número oficial) y las retiró; comprueba fila por fila que cuadran y, si no, se deshace. No toca `matches`, `predictions`, `picks`, `odds_snapshots` ni sus triggers.
+- Antes: respaldo `~/backups/futbol_pre_094_20261101.sql.gz` (60 MB) y ensayo completo con `ROLLBACK` sobre los datos reales (75 s). Aplicadas a las 02:20 UTC, sin tocar el worker ni la API; el reentrenamiento de las 03:00 UTC no se solapó.
+- Resultado: 1.604.058 filas en 22.504 partidos (jugador 942.899, incidencia 198.611, tiro 247.935, baja 54.432, equipo 18.978, estadio 21.039, clima 20.983, alineación 44.852, entrenador 44.840, contexto 9.489); 591 MB; base 4,26 GB; 43 GB libres. 0 repetidos, 0 tipos con dos fuentes en un partido, 0 ids de jugador sin ficha.
+- Identidad: 10.739 jugadores de SofaScore registrados, 9.604 ids de FotMob enlazados por evidencia, 6.676 de API-Football por el puente histórico y 130 ids sin ficha (tiradores, ausentes) registrados.
+- Pasada diaria `scripts/futbol_diario.sh` (probada en el VPS con el entorno mínimo de cron, 60 s, con `nice`; el DSN no aparece en `ps`). **Cron instalado el 1-nov con autorización del titular:** `15 8 * * *` (hora del servidor) con `flock`, registro en `~/futbol_base_unica/work/diario.log`; copia previa del crontab en `~/crontab_antes_futbol_diario_20261101.txt` (vuelta atrás: `crontab ~/crontab_antes_futbol_diario_20261101.txt`). Cuotas (`odds_snapshots`) y `matches` quedan fuera a propósito (inmutables / registro de partidos).
+- Interruptor `FUTBOL_LECTURA=canonica` (apagado por defecto) para que el motor lea `futbol.dato`; no se activa sin comparar antes el modelo.
+- Vuelta atrás: `DROP SCHEMA futbol CASCADE` y restaurar `futbol_pre_094_20261101.sql.gz` (deja las nueve tablas por tipo como estaban).
+
 ### 2026-11-01 01:41 UTC · Retiro de las fuentes antiguas y descanso desde `matches` · worker `quantfut-worker:bd58d4f` (PR #226) y db/093
 - Qué: fuera el código de API-Football, PitchAPI, BetsAPI, Apify, worldfootballR y el cargador de football-data (datos, tablas y migraciones se conservan); `record_health` vive en `ingest/salud.py`; bajas y once con ids de SofaScore en `ingest/sofascore_carga.py`; cotejo de football-data.org en `ingest/cotejo.py`; `v_descanso_equipo` usa `calendario_equipo` hasta su última carga (22-oct) y `matches` después.
 - Punto de partida: el worker en ejecución (`fdorg-e808239`) difería de `main` `9adc2a5` solo en copias viejas de `api/*`, `config.py` y `propline_shared.py` (diferencias aditivas) y `sofascore_apify.py`. La API (`quantfut-api-cuotas:5b6f545`) NO se despliega: su imagen es un parche de varias ramas y construirla desde `main` podría revertir la web; lo que cambia en ella es código muerto.

@@ -3477,3 +3477,18 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [ ] Revisar los términos del plan gratuito de football-data.org antes de activar.
 - [x] Desplegar según DEPLOYS.md: clave en el `.env` del VPS (visible al worker), activar `fdorg_settings.enabled`, vigilar la primera pasada.
 - [ ] Decisión del titular: fase 2 (rellenar resultados con plazo de gracia) y/o sección en `/control/respaldo`.
+
+## Fútbol: tabla única `futbol.dato` (1-nov-2026)
+- [x] db/094 y db/095 aplicadas; adaptadores FotMob, clima y estadio/altitud; cargador de SofaScore escribe solo en la tabla única (`docs/futbol_modelo_canonico_20261101.md`).
+- [x] Cron de `scripts/futbol_diario.sh` instalado (08:15, con autorización del titular el 1-nov).
+- [ ] Fase 2: lo conocido antes del partido (once previsto de SportsAPIPro y FotMob, bajas previas) en `futbol.dato` con su `pit` y hora de captura.
+- [ ] Comparar el modelo con `FUTBOL_LECTURA=origen` y `canonica` (jugadores.py, ajuste_xi.py), regenerar el estado guardado y solo entonces activar; evaluar `contexto.py` y `player_value.py` (lee `estadisticas_jugador`, congelada).
+- [ ] Fusionar la rama `futbol/dato-unico` a `main` (PR) y retirar lo redundante de las tablas de origen con respaldo y confirmación (plan R1–R4 en `docs/serie_a_sofascore_rediseno_20261031.md` §0.4).
+- [x] Rediseño de los motores actualizado a la tabla única: ligas del núcleo por cobertura (§0.2) y cruce de datos contra los estudios (§0.3).
+- [x] Cargador: córners, tiros, xG y tarjetas por mitad, y nombre e id del árbitro (db/097; pruebas con Postgres en verde). **Aplicado en producción el 1-nov 17:00 UTC** (db/097 y recarga `--forzar` de las 10 ligas).
+- [x] Umbrales de sanción (`futbol.regla_sancion`), derbis (`futbol.derbi`) y fase 2 (`baja_previa`, `once_previo`, `alineacion_previa`, `futbol.cargar_previo()`): db/098 y db/099 con pruebas con Postgres. **Aplicado en producción el 1-nov 17:00 UTC** (db/097-099, recarga de las 10 ligas, `futbol_diario.sh` actualizado).
+- [ ] Verificar los umbrales de sanción contra el reglamento de cada liga (`verificada = false`); Ligue 1, Premier por jornada y Argentina sin umbral fijo.
+- [ ] Descargar copas nacionales (minutos de jugador) para la carga de 30 días de A5.
+- [x] `futbol.dato` cubre el partido completo del scraper de SofaScore (db/096, recarga de 9.489 partidos); SofaScore completa columnas vacías de las filas de FotMob.
+- [x] Argentina (155) subida al VPS y cargada en `futbol.dato` (1.138 partidos). Pendientes de descarga en el PC: Argentina 2023 completo y 214 de 2024 (bloqueo 403 y presupuesto de Scrapfly), Premier y LaLiga 2023/24.
+- [x] Retiro R1–R3 de tablas de origen ejecutado el 1-nov (autorizado por el titular): R1/R2 `DELETE` + `VACUUM FULL`, R3 db/100 `DROP`; base 5.109 → 3.418 MB. Siguen R4 (`fotmob_*`, `estadisticas_jugador`) tras activar `FUTBOL_LECTURA=canonica`.
