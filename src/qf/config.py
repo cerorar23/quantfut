@@ -51,7 +51,6 @@ class Settings:
     propline_soft_every_hours: int = _i("PROPLINE_SOFT_EVERY_HOURS", 3)
     # Resultados y calendario. API-Football pasó al plan gratuito el 22-oct-2026
     # y el titular decidió sustituirlo por el archivo de PropLine (24-oct).
-    results_provider: str = os.getenv("RESULTS_PROVIDER", "api_football")
     # Archivo del recolector SofaScore vía Apify (host), montado en solo lectura.
     sofascore_archive: str = os.getenv("SOFASCORE_ARCHIVE", "/srv/quantfut/sofascore")
     # `eu` trae Pinnacle y Betfair Exchange, la referencia sharp. `us` solo

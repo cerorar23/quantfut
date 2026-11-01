@@ -92,7 +92,6 @@ def test_el_xg_no_recorre_ligas_sin_modelo(monkeypatch):
 @pytest.mark.parametrize("modulo,funcion", [
     ("qf.ingest.af_odds", "_pending"),
     ("qf.publish.shadow_sharp", "capture"),
-    ("qf.ingest.fixtures", "run"),
 ])
 def test_el_criterio_si_ve_las_ligas_solo_sharp(monkeypatch, modulo, funcion):
     import importlib

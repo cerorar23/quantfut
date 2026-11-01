@@ -48,7 +48,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 */5 * * * * cd /app && python -m qf.ingest.live >> /var/log/live.log 2>&1
 
 # Cierre de partidos terminados + liquidacion encadenada. Cada 3 horas.
-# Con RESULTS_PROVIDER=propline lee el archivo de PropLine (/scores cada 3 h, a las :07).
+# Lee el archivo de PropLine (/scores cada 3 h, a las :07).
 45 */3 * * * cd /app && python -m qf.ingest.results >> /var/log/results.log 2>&1
 
 # xG, tiros, córners, tarjetas y alineaciones de SofaScore (archivo Apify del host,
@@ -60,10 +60,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Bajas y once desde FotMob (31-oct-2026): copia lo que `fotmob_captura previos` (cada 5 min) guarda a lineups,
 # lineups_previstas e injuries, 2 minutos después de cada captura.
 2-59/5 * * * * cd /app && flock -n /tmp/fotmob_alineaciones.lock python -m qf.ingest.fotmob_alineaciones >> /var/log/fotmob_alineaciones.log 2>&1
-
-# xG API-Football tardío: reconsulta hasta 35 días, máximo 100 partidos/día,
-# reserva el 15% de cuota. Primera observación congelada para entrenamiento.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 10 12 * * * cd /app && python -m qf.ingest.xg_api_football >> /var/log/xg_api_football.log 2>&1
 
 # xG historico desde los releases de worldfootballR_data. Semanal: esos
 # datasets se publican por lotes, no cambian a diario.

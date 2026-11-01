@@ -42,8 +42,6 @@ def test_frescura_de_cuotas_usa_el_proveedor_activo(monkeypatch):
 
 def test_bajas_sin_fuente_no_alarman_con_propline(monkeypatch):
     """Con PropLine las bajas y el once salen de SofaScore (db/087): se mide su cobertura."""
-    import qf.config as cfg
-    monkeypatch.setattr(cfg, "settings", SimpleNamespace(results_provider="propline"))
     fila = {"prox": 40, "prox_con": 35, "emp": 30, "emp_con": 24}
     monkeypatch.setattr(health, "query", lambda *a, **k: [fila])
     ok, msg = health.check_injuries_coverage()

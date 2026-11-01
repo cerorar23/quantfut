@@ -201,68 +201,12 @@ def check_settlement_lag() -> tuple[bool, str]:
     return True, "Liquidación al día"
 
 
-INJURIES_LOOKBACK_DAYS = 30
-
-# Bajo esta muestra, cero bajas reportadas es normal (racha de suerte, liga
-# recién arrancada). A partir de aquí, cero en TODOS los partidos comprobados
-# de una liga entera dentro de un mes deja de ser plausible y es la misma
-# firma de "array vacío con status 200" que ya se documentó para el xG de
-# este proveedor.
-INJURIES_MIN_MATCHES = 15
-
-# Confirmado 2026-09-22 (ver README.md): estas tres devuelven 0 en la
-# temporada 2026 en curso pese a tener partidos de sobra terminados, con
-# season=2025 sí hay datos. Es un hueco de cobertura del proveedor, no un
-# fallo de ingesta, así que no tiene sentido alertar cada día por algo que
-# ya se investigó y no se puede arreglar desde este lado.
-KNOWN_INJURY_COVERAGE_GAPS = {"mx.liga_mx", "ar.primera", "pt.primeira"}
-
-
 def check_injuries_coverage() -> tuple[bool, str]:
     """
-    Detecta el mismo fallo silencioso de API-Football ya visto en el xG:
-    una liga sin cobertura para `/injuries` no da error, da 0 resultados con
-    status 200. Sin este chequeo, una liga nueva con ese mismo hueco pasaría
-    desapercibida hasta que alguien note que su feature de disponibilidad
-    siempre está vacía.
-
-    No se dispara con muestra pequeña (`INJURIES_MIN_MATCHES`): un partido o
-    dos sin bajas es lo normal, no un indicio de nada. Las ligas ya
-    confirmadas como huecas (`KNOWN_INJURY_COVERAGE_GAPS`) no alertan de
-    nuevo cada día, solo se cuentan en el mensaje.
+    Cobertura de bajas y once de los partidos próximos. Desde el 25-oct-2026 llegan
+    de SofaScore y FotMob (db/087); ver `check_sofascore_lineups`.
     """
-    from ..config import settings
-    if settings.results_provider == "propline":
-        # 25-oct-2026: el titular retiró API-Football; bajas y once llegan de SofaScore (db/087).
-        return check_sofascore_lineups()
-    rows = query(
-        """SELECT m.league_id,
-                  count(DISTINCT c.match_id) AS checked,
-                  coalesce(sum(c.n_reported), 0) AS total_reported
-           FROM injuries_capture_log c
-           JOIN matches m ON m.match_id = c.match_id
-           WHERE c.captured_at > now() - make_interval(days => %s)
-           GROUP BY m.league_id""",
-        (INJURIES_LOOKBACK_DAYS,),
-    )
-    nuevos = [r["league_id"] for r in rows
-              if r["checked"] >= INJURIES_MIN_MATCHES and r["total_reported"] == 0
-              and r["league_id"] not in KNOWN_INJURY_COVERAGE_GAPS]
-    if nuevos:
-        # Del 22-sep al 2-oct-2026 esta alerta saltó por un error nuestro
-        # (las bajas se descartaban al asignarlas a un lado), no del
-        # proveedor: el mensaje no debe dar por hecho ninguna de las dos.
-        return False, (f"Sin NINGUNA baja guardada en {INJURIES_MIN_MATCHES}+ "
-                       "partidos comprobados de: " + ", ".join(nuevos)
-                       + ". Antes de darlo por hueco del proveedor, descartar "
-                       "un error nuestro: pedir /injuries de un partido y "
-                       "comparar con lo guardado en `injuries`")
-    activos = {r["league_id"] for r in rows}
-    conocidos = KNOWN_INJURY_COVERAGE_GAPS & activos
-    msg = "Cobertura de bajas OK"
-    if conocidos:
-        msg += f" ({len(conocidos)} liga(s) con hueco ya conocido, ver README.md)"
-    return True, msg
+    return check_sofascore_lineups()
 
 
 ONCE_MIN_PARTIDOS = 10

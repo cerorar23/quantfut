@@ -9,7 +9,7 @@ nombres parecidos y EL MISMO MARCADOR. El marcador es la comprobación independi
 escrito distinto («Club Atlético Belgrano» / «Belgrano») no puede colocar estadísticas en otro partido.
 Si los equipos coinciden y el marcador no, no se aplica nada y se cuenta como conflicto.
 
-El xG solo se escribe si el partido no tiene ninguno (primera pareja válida, como `xg_api_football`), con
+El xG solo se escribe si el partido no tiene ninguno (primera pareja válida), con
 `xg_recorded_at` = recepción del recolector. Solo partidos terminados en tiempo reglamentario
 (`statusCode` 100): el formato del actor no separa la prórroga.
 """

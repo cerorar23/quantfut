@@ -7,7 +7,7 @@ El recolector horario guarda `/v1/sports/{sport}/scores` (próximos ~30 días y 
 Reglas que no se relajan:
 - Nunca se da de alta un equipo. Un nombre que no resuelve queda en `unresolved_names` y su
   partido no se toca: un equipo duplicado parte su historial sin dar ningún error.
-- En copas (`cross_league`) solo vale la coincidencia exacta, como en `fixtures._resolve`.
+- En copas (`cross_league`) solo vale la coincidencia exacta (CLAUDE.md).
 - Un partido solo se cierra con estado `final` y marcador entero; `result_recorded_at` es ahora.
 - El marcador de PropLine es el del partido (en ligas no hay prórroga). En una eliminatoria con
   prórroga no se distinguiría: las copas que se modelan juegan la fase de liga hasta enero.
