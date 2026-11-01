@@ -51,7 +51,7 @@ Cuando el CI vuelva: relanzarlo y fusionar el #163 (**Claude**).
 
 ## 2. Claude: esperan una fecha o una muestra
 - **1-nov:** reentrenar en local y subir (`scripts/entrenamiento_local/`), y reejecutar `python -m qf.model.ajuste` sobre el OOS nuevo.
-- **Enero de 2027:** pasar Liga MX a `11620` (Clausura) en `scripts/sofascore_apify_config.json` y en el VPS.
+- **Enero de 2027:** pasar Liga MX a `11620` (Clausura) en `LIGA_DE_TORNEO` (`sofascore_carga.py`) y en el scraper del VPS.
 - Puertas que esperan muestra: calibración, residuo, cuatro brazos, `ajuste_xi`, alineación en F7, altitud, tarjetas y córners del parley,
   1xBet y la ampliada 73-95 % (acierta 78,0 % frente a 81,4 % prometido, n=223).
 - Historia de onces de SofaScore para `availability`, y que las bajas de SofaScore alimenten al modelo (F3).

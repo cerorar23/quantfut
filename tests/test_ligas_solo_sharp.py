@@ -77,9 +77,7 @@ def test_la_frescura_del_bootstrap_mira_lo_mismo_que_el_entrenamiento(monkeypatc
 
 
 
-def test_el_xg_no_recorre_ligas_sin_modelo(monkeypatch):
-    from qf.ingest import xg_worldfootball as xg
-    assert "model_enabled" in _sql_de(monkeypatch, xg, xg.run)
+
 
 
 @pytest.mark.parametrize("modulo,funcion", [

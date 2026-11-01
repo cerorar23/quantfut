@@ -1,4 +1,4 @@
-"""pendientes y cargar contra un Postgres real (ver test_history_fd_cierres_pg)."""
+"""pendientes y cargar contra un Postgres real (ver test_cierres_pg)."""
 import json
 import os
 import uuid

@@ -1,9 +1,7 @@
-"""Bajas y once (previsto y oficial) de partidos por jugar, desde el archivo SofaScore/Apify.
+"""Carga de bajas y once de SofaScore (ids de SofaScore) a `injuries`, `lineups_previstas` y `lineups`.
 
-Sustituye a `/injuries` y `/fixtures/lineups` de API-Football (plan gratuito desde el 22-oct-2026) y a las
-capturas de FotMob (retiradas del cron el 25-oct). El recolector del host (`sofascore_apify.py lineups`, cron
-cada 10 min) guarda los originales con la hora real de recepción; el worker los lee en solo lectura. Sin
-peticiones.
+Los originales llegan de `sportsapipro_alineaciones` (mismos ids de SofaScore). Aquí vive lo que escribe en la
+base y empareja cada evento con un partido nuestro programado, sin importar de dónde venga el original.
 
 Qué escribe, por partido nuestro todavía programado:
   * `injuries`: las bajas (`missing`/`doubtful`) con motivo y fecha de regreso, `source = 'sofascore'`.
@@ -12,62 +10,41 @@ Qué escribe, por partido nuestro todavía programado:
     `sello_tardio` («alineaciones oficiales capturadas»). Un once previsto nunca entra ahí.
 
 Los ids de jugador son los de SofaScore y se marcan `src = 'sofascore'` en cada titular: no coinciden con los
-de API-Football, y `lineups.availability` solo compara contra historia de la misma fuente.
+de otras fuentes, y `lineups.availability` solo compara contra historia de la misma fuente.
 
 Un evento solo se enlaza con un partido nuestro programado de la misma competición, a ±36 h, con los dos
 nombres parecidos y como único candidato (sin marcador que lo confirme, porque aún no hay).
 """
 from __future__ import annotations
 
-import gzip
-import hashlib
-import json
-import logging
-import sqlite3
 from datetime import date, datetime, timedelta, timezone
-from pathlib import Path
 
 from psycopg.types.json import Jsonb
+from rapidfuzz import fuzz
 
-from ..db import conn, query
-from .salud import record_health
-from .sofascore_partidos import LIGA_DE_TORNEO, PARECIDO_MIN, VENTANA, _nombres, parecido
+from ..db import query
+from ..league_policy import RETIRED_LEAGUES
+from ..normalize import slugify
+from .sofascore_history import TOURNAMENTS
 
-log = logging.getLogger(__name__)
-
-LOCK_ID = 61024087
+LIGA_DE_TORNEO = {v: k for k, v in TOURNAMENTS.items() if k not in RETIRED_LEAGUES} | {11621: "mx.liga_mx"}
+VENTANA = timedelta(hours=36)
+PARECIDO_MIN = 70
 POS = {"G": "G", "D": "D", "M": "M", "F": "F"}
 
 
-def _archivo() -> Path:
-    from ..config import settings
-    return Path(settings.sofascore_archive)
-
-
-def capturas(raiz: Path, desde: datetime) -> list[tuple[dict, dict]]:
-    """(recibo, fila) de cada captura de once/bajas recibida desde `desde`, verificando el hash."""
-    db_path = raiz / "index.sqlite"
-    if not db_path.is_file():
-        return []
-    db = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)
-    db.row_factory = sqlite3.Row
-    try:
-        recibos = db.execute("""SELECT id, received_at, sha256, body_path FROM receipts
-                                WHERE kind = 'lineup' AND status IN (200, 201) AND rows > 0
-                                  AND received_at >= ? ORDER BY id""", (desde.isoformat(),)).fetchall()
-    finally:
-        db.close()
-    out = []
-    for r in recibos:
-        body = gzip.decompress((raiz / r["body_path"]).read_bytes())
-        if hashlib.sha256(body).hexdigest() != r["sha256"]:
-            log.error("Recibo SofaScore %s alterado: hash distinto; se ignora", r["id"])
-            continue
-        for fila in json.loads(body):
-            if isinstance(fila, dict) and fila.get("kind") == "event_detail" and fila.get("sport") == "football":
-                out.append((dict(r), fila))
+def _nombres(team_ids: list[int]) -> dict[int, set[str]]:
+    out: dict[int, set[str]] = {t: set() for t in team_ids}
+    for r in query("""SELECT team_id, canonical_name AS n FROM teams WHERE team_id = ANY(%s)
+                      UNION SELECT team_id, alias FROM team_aliases WHERE team_id = ANY(%s)""",
+                   (team_ids, team_ids)):
+        out[r["team_id"]].add(slugify(r["n"]))
     return out
 
+
+def parecido(nombre: str, conocidos: set[str]) -> float:
+    s = slugify(nombre)
+    return max((fuzz.token_set_ratio(s, c) for c in conocidos), default=0.0)
 
 def emparejar(fila: dict) -> tuple[str | None, str]:
     """(match_id, motivo). Un único partido programado de la competición con equipos parecidos."""
@@ -90,7 +67,6 @@ def emparejar(fila: dict) -> tuple[str | None, str]:
         return None, "ya_empezado"
     return mismos[0]["match_id"], "ok"
 
-
 def titulares(lado: dict | None) -> list[dict]:
     """Titulares en el formato de `lineups.starters`, con `src` para no mezclar ids de otra fuente."""
     out = []
@@ -105,7 +81,6 @@ def titulares(lado: dict | None) -> list[dict]:
                     "pos": POS.get(str(p.get("position") or j.get("position") or "").upper()[:1]),
                     "number": p.get("shirtNumber") or p.get("jerseyNumber"), "src": "sofascore"})
     return out
-
 
 def bajas(lado: dict | None) -> list[dict]:
     out = []
@@ -124,7 +99,6 @@ def bajas(lado: dict | None) -> list[dict]:
                     "reason": m.get("description") or (None if m.get("reason") is None else str(m["reason"])),
                     "expected_return": fin})
     return out
-
 
 def aplicar(c, recibo: dict, fila: dict, match_id: str) -> dict:
     """Escribe bajas, once previsto y, si es oficial y completo, `lineups`. Idempotente por recibo."""
@@ -165,36 +139,3 @@ def aplicar(c, recibo: dict, fila: dict, match_id: str) -> dict:
                          VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
                       (match_id, s, (lados[s] or {}).get("formation"), Jsonb(xi[s]), recibido, mins))
     return {"nuevo": True, "bajas": n_bajas, "oficial": oficial, "previsto": not confirmado}
-
-
-def run(horas: int = 48) -> dict:
-    out = {"capturas": 0, "nuevas": 0, "oficiales": 0, "previstas": 0, "bajas": 0, "motivos": {}}
-    filas = capturas(_archivo(), datetime.now(timezone.utc) - timedelta(hours=horas))
-    out["capturas"] = len(filas)
-    with conn() as c:
-        if not c.execute("SELECT pg_try_advisory_lock(%s) AS ok", (LOCK_ID,)).fetchone()["ok"]:
-            return {"skipped": "otra carga de alineaciones en marcha"}
-        try:
-            for recibo, fila in filas:
-                match_id, motivo = emparejar(fila)
-                out["motivos"][motivo] = out["motivos"].get(motivo, 0) + 1
-                if match_id is None:
-                    continue
-                with c.transaction():
-                    r = aplicar(c, recibo, fila, match_id)
-                if r["nuevo"]:
-                    out["nuevas"] += 1
-                    out["bajas"] += r["bajas"]
-                    out["oficiales"] += int(r["oficial"])
-                    out["previstas"] += int(r["previsto"])
-        finally:
-            c.execute("SELECT pg_advisory_unlock(%s)", (LOCK_ID,))
-    sin_empate = out["motivos"].get("ambiguo", 0)
-    record_health("sofascore_alineaciones", out["nuevas"], not sin_empate, out)
-    log.info("SofaScore alineaciones/bajas: %s", out)
-    return out
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-    print(json.dumps(run(), default=str))

@@ -36,7 +36,7 @@ def current_season(season_style: str, now: datetime | None = None) -> int:
 def _season_label(league: dict, ko: datetime) -> str:
     """
     Etiqueta de temporada para la columna `season`: la MISMA que pone el
-    histórico de football-data (ver `history_fd.season_labels_extra`).
+    histórico cargado de football-data.
 
       european / apertura_clausura  2026/27 -> '2627' (Apertura 2026 y
                                     Clausura 2027 van juntos, como en MEX.csv)

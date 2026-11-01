@@ -46,26 +46,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # Lee el archivo de PropLine (/scores cada 3 h, a las :07).
 45 */3 * * * cd /app && python -m qf.ingest.results >> /var/log/results.log 2>&1
 
-# xG, tiros, córners, tarjetas y alineaciones de SofaScore (archivo Apify del host,
-# recolector a las 07:40). Antes del diario de las 09:00; segunda pasada por los rezagados.
-# RETIRADO 2026-10-31: Apify devuelve 403 (tope del plan gratuito) y el titular no vuelve a pagarlo; el xG y las
-# estadísticas ya salían de FotMob. Para volver atrás basta quitar el prefijo «RETIRADO».
-# RETIRADO 30 8,20 * * * cd /app && python -m qf.ingest.sofascore_partidos >> /var/log/sofascore_partidos.log 2>&1
-# RETIRADO 3-59/10 * * * * cd /app && flock -n /tmp/sofascore_alineaciones.lock python -m qf.ingest.sofascore_alineaciones >> /var/log/sofascore_alineaciones.log 2>&1
 # Bajas y once desde FotMob (31-oct-2026): copia lo que `fotmob_captura previos` (cada 5 min) guarda a lineups,
 # lineups_previstas e injuries, 2 minutos después de cada captura.
 2-59/5 * * * * cd /app && flock -n /tmp/fotmob_alineaciones.lock python -m qf.ingest.fotmob_alineaciones >> /var/log/fotmob_alineaciones.log 2>&1
-
-# xG historico desde los releases de worldfootballR_data. Semanal: esos
-# datasets se publican por lotes, no cambian a diario.
-# No se raspa FBref en vivo: esta detras de Cloudflare y devuelve 403.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 0 4 * * 2 cd /app && python -m qf.ingest.xg_worldfootball >> /var/log/xg.log 2>&1
-
-# Historico de Champions y Europa League. Mismo release por lotes, misma
-# cadencia. Va DESPUES del xG y no antes: si algun dia se da de alta una liga
-# nueva, sus equipos tienen que existir ya cuando las copas intenten
-# resolverlos (uefa_cups nunca crea equipos, descarta el partido).
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 30 4 * * 2 cd /app && python -m qf.ingest.uefa_cups >> /var/log/xg.log 2>&1
 
 # Chequeo de salud. Diario, alerta si algo falla.
 0 7 * * * cd /app && python -m qf.ingest.health >> /var/log/health.log 2>&1

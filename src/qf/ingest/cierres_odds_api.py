@@ -15,7 +15,7 @@ from pathlib import Path
 
 from ..normalize import match_team
 from . import odds_history as oh
-from .history_fd import insertar_cierre
+from .cierres import insertar_cierre
 
 log = logging.getLogger(__name__)
 

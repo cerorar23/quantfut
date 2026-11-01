@@ -9,12 +9,31 @@ infraestructura de credibilidad desde la primera línea.
 
 ---
 
+## Fuentes de datos vigentes (1-nov-2026)
+
+Verificado en el VPS el 1-nov-2026 con los crons, los registros y `ingest_health`. Las secciones de más abajo conservan el
+historial de decisiones y mediciones: donde nombran API-Football, Apify, PitchAPI, BetsAPI, worldfootballR o football-data
+como fuente activa, describen una etapa anterior (todas salvo football-data, que solo aportó histórico, retiradas por el
+titular; sus datos ya cargados se conservan).
+
+| Fuente | Qué aporta |
+|---|---|
+| **PropLine** | Cuotas horarias y cierres (Pinnacle y casas), resultados y calendario. Es la fuente fija de cuotas. |
+| **FotMob** (ZenRows de respaldo) | xG, once, bajas, árbitro, sedes, clima, resultados al pitido y marcador en vivo. |
+| **SportsAPIPro** | Huecos de once y bajas, con ids de SofaScore. |
+| **Scraper SofaScore del VPS** | Archivo de partidos en disco (no escribe en tablas). |
+| **Copernicus ERA5** y **OpenTopoData** | Clima histórico por partido y altitud de estadios. |
+| **The Odds API** | Solo respaldo manual por lotes (huecos de cuotas de NBA y tenis, históricos ya autorizados). |
+
+El descanso y la carga (`v_descanso_equipo`, db/092) se calculan con `calendario_equipo` hasta su última carga (22-oct-2026) y
+con los partidos terminados de `matches` después.
+
 ## Estado de las fases
 
 | Fase | Qué es | Estado | Falta |
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de API-Football conectado el 12-oct-2026; falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 4 ligas adicionales solo sharp (Championship, 2. Bundesliga, Turquía, Noruega). El 25-oct se retiraron Serie B, LaLiga 2, Allsvenskan, Super League suiza, Ligue 2 y Superliga danesa (historial conservado). |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de FotMob (100 % de lo nuevo desde el 28-oct-2026); falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 4 ligas adicionales solo sharp (Championship, 2. Bundesliga, Turquía, Noruega). El 25-oct se retiraron Serie B, LaLiga 2, Allsvenskan, Super League suiza, Ligue 2 y Superliga danesa (historial conservado). |
 | **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-10-08, 24 de 300 (IC [−0,11, +6,03] %, 0 de 3 ligas con muestra propia). Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **80%** | Cobros (elegir procesador). Hecho el 7-oct: cuentas, web conectada, correo Proton, panel `/control` |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
@@ -526,10 +545,10 @@ nada a saber CUÁNTOS habituales faltan, se mida como se mida.
   FUENTES                    VPS CONTABO                     TÚ Y TUS CLIENTES
   ───────                    ───────────                     ─────────────────
 
-  football-data.co.uk ─┐
-  worldfootballR_data ─┤                                    ┌─ Web pública
-  API-Football        ─┼──▶ workers ──▶ Postgres ──▶ API ───┼─ Canal Telegram
-  The Odds API        ─┘      (cron)        │        (interna) └─ Bot
+  PropLine            ─┐
+  FotMob              ─┤                                    ┌─ Web pública
+  SportsAPIPro        ─┼──▶ workers ──▶ Postgres ──▶ API ───┼─ App móvil
+  SofaScore, ERA5     ─┘      (cron)        │        (interna) └─ Alertas Telegram
                                             │
                                             └──▶ Grafana ──────── Solo tú
 ```
@@ -1083,12 +1102,10 @@ Dos cosas que cambian por tener Cloudflare delante, ambas en el `Caddyfile`:
 | Servicio | Plan | Coste | Para qué |
 |---|---|---|---|
 | The Odds API | 20K créditos | $30/mes | Cuotas, Pinnacle, Betfair Exchange |
-| API-Football | Básico | $19/mes | Calendario y alineaciones a T-60 |
-| worldfootballR_data | — | gratis | xG histórico (datos de FBref ya raspados) |
-| football-data.co.uk | — | gratis | 12 años de resultados y cuotas de cierre |
+| Fuentes vigentes | ver «Fuentes de datos vigentes» | — | PropLine, FotMob, SportsAPIPro, SofaScore, ERA5 |
 | VPS Contabo | 4 vCPU / 8 GB | ~$9/mes | Todo |
 | Dominio + backups | — | ~$2/mes | — |
-| **Total** | | **~$60/mes** | **~$720/año** |
+| **Total** | | _pendiente de recalcular_ | Las fuentes de pago retiradas ya no cuentan |
 
 **The Odds API cobra en créditos, no en llamadas**: cada llamada cuesta
 `n_mercados × n_regiones`.
@@ -1129,6 +1146,8 @@ pago, datos desde junio de 2020, snapshots cada 5 min desde septiembre de
 2022, **10 créditos** por mercado y región en cada llamada). Ese histórico es
 lo que permite validar el criterio de selección en Liga MX, Argentina, Brasil
 y MLS, donde football-data solo trae cierre.
+
+> Etapa anterior: API-Football se retiró el 25-oct-2026 (ver «Fuentes de datos vigentes»). Lo que sigue describe esa etapa.
 
 **El plan de API-Football decide si el sistema puede operar, y no por la
 cuota.** Lo que descarta el plan Free no son sus 100 peticiones diarias sino
@@ -1438,7 +1457,7 @@ con esas cuotas, coherente con un mercado real); quedan 697 huecos en las 13 lig
 ## Estructura
 
 ```
-db/              001 esquema · 002 ligas · 003 API-Football · 004 Grafana
+db/              001 esquema · 002 ligas · 003 (tablas de la primera fuente de alineaciones) · 004 Grafana
                  005 alias de FBref (revisados a mano, ver el propio archivo)
                  006 estadísticas de remates
                  007 MLS + copas europeas (competición != liga del equipo)
@@ -1452,10 +1471,12 @@ scripts/         setup_fase1.sh · bootstrap_aliases.py · crontab
 tests/           casos sobre datos simulados: recuperación de parámetros,
                  ausencia de fugas point-in-time, unidades del stake
 src/qf/
-  ingest/        odds_worker · fixtures · results · history_fd · health
-                 lineups            XI a T-60 (ventana T-90..T-20)
-                 xg_worldfootball   xG vía releases de worldfootballR_data
-                 uefa_cups          histórico de Champions y Europa League (.rds)
+  ingest/        odds_worker · fixtures · results · health
+                 propline_*         cuotas, cierres, resultados y calendario de PropLine
+                 fotmob_*           captura, alineaciones y resultados de FotMob
+                 sportsapipro_alineaciones  huecos de once y bajas
+                 sofascore_carga    escribe bajas y once con ids de SofaScore
+                 lineups            disponibilidad de titulares (`availability`)
                  game_state         xG por estado del marcador (ver arriba)
   model/         dixon_coles   efectos por liga + fuerza relativa entre ligas
                  kalman        ratings dinámicos (estado latente)

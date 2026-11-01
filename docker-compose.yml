@@ -67,8 +67,6 @@ services:
       # Los logs del cron (>> /var/log/*.log) se perdían en cada
       # despliegue: así se borró la salida del chequeo diario (oct-2026).
       - workerlogs:/var/log
-      # Archivo del recolector SofaScore (Apify) del host, solo lectura.
-      - /home/qf/sofascore-apify/data:/srv/quantfut/sofascore:ro
     # cron no hereda el entorno del contenedor: se lo pasa pam_env leyendo
     # /etc/environment. Se vuelca ENTERO. La versión anterior filtraba por
     # prefijos y dejaba fuera las claves de las APIs, así que los jobs que las

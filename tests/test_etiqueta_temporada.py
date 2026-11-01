@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 import pytest
 
 from qf.ingest.fixtures import _season_label
-from qf.ingest.history_fd import season_labels_extra
 
 
 def _ko(y, m, d):
@@ -34,15 +33,3 @@ def _ko(y, m, d):
 def test_misma_etiqueta_que_el_historico(estilo, ko, esperada):
     assert _season_label({"season_style": estilo}, ko) == esperada
 
-
-def test_ano_natural_casa_con_la_etiqueta_del_csv_extra():
-    """BRA.csv / ARG.csv / USA.csv escriben '2026': tiene que caer en '2627'."""
-    etiqueta = _season_label({"season_style": "calendar"}, _ko(2026, 9, 26))
-    assert "2026" in season_labels_extra(etiqueta)
-
-
-def test_liga_mx_casa_con_la_etiqueta_del_csv_extra():
-    """MEX.csv escribe '2026/2027' para el Apertura 2026 y el Clausura 2027."""
-    for ko in (_ko(2026, 9, 26), _ko(2027, 3, 14)):
-        etiqueta = _season_label({"season_style": "apertura_clausura"}, ko)
-        assert "2026/2027" in season_labels_extra(etiqueta)

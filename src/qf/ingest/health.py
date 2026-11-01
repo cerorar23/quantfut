@@ -273,12 +273,12 @@ def check_xg_coverage() -> tuple[bool, str]:
 
 
 # Una liga con partidos jugados en los últimos XG_RECENT_DAYS cuyo último xG
-# es más viejo que XG_MAX_GAP_DAYS está "parada". La fuente publica por lotes
-# semanales, así que tres semanas ya no son un retraso normal.
+# es más viejo que XG_MAX_GAP_DAYS está "parada": tres semanas ya no son un
+# retraso normal.
 XG_RECENT_DAYS = 30
 XG_MAX_GAP_DAYS = 21
 
-# Paradas ya el 2-oct-2026 (worldfootballR_data sin actualizar desde el
+# Paradas ya el 2-oct-2026 (su fuente de entonces dejó de publicar el
 # 18-sep-2025; ver README). Reconocidas, no olvidadas: dejan de fallar solo
 # hasta esta fecha, para que la decisión sobre la fuente de xG (tareas.md) no
 # se quede sin tomar. Una liga que se pare DESPUÉS falla en el acto.
@@ -308,8 +308,7 @@ def check_xg_freshness(now: datetime | None = None) -> tuple[bool, str]:
     )
     # Una liga que nunca tuvo xG y no tiene fuente no se ha "parado": no hay
     # nada que vigilar (las 10 activadas el 2026-10-11 se entrenan con goles).
-    from .xg_worldfootball import ASSETS, RDS_ASSETS
-    con_fuente = set(ASSETS) | set(RDS_ASSETS) | XG_PARADO_CONOCIDO
+    con_fuente = XG_PARADO_CONOCIDO
     parados = []
     for r in rows:
         jugado, xg = r["ult_jugado"], r["ult_xg"]

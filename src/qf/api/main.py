@@ -717,8 +717,6 @@ def run_job(job: str):
         "fixtures": ("..ingest.fixtures", "run"),
         "results": ("..ingest.results", "close_recent"),
         "odds": ("..ingest.odds_worker", "run_once"),
-        "xg": ("..ingest.xg_worldfootball", "run"),
-        "uefa_cups": ("..ingest.uefa_cups", "run"),
         "daily": ("..publish.daily", "run"),
         "settle": ("..eval.clv", "settle_pending"),
     }

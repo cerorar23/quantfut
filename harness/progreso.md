@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 1-nov-2026 · Retirada completa de las fuentes antiguas en un solo PR (`retirar/fuentes-todo`)
+
+Decisión del titular: hacerlo todo de una vez en un PR nuevo, y fusionar y desplegar al final. Lo que se añade a las fases 1-2c: las tres piezas que quedaban enganchadas, separando siempre lo vivo de lo retirable. `sofascore_alineaciones` y `sofascore_partidos` mezclaban la lectura del archivo de Apify con las funciones que escriben bajas y once (`emparejar`, `aplicar`, `titulares`, `bajas`) y que sigue usando SportsAPIPro: esas pasan a `sofascore_carga.py` y el resto se borra. `history_fd.py` mezclaba el cargador de CSV de football-data con `insertar_cierre` (lo usa `cierres_odds_api`) y `_parse_date` (lo usa `early_vs_close`): se extraen y el cargador se borra. El chequeo de frescura del xG ya no lee los assets de worldfootballR.
+
+Descanso: `db/092` hace que `v_descanso_equipo` use `calendario_equipo` hasta su última carga y los partidos terminados de `matches` después; antes la vista sobrestimaba el descanso 8,2 días de media. Verificado en un esquema aislado con partidos antes y después del corte. Límite declarado: copas domésticas y selecciones posteriores al 22-oct no están.
+
+Además, la prueba de tenis `test_shadow_paid_path_uses_post_receipt_time_and_preseals` dependía del mes real (parcheaba `shadow.now`, pero `Capture` usa su propio reloj): desde el 1-nov fallaba en `main` limpio. Se fija el reloj de `Capture` (mismo criterio que #64).
+
 ## 1-nov-2026 · Las fuentes retiradas se quitan del código por fases, no de golpe
 
 Decisión del titular: retirar API-Football, Apify, PitchAPI, BetsAPI, worldfootballR/FBref, football-data y soccerway/365scores conservando los datos ya cargados. Por qué por fases: el grafo de imports mostró que `api_football.py` no es solo un cliente, también aloja `record_health`, que usan 20 módulos (PropLine, FotMob y SportsAPIPro incluidos), y que football-data sostiene la base estadística, los cierres de 1X2 y 24 archivos de `src`. Borrarlos de golpe habría roto jobs activos sin avisar.

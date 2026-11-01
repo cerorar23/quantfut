@@ -71,8 +71,7 @@ def run(dry_run: bool = False, season: int | None = None) -> dict:
     base = query("SELECT count(*) AS n FROM teams")[0]["n"]
     if base == 0:
         raise SystemExit(
-            "No hay equipos en la base. Ejecuta primero el backfill histórico:\n"
-            "  python -m qf.ingest.history_fd"
+            "No hay equipos en la base. Restaura primero una copia (scripts/restore_db.sh)."
         )
     log.info("Equipos canónicos en base: %d", base)
 
