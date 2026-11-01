@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 1-nov-2026 · Con cuota real ≥ 1,28 la probabilidad publicada debe ser la de Pinnacle, no la del motor
+Medido con las cuotas reales de PropLine (23-oct → 1-nov, 128 partidos a T-60, 150 al cierre). **Por qué:** exigir cuota ≥ 1,28 a una opción que el motor ve por encima de 74 % selecciona justo los casos en que el motor discrepa del mercado, y en ellos acierta lo que dice Pinnacle (motor 54 %, Pinnacle 46 %, real 46–47 %). Elegir entre muchas líneas con el motor infla lo anunciado 5–8 puntos; Pinnacle sin margen cumple lo anunciado (cierre 74,7 % frente a 74,4 %). El motor queda para mercados que Pinnacle no cotiza, con el tope de 74,4 %. Muestra corta (±8 puntos): remedir cada semana. Informe §12.
+
 ## 1-nov-2026 · Mercados del titular: la probabilidad alta honesta está en mercados «aburridos», no en los populares
 Se modelaron y midieron los 37 mercados de las dos listas del titular con las mismas distribuciones del rediseño (matriz de A0 o del mercado invertido, mitades por f1 de liga, Yip, Dawson, props por jugador) y la cuota mínima 1,28. **Por qué importa:** por encima de ≈ 74 % de probabilidad la cuota cae bajo 1,28, así que el techo honesto con cuota publicable es ≈ 75–80 %, y lo alcanzan favorito marca, 2.ª parte más de 0,5, más de 1,5, doble del favorito, primer equipo en marcar y córners más de 7,5; los mercados populares (Lista 2) casi todos quedan bajo 60 %. Tres afirmaciones de la Lista 1 no se sostienen (2.ª mitad con más goles 45 %, ambos marcan NO 46 %, AH de córners 63 %). Los props de jugador crudos prometen de más y se recalibran con temporadas anteriores; los pases son la excepción (deriva). Informe §10–11.
 

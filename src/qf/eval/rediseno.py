@@ -49,10 +49,14 @@ def cargar(carpeta: str | Path) -> Datos:
 
 
 def mercado_1x2(cuotas: pd.DataFrame, metodo: str = "shin") -> pd.DataFrame:
-    """Cierre 1X2 sin margen: Pinnacle donde lo hay (hasta el 14-ene-2026) y bet365 después; `casa` lo dice."""
-    c = cuotas[(cuotas["source"] == "football_data") & (cuotas["market"] == "h2h")]
-    w = c.pivot_table(index=["match_id", "bookmaker"], columns="selection", values="price").dropna().reset_index()
-    w["prioridad"] = w["bookmaker"].map({"pinnacle": 0, "bet365": 1}).fillna(9)
+    """
+    Cierre 1X2 sin margen: football-data (Pinnacle hasta el 14-ene-2026, bet365 después) y, donde no hay, el último
+    precio de PropLine antes del saque (Pinnacle primero; desde el 23-oct-2026). `casa` dice cuál se usó.
+    """
+    c = cuotas[cuotas["source"].isin(["football_data", "propline"]) & (cuotas["market"] == "h2h")]
+    w = c.pivot_table(index=["match_id", "source", "bookmaker"], columns="selection", values="price").dropna().reset_index()
+    orden = {("football_data", "pinnacle"): 0, ("football_data", "bet365"): 1, ("propline", "pinnacle"): 2}
+    w["prioridad"] = [orden.get((s, b), 3 if s == "propline" else 9) for s, b in zip(w["source"], w["bookmaker"])]
     w = w.sort_values("prioridad").drop_duplicates("match_id")
     p = np.array([devig([h, d, a], metodo) for h, d, a in w[["home", "draw", "away"]].to_numpy()])
     return pd.DataFrame({"match_id": w["match_id"].to_numpy(), "casa": w["bookmaker"].to_numpy(),

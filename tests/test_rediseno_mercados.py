@@ -51,3 +51,19 @@ def test_platt_corrige_una_probabilidad_inflada():
     inflada = np.clip(verdad * 1.3, 0, 0.99)
     f = platt(inflada, y)
     assert f(inflada).mean() == pytest.approx(y.mean(), abs=0.01)
+
+
+def test_cuotas_reales_handicap_y_liquidacion():
+    """PropLine: la línea del hándicap es la del equipo elegido (local −1,0 gana si gana por 2 o más)."""
+    import importlib.util
+    from pathlib import Path
+    ruta = Path(__file__).resolve().parents[1] / "scripts" / "rediseno_futbol" / "cuotas_reales.py"
+    spec = importlib.util.spec_from_file_location("cuotas_reales", ruta)
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    r = {"home_goals": 2, "away_goals": 1}
+    assert m.resultado("spreads", "home", -1.0, r) == "devuelve"
+    assert m.resultado("spreads", "away", 1.5, r) == "gana"
+    assert m.resultado("double_chance", "X2", -999, r) == "pierde"
+    M = np.zeros((3, 3)); M[2, 1] = 1.0  # 2-1 seguro
+    assert m.probs_motor("spreads", "home", -1.0, M, None, None, None, None) == pytest.approx((0.0, 1.0))
+    assert m.probs_motor("spreads", "away", 1.5, M, None, None, None, None)[0] == pytest.approx(1.0)

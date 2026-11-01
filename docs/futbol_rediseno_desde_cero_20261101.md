@@ -345,3 +345,37 @@ Cómo se calcula cada familia (todo con datos anteriores al partido):
    quedan dentro de ±3 puntos.
 5. **Props de jugador:** la probabilidad cruda promete de más; con la recalibración por temporadas anteriores queda a
    ±1 punto. Faltan cuotas históricas de jugador para saber qué líneas existen a ≥ 1,28.
+
+## 12. Con las cuotas reales de PropLine, a T-60 y al cierre (1-nov)
+
+`scripts/rediseno_futbol/cuotas_reales.py` (exportación de solo lectura `exportar_cuotas_t60.sql`). Del 23-oct al
+1-nov: 128 partidos con cuota a T-60 (mediana 111 min antes del saque) y 150 al cierre, en 9–10 días, 8 ligas. Unas
+9.400–12.300 opciones (1X2, doble, hándicap, totales, ambos marcan, goles por equipo, córners, tarjetas; sin líneas de
+cuarto). Se toma la mejor cuota entre casas y, por partido, la opción más probable con **cuota real ≥ 1,28**.
+**Muestra pequeña: los intervalos son de ±8 puntos.**
+
+| Fuente de la probabilidad | T-60: acierto (anuncia) | Cierre: acierto (anuncia) |
+|---|---|---|
+| Pinnacle sin margen | **69,5 %** [61,1; 76,8] (73,9) | **74,7 %** [67,2; 81,0] (74,4) |
+| Motor (A0, Yip, Dawson) | 71,1 % (77,0) | 72,7 % (77,5) |
+| Motor solo hasta p ≤ 74,4 % | 66,4 % (71,5) | 68,7 % (71,7) |
+| Mercado si hay, si no motor | 68,0 % (76,2) | 69,3 % (76,5) |
+
+Calibración de todas las opciones con cuota ≥ 1,28, tramo 70–80 %: Pinnacle anuncia 72,6–72,7 % y ocurre 71,9–73,8 %;
+el motor anuncia 74,1–74,2 % y ocurre 68,1–70,0 %. Por encima de 80 % el motor anuncia 83 % y ocurre 69–73 %.
+
+**Lo que dicen**
+1. **El tope aproximado de las secciones 10–11 era correcto:** el 98,7–98,9 % de las opciones con probabilidad
+   ≤ 74,4 % tienen de verdad cuota ≥ 1,28, y solo el 12–13 % de las que lo superan.
+2. **Con cuota real el motor cae en la maldición del ganador.** Una opción con más de 74 % según el motor y aun así
+   cuota ≥ 1,28 es justo un caso en que el motor discrepa del mercado, y ahí se equivoca: cuando el motor ve más de
+   5 puntos por encima de Pinnacle (≈ 700–900 opciones), anuncia 54 %, Pinnacle 46 % y ocurre 46–47 %; cuando ve 5
+   puntos por debajo, ocurre lo que dice Pinnacle (49–50 %). Cuantas más líneas se comparan, peor: elegir entre todas
+   las líneas alternativas y de equipo infla lo anunciado 5–8 puntos.
+3. **Pinnacle sin margen es la fuente honesta** en todos los mercados que cotiza: al cierre anuncia 74,4 % y acierta
+   74,7 %; a T-60 anuncia 73,9 % y acierta 69,5 % (dentro del intervalo, pero hay que vigilarlo).
+4. **Regla para el motor de producción:** la probabilidad publicada es la de Pinnacle sin margen a la hora del sello
+   en todo mercado que Pinnacle cotice (1X2, doble, hándicap, totales, ambos marcan, goles por equipo, córners y
+   tarjetas). El motor propio solo se usa donde Pinnacle no cotiza, con las líneas estándar y el tope de 74,4 %, y
+   nunca para elegir entre líneas en las que discrepa del mercado. Remedir cada semana: con 9–10 días el acierto
+   real puede estar 8 puntos por encima o por debajo.
