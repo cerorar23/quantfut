@@ -3105,3 +3105,9 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
 - [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
 - [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
+
+## Respaldo football-data.org (2026-11-01)
+- [x] Diseño, migración db/089, `qf.ingest.fdorg_respaldo`, pruebas y cron (rama `futbol/fdorg-respaldo`, sin desplegar).
+- [ ] Revisar los términos del plan gratuito de football-data.org antes de activar.
+- [ ] Desplegar según DEPLOYS.md: clave en el `.env` del VPS (visible al worker), aplicar db/089, activar `fdorg_settings.enabled`, vigilar la primera pasada.
+- [ ] Decisión del titular: fase 2 (rellenar resultados con plazo de gracia) y/o sección en `/control/respaldo`.

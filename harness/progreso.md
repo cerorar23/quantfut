@@ -6835,3 +6835,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: en Meta se apaga el registro automático de compras de la app porque las compras las manda el servidor por CAPI; con él activo saldrían duplicadas. En Meta los hashes de clave van en base64 (el SHA-1 de Play App Signing, de `llave.jks` y de la clave antigua).
 - Decisión: tras subir un AAB a Play se registra la versión en `mobile_update_settings` por SSH; `min_build_android` y la obligación solo se tocan cuando esa versión ya está disponible para los usuarios.
 - Pendiente: ID de app y bloque de iOS (cuando exista la app en App Store), autorización de anuncios de apuestas en Meta/AdMob, compra de prueba web con `META_TEST_EVENT_CODE`.
+
+## 2026-11-01 — Respaldo football-data.org (rama `futbol/fdorg-respaldo`, sin desplegar)
+- Decisión: football-data.org es un **testigo** de calendario y resultados, no una fuente dueña: compara contra `matches` y avisa; no escribe ni crea equipos. Reutiliza `compare()`/`promote()` de `pitchapi_respaldo` por adaptador, sin tocar código desplegado. Tablas `fdorg_*` propias (db/089; 085-088 quedan para `futbol/base-unica`).
+- Decisión: prórroga y penales no se comparan (la convención de goles puede diferir); el pendiente exige 6 h desde el saque porque el plan gratis puede reflejar marcadores con retraso (no verificado).
+- Verificado: 30 pruebas (nuevas + PitchAPI) y una pasada completa en esquema aislado de Postgres local (migración idempotente, sin duplicar abiertas, sin tocar `matches`, 401 avisa una vez). Diseño: `docs/superpowers/specs/2026-11-01-football-data-org-respaldo-design.md`.
+- Pendiente: términos del plan gratuito; clave en el `.env` del VPS; aplicar db/089 y activar `fdorg_settings.enabled`; fase 2 (rellenar resultados) y panel solo si el titular lo decide.

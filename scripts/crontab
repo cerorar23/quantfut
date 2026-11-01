@@ -49,6 +49,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # ultimos 10 dias (avisa, no corrige) y xG de respaldo tras las 48 h de gracia
 # de API-Football. Sin clave o desactivado desde /control/respaldo: no hace nada.
 40 12 * * * cd /app && python -m qf.ingest.pitchapi_respaldo >> /var/log/pitchapi.log 2>&1
+10 1,13 * * * cd /app && python -m qf.ingest.fdorg_respaldo >> /var/log/fdorg.log 2>&1
 
 # xG historico desde los releases de worldfootballR_data. Semanal: esos
 # datasets se publican por lotes, no cambian a diario.
