@@ -19,9 +19,6 @@ for f in db/001_schema.sql db/002_seed_leagues.sql db/003_api_football.sql \
     || echo "    (ya aplicado, se omite)"
 done
 
-echo "==> 2/7  Verificar los IDs de liga de API-Football"
-$D python -m qf.ingest.api_football
-
 echo "==> 3/7  Backfill historico (football-data.co.uk, ~10 min)"
 $D python -m qf.ingest.history_fd
 

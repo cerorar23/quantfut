@@ -25,11 +25,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 
 */5 * * * * cd /app && python -m qf.ingest.rafagas >> /var/log/rafagas.log 2>&1
 
-# Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle).
-# Cada hora: el proveedor actualiza cada liga cuando le toca y solo guarda 7
-# días. Cada 3 h, una actualización de las 06:10 no llegaría al job de las
-# 08:00. Una petición por partido en las próximas 72 h (~50/h de 7.500/día).
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): 20 * * * * cd /app && python -m qf.ingest.af_odds >> /var/log/af_odds.log 2>&1
 # Sombra del criterio de picks: registra lo que se HABRÍA recomendado con las
 # cuotas recién capturadas. No publica. Se liquida desde qf.eval.clv.
 25 * * * * cd /app && python -m qf.publish.shadow_sharp capture >> /var/log/shadow_sharp.log 2>&1
@@ -76,11 +71,6 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 0 7 * * * cd /app && python -m qf.ingest.health >> /var/log/health.log 2>&1
 
 # --- FASE 4 ---
-# Alineaciones confirmadas. Cada 5 min: la ventana util es T-90..T-20 y el XI
-# se publica sin horario fijo, asi que hay que estar mirando. Solo llama a la
-# API por partidos DENTRO de la ventana y sin alineacion guardada, asi que el
-# coste de cuota es bajo aunque corra a menudo.
-# RETIRADO 2026-10-25 (titular: datos solo de SofaScore y PropLine): */5 * * * * cd /app && python -m qf.ingest.lineups >> /var/log/lineups.log 2>&1
 # Un minuto después, evalúa el ajuste de XI en sombra. No publica ni apuesta;
 # si todavía no hay muestra/artefacto validado termina como no-op.
 1-56/5 * * * * cd /app && python -m qf.model.shadow >> /var/log/shadow.log 2>&1

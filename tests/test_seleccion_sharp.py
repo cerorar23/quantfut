@@ -27,7 +27,7 @@ NORMAL = {"home": 1.95, "draw": 3.30, "away": 3.90}
 def _snap(age_h=1.0, **books):
     base = {"pinnacle": PIN, "marathonbet": NORMAL, "betvictor": NORMAL}
     base.update(books)
-    return pk.Snapshot("api_football", NOW - timedelta(hours=age_h), base)
+    return pk.Snapshot("the_odds_api", NOW - timedelta(hours=age_h), base)
 
 
 def _fair_home():
@@ -110,19 +110,16 @@ def _pred():
             "markets": {"1x2": {"home": 0.61, "draw": 0.22, "away": 0.17}}}
 
 
-def test_find_candidates_une_fuentes_y_el_modelo_solo_es_diagnostico(monkeypatch):
-    af = _snap(**{"1xbet": {"home": 2.20, "draw": 3.2, "away": 3.7},
-                  "william_hill": {"home": 2.25, "draw": 3.2, "away": 3.7}})
+def test_find_candidates_el_modelo_solo_es_diagnostico(monkeypatch):
     toa = pk.Snapshot("the_odds_api", NOW - timedelta(hours=2),
                       {"pinnacle": PIN, "unibet_eu": NORMAL, "betsson": NORMAL,
-                       "1xbet": {"home": 2.15, "draw": 3.2, "away": 3.7}})
-    monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: af)
+                       "1xbet": {"home": 2.20, "draw": 3.2, "away": 3.7},
+                       "william_hill": {"home": 2.25, "draw": 3.2, "away": 3.7}})
     monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: toa)
     cands = pk.find_candidates(_pred(), NOW)
     assert {(c.best_book, c.odds_source) for c in cands} == {
-        ("1xbet", "api_football"), ("william_hill", "api_football"),
-        ("1xbet", "the_odds_api")}
+        ("1xbet", "the_odds_api"), ("william_hill", "the_odds_api")}
     assert all(c.model_prob == 0.61 for c in cands)
     assert cands[0].best_book == "1xbet", "ordena por edge ESPERADO, no bruto"
     wh = next(c for c in cands if c.best_book == "william_hill")
@@ -130,16 +127,15 @@ def test_find_candidates_une_fuentes_y_el_modelo_solo_es_diagnostico(monkeypatch
 
 
 def test_select_daily_descarta_stake_nulo_y_deja_uno_por_partido(monkeypatch):
-    af = _snap(**{"1xbet": {"home": 2.20, "draw": 3.2, "away": 3.7},
-                  "william_hill": {"home": 2.25, "draw": 3.2, "away": 3.7}})
-    monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: af)
+    snap = _snap(**{"1xbet": {"home": 2.20, "draw": 3.2, "away": 3.7},
+                    "william_hill": {"home": 2.25, "draw": 3.2, "away": 3.7}})
     monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
-    monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: None)
+    monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: snap)
     picks = pk.select_daily([_pred()], NOW)
     assert len(picks) == 1
     p = picks[0]
     assert p.best_book == "1xbet" and p.stake_units > pk.MIN_STAKE_UNITS
-    assert p.min_price is not None and p.odds_as_of == af.as_of
+    assert p.min_price is not None and p.odds_as_of == snap.as_of
 
 
 # ---------------------------------------------------------------------------

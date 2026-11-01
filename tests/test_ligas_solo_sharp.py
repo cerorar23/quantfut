@@ -75,13 +75,6 @@ def test_la_frescura_del_bootstrap_mira_lo_mismo_que_el_entrenamiento(monkeypatc
         "si no, un cierre de LaLiga 2 daría por fresco un mercado que el modelo no ve"
 
 
-@pytest.mark.parametrize("modulo", ["lineups"])
-def test_alineaciones_y_bajas_no_gastan_cuota_en_ligas_sin_modelo(monkeypatch, modulo):
-    import importlib
-    m = importlib.import_module(f"qf.ingest.{modulo}")
-    sql = _sql_de(monkeypatch, m, m.pending_matches)
-    # db/052: tampoco en ligas con modelo pero captura reducida.
-    assert "model_enabled" in sql and "captura_completa" in sql
 
 
 def test_el_xg_no_recorre_ligas_sin_modelo(monkeypatch):
@@ -90,7 +83,6 @@ def test_el_xg_no_recorre_ligas_sin_modelo(monkeypatch):
 
 
 @pytest.mark.parametrize("modulo,funcion", [
-    ("qf.ingest.af_odds", "_pending"),
     ("qf.publish.shadow_sharp", "capture"),
 ])
 def test_el_criterio_si_ve_las_ligas_solo_sharp(monkeypatch, modulo, funcion):

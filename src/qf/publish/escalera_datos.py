@@ -147,32 +147,23 @@ class Modelos:
         return acc
 
 
-def _cuotas_af(match_id: str, now: datetime) -> list[dict]:
+def _cuotas_mercados(match_id: str, now: datetime) -> list[dict]:
     """
     Última cotización de cada casa para ambos anotan, doble oportunidad, hándicap,
     córners y tarjetas, ya recibida en `now` y con menos de MAX_EDAD_PRECIO.
     """
-    if getattr(settings, "odds_provider", "the_odds_api") == "propline":
-        return query("""SELECT DISTINCT ON(bookmaker,market,selection,line)
+    if getattr(settings, "odds_provider", "the_odds_api") != "propline":
+        return []
+    return query("""SELECT DISTINCT ON(bookmaker,market,selection,line)
                    bookmaker,market,selection,line,price,captured_at AS provider_updated_at
                    FROM odds_snapshots WHERE match_id=%s AND source='propline'
                      AND market IN ('btts','double_chance','spreads','corners','cards','corners_home','corners_away')
                      AND captured_at<=%s AND captured_at>=%s
                    ORDER BY bookmaker,market,selection,line,captured_at DESC""",
                      (match_id,now,now-es.MAX_EDAD_PRECIO))
-    return query(
-        """SELECT DISTINCT ON (bookmaker, market, selection, line)
-                  bookmaker, market, selection, line, price, provider_updated_at
-           FROM af_odds_snapshots
-           WHERE match_id = %s
-             AND market IN ('btts', 'double_chance', 'spreads', 'corners', 'cards',
-                            'corners_home', 'corners_away')
-             AND fetched_at <= %s AND provider_updated_at >= %s
-           ORDER BY bookmaker, market, selection, line, provider_updated_at DESC""",
-        (match_id, now, now - es.MAX_EDAD_PRECIO))
 
 
-def _ref_af(rows: list[dict], c) -> tuple:
+def _ref_casa(rows: list[dict], c) -> tuple:
     """(cuota, casa, hora) de la mejor casa de la lista para ese mercado, lado y línea."""
     precios = [(float(r["price"]), pk.canonical_book(r["bookmaker"]), r["provider_updated_at"])
                for r in rows
@@ -275,7 +266,7 @@ def opciones(m: dict, now: datetime, rho: float | None,
     """
     match_id, kickoff = m["match_id"], m["kickoff_utc"]
     out = []
-    filas_af = _cuotas_af(match_id, now)
+    filas_mercados = _cuotas_mercados(match_id, now)
     snap = ad._snapshot(match_id, kickoff, now)
     if snap is not None:
         totales, equipos = ad._referencias(match_id, snap, now)
@@ -302,21 +293,21 @@ def opciones(m: dict, now: datetime, rho: float | None,
             lineas_ah = _handicaps(match_id, snap.as_of)
         for c in cands:
             if c.market in ("btts", "double_chance"):
-                price, book, _ = _ref_af(filas_af, c)
+                price, book, _ = _ref_casa(filas_mercados, c)
             elif c.market == "spreads":
                 price, book = _ref_handicap(lineas_ah, c)
             else:
                 price, book = ad._ref(snap, totales, c, equipos)
             if price is not None:
                 out.append(es.Opcion(match_id, c, float(price), book, snap.source, snap.as_of))
-    if modelos is not None and filas_af:
+    if modelos is not None and filas_mercados:
         for c in _candidatos_estadisticos(m, modelos):
-            c = prudente(c, filas_af)
+            c = prudente(c, filas_mercados)
             if c is None:
                 continue
-            price, book, as_of = _ref_af(filas_af, c)
+            price, book, as_of = _ref_casa(filas_mercados, c)
             if price is not None:
-                out.append(es.Opcion(match_id, c, float(price), book, "api_football", as_of))
+                out.append(es.Opcion(match_id, c, float(price), book, "propline", as_of))
     return out if (snap is not None or out) else None
 
 

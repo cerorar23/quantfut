@@ -80,18 +80,7 @@ def run(days: int = 30, now: datetime | None = None) -> dict:
              GROUP BY m.match_id, m.league_id, m.kickoff_utc,
                       s.source, s.bookmaker, s.captured_at
              HAVING count(DISTINCT s.selection) = 3 AND min(s.price) > 1
-             UNION ALL
-             SELECT m.match_id, m.league_id, m.kickoff_utc,
-                    'api_football' AS source, s.bookmaker,
-                    min(s.fetched_at) AS observed_at,
-                    s.provider_updated_at AS provider_at
-             FROM af_odds_snapshots s JOIN matches m USING (match_id)
-             WHERE s.market = 'h2h' AND s.fetched_at < m.kickoff_utc
-               AND m.kickoff_utc >= %s AND m.kickoff_utc < %s
-             GROUP BY m.match_id, m.league_id, m.kickoff_utc,
-                      s.bookmaker, s.provider_updated_at
-             HAVING count(DISTINCT s.selection) = 3 AND min(s.price) > 1
-           ) SELECT * FROM complete""", (start, end, start, end)
+           ) SELECT * FROM complete""", (start, end)
     )
     return {"period_start_utc": start.isoformat(),
             "period_end_utc": end.isoformat(),

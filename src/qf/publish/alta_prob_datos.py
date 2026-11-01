@@ -116,32 +116,6 @@ def _capturas(match_id: str, now: datetime) -> list[pk.Snapshot]:
     return [pk._group(g, source, "captured_at") for g in por_hora.values()]
 
 
-def _totales_af(match_id: str, as_of: datetime, now: datetime) -> list[dict]:
-    """
-    Totales de la MISMA respuesta de API-Football que el 1X2 (misma marca
-    `update`), y solo los que ya TENÍAMOS en `now` (`fetched_at`): la misma regla
-    que `picks._af_snapshot`.
-    """
-    return query(
-        """SELECT bookmaker, selection, line, price FROM af_odds_snapshots
-           WHERE match_id = %s AND market = 'totals' AND provider_updated_at = %s
-             AND fetched_at <= %s""",
-        (match_id, as_of, now))
-
-
-def _equipos_af(match_id: str, as_of: datetime, now: datetime) -> list[dict]:
-    """
-    "Más de 0,5" de cada equipo de las casas blandas, de la MISMA respuesta de
-    API-Football que el 1X2. Solo da la cuota de referencia: la probabilidad
-    sale del ajuste de goles.
-    """
-    return query(
-        """SELECT bookmaker, market, selection, line, price FROM af_odds_snapshots
-           WHERE match_id = %s AND market IN ('team_totals_home', 'team_totals_away')
-             AND provider_updated_at = %s AND fetched_at <= %s""",
-        (match_id, as_of, now))
-
-
 def _liquidados(desde: str | None = "control") -> list[dict]:
     """
     Liquidados y sellados. Por defecto, desde ALTA_PROB_CONTROL_DESDE (lo que
@@ -168,13 +142,13 @@ def _snapshot(match_id: str, kickoff: datetime, now: datetime) -> pk.Snapshot | 
     """
     La captura más reciente, vigente, con el 1X2 de Pinnacle completo y alguna casa
     de los suscriptores; The Odds API/PropLine primero. Los totales se leen de la
-    MISMA fuente y respuesta que el 1X2 (`_totales` / `_totales_af`): nunca se mezclan.
+    MISMA fuente y respuesta que el 1X2 (`_totales`): nunca se mezclan.
 
     No vale la última sin más: PropLine trae solo a Pinnacle la mayoría de las horas
     y las casas cada ~3 h. El 25-oct la selección cayó en una de solo Pinnacle y casi
     todo salió sin cuota.
     """
-    for snap in (*_capturas(match_id, now), pk._af_snapshot(match_id, now)):
+    for snap in _capturas(match_id, now):
         if snap is None:
             continue
         if now - snap.as_of > ap.MAX_EDAD_PRECIO or kickoff - snap.as_of < pk.MIN_LEAD:
@@ -235,7 +209,7 @@ def decidir(snap: pk.Snapshot, totales: list[dict], rho: float | None,
     return elegido, (ajuste if elegido.market in ap.MERCADOS_CON_AJUSTE else None)
 
 
-def _corners(m: dict, now: datetime, modelos, filas_af: list[dict],
+def _corners(m: dict, now: datetime, modelos, filas_mercados: list[dict],
              lineas: tuple | None = None) -> tuple[list[ap.Candidato], dict]:
     """
     Córners del modelo estadístico, recortados a la probabilidad sin margen del
@@ -259,35 +233,31 @@ def _corners(m: dict, now: datetime, modelos, filas_af: list[dict],
         if not em.disponible(mercado, lado, linea, sup):
             continue
         modelo = em.prob(mercado, lam, lado, linea, sup)
-        c = ed.prudente(ap.Candidato(mercado, lado, linea, modelo), filas_af)
+        c = ed.prudente(ap.Candidato(mercado, lado, linea, modelo), filas_mercados)
         if c is None:
             continue
         cands.append(c)
         fits[(mercado, lado, linea)] = {
             "modelo": round(modelo, 6), "lambdas": [round(lam[0], 4), round(lam[1], 4)],
             "supremacia": None if sup is None else round(sup, 4),
-            "mercado": round(ed.prob_mercado(filas_af, c), 6)}
+            "mercado": round(ed.prob_mercado(filas_mercados, c), 6)}
     return cands, fits
 
 
-def _ref_nuevos(c: ap.Candidato, match_id: str, snap: pk.Snapshot, filas_af: list[dict]
+def _ref_nuevos(c: ap.Candidato, match_id: str, snap: pk.Snapshot, filas_mercados: list[dict]
                 ) -> tuple[float | None, str | None]:
     """
     Cuota de referencia de ambos marcan, doble oportunidad, hándicap y córners.
 
-    La doble oportunidad sale de API-Football (bet 12, `af_odds`, desde el 12-oct): la
-    misma fuente y la misma regla de edad que usan la escalera y el parley. Sin esto el
-    pronóstico salía sin cuota aunque el dato estuviera en la base.
+    La doble oportunidad sale de PropLine: la misma fuente y la misma regla de edad que usan
+    la escalera y el parley. Sin esto el pronóstico salía sin cuota aunque el dato estuviera
+    en la base.
     """
     from . import escalera_datos as ed
     if c.market in ("btts", "double_chance", *CORNERS):
-        price, book, _ = ed._ref_af(filas_af, c)
+        price, book, _ = ed._ref_casa(filas_mercados, c)
         return price, book
-    # Hándicap: cada fuente con SU snapshot, nunca mezcladas (edades distintas). Con uno de
-    # API-Football, su bet 4 (desde el 2026-10-14); con uno de The Odds API, sus spreads.
-    if snap.source == "api_football":
-        price, book, _ = ed._ref_af(filas_af, c)
-        return price, book
+    # Hándicap: con el snapshot de la misma fuente, nunca mezcladas (edades distintas).
     if snap.source not in ("the_odds_api", "propline"):
         return None, None
     return ed._ref_handicap(ed._handicaps(match_id, snap.as_of), c)
@@ -316,7 +286,7 @@ def _ref(snap: pk.Snapshot, totales: list[dict], c: ap.Candidato,
 
 
 def cotizador(match_id: str, snap: pk.Snapshot, totales: list[dict], equipos: list[dict],
-              filas_af: list[dict]) -> Callable[[ap.Candidato], tuple]:
+              filas_mercados: list[dict]) -> Callable[[ap.Candidato], tuple]:
     """
     (cuota, casa) de referencia de cada candidato del partido, calculada una vez.
     Decide qué entra (decisión del titular, 2026-10-25): sin cuota de una casa de los
@@ -327,7 +297,7 @@ def cotizador(match_id: str, snap: pk.Snapshot, totales: list[dict], equipos: li
     def cuota(c: ap.Candidato) -> tuple:
         k = (c.market, c.selection, c.line)
         if k not in memo:
-            memo[k] = (_ref_nuevos(c, match_id, snap, filas_af)
+            memo[k] = (_ref_nuevos(c, match_id, snap, filas_mercados)
                        if c.market in ("btts", "double_chance", "spreads", *CORNERS)
                        else _ref(snap, totales, c, equipos))
         return memo[k]
@@ -338,8 +308,6 @@ def _referencias(match_id: str, snap: pk.Snapshot, now: datetime) -> tuple[list[
     """(totales, goles de cada equipo) de la MISMA respuesta que el 1X2."""
     if snap.source in ("the_odds_api", "propline"):
         return _totales(match_id, snap.as_of), _equipos(match_id, snap.as_of)
-    if snap.source == "api_football":
-        return _totales_af(match_id, snap.as_of, now), _equipos_af(match_id, snap.as_of, now)
     return [], []       # fuente desconocida: no mezcla totales de nadie
 
 
@@ -393,9 +361,9 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             continue
         totales, equipos = _referencias(m["match_id"], snap, now)
         # Siempre: la doble oportunidad (que decidir() ofrece siempre) cotiza ahí.
-        filas_af = ed._cuotas_af(m["match_id"], now)
-        corners, fits_corners = _corners(m, now, modelos, filas_af)
-        cuota = cotizador(m["match_id"], snap, totales, equipos, filas_af)
+        filas_mercados = ed._cuotas_mercados(m["match_id"], now)
+        corners, fits_corners = _corners(m, now, modelos, filas_mercados)
+        cuota = cotizador(m["match_id"], snap, totales, equipos, filas_mercados)
         res = decidir(snap, totales, rho, habilitados, excluir,
                       ap.MERCADOS_EQUIPO_HABILITADOS, ap.BTTS_HABILITADOS,
                       ap.HANDICAP_HABILITADOS, corners, cuota)

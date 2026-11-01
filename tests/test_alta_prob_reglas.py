@@ -1,7 +1,6 @@
 """Reglas de la línea de alta probabilidad, sin base de datos."""
 import pytest
 
-from qf.ingest import af_odds
 from qf.model.pricing import market_1x2, score_matrix, totals_fair_over
 from qf.publish import alta_prob as ap
 
@@ -81,15 +80,6 @@ def test_ajuste_incoherente_se_rechaza():
 def test_texto(market, sel, line, esperado):
     assert ap.texto(market, sel, line, "Cruzeiro", "Sao Paulo") == esperado
 
-
-def test_las_lineas_de_goles_se_guardan_tambien_de_las_casas_blandas():
-    # `af_odds` solo guarda de las casas blandas las LINEAS_BLANDAS (de Pinnacle,
-    # todas). Si se habilita una línea nueva aquí sin añadirla allí, el
-    # pronóstico se elegiría sin cuota de referencia de las casas de los
-    # suscriptores.
-    lineas = {ln for _, ln in ap.LINEAS_GOLES}
-    assert lineas <= set(af_odds.LINEAS_BLANDAS)
-    assert {ln for _, ln in ap.MERCADOS_GOLES_HABILITADOS} <= set(af_odds.LINEAS_BLANDAS)
 
 
 def test_menos_de_4_5_goles_excluido_por_decision_del_usuario():

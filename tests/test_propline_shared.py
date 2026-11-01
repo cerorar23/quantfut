@@ -179,17 +179,15 @@ def test_restricted_or_future_published_prices_cannot_feed_predictions():
 
 def test_propline_mode_cannot_spend_legacy_provider_credits(monkeypatch):
     from types import SimpleNamespace
-    from qf.ingest import odds_worker,rafagas,af_odds,propline_ingest
+    from qf.ingest import odds_worker,rafagas,propline_ingest
     settings=SimpleNamespace(odds_provider="propline")
-    for module in (odds_worker,rafagas,af_odds):
+    for module in (odds_worker,rafagas):
         monkeypatch.setattr(module,"settings",settings)
     monkeypatch.setattr(propline_ingest,"ingest_hourly",lambda: {"calls":0,"source":"propline"})
     monkeypatch.setattr(odds_worker,"_fetch",lambda *a: pytest.fail("legacy network"))
     monkeypatch.setattr(rafagas,"_fetch",lambda *a: pytest.fail("legacy network"))
-    monkeypatch.setattr(af_odds,"_pending",lambda *a: pytest.fail("legacy network"))
     assert odds_worker.run_once()["calls"] == 0
     assert rafagas.run_once()["consultas"] == 0
-    assert af_odds.run_once()["calls"] == 0
 
 
 def test_predictions_read_only_configured_source_and_same_response(monkeypatch):
@@ -206,7 +204,6 @@ def test_predictions_read_only_configured_source_and_same_response(monkeypatch):
         monkeypatch.setattr(module,"query",query)
     snap=picks._odds_api_snapshot("match",NOW)
     assert snap.source == "propline" and snap.as_of == NOW
-    assert picks._af_snapshot("match",NOW) is None
     alta_prob_datos._totales("match",NOW)
     escalera_datos._handicaps("match",NOW)
     assert len(calls) == 3 and all("source = 'propline'" in sql and "source = 'the_odds_api'" not in sql for sql in calls)

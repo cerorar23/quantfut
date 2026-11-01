@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from qf.ingest import af_odds
 from qf.ingest.estadisticas import arbitro
 from qf.model import estadisticas_mercado as em
 from qf.publish import escalera_datos as ed
@@ -72,25 +71,6 @@ def test_nombre_del_arbitro_igual_en_las_dos_fuentes():
     assert arbitro("Michael Oliver, England") == arbitro("M Oliver") == "M Oliver"
 
 
-def test_cuotas_de_corners_tarjetas_y_ambos_anotan_de_la_misma_respuesta():
-    resp = [{"update": "2026-10-08T07:20:00+00:00", "fixture": {"id": 1}, "bookmakers": [
-        {"name": "Betano", "bets": [
-            {"id": 8, "name": "Both Teams Score", "values": [{"value": "Yes", "odd": "1.65"},
-                                                              {"value": "No", "odd": "2.15"}]},
-            {"id": 45, "name": "Corners Over Under", "values": [
-                {"value": "Over 8.5", "odd": "1.55"}, {"value": "Under 8.5", "odd": "2.35"}]},
-            {"id": 80, "name": "Cards Over/Under", "values": [
-                {"value": "Over 3.5", "odd": "1.80"}, {"value": "Under 3.5", "odd": "2.00"}]},
-            {"id": 45, "name": "Otro nombre", "values": [{"value": "Over 9.5", "odd": "1.9"},
-                                                          {"value": "Under 9.5", "odd": "1.9"}]}]},
-        {"name": "Casa Ajena", "bets": [
-            {"id": 45, "name": "Corners Over Under", "values": [
-                {"value": "Over 8.5", "odd": "1.60"}, {"value": "Under 8.5", "odd": "2.30"}]}]}]}]
-    filas = af_odds.parse(resp, "m1", datetime(2026, 10, 8, 18, tzinfo=timezone.utc))
-    mercados = sorted({(r[2], r[3], r[8]) for r in filas})
-    assert mercados == [("betano", "btts", None), ("betano", "cards", 3.5),
-                        ("betano", "corners", 8.5)]               # ni el nombre raro ni la casa ajena
-
 
 def test_mejor_cuota_de_la_lista_para_cada_linea():
     t = datetime(2026, 10, 8, 7, tzinfo=timezone.utc)
@@ -102,7 +82,7 @@ def test_mejor_cuota_de_la_lista_para_cada_linea():
               "price": 1.50, "provider_updated_at": t},
              {"bookmaker": "betano", "market": "corners", "selection": "over", "line": 9.5,
               "price": 1.60, "provider_updated_at": t}]
-    price, book, _ = ed._ref_af(filas, Candidato("corners", "over", 8.5, 0.8))
+    price, book, _ = ed._ref_casa(filas, Candidato("corners", "over", 8.5, 0.8))
     assert (price, book) == (1.36, "1xbet")
 
 
@@ -164,15 +144,7 @@ def test_textos_en_la_web():
     assert ed.texto("h2h", "home", None, "Dortmund", "Werder") == "Gana Dortmund"
 
 
-def test_corners_de_cada_equipo_cuotas_modelo_y_liquidacion():
-    resp = [{"update": "2026-10-08T07:20:00+00:00", "fixture": {"id": 1}, "bookmakers": [
-        {"name": "Betano", "bets": [
-            {"id": 57, "name": "Home Corners Over/Under", "values": [
-                {"value": "Over 3.5", "odd": "1.30"}, {"value": "Under 3.5", "odd": "3.20"}]},
-            {"id": 58, "name": "Away Corners Over/Under", "values": [
-                {"value": "Over 2.5", "odd": "1.50"}, {"value": "Under 2.5", "odd": "2.40"}]}]}]}]
-    filas = af_odds.parse(resp, "m1", datetime(2026, 10, 8, 18, tzinfo=timezone.utc))
-    assert sorted({(r[3], r[8]) for r in filas}) == [("corners_away", 2.5), ("corners_home", 3.5)]
+def test_corners_de_cada_equipo_modelo_y_liquidacion():
     # El local con 7 córners esperados frente al visitante con 3.
     assert em.prob("corners_home", (7.0, 3.0), "over", 3.5) > em.prob("corners_away", (7.0, 3.0), "over", 3.5)
     ahora = datetime(2026, 10, 10, tzinfo=timezone.utc)

@@ -118,7 +118,7 @@ def encendido(monkeypatch):
     monkeypatch.setattr(ts.ad, "_lote_sellado", lambda dia: False)
     monkeypatch.setattr(ts, "_partidos", lambda now: [PARTIDO])
     monkeypatch.setattr(ed, "Modelos", lambda now: _Modelos())
-    monkeypatch.setattr(ed, "_cuotas_af", lambda mid, now: _filas((5.5, (1.9, 1.95, 2.0))))
+    monkeypatch.setattr(ed, "_cuotas_mercados", lambda mid, now: _filas((5.5, (1.9, 1.95, 2.0))))
 
 
 def test_apagado_sin_corte_o_lote_sellado_no_guarda_nada(monkeypatch, encendido):
@@ -140,7 +140,7 @@ def test_guarda_cada_candidato_con_su_cuota_y_el_ajuste(monkeypatch, encendido):
     assert out["guardados"] == 2 and out["partidos"] == 1                   # menos de y más de 5,5
     sql, p = next(f for f in filas if f[1][2] == "under")
     assert "INSERT INTO tarjetas_seg" in sql and "ON CONFLICT ON CONSTRAINT tarjetas_seg_uq" in sql
-    assert p[:4] == ("m1", "cards", "under", 5.5) and p[7] == "betano" and p[8] == "api_football"
+    assert p[:4] == ("m1", "cards", "under", 5.5) and p[7] == "betano" and p[8] == "propline"
     assert p[6] == 2.0 and 0 < p[4] < 1 and abs(p[5] - 1 / p[4]) < 1e-3
 
 

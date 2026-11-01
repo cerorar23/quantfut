@@ -71,8 +71,8 @@ services:
       - /home/qf/sofascore-apify/data:/srv/quantfut/sofascore:ro
     # cron no hereda el entorno del contenedor: se lo pasa pam_env leyendo
     # /etc/environment. Se vuelca ENTERO. La versión anterior filtraba por
-    # prefijos y dejaba fuera API_FOOTBALL_*, así que calendario, resultados,
-    # alineaciones, lesiones y cuotas de API-Football fallaban en cada pasada.
+    # prefijos y dejaba fuera las claves de las APIs, así que los jobs que las
+    # usaban fallaban en cada pasada.
     # `command: >` (folded) junta las líneas con espacios: la versión anterior
     # tenía tres pasos separados solo por saltos de línea, así que sin `&&`
     # entre ellos "cron -f" quedaba como argumento de `crontab` en vez de
