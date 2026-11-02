@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 2-nov-2026 · Destacado de la web sin tope: se aplicó sobre el frontend real de producción, no sobre el de main
+Orden del titular: cuota mínima 1,40 y sin tope (antes 1,40-1,80). **Por qué un parche archivo a archivo:** la comparación con el contenedor mostró que el frontend en producción lleva cambios del 30-oct (`app.js`, `ergonomic-views.js`) que `main` no tiene; copiar los archivos de `main` los habría revertido. Se aplicó el diff del PR sobre las copias del contenedor (sin ambigüedad: una coincidencia por reemplazo) y se verificó por hash en el dominio real. El tope pasa a `None` (viaja como `null` en `rango`) en vez de infinito porque JSON no admite infinito.
+
 ## 2-nov-2026 · SharpAPI se captura como archivos y hacia adelante, no se carga en la base
 El titular autorizó capturar SharpAPI para los mercados que PropLine no trae. **Por qué así:** el plan gratuito no da histórico ni cierres y solo DraftKings y FanDuel con 60 s de retraso, de modo que solo sirve capturar a momentos fijos antes del saque (24 h, 6 h, 2 h, 60 min, 15 min); se guarda todo el catálogo prepartido del partido (≈ 1.500 filas, 58 mercados, 16 KB) porque cuesta lo mismo que filtrar y no se sabe aún qué mercados valdrán. Siguen las convenciones del proyecto: originales como archivos, script con biblioteca estándar y cron del host (como `propline_captura.py`), sin tocar imágenes, base ni picks. Cargarlos en la base espera a tener semanas de datos y a ampliar el CHECK de `futbol.cuota_historica`.
 

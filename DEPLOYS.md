@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-02 03:20 UTC · Destacado de la web con cuota mínima 1,40 y sin tope · API `quantfut-api-destacado-sin-tope:a7e1b28` (PR #233, `main` `a7e1b28`)
+- Orden del titular («fusiona y despliega»): el destacado pasa de 1,40-1,80 a mínimo 1,40 sin tope (servidor y frontend de fútbol, NBA y tenis).
+- Base comprobada con `scripts/deploy.sh estado` y por archivo: la API en ejecución (`quantfut-api-cuotas:5b6f545`, coincide con el compose del servidor) difiere de `main` en 29 archivos y **su frontend lleva cambios del 30-oct que `main` no tiene** (`app.js`, `ergonomic-views.js`, versiones `destacado-20261030`). Por eso NO se copiaron los archivos de `main`: los cambios del PR se aplicaron sobre las copias reales del contenedor (cada reemplazo exige una sola coincidencia) en `app.js`, `ergonomic-views.js`, `real-views.js` e `index.html`; `sports-data.js`, `sports-window.js`, `fichas-data.js` y `api/partido_mercados.py` eran idénticos a la base de `main` y se tomaron de `main`.
+- Imagen: `FROM quantfut-api-cuotas:5b6f545` + `frontend/` (8 archivos) + `src/qf/api/partido_mercados.py`. sha256 (12): `app.js` `166d11608ff1`, `ergonomic-views.js` `ec43b2481efc`, `real-views.js` `9a4173ba75df`, `sports-data.js` `b339c5dbd531`, `sports-window.js` `8da348ded867`, `fichas-data.js` `0353a130a6f6`, `index.html` `28e49c4e721d`, `partido_mercados.py` `8f6f922719b9`. Versión de caché nueva `destacado-sin-tope-20261102`.
+- Ensayo aislado (`--network none`): `RANGO_DESTACADO = (1.4, None)`, 138 rutas (igual que la imagen anterior). Solo se recreó el servicio `api` (`up -d --no-deps --no-build --force-recreate api`); el worker sigue en `quantfut-worker:bd58d4f`, sin reiniciar. Nadie más desplegando.
+- Verificado en el dominio real: los seis archivos servidos tienen el mismo hash que los del despliegue; `/health` 200; la ficha web de tres partidos (`?web=1`) devuelve `rango [1.4, null]` y destacados con cuota 1,40, 1,46 y 1,47 (el de mayor probabilidad con cuota ≥ 1,40).
+- Respaldo: `~/quantfut/releases/destacado-sin-tope-a7e1b28/backup/` (compose, los ocho archivos anteriores e id de la imagen).
+- **Vuelta atrás:** `cp -p ~/quantfut/releases/destacado-sin-tope-a7e1b28/backup/docker-compose.yml ~/quantfut/docker-compose.yml && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate api` (vuelve `quantfut-api-cuotas:5b6f545`).
+- Pendiente: el frontend de `main` no es el de producción (faltan los cambios del 30-oct); conviene fusionarlos a `main` desde su rama de origen.
+
 ### 2026-11-02 02:50 UTC · Captura de SharpAPI (plan Free) — script y cron en el host, rama `futbol/captura-sharpapi`
 - Autorizada por el titular en el chat («autorizo la captura»). Solo host: ninguna imagen ni contenedor cambia, no toca la base ni el pipeline de picks. Mismo patrón que `propline_captura.py` (script con biblioteca estándar en `~/`, cron del usuario `qf`, datos como archivos).
 - Archivos en el servidor: `~/sharpapi/sharpapi_captura.py` (= `scripts/sharpapi_captura.py` de la rama, sha256 `3a57d5ceb176…`), `~/sharpapi/.env` (solo `SHARPAPI_KEY`, modo 600) y `~/sharpapi_data/` (originales `AAAA-MM-DD/<evento>/<capturado>.jsonl.gz` y `estado.json`).

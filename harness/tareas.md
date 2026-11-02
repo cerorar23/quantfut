@@ -30,7 +30,8 @@ Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin f
 - [ ] Motor C: reajuste del nivel de liga dentro de la temporada y comparación hacia delante con PropLine (córners y tarjetas).
 - [x] Decisión (2-nov): se queda Dixon-Coles; A0 *score-driven* empata y no justifica cambiar lo que sellan los picks.
 - [x] Cuota mínima del titular (2-nov): 1,40 hacia arriba. Las cifras definitivas del rediseño usan 1,40 (§14.2): con todas las líneas la mejor opción de cada partido acierta 74,5 % [69,1; 79,2] (n = 286, T-60) frente a 67,8 % anunciado; con una sola línea (bet365) ≈ 65 % el 10 % mejor del día.
-- [ ] Titular: el destacado de la web usa 1,40-1,80 (`api/partido_mercados.py: RANGO_DESTACADO` y `frontend/*`); si «hacia arriba» significa quitar el tope de 1,80, es un cambio aparte con despliegue de la web.
+- [x] Destacado de la web con cuota mínima 1,40 y sin tope (titular, 2-nov): PR #233 desplegado en la API `quantfut-api-destacado-sin-tope:a7e1b28` (DEPLOYS.md).
+- [ ] El frontend de `main` no es el de producción (faltan los cambios del 30-oct de `app.js`/`ergonomic-views.js`): fusionarlos a `main` desde su rama de origen.
 - [ ] Medición semanal: `python scripts/rediseno_futbol/remedir_semana.py` (solo lectura del servidor) hasta ≥ 500 partidos a T-60 (hoy 286).
 - [ ] C4 conteos de equipo (tiros, a puerta, faltas, fueras de juego): sin hacer, ninguna lista del titular los pide.
 
