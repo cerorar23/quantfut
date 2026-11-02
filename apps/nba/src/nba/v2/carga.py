@@ -113,3 +113,38 @@ def registrar_captura(db, *, fuente: str, objetivo: str, fase: str, solicitado_e
         "sha256, bytes, ruta, error, creditos) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING captura_id",
         (fuente, objetivo, fase, partido_id, solicitado_en, recibido_en, http_status, ok, sha256, bytes_, ruta,
          error, creditos)).fetchone()[0]
+
+
+@dataclass(frozen=True)
+class EventoNuevo:
+    partido_id: int
+    fuente: str
+    secuencia: int
+    periodo: int
+    reloj_s: float
+    tipo: str
+    recibido_en: datetime
+    equipo_id: int | None = None
+    jugador_id: int | None = None
+    subtipo: str | None = None
+    x: float | None = None
+    y: float | None = None
+    acierto: bool | None = None
+    puntos: int | None = None
+    marcador_local: int | None = None
+    marcador_visit: int | None = None
+    captura_id: int | None = None
+
+
+def guardar_eventos(db, filas: Iterable[EventoNuevo]) -> int:
+    """Jugada a jugada: la primera versión de cada (partido, fuente, secuencia) se queda; no se reescribe."""
+    insertadas = 0
+    for e in filas:
+        cursor = db.execute(
+            "INSERT INTO nba.evento (partido_id, fuente, secuencia, periodo, reloj_s, equipo_id, jugador_id, tipo, subtipo, "
+            "x, y, acierto, puntos, marcador_local, marcador_visit, captura_id, recibido_en) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+            (e.partido_id, e.fuente, e.secuencia, e.periodo, e.reloj_s, e.equipo_id, e.jugador_id, e.tipo, e.subtipo,
+             e.x, e.y, e.acierto, e.puntos, e.marcador_local, e.marcador_visit, e.captura_id, e.recibido_en))
+        insertadas += cursor.rowcount
+    return insertadas

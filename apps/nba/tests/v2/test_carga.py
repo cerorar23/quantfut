@@ -103,3 +103,15 @@ def test_solo_cambios_omite_repetidos_y_guarda_cambios(mundo):
     assert carga.guardar_datos(db, [fila(p, j, recibido=t(12), **cambio)], solo_cambios=True) == 1
     assert carga.guardar_datos(db, [fila(p, j, recibido=t(13), **kw)], solo_cambios=True) == 1    # vuelve a Ques: es cambio
     assert cuenta(db) == 3
+
+
+def test_guardar_eventos_es_idempotente_y_conserva_la_primera_version(mundo):
+    from nba.v2.carga import EventoNuevo
+    db, p, _ = mundo
+    e = EventoNuevo(partido_id=p, fuente="nba_oficial", secuencia=15, periodo=1, reloj_s=669.0, tipo="2pt", subtipo="Layup",
+                    recibido_en=T0, x=94.9, y=44.4, acierto=True, puntos=2, marcador_local=2, marcador_visit=0)
+    assert carga.guardar_eventos(db, [e]) == 1
+    editado = EventoNuevo(partido_id=p, fuente="nba_oficial", secuencia=15, periodo=1, reloj_s=669.0, tipo="3pt",
+                          recibido_en=T0)
+    assert carga.guardar_eventos(db, [e, editado]) == 0
+    assert db.execute("SELECT tipo, puntos FROM nba.evento").fetchall() == [("2pt", 2)]
