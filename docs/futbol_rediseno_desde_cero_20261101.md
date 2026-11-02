@@ -398,3 +398,122 @@ comunes son tan informativas como Pinnacle; por eso se usa la mediana, que no de
 
 Corrección del 1-nov: la primera versión de esta sección emparejaba mal el hándicap asiático de Pinnacle (juntaba
 local −0,5 con local +0,5 en vez de local −0,5 con visitante +0,5); las cifras de arriba ya son las corregidas.
+
+## 13. Cuotas sin procesar del VPS: bet365 (BetsAPI), fichas prematch y respaldo de API-Football (1-nov)
+
+Análisis solo en local, sin escribir en la base. Código: `eval/rediseno_betsapi.py` y `scripts/rediseno_futbol/betsapi_cuotas.py`,
+`betsapi_vivo.py`, `betsapi_fichas.py`, `af_cuotas.py` (pruebas en `tests/test_rediseno_betsapi.py`).
+
+### 13.1 Archivo de BetsAPI (bet365), 9 ligas, jul-2024 → oct-2026
+- **10.062 partidos** de las 9 ligas leídos (ago-2023 → oct-2026), emparejados con `matches` por hora, marcador y nombres
+  (99,4–100 % por liga; similitud de nombres media 0,95). Validación contra nuestra tabla: los córners coinciden en el
+  93,7 % de 9.609 partidos y los goles al descanso en el 95,6 %.
+- Mercados `1_1`..`1_8`: 1X2, hándicap asiático, totales de goles, córners, y en la 1.ª parte hándicap, goles, córners y
+  resultado al descanso. **Una sola línea por mercado y momento** (la principal); no es la escalera de líneas
+  alternativas, por eso las opciones rondan el 50 % y casi todas pasan la cuota 1,28 (99,5 %).
+- Evaluación: 6.944 partidos y 102.646 opciones a T-60 (último cambio con ≥ 60 min de antelación) y 6.934 / 115.497 al
+  cierre, 585 días, líneas enteras y medias (las de cuarto quedan fuera). Cuota = la de bet365; probabilidad «casa» =
+  la de bet365 sin margen (Shin en tres vías, proporcional en dos).
+
+| Mercado (opción más probable de cada partido) | Acierto T-60 | Anuncia | Acierto cierre | Anuncia |
+|---|---|---|---|---|
+| 1X2 | 49,0 % | 48,6 | 49,2 % | 48,5 |
+| Hándicap asiático | 51,9 % | 51,9 | 52,2 % | 51,9 |
+| Hándicap 1.ª parte | 55,2 % | 53,4 | 56,0 % | 53,4 |
+| Córners | 51,6 % | 51,6 | 51,6 % | 51,6 |
+| Córners 1.ª parte | 53,3 % | 52,4 | 53,5 % | 52,4 |
+| Resultado al descanso | 46,3 % | 45,9 | 46,5 % | 46,1 |
+| Goles / goles 1.ª parte | 50,6 / 53,0 % | 51,7 / 53,0 | 51,6 / 55,8 % | 51,7 / 53,0 |
+
+**bet365 sin margen es honesto o conservador** en todos los mercados. El mejor 10 % de cada día acierta **70,0 %** a
+T-60 (IC95 [67,1; 72,7]) y **71,6 %** al cierre (anuncia 67,3 %); el 30 % mejor, 65,9 / 67,0 % (anuncia 64,0 %); en el
+tramo anunciado 70–80 % ocurre 74,7 / 76,9 %. **Con una sola línea por mercado el techo es ≈ 70–72 %**; llegar a ≥ 74 %
+exige la escalera de líneas (§12).
+
+**El motor propio en estos mercados** (A0, Yip, mitades con f1 por liga; corregido un error del hándicap): en el 10 %
+mejor anuncia 69,7 % y acierta 61,4 % (**8 puntos de más**); 6 puntos de más en el 30 %. Aun así no es inútil: donde ve
+más de 5 puntos sobre la casa ocurre 46,7 % (motor 53,0, casa 44,2) y donde ve menos ocurre 46,4 % (motor 40,3, casa
+49,3), es decir, la verdad queda ≈ 30 % hacia el motor. Peso óptimo del motor en la mezcla (Brier, IC por partido):
+
+| Mercado | Peso del motor T-60 | Cierre | Mejora del Brier |
+|---|---|---|---|
+| 1X2 / resultado al descanso | 0 | 0 | ninguna |
+| Goles totales y de la 1.ª parte | 0 [0; 0,2–0,3] | 0,1 / 0,5 | ≤ 0,0024 |
+| Hándicap | 0,3 [0,1; 0,4] | 0,2 | 0,0005 |
+| Córners | 0,4 [0,2; 0,6] | 0,3 | 0,0003 |
+| Hándicap 1.ª parte / córners 1.ª parte | 0,5 / 0,6 [0,4; 0,8] | 0,5 / 0,4 | 0,0028 / 0,0007 |
+| Todos | 0,3 [0,2; 0,3] | 0,3 | 0,0003 |
+
+La mejora es pequeña; solo en los mercados de la 1.ª parte (menos líquidos) y en hándicap/córners parece valer la mezcla.
+Se deja como hipótesis a validar con log-loss y registro hacia adelante antes de usarla.
+
+### 13.2 En vivo y tiempos (6.976 partidos con lectura en vivo)
+Las lecturas en vivo traen minuto, marcador y marcador de córners (≈ una por minuto); esto **hace medibles** los dos mercados
+que antes se dieron por imposibles.
+- **Córners asiáticos EN VIVO, minuto 65-70, favorito perdiendo** (1.421 partidos): sí hay efecto, en lo que queda se
+  cobran 2,79 córners frente a 2,54 del ritmo previo (×1,09), mientras que con el favorito ganando ×0,96. **Pero la casa
+  ya lo precia**: «más de la línea» ocurre 48,6 % y la casa implica 48,6 %. El mejor lado según la casa con cuota ≥ 1,28
+  acierta **53,5 %** [50,8; 56,3] (anuncia 53,2). No es un mercado de alta probabilidad ni tiene ventaja.
+- **Carrera a X córners** (primer equipo en llegar; el minuto de cada córner se reconstruye con la serie en vivo):
+
+| X | Ganador claro | Lado más probable acierta (anuncia) | 10 % más seguro (anuncia) |
+|---|---|---|---|
+| 3 | 97 % | 64,8 % (66,3) | 83,7 % (85,2) |
+| 4 | 90 % | 67,1 % (68,9) | 87,9 % (89,2) |
+| 5 | 76 % | 68,2 % (71,5) | 88,3 % (92,5) |
+| 6 | 60 % | 70,0 % (74,4) | 90,8 % (95,2) |
+
+  El modelo (Yip por equipo, proceso de Poisson) promete 1,5–4,4 puntos de más; hay que recortarlo. No se conoce la cuota de
+  este mercado (las fichas de bet365 lo traen vacío), así que no se sabe si pasa 1,28.
+- **Córner en los primeros 10 minutos**: ocurre 60,6 %; el modelo anuncia 60,0 y ocurre 61,2 (calibrado con 2024/25 y
+  evaluado en 2025/26, n = 3.252). **Tarjeta en los primeros 10 minutos**: anuncia 27,9 %, ocurre 27,3 % (n = 6.012). Ninguno
+  es de alta probabilidad; su contrario («no hay córner / tarjeta / gol») sí, pero con cuota < 1,28.
+
+### 13.3 Fichas prematch de bet365 (276 partidos, 23-25 oct-2026)
+**Corrección a lo dicho el 1-nov:** no traen «casi todos» los mercados de las listas. Traen cuota en: hándicap y línea
+asiática, córners (totales, por equipo, alternativos), goles (totales, alternativos, rangos, ambos marcan, resultado y
+goles), ambos marcan en cada mitad, resultado y marcador exacto al descanso, doble oportunidad al descanso, equipo marca en
+cada mitad, primeros 10 minutos (gol / córner / tarjeta), número de tarjetas, ambos equipos reciben tarjeta, marcador
+exacto, tiros y tiros a puerta de jugador, «marca o asiste». **Faltan** (vacíos): descanso/final, goleador y primer goleador,
+primer equipo en marcar, mitad con más goles, carrera de córners, pases y faltas de jugador, tarjetas asiáticas, tarjeta a
+jugador. Además se descargaron una media de 279 horas después del saque: los precios parecen de antes del partido (1X2
+1,91/2,60/6,00 en un 5-0) pero la hora real de captura no se conoce.
+
+| Mercado (opción más probable) | Partidos | Margen | Acierto [IC95] | Anuncia | Cuota media | Con cuota ≥ 1,28 |
+|---|---|---|---|---|---|---|
+| Ambos equipos reciben tarjeta | 232 | 6,2 % | 80,2 % [75; 85] | 76,4 | 1,25 | n 87: 72,4 % (67,5) |
+| Ambos marcan 1.ª parte (No) | 275 | 6,5 % | 77,1 % [72; 82] | 76,7 | 1,23 | n 61: 70,5 % (71,2) |
+| Gol en los primeros 10 min (No) | 274 | 6,5 % | 78,1 % [73; 83] | 77,1 | 1,22 | n 44: 72,7 % (72,4) |
+| Equipo marca en la 2.ª / 1.ª parte | 275 | 7,6 % | 66,2 % / 61,5 % | 63,6 / 61,5 | 1,48 / 1,53 | 65,2 % / 61,3 % |
+| Resultado al descanso | 275 | 8,0 % | 42,9 % [37; 49] | 44,7 | 2,13 | — |
+| Tarjetas del partido (cualquier línea) | 232 | 8,0 % | 50,9 % [44; 57] | 53,8 | 1,72 | — |
+
+Todos cumplen o son conservadores, con muestra corta (±5 puntos). Lo que supera 75 % tiene cuota ≈ 1,22–1,25, es decir
+justo por debajo del mínimo de 1,28.
+
+### 13.4 Respaldo de API-Football (23-sep → 24-oct) y muestra conjunta con PropLine
+723 partidos de 23 ligas, 10 casas (Pinnacle en 1X2, córners, tarjetas y totales; bet365 en todo; 1xBet, Betano,
+William Hill en varios); 272 partidos son de las ligas del núcleo. Unido a PropLine T-60 (23-oct → 1-nov) hay **348
+partidos con la escalera completa de líneas**. Probabilidad = Pinnacle y, donde no cotiza, la mediana de las demás casas:
+- La mejor opción de cada partido con cuota real ≥ 1,28 acierta **75,6 %** [70,8; 79,8] y anuncia 73,4 %.
+- El 10 % mejor de cada día (n = 49): 81,6 % (anuncia 74,7); el 30 % mejor: 76,3 % (74,8).
+- Calibración de todas las opciones con cuota ≥ 1,28: tramo 60–70 % anuncia 65,0 y ocurre 67,2; tramo 70–80 % anuncia 72,3 y
+  ocurre 72,7.
+- Por mercado, mejor opción: totales 73,6 % (anuncia 71,5), hándicap 74,1 % (70,5), tarjetas 74,2 % (69,0), córners 67,5 % (67,7),
+  ambos marcan 57,1 % (58,4), doble oportunidad 63,5 % (59,1).
+
+Coincide con §12 (74,7 % al cierre con PropLine) y confirma que **la escalera de líneas alternativas es lo que permite
+≈ 75 % con cuota ≥ 1,28**; una sola línea por mercado se queda en ≈ 70–72 %.
+
+### 13.5 Lo que cambia en el diseño
+1. La probabilidad publicada sigue siendo la de la casa sin margen (Pinnacle o la mediana de las demás); sale confirmada en
+   10.000 partidos con cuotas de bet365 y 348 con la escalera completa.
+2. Mezcla del motor (peso 0,3–0,5) solo en hándicap, córners y mercados de la 1.ª parte, y solo tras validarla hacia
+   adelante. En 1X2, descanso y goles totales el peso es 0.
+3. Los dos mercados «imposibles» eran medibles: córners en vivo (sin ventaja; ≈ 53 %) y carrera de córners (65–70 % el lado
+   más probable; falta su cuota).
+4. Falta cuota real para: descanso/final, primer equipo en marcar, goleadores, mitad con más goles, pases y faltas de
+   jugador, tarjetas asiáticas, carrera de córners. Las cubre SharpAPI (plan gratis: solo DraftKings y FanDuel, de hoy en
+   adelante) o una captura propia con la API de bet365.
+5. **Nada de esto está cargado en la base**: `odds_snapshots` no admite borrar ni modificar, así que cargar BetsAPI
+   (≈ 12 millones de lecturas) o el respaldo de API-Football exige tu visto bueno y un diseño previo (qué ventana y qué casas).
