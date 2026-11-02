@@ -3133,3 +3133,9 @@ Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adap
 - [ ] Verificar esta noche (≈ 02:00-04:30 UTC) el primer box score y jugada a jugada reales en `nba_datos` y el gasto de créditos del día.
 - [ ] Respaldo de `stats.nba.com` por ZenRows (D6) si Scrapfly se agota; no implementado.
 - [ ] S1b-B cuotas (archivo PropLine) y S1b-C backfill de `.local/normalized`.
+
+### NBA — rediseño completo, Sprint 1b-B: cuotas (2026-11-02)
+- [x] Cuotas de PropLine (Pinnacle, DraftKings, FanDuel, BetMGM) a `nba.cuota` cada hora desde el archivo compartido, solo cambios, fase cierre a ≤ 60 min. 136 pruebas v2.
+- [ ] Cierres de The Odds API / SharpAPI para los partidos que PropLine no cubra (con tope de créditos).
+- [ ] Recuperar el archivo histórico de PropLine desde el 23-oct (`NBA_PROPLINE_DESDE=0` con lotes) y su efecto en el volumen.
+- [ ] Decidir si se cargan los «milestone» (hoy excluidos) y mercados de periodo (solo q1 en milestone aparece en el archivo).

@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-02 21:15 UTC · NBA: cuotas de PropLine hacia `nba.cuota` (imagen `nba-captura:9e9dda0`) · cron del usuario `qf`, rama `nba/rediseno-s0`
+- Colector `propline`: lee el archivo compartido de PropLine (volumen `quantfut_artifacts`, carpeta `propline_shared`) montado **en solo lectura**; no hace peticiones al proveedor ni usa créditos. Verifica el hash de cada objeto contra su recibo y carga los recibos NBA con estado 200 desde el último procesado (la primera pasada empezó por el último slot).
+- Cron nuevo (respaldo previo en `~/nba-isolated/nba-captura/crontab.before-cuotas-20261102`): `20 * * * *` (el archivo se escribe a :07). Se cargan 4 casas (Pinnacle, DraftKings, FanDuel, BetMGM) y los mercados ganador, hándicap, total, total de equipo, puntos, rebotes, asistencias, triples, robos, tapones, combinados, doble/triple-doble y primer anotador, líneas principales y alternativas (los «milestone» quedan fuera). Solo se guarda una fila cuando cambia el precio o la línea; `fase = cierre` si faltan ≤ 60 min para el salto. Juegos en vivo o a más de 48 h se ignoran.
+- Primera pasada: 7 recibos, 19.512 cuotas en 7 s, 15 partidos. Márgenes implícitos de Pinnacle (principales, 2 lados): ganador 2,9 %, hándicap 2,6 %, total 3,1 %, total de equipo 3,8 %, puntos y asistencias de jugador ≈ 7,0 %, en línea con lo medido en la literatura.
+- Jugadores: ahora hay 470 canónicos, 12 marcados ambiguos (mismo nombre en distintos ids), 331 unidos entre dos o más fuentes; el id `nba:NNNN` de PropLine es el mismo `personId` de cdn.nba.com.
+- Sin tocar: archivo de PropLine (lectura), contenedores previos, base de fútbol.
+- **Vuelta atrás:** `crontab ~/nba-isolated/nba-captura/crontab.before-cuotas-20261102`; las cuotas cargadas son solo-anexar.
+
 ### 2026-11-02 20:50 UTC · NBA: parte oficial de lesiones (PDF) y final del partido (cdn.nba.com) hacia `nba_datos` (imagen `nba-captura:3b2335c`) · cron del usuario `qf`, rama `nba/rediseno-s0`
 - Migración `0006_metricas_parte_oficial_y_final` aplicada con el ejecutor (3 métricas: `motivo_disponibilidad`, `reporte_no_enviado`, `jugo`). Imagen nueva con `pdfplumber==0.11.9`; `imagen_actual` apunta a `3b2335c`.
 - Cron nuevo (2 líneas, respaldo previo en `~/nba-isolated/nba-captura/crontab.before-s1b-20261102`): `*/15` `parte` (PDF oficial, directo y gratis desde el VPS; el CDN responde 403 mientras el PDF de esa hora no existe) y `*/15` `nba` (final del partido por Scrapfly con ASP, ≈1 crédito por archivo, **tope 25 créditos por día UTC** en `NBA_SCRAPFLY_TOPE_DIARIO`; como mucho 2 intentos por archivo; marcador del día una vez desde las 10:00 ET; box score de cada final 10 min después de que ESPN lo dé por final; jugada a jugada con lo que quede de presupuesto). `SCRAPFLY_API_KEY` se copió de la configuración del scraper del VPS a `captura.env` (modo 600).

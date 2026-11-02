@@ -6869,3 +6869,12 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: el presupuesto de Scrapfly se mide por día UTC con tope 25, y un archivo se reintenta como mucho dos veces (en la prueba real 14 de 30 peticiones a cdn fallaron y se cobraron).
 - Hallazgo: el CDN de los PDF responde 403 (no 404) cuando el PDF de esa hora aún no existe; desde el VPS responde igual que desde el PC, así que no hace falta proxy.
 - Error mío: probé la identidad con fixtures donde el PDF no existía y no vi el choque entre ids sintético y real hasta el despliegue; quedaron 15 canónicos duplicados inertes (la evidencia no se borra).
+
+## 2026-11-02 — Cuotas de PropLine (Sprint 1b-B)
+
+- Decisión: el contrato de una línea principal NO lleva el punto (la línea se mueve y es un valor); el de una alternativa SÍ (cada punto es otro contrato). Así `cuota_cierre` da la línea principal al cierre.
+- Decisión: solo se guarda una cuota cuando cambia el precio o la línea (compara contra el último valor de la misma fase), pero la primera de cada fase se guarda siempre; así el primer precio dentro de la última hora (el cierre) existe aunque no se haya movido.
+- Decisión: casas = Pinnacle (referencia afilada), DraftKings, FanDuel y BetMGM; los «milestone» se omiten porque derivan de las alternativas y multiplican las filas.
+- Hallazgo: en PropLine los totales de equipo vienen como mercado `totals` con el campo `team`; se guardan como `team_totals` con el equipo como entidad.
+- Hallazgo: el id de jugador de PropLine (`nba:NNNN`) coincide con el `personId` de cdn.nba.com, así que las cuotas se unen a box scores sin cruzar nombres.
+- Verificación: márgenes de Pinnacle 2,6-3,8 % en mercados de equipo y ≈ 7 % en props, coherentes con la literatura (fichas 21-23).
