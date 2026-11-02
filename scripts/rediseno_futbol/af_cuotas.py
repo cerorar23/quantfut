@@ -22,7 +22,7 @@ import pandas as pd
 
 from qf.eval.rediseno_acierto import calibracion_alta, seleccion_diaria, wilson
 
-CUOTA_MIN = 1.28
+CUOTA_MIN = 1.40  # decisión del titular (2-nov-2026); --cuota-min la cambia
 MERCADOS = ["h2h", "double_chance", "spreads", "totals", "btts", "team_totals_home", "team_totals_away", "corners",
             "corners_home", "corners_away", "cards"]
 
@@ -34,12 +34,43 @@ def cargar_cuotas_reales():
     return m
 
 
+def construir_opciones(filas: pd.DataFrame, partidos: pd.DataFrame, cr, minimo: int) -> pd.DataFrame:
+    """
+    Opciones de cada partido con la mejor cuota entre casas, su resultado y la probabilidad sin margen de la casa
+    (Pinnacle y, donde no cotiza, la mediana de las demás). `filas`: match_id, bookmaker, market, selection, line, price,
+    mins_to_kickoff; se toma, por opción y casa, el último precio con al menos `minimo` minutos de antelación.
+    """
+    reales = partidos.set_index("match_id")
+    af = filas
+    s = af[af["mins_to_kickoff"] >= minimo].sort_values("mins_to_kickoff")
+    s = s.groupby(["match_id", "bookmaker", "market", "selection", "line"], dropna=False, as_index=False).head(1)
+    sm = cr.sin_margen(s)
+    pin = sm[sm["casa"].eq("pinnacle")].set_index(["match_id", "mercado", "seleccion", "linea"])["q"]
+    resto = sm[~sm["casa"].eq("pinnacle")].groupby(["match_id", "mercado", "seleccion", "linea"])["q"].median()
+    s = s.assign(linea=s["line"].fillna(-999))
+    o = s.groupby(["match_id", "market", "selection", "linea"], as_index=False).agg(cuota=("price", "max"))
+    res, pn, ot = [], [], []
+    for mid, mk, sel, ln, cu in o.itertuples(index=False):
+        res.append(cr.resultado(mk, sel, ln, reales.loc[mid]))
+        k = (mid, mk, sel, ln)
+        pn.append(pin.get(k, np.nan)); ot.append(resto.get(k, np.nan))
+    o = o.rename(columns={"market": "mercado", "selection": "seleccion"}).assign(resultado=res, pinnacle=pn, otras_casas=ot)
+    o["mercado_p"] = o["pinnacle"].fillna(o["otras_casas"])
+    o = o[o["resultado"].isin(["gana", "pierde"])]
+    o["acierto"] = (o["resultado"] == "gana").astype(float)
+    o = o.merge(partidos[["match_id", "kickoff_utc"]], on="match_id")
+    return o
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
     ap.add_argument("--raiz", default=".local/betsapi_futbol")
+    ap.add_argument("--cuota-min", type=float, default=1.40, help="cuota mínima de las opciones publicables")
     ap.add_argument("--datos", default=".local/rediseno_20261101b")
     a = ap.parse_args()
+    global CUOTA_MIN
+    CUOTA_MIN = a.cuota_min
     raiz, d = Path(a.raiz), Path(a.datos)
     cr = cargar_cuotas_reales()
     partidos = pd.read_csv(d / "partidos.csv.gz", parse_dates=["kickoff_utc"])
@@ -52,23 +83,7 @@ def main() -> None:
           f"{af['bookmaker'].nunique()} casas")
     salida = []
     for nombre, minimo in (("T-60", 60), ("último", 0)):
-        s = af[af["mins_to_kickoff"] >= minimo].sort_values("mins_to_kickoff")
-        s = s.groupby(["match_id", "bookmaker", "market", "selection", "line"], dropna=False, as_index=False).head(1)
-        sm = cr.sin_margen(s)
-        pin = sm[sm["casa"].eq("pinnacle")].set_index(["match_id", "mercado", "seleccion", "linea"])["q"]
-        resto = sm[~sm["casa"].eq("pinnacle")].groupby(["match_id", "mercado", "seleccion", "linea"])["q"].median()
-        s = s.assign(linea=s["line"].fillna(-999))
-        o = s.groupby(["match_id", "market", "selection", "linea"], as_index=False).agg(cuota=("price", "max"))
-        res, pn, ot = [], [], []
-        for mid, mk, sel, ln, cu in o.itertuples(index=False):
-            res.append(cr.resultado(mk, sel, ln, reales.loc[mid]))
-            k = (mid, mk, sel, ln)
-            pn.append(pin.get(k, np.nan)); ot.append(resto.get(k, np.nan))
-        o = o.rename(columns={"market": "mercado", "selection": "seleccion"}).assign(resultado=res, pinnacle=pn, otras_casas=ot)
-        o["mercado_p"] = o["pinnacle"].fillna(o["otras_casas"])
-        o = o[o["resultado"].isin(["gana", "pierde"])]
-        o["acierto"] = (o["resultado"] == "gana").astype(float)
-        o = o.merge(partidos[["match_id", "kickoff_utc"]], on="match_id")
+        o = construir_opciones(af, partidos, cr, minimo)
         o["dia"] = o["kickoff_utc"].dt.strftime("%Y-%m-%d")
         o["fuente_cuotas"] = "api_football"
         o.to_csv(raiz / f"af_opciones_{nombre.replace('-', '').replace('ú', 'u')}.csv.gz", index=False)
