@@ -86,6 +86,14 @@ def test_cuota_margen_dos_lados(mundo):
     assert fila[0] == 2 and abs(fila[1] - (2 / Decimal("1.91") - 1)) < Decimal("1e-9")
 
 
+def test_cuota_margen_empareja_los_lados_de_un_handicap_con_lineas_opuestas(mundo):
+    db, p, _ = mundo
+    nueva_cuota(db, p, Decimal("1.91"), "local", mercado="spreads", linea=Decimal("-4.5"), contrato="s1")
+    nueva_cuota(db, p, Decimal("1.91"), "visit", mercado="spreads", linea=Decimal("4.5"), contrato="s1")
+    fila = db.execute("SELECT n_lados, margen, linea_abs FROM nba.cuota_margen WHERE mercado = 'spreads'").fetchone()
+    assert fila[0] == 2 and abs(fila[1] - (2 / Decimal("1.91") - 1)) < Decimal("1e-9") and fila[2] == Decimal("4.5")
+
+
 def con_rol(db, rol):
     db.execute(psycopg.sql.SQL("SET ROLE {}").format(psycopg.sql.Identifier(rol)))
 
