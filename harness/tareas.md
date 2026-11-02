@@ -33,6 +33,8 @@ Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin f
 - [x] Destacado de la web con cuota mínima 1,40 y sin tope (titular, 2-nov): PR #233 desplegado en la API `quantfut-api-destacado-sin-tope:a7e1b28` (DEPLOYS.md).
 - [x] El frontend de `main` vuelve a ser el de producción (PR #235, 2-nov): se fusionó `web/destacado-en-tarjeta`; los archivos de texto del frontend coinciden por hash con el contenedor.
 - [x] Tarjeta de fútbol con el destacado de todos los mercados y Acertó/Falló en la fecha (PR #235, desplegado).
+- [x] Cuota de la mejor casa (con su nombre) en la ficha web y para elegir el destacado, en vez de 1 ÷ probabilidad (`partido_mercados.cuotas_casas`; historial con la cuota de justo antes del saque; medido 2-nov: 209 de 213 destacados con casa, 70,3 % de acierto).
+- [ ] Ver a ojo, tras el lote de las 09:00 UTC, la ficha de un partido próximo con el nombre de la casa en la tabla y en el destacado (el 2-nov de madrugada ningún próximo tenía modelo).
 - [ ] Ver a ojo la tarjeta de fútbol con pick solo de pago cuando haya picks de fútbol próximos publicados.
 - [x] Partidos de fútbol terminados como tarjeta en Pronósticos → Finalizados (PR #237, desplegado: 43 tarjetas el 1-nov, 31 acertadas y 12 falladas).
 - [ ] Medición semanal: `python scripts/rediseno_futbol/remedir_semana.py` (solo lectura del servidor) hasta ≥ 500 partidos a T-60 (hoy 286).
