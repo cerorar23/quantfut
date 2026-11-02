@@ -35,6 +35,7 @@ Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin f
 - [x] Tarjeta de fútbol con el destacado de todos los mercados y Acertó/Falló en la fecha (PR #235, desplegado).
 - [ ] Ver a ojo la tarjeta de fútbol con pick solo de pago cuando haya picks de fútbol próximos publicados.
 - [x] Partidos de fútbol terminados como tarjeta en Pronósticos → Finalizados (PR #237, desplegado: 43 tarjetas el 1-nov, 31 acertadas y 12 falladas).
+- [x] Escudos en esas tarjetas (PR #239, desplegado): `destacados_resueltos` trae `local_escudo` y `visitante_escudo` (218 de 218 filas).
 - [ ] Medición semanal: `python scripts/rediseno_futbol/remedir_semana.py` (solo lectura del servidor) hasta ≥ 500 partidos a T-60 (hoy 286).
 - [ ] C4 conteos de equipo (tiros, a puerta, faltas, fueras de juego): sin hacer, ninguna lista del titular los pide.
 

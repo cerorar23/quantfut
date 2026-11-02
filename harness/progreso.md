@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 2-nov-2026 · Los escudos de una tarjeta terminada los manda el servidor, no la agenda
+Al ver las tarjetas de fútbol terminadas (PR #237) salían las iniciales en vez del escudo. **Causa:** los partidos terminados no están en la agenda del día, que es de donde las tarjetas próximas toman el escudo. **Decisión:** que `destacados_resueltos` devuelva el escudo de cada equipo con la misma función que usa la agenda (`fichas.escudo`) en vez de buscar la ficha de cada partido desde el navegador (una petición por tarjeta) o de derivar la URL en el frontend (duplicaría la regla de dónde está cada imagen). Sin escudo descargado queda `None` y se mantienen las iniciales: no se inventa ninguna imagen.
+
 ## 2-nov-2026 · Los partidos de fútbol terminados salen como tarjeta: el motivo era la fuente de la lista, no los datos
 El titular preguntó por qué no aparecían ni los terminados de hoy. **Causa:** la lista de tarjetas de fútbol solo salía de los picks «próximos» (y de pago) de la portada; el servidor manda como próximos únicamente los que no han empezado, así que al empezar el partido su tarjeta desaparecía y quedaba solo en el panel de resultados (NBA y tenis salen de otra fuente que sí incluye terminados). **Decisión:** construir las tarjetas terminadas desde el destacado resuelto de cada partido (`/markets/destacados`, ya cargado para el historial) en vez de pedir la ficha de cada uno o ampliar el payload de la portada; el destacado trae marcador y resultado, y no suma a «Publicados» porque no es un pick sellado. Probado con la respuesta real de producción antes de desplegar.
 
