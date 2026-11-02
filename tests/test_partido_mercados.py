@@ -317,8 +317,10 @@ def test_destacados_resueltos_usa_el_analisis_sin_picks_y_solo_cuenta_los_resuel
     from datetime import date, datetime, timezone
     kick = datetime(2026, 10, 26, 18, tzinfo=timezone.utc)
     base = {'league_id': 'it.serie_a', 'kickoff_utc': kick, 'home_goals': 2, 'away_goals': 1}
-    partidos = [dict(base, match_id=m, local='A', visitante='B') for m in 'abcd']
+    partidos = [dict(base, match_id=m, local='A', visitante='B', home_team_id=7, away_team_id=9) for m in 'abcd']
     vistos = {}
+    from qf.api import fichas
+    monkeypatch.setattr(fichas, 'escudo', lambda tid: f'/web/escudos/{tid}.png' if tid == 7 else None)
 
     def construir(match_id, local, visitante, abiertas, plus, web=False):
         vistos[match_id] = (abiertas, plus, web)
@@ -334,6 +336,7 @@ def test_destacados_resueltos_usa_el_analisis_sin_picks_y_solo_cuenta_los_resuel
     items = pm.destacados_resueltos(date(2026, 10, 26))
     assert [i['match_id'] for i in items] == ['a']
     assert items[0]['outcome'] == 'win' and items[0]['prob'] == 0.6956 and items[0]['ref_price'] is None
+    assert items[0]['local_escudo'] == '/web/escudos/7.png' and items[0]['visitante_escudo'] is None   # sin escudo descargado: None, no inventado
     assert all(v == ({}, False, True) for v in vistos.values())
     assert pedido['params'][0] == datetime(2026, 10, 25, tzinfo=timezone.utc)
 

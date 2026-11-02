@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=finalizados-futbol-20261102';
-import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=finalizados-futbol-20261102';
-import { createSportWindow } from './sports-window.js?v=finalizados-futbol-20261102';
+import { createRealViews } from './real-views.js?v=escudos-terminados-20261102';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=escudos-terminados-20261102';
+import { createSportWindow } from './sports-window.js?v=escudos-terminados-20261102';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
