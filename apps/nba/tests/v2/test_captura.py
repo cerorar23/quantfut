@@ -75,3 +75,13 @@ def test_ejecutar_parte_oficial_con_pdf_real(base_migrada_dsn, tmp_path):
 def test_nba_sin_clave_de_scrapfly_devuelve_2(base_migrada_dsn, tmp_path):
     env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path)}
     assert captura.principal(["nba"], env) == 2
+
+
+def test_ejecutar_propline_desde_un_archivo(base_migrada_dsn, tmp_path):
+    from test_propline import LOTES, archivo
+    raiz = archivo(tmp_path, LOTES)
+    env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path / "datos"), "NBA_PROPLINE_DIR": str(raiz),
+           "NBA_PROPLINE_DESDE": "0"}
+    r = captura.ejecutar("propline", env, AHORA)
+    assert r["ok"] and r["lotes"] == 3 and contar(base_migrada_dsn, "cuota") > 0
+    assert captura.principal(["propline"], {"NBA_DB_DSN": base_migrada_dsn}) == 2          # falta NBA_PROPLINE_DIR
