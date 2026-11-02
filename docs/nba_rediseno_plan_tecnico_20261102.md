@@ -103,6 +103,8 @@ pronostico(pronostico_id BIGINT IDENTITY PK, partido_id BIGINT NOT NULL REFERENC
 - `nba.cuota_cierre`: última `cuota` con `fase='cierre'` por contrato; `nba.cuota_margen`: suma de probabilidades implícitas − 1 por grupo (no se guarda el margen: regla de derivados).
 - **Reconciliación de la ficha 67:** el método de quitado de margen NO se guarda en `cuota`; se registra en `nba.pronostico.version_modelo` y en los informes.
 
+**Refinamientos hechos en el Sprint 0:** `nba.metrica.resolucion` (`prioridad`/`por_fuente`) decide cómo `dato_a_las` resuelve fuentes; `nivel` admite `equipo_jugador`; la clave única de `nba.dato` incluye `recibido_en` (versiones horarias sin colisión); `nba.migracion` es infraestructura del ejecutor; las tablas de evidencia rechazan cambios con disparadores por sentencia.
+
 **Disponibilidad y árbitros** no tienen tabla propia: son métricas de `nba.dato` con `fase='pre'` (estado oficial como `etiqueta` + probabilidad de jugar en `valor`; `rotowire`/`espn`/`nba_oficial` como fuentes distintas; árbitro asignado con `entidad_id` del árbitro). Cada versión del parte queda como fila nueva (ficha 61).
 
 **Conflictos:** el cargador compara la fila nueva con la vigente de otra fuente; si difiere más que la tolerancia de la métrica (columna `tolerancia` en el catálogo de adaptadores, no en la tabla), marca `conflicto = true` en ambas inserciones. Nunca se sobrescribe. Rebotes de equipo = suma de jugadores (`reboundsPersonal`), como en la Fase 1.
