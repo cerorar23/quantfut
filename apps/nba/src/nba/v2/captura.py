@@ -17,6 +17,10 @@ from .fuentes import espn, rotowire
 LOTE_ESPN = 200
 
 
+class FaltaVariable(Exception):
+    """Variable de entorno obligatoria ausente."""
+
+
 def _guardar_estado(ruta: Path, seq: int) -> None:
     """El estado avanza solo después de confirmar el lote; escritura atómica."""
     temporal = ruta.with_suffix(".tmp")
@@ -31,7 +35,7 @@ def _directo(url: str) -> tuple[int, bytes]:
 def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=None) -> dict:
     dsn = entorno.get("NBA_DB_DSN")
     if not dsn:
-        raise KeyError("NBA_DB_DSN")
+        raise FaltaVariable("NBA_DB_DSN")
     raiz = Path(entorno.get("NBA_CAPTURA_DIR", "/datos"))
     raiz.mkdir(parents=True, exist_ok=True)
     with migrar.conectar(dsn) as db:
@@ -43,6 +47,8 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
                 obtener = rotowire.con_respaldo(_directo, pago, lambda: rotowire.gastado_hoy(db, ahora) < tope)
             resumen = rotowire.capturar(db, obtener, raiz / "originales", ahora)
         elif fuente == "espn":
+            if "NBA_RUN57_DIR" not in entorno:
+                raise FaltaVariable("NBA_RUN57_DIR")
             carpeta = Path(entorno["NBA_RUN57_DIR"])
             estado = raiz / "estado_espn.json"
             desde = json.loads(estado.read_text())["seq"] if estado.exists() else 0
@@ -71,7 +77,7 @@ def principal(argv: list[str] | None = None, entorno: Mapping[str, str] | None =
         return 2
     try:
         resumen = ejecutar(argv[0], entorno, datetime.now(UTC))
-    except KeyError as e:
+    except FaltaVariable as e:
         print(f"falta la variable {e}", file=sys.stderr)
         return 2
     except Exception as e:  # el cron registra el fallo; no se reintenta aquí

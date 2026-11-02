@@ -116,3 +116,10 @@ def test_lesiones_sin_partido_proximo_no_escriben_datos(base_migrada, tmp_path):
     _, r = espn.cargar_ledger(base_migrada, ruta, blobs, desde_seq=0)
     assert r["lesiones"] == 1
     assert base_migrada.execute("SELECT count(*) FROM nba.dato").fetchone()[0] == 0
+
+
+def test_partido_con_rival_que_no_es_de_la_nba_se_omite():
+    datos = json.loads(SCOREBOARD)
+    datos["events"][0]["competitions"][0]["competitors"][1]["team"].update(id="9999", abbreviation="LON")
+    ids = [p.id for p in espn.parsear_scoreboard(json.dumps(datos))]
+    assert "401909907" not in ids and len(ids) == 2

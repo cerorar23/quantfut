@@ -49,7 +49,10 @@ def parsear_scoreboard(texto: str) -> list[PartidoESPN]:
     for e in json.loads(texto)["events"]:
         c = e["competitions"][0]
         lado = {x["homeAway"]: x for x in c["competitors"]}
-        local, visitante = _tricode(lado["home"]["team"]), _tricode(lado["away"]["team"])
+        try:
+            local, visitante = _tricode(lado["home"]["team"]), _tricode(lado["away"]["team"])
+        except KeyError:  # pretemporada: rivales que no son de la NBA (p. ej. equipos europeos o australianos)
+            continue
         inicio = datetime.fromisoformat(e["date"].replace("Z", "+00:00"))
         nombre = c["status"]["type"]["name"]
         estado = ESTADOS.get(nombre, nombre.removeprefix("STATUS_").lower())
