@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-02 19:45 UTC · NBA: base propia `nba_datos` (contenedor `nba-db`, vacía) · SOLO host y contenedor nuevo, rama `nba/rediseno-s0` (`e29e746`)
+- Contenedor `nba-db` (`postgres:16-alpine`, sin puerto publicado, 512 MiB, `restart: unless-stopped`) en el proyecto Compose `nba-db`, red `nba-red` y volumen `nba_db_datos`; base `nba_datos`, usuario administrador `nba_admin`. Archivos en `~/nba-isolated/nba-db/` (`apps/nba/{ops/nba-db,db,src}` con los mismos hashes que el repositorio; `.env` y `migrar.env` con la contraseña, modo 600, solo en el servidor).
+- Migraciones 0001-0005 aplicadas con `python -m nba.v2.migrar` desde un contenedor temporal `python:3.12-slim` en `nba-red`: 7 tablas `nba.*`, 9 fuentes, 34 métricas, `nba.dato_a_las`, roles de grupo `nba_escritor` y `nba_lector`. Verificado en el servidor: `DELETE`/`TRUNCATE ... CASCADE` rechazados por los disparadores, `dato_a_las(now())` devuelve 0 filas, 0 puertos publicados.
+- Sin tocar: los 8 contenedores que ya corrían conservan nombre, id e imagen (api, worker, db, cache, caddy, grafana, dashboard NBA, capture, propline). No se leyó ni se escribió la base de fútbol.
+- Pendiente: usuarios de login para colectores y API (S1), respaldo diario de `nba_datos` fuera del VPS (la base está vacía; añadirlo antes de cargar datos).
+- **Vuelta atrás:** `cd ~/nba-isolated/nba-db/apps/nba/ops/nba-db && docker compose --env-file ~/nba-isolated/nba-db/.env -p nba-db -f compose.yml down` (conserva el volumen); para borrar la base añadir `-v`. No hay nada más que revertir.
+
 ### 2026-10-21 · AdMob (ID de editor y bloque) y estado de Meta · SOLO configuración en la base, sin código ni reinicios
 - `reward_settings` (vía `qf.api.anuncios.save_config`, auditado como `ssh:claude-titular`): `admob_publisher_id = pub-3902371555866850` y
   `ad_unit_android = ca-app-pub-3902371555866850/4169479093` (bloque Recompensado, SSV con `https://pronosticosdeportivos.pro/rewards/callback/admob`).
