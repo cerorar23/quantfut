@@ -137,11 +137,12 @@ def cargar_lesiones(db, texto: str, recibido_en: datetime, captura_id: int) -> i
     return carga.guardar_datos(db, filas, solo_cambios=True)
 
 
-def cargar_ledger(db, ruta_sqlite: Path, raiz_blobs: Path, desde_seq: int) -> tuple[int, dict]:
-    """Procesa los recibos de `run57` con `seq > desde_seq`; devuelve (último seq, resumen)."""
+def cargar_ledger(db, ruta_sqlite: Path, raiz_blobs: Path, desde_seq: int, limite: int | None = None) -> tuple[int, dict]:
+    """Procesa los recibos de `run57` con `seq > desde_seq` (como mucho `limite`); devuelve (último seq, resumen)."""
     con = sqlite3.connect(f"{ruta_sqlite.resolve().as_uri()}?mode=ro", uri=True)
     try:
-        eventos = con.execute("SELECT seq, payload FROM events WHERE seq > ? ORDER BY seq", (desde_seq,)).fetchall()
+        eventos = con.execute("SELECT seq, payload FROM events WHERE seq > ? ORDER BY seq LIMIT ?",
+                              (desde_seq, limite if limite is not None else -1)).fetchall()
     finally:
         con.close()
     resumen = {"calendario": 0, "lesiones": 0, "omitidos": 0}

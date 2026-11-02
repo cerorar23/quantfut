@@ -47,3 +47,16 @@ def test_principal_rechaza_la_base_de_futbol(tmp_path, capsys):
     env = {"NBA_DB_DSN": "dbname=quantfut", "NBA_CAPTURA_DIR": str(tmp_path)}
     assert captura.principal(["rotowire"], env) == 1
     assert "ValueError" in capsys.readouterr().out
+
+
+def test_espn_por_lotes_da_lo_mismo_que_de_golpe(base_nueva, monkeypatch, tmp_path):
+    from nba.v2 import migrar
+    migrar.aplicar(base_nueva)
+    (tmp_path / "run57").mkdir()
+    ruta, _ = ledger(tmp_path / "run57", [(SB, 200, SCOREBOARD, T), (INJ, 200, LESIONES, T), (INJ, 200, LESIONES, T)])
+    env = {"NBA_DB_DSN": base_nueva, "NBA_CAPTURA_DIR": str(tmp_path / "datos"), "NBA_RUN57_DIR": str(ruta.parent)}
+    monkeypatch.setattr(captura, "LOTE_ESPN", 1)
+    r = captura.ejecutar("espn", env, AHORA)
+    assert r["ultimo_seq"] == 3 and r["calendario"] == 1 and r["lesiones"] == 2
+    assert json.loads((tmp_path / "datos" / "estado_espn.json").read_text()) == {"seq": 3}
+    assert contar(base_nueva, "dato") > 0

@@ -14,6 +14,16 @@ from . import migrar
 from .fuentes import espn, rotowire
 
 
+LOTE_ESPN = 200
+
+
+def _guardar_estado(ruta: Path, seq: int) -> None:
+    """El estado avanza solo después de confirmar el lote; escritura atómica."""
+    temporal = ruta.with_suffix(".tmp")
+    temporal.write_text(json.dumps({"seq": seq}))
+    temporal.replace(ruta)
+
+
 def _directo(url: str) -> tuple[int, bytes]:
     return rotowire.obtener_http(url)
 
@@ -36,15 +46,20 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
             carpeta = Path(entorno["NBA_RUN57_DIR"])
             estado = raiz / "estado_espn.json"
             desde = json.loads(estado.read_text())["seq"] if estado.exists() else 0
-            ultimo, resumen = espn.cargar_ledger(db, carpeta / "receipts.sqlite", carpeta / "blobs", desde)
-            resumen = {"ok": True, "ultimo_seq": ultimo, **resumen}
+            resumen = {"ok": True, "ultimo_seq": desde, "calendario": 0, "lesiones": 0, "omitidos": 0}
+            while True:  # por lotes: cada uno se confirma y avanza el estado, así un fallo no pierde todo el avance
+                ultimo, parcial = espn.cargar_ledger(db, carpeta / "receipts.sqlite", carpeta / "blobs", resumen["ultimo_seq"],
+                                                     limite=LOTE_ESPN)
+                db.commit()
+                _guardar_estado(estado, ultimo)
+                for clave, valor in parcial.items():
+                    resumen[clave] += valor
+                if ultimo == resumen["ultimo_seq"]:
+                    break
+                resumen["ultimo_seq"] = ultimo
         else:
             raise ValueError(f"fuente desconocida: {fuente}")
         db.commit()
-    if fuente == "espn":  # el estado avanza solo después de confirmar la transacción
-        temporal = estado.with_suffix(".tmp")
-        temporal.write_text(json.dumps({"seq": resumen["ultimo_seq"]}))
-        temporal.replace(estado)
     return resumen
 
 
