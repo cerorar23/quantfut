@@ -1,5 +1,10 @@
 # Backlog — QuantFut
 
+## 2-nov-2026 · Captura de SharpAPI (plan Free) desplegada en el servidor
+- [x] `scripts/sharpapi_captura.py` + cron cada 5 min: cuotas prepartido de DraftKings y FanDuel de las 9 ligas a 24 h, 6 h, 2 h, 60 min y 15 min del saque, como archivos en `~/sharpapi_data` (docs/sharpapi_captura_20261102.md, DEPLOYS.md).
+- [ ] Cuando haya semanas de capturas: cargarlas en `futbol.cuota_historica` (`fuente = 'sharpapi'`, hace falta ampliar el CHECK de db/101) y medir con ellas descanso/final, marcador exacto, primer equipo en marcar, goleadores y tiros de jugador.
+- [ ] Antes de mostrar cuotas de SharpAPI en la web o la app: «Data provided by SharpAPI» (obligatorio desde el 1-dic-2026) y revisar la cláusula 5.3 para el plan gratuito.
+
 ## 1-nov-2026 · Rediseño de los motores de fútbol desde cero con `futbol.dato` (rama `futbol/rediseno-f2`, nada desplegado)
 Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin fiarse de mediciones anteriores** (las del 31-oct en Serie A se rehacen, no se citan como resultado). Plan de referencia: `docs/serie_a_sofascore_rediseno_20261031.md` §0 (en la rama `futbol/dato-unico`). Solo lectura del servidor; todo se calcula en local; nada se activa.
 - Datos: una exportación de solo lectura por ejecución (`scripts/rediseno_futbol/exportar.sh`) con `matches` de las 8 ligas del núcleo (Serie A, Bundesliga, Ligue 1, Eredivisie, Primeira, Brasileirão, Premier, LaLiga) desde 14/15, agregados por partido de `futbol.dato` (tiros, xG sin penaltis, xGOT, estado del partido, faltas, mitades, árbitro) y cierres 1X2/totales de `odds_snapshots`. Liga MX aparte (sin xG por tiro en 23/24–24/25).

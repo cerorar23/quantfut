@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-02 02:50 UTC · Captura de SharpAPI (plan Free) — script y cron en el host, rama `futbol/captura-sharpapi`
+- Autorizada por el titular en el chat («autorizo la captura»). Solo host: ninguna imagen ni contenedor cambia, no toca la base ni el pipeline de picks. Mismo patrón que `propline_captura.py` (script con biblioteca estándar en `~/`, cron del usuario `qf`, datos como archivos).
+- Archivos en el servidor: `~/sharpapi/sharpapi_captura.py` (= `scripts/sharpapi_captura.py` de la rama, sha256 `3a57d5ceb176…`), `~/sharpapi/.env` (solo `SHARPAPI_KEY`, modo 600) y `~/sharpapi_data/` (originales `AAAA-MM-DD/<evento>/<capturado>.jsonl.gz` y `estado.json`).
+- Cron (`crontab` de `qf`, copia anterior en `~/backups/crontab-antes-sharpapi-20261102.txt`): `*/5 * * * * flock -n ~/sharpapi/captura.lock … sharpapi_captura.py --env sharpapi/.env --out sharpapi_data >> ~/sharpapi/captura.log`, marcada `# sharpapi-captura`.
+- Qué hace: lista los partidos de las 9 ligas del núcleo que empiezan en las próximas 26 h con DraftKings o FanDuel y, a 24 h, 6 h, 2 h, 60 min y 15 min del saque, guarda TODAS sus cuotas prepartido de esas dos casas (≈ 1.500 filas y 58 mercados por captura; 11 peticiones; ≈ 16 KB). Plan Free: 12 peticiones/min (el script espera 5,5 s entre peticiones y para a las 150 por pasada), retraso de 60 s, sin histórico. Detalle y términos de uso en `docs/sharpapi_captura_20261102.md`.
+- Ensayado: pruebas (7), `--seco` local y en el servidor, y una captura real local de un partido antes de instalar el cron. Primera pasada en producción (02:50-02:54 UTC): 8 partidos capturados (momento 24 h), 54 peticiones en total y 160 KB en disco; la pasada siguiente (02:55) no repitió nada: 0 capturas, 2 peticiones.
+- Vuelta atrás: quitar la línea `# sharpapi-captura` del crontab (o restaurar la copia), `rm -r ~/sharpapi` y, si se quiere, `~/sharpapi_data`. La clave sigue en el `.env` local del repo principal.
+
 ### 2026-11-01 17:00 UTC · db/097, 098 y 099 y recarga de las 10 ligas — base de datos y scripts, rama `futbol/dato-unico`
 - Respaldo previo: `~/backups/futbol_pre_097_20261101.sql.gz` (133 MB, `gzip -t` correcto; copia local en
   `Documents/respaldos_quantfut_20261101`). Ensayo con `BEGIN … ROLLBACK` sobre los datos reales antes de aplicar.
