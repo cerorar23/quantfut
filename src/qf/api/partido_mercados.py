@@ -32,6 +32,8 @@ GRUPOS = ('RESULTADO', 'DOBLE OPORTUNIDAD', 'EMPATE NO ACCIÓN', 'GOLES', 'GOLES
 LINEAS_GOLES = (1.5, 2.5, 3.5, 4.5)
 LINEAS_EQUIPO = (0.5, 1.5)
 MARCADORES = 5
+# Opciones por debajo de esta probabilidad no se listan entre las complementarias (cuota > 33: ruido).
+PROB_MIN_OPCION = .03
 
 
 def nivel(prob: float) -> str:
@@ -120,6 +122,76 @@ def filas_goles(lam: float, mu: float, rho: float, local: str, visitante: str):
     marcadores = [{'marcador': r['score'], 'prob': round(r['prob'], 4)}
                   for r in pricing.market_correct_score(m, MARCADORES)]
     return filas, marcadores
+
+
+def filas_complementarias(lam: float, mu: float, rho: float, local: str, visitante: str,
+                          ya: set[str]) -> list[dict]:
+    """
+    Opciones de los mercados de goles que `filas_goles` NO lista: `filas_goles` enseña solo el lado más
+    probable de cada mercado, así que el otro lado (p. ej. «Menos de 1,5» cuando lo probable es «Más») y los
+    otros resultados del 1X2 no podían ser nunca el destacado. Solo la web (`construir(web=True)`) las añade:
+    la regla del destacado es «de TODOS los mercados del partido, el de mayor probabilidad con cuota de 1,40 en
+    adelante» (titular, 2-nov-2026). Córners, tarjetas y 1ª mitad siguen con sus líneas validadas (no se añade
+    ninguna sin prueba histórica). Se descartan las opciones por debajo de `PROB_MIN_OPCION` y las ya listadas.
+    """
+    m = pricing.score_matrix(lam, mu, rho)
+    nombre = {'home': local, 'away': visitante}
+    nuevas: list[dict] = []
+
+    def anadir(*args, **kw) -> None:
+        f = _fila(*args, **kw)
+        if f['prob'] >= PROB_MIN_OPCION and f['id'] not in ya:
+            ya.add(f['id'])
+            nuevas.append(f)
+
+    p1x2 = pricing.market_1x2(m)
+    txt = {'home': f'Gana {local}', 'draw': 'Empate', 'away': f'Gana {visitante}'}
+    for sel, p in p1x2.items():
+        anadir('RESULTADO', 'Ganador del partido', 'h2h', sel, None, txt[sel], p)
+
+    txt_dc = {'1X': f'{local} o empate', 'X2': f'{visitante} o empate', '12': f'{local} o {visitante} (sin empate)'}
+    for sel, p in pricing.market_double_chance(m).items():
+        anadir('DOBLE OPORTUNIDAD', 'Doble oportunidad', 'double_chance', sel, None, txt_dc[sel], p)
+
+    dnb = pricing.market_asian_handicap(m, 0.0)
+    for side in ('home', 'away'):
+        anadir('EMPATE NO ACCIÓN', 'Empate no acción', 'spreads', side, 0.0,
+               f'{nombre[side]} gana (empate devuelve)', dnb[side])
+
+    for ln in LINEAS_GOLES:
+        t = pricing.market_totals(m, ln)
+        for sel in ('over', 'under'):
+            anadir('GOLES', 'Goles totales', 'totals', sel, ln,
+                   f"{'Más' if sel == 'over' else 'Menos'} de {_fmt(ln)} goles", t[sel],
+                   nota=f'Goles esperados: {lam + mu:.2f}'.replace('.', ','))
+
+    for side in ('home', 'away'):
+        for ln in LINEAS_EQUIPO:
+            t = pricing.market_team_total(m, ln, side)
+            esp = lam if side == 'home' else mu
+            for sel in ('over', 'under'):
+                anadir('GOLES DE EQUIPO', f'Goles de {nombre[side]}', f'team_totals_{side}', sel, ln,
+                       f"{'Más' if sel == 'over' else 'Menos'} de {_fmt(ln)} goles", t[sel],
+                       nota=f'Goles esperados: {esp:.2f}'.replace('.', ','))
+
+    btts = pricing.market_btts(m)
+    for sel in ('yes', 'no'):
+        anadir('AMBOS MARCAN', 'Ambos marcan', 'btts', sel, None,
+               'Marcan los dos' if sel == 'yes' else 'No marcan los dos', btts[sel])
+
+    fav = 'home' if p1x2['home'] >= p1x2['away'] else 'away'
+    dog = 'away' if fav == 'home' else 'home'
+    for side, ln in ((fav, -1.0), (fav, -1.5), (dog, 1.0), (dog, 1.5)):
+        home_line = ln if side == 'home' else -ln
+        p = pricing.market_asian_handicap(m, home_line)[side]
+        anadir('HÁNDICAP', 'Hándicap asiático', 'spreads', side, ln,
+               f"{nombre[side]} {'+' if ln > 0 else ''}{_fmt(ln)}", p,
+               nota=f'xG: {local} {lam:.2f} · {visitante} {mu:.2f}'.replace('.', ','))
+
+    nil = {'home': float(m[1:, 0].sum()), 'away': float(m[0, 1:].sum())}
+    for side, p in nil.items():
+        anadir('ESPECIALES', 'Gana a cero', 'win_to_nil', side, None, f'{nombre[side]} gana sin recibir gol', p)
+    return nuevas
 
 
 def filas_primer_tiempo(lam: float, mu: float) -> list[dict]:
@@ -440,6 +512,7 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     corners, tarjetas = lambdas_estadisticas(match_id)
     filas += filas_estadisticas(corners, tarjetas)
     if web:
+        filas += filas_complementarias(*lam, local, visitante, {f['id'] for f in filas})
         filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus)
         partido = datos_partido(match_id)
         filas = con_resultados(filas, partido)
