@@ -25,7 +25,7 @@ def aplicar(dsn: str, directorio: Path | None = None) -> list[str]:
             db.execute("CREATE TABLE IF NOT EXISTS nba.migracion (version TEXT PRIMARY KEY, "
                        "sha256 TEXT NOT NULL, aplicada_en TIMESTAMPTZ NOT NULL DEFAULT now())")
         for archivo in archivos:
-            contenido = archivo.read_bytes()
+            contenido = archivo.read_bytes().replace(b"\r\n", b"\n")  # la huella no depende del checkout (CRLF/LF)
             huella = hashlib.sha256(contenido).hexdigest()
             with db.transaction():
                 db.execute("SELECT pg_advisory_xact_lock(%s)", (CANDADO,))

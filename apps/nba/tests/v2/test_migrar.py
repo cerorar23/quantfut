@@ -43,3 +43,10 @@ def test_aplicar_en_orden_y_atomico(base_nueva, tmp_path):
         assert db.execute("SELECT to_regclass('tb')").fetchone()[0] is None
         versiones = [r[0] for r in db.execute("SELECT version FROM nba.migracion ORDER BY version")]
     assert versiones == ["0001_a"]
+
+
+def test_huella_ignora_finales_de_linea(base_nueva, tmp_path):
+    d = carpeta(tmp_path, **{"0001_a": "CREATE TABLE ta(x int);\nSELECT 1;\n"})
+    migrar.aplicar(base_nueva, d)
+    (d / "0001_a.sql").write_bytes(b"CREATE TABLE ta(x int);\r\nSELECT 1;\r\n")
+    assert migrar.aplicar(base_nueva, d) == []
