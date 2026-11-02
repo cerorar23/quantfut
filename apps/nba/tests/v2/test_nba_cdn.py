@@ -174,3 +174,26 @@ def test_marcador_no_se_pide_antes_de_las_10_et(base_migrada, tmp_path):
     obtener, visitas = servidor({cdn.URL_MARCADOR: MARCADOR})
     cdn.capturar(db, obtener, tmp_path, datetime(2026, 11, 2, 12, 0, tzinfo=UTC))             # 07:00 ET
     assert visitas == []
+
+
+def test_un_alias_sintetico_del_parte_no_cuenta_como_id_de_la_nba(base_migrada, tmp_path):
+    db = base_migrada
+    loc, vis = identidad.equipo(db, "CLE"), identidad.equipo(db, "OKC")
+    identidad.partido(db, "espn", "401x", date(2026, 11, 2), loc, vis, "2026-27")
+    identidad.partido(db, "nba_oficial", "2026-11-02:OKC@CLE", date(2026, 11, 2), loc, vis, "2026-27")   # del PDF de lesiones
+    obtener, visitas = servidor({cdn.URL_MARCADOR: MARCADOR})
+    cdn.capturar(db, obtener, tmp_path, datetime(2026, 11, 2, 18, 0, tzinfo=UTC))
+    assert visitas == [cdn.URL_MARCADOR]                                                              # igual se pide el marcador
+    assert db.execute("SELECT count(*) FROM nba.entidad WHERE id_en_fuente = '0022600158'").fetchone()[0] == 1
+
+
+def test_un_final_solo_con_alias_sintetico_no_pide_ningun_box(base_migrada, tmp_path):
+    db = base_migrada
+    local, visitante = identidad.equipo(db, "DET"), identidad.equipo(db, "BOS")
+    espn = identidad.partido(db, "espn", "401", date(2026, 10, 20), local, visitante, "2026-27")
+    identidad.partido(db, "nba_oficial", "2026-10-20:BOS@DET", date(2026, 10, 20), local, visitante, "2026-27")
+    carga.guardar_datos(db, [DatoNuevo(partido_id=espn, entidad_id=espn, metrica="estado_partido", fase="final",
+                                       fuente="espn", recibido_en=T, etiqueta="final")])
+    obtener, visitas = servidor(CUERPOS)
+    cdn.capturar(db, obtener, tmp_path, T + timedelta(minutes=30))
+    assert all("boxscore" not in u and "playbyplay" not in u for u in visitas)         # solo intenta el marcador del día
