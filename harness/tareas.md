@@ -1,5 +1,10 @@
 # Backlog — QuantFut
 
+## 2-nov-2026 · Captura de SharpAPI (plan Free) desplegada en el servidor
+- [x] `scripts/sharpapi_captura.py` + cron cada 5 min: cuotas prepartido de DraftKings y FanDuel de las 9 ligas a 24 h, 6 h, 2 h, 60 min y 15 min del saque, como archivos en `~/sharpapi_data` (docs/sharpapi_captura_20261102.md, DEPLOYS.md).
+- [ ] Cuando haya semanas de capturas: cargarlas en `futbol.cuota_historica` (`fuente = 'sharpapi'`, hace falta ampliar el CHECK de db/101) y medir con ellas descanso/final, marcador exacto, primer equipo en marcar, goleadores y tiros de jugador.
+- [ ] Antes de mostrar cuotas de SharpAPI en la web o la app: «Data provided by SharpAPI» (obligatorio desde el 1-dic-2026) y revisar la cláusula 5.3 para el plan gratuito.
+
 ## 1-nov-2026 · Rediseño de los motores de fútbol desde cero con `futbol.dato` (rama `futbol/rediseno-f2`, nada desplegado)
 Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin fiarse de mediciones anteriores** (las del 31-oct en Serie A se rehacen, no se citan como resultado). Plan de referencia: `docs/serie_a_sofascore_rediseno_20261031.md` §0 (en la rama `futbol/dato-unico`). Solo lectura del servidor; todo se calcula en local; nada se activa.
 - Datos: una exportación de solo lectura por ejecución (`scripts/rediseno_futbol/exportar.sh`) con `matches` de las 8 ligas del núcleo (Serie A, Bundesliga, Ligue 1, Eredivisie, Primeira, Brasileirão, Premier, LaLiga) desde 14/15, agregados por partido de `futbol.dato` (tiros, xG sin penaltis, xGOT, estado del partido, faltas, mitades, árbitro) y cierres 1X2/totales de `odds_snapshots`. Liga MX aparte (sin xG por tiro en 23/24–24/25).
@@ -25,7 +30,8 @@ Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin f
 - [ ] Motor C: reajuste del nivel de liga dentro de la temporada y comparación hacia delante con PropLine (córners y tarjetas).
 - [x] Decisión (2-nov): se queda Dixon-Coles; A0 *score-driven* empata y no justifica cambiar lo que sellan los picks.
 - [x] Cuota mínima del titular (2-nov): 1,40 hacia arriba. Las cifras definitivas del rediseño usan 1,40 (§14.2): con todas las líneas la mejor opción de cada partido acierta 74,5 % [69,1; 79,2] (n = 286, T-60) frente a 67,8 % anunciado; con una sola línea (bet365) ≈ 65 % el 10 % mejor del día.
-- [ ] Titular: el destacado de la web usa 1,40-1,80 (`api/partido_mercados.py: RANGO_DESTACADO` y `frontend/*`); si «hacia arriba» significa quitar el tope de 1,80, es un cambio aparte con despliegue de la web.
+- [x] Destacado de la web con cuota mínima 1,40 y sin tope (titular, 2-nov): PR #233 desplegado en la API `quantfut-api-destacado-sin-tope:a7e1b28` (DEPLOYS.md).
+- [ ] El frontend de `main` no es el de producción (faltan los cambios del 30-oct de `app.js`/`ergonomic-views.js`): fusionarlos a `main` desde su rama de origen.
 - [ ] Medición semanal: `python scripts/rediseno_futbol/remedir_semana.py` (solo lectura del servidor) hasta ≥ 500 partidos a T-60 (hoy 286).
 - [ ] C4 conteos de equipo (tiros, a puerta, faltas, fueras de juego): sin hacer, ninguna lista del titular los pide.
 
