@@ -517,3 +517,92 @@ Coincide con §12 (74,7 % al cierre con PropLine) y confirma que **la escalera d
    adelante) o una captura propia con la API de bet365.
 5. **Nada de esto está cargado en la base**: `odds_snapshots` no admite borrar ni modificar, así que cargar BetsAPI
    (≈ 12 millones de lecturas) o el respaldo de API-Football exige tu visto bueno y un diseño previo (qué ventana y qué casas).
+
+### 13.6 Mezcla casa + motor validada fuera de muestra, y carga en la base (2-nov)
+Con el peso elegido en 2024/25 y evaluado en 2025/26 (log-loss, IC95 por bloques de partido), la mezcla solo mejora de verdad
+en los mercados de la **1.ª parte**: hándicap 1.ª parte −0,0060 [±0,0035] a T-60 y −0,0050 [±0,0036] al cierre (w = 0,5);
+goles 1.ª parte −0,0057 [±0,0026] al cierre (w = 0,4). En hándicap (−0,0009 [±0,0018]) y goles totales no se distingue de cero;
+en córners (+0,0004 a +0,0006) empeora algo; en 1X2 y descanso el peso es 0. **La mezcla queda reducida a hándicap y goles
+de la 1.ª parte (peso 0,4–0,5); en los demás mercados se publica la probabilidad de la casa.**
+
+Las cuotas se cargaron en la base como **`futbol.cuota_historica`** (db/101, 1.033.331 filas, 351 MB, inmutable), no en
+`odds_snapshots`: varias lecturas (CLV, API, `daily.py`, entrenamiento) no filtran por fuente y cuotas retroactivas habrían
+cambiado resultados ya medidos. Apertura, T-60 y cierre/último de BetsAPI (bet365) y API-Football más la lectura del minuto 65-70
+de córners; los cambios intermedios siguen en el archivo del VPS. Registro del despliegue en `DEPLOYS.md`.
+## 14. Cierre del rediseño de fútbol (2-nov): cuota mínima 1,40, F5 y qué queda
+
+### 14.1 Decisiones del titular (2-nov)
+- **Cuota mínima 1,40 hacia arriba.** Todas las cifras de esta sección usan cuota real ≥ 1,40 (en las secciones 10-13 se usó 1,28). Los
+  scripts llevan ahora `--cuota-min` con 1,40 por defecto. En producción no cambia nada: el destacado de la app ya exige 1,40 y el de la
+  web usa 1,40-1,80 (`api/partido_mercados.py: RANGO_DESTACADO`, `frontend/*`). **Si «hacia arriba» significa quitar el tope de 1,80 de
+  la web, es un cambio aparte (el servidor y varios archivos del frontend, con su despliegue); no se ha tocado.**
+- **Motor de fuerza: se queda Dixon-Coles.** A0 *score-driven* empata con él (−0,0021, no significativo) y no hay ganancia que justifique
+  cambiar lo que sellan los picks; además el mercado les gana a los dos en 1X2 y el porcentaje que se publica sale del mercado.
+
+### 14.2 Lo que se cumple con cuota ≥ 1,40
+| Muestra (cuota real) | Partidos | Mejor opción de cada partido | Anuncia |
+|---|---|---|---|
+| PropLine, con todas las líneas, T-60 (23-oct → 2-nov) | 286 | **74,5 %** [69,1; 79,2] | 67,8 % |
+| PropLine, cierre | 329 | **74,8 %** [69,8; 79,2] | 68,3 % |
+| PropLine, últimos 7 días (T-60 / cierre) | 179 | 71,5 % / 70,9 % | 68,0 / 68,4 |
+| API-Football + PropLine, T-60 (23-sep → 1-nov) | 348 | **72,1 %** [67,2; 76,6] | 67,5 % |
+| bet365 con una sola línea por mercado, T-60 (jul-2024 → oct-2026) | 6.944 | 59,1 % [57,9; 60,3] | 56,7 % |
+
+- Con **todas las líneas** el porcentaje de la casa (Pinnacle y, donde no cotiza, la mediana de las demás) es **conservador**: lo anunciado
+  queda de 3 a 7 puntos por debajo de lo que ocurre. Calibración de todas las opciones con cuota ≥ 1,40, tramo 60-70 %: anuncia 64,0 y ocurre
+  65,0 (T-60); 70-80 % tiene pocas opciones (24) porque el 70 % ya equivale a cuota 1,43.
+- Con **una sola línea** (bet365): el 10 % mejor de cada día acierta **65,1 %** (T-60) / **65,5 %** (cierre), anuncia 63,5 %; el 30 % mejor, 63,4 /
+  63,9 %. Por mercado, la opción más probable con cuota ≥ 1,40: 1X2 45,3 %, hándicap 51,9 %, hándicap 1.ª parte 55,2 %, córners 51,6 %, resultado al
+  descanso 45,9 %, goles 50,6 %. **Techo honesto con 1,40: ≈ 65 % con una línea y ≈ 72-75 % eligiendo entre la escalera de líneas.**
+- El **motor propio** sigue prometiendo de más: en el 10 % mejor anuncia 68,8 % y acierta 60,1 % (**8,7 puntos**).
+- Fichas de bet365 con cuota ≥ 1,40: lo más probable (ambos equipos reciben tarjeta 80 %, ambos marcan 1.ª parte «no» 77 %, gol en los
+  primeros 10 minutos «no» 78 %) paga 1,22-1,25, es decir **no es publicable con 1,40**. Lo que sí pasa 1,40: equipo marca en la 2.ª parte 63,4 %
+  (anuncia 60,1) y en la 1.ª 59,4 % (59,2); resultado al descanso 42,7 % (44,6).
+
+### 14.3 F5: once, rotación, bajas, definición y entrenador (A3-A7), medidos
+Regresión de Poisson con desplazamiento log(λ de A0), walk-forward cada 28 días desde 2025-01 (4.644-4.948 partidos), 1X2, Diebold-Mariano
+por semanas, siempre frente a A0 en las mismas filas (`scripts/rediseno_futbol/once_a4.py`). El once se toma como el real (el publicado a
+T-60 no está archivado en la historia).
+
+| Capa | Δ log-loss | t | Lectura |
+|---|---|---|---|
+| A3 definición y portero (xG y xGOT) | +0,0001 | +0,3 | sin efecto |
+| A4 fuerza del once (goles esperados de sus once) | **+0,0001 (peor)** | +2,4 | sin efecto: el coeficiente es 0,01 (t 0,2) |
+| A5 rotación | −0,0007 | −2,2 | cada titular cambiado respecto al partido anterior resta 1,4 % de goles propios (t −3,2) |
+| A6 habituales ausentes | −0,0010 | −1,6 | cada habitual ausente propio −1,3 % (t −2,7) y cada uno del rival **+1,9 %** (t +4,1) |
+| A4+A5+A6 | −0,0012 | −1,7 | no significativo |
+| A7 entrenador nuevo (5 partidos) | −0,0004 | −1,0 | −3,2 % propio (t −1,7), +2,7 % si lo cambia el rival (t +1,5) |
+
+**Los efectos tienen el signo esperado pero valen ≤ 0,0012 de log-loss** (el mercado le saca 0,016-0,019 a A0), y el mercado ya incluye el once.
+No se activa nada. Se repite cuando haya meses de once capturado a T-60 (`futbol.dato`, tipos `previo`, db/099).
+
+### 14.4 Estado del plan (§5-§6 de `serie_a_sofascore_rediseno_20261031.md`)
+| Pieza | Estado |
+|---|---|
+| F0 conciliación, F1 `futbol.dato` | hechas (31-oct, 1-nov) |
+| F2 referencias (DC, pi-ratings, mercado) | hecha: el mercado gana |
+| A0-A2 *score-driven*, xG por tiro, estado del partido | hechas: A0 empata con DC; A1 y A2 no aportan |
+| A3-A7 | **hechas hoy** (§14.3): efectos ≤ 0,0012, nada que activar |
+| Motor B (mercado) | sin cambio de fondo; es la fuente del porcentaje (Pinnacle y mediana de las demás casas) |
+| C1 tarjetas, C2 córners, C3 mitades | hechas y medidas (§5, §11) |
+| C4 conteos de equipo (tiros, a puerta, faltas, fueras de juego) | **sin hacer**: ninguna lista del titular los pide; los de jugador sí están (C5) |
+| C5 jugador | hecho con recalibración (§11); falta cuota histórica de jugador |
+| F6 puerta de activación | no aplica: nada del motor propio sustituye al mercado |
+| F7 once a T-60 | espera muestra de `previo` |
+| Mezcla casa + motor | solo hándicap y goles de la 1.ª parte (peso 0,4-0,5), validada fuera de muestra (§13.6) |
+| Cuotas reales (§12-§13), carga en la base | hechas; medición semanal con `remedir_semana.py` |
+
+**Producción ya está alineada con el rediseño:** `publish/alta_prob.py` toma la probabilidad de Pinnacle sin margen (los córners del modelo
+recortados al mercado) desde el 5-oct; la `escalera` usa la probabilidad real de Pinnacle; los picks de valor (`picks.py`) siguen apagados
+(`PUBLISH_PICKS_ENABLED`) a la espera de la puerta de CLV. No hay una línea de código del motor que cambiar por el rediseño; cambiarlas
+exigiría repetir la prueba histórica de `eval/alta_prob_calibracion.py` (regla del propio módulo).
+
+### 14.5 Lo que queda y por qué no se hizo
+1. **Cuotas de los mercados sin fuente** (descanso/final, goleadores, primer equipo en marcar, pases y faltas de jugador, carrera de
+   córners): PropLine no los trae y SharpAPI gratis solo da DraftKings y FanDuel desde hoy. Capturarlos es una tarea recurrente en el
+   servidor (cron, clave, crédito «Data provided by SharpAPI» desde el 1-dic): decisión aparte.
+2. **Otras 14 competiciones del archivo de BetsAPI** (Argentina, MLS, Champions, Europa League, Championship…): no están en la
+   exportación de `matches` del rediseño; cargarlas es repetir §13 con otra exportación.
+3. **Medición semanal**: `python scripts/rediseno_futbol/remedir_semana.py` (lee el servidor en modo solo lectura). Primera pasada hoy:
+   286 partidos a T-60, 74,5 % [69,1; 79,2]. Meta: 500 partidos.
+4. **Tope de 1,80 del destacado web** (ver 14.1).

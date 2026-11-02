@@ -41,6 +41,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Ensayado: pruebas (7), `--seco` local y en el servidor, y una captura real local de un partido antes de instalar el cron. Primera pasada en producción (02:50-02:54 UTC): 8 partidos capturados (momento 24 h), 54 peticiones en total y 160 KB en disco; la pasada siguiente (02:55) no repitió nada: 0 capturas, 2 peticiones.
 - Vuelta atrás: quitar la línea `# sharpapi-captura` del crontab (o restaurar la copia), `rm -r ~/sharpapi` y, si se quiere, `~/sharpapi_data`. La clave sigue en el `.env` local del repo principal.
 
+### 2026-11-02 01:50 UTC · db/101 y carga de las cuotas históricas de BetsAPI y API-Football — base de datos, rama `futbol/cargar-cuotas-vps`
+- Autorizado por el titular en el chat. Solo base de datos: ningún contenedor ni imagen cambia; nada del pipeline predecir → sellar → publicar lee la tabla nueva.
+- db/101 crea `futbol.cuota_historica` (inmutable por `deny_mutation`, clave única que hace la carga idempotente). **No se carga en `odds_snapshots`**: esa tabla alimenta CLV, API, `daily.py` y entrenamiento y varias lecturas no filtran por fuente; cuotas retroactivas habrían cambiado resultados ya medidos (misma razón que `ingest/odds_history.py`).
+- Carga con `scripts/rediseno_futbol/cargar_cuota_historica.sh` en UNA transacción (ensayada antes en un esquema aislado de la base local, dos vueltas: la segunda inserta 0): **1.033.331 filas**, 10.759 partidos: BetsAPI (bet365, retroactiva) 556.525 filas de 10.036 partidos (apertura, t60, cierre y lectura del minuto 65-70 de córners, 8 mercados incluidos los de la 1.ª parte) y API-Football (10 casas, recepción real) 476.806 filas de 723 partidos (apertura, t60, último).
+- Comprobado después: `odds_snapshots` intacta (3.338.606 filas antes y después), trigger activo (un `DELETE` se rechaza), línea propia de cada selección (local −0,5 con visitante +0,5). Tabla 351 MB; base de 3.443 a 3.795 MB; disco con 42 GB libres.
+- Los originales siguen intactos: `~/betsapi/data/football` (1,1 GB, cada cambio de precio) y `~/backups/retiro_af_odds_snapshots_20261101.sql.gz`.
+- Vuelta atrás: `DROP TABLE futbol.cuota_historica;` (la tabla es nueva; nadie la lee).
+
 ### 2026-11-01 17:00 UTC · db/097, 098 y 099 y recarga de las 10 ligas — base de datos y scripts, rama `futbol/dato-unico`
 - Respaldo previo: `~/backups/futbol_pre_097_20261101.sql.gz` (133 MB, `gzip -t` correcto; copia local en
   `Documents/respaldos_quantfut_20261101`). Ensayo con `BEGIN … ROLLBACK` sobre los datos reales antes de aplicar.

@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=hist-desde26-20261029';
+import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=destacado-sin-tope-20261102';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -116,9 +116,9 @@ export function createHubViews(ctx) {
     return `<ul class="win-pk-stats" aria-label="Resumen del día">${tile('Publicados',source.home.status==='ready'||published.length?published.length:'—','pronósticos del día')}${tile('Próximos',source.home.status==='ready'||published.length?upcoming:'—','aún sin empezar')}${tile('Con Plus',plus,'análisis reservados')}${tile('Aciertos',resolved.length?`${wins}/${resolved.length}`:'—','últimos resueltos')}</ul>`;
   }
 
-  // Destacado del día: la regla de la web (`partido_mercados`: mayor probabilidad con cuota de 1,40 a 1,80) aplicada solo
+  // Destacado del día: la regla de la web (`partido_mercados`: mayor probabilidad con cuota de 1,40 en adelante, sin tope) aplicada solo
   // a los pronósticos ya publicados y abiertos. No genera nada: elige entre lo que envía el servidor.
-  const FEATURED_RANGE=[1.4,1.8];
+  const FEATURED_RANGE=[1.4,Infinity];
   const featuredPick=picks=>picks.filter(p=>p&&p.locked!==true&&p.chain_sha256&&typeof p.ref_price==='number'&&Number.isFinite(p.ref_price)
     &&p.ref_price>=FEATURED_RANGE[0]&&p.ref_price<=FEATURED_RANGE[1]).reduce((best,p)=>(!best||p.prob>best.prob?p:best),null);
 

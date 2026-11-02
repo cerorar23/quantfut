@@ -164,11 +164,16 @@ def test_equipo_desconocido_toma_las_lambdas_del_mercado(monkeypatch):
     assert pm.lambdas_goles('m1') == (1.5, 1.1, -0.06)
 
 
-# --- regla de la WEB: destacado de 1,40 a 1,80 y 3 mercados gratis -----------------------------
+# --- regla de la WEB: destacado de 1,40 en adelante (sin tope) y 3 mercados gratis -------------
 
 def _en_rango(filas):
-    return sorted((f for f in filas if pm.RANGO_DESTACADO[0] <= f['cuota'] <= pm.RANGO_DESTACADO[1]),
-                  key=lambda f: -f['prob'])
+    return sorted((f for f in filas if f['cuota'] >= 1.40), key=lambda f: -f['prob'])
+
+
+def test_el_rango_del_destacado_no_tiene_tope():
+    assert pm.RANGO_DESTACADO == (1.40, None)
+    assert pm.en_rango_destacado(1.40) and pm.en_rango_destacado(1.81) and pm.en_rango_destacado(25.0)
+    assert not pm.en_rango_destacado(1.39) and not pm.en_rango_destacado(None) and not pm.en_rango_destacado(0)
 
 
 def test_web_destacado_sale_de_todos_los_mercados_aunque_sean_vip(lista):
@@ -177,8 +182,8 @@ def test_web_destacado_sale_de_todos_los_mercados_aunque_sean_vip(lista):
     assert len(esperado) >= 3
     out, _, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
     assert destacado['id'] == esperado[0]['id']
-    assert 1.40 <= destacado['cuota'] <= 1.80 and destacado['locked'] is False
-    assert destacado['prob'] == max(f['prob'] for f in filas if 1.40 <= f['cuota'] <= 1.80)
+    assert destacado['cuota'] >= 1.40 and destacado['locked'] is False
+    assert destacado['prob'] == max(f['prob'] for f in filas if f['cuota'] >= 1.40)
 
 
 def test_web_gratis_tiene_tres_abiertas_las_mas_probables_del_rango_y_el_resto_con_candado(lista):
@@ -204,7 +209,7 @@ def test_web_con_vip_todo_va_abierto_y_el_destacado_es_el_mismo(lista):
 def test_web_si_el_rango_no_da_para_tres_se_completa_con_las_mas_probables():
     def fila(i, prob):
         return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
-    filas = [fila(1, .60), fila(2, .90), fila(3, .85), fila(4, .80)]   # solo la primera tiene cuota 1,40–1,80
+    filas = [fila(1, .60), fila(2, .90), fila(3, .85), fila(4, .80)]   # solo la primera tiene cuota ≥ 1,40
     out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
     assert destacado['id'] == filas[0]['id']
     assert {f['id'] for f in out if not f['locked']} == {filas[0]['id'], filas[1]['id'], filas[2]['id']}
@@ -213,9 +218,17 @@ def test_web_si_el_rango_no_da_para_tres_se_completa_con_las_mas_probables():
 def test_web_sin_ningun_mercado_en_rango_no_hay_destacado_pero_si_tres_gratis():
     def fila(i, prob):
         return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
-    filas = [fila(1, .95), fila(2, .90), fila(3, .85), fila(4, .30)]
+    filas = [fila(1, .95), fila(2, .90), fila(3, .85), fila(4, .80)]   # todas por debajo de 1,40
     out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
     assert destacado is None and sum(not f['locked'] for f in out) == 3
+
+
+def test_web_una_cuota_larga_tambien_puede_ser_el_destacado():
+    def fila(i, prob):
+        return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
+    filas = [fila(1, .95), fila(2, .90), fila(3, .20)]                 # solo la tercera tiene cuota ≥ 1,40 (5,00)
+    _, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
+    assert destacado['id'] == filas[2]['id'] and destacado['cuota'] >= 5
 
 
 def test_web_un_pick_sellado_abierto_conserva_su_probabilidad_y_no_se_duplica(lista):
