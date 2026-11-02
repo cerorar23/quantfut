@@ -1137,6 +1137,20 @@
   color: var(--text);
 }
 
+/* Fecha de la tarjeta con el estado del pronóstico al lado (Acertó / Falló / Devolución) */
+.win-pk-when {
+  margin-left: auto;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 8px;
+}
+
+.win-pk-when .win-pk-time {
+  margin-left: 0;
+}
+
 .win-pk-teams {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
