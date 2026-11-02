@@ -65,7 +65,7 @@ export function createSportWindow(ctx) {
   // ---- pronóstico (izquierda)
   function forecast(event) {
     const feat = featuredModelMarket(event.markets.filter(m => !m.revised));
-    const range = '1,40 a 1,80';
+    const range = '1,40 o más';
     const card = feat
       ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(playerPhoto("nba", feat.player_id), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>Cuota del modelo</small><strong>${fmtOdds(1 / feat.probability)}</strong><em>1 ÷ probabilidad</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
       : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado de este evento tiene cuota del modelo de ${range}.`}</p>`;

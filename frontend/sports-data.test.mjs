@@ -40,11 +40,13 @@ test('la portada conserva el bloqueo aunque el payload traiga datos privados',()
 import { featuredModelMarket } from './sports-data.js';
 import { createSportWindow } from './sports-window.js';
 
-test('el destacado de NBA y tenis usa la cuota del modelo (1 ÷ prob.) de 1,40 a 1,80 y la mayor probabilidad', () => {
+test('el destacado de NBA y tenis usa la cuota del modelo (1 ÷ prob.) de 1,40 en adelante, sin tope, y la mayor probabilidad', () => {
   const m = (id, probability) => ({ id, probability });
   assert.equal(featuredModelMarket([m('a', .95), m('b', .70), m('c', .60), m('d', .30)]).id, 'b');
-  assert.equal(featuredModelMarket([m('lo', 1 / 1.4), m('hi', 1 / 1.8)]).id, 'lo');          // extremos incluidos
-  assert.equal(featuredModelMarket([m('x', .75), m('y', .5)]), null);                           // 1,33 y 2,00 quedan fuera
+  assert.equal(featuredModelMarket([m('lo', 1 / 1.4), m('hi', 1 / 1.8)]).id, 'lo');          // 1,40 incluido; gana la mayor probabilidad
+  assert.equal(featuredModelMarket([m('x', .75), m('y', .5)]).id, 'y');                         // 1,33 queda fuera; 2,00 ya cuenta (sin tope)
+  assert.equal(featuredModelMarket([m('x', .75), m('y', .9)]), null);                           // todas por debajo de 1,40
+  assert.equal(featuredModelMarket([m('largo', .05)]).id, 'largo');                             // cuota 20: sin tope
   assert.equal(featuredModelMarket([{ id: 'z', probability: 'alta' }, null]), null);
   assert.equal(featuredModelMarket(undefined), null);
 });
