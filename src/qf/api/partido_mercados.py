@@ -533,6 +533,14 @@ _TTL_DESTACADOS = 600.0
 _destacados: dict[str, tuple[float, list[dict]]] = {}
 
 
+def _escudo(team_id) -> str | None:
+    """URL propia del escudo del equipo (la misma que la agenda), o None; la tarjeta de un partido terminado no tiene agenda."""
+    if team_id is None:
+        return None
+    from .fichas import escudo
+    return escudo(team_id)
+
+
 def destacados_resueltos(desde: date) -> list[dict]:
     """El destacado de la web de cada partido terminado desde `desde` (acertó o falló).
 
@@ -547,7 +555,7 @@ def destacados_resueltos(desde: date) -> list[dict]:
     if hit and time.monotonic() - hit[0] < _TTL_DESTACADOS:
         return hit[1]
     corte = datetime.combine(desde, datetime.min.time(), tzinfo=timezone.utc) - timedelta(days=1)
-    partidos = query("SELECT m.match_id, m.league_id, m.kickoff_utc, "
+    partidos = query("SELECT m.match_id, m.league_id, m.kickoff_utc, m.home_team_id, m.away_team_id, "
                      "COALESCE(th.display_name, th.canonical_name) AS local, "
                      "COALESCE(ta.display_name, ta.canonical_name) AS visitante, m.home_goals, m.away_goals "
                      "FROM matches m JOIN teams th ON th.team_id=m.home_team_id "
@@ -564,6 +572,7 @@ def destacados_resueltos(desde: date) -> list[dict]:
                     'local': p['local'], 'visitante': p['visitante'], 'market': d['market'],
                     'selection': d['selection'], 'line': d.get('line'), 'texto': d['seleccion'],
                     'prob': round(float(d['prob']), 4), 'ref_price': None, 'outcome': d['resultado'],
-                    'home_goals': p['home_goals'], 'away_goals': p['away_goals']})
+                    'home_goals': p['home_goals'], 'away_goals': p['away_goals'],
+                    'local_escudo': _escudo(p.get('home_team_id')), 'visitante_escudo': _escudo(p.get('away_team_id'))})
     _destacados[clave_] = (time.monotonic(), out)
     return out

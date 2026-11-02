@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=finalizados-futbol-20261102';
+import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=escudos-terminados-20261102';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -28,7 +28,8 @@ export function createHubViews(ctx) {
       if(!r.match_id||events.has(r.match_id)||!r.local||!r.visitante||!r.kickoff_utc||!['win','loss'].includes(r.outcome))continue;
       const game=agenda.find(g=>g.match_id===r.match_id),model=!r.ref_price&&r.prob>0&&r.prob<1;
       events.set(r.match_id,{id:r.match_id,sport:'futbol',home:r.local,away:r.visitante,start:r.kickoff_utc,
-        home_img:game?.local?.escudo||null,away_img:game?.visitante?.escudo||null,league:game?.liga?.nombre||ligas.get(r.league_id)||r.league_id,status:'finished',
+        home_img:r.local_escudo||game?.local?.escudo||null,away_img:r.visitante_escudo||game?.visitante?.escudo||null,
+        league:game?.liga?.nombre||ligas.get(r.league_id)||r.league_id,status:'finished',
         score:`${r.home_goals} – ${r.away_goals}`,resolved:true,locked_count:0,
         markets:[{id:`destacado:${r.match_id}`,label:'Pronóstico destacado',selection:r.texto,probability:r.prob,
           price:r.ref_price||(model?Math.round(100/r.prob)/100:null),model,reference:r.ref_price?'Casa registrada':'1 ÷ probabilidad',

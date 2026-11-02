@@ -136,3 +136,11 @@ test('la liga de un partido terminado sale con su nombre (de la agenda del día)
   const html = views.home();
   assert.ok(html.includes('Ligue 1') && !html.includes('fr.ligue_1'));
 });
+
+test('el partido terminado usa el escudo que manda el servidor y, si no hay, las iniciales', () => {
+  const conEscudo = { ...terminado, local_escudo: '/web/escudos/7.png', visitante_escudo: null };
+  const html = tarjetasTerminadas([conEscudo]);
+  assert.ok(html.includes('<img src="/web/escudos/7.png"'), 'escudo del local');
+  assert.ok(html.includes('is-mono'), 'el visitante sin escudo queda con iniciales');
+  assert.ok(!tarjetasTerminadas([terminado]).includes('<img src="/web/escudos/'), 'sin escudo en el servidor no se inventa ninguno');
+});
