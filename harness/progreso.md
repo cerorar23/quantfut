@@ -6900,3 +6900,11 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: el decaimiento de los minutos se eligió con 2023-24 y 2024-25 (0,70); con el 0,90 que puse al principio el modelo solo igualaba a la media de 5 partidos. La incertidumbre sale de residuos por tramo de minutos esperados, no de las muestras del historial (daban 74,7 % de cobertura en el intervalo del 80 %).
 - Hallazgo: quien no figura en la caja cuenta como que no jugó; si se excluyen esos casos «Questionable» parece jugar el 80 %, cuando en realidad es ≈ 43 %. Sesgo de selección que hay que evitar en cualquier evaluación de disponibilidad.
 - Límite: Available (84 %) y «sin parte» (84 %) mezclan titulares y fondo de plantilla; falta condicionar al rol.
+
+## 2026-11-02 — Sprint 3: núcleo del marcador y mercados de equipo
+
+- Resultado honesto: un núcleo solo de ratings de equipo queda calibrado pero NO aporta información al cierre de bet365 (peso de mezcla 0,03 contra 1,03 de la línea; RMSE 14,49 frente a 14,04). Coincide con lo que ya decía la calibración de la v1.5; no se intentó forzar la métrica con ajustes sobre la prueba.
+- Decisión: el nivel de liga se actualiza más rápido (0,01) porque la anotación sube cada temporada; con 0,002 el total iba retrasado.
+- Hallazgo: jugar en la noche siguiente cuesta ≈ 2,8 puntos de margen por equipo (3,5 errores estándar) y no mueve el total. Se mide en el ajuste y se fija antes de mirar la prueba.
+- Decisión: coherencia entre mercados por construcción (una sola muestra simulada por partido), no por reconciliación posterior.
+- Siguiente palanca: jugadores esperados dentro del rating de equipo (lo que mueve una línea es quién juega).

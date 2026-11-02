@@ -3159,3 +3159,10 @@ Resultados medidos en docs/nba_rediseno_s2_resultados_20261102.md. Biblioteca `n
 - [x] Minutos si juega: decaimiento 0,70 + residuos por tramo; prueba 2025-26: MASE 0,969, cobertura 80 % = 81,5 %, pinball −4,2 % frente a la media de 5 partidos.
 - [ ] Condicionar la probabilidad de jugar al rol (minutos esperados) y añadir compañeros ausentes, titular/banca y minutos de basura al modelo de minutos.
 - [ ] Conectar `instantanea` (lectura punto en el tiempo) con estos módulos para producir escenarios por partido real; hoy son biblioteca sin despliegue.
+
+### NBA — rediseño completo, Sprint 3: núcleo del marcador y mercados de equipo (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s3_resultados_20261102.md. Biblioteca `nba.v2.nucleo/mercados`, evaluación `apps/nba/ops/evaluar_s3.py`.
+- [x] Ratings de ataque/defensa por equipo + distribución conjunta simulada; ganador, hándicap, totales, total de equipo y margen de victoria salen de UNA muestra (G-coherencia: 0 violaciones en 320 partidos).
+- [x] Efecto de jugar en la noche siguiente medido (≈ 2,8 puntos de margen por equipo) y puesto en el modelo.
+- [ ] G-equipo: el modelo está calibrado (pendiente 1,04) pero su Brier es peor que el del cierre (ganador +0,008, hándicap +0,010, total +0,011, IC95 sin cruzar 0); se cierra en S5 con la evaluación única contra v1.5 y mercado.
+- [ ] Meter a los jugadores esperados (S2: P(juega) y minutos) en ataque y defensa del equipo; depende de la tabla de impacto por jugador (S4) y de conectar `nba.dato_a_las`.
