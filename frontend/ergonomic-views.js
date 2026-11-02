@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=escudos-terminados-20261102';
+import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=cuota-casa-20261102';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -32,7 +32,7 @@ export function createHubViews(ctx) {
         league:game?.liga?.nombre||ligas.get(r.league_id)||r.league_id,status:'finished',
         score:`${r.home_goals} – ${r.away_goals}`,resolved:true,locked_count:0,
         markets:[{id:`destacado:${r.match_id}`,label:'Pronóstico destacado',selection:r.texto,probability:r.prob,
-          price:r.ref_price||(model?Math.round(100/r.prob)/100:null),model,reference:r.ref_price?'Casa registrada':'1 ÷ probabilidad',
+          price:r.ref_price||(model?Math.round(100/r.prob)/100:null),model,reference:r.ref_price?(r.ref_book||'Casa registrada'):'1 ÷ probabilidad',
           featured:true,outcome:r.outcome}]});
     }
     // Los bloqueos solo usan la identidad pública del evento. Ningún valor privado se copia a la vista.
@@ -101,7 +101,7 @@ export function createHubViews(ctx) {
   const progress=value=>{const pct=Math.max(0,Math.min(100,Math.round(value*100)));return `<div class="cyber-progress cyber-progress--green cyber-progress--sm" data-value="${pct}" role="progressbar" aria-label="Probabilidad publicada ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="cyber-progress__bar"></div></div>`;};
   const teamsRow=(e,big=false)=>`<div class="win-pk-teams"><div class="win-pk-side">${avatar(e.home,e.sport,imageOf(e,'home'),big)}<strong>${esc(e.home)}</strong></div><span class="win-pk-vs ${e.score?'is-score':''}">${e.score?esc(e.score):'VS'}</span><div class="win-pk-side is-away">${avatar(e.away,e.sport,imageOf(e,'away'),big)}<strong>${esc(e.away)}</strong></div></div>`;
   // Sin cuota publicada (NBA, tenis) no hay bloque de cuota: la probabilidad ya sale en su barra.
-  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.model?'Cuota del modelo':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
+  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.model?'Cuota del modelo':m.house?'Cuota de la casa':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
 
   // Pronóstico de la tarjeta de fútbol: el destacado del partido, el mismo que enseña su ficha (`mercados.destacado`, regla del
   // servidor: de TODOS los mercados del partido, el de mayor probabilidad con cuota de 1,40 en adelante). Mientras se consulta no se enseña el pick sellado, para que la
@@ -112,9 +112,9 @@ export function createHubViews(ctx) {
     if(entry.status==='loading')return {loading:true};
     const d=entry.status==='ready'?featuredMarket(entry.data.ficha?.mercados):null;
     if(!d)return null;
-    const sealed=d.pick_key?event.markets.find(x=>x.id===d.pick_key):null,published=d.cuota_tipo==='publicada';
-    return {market:{selection:d.seleccion,probability:d.prob,price:d.cuota,model:!published,
-      reference:published?sealed?.reference||'Casa registrada':'1 ÷ probabilidad',seal:sealed?.seal,odds_at:sealed?.odds_at,featured:true,result:d.resultado}};
+    const sealed=d.pick_key?event.markets.find(x=>x.id===d.pick_key):null,published=d.cuota_tipo==='publicada',house=d.cuota_tipo==='casa';
+    return {market:{selection:d.seleccion,probability:d.prob,price:d.cuota,model:!published&&!house,house,
+      reference:published?sealed?.reference||d.casa||'Casa registrada':house?d.casa||'Casa':'1 ÷ probabilidad',seal:sealed?.seal,odds_at:sealed?.odds_at,featured:true,result:d.resultado}};
   }
 
   // Estado del pronóstico en la fecha de la tarjeta (el servidor solo manda `resultado` cuando el partido terminó; NBA y tenis traen `outcome`).

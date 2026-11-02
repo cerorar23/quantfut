@@ -237,6 +237,71 @@ GRUPO_DE_MERCADO = {'h2h': 'RESULTADO', 'double_chance': 'DOBLE OPORTUNIDAD', 't
                     'corners_home': 'CÓRNERS', 'corners_away': 'CÓRNERS', 'cards': 'TARJETAS'}
 
 
+# --- cuota real de las casas (web) ------------------------------------------------------------
+
+MERCADOS_CON_CUOTA = ('h2h', 'double_chance', 'totals', 'team_totals_home', 'team_totals_away', 'btts', 'spreads',
+                      'corners', 'cards')
+EDAD_MAX_CUOTA = '6 hours'     # la misma que la escalera (`escalera.MAX_EDAD_PRECIO`)
+_CASAS = {'bet365': 'bet365', 'betano': 'Betano', '1xbet': '1xBet', 'william_hill': 'William Hill',
+          '888sport': '888sport', 'betway': 'Betway', 'betsson': 'Betsson', 'coolbet': 'Coolbet',
+          'coderemx': 'Codere MX', 'codere': 'Codere', 'strendus': 'Strendus', 'marcaapuestas': 'Marca Apuestas',
+          'sportium': 'Sportium', 'bovada': 'Bovada', 'betonlineag': 'BetOnline', 'bookmaker_eu': 'Bookmaker',
+          'heritage': 'Heritage', 'jazzsports': 'Jazz Sports'}
+
+
+def nombre_casa(casa) -> str | None:
+    """Nombre para mostrar de una casa (admite el alias de PropLine); None si no hay casa."""
+    if not casa:
+        return None
+    from ..publish.picks import canonical_book
+    k = canonical_book(str(casa))
+    return _CASAS.get(k) or k.replace('_', ' ').title()
+
+
+def cuotas_casas(match_id: str) -> dict[str, tuple[float, str, datetime]]:
+    """
+    Mejor cuota de las casas de los suscriptores (`settings.soft_books`; Pinnacle es la referencia, no una casa
+    donde apostar) para cada mercado, lado y línea: `clave -> (cuota, casa, hora de captura)`.
+    Última cotización de cada casa hasta el saque inicial (o ahora, si el partido no ha empezado) y con menos de
+    `EDAD_MAX_CUOTA` de antigüedad: para un partido terminado es la cuota de justo antes de empezar, así que el
+    historial no cambia cuando pasa el tiempo. Empate de precio: gana la casa de nombre menor (reproducible).
+    Sin cuota (1ª mitad, gana a cero, ligas sin PropLine) no hay entrada.
+    """
+    from ..config import settings
+    from ..publish.picks import canonical_book
+    mercados = ','.join(f"'{m}'" for m in MERCADOS_CON_CUOTA)
+    rows = query(f"""WITH t AS (SELECT LEAST(now(), kickoff_utc) AS hasta FROM matches WHERE match_id=%s)
+                     SELECT DISTINCT ON (o.bookmaker,o.market,o.selection,o.line)
+                            o.bookmaker,o.market,o.selection,o.line,o.price,o.captured_at
+                     FROM odds_snapshots o, t
+                     WHERE o.match_id=%s AND o.source='propline' AND o.market IN ({mercados}) AND o.price>1
+                       AND o.captured_at<=t.hasta AND o.captured_at>=t.hasta-interval '{EDAD_MAX_CUOTA}'
+                     ORDER BY o.bookmaker,o.market,o.selection,o.line,o.captured_at DESC""", (match_id, match_id))
+    mejores: dict[str, tuple[float, str, datetime]] = {}
+    for r in rows:
+        casa = canonical_book(r['bookmaker'])
+        if casa not in settings.soft_books:
+            continue
+        k = clave(r['market'], r['selection'], None if r['line'] is None else float(r['line']) + 0.0)
+        cand = (float(r['price']), casa, r['captured_at'])
+        actual = mejores.get(k)
+        if actual is None or (-cand[0], cand[1]) < (-actual[0], actual[1]):
+            mejores[k] = cand
+    return mejores
+
+
+def con_cuotas_casas(filas: list[dict], cuotas: dict[str, tuple[float, str, datetime]]) -> list[dict]:
+    """La cuota de la fila pasa a ser la de la mejor casa, con su nombre; sin cuota de casa queda la del modelo."""
+    out = []
+    for f in filas:
+        q = cuotas.get(f['id'])
+        if q:
+            f = dict(f, cuota=round(q[0], 2), cuota_tipo='casa', casa=nombre_casa(q[1]),
+                     cuota_hora=q[2].isoformat() if hasattr(q[2], 'isoformat') else None)
+        out.append(f)
+    return out
+
+
 def solo_candados(bloqueados: list[dict]) -> dict | None:
     """
     Partido sin modelo de goles (no hay lista completa que construir) pero con pronósticos VIP
@@ -268,6 +333,7 @@ def _con_pick(f: dict, pick: dict | None) -> dict:
     price = (pick or {}).get('ref_price', (pick or {}).get('price'))
     if isinstance(price, (int, float)) and price > 1:
         f['cuota'], f['cuota_tipo'] = round(float(price), 2), 'publicada'
+        f['casa'] = nombre_casa((pick or {}).get('ref_book'))
         f['oportunidad'] = f['prob'] * float(price) > 1.02
     return f
 
@@ -334,6 +400,7 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
 # Cuota del modelo: 1/prob (o la publicada si el pick abierto la trae). Mínimo 1,40 y SIN tope (titular, 2026-11-02;
 # antes 1,40 a 1,80): el tope es None y viaja como null en `rango`.
 RANGO_DESTACADO = (1.40, None)
+CUOTA_REAL = ('casa', 'publicada')      # `cuota_tipo` de una cuota que paga una casa (la otra es 'justa', del modelo)
 
 
 def en_rango_destacado(cuota) -> bool:
@@ -353,8 +420,11 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     Con VIP todo va abierto. Los marcadores no se regalan por esto: solo con VIP o con un pick abierto.
     """
     efectivas = {f['id']: _con_pick(dict(f), abiertas.get(f['id'])) for f in filas}
+    # Con cuotas reales en el partido, solo cuentan las opciones que una casa cotiza: el precio del modelo (1/prob) es
+    # una cuota justa sin margen que ninguna casa paga y no se puede comparar con la de una casa (titular, 2-nov-2026).
+    hay_casa = any(f.get('cuota_tipo') in CUOTA_REAL for f in efectivas.values())
     en_rango = sorted((f for f in efectivas.values()
-                       if en_rango_destacado(f.get('cuota'))),
+                       if en_rango_destacado(f.get('cuota')) and (not hay_casa or f.get('cuota_tipo') in CUOTA_REAL)),
                       key=lambda f: -f['prob'])
     elegidas = [f['id'] for f in en_rango[:GRATIS_WEB]]
     if len(elegidas) < GRATIS_WEB:
@@ -513,6 +583,7 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     filas += filas_estadisticas(corners, tarjetas)
     if web:
         filas += filas_complementarias(*lam, local, visitante, {f['id'] for f in filas})
+        filas = con_cuotas_casas(filas, cuotas_casas(match_id))
         filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus)
         partido = datos_partido(match_id)
         filas = con_resultados(filas, partido)
@@ -545,8 +616,9 @@ def destacados_resueltos(desde: date) -> list[dict]:
     """El destacado de la web de cada partido terminado desde `desde` (acertó o falló).
 
     Definición fija y reproducible: la de `aplicar_acceso_web` sobre el análisis del modelo, SIN
-    picks abiertos ni VIP. La cuota es siempre la del modelo (1 ÷ prob.); un pick abierto la
-    cambiaría por la publicada y el destacado dependería de quién mira. Un partido sin modelo,
+    picks abiertos ni VIP. La cuota es la de la mejor casa justo antes del saque (`cuotas_casas`) y, si el partido
+    no tiene cuotas de casas (anterior al 23-oct o liga sin PropLine), la del modelo (1 ÷ prob.; `ref_price` nulo);
+    un pick abierto la cambiaría por la publicada y el destacado dependería de quién mira. Un partido sin modelo,
     sin mercado en rango o sin resultado no entra. Se pide un día antes de `desde` para que el
     cliente corte por su día local; en caché diez minutos porque recorre cada partido.
     """
@@ -571,7 +643,9 @@ def destacados_resueltos(desde: date) -> list[dict]:
         out.append({'match_id': p['match_id'], 'league_id': p['league_id'], 'kickoff_utc': p['kickoff_utc'],
                     'local': p['local'], 'visitante': p['visitante'], 'market': d['market'],
                     'selection': d['selection'], 'line': d.get('line'), 'texto': d['seleccion'],
-                    'prob': round(float(d['prob']), 4), 'ref_price': None, 'outcome': d['resultado'],
+                    'prob': round(float(d['prob']), 4), 'outcome': d['resultado'],
+                    'ref_price': d['cuota'] if d.get('cuota_tipo') in CUOTA_REAL else None,
+                    'ref_book': d.get('casa') if d.get('cuota_tipo') in CUOTA_REAL else None,
                     'home_goals': p['home_goals'], 'away_goals': p['away_goals'],
                     'local_escudo': _escudo(p.get('home_team_id')), 'visitante_escudo': _escudo(p.get('away_team_id'))})
     _destacados[clave_] = (time.monotonic(), out)

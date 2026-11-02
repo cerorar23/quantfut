@@ -377,7 +377,103 @@ def test_construir_web_suma_las_complementarias_y_la_app_no(monkeypatch):
     monkeypatch.setattr(pm, 'lambdas_goles', lambda mid: (LAM, MU, RHO))
     monkeypatch.setattr(pm, 'lambdas_estadisticas', lambda mid: (None, None))
     monkeypatch.setattr(pm, 'datos_partido', lambda mid: None)
+    monkeypatch.setattr(pm, 'cuotas_casas', lambda mid: {})
     web = pm.construir('m1', 'Local FC', 'Visita FC', {}, False, web=True)
     app = pm.construir('m1', 'Local FC', 'Visita FC', {}, False, web=False)
     assert web['total'] > app['total'] >= 16                      # la web enseña más opciones; la app conserva su lista
     assert web['rango'] == [1.4, None] and web['destacado']['cuota'] >= 1.40
+
+
+# --- la cuota y el destacado de la web salen de la mejor casa disponible, con su nombre ------------------
+
+def _snap(casa, market, sel, line, price, hora='2026-11-02T10:00:00+00:00'):
+    from datetime import datetime
+    return {'bookmaker': casa, 'market': market, 'selection': sel, 'line': line, 'price': price,
+            'captured_at': datetime.fromisoformat(hora)}
+
+
+def test_cuotas_casas_toma_el_mejor_precio_de_las_casas_de_los_suscriptores(monkeypatch):
+    filas = [_snap('bet365', 'totals', 'over', 2.5, 1.80), _snap('betano', 'totals', 'over', 2.5, 1.95),
+             _snap('pinnacle', 'totals', 'over', 2.5, 2.10),          # la referencia sharp no es casa donde apostar
+             _snap('smarkets', 'totals', 'over', 2.5, 2.30),          # exchange: tampoco
+             _snap('onexbet', 'btts', 'yes', None, 1.70),              # alias de PropLine
+             _snap('williamhill', 'spreads', 'home', 0, 1.62),
+             _snap('bet365', 'spreads', 'home', 0, 1.62)]             # empate de precio: gana la casa de nombre menor
+    monkeypatch.setattr(pm, 'query', lambda sql, params=(): filas)
+    q = pm.cuotas_casas('m1')
+    assert q[pm.clave('totals', 'over', 2.5)][:2] == (1.95, 'betano')
+    assert q[pm.clave('btts', 'yes', None)][:2] == (1.70, '1xbet')
+    assert q[pm.clave('spreads', 'home', 0.0)][:2] == (1.62, 'bet365')
+    assert pm.clave('totals', 'under', 2.5) not in q
+
+
+def test_cuotas_casas_pide_el_precio_hasta_el_saque_y_con_poca_antiguedad(monkeypatch):
+    visto = {}
+    monkeypatch.setattr(pm, 'query', lambda sql, params=(): visto.update(sql=sql, params=params) or [])
+    assert pm.cuotas_casas('m9') == {}
+    assert visto['params'] == ('m9', 'm9')
+    assert 'LEAST(now(), kickoff_utc)' in visto['sql'] and "interval '6 hours'" in visto['sql']
+    assert "source='propline'" in visto['sql']
+
+
+def test_con_cuotas_casas_cambia_la_cuota_del_modelo_por_la_de_la_casa_y_deja_las_demas():
+    a = pm._fila('GOLES', 'Goles totales', 'totals', 'over', 2.5, 'Más de 2,5 goles', .60)
+    b = pm._fila('ESPECIALES', 'Gana a cero', 'win_to_nil', 'home', None, 'Local gana sin recibir gol', .30)
+    from datetime import datetime, timezone
+    q = {a['id']: (1.83, 'william_hill', datetime(2026, 11, 2, 10, tzinfo=timezone.utc))}
+    out = pm.con_cuotas_casas([a, b], q)
+    assert (out[0]['cuota'], out[0]['cuota_tipo'], out[0]['casa']) == (1.83, 'casa', 'William Hill')
+    assert out[0]['cuota_hora'].startswith('2026-11-02T10:00')
+    assert out[0]['prob'] == a['prob']                                   # la probabilidad sigue siendo la del modelo
+    assert out[1] == b and 'casa' not in out[1]                          # sin cuota de casa queda la del modelo
+    assert a['cuota_tipo'] == 'justa'                                    # la fila original no se toca
+
+
+def test_destacado_con_cuotas_de_casa_solo_cuenta_lo_que_una_casa_cotiza():
+    # «Gana a cero» (sin cuota de casa) tiene la cuota justa 1,43 y la mayor probabilidad; la de la casa baja a 1,30.
+    nil = pm._fila('ESPECIALES', 'Gana a cero', 'win_to_nil', 'home', None, 'Gana a cero', .70)
+    over = pm._fila('GOLES', 'Goles totales', 'totals', 'over', 1.5, 'Más de 1,5 goles', .66)
+    under = pm._fila('GOLES', 'Goles totales', 'totals', 'under', 3.5, 'Menos de 3,5 goles', .64)
+    from datetime import datetime, timezone
+    hora = datetime(2026, 11, 2, 10, tzinfo=timezone.utc)
+    filas = pm.con_cuotas_casas([nil, over, under], {over['id']: (1.46, 'bet365', hora), under['id']: (1.30, 'betano', hora)})
+    _, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
+    assert destacado['id'] == over['id'] and destacado['casa'] == 'bet365' and destacado['cuota'] == 1.46
+    # la cuota de la casa por debajo de 1,40 deja la opción fuera aunque la justa del modelo (1/0,64 = 1,56) sí llegue
+    assert destacado['id'] != under['id']
+
+
+def test_destacado_sin_ninguna_cuota_de_casa_usa_la_del_modelo_como_antes(lista):
+    filas, marcadores = lista
+    _, _, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
+    assert destacado['cuota_tipo'] == 'justa' and 'casa' not in destacado
+
+
+def test_pick_abierto_lleva_el_nombre_de_su_casa(lista):
+    filas, _ = lista
+    f = dict(filas[0])
+    pick = {'prob': .80, 'ref_price': 1.45, 'ref_book': 'william_hill'}
+    out = pm._con_pick(f, pick)
+    assert (out['cuota'], out['cuota_tipo'], out['casa']) == (1.45, 'publicada', 'William Hill')
+
+
+def test_nombre_casa_acepta_alias_y_casas_sin_nombre_propio():
+    assert pm.nombre_casa('onexbet') == '1xBet' and pm.nombre_casa('bet_365') == 'bet365'
+    assert pm.nombre_casa('casa_nueva') == 'Casa Nueva' and pm.nombre_casa(None) is None
+
+
+def test_destacados_resueltos_guarda_cuota_y_casa_cuando_el_destacado_las_tiene(monkeypatch):
+    from datetime import date, datetime, timezone
+    kick = datetime(2026, 11, 1, 18, tzinfo=timezone.utc)
+    base = {'league_id': 'es.la_liga', 'kickoff_utc': kick, 'home_goals': 2, 'away_goals': 1, 'home_team_id': None,
+            'away_team_id': None, 'local': 'A', 'visitante': 'B'}
+    partidos = [dict(base, match_id='con'), dict(base, match_id='sin')]
+    dest = {'market': 'totals', 'selection': 'over', 'line': 1.5, 'seleccion': 'Más de 1,5 goles', 'prob': .7, 'resultado': 'win'}
+    resp = {'con': {'destacado': dict(dest, cuota=1.47, cuota_tipo='casa', casa='bet365')},
+            'sin': {'destacado': dict(dest, cuota=1.43, cuota_tipo='justa')}}
+    monkeypatch.setattr(pm, 'query', lambda sql, params=(): partidos)
+    monkeypatch.setattr(pm, 'construir', lambda mid, *a, **k: resp[mid])
+    pm._destacados.clear()
+    items = {i['match_id']: i for i in pm.destacados_resueltos(date(2026, 11, 1))}
+    assert (items['con']['ref_price'], items['con']['ref_book']) == (1.47, 'bet365')
+    assert (items['sin']['ref_price'], items['sin']['ref_book']) == (None, None)    # cuota del modelo: no se hace pasar por la de una casa
