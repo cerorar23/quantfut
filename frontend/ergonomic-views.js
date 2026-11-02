@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=tarjeta-todos-20261102';
+import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=finalizados-futbol-20261102';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -20,6 +20,19 @@ export function createHubViews(ctx) {
         league:game?.liga?.nombre||pick.league_id,status:game?.estado||'scheduled',seal:pick.chain_sha256,sealed_at:pick.batch_date,markets:[],locked_count:0});
       events.get(pick.match_id).markets.push({id:pick.pick_key,label:'Pronóstico publicado',selection:pick.texto,probability:pick.prob,price:pick.ref_price,
         reference:pick.ref_book,odds_at:pick.odds_as_of,seal:pick.chain_sha256});
+    }
+    // Partidos ya terminados: el servidor solo manda como «próximos» los que no han empezado, así que los terminados salían solo en el
+    // panel de resultados. Su tarjeta sale del destacado resuelto de cada partido (`/markets/destacados`: una fila por partido).
+    const ligas=new Map(agenda.map(g=>[String(g.match_id).split(':')[0],g.liga?.nombre]));   // id de liga → nombre, de la agenda del día
+    for(const r of results().featured||[]) {
+      if(!r.match_id||events.has(r.match_id)||!r.local||!r.visitante||!r.kickoff_utc||!['win','loss'].includes(r.outcome))continue;
+      const game=agenda.find(g=>g.match_id===r.match_id),model=!r.ref_price&&r.prob>0&&r.prob<1;
+      events.set(r.match_id,{id:r.match_id,sport:'futbol',home:r.local,away:r.visitante,start:r.kickoff_utc,
+        home_img:game?.local?.escudo||null,away_img:game?.visitante?.escudo||null,league:game?.liga?.nombre||ligas.get(r.league_id)||r.league_id,status:'finished',
+        score:`${r.home_goals} – ${r.away_goals}`,resolved:true,locked_count:0,
+        markets:[{id:`destacado:${r.match_id}`,label:'Pronóstico destacado',selection:r.texto,probability:r.prob,
+          price:r.ref_price||(model?Math.round(100/r.prob)/100:null),model,reference:r.ref_price?'Casa registrada':'1 ÷ probabilidad',
+          featured:true,outcome:r.outcome}]});
     }
     // Los bloqueos solo usan la identidad pública del evento. Ningún valor privado se copia a la vista.
     for(const p of entry.data.alta_probabilidad?.vip||[]) {
@@ -93,7 +106,7 @@ export function createHubViews(ctx) {
   // servidor: de TODOS los mercados del partido, el de mayor probabilidad con cuota de 1,40 en adelante). Mientras se consulta no se enseña el pick sellado, para que la
   // tarjeta no cambie de selección al llegar; si la consulta falla o el partido no tiene destacado, queda el pick sellado.
   function destacadoOf(event) {
-    if(event.sport!=='futbol'||!ctx.ensureMatch)return null;
+    if(event.sport!=='futbol'||event.resolved||!ctx.ensureMatch)return null;
     const entry=ctx.ensureMatch(event.id);
     if(entry.status==='loading')return {loading:true};
     const d=entry.status==='ready'?featuredMarket(entry.data.ficha?.mercados):null;
@@ -126,7 +139,7 @@ export function createHubViews(ctx) {
 
   // Cifras del encabezado: solo cuentan lo que ya publicó el servidor.
   function summary(onDay,source) {
-    const published=onDay.filter(e=>e.markets.length);
+    const published=onDay.filter(e=>e.markets.length&&!e.resolved);
     const upcoming=published.filter(e=>e.status!=='finished'&&new Date(e.start)>new Date()).length;
     const plus=onDay.reduce((n,e)=>n+(e.locked_count||0),0);
     const resolved=resultRows(source).slice(0,50),wins=resolved.filter(r=>r.outcome==='win').length;

@@ -87,3 +87,52 @@ test('el pick sellado de un partido ya liquidado también marca el estado en la 
   const html = cards(sellado);   // cae al pick sellado (sin `outcome`): sin insignia, sin romper la cabecera
   assert.ok(html.includes('win-pk-when') && !/Acertó|Falló/.test(html));
 });
+
+// --- partidos de fútbol ya terminados: salen como tarjeta con su destacado resuelto ------------------------------------------
+
+const terminado = { match_id: 'm9', league_id: 'fr.ligue_1', kickoff_utc: '2026-10-30T19:00:00Z', local: 'Lorient', visitante: 'Brest', texto: 'Más de 1,5 goles',
+  prob: .72, ref_price: null, outcome: 'win', home_goals: 2, away_goals: 1, market: 'totals', selection: 'over', line: 1.5 };
+const sinNada = { status: 'ready', data: { agenda: home.data.agenda, alta_probabilidad: { proximos: [], vip: [] }, escalera: null, parley: null } };
+
+function tarjetasTerminadas(featured, estado = 'cerrados', pedidos = [], vista = 'home') {
+  const views = createHubViews({ state: { dayOffset: 0, sport: 'todos', homeSearch: '', homeStatus: estado }, esc: x => String(x ?? ''), ensureHome: () => sinNada,
+    addDays: () => date, localDay: d => d.toISOString().slice(0, 10), dayLabel: () => 'Hoy', realDate: () => '30 oct', realTime: () => '13:00', fmtOdds: String, fmtPct: String,
+    dayRail: () => '', liveEvidence: () => '', ensureResults: () => ({ status: 'ready', items: [], featured }),
+    ensureMatch: id => { pedidos.push(id); return { status: 'loading', data: null }; } });
+  return views[vista]();
+}
+
+test('un partido de fútbol terminado sale como tarjeta con su destacado, el marcador y Acertó en la fecha', () => {
+  const pedidos = [];
+  const html = tarjetasTerminadas([terminado], 'cerrados', pedidos);
+  assert.ok(html.includes('Lorient') && html.includes('Brest'));
+  assert.ok(html.includes('2 – 1'), 'marcador');
+  assert.ok(html.includes('Más de 1,5 goles') && html.includes('Pronóstico destacado'));
+  assert.ok(html.includes('Cuota del modelo') && html.includes('1.39'), 'sin cuota publicada: 1 ÷ probabilidad');
+  assert.ok(html.includes('<span class="badge good">Acertó</span>'), 'Acertó junto a la fecha');
+  assert.deepEqual(pedidos, [], 'ya trae su destacado: no pide la ficha');
+});
+
+test('el destacado fallado marca Falló y el filtro Próximos no enseña los terminados', () => {
+  const fallado = { ...terminado, outcome: 'loss' };
+  assert.ok(tarjetasTerminadas([fallado]).includes('<span class="badge warn">Falló</span>'));
+  const tarjetas = html => (html.match(/win-pk-card /g) || []).length;
+  assert.equal(tarjetas(tarjetasTerminadas([terminado], 'proximos')), 0);   // el panel de resultados sigue nombrando el partido; la tarjeta no
+  assert.equal(tarjetas(tarjetasTerminadas([terminado], 'todos')), 1);
+});
+
+test('los terminados no inflan «Publicados» y las filas sin resultado o sin equipos se ignoran', () => {
+  const html = tarjetasTerminadas([terminado, { ...terminado, match_id: 'x', outcome: 'push' }, { ...terminado, match_id: 'y', local: '' }], 'cerrados');
+  assert.equal((html.match(/win-pk-card /g) || []).length, 1);                 // solo el 'win'; 'push' y sin equipo se ignoran
+  assert.ok(/Publicados<\/small><strong>0</.test(tarjetasTerminadas([terminado], 'cerrados', [], 'picks')), 'Publicados sigue en 0');
+});
+
+test('la liga de un partido terminado sale con su nombre (de la agenda del día) y no con su id', () => {
+  const otra = { status: 'ready', data: { ...sinNada.data, agenda: [{ match_id: 'fr.ligue_1:2627:x-y:20261030', kickoff_utc: kickoff, liga: { id: 1, nombre: 'Ligue 1' },
+    local: { nombre: 'X' }, visitante: { nombre: 'Y' } }] } };
+  const views = createHubViews({ state: { dayOffset: 0, sport: 'todos', homeSearch: '', homeStatus: 'cerrados' }, esc: x => String(x ?? ''), ensureHome: () => otra,
+    addDays: () => date, localDay: d => d.toISOString().slice(0, 10), dayLabel: () => 'Hoy', realDate: () => '30 oct', realTime: () => '13:00', fmtOdds: String, fmtPct: String,
+    dayRail: () => '', liveEvidence: () => '', ensureResults: () => ({ status: 'ready', items: [], featured: [terminado] }), ensureMatch: () => ({ status: 'loading' }) });
+  const html = views.home();
+  assert.ok(html.includes('Ligue 1') && !html.includes('fr.ligue_1'));
+});
