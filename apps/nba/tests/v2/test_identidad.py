@@ -65,3 +65,9 @@ def test_partido_de_otra_fecha_no_es_alias(base_migrada):
     p1 = identidad.partido(db, "espn", "1", date(2026, 11, 2), loc, vis, "2026-27")
     p2 = identidad.partido(db, "nba_oficial", "2", date(2026, 11, 4), loc, vis, "2026-27")
     assert p1 != p2
+
+
+def test_temporada_de_una_fecha():
+    assert identidad.temporada(date(2026, 11, 2)) == "2026-27"
+    assert identidad.temporada(date(2027, 4, 12)) == "2026-27"
+    assert identidad.temporada(date(2099, 10, 1)) == "2099-00"

@@ -42,7 +42,9 @@ class CuotaNueva:
     captura_id: int | None = None
 
 
-def guardar_datos(db, filas: Iterable[DatoNuevo]) -> int:
+def guardar_datos(db, filas: Iterable[DatoNuevo], solo_cambios: bool = False) -> int:
+    """Con `solo_cambios`, omite la fila si el último valor visible de la misma fuente y clave es idéntico:
+    `nba.dato_a_las` ya devuelve ese valor mientras no cambie, así que repetirlo solo ocuparía espacio."""
     filas = list(filas)
     metricas = {nombre: (mid, res) for mid, nombre, res in db.execute(
         "SELECT metrica_id, nombre, resolucion FROM nba.metrica")}
@@ -52,6 +54,13 @@ def guardar_datos(db, filas: Iterable[DatoNuevo]) -> int:
     insertadas = 0
     for f in filas:
         metrica_id, resolucion = metricas[f.metrica]
+        if solo_cambios and db.execute(
+                "SELECT (valor IS NOT DISTINCT FROM %s AND etiqueta IS NOT DISTINCT FROM %s) FROM nba.dato "
+                "WHERE partido_id = %s AND entidad_id = %s AND periodo = %s AND metrica_id = %s AND fase = %s "
+                "AND fuente = %s AND recibido_en <= %s ORDER BY recibido_en DESC, dato_id DESC LIMIT 1",
+                (f.valor, f.etiqueta, f.partido_id, f.entidad_id, f.periodo, metrica_id, f.fase, f.fuente,
+                 f.recibido_en)).fetchone() in [(True,)]:
+            continue
         conflicto = False
         if resolucion == "prioridad" and f.valor is not None:
             conflicto = db.execute(

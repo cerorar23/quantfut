@@ -81,3 +81,9 @@ def partido(db, fuente: str, id_en_fuente: str, fecha_et: date, local: int, visi
     nombre = f"{fecha_et.isoformat()} #{visitante}@{local}"
     return _insertar(db, "partido", fuente, id_en_fuente, nombre, canonica_id=fila[0] if fila else None,
                      atributos=atributos, fecha_et=fecha_et, temporada=temporada)
+
+
+def temporada(fecha_et: date) -> str:
+    """Temporada NBA de una fecha ET: de septiembre en adelante empieza la del año en curso."""
+    inicio = fecha_et.year if fecha_et.month >= 9 else fecha_et.year - 1
+    return f"{inicio}-{(inicio + 1) % 100:02d}"

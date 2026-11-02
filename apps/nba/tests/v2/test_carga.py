@@ -91,3 +91,15 @@ def test_guardar_cuotas_es_idempotente(mundo):
     assert carga.guardar_cuotas(db, [c]) == 1
     assert carga.guardar_cuotas(db, [c]) == 0
     assert cuenta(db, "nba.cuota") == 1
+
+
+def test_solo_cambios_omite_repetidos_y_guarda_cambios(mundo):
+    db, p, j = mundo
+    kw = dict(metrica="estado_disponibilidad", fase="pre", fuente="rotowire", valor=0.5, etiqueta="Ques")
+    t = lambda h: datetime(2026, 11, 1, h, 0, tzinfo=UTC)
+    assert carga.guardar_datos(db, [fila(p, j, recibido=t(10), **kw)], solo_cambios=True) == 1
+    assert carga.guardar_datos(db, [fila(p, j, recibido=t(11), **kw)], solo_cambios=True) == 0   # igual que el último
+    cambio = dict(kw, valor=0.0, etiqueta="Out")
+    assert carga.guardar_datos(db, [fila(p, j, recibido=t(12), **cambio)], solo_cambios=True) == 1
+    assert carga.guardar_datos(db, [fila(p, j, recibido=t(13), **kw)], solo_cambios=True) == 1    # vuelve a Ques: es cambio
+    assert cuenta(db) == 3
