@@ -163,3 +163,15 @@ def test_objeto_corrupto_queda_como_captura_fallida_sin_cuotas(base_migrada, tmp
     assert not r["ok"] and r["fallidos"] == 1
     assert db.execute("SELECT count(*) FROM nba.cuota").fetchone()[0] == 0
     assert "hash" in db.execute("SELECT error FROM nba.captura WHERE NOT ok").fetchone()[0]
+
+
+def test_recorrer_desde_el_principio_no_duplica_capturas_ya_cargadas(base_migrada, tmp_path):
+    db = base_migrada
+    raiz = archivo(tmp_path, LOTES)
+    pl.capturar(db, raiz, T)
+    capturas = db.execute("SELECT count(*) FROM nba.captura").fetchone()[0]
+    cuotas_n = db.execute("SELECT count(*) FROM nba.cuota").fetchone()[0]
+    r = pl.capturar(db, raiz, T, desde_id=0)
+    assert r["lotes"] == 0 and r["ultimo_id"] == LOTES[-1]["request_id"]
+    assert db.execute("SELECT count(*) FROM nba.captura").fetchone()[0] == capturas
+    assert db.execute("SELECT count(*) FROM nba.cuota").fetchone()[0] == cuotas_n

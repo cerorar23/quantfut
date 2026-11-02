@@ -170,6 +170,10 @@ def capturar(db, raiz_archivo: Path, ahora: datetime, max_lotes: int = 40, desde
     for rid, recibido, sha, ruta in lotes:
         recibido_en = datetime.fromisoformat(recibido)
         objetivo = f"propline:{rid}"
+        if db.execute("SELECT EXISTS (SELECT 1 FROM nba.captura WHERE fuente = %s AND objetivo = %s AND ok)",
+                      (FUENTE, objetivo)).fetchone()[0]:
+            resumen["ultimo_id"] = rid
+            continue  # ya cargado: permite recorrer el archivo desde el principio sin duplicar capturas
         try:
             cuerpo = gzip.open(raiz_archivo / ruta).read()
             if hashlib.sha256(cuerpo).hexdigest() != sha:
