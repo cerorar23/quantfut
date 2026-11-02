@@ -3146,7 +3146,7 @@ Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adap
 - [ ] Cierres de The Odds API / SharpAPI solo para partidos sin cierre en PropLine ni en el histórico.
 - [ ] Verificar el primer box score real (noche del 2-nov) y el gasto de créditos.
 
-### NBA — rediseño completo, Sprint 1b-D: cajas y partes históricos (2026-11-03)
+### NBA — rediseño completo, Sprint 1b-D: cajas y partes históricos (2026-11-02)
 - [x] Cajas finales 2021-26 (2,7 M filas) y partes oficiales de lesiones (2.726 partes) a `nba.dato`, sin créditos. 150 pruebas v2.
 - [ ] Reducir los 113 jugadores ambiguos usando el equipo y la temporada como pista.
 - [ ] Rotaciones/quintetos históricos y jugada a jugada histórica (solo hacia adelante por decisión; revisar si basta con SportsDataverse).

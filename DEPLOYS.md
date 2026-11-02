@@ -33,7 +33,7 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
-### 2026-11-03 00:15 UTC · NBA: cajas finales y partes oficiales de lesiones 2021-26 en `nba_datos` (imagen `nba-captura:cdecc6c`) · SOLO base de datos y archivos, rama `nba/rediseno-s0`
+### 2026-11-02 23:10 UTC · NBA: cajas finales y partes oficiales de lesiones 2021-26 en `nba_datos` (imagen `nba-captura:cdecc6c`) · SOLO base de datos y archivos, rama `nba/rediseno-s0`
 - Archivos que ya existían en el PC (sin créditos), copiados a `~/nba-isolated/nba-captura/historico/` con hash verificado: `players.jsonl.gz` y `games.json` de nba_extended_box (cajas por jugador y por equipo) y los dos `reports.jsonl.gz` de partes oficiales ya extraídos de los PDF (816 + 1.910 partes). Ensayados antes con la misma carga en un Postgres desechable local.
 - Carga única (`captura.py historico`, pasos `juegos,cajas,partes`, contenedor de una vez): 2.696.246 filas de caja final (166.632 jugador-partido, 12.828 equipo-partido; 2021-22 a 2025-26, regular, play-in y playoffs; 1.229 a 1.316 juegos por temporada) con `pit = reconstruido` y `recibido_en` = fecha de adquisición del archivo; 2.726 partes oficiales (150.693 filas nuevas tras descartar repeticiones) con la hora del propio parte como `recibido_en`. A quien no jugó solo se le guarda `jugo = 0`, sin estadísticas en cero.
 - Resultado: base de 2,2 GB (disco del VPS al 61 %); 3.868 juegos tienen a la vez cuota de cierre y caja final (insumo del análisis contra el mercado); jugadores canónicos 1.242, **113 marcados ambiguos** (mismo nombre normalizado en varios ids: no se fusionan por duda; queda por mejorar con el equipo como pista).
