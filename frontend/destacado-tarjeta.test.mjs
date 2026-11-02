@@ -144,3 +144,25 @@ test('el partido terminado usa el escudo que manda el servidor y, si no hay, las
   assert.ok(html.includes('is-mono'), 'el visitante sin escudo queda con iniciales');
   assert.ok(!tarjetasTerminadas([terminado]).includes('<img src="/web/escudos/'), 'sin escudo en el servidor no se inventa ninguno');
 });
+
+// --- la cuota del destacado es la de una casa y la tarjeta dice cuál -------------------------------------------------------
+
+test('el destacado con cuota de casa enseña «Cuota de la casa» y su nombre, no «del modelo»', () => {
+  const html = cards({ status: 'ready', data: { ficha: { mercados: { destacado: { ...destacado, cuota: 1.46, cuota_tipo: 'casa', casa: 'William Hill' } } }, picks: [] } });
+  assert.ok(html.includes('Cuota de la casa'));
+  assert.ok(html.includes('William Hill'));
+  assert.ok(html.includes('1.46'));
+  assert.ok(!html.includes('Cuota del modelo') && !html.includes('1 ÷ probabilidad'));
+});
+
+test('el destacado publicado sin pick a mano toma la casa que manda el servidor', () => {
+  const html = cards({ status: 'ready', data: { ficha: { mercados: { destacado: { ...destacado, cuota: 1.5, cuota_tipo: 'publicada', casa: 'Betano' } } }, picks: [] } });
+  assert.ok(html.includes('Cuota publicada') && html.includes('Betano'));
+});
+
+test('el partido terminado enseña la casa de su cuota; sin casa guarda el precio del modelo', () => {
+  const conCasa = tarjetasTerminadas([{ ...terminado, ref_price: 1.47, ref_book: 'bet365' }]);
+  assert.ok(conCasa.includes('bet365') && conCasa.includes('1.47') && conCasa.includes('Cuota publicada'));
+  const sinCasa = tarjetasTerminadas([terminado]);
+  assert.ok(sinCasa.includes('Cuota del modelo') && sinCasa.includes('1 ÷ probabilidad'));
+});
