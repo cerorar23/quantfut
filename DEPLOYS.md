@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-02 20:00 UTC · NBA: capturas Rotowire y ESPN hacia `nba_datos` (imagen `nba-captura:8bfe3c6`) · cron del usuario `qf`, rama `nba/rediseno-s0`
+- Imagen `nba-captura:8bfe3c6` (Python 3.12 slim, usuario 1001, `--read-only`, sin capacidades, 256 MiB, red `nba-red`) construida en `~/nba-isolated/nba-captura/build` desde el código de la rama; `imagen_actual` apunta a ella. Las tres imágenes de la jornada (`fb397c8`, `71d2ff9`, `8bfe3c6`) siguen en el servidor.
+- Usuario de base `nba_captura` (LOGIN, miembro de `nba_escritor`: solo INSERT). Su contraseña y `ZENROWS_API_KEY` (copiada de la configuración del scraper, tope `NBA_ZENROWS_TOPE_DIARIO=30`) están solo en `captura.env` (modo 600).
+- Cron nuevo (3 líneas, respaldo previo en `~/nba-isolated/nba-captura/crontab.before-20261102`): `*/30` Rotowire, `*/15` ESPN (lee el ledger de `run57` en solo lectura) y `15 9` respaldo diario con `pg_dump -Fc` (7 conservados). Registro en `~/.local/share/quantfut/nba_captura.log`.
+- Carga inicial: 10.177 recibos de `run57` (8-oct a 2-nov) en lotes de 200, 22.493 filas, 156 partidos, 433 jugadores canónicos, 0 ambiguos, 0 conflictos; 1ª captura de Rotowire: 15 partidos, 1.599 filas. Los ciclos de cron de las 19:45 y 20:00 se ejecutaron solos y ESPN tomó el recibo nuevo (seq 10178).
+- Hallazgo: Rotowire solo da gratis los minutos proyectados del equipo visitante (los del local devuelven «debes ser suscriptor»); el colector pide solo los visitantes y no rodea la restricción.
+- Respaldo probado: `pg_restore` a una base temporal dio los mismos conteos (22.493 / 931 / 3.019); copia fuera del VPS en `Documentsespaldos_nba` del PC del titular con `scripts/respaldo_nba_vps.ps1` (a mano; sin tarea programada).
+- Sin tocar: los 8 contenedores previos conservan nombre, id e imagen; `run57` solo se lee. No se escribió ni leyó la base de fútbol.
+- **Vuelta atrás:** `crontab ~/nba-isolated/nba-captura/crontab.before-20261102` (quita las líneas NBA); `docker rmi` de las imágenes y borrar `~/nba-isolated/nba-captura` si se quiere deshacer todo. Los datos ya cargados son solo-anexar y se quedan en `nba_datos`.
+
 ### 2026-11-02 19:45 UTC · NBA: base propia `nba_datos` (contenedor `nba-db`, vacía) · SOLO host y contenedor nuevo, rama `nba/rediseno-s0` (`e29e746`)
 - Contenedor `nba-db` (`postgres:16-alpine`, sin puerto publicado, 512 MiB, `restart: unless-stopped`) en el proyecto Compose `nba-db`, red `nba-red` y volumen `nba_db_datos`; base `nba_datos`, usuario administrador `nba_admin`. Archivos en `~/nba-isolated/nba-db/` (`apps/nba/{ops/nba-db,db,src}` con los mismos hashes que el repositorio; `.env` y `migrar.env` con la contraseña, modo 600, solo en el servidor).
 - Migraciones 0001-0005 aplicadas con `python -m nba.v2.migrar` desde un contenedor temporal `python:3.12-slim` en `nba-red`: 7 tablas `nba.*`, 9 fuentes, 34 métricas, `nba.dato_a_las`, roles de grupo `nba_escritor` y `nba_lector`. Verificado en el servidor: `DELETE`/`TRUNCATE ... CASCADE` rechazados por los disparadores, `dato_a_las(now())` devuelve 0 filas, 0 puertos publicados.

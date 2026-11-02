@@ -3121,3 +3121,9 @@ Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adap
 - [x] Adaptador ESPN sobre el ledger de run57 (`fuentes/espn.py`): calendario, marcadores finales y lesiones, con «sin_reporte» cuando un jugador deja de figurar. 83 pruebas v2 en verde.
 - [ ] S1b: parte oficial NBA (PDF), cdn.nba.com/stats.nba.com (final), cuotas, backfill desde `.local/normalized`.
 - [ ] S1c: imagen `nba-captura`, cron en el VPS, usuarios de login, respaldo diario fuera del VPS (antes de cargar datos).
+
+### NBA — rediseño completo, Sprint 1c: captura en el VPS (2026-11-02)
+- [x] Imagen `nba-captura`, ejecutor `nba.v2.captura`, usuario `nba_captura`, cron (Rotowire 30 min, ESPN 15 min), respaldo diario con restauración probada. Ver DEPLOYS.md.
+- [x] Carga inicial desde run57: 22.493 filas (8-oct a 2-nov). Rotowire hacia adelante (solo minutos del visitante: los del local son de pago).
+- [ ] Programar en el PC la copia fuera del VPS (`scripts/respaldo_nba_vps.ps1`) si el titular lo quiere (tarea programada de Windows).
+- [ ] S1b: parte oficial NBA (PDF), cdn/stats (final), cuotas, backfill de `.local/normalized`.

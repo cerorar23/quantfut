@@ -6852,3 +6852,12 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: los adaptadores no hacen red; reciben `obtener(url)`. Un error o un 403 deja una captura `ok = false` y ningún dato imputado; los minutos nulos de Rotowire no se rellenan.
 - Hallazgo: ESPN omite `athlete.id` en las lesiones; el id se saca del enlace público del jugador. Rotowire usa los tricodes oficiales; ESPN usa GS/NO/NY/SA/UTAH/WSH.
 - Pendiente: S1b y S1c; nada de S1 está desplegado todavía.
+
+## 2026-11-02 — Rotowire/ESPN a `nba_datos` (Sprint 1c)
+
+- Decisión: Rotowire entrega gratis los minutos proyectados solo del visitante; el endpoint del local responde «debes ser suscriptor». No se paga ni se rodea: se piden solo los visitantes y el aviso de pago queda como captura fallida con su texto.
+- Decisión: el colector prueba siempre la petición directa (gratis) y usa ZenRows solo ante 403/429/503 y con tope diario (30 créditos); hoy ni Rotowire desde el VPS ni la prueba local necesitaron pago.
+- Decisión: ESPN se procesa en lotes de 200 recibos y el estado (`estado_espn.json`) avanza tras confirmar cada lote; un fallo a mitad no pierde el avance ni repite lo ya cargado.
+- Hallazgo: en pretemporada ESPN trae rivales que no son de la NBA (p. ej. «LON»); esos partidos se omiten en lugar de abortar la carga.
+- Hallazgo: `docker exec` sin `-i` no pasa la entrada estándar, y un `pg_restore -l` así falla con «input file is too short»; la prueba de restauración usa `-i`.
+- Pendiente: ninguna captura es de pago salvo el respaldo; falta programar la copia fuera del VPS en el PC del titular y S1b.
