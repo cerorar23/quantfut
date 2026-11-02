@@ -1,5 +1,8 @@
 # Registro de decisiones — QuantFut
 
+## 2-nov-2026 · El destacado de la web sale de todas las opciones y `main` vuelve a ser el frontend de producción
+Orden del titular: resolver el aviso de que `main` no coincidía con producción y que la tarjeta de fútbol use todos los mercados y diga en la fecha si acertó o falló. **Por qué la causa era una rama sin fusionar:** `web/destacado-en-tarjeta` se desplegó el 30-oct pero nunca se subió a GitHub; fusionarla recuperó el frontend real y, de paso, el pie de página y el estado Acertó/Falló bajo el destacado que `main` tenía y producción no. **Por qué opciones complementarias solo en la web:** `filas_goles` listaba el lado más probable de cada mercado (la lista de la app), de modo que «Menos de 1,5» o los otros resultados del 1X2 no podían ser nunca el destacado; añadirlas en `construir(web=True)` cumple «todos los mercados» sin cambiar la lista ni los conteos de la app. Córners, tarjetas y 1.ª mitad siguen con sus líneas validadas históricamente. Efecto colateral: los destacados del historial público se recalculan.
+
 ## 2-nov-2026 · Destacado de la web sin tope: se aplicó sobre el frontend real de producción, no sobre el de main
 Orden del titular: cuota mínima 1,40 y sin tope (antes 1,40-1,80). **Por qué un parche archivo a archivo:** la comparación con el contenedor mostró que el frontend en producción lleva cambios del 30-oct (`app.js`, `ergonomic-views.js`) que `main` no tiene; copiar los archivos de `main` los habría revertido. Se aplicó el diff del PR sobre las copias del contenedor (sin ambigüedad: una coincidencia por reemplazo) y se verificó por hash en el dominio real. El tope pasa a `None` (viaja como `null` en `rango`) en vez de infinito porque JSON no admite infinito.
 
