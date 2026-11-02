@@ -161,3 +161,20 @@ def guardar_cuotas_lote(db, filas: list) -> int:
         [(c.partido_id, c.fuente, c.casa, c.mercado, c.periodo, c.entidad_id, c.linea, c.lado, c.cuota, c.contrato_id,
           c.fase, c.captura_id, c.recibido_en) for c in filas], returning=False)
     return cursor.rowcount
+
+
+def guardar_datos_lote(db, filas: list[DatoNuevo]) -> int:
+    """Carga masiva (históricos): sin comparar con otras fuentes ni con el valor anterior; idempotente por la clave única."""
+    if not filas:
+        return 0
+    metricas = {nombre: mid for mid, nombre in db.execute("SELECT metrica_id, nombre FROM nba.metrica")}
+    for f in filas:
+        if f.metrica not in metricas:
+            raise KeyError(f.metrica)
+    cursor = db.cursor()
+    cursor.executemany(
+        "INSERT INTO nba.dato (partido_id, entidad_id, periodo, metrica_id, valor, etiqueta, fase, fuente, captura_id, "
+        "recibido_en, pit, conflicto) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,false) ON CONFLICT DO NOTHING",
+        [(f.partido_id, f.entidad_id, f.periodo, metricas[f.metrica], f.valor, f.etiqueta, f.fase, f.fuente, f.captura_id,
+          f.recibido_en, f.pit) for f in filas], returning=False)
+    return cursor.rowcount

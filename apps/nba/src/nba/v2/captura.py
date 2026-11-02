@@ -13,7 +13,7 @@ from pathlib import Path
 import sys
 
 from . import migrar
-from .fuentes import espn, historico_cuotas, nba_cdn, parte_oficial, propline, rotowire
+from .fuentes import espn, historico_cuotas, historico_partidos, nba_cdn, parte_oficial, propline, rotowire
 
 
 LOTE_ESPN = 200
@@ -76,13 +76,19 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
             if "NBA_HISTORICO_DIR" not in entorno:
                 raise FaltaVariable("NBA_HISTORICO_DIR")
             carpeta = Path(entorno["NBA_HISTORICO_DIR"])
+            pasos = set(entorno.get("NBA_HISTORICO_PASOS", "juegos,betsapi,props,h2h,cajas,partes").split(","))
             resumen = {"ok": True}
             for paso, ruta, cargar in (("juegos", "games.json", historico_cuotas.cargar_juegos),
                                        ("betsapi", "betsapi_odds.jsonl.gz", historico_cuotas.cargar_betsapi),
                                        ("props", "props_linked.jsonl.gz", historico_cuotas.cargar_props),
                                        ("h2h", "oddsapi_h2h", historico_cuotas.cargar_h2h)):
-                if (carpeta / ruta).exists():
+                if paso in pasos and (carpeta / ruta).exists():
                     resumen[paso] = cargar(db, carpeta / ruta)
+            if "cajas" in pasos and (carpeta / "games.json").exists() and (carpeta / "players.jsonl.gz").exists():
+                resumen["cajas"] = historico_partidos.cargar_cajas(db, carpeta)
+            partes = [r for r in (carpeta / "partes_final.jsonl.gz", carpeta / "partes_t60.jsonl.gz") if r.exists()]
+            if "partes" in pasos and partes:
+                resumen["partes"] = historico_partidos.cargar_partes(db, partes)
         elif fuente == "parte":
             resumen = parte_oficial.capturar(db, obtener or parte_oficial.obtener_http, raiz / "originales", ahora)
         elif fuente == "nba":
