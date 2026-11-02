@@ -6886,3 +6886,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: en el histórico de props la línea forma parte del contrato porque un mismo jugador, casa y foto trae varias líneas.
 - Error mío: la vista `cuota_margen` de la migración 0004 estaba mal para hándicaps y solo se vio con datos reales; la corrige la 0007. Lección: probar las vistas con datos reales de cada mercado antes de dar un sprint por cerrado.
 - Medida: 3,25 M de filas históricas cargadas en ≈ 7 min; la base ocupa ≈ 290 bytes por cuota con índices.
+
+## 2026-11-03 — Cajas y partes históricos (Sprint 1b-D)
+
+- Decisión: las cajas históricas se cargan en bloque (`guardar_datos_lote`, sin comparar con otras fuentes ni con el valor anterior) porque no hay solape en el tiempo con las capturas hacia adelante; los partes sí van con «solo cambios» y en orden cronológico.
+- Decisión: `recibido_en` de la caja final es la adquisición del archivo y `pit = reconstruido`; las consultas históricas filtran por fecha de juego. Los partes usan la hora del parte.
+- Medida: 2,7 M de filas de caja en ≈ 6 min y 657 mil filas de partes en ≈ 8 min (con «solo cambios» quedan 150 mil); ≈ 300 bytes por fila con índices.
+- Pendiente: 113 jugadores ambiguos (nombre repetido sin equipo como pista) y la unión entre ids de ESPN/Rotowire y los de la NBA depende de ello.
