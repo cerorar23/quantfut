@@ -23,3 +23,11 @@ def canonico(fuente: str, abreviatura: str) -> str:
     if codigo not in TRICODES:
         raise KeyError(f"equipo desconocido en {fuente}: {abreviatura}")
     return codigo
+
+# Identificador numérico de equipo en ESPN → código oficial (medido en el marcador del 2-nov-2026).
+ESPN_IDS = {
+    "1": "ATL", "17": "BKN", "2": "BOS", "30": "CHA", "4": "CHI", "5": "CLE", "6": "DAL", "7": "DEN", "8": "DET",
+    "9": "GSW", "10": "HOU", "11": "IND", "12": "LAC", "13": "LAL", "29": "MEM", "14": "MIA", "15": "MIL",
+    "16": "MIN", "3": "NOP", "18": "NYK", "25": "OKC", "19": "ORL", "20": "PHI", "21": "PHX", "22": "POR",
+    "24": "SAS", "23": "SAC", "28": "TOR", "26": "UTA", "27": "WAS",
+}

@@ -1,0 +1,472 @@
+{
+ "timestamp": "2026-11-02T18:34:19Z",
+ "status": "success",
+ "season": {
+  "year": 2027,
+  "type": 2,
+  "name": "Regular Season",
+  "displayName": "2026-27"
+ },
+ "injuries": [
+  {
+   "id": "30",
+   "displayName": "Charlotte Hornets",
+   "injuries": [
+    {
+     "id": "537114",
+     "longComment": "Williams has yet to suit up during the 2026-27 campaign. There hasn't been much revealed about his health. However, unti",
+     "shortComment": "Williams (hamstring) is listed as out for Monday's game against the Pistons.",
+     "status": "Out",
+     "date": "2026-11-01T22:17Z",
+     "athlete": {
+      "firstName": "Grant",
+      "lastName": "Williams",
+      "displayName": "Grant Williams",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/4066218/grant-williams",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Hamstring",
+      "location": "Leg",
+      "side": "Right",
+      "returnDate": "2026-11-09"
+     }
+    },
+    {
+     "id": "537108",
+     "longComment": "Knueppel is still dealing with a left hamstring injury. While he is moving in the right direction, he will remain out fo",
+     "shortComment": "Knueppel (hamstring) is listed as out for Monday's game versus the Pistons.",
+     "status": "Out",
+     "date": "2026-11-01T22:08Z",
+     "athlete": {
+      "firstName": "Kon",
+      "lastName": "Knueppel",
+      "displayName": "Kon Knueppel",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/5061575/kon-knueppel",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Hamstring",
+      "location": "Leg",
+      "side": "Left",
+      "returnDate": "2026-11-09"
+     }
+    }
+   ]
+  },
+  {
+   "id": "5",
+   "displayName": "Cleveland Cavaliers",
+   "injuries": [
+    {
+     "id": "537106",
+     "longComment": "Watson is battling soreness in his right hamstring, an ailment that has put his status for Monday's contest in jeopardy.",
+     "shortComment": "Watson (hamstring) is questionable to play in Monday's game against Oklahoma City.",
+     "status": "Day-To-Day",
+     "date": "2026-11-01T21:57Z",
+     "athlete": {
+      "firstName": "Peyton",
+      "lastName": "Watson",
+      "displayName": "Peyton Watson",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/4576087/peyton-watson",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "6",
+      "name": "INJURY_STATUS_DAYTODAY",
+      "description": "day-to-day",
+      "abbreviation": "DD"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "GTD",
+       "abbreviation": "GTD"
+      },
+      "type": "Hamstring",
+      "location": "Leg",
+      "detail": "Soreness",
+      "side": "Right",
+      "returnDate": "2026-11-02"
+     }
+    },
+    {
+     "id": "537104",
+     "longComment": "A right ankle sprain will keep Tyson sidelined for a second consecutive contest. His next chance to suit up will come We",
+     "shortComment": "Tyson (ankle) has been ruled out for Monday's game against Oklahoma City.",
+     "status": "Out",
+     "date": "2026-11-01T21:50Z",
+     "athlete": {
+      "firstName": "Jaylon",
+      "lastName": "Tyson",
+      "displayName": "Jaylon Tyson",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/4683747/jaylon-tyson",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Ankle",
+      "location": "Leg",
+      "detail": "Sprain",
+      "side": "Right",
+      "returnDate": "2026-11-04"
+     }
+    }
+   ]
+  },
+  {
+   "id": "8",
+   "displayName": "Detroit Pistons",
+   "injuries": [
+    {
+     "id": "537196",
+     "longComment": "Jones was unable to shake his questionable tag and will miss his fourth straight game. His next chance to play comes Wed",
+     "shortComment": "Joe (hip) is out for Monday against the Hornets.",
+     "status": "Out",
+     "date": "2026-11-02T17:35Z",
+     "athlete": {
+      "firstName": "Isaiah",
+      "lastName": "Joe",
+      "displayName": "Isaiah Joe",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/4395702/isaiah-joe",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Hip",
+      "location": "Torso",
+      "detail": "Bruise",
+      "side": "Right",
+      "returnDate": "2026-11-04"
+     }
+    },
+    {
+     "id": "535976",
+     "longComment": "Duren suffered the hamstring injury in Friday's win over Miami and is set to miss an extended period. Paul Reed is expec",
+     "shortComment": "Duren will be re-evaluated in two weeks due to a right hamstring strain, Eric Vincent of ClutchPoints.com reports.",
+     "status": "Out",
+     "date": "2026-10-25T14:56Z",
+     "athlete": {
+      "firstName": "Jalen",
+      "lastName": "Duren",
+      "displayName": "Jalen Duren",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/4433621/jalen-duren",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Hamstring",
+      "location": "Leg",
+      "detail": "Strain",
+      "side": "Right",
+      "returnDate": "2026-11-09"
+     }
+    }
+   ]
+  },
+  {
+   "id": "25",
+   "displayName": "Oklahoma City Thunder",
+   "injuries": [
+    {
+     "id": "537137",
+     "longComment": "Sorber has yet to appear in a game for the Thunder after the franchise selected him with the 15th overall pick in the 20",
+     "shortComment": "Oklahoma City exercised the third-year team option on Sorber (knee) on Sunday, Clemente Almanza of USA Today reports.",
+     "status": "Out",
+     "date": "2026-11-02T00:54Z",
+     "athlete": {
+      "firstName": "Thomas",
+      "lastName": "Sorber",
+      "displayName": "Thomas Sorber",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/5061603/thomas-sorber",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "returnDate": "2026-11-04"
+     }
+    },
+    {
+     "id": "536873",
+     "longComment": "Wallace is expected to miss most, if not all, of the season. However, there's still a chance he will return late in the ",
+     "shortComment": "Wallace underwent surgery Friday to repair a torn labrum in his left shoulder and will be re-evaluated before the end of the regular season, Clemente Almanza of USA Today reports.",
+     "status": "Out",
+     "date": "2026-10-31T01:16Z",
+     "athlete": {
+      "firstName": "Cason",
+      "lastName": "Wallace",
+      "displayName": "Cason Wallace",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/4683692/cason-wallace",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Shoulder",
+      "location": "Arm",
+      "detail": "Surgery",
+      "side": "Left",
+      "returnDate": "2027-03-02"
+     }
+    },
+    {
+     "id": "536870",
+     "longComment": "This is another massive blow to an Oklahoma City squad that's already set to be without Jalen Williams (leg) and Cason W",
+     "shortComment": "Holmgren underwent a biological treatment Friday to address a small patellar tendon tear and will miss at least 8-10 weeks, Nick Crain of Slam reports.",
+     "status": "Out",
+     "date": "2026-10-31T01:02Z",
+     "athlete": {
+      "firstName": "Chet",
+      "lastName": "Holmgren",
+      "displayName": "Chet Holmgren",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nba/player/_/id/4433255/chet-holmgren",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ]
+     },
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "side": "Right",
+      "returnDate": "2027-01-02"
+     }
+    }
+   ]
+  }
+ ]
+}

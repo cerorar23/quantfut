@@ -3113,3 +3113,11 @@ Plan técnico docs/nba_rediseno_plan_tecnico_20261102.md (D1-D6 aprobadas) y pla
 - [x] `apps/nba/ops/nba-db/compose.yml` (contenedor propio, sin puerto publicado) validado como YAML.
 - [ ] Desplegar `nba-db` en el VPS (DEPLOYS.md, confirmación del titular, usuarios de login, vuelta atrás) y probar el compose con `docker compose config` allí.
 - [ ] 3 fallos previos en `apps/nba/tests/test_paper_bundle.py` (reloj de los workers; el código no se tocó en esta rama).
+
+### NBA — rediseño completo, Sprint 1a: carga y adaptadores (2026-11-02)
+Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adaptadores, sin créditos), S1b (parte oficial, cdn/stats, cuotas, backfill) y S1c (contenedor de captura, cron, usuarios de login, respaldo).
+- [x] `nba.v2.carga` (carga idempotente, `solo_cambios`, conflicto marcado, originales con hash), `nba.v2.equipos` (30 tricodes y alias de ESPN), `nba.v2.identidad` (alias sin falsas fusiones).
+- [x] Adaptador Rotowire (`fuentes/rotowire.py`): quinteto esperado, probabilidad de jugar, árbitros y minutos proyectados; probado con páginas reales (15 partidos).
+- [x] Adaptador ESPN sobre el ledger de run57 (`fuentes/espn.py`): calendario, marcadores finales y lesiones, con «sin_reporte» cuando un jugador deja de figurar. 83 pruebas v2 en verde.
+- [ ] S1b: parte oficial NBA (PDF), cdn.nba.com/stats.nba.com (final), cuotas, backfill desde `.local/normalized`.
+- [ ] S1c: imagen `nba-captura`, cron en el VPS, usuarios de login, respaldo diario fuera del VPS (antes de cargar datos).

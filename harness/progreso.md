@@ -6843,3 +6843,12 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: la huella de cada migración ignora CRLF/LF; en Windows y en el VPS el mismo archivo debe dar la misma huella.
 - Decisión: el margen de las cuotas no se guarda (vista `nba.cuota_margen`) y el método de quitado de margen queda en `nba.pronostico.version_modelo`.
 - Pendiente: desplegar `nba-db` en el VPS con confirmación; el compose no se probó con Docker (no hay Docker en este PC).
+
+## 2026-11-02 — Rediseño NBA, Sprint 1a (carga y adaptadores)
+
+- Decisión: `guardar_datos(..., solo_cambios=True)` no repite una fila si el último valor visible de esa fuente y clave es idéntico; `nba.dato_a_las` ya devuelve ese valor hasta que cambie, así que guardar cada hora lo mismo solo gastaría espacio.
+- Decisión: la identidad nunca fusiona por duda. Un nombre normalizado igual solo crea alias si hay UN candidato canónico que aún no tiene fila de esa fuente; un segundo id de la misma fuente con el mismo nombre es otra persona.
+- Decisión: de ESPN lesiones solo existe la lista de quienes figuran; quien deja de figurar recibe `sin_reporte` (no «disponible»), porque la ausencia de reporte no prueba que juegue.
+- Decisión: los adaptadores no hacen red; reciben `obtener(url)`. Un error o un 403 deja una captura `ok = false` y ningún dato imputado; los minutos nulos de Rotowire no se rellenan.
+- Hallazgo: ESPN omite `athlete.id` en las lesiones; el id se saca del enlace público del jugador. Rotowire usa los tricodes oficiales; ESPN usa GS/NO/NY/SA/UTAH/WSH.
+- Pendiente: S1b y S1c; nada de S1 está desplegado todavía.
