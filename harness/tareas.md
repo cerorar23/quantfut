@@ -3152,3 +3152,10 @@ Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adap
 - [ ] Rotaciones/quintetos históricos y jugada a jugada histórica (solo hacia adelante por decisión; revisar si basta con SportsDataverse).
 - [ ] Verificar el primer box score real de cdn (noche del 2-nov) y los créditos de Scrapfly.
 - [ ] Subir la rama `nba/rediseno-s0` y programar la copia del respaldo en el PC.
+
+### NBA — rediseño completo, Sprint 2: disponibilidad y minutos (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s2_resultados_20261102.md. Biblioteca `nba.v2.distribucion/minutos/disponibilidad`, evaluación `apps/nba/ops/evaluar_s2.py`.
+- [x] Probabilidad de jugar por estado oficial medida con los partes 2021-26 (Brier 0,0266 en 2025-26, mejor que la convención inicial y que la tasa global).
+- [x] Minutos si juega: decaimiento 0,70 + residuos por tramo; prueba 2025-26: MASE 0,969, cobertura 80 % = 81,5 %, pinball −4,2 % frente a la media de 5 partidos.
+- [ ] Condicionar la probabilidad de jugar al rol (minutos esperados) y añadir compañeros ausentes, titular/banca y minutos de basura al modelo de minutos.
+- [ ] Conectar `instantanea` (lectura punto en el tiempo) con estos módulos para producir escenarios por partido real; hoy son biblioteca sin despliegue.

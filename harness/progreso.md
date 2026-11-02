@@ -6893,3 +6893,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: `recibido_en` de la caja final es la adquisición del archivo y `pit = reconstruido`; las consultas históricas filtran por fecha de juego. Los partes usan la hora del parte.
 - Medida: 2,7 M de filas de caja en ≈ 6 min y 657 mil filas de partes en ≈ 8 min (con «solo cambios» quedan 150 mil); ≈ 300 bytes por fila con índices.
 - Pendiente: 113 jugadores ambiguos (nombre repetido sin equipo como pista) y la unión entre ids de ESPN/Rotowire y los de la NBA depende de ello.
+
+## 2026-11-02 — Sprint 2: disponibilidad y minutos
+
+- Decisión: la probabilidad de jugar sale de medir los partes contra quién jugó (no de una convención). Mi convención inicial era peor (Brier 0,0289 frente a 0,0266 de la tabla medida) y los partes cambian de significado con los años (Probable pasó de 93 % a 71 %), así que la tabla se vuelve a medir cada temporada.
+- Decisión: el decaimiento de los minutos se eligió con 2023-24 y 2024-25 (0,70); con el 0,90 que puse al principio el modelo solo igualaba a la media de 5 partidos. La incertidumbre sale de residuos por tramo de minutos esperados, no de las muestras del historial (daban 74,7 % de cobertura en el intervalo del 80 %).
+- Hallazgo: quien no figura en la caja cuenta como que no jugó; si se excluyen esos casos «Questionable» parece jugar el 80 %, cuando en realidad es ≈ 43 %. Sesgo de selección que hay que evitar en cualquier evaluación de disponibilidad.
+- Límite: Available (84 %) y «sin parte» (84 %) mezclan titulares y fondo de plantilla; falta condicionar al rol.
