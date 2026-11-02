@@ -3127,3 +3127,9 @@ Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adap
 - [x] Carga inicial desde run57: 22.493 filas (8-oct a 2-nov). Rotowire hacia adelante (solo minutos del visitante: los del local son de pago).
 - [ ] Programar en el PC la copia fuera del VPS (`scripts/respaldo_nba_vps.ps1`) si el titular lo quiere (tarea programada de Windows).
 - [ ] S1b: parte oficial NBA (PDF), cdn/stats (final), cuotas, backfill de `.local/normalized`.
+
+### NBA — rediseño completo, Sprint 1b-A: parte oficial y final del partido (2026-11-02)
+- [x] Parte oficial (PDF) a `nba.dato` cada 15 min (gratis) y final de cdn.nba.com (marcador, box score, jugada a jugada) con tope de 25 créditos/día. 124 pruebas v2.
+- [ ] Verificar esta noche (≈ 02:00-04:30 UTC) el primer box score y jugada a jugada reales en `nba_datos` y el gasto de créditos del día.
+- [ ] Respaldo de `stats.nba.com` por ZenRows (D6) si Scrapfly se agota; no implementado.
+- [ ] S1b-B cuotas (archivo PropLine) y S1b-C backfill de `.local/normalized`.

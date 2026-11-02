@@ -6861,3 +6861,11 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Hallazgo: en pretemporada ESPN trae rivales que no son de la NBA (p. ej. «LON»); esos partidos se omiten en lugar de abortar la carga.
 - Hallazgo: `docker exec` sin `-i` no pasa la entrada estándar, y un `pg_restore -l` así falla con «input file is too short»; la prueba de restauración usa `-i`.
 - Pendiente: ninguna captura es de pago salvo el respaldo; falta programar la copia fuera del VPS en el PC del titular y S1b.
+
+## 2026-11-02 — Parte oficial y final del partido (Sprint 1b-A)
+
+- Decisión: un juego es único por (fecha ET, local, visitante). Una misma fuente puede traer ids distintos del mismo juego (el PDF no trae id y se usa uno sintético; cdn trae el real), así que el alias se decide por esa tupla y los datos siempre se escriben bajo el canónico más antiguo.
+- Decisión: el id real de la NBA se reconoce por su forma (10 dígitos); los ids sintéticos del PDF no cuentan.
+- Decisión: el presupuesto de Scrapfly se mide por día UTC con tope 25, y un archivo se reintenta como mucho dos veces (en la prueba real 14 de 30 peticiones a cdn fallaron y se cobraron).
+- Hallazgo: el CDN de los PDF responde 403 (no 404) cuando el PDF de esa hora aún no existe; desde el VPS responde igual que desde el PC, así que no hace falta proxy.
+- Error mío: probé la identidad con fixtures donde el PDF no existía y no vi el choque entre ids sintético y real hasta el despliegue; quedaron 15 canónicos duplicados inertes (la evidencia no se borra).

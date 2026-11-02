@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-02 20:50 UTC · NBA: parte oficial de lesiones (PDF) y final del partido (cdn.nba.com) hacia `nba_datos` (imagen `nba-captura:3b2335c`) · cron del usuario `qf`, rama `nba/rediseno-s0`
+- Migración `0006_metricas_parte_oficial_y_final` aplicada con el ejecutor (3 métricas: `motivo_disponibilidad`, `reporte_no_enviado`, `jugo`). Imagen nueva con `pdfplumber==0.11.9`; `imagen_actual` apunta a `3b2335c`.
+- Cron nuevo (2 líneas, respaldo previo en `~/nba-isolated/nba-captura/crontab.before-s1b-20261102`): `*/15` `parte` (PDF oficial, directo y gratis desde el VPS; el CDN responde 403 mientras el PDF de esa hora no existe) y `*/15` `nba` (final del partido por Scrapfly con ASP, ≈1 crédito por archivo, **tope 25 créditos por día UTC** en `NBA_SCRAPFLY_TOPE_DIARIO`; como mucho 2 intentos por archivo; marcador del día una vez desde las 10:00 ET; box score de cada final 10 min después de que ESPN lo dé por final; jugada a jugada con lo que quede de presupuesto). `SCRAPFLY_API_KEY` se copió de la configuración del scraper del VPS a `captura.env` (modo 600).
+- Créditos gastados hoy: 3 (muestras para escribir el adaptador) + 1 (marcador del día). Saldo de Scrapfly al medir: 672 de 1.000 hasta el 30-nov.
+- Primera captura real del parte: 2 PDF (1:30 y 2:30 PM ET), 232 filas. El marcador del día dio los 15 id reales de la NBA; todos se asocian a su juego por fecha y equipos.
+- Error corregido durante el despliegue: la primera versión creó 15 partidos canónicos duplicados con el id de la NBA (la regla «una fuente, un alias» chocaba con el id sintético del PDF). La evidencia no se borra: esos 15 registros quedan inertes (sin datos) y la nueva lógica une cada juego por (fecha ET, local, visitante) y siempre usa el canónico más antiguo.
+- Sin verificar todavía de extremo a extremo: la captura de un box score y jugada a jugada reales (las pruebas usan muestras reales de cdn, pero el primer final de hoy ocurre esta noche, ≈ 02:00-04:30 UTC).
+- Sin tocar: contenedores previos, `run57` (solo lectura), base de fútbol.
+- **Vuelta atrás:** `crontab ~/nba-isolated/nba-captura/crontab.before-s1b-20261102` (quita las dos líneas); los datos cargados son solo-anexar.
+
 ### 2026-11-02 20:00 UTC · NBA: capturas Rotowire y ESPN hacia `nba_datos` (imagen `nba-captura:8bfe3c6`) · cron del usuario `qf`, rama `nba/rediseno-s0`
 - Imagen `nba-captura:8bfe3c6` (Python 3.12 slim, usuario 1001, `--read-only`, sin capacidades, 256 MiB, red `nba-red`) construida en `~/nba-isolated/nba-captura/build` desde el código de la rama; `imagen_actual` apunta a ella. Las tres imágenes de la jornada (`fb397c8`, `71d2ff9`, `8bfe3c6`) siguen en el servidor.
 - Usuario de base `nba_captura` (LOGIN, miembro de `nba_escritor`: solo INSERT). Su contraseña y `ZENROWS_API_KEY` (copiada de la configuración del scraper, tope `NBA_ZENROWS_TOPE_DIARIO=30`) están solo en `captura.env` (modo 600).
