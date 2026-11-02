@@ -155,7 +155,9 @@ def _finales_pendientes(db, ahora: datetime, dias: int = 3) -> list[tuple[int, s
     desde = (ahora.astimezone(ET) - timedelta(days=dias)).date()
     return db.execute(
         "SELECT p.entidad_id, a.id_en_fuente, min(d.recibido_en) FROM nba.entidad p "
-        "JOIN nba.entidad a ON a.canonica_id = p.entidad_id AND a.fuente = %s AND a.tipo = 'partido' AND a.id_en_fuente ~ '^[0-9]{10}$' "
+        "JOIN nba.entidad a ON a.fuente = %s AND a.tipo = 'partido' AND a.id_en_fuente ~ '^[0-9]{10}$' "
+        "AND a.fecha_juego_et = p.fecha_juego_et AND a.atributos->>'local' = p.atributos->>'local' "
+        "AND a.atributos->>'visitante' = p.atributos->>'visitante' "
         "JOIN nba.dato d ON d.partido_id = p.entidad_id AND d.entidad_id = p.entidad_id AND d.fase = 'final' "
         "JOIN nba.metrica m ON m.metrica_id = d.metrica_id AND m.nombre = 'estado_partido' AND d.etiqueta = 'final' "
         "WHERE p.tipo = 'partido' AND p.canonica_id = p.entidad_id AND p.fecha_juego_et >= %s "
@@ -195,8 +197,9 @@ def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, t
                         "AND recibido_en > %s)", (FUENTE, URL_MARCADOR, ahora - timedelta(hours=20))).fetchone()[0]
     sin_id = db.execute(
         "SELECT count(*) FROM nba.entidad p WHERE p.tipo = 'partido' AND p.canonica_id = p.entidad_id AND p.fecha_juego_et = %s "
-        "AND NOT EXISTS (SELECT 1 FROM nba.entidad a WHERE a.canonica_id = p.entidad_id AND a.fuente = %s "
-        "AND a.id_en_fuente ~ '^[0-9]{10}$')", (ahora_et.date(), FUENTE)).fetchone()[0]
+        "AND NOT EXISTS (SELECT 1 FROM nba.entidad a WHERE a.fuente = %s AND a.tipo = 'partido' "
+        "AND a.id_en_fuente ~ '^[0-9]{10}$' AND a.fecha_juego_et = p.fecha_juego_et "
+        "AND a.atributos->>'local' = p.atributos->>'local' AND a.atributos->>'visitante' = p.atributos->>'visitante')", (ahora_et.date(), FUENTE)).fetchone()[0]
     if ahora_et.hour >= 10 and not ya_hoy and sin_id > 0 and _fallos_recientes(db, URL_MARCADOR, ahora) < max_fallos:
         r = pedir(URL_MARCADOR)
         if r is not None:

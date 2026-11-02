@@ -71,3 +71,24 @@ def test_temporada_de_una_fecha():
     assert identidad.temporada(date(2026, 11, 2)) == "2026-27"
     assert identidad.temporada(date(2027, 4, 12)) == "2026-27"
     assert identidad.temporada(date(2099, 10, 1)) == "2099-00"
+
+
+def test_misma_fuente_con_dos_ids_del_mismo_juego_cae_en_el_mismo_canonico(base_migrada):
+    db = base_migrada
+    loc, vis = identidad.equipo(db, "CLE"), identidad.equipo(db, "OKC")
+    a = identidad.partido(db, "nba_oficial", "2026-11-02:OKC@CLE", date(2026, 11, 2), loc, vis, "2026-27")   # id del PDF
+    b = identidad.partido(db, "nba_oficial", "0022600158", date(2026, 11, 2), loc, vis, "2026-27")           # id real
+    assert a == b
+
+
+def test_un_canonico_duplicado_ya_existente_no_desvia_los_datos(base_migrada):
+    db = base_migrada
+    loc, vis = identidad.equipo(db, "CLE"), identidad.equipo(db, "OKC")
+    primero = identidad.partido(db, "espn", "401", date(2026, 11, 2), loc, vis, "2026-27")
+    # Situación heredada de un error anterior: un segundo canónico para el mismo juego (la evidencia no se borra).
+    duplicado = db.execute(
+        "INSERT INTO nba.entidad (tipo, fuente, id_en_fuente, nombre, fecha_juego_et, temporada, atributos) VALUES "
+        "('partido','nba_oficial','0022600158','dup',%s,'2026-27',%s) RETURNING entidad_id",
+        (date(2026, 11, 2), '{"local": %d, "visitante": %d}' % (loc, vis))).fetchone()[0]
+    assert duplicado != primero
+    assert identidad.partido(db, "nba_oficial", "0022600158", date(2026, 11, 2), loc, vis, "2026-27") == primero

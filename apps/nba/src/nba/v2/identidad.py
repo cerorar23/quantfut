@@ -68,19 +68,28 @@ def arbitro(db, fuente: str, id_en_fuente: str, nombre: str) -> int:
     return _persona(db, "arbitro", fuente, id_en_fuente, nombre)
 
 
+def _juego_canonico(db, fecha_et: date, local: int, visitante: int) -> int | None:
+    """El partido canónico más antiguo de ese día y esos equipos (en la NBA no hay dobles jornadas)."""
+    return db.execute(
+        "SELECT min(entidad_id) FROM nba.entidad WHERE tipo = 'partido' AND canonica_id = entidad_id "
+        "AND fecha_juego_et = %s AND (atributos->>'local')::bigint = %s AND (atributos->>'visitante')::bigint = %s",
+        (fecha_et, local, visitante)).fetchone()[0]
+
+
 def partido(db, fuente: str, id_en_fuente: str, fecha_et: date, local: int, visitante: int, temporada: str) -> int:
+    """Un juego es único por (fecha ET, local, visitante): todas las fuentes y todos sus ids caen en el mismo canónico,
+    aunque una misma fuente use ids distintos (p. ej. el id sintético del PDF y el id real de cdn.nba.com)."""
+    canonico = _juego_canonico(db, fecha_et, local, visitante)
     previa = _existente(db, "partido", fuente, id_en_fuente)
-    if previa:
-        return previa
-    atributos = {"local": local, "visitante": visitante}
-    fila = db.execute(
-        "SELECT c.entidad_id FROM nba.entidad c WHERE c.tipo = 'partido' AND c.canonica_id = c.entidad_id "
-        "AND c.fecha_juego_et = %s AND (c.atributos->>'local')::bigint = %s AND (c.atributos->>'visitante')::bigint = %s "
-        "AND NOT EXISTS (SELECT 1 FROM nba.entidad a WHERE a.canonica_id = c.entidad_id AND a.fuente = %s)",
-        (fecha_et, local, visitante, fuente)).fetchone()
-    nombre = f"{fecha_et.isoformat()} #{visitante}@{local}"
-    return _insertar(db, "partido", fuente, id_en_fuente, nombre, canonica_id=fila[0] if fila else None,
-                     atributos=atributos, fecha_et=fecha_et, temporada=temporada)
+    if canonico is None:
+        return previa or _insertar(db, "partido", fuente, id_en_fuente, f"{fecha_et.isoformat()} #{visitante}@{local}",
+                                   atributos={"local": local, "visitante": visitante}, fecha_et=fecha_et,
+                                   temporada=temporada)
+    if previa is None:
+        _insertar(db, "partido", fuente, id_en_fuente, f"{fecha_et.isoformat()} #{visitante}@{local}",
+                  canonica_id=canonico, atributos={"local": local, "visitante": visitante}, fecha_et=fecha_et,
+                  temporada=temporada)
+    return canonico
 
 
 def temporada(fecha_et: date) -> str:
