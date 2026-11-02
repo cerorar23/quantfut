@@ -110,9 +110,12 @@ def parsear_lineups(texto: str) -> PaginaRW:
 
 
 def parsear_minutos(texto_json: str) -> list[MinutosRW]:
+    datos = json.loads(texto_json)
+    if not isinstance(datos, list):  # p. ej. {"error": "...suscriptor..."}: contenido de pago, no se rodea
+        raise ValueError(f"minutos no disponibles: {datos.get('error', datos) if isinstance(datos, dict) else datos}")
     return [MinutosRW(id_rw=str(x["id"]), nombre=x["name"], equipo=x["team"], proy=x["proj"], promedio=x["avg"],
                       minimo=x["min"], maximo=x["max"], desviacion=x["stdev"], lineup=x["lineup"], estado=x["inj"])
-            for x in json.loads(texto_json)]
+            for x in datos]
 
 
 def a_filas_lineups(db, pagina: PaginaRW, partido: PartidoRW, recibido_en: datetime, captura_id: int) -> list[DatoNuevo]:
@@ -194,7 +197,7 @@ def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, v
     (como mucho una vez cada `espera_min`); nunca imputa lo que la fuente no entrega.
     `obtener(url)` devuelve (estado, cuerpo) o (estado, cuerpo, créditos de pago)."""
 
-    def pedir(url: str, fase: str = "pre"):
+    def pedir(url: str, fase: str = "pre", validar=None):
         try:
             respuesta = obtener(url)
         except Exception as e:  # red caída, tiempo agotado...
@@ -207,6 +210,15 @@ def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, v
             carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase=fase, solicitado_en=ahora, ok=False,
                                     http_status=estado, recibido_en=ahora, creditos=creditos)
             return None
+        if validar is not None:
+            try:
+                validar(cuerpo.decode("utf-8"))
+            except ValueError as e:
+                ruta, huella = carga.guardar_original(raiz, FUENTE, cuerpo, ahora)
+                carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase=fase, solicitado_en=ahora, ok=False,
+                                        recibido_en=ahora, http_status=200, sha256=huella, bytes_=len(cuerpo),
+                                        ruta=ruta, error=str(e)[:300], creditos=creditos)
+                return None
         ruta, huella = carga.guardar_original(raiz, FUENTE, cuerpo, ahora)
         captura = carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase=fase, solicitado_en=ahora, ok=True,
                                           recibido_en=ahora, http_status=200, sha256=huella, bytes_=len(cuerpo),
@@ -229,11 +241,12 @@ def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, v
         partido_id = filas[0].partido_id
         inicio = inicio_utc(pagina.fecha, partido.hora_et)
         en_ventana = inicio is None or timedelta(0) <= inicio - ahora <= timedelta(hours=ventana_h)
-        for tricode in (partido.visitante, partido.local) if en_ventana else ():
+        # Rotowire solo da gratis los minutos del equipo visitante; los del local son de pago y no se piden.
+        for tricode in (partido.visitante,) if en_ventana else ():
             url = URL_MINUTOS + tricode
             if _ya_capturado_hace_menos_de(db, url, ahora, espera_min):
                 continue
-            r = pedir(url)
+            r = pedir(url, validar=parsear_minutos)
             if r is not None:
                 filas += a_filas_minutos(db, partido_id, parsear_minutos(r[1]), ahora, r[0])
         datos += carga.guardar_datos(db, filas, solo_cambios=True)

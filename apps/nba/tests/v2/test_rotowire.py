@@ -160,7 +160,7 @@ def test_minutos_solo_dentro_de_la_ventana_antes_del_salto(base_migrada, tmp_pat
     assert minutos_pedidos(visitas) == []
     obtener, visitas = espiado(CUERPOS)
     rotowire.capturar(base_migrada, obtener, tmp_path, AHORA + timedelta(hours=5))   # faltan 3 h
-    assert minutos_pedidos(visitas) == ["CHI", "CLE", "OKC", "PHI"]
+    assert minutos_pedidos(visitas) == ["CHI", "OKC"]            # solo visitantes (los locales son de pago)
 
 
 def test_minutos_no_se_piden_despues_del_salto(base_migrada, tmp_path):
@@ -173,13 +173,13 @@ def test_minutos_respetan_la_espera_entre_capturas(base_migrada, tmp_path):
     ahora = AHORA + timedelta(hours=6)
     obtener, visitas = espiado(CUERPOS)
     rotowire.capturar(base_migrada, obtener, tmp_path, ahora)
-    assert len(minutos_pedidos(visitas)) == 4
+    assert len(minutos_pedidos(visitas)) == 2
     obtener, visitas = espiado(CUERPOS)
     rotowire.capturar(base_migrada, obtener, tmp_path, ahora + timedelta(minutes=30))
     assert minutos_pedidos(visitas) == [] and rotowire.URL_LINEUPS in visitas        # la página sí se repite
     obtener, visitas = espiado(CUERPOS)
     rotowire.capturar(base_migrada, obtener, tmp_path, ahora + timedelta(minutes=61))
-    assert len(minutos_pedidos(visitas)) == 4
+    assert len(minutos_pedidos(visitas)) == 2
 
 
 def test_creditos_de_pago_quedan_en_la_captura(base_migrada, tmp_path):
@@ -207,3 +207,16 @@ def test_respaldo_de_pago_solo_ante_bloqueo_y_con_presupuesto():
     assert rotowire.con_respaldo(lambda u: (200, b"x"), pago, True)("u") == (200, b"x", 0)      # no hace falta
     assert rotowire.con_respaldo(lambda u: (404, b"x"), pago, True)("u") == (404, b"x", 0)      # 404 no es bloqueo
     assert len(llamadas) == 1
+
+
+def test_minutos_de_pago_se_registran_como_captura_fallida_sin_datos(base_migrada, tmp_path):
+    cuerpos = dict(CUERPOS)
+    cuerpos[rotowire.URL_MINUTOS + "OKC"] = (200, b'{"error":"You must be a paid subscriber to view projected minutes."}')
+    obtener, _ = espiado(cuerpos)
+    r = rotowire.capturar(base_migrada, obtener, tmp_path, AHORA + timedelta(hours=5))
+    assert r["ok"]
+    fallo = base_migrada.execute("SELECT ok, error FROM nba.captura WHERE objetivo = %s",
+                                 (rotowire.URL_MINUTOS + "OKC",)).fetchone()
+    assert fallo[0] is False and "paid subscriber" in fallo[1]
+    assert base_migrada.execute("SELECT count(*) FROM nba.dato d JOIN nba.metrica m USING (metrica_id) "
+                                "WHERE m.nombre = 'minutos_proyectados'").fetchone()[0] > 0   # el otro visitante (CHI)
