@@ -1,4 +1,4 @@
-"""Ejecutor de capturas a `nba_datos`: `python -m nba.v2.captura rotowire|espn|parte|nba|propline` (lo lanza el cron del VPS).
+"""Ejecutor de capturas a `nba_datos`: `python -m nba.v2.captura rotowire|espn|parte|nba|propline|historico` (lo lanza el cron del VPS).
 
 Entorno: NBA_DB_DSN (obligatorio), NBA_CAPTURA_DIR (originales y estado, por omisión /datos),
 NBA_RUN57_DIR (carpeta captures de run57, solo para espn),
@@ -13,7 +13,7 @@ from pathlib import Path
 import sys
 
 from . import migrar
-from .fuentes import espn, nba_cdn, parte_oficial, propline, rotowire
+from .fuentes import espn, historico_cuotas, nba_cdn, parte_oficial, propline, rotowire
 
 
 LOTE_ESPN = 200
@@ -72,6 +72,17 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
             resumen = propline.capturar(db, Path(entorno["NBA_PROPLINE_DIR"]), ahora,
                                         max_lotes=int(entorno.get("NBA_PROPLINE_LOTES", "40")),
                                         desde_id=int(desde) if desde else None)
+        elif fuente == "historico":
+            if "NBA_HISTORICO_DIR" not in entorno:
+                raise FaltaVariable("NBA_HISTORICO_DIR")
+            carpeta = Path(entorno["NBA_HISTORICO_DIR"])
+            resumen = {"ok": True}
+            for paso, ruta, cargar in (("juegos", "games.json", historico_cuotas.cargar_juegos),
+                                       ("betsapi", "betsapi_odds.jsonl.gz", historico_cuotas.cargar_betsapi),
+                                       ("props", "props_linked.jsonl.gz", historico_cuotas.cargar_props),
+                                       ("h2h", "oddsapi_h2h", historico_cuotas.cargar_h2h)):
+                if (carpeta / ruta).exists():
+                    resumen[paso] = cargar(db, carpeta / ruta)
         elif fuente == "parte":
             resumen = parte_oficial.capturar(db, obtener or parte_oficial.obtener_http, raiz / "originales", ahora)
         elif fuente == "nba":
@@ -91,8 +102,8 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
 def principal(argv: list[str] | None = None, entorno: Mapping[str, str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     entorno = os.environ if entorno is None else entorno
-    if len(argv) != 1 or argv[0] not in ("rotowire", "espn", "parte", "nba", "propline"):
-        print("uso: python -m nba.v2.captura rotowire|espn|parte|nba|propline", file=sys.stderr)
+    if len(argv) != 1 or argv[0] not in ("rotowire", "espn", "parte", "nba", "propline", "historico"):
+        print("uso: python -m nba.v2.captura rotowire|espn|parte|nba|propline|historico", file=sys.stderr)
         return 2
     try:
         resumen = ejecutar(argv[0], entorno, datetime.now(UTC))

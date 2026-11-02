@@ -148,3 +148,16 @@ def guardar_eventos(db, filas: Iterable[EventoNuevo]) -> int:
              e.x, e.y, e.acierto, e.puntos, e.marcador_local, e.marcador_visit, e.captura_id, e.recibido_en))
         insertadas += cursor.rowcount
     return insertadas
+
+
+def guardar_cuotas_lote(db, filas: list) -> int:
+    """Carga masiva (históricos): una sola sentencia preparada por lote; idempotente por la clave única."""
+    if not filas:
+        return 0
+    cursor = db.cursor()
+    cursor.executemany(
+        "INSERT INTO nba.cuota (partido_id, fuente, casa, mercado, periodo, entidad_id, linea, lado, cuota, contrato_id, "
+        "fase, captura_id, recibido_en) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+        [(c.partido_id, c.fuente, c.casa, c.mercado, c.periodo, c.entidad_id, c.linea, c.lado, c.cuota, c.contrato_id,
+          c.fase, c.captura_id, c.recibido_en) for c in filas], returning=False)
+    return cursor.rowcount

@@ -85,3 +85,18 @@ def test_ejecutar_propline_desde_un_archivo(base_migrada_dsn, tmp_path):
     r = captura.ejecutar("propline", env, AHORA)
     assert r["ok"] and r["lotes"] == 3 and contar(base_migrada_dsn, "cuota") > 0
     assert captura.principal(["propline"], {"NBA_DB_DSN": base_migrada_dsn}) == 2          # falta NBA_PROPLINE_DIR
+
+
+def test_ejecutar_historico_desde_una_carpeta(base_migrada_dsn, tmp_path):
+    import shutil
+    fix = Path(__file__).parent / "fixtures"
+    shutil.copy(fix / "historico_juegos.json", tmp_path / "games.json")
+    shutil.copy(fix / "historico_betsapi.jsonl", tmp_path / "betsapi_odds.jsonl.gz.tmp")
+    import gzip
+    with gzip.open(tmp_path / "betsapi_odds.jsonl.gz", "wt", encoding="utf8") as f:
+        f.write((fix / "historico_betsapi.jsonl").read_text(encoding="utf8"))
+    env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path / "datos"), "NBA_HISTORICO_DIR": str(tmp_path)}
+    r = captura.ejecutar("historico", env, AHORA)
+    assert r["ok"] and r["juegos"]["juegos"] == 2 and r["betsapi"]["nuevas"] > 100 and "props" not in r
+    r2 = captura.ejecutar("historico", env, AHORA)
+    assert r2["betsapi"]["nuevas"] == 0
