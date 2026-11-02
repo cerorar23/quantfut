@@ -21,9 +21,13 @@ Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin f
 - [ ] SharpAPI (plan Free, solo DraftKings/FanDuel, sin histórico): captura a T-60 de los mercados que PropLine no tiene (mitades, HT/FT, marcador exacto, primer equipo en marcar, goleadores, tiros de jugador, córners por mitad). Crédito «Data provided by SharpAPI» desde el 1-dic si se muestran.
 - [ ] Remedir el acierto con cuotas reales cada semana hasta tener ≥ 500 partidos (hoy 128 a T-60, ±8 puntos).
 - [ ] Props de jugador: recalibración Platt por temporadas anteriores; los pases derivan entre temporadas (usar la cruda). Faltan cuotas históricas de jugador.
-- [ ] F5 motor A: A4 plus-minus por tramos con xG, A5 rotación/carga 30 días, A6 bajas, A7 entrenador, con lo previo al partido de db/099 (no con bajas reconstruidas).
+- [x] F5 motor A (2-nov, §14.3): A3 (definición y portero), A4 (fuerza del once), A5 (rotación), A6 (habituales ausentes) y A7 (entrenador nuevo) medidos con el once real; efectos con el signo esperado pero ≤ 0,0012 de log-loss (A4 sin efecto): no se activa nada. Repetir con el once capturado a T-60 (`previo`, db/099) cuando haya meses.
 - [ ] Motor C: reajuste del nivel de liga dentro de la temporada y comparación hacia delante con PropLine (córners y tarjetas).
-- [ ] Decidir con el titular si A0 *score-driven* sustituye a DC de producción (hoy empate técnico).
+- [x] Decisión (2-nov): se queda Dixon-Coles; A0 *score-driven* empata y no justifica cambiar lo que sellan los picks.
+- [x] Cuota mínima del titular (2-nov): 1,40 hacia arriba. Las cifras definitivas del rediseño usan 1,40 (§14.2): con todas las líneas la mejor opción de cada partido acierta 74,5 % [69,1; 79,2] (n = 286, T-60) frente a 67,8 % anunciado; con una sola línea (bet365) ≈ 65 % el 10 % mejor del día.
+- [ ] Titular: el destacado de la web usa 1,40-1,80 (`api/partido_mercados.py: RANGO_DESTACADO` y `frontend/*`); si «hacia arriba» significa quitar el tope de 1,80, es un cambio aparte con despliegue de la web.
+- [ ] Medición semanal: `python scripts/rediseno_futbol/remedir_semana.py` (solo lectura del servidor) hasta ≥ 500 partidos a T-60 (hoy 286).
+- [ ] C4 conteos de equipo (tiros, a puerta, faltas, fueras de juego): sin hacer, ninguna lista del titular los pide.
 
 ## 1-nov-2026 · Retirar el código de las fuentes retiradas (rama `retirar/fuentes-todo`, todo en uno, nada desplegado)
 Decisión del titular (1-nov): API-Football, Apify, PitchAPI, BetsAPI, worldfootballR/FBref, football-data y soccerway/365scores quedan fuera; se borran sus claves y referencias, **los datos ya cargados se conservan** (tablas, archivos del VPS, migraciones). Mapa de dependencias medido con el grafo de imports de `src/qf` sobre `main` `e097691`: la mayoría del código viejo sigue enganchado a jobs activos, así que se retira por fases.

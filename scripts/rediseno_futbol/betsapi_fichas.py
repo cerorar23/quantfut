@@ -67,6 +67,7 @@ def main() -> None:
     ap.add_argument("--pred", default=".local/rediseno_20261101")
     ap.add_argument("--ligas", default=",".join(B.LIGAS))
     ap.add_argument("--sufijo", default="")
+    ap.add_argument("--cuota-min", type=float, default=1.40, help="cuota mínima de las opciones publicables")
     a = ap.parse_args()
     raiz, d, dp = Path(a.raiz), Path(a.datos), Path(a.pred)
     partidos = pd.read_csv(d / "partidos.csv.gz", parse_dates=["kickoff_utc"])
@@ -172,16 +173,16 @@ def main() -> None:
     o = pd.DataFrame(filas)
     o.to_csv(raiz / f"fichas_opciones{a.sufijo}.csv.gz", index=False)
     print("\nMercado | partidos | margen medio | casa anuncia / ocurre (todas las opciones) | opción más probable: acierto, anuncia, cuota"
-          " | ≥1,28: n, acierto, anuncia")
+          f" | ≥{a.cuota_min}: n, acierto, anuncia")
     for mk, g in o.groupby("mercado"):
         n_p = g["match_id"].nunique()
         marg = (g.assign(i=1 / g["cuota"]).groupby(["match_id", g["grupo"].fillna("")])["i"].sum() - 1).mean()
         mejor = g.sort_values("casa", ascending=False).drop_duplicates("match_id")
-        x = mejor[mejor["cuota"] >= 1.28]
+        x = mejor[mejor["cuota"] >= a.cuota_min]
         lo, hi = wilson(mejor["acierto"].sum(), len(mejor))
         print(f"{mk:44s} {n_p:4d} partidos | margen {marg:.3f} | todas: {g['casa'].mean():.3f}/{g['acierto'].mean():.3f} | más probable: "
               f"{mejor['acierto'].mean():.3f} [{lo:.2f};{hi:.2f}] anuncia {mejor['casa'].mean():.3f} cuota {mejor['cuota'].mean():.2f} | "
-              f"≥1,28: n {len(x)} {x['acierto'].mean() if len(x) else np.nan:.3f} anuncia {x['casa'].mean() if len(x) else np.nan:.3f}")
+              f"≥{a.cuota_min}: n {len(x)} {x['acierto'].mean() if len(x) else np.nan:.3f} anuncia {x['casa'].mean() if len(x) else np.nan:.3f}")
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ from qf.model.calibration import score_matrices
 from qf.model.devig import devig
 
 DESDE = "2026-10-23"
-CUOTA_MIN = 1.28
+CUOTA_MIN = 1.40  # decisión del titular (2-nov-2026); --cuota-min la cambia
 MERCADOS = ["h2h", "double_chance", "spreads", "totals", "btts", "team_totals_home", "team_totals_away", "corners",
             "corners_home", "corners_away", "cards"]
 
@@ -118,8 +118,11 @@ def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
     ap.add_argument("--datos", default=".local/rediseno_20261101b")
+    ap.add_argument("--cuota-min", type=float, default=1.40, help="cuota mínima de las opciones publicables")
     ap.add_argument("--pred", default=".local/rediseno_20261101")
     a = ap.parse_args()
+    global CUOTA_MIN
+    CUOTA_MIN = a.cuota_min
     d, dp = Path(a.datos), Path(a.pred)
     datos = R.cargar(d)
     df = R.tabla_partidos(datos)
@@ -200,7 +203,7 @@ def main() -> None:
             print(sel.round(3).to_string(index=False))
             top1 = mejor[mejor.groupby("dia")[fuente].rank(ascending=False, method="first") == 1]
             print(f"   1 por día: n {len(top1)}, acierto {top1['acierto'].mean():.3f}, anunciado {top1[fuente].mean():.3f}")
-            print("   calibración de TODAS las opciones con cuota ≥ 1,28:")
+            print(f"   calibración de TODAS las opciones con cuota ≥ {CUOTA_MIN}:")
             print(calibracion_alta(x[fuente].to_numpy(), x["acierto"].to_numpy(), cortes=(0.5, 0.6, 0.7, 0.8, 1.0001))
                   .round(3).to_string(index=False))
         # honestidad de cada casa: todas las opciones que cotiza (cualquier cuota), tramo 0,6–0,8 y Brier

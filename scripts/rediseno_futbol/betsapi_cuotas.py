@@ -27,7 +27,7 @@ from qf.model.calibration import score_matrices
 from qf.model.devig import devig
 
 EVAL = pd.Timestamp("2024-07-01", tz="UTC")
-CUOTA_MIN = 1.28
+CUOTA_MIN = 1.40  # decisión del titular (2-nov-2026); --cuota-min la cambia
 
 
 def fase1(raiz: Path, ligas: list[str], suf: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -81,9 +81,12 @@ def main() -> None:
     ap.add_argument("--raiz", default=".local/betsapi_futbol")
     ap.add_argument("--datos", default=".local/rediseno_20261101b")
     ap.add_argument("--pred", default=".local/rediseno_20261101")
+    ap.add_argument("--cuota-min", type=float, default=1.40, help="cuota mínima de las opciones publicables")
     ap.add_argument("--ligas", default=",".join(B.LIGAS), help="subconjunto de ligas, separadas por coma")
     ap.add_argument("--sufijo", default="", help="sufijo de los archivos de caché si se usa un subconjunto")
     a = ap.parse_args()
+    global CUOTA_MIN
+    CUOTA_MIN = a.cuota_min
     raiz, d, dp = Path(a.raiz), Path(a.datos), Path(a.pred)
     partidos = pd.read_csv(d / "partidos.csv.gz", parse_dates=["kickoff_utc"])
     ev, tk = fase1(raiz, a.ligas.split(","), a.sufijo)
@@ -200,7 +203,7 @@ def main() -> None:
 
 def informe(o: pd.DataFrame) -> None:
     x = o[o["cuota"] >= CUOTA_MIN]
-    print("\n   Por mercado: la opción más probable de cada partido con cuota ≥ 1,28")
+    print(f"\n   Por mercado: la opción más probable de cada partido con cuota ≥ {CUOTA_MIN}")
     filas = []
     for mk, g in x.groupby("mercado"):
         for fuente in ("casa", "motor"):
