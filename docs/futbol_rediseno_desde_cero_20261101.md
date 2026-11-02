@@ -517,3 +517,15 @@ Coincide con §12 (74,7 % al cierre con PropLine) y confirma que **la escalera d
    adelante) o una captura propia con la API de bet365.
 5. **Nada de esto está cargado en la base**: `odds_snapshots` no admite borrar ni modificar, así que cargar BetsAPI
    (≈ 12 millones de lecturas) o el respaldo de API-Football exige tu visto bueno y un diseño previo (qué ventana y qué casas).
+
+### 13.6 Mezcla casa + motor validada fuera de muestra, y carga en la base (2-nov)
+Con el peso elegido en 2024/25 y evaluado en 2025/26 (log-loss, IC95 por bloques de partido), la mezcla solo mejora de verdad
+en los mercados de la **1.ª parte**: hándicap 1.ª parte −0,0060 [±0,0035] a T-60 y −0,0050 [±0,0036] al cierre (w = 0,5);
+goles 1.ª parte −0,0057 [±0,0026] al cierre (w = 0,4). En hándicap (−0,0009 [±0,0018]) y goles totales no se distingue de cero;
+en córners (+0,0004 a +0,0006) empeora algo; en 1X2 y descanso el peso es 0. **La mezcla queda reducida a hándicap y goles
+de la 1.ª parte (peso 0,4–0,5); en los demás mercados se publica la probabilidad de la casa.**
+
+Las cuotas se cargaron en la base como **`futbol.cuota_historica`** (db/101, 1.033.331 filas, 351 MB, inmutable), no en
+`odds_snapshots`: varias lecturas (CLV, API, `daily.py`, entrenamiento) no filtran por fuente y cuotas retroactivas habrían
+cambiado resultados ya medidos. Apertura, T-60 y cierre/último de BetsAPI (bet365) y API-Football más la lectura del minuto 65-70
+de córners; los cambios intermedios siguen en el archivo del VPS. Registro del despliegue en `DEPLOYS.md`.
