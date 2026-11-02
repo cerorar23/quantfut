@@ -34,6 +34,7 @@ Pedido del titular (1-nov): rehacer todo el rediseño con la data nueva, **sin f
 - [x] El frontend de `main` vuelve a ser el de producción (PR #235, 2-nov): se fusionó `web/destacado-en-tarjeta`; los archivos de texto del frontend coinciden por hash con el contenedor.
 - [x] Tarjeta de fútbol con el destacado de todos los mercados y Acertó/Falló en la fecha (PR #235, desplegado).
 - [ ] Ver a ojo la tarjeta de fútbol con pick solo de pago cuando haya picks de fútbol próximos publicados.
+- [x] Partidos de fútbol terminados como tarjeta en Pronósticos → Finalizados (PR #237, desplegado: 43 tarjetas el 1-nov, 31 acertadas y 12 falladas).
 - [ ] Medición semanal: `python scripts/rediseno_futbol/remedir_semana.py` (solo lectura del servidor) hasta ≥ 500 partidos a T-60 (hoy 286).
 - [ ] C4 conteos de equipo (tiros, a puerta, faltas, fueras de juego): sin hacer, ninguna lista del titular los pide.
 
