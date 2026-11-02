@@ -336,3 +336,45 @@ def test_destacados_resueltos_usa_el_analisis_sin_picks_y_solo_cuenta_los_resuel
     assert items[0]['outcome'] == 'win' and items[0]['prob'] == 0.6956 and items[0]['ref_price'] is None
     assert all(v == ({}, False, True) for v in vistos.values())
     assert pedido['params'][0] == datetime(2026, 10, 25, tzinfo=timezone.utc)
+
+
+# --- el destacado de la web elige entre TODAS las opciones de los mercados de goles --------------------
+
+def test_complementarias_son_el_otro_lado_y_las_otras_lineas_sin_repetir(lista):
+    filas, _ = lista
+    ya = {f['id'] for f in filas}
+    extra = pm.filas_complementarias(LAM, MU, RHO, 'Local FC', 'Visita FC', set(ya))
+    todas = filas + extra
+    ids = [f['id'] for f in todas]
+    assert len(ids) == len(set(ids)) and not (ya & {f['id'] for f in extra})       # ni repetidas ni pisan las del modelo
+    assert all(f['prob'] >= pm.PROB_MIN_OPCION and f['cuota_tipo'] == 'justa' and not f['locked'] for f in extra)
+    por_id = {f['id']: f for f in todas}
+    for ln in pm.LINEAS_GOLES:                                                       # más + menos = 1 en cada línea
+        total = por_id[pm.clave('totals', 'over', ln)]['prob'] + por_id[pm.clave('totals', 'under', ln)]['prob']
+        assert total == pytest.approx(1, abs=2e-4)
+    assert por_id[pm.clave('btts', 'yes', None)]['prob'] + por_id[pm.clave('btts', 'no', None)]['prob'] == pytest.approx(1, abs=2e-4)
+    assert sum(por_id[pm.clave('h2h', s, None)]['prob'] for s in ('home', 'draw', 'away')) == pytest.approx(1, abs=2e-4)
+    assert pm.clave('spreads', 'away', 1.0) in por_id                                # el complemento de «local −1»
+    assert {f['grupo'] for f in extra} <= {'RESULTADO', 'DOBLE OPORTUNIDAD', 'EMPATE NO ACCIÓN', 'GOLES', 'GOLES DE EQUIPO',
+                                           'AMBOS MARCAN', 'HÁNDICAP', 'ESPECIALES'}   # córners, tarjetas y 1T siguen validados
+
+
+def test_el_destacado_puede_ser_una_opcion_que_no_era_el_lado_mas_probable():
+    def f(i, prob, market='totals'):
+        return pm._fila('GOLES', f'M{i}', market, 'over', float(i), f'Más de {i}', prob)
+    mas_probables = [f(1, .90), f(2, .85), f(3, .80)]                    # todas por debajo de cuota 1,40: sin destacado
+    _, _, sin = pm.aplicar_acceso_web(mas_probables, [], {}, plus=False)
+    assert sin is None
+    otro_lado = pm._fila('GOLES', 'M4', 'totals', 'under', 4.0, 'Menos de 4', .55)
+    _, _, con = pm.aplicar_acceso_web(mas_probables + [otro_lado], [], {}, plus=False)
+    assert con['id'] == otro_lado['id'] and con['cuota'] >= 1.40
+
+
+def test_construir_web_suma_las_complementarias_y_la_app_no(monkeypatch):
+    monkeypatch.setattr(pm, 'lambdas_goles', lambda mid: (LAM, MU, RHO))
+    monkeypatch.setattr(pm, 'lambdas_estadisticas', lambda mid: (None, None))
+    monkeypatch.setattr(pm, 'datos_partido', lambda mid: None)
+    web = pm.construir('m1', 'Local FC', 'Visita FC', {}, False, web=True)
+    app = pm.construir('m1', 'Local FC', 'Visita FC', {}, False, web=False)
+    assert web['total'] > app['total'] >= 16                      # la web enseña más opciones; la app conserva su lista
+    assert web['rango'] == [1.4, None] and web['destacado']['cuota'] >= 1.40

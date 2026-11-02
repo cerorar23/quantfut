@@ -1,6 +1,6 @@
-import { publicForecasts, forecastGames } from './fichas-data.js?v=real-20261029';
+import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=destacado-sin-tope-20261102';
+import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=tarjeta-todos-20261102';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -87,15 +87,33 @@ export function createHubViews(ctx) {
   const progress=value=>{const pct=Math.max(0,Math.min(100,Math.round(value*100)));return `<div class="cyber-progress cyber-progress--green cyber-progress--sm" data-value="${pct}" role="progressbar" aria-label="Probabilidad publicada ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="cyber-progress__bar"></div></div>`;};
   const teamsRow=(e,big=false)=>`<div class="win-pk-teams"><div class="win-pk-side">${avatar(e.home,e.sport,imageOf(e,'home'),big)}<strong>${esc(e.home)}</strong></div><span class="win-pk-vs ${e.score?'is-score':''}">${e.score?esc(e.score):'VS'}</span><div class="win-pk-side is-away">${avatar(e.away,e.sport,imageOf(e,'away'),big)}<strong>${esc(e.away)}</strong></div></div>`;
   // Sin cuota publicada (NBA, tenis) no hay bloque de cuota: la probabilidad ya sale en su barra.
-  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>Cuota publicada</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
+  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.model?'Cuota del modelo':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
+
+  // Pronóstico de la tarjeta de fútbol: el destacado del partido, el mismo que enseña su ficha (`mercados.destacado`, regla del
+  // servidor: de TODOS los mercados del partido, el de mayor probabilidad con cuota de 1,40 en adelante). Mientras se consulta no se enseña el pick sellado, para que la
+  // tarjeta no cambie de selección al llegar; si la consulta falla o el partido no tiene destacado, queda el pick sellado.
+  function destacadoOf(event) {
+    if(event.sport!=='futbol'||!ctx.ensureMatch)return null;
+    const entry=ctx.ensureMatch(event.id);
+    if(entry.status==='loading')return {loading:true};
+    const d=entry.status==='ready'?featuredMarket(entry.data.ficha?.mercados):null;
+    if(!d)return null;
+    const sealed=d.pick_key?event.markets.find(x=>x.id===d.pick_key):null,published=d.cuota_tipo==='publicada';
+    return {market:{selection:d.seleccion,probability:d.prob,price:d.cuota,model:!published,
+      reference:published?sealed?.reference||'Casa registrada':'1 ÷ probabilidad',seal:sealed?.seal,odds_at:sealed?.odds_at,featured:true,result:d.resultado}};
+  }
+
+  // Estado del pronóstico en la fecha de la tarjeta (el servidor solo manda `resultado` cuando el partido terminó; NBA y tenis traen `outcome`).
+  const RESULT={win:['Acertó','good'],loss:['Falló','warn'],push:['Devolución','muted']};
+  const resultBadge=m=>{const r=RESULT[m?.result||m?.outcome];return r?`<span class="badge ${r[1]}">${r[0]}</span>`:'';};
 
   function card(event) {
-    const m=featured(event),locked=!m;
+    const dest=destacadoOf(event),m=dest?.market||featured(event)||(dest?.loading?{}:undefined),locked=!m;
     const extra=event.locked_count?`<button type="button" class="text-link win-pk-more" data-route="planes">+${event.locked_count} análisis con Plus ↗</button>`:'';
-    const head=`<header class="win-pk-top"><span class="win-pk-sport">${sportIcon[event.sport]}<b>${sportLabel(event)}</b></span><span class="win-pk-league">${leagueLabel(event)}</span><time class="win-pk-time" datetime="${esc(event.start)}">${realDate(event.start)} · ${realTime(event.start)}</time></header>`;
+    const head=`<header class="win-pk-top"><span class="win-pk-sport">${sportIcon[event.sport]}<b>${sportLabel(event)}</b></span><span class="win-pk-league">${leagueLabel(event)}</span><span class="win-pk-when"><time class="win-pk-time" datetime="${esc(event.start)}">${realDate(event.start)} · ${realTime(event.start)}</time>${resultBadge(m)}</span></header>`;
     if(locked)return `<article class="cyber-card cyber-card--yellow win-pk-card is-locked is-${event.sport}">${head}${teamsRow(event)}<div class="win-pk-pick"><div class="win-pk-sel"><small>Pronóstico</small><strong class="win-pk-masked">${lockIcon}<span>Contenido reservado</span></strong></div><div class="win-pk-odds is-prob"><small>Acceso</small><strong>Plus</strong><em>Selección y cuota privadas</em></div></div><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--yellow" data-route="planes">Consultar acceso Plus ↗</button></footer></article>`;
-    const seal=`<details class="win-pk-seal"><summary>Registro del pronóstico</summary><p>Publicación: ${realDate(event.sealed_at)} ${realTime(event.sealed_at)}.</p><code>${esc(m.seal||event.seal||'Registro del motor')}</code>${m.odds_at?`<p>Cuota capturada: ${realDate(m.odds_at)} ${realTime(m.odds_at)}. Puede haber cambiado.</p>`:''}<p>${esc(m.reference||'Probabilidad estadística del motor')}</p></details>`;
-    return `<article class="cyber-card cyber-card--interactive win-pk-card is-${event.sport}">${head}${teamsRow(event)}<div class="win-pk-pick ${m.price?'':'is-single'}"><div class="win-pk-sel"><small>Pronóstico</small><strong>${esc(m.selection)}</strong></div>${oddsBlock(m)}</div><div class="win-pk-prob"><span>Probabilidad del modelo</span><b>${fmtPct(m.probability)}</b>${progress(m.probability)}</div>${m.revised?'<p class="win-pk-note">Revisión posterior al inicio. No cuenta como pronóstico previo.</p>':''}<footer class="win-pk-foot">${badgeFor(event)}${extra}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer>${seal}</article>`;
+    const seal=(m.featured&&!m.seal)||dest?.loading?'':`<details class="win-pk-seal"><summary>Registro del pronóstico</summary><p>Publicación: ${realDate(event.sealed_at)} ${realTime(event.sealed_at)}.</p><code>${esc(m.seal||event.seal||'Registro del motor')}</code>${m.odds_at?`<p>Cuota capturada: ${realDate(m.odds_at)} ${realTime(m.odds_at)}. Puede haber cambiado.</p>`:''}<p>${esc(m.reference||'Probabilidad estadística del motor')}</p></details>`;
+    return `<article class="cyber-card cyber-card--interactive win-pk-card is-${event.sport}">${head}${teamsRow(event)}${dest?.loading?`<div class="win-pk-pick is-single"><div class="win-pk-sel"><small>Pronóstico destacado</small><strong class="win-pk-masked"><span>Consultando…</span></strong></div></div>`:`<div class="win-pk-pick ${m.price?'':'is-single'}"><div class="win-pk-sel"><small>${m.featured?'Pronóstico destacado':'Pronóstico'}</small><strong>${esc(m.selection)}</strong></div>${oddsBlock(m)}</div><div class="win-pk-prob"><span>Probabilidad del modelo</span><b>${fmtPct(m.probability)}</b>${progress(m.probability)}</div>`}${m.revised&&!m.featured?'<p class="win-pk-note">Revisión posterior al inicio. No cuenta como pronóstico previo.</p>':''}<footer class="win-pk-foot">${badgeFor(event)}${extra}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer>${seal}</article>`;
   }
 
   function sportTabs(events) {
