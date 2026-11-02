@@ -5,11 +5,12 @@ La página no trae hora de actualización: `recibido_en` es el instante en que N
 """
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timedelta
 import html
 import json
 from pathlib import Path
 import re
+from zoneinfo import ZoneInfo
 
 from .. import carga, equipos, identidad
 from ..carga import DatoNuevo
@@ -148,24 +149,68 @@ def a_filas_minutos(db, partido_id: int, minutos: list[MinutosRW], recibido_en: 
     return filas
 
 
-def capturar(db, obtener: Callable[[str], tuple[int, bytes]], raiz: Path, ahora: datetime) -> dict:
-    """Pide la página y los minutos de los equipos que juegan; nunca imputa lo que la fuente no entrega."""
+BLOQUEOS = {403, 429, 503}
+ET = ZoneInfo("America/New_York")
+
+
+def inicio_utc(fecha: date, hora_et: str) -> datetime | None:
+    """`7:00 PM ET` + fecha de juego → instante UTC; None si el texto no se entiende."""
+    m = re.search(r"(\d{1,2}):(\d{2})\s*(AM|PM)", hora_et or "", re.I)
+    if not m:
+        return None
+    hora = int(m.group(1)) % 12 + (12 if m.group(3).upper() == "PM" else 0)
+    return datetime(fecha.year, fecha.month, fecha.day, hora, int(m.group(2)), tzinfo=ET).astimezone(UTC)
+
+
+def gastado_hoy(db, ahora: datetime) -> float:
+    """Créditos de pago gastados en Rotowire desde las 00:00 UTC del día de `ahora`."""
+    desde = ahora.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    return float(db.execute("SELECT coalesce(sum(creditos), 0) FROM nba.captura WHERE fuente = %s AND solicitado_en >= %s "
+                            "AND solicitado_en < %s", (FUENTE, desde, desde + timedelta(days=1))).fetchone()[0])
+
+
+def con_respaldo(directo, pago, permitir_pago):
+    """Intenta primero la petición directa (gratis); solo ante un bloqueo, y con presupuesto, usa la de pago.
+    `permitir_pago` es un bool o una función sin argumentos que se evalúa en cada petición."""
+
+    def obtener(url: str):
+        estado, cuerpo = directo(url)
+        if estado in BLOQUEOS and pago is not None and (permitir_pago() if callable(permitir_pago) else permitir_pago):
+            estado, cuerpo = pago(url)
+            return estado, cuerpo, 1.0
+        return estado, cuerpo, 0
+
+    return obtener
+
+
+def _ya_capturado_hace_menos_de(db, objetivo: str, ahora: datetime, minutos: float) -> bool:
+    return db.execute("SELECT EXISTS (SELECT 1 FROM nba.captura WHERE fuente = %s AND objetivo = %s AND ok "
+                      "AND recibido_en > %s)", (FUENTE, objetivo, ahora - timedelta(minutes=minutos))).fetchone()[0]
+
+
+def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, ventana_h: float = 8,
+             espera_min: float = 60) -> dict:
+    """Pide la página y, para los partidos que empiezan dentro de `ventana_h` horas, los minutos de sus equipos
+    (como mucho una vez cada `espera_min`); nunca imputa lo que la fuente no entrega.
+    `obtener(url)` devuelve (estado, cuerpo) o (estado, cuerpo, créditos de pago)."""
 
     def pedir(url: str, fase: str = "pre"):
         try:
-            estado, cuerpo = obtener(url)
+            respuesta = obtener(url)
         except Exception as e:  # red caída, tiempo agotado...
             carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase=fase, solicitado_en=ahora, ok=False,
                                     error=f"{type(e).__name__}: {e}")
             return None
+        estado, cuerpo = respuesta[0], respuesta[1]
+        creditos = respuesta[2] if len(respuesta) > 2 else 0
         if estado != 200:
             carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase=fase, solicitado_en=ahora, ok=False,
-                                    http_status=estado, recibido_en=ahora)
+                                    http_status=estado, recibido_en=ahora, creditos=creditos)
             return None
         ruta, huella = carga.guardar_original(raiz, FUENTE, cuerpo, ahora)
         captura = carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase=fase, solicitado_en=ahora, ok=True,
                                           recibido_en=ahora, http_status=200, sha256=huella, bytes_=len(cuerpo),
-                                          ruta=ruta)
+                                          ruta=ruta, creditos=creditos)
         return captura, cuerpo.decode("utf-8")
 
     respuesta = pedir(URL_LINEUPS)
@@ -182,8 +227,13 @@ def capturar(db, obtener: Callable[[str], tuple[int, bytes]], raiz: Path, ahora:
     for partido in pagina.partidos:
         filas = a_filas_lineups(db, pagina, partido, ahora, captura)
         partido_id = filas[0].partido_id
-        for tricode in (partido.visitante, partido.local):
-            r = pedir(URL_MINUTOS + tricode)
+        inicio = inicio_utc(pagina.fecha, partido.hora_et)
+        en_ventana = inicio is None or timedelta(0) <= inicio - ahora <= timedelta(hours=ventana_h)
+        for tricode in (partido.visitante, partido.local) if en_ventana else ():
+            url = URL_MINUTOS + tricode
+            if _ya_capturado_hace_menos_de(db, url, ahora, espera_min):
+                continue
+            r = pedir(url)
             if r is not None:
                 filas += a_filas_minutos(db, partido_id, parsear_minutos(r[1]), ahora, r[0])
         datos += carga.guardar_datos(db, filas, solo_cambios=True)
@@ -198,4 +248,11 @@ def obtener_http(url: str) -> tuple[int, bytes]:
     if "/ajax/" in url:
         cabeceras["X-Requested-With"] = "XMLHttpRequest"
     r = httpx.get(url, headers=cabeceras, timeout=20, follow_redirects=True)
+    return r.status_code, r.content
+
+
+def obtener_zenrows(url: str, clave: str) -> tuple[int, bytes]:
+    """Respaldo de pago (ZenRows, petición básica = 1 crédito); solo se usa ante un bloqueo."""
+    import httpx
+    r = httpx.get("https://api.zenrows.com/v1/", params={"apikey": clave, "url": url}, timeout=60)
     return r.status_code, r.content

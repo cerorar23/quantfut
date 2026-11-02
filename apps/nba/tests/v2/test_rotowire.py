@@ -125,3 +125,85 @@ def test_minutos_nulos_no_se_imputan(cargado):
         "ON e.entidad_id = d.entidad_id WHERE e.nombre = 'Thomas Sorber' AND m.nombre LIKE 'minutos%'").fetchall()
     nombres = {f[0] for f in filas}
     assert "minutos_proyectados" in nombres and "minutos_promedio_reciente" not in nombres
+
+
+from datetime import timedelta
+
+
+def espiado(cuerpos):
+    visitas = []
+
+    def obtener(url):
+        visitas.append(url)
+        return cuerpos.get(url, (404, b"no existe"))
+
+    return obtener, visitas
+
+
+CUERPOS = {rotowire.URL_LINEUPS: (200, HTML.encode())}
+CUERPOS.update({rotowire.URL_MINUTOS + t: (200, MINUTOS_OKC.encode()) for t in ("OKC", "CLE", "CHI", "PHI")})
+
+
+def minutos_pedidos(visitas):
+    return sorted(u.rsplit("=", 1)[1] for u in visitas if u.startswith(rotowire.URL_MINUTOS))
+
+
+def test_inicio_utc_desde_la_hora_et():
+    assert rotowire.inicio_utc(date(2026, 11, 2), "7:00 PM ET") == datetime(2026, 11, 3, 0, 0, tzinfo=UTC)
+    assert rotowire.inicio_utc(date(2026, 11, 2), "12:30 PM ET") == datetime(2026, 11, 2, 17, 30, tzinfo=UTC)
+    assert rotowire.inicio_utc(date(2026, 11, 2), "") is None
+
+
+def test_minutos_solo_dentro_de_la_ventana_antes_del_salto(base_migrada, tmp_path):
+    obtener, visitas = espiado(CUERPOS)
+    rotowire.capturar(base_migrada, obtener, tmp_path, AHORA, ventana_h=4)          # faltan 8 h: fuera de ventana
+    assert minutos_pedidos(visitas) == []
+    obtener, visitas = espiado(CUERPOS)
+    rotowire.capturar(base_migrada, obtener, tmp_path, AHORA + timedelta(hours=5))   # faltan 3 h
+    assert minutos_pedidos(visitas) == ["CHI", "CLE", "OKC", "PHI"]
+
+
+def test_minutos_no_se_piden_despues_del_salto(base_migrada, tmp_path):
+    obtener, visitas = espiado(CUERPOS)
+    rotowire.capturar(base_migrada, obtener, tmp_path, AHORA + timedelta(hours=9))   # ya empezaron
+    assert minutos_pedidos(visitas) == []
+
+
+def test_minutos_respetan_la_espera_entre_capturas(base_migrada, tmp_path):
+    ahora = AHORA + timedelta(hours=6)
+    obtener, visitas = espiado(CUERPOS)
+    rotowire.capturar(base_migrada, obtener, tmp_path, ahora)
+    assert len(minutos_pedidos(visitas)) == 4
+    obtener, visitas = espiado(CUERPOS)
+    rotowire.capturar(base_migrada, obtener, tmp_path, ahora + timedelta(minutes=30))
+    assert minutos_pedidos(visitas) == [] and rotowire.URL_LINEUPS in visitas        # la página sí se repite
+    obtener, visitas = espiado(CUERPOS)
+    rotowire.capturar(base_migrada, obtener, tmp_path, ahora + timedelta(minutes=61))
+    assert len(minutos_pedidos(visitas)) == 4
+
+
+def test_creditos_de_pago_quedan_en_la_captura(base_migrada, tmp_path):
+    obtener = lambda url: (200, HTML.encode(), 1.0) if url == rotowire.URL_LINEUPS else (404, b"")
+    rotowire.capturar(base_migrada, obtener, tmp_path, AHORA)
+    assert base_migrada.execute("SELECT creditos FROM nba.captura WHERE objetivo = %s",
+                                (rotowire.URL_LINEUPS,)).fetchone()[0] == 1
+
+
+def test_gastado_hoy_suma_los_creditos_del_dia(base_migrada, tmp_path):
+    obtener = lambda url: (200, HTML.encode(), 1.0) if url == rotowire.URL_LINEUPS else (404, b"")
+    rotowire.capturar(base_migrada, obtener, tmp_path, AHORA)
+    rotowire.capturar(base_migrada, obtener, tmp_path, AHORA + timedelta(hours=1))
+    rotowire.capturar(base_migrada, obtener, tmp_path, AHORA + timedelta(days=1))
+    assert rotowire.gastado_hoy(base_migrada, AHORA + timedelta(hours=2)) == 2
+
+
+def test_respaldo_de_pago_solo_ante_bloqueo_y_con_presupuesto():
+    llamadas = []
+    directo = lambda url: (403, b"bloqueado")
+    pago = lambda url: llamadas.append(url) or (200, b"ok")
+    assert rotowire.con_respaldo(directo, pago, True)("u") == (200, b"ok", 1.0)
+    assert rotowire.con_respaldo(directo, pago, False)("u") == (403, b"bloqueado", 0)           # sin presupuesto
+    assert rotowire.con_respaldo(directo, None, True)("u") == (403, b"bloqueado", 0)            # sin clave
+    assert rotowire.con_respaldo(lambda u: (200, b"x"), pago, True)("u") == (200, b"x", 0)      # no hace falta
+    assert rotowire.con_respaldo(lambda u: (404, b"x"), pago, True)("u") == (404, b"x", 0)      # 404 no es bloqueo
+    assert len(llamadas) == 1

@@ -33,3 +33,11 @@ def base_migrada(base_nueva):
     with psycopg.connect(base_nueva) as db:
         yield db
         db.rollback()
+
+
+@pytest.fixture
+def base_migrada_dsn(base_nueva):
+    """DSN de una base ya migrada (para probar procesos que abren su propia conexión)."""
+    from nba.v2 import migrar
+    migrar.aplicar(base_nueva)
+    return base_nueva
