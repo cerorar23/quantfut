@@ -50,3 +50,11 @@ def test_huella_ignora_finales_de_linea(base_nueva, tmp_path):
     migrar.aplicar(base_nueva, d)
     (d / "0001_a.sql").write_bytes(b"CREATE TABLE ta(x int);\r\nSELECT 1;\r\n")
     assert migrar.aplicar(base_nueva, d) == []
+
+
+def test_principal_aplica_las_migraciones_del_repositorio(base_nueva, monkeypatch, capsys):
+    monkeypatch.setenv("NBA_DB_DSN", base_nueva)
+    assert migrar.principal() == 0
+    assert capsys.readouterr().out.split() == [f.stem for f in sorted(migrar.DIRECTORIO.glob("*.sql"))]
+    monkeypatch.delenv("NBA_DB_DSN")
+    assert migrar.principal() == 2

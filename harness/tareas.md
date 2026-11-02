@@ -3105,3 +3105,11 @@ Diseño: `docs/superpowers/specs/2026-10-18-whop-checkout-meta-design.md`.
 - [x] Ensayo local (11 partidos reales), navegador sin errores, 15 pruebas nuevas, plan de despliegue con vuelta atrás.
 - [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
 - [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
+
+### NBA — rediseño completo, Sprint 0 (2026-11-02)
+Plan técnico docs/nba_rediseno_plan_tecnico_20261102.md (D1-D6 aprobadas) y plan del sprint docs/nba_rediseno_s0_plan_20261102.md. Rama `nba/rediseno-s0` (worktree qf-nba-rediseno).
+- [x] Ejecutor de migraciones aislado `nba.v2.migrar` (rechaza bases que no sean `nba_*`, candado, huella sin depender de CRLF, atómico por archivo).
+- [x] Migraciones 0001-0005 en `apps/nba/db`: 7 tablas `nba.*`, inmutabilidad por sentencia, semillas (9 fuentes, 34 métricas), `nba.dato_a_las(corte)`, vistas de cuotas y roles `nba_escritor`/`nba_lector`. 49 pruebas contra un Postgres 16 desechable (`apps/nba/ops/cluster_prueba.py`).
+- [x] `apps/nba/ops/nba-db/compose.yml` (contenedor propio, sin puerto publicado) validado como YAML.
+- [ ] Desplegar `nba-db` en el VPS (DEPLOYS.md, confirmación del titular, usuarios de login, vuelta atrás) y probar el compose con `docker compose config` allí.
+- [ ] 3 fallos previos en `apps/nba/tests/test_paper_bundle.py` (reloj de los workers; el código no se tocó en esta rama).

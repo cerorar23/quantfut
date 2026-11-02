@@ -6835,3 +6835,11 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: en Meta se apaga el registro automático de compras de la app porque las compras las manda el servidor por CAPI; con él activo saldrían duplicadas. En Meta los hashes de clave van en base64 (el SHA-1 de Play App Signing, de `llave.jks` y de la clave antigua).
 - Decisión: tras subir un AAB a Play se registra la versión en `mobile_update_settings` por SSH; `min_build_android` y la obligación solo se tocan cuando esa versión ya está disponible para los usuarios.
 - Pendiente: ID de app y bloque de iOS (cuando exista la app en App Store), autorización de anuncios de apuestas en Meta/AdMob, compra de prueba web con `META_TEST_EVENT_CODE`.
+
+## 2026-11-02 — Rediseño NBA, Sprint 0 (base `nba_datos`)
+
+- Decisión: `nba.dato_a_las(corte)` es el único camino de lectura del motor y cada métrica declara su `resolucion`: `prioridad` (hechos únicos; gana la mejor fuente) o `por_fuente` (disponibilidad y proyecciones, que cambian cada hora; una fila por fuente, la más reciente visible). Sin esto, un parte oficial viejo taparía a un dato más nuevo de otra fuente.
+- Decisión: las tablas de evidencia rechazan UPDATE/DELETE/TRUNCATE con disparadores por sentencia (fallan incluso con `WHERE false` y con `TRUNCATE ... CASCADE`), para que ningún "arreglo rápido" pase por filas vacías.
+- Decisión: la huella de cada migración ignora CRLF/LF; en Windows y en el VPS el mismo archivo debe dar la misma huella.
+- Decisión: el margen de las cuotas no se guarda (vista `nba.cuota_margen`) y el método de quitado de margen queda en `nba.pronostico.version_modelo`.
+- Pendiente: desplegar `nba-db` en el VPS con confirmación; el compose no se probó con Docker (no hay Docker en este PC).

@@ -1,12 +1,25 @@
 """Ejecutor de migraciones de la base aislada `nba_*` (rediseño NBA, esquema `nba`)."""
 import hashlib
+import os
 from pathlib import Path
+import sys
 
 import psycopg
 from psycopg.conninfo import conninfo_to_dict
 
 DIRECTORIO = Path(__file__).resolve().parents[3] / "db"
 CANDADO = 74754155  # distinto del de nba_delivery (74754154)
+
+
+def principal() -> int:
+    """`NBA_DB_DSN=... python -m nba.v2.migrar`: aplica las migraciones pendientes e imprime sus versiones."""
+    dsn = os.environ.get("NBA_DB_DSN")
+    if not dsn:
+        print("falta NBA_DB_DSN", file=sys.stderr)
+        return 2
+    for version in aplicar(dsn):
+        print(version)
+    return 0
 
 
 def conectar(dsn: str) -> psycopg.Connection:
@@ -38,3 +51,7 @@ def aplicar(dsn: str, directorio: Path | None = None) -> list[str]:
                 db.execute("INSERT INTO nba.migracion (version, sha256) VALUES (%s, %s)", (archivo.stem, huella))
                 aplicadas.append(archivo.stem)
     return aplicadas
+
+
+if __name__ == "__main__":
+    raise SystemExit(principal())
