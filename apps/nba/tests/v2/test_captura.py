@@ -60,3 +60,18 @@ def test_espn_por_lotes_da_lo_mismo_que_de_golpe(base_nueva, monkeypatch, tmp_pa
     assert r["ultimo_seq"] == 3 and r["calendario"] == 1 and r["lesiones"] == 2
     assert json.loads((tmp_path / "datos" / "estado_espn.json").read_text()) == {"seq": 3}
     assert contar(base_nueva, "dato") > 0
+
+
+def test_ejecutar_parte_oficial_con_pdf_real(base_migrada_dsn, tmp_path):
+    from nba.v2.fuentes import parte_oficial as po
+    pdf = (FIX / "parte_oficial_2025-10-21_06PM.pdf").read_bytes()
+    url = po.BASE + "Injury-Report_2025-10-21_06PM.pdf"
+    env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path)}
+    r = captura.ejecutar("parte", env, datetime(2025, 10, 21, 23, 0, tzinfo=UTC),
+                         obtener=lambda u: (200, pdf) if u == url else (403, b""))
+    assert r["ok"] and r["partes_nuevos"] == 1 and contar(base_migrada_dsn, "dato") > 100
+
+
+def test_nba_sin_clave_de_scrapfly_devuelve_2(base_migrada_dsn, tmp_path):
+    env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path)}
+    assert captura.principal(["nba"], env) == 2

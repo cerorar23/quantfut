@@ -1,7 +1,8 @@
-"""Ejecutor de capturas a `nba_datos`: `python -m nba.v2.captura rotowire|espn` (lo lanza el cron del VPS).
+"""Ejecutor de capturas a `nba_datos`: `python -m nba.v2.captura rotowire|espn|parte|nba` (lo lanza el cron del VPS).
 
 Entorno: NBA_DB_DSN (obligatorio), NBA_CAPTURA_DIR (originales y estado, por omisión /datos),
-NBA_RUN57_DIR (carpeta captures de run57, solo para espn), ZENROWS_API_KEY y NBA_ZENROWS_TOPE_DIARIO (respaldo de pago).
+NBA_RUN57_DIR (carpeta captures de run57, solo para espn), ZENROWS_API_KEY y NBA_ZENROWS_TOPE_DIARIO (respaldo de pago
+de Rotowire), SCRAPFLY_API_KEY y NBA_SCRAPFLY_TOPE_DIARIO (final del partido en cdn.nba.com, por omisión 25 créditos al día).
 """
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -11,7 +12,7 @@ from pathlib import Path
 import sys
 
 from . import migrar
-from .fuentes import espn, rotowire
+from .fuentes import espn, nba_cdn, parte_oficial, rotowire
 
 
 LOTE_ESPN = 200
@@ -63,6 +64,16 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
                 if ultimo == resumen["ultimo_seq"]:
                     break
                 resumen["ultimo_seq"] = ultimo
+        elif fuente == "parte":
+            resumen = parte_oficial.capturar(db, obtener or parte_oficial.obtener_http, raiz / "originales", ahora)
+        elif fuente == "nba":
+            if obtener is None:
+                clave = entorno.get("SCRAPFLY_API_KEY")
+                if not clave:
+                    raise FaltaVariable("SCRAPFLY_API_KEY")
+                obtener = lambda url: nba_cdn.obtener_scrapfly(url, clave)
+            resumen = nba_cdn.capturar(db, obtener, raiz / "originales", ahora,
+                                       tope_diario=float(entorno.get("NBA_SCRAPFLY_TOPE_DIARIO", "25")))
         else:
             raise ValueError(f"fuente desconocida: {fuente}")
         db.commit()
@@ -72,8 +83,8 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
 def principal(argv: list[str] | None = None, entorno: Mapping[str, str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     entorno = os.environ if entorno is None else entorno
-    if len(argv) != 1 or argv[0] not in ("rotowire", "espn"):
-        print("uso: python -m nba.v2.captura rotowire|espn", file=sys.stderr)
+    if len(argv) != 1 or argv[0] not in ("rotowire", "espn", "parte", "nba"):
+        print("uso: python -m nba.v2.captura rotowire|espn|parte|nba", file=sys.stderr)
         return 2
     try:
         resumen = ejecutar(argv[0], entorno, datetime.now(UTC))
