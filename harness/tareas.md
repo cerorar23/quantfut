@@ -3139,3 +3139,9 @@ Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adap
 - [ ] Cierres de The Odds API / SharpAPI para los partidos que PropLine no cubra (con tope de créditos).
 - [ ] Recuperar el archivo histórico de PropLine desde el 23-oct (`NBA_PROPLINE_DESDE=0` con lotes) y su efecto en el volumen.
 - [ ] Decidir si se cargan los «milestone» (hoy excluidos) y mercados de periodo (solo q1 en milestone aparece en el archivo).
+
+### NBA — rediseño completo, Sprint 1b-C: cuotas históricas (2026-11-02)
+- [x] bet365 (BetsAPI) 2023-24 a 2025-26, props y moneyline de The Odds API, catálogo de 6.414 juegos y archivo de PropLine desde el 23-oct en `nba.cuota` (4,3 M filas), sin créditos. 146 pruebas v2.
+- [ ] Backfill de box scores y partes de lesiones 2021-26 desde `.local/normalized` (cajas completas, rotaciones, partes oficiales).
+- [ ] Cierres de The Odds API / SharpAPI solo para partidos sin cierre en PropLine ni en el histórico.
+- [ ] Verificar el primer box score real (noche del 2-nov) y el gasto de créditos.

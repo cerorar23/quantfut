@@ -6878,3 +6878,11 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Hallazgo: en PropLine los totales de equipo vienen como mercado `totals` con el campo `team`; se guardan como `team_totals` con el equipo como entidad.
 - Hallazgo: el id de jugador de PropLine (`nba:NNNN`) coincide con el `personId` de cdn.nba.com, así que las cuotas se unen a box scores sin cruzar nombres.
 - Verificación: márgenes de Pinnacle 2,6-3,8 % en mercados de equipo y ≈ 7 % en props, coherentes con la literatura (fichas 21-23).
+
+## 2026-11-02 — Cuotas históricas (Sprint 1b-C)
+
+- Decisión: se reutilizan los archivos de cuotas que ya existían (bet365 de BetsAPI, props y moneyline de The Odds API) en lugar de comprar un backfill; el instante de cada fila es el de la casa y la adquisición va en la captura `historico`.
+- Decisión: el margen se calcula por contrato, no por línea (en un hándicap los dos lados tienen líneas opuestas).
+- Decisión: en el histórico de props la línea forma parte del contrato porque un mismo jugador, casa y foto trae varias líneas.
+- Error mío: la vista `cuota_margen` de la migración 0004 estaba mal para hándicaps y solo se vio con datos reales; la corrige la 0007. Lección: probar las vistas con datos reales de cada mercado antes de dar un sprint por cerrado.
+- Medida: 3,25 M de filas históricas cargadas en ≈ 7 min; la base ocupa ≈ 290 bytes por cuota con índices.
