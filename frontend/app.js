@@ -241,9 +241,16 @@ function ensureRealMatch(id) {
   realMatchCache.set(id,entry);
   loadForecastMatch(id,publicFetch).then(result=>{
     if(generation!==realGeneration)return;
-    realMatchCache.set(id,result); if(state.realMatch===id)rerenderIfIdle();
+    realMatchCache.set(id,result);
+    if(state.realMatch===id)rerenderIfIdle(); else scheduleCardsRerender();
   });
   return entry;
+}
+// Las tarjetas de Pronósticos piden la ficha de cada partido para enseñar su destacado: se agrupan las respuestas en un solo repintado.
+let cardsRerender=null;
+function scheduleCardsRerender() {
+  if(cardsRerender)return;
+  cardsRerender=setTimeout(()=>{cardsRerender=null;rerenderIfIdle();},80);
 }
 
 
