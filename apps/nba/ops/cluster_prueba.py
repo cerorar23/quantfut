@@ -20,7 +20,7 @@ DSN = f"postgresql://postgres@127.0.0.1:{PUERTO}/postgres"
 
 def _ejecutar(exe, *args):
     # El servidor hereda la salida: sin redirigirla, pg_ctl deja colgado al proceso que lo lanzó.
-    subprocess.run([str(BIN / exe), *args], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([str(BIN / exe), *args], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def start():
