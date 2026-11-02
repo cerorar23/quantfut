@@ -259,7 +259,13 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
 
 # --- acceso de la WEB (independiente del de la app) -----------------------------------------
 
-RANGO_DESTACADO = (1.40, 1.80)   # cuota del modelo: 1/prob (o la publicada si el pick abierto la trae)
+# Cuota del modelo: 1/prob (o la publicada si el pick abierto la trae). Mínimo 1,40 y SIN tope (titular, 2026-11-02;
+# antes 1,40 a 1,80): el tope es None y viaja como null en `rango`.
+RANGO_DESTACADO = (1.40, None)
+
+
+def en_rango_destacado(cuota) -> bool:
+    return bool(cuota) and cuota >= RANGO_DESTACADO[0] and (RANGO_DESTACADO[1] is None or cuota <= RANGO_DESTACADO[1])
 GRATIS_WEB = 3                   # mercados abiertos para quien no tiene VIP
 
 
@@ -268,7 +274,7 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     """
     Regla de la web (decisión del titular, 2026-10-28), distinta de la de la app:
     - Destacado: de TODOS los mercados del partido, también los que sin VIP salen con candado,
-      el de mayor probabilidad con cuota entre 1,40 y 1,80. Se enseña abierto y gratis.
+      el de mayor probabilidad con cuota de 1,40 en adelante, sin tope. Se enseña abierto y gratis.
     - Gratis: el destacado y los siguientes de mayor probabilidad dentro de ese rango hasta
       sumar `GRATIS_WEB`; si el rango no da para tanto, se completa con los más probables.
     - El resto sigue con candado (solo categoría) y los picks sellados ya abiertos se conservan.
@@ -276,7 +282,7 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     """
     efectivas = {f['id']: _con_pick(dict(f), abiertas.get(f['id'])) for f in filas}
     en_rango = sorted((f for f in efectivas.values()
-                       if f.get('cuota') and RANGO_DESTACADO[0] <= f['cuota'] <= RANGO_DESTACADO[1]),
+                       if en_rango_destacado(f.get('cuota'))),
                       key=lambda f: -f['prob'])
     elegidas = [f['id'] for f in en_rango[:GRATIS_WEB]]
     if len(elegidas) < GRATIS_WEB:

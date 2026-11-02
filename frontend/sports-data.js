@@ -138,8 +138,8 @@ export async function loadImages(fetcher=fetch) {
 }
 
 // Destacado de NBA y tenis: de los mercados publicados, el de mayor probabilidad con «cuota del modelo»
-// (1 ÷ probabilidad) de 1,40 a 1,80. Ninguna casa publica estas cuotas; no se inventa ninguna.
-export function featuredModelMarket(markets, range = [1.4, 1.8]) {
+// (1 ÷ probabilidad) de 1,40 en adelante, sin tope (titular, 2-nov-2026). Ninguna casa publica estas cuotas; no se inventa ninguna.
+export function featuredModelMarket(markets, range = [1.4, Infinity]) {
   return (Array.isArray(markets) ? markets : []).reduce((best, m) => {
     if (!m || !probability(m.probability)) return best;
     const odds = 1 / m.probability;
