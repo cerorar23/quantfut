@@ -1422,6 +1422,27 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navProfile => 'Perfil';
 
   @override
+  String get nbaSealHeading => 'QUANDO O PALPITE É ADICIONADO';
+
+  @override
+  String get nbaSealMissedBody =>
+      'Este jogo começou sem um palpite selado. A QuantFut não calcula palpites a posteriori nem os adiciona depois do início.';
+
+  @override
+  String get nbaSealMissedTitle => 'Sem palpite prévio';
+
+  @override
+  String nbaSealPendingBody(String when) {
+    return 'Será adicionado em $when, antes do início.';
+  }
+
+  @override
+  String get nbaSealPendingSoon => 'Será adicionado pouco antes do início.';
+
+  @override
+  String get nbaSealPendingTitle => 'Palpite pendente';
+
+  @override
   String noteExpectedAverage(String value) {
     return 'Média esperada: $value';
   }

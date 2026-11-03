@@ -1413,6 +1413,27 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navProfile => 'Profil';
 
   @override
+  String get nbaSealHeading => 'WANN DIE PROGNOSE HINZUGEFÜGT WIRD';
+
+  @override
+  String get nbaSealMissedBody =>
+      'Dieses Spiel begann ohne versiegelte Prognose. QuantFut berechnet keine Prognosen im Nachhinein und fügt sie nach dem Beginn nicht hinzu.';
+
+  @override
+  String get nbaSealMissedTitle => 'Keine vorherige Prognose';
+
+  @override
+  String nbaSealPendingBody(String when) {
+    return 'Sie wird am $when hinzugefügt, vor dem Anpfiff.';
+  }
+
+  @override
+  String get nbaSealPendingSoon => 'Sie wird kurz vor dem Anpfiff hinzugefügt.';
+
+  @override
+  String get nbaSealPendingTitle => 'Prognose ausstehend';
+
+  @override
   String noteExpectedAverage(String value) {
     return 'Erwarteter Durchschnitt: $value';
   }

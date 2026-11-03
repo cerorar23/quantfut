@@ -1401,6 +1401,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navProfile => 'Profile';
 
   @override
+  String get nbaSealHeading => 'WHEN THE PREDICTION IS ADDED';
+
+  @override
+  String get nbaSealMissedBody =>
+      'This game started without a sealed prediction. QuantFut does not calculate predictions after the fact or add them once the game has started.';
+
+  @override
+  String get nbaSealMissedTitle => 'No prior prediction';
+
+  @override
+  String nbaSealPendingBody(String when) {
+    return 'It will be added on $when, before tip-off.';
+  }
+
+  @override
+  String get nbaSealPendingSoon => 'It will be added shortly before tip-off.';
+
+  @override
+  String get nbaSealPendingTitle => 'Prediction pending';
+
+  @override
   String noteExpectedAverage(String value) {
     return 'Expected average: $value';
   }
