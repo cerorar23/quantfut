@@ -318,31 +318,32 @@ def test_con_resultados_solo_marca_las_abiertas_y_nunca_las_bloqueadas():
     assert pm.con_resultados(filas, None)[0].get('resultado') is None
 
 
-def test_destacados_resueltos_usa_el_analisis_sin_picks_y_solo_cuenta_los_resueltos(monkeypatch):
+def test_destacados_resueltos_liquida_el_registro_sin_reconstruir_modelos(monkeypatch):
     from datetime import date, datetime, timezone
     kick = datetime(2026, 10, 26, 18, tzinfo=timezone.utc)
     base = {'league_id': 'it.serie_a', 'kickoff_utc': kick, 'home_goals': 2, 'away_goals': 1}
     partidos = [dict(base, match_id=m, local='A', visitante='B', home_team_id=7, away_team_id=9) for m in 'abcd']
-    vistos = {}
     from qf.api import fichas
+    from qf.publish import destacado_web
     monkeypatch.setattr(fichas, 'escudo', lambda tid: f'/web/escudos/{tid}.png' if tid == 7 else None)
 
-    def construir(match_id, local, visitante, abiertas, plus, web=False):
-        vistos[match_id] = (abiertas, plus, web)
-        dest = {'market': 'totals', 'selection': 'over', 'line': 1.5, 'seleccion': 'Más de 1,5 goles',
-                'prob': 0.69561, 'resultado': 'win'}
-        return {'a': {'destacado': dest}, 'b': {'destacado': None},
-                'c': {'destacado': dict(dest, resultado=None)}, 'd': None}[match_id]
+    dest = {'market': 'totals', 'selection': 'over', 'line': 1.5, 'seleccion': 'Más de 1,5 goles',
+            'prob': 0.69561, 'locked': False, 'cuota_tipo': 'justa'}
+    registros = {'a': {'fila': dest}, 'b': None,
+                 'c': {'fila': dict(dest, market='corners')}, 'd': None}
+    monkeypatch.setattr(destacado_web, 'obtener', lambda mid, **kw: registros[mid])
+    monkeypatch.setattr(pm, 'datos_partido', lambda mid: dict(base, status='finished'))
+    def reconstruir(*args, **kwargs):
+        pytest.fail('El historial no debe recalcular modelos ni seleccionar otro destacado')
 
     pedido = {}
     monkeypatch.setattr(pm, 'query', lambda sql, params=(): pedido.update(params=params) or partidos)
-    monkeypatch.setattr(pm, 'construir', construir)
+    monkeypatch.setattr(pm, 'construir', reconstruir)
     pm._destacados.clear()
     items = pm.destacados_resueltos(date(2026, 10, 26))
     assert [i['match_id'] for i in items] == ['a']
     assert items[0]['outcome'] == 'win' and items[0]['prob'] == 0.6956 and items[0]['ref_price'] is None
     assert items[0]['local_escudo'] == '/web/escudos/7.png' and items[0]['visitante_escudo'] is None   # sin escudo descargado: None, no inventado
-    assert all(v == ({}, False, True) for v in vistos.values())
     assert pedido['params'][0] == datetime(2026, 10, 25, tzinfo=timezone.utc)
 
 
@@ -476,8 +477,10 @@ def test_destacados_resueltos_guarda_cuota_y_casa_cuando_el_destacado_las_tiene(
     dest = {'market': 'totals', 'selection': 'over', 'line': 1.5, 'seleccion': 'Más de 1,5 goles', 'prob': .7, 'resultado': 'win'}
     resp = {'con': {'destacado': dict(dest, cuota=1.47, cuota_tipo='casa', casa='bet365')},
             'sin': {'destacado': dict(dest, cuota=1.43, cuota_tipo='justa')}}
+    from qf.publish import destacado_web
     monkeypatch.setattr(pm, 'query', lambda sql, params=(): partidos)
-    monkeypatch.setattr(pm, 'construir', lambda mid, *a, **k: resp[mid])
+    monkeypatch.setattr(destacado_web, 'obtener', lambda mid, **kw: {'fila': resp[mid]['destacado']})
+    monkeypatch.setattr(pm, 'datos_partido', lambda mid: dict(base, status='finished'))
     pm._destacados.clear()
     items = {i['match_id']: i for i in pm.destacados_resueltos(date(2026, 11, 1))}
     assert (items['con']['ref_price'], items['con']['ref_book']) == (1.47, 'bet365')
