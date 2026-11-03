@@ -276,7 +276,9 @@ def main(carpeta, prueba):
 
     vv = [g for g in res if lin(g["pid"]) is not None]
     X = np.array([[pred[g["pid"]][0], nuc[g["pid"]][0] - nuc[g["pid"]][1], lin(g["pid"])] for g in vv])
-    w = np.linalg.lstsq(X, np.array([g["pl"] - g["pv"] for g in vv]), rcond=None)[0]
+    w = np.linalg.lstsq(X, np.array([g["pl"] - g["pv"] for g in vv]), rcond=None)[0] if len(vv) >= 100 else np.array([0.5, 0.5, 0.0])
+    if len(vv) < 100:
+        print("sin cuotas en la validación: los pesos de mezcla con el mercado no se estiman (se usa 50/50 solo para la variante informativa)")
     print(f"pesos del margen (jugadores, equipo, mercado) en validación: {w.round(3)}")
 
     pruebas = [g for g in evaluables if g["temporada"] == prueba]

@@ -122,7 +122,8 @@ def main(carpeta: Path, prueba: str):
     ajuste_con = [(m, j) for m, j in zip(mus, juegos) if j["temporada"] in ajuste[1:] and linea_margen(j["pid"]) is not None]
     x = np.array([[m[0] - m[1], linea_margen(j["pid"])] for m, j in ajuste_con])
     y = np.array([j["pl"] - j["pv"] for _, j in ajuste_con])
-    w = np.linalg.lstsq(x, y, rcond=None)[0]
+    # sin cuotas en las temporadas de ajuste (origen 2023-24: las cuotas de cierre empiezan ese año) no se estima la mezcla con el mercado
+    w = np.linalg.lstsq(x, y, rcond=None)[0] if len(y) >= 100 else np.array([float("nan"), float("nan")])
     print(f"pesos de mezcla del margen (modelo, mercado) sobre {len(y)} partidos de ajuste: {w.round(3)}")
 
     prueba_juegos = [(m, j) for m, j in zip(mus, juegos) if j["temporada"] == prueba]

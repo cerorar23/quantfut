@@ -3234,3 +3234,9 @@ Detalle y plan de la fase en docs/nba_rediseno_fase4_contratos_20261103.md. `app
 
 - [x] F4.0 conexión: los contratos validan antes de sellar (motor) y antes de servir (API, 502 `datos_invalidos`); pydantic en las imágenes; G-fuga valida 5.852 distribuciones reales sin violaciones; `nba-motor:233e372` en el cron.
 - [ ] Adaptadores que produzcan SalidaPasoA/B desde los módulos actuales.
+
+### NBA — Fase 4, F4.1 evaluación de origen móvil (2026-11-03)
+Detalle en docs/nba_rediseno_f41_origen_movil_20261103.md. `ops/resumen_origen_movil.py`; `evaluar_s4.py` generalizado a cualquier origen.
+- [x] Tres orígenes de equipo (2023-24, 2024-25, 2025-26) y dos de props: estables; el modelo es peor que el cierre en todos con IC que no cruza 0; los jugadores ayudan siempre; coherencia y G-props cumplidas.
+- [ ] Recalibración logística del ganador con temporadas previas (pendiente 1,03-1,19), probada con el mismo origen móvil.
+- [ ] F4.2 Monte Carlo; F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.

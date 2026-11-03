@@ -6980,3 +6980,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 
 - Decisión (F4.0): un contrato incumplido nunca se arregla en silencio: el motor no sella ese partido (o descarta ese jugador) y alerta; la API no sirve ese dato. Los sellos son inmutables, así que la validación va ANTES de sellar.
 - Hecho: los 5.852 distribuciones reales de la comprobación cumplen los contratos; la frontera no rechaza nada legítimo.
+
+## 2026-11-03 — F4.1: origen móvil
+
+- Resultado: con tres temporadas de prueba distintas las conclusiones se sostienen; el modelo no supera al cierre en ningún origen (ganador +0,0099 [+0,0071, +0,0127]); los jugadores acercan el modelo al mercado en los tres (−0,0024 a −0,0036 de Brier).
+- Hallazgo: la distancia al mercado se achica con más temporadas de entrenamiento (+0,0119, +0,0099, +0,0078), y la pendiente de calibración del ganador queda algo por encima de 1 (probabilidades tímidas), candidata a recalibración.
+- Límite: la v1.5 solo puede compararse en 2025-26; las cuotas de cierre no existen antes de 2023-24.

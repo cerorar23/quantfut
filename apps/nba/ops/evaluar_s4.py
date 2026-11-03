@@ -106,8 +106,12 @@ def main(carpeta, prueba):
         return minutos.ajustar_residuos(zip(mp[mask], filas["m"][mask]))
 
     # 1) rejilla (k, decaimiento) por error absoluto relativo en 2023-24 y 2024-25, con todo lo demás ajustado antes
-    entren = temp < "2023-24"
-    valid = (temp >= "2023-24") & (temp < prueba)
+    anteriores = sorted(set(temp[temp < prueba].tolist()))                # origen móvil: la validación son las dos últimas temporadas previas
+    if len(anteriores) < 2:                                              # (o la última, si solo hay otra anterior para entrenar)
+        raise SystemExit("hacen falta al menos dos temporadas anteriores a la de prueba")
+    primera_val = anteriores[-2] if len(anteriores) >= 3 else anteriores[-1]
+    entren = temp < primera_val
+    valid = (temp >= primera_val) & (temp < prueba)
     res_v = residuos_de(entren)
     prior_v = props.prior_por_nivel(mp[entren], filas["m"][entren], filas["y"][entren])
     mean_min_v = muestras_minutos(mp[valid], res_v).mean(axis=1)
