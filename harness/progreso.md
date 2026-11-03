@@ -6970,3 +6970,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Resultado: con SofaScore (más partidos, titulares y 2026-27) las evaluaciones de equipo, jugadores y props dan prácticamente lo mismo que antes; los modelos no dependían de un detalle de la caja oficial.
 - Decisión: el efecto del descanso (2,90) y las sigmas se actualizan con la base nueva; eta, arrastre, tasa de liga y la regla «solo el margen se mezcla» no cambian.
 - Aprendizaje: la muestra de 100 partidos de G-fuga cambia cuando cambia el número de partidos; su Brier no es una métrica del modelo (error típico ≈ 0,02), solo la alarma de fuga por debajo de 0,18.
+
+## 2026-11-03 — Fase 4, F4.0: contratos
+
+- Decisión: la Fase 4 empieza por las fronteras entre pasos (Pydantic estricto), con el Paso A definido por sus salidas y no por el tipo de modelo; una red neuronal sería un retador más, sujeto a las mismas compuertas hacia adelante.
+- Decisión: las distribuciones de salida del contrato tienen la forma exacta de lo que ya se sella, para validar lo sellado, lo servido y lo simulado con un solo esquema.
+- Hallazgo: las pruebas con datos absurdos encontraron un hueco real en el contrato (`descanso_dias` aceptaba un equipo faltante); y los 192 sellos reales cumplen los contratos.
+- Límite: los contratos aún no están conectados al motor ni a la API.

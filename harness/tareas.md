@@ -3225,3 +3225,9 @@ Detalle en docs/nba_rediseno_carga_sofascore_20261103.md. `ops/sofascore_a_jsonl
 ### NBA — reentrenamiento con SofaScore (2026-11-03)
 - [x] Exportación con prioridad de fuentes, evaluaciones S3/S3b/S4 repetidas (mismas conclusiones), props e impacto reentrenados, efecto del descanso 2,90 y sigmas nuevas, G-fuga con ambas fuentes aprobada, imagen `nba-motor:a16b019` en el cron.
 - [ ] Reentrenar el impacto y los props periódicamente (hoy artefactos estáticos con datos hasta el 2-nov-2026).
+
+### NBA — Fase 4 (pruebas), F4.0 contratos (2026-11-03)
+Detalle y plan de la fase en docs/nba_rediseno_fase4_contratos_20261103.md. `apps/nba/src/nba/contratos/` (Pydantic estricto).
+- [x] F4.0: contratos Paso A (estimadores), B (fórmulas analíticas) y C (Monte Carlo) + distribuciones selladas; 52 pruebas con casos extremos; los 192 pronósticos reales sellados en producción cumplen los contratos.
+- [ ] Conectar los contratos: validar antes de sellar y al servir (agregar pydantic a las imágenes del motor y la captura); adaptadores que produzcan SalidaPasoA/B desde los módulos actuales.
+- [ ] F4.1 origen móvil; F4.2 Monte Carlo; F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
