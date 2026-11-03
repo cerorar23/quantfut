@@ -6922,3 +6922,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Hallazgo: la cobertura de conteos bajos no se mide con el PIT de punto medio (88 % falso en triples); se usa el PIT aleatorizado, que es uniforme si la distribución está calibrada.
 - Hallazgo: la cobertura del 80 % pasó de 73 % (v1.5) a ≈ 81 % en las cuatro estadísticas sin reajustar nada contra el mercado.
 - Límite: sin contexto del partido, la probabilidad de superar la línea apenas discrimina (pendientes 0,09-0,61).
+
+## 2026-11-02 — Sprint 5: referencia, evaluación única, sellado y G-fuga
+
+- Decisión: el método de quitado de margen es proporcional; Shin y potencia ganan unas diezmilésimas en favoritos fuertes pero no significativas, y el método queda escrito en `version_modelo` (no en la cuota).
+- Hallazgo: la implementación independiente de G-fuga halló un error real del motor (no aplicaba el arrastre de temporada al primer partido de una temporada nueva, ≈ 2,3 puntos de diferencia). Una compuerta de reproducibilidad sola no lo habría visto; hace falta compararla con un cálculo hecho por otro camino.
+- Decisión: las cajas históricas se aceptan por fecha del partido (su `recibido_en` es la fecha de adquisición del archivo), supuesto escrito en `pit.py`; el motor y el sellado exigen que el corte ya haya pasado.
+- Límite: G-fuga cubre solo el motor de equipo; jugadores y props se enlazan en el Sprint 6.

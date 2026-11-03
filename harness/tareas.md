@@ -3179,3 +3179,11 @@ Resultados medidos en docs/nba_rediseno_s4_resultados_20261102.md. Biblioteca `n
 - [x] Puntos, rebotes, asistencias y triples: minutos × tasa con prior por rol y conteo binomial negativa; G-props cumplida (cobertura 80 % entre 80,5 y 81,3 %, MASE 0,95-0,96, mejor que la media de 5 en log-pérdida).
 - [ ] Contra el cierre del mercado no (Brier +0,003 a +0,013); pendiente: ajustar la tasa por contexto del partido (ritmo, rival, compañeros ausentes) con el núcleo del Sprint 3b.
 - [ ] Combos (R+A, PRA), dobles y primer anotador: esperan semanas de cierres de PropLine y la cópula por rol.
+
+### NBA — rediseño completo, Sprint 5: referencia, evaluación única, sellado y G-fuga (2026-11-02)
+Resultados en docs/nba_rediseno_s5_resultados_20261102.md. Módulos `referencia`, `evaluacion`, `pit`, `motor_equipo`, `sellado`; `ops/evaluar_s5.py`, `ops/g_fuga.py`.
+- [x] Método de quitado de margen medido: sin diferencia significativa; se fija proporcional (queda en `version_modelo`).
+- [x] Evaluación única: los scripts de S3, S3b y S4 importan sus métricas de `nba.v2.evaluacion`.
+- [x] Sellado en cadena con candado, rechazo de objetivo posterior al sello y `verificar_cadena`; probado en bases desechables.
+- [x] G-fuga del motor de equipo aprobada en la base real (200 partidos, 0 diferencias); halló y corrigió un error real (arrastre en el primer partido de temporada).
+- [ ] Conectar jugadores (S3b) y props (S4) a la instantánea y repetir G-fuga; primer sellado real con `nba-motor`.

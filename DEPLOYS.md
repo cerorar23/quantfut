@@ -40,6 +40,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 01:50 UTC · NBA: imágenes `nba-captura:408ea38` y `nba-motor:df8a151` y G-fuga (solo lectura) · SOLO imágenes y archivos, rama `nba/rediseno-s0`
+- Construidas dos imágenes en el VPS: `nba-captura:408ea38` (código v2 del Sprint 5; `imagen_actual` sigue en `3ca6392`, los crons no cambian) y `nba-motor:df8a151` (lo del colector más numpy 2.1.3 y scipy 1.14.1). `build/src` del servidor tiene el código del Sprint 5; el anterior en `build/src.antes-3ca6392`.
+- G-fuga ejecutada con `nba-motor:df8a151` contra `nba_datos` en una transacción de solo lectura (200 partidos de 2025-26): 0 diferencias, 0 fugas, diferencia máxima con el cálculo independiente 5·10⁻⁵. No se escribió nada en la base ni se selló ningún pronóstico (`nba.pronostico` sigue vacía).
+- **Vuelta atrás:** nada que deshacer en datos; las imágenes nuevas se pueden borrar con `docker rmi nba-motor:df8a151 nba-captura:408ea38`.
+
 ### 2026-11-03 00:10 UTC · NBA: dato `equipo_del_jugador` (imagen `nba-captura:3ca6392`) · SOLO `nba-db` y colectores, rama `nba/rediseno-s0`
 - Migración `0008_equipo_del_jugador` aplicada a `nba_datos` (métrica 60): con qué equipo figura cada jugador en cada partido; antes la caja por jugador no lo guardaba y no se deduce sin ambigüedad.
 - Imagen `nba-captura:3ca6392` construida y puesta en `imagen_actual` (los crons usan el cargador de cdn.nba.com que ya escribe el dato); el código anterior queda en `nba-captura/build/src.antes-3ca6392`.
