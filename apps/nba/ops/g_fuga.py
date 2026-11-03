@@ -20,7 +20,7 @@ import sys
 import psycopg
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from nba.v2 import identidad, motor_equipo, motor_jugadores, nucleo, parametros, pit, props  # noqa: E402
+from nba.v2 import equipo_jugadores, identidad, motor_equipo, motor_jugadores, nucleo, parametros, pit, props  # noqa: E402
 from nba.v2.plantilla_pit import plantilla  # noqa: E402
 import numpy as np  # noqa: E402
 from nba.v2.nucleo import Ratings  # noqa: E402
@@ -99,13 +99,15 @@ def referencia_plantilla(caja, juegos, equipos_ids, objetivo, en_parte):
     return salida
 
 
-def probar_jugadores(db, elegidos, n):
+def probar_jugadores(db, elegidos, n, ref_equipo=None):
     par = parametros.cargar_props()
     caja = db.execute(CAJA).fetchall()
     equipos_ids = {tri: eid for eid, tri in db.execute("SELECT entidad_id, id_en_fuente FROM nba.entidad WHERE tipo = 'equipo'").fetchall()}
     juegos = [(f, int(pid), lo, vi) for f, pid, lo, vi, _, _ in db.execute(REFERENCIA).fetchall()]
     real = {(r[1], r[2]): r for r in caja}
-    res = {"n": 0, "difs_repetibilidad": 0, "difs_plantilla_vs_referencia": 0, "pronosticos": 0, "pit": []}
+    imp = parametros.cargar_impacto()
+    res = {"n": 0, "difs_repetibilidad": 0, "difs_plantilla_vs_referencia": 0, "pronosticos": 0, "pit": [], "difs_repetibilidad_mezcla": 0,
+           "mezclas_2_1": 0, "mezclas_respaldo_2_0": 0, "max_dif_mezcla_vs_referencia": 0.0}
     paso = max(1, len(elegidos) // n)
     for fecha, pid, lo, vi, _, _ in elegidos[::paso][:n]:
         corte = datetime(fecha.year, fecha.month, fecha.day, 12, tzinfo=UTC)
@@ -133,6 +135,23 @@ def probar_jugadores(db, elegidos, n):
                     ej["stats_distintas"] = [(i, a_, b_) for i, (a_, b_) in enumerate(zip(m[2], r_[2])) if a_ != b_][:3]
                     break
             res.setdefault("ejemplos", []).append(ej)
+        # mezcla equipo + jugadores (v2.1): repetible y con el margen igual a la media del margen de equipo INDEPENDIENTE y el de jugadores
+        try:
+            va, esc_a, dist_a = equipo_jugadores.pronosticar(inst, a, imp, par)
+            vb, esc_b, dist_b = equipo_jugadores.pronosticar(inst, b, imp, par)
+        except ValueError:                                   # sin historia visible: el motor se niega, igual que en producción
+            res["pronosticos"] += len(ra)
+            continue
+        if (va, esc_a, dist_a) != (vb, esc_b, dist_b):
+            res["difs_repetibilidad_mezcla"] += 1
+        if va.startswith("equipo-2.1") and ref_equipo is not None and pid in ref_equipo:
+            res["mezclas_2_1"] += 1
+            t_l, t_v = ref_equipo[pid]
+            esperado = ((t_l - t_v) + esc_a["margen_jugadores"]) / 2
+            res["max_dif_mezcla_vs_referencia"] = max(res["max_dif_mezcla_vs_referencia"], abs((dist_a["mu"][0] - dist_a["mu"][1]) - esperado),
+                                                      abs((dist_a["mu"][0] + dist_a["mu"][1]) - (t_l + t_v)))
+        else:
+            res["mezclas_respaldo_2_0"] += 1
         res["pronosticos"] += len(ra)
         for x in ra:
             if x["mercado"] == "jugador:puntos" and (pid, x["jugador"]) in real:
@@ -143,6 +162,7 @@ def probar_jugadores(db, elegidos, n):
     res["n_puntos_evaluados"] = int(len(pit_))
     res["ejemplos"] = res.get("ejemplos", [])[:5]
     res["aprobado"] = (res["difs_repetibilidad"] == 0 and res["difs_plantilla_vs_referencia"] == 0 and res["pronosticos"] > 0
+                       and res["difs_repetibilidad_mezcla"] == 0 and res["max_dif_mezcla_vs_referencia"] < 2e-3 and res["mezclas_2_1"] > 0
                        and res["cobertura80_puntos"] is not None and 0.74 <= res["cobertura80_puntos"] <= 0.86)
     return res
 
@@ -183,7 +203,7 @@ def main(temporada: str, n: int):
             p_local.append(dist_a["p_local"])
             y.append(1.0 if pl > pv else 0.0)
         res["discrepancias"] = res.get("discrepancias", [])[:6]
-        res["jugadores"] = probar_jugadores(db, elegidos, int(os.environ.get("NBA_G_FUGA_JUGADORES", "60")))
+        res["jugadores"] = probar_jugadores(db, elegidos, int(os.environ.get("NBA_G_FUGA_JUGADORES", "60")), ref)
         res["brier_ganador"] = sum((p - o) ** 2 for p, o in zip(p_local, y)) / len(y)
         res["alarma_fuga_brier_menor_0_18"] = res["brier_ganador"] < 0.18
         res["aprobado_equipo"] = (res["difs_repetibilidad"] == 0 and res["fugas_historia"] == 0 and res["fugas_propias"] == 0

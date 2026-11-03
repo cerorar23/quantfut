@@ -29,6 +29,26 @@ class ParametrosProps:
     version: str
 
 
+RUTA_IMPACTO = Path(__file__).parent / "parametros" / "impacto.json"
+
+
+@dataclass(frozen=True)
+class ParametrosImpacto:
+    impacto: object                        # plantilla.Impacto (beta, tau, intercepto y efecto del descanso)
+    sigma_margen: float                    # desviación del margen de la MEZCLA equipo + jugadores medida hacia adelante
+    datos_hasta: str
+    version: str
+
+
+def cargar_impacto(ruta: Path = RUTA_IMPACTO) -> ParametrosImpacto:
+    from .plantilla import Impacto
+    crudo = ruta.read_bytes().replace(b"\r\n", b"\n")
+    a = json.loads(crudo)
+    imp = Impacto(beta={int(k): v for k, v in a["beta"].items()}, tau={int(k): v for k, v in a["tau"].items()},
+                  c_margen=a["c_margen"], d_margen=a["d_margen"], c_total=a["c_total"], d_total=a["d_total"])
+    return ParametrosImpacto(imp, a["sigma_margen_mezcla"], a["datos_hasta"], hashlib.sha256(crudo).hexdigest()[:12])
+
+
 def cargar_props(ruta: Path = RUTA_PROPS) -> ParametrosProps:
     crudo = ruta.read_bytes().replace(b"\r\n", b"\n")      # la huella no depende de los finales de línea del sistema
     a = json.loads(crudo)

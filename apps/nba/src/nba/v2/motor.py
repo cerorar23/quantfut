@@ -18,7 +18,7 @@ import sys
 
 import psycopg
 
-from . import alertas, motor_equipo, motor_jugadores, parametros, pit, sellado
+from . import alertas, equipo_jugadores, motor_equipo, motor_jugadores, parametros, pit, sellado
 from .plantilla_pit import plantilla
 from .sellado import PronosticoNuevo
 
@@ -27,6 +27,8 @@ MINUTOS_ANTES = 60
 HOLGURA_HISTORIA_DIAS = 7                 # más que la pausa del Juego de Estrellas
 MERCADO = "equipo"
 PARAMETROS_PROPS = parametros.cargar_props()
+PARAMETROS_IMPACTO = parametros.cargar_impacto()
+VERSION_EQUIPO_JUGADORES = equipo_jugadores.version(PARAMETROS_IMPACTO)
 VERSION_PROPS = f"props-2.0;{PARAMETROS_PROPS.version};k={PARAMETROS_PROPS.k_minutos};dec={PARAMETROS_PROPS.decaimiento}"
 HORAS_DE_AVISO_TRAS_EL_SALTO = 3           # pasado esto, un partido sin sello deja de repetirse en el informe
 
@@ -49,7 +51,7 @@ ORDER BY e.fecha_juego_et, e.entidad_id
 def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict:
     ahora = ahora or datetime.now(UTC)
     hoy = ahora.astimezone(ET).date()
-    resumen = {"ahora": ahora.isoformat(), "version_modelo": motor_equipo.VERSION_MODELO, "version_props": VERSION_PROPS, "simulacro": simulacro,
+    resumen = {"ahora": ahora.isoformat(), "version_modelo": VERSION_EQUIPO_JUGADORES, "version_props": VERSION_PROPS, "simulacro": simulacro,
                "sellados": [], "props": [], "omitidos": [], "sin_hora": [], "errores": []}
     filas = db.execute(CANDIDATOS, {"ahora": ahora, "desde": hoy - timedelta(days=1), "hasta": hoy + timedelta(days=1)}).fetchall()
     db.rollback()
@@ -74,24 +76,27 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
                 resumen["omitidos"].append({"partido": pid, "razon": "historia_atrasada"})
                 db.rollback()
                 continue
+            pl = plantilla(db, inst)
             if not equipo_hecho:
-                esc, dist = motor_equipo.pronosticar(inst)
+                version, esc, dist = equipo_jugadores.pronosticar(inst, pl, PARAMETROS_IMPACTO, PARAMETROS_PROPS)
+                vd = (inst.version_datos + pl.version_datos)[:64] if version == VERSION_EQUIPO_JUGADORES else inst.version_datos
                 if simulacro:
-                    resumen["sellados"].append({"partido": pid, "p_local": dist["p_local"], "mu": dist["mu"], "version_datos": inst.version_datos[:12]})
+                    resumen["sellados"].append({"partido": pid, "version": version.split(";")[0], "p_local": dist["p_local"], "mu": dist["mu"],
+                                                "version_datos": vd[:12]})
                 else:
-                    h = sellado.sellar(db, PronosticoNuevo(pid, MERCADO, motor_equipo.VERSION_MODELO, inst.version_datos, corte, esc, dist))
+                    h = sellado.sellar(db, PronosticoNuevo(pid, MERCADO, version, vd, corte, esc, dist))
                     db.commit()
-                    resumen["sellados"].append({"partido": pid, "hash": h, "p_local": dist["p_local"]})
+                    resumen["sellados"].append({"partido": pid, "hash": h, "version": version.split(";")[0], "p_local": dist["p_local"]})
             if not props_hechos:
-                pl = plantilla(db, inst)
                 items = motor_jugadores.pronosticar(pl, PARAMETROS_PROPS)
                 if simulacro:
                     resumen["props"].append({"partido": pid, "jugadores": len({x["jugador"] for x in items}), "pronosticos": len(items)})
                 elif items:
                     vd = pl.version_datos + inst.version_datos
-                    for x in items:                                  # todo el partido o nada: un fallo deshace los sellos de sus jugadores
-                        sellado.sellar(db, PronosticoNuevo(pid, x["mercado"], VERSION_PROPS, vd[:64], corte, x["escenarios"], x["distribucion"],
-                                                           entidad_id=x["jugador"]))
+                    with db.transaction():                           # todo el partido o nada: un fallo deshace los sellos de sus jugadores
+                        for x in items:
+                            sellado.sellar(db, PronosticoNuevo(pid, x["mercado"], VERSION_PROPS, vd[:64], corte, x["escenarios"], x["distribucion"],
+                                                               entidad_id=x["jugador"]))
                     db.commit()
                     resumen["props"].append({"partido": pid, "jugadores": len({x["jugador"] for x in items}), "pronosticos": len(items)})
         except Exception as e:                               # un partido roto no impide sellar los demás
@@ -106,7 +111,7 @@ def _ya_sellado(db, pid: int, corte: datetime, props: bool = False) -> bool:
                          "AND objetivo_en = %s LIMIT 1", (pid, VERSION_PROPS, corte)).fetchone()
     else:
         hay = db.execute("SELECT 1 FROM nba.pronostico WHERE partido_id = %s AND mercado = %s AND periodo = 0 AND entidad_id IS NULL "
-                         "AND version_modelo = %s AND objetivo_en = %s", (pid, MERCADO, motor_equipo.VERSION_MODELO, corte)).fetchone()
+                         "AND version_modelo LIKE 'equipo-%%' AND objetivo_en = %s", (pid, MERCADO, corte)).fetchone()
     db.rollback()
     return hay is not None
 
