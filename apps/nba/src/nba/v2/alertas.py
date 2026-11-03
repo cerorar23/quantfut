@@ -10,7 +10,8 @@ from pathlib import Path
 import urllib.parse
 import urllib.request
 
-RAZONES = {"ya_empezo_sin_sello": "empezó sin pronóstico sellado", "historia_atrasada": "no se sella: la captura de resultados está atrasada"}
+RAZONES = {"ya_empezo_sin_sello": "empezó sin pronóstico sellado", "historia_atrasada": "no se sella: la captura de resultados está atrasada",
+          "equipo_sin_resultados_recientes": "no se sella: a uno de sus equipos le faltan resultados recientes"}
 
 
 def mensajes(resumen: dict) -> list[tuple[str, str]]:

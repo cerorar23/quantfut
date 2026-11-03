@@ -35,9 +35,11 @@ def tasa_por_minuto(m_hist: np.ndarray, s_hist: np.ndarray, prior: np.ndarray, k
     reciente; prior (N, E). Devuelve (N, E): (Σ w·s + k·prior) / (Σ w·m + k)."""
     V = m_hist.shape[1]
     w = decaimiento ** np.arange(V - 1, -1, -1)
-    mm = np.where(np.isnan(m_hist), 0.0, m_hist) * w
-    ss = np.where(np.isnan(s_hist), 0.0, s_hist) * w
-    return (ss.sum(axis=2) + k * prior) / (mm.sum(axis=1)[:, None] + k)
+    # un dato que falta NO vale 0: ese partido sale de la tasa de esa estadística (ni sus puntos ni sus minutos cuentan)
+    validos = ~np.isnan(s_hist) & ~np.isnan(m_hist)[:, None, :]
+    num = np.where(validos, s_hist, 0.0) * w
+    den = np.where(validos, m_hist[:, None, :], 0.0) * w
+    return (num.sum(axis=2) + k * prior) / (den.sum(axis=2) + k)
 
 
 def estimar_alfa(mu: np.ndarray, y: np.ndarray, minimo_mu: float = 0.5) -> float:

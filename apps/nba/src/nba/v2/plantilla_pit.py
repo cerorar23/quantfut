@@ -16,6 +16,7 @@ from .pit import Instantanea
 VENTANA_EQUIPO = 10
 V = 30                                    # partidos de historia por jugador
 MIN_PARTIDOS = 5
+MINUTOS_MAXIMOS = 60.0                  # un partido con más de 60 minutos de un jugador es un dato corrupto
 DIAS_ATRAS = 2200                       # el modelo validado usa los últimos 30 partidos sin límite de edad (todo el archivo desde 2021)
 METRICAS = ("minutos", "puntos", "rebotes", "asistencias", "triples_anotados")
 
@@ -97,7 +98,7 @@ def plantilla(db, inst: Instantanea) -> Plantilla:
         fechas[(jug, pid)] = f
     partidos_de = defaultdict(list)
     for (jug, pid), mets in crudo.items():
-        if "minutos" in mets and mets["minutos"][1] and mets["minutos"][1] > 0:
+        if "minutos" in mets and mets["minutos"][1] is not None and 0 < mets["minutos"][1] <= MINUTOS_MAXIMOS:     # minutos corruptos: el partido no cuenta
             partidos_de[jug].append((fechas[(jug, pid)], pid, mets))
     nombres = dict(db.execute("SELECT entidad_id, nombre FROM nba.entidad WHERE entidad_id = ANY(%s)", (sorted(candidatos),)).fetchall())
     lados = {}
@@ -109,7 +110,8 @@ def plantilla(db, inst: Instantanea) -> Plantilla:
             if jug not in plantel[lado] and jug not in parte:
                 continue
             juegos = sorted(partidos_de[jug], key=lambda x: (x[0], x[1]))[-V:]
-            stats = tuple(tuple(float(m.get(n, (None, 0.0))[1] or 0.0) for n in ("puntos", "rebotes", "asistencias", "triples_anotados"))
+            stats = tuple(tuple(float(m[n][1]) if n in m and m[n][1] is not None else float("nan")      # estadística ausente = desconocida, nunca 0
+                                for n in ("puntos", "rebotes", "asistencias", "triples_anotados"))
                           for _, _, m in juegos)
             jugadores.append(JugadorPlantilla(jug, nombres.get(jug) or str(jug), parte.get(jug), tuple(float(m["minutos"][1]) for _, _, m in juegos), stats))
         lados[lado] = tuple(jugadores)

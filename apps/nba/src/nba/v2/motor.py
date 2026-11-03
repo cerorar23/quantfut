@@ -18,7 +18,7 @@ import sys
 
 import psycopg
 
-from . import alertas, equipo_jugadores, motor_equipo, motor_jugadores, parametros, pit, sellado
+from . import alertas, equipo_jugadores, identidad, motor_equipo, motor_jugadores, parametros, pit, sellado
 from ..contratos.validar import ContratoIncumplido, validar_equipo, validar_jugador
 from .plantilla_pit import plantilla
 from .sellado import PronosticoNuevo
@@ -31,6 +31,8 @@ PARAMETROS_PROPS = parametros.cargar_props()
 PARAMETROS_IMPACTO = parametros.cargar_impacto()
 VERSION_EQUIPO_JUGADORES = equipo_jugadores.version(PARAMETROS_IMPACTO)
 VERSION_PROPS = f"props-2.0;{PARAMETROS_PROPS.version};k={PARAMETROS_PROPS.k_minutos};dec={PARAMETROS_PROPS.decaimiento}"
+DIAS_MAXIMOS_SIN_JUGAR = 10                # más que la pausa del Juego de Estrellas: un equipo sin resultados por más tiempo es un hueco de datos
+DIAS_DE_GRACIA_INICIO = 21                 # pasadas tres semanas de temporada, un equipo sin ningún resultado también lo es
 HORAS_DE_AVISO_TRAS_EL_SALTO = 3           # pasado esto, un partido sin sello deja de repetirse en el informe
 
 CANDIDATOS = """
@@ -77,6 +79,11 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
                 resumen["omitidos"].append({"partido": pid, "razon": "historia_atrasada"})
                 db.rollback()
                 continue
+            razon = equipo_atrasado(inst)
+            if razon:
+                resumen["omitidos"].append({"partido": pid, "razon": razon})
+                db.rollback()
+                continue
             pl = plantilla(db, inst)
             if not equipo_hecho:
                 version, esc, dist = equipo_jugadores.pronosticar(inst, pl, PARAMETROS_IMPACTO, PARAMETROS_PROPS)
@@ -105,6 +112,22 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
             db.rollback()
             resumen["errores"].append({"partido": pid, "error": f"{type(e).__name__}: {e}"[:300]})
     return resumen
+
+
+def equipo_atrasado(inst) -> str | None:
+    """Razón por la que a uno de los dos equipos le faltan resultados recientes (captura caída solo para él), o None. Un ratings viejo no se sella."""
+    temporada = identidad.temporada(inst.fecha)
+    esta = [h for h in inst.historia if identidad.temporada(h[0]) == temporada]
+    if not esta:                                          # apertura de temporada: no hay nada que comparar
+        return None
+    inicio = min(h[0] for h in esta)
+    for tri in (inst.local, inst.visitante):
+        propios = [h[0] for h in esta if tri in (h[2], h[3])]
+        if propios and (inst.fecha - max(propios)).days > DIAS_MAXIMOS_SIN_JUGAR:
+            return "equipo_sin_resultados_recientes"
+        if not propios and (inst.fecha - inicio).days > DIAS_DE_GRACIA_INICIO:
+            return "equipo_sin_resultados_recientes"
+    return None
 
 
 def _solo_validos(items: list[dict], pid: int, resumen: dict) -> list[dict]:
