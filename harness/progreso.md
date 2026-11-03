@@ -7002,3 +7002,7 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Corrección: el 3-nov no hubo partidos NBA (elecciones); mi aviso anterior de que los primeros sellos de la imagen 6b85093 saldrían hacia las 22:00 UTC de hoy era falso: salen con los partidos del 4-nov.
 
 - Decisión del titular (3-nov): mantener el impacto S3c (RAPM de quintetos) en producción; se despliegan los arreglos de F4.3 sobre esa base (`nba-motor:d73c7c5`).
+
+## 2026-11-03 — F4.4 ensayo operativo
+
+- Resultado: se restaura y se verifica en menos de un minuto, la manipulación se detecta y la vuelta atrás son 1 s; el punto débil es la distancia entre respaldos (24 h de sellos) y la copia fuera del servidor, que dependía de traerla a mano y estaba desactualizada.

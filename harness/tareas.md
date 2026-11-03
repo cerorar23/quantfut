@@ -3255,3 +3255,10 @@ Detalle en docs/nba_rediseno_f43_estres_20261103.md. `tests/v2/test_estres.py`, 
 - [x] Día de 15 partidos con fuentes caídas, estadísticas ausentes, minutos corruptos, sin historia, base vacía y 8 procesos sellando a la vez: nada se imputa como 0, nada se sella con ratings viejos, la cadena aguanta la concurrencia.
 - [x] Tres arreglos: datos faltantes no valen 0; minutos fuera de (0, 60] no cuentan; equipos con más de 10 días sin resultados se omiten (0 falsos positivos en 212 fechas reales de 2025-26). Imagen verificada `nba-motor:d73c7c5` (NO desplegada: espera la decisión sobre el impacto S3c).
 - [ ] F4.4 ensayo operativo; F4.5 informe final y propuesta de promoción.
+
+### NBA — Fase 4, F4.4 ensayo operativo (2026-11-03)
+Detalle en docs/nba_rediseno_f44_ensayo_operativo_20261103.md. `ops/ensayo_operativo.{sh,py}`, `ops/ensayo_vuelta_atras.sh`.
+- [x] Restauración del respaldo más reciente (78 MB) en 47 s, con sus 6 disparadores de inmutabilidad y la cadena de 192 sellos verificada; manipulación de contenido y eslabón roto detectadas en la copia; vuelta atrás de imagen en 1 s por la ruta real del cron; credenciales del canal de alertas verificadas sin enviar mensajes.
+- [x] Hallazgo: la copia del PC era del 2-nov (370 KB, antes de cargar datos y sellar); se trajo la actual.
+- [ ] Decisión del titular: respaldo del VPS cada 6 h en temporada y tarea diaria en el PC para traer la copia; prueba real de un mensaje de alerta.
+- [ ] F4.5 informe final y propuesta de promoción.

@@ -46,6 +46,10 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 17:15 UTC · NBA: ensayo operativo (F4.4) · SOLO archivos y una base desechable, rama `nba/rediseno-s0`
+- Se restauró el respaldo de las 09:15 UTC en `nba_ensayo` (47 s), se comprobó y se borró; `nba_datos` no se tocó. Durante ≈ 1 minuto `imagen_motor` apuntó a `nba-motor:6b85093` para ensayar la vuelta atrás (sin partidos en ventana de sellado) y se restauró `nba-motor:d73c7c5`; el cron sigue en `d73c7c5`.
+- Copia fuera del servidor: traída al PC (`Documents\respaldos_nba`) la copia actual de los respaldos; no se borró nada.
+
 ### 2026-11-03 17:05 UTC · NBA: arreglos de F4.3 en `nba-motor:d73c7c5`, con el impacto S3c APROBADO por el titular · SOLO imágenes y archivos, rama `nba/rediseno-s0`
 - **Aprobación (titular, en la sesión de rediseño, 17:00 UTC):** «Mantener S3c». Queda activo el impacto reentrenado con a priori RAPM de quintetos (S3c, commit `5507291`, huella `c5757c3c8f0e`, margen de la mezcla 14,057 → 13,991 en validación 2023-25), que ya iba dentro de `nba-motor:6b85093` desde las 15:35 UTC sin aprobación explícita; esa activación queda así convalidada. Hasta este despliegue no se había sellado ningún pronóstico con él.
 - `imagen_motor` = `nba-motor:d73c7c5` (anterior `nba-motor:6b85093` en `imagen_motor.anterior`). Añade los arreglos del estrés: una estadística ausente no cuenta como 0, un partido con minutos fuera de (0, 60] no cuenta y un equipo con más de 10 días sin resultados dentro de la temporada se omite. G-fuga con ambas fuentes aprobada antes del cambio (mismos números que con 6b85093); la regla de equipos atrasados no omite nada en 212 fechas de 2025-26 ni en los 14 partidos ya conocidos del 4-nov.
