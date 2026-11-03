@@ -165,14 +165,27 @@ def _finales_pendientes(db, ahora: datetime, dias: int = 3) -> list[tuple[int, s
         "GROUP BY p.entidad_id, a.id_en_fuente ORDER BY min(d.recibido_en) DESC", (FUENTE, desde)).fetchall()
 
 
-def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, tope_diario: float = 25,
+def _sin_box(db, ahora: datetime) -> int:
+    """Partidos de ayer y hoy (hora del este) cuyo box score aún no se ha bajado: los créditos que la jugada a jugada debe respetar."""
+    desde = (ahora.astimezone(ET) - timedelta(days=1)).date()
+    return db.execute(
+        "SELECT count(*) FROM nba.entidad p WHERE p.tipo = 'partido' AND p.canonica_id = p.entidad_id AND p.fecha_juego_et >= %s "
+        "AND NOT EXISTS (SELECT 1 FROM nba.entidad a JOIN nba.captura c ON c.fuente = %s AND c.ok "
+        "AND c.objetivo = %s || a.id_en_fuente || '.json' WHERE a.fuente = %s AND a.tipo = 'partido' "
+        "AND a.id_en_fuente ~ '^[0-9]{10}$' AND a.fecha_juego_et = p.fecha_juego_et "
+        "AND a.atributos->>'local' = p.atributos->>'local' AND a.atributos->>'visitante' = p.atributos->>'visitante')",
+        (desde, FUENTE, BASE + "boxscore/boxscore_", FUENTE)).fetchone()[0]
+
+
+def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, tope_diario: float = 40,
              espera_final_min: float = 10, max_fallos: int = 2) -> dict:
     """1) marcador del día (una vez, para conocer los id de la NBA); 2) box score de cada final; 3) jugada a jugada
-    con el presupuesto que quede. Nunca pasa del tope diario de créditos."""
+    solo con el presupuesto que sobre una vez reservado un crédito por cada box que falta (más uno de reintento), para que
+    la jugada a jugada de los primeros partidos de la noche no deje sin box a los últimos. Nunca pasa del tope diario."""
     resumen = {"ok": True, "creditos": 0.0, "marcador": 0, "box": 0, "pbp": 0, "datos": 0, "eventos": 0, "sin_presupuesto": False}
 
-    def pedir(url: str):
-        if gastado_hoy(db, ahora) >= tope_diario:
+    def pedir(url: str, reserva: float = 0):
+        if gastado_hoy(db, ahora) + reserva >= tope_diario:
             resumen["sin_presupuesto"] = True
             return None
         try:
@@ -233,7 +246,8 @@ def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, t
         url = url_pbp(game_id)
         if not _captura_ok(db, url_box(game_id)) or _captura_ok(db, url) or _fallos_recientes(db, url, ahora) >= max_fallos:
             continue
-        r = pedir(url)
+        faltan = _sin_box(db, ahora)
+        r = pedir(url, reserva=faltan + 1 if faltan else 0)
         if r is None:
             continue
         ficha, texto = r

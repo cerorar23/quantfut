@@ -33,6 +33,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-03 20:15 UTC · NBA: tope de Scrapfly 40/día y jugada a jugada con reserva (imagen `nba-captura:63b8ce3`) · solo imagen y `captura.env`, rama `nba/rediseno-s0`
+- Causa del tope agotado: los 12 partidos del 2-nov terminaron después de las 00:00 UTC y se cobraron al 3-nov (2 créditos por partido más 2 cobrados por 403 tempranos); la jugada a jugada de los primeros partidos gastaba créditos antes de que existieran los box de los últimos.
+- Cambio: la jugada a jugada solo se pide si, tras gastarla, quedan créditos para los box que faltan (1 por box más 1 de reintento); tope diario 25 → 40 (`NBA_SCRAPFLY_TOPE_DIARIO=40` en `captura.env`). Primera pasada real: 3 box recuperados (28 créditos del día).
+- **Vuelta atrás:** `imagen_actual.anterior` (`nba-captura:98d2c10`) y `captura.env.antes-tope40`.
+
 ### 2026-11-03 · Correcciones de la auditoría del motor de fútbol · API + worker + `db/102` (PR #242 y #244)
 - Migración `db/102_futbol_integridad_y_capturas.sql` aplicada después de respaldo completo `futbol.before.sql.gz` (162.6 MB) y `matches.before.sql.gz` (4.7 MB), ambos verificados, en `~/quantfut/releases/correcciones-futbol-20261103/`. Ensayo previo contra la base real con `ROLLBACK`: cuatro originales en cuarentena, cero parejas incoherentes y cero bajas recientes pendientes. Aplicación final: cuarentena = 4, pares incoherentes de partidos/jugador = 0 y atrasos de bajas = 0. El cambio es aditivo: cuarentena conserva los originales y la corrección deja a NULL las parejas imposibles; no toca predicciones, picks ni cuotas.
 - API `quantfut-api-auditoria:cec59cb`, derivada de la API que estaba en ejecución, con `partido_mercados.py` de `main` (`7f9c4de50309…`) y el destacado congelado. Worker `quantfut-worker-auditoria:13696cf`, derivado de `quantfut-worker:bd58d4f`, con `daily.py`, `hashchain.py`, `escalera_datos.py`, `destacado_web.py` y el lector de mercados auditados. Antes de sustituirlos se compararon las diferencias ajenas a `main`; por eso no se hizo una reconstrucción completa que pudiera borrarlas.
