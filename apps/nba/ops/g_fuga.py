@@ -122,7 +122,17 @@ def probar_jugadores(db, elegidos, n):
         motor = {j.id: (lado, j.minutos, j.stats) for lado, js in a.lados.items() for j in js}
         if motor != ref:
             res["difs_plantilla_vs_referencia"] += 1
-            res.setdefault("ejemplos", []).append({"partido": pid, "solo_motor": len(motor.keys() - ref.keys()), "solo_referencia": len(ref.keys() - motor.keys())})
+            ej = {"partido": pid, "solo_motor": len(motor.keys() - ref.keys()), "solo_referencia": len(ref.keys() - motor.keys())}
+            for jug in motor.keys() & ref.keys():
+                if motor[jug] != ref[jug]:
+                    m, r_ = motor[jug], ref[jug]
+                    ej["jugador"] = jug
+                    ej["lado"] = (m[0], r_[0])
+                    ej["n_minutos"] = (len(m[1]), len(r_[1]))
+                    ej["minutos_distintos"] = [(i, a_, b_) for i, (a_, b_) in enumerate(zip(m[1], r_[1])) if a_ != b_][:3]
+                    ej["stats_distintas"] = [(i, a_, b_) for i, (a_, b_) in enumerate(zip(m[2], r_[2])) if a_ != b_][:3]
+                    break
+            res.setdefault("ejemplos", []).append(ej)
         res["pronosticos"] += len(ra)
         for x in ra:
             if x["mercado"] == "jugador:puntos" and (pid, x["jugador"]) in real:
