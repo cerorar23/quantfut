@@ -1,5 +1,16 @@
 # Backlog — QuantFut
 
+## Correcciones de la auditoría del 3-nov-2026 — en curso
+
+Autorización del titular: «haz las correcciones». Evidencia inicial en el checkout principal, `docs/auditoria_futbol_20261103/INFORME.md`. Se usa este worktree porque contiene el rediseño y la API vigente.
+- [x] H01: corte histórico correcto y destacado congelado en la predicción inmutable antes del sello, sin reconstruir aciertos inexistentes.
+- [x] H02/H03/H06/H07/H10: xG con recepción común, rasgos sin simultáneos, periodo real de estimación, convergencia obligatoria y cuotas coherentes.
+- [x] H04/H09: migración 102 de propagación transaccional y cuarentena preparada y ensayada en PostgreSQL aislado, conservando originales.
+- [x] H05/H08/H12: tramos de jugador como candidato separado; la regla MX falsa pasa a pendiente y las no verificadas quedan fuera de la vista de consumo; evaluación identifica reconstrucción y seguimiento observado.
+- [x] Repetir pruebas y comparaciones afectadas: 1.756 aprobadas, 122 omitidas; A0/DC y conteos repetidos, A4 construido en 7.138 partidos. Informe `docs/correcciones_futbol_20261103.md`.
+- [ ] Integrar y desplegar cambios operativos con respaldo, ensayo sobre la base real y comprobación posterior. No activar candidatos: A0 no confirma mejora y A4 todavía no tiene validación prospectiva.
+- [ ] Confirmar reglamentos por temporada/fase y paridad completa origen/canónica antes de usar sus nuevas señales.
+
 ## 2-nov-2026 · Captura de SharpAPI (plan Free) desplegada en el servidor
 - [x] `scripts/sharpapi_captura.py` + cron cada 5 min: cuotas prepartido de DraftKings y FanDuel de las 9 ligas a 24 h, 6 h, 2 h, 60 min y 15 min del saque, como archivos en `~/sharpapi_data` (docs/sharpapi_captura_20261102.md, DEPLOYS.md).
 - [ ] Cuando haya semanas de capturas: cargarlas en `futbol.cuota_historica` (`fuente = 'sharpapi'`, hace falta ampliar el CHECK de db/101) y medir con ellas descanso/final, marcador exacto, primer equipo en marcar, goleadores y tiros de jugador.

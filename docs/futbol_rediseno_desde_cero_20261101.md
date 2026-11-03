@@ -567,7 +567,7 @@ T-60 no está archivado en la historia).
 | Capa | Δ log-loss | t | Lectura |
 |---|---|---|---|
 | A3 definición y portero (xG y xGOT) | +0,0001 | +0,3 | sin efecto |
-| A4 fuerza del once (goles esperados de sus once) | **+0,0001 (peor)** | +2,4 | sin efecto: el coeficiente es 0,01 (t 0,2) |
+| A4 proxy ofensivo del once (suma de tasas de gol; no plus-minus por tramos) | **+0,0001 (peor)** | +2,4 | sin efecto: el coeficiente es 0,01 (t 0,2); no descarta el método por tramos |
 | A5 rotación | −0,0007 | −2,2 | cada titular cambiado respecto al partido anterior resta 1,4 % de goles propios (t −3,2) |
 | A6 habituales ausentes | −0,0010 | −1,6 | cada habitual ausente propio −1,3 % (t −2,7) y cada uno del rival **+1,9 %** (t +4,1) |
 | A4+A5+A6 | −0,0012 | −1,7 | no significativo |
@@ -582,7 +582,7 @@ No se activa nada. Se repite cuando haya meses de once capturado a T-60 (`futbol
 | F0 conciliación, F1 `futbol.dato` | hechas (31-oct, 1-nov) |
 | F2 referencias (DC, pi-ratings, mercado) | hecha: el mercado gana |
 | A0-A2 *score-driven*, xG por tiro, estado del partido | hechas: A0 empata con DC; A1 y A2 no aportan |
-| A3-A7 | **hechas hoy** (§14.3): efectos ≤ 0,0012, nada que activar |
+| A3-A7 | Aproximaciones medidas (§14.3): efectos ≤ 0,0012. A4 por tramos y carga completa no quedan validados por estos proxies; ver correcciones del 3-nov |
 | Motor B (mercado) | sin cambio de fondo; es la fuente del porcentaje (Pinnacle y mediana de las demás casas) |
 | C1 tarjetas, C2 córners, C3 mitades | hechas y medidas (§5, §11) |
 | C4 conteos de equipo (tiros, a puerta, faltas, fueras de juego) | **sin hacer**: ninguna lista del titular los pide; los de jugador sí están (C5) |

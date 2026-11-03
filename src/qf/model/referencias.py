@@ -39,12 +39,19 @@ class Climatologia:
 class DixonColesRef:
     """Motor A de producción. Usa solo los últimos `anios` (con vida media de 270 días, lo anterior pesa < 0,5 %)."""
 
-    def __init__(self, halflife: float = 270.0, xg_blend: float = 0.65, anios: float = 6.0):
+    def __init__(self, halflife: float = 270.0, xg_blend: float = 0.65, anios: float = 6.0,
+                 disponibilidad: str = 'recepcion'):
         self.halflife, self.xg_blend, self.anios = halflife, xg_blend, anios
         self.m: DixonColes | None = None
+        if disponibilidad not in ('recepcion', 'reconstruida'):
+            raise ValueError('Política de xG desconocida')
+        self.disponibilidad = disponibilidad
 
     def ajustar(self, historia: pd.DataFrame, corte) -> None:
         h = historia[historia["kickoff_utc"] >= corte - pd.Timedelta(days=365 * self.anios)]
+        if self.disponibilidad == 'reconstruida':
+            # Solo el banco de investigación; no cambia el lector ni el artefacto de producción.
+            h = h.drop(columns=['xg_source', 'xg_recorded_at'], errors='ignore')
         self.m = DixonColes(halflife_days=self.halflife, xg_blend=self.xg_blend)
         self.m.fit(h, as_of=corte.to_pydatetime())
 

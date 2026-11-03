@@ -23,14 +23,14 @@ COPY (
 \echo '@@ tiros'
 COPY (
   SELECT d.match_id, d.side, d.evento AS tiro_id, d.minuto, d.anadido, d.segundos_periodo, d.jugador_id,
-         d.portero_id, d.xg, d.xgot, d.situacion, d.resultado, d.parte_cuerpo, d.x, d.y
+         d.portero_id, d.xg, d.xgot, d.situacion, d.resultado, d.parte_cuerpo, d.x, d.y, d.recibido_en
     FROM futbol.dato d JOIN :P p USING (match_id) WHERE d.tipo = 'tiro'
 ) TO STDOUT WITH CSV HEADER;
 
 \echo '@@ incidencias'
 COPY (
   SELECT d.match_id, d.side, d.evento AS orden, d.subtipo, d.clase, d.minuto, d.anadido, d.jugador_id,
-         d.jugador2_id, d.marcador_local, d.marcador_visita, d.anulada
+         d.jugador2_id, d.marcador_local, d.marcador_visita, d.anulada, d.recibido_en
     FROM futbol.dato d JOIN :P p USING (match_id)
    WHERE d.tipo = 'incidencia' AND d.subtipo IN ('goal','card','substitution','inGamePenalty','period')
 ) TO STDOUT WITH CSV HEADER;

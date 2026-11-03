@@ -130,6 +130,7 @@ def _collect(batch_date: date) -> dict:
                   p.home_lambda, p.away_lambda, p.rho, p.confidence_tier,
                   p.markets -> '1x2'    AS m_1x2,
                   p.markets -> 'totals' AS m_totals,
+                  p.data_completeness -> 'web_destacado' AS web_destacado,
                   {consenso}
                   m.kickoff_utc, m.league_id,
                   th.canonical_name AS home_team, ta.canonical_name AS away_team
@@ -147,6 +148,9 @@ def _collect(batch_date: date) -> dict:
            ORDER BY p.generated_at, p.prediction_id""",
         (batch_date,),
     )
+    for pred in preds:
+        if pred.get('web_destacado') is None:
+            pred.pop('web_destacado', None)  # el payload de lotes antiguos conserva exactamente sus claves
     picks = query(
         """SELECT pick_id, prediction_id, match_id, market, selection, line,
                   model_prob, advised_price, bookmaker, edge_pct, raw_edge_pct,
@@ -338,6 +342,7 @@ def _collect_partido(match_id: str) -> dict:
                   p.markets -> 'totals' AS m_totals,
                   -- momento y motivo del sello y factor del once en sombra: queda en el JSON que se revela y se verifica
                   p.data_completeness -> 'sello_tardio' AS sello_tardio,
+                  p.data_completeness -> 'web_destacado' AS web_destacado,
                   m.kickoff_utc, m.league_id,
                   th.canonical_name AS home_team, ta.canonical_name AS away_team
            FROM predictions p
@@ -346,6 +351,9 @@ def _collect_partido(match_id: str) -> dict:
            JOIN teams ta ON ta.team_id = m.away_team_id
            WHERE p.match_id = %s AND p.etapa = 'final'
            ORDER BY p.generated_at, p.prediction_id""", (match_id,))
+    for pred in preds:
+        if pred.get('web_destacado') is None:
+            pred.pop('web_destacado', None)
     picks = query(
         """SELECT pick_id, prediction_id, match_id, market, selection, line,
                   model_prob, advised_price, bookmaker, edge_pct, raw_edge_pct,

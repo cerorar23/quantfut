@@ -5,6 +5,11 @@ from qf.api import partido_mercados as pm
 from qf.model import estadisticas_mercado as em
 from qf.model import pricing
 
+
+@pytest.fixture(autouse=True)
+def sin_lecturas_externas(monkeypatch):
+    monkeypatch.setattr(pm, 'query_one', lambda *a, **k: None)
+
 LAM, MU, RHO = 1.457, .7185, -.06
 
 
