@@ -31,20 +31,25 @@ test('las fuentes fallan por separado y nunca fabrican cuotas ni publicaciones',
 });
 const game=(id,fecha,home,away,iso,result,pick=null)=>({id,fecha,local:{codigo:home[0],nombre:home[1]},visitante:{codigo:away[0],nombre:away[1]},inicio_utc:iso,sello_previsto:new Date(Date.parse(iso)-36e5).toISOString(),resultado:result,pronostico:pick});
 const BOS=['BOS','Boston Celtics'],NYK=['NYK','New York Knicks'],MIA=['MIA','Miami Heat'];
-test('la cartelera v2 conserva los partidos sin pronóstico y calcula sus estadísticas con marcadores finales',()=>{
+test('la cartelera v2 conserva los partidos sin pronóstico y no calcula estadísticas en el navegador',()=>{
  const rows=[game(1,'2026-10-28',BOS,NYK,'2026-10-29T00:00:00Z',{local:110,visitante:100}),game(2,'2026-11-01',MIA,BOS,'2026-11-02T00:00:00Z',{local:90,visitante:99}),
   game(3,'2026-11-04',BOS,NYK,'2026-11-05T00:00:00Z',null),game(4,'2026-11-05',MIA,NYK,'2026-11-06T00:00:00Z',null)];
  const events=nbaV2Events(rows,new Date('2026-11-03T12:00:00Z'));
  assert.equal(events.length,4);
  const next=events.find(e=>e.id===3);
  assert.deepEqual(next.markets,[]);assert.equal(next.status,'scheduled');assert.equal(next.planned_seal,'2026-11-04T23:00:00.000Z');assert.equal(next.seal,null);
- const [bos,nyk]=next.stats.teams;
- assert.equal(bos.season.won,2);assert.equal(bos.season.lost,0);assert.equal(bos.streak,2);assert.equal(bos.rest_days,2);assert.equal(bos.back_to_back,false);
- assert.equal(nyk.season.lost,1);assert.equal(nyk.streak,-1);assert.equal(nyk.scoring.points_for,100);
- assert.equal(next.stats.h2h.matches.length,1);assert.equal(next.stats.h2h.home_wins,1);assert.equal(next.stats.h2h.average_total,210);
- // las estadísticas de un partido no usan marcadores posteriores a su inicio
- assert.equal(events.find(e=>e.id===1).stats.teams[0].season.won,0);
- assert.equal(events.find(e=>e.id===2).score,'90 – 99');
+ assert.ok(events.every(e=>e.v2===true&&!('stats' in e)));
+ assert.equal(events.find(e=>e.id===2).score,'90 – 99');assert.equal(events.find(e=>e.id===2).status,'finished');
+});
+test('las estadísticas de un partido se piden al servidor al abrirlo, no con la cartelera',async()=>{
+ const calls=[];const fetcher=async path=>{calls.push(path);return {ok:true,json:async()=>({fecha:'x',partidos:[]})};};
+ await loadSport('nba',fetcher,new Date(2026,10,3,12));
+ assert.equal(calls.length,9);assert.ok(calls.every(c=>c.startsWith('/nba/v1/cartelera?fecha=')));
+ assert.ok(!calls.some(c=>c.includes('estadisticas')));
+});
+test('la cartelera no pide días de pretemporada',async()=>{
+ const calls=[];await loadSport('nba',async path=>{calls.push(path);return {ok:true,json:async()=>({partidos:[]})};},new Date(2026,9,21,12));
+ assert.deepEqual(calls.map(c=>c.slice(-10)),['2026-10-20','2026-10-21','2026-10-22','2026-10-23','2026-10-24','2026-10-25']);
 });
 test('el pronóstico v2 solo cuenta como previo si se selló antes del inicio',()=>{
  const pick=sealed=>({hash:'abc',p_local:.7,sellado_en:sealed});
