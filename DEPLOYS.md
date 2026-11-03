@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-03 · La leyenda de NBA queda solo con título, encabezado y una frase · API `quantfut-api-nba-leyenda:d2a014b` (PR #249, `main` `d2a014b`)
+- Orden del titular («fusionar y desplegar»). Cambio (solo frontend): la tarjeta «Cuándo se agrega el pronóstico» pierde la línea de pasos y el párrafo final; versión de caché `nba-leyenda-20261103`.
+- Base comprobada: API `quantfut-api-nba-v2:e3ca396` (coincide con el compose), worker sin tocar, nadie más desplegando. Imagen `FROM` esa API + 7 archivos de `frontend/` (sha256 12: `app.js` `da607b1d6367`, `ergonomic-views.js` `b188c8ea29da`, `real-views.js` `8224cd5acc91`, `sports-data.js` `8f59c9ab3bc7`, `sports-window.js` `29a9afe56854`, `window.css` `2d9b08243d85`, `index.html` `bbf4d620c933`). Ensayo aislado: hashes = repo y 138 rutas. Solo se recreó `api`; el worker sigue en `quantfut-worker-auditoria:13696cf`.
+- Verificado en el dominio real: `/health` 200; los 7 archivos servidos (URL versionada) = repo; en el navegador la tarjeta de NBA del 4-nov muestra solo «Pronóstico pendiente · Se agregará el 04 nov 2026 a las 17:00…» y la del 2-nov «Sin pronóstico previo», sin pasos.
+- Respaldo: `~/quantfut/releases/nba-leyenda-d2a014b/backup/` (compose e id de la imagen). **Vuelta atrás:** `cp -p ~/quantfut/releases/nba-leyenda-d2a014b/backup/docker-compose.yml ~/quantfut/docker-compose.yml && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate api` (vuelve `quantfut-api-nba-v2:e3ca396`).
+
+
 ### 2026-11-03 · La cartelera de NBA de la web lee la API v2 y explica cuándo llega el pronóstico · API `quantfut-api-nba-v2:e3ca396` (PR #247, `main` `e3ca396`)
 - Orden del titular («esperar CI y desplegar»; decisión previa: «solo usar v2»). Causa: al retirarse la v1 (3-nov 18:05 UTC) `/nba/api/data` redirige (302) a `/nba/v2/` y la web mostraba «No se pudo cargar la fuente» y «Sin eventos este día». Cambio (solo frontend): `loadSport('nba')` pide `/nba/v1/cartelera?fecha=` (desde el 20-oct, tope 21 días atrás, 4 adelante), conserva los partidos sin pronóstico, resume estadísticas con los marcadores finales de la API y añade la tarjeta «Cuándo se agrega el pronóstico». Los pronósticos que la v1 publicó hasta el 2-nov no se recuperan en la web.
 - Base comprobada: API `quantfut-api-auditoria:cec59cb` (coincide con el compose), worker sin tocar, nadie más desplegando; los 7 archivos del frontend en ejecución eran idénticos a `main` antes del PR.
