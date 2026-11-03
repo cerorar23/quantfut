@@ -19,6 +19,7 @@ import sys
 import psycopg
 
 from . import alertas, equipo_jugadores, motor_equipo, motor_jugadores, parametros, pit, sellado
+from ..contratos.validar import ContratoIncumplido, validar_equipo, validar_jugador
 from .plantilla_pit import plantilla
 from .sellado import PronosticoNuevo
 
@@ -80,6 +81,7 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
             if not equipo_hecho:
                 version, esc, dist = equipo_jugadores.pronosticar(inst, pl, PARAMETROS_IMPACTO, PARAMETROS_PROPS)
                 vd = (inst.version_datos + pl.version_datos)[:64] if version == VERSION_EQUIPO_JUGADORES else inst.version_datos
+                validar_equipo(dist)                              # frontera: lo que incumple el contrato no se sella
                 if simulacro:
                     resumen["sellados"].append({"partido": pid, "version": version.split(";")[0], "p_local": dist["p_local"], "mu": dist["mu"],
                                                 "version_datos": vd[:12]})
@@ -88,7 +90,7 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
                     db.commit()
                     resumen["sellados"].append({"partido": pid, "hash": h, "version": version.split(";")[0], "p_local": dist["p_local"]})
             if not props_hechos:
-                items = motor_jugadores.pronosticar(pl, PARAMETROS_PROPS)
+                items = _solo_validos(motor_jugadores.pronosticar(pl, PARAMETROS_PROPS), pid, resumen)
                 if simulacro:
                     resumen["props"].append({"partido": pid, "jugadores": len({x["jugador"] for x in items}), "pronosticos": len(items)})
                 elif items:
@@ -103,6 +105,18 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
             db.rollback()
             resumen["errores"].append({"partido": pid, "error": f"{type(e).__name__}: {e}"[:300]})
     return resumen
+
+
+def _solo_validos(items: list[dict], pid: int, resumen: dict) -> list[dict]:
+    """Descarta (y avisa) los pronósticos de jugador que incumplen el contrato; nunca se sella uno inválido ni se completa con un valor inventado."""
+    validos = []
+    for x in items:
+        try:
+            validar_jugador(x["distribucion"])
+            validos.append(x)
+        except ContratoIncumplido as e:
+            resumen["errores"].append({"partido": pid, "error": f"ContratoIncumplido: jugador {x['jugador']} {x['mercado']}: {e}"[:300]})
+    return validos
 
 
 def _ya_sellado(db, pid: int, corte: datetime, props: bool = False) -> bool:

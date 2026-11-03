@@ -20,6 +20,7 @@ import sys
 import psycopg
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from nba.contratos.validar import ContratoIncumplido, validar_equipo, validar_jugador  # noqa: E402
 from nba.v2 import equipo_jugadores, identidad, motor_equipo, motor_jugadores, nucleo, parametros, pit, props  # noqa: E402
 from nba.v2.plantilla_pit import plantilla  # noqa: E402
 import numpy as np  # noqa: E402
@@ -118,7 +119,7 @@ def probar_jugadores(db, elegidos, n, ref_equipo=None):
     real = {(r[1], r[2]): r for r in caja}
     imp = parametros.cargar_impacto()
     res = {"n": 0, "difs_repetibilidad": 0, "difs_plantilla_vs_referencia": 0, "pronosticos": 0, "pit": [], "difs_repetibilidad_mezcla": 0,
-           "mezclas_2_1": 0, "mezclas_respaldo_2_0": 0, "max_dif_mezcla_vs_referencia": 0.0}
+           "mezclas_2_1": 0, "mezclas_respaldo_2_0": 0, "max_dif_mezcla_vs_referencia": 0.0, "violaciones_contrato": 0, "validados": 0}
     paso = max(1, len(elegidos) // n)
     for fecha, pid, lo, vi, _, _ in elegidos[::paso][:n]:
         corte = datetime(fecha.year, fecha.month, fecha.day, 12, tzinfo=UTC)
@@ -153,6 +154,14 @@ def probar_jugadores(db, elegidos, n, ref_equipo=None):
         except ValueError:                                   # sin historia visible: el motor se niega, igual que en producción
             res["pronosticos"] += len(ra)
             continue
+        try:                                                 # frontera: todo lo que el motor produciría debe cumplir el contrato
+            validar_equipo(dist_a)
+            for x in ra:
+                validar_jugador(x["distribucion"])
+            res["validados"] += 1 + len(ra)
+        except ContratoIncumplido as e:
+            res["violaciones_contrato"] += 1
+            res.setdefault("ejemplos_contrato", []).append({"partido": pid, "error": str(e)[:200]})
         if (va, esc_a, dist_a) != (vb, esc_b, dist_b):
             res["difs_repetibilidad_mezcla"] += 1
         if va.startswith("equipo-2.1") and ref_equipo is not None and pid in ref_equipo:
@@ -173,7 +182,7 @@ def probar_jugadores(db, elegidos, n, ref_equipo=None):
     res["n_puntos_evaluados"] = int(len(pit_))
     res["ejemplos"] = res.get("ejemplos", [])[:5]
     res["aprobado"] = (res["difs_repetibilidad"] == 0 and res["difs_plantilla_vs_referencia"] == 0 and res["pronosticos"] > 0
-                       and res["difs_repetibilidad_mezcla"] == 0 and res["max_dif_mezcla_vs_referencia"] < 2e-3 and res["mezclas_2_1"] > 0
+                       and res["difs_repetibilidad_mezcla"] == 0 and res["violaciones_contrato"] == 0 and res["max_dif_mezcla_vs_referencia"] < 2e-3 and res["mezclas_2_1"] > 0
                        and res["cobertura80_puntos"] is not None and 0.74 <= res["cobertura80_puntos"] <= 0.86)
     return res
 

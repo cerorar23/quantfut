@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles
 import numpy as np
 import psycopg
 
+from ..contratos.validar import ContratoIncumplido, validar_equipo, validar_jugador
 from ..v2 import props, sellado
 
 ESTATICOS = Path(__file__).parent / "static"
@@ -39,6 +40,23 @@ def prob_mas_de(cuantiles: list[float], linea: float, paso: float = 0.005) -> tu
     # np.interp exige abscisas crecientes: se desempata con una mota para cuantiles repetidos (distribución discreta)
     xs = q + np.arange(len(q)) * 1e-9
     return float(1.0 - np.interp(linea, xs, niveles)), False
+
+
+def _equipo_valido(dist: dict) -> dict:
+    """Frontera de salida: nada que incumpla el contrato llega al navegador (los sellos son inmutables; si uno está mal, se dice y no se sirve)."""
+    try:
+        validar_equipo(dist)
+    except ContratoIncumplido:
+        raise HTTPException(502, {"codigo": "datos_invalidos"}) from None
+    return dist
+
+
+def _jugador_valido(dist: dict) -> dict:
+    try:
+        validar_jugador(dist)
+    except ContratoIncumplido:
+        raise HTTPException(502, {"codigo": "datos_invalidos"}) from None
+    return dist
 
 
 def crear_app(dsn: str | None = None) -> FastAPI:
@@ -75,6 +93,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
                   "pronostico": None}
         if p:
             h, hp, vm, vd, obj, sel, esc, dist, _ = p
+            _equipo_valido(dist)
             salida["pronostico"] = {"hash": h, "version_modelo": vm, "objetivo_en": obj.isoformat(), "sellado_en": sel.isoformat(),
                                     "p_local": dist["p_local"], "mu": dist["mu"], "escenarios": esc,
                                     "margen_p10_p90": [dist["margen"][19], dist["margen"][179]],
@@ -116,7 +135,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
             p = ultimo_pronostico(db, partido_id)
             if p is None:
                 raise HTTPException(404, {"codigo": "sin_pronostico"})
-            d = p[7]
+            d = _equipo_valido(p[7])
             mas, extremo = prob_mas_de(d[mercado], valor, d["paso_cuantil"])
             return {"mercado": mercado, "linea": valor, "p_mas": round(mas, 4), "p_menos": round(1 - mas, 4), "extremo": extremo, "hash": p[0]}
 
@@ -129,7 +148,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
             if not filas:
                 raise HTTPException(404, {"codigo": "sin_pronostico_jugador"})
             return {"partido_id": partido_id, "jugador_id": jugador_id,
-                    "mercados": {m: {"hash": h, "sellado_en": s.isoformat(), "escenarios": e, "distribucion": d} for m, h, s, e, d in filas}}
+                    "mercados": {m: {"hash": h, "sellado_en": s.isoformat(), "escenarios": e, "distribucion": _jugador_valido(d)} for m, h, s, e, d in filas}}
 
     @app.get("/nba/v1/partido/{partido_id}/jugadores")
     def jugadores(partido_id: int):
@@ -139,6 +158,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
                                (partido_id,)).fetchall()
         por_jugador: dict = {}
         for jid, mercado, esc, dist in filas:
+            _jugador_valido(dist)
             j = por_jugador.setdefault(jid, {"id": jid, "nombre": esc.get("nombre"), "lado": esc.get("lado"), "estado": esc.get("estado"),
                                              "p_juega": esc.get("p_juega"), "minutos_si_juega": esc.get("minutos_si_juega"),
                                              "minutos_esperados": dist.get("minutos_esperados"), "mercados": {}})
@@ -154,7 +174,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
             p = ultimo_pronostico(db, partido_id, f"jugador:{mercado}", jugador_id)
         if p is None:
             raise HTTPException(404, {"codigo": "sin_pronostico_jugador"})
-        pmf = np.asarray(p[7]["pmf"], float)
+        pmf = np.asarray(_jugador_valido(p[7])["pmf"], float)
         mas = float(props.prob_mas_de(pmf[None, :], np.array([valor]))[0])
         return {"mercado": mercado, "linea": valor, "p_mas": round(mas, 4), "p_menos": round(1 - mas, 4), "p_juega": p[7]["p_juega"],
                 "extremo": bool(mas in (0.001, 0.999)), "hash": p[0]}

@@ -82,7 +82,8 @@
     "est_Doubtful": "Dudoso",
     "est_Questionable": "Cuestionable",
     "est_Probable": "Probable",
-    "est_Available": "Disponible"
+    "est_Available": "Disponible",
+    "err_datos_invalidos": "Este pronóstico no se puede mostrar porque sus datos no pasaron la validación."
   },
   "en": {
     "titulo": "NBA Forecasts",
@@ -167,7 +168,8 @@
     "est_Doubtful": "Doubtful",
     "est_Questionable": "Questionable",
     "est_Probable": "Probable",
-    "est_Available": "Available"
+    "est_Available": "Available",
+    "err_datos_invalidos": "This forecast cannot be shown because its data failed validation."
   },
   "pt": {
     "titulo": "Previsões NBA",
@@ -252,7 +254,8 @@
     "est_Doubtful": "Improvável",
     "est_Questionable": "Em dúvida",
     "est_Probable": "Provável",
-    "est_Available": "Disponível"
+    "est_Available": "Disponível",
+    "err_datos_invalidos": "Esta previsão não pode ser exibida porque os dados não passaram na validação."
   },
   "fr": {
     "titulo": "Pronostics NBA",
@@ -337,7 +340,8 @@
     "est_Doubtful": "Peu probable",
     "est_Questionable": "Incertain",
     "est_Probable": "Probable",
-    "est_Available": "Disponible"
+    "est_Available": "Disponible",
+    "err_datos_invalidos": "Ce pronostic ne peut pas être affiché car ses données n'ont pas passé la validation."
   },
   "it": {
     "titulo": "Pronostici NBA",
@@ -422,7 +426,8 @@
     "est_Doubtful": "Improbabile",
     "est_Questionable": "Incerto",
     "est_Probable": "Probabile",
-    "est_Available": "Disponibile"
+    "est_Available": "Disponibile",
+    "err_datos_invalidos": "Questo pronostico non può essere mostrato perché i dati non hanno superato la validazione."
   },
   "de": {
     "titulo": "NBA-Prognosen",
@@ -507,6 +512,7 @@
     "est_Doubtful": "Unwahrscheinlich",
     "est_Questionable": "Fraglich",
     "est_Probable": "Wahrscheinlich",
-    "est_Available": "Verfügbar"
+    "est_Available": "Verfügbar",
+    "err_datos_invalidos": "Diese Prognose kann nicht angezeigt werden, weil ihre Daten die Prüfung nicht bestanden haben."
   }
 }
