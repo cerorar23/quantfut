@@ -45,8 +45,9 @@ class Impacto:
 
 
 def ajustar(partidos: Sequence[PartidoFila], lam_margen: float, lam_total: float, vida_media_dias: float,
-            dia_corte: int | None = None) -> Impacto:
-    """Ridge ponderado. Solo usa partidos con `dia < dia_corte` (o todos si es None)."""
+            dia_corte: int | None = None, prior_beta: Mapping[int, float] | None = None) -> Impacto:
+    """Ridge ponderado. Solo usa partidos con `dia < dia_corte` (o todos si es None). `prior_beta` centra el ridge del margen
+    en un impacto previo por jugador (en vez de 0)."""
     filas = [p for p in partidos if dia_corte is None or p.dia < dia_corte]
     if not filas:
         return Impacto()
@@ -72,7 +73,10 @@ def ajustar(partidos: Sequence[PartidoFila], lam_margen: float, lam_total: float
         penal = np.full(k + 2, lam)
         penal[k:] = 1e-8
         # el total se centra en su media ponderada para que el ridge no tire del intercepto
-        theta = np.linalg.solve(Xw.T @ X + np.diag(penal), Xw.T @ y)
+        mu = np.zeros(k + 2)
+        if prior_beta is not None and X is X_m:
+            mu[:k] = [prior_beta.get(j, 0.0) for j in jugadores]
+        theta = np.linalg.solve(Xw.T @ X + np.diag(penal), Xw.T @ (y - X @ mu) + 0.0) + mu
         resultado.append(theta)
     tm, tt = resultado
     return Impacto(beta=dict(zip(jugadores, tm[:k])), tau=dict(zip(jugadores, tt[:k])), c_margen=float(tm[k]),

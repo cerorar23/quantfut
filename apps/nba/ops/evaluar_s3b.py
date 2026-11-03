@@ -47,6 +47,8 @@ def leer_cajas(carpeta, por_pid):
             if r["fuente"] == "nba_oficial" and r["id_en_fuente"].isdigit():
                 jug[int(r["id_en_fuente"])] = int(r["canonica_id"])
     cajas = defaultdict(lambda: {"local": defaultdict(float), "visit": defaultdict(float)})
+    global HIST_PM
+    HIST_PM = defaultdict(list)
     with gzip.open(carpeta / "players.jsonl.gz", "rt", encoding="utf8") as f:
         for linea in f:
             r = json.loads(linea)
@@ -61,6 +63,8 @@ def leer_cajas(carpeta, por_pid):
             lado = "local" if tri == g["local"] else "visit" if tri == g["visit"] else None
             if lado:
                 cajas[pid][lado][jid] += float(r["minutes"])
+                if r.get("plus_minus") is not None:
+                    HIST_PM[jid].append((g["dia"], float(r["minutes"]), float(r["plus_minus"])))
     estados = {}
     with open(carpeta / "s2_estados.csv", encoding="utf8") as f:
         for r in csv.DictReader(f):
@@ -130,7 +134,24 @@ def minutos_del_partido(reg, tabla_estado, tabla_sin_parte):
     return salida
 
 
-def predecir_bloques(filas, esperados, juegos_eval, lam, vida, dias_bloque_ini, descansos):
+HIST_PM = {}
+_CACHE_PRIOR = {}
+
+
+def prior_en(corte, c, n0=1500.0, vida=730.0):
+    """Impacto previo = c × (más/menos por 48 minutos con decaimiento) encogido por minutos acumulados; solo partidos < corte."""
+    if corte not in _CACHE_PRIOR:
+        crudo = {}
+        for j, lst in HIST_PM.items():
+            w = [(0.5 ** ((corte - d) / vida), m, pm) for d, m, pm in lst if d < corte]
+            mins = sum(a * m for a, m, _ in w)
+            if mins > 0:
+                crudo[j] = (48.0 * sum(a * pm for a, _, pm in w) / mins, mins)
+        _CACHE_PRIOR[corte] = crudo
+    return {j: c * v * m / (m + n0) for j, (v, m) in _CACHE_PRIOR[corte].items()}
+
+
+def predecir_bloques(filas, esperados, juegos_eval, lam, vida, dias_bloque_ini, descansos, c_prior=0.0):
     """Predice margen y total de cada partido de `juegos_eval` con impacto reajustado cada BLOQUE_DIAS días."""
     pred = {}
     inicios = sorted({dias_bloque_ini + BLOQUE_DIAS * ((g["dia"] - dias_bloque_ini) // BLOQUE_DIAS) for g in juegos_eval})
@@ -138,7 +159,7 @@ def predecir_bloques(filas, esperados, juegos_eval, lam, vida, dias_bloque_ini, 
     for g in juegos_eval:
         por_bloque[dias_bloque_ini + BLOQUE_DIAS * ((g["dia"] - dias_bloque_ini) // BLOQUE_DIAS)].append(g)
     for ini in inicios:
-        imp = plantilla.ajustar(filas, lam, lam, vida, dia_corte=ini)
+        imp = plantilla.ajustar(filas, lam, lam, vida, dia_corte=ini, prior_beta=prior_en(ini, c_prior) if c_prior else None)
         for g in por_bloque[ini]:
             e = esperados[g["pid"]]
             d = descansos[g["pid"]]
@@ -226,11 +247,20 @@ def main(carpeta, prueba):
         if mejor is None or em < mejor[0]:                    # el total de jugadores se compara aparte con el del equipo
             mejor = (em, lam, vida, em, et)
     _, lam, vida, em_val, et_val = mejor
+    c_prior = 0.0
+    for c, lam2 in itertools.product((0.3, 0.6, 1.0), (10.0, 20.0, 40.0)):
+        pr = predecir_bloques(filas, esperados, val, lam2, vida, primero_eval, descansos, c)
+        em = e3.rmse([pr[g["pid"]][0] for g in val], [g["pl"] - g["pv"] for g in val])
+        et = e3.rmse([pr[g["pid"]][1] for g in val], [g["pl"] + g["pv"] for g in val])
+        print(f"prior c={c} lam={lam2:.0f} -> RMSE margen {em:.3f} total {et:.3f}")
+        if em < em_val:
+            em_val, et_val, lam, c_prior = em, et, lam2, c
+    print(f"con prior: c={c_prior} lam={lam}; validación margen {em_val:.3f}")
     print(f"elegido: lam={lam} vida={vida}; validación RMSE margen {em_val:.3f}, total {et_val:.3f}")
 
     # predicciones de todo lo evaluable con los parámetros elegidos (honestas y con minutos reales como techo)
-    pred = predecir_bloques(filas, esperados, evaluables, lam, vida, primero_eval, descansos)
-    techo = predecir_bloques(filas, reales, evaluables, lam, vida, primero_eval, descansos)
+    pred = predecir_bloques(filas, esperados, evaluables, lam, vida, primero_eval, descansos, c_prior)
+    techo = predecir_bloques(filas, reales, evaluables, lam, vida, primero_eval, descansos, c_prior)
     nuc = {g["pid"]: m for g, m in zip(juegos, mus_nucleo)}
     res = [g for g in evaluables if g["temporada"] in validar]
     sig_m = float(np.std([(g["pl"] - g["pv"]) - pred[g["pid"]][0] for g in res]))

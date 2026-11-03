@@ -54,3 +54,7 @@ Con cierre de bet365: ganador n = 1.269, hándicap n = 1.126, total n = 1.113. B
 - Los partes históricos se leen como «último parte del partido»; se asume anterior al salto (los partes oficiales lo son), no se comprobó hora por hora.
 - Las tablas de probabilidad de jugar se midieron con 2021-23 y se aplican a validación y prueba; cambian de significado con los años y hay que remedirlas cada temporada.
 - Jugadores sin historial reciente (novatos, regresos largos) entran con impacto 0 y minutos por su media previa.
+
+## Prueba del a priori informativo (resultado negativo)
+
+Se centró el ridge del margen en un impacto previo por jugador = c × más/menos por 48 minutos (decaimiento 730 días, encogido por minutos acumulados), con c y λ elegidos en validación (c = 0,6, λ = 20). En validación el error del margen baja de 14,08 a 14,04, pero en 2025-26 queda igual (14,369 frente a 14,367; media con el equipo 14,326 frente a 14,324; Brier del ganador 0,2039 frente a 0,2038). Solo mejora la pendiente de calibración del ganador (de 1,14 a 1,11). **No cierra la distancia al mercado**; el código queda como opción (`prior_beta` en `plantilla.ajustar`), apagada por defecto. Queda descartado como palanca; lo que falta es información que la caja no trae (alineaciones confirmadas, calidad de tiro, rotaciones del entrenador).
