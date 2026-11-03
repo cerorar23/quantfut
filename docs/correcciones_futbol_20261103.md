@@ -31,10 +31,10 @@ Walk-forward semanal; 5.541 partidos comunes en selección y 475 en seguimiento 
 
 | Periodo | Mercado | DC | A0-xG |
 |---|---:|---:|---:|
-| Selección, log-loss | 0,963922 | 0,982760 | 0,981514 |
-| Seguimiento ya observado, log-loss | 0,976560 | 0,991350 | 0,991654 |
+| Selección, log-loss | 0,963922 | 0,982760 | 0,981510 |
+| Seguimiento ya observado, log-loss | 0,976560 | 0,991350 | 0,991699 |
 
-Delta A0−DC en selección: **−0,001246**, IC95 **[−0,003201; +0,000708]**. Seguimiento: **+0,000304**, IC95 **[−0,012386; +0,012993]**. No hay mejora confirmada para promover A0. Cero ajustes omitidos por fallo de convergencia en esta repetición.
+Delta A0−DC en selección: **−0,001250**, IC95 **[−0,003203; +0,000702]**. Seguimiento: **+0,000349**, IC95 **[−0,012295; +0,012993]**. No hay mejora confirmada para promover A0. Cero ajustes omitidos por fallo de convergencia en esta repetición.
 
 Esta comparación aplica recepción al xG con fuente conocida y mantiene el tratamiento legado del xG sin recepción acreditada que utiliza el DC existente. No convierte ese histórico legado ni las cuotas de cierre en evidencia prospectiva.
 
@@ -66,6 +66,12 @@ La migración conserva la procedencia y cambia a NULL únicamente parejas de tir
 Al desplegar, los partidos anteriores sin destacado congelado dejarán de contarse como pronósticos registrados. El historial nuevo empieza con decisiones previas selladas. Esto corrige el origen del historial; no reconstruye una publicación que nunca quedó registrada.
 
 La activación del lector canónico, nuevas reglas de sanción verificadas y una promoción de A0/A4 requieren sus datos y comprobaciones correspondientes. No se marcan como logradas por tener código o pruebas sintéticas.
+
+### Aplicación en producción (3-nov-2026)
+
+La migración 102 se aplicó después de respaldar `futbol` y `matches` y de ensayarla con `ROLLBACK` sobre la base real. Conserva cuatro originales en cuarentena, deja cero parejas incoherentes y no deja bajas recientes sin copia canónica. Se desplegaron imágenes derivadas que sustituyen únicamente los módulos auditados: API `quantfut-api-auditoria:cec59cb` y worker `quantfut-worker-auditoria:13696cf`. La cadena conserva 252 lotes verificables (233 revelados y 19 compromisos sin revelar). El modelo activo se mantiene en `2026.10.26-020600` y `PUBLISH_PICKS_ENABLED` sigue apagado.
+
+El historial público ahora liquida exclusivamente el destacado congelado y sellado antes del saque; no vuelve a ejecutar modelos ni elige retrospectivamente otro mercado. Por diseño, los partidos anteriores que no dejaron ese registro desaparecen del historial de aciertos.
 
 ## Verificación
 
