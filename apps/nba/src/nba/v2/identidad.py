@@ -60,6 +60,15 @@ def _persona(db, tipo: str, fuente: str, id_en_fuente: str, nombre: str) -> int:
     return _insertar(db, tipo, fuente, id_en_fuente, nombre, atributos=atributos)
 
 
+def alias_jugador(db, fuente: str, id_en_fuente: str, nombre: str, canonica_id: int) -> int:
+    """Alias de una fuente apuntando a un canónico YA decidido por otra vía (p. ej. la huella de la caja del mismo partido en otra fuente)."""
+    previa = _existente(db, "jugador", fuente, id_en_fuente)
+    if previa:
+        return previa
+    return _insertar(db, "jugador", fuente, id_en_fuente, nombre, canonica_id=canonica_id,
+                     atributos={"nombre_norm": normalizar_nombre(nombre), "alias_por_huella": True})
+
+
 def jugador(db, fuente: str, id_en_fuente: str, nombre: str) -> int:
     return _persona(db, "jugador", fuente, id_en_fuente, nombre)
 
