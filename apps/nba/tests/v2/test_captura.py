@@ -100,3 +100,48 @@ def test_ejecutar_historico_desde_una_carpeta(base_migrada_dsn, tmp_path):
     assert r["ok"] and r["juegos"]["juegos"] == 2 and r["betsapi"]["nuevas"] > 100 and "props" not in r
     r2 = captura.ejecutar("historico", env, AHORA)
     assert r2["betsapi"]["nuevas"] == 0
+
+
+# El fixture está recortado; las respuestas reales de ESPN traen la liga, que el colector exige.
+SCOREBOARD_NBA = json.dumps({"leagues": [{"slug": "nba"}], **json.loads(SCOREBOARD)}).encode()
+
+
+def _espn_en_vivo(solicitadas, malo=None):
+    def obtener(url):
+        solicitadas.append(url)
+        if malo and malo in url:
+            return 200, b'{"otra": "cosa"}'
+        return (200, SCOREBOARD_NBA) if "/scoreboard" in url else (200, LESIONES)
+    return obtener
+
+
+def test_espn_directo_carga_sin_ledger_y_lesiones_como_mucho_cada_hora(base_migrada_dsn, tmp_path):
+    env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path)}
+    pedidas = []
+    r = captura.ejecutar("espn_directo", env, AHORA, obtener=_espn_en_vivo(pedidas))
+    assert r["ok"] and r["calendario"] == 3 and r["lesiones"] == 1 and contar(base_migrada_dsn, "dato") > 0
+    assert sum("/scoreboard?dates=" in u for u in pedidas) == 3 and sum("/injuries" in u for u in pedidas) == 1
+    assert (tmp_path / "originales" / "espn").is_dir()
+    datos = contar(base_migrada_dsn, "dato")
+    pedidas.clear()
+    r2 = captura.ejecutar("espn_directo", env, AHORA, obtener=_espn_en_vivo(pedidas))
+    assert r2["ok"] and r2["lesiones"] == 0 and not any("/injuries" in u for u in pedidas)
+    assert contar(base_migrada_dsn, "dato") == datos          # mismos cuerpos: nada nuevo
+
+
+def test_espn_directo_rechaza_respuestas_que_no_son_de_la_nba(base_migrada_dsn, tmp_path):
+    env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path)}
+    r = captura.ejecutar("espn_directo", env, AHORA, obtener=_espn_en_vivo([], malo="/injuries"))
+    assert not r["ok"] and r["fallidos"] == 1 and r["lesiones"] == 0 and r["calendario"] == 3
+    r = captura.ejecutar("espn_directo", env, AHORA, obtener=lambda url: (403, b""))
+    assert not r["ok"] and r["fallidos"] >= 3
+
+
+def test_espn_directo_un_fallo_de_red_no_tumba_la_pasada(base_migrada_dsn, tmp_path):
+    env = {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path)}
+    def obtener(url):
+        if "/injuries" in url:
+            raise TimeoutError("sin respuesta")
+        return 200, SCOREBOARD_NBA
+    r = captura.ejecutar("espn_directo", env, AHORA, obtener=obtener)
+    assert not r["ok"] and r["calendario"] == 3 and r["fallidos"] == 1

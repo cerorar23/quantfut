@@ -1,4 +1,5 @@
-"""Ejecutor de capturas a `nba_datos`: `python -m nba.v2.captura rotowire|espn|parte|nba|propline|historico` (lo lanza el cron del VPS).
+"""Ejecutor de capturas a `nba_datos`: `python -m nba.v2.captura rotowire|espn|espn_directo|parte|nba|propline|historico` (lo lanza el cron del VPS).
+`espn` lee el ledger de `run57` (v1, en retirada); `espn_directo` pide ESPN por su cuenta y lo sustituye.
 
 Entorno: NBA_DB_DSN (obligatorio), NBA_CAPTURA_DIR (originales y estado, por omisión /datos),
 NBA_RUN57_DIR (carpeta captures de run57, solo para espn),
@@ -65,6 +66,8 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
                 if ultimo == resumen["ultimo_seq"]:
                     break
                 resumen["ultimo_seq"] = ultimo
+        elif fuente == "espn_directo":
+            resumen = espn.capturar(db, obtener or espn.obtener_http, raiz / "originales", ahora)
         elif fuente == "propline":
             if "NBA_PROPLINE_DIR" not in entorno:
                 raise FaltaVariable("NBA_PROPLINE_DIR")
@@ -111,8 +114,8 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
 def principal(argv: list[str] | None = None, entorno: Mapping[str, str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     entorno = os.environ if entorno is None else entorno
-    if len(argv) != 1 or argv[0] not in ("rotowire", "espn", "parte", "nba", "propline", "historico"):
-        print("uso: python -m nba.v2.captura rotowire|espn|parte|nba|propline|historico", file=sys.stderr)
+    if len(argv) != 1 or argv[0] not in ("rotowire", "espn", "espn_directo", "parte", "nba", "propline", "historico"):
+        print("uso: python -m nba.v2.captura rotowire|espn|espn_directo|parte|nba|propline|historico", file=sys.stderr)
         return 2
     try:
         resumen = ejecutar(argv[0], entorno, datetime.now(UTC))

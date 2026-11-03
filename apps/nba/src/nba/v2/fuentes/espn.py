@@ -3,7 +3,7 @@
 La captura de red ya la hace el contenedor de `run57`; aquí solo se convierten sus recibos 200 en filas de `nba.*`.
 """
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import json
 from pathlib import Path
 import re
@@ -138,6 +138,70 @@ def cargar_lesiones(db, texto: str, recibido_en: datetime, captura_id: int) -> i
                     filas.append(DatoNuevo(entidad_id=jugador, metrica="estado_disponibilidad", etiqueta="sin_reporte",
                                            **base))
     return carga.guardar_datos(db, filas, solo_cambios=True)
+
+
+URL_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={dia}"
+URL_LESIONES = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries?limit=1000"
+
+
+def _valido(tipo: str, texto: str) -> bool:
+    try:
+        cuerpo = json.loads(texto)
+        if tipo == "calendario":
+            return cuerpo["leagues"][0]["slug"] == "nba" and isinstance(cuerpo["events"], list)
+        return isinstance(cuerpo["injuries"], list)
+    except (ValueError, KeyError, IndexError, TypeError):
+        return False
+
+
+def capturar(db, obtener, raiz: Path, ahora: datetime, espera_lesiones_min: float = 55, reloj=None) -> dict:
+    """Captura directa (sin pasar por `run57`): marcador de ayer, hoy y mañana (hora del este) y, como mucho cada hora, lesiones.
+
+    Cada respuesta se guarda como original, se registra la captura con la hora real de recepción y se convierte con
+    los mismos lectores que el ledger; un cuerpo que no es una respuesta NBA válida queda como captura fallida.
+    """
+    hoy = ahora.astimezone(ET).date()
+    objetivos = [("calendario", URL_SCOREBOARD.format(dia=(hoy + timedelta(days=d)).strftime("%Y%m%d"))) for d in (-1, 0, 1)]
+    reciente = db.execute("SELECT EXISTS (SELECT 1 FROM nba.captura WHERE fuente = %s AND objetivo = %s AND solicitado_en > %s)",
+                          (FUENTE, URL_LESIONES, ahora - timedelta(minutes=espera_lesiones_min))).fetchone()[0]
+    if not reciente:
+        objetivos.append(("lesiones", URL_LESIONES))
+    resumen = {"ok": True, "calendario": 0, "lesiones": 0, "fallidos": 0}
+    for tipo, url in objetivos:
+        try:
+            estado, cuerpo = obtener(url)
+        except Exception as e:
+            carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase="pre", solicitado_en=ahora, ok=False,
+                                    error=f"{type(e).__name__}: {e}"[:300])
+            resumen["fallidos"] += 1
+            continue
+        recibido = reloj() if reloj else datetime.now(ahora.tzinfo)   # hora real de recepción, no la del inicio de la pasada
+        if estado != 200:
+            carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase="pre", solicitado_en=ahora, ok=False,
+                                    recibido_en=recibido, http_status=estado)
+            resumen["fallidos"] += 1
+            continue
+        ruta, huella = carga.guardar_original(raiz, FUENTE, cuerpo, recibido)
+        texto = cuerpo.decode("utf-8", errors="replace")
+        if not _valido(tipo, texto):
+            carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase="pre", solicitado_en=ahora, ok=False,
+                                    recibido_en=recibido, http_status=200, sha256=huella, bytes_=len(cuerpo), ruta=ruta,
+                                    error="respuesta que no es de la NBA o sin la estructura esperada")
+            resumen["fallidos"] += 1
+            continue
+        captura = carga.registrar_captura(db, fuente=FUENTE, objetivo=url, fase="pre", solicitado_en=ahora, ok=True,
+                                          recibido_en=recibido, http_status=200, sha256=huella, bytes_=len(cuerpo), ruta=ruta)
+        (cargar_scoreboard if tipo == "calendario" else cargar_lesiones)(db, texto, recibido, captura)
+        resumen[tipo] += 1
+    resumen["ok"] = resumen["fallidos"] == 0
+    return resumen
+
+
+def obtener_http(url: str) -> tuple[int, bytes]:
+    import httpx
+    r = httpx.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"},
+                  timeout=20, follow_redirects=True)
+    return r.status_code, r.content
 
 
 def cargar_ledger(db, ruta_sqlite: Path, raiz_blobs: Path, desde_seq: int, limite: int | None = None) -> tuple[int, dict]:
