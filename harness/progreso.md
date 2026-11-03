@@ -6994,3 +6994,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: subir el equipo a 100.000 simulaciones porque con 20.000 el error del 1 % peor (0,86 pp) incumplía la compuerta de 0,5 pp y el coste de 100.000 es de 6 ms; los props no tienen Monte Carlo (son analíticos).
 - Hallazgo: la reproducibilidad entre Windows y Linux es exacta bit a bit con la misma versión de numpy; se fija la versión y se conserva el script de huella como prueba al actualizar.
 - Hallazgo: el error de un prop correlaciona +0,10 a +0,13 con el del total del partido y −0,13 con lo desigual en titulares; sin combinaciones en el producto no se simulan conjuntamente, pero no se debe multiplicar un prop por una probabilidad del partido.
+
+## 2026-11-03 — F4.3 estrés
+
+- Hallazgo: tres huecos reales encontrados por las pruebas de estrés (estadística ausente = 0, minutos corruptos aceptados, equipo con ratings viejos sellado cuando solo a él le faltaban resultados); ninguno afectaba a los datos de hoy (la base está limpia) pero sí a cualquier fuente futura.
+- Decisión: la imagen con los arreglos no se despliega mientras esté pendiente la decisión del titular sobre el impacto S3c, para no mezclar cambios de comportamiento con una activación sin aprobar.
+- Corrección: el 3-nov no hubo partidos NBA (elecciones); mi aviso anterior de que los primeros sellos de la imagen 6b85093 saldrían hacia las 22:00 UTC de hoy era falso: salen con los partidos del 4-nov.

@@ -3249,3 +3249,9 @@ Detalle en docs/nba_rediseno_f42_montecarlo_20261103.md. `ops/f42_montecarlo.py`
 - [x] Semillas consecutivas independientes; muestras idénticas bit a bit entre Windows y el contenedor Linux del VPS con numpy 2.1.3.
 - [x] Props: correlación con el resultado del partido medida (+0,10 a +0,13 con el total; −0,13 con lo desigual en titulares): marginales correctos, conjuntas no; sin combinaciones en el producto, no se simula de forma conjunta.
 - [ ] F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
+
+### NBA — Fase 4, F4.3 estrés (2026-11-03)
+Detalle en docs/nba_rediseno_f43_estres_20261103.md. `tests/v2/test_estres.py`, `test_propiedades.py`, `test_concurrencia.py`.
+- [x] Día de 15 partidos con fuentes caídas, estadísticas ausentes, minutos corruptos, sin historia, base vacía y 8 procesos sellando a la vez: nada se imputa como 0, nada se sella con ratings viejos, la cadena aguanta la concurrencia.
+- [x] Tres arreglos: datos faltantes no valen 0; minutos fuera de (0, 60] no cuentan; equipos con más de 10 días sin resultados se omiten (0 falsos positivos en 212 fechas reales de 2025-26). Imagen verificada `nba-motor:d73c7c5` (NO desplegada: espera la decisión sobre el impacto S3c).
+- [ ] F4.4 ensayo operativo; F4.5 informe final y propuesta de promoción.
