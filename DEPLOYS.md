@@ -40,6 +40,10 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 03:55 UTC · NBA: modelo reentrenado con SofaScore en `nba-motor:a16b019` · SOLO imágenes y archivos, rama `nba/rediseno-s0`
+- `imagen_motor` = `nba-motor:a16b019` (props `6323d806ed81`, impacto de 1.083 jugadores, efecto del descanso 2,90, sigmas 13,81/18,43). G-fuga con `nba_oficial` y `sofascore` aprobada antes del cambio; ejecución del cron de las 03:55 sin errores. Los sellos nuevos llevan versiones nuevas en `version_modelo`; los anteriores no se tocan.
+- **Vuelta atrás:** `cp imagen_motor.anterior imagen_motor` (vuelve a `nba-motor:b874e9a`); lo sellado se queda.
+
 ### 2026-11-03 03:40 UTC · NBA: carga de SofaScore (6 temporadas) a `nba_datos` · SOLO base de datos y archivos, rama `nba/rediseno-s0`
 - Respaldo previo `~/nba-isolated/nba-captura/respaldos/nba_datos_20261103T031925Z.dump`. Archivo `historico/sofascore_nba_eventos.jsonl.gz` (4,9 MB, derivado de `SOFASCORE\data\v3` en el PC). Imagen de carga `nba-motor:1df38de` (la del cron no cambia).
 - 5.492 partidos, 93 partidos nuevos, 2.409.592 filas nuevas (fuente `sofascore`, prioridad 2, `pit = reconstruido`), 932 jugadores emparejados por huella, 61 por nombre (14 canónicos nuevos). Base 3,05 GB, disco 64 %.

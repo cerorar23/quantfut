@@ -3221,3 +3221,7 @@ Detalle en docs/nba_rediseno_carga_sofascore_20261103.md. `ops/sofascore_a_jsonl
 - [x] 5.492 partidos terminados de 2021-22 a 2026-27: 93 partidos nuevos, titulares (antes no había), 2.409.592 filas; jugadores emparejados por huella de caja (932) sin conflictos; auditoría cruzada contra nba_oficial con más del 99 % de coincidencia.
 - [ ] Reexportar los CSV de entrenamiento con prioridad nba_oficial > sofascore, repetir S3/S3b/S4, reentrenar props e impacto, G-fuga con ambas fuentes y publicar imagen nueva.
 - [ ] 2021-22 sin titulares fuera de los playoffs; ausentes por partido de SofaScore (no PIT) y árbitros sin cargar.
+
+### NBA — reentrenamiento con SofaScore (2026-11-03)
+- [x] Exportación con prioridad de fuentes, evaluaciones S3/S3b/S4 repetidas (mismas conclusiones), props e impacto reentrenados, efecto del descanso 2,90 y sigmas nuevas, G-fuga con ambas fuentes aprobada, imagen `nba-motor:a16b019` en el cron.
+- [ ] Reentrenar el impacto y los props periódicamente (hoy artefactos estáticos con datos hasta el 2-nov-2026).

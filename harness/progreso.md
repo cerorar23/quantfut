@@ -6964,3 +6964,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: los jugadores se emparejan por la huella de la caja en el mismo partido, no por nombre; el nombre solo para quienes no comparten ningún partido.
 - Hallazgo: las dos cajas coinciden en más del 99 % de los datos; las diferencias son correcciones de estadística (minutos 0,25 %, más/menos 0,77 %).
 - Pendiente real: los entrenamientos, las evaluaciones y G-fuga se hicieron solo con nba_oficial; hay que repetirlos con la base nueva antes de la Fase 4.
+
+## 2026-11-03 — Reentrenamiento con la base nueva
+
+- Resultado: con SofaScore (más partidos, titulares y 2026-27) las evaluaciones de equipo, jugadores y props dan prácticamente lo mismo que antes; los modelos no dependían de un detalle de la caja oficial.
+- Decisión: el efecto del descanso (2,90) y las sigmas se actualizan con la base nueva; eta, arrastre, tasa de liga y la regla «solo el margen se mezcla» no cambian.
+- Aprendizaje: la muestra de 100 partidos de G-fuga cambia cuando cambia el número de partidos; su Brier no es una métrica del modelo (error típico ≈ 0,02), solo la alarma de fuga por debajo de 0,18.
