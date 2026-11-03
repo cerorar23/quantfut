@@ -13,7 +13,7 @@ from pathlib import Path
 import sys
 
 from . import migrar
-from .fuentes import espn, historico_cuotas, historico_partidos, nba_cdn, parte_oficial, propline, rotowire
+from .fuentes import espn, historico_cuotas, historico_partidos, historico_rotaciones, nba_cdn, parte_oficial, propline, rotowire
 
 
 LOTE_ESPN = 200
@@ -86,6 +86,9 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
                     resumen[paso] = cargar(db, carpeta / ruta)
             if "cajas" in pasos and (carpeta / "games.json").exists() and (carpeta / "players.jsonl.gz").exists():
                 resumen["cajas"] = historico_partidos.cargar_cajas(db, carpeta)
+            if "rotaciones" in pasos and (carpeta / "rotaciones.jsonl.gz").exists():
+                indice, total = (int(x) for x in entorno.get("NBA_HISTORICO_FRAGMENTO", "0/1").split("/"))
+                resumen["rotaciones"] = historico_rotaciones.cargar_rotaciones(db, carpeta, (indice, total))
             partes = [r for r in (carpeta / "partes_final.jsonl.gz", carpeta / "partes_t60.jsonl.gz") if r.exists()]
             if "partes" in pasos and partes:
                 resumen["partes"] = historico_partidos.cargar_partes(db, partes)
