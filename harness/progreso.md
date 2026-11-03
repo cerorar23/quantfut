@@ -1,5 +1,11 @@
 # Registro de decisiones — QuantFut
 
+## 3-nov-2026 · Correcciones de auditoría: la evidencia previa decide el historial
+
+Se guarda el destacado en la predicción inmutable y se incluye en su sello; una fila reconstruida después del resultado deja de contar como pronóstico publicado. Los lotes anteriores omiten el campo nuevo para conservar su forma. La migración 102 propaga capturas previas dentro de su transacción, conserva su recepción y aparta tiros incoherentes con copia íntegra en cuarentena; ensayo en Postgres aislado aprobado.
+
+La nueva comparación A0/DC con la misma admisión de xG reduce la diferencia a −0,001246 de log-loss en 5.541 partidos (IC95 cruza cero); en 475 de seguimiento A0 empeora +0,000304. No se promueve. Conteos sin simultáneos mantienen su orden frente a la media de liga. El nuevo A4 construyó 49.933 tramos de 7.138 partidos; sigue condicionado al once reconstruido y no demuestra mejora de acierto. La ausencia de evidencia no se convierte en parámetros de producción. Suite corregida: 1.756 aprobadas, 122 omitidas. Detalle: `docs/correcciones_futbol_20261103.md`.
+
 ## 2-nov-2026 · Los escudos de una tarjeta terminada los manda el servidor, no la agenda
 Al ver las tarjetas de fútbol terminadas (PR #237) salían las iniciales en vez del escudo. **Causa:** los partidos terminados no están en la agenda del día, que es de donde las tarjetas próximas toman el escudo. **Decisión:** que `destacados_resueltos` devuelva el escudo de cada equipo con la misma función que usa la agenda (`fichas.escudo`) en vez de buscar la ficha de cada partido desde el navegador (una petición por tarjeta) o de derivar la URL en el frontend (duplicaría la regla de dónde está cada imagen). Sin escudo descargado queda `None` y se mantienen las iniciales: no se inventa ninguna imagen.
 

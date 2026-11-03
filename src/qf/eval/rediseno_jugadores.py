@@ -15,6 +15,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from scipy.stats import nbinom, poisson
+from .temporal import medias_previas
 
 STATS = ["tiros_puerta", "tiros_totales", "pases_acertados", "faltas_recibidas", "goles", "xg", "tarjeta"]
 
@@ -24,6 +25,8 @@ def tabla(jug: pd.DataFrame, partidos: pd.DataFrame, incid: pd.DataFrame) -> pd.
     j["titular"] = j["titular"].astype(str).str.lower().isin(["t", "true", "1"])
     tot = j[["tiros_puerta", "tiros_fuera", "tiros_bloq"]].sum(axis=1, min_count=1)
     j["tiros_totales"] = j["tiros_totales"].fillna(tot)
+    incoherente = j.tiros_puerta.gt(j.tiros_totales) | j.tiros_puerta.lt(0) | j.tiros_totales.lt(0)
+    j.loc[incoherente, ['tiros_puerta','tiros_totales']] = np.nan
     tarj = incid[incid["subtipo"].eq("card") & incid["clase"].isin(["yellow", "yellowRed", "red"])]
     tarj = tarj.groupby(["match_id", "jugador_id"]).size().rename("tarjeta").reset_index()
     j = j.merge(tarj, on=["match_id", "jugador_id"], how="left")
@@ -39,21 +42,28 @@ def previos(j: pd.DataFrame, fin_entreno, vida: float = 8.0, k: float = 6.0) -> 
     j = j.copy()
     g = j.groupby("jugador_id")
     ew = lambda s: s.ewm(halflife=vida, ignore_na=True).mean().shift(1)  # noqa: E731
-    m_min = g["minutos"].transform(ew)
     j["n_prev"] = g.cumcount()
     titulares = j["minutos"].where(j["titular"])
     j["min_esp"] = titulares.groupby(j["jugador_id"]).transform(ew)
-    entreno = j[j["kickoff_utc"] < pd.Timestamp(fin_entreno, tz="UTC")]
+    entrenamiento = j.kickoff_utc < pd.Timestamp(fin_entreno, tz='UTC')
+    disponibles = j.kickoff_utc + pd.Timedelta(hours=3)
     for c in STATS:
-        tasa = j.groupby("jugador_id")[c].transform(ew) / m_min * 90
-        pos = (entreno[c].sum() / entreno["minutos"].where(entreno[c].notna()).sum() * 90) if c != "xg" else np.nan
-        pos_por = entreno.groupby("posicion").apply(lambda x: x[c].sum() / x["minutos"].where(x[c].notna()).sum() * 90)
-        prior = j["posicion"].map(pos_por).fillna(pos)
+        mins = j['minutos'].where(j[c].notna())
+        tasa = j.groupby('jugador_id')[c].transform(ew) / mins.groupby(j.jugador_id).transform(ew) * 90
+        # Incluso los pronósticos que entrenan el calibrador deben tener un prior anterior:
+        # la media de toda la temporada de entrenamiento también filtra su futuro interno.
+        val, minutos = j[c].where(entrenamiento), mins.where(entrenamiento)
+        def prior_de(grupo):
+            num,_=medias_previas(val,grupo,j.kickoff_utc,disponibles)
+            den,_=medias_previas(minutos,grupo,j.kickoff_utc,disponibles)
+            return num/den.replace(0,np.nan)*90
+        prior=prior_de(j.posicion).fillna(prior_de(pd.Series('_global',index=j.index)))
         j[f"r_{c}"] = (tasa.fillna(prior) * j["n_prev"] + prior * k) / (j["n_prev"] + k)
     gol_xg = np.where(j["r_xg"].notna(), 0.65 * j["r_xg"].fillna(0) + 0.35 * j["r_goles"], j["r_goles"])
     j["r_gol"] = gol_xg
     for c in ["tiros_puerta", "tiros_totales", "pases_acertados", "faltas_recibidas", "tarjeta", "gol"]:
         j[f"m_{c}"] = j[f"r_{c}"] * j["min_esp"] / 90
+    j.attrs['disponibilidad']='condicionado_al_once_reconstruido'
     return j
 
 

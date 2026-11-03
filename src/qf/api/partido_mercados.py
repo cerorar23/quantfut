@@ -537,17 +537,20 @@ def lambdas_goles(match_id: str) -> tuple[float, float, float] | None:
 
 
 _TTL = 3600.0
-_acc: dict[tuple[str, str], tuple[float, object]] = {}
+_acc: dict[tuple, tuple[float, object]] = {}
 
 
-def _acumulador(liga: str, mercado: str):
-    """Acumulador de la liga con los partidos terminados hasta ahora; en caché una hora."""
-    clave_ = (liga, mercado)
+def _acumulador(liga: str, mercado: str, corte: datetime | None = None):
+    """Estado anterior al corte, también para análisis de partidos pasados."""
+    corte = corte or datetime.now(timezone.utc)
+    clave_ = (liga, mercado, corte.isoformat())
     hit = _acc.get(clave_)
     if hit and time.monotonic() - hit[0] < _TTL:
         return hit[1]
     from ..publish import escalera_datos
-    acc = escalera_datos.Modelos(datetime.now(timezone.utc)).de(liga, mercado)
+    acc = escalera_datos.Modelos(corte).de(liga, mercado)
+    if len(_acc) >= 512:
+        _acc.clear()
     _acc[clave_] = (time.monotonic(), acc)
     return acc
 
@@ -561,7 +564,8 @@ def lambdas_estadisticas(match_id: str) -> tuple[tuple[float, float] | None, tup
     out = []
     for mercado in ('corners', 'cards'):
         try:
-            acc = _acumulador(m['league_id'], mercado)
+            corte = min(datetime.now(timezone.utc), m['kickoff_utc'])
+            acc = _acumulador(m['league_id'], mercado, corte)
             out.append(acc.lambdas(m['kickoff_utc'], m['home_team_id'], m['away_team_id'],
                                    m['referee']) if acc else None)
         except Exception:  # noqa: BLE001 - un fallo del modelo estadístico no tumba el detalle
@@ -586,6 +590,18 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
         filas = con_cuotas_casas(filas, cuotas_casas(match_id))
         filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus)
         partido = datos_partido(match_id)
+        from ..publish.destacado_web import obtener
+        registro = obtener(match_id, consulta=query_one)
+        if registro:
+            destacado = dict(registro['fila'])
+        elif partido:
+            # Un análisis reconstruido después del resultado no se presenta como pronóstico acertado.
+            destacado = None
+        if registro:
+            for i, fila in enumerate(filas):
+                fila = dict(fila)
+                fila.pop('destacado', None)
+                filas[i] = dict(destacado) if fila['id'] == destacado['id'] else fila
         filas = con_resultados(filas, partido)
         if destacado:
             destacado = con_resultados([destacado], partido)[0]

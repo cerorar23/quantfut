@@ -22,6 +22,8 @@ import pandas as pd
 from ..model.calibration import LambdaCalibrator, probs_1x2
 from ..model.devig import devig
 from .metrics import brier, diebold_mariano, log_loss, murphy, rps
+from ..model.xg import xg_at_cutoff
+from ..model.fit_checks import AjusteNoConvergente
 
 log = logging.getLogger(__name__)
 
@@ -54,10 +56,29 @@ def mercado_1x2(cuotas: pd.DataFrame, metodo: str = "shin") -> pd.DataFrame:
     precio de PropLine antes del saque (Pinnacle primero; desde el 23-oct-2026). `casa` dice cuál se usó.
     """
     c = cuotas[cuotas["source"].isin(["football_data", "propline"]) & (cuotas["market"] == "h2h")]
-    w = c.pivot_table(index=["match_id", "source", "bookmaker"], columns="selection", values="price").dropna().reset_index()
+    c = c[c.selection.isin(RESULTADOS) & np.isfinite(c.price) & c.price.gt(1)].copy()
+    keys = ['match_id', 'source', 'bookmaker']
+    # Una duplicación ambigua invalida la terna: nunca se promedian precios de horas distintas.
+    duplicadas = c.duplicated(keys + ['selection'], keep=False)
+    malas = set(map(tuple, c.loc[duplicadas, keys].to_numpy()))
+    if 'captured_at' not in c or 'mins_to_kickoff' not in c:
+        malas.update(map(tuple, c[keys].to_numpy()))
+    else:
+        c['captured_at'] = pd.to_datetime(c.captured_at, utc=True, errors='coerce')
+        clocks = c.groupby(keys).agg(lo=('captured_at','min'), hi=('captured_at','max'),
+                                    lead=('mins_to_kickoff','min'), nclock=('captured_at','count'))
+        invalidas = clocks[(clocks.hi-clocks.lo > pd.Timedelta(minutes=15)) | clocks.lead.lt(0) | clocks.nclock.lt(3)]
+        malas.update(invalidas.index)
+    c = c[[tuple(k) not in malas for k in c[keys].to_numpy()]]
+    columnas = ['match_id','casa','mk_home','mk_draw','mk_away','odd_home','odd_draw','odd_away','margen']
+    if c.empty:
+        return pd.DataFrame(columns=columnas)
+    w = c.pivot(index=keys, columns='selection', values='price').reindex(columns=RESULTADOS).dropna().reset_index()
+    if w.empty:
+        return pd.DataFrame(columns=columnas)
     orden = {("football_data", "pinnacle"): 0, ("football_data", "bet365"): 1, ("propline", "pinnacle"): 2}
     w["prioridad"] = [orden.get((s, b), 3 if s == "propline" else 9) for s, b in zip(w["source"], w["bookmaker"])]
-    w = w.sort_values("prioridad").drop_duplicates("match_id")
+    w = w.sort_values(['prioridad','source','bookmaker']).drop_duplicates("match_id")
     p = np.array([devig([h, d, a], metodo) for h, d, a in w[["home", "draw", "away"]].to_numpy()])
     return pd.DataFrame({"match_id": w["match_id"].to_numpy(), "casa": w["bookmaker"].to_numpy(),
                          "mk_home": p[:, 0], "mk_draw": p[:, 1], "mk_away": p[:, 2],
@@ -96,6 +117,9 @@ def xg_por_estado(tiros: pd.DataFrame, incidencias: pd.DataFrame, peso: float = 
 def tabla_partidos(datos: Datos, ligas=NUCLEO) -> pd.DataFrame:
     """Una fila por partido con lo que necesitan los modelos y el mercado de referencia."""
     p = datos.partidos[datos.partidos["league_id"].isin(ligas)].copy()
+    for side in ('home','away'):
+        bad = p[f'{side}_shots_target'] > p[f'{side}_shots']
+        p.loc[bad, [f'{side}_shots_target', f'{side}_shots']] = np.nan
     p["home_team"] = p["home_team_id"].astype(str)
     p["away_team"] = p["away_team_id"].astype(str)
     p["outcome"] = np.select([p["home_goals"] > p["away_goals"], p["home_goals"] == p["away_goals"]], [0, 1], 2)
@@ -110,6 +134,11 @@ def tabla_partidos(datos: Datos, ligas=NUCLEO) -> pd.DataFrame:
     # xG por tiro solo cuando el partido tiene mapa de tiros y todos los tiros traen xG
     completo = (p["home_tiros_sin_xg"] == 0) & (p["away_tiros_sin_xg"] == 0)
     p = p.merge(xg_por_estado(datos.tiros, datos.incidencias), left_on="match_id", right_index=True, how="left")
+    if 'recibido_en' in datos.tiros and 'recibido_en' in datos.incidencias:
+        recibos = pd.concat([datos.tiros[['match_id','recibido_en']], datos.incidencias[['match_id','recibido_en']]])
+        recibos['recibido_en'] = pd.to_datetime(recibos.recibido_en, utc=True)
+        p = p.merge(recibos.groupby('match_id').recibido_en.max().rename('derivado_recibido_en'),
+                    left_on='match_id', right_index=True, how='left')
     for side in ("home", "away"):
         p.loc[~completo, [f"{side}_npxg", f"{side}_npxg_estado"]] = np.nan
         p.loc[completo, f"{side}_npxg_estado"] = p.loc[completo, f"{side}_npxg_estado"].fillna(0.0)
@@ -123,19 +152,44 @@ def tabla_partidos(datos: Datos, ligas=NUCLEO) -> pd.DataFrame:
     return p.sort_values("kickoff_utc").reset_index(drop=True)
 
 
-def walk_forward(df: pd.DataFrame, modelos: dict, desde, hasta=None, paso_dias: int = 7) -> pd.DataFrame:
+def historia_disponible(df: pd.DataFrame, corte, disponibilidad: str = 'recepcion') -> pd.DataFrame:
+    """La misma información para todos los candidatos; reconstrucción solo por opción explícita."""
+    h = df[df.kickoff_utc < corte].copy()
+    if disponibilidad == 'reconstruida':
+        return h
+    if disponibilidad != 'recepcion':
+        raise ValueError('Política temporal desconocida')
+    hx, ax = xg_at_cutoff(h, corte)
+    h['home_xg'], h['away_xg'] = hx, ax
+    disponible = pd.to_datetime(h.get('derivado_recibido_en', pd.Series(pd.NaT,index=h.index)),utc=True)
+    ok = (disponible.notna() & (disponible <= corte)).to_numpy()
+    for side, base in (('home',hx),('away',ax)):
+        for col in ('npxg','npxg_estado','npxg_o_xg','npxg_estado_o_xg'):
+            key=f'{side}_{col}'
+            if key in h:
+                h[key] = np.where(ok, h[key], base if col.endswith('_o_xg') else np.nan)
+    return h
+
+
+def walk_forward(df: pd.DataFrame, modelos: dict, desde, hasta=None, paso_dias: int = 7,
+                 disponibilidad: str = 'recepcion') -> pd.DataFrame:
     """Predicciones fuera de muestra de cada modelo, en formato largo (una fila por partido y modelo)."""
     corte = pd.Timestamp(desde, tz="UTC")
     fin = pd.Timestamp(hasta, tz="UTC") if hasta else df["kickoff_utc"].max() + pd.Timedelta(seconds=1)
-    salida, tiempos = [], {n: 0.0 for n in modelos}
+    salida, tiempos, fallos = [], {n: 0.0 for n in modelos}, []
     while corte < fin:
         sig = min(corte + pd.Timedelta(days=paso_dias), fin)
         prueba = df[(df["kickoff_utc"] >= corte) & (df["kickoff_utc"] < sig)]
         if not prueba.empty:
-            historia = df[df["kickoff_utc"] < corte]
+            historia = historia_disponible(df, corte, disponibilidad)
             for nombre, m in modelos.items():
                 t0 = time.perf_counter()
-                m.ajustar(historia, corte)
+                try:
+                    m.ajustar(historia, corte)
+                except AjusteNoConvergente as exc:
+                    fallos.append({'modelo': nombre, 'corte': corte.isoformat(), 'error': str(exc)})
+                    log.error('Corte omitido: %s', fallos[-1])
+                    continue
                 out = m.predecir(prueba).reset_index(drop=True)
                 tiempos[nombre] += time.perf_counter() - t0
                 out.insert(0, "match_id", prueba["match_id"].to_numpy())
@@ -143,8 +197,13 @@ def walk_forward(df: pd.DataFrame, modelos: dict, desde, hasta=None, paso_dias: 
                 salida.append(out)
         corte = sig
     log.info("Tiempo por modelo (s): %s", {k: round(v, 1) for k, v in tiempos.items()})
-    pred = pd.concat(salida, ignore_index=True)
-    return completar_1x2(pred)
+    if not salida:
+        raise ValueError('Ningún ajuste produjo predicciones')
+    pred = completar_1x2(pd.concat(salida, ignore_index=True))
+    if set(modelos) != set(pred.modelo):
+        raise ValueError('Hay candidatos sin ningún ajuste válido; no se puede comparar')
+    pred.attrs.update(disponibilidad=disponibilidad, fallos_ajuste=fallos)
+    return pred
 
 
 def completar_1x2(pred: pd.DataFrame) -> pd.DataFrame:

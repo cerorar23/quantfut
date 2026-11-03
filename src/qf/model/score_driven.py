@@ -1,8 +1,9 @@
 """
-A0 del rediseño: fuerzas *score-driven* (Koopman y Lit, IJF 2019; DP Tinbergen 17-062).
+A0 del rediseño: adaptación por residuos Poisson inspirada en Koopman y Lit (IJF 2019).
 
 En vez de reajustar un Dixon-Coles ponderado en el tiempo, cada equipo lleva un ataque α y una defensa β que se
-mueven tras cada partido en la dirección del gradiente de la log-verosimilitud (el «score»):
+mueven tras cada partido con el residuo Poisson. La actualización no es una réplica del score
+bivariante/Skellam/probit del artículo ni del gradiente de la corrección DC:
 
     λ_local  = exp(c_L + h_L + α_local − β_visita)      λ_visita = exp(c_L + α_visita − β_local)
     α_local ← (1 − b)·α_local + a_atq·(x − λ_local)      β_visita ← (1 − b)·β_visita − a_def·(x − λ_local)
@@ -21,6 +22,8 @@ import math
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
+from .fit_checks import validar_ajuste
+from .xg import xg_at_cutoff
 
 C0, H0 = math.log(1.15), 0.25  # nivel inicial de una liga: ~1,15 goles del visitante y ventaja de local 0,25
 LIMITES = [(0.0, 0.2), (0.0, 0.2), (0.0, 0.05), (0.0, 0.05), (-0.25, 0.15)]
@@ -40,10 +43,17 @@ def _tau(x: int, y: int, l1: float, l2: float, rho: float) -> float:
 
 
 class ScoreDriven:
-    def __init__(self, fin_estimacion, w_xg: float = 0.0, columna_xg: str = "xg"):
+    def __init__(self, fin_estimacion, w_xg: float = 0.0, columna_xg: str = "xg",
+                 disponibilidad: str = 'recepcion'):
         fin = pd.Timestamp(fin_estimacion)
         self.fin_estimacion = fin.tz_localize("UTC") if fin.tzinfo is None else fin.tz_convert("UTC")
         self.w_xg, self.columna_xg = w_xg, columna_xg
+        if disponibilidad not in ('recepcion', 'reconstruida'):
+            raise ValueError('Política de xG desconocida')
+        self.disponibilidad = disponibilidad
+        self._as_of = self.fin_estimacion
+        self.diagnostico: dict | None = None
+        self.estimado_hasta = None
         self.hip: np.ndarray | None = None
         self._reiniciar()
 
@@ -57,7 +67,18 @@ class ScoreDriven:
         hg, ag = df["home_goals"].to_numpy(float), df["away_goals"].to_numpy(float)
         if self.w_xg == 0:
             return hg, ag
-        hx = df[f"home_{self.columna_xg}"].to_numpy(float); ax = df[f"away_{self.columna_xg}"].to_numpy(float)
+        if self.disponibilidad == 'reconstruida':
+            hx = df[f"home_{self.columna_xg}"].to_numpy(float)
+            ax = df[f"away_{self.columna_xg}"].to_numpy(float)
+        else:
+            hx, ax = xg_at_cutoff(df, self._as_of)
+            if self.columna_xg != 'xg':
+                # El mapa de tiros tiene su propio reloj, distinto del xG de `matches`.
+                recibido = pd.to_datetime(df.get('derivado_recibido_en', pd.Series(pd.NaT, index=df.index)), utc=True)
+                disponible = recibido.notna() & (recibido <= self._as_of)
+                dx, dy = (df[f'{s}_{self.columna_xg}'].to_numpy(float) for s in ('home','away'))
+                usar = disponible.to_numpy() & np.isfinite(dx) & np.isfinite(dy)
+                hx, ax = np.where(usar, dx, hx), np.where(usar, dy, ax)
         ok = ~(np.isnan(hx) | np.isnan(ax))
         w = self.w_xg
         return np.where(ok, (1 - w) * hg + w * hx, hg), np.where(ok, (1 - w) * ag + w * ax, ag)
@@ -100,13 +121,28 @@ class ScoreDriven:
             self.ataque, self.defensa, self.liga, self.visto = guardado
 
     def ajustar(self, historia: pd.DataFrame, corte) -> None:
-        if self.hip is None:
+        corte = pd.Timestamp(corte)
+        corte = corte.tz_localize('UTC') if corte.tzinfo is None else corte.tz_convert('UTC')
+        if (historia['kickoff_utc'] >= corte).any():
+            raise ValueError('La historia contiene partidos posteriores al corte')
+        self._as_of = corte
+        if self.estimado_hasta is None and corte >= self.fin_estimacion:
             est = historia[historia["kickoff_utc"] < self.fin_estimacion]
+            if est.empty:
+                raise ValueError('Sin historia para estimar los hiperparámetros')
+            self._as_of = self.fin_estimacion
             r = minimize(self.nll, INICIO, args=(est,), method="L-BFGS-B", bounds=LIMITES,
-                         options={"maxiter": 60, "eps": 1e-4})
+                         options={"maxiter": 500, "eps": 1e-4})
+            self.diagnostico = validar_ajuste(r, 'ScoreDriven')
             self.hip = r.x
-            self._reiniciar()
-        self._filtrar(historia.iloc[self.visto:], self.hip, sumar=False)
+            self.estimado_hasta = self.fin_estimacion
+        self._as_of = corte
+        if self.hip is None:
+            self.hip = INICIO.copy()  # calentamiento con prior; no se presenta como ajuste definitivo
+        # Reproducir el filtro admite las observaciones que llegaron tarde sin dejar el estado
+        # permanentemente calculado con el xG oculto del corte anterior.
+        self._reiniciar()
+        self._filtrar(historia, self.hip, sumar=False)
         self.visto = len(historia)
 
     def predecir(self, partidos: pd.DataFrame) -> pd.DataFrame:

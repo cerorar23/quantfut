@@ -13,7 +13,10 @@ import numpy as np
 import pandas as pd
 
 from ..model.conteos import RegresionNB, pmf_suma
+from ..model.fit_checks import AjusteNoConvergente
+import logging
 from .metrics import diebold_mariano, murphy
+from .temporal import medias_previas
 
 MAXIMO = {"corners": 25, "yellow": 14}
 LINEAS = {"corners": (8.5, 9.5, 10.5), "yellow": (3.5, 4.5, 5.5)}
@@ -37,10 +40,16 @@ def _previos(serie: pd.Series, grupos: pd.Series) -> pd.Series:
 
 
 def rasgos(df: pd.DataFrame, contexto: pd.DataFrame, derbis: pd.DataFrame, equipo: pd.DataFrame,
-           objetivo: str, vida: float = 10.0, k: float = 6.0) -> pd.DataFrame:
+           objetivo: str, vida: float = 10.0, k: float = 6.0,
+           disponibilidad: str = 'reconstruida') -> pd.DataFrame:
     """Una fila por partido y lado con la respuesta `y` y los rasgos previos."""
     c = f"{objetivo}"
     base = df.merge(contexto[["match_id", "arbitro"]], on="match_id", how="left")
+    if disponibilidad not in ('recepcion', 'reconstruida'):
+        raise ValueError('Política temporal desconocida')
+    # La hora de saque nunca es la hora en que ya se conoce el resultado.
+    base['disponible'] = (pd.to_datetime(base['result_recorded_at'], utc=True) if disponibilidad == 'recepcion'
+                          else base['kickoff_utc'] + pd.Timedelta(hours=3))
     faltas = equipo[equipo["periodo"] == 0].pivot_table(index="match_id", columns="side", values="faltas")
     base = base.merge(faltas.add_suffix("_faltas"), left_on="match_id", right_index=True, how="left")
     filas = []
@@ -48,6 +57,7 @@ def rasgos(df: pd.DataFrame, contexto: pd.DataFrame, derbis: pd.DataFrame, equip
         filas.append(pd.DataFrame({
             "match_id": base["match_id"], "kickoff_utc": base["kickoff_utc"], "semana": base["semana"],
             "league_id": base["league_id"], "local": int(side == "home"),
+            "disponible": base['disponible'],
             "equipo": base[f"{side}_team"], "rival": base[f"{opp}_team"],
             "y": base[f"{side}_{c}"], "y_rival": base[f"{opp}_{c}"],
             "goles": base[f"{side}_goals"], "goles_rival": base[f"{opp}_goals"],
@@ -58,16 +68,21 @@ def rasgos(df: pd.DataFrame, contexto: pd.DataFrame, derbis: pd.DataFrame, equip
     L = pd.concat(filas, ignore_index=True).sort_values(["kickoff_utc", "match_id", "local"]).reset_index(drop=True)
     # medias de la liga por lado, solo con partidos anteriores
     ls = L["league_id"] + L["local"].astype(str)
-    liga_y = L.groupby(ls)["y"].transform(lambda s: s.expanding().mean().shift(1))
-    liga_g = L.groupby(ls)["goles"].transform(lambda s: s.expanding().mean().shift(1))
-    liga_f = L.groupby(ls)["faltas"].transform(lambda s: s.expanding().mean().shift(1))
+    def media(col, grupo, half=None):
+        return medias_previas(L[col], grupo, L.kickoff_utc, L.disponible, half)
+    liga_y = media('y', ls)[0]
+    liga_yr = media('y_rival', ls)[0]
+    liga_g = media('goles', ls)[0]
+    liga_gr = media('goles_rival', ls)[0]
+    liga_f = media('faltas', ls)[0]
 
     def encoger(media, n, prior):
         return (media.fillna(prior) * n + prior * k) / (n + k)
 
-    for col, prior in (("y", liga_y), ("y_rival", liga_y), ("goles", liga_g), ("goles_rival", liga_g),
+    for col, prior in (("y", liga_y), ("y_rival", liga_yr), ("goles", liga_g), ("goles_rival", liga_gr),
                        ("faltas", liga_f)):
-        L[f"m_{col}"] = encoger(_ewm_previa(L[col], L["equipo"], vida), _previos(L[col], L["equipo"]), prior)
+        promedio, n = media(col, L.equipo, vida)
+        L[f"m_{col}"] = encoger(promedio, n, prior)
     # lo que concede el rival: su media de `y_rival` (lo que le hacen a él)
     por_equipo = L.set_index(["match_id", "equipo"])
     rival = por_equipo.loc[list(zip(L["match_id"], L["rival"])), ["m_y_rival", "m_goles_rival", "m_faltas"]]
@@ -75,11 +90,11 @@ def rasgos(df: pd.DataFrame, contexto: pd.DataFrame, derbis: pd.DataFrame, equip
     L["rival_encaja_goles"] = rival["m_goles_rival"].to_numpy()
     L["rival_faltas"] = rival["m_faltas"].to_numpy()
     # árbitro: media del TOTAL del partido en sus partidos anteriores, encogida a la de la liga (k = 10 partidos)
-    porp = L[L["local"] == 1][["match_id", "kickoff_utc", "league_id", "arbitro", "total"]].copy()
-    liga_t = porp.groupby("league_id")["total"].transform(lambda s: s.expanding().mean().shift(1))
+    porp = L[L["local"] == 1][["match_id", "kickoff_utc", "disponible", "league_id", "arbitro", "total"]].copy()
+    liga_t = medias_previas(porp.total, porp.league_id, porp.kickoff_utc, porp.disponible)[0]
     con_arb = porp["arbitro"].notna()
-    m_arb = _ewm_previa(porp["total"].where(con_arb), porp["arbitro"].fillna("_"), 30.0)
-    n_arb = _previos(porp["total"].where(con_arb), porp["arbitro"].fillna("_"))
+    m_arb, n_arb = medias_previas(porp['total'].where(con_arb), porp.arbitro.fillna('_'),
+                                 porp.kickoff_utc, porp.disponible, 30.0)
     porp["arbitro_rel"] = np.log((m_arb.fillna(liga_t) * n_arb + liga_t * 10) / (n_arb + 10) / liga_t)
     porp.loc[~con_arb, "arbitro_rel"] = 0.0
     L = L.merge(porp[["match_id", "arbitro_rel"]], on="match_id", how="left")
@@ -88,6 +103,7 @@ def rasgos(df: pd.DataFrame, contexto: pd.DataFrame, derbis: pd.DataFrame, equip
     L["supremacia"] = L["p_gana"] - L["p_pierde"]
     L["igualdad"] = L["p_local"] * (1 - L["p_local"])
     L["log_liga"] = np.log(liga_y)
+    L.attrs['disponibilidad'] = disponibilidad
     return L
 
 
@@ -119,7 +135,7 @@ def walk_forward(L: pd.DataFrame, objetivo: str, variantes: list[str], desde, pa
     X = matriz(L)
     corte = pd.Timestamp(desde, tz="UTC"); fin = X["kickoff_utc"].max() + pd.Timedelta(seconds=1)
     mx = MAXIMO[objetivo]
-    salida = []
+    salida,fallos = [],[]
     while corte < fin:
         sig = corte + pd.Timedelta(days=paso_dias)
         ent = X[(X["kickoff_utc"] < corte) & (X["kickoff_utc"] >= corte - pd.Timedelta(days=365 * anios))]
@@ -131,7 +147,12 @@ def walk_forward(L: pd.DataFrame, objetivo: str, variantes: list[str], desde, pa
             p = pru[np.isfinite(pru[cx + cz].to_numpy(float)).all(1)]
             if len(e) < 1000 or p.empty:
                 continue
-            m = RegresionNB().fit(e[cx].to_numpy(), e["y"].to_numpy(), e[cz].to_numpy() if cz else None)
+            try:
+                m = RegresionNB().fit(e[cx].to_numpy(), e["y"].to_numpy(), e[cz].to_numpy() if cz else None)
+            except AjusteNoConvergente as exc:
+                fallos.append({'variante':v,'corte':corte.isoformat(),'error':str(exc)})
+                logging.getLogger(__name__).error('Ajuste omitido: %s',fallos[-1])
+                continue
             pm = m.pmf(p[cx].to_numpy(), mx, p[cz].to_numpy() if cz else None)
             lado = pd.DataFrame(pm).assign(match_id=p["match_id"].to_numpy(), local=p["local"].to_numpy())
             h = lado[lado["local"] == 1].set_index("match_id").drop(columns="local")
@@ -143,7 +164,13 @@ def walk_forward(L: pd.DataFrame, objetivo: str, variantes: list[str], desde, pa
                 fila = fila.join(h.loc[comunes].add_prefix("h")).join(a.loc[comunes].add_prefix("a"))
             salida.append(fila.assign(variante=v).reset_index())
         corte = sig
-    return pd.concat(salida, ignore_index=True)
+    if not salida:
+        raise ValueError('Ningún ajuste de conteos válido')
+    out=pd.concat(salida, ignore_index=True)
+    if set(out.variante)!=set(variantes):
+        raise ValueError('Una variante no tiene ajustes válidos; comparación imposible')
+    out.attrs['fallos_ajuste']=fallos
+    return out
 
 
 def evaluar(pred: pd.DataFrame, L: pd.DataFrame, objetivo: str, desde, hasta=None,

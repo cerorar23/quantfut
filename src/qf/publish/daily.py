@@ -503,6 +503,13 @@ def generate_predictions(model_path: str | None = None, solo_partido: str | None
                 markets["1x2"] = adjusted
                 meta_pred["residual_applied"] = True
 
+        destacado_web = None
+        if meta_pred['both_teams_known']:
+            from .destacado_web import congelar
+            try:
+                destacado_web = congelar(m, (meta_pred['home_lambda'], meta_pred['away_lambda'], meta_pred['rho']))
+            except Exception:
+                log.exception('Destacado sin registro previo para %s; no entrará en el historial', m['match_id'])
         with conn() as c, c.cursor() as cur:
             cur.execute(
                 """INSERT INTO predictions
@@ -524,6 +531,7 @@ def generate_predictions(model_path: str | None = None, solo_partido: str | None
                              "residual_applied": meta_pred.get("residual_applied",
                                                                False),
                              "ajuste_altitud": info_altitud,
+                             **({'web_destacado': destacado_web} if destacado_web else {}),
                              **({"sello_tardio": info_final} if info_final else {})}),
                  etapa),
             )

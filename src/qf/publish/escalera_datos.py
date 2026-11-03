@@ -137,7 +137,8 @@ class Modelos:
                 FROM matches
                 WHERE league_id = %s AND status = 'finished' AND {hay}
                   AND kickoff_utc < %s AND kickoff_utc > %s - interval '4 years'
-                ORDER BY kickoff_utc""", (liga, self.now, self.now))
+                  AND coalesce(result_recorded_at, kickoff_utc + interval '3 hours') <= %s
+                ORDER BY kickoff_utc""", (liga, self.now, self.now, self.now))
         if not filas:
             return None
         acc = em.acumulador(mercado)
