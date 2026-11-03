@@ -3187,3 +3187,10 @@ Resultados en docs/nba_rediseno_s5_resultados_20261102.md. Módulos `referencia`
 - [x] Sellado en cadena con candado, rechazo de objetivo posterior al sello y `verificar_cadena`; probado en bases desechables.
 - [x] G-fuga del motor de equipo aprobada en la base real (200 partidos, 0 diferencias); halló y corrigió un error real (arrastre en el primer partido de temporada).
 - [ ] Conectar jugadores (S3b) y props (S4) a la instantánea y repetir G-fuga; primer sellado real con `nba-motor`.
+
+### NBA — rediseño completo, Sprint 6: API de lectura y web NBA (2026-11-03)
+Detalle en docs/nba_rediseno_s6_resultados_20261103.md. `apps/nba/src/nba/api/` (API + web estática en 6 idiomas), `ops/nba-api/Dockerfile`. Sin desplegar ni exponer.
+- [x] API `/nba/v1`: cartelera, partido, línea, jugador, sello y calibración; conexiones de solo lectura; errores como códigos.
+- [x] Web `/nba/v2/` en es, en, pt, fr, it, de con prueba de paridad de traducciones; verificada en el navegador con datos de demostración.
+- [ ] `nba-motor`: proceso que sella cada partido ≈ 60 min antes del salto (sin él la web no muestra pronósticos reales).
+- [ ] Ruta pública, integración con cuentas y bloqueo de pago, rol de solo lectura en la base y despliegue de `nba-api` (esperan tu aprobación del boceto).

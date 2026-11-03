@@ -10,7 +10,7 @@ from .pit import Instantanea
 PARAMETROS = Parametros(eta=0.045, arrastre=0.65, eta_liga=0.01, efecto_b2b=2.78)
 SIGMA_MARGEN, SIGMA_TOTAL = 13.80, 18.46
 N_SIM = 20000
-NIVELES = (0.005, 0.025, 0.10, 0.25, 0.50, 0.75, 0.90, 0.975, 0.995)
+NIVELES = tuple(i / 200 for i in range(1, 200))                     # cuantiles 0,5 % … 99,5 % en pasos de 0,5 % (199 valores)
 VERSION_MODELO = (f"equipo-2.0;eta={PARAMETROS.eta};arrastre={PARAMETROS.arrastre};liga={PARAMETROS.eta_liga};"
                   f"b2b={PARAMETROS.efecto_b2b};sigma={SIGMA_MARGEN}/{SIGMA_TOTAL};margen=proporcional")
 
@@ -44,9 +44,10 @@ def pronosticar(inst: Instantanea) -> tuple[dict, dict]:
     m = nucleo.simular(mu_l, mu_v, SIGMA_MARGEN, SIGMA_TOTAL, n=N_SIM, semilla=inst.partido_id)
     margen, total = m.margen(), m.total()
     distribucion = {"p_local": round(mercados.ganador(m), 6), "mu": [round(mu_l, 4), round(mu_v, 4)],
-                    "margen": {str(q): float(margen.cuantil(q)) for q in NIVELES},
-                    "total": {str(q): float(total.cuantil(q)) for q in NIVELES},
-                    "puntos_local": {str(q): float(m.puntos("local").cuantil(q)) for q in NIVELES},
-                    "puntos_visitante": {str(q): float(m.puntos("visit").cuantil(q)) for q in NIVELES}}
+                    "paso_cuantil": 0.005,
+                    "margen": [float(margen.cuantil(q)) for q in NIVELES],
+                    "total": [float(total.cuantil(q)) for q in NIVELES],
+                    "puntos_local": [float(m.puntos("local").cuantil(q)) for q in NIVELES],
+                    "puntos_visitante": [float(m.puntos("visit").cuantil(q)) for q in NIVELES]}
     escenarios = {"descanso_dias": {"local": dl, "visitante": dv}, "partidos_en_historia": len(inst.historia)}
     return escenarios, distribucion

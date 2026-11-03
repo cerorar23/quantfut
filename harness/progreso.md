@@ -6929,3 +6929,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Hallazgo: la implementación independiente de G-fuga halló un error real del motor (no aplicaba el arrastre de temporada al primer partido de una temporada nueva, ≈ 2,3 puntos de diferencia). Una compuerta de reproducibilidad sola no lo habría visto; hace falta compararla con un cálculo hecho por otro camino.
 - Decisión: las cajas históricas se aceptan por fecha del partido (su `recibido_en` es la fecha de adquisición del archivo), supuesto escrito en `pit.py`; el motor y el sellado exigen que el corte ya haya pasado.
 - Límite: G-fuga cubre solo el motor de equipo; jugadores y props se enlazan en el Sprint 6.
+
+## 2026-11-03 — Sprint 6: API de lectura y web NBA
+
+- Decisión: la distribución sellada guarda 199 cuantiles (pasos de 0,5 %) para que la API calcule la probabilidad de cualquier línea sin resimular; es la misma información que ya se sellaba, solo más fina (aún no había nada sellado en producción).
+- Decisión: la API no manda texto visible, solo códigos de error; la web los traduce a los 6 idiomas y una prueba exige paridad de claves y cobertura de códigos.
+- Decisión: v2 sigue sin exponerse; el piloto v1 de `/nba` se mantiene hasta que apruebes v2 (después se retira del VPS).
+- Pendiente real: sin el proceso `nba-motor` (sellado por partido) la web no tiene pronósticos que mostrar.

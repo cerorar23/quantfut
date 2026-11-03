@@ -123,7 +123,7 @@ def test_el_motor_es_determinista_no_ve_el_futuro_y_se_niega_sin_historia(base_m
     inst = pit.instantanea(db, objetivo[0], corte)
     e1, d1 = motor_equipo.pronosticar(inst)
     e2, d2 = motor_equipo.pronosticar(pit.instantanea(db, objetivo[0], corte))
-    assert (e1, d1) == (e2, d2) and 0.0 < d1["p_local"] < 1.0 and d1["margen"]["0.5"] == pytest.approx(d1["mu"][0] - d1["mu"][1], abs=1.0)
+    assert (e1, d1) == (e2, d2) and 0.0 < d1["p_local"] < 1.0 and d1["margen"][99] == pytest.approx(d1["mu"][0] - d1["mu"][1], abs=1.0)
     # cambiar el resultado de un partido POSTERIOR (otra fecha) no mueve el pronóstico
     futuro = partidos[20][0]
     guardar_datos(db, [DatoNuevo(partido_id=futuro, entidad_id=ids[partidos[20][2]], metrica="puntos", fase="final", fuente="espn",

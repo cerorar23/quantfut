@@ -1,0 +1,15 @@
+{
+  "temporada": "2025-26",
+  "metodo": "hacia adelante: parámetros y desviaciones ajustados solo con temporadas anteriores; contra el cierre de bet365 y The Odds API",
+  "equipo": {
+    "modelo": {"brier_ganador": 0.2063, "brier_handicap": 0.2597, "brier_total": 0.2605, "rmse_margen": 14.49, "rmse_total": 19.12, "pendiente_ganador": 1.07},
+    "mercado": {"brier_ganador": 0.1981, "brier_handicap": 0.2499, "brier_total": 0.2500, "rmse_margen": 14.04, "rmse_total": 18.41},
+    "n": {"ganador": 1269, "handicap": 1126, "total": 1113}
+  },
+  "props": {
+    "puntos": {"mase": 0.959, "cobertura80": 0.809, "brier_modelo": 0.2622, "brier_mercado": 0.2494, "n": 17185},
+    "rebotes": {"mase": 0.952, "cobertura80": 0.809, "brier_modelo": 0.2549, "brier_mercado": 0.2468, "n": 16837},
+    "asistencias": {"mase": 0.961, "cobertura80": 0.813, "brier_modelo": 0.2535, "brier_mercado": 0.2453, "n": 15312},
+    "triples": {"mase": 0.961, "cobertura80": 0.805, "brier_modelo": 0.2451, "brier_mercado": 0.2417, "n": 14948}
+  }
+}
