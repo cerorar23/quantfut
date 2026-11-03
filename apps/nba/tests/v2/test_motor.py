@@ -35,7 +35,7 @@ def test_sella_dentro_de_la_hora_previa_y_no_antes_ni_despues(base_migrada):
     assert r0["sellados"] == [] and n_sellos(db) == 0                       # todavía falta más de una hora
     r1 = motor.ejecutar(db, inicio[pid] - timedelta(minutes=30))
     assert [s["partido"] for s in r1["sellados"]] == [pid] and r1["errores"] == []
-    assert {o["partido"]: o["razon"] for o in r1["omitidos"]} == {partidos[19][0]: "ya_empezo_sin_sello"}      # el de la víspera ya empezó
+    assert r1["omitidos"] == []                                                # el de la víspera empezó hace 23 h: ya no se repite en el informe
     obj = db.execute("SELECT objetivo_en FROM nba.pronostico").fetchone()[0]
     assert obj == inicio[pid] - timedelta(minutes=60)                       # el corte es fijo: salto − 60 min, no la hora del cron
     assert sellado.verificar_cadena(db) == 1

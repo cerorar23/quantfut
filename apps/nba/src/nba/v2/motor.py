@@ -24,6 +24,7 @@ ET = ZoneInfo("America/New_York")
 MINUTOS_ANTES = 60
 HOLGURA_HISTORIA_DIAS = 7                 # más que la pausa del Juego de Estrellas
 MERCADO = "equipo"
+HORAS_DE_AVISO_TRAS_EL_SALTO = 3           # pasado esto, un partido sin sello deja de repetirse en el informe
 
 CANDIDATOS = """
 SELECT e.entidad_id, e.fecha_juego_et, ini.valor
@@ -57,7 +58,7 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
         if ahora < corte:
             continue
         if ahora >= inicio:
-            if not _ya_sellado(db, pid, corte):
+            if ahora < inicio + timedelta(hours=HORAS_DE_AVISO_TRAS_EL_SALTO) and not _ya_sellado(db, pid, corte):
                 resumen["omitidos"].append({"partido": pid, "razon": "ya_empezo_sin_sello"})
             continue
         try:
