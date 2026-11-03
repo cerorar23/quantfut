@@ -541,8 +541,8 @@ _acc: dict[tuple, tuple[float, object]] = {}
 
 
 def _acumulador(liga: str, mercado: str, corte: datetime | None = None):
-    """Estado anterior al corte, también para análisis de partidos pasados."""
-    corte = corte or datetime.now(timezone.utc)
+    """Estado anterior al corte, reutilizable por hora sin admitir datos posteriores."""
+    corte = (corte or datetime.now(timezone.utc)).replace(minute=0, second=0, microsecond=0)
     clave_ = (liga, mercado, corte.isoformat())
     hit = _acc.get(clave_)
     if hit and time.monotonic() - hit[0] < _TTL:
@@ -631,12 +631,10 @@ def _escudo(team_id) -> str | None:
 def destacados_resueltos(desde: date) -> list[dict]:
     """El destacado de la web de cada partido terminado desde `desde` (acertó o falló).
 
-    Definición fija y reproducible: la de `aplicar_acceso_web` sobre el análisis del modelo, SIN
-    picks abiertos ni VIP. La cuota es la de la mejor casa justo antes del saque (`cuotas_casas`) y, si el partido
-    no tiene cuotas de casas (anterior al 23-oct o liga sin PropLine), la del modelo (1 ÷ prob.; `ref_price` nulo);
-    un pick abierto la cambiaría por la publicada y el destacado dependería de quién mira. Un partido sin modelo,
-    sin mercado en rango o sin resultado no entra. Se pide un día antes de `desde` para que el
-    cliente corte por su día local; en caché diez minutos porque recorre cada partido.
+    Se liquida exclusivamente la fila registrada antes del inicio y sellada, con su
+    probabilidad y cuota originales. No se recalcula el modelo ni se elige otra opción.
+    Un partido sin registro previo o sin resultado no entra. Se pide un día antes de
+    `desde` para que el cliente corte por su día local; caché de diez minutos.
     """
     clave_ = desde.isoformat()
     hit = _destacados.get(clave_)
@@ -651,9 +649,12 @@ def destacados_resueltos(desde: date) -> list[dict]:
                      "WHERE m.status='finished' AND m.home_goals IS NOT NULL AND m.kickoff_utc >= %s "
                      "ORDER BY m.kickoff_utc, m.match_id LIMIT 600", (corte,))
     out = []
+    from ..publish.destacado_web import obtener
     for p in partidos:
-        lista = construir(p['match_id'], p['local'], p['visitante'], {}, False, web=True)
-        d = lista and lista.get('destacado')
+        registro = obtener(p['match_id'], consulta=query_one)
+        if not registro:
+            continue
+        d = con_resultados([dict(registro['fila'])], datos_partido(p['match_id']))[0]
         if not d or d.get('resultado') not in ('win', 'loss'):
             continue
         out.append({'match_id': p['match_id'], 'league_id': p['league_id'], 'kickoff_utc': p['kickoff_utc'],
