@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, UTC
+import json
 
 import pytest
 
@@ -119,3 +120,17 @@ def test_cli_ahora_solo_en_simulacro(monkeypatch):
     monkeypatch.setenv("NBA_DB_DSN", "postgresql://no-se-usa")
     assert motor.main(["--ahora", "2026-01-21T23:30:00+00:00"]) == 2          # sin --simulacro: no se puede fingir la hora
     assert motor.main(["--simulacro", "--ahora", "2026-01-21T23:30:00"]) == 2   # sin zona horaria
+
+
+def test_un_juego_duplicado_en_la_base_no_se_lista_dos_veces(base_migrada):
+    db = base_migrada
+    ids, partidos, inicio = con_horas(db)
+    pid, fecha, a, b = partidos[20]
+    original = db.execute("SELECT atributos, temporada FROM nba.entidad WHERE entidad_id = %s", (pid,)).fetchone()
+    db.execute("INSERT INTO nba.entidad (tipo, fuente, id_en_fuente, nombre, fecha_juego_et, temporada, atributos) "
+               "VALUES ('partido', 'nba_oficial', 'sintetico-dup', 'dup', %s, %s, %s::jsonb)", (fecha, original[1], json.dumps(original[0])))
+    db.commit()
+    dup = db.execute("SELECT entidad_id, canonica_id FROM nba.entidad WHERE id_en_fuente = 'sintetico-dup'").fetchone()
+    assert dup[0] > pid
+    r = motor.ejecutar(db, inicio[pid] - timedelta(minutes=30))
+    assert [s["partido"] for s in r["sellados"]] == [pid] and dup[0] not in r["sin_hora"]

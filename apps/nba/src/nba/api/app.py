@@ -85,7 +85,8 @@ def crear_app(dsn: str | None = None) -> FastAPI:
     PARTIDOS = ("SELECT e.entidad_id, e.fecha_juego_et, tl.id_en_fuente, tv.id_en_fuente, tl.nombre, tv.nombre FROM nba.entidad e "
                 "JOIN nba.entidad tl ON tl.entidad_id = (e.atributos->>'local')::bigint "
                 "JOIN nba.entidad tv ON tv.entidad_id = (e.atributos->>'visitante')::bigint "
-                "WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id")
+                "WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id "
+                "AND e.entidad_id = (SELECT min(x.entidad_id) FROM nba.entidad x WHERE x.tipo = 'partido' AND x.canonica_id = x.entidad_id AND x.fecha_juego_et = e.fecha_juego_et AND x.atributos->>'local' = e.atributos->>'local' AND x.atributos->>'visitante' = e.atributos->>'visitante')")
 
     @app.get("/nba/v1/cartelera")
     def cartelera(fecha: date = Query(...)):

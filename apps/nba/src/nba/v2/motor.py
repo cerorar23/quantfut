@@ -34,6 +34,7 @@ LEFT JOIN LATERAL (
     ORDER BY d.recibido_en DESC, d.dato_id DESC LIMIT 1
 ) ini ON true
 WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id AND e.fecha_juego_et BETWEEN %(desde)s AND %(hasta)s
+  AND e.entidad_id = (SELECT min(x.entidad_id) FROM nba.entidad x WHERE x.tipo = 'partido' AND x.canonica_id = x.entidad_id AND x.fecha_juego_et = e.fecha_juego_et AND x.atributos->>'local' = e.atributos->>'local' AND x.atributos->>'visitante' = e.atributos->>'visitante')
   AND NOT EXISTS (SELECT 1 FROM nba.dato f JOIN nba.metrica mf USING (metrica_id)
                   WHERE f.partido_id = e.entidad_id AND mf.nombre = 'estado_partido' AND f.etiqueta = 'final' AND f.recibido_en <= %(ahora)s)
 ORDER BY e.fecha_juego_et, e.entidad_id
