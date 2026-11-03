@@ -20,8 +20,22 @@ import sys
 import psycopg
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from nba.v2 import identidad, motor_equipo, nucleo, pit  # noqa: E402
+from nba.v2 import identidad, motor_equipo, motor_jugadores, nucleo, parametros, pit, props  # noqa: E402
+from nba.v2.plantilla_pit import plantilla  # noqa: E402
+import numpy as np  # noqa: E402
 from nba.v2.nucleo import Ratings  # noqa: E402
+
+CAJA = """
+SELECT e.fecha_juego_et, d.partido_id, d.entidad_id,
+  max(CASE WHEN m.nombre = 'minutos' THEN d.valor END), max(CASE WHEN m.nombre = 'puntos' THEN d.valor END),
+  max(CASE WHEN m.nombre = 'rebotes' THEN d.valor END), max(CASE WHEN m.nombre = 'asistencias' THEN d.valor END),
+  max(CASE WHEN m.nombre = 'triples_anotados' THEN d.valor END), max(CASE WHEN m.nombre = 'equipo_del_jugador' THEN d.valor END)
+FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id JOIN nba.entidad e ON e.entidad_id = d.partido_id
+WHERE d.fuente = 'nba_oficial' AND d.fase = 'final' AND d.periodo = 0 AND e.canonica_id = e.entidad_id
+  AND m.nombre IN ('minutos', 'puntos', 'rebotes', 'asistencias', 'triples_anotados', 'equipo_del_jugador')
+GROUP BY 1, 2, 3 HAVING max(CASE WHEN m.nombre = 'minutos' THEN d.valor END) > 0
+ORDER BY 1, 2, 3
+"""
 
 REFERENCIA = """
 SELECT e.fecha_juego_et, e.entidad_id, tl.id_en_fuente, tv.id_en_fuente,
@@ -64,6 +78,64 @@ def referencia_por_fecha(filas, objetivos):
     return salida
 
 
+def referencia_plantilla(caja, juegos, equipos_ids, objetivo, en_parte):
+    """Plantilla de (partido objetivo, lado) calculada desde cero: jugadores con ≥ 5 partidos, historial de 30 y último equipo, usando
+    solo partidos de fecha estrictamente anterior. Camino distinto de `plantilla_pit` (sin DISTINCT ON ni punto en el tiempo)."""
+    fecha, pid, tri_l, tri_v = objetivo
+    antes = [r for r in caja if r[0] < fecha]
+    por_jugador = defaultdict(list)
+    for r in antes:
+        por_jugador[r[2]].append(r)
+    salida = {}
+    for lado, tri in (("local", tri_l), ("visitante", tri_v)):
+        eq = equipos_ids[tri]
+        pids = [g[1] for g in juegos if g[0] < fecha and tri in (g[2], g[3])][-10:]
+        plantel = {r[2] for r in antes if r[1] in pids and int(r[8]) == eq}
+        for jug, filas in por_jugador.items():
+            if int(filas[-1][8]) == eq and (jug in plantel or jug in en_parte) and len(filas) >= 5:
+                ult = filas[-30:]
+                salida[jug] = (lado, tuple(float(r[3]) for r in ult), tuple(tuple(float(x or 0.0) for x in r[4:8]) for r in ult))
+    return salida
+
+
+def probar_jugadores(db, elegidos, n):
+    par = parametros.cargar_props()
+    caja = db.execute(CAJA).fetchall()
+    equipos_ids = {tri: eid for eid, tri in db.execute("SELECT entidad_id, id_en_fuente FROM nba.entidad WHERE tipo = 'equipo'").fetchall()}
+    juegos = [(f, int(pid), lo, vi) for f, pid, lo, vi, _, _ in db.execute(REFERENCIA).fetchall()]
+    real = {(r[1], r[2]): r for r in caja}
+    res = {"n": 0, "difs_repetibilidad": 0, "difs_plantilla_vs_referencia": 0, "pronosticos": 0, "pit": []}
+    paso = max(1, len(elegidos) // n)
+    for fecha, pid, lo, vi, _, _ in elegidos[::paso][:n]:
+        corte = datetime(fecha.year, fecha.month, fecha.day, 12, tzinfo=UTC)
+        inst = pit.instantanea(db, pid, corte)
+        a, b = plantilla(db, inst), plantilla(db, pit.instantanea(db, pid, corte))
+        ra, rb = motor_jugadores.pronosticar(a, par), motor_jugadores.pronosticar(b, par)
+        res["n"] += 1
+        if a.version_datos != b.version_datos or ra != rb:
+            res["difs_repetibilidad"] += 1
+        en_parte = {r[0] for r in db.execute("SELECT DISTINCT d.entidad_id FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id "
+                                             "WHERE d.partido_id = %s AND m.nombre = 'estado_disponibilidad' AND d.fuente = 'nba_oficial' AND d.recibido_en <= %s",
+                                             (pid, corte)).fetchall()}
+        ref = referencia_plantilla(caja, juegos, equipos_ids, (fecha, pid, lo, vi), en_parte)
+        motor = {j.id: (lado, j.minutos, j.stats) for lado, js in a.lados.items() for j in js}
+        if motor != ref:
+            res["difs_plantilla_vs_referencia"] += 1
+            res.setdefault("ejemplos", []).append({"partido": pid, "solo_motor": len(motor.keys() - ref.keys()), "solo_referencia": len(ref.keys() - motor.keys())})
+        res["pronosticos"] += len(ra)
+        for x in ra:
+            if x["mercado"] == "jugador:puntos" and (pid, x["jugador"]) in real:
+                pmf = np.array([x["distribucion"]["pmf"]])
+                res["pit"].append(float(props.pit_aleatorio(pmf, np.array([real[(pid, x["jugador"])][4]]), semilla=len(res["pit"]))[0]))
+    pit_ = np.array(res.pop("pit"))
+    res["cobertura80_puntos"] = float(np.mean((pit_ > 0.1) & (pit_ < 0.9))) if len(pit_) else None
+    res["n_puntos_evaluados"] = int(len(pit_))
+    res["ejemplos"] = res.get("ejemplos", [])[:5]
+    res["aprobado"] = (res["difs_repetibilidad"] == 0 and res["difs_plantilla_vs_referencia"] == 0 and res["pronosticos"] > 0
+                       and res["cobertura80_puntos"] is not None and 0.74 <= res["cobertura80_puntos"] <= 0.86)
+    return res
+
+
 def main(temporada: str, n: int):
     with psycopg.connect(os.environ["NBA_DB_DSN"]) as db:
         db.execute("SET TRANSACTION READ ONLY")
@@ -100,10 +172,12 @@ def main(temporada: str, n: int):
             p_local.append(dist_a["p_local"])
             y.append(1.0 if pl > pv else 0.0)
         res["discrepancias"] = res.get("discrepancias", [])[:6]
+        res["jugadores"] = probar_jugadores(db, elegidos, int(os.environ.get("NBA_G_FUGA_JUGADORES", "60")))
         res["brier_ganador"] = sum((p - o) ** 2 for p, o in zip(p_local, y)) / len(y)
         res["alarma_fuga_brier_menor_0_18"] = res["brier_ganador"] < 0.18
-        res["aprobado"] = (res["difs_repetibilidad"] == 0 and res["fugas_historia"] == 0 and res["fugas_propias"] == 0
+        res["aprobado_equipo"] = (res["difs_repetibilidad"] == 0 and res["fugas_historia"] == 0 and res["fugas_propias"] == 0
                            and res["max_dif_mu_vs_referencia"] < 1e-3 and not res["alarma_fuga_brier_menor_0_18"])
+        res["aprobado"] = res["aprobado_equipo"] and res["jugadores"]["aprobado"]
     print(json.dumps(res))
 
 

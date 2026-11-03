@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 import numpy as np
 import psycopg
 
-from ..v2 import sellado
+from ..v2 import props, sellado
 
 ESTATICOS = Path(__file__).parent / "static"
 CALIBRACION = Path(os.environ.get("NBA_CALIBRACION_JSON", Path(__file__).parent / "calibracion_v2.json"))
@@ -130,6 +130,34 @@ def crear_app(dsn: str | None = None) -> FastAPI:
                 raise HTTPException(404, {"codigo": "sin_pronostico_jugador"})
             return {"partido_id": partido_id, "jugador_id": jugador_id,
                     "mercados": {m: {"hash": h, "sellado_en": s.isoformat(), "escenarios": e, "distribucion": d} for m, h, s, e, d in filas}}
+
+    @app.get("/nba/v1/partido/{partido_id}/jugadores")
+    def jugadores(partido_id: int):
+        with conexion() as db:
+            filas = db.execute("SELECT DISTINCT ON (entidad_id, mercado) entidad_id, mercado, escenarios, distribucion FROM nba.pronostico "
+                               "WHERE partido_id = %s AND entidad_id IS NOT NULL ORDER BY entidad_id, mercado, sellado_en DESC, pronostico_id DESC",
+                               (partido_id,)).fetchall()
+        por_jugador: dict = {}
+        for jid, mercado, esc, dist in filas:
+            j = por_jugador.setdefault(jid, {"id": jid, "nombre": esc.get("nombre"), "lado": esc.get("lado"), "estado": esc.get("estado"),
+                                             "p_juega": esc.get("p_juega"), "minutos_si_juega": esc.get("minutos_si_juega"),
+                                             "minutos_esperados": dist.get("minutos_esperados"), "mercados": {}})
+            j["mercados"][mercado.split(":", 1)[1]] = {"media": dist["media"], "p10": dist["p10"], "p50": dist["p50"], "p90": dist["p90"]}
+        orden = sorted(por_jugador.values(), key=lambda j: -(j["minutos_esperados"] or 0))
+        return {"partido_id": partido_id, "jugadores": orden}
+
+    @app.get("/nba/v1/partido/{partido_id}/jugador/{jugador_id}/linea")
+    def linea_jugador(partido_id: int, jugador_id: int, mercado: str = Query(...), valor: float = Query(...)):
+        if mercado not in props.ESTADISTICAS:
+            raise HTTPException(422, {"codigo": "mercado_desconocido"})
+        with conexion() as db:
+            p = ultimo_pronostico(db, partido_id, f"jugador:{mercado}", jugador_id)
+        if p is None:
+            raise HTTPException(404, {"codigo": "sin_pronostico_jugador"})
+        pmf = np.asarray(p[7]["pmf"], float)
+        mas = float(props.prob_mas_de(pmf[None, :], np.array([valor]))[0])
+        return {"mercado": mercado, "linea": valor, "p_mas": round(mas, 4), "p_menos": round(1 - mas, 4), "p_juega": p[7]["p_juega"],
+                "extremo": bool(mas in (0.001, 0.999)), "hash": p[0]}
 
     @app.get("/nba/v1/sello/{hash_}")
     def sello(hash_: str, cadena: bool = False):

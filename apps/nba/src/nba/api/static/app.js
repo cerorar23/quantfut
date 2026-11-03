@@ -106,6 +106,7 @@ async function partido(id) {
   const mostrar = (cual) => {
     [...pestanas.children].forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === cual)));
     if (cual === "equipo") zona.replaceChildren(panelEquipo(d, pr));
+    else if (cual === "jugador") panelJugador(d, zona);
     else zona.replaceChildren(nodo("p", { class: "aviso" }, t("proximamente")));
   };
   for (const k of ["equipo", "jugador", "especiales"]) pestanas.append(nodo("button", { role: "tab", "data-tab": k, onclick: () => mostrar(k) }, t("tab_" + k)));
@@ -146,6 +147,72 @@ function panelEquipo(d, pr) {
   deslizador.addEventListener("input", () => { panel.querySelector("output").textContent = num(deslizador.value, 1); });
   ajustar(); panel.querySelector("output").textContent = num(deslizador.value, 1);
   return panel;
+}
+
+function histogramaPmf(pmf, linea) {
+  const NS = "http://www.w3.org/2000/svg", max = Math.max(...pmf);
+  let ultimo = pmf.length - 1;
+  while (ultimo > 3 && pmf[ultimo] < max * 0.005) ultimo--;
+  const n = ultimo + 1, svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${n * 10} 100`); svg.setAttribute("class", "histo"); svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("role", "img"); svg.setAttribute("aria-label", t("distribucion"));
+  for (let k = 0; k < n; k++) {
+    const r = document.createElementNS(NS, "rect"), h = (pmf[k] / max) * 96;
+    r.setAttribute("x", k * 10 + 1); r.setAttribute("y", 100 - h); r.setAttribute("width", 8); r.setAttribute("height", h);
+    if (k > linea) r.setAttribute("class", "sobre");
+    svg.append(r);
+  }
+  return svg;
+}
+
+async function panelJugador(d, zona) {
+  zona.replaceChildren(nodo("p", {}, t("cargando")));
+  let lista;
+  try { lista = (await pedir(`/partido/${d.id}/jugadores`)).jugadores; } catch (e) { return zona.replaceChildren(errorEn(e)); }
+  if (!lista.length) return zona.replaceChildren(nodo("p", { class: "aviso" }, t("sin_jugadores")));
+  const equipo = (j) => (j.lado === "local" ? d.local.codigo : d.visitante.codigo);
+  const selJ = nodo("select", { "aria-label": t("jugador") }, lista.map((j, i) => nodo("option", { value: i }, `${equipo(j)} · ${j.nombre}`)));
+  const selM = nodo("select", { "aria-label": t("mercado") }, ["puntos", "rebotes", "asistencias", "triples"].map((m) => nodo("option", { value: m }, t(m))));
+  const desliz = nodo("input", { type: "range", "aria-label": t("linea"), min: 0.5, step: 1 });
+  const salida = nodo("output");
+  const info = nodo("dl", { class: "sello-datos" }), grafico = nodo("div"), lectura = nodo("div", { class: "dos" }), aviso = nodo("p", { class: "aviso" });
+  let temporizador, pmfActual = [];
+  const pintar = () => {
+    const j = lista[selJ.value], m = j.mercados[selM.value];
+    info.replaceChildren(
+      nodo("dt", {}, t("estado_parte")), nodo("dd", {}, j.estado ? t("est_" + j.estado) : t("sin_parte")),
+      nodo("dt", {}, t("p_juega")), nodo("dd", {}, pct(j.p_juega)),
+      nodo("dt", {}, t("minutos_esp")), nodo("dd", {}, `${num(j.minutos_si_juega[1], 0)} (${num(j.minutos_si_juega[0], 0)}–${num(j.minutos_si_juega[2], 0)})`),
+      nodo("dt", {}, `${t(selM.value)} · ${t("rango")}`), nodo("dd", {}, `${num(m.media, 1)} (${m.p10}–${m.p90})`));
+  };
+  const cargar = async () => {
+    const j = lista[selJ.value], m = j.mercados[selM.value];
+    desliz.max = Math.max(m.p90 + 3, 3) - 0.5;
+    desliz.value = Math.min(Math.max(m.p50 - 0.5, 0.5), desliz.max);
+    salida.textContent = num(desliz.value, 1);
+    pintar();
+    try { pmfActual = (await pedir(`/partido/${d.id}/jugador/${j.id}`)).mercados["jugador:" + selM.value].distribucion.pmf; } catch (e) { aviso.textContent = e.message; return; }
+    dibujar();
+  };
+  const dibujar = () => {
+    const j = lista[selJ.value], linea = Number(desliz.value);
+    salida.textContent = num(linea, 1);
+    grafico.replaceChildren(histogramaPmf(pmfActual, linea));
+    clearTimeout(temporizador);
+    temporizador = setTimeout(async () => {
+      try {
+        const r = await pedir(`/partido/${d.id}/jugador/${j.id}/linea?mercado=${selM.value}&valor=${linea}`);
+        lectura.replaceChildren(
+          nodo("div", { class: "tarjeta" }, nodo("small", {}, `${t("si_juega")}: ${t("mas")} ${num(linea, 1)}`), nodo("b", {}, pct(r.p_mas))),
+          nodo("div", { class: "tarjeta" }, nodo("small", {}, `${t("si_juega")}: ${t("menos")} ${num(linea, 1)}`), nodo("b", {}, pct(r.p_menos))));
+        aviso.textContent = r.extremo ? t("extremo") : "";
+      } catch (e) { aviso.textContent = e.message; }
+    }, 120);
+  };
+  selJ.addEventListener("change", cargar); selM.addEventListener("change", cargar); desliz.addEventListener("input", dibujar);
+  zona.replaceChildren(nodo("div", { class: "control" }, nodo("label", {}, t("jugador"), " ", selJ), nodo("label", {}, t("mercado"), " ", selM),
+    nodo("label", {}, t("linea") + ": ", salida, desliz)), info, grafico, lectura, aviso);
+  cargar();
 }
 
 function pieSello(pr) {

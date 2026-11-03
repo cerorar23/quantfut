@@ -86,3 +86,13 @@ def prediccion(jugados: Sequence[float | None], p_juega: float, residuos: Residu
     if p <= 0.0:
         return cero
     return Distribucion.mezcla([(1 - p, cero), (p, base)])
+
+
+def muestras_condicionadas(pronosticos, residuos: Residuos, n: int = 25) -> np.ndarray:
+    """(R, n) muestras equiprobables de los minutos de cada jugador SI juega: pronóstico + cuantiles de residuo de su tramo,
+    acotadas a [1, MAXIMO]. Es la forma en que los props meten la incertidumbre de minutos dentro de su distribución."""
+    pron = np.asarray(pronosticos, float)
+    tr = np.array([tramo(x, residuos.cortes) for x in pron])
+    cuant = np.array(residuos.cuantiles)
+    idx = np.linspace(0, cuant.shape[1] - 1, n).round().astype(int)
+    return np.clip(pron[:, None] + cuant[tr][:, idx], 1.0, MAXIMO)

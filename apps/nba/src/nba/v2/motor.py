@@ -13,17 +13,21 @@ from zoneinfo import ZoneInfo
 import argparse
 import json
 import os
+from pathlib import Path
 import sys
 
 import psycopg
 
-from . import motor_equipo, pit, sellado
+from . import alertas, motor_equipo, motor_jugadores, parametros, pit, sellado
+from .plantilla_pit import plantilla
 from .sellado import PronosticoNuevo
 
 ET = ZoneInfo("America/New_York")
 MINUTOS_ANTES = 60
 HOLGURA_HISTORIA_DIAS = 7                 # más que la pausa del Juego de Estrellas
 MERCADO = "equipo"
+PARAMETROS_PROPS = parametros.cargar_props()
+VERSION_PROPS = f"props-2.0;{PARAMETROS_PROPS.version};k={PARAMETROS_PROPS.k_minutos};dec={PARAMETROS_PROPS.decaimiento}"
 HORAS_DE_AVISO_TRAS_EL_SALTO = 3           # pasado esto, un partido sin sello deja de repetirse en el informe
 
 CANDIDATOS = """
@@ -45,8 +49,8 @@ ORDER BY e.fecha_juego_et, e.entidad_id
 def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict:
     ahora = ahora or datetime.now(UTC)
     hoy = ahora.astimezone(ET).date()
-    resumen = {"ahora": ahora.isoformat(), "version_modelo": motor_equipo.VERSION_MODELO, "simulacro": simulacro,
-               "sellados": [], "omitidos": [], "sin_hora": [], "errores": []}
+    resumen = {"ahora": ahora.isoformat(), "version_modelo": motor_equipo.VERSION_MODELO, "version_props": VERSION_PROPS, "simulacro": simulacro,
+               "sellados": [], "props": [], "omitidos": [], "sin_hora": [], "errores": []}
     filas = db.execute(CANDIDATOS, {"ahora": ahora, "desde": hoy - timedelta(days=1), "hasta": hoy + timedelta(days=1)}).fetchall()
     db.rollback()
     for pid, fecha, inicio_epoch in filas:
@@ -62,29 +66,47 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
                 resumen["omitidos"].append({"partido": pid, "razon": "ya_empezo_sin_sello"})
             continue
         try:
-            if _ya_sellado(db, pid, corte):
+            equipo_hecho, props_hechos = _ya_sellado(db, pid, corte), _ya_sellado(db, pid, corte, props=True)
+            if equipo_hecho and props_hechos:
                 continue
             inst = pit.instantanea(db, pid, corte)
             if not inst.historia or inst.historia[-1][0] < fecha - timedelta(days=HOLGURA_HISTORIA_DIAS):
                 resumen["omitidos"].append({"partido": pid, "razon": "historia_atrasada"})
                 db.rollback()
                 continue
-            esc, dist = motor_equipo.pronosticar(inst)
-            if simulacro:
-                resumen["sellados"].append({"partido": pid, "p_local": dist["p_local"], "mu": dist["mu"], "version_datos": inst.version_datos[:12]})
-            else:
-                h = sellado.sellar(db, PronosticoNuevo(pid, MERCADO, motor_equipo.VERSION_MODELO, inst.version_datos, corte, esc, dist))
-                db.commit()
-                resumen["sellados"].append({"partido": pid, "hash": h, "p_local": dist["p_local"]})
+            if not equipo_hecho:
+                esc, dist = motor_equipo.pronosticar(inst)
+                if simulacro:
+                    resumen["sellados"].append({"partido": pid, "p_local": dist["p_local"], "mu": dist["mu"], "version_datos": inst.version_datos[:12]})
+                else:
+                    h = sellado.sellar(db, PronosticoNuevo(pid, MERCADO, motor_equipo.VERSION_MODELO, inst.version_datos, corte, esc, dist))
+                    db.commit()
+                    resumen["sellados"].append({"partido": pid, "hash": h, "p_local": dist["p_local"]})
+            if not props_hechos:
+                pl = plantilla(db, inst)
+                items = motor_jugadores.pronosticar(pl, PARAMETROS_PROPS)
+                if simulacro:
+                    resumen["props"].append({"partido": pid, "jugadores": len({x["jugador"] for x in items}), "pronosticos": len(items)})
+                elif items:
+                    vd = pl.version_datos + inst.version_datos
+                    for x in items:                                  # todo el partido o nada: un fallo deshace los sellos de sus jugadores
+                        sellado.sellar(db, PronosticoNuevo(pid, x["mercado"], VERSION_PROPS, vd[:64], corte, x["escenarios"], x["distribucion"],
+                                                           entidad_id=x["jugador"]))
+                    db.commit()
+                    resumen["props"].append({"partido": pid, "jugadores": len({x["jugador"] for x in items}), "pronosticos": len(items)})
         except Exception as e:                               # un partido roto no impide sellar los demás
             db.rollback()
             resumen["errores"].append({"partido": pid, "error": f"{type(e).__name__}: {e}"[:300]})
     return resumen
 
 
-def _ya_sellado(db, pid: int, corte: datetime) -> bool:
-    hay = db.execute("SELECT 1 FROM nba.pronostico WHERE partido_id = %s AND mercado = %s AND periodo = 0 AND entidad_id IS NULL "
-                     "AND version_modelo = %s AND objetivo_en = %s", (pid, MERCADO, motor_equipo.VERSION_MODELO, corte)).fetchone()
+def _ya_sellado(db, pid: int, corte: datetime, props: bool = False) -> bool:
+    if props:
+        hay = db.execute("SELECT 1 FROM nba.pronostico WHERE partido_id = %s AND mercado LIKE 'jugador:%%' AND version_modelo = %s "
+                         "AND objetivo_en = %s LIMIT 1", (pid, VERSION_PROPS, corte)).fetchone()
+    else:
+        hay = db.execute("SELECT 1 FROM nba.pronostico WHERE partido_id = %s AND mercado = %s AND periodo = 0 AND entidad_id IS NULL "
+                         "AND version_modelo = %s AND objetivo_en = %s", (pid, MERCADO, motor_equipo.VERSION_MODELO, corte)).fetchone()
     db.rollback()
     return hay is not None
 
@@ -104,6 +126,13 @@ def main(argv=None) -> int:
         return 2
     with psycopg.connect(dsn) as db:
         resumen = ejecutar(db, ahora, simulacro=args.simulacro)
+    if not args.simulacro:
+        directorio = os.environ.get("NBA_MOTOR_DIR")
+        try:
+            resumen["alertas"] = alertas.procesar(resumen, Path(directorio) / "estado_alertas.json" if directorio else None,
+                                                  os.environ.get("NBA_ALERTA_TG_TOKEN"), os.environ.get("NBA_ALERTA_CHAT"))
+        except Exception as e:                               # una alerta que no sale no debe esconder lo sellado
+            resumen["alertas_error"] = f"{type(e).__name__}"[:80]
     print(json.dumps(resumen, ensure_ascii=False))
     return 1 if resumen["errores"] else 0
 

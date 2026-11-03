@@ -114,3 +114,25 @@ def test_traducciones_completas_y_sin_textos_fijos():
     codigos = set(re.findall(r'"codigo": "([a-z_]+)"', Path(api.__file__).read_text(encoding="utf-8")))
     assert {f"err_{k}" for k in codigos} <= claves                           # cada error del servidor tiene texto en los 6 idiomas
     assert {f"m_{m}" for m in api.MERCADOS_LINEA} <= claves and {"tab_equipo", "tab_jugador", "tab_especiales"} <= claves
+
+
+def test_endpoints_de_jugador_con_props_sellados(base_migrada_dsn):
+    from datetime import timedelta
+    from nba.v2 import motor
+    from test_motor_props import con_horas
+    with psycopg.connect(base_migrada_dsn) as db:
+        ids, partidos, jugadores, inicio = con_horas(db)
+        pid = partidos[25][0]
+        motor.ejecutar(db, inicio[pid] - timedelta(minutes=30))
+        db.commit()
+    c = TestClient(api.crear_app(base_migrada_dsn))
+    lista = c.get(f"/nba/v1/partido/{pid}/jugadores").json()["jugadores"]
+    assert len(lista) >= 10 and lista == sorted(lista, key=lambda j: -j["minutos_esperados"])
+    j = lista[0]
+    assert set(j["mercados"]) == {"puntos", "rebotes", "asistencias", "triples"} and j["nombre"] and j["lado"] in ("local", "visitante") and 0 < j["p_juega"] <= 1
+    ps = [c.get(f"/nba/v1/partido/{pid}/jugador/{j['id']}/linea", params={"mercado": "puntos", "valor": v}).json() for v in (5.5, 15.5, 30.5)]
+    assert ps[0]["p_mas"] > ps[1]["p_mas"] > ps[2]["p_mas"] and all(x["p_mas"] + x["p_menos"] == pytest.approx(1.0, abs=1e-3) for x in ps)
+    assert c.get(f"/nba/v1/partido/{pid}/jugador/{j['id']}").json()["mercados"]["jugador:puntos"]["distribucion"]["pmf"]
+    assert c.get(f"/nba/v1/partido/{pid}/jugador/{j['id']}/linea", params={"mercado": "otro", "valor": 1}).status_code == 422
+    assert c.get(f"/nba/v1/partido/{pid}/jugador/99999/linea", params={"mercado": "puntos", "valor": 1}).json()["detail"]["codigo"] == "sin_pronostico_jugador"
+    assert c.get(f"/nba/v1/partido/{partidos[3][0]}/jugadores").json()["jugadores"] == []

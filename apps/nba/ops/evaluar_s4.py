@@ -92,11 +92,7 @@ def leer_props(carpeta, canon_p, canon_j, pids):
 
 
 def muestras_minutos(mp, residuos):
-    """(R, N_MIN) muestras de minutos condicionados a jugar: pronóstico + cuantiles de residuo de su tramo."""
-    tr = np.array([minutos.tramo(x, residuos.cortes) for x in mp])
-    cuant = np.array([residuos.cuantiles[t] for t in range(len(residuos.cuantiles))])           # (T, 99)
-    idx = np.linspace(0, cuant.shape[1] - 1, N_MIN).round().astype(int)
-    return np.clip(mp[:, None] + cuant[tr][:, idx], 1.0, minutos.MAXIMO)
+    return minutos.muestras_condicionadas(mp, residuos, N_MIN)
 
 
 def main(carpeta, prueba):
