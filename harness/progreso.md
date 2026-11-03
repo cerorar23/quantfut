@@ -7008,3 +7008,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Resultado: se restaura y se verifica en menos de un minuto, la manipulación se detecta y la vuelta atrás son 1 s; el punto débil es la distancia entre respaldos (24 h de sellos) y la copia fuera del servidor, que dependía de traerla a mano y estaba desactualizada.
 
 - Decisión del titular (3-nov): respaldo del VPS cada 6 horas y copia diaria al PC programada; así la pérdida máxima de sellos pasa de 24 h a 6 h y la copia fuera del servidor deja de depender de que alguien la traiga.
+
+## 2026-11-03 — F4.5 informe final
+
+- Resultado: v2 es calibrado, coherente, sellado y reproducible, y mejora la cobertura de props (73 % → 80–81 %), pero es peor que el cierre del mercado en las tres temporadas de prueba y no mejora el margen de la v1.5; el informe lo dice sin adornos y propone un periodo prospectivo antes de publicar.
+- Hallazgo: v2 depende de v1 sin que constara (el colector de ESPN lee el libro `run57` escrito por `nba-research-capture-run68-v2`); por eso el retiro de v1 queda condicionado a independizar ese colector y a la aprobación explícita del titular.
+- Decisión pendiente: etapas A–D del informe; ninguna se ejecuta sin el visto bueno del titular.
