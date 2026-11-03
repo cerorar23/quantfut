@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-03 · La cartelera de NBA de la web lee la API v2 y explica cuándo llega el pronóstico · API `quantfut-api-nba-v2:e3ca396` (PR #247, `main` `e3ca396`)
+- Orden del titular («esperar CI y desplegar»; decisión previa: «solo usar v2»). Causa: al retirarse la v1 (3-nov 18:05 UTC) `/nba/api/data` redirige (302) a `/nba/v2/` y la web mostraba «No se pudo cargar la fuente» y «Sin eventos este día». Cambio (solo frontend): `loadSport('nba')` pide `/nba/v1/cartelera?fecha=` (desde el 20-oct, tope 21 días atrás, 4 adelante), conserva los partidos sin pronóstico, resume estadísticas con los marcadores finales de la API y añade la tarjeta «Cuándo se agrega el pronóstico». Los pronósticos que la v1 publicó hasta el 2-nov no se recuperan en la web.
+- Base comprobada: API `quantfut-api-auditoria:cec59cb` (coincide con el compose), worker sin tocar, nadie más desplegando; los 7 archivos del frontend en ejecución eran idénticos a `main` antes del PR.
+- Imagen: `FROM quantfut-api-auditoria:cec59cb` + `frontend/` (sha256 12: `app.js` `476d5375aefb`, `ergonomic-views.js` `c729d5c1524b`, `real-views.js` `62a9b28cc91d`, `sports-data.js` `8f59c9ab3bc7`, `sports-window.js` `d32f1bd0cace`, `window.css` `f4f6e845bd4e`, `index.html` `c32e40ca111d`). Versión de caché `nba-v2-20261103`. Ensayo aislado (`--network none`): hashes = repo y 138 rutas. Solo se recreó `api`; el worker sigue en `quantfut-worker-auditoria:13696cf`.
+- Verificado en el dominio real: `/health` 200; los 7 archivos servidos (URL versionada) = repo; en el navegador NBA del 2-nov muestra 15 partidos con la tarjeta «Sin pronóstico previo» y el del 4-nov «Pronóstico pendiente · se agregará a las 17:00».
+- Respaldo: `~/quantfut/releases/nba-v2-e3ca396/backup/` (compose e id de la imagen). **Vuelta atrás:** `cp -p ~/quantfut/releases/nba-v2-e3ca396/backup/docker-compose.yml ~/quantfut/docker-compose.yml && cd ~/quantfut && docker compose up -d --no-deps --no-build --force-recreate api` (vuelve `quantfut-api-auditoria:cec59cb`).
+- Pendiente: la app móvil sigue leyendo `/nba/api/data` (sin datos de NBA hasta una versión nueva); estadísticas v2 publicadas por el servidor.
+
+
 ### 2026-11-03 20:15 UTC · NBA: tope de Scrapfly 40/día y jugada a jugada con reserva (imagen `nba-captura:63b8ce3`) · solo imagen y `captura.env`, rama `nba/rediseno-s0`
 - Causa del tope agotado: los 12 partidos del 2-nov terminaron después de las 00:00 UTC y se cobraron al 3-nov (2 créditos por partido más 2 cobrados por 403 tempranos); la jugada a jugada de los primeros partidos gastaba créditos antes de que existieran los box de los últimos.
 - Cambio: la jugada a jugada solo se pide si, tras gastarla, quedan créditos para los box que faltan (1 por box más 1 de reintento); tope diario 25 → 40 (`NBA_SCRAPFLY_TOPE_DIARIO=40` en `captura.env`). Primera pasada real: 3 box recuperados (28 créditos del día).
