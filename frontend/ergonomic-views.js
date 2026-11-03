@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=cuota-casa-20261102';
+import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=nba-v2-20261103';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -47,7 +47,7 @@ export function createHubViews(ctx) {
   }
   function sources(offset=state.dayOffset) {
     const home=ensureHome(offset), nba=ensureSport('nba'),tenis=ensureSport('tenis');
-    return {home,nba,tenis,events:[...football(home),...(nba.events||[]),...(tenis.events||[])]};
+    return {home,nba,tenis,events:[...football(home),...(nba.events||[]).filter(e=>e.markets.length),...(tenis.events||[])]};
   }
   const eventKey=e=>`${e.sport}:${e.id}`;
   const featured=e=>e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];

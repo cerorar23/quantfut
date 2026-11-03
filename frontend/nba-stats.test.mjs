@@ -78,3 +78,36 @@ test('sin estadísticas la ventana lo dice y no inventa cifras', () => {
   }
   assert.ok(windowFor(null, {}, 'error')('clasificacion').includes('Todavía no hay estadísticas'));
 });
+
+function v2Window(event, pane = 'pron') {
+  const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: pane, winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false, winFormScope: 'all' };
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const pass = v => String(v);
+  let fetched = 0;
+  const w = createSportWindow({ state: st, esc, badge: t => `<i>${t}</i>`, fmtPct: p => `${(p * 100).toFixed(1)}%`, fmtOdds: o => o.toFixed(2), realDate: pass, realTime: pass, dateFmt: pass,
+    addDays: () => new Date(event.start), localDay: d => new Date(d).toISOString().slice(0, 10), dayLabel: () => 'Hoy', ensureSport: () => ({ status: 'ready', events: [event] }),
+    ensureTennisStats: () => ({ status: 'loading', data: null }), ensureNbaStats: () => { fetched++; return { status: 'error', data: null }; }, featuredModelMarket });
+  return { view: tab => { st.winSportTab = tab; return w.view(); }, fetched: () => fetched };
+}
+
+test('un partido v2 sin pronóstico explica cuándo se agrega y muestra estadísticas sin pedir el feed antiguo', () => {
+  const soon = new Date(Date.now() + 5 * 36e5).toISOString(), planned = new Date(Date.now() + 4 * 36e5).toISOString();
+  const event = { id: 3, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start: soon, planned_seal: planned, league: 'NBA', status: 'scheduled', markets: [], seal: null, sealed_at: null,
+    score: null, availability: null, stats: { ...stats, since: '2026-10-20', games_used: 40 } };
+  const html = v2Window(event);
+  const card = html.view('resumen');
+  assert.ok(card.includes('CUÁNDO SE AGREGA EL PRONÓSTICO') && card.includes('Pronóstico pendiente') && card.includes('60 min antes del saque') && card.includes('dentro de 4 h'));
+  assert.ok(card.includes('is-now') && !card.includes('Sin pronóstico destacado'));
+  const compare = html.view('comparativa');
+  assert.ok(compare.includes('3-1') && compare.includes('40 marcadores finales') && compare.includes('20/10/26'));
+  assert.ok(html.view('registro').includes('Aún no hay sello'));
+  assert.equal(html.fetched(), 0);
+});
+
+test('un partido v2 ya jugado sin sello no inventa un pronóstico a posteriori', () => {
+  const start = new Date(Date.now() - 5 * 36e5).toISOString();
+  const event = { id: 4, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, planned_seal: new Date(Date.parse(start) - 36e5).toISOString(), league: 'NBA', status: 'finished',
+    markets: [], seal: null, sealed_at: null, score: '100 – 90', availability: null, stats };
+  const card = v2Window(event).view('resumen');
+  assert.ok(card.includes('Sin pronóstico previo') && card.includes('no calcula pronósticos a posteriori') && card.includes('is-miss'));
+});

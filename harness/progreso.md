@@ -1,5 +1,9 @@
 # Registro de decisiones — QuantFut
 
+## 3-nov-2026 · La cartelera de NBA de la web lee la API v2 y explica cuándo llega el pronóstico
+Al retirarse la v1 de NBA (3-nov, 18:05 UTC) `/nba/api/data` pasó a redirigir (302) a `/nba/v2/` y la web (`sports-data.js`) y la app (`sports_feed.dart`) se quedaron sin fuente: «No se pudo cargar la fuente» y «Sin eventos este día». **Decisión del titular:** solo v2; los pronósticos que la v1 ya había publicado (hasta el 2-nov) no se recuperan en la web. `loadSport('nba')` pide `/nba/v1/cartelera?fecha=` desde el estreno de la temporada (20-oct, tope de 21 días atrás) hasta 4 días adelante, y conserva los partidos sin pronóstico: el pronóstico ganador solo se muestra si viene sellado antes del inicio. Las estadísticas (récord, forma, cara a cara, clasificación, descanso) se resumen en el navegador con los marcadores finales de la propia API, sin pretemporada y sin temporada pasada; el feed `nba_stats.json` no sirve porque se genera de las cohortes v1 congeladas. Tarjeta «Cuándo se agrega el pronóstico» en la ficha (hora de `sello_previsto`, 60 min antes del saque; distingue pendiente, sellado y sin pronóstico previo, y nunca presenta uno a posteriori). **Pendiente:** la app móvil sigue leyendo `/nba/api/data`; el feed de estadísticas v2 en servidor; todavía no se despliega (rama `web/nba-cartelera-v2`, sin commit).
+
+
 ## 3-nov-2026 · Correcciones de auditoría: la evidencia previa decide el historial
 
 Se guarda el destacado en la predicción inmutable y se incluye en su sello; una fila reconstruida después del resultado deja de contar como pronóstico publicado. Los lotes anteriores omiten el campo nuevo para conservar su forma. La migración 102 propaga capturas previas dentro de su transacción, conserva su recepción y aparta tiros incoherentes con copia íntegra en cuarentena; ensayo en Postgres aislado aprobado.
