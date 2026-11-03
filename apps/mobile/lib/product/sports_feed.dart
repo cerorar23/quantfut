@@ -54,6 +54,7 @@ class SportEvent {
     this.surface,
     this.score,
     this.availability,
+    this.plannedSeal,
   });
 
   final String id;
@@ -66,6 +67,9 @@ class SportEvent {
   final DateTime sealedAt;
   final List<SportMarket> markets;
   final JsonMap? availability;
+
+  /// Hora prevista del sellado del pronóstico (NBA v2); null si la API no la da.
+  final DateTime? plannedSeal;
 }
 
 class SportFeed {
@@ -191,36 +195,47 @@ List<SportEvent> nbaEvents(JsonMap data) {
   return events.values.toList()..sort((a, b) => a.start.compareTo(b.start));
 }
 
-/// Partidos de la API v2 de NBA (`/nba/v1/cartelera`). Igual que antes, solo salen los que ya tienen un pronóstico
-/// sellado: la lista de la app no muestra partidos sin pronóstico. El ganador se presenta con el lado y la probabilidad
-/// publicados; un sello posterior al inicio es una revisión y no cuenta como pronóstico previo.
+/// Partidos de la API v2 de NBA (`/nba/v1/cartelera`). Un partido sin pronóstico sellado sale igual, con la lista de
+/// mercados vacía y la hora prevista del sellado (`plannedSeal`): la ficha explica cuándo llegará. Con pronóstico, el
+/// ganador se presenta con el lado y la probabilidad publicados; un sello posterior al inicio es una revisión y no
+/// cuenta como pronóstico previo. Un pronóstico mal formado se trata como ausente: no se inventa nada.
 List<SportEvent> nbaV2Events(Iterable<JsonMap> games) {
   final events = <String, SportEvent>{};
   for (final game in games) {
     final id = game['id'];
     final home = jsonMap(game['local']), away = jsonMap(game['visitante']);
     final start = _stamp(game['inicio_utc']);
+    if (id is! int || !_text(home['nombre']) || !_text(away['nombre']) || start == null) {
+      continue;
+    }
     final pick = jsonMap(game['pronostico']);
     final sealed = _stamp(pick['sellado_en']);
     final pLocal = pick['p_local'];
-    if (id is! int ||
-        !_text(home['nombre']) ||
-        !_text(away['nombre']) ||
-        start == null ||
-        sealed == null ||
-        !_text(pick['hash']) ||
-        !_probability(pLocal)) {
-      continue;
-    }
-    final p = (pLocal as num).toDouble();
-    final homePick = p >= .5;
-    final eligible = sealed.isBefore(start);
+    final valid = sealed != null && _text(pick['hash']) && _probability(pLocal);
     final result = jsonMap(game['resultado']);
     final homePoints = result['local'], awayPoints = result['visitante'];
     final finished = homePoints is num && awayPoints is num;
-    String? outcome;
-    if (eligible && finished) {
-      outcome = (homePoints > awayPoints) == homePick ? 'win' : 'loss';
+    final markets = <SportMarket>[];
+    if (valid) {
+      final p = (pLocal as num).toDouble();
+      final homePick = p >= .5;
+      final eligible = sealed.isBefore(start);
+      String? outcome;
+      if (eligible && finished) {
+        outcome = (homePoints > awayPoints) == homePick ? 'win' : 'loss';
+      }
+      markets.add(
+        SportMarket(
+          id: 'winner-$id',
+          label: 'Ganador del partido', // l10n-ignore: nombre del mercado como dato; la familia se traduce por `market`
+          selection: (homePick ? home['nombre'] : away['nombre']) as String,
+          probability: homePick ? p : 1 - p,
+          sealedAt: sealed,
+          eligible: eligible,
+          outcome: outcome,
+          market: 'winner',
+        ),
+      );
     }
     final key = '$id';
     events[key] = SportEvent(
@@ -235,21 +250,11 @@ List<SportEvent> nbaV2Events(Iterable<JsonMap> games) {
           : start.add(const Duration(hours: 4)).isBefore(DateTime.now().toUtc())
           ? 'awaiting_result'
           : 'scheduled',
-      markets: [
-        SportMarket(
-          id: 'winner-$id',
-          label: 'Ganador del partido', // l10n-ignore: nombre del mercado como dato; la familia se traduce por `market`
-          selection: (homePick ? home['nombre'] : away['nombre']) as String,
-          probability: homePick ? p : 1 - p,
-          sealedAt: sealed,
-          eligible: eligible,
-          outcome: outcome,
-          market: 'winner',
-        ),
-      ],
-      sealedAt: sealed,
-      seal: pick['hash'] as String,
+      markets: markets,
+      sealedAt: valid ? sealed : start,
+      seal: valid ? pick['hash'] as String : '',
       score: finished ? '$homePoints – $awayPoints' : null,
+      plannedSeal: _stamp(game['sello_previsto']),
     );
   }
   return events.values.toList()..sort((a, b) => a.start.compareTo(b.start));

@@ -1206,6 +1206,35 @@
   "navMarkets": "Mercados",
   "navPredictions": "Predicciones",
   "navProfile": "Perfil",
+  "nbaSealHeading": "CUÁNDO SE AGREGA EL PRONÓSTICO",
+  "@nbaSealHeading": {
+    "description": "Encabezado de la tarjeta de un partido de NBA que aún no tiene pronóstico sellado."
+  },
+  "nbaSealMissedBody": "Este partido empezó sin un pronóstico sellado. QuantFut no calcula pronósticos a posteriori ni los agrega después del inicio.",
+  "@nbaSealMissedBody": {
+    "description": "Explicación de un partido de NBA que empezó sin pronóstico sellado."
+  },
+  "nbaSealMissedTitle": "Sin pronóstico previo",
+  "@nbaSealMissedTitle": {
+    "description": "Título de un partido de NBA que empezó sin pronóstico sellado."
+  },
+  "nbaSealPendingBody": "Se agregará el {when}, antes del saque.",
+  "@nbaSealPendingBody": {
+    "description": "Cuándo se sellará el pronóstico; {when} es fecha y hora locales ya formateadas.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaSealPendingSoon": "Se agregará poco antes del saque.",
+  "@nbaSealPendingSoon": {
+    "description": "Cuando la API no da la hora prevista del sellado."
+  },
+  "nbaSealPendingTitle": "Pronóstico pendiente",
+  "@nbaSealPendingTitle": {
+    "description": "Título cuando el pronóstico de un partido de NBA todavía no se ha sellado."
+  },
   "noteExpectedAverage": "Media esperada: {value}",
   "@noteExpectedAverage": {
     "placeholders": {

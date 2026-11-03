@@ -243,13 +243,72 @@ void main() {
   });
   tearDown(() => AppLocale.instance.reset());
 
+  SportEvent sinPronostico({required DateTime start, String status = 'scheduled', String? score}) => SportEvent(
+    id: '11330',
+    sport: SportKind.nba,
+    home: 'Detroit Pistons',
+    away: 'Philadelphia 76ers',
+    league: 'NBA',
+    start: start,
+    status: status,
+    seal: '',
+    sealedAt: start,
+    markets: const [],
+    score: score,
+    plannedSeal: start.subtract(const Duration(hours: 1)),
+  );
+
+  testWidgets('NBA sin pronóstico futuro: la tarjeta dice cuándo se agregará', (tester) async {
+    await HttpOverrides.runZoned(() async {
+      await pump(tester, sinPronostico(start: DateTime.now().add(const Duration(days: 1))));
+      final l10n = AppLocale.instance.l10n;
+      expect(find.text(l10n.nbaSealHeading), findsOneWidget);
+      expect(find.text(l10n.nbaSealPendingTitle), findsOneWidget);
+      expect(find.textContaining('antes del saque'), findsOneWidget);
+      expect(find.text(l10n.detailNoPicks), findsNothing);
+      expect(find.byType(SealLine), findsNothing);
+    }, createHttpClient: (_) => _Client404());
+  });
+
+  testWidgets('NBA que empezó sin sello: no hay pronóstico a posteriori', (tester) async {
+    await HttpOverrides.runZoned(() async {
+      await pump(
+        tester,
+        sinPronostico(start: DateTime.now().subtract(const Duration(days: 1)), status: 'finished', score: '112 – 117'),
+      );
+      final l10n = AppLocale.instance.l10n;
+      expect(find.text(l10n.nbaSealMissedTitle), findsOneWidget);
+      expect(find.text(l10n.nbaSealMissedBody), findsOneWidget);
+      expect(find.text(l10n.nbaSealPendingTitle), findsNothing);
+    }, createHttpClient: (_) => _Client404());
+  });
+
+  for (final code in ['en', 'pt', 'fr', 'it', 'de']) {
+    test('las cadenas de la tarjeta de sellado existen en $code', () async {
+      await AppLocale.instance.select(code);
+      final l10n = AppLocale.instance.l10n;
+      for (final text in [
+        l10n.nbaSealHeading,
+        l10n.nbaSealPendingTitle,
+        l10n.nbaSealPendingBody('01/02 · 17:00'),
+        l10n.nbaSealPendingSoon,
+        l10n.nbaSealMissedTitle,
+        l10n.nbaSealMissedBody,
+      ]) {
+        expect(text, isNotEmpty);
+      }
+      expect(l10n.nbaSealPendingBody('01/02 · 17:00'), contains('01/02 · 17:00'));
+      expect(l10n.nbaSealPendingTitle, isNot('Pronóstico pendiente'));
+    });
+  }
+
   testWidgets('estadísticas 404: Análisis avisa y Pronósticos sigue', (
     tester,
   ) async {
     await HttpOverrides.runZoned(() async {
       final api = _Api();
       await pump(tester, nbaEvent(), api: api);
-      expect(api.paths, ['/web/deportes/nba/estadisticas/0022600021']);
+      expect(api.paths, ['/nba/v1/partido/0022600021/estadisticas']);
       // Pronósticos funciona: ganador, total, jugador con «Más de» y sello.
       expect(find.textContaining('Dallas Mavericks'), findsWidgets);
       expect(find.textContaining('Más de 224,5'), findsOneWidget);
@@ -276,7 +335,7 @@ void main() {
   ) async {
     await HttpOverrides.runZoned(() async {
       final api = _Api({
-        '/web/deportes/nba/estadisticas/0022600021': fixture('nba_stats.json'),
+        '/nba/v1/partido/0022600021/estadisticas': fixture('nba_stats.json'),
       });
       await pump(tester, nbaEvent(), api: api);
       await openTab(tester, 'Análisis');
@@ -466,7 +525,7 @@ void main() {
         ),
         api: api,
       );
-      expect(api.paths, ['/web/deportes/nba/estadisticas/a%20b%2Fc%3Fd']);
+      expect(api.paths, ['/nba/v1/partido/a%20b%2Fc%3Fd/estadisticas']);
     }, createHttpClient: (_) => _Client404());
   });
 

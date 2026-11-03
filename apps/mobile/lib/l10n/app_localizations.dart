@@ -2464,6 +2464,42 @@ abstract class AppLocalizations {
   /// **'Perfil'**
   String get navProfile;
 
+  /// Encabezado de la tarjeta de un partido de NBA que aún no tiene pronóstico sellado.
+  ///
+  /// In es, this message translates to:
+  /// **'CUÁNDO SE AGREGA EL PRONÓSTICO'**
+  String get nbaSealHeading;
+
+  /// Explicación de un partido de NBA que empezó sin pronóstico sellado.
+  ///
+  /// In es, this message translates to:
+  /// **'Este partido empezó sin un pronóstico sellado. QuantFut no calcula pronósticos a posteriori ni los agrega después del inicio.'**
+  String get nbaSealMissedBody;
+
+  /// Título de un partido de NBA que empezó sin pronóstico sellado.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin pronóstico previo'**
+  String get nbaSealMissedTitle;
+
+  /// Cuándo se sellará el pronóstico; {when} es fecha y hora locales ya formateadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Se agregará el {when}, antes del saque.'**
+  String nbaSealPendingBody(String when);
+
+  /// Cuando la API no da la hora prevista del sellado.
+  ///
+  /// In es, this message translates to:
+  /// **'Se agregará poco antes del saque.'**
+  String get nbaSealPendingSoon;
+
+  /// Título cuando el pronóstico de un partido de NBA todavía no se ha sellado.
+  ///
+  /// In es, this message translates to:
+  /// **'Pronóstico pendiente'**
+  String get nbaSealPendingTitle;
+
   /// No description provided for @noteExpectedAverage.
   ///
   /// In es, this message translates to:

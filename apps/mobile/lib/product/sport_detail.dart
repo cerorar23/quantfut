@@ -72,7 +72,7 @@ class _SportDetailState extends State<SportDetail> {
   Future<JsonMap?> _loadStats() async {
     try {
       final path = nba
-          ? '/web/deportes/nba/estadisticas/${Uri.encodeComponent(e.id)}'
+          ? '/nba/v1/partido/${Uri.encodeComponent(e.id)}/estadisticas'
           : '/web/deportes/tenis/estadisticas/${Uri.encodeComponent(e.id)}';
       final r = await widget.api.request(path);
       return r is Map<String, dynamic> ? r : null;
@@ -377,7 +377,11 @@ class _Predictions extends StatelessWidget {
       for (final m in event.markets)
         if (m.eligible) m,
     ];
-    if (all.isEmpty) return SportNote(l10n.detailNoPicks);
+    if (all.isEmpty) {
+      return event.sport == SportKind.nba && event.markets.isEmpty
+          ? _SealCard(event: event, accent: accent)
+          : SportNote(l10n.detailNoPicks);
+    }
     int rank(SportMarket m) => m.player != null
         ? 2
         : (m.market == 'winner' || (m.market == null && m.id == 'winner'))
@@ -419,6 +423,51 @@ class _Predictions extends StatelessWidget {
         const SizedBox(height: 8),
         SealLine(seal: event.seal, publishedAt: event.sealedAt),
       ],
+    );
+  }
+}
+
+/// Cuándo se agrega el pronóstico de un partido de NBA que aún no tiene (o empezó sin él).
+class _SealCard extends StatelessWidget {
+  const _SealCard({required this.event, required this.accent});
+  final SportEvent event;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final now = DateTime.now();
+    final started = !event.start.toLocal().isAfter(now) || event.status == 'finished';
+    final planned = event.plannedSeal;
+    final (title, body) = started
+        ? (l10n.nbaSealMissedTitle, l10n.nbaSealMissedBody)
+        : (
+            l10n.nbaSealPendingTitle,
+            planned == null ? l10n.nbaSealPendingSoon : l10n.nbaSealPendingBody(kickoffText(planned)),
+          );
+    return QfCard(
+      accent: accent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.nbaSealHeading,
+            style: const TextStyle(fontFamily: qfMono, fontSize: 11, letterSpacing: .8, color: QfColors.primary),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: qfDisplay,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              color: QfColors.text,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(body, style: const TextStyle(fontSize: 13, color: QfColors.text2)),
+        ],
+      ),
     );
   }
 }
