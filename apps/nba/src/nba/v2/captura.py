@@ -4,7 +4,7 @@
 Entorno: NBA_DB_DSN (obligatorio), NBA_CAPTURA_DIR (originales y estado, por omisión /datos),
 NBA_RUN57_DIR (carpeta captures de run57, solo para espn),
 NBA_PROPLINE_DIR (archivo compartido de PropLine) con NBA_PROPLINE_LOTES y NBA_PROPLINE_DESDE, ZENROWS_API_KEY y NBA_ZENROWS_TOPE_DIARIO (respaldo de pago
-de Rotowire), SCRAPFLY_API_KEY y NBA_SCRAPFLY_TOPE_DIARIO (final del partido en cdn.nba.com, por omisión 25 créditos al día).
+de Rotowire), SCRAPFLY_API_KEY y NBA_SCRAPFLY_TOPE_DIARIO (final del partido en cdn.nba.com, por omisión 40 créditos al día).
 """
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -104,7 +104,7 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
                     raise FaltaVariable("SCRAPFLY_API_KEY")
                 obtener = lambda url: nba_cdn.obtener_scrapfly(url, clave)
             resumen = nba_cdn.capturar(db, obtener, raiz / "originales", ahora,
-                                       tope_diario=float(entorno.get("NBA_SCRAPFLY_TOPE_DIARIO", "25")))
+                                       tope_diario=float(entorno.get("NBA_SCRAPFLY_TOPE_DIARIO", "40")))
         else:
             raise ValueError(f"fuente desconocida: {fuente}")
         db.commit()

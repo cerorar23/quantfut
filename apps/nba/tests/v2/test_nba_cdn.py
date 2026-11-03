@@ -199,3 +199,26 @@ def test_un_final_solo_con_alias_sintetico_no_pide_ningun_box(base_migrada, tmp_
     obtener, visitas = servidor(CUERPOS)
     cdn.capturar(db, obtener, tmp_path, T + timedelta(minutes=30))
     assert all("boxscore" not in u and "playbyplay" not in u for u in visitas)         # solo intenta el marcador del día
+
+
+def _otro_partido_sin_final(db):
+    """Un segundo partido del mismo día que todavía se juega: su box aún no se puede bajar."""
+    local, visitante = identidad.equipo(db, "LAL"), identidad.equipo(db, "GSW")
+    identidad.partido(db, "espn", "402", date(2026, 10, 20), local, visitante, "2026-27")
+    identidad.partido(db, "nba_oficial", "0022600002", date(2026, 10, 20), local, visitante, "2026-27")   # ya con su id: no hace falta bajar el marcador
+
+
+def test_la_jugada_a_jugada_no_gasta_lo_reservado_para_los_box_que_faltan(base_migrada, tmp_path):
+    preparar_final(base_migrada)
+    _otro_partido_sin_final(base_migrada)
+    obtener, visitas = servidor(CUERPOS)
+    r = cdn.capturar(base_migrada, obtener, tmp_path, T + timedelta(minutes=30), tope_diario=3)
+    # gastado 1 + (1 box que falta + 1 de reintento) = 3: la jugada a jugada espera y el box del otro partido queda protegido
+    assert visitas == [cdn.url_box("0022600001")] and r["box"] == 1 and r["pbp"] == 0 and r["sin_presupuesto"]
+
+
+def test_sin_box_pendientes_la_jugada_a_jugada_usa_todo_el_presupuesto(base_migrada, tmp_path):
+    preparar_final(base_migrada)
+    obtener, visitas = servidor(CUERPOS)
+    r = cdn.capturar(base_migrada, obtener, tmp_path, T + timedelta(minutes=30), tope_diario=2)
+    assert visitas == [cdn.url_box("0022600001"), cdn.url_pbp("0022600001")] and r["pbp"] == 1
