@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-03 · NBA: quintetos históricos 2021-26 en `nba.evento` (imagen `nba-captura:rot-e6c49f2`) · SOLO base de datos y archivos, rama `nba/rediseno-s0`
+- Archivos locales copiados a `~/nba-isolated/nba-captura/historico/`: `rotaciones.jsonl.gz` (= `nba_pending_rotations_v6`, 6.141 juegos, superconjunto de las rotaciones oficiales) y `games.json` (nba_extended_box). Paso nuevo `rotaciones` de `captura.py historico`, 6 contenedores en paralelo por fragmento `i/6` con `COPY` por partido; probado antes en Postgres desechable.
+- Resultado: 183.680 filas `tipo=quinteto` en 6.047 juegos (2021-22: 1.227, 2022-23: 1.222, 2023-24: 1.217, 2024-25: 1.194, 2025-26: 1.187), siempre 5 jugadores por lado, `reloj_s` de 0,1 a 720, `fuente = nba_oficial`, secuencia desde 1.000.001. 94 juegos del archivo no están en el catálogo de cajas y no se cargaron; 0 jugadores sin identidad. `recibido_en` = fecha de adquisición del archivo; tiempos cuantizados, no seguimiento exacto.
+- `imagen_actual` NO cambia (crons intactos); la imagen nueva queda en `imagen_rotaciones`.
+- **Vuelta atrás:** solo-anexar; deshacer exige restaurar el respaldo diario de `nba_datos`. Es idempotente: relanzar no duplica.
+
 ### 2026-11-02 23:10 UTC · NBA: cajas finales y partes oficiales de lesiones 2021-26 en `nba_datos` (imagen `nba-captura:cdecc6c`) · SOLO base de datos y archivos, rama `nba/rediseno-s0`
 - Archivos que ya existían en el PC (sin créditos), copiados a `~/nba-isolated/nba-captura/historico/` con hash verificado: `players.jsonl.gz` y `games.json` de nba_extended_box (cajas por jugador y por equipo) y los dos `reports.jsonl.gz` de partes oficiales ya extraídos de los PDF (816 + 1.910 partes). Ensayados antes con la misma carga en un Postgres desechable local.
 - Carga única (`captura.py historico`, pasos `juegos,cajas,partes`, contenedor de una vez): 2.696.246 filas de caja final (166.632 jugador-partido, 12.828 equipo-partido; 2021-22 a 2025-26, regular, play-in y playoffs; 1.229 a 1.316 juegos por temporada) con `pit = reconstruido` y `recibido_en` = fecha de adquisición del archivo; 2.726 partes oficiales (150.693 filas nuevas tras descartar repeticiones) con la hora del propio parte como `recibido_en`. A quien no jugó solo se le guarda `jugo = 0`, sin estadísticas en cero.
