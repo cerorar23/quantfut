@@ -67,7 +67,6 @@ export function createSportWindow(ctx) {
   function sealCard(event) {
     const pick = event.markets.find(m => m.sealed_at);
     const planned = event.planned_seal ? Date.parse(event.planned_seal) : null;
-    const lead = planned ? Math.round((Date.parse(event.start) - planned) / 60000) : null;
     const now = Date.now(), started = Date.parse(event.start) <= now;
     const sealedBefore = pick && Date.parse(pick.sealed_at) < Date.parse(event.start);
     let state, headline, note;
@@ -85,18 +84,7 @@ export function createSportWindow(ctx) {
       headline = 'Pronóstico pendiente';
       note = planned ? `Se agregará el ${realDate(event.planned_seal)} a las ${realTime(event.planned_seal)}, dentro de ${hourText(planned - now)}.` : 'Se agregará poco antes del saque.';
     }
-    const step = (kind, title, text) => `<li class="win-step is-${kind}"><b>${title}</b><span>${text}</span></li>`;
-    const sealKind = pick ? 'done' : state === 'missed' ? 'miss' : 'now';
-    return `<article class="win-pick win-seal is-${state} cyber-card" aria-label="Cuándo se agrega el pronóstico"><p class="eyebrow">CUÁNDO SE AGREGA EL PRONÓSTICO</p><h2>${headline}</h2><p class="win-sub">${esc(note)}</p>
-      <ol class="win-steps">
-        ${step('done', 'Calendario recibido', `${esc(event.home)} vs ${esc(event.away)} · ${realDate(event.start)} ${realTime(event.start)}.`)}
-        ${step('done', 'Estadísticas del partido', 'Forma, cara a cara y clasificación se actualizan con cada marcador final registrado; ya están en la sección Estadísticas.')}
-        ${step(sealKind, 'Sellado del pronóstico', state === 'missed' && !pick ? `Estaba previsto para ${planned ? `las ${realTime(event.planned_seal)}${lead ? `, ${lead} min antes del saque` : ''}` : 'poco antes del saque'}, pero no quedó ningún pronóstico sellado.`
-          : planned ? `${realTime(event.planned_seal)}${lead ? `, ${lead} min antes del saque` : ''}. El motor calcula con lo último disponible y sella el resultado con una huella (hash) encadenada a la anterior.` : 'Poco antes del saque, con una huella (hash) encadenada a la anterior.')}
-        ${step(pick ? 'done' : 'todo', 'Publicación en esta ficha', 'Aparece aquí en cuanto queda sellado, con su hora exacta. Lo sellado no se edita ni se borra.')}
-        ${step(event.status === 'finished' ? 'done' : 'todo', 'Resultado', event.status === 'finished' ? `Marcador final registrado: ${esc(event.score || '—')}.${pick ? '' : ' Sin pronóstico previo, no hay nada que marcar como acierto o fallo.'}` : 'Al terminar se registra el marcador final y el pronóstico se marca como Acertó o Falló.')}
-      </ol>
-      <p class="win-sub">Un pronóstico calculado o cambiado después del inicio nunca se presenta como previo ni cuenta en los resultados.</p></article>`;
+    return `<article class="win-pick win-seal is-${state} cyber-card" aria-label="Cuándo se agrega el pronóstico"><p class="eyebrow">CUÁNDO SE AGREGA EL PRONÓSTICO</p><h2>${headline}</h2><p class="win-sub">${esc(note)}</p></article>`;
   }
 
   // ---- pronóstico (izquierda)
