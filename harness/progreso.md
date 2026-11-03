@@ -7000,3 +7000,5 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Hallazgo: tres huecos reales encontrados por las pruebas de estrés (estadística ausente = 0, minutos corruptos aceptados, equipo con ratings viejos sellado cuando solo a él le faltaban resultados); ninguno afectaba a los datos de hoy (la base está limpia) pero sí a cualquier fuente futura.
 - Decisión: la imagen con los arreglos no se despliega mientras esté pendiente la decisión del titular sobre el impacto S3c, para no mezclar cambios de comportamiento con una activación sin aprobar.
 - Corrección: el 3-nov no hubo partidos NBA (elecciones); mi aviso anterior de que los primeros sellos de la imagen 6b85093 saldrían hacia las 22:00 UTC de hoy era falso: salen con los partidos del 4-nov.
+
+- Decisión del titular (3-nov): mantener el impacto S3c (RAPM de quintetos) en producción; se despliegan los arreglos de F4.3 sobre esa base (`nba-motor:d73c7c5`).
