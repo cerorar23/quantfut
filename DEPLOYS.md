@@ -40,6 +40,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 03:35 UTC · NBA: props de jugador en `nba-motor:06d13f2`, alertas del motor · SOLO base de datos, imágenes y archivos, rama `nba/rediseno-s0`
+- `imagen_motor` = `nba-motor:06d13f2` (artefacto de props `df758d36f764`, datos hasta 2026-04-12). El cron `*/5` del motor (activo desde las 01:36 UTC) selló desde las 02:30 los props de 3 partidos nocturnos: 192 pronósticos en total (4 de equipo + 188 de jugador), cadena verificada con `verificar_cadena`.
+- `ejecutar_motor.sh` monta `datos/` para el estado de alertas; `motor.env` (modo 600) recibe `NBA_MOTOR_DIR` y las dos variables del canal de alertas copiadas del `.env` principal. No se mandó ningún mensaje de prueba.
+- G-fuga con jugadores en solo lectura: 60 partidos, 0 diferencias de repetibilidad y de plantilla frente a la referencia independiente, cobertura 81,5 %.
+- **Vuelta atrás:** escribir `nba-motor:88f7759` en `imagen_motor` (vuelve a sellar solo el equipo); quitar la línea del cron detiene todo. Lo sellado es solo-anexar y se queda.
+
 ### 2026-11-03 01:35 UTC · NBA: `nba-motor:88f7759` y usuario `nba_motor` (cron NO activado) · SOLO base de datos, imágenes y archivos, rama `nba/rediseno-s0`
 - Rol de base `nba_motor` (login; hereda `nba_lector` y `nba_escritor`: lee todo, solo inserta); contraseña generada en el servidor, solo en `~/nba-isolated/nba-captura/motor.env` (modo 600). Imagen `nba-motor:88f7759` (`imagen_motor`) y `ejecutar_motor.sh` con candado.
 - Simulacro con datos reales (`--simulacro --ahora 2026-11-03T02:30:00Z`): 3 partidos pronosticados, 0 errores, nada sellado; `nba.pronostico` sigue vacía. El cron no está instalado: `crontab -l | grep motor` devuelve 0.

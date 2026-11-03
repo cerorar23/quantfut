@@ -3201,3 +3201,10 @@ Detalle en docs/nba_rediseno_s6_resultados_20261103.md. `apps/nba/src/nba/api/` 
 - [x] Simulacro con datos reales en el VPS (3 partidos nocturnos del 2-nov): probabilidades plausibles, 0 errores, nada escrito.
 - [ ] Activar el cron `*/5` (línea en `ops/nba-motor/ejecutar.sh`): lo sellado es irreversible, espera tu visto bueno.
 - [ ] Alertas operativas del motor (errores/omitidos) por el canal existente; hoy solo salen en el log.
+
+### NBA — props de jugador sellados por el motor, alertas y G-fuga con jugadores (2026-11-03)
+Detalle en docs/nba_rediseno_props_en_motor_20261103.md. `plantilla_pit`, `motor_jugadores`, `parametros` (+ `parametros/props.json`, `ops/entrenar_props.py`), `alertas`, API de jugadores y pestaña Jugador.
+- [x] El motor sella puntos, rebotes, asistencias y triples de los jugadores de rotación con el mismo corte que el equipo; G-fuga con jugadores aprobada en el VPS (60 partidos, 0 diferencias, cobertura 81,5 %).
+- [x] Alertas operativas del motor por el canal privado existente, una vez por tipo, partido y día.
+- [ ] Jugadores dentro del pronóstico de EQUIPO (mezcla S3b, 14,49 → 14,32): necesita plantilla completa y artefacto de impacto reajustado cada 21 días.
+- [ ] Especiales y combos; desplegar `nba-api` y exponer la web v2 (esperan tu decisión).

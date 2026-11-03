@@ -6942,3 +6942,11 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: el corte del pronóstico es `salto − 60 min`, no la hora en que corre el cron; un cron atrasado usa los mismos datos y G-fuga sigue valiendo. Nunca se sella después del salto.
 - Decisión: el cron NO se activa solo: un sello es solo-anexar, y un error del motor quedaría para siempre en la cadena. Se activa con tu visto bueno tras ver el simulacro.
 - Incidente propio: al construir la imagen puse solo la etiqueta (`3ca6392`) en `imagen_actual`, que guarda el nombre completo (`nba-captura:3ca6392`); los crons de captura fallaron de ≈ 00:10 a 01:33 UTC del 3-nov (≈ 1 h 20 min sin Rotowire/ESPN/partes/cdn/PropLine). Corregido; ESPN y partes recuperaron lo pendiente, las fotos de Rotowire de ese tramo no se pueden recuperar.
+
+## 2026-11-03 — Props de jugador en el motor
+
+- Decisión: el servidor no entrena; los parámetros de props son un artefacto JSON versionado (huella en `version_modelo`, normalizada por finales de línea) producido en local.
+- Hallazgo (G-fuga): la plantilla limitaba la historia a 500 días y el modelo validado usa los últimos 30 partidos sin límite de edad; era una diferencia real entre producción y lo evaluado. Corregida y comprobada contra una reconstrucción independiente.
+- Decisión: los props de un partido se sellan todo o nada (una transacción); si fallan, el equipo ya sellado se conserva y el siguiente cron completa.
+- Decisión: la alerta sale una vez por tipo, partido y día; el estado se sembró con lo anterior a la activación para no mandar una avalancha al primer mensaje.
+- Límite: los jugadores no entran aún en el pronóstico del equipo.
