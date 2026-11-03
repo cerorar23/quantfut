@@ -75,6 +75,14 @@ def test_a0_espera_el_fin_real_de_estimacion_y_rechaza_historia_futura(monkeypat
         m.ajustar(h,pd.Timestamp('2023-01-01',tz='UTC'))
 
 
+def test_a0_rechaza_un_optimo_no_convergente(monkeypatch):
+    monkeypatch.setattr('qf.model.score_driven.minimize',lambda *a,**k:SimpleNamespace(
+        x=INICIO.copy(),success=False,fun=10.,message='ABNORMAL_TERMINATION_IN_LNSRCH',nit=17))
+    m=ScoreDriven('2024-07-01')
+    with pytest.raises(AjusteNoConvergente): m.ajustar(_historia(),pd.Timestamp('2024-07-01',tz='UTC'))
+    assert m.estimado_hasta is None
+
+
 @pytest.mark.parametrize('success,x,fun',[(False,[0.,0.,2.],1.),(True,[np.nan,0.,2.],1.),(True,[0.,0.,2.],np.inf)])
 def test_nb_rechaza_fallos_y_coeficientes_no_finitos(monkeypatch,success,x,fun):
     monkeypatch.setattr('qf.model.conteos.minimize',lambda *a,**kw: SimpleNamespace(

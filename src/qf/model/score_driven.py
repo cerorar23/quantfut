@@ -131,8 +131,11 @@ class ScoreDriven:
             if est.empty:
                 raise ValueError('Sin historia para estimar los hiperparámetros')
             self._as_of = self.fin_estimacion
-            r = minimize(self.nll, INICIO, args=(est,), method="L-BFGS-B", bounds=LIMITES,
-                         options={"maxiter": 500, "eps": 1e-4})
+            # La diferencia hacia delante de paso fijo 1e-4 daba una dirección inexacta
+            # cerca del óptimo y terminaba anormalmente en Linux. La derivada centrada
+            # conserva la comprobación estricta de convergencia.
+            r = minimize(self.nll, INICIO, args=(est,), jac='3-point', method="L-BFGS-B", bounds=LIMITES,
+                         options={"maxiter": 500, "maxls": 50, 'ftol':1e-10, 'gtol':1e-5})
             self.diagnostico = validar_ajuste(r, 'ScoreDriven')
             self.hip = r.x
             self.estimado_hasta = self.fin_estimacion
