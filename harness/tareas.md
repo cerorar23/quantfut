@@ -8,7 +8,7 @@ Autorización del titular: «haz las correcciones». Evidencia inicial en el che
 - [x] H04/H09: migración 102 de propagación transaccional y cuarentena preparada y ensayada en PostgreSQL aislado, conservando originales.
 - [x] H05/H08/H12: tramos de jugador como candidato separado; la regla MX falsa pasa a pendiente y las no verificadas quedan fuera de la vista de consumo; evaluación identifica reconstrucción y seguimiento observado.
 - [x] Repetir pruebas y comparaciones afectadas: 1.756 aprobadas, 122 omitidas; A0/DC y conteos repetidos, A4 construido en 7.138 partidos. Informe `docs/correcciones_futbol_20261103.md`.
-- [ ] Integrar y desplegar cambios operativos con respaldo, ensayo sobre la base real y comprobación posterior. No activar candidatos: A0 no confirma mejora y A4 todavía no tiene validación prospectiva.
+- [x] Integrar y desplegar cambios operativos con respaldo, ensayo sobre la base real y comprobación posterior. Migración 102, API y worker activos; cadena verificada. No se activan candidatos: A0 no confirma mejora y A4 todavía no tiene validación prospectiva.
 - [ ] Confirmar reglamentos por temporada/fase y paridad completa origen/canónica antes de usar sus nuevas señales.
 
 ## 2-nov-2026 · Captura de SharpAPI (plan Free) desplegada en el servidor

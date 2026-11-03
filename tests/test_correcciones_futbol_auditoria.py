@@ -160,6 +160,21 @@ def test_api_corta_el_estado_de_un_partido_pasado_a_su_inicio(monkeypatch):
     assert visto==[T-timedelta(days=1)]*2
 
 
+def test_cache_estadistica_reutiliza_la_hora_sin_entrenar_con_el_futuro(monkeypatch):
+    from qf.publish import escalera_datos
+    cortes=[]
+    class Modelos:
+        def __init__(self, corte): cortes.append(corte)
+        def de(self, liga, mercado): return object()
+    monkeypatch.setattr(escalera_datos,'Modelos',Modelos)
+    pm._acc.clear()
+    primero=pm._acumulador('x','corners',T+timedelta(minutes=1))
+    assert pm._acumulador('x','corners',T+timedelta(minutes=59)) is primero
+    assert cortes==[T.replace(minute=0,second=0,microsecond=0)]
+    assert cortes[0]<=T+timedelta(minutes=1)
+    pm._acc.clear()
+
+
 def test_historial_no_inventa_un_destacado_sin_registro_previo(monkeypatch):
     monkeypatch.setattr(pm,'lambdas_goles',lambda *a:(1.8,.8,0.))
     monkeypatch.setattr(pm,'lambdas_estadisticas',lambda *a:(None,None))
