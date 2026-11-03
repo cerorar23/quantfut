@@ -6977,3 +6977,6 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: las distribuciones de salida del contrato tienen la forma exacta de lo que ya se sella, para validar lo sellado, lo servido y lo simulado con un solo esquema.
 - Hallazgo: las pruebas con datos absurdos encontraron un hueco real en el contrato (`descanso_dias` aceptaba un equipo faltante); y los 192 sellos reales cumplen los contratos.
 - Límite: los contratos aún no están conectados al motor ni a la API.
+
+- Decisión (F4.0): un contrato incumplido nunca se arregla en silencio: el motor no sella ese partido (o descarta ese jugador) y alerta; la API no sirve ese dato. Los sellos son inmutables, así que la validación va ANTES de sellar.
+- Hecho: los 5.852 distribuciones reales de la comprobación cumplen los contratos; la frontera no rechaza nada legítimo.

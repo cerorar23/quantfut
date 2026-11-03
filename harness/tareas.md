@@ -3231,3 +3231,6 @@ Detalle y plan de la fase en docs/nba_rediseno_fase4_contratos_20261103.md. `app
 - [x] F4.0: contratos Paso A (estimadores), B (fórmulas analíticas) y C (Monte Carlo) + distribuciones selladas; 52 pruebas con casos extremos; los 192 pronósticos reales sellados en producción cumplen los contratos.
 - [ ] Conectar los contratos: validar antes de sellar y al servir (agregar pydantic a las imágenes del motor y la captura); adaptadores que produzcan SalidaPasoA/B desde los módulos actuales.
 - [ ] F4.1 origen móvil; F4.2 Monte Carlo; F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
+
+- [x] F4.0 conexión: los contratos validan antes de sellar (motor) y antes de servir (API, 502 `datos_invalidos`); pydantic en las imágenes; G-fuga valida 5.852 distribuciones reales sin violaciones; `nba-motor:233e372` en el cron.
+- [ ] Adaptadores que produzcan SalidaPasoA/B desde los módulos actuales.

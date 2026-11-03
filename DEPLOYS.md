@@ -40,6 +40,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 04:18 UTC · NBA: contratos Pydantic en las fronteras, `nba-motor:233e372` · SOLO imágenes y archivos, rama `nba/rediseno-s0`
+- `imagen_motor` = `nba-motor:233e372` (pydantic 2.14.2). El motor valida antes de sellar; G-fuga con validación aprobada antes del cambio (5.852 distribuciones, 0 violaciones); tick de las 04:20 sin errores; 192 sellos existentes intactos.
+- La imagen de la API (`nba-api`) lleva pydantic pero sigue sin desplegarse.
+- **Vuelta atrás:** `cp imagen_motor.anterior imagen_motor` (vuelve a `nba-motor:a16b019`).
+
 ### 2026-11-03 03:55 UTC · NBA: modelo reentrenado con SofaScore en `nba-motor:a16b019` · SOLO imágenes y archivos, rama `nba/rediseno-s0`
 - `imagen_motor` = `nba-motor:a16b019` (props `6323d806ed81`, impacto de 1.083 jugadores, efecto del descanso 2,90, sigmas 13,81/18,43). G-fuga con `nba_oficial` y `sofascore` aprobada antes del cambio; ejecución del cron de las 03:55 sin errores. Los sellos nuevos llevan versiones nuevas en `version_modelo`; los anteriores no se tocan.
 - **Vuelta atrás:** `cp imagen_motor.anterior imagen_motor` (vuelve a `nba-motor:b874e9a`); lo sellado se queda.

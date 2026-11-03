@@ -28,3 +28,14 @@ La prueba encontró un hueco de mi propio contrato: `descanso_dias` aceptaba un 
 ## Resto de la Fase 4
 
 F4.1 evaluación de origen móvil (varias temporadas de prueba, con intervalos); F4.2 Monte Carlo (convergencia con 20.000 simulaciones, semillas y reproducibilidad entre máquinas, y si conviene simular props y equipo de forma conjunta); F4.3 estrés (día de 15 partidos con 30 fuentes caídas, casos extremos y propiedades); F4.4 ensayo operativo (restaurar respaldo, volver a una imagen anterior, detectar una cadena manipulada); F4.5 informe final y propuesta de promoción, con la decisión sobre retirar v1 en manos del titular.
+
+## Conexión a las fronteras (hecha, 2026-11-03)
+
+- **Motor (`nba.v2.motor`)**: antes de sellar valida la distribución del equipo (`validar_equipo`); si incumple, ese partido no se sella (ni equipo ni jugadores), queda en `errores` (alerta, una vez al día) y el siguiente cron lo reintenta. Cada pronóstico de jugador se valida (`validar_jugador`): el que incumple se descarta y se avisa, nunca se sella ni se completa con un valor inventado; los demás se sellan.
+- **API (`nba.api`)**: antes de servir cualquier distribución (partido, línea, jugadores, jugador, línea de jugador) valida el contrato; si un sello no lo cumple responde 502 con el código `datos_invalidos` (traducido a los 6 idiomas) y no entrega ese dato. Los sellos son inmutables: si alguno estuviera mal, se dice, no se corrige en silencio.
+- **Imágenes**: `pydantic==2.14.2` agregado a `nba-motor` y `nba-api`.
+- **Pruebas** (`test_contratos_frontera.py`, 4 nuevas; en total 56 de contratos y fronteras): el motor no sella un equipo que incumple y al corregirse el siguiente cron sella; un jugador inválido se descarta sin frenar a los demás y la cadena sigue verificable; la API devuelve 502 para un sello inválido y sirve el válido.
+- **G-fuga con validación (VPS, solo lectura)**: 100 partidos de equipo y 60 de jugadores; 5.852 distribuciones validadas, 0 violaciones; todas las demás comprobaciones siguen en 0 diferencias (aprobada).
+- **Desplegado**: `imagen_motor` = `nba-motor:233e372` desde las 04:18 UTC; el tick de las 04:20 sin errores. Anterior: `imagen_motor.anterior`.
+
+**Sigue pendiente de F4.0:** los adaptadores que produzcan `SalidaPasoA` y `SalidaPasoB` desde los módulos actuales (hoy son diccionarios internos); la validación en las fronteras ya cubre lo que se sella y lo que se sirve.
