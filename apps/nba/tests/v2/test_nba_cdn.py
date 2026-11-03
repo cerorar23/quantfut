@@ -45,6 +45,8 @@ def test_cargar_boxscore(base_migrada):
     assert valor(db, "mas_menos", "Ausar Thompson") == (12.0, None) and valor(db, "rebotes", "Ausar Thompson") == (11.0, None)
     assert valor(db, "jugo", "Chaz Lanier") == (0.0, None) and valor(db, "minutos", "Chaz Lanier") is None   # no se imputa
     assert valor(db, "arbitro_asignado", "Kevin Scott") == (1.0, None)
+    pistons = db.execute("SELECT entidad_id FROM nba.entidad WHERE nombre = 'Detroit Pistons'").fetchone()[0]
+    assert valor(db, "equipo_del_jugador", "Ausar Thompson")[0] == pistons == valor(db, "equipo_del_jugador", "Chaz Lanier")[0]
     assert valor(db, "rebotes", "Detroit Pistons")[0] == game["homeTeam"]["statistics"]["reboundsPersonal"]
     assert valor(db, "rebotes_equipo", "Detroit Pistons")[0] == game["homeTeam"]["statistics"]["reboundsTeam"]
     partido = db.execute("SELECT entidad_id FROM nba.entidad WHERE tipo = 'partido'").fetchone()[0]

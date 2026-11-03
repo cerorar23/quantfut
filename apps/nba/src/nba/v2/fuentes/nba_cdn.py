@@ -98,6 +98,7 @@ def cargar_boxscore(db, texto: str, recibido_en: datetime, captura_id: int) -> i
         for j in e["players"]:
             jugador = identidad.jugador(db, FUENTE, str(j["personId"]), j["name"])
             jugo = j.get("played") == "1"
+            filas.append(DatoNuevo(entidad_id=jugador, metrica="equipo_del_jugador", valor=float(equipo), **base))
             filas.append(DatoNuevo(entidad_id=jugador, metrica="jugo", valor=1.0 if jugo else 0.0, **base))
             filas.append(DatoNuevo(entidad_id=jugador, metrica="titular", valor=1.0 if j.get("starter") == "1" else 0.0,
                                    **base))

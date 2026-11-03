@@ -35,6 +35,14 @@ def test_cajas_de_equipos_y_jugadores(base_migrada, tmp_path):
     assert valor(db, "jugo", dnp["name"])[0] == 0.0 and valor(db, "minutos", dnp["name"]) is None      # sin minutos no se inventan
     assert db.execute("SELECT DISTINCT pit FROM nba.dato").fetchall() == [("reconstruido",)]
     assert db.execute("SELECT count(*) FROM nba.entidad WHERE tipo = 'partido' AND canonica_id = entidad_id").fetchone()[0] == 2
+    # el equipo con el que figura cada jugador queda como dato (también para quien no jugó)
+    equipo_de = lambda nombre: db.execute(  # noqa: E731
+        "SELECT t.nombre FROM nba.dato d JOIN nba.metrica m USING (metrica_id) JOIN nba.entidad e ON e.entidad_id = d.entidad_id "
+        "JOIN nba.entidad t ON t.entidad_id = d.valor::bigint WHERE m.nombre = 'equipo_del_jugador' AND e.nombre = %s",
+        (nombre,)).fetchone()
+    assert equipo_de(jug["name"]) is not None and equipo_de(dnp["name"]) is not None
+    assert db.execute("SELECT count(*) FROM nba.dato d JOIN nba.metrica m USING (metrica_id) WHERE m.nombre = 'equipo_del_jugador'"
+                      ).fetchone()[0] == len(JUGADORES)
 
 
 def test_cajas_son_idempotentes_y_dejan_la_captura_historica(base_migrada, tmp_path):

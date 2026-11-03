@@ -3166,3 +3166,10 @@ Resultados medidos en docs/nba_rediseno_s3_resultados_20261102.md. Biblioteca `n
 - [x] Efecto de jugar en la noche siguiente medido (≈ 2,8 puntos de margen por equipo) y puesto en el modelo.
 - [ ] G-equipo: el modelo está calibrado (pendiente 1,04) pero su Brier es peor que el del cierre (ganador +0,008, hándicap +0,010, total +0,011, IC95 sin cruzar 0); se cierra en S5 con la evaluación única contra v1.5 y mercado.
 - [ ] Meter a los jugadores esperados (S2: P(juega) y minutos) en ataque y defensa del equipo; depende de la tabla de impacto por jugador (S4) y de conectar `nba.dato_a_las`.
+
+### NBA — rediseño completo, Sprint 3b: jugadores dentro del núcleo (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s3b_jugadores_20261102.md. Biblioteca `nba.v2.plantilla`, evaluación `apps/nba/ops/evaluar_s3b.py`, migración 0008.
+- [x] Impacto por jugador (ridge sobre minutos, reajuste cada 21 días) + minutos esperados de la plantilla con partes y rol; el margen baja de 14,49 a 14,32 (RMSE) y el Brier del ganador de 0,2063 a 0,2038 (media de equipo y jugadores).
+- [x] `equipo_del_jugador` como dato (métrica 60) en los cargadores histórico y cdn.nba.com.
+- [ ] G-equipo contra el mercado sigue sin cumplirse (ganador +0,006, IC95 sin cruzar 0); el tope no son los minutos (con los reales, 14,30).
+- [ ] A priori informativo para el impacto de cada jugador (caja por minuto, mas_menos) y titulares confirmados cerca del salto.

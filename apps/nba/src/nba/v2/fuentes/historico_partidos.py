@@ -83,6 +83,7 @@ def cargar_cajas(db, carpeta: Path) -> dict:
     juegos = list(juegos.values()) if isinstance(juegos, dict) else juegos
     cache: dict = {}
     jugadores: dict = {}
+    equipos_ids: dict = {}
 
     def generar():
         for g in juegos:
@@ -110,6 +111,10 @@ def cargar_cajas(db, carpeta: Path) -> dict:
                     jugadores[r["player_id"]] = identidad.jugador(db, FUENTE, str(r["player_id"]), r["name"])
                 base = dict(partido_id=partido, fase="final", fuente=FUENTE, recibido_en=recibido, captura_id=captura_j,
                             pit="reconstruido", entidad_id=jugadores[r["player_id"]])
+                if r.get("team_id") in equipos.NBA_IDS:
+                    if r["team_id"] not in equipos_ids:
+                        equipos_ids[r["team_id"]] = identidad.equipo(db, equipos.NBA_IDS[r["team_id"]])
+                    yield DatoNuevo(metrica="equipo_del_jugador", valor=float(equipos_ids[r["team_id"]]), **base)
                 yield DatoNuevo(metrica="jugo", valor=1.0 if r["participated"] else 0.0, **base)
                 if not r["participated"]:
                     continue  # sin minutos no se imputan estadísticas en cero

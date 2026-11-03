@@ -6908,3 +6908,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Hallazgo: jugar en la noche siguiente cuesta ≈ 2,8 puntos de margen por equipo (3,5 errores estándar) y no mueve el total. Se mide en el ajuste y se fija antes de mirar la prueba.
 - Decisión: coherencia entre mercados por construcción (una sola muestra simulada por partido), no por reconciliación posterior.
 - Siguiente palanca: jugadores esperados dentro del rating de equipo (lo que mueve una línea es quién juega).
+
+## 2026-11-02 — Sprint 3b: jugadores dentro del núcleo
+
+- Decisión: el núcleo v2 promedia el rating de equipo con el de jugadores (margen y total); solo jugadores empeora el total (19,46 frente a 19,12).
+- Hallazgo: el tope no son los minutos esperados. Con los minutos reales del partido el error del margen solo baja a 14,30 (mercado 14,04); lo que falta es saber más de cada jugador, no adivinar quién juega.
+- Decisión: la probabilidad de jugar sin parte se condiciona al rol (53 % bajo 15 minutos esperados, 88 % entre 15 y 25, 98 % con 25 o más); el 84 % global mezclaba titulares seguros con fondo de plantilla.
+- Decisión: el equipo de cada jugador en cada partido es un dato propio (`equipo_del_jugador`, migración 0008); no se deduce de forma fiable después.
