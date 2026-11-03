@@ -30,7 +30,7 @@ class ParametrosProps:
 
 
 def cargar_props(ruta: Path = RUTA_PROPS) -> ParametrosProps:
-    crudo = ruta.read_bytes()
+    crudo = ruta.read_bytes().replace(b"\r\n", b"\n")      # la huella no depende de los finales de línea del sistema
     a = json.loads(crudo)
     r = a["residuos_minutos"]
     return ParametrosProps(

@@ -34,6 +34,7 @@ FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id JOIN nba.entid
 WHERE d.fuente = 'nba_oficial' AND d.fase = 'final' AND d.periodo = 0 AND e.canonica_id = e.entidad_id
   AND m.nombre IN ('minutos', 'puntos', 'rebotes', 'asistencias', 'triples_anotados', 'equipo_del_jugador')
 GROUP BY 1, 2, 3 HAVING max(CASE WHEN m.nombre = 'minutos' THEN d.valor END) > 0
+   AND max(CASE WHEN m.nombre = 'equipo_del_jugador' THEN d.valor END) IS NOT NULL      -- solo jugadores: los equipos también tienen minutos
 ORDER BY 1, 2, 3
 """
 
