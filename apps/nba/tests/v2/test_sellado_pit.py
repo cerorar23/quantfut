@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, UTC
 import psycopg
 import pytest
 
-from nba.v2 import identidad, motor_equipo, pit, sellado
+from nba.v2 import identidad, motor_equipo, nucleo, pit, sellado
 from nba.v2.carga import DatoNuevo, guardar_datos
 from nba.v2.sellado import PronosticoNuevo
 
@@ -88,6 +88,31 @@ def test_la_instantanea_solo_ve_el_pasado_y_su_huella_es_estable(base_migrada):
     assert all(f[3] != "final" for f in b.propias)
     with pytest.raises(ValueError):
         pit.instantanea(db, objetivo[0], datetime(2026, 1, 13))                              # sin zona horaria
+
+
+def test_el_primer_partido_de_una_temporada_aplica_el_arrastre(base_migrada):
+    db = base_migrada
+    ids = {t: identidad.equipo(db, t) for t in ("BOS", "NYK")}
+    recibido = datetime(2026, 11, 2, tzinfo=UTC)
+    pids = []
+    for d, (fecha, a, b, pa, pb) in enumerate([(date(2026, 5, 1), "BOS", "NYK", 130.0, 90.0), (date(2026, 5, 3), "NYK", "BOS", 95.0, 120.0),
+                                                (date(2026, 10, 25), "BOS", "NYK", 110.0, 105.0)]):
+        pid = identidad.partido(db, "nba_oficial", f"002250{d}", fecha, ids[a], ids[b], identidad.temporada(fecha))
+        guardar_datos(db, [DatoNuevo(partido_id=pid, entidad_id=ids[a], metrica="puntos", fase="final", fuente="nba_oficial",
+                                     recibido_en=recibido, valor=pa, pit="reconstruido"),
+                           DatoNuevo(partido_id=pid, entidad_id=ids[b], metrica="puntos", fase="final", fuente="nba_oficial",
+                                     recibido_en=recibido, valor=pb, pit="reconstruido")])
+        pids.append(pid)
+    corte = datetime(2026, 10, 25, 12, tzinfo=UTC)
+    _, d_nueva = motor_equipo.pronosticar(pit.instantanea(db, pids[2], corte))
+    r_nueva, _ = motor_equipo._ratings(pit.instantanea(db, pids[2], corte))
+    p = motor_equipo.PARAMETROS
+    esperado = nucleo.Ratings()                         # repetición manual: dos partidos de mayo, arrastre, y recién el de octubre
+    nucleo.actualizar(esperado, "BOS", "NYK", 130.0, 90.0, p, nucleo.ajuste_descanso(7, 7, p))
+    nucleo.actualizar(esperado, "NYK", "BOS", 95.0, 120.0, p, nucleo.ajuste_descanso(2, 2, p))
+    nucleo.nueva_temporada(esperado, p)
+    assert r_nueva.ataque["BOS"] == pytest.approx(esperado.ataque["BOS"]) and r_nueva.defensa["NYK"] == pytest.approx(esperado.defensa["NYK"])
+    assert d_nueva["mu"][0] > 0
 
 
 def test_el_motor_es_determinista_no_ve_el_futuro_y_se_niega_sin_historia(base_migrada):

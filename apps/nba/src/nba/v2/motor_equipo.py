@@ -16,6 +16,7 @@ VERSION_MODELO = (f"equipo-2.0;eta={PARAMETROS.eta};arrastre={PARAMETROS.arrastr
 
 
 def _ratings(inst: Instantanea) -> tuple[Ratings, dict]:
+    """Juega la historia visible; si el partido pronosticado abre una temporada nueva, también aplica el arrastre antes de él."""
     r, ultimo, temporada = Ratings(), {}, None
     for fecha, _, local, visit, pl, pv in inst.historia:
         t = identidad.temporada(fecha)
@@ -27,6 +28,8 @@ def _ratings(inst: Instantanea) -> tuple[Ratings, dict]:
         dv = (fecha - ultimo[visit]).days if visit in ultimo else 7
         nucleo.actualizar(r, local, visit, pl, pv, PARAMETROS, nucleo.ajuste_descanso(dl, dv, PARAMETROS))
         ultimo[local] = ultimo[visit] = fecha
+    if temporada is not None and identidad.temporada(inst.fecha) != temporada:
+        nucleo.nueva_temporada(r, PARAMETROS)
     return r, ultimo
 
 

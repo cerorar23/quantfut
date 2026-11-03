@@ -91,9 +91,15 @@ def main(temporada: str, n: int):
             if (esc_a, dist_a) != motor_equipo.pronosticar(b):
                 res["difs_repetibilidad"] += 1
             mu = dist_a["mu"]
-            res["max_dif_mu_vs_referencia"] = max(res["max_dif_mu_vs_referencia"], abs(mu[0] - ref[pid][0]), abs(mu[1] - ref[pid][1]))
+            dif = max(abs(mu[0] - ref[pid][0]), abs(mu[1] - ref[pid][1]))
+            res["max_dif_mu_vs_referencia"] = max(res["max_dif_mu_vs_referencia"], dif)
+            n_ref = sum(1 for f in filas if f[0] < fecha)
+            if dif > 1e-3 or n_ref != len(a.historia):
+                res.setdefault("discrepancias", []).append({"pid": pid, "fecha": fecha.isoformat(), "dif": round(dif, 3),
+                                                            "n_historia_motor": len(a.historia), "n_historia_ref": n_ref})
             p_local.append(dist_a["p_local"])
             y.append(1.0 if pl > pv else 0.0)
+        res["discrepancias"] = res.get("discrepancias", [])[:6]
         res["brier_ganador"] = sum((p - o) ** 2 for p, o in zip(p_local, y)) / len(y)
         res["alarma_fuga_brier_menor_0_18"] = res["brier_ganador"] < 0.18
         res["aprobado"] = (res["difs_repetibilidad"] == 0 and res["fugas_historia"] == 0 and res["fugas_propias"] == 0
