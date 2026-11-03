@@ -264,14 +264,34 @@ void main() {
     });
 
     test('feed bien y endpoint de cuotas caido: los eventos son los mismos', () async {
+      final soon = DateTime.now().add(const Duration(hours: 3)).toUtc();
       final api = _Api((p) {
-        if (p == '/nba/api/data') return _fx('nba_feed.json');
+        if (p == '/nba/v1/cartelera') {
+          return {
+            'partidos': [
+              {
+                'id': 1,
+                'fecha': '2026-11-03',
+                'local': {'codigo': 'MIA', 'nombre': 'Miami Heat'},
+                'visitante': {'codigo': 'NYK', 'nombre': 'New York Knicks'},
+                'inicio_utc': soon.toIso8601String(),
+                'sello_previsto': soon.toIso8601String(),
+                'resultado': null,
+                'pronostico': {
+                  'hash': 'c1',
+                  'p_local': .61,
+                  'sellado_en': soon.subtract(const Duration(hours: 1)).toIso8601String(),
+                },
+              },
+            ],
+          };
+        }
         throw const ApiFailure('caido');
       });
       final feed = await loadSport(api, SportKind.nba);
       final q = await loadQuotes(api, SportKind.nba);
       expect(feed.ready, isTrue);
-      expect(feed.events.length, _nba().length);
+      expect(feed.events.length, 1);
       expect(q.isEmpty, isTrue);
       for (final e in feed.events) {
         for (final m in e.markets) {

@@ -84,6 +84,8 @@ String _string(dynamic v, String field) {
   throw FormatException('Invalid field: $field');
 }
 
+/// Formato de la v1 de NBA (`/nba/api/data`, retirada el 3-nov-2026). Ya no se pide; queda para leer los fixtures
+/// históricos de las pruebas.
 List<SportEvent> nbaEvents(JsonMap data) {
   final live = data['live_v13'];
   final raw = live is Map ? live['cohorts'] : null;
@@ -147,11 +149,15 @@ List<SportEvent> nbaEvents(JsonMap data) {
             eligible: eligible,
             outcome: outcome,
             market: market,
-            player: isPlayer && row['player'] is String ? row['player'] as String : null,
+            player: isPlayer && row['player'] is String
+                ? row['player'] as String
+                : null,
             playerId: isPlayer && row['player_id'] != null
                 ? '${row['player_id']}'
                 : null,
-            rowPlayerId: row['player_id'] != null ? '${row['player_id']}' : null,
+            rowPlayerId: row['player_id'] != null
+                ? '${row['player_id']}'
+                : null,
             line: line,
           ),
         );
@@ -183,6 +189,102 @@ List<SportEvent> nbaEvents(JsonMap data) {
     }
   }
   return events.values.toList()..sort((a, b) => a.start.compareTo(b.start));
+}
+
+/// Partidos de la API v2 de NBA (`/nba/v1/cartelera`). Igual que antes, solo salen los que ya tienen un pronóstico
+/// sellado: la lista de la app no muestra partidos sin pronóstico. El ganador se presenta con el lado y la probabilidad
+/// publicados; un sello posterior al inicio es una revisión y no cuenta como pronóstico previo.
+List<SportEvent> nbaV2Events(Iterable<JsonMap> games) {
+  final events = <String, SportEvent>{};
+  for (final game in games) {
+    final id = game['id'];
+    final home = jsonMap(game['local']), away = jsonMap(game['visitante']);
+    final start = _stamp(game['inicio_utc']);
+    final pick = jsonMap(game['pronostico']);
+    final sealed = _stamp(pick['sellado_en']);
+    final pLocal = pick['p_local'];
+    if (id is! int ||
+        !_text(home['nombre']) ||
+        !_text(away['nombre']) ||
+        start == null ||
+        sealed == null ||
+        !_text(pick['hash']) ||
+        !_probability(pLocal)) {
+      continue;
+    }
+    final p = (pLocal as num).toDouble();
+    final homePick = p >= .5;
+    final eligible = sealed.isBefore(start);
+    final result = jsonMap(game['resultado']);
+    final homePoints = result['local'], awayPoints = result['visitante'];
+    final finished = homePoints is num && awayPoints is num;
+    String? outcome;
+    if (eligible && finished) {
+      outcome = (homePoints > awayPoints) == homePick ? 'win' : 'loss';
+    }
+    final key = '$id';
+    events[key] = SportEvent(
+      id: key,
+      sport: SportKind.nba,
+      home: home['nombre'] as String,
+      away: away['nombre'] as String,
+      league: 'NBA',
+      start: start,
+      status: finished
+          ? 'finished'
+          : start.add(const Duration(hours: 4)).isBefore(DateTime.now().toUtc())
+          ? 'awaiting_result'
+          : 'scheduled',
+      markets: [
+        SportMarket(
+          id: 'winner-$id',
+          label: 'Ganador del partido', // l10n-ignore: nombre del mercado como dato; la familia se traduce por `market`
+          selection: (homePick ? home['nombre'] : away['nombre']) as String,
+          probability: homePick ? p : 1 - p,
+          sealedAt: sealed,
+          eligible: eligible,
+          outcome: outcome,
+          market: 'winner',
+        ),
+      ],
+      sealedAt: sealed,
+      seal: pick['hash'] as String,
+      score: finished ? '$homePoints – $awayPoints' : null,
+    );
+  }
+  return events.values.toList()..sort((a, b) => a.start.compareTo(b.start));
+}
+
+/// Pide la cartelera de la API v2 de tres días atrás a tres adelante. Un día que falla no tumba a los demás; solo si
+/// fallan todos el feed queda no listo.
+Future<SportFeed> _loadNba(QuantFutApi api, DateTime now) async {
+  final days = [
+    for (var i = -3; i <= 3; i++)
+      DateTime(
+        now.year,
+        now.month,
+        now.day + i,
+      ).toIso8601String().substring(0, 10),
+  ];
+  final games = <JsonMap>[];
+  var answered = 0;
+  await Future.wait([
+    for (final day in days)
+      () async {
+        try {
+          final data = jsonMap(
+            await api.request('/nba/v1/cartelera', query: {'fecha': day}),
+          );
+          if (data['partidos'] is! List) return;
+          games.addAll(jsonRows(data['partidos']));
+          answered++;
+        } catch (_) {
+          /* Ese día queda fuera. */
+        }
+      }(),
+  ]);
+  if (answered == 0) return const SportFeed(ready: false, events: []);
+  return SportFeed(ready: true, events: nbaV2Events(games));
 }
 
 List<SportEvent> tennisEvents(JsonMap data) {
@@ -244,17 +346,15 @@ List<SportEvent> tennisEvents(JsonMap data) {
 /// Lee el feed del deporte; ante cualquier fallo devuelve un feed no listo.
 Future<SportFeed> loadSport(QuantFutApi api, SportKind sport) async {
   try {
+    if (sport == SportKind.nba) return await _loadNba(api, DateTime.now());
     final data = jsonMap(
       await api.request(switch (sport) {
-        SportKind.nba => '/nba/api/data',
         SportKind.tennis => '/web/deportes/tenis',
-        SportKind.football => throw const FormatException('No public feed'),
+        SportKind.football ||
+        SportKind.nba => throw const FormatException('No public feed'),
       }),
     );
-    final events = sport == SportKind.nba
-        ? nbaEvents(data)
-        : tennisEvents(data);
-    return SportFeed(ready: true, events: events);
+    return SportFeed(ready: true, events: tennisEvents(data));
   } catch (_) {
     return const SportFeed(ready: false, events: []);
   }
