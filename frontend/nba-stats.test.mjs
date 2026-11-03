@@ -12,7 +12,7 @@ const team = (name, extra = {}) => ({
   form: { all: [row('2026-10-26', 'Chicago <b>Bulls</b>', true, 134, 99), row('2026-10-23', 'New York Knicks', false, 107, 103)],
     home: [row('2026-10-26', 'Chicago <b>Bulls</b>', true, 134, 99)], away: [row('2026-10-23', 'New York Knicks', false, 107, 103)] }, ...extra });
 const stats = {
-  generated_at: '2026-10-27T11:00:00+00:00', source: 'NBA.com (marcadores oficiales)', as_of: '2026-10-27',
+  temporada: '2026-27', fecha: '2026-10-27', games_used: 40,
   teams: [team('Boston Celtics'), team('Brooklyn Nets', { season: rec(0, 3), streak: -3, rest_days: 2, back_to_back: false, standing: { rank: 13, of: 15, conference: 'este' } })],
   h2h: { matches: [{ date: '2026-02-27', home: 'Boston Celtics', away: 'Brooklyn Nets', home_points: 148, away_points: 111 }], home_wins: 1, away_wins: 0, average_total: 259 },
 };
@@ -29,10 +29,10 @@ function windowFor(data, stateExtra = {}, status = 'ready') {
   return tab => { st.winSportTab = tab; return w.view(); };
 }
 
-test('las estadísticas de NBA validan la respuesta y piden el partido por id', async () => {
+test('las estadísticas de NBA validan la respuesta y piden el partido por id a la API v2', async () => {
   let path;
-  assert.equal((await loadNbaStats('0022600130', async p => { path = p; return { ok: true, json: async () => stats }; })).status, 'ready');
-  assert.equal(path, '/web/deportes/nba/estadisticas/0022600130');
+  assert.equal((await loadNbaStats(1290, async p => { path = p; return { ok: true, json: async () => stats }; })).status, 'ready');
+  assert.equal(path, '/nba/v1/partido/1290/estadisticas');
   assert.equal((await loadNbaStats('1', async () => ({ ok: true, json: async () => ({ ...stats, teams: [stats.teams[0]] }) }))).status, 'error');
   assert.equal((await loadNbaStats('1', async () => ({ ok: true, json: async () => ({ ...stats, h2h: {} }) }))).status, 'error');
   assert.equal((await loadNbaStats('1', async () => ({ ok: true, json: async () => ({ ...stats, teams: [{ ...stats.teams[0], form: { all: [] } }, stats.teams[1]] }) }))).status, 'error');
@@ -79,35 +79,43 @@ test('sin estadísticas la ventana lo dice y no inventa cifras', () => {
   assert.ok(windowFor(null, {}, 'error')('clasificacion').includes('Todavía no hay estadísticas'));
 });
 
-function v2Window(event, pane = 'pron') {
-  const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: pane, winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false, winFormScope: 'all' };
+function v2Window(event, entry) {
+  const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false, winFormScope: 'all' };
   const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const pass = v => String(v);
-  let fetched = 0;
+  const asked = [];
   const w = createSportWindow({ state: st, esc, badge: t => `<i>${t}</i>`, fmtPct: p => `${(p * 100).toFixed(1)}%`, fmtOdds: o => o.toFixed(2), realDate: pass, realTime: pass, dateFmt: pass,
     addDays: () => new Date(event.start), localDay: d => new Date(d).toISOString().slice(0, 10), dayLabel: () => 'Hoy', ensureSport: () => ({ status: 'ready', events: [event] }),
-    ensureTennisStats: () => ({ status: 'loading', data: null }), ensureNbaStats: () => { fetched++; return { status: 'error', data: null }; }, featuredModelMarket });
-  return { view: tab => { st.winSportTab = tab; return w.view(); }, fetched: () => fetched };
+    ensureTennisStats: () => ({ status: 'loading', data: null }), ensureNbaStats: id => { asked.push(id); return entry; }, featuredModelMarket });
+  return { view: tab => { st.winSportTab = tab; return w.view(); }, asked };
 }
 
-test('un partido v2 sin pronóstico explica cuándo se agrega y muestra estadísticas sin pedir el feed antiguo', () => {
+test('un partido v2 sin pronóstico explica cuándo se agrega y pide las estadísticas al servidor solo al abrir esa pestaña', () => {
   const soon = new Date(Date.now() + 5 * 36e5).toISOString(), planned = new Date(Date.now() + 4 * 36e5).toISOString();
   const event = { id: 3, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start: soon, planned_seal: planned, league: 'NBA', status: 'scheduled', markets: [], seal: null, sealed_at: null,
-    score: null, availability: null, stats: { ...stats, since: '2026-10-20', games_used: 40 } };
-  const html = v2Window(event);
+    score: null, availability: null };
+  const html = v2Window(event, { status: 'ready', data: stats });
   const card = html.view('resumen');
   assert.ok(card.includes('CUÁNDO SE AGREGA EL PRONÓSTICO') && card.includes('Pronóstico pendiente') && card.includes('dentro de 4 h'));
   assert.ok(!card.includes('win-step') && !card.includes('Calendario recibido') && !card.includes('Sin pronóstico destacado'));
+  assert.deepEqual(html.asked, []);                                                                       // el resumen no consulta estadísticas
   const compare = html.view('comparativa');
-  assert.ok(compare.includes('3-1') && compare.includes('40 marcadores finales') && compare.includes('20/10/26'));
+  assert.ok(compare.includes('3-1') && compare.includes('Temporada regular 2026-27') && compare.includes('40 marcadores finales') && compare.includes('Récord de la temporada pasada') && compare.includes('56-26'));
+  assert.deepEqual(html.asked, [3]);
   assert.ok(html.view('registro').includes('Aún no hay sello'));
-  assert.equal(html.fetched(), 0);
+  assert.ok(html.view('h2h').includes('Solo temporada regular'));
+});
+
+test('mientras llegan las estadísticas del servidor la ventana lo dice y no inventa cifras', () => {
+  const event = { id: 5, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start: new Date().toISOString(), planned_seal: null, league: 'NBA', status: 'scheduled', markets: [], seal: null, sealed_at: null, score: null, availability: null };
+  const html = v2Window(event, { status: 'loading', data: null }).view('comparativa');
+  assert.ok(html.includes('Consultando los marcadores de la temporada') && !html.includes('COMPARATIVA'));
 });
 
 test('un partido v2 ya jugado sin sello no inventa un pronóstico a posteriori', () => {
   const start = new Date(Date.now() - 5 * 36e5).toISOString();
   const event = { id: 4, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, planned_seal: new Date(Date.parse(start) - 36e5).toISOString(), league: 'NBA', status: 'finished',
-    markets: [], seal: null, sealed_at: null, score: '100 – 90', availability: null, stats };
-  const card = v2Window(event).view('resumen');
+    markets: [], seal: null, sealed_at: null, score: '100 – 90', availability: null };
+  const card = v2Window(event, { status: 'ready', data: stats }).view('resumen');
   assert.ok(card.includes('Sin pronóstico previo') && card.includes('no calcula pronósticos a posteriori') && !card.includes('win-step'));
 });

@@ -243,10 +243,11 @@ export function createSportWindow(ctx) {
     return `${games(event)}${registry(event)}`;
   }
 
-  // ---- estadísticas de equipos de NBA: marcadores finales oficiales, resumidos por el servidor «a la fecha» del partido.
+  // ---- estadísticas de equipos de NBA: marcadores finales de la temporada regular, resumidos por el servidor «a la fecha» del partido
+  // y pedidos solo al abrir una pestaña de estadísticas.
   // No hay alineaciones, estadio ni cuotas por cuarto en ninguna fuente validada: no se inventan.
   function nbaStats(event) {
-    const entry = event.v2 ? { status: event.stats ? 'ready' : 'error', data: event.stats } : ctx.ensureNbaStats(event.id);
+    const entry = ctx.ensureNbaStats(event.id);
     const head = '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS DE LOS EQUIPOS</p>';
     if (entry.status === 'loading') return { note: `${head}<p class="win-sub">Consultando los marcadores de la temporada…</p></div>` };
     if (entry.status !== 'ready') return { note: `${head}<p class="win-sub">Todavía no hay estadísticas publicadas para este partido. Se calculan con los marcadores finales de la NBA.</p></div>` };
@@ -267,7 +268,7 @@ export function createSportWindow(ctx) {
     const diff = t => (t.scoring.points_for == null ? null : Math.round((t.scoring.points_for - t.scoring.points_against) * 10) / 10);
     const place = t => (t.standing.rank == null ? '—' : `#${t.standing.rank} ${t.standing.conference === 'este' ? 'Este' : 'Oeste'}`);
     const pts = v => (v == null ? '—' : num(v));
-    const source = n.data.since ? `<p class="win-sub">Con los ${n.data.games_used} marcadores finales que QuantFut tiene registrados desde el ${shortDate(n.data.since)}; no incluye la temporada pasada.</p>` : '';
+    const source = n.data.temporada ? `<p class="win-sub">Temporada regular ${esc(n.data.temporada)}: ${n.data.games_used} marcadores finales de la liga registrados antes de este partido.</p>` : '';
     return `<div class="win-panel-box"><p class="eyebrow">COMPARATIVA</p>${source}<div class="win-vshead"><strong>${esc(event.home)}</strong><strong>${esc(event.away)}</strong></div>
       ${versus('Partidos jugados', played(h), played(a), { neutral: true })}
       ${versus('Récord de la temporada', h.season.rate, a.season.rate, { shown: [recRate(h.season), recRate(a.season)] })}
@@ -311,7 +312,7 @@ export function createSportWindow(ctx) {
     const winsHome = swapped ? h.away_wins : h.home_wins, winsAway = swapped ? h.home_wins : h.away_wins;
     if (!h.matches.length) return '<div class="win-panel-box"><p class="eyebrow">CARA A CARA</p><p class="win-sub">Sin enfrentamientos registrados entre estos equipos en las últimas temporadas.</p></div>';
     const list = h.matches.map(m => `<li><span class="win-d">${esc(shortDate(m.date))}</span><span>${esc(m.home)}<small>vs ${esc(m.away)}</small></span><span class="win-sc">${m.home_points}-${m.away_points}</span><span class="win-res ${m.home_points > m.away_points ? 'is-win' : 'is-loss'}" title="Ganó ${esc(m.home_points > m.away_points ? m.home : m.away)}">${m.home_points > m.away_points ? 'L' : 'V'}</span></li>`).join('');
-    return `<div class="win-panel-box"><p class="eyebrow">CARA A CARA · ÚLTIMOS ${h.matches.length}</p><div class="win-duelscore"><strong>${winsHome}</strong><span>${esc(event.home)}</span><span>${esc(event.away)}</span><strong>${winsAway}</strong></div>
+    return `<div class="win-panel-box"><p class="eyebrow">CARA A CARA · ÚLTIMOS ${h.matches.length}</p><p class="win-sub">Solo temporada regular.</p><div class="win-duelscore"><strong>${winsHome}</strong><span>${esc(event.home)}</span><span>${esc(event.away)}</span><strong>${winsAway}</strong></div>
       ${h.average_total != null ? kv('Total medio de puntos', num(h.average_total)) : ''}<ul class="win-list win-list--dated">${list}</ul>
       </div>`;
   }

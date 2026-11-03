@@ -2,6 +2,7 @@
 
 * GET /nba/v1/cartelera?fecha=AAAA-MM-DD     partidos del día con su pronóstico sellado más reciente y el estado del sello
 * GET /nba/v1/partido/{id}                   resumen y distribuciones de equipo (cuantiles de 0,5 % a 99,5 %)
+* GET /nba/v1/partido/{id}/estadisticas      forma, récord, cara a cara y clasificación a la fecha del partido (marcadores finales de la temporada regular)
 * GET /nba/v1/partido/{id}/linea             P(más / menos de una línea) para margen, total o puntos de un equipo
 * GET /nba/v1/partido/{id}/jugador/{id}      pronósticos de jugador sellados (cuando existan)
 * GET /nba/v1/sello/{hash}                   verificación pública del sello y su lugar en la cadena
@@ -21,6 +22,8 @@ import psycopg
 
 from ..contratos.validar import ContratoIncumplido, validar_equipo, validar_jugador
 from ..v2 import props, sellado
+from ..v2.equipos import TRICODES
+from . import estadisticas
 
 ESTATICOS = Path(__file__).parent / "static"
 CALIBRACION = Path(os.environ.get("NBA_CALIBRACION_JSON", Path(__file__).parent / "calibracion_v2.json"))
@@ -126,6 +129,35 @@ def crear_app(dsn: str | None = None) -> FastAPI:
                 r["distribuciones"] = {k: d[k] for k in ("margen", "total", "puntos_local", "puntos_visitante")}
                 r["distribuciones"]["paso_cuantil"] = d["paso_cuantil"]
             return r
+
+    PUNTOS_FINALES = ("(SELECT d.valor AS valor FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id AND m.nombre = 'puntos' "
+                      "JOIN nba.fuente f ON f.fuente = d.fuente WHERE d.partido_id = e.entidad_id AND d.entidad_id = {equipo}.entidad_id "
+                      "AND d.periodo = 0 AND d.fase = 'final' AND d.valor IS NOT NULL ORDER BY f.prioridad, d.recibido_en DESC, d.dato_id DESC LIMIT 1)")
+
+    @app.get("/nba/v1/partido/{partido_id}/estadisticas")
+    def estadisticas_partido(partido_id: int):
+        """Forma, récord, cara a cara y clasificación «a la fecha» del partido: solo marcadores finales de la temporada regular anteriores a su día."""
+        with conexion() as db:
+            f = db.execute("SELECT e.fecha_juego_et, e.temporada, (e.atributos->>'local')::bigint, (e.atributos->>'visitante')::bigint, tl.id_en_fuente, tv.id_en_fuente "
+                           "FROM nba.entidad e JOIN nba.entidad tl ON tl.entidad_id = (e.atributos->>'local')::bigint "
+                           "JOIN nba.entidad tv ON tv.entidad_id = (e.atributos->>'visitante')::bigint "
+                           "WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id AND e.entidad_id = %s", (partido_id,)).fetchone()
+            if f is None:
+                raise HTTPException(404, {"codigo": "partido_inexistente"})
+            fecha, temporada, id_local, id_visitante, local, visitante = f
+            if not (estadisticas.ventana_regular(temporada)[0] <= fecha) or local not in TRICODES or visitante not in TRICODES:
+                raise HTTPException(404, {"codigo": "sin_estadisticas"})
+            filas = db.execute(
+                "SELECT DISTINCT ON (e.fecha_juego_et, tl.entidad_id, tv.entidad_id) e.fecha_juego_et, e.temporada, tl.id_en_fuente, tv.id_en_fuente, pl.valor, pv.valor "
+                "FROM nba.entidad e JOIN nba.entidad tl ON tl.entidad_id = (e.atributos->>'local')::bigint "
+                "JOIN nba.entidad tv ON tv.entidad_id = (e.atributos->>'visitante')::bigint "
+                f"CROSS JOIN LATERAL {PUNTOS_FINALES.format(equipo='tl')} AS pl CROSS JOIN LATERAL {PUNTOS_FINALES.format(equipo='tv')} AS pv "
+                "WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id AND e.fecha_juego_et < %(fecha)s "
+                "AND (e.temporada IN (%(actual)s, %(pasada)s) OR (tl.entidad_id = %(a)s AND tv.entidad_id = %(b)s) OR (tl.entidad_id = %(b)s AND tv.entidad_id = %(a)s)) "
+                "ORDER BY e.fecha_juego_et, tl.entidad_id, tv.entidad_id, e.entidad_id",
+                {"fecha": fecha, "actual": temporada, "pasada": estadisticas.temporada_anterior(temporada), "a": id_local, "b": id_visitante}).fetchall()
+        previos = [estadisticas.Marcador(d, t, a, b, pl, pv) for d, t, a, b, pl, pv in filas if a in TRICODES and b in TRICODES]
+        return estadisticas.estadisticas(temporada, fecha, local, visitante, previos)
 
     @app.get("/nba/v1/partido/{partido_id}/linea")
     def linea(partido_id: int, mercado: str = Query(...), valor: float = Query(...)):
