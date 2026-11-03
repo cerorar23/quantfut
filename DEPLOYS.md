@@ -40,6 +40,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 00:10 UTC · NBA: dato `equipo_del_jugador` (imagen `nba-captura:3ca6392`) · SOLO `nba-db` y colectores, rama `nba/rediseno-s0`
+- Migración `0008_equipo_del_jugador` aplicada a `nba_datos` (métrica 60): con qué equipo figura cada jugador en cada partido; antes la caja por jugador no lo guardaba y no se deduce sin ambigüedad.
+- Imagen `nba-captura:3ca6392` construida y puesta en `imagen_actual` (los crons usan el cargador de cdn.nba.com que ya escribe el dato); el código anterior queda en `nba-captura/build/src.antes-3ca6392`.
+- Cajas históricas recargadas con el mismo cargador (idempotente: 2.862.878 filas leídas, 166.632 nuevas = una por jugador y partido de 6.414 partidos; nada de lo ya cargado se duplicó). Base de datos 2,29 GB, disco 62 %.
+- **Vuelta atrás:** datos solo-anexar; volver a la imagen anterior escribiendo `cdecc6c` en `imagen_actual`. La métrica 60 y sus filas se quedan (no estorban a las demás).
+- Pendiente de verificar: la primera caja y jugada a jugada reales de cdn.nba.com (los partidos del 2-nov terminan ≈ 02:00-04:30 UTC del 3-nov); hoy solo se pidió el marcador del día (1 crédito de Scrapfly).
+
 ### 2026-11-02 22:45 UTC · NBA: cuotas históricas (bet365, The Odds API) y archivo de PropLine desde el 23-oct en `nba_datos` (imagen `nba-captura:9d73ed5`) · SOLO base de datos y archivos, rama `nba/rediseno-s0`
 - Archivos que ya existían en el PC (sin créditos nuevos), copiados a `~/nba-isolated/nba-captura/historico/` con hash verificado: catálogo de 6.414 juegos (`games.json` de nba_extended_box), BetsAPI/bet365 (`odds.jsonl.gz`), props de The Odds API ya enlazadas (`props_linked.jsonl.gz`) y 325 instantáneas de moneyline. Cargados con `captura.py historico` (contenedor de una sola vez, 512 MiB, usuario `nba_captura`).
 - Resultado: 1.472.382 cuotas de bet365 (3.857 juegos, 2023-24 a 2025-26, trayectoria completa de ganador, hándicap y total de partido, mitad y 1.er cuarto), 1.755.830 de props (8 casas; puntos, rebotes, triples, asistencias) y 5.016 de Pinnacle. `recibido_en` es el instante en que la casa mostró el precio; la adquisición queda en `nba.captura` con fase `historico` y el hash del archivo.
