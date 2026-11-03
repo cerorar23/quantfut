@@ -3240,3 +3240,5 @@ Detalle en docs/nba_rediseno_f41_origen_movil_20261103.md. `ops/resumen_origen_m
 - [x] Tres orígenes de equipo (2023-24, 2024-25, 2025-26) y dos de props: estables; el modelo es peor que el cierre en todos con IC que no cruza 0; los jugadores ayudan siempre; coherencia y G-props cumplidas.
 - [ ] Recalibración logística del ganador con temporadas previas (pendiente 1,03-1,19), probada con el mismo origen móvil.
 - [ ] F4.2 Monte Carlo; F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
+
+- [x] F4.1 recalibración del ganador (escala de la media y logística): sin efecto (Δ Brier conjunto −0,00002 [−0,00009, +0,00004]); NO se adopta; las temporadas previas piden k ≈ 1.

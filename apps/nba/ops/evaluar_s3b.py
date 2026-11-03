@@ -281,6 +281,19 @@ def main(carpeta, prueba):
         print("sin cuotas en la validación: los pesos de mezcla con el mercado no se estiman (se usa 50/50 solo para la variante informativa)")
     print(f"pesos del margen (jugadores, equipo, mercado) en validación: {w.round(3)}")
 
+    # volcado por partido (equipo y jugadores) para el análisis de recalibración; solo hasta la temporada de prueba
+    volcado = []
+    for g in evaluables:
+        if g["temporada"] > prueba:
+            continue
+        c = cierres.get(g["pid"], {})
+        h2h, sp = c.get("h2h"), (c.get("spread"), c.get("spread_linea"))
+        volcado.append({"pid": g["pid"], "temporada": g["temporada"], "pl": g["pl"], "pv": g["pv"],
+                        "equipo_mu": list(nuc[g["pid"]]), "jugadores_margen": pred[g["pid"]][0], "jugadores_total": pred[g["pid"]][1],
+                        "p_mercado": e3.desvig(h2h["local"], h2h["visit"]) if h2h and "local" in h2h and "visit" in h2h else None,
+                        "linea": sp[1] if sp[0] and "local" in sp[0] and "visit" in sp[0] and sp[1] is not None and sp[1] % 1 != 0 else None,
+                        "p_mercado_handicap": e3.desvig(sp[0]["local"], sp[0]["visit"]) if sp[0] and "local" in sp[0] and "visit" in sp[0] else None})
+    (carpeta / "predicciones_s3b.json").write_text(json.dumps(volcado), encoding="utf8")
     pruebas = [g for g in evaluables if g["temporada"] == prueba]
     mus = {
         "jugadores": {g["pid"]: mu_de(*pred[g["pid"]]) for g in pruebas},

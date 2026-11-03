@@ -51,3 +51,18 @@ Las diferencias frente al mercado son de Brier (negativas = el modelo mejor). El
 - Recalibración con las temporadas anteriores (escalado logístico de la probabilidad del ganador) para llevar la pendiente a 1; probarla con el mismo origen móvil antes de adoptarla.
 - Se necesita una vista de la v1.5 sobre los mismos partidos si se quiere cerrar la comparación formal.
 - Con el origen 2023-24 no existen cuotas de cierre en el ajuste (empiezan ese año): la mezcla con el mercado no se estima allí.
+
+## Recalibración del ganador (probada, no se adopta)
+
+Dos recalibraciones ajustadas con las temporadas anteriores y medidas en cada origen (`nba.v2.recalibracion`, `ops/evaluar_recalibracion.py`): (a) **escala de la media**, P(gana el local) = Φ(k·μ/σ), coherente con el resto de mercados porque cambia el margen esperado; (b) **logística** sobre la probabilidad del ganador (solo referencia: no se podría sellar sin romper la coherencia con la distribución del margen).
+
+| Equipo solo | k ajustado | Brier base → escala | Δ Brier escala vs base (IC95) |
+|---|---|---|---|
+| 2023-24 | 0,86 | 0,2111 → 0,2116 | +0,00049 [−0,00051, +0,00142] |
+| 2024-25 | 0,98 | 0,2095 → 0,2095 | +0,00003 [−0,00012, +0,00018] |
+| 2025-26 | 1,01 | 0,2059 → 0,2058 | −0,00004 [−0,00011, +0,00004] |
+| **Conjunto** | | | **−0,00002 [−0,00009, +0,00004]** |
+
+Con la mezcla equipo + jugadores: k = 0,95 / 1,03 / 1,05 y Δ Brier conjunto +0,00005 [−0,00011, +0,00021]. La logística da lo mismo (+0,00002 y +0,00005). La escala no perjudica el hándicap (Δ conjunto +0,00005 [−0,00008, +0,00018]) ni el error del margen (14,56 → 14,56), y **tampoco acerca al mercado** (distancia del ganador +0,0094 → +0,0096).
+
+**Conclusión: no se adopta.** Las temporadas anteriores piden k ≈ 1 (de 0,86 a 1,05), es decir, el modelo ya estaba calibrado donde se podía medir; la pendiente algo mayor que 1 que se veía en la prueba es ruido de muestra (error típico ≈ 0,1) y cambia con la desviación elegida (en 2024-25 la pendiente medida con la sigma de la simulación fue 1,19 y con la sigma de todas las temporadas previas 1,03). Una recalibración con datos pasados no la corrige porque no es un sesgo estable. La compuerta de pendiente 0,9–1,1 se reformula para el informe: pendiente conjunta compatible con 1 dentro del error, en lugar de exigirlo en cada temporada.

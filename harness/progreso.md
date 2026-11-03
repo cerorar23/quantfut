@@ -6986,3 +6986,5 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Resultado: con tres temporadas de prueba distintas las conclusiones se sostienen; el modelo no supera al cierre en ningún origen (ganador +0,0099 [+0,0071, +0,0127]); los jugadores acercan el modelo al mercado en los tres (−0,0024 a −0,0036 de Brier).
 - Hallazgo: la distancia al mercado se achica con más temporadas de entrenamiento (+0,0119, +0,0099, +0,0078), y la pendiente de calibración del ganador queda algo por encima de 1 (probabilidades tímidas), candidata a recalibración.
 - Límite: la v1.5 solo puede compararse en 2025-26; las cuotas de cierre no existen antes de 2023-24.
+
+- Resultado (F4.1, recalibración): ajustar la escala de la media o la probabilidad con temporadas anteriores no mejora ni acerca al mercado; la pendiente >1 de la prueba es ruido de muestra, no un sesgo estable. No se cambia el motor.
