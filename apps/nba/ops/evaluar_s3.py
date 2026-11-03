@@ -19,6 +19,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from nba.v2 import mercados, nucleo  # noqa: E402
+from nba.v2.evaluacion import brier, ic_diferencia, logloss, pendiente_calibracion, rmse  # noqa: E402,F401
+from nba.v2.referencia import quitar_margen  # noqa: E402
+
+
+def desvig(o1, o2):
+    return quitar_margen([o1, o2])[0]
 from nba.v2.nucleo import Parametros, Ratings  # noqa: E402
 
 N_SIM = 20000
@@ -65,52 +71,6 @@ def recorrer(juegos, p: Parametros):
         nucleo.actualizar(r, j["local"], j["visit"], j["pl"], j["pv"], p, ajuste)
         ultimo[j["local"]] = ultimo[j["visit"]] = dia
     return salida
-
-
-def rmse(a, b):
-    return float(np.sqrt(np.mean((np.asarray(a) - np.asarray(b)) ** 2)))
-
-
-def desvig(o1, o2):
-    q1, q2 = 1 / o1, 1 / o2
-    return q1 / (q1 + q2)
-
-
-def brier(p, y):
-    return float(np.mean((np.asarray(p) - np.asarray(y)) ** 2))
-
-
-def logloss(p, y):
-    p = np.clip(np.asarray(p), 1e-6, 1 - 1e-6)
-    y = np.asarray(y)
-    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))
-
-
-def pendiente_calibracion(p, y):
-    """Regresión logística de y sobre logit(p) (Newton): pendiente 1 y término 0 = calibrado."""
-    x = np.log(np.clip(p, 1e-6, 1 - 1e-6) / (1 - np.clip(p, 1e-6, 1 - 1e-6)))
-    y = np.asarray(y, float)
-    b = np.array([0.0, 1.0])
-    for _ in range(50):
-        z = b[0] + b[1] * x
-        q = 1 / (1 + np.exp(-z))
-        w = q * (1 - q)
-        g = np.array([np.sum(y - q), np.sum((y - q) * x)])
-        h = np.array([[np.sum(w), np.sum(w * x)], [np.sum(w * x), np.sum(w * x * x)]])
-        paso = np.linalg.solve(h + 1e-9 * np.eye(2), g)
-        b += paso
-        if np.abs(paso).max() < 1e-9:
-            break
-    return float(b[1]), float(b[0])
-
-
-def ic_diferencia(p_a, p_b, y, n=2000, semilla=0):
-    """Brier(A) − Brier(B) con intervalo del 95 % por bootstrap pareado (negativo = A mejor)."""
-    p_a, p_b, y = map(np.asarray, (p_a, p_b, y))
-    d = (p_a - y) ** 2 - (p_b - y) ** 2
-    rng = np.random.default_rng(semilla)
-    medias = [d[rng.integers(0, len(d), len(d))].mean() for _ in range(n)]
-    return float(d.mean()), float(np.percentile(medias, 2.5)), float(np.percentile(medias, 97.5))
 
 
 def ajustar(juegos, temporadas_ajuste):
