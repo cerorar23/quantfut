@@ -3270,3 +3270,11 @@ Detalle en docs/nba_rediseno_informe_final_20261103.md.
 - [x] Informe final: resumen, resultados de origen móvil, estado de cada compuerta, riesgos y propuesta por etapas (A prospectiva, B web v2, C retiro de v1, D mantenimiento).
 - [x] Hallazgo: el colector de ESPN de v2 lee el libro `run57` que escribe un contenedor de v1 (`nba-research-capture-run68-v2`); retirar v1 sin sustituirlo detendría el calendario, las horas de salto y los marcadores de v2.
 - [ ] Decisión del titular: etapa A (5–6 semanas de sellos prospectivos), independizar el colector de ESPN, ruta y cuentas de la web v2, mensaje de alerta de prueba. v1 NO se retira sin su aprobación explícita.
+
+### NBA — Promoción de v2 (2026-11-03)
+- [x] `espn_directo` (independiente de v1) en producción con cron cada 15 min; verificado.
+- [x] `nba-api` + web v2 beta públicas en `/nba/v2/` y `/nba/v1/*`; rol de solo lectura `nba_api`.
+- [x] Mensaje de alerta de prueba enviado.
+- [x] v1 detenido (contenedores y productor), `/nba` redirige a `/nba/v2/`; datos de v1 conservados.
+- [ ] Medir la evidencia prospectiva (≥ 250 partidos sellados, cobertura, calibración) y decidir el borrado definitivo de v1 (archivar antes en el PC).
+- [ ] Adaptadores `SalidaPasoA/B`, reentrenos periódicos, cuentas/paywall si se quieren.

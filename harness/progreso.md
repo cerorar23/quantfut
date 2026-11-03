@@ -7014,3 +7014,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Resultado: v2 es calibrado, coherente, sellado y reproducible, y mejora la cobertura de props (73 % → 80–81 %), pero es peor que el cierre del mercado en las tres temporadas de prueba y no mejora el margen de la v1.5; el informe lo dice sin adornos y propone un periodo prospectivo antes de publicar.
 - Hallazgo: v2 depende de v1 sin que constara (el colector de ESPN lee el libro `run57` escrito por `nba-research-capture-run68-v2`); por eso el retiro de v1 queda condicionado a independizar ese colector y a la aprobación explícita del titular.
 - Decisión pendiente: etapas A–D del informe; ninguna se ejecuta sin el visto bueno del titular.
+
+## 2026-11-03 — Promoción de v2 (orden del titular: «de una vez todo»)
+
+- Resultado: v2 queda público como beta en `/nba/v2/` y v1 detenido; el colector `espn_directo` sustituye al ledger de `run57`, que era la única dependencia de v2 hacia v1.
+- Decisión: v1 se detiene pero no se borra (reversible en minutos); `/nba` redirige a v2. Se acorta el periodo prospectivo: la evidencia de los sellos reales se mide en paralelo, ya con v2 publicado y con el aviso beta, en lugar de esperar 5–6 semanas antes de publicar.
+- Decisión: sin cuentas ni paywall por ahora (el piloto v1 también era abierto); si el titular quiere integrarlo con cuentas, es una tarea aparte.
