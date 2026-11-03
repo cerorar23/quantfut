@@ -6988,3 +6988,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Límite: la v1.5 solo puede compararse en 2025-26; las cuotas de cierre no existen antes de 2023-24.
 
 - Resultado (F4.1, recalibración): ajustar la escala de la media o la probabilidad con temporadas anteriores no mejora ni acerca al mercado; la pendiente >1 de la prueba es ruido de muestra, no un sesgo estable. No se cambia el motor.
+
+## 2026-11-03 — F4.2 Monte Carlo
+
+- Decisión: subir el equipo a 100.000 simulaciones porque con 20.000 el error del 1 % peor (0,86 pp) incumplía la compuerta de 0,5 pp y el coste de 100.000 es de 6 ms; los props no tienen Monte Carlo (son analíticos).
+- Hallazgo: la reproducibilidad entre Windows y Linux es exacta bit a bit con la misma versión de numpy; se fija la versión y se conserva el script de huella como prueba al actualizar.
+- Hallazgo: el error de un prop correlaciona +0,10 a +0,13 con el del total del partido y −0,13 con lo desigual en titulares; sin combinaciones en el producto no se simulan conjuntamente, pero no se debe multiplicar un prop por una probabilidad del partido.

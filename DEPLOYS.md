@@ -46,6 +46,10 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 15:35 UTC · NBA: equipo con 100.000 simulaciones en `nba-motor:6b85093` · SOLO imágenes y archivos, rama `nba/rediseno-s0`
+- `imagen_motor` = `nba-motor:6b85093`. G-fuga aprobada antes del cambio (100 partidos de equipo, 60 de jugadores, 5.852 distribuciones sin violaciones); tick de las 15:40 sin errores. El número de simulaciones forma parte de `version_modelo` (`n=100000`).
+- **Vuelta atrás:** `cp imagen_motor.anterior imagen_motor` (vuelve a `nba-motor:233e372`, 20.000 simulaciones).
+
 ### 2026-11-03 04:18 UTC · NBA: contratos Pydantic en las fronteras, `nba-motor:233e372` · SOLO imágenes y archivos, rama `nba/rediseno-s0`
 - `imagen_motor` = `nba-motor:233e372` (pydantic 2.14.2). El motor valida antes de sellar; G-fuga con validación aprobada antes del cambio (5.852 distribuciones, 0 violaciones); tick de las 04:20 sin errores; 192 sellos existentes intactos.
 - La imagen de la API (`nba-api`) lleva pydantic pero sigue sin desplegarse.

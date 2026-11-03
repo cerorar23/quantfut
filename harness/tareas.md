@@ -3242,3 +3242,10 @@ Detalle en docs/nba_rediseno_f41_origen_movil_20261103.md. `ops/resumen_origen_m
 - [ ] F4.2 Monte Carlo; F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
 
 - [x] F4.1 recalibración del ganador (escala de la media y logística): sin efecto (Δ Brier conjunto −0,00002 [−0,00009, +0,00004]); NO se adopta; las temporadas previas piden k ≈ 1.
+
+### NBA — Fase 4, F4.2 Monte Carlo (2026-11-03)
+Detalle en docs/nba_rediseno_f42_montecarlo_20261103.md. `ops/f42_montecarlo.py`, `ops/f42_correlacion_props.py`.
+- [x] Convergencia medida: con 20.000 simulaciones el error medio es 0,26 pp pero el 1 % peor 0,86 pp; con 100.000, 0,12 pp y 0,43 pp como máximo; el motor de equipo simula 100.000 (n en la versión); `nba-motor:6b85093` en el cron.
+- [x] Semillas consecutivas independientes; muestras idénticas bit a bit entre Windows y el contenedor Linux del VPS con numpy 2.1.3.
+- [x] Props: correlación con el resultado del partido medida (+0,10 a +0,13 con el total; −0,13 con lo desigual en titulares): marginales correctos, conjuntas no; sin combinaciones en el producto, no se simula de forma conjunta.
+- [ ] F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
