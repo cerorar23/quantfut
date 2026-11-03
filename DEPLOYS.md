@@ -40,6 +40,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 04:00 UTC · NBA: equipo 2.1 con jugadores en `nba-motor:b874e9a` · SOLO imágenes y archivos, rama `nba/rediseno-s0`
+- `imagen_motor` = `nba-motor:b874e9a` (impacto `81a0df827045`, datos hasta 2026-04-12; props `df758d36f764`). El cron `*/5` sigue igual; desde el siguiente partido sin sello de equipo se sella `equipo-2.1`. Simulacro sin errores y G-fuga de la mezcla aprobada (60/60 en 2.1, 0 diferencias) antes del cambio.
+- Los tres partidos nocturnos del 2-nov quedan con el equipo 2.0 ya sellado (no se duplica).
+- **Vuelta atrás:** escribir `nba-motor:06d13f2` (equipo 2.0 + props) o `nba-motor:88f7759` (solo equipo 2.0) en `imagen_motor`; lo sellado se queda.
+
 ### 2026-11-03 03:35 UTC · NBA: props de jugador en `nba-motor:06d13f2`, alertas del motor · SOLO base de datos, imágenes y archivos, rama `nba/rediseno-s0`
 - `imagen_motor` = `nba-motor:06d13f2` (artefacto de props `df758d36f764`, datos hasta 2026-04-12). El cron `*/5` del motor (activo desde las 01:36 UTC) selló desde las 02:30 los props de 3 partidos nocturnos: 192 pronósticos en total (4 de equipo + 188 de jugador), cadena verificada con `verificar_cadena`.
 - `ejecutar_motor.sh` monta `datos/` para el estado de alertas; `motor.env` (modo 600) recibe `NBA_MOTOR_DIR` y las dos variables del canal de alertas copiadas del `.env` principal. No se mandó ningún mensaje de prueba.

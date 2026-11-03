@@ -3208,3 +3208,10 @@ Detalle en docs/nba_rediseno_props_en_motor_20261103.md. `plantilla_pit`, `motor
 - [x] Alertas operativas del motor por el canal privado existente, una vez por tipo, partido y día.
 - [ ] Jugadores dentro del pronóstico de EQUIPO (mezcla S3b, 14,49 → 14,32): necesita plantilla completa y artefacto de impacto reajustado cada 21 días.
 - [ ] Especiales y combos; desplegar `nba-api` y exponer la web v2 (esperan tu decisión).
+
+### NBA — equipo 2.1: jugadores dentro del pronóstico de equipo (2026-11-03)
+Detalle en docs/nba_rediseno_equipo_con_jugadores_20261103.md. `equipo_jugadores`, `parametros/impacto.json`, `ops/entrenar_impacto.py`; imagen `nba-motor:b874e9a`.
+- [x] Margen sellado = media del rating de equipo y del modelo de jugadores (error 14,19 → 14,05 en validación y 14,49 → 14,32 en prueba); el total no se toca (no mejora en los dos periodos). G-fuga de la mezcla aprobada (60/60 partidos en 2.1, 0 diferencias).
+- [x] Atomicidad de los props corregida (transacción explícita).
+- [ ] Reentrenar el impacto periódicamente (hoy es un artefacto estático hasta 2026-04-12) y publicar imagen nueva.
+- [ ] Alerta específica para partidos del día sin hora de salto.

@@ -6950,3 +6950,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: los props de un partido se sellan todo o nada (una transacción); si fallan, el equipo ya sellado se conserva y el siguiente cron completa.
 - Decisión: la alerta sale una vez por tipo, partido y día; el estado se sembró con lo anterior a la activación para no mandar una avalancha al primer mensaje.
 - Límite: los jugadores no entran aún en el pronóstico del equipo.
+
+## 2026-11-03 — Equipo 2.1 (jugadores en el equipo)
+
+- Decisión: se mezcla solo el margen, porque es lo único que mejora en los dos periodos de evaluación; el total de la mezcla cambia de signo entre validación y prueba y se deja en el núcleo de equipo.
+- Decisión: un solo pronóstico de equipo por partido y corte; la versión (2.0 o 2.1) dice si hubo plantilla suficiente. Sin ella se sella 2.0, nunca con jugadores inventados.
+- Hallazgo: al reordenar el motor se perdió la atomicidad de los props (cada sello se confirmaba solo); la prueba de fallo a mitad lo detectó y ahora van en una transacción explícita.
+- Límite: el artefacto de impacto es estático; sin reentrenos periódicos se degrada (el 3b lo reajustaba cada 21 días).
