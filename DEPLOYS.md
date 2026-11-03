@@ -33,6 +33,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-03 20:15 UTC · NBA: tope de Scrapfly 40/día y jugada a jugada con reserva (imagen `nba-captura:63b8ce3`) · solo imagen y `captura.env`, rama `nba/rediseno-s0`
+- Causa del tope agotado: los 12 partidos del 2-nov terminaron después de las 00:00 UTC y se cobraron al 3-nov (2 créditos por partido más 2 cobrados por 403 tempranos); la jugada a jugada de los primeros partidos gastaba créditos antes de que existieran los box de los últimos.
+- Cambio: la jugada a jugada solo se pide si, tras gastarla, quedan créditos para los box que faltan (1 por box más 1 de reintento); tope diario 25 → 40 (`NBA_SCRAPFLY_TOPE_DIARIO=40` en `captura.env`). Primera pasada real: 3 box recuperados (28 créditos del día).
+- **Vuelta atrás:** `imagen_actual.anterior` (`nba-captura:98d2c10`) y `captura.env.antes-tope40`.
+
 ### 2026-11-03 18:05 UTC · NBA: web y API v2 públicas (beta), ESPN directo y v1 detenido · VPS, Caddy y crons, rama `nba/rediseno-s0` (por orden del titular: «de una vez todo»)
 - **ESPN independiente de v1:** imagen `nba-captura:98d2c10` (`imagen_actual`; anterior `3ca6392` en `imagen_actual.anterior`) con el colector `espn_directo` (marcador de ayer/hoy/mañana y lesiones cada 55 min, originales con hash). Cron `*/15` verificado a las 18:00 UTC (0 fallidos). El cron `espn` (ledger de `run57`) se quitó.
 - **API y web v2:** rol de base `nba_api` (login, solo hereda `nba_lector`; sin INSERT, comprobado), `api.env` modo 600, contenedor `nba-api` (imagen `nba-api:0854ea2`, solo lectura, 384 MB, `restart unless-stopped`) en las redes `nba-red` y nueva `nba-api-red`; `quantfut-caddy-1` conectado a `nba-api-red` (no persiste si se recrea Caddy con compose: repetir `docker network connect nba-api-red quantfut-caddy-1`). Rutas públicas `/nba/v1/*` y `/nba/v2/` (200 también desde Internet) con aviso beta en 6 idiomas. Sin cuentas ni paywall: abierta, como el piloto v1.
