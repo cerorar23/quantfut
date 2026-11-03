@@ -1,6 +1,9 @@
 """Entrenamiento LOCAL del artefacto de impacto por jugador y de las desviaciones de la mezcla equipo + jugadores (versión 2.1 del equipo).
 
-    python apps/nba/ops/entrenar_impacto.py CARPETA SALIDA.json
+    python apps/nba/ops/entrenar_impacto.py CARPETA SALIDA.json [STINTS.pkl LAM_RAPM VIDA_RAPM C_PRIOR LAM_RIDGE]
+
+Con STINTS.pkl (de preparar_stints_s3c.py) el ridge del margen se centra en un a priori por jugador estimado sobre tramos de quinteto
+(S3c); sin él, la configuración anterior (ridge λ = 10 hacia 0).
 
 Reproduce la configuración medida en el Sprint 3b (ridge λ = 10, vida media 730 días, minutos esperados con partes y rol) y:
   1. mide, hacia adelante en 2023-24 y 2024-25, las desviaciones del margen y del total de la MEZCLA (media del rating de equipo y del
@@ -26,7 +29,14 @@ from nba.v2.plantilla import PartidoFila  # noqa: E402
 LAM, VIDA = 10.0, 730.0
 
 
-def main(carpeta: Path, salida: Path):
+def main(carpeta: Path, salida: Path, rapm_args: tuple | None = None):
+    lam, c_prior, rapm = LAM, 0.0, None
+    if rapm_args:
+        import pickle
+        import evaluar_s3c as e3c
+        pkl, lam_rapm, vida_rapm, c_prior, lam = rapm_args
+        rapm = e3c.Rapm(pickle.load(open(pkl, "rb")), lam_rapm, vida_rapm)
+        e3b.prior_en = lambda corte, c, n0=0.0, vida_=0.0: {j: c * b for j, b in rapm.beta(corte).items()}
     juegos, _ = e3.leer(carpeta)
     p_nucleo = Parametros(eta=0.045, arrastre=0.65, eta_liga=0.01, efecto_b2b=2.90)
     mus_nucleo = e3.recorrer(juegos, p_nucleo)                    # también deja j["dias"]
@@ -46,7 +56,7 @@ def main(carpeta: Path, salida: Path):
     validar = {"2023-24", "2024-25"}
     primero = min(g["dia"] for g in juegos if g["temporada"] == temporadas[1])
     val = [g for g in juegos if g["pid"] in registros and g["temporada"] in validar]
-    pred = e3b.predecir_bloques(filas, esperados, val, LAM, VIDA, primero, descansos)
+    pred = e3b.predecir_bloques(filas, esperados, val, lam, VIDA, primero, descansos, c_prior)
     nuc = {g["pid"]: m for g, m in zip(juegos, mus_nucleo)}
     res_m, res_t, res_mj, res_tj = [], [], [], []
     for g in val:
@@ -56,9 +66,11 @@ def main(carpeta: Path, salida: Path):
         res_t.append((g["pl"] + g["pv"]) - (pt + nt) / 2)
         res_mj.append((g["pl"] - g["pv"]) - nm)
         res_tj.append((g["pl"] + g["pv"]) - nt)
-    imp = plantilla.ajustar(filas, LAM, LAM, VIDA)
+    prior = e3b.prior_en(max(g["dia"] for g in juegos) + 1, c_prior) if rapm else None
+    imp = plantilla.ajustar(filas, lam, lam, VIDA, prior_beta=prior)
     artefacto = {
-        "formato": 1, "entrenado": date.today().isoformat(), "datos_hasta": max(g["fecha"] for g in juegos), "lam": LAM, "vida_media_dias": VIDA,
+        "formato": 1, "entrenado": date.today().isoformat(), "datos_hasta": max(g["fecha"] for g in juegos), "lam": lam, "vida_media_dias": VIDA,
+        "a_priori": ({"tipo": "rapm_quintetos", "lam_rapm": rapm_args[1], "vida_rapm": rapm_args[2], "c": c_prior} if rapm else {"tipo": "ninguno"}),
         "partidos_entrenamiento": len(filas), "jugadores": len(imp.beta),
         "c_margen": round(imp.c_margen, 5), "d_margen": round(imp.d_margen, 5), "c_total": round(imp.c_total, 5), "d_total": round(imp.d_total, 5),
         "sigma_margen_mezcla": round(float(np.std(res_m)), 4), "sigma_total_mezcla": round(float(np.std(res_t)), 4),
@@ -73,4 +85,5 @@ def main(carpeta: Path, salida: Path):
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    extra = (sys.argv[3], float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]), float(sys.argv[7])) if len(sys.argv) > 3 else None
+    main(Path(sys.argv[1]), Path(sys.argv[2]), extra)
