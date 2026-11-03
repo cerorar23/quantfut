@@ -28,7 +28,7 @@ LAM, VIDA = 10.0, 730.0
 
 def main(carpeta: Path, salida: Path):
     juegos, _ = e3.leer(carpeta)
-    p_nucleo = Parametros(eta=0.045, arrastre=0.65, eta_liga=0.01, efecto_b2b=2.78)
+    p_nucleo = Parametros(eta=0.045, arrastre=0.65, eta_liga=0.01, efecto_b2b=2.90)
     mus_nucleo = e3.recorrer(juegos, p_nucleo)                    # también deja j["dias"]
     por_pid = {g["pid"]: g for g in juegos}
     for g in juegos:

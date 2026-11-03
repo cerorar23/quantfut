@@ -26,28 +26,39 @@ import numpy as np  # noqa: E402
 from nba.v2.nucleo import Ratings  # noqa: E402
 
 CAJA = """
-SELECT e.fecha_juego_et, d.partido_id, d.entidad_id,
-  max(CASE WHEN m.nombre = 'minutos' THEN d.valor END), max(CASE WHEN m.nombre = 'puntos' THEN d.valor END),
-  max(CASE WHEN m.nombre = 'rebotes' THEN d.valor END), max(CASE WHEN m.nombre = 'asistencias' THEN d.valor END),
-  max(CASE WHEN m.nombre = 'triples_anotados' THEN d.valor END), max(CASE WHEN m.nombre = 'equipo_del_jugador' THEN d.valor END)
-FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id JOIN nba.entidad e ON e.entidad_id = d.partido_id
-WHERE d.fuente = 'nba_oficial' AND d.fase = 'final' AND d.periodo = 0 AND e.canonica_id = e.entidad_id
-  AND m.nombre IN ('minutos', 'puntos', 'rebotes', 'asistencias', 'triples_anotados', 'equipo_del_jugador')
-GROUP BY 1, 2, 3 HAVING max(CASE WHEN m.nombre = 'minutos' THEN d.valor END) > 0
-   AND max(CASE WHEN m.nombre = 'equipo_del_jugador' THEN d.valor END) IS NOT NULL      -- solo jugadores: los equipos también tienen minutos
+WITH f AS (
+  SELECT d.partido_id, d.entidad_id, m.nombre, d.valor,
+         row_number() OVER (PARTITION BY d.partido_id, d.entidad_id, d.metrica_id
+                            ORDER BY CASE d.fuente WHEN 'nba_oficial' THEN 0 WHEN 'sofascore' THEN 1 ELSE 2 END, d.recibido_en DESC, d.dato_id DESC) AS rk
+  FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id
+  WHERE d.fuente IN ('nba_oficial', 'sofascore', 'espn') AND d.fase = 'final' AND d.periodo = 0
+    AND m.nombre IN ('minutos', 'puntos', 'rebotes', 'asistencias', 'triples_anotados', 'equipo_del_jugador'))
+SELECT e.fecha_juego_et, f.partido_id, f.entidad_id,
+  max(CASE WHEN f.nombre = 'minutos' THEN f.valor END), max(CASE WHEN f.nombre = 'puntos' THEN f.valor END),
+  max(CASE WHEN f.nombre = 'rebotes' THEN f.valor END), max(CASE WHEN f.nombre = 'asistencias' THEN f.valor END),
+  max(CASE WHEN f.nombre = 'triples_anotados' THEN f.valor END), max(CASE WHEN f.nombre = 'equipo_del_jugador' THEN f.valor END)
+FROM f JOIN nba.entidad e ON e.entidad_id = f.partido_id AND e.canonica_id = e.entidad_id
+WHERE f.rk = 1
+GROUP BY 1, 2, 3 HAVING max(CASE WHEN f.nombre = 'minutos' THEN f.valor END) > 0
+   AND max(CASE WHEN f.nombre = 'equipo_del_jugador' THEN f.valor END) IS NOT NULL      -- solo jugadores: los equipos también tienen minutos
 ORDER BY 1, 2, 3
 """
 
 REFERENCIA = """
+WITH f AS (
+  SELECT d.partido_id, d.entidad_id, d.valor,
+         row_number() OVER (PARTITION BY d.partido_id, d.entidad_id
+                            ORDER BY CASE d.fuente WHEN 'nba_oficial' THEN 0 WHEN 'sofascore' THEN 1 ELSE 2 END, d.recibido_en DESC, d.dato_id DESC) AS rk
+  FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id
+  WHERE m.nombre = 'puntos' AND d.periodo = 0 AND d.fase = 'final' AND d.fuente IN ('nba_oficial', 'sofascore', 'espn'))
 SELECT e.fecha_juego_et, e.entidad_id, tl.id_en_fuente, tv.id_en_fuente,
-       max(CASE WHEN d.entidad_id = tl.entidad_id THEN d.valor END), max(CASE WHEN d.entidad_id = tv.entidad_id THEN d.valor END)
+       max(CASE WHEN f.entidad_id = tl.entidad_id THEN f.valor END), max(CASE WHEN f.entidad_id = tv.entidad_id THEN f.valor END)
 FROM nba.entidad e
 JOIN nba.entidad tl ON tl.entidad_id = (e.atributos->>'local')::bigint
 JOIN nba.entidad tv ON tv.entidad_id = (e.atributos->>'visitante')::bigint
-JOIN nba.dato d ON d.partido_id = e.entidad_id AND d.periodo = 0 AND d.fase = 'final' AND d.fuente = 'nba_oficial'
-JOIN nba.metrica m ON m.metrica_id = d.metrica_id AND m.nombre = 'puntos'
-WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id AND d.entidad_id IN (tl.entidad_id, tv.entidad_id)
-GROUP BY 1, 2, 3, 4 HAVING count(DISTINCT d.entidad_id) = 2
+JOIN f ON f.partido_id = e.entidad_id AND f.rk = 1 AND f.entidad_id IN (tl.entidad_id, tv.entidad_id)
+WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id
+GROUP BY 1, 2, 3, 4 HAVING count(DISTINCT f.entidad_id) = 2
 ORDER BY 1, 2
 """
 
