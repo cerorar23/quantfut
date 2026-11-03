@@ -3215,3 +3215,9 @@ Detalle en docs/nba_rediseno_equipo_con_jugadores_20261103.md. `equipo_jugadores
 - [x] Atomicidad de los props corregida (transacción explícita).
 - [ ] Reentrenar el impacto periódicamente (hoy es un artefacto estático hasta 2026-04-12) y publicar imagen nueva.
 - [ ] Alerta específica para partidos del día sin hora de salto.
+
+### NBA — carga de SofaScore (todas las temporadas) a nba_datos (2026-11-03)
+Detalle en docs/nba_rediseno_carga_sofascore_20261103.md. `ops/sofascore_a_jsonl.py`, `fuentes/sofascore.py`, `identidad.alias_jugador`.
+- [x] 5.492 partidos terminados de 2021-22 a 2026-27: 93 partidos nuevos, titulares (antes no había), 2.409.592 filas; jugadores emparejados por huella de caja (932) sin conflictos; auditoría cruzada contra nba_oficial con más del 99 % de coincidencia.
+- [ ] Reexportar los CSV de entrenamiento con prioridad nba_oficial > sofascore, repetir S3/S3b/S4, reentrenar props e impacto, G-fuga con ambas fuentes y publicar imagen nueva.
+- [ ] 2021-22 sin titulares fuera de los playoffs; ausentes por partido de SofaScore (no PIT) y árbitros sin cargar.

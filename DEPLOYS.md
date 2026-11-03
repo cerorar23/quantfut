@@ -40,6 +40,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 03:40 UTC · NBA: carga de SofaScore (6 temporadas) a `nba_datos` · SOLO base de datos y archivos, rama `nba/rediseno-s0`
+- Respaldo previo `~/nba-isolated/nba-captura/respaldos/nba_datos_20261103T031925Z.dump`. Archivo `historico/sofascore_nba_eventos.jsonl.gz` (4,9 MB, derivado de `SOFASCORE\data\v3` en el PC). Imagen de carga `nba-motor:1df38de` (la del cron no cambia).
+- 5.492 partidos, 93 partidos nuevos, 2.409.592 filas nuevas (fuente `sofascore`, prioridad 2, `pit = reconstruido`), 932 jugadores emparejados por huella, 61 por nombre (14 canónicos nuevos). Base 3,05 GB, disco 64 %.
+- Motor y colectores siguieron sanos durante la carga (sin errores en las 3 ejecuciones del motor intermedias).
+- **Vuelta atrás:** las filas son solo-anexar; para deshacerlo habría que restaurar el respaldo previo. La fuente `sofascore` se puede ignorar sin tocar datos (prioridad menor que `nba_oficial`).
+
 ### 2026-11-03 04:00 UTC · NBA: equipo 2.1 con jugadores en `nba-motor:b874e9a` · SOLO imágenes y archivos, rama `nba/rediseno-s0`
 - `imagen_motor` = `nba-motor:b874e9a` (impacto `81a0df827045`, datos hasta 2026-04-12; props `df758d36f764`). El cron `*/5` sigue igual; desde el siguiente partido sin sello de equipo se sella `equipo-2.1`. Simulacro sin errores y G-fuga de la mezcla aprobada (60/60 en 2.1, 0 diferencias) antes del cambio.
 - Los tres partidos nocturnos del 2-nov quedan con el equipo 2.0 ya sellado (no se duplica).

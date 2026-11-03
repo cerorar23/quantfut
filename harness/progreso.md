@@ -6957,3 +6957,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: un solo pronóstico de equipo por partido y corte; la versión (2.0 o 2.1) dice si hubo plantilla suficiente. Sin ella se sella 2.0, nunca con jugadores inventados.
 - Hallazgo: al reordenar el motor se perdió la atomicidad de los props (cada sello se confirmaba solo); la prueba de fallo a mitad lo detectó y ahora van en una transacción explícita.
 - Límite: el artefacto de impacto es estático; sin reentrenos periódicos se degrada (el 3b lo reajustaba cada 21 días).
+
+## 2026-11-03 — Carga de SofaScore
+
+- Decisión: `nba_datos` sigue siendo la base principal; SofaScore es una fuente con menos prioridad que `nba_oficial` y se carga completa (todas las temporadas), no solo los huecos, porque da una verificación cruzada de la caja y los titulares.
+- Decisión: los jugadores se emparejan por la huella de la caja en el mismo partido, no por nombre; el nombre solo para quienes no comparten ningún partido.
+- Hallazgo: las dos cajas coinciden en más del 99 % de los datos; las diferencias son correcciones de estadística (minutos 0,25 %, más/menos 0,77 %).
+- Pendiente real: los entrenamientos, las evaluaciones y G-fuga se hicieron solo con nba_oficial; hay que repetirlos con la base nueva antes de la Fase 4.
