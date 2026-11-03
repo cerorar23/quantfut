@@ -9,10 +9,10 @@ from .pit import Instantanea
 
 PARAMETROS = Parametros(eta=0.045, arrastre=0.65, eta_liga=0.01, efecto_b2b=2.90)
 SIGMA_MARGEN, SIGMA_TOTAL = 13.81, 18.43
-N_SIM = 20000
+N_SIM = 100_000                                       # error típico de una probabilidad ≤ 0,16 pp (con 20.000 era 0,35 pp); 6 ms por partido
 NIVELES = tuple(i / 200 for i in range(1, 200))                     # cuantiles 0,5 % … 99,5 % en pasos de 0,5 % (199 valores)
 VERSION_MODELO = (f"equipo-2.0;eta={PARAMETROS.eta};arrastre={PARAMETROS.arrastre};liga={PARAMETROS.eta_liga};"
-                  f"b2b={PARAMETROS.efecto_b2b};sigma={SIGMA_MARGEN}/{SIGMA_TOTAL};margen=proporcional")
+                  f"b2b={PARAMETROS.efecto_b2b};sigma={SIGMA_MARGEN}/{SIGMA_TOTAL};n={N_SIM};margen=proporcional")
 
 
 def _ratings(inst: Instantanea) -> tuple[Ratings, dict]:

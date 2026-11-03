@@ -14,7 +14,7 @@ MIN_CANDIDATOS_POR_EQUIPO = 8
 
 def version(imp) -> str:
     return (f"equipo-2.1;eta={PARAMETROS.eta};arrastre={PARAMETROS.arrastre};liga={PARAMETROS.eta_liga};b2b={PARAMETROS.efecto_b2b};"
-            f"sigma={imp.sigma_margen}/{SIGMA_TOTAL};margen=media(equipo,jugadores);impacto={imp.version}")
+            f"sigma={imp.sigma_margen}/{SIGMA_TOTAL};n={N_SIM};margen=media(equipo,jugadores);impacto={imp.version}")
 
 
 def minutos_esperados_plantilla(pl, par_props) -> dict:

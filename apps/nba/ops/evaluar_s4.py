@@ -142,6 +142,7 @@ def main(carpeta, prueba):
     base5 = np.nanmean(filas["sh"][prueba_m][:, :, -5:], axis=2)
     pids, jids, mps = filas["pid"][prueba_m], filas["jid"][prueba_m], mp[prueba_m]
     lineas = leer_props(carpeta, canon_p, canon_j, set(pids.tolist()))
+    volcado = {"pid": pids.tolist(), "jid": jids.tolist(), "minutos_esperados": mps.tolist()}
     informe = {"k": k, "decaimiento": dec, "alfa": dict(zip(props.ESTADISTICAS, alfas)), "n_filas_prueba": int(prueba_m.sum()), "stats": {}}
 
     for s, nombre in enumerate(props.ESTADISTICAS):
@@ -149,6 +150,7 @@ def main(carpeta, prueba):
         pmf = np.vstack([props.pmf_mezcla(tasa_t[i:i + 4000, s], muestras[i:i + 4000], alfas[s], techo)
                          for i in range(0, len(y), 4000)])
         mu = tasa_t[:, s] * muestras.mean(axis=1)
+        volcado[nombre] = {"y": y[:, s].tolist(), "mu": mu.tolist()}
         pit = props.pit_aleatorio(pmf, y[:, s], semilla=s)
         tr = np.array([minutos.tramo(x) for x in mps])
         sesgo = {f"tramo{t}": float((y[tr == t, s] - mu[tr == t]).mean() / y[tr == t, s].mean()) for t in range(3)}
@@ -175,6 +177,7 @@ def main(carpeta, prueba):
         print(f"{nombre:12s} MASE {r['MASE']:.3f} cob80 {r['cobertura80']:.3f} sesgo {list(sesgo.values())[0]:+.3f}/{list(sesgo.values())[1]:+.3f}/{list(sesgo.values())[2]:+.3f}"
               f" | n línea {ln.get('n')} LL mod {ln.get('logloss_modelo', 0):.4f} mer {ln.get('logloss_mercado', 0):.4f} b5 {ln.get('logloss_media5', 0):.4f}"
               f" | Brier dif {ln.get('dif_brier_vs_mercado', 0):+.4f} {np.round(ln.get('ic95', [0, 0]), 4)} pend {ln.get('pendiente', 0):.2f}")
+    (carpeta / "filas_props.json").write_text(json.dumps(volcado), encoding="utf8")
     (carpeta / "informe_s4.json").write_text(json.dumps(informe, indent=1, ensure_ascii=False), encoding="utf8")
 
 
