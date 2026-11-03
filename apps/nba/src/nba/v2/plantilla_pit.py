@@ -16,7 +16,7 @@ from .pit import Instantanea
 VENTANA_EQUIPO = 10
 V = 30                                    # partidos de historia por jugador
 MIN_PARTIDOS = 5
-DIAS_ATRAS = 500
+DIAS_ATRAS = 2200                       # el modelo validado usa los últimos 30 partidos sin límite de edad (todo el archivo desde 2021)
 METRICAS = ("minutos", "puntos", "rebotes", "asistencias", "triples_anotados")
 
 Q_PLANTEL = """
