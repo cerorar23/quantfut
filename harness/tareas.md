@@ -3524,6 +3524,179 @@ Detalle y medición en `docs/auditoria_consumo_apis_20261028.md`.
 - [ ] Desplegar (PR a `main`, arnés verde, confirmación del titular) y programar el productor diario; comprobar salida del servidor a nba.com/ak-static.
 - [ ] Tras el 1-nov: cuotas históricas y comparar v1.3 con Pinnacle sin margen.
 
+### NBA — rediseño completo, Sprint 0 (2026-11-02)
+Plan técnico docs/nba_rediseno_plan_tecnico_20261102.md (D1-D6 aprobadas) y plan del sprint docs/nba_rediseno_s0_plan_20261102.md. Rama `nba/rediseno-s0` (worktree qf-nba-rediseno).
+- [x] Ejecutor de migraciones aislado `nba.v2.migrar` (rechaza bases que no sean `nba_*`, candado, huella sin depender de CRLF, atómico por archivo).
+- [x] Migraciones 0001-0005 en `apps/nba/db`: 7 tablas `nba.*`, inmutabilidad por sentencia, semillas (9 fuentes, 34 métricas), `nba.dato_a_las(corte)`, vistas de cuotas y roles `nba_escritor`/`nba_lector`. 49 pruebas contra un Postgres 16 desechable (`apps/nba/ops/cluster_prueba.py`).
+- [x] `apps/nba/ops/nba-db/compose.yml` (contenedor propio, sin puerto publicado) validado como YAML.
+- [ ] Desplegar `nba-db` en el VPS (DEPLOYS.md, confirmación del titular, usuarios de login, vuelta atrás) y probar el compose con `docker compose config` allí.
+- [ ] 3 fallos previos en `apps/nba/tests/test_paper_bundle.py` (reloj de los workers; el código no se tocó en esta rama).
+
+### NBA — rediseño completo, Sprint 1a: carga y adaptadores (2026-11-02)
+Plan docs/nba_rediseno_s1_plan_20261102.md. S1 se reparte en S1a (núcleo y adaptadores, sin créditos), S1b (parte oficial, cdn/stats, cuotas, backfill) y S1c (contenedor de captura, cron, usuarios de login, respaldo).
+- [x] `nba.v2.carga` (carga idempotente, `solo_cambios`, conflicto marcado, originales con hash), `nba.v2.equipos` (30 tricodes y alias de ESPN), `nba.v2.identidad` (alias sin falsas fusiones).
+- [x] Adaptador Rotowire (`fuentes/rotowire.py`): quinteto esperado, probabilidad de jugar, árbitros y minutos proyectados; probado con páginas reales (15 partidos).
+- [x] Adaptador ESPN sobre el ledger de run57 (`fuentes/espn.py`): calendario, marcadores finales y lesiones, con «sin_reporte» cuando un jugador deja de figurar. 83 pruebas v2 en verde.
+- [ ] S1b: parte oficial NBA (PDF), cdn.nba.com/stats.nba.com (final), cuotas, backfill desde `.local/normalized`.
+- [ ] S1c: imagen `nba-captura`, cron en el VPS, usuarios de login, respaldo diario fuera del VPS (antes de cargar datos).
+
+### NBA — rediseño completo, Sprint 1c: captura en el VPS (2026-11-02)
+- [x] Imagen `nba-captura`, ejecutor `nba.v2.captura`, usuario `nba_captura`, cron (Rotowire 30 min, ESPN 15 min), respaldo diario con restauración probada. Ver DEPLOYS.md.
+- [x] Carga inicial desde run57: 22.493 filas (8-oct a 2-nov). Rotowire hacia adelante (solo minutos del visitante: los del local son de pago).
+- [ ] Programar en el PC la copia fuera del VPS (`scripts/respaldo_nba_vps.ps1`) si el titular lo quiere (tarea programada de Windows).
+- [ ] S1b: parte oficial NBA (PDF), cdn/stats (final), cuotas, backfill de `.local/normalized`.
+
+### NBA — rediseño completo, Sprint 1b-A: parte oficial y final del partido (2026-11-02)
+- [x] Parte oficial (PDF) a `nba.dato` cada 15 min (gratis) y final de cdn.nba.com (marcador, box score, jugada a jugada) con tope de 25 créditos/día. 124 pruebas v2.
+- [ ] Verificar esta noche (≈ 02:00-04:30 UTC) el primer box score y jugada a jugada reales en `nba_datos` y el gasto de créditos del día.
+- [ ] Respaldo de `stats.nba.com` por ZenRows (D6) si Scrapfly se agota; no implementado.
+- [ ] S1b-B cuotas (archivo PropLine) y S1b-C backfill de `.local/normalized`.
+
+### NBA — rediseño completo, Sprint 1b-B: cuotas (2026-11-02)
+- [x] Cuotas de PropLine (Pinnacle, DraftKings, FanDuel, BetMGM) a `nba.cuota` cada hora desde el archivo compartido, solo cambios, fase cierre a ≤ 60 min. 136 pruebas v2.
+- [ ] Cierres de The Odds API / SharpAPI para los partidos que PropLine no cubra (con tope de créditos).
+- [ ] Recuperar el archivo histórico de PropLine desde el 23-oct (`NBA_PROPLINE_DESDE=0` con lotes) y su efecto en el volumen.
+- [ ] Decidir si se cargan los «milestone» (hoy excluidos) y mercados de periodo (solo q1 en milestone aparece en el archivo).
+
+### NBA — rediseño completo, Sprint 1b-C: cuotas históricas (2026-11-02)
+- [x] bet365 (BetsAPI) 2023-24 a 2025-26, props y moneyline de The Odds API, catálogo de 6.414 juegos y archivo de PropLine desde el 23-oct en `nba.cuota` (4,3 M filas), sin créditos. 146 pruebas v2.
+- [ ] Backfill de box scores y partes de lesiones 2021-26 desde `.local/normalized` (cajas completas, rotaciones, partes oficiales).
+- [ ] Cierres de The Odds API / SharpAPI solo para partidos sin cierre en PropLine ni en el histórico.
+- [ ] Verificar el primer box score real (noche del 2-nov) y el gasto de créditos.
+
+### NBA — rediseño completo, Sprint 1b-D: cajas y partes históricos (2026-11-02)
+- [x] Cajas finales 2021-26 (2,7 M filas) y partes oficiales de lesiones (2.726 partes) a `nba.dato`, sin créditos. 150 pruebas v2.
+- [ ] Reducir los 113 jugadores ambiguos usando el equipo y la temporada como pista.
+- [ ] Rotaciones/quintetos históricos y jugada a jugada histórica (solo hacia adelante por decisión; revisar si basta con SportsDataverse).
+- [ ] Verificar el primer box score real de cdn (noche del 2-nov) y los créditos de Scrapfly.
+- [ ] Subir la rama `nba/rediseno-s0` y programar la copia del respaldo en el PC.
+
+### NBA — rediseño completo, Sprint 2: disponibilidad y minutos (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s2_resultados_20261102.md. Biblioteca `nba.v2.distribucion/minutos/disponibilidad`, evaluación `apps/nba/ops/evaluar_s2.py`.
+- [x] Probabilidad de jugar por estado oficial medida con los partes 2021-26 (Brier 0,0266 en 2025-26, mejor que la convención inicial y que la tasa global).
+- [x] Minutos si juega: decaimiento 0,70 + residuos por tramo; prueba 2025-26: MASE 0,969, cobertura 80 % = 81,5 %, pinball −4,2 % frente a la media de 5 partidos.
+- [ ] Condicionar la probabilidad de jugar al rol (minutos esperados) y añadir compañeros ausentes, titular/banca y minutos de basura al modelo de minutos.
+- [ ] Conectar `instantanea` (lectura punto en el tiempo) con estos módulos para producir escenarios por partido real; hoy son biblioteca sin despliegue.
+
+### NBA — rediseño completo, Sprint 3: núcleo del marcador y mercados de equipo (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s3_resultados_20261102.md. Biblioteca `nba.v2.nucleo/mercados`, evaluación `apps/nba/ops/evaluar_s3.py`.
+- [x] Ratings de ataque/defensa por equipo + distribución conjunta simulada; ganador, hándicap, totales, total de equipo y margen de victoria salen de UNA muestra (G-coherencia: 0 violaciones en 320 partidos).
+- [x] Efecto de jugar en la noche siguiente medido (≈ 2,8 puntos de margen por equipo) y puesto en el modelo.
+- [ ] G-equipo: el modelo está calibrado (pendiente 1,04) pero su Brier es peor que el del cierre (ganador +0,008, hándicap +0,010, total +0,011, IC95 sin cruzar 0); se cierra en S5 con la evaluación única contra v1.5 y mercado.
+- [ ] Meter a los jugadores esperados (S2: P(juega) y minutos) en ataque y defensa del equipo; depende de la tabla de impacto por jugador (S4) y de conectar `nba.dato_a_las`.
+
+### NBA — rediseño completo, Sprint 3b: jugadores dentro del núcleo (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s3b_jugadores_20261102.md. Biblioteca `nba.v2.plantilla`, evaluación `apps/nba/ops/evaluar_s3b.py`, migración 0008.
+- [x] Impacto por jugador (ridge sobre minutos, reajuste cada 21 días) + minutos esperados de la plantilla con partes y rol; el margen baja de 14,49 a 14,32 (RMSE) y el Brier del ganador de 0,2063 a 0,2038 (media de equipo y jugadores).
+- [x] `equipo_del_jugador` como dato (métrica 60) en los cargadores histórico y cdn.nba.com.
+- [ ] G-equipo contra el mercado sigue sin cumplirse (ganador +0,006, IC95 sin cruzar 0); el tope no son los minutos (con los reales, 14,30).
+- [ ] A priori informativo para el impacto de cada jugador (caja por minuto, mas_menos) y titulares confirmados cerca del salto.
+
+### NBA — rediseño completo, Sprint 4: props de jugador (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s4_resultados_20261102.md. Biblioteca `nba.v2.props`, evaluación `apps/nba/ops/evaluar_s4.py`.
+- [x] Puntos, rebotes, asistencias y triples: minutos × tasa con prior por rol y conteo binomial negativa; G-props cumplida (cobertura 80 % entre 80,5 y 81,3 %, MASE 0,95-0,96, mejor que la media de 5 en log-pérdida).
+- [ ] Contra el cierre del mercado no (Brier +0,003 a +0,013); pendiente: ajustar la tasa por contexto del partido (ritmo, rival, compañeros ausentes) con el núcleo del Sprint 3b.
+- [ ] Combos (R+A, PRA), dobles y primer anotador: esperan semanas de cierres de PropLine y la cópula por rol.
+
+### NBA — rediseño completo, Sprint 5: referencia, evaluación única, sellado y G-fuga (2026-11-02)
+Resultados en docs/nba_rediseno_s5_resultados_20261102.md. Módulos `referencia`, `evaluacion`, `pit`, `motor_equipo`, `sellado`; `ops/evaluar_s5.py`, `ops/g_fuga.py`.
+- [x] Método de quitado de margen medido: sin diferencia significativa; se fija proporcional (queda en `version_modelo`).
+- [x] Evaluación única: los scripts de S3, S3b y S4 importan sus métricas de `nba.v2.evaluacion`.
+- [x] Sellado en cadena con candado, rechazo de objetivo posterior al sello y `verificar_cadena`; probado en bases desechables.
+- [x] G-fuga del motor de equipo aprobada en la base real (200 partidos, 0 diferencias); halló y corrigió un error real (arrastre en el primer partido de temporada).
+- [ ] Conectar jugadores (S3b) y props (S4) a la instantánea y repetir G-fuga; primer sellado real con `nba-motor`.
+
+### NBA — rediseño completo, Sprint 6: API de lectura y web NBA (2026-11-03)
+Detalle en docs/nba_rediseno_s6_resultados_20261103.md. `apps/nba/src/nba/api/` (API + web estática en 6 idiomas), `ops/nba-api/Dockerfile`. Sin desplegar ni exponer.
+- [x] API `/nba/v1`: cartelera, partido, línea, jugador, sello y calibración; conexiones de solo lectura; errores como códigos.
+- [x] Web `/nba/v2/` en es, en, pt, fr, it, de con prueba de paridad de traducciones; verificada en el navegador con datos de demostración.
+- [ ] `nba-motor`: proceso que sella cada partido ≈ 60 min antes del salto (sin él la web no muestra pronósticos reales).
+- [ ] Ruta pública, integración con cuentas y bloqueo de pago, rol de solo lectura en la base y despliegue de `nba-api` (esperan tu aprobación del boceto).
+
+### NBA — rediseño completo, nba-motor: sellado por partido (2026-11-03)
+`apps/nba/src/nba/v2/motor.py`, `ops/nba-motor/{ejecutar.sh,README.md}`; imagen `nba-motor:88f7759`; usuario de base `nba_motor`.
+- [x] Proceso que sella cada partido 60 min antes del salto con corte fijo, nunca después del salto, sin sellar con historia atrasada, tolerante a fallos por partido, ignorando juegos canónicos duplicados (10 pruebas).
+- [x] Simulacro con datos reales en el VPS (3 partidos nocturnos del 2-nov): probabilidades plausibles, 0 errores, nada escrito.
+- [ ] Activar el cron `*/5` (línea en `ops/nba-motor/ejecutar.sh`): lo sellado es irreversible, espera tu visto bueno.
+- [ ] Alertas operativas del motor (errores/omitidos) por el canal existente; hoy solo salen en el log.
+
+### NBA — props de jugador sellados por el motor, alertas y G-fuga con jugadores (2026-11-03)
+Detalle en docs/nba_rediseno_props_en_motor_20261103.md. `plantilla_pit`, `motor_jugadores`, `parametros` (+ `parametros/props.json`, `ops/entrenar_props.py`), `alertas`, API de jugadores y pestaña Jugador.
+- [x] El motor sella puntos, rebotes, asistencias y triples de los jugadores de rotación con el mismo corte que el equipo; G-fuga con jugadores aprobada en el VPS (60 partidos, 0 diferencias, cobertura 81,5 %).
+- [x] Alertas operativas del motor por el canal privado existente, una vez por tipo, partido y día.
+- [ ] Jugadores dentro del pronóstico de EQUIPO (mezcla S3b, 14,49 → 14,32): necesita plantilla completa y artefacto de impacto reajustado cada 21 días.
+- [ ] Especiales y combos; desplegar `nba-api` y exponer la web v2 (esperan tu decisión).
+
+### NBA — equipo 2.1: jugadores dentro del pronóstico de equipo (2026-11-03)
+Detalle en docs/nba_rediseno_equipo_con_jugadores_20261103.md. `equipo_jugadores`, `parametros/impacto.json`, `ops/entrenar_impacto.py`; imagen `nba-motor:b874e9a`.
+- [x] Margen sellado = media del rating de equipo y del modelo de jugadores (error 14,19 → 14,05 en validación y 14,49 → 14,32 en prueba); el total no se toca (no mejora en los dos periodos). G-fuga de la mezcla aprobada (60/60 partidos en 2.1, 0 diferencias).
+- [x] Atomicidad de los props corregida (transacción explícita).
+- [ ] Reentrenar el impacto periódicamente (hoy es un artefacto estático hasta 2026-04-12) y publicar imagen nueva.
+- [ ] Alerta específica para partidos del día sin hora de salto.
+
+### NBA — carga de SofaScore (todas las temporadas) a nba_datos (2026-11-03)
+Detalle en docs/nba_rediseno_carga_sofascore_20261103.md. `ops/sofascore_a_jsonl.py`, `fuentes/sofascore.py`, `identidad.alias_jugador`.
+- [x] 5.492 partidos terminados de 2021-22 a 2026-27: 93 partidos nuevos, titulares (antes no había), 2.409.592 filas; jugadores emparejados por huella de caja (932) sin conflictos; auditoría cruzada contra nba_oficial con más del 99 % de coincidencia.
+- [ ] Reexportar los CSV de entrenamiento con prioridad nba_oficial > sofascore, repetir S3/S3b/S4, reentrenar props e impacto, G-fuga con ambas fuentes y publicar imagen nueva.
+- [ ] 2021-22 sin titulares fuera de los playoffs; ausentes por partido de SofaScore (no PIT) y árbitros sin cargar.
+
+### NBA — reentrenamiento con SofaScore (2026-11-03)
+- [x] Exportación con prioridad de fuentes, evaluaciones S3/S3b/S4 repetidas (mismas conclusiones), props e impacto reentrenados, efecto del descanso 2,90 y sigmas nuevas, G-fuga con ambas fuentes aprobada, imagen `nba-motor:a16b019` en el cron.
+- [ ] Reentrenar el impacto y los props periódicamente (hoy artefactos estáticos con datos hasta el 2-nov-2026).
+
+### NBA — Fase 4 (pruebas), F4.0 contratos (2026-11-03)
+Detalle y plan de la fase en docs/nba_rediseno_fase4_contratos_20261103.md. `apps/nba/src/nba/contratos/` (Pydantic estricto).
+- [x] F4.0: contratos Paso A (estimadores), B (fórmulas analíticas) y C (Monte Carlo) + distribuciones selladas; 52 pruebas con casos extremos; los 192 pronósticos reales sellados en producción cumplen los contratos.
+- [ ] Conectar los contratos: validar antes de sellar y al servir (agregar pydantic a las imágenes del motor y la captura); adaptadores que produzcan SalidaPasoA/B desde los módulos actuales.
+- [ ] F4.1 origen móvil; F4.2 Monte Carlo; F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
+
+- [x] F4.0 conexión: los contratos validan antes de sellar (motor) y antes de servir (API, 502 `datos_invalidos`); pydantic en las imágenes; G-fuga valida 5.852 distribuciones reales sin violaciones; `nba-motor:233e372` en el cron.
+- [ ] Adaptadores que produzcan SalidaPasoA/B desde los módulos actuales.
+
+### NBA — Fase 4, F4.1 evaluación de origen móvil (2026-11-03)
+Detalle en docs/nba_rediseno_f41_origen_movil_20261103.md. `ops/resumen_origen_movil.py`; `evaluar_s4.py` generalizado a cualquier origen.
+- [x] Tres orígenes de equipo (2023-24, 2024-25, 2025-26) y dos de props: estables; el modelo es peor que el cierre en todos con IC que no cruza 0; los jugadores ayudan siempre; coherencia y G-props cumplidas.
+- [ ] Recalibración logística del ganador con temporadas previas (pendiente 1,03-1,19), probada con el mismo origen móvil.
+- [ ] F4.2 Monte Carlo; F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
+
+- [x] F4.1 recalibración del ganador (escala de la media y logística): sin efecto (Δ Brier conjunto −0,00002 [−0,00009, +0,00004]); NO se adopta; las temporadas previas piden k ≈ 1.
+
+### NBA — Fase 4, F4.2 Monte Carlo (2026-11-03)
+Detalle en docs/nba_rediseno_f42_montecarlo_20261103.md. `ops/f42_montecarlo.py`, `ops/f42_correlacion_props.py`.
+- [x] Convergencia medida: con 20.000 simulaciones el error medio es 0,26 pp pero el 1 % peor 0,86 pp; con 100.000, 0,12 pp y 0,43 pp como máximo; el motor de equipo simula 100.000 (n en la versión); `nba-motor:6b85093` en el cron.
+- [x] Semillas consecutivas independientes; muestras idénticas bit a bit entre Windows y el contenedor Linux del VPS con numpy 2.1.3.
+- [x] Props: correlación con el resultado del partido medida (+0,10 a +0,13 con el total; −0,13 con lo desigual en titulares): marginales correctos, conjuntas no; sin combinaciones en el producto, no se simula de forma conjunta.
+- [ ] F4.3 estrés; F4.4 ensayo operativo; F4.5 informe y propuesta de promoción.
+
+### NBA — Fase 4, F4.3 estrés (2026-11-03)
+Detalle en docs/nba_rediseno_f43_estres_20261103.md. `tests/v2/test_estres.py`, `test_propiedades.py`, `test_concurrencia.py`.
+- [x] Día de 15 partidos con fuentes caídas, estadísticas ausentes, minutos corruptos, sin historia, base vacía y 8 procesos sellando a la vez: nada se imputa como 0, nada se sella con ratings viejos, la cadena aguanta la concurrencia.
+- [x] Tres arreglos: datos faltantes no valen 0; minutos fuera de (0, 60] no cuentan; equipos con más de 10 días sin resultados se omiten (0 falsos positivos en 212 fechas reales de 2025-26). Imagen verificada `nba-motor:d73c7c5` (NO desplegada: espera la decisión sobre el impacto S3c).
+- [ ] F4.4 ensayo operativo; F4.5 informe final y propuesta de promoción.
+
+### NBA — Fase 4, F4.4 ensayo operativo (2026-11-03)
+Detalle en docs/nba_rediseno_f44_ensayo_operativo_20261103.md. `ops/ensayo_operativo.{sh,py}`, `ops/ensayo_vuelta_atras.sh`.
+- [x] Restauración del respaldo más reciente (78 MB) en 47 s, con sus 6 disparadores de inmutabilidad y la cadena de 192 sellos verificada; manipulación de contenido y eslabón roto detectadas en la copia; vuelta atrás de imagen en 1 s por la ruta real del cron; credenciales del canal de alertas verificadas sin enviar mensajes.
+- [x] Hallazgo: la copia del PC era del 2-nov (370 KB, antes de cargar datos y sellar); se trajo la actual.
+- [ ] Decisión del titular: respaldo del VPS cada 6 h en temporada y tarea diaria en el PC para traer la copia; prueba real de un mensaje de alerta.
+- [ ] F4.5 informe final y propuesta de promoción.
+
+- [x] F4.4 seguimiento: respaldo del VPS cada 6 h (24 copias) y tarea diaria en el PC (10:00) que trae la copia; probados de punta a punta (respaldo de prueba 84 MB ya en el PC).
+
+### NBA — Fase 4, F4.5 informe final y propuesta de promoción (2026-11-03)
+Detalle en docs/nba_rediseno_informe_final_20261103.md.
+- [x] Informe final: resumen, resultados de origen móvil, estado de cada compuerta, riesgos y propuesta por etapas (A prospectiva, B web v2, C retiro de v1, D mantenimiento).
+- [x] Hallazgo: el colector de ESPN de v2 lee el libro `run57` que escribe un contenedor de v1 (`nba-research-capture-run68-v2`); retirar v1 sin sustituirlo detendría el calendario, las horas de salto y los marcadores de v2.
+- [ ] Decisión del titular: etapa A (5–6 semanas de sellos prospectivos), independizar el colector de ESPN, ruta y cuentas de la web v2, mensaje de alerta de prueba. v1 NO se retira sin su aprobación explícita.
+
+### NBA — Promoción de v2 (2026-11-03)
+- [x] `espn_directo` (independiente de v1) en producción con cron cada 15 min; verificado.
+- [x] `nba-api` + web v2 beta públicas en `/nba/v2/` y `/nba/v1/*`; rol de solo lectura `nba_api`.
+- [x] Mensaje de alerta de prueba enviado.
+- [x] v1 detenido (contenedores y productor), `/nba` redirige a `/nba/v2/`; datos de v1 conservados.
+- [ ] Medir la evidencia prospectiva (≥ 250 partidos sellados, cobertura, calibración) y decidir el borrado definitivo de v1 (archivar antes en el PC).
+- [ ] Adaptadores `SalidaPasoA/B`, reentrenos periódicos, cuentas/paywall si se quieren.
+
 ## Respaldo football-data.org (2026-11-01)
 - [x] Diseño, migración db/092, `qf.ingest.fdorg_respaldo`, pruebas y cron (rama `futbol/fdorg-respaldo`, desplegada el 1-nov).
 - [ ] Revisar los términos del plan gratuito de football-data.org antes de activar.

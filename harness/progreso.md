@@ -7198,6 +7198,191 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: tras subir un AAB a Play se registra la versión en `mobile_update_settings` por SSH; `min_build_android` y la obligación solo se tocan cuando esa versión ya está disponible para los usuarios.
 - Pendiente: ID de app y bloque de iOS (cuando exista la app en App Store), autorización de anuncios de apuestas en Meta/AdMob, compra de prueba web con `META_TEST_EVENT_CODE`.
 
+## 2026-11-02 — Rediseño NBA, Sprint 0 (base `nba_datos`)
+
+- Decisión: `nba.dato_a_las(corte)` es el único camino de lectura del motor y cada métrica declara su `resolucion`: `prioridad` (hechos únicos; gana la mejor fuente) o `por_fuente` (disponibilidad y proyecciones, que cambian cada hora; una fila por fuente, la más reciente visible). Sin esto, un parte oficial viejo taparía a un dato más nuevo de otra fuente.
+- Decisión: las tablas de evidencia rechazan UPDATE/DELETE/TRUNCATE con disparadores por sentencia (fallan incluso con `WHERE false` y con `TRUNCATE ... CASCADE`), para que ningún "arreglo rápido" pase por filas vacías.
+- Decisión: la huella de cada migración ignora CRLF/LF; en Windows y en el VPS el mismo archivo debe dar la misma huella.
+- Decisión: el margen de las cuotas no se guarda (vista `nba.cuota_margen`) y el método de quitado de margen queda en `nba.pronostico.version_modelo`.
+- Pendiente: desplegar `nba-db` en el VPS con confirmación; el compose no se probó con Docker (no hay Docker en este PC).
+
+## 2026-11-02 — Rediseño NBA, Sprint 1a (carga y adaptadores)
+
+- Decisión: `guardar_datos(..., solo_cambios=True)` no repite una fila si el último valor visible de esa fuente y clave es idéntico; `nba.dato_a_las` ya devuelve ese valor hasta que cambie, así que guardar cada hora lo mismo solo gastaría espacio.
+- Decisión: la identidad nunca fusiona por duda. Un nombre normalizado igual solo crea alias si hay UN candidato canónico que aún no tiene fila de esa fuente; un segundo id de la misma fuente con el mismo nombre es otra persona.
+- Decisión: de ESPN lesiones solo existe la lista de quienes figuran; quien deja de figurar recibe `sin_reporte` (no «disponible»), porque la ausencia de reporte no prueba que juegue.
+- Decisión: los adaptadores no hacen red; reciben `obtener(url)`. Un error o un 403 deja una captura `ok = false` y ningún dato imputado; los minutos nulos de Rotowire no se rellenan.
+- Hallazgo: ESPN omite `athlete.id` en las lesiones; el id se saca del enlace público del jugador. Rotowire usa los tricodes oficiales; ESPN usa GS/NO/NY/SA/UTAH/WSH.
+- Pendiente: S1b y S1c; nada de S1 está desplegado todavía.
+
+## 2026-11-02 — Rotowire/ESPN a `nba_datos` (Sprint 1c)
+
+- Decisión: Rotowire entrega gratis los minutos proyectados solo del visitante; el endpoint del local responde «debes ser suscriptor». No se paga ni se rodea: se piden solo los visitantes y el aviso de pago queda como captura fallida con su texto.
+- Decisión: el colector prueba siempre la petición directa (gratis) y usa ZenRows solo ante 403/429/503 y con tope diario (30 créditos); hoy ni Rotowire desde el VPS ni la prueba local necesitaron pago.
+- Decisión: ESPN se procesa en lotes de 200 recibos y el estado (`estado_espn.json`) avanza tras confirmar cada lote; un fallo a mitad no pierde el avance ni repite lo ya cargado.
+- Hallazgo: en pretemporada ESPN trae rivales que no son de la NBA (p. ej. «LON»); esos partidos se omiten en lugar de abortar la carga.
+- Hallazgo: `docker exec` sin `-i` no pasa la entrada estándar, y un `pg_restore -l` así falla con «input file is too short»; la prueba de restauración usa `-i`.
+- Pendiente: ninguna captura es de pago salvo el respaldo; falta programar la copia fuera del VPS en el PC del titular y S1b.
+
+## 2026-11-02 — Parte oficial y final del partido (Sprint 1b-A)
+
+- Decisión: un juego es único por (fecha ET, local, visitante). Una misma fuente puede traer ids distintos del mismo juego (el PDF no trae id y se usa uno sintético; cdn trae el real), así que el alias se decide por esa tupla y los datos siempre se escriben bajo el canónico más antiguo.
+- Decisión: el id real de la NBA se reconoce por su forma (10 dígitos); los ids sintéticos del PDF no cuentan.
+- Decisión: el presupuesto de Scrapfly se mide por día UTC con tope 25, y un archivo se reintenta como mucho dos veces (en la prueba real 14 de 30 peticiones a cdn fallaron y se cobraron).
+- Hallazgo: el CDN de los PDF responde 403 (no 404) cuando el PDF de esa hora aún no existe; desde el VPS responde igual que desde el PC, así que no hace falta proxy.
+- Error mío: probé la identidad con fixtures donde el PDF no existía y no vi el choque entre ids sintético y real hasta el despliegue; quedaron 15 canónicos duplicados inertes (la evidencia no se borra).
+
+## 2026-11-02 — Cuotas de PropLine (Sprint 1b-B)
+
+- Decisión: el contrato de una línea principal NO lleva el punto (la línea se mueve y es un valor); el de una alternativa SÍ (cada punto es otro contrato). Así `cuota_cierre` da la línea principal al cierre.
+- Decisión: solo se guarda una cuota cuando cambia el precio o la línea (compara contra el último valor de la misma fase), pero la primera de cada fase se guarda siempre; así el primer precio dentro de la última hora (el cierre) existe aunque no se haya movido.
+- Decisión: casas = Pinnacle (referencia afilada), DraftKings, FanDuel y BetMGM; los «milestone» se omiten porque derivan de las alternativas y multiplican las filas.
+- Hallazgo: en PropLine los totales de equipo vienen como mercado `totals` con el campo `team`; se guardan como `team_totals` con el equipo como entidad.
+- Hallazgo: el id de jugador de PropLine (`nba:NNNN`) coincide con el `personId` de cdn.nba.com, así que las cuotas se unen a box scores sin cruzar nombres.
+- Verificación: márgenes de Pinnacle 2,6-3,8 % en mercados de equipo y ≈ 7 % en props, coherentes con la literatura (fichas 21-23).
+
+## 2026-11-02 — Cuotas históricas (Sprint 1b-C)
+
+- Decisión: se reutilizan los archivos de cuotas que ya existían (bet365 de BetsAPI, props y moneyline de The Odds API) en lugar de comprar un backfill; el instante de cada fila es el de la casa y la adquisición va en la captura `historico`.
+- Decisión: el margen se calcula por contrato, no por línea (en un hándicap los dos lados tienen líneas opuestas).
+- Decisión: en el histórico de props la línea forma parte del contrato porque un mismo jugador, casa y foto trae varias líneas.
+- Error mío: la vista `cuota_margen` de la migración 0004 estaba mal para hándicaps y solo se vio con datos reales; la corrige la 0007. Lección: probar las vistas con datos reales de cada mercado antes de dar un sprint por cerrado.
+- Medida: 3,25 M de filas históricas cargadas en ≈ 7 min; la base ocupa ≈ 290 bytes por cuota con índices.
+
+## 2026-11-02 — Cajas y partes históricos (Sprint 1b-D)
+
+- Decisión: las cajas históricas se cargan en bloque (`guardar_datos_lote`, sin comparar con otras fuentes ni con el valor anterior) porque no hay solape en el tiempo con las capturas hacia adelante; los partes sí van con «solo cambios» y en orden cronológico.
+- Decisión: `recibido_en` de la caja final es la adquisición del archivo y `pit = reconstruido`; las consultas históricas filtran por fecha de juego. Los partes usan la hora del parte.
+- Medida: 2,7 M de filas de caja en ≈ 6 min y 657 mil filas de partes en ≈ 8 min (con «solo cambios» quedan 150 mil); ≈ 300 bytes por fila con índices.
+- Pendiente: 113 jugadores ambiguos (nombre repetido sin equipo como pista) y la unión entre ids de ESPN/Rotowire y los de la NBA depende de ello.
+
+## 2026-11-02 — Sprint 2: disponibilidad y minutos
+
+- Decisión: la probabilidad de jugar sale de medir los partes contra quién jugó (no de una convención). Mi convención inicial era peor (Brier 0,0289 frente a 0,0266 de la tabla medida) y los partes cambian de significado con los años (Probable pasó de 93 % a 71 %), así que la tabla se vuelve a medir cada temporada.
+- Decisión: el decaimiento de los minutos se eligió con 2023-24 y 2024-25 (0,70); con el 0,90 que puse al principio el modelo solo igualaba a la media de 5 partidos. La incertidumbre sale de residuos por tramo de minutos esperados, no de las muestras del historial (daban 74,7 % de cobertura en el intervalo del 80 %).
+- Hallazgo: quien no figura en la caja cuenta como que no jugó; si se excluyen esos casos «Questionable» parece jugar el 80 %, cuando en realidad es ≈ 43 %. Sesgo de selección que hay que evitar en cualquier evaluación de disponibilidad.
+- Límite: Available (84 %) y «sin parte» (84 %) mezclan titulares y fondo de plantilla; falta condicionar al rol.
+
+## 2026-11-02 — Sprint 3: núcleo del marcador y mercados de equipo
+
+- Resultado honesto: un núcleo solo de ratings de equipo queda calibrado pero NO aporta información al cierre de bet365 (peso de mezcla 0,03 contra 1,03 de la línea; RMSE 14,49 frente a 14,04). Coincide con lo que ya decía la calibración de la v1.5; no se intentó forzar la métrica con ajustes sobre la prueba.
+- Decisión: el nivel de liga se actualiza más rápido (0,01) porque la anotación sube cada temporada; con 0,002 el total iba retrasado.
+- Hallazgo: jugar en la noche siguiente cuesta ≈ 2,8 puntos de margen por equipo (3,5 errores estándar) y no mueve el total. Se mide en el ajuste y se fija antes de mirar la prueba.
+- Decisión: coherencia entre mercados por construcción (una sola muestra simulada por partido), no por reconciliación posterior.
+- Siguiente palanca: jugadores esperados dentro del rating de equipo (lo que mueve una línea es quién juega).
+
+## 2026-11-02 — Sprint 3b: jugadores dentro del núcleo
+
+- Decisión: el núcleo v2 promedia el rating de equipo con el de jugadores (margen y total); solo jugadores empeora el total (19,46 frente a 19,12).
+- Hallazgo: el tope no son los minutos esperados. Con los minutos reales del partido el error del margen solo baja a 14,30 (mercado 14,04); lo que falta es saber más de cada jugador, no adivinar quién juega.
+- Decisión: la probabilidad de jugar sin parte se condiciona al rol (53 % bajo 15 minutos esperados, 88 % entre 15 y 25, 98 % con 25 o más); el 84 % global mezclaba titulares seguros con fondo de plantilla.
+- Decisión: el equipo de cada jugador en cada partido es un dato propio (`equipo_del_jugador`, migración 0008); no se deduce de forma fiable después.
+
+## 2026-11-02 — Sprint 4: props de jugador
+
+- Decisión: los props se valoran condicionados a jugar (las casas anulan la apuesta si no juega); la incertidumbre de minutos entra como mezcla sobre muestras de minutos, no como una cola aparte.
+- Hallazgo: la cobertura de conteos bajos no se mide con el PIT de punto medio (88 % falso en triples); se usa el PIT aleatorizado, que es uniforme si la distribución está calibrada.
+- Hallazgo: la cobertura del 80 % pasó de 73 % (v1.5) a ≈ 81 % en las cuatro estadísticas sin reajustar nada contra el mercado.
+- Límite: sin contexto del partido, la probabilidad de superar la línea apenas discrimina (pendientes 0,09-0,61).
+
+## 2026-11-02 — Sprint 5: referencia, evaluación única, sellado y G-fuga
+
+- Decisión: el método de quitado de margen es proporcional; Shin y potencia ganan unas diezmilésimas en favoritos fuertes pero no significativas, y el método queda escrito en `version_modelo` (no en la cuota).
+- Hallazgo: la implementación independiente de G-fuga halló un error real del motor (no aplicaba el arrastre de temporada al primer partido de una temporada nueva, ≈ 2,3 puntos de diferencia). Una compuerta de reproducibilidad sola no lo habría visto; hace falta compararla con un cálculo hecho por otro camino.
+- Decisión: las cajas históricas se aceptan por fecha del partido (su `recibido_en` es la fecha de adquisición del archivo), supuesto escrito en `pit.py`; el motor y el sellado exigen que el corte ya haya pasado.
+- Límite: G-fuga cubre solo el motor de equipo; jugadores y props se enlazan en el Sprint 6.
+
+## 2026-11-03 — Sprint 6: API de lectura y web NBA
+
+- Decisión: la distribución sellada guarda 199 cuantiles (pasos de 0,5 %) para que la API calcule la probabilidad de cualquier línea sin resimular; es la misma información que ya se sellaba, solo más fina (aún no había nada sellado en producción).
+- Decisión: la API no manda texto visible, solo códigos de error; la web los traduce a los 6 idiomas y una prueba exige paridad de claves y cobertura de códigos.
+- Decisión: v2 sigue sin exponerse; el piloto v1 de `/nba` se mantiene hasta que apruebes v2 (después se retira del VPS).
+- Pendiente real: sin el proceso `nba-motor` (sellado por partido) la web no tiene pronósticos que mostrar.
+
+## 2026-11-03 — nba-motor
+
+- Decisión: el corte del pronóstico es `salto − 60 min`, no la hora en que corre el cron; un cron atrasado usa los mismos datos y G-fuga sigue valiendo. Nunca se sella después del salto.
+- Decisión: el cron NO se activa solo: un sello es solo-anexar, y un error del motor quedaría para siempre en la cadena. Se activa con tu visto bueno tras ver el simulacro.
+- Incidente propio: al construir la imagen puse solo la etiqueta (`3ca6392`) en `imagen_actual`, que guarda el nombre completo (`nba-captura:3ca6392`); los crons de captura fallaron de ≈ 00:10 a 01:33 UTC del 3-nov (≈ 1 h 20 min sin Rotowire/ESPN/partes/cdn/PropLine). Corregido; ESPN y partes recuperaron lo pendiente, las fotos de Rotowire de ese tramo no se pueden recuperar.
+
+## 2026-11-03 — Props de jugador en el motor
+
+- Decisión: el servidor no entrena; los parámetros de props son un artefacto JSON versionado (huella en `version_modelo`, normalizada por finales de línea) producido en local.
+- Hallazgo (G-fuga): la plantilla limitaba la historia a 500 días y el modelo validado usa los últimos 30 partidos sin límite de edad; era una diferencia real entre producción y lo evaluado. Corregida y comprobada contra una reconstrucción independiente.
+- Decisión: los props de un partido se sellan todo o nada (una transacción); si fallan, el equipo ya sellado se conserva y el siguiente cron completa.
+- Decisión: la alerta sale una vez por tipo, partido y día; el estado se sembró con lo anterior a la activación para no mandar una avalancha al primer mensaje.
+- Límite: los jugadores no entran aún en el pronóstico del equipo.
+
+## 2026-11-03 — Equipo 2.1 (jugadores en el equipo)
+
+- Decisión: se mezcla solo el margen, porque es lo único que mejora en los dos periodos de evaluación; el total de la mezcla cambia de signo entre validación y prueba y se deja en el núcleo de equipo.
+- Decisión: un solo pronóstico de equipo por partido y corte; la versión (2.0 o 2.1) dice si hubo plantilla suficiente. Sin ella se sella 2.0, nunca con jugadores inventados.
+- Hallazgo: al reordenar el motor se perdió la atomicidad de los props (cada sello se confirmaba solo); la prueba de fallo a mitad lo detectó y ahora van en una transacción explícita.
+- Límite: el artefacto de impacto es estático; sin reentrenos periódicos se degrada (el 3b lo reajustaba cada 21 días).
+
+## 2026-11-03 — Carga de SofaScore
+
+- Decisión: `nba_datos` sigue siendo la base principal; SofaScore es una fuente con menos prioridad que `nba_oficial` y se carga completa (todas las temporadas), no solo los huecos, porque da una verificación cruzada de la caja y los titulares.
+- Decisión: los jugadores se emparejan por la huella de la caja en el mismo partido, no por nombre; el nombre solo para quienes no comparten ningún partido.
+- Hallazgo: las dos cajas coinciden en más del 99 % de los datos; las diferencias son correcciones de estadística (minutos 0,25 %, más/menos 0,77 %).
+- Pendiente real: los entrenamientos, las evaluaciones y G-fuga se hicieron solo con nba_oficial; hay que repetirlos con la base nueva antes de la Fase 4.
+
+## 2026-11-03 — Reentrenamiento con la base nueva
+
+- Resultado: con SofaScore (más partidos, titulares y 2026-27) las evaluaciones de equipo, jugadores y props dan prácticamente lo mismo que antes; los modelos no dependían de un detalle de la caja oficial.
+- Decisión: el efecto del descanso (2,90) y las sigmas se actualizan con la base nueva; eta, arrastre, tasa de liga y la regla «solo el margen se mezcla» no cambian.
+- Aprendizaje: la muestra de 100 partidos de G-fuga cambia cuando cambia el número de partidos; su Brier no es una métrica del modelo (error típico ≈ 0,02), solo la alarma de fuga por debajo de 0,18.
+
+## 2026-11-03 — Fase 4, F4.0: contratos
+
+- Decisión: la Fase 4 empieza por las fronteras entre pasos (Pydantic estricto), con el Paso A definido por sus salidas y no por el tipo de modelo; una red neuronal sería un retador más, sujeto a las mismas compuertas hacia adelante.
+- Decisión: las distribuciones de salida del contrato tienen la forma exacta de lo que ya se sella, para validar lo sellado, lo servido y lo simulado con un solo esquema.
+- Hallazgo: las pruebas con datos absurdos encontraron un hueco real en el contrato (`descanso_dias` aceptaba un equipo faltante); y los 192 sellos reales cumplen los contratos.
+- Límite: los contratos aún no están conectados al motor ni a la API.
+
+- Decisión (F4.0): un contrato incumplido nunca se arregla en silencio: el motor no sella ese partido (o descarta ese jugador) y alerta; la API no sirve ese dato. Los sellos son inmutables, así que la validación va ANTES de sellar.
+- Hecho: los 5.852 distribuciones reales de la comprobación cumplen los contratos; la frontera no rechaza nada legítimo.
+
+## 2026-11-03 — F4.1: origen móvil
+
+- Resultado: con tres temporadas de prueba distintas las conclusiones se sostienen; el modelo no supera al cierre en ningún origen (ganador +0,0099 [+0,0071, +0,0127]); los jugadores acercan el modelo al mercado en los tres (−0,0024 a −0,0036 de Brier).
+- Hallazgo: la distancia al mercado se achica con más temporadas de entrenamiento (+0,0119, +0,0099, +0,0078), y la pendiente de calibración del ganador queda algo por encima de 1 (probabilidades tímidas), candidata a recalibración.
+- Límite: la v1.5 solo puede compararse en 2025-26; las cuotas de cierre no existen antes de 2023-24.
+
+- Resultado (F4.1, recalibración): ajustar la escala de la media o la probabilidad con temporadas anteriores no mejora ni acerca al mercado; la pendiente >1 de la prueba es ruido de muestra, no un sesgo estable. No se cambia el motor.
+
+## 2026-11-03 — F4.2 Monte Carlo
+
+- Decisión: subir el equipo a 100.000 simulaciones porque con 20.000 el error del 1 % peor (0,86 pp) incumplía la compuerta de 0,5 pp y el coste de 100.000 es de 6 ms; los props no tienen Monte Carlo (son analíticos).
+- Hallazgo: la reproducibilidad entre Windows y Linux es exacta bit a bit con la misma versión de numpy; se fija la versión y se conserva el script de huella como prueba al actualizar.
+- Hallazgo: el error de un prop correlaciona +0,10 a +0,13 con el del total del partido y −0,13 con lo desigual en titulares; sin combinaciones en el producto no se simulan conjuntamente, pero no se debe multiplicar un prop por una probabilidad del partido.
+
+## 2026-11-03 — F4.3 estrés
+
+- Hallazgo: tres huecos reales encontrados por las pruebas de estrés (estadística ausente = 0, minutos corruptos aceptados, equipo con ratings viejos sellado cuando solo a él le faltaban resultados); ninguno afectaba a los datos de hoy (la base está limpia) pero sí a cualquier fuente futura.
+- Decisión: la imagen con los arreglos no se despliega mientras esté pendiente la decisión del titular sobre el impacto S3c, para no mezclar cambios de comportamiento con una activación sin aprobar.
+- Corrección: el 3-nov no hubo partidos NBA (elecciones); mi aviso anterior de que los primeros sellos de la imagen 6b85093 saldrían hacia las 22:00 UTC de hoy era falso: salen con los partidos del 4-nov.
+
+- Decisión del titular (3-nov): mantener el impacto S3c (RAPM de quintetos) en producción; se despliegan los arreglos de F4.3 sobre esa base (`nba-motor:d73c7c5`).
+
+## 2026-11-03 — F4.4 ensayo operativo
+
+- Resultado: se restaura y se verifica en menos de un minuto, la manipulación se detecta y la vuelta atrás son 1 s; el punto débil es la distancia entre respaldos (24 h de sellos) y la copia fuera del servidor, que dependía de traerla a mano y estaba desactualizada.
+
+- Decisión del titular (3-nov): respaldo del VPS cada 6 horas y copia diaria al PC programada; así la pérdida máxima de sellos pasa de 24 h a 6 h y la copia fuera del servidor deja de depender de que alguien la traiga.
+
+## 2026-11-03 — F4.5 informe final
+
+- Resultado: v2 es calibrado, coherente, sellado y reproducible, y mejora la cobertura de props (73 % → 80–81 %), pero es peor que el cierre del mercado en las tres temporadas de prueba y no mejora el margen de la v1.5; el informe lo dice sin adornos y propone un periodo prospectivo antes de publicar.
+- Hallazgo: v2 depende de v1 sin que constara (el colector de ESPN lee el libro `run57` escrito por `nba-research-capture-run68-v2`); por eso el retiro de v1 queda condicionado a independizar ese colector y a la aprobación explícita del titular.
+- Decisión pendiente: etapas A–D del informe; ninguna se ejecuta sin el visto bueno del titular.
+
+## 2026-11-03 — Promoción de v2 (orden del titular: «de una vez todo»)
+
+- Resultado: v2 queda público como beta en `/nba/v2/` y v1 detenido; el colector `espn_directo` sustituye al ledger de `run57`, que era la única dependencia de v2 hacia v1.
+- Decisión: v1 se detiene pero no se borra (reversible en minutos); `/nba` redirige a v2. Se acorta el periodo prospectivo: la evidencia de los sellos reales se mide en paralelo, ya con v2 publicado y con el aviso beta, en lugar de esperar 5–6 semanas antes de publicar.
+- Decisión: sin cuentas ni paywall por ahora (el piloto v1 también era abierto); si el titular quiere integrarlo con cuentas, es una tarea aparte.
+
 ## 2026-10-21 — Auditoría de los tres motores (literatura + datos)
 - Hallazgo principal: el ajuste de Dixon-Coles de producción no converge (`success=False` por tope de evaluaciones; gradiente por diferencias finitas sobre 776 parámetros, 23 min) y la suma cero uniforme usa a los equipos sin datos como holgura, por lo que los que vuelven a la liga heredan fuerzas extremas. Con gradiente analítico (3-14 s), suma cero ponderada, ridge en partidos equivalentes y media vida 270, el RPS mejora −0,00084 [−0,00137, −0,00031] sobre 11.920 partidos, concentrado en inicios de temporada.
 - Decisión: el calibrador afín ajustado con el log-loss del 1X2 no identifica el nivel de goles y fuera de muestra empeora; no debe guardarse otro igual. La puerta tiene que medir también mercados de goles.

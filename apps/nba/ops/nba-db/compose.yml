@@ -1,0 +1,37 @@
+# Base propia del rediseño NBA (D1). Proyecto Compose independiente del de fútbol:
+#   NBA_DB_PASSWORD=... docker compose -p nba-db -f apps/nba/ops/nba-db/compose.yml up -d
+# Sin puerto publicado: solo los servicios NBA que se unan a la red `nba-red` la alcanzan.
+# La contraseña viene del entorno del servidor; no vive en el repositorio.
+name: nba-db
+
+services:
+  nba-db:
+    image: postgres:16-alpine
+    container_name: nba-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nba_datos
+      POSTGRES_USER: nba_admin
+      POSTGRES_PASSWORD: ${NBA_DB_PASSWORD:?defina NBA_DB_PASSWORD en el entorno}
+    volumes:
+      - nba_db_datos:/var/lib/postgresql/data
+      - ../../db:/migraciones:ro
+    networks:
+      - nba-red
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nba_admin -d nba_datos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+    pids_limit: 200
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  nba_db_datos:
+    name: nba_db_datos
+
+networks:
+  nba-red:
+    name: nba-red
