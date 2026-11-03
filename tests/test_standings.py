@@ -1,69 +1,90 @@
 """
-Clasificación de API-Football (`/standings`) para las fichas de la web.
+Clasificación calculada con nuestros resultados (`ingest/standings.py`).
 
-Lo que fijan: se leen posición, puntos, partidos y goles; una liga con una
-sola tabla no lleva grupo; la MLS (dos conferencias) sí, para no mezclar dos
-"primeros"; la forma y la descripción se guardan tal cual.
+Lo que fijan: puntos, partidos y goles salen de los partidos cerrados; el orden
+es puntos, diferencia y goles a favor; los grupos (MLS, Argentina) se respetan
+sin mezclar dos "primeros"; las eliminatorias no suman (tope de la fase
+regular); las sanciones se aplican; la forma va del más reciente al más viejo;
+los torneos cortos solo cuentan el semestre en curso.
 """
 from __future__ import annotations
 
-from qf.ingest.standings import parse, season_label
+from datetime import datetime, timezone
+
+from qf.ingest.standings import calcular, desde, season_label
 
 
-def _fila(rank, nombre, pts, group, j=6, g=4, e=1, p=1, gf=12, gc=5, form="WWDLW",
-          desc=None):
-    return {"rank": rank, "team": {"id": rank * 10, "name": nombre}, "points": pts,
-            "group": group, "form": form, "description": desc,
-            "all": {"played": j, "win": g, "draw": e, "lose": p,
-                    "goals": {"for": gf, "against": gc}}}
+def _p(h, a, hg, ag):
+    return {"home_team_id": h, "away_team_id": a, "home_goals": hg, "away_goals": ag}
 
 
-def _resp(*tablas):
-    return [{"league": {"id": 140, "season": 2026, "standings": list(tablas)}}]
+def _por_equipo(filas):
+    return {f["team_id"]: f for f in filas}
 
 
-def test_una_tabla_sin_grupo():
-    filas = parse(_resp([_fila(1, "Barcelona", 16, "LaLiga", desc="Champions League"),
-                         _fila(2, "Real Madrid", 13, "LaLiga")]))
-    assert [(f["grupo"], f["posicion"], f["nombre"], f["puntos"]) for f in filas] == [
-        ("", 1, "Barcelona", 16), ("", 2, "Real Madrid", 13)]
-    f = filas[0]
-    assert (f["jugados"], f["ganados"], f["empatados"], f["perdidos"]) == (6, 4, 1, 1)
-    assert (f["goles_favor"], f["goles_contra"]) == (12, 5)
-    assert f["forma"] == "WWDLW" and f["descripcion"] == "Champions League"
+def test_puntos_partidos_y_goles():
+    t = _por_equipo(calcular([_p(1, 2, 2, 0), _p(2, 3, 1, 1), _p(3, 1, 0, 3)], {}))
+    assert (t[1]["puntos"], t[1]["jugados"], t[1]["ganados"]) == (6, 2, 2)
+    assert (t[1]["goles_favor"], t[1]["goles_contra"]) == (5, 0)
+    assert (t[2]["puntos"], t[2]["empatados"], t[2]["perdidos"]) == (1, 1, 1)
+    assert [f["team_id"] for f in sorted(t.values(), key=lambda f: f["posicion"])] == [1, 2, 3]
+
+
+def test_desempate_por_diferencia_y_goles_a_favor():
+    # 1 y 2 empatan a 3 puntos y diferencia +1; 2 marcó más.
+    filas = calcular([_p(1, 3, 1, 0), _p(2, 4, 3, 2)], {})
+    assert [f["team_id"] for f in sorted(filas, key=lambda f: f["posicion"])][:2] == [2, 1]
 
 
 def test_la_mls_separa_conferencias():
-    filas = parse(_resp([_fila(1, "Inter Miami", 50, "Eastern Conference")],
-                        [_fila(1, "LA Galaxy", 48, "Western Conference")]))
-    assert {(f["grupo"], f["posicion"]) for f in filas} == {
-        ("Eastern Conference", 1), ("Western Conference", 1)}
+    filas = calcular([_p(1, 2, 1, 0), _p(3, 4, 2, 0)],
+                     {1: "Eastern Conference", 2: "Eastern Conference",
+                      3: "Western Conference", 4: "Western Conference"})
+    assert {(f["grupo"], f["posicion"], f["team_id"]) for f in filas if f["posicion"] == 1} == {
+        ("Eastern Conference", 1, 1), ("Western Conference", 1, 3)}
+
+
+def test_las_eliminatorias_no_suman():
+    # Fase regular de 2 partidos por equipo; el tercero de 1 y 2 es eliminatoria.
+    partidos = [_p(1, 2, 1, 0), _p(3, 4, 0, 0), _p(1, 3, 2, 2), _p(2, 4, 1, 0), _p(1, 2, 5, 0)]
+    t = _por_equipo(calcular(partidos, {}, tope=2))
+    assert t[1]["jugados"] == 2 and t[1]["goles_favor"] == 3
+    assert t[2]["jugados"] == 2
+
+
+def test_tope_por_defecto_es_ida_y_vuelta():
+    partidos = [_p(1, 2, 1, 0), _p(2, 1, 1, 0), _p(1, 2, 3, 0)]
+    assert _por_equipo(calcular(partidos, {}))[1]["jugados"] == 2
+
+
+def test_sancion_de_puntos():
+    t = _por_equipo(calcular([_p(1, 2, 1, 0)], {}, sanciones={1: -4}))
+    assert t[1]["puntos"] == -1 and t[1]["posicion"] == 2
+
+
+def test_forma_del_mas_reciente_al_mas_viejo():
+    partidos = [_p(1, 2, 1, 0), _p(1, 3, 0, 0), _p(4, 1, 1, 0)]
+    assert _por_equipo(calcular(partidos, {}, tope=10))[1]["forma"] == "LDW"
+
+
+def test_torneo_corto_cuenta_el_semestre():
+    mx = {"league_id": "mx.liga_mx", "season_style": "apertura_clausura"}
+    assert desde(mx, datetime(2026, 10, 25, tzinfo=timezone.utc)) == datetime(
+        2026, 7, 1, tzinfo=timezone.utc)
+    assert desde(mx, datetime(2027, 2, 3, tzinfo=timezone.utc)) == datetime(
+        2027, 1, 1, tzinfo=timezone.utc)
+    ar = {"league_id": "ar.primera", "season_style": "calendar"}
+    assert desde(ar, datetime(2026, 10, 25, tzinfo=timezone.utc)).month == 7
+    assert desde({"league_id": "es.laliga", "season_style": "european"},
+                 datetime(2026, 10, 25, tzinfo=timezone.utc)) is None
 
 
 def test_respuesta_vacia():
-    assert parse([]) == []
+    assert calcular([], {}) == []
 
 
 def test_etiqueta_de_temporada_igual_que_el_resto():
     assert season_label(2026) == "2627"
-
-
-
-def test_argentina_se_queda_con_la_fase_en_juego():
-    from qf.ingest.standings import vigentes
-    filas = parse(_resp([_fila(1, "River", 30, "Apertura - Group A")],
-                        [_fila(1, "Estudiantes", 29, "Apertura - Group B")],
-                        [_fila(1, "Boca", 20, "Clausura - Group A")],
-                        [_fila(1, "Racing", 19, "Clausura - Group B")]))
-    assert [f["grupo"] for f in vigentes(filas)] == ["Clausura - Group A",
-                                                     "Clausura - Group B"]
-
-
-def test_las_conferencias_no_son_fases():
-    from qf.ingest.standings import vigentes
-    filas = parse(_resp([_fila(1, "Inter Miami", 50, "Eastern Conference")],
-                        [_fila(1, "LA Galaxy", 48, "Western Conference")]))
-    assert len(vigentes(filas)) == 2
 
 
 def test_escudos_se_bajan_una_vez_y_solo_si_son_png(monkeypatch, tmp_path):
@@ -101,27 +122,3 @@ def test_escudos_se_bajan_una_vez_y_solo_si_son_png(monkeypatch, tmp_path):
     assert pedidos == [standings.ESCUDO_URL.format(20), standings.ESCUDO_URL.format(30)]
     assert (tmp_path / "2.png").read_bytes().startswith(b"\x89PNG")
     assert not (tmp_path / "3.png").exists()
-
-
-
-def test_un_id_nulo_se_completa_con_teams(monkeypatch):
-    from qf.ingest import standings
-    pedidos = []
-
-    def get(endpoint, params):
-        pedidos.append(endpoint)
-        return [{"team": {"id": 2289, "name": "Leon"}},
-                {"team": {"id": 2290, "name": "Pachuca"}}], {}
-
-    # 'Club Leon' (clasificación) y 'Leon' (/teams) son el mismo equipo 7.
-    ids = {"Club Leon": (7, None, 100.0), "Leon": (7, None, 100.0),
-           "Pachuca": (8, None, 100.0)}
-    monkeypatch.setattr(standings.af, "get", get)
-    monkeypatch.setattr(standings, "match_team", lambda n, s, l: ids.get(n, (None, None, 0.0)))
-    filas = [{"nombre": "Club Leon", "af_id": None}, {"nombre": "Pachuca", "af_id": None},
-             {"nombre": "America", "af_id": 2287}]
-    assert [f["af_id"] for f in standings.completar_ids(filas, 262, 2026, "mx.liga_mx")] == [
-        2289, 2290, 2287]
-    completas = [{"nombre": "America", "af_id": 2287}]
-    assert standings.completar_ids(completas, 262, 2026, "mx.liga_mx") == completas
-    assert pedidos == ["teams"]          # solo cuando falta alguno

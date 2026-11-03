@@ -36,11 +36,6 @@ def test_liga_nueva_parada_falla_aunque_haya_reconocidas(monkeypatch):
     assert not ok and "xx.nueva" in msg
 
 
-def test_liga_con_fuente_sin_ningun_xg_cuenta_como_parada(monkeypatch):
-    from qf.ingest import xg_worldfootball
-    monkeypatch.setitem(xg_worldfootball.ASSETS, "xx.nueva", "XXX_M_1st_match_shooting.csv")
-    ok, msg = _chequeo(monkeypatch, [_fila("xx.nueva", 2, None)])
-    assert not ok
 
 
 def test_liga_sin_fuente_de_xg_no_alarma(monkeypatch):

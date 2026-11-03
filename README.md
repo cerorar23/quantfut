@@ -9,12 +9,32 @@ infraestructura de credibilidad desde la primera línea.
 
 ---
 
+## Fuentes de datos vigentes (1-nov-2026)
+
+Verificado en el VPS el 1-nov-2026 con los crons, los registros y `ingest_health`. Las secciones de más abajo conservan el
+historial de decisiones y mediciones: donde nombran API-Football, Apify, PitchAPI, BetsAPI, worldfootballR o football-data
+como fuente activa, describen una etapa anterior (todas salvo football-data, que solo aportó histórico, retiradas por el
+titular; sus datos ya cargados se conservan).
+
+| Fuente | Qué aporta |
+|---|---|
+| **PropLine** | Cuotas horarias y cierres (Pinnacle y casas), resultados y calendario. Es la fuente fija de cuotas. |
+| **FotMob** (ZenRows de respaldo) | xG, once, bajas, árbitro, sedes, clima, resultados al pitido y marcador en vivo. |
+| **SportsAPIPro** | Huecos de once y bajas, con ids de SofaScore. |
+| **Scraper SofaScore del VPS** | Archivo de partidos en disco (no escribe en tablas). |
+| **Copernicus ERA5** y **OpenTopoData** | Clima histórico por partido y altitud de estadios. |
+| **football-data.org** | Testigo de calendario y resultados en 10 ligas (`fdorg_respaldo`): solo avisa, nunca escribe en `matches`. |
+| **The Odds API** | Solo respaldo manual por lotes (huecos de cuotas de NBA y tenis, históricos ya autorizados). |
+
+El descanso y la carga (`v_descanso_equipo`, db/093) se calculan con `calendario_equipo` hasta su última carga (22-oct-2026) y
+con los partidos terminados de `matches` después.
+
 ## Estado de las fases
 
 | Fase | Qué es | Estado | Falta |
 |---|---|---|---|
 | **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de API-Football conectado el 12-oct-2026; falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 10 ligas adicionales solo sharp. |
+| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de FotMob (100 % de lo nuevo desde el 28-oct-2026); falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 4 ligas adicionales solo sharp (Championship, 2. Bundesliga, Turquía, Noruega). El 25-oct se retiraron Serie B, LaLiga 2, Allsvenskan, Super League suiza, Ligue 2 y Superliga danesa (historial conservado). |
 | **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-10-08, 24 de 300 (IC [−0,11, +6,03] %, 0 de 3 ligas con muestra propia). Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
 | **3** Publicación y web | Lo que vendes | 🟡 **80%** | Cobros (elegir procesador). Hecho el 7-oct: cuentas, web conectada, correo Proton, panel `/control` |
 | **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
@@ -526,10 +546,10 @@ nada a saber CUÁNTOS habituales faltan, se mida como se mida.
   FUENTES                    VPS CONTABO                     TÚ Y TUS CLIENTES
   ───────                    ───────────                     ─────────────────
 
-  football-data.co.uk ─┐
-  worldfootballR_data ─┤                                    ┌─ Web pública
-  API-Football        ─┼──▶ workers ──▶ Postgres ──▶ API ───┼─ Canal Telegram
-  The Odds API        ─┘      (cron)        │        (interna) └─ Bot
+  PropLine            ─┐
+  FotMob              ─┤                                    ┌─ Web pública
+  SportsAPIPro        ─┼──▶ workers ──▶ Postgres ──▶ API ───┼─ App móvil
+  SofaScore, ERA5     ─┘      (cron)        │        (interna) └─ Alertas Telegram
                                             │
                                             └──▶ Grafana ──────── Solo tú
 ```
@@ -635,14 +655,15 @@ no las haya.
 |---|---|---|
 | Captura de cuotas (desde 2026-10-03 guarda también `book_updated_at`, cuándo cambió cada casa su precio) | cada 10 min | `qf.ingest.odds_worker` |
 | Ráfagas 1X2 para medir la latencia de las casas blandas: T-6 h a T-15 min, ligas de `RAFAGAS_LIGAS`, tabla aparte `odds_rafagas`, tope `RAFAGAS_MAX_CREDITOS_MES` (3.000); se leen con `python -m qf.eval.latencia` | cada 5 min | `qf.ingest.rafagas` |
-| Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | cada hora, :20 | `qf.ingest.af_odds` |
+| Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | retirado el 25-oct (API-Football) | `qf.ingest.af_odds` |
 | Sombra del criterio de picks: registra lo que se habría recomendado (no publica); se liquida con `qf.eval.clv` | cada hora, :25 | `qf.publish.shadow_sharp capture` |
 | Calendario de partidos | 05:15 y 17:15 | `qf.ingest.fixtures` |
 | Cierre de partidos + liquidación (guarda también `matches.stats` completo para las fichas, misma petición) | cada 3 h | `qf.ingest.results` |
-| Clasificación de cada liga para las fichas de la web (1 petición por liga) y escudos nuevos (una vez por equipo, volumen `escudos`, servidos en `/web/escudos/{team_id}.png`) | 06:40 y 22:40 | `qf.ingest.standings` |
-| xG histórico | martes 04:00 | `qf.ingest.xg_worldfootball` |
-| Histórico de copas europeas | martes 04:30 | `qf.ingest.uefa_cups` |
-| Alineaciones a T-60 | cada 5 min | `qf.ingest.lineups` |
+| Clasificación de cada liga para las fichas de la web, calculada con nuestros resultados (sin peticiones), y escudos nuevos (una vez por equipo, volumen `escudos`, servidos en `/web/escudos/{team_id}.png`) | cada hora, :50 | `qf.ingest.standings` |
+| Marcador en juego para la app: listado diario de FotMob, una petición por pasada y solo con partidos en ventana | cada 5 min | `qf.ingest.live` |
+| xG histórico | retirado el 25-oct | `qf.ingest.xg_worldfootball` |
+| Histórico de copas europeas | retirado el 25-oct | `qf.ingest.uefa_cups` |
+| Alineaciones a T-60 (API-Football; las sustituye `sofascore_alineaciones`) | retirado el 25-oct | `qf.ingest.lineups` |
 | Challenger de XI en sombra | cada 5 min, después de la captura | `qf.model.shadow` |
 | Chequeo de salud | 07:00 | `qf.ingest.health` |
 | Predicciones, picks, sellado, publicación (picks apagados con `PUBLISH_PICKS_ENABLED=0`: solo predice y sella) | 08:00 | `qf.publish.daily` |
@@ -833,6 +854,49 @@ verlo: football-data no trae cuotas de esos mercados. Desde entonces cuenta
 cotiza los dos lados, si no la media de las casas de la lista) y sin los dos
 lados cotizados el candidato no entra. Tarjetas y árbitro históricos: `python -m qf.ingest.history_fd tarjetas`.
 
+### Reto al 80 % en 7 días, con NBA y tenis (desde 2026-10-28, decisión del usuario)
+
+El usuario pide que el reto ENTERO se cumpla al menos el 80 % de las veces, buscando
+el acierto y no la cuota, con hasta 7 días para completarlo. Con escalones
+independientes y calibrados, P(completar) = ∏ p, y con el mercado calibrado
+probabilidad × cobro ≈ 1 − margen: un 80 % paga ≈ ×1,15. Regla (`escalera.py`):
+2 escalones; cada uno exige p ≥ (0,80 / ∏ p elegidos)^(1/faltan) (89,4 % el primero;
+con un 95 % el segundo basta con 84,2 %); como mucho 95 % en fútbol y NBA y 97 % en
+tenis (lo calibrado); el más probable primero; cuota ≥ 1,03, sin freeroll; hasta 2
+el mismo día en partidos distintos; 7 días como máximo y luego «expirado» (cobra su
+saldo, no cuenta como cumplido). Un reto a la vez. `db/089`: `prob_objetivo` y
+`dias_max` en `escalera_retos`; los retos anteriores (NULL) terminan con su regla.
+
+NBA y tenis (`publish/escalera_ext.py`): ganador del partido leído del archivo
+PropLine compartido sin peticiones nuevas; probabilidad de Pinnacle sin margen (sin
+Pinnacle en la observación, el partido no entra); cuota, la mejor de `SOFT_BOOKS`;
+liquidación con la calificación de PropLine de la casa del escalón (cada casa aplica
+su regla de retiradas en tenis) y, sin ella, la de Pinnacle; nulo a las 72 h sin
+calificar. El escalón guarda el evento de PropLine (`escalera_pasos.deporte`,
+`evento_*`, sin `match_id`) y su resultado va con `fuente = 'propline'`, sin
+marcador. En el archivo de prueba del 23-oct Pinnacle cotizaba 74 de 146 partidos de
+tenis; de la lista, Bovada, Strendus y BetOnline (bet365 no está en PropLine).
+
+Medido (`python -m qf.eval.escalera_multideporte`: football-data, NBA ganador al
+cierre de bet365 vía BetsAPI, Tennis-Data ATP/WTA con Pinnacle sin margen y cuota de
+bet365; el plazo cuenta desde el primer escalón):
+
+| Datos | Retos | Cumplidos | Fallidos | Expirados | Días | Cobro | Por reto |
+|---|---|---|---|---|---|---|---|
+| Fútbol + tenis 2019-2025 | 539 | **85,9 %** | 10,6 % | 3,5 % | 2,0 | ×1,14 | +1,8 % |
+| Fútbol + NBA + tenis oct-23 a may-25 | 230 | **84,3 %** | 14,8 % | 0,9 % | 1,6 | ×1,14 | −3,3 % |
+| Solo fútbol (1X2 y goles 2,5) | 29 | 41,4 % | 6,9 % | 51,7 % | 5,0 | ×1,19 | +5,7 % |
+| 3 escalones (fútbol + tenis) | 195 | 63,1 % | 7,7 % | 29,2 % | 4,2 | ×1,15 | +3,8 % |
+
+Calibración del tenis (Pinnacle sin margen, 2019-2026): 90-95 % prometido 92,3 %, real
+94,1 % (n=1.128); 95-100 %: 95,8 % y 98,0 % (n=201). Lo que más resta no son los
+fallos sino quedarse sin segundo escalón: con solo fútbol expira la mitad. Ningún
+resultado demuestra ganancia (−3 % a +2 % por reto). Literatura: Dubins y Savage
+(apuesta audaz en juegos desfavorables), sesgo favorito-longshot (Snowberg y Wolfers
+2010; tenis: Forrest y McHale 2007, Lahvička 2014; fútbol: Angelini y De Angelis 2019);
+ninguno encuentra beneficio en cuotas bajas sin ventaja sobre el precio (Kaunitz et al.
+2017).
+
 ## Línea de alta probabilidad (desde 2026-10-06)
 
 Una línea aparte de los picks de valor, pedida por el usuario: los clientes
@@ -858,6 +922,14 @@ valor esperado positivo (favorito ≥ 80 % en football-data 2019-2025: ROI
   más informativo); el tope evita obviedades. Precio de Pinnacle de ≤ 6 h y
   ≥ 15 min antes del inicio; horizonte 36 h; un pronóstico por partido para
   siempre (`UNIQUE`).
+- **Solo con cuota (desde 2026-10-25, decisión del usuario):** un candidato
+  sin cuota de una casa de `SOFT_BOOKS` para ese mercado, lado y línea no
+  entra, ni aquí ni en la ampliada; se descarta ANTES de elegir, así que el
+  partido se queda con el siguiente que sí cotiza. La captura usada es la más
+  reciente (≤ 6 h) que trae a Pinnacle y a alguna casa de los suscriptores:
+  PropLine trae solo a Pinnacle casi todas las horas y las casas cada ~3 h, y
+  la del 25-oct a las 08:00 UTC dejó 18 de 22 pronósticos sin cuota. "Marca
+  un equipo" toma su cuota de la misma captura de PropLine (`_equipos`).
 - **Prueba histórica** (`eval/alta_prob_calibracion.py`, 14.305 partidos,
   firma `d5cbc3151164`), con la regla desplegada el 2026-10-07 (sin "menos
   de 4,5", con "marca un equipo"): pronóstico en 9.021 de 14.216 partidos
@@ -1031,12 +1103,11 @@ Dos cosas que cambian por tener Cloudflare delante, ambas en el `Caddyfile`:
 | Servicio | Plan | Coste | Para qué |
 |---|---|---|---|
 | The Odds API | 20K créditos | $30/mes | Cuotas, Pinnacle, Betfair Exchange |
-| API-Football | Básico | $19/mes | Calendario y alineaciones a T-60 |
-| worldfootballR_data | — | gratis | xG histórico (datos de FBref ya raspados) |
-| football-data.co.uk | — | gratis | 12 años de resultados y cuotas de cierre |
+| Fuentes vigentes | ver «Fuentes de datos vigentes» | — | PropLine, FotMob, SportsAPIPro, SofaScore, ERA5 |
+| football-data.org (v4) | `qf.ingest.fdorg_respaldo` | gratis, 10 peticiones/min | testigo de calendario y resultados en 10 ligas; solo avisa, nunca escribe en `matches` |
 | VPS Contabo | 4 vCPU / 8 GB | ~$9/mes | Todo |
 | Dominio + backups | — | ~$2/mes | — |
-| **Total** | | **~$60/mes** | **~$720/año** |
+| **Total** | | _pendiente de recalcular_ | Las fuentes de pago retiradas ya no cuentan |
 
 **The Odds API cobra en créditos, no en llamadas**: cada llamada cuesta
 `n_mercados × n_regiones`.
@@ -1078,6 +1149,8 @@ pago, datos desde junio de 2020, snapshots cada 5 min desde septiembre de
 lo que permite validar el criterio de selección en Liga MX, Argentina, Brasil
 y MLS, donde football-data solo trae cierre.
 
+> Etapa anterior: API-Football se retiró el 25-oct-2026 (ver «Fuentes de datos vigentes»). Lo que sigue describe esa etapa.
+
 **El plan de API-Football decide si el sistema puede operar, y no por la
 cuota.** Lo que descarta el plan Free no son sus 100 peticiones diarias sino
 que solo da acceso a las temporadas **2022–2024**: pedir la temporada en curso
@@ -1095,6 +1168,38 @@ funciona igual, solo que 30 veces más lento de lo que podría.
 Consumo real de la ingesta operativa, muy por debajo del plan: 13 llamadas por
 pasada de calendario (2/día), 1 por partido terminado y 1 por partido en la
 ventana de alineaciones.
+
+**22-oct-2026: el plan volvió al Free** y desde entonces no entraron resultados
+ni calendario (76 partidos sin cerrar al detectarlo el 24-oct; el chequeo diario
+seguía en verde). Decisión del titular (24-oct): **sustituirlo**. Con
+`RESULTS_PROVIDER=propline`, `fixtures` y `results` leen `/scores` del archivo
+compartido de PropLine (`ingest/propline_partidos.py`, sin peticiones; córners
+del box score) y el xG, tiros, tarjetas y árbitro salen de SofaScore vía Apify
+(`ingest/sofascore_partidos.py`, solo las 13 ligas con modelo, tope 15 USD/mes y
+40 partidos/día). PropLine publica a veces el mismo cruce con local y visitante
+invertidos: el calendario nunca crea un partido si ese cruce ya existe en
+cualquier sentido, y un resultado solo se aplica a un evento con los dos equipos
+en su lado. SofaScore solo escribe si su marcador coincide con el nuestro, lo que
+de paso verifica a PropLine. Comprobado con peticiones reales el 25-oct:
+- API-Football responde `Free plans do not have access to this season` y agota
+  sus 100 peticiones diarias: clasificación parada desde el 22-oct 06:40 UTC y
+  marcador en vivo desde el 22-oct 20:00; las bajas solo entran en la primera
+  pasada tras el reinicio del cupo (40-70 partidos al día).
+- FotMob cubre alineaciones y bajas previas en las 13 ligas con modelo (63/63
+  partidos del 23-24 oct con captura previa, 53 con el once oficial antes del
+  inicio) y en ninguna de las otras 10.
+- SofaScore sí publica xG de las ligas con modelo, Argentina incluida (Talleres
+  0,77 – Defensa y Justicia 0,78, 24-oct); partidos de abril de 2026 no lo tenían.
+  El histórico SofaScore cargado tiene 0/30 con xG en Premier, LaLiga, Serie A,
+  Bundesliga, Ligue 1, Eredivisie y Primeira pese a que la fuente lo publica: revisar esa carga.
+- PropLine no tiene Ligue 2 ni la Superliga danesa (catálogo de 36 competiciones): el titular las retiró de los
+  motores el 25-oct (db/086, desactivadas con su historial sellado intacto).
+- Fuentes desde el 25-oct (decisión del titular): SofaScore vía Apify (rl1987 fútbol, scrapesage NBA y tenis;
+  `azzouzana` sigue roto), PropLine y FotMob como complemento. Conectado el 25-oct: once previsto y bajas de SofaScore;
+  clasificación calculada con nuestros resultados (contra la última foto de API-Football coincide equipo a equipo en las
+  19 ligas, salvo las sanciones de puntos, que van a mano en `standings.SANCIONES`); marcador en vivo del listado diario
+  de FotMob (una petición cada 5 min: el `/scores` de PropLine también lo tiene, pero cada consulta sale del presupuesto
+  diario compartido, que ya va justo con las cuotas). Ningún job de API-Football queda en el cron.
 
 **xG de API-Football habilitado el 12-oct-2026, por decisión del usuario.**
 La exclusión anterior queda revocada. Su cobertura sigue siendo variable:
@@ -1197,6 +1302,20 @@ predicciones; usar estas columnas en el motor es de las fases siguientes. FotMob
 cuenta las tarjetas un poco distinto (~6 % de partidos, +1), que mueve las
 probabilidades de tarjetas en ligas con poco historial. Detalle y reversión:
 [docs/f0_archivo_a_matches_20261014.md](docs/f0_archivo_a_matches_20261014.md).
+
+**Tarjetas a cero de FotMob (corregido el 25-oct-2026).** En Argentina, Brasil y
+parte de México, FotMob deja el bloque de estadísticas de tarjetas en `[0, 0]` en
+2026 aunque la cronología trae cada tarjeta: el relleno guardó ceros falsos (media de
+la liga argentina de 5,0 a 0,5 tarjetas) y el modelo de tarjetas llegó a dar 1,7 en
+un Independiente–Boca, con «menos de 6,5» al 100 %. Ahora, si el bloque trae las
+amarillas a cero (a veces con la roja bien), `extraer` cuenta la cronología para las
+cuatro columnas (sin las del cuerpo técnico; doble amarilla = roja), y si la cronología
+no tiene descanso o trae un tipo desconocido deja NULL. `--reparar-tarjetas` corrigió 776
+partidos ya guardados (ar 409, br 279, mx 83 y 5 de otras ligas) en dos pasadas: 607 con
+las cuatro a cero y 169 con amarillas a cero y alguna roja; 150 siguen igual porque la
+cronología coincide (sin amarillas). Contra API-Football, la
+cronología sin cuerpo técnico coincide en amarillas en ~92-97 % de partidos y en rojas
+en ~99 %.
 
 ### Capa de ajuste por bloques de señales (14-oct-2026)
 
@@ -1340,7 +1459,7 @@ con esas cuotas, coherente con un mercado real); quedan 697 huecos en las 13 lig
 ## Estructura
 
 ```
-db/              001 esquema · 002 ligas · 003 API-Football · 004 Grafana
+db/              001 esquema · 002 ligas · 003 (tablas de la primera fuente de alineaciones) · 004 Grafana
                  005 alias de FBref (revisados a mano, ver el propio archivo)
                  006 estadísticas de remates
                  007 MLS + copas europeas (competición != liga del equipo)
@@ -1354,10 +1473,12 @@ scripts/         setup_fase1.sh · bootstrap_aliases.py · crontab
 tests/           casos sobre datos simulados: recuperación de parámetros,
                  ausencia de fugas point-in-time, unidades del stake
 src/qf/
-  ingest/        odds_worker · fixtures · results · history_fd · health
-                 lineups            XI a T-60 (ventana T-90..T-20)
-                 xg_worldfootball   xG vía releases de worldfootballR_data
-                 uefa_cups          histórico de Champions y Europa League (.rds)
+  ingest/        odds_worker · fixtures · results · health
+                 propline_*         cuotas, cierres, resultados y calendario de PropLine
+                 fotmob_*           captura, alineaciones y resultados de FotMob
+                 sportsapipro_alineaciones  huecos de once y bajas
+                 sofascore_carga    escribe bajas y once con ids de SofaScore
+                 lineups            disponibilidad de titulares (`availability`)
                  game_state         xG por estado del marcador (ver arriba)
   model/         dixon_coles   efectos por liga + fuerza relativa entre ligas
                  kalman        ratings dinámicos (estado latente)
@@ -1398,6 +1519,16 @@ por debajo de 1**.
 
 Sin esa medida el sistema producía su stake MÁXIMO justo donde menos sabía:
 Hull salió a 0,9061 contra un mercado de 0,4659, "edge" del 97%, tier `high`.
+
+**Causa medida en la auditoría del 2026-10-21** (`docs/auditoria_motores_20261021.md`): la suma cero por liga
+promedia también a los equipos sin datos, que el optimizador usa de holgura (por eso quedan extremos), y el ridge
+de 0,02 se diluye con la normalización de los pesos hasta valer ~0,001 partidos. Además el ajuste no converge
+(tope de evaluaciones de L-BFGS-B). La guarda de muestra efectiva los saca de los picks, pero la agenda de la app
+sigue mostrando su 1X2. La corrección propuesta (suma cero ponderada, ridge en partidos equivalentes, gradiente
+analítico) está implementada en la rama `auditoria/motores-20261021` junto con la media vida de 270 días
+(`DECAY_HALFLIFE_DAYS`), el ridge en partidos equivalentes (`RIDGE_PARTIDOS`, 0,5), un calibrador ajustado con
+la verosimilitud del marcador y la agenda de la app mostrando el mercado cuando el modelo no conoce a un equipo.
+Entra en producción con el próximo despliegue y reentrenamiento confirmados.
 Las tres guardas existentes miraban otra cosa —`knows()` comprobaba pertenencia
 al índice, `_confidence()` contaba partidos de toda la vida, y el encogimiento
 de edge recortaba el 97% a un 53% que seguía saturando el tope—. Ahora
@@ -1413,6 +1544,15 @@ parones, ascendidos y cambios bruscos de plantilla que el decaimiento no puede
 expresar. En la medición de arriba empatan en precisión; Kalman gana por
 velocidad (51 s frente a 4.888 s para la misma evaluación fuera de muestra),
 lo que convierte el ajuste de hiperparámetros en rutina.
+
+Remedición desde cero con la tabla única `futbol.dato` (1-nov-2026, 8 ligas, 24/25–25/26):
+el *score-driven* con xG empata con Dixon-Coles (−0,0021 de log-loss, no significativo), el
+mercado les gana a ambos (≈ 0,016–0,019) y el peso óptimo del modelo en la mezcla con el
+mercado es 0; el apilado con LightGBM, la inflación diagonal y el calibrador afín no mejoran.
+Con cuotas reales (PropLine, bet365 y API-Football) el porcentaje de la casa sin margen se cumple (y es conservador) y el motor propio
+promete 5-9 puntos de más; con cuota mínima 1,40 la mejor opción de cada partido acierta ≈ 72-75 % eligiendo entre la escalera de líneas
+y ≈ 65 % con una sola línea. Once, rotación, bajas, definición y entrenador (A3-A7) mueven el 1X2 menos de 0,0012 de log-loss.
+Detalle y estudios en `docs/futbol_rediseno_desde_cero_20261101.md`.
 
 ### Antes de tocar código
 

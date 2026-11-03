@@ -1,0 +1,78 @@
+{
+  "version": "nba-props-residual-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-24 after a coverage probe (units per season, minutes between the odds snapshot and tipoff, availability of the BetsAPI game environment) and before any model-versus-market number of this model was computed. The v1 versus market result (nba_props_vs_market_protocol.json) is known and motivates the question; it is reproduced as an invariant, not re-selected",
+  "question": "Does a market-anchored residual model add calibrated information to the US books' no-vig consensus for points, rebounds, assists and threes, once availability, game environment and rest are available as of the quote? Research only: it never produces a bet, a stake or a pick, promotes nothing, and capturing data does not retrain anything.",
+  "seasons": {"train": "2024-25", "test": "2025-26"},
+  "markets": ["player_points", "player_rebounds", "player_assists", "player_threes"],
+  "units": {
+    "source": "nba.props_link output (The Odds API historical per-event, region us, one snapshot per game) turned into (game, player, market, line) units by nba.props_market.units: consensus no-vig over probability = mean logit of the books, DNP and zero-minute players excluded, pushes dropped, two-sided prices only",
+    "universe_filters": [
+      "the game exists in the extended box games (nba_extended_box_20261024) and in the v1.3 data (RUN071)",
+      "0 < minutes_to_tipoff <= 60: the quote must be after the T-60 injury-report cutoff, otherwise a report could carry information the price did not have (about 1.6k units of 2025-26 are earlier and are dropped and counted)",
+      "the player has at least 10 earlier box rows inside the v1 window (as in nba.props_market)",
+      "the game has a BetsAPI spread and total snapshot at or before the quote time (as-of rule below); units without are dropped and counted"
+    ],
+    "all_lines_primary": "every quoted line of a (game, player, market) is a unit, as in the v1 comparison; the main line (most books, ties to the smaller line) is a secondary subset"
+  },
+  "features": {
+    "anchor": "lk = logit of the consensus no-vig probability (offset with coefficient b, prior 1)",
+    "model_delta": "logit(v1 model probability at the quoted line) - lk; v1 is nba.multimarket player model with empirical weight 0.25, window 20, minimum history 10, unchanged",
+    "availability": {
+      "own_questionable_or_doubtful": "1 if the official report lists the player Questionable or Doubtful",
+      "own_probable": "1 if Probable",
+      "teammates_missing_minutes": "sum over listed teammates of (trailing mean minutes) x (1 - participation rate of their status) / 48, exactly the v1.3 feature (nba.multimarket_v13.player_features)",
+      "reports": "old reports plus the T-60 backfill (the v1.5 candidate arm); a report counts only if stamped at least 60 minutes before tipoff",
+      "participation_table": "Beta(1,1)-smoothed participation rate by status over games of the seasons strictly before the unit's season"
+    },
+    "environment": {
+      "total_c": "(BetsAPI full-game total line as of the quote - mean closing total of all earlier games) / 10",
+      "own_spread": "the player's team full-game spread as of the quote (negative = favourite) / 10, from the BetsAPI home line, sign changed for the away team",
+      "abs_spread": "|spread| / 10 (blowout risk)",
+      "home": "1 if the player's team is the home team",
+      "back_to_back": "1 if the player's team played the previous calendar day (Eastern)",
+      "pace_c": "(own team + opponent) / 2 mean estimated possessions of their last 10 games before the date, minus the mean of all earlier games, / 10",
+      "opp_def_c": "opponent points allowed per estimated possession over their last 10 games before the date, minus the mean of all earlier games, x 10",
+      "min10": "mean minutes of the player's last 10 participations before the date / 48"
+    },
+    "as_of": "every feature uses only information stamped before the quote: box rows and team games from earlier dates only (same-day games excluded), injury reports at least 60 minutes before tipoff, and the latest BetsAPI snapshot whose seconds_before_tip is >= minutes_to_tipoff x 60. Closing BetsAPI lines are used only for the expanding league mean of earlier games",
+    "never_used": ["the realised stat or minutes of the game", "the closing line of the game itself", "any later report", "any bookmaker price of the same prop other than through lk"]
+  },
+  "model": {
+    "form": "per market: logit p = a + b*lk + theta . x, with x standardised on the training units; ridge penalty lambda * ||w - prior||^2 on the mean log loss, prior a = 0, b = 1, theta = 0",
+    "lambda_grid": [0.0001, 0.001, 0.01, 0.1],
+    "lambda_choice": "5 contiguous date blocks inside 2024-25, held-out log loss, one lambda per arm and market",
+    "fit": "on all 2024-25 units, applied unchanged to 2025-26 (no refit on 2025-26 in the primary result)",
+    "arms": {
+      "market": "the raw consensus probability",
+      "A_recalibration": "a, b only",
+      "B_model": "A + model_delta",
+      "C_availability": "B + the three availability features",
+      "D_environment": "B + the eight environment features",
+      "E_full": "B + availability + environment (the primary candidate)"
+    },
+    "walk_forward_secondary": "arm E refit monthly: for each calendar month of 2025-26, train on 2024-25 plus the 2025-26 units dated before that month, same lambda, predict the month; pooled over the season"
+  },
+  "metrics": {
+    "scores": ["Brier", "log loss", "bias", "calibration slope and intercept (y on logit p) on the test season"],
+    "difference": "paired Brier difference arm - raw market, mean over units, with a bootstrap resampling whole dates (400 replicates, seed 20261025)",
+    "interval": "98.75% (Bonferroni over the four markets)",
+    "strata_descriptive": ["starters (min10 >= 28/48) versus bench", "main line only", "line tercile within market"]
+  },
+  "controls": {
+    "placebo_permutation": "arm E is refit and evaluated after permuting the availability and environment columns among units of the same date and market (seed 20261025); it must not show an improvement whose upper bound is below 0, otherwise the pipeline leaks and the run is void",
+    "reproduction_invariant": "on the unfiltered priced units the 2025-26 paired Brier difference of v1 against the market must equal the published props_market_comparison.json value to 1e-9 for every market, otherwise the run aborts",
+    "row_alignment": "all arms are scored on the identical unit set"
+  },
+  "decision_rule": {
+    "adds_information": "per market: the upper bound of the 98.75% interval of (E - raw market) Brier on 2025-26 is below 0 AND the walk-forward pooled Brier of E is below the raw market's AND the test calibration slope of E is in [0.9, 1.1]",
+    "calibration_only": "E beats the market but E - A_recalibration has an interval that includes 0: the gain is calibration of the market, not new information",
+    "otherwise": "no evidence that the model adds information for that stat; the market remains the reference and this is a valid result",
+    "scope": "necessary, not sufficient, for any use; it says nothing about prices a customer can get, limits, alternative lines or Pinnacle. Single early snapshot, US books only. No economic claim is made"
+  },
+  "outputs": {
+    "report": "props_residual_report.json (all arms, intervals, strata, placebo, walk-forward, drops)",
+    "coefficients": "props_residual_coefficients.json per market: arm E weights and lambda, promoted false",
+    "forward_test": "the same fitted E is to be scored, unchanged, on the PropLine archive as it accumulates (consensus of the six US books present on both sides, Pinnacle as a separate series); not part of this run"
+  }
+}

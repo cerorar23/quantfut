@@ -39,8 +39,8 @@ def test_la_ruta_publica_no_envia_la_cuota_de_lo_bloqueado_pero_la_app_si(monkey
     from qf.api import mobile
     c = _client(monkeypatch)
     soon = datetime.now(timezone.utc) + timedelta(days=1)
-    filas = [{"match_id": f"m{i}", "market": "totals", "texto": "x", "prob": 0.87, "ref_price": 1.15 + i / 100,
-              "kickoff_utc": soon, "league_id": "gb.premier_league", "local": "A", "visitante": "B"} for i in (1, 2)]
+    filas = [{"match_id": f"m{i}", "market": "totals", "texto": "x", "prob": 0.87, "ref_price": 1.40 + i / 100,
+              "kickoff_utc": soon, "league_id": "gb.premier_league", "local": "A", "visitante": "B", "batch_date": "2026-10-27"} for i in (1, 2)]
     monkeypatch.setattr(mobile, "high_rows", lambda: filas)
     monkeypatch.setattr(mobile, "allocations", lambda rows, stream: {"m1"})   # m2 queda bloqueado
     web = c.get("/alta-probabilidad").json()
@@ -48,7 +48,7 @@ def test_la_ruta_publica_no_envia_la_cuota_de_lo_bloqueado_pero_la_app_si(monkey
     assert "cuota" not in web["vip"][0]
     assert not {"selection", "line", "prob", "ref_price", "fit", "texto"} & web["vip"][0].keys()
     app = mobile.high_probability()
-    assert app["vip"][0]["cuota"] == 1.17            # lo que ve la app no cambia
+    assert app["vip"][0]["cuota"] == 1.42            # lo que ve la app no cambia
 
 
 def test_escalera_publica_no_envia_la_cuota_de_lo_bloqueado(monkeypatch):
@@ -68,13 +68,16 @@ def test_el_publico_de_la_web_ve_un_solo_gratis_y_la_app_conserva_sus_cuatro(mon
     c = _client(monkeypatch)
     soon = datetime.now(timezone.utc) + timedelta(days=1)
     probs = {"m1": 0.80, "m2": 0.91, "m3": 0.85, "m4": 0.78}
-    filas = [{"match_id": k, "market": "totals", "texto": f"t{k}", "selection": "over", "line": 2.5, "prob": p, "ref_price": 1.2,
-              "kickoff_utc": soon, "league_id": "gb.premier_league", "local": "A", "visitante": "B"} for k, p in probs.items()]
+    fila = lambda k, p, cuota: {"match_id": k, "market": "totals", "texto": f"t{k}", "selection": "over", "line": 2.5,
+                                "prob": p, "ref_price": cuota, "kickoff_utc": soon, "league_id": "gb.premier_league",
+                                "local": "A", "visitante": "B", "batch_date": "2026-10-27"}
+    # 31 publicados: a la app le tocan 4 gratis (10 % hacia arriba), los cuatro de cuota 1,45.
+    filas = [fila(k, p, 1.45) for k, p in probs.items()] + [fila(f"x{i}", .75, 1.2) for i in range(27)]
     monkeypatch.setattr(mobile, "high_rows", lambda: filas)
     monkeypatch.setattr(mobile, "allocations", lambda rows, stream: set(probs))      # los cuatro son gratis
     web = c.get("/alta-probabilidad").json()
     assert [p["match_id"] for p in web["proximos"]] == ["m2"]                         # queda el de mayor probabilidad
-    assert sorted(v["match_id"] for v in web["vip"]) == ["m1", "m3", "m4"]
+    assert {"m1", "m3", "m4"} <= {v["match_id"] for v in web["vip"]} and len(web["vip"]) == 30
     for v in web["vip"]:
         assert v["locked"] is True
         assert not {"cuota", "texto", "selection", "line", "prob", "ref_price", "fit"} & v.keys()
@@ -95,8 +98,8 @@ def test_la_cuenta_vip_ve_todos_los_pronosticos_en_la_web(monkeypatch):
     try:
         soon = datetime.now(timezone.utc) + timedelta(days=1)
         probs = {"m1": 0.80, "m2": 0.91, "m3": 0.85, "m4": 0.78}
-        filas = [{"match_id": k, "market": "totals", "texto": f"t{k}", "selection": "over", "line": 2.5, "prob": p, "ref_price": 1.2,
-                  "kickoff_utc": soon, "league_id": "gb.premier_league", "local": "A", "visitante": "B"} for k, p in probs.items()]
+        filas = [{"match_id": k, "market": "totals", "texto": f"t{k}", "selection": "over", "line": 2.5, "prob": p, "ref_price": 1.45,
+                  "kickoff_utc": soon, "league_id": "gb.premier_league", "local": "A", "visitante": "B", "batch_date": "2026-10-27"} for k, p in probs.items()]
         monkeypatch.setattr(mobile, "high_rows", lambda: filas)
         monkeypatch.setattr(mobile, "allocations", lambda rows, stream: {"m1"})     # solo uno gratis; los otros tres, VIP
         r = c.get("/alta-probabilidad")

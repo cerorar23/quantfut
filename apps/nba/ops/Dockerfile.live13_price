@@ -1,0 +1,8 @@
+ARG NBA_LIVE13_BASE
+FROM ${NBA_LIVE13_BASE}
+USER root
+COPY src/nba /app/src/nba
+USER 1001:1001
+WORKDIR /app
+# Takes only the prices that are due; the arguments come from live13_price.sh. No secret is baked into the image.
+CMD ["python","-m","nba.live_market","capture-pending"]

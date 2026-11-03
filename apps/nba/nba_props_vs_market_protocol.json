@@ -1,0 +1,37 @@
+{
+  "version": "nba-props-vs-market-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-24 after the quotes were bought and linked (docs/nba_props_historicos_descarga_20261024.md) but before any model-versus-market number was computed",
+  "question": "At the real lines US books quoted, does the v1 player-prop probability add information beyond the market's no-vig probability? Research only: it never produces a bet, a stake or a pick, and capturing data promotes nothing.",
+  "seasons": ["2024-25", "2025-26"],
+  "markets": ["player_points", "player_rebounds", "player_assists", "player_threes"],
+  "model": {
+    "definition": "v1 player count model of multimarket.player_parameters / player_over at the quoted line (negative binomial blended with the empirical sample), history strictly before the game date, window 20, min history 10",
+    "empirical_weight": 0.25,
+    "empirical_weight_source": "selected in v1.2 on the 2023-24 selection season only (comparison_v12.json); not re-selected here",
+    "not_modeled": ["injuries and availability", "opponent, pace, home/away", "any bookmaker input"],
+    "conditioning": "conditional on playing: quotes of players with no box row, or 0 minutes, are excluded (voided bet); counted in the report"
+  },
+  "market": {
+    "source": "The Odds API historical per-event endpoint, region us, one snapshot 30 minutes before tipoff (nba.props_history)",
+    "unit": "(game, player, market, line)",
+    "devig": "per book proportional (1/over)/(1/over + 1/under); consensus = mean of the books' logits",
+    "price_rules": "decimal prices finite and > 1; book overround 1/over + 1/under - 1 within [-0.02, 0.25]; the line must be quoted two-sided; pushes (actual == line) dropped",
+    "not_closing_line": "a single early snapshot, not the closing price"
+  },
+  "metrics": {
+    "scores": ["Brier", "log loss", "bias"],
+    "differences": "paired Brier difference model - market with a 95% bootstrap that resamples whole dates (400 replicates, seed 20261024)",
+    "information_weight": "c in logit(p) = logit(market) + c * (logit(model) - logit(market)); maximum likelihood per market and season; 95% interval is cluster-robust by game date (sandwich), not a bootstrap",
+    "walk_forward": "c fitted on 2024-25 and applied unchanged to 2025-26; Brier of that blend against the market on 2025-26",
+    "blend_5050": "equal logit blend, reported for reference"
+  },
+  "decision_rule": {
+    "adds_information": "per market: lower 95% bound of c > 0 in both seasons AND the walk-forward blend has a lower Brier than the market on 2025-26 (point estimate)",
+    "better_than_market": "per market: upper 95% bound of (model Brier - market Brier) < 0 in both seasons",
+    "otherwise": "no evidence that the model adds information over the market for that stat; the market is the reference and this is a valid result",
+    "scope": "necessary, not sufficient, for any commercial use; says nothing about prices a customer can get, limits, or alternative lines"
+  },
+  "stats": {"bootstrap": 400, "seed": 20261024},
+  "output_artifact": "props_blend.json: c per market (fitted on 2024-25, and on both seasons for the final value), for use as a research prior; not promoted"
+}

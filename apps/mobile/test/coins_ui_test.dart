@@ -8,6 +8,7 @@ import 'package:gobet/product/coin_burst.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_rewards.dart';
 import 'package:gobet/product/live_widgets.dart';
+import 'package:gobet/product/qf_theme.dart';
 
 const languages = ['es', 'en', 'pt', 'fr', 'it', 'de'];
 
@@ -151,6 +152,36 @@ void main() {
     expect(find.byType(CoinBurst), findsOneWidget);
     expect(find.text('+40 monedas'), findsOneWidget);
     await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('Coins tiene una sola acción ámbar', (tester) async {
+    await open(tester, rewards(signedIn: true));
+    final amber = tester
+        .widgetList<FilledButton>(find.byType(FilledButton))
+        .where((b) => b.style?.backgroundColor?.resolve(<WidgetState>{}) == QfColors.cta)
+        .toList();
+    expect(amber, hasLength(1));
+    expect(amber.single.key, const ValueKey('coins-claim'));
+    // Texto oscuro sobre ámbar, no blanco.
+    expect(amber.single.style?.foregroundColor?.resolve(<WidgetState>{}), QfColors.onCta);
+  });
+
+  testWidgets('la semana son 7 casillas: hechas con ✓ y hoy con borde ámbar', (tester) async {
+    await open(tester, rewards(signedIn: true));
+    for (var i = 0; i < 3; i++) {
+      expect(
+        find.descendant(of: find.byKey(ValueKey('coins-day-$i')), matching: find.byIcon(Icons.check)),
+        findsOneWidget,
+        reason: 'día $i hecho',
+      );
+    }
+    final today = tester.widget<Container>(find.byKey(const ValueKey('coins-day-3')));
+    final border = (today.decoration as BoxDecoration).border as Border;
+    expect(border.top.color, QfColors.cta);
+    expect(
+      find.descendant(of: find.byKey(const ValueKey('coins-day-4')), matching: find.byIcon(Icons.check)),
+      findsNothing,
+    );
   });
 
   testWidgets('ya marcada hoy: cuenta atrás en vez de botón', (tester) async {

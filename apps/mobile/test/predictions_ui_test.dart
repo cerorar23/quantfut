@@ -8,6 +8,7 @@ import 'package:gobet/product/live_parley.dart';
 import 'package:gobet/product/live_picks.dart';
 import 'package:gobet/product/live_widgets.dart';
 import 'package:gobet/product/predictions_switcher.dart';
+import 'package:gobet/product/qf_theme.dart';
 
 const languages = ['es', 'en', 'pt', 'fr', 'it', 'de'];
 
@@ -134,12 +135,32 @@ void main() {
 
   group('menú de secciones', () {
     test('deslizar a la izquierda avanza y a la derecha retrocede, sin salirse', () {
-      expect(PredictionsSwitcher.swipe('high', -800), 'ladder');
-      expect(PredictionsSwitcher.swipe('ladder', -800), 'parley');
-      expect(PredictionsSwitcher.swipe('parley', -800), 'parley');
-      expect(PredictionsSwitcher.swipe('parley', 800), 'ladder');
-      expect(PredictionsSwitcher.swipe('high', 800), 'high');
-      expect(PredictionsSwitcher.swipe('ladder', 100), 'ladder'); // roce corto
+      const all = ['high', 'ladder', 'parley'];
+      expect(PredictionsSwitcher.swipe('high', -800, all), 'ladder');
+      expect(PredictionsSwitcher.swipe('ladder', -800, all), 'parley');
+      expect(PredictionsSwitcher.swipe('parley', -800, all), 'parley');
+      expect(PredictionsSwitcher.swipe('parley', 800, all), 'ladder');
+      expect(PredictionsSwitcher.swipe('high', 800, all), 'high');
+      expect(PredictionsSwitcher.swipe('ladder', 100, all), 'ladder'); // roce corto
+    });
+
+    test('deslizar solo recorre las secciones que ofrece el deporte', () {
+      expect(PredictionsSwitcher.swipe('high', -800, const ['high']), 'high');
+      expect(PredictionsSwitcher.swipe('high', 800, const ['high']), 'high');
+      expect(PredictionsSwitcher.swipe('high', -800, const ['high', 'parley']), 'parley');
+    });
+
+    testWidgets('las secciones ausentes no se pintan y el indicador usa el primario', (tester) async {
+      await pump(
+        tester,
+        PredictionsSwitcher(value: 'high', onChanged: (_) {}, streams: const ['high']),
+        code: 'es',
+      );
+      expect(find.byKey(const ValueKey('streams-high')), findsOneWidget);
+      expect(find.byKey(const ValueKey('streams-ladder')), findsNothing);
+      expect(find.byKey(const ValueKey('streams-parley')), findsNothing);
+      final indicator = tester.widget<Container>(find.byKey(const ValueKey('streams-indicator')));
+      expect((indicator.decoration as BoxDecoration).color, QfColors.primary);
     });
 
     testWidgets('tocar cambia de sección, mueve el indicador y muestra los contadores', (tester) async {
@@ -153,6 +174,7 @@ void main() {
             return PredictionsSwitcher(
               value: value,
               onChanged: (v) => set(() => value = v),
+              streams: const ['high', 'ladder', 'parley'],
               badges: const {'high': 5, 'ladder': 4},
             );
           },

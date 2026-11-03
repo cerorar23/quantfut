@@ -89,6 +89,8 @@ def cargar_ultimo(carpeta: str) -> AjusteXI | None:
 def estado_xi(carpeta: str, max_edad_s: int = ESTADO_MAX_EDAD_S) -> jugadores.EstadoXI:
     """Estado de fuerzas y onces hasta ahora. Se guarda en disco: recorrer 870.000 apariciones tarda minutos."""
     ruta = f"{carpeta}/{ESTADO_ARCHIVO}"
+    if jugadores.lectura_canonica():
+        ruta += ".canonica"   # el estado por id canónico no se mezcla con el guardado por id de FotMob
     if os.path.exists(ruta) and time.time() - os.path.getmtime(ruta) < max_edad_s:
         with open(ruta, "rb") as f:
             return pickle.load(f)
@@ -103,13 +105,20 @@ def estado_xi(carpeta: str, max_edad_s: int = ESTADO_MAX_EDAD_S) -> jugadores.Es
 def once_confirmado(match_id: str) -> tuple[pd.DataFrame, object, float] | None:
     """(apariciones con equipo, momento de la captura, minutos al saque) de la última captura OFICIAL con los dos lados."""
     from ..db import query
+    # Con la lectura canónica el estado del jugador va por el id canónico: el once previo (ids de FotMob) se traduce
+    # con `futbol.jugador_fuente_id`; un id sin pareja usa el negativo determinista de `futbol.id_sintetico`.
+    id_jugador = ("COALESCE(cj.jugador_id, futbol.id_sintetico('fotmob', jp.jugador_id))"
+                  if jugadores.lectura_canonica() else "jp.jugador_id")
+    enlace = ("LEFT JOIN futbol.jugador_fuente_id cj ON cj.fuente = 'fotmob' AND cj.id_en_fuente = jp.jugador_id"
+              if jugadores.lectura_canonica() else "")
     filas = query(
-        """SELECT jp.side, jp.jugador_id, jp.titular, jp.posicion_id, jp.valor_mercado, jp.capturado_en,
+        f"""SELECT jp.side, {id_jugador} AS jugador_id, jp.titular, jp.posicion_id, jp.valor_mercado, jp.capturado_en,
                   fp.mins_to_kickoff,
                   CASE WHEN jp.side = 'home' THEN m.home_team_id ELSE m.away_team_id END AS equipo_id
            FROM fotmob_jugador_previo jp
            JOIN fotmob_previo fp ON fp.match_id = jp.match_id AND fp.capturado_en = jp.capturado_en
            JOIN matches m ON m.match_id = jp.match_id
+           {enlace}
            WHERE jp.match_id = %s AND fp.tipo_alineacion = 'standard'
              AND jp.capturado_en = (SELECT max(f2.capturado_en) FROM fotmob_previo f2
                                     WHERE f2.match_id = jp.match_id AND f2.tipo_alineacion = 'standard')""", (match_id,))

@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 D="docker compose exec -T worker"
 
-echo "==> 1/7  Esquema de base de datos"
+echo "==> 1/4  Esquema de base de datos"
 docker compose up -d db cache
 sleep 8
 # 006 y 007 son ALTER TABLE y seed: van aqui. Los ficheros de ALIAS (005, 008,
@@ -19,13 +19,7 @@ for f in db/001_schema.sql db/002_seed_leagues.sql db/003_api_football.sql \
     || echo "    (ya aplicado, se omite)"
 done
 
-echo "==> 2/7  Verificar los IDs de liga de API-Football"
-$D python -m qf.ingest.api_football
-
-echo "==> 3/7  Backfill historico (football-data.co.uk, ~10 min)"
-$D python -m qf.ingest.history_fd
-
-echo "==> 4/7  Emparejamiento de nombres entre fuentes"
+echo "==> 2/4  Emparejamiento de nombres entre fuentes"
 $D python scripts/bootstrap_aliases.py
 echo
 echo "    DETENTE AQUI si quedaron nombres pendientes."
@@ -43,17 +37,10 @@ for f in 005_fbref_aliases.sql 008_mls_aliases.sql 009_argentina_aliases.sql \
     -f "/docker-entrypoint-initdb.d/$f" || true
 done
 
-echo "==> 5/7  Calendario y xG"
+echo "==> 3/4  Calendario"
 $D python -m qf.ingest.fixtures
-$D python -m qf.ingest.xg_worldfootball
 
-# Las copas van DESPUES del xG y del backfill: uefa_cups nunca crea equipos, asi
-# que si los clubes de LaLiga o Premier no existen todavia descarta todos los
-# partidos en silencio.
-echo "==> 6/7  Historico de Champions y Europa League"
-$D python -m qf.ingest.uefa_cups
-
-echo "==> 7/7  Entrenar el primer modelo y chequear salud"
+echo "==> 4/4  Entrenar el primer modelo y chequear salud"
 $D python -m qf.model.train
 $D python -m qf.ingest.health
 

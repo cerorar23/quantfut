@@ -8,6 +8,8 @@ import '../l10n/app_locale.dart';
 import '../core/meta_events.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 import 'rewards_progress.dart';
 
 enum AdShow { earned, dismissed, failedToLoad }
@@ -229,21 +231,21 @@ class AdsCard extends StatelessWidget {
         : waiting
         ? l10n.adsWaitFor(AttendanceState.clock(wait))
         : status;
-    return Container(
+    return Padding(
       key: const ValueKey('coins-ads'),
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: liveCyan.withValues(alpha: .35)),
-      ),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: QfCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.ondemand_video, color: liveGold, size: 28),
+              Container(
+                width: 40,
+                height: 40,
+                color: QfColors.surface2,
+                child: const Icon(Icons.play_arrow, color: QfColors.primary, size: 22),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -254,7 +256,7 @@ class AdsCard extends StatelessWidget {
                     liveText(
                       l10n.adsProgress(used, cap),
                       size: 12,
-                      color: liveMuted,
+                      color: QfColors.text2,
                     ),
                   ],
                 ),
@@ -265,26 +267,19 @@ class AdsCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: liveCyan,
-                foregroundColor: liveBg,
-                padding: const EdgeInsets.all(15),
-                shape: const StadiumBorder(),
-              ),
+              style: qfFilled(QfColors.primary),
               onPressed: enabled && remaining > 0 && !waiting ? onWatch : null,
-              child: Text(
-                l10n.adsWatchCta(coins),
-                style: const TextStyle(fontFamily: 'Gilroy Bold', fontSize: 15),
-              ),
+              child: Text(l10n.adsWatchCta(coins)),
             ),
           ),
           if (note != null) ...[
             const SizedBox(height: 8),
-            liveText(note, size: 12, color: liveGold),
+            liveText(note, size: 12, color: QfColors.text2),
           ],
           const SizedBox(height: 8),
-          liveText(l10n.adsFootnote, size: 11, color: liveMuted),
+          liveText(l10n.adsFootnote, size: 11, color: QfColors.text2),
         ],
+      ),
       ),
     );
   }

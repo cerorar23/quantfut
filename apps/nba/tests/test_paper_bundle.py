@@ -57,6 +57,8 @@ def test_claimed_state_cannot_be_copied_into_second_worker(portable):
 
 
 def prepared_worker(portable,monkeypatch):
+    # The production deadline is an absolute date; keep it ahead of the tests' real-time clock.
+    monkeypatch.setattr(paper_bundle,'DEADLINE_UTC',(NOW+timedelta(days=30)).isoformat())
     paper_bundle.build_bundle('portable_plan','initial.sqlite','bundle')
     # The bundle's manifest is intentionally stored at its runtime workspace root.
     shutil.copyfile('bundle/bundle_manifest.json','bundle_manifest.json')
@@ -76,7 +78,7 @@ def test_waiting_worker_does_not_read_key_or_query(portable,monkeypatch):
 
 def test_worker_deadline_never_collects_and_clock_rollback_holds(portable,monkeypatch):
     prepared_worker(portable,monkeypatch)
-    health,done=worker.tick(portable,portable/'deadline','absent_key',clock=lambda:paper_followup.utc('2026-10-22T12:00:00Z'),runner=lambda *a:pytest.fail('deadline'))
+    health,done=worker.tick(portable,portable/'deadline','absent_key',clock=lambda:NOW+timedelta(days=31),runner=lambda *a:pytest.fail('deadline'))
     assert done and health['state']=='deadline_exhausted'
     worker.tick(portable,portable/'clock','absent_key',clock=lambda:NOW)
     health,done=worker.tick(portable,portable/'clock','absent_key',clock=lambda:NOW-timedelta(seconds=1))

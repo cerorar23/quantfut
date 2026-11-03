@@ -1,0 +1,30 @@
+{
+  "version": "nba-multimarket-research-1.4b",
+  "amends": "nba-multimarket-research-1.4 (docs/nba_multimarket_v14_20261021.md: relative missing value alone did not improve team markets); RUN071, v1.2, v1.3, v1.4 and the live v1.3 cohort untouched",
+  "frozen_before_running": true,
+  "inherits": "multimarket_v14_protocol.json, multimarket_v13_protocol.json, multimarket_v12_protocol.json (sources, T-60 rule, windows, ridge, seeds, bootstrap, reference lines, G League category)",
+  "hypothesis": "v1.3's absolute missing value also carried roster-depth information that the form window lags on; keeping it and adding the relative term (already-in-form absences removed) should recover that signal and add what v1.4 isolated",
+  "terms": {
+    "absolute": "sum trailing_value * (1 - play_probability), as in v1.3",
+    "relative": "sum trailing_value * (share_played - play_probability), as in v1.4",
+    "winner_model": "v1.2 logistic features + [abs_missing_points_home/10, abs_missing_points_away/10, rel_missing_points_home/10, rel_missing_points_away/10]; ridge prior 0 on all added weights, l2 0.002",
+    "team_points_model": "v1.2 ridge shift on [b2b_own, b2b_opp, abs_own/10, abs_opp/10, rel_own/10, rel_opp/10, 1]; penalty 5 on all but the intercept",
+    "player_model": "per market logistic on [logit(v1.2 probability), 1, own_questionable_or_doubtful, own_probable, teammates_abs_missing_minutes/48, teammates_rel_missing_minutes/48], ridge prior [1,0,0,0,0,0]"
+  },
+  "participation_floor": {
+    "rule": "play probability per category is clipped to [0.02, 0.98] after the Beta(1,1)-smoothed estimate; the 0.02 value is fixed a priori (about one chance in fifty that a listed Out plays) and is not tuned",
+    "applies_to": "all categories, in the missing-value terms and in the participation log loss"
+  },
+  "variants": {
+    "v13": "reference: v1.3 exactly (absolute term, v1.3 categories, no floor)",
+    "both": "candidate: absolute + relative terms, G League category, floor",
+    "abs_floor": "ablation: absolute term only, G League category, floor",
+    "both_nofloor": "ablation: absolute + relative terms, G League category, no floor"
+  },
+  "primary_comparison": "both vs v13 on identical rows, test seasons 2024-25 and 2025-26 only; paired Brier difference with 95% date bootstrap (400 replicates, seed 20261021). Secondary: both vs abs_floor (value of the relative term given the floor).",
+  "markets": ["winner", "team_points", "game_total", "player_points", "player_rebounds", "player_assists", "player_threes", "player_steals", "player_blocks"],
+  "secondary": ["participation log loss of the floored and unfloored G League tables vs the v1.3 table on the same listed rows", "fitted weights of the absolute and relative terms"],
+  "decision_rule": "adopt `both` for the team markets only if, in BOTH test seasons, the upper 95% bound of the paired Brier difference vs v13 is <= 0 for winner or team_points (at least one of them) and <= +0.0005 for the other; otherwise v1.3 stays. Improvement is reported, not promoted. The floor is adopted for the participation table if it lowers the participation log loss vs the v1.3 table in both seasons.",
+  "promotion": "none; retrospective, seasons already inspected with v1.1-v1.4, exploratory; the live module keeps v1.3 until a separate change",
+  "not_modeled": ["bookmaker prices and CLV", "report timing beyond the T-60 rule", "late scratches", "positions"]
+}

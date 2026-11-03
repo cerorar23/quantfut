@@ -123,3 +123,57 @@ def blend_logit(model_p: np.ndarray, market_p: np.ndarray, w_model: float) -> np
     b = np.log(np.clip(market_p, EPS, 1))
     z = np.exp(w_model * a + (1 - w_model) * b)
     return z / z.sum(axis=1, keepdims=True)
+
+
+def pav(y: np.ndarray, pesos: np.ndarray | None = None) -> np.ndarray:
+    """Regresión isotónica creciente (pool-adjacent-violators) de `y`, ya ordenada por el pronóstico."""
+    y = np.asarray(y, dtype=float)
+    w_in = np.ones_like(y) if pesos is None else np.asarray(pesos, dtype=float)
+    vals, ws, largos = [], [], []
+    for v, w in zip(y, w_in):
+        vals.append(v); ws.append(w); largos.append(1)
+        while len(vals) > 1 and vals[-2] > vals[-1]:
+            w2 = ws[-2] + ws[-1]
+            vals[-2] = (vals[-2] * ws[-2] + vals[-1] * ws[-1]) / w2
+            ws[-2] = w2; largos[-2] += largos[-1]
+            vals.pop(); ws.pop(); largos.pop()
+    return np.repeat(vals, largos)
+
+
+def _puntuacion(p: np.ndarray, y: np.ndarray, score: str) -> float:
+    if score == "brier":
+        return float(np.mean((p - y) ** 2))
+    p = np.clip(p, EPS, 1 - EPS)
+    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+
+def murphy(p: np.ndarray, y: np.ndarray, score: str = "brier") -> dict:
+    """
+    Descomposición de Murphy de un pronóstico binario (Dimitriadis-Gneiting-Jordan, CORP; Pohle 2020):
+    puntuación = UNC − DSC + MCB. MCB (descalibración) y DSC (resolución) salen de recalibrar con PAV; UNC es la
+    puntuación de la climatología. Un pronóstico calibrado pero sin resolución es climatología con otro nombre.
+    """
+    p = np.asarray(p, dtype=float); y = np.asarray(y, dtype=float)
+    # Los pronósticos iguales se recalibran juntos (CORP): se agrupan antes del PAV.
+    unicos, inv = np.unique(p, return_inverse=True)
+    cuenta = np.bincount(inv)
+    recal = pav(np.bincount(inv, weights=y) / cuenta, cuenta)[inv]
+    s, s_rc = _puntuacion(p, y, score), _puntuacion(recal, y, score)
+    unc = _puntuacion(np.full_like(p, y.mean()), y, score)
+    return {"score": s, "mcb": s - s_rc, "dsc": unc - s_rc, "unc": unc, "n": int(len(y))}
+
+
+def diebold_mariano(perdida_a: np.ndarray, perdida_b: np.ndarray, bloques: np.ndarray | None = None) -> dict:
+    """
+    Diferencia media de pérdidas A − B (positiva = A peor) con error estándar robusto por bloques (jornada o
+    semana): los partidos de un mismo bloque comparten información y no son independientes.
+    """
+    d = np.asarray(perdida_a, dtype=float) - np.asarray(perdida_b, dtype=float)
+    b = np.arange(len(d)) if bloques is None else np.asarray(bloques)
+    _, inv = np.unique(b, return_inverse=True)
+    sumas = np.bincount(inv, weights=d - d.mean())
+    var = float(np.sum(sumas ** 2)) / len(d) ** 2
+    se = float(np.sqrt(var)) if var > 0 else float("nan")
+    delta = float(d.mean())
+    return {"delta": delta, "se": se, "t": delta / se if se else float("nan"),
+            "ic95": (delta - 1.96 * se, delta + 1.96 * se), "n": int(len(d)), "bloques": int(inv.max() + 1)}

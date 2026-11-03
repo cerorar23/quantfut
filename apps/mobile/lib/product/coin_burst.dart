@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'live_widgets.dart';
+import 'qf_theme.dart';
 
 /// Lluvia breve de monedas con un «+N monedas» que sube y se desvanece. Se reproduce una vez al
 /// montarse; con «reducir animaciones» activado no se dibuja nada.
@@ -97,7 +98,7 @@ class _BurstPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(x, y),
         radius * .55,
-        Paint()..color = const Color(0xffffe08a).withValues(alpha: alpha),
+        Paint()..color = QfColors.text.withValues(alpha: alpha),
       );
     }
   }

@@ -35,7 +35,7 @@ NORMAL = {"home": 1.95, "draw": 3.30, "away": 3.90}
 
 
 def _snap():
-    return pk.Snapshot("api_football", NOW - timedelta(hours=1), {
+    return pk.Snapshot("the_odds_api", NOW - timedelta(hours=1), {
         "pinnacle": PIN, "marathonbet": NORMAL, "betvictor": NORMAL,
         "1xbet": {"home": 2.20, "draw": 3.2, "away": 3.7}})
 
@@ -47,8 +47,7 @@ def _solo_sharp():
 
 
 def test_un_pick_sin_prediccion_no_inventa_datos_del_modelo(monkeypatch):
-    monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: _snap())
-    monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: None)
+    monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: _snap())
     monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     (c,) = pk.find_candidates(_solo_sharp(), NOW)
     assert c.prediction_id is None
@@ -57,8 +56,7 @@ def test_un_pick_sin_prediccion_no_inventa_datos_del_modelo(monkeypatch):
 
 
 def test_con_prediccion_todo_sigue_igual(monkeypatch):
-    monkeypatch.setattr(pk, "_af_snapshot", lambda m, now: _snap())
-    monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: None)
+    monkeypatch.setattr(pk, "_odds_api_snapshot", lambda m, now: _snap())
     monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     pred = {"prediction_id": "p1", "match_id": "m1", "league_id": "es.laliga",
             "kickoff_utc": NOW + timedelta(hours=20),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,11 +10,9 @@ import 'live_ads.dart';
 import '../core/meta_events.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 import 'rewards_progress.dart';
-
-const _purple = Color(0xff7439c5), _purpleDark = Color(0xff3d1c80);
-const _pink = Color(0xffff426f);
-const _tile = Color(0xff0e1b2a);
 
 final _inviteLink = RegExp(r'/i/([A-Za-z0-9]{6,24})');
 final _inviteCode = RegExp(r'^[A-Za-z0-9]{6,24}$');
@@ -270,17 +267,20 @@ class _RewardsScreenState extends State<RewardsScreen>
         refs = jsonMap(data?['referrals']);
     final signedIn = data?['signed_in'] == true;
     return Scaffold(
-      backgroundColor: liveBg,
+      backgroundColor: QfColors.bg,
       appBar: AppBar(
-        backgroundColor: liveBg,
-        foregroundColor: Colors.white,
+        backgroundColor: QfColors.bg,
+        foregroundColor: QfColors.text,
         automaticallyImplyLeading: !widget.embedded,
-        title: Text(l10n.navCoins),
+        title: Text(
+          l10n.navCoins,
+          style: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w700, fontSize: 22),
+        ),
         actions: [
           IconButton(
             tooltip: l10n.rewardsRefreshBalance,
             onPressed: busy ? null : load,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: QfColors.primary),
           ),
         ],
       ),
@@ -293,8 +293,8 @@ class _RewardsScreenState extends State<RewardsScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          liveText(error!, color: liveMuted),
-                          liveButton(l10n.commonRetry, load),
+                          liveText(error!, color: QfColors.text2),
+                          liveButton(l10n.commonRetry, load, color: QfColors.primary),
                         ],
                       ),
                     ),
@@ -310,14 +310,8 @@ class _RewardsScreenState extends State<RewardsScreen>
                       _Hero(cfg: cfg, wallet: wallet, signedIn: signedIn),
                       if (cfg['enabled'] != true) training('${cfg['message']}'),
                       if (!signedIn) training(l10n.rewardsSignInHint),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(2, 6, 0, 10),
-                        child: liveText(
-                          l10n.rewardsEarnTitle,
-                          size: 19,
-                          bold: true,
-                        ),
-                      ),
+                      qfTitle(l10n.rewardsEarnTitle, size: 17),
+                      const SizedBox(height: 6),
                       _AttendanceCard(
                         cfg: cfg,
                         wallet: wallet,
@@ -377,7 +371,7 @@ class _RewardsScreenState extends State<RewardsScreen>
   }
 }
 
-/// Saldo, avance hacia el siguiente desbloqueo y los dos datos que más importan.
+/// Saldo en mono, avance hacia el siguiente desbloqueo y los dos datos que más importan.
 class _Hero extends StatelessWidget {
   const _Hero({required this.cfg, required this.wallet, required this.signedIn});
 
@@ -390,184 +384,131 @@ class _Hero extends StatelessWidget {
     final cost = cfg['unlock_cost'] as num?;
     final balance = (wallet['spendable'] as num?) ?? 0;
     final progress = unlockProgress(balance, cost);
+    final unlocks = cost == null || cost <= 0 ? 0 : balance ~/ cost;
     final attendance = AttendanceState.of(
       wallet,
       _RewardsScreenState._attendanceCoins(cfg),
       DateTime.now(),
     );
-    return Container(
+    return Padding(
       key: const ValueKey('coins-hero'),
-      padding: const EdgeInsets.all(18),
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_purple, _purpleDark],
-        ),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    liveText(l10n.rewardsMyCoins, color: const Color(0xffe3d4ff)),
-                    const SizedBox(height: 4),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        signedIn ? '${wallet['balance'] ?? 0}' : l10n.rewardsSignIn,
-                        style: const TextStyle(
-                          color: liveGold,
-                          fontFamily: 'Gilroy ExtraBold',
-                          fontSize: 40,
-                          height: 1.1,
-                        ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: QfCard(
+        accent: QfColors.cta,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            liveText(l10n.rewardsMyCoins, color: QfColors.text2, size: 13),
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      signedIn ? '${wallet['balance'] ?? 0}' : l10n.rewardsSignIn,
+                      style: TextStyle(
+                        color: QfColors.text,
+                        fontFamily: signedIn ? qfMono : qfDisplay,
+                        fontWeight: signedIn ? FontWeight.w500 : FontWeight.w700,
+                        fontSize: 38,
+                        height: 1.1,
                       ),
                     ),
-                  ],
+                  ),
                 ),
+                const SizedBox(width: 12),
+                Text(
+                  realPercent(progress.fraction),
+                  style: const TextStyle(fontFamily: qfMono, fontSize: 13, color: QfColors.text2),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SegmentedBar(
+              total: 10,
+              filled: (progress.fraction * 10).floor(),
+              color: QfColors.cta,
+            ),
+            const SizedBox(height: 8),
+            liveText(
+              cost == null
+                  ? l10n.rewardsMissingUnknown
+                  : progress.missing == 0
+                  ? l10n.rewardsUnlocksAvailable(unlocks)
+                  : l10n.rewardsMissing(progress.missing),
+              size: 12,
+              color: QfColors.text2,
+            ),
+            if ((wallet['balance'] as num?) != null &&
+                (wallet['balance'] as num) < 0)
+              Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 14, color: QfColors.danger),
+                  const SizedBox(width: 4),
+                  Expanded(child: liveText(l10n.rewardsDebt, color: QfColors.danger, size: 12)),
+                ],
               ),
-              const SizedBox(width: 12),
-              _Ring(fraction: progress.fraction),
-            ],
-          ),
-          const SizedBox(height: 10),
-          liveText(
-            cost == null
-                ? l10n.rewardsMissingUnknown
-                : progress.missing == 0
-                ? l10n.rewardsEnough
-                : l10n.rewardsMissing(progress.missing),
-            size: 12,
-            color: const Color(0xffe3d4ff),
-          ),
-          if ((wallet['balance'] as num?) != null &&
-              (wallet['balance'] as num) < 0)
-            liveText(l10n.rewardsDebt, color: liveGold, size: 12),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              if (signedIn && attendance.streak > 0)
-                _HeroChip(
-                  Icons.local_fire_department,
-                  l10n.rewardsChipStreak(attendance.streak),
-                ),
-              _HeroChip(Icons.lock_open, l10n.rewardsChipRate(cost ?? '—')),
-            ],
-          ),
-        ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (signedIn && attendance.streak > 0)
+                  _HeroChip(
+                    Icons.local_fire_department,
+                    l10n.rewardsChipStreak(attendance.streak),
+                    QfColors.success,
+                  ),
+                _HeroChip(Icons.lock_open, l10n.rewardsChipRate(cost ?? '—'), QfColors.text2),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+/// Insignia con borde de 1 dp y esquina cortada (sin mayúsculas: lleva cifras y frases).
 class _HeroChip extends StatelessWidget {
-  const _HeroChip(this.icon, this.label);
+  const _HeroChip(this.icon, this.label, this.color);
 
   final IconData icon;
   final String label;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .16),
-      borderRadius: BorderRadius.circular(99),
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: ShapeDecoration(
+      shape: CutCornerBorder(cut: 8, side: BorderSide(color: color)),
     ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: liveGold),
-        const SizedBox(width: 5),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontFamily: 'Gilroy Bold',
-              fontSize: 11,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: color, fontFamily: 'Gilroy Bold', fontSize: 11),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
 
-/// Anillo de avance con el porcentaje en el centro.
-class _Ring extends StatelessWidget {
-  const _Ring({required this.fraction});
-
-  final double fraction;
-
-  @override
-  Widget build(BuildContext context) {
-    final still = MediaQuery.of(context).disableAnimations;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(end: fraction),
-      duration: still ? Duration.zero : const Duration(milliseconds: 800),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, _) => SizedBox.square(
-        dimension: 76,
-        child: CustomPaint(
-          painter: _RingPainter(value),
-          child: Center(
-            child: Text(
-              realPercent(fraction),
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'Gilroy Bold',
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RingPainter extends CustomPainter {
-  const _RingPainter(this.value);
-
-  final double value;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = (Offset.zero & size).deflate(5);
-    final base = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..color = Colors.white24;
-    canvas.drawArc(rect, 0, 2 * math.pi, false, base);
-    if (value <= 0) return;
-    canvas.drawArc(
-      rect,
-      -math.pi / 2,
-      2 * math.pi * value.clamp(0, 1),
-      false,
-      base
-        ..strokeCap = StrokeCap.round
-        ..color = liveGold,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter oldDelegate) => oldDelegate.value != value;
-}
-
-/// Asistencia diaria: 7 días, el de hoy resaltado, y un botón o la cuenta atrás.
+/// Asistencia diaria: la semana en 7 casillas (hechas con ✓, hoy con borde ámbar) y la
+/// única acción ámbar de la pestaña, o la cuenta atrás si ya se marcó.
 class _AttendanceCard extends StatelessWidget {
   const _AttendanceCard({
     required this.cfg,
@@ -586,148 +527,133 @@ class _AttendanceCard extends StatelessWidget {
     final coins = _RewardsScreenState._attendanceCoins(cfg);
     final state = AttendanceState.of(wallet, coins, DateTime.now());
     final canClaim = !busy && wallet['can_check_in'] == true;
-    return Container(
+    return Padding(
       key: const ValueKey('coins-attendance'),
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: liveGold.withValues(alpha: .4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: QfCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.rewardsAttendanceTitle.toUpperCase(),
+                        style: const TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: QfColors.text,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      liveText(l10n.rewardsAttendanceSub, size: 12, color: QfColors.text2),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _StatusChip(
+                  label: state.claimedToday ? l10n.rewardsClaimedToday : l10n.rewardsAvailable,
+                  color: state.claimedToday ? QfColors.text2 : QfColors.success,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                for (var i = 0; i < coins.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 4),
+                  Expanded(
+                    child: _dayCell(
+                      i,
+                      coins: coins[i],
+                      label: i == state.todayIndex && !state.claimedToday
+                          ? l10n.commonToday
+                          : l10n.rewardsDay(i + 1),
+                      done: i < state.claimedDays,
+                      today: i == state.todayIndex && !state.claimedToday,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (state.claimedToday)
+              Container(
+                key: const ValueKey('coins-countdown'),
+                width: double.infinity,
+                constraints: const BoxConstraints(minHeight: 48),
+                decoration: ShapeDecoration(
+                  shape: const CutCornerBorder(cut: 8, side: BorderSide(color: QfColors.success)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    liveText(l10n.rewardsAttendanceTitle, size: 15, bold: true),
-                    const SizedBox(height: 2),
-                    liveText(
-                      l10n.rewardsAttendanceSub,
-                      size: 12,
-                      color: liveMuted,
+                    const Icon(Icons.check, size: 18, color: QfColors.success),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        l10n.rewardsNextIn(AttendanceState.clock(state.untilReset)),
+                        style: const TextStyle(fontFamily: qfMono, fontSize: 13, color: QfColors.success),
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              _StatusChip(
-                label: state.claimedToday
-                    ? l10n.rewardsClaimedToday
-                    : l10n.rewardsAvailable,
-                color: state.claimedToday ? liveMuted : liveGreen,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              for (var i = 0; i < coins.length; i++) ...[
-                if (i > 0) const SizedBox(width: 5),
-                Expanded(
-                  child: _DayCell(
-                    key: ValueKey('coins-day-$i'),
-                    coins: coins[i],
-                    label: i == state.todayIndex && !state.claimedToday
-                        ? l10n.commonToday
-                        : l10n.rewardsDay(i + 1),
-                    done: i < state.claimedDays,
-                    today: i == state.todayIndex && !state.claimedToday,
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  key: const ValueKey('coins-claim'),
+                  style: qfFilled(QfColors.cta),
+                  onPressed: canClaim ? onClaim : null,
+                  child: Text(
+                    state.nextCoins == null
+                        ? l10n.rewardsCheckIn
+                        : l10n.rewardsClaimCta(state.nextCoins!),
                   ),
                 ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (state.claimedToday)
-            Container(
-              key: const ValueKey('coins-countdown'),
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: _tile,
-                borderRadius: BorderRadius.circular(99),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.schedule, size: 18, color: liveMuted),
-                  const SizedBox(width: 8),
-                  liveText(
-                    l10n.rewardsNextIn(AttendanceState.clock(state.untilReset)),
-                    size: 13,
-                    color: liveMuted,
-                    bold: true,
-                  ),
-                ],
-              ),
-            )
-          else
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                key: const ValueKey('coins-claim'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: _pink,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(15),
-                  shape: const StadiumBorder(),
-                ),
-                onPressed: canClaim ? onClaim : null,
-                child: Text(
-                  state.nextCoins == null
-                      ? l10n.rewardsCheckIn
-                      : l10n.rewardsClaimCta(state.nextCoins!),
-                  style: const TextStyle(fontFamily: 'Gilroy Bold', fontSize: 15),
-                ),
-              ),
-            ),
-          const SizedBox(height: 8),
-          liveText(l10n.rewardsCheckInNote, size: 11, color: liveMuted),
-        ],
+            const SizedBox(height: 8),
+            liveText(l10n.rewardsCheckInNote, size: 11, color: QfColors.text2),
+          ],
+        ),
       ),
     );
   }
-}
 
-class _DayCell extends StatelessWidget {
-  const _DayCell({
-    super.key,
-    required this.coins,
-    required this.label,
-    required this.done,
-    required this.today,
-  });
-
-  final num coins;
-  final String label;
-  final bool done;
-  final bool today;
-
-  @override
-  Widget build(BuildContext context) {
-    final fg = today ? liveBg : (done ? liveGreen : liveMuted);
+  /// Casilla de un día: hecha (verde con ✓), hoy (borde ámbar) o pendiente.
+  static Widget _dayCell(
+    int i, {
+    required num coins,
+    required String label,
+    required bool done,
+    required bool today,
+  }) {
+    final fg = done ? QfColors.success : (today ? QfColors.cta : QfColors.text2);
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 9),
+      key: ValueKey('coins-day-$i'),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: today
-            ? liveGold
-            : (done ? liveGreen.withValues(alpha: .16) : _tile),
-        borderRadius: BorderRadius.circular(12),
+        color: done ? QfColors.success.withValues(alpha: .16) : QfColors.surface2,
+        border: today ? Border.all(color: QfColors.cta, width: 1.5) : null,
       ),
       child: Column(
         children: [
-          Icon(done ? Icons.check_circle : Icons.toll, size: 18, color: today ? liveBg : (done ? liveGreen : liveGold)),
+          if (done)
+            const Icon(Icons.check, size: 16, color: QfColors.success)
+          else
+            Icon(Icons.toll, size: 16, color: fg),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               '+${coins.toInt()}',
-              style: TextStyle(color: fg, fontFamily: 'Gilroy Bold', fontSize: 12),
+              style: TextStyle(color: fg, fontFamily: qfMono, fontSize: 12),
             ),
           ),
           FittedBox(
@@ -747,17 +673,19 @@ class _StatusChip extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: .16),
-      borderRadius: BorderRadius.circular(99),
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: ShapeDecoration(
+      color: color.withValues(alpha: .13),
+      shape: CutCornerBorder(cut: 8, side: BorderSide(color: color)),
     ),
-    child: Text(
-      label,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(color: color, fontFamily: 'Gilroy Bold', fontSize: 11),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: color, fontFamily: 'Gilroy Bold', fontSize: 11),
+      ),
     ),
   );
 }
@@ -788,21 +716,21 @@ class _OffersCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final p in ready)
-          Container(
+          Padding(
             key: ValueKey('coins-offer-${p['provider']}'),
-            margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: livePanel,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: liveCyan.withValues(alpha: .35)),
-            ),
+            padding: const EdgeInsets.only(bottom: 12),
+            child: QfCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.rocket_launch_outlined, color: liveGold, size: 28),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      color: QfColors.surface2,
+                      child: const Icon(Icons.rocket_launch_outlined, color: QfColors.primary, size: 22),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -813,7 +741,7 @@ class _OffersCard extends StatelessWidget {
                           liveText(
                             '${l10n.rewardsOffersLead} ${l10n.rewardsChipRate(unlockCost ?? '—')}',
                             size: 12,
-                            color: liveMuted,
+                            color: QfColors.text2,
                           ),
                         ],
                       ),
@@ -824,23 +752,16 @@ class _OffersCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: liveCyan,
-                      foregroundColor: liveBg,
-                      padding: const EdgeInsets.all(15),
-                      shape: const StadiumBorder(),
-                    ),
+                    style: qfFilled(QfColors.primary),
                     onPressed: enabled ? () => onOffer('${p['provider']}') : null,
-                    child: Text(
-                      l10n.rewardsOffersCta,
-                      style: const TextStyle(fontFamily: 'Gilroy Bold', fontSize: 15),
-                    ),
+                    child: Text(l10n.rewardsOffersCta),
                   ),
                 ),
                 const SizedBox(height: 8),
-                liveText(l10n.rewardsOfferAvailable, size: 11, color: liveMuted),
+                liveText(l10n.rewardsOfferAvailable, size: 11, color: QfColors.text2),
               ],
             ),
+          ),
           ),
         if (ready.isEmpty)
           training(l10n.rewardsOffersUnavailable),
@@ -851,7 +772,7 @@ class _OffersCard extends StatelessWidget {
             child: liveText(
               l10n.rewardsComingSoon(soon.join(', ')),
               size: 11,
-              color: liveMuted,
+              color: QfColors.text2,
             ),
           ),
       ],
@@ -883,15 +804,10 @@ class _InviteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final myCode = wallet['referral_code'];
-    return Container(
+    return Padding(
       key: const ValueKey('coins-invite'),
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: liveGold.withValues(alpha: .3)),
-      ),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: QfCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -902,7 +818,7 @@ class _InviteCard extends StatelessWidget {
               ),
               _StatusChip(
                 label: l10n.rewardsInviteChip(cfg['referrer_coins'] ?? '—'),
-                color: liveGold,
+                color: QfColors.primary,
               ),
             ],
           ),
@@ -910,7 +826,7 @@ class _InviteCard extends StatelessWidget {
           liveText(
             l10n.rewardsInviteFriend(cfg['invitee_coins'] ?? '—'),
             size: 12,
-            color: liveMuted,
+            color: QfColors.text2,
           ),
           if (myCode != null) ...[
             const SizedBox(height: 12),
@@ -918,19 +834,15 @@ class _InviteCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    constraints: const BoxConstraints(minHeight: 44),
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _tile,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xff4a5d73)),
-                    ),
+                    color: QfColors.surface2,
                     child: Text(
                       '$myCode',
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Gilroy ExtraBold',
-                        fontSize: 18,
+                        color: QfColors.text,
+                        fontFamily: qfMono,
+                        fontSize: 17,
                         letterSpacing: 2,
                       ),
                     ),
@@ -938,11 +850,7 @@ class _InviteCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: liveCyan,
-                    foregroundColor: liveBg,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
+                  style: qfFilled(QfColors.primary),
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: '$myCode'));
                     if (context.mounted) {
@@ -958,9 +866,10 @@ class _InviteCard extends StatelessWidget {
             OutlinedButton.icon(
               key: const ValueKey('coins-share'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: liveCyan,
-                side: const BorderSide(color: liveCyan),
+                foregroundColor: QfColors.primary,
+                side: const BorderSide(color: QfColors.primary),
                 minimumSize: const Size.fromHeight(44),
+                shape: const CutCornerBorder(cut: 8),
               ),
               onPressed: () {
                 MetaEvents.current?.invite();
@@ -978,13 +887,13 @@ class _InviteCard extends StatelessWidget {
                 refs['qualified'] ?? 0,
               ),
               size: 12,
-              color: liveMuted,
+              color: QfColors.text2,
             ),
           ],
           const SizedBox(height: 6),
           liveText(
             l10n.rewardsInviteCondition(cfg['referral_min_coins'] ?? '—'),
-            color: liveMuted,
+            color: QfColors.text2,
             size: 11,
           ),
           if (signedIn && refs['joined'] == null) ...[
@@ -1016,12 +925,20 @@ class _InviteCard extends StatelessWidget {
             liveButton(
               l10n.rewardsRegisterCode,
               canRegister ? onRegister : null,
+              color: QfColors.primary,
             ),
           ] else if (refs['joined'] != null) ...[
             const SizedBox(height: 12),
-            liveText(l10n.rewardsCodeRegistered, color: liveGreen),
+            Row(
+              children: [
+                const Icon(Icons.check, size: 16, color: QfColors.success),
+                const SizedBox(width: 6),
+                Expanded(child: liveText(l10n.rewardsCodeRegistered, color: QfColors.success)),
+              ],
+            ),
           ],
         ],
+      ),
       ),
     );
   }
@@ -1044,20 +961,16 @@ class _Ledger extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(2, 6, 0, 10),
-          child: liveText(l10n.rewardsLedgerTitle, size: 19, bold: true),
-        ),
+        qfTitle(l10n.rewardsLedgerTitle, size: 17),
+        const SizedBox(height: 6),
         if (rows.isEmpty)
           training(l10n.rewardsLedgerEmpty)
         else ...[
           for (final r in shown)
             Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: livePanel,
-                borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: QfColors.border)),
               ),
               child: Row(
                 children: [
@@ -1065,13 +978,16 @@ class _Ledger extends StatelessWidget {
                     child: liveText(
                       '${ledgerKindLabel(l10n, r['kind'])}\n${kickoffText(r['created_at'])}',
                       size: 12,
-                      color: liveMuted,
+                      color: QfColors.text2,
                     ),
                   ),
-                  liveText(
+                  Text(
                     '${(r['delta'] as num) >= 0 ? '+' : ''}${r['delta']}',
-                    bold: true,
-                    color: (r['delta'] as num) >= 0 ? liveGreen : liveGold,
+                    style: TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 13,
+                      color: (r['delta'] as num) >= 0 ? QfColors.success : QfColors.text,
+                    ),
                   ),
                 ],
               ),
@@ -1079,10 +995,13 @@ class _Ledger extends StatelessWidget {
           if (rows.length > _preview)
             InkWell(
               key: const ValueKey('coins-ledger-toggle'),
-              borderRadius: BorderRadius.circular(10),
               onTap: onToggle,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: QfColors.border)),
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -1090,10 +1009,10 @@ class _Ledger extends StatelessWidget {
                         open ? l10n.rewardsLedgerLess : l10n.rewardsLedgerMore,
                         size: 13,
                         bold: true,
-                        color: liveCyan,
+                        color: QfColors.primary,
                       ),
                     ),
-                    Icon(open ? Icons.expand_less : Icons.expand_more, color: liveCyan),
+                    Icon(open ? Icons.expand_less : Icons.expand_more, color: QfColors.primary),
                   ],
                 ),
               ),
@@ -1118,28 +1037,27 @@ class _Terms extends StatelessWidget {
     children: [
       InkWell(
         key: const ValueKey('coins-terms-toggle'),
-        borderRadius: BorderRadius.circular(10),
         onTap: onToggle,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, size: 18, color: liveMuted),
+              const Icon(Icons.info_outline, size: 18, color: QfColors.text2),
               const SizedBox(width: 8),
               Expanded(
                 child: liveText(
                   context.l10n.rewardsTermsTitle,
                   size: 13,
-                  color: liveMuted,
+                  color: QfColors.text2,
                   bold: true,
                 ),
               ),
-              Icon(open ? Icons.expand_less : Icons.expand_more, color: liveMuted),
+              Icon(open ? Icons.expand_less : Icons.expand_more, color: QfColors.text2),
             ],
           ),
         ),
       ),
-      if (open) liveText(text, color: liveMuted, size: 11),
+      if (open) liveText(text, color: QfColors.text2, size: 11),
     ],
   );
 }

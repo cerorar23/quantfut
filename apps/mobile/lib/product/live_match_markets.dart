@@ -8,20 +8,41 @@ import 'live_widgets.dart';
 // Los identificadores de categoría son los que envía el servidor (en español);
 // no son texto visible: se traducen con `groupLabel`.
 // l10n-ignore-start
-const _icons = <String, String>{
-  'RESULTADO': '🏆',
-  'DOBLE OPORTUNIDAD': '🎯',
-  'EMPATE NO ACCIÓN': '🛡',
-  'GOLES': '⚽',
-  'GOLES DE EQUIPO': '🥅',
-  'AMBOS MARCAN': '🤝',
-  'HÁNDICAP': '⚖',
-  'ESPECIALES': '✨',
-  '1ª MITAD': '⏱',
-  'CÓRNERS': '🚩',
-  'TARJETAS': '🟨',
+const _icons = <String, IconData>{
+  'RESULTADO': Icons.emoji_events_outlined,
+  'DOBLE OPORTUNIDAD': Icons.alt_route_rounded,
+  'EMPATE NO ACCIÓN': Icons.shield_outlined,
+  'GOLES': Icons.sports_soccer,
+  'GOLES DE EQUIPO': Icons.sports_score,
+  'AMBOS MARCAN': Icons.handshake_outlined,
+  'HÁNDICAP': Icons.balance,
+  'ESPECIALES': Icons.auto_awesome_outlined,
+  '1ª MITAD': Icons.timer_outlined,
+  'CÓRNERS': Icons.flag_outlined,
+  'TARJETAS': Icons.style_outlined,
 };
 // l10n-ignore-end
+
+/// Icono de categoría + texto, sin emojis (ver `live_markets.dart`).
+Widget _groupTitle(String? group, String text, double size, TextStyle style) =>
+    Text.rich(
+      TextSpan(
+        children: [
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Icon(
+              _icons[group] ?? Icons.circle_outlined,
+              size: size + 3,
+              color: liveMuted,
+            ),
+          ),
+          TextSpan(text: '  $text'),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
 
 (Color, String) _nivel(dynamic nivel) => switch (nivel) {
   'alta' => (liveGreen, levelLabel('alta')),
@@ -124,11 +145,11 @@ class _OpenRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  '${_icons[row['grupo']] ?? '•'}  ${groupLabel(row['grupo'])}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                child: _groupTitle(
+                  '${row['grupo']}',
+                  groupLabel(row['grupo']),
+                  10,
+                  const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: .4,
@@ -176,31 +197,37 @@ class _OpenRow extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: liveGreen.withValues(alpha: .13),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    liveText(
-                      '@${decimalText(row['cuota'])}',
-                      size: 15,
-                      bold: true,
-                      color: liveGreen,
-                    ),
-                    liveText(
-                      published ? l10n.mmPublishedOdds : l10n.mmFairOdds,
-                      size: 8,
-                      color: liveMuted,
-                    ),
-                  ],
+              // Flexible: «Veröffentlichte Quote» a 10 px no cabe en una línea en
+              // pantallas estrechas; parte en dos en vez de desbordar.
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: liveGreen.withValues(alpha: .13),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      liveText(
+                        '@${decimalText(row['cuota'])}',
+                        size: 15,
+                        bold: true,
+                        color: liveGreen,
+                      ),
+                      Text(
+                        published ? l10n.mmPublishedOdds : l10n.mmFairOdds,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 10, color: liveMuted),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(width: 12),
               const Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -256,11 +283,11 @@ class _LockedRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                '${_icons[group] ?? '•'}  ${context.l10n.mmGroupCount(groupLabel(group), count)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+              child: _groupTitle(
+                group,
+                context.l10n.mmGroupCount(groupLabel(group), count),
+                11,
+                const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: .4,

@@ -5,6 +5,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../product/live_api.dart';
+import '../product/qf_shapes.dart';
+import '../product/qf_theme.dart';
 import '../l10n/app_localizations.dart';
 
 class AppUpdate {
@@ -55,6 +57,23 @@ class AppUpdate {
   }
 }
 
+/// Pide la política de versiones al servidor y la compara con la instalada. La usan el
+/// arranque y la fila «Versión de la app» del Perfil.
+Future<AppUpdate?> checkAppUpdate() async {
+  final api = QuantFutApi();
+  try {
+    final config = jsonMap(
+      await api.request('/mobile/v1/config').timeout(const Duration(seconds: 8)),
+    );
+    final package = await PackageInfo.fromPlatform().timeout(
+      const Duration(seconds: 2),
+    );
+    return AppUpdate.evaluate(config, Platform.operatingSystem, package.buildNumber);
+  } finally {
+    api.dispose();
+  }
+}
+
 /// Remains above navigation, including login and replacement routes.
 class AppUpdateGate extends StatefulWidget {
   const AppUpdateGate({
@@ -93,7 +112,7 @@ class _AppUpdateGateState extends State<AppUpdateGate>
     if (_checking || !mounted) return;
     _checking = true;
     try {
-      final update = await (widget.checkForUpdate ?? _loadUpdate)();
+      final update = await (widget.checkForUpdate ?? checkAppUpdate)();
       if (!mounted) return;
       _update.value = update;
       final nav = widget.navigatorKey.currentState;
@@ -127,27 +146,6 @@ class _AppUpdateGateState extends State<AppUpdateGate>
     }
   }
 
-  Future<AppUpdate?> _loadUpdate() async {
-    final api = QuantFutApi();
-    try {
-      final config = jsonMap(
-        await api
-            .request('/mobile/v1/config')
-            .timeout(const Duration(seconds: 8)),
-      );
-      final package = await PackageInfo.fromPlatform().timeout(
-        const Duration(seconds: 2),
-      );
-      return AppUpdate.evaluate(
-        config,
-        Platform.operatingSystem,
-        package.buildNumber,
-      );
-    } finally {
-      api.dispose();
-    }
-  }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -162,7 +160,7 @@ class _AppUpdateGateState extends State<AppUpdateGate>
       if (!_ready)
         const Positioned.fill(
           child: ColoredBox(
-            color: Color(0xff090f1a),
+            color: QfColors.bg,
             child: Center(child: CircularProgressIndicator()),
           ),
         ),
@@ -208,21 +206,55 @@ class _UpdateDialogState extends State<AppUpdateDialog> {
     return PopScope(
       canPop: !widget.update.required,
       child: AlertDialog(
-        title: Text(l10n.updateTitle),
-        content: Text(
-          _failed
-              ? l10n.updateStoreError
-              : widget.update.required
-              ? l10n.updateRequired
-              : l10n.updateOptional,
+        backgroundColor: QfColors.surface2,
+        shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+        icon: const Icon(Icons.system_update, color: QfColors.primary),
+        title: Text(
+          l10n.updateTitle.toUpperCase(),
+          style: const TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: QfColors.text,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _failed
+                  ? l10n.updateStoreError
+                  : widget.update.required
+                  ? l10n.updateRequired
+                  : l10n.updateOptional,
+              style: const TextStyle(color: QfColors.text2, height: 1.4),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.update.version,
+              style: const TextStyle(fontFamily: qfMono, fontSize: 12, color: QfColors.muted),
+            ),
+          ],
         ),
         actions: [
           if (!widget.update.required)
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: QfColors.primary,
+                minimumSize: const Size(64, 44),
+              ),
               onPressed: () => Navigator.of(context).pop(),
               child: Text(l10n.updateLater),
             ),
           FilledButton(
+            key: const ValueKey('update-now'),
+            style: FilledButton.styleFrom(
+              backgroundColor: QfColors.primary,
+              foregroundColor: QfColors.onPrimary,
+              minimumSize: const Size(64, 44),
+              shape: const CutCornerBorder(cut: 8),
+            ),
             onPressed: _opening ? null : _open,
             child: Text(l10n.updateNow),
           ),

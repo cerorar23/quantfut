@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 
@@ -540,7 +542,7 @@ class _Leg extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${leg['texto'] ?? '—'}',
+                    pickText(leg),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -611,7 +613,15 @@ class _PastDay extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: liveText('${day['dia'] ?? '—'}', size: 13, bold: true),
+            child: liveText(
+              switch (dateValue(day['dia'])) {
+                final DateTime date =>
+                  toBeginningOfSentenceCase(localDate(DateFormat.yMMMEd, date)),
+                null => '${day['dia'] ?? '—'}',
+              },
+              size: 13,
+              bold: true,
+            ),
           ),
           liveText(
             '${context.l10n.parleyDayCount(tickets.length)}${settled == 0 ? '' : ' · ${context.l10n.parleyDaySettled(won, settled)}'}',

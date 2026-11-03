@@ -160,9 +160,29 @@ def features_xi(filas: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def cargar_filas(desde: str = "2023-01-01") -> pd.DataFrame:
-    """Apariciones de FotMob de los partidos desde `desde`, con el equipo de cada lado."""
+def lectura_canonica() -> bool:
+    """`FUTBOL_LECTURA=canonica` hace que el motor lea la tabla única `futbol.dato` (ids de jugador unificados) en lugar
+    de las tablas de cada fuente. Por defecto sigue leyendo `fotmob_*`: activarlo es una decisión que se toma tras
+    comparar el modelo antes y después (docs/futbol_modelo_canonico_20261101.md)."""
+    import os
+    return os.getenv("FUTBOL_LECTURA", "origen").strip().lower() == "canonica"
+
+
+def cargar_filas(desde: str = "2023-01-01", fuentes: tuple[str, ...] = ("fotmob",)) -> pd.DataFrame:
+    """Apariciones de los partidos desde `desde`, con el equipo de cada lado.
+
+    Origen (por defecto): `fotmob_jugador_partido`. Canónica: `futbol.dato` (tipo `jugador`) limitada a `fuentes`; con
+    `("fotmob",)` son exactamente las mismas apariciones, con el id de jugador canónico en lugar del de FotMob.
+    SofaScore no trae el `posicion_id` ni el valor de mercado de FotMob que usa este módulo, por eso no entra hasta
+    que se evalúe su aporte."""
     from ..db import query
+    if lectura_canonica():
+        return pd.DataFrame(query(
+            """SELECT j.match_id, m.kickoff_utc, j.side,
+                      CASE WHEN j.side = 'home' THEN m.home_team_id ELSE m.away_team_id END AS equipo_id,
+                      j.jugador_id, j.titular, j.posicion_id, j.valor_mercado, j.nota AS rating
+               FROM futbol.dato j JOIN matches m USING (match_id)
+               WHERE j.tipo = 'jugador' AND m.kickoff_utc >= %s AND j.fuente = ANY(%s)""", (desde, list(fuentes))))
     return pd.DataFrame(query(
         """SELECT j.match_id, m.kickoff_utc, j.side,
                   CASE WHEN j.side = 'home' THEN m.home_team_id ELSE m.away_team_id END AS equipo_id,

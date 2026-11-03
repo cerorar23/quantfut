@@ -1,0 +1,74 @@
+
+######## Walk-forward configuración de producción (wf_prodnuevo, 2024-01 → 2026-10)
+n: 9702
+desde: 2024-01-01
+hasta: 2026-10-22
+n_capas: 8131
+dRPS A-mercado IC95: [0.00525137 0.0078455 ]
+dRPS mezcla-mercado IC95: [-1.54576630e-18  8.45446348e-19]
+dLL mezcla-mercado IC95: [1.09881641e-17 1.58494108e-17]
+metricas:
+  Mercado (Pinnacle Shin)      RPS 0.19665  LL 0.97648  Brier 0.58191  ECE 0.0090
+  Motor A (DC)                 RPS 0.20319  LL 0.99746  Brier 0.59575  ECE 0.0131
+  A calibrado (T, pasado)      RPS 0.20293  LL 0.99675  Brier 0.59532  ECE 0.0106
+  Mezcla A+mercado (pasado)    RPS 0.19665  LL 0.97648  Brier 0.58191  ECE 0.0090
+temperaturas (ultimas 3): [('2026-08', np.float64(0.9099999999999999)), ('2026-09', np.float64(0.9099999999999999)), ('2026-10', np.float64(0.9099999999999999))]
+pesos mezcla (ultimos 3): [('2026-08', np.float64(0.0)), ('2026-09', np.float64(0.0)), ('2026-10', np.float64(0.0))]
+kelly_A: {'n': 7612, 'roi_plano': np.float64(-0.11042538097740409), 'roi_ic95': (np.float64(-0.15145213668745294), np.float64(-0.0713339822160182)), 'acierto': np.float64(0.267209668943773), 'cuota_media': np.float64(4.494724382553863), 'edge_medio_vs_mercado': np.float64(0.060320898236231865), 'banca_final_kelly': np.float64(4.2856163118391515e-08), 'max_drawdown': 0.9999999623985439}
+kelly_A_edge3: {'n': 6701, 'roi_plano': np.float64(-0.12001925085808089), 'roi_ic95': (np.float64(-0.16196056895376465), np.float64(-0.08035882859173112)), 'acierto': np.float64(0.2507088494254589), 'cuota_media': np.float64(4.6914656021489325), 'edge_medio_vs_mercado': np.float64(0.06612135782935807), 'banca_final_kelly': np.float64(4.9029095829314106e-08), 'max_drawdown': 0.9999999567182145}
+kelly_mezcla: {'n': 0}
+por_liga (n, dRPS, dLL) A-mercado
+  gb.premier_league      n=  744 dRPS +0.00429 dLL +0.01509
+  ar.primera             n= 1121 dRPS +0.00437 dLL +0.01435
+  pt.primeira            n=  496 dRPS +0.00511 dLL +0.02029
+  de.bundesliga          n=  603 dRPS +0.00511 dLL +0.01795
+  it.serie_a             n=  640 dRPS +0.00569 dLL +0.01982
+  mx.liga_mx             n=  526 dRPS +0.00637 dLL +0.02006
+  us.mls                 n= 1073 dRPS +0.00656 dLL +0.02034
+  nl.eredivisie          n=  522 dRPS +0.00678 dLL +0.02079
+  fr.ligue_1             n=  601 dRPS +0.00696 dLL +0.02309
+  es.laliga              n=  638 dRPS +0.00714 dLL +0.02200
+  br.serie_a             n=  851 dRPS +0.01043 dLL +0.03257
+  eu.ucl                 n=  221 dRPS +0.01058 dLL +0.02052
+  eu.uel                 n=   95 dRPS +0.02064 dLL +0.06662
+fiabilidad local (A): {Interval(0.0, 0.2, closed='right'): {'n': 407, 'prometido': 0.152, 'real': 0.12}, Interval(0.2, 0.3, closed='right'): {'n': 972, 'prometido': 0.257, 'real': 0.238}, Interval(0.3, 0.4, closed='right'): {'n': 1840, 'prometido': 0.354, 'real': 0.339}, Interval(0.4, 0.5, closed='right'): {'n': 2258, 'prometido': 0.448, 'real': 0.457}, Interval(0.5, 0.6, closed='right'): {'n': 1489, 'prometido': 0.545, 'real': 0.554}, Interval(0.6, 0.7, closed='right'): {'n': 771, 'prometido': 0.643, 'real': 0.673}, Interval(0.7, 0.8, closed='right'): {'n': 291, 'prometido': 0.744, 'real': 0.801}, Interval(0.8, 1.0, closed='right'): {'n': 103, 'prometido': 0.845, 'real': 0.893}}
+fugas: xG de ESTE partido registrado >6h tras el inicio (normal: es el resultado; no entra a su propia predicción): 95.2%
+fugas: kickoff duplicados: 38.5%
+fuente del cierre: {'football_data': 8241, 'the_odds_api_hist': 1106, 'the_odds_api': 318, 'oddspapi_reconstructed': 37}
+
+######## Validación del modelo activo 2026.10.22 (último año)
+n: 2024
+desde: 2025-10-22
+hasta: 2026-10-22
+n_capas: 443
+dRPS A-mercado IC95: [0.00944612 0.0302171 ]
+dRPS mezcla-mercado IC95: [-4.49296017e-18  3.94568459e-18]
+dLL mezcla-mercado IC95: [1.15559312e-17 2.72259551e-17]
+metricas:
+  Mercado (Pinnacle Shin)      RPS 0.18601  LL 0.94419  Brier 0.56068  ECE 0.0440
+  Motor A (DC)                 RPS 0.20451  LL 1.00266  Brier 0.59888  ECE 0.0298
+  A calibrado (T, pasado)      RPS 0.20430  LL 1.00226  Brier 0.59854  ECE 0.0272
+  Mezcla A+mercado (pasado)    RPS 0.18601  LL 0.94419  Brier 0.56068  ECE 0.0440
+temperaturas (ultimas 3): [('2026-08', np.float64(0.95)), ('2026-09', np.float64(0.95)), ('2026-10', np.float64(0.95))]
+pesos mezcla (ultimos 3): [('2026-08', np.float64(0.0)), ('2026-09', np.float64(0.0)), ('2026-10', np.float64(0.0))]
+kelly_A: {'n': 421, 'roi_plano': np.float64(-0.23857007125890736), 'roi_ic95': (np.float64(-0.3863719262320266), np.float64(-0.09335606977595805)), 'acierto': np.float64(0.24703087885985747), 'cuota_media': np.float64(4.752997624703088), 'edge_medio_vs_mercado': np.float64(0.08518065381127875), 'banca_final_kelly': np.float64(0.07089881312799057), 'max_drawdown': 0.9416279717362273}
+kelly_A_edge3: {'n': 364, 'roi_plano': np.float64(-0.23617857142857146), 'roi_ic95': (np.float64(-0.401231760626459), np.float64(-0.07866701841510915)), 'acierto': np.float64(0.23626373626373626), 'cuota_media': np.float64(5.004480769230769), 'edge_medio_vs_mercado': np.float64(0.09578898345645907), 'banca_final_kelly': np.float64(0.07350163447559173), 'max_drawdown': 0.9394185200801364}
+kelly_mezcla: {'n': 0}
+por_liga (n, dRPS, dLL) A-mercado
+  de.bundesliga          n=   27 dRPS -0.01231 dLL -0.05124
+  pt.primeira            n=   10 dRPS -0.00374 dLL -0.02236
+  it.serie_a             n=   21 dRPS +0.00320 dLL +0.00815
+  eu.uel                 n=   20 dRPS +0.01074 dLL +0.03432
+  nl.eredivisie          n=   27 dRPS +0.01086 dLL +0.04563
+  es.laliga              n=   20 dRPS +0.01363 dLL +0.05459
+  fr.ligue_1             n=   26 dRPS +0.01403 dLL +0.07139
+  us.mls                 n=   76 dRPS +0.01718 dLL +0.04971
+  eu.ucl                 n=   38 dRPS +0.02379 dLL +0.06436
+  ar.primera             n=   69 dRPS +0.02431 dLL +0.07540
+  mx.liga_mx             n=   36 dRPS +0.02562 dLL +0.07165
+  br.serie_a             n=   52 dRPS +0.02992 dLL +0.10115
+  gb.premier_league      n=   21 dRPS +0.04689 dLL +0.15274
+fiabilidad local (A): {Interval(0.0, 0.2, closed='right'): {'n': 23, 'prometido': 0.156, 'real': 0.174}, Interval(0.2, 0.3, closed='right'): {'n': 45, 'prometido': 0.256, 'real': 0.133}, Interval(0.3, 0.4, closed='right'): {'n': 109, 'prometido': 0.355, 'real': 0.339}, Interval(0.4, 0.5, closed='right'): {'n': 113, 'prometido': 0.449, 'real': 0.504}, Interval(0.5, 0.6, closed='right'): {'n': 90, 'prometido': 0.542, 'real': 0.533}, Interval(0.6, 0.7, closed='right'): {'n': 44, 'prometido': 0.643, 'real': 0.636}, Interval(0.7, 0.8, closed='right'): {'n': 17, 'prometido': 0.745, 'real': 0.882}, Interval(0.8, 1.0, closed='right'): {'n': 2, 'prometido': 0.829, 'real': 1.0}}
+fugas: xG de ESTE partido registrado >6h tras el inicio (normal: es el resultado; no entra a su propia predicción): 91.8%
+fugas: kickoff duplicados: 37.9%
+fuente del cierre: {'the_odds_api_hist': 904, 'football_data': 764, 'the_odds_api': 319, 'oddspapi_reconstructed': 37}

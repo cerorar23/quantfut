@@ -1,7 +1,6 @@
 """Reglas de la línea de alta probabilidad, sin base de datos."""
 import pytest
 
-from qf.ingest import af_odds
 from qf.model.pricing import market_1x2, score_matrix, totals_fair_over
 from qf.publish import alta_prob as ap
 
@@ -82,15 +81,6 @@ def test_texto(market, sel, line, esperado):
     assert ap.texto(market, sel, line, "Cruzeiro", "Sao Paulo") == esperado
 
 
-def test_las_lineas_de_goles_se_guardan_tambien_de_las_casas_blandas():
-    # `af_odds` solo guarda de las casas blandas las LINEAS_BLANDAS (de Pinnacle,
-    # todas). Si se habilita una línea nueva aquí sin añadirla allí, el
-    # pronóstico se elegiría sin cuota de referencia de las casas de los
-    # suscriptores.
-    lineas = {ln for _, ln in ap.LINEAS_GOLES}
-    assert lineas <= set(af_odds.LINEAS_BLANDAS)
-    assert {ln for _, ln in ap.MERCADOS_GOLES_HABILITADOS} <= set(af_odds.LINEAS_BLANDAS)
-
 
 def test_menos_de_4_5_goles_excluido_por_decision_del_usuario():
     # 2026-10-06: el usuario lo excluye de la regla (se paga a 1,09-1,17).
@@ -125,6 +115,9 @@ def test_desempate_con_goles_de_un_equipo():
 def test_texto_marca_un_equipo():
     assert ap.texto("team_totals_home", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Cruzeiro"
     assert ap.texto("team_totals_away", "over", 0.5, "Cruzeiro", "Sao Paulo") == "Marca Sao Paulo"
+    # Otra línea u otro lado no es «marca»: decirlo así cambiaba el pronóstico.
+    assert ap.texto("team_totals_home", "over", 1.5, "Cruzeiro", "Sao Paulo") == "Más de 1,5 goles de Cruzeiro"
+    assert ap.texto("team_totals_away", "under", 1.5, "Cruzeiro", "Sao Paulo") == "Menos de 1,5 goles de Sao Paulo"
 
 
 def test_bloquear_el_grupo_team_totals_excluye_los_dos_lados():

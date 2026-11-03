@@ -1,0 +1,38 @@
+{
+  "version": "nba-extended-box-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-24 after a format probe of the raw files (column names, null counts, which seasons each source covers, team-total differences) and before building the dataset; no model or outcome metric was computed",
+  "question": "Add shooting attempts, turnovers, offensive/defensive rebounds, fouls, plus-minus and team possessions to the accepted NBA box scores, and add play-in and playoff games, without changing any row the models already use.",
+  "base": {
+    "accepted_rows": "normalized/nba_subsecond_20261006/player_games.jsonl.gz (official seconds, status, participation)",
+    "reference_dataset": "normalized/nba_f6_run71_20261009/data (players.jsonl.gz + games.json, regular season, used by v1.1-v1.5 and the live engine)"
+  },
+  "sources": {
+    "player_counts": ["github/9252ea66.../playerlog_{2022..2026}.parquet (complete only for 2025-26)", "sportsdataverse release 97519777 player_boxscores_{2022..2026}.parquet"],
+    "team_reference": "github/9252ea66.../gamelog_{2022..2026}.parquet (official team box, possessions, pace, game minutes); postseason only for 2025-26",
+    "postseason_calendar": "api_nba_20261006/games_{2022..2024}.json (API-Sports, stage 3, status Finished): Eastern date, home side and final points for 2022-23..2024-25",
+    "integrity": "every parquet is checked against its manifest sha256 and size before reading (multimarket.archive_file)"
+  },
+  "season_types": {
+    "included": ["regular", "play_in", "playoffs"],
+    "excluded": {"preseason": "not requested; rotations not comparable", "cup_final": "one game a season, not counted in standings", "all_star": "not a competitive game", "2021-22 postseason": "no source with the game date"}
+  },
+  "rules": {
+    "accepted_tier": "regular season 2021-22..2025-26 and postseason 2025-26: each accepted row is extended only if exactly one distinct full count tuple exists among the raw sources for (game, player, team) whose points/rebounds/assists equal the accepted row; zero or several -> the whole game is quarantined (same policy as multimarket.recover)",
+    "single_source_tier": "postseason 2022-23..2024-25: rows come from sportsdataverse only (provenance 'sportsdataverse_only'); minutes from MM:SS (second precision, not official sub-second); participated = minutes present; status = the box comment",
+    "player_identities": "every row: points = 2*FGM + 3PM + FTM, rebounds = OREB + DREB, FGM <= FGA, 3PM <= 3PA <= FGA, FTM <= FTA, all counts non-negative integers; a violation quarantines the game",
+    "team_reconciliation": "accepted tier: sum over players equals the official team box for points, FGM, FGA, 3PM, 3PA, FTM, FTA, OREB, DREB, PF; official team turnovers must be >= the players' sum (the difference is team turnovers); otherwise quarantine",
+    "postseason_join": "single-source tier: games of one team pair in a season are ordered play-in first, then by game id (round/series/game number), and paired one to one with the API games of that pair ordered by start time; the pair is used only if the counts match, and each game only if the API home team and both final points equal the box score; otherwise the game is excluded and counted",
+    "no_ties": "a game with equal final points is quarantined"
+  },
+  "derived": {
+    "possessions_estimate": "per team: FGA - OREB + TOV_players + 0.44*FTA, with the players' turnover sum so that every tier uses the same definition; possessions (official) and pace only where the team box exists",
+    "team_turnovers": "official team TOV - players' sum, only where the team box exists"
+  },
+  "acceptance": {
+    "non_regression": "every output regular-season row must equal its reference row on all reference fields, and every output regular game must be a reference game; any difference aborts without writing",
+    "regular_loss": "regular games lost against the reference by the new checks must be <= 2% of the reference; above that the dataset is written with accepted=false",
+    "report": "coverage.json lists rows and games per season and type, quarantine reasons, excluded postseason games and source hashes"
+  },
+  "scope": "data only: it trains, promotes or publishes nothing; models must filter season_type explicitly"
+}

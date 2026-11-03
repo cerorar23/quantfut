@@ -11,11 +11,6 @@ uvicorn[standard]==0.34.0
 scikit-learn==1.6.0
 pyarrow==18.1.0
 rapidfuzz==3.10.1
-# Lee los .rds (serialización de R) de worldfootballR_data. Es la ÚNICA forma
-# gratuita de tener el histórico de Champions y Europa League (ese release no
-# publica CSV) y, de regalo, el xG de Argentina, que tampoco tiene CSV.
-# Ver src/qf/ingest/uefa_cups.py.
-pyreadr==0.5.6
 python-multipart==0.0.20
 # Fase comercial (2026-10-07): contraseñas de clientes (argon2id) y
 # plantillas del panel /control (autoescape de HTML).

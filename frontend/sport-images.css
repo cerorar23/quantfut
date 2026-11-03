@@ -1,0 +1,24 @@
+.player-photo {
+  display: inline-block;
+  vertical-align: middle;
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 20%;
+  background: var(--panel);
+}
+.player-photo.is-initial, .win-pk-avatar .is-initial {
+  display: inline-grid;
+  place-items: center;
+  font: 700 11px var(--font-mono);
+  color: var(--muted);
+}
+.lineup.has-photos li {
+  grid-template-columns: 28px 36px minmax(0, 1fr) auto;
+  align-items: center;
+}
+.lineup .player-photo { margin: 0; }
+.win-pick-grid .player-photo { float: left; width: 48px; height: 48px; }

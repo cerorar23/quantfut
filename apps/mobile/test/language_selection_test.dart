@@ -121,4 +121,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Selecciona tu idioma'), findsOneWidget);
   });
+
+  testWidgets('el idioma marcado lleva ✓ (no solo color) y cada tarjeta mide 44 dp o más', (
+    tester,
+  ) async {
+    await _phone(tester, const Size(390, 844));
+    await AppLocale.instance.select('es');
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: AppLocale.instance.locale,
+        theme: liveTheme(),
+        home: const LanguageSelectionScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    for (final code in languages) {
+      final card = find.byKey(ValueKey('first-language-$code'));
+      expect(tester.getSize(card).height, greaterThanOrEqualTo(44), reason: code);
+      expect(
+        find.descendant(of: card, matching: find.byIcon(Icons.check)),
+        code == 'es' ? findsOneWidget : findsNothing,
+        reason: code,
+      );
+    }
+  });
 }

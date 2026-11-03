@@ -2,7 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../product/live_widgets.dart';
+import '../product/qf_shapes.dart';
+import '../product/qf_theme.dart';
 import 'app_locale.dart';
 import 'language_picker.dart';
 
@@ -94,7 +95,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
-      backgroundColor: liveBg,
+      backgroundColor: QfColors.bg,
       body: Stack(
         children: [
           const Positioned.fill(child: _Backdrop()),
@@ -128,10 +129,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                             key: const ValueKey('first-language-title'),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'Gilroy ExtraBold',
-                              fontSize: 25,
-                              height: 1.15,
+                              color: QfColors.text,
+                              fontFamily: qfDisplay,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 28,
+                              height: 1.1,
                             ),
                           ),
                         ),
@@ -143,7 +145,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                             l10n.languageFirstHint,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              color: liveMuted,
+                              color: QfColors.text2,
                               fontSize: 13,
                               height: 1.35,
                             ),
@@ -185,7 +187,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
   }
 }
 
-/// Fondo oscuro con un resplandor verde que sale de arriba.
+/// Fondo oscuro con un resplandor azul tenue que sale de arriba (el único brillo de la pantalla).
 class _Backdrop extends StatelessWidget {
   const _Backdrop();
 
@@ -195,7 +197,7 @@ class _Backdrop extends StatelessWidget {
       gradient: RadialGradient(
         center: const Alignment(0, -.85),
         radius: 1.15,
-        colors: [liveGreen.withValues(alpha: .20), liveBg],
+        colors: [QfColors.primary.withValues(alpha: .14), QfColors.bg],
         stops: const [0, .75],
       ),
     ),
@@ -210,17 +212,9 @@ class _Card extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(18, 26, 18, 20),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .045),
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: Colors.white.withValues(alpha: .09)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: .45),
-          blurRadius: 40,
-          offset: const Offset(0, 18),
-        ),
-      ],
+    decoration: const ShapeDecoration(
+      color: QfColors.surface,
+      shape: CutCornerBorder(side: BorderSide(color: QfColors.border)),
     ),
     child: child,
   );
@@ -286,9 +280,9 @@ class _OrbitIcon extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: liveGreen.withValues(alpha: .22 + .20 * glow),
-                      blurRadius: 26 + 18 * glow,
-                      spreadRadius: 2 + 4 * glow,
+                      color: QfColors.primary.withValues(alpha: .10 + .10 * glow),
+                      blurRadius: 18 + 10 * glow,
+                      spreadRadius: 1 + 2 * glow,
                     ),
                   ],
                 ),
@@ -302,15 +296,15 @@ class _OrbitIcon extends StatelessWidget {
                 height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xff0a1b1a),
+                  color: QfColors.surface2,
                   border: Border.all(
-                    color: liveGreen.withValues(alpha: .35),
+                    color: QfColors.primary.withValues(alpha: .5),
                     width: 1.2,
                   ),
                 ),
                 child: const Icon(
                   Icons.language_rounded,
-                  color: liveGreen,
+                  color: QfColors.primary,
                   size: 34,
                 ),
               ),
@@ -338,7 +332,7 @@ class _OrbitPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
-        ..color = liveGreen.withValues(alpha: .14),
+        ..color = QfColors.border,
     );
     // El arco se dibuja siempre desde 0° y es el lienzo el que gira: así el degradado
     // no se parte al cruzar los 360°.
@@ -359,7 +353,7 @@ class _OrbitPainter extends CustomPainter {
           ..strokeCap = StrokeCap.round
           ..shader = SweepGradient(
             endAngle: sweep,
-            colors: [liveGreen.withValues(alpha: 0), liveGreen],
+            colors: [QfColors.primary.withValues(alpha: 0), QfColors.primary],
           ).createShader(local),
       )
       ..restore();
@@ -377,22 +371,14 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-    decoration: BoxDecoration(
-      color: liveGreen.withValues(alpha: .09),
-      borderRadius: BorderRadius.circular(99),
-      border: Border.all(color: liveGreen.withValues(alpha: .38)),
+    decoration: ShapeDecoration(
+      color: QfColors.primary.withValues(alpha: .13),
+      shape: const CutCornerBorder(cut: 8, side: BorderSide(color: QfColors.primary)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 6,
-          height: 6,
-          decoration: const BoxDecoration(
-            color: liveGreen,
-            shape: BoxShape.circle,
-          ),
-        ),
+        Container(width: 6, height: 6, color: QfColors.primary),
         const SizedBox(width: 8),
         Flexible(
           child: Text(
@@ -400,9 +386,10 @@ class _Badge extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: liveGreen,
-              fontFamily: 'Gilroy Bold',
-              fontSize: 11,
+              color: QfColors.primary,
+              fontFamily: qfDisplay,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
               letterSpacing: 1.3,
             ),
           ),
@@ -434,32 +421,24 @@ class _LanguageCard extends StatelessWidget {
     child: ExcludeSemantics(
       child: AnimatedContainer(
         key: ValueKey('first-language-$code'),
-        duration: const Duration(milliseconds: 220),
+        duration: MediaQuery.of(context).disableAnimations
+            ? Duration.zero
+            : const Duration(milliseconds: 220),
         curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          color: selected
-              ? liveGreen.withValues(alpha: .12)
-              : Colors.white.withValues(alpha: .035),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected
-                ? liveGreen
-                : Colors.white.withValues(alpha: .09),
-            width: selected ? 1.6 : 1,
+        decoration: ShapeDecoration(
+          color: selected ? QfColors.surface2 : QfColors.bg,
+          shape: CutCornerBorder(
+            cut: 8,
+            side: BorderSide(
+              color: selected ? QfColors.primary : QfColors.border,
+              width: selected ? 2 : 1,
+            ),
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: liveGreen.withValues(alpha: .28),
-                    blurRadius: 18,
-                  ),
-                ]
-              : null,
         ),
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            customBorder: const CutCornerBorder(cut: 8),
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -479,11 +458,16 @@ class _LanguageCard extends StatelessWidget {
                         Text(
                           name,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: QfColors.text,
                             fontFamily: 'Gilroy Bold',
                             fontSize: 15,
                           ),
                         ),
+                        // ✓ además del borde: el color no es la única señal.
+                        if (selected) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.check, size: 16, color: QfColors.primary),
+                        ],
                       ],
                     ),
                   ),
@@ -493,9 +477,7 @@ class _LanguageCard extends StatelessWidget {
                     child: Text(
                       _leagues[code] ?? '',
                       style: TextStyle(
-                        color: selected
-                            ? liveGreen
-                            : liveMuted.withValues(alpha: .85),
+                        color: selected ? QfColors.primary : QfColors.text2,
                         fontFamily: 'Gilroy Bold',
                         fontSize: 10,
                         letterSpacing: .3,

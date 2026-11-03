@@ -10,6 +10,7 @@ import 'live_forecast.dart';
 import 'live_match_markets.dart';
 import 'live_widgets.dart';
 import 'live_statistics.dart';
+import 'qf_theme.dart';
 
 class LiveMatchDetail extends StatefulWidget {
   const LiveMatchDetail({
@@ -174,6 +175,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                 () => setState(
                                   () => future = widget.api.detail(widget.id),
                                 ),
+                                color: QfColors.primary,
                               ),
                             ],
                           ),
@@ -190,6 +192,13 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
         final picks = jsonRows(data['picks']);
         final l10n = context.l10n;
         final featured = featuredPick(picks);
+        // Sin pronóstico sellado, los «Mercados del partido» siguen siendo estimaciones del modelo.
+        final marketRows = jsonRows(jsonMap(ficha['mercados'])['filas']);
+        final noPicks = marketRows.isEmpty
+            ? l10n.detailNoPicks
+            : marketRows.any((r) => r['locked'] != true)
+            ? l10n.detailNoSealedModel
+            : l10n.detailNoSealedModelVip;
         final alertCount = MatchAlerts.fromFicha(ficha)?.total ?? 0;
         return Column(
           children: [
@@ -220,7 +229,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                   const SizedBox(height: 24),
                   Container(
                     decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.white12)),
+                      border: Border(bottom: BorderSide(color: QfColors.border)),
                     ),
                     child: Row(
                       children: [
@@ -256,7 +265,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
                                                 color: tab == item.$1
-                                                    ? statsLime
+                                                    ? QfColors.primary
                                                     : liveMuted,
                                               ),
                                             ),
@@ -272,14 +281,14 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                                 vertical: 1,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xffe85667),
+                                                color: QfColors.danger,
                                                 borderRadius:
                                                     BorderRadius.circular(99),
                                               ),
                                               child: Text(
                                                 '$alertCount',
                                                 style: const TextStyle(
-                                                  color: Colors.white,
+                                                  color: QfColors.bg,
                                                   fontSize: 9,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -292,7 +301,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                                     Container(
                                       height: 3,
                                       color: tab == item.$1
-                                          ? statsLime
+                                          ? QfColors.primary
                                           : Colors.transparent,
                                     ),
                                   ],
@@ -322,7 +331,9 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                             ),
                           ),
                         if (picks.isEmpty && data['locked'] != true)
-                          training(l10n.detailNoPicks),
+                          training(noPicks),
+                        if (picks.isNotEmpty && featured == null)
+                          training(l10n.detailNoFeatured),
                         const SizedBox(height: 12),
                         LiveScoreStrip(ficha: ficha),
                         if (featured != null)

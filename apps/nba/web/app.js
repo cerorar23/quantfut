@@ -4,24 +4,47 @@ const dateOptions = { timeZone: 'America/Mexico_City', day: 'numeric', month: 's
 const date = (value) => value ? new Intl.DateTimeFormat('es-MX', dateOptions).format(new Date(value)) : 'Sin actualización verificada';
 const number = (n, places=1) => new Intl.NumberFormat('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: places }).format(n);
 const statusNames = { pending: 'Pendiente', awaiting_result: 'Esperando resultado', evaluated: 'Evaluado', dnp: 'No participó', validation_hold: 'Resultado en revisión', result_unavailable: 'Resultado no disponible' };
+const MARKET_ORDER = ['player_points','player_rebounds','player_assists','player_points_rebounds','player_points_assists','player_rebounds_assists','player_points_rebounds_assists','player_threes','player_steals','player_blocks','player_turnovers','player_blocks_steals'];
 let data = null, market = 'all', modelMarket = 'all', loading = false;
 function node(tag, css, text) { const n = document.createElement(tag); if (css) n.className = css; if (text !== undefined) n.textContent = text; return n; }
-function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-002\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
+function link(url, text) { const n = node('a', 'official', text); if (/^https:\/\/www\.nba\.com\/game\/[a-z]{2,3}-vs-[a-z]{2,3}-00[2456]\d{7}(\/box-score)?$/.test(url)) { n.href=url; n.target='_blank'; n.rel='noopener noreferrer'; } return n; }
+function portrait(row) {
+  const name=String(row.player||''),fallback=node('span','avatar',name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join(''));
+  fallback.title=`Foto no disponible: ${name}`;
+  if(!/^[1-9][0-9]{0,7}$/.test(String(row.player_id)))return fallback;
+  const photo=node('img','avatar player-photo');photo.src=`/web/imagenes/jugadores/nba/${row.player_id}.png`;photo.alt='';photo.loading='lazy';photo.decoding='async';
+  photo.addEventListener('error',()=>photo.replaceWith(fallback),{once:true});return photo;
+}
+let teamImages={};
+const imageName=name=>String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function teamLabel(name) {
+  const label=node('span','team-with-logo'),entry=teamImages[imageName(name)];
+  if(entry&&/^[A-Z]{3}\.png$/.test(entry.f)){
+    const logo=node('img');logo.src=`/web/imagenes/nba/${entry.f}`;logo.alt='';logo.loading='lazy';logo.decoding='async';
+    logo.addEventListener('error',()=>logo.remove(),{once:true});label.append(logo);
+  }
+  label.append(node('span','',name));return label;
+}
+function gameTitle(event){const title=node('h3','game-title');title.append(teamLabel(event.away_team),node('span','',' · '),teamLabel(event.home_team));return title;}
 function isPending(row) { return !['evaluated','dnp'].includes(row.result.status); }
 function modelCard(r,event) {
-      const card=node('div','player-card');card.append(node('p','player-name',r.player),node('span','market-name',r.market_label));
+      const card=node('div','player-card');if(String(r.market).startsWith('player_'))card.append(portrait(r));card.append(node('p','player-name',r.player),node('span','market-name',r.market_label));
       if(r.market==='winner') {
         card.append(node('p','estimate',`${number(r.probability_over*100)}%`),node('p','',`Gana ${event.home_team}`),node('p','model-note',`${number(r.probability_under*100)}% gana ${event.away_team}`));
       } else {
         card.append(node('p','estimate',number(r.estimate)),node('p','model-note',`Rango central 80%: ${number(r.range_low)}–${number(r.range_high)}`));
         const over=r.probability_over>=r.probability_under;
-        card.append(node('p','probability',`${number(Math.max(r.probability_over,r.probability_under)*100)}% ${over?'más':'menos'} de ${number(r.line)}`),node('p','line-reference','Umbral estadístico de referencia'));
+        card.append(node('p','probability',`${number(Math.max(r.probability_over,r.probability_under)*100)}% ${over?'más':'menos'} de ${number(r.line)}`),node('p','line-reference',r.reference||'Umbral estadístico de referencia'));
       }
       const outcome=r.result;
       const actual=r.market==='winner'?(outcome.actual===1?event.home_team:event.away_team):number(outcome.actual);
       card.append(node('p','result-line',outcome.status==='evaluated'?`Resultado oficial: ${actual}`:(statusNames[outcome.status]||'Pendiente')));
-      card.append(node('p','model-note',r.conditional_participation?'Condicionado a participación · Disponibilidad final sin confirmar':'Partido completo · Prórroga incluida'));
-      const details=node('details','details');details.append(node('summary','','Registro del modelo'),node('p','',`Registrado ${date(r.sealed_at_utc)}. Último partido usado: ${r.last_feature_date}. Sin cuotas como entrada.`));card.append(details);
+      const status=r.report_status&&r.report_status!=='no_listado'?` · Reporte oficial: ${r.report_status}${r.probability_play===null||r.probability_play===undefined?'':` (juega ${number(r.probability_play*100,0)}% de las veces)`}`:'';
+      card.append(node('p','model-note',r.conditional_participation?`Condicionado a participación (si no juega, no cuenta)${status}`:'Partido completo · Prórroga incluida'));
+      if(r.recalculated_at_utc) card.append(node('p','model-note',r.performance_eligible===false?`Recalculado ${date(r.recalculated_at_utc)}, después del inicio: no cuenta en el marcador`:`Actualizado ${date(r.recalculated_at_utc)}, antes del inicio`));
+      const details=node('details','details');details.append(node('summary','','Registro del modelo'),node('p','',`Registrado ${date(r.sealed_at_utc)}. Último partido usado: ${r.last_feature_date}. Sin cuotas como entrada.`));
+      if(r.original_sealed_at_utc&&r.original_probability_over!==undefined) details.append(node('p','',`Publicación original ${date(r.original_sealed_at_utc)}: ${number(r.original_probability_over*100)}% más${r.market==='winner'?' (gana local)':''}, estimación ${number(r.original_estimate)}.`));
+      card.append(details);
   return card;
 }
 function renderModels() {
@@ -32,7 +55,7 @@ function renderModels() {
   for(const event of data.events) {
     const matches=rows.filter(r=>r.event_id===event.event_id);if(!matches.length)continue;
     const game=node('article','game'),head=node('div','game-header'),names=node('div');
-    names.append(node('h3','game-title',`${event.away_team} · ${event.home_team}`),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
+    names.append(gameTitle(event),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
     head.append(names,link(event.official_url,'Resultado oficial ↗'));game.append(head);
     const grid=node('div','player-grid');
     for(const r of matches) grid.append(modelCard(r,event));
@@ -55,12 +78,13 @@ function renderLive() {
   const events=cohorts.flatMap(c=>c.events), rows=cohorts.flatMap(c=>c.predictions);
   $('live-count').textContent=`${events.length} partidos · ${rows.length} pronósticos · ${rows.filter(r=>r.result.status==='evaluated').length} resultados oficiales · modelo ${cohorts[0].version}`;
   for(const cohort of cohorts) {
-    const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${cohort.train_seasons.join(' y ')}`);box.append(head);
-    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
+    const recalculated=cohort.recalculated_at_utc?` · recalculada ${date(cohort.recalculated_at_utc)} con ${cohort.current_season_games} partidos de esta temporada${cohort.active_strength?' y fuerza individual de las plantillas actuales':''}`:'';
+    const head=node('p','model-note',`Cohorte ${cohort.cohort_date} · sellada ${date(cohort.created_at_utc)} antes de cada salto · entrenado con ${new Intl.ListFormat('es',{type:'conjunction'}).format(cohort.train_seasons)}${recalculated}`);box.append(head);
+    const names={winner:'Ganador',team_points:'Puntos de equipo',game_total:'Total',player_points:'Puntos de jugador',player_rebounds:'Rebotes',player_assists:'Asistencias',player_points_rebounds:'Puntos + rebotes',player_points_assists:'Puntos + asistencias',player_rebounds_assists:'Rebotes + asistencias',player_points_rebounds_assists:'Puntos + rebotes + asistencias',player_threes:'Triples',player_steals:'Robos',player_blocks:'Tapones',player_turnovers:'Pérdidas',player_blocks_steals:'Robos + tapones'},done=Object.entries(cohort.scorecard).filter(([,v])=>v.n>0);
     if(done.length) box.append(node('p','model-note',`Marcador (Brier, menor es mejor): ${done.map(([k,v])=>`${names[k]} ${number(v.brier,3)} (${v.n})`).join(' · ')}`));
     for(const event of cohort.events) {
       const game=node('article','game'),top=node('div','game-header'),names2=node('div'),meta=node('div','game-meta');
-      names2.append(node('h3','game-title',`${event.away_team} · ${event.home_team}`),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
+      names2.append(gameTitle(event),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
       meta.append(node('span',`badge ${event.status==='evaluated'?'done':event.status==='validation_hold'?'warn':''}`,statusNames[event.status]||'Pendiente'),link(event.official_url,'Partido en NBA.com ↗'));
       top.append(names2,meta);game.append(top,node('p','model-note',availabilityText(event.availability)));
       if(event.final) game.append(node('p','result-line',`Marcador oficial: ${event.away_team} ${event.final.away} · ${event.home_team} ${event.final.home}`));
@@ -92,14 +116,14 @@ function render() {
   for (const event of data.events) {
     const matches=rows.filter(r=>r.event_id===event.event_id); if (!matches.length) continue;
     const game=node('article','game'), header=node('div','game-header'), title=node('div');
-    title.append(node('h3','game-title',`${event.away_team} · ${event.home_team}`),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
+    title.append(gameTitle(event),node('p','game-time',`${date(event.tipoff_utc)} · Ciudad de México`));
     const meta=node('div','game-meta'); meta.append(node('span',`badge ${event.status==='evaluated'?'done':['validation_hold','result_unavailable'].includes(event.status)?'warn':''}`,statusNames[event.status]||'Pendiente'),link(event.official_url,'Partido en NBA.com ↗'));
     header.append(title,meta); game.append(header); const grid=node('div','player-grid');
     for (const id of [...new Set(matches.map(r=>r.player_id))]) {
       const predictions=matches.filter(r=>r.player_id===id), first=predictions[0], card=node('div','player-card'), head=node('div','player-head'), names=node('div');
       names.append(node('p','player-name',first.player),node('p','player-sub','Partido completo · Prórroga incluida'));
-      head.append(node('span','avatar',first.player.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('')),names); card.append(head);
-      for (const r of predictions.sort((a,b)=>Object.keys({player_points:1,player_rebounds:1,player_assists:1}).indexOf(a.market)-Object.keys({player_points:1,player_rebounds:1,player_assists:1}).indexOf(b.market))) {
+      head.append(portrait(first),names); card.append(head);
+      for (const r of predictions.sort((a,b)=>MARKET_ORDER.indexOf(a.market)-MARKET_ORDER.indexOf(b.market))) {
         const forecast=node('div','forecast-row'), estimate=node('div'), display=node('div','estimate',number(r.estimate));
         display.append(node('small','',`Rango ${r.range_low}–${r.range_high}`)); estimate.append(node('span','market-name',r.market_label),display);
         const probabilities=node('div'), above=r.probability_over>=r.probability_under, probability=above?r.probability_over:r.probability_under;
@@ -147,4 +171,5 @@ $('search').addEventListener('input',render);$('event-filter').addEventListener(
 document.querySelectorAll('[data-model]').forEach(button=>button.addEventListener('click',()=>{
   modelMarket=button.dataset.model;document.querySelectorAll('[data-model]').forEach(b=>{const chosen=b===button;b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));});renderModels();
 }));
+fetch('/web/imagenes/manifiesto.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(m=>{if(!m?.nba)return;teamImages=Object.fromEntries(Object.values(m.nba).filter(e=>e&&typeof e.n==='string').map(e=>[imageName(e.n),e]));if(data)render();}).catch(()=>{});
 load();setInterval(()=>{if(document.visibilityState==='visible')load();},60000);

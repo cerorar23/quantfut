@@ -262,7 +262,6 @@ def test_nunca_se_toma_una_oferta_del_snapshot_de_cierre(monkeypatch):
     insertadas = []
     monkeypatch.setattr(ss, "query", lambda *a, **k: [
         {"match_id": "m1", "league_id": "us.mls", "kickoff_utc": ko}])
-    monkeypatch.setattr(ss.pk, "_af_snapshot", lambda *a: None)
     monkeypatch.setattr(ss.pk, "persistencias", lambda: dict(ss.pk.PERSISTENCE))
     monkeypatch.setattr(ss.pk, "_odds_api_snapshot", lambda *a: snap)
     monkeypatch.setattr(ss, "executemany", lambda sql, rows: insertadas.extend(rows) or len(rows))

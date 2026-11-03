@@ -23,6 +23,9 @@ from ..config import settings
 from .picks import Candidate
 
 log = logging.getLogger(__name__)
+# httpx registra en INFO la URL completa, que lleva el token del bot: los
+# registros de los jobs lo guardaban en claro (auditoría del 24-oct-2026).
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 API = "https://api.telegram.org/bot{token}/{method}"
 

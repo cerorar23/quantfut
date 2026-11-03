@@ -1,0 +1,24 @@
+{
+  "version": "nba-live14b-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-25 after nba-live14-1.0 rejected the extended dataset as a whole (play-in and playoffs in the history made rebounds and assists worse) and before any number of this variant existed. The variant keeps the regular-season history of RUN071 and only adds the new box-score columns",
+  "question": "Does adding the new box-score columns to the RUN071 regular-season rows (turnovers, field-goal and free-throw attempts, offensive rebounds) and the estimated possessions to its games improve the deployed live 1.4.0 model, by giving values to pace_c, opp_def_c and usage_trend (constant 0 today) and by making player_turnovers possible?",
+  "data": {
+    "players": "RUN071 players.jsonl.gz with tov, fga, fta, oreb copied from nba_extended_box_20261024 for the same (game, player, team); a row whose game is missing there keeps None for those four",
+    "games": "RUN071 games.json with possessions_estimate of each side copied from the extended games for the same game id; missing games keep None",
+    "checks": "every copied row must agree with RUN071 on points, rebounds, assists, threes, steals and blocks, otherwise the build stops; no row, game or season type is added or removed"
+  },
+  "validation": {
+    "reference": "the deployed 1.4.0 configuration: RUN071, old + T-60 reports, BASE + ENV features, 11 player markets",
+    "candidate": "the same configuration on the RUN071 + columns data",
+    "fit": "nba.multimarket_v13_live.fit_model as if the target were 2025-26 (2023-24 and 2024-25)",
+    "units": "2025-26 regular-season player-games at the reference grid, each arm pricing them with its own history (identical for both: only the four columns differ)",
+    "bootstrap": "paired differences resampled by whole dates, 400 replicates, seed 20261030"
+  },
+  "acceptance": {
+    "data": "accepted if the pooled Brier difference over the 11 player markets has a 95% upper bound below 0 AND no single market is worse with a lower bound above 0 at 99.55% (Bonferroni over 11). The team model does not read the new columns and is not compared",
+    "turnovers": "player_turnovers enters only if the data is accepted and its live calibration beats the raw law with the upper bound of the 99% interval below 0, slope in [0.9, 1.1] and |intercept| <= 0.10"
+  },
+  "deployment_rule": "if accepted, the server's data folder is replaced by the RUN071 + columns files (the old ones kept for rollback) together with a model fitted on them; otherwise nothing changes",
+  "limits": ["the 53 regular-season games that the extended dataset quarantined keep no columns, so the history of a few players has gaps there", "retrospective on 2025-26 only"]
+}

@@ -25,3 +25,5 @@ def test_la_consulta_excluye_solo_competiciones_cross_league(monkeypatch):
         {"n": 0, "occ": None, "copa": 0}])
     health.check_unresolved_names()
     assert "cross_league" in seen[0] and "LEFT JOIN leagues" in seen[0]
+    # Ligas retiradas y nombres que ya no aparecen en ningún feed no alarman.
+    assert "l.active" in seen[0] and "last_seen" in seen[0]

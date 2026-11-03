@@ -31,7 +31,10 @@ VARIABLES = ["2m_temperature", "2m_dewpoint_temperature", "10m_u_component_of_wi
              "total_precipitation", "total_cloud_cover"]
 REJILLA = 0.25
 RETRASO_DIAS = 7
-CONCURRENCIA = 4
+# Una petición a la vez. Desde el ~20-oct-2026 Copernicus rechaza (`rejected`) las peticiones
+# simultáneas de la misma cuenta: con 4 a la vez fallaban 175 de 177 celdas cada día, y las
+# mismas celdas pedidas de una en una salen bien (comprobado el 25-oct).
+CONCURRENCIA = 1
 DESDE = date(2023, 7, 1)
 
 

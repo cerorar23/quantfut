@@ -11,7 +11,7 @@ import pandas as pd
 from ..config import settings
 from ..db import conn, execute, query, query_one
 from ..ingest.lineups import availability
-from ..eval.cierre import es_cierre_real
+from ..eval.cierre import cierre_o_vencido, es_cierre_real
 from .devig import consensus_devig, devig
 from .lineup_challenger import LINEUP_FEATURES, LineupLambdaChallenger
 from .market_anchor import anchor_from_consensus
@@ -64,14 +64,19 @@ def _features_from_availability(data: dict) -> dict | None:
 
 
 def _quotes(match_id: str, lineup_as_of) -> list[dict]:
+    # Desde el 23-oct-2026 las cuotas son de PropLine, que captura una vez por hora
+    # (`hourly:*`) y nunca etiqueta `post_xi`: sin admitirlas la sombra no registró nada
+    # desde ese día. Sigue valiendo solo una foto posterior al XI y anterior a T-15; la
+    # horaria se admite hasta 75 min de antigüedad porque no hay otra más reciente.
     return query(
         """SELECT DISTINCT ON (bookmaker, selection)
                   bookmaker, selection, price, captured_at
            FROM odds_snapshots
-           WHERE match_id=%s AND market='h2h' AND window_tag='post_xi'
+           WHERE match_id=%s AND market='h2h'
+             AND ((window_tag='post_xi' AND captured_at >= now() - interval '15 minutes')
+               OR (window_tag LIKE 'hourly:%%' AND captured_at >= now() - interval '75 minutes'))
              AND mins_to_kickoff >= 15
              AND captured_at >= %s
-             AND captured_at >= now() - interval '15 minutes'
            ORDER BY bookmaker, selection, captured_at DESC""",
         (match_id, lineup_as_of),
     )
@@ -290,12 +295,12 @@ def _closing(match_id: str) -> dict[str, float]:
 
 def settle_pending() -> dict:
     rows = query(
-        """SELECT sp.shadow_pick_id, sp.match_id, sp.selection,
+        f"""SELECT sp.shadow_pick_id, sp.match_id, sp.selection,
                   sp.observed_price, m.home_goals, m.away_goals
            FROM shadow_picks sp JOIN matches m USING (match_id)
            LEFT JOIN shadow_results sr USING (shadow_pick_id)
            WHERE sr.shadow_pick_id IS NULL AND m.status='finished'
-             AND m.home_goals IS NOT NULL"""
+             AND m.home_goals IS NOT NULL AND {cierre_o_vencido()}"""
     )
     settled, clvs = 0, []
     for row in rows:

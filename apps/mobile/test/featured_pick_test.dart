@@ -34,13 +34,51 @@ void main() {
   });
 
   test('los que no traen probabilidad no compiten', () {
-    final best = featuredPick([pick('a', null, 3.0), pick('b', .62, 1.1)]);
+    final best = featuredPick([pick('a', null, 1.3), pick('b', .74, 1.2)]);
     expect(best?['market'], 'b');
   });
 
-  test('si ninguno trae probabilidad se muestra el primero', () {
+  test('sin probabilidad válida no hay destacado', () {
     final best = featuredPick([pick('a', null), pick('b', null)]);
-    expect(best?['market'], 'a');
+    expect(best, isNull);
+  });
+
+  test('excluye la cuota 1.12 aunque tenga 85 por ciento', () {
+    final best = featuredPick([
+      pick('corners', .85, 1.12),
+      pick('goals', .80, 1.40),
+      pick('other', .86, 1.50),
+    ]);
+    expect(best?['market'], 'goals');
+  });
+
+  test('incluye extremos exactos de cuota y probabilidad', () {
+    for (final prob in [.74, .85]) {
+      for (final price in [1.20, 1.60]) {
+        expect(featuredPick([pick('valid', prob, price)]), isNotNull);
+      }
+    }
+    for (final invalid in [
+      pick('a', .7399, 1.40),
+      pick('b', .8501, 1.40),
+      pick('c', .80, 1.1999),
+      pick('d', .80, 1.6001),
+      pick('e', double.nan, 1.40),
+      pick('f', .80, double.infinity),
+      pick('g', .80),
+    ]) {
+      expect(featuredPick([invalid]), isNull);
+    }
+  });
+
+  test('acepta price si no existe ref_price y no modifica la lista', () {
+    final picks = [
+      pick('invalid', .85, 1.12),
+      {'market': 'valid', 'prob': .80, 'price': 1.40},
+    ];
+    expect(featuredPick(picks)?['market'], 'valid');
+    expect(picks.first['market'], 'invalid');
+    expect(picks.length, 2);
   });
 
   test('sin pronósticos no hay tarjeta', () {

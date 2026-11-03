@@ -74,7 +74,6 @@ from .mobile import member, router as mobile_router
 from . import mensajes
 from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
-from .respaldo import router as respaldo_router
 from .firebase import router as firebase_router
 from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
@@ -138,9 +137,10 @@ async def security_middleware(request: Request, call_next):
     # que bastaba para una sola página cortaba la navegación normal.
     if request.url.path.startswith(("/control", "/static")):
         scope, limit = "control", settings.rate_limit_default_per_minute * 2
-    elif request.url.path.startswith("/web/escudos/"):
+    elif request.url.path.startswith(("/web/escudos/", "/web/imagenes/")):
         # Una sola pantalla de la app pide ~80 escudos (uno por equipo) y agotaba los 60/min por IP:
         # el resto de la app (p. ej. Coins) recibía 429 (2026-10-15). Son PNG estáticos y de solo lectura.
+        # Los logos NBA y las fotos de tenis (/web/imagenes/) son igual de estáticos.
         scope, limit = "escudos", settings.rate_limit_default_per_minute * 10
     else:
         scope, limit = "ip", settings.rate_limit_default_per_minute
@@ -717,9 +717,6 @@ def run_job(job: str):
         "fixtures": ("..ingest.fixtures", "run"),
         "results": ("..ingest.results", "close_recent"),
         "odds": ("..ingest.odds_worker", "run_once"),
-        "xg": ("..ingest.xg_worldfootball", "run"),
-        "uefa_cups": ("..ingest.uefa_cups", "run"),
-        "lineups": ("..ingest.lineups", "run"),
         "daily": ("..publish.daily", "run"),
         "settle": ("..eval.clv", "settle_pending"),
     }
@@ -796,7 +793,6 @@ app.include_router(mobile_router)
 # `/rewards/callback/{provider}` de ofertas, que si no lo capturaría.
 app.include_router(anuncios_router)
 app.include_router(rewards_router)
-app.include_router(respaldo_router)
 app.include_router(firebase_router)
 app.include_router(whop_router)
 app.include_router(whop_webhooks)

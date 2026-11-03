@@ -32,11 +32,18 @@ def test_web_demo_se_sirve_sin_secreto(monkeypatch):
     assert "QuantFut" in response.text
     assert client.get("/styles.css").status_code == 200
     assert client.get("/future.css").status_code == 200
+    assert client.get("/window.css").status_code == 200
+    assert client.get("/sports-window.js").status_code == 200
     assert client.get("/vendor/cybercore/cybercore.min.css").status_code == 200
     assert client.get("/app.js").status_code == 200
+    assert client.get("/real-views.js").status_code == 200
     assert client.get("/public-data.js").status_code == 200
     assert client.get("/membership.js").status_code == 200
     assert client.get("/membership.css").status_code == 200
+    assert client.get("/conversion.css").status_code == 200
+    assert client.get("/conversion-views.js").status_code == 200
+    conversion = Path(web.FRONTEND_DIR / "conversion-views.js").read_text(encoding="utf-8")
+    assert "X-Service-Token" not in conversion and "/v1/" not in conversion
     assert client.get("/google-auth.js").status_code == 200
     assert client.get("/meta-pixel.js").status_code == 200
     assert client.get("/whop-checkout.js").status_code == 200

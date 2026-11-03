@@ -232,6 +232,10 @@ def _pata_publica(p: dict) -> dict:
             "kickoff_utc": p["kickoff_utc"], "local": p["local"], "visitante": p["visitante"],
             "texto": ed.texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"]),
             "market": p["market"],
+            # Como en la escalera: la app redacta el texto en el idioma del usuario desde
+            # estos campos (`pick_labels.dart`); sin ellos las patas salían siempre en español.
+            "selection": p["selection"],
+            "line": None if p["line"] is None else float(p["line"]),
             # Misma precisión pública reducida que la escalera.
             "prob": round(float(p["prob"]), 2), "price": float(p["price"]), "book": p["book"],
             "outcome": p["outcome"],
@@ -252,7 +256,8 @@ def informe_publico() -> dict:
     patas = query(
         f"""SELECT p.ticket_id, p.match_id, p.market, p.selection, p.line, p.prob, p.price,
                    p.book, m.kickoff_utc, m.league_id,
-                   th.canonical_name AS local, ta.canonical_name AS visitante,
+                   COALESCE(th.display_name, th.canonical_name) AS local,
+                   COALESCE(ta.display_name, ta.canonical_name) AS visitante,
                    rp.outcome, rp.home_goals, rp.away_goals, rp.valor
             FROM parley_patas p
             JOIN parley_tickets t ON t.ticket_id = p.ticket_id

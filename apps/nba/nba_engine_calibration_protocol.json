@@ -1,0 +1,55 @@
+{
+  "version": "nba-engine-calibration-1.0",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-24 after the nine bet365 team markets were evaluated (nba-team-markets-1.1: no evidence that the engine improves the close). Those runs showed that at the market's own line the no-vig probability is ~0.5, so the Brier against the market barely discriminates; the engine's distributions are therefore calibrated here across a grid of lines, against the realised results, for markets with and without a price. No number of this protocol existed when it was written",
+  "question": "Are the engine's own distributions (team scores by period, player stats and combinations, double-double) calibrated against the realised results across lines, does a logistic recalibration fitted on 2024-25 improve 2025-26, does the engine beat a climatological baseline, and do availability and game-environment features improve calibration for players? Research only: nothing is promoted, retrained in production or published.",
+  "seasons": {"calibration_fit": "2024-25", "test": "2025-26"},
+  "lines": {
+    "grid": "for every unit the lines are floor(mu + z*sd) + 0.5 for z in -1, -0.5, 0, 0.5, 1, with mu and sd the engine's own mean and standard deviation of that quantity for that unit; duplicated lines are kept once",
+    "outcome": "y = realised quantity > line (half-integer lines, no push)",
+    "units": "(game or player-game, market, line); several lines of the same game or player-game are correlated, so every interval resamples whole dates"
+  },
+  "team_markets": {
+    "list": ["total_game", "margin_game", "home_points", "away_points", "total_h1", "margin_h1", "total_q1", "margin_q1", "total_h2", "margin_h2", "total_q2", "margin_q2"],
+    "universe": "games matched to the bet365 archive (nba_betsapi_odds_20261024) so that every period has a realised score; h2 = game - h1, q2 = h1 - q1; Q3 and Q4 are not available in the normalised archive and are not scored",
+    "engine": "the score model of nba-team-markets-1.1: game margin ~ Normal(mu_m, sigma_m) with mu_m = sigma_m * Phi^-1(p_win), game total ~ Normal(mu_t, sigma_t); team points: home mean (mu_t + mu_m)/2, away mean (mu_t - mu_m)/2, both with sd sqrt((sigma_t^2 + sigma_m^2)/4) (symmetric split of the home/away variances); periods h1, q1, h2, q2: total = a + b*mu_t and margin = c + d*mu_m with residual sd, least squares on games of earlier seasons only",
+    "climatology": "the same normal law at the same lines with the mean and sd of the quantity over the two previous seasons (one if only one exists)",
+    "continuity": "points are integers: probabilities use the continuity correction of nba.team_markets.exceed"
+  },
+  "player_markets": {
+    "list": ["steals", "blocks", "turnovers", "steals_blocks", "points_rebounds", "points_assists", "rebounds_assists", "points_rebounds_assists", "double_double"],
+    "universe": "regular-season player-games with participation and minutes > 0, at least 10 earlier box rows inside the v1 window; conditional on playing, as the books void a bet on a player who does not play",
+    "engine": "the v1 player count law of nba.multimarket (negative binomial plus empirical sample, weight 0.25, window 20, minimum history 10, prior minutes 90), applied unchanged to each count; combinations and turnovers are counted per game and use the sum of the component prior rates per minute (steals + blocks 0.060, points + rebounds 0.85, points + assists 0.80, rebounds + assists 0.35, points + rebounds + assists 1.00, turnovers 0.07)",
+    "sd_for_the_grid": "sqrt(mean + mean^2 / n) of the fitted negative binomial",
+    "double_double": "engine probability = (k + 10 r0) / (n + 10) with k the double-doubles of the last 20 games, n the games in the window and r0 the double-double rate of all earlier seasons; one unit per player-game (no line)",
+    "baseline": "the share of the last 20 games above the line, (k + 1) / (n + 2); for double-double the constant r0",
+    "turnovers_source": "nba_extended_box_20261024 for the turnover counts; games missing there are skipped for that stat"
+  },
+  "calibration": {
+    "recalibration": "per market: logit p = a + b * logit(engine p), ridge lambda 0.0001 toward a = 0, b = 1, fitted on the 2024-25 units of that market, applied unchanged to 2025-26",
+    "player_features": "arm F = recalibration plus the availability (3) and environment (8) features of nba-props-residual-1.0 (as-of rules unchanged, snapshot nominal 45 minutes before tipoff), standardised on 2024-25, ridge lambda chosen by 5 contiguous date blocks inside 2024-25 from 0.0001, 0.001, 0.01, 0.1",
+    "placebo": "arm F refit after permuting the eleven feature columns among player-games of the same date and market (seed 20261027); it is compared with the recalibration arm A and must not beat it with an upper bound below 0, otherwise the market's feature result is void"
+  },
+  "metrics": {
+    "scores": ["Brier", "log loss", "bias", "calibration slope and intercept on the test season", "reliability table in 10 equal-count bins"],
+    "paired_differences": "Brier difference between arms, mean over units, date bootstrap (400 replicates, seed 20261027)",
+    "interval": "99.58% for the team markets (Bonferroni over 12) and 99.44% for the player markets (Bonferroni over 9)",
+    "secondary_descriptive": {
+      "rmse": "root mean squared error of the engine mean and of the climatological mean against the realised quantity, per market",
+      "vs_bet365_line": "for the full-game, first-half and first-quarter spread and total, the RMSE of the engine mean and of the bet365 close line against the realised margin and total, and the weight beta2 in outcome = alpha + beta1 * line_center + beta2 * (engine mean - line_center) with a date-clustered interval; reported with no decision rule, since the earlier run showed that the line is the market's own centre"
+    }
+  },
+  "decision_rule": {
+    "skilled": "per market: upper bound of (raw engine - baseline) Brier below 0 on 2025-26",
+    "calibrated": "per market: test slope of the raw engine in [0.9, 1.1] and |intercept| <= 0.10",
+    "recalibration_helps": "per market: upper bound of (A_recalibration - raw engine) below 0",
+    "features_help": "player markets only: upper bound of (F - A) below 0, the placebo against A clean, and the slope of F in [0.9, 1.1]",
+    "otherwise": "reported as not skilled / not calibrated / not helped; every outcome is a valid result",
+    "scope": "calibration against realised results; no price, no stake, no claim about value against a bookmaker"
+  },
+  "outputs": {
+    "report": "engine_calibration_report.json",
+    "parameters": "engine_calibration_params.json: per market the recalibration a and b and the player feature weights, promoted false",
+    "next": "the parameters are the engine's calibration for markets with no price; they are applied to the live engine only by a separate, explicit decision"
+  }
+}

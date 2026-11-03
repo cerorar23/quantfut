@@ -20,6 +20,12 @@ TOLERANCE = timedelta(hours=36)
 LOCK_ID = 61013062
 
 
+def canonical_season(value):
+    """`2023/2024` -> `2324`: la misma etiqueta que el resto de `matches.season`."""
+    found = re.fullmatch(r"(\d{4})/(\d{4})", str(value))
+    return found.group(1)[2:] + found.group(2)[2:] if found else str(value)
+
+
 def timestamp(value):
     result = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     if result.tzinfo is None:
@@ -54,7 +60,7 @@ def parse_payload(fixture, raw, meta):
         goals[side] = value
     row = {
         "provider": "fotmob", "source_match_id": sid, "league_id": norm["league_id"],
-        "season": norm["season"], "kickoff_utc": kickoff.isoformat(),
+        "season": canonical_season(norm["season"]), "kickoff_utc": kickoff.isoformat(),
         "captured_at": captured.isoformat(), "raw_sha256": meta["sha256"],
         "home_source_team_id": norm["home_team_id"], "away_source_team_id": norm["away_team_id"],
         "home_name": general["homeTeam"]["name"], "away_name": general["awayTeam"]["name"],
@@ -147,9 +153,11 @@ def records(path):
 class Matcher:
     """Identidades exactas por país; el calendario corrobora nombres e IDs."""
     def __init__(self, snapshot, rows, overrides=None, provider="fotmob"):
-        if provider not in ("fotmob", "sofascore"):
+        if provider not in ("fotmob", "sofascore", "sofascore_local"):
             raise ValueError("unsupported_provider")
         self.provider = provider
+        # El archivo local usa los mismos IDs de partido que SofaScore.
+        self.external_key = "sofascore" if provider == "sofascore_local" else provider
         self.teams = {t["team_id"]: t for t in snapshot["teams"]}
         self.leagues = {l["league_id"]: l for l in snapshot["leagues"]}
         self.names = defaultdict(set)
@@ -251,7 +259,7 @@ class Matcher:
             m = pair[0]
             if not self.score_agrees(r, m):
                 return {"mapping_status": "conflict", "mapping_reason": "score_or_status_conflict", "match_id": None}
-            existing = (m.get("external_ids") or {}).get(self.provider)
+            existing = (m.get("external_ids") or {}).get(self.external_key)
             if existing is not None and str(existing) != r["source_match_id"]:
                 return {"mapping_status": "conflict", "mapping_reason": "different_source_id", "match_id": None}
             return {"mapping_status": "matched", "mapping_reason": "exact_teams_time_score",
@@ -260,6 +268,8 @@ class Matcher:
             return {"mapping_status": "conflict", "mapping_reason": "multiple_candidate_matches", "match_id": None}
         if r.get('historical_tournament_id'):
             return {"mapping_status": "unresolved", "mapping_reason": "historical_tournament_requires_existing_match", "match_id": None}
+        if self.provider == "sofascore_local":
+            return {"mapping_status": "unresolved", "mapping_reason": "local_archive_never_creates", "match_id": None}
         if len(home) == len(away) == 1 and home != away:
             # Do not create a duplicate if one identified team already plays nearby.
             clashes = [m for m in near if {m["home_team_id"], m["away_team_id"]} & (home | away)]
@@ -278,7 +288,7 @@ def plan(normalized, snapshot_path, output, overrides_path=None):
                 for r in records(normalized)]
     overrides = json.loads(Path(overrides_path).read_text()) if overrides_path else {}
     providers = {r["provider"] for r in metadata}
-    if len(providers) != 1 or not providers <= {"fotmob", "sofascore"}:
+    if len(providers) != 1 or not providers <= {"fotmob", "sofascore", "sofascore_local"}:
         raise ValueError("unsupported_or_mixed_providers")
     provider = next(iter(providers))
     matcher = Matcher(snapshot, metadata, overrides, provider=provider)

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/firebase_services.dart';
 import '../product/live_api.dart';
-import '../product/live_widgets.dart';
+import '../product/qf_shapes.dart';
+import '../product/qf_theme.dart';
 import 'app_locale.dart';
 
 /// Cambia el idioma en la app y, si hay Firebase, lo sincroniza como preferencia.
@@ -26,23 +27,28 @@ Future<void> selectLanguage(String code) async {
 Future<void> showLanguagePicker(BuildContext context) =>
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: livePanel,
+      backgroundColor: QfColors.surface,
+      shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (sheet) => SafeArea(
         child: ListenableBuilder(
           listenable: AppLocale.instance,
-          builder: (context, _) => Column(
+          builder: (context, _) => SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 4),
                 child: Text(
-                  context.l10n.languageTitle,
+                  context.l10n.languageTitle.toUpperCase(),
                   style: const TextStyle(
-                    fontSize: 19,
+                    fontFamily: qfDisplay,
+                    fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    letterSpacing: .6,
+                    color: QfColors.text,
                   ),
                 ),
               ),
@@ -50,18 +56,24 @@ Future<void> showLanguagePicker(BuildContext context) =>
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
                 child: Text(
                   context.l10n.languageHint,
-                  style: const TextStyle(fontSize: 13, color: liveMuted),
+                  style: const TextStyle(fontSize: 13, color: QfColors.text2),
                 ),
               ),
               for (final entry in appLanguages.entries)
                 ListTile(
                   key: ValueKey('language-${entry.key}'),
+                  minTileHeight: 52,
+                  selected: AppLocale.instance.code == entry.key,
+                  selectedTileColor: QfColors.surface2,
                   title: Text(
                     entry.value,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: AppLocale.instance.code == entry.key ? QfColors.primary : QfColors.text,
+                    ),
                   ),
+                  // Marca con ✓ además del color.
                   trailing: AppLocale.instance.code == entry.key
-                      ? const Icon(Icons.check_rounded, color: liveGreen)
+                      ? const Icon(Icons.check_rounded, color: QfColors.primary)
                       : null,
                   onTap: () async {
                     await selectLanguage(entry.key);
@@ -70,6 +82,7 @@ Future<void> showLanguagePicker(BuildContext context) =>
                 ),
               const SizedBox(height: 8),
             ],
+            ),
           ),
         ),
       ),
@@ -77,7 +90,7 @@ Future<void> showLanguagePicker(BuildContext context) =>
 
 /// Botón de idioma para barras superiores (bienvenida, acceso).
 class LanguageButton extends StatelessWidget {
-  const LanguageButton({super.key, this.color = const Color(0xffb4bfce)});
+  const LanguageButton({super.key, this.color = QfColors.text2});
 
   final Color color;
 

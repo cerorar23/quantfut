@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/core/app_update.dart';
 import 'package:gobet/l10n/app_localizations.dart';
+import 'package:gobet/product/qf_theme.dart';
 
 Map<String, dynamic> policy() => {
   'app_version_android': '13.0.0+71',
@@ -189,6 +190,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Más tarde'), required ? findsNothing : findsOneWidget);
+      // Piel v3: actualizar es una acción azul (el ámbar queda para VIP y monedas), de 44 dp.
+      final now = find.byKey(const ValueKey('update-now'));
+      expect(
+        tester.widget<FilledButton>(now).style?.backgroundColor?.resolve(<WidgetState>{}),
+        QfColors.primary,
+      );
+      expect(tester.getSize(now).height, greaterThanOrEqualTo(44));
+      expect(find.text('1.0.0+71'), findsOneWidget);
       await tester.tap(find.text('Actualizar ahora'));
       await tester.pumpAndSettle();
       expect(opens, 1);

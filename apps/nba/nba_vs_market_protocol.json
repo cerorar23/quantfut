@@ -1,0 +1,44 @@
+{
+  "version": "nba-vs-pinnacle-1.0",
+  "frozen_before_data": true,
+  "frozen_note": "written on 2026-10-21, before any historical NBA price was bought; the purchase is blocked in code until 2026-11-01",
+  "question": "Does the v1.3 winner probability add information beyond the Pinnacle no-vig price? It never produces a bet, a stake or a pick.",
+  "seasons": ["2024-25", "2025-26"],
+  "market": {
+    "source": "The Odds API historical endpoint, region eu, bookmaker pinnacle, market h2h, one snapshot per Eastern game day taken 30 minutes before that day's earliest known tipoff (nba.odds_history plan)",
+    "price_rules": "event must not have started at the snapshot; the book's update must not be after the snapshot nor more than 6 hours before it; both decimal prices finite and > 1; the snapshot must fall on the same Eastern calendar day as the game (snapshots also list later days, whose prices are a day old)",
+    "team_names": "the provider's 'Los Angeles Clippers' is read as games.json 'LA Clippers'; every other name must match exactly (checked against the provider's 30 names)",
+    "primary_devig": "proportional (1/h)/(1/h+1/a)",
+    "sensitivity_devig": "power method (1/h)^k + (1/a)^k = 1",
+    "not_closing_line": "the price is taken before the first game of the day, so for later games it is hours old; minutes_to_tipoff is kept for every game and used to stratify"
+  },
+  "model": {
+    "definition": "v1.3 exactly as published (multimarket_v13), old injury reports, trained on the two scored seasons before each evaluated season with no data of the evaluated season; the live model and its reports are not changed",
+    "arms": {
+      "aligned": "PRIMARY. The model may use injury reports only up to min(tipoff - 60 min, snapshot time), so the model and the market know the same things; a game with no earlier report is treated as unobserved, as in v1.3",
+      "tminus60": "SECONDARY. The published rule (reports up to tipoff - 60 min). For games after the first of the day this is newer information than the price has, so it favours the model and is reported only to show that gap"
+    }
+  },
+  "coverage_rule": "per season, matched games (a model probability and an accepted price) / games with a known tipoff must be >= 0.85, otherwise that season is reported as inconclusive and no decision is taken from it",
+  "metrics": {
+    "scores": ["Brier", "log loss"],
+    "differences": "paired Brier difference with a 95% bootstrap that resamples whole dates (400 replicates, seed 20261101)",
+    "information_weight": "c in logit(p) = logit(market) + c * (logit(model) - logit(market)), one parameter, no intercept, maximum likelihood; c = 0 is the market, c = 1 is the model; 95% interval by the same date bootstrap",
+    "walk_forward": "c fitted on 2024-25 and applied unchanged to 2025-26; Brier of that blend against the market on 2025-26",
+    "blend_5050": "equal logit blend of model and market, reported for reference"
+  },
+  "decision_rule": {
+    "better_than_market": "aligned arm: upper 95% bound of (model Brier - market Brier) < 0 in both seasons",
+    "adds_information": "aligned arm: lower 95% bound of c > 0 in both seasons AND the walk-forward blend has a lower Brier than the market in 2025-26 (point estimate)",
+    "otherwise": "no evidence that the NBA winner probability adds information over Pinnacle; it is not used as a pick. This is the expected outcome for an efficient market and is a valid result",
+    "scope": "adds_information is necessary, not sufficient, for any commercial use: it says nothing about prices available to a customer, limits, or totals and team points"
+  },
+  "descriptive_only": [
+    "strata by minutes_to_tipoff: [0,60), [60,180), [180, inf)",
+    "bins of the gap model - market with observed home-win rate",
+    "sensitivity of every comparison to the power de-vig",
+    "average overround"
+  ],
+  "not_modeled": ["closing line value (no closing prices)", "totals and team points (second phase, December)", "player markets", "stakes, edges, ROI"],
+  "next_phase": "if a prospective test is wanted, capture the current Pinnacle price at the moment each cohort is sealed (about 1 credit per day) and compare on sealed forecasts; this protocol is retrospective and exploratory"
+}

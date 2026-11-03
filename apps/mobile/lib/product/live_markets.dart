@@ -10,17 +10,21 @@ import 'market_catalog.dart';
 
 /// Color y símbolo de cada familia de mercado. Una familia que no figure aquí
 /// usa el gris neutro: añadir un mercado al catálogo nunca rompe la pantalla.
-const _look = <String, (Color, String)>{
-  'goals': (liveCyan, '⚽'),
-  'team_goals': (liveGreen, '🥅'),
-  'corners': (liveGold, '🚩'),
-  'corners_team': (Color(0xffff8b3d), '🚩'),
-  'handicap': (Color(0xff9a7bff), '⚖'),
-  'double_chance': (Color(0xffbbf32a), '✌'),
-  'winner': (Color(0xff4ea1ff), '🏆'),
-  'cards': (Color(0xffe85667), '🟨'),
+///
+/// Iconos de Material y no emojis: un emoji depende de la fuente del teléfono y
+/// en Android antiguos (🟨, ⚖, ✌) sale como cuadro vacío o en monocromo.
+const _look = <String, (Color, IconData)>{
+  'goals': (liveCyan, Icons.sports_soccer),
+  'team_goals': (liveGreen, Icons.sports_score),
+  'corners': (liveGold, Icons.flag_outlined),
+  'corners_team': (Color(0xffff8b3d), Icons.flag_outlined),
+  'handicap': (Color(0xff9a7bff), Icons.shield_outlined),
+  'double_chance': (Color(0xffbbf32a), Icons.alt_route_rounded),
+  'winner': (Color(0xff4ea1ff), Icons.emoji_events_outlined),
+  'cards': (Color(0xffe85667), Icons.style_outlined),
 };
-(Color, String) _lookOf(String id) => _look[id] ?? (liveMuted, '•');
+(Color, IconData) _lookOf(String id) =>
+    _look[id] ?? (liveMuted, Icons.circle_outlined);
 
 /// Mercados del servidor que componen cada familia del catálogo.
 const familyMarkets = <String, List<String>>{
@@ -478,7 +482,7 @@ class _FamilyCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        Text(icon, style: const TextStyle(fontSize: 22)),
+                        Icon(icon, color: color, size: 24),
                       ],
                     ),
                     const SizedBox(height: 10),

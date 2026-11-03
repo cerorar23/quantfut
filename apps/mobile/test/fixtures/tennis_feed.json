@@ -1,0 +1,99 @@
+{
+ "sport": "tenis",
+ "state": "ok",
+ "generated_at": "2026-10-30T19:27:01.649167+00:00",
+ "events": [
+  {
+   "id": "12173711",
+   "sport": "tenis",
+   "home": "Liudmila Samsonova",
+   "away": "Heather Watson",
+   "start": "2026-10-24T01:30:00+00:00",
+   "league": "WTA · Tokyo",
+   "surface": "Hard",
+   "sealed_at": "2026-10-23T10:30:59.846137+00:00",
+   "seal": "d14cc5f14aaa98a086368f33ff6ee4082aeeecef77c54fe092c89c2271fbee99",
+   "status": "finished",
+   "score": "1 - 2",
+   "actionable": false,
+   "markets": [
+    {
+     "id": "winner",
+     "label": "Ganador del partido",
+     "selection": "Liudmila Samsonova",
+     "probability": 0.8250672539730151,
+     "price": null,
+     "reference": "Probabilidad del motor",
+     "push_probability": null,
+     "outcome": "loss"
+    },
+    {
+     "id": "tiebreak-1",
+     "label": "Tie-break",
+     "selection": "Sí",
+     "probability": 0.19498071252264587,
+     "price": null,
+     "reference": "Probabilidad del motor; cuota no publicada",
+     "push_probability": 0.0,
+     "outcome": "win"
+    },
+    {
+     "id": "games_total-2",
+     "label": "Juegos totales",
+     "selection": "Más de 18.5",
+     "probability": 0.5241265302293894,
+     "price": null,
+     "reference": "Probabilidad del motor; cuota no publicada",
+     "push_probability": 0.0,
+     "outcome": "win"
+    }
+   ]
+  },
+  {
+   "id": "12173712",
+   "sport": "tenis",
+   "home": "Yuliia Starodubtseva",
+   "away": "Aliaksandra Sasnovich",
+   "start": "2026-10-24T01:30:00+00:00",
+   "league": "WTA · Tokyo",
+   "surface": "Hard",
+   "sealed_at": "2026-10-23T10:31:00.226939+00:00",
+   "seal": "1d99166b479078c9af15d32c232bace6a88eb33b9bcf7ad926979291c818b01a",
+   "status": "finished",
+   "score": "0 - 2",
+   "actionable": false,
+   "markets": [
+    {
+     "id": "winner",
+     "label": "Ganador del partido",
+     "selection": "Yuliia Starodubtseva",
+     "probability": 0.5021662043333717,
+     "price": null,
+     "reference": "Probabilidad del motor",
+     "push_probability": null,
+     "outcome": "loss"
+    },
+    {
+     "id": "tiebreak-1",
+     "label": "Tie-break",
+     "selection": "Sí",
+     "probability": 0.2306216713149509,
+     "price": null,
+     "reference": "Probabilidad del motor; cuota no publicada",
+     "push_probability": 0.0,
+     "outcome": "loss"
+    },
+    {
+     "id": "games_total-2",
+     "label": "Juegos totales",
+     "selection": "Más de 18.5",
+     "probability": 0.6452636110565477,
+     "price": null,
+     "reference": "Probabilidad del motor; cuota no publicada",
+     "push_probability": 0.0,
+     "outcome": "win"
+    }
+   ]
+  }
+ ]
+}

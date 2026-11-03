@@ -46,6 +46,45 @@ cada escalón se guarda y se enseña.
 Lo que NO promete: elegir por probabilidad sube el acierto por escalón, no
 el valor esperado; con el margen de la casa, la escalera pierde de media.
 
+LA REGLA DESDE EL 2026-10-28 (decisión del usuario): RETO AL 80 % EN 7 DÍAS
+---------------------------------------------------------------------------
+El usuario pide que el reto COMPLETO se cumpla al menos el 80 % de las veces,
+que busque el acierto y no la cuota, que pueda esperar al pronóstico seguro y
+que dure como mucho 7 días (varios escalones un día o terminar en 2-3 días).
+
+Matemática. Con escalones independientes y calibrados, P(completar) = ∏ p_i.
+Con el mercado calibrado P × cobro ≈ 1 − margen: no hay combinación que suba P
+sin bajar el cobro (Dubins y Savage: en un juego desfavorable, menos apuestas
+es mejor). Por eso el reto tiene DOS escalones y un presupuesto de
+probabilidad: cada escalón exige p ≥ (PROB_RETO / ∏ p elegidos)^(1/faltan)
+(`umbral`), de modo que al terminar ∏ p ≥ 0,80 siempre; un primer escalón muy
+seguro deja margen al segundo (0,95 → 0,842). Lo que más resta no son los
+fallos sino quedarse sin segundo escalón en la ventana (`DIAS_MAX`): pasado
+el plazo el reto queda «expirado» (no pierde dinero, no cuenta como cumplido).
+
+- 2 escalones, hasta `POR_DIA` = 2 el mismo día en partidos distintos (es lo
+  mismo que una combinada de los dos) y como mucho `DIAS_MAX` = 7 días.
+- El MÁS PROBABLE primero (mide algo mejor que el de más valor: 85,9 % frente
+  a 84,3 % de retos cumplidos con fútbol + tenis 2019-2025).
+- Cuota ≥ 1,03 y como mucho 95 % por escalón en fútbol y NBA (`PROB_MAX`, lo
+  calibrado) y 97 % en tenis (`PROB_MAX_DEPORTE`).
+- Fútbol, NBA (ganador) y tenis (ganador): los dos últimos desde el archivo
+  PropLine compartido (`escalera_ext.py`), con Pinnacle sin margen.
+- Un reto abierto a la vez: el siguiente empieza cuando se cierra.
+- Los retos abiertos con una regla anterior (`prob_objetivo` NULL) terminan
+  con su rango de cuota y el más probable.
+
+Medido (`python -m qf.eval.escalera_multideporte`; football-data 7 ligas,
+NBA ganador al cierre de bet365 vía BetsAPI, tenis ATP/WTA de Tennis-Data con
+Pinnacle sin margen y la cuota de bet365; el plazo cuenta desde el primer
+escalón): fútbol + tenis 2019-2025, 539 retos, 85,9 % cumplidos, 10,6 %
+fallidos, 3,5 % expirados, 2,0 días de media, cobro ×1,14 (+1,8 % por reto,
+sin valor demostrado). Fútbol + NBA + tenis oct-2023 a may-2025: 230 retos,
+84,3 % cumplidos, 0,9 % expirados, −3,3 % por reto. Con 3 escalones expira
+uno de cada cuatro (63 % cumplidos). Solo fútbol con 1X2 y goles 2,5: 41 %
+cumplidos y 52 % expirados: la regla necesita tenis y NBA, o las líneas de
+vivo (hándicap, goles 1,5/3,5, córners), para no expirar.
+
 Este módulo es la parte pura. La base de datos está en `escalera_datos.py`.
 """
 from __future__ import annotations
@@ -56,14 +95,24 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from .alta_prob import Candidato
 
-CUOTA_MIN = 1.25
+CUOTA_MIN = 1.03
 CUOTA_MAX = 1.40
-# Longitudes posibles y tope de retos de 6 que pueden EMPEZAR en un mes natural
-# (UTC). Ver `longitud_nuevo`.
-LONGITUDES = (3, 4, 5, 6)
-MAX_SEIS_MES = 3
+# Probabilidad mínima de completar el reto entero (regla del 2026-10-28).
+PROB_RETO = 0.80
+# Tope por escalón en esa regla: hasta aquí llegan los tramos de calibración
+# de hándicap y alta probabilidad (0,90-0,95); por encima no está medido.
+PROB_MAX = 0.95
+# Por deporte: el tenis está calibrado hasta 0,97 (Tennis-Data 2019-2026, Pinnacle
+# sin margen: 95-100 % prometido 95,8 %, real 98,0 %, n=201; eval/escalera_multideporte).
+PROB_MAX_DEPORTE = {"futbol": PROB_MAX, "nba": PROB_MAX, "tenis": 0.97}
+# Longitudes posibles, por orden de preferencia. Ver `longitud_nuevo`.
+LONGITUDES = (2,)
+# Escalones de un mismo reto que se pueden elegir el mismo día (partidos distintos).
+POR_DIA = 2
+# Días que un reto puede seguir abierto desde que se crea; luego, «expirado».
+DIAS_MAX = 7
 STAKE = Decimal("10.00")
-FREEROLL_X = 2.5
+FREEROLL_X: float | None = None
 # None: sin filtro de valor (regla del 2026-10-08). Con 0.0 se vuelve a exigir
 # cuota ≥ precio justo.
 EV_MIN: float | None = None
@@ -95,13 +144,20 @@ _CENT = Decimal("0.01")
 
 @dataclass(frozen=True)
 class Opcion:
-    """Un candidato con la cuota que de verdad se puede tomar."""
+    """
+    Un candidato con la cuota que de verdad se puede tomar. En NBA y tenis
+    (`escalera_ext`) `match_id` es «deporte:id de PropLine» y `evento` lleva lo
+    que no está en `matches`: (id de PropLine, deporte de PropLine, inicio,
+    local, visitante).
+    """
     match_id: str
     cand: Candidato
     price: float
     book: str
     odds_source: str = ""
     odds_as_of: datetime | None = None
+    deporte: str = "futbol"
+    evento: tuple | None = None
 
     @property
     def ev(self) -> float:
@@ -149,27 +205,40 @@ def texto_handicap(selection: str, line: float, local: str, visitante: str) -> s
     return f"{equipo} {'+' if line > 0 else ''}{f'{line:g}'.replace('.', ',')} (hándicap asiático)"
 
 
-def longitud_nuevo(abiertos: list[int], seis_en_mes: int) -> int | None:
+def longitud_nuevo(abiertos: list[int]) -> int | None:
     """
-    Pasos del próximo reto, dados los pasos de los retos ABIERTOS y cuántos de
-    6 empezaron este mes (decisión del usuario, 2026-10-08): 3 por defecto; si
-    ya hay uno de 3 abierto, uno de 6 mientras vayan menos de MAX_SEIS_MES en
-    el mes; después 4 y 5. Como mucho un reto abierto de cada longitud.
+    Pasos del próximo reto, dados los pasos de los retos ABIERTOS con la regla
+    del 80 %: el primero de LONGITUDES que no esté abierto. Como mucho un reto
+    abierto de cada longitud.
     """
-    if 3 not in abiertos:
-        return 3
-    if 6 not in abiertos and seis_en_mes < MAX_SEIS_MES:
-        return 6
-    for n in (4, 5):
-        if n not in abiertos:
-            return n
-    return None
+    return next((n for n in LONGITUDES if n not in abiertos), None)
+
+
+@dataclass(frozen=True)
+class Abierto:
+    """Un reto que necesita escalón (`reto_id` None: uno nuevo de `objetivo` pasos)."""
+    reto_id: int | None
+    ganados: int
+    objetivo: int
+    prob_ganada: float = 1.0           # ∏ p de los escalones elegidos que cuentan
+    prob_objetivo: float | None = PROB_RETO   # None: regla anterior (rango de cuota)
+    cuota_min: float = CUOTA_MIN
+    cuota_max: float = CUOTA_MAX
+
+
+def umbral(prob_objetivo: float, prob_ganada: float, restantes: int) -> float:
+    """
+    Probabilidad mínima del siguiente escalón para que el reto entero quede en
+    ≥ `prob_objetivo`: lo que falta se reparte a partes iguales entre los
+    `restantes`. Más de 1 = ya no se puede (no pasa con escalones elegidos así).
+    """
+    return (prob_objetivo / prob_ganada) ** (1.0 / restantes)
 
 
 def valida(o: Opcion, cuota_min: float = CUOTA_MIN, cuota_max: float = CUOTA_MAX,
-           ev_min: float | None = EV_MIN) -> bool:
+           ev_min: float | None = EV_MIN, prob_min: float = 0.0, prob_max: float = 1.0) -> bool:
     return (o.cand.market in MERCADOS and cuota_min <= o.price <= cuota_max
-            and (ev_min is None or o.ev >= ev_min))
+            and prob_min <= o.cand.prob <= prob_max and (ev_min is None or o.ev >= ev_min))
 
 
 def _orden(o: Opcion) -> tuple:
@@ -177,52 +246,75 @@ def _orden(o: Opcion) -> tuple:
     return (round(o.cand.prob, 6), round(o.ev, 6), o.price)
 
 
-def elegir(opciones: list[Opcion], **limites) -> Opcion | None:
-    """El más probable dentro del rango; a igualdad, el de más valor."""
-    dentro = [o for o in opciones if valida(o, **limites)]
-    if not dentro:
-        return None
-    return max(dentro, key=_orden)
+def elegir(opciones: list[Opcion], reto: Abierto,
+           usados: set[str] = frozenset()) -> Opcion | None:
+    """El escalón de `reto` entre las opciones de partidos no `usados`."""
+    if reto.prob_objetivo is None:
+        # Regla anterior: solo fútbol, como cuando se abrió el reto.
+        opciones = [o for o in opciones if o.deporte == "futbol"]
+        prob_min = 0.0
+    else:
+        prob_min = umbral(reto.prob_objetivo, reto.prob_ganada, reto.objetivo - reto.ganados)
+    dentro = [o for o in opciones if o.match_id not in usados
+              and valida(o, reto.cuota_min, reto.cuota_max, prob_min=prob_min,
+                         prob_max=PROB_MAX_DEPORTE.get(o.deporte, PROB_MAX)
+                         if reto.prob_objetivo is not None else 1.0)]
+    return max(dentro, key=_orden, default=None)
 
 
-def planificar(en_curso: list[tuple[int, int]], abiertos: list[int], seis_en_mes: int,
-               opciones: list[Opcion], ocupados: set[str] = frozenset()
-               ) -> list[tuple[int | None, int | None, Opcion]]:
+def _del_dia(opciones: list[Opcion], reto: Abierto, usados: set[str]) -> list[Opcion]:
     """
-    Reparto del día: [(reto_id, None, opción)] para los retos que necesitan
-    escalón y [(None, pasos, opción)] para los retos nuevos.
+    Los escalones de `reto` hoy: hasta POR_DIA en partidos distintos (uno solo
+    en los retos de la regla anterior). Cada uno gasta su parte del presupuesto
+    como si el anterior ya se hubiera ganado: es lo que hace falta para cobrar.
+    """
+    tope = POR_DIA if reto.prob_objetivo is not None else 1
+    out: list[Opcion] = []
+    while len(out) < tope and reto.ganados < reto.objetivo:
+        o = elegir(opciones, reto, usados)
+        if o is None:
+            break
+        usados.add(o.match_id)
+        out.append(o)
+        reto = Abierto(reto.reto_id, reto.ganados + 1, reto.objetivo,
+                       reto.prob_ganada * o.cand.prob, reto.prob_objetivo,
+                       reto.cuota_min, reto.cuota_max)
+    return out
 
-    - `en_curso`: (reto_id, escalones ganados) de los retos que esperan su
-      siguiente escalón; se sirven primero, el más avanzado antes.
-    - `abiertos`: pasos de TODOS los retos abiertos (también los que esperan
-      resultado), para `longitud_nuevo`.
+
+def planificar(en_curso: list[Abierto], abiertos: list[int], opciones: list[Opcion],
+               ocupados: set[str] = frozenset()
+               ) -> list[tuple[int | None, int | None, list[Opcion]]]:
+    """
+    Reparto del día: [(reto_id, None, escalones)] para los retos que necesitan
+    escalón y [(None, pasos, escalones)] para los retos nuevos.
+
+    - `en_curso`: los retos que esperan su siguiente escalón (no vencidos); se
+      sirven primero, el más avanzado antes. Si alguno se queda sin escalón,
+      no se abre ningún reto nuevo ese día.
+    - `abiertos`: pasos de los retos abiertos con la regla del 80 % (también
+      los que esperan resultado), para `longitud_nuevo`.
     - Un partido no se repite el mismo día ni coincide con un escalón aún sin
       liquidar (`ocupados`): dos retos no dependen del mismo resultado.
     """
-    libres = sorted((o for o in opciones if valida(o)), key=_orden, reverse=True)
     usados = set(ocupados)
-
-    def siguiente() -> Opcion | None:
-        for o in libres:
-            if o.match_id not in usados:
-                usados.add(o.match_id)
-                return o
-        return None
-
-    plan: list[tuple[int | None, int | None, Opcion]] = []
-    for reto_id, _ in sorted(en_curso, key=lambda r: -r[1]):
-        o = siguiente()
-        if o is None:
-            return plan
-        plan.append((reto_id, None, o))
+    plan: list[tuple[int | None, int | None, list[Opcion]]] = []
+    sin_escalon = False
+    for reto in sorted(en_curso, key=lambda r: -r.ganados):
+        escalones = _del_dia(opciones, reto, usados)
+        if not escalones:
+            sin_escalon = True
+            continue
+        plan.append((reto.reto_id, None, escalones))
+    if sin_escalon:
+        return plan
     abiertos = list(abiertos)
-    while (n := longitud_nuevo(abiertos, seis_en_mes)) is not None:
-        o = siguiente()
-        if o is None:
+    while (n := longitud_nuevo(abiertos)) is not None:
+        escalones = _del_dia(opciones, Abierto(None, 0, n), usados)
+        if not escalones:
             break
-        plan.append((None, n, o))
+        plan.append((None, n, escalones))
         abiertos.append(n)
-        seis_en_mes += n == 6
     return plan
 
 
@@ -238,13 +330,15 @@ def _q(x: Decimal) -> Decimal:
 
 
 def estado(stake: Decimal, objetivo: int, freeroll_x: float | None,
-           pasos: list[Paso]) -> dict:
+           pasos: list[Paso], vencido: bool = False) -> dict:
     """
     El estado de un reto a partir de sus escalones, sin guardar nada:
 
     - 'esperando': el último escalón no está liquidado (`en_juego` es lo apostado).
     - 'en_curso': hace falta elegir el siguiente escalón.
     - 'completado' / 'fallido': cerrado; `ganancia` = lo cobrado − stake.
+    - 'expirado': `vencido` (pasó DIAS_MAX) sin escalón pendiente ni completar;
+      se cobra el saldo y no cuenta como cumplido.
 
     Un escalón 'void' (aplazado) o 'push' (hándicap entero devuelto) no cuenta
     y no mueve el saldo.
@@ -268,20 +362,27 @@ def estado(stake: Decimal, objetivo: int, freeroll_x: float | None,
             return {"estado": "completado", "saldo": _q(saldo), "retirado": _q(retirado),
                     "ganados": ganados, "en_juego": None,
                     "ganancia": _q(saldo + retirado - stake)}
+    if vencido:
+        return {"estado": "expirado", "saldo": _q(saldo), "retirado": _q(retirado),
+                "ganados": ganados, "en_juego": None, "ganancia": _q(saldo + retirado - stake)}
     return {"estado": "en_curso", "saldo": _q(saldo), "retirado": _q(retirado),
             "ganados": ganados, "en_juego": None, "ganancia": None}
 
 
+CERRADOS = ("completado", "fallido", "expirado")
+
+
 def resumen(retos: list[dict]) -> dict:
-    """Historial de retos cerrados: cuántos se completan y lo que dejan."""
-    cerrados = [r for r in retos if r["estado"] in ("completado", "fallido")]
+    """Historial de retos cerrados (también los expirados): cuántos se completan y lo que dejan."""
+    cerrados = [r for r in retos if r["estado"] in CERRADOS]
     if not cerrados:
-        return {"cerrados": 0, "completados": 0, "tasa_completados": None,
+        return {"cerrados": 0, "completados": 0, "expirados": 0, "tasa_completados": None,
                 "invertido": "0.00", "ganancia": "0.00", "roi": None}
     invertido = sum(Decimal(str(r["stake_inicial"])) for r in cerrados)
     ganancia = sum(Decimal(str(r["ganancia"])) for r in cerrados)
     completados = sum(1 for r in cerrados if r["estado"] == "completado")
     return {"cerrados": len(cerrados), "completados": completados,
+            "expirados": sum(1 for r in cerrados if r["estado"] == "expirado"),
             "tasa_completados": round(completados / len(cerrados) * 100, 1),
             "invertido": str(_q(invertido)), "ganancia": str(_q(ganancia)),
             "roi": round(float(ganancia / invertido) * 100, 1)}

@@ -3,7 +3,8 @@ Seguimiento SIN PUBLICAR de los candidatos de tarjetas (decisión del usuario, 2
 
 Las tarjetas dominan los tickets del parley y casi no tienen historial propio. Cada día se
 guardan en `tarjetas_seg` (db/068) TODOS los candidatos de tarjetas de los partidos con precio:
-las líneas habilitadas de `estadisticas_mercado.LINEAS_HABILITADAS["cards"]`, con la misma
+las líneas de `LINEAS_SEGUIMIENTO` (las habilitadas más «más de» y otras que no pasaron la
+prueba, para medirlas en real), con la misma
 probabilidad que usaría el parley (la menor entre modelo y mercado, `escalera_datos.prudente`)
 y la mejor cuota de las casas de la lista. Así la muestra crece con decenas de filas al día en
 vez de las 2-3 patas del parley, y `eval/calibracion_mercados.py` mide prometido frente a real.
@@ -32,6 +33,14 @@ log = logging.getLogger(__name__)
 
 MERCADO = "cards"
 
+# Líneas que se MIDEN (2026-10-21, decisión del usuario): las habilitadas más las que no pasaron
+# la prueba histórica, para ver en producción si el «más de» merece habilitarse. Solo seguimiento:
+# `LINEAS_HABILITADAS` sigue mandando en la escalera y el parley.
+LINEAS_SEGUIMIENTO = tuple(dict.fromkeys(
+    em.LINEAS_HABILITADAS[MERCADO]
+    + (("under", 3.5), ("under", 7.5))
+    + tuple(("over", x) for x in (2.5, 3.5, 4.5, 5.5, 6.5, 7.5))))
+
 
 def sql_sellado() -> str:
     return ad._sql_sellado(hashchain.LOTE_TARJETAS_DESDE)
@@ -50,7 +59,7 @@ def _partidos(now: datetime) -> list[dict]:
         (now + pk.MIN_LEAD, ventana.fin_ventana(now, ap.HORIZONTE)))
 
 
-def candidatos(m: dict, now: datetime, modelos, filas_af: list[dict]) -> list[dict]:
+def candidatos(m: dict, now: datetime, modelos, filas_mercados: list[dict]) -> list[dict]:
     """
     Candidatos de tarjetas de un partido: línea, lado, probabilidad prudente, cuota y casa.
     La línea solo entra si el mercado cotiza los dos lados (`prudente`) y alguna casa de la
@@ -63,17 +72,17 @@ def candidatos(m: dict, now: datetime, modelos, filas_af: list[dict]) -> list[di
     if lam is None:
         return []
     out = []
-    for lado, linea in em.LINEAS_HABILITADAS[MERCADO]:
+    for lado, linea in LINEAS_SEGUIMIENTO:
         modelo = em.prob(MERCADO, lam, lado, linea)
-        c = ed.prudente(ap.Candidato(MERCADO, lado, linea, modelo), filas_af)
+        c = ed.prudente(ap.Candidato(MERCADO, lado, linea, modelo), filas_mercados)
         if c is None:
             continue
-        precio, casa, hora = ed._ref_af(filas_af, c)
+        precio, casa, hora = ed._ref_casa(filas_mercados, c)
         if precio is None:
             continue
         out.append({"selection": lado, "line": linea, "prob": c.prob, "ref_price": precio,
                     "ref_book": casa, "odds_as_of": hora,
-                    "fit": {"modelo": round(modelo, 6), "mercado": round(ed.prob_mercado(filas_af, c), 6),
+                    "fit": {"modelo": round(modelo, 6), "mercado": round(ed.prob_mercado(filas_mercados, c), 6),
                             "lambdas": [round(lam[0], 4), round(lam[1], 4)]}})
     return out
 
@@ -92,10 +101,10 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     from . import escalera_datos as ed
     modelos = ed.Modelos(now)
     for m in _partidos(now):
-        filas_af = ed._cuotas_af(m["match_id"], now)
-        if not filas_af:
+        filas_mercados = ed._cuotas_mercados(m["match_id"], now)
+        if not filas_mercados:
             continue
-        cands = candidatos(m, now, modelos, filas_af)
+        cands = candidatos(m, now, modelos, filas_mercados)
         if not cands:
             out["sin_modelo"] += 1
             continue
@@ -113,7 +122,7 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                    ON CONFLICT ON CONSTRAINT tarjetas_seg_uq DO NOTHING""",
                 (m["match_id"], MERCADO, c["selection"], c["line"], round(c["prob"], 6),
-                 round(1.0 / c["prob"], 4), c["ref_price"], c["ref_book"], "api_football",
+                 round(1.0 / c["prob"], 4), c["ref_price"], c["ref_book"], "propline",
                  c["odds_as_of"], json.dumps(c["fit"]))) or 0
     log.info("Seguimiento de tarjetas: %s", {k: v for k, v in out.items() if k != "decisiones"})
     return out

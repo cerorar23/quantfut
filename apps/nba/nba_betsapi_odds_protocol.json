@@ -1,0 +1,153 @@
+{
+  "version": "nba-betsapi-odds-1.1",
+  "frozen_before_running": true,
+  "frozen_note": "written on 2026-10-24 after a format probe of the raw files (market keys, which rows are pregame, how alternate lines coexist, team names, score keys, handicap sign, share of suspended prices) and before building the dataset; no model or outcome metric was computed against these odds",
+  "question": "Turn the BetsAPI/bet365 NBA odds archive (3 seasons, full movement) into one pregame record per (game, market) with opening, closing and path, joined to game_id and settled against official results. Data only: it trains, promotes and publishes nothing.",
+  "input": {
+    "events": "raw/betsapi_nba_20261024/odds/*.json.gz, a copy of the VPS ~/betsapi/data/nba taken 2026-10-24T19:48Z; every file is hashed into inputs_manifest.json before reading",
+    "reference_games": "normalized/nba_extended_box_20261024/games.json (regular, play-in, playoffs; game_id, Eastern date, team ids, official final points)",
+    "not_provenance": "this is a historical download, not a pregame capture of ours: add_time is the provider's own timestamp for each price change and our receipt time is unknown. Nothing here proves a price was available to a customer at that moment"
+  },
+  "markets": {
+    "18_1": {
+      "name": "ml_game",
+      "period": "game",
+      "kind": "moneyline",
+      "prices": [
+        "home_od",
+        "away_od"
+      ]
+    },
+    "18_2": {
+      "name": "spread_game",
+      "period": "game",
+      "kind": "spread",
+      "prices": [
+        "home_od",
+        "away_od"
+      ],
+      "line": "handicap of the HOME team"
+    },
+    "18_3": {
+      "name": "total_game",
+      "period": "game",
+      "kind": "total",
+      "prices": [
+        "over_od",
+        "under_od"
+      ],
+      "line": "handicap = points line"
+    },
+    "18_4": {
+      "name": "ml_h1",
+      "period": "h1",
+      "kind": "moneyline",
+      "prices": [
+        "home_od",
+        "away_od"
+      ]
+    },
+    "18_5": {
+      "name": "spread_h1",
+      "period": "h1",
+      "kind": "spread",
+      "prices": [
+        "home_od",
+        "away_od"
+      ],
+      "line": "handicap of the HOME team"
+    },
+    "18_6": {
+      "name": "total_h1",
+      "period": "h1",
+      "kind": "total",
+      "prices": [
+        "over_od",
+        "under_od"
+      ],
+      "line": "handicap = points line"
+    },
+    "18_7": {
+      "name": "ml_q1",
+      "period": "q1",
+      "kind": "moneyline",
+      "prices": [
+        "home_od",
+        "away_od"
+      ]
+    },
+    "18_8": {
+      "name": "spread_q1",
+      "period": "q1",
+      "kind": "spread",
+      "prices": [
+        "home_od",
+        "away_od"
+      ],
+      "line": "handicap of the HOME team"
+    },
+    "18_9": {
+      "name": "total_q1",
+      "period": "q1",
+      "kind": "total",
+      "prices": [
+        "over_od",
+        "under_od"
+      ],
+      "line": "handicap = points line"
+    },
+    "identification": "18_1..18_3 game, 18_4..18_6 first half and 18_7..18_9 first quarter, from the line levels (medians 227.5 / 114.5 / 57.5 against realised 228.1 / 114.3 / 57.3); spread sign checked on the full game in BetsAPI orientation: first-listed margin + handicap averages 0.04 over 3,984 games"
+  },
+  "pregame_snapshot": {
+    "time": "add_time strictly before the event's scheduled start (event.time); a row at or after the start is never used",
+    "state": "ss is empty, or ss == '0:0' with time_str == '1 - 12:00' (feed open, clock not started); any other live state is excluded",
+    "price": "both prices numeric and > 1; '-' means suspended and is skipped; devigged overround 1/p1 + 1/p2 - 1 within [-0.02, 0.25]",
+    "line": "spread and total need a numeric handicap, '+999' placeholders are skipped; moneyline has no line",
+    "alternate_lines": "several handicaps can share one add_time; the main line of that snapshot is the row with the smallest |ln(p1/p2)|, ties go to the larger row id",
+    "ordering": "snapshots sorted by add_time, one per add_time",
+    "record": "open = first valid snapshot, close = last valid snapshot, path = every valid snapshot as [seconds_before_tip, line, price_1, price_2]; close_seconds_before_tip and close_fresh (<= 3600 s) are reported, nothing is dropped for being stale"
+  },
+  "devig": "proportional: q_i = (1/p_i) / (1/p_1 + 1/p_2); open and close both carry p1_novig and the overround",
+  "identity_join": {
+    "key": "(Eastern calendar date of the scheduled start, unordered pair of team ids); the official home team comes from the reference game",
+    "team_names": "BetsAPI 'ABB Nickname' -> drop the first token; the remainder must be the end of exactly one reference team name; any team that does not resolve uniquely aborts the build",
+    "verification": "the BetsAPI final points (scores[7]), oriented as decided, must equal the reference official points for the home and the away team; a mismatch makes the event unmatched, it is never forced",
+    "unmatched_reasons": [
+      "postponed_no_scores",
+      "after_reference_period",
+      "no_reference_game",
+      "points_mismatch",
+      "ambiguous_reference"
+    ],
+    "orientation": "BetsAPI lists the visiting team first as 'home' (3,822 of 3,822 pair-matched events): its home_od/away_od and handicap belong to that first-listed team. Orientation is decided per event from the reference game: swapped when the reference home team is the BetsAPI 'away' side. When swapped, the official home price is BetsAPI away_od, the official home line is 0.0 - handicap, totals (over/under, points line) are unchanged, and the period points are reversed. Never assumed: an event whose points do not agree with the reference in the decided orientation is unmatched (points_mismatch)",
+    "after_reference_period": "an event whose Eastern date is later than the last reference game (the 2026-27 season) is reported as after_reference_period, not as an identity failure"
+  },
+  "settlement": {
+    "scores": "scores['1']=Q1, scores['2']=Q2, scores['3']=first half (must equal Q1+Q2, else h1 and q1 stay unsettled), scores['7']=final including overtime (ss equals it)",
+    "y": "moneyline 1 if home wins; spread 1 if home margin + line > 0; total 1 if points > line; 0 on the other side; null on a push (margin or total exactly on the line, tied half or quarter)",
+    "full_game_includes_overtime": true
+  },
+  "acceptance": {
+    "match_rate": "identity: among events whose date and unordered pair resolve to exactly one reference game, >= 99% must agree on the final points; below that the dataset is written with accepted=false. Events outside the reference (after_reference_period, no_reference_game) are counted and listed, they do not decide acceptance",
+    "invariants": "no snapshot at or after the start; close_seconds_before_tip >= 1; every (game, market) unique; no event matched to two games",
+    "report": "coverage.json: events, matched and unmatched by reason, rows per market and season, rows with a close, close freshness (p5/p50/p95, share <= 60 min), pushes, input hashes; identity checked/ok/rate and the orientation counts (swapped / official order)"
+  },
+  "limits": [
+    "one bookmaker (bet365) as seen through BetsAPI; no consensus and no Pinnacle",
+    "no team totals, no quarters 2-4, no second half, no player props in this archive",
+    "closing is the last provider-timestamped price before the scheduled start, not a verified closing line"
+  ],
+  "amendments": [
+    {
+      "version": "1.1",
+      "amended_at_utc": "2026-10-24T19:53:49.223068+00:00",
+      "supersedes_sha256": "996ffaa1b78daf04f8c863fd5b9c921ccc7f2a1b1f0373d9695a52116958bb46",
+      "why": "The first build with v1.0 matched 0 of 3,985 events and wrote no rows: BetsAPI lists the visiting team first as home. A probe of orientation only (team pair, date and final points against the reference; no odds, no outcome metric) showed 3,822 of 3,822 pair-matched events swapped, 0 in the official order, 3 with a points mismatch. v1.0 also required 99% of ALL events to match the reference, which is ill-posed because the reference quarantines games of its own and ends in 2025-26.",
+      "changes": [
+        "identity_join.key is the unordered team pair plus the Eastern date",
+        "rows are re-oriented to the official home team (orientation rule added)",
+        "acceptance is the points-agreement rate among events whose pair and date resolve to one reference game"
+      ]
+    }
+  ]
+}

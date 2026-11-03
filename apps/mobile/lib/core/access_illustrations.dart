@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../product/live_widgets.dart';
+import '../product/qf_theme.dart';
 
-const _track = Color(0xff243447);
-const _panel = Color(0xff132333);
+const _track = QfColors.border;
+const _panel = QfColors.surface2;
 
 /// Logotipo de Google con sus cuatro colores (trazado oficial de las guías de marca).
 class GoogleLogo extends StatelessWidget {
@@ -164,8 +165,8 @@ class _Painter extends CustomPainter {
     for (var x = 44.0; x < 236; x += 12) {
       c.drawLine(const Offset(0, 0).translate(x, 58), Offset(x + 6, 58), Paint()..color = _track..strokeWidth = 2);
     }
-    c.drawCircle(const Offset(30, 58), 8, Paint()..color = const Color(0xff090f1a));
-    c.drawCircle(const Offset(250, 58), 8, Paint()..color = const Color(0xff090f1a));
+    c.drawCircle(const Offset(30, 58), 8, Paint()..color = QfColors.bg);
+    c.drawCircle(const Offset(250, 58), 8, Paint()..color = QfColors.bg);
     final lit = (t * 4).floor();
     for (var i = 0; i < 3; i++) {
       final y = 80.0 + i * 24;
@@ -187,7 +188,7 @@ class _Painter extends CustomPainter {
       c.drawCircle(
         rect.center.translate(0, -8),
         7,
-        Paint()..color = done ? liveGreen : (today ? const Color(0xff090f1a) : liveGold),
+        Paint()..color = done ? liveGreen : (today ? QfColors.bg : liveGold),
       );
       _round(c, Rect.fromCenter(center: rect.center.translate(0, 12), width: 18, height: 6), done ? liveGreen : Colors.white24, 3);
     }

@@ -37,7 +37,6 @@ def _sombra(monkeypatch, ko):
     insertadas = []
     monkeypatch.setattr(ss, "query", lambda *a, **k: [
         {"match_id": "m1", "league_id": "us.mls", "kickoff_utc": ko}])
-    monkeypatch.setattr(ss.pk, "_af_snapshot", lambda *a: None)
     monkeypatch.setattr(ss.pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     monkeypatch.setattr(ss.pk, "_odds_api_snapshot", lambda *a: SNAP)
     monkeypatch.setattr(ss, "executemany",
@@ -57,7 +56,6 @@ def test_sombra_si_decide_con_tiempo(monkeypatch):
 
 def _publicacion(monkeypatch, ko, as_of=None):
     snap = SNAP if as_of is None else pk.Snapshot(SNAP.source, as_of, SNAP.books)
-    monkeypatch.setattr(pk, "_af_snapshot", lambda *a: None)
     monkeypatch.setattr(pk, "_odds_api_snapshot", lambda *a: snap)
     monkeypatch.setattr(pk, "persistencias", lambda: dict(pk.PERSISTENCE))
     return pk.find_candidates({"match_id": "m1", "kickoff_utc": ko,

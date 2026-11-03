@@ -42,8 +42,12 @@ def test_rate_limited_no_mezcla_claves_distintas():
 
 
 def _app(monkeypatch):
+    from types import SimpleNamespace
     from fastapi.testclient import TestClient
     from qf.api import main
+    # No cruzar una frontera de minuto entre las peticiones del mismo test.
+    # Sustituir solo el reloj del módulo evita cambiar el reloj de TestClient.
+    monkeypatch.setattr(ratelimit, "time", SimpleNamespace(time=lambda: 1_800_000_000.0))
     monkeypatch.setattr(main, "r", _FakeRedis())
     monkeypatch.delenv("ADMIN_CONSOLE_USER", raising=False)
     monkeypatch.delenv("ADMIN_CONSOLE_PASSWORD_HASH", raising=False)

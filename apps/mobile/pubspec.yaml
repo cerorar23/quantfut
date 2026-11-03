@@ -1,7 +1,7 @@
 name: gobet
 description: QuantFut mobile app connected to the football data and prediction API.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+5
 
 environment:
   sdk: '>=3.13.5 <4.0.0'
@@ -62,6 +62,16 @@ flutter:
     - image/
     - assets/model/market_evidence.json
   fonts:
+    - family: Rajdhani
+      fonts:
+        - asset: fonts/Rajdhani-Medium.ttf
+          weight: 500
+        - asset: fonts/Rajdhani-Bold.ttf
+          weight: 700
+    - family: JetBrains Mono
+      fonts:
+        - asset: fonts/JetBrainsMono-Medium.ttf
+          weight: 500
     - family: Gilroy Black
       fonts:
         - asset: fonts/Gilroy-Black.ttf
