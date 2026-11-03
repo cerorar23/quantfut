@@ -45,14 +45,119 @@ export function tennisEvents(data) {
     .map(event=>({...event,markets:event.markets.filter(m=>probability(m.probability))})).filter(event=>event.markets.length);
 }
 
-export async function loadSport(sport, fetcher=fetch) {
+// ---- NBA (API v2 de lectura, /nba/v1/cartelera): calendario, marcadores finales y pronósticos sellados.
+// Un partido sin pronóstico igualmente figura en la cartelera, con la hora prevista de sellado y sus estadísticas.
+// Nada se calcula como pronóstico en el navegador: solo se resumen marcadores finales ya registrados.
+// La API trae también la pretemporada (13-16 oct): los récords y la forma solo cuentan desde el estreno de la temporada regular.
+const NBA_SEASON_START = '2026-10-20', NBA_HISTORY_DAYS = 21, NBA_AHEAD_DAYS = 4;
+const NBA_EAST = new Set(['ATL', 'BKN', 'BOS', 'CHA', 'CHI', 'CLE', 'DET', 'IND', 'MIA', 'MIL', 'NYK', 'ORL', 'PHI', 'TOR', 'WAS']);
+const isoDay = (base, offset) => new Date(Date.UTC(base.getFullYear(), base.getMonth(), base.getDate() + offset)).toISOString().slice(0, 10);
+
+export function nbaGames(partidos) {
+  const games = new Map();
+  for (const p of Array.isArray(partidos) ? partidos : []) {
+    if (!Number.isInteger(p?.id) || !p.local?.nombre || !p.visitante?.nombre || !p.local.codigo || !p.visitante.codigo || !stamp(p.inicio_utc)) continue;
+    const final = p.resultado && Number.isFinite(p.resultado.local) && Number.isFinite(p.resultado.visitante) ? p.resultado : null;
+    games.set(p.id, { id: p.id, fecha: p.fecha, home: p.local.nombre, homeCode: p.local.codigo, away: p.visitante.nombre, awayCode: p.visitante.codigo,
+      start: p.inicio_utc, planned: stamp(p.sello_previsto) ? p.sello_previsto : null, final, pick: p.pronostico || null });
+  }
+  return [...games.values()].sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+}
+
+function nbaPickMarkets(g) {
+  const p = g.pick;
+  if (!p || !probability(p.p_local) || !stamp(p.sellado_en)) return [];
+  const homePick = p.p_local >= .5;
+  // Un sello posterior al inicio es una revisión: ni se presenta como pronóstico previo ni cuenta como acierto.
+  const eligible = Date.parse(p.sellado_en) < Date.parse(g.start);
+  const outcome = eligible && g.final ? ((g.final.local > g.final.visitante) === homePick ? 'win' : 'loss') : null;
+  return [{ id: `winner-${g.id}`, label: 'Ganador del partido', market: 'winner', selection: homePick ? g.home : g.away,
+    probability: homePick ? p.p_local : 1 - p.p_local, price: null, reference: 'Probabilidad estadística', estimate: null,
+    sealed_at: p.sellado_en, eligible, revised: !eligible, outcome, conditional: false, player: null, player_id: null, line: null }];
+}
+
+const round = (value, digits) => Math.round(value * 10 ** digits) / 10 ** digits;
+const record = rows => ({ won: rows.filter(r => r.won).length, lost: rows.filter(r => !r.won).length, rate: rows.length ? round(rows.filter(r => r.won).length / rows.length, 4) : null });
+const average = (rows, key) => (rows.length ? round(rows.reduce((sum, r) => sum + r[key], 0) / rows.length, 1) : null);
+
+// Partidos terminados de un equipo antes de `before`, del más reciente al más antiguo, vistos desde ese equipo.
+function nbaRows(finished, code, before) {
+  return finished.filter(g => Date.parse(g.start) < before && (g.homeCode === code || g.awayCode === code))
+    .sort((a, b) => Date.parse(b.start) - Date.parse(a.start))
+    .map(g => { const home = g.homeCode === code, points = home ? g.final.local : g.final.visitante, against = home ? g.final.visitante : g.final.local;
+      return { date: g.fecha, opponent: home ? g.away : g.home, home, points, opponent_points: against, won: points > against }; });
+}
+
+function nbaStanding(finished, code, before) {
+  const conference = NBA_EAST.has(code) ? 'este' : 'oeste';
+  const table = [...new Set(finished.flatMap(g => [g.homeCode, g.awayCode]))].filter(c => NBA_EAST.has(c) === (conference === 'este')).map(c => {
+    const rows = nbaRows(finished, c, before);
+    return { code: c, rate: rows.length ? record(rows).rate : 0, diff: rows.length ? average(rows, 'points') - average(rows, 'opponent_points') : 0 };
+  }).sort((a, b) => b.rate - a.rate || b.diff - a.diff);
+  const index = table.findIndex(t => t.code === code);
+  return { rank: index < 0 ? null : index + 1, of: table.length, conference };
+}
+
+function nbaTeamStats(finished, name, code, game) {
+  const before = Date.parse(game.start), rows = nbaRows(finished, code, before), last6 = rows.slice(0, 6);
+  let streak = 0;
+  for (const row of rows) { if (streak === 0 || row.won === (streak > 0)) streak += row.won ? 1 : -1; else break; }
+  const rest = rows.length ? Math.round((Date.parse(game.fecha) - Date.parse(rows[0].date)) / 864e5) - 1 : null;
+  return { name, conference: NBA_EAST.has(code) ? 'este' : 'oeste', season: record(rows), home: record(rows.filter(r => r.home)), away: record(rows.filter(r => !r.home)),
+    scoring: { games: rows.length, points_for: average(rows, 'points'), points_against: average(rows, 'opponent_points') },
+    last6: { ...record(last6), games: last6.length, points_for: average(last6, 'points'), points_against: average(last6, 'opponent_points') },
+    streak, rest_days: rest, back_to_back: rest === null ? null : rest === 0,
+    last_season: { won: 0, lost: 0, rate: null, games: 0, points_for: null, points_against: null },
+    form: { all: last6, home: rows.filter(r => r.home).slice(0, 6), away: rows.filter(r => !r.home).slice(0, 6) },
+    standing: nbaStanding(finished, code, before) };
+}
+
+function nbaGameStats(finished, game) {
+  const before = Date.parse(game.start);
+  const matches = finished.filter(g => Date.parse(g.start) < before && new Set([g.homeCode, g.awayCode]).has(game.homeCode) && new Set([g.homeCode, g.awayCode]).has(game.awayCode))
+    .sort((a, b) => Date.parse(b.start) - Date.parse(a.start))
+    .map(g => ({ date: g.fecha, home: g.home, away: g.away, home_points: g.final.local, away_points: g.final.visitante }));
+  const homeWins = matches.filter(m => (m.home === game.home ? m.home_points > m.away_points : m.away_points > m.home_points)).length;
+  const since = finished.length ? finished.reduce((min, g) => (g.fecha < min ? g.fecha : min), finished[0].fecha) : null;
+  return { teams: [nbaTeamStats(finished, game.home, game.homeCode, game), nbaTeamStats(finished, game.away, game.awayCode, game)],
+    h2h: { matches, home_wins: homeWins, away_wins: matches.length - homeWins, average_total: matches.length ? round(matches.reduce((s, m) => s + m.home_points + m.away_points, 0) / matches.length, 1) : null },
+    since, games_used: finished.length };
+}
+
+export function nbaV2Events(partidos, now = new Date()) {
+  const games = nbaGames(partidos), finished = games.filter(g => g.final);
+  return games.map(g => ({ id: g.id, sport: 'nba', home: g.home, away: g.away, start: g.start, league: 'NBA',
+    status: g.final ? 'finished' : Date.parse(g.start) + 4 * 36e5 < now.getTime() ? 'awaiting_result' : 'scheduled',
+    markets: nbaPickMarkets(g), sealed_at: g.pick?.sellado_en || null, seal: g.pick?.hash || null, planned_seal: g.planned,
+    actionable: false, score: g.final ? `${g.final.local} – ${g.final.visitante}` : null, availability: null, official_url: null,
+    v2: true, stats: nbaGameStats(finished, g) }));
+}
+
+async function loadNba(fetcher, now) {
+  const back = Math.max(3, Math.min(NBA_HISTORY_DAYS, Math.floor((Date.parse(isoDay(now, 0)) - Date.parse(NBA_SEASON_START)) / 864e5)));
+  const days = Array.from({ length: back + NBA_AHEAD_DAYS + 1 }, (_, i) => isoDay(now, i - back)).filter(day => day >= NBA_SEASON_START);
+  const pull = async day => {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetcher(`/nba/v1/cartelera?fecha=${day}`, { signal: controller.signal, cache: 'no-store' });
+      if (!response.ok) throw new Error('Fuente no disponible');
+      const data = await response.json();
+      if (!Array.isArray(data?.partidos)) throw new TypeError('Fuente NBA no disponible');
+      return data.partidos;
+    } finally { clearTimeout(timer); }
+  };
+  const results = (await Promise.allSettled(days.map(pull))).filter(r => r.status === 'fulfilled');
+  return results.length ? { status: 'ready', events: nbaV2Events(results.flatMap(r => r.value), now) } : { status: 'error', events: [] };
+}
+
+export async function loadSport(sport, fetcher=fetch, now=new Date()) {
+  if (sport === 'nba') return loadNba(fetcher, now);
   const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
   try {
-    const path=sport==='nba'?'/nba/api/data':'/web/deportes/tenis';
-    const response=await fetcher(path,{signal:controller.signal,cache:'no-store'});
+    const response=await fetcher('/web/deportes/tenis',{signal:controller.signal,cache:'no-store'});
     if(!response.ok)throw new Error('Fuente no disponible');
     const data=await response.json();
-    return {status:'ready',events:sport==='nba'?nbaEvents(data):tennisEvents(data)};
+    return {status:'ready',events:tennisEvents(data)};
   } catch {return {status:'error',events:[]};}
   finally {clearTimeout(timer);}
 }

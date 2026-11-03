@@ -62,6 +62,43 @@ export function createSportWindow(ctx) {
     return `<div class="win-panel-box"><p class="eyebrow">PROBABILIDAD DE GANAR</p>${bar(event.home, home)}${bar(event.away, 1 - home)}</div>`;
   }
 
+  // ---- leyenda: cuándo se agrega el pronóstico de un partido de la NBA (siempre antes del saque, nunca después)
+  const hourText = ms => { const m = Math.max(0, Math.round(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60); return d ? `${d} ${d === 1 ? 'día' : 'días'}${h ? ` y ${h} h` : ''}` : h ? `${h} h ${m % 60} min` : `${m} min`; };
+  function sealCard(event) {
+    const pick = event.markets.find(m => m.sealed_at);
+    const planned = event.planned_seal ? Date.parse(event.planned_seal) : null;
+    const lead = planned ? Math.round((Date.parse(event.start) - planned) / 60000) : null;
+    const now = Date.now(), started = Date.parse(event.start) <= now;
+    const sealedBefore = pick && Date.parse(pick.sealed_at) < Date.parse(event.start);
+    let state, headline, note;
+    if (pick) {
+      state = 'done';
+      headline = sealedBefore ? 'Pronóstico sellado' : 'Sellado después del inicio';
+      note = sealedBefore ? `Se selló el ${realDate(pick.sealed_at)} a las ${realTime(pick.sealed_at)}, ${hourText(Date.parse(event.start) - Date.parse(pick.sealed_at))} antes del saque, y ya no puede modificarse.`
+        : `Se selló el ${realDate(pick.sealed_at)} a las ${realTime(pick.sealed_at)}, con el partido ya iniciado: se muestra como revisión y no cuenta como pronóstico previo.`;
+    } else if (event.status === 'finished' || started) {
+      state = 'missed';
+      headline = 'Sin pronóstico previo';
+      note = 'Este partido empezó sin un pronóstico sellado. QuantFut no calcula pronósticos a posteriori ni los agrega después del inicio, por eso no hay ninguno que mostrar.';
+    } else {
+      state = 'pending';
+      headline = 'Pronóstico pendiente';
+      note = planned ? `Se agregará el ${realDate(event.planned_seal)} a las ${realTime(event.planned_seal)}, dentro de ${hourText(planned - now)}.` : 'Se agregará poco antes del saque.';
+    }
+    const step = (kind, title, text) => `<li class="win-step is-${kind}"><b>${title}</b><span>${text}</span></li>`;
+    const sealKind = pick ? 'done' : state === 'missed' ? 'miss' : 'now';
+    return `<article class="win-pick win-seal is-${state} cyber-card" aria-label="Cuándo se agrega el pronóstico"><p class="eyebrow">CUÁNDO SE AGREGA EL PRONÓSTICO</p><h2>${headline}</h2><p class="win-sub">${esc(note)}</p>
+      <ol class="win-steps">
+        ${step('done', 'Calendario recibido', `${esc(event.home)} vs ${esc(event.away)} · ${realDate(event.start)} ${realTime(event.start)}.`)}
+        ${step('done', 'Estadísticas del partido', 'Forma, cara a cara y clasificación se actualizan con cada marcador final registrado; ya están en la sección Estadísticas.')}
+        ${step(sealKind, 'Sellado del pronóstico', state === 'missed' && !pick ? `Estaba previsto para ${planned ? `las ${realTime(event.planned_seal)}${lead ? `, ${lead} min antes del saque` : ''}` : 'poco antes del saque'}, pero no quedó ningún pronóstico sellado.`
+          : planned ? `${realTime(event.planned_seal)}${lead ? `, ${lead} min antes del saque` : ''}. El motor calcula con lo último disponible y sella el resultado con una huella (hash) encadenada a la anterior.` : 'Poco antes del saque, con una huella (hash) encadenada a la anterior.')}
+        ${step(pick ? 'done' : 'todo', 'Publicación en esta ficha', 'Aparece aquí en cuanto queda sellado, con su hora exacta. Lo sellado no se edita ni se borra.')}
+        ${step(event.status === 'finished' ? 'done' : 'todo', 'Resultado', event.status === 'finished' ? `Marcador final registrado: ${esc(event.score || '—')}.${pick ? '' : ' Sin pronóstico previo, no hay nada que marcar como acierto o fallo.'}` : 'Al terminar se registra el marcador final y el pronóstico se marca como Acertó o Falló.')}
+      </ol>
+      <p class="win-sub">Un pronóstico calculado o cambiado después del inicio nunca se presenta como previo ni cuenta en los resultados.</p></article>`;
+  }
+
   // ---- pronóstico (izquierda)
   function forecast(event) {
     const feat = featuredModelMarket(event.markets.filter(m => !m.revised));
@@ -75,7 +112,9 @@ export function createSportWindow(ctx) {
     const shown = state.winAll ? all : all.slice(0, ROW_LIMIT);
     const line = m => `<tr${feat && m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${m.player ? imageMarkup(playerPhoto("nba", m.player_id), m.player, esc) : ""}${esc(m.selection)}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${fmtOdds(1 / m.probability)}</td><td>${feat && m === feat ? badge('Destacado', 'good') : outcomeBadge(m)}</td></tr>`;
     const more = all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, de mayor a menor probabilidad.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
-    return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>
+    const seal = event.v2 ? sealCard(event) : '';
+    if (event.v2 && !event.markets.length) return seal;
+    return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>${seal}
       <section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${families.map(f => `<button type="button" class="chip ${fam === f ? 'selected' : ''}" data-win-sport-fam="${esc(f)}" aria-pressed="${fam === f}">${esc(f)}</button>`).join('')}</div></div>
       <div class="win-table" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}</section>`;
   }
@@ -219,7 +258,7 @@ export function createSportWindow(ctx) {
   // ---- estadísticas de equipos de NBA: marcadores finales oficiales, resumidos por el servidor «a la fecha» del partido.
   // No hay alineaciones, estadio ni cuotas por cuarto en ninguna fuente validada: no se inventan.
   function nbaStats(event) {
-    const entry = ctx.ensureNbaStats(event.id);
+    const entry = event.v2 ? { status: event.stats ? 'ready' : 'error', data: event.stats } : ctx.ensureNbaStats(event.id);
     const head = '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS DE LOS EQUIPOS</p>';
     if (entry.status === 'loading') return { note: `${head}<p class="win-sub">Consultando los marcadores de la temporada…</p></div>` };
     if (entry.status !== 'ready') return { note: `${head}<p class="win-sub">Todavía no hay estadísticas publicadas para este partido. Se calculan con los marcadores finales de la NBA.</p></div>` };
@@ -240,7 +279,8 @@ export function createSportWindow(ctx) {
     const diff = t => (t.scoring.points_for == null ? null : Math.round((t.scoring.points_for - t.scoring.points_against) * 10) / 10);
     const place = t => (t.standing.rank == null ? '—' : `#${t.standing.rank} ${t.standing.conference === 'este' ? 'Este' : 'Oeste'}`);
     const pts = v => (v == null ? '—' : num(v));
-    return `<div class="win-panel-box"><p class="eyebrow">COMPARATIVA</p><div class="win-vshead"><strong>${esc(event.home)}</strong><strong>${esc(event.away)}</strong></div>
+    const source = n.data.since ? `<p class="win-sub">Con los ${n.data.games_used} marcadores finales que QuantFut tiene registrados desde el ${shortDate(n.data.since)}; no incluye la temporada pasada.</p>` : '';
+    return `<div class="win-panel-box"><p class="eyebrow">COMPARATIVA</p>${source}<div class="win-vshead"><strong>${esc(event.home)}</strong><strong>${esc(event.away)}</strong></div>
       ${versus('Partidos jugados', played(h), played(a), { neutral: true })}
       ${versus('Récord de la temporada', h.season.rate, a.season.rate, { shown: [recRate(h.season), recRate(a.season)] })}
       ${versus('Posición en su conferencia', h.standing.rank, a.standing.rank, { lower: true, shown: [place(h), place(a)] })}
@@ -338,6 +378,7 @@ export function createSportWindow(ctx) {
   }
 
   function registry(event) {
+    if (!event.seal) return `<div class="win-panel-box"><p class="eyebrow">REGISTRO DEL ANÁLISIS</p><p class="win-sub">${event.planned_seal ? `Aún no hay sello. Se registra alrededor de las ${realTime(event.planned_seal)} del ${realDate(event.planned_seal)}.` : 'Este partido no tiene un análisis sellado.'}</p></div>`;
     return `<div class="win-panel-box"><p class="eyebrow">REGISTRO DEL ANÁLISIS</p>${kv('Publicado', `${realDate(event.sealed_at)} ${realTime(event.sealed_at)}`)}<code class="win-code">${esc(event.seal)}</code></div>`;
   }
 

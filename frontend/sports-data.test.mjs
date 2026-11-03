@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {nbaEvents,tennisEvents,loadSport,loadResults} from './sports-data.js';
+import {nbaEvents,nbaV2Events,tennisEvents,loadSport,loadResults} from './sports-data.js';
 import {createHubViews} from './ergonomic-views.js';
 const event={event_id:'1',tipoff_utc:'2026-10-27T20:00:00Z',home_team:'A',away_team:'B',status:'evaluated',final:{home:99,away:102}};
 const row={event_id:'1',player_id:'winner',market:'winner',market_label:'Ganador',probability_over:.3,probability_under:.7,sealed_at_utc:'2026-10-27T19:00:00Z',result:{status:'evaluated',actual:0}};
@@ -23,8 +23,36 @@ test('tenis exige el contrato público, sello y probabilidades válidas',()=>{
  assert.equal(tennisEvents({state:'ok',events:[e]}).length,1);assert.equal(tennisEvents({state:'ok',events:[{...e,seal:null}]}).length,0);assert.throws(()=>tennisEvents({events:[e]}));
 });
 test('las fuentes fallan por separado y nunca fabrican cuotas ni publicaciones',async()=>{
- const calls=[];const fetcher=async path=>{calls.push(path);return{ok:true,json:async()=>path.includes('/nba/')?nba():{state:'unavailable',events:[]}};};
- assert.equal((await loadSport('nba',fetcher)).status,'ready');assert.equal((await loadSport('tenis',fetcher)).status,'error');assert.deepEqual(calls,['/nba/api/data','/web/deportes/tenis']);assert.equal((await loadSport('nba',async()=>({ok:false}))).events.length,0);
+ const calls=[];const fetcher=async path=>{calls.push(path);return path.startsWith('/nba/')?{ok:true,json:async()=>({fecha:'x',partidos:[]})}:{ok:true,json:async()=>({state:'unavailable',events:[]})};};
+ const now=new Date(2026,10,3,12);
+ assert.equal((await loadSport('nba',fetcher,now)).status,'ready');assert.equal((await loadSport('tenis',fetcher)).status,'error');
+ assert.ok(calls.includes('/nba/v1/cartelera?fecha=2026-11-03')&&calls.includes('/nba/v1/cartelera?fecha=2026-11-07')&&calls.includes('/web/deportes/tenis'));assert.ok(!calls.includes('/nba/api/data'));
+ assert.equal((await loadSport('nba',async()=>({ok:false}),now)).status,'error');
+});
+const game=(id,fecha,home,away,iso,result,pick=null)=>({id,fecha,local:{codigo:home[0],nombre:home[1]},visitante:{codigo:away[0],nombre:away[1]},inicio_utc:iso,sello_previsto:new Date(Date.parse(iso)-36e5).toISOString(),resultado:result,pronostico:pick});
+const BOS=['BOS','Boston Celtics'],NYK=['NYK','New York Knicks'],MIA=['MIA','Miami Heat'];
+test('la cartelera v2 conserva los partidos sin pronóstico y calcula sus estadísticas con marcadores finales',()=>{
+ const rows=[game(1,'2026-10-28',BOS,NYK,'2026-10-29T00:00:00Z',{local:110,visitante:100}),game(2,'2026-11-01',MIA,BOS,'2026-11-02T00:00:00Z',{local:90,visitante:99}),
+  game(3,'2026-11-04',BOS,NYK,'2026-11-05T00:00:00Z',null),game(4,'2026-11-05',MIA,NYK,'2026-11-06T00:00:00Z',null)];
+ const events=nbaV2Events(rows,new Date('2026-11-03T12:00:00Z'));
+ assert.equal(events.length,4);
+ const next=events.find(e=>e.id===3);
+ assert.deepEqual(next.markets,[]);assert.equal(next.status,'scheduled');assert.equal(next.planned_seal,'2026-11-04T23:00:00.000Z');assert.equal(next.seal,null);
+ const [bos,nyk]=next.stats.teams;
+ assert.equal(bos.season.won,2);assert.equal(bos.season.lost,0);assert.equal(bos.streak,2);assert.equal(bos.rest_days,2);assert.equal(bos.back_to_back,false);
+ assert.equal(nyk.season.lost,1);assert.equal(nyk.streak,-1);assert.equal(nyk.scoring.points_for,100);
+ assert.equal(next.stats.h2h.matches.length,1);assert.equal(next.stats.h2h.home_wins,1);assert.equal(next.stats.h2h.average_total,210);
+ // las estadísticas de un partido no usan marcadores posteriores a su inicio
+ assert.equal(events.find(e=>e.id===1).stats.teams[0].season.won,0);
+ assert.equal(events.find(e=>e.id===2).score,'90 – 99');
+});
+test('el pronóstico v2 solo cuenta como previo si se selló antes del inicio',()=>{
+ const pick=sealed=>({hash:'abc',p_local:.7,sellado_en:sealed});
+ const [ok]=nbaV2Events([game(1,'2026-11-01',BOS,NYK,'2026-11-02T00:00:00Z',{local:100,visitante:90},pick('2026-11-01T23:00:00Z'))]);
+ assert.equal(ok.markets[0].selection,'Boston Celtics');assert.equal(ok.markets[0].outcome,'win');assert.equal(ok.seal,'abc');
+ const [late]=nbaV2Events([game(1,'2026-11-01',BOS,NYK,'2026-11-02T00:00:00Z',{local:100,visitante:90},pick('2026-11-02T00:30:00Z'))]);
+ assert.equal(late.markets[0].outcome,null);assert.equal(late.markets[0].revised,true);
+ assert.deepEqual(nbaV2Events([game(1,'2026-11-01',BOS,NYK,'2026-11-02T00:00:00Z',null,{hash:'abc',p_local:1.4,sellado_en:'2026-11-01T23:00:00Z'})])[0].markets,[]);
 });
 test('el historial conserva fallos reales y no acepta resultados inventados',async()=>{
  const rows=[{local:'A',visitante:'B',kickoff_utc:event.tipoff_utc,outcome:'loss'},{local:'A',visitante:'B',kickoff_utc:event.tipoff_utc,outcome:'fake'}];

@@ -1778,3 +1778,77 @@
     font-size: var(--text-3xl);
   }
 }
+
+/* Leyenda de NBA: cuándo se agrega el pronóstico (línea de pasos). */
+.win-seal.is-pending {
+  border-color: var(--border-strong);
+}
+
+.win-steps {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.win-step {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding-left: 26px;
+}
+
+.win-step::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--faint);
+  border-radius: 50%;
+}
+
+.win-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 18px;
+  bottom: -14px;
+  width: 1px;
+  background: var(--line);
+}
+
+.win-step.is-done::before {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.win-step.is-now::before {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 25%, transparent);
+}
+
+.win-step.is-miss::before {
+  border-color: var(--magenta);
+  background: var(--magenta);
+}
+
+.win-step b {
+  font: 700 12px var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.win-step span {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--faint);
+}
+
+.win-step.is-now b {
+  color: var(--cyan);
+}
