@@ -40,6 +40,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 01:35 UTC · NBA: `nba-motor:88f7759` y usuario `nba_motor` (cron NO activado) · SOLO base de datos, imágenes y archivos, rama `nba/rediseno-s0`
+- Rol de base `nba_motor` (login; hereda `nba_lector` y `nba_escritor`: lee todo, solo inserta); contraseña generada en el servidor, solo en `~/nba-isolated/nba-captura/motor.env` (modo 600). Imagen `nba-motor:88f7759` (`imagen_motor`) y `ejecutar_motor.sh` con candado.
+- Simulacro con datos reales (`--simulacro --ahora 2026-11-03T02:30:00Z`): 3 partidos pronosticados, 0 errores, nada sellado; `nba.pronostico` sigue vacía. El cron no está instalado: `crontab -l | grep motor` devuelve 0.
+- **Incidente (mío) 00:10-01:33 UTC:** al cambiar `imagen_actual` escribí `3ca6392` en vez de `nba-captura:3ca6392` y los crons de captura fallaron ≈ 1 h 20 min (23 ejecuciones con `pull access denied`). Corregido a las 01:33; ESPN y partes oficiales recuperaron lo pendiente; las fotos de Rotowire de ese tramo se perdieron. Regla: `imagen_actual` e `imagen_motor` guardan el nombre completo de la imagen.
+- **Vuelta atrás:** no activar el cron (o quitar su línea); `DROP ROLE nba_motor` si se quiere borrar el usuario; las imágenes se borran con `docker rmi`.
+
 ### 2026-11-03 01:50 UTC · NBA: imágenes `nba-captura:408ea38` y `nba-motor:df8a151` y G-fuga (solo lectura) · SOLO imágenes y archivos, rama `nba/rediseno-s0`
 - Construidas dos imágenes en el VPS: `nba-captura:408ea38` (código v2 del Sprint 5; `imagen_actual` sigue en `3ca6392`, los crons no cambian) y `nba-motor:df8a151` (lo del colector más numpy 2.1.3 y scipy 1.14.1). `build/src` del servidor tiene el código del Sprint 5; el anterior en `build/src.antes-3ca6392`.
 - G-fuga ejecutada con `nba-motor:df8a151` contra `nba_datos` en una transacción de solo lectura (200 partidos de 2025-26): 0 diferencias, 0 fugas, diferencia máxima con el cálculo independiente 5·10⁻⁵. No se escribió nada en la base ni se selló ningún pronóstico (`nba.pronostico` sigue vacía).

@@ -3194,3 +3194,10 @@ Detalle en docs/nba_rediseno_s6_resultados_20261103.md. `apps/nba/src/nba/api/` 
 - [x] Web `/nba/v2/` en es, en, pt, fr, it, de con prueba de paridad de traducciones; verificada en el navegador con datos de demostración.
 - [ ] `nba-motor`: proceso que sella cada partido ≈ 60 min antes del salto (sin él la web no muestra pronósticos reales).
 - [ ] Ruta pública, integración con cuentas y bloqueo de pago, rol de solo lectura en la base y despliegue de `nba-api` (esperan tu aprobación del boceto).
+
+### NBA — rediseño completo, nba-motor: sellado por partido (2026-11-03)
+`apps/nba/src/nba/v2/motor.py`, `ops/nba-motor/{ejecutar.sh,README.md}`; imagen `nba-motor:88f7759`; usuario de base `nba_motor`.
+- [x] Proceso que sella cada partido 60 min antes del salto con corte fijo, nunca después del salto, sin sellar con historia atrasada, tolerante a fallos por partido, ignorando juegos canónicos duplicados (10 pruebas).
+- [x] Simulacro con datos reales en el VPS (3 partidos nocturnos del 2-nov): probabilidades plausibles, 0 errores, nada escrito.
+- [ ] Activar el cron `*/5` (línea en `ops/nba-motor/ejecutar.sh`): lo sellado es irreversible, espera tu visto bueno.
+- [ ] Alertas operativas del motor (errores/omitidos) por el canal existente; hoy solo salen en el log.

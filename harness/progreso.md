@@ -6936,3 +6936,9 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Decisión: la API no manda texto visible, solo códigos de error; la web los traduce a los 6 idiomas y una prueba exige paridad de claves y cobertura de códigos.
 - Decisión: v2 sigue sin exponerse; el piloto v1 de `/nba` se mantiene hasta que apruebes v2 (después se retira del VPS).
 - Pendiente real: sin el proceso `nba-motor` (sellado por partido) la web no tiene pronósticos que mostrar.
+
+## 2026-11-03 — nba-motor
+
+- Decisión: el corte del pronóstico es `salto − 60 min`, no la hora en que corre el cron; un cron atrasado usa los mismos datos y G-fuga sigue valiendo. Nunca se sella después del salto.
+- Decisión: el cron NO se activa solo: un sello es solo-anexar, y un error del motor quedaría para siempre en la cadena. Se activa con tu visto bueno tras ver el simulacro.
+- Incidente propio: al construir la imagen puse solo la etiqueta (`3ca6392`) en `imagen_actual`, que guarda el nombre completo (`nba-captura:3ca6392`); los crons de captura fallaron de ≈ 00:10 a 01:33 UTC del 3-nov (≈ 1 h 20 min sin Rotowire/ESPN/partes/cdn/PropLine). Corregido; ESPN y partes recuperaron lo pendiente, las fotos de Rotowire de ese tramo no se pueden recuperar.
