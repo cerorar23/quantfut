@@ -46,6 +46,11 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - La imagen `cdecc6c` es ahora `imagen_actual` (los crons rotowire, espn, parte, nba y propline la usan); mismo código de captura que `9d73ed5` más los cargadores históricos.
 - **Vuelta atrás:** los datos son solo-anexar; para deshacer habría que recrear `nba_datos` desde el último respaldo diario (`~/nba-isolated/nba-captura/respaldos`). La imagen anterior sigue en el servidor y basta escribir su etiqueta en `imagen_actual`.
 
+### 2026-11-03 17:25 UTC · NBA: respaldo del VPS cada 6 h y copia diaria al PC · cron del usuario `qf` y tarea programada del PC, rama `nba/rediseno-s0`
+- **VPS:** `respaldar.sh` pasa de diario (09:15 UTC) a cada 6 horas (`15 3,9,15,21 * * *`) y conserva los 24 últimos (≈ 6 días; antes 7). Aprobado por el titular tras el ensayo operativo (F4.4). Crontab anterior en `~/nba-isolated/nba-captura/crontab.before-respaldo6h-20261103`; script anterior en `respaldar.sh.anterior`. Respaldo de prueba tomado a las 17:24 UTC (84 MB).
+- **PC:** tarea programada «NBA respaldo VPS» (usuario del titular, cada día a las 10:00 hora local, con arranque en cuanto se pueda si el PC estaba apagado) que ejecuta `Documents\respaldos_nba\respaldo_nba_vps.ps1` (copia de `scripts/respaldo_nba_vps.ps1`): solo agrega, no borra, y deja `ultimo_respaldo.log`. Ejecutada una vez a mano: resultado 0 y el respaldo de las 17:24 UTC ya está en el PC.
+- **Vuelta atrás:** `crontab ~/nba-isolated/nba-captura/crontab.before-respaldo6h-20261103` (vuelve al respaldo diario) y `Unregister-ScheduledTask -TaskName "NBA respaldo VPS"` en el PC.
+
 ### 2026-11-03 17:15 UTC · NBA: ensayo operativo (F4.4) · SOLO archivos y una base desechable, rama `nba/rediseno-s0`
 - Se restauró el respaldo de las 09:15 UTC en `nba_ensayo` (47 s), se comprobó y se borró; `nba_datos` no se tocó. Durante ≈ 1 minuto `imagen_motor` apuntó a `nba-motor:6b85093` para ensayar la vuelta atrás (sin partidos en ventana de sellado) y se restauró `nba-motor:d73c7c5`; el cron sigue en `d73c7c5`.
 - Copia fuera del servidor: traída al PC (`Documents\respaldos_nba`) la copia actual de los respaldos; no se borró nada.

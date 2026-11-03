@@ -7006,3 +7006,5 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 ## 2026-11-03 — F4.4 ensayo operativo
 
 - Resultado: se restaura y se verifica en menos de un minuto, la manipulación se detecta y la vuelta atrás son 1 s; el punto débil es la distancia entre respaldos (24 h de sellos) y la copia fuera del servidor, que dependía de traerla a mano y estaba desactualizada.
+
+- Decisión del titular (3-nov): respaldo del VPS cada 6 horas y copia diaria al PC programada; así la pérdida máxima de sellos pasa de 24 h a 6 h y la copia fuera del servidor deja de depender de que alguien la traiga.

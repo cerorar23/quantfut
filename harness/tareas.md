@@ -3262,3 +3262,5 @@ Detalle en docs/nba_rediseno_f44_ensayo_operativo_20261103.md. `ops/ensayo_opera
 - [x] Hallazgo: la copia del PC era del 2-nov (370 KB, antes de cargar datos y sellar); se trajo la actual.
 - [ ] Decisión del titular: respaldo del VPS cada 6 h en temporada y tarea diaria en el PC para traer la copia; prueba real de un mensaje de alerta.
 - [ ] F4.5 informe final y propuesta de promoción.
+
+- [x] F4.4 seguimiento: respaldo del VPS cada 6 h (24 copias) y tarea diaria en el PC (10:00) que trae la copia; probados de punta a punta (respaldo de prueba 84 MB ya en el PC).
