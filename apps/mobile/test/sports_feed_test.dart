@@ -189,7 +189,7 @@ void main() {
 
   test('un feed caído no tumba al otro', () async {
     final api = _Api({
-      '/nba/api/data': () => throw Exception('red'),
+      '/nba/v1/cartelera': () => throw Exception('red'),
       '/web/deportes/tenis': () => _fixture('tennis_feed.json'),
     });
     final nba = await loadSport(api, SportKind.nba);
@@ -198,7 +198,71 @@ void main() {
     expect(nba.events, isEmpty);
     expect(tennis.ready, isTrue);
     expect(tennis.events, isNotEmpty);
-    expect(api.calls, ['/nba/api/data', '/web/deportes/tenis']);
+    expect(api.calls, [...List.filled(7, '/nba/v1/cartelera'), '/web/deportes/tenis']);
+  });
+
+  group('NBA v2 (/nba/v1/cartelera)', () {
+    JsonMap game(int id, {JsonMap? pick, JsonMap? result, String start = '2026-11-02T00:00:00Z'}) => {
+      'id': id,
+      'fecha': '2026-11-01',
+      'local': {'codigo': 'BOS', 'nombre': 'Boston Celtics'},
+      'visitante': {'codigo': 'NYK', 'nombre': 'New York Knicks'},
+      'inicio_utc': start,
+      'sello_previsto': '2026-11-01T23:00:00+00:00',
+      'resultado': result,
+      'pronostico': pick,
+    };
+    JsonMap pick(String sealed, [double p = .7]) => {'hash': 'abc', 'p_local': p, 'sellado_en': sealed};
+
+    test('solo salen los partidos con pronóstico sellado y el resultado se evalúa', () {
+      final events = nbaV2Events([
+        game(1),
+        game(2, pick: pick('2026-11-01T23:00:00Z'), result: {'local': 100.0, 'visitante': 90.0}),
+        game(3, pick: pick('2026-11-01T23:00:00Z', .3), result: {'local': 100.0, 'visitante': 90.0}),
+      ]);
+      expect(events.map((e) => e.id), ['2', '3']);
+      final win = events.first, loss = events.last;
+      expect(win.markets.single.selection, 'Boston Celtics');
+      expect(win.markets.single.probability, .7);
+      expect(win.markets.single.outcome, 'win');
+      expect(win.status, 'finished');
+      expect(win.score, '100.0 – 90.0');
+      expect(win.seal, 'abc');
+      expect(loss.markets.single.selection, 'New York Knicks');
+      expect(loss.markets.single.probability, closeTo(.7, 1e-9));
+      expect(loss.markets.single.outcome, 'loss');
+    });
+
+    test('un sello posterior al inicio es revisión: no cuenta ni se evalúa', () {
+      final e = nbaV2Events([
+        game(1, pick: pick('2026-11-02T00:30:00Z'), result: {'local': 100.0, 'visitante': 90.0}),
+      ]).single;
+      expect(e.markets.single.eligible, isFalse);
+      expect(e.markets.single.outcome, isNull);
+      expect(featuredMarket(e), isNull);
+    });
+
+    test('datos inválidos se descartan sin inventar nada', () {
+      expect(nbaV2Events([game(1, pick: pick('2026-11-01T23:00:00Z', 1.4))]), isEmpty);
+      expect(nbaV2Events([game(1, pick: {'hash': '', 'p_local': .6, 'sellado_en': '2026-11-01T23:00:00Z'})]), isEmpty);
+      expect(nbaV2Events([{...game(1, pick: pick('2026-11-01T23:00:00Z')), 'id': 'x'}]), isEmpty);
+    });
+
+    test('un día que falla no tumba los demás; si fallan todos el feed no está listo', () async {
+      var n = 0;
+      final api = _Api({
+        '/nba/v1/cartelera': () {
+          if (n++ == 0) throw Exception('red');
+          return {'partidos': [game(2, pick: pick('2026-11-01T23:00:00Z'))]};
+        },
+      });
+      final feed = await loadSport(api, SportKind.nba);
+      expect(feed.ready, isTrue);
+      expect(feed.events.map((e) => e.id), ['2']);
+      expect(api.calls, List.filled(7, '/nba/v1/cartelera'));
+      final broken = _Api({'/nba/v1/cartelera': () => {'otro': 1}});
+      expect((await loadSport(broken, SportKind.nba)).ready, isFalse);
+    });
   });
 
   test('un estado no disponible o el fútbol devuelven feed no listo', () async {
