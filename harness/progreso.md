@@ -6915,3 +6915,10 @@ Se añadió `availability`/`multimarket_v13` (protocolo congelado antes de corre
 - Hallazgo: el tope no son los minutos esperados. Con los minutos reales del partido el error del margen solo baja a 14,30 (mercado 14,04); lo que falta es saber más de cada jugador, no adivinar quién juega.
 - Decisión: la probabilidad de jugar sin parte se condiciona al rol (53 % bajo 15 minutos esperados, 88 % entre 15 y 25, 98 % con 25 o más); el 84 % global mezclaba titulares seguros con fondo de plantilla.
 - Decisión: el equipo de cada jugador en cada partido es un dato propio (`equipo_del_jugador`, migración 0008); no se deduce de forma fiable después.
+
+## 2026-11-02 — Sprint 4: props de jugador
+
+- Decisión: los props se valoran condicionados a jugar (las casas anulan la apuesta si no juega); la incertidumbre de minutos entra como mezcla sobre muestras de minutos, no como una cola aparte.
+- Hallazgo: la cobertura de conteos bajos no se mide con el PIT de punto medio (88 % falso en triples); se usa el PIT aleatorizado, que es uniforme si la distribución está calibrada.
+- Hallazgo: la cobertura del 80 % pasó de 73 % (v1.5) a ≈ 81 % en las cuatro estadísticas sin reajustar nada contra el mercado.
+- Límite: sin contexto del partido, la probabilidad de superar la línea apenas discrimina (pendientes 0,09-0,61).

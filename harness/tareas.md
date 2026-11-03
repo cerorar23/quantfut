@@ -3173,3 +3173,9 @@ Resultados medidos en docs/nba_rediseno_s3b_jugadores_20261102.md. Biblioteca `n
 - [x] `equipo_del_jugador` como dato (métrica 60) en los cargadores histórico y cdn.nba.com.
 - [ ] G-equipo contra el mercado sigue sin cumplirse (ganador +0,006, IC95 sin cruzar 0); el tope no son los minutos (con los reales, 14,30).
 - [ ] A priori informativo para el impacto de cada jugador (caja por minuto, mas_menos) y titulares confirmados cerca del salto.
+
+### NBA — rediseño completo, Sprint 4: props de jugador (2026-11-02)
+Resultados medidos en docs/nba_rediseno_s4_resultados_20261102.md. Biblioteca `nba.v2.props`, evaluación `apps/nba/ops/evaluar_s4.py`.
+- [x] Puntos, rebotes, asistencias y triples: minutos × tasa con prior por rol y conteo binomial negativa; G-props cumplida (cobertura 80 % entre 80,5 y 81,3 %, MASE 0,95-0,96, mejor que la media de 5 en log-pérdida).
+- [ ] Contra el cierre del mercado no (Brier +0,003 a +0,013); pendiente: ajustar la tasa por contexto del partido (ritmo, rival, compañeros ausentes) con el núcleo del Sprint 3b.
+- [ ] Combos (R+A, PRA), dobles y primer anotador: esperan semanas de cierres de PropLine y la cópula por rol.
