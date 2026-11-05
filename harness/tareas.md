@@ -3797,3 +3797,11 @@ Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin dat
 - [ ] Ranking de SportsAPIPro: analizador sin respuesta real; una peticion aprobada lo validaria.
 - [ ] Revisar a mano las equivalencias de WTA (18 de 35 con una sola fila de edad) y las 25 dudosas.
 - [ ] S3: nucleo analitico (P, R, simulador) y export PIT que prefiera las horas reales de SofaScore sobre el calendario de TML.
+
+## Tenis: rediseno - Sprint 3, ola 1: simulador analitico y exportacion punto en el tiempo (2026-11-05)
+
+- [x] Simulador analitico (juego, tiebreak, set, partido a 3 y a 5, mezcla por cuadratura, inversion, sensibilidad, Monte Carlo): error 1e-16 a 1e-14 frente a una programacion dinamica punto a punto independiente; Monte Carlo p99 0,43 pp; cifras publicadas (T32, A31, A26) y del plan reproducidas. Cuadratura por defecto a 11 nodos (con 9 fallaba por ~3e-4 en mejor de 5 con mucha dispersion).
+- [x] Exportacion punto en el tiempo desde `tenis_dev` (260.165 partidos desde 2005; 19.665 con hora real de SofaScore): 0 discrepancias frente a las funciones oficiales `*_a_las` en 300 partidos, 0 fugas, exportacion determinista (sha256 igual en dos corridas).
+- [x] Hallazgo: en la base el id menor gana el 55,07 % (73,9 % sin historia) por el orden de carga; la exportacion orienta los lados de forma pseudoaleatoria (lado 1 gana 49,99 %); los ids son claves, nunca rasgos.
+- [ ] Ola 2: modelo de puntos P y rating R (superficie y fatiga estructurales), referencia independiente del rating, walk-forward 2019-2024 y compuertas de S3.
+- [ ] Pendiente del simulador: el contrato rechaza sets de ventaja y mejor de 5 sellado entero tarda 10-25 s (sellar el resumen comprimido del plan G.4); comparacion metodo delta frente a cuadratura espera el modelo D.7.

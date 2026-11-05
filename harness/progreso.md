@@ -7720,3 +7720,9 @@ Decision clave: validar contra datos reales lo que los subagentes entregaron com
 Segundo hallazgo de la integracion: TML (COI) y SofaScore (ISO) codifican distinto el pais; comparados tal cual, el 15 % de los jugadores se separaba como homonimo. Normalizado: union 85,2 % (antes 71,8 %), 0 contradicciones. Tercero: la validacion inicial unia partidos sin exigir la misma ronda y producia fines reales absurdos; se corrigio antes de calibrar.
 
 Coste declarado del calendario seguro: la pareja de TML se ve tras el inicio real en el 54,6 % de los partidos, y la final tarda hasta L+10 o L+16, lo que degrada la fatiga entre torneos en la era solo-TML.
+
+## 2026-11-05 - Tenis: Sprint 3, ola 1 (simulador y exportacion punto en el tiempo)
+
+Decision clave: el simulador se valido contra una segunda implementacion independiente (programacion dinamica punto a punto, sin formulas cerradas) y contra Monte Carlo, y se dejo la cuadratura en 11 nodos porque la compuerta propia mostro que 9 fallaba en mejor de 5 con alta dispersion. La exportacion se valido contra la puerta oficial de lectura (`*_a_las`) con 0 discrepancias, que es la comprobacion que impide una fuga silenciosa en el entrenamiento historico.
+
+Hallazgo de datos que habria sido una fuga: en la base los ids de jugador salen del orden de carga y el id menor gana el 55,07 % (73,9 % cuando ninguno tiene historia). Cualquier rasgo posicional o por id habria filtrado el resultado; la exportacion orienta los lados de forma pseudoaleatoria y declara los ids como claves.
