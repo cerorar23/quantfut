@@ -202,7 +202,7 @@ def cargar(conn, ficheros: list[Fichero], almacen, lote: str, rechazos: Rechazos
             e = agg.ediciones[(a.circuito, a.clave, a.anio)]
             ed = edi[(tor[(a.circuito, a.clave)], a.anio)]
             orient.append((linea, a, orientar(a, jug[(a.circuito, a.ids[0])], jug[(a.circuito, a.ids[1])],
-                                              ed, e["inicio"], e["dias"])))
+                                              ed, e["inicio"], e["dias"], frozenset(e["rondas"]))))
         _escribir_partidos(cur, orient, cont, rechazos, f, visto, rid, rec_dt)
         _ranking(cur, orient, rk, cont, rechazos, f, rid, rec_dt)
         conn.commit()

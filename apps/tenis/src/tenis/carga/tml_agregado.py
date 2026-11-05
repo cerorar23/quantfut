@@ -14,7 +14,8 @@ class Agregado:
             t["cat"].append(a.categoria)
         t["nombre"] = t["nombre"] or a.nombre
         e = self.ediciones.setdefault((a.circuito, a.clave, a.anio), {
-            "inicios": [], "sup": [], "indoor": [], "dias": 7, "equipos": False})
+            "inicios": [], "sup": [], "indoor": [], "dias": 7, "equipos": False, "rondas": set()})
+        e["rondas"].add(a.ronda)
         for lista, valor in ((e["inicios"], a.inicio), (e["sup"], a.superficie), (e["indoor"], a.indoor)):
             if valor is not None and valor not in lista:
                 lista.append(valor)

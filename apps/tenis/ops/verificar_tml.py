@@ -123,7 +123,13 @@ def main():
         previo = db.execute(
             "SELECT count(*) FROM (SELECT edicion_id, ronda, visible_desde FROM partido WHERE visible_desde IS NOT NULL) x "
             "JOIN edicion e ON e.edicion_id = x.edicion_id WHERE x.visible_desde < e.visible_desde").fetchone()[0]
-        informe["visible_desde"] = {"partidos_despues_del_fin": viol, "partidos_antes_que_su_edicion": previo}
+        # Protocolo retro: la pareja debe ser visible ESTRICTAMENTE antes que su resultado (si no, no se puede pronosticar).
+        sin_orden = db.execute(
+            "SELECT count(*) FROM partido p JOIN resultado r ON r.partido_id = p.partido_id "
+            "WHERE p.visible_desde IS NOT NULL AND r.visible_desde IS NOT NULL AND p.visible_desde >= r.visible_desde"
+        ).fetchone()[0]
+        informe["visible_desde"] = {"partidos_despues_del_fin": viol, "partidos_antes_que_su_edicion": previo,
+                                    "pareja_no_anterior_a_su_resultado": sin_orden}
         informe["rechazos_por_motivo"] = r1["contadores"]
         print(json.dumps(informe, indent=1, ensure_ascii=False, default=str))
         (trabajo / "informe_verificacion.json").write_text(json.dumps(informe, indent=1, ensure_ascii=False, default=str),

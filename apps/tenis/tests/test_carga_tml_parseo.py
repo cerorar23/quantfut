@@ -8,7 +8,8 @@ from tenis.carga.tml_carga import filas
 from tenis.carga.tml_orientar import orientar
 from tenis.carga.tml_parseo import analizar_fila
 from tenis.carga.tml_reglas import (DESFASE_7, DESFASE_14, categoria, dias_de_edicion, fecha_fin, inicio_visible,
-                                    lunes_de, lunes_semana_fin, por_equipos, visible_desde_ronda)
+                                    lunes_de, lunes_semana_fin, por_equipos, visible_desde_partido,
+                                    visible_desde_ronda)
 from tenis.carga.tml_score import parsear_marcador
 
 COLUMNAS = ["tourney_id", "tourney_name", "surface", "draw_size", "tourney_level", "indoor", "tourney_date",
@@ -204,10 +205,31 @@ def test_orientacion_retirada_marca_al_que_retira():
 # --- Reglas de visibilidad y edición -------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dias", [7, 14])
-def test_visible_desde_no_decrece_en_la_cadena_principal(dias):
+def test_visible_desde_crece_estrictamente_en_la_cadena_principal_y_en_las_previas(dias):
     tabla = DESFASE_14 if dias == 14 else DESFASE_7
-    valores = [tabla[r] for r in ["R128", "R64", "R32", "R16", "QF", "SF", "F"]]
-    assert valores == sorted(valores)
+    for cadena in (["R128", "R64", "R32", "R16", "QF", "SF", "F"], ["Q1", "Q2", "Q3"]):
+        valores = [tabla[r] for r in cadena]
+        assert valores == sorted(set(valores)), valores     # sin empates: el corte «fin de la ronda anterior» no ve la propia
+
+
+@pytest.mark.parametrize("dias,rondas", [(7, {"R32", "R16", "QF", "SF", "F"}), (14, {"R128", "R64", "R32", "R16", "QF", "SF", "F"}),
+                                         (7, {"R64", "R32", "R16", "QF", "SF", "F"})])
+def test_protocolo_retro_el_corte_ve_la_pareja_y_la_ronda_anterior_pero_no_el_propio_resultado(dias, rondas):
+    """Corte retro de un partido = visible_desde de la pareja + 1 s: ve su pareja y los resultados de las rondas
+    anteriores de la edición, nunca el resultado propio (ni de rondas posteriores)."""
+    inicio = date(2025, 5, 26)
+    orden = [r for r in ("R128", "R64", "R32", "R16", "QF", "SF", "F") if r in rondas]
+    for i, r in enumerate(orden):
+        pareja = visible_desde_partido(r, inicio, dias, rondas)
+        corte = pareja + timedelta(seconds=1)
+        propio = visible_desde_ronda(r, inicio, dias)
+        assert propio > corte, (r, pareja, propio)                                   # el propio resultado NO se ve
+        for anterior in orden[:i]:
+            assert visible_desde_ronda(anterior, inicio, dias) < corte, (r, anterior)  # el de las anteriores SÍ
+        for posterior in orden[i + 1:]:
+            assert visible_desde_ronda(posterior, inicio, dias) > corte
+    assert visible_desde_partido(orden[0], inicio, dias, rondas) == inicio_visible(inicio)   # la primera ronda: inicio
+    assert visible_desde_partido("R256", inicio, dias, rondas) is None
 
 
 @pytest.mark.parametrize("dias", [7, 14])
@@ -222,7 +244,7 @@ def test_ningun_visible_desde_supera_fecha_fin_mas_un_dia(dias):
 
 def test_tabla_7_dias_y_fin_de_semana_de_la_edicion():
     inicio = date(2025, 5, 26)  # lunes
-    assert visible_desde_ronda("R32", inicio, 7) == datetime(2025, 5, 29, tzinfo=timezone.utc)
+    assert visible_desde_ronda("R32", inicio, 7) == datetime(2025, 5, 29, tzinfo=timezone.utc)   # L+3d (estricto: R64 = L+2d)
     assert visible_desde_ronda("F", inicio, 7) == datetime(2025, 6, 2, tzinfo=timezone.utc)
     assert visible_desde_ronda("R256", inicio, 7) is None
     assert lunes_semana_fin(inicio, 7) == date(2025, 5, 26)

@@ -27,10 +27,15 @@ DOS_SEMANAS = {"G", "M", "1000", "PM", "P5", "T1", "F", "YEC", "O", "W"}
 EQUIPOS_NOMBRE = re.compile(r"davis|billie jean|bjk|fed cup|united cup|laver cup|hopman", re.IGNORECASE)
 
 # Desfase en días desde el inicio L de la edición (tabla fijada por el titular).
-DESFASE_7 = {"R128": 2, "R64": 3, "R32": 3, "R16": 4, "QF": 5, "SF": 6, "F": 7, "RR": 7,
-             "Q1": 3, "Q2": 3, "Q3": 3}
+# Revisión del 5-nov: los desfases de las rondas principales y de las previas crecen ESTRICTAMENTE con la ronda
+# (antes R64 y R32 compartían día en la tabla de 7): sin eso, el corte de evaluación «fin de la ronda anterior» vería el
+# resultado de la propia ronda. 7 días: ≤ L+7 = fecha_fin + 1 (invariante comprobado en la base).
+DESFASE_7 = {"R128": 1, "R64": 2, "R32": 3, "R16": 4, "QF": 5, "SF": 6, "F": 7, "RR": 7,
+             "Q1": 2, "Q2": 3, "Q3": 4}
 DESFASE_14 = {"R128": 3, "R64": 5, "R32": 8, "R16": 10, "QF": 12, "SF": 13, "F": 14, "RR": 14,
-              "Q1": 4, "Q2": 4, "Q3": 4}
+              "Q1": 2, "Q2": 3, "Q3": 4}
+ORDEN_PRINCIPAL = ("R128", "R64", "R32", "R16", "QF", "SF", "F")
+ORDEN_PREVIAS = ("Q1", "Q2", "Q3")
 
 
 def categoria(circuito: str, nivel: str, nombre: str) -> tuple[str | None, str | None]:
@@ -73,6 +78,26 @@ def visible_desde_ronda(ronda: str, inicio: date, dias: int) -> datetime | None:
         return None
     dia = inicio + timedelta(days=tabla[ronda])
     return datetime(dia.year, dia.month, dia.day, tzinfo=timezone.utc)
+
+
+def visible_desde_partido(ronda: str, inicio: date, dias: int, rondas_edicion: set) -> datetime | None:
+    """Instante desde el que el PARTIDO (la pareja) es conocible, para pronosticarlo: el fin conservador de la ronda
+    anterior que haya en esa edición (la pareja se conoce al acabar la anterior) o el inicio de la edición si es la
+    primera. Es estrictamente anterior al `visible_desde` de su propio resultado.
+
+    Protocolo de corte retro de un partido de TML: corte = visible_desde_partido + 1 s. En ese corte se ven la pareja y
+    los resultados de las rondas anteriores, y NO el propio resultado. RR (grupos) y las rondas fuera de tabla: sin
+    instante propio (None ⇒ regla por semana), salvo RR que se ve desde el inicio. Sin ronda en tabla → None.
+    """
+    if ronda == "RR":
+        return inicio_visible(inicio)
+    for orden in (ORDEN_PRINCIPAL, ORDEN_PREVIAS):
+        if ronda in orden:
+            previas = [r for r in orden[: orden.index(ronda)] if r in rondas_edicion]
+            if not previas:
+                return inicio_visible(inicio)
+            return visible_desde_ronda(previas[-1], inicio, dias)
+    return None
 
 
 def inicio_visible(inicio: date) -> datetime:
