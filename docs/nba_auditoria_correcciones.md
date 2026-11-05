@@ -2,9 +2,9 @@
 
 ## Alcance y estado
 
-Autorización: «necesito que arregles todo lo que encontraste en la auditoría». Rama `codex/nba-auditoria-20261104`, basada en `main` `8676e72`. Se preservaron el checkout antiguo, las observaciones originales y la cadena de pronósticos. **Los cambios están en esta rama; todavía no se han publicado en el VPS.**
+Autorización inicial: «necesito que arregles todo lo que encontraste en la auditoría»; posteriormente el titular ordenó publicarlas. Rama `codex/nba-auditoria-20261104`, basada en `main` `8676e72`, integrada mediante PR #255 con CI verde. **Publicadas en el VPS desde main `a491f225` el 4-nov-2026 a las 18:26 CDMX.** Se preservaron el checkout antiguo, las observaciones originales y la cadena de pronósticos.
 
-Se volvió a consultar el VPS: motor `nba-motor:d73c7c5`, API `nba-api:1c7fd93`. No se ejecutaron entrenamientos, migraciones ni escrituras en producción. Las pruebas SQL usan bases `nba_test_*` en un PostgreSQL 16 local dedicado. Tras autorización expresa del titular se exportaron 143.256 cajas de jugadores (ID, partido, equipo, minutos, más/menos y recepción) mediante SELECT y cuenta lectora; el archivo comprimido queda local, fuera del repositorio.
+La auditoría original observó motor `nba-motor:d73c7c5` y API `nba-api:1c7fd93`; al preparar la publicación, la API había avanzado a `mercados-1bd8748` y se preservaron sus cambios. Ahora ejecutan `nba-motor:auditoria-a491f225` y `nba-api:auditoria-a491f225`, con migración 0009 y respaldo. No se entrenó en VPS. Las pruebas SQL usaron bases `nba_test_*` en PostgreSQL 16 local. Tras autorización expresa se exportaron 143.256 cajas de jugadores mediante SELECT; el archivo queda local, fuera del repositorio.
 
 ## Matriz de correcciones
 
@@ -74,4 +74,8 @@ El antiguo `ops/g_fuga.py` compara contra ratings reaprendidos de puntos finales
 
 ## Límites que no se pueden cerrar con código
 
-No se puede recuperar una recepción original que nunca fue registrada ni fabricar una muestra prospectiva. La evaluación retrospectiva incluida usa resultados reconstruidos y lo declara; no certifica disponibilidad histórica punto en el tiempo, ausencia universal de sobreajuste, rentabilidad ni calibración del híbrido 2.2. La corrección de atribución y las guardias están implementadas; la certificación estadística y la promoción operativa permanecen pendientes. Los registros históricos erróneos de OT no se reescribieron: el nuevo entrenamiento deriva exposición directamente de minutos validados.
+No se puede recuperar una recepción original que nunca fue registrada ni fabricar una muestra prospectiva. La evaluación retrospectiva incluida no certifica disponibilidad histórica punto en el tiempo, ausencia universal de sobreajuste, rentabilidad ni calibración del híbrido. **La publicación está completada; la acreditación prospectiva de 2.2 no: hay 0 resultados al verificar.** El seguimiento por versión y la cohorte preregistrada quedan preparados, conservando `calibracion_certificada=false`. Los registros históricos de OT no se reescribieron: el nuevo entrenamiento deriva exposición de minutos validados.
+
+El cron real de las 00:30 UTC ejecutó 2.2 sin errores y selló su primer pronóstico de equipo. Se verificaron 1.541 sellos en cadena y 0 violaciones temporales en 2.2. Las cuatro rutas públicas responden 200 y los 153 archivos inspeccionados de la API coinciden con main. **1 pronóstico nuevo y 0 resultados todavía no permiten medir Brier, log-loss o fiabilidad prospectivos de 2.2.**
+
+Ver [evidencia del despliegue](nba_auditoria_evidencia/despliegue_20261104.json), [cohorte preregistrada](nba_auditoria_evidencia/cohorte_prospectiva_20261104.json) y rollback en `DEPLOYS.md`. El artefacto vence el **7-nov-2026 a las 13:18 CDMX**: requiere renovación local antes de caducar.

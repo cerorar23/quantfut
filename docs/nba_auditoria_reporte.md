@@ -1,6 +1,6 @@
 # Auditoría forense del motor NBA publicado
 
-> La auditoría original se conserva a continuación. Tras la autorización posterior del titular se implementaron correcciones en una rama aislada: [estado, pruebas y límites de las correcciones](nba_auditoria_correcciones.md). Esta nota no acredita un despliegue.
+> La auditoría original se conserva a continuación. Las correcciones se publicaron posteriormente desde main `a491f225` (PR #255): [estado, pruebas y límites](nba_auditoria_correcciones.md). La publicación no acredita por sí sola calibración prospectiva; 2.2 tenía 0 resultados al verificar.
 
 Fecha: **4 de noviembre de 2026**. Modalidad: **solo lectura**. Alcance corregido con la indicación del titular: auditar **la última versión efectivamente publicada en el VPS**, no suponer que el checkout local coincide con ella.
 

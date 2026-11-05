@@ -5,9 +5,9 @@
 Orden expresa del titular: publicar las correcciones y acreditar la calibración prospectiva si los datos lo permiten. No se fabrica acreditación ni se sustituyen resultados prospectivos por backtests.
 
 - [x] Releer reglas de despliegue y reconfirmar main/runtime. API concurrente `mercados-1bd8748`, corrección `61ff260`, preservada e integrada; cuotas por lado/última recepción y CDF exacta corregidas. 32 pruebas de API/mercados/regresiones aprobadas.
-- [ ] PR con arnés verde, integración en main y comparación previa de imágenes/hashes.
-- [ ] Respaldo, migración 0009, ensayo de solo lectura y publicación aislada motor/API; conservar rollback y fuentes de mercados.
-- [ ] Verificar rutas públicas, versión/artefacto, cron y cadena; documentar recuento prospectivo real y estado de acreditación según protocolo.
+- [x] PR #255 con arnés verde, integrado en main `a491f225`; comparación previa de imágenes/hashes.
+- [x] Respaldo, migración 0009, ensayo lector y publicación aislada motor/API; rollback y mercados preservados.
+- [x] Rutas públicas 200, versión/artefacto y cadena verificados; cohorte registrada antes de activar y recuento real documentado. 0 resultados de 2.2: no puede acreditarse todavía.
 
 ## 4-nov-2026 · Correcciones de la auditoría NBA — código y validación terminados; promoción pendiente
 
@@ -20,7 +20,8 @@ Autorización del titular: «necesito que arregles todo lo que encontraste en la
 - [x] NBA completa con PostgreSQL: 1.224 aprobadas, 18 omitidas; 94 regresiones finales y 4 pruebas adicionales de entrenamiento aprobadas. CI NBA incorpora PostgreSQL.
 - [x] Evidencia, límites y plan de publicación/rollback en `docs/nba_auditoria_correcciones.md`; runtime reconfirmado sin cambios.
 - [x] Validar el híbrido con la nueva ley: empeora Brier (0,21061 vs 0,20568; IC95 de la diferencia positivo). Se bloquea su activación y se conserva el núcleo validado; se añade confirmación separada en playoffs.
-- [ ] Publicar el núcleo solo desde main, registrar despliegue y mantener renovación local versionada antes de 72 h. La calibración prospectiva sigue sin acreditar.
+- [x] Núcleo publicado desde main `a491f225` y registrado en DEPLOYS.md.
+- [ ] Renovación local del artefacto antes del 7-nov-2026 13:18 CDMX y acumulación de evidencia prospectiva; no entrenar en VPS ni fabricar acreditación.
 
 ## Correcciones de la auditoría del 3-nov-2026 — en curso
 

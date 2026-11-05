@@ -3,7 +3,7 @@
 ## NBA · 4-nov-2026
 
 - Correcciones de la auditoría implementadas en `codex/nba-auditoria-20261104` y verificadas: 1.224 pruebas NBA aprobadas. Informe: `docs/nba_auditoria_correcciones.md`.
-- El híbrido candidato se evaluó y rechazó por empeorar el Brier; su activación queda bloqueada. Pendiente: publicar desde main el núcleo validado y mantener renovación local versionada del artefacto (caduca a 72 h). Sin despliegue en VPS ni certificación prospectiva de la nueva versión.
+- Publicado desde main `a491f225` (PR #255) en motor/API NBA; híbrido rechazado bloqueado. Pendiente: renovar el artefacto local antes del 7-nov-2026 13:18 CDMX y reunir evidencia prospectiva suficiente. La versión 2.2 tenía 0 resultados al verificar y no se acredita calibración inexistente.
 
 Actualizada el **2026-10-25** (limpieza a fondo: solo queda lo que sigue abierto). El detalle técnico vive en
 `harness/tareas.md` (índice «Pendientes vivos» al principio) y en `docs/`; cuando algo se cierre, se marca aquí y allí.
