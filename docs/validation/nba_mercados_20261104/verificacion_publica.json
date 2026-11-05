@@ -1,0 +1,26 @@
+{
+  "utc": "2026-11-05T01:17:33.459Z",
+  "origin": "https://pronosticosdeportivos.pro",
+  "assets": {
+    "app.js": "0d77360d7f0fe4f4488484870e24e6e7c132d8bf05c0d70a4df6a6035be22ad1",
+    "ergonomic-views.js": "e39565e23b7fef1f3b40ca9716c1287fa65247f90751592f2182c89ec79550ff",
+    "index.html": "69408d6ae0a22e65cd3e31a4ed79f9892c4b1b173f41fa2745b12ef638ef840a",
+    "real-views.js": "c6f91a3e231c42cf8926be3d68d0c584bf14a6c2370768f4f3c451b6bcdc11d4",
+    "sports-data.js": "f623bb87f9c04a16f4015d0bf39f91e2618ecc9f89b71e8c1e1ae5183e8624b0",
+    "sports-window.js": "d42f4130fc4ad2c3d9c7850e31b0c8af4a0e5af12c574ceae91fcc3b92e8ec5d"
+  },
+  "boston": {
+    "id": 11333,
+    "markets": 691,
+    "players": 24,
+    "projections": 96,
+    "featured": {
+      "market": "Asistencias de Derrick White",
+      "selection": "Menos de 6.5 asistencias",
+      "probability": 0.8902441097558902,
+      "price": 1.741,
+      "book": "DraftKings",
+      "outcome": null
+    }
+  }
+}
