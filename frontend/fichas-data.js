@@ -74,7 +74,7 @@ export function modelProbabilities(game) {
 }
 
 // El pronóstico destacado de la WEB lo elige el servidor con regla propia (independiente de la app):
-// de todos los mercados del partido, el de mayor probabilidad × cuota (cuota >= 1,20 y probabilidad >= 55 %)
+// de todos los mercados del partido, la mayor probabilidad con cuota >= 1,20 y probabilidad >= 75 %
 // (`partido_mercados.aplicar_acceso_web`). Aquí solo se valida lo recibido; no se calcula nada.
 export function featuredMarket(mercados) {
   const m = mercados?.destacado;

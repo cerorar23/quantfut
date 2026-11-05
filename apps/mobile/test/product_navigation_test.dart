@@ -806,7 +806,7 @@ void main() {
       ];
     await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
     expect(find.byType(ForecastPanel), findsNothing);
-    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 55 % o más'), findsOneWidget);
+    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 75 % o más'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

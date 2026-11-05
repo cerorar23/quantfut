@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 5-nov-2026 (tarde) · Destacado: de valor esperado a «probabilidad máxima segura»
+
+Decisión del titular, horas después de desplegar el valor esperado (PR #262): el destacado es un producto de retención, no de ROI; el objetivo es que el usuario vea >= 80 % de aciertos. Regla vigente en fútbol, NBA, tenis, web y app: candidato = cuota de referencia >= 1,20 y probabilidad >= 75 %; gana la MAYOR probabilidad (la cuota ya no multiplica nada y `score_destacado` desaparece); empate -> mayor cuota; sin candidatos -> `null`. Sin cuota de casa la de referencia es 1 ÷ prob., así que el destacado sale de la franja 75 %-83,3 %. Se conserva la regla de que, con cuotas de casa en el partido, solo compiten los mercados que una casa cotiza, y que el destacado es siempre uno de los 3 mercados gratis de la web.
+
+Ambigüedad del encargo resuelta: el punto 1 pedía cuota >= 1,20 y el punto 4 decía «pagando 1.10»; se aplicó 1,20 (aparece dos veces y el propio encargo habla del tope de 83,3 %). Si se quería 1,10, el tope de la franja sube a 90,9 % sin cuota de casa: es un cambio de una constante (`CUOTA_MIN`).
+
+Qué NO está demostrado: la cifra «31 % de acierto empírico» del valor esperado y que la nueva regla llegue a 80 % se citaron sin medición propia. Un destacado sale de una franja estrecha (75 %-83,3 %), así que 80 % real exige un modelo calibrado justo ahí; la calibración por mercado e historial se mide aparte (ver la entrada de calibración).
+
 ## 5-nov-2026 · Pronóstico destacado por valor esperado en fútbol, NBA y tenis (servidor)
 
 Decisión del titular: el destacado deja de ser «la mayor probabilidad con cuota ≥ 1,40» y pasa a ser el mercado de mayor `probabilidad × cuota de referencia` entre los que tienen cuota ≥ 1,20 y probabilidad ≥ 55 %; empate por mayor probabilidad; sin candidatos, `null`. Lo implementa `src/qf/api/destacado_valor.py` (puro, sin dependencias), usado por `partido_mercados.aplicar_acceso_web` (fútbol), `tenis_publico.read_public_feed` (campo `destacado` por evento) y la copia `apps/nba/src/nba/api/destacado_valor.py` en `/nba/v1/partido/{id}/mercados` (campo `destacado`). Pruebas: `tests/test_destacado_valor.py` y `apps/nba/tests/v2/test_destacado_valor_nba.py`, con el dilema 1,20/75 % contra 1,80/70 % (gana 1,80: 1,26 > 0,90).

@@ -131,8 +131,8 @@ def filas_complementarias(lam: float, mu: float, rho: float, local: str, visitan
     Opciones de los mercados de goles que `filas_goles` NO lista: `filas_goles` enseña solo el lado más
     probable de cada mercado, así que el otro lado (p. ej. «Menos de 1,5» cuando lo probable es «Más») y los
     otros resultados del 1X2 no podían ser nunca el destacado. Solo la web (`construir(web=True)`) las añade:
-    la regla del destacado es «de TODOS los mercados del partido, el de mayor probabilidad × cuota con cuota >= 1,20
-    y probabilidad >= 55 %» (titular, 5-nov-2026; antes 2-nov: la mayor probabilidad con cuota >= 1,40). Córners, tarjetas y 1ª mitad siguen con sus líneas validadas (no se añade
+    la regla del destacado es «de TODOS los mercados del partido, la mayor probabilidad con cuota >= 1,20 y
+    probabilidad >= 75 %» (titular, 5-nov-2026; antes 2-nov: la mayor probabilidad con cuota >= 1,40). Córners, tarjetas y 1ª mitad siguen con sus líneas validadas (no se añade
     ninguna sin prueba histórica). Se descartan las opciones por debajo de `PROB_MIN_OPCION` y las ya listadas.
     """
     m = pricing.score_matrix(lam, mu, rho)
@@ -398,8 +398,8 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
 
 # --- acceso de la WEB (independiente del de la app) -----------------------------------------
 
-# Destacado por valor esperado (titular, 2026-11-05; antes: mayor probabilidad con cuota >= 1,40): cuota de referencia >= 1,20,
-# probabilidad >= 55 % y gana la mayor probabilidad × cuota (`destacado_valor`). Sin tope de cuota: viaja como null en `rango`.
+# Destacado «probabilidad máxima segura» (titular, 2026-11-05; el valor esperado del mismo día bajó el acierto visible): cuota de
+# referencia >= 1,20, probabilidad >= 75 % y gana la mayor probabilidad (`destacado_valor`). Sin tope de cuota: viaja como null en `rango`.
 RANGO_DESTACADO = (destacado_valor.CUOTA_MIN, None)
 CUOTA_REAL = ('casa', 'publicada')      # `cuota_tipo` de una cuota que paga una casa (la otra es 'justa', del modelo)
 
@@ -424,7 +424,7 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     """
     Regla de la web (decisión del titular, 2026-10-28), distinta de la de la app:
     - Destacado: de TODOS los mercados del partido, también los que sin VIP salen con candado, el de mayor
-      probabilidad × cuota (`destacado_valor`) entre los de cuota >= 1,20 y probabilidad >= 55 %. Abierto y gratis.
+      probabilidad (`destacado_valor`) entre los de cuota >= 1,20 y probabilidad >= 75 %. Abierto y gratis.
     - Gratis: el destacado y los siguientes de mayor probabilidad que pasan ese filtro hasta sumar `GRATIS_WEB`;
       si el filtro no da para tanto, se completa con los más probables.
     - El resto sigue con candado (solo categoría) y los picks sellados ya abiertos se conservan.
@@ -447,7 +447,7 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     filas_out, marcadores_out = aplicar_acceso(filas, marcadores, {**abiertas, **{k: v for k, v in gratis.items() if k not in abiertas}}, plus)
     destacado = None
     if ganador:
-        destacado = dict(efectivas[ganador['id']], destacado=True, locked=False, score_destacado=ganador['score_destacado'])
+        destacado = dict(efectivas[ganador['id']], destacado=True, locked=False)
         pick = abiertas.get(destacado['id'])
         if pick and pick.get('pick_key'):
             destacado['pick_key'] = pick['pick_key']

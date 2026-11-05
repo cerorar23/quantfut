@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredSportMarket, bestByValue, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=destacado-valor-20261105';
+import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=destacado-segura-20261105';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -104,7 +104,7 @@ export function createHubViews(ctx) {
   const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.model?'Cuota del modelo':m.house?'Cuota de la casa':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
 
   // Pronóstico de la tarjeta de fútbol: el destacado del partido, el mismo que enseña su ficha (`mercados.destacado`, regla del
-  // servidor: de TODOS los mercados del partido, el de mayor probabilidad × cuota, con cuota >= 1,20 y probabilidad >= 55 %). Mientras se consulta no se enseña el pick sellado, para que la
+  // servidor: de TODOS los mercados del partido, la mayor probabilidad con cuota >= 1,20 y probabilidad >= 75 %). Mientras se consulta no se enseña el pick sellado, para que la
   // tarjeta no cambie de selección al llegar; si la consulta falla o el partido no tiene destacado, queda el pick sellado.
   function destacadoOf(event) {
     if(event.sport!=='futbol'||event.resolved||!ctx.ensureMatch)return null;
@@ -155,9 +155,9 @@ export function createHubViews(ctx) {
     return `<ul class="win-pk-stats" aria-label="Resumen del día">${tile('Publicados',source.home.status==='ready'||published.length?published.length:'—','pronósticos del día')}${tile('Próximos',source.home.status==='ready'||published.length?upcoming:'—','aún sin empezar')}${tile('Con Plus',plus,'análisis reservados')}${tile('Aciertos',resolved.length?`${wins}/${resolved.length}`:'—','últimos resueltos')}</ul>`;
   }
 
-  // Destacado del día: la regla de la web (`destacado_valor`: cuota >= 1,20, probabilidad >= 55 %, gana probabilidad × cuota) aplicada solo
+  // Destacado del día: la regla de la web (`destacado_valor`: cuota >= 1,20, probabilidad >= 75 %, gana la mayor probabilidad) aplicada solo
   // a los pronósticos ya publicados y abiertos. No genera nada: elige entre lo que envía el servidor.
-  const featuredPick=picks=>bestByValue(picks.filter(p=>p&&p.locked!==true&&p.chain_sha256),p=>p.prob,p=>p.ref_price);
+  const featuredPick=picks=>bestBySafety(picks.filter(p=>p&&p.locked!==true&&p.chain_sha256),p=>p.prob,p=>p.ref_price);
 
   function featuredCard(onDay,source,date) {
     if(source.home.status!=='ready')return '';

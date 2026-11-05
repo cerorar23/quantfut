@@ -151,7 +151,7 @@ void main() {
     expect(ms[1].player, isNull);
   });
 
-  group('destacado de tenis por valor esperado', () {
+  group('destacado de tenis: probabilidad máxima segura', () {
     Map<String, dynamic> match([Map<String, dynamic>? extra]) => {
       'id': '1',
       'sport': 'tenis',
@@ -161,13 +161,15 @@ void main() {
       'seal': 'abc',
       'markets': [
         {'id': 'alto', 'label': 'G', 'selection': 'A', 'probability': .80},
-        {'id': 'medio', 'label': 'G', 'selection': 'B', 'probability': .60},
+        {'id': 'medio', 'label': 'G', 'selection': 'B', 'probability': .78},
         {'id': 'corto', 'label': 'G', 'selection': 'C', 'probability': .95},
       ],
       ...?extra,
     };
-    SportEvent read(Map<String, dynamic> e) =>
-        tennisEvents({'state': 'ok', 'events': [e]}).single;
+    SportEvent read(Map<String, dynamic> e) => tennisEvents({
+      'state': 'ok',
+      'events': [e],
+    }).single;
 
     test('sin campo del servidor se aplica la regla con la cuota del modelo', () {
       // .95 paga 1,05 (< 1,20): la mayor probabilidad que aún paga 1,20 es .80
@@ -175,15 +177,31 @@ void main() {
     });
 
     test('el destacado del servidor manda aunque otro sea más probable', () {
-      final e = read(match({'destacado': {'id': 'medio', 'score_destacado': 1.0}}));
+      final e = read(
+        match({
+          'destacado': {'id': 'medio', 'score_destacado': 1.0},
+        }),
+      );
       expect(e.serverFeatured, isTrue);
       expect(featuredMarket(e)?.id, 'medio');
     });
 
-    test('el servidor dice que no hay destacado, o apunta a un mercado ausente', () {
-      expect(featuredMarket(read(match({'destacado': null}))), isNull);
-      expect(featuredMarket(read(match({'destacado': {'id': 'no-existe'}}))), isNull);
-    });
+    test(
+      'el servidor dice que no hay destacado, o apunta a un mercado ausente',
+      () {
+        expect(featuredMarket(read(match({'destacado': null}))), isNull);
+        expect(
+          featuredMarket(
+            read(
+              match({
+                'destacado': {'id': 'no-existe'},
+              }),
+            ),
+          ),
+          isNull,
+        );
+      },
+    );
   });
 
   test('tenis exige estado ok/partial, sello y probabilidad', () {
@@ -233,11 +251,19 @@ void main() {
     expect(nba.events, isEmpty);
     expect(tennis.ready, isTrue);
     expect(tennis.events, isNotEmpty);
-    expect(api.calls, [...List.filled(7, '/nba/v1/cartelera'), '/web/deportes/tenis']);
+    expect(api.calls, [
+      ...List.filled(7, '/nba/v1/cartelera'),
+      '/web/deportes/tenis',
+    ]);
   });
 
   group('NBA v2 (/nba/v1/cartelera)', () {
-    JsonMap game(int id, {JsonMap? pick, JsonMap? result, String start = '2026-11-02T00:00:00Z'}) => {
+    JsonMap game(
+      int id, {
+      JsonMap? pick,
+      JsonMap? result,
+      String start = '2026-11-02T00:00:00Z',
+    }) => {
       'id': id,
       'fecha': '2026-11-01',
       'local': {'codigo': 'BOS', 'nombre': 'Boston Celtics'},
@@ -247,13 +273,25 @@ void main() {
       'resultado': result,
       'pronostico': pick,
     };
-    JsonMap pick(String sealed, [double p = .7]) => {'hash': 'abc', 'p_local': p, 'sellado_en': sealed};
+    JsonMap pick(String sealed, [double p = .7]) => {
+      'hash': 'abc',
+      'p_local': p,
+      'sellado_en': sealed,
+    };
 
     test('los partidos sin pronóstico salen con mercados vacíos y su hora de sellado; el resultado se evalúa', () {
       final events = nbaV2Events([
         game(1),
-        game(2, pick: pick('2026-11-01T23:00:00Z'), result: {'local': 100.0, 'visitante': 90.0}),
-        game(3, pick: pick('2026-11-01T23:00:00Z', .3), result: {'local': 100.0, 'visitante': 90.0}),
+        game(
+          2,
+          pick: pick('2026-11-01T23:00:00Z'),
+          result: {'local': 100.0, 'visitante': 90.0},
+        ),
+        game(
+          3,
+          pick: pick('2026-11-01T23:00:00Z', .3),
+          result: {'local': 100.0, 'visitante': 90.0},
+        ),
       ]);
       expect(events.map((e) => e.id), ['1', '2', '3']);
       final pending = events.first, win = events[1], loss = events.last;
@@ -272,23 +310,54 @@ void main() {
       expect(loss.markets.single.outcome, 'loss');
     });
 
-    test('un sello posterior al inicio es revisión: no cuenta ni se evalúa', () {
-      final e = nbaV2Events([
-        game(1, pick: pick('2026-11-02T00:30:00Z'), result: {'local': 100.0, 'visitante': 90.0}),
-      ]).single;
-      expect(e.markets.single.eligible, isFalse);
-      expect(e.markets.single.outcome, isNull);
-      expect(featuredMarket(e), isNull);
-    });
+    test(
+      'un sello posterior al inicio es revisión: no cuenta ni se evalúa',
+      () {
+        final e = nbaV2Events([
+          game(
+            1,
+            pick: pick('2026-11-02T00:30:00Z'),
+            result: {'local': 100.0, 'visitante': 90.0},
+          ),
+        ]).single;
+        expect(e.markets.single.eligible, isFalse);
+        expect(e.markets.single.outcome, isNull);
+        expect(featuredMarket(e), isNull);
+      },
+    );
 
     test('un pronóstico mal formado se trata como ausente y un partido inválido se descarta', () {
-      expect(nbaV2Events([game(1, pick: pick('2026-11-01T23:00:00Z', 1.4))]).single.markets, isEmpty);
       expect(
-        nbaV2Events([game(1, pick: {'hash': '', 'p_local': .6, 'sellado_en': '2026-11-01T23:00:00Z'})]).single.markets,
+        nbaV2Events([game(1, pick: pick('2026-11-01T23:00:00Z', 1.4))])
+            .single
+            .markets,
         isEmpty,
       );
-      expect(nbaV2Events([{...game(1, pick: pick('2026-11-01T23:00:00Z')), 'id': 'x'}]), isEmpty);
-      expect(nbaV2Events([{...game(1), 'inicio_utc': null}]), isEmpty);
+      expect(
+        nbaV2Events([
+          game(
+            1,
+            pick: {
+              'hash': '',
+              'p_local': .6,
+              'sellado_en': '2026-11-01T23:00:00Z',
+            },
+          ),
+        ]).single.markets,
+        isEmpty,
+      );
+      expect(
+        nbaV2Events([
+          {...game(1, pick: pick('2026-11-01T23:00:00Z')), 'id': 'x'},
+        ]),
+        isEmpty,
+      );
+      expect(
+        nbaV2Events([
+          {...game(1), 'inicio_utc': null},
+        ]),
+        isEmpty,
+      );
     });
 
     test('un día que falla no tumba los demás; si fallan todos el feed no está listo', () async {
@@ -296,7 +365,9 @@ void main() {
       final api = _Api({
         '/nba/v1/cartelera': () {
           if (n++ == 0) throw Exception('red');
-          return {'partidos': [game(2, pick: pick('2026-11-01T23:00:00Z'))]};
+          return {
+            'partidos': [game(2, pick: pick('2026-11-01T23:00:00Z'))],
+          };
         },
       });
       final feed = await loadSport(api, SportKind.nba);
@@ -304,7 +375,9 @@ void main() {
       expect(feed.events.map((e) => e.id), ['2']);
       expect(feed.events.single.markets, isNotEmpty);
       expect(api.calls, List.filled(7, '/nba/v1/cartelera'));
-      final broken = _Api({'/nba/v1/cartelera': () => {'otro': 1}});
+      final broken = _Api({
+        '/nba/v1/cartelera': () => {'otro': 1},
+      });
       expect((await loadSport(broken, SportKind.nba)).ready, isFalse);
     });
   });
@@ -349,7 +422,14 @@ void main() {
   test('NBA: un jugador que no es texto no tumba el feed; el resto se lee', () {
     final events = nbaEvents(
       _nba([
-        {..._row, 'market': 'player_points', 'market_label': 'Puntos', 'player': 123, 'player_id': 'p1', 'line': 20.5},
+        {
+          ..._row,
+          'market': 'player_points',
+          'market_label': 'Puntos',
+          'player': 123,
+          'player_id': 'p1',
+          'line': 20.5,
+        },
         _row,
       ]),
     );

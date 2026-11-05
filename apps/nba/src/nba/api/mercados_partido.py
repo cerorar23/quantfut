@@ -109,7 +109,7 @@ def construir(partido_id, local, visitante, sellos, cuotas):
 
 
 def destacar(salida):
-    """Pronóstico destacado del partido (valor esperado, ver `destacado_valor`). Con cuotas de casa solo cuentan esas; si no hay
+    """Pronóstico destacado del partido (probabilidad máxima segura, ver `destacado_valor`). Con cuotas de casa solo cuentan esas; si no hay
     ninguna, la cuota de referencia es la del modelo, 1 ÷ probabilidad."""
     mercados = salida["markets"]
     con_casa = [m for m in mercados if m["price"] is not None]

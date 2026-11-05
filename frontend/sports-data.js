@@ -97,7 +97,7 @@ export function marketQuote(m) {
     : { price: m?.probability > 0 ? 1 / m.probability : null, source: 'Del modelo', model: true };
 }
 
-// Destacado de NBA y tenis: lo elige el SERVIDOR (valor esperado; `destacado` del evento, ver `destacado_valor.py`). Aquí solo se localiza
+// Destacado de NBA y tenis: lo elige el SERVIDOR (probabilidad máxima segura; `destacado` del evento, ver `destacado_valor.py`). Aquí solo se localiza
 // ese mercado entre los publicados; si es una revisión posterior al inicio no cuenta como pronóstico previo y no se sustituye por otro.
 // Solo si el servidor no mandó el campo (fuente antigua o mercados aún sin cargar) se aplica la misma regla a lo que hay en pantalla.
 export function featuredSportMarket(event) {
@@ -107,7 +107,7 @@ export function featuredSportMarket(event) {
     return id == null ? null : markets.find(m => m.id === id) || null;
   }
   const quoted = event.sport === 'nba' && event.v2 ? markets.filter(m => !marketQuote(m).model) : [];
-  return quoted.length ? bestByValue(quoted, m => m.probability, m => m.price) : featuredModelMarket(markets);
+  return quoted.length ? bestBySafety(quoted, m => m.probability, m => m.price) : featuredModelMarket(markets);
 }
 
 export async function loadNbaMarkets(event, fetcher = fetch) {
@@ -269,23 +269,22 @@ export async function loadImages(fetcher=fetch) {
   finally {clearTimeout(timer);}
 }
 
-// Regla del destacado por valor esperado (titular, 5-nov-2026; la misma del servidor, `destacado_valor.py`): cuota de referencia >= 1,20 y
-// probabilidad >= 55 %; gana la mayor probabilidad × cuota y, en empate, la mayor probabilidad. Sin candidatos: null.
-export const FEATURED_MIN_PRICE = 1.2, FEATURED_MIN_PROB = .55;
+// Regla del destacado «probabilidad máxima segura» (titular, 5-nov-2026; la misma del servidor, `destacado_valor.py`): cuota de referencia
+// >= 1,20 y probabilidad >= 75 %; gana la MAYOR PROBABILIDAD (la cuota no multiplica nada) y, en empate, la mayor cuota. Sin candidatos: null.
+export const FEATURED_MIN_PRICE = 1.2, FEATURED_MIN_PROB = .75;
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
-export function bestByValue(items, probOf, priceOf) {
-  let best = null, bestScore = 0, bestProb = 0;
+export function bestBySafety(items, probOf, priceOf) {
+  let best = null, bestProb = 0, bestPrice = 0;
   for (const item of Array.isArray(items) ? items : []) {
     if (!item) continue;
     const p = probOf(item), c = priceOf(item);
     if (!isNum(p) || !isNum(c) || c < FEATURED_MIN_PRICE || p < FEATURED_MIN_PROB) continue;
-    const score = Math.round(p * c * 1e9) / 1e9;     // sin el redondeo, el ruido de coma flotante decidiría los empates
-    if (!best || score > bestScore || (score === bestScore && p > bestProb)) { best = item; bestScore = score; bestProb = p; }
+    if (!best || p > bestProb || (p === bestProb && c > bestPrice)) { best = item; bestProb = p; bestPrice = c; }
   }
   return best;
 }
 
 // Sin cuota de casa la de referencia es la del modelo (1 ÷ probabilidad): ninguna casa publica estas cuotas y no se inventa otra.
 export function featuredModelMarket(markets) {
-  return bestByValue(markets, m => m.probability, m => probability(m.probability) ? 1 / m.probability : NaN);
+  return bestBySafety(markets, m => m.probability, m => probability(m.probability) ? 1 / m.probability : NaN);
 }

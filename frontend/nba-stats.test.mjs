@@ -123,14 +123,14 @@ test('un partido v2 ya jugado sin sello no inventa un pronóstico a posteriori',
 test('la ficha muestra el destacado de jugadores, sus mercados y proyecciones sin la tarjeta de sellado', () => {
   const start = new Date().toISOString();
   const market = { id: 'player-1', market: 'player_points', player: 'Jugador <b>', player_id: 10, label: 'Puntos del jugador', selection: 'Jugador <b> · Más de 20.5',
-    probability: .702, price: 1.44, book: 'bovada', line: 20.5, conditional: true, sealed_at: new Date(Date.now() - 3600000).toISOString(), eligible: true, revised: false, outcome: 'loss' };
+    probability: .802, price: 1.44, book: 'bovada', line: 20.5, conditional: true, sealed_at: new Date(Date.now() - 3600000).toISOString(), eligible: true, revised: false, outcome: 'loss' };
   const event = { id: 4, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, league: 'NBA', status: 'scheduled', markets: [], seal: 'abc', sealed_at: market.sealed_at };
   const entry = { status: 'ready', markets: [market], projections: [{ player: 'Jugador <b>', team: 'Boston Celtics', market: 'rebotes', estimate: 7.5, p10: 3, p90: 11, p_juega: .95 }] };
   const html = v2Window(event, { status: 'ready', data: stats }, entry).view('resumen');
   assert.ok(html.includes('PRONÓSTICO DESTACADO') && html.includes('Más de 20.5') && html.includes('Proyecciones de jugadores') && html.includes('Rebotes'));
   assert.ok(html.includes('Jugador &lt;b&gt;') && !html.includes('Jugador <b>'));
   const table = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
-  assert.ok(table.includes('70.2%') && table.includes('1.44') && table.includes('Bovada') && table.includes('Falló'));
+  assert.ok(table.includes('80.2%') && table.includes('1.44') && table.includes('Bovada') && table.includes('Falló'));
   assert.ok(table.includes('Pronóstico destacado') && !table.includes('>Destacado</'));
   assert.ok(html.includes('Cuota de la casa') && !html.includes('>1.42<'));
   assert.ok(!html.includes('win-seal') && !html.includes('CUÁNDO SE AGREGA EL PRONÓSTICO'));
