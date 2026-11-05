@@ -79,8 +79,8 @@ test('sin estadísticas la ventana lo dice y no inventa cifras', () => {
   assert.ok(windowFor(null, {}, 'error')('clasificacion').includes('Todavía no hay estadísticas'));
 });
 
-function v2Window(event, entry, marketsEntry) {
-  const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false, winFormScope: 'all' };
+function v2Window(event, entry, marketsEntry, stateExtra = {}) {
+  const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false, winFormScope: 'all', ...stateExtra };
   const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const pass = v => String(v);
   const asked = [];
@@ -139,4 +139,32 @@ test('la ficha muestra el destacado de jugadores, sus mercados y proyecciones si
     assert.ok(pending.includes(status === 'loading' ? 'Cargando mercados' : 'No se pudieron cargar los mercados'));
     assert.ok(!pending.includes('Sin pronóstico destacado') && !pending.includes('Ningún mercado'));
   }
+});
+
+test('Partido filtra desde cuota 1,20 y ordena por probabilidad sin limitar el destacado', () => {
+  const start = new Date().toISOString(), sealed_at = new Date(Date.now() - 3600000).toISOString();
+  const event = { id: 4, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, league: 'NBA', status: 'scheduled', markets: [], seal: 'abc', sealed_at };
+  const m = (id, probability, price) => ({ id, market: 'handicap', label: 'Hándicap', selection: id, probability, price, book: 'fanduel', sealed_at });
+  const entry = { status: 'ready', markets: [m('demasiado-baja', .995, 1.001), m('antes-de-redondear', .98, 1.199), m('probabilidad-alta', .83, 1.2), m('probabilidad-menor', .75, 1.3), m('destacado-sin-tope', .7, 5.5)], projections: [] };
+  const html = v2Window(event, { status: 'ready', data: stats }, entry).view('resumen');
+  const table = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
+  assert.ok(!table.includes('demasiado-baja') && !table.includes('antes-de-redondear'));
+  assert.ok(table.indexOf('probabilidad-alta') < table.indexOf('probabilidad-menor'));
+  assert.ok(html.includes('5.50') && html.includes('Cuotas ≥ 1,20') && html.includes('Todas las cuotas'));
+  const all = v2Window(event, { status: 'ready', data: stats }, entry, { winAllOdds: true }).view('resumen');
+  assert.ok(all.includes('demasiado-baja') && all.includes('antes-de-redondear'));
+});
+
+test('los mercados de jugadores agrupan líneas, usan el id oficial de foto y permiten buscar', () => {
+  const start = new Date().toISOString(), sealed_at = new Date(Date.now() - 3600000).toISOString();
+  const event = { id: 4, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, league: 'NBA', status: 'scheduled', markets: [], seal: 'abc', sealed_at };
+  const m = (id, player, player_id, photo_id, probability) => ({ id, player, player_id, photo_id, probability, market: 'player_points', label: 'Puntos', selection: `Más de ${id} puntos`, price: 1.8, book: 'fanduel', sealed_at, estimate: 25, conditional: true });
+  const entry = { status: 'ready', markets: [m(1, 'LeBron James', 10, 2544, .75), m(2, 'LeBron James', 10, 2544, .7), m(3, 'LeBron James', 10, 2544, .68), m(4, 'LeBron James', 10, 2544, .66), m(5, 'Otro Jugador', 11, 201939, .65)], projections: [] };
+  const extra = { winEvent: 'nba:4', winLastEvent: 'nba:4', winSportFam: 'Puntos' };
+  const html = v2Window(event, { status: 'ready', data: stats }, entry, extra).view('resumen');
+  assert.equal(html.split('<h4>LeBron James</h4>').length - 1, 1);
+  assert.ok(html.includes('/web/imagenes/jugadores/nba/2544.png') && !html.includes('/web/imagenes/jugadores/nba/10.png'));
+  assert.ok(html.includes('Ver 1 línea más') && html.includes('Más de 4 puntos') && html.includes('Buscar jugador o equipo'));
+  const search = v2Window(event, { status: 'ready', data: stats }, entry, { ...extra, winPlayerSearch: 'lébron' }).view('resumen');
+  assert.ok(search.includes('<h4>LeBron James</h4>') && !search.includes('<h4>Otro Jugador</h4>'));
 });

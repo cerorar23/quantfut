@@ -152,6 +152,19 @@ def consultar(db, fila):
         "AND mercado = ANY(%s) AND recibido_en <= %s ORDER BY recibido_en DESC, cuota_id DESC",
         (pid, list(MERCADOS), max(s[3] for s in sellos))).fetchall()
     salida = construir(pid, local, visitante, sellos, cuotas)
+    jugadores = sorted({p['player_id'] for p in salida['projections']})
+    fotos = {}
+    if jugadores:
+        identidades = db.execute(
+            "SELECT canonica_id, id_en_fuente FROM nba.entidad WHERE tipo = 'jugador' "
+            "AND fuente = 'nba_oficial' AND canonica_id = ANY(%s)", (jugadores,)).fetchall()
+        for canonico, oficial in identidades:
+            if oficial.isdecimal() and 0 < int(oficial) < 100_000_000:
+                fotos.setdefault(canonico, set()).add(int(oficial))
+    for row in [*salida['markets'], *salida['projections']]:
+        ids = fotos.get(row['player_id'], set())
+        # El id interno de la base nunca se usa como id del CDN de NBA.
+        row['photo_id'] = next(iter(ids)) if len(ids) == 1 else None
     resultados = db.execute(
         "SELECT DISTINCT ON (d.entidad_id, m.nombre) d.entidad_id, m.nombre, d.valor "
         "FROM nba.dato d JOIN nba.metrica m USING (metrica_id) JOIN nba.fuente f ON f.fuente = d.fuente "
