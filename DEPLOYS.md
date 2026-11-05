@@ -33,6 +33,17 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-05 12:22 CDMX / 18:22 UTC · Destacado «probabilidad máxima segura» (≥ 75 %) en API, `nba-api` y worker · PR #265, `main` `53b1e5ed`
+
+- Orden expresa del titular: commit rápido y despliegue. El valor esperado (PR #262) se abandona: el destacado es de retención y el objetivo es ≥ 80 % de aciertos visibles. Regla: cuota de referencia ≥ 1,20 y probabilidad ≥ 75 %; gana la mayor probabilidad (la cuota no multiplica; `score_destacado` desaparece); empate → mayor cuota; sin candidatos → `null`. El punto 4 del encargo decía «pagando 1.10»: se aplicó 1,20 (constante `CUOTA_MIN`); ver la entrada de calibración de `harness/progreso.md` (con 1,15 el acierto medido sube de 80 % a 85 %).
+- Base comprobada: los 13 archivos de API/frontend/NBA/worker que se sustituyeron eran idénticos (hash sin CR) a los del despliegue anterior `00bb1d92`. Capas finas sobre las imágenes en ejecución. PR con las 8 comprobaciones en verde.
+- Imágenes: **`quantfut-api-segura:53b1e5ed`** (sobre `quantfut-api-destacado:00bb1d92`; `destacado_valor.py`, `partido_mercados.py` y 7 archivos de `frontend/`), **`nba-api:segura-53b1e5ed`** (sobre `nba-api:destacado-00bb1d92`; `destacado_valor.py` y `mercados_partido.py`) y **`quantfut-worker-segura:53b1e5ed`** (sobre `quantfut-worker-destacado:00bb1d92`; `destacado_valor.py` y `partido_mercados.py`).
+- Ensayos: NBA con la base real de lectura (14 partidos, destacado igual al recalculado); worker en contenedor aparte con la base real en SOLO LECTURA (el mismo recorrido que `congelar` en 5 partidos próximos: destacado = la mayor probabilidad entre los que cumplen el filtro). Exclusión con `deploy.lock`; el worker se recreó tras esperar un hueco sin jobs `python -m qf.*`; crontab idéntico.
+- Verificado: `/health` 200; hashes 7 + 2 + 2 iguales a `main`; tenis 145 eventos, 111 con destacado, todas las probabilidades entre 75,3 % y 83,3 % y ninguna con `score_destacado`; el cron del worker retomó (ticks de las 18:25 UTC). Lo ya congelado en `web_destacado` no cambia: los partidos sellados hasta las 18:23 UTC conservan su destacado antiguo.
+- Respaldos privados: `~/quantfut/releases/segura-53b1e5ed/backup/` y `~/quantfut/releases/worker-segura-53b1e5ed/backup/` (compose, inspecciones y entorno, modo 600). Contenedor anterior de NBA parado como `nba-api-antes-segura-53b1e5ed`. **Vuelta atrás:** API: `cp <release>/backup/docker-compose.yml ~/quantfut/docker-compose.yml` y `docker compose -f ~/quantfut/docker-compose.yml up -d --no-deps --no-build --force-recreate api`; NBA: `docker rm -f nba-api && docker rename nba-api-antes-segura-53b1e5ed nba-api && docker update --restart unless-stopped nba-api && docker start nba-api`; worker: el mismo procedimiento con el compose de `worker-segura-53b1e5ed/backup/` y `--force-recreate worker` (las imágenes `…destacado:00bb1d92` siguen en el servidor).
+- La app Flutter (`apps/mobile`) lleva la misma regla y el texto nuevo en 6 idiomas, pero NO se publica desde aquí: falta subir el código de versión y compilar el AAB.
+- `docker-compose.yml` del repositorio actualizado a las imágenes `segura-53b1e5ed` de API y worker.
+
 ### 2026-11-05 11:23 CDMX / 17:23 UTC · Worker con la regla nueva del destacado (congelado de fútbol) · `main` `00bb1d92` · VPS: `quantfut-worker-1`
 
 - Orden expresa del titular, a continuación del despliegue del API. Sin esto los sellos nuevos de fútbol seguían congelando el destacado con la regla vieja (cuota ≥ 1,40).
