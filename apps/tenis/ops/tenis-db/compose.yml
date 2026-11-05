@@ -1,0 +1,33 @@
+# Contenedor aislado de la base de tenis (plan técnico tenis, §A.1 y §H.4).
+# No se publica ningún puerto al exterior: solo es accesible desde la red interna de este proyecto.
+# Escrito en S1 y NO desplegado ni probado contra Docker real (ver apps/tenis/db/LEEME.md).
+name: tenis-db
+
+services:
+  tenis-db:
+    image: postgres:16
+    container_name: tenis-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tenis
+      POSTGRES_USER: tenis_admin
+      # La contraseña llega del entorno del despliegue (fichero .env fuera del repositorio), nunca escrita aquí.
+      POSTGRES_PASSWORD: ${TENIS_DB_PASSWORD:?definir TENIS_DB_PASSWORD en el entorno del despliegue}
+    volumes:
+      - tenis-db-datos:/var/lib/postgresql/data
+    networks:
+      - tenis-interna
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tenis_admin -d tenis"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+networks:
+  tenis-interna:
+    driver: bridge
+    internal: true
+
+volumes:
+  tenis-db-datos:
+    name: tenis-db-datos

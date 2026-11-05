@@ -7692,3 +7692,13 @@ Hechos nuevos: el plan de API-Tennis venció el 1-nov y los resultados en vivo l
 Arnés completo en el worktree `tenis/rediseno-f1` (código de `origin/main` sin cambios; solo se añaden documentos y scripts de medición): 1.758 aprobadas, 122 omitidas, 0 fallos. Un primer intento dio 10 fallos, todos `PoolTimeout` por autenticación de Postgres: el worktree no tiene el `.env` (ignorado por git) y las pruebas caen a la configuración por defecto. Con el `.env` del repo principal cargado solo en memoria las mismas suites pasan (69/69). Es falla de entorno, no de código.
 
 Entorno: el shell no deja a Python crear temporales fuera de la carpeta principal del repo (el script `test_local_windows.ps1` fija el temporal dentro del worktree y por eso falla aquí); se corrió el mismo bootstrap de pytest con `--basetemp` y TEMP en `data/tennis/rediseno_20261104/`. Para que el script encuentre las dependencias, el worktree tiene una unión `.venv` hacia el entorno del repo principal (ignorada por git).
+
+## 2026-11-05 · Tenis: Sprint 1 (base de datos y contratos)
+
+Decisión clave: la evidencia de tenis vive en un esquema propio solo-anexar con una única puerta de lectura (`*_a_las(corte)`), igual que el principio de NBA pero con modelo de datos de tenis (ediciones por semana, resultado como aserción, orden canónico de jugadores, nunca ganador primero).
+
+Qué corrigió la revisión (no lo había visto el subagente): la primera lectura PIT llamaba por fila a una función que recorría las ediciones y crecía más que linealmente (8.000 partidos 13,7 s); a ~0,5 M era inutilizable. Se reescribió por conjunto, 450 veces más rápida con 8.000 partidos, con regresión frente a la definición antigua. Por qué importa: el motor y la evaluación leen con esta función; un lector lento habría hecho inviable el walk-forward.
+
+Tensión de diseño descubierta y NO resuelta (decisión para S2): la regla RETRO del plan oculta todo dato retro hasta cerrar la semana del torneo, pero la fatiga intratorneo y el rating ronda a ronda necesitan las rondas anteriores del mismo torneo. Propuesta: instante `visible_desde` por aserción retro (hora real de SofaScore; para TML, semana + desfase por ronda).
+
+Límites declarados: roles sin probar en local (sin permiso para crear roles), contenedor y copias solo con `bash -n`, CI definido pero sin ejecutar.

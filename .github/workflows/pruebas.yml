@@ -86,3 +86,28 @@ jobs:
         run: python -m pytest apps/tennis/tests -q -p no:cacheprovider
         env:
           PYTHONPATH: apps/tennis
+
+  tenis_v2:
+    # Rediseño del motor de tenis (apps/tenis): base `tenis` con inmutabilidad, lectura PIT, sellado y contratos.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: tenis-ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/tenis/pyproject.toml
+      - run: pip install -e 'apps/tenis[test]' pandas pyarrow
+      - name: Pruebas del motor de tenis v2 (contratos, recibos y base de datos)
+        run: python -m pytest apps/tenis/tests -q -p no:cacheprovider
+        env:
+          PYTHONPATH: apps/tenis/src
+          QF_TEST_PG_DSN: postgresql://postgres:tenis-ci@localhost:5432/postgres

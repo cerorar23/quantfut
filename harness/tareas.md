@@ -3768,3 +3768,15 @@ Plan: `docs/tenis_plan_tecnico_20261105.md` (secciones A–N). Sin código del m
 - [ ] Decisiones D1–D12 del plan (§M.1) y «Sí, Sprint 0» del titular.
 - [x] S0 (5-nov): arnés completo en verde (1.758 aprobadas, 122 omitidas, 0 fallos) y commit de las Fases 1 y 2 en `tenis/rediseno-f1`.
 - [ ] S1 contratos y base; S2 ingesta e identidad; S3 núcleo analítico (P y R); S4 conjunta y mercados; S5 PropLine como referencia; S6 sellado y ruta beta `/tenis/v2`; S7 micro-eventos (solo evaluados).
+
+## Tenis: rediseño — Sprint 1 base de datos y contratos (2026-11-05)
+
+Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin datos de producción, sin despliegue.
+
+- [x] Esquema `tenis`/`tenis_op` (7 migraciones), inmutabilidad por sentencia en toda la evidencia, lectura punto en el tiempo `*_a_las` con regla RETRO, sellado con cadena de hashes y candado, roles, scripts del contenedor `tenis-db` (solo sintaxis).
+- [x] Contratos Pydantic estrictos (entrada y salida, física del marcador, validar antes de sellar y de servir) y almacén de originales por contenido.
+- [x] Job de CI `tenis_v2` con Postgres (definido, **sin ejecutar**: no hay push ni PR todavía).
+- [x] Revisión mía: lectura PIT por fila no escalaba (2.000 partidos 1,9 s; 8.000 partidos 13,7 s) → reescrita por conjunto (8.000 partidos 0,03 s; 50.000 partidos 0,46 s) con prueba de regresión frente a la fórmula antigua; `lunes_semana` debe coincidir con `fecha_fin` (restricción nueva).
+- [ ] Roles sin probar (el usuario local no puede crear roles): se ejercitarán en CI y en el ensayo de S6.
+- [ ] Decisión abierta antes de S2: la regla RETRO oculta los resultados de rondas anteriores del mismo torneo, que la fatiga intratorneo necesita (propuesta: `visible_desde` por aserción). Ver `apps/tenis/db/LEEME.md`.
+- [ ] Pendiente para S2/S3: tabla de alias de torneo, redondeo a 6 decimales antes de sellar, hándicap de juegos en los mercados del contrato, recálculo del hash en `validar_antes_de_servir`.
