@@ -6,7 +6,7 @@
 
 const MUESTRA_MIN = 50;
 const PAGINA = 30;
-const DIAS_GRAFICA = 10;
+const DIAS_GRAFICA = 7;   // «Acierto por día» y «Días en verde» miran la misma ventana: la última semana
 const RACHA_FORMA = 30;
 const DEPORTE = { futbol: 'Fútbol', nba: 'NBA', tenis: 'Tenis' };
 const DEPORTE_ICONO = { futbol: '◉', nba: '◈', tenis: '◎' };
@@ -14,7 +14,10 @@ const DEPORTE_ICONO = { futbol: '◉', nba: '◈', tenis: '◎' };
 // ------------------------------------------------------------ lógica pura
 
 const valido = r => r && ['win', 'loss'].includes(r.outcome) && Number.isFinite(Date.parse(r.start));
-const cuotaReal = r => (Number.isFinite(r.price) && r.price > 1 ? r.price : null);
+// `ref` marca una cuota de referencia recibida antes del sello pero no sellada (tenis): se enseña, nunca entra en el beneficio.
+const cuotaReal = r => (!r.ref && Number.isFinite(r.price) && r.price > 1 ? r.price : null);
+const cuotaRef = r => (r.ref && Number.isFinite(r.price) && r.price > 1 ? r.price : null);
+const casa = nombre => String(nombre ?? '').replace(/_/g, ' ').trim().replace(/^./, c => c.toUpperCase());
 const probValida = r => (Number.isFinite(r.prob) && r.prob > 0 && r.prob < 1 ? r.prob : null);
 
 // Más antiguo primero. A igualdad de hora, el orden de entrada decide (orden estable).
@@ -194,34 +197,38 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
     </section>`;
   }
 
-  function kpis(r) {
-    const { rachas: ra, beneficio: b, calibracion: c } = r;
+  function kpis(r, rows) {
+    const { rachas: ra, calibracion: c } = r;
+    // Días en verde: de los últimos días con pronósticos liquidados, en cuántos hubo más aciertos que fallos.
+    const ultimosDias = porDia(rows, dia).slice(-DIAS_GRAFICA);
+    const verdes = ultimosDias.filter(d => d.aciertos > d.fallos).length;
+    const verde = ultimosDias.length ? `<div class="cv-hist-kpi"><span>Días en verde · última semana</span><strong class="pos">▲ ${num(verdes)} de ${num(ultimosDias.length)} días</strong><small>Días con más aciertos que fallos: ${num(ultimosDias.reduce((s, d) => s + d.aciertos, 0))} ✓ frente a ${num(ultimosDias.reduce((s, d) => s + d.fallos, 0))} ✗</small></div>` : '';
     const rachaTexto = ra.actual ? `${num(ra.actual)} ✓ seguidos` : 'Último: fallo ✗';
     const cal = c ? `<div class="cv-hist-kpi"><span>Prometido frente a real</span><strong>${pct(c.prometido)} → ${pct(c.real)}</strong><small>${c.estado === 'dentro' ? 'Dentro del margen de error: lo prometido se cumple' : c.estado === 'encima' ? 'Por encima de lo prometido' : 'Por debajo de lo prometido; lo decimos igual'}</small></div>` : '';
-    const ben = b.n ? `<div class="cv-hist-kpi"><span>Beneficio · 1 u por pronóstico</span><strong class="${b.unidades >= 0 ? 'pos' : 'neg'}">${b.unidades >= 0 ? '▲' : '▼'} ${unidades(b.unidades)}</strong><small>Solo fútbol con cuota registrada: ${num(b.n)} pronósticos, cuota media ${odds(b.cuotaMedia)}</small></div>` : '';
-    return `<section class="cv-hist-kpis" aria-label="Indicadores clave"><div class="cv-hist-kpi"><span>Racha actual</span><strong>${rachaTexto}</strong><small>Mejor racha: ${num(ra.mejor)} ✓ seguidos${ra.actual ? '' : ' · la racha se corta con el último fallo'}</small></div>${cal}${ben}<div class="cv-hist-kpi"><span>Muestra</span><strong>${num(r.n)} liquidados</strong><small>${r.n < MUESTRA_MIN ? 'Aún pequeña: cada resultado pesa mucho' : 'Suficiente para ver una tendencia, no una garantía'}</small></div></section>`;
+    return `<section class="cv-hist-kpis" aria-label="Indicadores clave"><div class="cv-hist-kpi"><span>Racha actual</span><strong>${rachaTexto}</strong><small>Mejor racha: ${num(ra.mejor)} ✓ seguidos${ra.actual ? '' : ' · la racha se corta con el último fallo'}</small></div>${cal}${verde}<div class="cv-hist-kpi"><span>Muestra</span><strong>${num(r.n)} liquidados</strong><small>${r.n < MUESTRA_MIN ? 'Aún pequeña: cada resultado pesa mucho' : 'Suficiente para ver una tendencia, no una garantía'}</small></div></section>`;
   }
 
   function graficas(r, rows) {
     const dias = porDia(rows, dia);
     const deportes = porDeporte(rows);
-    const d = r.desvio, b = r.beneficio;
-    const resultado = d.n ? `Hoy: ${signo(d.diferencia)}${num(Math.abs(d.diferencia), 1)} aciertos frente a los esperados, con un margen de azar de ±${num(d.margen, 1)}, en ${num(d.n)} pronósticos.` : '';
-    const dinero = b.n ? ` Acertar lo prometido no es ganar dinero: a cuota media ${odds(b.cuotaMedia)}, el beneficio en fútbol con 1 u por pronóstico fue ${unidades(b.unidades)} en ${num(b.n)} pronósticos con cuota registrada.` : '';
+    const d = r.desvio;
     return `<section class="cv-section" aria-label="Gráficas de rendimiento"><div class="cv-section-head"><p class="eyebrow">EL RENDIMIENTO, A SIMPLE VISTA</p><h2>Lo que pasó, sin adornos</h2></div>
       <div class="cv-hist-charts">
-        <article class="cyber-card cv-hist-card cv-hist-wide"><h3>Aciertos reales frente a esperados</h3><p class="cv-hist-sub">Cada pronóstico suma lo que salió (1 si acierta, 0 si falla) menos la probabilidad con que se publicó. La franja es el margen de azar: mientras la línea esté dentro, lo ocurrido es compatible con lo prometido.</p>${desvioSvg(d)}${resultado || dinero ? `<p class="cv-hist-foot">${resultado}${dinero}</p>` : ''}</article>
+        <article class="cyber-card cv-hist-card cv-hist-wide"><h3>Aciertos reales frente a esperados</h3>${desvioSvg(d)}</article>
         <article class="cyber-card cv-hist-card"><h3>Acierto por día</h3><p class="cv-hist-sub">Verde: acertados. Magenta: fallados. Encima, el porcentaje del día.</p>${diasSvg(dias)}</article>
         <article class="cyber-card cv-hist-card"><h3>Por deporte</h3><p class="cv-hist-sub">Cada motor tiene su propia muestra: míralas por separado.</p>${deportesBloque(deportes)}${forma(rows)}</article>
       </div></section>`;
   }
 
   function cuotaCelda(row) {
+    // La cuota arriba y, justo debajo, de qué casa es. Sin cuota de casa se dice, y sale la justa del modelo (1 ÷ probabilidad).
     const real = cuotaReal(row);
-    if (real) return `<strong class="cv-hist-odds">${odds(real)}</strong><small>cuota</small>`;
+    if (real) return `<strong class="cv-hist-odds">${odds(real)}</strong><small class="cv-hist-book">${row.book ? esc(casa(row.book)) : 'Casa no registrada'}</small>`;
+    const referencia = cuotaRef(row);
+    if (referencia) return `<strong class="cv-hist-odds">${odds(referencia)}</strong><small class="cv-hist-book">${row.book ? `${esc(casa(row.book))} · ` : ''}referencia</small>`;
     const p = probValida(row);
-    if (p) return `<strong class="cv-hist-odds model">≈ ${odds(1 / p)}</strong><small>justa del modelo</small>`;
-    return '<strong class="cv-hist-odds none">—</strong><small>sin cuota</small>';
+    if (p) return `<strong class="cv-hist-odds model">≈ ${odds(1 / p)}</strong><small class="cv-hist-book">Modelo · sin casa</small>`;
+    return '<strong class="cv-hist-odds none">—</strong><small class="cv-hist-book">Sin cuota</small>';
   }
 
   function fila(row) {
@@ -260,7 +267,7 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
     const preguntas = [
       ['Si acertáis tanto, ¿ganaré dinero seguro?', `No. Acertar mucho con cuotas bajas deja poco margen: ${r.beneficio.n ? `en fútbol, ${num(r.beneficio.n)} pronósticos con 1 unidad cada uno suman ${unidades(r.beneficio.unidades)}. ` : ''}Un fallo borra varios aciertos. Por eso enseñamos la cuota de cada uno y el beneficio real, no solo el porcentaje.`],
       ['¿Qué significa «prometido frente a real»?', 'Cada pronóstico sale con una probabilidad. Si el promedio de lo prometido se parece a lo que acierta de verdad, el modelo está bien calibrado. Si no, lo verás aquí.'],
-      ['¿Por qué NBA y tenis no traen cuota de casa?', 'Porque esos motores publican probabilidades estadísticas, no cuotas de una casa. Mostramos la cuota justa del modelo, marcada con ≈, y no la usamos en ningún beneficio.'],
+      ['¿Qué significa «≈» en la cuota?', 'Cada resultado enseña su cuota y, debajo, la casa que la ofrecía. Donde no hay cuota de casa guardada (parte de NBA y tenis, cuyos motores publican probabilidades) sale la cuota justa del modelo (1 ÷ probabilidad), marcada con ≈ y con la etiqueta «Modelo».'],
       ['¿Podéis borrar o editar un resultado?', 'No. Cada pronóstico se sella antes del partido en una cadena de huellas; tocarlo la rompería. Los fallos están ahí, como los aciertos.'],
     ];
     return `<section class="cv-cta cyber-card cyber-card--green" aria-label="Acceso VIP"><div><p class="eyebrow">DE LA PRUEBA A LA DECISIÓN</p><h2>Ya viste el registro entero. ¿Quieres los pronósticos antes del partido?</h2><p>Con VIP ves todos los pronósticos de cada lote, con su probabilidad, cuota y casa de referencia, sellados antes de empezar.</p></div><button type="button" class="primary-button" data-route="planes">Ver planes VIP</button></section>
@@ -280,7 +287,7 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
       return `${cabecera}${estado(cargando ? 'Consultando resultados…' : 'Sin resultados disponibles', cargando ? 'Un momento: cargamos el historial.' : 'El historial aparece cuando los resultados están confirmados.', !cargando)}`;
     }
     const r = resumir(lista_);
-    return `${hero(r)}${kpis(r)}${graficas(r, lista_)}${lista(lista_)}${sello()}${cierre(r)}`;
+    return `${hero(r)}${kpis(r, lista_)}${graficas(r, lista_)}${lista(lista_)}${sello()}${cierre(r)}`;
   }
 
   return { historyView, PAGINA };

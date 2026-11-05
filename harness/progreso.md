@@ -7724,3 +7724,41 @@ No cambiar de mercado, ventana o métrica para que el resultado salga positivo: 
 la cadena de hashes y es publicidad engañosa. Cambiar la métrica es válido solo si la pérdida sigue a la
 vista. Base: `main` (rama `web/historial-desvio`); ids de caché subidos a
 `hist-desvio-20261105` en toda la cadena de imports. Sin desplegar ni confirmar visualmente en navegador.
+
+## 2026-11-05 — #historial: cuota con su casa en cada fila, 7 días, sin leyendas (decisión del titular)
+
+Pedido del titular: (1) cada resultado enseña la cuota y, debajo, de qué casa es, en todos los deportes;
+(2) «Acierto por día» y la tarjeta nueva miran solo los últimos 7 días (`DIAS_GRAFICA = 7`);
+(3) fuera las dos leyendas de la gráfica grande (explicación y «Hoy: +9,7 aciertos… beneficio −6,98 u»);
+(4) la tarjeta «Beneficio · 1 u por pronóstico» se sustituye por «Días en verde · última semana»
+(días con más aciertos que fallos; cuenta real, no una métrica elegida a medida).
+
+Esto sustituye el límite de la entrada anterior («el beneficio NO se esconde»): lo decide el titular.
+Lo que queda a la vista: la pregunta frecuente «¿ganaré dinero seguro?» sigue diciendo el beneficio con
+su signo, y `beneficio()` sigue calculándose y probándose (la cuota de referencia de tenis nunca entra).
+
+Casa por deporte: NBA ya viene con casa (`book` → `marketQuote`). Fútbol: `/mobile/v1/markets/history`
+no devolvía `ref_book` (las filas de Alta probabilidad salían «Casa no registrada»); ahora lo devuelve con
+`nombre_casa()` (cambio en `src/qf/api/mobile.py`, **requiere desplegar la API**). Tenis: el servidor
+publica `price: None`; sin cuota de casa sale «≈ justa del modelo · Modelo · sin casa», no se inventa casa.
+La rama `web/tenis-cuota-referencia` (c965e096) ya trae la cuota de referencia de PropLine para tenis
+(`price_book`); el frontend la entiende (`ref` + `book`) pero ese servidor no está desplegado.
+Ids de caché: `hist-casa-20261105`. Verificado en local contra producción; sin desplegar.
+
+## 2026-11-05 — Días ya jugados: pronóstico sin VIP y mercados ordenados (decisión del titular)
+
+Regla 1 — sin candado pasado el día: cuando termina el día (hora de México, UTC-6 fijo: `ventana.dia_cerrado`)
+en que se juega un partido, `GET /mobile/v1/matches/{id}` lo trata como `plus` (mercados, marcadores, picks de
+Alta probabilidad y escalera del partido, todos abiertos), con o sin suscripción. Hoy y mañana siguen igual.
+Se eligió México porque ya es el reloj del pronóstico diario (`ventana.py`); un visitante de otra zona verá
+abrirse los partidos de su noche a la medianoche de México. El cambio vale también para la app móvil (mismo
+endpoint). NBA y tenis no tienen candado en la web actual: no hubo nada que abrir. **Requiere desplegar la API.**
+La lista `alta_probabilidad.vip` de `/mobile/v1/home` no se toca (solo trae partidos por empezar).
+
+Regla 2 — orden en un partido ya liquidado (fútbol, NBA y tenis; `ordenLiquidado` en `sports-data.js`):
+acertados de mayor a menor cuota, luego lo sin resultado (devolución, anulado) y al final los fallados, también
+de mayor a menor cuota. Si el partido no tiene nada liquidado (o fue una retirada, todo «devolución») queda el
+orden por probabilidad de siempre. En NBA el texto «De mayor a menor probabilidad» cambia a «Acertados primero,
+de mayor a menor cuota». En tenis la cuota que ordena es la del modelo (no hay cuota de casa publicada).
+Verificado en local contra producción (fútbol y NBA de ayer); los candados del fútbol solo desaparecen al
+desplegar la API. Ids de caché: `hist-casa-20261105`.

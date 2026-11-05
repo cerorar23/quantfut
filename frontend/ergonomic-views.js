@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createHistorialViews } from './historial-views.js?v=hist-desvio-20261105';
-import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=destacado-segura-20261105';
+import { createHistorialViews } from './historial-views.js?v=hist-casa-20261105';
+import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=hist-casa-20261105';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -199,12 +199,17 @@ export function createHubViews(ctx) {
 
   // Historial: desde HISTORY_SINCE, solo los Destacados (fútbol, NBA y tenis) y Alta probabilidad (fútbol).
   function allResults(source) {
-    const rows=results(),row=(sport,r)=>({sport,home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,prob:r.prob,score:`${r.home_goals} – ${r.away_goals}`});
+    const rows=results(),row=(sport,r)=>({sport,home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,book:r.ref_book||null,prob:r.prob,score:`${r.home_goals} – ${r.away_goals}`});
     const items=[...(rows.items||[]),...(rows.featured||[])].map(r=>row('futbol',r));
     for(let e of source.events.filter(e=>e.sport!=='futbol')) {
       if(e.sport==='nba'&&e.v2) e=withNbaMarkets(e,ctx.ensureNbaMarkets?.(e));
       const m=featuredSportMarket(e);
-      if(m&&['win','loss'].includes(m.outcome))items.push({sport:e.sport,home:e.home,away:e.away,start:e.start,text:m.selection,outcome:m.outcome,price:m.price,prob:m.probability,score:e.score});
+      if(m&&['win','loss'].includes(m.outcome)) {
+        // La casa de la cuota va con ella: NBA la trae en `book` (nombre para mostrar vía marketQuote); en tenis, `price_book` (cuota de referencia previa al sello).
+        const quote=e.sport==='nba'&&e.v2?marketQuote(m):null,real=quote?!quote.model:Number.isFinite(m.price)&&m.price>1;
+        items.push({sport:e.sport,home:e.home,away:e.away,start:e.start,text:m.selection,outcome:m.outcome,price:real?(quote?quote.price:m.price):null,
+          book:real?(quote?quote.source:m.price_book||m.book||null):null,ref:Boolean(m.price_book),prob:m.probability,score:e.score});
+      }
     }
     return items.filter(r=>localDay(new Date(r.start))>=HISTORY_SINCE).sort((a,b)=>new Date(b.start)-new Date(a.start));
   }

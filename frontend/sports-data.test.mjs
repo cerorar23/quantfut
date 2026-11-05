@@ -258,3 +258,20 @@ test('el historial solo junta destacados (fútbol, NBA y tenis) y Alta probabili
   for (const fuera of ['vieja', 'viejo', 'winner', 'revisado', 'sin-rango']) assert.ok(!html.includes(fuera), fuera);
   for (const dentro of ['alta', 'dest', 'T1 vs T2', 'C vs D']) assert.ok(html.includes(dentro), dentro);
 });
+
+test('ordenLiquidado: acertados por cuota de mayor a menor, luego lo sin resultado y al final los fallados', async () => {
+  const { ordenLiquidado, hayLiquidado } = await import('./sports-data.js');
+  const o = { resultado: m => m.r, cuota: m => m.c, prob: m => m.p };
+  const lista = [{ id: 'f1', r: 'loss', c: 1.9, p: .5 }, { id: 'w1', r: 'win', c: 1.2, p: .8 }, { id: 'n', r: null, c: 3, p: .3 },
+    { id: 'w2', r: 'win', c: 1.8, p: .6 }, { id: 'f2', r: 'loss', c: 1.3, p: .7 }, { id: 'push', r: 'push', c: 2, p: .4 }, { id: 'w3', r: 'win', c: null, p: .9 }];
+  assert.deepEqual(ordenLiquidado(lista, o).map(m => m.id), ['w2', 'w1', 'w3', 'n', 'push', 'f1', 'f2']);
+  const ids = ordenLiquidado(lista, o).map(m => m.id);
+  assert.deepEqual(ids.slice(0, 3), ['w2', 'w1', 'w3'], 'acertados: cuota 1,8 > 1,2 > sin cuota');
+  assert.deepEqual(ids.slice(-2), ['f1', 'f2'], 'fallados al final, también de mayor a menor cuota (1,9 > 1,3)');
+  assert.deepEqual(ids.slice(3, 5).sort(), ['n', 'push'], 'sin resultado entre unos y otros');
+  const sinJugar = [{ id: 'a', r: null, c: 1.5, p: .6 }, { id: 'b', r: null, c: 2, p: .9 }];
+  assert.equal(ordenLiquidado(sinJugar, o), sinJugar, 'sin nada liquidado se deja el orden recibido');
+  assert.equal(hayLiquidado(sinJugar, o.resultado), false);
+  assert.equal(hayLiquidado(lista, o.resultado), true);
+  assert.equal(lista[0].id, 'f1', 'no muta la lista original');
+});

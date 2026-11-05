@@ -97,6 +97,17 @@ export function marketQuote(m) {
     : { price: m?.probability > 0 ? 1 / m.probability : null, source: 'Del modelo', model: true };
 }
 
+// Orden de los mercados de un partido ya jugado (titular, 2026-11-05; fútbol, NBA y tenis): primero los acertados, de la cuota más alta
+// a la más baja; después lo que no tiene resultado (devoluciones, anulados) y al final los fallados, también de mayor a menor cuota.
+// Si el partido aún no tiene ningún mercado liquidado, la lista queda como vino (por probabilidad).
+export const hayLiquidado = (lista, resultado) => lista.some(x => ['win', 'loss'].includes(resultado(x)));
+export function ordenLiquidado(lista, { resultado, cuota, prob }) {
+  if (!hayLiquidado(lista, resultado)) return lista;
+  const rango = x => ({ win: 0, loss: 2 })[resultado(x)] ?? 1;
+  const precio = x => { const c = cuota(x); return Number.isFinite(c) ? c : -Infinity; };
+  return [...lista].sort((a, b) => rango(a) - rango(b) || precio(b) - precio(a) || (prob(b) || 0) - (prob(a) || 0));
+}
+
 // Destacado de NBA y tenis: lo elige el SERVIDOR (probabilidad máxima segura; `destacado` del evento, ver `destacado_valor.py`). Aquí solo se localiza
 // ese mercado entre los publicados; si es una revisión posterior al inicio no cuenta como pronóstico previo y no se sustituye por otro.
 // Solo si el servidor no mandó el campo (fuente antigua o mercados aún sin cargar) se aplica la misma regla a lo que hay en pantalla.

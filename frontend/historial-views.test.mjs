@@ -67,7 +67,7 @@ test('la vista enseña los fallos, la cuota real y marca la del modelo con ≈',
   assert.ok(html.includes('1 fallos, a la vista'));
   assert.ok(html.includes('Fallado') && html.includes('Menos de 4,5 goles'));
   assert.ok(html.includes('1.28') && html.includes('1.21'));
-  assert.ok(html.includes('≈ 1.47') && html.includes('justa del modelo'));
+  assert.ok(html.includes('≈ 1.47') && html.includes('Modelo · sin casa'));
   assert.ok(html.includes('Muestra en construcción'), 'con 4 resultados la muestra es pequeña');
   assert.ok(!html.includes('Metodología y registros de verificación'));
 });
@@ -99,13 +99,44 @@ test('desvio: acumula (real − prometido), la franja crece con la varianza y el
   assert.equal(desvio([]).n, 0);
 });
 
-test('la gráfica grande mide aciertos frente a esperados y el beneficio sigue a la vista, también en negativo', () => {
+test('la gráfica grande mide aciertos frente a esperados, sin leyendas debajo ni encima', () => {
   const html = views().historyView(muestra, false);
   assert.ok(html.includes('Aciertos reales frente a esperados') && html.includes('cv-hist-band'));
-  assert.ok(!html.includes('Beneficio acumulado en fútbol'));
-  assert.ok(html.includes('Beneficio · 1 u por pronóstico'), 'el indicador de beneficio se mantiene');
-  assert.match(html, /el beneficio en fútbol con 1 u por pronóstico fue −0[.,]72 u/, 'la pérdida se dice junto a la gráfica');
-  assert.ok(html.includes('Acertar lo prometido no es ganar dinero'));
+  assert.ok(!html.includes('Cada pronóstico suma lo que salió'), 'sin la explicación sobre la gráfica');
+  assert.ok(!html.includes('Hoy: ') && !html.includes('cv-hist-foot'), 'sin la frase «Hoy: … aciertos frente a los esperados»');
+  assert.ok(!html.includes('Acertar lo prometido no es ganar dinero'));
+  assert.ok(!html.includes('Beneficio · 1 u por pronóstico'), 'la tarjeta de beneficio ya no está');
+});
+
+test('«Acierto por día» y «Días en verde» miran solo los últimos 7 días', () => {
+  const diaN = i => new Date(Date.UTC(2026, 9, 20 + i, 15)).toISOString();
+  const rows = Array.from({ length: 10 }, (_, i) => [fila(diaN(i), 'win'), fila(diaN(i), i % 2 ? 'win' : 'loss')]).flat();
+  const html = views().historyView(rows, false);
+  const grafica = html.slice(html.indexOf('Acierto por día'), html.indexOf('Por deporte'));
+  assert.equal((grafica.match(/<rect class="cv-hist-bar win"/g) || []).length, 7);
+  assert.ok(html.includes('Días en verde · última semana'));
+  assert.match(html, /▲ 4 de 7 días/, 'solo cuentan los 7 días recientes (4 con más aciertos que fallos: los impares)');
+});
+
+test('cada resultado enseña su cuota y, debajo, la casa (o que es del modelo)', () => {
+  const rows = [
+    fila('2026-10-27T10:00:00Z', 'win', { price: 1.53, book: 'Bovada' }),
+    fila('2026-10-27T11:00:00Z', 'win', { sport: 'nba', price: 1.8, book: 'Pinnacle', text: 'Lakers' }),
+    fila('2026-10-27T12:00:00Z', 'win', { sport: 'tenis', price: 1.76, ref: true, book: 'pinnacle', text: 'Alcaraz' }),
+    fila('2026-10-27T13:00:00Z', 'win', { sport: 'tenis', price: null, prob: 0.5, text: 'Sin cuota' }),
+  ];
+  const html = views().historyView(rows, false);
+  assert.match(html, /<strong class="cv-hist-odds">1\.53<\/strong><small class="cv-hist-book">Bovada<\/small>/);
+  assert.match(html, /<strong class="cv-hist-odds">1\.8(0)?<\/strong><small class="cv-hist-book">Pinnacle<\/small>/);
+  assert.match(html, /1\.76<\/strong><small class="cv-hist-book">Pinnacle · referencia<\/small>/);
+  assert.match(html, /≈ 2\.00<\/strong><small class="cv-hist-book">Modelo · sin casa<\/small>/);
+});
+
+test('la cuota de referencia de tenis no entra en el beneficio', () => {
+  const rows = [fila('2026-10-26T01:00:00Z', 'win', { price: 1.5 }), fila('2026-10-26T02:00:00Z', 'win', { sport: 'tenis', price: 2.2, ref: true, book: 'pinnacle' })];
+  const b = beneficio(rows);
+  assert.equal(b.n, 1);
+  assert.ok(Math.abs(b.unidades - 0.5) < 1e-9);
 });
 
 test('filtros por deporte y resultado, y paginación', () => {
@@ -132,7 +163,7 @@ test('los textos de partidos se escapan', () => {
 
 test('el HTML y los módulos están registrados con el mismo identificador de versión', () => {
   const ergo = readFileSync(new URL('./ergonomic-views.js', import.meta.url), 'utf8');
-  assert.match(ergo, /historial-views\.js\?v=hist-desvio-20261105/);
+  assert.match(ergo, /historial-views\.js\?v=hist-casa-20261105/);
   const web = readFileSync(new URL('../src/qf/api/web.py', import.meta.url), 'utf8');
   assert.ok(web.includes('/historial-views.js'));
 });

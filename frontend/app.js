@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=hist-desvio-20261105';
-import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, featuredModelMarket, nbaCode } from './sports-data.js?v=destacado-segura-20261105';
-import { createSportWindow } from './sports-window.js?v=destacado-segura-20261105';
+import { createRealViews } from './real-views.js?v=hist-casa-20261105';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=hist-casa-20261105';
+import { createSportWindow } from './sports-window.js?v=hist-casa-20261105';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
@@ -1059,7 +1059,9 @@ function winForecast(game, entry) {
   const rows = ficha.mercados?.filas || [];
   const groups = [...new Set(rows.map(r => r.grupo))];
   const fam = groups.includes(state.winFam) ? state.winFam : 'Todos';
-  const shown = rows.filter(r => fam === 'Todos' || r.grupo === fam).sort((a, b) => Number(a.locked === true) - Number(b.locked === true));
+  // Abiertos primero; en un partido ya jugado, acertados por cuota de mayor a menor y al final los fallados (ver `ordenLiquidado`).
+  const delGrupo = rows.filter(r => fam === 'Todos' || r.grupo === fam);
+  const shown = [...ordenLiquidado(delGrupo.filter(r => r.locked !== true), { resultado: r => r.resultado, cuota: r => r.cuota, prob: r => r.prob }), ...delGrupo.filter(r => r.locked === true)];
   const locked = rows.filter(r => r.locked === true).length;
   const line = r => (r.locked
     ? `<tr class="win-lock"><td>${esc(r.grupo)}</td><td>Contenido reservado</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`
