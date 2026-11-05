@@ -1,5 +1,14 @@
 # Backlog — QuantFut
 
+## 4-nov-2026 · Publicar correcciones NBA y comprobar evidencia prospectiva
+
+Orden expresa del titular: publicar las correcciones y acreditar la calibración prospectiva si los datos lo permiten. No se fabrica acreditación ni se sustituyen resultados prospectivos por backtests.
+
+- [x] Releer reglas de despliegue y reconfirmar main/runtime. API concurrente `mercados-1bd8748`, corrección `61ff260`, preservada e integrada; cuotas por lado/última recepción y CDF exacta corregidas. 32 pruebas de API/mercados/regresiones aprobadas.
+- [ ] PR con arnés verde, integración en main y comparación previa de imágenes/hashes.
+- [ ] Respaldo, migración 0009, ensayo de solo lectura y publicación aislada motor/API; conservar rollback y fuentes de mercados.
+- [ ] Verificar rutas públicas, versión/artefacto, cron y cadena; documentar recuento prospectivo real y estado de acreditación según protocolo.
+
 ## 4-nov-2026 · Correcciones de la auditoría NBA — código y validación terminados; promoción pendiente
 
 Autorización del titular: «necesito que arregles todo lo que encontraste en la auditoría». Rama aislada `codex/nba-auditoria-20261104`, basada en `origin/main`; se preserva el checkout anterior y la evidencia del VPS.

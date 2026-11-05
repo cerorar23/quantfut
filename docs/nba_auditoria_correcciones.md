@@ -60,6 +60,8 @@ Se comprobó además que el workflow publicado de `main` `8676e72` estaba verde;
 
 ## Entrenamiento y publicación
 
+El titular autorizó posteriormente la publicación. La API activa había incorporado `mercados-1bd8748` con la corrección de banda `61ff260`; se preserva esa función. Al integrarla, las probabilidades pasan por el mismo contrato corregido, la cuota se toma del lado seleccionado y de su última observación anterior al corte. Las pruebas de API/mercados y regresiones: 32 aprobadas. El [protocolo prospectivo](nba_calibracion_prospectiva.md) queda registrado antes de publicar; una muestra insuficiente conserva el estado no acreditado.
+
 1. En local, exportar con una conexión lectora y transacción `READ ONLY`: `python apps/nba/ops/exportar_equipo.py exportacion_nueva.json` (`NBA_DB_DSN_LECTOR` fuera del repositorio).
 2. En local: `python apps/nba/ops/entrenar_equipo.py exportacion_nueva.json equipo_nuevo.json`. La salida debe ser nueva; se conservan las anteriores para replay.
 3. Evaluar por fechas con `ops/evaluar_equipo_congelado.py`; el entrenamiento actual no es su propia prueba. Para investigar otro híbrido: `ops/exportar_plantilla.py` y `ops/entrenar_hibrido.py`. La candidata evaluada aquí queda bloqueada; no activar el impacto antiguo o la candidata rechazada por cambiar una bandera.

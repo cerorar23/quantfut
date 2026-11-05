@@ -25,46 +25,12 @@ from ..v2 import props, sellado
 from ..v2.contratos_apuesta import ProbabilidadesContrato, desde_masas
 from ..v2.equipos import TRICODES
 from . import estadisticas
+from .comun import PARTIDOS, prob_mas_de, contrato_linea
 
 ESTATICOS = Path(__file__).parent / "static"
 CALIBRACION = Path(os.environ.get("NBA_CALIBRACION_JSON", Path(__file__).parent / "calibracion_v2.json"))
 MERCADOS_LINEA = {"margen", "total", "puntos_local", "puntos_visitante"}
 MINUTOS_ANTES_DEL_SELLO = 60
-
-
-def prob_mas_de(cuantiles: list[float], linea: float, paso: float = 0.005) -> tuple[float, bool]:
-    """P(X > línea) a partir de los cuantiles (199 valores, niveles paso…1-paso). Fuera del rango se acota a [paso, 1-paso]
-    y se marca como extremo. Interpolación lineal del nivel entre cuantiles contiguos."""
-    q = np.asarray(cuantiles, float)
-    if not np.isfinite(linea) or q.ndim != 1 or not len(q) or not np.isfinite(q).all() or (np.diff(q) < 0).any():
-        raise ValueError("cuantiles o línea inválidos")
-    if np.allclose(q, np.round(q), rtol=0, atol=1e-12):
-        # Los sellos antiguos solo guardaban cuantiles: distribución discreta aproximada,
-        # con resolución de 0,5 pp. Nunca se convierte un átomo en un tramo continuo.
-        return float(np.mean(q > linea)), bool(linea <= q[0] or linea >= q[-1])
-    niveles = paso * np.arange(1, len(q) + 1)
-    if linea <= q[0]:
-        return 1.0 - paso, True
-    if linea >= q[-1]:
-        return paso, True
-    # np.interp exige abscisas crecientes: se desempata con una mota para cuantiles repetidos (distribución discreta)
-    xs = q + np.arange(len(q)) * 1e-9
-    return float(1.0 - np.interp(linea, xs, niveles)), False
-
-
-def contrato_linea(dist: dict, mercado: str, linea: float) -> dict:
-    ley = (dist.get("masas") or {}).get(mercado)
-    if ley is not None:
-        p = desde_masas(ley["soporte"], ley["pmf"], linea)
-        return dict(p.salida(), extremo=p.gana == 0 or p.pierde == 0, aproximada=False, error_resolucion=0.)
-    q = np.asarray(dist[mercado], float)
-    if np.allclose(q, np.round(q), rtol=0, atol=1e-12):
-        p = desde_masas(q, np.full(len(q), 1 / len(q)), linea)
-    else:
-        mas, _ = prob_mas_de(q.tolist(), linea, dist["paso_cuantil"])
-        p = ProbabilidadesContrato(mas, 0., 1 - mas)
-    return dict(p.salida(), extremo=bool(linea <= q[0] or linea >= q[-1]),
-                aproximada=True, error_resolucion=float(dist["paso_cuantil"]))
 
 
 def calibracion_por_version(filas, version_actual: str | None) -> dict:
@@ -131,7 +97,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
             "ORDER BY sellado_en DESC, pronostico_id DESC LIMIT 1", (partido_id, mercado, entidad_id)).fetchone()
 
     def resumen_partido(db, fila) -> dict:
-        pid, fecha, local, visit, nl, nv = fila
+        pid, fecha, _ent_local, _ent_visit, nl, nv, local, visit = fila
         inicio = db.execute("SELECT d.valor FROM nba.dato d JOIN nba.metrica m USING (metrica_id) WHERE d.partido_id = %s "
                             "AND m.nombre = 'inicio_programado_utc' ORDER BY d.recibido_en DESC LIMIT 1", (pid,)).fetchone()
         inicio_utc = datetime.fromtimestamp(inicio[0], UTC) if inicio and inicio[0] else None
@@ -158,17 +124,17 @@ def crear_app(dsn: str | None = None) -> FastAPI:
                                     "mediana": {"margen": dist["margen"][99], "total": dist["total"][99]}}
         return salida
 
-    PARTIDOS = ("SELECT e.entidad_id, e.fecha_juego_et, tl.id_en_fuente, tv.id_en_fuente, tl.nombre, tv.nombre FROM nba.entidad e "
-                "JOIN nba.entidad tl ON tl.entidad_id = (e.atributos->>'local')::bigint "
-                "JOIN nba.entidad tv ON tv.entidad_id = (e.atributos->>'visitante')::bigint "
-                "WHERE e.tipo = 'partido' AND e.canonica_id = e.entidad_id "
-                "AND e.entidad_id = (SELECT min(x.entidad_id) FROM nba.entidad x WHERE x.tipo = 'partido' AND x.canonica_id = x.entidad_id AND x.fecha_juego_et = e.fecha_juego_et AND x.atributos->>'local' = e.atributos->>'local' AND x.atributos->>'visitante' = e.atributos->>'visitante')")
 
     @app.get("/nba/v1/cartelera")
     def cartelera(fecha: date = Query(...)):
         with conexion() as db:
             filas = db.execute(PARTIDOS + " AND e.fecha_juego_et = %s ORDER BY e.entidad_id", (fecha,)).fetchall()
             return {"fecha": fecha.isoformat(), "partidos": [resumen_partido(db, f) for f in filas]}
+
+    @app.get("/nba/v1/mercados")
+    def mercados(fecha: date = Query(...)):
+        from .mercados import mercados_del_dia
+        return mercados_del_dia(dsn or os.environ["NBA_DB_DSN_LECTOR"], fecha)
 
     @app.get("/nba/v1/partido/{partido_id}")
     def partido(partido_id: int):
