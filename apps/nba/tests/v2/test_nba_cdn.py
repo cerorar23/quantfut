@@ -222,3 +222,49 @@ def test_sin_box_pendientes_la_jugada_a_jugada_usa_todo_el_presupuesto(base_migr
     obtener, visitas = servidor(CUERPOS)
     r = cdn.capturar(base_migrada, obtener, tmp_path, T + timedelta(minutes=30), tope_diario=2)
     assert visitas == [cdn.url_box("0022600001"), cdn.url_pbp("0022600001")] and r["pbp"] == 1
+
+
+# --- 5-nov-2026: el marcador de las 10:00 ET llegó vacío y con la fecha anterior; los 14 partidos del día se quedaron sin id ---
+VACIO = json.dumps({"scoreboard": {"gameDate": "2026-11-01", "games": []}})
+
+
+def _espn_del_dia(db, dia=date(2026, 11, 2)):
+    for codigo, (loc, vis) in {"401x": ("CLE", "OKC"), "401y": ("CHA", "DET"), "401z": ("IND", "ATL")}.items():
+        identidad.partido(db, "espn", codigo, dia, identidad.equipo(db, loc), identidad.equipo(db, vis), "2026-27")
+
+
+def _ids_de_la_nba(db):
+    return db.execute("SELECT count(*) FROM nba.entidad WHERE fuente = 'nba_oficial' AND tipo = 'partido' "
+                      "AND id_en_fuente ~ '^[0-9]{10}$'").fetchone()[0]
+
+
+def test_un_marcador_vacio_se_reintenta_en_una_hora_y_crea_los_id(base_migrada, tmp_path):
+    db = base_migrada
+    _espn_del_dia(db)
+    ahora = datetime(2026, 11, 2, 15, 0, tzinfo=UTC)                                         # 10:00 ET
+    cdn.capturar(db, servidor({cdn.URL_MARCADOR: VACIO})[0], tmp_path, ahora)
+    assert _ids_de_la_nba(db) == 0
+    obtener, visitas = servidor({cdn.URL_MARCADOR: MARCADOR})
+    cdn.capturar(db, obtener, tmp_path, ahora + timedelta(hours=1))
+    assert visitas == [cdn.URL_MARCADOR] and _ids_de_la_nba(db) == 3
+
+
+def test_el_reintento_del_marcador_espera_y_tiene_tope(base_migrada, tmp_path):
+    db = base_migrada
+    _espn_del_dia(db)
+    ahora = datetime(2026, 11, 2, 15, 0, tzinfo=UTC)
+    obtener, visitas = servidor({cdn.URL_MARCADOR: VACIO})
+    cdn.capturar(db, obtener, tmp_path, ahora)
+    cdn.capturar(db, obtener, tmp_path, ahora + timedelta(minutes=15))                       # demasiado pronto
+    assert len(visitas) == 1
+    for h in range(1, 10):
+        cdn.capturar(db, obtener, tmp_path, ahora + timedelta(hours=h))
+    assert len(visitas) == cdn.MAX_MARCADORES                                                # nunca más que el tope
+
+
+def test_los_partidos_de_ayer_sin_id_tambien_piden_el_marcador(base_migrada, tmp_path):
+    db = base_migrada
+    _espn_del_dia(db)                                                                        # partidos del 2-nov
+    obtener, visitas = servidor({cdn.URL_MARCADOR: MARCADOR})                                # el marcador aún trae el 2-nov
+    cdn.capturar(db, obtener, tmp_path, datetime(2026, 11, 3, 15, 0, tzinfo=UTC))           # 10:00 ET del 3-nov
+    assert visitas == [cdn.URL_MARCADOR] and _ids_de_la_nba(db) == 3

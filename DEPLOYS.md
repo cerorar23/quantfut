@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-05 10:30 CDMX / 16:30 UTC · NBA: el marcador de cdn se reintenta y SofaScore respalda los box scores de jugador · rama `nba/cdn-ids-ayer` `ee81f33` (sin PR todavía) · VPS: imagen `nba-captura` y `~/sofascore-scraper`
+- Causa de los pronósticos de jugador en «Pendiente» (14 partidos del 4-nov): el marcador de cdn de las 10:00 ET llegó vacío y con la fecha anterior, el colector no lo repitió hasta 20 h después y solo miraba los partidos de hoy; sin id de la NBA no pedía el box score. No fue falta de créditos (34 gastados en el mes). A las 15:00 UTC el marcador ya traía los 14 partidos y el colector bajó los 14 box scores solo; a las 16:20 UTC la API liquida 2.019 de 2.085 mercados de jugador.
+- Arreglo (solo `captura.py`, `nba_cdn.py` y `sofascore_arbol.py` nuevo sobre el código que ya corría, `63b8ce3`): el marcador se repite cada 55 min, hasta 4 veces por ventana de 20 h, mientras falte el id de algún partido de ayer u hoy. Fuente nueva `sofascore`: lee el árbol `data/v3` del scraper (montaje de solo lectura), convierte los partidos terminados de los últimos 4 días y los carga con `sofascore.cargar` (solo añade filas, hora real de observación, la caja oficial gana).
+- VPS: imagen `nba-captura:ee81f33` (hashes de los 3 archivos verificados contra el repositorio), `imagen_actual` = `nba-captura:ee81f33`, `ejecutar_sofascore.sh` nuevo y cron `30 7,19 * * *` (hora del servidor, 1 h después del sync del scraper). Probados a mano: `nba`, `espn_directo`, `parte`, `sofascore`, todos con código 0.
+- Scraper: 69 partidos de la NBA 2026-27 subidos desde el archivo del titular (1 MB, con `subir_archivo_sofascore.py`) y `ssc follows add --sport basketball --seasons current tournament 132`. **Pendiente de confirmar**: el primer sync NBA recibió 403 al pedir la lista de temporadas (SofaScore bloquea la IP del VPS y los respaldos de pago están limitados); hasta que un sync lo consiga, el respaldo no aporta partidos nuevos.
+- Vuelta atrás: `echo nba-captura:63b8ce3 > ~/nba-isolated/nba-captura/imagen_actual`; `crontab ~/nba-isolated/nba-captura/crontab.before-sofascore-20261105`; seguimiento: `cd ~/sofascore-scraper && .venv/bin/python main.py follows remove tournament 132`. Copias: `imagen_actual.antes-sofascore-20261105`, `build/src.antes-sofascore`.
+- Fuera de `main`: hay que abrir el PR de `nba/cdn-ids-ayer` para que el repositorio y el servidor coincidan.
+
 ### 2026-11-04 20:10 CDMX / 2026-11-05 02:10 UTC · NBA: Partido desde cuota 1,20, tarjetas de jugador con foto oficial · PR #259, `main` `f11d97c7`
 
 - Orden del titular: terminar el trabajo pendiente (commit, push, PR, fusión y publicación). PR #259 fusionado con las cuatro comprobaciones en verde (frontend, arnés, NBA/PostgreSQL 16 y tenis). Validación local: 124 pruebas frontend y 7 de API/mercados con PostgreSQL 16.

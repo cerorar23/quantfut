@@ -1,5 +1,17 @@
 # Registro de decisiones — QuantFut
 
+## 5-nov-2026 · Pronósticos de jugador NBA en «Pendiente»: faltaba el id de la NBA, no los créditos
+
+Los 14 partidos del 4-nov liquidaban los mercados de equipo y ninguno de jugador. La razón no era de créditos ni de la
+web: el marcador de cdn de las 10:00 ET trajo `games: []` con la fecha anterior, el colector lo dio por hecho durante
+20 h y solo buscaba ids de hoy, así que sin id de la NBA no sabía qué box score pedir. Decisión: reintentar el marcador
+cada 55 min (tope 4 por ventana) mientras falten ids de ayer u hoy, en vez de fiarse de una sola lectura. El mismo día
+se añadió SofaScore como respaldo automático de los box scores de jugador (fuente `sofascore` del colector, solo
+partidos recientes, solo añade filas, la caja oficial manda), pero depende de que el scraper del VPS pase el bloqueo
+de SofaScore, que hoy no lo hace con la NBA (403 en la lista de temporadas): el cdn sigue siendo la vía principal.
+Pendiente de decisión: 66 mercados de 5 jugadores ausentes del box score (Jalen Johnson, Josh Hart, Jayson Tatum,
+Trey Murphy, Jaylin Williams) siguen sin resultado; `resolver()` deja pendiente lo que no ve y no lo marca nulo.
+
 ## 4-nov-2026 · Publicadas las correcciones NBA; acreditación prospectiva condicionada a datos reales
 
 Orden expresa de publicar. PR #255 integrado con arnés remoto verde (NBA con PostgreSQL, fútbol/API, frontend y tenis), main `a491f225`. API concurrente de mercados preservada desde `61ff260`; sus probabilidades/últimas cuotas por lado se integraron con los contratos corregidos. CI detectó fixtures con fechas UTC en lugar de ET al cruzar medianoche y una ruta temporal sin permisos; se corrigieron las pruebas sin debilitar la lógica de producción.
