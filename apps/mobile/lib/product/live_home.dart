@@ -184,14 +184,14 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   /// Destacado del día: entre los pronósticos abiertos (el bloqueado no se enseña aquí), el de mayor
-  /// valor esperado (`featured_rule.dart`); si ninguno cumple la regla no hay tarjeta.
+  /// probabilidad con cuota >= 1,20 y probabilidad >= 75 % (`featured_rule.dart`); si ninguno cumple la regla no hay tarjeta.
   JsonMap? _featuredPick() {
     final report = jsonMap(widget.data['alta_probabilidad']);
     final open = [
       ...jsonRows(report['proximos']),
       ...jsonRows(report['vip']),
     ].where((p) => p['locked'] != true);
-    return bestByValue<JsonMap>(
+    return bestBySafety<JsonMap>(
       open,
       (p) => p['prob'],
       (p) => p['ref_price'] ?? p['price'],

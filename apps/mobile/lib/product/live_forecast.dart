@@ -115,10 +115,10 @@ class LiveScoreStrip extends StatelessWidget {
   }
 }
 
-/// Destacado del partido por valor esperado (ver `featured_rule.dart`): entre los pronósticos
-/// sellados con cuota publicada >= 1,20 y probabilidad >= 55 %, gana el de mayor probabilidad ×
-/// cuota; en empate, el de mayor probabilidad. Sin candidatos válidos no se destaca ninguno.
-JsonMap? featuredPick(List<JsonMap> picks) => bestByValue<JsonMap>(
+/// Destacado del partido, «probabilidad máxima segura» (ver `featured_rule.dart`): entre los
+/// pronósticos sellados con cuota publicada >= 1,20 y probabilidad >= 75 %, gana el de mayor
+/// probabilidad; en empate, el de mayor cuota. Sin candidatos válidos no se destaca ninguno.
+JsonMap? featuredPick(List<JsonMap> picks) => bestBySafety<JsonMap>(
   picks,
   (p) => p['prob'],
   (p) => p['ref_price'] ?? p['price'],

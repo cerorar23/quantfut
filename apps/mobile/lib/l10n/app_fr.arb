@@ -120,7 +120,7 @@
   "detailInjuries": "Absences signalées",
   "detailLineups": "Compositions",
   "detailLineupsPending": "Compositions pas encore confirmées.",
-  "detailNoFeatured": "Aucun pronostic de ce match n’entre dans la une (cote de 1,20 ou plus et probabilité de 55 % ou plus). Les pronostics ouverts sont dans la liste ci-dessous.",
+  "detailNoFeatured": "Aucun pronostic de ce match n’entre dans la une (cote de 1,20 ou plus et probabilité de 75 % ou plus). Les pronostics ouverts sont dans la liste ci-dessous.",
   "detailNoH2h": "Aucune confrontation enregistrée pour ce match.",
   "detailNoInjuries": "Aucune absence dans le rapport disponible.",
   "detailNoInjuriesCheck": "Aucune vérification des absences disponible.",

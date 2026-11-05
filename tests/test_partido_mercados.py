@@ -169,12 +169,12 @@ def test_equipo_desconocido_toma_las_lambdas_del_mercado(monkeypatch):
     assert pm.lambdas_goles('m1') == (1.5, 1.1, -0.06)
 
 
-# --- regla de la WEB: destacado por valor esperado (cuota >= 1,20, prob >= 55 %) y 3 mercados gratis ----
-# (el detalle del algoritmo y su dilema están en test_destacado_valor.py)
+# --- regla de la WEB: destacado «probabilidad máxima segura» (cuota >= 1,20, prob >= 75 %) y 3 mercados gratis ----
+# (el detalle del algoritmo está en test_destacado_valor.py)
 
 def _en_rango(filas):
-    """Los que pasan el filtro con cuota del modelo (1/prob): ahí todos puntúan 1 y manda la probabilidad."""
-    return sorted((f for f in filas if f['prob'] >= .55 and 1 / f['prob'] >= 1.20), key=lambda f: -f['prob'])
+    """Los que pasan el filtro con cuota del modelo (1/prob): la franja 75 %-83,3 %, de mayor a menor probabilidad."""
+    return sorted((f for f in filas if f['prob'] >= .75 and 1 / f['prob'] >= 1.20), key=lambda f: -f['prob'])
 
 
 def test_el_rango_del_destacado_no_tiene_tope():
@@ -186,10 +186,10 @@ def test_el_rango_del_destacado_no_tiene_tope():
 def test_web_destacado_sale_de_todos_los_mercados_aunque_sean_vip(lista):
     filas, marcadores = lista
     esperado = _en_rango(filas)
-    assert len(esperado) >= 3
+    assert len(esperado) >= 1
     out, _, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
     assert destacado['id'] == esperado[0]['id']
-    assert destacado['cuota'] >= 1.20 and destacado['prob'] >= .55 and destacado['locked'] is False
+    assert destacado['cuota'] >= 1.20 and destacado['prob'] >= .75 and destacado['locked'] is False
     assert destacado['prob'] == max(f['prob'] for f in esperado)
 
 
@@ -197,7 +197,10 @@ def test_web_gratis_tiene_tres_abiertas_las_mas_probables_del_rango_y_el_resto_c
     filas, marcadores = lista
     out, marcadores_out, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, plus=False)
     abiertas = [f for f in out if not f['locked']]
-    assert [f['id'] for f in abiertas] == [f['id'] for f in _en_rango(filas)[:3]]
+    esperadas = [f['id'] for f in _en_rango(filas)[:3]]
+    resto = [f for f in sorted(filas, key=lambda f: -f['prob']) if f['id'] not in esperadas]
+    esperadas += [f['id'] for f in resto[:3 - len(esperadas)]]            # si la franja no da para tres, se completa con las más probables
+    assert [f['id'] for f in abiertas] == [f['id'] for f in sorted((f for f in filas if f['id'] in esperadas), key=lambda f: -f['prob'])]
     assert abiertas[0]['id'] == destacado['id'] and abiertas[0]['destacado'] is True
     candados = [f for f in out if f['locked']]
     assert len(abiertas) + len(candados) == len(filas)
@@ -216,7 +219,7 @@ def test_web_con_vip_todo_va_abierto_y_el_destacado_es_el_mismo(lista):
 def test_web_si_el_rango_no_da_para_tres_se_completa_con_las_mas_probables():
     def fila(i, prob):
         return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
-    filas = [fila(1, .60), fila(2, .90), fila(3, .85), fila(4, .50)]   # solo la primera pasa el filtro (cuota ≥ 1,20 y prob ≥ 55 %)
+    filas = [fila(1, .80), fila(2, .90), fila(3, .85), fila(4, .50)]   # solo la primera pasa el filtro (cuota ≥ 1,20 y prob ≥ 75 %)
     out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
     assert destacado['id'] == filas[0]['id']
     assert {f['id'] for f in out if not f['locked']} == {filas[0]['id'], filas[1]['id'], filas[2]['id']}
@@ -225,7 +228,7 @@ def test_web_si_el_rango_no_da_para_tres_se_completa_con_las_mas_probables():
 def test_web_sin_ningun_mercado_en_rango_no_hay_destacado_pero_si_tres_gratis():
     def fila(i, prob):
         return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
-    filas = [fila(1, .95), fila(2, .90), fila(3, .85), fila(4, .40)]   # tres pagan menos de 1,20 y la otra no llega al 55 %
+    filas = [fila(1, .95), fila(2, .90), fila(3, .85), fila(4, .40)]   # tres pagan menos de 1,20 y la otra no llega al 75 %
     out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
     assert destacado is None and sum(not f['locked'] for f in out) == 3
 
@@ -233,7 +236,7 @@ def test_web_sin_ningun_mercado_en_rango_no_hay_destacado_pero_si_tres_gratis():
 def test_web_una_cuota_larga_con_poca_probabilidad_no_es_destacado():
     def fila(i, prob):
         return pm._fila('GOLES', f'M{i}', 'totals', 'over', float(i), f'Más de {i}', prob)
-    filas = [fila(1, .95), fila(2, .90), fila(3, .20)]                 # la tercera paga 5,00 pero no llega al 55 %
+    filas = [fila(1, .95), fila(2, .90), fila(3, .20)]                 # la tercera paga 5,00 pero no llega al 75 %
     out, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
     assert destacado is None and sum(not f['locked'] for f in out) == 3
 
@@ -242,10 +245,10 @@ def test_web_un_pick_sellado_abierto_conserva_su_probabilidad_y_no_se_duplica(li
     filas, marcadores = lista
     objetivo = _en_rango(filas)[0]
     pick = {'pick_key': 'k1', 'market': objetivo['market'], 'selection': objetivo['selection'],
-            'line': objetivo['line'], 'prob': .66, 'ref_price': 1.52}
+            'line': objetivo['line'], 'prob': .78, 'ref_price': 1.52}
     out, marcadores_out, destacado = pm.aplicar_acceso_web(filas, marcadores, {objetivo['id']: pick}, plus=False)
     fila = next(f for f in out if f['id'] == objetivo['id'])
-    assert fila['prob'] == .66 and fila['cuota'] == 1.52 and fila['cuota_tipo'] == 'publicada'
+    assert fila['prob'] == .78 and fila['cuota'] == 1.52 and fila['cuota_tipo'] == 'publicada'
     assert sum(f['id'] == objetivo['id'] for f in out) == 1
     assert marcadores_out == marcadores                                    # hay pick abierto: mismo trato que la app
     assert destacado['pick_key'] == 'k1'
@@ -376,7 +379,7 @@ def test_el_destacado_puede_ser_una_opcion_que_no_era_el_lado_mas_probable():
     mas_probables = [f(1, .95), f(2, .90), f(3, .85)]                    # todas pagan menos de 1,20: sin destacado
     _, _, sin = pm.aplicar_acceso_web(mas_probables, [], {}, plus=False)
     assert sin is None
-    otro_lado = pm._fila('GOLES', 'M4', 'totals', 'under', 4.0, 'Menos de 4', .55)
+    otro_lado = pm._fila('GOLES', 'M4', 'totals', 'under', 4.0, 'Menos de 4', .78)
     _, _, con = pm.aplicar_acceso_web(mas_probables + [otro_lado], [], {}, plus=False)
     assert con['id'] == otro_lado['id'] and con['cuota'] >= 1.20
 
@@ -438,18 +441,18 @@ def test_con_cuotas_casas_cambia_la_cuota_del_modelo_por_la_de_la_casa_y_deja_la
 
 
 def test_destacado_con_cuotas_de_casa_solo_cuenta_lo_que_una_casa_cotiza():
-    # «Gana a cero» (sin cuota de casa) tiene la cuota justa 1,43 y la mayor probabilidad; la de la casa baja a 1,30.
-    # «Menos de 3,5» paga 1,30 (≥ 1,20: pasa el filtro) pero su valor (0,83) pierde contra el de «Más de 1,5» (0,96).
-    nil = pm._fila('ESPECIALES', 'Gana a cero', 'win_to_nil', 'home', None, 'Gana a cero', .70)
-    over = pm._fila('GOLES', 'Goles totales', 'totals', 'over', 1.5, 'Más de 1,5 goles', .66)
-    under = pm._fila('GOLES', 'Goles totales', 'totals', 'under', 3.5, 'Menos de 3,5 goles', .64)
+    # «Gana a cero» (sin cuota de casa) es la más probable con la cuota justa 1,25, pero no cotiza en ninguna casa y no compite.
+    # «Menos de 3,5» (78 %) paga 1,30 y «Más de 1,5» (80 %) paga 1,46: ambas pasan el filtro y gana la más probable.
+    nil = pm._fila('ESPECIALES', 'Gana a cero', 'win_to_nil', 'home', None, 'Gana a cero', .82)
+    over = pm._fila('GOLES', 'Goles totales', 'totals', 'over', 1.5, 'Más de 1,5 goles', .80)
+    under = pm._fila('GOLES', 'Goles totales', 'totals', 'under', 3.5, 'Menos de 3,5 goles', .78)
     from datetime import datetime, timezone
     hora = datetime(2026, 11, 2, 10, tzinfo=timezone.utc)
     filas = pm.con_cuotas_casas([nil, over, under], {over['id']: (1.46, 'bet365', hora), under['id']: (1.30, 'betano', hora)})
     _, _, destacado = pm.aplicar_acceso_web(filas, [], {}, plus=False)
     assert destacado['id'] == over['id'] and destacado['casa'] == 'bet365' and destacado['cuota'] == 1.46
-    assert destacado['id'] != under['id'] and destacado['score_destacado'] == pytest.approx(.66 * 1.46)
-    # una cuota de la casa por debajo de 1,20 deja la opción fuera aunque la justa del modelo (1/0,64 = 1,56) sí llegue
+    assert destacado['id'] != under['id'] and 'score_destacado' not in destacado
+    # una cuota de la casa por debajo de 1,20 deja la opción fuera aunque la justa del modelo (1/0,80 = 1,25) sí llegue
     corta = pm.con_cuotas_casas([nil, over, under], {over['id']: (1.15, 'bet365', hora), under['id']: (1.30, 'betano', hora)})
     _, _, otro = pm.aplicar_acceso_web(corta, [], {}, plus=False)
     assert otro['id'] == under['id']

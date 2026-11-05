@@ -74,7 +74,7 @@ class SportEvent {
   /// Hora prevista del sellado del pronóstico (NBA v2); null si la API no la da.
   final DateTime? plannedSeal;
 
-  /// El servidor mandó el campo `destacado` (valor esperado): `featuredId` es el id del mercado elegido o
+  /// El servidor mandó el campo `destacado` (probabilidad máxima segura): `featuredId` es el id del mercado elegido o
   /// null si ninguno cumple la regla. Si no lo mandó, el destacado se calcula en la app con la misma regla.
   final bool serverFeatured;
   final String? featuredId;
@@ -381,7 +381,7 @@ Future<SportFeed> loadSport(QuantFutApi api, SportKind sport) async {
 }
 
 /// Destacado de NBA y tenis entre los elegibles (sellados antes del inicio). Si el servidor mandó el suyo
-/// (valor esperado) solo se localiza; si no, se aplica la misma regla con la cuota del modelo (1 ÷ prob.).
+/// (probabilidad máxima segura) solo se localiza; si no, se aplica la misma regla con la cuota del modelo (1 ÷ prob.).
 SportMarket? featuredMarket(SportEvent e) {
   final eligible = e.markets.where((m) => m.eligible);
   if (e.serverFeatured) {
@@ -390,7 +390,7 @@ SportMarket? featuredMarket(SportEvent e) {
     }
     return null;
   }
-  return bestByValue<SportMarket>(
+  return bestBySafety<SportMarket>(
     eligible,
     (m) => m.probability,
     (m) => modelPrice(m.probability),

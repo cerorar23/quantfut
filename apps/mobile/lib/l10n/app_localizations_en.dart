@@ -442,7 +442,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'No prediction for this match qualifies as featured (odds of 1.20 or higher and probability of 55% or higher). The open ones are in the list below.';
+      'No prediction for this match qualifies as featured (odds of 1.20 or higher and probability of 75% or higher). The open ones are in the list below.';
 
   @override
   String get detailNoH2h => 'There are no recorded meetings for this match.';

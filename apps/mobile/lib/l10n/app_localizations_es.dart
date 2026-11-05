@@ -446,7 +446,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 55 % o más). Los abiertos están en la lista de abajo.';
+      'Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 75 % o más). Los abiertos están en la lista de abajo.';
 
   @override
   String get detailNoH2h =>
