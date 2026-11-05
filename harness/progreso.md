@@ -7762,3 +7762,21 @@ orden por probabilidad de siempre. En NBA el texto «De mayor a menor probabilid
 de mayor a menor cuota». En tenis la cuota que ordena es la del modelo (no hay cuota de casa publicada).
 Verificado en local contra producción (fútbol y NBA de ayer); los candados del fútbol solo desaparecen al
 desplegar la API. Ids de caché: `hist-casa-20261105`.
+
+## 2026-11-05 — Tenis: la web lee la cuota PropLine de `/web/deportes/tenis/cuotas` (decisión del titular)
+
+Por qué: el historial decía «Modelo · sin casa» en todo el tenis porque `/web/deportes/tenis` trae `price: None`, pero la
+cuota ya se calculaba en producción aparte (`cuotas_tenis.py` + `cuotas_web.py`, usada solo por la app móvil). La rama
+`web/tenis-cuota-referencia` (sidecar `tennis_cuotas.json`) quedó superada y no se despliega.
+
+Cómo: `ensureSport('tenis')` pinta primero el tenis y pide las cuotas DESPUÉS (`loadTennisQuotes`); en frío el endpoint tarda
+hasta ~100 s y mientras responde `unavailable`, así que se reintenta dos veces cada 20 s y, si falla, queda la cuota justa del
+modelo sin error visible. `applyTennisQuotes` pone `price`, `book`, `price_book` y `reference` solo si hay precio > 1 y casa con
+nombre, y nunca pisa un precio que ya trajera el feed. Es una REFERENCIA (la mejor casa antes del sello, fuera del sello): se rotula
+«Cuota de referencia» / «Casa · referencia» y `beneficio()` la excluye (marca `ref`). Efecto lateral buscado: la ventana de tenis y su
+destacado muestran esa cuota y casa en vez de «Del modelo».
+
+Cobertura medida (5-nov): 132 de 143 eventos con cuotas; 67 de 102 destacados liquidados con cuota en su mercado. Los huecos son
+hándicap de juegos (23), hándicap de sets (3) y juegos totales (2): el servidor exige la línea exacta y no usa la más cercana, y esas
+filas siguen con «Modelo · sin casa». Ids de caché: `tenis-cuota-20261105` (app, real-views, ergonomic-views, sports-data, sports-window).
+Verificado en local contra producción; sin desplegar.

@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-casa-20261105';
-import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=hist-casa-20261105';
+import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=tenis-cuota-20261105';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -100,8 +100,9 @@ export function createHubViews(ctx) {
   const leagueLabel=e=>`${esc(e.league||'')}${e.sport==='tenis'&&e.surface?` · ${esc(surfaceName(e.surface))}`:''}`;
   const progress=value=>{const pct=Math.max(0,Math.min(100,Math.round(value*100)));return `<div class="cyber-progress cyber-progress--green cyber-progress--sm" data-value="${pct}" role="progressbar" aria-label="Probabilidad publicada ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="cyber-progress__bar"></div></div>`;};
   const teamsRow=(e,big=false)=>`<div class="win-pk-teams"><div class="win-pk-side">${avatar(e.home,e.sport,imageOf(e,'home'),big)}<strong>${esc(e.home)}</strong></div><span class="win-pk-vs ${e.score?'is-score':''}">${e.score?esc(e.score):'VS'}</span><div class="win-pk-side is-away">${avatar(e.away,e.sport,imageOf(e,'away'),big)}<strong>${esc(e.away)}</strong></div></div>`;
-  // Sin cuota publicada (NBA, tenis) no hay bloque de cuota: la probabilidad ya sale en su barra.
-  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.model?'Cuota del modelo':m.house?'Cuota de la casa':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
+  // Sin cuota (NBA y tenis sin referencia) no hay bloque de cuota: la probabilidad ya sale en su barra. `price_book` marca la referencia de
+  // PropLine de tenis (la mejor casa antes del sello, no sellada): se dice así.
+  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.price_book?'Cuota de referencia':m.model?'Cuota del modelo':m.house?'Cuota de la casa':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
 
   // Pronóstico de la tarjeta de fútbol: el destacado del partido, el mismo que enseña su ficha (`mercados.destacado`, regla del
   // servidor: de TODOS los mercados del partido, la mayor probabilidad con cuota >= 1,20 y probabilidad >= 75 %). Mientras se consulta no se enseña el pick sellado, para que la

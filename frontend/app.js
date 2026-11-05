@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=hist-casa-20261105';
-import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=hist-casa-20261105';
-import { createSportWindow } from './sports-window.js?v=hist-casa-20261105';
+import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
+import { createSportWindow } from './sports-window.js?v=tenis-cuota-20261105';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
@@ -188,8 +188,17 @@ function ensureSport(sport) {
   if(sportsCache.has(sport))return sportsCache.get(sport);
   const entry={status:'loading',events:[]},generation=realGeneration;
   sportsCache.set(sport,entry);
-  loadSport(sport).then(result=>{if(generation!==realGeneration)return;sportsCache.set(sport,result);rerenderIfIdle();});
+  loadSport(sport).then(result=>{if(generation!==realGeneration)return;sportsCache.set(sport,result);if(sport==='tenis'&&result.status==='ready')ensureTennisQuotes(result,generation);rerenderIfIdle();});
   return entry;
+}
+// La cuota de referencia de tenis se pide DESPUÉS de pintar el tenis: el servidor la calcula aparte y en frío tarda. Si aún no está
+// (`unavailable`), se reintenta dos veces con pausa; si falla, el tenis sigue con la cuota justa del modelo, sin error visible.
+function ensureTennisQuotes(result,generation,attempt=0) {
+  loadTennisQuotes().then(quotes=>{
+    if(generation!==realGeneration)return;
+    if(quotes.status==='ready'){applyTennisQuotes(result.events,quotes.events);rerenderIfIdle();}
+    else if(quotes.status==='unavailable'&&attempt<2)setTimeout(()=>ensureTennisQuotes(result,generation,attempt+1),20000);
+  });
 }
 const tennisStatsCache = new Map();
 function ensureTennisStats(id) {

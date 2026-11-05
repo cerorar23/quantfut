@@ -199,6 +199,39 @@ export async function loadSport(sport, fetcher=fetch, now=new Date()) {
   finally {clearTimeout(timer);}
 }
 
+// Cuota PropLine de tenis (`/web/deportes/tenis/cuotas`): la mejor casa que cotizaba el mercado cuando se selló el pronóstico. Es una referencia,
+// NO va dentro del sello. El servidor la calcula aparte y en frío tarda (hasta ~100 s tras reiniciar la API; mientras, responde `unavailable`),
+// así que la web pinta el tenis primero y la pide después (ver `ensureSport`).
+export async function loadTennisQuotes(fetcher=fetch) {
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),30000);
+  try {
+    const response=await fetcher('/web/deportes/tenis/cuotas',{signal:controller.signal,cache:'no-store'});
+    if(!response.ok)throw new Error('Fuente no disponible');
+    const data=await response.json();
+    if(!['ok','partial'].includes(data?.state)||!data.events||typeof data.events!=='object'||Array.isArray(data.events))return {status:'unavailable',events:{}};
+    return {status:'ready',events:data.events};
+  } catch {return {status:'error',events:{}};}
+  finally {clearTimeout(timer);}
+}
+
+const bookLabel = key => BOOK_NAMES[key] || String(key).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+// Pone precio y casa de referencia en los mercados de tenis que la tengan. Muta los eventos recibidos (son los de la caché de la web).
+// Nunca pisa un precio que ya trajera el feed ni inventa uno: sin precio válido y casa con nombre, el mercado se queda como estaba.
+export function applyTennisQuotes(events, quotes) {
+  for (const event of Array.isArray(events) ? events : []) {
+    const byMarket = quotes?.[event?.id];
+    if (!byMarket || typeof byMarket !== 'object') continue;
+    for (const m of event.markets || []) {
+      const q = byMarket[m.id];
+      if (!q || m.price != null || !(typeof q.price === 'number' && Number.isFinite(q.price) && q.price > 1) || typeof q.book !== 'string' || !q.book.trim()) continue;
+      const book = bookLabel(q.book.trim());
+      Object.assign(m, { price: q.price, book, price_book: book, quote_as_of: q.as_of || null, reference: `${book} · referencia previa al sello` });
+    }
+  }
+  return events;
+}
+
 // Estadísticas de jugadores de un partido de tenis (las resume el servidor a partir de API-Tennis).
 const finiteNumber = v => v == null || (typeof v === 'number' && Number.isFinite(v));
 export async function loadTennisStats(eventId, fetcher = fetch) {
