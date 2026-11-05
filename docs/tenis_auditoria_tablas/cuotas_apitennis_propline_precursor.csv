@@ -1,0 +1,3 @@
+fuente,medida,metodos,http,archivos_respuesta_con_clave_odds_en_cabecera,nota
+API-Tennis (VPS intake),receipts,"{""get_fixtures"": 147}","{""200"": 146}",0,los 147 registros son get_fixtures; no hay llamada de cuotas
+PropLine precursor (VPS propline_data/tennis),archivos de cierre,,,,archivos muestreados=59; cierre con cotizaciones=56; cierre vacio=3; captured_at min/max=2026-10-23T05:11:54.095822+00:00/2026-10-24T00:40:02.572351+00:00

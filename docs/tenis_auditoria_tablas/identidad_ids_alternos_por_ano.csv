@@ -1,0 +1,11 @@
+circuito,ano,partidos_crudo,partidos_con_id_alterno_wta3xxxxx_crudo,partidos_puente_v3,partidos_con_id_alterno_wta3xxxxx_puente_v3,partidos_elegibles_crudo,partidos_elegibles_puente_v3
+ATP,2022,9619,NO MEDIDO (sin criterio),9619,NO MEDIDO (sin criterio),9004,9004
+ATP,2023,9984,NO MEDIDO (sin criterio),9984,NO MEDIDO (sin criterio),9441,9441
+ATP,2024,10510,NO MEDIDO (sin criterio),10510,NO MEDIDO (sin criterio),10057,10057
+ATP,2025,10427,NO MEDIDO (sin criterio),10427,NO MEDIDO (sin criterio),9748,9748
+ATP,2026,10177,NO MEDIDO (sin criterio),10177,NO MEDIDO (sin criterio),9733,9733
+WTA,2022,2612,0,2612,0,2413,2413
+WTA,2023,2801,0,2801,0,2483,2483
+WTA,2024,2695,0,2695,0,2571,2571
+WTA,2025,2519,0,2519,0,2417,2417
+WTA,2026,2299,89,2299,47,2146,2146

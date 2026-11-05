@@ -1,0 +1,15 @@
+metrica,valor
+filas_canonicas,492251
+match_id_duplicados,0
+partidos_con_fecha_hora_verificada,0
+partidos_fecha_sin_hora (date_precision distinto de hora verificada),492251
+received_at_min,2026-10-17T01:34:40.468208+00:00
+received_at_max,2026-10-17T01:35:48.757064+00:00
+received_at_distintos,168
+tourney_date_min,19670227
+tourney_date_max,20261016
+nombres_con_barra_(dobles_probables),0
+minutes_nulos,260099
+w_svpt_nulos,233386
+eligible_model_true,249938
+completed_standard_false,22724

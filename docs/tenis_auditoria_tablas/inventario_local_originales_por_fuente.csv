@@ -1,0 +1,7 @@
+fuente,patron,ficheros,bytes
+TML originals csv,full_20261016/tml/originals/*.csv,151,92855460
+TML originals atp_quali,full_20261016/tml/originals/atp_quali/*.csv,20,6061346
+MCP originals csv,full_20261016/mcp/originals/*.csv,40,493940768
+tennis-data xls/xlsx,tennis_data_manual/*/*.xls*,47,32795261
+API-Tennis receipts/responses,intake_v1/api_tennis/originals/*/response.json,2,2428518
+weekly tml originals csv,weekly/*/tml/originals/*.csv,151,92878346

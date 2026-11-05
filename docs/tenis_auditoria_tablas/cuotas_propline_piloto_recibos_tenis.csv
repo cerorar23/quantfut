@@ -1,0 +1,5 @@
+fuente,ruta,request_id,recibido_en,http,eventos,cotizaciones,sha256
+PropLine piloto,/v1/sports/tennis/odds,3,2026-10-23T22:21:15.438331+00:00,400,0,0,d20985fe4ad3
+PropLine piloto,/v1/sports/tennis/odds,6,2026-10-23T22:24:01.565668+00:00,200,173,29335,bee09847d074
+PropLine piloto,/v1/sports/tennis/events/587081/markets,7,2026-10-23T22:24:07.547254+00:00,200,10,0,7af0004c25c0
+PropLine piloto,/v1/sports/tennis/odds,8,2026-10-23T22:24:13.257799+00:00,200,88,1631,5ac0d64a8c01

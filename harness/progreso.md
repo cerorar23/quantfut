@@ -7668,3 +7668,27 @@ Decisión del titular: el bloque «Pronóstico» de cada tarjeta de #picks debe 
 ## 4-nov-2026 · NBA: mínimo de 1,20 en Partido y tarjetas de jugador
 Decisión clave: el mínimo de 1,20 se aplica solo a la lista de Partido, no al destacado, que conserva 1,40: el destacado ya tiene su propia regla y filtrarlo con 1,20 cambiaría qué se publica. Los mercados de jugador se agrupan por jugador con su foto oficial (nunca el id interno) y las líneas se pliegan; en 390 px la tabla plana era ilegible. La identidad de la foto sale de `nba.entidad`/`nba_oficial` y, si no es única, queda nula a propósito: una foto equivocada es peor que las iniciales. Desplegado en `nba-api:tarjetas-f11d97c7` y `quantfut-api-nba-tarjetas:f11d97c7`, verificado a 390 px y 851 px. Sigue abierto, ajeno a esta tarea, renovar el artefacto del motor antes del 7-nov.
 
+
+## 2026-11-05 · Tenis: Fase 1 del rediseño (auditoría)
+
+Decisión clave de método: el listón de calidad es el cierre del mercado y el objetivo es probabilidad calibrada y verificable, no ventaja. Lo medido lo justifica: un Elo propio queda +0,036 a +0,039 de log-loss peor que el cierre de Pinnacle y el Markov del motor actual +0,06 (ATP) / +0,09 (WTA) peor; el ganador en producción se recentra al precio del mercado, así que empata con él de forma circular (no mide habilidad propia).
+
+Hallazgo de datos: Pinnacle desaparece de Tennis-Data desde febrero de 2026 (0 % mensual; Bet365 y la media siguen); la referencia de 2026 es Bet365/media. Sigue abierta la duda de si esas cuotas son de apertura o cierre (la literatura se contradice).
+
+Por qué: la lectura de la literatura se rehízo en map-reduce (haiku extrae un JSON por estudio, opus sintetiza y verifica 28 cifras contra el texto) porque la primera pasada con 7 agentes opus se cortó por límite de uso y no cabía en un contexto. Los JSON baratos subestimaban nuestros datos (TML sí trae estadísticas de saque en ~250 mil partidos); manda el texto del PDF.
+
+Entorno: el shell solo deja escribir a Python en la carpeta principal del repo, no en el worktree; las salidas pesadas van a `data/tennis/rediseno_20261104/`.
+
+## 2026-11-05 · Tenis: Fase 2 del rediseño (plan técnico)
+
+Decisión clave: el rating de resultados (R) fija el ganador calibrado y el modelo de puntos (P) solo aporta la suma de probabilidades de punto; se unen por inversión exacta, de modo que todos los mercados salen de una única distribución conjunta. Por qué: un modelo solo por puntos pierde frente a Elo (lit. A01, A06, A12; nuestro Markov +0,06/+0,09 peor), y la diferencia de fuerza debe venir calibrada con resultados.
+
+Superficie y fatiga son estructurales (siempre presentes, con encogimiento jerárquico y φ ≥ 0) pero su magnitud se mide con compuerta propia: la literatura dice que la superficie aporta poco sobre un rating global y nadie validó minutos acumulados; si no mejoran fuera de muestra se publica así. IID con efecto aleatorio del partido por defecto (sin «clutch» por jugador), con una prueba preregistrada para decidir presión más adelante.
+
+Hechos nuevos: el plan de API-Tennis venció el 1-nov y los resultados en vivo llegan por SportsAPIPro (DEPLOYS 31-oct, imagen de la rama `plan/sustituir-apify`, sin fusionar a main); existe un recolector Apify de SofaScore con tenis que la auditoría no midió. Comprobación independiente: 0,66/0,60 → 0,775 de ganar a tres sets sin efecto de partido, igual que el plan.
+
+### Sprint 0 del rediseño de tenis (2026-11-05)
+
+Arnés completo en el worktree `tenis/rediseno-f1` (código de `origin/main` sin cambios; solo se añaden documentos y scripts de medición): 1.758 aprobadas, 122 omitidas, 0 fallos. Un primer intento dio 10 fallos, todos `PoolTimeout` por autenticación de Postgres: el worktree no tiene el `.env` (ignorado por git) y las pruebas caen a la configuración por defecto. Con el `.env` del repo principal cargado solo en memoria las mismas suites pasan (69/69). Es falla de entorno, no de código.
+
+Entorno: el shell no deja a Python crear temporales fuera de la carpeta principal del repo (el script `test_local_windows.ps1` fija el temporal dentro del worktree y por eso falla aquí); se corrió el mismo bootstrap de pytest con `--basetemp` y TEMP en `data/tennis/rediseno_20261104/`. Para que el script encuentre las dependencias, el worktree tiene una unión `.venv` hacia el entorno del repo principal (ignorada por git).

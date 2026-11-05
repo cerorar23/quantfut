@@ -1,0 +1,5 @@
+fuente,circuit,source_group,partidos,elegibles_modelo,completados,serve_counts_validos
+full_20261016/canonical/matches.parquet,ATP,challenger,165689,75559,159815,78411
+full_20261016/canonical/matches.parquet,ATP,qualifying,29429,27002,28320,27905
+full_20261016/canonical/matches.parquet,ATP,tour,199474,100390,187267,103744
+full_20261016/canonical/matches.parquet,WTA,tour,97659,46987,94125,48713

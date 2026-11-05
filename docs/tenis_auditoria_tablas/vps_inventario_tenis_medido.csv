@@ -1,0 +1,23 @@
+recurso,ubicacion,medida,valor,comando_o_fuente,fecha_medicion_utc
+~/quantfut-tenis/data,VPS,tamano,"12K params; 452K live_odds_v1 (37 ficheros); 647M-649M intake/weekly (du -sh)",du -sh por subcarpeta + find -type f | wc -l,2026-11-05 08:00
+~/quantfut-tenis/data/intake_v1,VPS,ficheros,896,find intake_v1 -type f | wc -l,2026-11-05 08:00
+~/quantfut-tenis/data/intake_v1/api_tennis/originals,VPS,carpetas_hash / ficheros / tamano,"147 carpetas hex / 293 ficheros / 65M",ls originals | wc -l; find -type f; du -sh,2026-11-05 08:00
+~/quantfut-tenis/data/intake_v1/api_tennis/originals,local,carpetas_hash,2 (ambas presentes en VPS),ls local originals vs listado VPS (grep -x -F),2026-11-05 08:00
+~/quantfut-tenis/data/intake_v1/predictions,VPS,ficheros,350,find -type f | wc -l,2026-11-05 08:00
+~/quantfut-tenis/data/intake_v1/runs,VPS,ficheros,248,find -type f | wc -l,2026-11-05 08:00
+~/quantfut-tenis/data/intake_v1/ledger.sqlite,VPS (copia local en scratchpad),sealed / excluded,"350 / 92 (sealed_at 2026-10-20T00:52 .. 2026-11-04T17:25)",scp copia + sqlite3 mode=ro,2026-11-05 08:00
+~/quantfut-tenis/data/intake_v1/api_tennis/states.sqlite,VPS (copia local),requests / receipts / observations / eventos distintos,"147 / 146 / 4747 / 527",scp copia + sqlite3 mode=ro (recepcion 2026-10-20T00:52 .. 2026-11-05T00:25),2026-11-05 08:00
+intake_v1/api_tennis/states.sqlite,local,requests / receipts / observations,"2 / 2 / 113 (copia local desfasada)",inventario_local_sqlite.csv (inventario_datos.py seccion locales),2026-11-05 03:1x UTC
+~/tenis-equivalencias/data/index.sqlite,VPS (copia local),receipts / equivalencias / partidos_emparejados / torneos,"27 (status 200) / 191 jugadores / 182 partidos (directo=182) / 7",scp copia + sqlite3 mode=ro,2026-11-05 08:00
+~/tenis-equivalencias,VPS,tamano,5.9M,du -sh,2026-11-05 08:00
+~/quantfut-tenis/data/weekly,VPS,snapshots,"20261019, 20261020, 20261026, 20261102; 216M y 187-188 ficheros cada uno",ls; du -sh; find | wc -l,2026-11-05 08:00
+weekly/20261102/tml/originals/2024.csv,VPS,lineas / sha256 inicio,3077 / bf6d2f18a422453e25fe,wc -l; sha256sum,2026-11-05 08:00
+full_20261016/tml/originals/2024.csv,local,lineas / sha256 inicio,3077 / d1127519d7bda61a9e10,wc -l; sha256sum,2026-11-05 08:00
+weekly/20261102/tml/originals/2026.csv,VPS,lineas / sha256 inicio,2658 / d69f95b1f319932b60d6,wc -l; sha256sum,2026-11-05 08:00
+full_20261016/tml/originals/2026.csv,local,lineas / sha256 inicio,2482 / a2bb4af3dfc06a60a0e5,wc -l; sha256sum,2026-11-05 08:00
+base quantfut (quantfut-db-1),VPS,esquemas con tablas de tenis,0 (esquemas futbol y public; ninguna tabla contiene tenis/tennis),SELECT en pg_class dentro de BEGIN TRANSACTION READ ONLY (psql via docker exec -i),2026-11-05 08:00
+bases de datos quantfut-db-1,VPS,bases,"postgres, quantfut, template0, template1",SELECT datname FROM pg_database,2026-11-05 08:00
+~/sofascore-scraper/data/v3,VPS,torneos / carpetas evento / schedules / tamano,"11 / 10748 / 1342 / 896M",find | wc -l; du -sh,2026-11-05 08:00
+~/sofascore-scraper/data/v3 (eventos),VPS,deporte de cada event.json.gz,"Football 10748 de 10748 (0 tenis)",find events -name event.json.gz | xargs zcat | grep -o sport slug (lectura),2026-11-05 08:00
+volumen quantfut_artifacts,VPS,contenido (subcarpeta propline_shared segun vps_run.sh),NO MEDIDO: _data sin permiso de lectura para el usuario qf; no se uso docker run,ls /var/lib/docker/volumes/quantfut_artifacts/_data -> Permission denied,2026-11-05 08:00
+crontab qf (tenis),VPS,entradas,"25 * * * * vps_run.sh hourly (intake; resultados 2 veces/h); 0 11 * * 1 vps_run.sh weekly (refresh); 20 4,16 * * * tenis-equivalencias capture+match; 17 */2 publicar_tenis_estadisticas; 2-59/5 publicar_tenis_web; 30 6,18 sofascore-local-sync (todos los deportes)",crontab -l,2026-11-05 08:00

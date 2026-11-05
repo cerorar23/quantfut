@@ -3749,3 +3749,22 @@ Detalle en docs/nba_rediseno_informe_final_20261103.md.
 - [x] 124 pruebas frontend y 7 de mercados con PostgreSQL 16; PR #259 y despliegue anotados en `DEPLOYS.md`.
 - [ ] Renovar el artefacto NBA local antes del 7-nov-2026 13:18 CDMX (sigue abierto; no es de esta tarea).
 
+
+## Tenis: rediseño completo del motor — Fase 1 auditoría (2026-11-04/05)
+
+Rama `tenis/rediseno-f1`. Informe: `docs/tenis_auditoria_20261104.md` (inventarios de datos y cuotas, literatura de 76 estudios, línea base walk-forward). No se ha escrito código del motor nuevo.
+
+- [x] Inventario de datos local y VPS (solo lectura) y de cuotas con margen por contrato.
+- [x] Literatura: 76/76 leídos (limpieza local, Paso A haiku por estudio, Paso B opus); síntesis en `docs/tenis_literatura_20261104.md`.
+- [x] Línea base walk-forward 2019-2026 contra el cierre (Elo propio +0,036 a +0,039 de log-loss peor que Pinnacle; Markov del motor actual +0,06 ATP / +0,09 WTA peor).
+- [ ] Decisiones del titular (10, en §9 del informe) y su «Sí» para pasar a la Fase 2 (plan técnico).
+- [ ] Correr `./scripts/test_local_windows.ps1 -Suite all` y hacer commit de la Fase 1.
+
+## Tenis: rediseño completo del motor — Fase 2 plan técnico (2026-11-05)
+
+Plan: `docs/tenis_plan_tecnico_20261105.md` (secciones A–N). Sin código del motor. Cuotas = PropLine (fuente fija); Tennis-Data solo historia del ganador.
+
+- [x] Plan técnico: datos propios (`tenis-db`), identidad, captura, modelo R (rating con superficie y fatiga) + P (saque/resto) unidos por inversión exacta, simulador analítico con una sola conjunta, compuertas, sprints.
+- [ ] Decisiones D1–D12 del plan (§M.1) y «Sí, Sprint 0» del titular.
+- [x] S0 (5-nov): arnés completo en verde (1.758 aprobadas, 122 omitidas, 0 fallos) y commit de las Fases 1 y 2 en `tenis/rediseno-f1`.
+- [ ] S1 contratos y base; S2 ingesta e identidad; S3 núcleo analítico (P y R); S4 conjunta y mercados; S5 PropLine como referencia; S6 sellado y ruta beta `/tenis/v2`; S7 micro-eventos (solo evaluados).
