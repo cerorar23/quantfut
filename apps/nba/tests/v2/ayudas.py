@@ -20,10 +20,10 @@ def nuevo_dato(db, partido, entidad, nombre="puntos", valor=10.0, etiqueta=None,
     ).fetchone()[0]
 
 
-def nueva_captura(db, fuente="nba_oficial", fase="final"):
+def nueva_captura(db, fuente="nba_oficial", fase="final", recibido=None):
     return db.execute(
-        "INSERT INTO nba.captura (fuente, objetivo, fase, solicitado_en, ok) VALUES (%s,'x',%s, now(), true) "
-        "RETURNING captura_id", (fuente, fase)).fetchone()[0]
+        "INSERT INTO nba.captura (fuente, objetivo, fase, solicitado_en, recibido_en, ok) VALUES (%s,'x',%s, now(), %s, true) "
+        "RETURNING captura_id", (fuente, fase, recibido)).fetchone()[0]
 
 
 def nueva_cuota(db, partido, valor, lado, fase="cierre", recibido="2026-11-01T21:00:00Z", fuente="propline",

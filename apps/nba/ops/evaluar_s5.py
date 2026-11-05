@@ -35,6 +35,7 @@ def cargar(carpeta: Path):
 
 def main(carpeta: Path):
     resultado, mercados = cargar(carpeta)
+    fechas = {int(r['partido_id']): r['fecha'] for r in csv.DictReader(open(carpeta / 's3_juegos.csv', encoding='utf8'))}
     filas = defaultdict(lambda: defaultdict(list))
     for (nombre, pid), v in mercados.items():
         if pid not in resultado:
@@ -51,6 +52,7 @@ def main(carpeta: Path):
         if a <= 1 or b <= 1:
             continue
         filas[nombre]["y"].append(y)
+        filas[nombre]["grupos"].append(fechas[pid])
         filas[nombre]["max"].append(max(1 / a, 1 / b) / (1 / a + 1 / b))
         for metodo in referencia.METODOS:
             filas[nombre][metodo].append(referencia.quitar_margen([a, b], metodo)[0])
@@ -65,7 +67,7 @@ def main(carpeta: Path):
         mejor = min(referencia.METODOS, key=lambda m: informe[nombre][m]["logloss"])
         base = np.array(d["proporcional"])
         informe[nombre]["mejor"] = mejor
-        informe[nombre]["dif_brier_mejor_vs_proporcional"] = evaluacion.ic_diferencia(np.array(d[mejor]), base, y)
+        informe[nombre]["dif_brier_mejor_vs_proporcional"] = evaluacion.ic_diferencia(np.array(d[mejor]), base, y, grupos=d['grupos'])
         print(f"{nombre:16s} n={len(y):5d} " + " ".join(f"{m}={informe[nombre][m]['logloss']:.5f}" for m in referencia.METODOS) + f" -> {mejor}")
     (carpeta / "informe_s5_referencia.json").write_text(json.dumps(informe, indent=1, ensure_ascii=False), encoding="utf8")
 

@@ -4,8 +4,7 @@
 * Partes oficiales de lesiones ya extraídos de los PDF (`reports.jsonl.gz`): estado y motivo por jugador y partido.
 
 La caja final no tiene recepción acreditada: `recibido_en` es la fecha de adquisición del archivo y `pit = 'reconstruido'`
-(las consultas históricas se filtran por la fecha del juego). Los partes sí tienen la hora del propio parte, que es la
-que se usa como `recibido_en`.
+La hora publicada del parte permanece en el original; no sustituye la recepción del archivo.
 """
 from collections.abc import Iterator
 from datetime import UTC, date, datetime
@@ -15,6 +14,7 @@ from pathlib import Path
 
 from .. import carga, equipos, identidad
 from ..carga import DatoNuevo
+from ..duracion import prorrogas
 from .historico_cuotas import _abrir, _huella
 from .parte_oficial import nombre_directo
 
@@ -93,8 +93,9 @@ def cargar_cajas(db, carpeta: Path) -> dict:
             base = dict(partido_id=partido, fase="final", fuente=FUENTE, recibido_en=recibido, captura_id=captura_e,
                         pit="reconstruido")
             yield DatoNuevo(entidad_id=partido, metrica="estado_partido", etiqueta="final", **base)
-            yield DatoNuevo(entidad_id=partido, metrica="prorrogas", valor=float(max(0, round(
-                ((g["home"].get("minutes") or 240) - 240) / 25))), **base)
+            ot_l, ot_v = prorrogas(g['home'].get('minutes')), prorrogas(g['away'].get('minutes'))
+            if ot_l is not None and ot_v is not None and ot_l == ot_v:
+                yield DatoNuevo(entidad_id=partido, metrica='prorrogas', valor=float(ot_l), **base)
             for lado in ("home", "away"):
                 e = g[lado]
                 equipo = identidad.equipo(db, equipos.NBA_IDS[e["team_id"]])
@@ -140,12 +141,12 @@ def cargar_partes(db, rutas: list[Path]) -> dict:
     def generar():
         for r, ruta in orden:
             captura = _captura(db, ruta, r["source_url"], sha256=r.get("pdf_sha256"))
-            emitido = datetime.fromisoformat(r["report_timestamp_utc"])
+            recibido = datetime.fromtimestamp(ruta.stat().st_mtime, UTC)
             for x in r["rows"]:
                 visitante, local = (equipos.canonico(FUENTE, c) for c in x["matchup"].split("@"))
                 fecha = datetime.strptime(x["game_date"], "%m/%d/%Y").date()
                 partido = _partido(db, cache, x["nba_game_id"] or f"{fecha.isoformat()}:{x['matchup']}", fecha, local, visitante)
-                base = dict(partido_id=partido, fase="pre", fuente=FUENTE, recibido_en=emitido, captura_id=captura,
+                base = dict(partido_id=partido, fase="pre", fuente=FUENTE, recibido_en=recibido, captura_id=captura,
                             pit="reconstruido")
                 if not x["report_submitted"]:
                     equipo = equipos.NBA_IDS.get(x.get("nba_team_id"))

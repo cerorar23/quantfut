@@ -44,6 +44,7 @@ def evaluar(origen: str, carpeta: Path, variante: str):
     mu_t = np.array([margen_de(g, variante) for g in prueba])
     y_t = np.array([1.0 if g["pl"] > g["pv"] else 0.0 for g in prueba])
     con_mercado = np.array([g["p_mercado"] is not None for g in prueba])
+    grupos = np.array([g['fecha'] for g in prueba])
     p_mer = np.array([g["p_mercado"] if g["p_mercado"] is not None else 0.5 for g in prueba])
     base, escala = rc.p_ganador(mu_t, sigma), rc.p_ganador(mu_t, sigma, k)
     logis = rc.aplicar_logistica(base, a, b)
@@ -51,8 +52,8 @@ def evaluar(origen: str, carpeta: Path, variante: str):
     for nombre, p in (("base", base), ("escala", escala), ("logistica", logis)):
         fila[nombre] = {"brier": ev.brier(p[con_mercado], y_t[con_mercado]), "logloss": ev.logloss(p[con_mercado], y_t[con_mercado]),
                         "pendiente": ev.pendiente_calibracion(p[con_mercado], y_t[con_mercado])[0],
-                        "dif_vs_mercado": ev.ic_diferencia(p[con_mercado], p_mer[con_mercado], y_t[con_mercado]),
-                        "dif_vs_base": ev.ic_diferencia(p[con_mercado], base[con_mercado], y_t[con_mercado])}
+                        "dif_vs_mercado": ev.ic_diferencia(p[con_mercado], p_mer[con_mercado], y_t[con_mercado], grupos=grupos[con_mercado]),
+                        "dif_vs_base": ev.ic_diferencia(p[con_mercado], base[con_mercado], y_t[con_mercado], grupos=grupos[con_mercado])}
     # hándicap: la escala de la media también mueve las probabilidades de cubrir una línea, así que se comprueba que no empeoren
     h = [i for i, g in enumerate(prueba) if g["linea"] is not None and g["p_mercado_handicap"] is not None]
     if h:
@@ -62,7 +63,7 @@ def evaluar(origen: str, carpeta: Path, variante: str):
         ph0 = np.clip(norm.cdf((mu_t[h] + lin) / sigma), 1e-6, 1 - 1e-6)
         ph1 = np.clip(norm.cdf((k * mu_t[h] + lin) / sigma), 1e-6, 1 - 1e-6)
         fila["handicap"] = {"n": len(h), "base": ev.brier(ph0, y_h), "escala": ev.brier(ph1, y_h), "mercado": ev.brier(p_h_mer, y_h),
-                            "dif_escala_vs_base": ev.ic_diferencia(ph1, ph0, y_h)}
+                            "dif_escala_vs_base": ev.ic_diferencia(ph1, ph0, y_h, grupos=grupos[h])}
     fila["rmse_margen"] = {"base": ev.rmse(mu_t, [g["pl"] - g["pv"] for g in prueba]), "escala": ev.rmse(k * mu_t, [g["pl"] - g["pv"] for g in prueba])}
     return fila
 

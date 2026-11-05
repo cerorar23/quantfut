@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
+import os
 
 import numpy as np
 
@@ -35,18 +36,31 @@ RUTA_IMPACTO = Path(__file__).parent / "parametros" / "impacto.json"
 @dataclass(frozen=True)
 class ParametrosImpacto:
     impacto: object                        # plantilla.Impacto (beta, tau, intercepto y efecto del descanso)
-    sigma_margen: float                    # desviación del margen de la MEZCLA equipo + jugadores medida hacia adelante
+    sigma_margen: float                    # desviación del margen; `objetivo` distingue regulación de finales completos
     datos_hasta: str
     version: str
+    aprobado_regulacion: bool = False
+    objetivo: str = 'margen_regulacion'
+    posesiones_referencia: float = 100.0
+    ot: dict | None = None
+    conocido_en_utc: str | None = None
 
 
-def cargar_impacto(ruta: Path = RUTA_IMPACTO) -> ParametrosImpacto:
+def cargar_impacto(ruta: Path | None = None) -> ParametrosImpacto:
     from .plantilla import Impacto
+    ruta = ruta or Path(os.environ.get('NBA_IMPACTO_JSON', RUTA_IMPACTO))
     crudo = ruta.read_bytes().replace(b"\r\n", b"\n")
     a = json.loads(crudo)
     imp = Impacto(beta={int(k): v for k, v in a["beta"].items()}, tau={int(k): v for k, v in a["tau"].items()},
                   c_margen=a["c_margen"], d_margen=a["d_margen"], c_total=a["c_total"], d_total=a["d_total"])
-    return ParametrosImpacto(imp, a["sigma_margen_mezcla"], a["datos_hasta"], hashlib.sha256(crudo).hexdigest()[:12])
+    val = a.get('validacion', {}).get('ganador', {})
+    ic = val.get('dif_ic95', [float('inf'),float('inf')])
+    aprobado = bool(a.get('aprobado_para_mezcla') and a.get('objetivo') == 'margen_regulacion'
+                    and val.get('n',0) >= 500 and len(ic)==2 and np.isfinite(ic).all() and ic[1]<=0
+                    and a.get('ot') and a.get('conocido_en_utc') and a.get('hashes_entradas'))
+    return ParametrosImpacto(imp, a["sigma_margen_mezcla"], a["datos_hasta"], hashlib.sha256(crudo).hexdigest()[:12],
+                            aprobado, a.get('objetivo','final_historico_implicito'),
+                            a.get('posesiones_referencia',100.), a.get('ot'), a.get('conocido_en_utc'))
 
 
 def cargar_props(ruta: Path = RUTA_PROPS) -> ParametrosProps:

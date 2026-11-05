@@ -8,6 +8,7 @@
 """
 import numpy as np
 from scipy.special import gammaln
+from scipy.stats import nbinom
 
 ESTADISTICAS = ("puntos", "rebotes", "asistencias", "triples")
 TECHO = {"puntos": 70, "rebotes": 35, "asistencias": 30, "triples": 15}
@@ -57,12 +58,50 @@ def pmf_mezcla(tasa: np.ndarray, muestras_min: np.ndarray, alfa: float, techo: i
     return np.exp(logp).mean(axis=1)
 
 
-def prob_mas_de(pmf: np.ndarray, linea: np.ndarray) -> np.ndarray:
-    """P(X > línea) por fila; en líneas enteras el empate exacto se reparte a mitades. Acotada a [0,001; 0,999]."""
+def pmf_mezcla_adaptativa(tasa: np.ndarray, muestras_min: np.ndarray, alfa: float, techo: int,
+                         tolerancia: float = 1e-10, maximo: int = 4096) -> np.ndarray:
+    """Conserva la cola de cada componente; solo normaliza después de comprobar su masa omitida."""
+    tasa, muestras_min = np.asarray(tasa, float), np.asarray(muestras_min, float)
+    if tasa.ndim != 1 or muestras_min.ndim != 2 or len(tasa) != len(muestras_min) or not muestras_min.shape[1]:
+        raise ValueError("dimensiones de conteo inválidas")
+    if not np.isfinite(tasa).all() or not np.isfinite(muestras_min).all() or (tasa < 0).any() or (muestras_min < 0).any():
+        raise ValueError("exposición o tasa inválida")
+    if not np.isfinite(alfa) or alfa <= 0 or not 0 < tolerancia < 1 or not 0 <= techo <= maximo:
+        raise ValueError("parámetros de cola inválidos")
+    mu = np.maximum(tasa[:, None] * muestras_min, 1e-9)
+    n = 1 / alfa
+    limite = nbinom.isf(tolerancia / 2, n, n / (n + mu))
+    if not np.isfinite(limite).all() or limite.max() > maximo:
+        raise ValueError("cola fuera del presupuesto de soporte; no se renormaliza una ley truncada")
+    soporte = max(techo, int(limite.max()))
+    p = pmf_mezcla(tasa, muestras_min, alfa, soporte)
+    masa = p.sum(axis=1)
+    cola = nbinom.sf(soporte, n, n / (n + mu)).mean(axis=1)
+    if (cola > tolerancia).any() or not np.isfinite(p).all() or (np.abs(1 - masa) > tolerancia + 1e-12).any():
+        raise ValueError("masa omitida fuera de tolerancia")
+    return p / masa[:, None]
+
+
+def probabilidades_contrato(pmf: np.ndarray, linea: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Masas de over, push y under condicionadas a participar, no a evitar el push."""
+    pmf = np.asarray(pmf, float)
+    if pmf.ndim != 2 or not pmf.shape[1] or not np.isfinite(pmf).all() or (pmf < 0).any():
+        raise ValueError("PMF inválida")
+    masa = pmf.sum(axis=1)
+    if (np.abs(masa - 1) > 1e-4).any():
+        raise ValueError("PMF incompleta; no se valora una cola desconocida")
     k = np.arange(pmf.shape[1])[None, :]
     linea = np.asarray(linea)[:, None]
-    p = (pmf * (k > linea)).sum(axis=1) + 0.5 * (pmf * (k == linea)).sum(axis=1)
-    return np.clip(p / pmf.sum(axis=1), 0.001, 0.999)
+    if linea.shape[0] != pmf.shape[0] or not np.isfinite(linea).all():
+        raise ValueError("línea inválida")
+    return tuple((pmf * mascara).sum(axis=1) / masa for mascara in (k > linea, k == linea, k < linea))
+
+
+def prob_mas_de(pmf: np.ndarray, linea: np.ndarray) -> np.ndarray:
+    """P(over | participación, no push). NaN significa contrato siempre devuelto, no una apuesta al 50 %."""
+    gana, _, pierde = probabilidades_contrato(pmf, linea)
+    accion = gana + pierde
+    return np.divide(gana, accion, out=np.full_like(gana, np.nan), where=accion > 1e-15)
 
 
 def pit_medio(pmf: np.ndarray, y: np.ndarray) -> np.ndarray:

@@ -1,18 +1,18 @@
-"""Motor v2.0 de equipo sobre una `Instantanea`: reproduce los ratings jugando la historia visible y simula el partido.
-
-Determinista: la semilla es el id del partido; mismos datos → misma distribución (G-fuga). No usa jugadores todavía: ese refinamiento
-(plantilla, Sprint 3b) necesita las alineaciones y los minutos esperados dentro de la instantánea.
-"""
-from . import identidad, mercados, nucleo
+"""Inferencia determinista con posesiones, estado local congelado y prórroga explícita."""
+from . import identidad, mercados, nucleo, estado_equipo
 from .nucleo import Parametros, Ratings
 from .pit import Instantanea
+from .salida_equipo import serializar
 
 PARAMETROS = Parametros(eta=0.045, arrastre=0.65, eta_liga=0.01, efecto_b2b=2.90)
 SIGMA_MARGEN, SIGMA_TOTAL = 13.81, 18.43
 N_SIM = 100_000                                       # error típico de una probabilidad ≤ 0,16 pp (con 20.000 era 0,35 pp); 6 ms por partido
 NIVELES = tuple(i / 200 for i in range(1, 200))                     # cuantiles 0,5 % … 99,5 % en pasos de 0,5 % (199 valores)
-VERSION_MODELO = (f"equipo-2.0;eta={PARAMETROS.eta};arrastre={PARAMETROS.arrastre};liga={PARAMETROS.eta_liga};"
-                  f"b2b={PARAMETROS.efecto_b2b};sigma={SIGMA_MARGEN}/{SIGMA_TOTAL};n={N_SIM};margen=proporcional")
+VERSION_MODELO = 'equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta'
+
+
+def version() -> str:
+    return VERSION_MODELO + ';equipo=' + estado_equipo.artefacto()[1][:12]
 
 
 def _ratings(inst: Instantanea) -> tuple[Ratings, dict]:
@@ -37,17 +37,12 @@ def pronosticar(inst: Instantanea) -> tuple[dict, dict]:
     """(escenarios, distribucion) listos para sellar; con la historia vacía se niega en lugar de inventar ratings."""
     if not inst.historia:
         raise ValueError("sin historia visible: no se pronostica")
-    r, ultimo = _ratings(inst)
-    dl = (inst.fecha - ultimo[inst.local]).days if inst.local in ultimo else 7
-    dv = (inst.fecha - ultimo[inst.visitante]).days if inst.visitante in ultimo else 7
-    mu_l, mu_v = r.esperado(inst.local, inst.visitante, nucleo.ajuste_descanso(dl, dv, PARAMETROS))
-    m = nucleo.simular(mu_l, mu_v, SIGMA_MARGEN, SIGMA_TOTAL, n=N_SIM, semilla=inst.partido_id)
-    margen, total = m.margen(), m.total()
-    distribucion = {"p_local": round(mercados.ganador(m), 6), "mu": [round(mu_l, 4), round(mu_v, 4)],
-                    "paso_cuantil": 0.005,
-                    "margen": [float(margen.cuantil(q)) for q in NIVELES],
-                    "total": [float(total.cuantil(q)) for q in NIVELES],
-                    "puntos_local": [float(m.puntos("local").cuantil(q)) for q in NIVELES],
-                    "puntos_visitante": [float(m.puntos("visit").cuantil(q)) for q in NIVELES]}
-    escenarios = {"descanso_dias": {"local": dl, "visitante": dv}, "partidos_en_historia": len(inst.historia)}
+    e = estado_equipo.estimar(inst)
+    m = nucleo.simular_con_ot(e.mu_local, e.mu_visitante, e.sigma_margen, e.sigma_total,
+                             e.posesiones, e.p_ot, n=N_SIM, semilla=inst.partido_id)
+    distribucion = serializar(m, *map(float, m.muestras.mean(axis=0)), NIVELES)
+    distribucion['tratamiento_ot'] = 'regulacion_mas_prorroga'
+    escenarios = {"descanso_dias": {"local": e.descanso_local, "visitante": e.descanso_visitante},
+                  "partidos_en_historia": len(inst.historia), 'posesiones_regulacion': e.posesiones, 'p_ot': e.p_ot,
+                  'artefacto_equipo': e.version, 'corte_entrenamiento': e.corte_entrenamiento}
     return escenarios, distribucion

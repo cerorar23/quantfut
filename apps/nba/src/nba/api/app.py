@@ -22,6 +22,7 @@ import psycopg
 
 from ..contratos.validar import ContratoIncumplido, validar_equipo, validar_jugador
 from ..v2 import props, sellado
+from ..v2.contratos_apuesta import ProbabilidadesContrato, desde_masas
 from ..v2.equipos import TRICODES
 from . import estadisticas
 
@@ -35,6 +36,12 @@ def prob_mas_de(cuantiles: list[float], linea: float, paso: float = 0.005) -> tu
     """P(X > línea) a partir de los cuantiles (199 valores, niveles paso…1-paso). Fuera del rango se acota a [paso, 1-paso]
     y se marca como extremo. Interpolación lineal del nivel entre cuantiles contiguos."""
     q = np.asarray(cuantiles, float)
+    if not np.isfinite(linea) or q.ndim != 1 or not len(q) or not np.isfinite(q).all() or (np.diff(q) < 0).any():
+        raise ValueError("cuantiles o línea inválidos")
+    if np.allclose(q, np.round(q), rtol=0, atol=1e-12):
+        # Los sellos antiguos solo guardaban cuantiles: distribución discreta aproximada,
+        # con resolución de 0,5 pp. Nunca se convierte un átomo en un tramo continuo.
+        return float(np.mean(q > linea)), bool(linea <= q[0] or linea >= q[-1])
     niveles = paso * np.arange(1, len(q) + 1)
     if linea <= q[0]:
         return 1.0 - paso, True
@@ -43,6 +50,53 @@ def prob_mas_de(cuantiles: list[float], linea: float, paso: float = 0.005) -> tu
     # np.interp exige abscisas crecientes: se desempata con una mota para cuantiles repetidos (distribución discreta)
     xs = q + np.arange(len(q)) * 1e-9
     return float(1.0 - np.interp(linea, xs, niveles)), False
+
+
+def contrato_linea(dist: dict, mercado: str, linea: float) -> dict:
+    ley = (dist.get("masas") or {}).get(mercado)
+    if ley is not None:
+        p = desde_masas(ley["soporte"], ley["pmf"], linea)
+        return dict(p.salida(), extremo=p.gana == 0 or p.pierde == 0, aproximada=False, error_resolucion=0.)
+    q = np.asarray(dist[mercado], float)
+    if np.allclose(q, np.round(q), rtol=0, atol=1e-12):
+        p = desde_masas(q, np.full(len(q), 1 / len(q)), linea)
+    else:
+        mas, _ = prob_mas_de(q.tolist(), linea, dist["paso_cuantil"])
+        p = ProbabilidadesContrato(mas, 0., 1 - mas)
+    return dict(p.salida(), extremo=bool(linea <= q[0] or linea >= q[-1]),
+                aproximada=True, error_resolucion=float(dist["paso_cuantil"]))
+
+
+def calibracion_por_version(filas, version_actual: str | None) -> dict:
+    """Una observación por partido y versión; ninguna cifra de otra versión acredita la vigente."""
+    from collections import defaultdict
+    grupos = defaultdict(dict)
+    for identificador, partido, version, prob, a, b in filas:
+        if partido not in grupos[version] or identificador > grupos[version][partido][0]:
+            grupos[version][partido] = (identificador, prob, a, b)
+    def resumir(version):
+        datos = list(grupos[version].values())
+        completos = [(p, float(a > b)) for _, p, a, b in datos if a is not None and b is not None and a != b]
+        r = {"version_modelo": version, "sellados": len(datos), "con_resultado": len(completos),
+             "brier_ganador": None, "logloss_ganador": None, "fiabilidad": [],
+             "estado_evidencia": "descriptiva" if completos else "sin_muestra", "calibracion_certificada": False}
+        if completos:
+            p, y = np.asarray(completos, float).T
+            if not np.isfinite(p).all() or (p < 0).any() or (p > 1).any():
+                raise ValueError("probabilidades inválidas en el seguimiento")
+            r['brier_ganador'] = float(np.mean((p - y) ** 2))
+            pc = np.clip(p, np.finfo(float).eps, 1 - np.finfo(float).eps)
+            r['logloss_ganador'] = float(np.mean(-y * np.log(pc) - (1 - y) * np.log1p(-pc)))
+            tramos = np.minimum((p * 5).astype(int), 4)
+            r['fiabilidad'] = [{"desde": t / 5, "hasta": (t + 1) / 5, "n": int((tramos == t).sum()),
+                               "prob_media": float(p[tramos == t].mean()), "tasa_observada": float(y[tramos == t].mean())}
+                              for t in range(5) if (tramos == t).any()]
+        return r
+    versiones = {v: resumir(v) for v in sorted(grupos)}
+    vigente = resumir(version_actual) if version_actual else {
+        "version_modelo": None, "sellados": 0, "con_resultado": 0, "brier_ganador": None, "logloss_ganador": None,
+        "fiabilidad": [], "estado_evidencia": "version_actual_no_configurada", "calibracion_certificada": False}
+    return {"prospectivo": vigente, "por_version": versiones}
 
 
 def _equipo_valido(dist: dict) -> dict:
@@ -160,7 +214,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
         return estadisticas.estadisticas(temporada, fecha, local, visitante, previos)
 
     @app.get("/nba/v1/partido/{partido_id}/linea")
-    def linea(partido_id: int, mercado: str = Query(...), valor: float = Query(...)):
+    def linea(partido_id: int, mercado: str = Query(...), valor: float = Query(..., allow_inf_nan=False)):
         if mercado not in MERCADOS_LINEA:
             raise HTTPException(422, {"codigo": "mercado_desconocido"})
         with conexion() as db:
@@ -168,8 +222,8 @@ def crear_app(dsn: str | None = None) -> FastAPI:
             if p is None:
                 raise HTTPException(404, {"codigo": "sin_pronostico"})
             d = _equipo_valido(p[7])
-            mas, extremo = prob_mas_de(d[mercado], valor, d["paso_cuantil"])
-            return {"mercado": mercado, "linea": valor, "p_mas": round(mas, 4), "p_menos": round(1 - mas, 4), "extremo": extremo, "hash": p[0]}
+            contrato = contrato_linea(d, mercado, valor)
+            return {"mercado": mercado, "linea": valor, **contrato, "hash": p[0]}
 
     @app.get("/nba/v1/partido/{partido_id}/jugador/{jugador_id}")
     def jugador(partido_id: int, jugador_id: int):
@@ -199,7 +253,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
         return {"partido_id": partido_id, "jugadores": orden}
 
     @app.get("/nba/v1/partido/{partido_id}/jugador/{jugador_id}/linea")
-    def linea_jugador(partido_id: int, jugador_id: int, mercado: str = Query(...), valor: float = Query(...)):
+    def linea_jugador(partido_id: int, jugador_id: int, mercado: str = Query(...), valor: float = Query(..., allow_inf_nan=False)):
         if mercado not in props.ESTADISTICAS:
             raise HTTPException(422, {"codigo": "mercado_desconocido"})
         with conexion() as db:
@@ -207,9 +261,9 @@ def crear_app(dsn: str | None = None) -> FastAPI:
         if p is None:
             raise HTTPException(404, {"codigo": "sin_pronostico_jugador"})
         pmf = np.asarray(_jugador_valido(p[7])["pmf"], float)
-        mas = float(props.prob_mas_de(pmf[None, :], np.array([valor]))[0])
-        return {"mercado": mercado, "linea": valor, "p_mas": round(mas, 4), "p_menos": round(1 - mas, 4), "p_juega": p[7]["p_juega"],
-                "extremo": bool(mas in (0.001, 0.999)), "hash": p[0]}
+        contrato = desde_masas(np.arange(len(pmf)), pmf, valor)
+        return {"mercado": mercado, "linea": valor, **contrato.salida(p[7]["p_juega"]), "p_juega": p[7]["p_juega"],
+                "extremo": contrato.gana == 0 or contrato.pierde == 0, "hash": p[0]}
 
     @app.get("/nba/v1/sello/{hash_}")
     def sello(hash_: str, cadena: bool = False):
@@ -241,7 +295,7 @@ def crear_app(dsn: str | None = None) -> FastAPI:
         historico = json.loads(CALIBRACION.read_text(encoding="utf8")) if CALIBRACION.exists() else None
         with conexion() as db:
             filas = db.execute(
-                "SELECT p.pronostico_id, (p.distribucion->>'p_local')::float, rl.valor, rv.valor FROM nba.pronostico p "
+                "SELECT p.pronostico_id, p.partido_id, p.version_modelo, (p.distribucion->>'p_local')::float, rl.valor, rv.valor FROM nba.pronostico p "
                 "JOIN nba.entidad e ON e.entidad_id = p.partido_id "
                 "JOIN nba.entidad tl ON tl.entidad_id = (e.atributos->>'local')::bigint "
                 "JOIN nba.entidad tv ON tv.entidad_id = (e.atributos->>'visitante')::bigint "
@@ -250,16 +304,15 @@ def crear_app(dsn: str | None = None) -> FastAPI:
                 "LEFT JOIN LATERAL (SELECT d.valor FROM nba.dato d JOIN nba.metrica m USING (metrica_id) WHERE d.partido_id = e.entidad_id AND d.entidad_id = tv.entidad_id "
                 "  AND m.nombre = 'puntos' AND d.periodo = 0 AND d.fase = 'final' ORDER BY d.recibido_en DESC LIMIT 1) rv ON true "
                 "WHERE p.mercado = 'equipo' AND p.entidad_id IS NULL").fetchall()
-        con_resultado = [(p, 1.0 if a > b else 0.0) for _, p, a, b in filas if a is not None and b is not None]
-        pros = {"sellados": len(filas), "con_resultado": len(con_resultado), "brier_ganador": None, "fiabilidad": []}
-        if con_resultado:
-            p = np.array([x[0] for x in con_resultado])
-            y = np.array([x[1] for x in con_resultado])
-            pros["brier_ganador"] = round(float(np.mean((p - y) ** 2)), 4)
-            tramos = np.minimum((p * 5).astype(int), 4)
-            pros["fiabilidad"] = [{"desde": t / 5, "hasta": (t + 1) / 5, "n": int((tramos == t).sum()), "prob_media": round(float(p[tramos == t].mean()), 3),
-                                   "tasa_observada": round(float(y[tramos == t].mean()), 3)} for t in range(5) if (tramos == t).any()]
-        return {"historico": historico, "prospectivo": pros}
+        actual = os.environ.get("NBA_VERSION_MODELO_ACTIVA")
+        if not actual:
+            from ..v2 import equipo_jugadores, parametros
+            actual = equipo_jugadores.version(parametros.cargar_impacto())
+        resumen = calibracion_por_version(filas, actual)
+        identidad_historica = historico.get('version_modelo') if historico else None
+        return {"historico": historico, "historico_version_modelo": identidad_historica,
+                "historico_acredita_version_actual": bool(actual and identidad_historica == actual and historico.get('hashes_entradas')),
+                **resumen}
 
     @app.get("/nba/v2")
     def raiz():

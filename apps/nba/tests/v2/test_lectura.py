@@ -34,7 +34,7 @@ def test_prioridad_gana_en_metricas_de_prioridad(mundo):
 
 def test_misma_fuente_y_mismo_instante_desempata_por_dato_id(mundo):
     db, p, j = mundo
-    c1, c2 = nueva_captura(db), nueva_captura(db)
+    c1, c2 = nueva_captura(db, recibido='2026-11-01T12:00:00Z'), nueva_captura(db, recibido='2026-11-01T12:00:00Z')
     nuevo_dato(db, p, j, valor=20.0, captura_id=c1)
     ultimo = nuevo_dato(db, p, j, valor=22.0, captura_id=c2)
     assert [f[0] for f in a_las(db, "2026-11-02T00:00:00Z")] == [ultimo]

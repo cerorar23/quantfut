@@ -4,8 +4,15 @@ from typing import Literal
 import numpy as np
 
 from .nucleo import Marcador
+from .contratos_apuesta import ProbabilidadesContrato
 
 Lado = Literal["local", "visit", "over", "under"]
+
+
+def _condicionada(ajustado: np.ndarray, invertir: bool = False) -> float | None:
+    p = ProbabilidadesContrato(float(np.mean(ajustado > 0)), float(np.mean(ajustado == 0)),
+                              float(np.mean(ajustado < 0))).condicionada
+    return None if p is None else 1 - p if invertir else p
 
 
 def ganador(m: Marcador, lado: Literal["local", "visit"] = "local") -> float:
@@ -13,24 +20,21 @@ def ganador(m: Marcador, lado: Literal["local", "visit"] = "local") -> float:
     return p_local if lado == "local" else 1.0 - p_local
 
 
-def handicap(m: Marcador, linea: float, lado: Literal["local", "visit"] = "local") -> float:
+def handicap(m: Marcador, linea: float, lado: Literal["local", "visit"] = "local") -> float | None:
     """P(el lado cubre). `linea` es la del LOCAL (−4,5 = local da 4,5 puntos); el visitante tiene la opuesta.
-    En líneas enteras el empate exacto (push) se reparte a mitades, como en `Distribucion.prob_mas_de`."""
+    Probabilidad condicionada a no devolver el contrato; un contrato siempre devuelto no tiene probabilidad de apuesta."""
     ajustado = m.muestras[:, 0] - m.muestras[:, 1] + linea
-    p_local = float(np.mean(ajustado > 0) + 0.5 * np.mean(ajustado == 0))
-    return p_local if lado == "local" else 1.0 - p_local
+    return _condicionada(ajustado, lado != "local")
 
 
-def total(m: Marcador, linea: float, lado: Literal["over", "under"] = "over") -> float:
+def total(m: Marcador, linea: float, lado: Literal["over", "under"] = "over") -> float | None:
     suma = m.muestras.sum(axis=1)
-    p_over = float(np.mean(suma > linea) + 0.5 * np.mean(suma == linea))
-    return p_over if lado == "over" else 1.0 - p_over
+    return _condicionada(suma - linea, lado != "over")
 
 
-def total_equipo(m: Marcador, equipo: Literal["local", "visit"], linea: float, lado: Literal["over", "under"] = "over") -> float:
+def total_equipo(m: Marcador, equipo: Literal["local", "visit"], linea: float, lado: Literal["over", "under"] = "over") -> float | None:
     pts = m.muestras[:, 0 if equipo == "local" else 1]
-    p_over = float(np.mean(pts > linea) + 0.5 * np.mean(pts == linea))
-    return p_over if lado == "over" else 1.0 - p_over
+    return _condicionada(pts - linea, lado != "over")
 
 
 def margen_de_victoria(m: Marcador, cortes: tuple[int, ...] = (5, 10, 15)) -> dict[str, float]:

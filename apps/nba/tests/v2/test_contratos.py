@@ -53,7 +53,7 @@ def dist_equipo(**cambios):
 
 
 def dist_jugador(**cambios):
-    base = dict(pmf=[0.1, 0.2, 0.4, 0.2, 0.05, 0.05], media=2.3, p10=0, p50=2, p90=4, p_juega=0.9, minutos_esperados=30.0)
+    base = dict(pmf=[0.1, 0.2, 0.4, 0.2, 0.05, 0.05], media=2.05, p10=0, p50=2, p90=3, p_juega=0.9, minutos_esperados=30.0)
     base.update(cambios)
     return base
 

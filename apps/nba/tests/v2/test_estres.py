@@ -19,18 +19,19 @@ def liga_completa(db, dias=20, sin_hora=(), equipos_sin_datos=(), sin_puntos=Non
     ids = {t: identidad.equipo(db, t) for t in TRI}
     jug = {t: [identidad.jugador(db, "nba_oficial", f"{2000 + 20 * k + i}", f"{t} jugador {i}") for i in range(9)] for k, t in enumerate(TRI)}
     filas, objetivo, inicio = [], [], {}
+    reloj = datetime.now(UTC)
     for d in range(dias + 1):
         rot = TRI[d % 29:] + TRI[:d % 29] if d else TRI
         for g in range(15):
             a, b = rot[g], rot[29 - g] if g else rot[29]
             if a == b:
                 continue
-            fecha = date(2026, 1, 1) + timedelta(days=d)
+            fecha = reloj.date() + timedelta(days=-dias+d)
             if d == dias:
                 pid = identidad.partido(db, "nba_oficial", f"00225{d:03d}{g:02d}", fecha, ids[a], ids[b], identidad.temporada(fecha))
                 objetivo.append((pid, a, b))
                 if len(objetivo) - 1 not in sin_hora:
-                    t = datetime(fecha.year, fecha.month, fecha.day, 0, 30, tzinfo=UTC) + timedelta(days=1)
+                    t = reloj + timedelta(minutes=30)
                     inicio[pid] = t
                     filas.append(DatoNuevo(partido_id=pid, entidad_id=ids[a], metrica="inicio_programado_utc", fase="pre", fuente="nba_oficial",
                                            recibido_en=datetime(2025, 12, 1, tzinfo=UTC), valor=t.timestamp()))
@@ -41,7 +42,8 @@ def liga_completa(db, dias=20, sin_hora=(), equipos_sin_datos=(), sin_puntos=Non
             filas.append(DatoNuevo(partido_id=pid, entidad_id=pid, metrica="estado_partido", etiqueta="final", fase="final", fuente="nba_oficial",
                                    recibido_en=datetime(fecha.year, fecha.month, fecha.day, 6, tzinfo=UTC) + timedelta(days=1), pit="reconstruido"))           # el partido ya terminó (así lo registra la captura real)
             for t, eq in ((a, ids[a]), (b, ids[b])):
-                base = dict(partido_id=pid, fase="final", fuente="nba_oficial", recibido_en=ADQ, pit="reconstruido")
+                recibido = datetime.combine(fecha + timedelta(days=1), datetime.min.time(), UTC) + timedelta(hours=6)
+                base = dict(partido_id=pid, fase="final", fuente="nba_oficial", recibido_en=recibido, pit="reconstruido")
                 filas.append(DatoNuevo(entidad_id=eq, metrica="puntos", valor=100.0 + (d * 7 + g) % 25, **base))
                 for i, j in enumerate(jug[t]):
                     m = float(MINUTOS[i] + (d % 3) - 1)

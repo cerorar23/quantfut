@@ -61,12 +61,14 @@ def partes(tmp_path):
 
 def test_partes_con_la_hora_del_propio_parte(base_migrada, tmp_path):
     db = base_migrada
-    r = hp.cargar_partes(db, [partes(tmp_path)])
+    ruta = partes(tmp_path)
+    recibido = datetime.fromtimestamp(ruta.stat().st_mtime, UTC)
+    r = hp.cargar_partes(db, [ruta])
     assert r["ok"] and r["partes"] == 2 and r["nuevas"] > 10
     primero = db.execute("SELECT d.etiqueta, d.recibido_en, d.pit, d.fase FROM nba.dato d JOIN nba.metrica m USING (metrica_id) "
                          "JOIN nba.entidad e ON e.entidad_id = d.entidad_id WHERE m.nombre = 'estado_disponibilidad' "
                          "AND e.nombre = 'Colin Castleton'").fetchone()
-    assert primero == ("Out", datetime(2023, 10, 24, 22, 30, tzinfo=UTC), "reconstruido", "pre")
+    assert primero == ("Out", recibido, "reconstruido", "pre")
     motivo = db.execute("SELECT d.etiqueta FROM nba.dato d JOIN nba.metrica m USING (metrica_id) JOIN nba.entidad e "
                         "ON e.entidad_id = d.entidad_id WHERE m.nombre = 'motivo_disponibilidad' AND e.nombre = 'Colin Castleton'").fetchone()
     assert motivo[0] == "G League - Two-Way"

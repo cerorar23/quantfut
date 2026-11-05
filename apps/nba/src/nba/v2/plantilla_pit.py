@@ -1,7 +1,7 @@
 """Plantilla de un partido en un corte (punto en el tiempo): quién puede jugar, su último parte oficial y sus últimos partidos.
 
-Misma regla de visibilidad que `pit.instantanea`: solo partidos de fecha ANTERIOR a la del pronosticado; las filas `reconstruido` se
-aceptan por fecha del partido y las `posterior` exigen `recibido_en <= corte`. El parte oficial (`estado_disponibilidad`, fuente
+Misma regla de visibilidad que `pit.instantanea`: solo partidos de fecha ANTERIOR a la del pronosticado y recepción acreditada.
+El parte oficial (`estado_disponibilidad`, fuente
 `nba_oficial`) es el último con `recibido_en <= corte`. Candidatos de un equipo: quienes jugaron en sus últimos 10 partidos y cuyo último
 partido jugado fue con ese equipo, más los nombrados en el parte cuyo último equipo es este; se exigen al menos 5 partidos jugados.
 """
@@ -25,13 +25,15 @@ SELECT DISTINCT d.entidad_id FROM nba.dato d JOIN nba.metrica m ON m.metrica_id 
 JOIN nba.dato t ON t.partido_id = d.partido_id AND t.entidad_id = d.entidad_id AND t.valor = %(equipo)s
 JOIN nba.metrica mt ON mt.metrica_id = t.metrica_id AND mt.nombre = 'equipo_del_jugador'
 WHERE d.partido_id = ANY(%(pids)s) AND d.fase = 'final' AND d.valor > 0
-  AND (d.pit = 'reconstruido' OR d.recibido_en <= %(corte)s) AND (t.pit = 'reconstruido' OR t.recibido_en <= %(corte)s)
+  AND d.recibido_en <= %(corte)s AND t.recibido_en <= %(corte)s
+  AND NOT EXISTS (SELECT 1 FROM nba.captura c WHERE c.captura_id IN (d.captura_id, t.captura_id) AND (c.recibido_en IS NULL OR c.recibido_en > %(corte)s))
 """
 
 Q_PARTE = """
 SELECT DISTINCT ON (d.entidad_id) d.entidad_id, d.etiqueta
 FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id AND m.nombre = 'estado_disponibilidad'
 WHERE d.partido_id = %(partido)s AND d.fuente = 'nba_oficial' AND d.recibido_en <= %(corte)s
+  AND NOT EXISTS (SELECT 1 FROM nba.captura c WHERE c.captura_id = d.captura_id AND (c.recibido_en IS NULL OR c.recibido_en > %(corte)s))
 ORDER BY d.entidad_id, d.recibido_en DESC, d.dato_id DESC
 """
 
@@ -39,9 +41,12 @@ Q_ULTIMO_EQUIPO = """
 SELECT DISTINCT ON (t.entidad_id) t.entidad_id, t.valor::bigint
 FROM nba.dato t JOIN nba.metrica mt ON mt.metrica_id = t.metrica_id AND mt.nombre = 'equipo_del_jugador'
 JOIN nba.entidad e ON e.entidad_id = t.partido_id
-WHERE t.entidad_id = ANY(%(jug)s) AND e.fecha_juego_et < %(fecha)s AND (t.pit = 'reconstruido' OR t.recibido_en <= %(corte)s)
+WHERE t.entidad_id = ANY(%(jug)s) AND e.fecha_juego_et < %(fecha)s AND t.recibido_en <= %(corte)s
+  AND NOT EXISTS (SELECT 1 FROM nba.captura c WHERE c.captura_id = t.captura_id AND (c.recibido_en IS NULL OR c.recibido_en > %(corte)s))
   AND EXISTS (SELECT 1 FROM nba.dato dm JOIN nba.metrica mm ON mm.metrica_id = dm.metrica_id AND mm.nombre = 'minutos'
-              WHERE dm.partido_id = t.partido_id AND dm.entidad_id = t.entidad_id AND dm.valor > 0 AND dm.fase = 'final')
+              WHERE dm.partido_id = t.partido_id AND dm.entidad_id = t.entidad_id AND dm.valor > 0 AND dm.fase = 'final'
+                AND dm.periodo = 0 AND dm.recibido_en <= %(corte)s
+                AND NOT EXISTS (SELECT 1 FROM nba.captura c WHERE c.captura_id = dm.captura_id AND (c.recibido_en IS NULL OR c.recibido_en > %(corte)s)))
 ORDER BY t.entidad_id, e.fecha_juego_et DESC, t.dato_id DESC
 """
 
@@ -50,7 +55,8 @@ SELECT d.entidad_id, e.fecha_juego_et, d.partido_id, m.nombre, d.valor, f.priori
 FROM nba.dato d JOIN nba.metrica m ON m.metrica_id = d.metrica_id JOIN nba.entidad e ON e.entidad_id = d.partido_id
 JOIN nba.fuente f ON f.fuente = d.fuente
 WHERE d.entidad_id = ANY(%(jug)s) AND m.nombre = ANY(%(metricas)s) AND d.fase = 'final' AND d.periodo = 0
-  AND e.fecha_juego_et < %(fecha)s AND e.fecha_juego_et >= %(desde)s AND (d.pit = 'reconstruido' OR d.recibido_en <= %(corte)s)
+  AND e.fecha_juego_et < %(fecha)s AND e.fecha_juego_et >= %(desde)s AND d.recibido_en <= %(corte)s
+  AND NOT EXISTS (SELECT 1 FROM nba.captura c WHERE c.captura_id = d.captura_id AND (c.recibido_en IS NULL OR c.recibido_en > %(corte)s))
 """
 
 

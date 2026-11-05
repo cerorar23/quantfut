@@ -41,16 +41,33 @@ def pendiente_calibracion(p, y) -> tuple[float, float]:
     return float(b[1]), float(b[0])
 
 
-def ic_diferencia(p_a, p_b, y, n: int = 2000, semilla: int = 0) -> tuple[float, float, float]:
-    """Brier(A) − Brier(B) con intervalo del 95 % por bootstrap pareado (negativo = A mejor)."""
+def ic_diferencia(p_a, p_b, y, n: int = 2000, semilla: int = 0, grupos=None) -> tuple[float, float, float]:
+    """Brier(A) − Brier(B), remuestreando grupos completos y preservando el estimando por observación."""
     p_a, p_b, y = (np.asarray(v, float) for v in (p_a, p_b, y))
+    if p_a.ndim != 1 or p_a.shape != p_b.shape or p_a.shape != y.shape or not len(y):
+        raise ValueError("observaciones incompatibles")
+    if grupos is None:
+        raise ValueError("se requiere declarar la unidad independiente en grupos")
+    grupos = np.asarray(grupos)
+    if grupos.shape != y.shape or n < 2:
+        raise ValueError("grupos de remuestreo incompatibles")
+    if not np.isfinite([p_a, p_b, y]).all() or (p_a < 0).any() or (p_a > 1).any() or (p_b < 0).any() or (p_b > 1).any():
+        raise ValueError("probabilidades inválidas")
     d = (p_a - y) ** 2 - (p_b - y) ** 2
+    _, indice = np.unique(grupos, return_inverse=True)
+    k = int(indice.max()) + 1
+    if k < 2:
+        raise ValueError("al menos dos grupos independientes para estimar incertidumbre")
+    total, cuenta = np.bincount(indice, weights=d), np.bincount(indice)
     rng = np.random.default_rng(semilla)
-    medias = [d[rng.integers(0, len(d), len(d))].mean() for _ in range(n)]
+    medias = np.empty(n)
+    for i in range(n):
+        seleccion = rng.integers(0, k, k)
+        medias[i] = total[seleccion].sum() / cuenta[seleccion].sum()
     return float(d.mean()), float(np.percentile(medias, 2.5)), float(np.percentile(medias, 97.5))
 
 
-def informe_binario(p, y, base=None, estratos: Mapping[str, np.ndarray] | None = None) -> dict:
+def informe_binario(p, y, base=None, estratos: Mapping[str, np.ndarray] | None = None, grupos=None) -> dict:
     """Brier, log-pérdida y calibración de P(y=1); con `base` (probabilidades de referencia) añade la diferencia con su intervalo;
     con `estratos` ({nombre: etiqueta por fila}) repite Brier y n por estrato."""
     p, y = np.asarray(p, float), np.asarray(y, float)
@@ -58,9 +75,10 @@ def informe_binario(p, y, base=None, estratos: Mapping[str, np.ndarray] | None =
     r = {"n": int(len(y)), "brier": brier(p, y), "logloss": logloss(p, y), "pendiente": pend, "intercepto": inter,
          "tasa_observada": float(y.mean()), "prob_media": float(p.mean())}
     if base is not None:
-        d, lo, hi = ic_diferencia(p, base, y)
+        d, lo, hi = ic_diferencia(p, base, y, grupos=grupos)
         r["base"] = {"brier": brier(base, y), "logloss": logloss(base, y)}
         r["dif_brier"], r["dif_ic95"] = d, [lo, hi]
+        r["grupos_independientes"] = len(np.unique(grupos))
     if estratos:
         r["estratos"] = {}
         for nombre, etiquetas in estratos.items():

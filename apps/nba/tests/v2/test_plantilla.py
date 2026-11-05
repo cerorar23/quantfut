@@ -13,11 +13,14 @@ def _rotacion(rng, ids):
 
 
 def test_minutos_esperados_suman_240_y_reparten_lo_del_ausente():
-    candidatos = {1: (34.0, 1.0), 2: (30.0, 1.0), 3: (28.0, 0.0), 4: (20.0, 0.5)}
+    candidatos = {1: (34.0, 1.0), 2: (30.0, 1.0), 3: (28.0, 0.0), 4: (20.0, 0.5),
+                  5: (25.0, 1.0), 6: (20.0, 1.0), 7: (15.0, 1.0), 8: (10.0, 1.0)}
     e = plantilla.minutos_esperados(candidatos)
     assert sum(e.values()) == pytest.approx(240.0)
     assert 3 not in e                                              # ausente seguro: sin minutos
-    assert e[1] > e[2] > e[4] > 0
+    assert e[1] >= e[2] > e[4] > 0  # el límite físico puede saturar a los dos primeros
+    assert all(m <= 48 * candidatos[j][1] for j, m in e.items())
+    assert plantilla.minutos_esperados({1: (34.0, 1.0), 2: (30.0, 1.0), 3: (20.0, .5)}) == {}
     assert plantilla.minutos_esperados({1: (30.0, 0.0)}) == {}
 
 

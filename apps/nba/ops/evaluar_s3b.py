@@ -183,10 +183,12 @@ def variante(nombre, mus, pruebas, cierres, sig_m, sig_t, n_sim=10000):
         ys["ganador"]["p"].append(mercados.ganador(m))
         ys["ganador"]["m"].append(e3.desvig(c["h2h"]["local"], c["h2h"]["visit"]))
         ys["ganador"]["y"].append(1.0 if margen > 0 else 0.0)
+        ys["ganador"]["grupos"].append(g["fecha"])
         if "spread_linea" in c and c["spread_linea"] % 1 != 0 and "spread" in c:
             ys["handicap"]["p"].append(mercados.handicap(m, c["spread_linea"]))
             ys["handicap"]["m"].append(e3.desvig(c["spread"]["local"], c["spread"]["visit"]))
             ys["handicap"]["y"].append(1.0 if margen + c["spread_linea"] > 0 else 0.0)
+            ys["handicap"]["grupos"].append(g["fecha"])
             ys["rmse"]["margen_mod"].append(mu[0] - mu[1])
             ys["rmse"]["margen_mer"].append(-c["spread_linea"])
             ys["rmse"]["margen_y"].append(margen)
@@ -194,6 +196,7 @@ def variante(nombre, mus, pruebas, cierres, sig_m, sig_t, n_sim=10000):
             ys["total"]["p"].append(mercados.total(m, c["total_linea"]))
             ys["total"]["m"].append(e3.desvig(c["total"]["over"], c["total"]["under"]))
             ys["total"]["y"].append(1.0 if g["pl"] + g["pv"] > c["total_linea"] else 0.0)
+            ys["total"]["grupos"].append(g["fecha"])
             ys["rmse"]["total_mod"].append(mu[0] + mu[1])
             ys["rmse"]["total_mer"].append(c["total_linea"])
             ys["rmse"]["total_y"].append(g["pl"] + g["pv"])
@@ -204,7 +207,7 @@ def variante(nombre, mus, pruebas, cierres, sig_m, sig_t, n_sim=10000):
     for k in ("ganador", "handicap", "total"):
         d = ys[k]
         pend, inter = e3.pendiente_calibracion(np.array(d["p"]), d["y"])
-        dif, lo, hi = e3.ic_diferencia(d["p"], d["m"], d["y"])
+        dif, lo, hi = e3.ic_diferencia(d["p"], d["m"], d["y"], grupos=d["grupos"])
         salida[k] = dict(n=len(d["y"]), brier=e3.brier(d["p"], d["y"]), brier_mercado=e3.brier(d["m"], d["y"]),
                          pendiente=pend, dif=dif, ic95=[lo, hi])
     return salida
