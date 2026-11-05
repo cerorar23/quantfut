@@ -33,6 +33,17 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-05 · Tenis: la web lee la cuota PropLine y enseña cuota y casa · rama `web/historial-casa-cuota` `8feddf04` (NO fusionada a `main`) · VPS: API
+
+- Orden del titular: «Sí, desplegar». Solo frontend, encima del despliegue anterior (`79009c9e`). Sigue **pendiente el PR y la fusión a `main`** de toda la rama.
+- Cambio: `ensureSport('tenis')` pinta el tenis y después pide `/web/deportes/tenis/cuotas` (endpoint que ya servía la API y solo usaba la app móvil); `applyTennisQuotes` pone precio y casa en los mercados que tengan, como referencia previa al sello (nunca entra en el beneficio) y sin pisar un precio existente; el historial, la tarjeta y la ventana de tenis dicen «Cuota de referencia» y la casa. Detalle y cobertura medida: `harness/progreso.md`. No hay cambios en `src/`.
+- Base comprobada antes de sustituir: los 6 archivos de `frontend/` del contenedor `quantfut-api-casa:79009c9e` eran idénticos (hash) a la base; `deploy.lock` libre. `mobile.py` y `ventana.py` de la imagen nueva siguen idénticos al despliegue anterior.
+- Imagen: **`quantfut-api-tenis:8feddf04`** (ID `sha256:2d323255…`), capa fina sobre `quantfut-api-casa:79009c9e` con `app.js`, `ergonomic-views.js`, `index.html`, `real-views.js`, `sports-data.js` y `sports-window.js`. Ensayo sin red: 6/6 hashes iguales al commit, 0 módulos con error, 138 rutas.
+- Despliegue: solo se recreó `api` (`--no-deps --no-build`), con vuelta atrás automática si `/health` no daba 200 (dio 200 al 1.er intento). Verificado en `https://pronosticosdeportivos.pro`: `/health` 200; `index.html` → `app.js?v=tenis-cuota-20261105`; `app.js`, `real-views.js`, `ergonomic-views.js`, `sports-data.js` y `sports-window.js` con el hash del commit; `/web/deportes/tenis/cuotas` en `partial` con 132 eventos tras calentar. Worker `quantfut-worker-segura:53b1e5ed` y `nba-api:segura-53b1e5ed` **sin tocar**. La comprobación visual se hizo en local contra la API de producción (mismo código); no se repitió en el navegador sobre el dominio.
+- Aviso operativo: tras recrear la API, `/web/deportes/tenis/cuotas` responde `unavailable` ~100 s (calentamiento); la web reintenta dos veces cada 20 s y mientras tanto el tenis muestra la cuota justa del modelo. Se calentó a mano después del despliegue.
+- Respaldo privado: `~/quantfut/releases/tenis-cuota-8feddf04/backup/` (compose e inspección del API, modo 600). **Vuelta atrás:** `cp ~/quantfut/releases/tenis-cuota-8feddf04/backup/docker-compose.yml ~/quantfut/docker-compose.yml && docker compose -f ~/quantfut/docker-compose.yml up -d --no-deps --no-build --force-recreate api` (la imagen `quantfut-api-casa:79009c9e` sigue en el servidor).
+- `docker-compose.yml` del repositorio actualizado a `quantfut-api-tenis:8feddf04`.
+
 ### 2026-11-05 · #historial con cuota y casa, 7 días; días jugados sin VIP; mercados ordenados · rama `web/historial-casa-cuota` `79009c9e` (NO fusionada a `main`) · VPS: API
 
 - Orden del titular: «Sí, desplegar». **No se fusionó ni se subió nada a GitHub**: se desplegó desde el commit local de la rama (base `7a8ca950`, que contiene `f051d5c1`). `scripts/deploy.sh desplegar` exige HEAD == `origin/main`, así que se hizo a mano con el mismo método del despliegue anterior. **Pendiente: PR y fusión a `main`** para que producción vuelva a ser lo que dice `main`.
