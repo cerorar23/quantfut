@@ -446,7 +446,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Kein Tipp dieses Spiels kommt in die Hervorhebung (Quote 1,20 bis 1,60 und Wahrscheinlichkeit 74 % bis 85 %). Die offenen Tipps stehen in der Liste unten.';
+      'Kein Tipp dieses Spiels kommt in die Hervorhebung (Quote ab 1,20 und Wahrscheinlichkeit ab 55 %). Die offenen Tipps stehen in der Liste unten.';
 
   @override
   String get detailNoH2h => 'Für dieses Spiel sind keine Begegnungen erfasst.';

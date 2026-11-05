@@ -446,7 +446,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Aucun pronostic de ce match n’entre dans la une (cote de 1,20 à 1,60 et probabilité de 74 % à 85 %). Les pronostics ouverts sont dans la liste ci-dessous.';
+      'Aucun pronostic de ce match n’entre dans la une (cote de 1,20 ou plus et probabilité de 55 % ou plus). Les pronostics ouverts sont dans la liste ci-dessous.';
 
   @override
   String get detailNoH2h => 'Aucune confrontation enregistrée pour ce match.';

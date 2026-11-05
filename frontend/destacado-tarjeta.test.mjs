@@ -166,3 +166,18 @@ test('el partido terminado enseña la casa de su cuota; sin casa guarda el preci
   const sinCasa = tarjetasTerminadas([terminado]);
   assert.ok(sinCasa.includes('Cuota del modelo') && sinCasa.includes('1 ÷ probabilidad'));
 });
+
+// --- destacado del día: valor esperado (cuota >= 1,20, prob. >= 55 %, gana prob. × cuota), no solo la mayor probabilidad ----------------------
+
+test('el destacado del día es el de mayor valor esperado: cuota 1,80 con 70 % gana a cuota 1,20 con 75 %', () => {
+  const mk = (id, local, visitante, prob, ref_price) => ({ ...pick, match_id: id, pick_key: `k-${id}`, local, visitante, prob, ref_price });
+  const picks = [mk('s', 'Seguro FC', 'Rival S', .75, 1.20), mk('v', 'Valor FC', 'Rival V', .70, 1.80), mk('c', 'Corto FC', 'Rival C', .95, 1.08), mk('a', 'Alto FC', 'Rival A', .80, 1.45)];   // la regla vieja (mayor prob. con cuota >= 1,40) elegía a Alto
+  const agenda = picks.map(p => ({ match_id: p.match_id, kickoff_utc: kickoff, liga: { nombre: 'Liga' }, local: { nombre: p.local }, visitante: { nombre: p.visitante } }));
+  const day = { status: 'ready', data: { agenda, alta_probabilidad: { proximos: picks, vip: [] } } };
+  const views = createHubViews({ state: { dayOffset: 0, sport: 'todos', homeSearch: '', homeStatus: 'todos' }, esc: x => String(x ?? ''), ensureHome: () => day,
+    addDays: () => date, localDay: d => d.toISOString().slice(0, 10), dayLabel: () => 'Hoy', realDate: () => '30 oct', realTime: () => '17:30', fmtOdds: String, fmtPct: String,
+    dayRail: () => '', liveEvidence: () => '', ensureMatch: () => ({ status: 'loading', data: null }) });
+  const featured = views.picks().match(/<aside[^>]*win-pk-featured[\s\S]*?<\/aside>/)?.[0] || '';
+  assert.ok(featured.includes('Valor FC'), 'el destacado debía ser el de cuota 1,80');
+  assert.ok(!featured.includes('Seguro FC') && !featured.includes('Corto FC') && !featured.includes('Alto FC'));
+});

@@ -348,6 +348,40 @@ void main() {
     expect(opened, 'b1');
   });
 
+  testWidgets('fútbol: el destacado del día es el de mayor valor esperado, no el más probable', (
+    tester,
+  ) async {
+    String? opened;
+    Map<String, dynamic> priced(String id, double prob, double price) =>
+        {...pick(id, prob), 'ref_price': price};
+    await pump(
+      tester,
+      onMatch: (id) => opened = id,
+      data: homeData(
+        picks: [
+          priced('a1', .75, 1.20), // 0,90: el más probable que paga lo mínimo
+          priced('b1', .70, 1.80), // 1,26: gana
+          priced('c1', .95, 1.08), // no llega a cuota 1,20
+        ],
+      ),
+    );
+    final hero = find.byType(HomeHero);
+    expect(hero, findsOneWidget);
+    expect(find.descendant(of: hero, matching: find.text('70 %')), findsOneWidget);
+    await tester.tap(hero);
+    expect(opened, 'b1');
+  });
+
+  testWidgets('fútbol: sin ningún pronóstico que cumpla la regla no hay destacado', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      data: homeData(picks: [{...pick('a1', .95), 'ref_price': 1.05}, {...pick('b1', .50), 'ref_price': 2.5}]),
+    );
+    expect(find.byType(HomeHero), findsNothing);
+  });
+
   testWidgets('fútbol: sin pronóstico abierto no hay destacado', (tester) async {
     await pump(tester, data: homeData(picks: [pick('b2', .85, locked: true)]));
     expect(find.byType(HomeHero), findsNothing);

@@ -447,7 +447,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Nenhum prognóstico deste jogo entra no destaque (odds de 1,20 a 1,60 e probabilidade de 74% a 85%). Os abertos estão na lista abaixo.';
+      'Nenhum prognóstico deste jogo entra no destaque (odds de 1,20 ou mais e probabilidade de 55% ou mais). Os abertos estão na lista abaixo.';
 
   @override
   String get detailNoH2h => 'Não há confrontos registrados para este jogo.';

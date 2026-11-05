@@ -7,6 +7,7 @@ import numpy as np
 from ..contratos.validar import validar_equipo, validar_jugador
 from ..v2.contratos_apuesta import desde_masas
 from .comun import contrato_linea
+from .destacado_valor import elegir_destacado
 
 PROPS = {"player_points": "puntos", "player_rebounds": "rebotes",
          "player_assists": "asistencias", "player_threes": "triples"}
@@ -107,6 +108,15 @@ def construir(partido_id, local, visitante, sellos, cuotas):
     return {"partido_id": partido_id, "markets": list(rows.values()), "projections": proyecciones}
 
 
+def destacar(salida):
+    """Pronóstico destacado del partido (valor esperado, ver `destacado_valor`). Con cuotas de casa solo cuentan esas; si no hay
+    ninguna, la cuota de referencia es la del modelo, 1 ÷ probabilidad."""
+    mercados = salida["markets"]
+    con_casa = [m for m in mercados if m["price"] is not None]
+    precio = lambda m: m["price"] if m["price"] is not None else (1 / m["probability"] if m["probability"] > 0 else None)
+    salida["destacado"] = elegir_destacado(con_casa or mercados, prob="probability", precio=precio)
+
+
 def resolver(salida, local, visitante, valores):
     """Liquida con valores finales reales; la ausencia de una estadística queda pendiente."""
     a, b = valores.get((local, "puntos")), valores.get((visitante, "puntos"))
@@ -145,7 +155,7 @@ def consultar(db, fila):
         "FROM nba.pronostico WHERE partido_id = %s AND periodo = 0 "
         "ORDER BY mercado, entidad_id, sellado_en DESC, pronostico_id DESC", (pid,)).fetchall()
     if not sellos:
-        return {"partido_id": pid, "markets": [], "projections": []}
+        return {"partido_id": pid, "markets": [], "projections": [], "destacado": None}
     cuotas = db.execute(
         "SELECT mercado, entidad_id, linea, lado, casa, cuota, recibido_en FROM nba.cuota "
         "WHERE partido_id = %s AND periodo = 0 AND fase IN ('pre','cierre') "
@@ -175,4 +185,5 @@ def consultar(db, fila):
     nombres = {local: fila[4], visitante: fila[5]}
     for row in [*salida["markets"], *salida["projections"]]:
         row["team"] = nombres.get(row["team"])
+    destacar(salida)
     return salida

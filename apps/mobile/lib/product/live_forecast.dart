@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
+import 'featured_rule.dart';
 import 'live_api.dart';
 import 'live_statistics.dart';
 import 'live_widgets.dart';
@@ -114,31 +115,14 @@ class LiveScoreStrip extends StatelessWidget {
   }
 }
 
-/// Destacado: mayor probabilidad entre 74–85 % y cuota publicada entre 1.20–1.60,
-/// incluidos los extremos. En empate gana la cuota más alta.
-/// Sin candidatos válidos no se destaca un pronóstico fuera de los límites.
-JsonMap? featuredPick(List<JsonMap> picks) {
-  double number(dynamic value) => value is num && value.isFinite
-      ? value.toDouble()
-      : double.negativeInfinity;
-  JsonMap? best;
-  for (final pick in picks) {
-    final prob = number(pick['prob']);
-    final price = number(pick['ref_price'] ?? pick['price']);
-    if (prob < .74 || prob > .85 || price < 1.20 || price > 1.60) {
-      continue;
-    }
-    if (best == null) {
-      best = pick;
-      continue;
-    }
-    final byProb = number(pick['prob']).compareTo(number(best['prob']));
-    final byPrice = number(pick['ref_price'] ?? pick['price'])
-        .compareTo(number(best['ref_price'] ?? best['price']));
-    if (byProb > 0 || (byProb == 0 && byPrice > 0)) best = pick;
-  }
-  return best;
-}
+/// Destacado del partido por valor esperado (ver `featured_rule.dart`): entre los pronósticos
+/// sellados con cuota publicada >= 1,20 y probabilidad >= 55 %, gana el de mayor probabilidad ×
+/// cuota; en empate, el de mayor probabilidad. Sin candidatos válidos no se destaca ninguno.
+JsonMap? featuredPick(List<JsonMap> picks) => bestByValue<JsonMap>(
+  picks,
+  (p) => p['prob'],
+  (p) => p['ref_price'] ?? p['price'],
+);
 
 /// Pronóstico destacado + indicadores + dictamen, todo con datos entregados
 /// por el servidor. Lo que no llega se muestra como «—», nunca se rellena.

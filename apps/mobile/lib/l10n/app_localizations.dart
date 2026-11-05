@@ -829,7 +829,7 @@ abstract class AppLocalizations {
   /// No description provided for @detailNoFeatured.
   ///
   /// In es, this message translates to:
-  /// **'Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60 y probabilidad de 74 % a 85 %). Los abiertos están en la lista de abajo.'**
+  /// **'Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 55 % o más). Los abiertos están en la lista de abajo.'**
   String get detailNoFeatured;
 
   /// No description provided for @detailNoH2h.

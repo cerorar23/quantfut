@@ -188,6 +188,7 @@ def projection(root, now=None, fixture_root=None):
 
 
 def read_public_feed(path, now=None):
+    from .destacado_valor import elegir_destacado   # import local: este módulo también corre como script en el exportador
     now = now or datetime.now(UTC)
     try:
         value = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -204,6 +205,8 @@ def read_public_feed(path, now=None):
             clean["actionable"] = False
             clean["markets"] = [{k: m.get(k) for k in ("id", "label", "selection", "probability", "price", "reference", "push_probability", "outcome")}
                                 for m in event.get("markets", []) if _prob(m.get("probability")) and m.get("price") is None]
+            # Ninguna casa publica estas cuotas: la de referencia es la del modelo (1 ÷ probabilidad). Ver `destacado_valor`.
+            clean["destacado"] = elegir_destacado(clean["markets"], prob="probability", precio=lambda m: 1 / m["probability"])
             if clean["markets"] and clean["sport"] == "tenis":
                 events.append(clean)
         return dict(sport="tenis", state=value["state"], generated_at=value["generated_at"], events=events, problems=value.get("problems", 0))

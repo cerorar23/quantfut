@@ -797,16 +797,16 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('sin candidatos en rango no muestra un destacado fuera de limites', (tester) async {
+  testWidgets('sin candidatos que cumplan la regla no muestra un destacado fuera de limites', (tester) async {
     final api = FixtureApi()
       ..richDetail = true
       ..detailPicks = [
         {'market': 'corners', 'texto': 'Más de 6,5 córners', 'prob': .85, 'ref_price': 1.12},
-        {'market': 'totals', 'texto': 'Más de 1,5 goles', 'prob': .86, 'ref_price': 1.40},
+        {'market': 'totals', 'texto': 'Más de 1,5 goles', 'prob': .50, 'ref_price': 2.40},
       ];
     await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
     expect(find.byType(ForecastPanel), findsNothing);
-    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60'), findsOneWidget);
+    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 55 % o más'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

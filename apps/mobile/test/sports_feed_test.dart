@@ -151,6 +151,41 @@ void main() {
     expect(ms[1].player, isNull);
   });
 
+  group('destacado de tenis por valor esperado', () {
+    Map<String, dynamic> match([Map<String, dynamic>? extra]) => {
+      'id': '1',
+      'sport': 'tenis',
+      'home': 'A',
+      'away': 'B',
+      'start': '2026-10-27T20:00:00Z',
+      'seal': 'abc',
+      'markets': [
+        {'id': 'alto', 'label': 'G', 'selection': 'A', 'probability': .80},
+        {'id': 'medio', 'label': 'G', 'selection': 'B', 'probability': .60},
+        {'id': 'corto', 'label': 'G', 'selection': 'C', 'probability': .95},
+      ],
+      ...?extra,
+    };
+    SportEvent read(Map<String, dynamic> e) =>
+        tennisEvents({'state': 'ok', 'events': [e]}).single;
+
+    test('sin campo del servidor se aplica la regla con la cuota del modelo', () {
+      // .95 paga 1,05 (< 1,20): la mayor probabilidad que aún paga 1,20 es .80
+      expect(featuredMarket(read(match()))?.id, 'alto');
+    });
+
+    test('el destacado del servidor manda aunque otro sea más probable', () {
+      final e = read(match({'destacado': {'id': 'medio', 'score_destacado': 1.0}}));
+      expect(e.serverFeatured, isTrue);
+      expect(featuredMarket(e)?.id, 'medio');
+    });
+
+    test('el servidor dice que no hay destacado, o apunta a un mercado ausente', () {
+      expect(featuredMarket(read(match({'destacado': null}))), isNull);
+      expect(featuredMarket(read(match({'destacado': {'id': 'no-existe'}}))), isNull);
+    });
+  });
+
   test('tenis exige estado ok/partial, sello y probabilidad', () {
     final e = {
       'id': '1',
