@@ -1,5 +1,13 @@
 # Registro de decisiones — QuantFut
 
+## 4-nov-2026 · Publicadas las correcciones NBA; acreditación prospectiva condicionada a datos reales
+
+Orden expresa de publicar. PR #255 integrado con arnés remoto verde (NBA con PostgreSQL, fútbol/API, frontend y tenis), main `a491f225`. API concurrente de mercados preservada desde `61ff260`; sus probabilidades/últimas cuotas por lado se integraron con los contratos corregidos. CI detectó fixtures con fechas UTC en lugar de ET al cruzar medianoche y una ruta temporal sin permisos; se corrigieron las pruebas sin debilitar la lógica de producción.
+
+Publicados únicamente `nba-motor:auditoria-a491f225` y `nba-api:auditoria-a491f225`, con respaldo, migración 0009, ensayo lector y rollback. Un ensayo previo detectó directorios Docker sin lectura; se reconstruyó sin caché antes de sustituir. Cuatro rutas públicas 200, 153 archivos de API iguales a main, cadena de 1.541 sellos íntegra. Cron 00:30 UTC: 2.2, cero errores y primer pronóstico de equipo sellado.
+
+La cohorte y tolerancias se registraron antes de activar. No se acredita calibración con cero resultados ni se mezclan los de 2.0/2.1. Seguimiento por versión activo; la candidata híbrida permanece bloqueada. El artefacto actual vence el 7-nov-2026 13:18 CDMX y debe renovarse en local. Registro/rollback: DEPLOYS.md; evidencia y límites: docs/nba_auditoria_correcciones.md.
+
 ## 4-nov-2026 · Auditoría NBA: correcciones y evidencia, promoción pendiente
 
 La autorización posterior del titular permite corregir el código auditado. Rama `codex/nba-auditoria-20261104`, sobre main vigente, preservando el checkout antiguo y la evidencia original. Las guardias temporales incluyen la recepción del original: publicar un PDF antes del corte no prueba que el sistema lo hubiera recibido entonces. No se alteran filas inmutables para fingir esa disponibilidad.

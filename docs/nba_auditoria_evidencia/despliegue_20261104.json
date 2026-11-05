@@ -1,0 +1,383 @@
+{
+  "sha": "a491f225f34c59dc142be50220b76fa3bea89620",
+  "fecha_utc": "2026-11-05T00:26:57.768080+00:00",
+  "imagen_motor": "nba-motor:auditoria-a491f225",
+  "imagen_api": "nba-api:auditoria-a491f225",
+  "imagen_api_id": "sha256:055c58d60d84f1ab3caa9ec3ea423a8cf1b240bf95f607ecdb53a2e71edd429f",
+  "motor": {
+    "version_modelo": "equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta;equipo=4b6f21c944da",
+    "artefacto": "4b6f21c944dafe3bfb503e4959e9235f043faf941d07b88a08568aa0261364e0",
+    "conocido_en_utc": "2026-11-04T19:18:28.478000+00:00",
+    "vigencia_horas": 72
+  },
+  "api_anterior": "nba-api-antes-auditoria-a491f225",
+  "backup": "/home/qf/nba-isolated/releases/auditoria-a491f225f34c59dc142be50220b76fa3bea89620/backup-reintento-20261105T002533",
+  "ensayo_motor": {
+    "ahora": "2026-11-05T00:25:36.609924+00:00",
+    "version_modelo": "equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta;equipo=4b6f21c944da",
+    "version_props": "props-2.1;6323d806ed81;k=30.0;dec=0.97;cola=1e-10",
+    "simulacro": true,
+    "sellados": [],
+    "props": [
+      {
+        "partido": 11332,
+        "jugadores": 23,
+        "pronosticos": 92
+      },
+      {
+        "partido": 11333,
+        "jugadores": 24,
+        "pronosticos": 96
+      },
+      {
+        "partido": 11334,
+        "jugadores": 26,
+        "pronosticos": 104
+      },
+      {
+        "partido": 11335,
+        "jugadores": 34,
+        "pronosticos": 136
+      },
+      {
+        "partido": 11336,
+        "jugadores": 26,
+        "pronosticos": 104
+      },
+      {
+        "partido": 11337,
+        "jugadores": 35,
+        "pronosticos": 140
+      }
+    ],
+    "omitidos": [],
+    "sin_hora": [],
+    "errores": []
+  },
+  "prospectivo": {
+    "version_modelo": "equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta;equipo=4b6f21c944da",
+    "sellados": 1,
+    "con_resultado": 0,
+    "brier_ganador": null,
+    "logloss_ganador": null,
+    "fiabilidad": [],
+    "estado_evidencia": "sin_muestra",
+    "calibracion_certificada": false
+  },
+  "migracion": "0009_recepcion_original",
+  "salud_publica": {
+    "/nba/v1/calibracion": 200,
+    "/nba/v1/mercados?fecha=2026-11-04": 200,
+    "/nba/v1/cartelera?fecha=2026-11-04": 200,
+    "/nba/v2/": 200
+  },
+  "cadena": {
+    "cadena_verificada": 1541,
+    "pronosticos_equipo_22": 1,
+    "violaciones_temporales_22": 0
+  },
+  "por_version": {
+    "equipo-2.0;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.78;sigma=13.8/18.46;margen=proporcional": {
+      "version_modelo": "equipo-2.0;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.78;sigma=13.8/18.46;margen=proporcional",
+      "sellados": 4,
+      "con_resultado": 4,
+      "brier_ganador": 0.25814793124999996,
+      "logloss_ganador": 0.7099995548637108,
+      "fiabilidad": [
+        {
+          "desde": 0.2,
+          "hasta": 0.4,
+          "n": 1,
+          "prob_media": 0.38475,
+          "tasa_observada": 0.0
+        },
+        {
+          "desde": 0.4,
+          "hasta": 0.6,
+          "n": 2,
+          "prob_media": 0.503175,
+          "tasa_observada": 1.0
+        },
+        {
+          "desde": 0.6,
+          "hasta": 0.8,
+          "n": 1,
+          "prob_media": 0.621,
+          "tasa_observada": 0.0
+        }
+      ],
+      "estado_evidencia": "descriptiva",
+      "calibracion_certificada": false
+    },
+    "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e": {
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "sellados": 8,
+      "con_resultado": 0,
+      "brier_ganador": null,
+      "logloss_ganador": null,
+      "fiabilidad": [],
+      "estado_evidencia": "sin_muestra",
+      "calibracion_certificada": false
+    },
+    "equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta;equipo=4b6f21c944da": {
+      "version_modelo": "equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta;equipo=4b6f21c944da",
+      "sellados": 1,
+      "con_resultado": 0,
+      "brier_ganador": null,
+      "logloss_ganador": null,
+      "fiabilidad": [],
+      "estado_evidencia": "sin_muestra",
+      "calibracion_certificada": false
+    }
+  },
+  "hashes_api": {
+    "extra_sources.py": "bf32671fe1619c631f0d57d528e9df5b673eb0dce7c179335dee591caceae1ea",
+    "props_history.py": "5fe0166f2402221a35f751a8e699abea5c34d41c540c2a0ba53871b8021a58d8",
+    "roster_elo.py": "561ea6a58d2434664928371f6fd15ed5ab1d9f12a25289e3f5362b0f93532869",
+    "prop_lines.py": "d913601b0afa75eea03fcf845ed204c5e1bbf44f775f28499ef8534edeecb716",
+    "calibration.py": "d1e5ddd2f6b226b15c285a96c1243bd65f42afd6d79203f2198b0f0456d58b6b",
+    "multimarket_v13_live.py": "1d2fc8682aee01a621ff72f0c29c24934b0e340cd6e74707718cfced9b82984d",
+    "training_data.py": "28520f690ac667990f4e78e2c9f33c8faee133f6a0bdc47b79643035d6b8b573",
+    "adaptive_retrain.py": "3822532714d91ee336ef481b577fa8ef32e4c928d54f631cf8c6de4861b1ea6e",
+    "engine_calibration.py": "a292b53307900f7b3e56c1cacdb59c1828e462de46d5b586583e17ae364f5280",
+    "minutes_repair.py": "8f840e1463516c9af378d78d3dfda86c6af0be7f74561646861e9e9739918512",
+    "live_combos_check.py": "20f30507d6546f5c26558bd9e4fe28924a70790a4a5398ac8a112de700d46772",
+    "__init__.py": "5227efe5e72debf0e9b87b65d400586d863c23026ebed6ea8cb8b5ad10b0eba6",
+    "paper_followup.py": "e135e2066d42b9b3dbc09fd2e0919fadb4b2643f886c52302e1c394da6f6d0e4",
+    "multimarket_v13_live_producer.py": "b1d64ed42f3b865ce2c0095108bf0fbc8905b3b607b40e012a7f5bd85b6fae83",
+    "multimarket_live_dashboard.py": "6dd86506633f1b577097d6077980adbc8f174eff58e3b7a773a76d31554fb0d4",
+    "live_features.py": "a2d6adaf0855bfab1e6dcdd2902e07cc11dde284b7cbfda32af3e7e1ffe0898e",
+    "props_sources.json": "80235340d4c75aecb9b7416f31295443bc950a01497bd1b16bd1bd6d3c9ab929",
+    "multimarket_v13.py": "d0f50d197badefdbc1149016e1a1dbde32827abc824064e286e35809b5a9d744",
+    "role_projection.py": "b1d0fb219851623610d3f2cf6e50d17c9a988ac23f37b110b0882926a59d25db",
+    "odds_capture.py": "88779e5a1c39e9417ee4dfb160dda473ffdf22fa50aab4e53d31612e4199f102",
+    "telegram_keepalive.py": "1ac2044bfa0871d51653d0f8dcbb24aaa71de51e48060ea32d5a3bf8ccfcf1b6",
+    "live14b_check.py": "4f4e67ca8e8ebe5e9498f3c844bde0b35555e991c08dd94299d3d5c3d1be6446",
+    "postgres_delivery.py": "8e0a16207fb4f040cc9a149acfa674157ac4a95df532e8df9d153f30da20efc7",
+    "injury_t60.py": "9d7c7724d689a3826864f4d8472eba450beec6443dad71c14cdaa2a2c6822f8a",
+    "roster_strength.py": "c12efbacc8b41f3079c8a1435292a57bb40f5b071785eb13bb8d804a6580b088",
+    "paper_bundle.py": "045d501faa5e549a2b3bf97420e961c7ccd77fe7cec5f32757e2deaaa4602fc4",
+    "audit.py": "750a7ef27f6081fb1fed5d9d28d78f4ecf1b24894757e23b7ce39c677156d8fa",
+    "cli.py": "238ed35ef367f95901f9c9c3f8f9f36ebf9363ec2153edec92e0d5815261ea79",
+    "odds_sources.json": "ff9dcbf9bb9289ac3e932f1a7a1cc5c30c8fee004f4b996c52696ee1c517a22b",
+    "extended_box.py": "f416af73a4967453f3d6e757a6cf31643d21a4b06eea21c9ed8d23bd9c129695",
+    "team_markets.py": "8f49ccf20918006cea1fe8c8c954651c3bc0228fdd54a9a0da62a20580135036",
+    "capture_backup.py": "5dcc69ffc6b8b7b062ccd8e8113518e8f2b0bb5f0d16e93b61fac954dc52240d",
+    "timestamp_anchor.py": "6c701cdedafc7980f60ec70284cd110d422b6e5ae431c273204cdf05d6715d3e",
+    "delivery_observations.py": "d81cb779669d7a56290b40869941051e9510dc71ae1097fd377f9fa84aa64a27",
+    "market_compare.py": "11b36993ac04b4dc7b606bffb26a891b4a8e0fb5f343ff11dcb6835a1638c330",
+    "current.py": "8d6960c21746d6805d2db0df4daba2b79bd93b2fe57e01be29a5e9ee6e7bc1de",
+    "github_archive.py": "a7419a28ddac311882e6f3db2f9de34bf39f1109acec709099aa9ab8d5b598f6",
+    "paper_protocol.json": "dce972a8d810657867519b52fb040a478b71464ed64af339af9d54b8b502759e",
+    "injury_pdf.py": "011c8bba1e5cc063b626de5c4045451a8ccb1a71841b65546a4eb82b7f3a95fe",
+    "live14_check.py": "443f52e7208b8930b799208fc49c63b19b20a8c255b354b8fc5a31904e88bd54",
+    "roster_elo_check.py": "dc83c7b5ba5897661b6cde4130678e1959dec0703b8a11a3c9a5de84e880504a",
+    "box_players.py": "cf7f5b4f246b0bb87351880a4bcba8177629610ae1bed2af27862905777c81a1",
+    "clock_policy.py": "9cdd3a9c01316666769f84e2c122cb31839cd994ad2114df13dbe690473db549",
+    "delivery.py": "f01c0f7c717fd04f4f7f8c8ef392b4bc2fe364714c51dd11b959c4b44196b1a4",
+    "participation.py": "95af8aca0f913aaefefdcbb355692369ecd5814e40e9926b440c5ec04cf75835",
+    "multimarket_v15.py": "e4676165d7ee0c18eca43fb99dedb6a466fadc8595de98f1d682218b072ebad8",
+    "model.py": "453482ec15d035c249df8f016bb33d22852d00ea7303723f44daf6e97fcca709",
+    "sportsdataverse.py": "0f7079591d50f5748ff12e649f6ff193431515e2bfb7f7dfe3f2197cc90ce395",
+    "public_capture.py": "ec213f267a09b20dc4a94de76918eafe621584cff1a57a3132e9de265b434fad",
+    "prop_feed.py": "a362d3374fb305fdce31ccb3aac365fda5af69a9fd20872906865feb0ce7a4c9",
+    "multimarket_dashboard.py": "8d1f19fc50809e5d1bc0c13258a643673522ef521e5ef1bc3dec48b46fc1d46a",
+    "ingest.py": "a79f95dd0597f60c50f9ac3083dec83ab15d8ffd3ac1a5ed96da5ffbf1e12568",
+    "live_market.py": "e96857fceeaa97cdc7c50fb4ba15a33b92a0af2b9a771937a86debcd88867bee",
+    "fullgame_rebounds.py": "28c04bea4286e8003580af35ed5a6bae96149db585184d11a22e5b6eee198c03",
+    "minutes_benchmark.py": "074b14fbb351c8b271339e2eea9209fc687587f80165678a310803bfe39ceec4",
+    "caliente_public.py": "ed6b1db2d82ec506223e9ad1c2db38ae65df69255940f456ca103793db3f75d5",
+    "revisions.py": "210c6ba6b89720735260bd1b3dd18fd6ceea569620c77f134f5bd6b7de1eb0e5",
+    "props_market.py": "79b03bd8536a3a3f27759f7c7b48554dd30f93f76134e42070a82fe143b3be40",
+    "multimarket_v14b.py": "4214c22de1be1108291cfdddd73a2edb6446cc2ee2d682e3aa4b5ee521e9e737",
+    "startup.py": "7e4058e30b36a903cd33e4d82d9425186e909ce93b2073c77f9b775251872a45",
+    "official_repairs.py": "245e69462b69d441254697d6b557e23b74dd20ed699cd9368bd67a68003dd42b",
+    "prospective_context.py": "4e648e33cfc10ad3b71859dfc956561f2995004a3202b225e2f08122caab8d38",
+    "delivery_timing.py": "975c59ce1346ca7a57c4017e7599606d36d24271f577a3d12620484aaad022cd",
+    "stats_proxy.py": "1714858e3f451de8f507acaa1971b0fe0141104013d0303dba4dc19a831bb5ae",
+    "config.py": "548302bc84b3c25994f36f24ed9cb2f3d1481fcd55801fc6549fad267814c38f",
+    "multimarket_v12.py": "0755d120b22f06397ea19bd896613e765b772c52ae698e47466b35b1b5898cd7",
+    "live14b_data.py": "1a32bcb07a0983c8bab7d5c608ca4b2b87b332b7235f31212d059cab97dc51b2",
+    "markets.py": "97cbfc90d56cfddcd7538aa272ba02175fb6e5ce68665b25abab231f33684feb",
+    "odds_history.py": "f6c1caa76affccfcd13b8f8a66727d9cfa8d2a6ed08a03ee62d8e83396734481",
+    "multimarket.py": "ed80005a37036a6dbe15267e4d8bfd18aba18eb3ec9aba89ee5796df3136c192",
+    "__main__.py": "6fa866512144a0426e5d513391a364a4bf22897516c47bb5da6ea8c8418fcb6d",
+    "receipt_capture.py": "8f068e34e1290e7da39496fe935aa57c3085a1dadba07f58844bad95efbee97e",
+    "multimarket_v14.py": "8911f7287d5f91554ba74f4f1a22363681eaf2ef4b6d400236f0279bf8208b2a",
+    "coverage.py": "880d5f1b500e500955cd7952b15261c82bc5a9ead1f8d858595bc213cf8bf629",
+    "team_recal.py": "23ea82bf13b40c36ecc52ecba7f5d5a7c355adac273c91151d3eabd2c791c553",
+    "basketball_reference.py": "84bd92241e0d6de0d035f966ef30e4032fc0ac50604f9ed4a2a6439069a03785",
+    "betsapi_odds.py": "7cb162d17f20edac5848de666e833961de967ef5ad1c8b821cc3ea19244dca93",
+    "props_link.py": "de87154fa187886e3d2ef7be99eaac318e48cf52b560779e30339405f338dc8c",
+    "availability.py": "a933a628bbc0a08edcbdab44ff643b83f7faac8f79dbbf2a284357d49ff91f6a",
+    "props_residual.py": "89bf5de967fbf8bed202dcdfa5c7de606b9ecce9b8f86edde682d2811b8f98b2",
+    "current_rosters.py": "df2114eb0e1dd3a8033de961477657d171bb90c4618e75016d93cfc511b48bbf",
+    "odds_sources.py": "bf227349dad7bf590cc4f942eaf21033a242a3608ec4f2d30a2737eb01c52b8e",
+    "live15_check.py": "5c9ad4ce3e1451c8f944d427f5a402877964859d53853d00fae2326e54c53454",
+    "paper.py": "f0fc14de0ad61bcf79eda2a4ee5017b1642772d2062cd7ef02501b306c91f816",
+    "event_listing.py": "26eec9f875e60846a3cb60713eb890f546b14d05e697f744c7925f55d912ee9b",
+    "web_stats.py": "9a761d955f0d4e4bb3dc532f9bfc19ea9242384530f117f970327014902e05ca",
+    "context.py": "fba08d7bef8e0e2b18e23bc4a79389cf226a8da29c99d59cb8f0a580aab8d5c6",
+    "vps_session.py": "8362d1029d4ae2630af2bdc0d007ffa108c27ce7b6331709b294ac93f907e975",
+    "evaluate.py": "a0196fdfb7d5f0179f7b46e63dff549cace374524fee33422e932bafb1044d1e",
+    "official_context.py": "38d9f84448d671af8dd20abe41eb5cba1f05c82cf309f593f841c04068cd49e4",
+    "roster_strength_check.py": "87985bf042952240871776096e6004ee3b8b5f3cbc23e89d0a4970dcf70ddc3e",
+    "dashboard.py": "41212c6ff554737fab06e6205bbdedf1309991d047d57371359c9903497a2260",
+    "backfill.py": "536985331173eacc9401512b5134b6d346cf8532d51d4a4f1e71c547a59578ef",
+    "rebound_distributions.py": "43121d115477fc712b3a093110ac19c5e30fe7ffbc917c794a4b0aa99a4d5473",
+    "vps_telegram.py": "d98a4e8070e2fcad81ca987e27d4efa11f4418d3c54057ff44903da60a6172ae",
+    "v2/motor_equipo.py": "d204892a3d20e53d34323727111c191791cf698b2511762499c4ba97ee41d196",
+    "v2/salida_equipo.py": "085f33c0c7f0582e9765057dbbe89c09688d704007020def63e87f0871cf1402",
+    "v2/migrar.py": "e197f87116f889374000165597c09011553cf74a67816bc0b4ed63b9f0138077",
+    "v2/parametros.py": "b79f6c74542f893fa1061f0a4bc661bb612f79e212e1772e231e87ad576fd4ad",
+    "v2/referencia.py": "624c5756b77933f0e0c3318403c9c36054e1c40ef8d6cfba6aa7c25fb781aee2",
+    "v2/nucleo.py": "679f86fdf3c84b29a3f48640faf8f63723c74d740179fe79901685f3aeeb4992",
+    "v2/alertas.py": "aa86afe567ad9bb04de692d35abcc56905f43de43941e8f73fdaa2cf832a2c10",
+    "v2/__init__.py": "a867548d411f4fe0ea6e8e9726e5bc1e9eecd45fb13a28568f6801ddf7c06a45",
+    "v2/estado_equipo.py": "c81eb820c583cabd5fc3caededc0b33af97489a9ca65a1a5ad27524be5b233eb",
+    "v2/mercados.py": "d9b46f1359120e9d1529af5db5e5908373744bec2b73af99e2ec983e851d1acf",
+    "v2/equipo_jugadores.py": "044d50d7e3905b40ee92c96cbbb2ad7ef65ef8dc5bb24f419afa8752a6f748a4",
+    "v2/plantilla.py": "d1e70fce739127ddfeb4cd3fdf2e0c594744abf5e08c205a209dfd2e63ad7d1a",
+    "v2/distribucion.py": "ea742c6d90e93e91658b6fa60fed18867a963ed9a8296f4c2aba9a7b87d45831",
+    "v2/sellado.py": "e49bc7a565ab811aabc8aa19e6a026c164410a3737197df3034b897c2314bc64",
+    "v2/captura.py": "41960b2c9ff1deb0e50cb8574698c404fa93d5106bcd1b2600727aab6b980e42",
+    "v2/minutos.py": "912d10dc3adf695e1a2c388d519f94cf7b9f91706a0cfd866fca6a99a914d61f",
+    "v2/evaluacion.py": "915ea289d860d4046c266431d44de5c85144c3084fa87695f2f8fa2ec2ec0360",
+    "v2/disponibilidad.py": "de6f7ae849ae1c58c7321fc211e1909007ac75f7fd0c339fe8da4bafb31ab83e",
+    "v2/contratos_apuesta.py": "df511447df25b3a5320d7c2f86f399424ed56eaff8258a96391881c059b09386",
+    "v2/pit.py": "50802573b6b2cf3025a2b0f9d0f52b814486062834fd56a4a2ccffc53c8cd2bf",
+    "v2/props.py": "fa1d225889577dbf3c157d0bce2322199e6797432b4a27d2fa01d6e24e8a9763",
+    "v2/carga.py": "a6245ca69e173f5e2101ad4dd98bed72fb10af06ab9b0f679e2feb57d612b736",
+    "v2/motor_jugadores.py": "6cb5719b691579ce14269e9be5ece6e0c5608a8e263fc943df88305e2c2e1491",
+    "v2/identidad.py": "0ef1250a74a88eafde028c927358a964af9a7aa6ca8cab84689f4b3b0b3c7cc3",
+    "v2/equipos.py": "401b0ddf4babe51fc7f6f0cc2de3fc603605d95abdda56ca1935ab58af483095",
+    "v2/recalibracion.py": "619bdc843fa487179f4cbfcbc98d6e8213ac60dd6901d3d2d0800caa565d4e0d",
+    "v2/plantilla_pit.py": "11b8e7688af04380f47546c1f9afec4e2c652b2e62978521d3d11c4921f00192",
+    "v2/duracion.py": "25896e057aa47a74d28efb09230be1cab11596a4929288286a171296068c3ee8",
+    "v2/motor.py": "eb8cb7a88ad5f19a9c171ac67a7b01943d49cf992832785a1747ea666099c9d3",
+    "contratos/paso_c.py": "2d7ec95ee6759db39d645202f7dcb9bae725d8a975762c76d38c3d4221da08e6",
+    "contratos/__init__.py": "c0793365e24d9e530904f91110835a8beb29c2eb65cabdc313a118539e913249",
+    "contratos/paso_b.py": "40d6964a16b573f58e9e547a34d6c1e92c9208a2c3912a91c5cc9bc367e08d44",
+    "contratos/validar.py": "2dd26d324966c49dd7159d4c8ca6551fa1d715cb0dac4a3a52285d7ca4c48582",
+    "contratos/base.py": "6d4747e2d767842ff0fdaf65b7908ddb234aafb14e2fa3b4f2384b094cb1feab",
+    "contratos/paso_a.py": "cb5f14c3ea10786f200c0447e776300317b660c228812b6fd97f727af8c65e25",
+    "api/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "api/calibracion_v2.json": "ee4e1d5de7dfd1fb939b47936b969f2a307495d55cb8a0f822bf932c84e9960e",
+    "api/mercados.py": "35364f55c2a977abad8136f9832cdb2f0ecfb6c9084b84d16ff8b44b9257a4cd",
+    "api/estadisticas.py": "7ea8f1adb0d48ed0987410823bdc989c0da14f793867386961411bc30908bbd1",
+    "api/comun.py": "3cb6438a11ae8b511356d6a256bb1cb57eac277684dd1c2e03754fd69d6812b0",
+    "api/app.py": "672dbad2642225ab076e961013bc254c135ea6658907a48dfa16ce68b1703658",
+    "v2/fuentes/rotowire.py": "4ed64d30ec0b53df50495381c5cf9f06a89d22c616ad726247138a231a7dca8f",
+    "v2/fuentes/sofascore.py": "af80abfd160fa61634defb35bfce27b1f465533dd12acf25078da8c32fe41b1b",
+    "v2/fuentes/espn.py": "2cb2d91e958db61fa382c22212312aef5919e0b016d072c599a240d2cf8a8fec",
+    "v2/fuentes/__init__.py": "efcc48b92a89e8711b0c0040856cb90ad3ec4f1cce97bf021dfb771b3f2b0f83",
+    "v2/fuentes/historico_cuotas.py": "c33ebdab4fadff361ba8902ab86a9c0e02eb20ef3e51c3dc3d59b8e50f1e442b",
+    "v2/fuentes/parte_oficial.py": "02abfe0dcc03f500dd238e8228c14e044434b41cca34abe287efa51291a99a29",
+    "v2/fuentes/propline.py": "e97abd904673d39b1bfbd97f649279b026e24b2bb8020fea52345b73f16b5705",
+    "v2/fuentes/historico_partidos.py": "32c6999497183b290a7850e9e60c71da3680f722ec155790dcc78db0328bd7c2",
+    "v2/fuentes/nba_cdn.py": "e7370a9212d3a2ecf2d4cb0bd138ab9ec81183d62763d48ad49da65424c5cfa2",
+    "v2/fuentes/historico_rotaciones.py": "40b80f998ede380168184a86613c8b9596654e2561aba9d8818778189900a439",
+    "v2/parametros/props.json": "6323d806ed81590ca6dd34417e5ddaea653d75a54a27b56252a83a45e8c54920",
+    "v2/parametros/impacto.json": "c5757c3c8f0e025a06b0580c8318921f179690f9aadae3613f80dad1eb6fdb39",
+    "v2/parametros/equipo.json": "4b6f21c944dafe3bfb503e4959e9235f043faf941d07b88a08568aa0261364e0",
+    "api/static/app.js": "ea6002435b08f41a4802057ff5fec188d243455508338ad1b7d4102a2fdae3d8",
+    "api/static/estilos.css": "4f93ea5c58761997206e8f5be06bf4e4701fa39efe33f10074243d37c066ccfd",
+    "api/static/i18n.json": "3d88e2694f472cbee71b452fd388e34641546bcbed6640f92fc178b8107c406c",
+    "api/static/index.html": "00fff770f101a567e3805a499f39ff8652efdebd356782f4f871436bf7270014"
+  },
+  "cron": [
+    {
+      "ahora": "2026-11-04T23:55:02.380815+00:00",
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "errores": 0,
+      "sellados": 0
+    },
+    {
+      "ahora": "2026-11-05T00:00:06.144461+00:00",
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "errores": 0,
+      "sellados": 3
+    },
+    {
+      "ahora": "2026-11-05T00:05:03.317847+00:00",
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "errores": 0,
+      "sellados": 0
+    },
+    {
+      "ahora": "2026-11-05T00:10:03.187645+00:00",
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "errores": 0,
+      "sellados": 0
+    },
+    {
+      "ahora": "2026-11-05T00:15:03.949554+00:00",
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "errores": 0,
+      "sellados": 0
+    },
+    {
+      "ahora": "2026-11-05T00:20:05.025037+00:00",
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "errores": 0,
+      "sellados": 0
+    },
+    {
+      "ahora": "2026-11-05T00:25:03.255071+00:00",
+      "version_modelo": "equipo-2.1;eta=0.045;arrastre=0.65;liga=0.01;b2b=2.9;sigma=13.9908/18.43;n=100000;margen=media(equipo,jugadores);impacto=c5757c3c8f0e",
+      "errores": 0,
+      "sellados": 0
+    },
+    {
+      "ahora": "2026-11-05T00:30:04.582156+00:00",
+      "version_modelo": "equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta;equipo=4b6f21c944da",
+      "errores": 0,
+      "sellados": 1
+    }
+  ],
+  "seguridad": {
+    "ReadonlyRootfs": {
+      "antes": true,
+      "ahora": true
+    },
+    "CapDrop": {
+      "antes": [
+        "ALL"
+      ],
+      "ahora": [
+        "ALL"
+      ]
+    },
+    "SecurityOpt": {
+      "antes": [
+        "no-new-privileges"
+      ],
+      "ahora": [
+        "no-new-privileges"
+      ]
+    },
+    "PidsLimit": {
+      "antes": 64,
+      "ahora": 64
+    },
+    "Memory": {
+      "antes": 402653184,
+      "ahora": 402653184
+    },
+    "Tmpfs": {
+      "antes": null,
+      "ahora": {
+        "/tmp": ""
+      }
+    }
+  },
+  "verificado_en_utc": "2026-11-05T00:31:30.786605+00:00",
+  "acreditacion_prospectiva": {
+    "estado": "muestra_insuficiente",
+    "certificada": false,
+    "sellados": 1,
+    "con_resultado": 0,
+    "cohorte": "nba-equipo-2.2-core-20261104",
+    "motivo": "No hay resultados de 2.2 para medir calibración; no se atribuyen los de versiones antiguas."
+  }
+}
