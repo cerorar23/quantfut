@@ -24,6 +24,7 @@ class PronosticoNuevo:
     distribucion: dict
     periodo: int = 0
     entidad_id: int | None = None
+    inicio_utc: datetime | None = None
 
 
 def _canonico(obj) -> str:
@@ -52,14 +53,23 @@ def sellar(db, p: PronosticoNuevo) -> str:
                                (p.partido_id, p.mercado, p.periodo, p.entidad_id, p.version_modelo, p.objetivo_en)).fetchone()
         if existente:
             return existente[0]
+        if p.inicio_utc is not None:
+            if p.inicio_utc.tzinfo is None or p.objetivo_en >= p.inicio_utc:
+                raise ValueError("salto sin zona o corte incompatible")
+            if ahora >= p.inicio_utc:
+                raise ValueError("el partido ya empezó antes de persistir")
         previo = db.execute("SELECT hash FROM nba.pronostico ORDER BY pronostico_id DESC LIMIT 1").fetchone()
         hash_previo = previo[0] if previo else GENESIS
         h = calcular_hash(p.partido_id, p.mercado, p.periodo, p.entidad_id, p.version_modelo, p.version_datos, p.objetivo_en,
                           ahora, p.escenarios, p.distribucion, hash_previo)
-        db.execute("INSERT INTO nba.pronostico (partido_id, mercado, periodo, entidad_id, version_modelo, version_datos, objetivo_en, "
-                   "sellado_en, escenarios, distribucion, hash_previo, hash) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s)",
+        insertado = db.execute("INSERT INTO nba.pronostico (partido_id, mercado, periodo, entidad_id, version_modelo, version_datos, objetivo_en, "
+                   "sellado_en, escenarios, distribucion, hash_previo, hash) "
+                   "SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s "
+                   "WHERE (%s::timestamptz IS NULL OR clock_timestamp() < %s::timestamptz) RETURNING hash",
                    (p.partido_id, p.mercado, p.periodo, p.entidad_id, p.version_modelo, p.version_datos, p.objetivo_en, ahora,
-                    _canonico(p.escenarios), _canonico(p.distribucion), hash_previo, h))
+                    _canonico(p.escenarios), _canonico(p.distribucion), hash_previo, h, p.inicio_utc, p.inicio_utc)).fetchone()
+        if insertado is None:
+            raise ValueError("el partido empezó durante el sellado; no se insertó el pronóstico")
         return h
 
 

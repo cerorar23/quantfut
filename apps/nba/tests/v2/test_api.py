@@ -19,7 +19,7 @@ ESTATICOS = Path(api.__file__).parent / "static"
 
 
 @pytest.fixture
-def cliente(base_migrada_dsn):
+def cliente(base_migrada_dsn, monkeypatch):
     with psycopg.connect(base_migrada_dsn) as db:
         ids, partidos = liga(db, 25)
         db.commit()
@@ -30,6 +30,7 @@ def cliente(base_migrada_dsn):
             esc, dist = motor_equipo.pronosticar(inst)
             sellados[pid] = sellado.sellar(db, PronosticoNuevo(pid, "equipo", motor_equipo.VERSION_MODELO, inst.version_datos, corte, esc, dist))
         db.commit()
+    monkeypatch.setenv('NBA_VERSION_MODELO_ACTIVA', motor_equipo.VERSION_MODELO)
     return TestClient(api.crear_app(base_migrada_dsn)), partidos, sellados
 
 
@@ -65,7 +66,7 @@ def test_partido_y_linea_son_coherentes(cliente):
     assert ps[0]["p_mas"] > ps[1]["p_mas"] > ps[2]["p_mas"]
     assert all(x["p_mas"] + x["p_menos"] == pytest.approx(1.0, abs=1e-3) for x in ps)
     fuera = c.get(f"/nba/v1/partido/{pid}/linea", params={"mercado": "total", "valor": 999}).json()
-    assert fuera["extremo"] is True and 0 < fuera["p_mas"] < 0.01
+    assert fuera["extremo"] is True and fuera["p_mas"] == 0.0 and fuera['aproximada'] is False
     assert c.get(f"/nba/v1/partido/{pid}/linea", params={"mercado": "otro", "valor": 1}).json()["detail"]["codigo"] == "mercado_desconocido"
     assert c.get("/nba/v1/partido/999999").json()["detail"]["codigo"] == "partido_inexistente"
     sin = c.get(f"/nba/v1/partido/{partidos[3][0]}/linea", params={"mercado": "total", "valor": 220.5})
@@ -94,6 +95,15 @@ def test_calibracion_cuenta_lo_sellado_y_calcula_brier(cliente):
     p = d["prospectivo"]
     assert p["sellados"] == 3 and p["con_resultado"] == 3 and 0 <= p["brier_ganador"] <= 1
     assert sum(b["n"] for b in p["fiabilidad"]) == 3
+
+
+def test_calibracion_identifica_el_artefacto_activo_sin_variable_manual(cliente, monkeypatch):
+    c,_,_=cliente
+    monkeypatch.delenv('NBA_VERSION_MODELO_ACTIVA',raising=False)
+    d=c.get('/nba/v1/calibracion').json()
+    assert d['prospectivo']['version_modelo']==motor_equipo.version()
+    assert d['prospectivo']['sellados']==0  # los tres sellos fixture llevan otra versión explícita
+    assert d['por_version'][motor_equipo.VERSION_MODELO]['con_resultado']==3
 
 
 def test_la_web_estatica_se_sirve(cliente):

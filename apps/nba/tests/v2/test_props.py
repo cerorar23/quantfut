@@ -19,14 +19,14 @@ def test_mezcla_de_minutos_ensancha_la_distribucion():
     assert (fijo * k).sum() == pytest.approx((mezcla * k).sum(), abs=0.01) and var(mezcla) > var(fijo)
 
 
-def test_prob_mas_de_es_monotona_acotada_y_reparte_el_empate():
+def test_prob_mas_de_es_monotona_y_condiciona_por_el_push():
     pmf = props.pmf_mezcla(np.array([0.4, 0.4]), np.full((2, 5), 30.0), 0.1, 80)
     p = props.prob_mas_de(pmf, np.array([10.5, 14.5]))
     assert p[0] > p[1] and 0.001 <= p[1] <= p[0] <= 0.999
     entera = props.prob_mas_de(pmf[:1], np.array([12.0]))[0]
     assert props.prob_mas_de(pmf[:1], np.array([11.5]))[0] > entera > props.prob_mas_de(pmf[:1], np.array([12.5]))[0]
     extremo = props.prob_mas_de(pmf[:1], np.array([500.0]))[0]
-    assert extremo == 0.001                                               # nunca 0 exacto
+    assert extremo == 0.0                                                # no se fabrica masa fuera del soporte
 
 
 def test_alfa_y_pit_recuperan_una_binomial_negativa_simulada():

@@ -15,13 +15,13 @@ def test_pmf_de_conteo_es_una_distribucion_valida_y_la_probabilidad_decrece_con_
     for _ in range(150):
         tasa, alfa, techo = RNG.uniform(0, 2.0), RNG.uniform(0.001, 1.0), int(RNG.integers(20, 90))
         muestras = RNG.uniform(1, 48, size=(1, 7))
-        pmf = props.pmf_mezcla(np.array([tasa]), muestras, alfa, techo)[0]
+        pmf = props.pmf_mezcla_adaptativa(np.array([tasa]), muestras, alfa, techo)[0]
         assert (pmf >= 0).all() and pmf.sum() <= 1 + 1e-9 and np.isfinite(pmf).all()
         if tasa * 48 < techo / 3 and alfa <= 0.3:                         # soporte suficiente y sobredispersión real (≤ 0,23 medida): casi toda la masa dentro
             assert pmf.sum() > 0.999
         lineas = np.sort(RNG.uniform(-1, techo + 5, 6))
         p = props.prob_mas_de(np.repeat(pmf[None, :], 6, axis=0), lineas)
-        assert (np.diff(p) <= 1e-12).all() and ((p >= 0.001) & (p <= 0.999)).all()
+        assert (np.diff(p) <= 1e-12).all() and ((p >= 0.0) & (p <= 1.0)).all()
 
 
 def test_quitar_margen_suma_uno_conserva_el_orden_y_no_da_cero_ni_uno():
@@ -61,7 +61,7 @@ def test_los_cuantiles_selados_siempre_cumplen_el_contrato_de_equipo():
         validar_equipo(dist)
         q = dist["margen"]
         pr = [prob_cuantiles(q, x)[0] for x in np.sort(RNG.uniform(q[0] - 3, q[-1] + 3, 8))]
-        assert (np.diff(pr) <= 1e-12).all() and all(0 < x < 1 for x in pr)
+        assert (np.diff(pr) <= 1e-12).all() and all(0 <= x <= 1 for x in pr)
 
 
 def test_minutos_esperados_suman_240_o_son_vacios_y_las_muestras_de_minutos_quedan_en_rango():

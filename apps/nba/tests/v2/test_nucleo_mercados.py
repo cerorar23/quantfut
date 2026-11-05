@@ -81,10 +81,10 @@ def test_total_de_equipo_y_margen_de_victoria():
     assert set(tramos) == {"1-5", "6-10", "11-15", "16+"} and sum(tramos.values()) == pytest.approx(1)
 
 
-def test_lineas_enteras_reparten_el_empate_exacto_a_mitades():
+def test_lineas_enteras_se_condicionan_a_no_push():
     m = nucleo.Marcador(np.array([[100.0, 90.0], [100.0, 90.0], [95.0, 90.0], [90.0, 100.0]]))   # márgenes 10, 10, 5, -10
-    assert mercados.handicap(m, -10.0) == pytest.approx(0.5 * 2 / 4)                     # dos pushes exactos
-    assert mercados.total(m, 190.0) == pytest.approx(0.5 * 3 / 4)                         # tres totales de 190 exactos
+    assert mercados.handicap(m, -10.0) == 0.0                        # cero victorias entre dos contratos con acción
+    assert mercados.total(m, 190.0) == 0.0                           # tres pushes y una derrota
 
 
 def test_ajuste_de_descanso_mueve_el_margen_sin_tocar_el_total():

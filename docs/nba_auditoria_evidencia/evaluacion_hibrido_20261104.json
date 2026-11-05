@@ -1,0 +1,56 @@
+{
+  "tipo": "retrospectivo_temporal_hibrido_regulacion",
+  "calibracion_prospectiva_certificada": false,
+  "acredita_recepcion_historica": false,
+  "partes_lesiones_en_evaluacion": false,
+  "prueba": "2025-26 hasta 30-abr-2026",
+  "ajuste_dispersion": "2023-24 y 2024-25",
+  "hiperparametros_fijados_antes_prueba": true,
+  "ganador": {
+    "n": 1235,
+    "brier": 0.2106148978380567,
+    "logloss": 0.6091875578717176,
+    "pendiente": 1.1484243293684064,
+    "intercepto": 0.05550308363832795,
+    "tasa_observada": 0.5611336032388664,
+    "prob_media": 0.5446395141700404,
+    "base": {
+      "brier": 0.20567827426923077,
+      "logloss": 0.5983699386074751
+    },
+    "dif_brier": 0.004936623568825912,
+    "dif_ic95": [
+      0.0012557072728935645,
+      0.008479972470433222
+    ],
+    "grupos_independientes": 179
+  },
+  "referencia_constante": {
+    "n": 1235,
+    "brier": 0.2106148978380567,
+    "logloss": 0.6091875578717176,
+    "pendiente": 1.1484243293684064,
+    "intercepto": 0.05550308363832795,
+    "tasa_observada": 0.5611336032388664,
+    "prob_media": 0.5446395141700404,
+    "base": {
+      "brier": 0.24656586359837965,
+      "logloss": 0.6862662235440695
+    },
+    "dif_brier": -0.03595096576032298,
+    "dif_ic95": [
+      -0.04423372028669029,
+      -0.0274333820201396
+    ],
+    "grupos_independientes": 179
+  },
+  "respaldos_equipo": 0,
+  "hashes_entradas": {
+    "team_history_readonly.json": "c1c32e8c76b0cfc848af25348850147699e64909b5e7b3f18fbe14bd96578b0b",
+    "jugadores_exportados.json.gz": "f675a2ec7fb052b163e4ea51fd1c07612891d9bdc81691e81ade0d84c11f0086"
+  },
+  "partidos_entrenamiento_sin_ot": 5847,
+  "descartes": {
+    "sin_exposicion_verificable": 587
+  }
+}

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, UTC
+from datetime import date, datetime, timedelta, UTC
 
 import numpy as np
 import pytest
@@ -11,10 +11,10 @@ from test_sellado_pit import EQUIPOS, liga
 ADQUIRIDO = datetime(2026, 11, 2, tzinfo=UTC)
 
 
-def con_jugadores(db, n=30, traspaso=None):
+def con_jugadores(db, n=30, traspaso=None, fecha_base=date(2026, 1, 1)):
     """Liga de 6 equipos con 9 jugadores cada uno: minutos y estadísticas deterministas, equipo del jugador y caja final.
     `traspaso` = (jugador_idx, partido_desde): ese jugador de BOS pasa a NYK desde esa posición."""
-    ids, partidos = liga(db, n)
+    ids, partidos = liga(db, n, fecha_base)
     jugadores = {t: [identidad.jugador(db, "nba_oficial", f"{1000 + 10 * k + i}", f"{t} jugador {i}") for i in range(9)]
                  for k, t in enumerate(EQUIPOS)}
     minutos = [34, 32, 30, 28, 24, 20, 16, 10, 3]
@@ -30,7 +30,8 @@ def con_jugadores(db, n=30, traspaso=None):
                     plantel.append((1, jugadores["BOS"][1]))                         # …y juega con NYK
             for i, jug in plantel:
                 m = minutos[i] + (pos % 3) - 1
-                base = dict(partido_id=pid, entidad_id=jug, fase="final", fuente="nba_oficial", recibido_en=ADQUIRIDO, pit="reconstruido")
+                recibido = datetime.combine(fecha + timedelta(days=1), datetime.min.time(), UTC) + timedelta(hours=6)
+                base = dict(partido_id=pid, entidad_id=jug, fase="final", fuente="nba_oficial", recibido_en=recibido, pit="reconstruido")
                 filas += [DatoNuevo(metrica="minutos", valor=float(m), **base), DatoNuevo(metrica="jugo", valor=1.0, **base),
                           DatoNuevo(metrica="puntos", valor=float(round(0.5 * m + (i + pos) % 4)), **base),
                           DatoNuevo(metrica="rebotes", valor=float(round(0.2 * m + (pos % 3))), **base),

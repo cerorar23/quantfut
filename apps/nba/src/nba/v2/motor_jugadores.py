@@ -40,14 +40,13 @@ def pronosticar(pl: Plantilla, par: ParametrosProps) -> list[dict]:
             muestras = minutos.muestras_condicionadas([mp], par.residuos, N_MINUTOS)
             min_si_juega = [float(np.quantile(muestras, q)) for q in (0.1, 0.5, 0.9)]
             for s, nombre in enumerate(par.estadisticas):
-                pmf = props.pmf_mezcla(tasa[s:s + 1], muestras, par.alfa[s], props.TECHO[nombre])[0]
-                pmf = pmf / pmf.sum()
+                pmf = props.pmf_mezcla_adaptativa(tasa[s:s + 1], muestras, par.alfa[s], props.TECHO[nombre])[0]
                 k = np.arange(len(pmf))
                 salida.append({
                     "jugador": j.id, "nombre": j.nombre, "lado": lado, "mercado": NOMBRES_MERCADO[nombre],
                     "escenarios": {"nombre": j.nombre, "lado": lado, "estado": j.estado, "p_juega": round(float(p_juega), 4), "minutos_si_juega": [round(x, 2) for x in min_si_juega],
                                    "partidos_en_historia": n, "parametros": par.version},
-                    "distribucion": {"pmf": [round(float(x), 6) for x in pmf], "media": round(float((pmf * k).sum()), 4),
+                    "distribucion": {"pmf": [float(x) for x in pmf], "media": round(float((pmf * k).sum()), 4),
                                      "p10": _cuantil(pmf, 0.10), "p50": _cuantil(pmf, 0.50), "p90": _cuantil(pmf, 0.90),
                                      "p_juega": round(float(p_juega), 4), "minutos_esperados": round(float(mp), 2)}})
     return salida

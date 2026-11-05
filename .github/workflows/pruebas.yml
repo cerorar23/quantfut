@@ -47,6 +47,14 @@ jobs:
 
   nba:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: nba-ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,6 +69,7 @@ jobs:
           PYTHONPATH: apps/nba/src
           OPENBLAS_NUM_THREADS: "1"
           OMP_NUM_THREADS: "1"
+          NBA_TEST_PG_ADMIN_DSN: postgresql://postgres:nba-ci@localhost:5432/postgres
 
   tenis:
     # Motor de tenis (estudio sin lucro): independiente del de fútbol, sin base de datos.

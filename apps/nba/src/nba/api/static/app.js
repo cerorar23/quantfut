@@ -15,7 +15,7 @@ const nodo = (tag, attrs = {}, ...hijos) => {
   for (const h of hijos.flat()) if (h != null) e.append(h instanceof Node ? h : document.createTextNode(String(h)));
   return e;
 };
-const pct = (p) => (p * 100).toFixed(0) + " %";
+const pct = (p) => p == null || !Number.isFinite(p) ? "—" : (p * 100).toFixed(0) + " %";
 const num = (x, d = 1) => Number(x).toLocaleString(lang, { minimumFractionDigits: d, maximumFractionDigits: d });
 const fmtHora = (iso) => new Date(iso).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", timeZone: "America/New_York" }) + " ET";
 const fmtFechaHora = (iso) => new Date(iso).toLocaleString(lang, { dateStyle: "short", timeStyle: "short" });
@@ -240,6 +240,7 @@ async function calibracion() {
   if (h) {
     const e = h.equipo;
     partes.push(nodo("h2", {}, t("calib_hist") + " · " + h.temporada),
+      nodo("p", { class: "sub" }, t("modelo") + ": " + (d.historico_version_modelo || "—")),
       nodo("table", {}, nodo("thead", {}, nodo("tr", {}, nodo("th", {}), nodo("th", {}, "QuantFut"), nodo("th", {}, t("mercado")))),
         nodo("tbody", {}, fila(t("brier"), num(e.modelo.brier_ganador, 4), num(e.mercado.brier_ganador, 4)), fila(t("rmse_margen"), num(e.modelo.rmse_margen, 2), num(e.mercado.rmse_margen, 2)),
           fila(t("rmse_total"), num(e.modelo.rmse_total, 2), num(e.mercado.rmse_total, 2)))),
@@ -247,6 +248,8 @@ async function calibracion() {
         nodo("tbody", {}, Object.entries(h.props).map(([k, v]) => fila(t(k), num(v.mase, 3), pct(v.cobertura80), v.n.toLocaleString(lang))))));
   }
   partes.push(nodo("h2", {}, t("calib_prosp")), nodo("p", {}, `${t("sellados")}: ${p.sellados} · ${t("con_resultado")}: ${p.con_resultado}` + (p.brier_ganador != null ? ` · ${t("brier")}: ${num(p.brier_ganador, 4)}` : "")));
+  partes.push(nodo("p", { class: "sub" }, t("modelo") + ": " + (p.version_modelo || "—")));
+  if (p.logloss_ganador != null) partes.push(nodo("p", {}, `${t("logloss")}: ${num(p.logloss_ganador, 4)}`));
   if (p.fiabilidad.length) partes.push(nodo("table", {}, nodo("thead", {}, nodo("tr", {}, ["tramo", "n", "prob_media", "observado"].map((k) => nodo("th", {}, t(k))))),
     nodo("tbody", {}, p.fiabilidad.map((b) => fila(`${pct(b.desde)}–${pct(b.hasta)}`, b.n, pct(b.prob_media), pct(b.tasa_observada))))));
   else partes.push(nodo("p", { class: "aviso" }, t("sin_datos")));

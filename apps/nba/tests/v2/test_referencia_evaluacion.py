@@ -31,7 +31,8 @@ def test_informe_binario_de_probabilidades_calibradas():
     rng = np.random.default_rng(0)
     p = rng.uniform(0.2, 0.8, 20000)
     y = (rng.random(20000) < p).astype(float)
-    r = evaluacion.informe_binario(p, y, base=np.full(20000, y.mean()), estratos={"mitad": np.arange(20000) % 2})
+    r = evaluacion.informe_binario(p, y, base=np.full(20000, y.mean()), estratos={"mitad": np.arange(20000) % 2},
+                                  grupos=np.arange(20000))  # las Bernoulli de esta simulación son independientes
     assert r["pendiente"] == pytest.approx(1.0, abs=0.1) and r["intercepto"] == pytest.approx(0.0, abs=0.06)
     assert r["dif_brier"] < 0 and r["dif_ic95"][1] < 0                  # mejor que la base constante, con intervalo
     assert set(r["estratos"]["mitad"]) == {"0", "1"} and r["estratos"]["mitad"]["0"]["n"] == 10000

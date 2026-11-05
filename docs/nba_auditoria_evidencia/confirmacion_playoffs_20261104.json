@@ -1,0 +1,107 @@
+{
+  "tipo": "retrospectivo_walk_forward_por_fecha",
+  "acredita_recepcion_historica": false,
+  "acredita_hibrido_jugadores": false,
+  "calibracion_prospectiva_certificada": false,
+  "ajuste_hasta": "2024-06-30",
+  "prueba_desde": "2026-05-01",
+  "prueba_hasta": "2026-06-30",
+  "hashes_entradas": {
+    "team_history_readonly.json": "c1c32e8c76b0cfc848af25348850147699e64909b5e7b3f18fbe14bd96578b0b"
+  },
+  "descartes": {
+    "sin_exposicion_verificable": 587
+  },
+  "ganador": {
+    "n": 43,
+    "brier": 0.20506352244186046,
+    "logloss": 0.5959940402863522,
+    "pendiente": 1.5060325487422177,
+    "intercepto": -0.38305653672421264,
+    "tasa_observada": 0.4883720930232558,
+    "prob_media": 0.5465953488372093,
+    "base": {
+      "brier": 0.2551680042247754,
+      "logloss": 0.7035541924976232
+    },
+    "dif_brier": -0.05010448178291494,
+    "dif_ic95": [
+      -0.08244711570726732,
+      -0.016302189524093184
+    ],
+    "grupos_independientes": 31
+  },
+  "ot": {
+    "prob_media": 0.056319742131912605,
+    "frecuencia": 0.09302325581395349,
+    "brier": 0.08560010330140051,
+    "logloss": 0.31924060529288784
+  },
+  "totales_por_ot": {
+    "False": {
+      "n": 39,
+      "rmse": 18.9932868731668,
+      "cobertura80_incondicional": 0.8461538461538461,
+      "rmse_condicionado_ot": 18.698076533196467,
+      "cobertura80_condicionada_ot": 0.8205128205128205
+    },
+    "True": {
+      "n": 4,
+      "rmse": 9.08645727394621,
+      "cobertura80_incondicional": 1.0,
+      "rmse_condicionado_ot": 22.97710311836931,
+      "cobertura80_condicionada_ot": 0.5
+    }
+  },
+  "fiabilidad": [
+    {
+      "desde": 0.2,
+      "hasta": 0.3,
+      "n": 4,
+      "prob_media": 0.2683375,
+      "tasa": 0.0
+    },
+    {
+      "desde": 0.3,
+      "hasta": 0.4,
+      "n": 6,
+      "prob_media": 0.3305916666666667,
+      "tasa": 0.3333333333333333
+    },
+    {
+      "desde": 0.4,
+      "hasta": 0.5,
+      "n": 5,
+      "prob_media": 0.45997000000000005,
+      "tasa": 0.2
+    },
+    {
+      "desde": 0.5,
+      "hasta": 0.6,
+      "n": 11,
+      "prob_media": 0.540290909090909,
+      "tasa": 0.6363636363636364
+    },
+    {
+      "desde": 0.6,
+      "hasta": 0.7,
+      "n": 4,
+      "prob_media": 0.6357375000000001,
+      "tasa": 0.0
+    },
+    {
+      "desde": 0.7,
+      "hasta": 0.8,
+      "n": 12,
+      "prob_media": 0.7357041666666667,
+      "tasa": 0.8333333333333334
+    },
+    {
+      "desde": 0.8,
+      "hasta": 0.9,
+      "n": 1,
+      "prob_media": 0.83225,
+      "tasa": 1.0
+    }
+  ]
+}

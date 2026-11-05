@@ -155,11 +155,13 @@ def main(carpeta: Path, prueba: str):
         filas["ganador"]["modelo"].append(mercados.ganador(marcador))
         filas["ganador"]["mercado"].append(desvig(c["h2h"]["local"], c["h2h"]["visit"]))
         filas["ganador"]["y"].append(1.0 if margen_real > 0 else 0.0)
+        filas["ganador"]["grupos"].append(j["fecha"])
         if "spread_linea" in c and c["spread_linea"] % 1 != 0 and "spread" in c:
             linea = c["spread_linea"]
             filas["handicap"]["modelo"].append(mercados.handicap(marcador, linea))
             filas["handicap"]["mercado"].append(desvig(c["spread"]["local"], c["spread"]["visit"]))
             filas["handicap"]["y"].append(1.0 if margen_real + linea > 0 else 0.0)
+            filas["handicap"]["grupos"].append(j["fecha"])
             filas["margen_linea"]["mercado"].append(-linea)
             filas["margen_linea"]["mezcla"].append(w[0] * (m[0] - m[1]) + w[1] * (-linea))
             filas["margen_linea"]["modelo"].append(m[0] - m[1])
@@ -169,6 +171,7 @@ def main(carpeta: Path, prueba: str):
             filas["total"]["modelo"].append(mercados.total(marcador, linea))
             filas["total"]["mercado"].append(desvig(c["total"]["over"], c["total"]["under"]))
             filas["total"]["y"].append(1.0 if total_real > linea else 0.0)
+            filas["total"]["grupos"].append(j["fecha"])
             filas["total_linea"]["mercado"].append(linea)
             filas["total_linea"]["modelo"].append(m[0] + m[1])
             filas["total_linea"]["y"].append(total_real)
@@ -178,7 +181,7 @@ def main(carpeta: Path, prueba: str):
         f = filas[nombre]
         y = np.array(f["y"])
         pend, inter = pendiente_calibracion(np.array(f["modelo"]), y)
-        d, lo, hi = ic_diferencia(f["modelo"], f["mercado"], y)
+        d, lo, hi = ic_diferencia(f["modelo"], f["mercado"], y, grupos=f["grupos"])
         informe[nombre] = dict(n=len(y), brier_modelo=brier(f["modelo"], y), brier_mercado=brier(f["mercado"], y),
                                logloss_modelo=logloss(f["modelo"], y), logloss_mercado=logloss(f["mercado"], y),
                                pendiente=pend, intercepto=inter, dif_brier=d, dif_ic95=[lo, hi])

@@ -4,9 +4,7 @@ Una `Instantanea` contiene (1) la historia de resultados finales de partidos ANT
 partido visibles en `corte` (`recibido_en <= corte`, nunca las de fase `final`). `version_datos` es el sha256 de ambas: si dos
 instantáneas tienen la misma huella, el motor ve exactamente lo mismo.
 
-Modo de la historia: las filas `pit = 'reconstruido'` (cajas históricas) tienen como `recibido_en` la fecha de adquisición del
-archivo, no la del partido; se aceptan si el partido al que pertenecen es de una fecha anterior al partido pronosticado. Las filas
-`posterior` exigen `recibido_en <= corte`. Es una suposición explícita: el resultado final de un partido anterior se sabía al día siguiente.
+También los archivos reconstruidos exigen recepción acreditada anterior al corte; la fecha del evento no acredita recepción.
 """
 from dataclasses import dataclass
 from datetime import date, datetime, UTC
@@ -17,9 +15,13 @@ HISTORIA = """
 WITH vis AS (
     SELECT DISTINCT ON (d.partido_id, d.entidad_id) d.partido_id, d.entidad_id, d.valor
     FROM nba.dato d
+    JOIN nba.entidad equipo ON equipo.entidad_id = d.entidad_id AND equipo.tipo = 'equipo'
+    JOIN nba.entidad juego ON juego.entidad_id = d.partido_id AND juego.tipo = 'partido'
+         AND juego.canonica_id = juego.entidad_id AND juego.fecha_juego_et < %(fecha)s
     JOIN nba.fuente f ON f.fuente = d.fuente
     JOIN nba.metrica m ON m.metrica_id = d.metrica_id AND m.nombre = 'puntos'
-    WHERE d.periodo = 0 AND d.fase = 'final' AND (d.pit = 'reconstruido' OR d.recibido_en <= %(corte)s)
+    WHERE d.periodo = 0 AND d.fase = 'final' AND d.recibido_en <= %(corte)s
+      AND NOT EXISTS (SELECT 1 FROM nba.captura c WHERE c.captura_id = d.captura_id AND (c.recibido_en IS NULL OR c.recibido_en > %(corte)s))
     ORDER BY d.partido_id, d.entidad_id, f.prioridad, d.recibido_en DESC, d.dato_id DESC
 )
 SELECT e.fecha_juego_et, e.entidad_id, tl.id_en_fuente, tv.id_en_fuente, pl.valor, pv.valor
@@ -60,6 +62,13 @@ def _huella(historia, propias) -> str:
     for fila in propias:
         h.update(json.dumps([*fila[:7], fila[7].astimezone(UTC).isoformat(timespec="microseconds")], separators=(",", ":")).encode())
     return h.hexdigest()
+
+
+def combinar_huellas(*huellas: str) -> str:
+    """Composición con dominio y orden: ninguna entrada se descarta por concatenación/truncamiento."""
+    if not huellas or any(len(h) != 64 or any(c not in '0123456789abcdef' for c in h) for h in huellas):
+        raise ValueError("se requieren huellas sha256 completas")
+    return hashlib.sha256(json.dumps(['nba-inputs-v1', *huellas], separators=(',', ':')).encode()).hexdigest()
 
 
 def instantanea(db, partido_id: int, corte: datetime) -> Instantanea:

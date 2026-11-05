@@ -13,10 +13,10 @@ class Distribucion:
     @staticmethod
     def de_muestras(valores: Sequence[float], pesos: Sequence[float] | None = None) -> "Distribucion":
         v = np.asarray(valores, dtype=float)
-        if v.size == 0:
+        if v.ndim != 1 or v.size == 0 or not np.isfinite(v).all():
             raise ValueError("una distribución necesita al menos un valor")
         w = np.ones_like(v) if pesos is None else np.asarray(pesos, dtype=float)
-        if (w < 0).any() or w.sum() <= 0:
+        if w.shape != v.shape or not np.isfinite(w).all() or (w < 0).any() or w.sum() <= 0:
             raise ValueError("pesos inválidos")
         orden = np.argsort(v, kind="stable")
         return Distribucion(v[orden], w[orden] / w.sum())
@@ -31,11 +31,19 @@ class Distribucion:
         return float(self.valores[min(i, self.valores.size - 1)])
 
     def prob_menos_de(self, x: float) -> float:
-        """P(X < x); el empate con un valor discreto se reparte por mitades para no sesgar líneas enteras."""
-        return float(self.pesos[self.valores < x].sum() + 0.5 * self.pesos[self.valores == x].sum())
+        """P(X < x) estricta; la masa en x es una devolución separada."""
+        return float(self.pesos[self.valores < x].sum())
 
     def prob_mas_de(self, x: float) -> float:
-        return float(self.pesos[self.valores > x].sum() + 0.5 * self.pesos[self.valores == x].sum())
+        return float(self.pesos[self.valores > x].sum())
+
+    def cuantiles(self, niveles: Sequence[float]) -> np.ndarray:
+        """Todos los cuantiles en una pasada; no se vuelve a ordenar ni acumular por nivel."""
+        p = np.asarray(niveles, float)
+        if not np.isfinite(p).all() or (p < 0).any() or (p > 1).any():
+            raise ValueError("niveles de cuantil inválidos")
+        i = np.searchsorted(np.cumsum(self.pesos), np.maximum(p - 1e-12, 0))
+        return self.valores[np.minimum(i, len(self.valores) - 1)]
 
     def pinball(self, y: float, p: float) -> float:
         """Pérdida de cuantil (pinball) del cuantil p frente al valor observado y."""

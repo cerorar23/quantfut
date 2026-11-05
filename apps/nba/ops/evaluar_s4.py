@@ -147,8 +147,10 @@ def main(carpeta, prueba):
 
     for s, nombre in enumerate(props.ESTADISTICAS):
         techo = props.TECHO[nombre]
-        pmf = np.vstack([props.pmf_mezcla(tasa_t[i:i + 4000, s], muestras[i:i + 4000], alfas[s], techo)
-                         for i in range(0, len(y), 4000)])
+        bloques = [props.pmf_mezcla_adaptativa(tasa_t[i:i + 4000, s], muestras[i:i + 4000], alfas[s], techo)
+                   for i in range(0, len(y), 4000)]
+        ancho = max(b.shape[1] for b in bloques)
+        pmf = np.vstack([np.pad(b, ((0, 0), (0, ancho - b.shape[1]))) for b in bloques])
         mu = tasa_t[:, s] * muestras.mean(axis=1)
         volcado[nombre] = {"y": y[:, s].tolist(), "mu": mu.tolist()}
         pit = props.pit_aleatorio(pmf, y[:, s], semilla=s)
@@ -163,11 +165,12 @@ def main(carpeta, prueba):
             linea = np.array([lineas[(pids[i], jids[i], s)][0] for i in idx])
             p_mer = np.array([lineas[(pids[i], jids[i], s)][1] for i in idx])
             p_mod = props.prob_mas_de(pmf[idx], linea)
-            pmf5 = props.pmf_mezcla(np.maximum(base5[idx, s], 0.05), np.ones((len(idx), 1)), alfas[s], techo)
+            pmf5 = props.pmf_mezcla_adaptativa(np.maximum(base5[idx, s], 0.05), np.ones((len(idx), 1)), alfas[s], techo)
             p_b5 = props.prob_mas_de(pmf5, linea)
             res_y = (y[idx, s] > linea).astype(float)
             pend, inter = e3.pendiente_calibracion(p_mod, res_y)
-            d_m, lo, hi = e3.ic_diferencia(p_mod, p_mer, res_y)
+            fechas_por_pid = {g['pid']: g['fecha'] for g in juegos}
+            d_m, lo, hi = e3.ic_diferencia(p_mod, p_mer, res_y, grupos=[fechas_por_pid[int(pids[i])] for i in idx])
             r["linea"] = {"n": len(idx), "logloss_modelo": e3.logloss(p_mod, res_y), "logloss_mercado": e3.logloss(p_mer, res_y),
                           "logloss_media5": e3.logloss(p_b5, res_y), "brier_modelo": e3.brier(p_mod, res_y),
                           "brier_mercado": e3.brier(p_mer, res_y), "brier_media5": e3.brier(p_b5, res_y),

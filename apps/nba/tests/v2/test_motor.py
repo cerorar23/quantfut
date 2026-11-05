@@ -10,12 +10,14 @@ from test_sellado_pit import liga
 
 def con_horas(db, n=30, sin_hora=(), extra_marzo=False):
     """Liga de prueba con hora de salto a las 00:30 UTC del día siguiente a su fecha (19:30 ET)."""
-    ids, partidos = liga(db, n)
+    reloj = datetime.now(UTC)
+    fecha_et = reloj.astimezone(motor.ET).date()
+    ids, partidos = liga(db, n, fecha_et - timedelta(days=20))
     inicio = {}
     for i, (pid, fecha, a, _) in enumerate(partidos):
         if i in sin_hora:
             continue
-        t = datetime(fecha.year, fecha.month, fecha.day, 0, 30, tzinfo=UTC) + timedelta(days=1)
+        t = reloj + timedelta(minutes=30, days=(fecha-fecha_et).days)
         inicio[pid] = t
         guardar_datos(db, [DatoNuevo(partido_id=pid, entidad_id=ids[a], metrica="inicio_programado_utc", fase="pre", fuente="nba_oficial",
                                      recibido_en=datetime(2025, 12, 1, tzinfo=UTC), valor=t.timestamp())])
@@ -73,7 +75,7 @@ def test_sin_hora_conocida_no_se_sella_y_se_informa(base_migrada):
     db = base_migrada
     _, partidos, inicio = con_horas(db, sin_hora=(20,))
     pid = partidos[20][0]
-    r = motor.ejecutar(db, datetime(2026, 1, 21, 23, 30, tzinfo=UTC))
+    r = motor.ejecutar(db, datetime.now(UTC))
     assert r["sin_hora"] == [pid] and r["sellados"] == [] and n_sellos(db) == 0
 
 
@@ -107,7 +109,7 @@ def test_un_partido_roto_no_impide_sellar_los_demas(base_migrada, monkeypatch):
 
     monkeypatch.setattr(motor_equipo, "pronosticar", roto)
     r = motor.ejecutar(db, inicio[a] - timedelta(minutes=20))
-    assert [e["partido"] for e in r["errores"]] == [a] and [s["partido"] for s in r["sellados"]] == [b]
+    assert [e["partido"] for e in r["errores"]] == [a] and [s["partido"] for s in r["sellados"]] == [b], r
     assert n_sellos(db) == 1 and sellado.verificar_cadena(db) == 1
 
 

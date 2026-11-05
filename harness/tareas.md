@@ -1,5 +1,27 @@
 # Backlog — QuantFut
 
+## 4-nov-2026 · Publicar correcciones NBA y comprobar evidencia prospectiva
+
+Orden expresa del titular: publicar las correcciones y acreditar la calibración prospectiva si los datos lo permiten. No se fabrica acreditación ni se sustituyen resultados prospectivos por backtests.
+
+- [x] Releer reglas de despliegue y reconfirmar main/runtime. API concurrente `mercados-1bd8748`, corrección `61ff260`, preservada e integrada; cuotas por lado/última recepción y CDF exacta corregidas. 32 pruebas de API/mercados/regresiones aprobadas.
+- [ ] PR con arnés verde, integración en main y comparación previa de imágenes/hashes.
+- [ ] Respaldo, migración 0009, ensayo de solo lectura y publicación aislada motor/API; conservar rollback y fuentes de mercados.
+- [ ] Verificar rutas públicas, versión/artefacto, cron y cadena; documentar recuento prospectivo real y estado de acreditación según protocolo.
+
+## 4-nov-2026 · Correcciones de la auditoría NBA — código y validación terminados; promoción pendiente
+
+Autorización del titular: «necesito que arregles todo lo que encontraste en la auditoría». Rama aislada `codex/nba-auditoria-20261104`, basada en `origin/main`; se preserva el checkout anterior y la evidencia del VPS.
+
+- [x] C01/C02/M02: visibilidad estricta y guardia de salto al persistir, con regresiones SQL y de concurrencia.
+- [x] C03/C04/C05/C06/M01/M03/M06/MN01: push separado, masas discretas, capacidad de minutos, colas conservadas, huellas completas, invariantes, bootstrap por grupos y cuantiles reutilizados.
+- [x] C07/M04/M07: posesiones, regulación más OT y ratings entrenados solo en local con artefacto temporal verificable.
+- [x] M05: métricas por versión, Brier/log-loss y evidencia; afirmación pública de calibración corregida en seis idiomas.
+- [x] NBA completa con PostgreSQL: 1.224 aprobadas, 18 omitidas; 94 regresiones finales y 4 pruebas adicionales de entrenamiento aprobadas. CI NBA incorpora PostgreSQL.
+- [x] Evidencia, límites y plan de publicación/rollback en `docs/nba_auditoria_correcciones.md`; runtime reconfirmado sin cambios.
+- [x] Validar el híbrido con la nueva ley: empeora Brier (0,21061 vs 0,20568; IC95 de la diferencia positivo). Se bloquea su activación y se conserva el núcleo validado; se añade confirmación separada en playoffs.
+- [ ] Publicar el núcleo solo desde main, registrar despliegue y mantener renovación local versionada antes de 72 h. La calibración prospectiva sigue sin acreditar.
+
 ## Correcciones de la auditoría del 3-nov-2026 — en curso
 
 Autorización del titular: «haz las correcciones». Evidencia inicial en el checkout principal, `docs/auditoria_futbol_20261103/INFORME.md`. Se usa este worktree porque contiene el rediseño y la API vigente.

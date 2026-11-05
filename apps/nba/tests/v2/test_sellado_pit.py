@@ -18,7 +18,7 @@ def pronostico(partido, **kw):
     return PronosticoNuevo(**base)
 
 
-def liga(db, dias=30):
+def liga(db, dias=30, fecha_base=date(2026, 1, 1)):
     """Seis equipos, un partido por día entre parejas rotativas, resultados reconstruidos conocidos."""
     ids = {t: identidad.equipo(db, t) for t in EQUIPOS}
     partidos = []
@@ -26,9 +26,9 @@ def liga(db, dias=30):
         a, b = EQUIPOS[d % 6], EQUIPOS[(d + 1 + d // 6) % 6]
         if a == b:
             b = EQUIPOS[(d + 2) % 6]
-        fecha = date(2026, 1, 1) + timedelta(days=d)
+        fecha = fecha_base + timedelta(days=d)
         pid = identidad.partido(db, "nba_oficial", f"00225{d:05d}", fecha, ids[a], ids[b], identidad.temporada(fecha))
-        recibido = datetime(2026, 11, 2, tzinfo=UTC)
+        recibido = datetime.combine(fecha + timedelta(days=1), datetime.min.time(), UTC) + timedelta(hours=6)
         guardar_datos(db, [DatoNuevo(partido_id=pid, entidad_id=ids[a], metrica="puntos", fase="final", fuente="nba_oficial",
                                      recibido_en=recibido, valor=100.0 + d, pit="reconstruido"),
                            DatoNuevo(partido_id=pid, entidad_id=ids[b], metrica="puntos", fase="final", fuente="nba_oficial",
@@ -93,11 +93,11 @@ def test_la_instantanea_solo_ve_el_pasado_y_su_huella_es_estable(base_migrada):
 def test_el_primer_partido_de_una_temporada_aplica_el_arrastre(base_migrada):
     db = base_migrada
     ids = {t: identidad.equipo(db, t) for t in ("BOS", "NYK")}
-    recibido = datetime(2026, 11, 2, tzinfo=UTC)
     pids = []
     for d, (fecha, a, b, pa, pb) in enumerate([(date(2026, 5, 1), "BOS", "NYK", 130.0, 90.0), (date(2026, 5, 3), "NYK", "BOS", 95.0, 120.0),
                                                 (date(2026, 10, 25), "BOS", "NYK", 110.0, 105.0)]):
         pid = identidad.partido(db, "nba_oficial", f"002250{d}", fecha, ids[a], ids[b], identidad.temporada(fecha))
+        recibido = datetime.combine(fecha + timedelta(days=1), datetime.min.time(), UTC)
         guardar_datos(db, [DatoNuevo(partido_id=pid, entidad_id=ids[a], metrica="puntos", fase="final", fuente="nba_oficial",
                                      recibido_en=recibido, valor=pa, pit="reconstruido"),
                            DatoNuevo(partido_id=pid, entidad_id=ids[b], metrica="puntos", fase="final", fuente="nba_oficial",

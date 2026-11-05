@@ -30,7 +30,7 @@ MERCADO = "equipo"
 PARAMETROS_PROPS = parametros.cargar_props()
 PARAMETROS_IMPACTO = parametros.cargar_impacto()
 VERSION_EQUIPO_JUGADORES = equipo_jugadores.version(PARAMETROS_IMPACTO)
-VERSION_PROPS = f"props-2.0;{PARAMETROS_PROPS.version};k={PARAMETROS_PROPS.k_minutos};dec={PARAMETROS_PROPS.decaimiento}"
+VERSION_PROPS = f"props-2.1;{PARAMETROS_PROPS.version};k={PARAMETROS_PROPS.k_minutos};dec={PARAMETROS_PROPS.decaimiento};cola=1e-10"
 DIAS_MAXIMOS_SIN_JUGAR = 10                # más que la pausa del Juego de Estrellas: un equipo sin resultados por más tiempo es un hueco de datos
 DIAS_DE_GRACIA_INICIO = 21                 # pasadas tres semanas de temporada, un equipo sin ningún resultado también lo es
 HORAS_DE_AVISO_TRAS_EL_SALTO = 3           # pasado esto, un partido sin sello deja de repetirse en el informe
@@ -87,13 +87,13 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
             pl = plantilla(db, inst)
             if not equipo_hecho:
                 version, esc, dist = equipo_jugadores.pronosticar(inst, pl, PARAMETROS_IMPACTO, PARAMETROS_PROPS)
-                vd = (inst.version_datos + pl.version_datos)[:64] if version == VERSION_EQUIPO_JUGADORES else inst.version_datos
+                vd = pit.combinar_huellas(inst.version_datos, pl.version_datos) if 'jugadores' in esc else inst.version_datos
                 validar_equipo(dist)                              # frontera: lo que incumple el contrato no se sella
                 if simulacro:
                     resumen["sellados"].append({"partido": pid, "version": version.split(";")[0], "p_local": dist["p_local"], "mu": dist["mu"],
                                                 "version_datos": vd[:12]})
                 else:
-                    h = sellado.sellar(db, PronosticoNuevo(pid, MERCADO, version, vd, corte, esc, dist))
+                    h = sellado.sellar(db, PronosticoNuevo(pid, MERCADO, version, vd, corte, esc, dist, inicio_utc=inicio))
                     db.commit()
                     resumen["sellados"].append({"partido": pid, "hash": h, "version": version.split(";")[0], "p_local": dist["p_local"]})
             if not props_hechos:
@@ -101,11 +101,11 @@ def ejecutar(db, ahora: datetime | None = None, simulacro: bool = False) -> dict
                 if simulacro:
                     resumen["props"].append({"partido": pid, "jugadores": len({x["jugador"] for x in items}), "pronosticos": len(items)})
                 elif items:
-                    vd = pl.version_datos + inst.version_datos
+                    vd = pit.combinar_huellas(pl.version_datos, inst.version_datos)
                     with db.transaction():                           # todo el partido o nada: un fallo deshace los sellos de sus jugadores
                         for x in items:
-                            sellado.sellar(db, PronosticoNuevo(pid, x["mercado"], VERSION_PROPS, vd[:64], corte, x["escenarios"], x["distribucion"],
-                                                               entidad_id=x["jugador"]))
+                            sellado.sellar(db, PronosticoNuevo(pid, x["mercado"], VERSION_PROPS, vd, corte, x["escenarios"], x["distribucion"],
+                                                               entidad_id=x["jugador"], inicio_utc=inicio))
                     db.commit()
                     resumen["props"].append({"partido": pid, "jugadores": len({x["jugador"] for x in items}), "pronosticos": len(items)})
         except Exception as e:                               # un partido roto no impide sellar los demás

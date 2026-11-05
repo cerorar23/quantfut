@@ -188,6 +188,15 @@ def probar_jugadores(db, elegidos, n, ref_equipo=None):
 
 
 def main(temporada: str, n: int):
+    # La referencia de este script reaprende ratings de puntos finales: no es una
+    # referencia independiente del núcleo congelado por posesiones/OT.
+    if motor_equipo.VERSION_MODELO.startswith('equipo-2.2'):
+        print(json.dumps({'aprobado':False, 'estado':'referencia_legacy_no_aplica',
+                          'version_modelo':motor_equipo.VERSION_MODELO,
+                          'regresiones':'tests/v2/test_auditoria_sql.py y test_equipo_congelado.py',
+                          'evaluador':'ops/evaluar_equipo_congelado.py',
+                          'requiere':'archivo de artefactos y recepciones originales para certificar replay prospectivo'}))
+        return 2
     with psycopg.connect(os.environ["NBA_DB_DSN"]) as db:
         db.execute("SET TRANSACTION READ ONLY")
         filas = [(f, int(pid), lo, vi, float(a), float(b)) for f, pid, lo, vi, a, b in db.execute(REFERENCIA).fetchall()]
@@ -233,4 +242,4 @@ def main(temporada: str, n: int):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "2025-26", int(sys.argv[2]) if len(sys.argv) > 2 else 200)
+    raise SystemExit(main(sys.argv[1] if len(sys.argv) > 1 else "2025-26", int(sys.argv[2]) if len(sys.argv) > 2 else 200))

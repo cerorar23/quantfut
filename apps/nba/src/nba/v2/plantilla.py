@@ -84,10 +84,23 @@ def ajustar(partidos: Sequence[PartidoFila], lam_margen: float, lam_total: float
 
 
 def minutos_esperados(candidatos: Mapping[int, tuple[float, float]]) -> dict[int, float]:
-    """{jugador: (minutos si juega, prob. de jugar)} → minutos esperados que suman 240 (vacío si nadie puede jugar)."""
-    crudos = {j: m * p for j, (m, p) in candidatos.items() if m > 0 and p > 0}
+    """Proyección proporcional con capacidad por jugador; una plantilla insuficiente no inventa minutos."""
+    if any(not np.isfinite([m, p]).all() or m < 0 or not 0 <= p <= 1 for m, p in candidatos.values()):
+        raise ValueError("minutos o participación inválidos")
+    crudos = {j: min(m, MINUTOS_COMPLETOS) * p for j, (m, p) in candidatos.items() if m > 0 and p > 0}
     suma = sum(crudos.values())
-    if suma <= 0:
+    limites = np.asarray([MINUTOS_COMPLETOS * candidatos[j][1] for j in crudos], float)
+    if suma <= 0 or limites.sum() < MINUTOS_EQUIPO - 1e-10:
         return {}
-    k = MINUTOS_EQUIPO / suma
-    return {j: v * k for j, v in crudos.items()}
+    valores = np.asarray(list(crudos.values()), float)
+    lo, hi = 0., MINUTOS_EQUIPO / float(valores.min())
+    for _ in range(80):
+        k = (lo + hi) / 2
+        if np.minimum(valores * k, limites).sum() < MINUTOS_EQUIPO:
+            lo = k
+        else:
+            hi = k
+    minutos = np.minimum(valores * ((lo + hi) / 2), limites)
+    if abs(minutos.sum() - MINUTOS_EQUIPO) > 1e-8:
+        raise ValueError("la proyección no conserva capacidad de equipo")
+    return dict(zip(crudos, map(float, minutos)))

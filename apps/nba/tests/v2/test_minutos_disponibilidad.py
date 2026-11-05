@@ -9,7 +9,7 @@ from nba.v2.distribucion import Distribucion
 def test_distribucion_media_cuantiles_y_empates():
     d = Distribucion.de_muestras([10, 20, 30], [1, 1, 2])
     assert d.media() == pytest.approx(22.5) and d.cuantil(0.5) == 20 and d.cuantil(0.99) == 30 and d.cuantil(0.0) == 10
-    assert d.prob_mas_de(20) == pytest.approx(0.5 + 0.5 * 0.25) and d.prob_menos_de(20) == pytest.approx(0.25 + 0.125)
+    assert d.prob_mas_de(20) == pytest.approx(0.5) and d.prob_menos_de(20) == pytest.approx(0.25)
     assert d.prob_mas_de(5) == 1 and d.prob_menos_de(5) == 0
     assert d.pinball(25, 0.5) == pytest.approx(0.5 * 5)                         # y por encima del cuantil
     with pytest.raises(ValueError):
@@ -18,7 +18,7 @@ def test_distribucion_media_cuantiles_y_empates():
 
 def test_mezcla_de_distribuciones_suma_uno():
     m = Distribucion.mezcla([(0.25, Distribucion.de_muestras([0.0])), (0.75, Distribucion.de_muestras([30.0, 34.0]))])
-    assert m.pesos.sum() == pytest.approx(1) and m.media() == pytest.approx(0.75 * 32) and m.prob_mas_de(0) == pytest.approx(0.75 + 0.5 * 0.25)
+    assert m.pesos.sum() == pytest.approx(1) and m.media() == pytest.approx(0.75 * 32) and m.prob_mas_de(0) == pytest.approx(0.75)
 
 
 def residuos_simples():
