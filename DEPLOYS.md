@@ -33,6 +33,17 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-04 20:10 CDMX / 2026-11-05 02:10 UTC · NBA: Partido desde cuota 1,20, tarjetas de jugador con foto oficial · PR #259, `main` `f11d97c7`
+
+- Orden del titular: terminar el trabajo pendiente (commit, push, PR, fusión y publicación). PR #259 fusionado con las cuatro comprobaciones en verde (frontend, arnés, NBA/PostgreSQL 16 y tenis). Validación local: 124 pruebas frontend y 7 de API/mercados con PostgreSQL 16.
+- Cambios: la familia Partido oculta las filas con cuota < 1,20 y ordena por probabilidad; el destacado conserva el mínimo de 1,40. Los mercados de jugador se agrupan en tarjetas con foto, búsqueda por jugador/equipo y líneas plegables; las proyecciones se pliegan por jugador; el resumen usa `team_projection` (puntos esperados). La API entrega `photo_id` desde `nba.entidad` (`nba_oficial`); identidad ausente o ambigua queda nula y la web usa iniciales. Nunca se usa el id interno como id del CDN.
+- Imágenes: **`nba-api:tarjetas-f11d97c7`** (ID `sha256:e2b9a1ec8cf842512bec7cbb84fc62afb90b3c8b213b57c4a543ae8b57568188`) sobre `nba-api:mercados-f3ffb440`, y **`quantfut-api-nba-tarjetas:f11d97c7`** (ID `sha256:33daea6e3a3ab82102a0f35ecd46f6b445a553e1b300f700469f80c7f368ba58`) sobre `quantfut-api-nba-mercados:f3ffb440`. Solo se sustituyeron `nba-api` y `api`; el worker conservó su ID.
+- Ensayo aislado con el rol lector real: 14 partidos de la cartelera, 691 mercados y 96 proyecciones en el destacado (Boston–Milwaukee), `photo_id` comprobado contra la identidad oficial en todas las filas; la API general importó sus 138 rutas con la capa nueva.
+- Exclusión con `~/quantfut/releases/deploy.lock` y `~/nba-isolated/releases/nba-publicacion.lock`; comparación de contenedores e imagen antes de sustituir. Verificación pública: `/health` 200; `/nba/v1/partido/11333/mercados` 691 mercados, 96 proyecciones y 197 `photo_id`; los siete archivos servidos coinciden con `main` por sha256. Vista previa a 390 px: Partido arranca en 1,20 y baja por probabilidad; tarjetas de jugador con foto y búsqueda; destacado de Derrick White a 1,74.
+- Respaldo privado: `~/quantfut/releases/nba-tarjetas-f11d97c7/backup/` (compose, inspect y entorno de NBA, modo 600). Contenedor anterior conservado como `nba-api-antes-tarjetas-f11d97c7` (parado, restart `no`). **Vuelta atrás frontend:** restaurar `backup/docker-compose.yml` en `~/quantfut/docker-compose.yml` y `docker compose up -d --no-deps --no-build --force-recreate api` (vuelve `quantfut-api-nba-mercados:f3ffb440`). **Vuelta atrás NBA:** con los dos candados, parar y renombrar `nba-api`, devolver `nba-api-antes-tarjetas-f11d97c7` al nombre `nba-api`, restaurar `restart unless-stopped` y arrancarlo. No borrar sellos ni originales para volver atrás.
+- Evidencia: `docs/validation/nba_tarjetas_20261105/`.
+
+
 ### 2026-11-04 19:16 CDMX / 2026-11-05 01:16 UTC · NBA: mercados completos, destacado con casa y resultado, sin tarjeta de sellado · PR #257, `main` `f3ffb440`
 
 - Orden expresa del titular: commit, push, PR, fusión y despliegue. PR #257 fusionado con las ocho comprobaciones de push/PR aprobadas (frontend, arnés, NBA/PostgreSQL 16 y tenis). Validación local: 122 pruebas frontend y 27 de API/mercados con PostgreSQL 16.
@@ -213,7 +224,8 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Cron nuevo (3 líneas, respaldo previo en `~/nba-isolated/nba-captura/crontab.before-20261102`): `*/30` Rotowire, `*/15` ESPN (lee el ledger de `run57` en solo lectura) y `15 9` respaldo diario con `pg_dump -Fc` (7 conservados). Registro en `~/.local/share/quantfut/nba_captura.log`.
 - Carga inicial: 10.177 recibos de `run57` (8-oct a 2-nov) en lotes de 200, 22.493 filas, 156 partidos, 433 jugadores canónicos, 0 ambiguos, 0 conflictos; 1ª captura de Rotowire: 15 partidos, 1.599 filas. Los ciclos de cron de las 19:45 y 20:00 se ejecutaron solos y ESPN tomó el recibo nuevo (seq 10178).
 - Hallazgo: Rotowire solo da gratis los minutos proyectados del equipo visitante (los del local devuelven «debes ser suscriptor»); el colector pide solo los visitantes y no rodea la restricción.
-- Respaldo probado: `pg_restore` a una base temporal dio los mismos conteos (22.493 / 931 / 3.019); copia fuera del VPS en `Documentsespaldos_nba` del PC del titular con `scripts/respaldo_nba_vps.ps1` (a mano; sin tarea programada).
+- Respaldo probado: `pg_restore` a una base temporal dio los mismos conteos (22.493 / 931 / 3.019); copia fuera del VPS en `Documents
+espaldos_nba` del PC del titular con `scripts/respaldo_nba_vps.ps1` (a mano; sin tarea programada).
 - Sin tocar: los 8 contenedores previos conservan nombre, id e imagen; `run57` solo se lee. No se escribió ni leyó la base de fútbol.
 - **Vuelta atrás:** `crontab ~/nba-isolated/nba-captura/crontab.before-20261102` (quita las líneas NBA); `docker rmi` de las imágenes y borrar `~/nba-isolated/nba-captura` si se quiere deshacer todo. Los datos ya cargados son solo-anexar y se quedan en `nba_datos`.
 

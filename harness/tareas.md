@@ -3740,3 +3740,12 @@ Detalle en docs/nba_rediseno_informe_final_20261103.md.
 - [x] `futbol.dato` cubre el partido completo del scraper de SofaScore (db/096, recarga de 9.489 partidos); SofaScore completa columnas vacías de las filas de FotMob.
 - [x] Argentina (155) subida al VPS y cargada en `futbol.dato` (1.138 partidos). Pendientes de descarga en el PC: Argentina 2023 completo y 214 de 2024 (bloqueo 403 y presupuesto de Scrapfly), Premier y LaLiga 2023/24.
 - [x] Retiro R1–R3 de tablas de origen ejecutado el 1-nov (autorizado por el titular): R1/R2 `DELETE` + `VACUUM FULL`, R3 db/100 `DROP`; base 5.109 → 3.418 MB. Siguen R4 (`fotmob_*`, `estadisticas_jugador`) tras activar `FUTBOL_LECTURA=canonica`.
+
+### NBA — cuotas desde 1,20 y tarjetas de jugador (2026-11-04)
+
+- [x] Partido filtra desde 1,20 y ordena por probabilidad; el destacado mantiene su mínimo de 1,40.
+- [x] Tarjetas por jugador con foto oficial, búsqueda por jugador o equipo y líneas plegables; proyecciones plegadas y puntos esperados por equipo.
+- [x] `photo_id` en `/nba/v1/partido/{id}/mercados` desde `nba.entidad` (`nba_oficial`); identidad ausente o ambigua queda nula y la web muestra iniciales.
+- [x] 124 pruebas frontend y 7 de mercados con PostgreSQL 16; PR #259 y despliegue anotados en `DEPLOYS.md`.
+- [ ] Renovar el artefacto NBA local antes del 7-nov-2026 13:18 CDMX (sigue abierto; no es de esta tarea).
+

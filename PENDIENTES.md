@@ -4,6 +4,7 @@
 
 - Correcciones de la auditoría implementadas en `codex/nba-auditoria-20261104` y verificadas: 1.224 pruebas NBA aprobadas. Informe: `docs/nba_auditoria_correcciones.md`.
 - Publicado desde main `a491f225` (PR #255) en motor/API NBA; híbrido rechazado bloqueado. Pendiente: renovar el artefacto local antes del 7-nov-2026 13:18 CDMX y reunir evidencia prospectiva suficiente. La versión 2.2 tenía 0 resultados al verificar y no se acredita calibración inexistente.
+- [x] Web/API: Partido desde cuota 1,20 y tarjetas de jugador con foto oficial; desplegado el 5-nov (`nba-api:tarjetas-f11d97c7`, PR #259). Sigue abierto renovar el artefacto del motor antes del 7-nov.
 
 Actualizada el **2026-10-25** (limpieza a fondo: solo queda lo que sigue abierto). El detalle técnico vive en
 `harness/tareas.md` (índice «Pendientes vivos» al principio) y en `docs/`; cuando algo se cierre, se marca aquí y allí.
