@@ -1,0 +1,164 @@
+{
+  "games": [
+    {
+      "id": 11330,
+      "home": "Detroit Pistons",
+      "away": "Philadelphia 76ers",
+      "markets": 638,
+      "players": 23,
+      "projections": 92,
+      "quoted": 638,
+      "seconds": 0.171
+    },
+    {
+      "id": 11331,
+      "home": "Washington Wizards",
+      "away": "Atlanta Hawks",
+      "markets": 635,
+      "players": 25,
+      "projections": 100,
+      "quoted": 635,
+      "seconds": 0.176
+    },
+    {
+      "id": 11332,
+      "home": "New York Knicks",
+      "away": "Chicago Bulls",
+      "markets": 645,
+      "players": 23,
+      "projections": 92,
+      "quoted": 645,
+      "seconds": 0.197
+    },
+    {
+      "id": 11333,
+      "home": "Boston Celtics",
+      "away": "Milwaukee Bucks",
+      "markets": 691,
+      "players": 24,
+      "projections": 96,
+      "quoted": 691,
+      "seconds": 0.23
+    },
+    {
+      "id": 11334,
+      "home": "Brooklyn Nets",
+      "away": "Charlotte Hornets",
+      "markets": 608,
+      "players": 26,
+      "projections": 104,
+      "quoted": 608,
+      "seconds": 0.17
+    },
+    {
+      "id": 11335,
+      "home": "New Orleans Pelicans",
+      "away": "Utah Jazz",
+      "markets": 658,
+      "players": 34,
+      "projections": 136,
+      "quoted": 658,
+      "seconds": 0.174
+    },
+    {
+      "id": 11336,
+      "home": "Oklahoma City Thunder",
+      "away": "Cleveland Cavaliers",
+      "markets": 649,
+      "players": 26,
+      "projections": 104,
+      "quoted": 649,
+      "seconds": 0.163
+    },
+    {
+      "id": 11337,
+      "home": "Memphis Grizzlies",
+      "away": "Indiana Pacers",
+      "markets": 612,
+      "players": 35,
+      "projections": 140,
+      "quoted": 612,
+      "seconds": 0.153
+    },
+    {
+      "id": 11338,
+      "home": "Houston Rockets",
+      "away": "Minnesota Timberwolves",
+      "markets": 623,
+      "players": 24,
+      "projections": 96,
+      "quoted": 623,
+      "seconds": 0.134
+    },
+    {
+      "id": 11339,
+      "home": "Denver Nuggets",
+      "away": "Toronto Raptors",
+      "markets": 610,
+      "players": 26,
+      "projections": 104,
+      "quoted": 610,
+      "seconds": 0.133
+    },
+    {
+      "id": 11340,
+      "home": "Phoenix Suns",
+      "away": "Portland Trail Blazers",
+      "markets": 618,
+      "players": 27,
+      "projections": 108,
+      "quoted": 618,
+      "seconds": 0.15
+    },
+    {
+      "id": 17835,
+      "home": "San Antonio Spurs",
+      "away": "Dallas Mavericks",
+      "markets": 0,
+      "players": 0,
+      "projections": 0,
+      "quoted": 0,
+      "seconds": 0.023
+    },
+    {
+      "id": 17836,
+      "home": "Sacramento Kings",
+      "away": "Los Angeles Lakers",
+      "markets": 0,
+      "players": 0,
+      "projections": 0,
+      "quoted": 0,
+      "seconds": 0.019
+    },
+    {
+      "id": 17877,
+      "home": "LA Clippers",
+      "away": "Miami Heat",
+      "markets": 0,
+      "players": 0,
+      "projections": 0,
+      "quoted": 0,
+      "seconds": 0.02
+    }
+  ],
+  "calibration_version": "equipo-2.2;posesiones;regulacion-mas-ot;ratings-local;pmf-exacta;equipo=4b6f21c944da",
+  "frontend_hashes": {
+    "/app/frontend/app.js": "0d77360d7f0fe4f4488484870e24e6e7c132d8bf05c0d70a4df6a6035be22ad1",
+    "/app/frontend/ergonomic-views.js": "e39565e23b7fef1f3b40ca9716c1287fa65247f90751592f2182c89ec79550ff",
+    "/app/frontend/index.html": "69408d6ae0a22e65cd3e31a4ed79f9892c4b1b173f41fa2745b12ef638ef840a",
+    "/app/frontend/real-views.js": "c6f91a3e231c42cf8926be3d68d0c584bf14a6c2370768f4f3c451b6bcdc11d4",
+    "/app/frontend/sports-data.js": "f623bb87f9c04a16f4015d0bf39f91e2618ecc9f89b71e8c1e1ae5183e8624b0",
+    "/app/frontend/sports-window.js": "d42f4130fc4ad2c3d9c7850e31b0c8af4a0e5af12c574ceae91fcc3b92e8ec5d"
+  },
+  "nba_hashes": {
+    "/app/src/nba/api/app.py": "3e2f58618fc6ba209c8e5bbb1c65b19677af40d471280d4d4e203404d2b6d113",
+    "/app/src/nba/api/mercados_partido.py": "c89808fcf8de50040fc52f9a5287685147089d96d6677ea3ce3c06ae76b1862c"
+  },
+  "sha": "f3ffb4403f62cd8fe9188938972f9500c273a3b6",
+  "utc": "2026-11-05T01:16:59.940363+00:00",
+  "nba_image": "nba-api:mercados-f3ffb440",
+  "web_image": "quantfut-api-nba-mercados:f3ffb440",
+  "backup": "/home/qf/quantfut/releases/nba-mercados-f3ffb440/backup",
+  "rollback_nba": "nba-api-antes-mercados-f3ffb440",
+  "worker_unchanged": true
+}
