@@ -43,9 +43,10 @@ def nuevo_recibo(
     cuerpo: bytes,
     retro: bool,
     estado_http: int | None = None,
+    extension: str = ".json.gz",
 ) -> Recibo:
     _sin_secretos(parametros)
-    sha, ruta, _creado = guardar_objeto(raiz, cuerpo)
+    sha, ruta, _creado = guardar_objeto(raiz, cuerpo, extension)
     return Recibo(
         fuente=fuente,
         recurso=recurso,

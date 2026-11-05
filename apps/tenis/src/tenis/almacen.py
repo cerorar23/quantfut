@@ -12,8 +12,8 @@ import zlib
 from pathlib import Path
 
 
-def _ruta(sha: str) -> str:
-    return f"objetos/{sha[:2]}/{sha}.json.gz"
+def _ruta(sha: str, extension: str = ".json.gz") -> str:
+    return f"objetos/{sha[:2]}/{sha}{extension}"
 
 
 def _verificar(destino: Path, sha: str) -> None:
@@ -26,10 +26,11 @@ def _verificar(destino: Path, sha: str) -> None:
         raise ValueError("objeto corrupto")
 
 
-def guardar_objeto(raiz, cuerpo: bytes) -> tuple[str, str, bool]:
-    """Devuelve (sha256, ruta_relativa, creado). creado=False si el mismo contenido ya estaba."""
+def guardar_objeto(raiz, cuerpo: bytes, extension: str = ".json.gz") -> tuple[str, str, bool]:
+    """Devuelve (sha256, ruta_relativa, creado). creado=False si el mismo contenido ya estaba.
+    `extension`: ".json.gz" (por defecto) o ".csv.gz" (originales CSV de TML)."""
     sha = hashlib.sha256(cuerpo).hexdigest()
-    relativa = _ruta(sha)
+    relativa = _ruta(sha, extension)
     destino = Path(raiz) / relativa
     destino.parent.mkdir(parents=True, exist_ok=True)
     if destino.exists():
@@ -51,7 +52,7 @@ def guardar_objeto(raiz, cuerpo: bytes) -> tuple[str, str, bool]:
     return sha, relativa, True
 
 
-def leer_objeto(raiz, sha: str) -> bytes:
-    destino = Path(raiz) / _ruta(sha)
+def leer_objeto(raiz, sha: str, extension: str = ".json.gz") -> bytes:
+    destino = Path(raiz) / _ruta(sha, extension)
     _verificar(destino, sha)
     return gzip.decompress(destino.read_bytes())

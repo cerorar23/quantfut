@@ -7702,3 +7702,13 @@ Qué corrigió la revisión (no lo había visto el subagente): la primera lectur
 Tensión de diseño descubierta y NO resuelta (decisión para S2): la regla RETRO del plan oculta todo dato retro hasta cerrar la semana del torneo, pero la fatiga intratorneo y el rating ronda a ronda necesitan las rondas anteriores del mismo torneo. Propuesta: instante `visible_desde` por aserción retro (hora real de SofaScore; para TML, semana + desfase por ronda).
 
 Límites declarados: roles sin probar en local (sin permiso para crear roles), contenedor y copias solo con `bash -n`, CI definido pero sin ejecutar.
+
+## 2026-11-05 · Tenis: Sprint 2a (cargador TML retro)
+
+Decisión clave: TML entra solo como evidencia retro con `visible_desde` por ronda (tabla fijada por el titular), y se conserva lo que no encaja en la regla escrita en vez de inventarlo. Se rechazan los 7-6 sin tie-break y los sets de ventaja porque la regla lo pide, aunque eso deje fuera unas 40.000 filas reales de 1968–1990: la decisión de aceptarlas se deja al titular, cuantificada en `docs/tenis_carga_tml_conciliacion_20261105.md`.
+
+Desviación justificada: duración de 14 días también para WTA1000, P5, T1, F, YEC, O y W (no solo G/M). Con 7 días, una final de dos semanas quedaría visible antes de jugarse, lo que contradice la regla de conservar la visibilidad.
+
+Por qué importa: el cargador es idempotente por claves naturales y por fichero (transacción por fichero), y el manifiesto sha256 impide mezclar un original alterado en la evidencia.
+
+Revisión del S2a (5-nov, tras la verificación independiente): se cambió la regla de marcadores. Se aceptan los 7-6 sin puntos de tie-break (NULL) y los sets de ventaja, porque TML antiguo no registra el tie-break y rechazar ≈39.000 partidos reales de 1968–1990 sesgaba la historia de ratings sin que fuesen datos corruptos; los sets imposibles se siguen rechazando. Se descubrió además que TML codifica como 0 el saque de un lado ausente (65 partidos, p. ej. 6-2 6-2 con el saque del perdedor a 0): un faltante no puede valer 0, así que ese lado queda NULL. Resultado: 493.867 partidos cargados (+0,3 % sobre la auditoría), 0 errores de orientación en 40.000 partidos comprobados contra los CSV con código independiente, 0 violaciones de `visible_desde`, segunda carga con 0 filas nuevas. El calendario de `visible_desde` por ronda sigue sin validar con horas reales (S2b/S3).

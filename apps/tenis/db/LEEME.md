@@ -52,3 +52,69 @@ Se aplican en ese orden. Las migraciones no son idempotentes del todo: `0002` a�
 ## Pruebas
 
 Se ejecutan con `correr_pytest_tenis.ps1 apps/tenis/tests -k db` y `QF_TEST_PG_DSN`. Cada prueba crea un esquema `tenis_t_<hex>` (y su `_op`) y lo borra al terminar. La prueba cruzada usa una muestra de 1.000 partidos reales de TML (semilla 20261104) con un cargador mínimo escrito en el propio test.
+
+## Cargador TML (Sprint 2a, retro)
+
+Código: `apps/tenis/src/tenis/carga/` (`tml_reglas`, `tml_score`, `tml_campos`, `tml_parseo`, `tml_orientar`, `tml_agregado`, `tml_escritor`, `tml_carga`, `tml_cli`). Uso: `python -m tenis.carga.tml_cli --snapshot <carpeta tml/originals> --dsn <dsn> --esquema tenis`. Conciliación con la auditoría: `apps/tenis/ops/conciliar_tml.py` y `docs/tenis_carga_tml_conciliacion_20261105.md`.
+
+### Ficheros y recibos
+
+- Se cargan `YYYY.csv`, `YYYY_wta.csv`, `YYYY_challenger.csv` y `atp_quali/YYYY_atp_quali.csv`. No se cargan `ATP_Database.csv` (repite los anuales), `atp_matches_amateur.csv` (amateur) ni los `*ongoing*` (partidos en curso); quedan listados con su número de filas.
+- Cada fichero se verifica por tamaño y sha256 contra el manifiesto. Si no coincide o no está en él, se rechaza entero y se registra (`fichero_sha_no_coincide`).
+- Recibo: `recibido_en` = `received_at` del manifiesto; `lote` = `tml_` + fecha de `snapshot_created_at`; `retro = true`; original en `objetos/aa/<sha>.csv.gz`. Para ello `almacen.guardar_objeto` y `recibo.nuevo_recibo` admiten `extension` (por defecto `.json.gz`, sin cambio de comportamiento).
+- Circuito: `_wta` → wta; el resto (incluidos challengers y previas) → atp.
+
+### Torneos, ediciones y categorías
+
+- Clave de torneo: el `tourney_id` sin el año inicial, en minúsculas. Los torneos de equipos (`W-FC-AAAA-…`) no empiezan por año: la clave es el id completo y el año es el primer grupo de cuatro dígitos.
+- Temporada `< 1968` se rechaza (`temporada_anterior_al_esquema`): el CHECK de `edicion.temporada` no admite 1967.
+- Edición = torneo × temporada, creada una vez con el recibo de su primera aparición (orden: ATP, WTA, challengers, previas). Fecha = mínimo de las filas; superficie e `indoor` = primer valor no vacío. Cada valor distinto queda como conflicto.
+- Categoría por nivel, con significado verificado por nombres de torneo:
+  - ATP: `G` GS; `M` M1000 (Miami, Indian Wells, Rome…); `500`, `250`; `F` Finales (Masters, Tour Finals); `O` JJOO; `D` equipos (Davis Cup); `C` Challenger.
+  - WTA: `G` GS; `1000` y `PM` WTA1000 (Indian Wells, Miami, Madrid, Beijing); `500`; `250`; `I` 250 (Auckland, Hobart, Acapulco, Linz); `D` equipos (BJK/Fed Cup); `O` JJOO; `F` y `YEC` Finales.
+  - `T1` WTA1000, `T2` 500, `T3`/`T4`/`T5` 250: son las categorías históricas de la WTA; la lista de nombres es coherente con ese orden, pero el nivel exacto no está verificado para `T4` y `T5`.
+- Niveles **no verificados**, con categoría neutra 250 y aviso `nivel_no_verificado`: ATP `A` (mezcla de Cincinnati, Queen's, Rome… de los años 90) y `P` (torneos pro de 1968-1970); WTA `P` (Premier de 2009-2020, entre 250 y 500), `P5` (asignado a 500; incluye Rome y Cincinnati), `W` (mezcla de Virginia Slims Championships y eventos normales), `A` (Prague Open, United Cup), `T4` y `T5`. Un nivel vacío (solo en algunas previas) deja la categoría vacía si el torneo no tiene otro nivel.
+- Si un mismo torneo trae categorías distintas en años distintos, la categoría queda vacía y se registra `categoria_conflicto` (la base no permite corregirla por fila).
+- Equipos por nombre (Davis, Billie Jean King/BJK, Fed Cup, United Cup, Laver Cup, Hopman): categoría `equipos` y `por_equipos = true`, también si el nivel no es `D`.
+
+### Duración y visibilidad (regla fijada, con una desviación justificada)
+
+- `L` = `tourney_date` tal cual, sin ajustarla al lunes (la fecha del snapshot no es siempre lunes; ver medición abajo). `fecha_fin = L + duración − 1`; `lunes_semana` = lunes de `fecha_fin` (cumple el CHECK).
+- **Desviación:** la duración es de 14 días para los niveles `G`, `M`, `1000`, `PM`, `P5`, `T1`, `F`, `YEC`, `O` y `W`, y 7 para el resto. La regla escrita decía solo «G o M». Con 7 días, la final de un WTA1000 (dos semanas) quedaría visible antes de jugarse, lo que incumple «nunca más temprano que el fin real». Elegir el desfase largo es la opción conservadora.
+- `visible_desde` de partido, resultado y estadísticas = tabla fijada (`tml_reglas.DESFASE_7` y `DESFASE_14`), contando desde `L` a las 00:00 UTC. Ronda fuera de la tabla → NULL (regla por semana). La edición lleva `visible_desde = L`.
+- Ranking: `fecha_publicacion` = lunes ISO de `tourney_date` (en un domingo, el lunes anterior: nunca adelanta una publicación); `visible_desde` = ese lunes.
+- Pruebas de la tabla: la cadena R128→F es monótona y ninguna ronda supera `fecha_fin + 1 d`. Las rondas Q1–Q3 no se encadenan con R128 (en 7 días, Q1 = L+3 y R128 = L+2): la tabla lo fija así y no se corrige.
+
+### Marcador, sets y estado
+
+- TML escribe el marcador desde el ganador. Cada set se guarda como `[g_a, g_b, tb_a, tb_b]` desde el ganador y se reorienta a `jugador_1`/`jugador_2` según el id canónico.
+- Tie-break: los puntos entre paréntesis son los del que perdió el set; el ganador del set tiene `max(7, t+2)`. Un super tie-break final `[x-y]` es un set 1-0 con tb `x`/`y` (gana el mayor) y cuenta en `aviso:super_tiebreak_final`.
+- Un «completado» exige: sets válidos, al menos 2 sets, el ganador de TML gana la mayoría (`(mejor_de // 2) + 1`) y el perdedor no. Una super-tiebreak que contradice el resultado (`7-6(5) 5-7 [3-10]`) se rechaza (`completado_incoherente`).
+- `RET`/`ret.` → retirada (ganador = el de TML; `retira` = el otro). `sets_completos` no cuenta el último set si no es un set terminado (`6-3 2-1 RET` → 1).
+- `DEF` → descalificado sin ganador. `W/O` → walkover sin sets; `W/O` con marcador → rechazo. Vacío, `ABD`, `Unfinished`, `Played and abandoned`, `&nbsp;` → cancelado. `WEA` o `RET+H64` con sets, o cualquier token no reconocido → rechazo.
+- `duracion_min`: solo 1–600. Vacío, 0 o mayor de 600 → NULL con aviso (nunca 0).
+
+### Jugadores, entradas y estadísticas
+
+- Un `jugador` por (circuito, id de TML), con alias `id_exacto`. Filas con id vacío o con el mismo id en ambos lados → rechazo (`id_jugador_vacio`, `mismo_jugador`). Nombres con «/» → dobles, excluidos.
+- Asercion de nombre, altura, país y mano: solo cuando cambia el valor respecto a la última escrita en la carga. Mano: `R`→`D`, `L`→`Z`, `U`→`U`; `A` (ambidiestro) no existe en el CHECK y no se escribe. Altura: 2–3 dígitos (`0` y fechas no). País: tres letras.
+- `equivalencias.csv` existe solo con cabecera: no hay equivalencias manuales. Si llegan, el alias apunta al jugador principal (`metodo = manual`).
+- Entradas: solo `Q`, `LL`, `WC`, `PR`, `SE`. Variantes en minúsculas (`Wc`, `Ll`, `wc`) y otras (`SR`, `ALT`, `A`, `IP`, `ITF`, `CO`, `NG`, `UP`) → NULL. Cuenta como `aviso:entrada_no_mapeada`, sin rechazo.
+- Estadísticas: un lado sin ningún dato no se escribe (no es 0). Si un lado viola un CHECK (`primeros_ganados > primeros_dentro`, `primeros_dentro > puntos_saque`, `bp_salvados > bp_afrontados`) se rechaza la estadística de ese partido; el partido se carga igual.
+
+### Duplicados y ranking
+
+- Clave del partido: (edición, ronda, par de jugadores). La primera aparición se carga; las demás cuentan como `duplicado` y van al CSV de rechazos. Las estadísticas, resultados y ranking solo se escriben para la primera aparición.
+- Ranking: una observación por (circuito, lunes, jugador), tomada de las filas aceptadas (también de las duplicadas, sin escribir partido). Si el mismo lunes llega con otro valor, se conserva el primero y se cuenta `conflicto_ranking`.
+
+### Recuentos y garantías
+
+- Leídas = cargadas + rechazadas + duplicadas + dobles (cada fila cae en una sola categoría; los avisos son informativos). El informe lo verifica (`cuadra`).
+- Cada fichero es una transacción; la clave natural y `ON CONFLICT DO NOTHING` hacen que repetir la carga no añada filas (prueba `test_carga_tml_idempotencia`).
+- Ningún `UPDATE` ni `DELETE` sobre la evidencia. Los ids se resuelven por lote, no por fila.
+
+### Medición del snapshot A (16-oct)
+
+- Día de la semana de `tourney_date` en las 495.960 filas: 312.332 lunes, 128.179 domingos, 17.954 viernes, 12.344 sábados, 10.369 martes, 9.133 miércoles, 5.649 jueves. Se usa `L` literal: en un torneo que empieza en domingo, `L+2` cae en martes y el desfase se cuenta desde el primer día del torneo, como pide la regla. Es una consecuencia de no ajustar la fecha; no se ha medido si alguna ronda de esos torneos se juega después de su visibilidad.
+- Resultado de la carga completa (snapshot A, reglas finales del 5-nov): 495.960 filas leídas, 493.867 cargadas, 2.007 rechazadas, 86 duplicadas, 400–430 s; segunda carga: 0 filas nuevas. Recuentos frente a la auditoría y verificación independiente: `docs/tenis_carga_tml_conciliacion_20261105.md`.
+- **Decisión tomada en la revisión (5-nov): se aceptan los 7-6 sin puntos de tie-break y los sets de ventaja.** TML antiguo (1968–1990) no registra los puntos del tie-break (faltante = NULL, no inválido) y hubo sets de ventaja sin tie-break; rechazarlos dejaba fuera ≈39.000 partidos reales. Siguen rechazados los sets imposibles (7-4, 9-6, 6-6, 7-7, 8-5, 10-3…). Reversible: es una línea en `tml_score._set_normal`. **Ceros imposibles:** un lado con 0 puntos de saque en un partido terminado es un faltante codificado como 0 (65 partidos medidos); queda sin estadística (NULL) y con aviso `estadistica_cero_imposible`.

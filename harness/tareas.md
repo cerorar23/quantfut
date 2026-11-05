@@ -3779,4 +3779,11 @@ Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin dat
 - [x] Revisión mía: lectura PIT por fila no escalaba (2.000 partidos 1,9 s; 8.000 partidos 13,7 s) → reescrita por conjunto (8.000 partidos 0,03 s; 50.000 partidos 0,46 s) con prueba de regresión frente a la fórmula antigua; `lunes_semana` debe coincidir con `fecha_fin` (restricción nueva).
 - [ ] Roles sin probar (el usuario local no puede crear roles): se ejercitarán en CI y en el ensayo de S6.
 - [ ] Decisión abierta antes de S2: la regla RETRO oculta los resultados de rondas anteriores del mismo torneo, que la fatiga intratorneo necesita (propuesta: `visible_desde` por aserción). Ver `apps/tenis/db/LEEME.md`.
-- [ ] Pendiente para S2/S3: tabla de alias de torneo, redondeo a 6 decimales antes de sellar, hándicap de juegos en los mercados del contrato, recálculo del hash en `validar_antes_de_servir`.
+- [ ] Pendiente para S2/S3: tabla de alias de torneo, redondeo a 6 decimales antes de sellar, hándicap de juegos en los mercados del contrato, recálculo del hash en `validar_antes_de_servir`
+
+## Tenis: rediseño — Sprint 2a cargador TML retro (2026-11-05)
+
+- [x] Cargador TML (`apps/tenis/src/tenis/carga/`) y CLI `tml_cli`; pruebas `test_carga_tml_*` (parseo, base en esquema aislado, objetos, independiente sobre 2025 real) en verde.
+- [x] Conciliación con la auditoría del snapshot A (`ops/conciliar_tml.py`, `docs/tenis_carga_tml_conciliacion_20261105.md`): 493.867 cargadas de 495.960 (2.007 rechazadas, 86 duplicadas), idempotente; verificación independiente: 0 ganadores y 0 marcadores mal orientados en 40.000 partidos.
+- [x] Sets 7-6 sin tie-break y sets de ventaja: aceptados en la revisión del 5-nov (reversible; ≈39.000 partidos de 1968–1990 recuperados). Ceros imposibles de saque → NULL.
+- [ ] S2b: alias de WTA `3xxxxx` (equivalencias), captura diaria, ranking oficial, identidad con SofaScore/API-Tennis. No empezado..
