@@ -1,0 +1,19 @@
+{
+  "verificado_en": "2026-11-05T02:10:00+00:00",
+  "salud": 200,
+  "partido": 11333,
+  "mercados": 691,
+  "proyecciones": 96,
+  "photo_ids_no_nulos": 197,
+  "photo_ids_comprobados_contra_identidad_oficial": true,
+  "archivos_publicos_sha256": {
+    "app.js": "5a83a1345ced9896f23acdb1364e9d66d5c30a8c5172519ea9b11c210eb4f205",
+    "ergonomic-views.js": "0f37a54eaaecb89bd733030d7cbec79ec2934cf5aa20e3ae55de476e42526283",
+    "index.html": "8ffc55b24765d410842458a4b61257d1063c813eee19f302738d0b2615668962",
+    "real-views.js": "9dbdcbef6d064ef60864b7a2ebdf7622e953c426c3fab8b92199c2cf5e032777",
+    "sports-data.js": "5b82f6c1d6e99dd4311aece6d4d6b43601aa3253eb8cc2e19a948a2970bfddc8",
+    "sports-window.js": "f8e4ca634f91529dfbc85458e4ed91dc9c18824fae37675ba1aa208fc1460f88",
+    "window.css": "3bffa65cc5e919c6a41f2cee680d73f9f4a388cf65d9dfc0dd7a5bc8b2b9530f"
+  },
+  "worker_sin_cambios": true
+}
