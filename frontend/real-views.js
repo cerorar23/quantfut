@@ -1,7 +1,7 @@
 // Presentación del contrato real de la app con las clases del diseño existente.
 // No genera probabilidades, cuotas, selecciones ni resultados.
 import { forecastGames, publicForecasts, modelProbabilities } from './fichas-data.js?v=real-20261029';
-import { createHubViews } from './ergonomic-views.js?v=nba-estadisticas-20261103';
+import { createHubViews } from './ergonomic-views.js?v=nba-mercados-20261104';
 
 export function createRealViews(ctx) {
   const { state, esc, badge, ensureHome, ensureMatch, addDays, localDay, dayLabel,

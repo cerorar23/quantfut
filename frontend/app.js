@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=nba-estadisticas-20261103';
-import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, featuredModelMarket, nbaCode } from './sports-data.js?v=nba-estadisticas-20261103';
-import { createSportWindow } from './sports-window.js?v=nba-estadisticas-20261103';
+import { createRealViews } from './real-views.js?v=nba-mercados-20261104';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, featuredModelMarket, nbaCode } from './sports-data.js?v=nba-mercados-20261104';
+import { createSportWindow } from './sports-window.js?v=nba-mercados-20261104';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
@@ -198,6 +198,22 @@ function ensureTennisStats(id) {
   return entry;
 }
 const nbaStatsCache = new Map();
+const nbaMarketsCache = new Map(), nbaMarketLanes = Array.from({ length: 4 }, () => Promise.resolve());
+let nbaMarketLane = 0;
+function ensureNbaMarkets(event) {
+  if (nbaMarketsCache.has(event.id)) return nbaMarketsCache.get(event.id);
+  const entry = { status: 'loading', markets: [], projections: [] }, generation = realGeneration;
+  nbaMarketsCache.set(event.id, entry);
+  const lane = nbaMarketLane++ % nbaMarketLanes.length;
+  nbaMarketLanes[lane] = nbaMarketLanes[lane].then(async () => {
+    if (generation !== realGeneration) return;
+    const result = await loadNbaMarkets(event);
+    if (generation !== realGeneration) return;
+    nbaMarketsCache.set(event.id, result);
+    scheduleCardsRerender();
+  });
+  return entry;
+}
 function ensureNbaStats(id) {
   if (nbaStatsCache.has(id)) return nbaStatsCache.get(id);
   const entry = { status: 'loading', data: null }, generation = realGeneration;
@@ -1104,9 +1120,9 @@ const membershipUI = createMembershipUI({
 
 const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
-  ensureSport, ensureResults, ensureImages, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
+  ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
 
-const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, featuredModelMarket, ensureImages, nbaCode });
+const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, ensureNbaMarkets, featuredModelMarket, ensureImages, nbaCode });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1435,7 +1451,7 @@ function syncPublicAuth() {
 async function refreshPublicData() {
   const request = ++publicRequest;
   publicData = null;
-  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
+  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
   render();
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;

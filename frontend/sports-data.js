@@ -85,6 +85,72 @@ export function nbaV2Events(partidos, now = new Date()) {
     v2: true }));
 }
 
+const NBA_LABELS = { winner: 'Ganador del partido', handicap: 'Hándicap', game_total: 'Total del partido', team_points: 'Puntos del equipo',
+  player_points: 'Puntos del jugador', player_rebounds: 'Rebotes del jugador', player_assists: 'Asistencias del jugador', player_threes: 'Triples del jugador' };
+const NBA_UNITS = { game_total: 'puntos', team_points: 'puntos', player_points: 'puntos', player_rebounds: 'rebotes', player_assists: 'asistencias', player_threes: 'triples' };
+const BOOK_NAMES = { bovada: 'Bovada', pinnacle: 'Pinnacle', fanduel: 'FanDuel', draftkings: 'DraftKings', betmgm: 'BetMGM', caesars: 'Caesars', bet365: 'bet365' };
+
+export function marketQuote(m) {
+  const house = typeof m?.price === 'number' && Number.isFinite(m.price) && m.price > 1 && typeof m.book === 'string' && m.book.trim();
+  return house ? { price: m.price, source: BOOK_NAMES[m.book] || m.book, model: false }
+    : { price: m?.probability > 0 ? 1 / m.probability : null, source: 'Del modelo', model: true };
+}
+
+export function featuredSportMarket(event) {
+  const markets = event.markets.filter(m => !m.revised);
+  if (event.sport !== 'nba' || !event.v2) return featuredModelMarket(markets);
+  const quoted = markets.filter(m => !marketQuote(m).model);
+  if (!quoted.length) return featuredModelMarket(markets);
+  return quoted.reduce((best, m) => probability(m.probability) && m.price >= 1.4 && (!best || m.probability > best.probability) ? m : best, null);
+}
+
+export async function loadNbaMarkets(event, fetcher = fetch) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`/nba/v1/partido/${encodeURIComponent(event.id)}/mercados`, { signal: controller.signal, cache: 'no-store' });
+    if (!response.ok) throw new Error('Sin mercados');
+    const data = await response.json();
+    if (data?.partido_id !== event.id || !Array.isArray(data.markets) || !Array.isArray(data.projections)) throw new Error('Formato inesperado');
+    const valid = m => m && NBA_LABELS[m.market] && typeof m.id === 'string' && stamp(m.sealed_at) && typeof m.seal === 'string'
+      && typeof m.probability === 'number' && Number.isFinite(m.probability) && m.probability >= 0 && m.probability <= 1
+      && (m.market === 'winner' ? typeof m.team === 'string' && ['local', 'visit'].includes(m.side)
+        : typeof m.line === 'number' && Number.isFinite(m.line) && (m.market === 'handicap' ? ['local', 'visit'] : ['over', 'under']).includes(m.side))
+      && (!m.market.startsWith('player_') || (Number.isInteger(m.player_id) && typeof m.player === 'string'));
+    if (!data.markets.every(valid) || !data.projections.every(p => p && ['puntos', 'rebotes', 'asistencias', 'triples'].includes(p.market)
+      && Number.isInteger(p.player_id) && typeof p.player === 'string' && stamp(p.sealed_at)
+      && ['estimate', 'p10', 'p50', 'p90', 'p_juega'].every(k => typeof p[k] === 'number' && Number.isFinite(p[k])))) throw new Error('Formato inesperado');
+    const scores = typeof event.score === 'string' ? event.score.split(' – ').map(Number) : [];
+    const markets = data.markets.map(m => {
+      const eligible = Date.parse(m.sealed_at) < Date.parse(event.start);
+      const label = m.player ? `${NBA_LABELS[m.market].replace(' del jugador', '')} de ${m.player}`
+        : m.market === 'team_points' ? `Puntos de ${m.team}` : NBA_LABELS[m.market];
+      const selection = m.market === 'winner' ? m.team : m.market === 'handicap' ? `${m.team} ${m.line > 0 ? '+' : ''}${m.line}`
+        : `${m.side === 'over' ? 'Más de' : 'Menos de'} ${m.line} ${NBA_UNITS[m.market]}`;
+      let actual = null;
+      if (eligible && event.status === 'finished' && scores.length === 2 && scores.every(Number.isFinite)) {
+        if (m.market === 'winner' || m.market === 'handicap') actual = m.team === event.home ? scores[0] - scores[1] : scores[1] - scores[0];
+        else if (m.market === 'game_total') actual = scores[0] + scores[1];
+        else if (m.market === 'team_points') actual = m.team === event.home ? scores[0] : scores[1];
+      }
+      const value = actual == null ? null : m.market === 'handicap' ? actual + m.line : actual;
+      const threshold = ['winner', 'handicap'].includes(m.market) ? 0 : m.line;
+      const computed = value == null ? null : value === threshold ? 'push'
+        : ((m.side === 'under' ? value < threshold : value > threshold) ? 'win' : 'loss');
+      const outcome = !eligible ? null : ['win', 'loss', 'push', 'void'].includes(m.outcome) ? m.outcome : computed;
+      const quote = marketQuote(m);
+      return { ...m, label, selection, eligible, revised: !eligible, outcome, reference: quote.model ? 'Probabilidad estadística' : quote.source };
+    });
+    return { status: 'ready', markets, projections: data.projections };
+  } catch { return { status: 'error', markets: [], projections: [] }; }
+  finally { clearTimeout(timer); }
+}
+
+export function withNbaMarkets(event, entry) {
+  if (event.sport !== 'nba' || !event.v2 || !entry) return event;
+  return { ...event, markets_status: entry.status, markets: entry.status === 'ready' ? entry.markets : [],
+    projections: entry.status === 'ready' ? entry.projections : [] };
+}
+
 async function loadNba(fetcher, now) {
   const days = Array.from({ length: NBA_BACK_DAYS + NBA_AHEAD_DAYS + 1 }, (_, i) => isoDay(now, i - NBA_BACK_DAYS)).filter(day => day >= NBA_SEASON_START);
   const pull = async day => {

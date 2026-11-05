@@ -3,6 +3,7 @@
 * GET /nba/v1/cartelera?fecha=AAAA-MM-DD     partidos del día con su pronóstico sellado más reciente y el estado del sello
 * GET /nba/v1/partido/{id}                   resumen y distribuciones de equipo (cuantiles de 0,5 % a 99,5 %)
 * GET /nba/v1/partido/{id}/estadisticas      forma, récord, cara a cara y clasificación a la fecha del partido (marcadores finales de la temporada regular)
+* GET /nba/v1/partido/{id}/mercados          todas las líneas evaluables, cuotas, casas, resultados finales y proyecciones de jugadores
 * GET /nba/v1/partido/{id}/linea             P(más / menos de una línea) para margen, total o puntos de un equipo
 * GET /nba/v1/partido/{id}/jugador/{id}      pronósticos de jugador sellados (cuando existan)
 * GET /nba/v1/sello/{hash}                   verificación pública del sello y su lugar en la cadena
@@ -178,6 +179,18 @@ def crear_app(dsn: str | None = None) -> FastAPI:
                 {"fecha": fecha, "actual": temporada, "pasada": estadisticas.temporada_anterior(temporada), "a": id_local, "b": id_visitante}).fetchall()
         previos = [estadisticas.Marcador(d, t, a, b, pl, pv) for d, t, a, b, pl, pv in filas if a in TRICODES and b in TRICODES]
         return estadisticas.estadisticas(temporada, fecha, local, visitante, previos)
+
+    @app.get("/nba/v1/partido/{partido_id}/mercados")
+    def mercados_partido(partido_id: int):
+        from .mercados_partido import consultar
+        with conexion() as db:
+            fila = db.execute(PARTIDOS + " AND e.entidad_id = %s", (partido_id,)).fetchone()
+            if fila is None:
+                raise HTTPException(404, {"codigo": "partido_inexistente"})
+            try:
+                return consultar(db, fila)
+            except ContratoIncumplido:
+                raise HTTPException(502, {"codigo": "datos_invalidos"}) from None
 
     @app.get("/nba/v1/partido/{partido_id}/linea")
     def linea(partido_id: int, mercado: str = Query(...), valor: float = Query(..., allow_inf_nan=False)):
