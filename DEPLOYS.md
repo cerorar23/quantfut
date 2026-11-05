@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-05 12:50 CDMX / 18:50 UTC · #historial: la gráfica grande mide aciertos reales frente a esperados · PR #267, `main` `f051d5c1` · VPS: API
+
+- Orden expresa del titular: «fusiona y despliega». PR #267 fusionado (squash) con las 8 comprobaciones en verde. Solo frontend: la curva de beneficio en unidades pasa a `desvio()` (suma de acierto − probabilidad publicada con franja de azar al 95 %); el indicador de beneficio y la frase con su signo siguen visibles (lo exige un test). Detalle y límite de la decisión: `harness/progreso.md` (5-nov, #historial).
+- Base comprobada antes de sustituir: los 6 archivos de `frontend/` del contenedor `quantfut-api-segura:53b1e5ed` eran idénticos (hash sin CR) a `main` previo; `deploy.lock` libre. Entre `53b1e5ed` y `f051d5c1` solo entraron commits de documentación además del mío.
+- Imagen: **`quantfut-api-historial:f051d5c1`** (ID `sha256:0d48540e…`), capa fina sobre `quantfut-api-segura:53b1e5ed` con `app.js`, `conversion.css`, `ergonomic-views.js`, `historial-views.js`, `index.html` y `real-views.js`. No se reconstruyó nada desde `~/quantfut/src`. Ensayo: 6/6 hashes de la imagen iguales a `main` antes de recrear.
+- Despliegue: candado `deploy.lock`; solo se recreó `api` (`--no-deps --no-build`), con vuelta atrás automática si `/health` no daba 200 (dio 200 al 3.er intento). Verificado en `https://pronosticosdeportivos.pro`: `/health` 200; `historial-views.js` (5e7a5bd4d7a1) y `conversion.css` (836b643531b5) iguales a `main`; `index.html` apunta a `app.js?v=hist-desvio-20261105`. Worker `quantfut-worker-segura:53b1e5ed` y `nba-api:segura-53b1e5ed` **sin tocar**.
+- Respaldo privado: `~/quantfut/releases/historial-desvio-f051d5c1/backup/` (compose e inspección del API, modo 600). **Vuelta atrás:** `cp ~/quantfut/releases/historial-desvio-f051d5c1/backup/docker-compose.yml ~/quantfut/docker-compose.yml && docker compose -f ~/quantfut/docker-compose.yml up -d --no-deps --no-build --force-recreate api` (la imagen `quantfut-api-segura:53b1e5ed` sigue en el servidor).
+- `docker-compose.yml` del repositorio actualizado a `quantfut-api-historial:f051d5c1`.
+
 ### 2026-11-05 12:22 CDMX / 18:22 UTC · Destacado «probabilidad máxima segura» (≥ 75 %) en API, `nba-api` y worker · PR #265, `main` `53b1e5ed`
 
 - Orden expresa del titular: commit rápido y despliegue. El valor esperado (PR #262) se abandona: el destacado es de retención y el objetivo es ≥ 80 % de aciertos visibles. Regla: cuota de referencia ≥ 1,20 y probabilidad ≥ 75 %; gana la mayor probabilidad (la cuota no multiplica; `score_destacado` desaparece); empate → mayor cuota; sin candidatos → `null`. El punto 4 del encargo decía «pagando 1.10»: se aplicó 1,20 (constante `CUOTA_MIN`); ver la entrada de calibración de `harness/progreso.md` (con 1,15 el acierto medido sube de 80 % a 85 %).
