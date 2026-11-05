@@ -64,12 +64,30 @@ export function calibrar(rows) {
   return { n: con.length, prometido, real, diff, ee, estado };
 }
 
+// Aciertos reales menos esperados, acumulados: cada pronóstico suma (1 si acierta, 0 si falla)
+// menos la probabilidad con que se publicó. La franja es el margen de azar al 95 % (±2 desviaciones
+// típicas de la suma de Bernoulli con esas mismas probabilidades): dentro de ella, lo ocurrido es
+// compatible con lo prometido; fuera, no lo es, para bien o para mal.
+export function desvio(rows) {
+  const con = ordenar(rows).filter(probValida);
+  const curva = [0], banda = [0];
+  let acumulado = 0, varianza = 0;
+  for (const r of con) {
+    const p = probValida(r);
+    acumulado += (r.outcome === 'win' ? 1 : 0) - p;
+    varianza += p * (1 - p);
+    curva.push(acumulado); banda.push(2 * Math.sqrt(varianza));
+  }
+  const margen = banda[banda.length - 1];
+  return { n: con.length, diferencia: acumulado, margen, estado: Math.abs(acumulado) <= margen ? 'dentro' : acumulado > 0 ? 'encima' : 'debajo', curva, banda };
+}
+
 export function resumir(rows) {
   const lista = ordenar(rows);
   const aciertos = lista.filter(r => r.outcome === 'win').length;
   const n = lista.length;
   return { n, aciertos, fallos: n - aciertos, acierto: n ? aciertos / n : null, intervalo: wilson(aciertos, n),
-    desde: n ? lista[0].start : null, hasta: n ? lista[n - 1].start : null, rachas: rachas(lista), beneficio: beneficio(lista), calibracion: calibrar(lista) };
+    desde: n ? lista[0].start : null, hasta: n ? lista[n - 1].start : null, rachas: rachas(lista), beneficio: beneficio(lista), calibracion: calibrar(lista), desvio: desvio(lista) };
 }
 
 export function porDeporte(rows) {
@@ -112,20 +130,21 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
   };
 
   // -------- gráficas SVG (sin estilos en línea: la CSP no los admite; el color va por clases)
-  function curvaSvg(curva) {
-    if (curva.length < 3) return '<p class="cv-hist-nota">Aún no hay suficientes pronósticos con cuota registrada para dibujar la curva.</p>';
+  function desvioSvg(d) {
+    const { curva, banda } = d;
+    if (curva.length < 3) return '<p class="cv-hist-nota">Aún no hay suficientes pronósticos con probabilidad publicada para dibujar la curva.</p>';
     const W = 640, H = 230, L = 46, R = 16, T = 18, B = 26;
-    const min = Math.min(...curva, 0), max = Math.max(...curva, 0);
+    const min = Math.min(...curva, ...banda.map(b => -b)), max = Math.max(...curva, ...banda);
     const span = max - min || 1;
     const x = i => L + (i / (curva.length - 1)) * (W - L - R);
     const y = v => T + (1 - (v - min) / span) * (H - T - B);
+    const arriba = banda.map((b, i) => `${x(i).toFixed(1)},${y(b).toFixed(1)}`);
+    const abajo = banda.map((b, i) => `${x(i).toFixed(1)},${y(-b).toFixed(1)}`).reverse();
     const puntos = curva.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-    const base = y(0).toFixed(1);
-    const area = `${x(0).toFixed(1)},${base} ${puntos} ${x(curva.length - 1).toFixed(1)},${base}`;
     const fin = curva[curva.length - 1];
     const marcas = [...new Set([max, 0, min])].map(v => `<g><line class="cv-hist-grid" x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="cv-hist-axis" x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${v === 0 ? '0' : signo(v) + num(Math.abs(v), 1)}</text></g>`).join('');
-    const etiqueta = `Beneficio acumulado en fútbol: ${unidades(fin)} tras ${curva.length - 1} pronósticos con cuota. Mínimo ${num(min, 1)} u, máximo ${num(max, 1)} u.`;
-    return `<svg class="cv-hist-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(etiqueta)}">${marcas}<polygon class="cv-hist-area ${fin >= 0 ? 'win' : 'loss'}" points="${area}"/><polyline class="cv-hist-line ${fin >= 0 ? 'win' : 'loss'}" points="${puntos}" fill="none"/><circle class="cv-hist-end ${fin >= 0 ? 'win' : 'loss'}" cx="${x(curva.length - 1).toFixed(1)}" cy="${y(fin).toFixed(1)}" r="5"/><text class="cv-hist-axis" x="${L}" y="${H - 6}">Primer pronóstico</text><text class="cv-hist-axis" x="${W - R}" y="${H - 6}" text-anchor="end">Último (${curva.length - 1})</text></svg>`;
+    const etiqueta = `Aciertos reales frente a esperados: ${signo(fin)}${num(Math.abs(fin), 1)} tras ${curva.length - 1} pronósticos, con un margen de azar de ±${num(d.margen, 1)}. ${d.estado === 'dentro' ? 'Dentro del margen: compatible con lo prometido.' : d.estado === 'encima' ? 'Por encima del margen.' : 'Por debajo del margen.'}`;
+    return `<svg class="cv-hist-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(etiqueta)}">${marcas}<polygon class="cv-hist-band" points="${[...arriba, ...abajo].join(' ')}"/><polyline class="cv-hist-line ${fin >= 0 ? 'win' : 'loss'}" points="${puntos}" fill="none"/><circle class="cv-hist-end ${fin >= 0 ? 'win' : 'loss'}" cx="${x(curva.length - 1).toFixed(1)}" cy="${y(fin).toFixed(1)}" r="5"/><text class="cv-hist-axis" x="${L}" y="${H - 6}">Primer pronóstico</text><text class="cv-hist-axis" x="${W - R}" y="${H - 6}" text-anchor="end">Último (${curva.length - 1})</text></svg>`;
   }
 
   function diasSvg(dias) {
@@ -186,10 +205,12 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
   function graficas(r, rows) {
     const dias = porDia(rows, dia);
     const deportes = porDeporte(rows);
-    const curva = r.beneficio.curva;
+    const d = r.desvio, b = r.beneficio;
+    const resultado = d.n ? `Hoy: ${signo(d.diferencia)}${num(Math.abs(d.diferencia), 1)} aciertos frente a los esperados, con un margen de azar de ±${num(d.margen, 1)}, en ${num(d.n)} pronósticos.` : '';
+    const dinero = b.n ? ` Acertar lo prometido no es ganar dinero: a cuota media ${odds(b.cuotaMedia)}, el beneficio en fútbol con 1 u por pronóstico fue ${unidades(b.unidades)} en ${num(b.n)} pronósticos con cuota registrada.` : '';
     return `<section class="cv-section" aria-label="Gráficas de rendimiento"><div class="cv-section-head"><p class="eyebrow">EL RENDIMIENTO, A SIMPLE VISTA</p><h2>Lo que pasó, sin adornos</h2></div>
       <div class="cv-hist-charts">
-        <article class="cyber-card cv-hist-card cv-hist-wide"><h3>Beneficio acumulado en fútbol</h3><p class="cv-hist-sub">Si hubieras puesto 1 unidad en cada pronóstico con cuota registrada. Sube cuando acertamos y baja cuando fallamos.</p>${curvaSvg(curva)}${r.beneficio.n ? `<p class="cv-hist-foot">Cuotas bajas (media ${odds(r.beneficio.cuotaMedia)}): se acierta mucho y se gana poco por pronóstico. Un fallo borra varios aciertos.</p>` : ''}</article>
+        <article class="cyber-card cv-hist-card cv-hist-wide"><h3>Aciertos reales frente a esperados</h3><p class="cv-hist-sub">Cada pronóstico suma lo que salió (1 si acierta, 0 si falla) menos la probabilidad con que se publicó. La franja es el margen de azar: mientras la línea esté dentro, lo ocurrido es compatible con lo prometido.</p>${desvioSvg(d)}${resultado || dinero ? `<p class="cv-hist-foot">${resultado}${dinero}</p>` : ''}</article>
         <article class="cyber-card cv-hist-card"><h3>Acierto por día</h3><p class="cv-hist-sub">Verde: acertados. Magenta: fallados. Encima, el porcentaje del día.</p>${diasSvg(dias)}</article>
         <article class="cyber-card cv-hist-card"><h3>Por deporte</h3><p class="cv-hist-sub">Cada motor tiene su propia muestra: míralas por separado.</p>${deportesBloque(deportes)}${forma(rows)}</article>
       </div></section>`;

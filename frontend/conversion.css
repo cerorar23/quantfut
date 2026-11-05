@@ -461,6 +461,7 @@
 .cv-hist-end { fill: var(--cyber-void-900); stroke-width: 2.5; }
 .cv-hist-area.win { fill: color-mix(in srgb, var(--green) 14%, transparent); }
 .cv-hist-area.loss { fill: color-mix(in srgb, var(--magenta) 14%, transparent); }
+.cv-hist-band { fill: color-mix(in srgb, var(--cyber-chrome-500) 16%, transparent); stroke: none; }
 .cv-hist-bar.win { fill: var(--green); }
 .cv-hist-bar.loss { fill: var(--magenta); }
 
