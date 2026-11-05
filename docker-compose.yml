@@ -25,7 +25,7 @@ services:
   # credenciales del host, fuera del repo.
   api:
     build: .
-    image: quantfut-api-segura:53b1e5ed
+    image: quantfut-api-historial:f051d5c1
     env_file: .env
     depends_on:
       db: {condition: service_healthy}
