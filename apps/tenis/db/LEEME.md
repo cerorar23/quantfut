@@ -118,3 +118,15 @@ Código: `apps/tenis/src/tenis/carga/` (`tml_reglas`, `tml_score`, `tml_campos`,
 - Día de la semana de `tourney_date` en las 495.960 filas: 312.332 lunes, 128.179 domingos, 17.954 viernes, 12.344 sábados, 10.369 martes, 9.133 miércoles, 5.649 jueves. Se usa `L` literal: en un torneo que empieza en domingo, `L+2` cae en martes y el desfase se cuenta desde el primer día del torneo, como pide la regla. Es una consecuencia de no ajustar la fecha; no se ha medido si alguna ronda de esos torneos se juega después de su visibilidad.
 - Resultado de la carga completa (snapshot A, reglas finales del 5-nov): 495.960 filas leídas, 493.867 cargadas, 2.007 rechazadas, 86 duplicadas, 400–430 s; segunda carga: 0 filas nuevas. Recuentos frente a la auditoría y verificación independiente: `docs/tenis_carga_tml_conciliacion_20261105.md`.
 - **Decisión tomada en la revisión (5-nov): se aceptan los 7-6 sin puntos de tie-break y los sets de ventaja.** TML antiguo (1968–1990) no registra los puntos del tie-break (faltante = NULL, no inválido) y hubo sets de ventaja sin tie-break; rechazarlos dejaba fuera ≈39.000 partidos reales. Siguen rechazados los sets imposibles (7-4, 9-6, 6-6, 7-7, 8-5, 10-3…). Reversible: es una línea en `tml_score._set_normal`. **Ceros imposibles:** un lado con 0 puntos de saque en un partido terminado es un faltante codificado como 0 (65 partidos medidos); queda sin estadística (NULL) y con aviso `estadistica_cero_imposible`.
+
+## S2b: SofaScore, identidad entre fuentes y captura (5-nov)
+
+Informes por módulo: `docs/tenis_carga_sofascore_20261105.md`, `docs/tenis_identidad_20261105.md`, `docs/tenis_captura_ranking_20261105.md`; integración real y validación del calendario: `docs/tenis_integracion_s2b_20261105.md`.
+
+- **Orden de carga obligatorio:** TML primero y SofaScore después con el resolutor multifuente (`fabrica_resolutor` de `sofascore_cli.ejecutar`); si se carga SofaScore antes, duplica a los jugadores.
+- **Códigos de país:** se normalizan a ISO alpha-3 (`identidad/paises.py`) porque TML usa los del COI (sin esto, el 15 % de los jugadores se separaba como homónimo).
+- **Calendario retro de TML calibrado con horas reales de SofaScore** (ver `tml_reglas.py`): tablas por ronda = percentil 99,9 del fin real + 1 día. Fuga residual 0,97 % (125 de 12.924). Edición desalineada (3 %): limitación declarada. **Para partidos con hora real, el PIT debe usar los tiempos de SofaScore, no el calendario de TML.**
+- **Equivalencia con el principal en un fichero posterior:** el cargador de TML crea el principal al ver el alias (antes era un error).
+- **Edición de SofaScore:** inicio = mínimo y fin = máximo de las fechas de torneo de sus eventos (el clasificatorio y el cuadro traen fechas distintas), nunca antes del último partido + 1 día.
+- **Ronda QL:** «Qualification Final» (última ronda del clasificatorio), distinta de QF (cuartos).
+- **Pendiente:** captura del ranking de SportsAPIPro no probada contra respuesta real; colector con flock solo ejercitado en CI Linux; el resolutor requiere un proveedor de edades de TML (`enlazar.edades_para_resolutor`), porque las edades no se persisten.

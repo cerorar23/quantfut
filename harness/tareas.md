@@ -3787,3 +3787,13 @@ Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin dat
 - [x] Conciliación con la auditoría del snapshot A (`ops/conciliar_tml.py`, `docs/tenis_carga_tml_conciliacion_20261105.md`): 493.867 cargadas de 495.960 (2.007 rechazadas, 86 duplicadas), idempotente; verificación independiente: 0 ganadores y 0 marcadores mal orientados en 40.000 partidos.
 - [x] Sets 7-6 sin tie-break y sets de ventaja: aceptados en la revisión del 5-nov (reversible; ≈39.000 partidos de 1968–1990 recuperados). Ceros imposibles de saque → NULL.
 - [ ] S2b: alias de WTA `3xxxxx` (equivalencias), captura diaria, ranking oficial, identidad con SofaScore/API-Tennis. No empezado..
+
+## Tenis: rediseno — Sprint 2b SofaScore, identidad y captura (2026-11-05)
+
+- [x] Cargador de SofaScore (horas reales; 19.665 partidos cargados, idempotente), resolutor multifuente de identidad (85,2 % de union TML a SofaScore, 0 contradicciones), captura de ranking con presupuesto, cursores y candado, y colector (`ops/colector.sh`).
+- [x] Validacion real del calendario retro de TML contra SofaScore: el calendario inicial dejaba el resultado visible antes del fin real en el 9,1 %; recalibrado, 0,97 % (ediciones desalineadas, 3 %: limitacion declarada).
+- [x] Defectos hallados en la integracion y corregidos: codigos COI/ISO de pais, fin de edicion con clasificatorios, ronda QL, equivalencia con el principal en un fichero posterior, conexion del resolutor al cargador, flake del candado, cruce por ronda en la validacion.
+- [ ] Cargar en la base `tenis` real y en el VPS: requiere OK del titular.
+- [ ] Ranking de SportsAPIPro: analizador sin respuesta real; una peticion aprobada lo validaria.
+- [ ] Revisar a mano las equivalencias de WTA (18 de 35 con una sola fila de edad) y las 25 dudosas.
+- [ ] S3: nucleo analitico (P, R, simulador) y export PIT que prefiera las horas reales de SofaScore sobre el calendario de TML.

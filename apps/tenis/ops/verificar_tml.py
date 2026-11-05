@@ -118,7 +118,7 @@ def main():
         # Invariantes de visible_desde.
         viol = db.execute(
             "SELECT count(*) FROM partido p JOIN edicion e ON e.edicion_id = p.edicion_id "
-            "WHERE p.visible_desde IS NOT NULL AND p.visible_desde > (e.fecha_fin + 1)::timestamp AT TIME ZONE 'UTC'"
+            "WHERE p.visible_desde IS NOT NULL AND p.visible_desde > (e.fecha_fin + 4)::timestamp AT TIME ZONE 'UTC'"
         ).fetchone()[0]
         previo = db.execute(
             "SELECT count(*) FROM (SELECT edicion_id, ronda, visible_desde FROM partido WHERE visible_desde IS NOT NULL) x "

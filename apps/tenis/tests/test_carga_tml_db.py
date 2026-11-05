@@ -179,13 +179,15 @@ def test_carga_tml_pit_visibilidad_por_ronda(tmp_path, esquema):
     _ejecutar(tmp_path, esquema, _archivos_base())
     db = esquema.conectar()
     (final,) = _partidos(db, "1000", "F")
-    assert final[9] == datetime(2025, 5, 12, tzinfo=timezone.utc)
+    # Edición de 7 días (Lyon, inicio 5-may): la final se hace visible en L+10 (calendario calibrado con horas reales:
+    # los finales acaban pasada la fecha nominal; antes L+7 dejaba el 9 % de los resultados visibles demasiado pronto).
+    assert final[9] == datetime(2025, 5, 15, tzinfo=timezone.utc)
 
     def visible(instante):
         return db.execute("SELECT count(*) FROM resultado_a_las(%s) WHERE partido_id = %s",
                           (instante, final[0])).fetchone()[0]
-    assert visible(datetime(2025, 5, 11, 23, tzinfo=timezone.utc)) == 0
-    assert visible(datetime(2025, 5, 12, 1, tzinfo=timezone.utc)) == 1
+    assert visible(datetime(2025, 5, 14, 23, tzinfo=timezone.utc)) == 0
+    assert visible(datetime(2025, 5, 15, 1, tzinfo=timezone.utc)) == 1
 
 
 def test_carga_tml_pit_retro_2023_visible_en_su_epoca(tmp_path, esquema):
@@ -218,3 +220,26 @@ def test_carga_tml_sha_que_no_coincide_rechaza_el_fichero_entero(tmp_path, esque
     assert res["contadores"]["rechazo:fichero_sha_no_coincide"] == 2
     assert "fichero_sha_no_coincide" in (tmp_path / "rechazos.csv").read_text(encoding="utf-8")
     assert res["cuadra"] is True
+
+
+def test_equivalencia_con_el_principal_en_un_fichero_posterior_no_parte_a_la_persona(esquema):
+    """Hallado en la integración real: el alias aparece antes que su principal en el orden de carga. Antes era un error;
+    ahora se crea el principal al ver el alias y su fichero posterior lo reutiliza: una sola persona, dos alias."""
+    from types import SimpleNamespace
+
+    from db_util import nuevo_recibo, ts
+    from tenis.carga.tml_carga import _jugadores
+
+    def fila(id_a, nombre_a, id_b, nombre_b):
+        return (1, SimpleNamespace(circuito="wta", ids=(id_a, id_b), nombres=(nombre_a, nombre_b)))
+
+    with esquema.conectar() as db:
+        cur = db.cursor()
+        rid = nuevo_recibo(db, "tml", "2026-10-17", retro=True)
+        jug, equivalencias = {}, {"ALIAS": "PRINC"}
+        _jugadores(cur, [fila("ALIAS", "Ana Uno", "RIVAL1", "Bea Dos")], jug, equivalencias, rid, ts("2026-10-17"))
+        assert jug[("wta", "ALIAS")] == jug[("wta", "PRINC")]            # misma persona
+        _jugadores(cur, [fila("PRINC", "Ana Uno", "RIVAL2", "Cris Tres")], jug, equivalencias, rid, ts("2026-10-17"))
+        assert cur.execute("SELECT count(*) FROM jugador").fetchone()[0] == 3        # Ana (1), Bea y Cris: no 4
+        alias = dict(cur.execute("SELECT id_fuente, jugador_id FROM jugador_alias WHERE fuente = 'tml'").fetchall())
+        assert alias["ALIAS"] == alias["PRINC"]

@@ -233,9 +233,9 @@ def test_protocolo_retro_el_corte_ve_la_pareja_y_la_ronda_anterior_pero_no_el_pr
 
 
 @pytest.mark.parametrize("dias", [7, 14])
-def test_ningun_visible_desde_supera_fecha_fin_mas_un_dia(dias):
+def test_ningun_visible_desde_supera_fecha_fin_mas_cuatro_dias(dias):
     inicio = date(2025, 5, 26)
-    tope = fecha_fin(inicio, dias) + timedelta(days=1)
+    tope = fecha_fin(inicio, dias) + timedelta(days=4)   # los finales acaban pasada la fecha nominal (husos): medido hasta L+16 en 14 días
     for ronda in list(DESFASE_7) + ["R256", "BR"]:
         v = visible_desde_ronda(ronda, inicio, dias)
         if v is not None:
@@ -244,8 +244,8 @@ def test_ningun_visible_desde_supera_fecha_fin_mas_un_dia(dias):
 
 def test_tabla_7_dias_y_fin_de_semana_de_la_edicion():
     inicio = date(2025, 5, 26)  # lunes
-    assert visible_desde_ronda("R32", inicio, 7) == datetime(2025, 5, 29, tzinfo=timezone.utc)   # L+3d (estricto: R64 = L+2d)
-    assert visible_desde_ronda("F", inicio, 7) == datetime(2025, 6, 2, tzinfo=timezone.utc)
+    assert visible_desde_ronda("R32", inicio, 7) == datetime(2025, 6, 1, tzinfo=timezone.utc)   # L+6d (calibrado; R64 = L+3d)
+    assert visible_desde_ronda("F", inicio, 7) == datetime(2025, 6, 5, tzinfo=timezone.utc)
     assert visible_desde_ronda("R256", inicio, 7) is None
     assert lunes_semana_fin(inicio, 7) == date(2025, 5, 26)
     assert lunes_semana_fin(inicio, 14) == date(2025, 6, 2)

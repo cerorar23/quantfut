@@ -96,9 +96,15 @@ def _jugadores(cur, ok, jug, equivalencias, rid, rec_dt) -> None:
                 pendientes[k] = a.nombres[s]
     for (circ, id_), nombre in list(pendientes.items()):
         if id_ in equivalencias:
-            jid = jug.get((circ, equivalencias[id_]))
+            principal = equivalencias[id_]
+            jid = jug.get((circ, principal))
             if jid is None:
-                raise ValueError(f"equivalencia de {id_} sin jugador principal {equivalencias[id_]}")
+                # El principal aún no se ha cargado (aparece en un fichero posterior): se crea ahora con el nombre
+                # del alias (es la misma persona por la equivalencia) y sus propias filas lo completarán después.
+                # Antes esto era un error; así nunca se parte a una persona en dos.
+                jid = w.crear_jugadores(cur, [(circ, principal, nombre)], rid, rec_dt)[0]
+                jug[(circ, principal)] = jid
+                pendientes.pop((circ, principal), None)
             w.alias(cur, id_, jid, rid, rec_dt)
             jug[(circ, id_)] = jid
             del pendientes[(circ, id_)]

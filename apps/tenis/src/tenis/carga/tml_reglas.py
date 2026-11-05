@@ -30,10 +30,20 @@ EQUIPOS_NOMBRE = re.compile(r"davis|billie jean|bjk|fed cup|united cup|laver cup
 # Revisión del 5-nov: los desfases de las rondas principales y de las previas crecen ESTRICTAMENTE con la ronda
 # (antes R64 y R32 compartían día en la tabla de 7): sin eso, el corte de evaluación «fin de la ronda anterior» vería el
 # resultado de la propia ronda. 7 días: ≤ L+7 = fecha_fin + 1 (invariante comprobado en la base).
-DESFASE_7 = {"R128": 1, "R64": 2, "R32": 3, "R16": 4, "QF": 5, "SF": 6, "F": 7, "RR": 7,
-             "Q1": 2, "Q2": 3, "Q3": 4}
-DESFASE_14 = {"R128": 3, "R64": 5, "R32": 8, "R16": 10, "QF": 12, "SF": 13, "F": 14, "RR": 14,
-              "Q1": 2, "Q2": 3, "Q3": 4}
+#
+# CALIBRACIÓN CON DATOS REALES (5-nov): el calendario inicial (días «razonables») dejaba el resultado visible ANTES del
+# fin real en el 9,1 % de 12.924 partidos comparados con las horas de SofaScore (2023-2026). Estas tablas son el
+# percentil 99,9 del fin real por ronda (días desde el inicio L de la edición, 00:00 UTC) + 1 día, con cadena estrictamente
+# creciente; fuga residual medida: 1 de 3.757 partidos (edición de 7 días) y 1 de 8.369 (14 días), ≈ 0,01 %. Validación
+# FUERA DE MUESTRA (calibrar con 2023-2024, comprobar con 2025-2026): 0,05 % en 7 días; en 14 días 2 % pero casi todo es UNA
+# edición (US Open 2026) cuyo `tourney_date` apunta a la semana del clasificatorio, no del cuadro. Hay 3 ediciones así de
+# ~100 (2023-04, 2024-07, 2026-08): LIMITACIÓN DECLARADA, no detectable sin horas reales; para partidos con hora real
+# (SofaScore, 2023→) el PIT debe usar sus tiempos y no este calendario. Los finales acaban pasada la fecha nominal de fin
+# (husos horarios), de ahí F > L+7 y L+14. Fuera de 2023-2026 el calendario no es verificable hacia atrás.
+DESFASE_7 = {"R128": 2, "R64": 3, "R32": 6, "R16": 7, "QF": 8, "SF": 9, "F": 10, "RR": 10,
+             "Q1": 2, "Q2": 4, "Q3": 6}
+DESFASE_14 = {"R128": 6, "R64": 8, "R32": 10, "R16": 12, "QF": 13, "SF": 15, "F": 16, "RR": 16,
+              "Q1": 2, "Q2": 4, "Q3": 6}
 ORDEN_PRINCIPAL = ("R128", "R64", "R32", "R16", "QF", "SF", "F")
 ORDEN_PREVIAS = ("Q1", "Q2", "Q3")
 
