@@ -78,7 +78,9 @@ def test_endpoint_entrega_lineas_proyecciones_y_no_cambia_el_radar(partido_con_m
     puntos = [r for r in data["markets"] if r["market"] == "player_points"]
     assert {r["side"] for r in puntos} == {"over", "under"}
     assert all(r["player_id"] == jugador and isinstance(r["team"], str) for r in puntos)
+    assert jugador != 2544 and all(r["photo_id"] == 2544 for r in puntos)
     assert len(data["projections"]) == 1
+    assert data["projections"][0]["photo_id"] == 2544
     assert not any(r["market"] == "game_total" and r["line"] == 210.5 for r in data["markets"])
     assert client.get(f"/nba/v1/mercados?fecha={fecha}").status_code == 200
     assert client.get("/nba/v1/partido/999999/mercados").status_code == 404

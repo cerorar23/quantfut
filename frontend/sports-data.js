@@ -82,6 +82,7 @@ export function nbaV2Events(partidos, now = new Date()) {
     status: g.final ? 'finished' : Date.parse(g.start) + 4 * 36e5 < now.getTime() ? 'awaiting_result' : 'scheduled',
     markets: nbaPickMarkets(g), sealed_at: g.pick?.sellado_en || null, seal: g.pick?.hash || null, planned_seal: g.planned,
     actionable: false, score: g.final ? `${g.final.local} – ${g.final.visitante}` : null, availability: null, official_url: null,
+    team_projection: Array.isArray(g.pick?.mu) && g.pick.mu.length === 2 && g.pick.mu.every(Number.isFinite) ? g.pick.mu : null,
     v2: true }));
 }
 

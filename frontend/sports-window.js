@@ -1,5 +1,5 @@
 import { imageMarkup, playerPhoto } from './sport-images.js?v=imagenes-20261028b';
-import { withNbaMarkets, marketQuote, featuredSportMarket } from './sports-data.js?v=nba-mercados-20261104';
+import { withNbaMarkets, marketQuote, featuredSportMarket } from './sports-data.js?v=nba-tarjetas-20261104';
 // Ventana única de NBA y tenis: pronóstico y estadísticas del mismo evento, con el diseño de la de fútbol.
 // Solo presenta lo que publican los motores; no calcula probabilidades ni inventa cuotas.
 // La «cuota del modelo» es 1 ÷ probabilidad y se rotula como tal: ninguna casa publica estos mercados.
@@ -10,6 +10,7 @@ export function createSportWindow(ctx) {
   const ROW_LIMIT = 24;
   const SPORT_NAME = { nba: 'NBA', tenis: 'Tenis' };
   const keyOf = event => `${event.sport}:${event.id}`;
+  const portrait = (event, player) => playerPhoto('nba', event.v2 ? player.photo_id : player.player_id);
   const num = (value, digits = 1) => (Number.isFinite(value) ? Number(value).toLocaleString('es-MX', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—');
   const marks = name => esc(String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || '?');
   // Imágenes del manifiesto para NBA y tenis, tanto en la lista como en el encabezado.
@@ -72,28 +73,65 @@ export function createSportWindow(ctx) {
     const quote = feat ? marketQuote(feat) : null;
     const range = '1,40 o más';
     const card = feat
-      ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(playerPhoto("nba", feat.player_id), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>${quote.model ? 'Cuota del modelo' : 'Cuota de la casa'}</small><strong>${fmtOdds(quote.price)}</strong><em>${quote.model ? '1 ÷ probabilidad' : esc(quote.source)}</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
+      ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(portrait(event, feat), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>${quote.model ? 'Cuota del modelo' : 'Cuota de la casa'}</small><strong>${fmtOdds(quote.price)}</strong><em>${quote.model ? '1 ÷ probabilidad' : esc(quote.source)}</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
       : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado publicado de este evento cumple la cuota mínima de ${range}.`}</p>`;
     const families = [...new Set(event.markets.map(m => family(event, m)))].sort((a, b) => FAMILY_ORDER.indexOf(a) - FAMILY_ORDER.indexOf(b));
     const fam = families.includes(state.winSportFam) ? state.winSportFam : families[0];
-    const all = event.markets.filter(m => family(event, m) === fam).sort((a, b) => b.probability - a.probability);
+    const nba = event.sport === 'nba' && event.v2;
+    const all = event.markets.filter(m => family(event, m) === fam && (!nba || state.winAllOdds || marketQuote(m).price >= 1.2))
+      .sort((a, b) => b.probability - a.probability || marketQuote(b).price - marketQuote(a).price);
     const shown = state.winAll ? all : all.slice(0, ROW_LIMIT);
     const line = m => {
       const q = marketQuote(m);
-      return `<tr${m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${m.player ? imageMarkup(playerPhoto("nba", m.player_id), m.player, esc) : ""}${esc(m.selection)}${m === feat ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${q.price != null ? `${fmtOdds(q.price)}<small class="win-cell-note">${esc(q.source)}</small>` : '—'}</td><td>${outcomeBadge(m)}</td></tr>`;
+      return `<tr${m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${m.player ? imageMarkup(portrait(event, m), m.player, esc) : ""}${esc(m.selection)}${m === feat ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${q.price != null ? `${fmtOdds(q.price)}<small class="win-cell-note">${esc(q.source)}</small>` : '—'}</td><td>${outcomeBadge(m)}</td></tr>`;
     };
     const more = all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, de mayor a menor probabilidad.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
     const projections = playerProjections(event);
     if (event.v2 && !event.markets.length) return projections || (event.markets_status === 'ready' ? '<p class="win-sub">Todavía no hay mercados publicados para este partido.</p>' : '');
+    const controls = nba ? `<div class="win-market-tools"><div class="win-chips" role="group" aria-label="Filtrar por cuota"><button type="button" class="chip ${!state.winAllOdds ? 'selected' : ''}" data-win-odds="min" aria-pressed="${!state.winAllOdds}">Cuotas ≥ 1,20</button><button type="button" class="chip ${state.winAllOdds ? 'selected' : ''}" data-win-odds="all" aria-pressed="${Boolean(state.winAllOdds)}">Todas las cuotas</button></div><p class="win-sub">De mayor a menor probabilidad</p></div>` : '';
+    const markets = nba && fam !== 'Partido' ? playerMarkets(event, all, feat, fam)
+      : all.length ? `<div class="win-table ${nba ? 'win-nba-table' : ''}" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}`
+      : '<p class="win-sub" role="status">No hay mercados con la cuota seleccionada en esta categoría.</p>';
     return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>
       <section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${families.map(f => `<button type="button" class="chip ${fam === f ? 'selected' : ''}" data-win-sport-fam="${esc(f)}" aria-pressed="${fam === f}">${esc(f)}</button>`).join('')}</div></div>
-      <div class="win-table" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}</section>${projections}`;
+      ${controls}${markets}</section>${projections}`;
+  }
+
+  function playerMarkets(event, markets, feat, fam) {
+    const normalize = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const query = normalize(state.winPlayerSearch);
+    const groups = new Map();
+    for (const m of markets) {
+      if (!normalize(`${m.player} ${m.team}`).includes(query)) continue;
+      if (!groups.has(m.player_id)) groups.set(m.player_id, []);
+      groups.get(m.player_id).push(m);
+    }
+    const players = [...groups.values()];
+    const shown = state.winAll ? players : players.slice(0, 6);
+    const row = m => {
+      const q = marketQuote(m);
+      return `<tr${m === feat ? ' class="win-feat"' : ''}><td>${esc(m.selection)}${m === feat ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${fmtPct(m.probability)}</td><td class="n">${fmtOdds(q.price)}<small class="win-cell-note">${esc(q.source)}</small></td><td>${outcomeBadge(m)}</td></tr>`;
+    };
+    const table = rows => `<div class="win-table win-player-lines"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${rows.map(row).join('')}</tbody></table></div>`;
+    const cards = shown.map(rows => {
+      const m = rows[0];
+      return `<article class="win-player-card ${rows.includes(feat) ? 'is-featured' : ''}" aria-label="${esc(`${fam} de ${m.player}`)}"><header class="win-player-head">${imageMarkup(portrait(event, m), m.player, esc)}<div><h4>${esc(m.player)}</h4><p>${esc(m.team || '')} · ${esc(fam)}</p>${m.estimate != null ? `<p>Proyección <strong>${num(m.estimate)}</strong> · Si participa</p>` : ''}</div></header>${table(rows.slice(0, 3))}${rows.length > 3 ? `<details class="win-player-more"><summary>Ver ${rows.length - 3} línea${rows.length === 4 ? '' : 's'} más</summary>${table(rows.slice(3))}</details>` : ''}</article>`;
+    }).join('');
+    return `<label class="win-player-search"><span>Buscar jugador o equipo</span><input type="search" id="win-player-search" data-input="win-player-search" value="${esc(state.winPlayerSearch || '')}" placeholder="Nombre del jugador o equipo" autocomplete="off"></label>${players.length ? `<div class="win-player-grid">${cards}</div>` : '<p class="win-sub" role="status">No hay jugadores con estos filtros.</p>'}${players.length > 6 ? `<div class="win-vipbar"><p>${shown.length} de ${players.length} jugadores</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos los jugadores'}</button></div>` : ''}`;
   }
 
   function playerProjections(event) {
     if (!event.projections?.length) return '';
     const names = { puntos: 'Puntos', rebotes: 'Rebotes', asistencias: 'Asistencias', triples: 'Triples' };
-    return `<section aria-label="Proyecciones de jugadores"><h3>Proyecciones de jugadores</h3><p class="win-sub">Valores esperados si el jugador participa. Las selecciones con línea aparecen en Mercados.</p><div class="win-table" tabindex="0" role="region" aria-label="Todas las proyecciones de jugadores"><table class="cyber-table cyber-table--compact"><thead><tr><th>Jugador</th><th>Mercado</th><th class="n">Proyección</th><th class="n">P10–P90</th><th class="n">Prob. de jugar</th></tr></thead><tbody>${event.projections.map(p => `<tr><td>${esc(p.player)}<small class="win-cell-note">${esc(p.team || '')}</small></td><td>${names[p.market]}</td><td class="n">${num(p.estimate)}</td><td class="n">${num(p.p10)}–${num(p.p90)}</td><td class="n">${fmtPct(p.p_juega)}</td></tr>`).join('')}</tbody></table></div></section>`;
+    const players = new Map();
+    for (const p of event.projections) {
+      if (!players.has(p.player_id)) players.set(p.player_id, []);
+      players.get(p.player_id).push(p);
+    }
+    return `<details class="win-projections"><summary>Proyecciones de jugadores <span>${players.size} jugadores</span></summary><p class="win-sub">Valores esperados si el jugador participa.</p><div class="win-player-grid">${[...players.values()].map(stats => {
+      const p = stats[0];
+      return `<article class="win-player-card"><header class="win-player-head">${imageMarkup(portrait(event, p), p.player, esc)}<div><h4>${esc(p.player)}</h4><p>${esc(p.team || '')}</p><p>Prob. de jugar ${fmtPct(p.p_juega)}</p></div></header><dl class="win-player-stats">${stats.map(s => `<div><dt>${names[s.market]}</dt><dd>${num(s.estimate)}</dd><small>P10–P90: ${num(s.p10)}–${num(s.p90)}</small></div>`).join('')}</dl></article>`;
+    }).join('')}</div></details>`;
   }
 
   // ---- estadísticas (derecha)
@@ -330,6 +368,11 @@ export function createSportWindow(ctx) {
       const total = event.markets.find(m => m.market === 'game_total' && !m.revised);
       const teams = event.markets.filter(m => m.market === 'team_points' && !m.revised);
       parts.push(`<div class="win-panel-box"><p class="eyebrow">EL PARTIDO</p>${kv('Hora', `${realDate(event.start)} ${realTime(event.start)}`)}${kv('Estado', esc(statusText(event)))}${event.score ? kv('Marcador', esc(event.score)) : ''}${event.official_url ? kv('Ficha oficial', `<a class="text-link" href="${esc(event.official_url)}" target="_blank" rel="noopener noreferrer">NBA.com ↗</a>`) : ''}</div>`);
+      if (event.v2) {
+        const p = event.team_projection;
+        parts.push(`<div class="win-panel-box"><p class="eyebrow">PUNTOS ESPERADOS</p>${p ? kv(esc(event.home), num(p[0])) + kv(esc(event.away), num(p[1])) : '<p class="win-sub">Sin proyección de puntos publicada.</p>'}</div>`);
+        return parts.join('');
+      }
       parts.push(`<div class="win-panel-box"><p class="eyebrow">PROYECCIONES DEL MOTOR</p>${total ? kv('Total de puntos', `${num(total.estimate)} <small>(línea ${num(lineOf(total.selection))} · más de ${fmtPct(total.probability)})</small>`) : ''}${teams.map(m => kv(String(m.selection).split(' · ')[0], `${num(m.estimate)} <small>(línea ${num(lineOf(m.selection))} · más de ${fmtPct(m.probability)})</small>`)).join('')}${!total && !teams.length ? '<p class="win-sub">Sin proyecciones de equipo publicadas.</p>' : ''}</div>`);
     }
     return parts.join('');
@@ -384,7 +427,7 @@ export function createSportWindow(ctx) {
     const selected = list.find(e => keyOf(e) === state.winEvent);
     const event = selected?.sport === 'nba' && selected.v2 ? withNbaMarkets(selected, ctx.ensureNbaMarkets?.(selected)) : selected;
     state.winResetFlag = state.winLastEvent !== state.winEvent;
-    if (state.winResetFlag) { state.winSportFam = ''; state.winAll = false; }
+    if (state.winResetFlag) { state.winSportFam = ''; state.winAll = false; state.winPlayerSearch = ''; }
     state.winLastEvent = state.winEvent;
     state.winEvList = list.map(keyOf);
     const index = state.winEvList.indexOf(state.winEvent);

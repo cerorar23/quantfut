@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=nba-mercados-20261104';
-import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, featuredModelMarket, nbaCode } from './sports-data.js?v=nba-mercados-20261104';
-import { createSportWindow } from './sports-window.js?v=nba-mercados-20261104';
+import { createRealViews } from './real-views.js?v=nba-tarjetas-20261104';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, featuredModelMarket, nbaCode } from './sports-data.js?v=nba-tarjetas-20261104';
+import { createSportWindow } from './sports-window.js?v=nba-tarjetas-20261104';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
@@ -115,6 +115,8 @@ const state = {
   winSportFam: '',
   winFormScope: 'all',
   winAll: false,
+  winAllOdds: false,
+  winPlayerSearch: '',
   winResetFlag: false,
   winDayPinned: false,
   winFam: 'Todos',
@@ -1323,6 +1325,7 @@ app.addEventListener('click', event => {
   if (data.winFormScope) { state.winFormScope = data.winFormScope; rerenderKeepingFocus(`[data-win-form-scope="${data.winFormScope}"]`); return; }
   if (data.winSportFam) { state.winSportFam = data.winSportFam; state.winAll = false; rerenderKeepingFocus(`[data-win-sport-fam="${CSS.escape(data.winSportFam)}"]`); return; }
   if (data.winAll) { state.winAll = !state.winAll; rerenderKeepingFocus('[data-win-all]'); return; }
+  if (data.winOdds) { state.winAllOdds = data.winOdds === 'all'; state.winAll = false; rerenderKeepingFocus(`[data-win-odds="${data.winOdds}"]`); return; }
   if (data.winPane) { state.winPane = data.winPane; rerenderKeepingFocus(`[data-win-pane="${data.winPane}"]`); return; }
   if (data.winFam) { state.winFam = data.winFam; rerenderKeepingFocus(`[data-win-fam="${CSS.escape(data.winFam)}"]`); return; }
   if (data.winStep) { const next = state.winList[state.winList.indexOf(state.statsMatch) + Number(data.winStep)]; if (next) { state.statsMatch = next; rerenderKeepingFocus(`[data-win-step="${data.winStep}"]`); } return; }
@@ -1385,6 +1388,15 @@ app.addEventListener('change', event => {
 });
 
 app.addEventListener('input', event => {
+  if (event.target.dataset.input === 'win-player-search') {
+    const caret = event.target.selectionStart;
+    state.winPlayerSearch = event.target.value;
+    state.winAll = false;
+    render();
+    const input = app.querySelector('#win-player-search');
+    input.focus(); input.setSelectionRange(caret, caret);
+    return;
+  }
   const home = event.target.dataset.input === 'home-search';
   if (!home && event.target.dataset.input !== 'desk-search') return;
   const caret = event.target.selectionStart;
