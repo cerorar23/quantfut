@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredModelMarket, HISTORY_SINCE } from './sports-data.js?v=nba-estadisticas-20261103';
+import { featuredSportMarket, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=nba-mercados-20261104';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -50,7 +50,7 @@ export function createHubViews(ctx) {
     return {home,nba,tenis,events:[...football(home),...(nba.events||[]).filter(e=>e.markets.length),...(tenis.events||[])]};
   }
   const eventKey=e=>`${e.sport}:${e.id}`;
-  const featured=e=>e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];
+  const featured=e=>e.sport==='nba'&&e.v2?featuredSportMarket(e):e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];
   const timing=e=>e.status==='finished'?'Finalizado':e.status==='awaiting_result'?'Esperando resultado':new Date(e.start)<=new Date()?'Hora prevista superada':'Próximo';
   const action=e=>e.sport==='futbol'?`data-real-match="${esc(e.id)}"`:`data-sport-event="${esc(eventKey(e))}"`;
 
@@ -118,13 +118,20 @@ export function createHubViews(ctx) {
   }
 
   // Estado del pronóstico en la fecha de la tarjeta (el servidor solo manda `resultado` cuando el partido terminó; NBA y tenis traen `outcome`).
-  const RESULT={win:['Acertó','good'],loss:['Falló','warn'],push:['Devolución','muted']};
+  const RESULT={win:['Acertó','good'],loss:['Falló','warn'],push:['Devolución','muted'],void:['Anulada','muted']};
   const resultBadge=m=>{const r=RESULT[m?.result||m?.outcome];return r?`<span class="badge ${r[1]}">${r[0]}</span>`:'';};
 
   function card(event) {
-    const dest=destacadoOf(event),m=dest?.market||featured(event)||(dest?.loading?{}:undefined),locked=!m;
+    if(event.sport==='nba'&&event.v2) event=withNbaMarkets(event,ctx.ensureNbaMarkets?.(event));
+    const dest=destacadoOf(event),selected=dest?.market||featured(event)||(dest?.loading?{}:undefined);
+    const quote=selected&&event.sport==='nba'&&event.v2?marketQuote(selected):null;
+    const m=quote?{...selected,featured:true,price:quote.price,model:quote.model,house:!quote.model,reference:quote.source}:selected,locked=!m;
     const extra=event.locked_count?`<button type="button" class="text-link win-pk-more" data-route="planes">+${event.locked_count} análisis con Plus ↗</button>`:'';
     const head=`<header class="win-pk-top"><span class="win-pk-sport">${sportIcon[event.sport]}<b>${sportLabel(event)}</b></span><span class="win-pk-league">${leagueLabel(event)}</span><span class="win-pk-when"><time class="win-pk-time" datetime="${esc(event.start)}">${realDate(event.start)} · ${realTime(event.start)}</time>${resultBadge(m)}</span></header>`;
+    if(event.sport==='nba'&&event.v2&&!m) {
+      const note=event.markets_status==='loading'?'Consultando mercados…':event.markets_status==='error'?'No se pudieron cargar los mercados.':event.markets.length?'Sin pronóstico destacado':'Todavía no hay mercados publicados.';
+      return `<article class="cyber-card win-pk-card is-nba">${head}${teamsRow(event)}<p class="win-sub" role="status">${note}</p><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer></article>`;
+    }
     if(locked)return `<article class="cyber-card cyber-card--yellow win-pk-card is-locked is-${event.sport}">${head}${teamsRow(event)}<div class="win-pk-pick"><div class="win-pk-sel"><small>Pronóstico</small><strong class="win-pk-masked">${lockIcon}<span>Contenido reservado</span></strong></div><div class="win-pk-odds is-prob"><small>Acceso</small><strong>Plus</strong><em>Selección y cuota privadas</em></div></div><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--yellow" data-route="planes">Consultar acceso Plus ↗</button></footer></article>`;
     const seal=(m.featured&&!m.seal)||dest?.loading?'':`<details class="win-pk-seal"><summary>Registro del pronóstico</summary><p>Publicación: ${realDate(event.sealed_at)} ${realTime(event.sealed_at)}.</p><code>${esc(m.seal||event.seal||'Registro del motor')}</code>${m.odds_at?`<p>Cuota capturada: ${realDate(m.odds_at)} ${realTime(m.odds_at)}. Puede haber cambiado.</p>`:''}<p>${esc(m.reference||'Probabilidad estadística del motor')}</p></details>`;
     return `<article class="cyber-card cyber-card--interactive win-pk-card is-${event.sport}">${head}${teamsRow(event)}${dest?.loading?`<div class="win-pk-pick is-single"><div class="win-pk-sel"><small>Pronóstico destacado</small><strong class="win-pk-masked"><span>Consultando…</span></strong></div></div>`:`<div class="win-pk-pick ${m.price?'':'is-single'}"><div class="win-pk-sel"><small>${m.featured?'Pronóstico destacado':'Pronóstico'}</small><strong>${esc(m.selection)}</strong></div>${oddsBlock(m)}</div><div class="win-pk-prob"><span>Probabilidad del modelo</span><b>${fmtPct(m.probability)}</b>${progress(m.probability)}</div>`}${m.revised&&!m.featured?'<p class="win-pk-note">Revisión posterior al inicio. No cuenta como pronóstico previo.</p>':''}<footer class="win-pk-foot">${badgeFor(event)}${extra}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer>${seal}</article>`;
@@ -196,8 +203,9 @@ export function createHubViews(ctx) {
   function allResults(source) {
     const rows=results(),row=(sport,r)=>({sport,home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,prob:r.prob,score:`${r.home_goals} – ${r.away_goals}`});
     const items=[...(rows.items||[]),...(rows.featured||[])].map(r=>row('futbol',r));
-    for(const e of source.events.filter(e=>e.sport!=='futbol')) {
-      const m=featuredModelMarket(e.markets.filter(x=>!x.revised));
+    for(let e of source.events.filter(e=>e.sport!=='futbol')) {
+      if(e.sport==='nba'&&e.v2) e=withNbaMarkets(e,ctx.ensureNbaMarkets?.(e));
+      const m=featuredSportMarket(e);
       if(m&&['win','loss'].includes(m.outcome))items.push({sport:e.sport,home:e.home,away:e.away,start:e.start,text:m.selection,outcome:m.outcome,price:m.price,prob:m.probability,score:e.score});
     }
     return items.filter(r=>localDay(new Date(r.start))>=HISTORY_SINCE).sort((a,b)=>new Date(b.start)-new Date(a.start));

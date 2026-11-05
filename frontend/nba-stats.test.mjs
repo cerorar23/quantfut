@@ -79,24 +79,24 @@ test('sin estadísticas la ventana lo dice y no inventa cifras', () => {
   assert.ok(windowFor(null, {}, 'error')('clasificacion').includes('Todavía no hay estadísticas'));
 });
 
-function v2Window(event, entry) {
+function v2Window(event, entry, marketsEntry) {
   const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false, winFormScope: 'all' };
   const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const pass = v => String(v);
   const asked = [];
   const w = createSportWindow({ state: st, esc, badge: t => `<i>${t}</i>`, fmtPct: p => `${(p * 100).toFixed(1)}%`, fmtOdds: o => o.toFixed(2), realDate: pass, realTime: pass, dateFmt: pass,
     addDays: () => new Date(event.start), localDay: d => new Date(d).toISOString().slice(0, 10), dayLabel: () => 'Hoy', ensureSport: () => ({ status: 'ready', events: [event] }),
-    ensureTennisStats: () => ({ status: 'loading', data: null }), ensureNbaStats: id => { asked.push(id); return entry; }, featuredModelMarket });
+    ensureTennisStats: () => ({ status: 'loading', data: null }), ensureNbaStats: id => { asked.push(id); return entry; }, ensureNbaMarkets: () => marketsEntry, featuredModelMarket });
   return { view: tab => { st.winSportTab = tab; return w.view(); }, asked };
 }
 
-test('un partido v2 sin pronóstico explica cuándo se agrega y pide las estadísticas al servidor solo al abrir esa pestaña', () => {
+test('un partido v2 sin pronóstico omite la tarjeta de sellado y pide estadísticas solo al abrir esa pestaña', () => {
   const soon = new Date(Date.now() + 5 * 36e5).toISOString(), planned = new Date(Date.now() + 4 * 36e5).toISOString();
   const event = { id: 3, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start: soon, planned_seal: planned, league: 'NBA', status: 'scheduled', markets: [], seal: null, sealed_at: null,
     score: null, availability: null };
   const html = v2Window(event, { status: 'ready', data: stats });
   const card = html.view('resumen');
-  assert.ok(card.includes('CUÁNDO SE AGREGA EL PRONÓSTICO') && card.includes('Pronóstico pendiente') && card.includes('dentro de 4 h'));
+  assert.ok(!card.includes('CUÁNDO SE AGREGA EL PRONÓSTICO') && !card.includes('Pronóstico pendiente') && !card.includes('win-seal'));
   assert.ok(!card.includes('win-step') && !card.includes('Calendario recibido') && !card.includes('Sin pronóstico destacado'));
   assert.deepEqual(html.asked, []);                                                                       // el resumen no consulta estadísticas
   const compare = html.view('comparativa');
@@ -117,5 +117,26 @@ test('un partido v2 ya jugado sin sello no inventa un pronóstico a posteriori',
   const event = { id: 4, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, planned_seal: new Date(Date.parse(start) - 36e5).toISOString(), league: 'NBA', status: 'finished',
     markets: [], seal: null, sealed_at: null, score: '100 – 90', availability: null };
   const card = v2Window(event, { status: 'ready', data: stats }).view('resumen');
-  assert.ok(card.includes('Sin pronóstico previo') && card.includes('no calcula pronósticos a posteriori') && !card.includes('win-step'));
+  assert.ok(!card.includes('win-seal') && !card.includes('Sin pronóstico destacado') && !card.includes('data-win-sport-fam'));
+});
+
+test('la ficha muestra el destacado de jugadores, sus mercados y proyecciones sin la tarjeta de sellado', () => {
+  const start = new Date().toISOString();
+  const market = { id: 'player-1', market: 'player_points', player: 'Jugador <b>', player_id: 10, label: 'Puntos del jugador', selection: 'Jugador <b> · Más de 20.5',
+    probability: .702, price: 1.44, book: 'bovada', line: 20.5, conditional: true, sealed_at: new Date(Date.now() - 3600000).toISOString(), eligible: true, revised: false, outcome: 'loss' };
+  const event = { id: 4, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, league: 'NBA', status: 'scheduled', markets: [], seal: 'abc', sealed_at: market.sealed_at };
+  const entry = { status: 'ready', markets: [market], projections: [{ player: 'Jugador <b>', team: 'Boston Celtics', market: 'rebotes', estimate: 7.5, p10: 3, p90: 11, p_juega: .95 }] };
+  const html = v2Window(event, { status: 'ready', data: stats }, entry).view('resumen');
+  assert.ok(html.includes('PRONÓSTICO DESTACADO') && html.includes('Más de 20.5') && html.includes('Proyecciones de jugadores') && html.includes('Rebotes'));
+  assert.ok(html.includes('Jugador &lt;b&gt;') && !html.includes('Jugador <b>'));
+  const table = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
+  assert.ok(table.includes('70.2%') && table.includes('1.44') && table.includes('Bovada') && table.includes('Falló'));
+  assert.ok(table.includes('Pronóstico destacado') && !table.includes('>Destacado</'));
+  assert.ok(html.includes('Cuota de la casa') && !html.includes('>1.42<'));
+  assert.ok(!html.includes('win-seal') && !html.includes('CUÁNDO SE AGREGA EL PRONÓSTICO'));
+  for (const status of ['loading', 'error']) {
+    const pending = v2Window(event, { status: 'ready', data: stats }, { status }).view('resumen');
+    assert.ok(pending.includes(status === 'loading' ? 'Cargando mercados' : 'No se pudieron cargar los mercados'));
+    assert.ok(!pending.includes('Sin pronóstico destacado') && !pending.includes('Ningún mercado'));
+  }
 });

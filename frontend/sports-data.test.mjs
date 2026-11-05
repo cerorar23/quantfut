@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {nbaEvents,nbaV2Events,tennisEvents,loadSport,loadResults} from './sports-data.js';
+import {nbaEvents,nbaV2Events,tennisEvents,loadSport,loadResults,loadNbaMarkets,withNbaMarkets,featuredModelMarket,featuredSportMarket,marketQuote} from './sports-data.js';
 import {createHubViews} from './ergonomic-views.js';
 const event={event_id:'1',tipoff_utc:'2026-10-27T20:00:00Z',home_team:'A',away_team:'B',status:'evaluated',final:{home:99,away:102}};
 const row={event_id:'1',player_id:'winner',market:'winner',market_label:'Ganador',probability_over:.3,probability_under:.7,sealed_at_utc:'2026-10-27T19:00:00Z',result:{status:'evaluated',actual:0}};
@@ -31,6 +31,48 @@ test('las fuentes fallan por separado y nunca fabrican cuotas ni publicaciones',
 });
 const game=(id,fecha,home,away,iso,result,pick=null)=>({id,fecha,local:{codigo:home[0],nombre:home[1]},visitante:{codigo:away[0],nombre:away[1]},inicio_utc:iso,sello_previsto:new Date(Date.parse(iso)-36e5).toISOString(),resultado:result,pronostico:pick});
 const BOS=['BOS','Boston Celtics'],NYK=['NYK','New York Knicks'],MIA=['MIA','Miami Heat'];
+const fullMarket = (extra = {}) => ({ id: 'points-10-20.5-over', market: 'player_points', side: 'over', line: 20.5, player: 'Jugador <b>', player_id: 10,
+  team: 'Boston Celtics', probability: .65, push_probability: 0, conditional: true, sealed_at: '2026-11-04T23:00:00Z', seal: 'a'.repeat(64), estimate: 23, ...extra });
+const fullEvent = { id: 99, sport: 'nba', v2: true, home: 'Boston Celtics', away: 'Milwaukee Bucks', start: '2026-11-05T00:00:00Z', status: 'scheduled', markets: [] };
+test('carga todos los mercados del partido y el destacado puede ser un jugador', async () => {
+ let path;
+ const data={partido_id:99,markets:[fullMarket({id:'winner',market:'winner',side:'local',line:null,player:null,player_id:null,probability:.896}),fullMarket(),fullMarket({id:'points-10-25.5-under',line:25.5,side:'under',probability:.7})],projections:[]};
+ const entry=await loadNbaMarkets(fullEvent,async p=>{path=p;return {ok:true,json:async()=>data};});
+ assert.equal(path,'/nba/v1/partido/99/mercados');assert.equal(entry.status,'ready');assert.equal(entry.markets.length,3);
+ const event=withNbaMarkets(fullEvent,entry);
+ assert.equal(featuredModelMarket(event.markets).selection,'Menos de 25.5 puntos');
+ assert.equal(featuredModelMarket(event.markets).label,'Puntos de Jugador <b>');
+ assert.equal(event.markets[0].selection,'Boston Celtics');assert.ok(event.markets.every(m=>m.eligible&&!m.revised));
+});
+test('una carga fallida o en curso no evalúa solo el ganador ni afirma que no hay destacado', async()=>{
+ for(const status of ['loading','error']) assert.deepEqual(withNbaMarkets({...fullEvent,markets:[fullMarket()]},{status}).markets,[]);
+ for(const data of [{partido_id:100,markets:[],projections:[]},{partido_id:99,markets:[fullMarket({probability:NaN})],projections:[]},{partido_id:99,markets:[fullMarket({line:null})],projections:[]}])
+   assert.equal((await loadNbaMarkets(fullEvent,async()=>({ok:true,json:async()=>data}))).status,'error');
+ assert.equal((await loadNbaMarkets(fullEvent,async()=>{throw Error('red');})).status,'error');
+});
+test('los mercados posteriores al inicio se excluyen del destacado y los resultados de equipo se liquidan por lado',async()=>{
+ const rows=[fullMarket({sealed_at:'2026-11-05T00:01:00Z'}),fullMarket({id:'total-under',market:'game_total',player:null,player_id:null,line:210,side:'under',probability:.6}),fullMarket({id:'spread-away',market:'handicap',team:'Milwaukee Bucks',line:5.5,side:'visit',player:null,player_id:null,probability:.6})];
+ const entry=await loadNbaMarkets({...fullEvent,status:'finished',score:'110 – 100'},async()=>({ok:true,json:async()=>({partido_id:99,markets:rows,projections:[]})}));
+ assert.equal(entry.markets[0].revised,true);assert.equal(entry.markets[0].outcome,null);
+ assert.equal(entry.markets[1].outcome,'push');assert.equal(entry.markets[2].outcome,'loss');
+ assert.notEqual(featuredModelMarket(entry.markets.filter(m=>!m.revised)).id,rows[0].id);
+});
+test('NBA elige el destacado por la cuota de la casa cuando existe y muestra su nombre',()=>{
+ const markets=[fullMarket({id:'high-prob',probability:.8,price:1.44,book:'bovada'}),fullMarket({id:'too-short',probability:.9,price:1.12,book:'pinnacle'}),fullMarket({id:'model-only',probability:.7})];
+ assert.equal(featuredSportMarket({...fullEvent,markets}).id,'high-prob');
+ assert.deepEqual(marketQuote(markets[0]),{price:1.44,source:'Bovada',model:false});
+ assert.equal(featuredSportMarket({...fullEvent,markets:[markets[1],markets[2]]}),null);
+ assert.equal(featuredSportMarket({...fullEvent,markets:[markets[2]]}).id,'model-only');
+ assert.equal(marketQuote({...markets[0],book:null}).model,true);
+});
+test('el resultado de jugador publicado se conserva y las revisiones nunca se convierten en aciertos',async()=>{
+ for(const outcome of ['win','loss','push','void']) {
+  const entry=await loadNbaMarkets(fullEvent,async()=>({ok:true,json:async()=>({partido_id:99,markets:[fullMarket({outcome})],projections:[]})}));
+  assert.equal(entry.markets[0].outcome,outcome);
+ }
+ const late=await loadNbaMarkets(fullEvent,async()=>({ok:true,json:async()=>({partido_id:99,markets:[fullMarket({outcome:'win',sealed_at:'2026-11-05T01:00:00Z'})],projections:[]})}));
+ assert.equal(late.markets[0].outcome,null);
+});
 test('la cartelera v2 conserva los partidos sin pronóstico y no calcula estadísticas en el navegador',()=>{
  const rows=[game(1,'2026-10-28',BOS,NYK,'2026-10-29T00:00:00Z',{local:110,visitante:100}),game(2,'2026-11-01',MIA,BOS,'2026-11-02T00:00:00Z',{local:90,visitante:99}),
   game(3,'2026-11-04',BOS,NYK,'2026-11-05T00:00:00Z',null),game(4,'2026-11-05',MIA,NYK,'2026-11-06T00:00:00Z',null)];
@@ -70,7 +112,6 @@ test('la portada conserva el bloqueo aunque el payload traiga datos privados',()
  const html=views.home();assert.ok(html.includes('acceso Plus'));assert.ok(!html.includes('PRIVATE_SELECTION'));assert.ok(!html.includes('99%'));
 });
 
-import { featuredModelMarket } from './sports-data.js';
 import { createSportWindow } from './sports-window.js';
 
 test('el destacado de NBA y tenis usa la cuota del modelo (1 ÷ prob.) de 1,40 en adelante, sin tope, y la mayor probabilidad', () => {
