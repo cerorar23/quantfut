@@ -1,3 +1,4 @@
+import 'featured_rule.dart';
 import 'live_api.dart';
 import 'sports.dart';
 
@@ -55,6 +56,8 @@ class SportEvent {
     this.score,
     this.availability,
     this.plannedSeal,
+    this.serverFeatured = false,
+    this.featuredId,
   });
 
   final String id;
@@ -70,6 +73,11 @@ class SportEvent {
 
   /// Hora prevista del sellado del pronóstico (NBA v2); null si la API no la da.
   final DateTime? plannedSeal;
+
+  /// El servidor mandó el campo `destacado` (valor esperado): `featuredId` es el id del mercado elegido o
+  /// null si ninguno cumple la regla. Si no lo mandó, el destacado se calcula en la app con la misma regla.
+  final bool serverFeatured;
+  final String? featuredId;
 }
 
 class SportFeed {
@@ -205,7 +213,10 @@ List<SportEvent> nbaV2Events(Iterable<JsonMap> games) {
     final id = game['id'];
     final home = jsonMap(game['local']), away = jsonMap(game['visitante']);
     final start = _stamp(game['inicio_utc']);
-    if (id is! int || !_text(home['nombre']) || !_text(away['nombre']) || start == null) {
+    if (id is! int ||
+        !_text(home['nombre']) ||
+        !_text(away['nombre']) ||
+        start == null) {
       continue;
     }
     final pick = jsonMap(game['pronostico']);
@@ -342,6 +353,10 @@ List<SportEvent> tennisEvents(JsonMap data) {
         seal: event['seal'] as String,
         sealedAt: sealedAt,
         markets: markets,
+        serverFeatured: event.containsKey('destacado'),
+        featuredId: jsonMap(event['destacado'])['id'] is String
+            ? jsonMap(event['destacado'])['id'] as String
+            : null,
       ),
     );
   }
@@ -365,13 +380,19 @@ Future<SportFeed> loadSport(QuantFutApi api, SportKind sport) async {
   }
 }
 
-/// Mercado de mayor probabilidad entre los elegibles (sellados antes del inicio).
+/// Destacado de NBA y tenis entre los elegibles (sellados antes del inicio). Si el servidor mandó el suyo
+/// (valor esperado) solo se localiza; si no, se aplica la misma regla con la cuota del modelo (1 ÷ prob.).
 SportMarket? featuredMarket(SportEvent e) {
-  SportMarket? best;
-  for (final m in e.markets) {
-    if (m.eligible && (best == null || m.probability > best.probability)) {
-      best = m;
+  final eligible = e.markets.where((m) => m.eligible);
+  if (e.serverFeatured) {
+    for (final m in eligible) {
+      if (m.id == e.featuredId) return m;
     }
+    return null;
   }
-  return best;
+  return bestByValue<SportMarket>(
+    eligible,
+    (m) => m.probability,
+    (m) => modelPrice(m.probability),
+  );
 }

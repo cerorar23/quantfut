@@ -120,7 +120,7 @@
   "detailInjuries": "Reported absences",
   "detailLineups": "Lineups",
   "detailLineupsPending": "Lineups not confirmed yet.",
-  "detailNoFeatured": "No prediction for this match qualifies as featured (odds 1.20 to 1.60 and probability 74% to 85%). The open ones are in the list below.",
+  "detailNoFeatured": "No prediction for this match qualifies as featured (odds of 1.20 or higher and probability of 55% or higher). The open ones are in the list below.",
   "detailNoH2h": "There are no recorded meetings for this match.",
   "detailNoInjuries": "No absences in the available report.",
   "detailNoInjuriesCheck": "No absence check is available.",

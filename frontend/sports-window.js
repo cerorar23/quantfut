@@ -1,5 +1,5 @@
 import { imageMarkup, playerPhoto } from './sport-images.js?v=imagenes-20261028b';
-import { withNbaMarkets, marketQuote, featuredSportMarket } from './sports-data.js?v=nba-tarjetas-20261104';
+import { withNbaMarkets, marketQuote, featuredSportMarket } from './sports-data.js?v=destacado-valor-20261105';
 // Ventana única de NBA y tenis: pronóstico y estadísticas del mismo evento, con el diseño de la de fútbol.
 // Solo presenta lo que publican los motores; no calcula probabilidades ni inventa cuotas.
 // La «cuota del modelo» es 1 ÷ probabilidad y se rotula como tal: ninguna casa publica estos mercados.
@@ -71,10 +71,10 @@ export function createSportWindow(ctx) {
     if (event.markets_status === 'error') return '<p class="win-sub" role="status">No se pudieron cargar los mercados. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p>';
     const feat = featuredSportMarket(event);
     const quote = feat ? marketQuote(feat) : null;
-    const range = '1,40 o más';
+    const rule = 'cuota de 1,20 o más y probabilidad de 55 % o más';
     const card = feat
       ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(portrait(event, feat), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>${quote.model ? 'Cuota del modelo' : 'Cuota de la casa'}</small><strong>${fmtOdds(quote.price)}</strong><em>${quote.model ? '1 ÷ probabilidad' : esc(quote.source)}</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
-      : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado publicado de este evento cumple la cuota mínima de ${range}.`}</p>`;
+      : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado publicado de este evento cumple la regla del destacado: ${rule}.`}</p>`;
     const families = [...new Set(event.markets.map(m => family(event, m)))].sort((a, b) => FAMILY_ORDER.indexOf(a) - FAMILY_ORDER.indexOf(b));
     const fam = families.includes(state.winSportFam) ? state.winSportFam : families[0];
     const nba = event.sport === 'nba' && event.v2;

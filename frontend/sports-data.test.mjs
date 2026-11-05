@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {nbaEvents,nbaV2Events,tennisEvents,loadSport,loadResults,loadNbaMarkets,withNbaMarkets,featuredModelMarket,featuredSportMarket,marketQuote} from './sports-data.js';
+import {nbaEvents,nbaV2Events,tennisEvents,loadSport,loadResults,loadNbaMarkets,withNbaMarkets,featuredModelMarket,featuredSportMarket,bestByValue,marketQuote} from './sports-data.js';
 import {createHubViews} from './ergonomic-views.js';
 const event={event_id:'1',tipoff_utc:'2026-10-27T20:00:00Z',home_team:'A',away_team:'B',status:'evaluated',final:{home:99,away:102}};
 const row={event_id:'1',player_id:'winner',market:'winner',market_label:'Ganador',probability_over:.3,probability_under:.7,sealed_at_utc:'2026-10-27T19:00:00Z',result:{status:'evaluated',actual:0}};
@@ -114,15 +114,46 @@ test('la portada conserva el bloqueo aunque el payload traiga datos privados',()
 
 import { createSportWindow } from './sports-window.js';
 
-test('el destacado de NBA y tenis usa la cuota del modelo (1 ÷ prob.) de 1,40 en adelante, sin tope, y la mayor probabilidad', () => {
+test('el destacado sin cuota de casa usa la del modelo (1 ÷ prob.): la mayor probabilidad con cuota >= 1,20 y prob. >= 55 %', () => {
   const m = (id, probability) => ({ id, probability });
-  assert.equal(featuredModelMarket([m('a', .95), m('b', .70), m('c', .60), m('d', .30)]).id, 'b');
-  assert.equal(featuredModelMarket([m('lo', 1 / 1.4), m('hi', 1 / 1.8)]).id, 'lo');          // 1,40 incluido; gana la mayor probabilidad
-  assert.equal(featuredModelMarket([m('x', .75), m('y', .5)]).id, 'y');                         // 1,33 queda fuera; 2,00 ya cuenta (sin tope)
-  assert.equal(featuredModelMarket([m('x', .75), m('y', .9)]), null);                           // todas por debajo de 1,40
-  assert.equal(featuredModelMarket([m('largo', .05)]).id, 'largo');                             // cuota 20: sin tope
+  assert.equal(featuredModelMarket([m('a', .95), m('b', .80), m('c', .60), m('d', .30)]).id, 'b');   // .95 paga 1,05; .30 no llega al 55 %
+  assert.equal(featuredModelMarket([m('lo', 1 / 1.2), m('hi', .55)]).id, 'lo');                       // 1,20 y 55 % incluidos; todas puntúan 1: manda la prob.
+  assert.equal(featuredModelMarket([m('x', .5), m('y', .54)]), null);                                  // ninguna llega al 55 %
+  assert.equal(featuredModelMarket([m('x', .85), m('y', .9)]), null);                                  // todas pagan menos de 1,20
+  assert.equal(featuredModelMarket([m('largo', .05)]), null);                                          // cuota 20, pero 5 %: no es probable
   assert.equal(featuredModelMarket([{ id: 'z', probability: 'alta' }, null]), null);
   assert.equal(featuredModelMarket(undefined), null);
+});
+
+test('valor esperado: cuota 1,80 con 70 % gana a cuota 1,20 con 75 %; el empate lo decide la mayor probabilidad', () => {
+  const rows = [{ id: 'seguro', p: .75, c: 1.2 }, { id: 'valor', p: .70, c: 1.8 }];
+  for (const list of [rows, [...rows].reverse()]) assert.equal(bestByValue(list, r => r.p, r => r.c).id, 'valor');
+  const tie = [{ id: 'a', p: .6, c: 1.5 }, { id: 'b', p: .75, c: 1.2 }];                              // ambos puntúan 0,90
+  for (const list of [tie, [...tie].reverse()]) assert.equal(bestByValue(list, r => r.p, r => r.c).id, 'b');
+  assert.equal(bestByValue([{ p: .5, c: 3 }, { p: .9, c: 1.1 }], r => r.p, r => r.c), null);
+  assert.equal(bestByValue([{ p: .6, c: 1.1999 }, { p: .5499, c: 3 }], r => r.p, r => r.c), null);
+  assert.equal(bestByValue([{ p: .55, c: 1.2 }], r => r.p, r => r.c).p, .55);
+});
+
+test('el destacado de tenis y NBA lo manda el servidor: el cliente solo localiza ese mercado', async () => {
+  const m = (id, probability, extra = {}) => ({ id, probability, ...extra });
+  const markets = [m('a', .80), m('b', .60), m('c', .70)];
+  const tenis = { sport: 'tenis', markets };
+  assert.equal(featuredSportMarket({ ...tenis, destacado: { id: 'b', score_destacado: 1 } }).id, 'b');   // el del servidor manda aunque 'a' sea más probable
+  assert.equal(featuredSportMarket({ ...tenis, destacado: null }), null);                                   // el servidor dice que no hay
+  assert.equal(featuredSportMarket({ ...tenis, destacado: { id: 'no-existe' } }), null);
+  assert.equal(featuredSportMarket({ ...tenis, markets: [m('a', .8, { revised: true }), m('c', .7)], destacado: { id: 'a' } }), null);   // revisión: no se sustituye
+  assert.equal(featuredSportMarket(tenis).id, 'a');                                                         // sin campo: misma regla en el cliente
+  const data = { partido_id: 99, markets: [fullMarket({ id: 'p1', probability: .65 }), fullMarket({ id: 'p2', probability: .6 })], projections: [] };
+  const load = extra => loadNbaMarkets(fullEvent, async () => ({ ok: true, json: async () => ({ ...data, ...extra }) }));
+  const con = await load({ destacado: { id: 'p2', score_destacado: 1 } });
+  assert.equal(con.destacado, 'p2');
+  assert.equal(featuredSportMarket(withNbaMarkets(fullEvent, con)).id, 'p2');
+  assert.equal(featuredSportMarket(withNbaMarkets(fullEvent, await load({ destacado: null }))), null);
+  const sin = await load({});
+  assert.equal(sin.destacado, undefined);
+  assert.equal(featuredSportMarket(withNbaMarkets(fullEvent, sin)).id, 'p1');
+  assert.equal('destacado' in withNbaMarkets(fullEvent, { status: 'loading' }), false);
 });
 
 test('la ventana de tenis y NBA renderiza pronóstico y estadísticas sin cuotas inventadas', () => {

@@ -445,7 +445,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Nessun pronostico di questa partita rientra in evidenza (quota da 1,20 a 1,60 e probabilità dal 74% all’85%). Quelli aperti sono nell’elenco qui sotto.';
+      'Nessun pronostico di questa partita rientra in evidenza (quota da 1,20 in su e probabilità dal 55% in su). Quelli aperti sono nell’elenco qui sotto.';
 
   @override
   String get detailNoH2h =>
