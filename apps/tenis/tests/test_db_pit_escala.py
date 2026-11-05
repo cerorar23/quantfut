@@ -18,12 +18,12 @@ from medir_pit import crear  # noqa: E402
 REFERENCIA_RESULTADO = """
     SELECT DISTINCT ON (x.partido_id) x.resultado_id
     FROM resultado x JOIN fuente f ON f.fuente = x.fuente JOIN recibo r ON r.recibo_id = x.recibo_id
-    WHERE x.recibido_en <= %(c)s AND retro_visible(%(c)s, r.retro, lunes_partido_a_las(x.partido_id, %(c)s))
+    WHERE visible_a_las(%(c)s, x.recibido_en, r.retro, lunes_partido_a_las(x.partido_id, %(c)s), x.visible_desde)
     ORDER BY x.partido_id, f.prioridad_resultado, x.recibido_en DESC, x.resultado_id DESC
 """
 REFERENCIA_PARTIDO = """
     SELECT p.partido_id FROM partido p JOIN recibo r ON r.recibo_id = p.recibo_id
-    WHERE p.recibido_en <= %(c)s AND retro_visible(%(c)s, r.retro, lunes_partido_a_las(p.partido_id, %(c)s))
+    WHERE visible_a_las(%(c)s, p.recibido_en, r.retro, lunes_partido_a_las(p.partido_id, %(c)s), p.visible_desde)
 """
 CORTES = ["2026-10-16T00:00:00Z", "2026-10-17T02:00:00Z", "2026-10-19T00:00:00Z", "2026-10-20T00:00:00Z",
           "2026-11-05T00:00:00Z", "2027-01-01T00:00:00Z"]
@@ -78,8 +78,9 @@ def test_resultado_y_partido_coinciden_con_la_formula_por_fila(mundo, corte):
 def test_los_cortes_distinguen_casos(mundo):
     """La prueba de equivalencia no sería informativa si todos los cortes dieran lo mismo."""
     tamanos = [mundo.execute("SELECT count(*) FROM resultado_a_las(%s)", (c,)).fetchone()[0] for c in CORTES]
-    assert len(set(tamanos)) >= 4, tamanos
-    assert tamanos[0] == 0
+    assert len(set(tamanos)) >= 3, tamanos
+    # Un dato retro es visible por la regla de su semana aunque el corte sea anterior a su descarga (2026-10-17).
+    assert tamanos[0] > 0
 
 
 def test_escala_sin_crecer_mas_que_lineal(dsn):

@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS tenis.partido (
     fuente      TEXT NOT NULL REFERENCES tenis.fuente (fuente),
     recibo_id   BIGINT NOT NULL REFERENCES tenis.recibo (recibo_id),
     recibido_en TIMESTAMPTZ NOT NULL,
+    -- Solo datos retro (recibo.retro): instante desde el que el dato era conocible. NULL = regla por semana (0004).
+    visible_desde TIMESTAMPTZ,
     CONSTRAINT partido_jugadores_distintos CHECK (jugador_1 <> jugador_2),
     CONSTRAINT partido_orden_canonico CHECK (jugador_1 < jugador_2),
     UNIQUE (edicion_id, ronda, jugador_1, jugador_2)
@@ -60,6 +62,7 @@ CREATE TABLE IF NOT EXISTS tenis.programa (
     fuente                TEXT NOT NULL REFERENCES tenis.fuente (fuente),
     recibo_id             BIGINT NOT NULL REFERENCES tenis.recibo (recibo_id),
     recibido_en           TIMESTAMPTZ NOT NULL,
+    visible_desde         TIMESTAMPTZ,
     CHECK (inicio_programado_utc IS NOT NULL OR tipo_hora IN ('a_continuacion', 'desconocida')),
     CHECK (tipo_hora NOT IN ('fija', 'no_antes_de') OR inicio_programado_utc IS NOT NULL),
     UNIQUE (partido_id, fuente, recibido_en)
@@ -79,6 +82,7 @@ CREATE TABLE IF NOT EXISTS tenis.resultado (
     fuente         TEXT NOT NULL REFERENCES tenis.fuente (fuente),
     recibo_id      BIGINT NOT NULL REFERENCES tenis.recibo (recibo_id),
     recibido_en    TIMESTAMPTZ NOT NULL,
+    visible_desde  TIMESTAMPTZ,
     CHECK (retira IS NULL OR estado = 'retirada'),
     CHECK (estado <> 'completado' OR (ganador IS NOT NULL AND sets IS NOT NULL
                                       AND sets_completos IS NOT NULL AND sets_completos >= 2)),
@@ -105,6 +109,7 @@ CREATE TABLE IF NOT EXISTS tenis.estadistica (
     fuente           TEXT NOT NULL REFERENCES tenis.fuente (fuente),
     recibo_id        BIGINT NOT NULL REFERENCES tenis.recibo (recibo_id),
     recibido_en      TIMESTAMPTZ NOT NULL,
+    visible_desde    TIMESTAMPTZ,
     CHECK (primeros_dentro IS NULL OR puntos_saque IS NULL OR primeros_dentro <= puntos_saque),
     CHECK (primeros_ganados IS NULL OR primeros_dentro IS NULL OR primeros_ganados <= primeros_dentro),
     CHECK (bp_salvados IS NULL OR bp_afrontados IS NULL OR bp_salvados <= bp_afrontados),
@@ -123,6 +128,7 @@ CREATE TABLE IF NOT EXISTS tenis.juego_pbp (
     fuente       TEXT NOT NULL REFERENCES tenis.fuente (fuente),
     recibo_id    BIGINT NOT NULL REFERENCES tenis.recibo (recibo_id),
     recibido_en  TIMESTAMPTZ NOT NULL,
+    visible_desde TIMESTAMPTZ,
     UNIQUE (partido_id, fuente, recibido_en, set_n, juego_n)
 );
 
@@ -138,6 +144,7 @@ CREATE TABLE IF NOT EXISTS tenis.ranking (
     fuente             TEXT NOT NULL REFERENCES tenis.fuente (fuente),
     recibo_id          BIGINT NOT NULL REFERENCES tenis.recibo (recibo_id),
     recibido_en        TIMESTAMPTZ NOT NULL,
+    visible_desde      TIMESTAMPTZ,
     UNIQUE (circuito, fecha_publicacion, jugador_id, fuente, recibido_en)
 );
 

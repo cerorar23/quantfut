@@ -104,6 +104,8 @@ CREATE TABLE IF NOT EXISTS tenis.edicion (
     fuente       TEXT NOT NULL REFERENCES tenis.fuente (fuente),
     recibo_id    BIGINT NOT NULL,
     recibido_en  TIMESTAMPTZ NOT NULL,
+    -- Solo edición retro: desde cuándo se conocían sus metadatos (superficie, sede, formato). NULL = regla por semana.
+    visible_desde TIMESTAMPTZ,
     UNIQUE (torneo_id, temporada, fuente, recibido_en)
 );
 
