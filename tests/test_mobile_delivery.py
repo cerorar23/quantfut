@@ -162,6 +162,7 @@ def test_markets_history_filters_and_rounds(monkeypatch):
     def fake_query(sql, params=()):
         captured['params'] = params
         return [{'match_id': 'm1', 'market': 'totals', 'selection': 'over', 'line': 1.5, 'prob': 0.8123456,
+                 'ref_price': 1.3, 'ref_book': 'bovada',
                  'local': 'A', 'visitante': 'B', 'outcome': 'win', 'home_goals': 2, 'away_goals': 1}]
 
     monkeypatch.setattr(mobile, 'query', fake_query)
@@ -170,6 +171,7 @@ def test_markets_history_filters_and_rounds(monkeypatch):
     assert captured['params'][2] == ['totals', 'spreads'] and captured['params'][-1] == 50
     item = out['items'][0]
     assert item['prob'] == 0.81 and item['texto']
+    assert item['ref_book'] == 'Bovada'   # la casa de la cuota viaja con el pronóstico, ya con nombre para mostrar
     monkeypatch.setattr(mobile, 'features', lambda: {'alta_probabilidad': {'enabled': False}})
     assert mobile.markets_history(Response(), market=None, limit=10) == {'items': []}
 
@@ -344,3 +346,28 @@ def test_ficha_con_equipo_desconocido_usa_la_tarjeta_de_mercado(delivery, monkey
     out = mobile.detail('m1', Response(), plus=False, account=None)
     assert out['ficha']['probabilities']['home'] == pytest.approx(.3)
     assert out['ficha']['modelo'] == {'fuente': 'mercado'}
+
+
+def test_detail_de_un_dia_ya_cerrado_va_abierto_sin_vip(delivery, monkeypatch):
+    """Ayer en adelante es historial (titular, 2026-11-05): el pronóstico no se bloquea; hoy sí."""
+    visto = {}
+    ayer = datetime.now(timezone.utc) - timedelta(days=2)
+    manana = datetime.now(timezone.utc) + timedelta(days=1)
+    partido = {}
+    monkeypatch.setattr(mobile.fichas, '_ficha', lambda mid: {
+        'partido': partido, 'local': {'id': 1, 'nombre': 'A'}, 'visitante': {'id': 2, 'nombre': 'B'},
+        'cara_a_cara': None, 'alineaciones': None, 'bajas': None, 'tabla': None})
+    monkeypatch.setattr(mobile.rewards, 'entitlements', lambda account: set())
+    monkeypatch.setattr(mobile, 'ladder', lambda plus, *a, **k: visto.update(ladder=plus) or {'actuales': []})
+    monkeypatch.setattr(mobile, 'live_score', lambda mid: None)
+    monkeypatch.setattr(mobile, 'query_one', lambda *a, **k: None)
+    monkeypatch.setattr(mobile, 'mercados_partido', lambda mid, ficha, picks, plus, web=False: visto.update(mercados=plus))
+    monkeypatch.setattr(mobile, 'high_probability', lambda plus, *a, **k: visto.update(alta=plus) or
+                        {'proximos': [], 'vip': [{'match_id': 'm1', 'pick_key': 'k1', 'market': 'corners', 'locked': True}]})
+    partido['kickoff_utc'] = ayer
+    out = mobile.detail('m1', Response(), plus=False, account=None)
+    assert visto == {'alta': True, 'ladder': True, 'mercados': True}, 'con el día cerrado se pide todo con acceso completo'
+    assert out['locked'] is False
+    partido['kickoff_utc'] = manana
+    out = mobile.detail('m1', Response(), plus=False, account=None)
+    assert visto == {'alta': False, 'ladder': False, 'mercados': False} and out['locked'] is True

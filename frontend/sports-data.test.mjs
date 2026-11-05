@@ -258,3 +258,53 @@ test('el historial solo junta destacados (fútbol, NBA y tenis) y Alta probabili
   for (const fuera of ['vieja', 'viejo', 'winner', 'revisado', 'sin-rango']) assert.ok(!html.includes(fuera), fuera);
   for (const dentro of ['alta', 'dest', 'T1 vs T2', 'C vs D']) assert.ok(html.includes(dentro), dentro);
 });
+
+test('ordenLiquidado: acertados por cuota de mayor a menor, luego lo sin resultado y al final los fallados', async () => {
+  const { ordenLiquidado, hayLiquidado } = await import('./sports-data.js');
+  const o = { resultado: m => m.r, cuota: m => m.c, prob: m => m.p };
+  const lista = [{ id: 'f1', r: 'loss', c: 1.9, p: .5 }, { id: 'w1', r: 'win', c: 1.2, p: .8 }, { id: 'n', r: null, c: 3, p: .3 },
+    { id: 'w2', r: 'win', c: 1.8, p: .6 }, { id: 'f2', r: 'loss', c: 1.3, p: .7 }, { id: 'push', r: 'push', c: 2, p: .4 }, { id: 'w3', r: 'win', c: null, p: .9 }];
+  assert.deepEqual(ordenLiquidado(lista, o).map(m => m.id), ['w2', 'w1', 'w3', 'n', 'push', 'f1', 'f2']);
+  const ids = ordenLiquidado(lista, o).map(m => m.id);
+  assert.deepEqual(ids.slice(0, 3), ['w2', 'w1', 'w3'], 'acertados: cuota 1,8 > 1,2 > sin cuota');
+  assert.deepEqual(ids.slice(-2), ['f1', 'f2'], 'fallados al final, también de mayor a menor cuota (1,9 > 1,3)');
+  assert.deepEqual(ids.slice(3, 5).sort(), ['n', 'push'], 'sin resultado entre unos y otros');
+  const sinJugar = [{ id: 'a', r: null, c: 1.5, p: .6 }, { id: 'b', r: null, c: 2, p: .9 }];
+  assert.equal(ordenLiquidado(sinJugar, o), sinJugar, 'sin nada liquidado se deja el orden recibido');
+  assert.equal(hayLiquidado(sinJugar, o.resultado), false);
+  assert.equal(hayLiquidado(lista, o.resultado), true);
+  assert.equal(lista[0].id, 'f1', 'no muta la lista original');
+});
+
+test('loadTennisQuotes: solo «ok»/«partial» con eventos cuentan; unavailable y errores no inventan nada', async () => {
+  const { loadTennisQuotes } = await import('./sports-data.js');
+  const resp = (body, ok = true) => async url => { assert.equal(url, '/web/deportes/tenis/cuotas'); return { ok, json: async () => body }; };
+  const q = { '1': { winner: { price: 1.8, book: 'pinnacle' } } };
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'partial', events: q })), { status: 'ready', events: q });
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'ok', events: q })), { status: 'ready', events: q });
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'unavailable', events: {} })), { status: 'unavailable', events: {} });
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'ok', events: [] })), { status: 'unavailable', events: {} });
+  assert.deepEqual(await loadTennisQuotes(resp({}, false)), { status: 'error', events: {} });
+  assert.deepEqual(await loadTennisQuotes(async () => { throw new Error('red'); }), { status: 'error', events: {} });
+});
+
+test('applyTennisQuotes: precio y casa de referencia en el mercado, sin pisar ni inventar', async () => {
+  const { applyTennisQuotes, marketQuote } = await import('./sports-data.js');
+  const eventos = () => [{ id: '12175299', sport: 'tenis', markets: [
+    { id: 'winner', probability: .55, price: null, reference: 'Probabilidad del motor' },
+    { id: 'games_total-2', probability: .8, price: null }, { id: 'tiebreak-1', probability: .4, price: null },
+    { id: 'sets-3', probability: .6, price: 1.5, book: 'bovada' }, { id: 'sin-casa', probability: .5, price: null }, { id: 'baja', probability: .5, price: null }] }];
+  const quotes = { '12175299': { winner: { price: 1.83, book: 'betfair_ex', as_of: '2026-10-29T23:07:53+00:00' },
+    'games_total-2': { price: 1.36, book: 'draftkings' }, 'tiebreak-1': { price: 'x', book: 'pinnacle' }, 'sets-3': { price: 9, book: 'pinnacle' },
+    'sin-casa': { price: 2, book: '  ' }, baja: { price: 1, book: 'pinnacle' }, fantasma: { price: 3, book: 'pinnacle' } } };
+  const [e] = applyTennisQuotes(eventos(), quotes);
+  const m = id => e.markets.find(x => x.id === id);
+  assert.equal(m('winner').price, 1.83); assert.equal(m('winner').book, 'Betfair Ex'); assert.equal(m('winner').price_book, 'Betfair Ex');
+  assert.equal(m('winner').reference, 'Betfair Ex · referencia previa al sello'); assert.equal(m('winner').quote_as_of, '2026-10-29T23:07:53+00:00');
+  assert.equal(m('games_total-2').book, 'DraftKings', 'usa los nombres de casa conocidos');
+  assert.deepEqual(marketQuote(m('winner')), { price: 1.83, source: 'Betfair Ex', model: false }, 'la ventana la lee como cuota de casa');
+  for (const id of ['tiebreak-1', 'sin-casa', 'baja']) assert.equal(m(id).price, null, `${id}: precio inválido o sin casa, se queda sin cuota`);
+  assert.equal(m('sets-3').price, 1.5, 'un precio que ya traía el feed no se pisa'); assert.equal(m('sets-3').book, 'bovada');
+  assert.equal(e.markets.length, 6, 'no crea mercados que no existan');
+  assert.doesNotThrow(() => applyTennisQuotes(undefined, quotes) && applyTennisQuotes([{ id: 'z' }], null) && applyTennisQuotes([{ id: '12175299', markets: [] }], quotes));
+});

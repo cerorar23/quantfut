@@ -474,7 +474,7 @@ def markets_history(response: Response,
         return query(f'''SELECT a.match_id, m.league_id, m.kickoff_utc,
         COALESCE(th.display_name, th.canonical_name) AS local,
         COALESCE(ta.display_name, ta.canonical_name) AS visitante,
-        a.market, a.selection, a.line, a.prob, a.ref_price, r.outcome, r.home_goals, r.away_goals,
+        a.market, a.selection, a.line, a.prob, a.ref_price, a.ref_book, r.outcome, r.home_goals, r.away_goals,
         m.home_corners, m.away_corners
         FROM {table} a JOIN matches m ON m.match_id=a.match_id
         JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
@@ -497,6 +497,7 @@ def markets_history(response: Response,
     for row in rows:
         row['texto'] = ap.texto(row['market'], row['selection'], row['line'], row['local'], row['visitante'])
         row['prob'] = round(float(row['prob']), 2)
+        row['ref_book'] = partido_mercados.nombre_casa(row.get('ref_book'))
     return {'items': rows}
 
 
@@ -543,6 +544,8 @@ def detail(match_id: str, response: Response, web: bool = Query(False), plus: bo
     if ficha is None:
         raise HTTPException(404, 'Partido no encontrado')
     ficha['partido']['vivo'] = live_score(match_id)
+    # Pasado el día del partido (hora de México) todo su pronóstico va abierto, con o sin VIP (titular, 2026-11-05).
+    plus = plus or ventana.dia_cerrado(ficha['partido'].get('kickoff_utc'))
     unlocks = rewards.entitlements(account)
     high = high_probability(plus,unlocks,started=True)
     steps = ladder(plus,unlocks)

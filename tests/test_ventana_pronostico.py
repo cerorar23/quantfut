@@ -96,3 +96,15 @@ def test_los_generadores_de_pronosticos_respetan_la_misma_ventana(monkeypatch, m
     assert params[1] == ventana.fin_ventana(ahora, params[1] - ahora) or \
         params[1] <= ventana.fin_ventana(ahora)
     assert params[1] < utc(2026, 10, 14, 10)
+
+
+def test_el_dia_del_partido_se_cierra_a_medianoche_de_mexico():
+    ahora = utc(2026, 11, 5, 7)                       # 01:00 del 5-nov en México
+    assert ventana.dia_cerrado(utc(2026, 11, 5, 5), ahora) is True     # 23:00 MX del 4-nov: ayer
+    assert ventana.dia_cerrado(utc(2026, 11, 5, 6, 30), ahora) is False  # 00:30 MX del 5-nov: hoy
+    assert ventana.dia_cerrado(utc(2026, 11, 6, 20), ahora) is False   # mañana
+    # El mismo instante visto desde UTC sería «ayer» para 23:00 UTC del 4-nov: aquí manda México.
+    assert ventana.dia_cerrado(utc(2026, 11, 5, 5, 59), utc(2026, 11, 5, 5, 59, 30)) is False
+    assert ventana.dia_cerrado(datetime(2026, 11, 1, 12), ahora) is True   # sin zona: se toma como UTC
+    for sin_hora in (None, '2026-11-01T12:00:00Z', 5):
+        assert ventana.dia_cerrado(sin_hora, ahora) is False

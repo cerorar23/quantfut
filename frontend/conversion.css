@@ -528,6 +528,8 @@
 .cv-hist-odds { font: 700 20px var(--font-display); font-variant-numeric: tabular-nums; color: var(--yellow); }
 .cv-hist-odds.model { color: var(--muted); font-size: 17px; }
 .cv-hist-odds.none { color: var(--faint); }
+.cv-hist-cuota .cv-hist-book { max-width: 180px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 11px var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--cyan); }
+.cv-hist-odds.model + .cv-hist-book, .cv-hist-odds.none + .cv-hist-book { color: var(--muted); }
 .cv-hist-score strong { font: 700 16px var(--font-mono); font-variant-numeric: tabular-nums; }
 .cv-hist-more { display: block; margin: 8px auto 4px; min-height: 48px; }
 
