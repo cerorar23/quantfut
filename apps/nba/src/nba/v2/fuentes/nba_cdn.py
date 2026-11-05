@@ -17,6 +17,10 @@ FUENTE = "nba_oficial"
 ET = ZoneInfo("America/New_York")
 BASE = "https://cdn.nba.com/static/json/liveData/"
 URL_MARCADOR = BASE + "scoreboard/todaysScoreboard_00.json"
+# El marcador del día puede llegar vacío y con la fecha anterior si la NBA aún no ha cambiado de día (5-nov-2026: a las 10:00 ET
+# trajo `games: []` y 14 partidos se quedaron sin id). Se reintenta cada hora, con tope, mientras falten ids de ayer u hoy.
+MAX_MARCADORES = 4
+ESPERA_MARCADOR_MIN = 55
 
 
 def url_box(game_id: str) -> str:
@@ -205,16 +209,21 @@ def capturar(db, obtener: Callable[[str], tuple], raiz: Path, ahora: datetime, t
         return dict(fuente=FUENTE, objetivo=url, fase="final", solicitado_en=ahora, ok=True, recibido_en=ahora,
                     http_status=200, sha256=huella, bytes_=len(cuerpo), ruta=ruta, creditos=creditos), cuerpo.decode("utf-8")
 
-    # 1) marcador del día: una vez por día ET, a partir de las 10:00 ET, si hay partidos de hoy sin id de la NBA
+    # 1) marcador del día: a partir de las 10:00 ET, mientras a algún partido de ayer u hoy le falte el id de la NBA; se reintenta
+    # tras ESPERA_MARCADOR_MIN (la NBA a veces publica el marcador vacío y con la fecha anterior) y a lo sumo MAX_MARCADORES veces
+    # por ventana de 20 h
     ahora_et = ahora.astimezone(ET)
-    ya_hoy = db.execute("SELECT EXISTS (SELECT 1 FROM nba.captura WHERE fuente = %s AND objetivo = %s AND ok "
-                        "AND recibido_en > %s)", (FUENTE, URL_MARCADOR, ahora - timedelta(hours=20))).fetchone()[0]
+    previos = db.execute("SELECT count(*), max(recibido_en) FROM nba.captura WHERE fuente = %s AND objetivo = %s AND ok "
+                         "AND recibido_en > %s", (FUENTE, URL_MARCADOR, ahora - timedelta(hours=20))).fetchone()
     sin_id = db.execute(
-        "SELECT count(*) FROM nba.entidad p WHERE p.tipo = 'partido' AND p.canonica_id = p.entidad_id AND p.fecha_juego_et = %s "
+        "SELECT count(*) FROM nba.entidad p WHERE p.tipo = 'partido' AND p.canonica_id = p.entidad_id "
+        "AND p.fecha_juego_et IN (%s, %s) "
         "AND NOT EXISTS (SELECT 1 FROM nba.entidad a WHERE a.fuente = %s AND a.tipo = 'partido' "
         "AND a.id_en_fuente ~ '^[0-9]{10}$' AND a.fecha_juego_et = p.fecha_juego_et "
-        "AND a.atributos->>'local' = p.atributos->>'local' AND a.atributos->>'visitante' = p.atributos->>'visitante')", (ahora_et.date(), FUENTE)).fetchone()[0]
-    if ahora_et.hour >= 10 and not ya_hoy and sin_id > 0 and _fallos_recientes(db, URL_MARCADOR, ahora) < max_fallos:
+        "AND a.atributos->>'local' = p.atributos->>'local' AND a.atributos->>'visitante' = p.atributos->>'visitante')",
+        (ahora_et.date() - timedelta(days=1), ahora_et.date(), FUENTE)).fetchone()[0]
+    toca = previos[0] == 0 or (previos[0] < MAX_MARCADORES and ahora - previos[1] >= timedelta(minutes=ESPERA_MARCADOR_MIN))
+    if ahora_et.hour >= 10 and sin_id > 0 and toca and _fallos_recientes(db, URL_MARCADOR, ahora) < max_fallos:
         r = pedir(URL_MARCADOR)
         if r is not None:
             ficha, texto = r
