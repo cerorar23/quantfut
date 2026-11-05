@@ -4,7 +4,8 @@
 Entorno: NBA_DB_DSN (obligatorio), NBA_CAPTURA_DIR (originales y estado, por omisión /datos),
 NBA_RUN57_DIR (carpeta captures de run57, solo para espn),
 NBA_PROPLINE_DIR (archivo compartido de PropLine) con NBA_PROPLINE_LOTES y NBA_PROPLINE_DESDE, ZENROWS_API_KEY y NBA_ZENROWS_TOPE_DIARIO (respaldo de pago
-de Rotowire), SCRAPFLY_API_KEY y NBA_SCRAPFLY_TOPE_DIARIO (final del partido en cdn.nba.com, por omisión 40 créditos al día).
+de Rotowire), SCRAPFLY_API_KEY y NBA_SCRAPFLY_TOPE_DIARIO (final del partido en cdn.nba.com, por omisión 40 créditos al día),
+NBA_SOFASCORE_DIR (árbol `data/v3` del scraper de SofaScore, solo lectura) y NBA_SOFASCORE_DIAS (ventana de partidos recientes, 4).
 """
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -14,7 +15,7 @@ from pathlib import Path
 import sys
 
 from . import migrar
-from .fuentes import espn, historico_cuotas, historico_partidos, historico_rotaciones, nba_cdn, parte_oficial, propline, rotowire
+from .fuentes import espn, historico_cuotas, historico_partidos, historico_rotaciones, nba_cdn, parte_oficial, propline, rotowire, sofascore_arbol
 
 
 LOTE_ESPN = 200
@@ -97,6 +98,11 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
                 resumen["partes"] = historico_partidos.cargar_partes(db, partes)
         elif fuente == "parte":
             resumen = parte_oficial.capturar(db, obtener or parte_oficial.obtener_http, raiz / "originales", ahora)
+        elif fuente == "sofascore":
+            if "NBA_SOFASCORE_DIR" not in entorno:
+                raise FaltaVariable("NBA_SOFASCORE_DIR")
+            resumen = sofascore_arbol.cargar_recientes(db, Path(entorno["NBA_SOFASCORE_DIR"]), raiz / "sofascore", ahora,
+                                                       dias=int(entorno.get("NBA_SOFASCORE_DIAS", "4")))
         elif fuente == "nba":
             if obtener is None:
                 clave = entorno.get("SCRAPFLY_API_KEY")
@@ -114,8 +120,8 @@ def ejecutar(fuente: str, entorno: Mapping[str, str], ahora: datetime, obtener=N
 def principal(argv: list[str] | None = None, entorno: Mapping[str, str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     entorno = os.environ if entorno is None else entorno
-    if len(argv) != 1 or argv[0] not in ("rotowire", "espn", "espn_directo", "parte", "nba", "propline", "historico"):
-        print("uso: python -m nba.v2.captura rotowire|espn|espn_directo|parte|nba|propline|historico", file=sys.stderr)
+    if len(argv) != 1 or argv[0] not in ("rotowire", "espn", "espn_directo", "parte", "nba", "sofascore", "propline", "historico"):
+        print("uso: python -m nba.v2.captura rotowire|espn|espn_directo|parte|nba|sofascore|propline|historico", file=sys.stderr)
         return 2
     try:
         resumen = ejecutar(argv[0], entorno, datetime.now(UTC))

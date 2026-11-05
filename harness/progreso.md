@@ -8,6 +8,18 @@ Por qué importa saberlo: con cuota del modelo (1 ÷ prob) el score vale 1 en to
 
 Web adaptada en la misma rama: `featuredSportMarket` (NBA y tenis) ya no calcula, solo localiza el mercado que manda el servidor en `destacado` (si es una revisión posterior al inicio, queda sin destacado en vez de sustituirse); `loadNbaMarkets`/`withNbaMarkets` conservan su id; el cliente aplica la misma regla (`bestByValue`) solo si el servidor no manda el campo (fuente antigua o mercados aún sin cargar). El «destacado del día» (`ergonomic-views`) usa también `bestByValue`. Textos «cuota de 1,40…» sustituidos por la regla nueva y versiones `?v=destacado-valor-20261105` para saltar la caché de Cloudflare. El historial de NBA/tenis se calcula en vivo con el destacado vigente, así que la regla nueva también cambia lo que enseña de partidos pasados (ya ocurría con el cambio del 2-nov). App Flutter adaptada (misma rama, base `origin/main`, app 1.1.0+7): `featured_rule.dart` (`bestByValue`) sustituye la banda 74–85 % / cuota 1,20–1,60 de `featuredPick` (detalle del partido), el «Destacado del día» de fútbol (`live_home`, ahora solo entre pronósticos abiertos y sin tarjeta si nadie cumple la regla) y `featuredMarket` de NBA/tenis, que respeta el campo `destacado` del servidor (`SportEvent.serverFeatured/featuredId`) y, sin él, aplica la regla con la cuota del modelo. Texto `detailNoFeatured` actualizado en los 6 idiomas. Ojo con las ramas: la regla «cuota ≥ 1,40, sin tope de probabilidad» (commit f8c9ffd1, app 1.0.0+3, 25-oct) vive solo en `nba/v13-disponibilidad` y NUNCA llegó a `main`, que conserva la banda 74–85 %; esta rama parte de `main`, así que sustituye la banda y deja sin efecto esa rama en este punto. No se subió el código de versión ni se compiló un AAB (hacerlo al publicar). Pendiente: los destacados ya congelados en `web_destacado` (hashchain) no cambian; sin desplegar (ver DEPLOYS.md) ni probado en navegador contra la API real. Base: `origin/main` 0097b767, rama `futbol/destacado-valor-esperado`.
 
+## 5-nov-2026 · Pronósticos de jugador NBA en «Pendiente»: faltaba el id de la NBA, no los créditos
+
+Los 14 partidos del 4-nov liquidaban los mercados de equipo y ninguno de jugador. La razón no era de créditos ni de la
+web: el marcador de cdn de las 10:00 ET trajo `games: []` con la fecha anterior, el colector lo dio por hecho durante
+20 h y solo buscaba ids de hoy, así que sin id de la NBA no sabía qué box score pedir. Decisión: reintentar el marcador
+cada 55 min (tope 4 por ventana) mientras falten ids de ayer u hoy, en vez de fiarse de una sola lectura. El mismo día
+se añadió SofaScore como respaldo automático de los box scores de jugador (fuente `sofascore` del colector, solo
+partidos recientes, solo añade filas, la caja oficial manda), pero depende de que el scraper del VPS pase el bloqueo
+de SofaScore, que hoy no lo hace con la NBA (403 en la lista de temporadas): el cdn sigue siendo la vía principal.
+Pendiente de decisión: 66 mercados de 5 jugadores ausentes del box score (Jalen Johnson, Josh Hart, Jayson Tatum,
+Trey Murphy, Jaylin Williams) siguen sin resultado; `resolver()` deja pendiente lo que no ve y no lo marca nulo.
+
 ## 4-nov-2026 · Publicadas las correcciones NBA; acreditación prospectiva condicionada a datos reales
 
 Orden expresa de publicar. PR #255 integrado con arnés remoto verde (NBA con PostgreSQL, fútbol/API, frontend y tenis), main `a491f225`. API concurrente de mercados preservada desde `61ff260`; sus probabilidades/últimas cuotas por lado se integraron con los contratos corregidos. CI detectó fixtures con fechas UTC en lugar de ET al cruzar medianoche y una ruta temporal sin permisos; se corrigieron las pruebas sin debilitar la lógica de producción.
