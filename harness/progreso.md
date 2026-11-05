@@ -7707,3 +7707,20 @@ Decisión del titular: el bloque «Pronóstico» de cada tarjeta de #picks debe 
 ## 4-nov-2026 · NBA: mínimo de 1,20 en Partido y tarjetas de jugador
 Decisión clave: el mínimo de 1,20 se aplica solo a la lista de Partido, no al destacado, que conserva 1,40: el destacado ya tiene su propia regla y filtrarlo con 1,20 cambiaría qué se publica. Los mercados de jugador se agrupan por jugador con su foto oficial (nunca el id interno) y las líneas se pliegan; en 390 px la tabla plana era ilegible. La identidad de la foto sale de `nba.entidad`/`nba_oficial` y, si no es única, queda nula a propósito: una foto equivocada es peor que las iniciales. Desplegado en `nba-api:tarjetas-f11d97c7` y `quantfut-api-nba-tarjetas:f11d97c7`, verificado a 390 px y 851 px. Sigue abierto, ajeno a esta tarea, renovar el artefacto del motor antes del 7-nov.
 
+## 2026-11-05 — #historial: la gráfica grande mide aciertos reales frente a esperados, no unidades
+
+Motivo: la curva de beneficio (1 u por pronóstico, cuota media 1,20) mostraba −6,98 u en 532
+pronósticos con 83 % de acierto frente al 82 % prometido. No es un fallo del modelo: a cuota 1,20 el
+punto de equilibrio es 83,3 % y el margen de la casa se come el resto (mismo resultado que la medición
+del 5-oct: favoritos ≥ 80 % → ROI −2,4 %). El producto promete probabilidad calibrada, y eso es lo que
+ahora mide la gráfica: suma acumulada de (acierto − probabilidad publicada) con franja de azar al 95 %
+(`desvio()` en `frontend/historial-views.js`; vale también para NBA y tenis porque usa la probabilidad,
+no la cuota).
+
+Límite que se mantiene a propósito: el beneficio NO se esconde. Sigue el indicador «Beneficio · 1 u por
+pronóstico» y la frase bajo la gráfica lo dice con su signo («Acertar lo prometido no es ganar dinero…»).
+Un test lo exige (`la gráfica grande mide aciertos frente a esperados y el beneficio sigue a la vista`).
+No cambiar de mercado, ventana o métrica para que el resultado salga positivo: rompe la credibilidad de
+la cadena de hashes y es publicidad engañosa. Cambiar la métrica es válido solo si la pérdida sigue a la
+vista. Base: `main` (rama `web/historial-desvio`); ids de caché subidos a
+`hist-desvio-20261105` en toda la cadena de imports. Sin desplegar ni confirmar visualmente en navegador.

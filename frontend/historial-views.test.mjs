@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ordenar, wilson, rachas, beneficio, calibrar, resumir, porDeporte, porDia, createHistorialViews } from './historial-views.js';
+import { ordenar, wilson, rachas, beneficio, calibrar, desvio, resumir, porDeporte, porDia, createHistorialViews } from './historial-views.js';
 
 const fila = (start, outcome, extra = {}) => ({ sport: 'futbol', home: 'A', away: 'B', start, text: 'Gana A', outcome, price: 1.5, prob: 0.7, score: '1 – 0', ...extra });
 const dia = start => start.slice(0, 10);
@@ -83,7 +83,29 @@ test('el beneficio nunca usa la cuota del modelo de NBA o tenis', () => {
   const soloModelo = muestra.filter(r => r.sport !== 'futbol');
   const html = views().historyView(soloModelo, false);
   assert.ok(!html.includes('Beneficio · 1 u por pronóstico'));
-  assert.ok(html.includes('Aún no hay suficientes pronósticos con cuota registrada'));
+  assert.ok(!html.includes('el beneficio en fútbol con 1 u'), 'sin cuota de casa no hay frase de beneficio');
+});
+
+test('desvio: acumula (real − prometido), la franja crece con la varianza y el signo es honesto', () => {
+  const rows = [fila('2026-10-26T01:00:00Z', 'win', { prob: 0.8 }), fila('2026-10-26T02:00:00Z', 'loss', { prob: 0.8 }), fila('2026-10-26T03:00:00Z', 'win', { prob: null })];
+  const d = desvio(rows);
+  assert.equal(d.n, 2);
+  assert.deepEqual(d.curva.map(v => Math.round(v * 100) / 100), [0, 0.2, -0.6]);
+  assert.ok(Math.abs(d.margen - 2 * Math.sqrt(2 * 0.8 * 0.2)) < 1e-9);
+  assert.ok(d.banda[2] > d.banda[1]);
+  assert.equal(d.estado, 'dentro');
+  const mal = desvio(Array.from({ length: 100 }, (_, i) => fila(`2026-10-${10 + Math.floor(i / 24)}T${String(i % 24).padStart(2, '0')}:00:00Z`, i < 60 ? 'win' : 'loss', { prob: 0.8 })));
+  assert.equal(mal.estado, 'debajo', 'si se acierta bastante menos de lo prometido, se dice');
+  assert.equal(desvio([]).n, 0);
+});
+
+test('la gráfica grande mide aciertos frente a esperados y el beneficio sigue a la vista, también en negativo', () => {
+  const html = views().historyView(muestra, false);
+  assert.ok(html.includes('Aciertos reales frente a esperados') && html.includes('cv-hist-band'));
+  assert.ok(!html.includes('Beneficio acumulado en fútbol'));
+  assert.ok(html.includes('Beneficio · 1 u por pronóstico'), 'el indicador de beneficio se mantiene');
+  assert.match(html, /el beneficio en fútbol con 1 u por pronóstico fue −0[.,]72 u/, 'la pérdida se dice junto a la gráfica');
+  assert.ok(html.includes('Acertar lo prometido no es ganar dinero'));
 });
 
 test('filtros por deporte y resultado, y paginación', () => {
@@ -110,7 +132,7 @@ test('los textos de partidos se escapan', () => {
 
 test('el HTML y los módulos están registrados con el mismo identificador de versión', () => {
   const ergo = readFileSync(new URL('./ergonomic-views.js', import.meta.url), 'utf8');
-  assert.match(ergo, /historial-views\.js\?v=hist-limpio-20261028b/);
+  assert.match(ergo, /historial-views\.js\?v=hist-desvio-20261105/);
   const web = readFileSync(new URL('../src/qf/api/web.py', import.meta.url), 'utf8');
   assert.ok(web.includes('/historial-views.js'));
 });

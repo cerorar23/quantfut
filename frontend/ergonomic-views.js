@@ -1,5 +1,5 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
+import { createHistorialViews } from './historial-views.js?v=hist-desvio-20261105';
 import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=destacado-segura-20261105';
 
 export function createHubViews(ctx) {
