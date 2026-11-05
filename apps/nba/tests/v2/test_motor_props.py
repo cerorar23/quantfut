@@ -10,10 +10,11 @@ from test_plantilla_pit import con_jugadores
 
 def con_horas(db):
     reloj = datetime.now(UTC)
-    ids, partidos, jugadores = con_jugadores(db, fecha_base=reloj.date() - timedelta(days=25))
+    fecha_et = reloj.astimezone(motor.ET).date()
+    ids, partidos, jugadores = con_jugadores(db, fecha_base=fecha_et - timedelta(days=25))
     inicio = {}
     for pid, fecha, a, _ in partidos:
-        t = reloj + timedelta(minutes=30, days=(fecha-reloj.date()).days)
+        t = reloj + timedelta(minutes=30, days=(fecha-fecha_et).days)
         inicio[pid] = t
         guardar_datos(db, [DatoNuevo(partido_id=pid, entidad_id=ids[a], metrica="inicio_programado_utc", fase="pre", fuente="nba_oficial",
                                      recibido_en=datetime(2025, 12, 1, tzinfo=UTC), valor=t.timestamp())])

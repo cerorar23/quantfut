@@ -26,7 +26,7 @@ def liga_completa(db, dias=20, sin_hora=(), equipos_sin_datos=(), sin_puntos=Non
             a, b = rot[g], rot[29 - g] if g else rot[29]
             if a == b:
                 continue
-            fecha = reloj.date() + timedelta(days=-dias+d)
+            fecha = reloj.astimezone(motor.ET).date() + timedelta(days=-dias+d)
             if d == dias:
                 pid = identidad.partido(db, "nba_oficial", f"00225{d:03d}{g:02d}", fecha, ids[a], ids[b], identidad.temporada(fecha))
                 objetivo.append((pid, a, b))

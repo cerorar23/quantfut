@@ -84,7 +84,7 @@ def test_ejecutar_propline_desde_un_archivo(base_migrada_dsn, tmp_path):
            "NBA_PROPLINE_DESDE": "0"}
     r = captura.ejecutar("propline", env, AHORA)
     assert r["ok"] and r["lotes"] == 3 and contar(base_migrada_dsn, "cuota") > 0
-    assert captura.principal(["propline"], {"NBA_DB_DSN": base_migrada_dsn}) == 2          # falta NBA_PROPLINE_DIR
+    assert captura.principal(["propline"], {"NBA_DB_DSN": base_migrada_dsn, "NBA_CAPTURA_DIR": str(tmp_path/'sin_variable')}) == 2
 
 
 def test_ejecutar_historico_desde_una_carpeta(base_migrada_dsn, tmp_path):

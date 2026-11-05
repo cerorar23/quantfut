@@ -11,12 +11,13 @@ from test_sellado_pit import liga
 def con_horas(db, n=30, sin_hora=(), extra_marzo=False):
     """Liga de prueba con hora de salto a las 00:30 UTC del día siguiente a su fecha (19:30 ET)."""
     reloj = datetime.now(UTC)
-    ids, partidos = liga(db, n, reloj.date() - timedelta(days=20))
+    fecha_et = reloj.astimezone(motor.ET).date()
+    ids, partidos = liga(db, n, fecha_et - timedelta(days=20))
     inicio = {}
     for i, (pid, fecha, a, _) in enumerate(partidos):
         if i in sin_hora:
             continue
-        t = reloj + timedelta(minutes=30, days=(fecha-reloj.date()).days)
+        t = reloj + timedelta(minutes=30, days=(fecha-fecha_et).days)
         inicio[pid] = t
         guardar_datos(db, [DatoNuevo(partido_id=pid, entidad_id=ids[a], metrica="inicio_programado_utc", fase="pre", fuente="nba_oficial",
                                      recibido_en=datetime(2025, 12, 1, tzinfo=UTC), valor=t.timestamp())])
