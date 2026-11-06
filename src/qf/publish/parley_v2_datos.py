@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Callable
 
-from ..db import conn, query_one
+from ..db import conn, query, query_one
 from . import hashchain
 from . import parley_v2 as v2
 from .escalera import Opcion
@@ -187,6 +187,74 @@ def _guardar(lote: dict) -> bool:
                      pt["cuota_en"], pt["inicio_utc"] or lote["decidido_at"], pt["n_casas_ref"], pt["referencia"],
                      json.dumps(pt["evento"])))
     return True
+
+
+# ------------------------------------------------------------------ lectura pública (API, web y app)
+def _texto(mercado: str, sel: str, linea, local: str | None, visita: str | None, jugador: str | None) -> str:
+    """Texto en español de respaldo; la app redacta el suyo en cada idioma desde mercado/selección/línea."""
+    lado = {"home": local or "Local", "away": visita or "Visitante", "draw": "Empate", "over": "Más de",
+            "under": "Menos de", "yes": "Sí", "no": "No"}.get(sel, sel)
+    suf = "" if linea is None else f" {float(linea):g}"
+    if jugador:
+        return f"{jugador} · {mercado.replace('player_', '')}: {lado}{suf}"
+    return f"{mercado}: {lado}{suf}" if sel in ("over", "under") else f"{lado}{suf}"
+
+
+def informe_publico_v2(dias: int = 30) -> dict:
+    """Tickets sellados del parley v2 con la forma del parley actual (escalón = índice del target)."""
+    objetivos = {t: i for i, t in enumerate(v2.TARGETS, 1)}
+    filas = query(
+        """SELECT l.lote_id, l.dia, l.ambito, l.evento_id AS lote_evento, l.chain_sha256, l.lote_diario_sha256, l.decidido_at,
+                  t.ticket_id, t.target, t.tipo, t.estado, t.n_patas, t.cuota_total, t.prob_conjunta, t.prob_prudente,
+                  t.p_bajo, t.p_alto, t.motivos, r.outcome, r.factor_pago
+           FROM parley_v2_lotes l JOIN parley_v2_tickets t ON t.lote_id = l.lote_id
+           LEFT JOIN parley_v2_resultados r ON r.ticket_id = t.ticket_id
+           WHERE l.dia >= CURRENT_DATE - %s ORDER BY l.dia DESC, l.ambito, t.target""", (dias,))
+    patas = query(
+        """SELECT p.ticket_id, p.deporte, p.evento_id, p.mercado, p.seleccion, p.linea, p.jugador, p.prob, p.price,
+                  p.book, p.inicio_utc, p.evento, rp.outcome, rp.valor,
+                  COALESCE(th.display_name, th.canonical_name) AS local_f, COALESCE(ta.display_name, ta.canonical_name) AS visita_f
+           FROM parley_v2_patas p
+           JOIN parley_v2_tickets t ON t.ticket_id = p.ticket_id
+           JOIN parley_v2_lotes l ON l.lote_id = t.lote_id
+           LEFT JOIN matches m ON p.deporte = 'futbol' AND m.match_id = p.evento_id
+           LEFT JOIN teams th ON th.team_id = m.home_team_id LEFT JOIN teams ta ON ta.team_id = m.away_team_id
+           LEFT JOIN parley_v2_resultados_pata rp ON rp.pata_id = p.pata_id
+           WHERE l.dia >= CURRENT_DATE - %s ORDER BY p.inicio_utc, p.evento_id""", (dias,))
+    por_ticket: dict = {}
+    for p in patas:
+        ev = p["evento"] if isinstance(p["evento"], list) else json.loads(p["evento"] or "[]")
+        local = p["local_f"] or (ev[3] if len(ev) > 3 else None)
+        visita = p["visita_f"] or (ev[4] if len(ev) > 4 else None)
+        por_ticket.setdefault(p["ticket_id"], []).append({
+            "deporte": p["deporte"], "evento_id": p["evento_id"], "kickoff_utc": p["inicio_utc"], "local": local,
+            "visitante": visita, "market": p["mercado"], "selection": p["seleccion"],
+            "line": None if p["linea"] is None else float(p["linea"]), "jugador": p["jugador"],
+            "texto": _texto(p["mercado"], p["seleccion"], p["linea"], local, visita, p["jugador"]),
+            "prob": round(float(p["prob"]), 2), "price": float(p["price"]), "book": p["book"],
+            "outcome": p["outcome"], "valor": p["valor"]})
+    salida: list[dict] = []
+    for t in filas:
+        clave = (t["dia"], t["ambito"], t["lote_evento"])
+        if not salida or salida[-1]["_k"] != clave:
+            salida.append({"_k": clave, "dia": t["dia"], "ambito": t["ambito"], "evento_id": t["lote_evento"],
+                           "chain_sha256": t["chain_sha256"], "lote_diario_sha256": t["lote_diario_sha256"], "tickets": []})
+        salida[-1]["tickets"].append({
+            "escalon": objetivos.get(round(float(t["target"]), 2), 0), "target": float(t["target"]), "tipo": t["tipo"],
+            "estado": t["estado"], "n_patas": t["n_patas"], "cuota_total": float(t["cuota_total"]),
+            "prob_total": None if t["prob_conjunta"] is None else round(float(t["prob_conjunta"]), 4),
+            "prob_prudente": None if t["prob_prudente"] is None else round(float(t["prob_prudente"]), 4),
+            "incertidumbre": None if t["p_bajo"] is None else [round(float(t["p_bajo"]), 4), round(float(t["p_alto"]), 4)],
+            "motivos": t["motivos"], "outcome": t["outcome"],
+            "factor_pago": None if t["factor_pago"] is None else float(t["factor_pago"]),
+            "patas": por_ticket.get(t["ticket_id"], [])})
+    for d in salida:
+        d.pop("_k")
+    return {"activo": habilitado(), "estrategia": v2.ESTRATEGIA, "version": v2.VERSION,
+            "reglas": {"escalones": [{"escalon": i, "cuota_min": round(t * (1 - v2.TARGET_TOLERANCE), 3),
+                                      "cuota_max": round(t * (1 + v2.TARGET_TOLERANCE), 3), "target": t}
+                                     for t, i in objetivos.items()]},
+            "dias": salida}
 
 
 # ------------------------------------------------------------------ orquestación

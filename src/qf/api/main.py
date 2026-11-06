@@ -286,7 +286,13 @@ def parley(response: Response, plus: bool = Depends(member)):
     from ..publish import parley_datos
     from .parley_acceso import aplicar_acceso
     response.headers['Cache-Control'] = 'no-store'
-    return aplicar_acceso(parley_datos.informe_publico(), plus)
+    informe = aplicar_acceso(parley_datos.informe_publico(), plus)
+    try:   # parley v2 (lote propio): mismas reglas de acceso; si falla, el parley actual no se ve afectado
+        from ..publish import parley_v2_datos
+        informe["v2"] = aplicar_acceso(parley_v2_datos.informe_publico_v2(), plus)
+    except Exception:  # noqa: BLE001
+        informe["v2"] = None
+    return informe
 
 
 @publico.get("/calibration")

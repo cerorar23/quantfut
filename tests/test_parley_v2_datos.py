@@ -119,3 +119,32 @@ def test_dry_run_no_guarda_ni_exige_habilitar(monkeypatch, entorno):
     monkeypatch.delenv("PARLEY_V2_ENABLED", raising=False)
     r = pd_.ejecutar(hora(9, 36), lambda n, d: ops(), RECIBOS, modo_referencia=True, dry_run=True)
     assert r["estado"] == "elegido" and not entorno
+
+
+def test_informe_publico_v2_forma_acceso_y_textos(monkeypatch):
+    from qf.api.parley_acceso import aplicar_acceso
+    lote = dict(lote_id="l", dia=DIA, ambito="diario", lote_evento=None, chain_sha256="c" * 64, lote_diario_sha256="d" * 64,
+                decidido_at=hora(9, 35))
+    t = lambda tid, target, outcome=None: dict(lote, ticket_id=tid, target=target, tipo="multievento", estado="publicado",
+        n_patas=2, cuota_total=target, prob_conjunta=.4, prob_prudente=.35, p_bajo=.3, p_alto=.5, motivos=["x"],
+        outcome=outcome, factor_pago=None)
+    pata = lambda tid, **kw: dict(dict(ticket_id=tid, deporte="tenis", evento_id="7", mercado="total_games", seleccion="over",
+        linea=22.5, jugador=None, prob=.612, price=1.9, book="bet365", inicio_utc=hora(14), evento=["7", "t", "x", "Ana", "Eva"],
+        outcome=None, valor=None, local_f=None, visita_f=None), **kw)
+
+    def falso(sql, params=()):
+        if "FROM parley_v2_patas" in sql:
+            return [pata("a"), pata("a", evento_id="8", mercado="player_points", jugador="A. Jugador", seleccion="under", linea=24.5),
+                    pata("b", deporte="futbol", evento_id="es.laliga:2425:a-b:20250225", mercado="h2h", seleccion="home",
+                         linea=None, local_f="Cádiz", visita_f="Celta")]
+        return [t("a", 2.1), t("b", 3.1), t("c", 8.2, "ganado")]
+    monkeypatch.setattr(pd_, "query", falso)
+    inf = pd_.informe_publico_v2()
+    d = inf["dias"][0]
+    assert d["chain_sha256"] == "c" * 64 and [x["escalon"] for x in d["tickets"]] == [1, 2, 3]
+    pa = d["tickets"][0]["patas"]
+    assert pa[0]["texto"] == "total_games: Más de 22.5" and pa[1]["texto"].startswith("A. Jugador") and pa[0]["local"] == "Ana"
+    assert d["tickets"][1]["patas"][0]["local"] == "Cádiz"
+    libre = aplicar_acceso(inf, plus=False)["dias"][0]["tickets"]
+    assert libre[0]["locked"] is False and libre[1]["locked"] is True and libre[2]["locked"] is False
+    assert "patas" not in libre[1] and "cuota_total" not in libre[1]
