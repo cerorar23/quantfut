@@ -82,7 +82,7 @@ def toca_multipartido(now: datetime, listos: list[Juego]) -> bool:
 
 
 def ejecutar_multipartido(now: datetime, dia: date, ids_evento: list[str], cargar_ops: Callable,
-                          leer_contexto: Callable, dry_run: bool = False) -> dict:
+                          leer_contexto: Callable, dry_run: bool = False, artefacto: dict | None = None) -> dict:
     """Un ticket por target con patas de varios partidos NBA, sellado en el lote ``nba_dia``."""
     if not base.habilitado() and not dry_run:
         return {"estado": "desactivado"}
@@ -90,8 +90,13 @@ def ejecutar_multipartido(now: datetime, dia: date, ids_evento: list[str], carga
     if not dry_run and base._existe(clave):
         return {"estado": "ya_elegido", "dia": dia.isoformat()}
     ops = [o for o in cargar_ops(now, ids_evento)]
+    calibracion = None
+    if artefacto and artefacto.get("aprobado"):           # abstención por categoría, como el lote diario
+        from ..eval.parley_calibracion import Calibrador, filtrar_calibradas
+        calibracion = Calibrador(artefacto).para_opciones(ops)
+        ops = filtrar_calibradas(ops, calibracion)
     for _ in range(2):                                    # una revalidación y, si hace falta, un recálculo
-        plan = v2.armar_plan(ops, ahora=now)
+        plan = v2.armar_plan(ops, calibracion=calibracion, ahora=now)
         malos: set[str] = set()
         for t in plan.tickets:
             for o in t.legs:
@@ -121,7 +126,7 @@ def base_clave(o) -> str:
 
 
 def revisar(now: datetime, cartelera: Callable[[date], dict], eventos_propline: Callable[[], list[dict]],
-            cargar_ops: Callable, leer_contexto: Callable, dry_run: bool = False) -> dict:
+            cargar_ops: Callable, leer_contexto: Callable, dry_run: bool = False, artefacto: dict | None = None) -> dict:
     """Una pasada: partidos elegibles, un parley por partido y el de varios partidos si toca."""
     hoy = now.date()
     juegos = [j for d in (hoy - timedelta(days=1), hoy, hoy + timedelta(days=1)) for j in juegos_de_cartelera(cartelera(d))]
@@ -134,7 +139,8 @@ def revisar(now: datetime, cartelera: Callable[[date], dict], eventos_propline: 
             now, mapa[j.id], j.inicio, j.sellado, lambda n, e: cargar_ops(n, [e]), leer_contexto, dry_run=dry_run))
     if toca_multipartido(now, listos):
         dia = min(j.inicio for j in listos).date()
-        out["multi"] = ejecutar_multipartido(now, dia, [mapa[j.id] for j in listos], cargar_ops, leer_contexto, dry_run=dry_run)
+        out["multi"] = ejecutar_multipartido(now, dia, [mapa[j.id] for j in listos], cargar_ops, leer_contexto, dry_run=dry_run,
+                                       artefacto=artefacto)
     return out
 
 
@@ -165,7 +171,9 @@ def main() -> None:                                     # pragma: no cover - cab
         activos = {pid: fuera.get(pid, "active") for o in ops if o.jugador for pid in [o.jugador[0]]} if lesiones is not None else {}
         return nba.Contexto(inicio=inicio, estado_jugadores=activos, cuotas={v2._clave(o): o.price for o in ops})
 
-    print(json.dumps(revisar(now, cartelera, lambda: eventos, cargar, contexto), ensure_ascii=False, default=str))
+    ruta = os.getenv("PARLEY_V2_ARTEFACTO")
+    artefacto = json.loads(open(ruta, encoding="utf-8").read()) if ruta and os.path.isfile(ruta) else None
+    print(json.dumps(revisar(now, cartelera, lambda: eventos, cargar, contexto, artefacto=artefacto), ensure_ascii=False, default=str))
 
 
 if __name__ == "__main__":                              # pragma: no cover
