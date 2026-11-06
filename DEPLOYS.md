@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-05 · Regla de publicación NBA/tenis (cuota ≥ 1,20) · PR #270, `main` `8e9fe9a2` · VPS: API
+
+- Orden del titular: «despliega». Capa fina sobre `quantfut-api-tenis:8feddf04` con `mobile.py`, `cuotas_web.py` y `regla_publicacion.py` (los dos primeros eran idénticos a `main` por hash antes de sustituir). Imagen: **`quantfut-api-regla:8e9fe9a2`**.
+- Solo se recreó `api` (`--no-deps --no-build`); `/health` 200 al 1.er intento. Verificado: `/web/deportes/tenis/cuotas` trae `publicables` (15 partidos) tras el calentamiento (~100 s en `unavailable`).
+- **NO desplegado: servicio `nba-api`** (`nba-api:segura-53b1e5ed`, lanzado con `docker run`, sin compose). Falta `publicable` en `/nba/v1/partido/{id}/mercados`; la app usa su banda de respaldo hasta entonces. Hay que recrearlo con sus argumentos originales (archivos: `apps/nba/src/nba/api/publicacion.py` y `mercados_partido.py`).
+- Respaldo: `~/quantfut/releases/regla-8e9fe9a2/backup/docker-compose.yml`. **Vuelta atrás:** copiarlo a `~/quantfut/docker-compose.yml` y `docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-05 · Tenis: la web lee la cuota PropLine y enseña cuota y casa · rama `web/historial-casa-cuota` `8feddf04` (NO fusionada a `main`) · VPS: API
 
 - Orden del titular: «Sí, desplegar». Solo frontend, encima del despliegue anterior (`79009c9e`). Sigue **pendiente el PR y la fusión a `main`** de toda la rama.
