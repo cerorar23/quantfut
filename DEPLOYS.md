@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-06 22:30 UTC · Parley v2.1: fútbol sin Pinnacle, revisor NBA cada 5 min; API y web LISTAS pero NO desplegadas · VPS
+- Fusionado a `main` (PR #276). Carpeta `~/quantfut/releases/parley-v2-20261106/`: `run.sh` y `run_nba.sh` montan de solo lectura los archivos de `main` sobre la imagen del worker (`quantfut-worker-segura:53b1e5ed`); los 5 archivos compartidos (`alta_prob_datos`, `escalera_datos`, `parley_datos`, `parley`, `escalera`) eran idénticos a `main` antes de superponerlos. Api y worker sin tocar.
+- Cron del host: añadido el revisor NBA (`*/5 * * * *`, `flock`, `run_nba.sh`, red `nba-red` para `nba-api`); copia previa `crontab_antes_nba.txt`. Fútbol del parley v2 ya usa consenso de casas (sin Pinnacle) y la política de cuota por mercado.
+- Probado: ensayo en seco con cuatro tickets `publicado`; el revisor lista 18 partidos, empareja 12 con PropLine y ninguno elegible hasta que se selle el pronóstico NBA.
+- API/web: imagen construida y ensayada `quantfut-api-mobile:parley-v2-20261106` (FROM la actual + `main.py` de producción parcheado + `parley_v2*.py` + `conversion-views.js`); el contenedor API difiere de `main` en 32 archivos, por eso NO se despliega `main` entero. FALTA recrear solo `api` (el sistema bloqueó esa acción): `cp ~/quantfut/docker-compose.yml releases/parley-v2-20261106/docker-compose.before-api.yml; sed -i 's#quantfut-api-mobile:8db511e7-mime#quantfut-api-mobile:parley-v2-20261106#' docker-compose.yml; docker compose up -d --no-deps --no-build api`. Vuelta atrás: restaurar esa copia del compose y recrear `api`.
+- La app Flutter ya lee `v2` en `main`; llega con la próxima compilación que suba el titular.
+
 ### 2026-11-06 20:50 UTC · Parley v2.1 (lote propio, sellado en sombra a las 03:35 México) · VPS (BD + cron del host; api y worker SIN tocar)
 - Autorizado por el titular en el chat (artefacto aprobado, migración, despliegue, sellado y ensayo con PropLine). Código en las ramas `nba/v13-disponibilidad` (`2007b50f`, `f26c474b`, `2572172a`), NO en `main`: pendiente fusionar.
 - BD: `db/098_parley_v2_lotes.sql` aplicada (5 tablas `parley_v2_*`, inmutables). Respaldo previo `~/quantfut/releases/parley-v2-20261106/antes.dump` (980 MB). No toca `prediction_batches` ni `seal()`.
