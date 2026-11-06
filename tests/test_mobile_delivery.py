@@ -162,15 +162,18 @@ def test_markets_history_filters_and_rounds(monkeypatch):
     def fake_query(sql, params=()):
         captured['params'] = params
         return [{'match_id': 'm1', 'market': 'totals', 'selection': 'over', 'line': 1.5, 'prob': 0.8123456,
-                 'ref_price': 1.3, 'ref_book': 'bovada',
+                 'ref_price': 1.3, 'ref_book': 'bovada', 'home_team_id': 7, 'away_team_id': 8,
                  'local': 'A', 'visitante': 'B', 'outcome': 'win', 'home_goals': 2, 'away_goals': 1}]
 
     monkeypatch.setattr(mobile, 'query', fake_query)
+    monkeypatch.setattr(mobile.fichas, 'escudo', lambda tid: f'/web/escudos/{tid}.png' if tid == 7 else None)
     monkeypatch.setattr(mobile, 'features', lambda: {'alta_probabilidad': {'enabled': True}})
     out = mobile.markets_history(Response(), market='totals,spreads', limit=50)
     assert captured['params'][2] == ['totals', 'spreads'] and captured['params'][-1] == 50
     item = out['items'][0]
     assert item['prob'] == 0.81 and item['texto']
+    assert item['local_escudo'] == '/web/escudos/7.png' and item['visitante_escudo'] is None
+    assert 'home_team_id' not in item
     assert item['ref_book'] == 'Bovada'   # la casa de la cuota viaja con el pronóstico, ya con nombre para mostrar
     monkeypatch.setattr(mobile, 'features', lambda: {'alta_probabilidad': {'enabled': False}})
     assert mobile.markets_history(Response(), market=None, limit=10) == {'items': []}

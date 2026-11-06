@@ -73,6 +73,8 @@ class _ProductShellState extends State<ProductShell>
   // Cuotas de referencia por deporte: overlay aparte del feed; sin ellas todo se ve igual.
   final quotes = <SportKind, QuotesOverlay>{};
   final _feedLoading = <SportKind>{};
+  // Cada recarga de NBA invalida el enriquecimiento anterior.
+  int _nbaGeneration = 0;
   ImageCatalog images = ImageCatalog.empty;
   final _memory = <String, String>{};
   late final SportPrefs sportPrefs =
@@ -174,6 +176,25 @@ class _ProductShellState extends State<ProductShell>
         _feedsNotifier.value = Map.of(feeds);
         if (!identical(catalog, ImageCatalog.empty)) images = catalog;
       });
+      // NBA: la cartelera solo trae el ganador; el resto de mercados (con su cuota y casa) se pide partido a
+      // partido y se va sumando al feed sin bloquear la pantalla.
+      if (kind == SportKind.nba && feed.ready) {
+        final generation = ++_nbaGeneration;
+        unawaited(
+          enrichNbaFeed(
+            api,
+            feed,
+            current: () => mounted && generation == _nbaGeneration,
+            onUpdate: (enriched) {
+              if (!mounted) return;
+              setState(() {
+                feeds[kind] = enriched;
+                _feedsNotifier.value = Map.of(feeds);
+              });
+            },
+          ),
+        );
+      }
     } finally {
       _feedLoading.remove(kind);
     }
@@ -544,6 +565,8 @@ class _ProductShellState extends State<ProductShell>
         api: api,
         alta: jsonMap(d['alta_probabilidad']),
         onVip: vip,
+        agenda: jsonRows(d['agenda']),
+        onOpenMatch: detail,
       ),
     ],
   );
@@ -657,8 +680,12 @@ class _ProductShellState extends State<ProductShell>
         ? loading
         : SportMarkets(
             key: ValueKey('sport-markets-${sport.id}'),
+            api: api,
             sport: sport,
             feed: feed,
+            images: images,
+            quotes: quotes[sport] ?? QuotesOverlay.empty,
+            onOpenEvent: openSportEvent,
             onRetry: () => loadFeed(sport),
           );
   }

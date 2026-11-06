@@ -111,3 +111,26 @@ class SportPrefs {
     await write(hiddenKey, hidden.map((k) => k.id).join(','));
   }
 }
+
+/// Nombre de la familia en el idioma actual. Una familia desconocida usa la etiqueta del servidor.
+String sportFamilyTitle(
+  AppLocalizations l10n,
+  String family, {
+  String? fallback,
+}) => switch (family) {
+  'winner' => l10n.famWinnerTitle,
+  'handicap' => l10n.sfNbaHandicap,
+  'game_total' => l10n.sfNbaGameTotal,
+  'team_points' => l10n.sfNbaTeamPoints,
+  'player_points' => l10n.sfNbaPlayerPoints,
+  'player_rebounds' => l10n.sfNbaPlayerRebounds,
+  'player_assists' => l10n.sfNbaPlayerAssists,
+  'player_threes' => l10n.sfNbaPlayerThrees,
+  'games_total' => l10n.sfTennisGamesTotal,
+  'games_handicap' => l10n.sfTennisGamesHandicap,
+  'set_winner' => l10n.sfTennisSetWinner,
+  'sets_handicap' => l10n.sfTennisSetsHandicap,
+  'sets_total' => l10n.sfTennisSetsTotal,
+  'tiebreak' => l10n.sfTennisTiebreak,
+  _ => fallback ?? family,
+};

@@ -1018,6 +1018,15 @@
     }
   },
   "marketResult1x2": "Resultado 1X2",
+  "marketUnderLine": "Menos de {line}",
+  "@marketUnderLine": {
+    "description": "Selección «menos de» de un mercado de línea (puntos, asistencias, total). {line} es la línea ya formateada, p. ej. 24,5.",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
   "marketUnknown": "Mercado",
   "marketWinToNil": "Gana a cero",
   "marketsAndResults": "Mercados y resultados",
@@ -2071,6 +2080,32 @@
       }
     }
   },
+  "sfCounts": "Abiertos {open} · Resueltos {resolved}",
+  "@sfCounts": {
+    "description": "Tarjeta de familia de mercado de NBA o tenis: pronósticos aún abiertos y ya resueltos.",
+    "placeholders": {
+      "open": {
+        "type": "int"
+      },
+      "resolved": {
+        "type": "int"
+      }
+    }
+  },
+  "sfNbaGameTotal": "Total de puntos del partido",
+  "sfNbaHandicap": "Hándicap del partido",
+  "sfNbaPlayerAssists": "Asistencias del jugador",
+  "sfNbaPlayerPoints": "Puntos del jugador",
+  "sfNbaPlayerRebounds": "Rebotes del jugador",
+  "sfNbaPlayerThrees": "Triples del jugador",
+  "sfNbaTeamPoints": "Puntos por equipo",
+  "sfRangeNote": "Pronósticos con probabilidad del 60 % al 95 %",
+  "sfTennisGamesHandicap": "Hándicap de juegos",
+  "sfTennisGamesTotal": "Juegos totales",
+  "sfTennisSetWinner": "Ganador del set",
+  "sfTennisSetsHandicap": "Hándicap de sets",
+  "sfTennisSetsTotal": "Total de sets",
+  "sfTennisTiebreak": "Tie-break",
   "shellNeedCoinsBody": "Gana monedas con la asistencia diaria y las ofertas para desbloquear este pronóstico.",
   "@shellNeedCoinsBody": {
     "description": "Explica cómo conseguir monedas."

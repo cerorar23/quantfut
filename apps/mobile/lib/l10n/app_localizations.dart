@@ -2092,6 +2092,12 @@ abstract class AppLocalizations {
   /// **'Resultado 1X2'**
   String get marketResult1x2;
 
+  /// Selección «menos de» de un mercado de línea (puntos, asistencias, total). {line} es la línea ya formateada, p. ej. 24,5.
+  ///
+  /// In es, this message translates to:
+  /// **'Menos de {line}'**
+  String marketUnderLine(String line);
+
   /// No description provided for @marketUnknown.
   ///
   /// In es, this message translates to:
@@ -3735,6 +3741,96 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{team} gana sin recibir gol'**
   String selWinToNil(String team);
+
+  /// Tarjeta de familia de mercado de NBA o tenis: pronósticos aún abiertos y ya resueltos.
+  ///
+  /// In es, this message translates to:
+  /// **'Abiertos {open} · Resueltos {resolved}'**
+  String sfCounts(int open, int resolved);
+
+  /// No description provided for @sfNbaGameTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total de puntos del partido'**
+  String get sfNbaGameTotal;
+
+  /// No description provided for @sfNbaHandicap.
+  ///
+  /// In es, this message translates to:
+  /// **'Hándicap del partido'**
+  String get sfNbaHandicap;
+
+  /// No description provided for @sfNbaPlayerAssists.
+  ///
+  /// In es, this message translates to:
+  /// **'Asistencias del jugador'**
+  String get sfNbaPlayerAssists;
+
+  /// No description provided for @sfNbaPlayerPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos del jugador'**
+  String get sfNbaPlayerPoints;
+
+  /// No description provided for @sfNbaPlayerRebounds.
+  ///
+  /// In es, this message translates to:
+  /// **'Rebotes del jugador'**
+  String get sfNbaPlayerRebounds;
+
+  /// No description provided for @sfNbaPlayerThrees.
+  ///
+  /// In es, this message translates to:
+  /// **'Triples del jugador'**
+  String get sfNbaPlayerThrees;
+
+  /// No description provided for @sfNbaTeamPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos por equipo'**
+  String get sfNbaTeamPoints;
+
+  /// No description provided for @sfRangeNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Pronósticos con probabilidad del 60 % al 95 %'**
+  String get sfRangeNote;
+
+  /// No description provided for @sfTennisGamesHandicap.
+  ///
+  /// In es, this message translates to:
+  /// **'Hándicap de juegos'**
+  String get sfTennisGamesHandicap;
+
+  /// No description provided for @sfTennisGamesTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Juegos totales'**
+  String get sfTennisGamesTotal;
+
+  /// No description provided for @sfTennisSetWinner.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganador del set'**
+  String get sfTennisSetWinner;
+
+  /// No description provided for @sfTennisSetsHandicap.
+  ///
+  /// In es, this message translates to:
+  /// **'Hándicap de sets'**
+  String get sfTennisSetsHandicap;
+
+  /// No description provided for @sfTennisSetsTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total de sets'**
+  String get sfTennisSetsTotal;
+
+  /// No description provided for @sfTennisTiebreak.
+  ///
+  /// In es, this message translates to:
+  /// **'Tie-break'**
+  String get sfTennisTiebreak;
 
   /// Explica cómo conseguir monedas.
   ///

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
+import '../l10n/pick_labels.dart' show bookName;
 import 'live_api.dart';
 import 'qf_theme.dart';
 import 'sports_quotes.dart';
@@ -51,7 +52,7 @@ class QuoteLabel extends StatelessWidget {
             ),
           ),
           Text(
-            l10n.quoteBookAt(q.book, time),
+            l10n.quoteBookAt(bookName(q.book), time),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 10, color: QfColors.text2),

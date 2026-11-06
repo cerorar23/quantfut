@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/sports.dart';
 import 'package:gobet/product/sports_feed.dart';
+import 'package:gobet/product/sports_quotes.dart';
 
 class _Api extends QuantFutApi {
   _Api(this.routes);
@@ -437,5 +438,208 @@ void main() {
     final markets = events.single.markets;
     expect(markets, hasLength(2));
     expect(markets.where((m) => m.player != null), isEmpty);
+  });
+
+  group('NBA v2: todos los mercados del partido (/nba/v1/partido/{id}/mercados)', () {
+    final start = DateTime.utc(2026, 11, 5, 0);
+    SportEvent game({String score = '110 – 100', String status = 'finished'}) => SportEvent(
+      id: '11330',
+      sport: SportKind.nba,
+      home: 'Detroit Pistons',
+      away: 'Philadelphia 76ers',
+      league: 'NBA',
+      start: start,
+      status: status,
+      seal: 'h',
+      sealedAt: start,
+      markets: const [],
+      score: score,
+    );
+    Map<String, dynamic> row(
+      String id,
+      String market,
+      String side,
+      double p, {
+      double? line,
+      String? team,
+      String? player,
+      int? playerId,
+      double? price = 1.9,
+      String? book = 'fanduel',
+      String? outcome,
+      String sealed = '2026-11-04T23:00:00+00:00',
+    }) => {
+      'id': id,
+      'market': market,
+      'side': side,
+      'team': team ?? 'Detroit Pistons',
+      'line': line,
+      'probability': p,
+      'player': player,
+      'player_id': playerId,
+      'sealed_at': sealed,
+      'price': price,
+      'book': book,
+      'odds_at': '2026-11-04T21:07:32+00:00',
+      'outcome': outcome,
+    };
+
+    test('queda el lado de mayor probabilidad por línea, dentro de la banda, con cuota y casa', () {
+      final rows = nbaGameMarkets({
+        'partido_id': 11330,
+        'markets': [
+          row('w-l', 'winner', 'local', .55, team: 'Detroit Pistons', outcome: 'win'),
+          row('w-v', 'winner', 'visit', .45, team: 'Philadelphia 76ers', outcome: 'loss'),
+          row('t-o', 'game_total', 'over', .35, line: 220.5),
+          row('t-u', 'game_total', 'under', .65, line: 220.5, outcome: 'win'),
+          row('far', 'game_total', 'over', .99, line: 150.5),
+          row('p-o', 'player_threes', 'over', .72, line: 1.5, player: 'Daniss Jenkins', playerId: 212),
+          row('h-l', 'handicap', 'local', .40, line: -3.5, outcome: 'loss'),
+          row('h-v', 'handicap', 'visit', .60, line: 3.5, team: 'Philadelphia 76ers', outcome: 'win'),
+        ],
+      }, game());
+      final byId = {for (final m in rows) m.id: m};
+      // Ganador: siempre el lado favorito, aunque no llegue al 60 %.
+      expect(byId['w-l']!.probability, .55);
+      expect(byId.containsKey('w-v'), isFalse);
+      // Total: el «menos de» (65 %) y no el «más de»; el 99 % queda fuera de la banda.
+      expect(byId['t-u']!.side, 'under');
+      expect(byId.containsKey('t-o'), isFalse);
+      expect(byId.containsKey('far'), isFalse);
+      // Hándicap: -3,5 local y +3,5 visitante son la misma línea; gana el visitante (60 %).
+      expect(byId['h-v']!.team, 'Philadelphia 76ers');
+      expect(byId.containsKey('h-l'), isFalse);
+      final jenkins = byId['p-o']!;
+      expect(jenkins.player, 'Daniss Jenkins');
+      expect(jenkins.price, 1.9);
+      expect(jenkins.book, 'fanduel');
+      expect(jenkins.quotedAt, DateTime.utc(2026, 11, 4, 21, 7, 32));
+      expect(jenkins.eligible, isTrue);
+    });
+
+    test('resultado: el del servidor, o se calcula del marcador en total y hándicap', () {
+      final rows = nbaGameMarkets({
+        'partido_id': 11330,
+        'markets': [
+          row('t-u', 'game_total', 'under', .70, line: 220.5), // 210 puntos: gana
+          row('t-o', 'game_total', 'over', .70, line: 200.5), // 210: gana
+          row('h', 'handicap', 'local', .70, line: -9.5), // gana por 10: gana
+          row('h2', 'handicap', 'local', .70, line: -10.0), // empata el hándicap: push
+          row('tp', 'team_points', 'over', .70, line: 115.5, team: 'Philadelphia 76ers'), // 100: pierde
+          row('s', 'player_points', 'over', .70, line: 10.5, player: 'A', playerId: 1, outcome: 'win'),
+        ],
+      }, game());
+      final by = {for (final m in rows) m.id: m.outcome};
+      expect(by, {
+        't-u': 'win',
+        't-o': 'win',
+        'h': 'win',
+        'h2': 'push',
+        'tp': 'loss',
+        's': 'win',
+      });
+    });
+
+    test('un sello posterior al inicio no es pronóstico previo ni resultado', () {
+      final rows = nbaGameMarkets({
+        'partido_id': 11330,
+        'markets': [
+          row('late', 'game_total', 'over', .70, line: 200.5, sealed: '2026-11-05T01:00:00+00:00'),
+        ],
+      }, game());
+      expect(rows.single.eligible, isFalse);
+      expect(rows.single.outcome, isNull);
+    });
+
+    test('filas mal formadas se descartan; otro partido o formato lanza', () {
+      final rows = nbaGameMarkets({
+        'partido_id': 11330,
+        'markets': [
+          row('sin-linea', 'game_total', 'over', .70),
+          row('lado-malo', 'game_total', 'sideways', .70, line: 200.5),
+          row('prob-nan', 'game_total', 'over', double.nan, line: 200.5),
+          row('jugador-sin-id', 'player_points', 'over', .70, line: 10.5, player: 'A'),
+          row('mercado-raro', 'player_blocks', 'over', .70, line: 1.5, player: 'A', playerId: 1),
+          row('ok', 'game_total', 'over', .70, line: 200.5, price: null, book: null),
+        ],
+      }, game());
+      expect(rows.map((m) => m.id), ['ok']);
+      expect(rows.single.price, isNull); // sin cuota: nunca se inventa
+      expect(() => nbaGameMarkets({'partido_id': 1, 'markets': []}, game()), throwsFormatException);
+      expect(() => nbaGameMarkets({'partido_id': 11330}, game()), throwsFormatException);
+    });
+
+    test('el destacado del servidor se conserva aunque pase del 95 %', () {
+      final rows = nbaGameMarkets({
+        'partido_id': 11330,
+        'destacado': {'id': 'top'},
+        'markets': [row('top', 'game_total', 'over', .97, line: 150.5)],
+      }, game());
+      expect(rows.single.id, 'top');
+    });
+
+    test('quoteFor usa la cuota y casa del propio mercado, sin overlay', () {
+      final m = nbaGameMarkets({
+        'partido_id': 11330,
+        'markets': [row('x', 'game_total', 'over', .70, line: 200.5, book: 'draftkings')],
+      }, game()).single;
+      final q = quoteFor(game(), m, QuotesOverlay.empty)!;
+      expect(q.price, 1.9);
+      expect(q.book, 'DraftKings');
+    });
+
+    test('enrichNbaFeed suma los mercados a los partidos con pronóstico y tolera fallos', () async {
+      final base = SportFeed(
+        ready: true,
+        events: [
+          game().withMarkets([
+            SportMarket(
+              id: 'winner-11330',
+              label: 'Ganador del partido',
+              selection: 'Detroit Pistons',
+              probability: .7,
+              sealedAt: start.subtract(const Duration(hours: 1)),
+              eligible: true,
+              market: 'winner',
+            ),
+          ]),
+          SportEvent(
+            id: '999',
+            sport: SportKind.nba,
+            home: 'A',
+            away: 'B',
+            league: 'NBA',
+            start: start,
+            status: 'scheduled',
+            seal: '',
+            sealedAt: start,
+            markets: const [],
+          ),
+        ],
+      );
+      final api = _Api({
+        '/nba/v1/partido/11330/mercados': () => {
+          'partido_id': 11330,
+          'markets': [row('t', 'game_total', 'over', .70, line: 200.5)],
+        },
+      });
+      final updates = <SportFeed>[];
+      await enrichNbaFeed(api, base, onUpdate: updates.add, current: () => true);
+      // El partido sin pronóstico no se pide.
+      expect(api.calls, ['/nba/v1/partido/11330/mercados']);
+      expect(updates.last.events.first.markets.single.id, 't');
+      expect(updates.last.events.last.markets, isEmpty);
+
+      // Si el feed base ya no es el vigente, no se publica nada.
+      final stale = <SportFeed>[];
+      await enrichNbaFeed(api, base, onUpdate: stale.add, current: () => false);
+      expect(stale, isEmpty);
+
+      // Un partido que falla conserva su ganador.
+      final failing = _Api({});
+      final kept = <SportFeed>[];
+      await enrichNbaFeed(failing, base, onUpdate: kept.add, current: () => true);
+      expect(kept.isEmpty || kept.last.events.first.markets.single.id == 'winner-11330', isTrue);
+    });
   });
 }

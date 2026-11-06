@@ -387,7 +387,11 @@ class _Predictions extends StatelessWidget {
         : (m.market == 'winner' || (m.market == null && m.id == 'winner'))
         ? 0
         : 1;
-    final ordered = [...all]..sort((a, b) => rank(a).compareTo(rank(b)));
+    final ordered = [...all]
+      ..sort((a, b) {
+        final r = rank(a).compareTo(rank(b));
+        return r != 0 ? r : b.probability.compareTo(a.probability);
+      });
     final featured = featuredMarket(event);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -507,7 +511,11 @@ class _MarketRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                m.label,
+                sportFamilyTitle(
+                  l10n,
+                  m.market ?? m.id.split('-').first,
+                  fallback: m.label,
+                ),
                 style: const TextStyle(fontSize: 11, color: QfColors.text2),
               ),
               const SizedBox(height: 2),
