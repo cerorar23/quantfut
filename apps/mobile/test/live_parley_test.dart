@@ -265,4 +265,34 @@ void main() {
       expect(vip, 1);
     },
   );
+
+  testWidgets('parley v2: lote sellado con tenis y NBA, sin inventar probabilidad en un solo partido', (tester) async {
+    Map<String, dynamic> pata(String market, String sel, num? line, {String? jugador, String deporte = 'tenis'}) => {
+          'deporte': deporte, 'market': market, 'selection': sel, 'line': line, 'jugador': jugador,
+          'local': 'Ana', 'visitante': 'Eva', 'kickoff_utc': '2026-11-07T14:00:00Z', 'texto': 'x',
+          'prob': 0.6, 'price': 1.9, 'book': 'bet365', 'outcome': null,
+        };
+    await open(tester, {
+      'activo': true, 'reglas': rules, 'dias': [], 'resumen': {'total': {'n': 0}},
+      'v2': {
+        'dias': [
+          {
+            'dia': '2026-11-07', 'chain_sha256': 'a' * 64,
+            'tickets': [
+              {'escalon': 1, 'target': 2.1, 'tipo': 'multievento', 'estado': 'publicado', 'n_patas': 2, 'cuota_total': 2.07,
+               'prob_total': 0.47, 'locked': false, 'outcome': null,
+               'patas': [pata('total_games', 'over', 22.5), pata('player_points', 'under', 24.5, jugador: 'A. Jugador', deporte: 'nba')]},
+              {'escalon': 2, 'target': 3.1, 'tipo': 'same_game', 'estado': 'solo_referencia', 'n_patas': 2, 'cuota_total': 3.0,
+               'prob_total': null, 'locked': false, 'outcome': null, 'patas': [pata('handicap_games', 'home', -3.5)]},
+            ],
+          },
+        ],
+      },
+    });
+    expect(find.text('Parley v2 · fútbol, tenis y NBA'), findsOneWidget);
+    expect(find.text('Más de 22,5 juegos'), findsOneWidget);
+    expect(find.text('A. Jugador: menos de 24,5 puntos'), findsOneWidget);
+    expect(find.textContaining('juegos'), findsNWidgets(2));
+    expect(find.textContaining('Un solo partido · Solo referencia'), findsOneWidget);
+  });
 }
