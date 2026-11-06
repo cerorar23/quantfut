@@ -33,6 +33,12 @@ fase 3 se diseñó para NO tocar `seal()` ni el cron diario: cadena propia que g
 orden, y todo apagado hasta confirmar. Un fallo real salió del cierre: dos jugadores con el mismo prop y línea se fundían en un
 contrato al consolidar; el jugador ahora forma parte de la clave de la pata.
 
+Cierre de pendientes: liquidación de patas v2 (fútbol, tenis, NBA) y orquestación del parley NBA por partido. La prueba de la
+liquidación destapó otro fallo: el id de evento de fútbol (`liga:temporada:equipos:fecha`) se cortaba en el primer `:` al sellar,
+lo que habría impedido unir la pata con `matches`; ahora fútbol conserva el `match_id` completo y tenis/NBA quitan su prefijo.
+Lo que queda no es código: aprobación del artefacto, aplicar la migración 098, desplegar, el sellado diario NBA v1.3 con su
+revisor y la disponibilidad en vivo.
+
 ## 2026-10-25 — Destacado del detalle: cuota mínima 1,40
 
 ## 5-nov-2026 (noche) · Calibración del destacado de fútbol por mercado y banda; qué regla cumple el 80 %

@@ -788,13 +788,16 @@ medición de topes en `docs/parley_topes_medicion_20261106.md`. NO está enganch
    por fuentes, 03:35 México = 09:35 UTC, reintentos cada 5 min hasta las 04:00, publicar lo factible o abstenerse,
    idempotencia, hash del lote diario que lo precede) y dos líneas en `scripts/crontab`. Todo apagado salvo
    `PARLEY_V2_ENABLED=1` (y `PARLEY_V2_REFERENCIA=1` para sellar en sombra sin artefacto aprobado). No toca
-   `seal()` ni el lote diario. Falta: comprobar el número 098 contra otras ramas, aplicar la migración, desplegar,
-   y un resolutor de resultados de tenis y NBA para liquidar las patas (el de fútbol reutiliza `parley_datos`).
+   `seal()` ni el lote diario. `publish/parley_v2_liquidacion.py` liquida patas de fútbol (reglas del parley actual),
+   tenis y NBA (calificación de PropLine de la casa de la pata, luego mayoría; nula a las 72 h sin calificar) y cierra los
+   tickets; SQL validado en el Postgres local con transacción revertida. Falta (fuera del código): comprobar el número 098
+   contra otras ramas, aplicar la migración, desplegar y programar la liquidación (`python -m qf.publish.parley_v2_liquidacion`).
 4. [x] Fase 4 (lógica pura): `publish/parley_nba.py`: ejecución en `max(inicio − 60 min, sellado)`, nunca después
    de inicio − 30 min, clave idempotente por partido, estrategia y versión, revalidación de horario, jugador,
    titularidad, minutos y cuota (recalcular o anular) y parley de un partido como same-game (solo referencia sin
-   cuota de paquete y modelo conjunto). Falta: el sellado diario NBA v1.3, el job cada 5 min que la dispare y la
-   fuente de disponibilidad en vivo.
+   cuota de paquete y modelo conjunto). `publish/parley_nba_datos.py` orquesta un partido (ventana, revalidación con un
+   recálculo, sellado con cadena propia, anulación de un ticket ya sellado con resultados `void`). Falta (fuera del código):
+   el sellado diario NBA v1.3, el revisor cada 5 minutos que lo llame con las fuentes reales y la disponibilidad en vivo.
 5. [ ] Medir cuando existan precios: tarjetas, ambos marcan, doble oportunidad, goles/córners por equipo
    (solo desde sep/oct-2026) y tenis con historia larga (hoy solo el ganador).
 

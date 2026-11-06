@@ -102,7 +102,10 @@ def barrera(now: datetime, recibos: dict[str, Recibo], lote_diario: str | None,
 def _pata(o: Opcion) -> dict:
     evento = getattr(o, "evento", ())
     jugador = getattr(o, "jugador", ())
-    return {"deporte": getattr(o, "deporte", "") or "futbol", "evento_id": o.match_id.split(":", 1)[-1],
+    deporte = getattr(o, "deporte", "") or "futbol"
+    # El id de fútbol es el match_id completo (lleva ':'); en tenis y NBA el prefijo es el deporte.
+    evento_id = o.match_id if deporte == "futbol" else o.match_id.split(":", 1)[-1]
+    return {"deporte": deporte, "evento_id": evento_id,
             "match_id": o.match_id, "mercado": o.cand.market, "seleccion": o.cand.selection, "linea": o.cand.line,
             "jugador_id": jugador[0] if jugador else None, "jugador": jugador[1] if jugador else None,
             "prob": round(o.cand.prob, 6), "cuota": o.price, "casa": o.book, "fuente_cuota": o.odds_source,
