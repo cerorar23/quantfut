@@ -69,6 +69,11 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 # UTC). Decisión del usuario, 2026-10-12: antes era 08:00 UTC (02:00 en México). Solo entran
 # partidos que empiezan DESPUÉS del sellado: los de 08:00-13:00 UTC dependen del lote anterior.
 0 9 * * * cd /app && python -m qf.publish.daily >> /var/log/daily.log 2>&1
+# Parley v2 (lote propio, DESPUES del lote diario): 09:35-10:00 UTC = 03:35-04:00 en Ciudad de
+# Mexico (UTC-6 fijo). Reintenta cada 5 min si falta alguna fuente y se detiene a las 04:00.
+# Apagado salvo PARLEY_V2_ENABLED=1; sin artefacto aprobado solo sella en sombra con PARLEY_V2_REFERENCIA=1.
+35,40,45,50,55 9 * * * cd /app && python -m qf.publish.parley_v2_datos >> /var/log/parley_v2.log 2>&1
+0 10 * * * cd /app && python -m qf.publish.parley_v2_datos >> /var/log/parley_v2.log 2>&1
 
 # F7: sello tardio por partido (T-45 o alineaciones confirmadas). Sin efecto mientras hashchain.LOTE_POR_PARTIDO_DESDE sea None.
 */5 * * * * cd /app && flock -n /tmp/sello_tardio.lock python -m qf.publish.sello_tardio >> /var/log/sello_tardio.log 2>&1

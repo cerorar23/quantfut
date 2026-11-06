@@ -150,3 +150,21 @@ test('escalera al 80 % en 7 días: plazo, expirados, NBA y tenis con su nombre',
   assert.match(e, /Por qué un reto tan seguro paga poco/);
   assert.doesNotMatch(e, /Qué es el freeroll/);
 });
+
+
+test('parley v2 muestra el lote sellado, el estado y lo bloqueado sin inventar probabilidad conjunta', () => {
+  const pata = { texto: 'Más de 22.5', local: 'Ana', visitante: 'Eva', kickoff_utc: '2026-11-07T14:00:00Z', outcome: null, prob: 0.6, price: 1.9, book: 'bet365' };
+  const v2 = { dias: [{ dia: '2026-11-07', chain_sha256: 'a'.repeat(64), tickets: [
+    { escalon: 1, target: 2.1, tipo: 'multievento', estado: 'publicado', n_patas: 2, cuota_total: 2.07, prob_total: 0.47, incertidumbre: [0.4, 0.53], gratis: true, locked: false, patas: [pata, pata] },
+    { escalon: 2, target: 3.1, tipo: 'same_game', estado: 'solo_referencia', n_patas: 2, cuota_total: 3.0, prob_total: null, locked: false, patas: [pata, pata] },
+    { escalon: 3, locked: true, cuota_min: 8.0, cuota_max: 8.4 }] }] };
+  const data = { parley: { status: 'ready', data: { activo: true, dias: [], reglas: { escalones: [] }, v2 } } };
+  const html = createConversionViews(helpers(data)).parleyView();
+  assert.match(html, /PARLEY v2/);
+  assert.match(html, /Publicado/);
+  assert.match(html, /Solo referencia/);
+  assert.match(html, /sin probabilidad conjunta validada/);
+  assert.match(html, /Parley de cuota ≈8\.2/);
+  const seccion = html.split('aria-label="Parley v2"')[1].split('</section>')[0];
+  assert.doesNotMatch(seccion, /NaN|null|undefined/);
+});

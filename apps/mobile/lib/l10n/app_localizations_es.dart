@@ -1604,6 +1604,15 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get parleyV2Heading => 'Parley v2 · fútbol, tenis y NBA';
+
+  @override
+  String get parleyV2Reference => 'Solo referencia';
+
+  @override
+  String get parleyV2SameGame => 'Un solo partido';
+
+  @override
   String pickOddsAtPublish(Object book) {
     return 'Cuota al publicar · $book';
   }
@@ -1922,6 +1931,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileYourAccount => 'Tu cuenta QuantFut';
 
   @override
+  String get propStatAssists => 'asistencias';
+
+  @override
+  String get propStatPoints => 'puntos';
+
+  @override
+  String get propStatRebounds => 'rebotes';
+
+  @override
+  String get propStatThrees => 'triples';
+
+  @override
   String quoteBookAt(String book, String time) {
     return '$book · $time';
   }
@@ -2231,6 +2252,21 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String selGamesHandicap(String team, String line) {
+    return '$team $line juegos';
+  }
+
+  @override
+  String selGamesOver(String line) {
+    return 'Más de $line juegos';
+  }
+
+  @override
+  String selGamesUnder(String line) {
+    return 'Menos de $line juegos';
+  }
+
+  @override
   String selGoals(String side, String line) {
     String _temp0 = intl.Intl.selectLogic(side, {
       'over': 'Más de $line goles',
@@ -2259,6 +2295,31 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get selHtGoalYes => 'Habrá gol en el 1T';
+
+  @override
+  String selPlayerOver(String player, String line, String stat) {
+    return '$player: más de $line $stat';
+  }
+
+  @override
+  String selPlayerUnder(String player, String line, String stat) {
+    return '$player: menos de $line $stat';
+  }
+
+  @override
+  String selPointsOver(String line) {
+    return 'Más de $line puntos';
+  }
+
+  @override
+  String selPointsUnder(String line) {
+    return 'Menos de $line puntos';
+  }
+
+  @override
+  String selSpreadPoints(String team, String line) {
+    return '$team $line puntos';
+  }
 
   @override
   String selTeamGoalsLine(String side, String line, String team) {

@@ -2734,6 +2734,24 @@ abstract class AppLocalizations {
   /// **' · {value} % real'**
   String parleySummaryReal(String value);
 
+  /// No description provided for @parleyV2Heading.
+  ///
+  /// In es, this message translates to:
+  /// **'Parley v2 · fútbol, tenis y NBA'**
+  String get parleyV2Heading;
+
+  /// No description provided for @parleyV2Reference.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo referencia'**
+  String get parleyV2Reference;
+
+  /// No description provided for @parleyV2SameGame.
+  ///
+  /// In es, this message translates to:
+  /// **'Un solo partido'**
+  String get parleyV2SameGame;
+
   /// No description provided for @pickOddsAtPublish.
   ///
   /// In es, this message translates to:
@@ -3262,6 +3280,30 @@ abstract class AppLocalizations {
   /// **'Tu cuenta QuantFut'**
   String get profileYourAccount;
 
+  /// No description provided for @propStatAssists.
+  ///
+  /// In es, this message translates to:
+  /// **'asistencias'**
+  String get propStatAssists;
+
+  /// No description provided for @propStatPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'puntos'**
+  String get propStatPoints;
+
+  /// No description provided for @propStatRebounds.
+  ///
+  /// In es, this message translates to:
+  /// **'rebotes'**
+  String get propStatRebounds;
+
+  /// No description provided for @propStatThrees.
+  ///
+  /// In es, this message translates to:
+  /// **'triples'**
+  String get propStatThrees;
+
   /// Casa de apuestas y hora local de la cuota de referencia.
   ///
   /// In es, this message translates to:
@@ -3688,6 +3730,24 @@ abstract class AppLocalizations {
   /// **'{home} o {away} (sin empate)'**
   String selEitherNoDraw(String home, String away);
 
+  /// Tenis: hándicap de juegos
+  ///
+  /// In es, this message translates to:
+  /// **'{team} {line} juegos'**
+  String selGamesHandicap(String team, String line);
+
+  /// Tenis: total de juegos, más de
+  ///
+  /// In es, this message translates to:
+  /// **'Más de {line} juegos'**
+  String selGamesOver(String line);
+
+  /// Tenis: total de juegos, menos de
+  ///
+  /// In es, this message translates to:
+  /// **'Menos de {line} juegos'**
+  String selGamesUnder(String line);
+
   /// No description provided for @selGoals.
   ///
   /// In es, this message translates to:
@@ -3723,6 +3783,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Habrá gol en el 1T'**
   String get selHtGoalYes;
+
+  /// NBA: prop de jugador, más de
+  ///
+  /// In es, this message translates to:
+  /// **'{player}: más de {line} {stat}'**
+  String selPlayerOver(String player, String line, String stat);
+
+  /// NBA: prop de jugador, menos de
+  ///
+  /// In es, this message translates to:
+  /// **'{player}: menos de {line} {stat}'**
+  String selPlayerUnder(String player, String line, String stat);
+
+  /// NBA: total de puntos del partido, más de
+  ///
+  /// In es, this message translates to:
+  /// **'Más de {line} puntos'**
+  String selPointsOver(String line);
+
+  /// NBA: total de puntos del partido, menos de
+  ///
+  /// In es, this message translates to:
+  /// **'Menos de {line} puntos'**
+  String selPointsUnder(String line);
+
+  /// NBA: hándicap de puntos
+  ///
+  /// In es, this message translates to:
+  /// **'{team} {line} puntos'**
+  String selSpreadPoints(String team, String line);
 
   /// Goles de un equipo con línea distinta de «marca» (más de 0,5).
   ///

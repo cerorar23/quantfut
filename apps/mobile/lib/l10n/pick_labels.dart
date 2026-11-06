@@ -56,6 +56,34 @@ num? _line(Object? v) => v is num ? v : num.tryParse('$v');
 
 /// El pronóstico en palabras (equivale a `alta_prob.texto`). Los nombres de los
 /// equipos salen de `home`/`away` si se dan, o de `local`/`visitante` del propio pick.
+/// Patas del parley v2 de tenis y NBA: totales, hándicap y props de jugador en el idioma actual.
+String? _otherSport(AppLocalizations l10n, String sport, String market, String selection, num? line, String home,
+    String away, Object? player) {
+  if (line == null) return null;
+  final over = selection == 'over';
+  final text = lineText(line);
+  switch (market) {
+    case 'total_games':
+      return over ? l10n.selGamesOver(text) : l10n.selGamesUnder(text);
+    case 'handicap_games':
+      return l10n.selGamesHandicap(selection == 'home' ? home : away, signedLine(line));
+    case 'totals':
+      return sport == 'nba' ? (over ? l10n.selPointsOver(text) : l10n.selPointsUnder(text)) : null;
+    case 'spreads':
+      return sport == 'nba' ? l10n.selSpreadPoints(selection == 'home' ? home : away, signedLine(line)) : null;
+    case 'player_points' || 'player_rebounds' || 'player_assists' || 'player_threes':
+      final stat = switch (market) {
+        'player_points' => l10n.propStatPoints,
+        'player_rebounds' => l10n.propStatRebounds,
+        'player_assists' => l10n.propStatAssists,
+        _ => l10n.propStatThrees,
+      };
+      final name = '${player ?? '—'}';
+      return over ? l10n.selPlayerOver(name, text, stat) : l10n.selPlayerUnder(name, text, stat);
+  }
+  return null;
+}
+
 String pickText(JsonMap pick, {Object? home, Object? away}) {
   final l10n = AppLocale.instance.l10n;
   final market = pick['market'], selection = pick['selection'];
@@ -64,6 +92,11 @@ String pickText(JsonMap pick, {Object? home, Object? away}) {
   final line = _line(pick['line']);
   final fallback = '${pick['texto'] ?? '—'}';
   if (market == null || selection == null) return fallback;
+  if (pick['deporte'] == 'tenis' || pick['deporte'] == 'nba') {
+    final other = _otherSport(l10n, '${pick['deporte']}', '$market', '$selection', line, homeName, awayName,
+        pick['jugador']);
+    if (other != null) return other;
+  }
   switch ('$market') {
     case 'h2h':
       return switch ('$selection') {

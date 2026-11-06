@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 
 from ..config import settings
@@ -20,6 +21,7 @@ from . import alta_prob_datos as ad
 from . import escalera_datos as ed
 from . import hashchain
 from . import parley as pl
+from . import parley_v2 as v2
 from . import picks as pk
 from . import ventana
 
@@ -53,18 +55,24 @@ def _partidos(now: datetime) -> list[dict]:
         (now + pk.MIN_LEAD, ventana.fin_ventana(now, VENTANA)))
 
 
-def candidatas(now: datetime) -> tuple[list, int]:
-    """Patas que pueden entrar y cuántos partidos no tenían precio."""
+def candidatas(now: datetime, v2_activo: bool | None = None) -> tuple[list, int]:
+    """Patas que pueden entrar y cuántos partidos no tenían precio.
+
+    `v2_activo` (por defecto, PARLEY_STRATEGY_VERSION=v2): el parley v2 ya no exige a Pinnacle
+    (consenso de casas, igual que tenis y NBA) y el rango de cuota por pata lo decide su política
+    por mercado, no el 1,20-1,80 del parley legado.
+    """
     rho = ad._rho_activo()
     modelos = ed.Modelos(now)
+    consenso = (os.getenv("PARLEY_STRATEGY_VERSION", "legacy") == "v2") if v2_activo is None else v2_activo
     todas, sin_precio = [], 0
     for m in _partidos(now):
-        res = ed.opciones(m, now, rho, modelos, incluir_doble=True)
+        res = ed.opciones(m, now, rho, modelos, incluir_doble=True, consenso=consenso)
         if res is None:
             sin_precio += 1
             continue
         todas.extend(res)
-    return pl.filtrar(todas, now), sin_precio
+    return (pl.filtrar_v2(todas, now) if consenso else pl.filtrar(todas, now)), sin_precio
 
 
 def mercados_bloqueados() -> list[str]:
@@ -116,7 +124,15 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     bloqueados = mercados_bloqueados()
     patas = pl.sin_bloqueados(patas, bloqueados)
     ctl = pl.control(_liquidados())
-    plan = pl.armar_dia(patas, set(ctl["pausados"]))
+    if os.getenv("PARLEY_STRATEGY_VERSION", "legacy") == "v2":
+        # v2 no presume +EV: prioriza cardinalidad mínima y probabilidad
+        # calibrada/prudente. El índice del target se conserva en `escalon`
+        # para compatibilidad con la API y la cadena histórica.
+        v2_plan = v2.armar_dia(patas)
+        plan = [(next(i for i, x in enumerate(v2.TARGETS, 1) if x == t.target), t.legs)
+                for t in v2_plan]
+    else:
+        plan = pl.armar_dia(patas, set(ctl["pausados"]))
     out = {"estado": "elegido" if plan else "sin_combinacion", "dia": dia.isoformat(),
            "candidatas": len(patas), "partidos": len({o.match_id for o in patas}),
            "sin_precio": sin_precio, "pausados": ctl["pausados"],

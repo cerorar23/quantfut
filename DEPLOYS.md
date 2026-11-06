@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-06 20:50 UTC · Parley v2.1 (lote propio, sellado en sombra a las 03:35 México) · VPS (BD + cron del host; api y worker SIN tocar)
+- Autorizado por el titular en el chat (artefacto aprobado, migración, despliegue, sellado y ensayo con PropLine). Código en las ramas `nba/v13-disponibilidad` (`2007b50f`, `f26c474b`, `2572172a`), NO en `main`: pendiente fusionar.
+- BD: `db/098_parley_v2_lotes.sql` aplicada (5 tablas `parley_v2_*`, inmutables). Respaldo previo `~/quantfut/releases/parley-v2-20261106/antes.dump` (980 MB). No toca `prediction_batches` ni `seal()`.
+- Código: carpeta `~/quantfut/releases/parley-v2-20261106/` (8 archivos nuevos + `artefacto.json` aprobado, 15 categorías: 12 ok, 3 abstención). `run.sh` lanza un contenedor efímero con la imagen del worker (`quantfut-worker-segura:53b1e5ed`), los archivos montados de solo lectura y `--volumes-from` del worker. No se reconstruyó ninguna imagen ni se recreó ningún contenedor (lección del incidente de hoy).
+- Cron del host (usuario `qf`, copia previa en `crontab_antes.txt`): sellado 09:35-09:55 UTC cada 5 min y 10:00 UTC (= 03:35-04:00 México), liquidación cada 3 h, con `flock`. Solo fútbol (Pinnacle obligatorio en el camino de fútbol de producción) y tenis (ganador, handicap y totales de juegos con consenso); NBA por partido NO está programado.
+- Probado: ensayo de lectura contra el archivo real de PropLine (20 eventos de tenis, 9 de NBA, 2.528 candidatas, 2.374 props; cuatro tickets); orquestador en seco con cuatro tickets `publicado`; `desactivado` sin bandera; liquidación sin pendientes. Las filas inmutables del primer lote saldrán mañana a las 09:35 UTC.
+- Vuelta atrás: `crontab ~/quantfut/releases/parley-v2-20261106/crontab_antes.txt`. Los datos ya sellados no se borran (triggers); sin cron dejan de crearse. Esquema: `pg_restore` de `antes.dump` solo si hiciera falta.
+
 ### 2026-11-05 · Android 1.1.1+9: historial web por mercado/deporte · PR #272 y #273
 
 - PR #272 y #273 fusionados con frontend, arnés/Postgres, NBA, tenis y Flutter en verde. Fuente del APK: main 8db511e7; versión nativa 1.1.1, build 9, firma de distribución SHA-256 e03c66cadb0bc0caca43138dc399844790a6893a885c2a47aa00c86fd38b1f34.
