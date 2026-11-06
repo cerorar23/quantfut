@@ -109,10 +109,11 @@ class Target:
 @dataclass(frozen=True)
 class Calibracion:
     """Probabilidad prudente de una pata y su intervalo (bootstrap del artefacto)."""
-    p_prudente: float
+    p_prudente: float                    # la que usa la selección (cota inferior del intervalo)
     p_bajo: float
     p_alto: float
     artefacto: str = ""
+    p_calibrada: float | None = None     # estimación central; si falta se informa la prudente
 
 
 @dataclass(frozen=True)
@@ -128,6 +129,7 @@ class Ticket:
     p_bajo: float | None = None
     p_alto: float | None = None
     motivos: tuple[str, ...] = ()
+    p_prudente: float | None = None      # producto de las p prudentes con las que se eligió
 
 
 @dataclass(frozen=True)
@@ -144,7 +146,11 @@ class Plan:
 
 
 def _clave(op: Opcion) -> tuple:
-    return (op.match_id, op.cand.market, op.cand.selection, op.cand.line)
+    """Contrato exacto. En los props de jugador el jugador es parte del contrato: dos jugadores con
+    el mismo mercado y línea NO son la misma oferta."""
+    base = (op.match_id, op.cand.market, op.cand.selection, op.cand.line)
+    jugador = getattr(op, "jugador", ())
+    return base + (jugador[0],) if jugador else base
 
 
 def _p(op: Opcion, calibracion: dict | None = None) -> float:
@@ -252,8 +258,10 @@ def _candidatos(grupos: dict[str, list[Opcion]], target: Target,
 def _ticket(target: Target, entrada: tuple, calibracion: dict | None) -> Ticket:
     _, legs, _ = entrada
     quote = math.prod(o.price for o in legs)
-    prob = math.prod(_p(o, calibracion) for o in legs)
     cals = [(calibracion or {}).get(_clave(o)) for o in legs]
+    prudente = math.prod(_p(o, calibracion) for o in legs)
+    prob = math.prod(c.p_calibrada if c is not None and c.p_calibrada is not None else _p(o, calibracion)
+                     for o, c in zip(legs, cals))
     calibrado = all(c is not None for c in cals)
     motivos = [f"{len(legs)} patas: mínimo que alcanza el target {target.value:.2f}"
                if len(legs) == MIN_LEGS else f"{len(legs)} patas"]
@@ -267,7 +275,7 @@ def _ticket(target: Target, entrada: tuple, calibracion: dict | None) -> Ticket:
         estado, lo, hi = "solo_referencia", None, None
         motivos.append("sin artefacto de calibración aprobado para todas las patas")
     return Ticket(target.value, tuple(legs), quote, prob, estado=estado,
-                  p_bajo=lo, p_alto=hi, motivos=tuple(motivos))
+                  p_bajo=lo, p_alto=hi, motivos=tuple(motivos), p_prudente=prudente if calibrado else None)
 
 
 def _clave_plan(tickets: list[tuple]) -> tuple:
@@ -369,6 +377,7 @@ def resumen(ticket: Ticket) -> dict:
         "tipo": ticket.tipo, "estado": ticket.estado, "n_patas": len(ticket.legs),
         "cuota_total": round(ticket.quote, 4),
         "probabilidad_conjunta": None if math.isnan(ticket.probability) else round(ticket.probability, 6),
+        "probabilidad_prudente": None if ticket.p_prudente is None else round(ticket.p_prudente, 6),
         "incertidumbre": None if ticket.p_bajo is None else [round(ticket.p_bajo, 6), round(ticket.p_alto, 6)],
         "motivos": list(ticket.motivos),
         "patas": [{"match_id": o.match_id, "mercado": o.cand.market, "seleccion": o.cand.selection,

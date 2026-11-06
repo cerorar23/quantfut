@@ -216,3 +216,14 @@ def test_el_selector_usa_props_y_solo_una_pata_por_partido():
     plan = v2.armar_plan(ops, ahora=NOW)
     ids = [o.match_id for t in plan.tickets for o in t.legs]
     assert plan.tickets and len(ids) == len(set(ids))
+
+
+def test_dos_jugadores_con_el_mismo_mercado_y_linea_no_se_funden_en_un_contrato():
+    def libro(casa_, pid, nombre, over, under):
+        return casa(casa_, prop("player_points", nombre, pid, 24.5, over, under))
+    e = evento(7, sport="basketball_nba", books=[
+        casa("bet365", prop("player_points", "A", 11, 24.5, 1.80, 2.00), prop("player_points", "B", 12, 24.5, 2.40, 1.55)),
+        casa("betano", prop("player_points", "A", 11, 24.5, 1.82, 1.98), prop("player_points", "B", 12, 24.5, 2.30, 1.58))])
+    ops = ext.candidatos({"nba_props": [e]}, NOW)
+    overs = {o.jugador[1]: o.price for o in ops if o.cand.selection == "over"}
+    assert overs == {"A": 1.82, "B": 2.40}          # cada jugador conserva su mejor cuota

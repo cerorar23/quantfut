@@ -778,16 +778,25 @@ medición de topes en `docs/parley_topes_medicion_20261106.md`. NO está enganch
    demás `player_*` (combos, robos, tapones) entran como no medidos (1.80). Una pata por partido. Pendiente antes
    de publicar: confirmar disponibilidad del jugador (un prop de quien no juega se devuelve y cambia la cuota) y
    ensayar contra el archivo real (la ejecución en el VPS se denegó).
-2. [ ] Fase 2: artefacto de calibración (60/20/20 con embargo, Platt / isotónica / mercado, bootstrap),
-   backtest A / B0 / B1 / B2 / B3 con versiones congeladas; sin eso nada pasa de `solo_referencia`.
-3. [ ] Fase 3: lote propio de parley a las 03:35 America/Mexico_City (09:35 UTC) con barrera por deporte y
-   reintentos hasta las 04:00; invierte predecir → seleccionar parley → sellar, así que exige confirmación
-   expresa del usuario antes de tocar `daily.py`, el cron o el sellado (`seal()` es único por fecha).
-4. [ ] Fase 4: parley NBA por partido en `max(inicio − 60 min, sellado)`: necesita el sellado diario NBA v1.3
-   (pendiente) y un revisor cada 5 min; un parley de un solo partido es same-game y hoy solo sería referencia.
+2. [x] Fase 2: `eval/parley_calibracion.py` (partición 60/20/20 con embargo de 7 días, mercado / Platt /
+   isotónica, bootstrap, abstención por muestra o ECE > 0,04) y `scripts/analisis_parley/backtest_parley.py`
+   (A / B0 / B1 / B2; B3 no evaluable). Resultado en `docs/parley_topes_medicion_20261106.md`: el mercado ya está
+   calibrado, nada mejora con claridad y ninguna estrategia se promueve. Pendiente del titular: aprobar un artefacto
+   (`aprobado: true`) tras ver el informe; sin eso todo sale `solo_referencia`.
+3. [x] Fase 3 (código; NO desplegada): `db/098_parley_v2_lotes.sql` (cadena propia inmutable, patas de cualquier
+   deporte; validada en un esquema temporal del Postgres local y revertida), `publish/parley_v2_datos.py` (barrera
+   por fuentes, 03:35 México = 09:35 UTC, reintentos cada 5 min hasta las 04:00, publicar lo factible o abstenerse,
+   idempotencia, hash del lote diario que lo precede) y dos líneas en `scripts/crontab`. Todo apagado salvo
+   `PARLEY_V2_ENABLED=1` (y `PARLEY_V2_REFERENCIA=1` para sellar en sombra sin artefacto aprobado). No toca
+   `seal()` ni el lote diario. Falta: comprobar el número 098 contra otras ramas, aplicar la migración, desplegar,
+   y un resolutor de resultados de tenis y NBA para liquidar las patas (el de fútbol reutiliza `parley_datos`).
+4. [x] Fase 4 (lógica pura): `publish/parley_nba.py`: ejecución en `max(inicio − 60 min, sellado)`, nunca después
+   de inicio − 30 min, clave idempotente por partido, estrategia y versión, revalidación de horario, jugador,
+   titularidad, minutos y cuota (recalcular o anular) y parley de un partido como same-game (solo referencia sin
+   cuota de paquete y modelo conjunto). Falta: el sellado diario NBA v1.3, el job cada 5 min que la dispare y la
+   fuente de disponibilidad en vivo.
 5. [ ] Medir cuando existan precios: tarjetas, ambos marcan, doble oportunidad, goles/córners por equipo
    (solo desde sep/oct-2026) y tenis con historia larga (hoy solo el ganador).
-
 
 ## Modelo propio en las 12 ligas "solo sharp" (2026-10-11, pedido del usuario)
 

@@ -25,6 +25,14 @@ fútbol mediante un parámetro `consenso` que solo activa `PARLEY_STRATEGY_VERSI
 probabilidad, escalera ni el parley legado, cuyos controles se midieron con Pinnacle. El efecto sobre las
 probabilidades sin Pinnacle no está medido todavía: va antes de activar v2.
 
+Después, a pedido de «termina los pendientes»: fase 2 (calibración y backtest), fase 3 (lote propio con cadena de hashes, barrera
+y reintentos, apagado) y fase 4 (parley NBA por partido, lógica pura). La decisión clave de la fase 2 es negativa: en fútbol y tenis
+el mercado sin margen ya está calibrado, Platt e isotónica no lo mejoran con claridad y por eso B1/B2 no se promueven; lo que
+sí aporta el artefacto es la abstención (NBA se abstuvo en las categorías de cuota alta de props) y la incertidumbre por pata. La
+fase 3 se diseñó para NO tocar `seal()` ni el cron diario: cadena propia que guarda el hash del lote diario como prueba de
+orden, y todo apagado hasta confirmar. Un fallo real salió del cierre: dos jugadores con el mismo prop y línea se fundían en un
+contrato al consolidar; el jugador ahora forma parte de la clave de la pata.
+
 ## 2026-10-25 — Destacado del detalle: cuota mínima 1,40
 
 ## 5-nov-2026 (noche) · Calibración del destacado de fútbol por mercado y banda; qué regla cumple el 80 %

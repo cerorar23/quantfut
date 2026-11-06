@@ -80,6 +80,32 @@ ejecutable con distribución conjunta validada y cuota real del paquete.
   criterio. Haz de 3 por estado y tope por cardinalidad: no se afirma optimalidad global.
 - `publicado` solo con probabilidad calibrada e incertidumbre por pata; sin artefacto, `solo_referencia`.
 
+## Fase 2: calibración y backtest (fuera de muestra)
+`src/qf/eval/parley_calibracion.py` ajusta por categoría (deporte, familia, banda de cuota) con partición temporal
+60/20/20 y embargo de 7 días, compara baseline de mercado, Platt e isotónica, usa bootstrap y **se abstiene** si
+falta muestra o el ECE del test supera 0,04. `scripts/analisis_parley/backtest_parley.py` compara A (parley anterior),
+B0 (targets nuevos), B1 (con calibración) y B2 (con abstención) en el 20 % final de cada pool, con el artefacto
+ajustado solo con el 80 % anterior. B3 (same-game con modelo conjunto) no es evaluable: no hay cuota de paquete.
+
+| Pool | Días de prueba | Categorías | Estrategia | Tickets | Patas | Cuota | p media | Acierto | Brier |
+|---|---:|---|---|---:|---:|---:|---:|---:|---:|
+| Fútbol (desde 2024-04-11) | 251 | 6 ok, todas con el mercado como método | A | 661 | 2,27 | 2,77 | 0,374 | 0,393 | 0,227 |
+| | | | B0 | 561 | 2,47 | 5,65 | 0,262 | 0,273 | 0,175 |
+| | | | B1 = B2 | 563 | 2,47 | 5,67 | 0,262 | 0,258 | 0,163 |
+| Tenis (desde 2025-01-13) | 285 | 3 ok | B0 | 745 | 2,76 | 5,75 | 0,269 | 0,264 | 0,169 |
+| | | | B1 = B2 | 744 | 2,77 | 5,74 | 0,269 | 0,265 | 0,169 |
+| NBA partido + props (desde 2026-03-12) | 78 | 4 ok, 2 abstención | B0 | 122 | 2,61 | 5,31 | 0,268 | 0,205 | 0,158 |
+| | | | B1 | 121 | 2,54 | 5,26 | 0,265 | 0,314 | 0,205 |
+| | | | B2 | 114 | 2,53 | 4,85 | 0,277 | 0,351 | 0,233 |
+
+Lectura: (1) en todas las categorías de fútbol y tenis el baseline de mercado ya está calibrado: ni Platt ni
+isotónica lo mejoran con claridad, así que B1 y B2 solo cambian la probabilidad prudente con la que se elige;
+(2) A y B no son comparables en Brier ni en ROI: A apunta a cuotas totales de 1,90-5,00 y B a 2,10-12,10;
+(3) las diferencias entre estrategias (p. ej. 0,273 frente a 0,258 de acierto en fútbol, ±0,019 de error) y el
+ROI observado (±12 a ±20 puntos) están dentro del ruido: ningún resultado justifica promover B1/B2, que queda
+congelada y sin promover; (4) NBA tiene solo 78 días y 114-122 tickets, y sus dos categorías en abstención son
+las de cuota alta de props; (5) no se reajustó ningún parámetro con el test.
+
 ## Errores corregidos durante el análisis
 Los CSV de football-data con marca BOM dejaban sin identificador al 19 % de las filas de fútbol; la primera
 simulación subestimó la cobertura del fútbol (8.20 a 2.5: 59 % → 72 %; todos 12.10 a 2.5: 76 % → 90 %). Las
