@@ -73,7 +73,8 @@ En NBA sí se encontraron selecciones abiertas ya publicadas con probabilidades 
 
 - 45 pruebas dirigidas de Flutter aprobadas: fuentes, mercados, traducciones, destacados, fallos de red y ventana NBA.
 - 2 pruebas matemáticas aprobadas para complementos en partidos al mejor de 3 y de 5 sets, conservando probabilidades, pushes y contratos previos.
-- Verificaciones completas y artefacto Android: resultado final registrado en `harness/progreso.md`.
+- CI completo aprobado en PR #272/#273 y main: frontend, arnés con Postgres, NBA, tenis y Flutter. APK release 1.1.1+9, firma y manifiesto verificados.
+- Descarga: https://pronosticosdeportivos.pro/static/downloads/QuantFut-1.1.1-9.apk?v=9; copia en GitHub Releases v1.1.1. Respaldo y rollback en DEPLOYS.md.
 - No se desplegó el motor ni se activaron complementos. El código Flutter requiere instalar la nueva compilación; el cambio del motor necesita su despliegue y validación posteriores.
 
 Para repetir la consulta pública desde la raíz, con Node disponible:
