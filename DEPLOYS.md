@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-05 · Regla de publicación NBA/tenis (cuota ≥ 1,20) · PR #270, `main` `8e9fe9a2` · VPS: API
+
+- Orden del titular: «despliega». Capa fina sobre `quantfut-api-tenis:8feddf04` con `mobile.py`, `cuotas_web.py` y `regla_publicacion.py` (los dos primeros eran idénticos a `main` por hash antes de sustituir). Imagen: **`quantfut-api-regla:8e9fe9a2`**.
+- Solo se recreó `api` (`--no-deps --no-build`); `/health` 200 al 1.er intento. Verificado: `/web/deportes/tenis/cuotas` trae `publicables` (15 partidos) tras el calentamiento (~100 s en `unavailable`).
+- **Servicio `nba-api`** (también orden del titular): imagen **`nba-api:regla-8e9fe9a2`**, capa fina sobre `nba-api:segura-53b1e5ed` con `publicacion.py` y `mercados_partido.py` (el segundo idéntico a `main` por hash). Se recreó con `docker run` (el original no usa compose) replicando su configuración: red `nba-api-red` + `nba-red`, solo lectura, `/tmp` tmpfs, `--cap-drop ALL`, `no-new-privileges`, 384 MB, 64 pids, usuario 1001, `unless-stopped`; las variables `NBA_*` se extrajeron en el servidor sin mostrarlas. Verificado: `/nba/v1/cartelera` 200 y `/nba/v1/partido/{id}/mercados` trae `publicable`. **Vuelta atrás:** `docker rm -f nba-api` y recrearlo con la imagen `nba-api:segura-53b1e5ed` y los mismos parámetros (el contenedor viejo se borró tras la verificación).
+- Respaldo: `~/quantfut/releases/regla-8e9fe9a2/backup/docker-compose.yml`. **Vuelta atrás:** copiarlo a `~/quantfut/docker-compose.yml` y `docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-05 · Tenis: la web lee la cuota PropLine y enseña cuota y casa · rama `web/historial-casa-cuota` `8feddf04` (NO fusionada a `main`) · VPS: API
 
 - Orden del titular: «Sí, desplegar». Solo frontend, encima del despliegue anterior (`79009c9e`). Sigue **pendiente el PR y la fusión a `main`** de toda la rama.
