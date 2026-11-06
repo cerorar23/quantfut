@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 from datetime import datetime, timedelta, timezone
 
 from ..config import settings
@@ -21,7 +20,6 @@ from . import alta_prob_datos as ad
 from . import escalera_datos as ed
 from . import hashchain
 from . import parley as pl
-from . import parley_v2 as v2
 from . import picks as pk
 from . import ventana
 
@@ -118,15 +116,7 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     bloqueados = mercados_bloqueados()
     patas = pl.sin_bloqueados(patas, bloqueados)
     ctl = pl.control(_liquidados())
-    if os.getenv("PARLEY_STRATEGY_VERSION", "legacy") == "v2":
-        # v2 no presume +EV: prioriza cardinalidad mínima y probabilidad
-        # calibrada/prudente. El índice del target se conserva en `escalon`
-        # para compatibilidad con la API y la cadena histórica.
-        v2_plan = v2.armar_dia(patas)
-        plan = [(next(i for i, x in enumerate(v2.TARGETS, 1) if x == t.target), t.legs)
-                for t in v2_plan]
-    else:
-        plan = pl.armar_dia(patas, set(ctl["pausados"]))
+    plan = pl.armar_dia(patas, set(ctl["pausados"]))
     out = {"estado": "elegido" if plan else "sin_combinacion", "dia": dia.isoformat(),
            "candidatas": len(patas), "partidos": len({o.match_id for o in patas}),
            "sin_precio": sin_precio, "pausados": ctl["pausados"],
