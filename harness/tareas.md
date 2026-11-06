@@ -3815,3 +3815,6 @@ Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin dat
 - [x] Informes de ablacion: superficie ayuda (ATP -0,0033, WTA -0,0017); fatiga NO validada (phi1 ~ 0).
 - [ ] Referencia independiente del rating: codigo y 40 pruebas hechos; comparacion contra predicciones_wf.parquet sin correr (~45 min por circuito); 24 ambiguedades de especificacion en docs/tenis_referencia_rating_20261105.md.
 - [ ] Defecto aguas arriba: 15 filas de estadisticas SofaScore con mas puntos ganados que jugados (rechazar en cargador/contrato).
+
+- [x] S3 parche sigma_R^2 (6-nov): aplicado y reentrenado; la ML con <= 2018 lo lleva a ~0 (ATP 0,0010; WTA 0,0036); G-calibracion sigue FALLANDO (ATP 0,797, WTA 0,876); variante Challenger/gira no justificada (2dLL 0,98 < 3,84). Antes/despues en docs/tenis_modelo_s3_20261105.md §3.b; 45 pruebas del modelo y suite 1.630 verdes.
+- [ ] S3 siguiente parche (pendiente de OK): factor de inflacion de la varianza PREDICTIVA de los ratings estimado con <= 2018 (con v+0,02 la pendiente 2012-2018 pasa de 0,85-0,87 a 0,99-1,00), declarando que prediccion y actualizacion ya no usan la misma Sigma; alternativa: filtro con covarianzas cruzadas.

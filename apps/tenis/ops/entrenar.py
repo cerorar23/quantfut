@@ -9,6 +9,7 @@ arranque en caliente (sin superficie: κ ≡ 1, d ≡ 0, ℓ̄ común; sin fatig
 import argparse
 import json
 import math
+import shutil
 import sys
 import time
 from datetime import datetime, timezone
@@ -118,13 +119,61 @@ def entrenar_circuito(d, obs, a) -> dict:
                                         "x_r": x_sf.tolist(), "menos_loglik": f_sf}}
 
 
+def parche_sigma_r(a):
+    """Parche G-calibración (6-nov): σ_R² del partido en el enlace de R, por MV con ≤ 2018 y el resto CONGELADO;
+    variante registrada σ_R Challenger/gira; reajuste corto de todo; ablaciones con su σ_R. Conserva el JSON anterior."""
+    ruta = Path(a.salida)
+    antes = ruta.with_name("hiperparametros_antes_parche.json")
+    if not antes.exists():
+        shutil.copyfile(ruta, antes)
+    hpj = hp.leer(antes)
+    p, e = dm.cargar_export(hasta=HASTA)
+    for c in a.circuitos:
+        cfg, d = hpj["circuitos"][c], dm.preparar(p, e, c, HASTA)
+        fijo, x = cfg["fijo_r"], [cfg["x_r"][n] for n in hp.NOMBRES_R[:13]]
+        tabs = tabla.construir_todas(tuple(cfg["lbar"]), fijo["sigma_eps"], fijo["rho_eps"])
+        tabs_c = tabla.construir_todas((cfg["lbar_comun"],) * 4, fijo["sigma_eps"], fijo["rho_eps"])
+        base = {"d": d, "tablas": tabs, "fijo": fijo, "ablacion": ""}
+        log(f"{c}: σ_R con el resto congelado (−ll anterior {cfg['menos_loglik_r']:.3f})")
+        x1, f1, _ = hp.ajustar(hp._obj_r, x + [math.log(0.15)], base, libres=[13], maxiter=15, trabajadores=a.trabajadores)
+        log(f"{c}: σ_R = {math.exp(x1[13]):.4f}, −ll {f1:.3f}")
+        parche = {"menos_loglik_antes": cfg["menos_loglik_r"], "sigma_r_solo": math.exp(x1[13]), "menos_loglik_sigma_r_solo": f1}
+        if (d.p.nivel == 1).any():
+            x2, f2, _ = hp.ajustar(hp._obj_r, list(x1) + [x1[13]], base, libres=[13, 14], maxiter=15, trabajadores=a.trabajadores)
+            lr = 2 * (f1 - f2)
+            cfg["variante_challenger"] = {"psi_r": hp.psi_desde_vector(x2, fijo).como_dict(), "x_r": x2.tolist(),
+                                          "menos_loglik": f2, "razon_verosimilitud": lr, "justificada_chi2_1gl": lr > 3.84}
+            log(f"{c}: variante Challenger σ_R gira {math.exp(x2[13]):.4f} / Challenger {math.exp(x2[14]):.4f}, 2Δll = {lr:.2f}")
+        x3, f3, _ = hp.ajustar(hp._obj_r, x1, base, maxiter=a.maxiter, trabajadores=a.trabajadores)
+        xf, ff = (x3, f3) if f3 < f1 else (x1, f1)
+        log(f"{c}: reajuste corto −ll {f3:.3f} (σ_R {math.exp(x3[13]):.4f}); se queda {'reajuste' if f3 < f1 else 'solo σ_R'}")
+        psi_a, psi_f = hp.psi_desde_vector(x, fijo), hp.psi_desde_vector(xf, fijo)
+        parche |= {"menos_loglik_reajuste_corto": f3, "usa_reajuste": bool(f3 < f1),
+                   "platt_2012_2018_antes": hp.pendiente_platt(d, filtrar(d, psi_a, tabs).pi),
+                   "platt_2012_2018_despues": hp.pendiente_platt(d, filtrar(d, psi_f, tabs).pi)}
+        log(f"{c}: Platt 2012–2018 {parche['platt_2012_2018_antes']:.3f} → {parche['platt_2012_2018_despues']:.3f}")
+        for nombre, abl, tb in (("ablacion_sin_superficie", "sin_superficie", tabs_c), ("ablacion_sin_fatiga", "sin_fatiga", tabs)):
+            xa, fa, _ = hp.ajustar(hp._obj_r, list(cfg[nombre]["x_r"]) + [xf[13]], dict(base, tablas=tb, ablacion=abl),
+                                   libres=[13], maxiter=10, trabajadores=a.trabajadores)
+            cfg[nombre] = {"psi_r": hp.psi_desde_vector(xa, fijo, abl).como_dict(), "x_r": xa.tolist(), "menos_loglik": fa}
+        cfg |= {"psi_r": psi_f.como_dict(), "x_r": dict(zip(hp.NOMBRES_R, xf.tolist())), "menos_loglik_r": ff,
+                "parche_sigma_r": parche}
+    hpj["parche_sigma_r"] = {"fecha": "2026-11-06", "sha256_antes": hp.huella(hp.leer(antes)),
+                             "regla": "Σ_m += σ_R²·[[1,−1],[−1,1]] en verosimilitud y predicción; resto congelado salvo reajuste corto"}
+    sha = hp.escribir(ruta, hpj)
+    log(f"{ruta} escrito, sha256 {sha}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--circuitos", nargs="+", default=["atp", "wta"])
     ap.add_argument("--maxiter", type=int, default=30)
     ap.add_argument("--trabajadores", type=int, default=6)
     ap.add_argument("--salida", default=str(SALIDA / "hiperparametros.json"))
+    ap.add_argument("--parche-sigma-r", action="store_true", help="solo el parche σ_R sobre el JSON existente")
     a = ap.parse_args()
+    if a.parche_sigma_r:
+        return parche_sigma_r(a)
     t0 = time.time()
     p, e = dm.cargar_export(hasta=HASTA)
     stats = pd.read_parquet(dm.RUTA_EXPORT / "estadisticas_saque.parquet",

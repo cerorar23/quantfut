@@ -2,7 +2,7 @@
 
 Plan §D, §E, §F, §I, §J, §K.2 S3. Código en `apps/tenis/src/tenis/modelo/`, `apps/tenis/ops/{entrenar,evaluar_wf}.py`,
 pruebas `apps/tenis/tests/test_modelo_*.py`. Salidas en `data/tennis/rediseno_20261104/modelo_s3/`:
-`hiperparametros.json` (sha256 de contenido `0f2d5a52…3d650`), `predicciones_wf.parquet` (60.741 filas = todos los
+`hiperparametros.json` (tras el parche §3.b `416d4dee…`; antes `0f2d5a52…3d650`, conservado como `_antes_parche`), `predicciones_wf.parquet` (60.741 filas = todos los
 partidos pronosticables 2019–2024, 46.558 ATP + 14.183 WTA; 60.058 liquidan y se evalúan; sha256 de contenido `f1703195…`), `evaluacion_wf.json`, `evaluacion_filas.parquet`,
 `entrenar.log`, `evaluar_wf.log`. Reserva 2025–2026: no se leyó (filtro de lectura `temporada <= 2024`, con prueba).
 Sin red, sin VPS, sin coste. El mercado no entra en ninguna pieza.
@@ -61,6 +61,38 @@ WTA 1.266 / 290 / 520 / 0.
 3. Corrección propuesta (parche atómico, para la próxima ola, con prueba de regresión): una varianza extra del partido
    en R, σ_R² sumada a v en el enlace y estimada por MV con ≤ 2018 (o Σ_ε de R estimada en R y no tomada de P),
    por circuito y quizá por nivel (Challenger/gira). No la apliqué: exigiría reentrenar y la orden fue parar.
+
+### 3.b Parche G-calibración (6-nov, aprobado por el titular): σ_R² del partido en el enlace
+
+Implementación: Σ_m += σ_R²·[[1,−1],[−1,1]] en la verosimilitud y en la predicción (`tabla.convolucionar`, convolución
+1-D exacta; frente al simulador con Q = 61 < 1e-6); σ_R por circuito por MV con ≤ 2018 y el resto CONGELADO
+(`entrenar.py --parche-sigma-r`), después un reajuste corto de todo (4 iteraciones) y σ_R de cada ablación. JSON
+anterior en `hiperparametros_antes_parche.json`; nuevo `hiperparametros.json` sha256 `416d4dee…54e5ec`; predicciones
+nuevas sha256 `38788d22…` (antes `f1703195…`; antes y después en `*_antes_parche.*`). Pruebas `test_modelo_parche.py`:
+σ_R = 0 reproduce bit a bit el sha256 WTA anterior; σ_R = 0,15 sube la pendiente de Platt 2012–2018.
+
+| Compuerta (2019–2024) | ATP antes → después | WTA antes → después |
+|---|---|---|
+| σ_R estimada (MV ≤ 2018) | — → **0,0010** | — → **0,0036** |
+| G-línea base Δ vs Elo rec. | −0,0036 [−0,0051; −0,0022] → igual | −0,0045 [−0,0068; −0,0022] → −0,0045 [−0,0068; −0,0021] |
+| G-calibración pendiente | 0,796 [0,771; 0,821] → 0,797 [0,772; 0,821] **FALLA** | 0,876 [0,833; 0,920] → 0,876 [0,832; 0,919] **FALLA** |
+| G-recalibración | −0,0027 → −0,0026 | −0,0010 → −0,0010 |
+| G-cordura (Brier mín.) | 0,223 → 0,223 | 0,211 → 0,211 |
+| No-fuga / reproducibilidad / unión C | 0 / sha idéntico / ≤ 3,1e-10 | 0 / sha idéntico / ≤ 2,9e-10 |
+| Ablaciones superficie / fatiga | −0,0033 / +0,0002 (sin cambio) | −0,0017 / −0,0003 (sin cambio) |
+
+Variante registrada Challenger/gira (ATP): σ_R gira 0,000 y Challenger 0,046; 2Δll = 0,98 < 3,84 ⇒ **no justificada**
+(en 2019–2024: pendiente 0,798, Δ −0,00005). WTA no tiene Challenger en TML.
+
+**Causa raíz (diagnóstico con los mismos estados, solo ≤ 2018):** la MV rechaza σ_R porque, al entrar en la
+verosimilitud, también frena las actualizaciones, y las ganancias del filtro ya están en su óptimo. La sobreconfianza
+no es ruido del partido: es que la **varianza predictiva de las medias está infravalorada**. Recalculando π con los
+mismos (ρ, v) de 2012–2018: v mediana 0,008–0,009; v + 0,02 solo en la predicción ⇒ pendiente de Platt 0,854 → 0,994
+(WTA) y 0,867 → 1,000 (ATP) y log-loss −0,0016 en ambos; v·4 ⇒ 1,04–1,07. El filtro (Laplace de un paso, campo medio
+sin covarianzas cruzadas entre jugadores, d por superficie) estima V ~3 veces menor que el error real de θ. Según la
+orden, **paro aquí sin aplicar la capa**. Corrección propuesta (siguiente parche, a aprobar): corregir V y no la
+observación, con un factor de inflación de la varianza predictiva estimado con ≤ 2018 (o un filtro con covarianza
+cruzada/EP). Habría que declarar que la verosimilitud de las actualizaciones y la predicción dejan de usar la misma Σ.
 
 ## 4. Ablaciones (informes; Δ = completo − ablación, mismas temporadas)
 

@@ -55,6 +55,8 @@ def correr_circuito(d, cfg: dict, obs) -> pd.DataFrame:
     s_sf = filtrar(d, Psi.desde_dict(cfg["ablacion_sin_fatiga"]["psi_r"]), tabs)
     _, s_hat, _ = filtrar_p(d, obs, PsiP(**{k: (tuple(v) if isinstance(v, list) else v) for k, v in cfg["psi_p"].items()}))
     el = elo(d)
+    var_ch = (filtrar(d, Psi.desde_dict(cfg["variante_challenger"]["psi_r"]), tabs).pi
+              if "variante_challenger" in cfg else np.full(len(d.p), np.nan))     # variante registrada (no publicada)
     p = d.p
     f = pd.DataFrame({"partido_key": p.partido_key, "circuito": p.circuito, "temporada": p.temporada,
                       "corte_utc": p.corte_utc, "pi_lado1": sal.pi, "prior_ranking_1": sal.prior1,
@@ -65,7 +67,7 @@ def correr_circuito(d, cfg: dict, obs) -> pd.DataFrame:
                       # columnas internas de evaluación (no se guardan en predicciones_wf)
                       "motivo": sal.motivo, "ult_vis": sal.ult_vis, "corte_ns": p.corte_ns, "fmt": p.fmt,
                       "y1": d.y1, "liquida": d.liquida, "pi_sin_sup": s_ss.pi, "pi_sin_fat": s_sf.pi,
-                      "p_elo": el["p_elo"], "p_elo_sup": el["p_elo_sup"], "superficie": p.superficie,
+                      "pi_var_ch": var_ch, "p_elo": el["p_elo"], "p_elo_sup": el["p_elo_sup"], "superficie": p.superficie,
                       "categoria": p.categoria.fillna("sin_categoria"), "ronda": p.ronda, "mejor_de": p.mejor_de,
                       "n_prev_min": np.minimum(p.n_prev_1.fillna(0), p.n_prev_2.fillna(0))})
     for col, base in (("pi_recal", "pi_lado1"), ("p_elo_cal", "p_elo")):
@@ -88,6 +90,9 @@ def evaluar(f: pd.DataFrame, cfg: dict, rng, reps: int) -> dict:
         else:
             out["comparaciones"][nombre] = ev.por_origen(s.temporada, y, pi, s[ref], rng, reps)
     out["calibracion"] = {c: ev.calibracion(y, s[c].to_numpy(), rng, reps) for c in ("pi_lado1", "p_elo_cal")}
+    if s.pi_var_ch.notna().all():
+        out["variante_challenger"] = {"calibracion": ev.calibracion(y, s.pi_var_ch.to_numpy(), rng, reps),
+                                      "vs_principal": ev.por_origen(s.temporada, y, s.pi_var_ch, pi, rng, reps)["combinado"]}
     for temp, g in s.groupby("temporada"):
         out["por_temporada_brier"][int(temp)] = {"n": int(len(g)), "brier": float(ev.brier(g.y1, g.pi_lado1).mean()),
                                                  "logloss": float(ev.perdida(g.y1, g.pi_lado1).mean())}

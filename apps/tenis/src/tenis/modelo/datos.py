@@ -65,6 +65,7 @@ def preparar(partidos: pd.DataFrame, eventos: pd.DataFrame, circuito: str, hasta
     p["fmt"] = [indice_formato(m, d) for m, d in zip(p.mejor_de, p.formato_decisivo)]
     p["equipos"] = p.por_equipos.fillna(False).astype(bool) | p.jjoo.fillna(False).astype(bool)
     p["pregs"] = p.semana_previa_gs.fillna(False).astype(float)
+    p["nivel"] = (p.categoria == "Challenger").astype(int)          # solo para la variante σ_R por nivel
     p["rank1"] = pd.to_numeric(p.rank_1, errors="coerce").astype(float)
     p["rank2"] = pd.to_numeric(p.rank_2, errors="coerce").astype(float)
     g = pd.to_numeric(p.y_ganador, errors="coerce")

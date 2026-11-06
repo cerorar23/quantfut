@@ -18,6 +18,7 @@ from . import estado as est
 from .fatiga import fatiga, termino
 from .prior_ranking import estado_inicial
 from .superficie import multiplicador
+from .tabla import convolucionar
 
 HISTORIAL_MAX = 12
 
@@ -57,6 +58,19 @@ def filtrar(d, psi, tablas: dict, ganadores=None) -> SalidaFiltro:
     fat_desc, pr1, pr2 = np.zeros(n_p, bool), np.zeros(n_p, bool), np.zeros(n_p, bool)
     motivo, ult = np.full(n_p, None, dtype=object), np.full(n_p, np.iinfo(np.int64).min, dtype=np.int64)
     cuenta = {"act": 0, "mult": 0}
+    niv = p.nivel.tolist() if "nivel" in p else [0] * n_p
+    s2_gen = psi.sigma_r ** 2
+    s2_ch = s2_gen if psi.sigma_r_challenger is None else psi.sigma_r_challenger ** 2
+    conv = {}
+
+    def tabla_de(f, s, nivel):
+        """Enlace con σ_R² (parche G-calibración); con σ_R = 0 es la tabla original, sin tocar."""
+        base, s2 = tablas[(f, s)], (s2_ch if nivel else s2_gen)
+        if s2 <= 0.0:
+            return base
+        if (id(base), s2) not in conv:
+            conv[(id(base), s2)] = convolucionar(base, s2)
+        return conv[(id(base), s2)]
 
     def bloque(i0, i1):
         terms = defaultdict(list)
@@ -72,7 +86,7 @@ def filtrar(d, psi, tablas: dict, ganadores=None) -> SalidaFiltro:
             for j in (a, b):
                 est.propagar(v[j], vis - t[j], psi); t[j] = vis
             rho = k * (m[a][0] - m[b][0]) + m[a][s + 1] - m[b][s + 1] - c_m[q]
-            tab = tablas[(fmt[q], s)]
+            tab = tabla_de(fmt[q], s, niv[q])
             if e_gan[i] == 1:
                 _, l1, l2 = tab.log_m(rho); g, h = l1, -l2
             else:
@@ -120,6 +134,6 @@ def filtrar(d, psi, tablas: dict, ganadores=None) -> SalidaFiltro:
         rho = k * (m[a][0] - m[b][0]) + m[a][s + 1] - m[b][s + 1] - (ft or 0.0)
         var = est.var_dir(v[a], c - t[a], psi, k, s) + est.var_dir(v[b], c - t[b], psi, k, s)
         k_m[i], c_m[i] = k, (ft or 0.0)
-        out["pi"][i], out["rho"][i], out["var_rho"][i] = tablas[(f, s)].prob(rho, var), rho, var
+        out["pi"][i], out["rho"][i], out["var_rho"][i] = tabla_de(f, s, niv[i]).prob(rho, var), rho, var
     return SalidaFiltro(out["pi"], out["rho"], out["var_rho"], out["f1"], out["f2"], fat_desc, pr1, pr2, motivo, ult,
                         cuenta["act"], cuenta["mult"])

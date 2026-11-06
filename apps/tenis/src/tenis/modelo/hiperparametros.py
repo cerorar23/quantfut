@@ -20,7 +20,8 @@ from .rating import filtrar
 VENTANA = (2007, 2018)
 S_LOG_KAPPA, S_GAMMA = 0.5, 0.1
 NOMBRES_R = ("ln_tau_theta", "ln_tau_inact", "ln_sigma_theta0", "b_rank", "ln_kappa_clay", "ln_kappa_grass",
-             "ln_kappa_indoor", "ln_sigma_d", "ln_tau_d", "x_r_omega", "u_phi1", "u_phi2", "gamma_pregs")
+             "ln_kappa_indoor", "ln_sigma_d", "ln_tau_d", "x_r_omega", "u_phi1", "u_phi2", "gamma_pregs",
+             "ln_sigma_r", "ln_sigma_r_challenger")
 NOMBRES_P = ("ln_sigma_alpha0", "ln_sigma_beta0", "ln_tau_alpha", "ln_tau_beta", "ln_sigma_ab", "ln_kappa_clay",
              "ln_kappa_grass", "ln_kappa_indoor", "ln_sigma_eps", "x_rho_eps", "ln_tau_mu")
 
@@ -38,7 +39,9 @@ def psi_desde_vector(x, fijo: dict, ablacion: str = "") -> Psi:
                r_omega=-0.2 + 1.19 * _expit(x[9]),
                phi=(0.0, 0.0) if sin_fat else (softplus(x[10]), softplus(x[11])),
                gamma=(x[12], 0.0, 0.0), lam=fijo["lam"], f90=fijo["f90"], sigma_eps=fijo["sigma_eps"],
-               rho_eps=fijo["rho_eps"], lbar=tuple(fijo["lbar"]))
+               rho_eps=fijo["rho_eps"], lbar=tuple(fijo["lbar"]),
+               sigma_r=math.exp(x[13]) if len(x) > 13 else 0.0,           # parche G-calibración
+               sigma_r_challenger=math.exp(x[14]) if len(x) > 14 else None)
 
 
 def psip_desde_vector(x) -> PsiP:
@@ -72,6 +75,14 @@ def _obj_r(x) -> float:
     psi = psi_desde_vector(x, _G["fijo"], _G["ablacion"])
     sal = filtrar(_G["d"], psi, _G["tablas"])
     return -loglik(_G["d"], sal.pi) + penalizacion(x, _G["ablacion"])
+
+
+def pendiente_platt(d, pi, ventana=(2012, 2018)) -> float:
+    """Pendiente de Platt de π en las temporadas de la ventana (diagnóstico del parche; dentro del ajuste)."""
+    from .recalibracion import ajustar_pendiente
+    t = d.p.temporada.to_numpy()
+    sel = np.isfinite(pi) & d.liquida & (t >= ventana[0]) & (t <= ventana[1])
+    return ajustar_pendiente(pi[sel], d.y1[sel])
 
 
 def _obj_p(x) -> float:

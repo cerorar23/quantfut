@@ -7730,3 +7730,7 @@ Hallazgo de datos que habria sido una fuga: en la base los ids de jugador salen 
 ## 2026-11-05 - Tenis v2, S3 ola 2 (modelo y walk-forward)
 
 Decision: no se aplica la capa de recalibracion para tapar G-calibracion. La pendiente ya sale 0,84-0,87 dentro de la ventana de ajuste, asi que la sobreconfianza es estructural (el enlace M_f fija la escala con la forma del dia estimada de los puntos de saque y el filtro de campo medio subestima la incertidumbre del rating), y una capa solo la escondería. Parche atomico propuesto: varianza extra del partido en el enlace de R. La fatiga queda como no validada (phi1 ~ 0): se informa, no se fuerza un efecto. Informe: docs/tenis_modelo_s3_20261105.md.
+
+## 2026-11-06 - Tenis v2, S3: el parche sigma_R no corrige la calibracion
+
+Decision/hallazgo: la varianza extra del partido en la verosimilitud tambien frena las actualizaciones del filtro, que ya estan en su optimo, asi que la ML la lleva a ~0 y la pendiente no se mueve. La sobreconfianza no es ruido del partido: la varianza predictiva de los ratings esta infravalorada ~3 veces (filtro de un paso de Laplace sin covarianzas cruzadas). Con v+0,02 solo en la prediccion la pendiente 2012-2018 llega a 0,99-1,00. Siguiente parche propuesto: inflacion de la varianza predictiva estimada con <= 2018; no se aplica la capa de recalibracion.

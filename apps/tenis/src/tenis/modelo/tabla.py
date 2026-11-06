@@ -85,6 +85,19 @@ def construir(lbar: float, formato: Formato, inc: Incertidumbre, r_max: float = 
     return Tabla(float(rej[0]), paso, tuple(c.tolist() for c in sp.c), float(ok.max()))
 
 
+def convolucionar(tb: Tabla, s2: float) -> Tabla:
+    """Tabla de M_R(ρ) = E_u[M_ε(ρ + u)], u ~ N(0, s2): el enlace con la varianza extra del partido σ_R² en la Σ de
+    M̄_f (dirección [1, −1], exacta como convolución 1-D). s2 = 0 devuelve la MISMA tabla (modelo anterior exacto)."""
+    if s2 <= 0.0:
+        return tb
+    rej = tb.lo + tb.paso * np.arange(len(tb.coef[0]) + 1)
+    s, nod = math.sqrt(s2), (NODOS_V if s2 <= V_CAMBIO else NODOS_V_ANCHO)
+    m = np.array([sum(w * math.exp(tb.log_m(r + s * x)[0]) for x, w in nod) for r in rej])
+    sp = CubicSpline(rej, np.log(m))
+    ok = rej[(rej >= -1e-9) & (m[::-1] >= 1e-13)]
+    return Tabla(float(rej[0]), tb.paso, tuple(c.tolist() for c in sp.c), float(ok.max()))
+
+
 def construir_todas(lbar: tuple, sigma_eps: float, rho_eps: float) -> dict:
     """tablas[(fmt, sup)] para los 6 formatos soportados × 4 superficies (ℓ̄ por superficie; se reutiliza si coincide)."""
     from .datos import FORMATOS

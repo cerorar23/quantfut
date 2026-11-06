@@ -22,8 +22,15 @@ class Psi:
     sigma_eps: float      # forma del día (logit), de la pieza P
     rho_eps: float
     lbar: tuple           # ℓ̄_{c,s} por superficie, de la pieza P
+    # Parche G-calibración (6-nov): varianza extra del partido en el enlace, Σ_m += σ_R²·[[1,−1],[−1,1]] (entra en la
+    # verosimilitud y en la predicción). 0 = modelo anterior exacto. Variante registrada: otra σ_R para Challenger.
+    sigma_r: float = 0.0
+    sigma_r_challenger: float | None = None
 
     def __post_init__(self):
+        if not (math.isfinite(self.sigma_r) and self.sigma_r >= 0) or (
+                self.sigma_r_challenger is not None and not (math.isfinite(self.sigma_r_challenger) and self.sigma_r_challenger >= 0)):
+            raise ValueError("σ_R debe ser finita y ≥ 0")
         escalas = (self.tau_theta, self.tau_inact, self.sigma_theta0, self.sigma_d, self.tau_d, self.sigma_eps, self.f90)
         if not all(math.isfinite(x) and x >= 0 for x in escalas):
             raise ValueError("las escalas de Ψ deben ser finitas y ≥ 0")
