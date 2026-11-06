@@ -6,6 +6,7 @@ import 'live_api.dart';
 import 'live_widgets.dart';
 import 'market_catalog.dart';
 import 'market_hub.dart';
+import 'published_history.dart';
 
 /// Pantalla de un mercado: tasa de acierto, pronósticos de hoy (abiertos) y
 /// el historial de los ya resueltos. Todo viene del servidor; lo que no llega
@@ -21,6 +22,7 @@ class MarketDetailScreen extends StatefulWidget {
     required this.upcoming,
     required this.record,
     this.locked = const [],
+    this.historyItems,
     this.onVip,
     this.agenda = const [],
     this.onOpenMatch,
@@ -51,6 +53,9 @@ class MarketDetailScreen extends StatefulWidget {
   /// Resueltos de esta familia (acertados / total).
   final PublishedRecord record;
 
+  /// La misma instantánea que alimentó las tarjetas del panel.
+  final List<JsonMap>? historyItems;
+
   @override
   State<MarketDetailScreen> createState() => _MarketDetailScreenState();
 }
@@ -62,7 +67,11 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.historyItems != null) {
+      history = List.of(widget.historyItems!);
+    } else {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -75,16 +84,12 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
       return;
     }
     try {
-      final body = jsonMap(
-        await widget.api.request(
-          '/mobile/v1/markets/history',
-          query: {'market': widget.markets.join(','), 'limit': 200},
-        ),
-      );
+      final rows = await loadFootballHistory(widget.api);
       if (!mounted) return;
       setState(
         () => history = [
-          for (final row in (body['items'] as List? ?? const [])) jsonMap(row),
+          for (final r in rows)
+            if (widget.markets.contains(r['market'])) r,
         ],
       );
     } catch (_) {
@@ -134,14 +139,16 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
       title: widget.family.localTitle,
       color: widget.color,
       today: history == null ? null : PublishedRecord(todays.length, todayWon),
-      overall: widget.record,
+      overall: history == null ? widget.record : historyRecord(history!),
       todayCount: widget.upcoming.length + widget.locked.length,
-      onLines: () => showLinesSheet(
-        context,
-        widget.family,
-        widget.minimum,
-        widget.color,
-      ),
+      onLines: widget.family.lines.isEmpty
+          ? null
+          : () => showLinesSheet(
+              context,
+              widget.family,
+              widget.minimum,
+              widget.color,
+            ),
       todayTab: _todayTab(context),
       historyTab: _historyTab(context),
     );
@@ -183,7 +190,8 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
     );
   }
 
-  static double? _price(Object? v) => v is num && v.isFinite && v > 1 ? v.toDouble() : null;
+  static double? _price(Object? v) =>
+      v is num && v.isFinite && v > 1 ? v.toDouble() : null;
 
   Widget _historyTab(BuildContext context) {
     if (error != null) {
@@ -193,10 +201,7 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
           children: [
             liveText(error!, color: liveMuted),
             const SizedBox(height: 12),
-            TextButton(
-              onPressed: _load,
-              child: Text(context.l10n.commonRetry),
-            ),
+            TextButton(onPressed: _load, child: Text(context.l10n.commonRetry)),
           ],
         ),
       );

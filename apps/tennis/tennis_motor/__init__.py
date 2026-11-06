@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 from tennis_engine.model import ServeModel
 from tennis_engine.scoring import Rules
-from tennis_allmarkets_v1.contracts import forecast_board
+from tennis_allmarkets_v1.contracts import forecast_board, validate_mass
 from tennis_markets_v2.catalog import Contract
 import tennis_player_games_v1 as player_games
 from tennis_core_v5.features import pair_features
@@ -33,6 +33,31 @@ def recentre(p_serve, q_serve, rules, sigma, target):
     f = lambda c: float(weights(c, sigma) @ bank.winner) - target
     center = brentq(f, -1.5, 1.5) if f(-1.5) < 0 < f(1.5) else (-1.5 if f(-1.5) >= 0 else 1.5)
     return MixtureEngine(bank, weights(center, sigma))
+
+
+def publication_board(engine):
+    """Prospective public contracts; the research board remains frozen.
+
+    Append the missing sides of sets totals and tie-break before sealing. The
+    Runtime activation is opt-in after validation. The publication rule still
+    requires a matching pre-seal quote and chooses one
+    candidate per family. Complements are not independent validation cases.
+    """
+    rows = forecast_board(engine)
+    extra = []
+    for row in rows:
+        contract = row['contract']
+        opposite = {'sets_total': 'under', 'tiebreak': 'no'}.get(contract['kind'])
+        if opposite is None:
+            continue
+        new_contract = dict(contract, selection=opposite)
+        if any(r['contract'] == new_contract for r in rows + extra):
+            continue
+        probabilities = engine.probabilities(Contract(**new_contract))
+        # Same joint distribution and push rules as the sealed original side.
+        validate_mass(probabilities)
+        extra.append(dict(contract=new_contract, probabilities=probabilities))
+    return rows + extra
 
 
 def live_market(config, player_a, player_b, before):
@@ -159,5 +184,5 @@ class Motor:
             board = market_board(self.config['propline_root'], name(a), name(b), decided_at)
         return dict(circuit=circuit, players=[name(a), name(b)], player_ids=[a, b], surface=surface, date=str(day.date()),
                     best_of=best_of, deciding_tiebreak=deciding_tiebreak, serve=point, winner=winner,
-                    markets=forecast_board(engine), market_board=board_with_model(engine, board) if board else None,
+                    markets=(publication_board(engine) if self.config.get('publish_complementary_markets') is True else forecast_board(engine)), market_board=board_with_model(engine, board) if board else None,
                     odds_used=odds is not None or live is not None, research_only=True)

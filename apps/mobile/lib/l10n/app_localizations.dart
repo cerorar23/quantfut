@@ -1576,6 +1576,12 @@ abstract class AppLocalizations {
   /// **'RESPONSABILIDAD'**
   String get guideTopic6;
 
+  /// No description provided for @historyWebSince.
+  ///
+  /// In es, this message translates to:
+  /// **'Historial web desde el 26/10/2026'**
+  String get historyWebSince;
+
   /// Cierra el aviso de la parte superior.
   ///
   /// In es, this message translates to:

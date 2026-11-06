@@ -22,6 +22,7 @@ import 'qf_theme.dart';
 const _look = <String, (Color, IconData)>{
   // Fútbol.
   'goals': (liveCyan, Icons.sports_soccer),
+  'btts': (liveGreen, Icons.compare_arrows),
   'team_goals': (liveGreen, Icons.sports_score),
   'corners': (liveGold, Icons.flag_outlined),
   'corners_team': (Color(0xffff8b3d), Icons.flag_outlined),
@@ -762,9 +763,7 @@ class MarketScaffold extends StatelessWidget {
                 Tab(text: context.l10n.mdTabPrevious),
               ],
             ),
-            Expanded(
-              child: TabBarView(children: [todayTab, historyTab]),
-            ),
+            Expanded(child: TabBarView(children: [todayTab, historyTab])),
           ],
         ),
       ),
@@ -889,12 +888,21 @@ class MarketPickCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          liveText('@${decimalText(price)}', size: 17, bold: true, color: liveGold),
+          liveText(
+            '@${decimalText(price)}',
+            size: 17,
+            bold: true,
+            color: liveGold,
+          ),
           if (caption != null)
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.storefront_outlined, size: 11, color: liveMuted),
+                const Icon(
+                  Icons.storefront_outlined,
+                  size: 11,
+                  color: liveMuted,
+                ),
                 const SizedBox(width: 3),
                 Flexible(
                   child: Text(
@@ -937,9 +945,7 @@ class MarketPickCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: liveText(header, size: 11, color: liveMuted),
-                  ),
+                  Expanded(child: liveText(header, size: 11, color: liveMuted)),
                   if (data.outcome != null) _outcomeBadge(context),
                 ],
               ),
@@ -1044,7 +1050,10 @@ class MarketLockedCard extends StatelessWidget {
               children: [
                 liveText(kickoffText(kickoff), size: 11, color: liveMuted),
                 const SizedBox(height: 8),
-                for (final (avatar, name) in [(homeAvatar, home), (awayAvatar, away)])
+                for (final (avatar, name) in [
+                  (homeAvatar, home),
+                  (awayAvatar, away),
+                ])
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(

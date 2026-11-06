@@ -1,0 +1,697 @@
+{
+  "generated_at": "2026-11-06T02:04:10.075Z",
+  "timezone": "America/Mexico_City",
+  "since": "2026-10-26",
+  "scope": "Mismo universo que #historial: fútbol Alta + Destacados; NBA/tenis solo Destacados",
+  "football": {
+    "overall": {
+      "n": 520,
+      "won": 429,
+      "hit_rate": 0.825,
+      "wilson95": [
+        0.79,
+        0.8552
+      ]
+    },
+    "markets": {
+      "h2h": {
+        "n": 9,
+        "won": 8,
+        "hit_rate": 0.8888888888888888,
+        "wilson95": [
+          0.565,
+          0.9801
+        ]
+      },
+      "totals": {
+        "n": 166,
+        "won": 126,
+        "hit_rate": 0.7590361445783133,
+        "wilson95": [
+          0.6886,
+          0.8178
+        ]
+      },
+      "spreads": {
+        "n": 206,
+        "won": 173,
+        "hit_rate": 0.8398058252427184,
+        "wilson95": [
+          0.7836,
+          0.8836
+        ]
+      },
+      "team_totals_home": {
+        "n": 62,
+        "won": 55,
+        "hit_rate": 0.8870967741935484,
+        "wilson95": [
+          0.7848,
+          0.9442
+        ]
+      },
+      "team_totals_away": {
+        "n": 35,
+        "won": 28,
+        "hit_rate": 0.8,
+        "wilson95": [
+          0.6411,
+          0.8996
+        ]
+      },
+      "corners": {
+        "n": 16,
+        "won": 16,
+        "hit_rate": 1,
+        "wilson95": [
+          0.8064,
+          1
+        ]
+      },
+      "double_chance": {
+        "n": 22,
+        "won": 20,
+        "hit_rate": 0.9090909090909091,
+        "wilson95": [
+          0.7219,
+          0.9747
+        ]
+      },
+      "btts": {
+        "n": 2,
+        "won": 2,
+        "hit_rate": 1,
+        "wilson95": [
+          0.3424,
+          1
+        ]
+      },
+      "cards": {
+        "n": 2,
+        "won": 1,
+        "hit_rate": 0.5,
+        "wilson95": [
+          0.0945,
+          0.9055
+        ]
+      }
+    }
+  },
+  "tennis": {
+    "winner": {
+      "model_rows": 142,
+      "published_rows": 10,
+      "published_record": {
+        "n": 9,
+        "won": 8,
+        "hit_rate": 0.8888888888888888,
+        "wilson95": [
+          0.565,
+          0.9801
+        ]
+      },
+      "web_record": {
+        "n": 16,
+        "won": 15,
+        "hit_rate": 0.9375,
+        "wilson95": [
+          0.7167,
+          0.9889
+        ]
+      },
+      "future_candidates": []
+    },
+    "tiebreak": {
+      "model_rows": 142,
+      "published_rows": 0,
+      "published_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "web_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "future_candidates": []
+    },
+    "games_total": {
+      "model_rows": 1278,
+      "published_rows": 2,
+      "published_record": {
+        "n": 2,
+        "won": 2,
+        "hit_rate": 1,
+        "wilson95": [
+          0.3424,
+          1
+        ]
+      },
+      "web_record": {
+        "n": 20,
+        "won": 17,
+        "hit_rate": 0.85,
+        "wilson95": [
+          0.6396,
+          0.9476
+        ]
+      },
+      "future_candidates": []
+    },
+    "games_handicap": {
+      "model_rows": 994,
+      "published_rows": 1,
+      "published_record": {
+        "n": 1,
+        "won": 1,
+        "hit_rate": 1,
+        "wilson95": [
+          0.2065,
+          1
+        ]
+      },
+      "web_record": {
+        "n": 44,
+        "won": 35,
+        "hit_rate": 0.7954545454545454,
+        "wilson95": [
+          0.655,
+          0.8885
+        ]
+      },
+      "future_candidates": []
+    },
+    "sets_total": {
+      "model_rows": 142,
+      "published_rows": 0,
+      "published_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "web_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "future_candidates": []
+    },
+    "sets_handicap": {
+      "model_rows": 284,
+      "published_rows": 2,
+      "published_record": {
+        "n": 2,
+        "won": 2,
+        "hit_rate": 1,
+        "wilson95": [
+          0.3424,
+          1
+        ]
+      },
+      "web_record": {
+        "n": 21,
+        "won": 20,
+        "hit_rate": 0.9523809523809523,
+        "wilson95": [
+          0.7733,
+          0.9915
+        ]
+      },
+      "future_candidates": []
+    },
+    "set_winner": {
+      "model_rows": 426,
+      "published_rows": 1,
+      "published_record": {
+        "n": 1,
+        "won": 1,
+        "hit_rate": 1,
+        "wilson95": [
+          0.2065,
+          1
+        ]
+      },
+      "web_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "future_candidates": []
+    }
+  },
+  "nba": {
+    "winner": {
+      "model_rows": 40,
+      "published_rows": 1,
+      "published_record": {
+        "n": 1,
+        "won": 1,
+        "hit_rate": 1,
+        "wilson95": [
+          0.2065,
+          1
+        ]
+      },
+      "web_record": {
+        "n": 1,
+        "won": 1,
+        "hit_rate": 1,
+        "wilson95": [
+          0.2065,
+          1
+        ]
+      },
+      "future_candidates": []
+    },
+    "game_total": {
+      "model_rows": 3338,
+      "published_rows": 20,
+      "published_record": {
+        "n": 18,
+        "won": 15,
+        "hit_rate": 0.8333333333333334,
+        "wilson95": [
+          0.6078,
+          0.9416
+        ]
+      },
+      "web_record": {
+        "n": 1,
+        "won": 1,
+        "hit_rate": 1,
+        "wilson95": [
+          0.2065,
+          1
+        ]
+      },
+      "future_candidates": [
+        {
+          "event": 17966,
+          "market": "totals-None-252.5-under",
+          "selection": "Menos de 252.5 puntos",
+          "probability": 0.87017,
+          "price": 1.2,
+          "book": "fanduel"
+        }
+      ]
+    },
+    "team_points": {
+      "model_rows": 3778,
+      "published_rows": 20,
+      "published_record": {
+        "n": 18,
+        "won": 15,
+        "hit_rate": 0.8333333333333334,
+        "wilson95": [
+          0.6078,
+          0.9416
+        ]
+      },
+      "web_record": {
+        "n": 12,
+        "won": 9,
+        "hit_rate": 0.75,
+        "wilson95": [
+          0.4677,
+          0.9111
+        ]
+      },
+      "future_candidates": [
+        {
+          "event": 17966,
+          "market": "team_totals-394-131.5-under",
+          "selection": "Menos de 131.5 puntos",
+          "probability": 0.89502,
+          "price": 1.211,
+          "book": "betmgm"
+        }
+      ]
+    },
+    "handicap": {
+      "model_rows": 2616,
+      "published_rows": 20,
+      "published_record": {
+        "n": 18,
+        "won": 15,
+        "hit_rate": 0.8333333333333334,
+        "wilson95": [
+          0.6078,
+          0.9416
+        ]
+      },
+      "web_record": {
+        "n": 2,
+        "won": 2,
+        "hit_rate": 1,
+        "wilson95": [
+          0.3424,
+          1
+        ]
+      },
+      "future_candidates": [
+        {
+          "event": 17966,
+          "market": "spreads-None-17.5-visit",
+          "selection": "Miami Heat +17.5",
+          "probability": 0.8660699999999999,
+          "price": 1.211,
+          "book": "betmgm"
+        }
+      ]
+    },
+    "player_threes": {
+      "model_rows": 456,
+      "published_rows": 0,
+      "published_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "web_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "future_candidates": []
+    },
+    "player_assists": {
+      "model_rows": 470,
+      "published_rows": 0,
+      "published_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "web_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "future_candidates": []
+    },
+    "player_rebounds": {
+      "model_rows": 672,
+      "published_rows": 0,
+      "published_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "web_record": {
+        "n": 1,
+        "won": 1,
+        "hit_rate": 1,
+        "wilson95": [
+          0.2065,
+          1
+        ]
+      },
+      "future_candidates": []
+    },
+    "player_points": {
+      "model_rows": 1000,
+      "published_rows": 0,
+      "published_record": {
+        "n": 0,
+        "won": 0,
+        "hit_rate": null,
+        "wilson95": null
+      },
+      "web_record": {
+        "n": 1,
+        "won": 1,
+        "hit_rate": 1,
+        "wilson95": [
+          0.2065,
+          1
+        ]
+      },
+      "future_candidates": []
+    }
+  },
+  "requests": [
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-03",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-09",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-08",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-07",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-01",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-05",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-06",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-02",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/cartelera?fecha=2026-11-04",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/938/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/937/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/936/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/935/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/33/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/63/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/124/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/98/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/159/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/189/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/218/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/250/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/282/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/341/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/310/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/367/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/396/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/427/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/458/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11332/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11331/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11330/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11333/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11334/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11335/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11336/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11337/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11338/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11339/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/11340/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/17835/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/17836/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/17877/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/17965/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18061/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18062/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/17966/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18063/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18064/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18066/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18065/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18067/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18073/mercados",
+      "status": 200
+    },
+    {
+      "url": "https://pronosticosdeportivos.pro/nba/v1/partido/18074/mercados",
+      "status": 200
+    }
+  ],
+  "limitations": [
+    "Ventana del servidor: NBA cuatro días atrás y cuatro adelante; tenis siete días.",
+    "Las publicaciones y cuotas se obtienen en momentos distintos; los resultados son una instantánea.",
+    "Los intervalos Wilson son descriptivos; varias selecciones del mismo partido no son independientes.",
+    "Un porcentaje alto con pocos casos no acredita una tasa futura ni rentabilidad.",
+    "No se modificó ningún sello, historial, configuración o motor."
+  ],
+  "tennis_complements_research_only": {
+    "note": "Derivación matemática retrospectiva de probabilidades selladas; no es una publicación ni acredita cuota de la casa del lado complementario. No se suma al historial.",
+    "families": {
+      "sets_total": [
+        {
+          "threshold": 0.6,
+          "n": 131,
+          "won": 86,
+          "averageProbability": 0.6575125963013061
+        },
+        {
+          "threshold": 0.75,
+          "n": 2,
+          "won": 1,
+          "averageProbability": 0.7575768788479087
+        }
+      ],
+      "tiebreak": [
+        {
+          "threshold": 0.6,
+          "n": 101,
+          "won": 62,
+          "averageProbability": 0.7293560152122625
+        },
+        {
+          "threshold": 0.75,
+          "n": 50,
+          "won": 33,
+          "averageProbability": 0.7828655726290815
+        }
+      ]
+    }
+  }
+}
