@@ -25,6 +25,7 @@ from ..model.devig import devig, two_way_devig
 from . import alta_prob as ap
 from . import hashchain
 from . import picks as pk
+from . import referencia as rf
 from . import ventana
 
 log = logging.getLogger(__name__)
@@ -138,7 +139,8 @@ def _liquidados(desde: str | None = "control") -> list[dict]:
 # Decisión
 # --------------------------------------------------------------------------
 
-def _snapshot(match_id: str, kickoff: datetime, now: datetime) -> pk.Snapshot | None:
+def _snapshot(match_id: str, kickoff: datetime, now: datetime,
+              consenso: bool = False) -> pk.Snapshot | None:
     """
     La captura más reciente, vigente, con el 1X2 de Pinnacle completo y alguna casa
     de los suscriptores; The Odds API/PropLine primero. Los totales se leen de la
@@ -147,11 +149,19 @@ def _snapshot(match_id: str, kickoff: datetime, now: datetime) -> pk.Snapshot | 
     No vale la última sin más: PropLine trae solo a Pinnacle la mayoría de las horas
     y las casas cada ~3 h. El 25-oct la selección cayó en una de solo Pinnacle y casi
     todo salió sin cuota.
+
+    `consenso` (solo el parley v2, decisión del usuario 2026-11-06): Pinnacle deja de ser
+    obligatorio; basta que varias casas cotizen el 1X2 completo (`referencia.probabilidades`).
     """
     for snap in _capturas(match_id, now):
         if snap is None:
             continue
         if now - snap.as_of > ap.MAX_EDAD_PRECIO or kickoff - snap.as_of < pk.MIN_LEAD:
+            continue
+        if consenso:
+            if (rf.probabilidades(snap.books, SEL, preferida=settings.sharp_book) is not None
+                    and any(b in settings.soft_books for b in snap.books)):
+                return snap
             continue
         q = snap.books.get(settings.sharp_book, {})
         if (set(q) == set(SEL) and min(q.values()) > 1.0
@@ -160,8 +170,37 @@ def _snapshot(match_id: str, kickoff: datetime, now: datetime) -> pk.Snapshot | 
     return None
 
 
-def linea_pinnacle(rows: list[dict]) -> tuple[float, float] | None:
-    """(línea, p_over justa) de Pinnacle: medio gol primero, si no la más cercana a 2,5."""
+def referencia_1x2(snap: pk.Snapshot, consenso: bool = False) -> dict[str, float] | None:
+    """Probabilidades 1X2 sin margen: Pinnacle (por defecto) o el consenso de casas."""
+    if consenso:
+        r = rf.probabilidades(snap.books, SEL, preferida=settings.sharp_book)
+        return r[0] if r else None
+    q = snap.books[settings.sharp_book]
+    fair = devig([q[s] for s in SEL], settings.devig_method)
+    return {s: float(fair[i]) for i, s in enumerate(SEL)}
+
+
+def linea_pinnacle(rows: list[dict], consenso: bool = False) -> tuple[float, float] | None:
+    """(línea, p_over justa) de Pinnacle: medio gol primero, si no la más cercana a 2,5.
+
+    Con `consenso` la p_over sale del consenso de las casas que cotizan esa línea.
+    """
+    if consenso:
+        casas: dict[float, dict[str, dict[str, float]]] = {}
+        for r in rows:
+            if r["line"] is None:
+                continue
+            casas.setdefault(float(r["line"]), {}).setdefault(
+                pk.canonical_book(r["bookmaker"]), {})[r["selection"]] = float(r["price"])
+        listas = {}
+        for ln, por_casa in casas.items():
+            ref = rf.probabilidades(por_casa, ("over", "under"), preferida=settings.sharp_book)
+            if ref:
+                listas[ln] = ref[0]["over"]
+        if not listas:
+            return None
+        ln = min(listas, key=lambda x: (x not in _MEDIO_GOL, abs(x - 2.5)))
+        return ln, listas[ln]
     por_linea: dict[float, dict[str, float]] = {}
     for r in rows:
         if r["line"] is None or pk.canonical_book(r["bookmaker"]) != settings.sharp_book:

@@ -1,5 +1,10 @@
 # Parley v2: probabilidad calibrada y control de incertidumbre, sin supuesto +EV
 
+> Actualización 2026-11-06: la fase 1 está implementada en `src/qf/publish/parley_v2.py` (v2.1: topes por
+> mercado, búsqueda simultánea de los cuatro targets, estados publicado / abstención / solo referencia). Las
+> mediciones que la respaldan están en `parley_topes_medicion_20261106.md`. Lo que sigue de este documento
+> (horario 03:35, lote propio, calibración y backtest) son fases pendientes.
+
 Fecha: 2026-11-06. Entrega de diseño y pseudocódigo; NO modifica el motor activo,
 el cron, modelos, base de datos ni publicaciones. El usuario admite implementación
 o propuesta y solicita explícitamente pseudocódigo o código. Las casas mezcladas

@@ -748,6 +748,46 @@ del usuario: pierde el margen en cada pata y el historial lo enseña). Diseño:
     5): con esos n, 73 % frente a 100 % puede ser azar y se favorecerían mercados por suerte. Revisar
     cuando haya ~50 liquidados POR mercado (`historial.por_mercado` de `/alta-probabilidad` y el
     resumen del parley); entonces medir calibración real/prometida por mercado antes de ponderar.
+### Parley v2.1: targets 2.10 / 3.10 / 8.20 / 12.10 (2026-11-06, pedido del usuario)
+
+Selector puro `publish/parley_v2.py`, sin supuesto +EV; propuesta en `docs/parley_v2_propuesta_20261106.md`,
+medición de topes en `docs/parley_topes_medicion_20261106.md`. NO está enganchado al sellado.
+
+1. [x] Fase 1: política por mercado (ganador ≤2.50 y líneas ≤2.10 en targets altos; 1.20-1.80 en bajos; 1T 1X2
+   fuera; lo no medido 1.80), `consolidar` (mejor cuota entre casas con guarda de cuotas atípicas), búsqueda
+   simultánea de los cuatro targets, estados `publicado` / `abstencion` / `solo_referencia`, `same_game` solo
+   referencia sin cuota de paquete y modelo conjunto, `resumen` auditable. Pruebas en `tests/test_parley_v2.py`
+   (incluye comparación con búsqueda exhaustiva). Scripts en `scripts/analisis_parley/`.
+1b. [x] Tenis y NBA en el selector (2026-11-06): `publish/parley_ext.py` convierte el archivo PropLine
+   (`read_two_way`) en candidatos de ganador, hándicap y totales del partido (solo líneas .5), con una oferta por
+   casa para `consolidar`. Probado con eventos sintéticos y, antes del cambio de referencia, en lectura contra el
+   archivo real del VPS (127 eventos de tenis y 29 de NBA, 104 candidatas, cuatro tickets). NO guarda patas:
+   `parley_patas.match_id` apunta a `matches` (fútbol) y no hay liquidación de tenis/NBA para el parley; eso va
+   en la fase 3 (migración + lote propio). Sets, ganador del set y tie-break no entran: no hay cuota en el archivo.
+1c. [x] Sin Pinnacle obligatorio (2026-11-06, pedido del usuario, todos los deportes y mercados):
+   `publish/referencia.py` da la probabilidad como consenso de las casas que cotizan el contrato completo (cada
+   una sin margen; Pinnacle conserva su peso 0,6 si cotiza; mínimo 2 casas, salvo Pinnacle sola). Tenis/NBA lo usan
+   siempre. Fútbol: `alta_prob_datos._snapshot / referencia_1x2 / linea_pinnacle` y `escalera_datos.opciones`
+   aceptan `consenso=True`; `parley_datos.candidatas` lo activa SOLO con `PARLEY_STRATEGY_VERSION=v2`; alta
+   probabilidad, escalera y el parley legado siguen exigiendo Pinnacle, sin cambios. Pendiente: ensayo contra el
+   archivo real con el consenso (la ejecución en el VPS se denegó) y medir cuánto cambian las probabilidades al
+   quitar Pinnacle antes de activar v2.
+1d. [x] Props de jugador NBA en el selector (2026-11-06): `parley_ext.props_feed` lee puntos, rebotes, asistencias y
+   triples (Over/Under, línea .5, dos lados en la misma casa, sin marcas de restricción/DFS/en juego) del mismo
+   archivo PropLine; probabilidad por consenso de casas y mejor cuota entre casas, con tope 2.10 (medido). Los
+   demás `player_*` (combos, robos, tapones) entran como no medidos (1.80). Una pata por partido. Pendiente antes
+   de publicar: confirmar disponibilidad del jugador (un prop de quien no juega se devuelve y cambia la cuota) y
+   ensayar contra el archivo real (la ejecución en el VPS se denegó).
+2. [ ] Fase 2: artefacto de calibración (60/20/20 con embargo, Platt / isotónica / mercado, bootstrap),
+   backtest A / B0 / B1 / B2 / B3 con versiones congeladas; sin eso nada pasa de `solo_referencia`.
+3. [ ] Fase 3: lote propio de parley a las 03:35 America/Mexico_City (09:35 UTC) con barrera por deporte y
+   reintentos hasta las 04:00; invierte predecir → seleccionar parley → sellar, así que exige confirmación
+   expresa del usuario antes de tocar `daily.py`, el cron o el sellado (`seal()` es único por fecha).
+4. [ ] Fase 4: parley NBA por partido en `max(inicio − 60 min, sellado)`: necesita el sellado diario NBA v1.3
+   (pendiente) y un revisor cada 5 min; un parley de un solo partido es same-game y hoy solo sería referencia.
+5. [ ] Medir cuando existan precios: tarjetas, ambos marcan, doble oportunidad, goles/córners por equipo
+   (solo desde sep/oct-2026) y tenis con historia larga (hoy solo el ganador).
+
 
 ## Modelo propio en las 12 ligas "solo sharp" (2026-10-11, pedido del usuario)
 

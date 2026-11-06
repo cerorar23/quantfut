@@ -1,5 +1,32 @@
 # Registro de decisiones — QuantFut
 
+## 2026-11-06 · Parley v2.1: tope por mercado, cuatro targets a la vez y «solo referencia» sin calibración
+
+El usuario pidió un selector de parleys por targets (2.10, 3.10, 8.20, 12.10), mínimo de patas y sin +EV. Lo que
+decide el diseño no es el prompt sino lo medido (`docs/parley_topes_medicion_20261106.md`): a cuota total fija
+la probabilidad conjunta es casi la misma con 3 o 4 patas (P ≈ (1 − margen) / cuota), así que menos patas compra
+cobertura y menos margen acumulado, no acierto; el salto útil es de tope 2.0 a 2.5 y 3.0 añade poco, mientras
+que por encima de 2.1 los goles y los props de jugador se calibran peor y cuestan 3-4 puntos más por pata. Por eso
+2.50 solo para ganador, 2.10 para líneas, 1.80 para lo no medido y el 1T 1X2 fuera (margen 9-11 %). Los cuatro
+tickets se resuelven a la vez: con el orden secuencial, el 12.10 se quedaba con lo que dejaban los demás.
+
+`publicado` exige probabilidad calibrada con incertidumbre en cada pata; sin artefacto de calibración (fase 2) todo
+sale `solo_referencia`, y un same-game solo es ejecutable con cuota real del paquete y modelo conjunto (la
+correlación medida llega a 1,45-1,59 sobre el producto de marginales). El módulo no está enganchado al sellado:
+el lote propio de las 03:35 invierte predecir → seleccionar → sellar y exige confirmación expresa. Lecciones: la
+prueba contra búsqueda exhaustiva cazó un fallo real (dos opciones de un mismo conjunto de eventos se pisaban
+al deduplicar), y el BOM de football-data dejaba sin id al 19 % de los partidos, lo que subestimó la cobertura del
+fútbol en la primera medición (corregido y documentado).
+
+Mismo día, a pedido del usuario: Pinnacle deja de ser obligatorio para la probabilidad de referencia en todos los
+deportes y mercados del parley. `publish/referencia.py` usa el consenso de las casas que cotizan el contrato
+completo (Pinnacle conserva su peso si cotiza; mínimo 2 casas). Se aplicó a tenis/NBA (`parley_ext.py`) y al
+fútbol mediante un parámetro `consenso` que solo activa `PARLEY_STRATEGY_VERSION=v2`, para no mover alta
+probabilidad, escalera ni el parley legado, cuyos controles se midieron con Pinnacle. El efecto sobre las
+probabilidades sin Pinnacle no está medido todavía: va antes de activar v2.
+
+## 2026-10-25 — Destacado del detalle: cuota mínima 1,40
+
 ## 5-nov-2026 (noche) · Calibración del destacado de fútbol por mercado y banda; qué regla cumple el 80 %
 
 Medición con 390 partidos terminados que tenían predicción previa al saque (base local `entreno`, copia de producción al 25-oct; del 27-sep al 25-oct), reconstruyendo las filas de la lista web (goles, equipo, hándicap, doble oportunidad, empate no acción, 1ª mitad, córners y tarjetas) y liquidándolas con el resultado real (los empates devueltos no cuentan). 97 de esos partidos tienen cuota de casa (PropLine, desde el 23-oct). NBA y tenis NO se calibraron aquí (pendiente).

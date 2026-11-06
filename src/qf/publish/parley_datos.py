@@ -59,9 +59,11 @@ def candidatas(now: datetime) -> tuple[list, int]:
     """Patas que pueden entrar y cuántos partidos no tenían precio."""
     rho = ad._rho_activo()
     modelos = ed.Modelos(now)
+    # v2: sin Pinnacle obligatorio (consenso de casas). El parley legado conserva su referencia.
+    consenso = os.getenv("PARLEY_STRATEGY_VERSION", "legacy") == "v2"
     todas, sin_precio = [], 0
     for m in _partidos(now):
-        res = ed.opciones(m, now, rho, modelos, incluir_doble=True)
+        res = ed.opciones(m, now, rho, modelos, incluir_doble=True, consenso=consenso)
         if res is None:
             sin_precio += 1
             continue
