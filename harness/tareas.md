@@ -3805,3 +3805,13 @@ Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin dat
 - [x] Hallazgo: en la base el id menor gana el 55,07 % (73,9 % sin historia) por el orden de carga; la exportacion orienta los lados de forma pseudoaleatoria (lado 1 gana 49,99 %); los ids son claves, nunca rasgos.
 - [ ] Ola 2: modelo de puntos P y rating R (superficie y fatiga estructurales), referencia independiente del rating, walk-forward 2019-2024 y compuertas de S3.
 - [ ] Pendiente del simulador: el contrato rechaza sets de ventaja y mejor de 5 sellado entero tarda 10-25 s (sellar el resumen comprimido del plan G.4); comparacion metodo delta frente a cuadratura espera el modelo D.7.
+
+## Tenis: rediseno - Sprint 3, ola 2: modelo P y R, walk-forward 2019-2024 (2026-11-05)
+
+- [x] Modelo (`apps/tenis/src/tenis/modelo/`): rating R con superficie y fatiga siempre presentes, pieza P de puntos, union por inversion, tabla de M_f (error 2,5e-9), linea base Elo/Elo+superficie/Elo recalibrado; hiperparametros congelados con datos <= 2018; 41 pruebas verdes.
+- [x] Predicciones 2019-2024: 60.741 partidos (reserva 2025-26 sin tocar), no-fuga 0 violaciones en 209.339, sha256 reproducible.
+- [x] G-linea base pasa (ATP -0,0036 [-0,0051; -0,0022], WTA -0,0045 [-0,0068; -0,0022] frente a Elo recalibrado). G-cordura pasa.
+- [ ] **G-calibracion FALLA**: pendiente 0,796 ATP y 0,876 WTA (sobreconfianza estructural, ya 0,84-0,87 dentro de 2012-2018). No se arreglo con la capa. Parche propuesto: varianza extra del partido sigma_R^2 en el enlace de R, por circuito, ML con <= 2018, reentrenar.
+- [x] Informes de ablacion: superficie ayuda (ATP -0,0033, WTA -0,0017); fatiga NO validada (phi1 ~ 0).
+- [ ] Referencia independiente del rating: codigo y 40 pruebas hechos; comparacion contra predicciones_wf.parquet sin correr (~45 min por circuito); 24 ambiguedades de especificacion en docs/tenis_referencia_rating_20261105.md.
+- [ ] Defecto aguas arriba: 15 filas de estadisticas SofaScore con mas puntos ganados que jugados (rechazar en cargador/contrato).

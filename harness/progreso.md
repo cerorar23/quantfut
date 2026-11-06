@@ -7726,3 +7726,7 @@ Coste declarado del calendario seguro: la pareja de TML se ve tras el inicio rea
 Decision clave: el simulador se valido contra una segunda implementacion independiente (programacion dinamica punto a punto, sin formulas cerradas) y contra Monte Carlo, y se dejo la cuadratura en 11 nodos porque la compuerta propia mostro que 9 fallaba en mejor de 5 con alta dispersion. La exportacion se valido contra la puerta oficial de lectura (`*_a_las`) con 0 discrepancias, que es la comprobacion que impide una fuga silenciosa en el entrenamiento historico.
 
 Hallazgo de datos que habria sido una fuga: en la base los ids de jugador salen del orden de carga y el id menor gana el 55,07 % (73,9 % cuando ninguno tiene historia). Cualquier rasgo posicional o por id habria filtrado el resultado; la exportacion orienta los lados de forma pseudoaleatoria y declara los ids como claves.
+
+## 2026-11-05 - Tenis v2, S3 ola 2 (modelo y walk-forward)
+
+Decision: no se aplica la capa de recalibracion para tapar G-calibracion. La pendiente ya sale 0,84-0,87 dentro de la ventana de ajuste, asi que la sobreconfianza es estructural (el enlace M_f fija la escala con la forma del dia estimada de los puntos de saque y el filtro de campo medio subestima la incertidumbre del rating), y una capa solo la escondería. Parche atomico propuesto: varianza extra del partido en el enlace de R. La fatiga queda como no validada (phi1 ~ 0): se informa, no se fuerza un efecto. Informe: docs/tenis_modelo_s3_20261105.md.
