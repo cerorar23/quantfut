@@ -863,6 +863,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get guideTopic6 => 'VERANTWORTUNG';
 
   @override
+  String get historyWebSince => 'Webverlauf seit dem 26.10.2026';
+
+  @override
   String get homeBannerClose => 'Hinweis schließen';
 
   @override

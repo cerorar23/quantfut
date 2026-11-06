@@ -96,6 +96,15 @@ class PublishedRecord {
 }
 
 class MarketFamily {
+  /// Familia publicada sin prueba histórica empaquetada (p. ej., ambos marcan).
+  MarketFamily.publishedOnly({required this.id, required this.title})
+    : subtitle = title,
+      sport = sportFootball,
+      origin = '',
+      experimental = false,
+      published = PublishedRecord(0, 0),
+      lines = const [];
+
   MarketFamily.fromJson(Map<String, dynamic> json)
     : id = json['id'] as String,
       title = json['title'] as String,

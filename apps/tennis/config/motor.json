@@ -9,10 +9,11 @@
   "canonical_history": [
     {
       "canonical": "C:/Users/huye/Documents/apuesta proyec/data/tennis/identity_bridge_v3_20261019/canonical/matches.parquet",
-      "replaced_at": "2026-10-20T01:29:03.670593+00:00",
+      "replaced_at": "2026-10-19T19:29:03.670593-06:00",
       "models_root": "C:/Users/huye/Documents/apuesta proyec/data/tennis/full_20261016/models"
     }
   ],
   "params_norank": "C:/Users/huye/Documents/apuesta proyec/data/tennis/motor_params_norank.json",
-  "_note": "Template. The runtime copy is data/tennis/motor_config.json (TENNIS_MOTOR_CONFIG); the weekly refresh updates that one."
+  "_note": "Template. The runtime copy is data/tennis/motor_config.json (TENNIS_MOTOR_CONFIG); the weekly refresh updates that one.",
+  "publish_complementary_markets": false
 }

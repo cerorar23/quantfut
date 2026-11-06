@@ -862,6 +862,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get guideTopic6 => 'RESPONSABILITÉ';
 
   @override
+  String get historyWebSince => 'Historique web depuis le 26/10/2026';
+
+  @override
   String get homeBannerClose => 'Fermer l\'avis';
 
   @override

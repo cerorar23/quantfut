@@ -853,6 +853,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guideTopic6 => 'RESPONSIBILITY';
 
   @override
+  String get historyWebSince => 'Web history since 26 Oct 2026';
+
+  @override
   String get homeBannerClose => 'Dismiss notice';
 
   @override

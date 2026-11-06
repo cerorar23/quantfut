@@ -1,5 +1,13 @@
 # Backlog — QuantFut
 
+## Historial web en Flutter y mercados vacíos — 5-nov-2026
+
+- [x] Consultar la web publicada y auditar por deporte, familia y origen. Evidencia: docs/auditoria_historial_mercados_20261105.md y .json.
+- [x] Igualar fuentes, selección de destacados, corte local y ventana NBA; añadir Ambos marcan y compartir la instantánea de tarjetas/detalle.
+- [x] Preparar complementos de tenis antes del sellado, desactivados hasta validar calibración y acierto.
+- [ ] Completar PR/CI, integrar main, compilar 1.1.1+9 y publicar el artefacto Android.
+
+
 ## 4-nov-2026 · Publicar correcciones NBA y comprobar evidencia prospectiva
 
 Orden expresa del titular: publicar las correcciones y acreditar la calibración prospectiva si los datos lo permiten. No se fabrica acreditación ni se sustituyen resultados prospectivos por backtests.
