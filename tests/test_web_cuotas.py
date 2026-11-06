@@ -83,7 +83,7 @@ def test_tenis_forma_exacta_y_no_store(tmp_path, monkeypatch):
     r = client.get(TENIS)
     assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
     body = r.json()
-    assert set(body) == {"state", "generated_at", "source", "events"}
+    assert set(body) == {"state", "generated_at", "source", "events", "publicables"}
     assert body["state"] == "ok" and body["source"] == "PropLine"
     assert body["events"]["1"]["winner"]["price"] == 1.83
 
