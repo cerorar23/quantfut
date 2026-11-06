@@ -65,8 +65,9 @@ class _Api extends QuantFutApi {
     bool retry = true,
   }) async {
     if (path == '/mobile/v1/markets/history' ||
-        path == '/mobile/v1/markets/destacados')
+        path == '/mobile/v1/markets/destacados') {
       return {'items': <JsonMap>[]};
+    }
     if (path == '/mobile/v1/rewards') {
       return {
         'settings': {

@@ -168,7 +168,9 @@ class FixtureApi extends QuantFutApi {
     bool retry = true,
   }) async {
     paths.add(path);
-    if (path == '/mobile/v1/markets/history' || path == '/mobile/v1/markets/destacados') return {'items': <JsonMap>[]};
+    if (path == '/mobile/v1/markets/history' || path == '/mobile/v1/markets/destacados') {
+      return {'items': <JsonMap>[]};
+    }
     if (path == '/nba/v1/cartelera' && nbaFeed != null) return nbaFeed;
     if (path == '/web/deportes/tenis' && tennisFeed != null) return tennisFeed;
     return _rewards;
