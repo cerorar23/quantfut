@@ -94,6 +94,41 @@ orden, **paro aquí sin aplicar la capa**. Corrección propuesta (siguiente parc
 observación, con un factor de inflación de la varianza predictiva estimado con ≤ 2018 (o un filtro con covarianza
 cruzada/EP). Habría que declarar que la verosimilitud de las actualizaciones y la predicción dejan de usar la misma Σ.
 
+### 3.c Variante «filtro completo» (6-nov): θ con covarianza cruzada entre jugadores
+
+Implementación: `modelo/covarianza.py` y `modelo/rating_completo.py`. `rating.py` (campo medio) queda intacto y sigue
+reproduciendo su sha256. θ de los activos es una gaussiana conjunta con C densa (ventana de 2 años: ~1.000 activos en
+ATP y ~360 en WTA; quien sale guarda su marginal y vuelve con cruces 0). Cada bloque de igual visibilidad es una
+actualización de Laplace conjunta de rango K (Woodbury). La predicción usa Var(θ_A − θ_B) = C_AA + C_BB − 2C_AB.
+Parte de campo medio declarada: d_i y cov(θ_i, d_i) por jugador; se descartan cov(d_i, ·) con otros jugadores.
+Coste: 106 s por pasada ATP 2005–2018 (9 s el campo medio). Reajuste solo de τ_θ, τ_I, σ_θ0, b_rank (≤ 2018, L-BFGS, 10 it.).
+Pruebas (`test_modelo_completo.py`): con cruces forzados a 0 reproduce el filtro anterior a 1e-12 en un mundo sin
+jugadores repetidos en un bloque. En datos reales difiere hasta 0,026 en π por los bloques donde un jugador tiene
+varios resultados simultáneos: aquí la Laplace es conjunta y antes era una aproximación por jugador. También se
+prueban la simetría y semidefinición de C, la existencia de cruces, que la actualización reduce Var(θ_A − θ_B), la
+no-fuga, la simetría de lados, la reproducibilidad y la ventana.
+
+| ≤ 2018 (dentro del ajuste) | ATP campo medio → completo | WTA campo medio → completo |
+|---|---|---|
+| −log-verosimilitud predictiva | 59.734,6 → 59.636,2 | 17.617,7 → 17.601,6 |
+| Pendiente de Platt 2012–2018 | 0,867 → **0,875** | 0,854 → **0,860** |
+
+Con pendientes < 0,95 (y el adelanto 2012–2018 ya predijo bien 2019–2024 en el modelo anterior), por orden del
+titular **no se corrieron el walk-forward 2019–2024 ni la suite completa**. G-calibración se da por fallida también
+con esta variante. Los hiperparámetros quedan en `hiperparametros_filtro_completo.json`. `hiperparametros.json` y
+`predicciones_wf.parquet` vigentes no cambian (campo medio, parche σ_R ≈ 0).
+
+**Por qué la covarianza cruzada no corrige la escala.** Mejora las medias, con ganancia de verosimilitud real
+(98 nats ATP y 16 nats WTA), pero apenas cambia la varianza predictiva. Los cruces C_AB salen sobre todo positivos (un
+resultado solo informa de la diferencia), así que Var(θ_A − θ_B) baja en las parejas conectadas en lugar de subir. Haría
+falta ~+0,02 sobre v ≈ 0,009 (§3.b). El campo medio, por tanto, no es la causa principal. Hay un mismo τ_θ (con
+σ_θ0 y b) que fija a la vez la ganancia del filtro y la dispersión predictiva. Los datos prefieren la ganancia actual y
+más dispersión, lo que apunta a que el enlace M̄_f es demasiado empinado en ρ: IID + forma del día de P dan resultados
+más decisivos que los reales. σ_R lo aplanaría, pero en §3.b se estimó con la escala de θ congelada y arrancó en un
+óptimo local (σ_R → 0). Con un enlace más plano, las diferencias de θ tendrían que crecer a la vez (b_rank, σ_θ0, τ_θ).
+Hipótesis sin probar: ajustar CONJUNTAMENTE σ_R y la escala de θ (τ_θ, σ_θ0, b_rank) partiendo de σ_R > 0. Si tampoco
+llega, la causa estará en la forma de la dinámica (saltos o colas pesadas en θ: lesiones, regresos) y no en Σ.
+
 ## 4. Ablaciones (informes; Δ = completo − ablación, mismas temporadas)
 
 | | ATP | WTA |

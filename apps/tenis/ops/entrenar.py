@@ -9,6 +9,7 @@ arranque en caliente (sin superficie: κ ≡ 1, d ≡ 0, ℓ̄ común; sin fatig
 import argparse
 import json
 import math
+import os
 import shutil
 import sys
 import time
@@ -164,6 +165,48 @@ def parche_sigma_r(a):
     log(f"{ruta} escrito, sha256 {sha}")
 
 
+def filtro_completo(a):
+    """Variante «filtro completo» (6-nov): θ con covarianza cruzada. Parte del Ψ campo medio sin σ_R
+    (`hiperparametros_antes_parche.json`) y reajusta SOLO lo que cambia al corregir el filtro (τ_θ, τ_I, σ_θ0, b_rank)
+    con ≤ 2018; el resto queda congelado. Conserva el JSON del parche σ_R y el campo medio como alternativa."""
+    ruta = Path(a.salida)
+    if not ruta.with_name("hiperparametros_parche_sigma_r.json").exists():
+        shutil.copyfile(ruta, ruta.with_name("hiperparametros_parche_sigma_r.json"))
+    hpj = hp.leer(ruta.with_name("hiperparametros_antes_parche.json"))
+    from tenis.modelo.parametros import Psi
+    from tenis.modelo.rating_completo import VENTANA_ACTIVOS_ANIOS, filtrar_completo
+    p, e = dm.cargar_export(hasta=HASTA)
+    libres = [0, 1, 2, 3]
+    for c in a.circuitos:
+        cfg, d = hpj["circuitos"][c], dm.preparar(p, e, c, HASTA)
+        fijo, x = cfg["fijo_r"], [cfg["x_r"][n] for n in hp.NOMBRES_R[:13]]
+        tabs = tabla.construir_todas(tuple(cfg["lbar"]), fijo["sigma_eps"], fijo["rho_eps"])
+        tabs_c = tabla.construir_todas((cfg["lbar_comun"],) * 4, fijo["sigma_eps"], fijo["rho_eps"])
+        alternativa = {k: cfg[k] for k in ("psi_r", "x_r", "menos_loglik_r", "ablacion_sin_superficie", "ablacion_sin_fatiga")}
+        base = {"d": d, "tablas": tabs, "fijo": fijo, "ablacion": ""}
+        log(f"{c}: filtro completo, reajuste de {[hp.NOMBRES_R[i] for i in libres]} (−ll campo medio {cfg['menos_loglik_r']:.3f})")
+        xn, fn, _ = hp.ajustar(hp._obj_rc, x, base, libres=libres, maxiter=a.maxiter, trabajadores=a.trabajadores)
+        psi_n = hp.psi_desde_vector(xn, fijo)
+        info = {"menos_loglik_campo_medio": cfg["menos_loglik_r"], "menos_loglik_completo": fn,
+                "platt_2012_2018_campo_medio": hp.pendiente_platt(d, filtrar(d, Psi.desde_dict(cfg["psi_r"]), tabs).pi),
+                "platt_2012_2018_completo": hp.pendiente_platt(d, filtrar_completo(d, psi_n, tabs).pi),
+                "libres": [hp.NOMBRES_R[i] for i in libres], "ventana_activos_anios": VENTANA_ACTIVOS_ANIOS}
+        log(f"{c}: −ll {fn:.3f}; Platt 2012–2018 {info['platt_2012_2018_campo_medio']:.3f} → {info['platt_2012_2018_completo']:.3f}")
+        for nombre, abl, tb in (("ablacion_sin_superficie", "sin_superficie", tabs_c), ("ablacion_sin_fatiga", "sin_fatiga", tabs)):
+            xa0 = list(cfg[nombre]["x_r"])[:13]
+            xa0[:4] = xn[:4]
+            xa, fa, _ = hp.ajustar(hp._obj_rc, xa0, dict(base, tablas=tb, ablacion=abl), libres=libres,
+                                   maxiter=min(5, a.maxiter), trabajadores=a.trabajadores)
+            cfg[nombre] = {"psi_r": hp.psi_desde_vector(xa, fijo, abl).como_dict(), "x_r": xa.tolist(), "menos_loglik": fa}
+            log(f"{c}: {nombre} −ll {fa:.3f}")
+        cfg |= {"filtro": "covarianza_completa", "psi_r": psi_n.como_dict(), "x_r": dict(zip(hp.NOMBRES_R, xn.tolist())),
+                "menos_loglik_r": fn, "filtro_completo": info, "alternativa_campo_medio": alternativa}
+    hpj["filtro_completo"] = {"fecha": "2026-11-06", "regla": "θ conjunta con covarianza cruzada (ventana de activos), d por jugador "
+                              "con cov(θ_i, d_i); predicción con Var(θ_A − θ_B) incluida C_AB; bloques con Laplace conjunta (Woodbury)"}
+    sha = hp.escribir(ruta, hpj)
+    log(f"{ruta} escrito, sha256 {sha}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--circuitos", nargs="+", default=["atp", "wta"])
@@ -171,9 +214,15 @@ def main():
     ap.add_argument("--trabajadores", type=int, default=6)
     ap.add_argument("--salida", default=str(SALIDA / "hiperparametros.json"))
     ap.add_argument("--parche-sigma-r", action="store_true", help="solo el parche σ_R sobre el JSON existente")
+    ap.add_argument("--filtro-completo", action="store_true", help="variante con covarianza cruzada de θ")
+    ap.add_argument("--hilos-blas", type=int, default=2)
     a = ap.parse_args()
+    for v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ[v] = str(a.hilos_blas)      # lo heredan los trabajadores (se fija antes de importar numpy en ellos)
     if a.parche_sigma_r:
         return parche_sigma_r(a)
+    if a.filtro_completo:
+        return filtro_completo(a)
     t0 = time.time()
     p, e = dm.cargar_export(hasta=HASTA)
     stats = pd.read_parquet(dm.RUTA_EXPORT / "estadisticas_saque.parquet",

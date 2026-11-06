@@ -77,6 +77,14 @@ def _obj_r(x) -> float:
     return -loglik(_G["d"], sal.pi) + penalizacion(x, _G["ablacion"])
 
 
+def _obj_rc(x) -> float:
+    """Igual que `_obj_r` pero con el filtro de covarianza completa (variante del 6-nov)."""
+    from .rating_completo import filtrar_completo
+    psi = psi_desde_vector(x, _G["fijo"], _G["ablacion"])
+    sal = filtrar_completo(_G["d"], psi, _G["tablas"])
+    return -loglik(_G["d"], sal.pi) + penalizacion(x, _G["ablacion"])
+
+
 def pendiente_platt(d, pi, ventana=(2012, 2018)) -> float:
     """Pendiente de Platt de π en las temporadas de la ventana (diagnóstico del parche; dentro del ajuste)."""
     from .recalibracion import ajustar_pendiente

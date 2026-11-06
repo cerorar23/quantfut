@@ -7734,3 +7734,7 @@ Decision: no se aplica la capa de recalibracion para tapar G-calibracion. La pen
 ## 2026-11-06 - Tenis v2, S3: el parche sigma_R no corrige la calibracion
 
 Decision/hallazgo: la varianza extra del partido en la verosimilitud tambien frena las actualizaciones del filtro, que ya estan en su optimo, asi que la ML la lleva a ~0 y la pendiente no se mueve. La sobreconfianza no es ruido del partido: la varianza predictiva de los ratings esta infravalorada ~3 veces (filtro de un paso de Laplace sin covarianzas cruzadas). Con v+0,02 solo en la prediccion la pendiente 2012-2018 llega a 0,99-1,00. Siguiente parche propuesto: inflacion de la varianza predictiva estimada con <= 2018; no se aplica la capa de recalibracion.
+
+## 2026-11-06 - Tenis v2, S3: el filtro con covarianzas cruzadas tampoco corrige la escala
+
+Hallazgo: con covarianza completa de theta mejoran las medias (+98 nats ATP, +16 WTA) pero la pendiente de Platt 2012-2018 casi no se mueve (0,875 y 0,860), porque la covarianza cruzada entre rivales es sobre todo positiva y por tanto reduce Var(theta_A - theta_B) en vez de subirla. El campo medio no era la causa principal. Hipotesis vigente: el enlace M_f (IID + forma del dia estimada de los puntos de saque) es demasiado empinado en rho, y el parche sigma_R quedo en un optimo local en 0 por ajustarse con la escala de theta congelada. Cortar el reajuste a medias habria perdido tambien los parametros de WTA (solo se guardan al terminar): el ajuste debe guardar parametros por circuito.

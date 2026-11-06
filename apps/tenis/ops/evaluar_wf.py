@@ -26,6 +26,7 @@ from tenis.modelo.linea_base import elo
 from tenis.modelo.parametros import Psi
 from tenis.modelo.puntos import PsiP, filtrar_p, observaciones
 from tenis.modelo.rating import filtrar
+from tenis.modelo.rating_completo import filtrar_completo
 from tenis.modelo.union import unir
 
 SALIDA = Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\rediseno_20261104\modelo_s3")
@@ -48,11 +49,12 @@ def correr_circuito(d, cfg: dict, obs) -> pd.DataFrame:
     psi = Psi.desde_dict(cfg["psi_r"])
     tabs = tabla.construir_todas(tuple(cfg["lbar"]), psi.sigma_eps, psi.rho_eps)
     tabs_c = tabla.construir_todas((cfg["lbar_comun"],) * 4, psi.sigma_eps, psi.rho_eps)
+    fil = filtrar_completo if cfg.get("filtro") == "covarianza_completa" else filtrar
     t0 = time.time()
-    sal = filtrar(d, psi, tabs)
-    log(f"{d.circuito}: filtro completo {time.time() - t0:.0f} s, {sal.n_actualizaciones} actualizaciones")
-    s_ss = filtrar(d, Psi.desde_dict(cfg["ablacion_sin_superficie"]["psi_r"]), tabs_c)
-    s_sf = filtrar(d, Psi.desde_dict(cfg["ablacion_sin_fatiga"]["psi_r"]), tabs)
+    sal = fil(d, psi, tabs)
+    log(f"{d.circuito}: filtro {cfg.get('filtro', 'campo_medio')} {time.time() - t0:.0f} s, {sal.n_actualizaciones} actualizaciones")
+    s_ss = fil(d, Psi.desde_dict(cfg["ablacion_sin_superficie"]["psi_r"]), tabs_c)
+    s_sf = fil(d, Psi.desde_dict(cfg["ablacion_sin_fatiga"]["psi_r"]), tabs)
     _, s_hat, _ = filtrar_p(d, obs, PsiP(**{k: (tuple(v) if isinstance(v, list) else v) for k, v in cfg["psi_p"].items()}))
     el = elo(d)
     var_ch = (filtrar(d, Psi.desde_dict(cfg["variante_challenger"]["psi_r"]), tabs).pi
