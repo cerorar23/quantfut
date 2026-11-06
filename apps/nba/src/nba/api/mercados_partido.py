@@ -8,6 +8,7 @@ from ..contratos.validar import validar_equipo, validar_jugador
 from ..v2.contratos_apuesta import desde_masas
 from .comun import contrato_linea
 from .destacado_valor import elegir_destacado
+from .publicacion import publicar
 
 PROPS = {"player_points": "puntos", "player_rebounds": "rebotes",
          "player_assists": "asistencias", "player_threes": "triples"}
@@ -186,4 +187,5 @@ def consultar(db, fila):
     for row in [*salida["markets"], *salida["projections"]]:
         row["team"] = nombres.get(row["team"])
     destacar(salida)
+    publicar(salida)
     return salida

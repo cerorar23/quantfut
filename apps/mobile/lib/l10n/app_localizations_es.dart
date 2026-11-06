@@ -1191,6 +1191,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get marketResult1x2 => 'Resultado 1X2';
 
   @override
+  String marketUnderLine(String line) {
+    return 'Menos de $line';
+  }
+
+  @override
   String get marketUnknown => 'Mercado';
 
   @override
@@ -2275,6 +2280,53 @@ class AppLocalizationsEs extends AppLocalizations {
   String selWinToNil(String team) {
     return '$team gana sin recibir gol';
   }
+
+  @override
+  String sfCounts(int open, int resolved) {
+    return 'Abiertos $open · Resueltos $resolved';
+  }
+
+  @override
+  String get sfNbaGameTotal => 'Total de puntos del partido';
+
+  @override
+  String get sfNbaHandicap => 'Hándicap del partido';
+
+  @override
+  String get sfNbaPlayerAssists => 'Asistencias del jugador';
+
+  @override
+  String get sfNbaPlayerPoints => 'Puntos del jugador';
+
+  @override
+  String get sfNbaPlayerRebounds => 'Rebotes del jugador';
+
+  @override
+  String get sfNbaPlayerThrees => 'Triples del jugador';
+
+  @override
+  String get sfNbaTeamPoints => 'Puntos por equipo';
+
+  @override
+  String get sfRangeNote => 'Pronósticos con probabilidad del 60 % al 95 %';
+
+  @override
+  String get sfTennisGamesHandicap => 'Hándicap de juegos';
+
+  @override
+  String get sfTennisGamesTotal => 'Juegos totales';
+
+  @override
+  String get sfTennisSetWinner => 'Ganador del set';
+
+  @override
+  String get sfTennisSetsHandicap => 'Hándicap de sets';
+
+  @override
+  String get sfTennisSetsTotal => 'Total de sets';
+
+  @override
+  String get sfTennisTiebreak => 'Tie-break';
 
   @override
   String get shellNeedCoinsBody =>

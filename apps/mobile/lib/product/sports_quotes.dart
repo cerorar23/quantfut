@@ -1,3 +1,4 @@
+import '../l10n/pick_labels.dart' show bookName;
 import 'live_api.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
@@ -57,11 +58,19 @@ SportQuote? _quote(Object? raw) {
 }
 
 class QuotesOverlay {
-  const QuotesOverlay._(this._sport, this._events);
+  const QuotesOverlay._(this._sport, this._events, [this._publishable]);
   static const empty = QuotesOverlay._(null, {});
 
   final SportKind? _sport;
   final Map<String, _EventQuotes> _events;
+
+  /// Tenis: lo que el servidor decidió publicar (`publicables`: partido -> mercados). Null si no lo mandó
+  /// (servidor antiguo): entonces la app aplica su banda de respaldo.
+  final Map<String, Set<String>>? _publishable;
+
+  /// ¿El servidor publica este mercado? Null = el servidor no aplica regla (respaldo local).
+  bool? publishes(String eventId, String marketId) =>
+      _publishable == null ? null : (_publishable[eventId]?.contains(marketId) ?? false);
   bool get isEmpty => _events.isEmpty;
 
   /// Tolerante: JSON nulo, listas, tipos raros o `state` distinto de ok/partial -> `empty`; lo ilegible
@@ -99,7 +108,16 @@ class QuotesOverlay {
           if (rows.isNotEmpty) out[id] = _EventQuotes(null, rows);
         }
       });
-      return out.isEmpty ? empty : QuotesOverlay._(sport, out);
+      Map<String, Set<String>>? rule;
+      final rules = json['publicables'];
+      if (rules is Map) {
+        rule = {
+          for (final e in rules.entries)
+            if (e.key is String && e.value is List)
+              e.key as String: {for (final id in e.value as List) if (id is String) id},
+        };
+      }
+      return out.isEmpty && rule == null ? empty : QuotesOverlay._(sport, out, rule);
     } catch (_) {
       return empty;
     }
@@ -112,6 +130,17 @@ class QuotesOverlay {
 /// - Tenis: por id de mercado (cada id tiene una única selección en el feed).
 /// - Una cuota recibida DESPUÉS del sello de la fila mostrada se descarta (no es la del sello).
 SportQuote? quoteFor(SportEvent e, SportMarket m, QuotesOverlay overlay) {
+  // NBA v2: el mercado ya trae la cuota y la casa que había ANTES de su sello (`/nba/v1/partido/{id}/mercados`);
+  // el overlay de PropLine sigue siendo la fuente de tenis.
+  final own = m.price, ownBook = m.book, ownAt = m.quotedAt;
+  if (own != null && ownBook != null && ownAt != null) {
+    return SportQuote(
+      price: own,
+      book: bookName(ownBook),
+      asOf: ownAt,
+      books: 0,
+    );
+  }
   final entry = overlay._events[e.id];
   if (entry == null || overlay._sport != e.sport) return null;
   SportQuote? q;

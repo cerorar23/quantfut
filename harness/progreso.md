@@ -7780,3 +7780,11 @@ Cobertura medida (5-nov): 132 de 143 eventos con cuotas; 67 de 102 destacados li
 hándicap de juegos (23), hándicap de sets (3) y juegos totales (2): el servidor exige la línea exacta y no usa la más cercana, y esas
 filas siguen con «Modelo · sin casa». Ids de caché: `tenis-cuota-20261105` (app, real-views, ergonomic-views, sports-data, sports-window).
 Verificado en local contra producción; sin desplegar.
+
+## 2026-11-05 · Mercados de la app: NBA y tenis con el diseño de fútbol (rama app/mercados-todos-deportes)
+
+- Decisión: las piezas de la pestaña Mercados (radar, tarjeta de familia, tarjeta de pronóstico con escudos/logos/fotos, cuota y casa, marco Hoy/Anteriores) viven en `market_hub.dart` y las usan los tres deportes.
+- Hallazgo: la app NBA solo leía `/nba/v1/cartelera` (únicamente «Ganador»); los otros 7 mercados con cuota y casa estaban en `/nba/v1/partido/{id}/mercados` y no llegaban. Ahora `enrichNbaFeed` los pide por partido (6 en paralelo, sin bloquear la pantalla) y la cuota del overlay v1 (cohorte vieja) ya no se usa en NBA.
+- Regla de «pronóstico publicado» en NBA/tenis: sellado antes del inicio, un solo lado por línea y probabilidad 60–95 % (la banda del radar del servidor); el ganador queda exento.
+- API (aditivo, SIN desplegar): `local_escudo`/`visitante_escudo` en `proximos` e historial de fútbol. La app funciona sin ellas (agenda o iniciales). Desplegar según DEPLOYS.md.
+- Regla de publicación en el servidor (NBA/tenis, cuota ≥ 1,20), app obediente; ver docs/regla_publicacion_20261105.md. Sin desplegar.

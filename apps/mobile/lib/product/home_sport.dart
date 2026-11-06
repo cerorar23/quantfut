@@ -24,12 +24,28 @@ const _stripHeight = 136.0;
 String sportPickText(AppLocalizations l10n, SportMarket m) {
   final line = m.line;
   if (m.market == null) {
-    // Tenis: el ganador es el nombre; el resto lleva su etiqueta del servidor.
-    return m.id == 'winner' ? m.selection : '${m.label}: ${m.selection}';
+    // Tenis: el ganador es el nombre; el resto lleva el nombre de su familia y la selección que manda el feed
+    // («Más de 18.5» se reescribe en el idioma actual; un nombre o un hándicap se dejan tal cual).
+    if (m.id == 'winner') return m.selection;
+    final family = m.id.split('-').first;
+    // l10n-ignore-start: formato de datos del feed, no texto de interfaz
+    final over = RegExp(r'^(Más|Menos) de (\d+(?:[.,]\d+)?)$').firstMatch(m.selection);
+    final selection = over == null
+        ? m.selection
+        : (over.group(1) == 'Más' ? l10n.marketOverLine : l10n.marketUnderLine)(
+            lineText(num.parse(over.group(2)!.replaceAll(',', '.'))),
+          );
+    // l10n-ignore-end
+    return '${sportFamilyTitle(l10n, family, fallback: m.label)}: $selection';
   }
   if (m.market == 'winner' || line == null) return m.selection;
-  final over = l10n.marketOverLine(lineText(line));
-  return m.player == null ? over : '${m.player} · $over';
+  // Hándicap: el equipo con su línea con signo.
+  if (m.market == 'handicap') return '${m.team ?? m.selection} ${signedLine(line)}';
+  final text = m.side == 'under'
+      ? l10n.marketUnderLine(lineText(line))
+      : l10n.marketOverLine(lineText(line));
+  final who = m.player ?? (m.market == 'team_points' ? m.team : null);
+  return who == null ? text : '$who · $text';
 }
 
 /// Logo NBA por sigla o foto de tenis por nombre; sin imagen, iniciales.

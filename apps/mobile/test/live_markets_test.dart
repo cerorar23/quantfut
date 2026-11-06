@@ -119,6 +119,8 @@ void main() {
         'visitante': 'Leon',
         'prob': .78,
         'ref_price': 1.5,
+        'ref_book': 'bet365',
+        'match_id': 'm1',
         'kickoff_utc': DateTime.now()
             .add(const Duration(hours: 5))
             .toUtc()
@@ -181,6 +183,10 @@ void main() {
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
     expect(find.text('Otro'), findsNothing); // otro mercado (hándicap)
     expect(find.text('Más de 2,5 goles · Tigres - Leon'), findsOneWidget);
+    // La tarjeta lleva la cuota y la casa; sin escudo conocido, las iniciales del equipo.
+    expect(find.text('@1,50'), findsOneWidget);
+    expect(find.text('bet365'), findsOneWidget);
+    expect(find.text('TI'), findsOneWidget);
     expect(find.text('24/30'), findsOneWidget); // General, del servidor
     expect(find.text('1/1'), findsOneWidget); // Hoy: el de hoy acertó
 
