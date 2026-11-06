@@ -197,3 +197,12 @@ def test_pata_menos_probable_y_mas_barata_sirve_para_no_pasarse_del_escalon():
     c = _o("m2", 0.55, 1.72, market="h2h", sel="home", line=None)
     sel = pl.buscar([a, b, c], 1)                             # A×C = 2,236 se pasa; B×C = 2,15
     assert sel is not None and sorted(o.cand.prob for o in sel) == [0.55, 0.75]
+
+
+def test_filtrar_v2_no_aplica_el_rango_1_20_1_80_pero_si_mercado_cuota_erronea_y_fuga():
+    caro = _o("a", 0.45, 2.40)                       # el legado lo descarta por rango; el v2 lo deja a su política
+    assert pl.filtrar([caro], AHORA) == [] and pl.filtrar_v2([caro], AHORA) == [caro]
+    assert pl.filtrar_v2([_o("a", 0.9, 1.0)], AHORA) == []                                  # cuota no válida
+    assert pl.filtrar_v2([_o("a", 0.9, 2.0)], AHORA) == []                                  # EV > 25 %: precio erróneo
+    assert pl.filtrar_v2([_o("a", 0.7, 1.4, market="first_half", sel="yes", line=None)], AHORA) == []
+    assert pl.filtrar_v2([_o("a", 0.7, 1.4, as_of=AHORA + timedelta(minutes=1))], AHORA) == []

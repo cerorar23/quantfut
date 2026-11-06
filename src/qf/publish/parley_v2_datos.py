@@ -260,7 +260,7 @@ def main() -> None:                                   # pragma: no cover - cable
     def cargar(ahora, deportes):
         ops = []
         if "futbol" in deportes:
-            ops += v2.consolidar(pd_.candidatas(ahora)[0])
+            ops += v2.consolidar(pd_.candidatas(ahora, v2_activo=True)[0])
         if "tenis" in deportes:
             ops += ext.candidatos({"tenis": ext.cargar(ahora)["tenis"]}, ahora)
         return ops

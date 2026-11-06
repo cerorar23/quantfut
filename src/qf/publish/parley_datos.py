@@ -55,12 +55,16 @@ def _partidos(now: datetime) -> list[dict]:
         (now + pk.MIN_LEAD, ventana.fin_ventana(now, VENTANA)))
 
 
-def candidatas(now: datetime) -> tuple[list, int]:
-    """Patas que pueden entrar y cuántos partidos no tenían precio."""
+def candidatas(now: datetime, v2_activo: bool | None = None) -> tuple[list, int]:
+    """Patas que pueden entrar y cuántos partidos no tenían precio.
+
+    `v2_activo` (por defecto, PARLEY_STRATEGY_VERSION=v2): el parley v2 ya no exige a Pinnacle
+    (consenso de casas, igual que tenis y NBA) y el rango de cuota por pata lo decide su política
+    por mercado, no el 1,20-1,80 del parley legado.
+    """
     rho = ad._rho_activo()
     modelos = ed.Modelos(now)
-    # v2: sin Pinnacle obligatorio (consenso de casas). El parley legado conserva su referencia.
-    consenso = os.getenv("PARLEY_STRATEGY_VERSION", "legacy") == "v2"
+    consenso = (os.getenv("PARLEY_STRATEGY_VERSION", "legacy") == "v2") if v2_activo is None else v2_activo
     todas, sin_precio = [], 0
     for m in _partidos(now):
         res = ed.opciones(m, now, rho, modelos, incluir_doble=True, consenso=consenso)
@@ -68,7 +72,7 @@ def candidatas(now: datetime) -> tuple[list, int]:
             sin_precio += 1
             continue
         todas.extend(res)
-    return pl.filtrar(todas, now), sin_precio
+    return (pl.filtrar_v2(todas, now) if consenso else pl.filtrar(todas, now)), sin_precio
 
 
 def mercados_bloqueados() -> list[str]:

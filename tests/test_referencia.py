@@ -49,8 +49,7 @@ SIN_PINNACLE = {"bet365": {"home": 1.50, "draw": 4.2, "away": 6.0},
 
 def test_snapshot_sin_pinnacle_solo_entra_con_consenso(monkeypatch):
     snap = _snap(SIN_PINNACLE)
-    monkeypatch.setattr(ad.pk, "_odds_api_snapshot", lambda m, now: snap)
-    monkeypatch.setattr(ad.pk, "_af_snapshot", lambda m, now: None)
+    monkeypatch.setattr(ad, "_capturas", lambda m, now: [snap])
     kick = NOW + timedelta(hours=5)
     assert ad._snapshot("m", kick, NOW) is None                       # alta probabilidad y escalera: igual que antes
     assert ad._snapshot("m", kick, NOW, consenso=True) is snap
@@ -77,10 +76,9 @@ def test_linea_de_goles_por_consenso_y_por_defecto_solo_pinnacle():
 
 def test_opciones_de_futbol_sin_pinnacle_solo_con_consenso(monkeypatch):
     snap = _snap(SIN_PINNACLE)
-    monkeypatch.setattr(ad.pk, "_odds_api_snapshot", lambda m, now: snap)
-    monkeypatch.setattr(ad.pk, "_af_snapshot", lambda m, now: None)
-    monkeypatch.setattr(ad, "_totales", lambda m, as_of: [])
-    monkeypatch.setattr(ed, "_cuotas_af", lambda m, now: [])
+    monkeypatch.setattr(ad, "_capturas", lambda m, now: [snap])
+    monkeypatch.setattr(ad, "_referencias", lambda m, sn, now: ([], []))
+    monkeypatch.setattr(ed, "_cuotas_mercados", lambda m, now: [])
     monkeypatch.setattr(ad, "settings", replace(ad.settings, soft_books=("bet365", "betano")))
     monkeypatch.setattr(ed, "settings", replace(ed.settings, soft_books=("bet365", "betano")))
     m = {"match_id": "m", "kickoff_utc": NOW + timedelta(hours=5)}
