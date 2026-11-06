@@ -40,6 +40,7 @@ def _sql_sellado() -> str:
     return f"""JOIN prediction_batches b
              ON b.batch_date = (t.decided_at AT TIME ZONE 'UTC')::date
             AND t.decided_at <= b.created_at
+            AND b.batch_kind = 'diario'
             {corte}"""
 
 
@@ -241,6 +242,10 @@ def _pata_publica(p: dict) -> dict:
             "kickoff_utc": p["kickoff_utc"], "local": p["local"], "visitante": p["visitante"],
             "texto": ed.texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"]),
             "market": p["market"],
+            # Como en la escalera: la app redacta el texto en el idioma del usuario desde
+            # estos campos (`pick_labels.dart`); sin ellos las patas salían siempre en español.
+            "selection": p["selection"],
+            "line": None if p["line"] is None else float(p["line"]),
             # Misma precisión pública reducida que la escalera.
             "prob": round(float(p["prob"]), 2), "price": float(p["price"]), "book": p["book"],
             "outcome": p["outcome"],
@@ -261,7 +266,8 @@ def informe_publico() -> dict:
     patas = query(
         f"""SELECT p.ticket_id, p.match_id, p.market, p.selection, p.line, p.prob, p.price,
                    p.book, m.kickoff_utc, m.league_id,
-                   th.canonical_name AS local, ta.canonical_name AS visitante,
+                   COALESCE(th.display_name, th.canonical_name) AS local,
+                   COALESCE(ta.display_name, ta.canonical_name) AS visitante,
                    rp.outcome, rp.home_goals, rp.away_goals, rp.valor
             FROM parley_patas p
             JOIN parley_tickets t ON t.ticket_id = p.ticket_id
@@ -285,17 +291,10 @@ def informe_publico() -> dict:
             "factor_pago": None if t["factor_pago"] is None else float(t["factor_pago"]),
             "patas": por_ticket.get(t["ticket_id"], [])})
     liq = _liquidados()
-    if os.getenv("PARLEY_STRATEGY_VERSION", "legacy") == "v2":
-        escalones = [{"escalon": i, "cuota_min": t * (1 - v2.TARGET_TOLERANCE),
-                      "cuota_max": t * (1 + v2.TARGET_TOLERANCE)}
-                     for i, t in enumerate(v2.TARGETS, 1)]
-    else:
-        escalones = [{"escalon": e, "cuota_min": lo, "cuota_max": hi}
-                     for e, lo, hi in pl.ESCALONES]
     return {
         "activo": settings.parley_enabled,
-        "reglas": {"version": os.getenv("PARLEY_STRATEGY_VERSION", "legacy"),
-                   "escalones": escalones,
+        "reglas": {"escalones": [{"escalon": e, "cuota_min": lo, "cuota_max": hi}
+                                 for e, lo, hi in pl.ESCALONES],
                    "cuota_min_pata": pl.CUOTA_MIN_PATA, "cuota_max_pata": pl.CUOTA_MAX_PATA,
                    "min_patas": pl.MIN_PATAS, "max_patas": pl.MAX_PATAS},
         "control": pl.control(liq),
