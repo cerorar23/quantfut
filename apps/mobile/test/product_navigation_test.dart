@@ -168,6 +168,9 @@ class FixtureApi extends QuantFutApi {
     bool retry = true,
   }) async {
     paths.add(path);
+    if (path == '/mobile/v1/markets/history' || path == '/mobile/v1/markets/destacados') {
+      return {'items': <JsonMap>[]};
+    }
     if (path == '/nba/v1/cartelera' && nbaFeed != null) return nbaFeed;
     if (path == '/web/deportes/tenis' && tennisFeed != null) return tennisFeed;
     return _rewards;
@@ -457,12 +460,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sport-nba')));
     await tester.pumpAndSettle();
     expect(find.text('No se pudieron cargar los datos de este deporte.'), findsOneWidget);
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 1 * 7); // 7 días por carga
+    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 1 * 9); // 9 días por carga
     // Las cuotas se piden junto al feed; si no llegan (aqui, respuesta ajena) no cambia nada.
     expect(api.paths.where((p) => p == '/web/deportes/nba/cuotas').length, 1);
     await tester.tap(find.byKey(const ValueKey('sport-feed-retry')));
     await tester.pumpAndSettle();
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 7); // 7 días por carga
+    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 9); // 9 días por carga
     await tester.tap(find.byKey(const ValueKey('sport-futbol')));
     await tester.pumpAndSettle();
     expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
@@ -471,7 +474,7 @@ void main() {
     // Volver a NBA no repite la petición: el estado se guarda por deporte.
     await tester.tap(find.byKey(const ValueKey('sport-nba')));
     await tester.pumpAndSettle();
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 7); // 7 días por carga
+    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 9); // 9 días por carga
     // Tenis carga su propio feed sin heredar el aviso de NBA.
     api.tennisFeed = jsonMap(
       jsonDecode(File('test/fixtures/tennis_feed.json').readAsStringSync()),
@@ -509,7 +512,7 @@ void main() {
     api.nbaFeed = null; // el siguiente refresco falla
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pumpAndSettle();
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 7); // 7 días por carga
+    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 9); // 9 días por carga
     expect(find.byKey(const ValueKey('sport-event-1')), findsOneWidget);
     expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
     await tester.pumpWidget(const SizedBox());

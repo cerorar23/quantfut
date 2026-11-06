@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 
 import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_market_detail.dart';
 import 'market_catalog.dart';
 import 'market_hub.dart';
+import 'published_history.dart';
 
 /// Mercados del servidor que componen cada familia del catálogo.
 const familyMarkets = <String, List<String>>{
@@ -21,27 +23,12 @@ const familyMarkets = <String, List<String>>{
   'double_chance': ['double_chance'],
   'winner': ['h2h'],
   'cards': ['cards'],
+  'btts': ['btts'],
 };
 
-/// Resueltos de una familia según el servidor (historial vivo). Sin datos del
-/// servidor devuelve null y la pantalla usa el catálogo empaquetado.
-PublishedRecord? serverRecord(JsonMap historial, String familyId) {
-  final byMarket = jsonMap(historial['por_mercado']);
-  var cases = 0, won = 0;
-  for (final key in familyMarkets[familyId] ?? const <String>[]) {
-    final m = jsonMap(byMarket[key]);
-    cases += (m['n'] as num?)?.toInt() ?? 0;
-    won += (m['aciertos'] as num?)?.toInt() ?? 0;
-  }
-  return byMarket.isEmpty || won > cases ? null : PublishedRecord(cases, won);
-}
-
-/// Pestaña Mercados de fútbol: radar animado + una tarjeta por familia de mercado.
-///
-/// Todo sale de [MarketCatalog] (evidencia validada y resultados publicados).
-/// No hay alertas en vivo porque el modelo pronostica antes del partido; la
-/// pantalla no insinúa lo contrario.
-class MarketsDashboard extends StatelessWidget {
+/// Fútbol: las cifras y filas vienen de la misma instantánea del historial web.
+/// El catálogo empaquetado solo aporta títulos y pruebas por línea.
+class MarketsDashboard extends StatefulWidget {
   const MarketsDashboard({
     super.key,
     required this.api,
@@ -67,93 +54,130 @@ class MarketsDashboard extends StatelessWidget {
   final ValueChanged<String>? onOpenMatch;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<MarketCatalog>(
-    future: MarketCatalog.load(),
-    initialData: MarketCatalog.current,
-    builder: (context, snapshot) {
-      final catalog = snapshot.data;
-      if (catalog == null) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 40),
-          child: Center(child: CircularProgressIndicator()),
-        );
-      }
-      final families = catalog.forSport(sportFootball);
-      final historial = jsonMap(alta['historial']);
-      final upcoming = [
-        for (final p in (alta['proximos'] as List? ?? const [])) jsonMap(p),
-      ];
-      final locked = [
-        for (final p in (alta['vip'] as List? ?? const [])) jsonMap(p),
-      ];
-      final liveOverall = (historial['n'] as num?) == null
-          ? null
-          : PublishedRecord(
-              (historial['n'] as num).toInt(),
-              (historial['aciertos'] as num?)?.toInt() ?? 0,
-            );
-      MarketTileData tile(MarketFamily f) {
-        final (color, icon) = marketLook(f.id);
-        final best = f.bestSupported(catalog.minimumCases);
-        return MarketTileData(
-          id: f.id,
-          title: f.localTitle,
-          detail: best == null
-              ? context.l10n.marketsInReview
-              : '${best.localLabel} · ${casesLabel(best.cases)}',
-          color: color,
-          icon: icon,
-          percent: best?.observed,
-          record: serverRecord(historial, f.id) ?? f.published,
-        );
-      }
+  State<MarketsDashboard> createState() => _MarketsDashboardState();
+}
 
-      final tiles = [for (final f in families) tile(f)];
-      return RadarClock(
-        builder: (context, clock) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MarketsHero(
-              clock: clock,
-              colors: [for (final f in families) marketLook(f.id).$1],
-              evidence: context.l10n.marketsEvidenceAt(catalog.cutoff),
-              overall: liveOverall ?? catalog.overall,
+class _MarketsDashboardState extends State<MarketsDashboard> {
+  late Future<(MarketCatalog, List<JsonMap>)> _content;
+
+  Future<(MarketCatalog, List<JsonMap>)> _load() {
+    final history = loadFootballHistory(widget.api);
+    final cached = MarketCatalog.current;
+    if (cached != null) return history.then((rows) => (cached, rows));
+    return (MarketCatalog.load(), history).wait;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _content = _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant MarketsDashboard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.api != widget.api || !mapEquals(oldWidget.alta, widget.alta)) {
+      _content = _load();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<(MarketCatalog, List<JsonMap>)>(
+    future: _content,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.hasError) {
+        return Column(children: [
+          Text(context.l10n.mdLoadError),
+          TextButton(
+            onPressed: () => setState(() => _content = _load()),
+            child: Text(context.l10n.commonRetry),
+          ),
+        ]);
+      }
+      final (catalog, rows) = snapshot.data!;
+          final families = [
+            ...catalog.forSport(sportFootball),
+            MarketFamily.publishedOnly(
+              id: 'btts',
+              title: context.l10n.marketBtts,
             ),
-            const SizedBox(height: 12),
-            MarketTilesGrid(
-              clock: clock,
-              tiles: tiles,
-              onOpen: (t) {
-                final family = families.firstWhere((f) => f.id == t.id);
-                final ids = familyMarkets[family.id] ?? const <String>[];
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => MarketDetailScreen(
-                      api: api,
-                      family: family,
-                      minimum: catalog.minimumCases,
-                      color: t.color,
-                      markets: ids,
-                      onVip: onVip,
-                      agenda: agenda,
-                      onOpenMatch: onOpenMatch,
-                      locked: [
-                        for (final p in locked)
-                          if (ids.contains(p['market'])) p,
-                      ],
-                      upcoming: [
-                        for (final p in upcoming)
-                          if (ids.contains(p['market'])) p,
-                      ],
-                      record: t.record,
-                    ),
-                  ),
-                );
-              },
+          ];
+          final upcoming = jsonRows(widget.alta['proximos']);
+          final locked = jsonRows(widget.alta['vip']);
+          List<JsonMap> familyRows(String id) => [
+            for (final r in rows)
+              if ((familyMarkets[id] ?? const <String>[]).contains(r['market']))
+                r,
+          ];
+          final tiles = [
+            for (final f in families)
+              MarketTileData(
+                id: f.id,
+                title: f.localTitle,
+                detail: context.l10n.sfCounts(
+                  [...upcoming, ...locked]
+                      .where(
+                        (p) => (familyMarkets[f.id] ?? const <String>[])
+                            .contains(p['market']),
+                      )
+                      .length,
+                  familyRows(f.id).length,
+                ),
+                color: marketLook(f.id).$1,
+                icon: marketLook(f.id).$2,
+                percent: historyRecord(familyRows(f.id)).observed,
+                record: historyRecord(familyRows(f.id)),
+              ),
+          ];
+          return RadarClock(
+            builder: (context, clock) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MarketsHero(
+                  clock: clock,
+                  colors: [for (final f in families) marketLook(f.id).$1],
+                  evidence: context.l10n.historyWebSince,
+                  overall: historyRecord(rows),
+                ),
+                const SizedBox(height: 12),
+                MarketTilesGrid(
+                  clock: clock,
+                  tiles: tiles,
+                  onOpen: (t) {
+                    final family = families.firstWhere((f) => f.id == t.id);
+                    final ids = familyMarkets[family.id] ?? const <String>[];
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => MarketDetailScreen(
+                          api: widget.api,
+                          family: family,
+                          minimum: catalog.minimumCases,
+                          color: t.color,
+                          markets: ids,
+                          onVip: widget.onVip,
+                          agenda: widget.agenda,
+                          onOpenMatch: widget.onOpenMatch,
+                          locked: [
+                            for (final p in locked)
+                              if (ids.contains(p['market'])) p,
+                          ],
+                          upcoming: [
+                            for (final p in upcoming)
+                              if (ids.contains(p['market'])) p,
+                          ],
+                          record: t.record,
+                          historyItems: familyRows(family.id),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          );
     },
   );
 }

@@ -691,6 +691,7 @@
   "@guideTopic6": {
     "description": "Tema 6 de la guía."
   },
+  "historyWebSince": "Historial web desde el 26/10/2026",
   "homeBannerClose": "Cerrar aviso",
   "@homeBannerClose": {
     "description": "Cierra el aviso de la parte superior."

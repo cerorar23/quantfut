@@ -7788,3 +7788,9 @@ Verificado en local contra producción; sin desplegar.
 - Regla de «pronóstico publicado» en NBA/tenis: sellado antes del inicio, un solo lado por línea y probabilidad 60–95 % (la banda del radar del servidor); el ganador queda exento.
 - API (aditivo, SIN desplegar): `local_escudo`/`visitante_escudo` en `proximos` e historial de fútbol. La app funciona sin ellas (agenda o iniciales). Desplegar según DEPLOYS.md.
 - Regla de publicación en el servidor (NBA/tenis, cuota ≥ 1,20), app obediente; ver docs/regla_publicacion_20261105.md. Sin desplegar.
+
+
+**5-nov-2026 — Historial web/Flutter y vacíos por mercado.** La web cuenta Alta + Destacados de fútbol y solo Destacados de NBA/tenis. Flutter filtraba los resueltos con la regla actual del overlay y usaba cifras empaquetadas en fútbol. Se unifican fuentes y registros de tarjetas/detalle, se añade Ambos marcan y la ventana NBA pasa a ±4 días. Consulta propia: 520 filas de fútbol y 101 destacados de tenis liquidados; no acredita por sí sola predicción prospectiva (H01 de fútbol sigue pendiente). Los complementos under de sets/no tie-break se preparan solo antes del sello y quedan desactivados: el estudio de no tie-break con p≥75 % dio 33/50; no se rellena una tarjeta con una promesa de acierto no demostrada. Pruebas dirigidas 45 Flutter + 27 Python aprobadas; revisión completa y compilación en curso. Titular solicita commit, push, PR, CI y despliegue; main sigue siendo la puerta de despliegue.
+
+
+**5-nov-2026 — Publicación Android del historial.** PR #272/#273 integrados y CI completo aprobado, incluido Flutter. APK release 1.1.1+9 firmado con el certificado vigente y manifiesto verificado; publicado en v1.1.1 y en /static/downloads/QuantFut-1.1.1-9.apk. La distribución añade solo el instalador a la imagen API existente, con respaldo/rollback; no activa los complementos de tenis ni cambia el motor. El usuario necesita instalar la actualización. SHA y comprobaciones en DEPLOYS.md.

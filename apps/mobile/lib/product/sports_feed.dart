@@ -97,25 +97,28 @@ class SportEvent {
   final String? featuredId;
 
   /// Mismo partido con otra lista de mercados (NBA: la v2 completa de `/nba/v1/partido/{id}/mercados`).
-  SportEvent withMarkets(List<SportMarket> value, {String? featured, bool serverFeaturedField = false}) =>
-      SportEvent(
-        id: id,
-        sport: sport,
-        home: home,
-        away: away,
-        league: league,
-        start: start,
-        status: status,
-        seal: seal,
-        sealedAt: sealedAt,
-        markets: value,
-        surface: surface,
-        score: score,
-        availability: availability,
-        plannedSeal: plannedSeal,
-        serverFeatured: serverFeaturedField || serverFeatured,
-        featuredId: serverFeaturedField ? featured : featuredId,
-      );
+  SportEvent withMarkets(
+    List<SportMarket> value, {
+    String? featured,
+    bool serverFeaturedField = false,
+  }) => SportEvent(
+    id: id,
+    sport: sport,
+    home: home,
+    away: away,
+    league: league,
+    start: start,
+    status: status,
+    seal: seal,
+    sealedAt: sealedAt,
+    markets: value,
+    surface: surface,
+    score: score,
+    availability: availability,
+    plannedSeal: plannedSeal,
+    serverFeatured: serverFeaturedField || serverFeatured,
+    featuredId: serverFeaturedField ? featured : featuredId,
+  );
 }
 
 class SportFeed {
@@ -472,15 +475,16 @@ Future<void> enrichNbaFeed(
 }) async {
   final clock = (now ?? DateTime.now()).toUtc();
   final events = List<SportEvent>.of(base.events);
-  final order = [
-    for (var i = 0; i < events.length; i++)
-      if (events[i].markets.isNotEmpty) i,
-  ]..sort(
-    (a, b) => events[a].start
-        .difference(clock)
-        .abs()
-        .compareTo(events[b].start.difference(clock).abs()),
-  );
+  final order =
+      [
+        for (var i = 0; i < events.length; i++)
+          if (events[i].markets.isNotEmpty) i,
+      ]..sort(
+        (a, b) => events[a].start
+            .difference(clock)
+            .abs()
+            .compareTo(events[b].start.difference(clock).abs()),
+      );
   var next = 0, done = 0;
   Future<void> worker() async {
     while (next < order.length) {
@@ -513,11 +517,11 @@ Future<void> enrichNbaFeed(
   await Future.wait([for (var k = 0; k < parallel; k++) worker()]);
 }
 
-/// Pide la cartelera de la API v2 de tres días atrás a tres adelante. Un día que falla no tumba a los demás; solo si
+/// Pide la cartelera de la API v2 de cuatro días atrás a cuatro adelante, como la web. Un día que falla no tumba a los demás; solo si
 /// fallan todos el feed queda no listo.
 Future<SportFeed> _loadNba(QuantFutApi api, DateTime now) async {
   final days = [
-    for (var i = -3; i <= 3; i++)
+    for (var i = -4; i <= 4; i++)
       DateTime(
         now.year,
         now.month,
@@ -564,8 +568,8 @@ List<SportEvent> tennisEvents(JsonMap data) {
         event['markets'] is! List) {
       continue;
     }
-    // Si el feed no trae `sealed_at` válido se usa el inicio (el campo es obligatorio en la app).
-    final sealedAt = _stamp(event['sealed_at']) ?? start;
+    final sealTime = _stamp(event['sealed_at']);
+    final sealedAt = sealTime ?? start;
     final markets = [
       for (final m in jsonRows(event['markets']))
         if (_probability(m['probability']))
@@ -575,8 +579,7 @@ List<SportEvent> tennisEvents(JsonMap data) {
             selection: '${m['selection']}',
             probability: (m['probability'] as num).toDouble(),
             sealedAt: sealedAt,
-            // El feed solo publica pronósticos ya sellados.
-            eligible: true,
+            eligible: sealTime != null && sealTime.isBefore(start),
             outcome: m['outcome'] is String ? m['outcome'] as String : null,
           ),
     ];

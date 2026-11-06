@@ -5,6 +5,7 @@ import 'home_sport.dart';
 import 'live_api.dart';
 import 'market_catalog.dart' show PublishedRecord;
 import 'market_hub.dart';
+import 'published_history.dart';
 import 'qf_theme.dart';
 import 'sport_images.dart';
 import 'sports.dart';
@@ -18,7 +19,9 @@ String marketFamily(SportMarket m) => m.market ?? m.id.split('-').first;
 /// Aciertos y resueltos por familia. Solo cuentan los `eligible` (sellados antes del inicio)
 /// con resultado `win` o `loss`; `push` y sin resultado no cuentan. Toda familia con algún
 /// mercado aparece, aunque no tenga resueltos todavía.
-Map<String, ({int won, int resolved})> hitRateByFamily(List<SportEvent> events) {
+Map<String, ({int won, int resolved})> hitRateByFamily(
+  List<SportEvent> events,
+) {
   final out = <String, ({int won, int resolved})>{};
   for (final e in events) {
     for (final m in e.markets) {
@@ -70,7 +73,13 @@ bool isPublished(SportEvent e, SportMarket m, QuotesOverlay quotes) {
 
 /// Partido que aún no empezó: sus pronósticos están abiertos.
 bool _open(SportEvent e) =>
-    !const {'finished', 'awaiting_result', 'live', 'cancelled', 'no_result'}.contains(e.status) &&
+    !const {
+      'finished',
+      'awaiting_result',
+      'live',
+      'cancelled',
+      'no_result',
+    }.contains(e.status) &&
     e.start.isAfter(DateTime.now().toUtc());
 
 typedef SportPick = (SportEvent, SportMarket);
@@ -83,7 +92,9 @@ class FamilyPicks {
   final settled = <SportPick>[];
 
   int get won => settled.where((p) => p.$2.outcome == 'win').length;
-  int get resolved => settled.where((p) => p.$2.outcome == 'win' || p.$2.outcome == 'loss').length;
+  int get resolved => settled
+      .where((p) => p.$2.outcome == 'win' || p.$2.outcome == 'loss')
+      .length;
   double? get percentValue => resolved == 0 ? null : won * 100 / resolved;
 }
 
@@ -105,13 +116,19 @@ List<FamilyPicks> familyPicks(
     of(key);
   }
   for (final e in feed.events) {
+    final featured = featuredMarket(e);
     for (final m in e.markets) {
       labels.putIfAbsent(marketFamily(m), () => m.label);
-      if (!isPublished(e, m, quotes)) continue;
       final f = of(marketFamily(m), m.label);
-      if (m.outcome != null) {
+      // El historial web cuenta el destacado del servidor, aunque la regla
+      // de publicación actual no lo incluya en el overlay de cuotas.
+      if (m.eligible &&
+          inPublishedHistory(e.start) &&
+          featured?.id == m.id &&
+          (m.outcome == 'win' || m.outcome == 'loss')) {
         f.settled.add((e, m));
-      } else if (_open(e)) {
+      }
+      if (m.outcome == null && _open(e) && isPublished(e, m, quotes)) {
         f.open.add((e, m));
       }
     }
@@ -187,7 +204,9 @@ class SportMarkets extends StatelessWidget {
                   clock: clock,
                   accent: accent,
                   colors: [for (final f in families) marketLook(f.family).$1],
-                  evidence: resolved > 0 ? l10n.sportHitWindow(resolved) : l10n.sfRangeNote,
+                  evidence: resolved > 0
+                      ? l10n.sportHitWindow(resolved)
+                      : l10n.sfRangeNote,
                   overall: PublishedRecord(resolved, won),
                 ),
                 const SizedBox(height: 12),
@@ -216,7 +235,7 @@ class SportMarkets extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            l10n.sfRangeNote,
+            l10n.historyWebSince,
             key: const ValueKey('sport-range-note'),
             style: const TextStyle(fontSize: 11, color: QfColors.muted),
           ),
@@ -303,7 +322,11 @@ class SportMarketDetailScreen extends StatelessWidget {
         final t = b.$1.start.compareTo(a.$1.start);
         return t != 0 ? t : b.$2.probability.compareTo(a.$2.probability);
       });
-    final todays = settled.where((p) => _sameDay(p.$1.start.toLocal(), now) && (p.$2.outcome == 'win' || p.$2.outcome == 'loss'));
+    final todays = settled.where(
+      (p) =>
+          _sameDay(p.$1.start.toLocal(), now) &&
+          (p.$2.outcome == 'win' || p.$2.outcome == 'loss'),
+    );
     final todayWon = todays.where((p) => p.$2.outcome == 'win').length;
     final history = <Widget>[];
     String? current;
