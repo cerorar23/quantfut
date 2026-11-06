@@ -5,7 +5,7 @@
 - [x] Consultar la web publicada y auditar por deporte, familia y origen. Evidencia: docs/auditoria_historial_mercados_20261105.md y .json.
 - [x] Igualar fuentes, selección de destacados, corte local y ventana NBA; añadir Ambos marcan y compartir la instantánea de tarjetas/detalle.
 - [x] Preparar complementos de tenis antes del sellado, desactivados hasta validar calibración y acierto.
-- [ ] Completar PR/CI, integrar main, compilar 1.1.1+9 y publicar el artefacto Android.
+- [x] Completar PR/CI, integrar main, compilar 1.1.1+9 y publicar el artefacto Android. PR #272/#273; release v1.1.1; evidencia y rollback en DEPLOYS.md.
 
 
 ## 4-nov-2026 · Publicar correcciones NBA y comprobar evidencia prospectiva

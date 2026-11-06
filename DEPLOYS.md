@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-05 · Android 1.1.1+9: historial web por mercado/deporte · PR #272 y #273
+
+- PR #272 y #273 fusionados con frontend, arnés/Postgres, NBA, tenis y Flutter en verde. Fuente del APK: main 8db511e7; versión nativa 1.1.1, build 9, firma de distribución SHA-256 e03c66cadb0bc0caca43138dc399844790a6893a885c2a47aa00c86fd38b1f34.
+- APK release 81,1 MB; SHA-256 4516b40a2b802727b65b18a7467369c1b1bd188fbdc084b82846f18068ad2ec6. Descarga: https://pronosticosdeportivos.pro/static/downloads/QuantFut-1.1.1-9.apk?v=9. Copia en GitHub Releases v1.1.1. Requiere instalación; no se cambian mínimos ni se fuerza actualización.
+- Despliegue exclusivo del instalador: imagen quantfut-api-mobile:8db511e7-mime, capa sobre quantfut-api-regla:8e9fe9a2; solo añade el APK a /app/src/qf/api/static/downloads y su tipo MIME Android en /etc/mime.types. Código API/web heredado sin sustituir, worker y NBA sin recrear. Motor de tenis sin cambiar; complementos desactivados.
+- Candado deploy.lock, hash verificado antes de recrear solo API y rollback automático por salud. Verificado /health 200 y descarga pública disponible.
+- Respaldo: /home/qf/quantfut/releases/mobile-8db511e7/docker-compose.before.yml. Vuelta atrás: restaurar ese archivo como ~/quantfut/docker-compose.yml y ejecutar docker compose up -d --no-deps --no-build --force-recreate api. Imagen anterior conservada.
+
+
 ### 2026-11-05 · Regla de publicación NBA/tenis (cuota ≥ 1,20) · PR #270, `main` `8e9fe9a2` · VPS: API
 
 - Orden del titular: «despliega». Capa fina sobre `quantfut-api-tenis:8feddf04` con `mobile.py`, `cuotas_web.py` y `regla_publicacion.py` (los dos primeros eran idénticos a `main` por hash antes de sustituir). Imagen: **`quantfut-api-regla:8e9fe9a2`**.
