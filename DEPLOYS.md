@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-06 · Selector de parleys v2 — worker
+- Commit `0de5e1ee` en `main`: targets 2,10/3,10/8,20/12,10, mínima cantidad de patas y probabilidad calibrada; sin supuesto/filtro +EV y sin cambios a motores de pronósticos.
+- Producción: respaldo en `~/quantfut/releases/parley-v2-20261106/before/`; se copiaron `src/qf/publish/parley_v2.py` y `parley_datos.py`, se fijó `PARLEY_STRATEGY_VERSION=v2` y se recreó únicamente `quantfut-worker-1`.
+- Verificación: worker carga `TARGETS=(2.1, 3.1, 8.2, 12.1)`, todos los contenedores están `running` y `/health` devuelve HTTP 200.
+- Vuelta atrás: restaurar los archivos desde `before/`, restaurar `.env` y recrear solo `worker`.
+
 ### 2026-11-05 · Android 1.1.1+9: historial web por mercado/deporte · PR #272 y #273
 
 - PR #272 y #273 fusionados con frontend, arnés/Postgres, NBA, tenis y Flutter en verde. Fuente del APK: main 8db511e7; versión nativa 1.1.1, build 9, firma de distribución SHA-256 e03c66cadb0bc0caca43138dc399844790a6893a885c2a47aa00c86fd38b1f34.
