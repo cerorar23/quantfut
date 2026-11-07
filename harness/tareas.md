@@ -3848,3 +3848,33 @@ Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin dat
   - Delta Brier vs Elo recalibrado: ATP -0,00361, WTA -0,00225. Acierto: ATP 63,85 %, WTA 65,06 %.
   - Mercados derivados en reserva: G-coherencia 0 violaciones (< 1,6e-10); RPS de totales bate significativamente la base histórica; 1.er set (WTA b = 0,941; ATP b = 0,887) y Hándicap de sets (WTA b = 1,007; ATP b = 0,932) excelentes; sesgo IID en totales confirmado en +0,736 (ATP) y +0,608 (WTA) juegos.
   - Promoción: **APROBADA para la beta**. Ganador, 1.er set, Hándicap de sets y Tiebreak aptos para publicación directa. Totales y Hándicaps de juegos aptos declarando el sesgo IID. Artefactos: `evaluacion_wf.json`, `predicciones_wf.parquet` (88.193 filas), `evaluacion_mercados_reserva_2025_2026.parquet/json`.
+
+## Tenis: rediseño — Sprint 5: cuotas y referencia de mercado (2026-11-06 / 2026-11-07)
+
+- [x] **Módulo pps/tenis/src/tenis/mercado/ completo y tipado**:
+  - devig.py: Des-marginado proporcional estricto ( = (1/O_i)/\sum(1/O_j)$), conversor cuota americana/decimal, validaciones absurdas (cuota <= 1.0, americana |x| < 100, un solo lado sin probabilidad sin margen).
+  - propline.py: Adaptador offline sin red que envuelve qf.ingest.propline_shared (
+ead_two_way, 
+ead_closing, quotes). Exclusión estricta de DFS, exchanges, apuestas en juego (in_play_or_started) y descarte de parejas repetidas en la misma observación.
+  - 	ennis_data_hist.py: Cargador y normalizador de cuotas históricas de Tennis-Data con selección de cierre según §I.0 (PS hasta ene-2026; Avg/B365 desde feb-2026; clase 'b').
+  - enlace.py: Enlace punto en el tiempo por circuito, jugadores normalizados (claves_apellido) y ventana adaptativa (+-2 d para SofaScore, hasta 16 d para fecha semanal de inicio de torneo TML).
+  - liquidacion.py: Liquidación estricta según §I.3 basada exclusivamente en resultados propios (y_estado, y_ganador, y_sets, y_juegos). Prohibición absoluta de leer calificación de PropLine (lanza ValueError).
+- [x] **Pruebas unitarias en pps/tenis/tests/test_mercado_cuotas.py (14/14 aprobadas)**:
+  - Pruebas absurdas de cuotas, mercados de un solo lado, parejas repetidas, y liquidación de retiradas (con >= 1 set liquida ganador y set 1, anula totales y hándicaps; con 0 sets anula todo; walkover anula todo).
+  - Prueba que falla taxativamente si se suministra o lee calificación de PropLine.
+  - Reproducción independiente del margen mediano de Pinnacle:
+    - En Tennis-Data: reproduce 2,46% (,0246$,  > 90.000$).
+    - En PropLine piloto: reproduce 4,74% (,0474$,  = 76$).
+- [x] **Script de carga y enlace pps/tenis/ops/cargar_precios.py**:
+  - Enlazó 33.124 partidos de walk-forward (2019–2026) con cuotas de mercado.
+  - Generó modelo_s5/precios_enlazados.parquet (88.193 filas) y modelo_s5/cobertura_cruce.json.
+- [x] **Script de evaluación pps/tenis/ops/evaluar_prospectivo.py y compuertas de Sprint 5**:
+  - **G-identidad**:
+    - Cruce cuadro principal ATP: 90,0% global (2024: 91,8%; 2025: 93,9%).
+    - Cruce cuadro principal WTA: 86,7% global (2024: 90,0%; 2025: 90,6%).
+    - Prueba de sesgo de selección WTA: Delta log-loss cruzados vs no cruzados = -0,0117 [IC95: -0,0291, +0,0046] (incluye 0 => sin sesgo).
+  - **G-cierre retrospectivo (ganador, clase b)**: PASA ROTUNDO en ambos circuitos:
+    - ATP ( = 17.340$ con cierre): Delta log-loss combinado = +0,02373 [IC95: +0,02089, +0,02657]. Bate ampliamente a la línea base Elo recalibrado (+0,03766 vs cierre) reduciendo la brecha frente al mercado en casi 14 milésimas.
+    - WTA ( = 15.330$ con cierre): Delta log-loss combinado = +0,02835 [IC95: +0,02510, +0,03159]. Bate a la línea base Elo recalibrado (+0,03549 vs cierre) reduciendo la brecha en más de 7 milésimas.
+    - Reserva 2025–2026: ATP +0,02292; WTA +0,02824.
+  - **PropLine piloto**: 2.130 mercados de ganador evaluados offline en local con 33 casas. Artefacto: modelo_s5/evaluacion_mercado.json.
