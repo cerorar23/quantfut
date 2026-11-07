@@ -19,12 +19,36 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
+import psycopg
+from psycopg.rows import dict_row
+import os
 
 from tenis.sellado import ContratoInvalidoError, cargar_pronostico_sellado
 from ..db import query, query_one
 
 router = APIRouter(prefix="/tenis/v2", tags=["tenis_v2"])
 UTC = timezone.utc
+_TENIS_DSN = os.getenv("TENIS_PG_DSN")
+
+
+def _consultar(sql: str, params: tuple = ()) -> list[dict]:
+    dsn = os.getenv("TENIS_PG_DSN", _TENIS_DSN)
+    if dsn:
+        with psycopg.connect(dsn, row_factory=dict_row) as c:
+            with c.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchall()
+    return query(sql, params)
+
+
+def _consultar_uno(sql: str, params: tuple = ()) -> dict | None:
+    dsn = os.getenv("TENIS_PG_DSN", _TENIS_DSN)
+    if dsn:
+        with psycopg.connect(dsn, row_factory=dict_row) as c:
+            with c.cursor() as cur:
+                cur.execute(sql, params)
+                return cur.fetchone()
+    return query_one(sql, params)
 
 
 def _resolver_conexion(db_conn: Any = None):
@@ -65,11 +89,11 @@ def cartelera(fecha: str | None = Query(None, description="Fecha de los partidos
     ORDER BY pr.inicio_programado_utc ASC, p.partido_id ASC
     """
     try:
-        filas = query(sql, (fecha,))
+        filas = _consultar(sql, (fecha,))
     except Exception as e:
         # Fallback para esquemas de prueba o sin prefijo tenis
         sql_alt = sql.replace("tenis.", "")
-        filas = query(sql_alt, (fecha,))
+        filas = _consultar(sql_alt, (fecha,))
 
     # Recolectar nombres de jugadores
     j_ids = set()
@@ -86,7 +110,7 @@ def cartelera(fecha: str | None = Query(None, description="Fecha de los partidos
             WHERE campo = 'nombre' AND jugador_id = ANY(%s)
             ORDER BY jugador_id, recibido_en DESC
             """
-            rows_j = query(sql_j, (list(j_ids),))
+            rows_j = _consultar(sql_j, (list(j_ids),))
         except Exception:
             sql_j_alt = """
             SELECT DISTINCT ON (jugador_id) jugador_id, valor AS nombre
@@ -94,7 +118,7 @@ def cartelera(fecha: str | None = Query(None, description="Fecha de los partidos
             WHERE campo = 'nombre' AND jugador_id = ANY(%s)
             ORDER BY jugador_id, recibido_en DESC
             """
-            rows_j = query(sql_j_alt, (list(j_ids),))
+            rows_j = _consultar(sql_j_alt, (list(j_ids),))
 
         for rj in rows_j:
             nombres[rj["jugador_id"]] = rj["nombre"]
@@ -165,10 +189,10 @@ def detalle_partido(partido_id: int):
     WHERE p.partido_id = %s
     """
     try:
-        f = query_one(sql, (partido_id,))
+        f = _consultar_uno(sql, (partido_id,))
     except Exception:
         sql_alt = sql.replace("tenis.", "")
-        f = query_one(sql_alt, (partido_id,))
+        f = _consultar_uno(sql_alt, (partido_id,))
 
     if not f:
         raise HTTPException(status_code=404, detail="partido_no_encontrado")
@@ -182,10 +206,10 @@ def detalle_partido(partido_id: int):
     ORDER BY pronostico_id DESC LIMIT 1
     """
     try:
-        sello_row = query_one(sql_sello, (partido_id,))
+        sello_row = _consultar_uno(sql_sello, (partido_id,))
     except Exception:
         sql_sello_alt = sql_sello.replace("tenis.", "")
-        sello_row = query_one(sql_sello_alt, (partido_id,))
+        sello_row = _consultar_uno(sql_sello_alt, (partido_id,))
 
     sello_obj = None
     if sello_row:
