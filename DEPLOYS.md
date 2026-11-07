@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-07 19:00 UTC · Tenis v2: Rediseño integral ATP/WTA (S0-S6: motor, simulador, calibración, sellado y API) · contenedor `tenis-db` e imagen `tenis-motor:78a3aa93` (PR #278, `main` `78a3aa93`)
+- Autorización explícita del titular en el chat («si»). Todos los flujos de CI (`frontend`, `mobile`, `arnes`, `nba`, `tenis`, `tenis_v2`) 100% en verde en GitHub Actions antes de fusionar.
+- **Base de datos (`tenis-db`):** contenedor `tenis-db` (`postgres:16`, sin puertos publicados al host, solo red interna `tenis-db_tenis-interna` y volumen `tenis-db-datos`); base `tenis`, usuario administrador `tenis_admin`. Ubicado en `~/tenis-isolated/tenis-db/` (`.env` con contraseña generada aleatoriamente y permisos 600).
+- **Migraciones aplicadas:** 0001 a 0007 (`0001_catalogos.sql` a `0007_semillas.sql`); 22 tablas en los esquemas `tenis` y `tenis_op`. Disparadores de inmutabilidad verificados: rechazan DELETE/UPDATE/TRUNCATE con `ERROR: evidencia inmutable de tenis`.
+- **Motor de tenis (`tenis-motor:78a3aa93`):** construido en el VPS a partir del commit de `main` `78a3aa93` con usuario seguro `qf`. Wrapper operativo `~/tenis-isolated/ejecutar_motor.sh`.
+- **Ensayos:** `ensayo_vuelta_atras.sh` y `ensayo_operativo.sh` ejecutados con éxito en el VPS (4/4 compuertas aprobadas, incluyendo validación de `imagen_actual`, candado de concurrencia flock, ejecución dry-run y verificación de cadena de hashes criptográficos con `{'integra': True, 'total_sellos': 0, 'ultimo_hash': None}`).
+- **Vuelta atrás:**
+  - Base de datos: `cd ~/tenis-isolated/tenis-db/apps/tenis/ops/tenis-db && docker compose --env-file ~/tenis-isolated/tenis-db/.env -p tenis-db down` (el volumen `tenis-db-datos` se conserva; añadir `-v` solo si se requiere purga total).
+  - Motor: revertir `imagen_actual` a `imagen_actual.anterior` mediante `~/tenis-isolated/tenis-db/apps/tenis/ops/ensayo_vuelta_atras.sh` o eliminar la imagen con `docker rmi tenis-motor:78a3aa93`.
+
 ### 2026-11-06 22:30 UTC · Parley v2.1: fútbol sin Pinnacle, revisor NBA cada 5 min; API y web DESPLEGADAS · VPS
 - Fusionado a `main` (PR #276). Carpeta `~/quantfut/releases/parley-v2-20261106/`: `run.sh` y `run_nba.sh` montan de solo lectura los archivos de `main` sobre la imagen del worker (`quantfut-worker-segura:53b1e5ed`); los 5 archivos compartidos (`alta_prob_datos`, `escalera_datos`, `parley_datos`, `parley`, `escalera`) eran idénticos a `main` antes de superponerlos. Api y worker sin tocar.
 - Cron del host: añadido el revisor NBA (`*/5 * * * *`, `flock`, `run_nba.sh`, red `nba-red` para `nba-api`); copia previa `crontab_antes_nba.txt`. Fútbol del parley v2 ya usa consenso de casas (sin Pinnacle) y la política de cuota por mercado.
