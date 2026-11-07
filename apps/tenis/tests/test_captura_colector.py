@@ -47,33 +47,23 @@ def test_codigo_de_salida_del_comando_se_propaga(tmp_path):
 
 
 def test_candado_ocupado_sale_con_cero_sin_ejecutar(tmp_path):
+    import fcntl
+
     lock = tmp_path / "locks" / "tenis-sportsapipro.lock"
     (tmp_path / "locks").mkdir(exist_ok=True)
     marca = tmp_path / "ejecutado.txt"
-    tenedor = subprocess.Popen([
-        sys.executable, "-c",
-        f"import fcntl, time; f = open(r'{lock}', 'w'); fcntl.flock(f.fileno(), fcntl.LOCK_EX); time.sleep(30)"
-    ])
-    try:
-        r = None
-        for _ in range(50):  # esperar a que el tenedor tenga el candado
+    with open(lock, "w") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
             r = _ejecutar(tmp_path, "sportsapipro", "bash", "-c", f"touch {marca}")
-            if "ocupado" in r.stdout:
-                break
-            time.sleep(0.1)
-        assert r is not None and r.returncode == 0 and "ocupado" in r.stdout
-        assert not marca.exists()
-        assert "ocupado" in (tmp_path / "logs" / "sportsapipro.log").read_text(encoding="utf-8")
-    finally:
-        tenedor.kill()
-        tenedor.wait()
-    r = None
-    for _ in range(20):
-        r = _ejecutar(tmp_path, "sportsapipro", "bash", "-c", f"touch {marca}")
-        if r.returncode == 0 and marca.exists():
-            break
-        time.sleep(0.05)
-    assert r is not None and r.returncode == 0 and marca.exists()
+            assert r.returncode == 0 and "ocupado" in r.stdout
+            assert not marca.exists()
+            assert "ocupado" in (tmp_path / "logs" / "sportsapipro.log").read_text(encoding="utf-8")
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+    r = _ejecutar(tmp_path, "sportsapipro", "bash", "-c", f"touch {marca}")
+    assert r.returncode == 0 and marca.exists()
 
 
 def test_fuente_invalida_o_sin_comando_da_error_de_uso(tmp_path):
