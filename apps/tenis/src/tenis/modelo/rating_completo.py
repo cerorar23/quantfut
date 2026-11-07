@@ -112,7 +112,7 @@ def filtrar_completo(d, psi, tablas: dict, cruzadas: bool = True, ventana_anios:
         rho = st.rho(a, b, k, s) - (ft or 0.0)
         var = st.var_diferencial(a, b, k, s, c)
         k_m[i], c_m[i] = k, (ft or 0.0)
-        out["pi"][i], out["rho"][i], out["var_rho"][i] = tablas[(f, s)].prob(rho, var), rho, var
+        out["pi"][i], out["rho"][i], out["var_rho"][i] = tablas[(f, s)].prob(rho, var, psi.c_inf), rho, var
     sal = SalidaFiltro(out["pi"], out["rho"], out["var_rho"], out["f1"], out["f2"], fat_desc, pr1, pr2, motivo, ult,
                        cuenta["act"], cuenta["mult"])
     sal.estado = st

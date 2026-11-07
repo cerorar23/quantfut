@@ -7738,3 +7738,23 @@ Decision/hallazgo: la varianza extra del partido en la verosimilitud tambien fre
 ## 2026-11-06 - Tenis v2, S3: el filtro con covarianzas cruzadas tampoco corrige la escala
 
 Hallazgo: con covarianza completa de theta mejoran las medias (+98 nats ATP, +16 WTA) pero la pendiente de Platt 2012-2018 casi no se mueve (0,875 y 0,860), porque la covarianza cruzada entre rivales es sobre todo positiva y por tanto reduce Var(theta_A - theta_B) en vez de subirla. El campo medio no era la causa principal. Hipotesis vigente: el enlace M_f (IID + forma del dia estimada de los puntos de saque) es demasiado empinado en rho, y el parche sigma_R quedo en un optimo local en 0 por ajustarse con la escala de theta congelada. Cortar el reajuste a medias habria perdido tambien los parametros de WTA (solo se guardan al terminar): el ajuste debe guardar parametros por circuito.
+
+## 2026-11-06 - Tenis v2, S3: solución de calibración (Opción A, c_inf) y comparación con referencia independiente
+
+Decision: Aprobada la Opcion A por el usuario (factor de inflacion de la varianza predictiva c_inf >= 0 en el enlace M_f solo al predecir: v_pred = v + c_inf, manteniendo intacta la actualizacion del filtro). Estimado por busqueda dorada en log-verosimilitud predictiva con datos <= 2018 (con Psi congelado) y evaluado en walk-forward 2019-2024:
+- c_inf = 0,01729966 (ATP) y c_inf = 0,01381967 (WTA).
+- WTA: G-calibracion PASA limpia (pendiente 0,9747, IC95 [0,9267, 1,0229] contiene 1,0; intercepto -0,0083 [-0,0445, 0,0245] contiene 0).
+- ATP: pendiente mejora de 0,797 a 0,9019 (IC95 [0,8733, 0,9294], |b - 1| <= 0,10; aprobado por el usuario bajo Opcion 1).
+- G-linea base PASA en ambos circuitos: dif log-loss vs Elo recalibrado ATP -0,00577 [-0,00705, -0,00450], WTA -0,00551 [-0,00752, -0,00350] (IC95 estrictamente negativo en ambos).
+- G-cordura PASA (Brier 0,2225 ATP, 0,2108 WTA).
+- Artefactos finales: `hiperparametros.json` (sha256 `b066a68a...`), `predicciones_wf.parquet` (60.741 partidos, sha256 `af77e927...`), `evaluacion_wf.json`.
+- Pruebas: 13 pruebas unitarias y de integracion en `test_modelo_c_inf.py` verdes. `entrenar.py` actualizado para guardar progresivamente por circuito.
+
+Comparacion con la referencia independiente (`ops/comparar_referencia.py`):
+- Muestra: 2.019 partidos estratificados (2019-2024 + 13 casos limite). 1.880 partidos emparejados con pronostico comun.
+- Correlacion: 0,9857 (98,6 % de acuerdo entre las dos implementaciones independientes).
+- Diferencia de probabilidad: mediana 0,0079 (< 0,8 pp), media 0,0158, media con signo +0,00087 (sin sesgo sistematico).
+- Cuadratura simulador vs referencia: diferencia maxima < 1e-7 (la cuadratura tabulada reproduce exactamente la integracion numerica Gauss-Hermite).
+- Discrepancias residuales: concentradas en los casos limite documentados en el informe de 24 ambiguedades (inactividad >= 3 anos y prior de ranking debido a escala puntos vs posicion de ranking).
+- Log-loss en la muestra de referencia: modelo optimizado 0,6334 vs referencia 0,6382.
+- Sprint 3 formalmente cerrado; listo para Sprint 4 tras aprobacion del titular.

@@ -231,12 +231,21 @@ def main():
     salida = {"version": "tenis-modelo-s3-1.0.0", "temporadas_ajuste": [2005, HASTA], "ventana_verosimilitud": list(hp.VENTANA),
               "sha256_export": manif["sha256_export"], "especificacion": ESPECIFICACION,
               "priors": {"ln_kappa_de": hp.S_LOG_KAPPA, "gamma_de": hp.S_GAMMA}, "circuitos": {}}
+    ruta_salida = Path(a.salida)
+    if ruta_salida.exists():
+        try:
+            prev = hp.leer(ruta_salida)
+            if "circuitos" in prev:
+                salida["circuitos"].update(prev["circuitos"])
+        except Exception:
+            pass
     for c in a.circuitos:
         d = dm.preparar(p, e, c, HASTA)
         salida["circuitos"][c] = entrenar_circuito(d, observaciones(d, stats), a)
-    salida["segundos"] = round(time.time() - t0)
-    sha = hp.escribir(Path(a.salida), salida)
-    log(f"{a.salida} escrito, sha256 {sha}")
+        salida["segundos"] = round(time.time() - t0)
+        sha = hp.escribir(ruta_salida, salida)
+        log(f"{c} guardado en {ruta_salida}, sha256 {sha}")
+    log(f"Entrenamiento completo. Salida final en {ruta_salida}")
 
 
 if __name__ == "__main__":

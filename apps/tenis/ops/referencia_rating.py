@@ -440,9 +440,10 @@ class Filtro:
     def predecir(self, p: Partido, a, b) -> dict:
         r = self._rho_y_var(p, a, b)
         v = float(r["g"] @ r["V"] @ r["g"])
-        S = sigma_eps(self.hp.s_eps, self.hp.r_eps) + v * np.array([[1.0, -1.0], [-1.0, 1.0]])
+        v_pred = v + float(self.hp.extra.get("c_inf", 0.0))
+        S = sigma_eps(self.hp.s_eps, self.hp.r_eps) + v_pred * np.array([[1.0, -1.0], [-1.0, 1.0]])
         pi = float(m_barra(self.hp.ell[p.superficie], [r["rho"]], S, p.mejor_de, p.decisivo, self.hp.q_pred)[0])
-        return dict(pi=pi, rho=r["rho"], var_rho=v, ell=self.hp.ell[p.superficie], sigma_m=S, prior_a=r["prior_a"], prior_b=r["prior_b"],
+        return dict(pi=pi, rho=r["rho"], var_rho=v_pred, ell=self.hp.ell[p.superficie], sigma_m=S, prior_a=r["prior_a"], prior_b=r["prior_b"],
                     fatiga_desconocida=r["fat_desc"], F_a=r["Fa"], F_b=r["Fb"])
 
     # -- actualización --------------------------------------------------------------------------------------
@@ -526,27 +527,44 @@ def pronosticable(r) -> str | None:
     return None
 
 
-def ejecutar(df: pd.DataFrame, hp_por_circuito: dict, objetivo: set, hasta=None, progreso: int = 0) -> pd.DataFrame:
+def _ejecutar_circuito(args_tuple):
+    d, hp, circ, objetivo, hasta, progreso = args_tuple
+    if hasta is not None:
+        d = d[d["corte_utc"] < hasta]
+    filtro = Filtro(hp)
+    obj = d[d["partido_key"].isin(objetivo)].sort_values("corte_utc", kind="stable")
+    obj_it = list(obj.itertuples(index=False))
+    salida = []
+    k = 0
+    for n, r in enumerate(d.itertuples(index=False)):
+        vis = r.visible_resultado_utc
+        while k < len(obj_it) and obj_it[k].corte_utc <= vis:
+            salida.append(_pronostico(filtro, obj_it[k], circ)); k += 1
+        _consumir(filtro, r)
+        if progreso and n % progreso == 0:
+            print(f"  {circ} {n}/{len(d)} {vis}", flush=True)
+    while k < len(obj_it):
+        salida.append(_pronostico(filtro, obj_it[k], circ)); k += 1
+    return salida
+
+
+def ejecutar(df: pd.DataFrame, hp_por_circuito: dict, objetivo: set, hasta=None, progreso: int = 0, paralelo: bool = True) -> pd.DataFrame:
     """Recorre los eventos de cada circuito en orden de visibilidad y pronostica los partidos de `objetivo`
     (partido_key) justo antes de consumir el primer evento con vis ≥ su corte."""
-    salida = []
-    for circ, hp in hp_por_circuito.items():
-        d = df[df["circuito"] == circ]
-        if hasta is not None:
-            d = d[d["corte_utc"] < hasta]
-        filtro = Filtro(hp)
-        obj = d[d["partido_key"].isin(objetivo)].sort_values("corte_utc", kind="stable")
-        obj_it = list(obj.itertuples(index=False))
-        k = 0
-        for n, r in enumerate(d.itertuples(index=False)):
-            vis = r.visible_resultado_utc
-            while k < len(obj_it) and obj_it[k].corte_utc <= vis:
-                salida.append(_pronostico(filtro, obj_it[k], circ)); k += 1
-            _consumir(filtro, r)
-            if progreso and n % progreso == 0:
-                print(f"  {circ} {n}/{len(d)} {vis}", flush=True)
-        while k < len(obj_it):
-            salida.append(_pronostico(filtro, obj_it[k], circ)); k += 1
+    tareas = [
+        (df[df["circuito"] == circ].copy(), hp, circ, objetivo, hasta, progreso)
+        for circ, hp in hp_por_circuito.items()
+    ]
+    if paralelo and len(tareas) > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        salida = []
+        with ProcessPoolExecutor(max_workers=min(2, len(tareas))) as ex:
+            for res in ex.map(_ejecutar_circuito, tareas):
+                salida.extend(res)
+    else:
+        salida = []
+        for t in tareas:
+            salida.extend(_ejecutar_circuito(t))
     return pd.DataFrame(salida)
 
 

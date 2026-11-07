@@ -101,9 +101,38 @@ ALIAS = {   # clave canónica de rr.Hiper → nombres aceptados en el JSON del o
 }
 
 
-def hiper_desde_json(h: dict) -> tuple[rr.Hiper | None, list]:
+def hiper_desde_json(h: dict, circ: str = "atp") -> tuple[rr.Hiper | None, list]:
     """Traduce los hiperparámetros congelados de UN circuito al formato canónico de la referencia. Devuelve
     (Hiper o None, claves que faltan). Lo que falte se informa como hallazgo de especificación: no se rellena."""
+    if "circuitos" in h:
+        h = h["circuitos"].get(circ, h)
+    if "psi_r" in h:
+        p = h["psi_r"]
+        sups = rr.SUPERFICIES
+        ell = {s: p["lbar"][i] for i, s in enumerate(sups)}
+        kap = {s: p["kappa"][i] for i, s in enumerate(sups)}
+        sig_d = {s: p["sigma_d"] for s in sups}
+        om = np.full((4, 4), p["r_omega"])
+        np.fill_diagonal(om, 1.0)
+        ctxs = rr.CONTEXTOS
+        gam = {k: p["gamma"][i] if i < len(p["gamma"]) else 0.0 for i, k in enumerate(ctxs)}
+        try:
+            hip = rr.Hiper(
+                ell=ell, kappa=kap,
+                tau_theta=p["tau_theta"] / math.sqrt(365.25),
+                tau_d=p["tau_d"] / math.sqrt(365.25),
+                inact_umbral_dias=60.0,
+                inact_var=(p["tau_inact"] / math.sqrt(365.25)) ** 2,
+                sigma_d=sig_d, omega=om.tolist(), zeta=1.0, var_d_iota=0.0025,
+                phi=tuple(p["phi"]), lam=p["lam"], F90=p["f90"], ventana_h=96.0,
+                gamma=gam, s_eps=p["sigma_eps"], r_eps=p["rho_eps"],
+                prior_a=-0.35, prior_b=0.06, prior_var=p["sigma_theta0"] ** 2,
+                theta_sin_ranking=-0.35,
+                extra={"c_inf": p.get("c_inf", 0.0)}
+            ).validar()
+            return hip, []
+        except Exception as e:
+            return None, [str(e)]
     vals, faltan = {}, []
     for k, alias in ALIAS.items():
         for a in alias:
@@ -155,7 +184,7 @@ def main(argv=None):
         crudo = json.loads(Path(args.hiper).read_text(encoding="utf-8"))
         hps = {}
         for c in circuitos:
-            h, faltan = hiper_desde_json(crudo.get(c, crudo))
+            h, faltan = hiper_desde_json(crudo.get(c, crudo), circ=c)
             if faltan:
                 raise SystemExit(f"{c}: el JSON no trae {faltan} → hallazgo de especificación; no se rellena")
             hps[c] = h
@@ -198,7 +227,7 @@ def anadir_pi_simulador(ref: pd.DataFrame, hps: dict, q: int = 11) -> pd.DataFra
 def _col_pi(otro: pd.DataFrame, col: str | None) -> str:
     if col:
         return col
-    for c in ("pi", "pi_1", "pi_lado_1", "pi_r", "p_1", "prob_1", "prob_lado_1", "pi_ganador_1"):
+    for c in ("pi", "pi_1", "pi_lado_1", "pi_lado1", "pi_r", "p_1", "prob_1", "prob_lado_1", "pi_ganador_1"):
         if c in otro.columns:
             return c
     raise KeyError(f"no encuentro la columna de π en {list(otro.columns)}; usa --col-pi")

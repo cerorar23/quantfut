@@ -134,6 +134,6 @@ def filtrar(d, psi, tablas: dict, ganadores=None) -> SalidaFiltro:
         rho = k * (m[a][0] - m[b][0]) + m[a][s + 1] - m[b][s + 1] - (ft or 0.0)
         var = est.var_dir(v[a], c - t[a], psi, k, s) + est.var_dir(v[b], c - t[b], psi, k, s)
         k_m[i], c_m[i] = k, (ft or 0.0)
-        out["pi"][i], out["rho"][i], out["var_rho"][i] = tabla_de(f, s, niv[i]).prob(rho, var), rho, var
+        out["pi"][i], out["rho"][i], out["var_rho"][i] = tabla_de(f, s, niv[i]).prob(rho, var, psi.c_inf), rho, var
     return SalidaFiltro(out["pi"], out["rho"], out["var_rho"], out["f1"], out["f2"], fat_desc, pr1, pr2, motivo, ult,
                         cuenta["act"], cuenta["mult"])

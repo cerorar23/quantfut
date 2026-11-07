@@ -63,13 +63,18 @@ class Tabla:
         a3, a2, a1, a0 = self.coef[0][i], self.coef[1][i], self.coef[2][i], self.coef[3][i]
         return ((a3 * t + a2) * t + a1) * t + a0, (3.0 * a3 * t + 2.0 * a2) * t + a1, 6.0 * a3 * t + 2.0 * a2
 
-    def prob(self, rho: float, v: float) -> float:
-        """π = M̄(ρ, v) normalizado con el perdedor por simetría: π(−ρ) = 1 − π(ρ) exacto."""
+    def prob(self, rho: float, v: float, c_inf: float = 0.0) -> float:
+        """π = M̄(ρ, v + c_inf) normalizado con el perdedor por simetría: π(−ρ) = 1 − π(ρ) exacto.
+
+        c_inf: factor de inflación de varianza predictiva (opción A, 7-nov). Solo entra aquí; la actualización
+        (log_m) sigue usando v sin modificar. c_inf = 0 reproduce el comportamiento anterior exacto.
+        """
         lm = self.log_m
-        if v <= 0.0:
+        v_pred = v + c_inf
+        if v_pred <= 0.0:
             pw, pl = math.exp(lm(rho)[0]), math.exp(lm(-rho)[0])
         else:
-            s, nod = math.sqrt(v), (NODOS_V if v <= V_CAMBIO else NODOS_V_ANCHO)
+            s, nod = math.sqrt(v_pred), (NODOS_V if v_pred <= V_CAMBIO else NODOS_V_ANCHO)
             pw = sum(w * math.exp(lm(rho + s * x)[0]) for x, w in nod)
             pl = sum(w * math.exp(lm(-rho + s * x)[0]) for x, w in nod)
         return pw / (pw + pl)

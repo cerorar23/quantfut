@@ -26,8 +26,13 @@ class Psi:
     # verosimilitud y en la predicción). 0 = modelo anterior exacto. Variante registrada: otra σ_R para Challenger.
     sigma_r: float = 0.0
     sigma_r_challenger: float | None = None
+    # Factor de inflación de varianza predictiva (opción A, 7-nov): v_pred = v + c_inf, solo al predecir; la
+    # actualización sigue usando v sin cambio. c_inf ≥ 0; estimado con ≤ 2018 y congelado. 0 = sin inflación.
+    c_inf: float = 0.0
 
     def __post_init__(self):
+        if not (math.isfinite(self.c_inf) and self.c_inf >= 0):
+            raise ValueError("c_inf debe ser finita y ≥ 0")
         if not (math.isfinite(self.sigma_r) and self.sigma_r >= 0) or (
                 self.sigma_r_challenger is not None and not (math.isfinite(self.sigma_r_challenger) and self.sigma_r_challenger >= 0)):
             raise ValueError("σ_R debe ser finita y ≥ 0")
