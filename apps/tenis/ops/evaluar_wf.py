@@ -30,7 +30,7 @@ from tenis.modelo.rating_completo import filtrar_completo
 from tenis.modelo.union import unir
 
 SALIDA = Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\rediseno_20261104\modelo_s3")
-EVAL, HASTA, SEMILLA = (2019, 2024), 2024, 20261105
+EVAL_DEFECTO, HASTA_DEFECTO, SEMILLA = (2019, 2024), 2024, 20261105
 COLS_PRED = ["partido_key", "circuito", "temporada", "corte_utc", "pi_lado1", "prior_ranking_1", "prior_ranking_2",
              "prior_ranking", "historia_corta", "fatiga_desconocida", "rho", "var_rho", "fatiga_1", "fatiga_2", "S_hat"]
 
@@ -45,7 +45,7 @@ def sha_df(df: pd.DataFrame) -> str:
     return hashlib.sha256(buf.getvalue().encode("utf-8")).hexdigest()
 
 
-def correr_circuito(d, cfg: dict, obs) -> pd.DataFrame:
+def correr_circuito(d, cfg: dict, obs, eval_rango: tuple[int, int] = EVAL_DEFECTO) -> pd.DataFrame:
     psi = Psi.desde_dict(cfg["psi_r"])
     tabs = tabla.construir_todas(tuple(cfg["lbar"]), psi.sigma_eps, psi.rho_eps)
     tabs_c = tabla.construir_todas((cfg["lbar_comun"],) * 4, psi.sigma_eps, psi.rho_eps)
@@ -73,14 +73,14 @@ def correr_circuito(d, cfg: dict, obs) -> pd.DataFrame:
                       "categoria": p.categoria.fillna("sin_categoria"), "ronda": p.ronda, "mejor_de": p.mejor_de,
                       "n_prev_min": np.minimum(p.n_prev_1.fillna(0), p.n_prev_2.fillna(0))})
     for col, base in (("pi_recal", "pi_lado1"), ("p_elo_cal", "p_elo")):
-        f[col], bs = rc.por_temporada(f.temporada, f[base], f.y1, f.liquida & f[base].notna(), range(EVAL[0], EVAL[1] + 1), 2012)
+        f[col], bs = rc.por_temporada(f.temporada, f[base], f.y1, f.liquida & f[base].notna(), range(eval_rango[0], eval_rango[1] + 1), 2012)
         cfg.setdefault("_pendientes_recal", {})[col] = bs
     return f
 
 
-def evaluar(f: pd.DataFrame, cfg: dict, rng, reps: int) -> dict:
+def evaluar(f: pd.DataFrame, cfg: dict, rng, reps: int, eval_rango: tuple[int, int] = EVAL_DEFECTO) -> dict:
     t = f.temporada.to_numpy()
-    s = f[(t >= EVAL[0]) & (t <= EVAL[1]) & f.pi_lado1.notna() & f.liquida].copy()
+    s = f[(t >= eval_rango[0]) & (t <= eval_rango[1]) & f.pi_lado1.notna() & f.liquida].copy()
     y, pi = s.y1.to_numpy(), s.pi_lado1.to_numpy()
     out = {"n_evaluados": int(len(s)), "metricas": {}, "comparaciones": {}, "por_temporada_brier": {}}
     for col in ("pi_lado1", "pi_recal", "p_elo", "p_elo_sup", "p_elo_cal", "pi_sin_sup", "pi_sin_fat"):
@@ -98,6 +98,17 @@ def evaluar(f: pd.DataFrame, cfg: dict, rng, reps: int) -> dict:
     for temp, g in s.groupby("temporada"):
         out["por_temporada_brier"][int(temp)] = {"n": int(len(g)), "brier": float(ev.brier(g.y1, g.pi_lado1).mean()),
                                                  "logloss": float(ev.perdida(g.y1, g.pi_lado1).mean())}
+    if eval_rango[1] >= 2025:
+        # Evaluación específica de la reserva 2025-2026
+        s_res = s[s.temporada >= 2025].copy()
+        if len(s_res) > 0:
+            y_res, pi_res = s_res.y1.to_numpy(), s_res.pi_lado1.to_numpy()
+            out["reserva_2025_2026"] = {
+                "n": int(len(s_res)),
+                "metricas": ev.metricas(y_res, pi_res),
+                "calibracion": ev.calibracion(y_res, pi_res, rng, reps),
+                "vs_elo_recalibrado": ev.por_origen(s_res.temporada, y_res, pi_res, s_res.p_elo_cal, rng, reps)["combinado"]
+            }
     f90 = cfg["fijo_r"]["f90"]
     s["seg_fatiga"] = np.where((s.fatiga_1 > f90) | (s.fatiga_2 > f90), "F>F90",
                                np.where(s.fatiga_desconocida, "desconocida", "F<=F90"))
@@ -129,6 +140,7 @@ def evaluar(f: pd.DataFrame, cfg: dict, rng, reps: int) -> dict:
     out["fiabilidad"] = [{"decil": int(k), "pi_media": float(pi[q == k].mean()), "frec": float(y[q == k].mean()),
                           "n": int((q == k).sum())} for k in np.unique(q)]
     return out
+    return out
 
 
 def compuertas(r: dict) -> dict:
@@ -149,13 +161,14 @@ def no_fuga(f: pd.DataFrame) -> dict:
     return {"pronosticos": int(len(s)), "violaciones": int((s.ult_vis >= s.corte_ns).sum())}
 
 
-def muestra_union(f: pd.DataFrame, cfg: dict, rng, n: int = 120) -> dict:
-    s = f[(f.temporada >= EVAL[0]) & f.pi_lado1.notna() & f.S_hat.notna()]
+def muestra_union(f: pd.DataFrame, cfg: dict, rng, n: int = 120, eval_rango: tuple[int, int] = EVAL_DEFECTO) -> dict:
+    s = f[(f.temporada >= eval_rango[0]) & f.pi_lado1.notna() & f.S_hat.notna()]
     s = s.iloc[rng.choice(len(s), size=min(n, len(s)), replace=False)]
     errs, rech = [], 0
+    c_inf = cfg["psi_r"].get("c_inf", 0.0)
     for r in s.itertuples():
         try:
-            u = unir(r.S_hat, r.pi_lado1, r.fmt, cfg["psi_r"]["sigma_eps"], cfg["psi_r"]["rho_eps"], r.var_rho)
+            u = unir(r.S_hat, r.pi_lado1, r.fmt, cfg["psi_r"]["sigma_eps"], cfg["psi_r"]["rho_eps"], r.var_rho + c_inf)
             errs.append(abs(u.pi_logrado - r.pi_lado1))
         except ValueError:
             rech += 1
@@ -169,40 +182,43 @@ def main():
     ap.add_argument("--reps", type=int, default=ev.REPS)
     ap.add_argument("--circuitos", nargs="+", default=["atp", "wta"])
     ap.add_argument("--dir", default=str(SALIDA), help="carpeta con hiperparametros.json y de salida")
+    ap.add_argument("--hasta", type=int, default=HASTA_DEFECTO, help="año máximo a cargar del histórico")
+    ap.add_argument("--eval_min", type=int, default=EVAL_DEFECTO[0], help="año inicial a evaluar")
+    ap.add_argument("--eval_max", type=int, default=EVAL_DEFECTO[1], help="año final a evaluar")
     a = ap.parse_args()
     salida = Path(a.dir)
+    eval_rango = (a.eval_min, a.eval_max)
     hpj = hp.leer(salida / "hiperparametros.json")
-    p, e = dm.cargar_export(hasta=HASTA)
+    p, e = dm.cargar_export(hasta=a.hasta)
     stats = pd.read_parquet(dm.RUTA_EXPORT / "estadisticas_saque.parquet",
                             columns=["partido_key", "lado", "puntos_saque", "puntos_saque_ganados", "visible_desde"])
     rng = np.random.default_rng(SEMILLA)
-    informe, preds, filas = {"sha256_hiperparametros": hp.huella(hpj), "reps": a.reps, "circuitos": {}}, [], []
+    informe, preds, filas = {"sha256_hiperparametros": hp.huella(hpj), "reps": a.reps, "eval_rango": eval_rango, "hasta": a.hasta, "circuitos": {}}, [], []
     for c in a.circuitos:
         cfg = hpj["circuitos"][c]
-        d = dm.preparar(p, e, c, HASTA)
-        f = correr_circuito(d, cfg, observaciones(d, stats))
+        d = dm.preparar(p, e, c, a.hasta)
+        f = correr_circuito(d, cfg, observaciones(d, stats), eval_rango)
         t = f.temporada.to_numpy()
-        pr = f[(t >= EVAL[0]) & (t <= EVAL[1]) & f.pi_lado1.notna()][COLS_PRED].reset_index(drop=True)
-        r = evaluar(f, cfg, rng, a.reps)
+        pr = f[(t >= eval_rango[0]) & (t <= eval_rango[1]) & f.pi_lado1.notna()][COLS_PRED].reset_index(drop=True)
+        r = evaluar(f, cfg, rng, a.reps, eval_rango)
         r["compuertas"] = compuertas(r)
         r["no_fuga"] = no_fuga(f)
         r["pendientes_recal"] = cfg.get("_pendientes_recal")
-        r["union_muestra"] = muestra_union(f, cfg, rng)
-        r["omitidos_2019_2024"] = f[(t >= EVAL[0]) & (t <= EVAL[1])].motivo.value_counts(dropna=False).rename(
+        r["union_muestra"] = muestra_union(f, cfg, rng, eval_rango=eval_rango)
+        r[f"omitidos_{eval_rango[0]}_{eval_rango[1]}"] = f[(t >= eval_rango[0]) & (t <= eval_rango[1])].motivo.value_counts(dropna=False).rename(
             index=lambda k: k or "pronosticado").to_dict()
         r["sha256_predicciones"] = sha_df(pr)
         if a.repetir:
-            r["sha256_segunda_corrida"] = sha_df(correr_circuito(d, cfg, observaciones(d, stats))
-                                                 .pipe(lambda g: g[(g.temporada >= EVAL[0]) & (g.temporada <= EVAL[1])
+            r["sha256_segunda_corrida"] = sha_df(correr_circuito(d, cfg, observaciones(d, stats), eval_rango)
+                                                 .pipe(lambda g: g[(g.temporada >= eval_rango[0]) & (g.temporada <= eval_rango[1])
                                                                    & g.pi_lado1.notna()][COLS_PRED].reset_index(drop=True)))
         informe["circuitos"][c] = r
         preds.append(pr)
-        filas.append(f[(t >= EVAL[0]) & (t <= EVAL[1]) & f.pi_lado1.notna()].drop(columns=["motivo"]))
+        filas.append(f[(t >= eval_rango[0]) & (t <= eval_rango[1]) & f.pi_lado1.notna()].drop(columns=["motivo"]))
         log(f"{c}: compuertas {json.dumps(r['compuertas'], default=float)[:600]}")
     todo = pd.concat(preds, ignore_index=True)
     todo.to_parquet(salida / "predicciones_wf.parquet", index=False)
     informe["sha256_predicciones_total"] = sha_df(todo)
-    # filas de evaluación (con etiquetas y líneas base) para diagnósticos posteriores sin volver a correr el filtro
     pd.concat(filas, ignore_index=True).to_parquet(salida / "evaluacion_filas.parquet", index=False)
     (salida / "evaluacion_wf.json").write_text(json.dumps(informe, indent=1, ensure_ascii=False, default=float), encoding="utf-8")
     log(f"predicciones_wf.parquet: {len(todo)} filas, sha256 {informe['sha256_predicciones_total']}")

@@ -481,6 +481,9 @@ def main():
     parser.add_argument("--predicciones", type=Path, default=DIR_MODELO_S3 / "predicciones_wf.parquet")
     parser.add_argument("--hiper", type=Path, default=DIR_MODELO_S3 / "hiperparametros.json")
     parser.add_argument("--salida_dir", type=Path, default=DIR_MODELO_S4)
+    parser.add_argument("--salida_nombre", type=str, default="evaluacion_mercados")
+    parser.add_argument("--temp_min", type=int, default=2019, help="Temporada mínima a evaluar")
+    parser.add_argument("--temp_max", type=int, default=2024, help="Temporada máxima a evaluar")
     parser.add_argument("--max_workers", type=int, default=os.cpu_count())
     parser.add_argument("--limite", type=int, default=None, help="Límite de partidos para prueba rápida")
     parser.add_argument("--reps", type=int, default=2000, help="Réplicas de bootstrap")
@@ -488,7 +491,7 @@ def main():
 
     args.salida_dir.mkdir(parents=True, exist_ok=True)
     t0_total = time.time()
-    log("=== Inicio de Evaluación de Mercados Sprint 4 (2019–2024) ===")
+    log(f"=== Inicio de Evaluación de Mercados Sprint 4 ({args.temp_min}–{args.temp_max}) ===")
 
     log(f"Cargando predicciones de {args.predicciones}...")
     pred = pd.read_parquet(args.predicciones)
@@ -500,7 +503,7 @@ def main():
             "partido_key", "mejor_de", "formato_decisivo", "superficie",
             "y_estado", "y_ganador", "y_sets", "y_juegos_1", "y_juegos_2", "temporada"
         ],
-        filters=[("temporada", ">=", 2019), ("temporada", "<=", 2024)]
+        filters=[("temporada", ">=", args.temp_min), ("temporada", "<=", args.temp_max)]
     )
 
     log(f"Cargando hiperparámetros de {args.hiper}...")
@@ -577,7 +580,7 @@ def main():
     log(f"Simulación analítica completada: {len(resultados_partidos)} partidos en {dt_sim:.1f} s ({len(resultados_partidos)/dt_sim:.1f} part/s)")
 
     df_res = pd.DataFrame(resultados_partidos)
-    salida_parquet = args.salida_dir / "evaluacion_mercados.parquet"
+    salida_parquet = args.salida_dir / f"{args.salida_nombre}.parquet"
     log(f"Guardando {salida_parquet}...")
     df_res.to_parquet(salida_parquet, index=False)
 
@@ -585,6 +588,7 @@ def main():
     informe_final = {
         "version": "tenis-modelo-s4-1.0.0",
         "fecha": datetime.now().isoformat(),
+        "temporadas": [args.temp_min, args.temp_max],
         "n_total_predicciones": n_total,
         "n_completados": n_comp,
         "n_evaluados": len(df_res),
@@ -597,7 +601,7 @@ def main():
             res_c = evaluar_compuertas_circuito(df_c, lb_hist, rng, reps=args.reps)
             informe_final["circuitos"][circ] = res_c
 
-    salida_json = args.salida_dir / "evaluacion_mercados.json"
+    salida_json = args.salida_dir / f"{args.salida_nombre}.json"
     log(f"Guardando {salida_json}...")
     with open(salida_json, "w", encoding="utf-8") as f:
         json.dump(informe_final, f, indent=2)

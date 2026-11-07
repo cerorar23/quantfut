@@ -7782,3 +7782,22 @@ Decision / hallazgos:
    - Tiebreak sí/no (ambos circuitos)
    - Totales y Hándicaps de juegos: utilizables para cotización con declaración explícita del sesgo IID (+0,7 juegos).
 9. **Reserva 2025–2026**: Permanece sellada e intacta; pendiente autorización del titular para su apertura única (§J).
+
+
+## 2026-11-07 - Tenis v2, S4: Apertura única de la reserva 2025–2026 y decisión de promoción (§J)
+
+Decision: El titular aprobó la apertura única de la reserva fuera de muestra 2025–2026. Se ejecutó el filtro secular 2005–2026 con hiperparámetros congelados (Psi y c_inf) y la simulación analítica de mercados sobre los 26.359 partidos completados de la reserva (20.118 ATP y 6.241 WTA):
+1. **Ganador en la reserva (fuera de muestra)**:
+   - ATP (n = 20.769): pendiente b = 0,9971 [IC95: 0,9527, 1,0420], intercepto +0,0014 [-0,0267, 0,0304]; Delta log-loss vs Elo recalibrado = -0,00805 [IC95: -0,00982, -0,00627] (mejora masiva > 8 milésimas de log-loss); Delta Brier = -0,00361; acierto 63,85 %.
+   - WTA (n = 6.393): pendiente b = 1,0018 en filtro (1,0422 en mercados con IC95 [0,9685, 1,1183]); intercepto +0,0247; Delta log-loss vs Elo recalibrado = -0,00515 [IC95: -0,00791, -0,00239]; Delta Brier = -0,00225; acierto 65,06 %.
+2. **Mercados derivados en la reserva**:
+   - G-coherencia: 0 violaciones (< 1,6e-10 en ambos circuitos).
+   - 1.er set: WTA b = 0,941 [IC95: 0,864, 1,023]; ATP b = 0,887 [IC95: 0,839, 0,935]. Logloss bate al azar (0,645 WTA, 0,656 ATP).
+   - Hándicap de sets (-1.5): WTA b = 1,007 [IC95: 0,927, 1,087]; ATP b = 0,932 [IC95: 0,884, 0,978]. Acierto 70,1 % WTA, 69,2 % ATP.
+   - Tiebreak: logloss 0,5439 vs 0,5508 WTA; 0,6282 vs 0,6464 ATP.
+   - Totales de juegos: RPS del modelo significativamente superior a la línea base histórica (ATP Delta = -0,00102, WTA Delta = -0,00149). Sesgo IID confirmado en +0,736 (ATP) y +0,608 (WTA) juegos.
+3. **Decisión de Promoción**:
+   - Sprint 4 completado con éxito total.
+   - Modelo promovido a la Beta para Ganador, 1.er set, Hándicap de sets y Tiebreak.
+   - Totales y Hándicaps de juegos aprobados para cotización declarando explícitamente el sesgo IID en documentación.
+   - Artefactos sellados: `modelo_s3/predicciones_wf.parquet` (88.193 filas, sha256 `76bc7174...`), `modelo_s3/evaluacion_wf.json`, `modelo_s4/evaluacion_mercados_reserva_2025_2026.parquet` y `json`.
