@@ -41,13 +41,20 @@ def invertir(suma: float, pi: float, formato: Formato, inc: Incertidumbre, q: in
     if not m_lo < pi < m_hi:
         raise ValueError(f"π = {pi:.6f} inalcanzable con Ŝ = {s} y p ∈ [{P_MIN}; {P_MAX}] "
                          f"(rango [{m_lo:.6f}; {m_hi:.6f}])")
-    it = 0
-    while hi - lo > tol:
-        mid = 0.5 * (lo + hi)
-        if m(mid) < pi:
-            lo = mid
-        else:
-            hi = mid
-        it += 1
-    d = 0.5 * (lo + hi)
-    return Inversion(d, s / 2 + d, s / 2 - d, m(d), it)
+    try:
+        from scipy.optimize import brentq
+        res = brentq(lambda x: m(x) - pi, lo, hi, xtol=tol, rtol=tol, full_output=True)
+        d = float(res[0])
+        it = int(res[1].iterations)
+        return Inversion(d, s / 2 + d, s / 2 - d, m(d), it)
+    except Exception:
+        it = 0
+        while hi - lo > tol:
+            mid = 0.5 * (lo + hi)
+            if m(mid) < pi:
+                lo = mid
+            else:
+                hi = mid
+            it += 1
+        d = 0.5 * (lo + hi)
+        return Inversion(d, s / 2 + d, s / 2 - d, m(d), it)

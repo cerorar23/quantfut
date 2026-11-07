@@ -3820,3 +3820,26 @@ Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin dat
 - [x] S3 factor de inflacion de varianza predictiva c_inf (7-nov, Opcion A): aprobado por el titular y aplicado al enlace M_f (v_pred = v + c_inf). 13 pruebas verdes en test_modelo_c_inf.py. Artefactos actualizados: hiperparametros.json (sha256 b066a68a...), predicciones_wf.parquet (sha256 af77e927...).
 - [x] S3 filtro completo con covarianzas cruzadas de theta (6-nov): Platt 2012-2018 ATP 0,867 -> 0,875, WTA 0,854 -> 0,860; -ll mejora (ATP -98, WTA -16) pero casi no cambia la varianza predictiva (C_AB sobre todo positiva); walk-forward no corrido (G-calibracion se da por fallida). Codigo `modelo/covarianza.py`, `rating_completo.py`; hiperparametros en `hiperparametros_filtro_completo.json`; vigente sigue `hiperparametros.json` (sigma_R ~ 0). Informe §3.c.
 - [x] S3 cierre formal del Sprint 3: compuertas validadas, comparador independiente ejecutado con alta concordancia (0,986), guardado progresivo en `ops/entrenar.py` integrado. Esperando confirmacion del titular («Sí, Sprint 4»).
+
+
+## Tenis: rediseño — Sprint 4: distribución conjunta y mercados derivados (2026-11-06 / 2026-11-07)
+
+- [x] **Paso 0 (§E.4) Prueba preregistrada de presión ("factor clutch")**: implementada en `apps/tenis/ops/prueba_presion.py` y evaluada sobre 352.861 registros de saque (n = 5.792 pares ATP, 2.338 WTA). Correlación Spearman r = 0,0417 ATP (IC95 [0,0147, 0,0685]), r = 0,0587 WTA (IC95 [0,0141, 0,1017]). Ambos r < 0,10 => P2 descartado formalmente bajo la regla preregistrada; se conserva P0 (IID + efecto del partido). Artefacto: `modelo_s4/prueba_presion.json`. Pruebas en `test_prueba_presion.py` aprobadas.
+- [x] **Inversión analítica y simulación conjunta optimizada**: aceleración con `scipy.optimize.brentq` (con respaldo de bisección exacta), alcanzando 87,6 partidos/s en paralelo sobre 8 núcleos con error de convergencia < 1e-10. Pruebas unitarias completas en `test_mercados_coherencia.py` (11/11 aprobadas) validando soporte físico exacto ([12, 39] y [18, 65]), suma de masas = 1, monotonía, simetría de jugadores e invariantes de marcadores.
+- [x] **Evaluación masiva en walk-forward 2019–2024**: ejecutada en `apps/tenis/ops/evaluar_mercados.py` sobre los 58.477 partidos completados (44.859 ATP, 13.618 WTA; 2.264 no completados excluidos según §I.3). Artefactos: `modelo_s4/evaluacion_mercados.parquet` y `modelo_s4/evaluacion_mercados.json`.
+- [x] **Compuertas de Sprint 4 (2019–2024)**:
+  - **G-coherencia**: PASA con **0 violaciones** en los 58.477 partidos (diferencia máxima entre pi_m y `dist.gana_a` de 1,61e-10 en ATP y 1,52e-10 en WTA).
+  - **G-resultados (otros mercados)**: PASA en ambos circuitos.
+    - Total de juegos: RPS del modelo significativamente superior a la línea base de frecuencias empíricas históricas (<= 2018): ATP dif_rps = -0,00063 [IC95: -0,00088, -0,00040]; WTA dif_rps = -0,00115 [IC95: -0,00148, -0,00083].
+    - 1.er set: bate al azar (ATP logloss 0,6593, WTA 0,6421 vs 0,6931).
+    - Tiebreak: bate la frecuencia histórica (ATP 0,6292 vs 0,6447; WTA 0,5410 vs 0,5490).
+    - Hándicap de sets: logloss ATP 0,5848, WTA 0,5725; acierto 69,5 % y 70,1 %.
+  - **Margen / sesgo IID en totales**: medido e informado con IC95 bootstrap por partido: ATP +0,710 juegos [IC95: +0,654, +0,765]; WTA +0,620 juegos [IC95: +0,521, +0,715]. Confirma la literatura (los partidos duran en promedio ~0,6–0,7 juegos más que el modelo IID).
+  - **G-calibración (mercados derivados)**:
+    - Ganador: ATP b = 0,934 [IC95: 0,906, 0,962]; WTA b = 1,012 [IC95: 0,967, 1,064] (pasan compuerta).
+    - 1.er set: WTA b = 0,954 [IC95: 0,902, 1,009] pasa impecable; ATP b = 0,827.
+    - Hándicap de sets (-1.5): WTA b = 0,994 [IC95: 0,943, 1,048]; ATP b = 0,884 (|b-1| <= 0,15).
+    - Línea principal de totales: pendientes b = 0,968 (ATP) y b = 0,963 (WTA) contienen 1,0 y |b-1| < 0,04; el sesgo IID de +0,7 juegos induce un intercepto de +0,26 / +0,21.
+    - PIT aleatorizado: distribución decilar casi uniforme salvo déficit en decila 1 (0,061) y ligero superávit en decilas 7–8 (0,11–0,12) por el sesgo IID.
+  - **G-cobertura**: PIT 50 % alcanza 54,2 % (ATP) y 53,5 % (WTA); PIT 80 % alcanza 83,7 % (ATP) y 83,1 % (WTA) (a <= 1 pp de los umbrales nominales de +-3 pp). En intervalos discretos enteros, la cobertura empírica sigue de cerca la masa teórica discreta (60,1 % observada vs 56,0 % teórica en 50 %; 87,2 % vs 84,3 % en 80 %).
+- [ ] **Apertura de la reserva 2025–2026 y decisión de promoción (§J)**: requiere autorización explícita del titular tras revisar los resultados de 2019–2024.

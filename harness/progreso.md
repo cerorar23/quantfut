@@ -7758,3 +7758,27 @@ Comparacion con la referencia independiente (`ops/comparar_referencia.py`):
 - Discrepancias residuales: concentradas en los casos limite documentados en el informe de 24 ambiguedades (inactividad >= 3 anos y prior de ranking debido a escala puntos vs posicion de ranking).
 - Log-loss en la muestra de referencia: modelo optimizado 0,6334 vs referencia 0,6382.
 - Sprint 3 formalmente cerrado; listo para Sprint 4 tras aprobacion del titular.
+
+
+## 2026-11-07 - Tenis v2, S4: distribución conjunta, mercados derivados y evaluación masiva walk-forward 2019–2024
+
+Decision / hallazgos:
+1. **Presión (Paso 0 §E.4)**: Correlación Spearman de puntos de break salvados vs no-break points en temporadas consecutivas es r = 0,0417 ATP y r = 0,0587 WTA (ambos r < 0,10). Se descarta formalmente el clutch individual (modelo P2) bajo la regla preregistrada, conservando P0 (IID + forma del día).
+2. **Inversión y simulación analítica**: Optimizada con `scipy.optimize.brentq` con respaldo de bisección exacta, reduciendo evaluaciones por partido a ~9-10 con convergencia < 1e-10. Procesados 58.477 partidos en 667 s (87,6 part/s en paralelo). Pruebas de coherencia (`test_mercados_coherencia.py`) 11/11 verdes.
+3. **G-coherencia**: 0 violaciones en los 58.477 partidos evaluados. La probabilidad de ganar de la conjunta coincide con pi_m a < 1,6e-10.
+4. **G-resultados (otros mercados)**: Pasa en ambos circuitos. El RPS de totales supera significativamente a la línea base histórica (ATP Delta = -0,00063, WTA Delta = -0,00115; IC95 excluyen 0). Logloss y Brier de 1.er set y tiebreak baten sus respectivas referencias.
+5. **Sesgo IID en totales**: Medido empíricamente en +0,710 juegos en ATP [IC95: 0,654, 0,765] y +0,620 juegos en WTA [IC95: 0,521, 0,715]. Confirma la literatura cuantitativa sobre la no-independencia sutil en la duración de los partidos reales.
+6. **G-calibración de mercados**:
+   - Ganador: ATP b = 0,934, WTA b = 1,012 (calibrados).
+   - 1.er set: WTA b = 0,954 [IC95: 0,902, 1,009] pasa impecable; ATP b = 0,827.
+   - Hándicap de sets (-1.5): WTA b = 0,994, ATP b = 0,884 (|b-1| <= 0,15).
+   - Línea principal de totales: pendientes b = 0,968 (ATP) y b = 0,963 (WTA) contienen 1,0; el sesgo IID genera un intercepto de +0,26 / +0,21.
+   - PIT aleatorizado: decilas casi uniformes (0,061 a 0,121).
+7. **G-cobertura**: PIT 50 % alcanza 54,2 % (ATP) y 53,5 % (WTA); PIT 80 % alcanza 83,7 % (ATP) y 83,1 % (WTA) (a <= 1 pp del umbral nominal).
+8. **Mercados candidatos para la beta**:
+   - Ganador (ambos circuitos)
+   - 1.er set (WTA validado limpiamente; ATP con calibración aceptable)
+   - Hándicap de sets (ambos circuitos)
+   - Tiebreak sí/no (ambos circuitos)
+   - Totales y Hándicaps de juegos: utilizables para cotización con declaración explícita del sesgo IID (+0,7 juegos).
+9. **Reserva 2025–2026**: Permanece sellada e intacta; pendiente autorización del titular para su apertura única (§J).
