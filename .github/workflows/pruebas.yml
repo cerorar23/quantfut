@@ -33,6 +33,7 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
       - run: pip install -r requirements-dev.txt
+      - run: pip install -e 'apps/tenis[test]'
       - name: Esquema de la base de pruebas
         run: python scripts/ci_aplicar_esquema.py
         env:
@@ -40,7 +41,7 @@ jobs:
       - name: Pruebas (incluidas las que necesitan Postgres)
         run: python -m pytest tests -q
         env:
-          PYTHONPATH: src
+          PYTHONPATH: src:apps/tenis/src
           QF_TEST_PG_DSN: postgresql://postgres:ci@localhost:5432/qf_test
           # Las pruebas anteriores usan la configuración por defecto: que apunte también a la base de pruebas
           PG_DSN: postgresql://postgres:ci@localhost:5432/qf_test
@@ -109,7 +110,7 @@ jobs:
       - name: Pruebas del motor de tenis v2 (contratos, recibos y base de datos)
         run: python -m pytest apps/tenis/tests -q -p no:cacheprovider
         env:
-          PYTHONPATH: apps/tenis/src
+          PYTHONPATH: apps/tenis/src:src
           QF_TEST_PG_DSN: postgresql://postgres:tenis-ci@localhost:5432/postgres
 
   mobile:

@@ -20,8 +20,11 @@ from tenis.identidad import enlazar
 from tenis.identidad.normalizar import nombre_clave
 from tenis.identidad.resolver import ResolutorMultifuente
 
-TML = Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\full_20261016\tml\originals")
-MANIFIESTO = TML.parents[1] / "download_manifest.json"
+TML = Path("C:/Users/huye/Documents/apuesta proyec/data/tennis/full_20261016/tml/originals")
+try:
+    MANIFIESTO = TML.parents[1] / "download_manifest.json"
+except IndexError:
+    MANIFIESTO = TML / "download_manifest.json"
 FICHEROS = ["2025.csv", "2025_wta.csv", "2026.csv", "2026_wta.csv"]   # 2026 trae los ids alternos 3xxxxx de WTA
 RECIBIDO = "2026-01-05"
 

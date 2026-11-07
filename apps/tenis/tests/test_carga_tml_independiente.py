@@ -17,8 +17,11 @@ np = pytest.importorskip("numpy")
 
 from tenis.carga.tml_cli import ejecutar  # noqa: E402
 
-ORIGINALES = Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\full_20261016\tml\originals")
-MANIFIESTO = ORIGINALES.parents[1] / "download_manifest.json"
+ORIGINALES = Path("C:/Users/huye/Documents/apuesta proyec/data/tennis/full_20261016/tml/originals")
+try:
+    MANIFIESTO = ORIGINALES.parents[1] / "download_manifest.json"
+except IndexError:
+    MANIFIESTO = ORIGINALES / "download_manifest.json"
 FICHEROS = ["2025.csv", "2025_wta.csv"]
 
 
