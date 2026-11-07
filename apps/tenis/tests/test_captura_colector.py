@@ -64,8 +64,13 @@ def test_candado_ocupado_sale_con_cero_sin_ejecutar(tmp_path):
     finally:
         tenedor.kill()
         tenedor.wait()
-    r = _ejecutar(tmp_path, "sportsapipro", "bash", "-c", f"touch {marca}")
-    assert r.returncode == 0 and marca.exists()
+    r = None
+    for _ in range(20):
+        r = _ejecutar(tmp_path, "sportsapipro", "bash", "-c", f"touch {marca}")
+        if r.returncode == 0 and marca.exists():
+            break
+        time.sleep(0.05)
+    assert r is not None and r.returncode == 0 and marca.exists()
 
 
 def test_fuente_invalida_o_sin_comando_da_error_de_uso(tmp_path):

@@ -110,6 +110,8 @@ def _ranking_asof(q: pd.DataFrame, rk: pd.DataFrame) -> tuple[pd.DataFrame, int]
     qq = qq[qq["corte"].notna() & qq["fecha_rk"].notna() & qq["jugador_id"].notna()]
     qq["jugador_id"] = qq["jugador_id"].astype("int64")
     g["jugador_id"] = g["jugador_id"].astype("int64")
+    qq["fecha_rk"] = pd.to_datetime(qq["fecha_rk"]).dt.tz_localize(None).astype("datetime64[ns]")
+    g["fecha_publicacion"] = pd.to_datetime(g["fecha_publicacion"]).dt.tz_localize(None).astype("datetime64[ns]")
     qq = qq.sort_values("fecha_rk")
     g = g.sort_values("fecha_publicacion")
     m = pd.merge_asof(qq, g, left_on="fecha_rk", right_on="fecha_publicacion", by=["circuito", "jugador_id"],
@@ -319,12 +321,15 @@ def construir(t: dict, desde: date | None = None) -> dict:
     # ---- historia previa (n_prev, plan §D.6) con TODOS los eventos jugados visibles antes del corte
     jug = ev[ev["r_estado"].isin(ESTADOS_JUGADOS)]
     largo = pd.concat([pd.DataFrame({"jugador_id": jug[f"jugador_{l}"].astype("int64"), "t": jug["r_vis"]})
-                       for l in (1, 2)], ignore_index=True).sort_values(["t", "jugador_id"], kind="mergesort")
+                       for l in (1, 2)], ignore_index=True)
+    largo["t"] = pd.to_datetime(largo["t"], utc=True).astype("datetime64[ns, UTC]")
+    largo = largo.sort_values(["t", "jugador_id"], kind="mergesort")
     largo["n"] = largo.groupby("jugador_id").cumcount() + 1
     for lado in (1, 2):
         qq = K[["partido_key", f"jugador_{lado}", "corte_utc"]].dropna().rename(
             columns={f"jugador_{lado}": "jugador_id"})
         qq["jugador_id"] = qq["jugador_id"].astype("int64")
+        qq["corte_utc"] = pd.to_datetime(qq["corte_utc"], utc=True).astype("datetime64[ns, UTC]")
         qq = qq.sort_values("corte_utc")
         mm = pd.merge_asof(qq, largo, left_on="corte_utc", right_on="t", by="jugador_id", direction="backward",
                            allow_exact_matches=False)

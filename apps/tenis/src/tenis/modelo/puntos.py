@@ -51,7 +51,9 @@ def observaciones(d, stats: pd.DataFrame) -> pd.DataFrame:
           & (o.puntos_saque_ganados_1 <= o.puntos_saque_1) & (o.puntos_saque_ganados_2 <= o.puntos_saque_2)]
     info = d.p.set_index("partido_key")[["j1", "j2", "sup", "temporada"]]
     o = o.join(info, how="inner").reset_index()
-    o["vis_ns"] = pd.DatetimeIndex(o.visible_desde).asi8
+    idx_v = pd.DatetimeIndex(o.visible_desde)
+    idx_v = idx_v.tz_convert("UTC") if idx_v.tz is not None else idx_v.tz_localize("UTC")
+    o["vis_ns"] = idx_v.astype("datetime64[ns, UTC]").astype("int64").to_numpy()
     o = o[o.sup >= 0]
     return o.sort_values(["vis_ns", "partido_key"], kind="mergesort").reset_index(drop=True)
 

@@ -43,7 +43,8 @@ def indice_formato(mejor_de, decisivo) -> int:
 def _ns(serie: pd.Series) -> np.ndarray:
     """Instante en ns UTC (entero: las comparaciones visible < corte son exactas)."""
     idx = pd.DatetimeIndex(serie)
-    return (idx.tz_convert("UTC") if idx.tz is not None else idx.tz_localize("UTC")).asi8.copy()
+    idx = idx.tz_convert("UTC") if idx.tz is not None else idx.tz_localize("UTC")
+    return idx.astype("datetime64[ns, UTC]").astype("int64").to_numpy().copy()
 
 
 def liquidacion(estado: pd.Series, sets_completos: pd.Series) -> np.ndarray:
