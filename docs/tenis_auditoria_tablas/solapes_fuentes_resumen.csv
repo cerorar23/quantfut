@@ -1,0 +1,6 @@
+fuente,partidos_con_fecha,fecha_min,fecha_max,circuitos
+TML canonico,492251,1967-02-27,2026-10-16,atp;wta
+SofaScore local,21913,2022-12-30,2026-11-03,atp;wta
+Match Charting Project,11811,1960-05-29,2026-09-09,atp;wta
+"API-Tennis (states.sqlite VPS, copia local)",527,2026-10-18,2026-11-06,atp;wta
+tennis-data.co.uk (manual),119456,2000-01-03,2026-10-18,atp;wta

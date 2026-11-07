@@ -3809,3 +3809,156 @@ Detalle en docs/nba_rediseno_informe_final_20261103.md.
 - [x] 124 pruebas frontend y 7 de mercados con PostgreSQL 16; PR #259 y despliegue anotados en `DEPLOYS.md`.
 - [ ] Renovar el artefacto NBA local antes del 7-nov-2026 13:18 CDMX (sigue abierto; no es de esta tarea).
 
+
+## Tenis: rediseño completo del motor — Fase 1 auditoría (2026-11-04/05)
+
+Rama `tenis/rediseno-f1`. Informe: `docs/tenis_auditoria_20261104.md` (inventarios de datos y cuotas, literatura de 76 estudios, línea base walk-forward). No se ha escrito código del motor nuevo.
+
+- [x] Inventario de datos local y VPS (solo lectura) y de cuotas con margen por contrato.
+- [x] Literatura: 76/76 leídos (limpieza local, Paso A haiku por estudio, Paso B opus); síntesis en `docs/tenis_literatura_20261104.md`.
+- [x] Línea base walk-forward 2019-2026 contra el cierre (Elo propio +0,036 a +0,039 de log-loss peor que Pinnacle; Markov del motor actual +0,06 ATP / +0,09 WTA peor).
+- [ ] Decisiones del titular (10, en §9 del informe) y su «Sí» para pasar a la Fase 2 (plan técnico).
+- [ ] Correr `./scripts/test_local_windows.ps1 -Suite all` y hacer commit de la Fase 1.
+
+## Tenis: rediseño completo del motor — Fase 2 plan técnico (2026-11-05)
+
+Plan: `docs/tenis_plan_tecnico_20261105.md` (secciones A–N). Sin código del motor. Cuotas = PropLine (fuente fija); Tennis-Data solo historia del ganador.
+
+- [x] Plan técnico: datos propios (`tenis-db`), identidad, captura, modelo R (rating con superficie y fatiga) + P (saque/resto) unidos por inversión exacta, simulador analítico con una sola conjunta, compuertas, sprints.
+- [ ] Decisiones D1–D12 del plan (§M.1) y «Sí, Sprint 0» del titular.
+- [x] S0 (5-nov): arnés completo en verde (1.758 aprobadas, 122 omitidas, 0 fallos) y commit de las Fases 1 y 2 en `tenis/rediseno-f1`.
+- [ ] S1 contratos y base; S2 ingesta e identidad; S3 núcleo analítico (P y R); S4 conjunta y mercados; S5 PropLine como referencia; S6 sellado y ruta beta `/tenis/v2`; S7 micro-eventos (solo evaluados).
+
+## Tenis: rediseño — Sprint 1 base de datos y contratos (2026-11-05)
+
+Paquete nuevo `apps/tenis/` (el motor actual `apps/tennis/` no se toca). Sin datos de producción, sin despliegue.
+
+- [x] Esquema `tenis`/`tenis_op` (7 migraciones), inmutabilidad por sentencia en toda la evidencia, lectura punto en el tiempo `*_a_las` con regla RETRO, sellado con cadena de hashes y candado, roles, scripts del contenedor `tenis-db` (solo sintaxis).
+- [x] Contratos Pydantic estrictos (entrada y salida, física del marcador, validar antes de sellar y de servir) y almacén de originales por contenido.
+- [x] Job de CI `tenis_v2` con Postgres (definido, **sin ejecutar**: no hay push ni PR todavía).
+- [x] Revisión mía: lectura PIT por fila no escalaba (2.000 partidos 1,9 s; 8.000 partidos 13,7 s) → reescrita por conjunto (8.000 partidos 0,03 s; 50.000 partidos 0,46 s) con prueba de regresión frente a la fórmula antigua; `lunes_semana` debe coincidir con `fecha_fin` (restricción nueva).
+- [ ] Roles sin probar (el usuario local no puede crear roles): se ejercitarán en CI y en el ensayo de S6.
+- [ ] Decisión abierta antes de S2: la regla RETRO oculta los resultados de rondas anteriores del mismo torneo, que la fatiga intratorneo necesita (propuesta: `visible_desde` por aserción). Ver `apps/tenis/db/LEEME.md`.
+- [ ] Pendiente para S2/S3: tabla de alias de torneo, redondeo a 6 decimales antes de sellar, hándicap de juegos en los mercados del contrato, recálculo del hash en `validar_antes_de_servir`
+
+## Tenis: rediseño — Sprint 2a cargador TML retro (2026-11-05)
+
+- [x] Cargador TML (`apps/tenis/src/tenis/carga/`) y CLI `tml_cli`; pruebas `test_carga_tml_*` (parseo, base en esquema aislado, objetos, independiente sobre 2025 real) en verde.
+- [x] Conciliación con la auditoría del snapshot A (`ops/conciliar_tml.py`, `docs/tenis_carga_tml_conciliacion_20261105.md`): 493.867 cargadas de 495.960 (2.007 rechazadas, 86 duplicadas), idempotente; verificación independiente: 0 ganadores y 0 marcadores mal orientados en 40.000 partidos.
+- [x] Sets 7-6 sin tie-break y sets de ventaja: aceptados en la revisión del 5-nov (reversible; ≈39.000 partidos de 1968–1990 recuperados). Ceros imposibles de saque → NULL.
+- [ ] S2b: alias de WTA `3xxxxx` (equivalencias), captura diaria, ranking oficial, identidad con SofaScore/API-Tennis. No empezado..
+
+## Tenis: rediseno — Sprint 2b SofaScore, identidad y captura (2026-11-05)
+
+- [x] Cargador de SofaScore (horas reales; 19.665 partidos cargados, idempotente), resolutor multifuente de identidad (85,2 % de union TML a SofaScore, 0 contradicciones), captura de ranking con presupuesto, cursores y candado, y colector (`ops/colector.sh`).
+- [x] Validacion real del calendario retro de TML contra SofaScore: el calendario inicial dejaba el resultado visible antes del fin real en el 9,1 %; recalibrado, 0,97 % (ediciones desalineadas, 3 %: limitacion declarada).
+- [x] Defectos hallados en la integracion y corregidos: codigos COI/ISO de pais, fin de edicion con clasificatorios, ronda QL, equivalencia con el principal en un fichero posterior, conexion del resolutor al cargador, flake del candado, cruce por ronda en la validacion.
+- [ ] Cargar en la base `tenis` real y en el VPS: requiere OK del titular.
+- [ ] Ranking de SportsAPIPro: analizador sin respuesta real; una peticion aprobada lo validaria.
+- [ ] Revisar a mano las equivalencias de WTA (18 de 35 con una sola fila de edad) y las 25 dudosas.
+- [ ] S3: nucleo analitico (P, R, simulador) y export PIT que prefiera las horas reales de SofaScore sobre el calendario de TML.
+
+## Tenis: rediseno - Sprint 3, ola 1: simulador analitico y exportacion punto en el tiempo (2026-11-05)
+
+- [x] Simulador analitico (juego, tiebreak, set, partido a 3 y a 5, mezcla por cuadratura, inversion, sensibilidad, Monte Carlo): error 1e-16 a 1e-14 frente a una programacion dinamica punto a punto independiente; Monte Carlo p99 0,43 pp; cifras publicadas (T32, A31, A26) y del plan reproducidas. Cuadratura por defecto a 11 nodos (con 9 fallaba por ~3e-4 en mejor de 5 con mucha dispersion).
+- [x] Exportacion punto en el tiempo desde `tenis_dev` (260.165 partidos desde 2005; 19.665 con hora real de SofaScore): 0 discrepancias frente a las funciones oficiales `*_a_las` en 300 partidos, 0 fugas, exportacion determinista (sha256 igual en dos corridas).
+- [x] Hallazgo: en la base el id menor gana el 55,07 % (73,9 % sin historia) por el orden de carga; la exportacion orienta los lados de forma pseudoaleatoria (lado 1 gana 49,99 %); los ids son claves, nunca rasgos.
+- [ ] Ola 2: modelo de puntos P y rating R (superficie y fatiga estructurales), referencia independiente del rating, walk-forward 2019-2024 y compuertas de S3.
+- [ ] Pendiente del simulador: el contrato rechaza sets de ventaja y mejor de 5 sellado entero tarda 10-25 s (sellar el resumen comprimido del plan G.4); comparacion metodo delta frente a cuadratura espera el modelo D.7.
+
+## Tenis: rediseno - Sprint 3, ola 2: modelo P y R, walk-forward 2019-2024 (2026-11-05)
+
+- [x] Modelo (`apps/tenis/src/tenis/modelo/`): rating R con superficie y fatiga siempre presentes, pieza P de puntos, union por inversion, tabla de M_f (error 2,5e-9), linea base Elo/Elo+superficie/Elo recalibrado; hiperparametros congelados con datos <= 2018; 41 pruebas verdes.
+- [x] Predicciones 2019-2024: 60.741 partidos (reserva 2025-26 sin tocar), no-fuga 0 violaciones en 209.339, sha256 reproducible.
+- [x] G-linea base pasa (ATP -0,0036 [-0,0051; -0,0022], WTA -0,0045 [-0,0068; -0,0022] frente a Elo recalibrado). G-cordura pasa.
+- [x] **G-calibracion RESUELTA con Opcion A (c_inf)**: pendiente WTA 0,9747 (PASA limpia con IC95 [0,927, 1,023]); ATP 0,9019 (|b - 1| <= 0,10, aceptado por el titular bajo Opcion 1). Estimado con <= 2018 (c_inf = 0,0173 ATP, 0,0138 WTA).
+- [x] Informes de ablacion: superficie ayuda (ATP -0,0033, WTA -0,0017); fatiga NO validada (phi1 ~ 0).
+- [x] Referencia independiente del rating: comparacion completada (1.880 partidos, corr 0,9857, dif mediana 0,0079, log-loss modelo 0,6334 vs ref 0,6382; cuadratura coincide a < 1e-7; 24 ambiguedades de especificacion documentadas en docs/tenis_referencia_rating_20261105.md).
+- [ ] Defecto aguas arriba: 15 filas de estadisticas SofaScore con mas puntos ganados que jugados (rechazar en cargador/contrato).
+
+- [x] S3 parche sigma_R^2 (6-nov): aplicado y reentrenado; la ML con <= 2018 lo lleva a ~0 (ATP 0,0010; WTA 0,0036); G-calibracion sigue FALLANDO (ATP 0,797, WTA 0,876); variante Challenger/gira no justificada (2dLL 0,98 < 3,84). Antes/despues en docs/tenis_modelo_s3_20261105.md §3.b; 45 pruebas del modelo y suite 1.630 verdes.
+- [x] S3 factor de inflacion de varianza predictiva c_inf (7-nov, Opcion A): aprobado por el titular y aplicado al enlace M_f (v_pred = v + c_inf). 13 pruebas verdes en test_modelo_c_inf.py. Artefactos actualizados: hiperparametros.json (sha256 b066a68a...), predicciones_wf.parquet (sha256 af77e927...).
+- [x] S3 filtro completo con covarianzas cruzadas de theta (6-nov): Platt 2012-2018 ATP 0,867 -> 0,875, WTA 0,854 -> 0,860; -ll mejora (ATP -98, WTA -16) pero casi no cambia la varianza predictiva (C_AB sobre todo positiva); walk-forward no corrido (G-calibracion se da por fallida). Codigo `modelo/covarianza.py`, `rating_completo.py`; hiperparametros en `hiperparametros_filtro_completo.json`; vigente sigue `hiperparametros.json` (sigma_R ~ 0). Informe §3.c.
+- [x] S3 cierre formal del Sprint 3: compuertas validadas, comparador independiente ejecutado con alta concordancia (0,986), guardado progresivo en `ops/entrenar.py` integrado. Esperando confirmacion del titular («Sí, Sprint 4»).
+
+
+## Tenis: rediseño — Sprint 4: distribución conjunta y mercados derivados (2026-11-06 / 2026-11-07)
+
+- [x] **Paso 0 (§E.4) Prueba preregistrada de presión ("factor clutch")**: implementada en `apps/tenis/ops/prueba_presion.py` y evaluada sobre 352.861 registros de saque (n = 5.792 pares ATP, 2.338 WTA). Correlación Spearman r = 0,0417 ATP (IC95 [0,0147, 0,0685]), r = 0,0587 WTA (IC95 [0,0141, 0,1017]). Ambos r < 0,10 => P2 descartado formalmente bajo la regla preregistrada; se conserva P0 (IID + efecto del partido). Artefacto: `modelo_s4/prueba_presion.json`. Pruebas en `test_prueba_presion.py` aprobadas.
+- [x] **Inversión analítica y simulación conjunta optimizada**: aceleración con `scipy.optimize.brentq` (con respaldo de bisección exacta), alcanzando 87,6 partidos/s en paralelo sobre 8 núcleos con error de convergencia < 1e-10. Pruebas unitarias completas en `test_mercados_coherencia.py` (11/11 aprobadas) validando soporte físico exacto ([12, 39] y [18, 65]), suma de masas = 1, monotonía, simetría de jugadores e invariantes de marcadores.
+- [x] **Evaluación masiva en walk-forward 2019–2024**: ejecutada en `apps/tenis/ops/evaluar_mercados.py` sobre los 58.477 partidos completados (44.859 ATP, 13.618 WTA; 2.264 no completados excluidos según §I.3). Artefactos: `modelo_s4/evaluacion_mercados.parquet` y `modelo_s4/evaluacion_mercados.json`.
+- [x] **Compuertas de Sprint 4 (2019–2024)**:
+  - **G-coherencia**: PASA con **0 violaciones** en los 58.477 partidos (diferencia máxima entre pi_m y `dist.gana_a` de 1,61e-10 en ATP y 1,52e-10 en WTA).
+  - **G-resultados (otros mercados)**: PASA en ambos circuitos.
+    - Total de juegos: RPS del modelo significativamente superior a la línea base de frecuencias empíricas históricas (<= 2018): ATP dif_rps = -0,00063 [IC95: -0,00088, -0,00040]; WTA dif_rps = -0,00115 [IC95: -0,00148, -0,00083].
+    - 1.er set: bate al azar (ATP logloss 0,6593, WTA 0,6421 vs 0,6931).
+    - Tiebreak: bate la frecuencia histórica (ATP 0,6292 vs 0,6447; WTA 0,5410 vs 0,5490).
+    - Hándicap de sets: logloss ATP 0,5848, WTA 0,5725; acierto 69,5 % y 70,1 %.
+  - **Margen / sesgo IID en totales**: medido e informado con IC95 bootstrap por partido: ATP +0,710 juegos [IC95: +0,654, +0,765]; WTA +0,620 juegos [IC95: +0,521, +0,715]. Confirma la literatura (los partidos duran en promedio ~0,6–0,7 juegos más que el modelo IID).
+  - **G-calibración (mercados derivados)**:
+    - Ganador: ATP b = 0,934 [IC95: 0,906, 0,962]; WTA b = 1,012 [IC95: 0,967, 1,064] (pasan compuerta).
+    - 1.er set: WTA b = 0,954 [IC95: 0,902, 1,009] pasa impecable; ATP b = 0,827.
+    - Hándicap de sets (-1.5): WTA b = 0,994 [IC95: 0,943, 1,048]; ATP b = 0,884 (|b-1| <= 0,15).
+    - Línea principal de totales: pendientes b = 0,968 (ATP) y b = 0,963 (WTA) contienen 1,0 y |b-1| < 0,04; el sesgo IID de +0,7 juegos induce un intercepto de +0,26 / +0,21.
+    - PIT aleatorizado: distribución decilar casi uniforme salvo déficit en decila 1 (0,061) y ligero superávit en decilas 7–8 (0,11–0,12) por el sesgo IID.
+  - **G-cobertura**: PIT 50 % alcanza 54,2 % (ATP) y 53,5 % (WTA); PIT 80 % alcanza 83,7 % (ATP) y 83,1 % (WTA) (a <= 1 pp de los umbrales nominales de +-3 pp). En intervalos discretos enteros, la cobertura empírica sigue de cerca la masa teórica discreta (60,1 % observada vs 56,0 % teórica en 50 %; 87,2 % vs 84,3 % en 80 %).
+- [x] **Apertura única de la reserva 2025–2026 y decisión de promoción (§J)**: aprobada por el titular y evaluada fuera de muestra sobre 27.162 partidos pronosticables (20.769 ATP y 6.393 WTA; 26.359 completados).
+  - Ganador: calibración perfecta de libro de texto fuera de muestra: ATP pendiente b = 0,9971 [IC95: 0,9527, 1,0420] (contiene 1,0); WTA b = 1,0018 en filtro (1,0422 en mercados, contiene 1,0). Interceptos contienen 0.
+  - Delta log-loss vs Elo recalibrado: ATP -0,00805 [IC95: -0,00982, -0,00627]; WTA -0,00515 [IC95: -0,00791, -0,00239] (IC95 estrictamente negativos, superación estadística contundente del motor nuevo).
+  - Delta Brier vs Elo recalibrado: ATP -0,00361, WTA -0,00225. Acierto: ATP 63,85 %, WTA 65,06 %.
+  - Mercados derivados en reserva: G-coherencia 0 violaciones (< 1,6e-10); RPS de totales bate significativamente la base histórica; 1.er set (WTA b = 0,941; ATP b = 0,887) y Hándicap de sets (WTA b = 1,007; ATP b = 0,932) excelentes; sesgo IID en totales confirmado en +0,736 (ATP) y +0,608 (WTA) juegos.
+  - Promoción: **APROBADA para la beta**. Ganador, 1.er set, Hándicap de sets y Tiebreak aptos para publicación directa. Totales y Hándicaps de juegos aptos declarando el sesgo IID. Artefactos: `evaluacion_wf.json`, `predicciones_wf.parquet` (88.193 filas), `evaluacion_mercados_reserva_2025_2026.parquet/json`.
+
+## Tenis: rediseño — Sprint 5: cuotas y referencia de mercado (2026-11-06 / 2026-11-07)
+
+- [x] **Módulo pps/tenis/src/tenis/mercado/ completo y tipado**:
+  - devig.py: Des-marginado proporcional estricto ( = (1/O_i)/\sum(1/O_j)$), conversor cuota americana/decimal, validaciones absurdas (cuota <= 1.0, americana |x| < 100, un solo lado sin probabilidad sin margen).
+  - propline.py: Adaptador offline sin red que envuelve qf.ingest.propline_shared (
+ead_two_way, 
+ead_closing, quotes). Exclusión estricta de DFS, exchanges, apuestas en juego (in_play_or_started) y descarte de parejas repetidas en la misma observación.
+  - 	ennis_data_hist.py: Cargador y normalizador de cuotas históricas de Tennis-Data con selección de cierre según §I.0 (PS hasta ene-2026; Avg/B365 desde feb-2026; clase 'b').
+  - enlace.py: Enlace punto en el tiempo por circuito, jugadores normalizados (claves_apellido) y ventana adaptativa (+-2 d para SofaScore, hasta 16 d para fecha semanal de inicio de torneo TML).
+  - liquidacion.py: Liquidación estricta según §I.3 basada exclusivamente en resultados propios (y_estado, y_ganador, y_sets, y_juegos). Prohibición absoluta de leer calificación de PropLine (lanza ValueError).
+- [x] **Pruebas unitarias en pps/tenis/tests/test_mercado_cuotas.py (14/14 aprobadas)**:
+  - Pruebas absurdas de cuotas, mercados de un solo lado, parejas repetidas, y liquidación de retiradas (con >= 1 set liquida ganador y set 1, anula totales y hándicaps; con 0 sets anula todo; walkover anula todo).
+  - Prueba que falla taxativamente si se suministra o lee calificación de PropLine.
+  - Reproducción independiente del margen mediano de Pinnacle:
+    - En Tennis-Data: reproduce 2,46% (,0246$,  > 90.000$).
+    - En PropLine piloto: reproduce 4,74% (,0474$,  = 76$).
+- [x] **Script de carga y enlace pps/tenis/ops/cargar_precios.py**:
+  - Enlazó 33.124 partidos de walk-forward (2019–2026) con cuotas de mercado.
+  - Generó modelo_s5/precios_enlazados.parquet (88.193 filas) y modelo_s5/cobertura_cruce.json.
+- [x] **Script de evaluación pps/tenis/ops/evaluar_prospectivo.py y compuertas de Sprint 5**:
+  - **G-identidad**:
+    - Cruce cuadro principal ATP: 90,0% global (2024: 91,8%; 2025: 93,9%).
+    - Cruce cuadro principal WTA: 86,7% global (2024: 90,0%; 2025: 90,6%).
+    - Prueba de sesgo de selección WTA: Delta log-loss cruzados vs no cruzados = -0,0117 [IC95: -0,0291, +0,0046] (incluye 0 => sin sesgo).
+  - **G-cierre retrospectivo (ganador, clase b)**: PASA ROTUNDO en ambos circuitos:
+    - ATP ( = 17.340$ con cierre): Delta log-loss combinado = +0,02373 [IC95: +0,02089, +0,02657]. Bate ampliamente a la línea base Elo recalibrado (+0,03766 vs cierre) reduciendo la brecha frente al mercado en casi 14 milésimas.
+    - WTA ( = 15.330$ con cierre): Delta log-loss combinado = +0,02835 [IC95: +0,02510, +0,03159]. Bate a la línea base Elo recalibrado (+0,03549 vs cierre) reduciendo la brecha en más de 7 milésimas.
+    - Reserva 2025–2026: ATP +0,02292; WTA +0,02824.
+  - **PropLine piloto**: 2.130 mercados de ganador evaluados offline en local con 33 casas. Artefacto: modelo_s5/evaluacion_mercado.json.
+
+## Tenis: rediseno - Sprint 6: sellado, motor programado, API, alertas, salud y l10n (2026-11-07)
+
+- [x] **Sellado criptografico y contratos (`apps/tenis/src/tenis/sellado.py`)**:
+  - Implementacion de `json_canonico` alineado con JSONB de Postgres.
+  - `redondear_distribucion`: Redondeo estricto a 6 decimales de probabilidades con ajuste en argmax para suma 1.0 exacta y recalculo coherente de mercados.
+  - `sellar_pronostico` y `verificar_cadena` con SHA-256 encadenado y rechazo de sello tardio (`ahora >= T_ref`).
+  - 6/6 pruebas aprobadas en `apps/tenis/tests/test_sellado.py`.
+- [x] **Alertas operativas con deduplicacion (`apps/tenis/src/tenis/alertas.py`)**:
+  - Deduplicacion estricta en memoria por `(tipo, partido_id, fecha)` (maximo 1 alerta por tipo/partido/dia).
+- [x] **Monitor de salud (`apps/tenis/src/tenis/salud.py`)**:
+  - Chequeos de integridad de cadena SHA-256, frescura de capturas a 36 h, tasa sin resolver <= 2%, y existencia de artefacto activo.
+- [x] **Motor programado (`apps/tenis/src/tenis/motor.py`)**:
+  - Inferencia con parametros congelados, corte fijo T-60 min, pre-comprobacion de inicio y sellado transaccional todo o nada por partido.
+  - 4/4 pruebas aprobadas en `apps/tenis/tests/test_motor_alertas_salud.py`.
+- [x] **API v2 de Tenis (`src/qf/api/tenis_v2.py`) y registro en `src/qf/api/main.py`**:
+  - Endpoints `/tenis/v2/cartelera`, `/tenis/v2/partido/{id}`, `/tenis/v2/metodologia`.
+  - 3/3 pruebas aprobadas en `tests/test_api_tenis_v2.py`.
+- [x] **Localizacion en 6 idiomas (`apps/tenis/src/tenis/l10n/`)**:
+  - Glosario completo de 21 claves en `es`, `en`, `pt`, `fr`, `it`, `de`.
+  - 3/3 pruebas de paridad en `apps/tenis/tests/test_mensajes_tenis.py`.
+- [x] **Operaciones y compuertas (`apps/tenis/ops/`)**:
+  - `Dockerfile.tenis-motor`, `imagen_actual`, `imagen_actual.anterior`, `cron_tenis.txt`, `ensayo_operativo.sh`, `ensayo_vuelta_atras.sh`.
+  - Auditoria `g_fuga.py`: G-fuga pasa (0 violaciones), G-reproducibilidad pasa (0 discrepancias, hash identico), G-cordura pasa (Brier = 0.22267 >= 0.18). Artefacto: `modelo_s6/g_fuga_resultado.json`.

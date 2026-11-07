@@ -1,0 +1,9 @@
+fuente,circuit,surface,partidos,elegibles_modelo,completados,serve_counts_validos
+full_20261016/canonical/matches.parquet,ATP,Carpet,29140,6666,27841,6811
+full_20261016/canonical/matches.parquet,ATP,Clay,164730,78769,157113,81610
+full_20261016/canonical/matches.parquet,ATP,Grass,32439,14477,28960,15038
+full_20261016/canonical/matches.parquet,ATP,Hard,168283,103039,161488,106601
+full_20261016/canonical/matches.parquet,WTA,Carpet,4733,326,4608,335
+full_20261016/canonical/matches.parquet,WTA,Clay,29318,12586,28247,13093
+full_20261016/canonical/matches.parquet,WTA,Grass,9373,5335,8936,5585
+full_20261016/canonical/matches.parquet,WTA,Hard,54235,28740,52334,29700

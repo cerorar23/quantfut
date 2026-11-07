@@ -1,0 +1,31 @@
+# Dockerfile para el motor de inferencia y sellado de tenis v2 (plan §H.1, §H.4, Sprint 6)
+# Construcción reproducible y delgada sin herramientas de compilación en la imagen final.
+
+FROM python:3.12-slim AS base
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TZ=UTC
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copia de código del motor y API
+COPY src/ /app/src/
+COPY apps/tenis/src/ /app/apps/tenis/src/
+COPY apps/tenis/config/ /app/apps/tenis/config/
+
+ENV PYTHONPATH="/app/src:/app/apps/tenis/src"
+
+# Usuario no root para ejecución segura
+RUN useradd -m -u 1000 qf && chown -R qf:qf /app
+USER qf
+
+ENTRYPOINT ["python", "-m", "tenis.motor"]

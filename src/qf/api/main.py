@@ -77,6 +77,7 @@ from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
 from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
+from .tenis_v2 import router as tenis_v2_router
 from .meta import router as meta_router
 from .compras import router as compras_router, store_router as compras_store_router
 from ..comercial.entrega import picks_for_tiers
@@ -806,6 +807,7 @@ app.include_router(meta_router)
 app.include_router(compras_router)
 app.include_router(compras_store_router)
 app.include_router(legal_router)
+app.include_router(tenis_v2_router)
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

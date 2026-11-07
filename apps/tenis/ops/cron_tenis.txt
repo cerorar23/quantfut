@@ -1,0 +1,18 @@
+# Líneas de cron para la operación del motor de tenis v2 (plan §H.4, §C.1-C.2)
+# Todas las ejecuciones de colectores usan colector.sh con flock -n por fuente.
+# El motor usa candado propio y corre como usuario qf.
+
+# 1. Colectores de calendario y resultados (cada hora)
+0 * * * * /app/apps/tenis/ops/colector.sh sofascore python -m tenis.captura.sofascore >> /var/log/tenis/sofascore.log 2>&1
+
+# 2. Colector de ranking oficial (lunes a las 04:00 UTC)
+0 4 * * 1 /app/apps/tenis/ops/colector.sh ranking python -m tenis.captura.ranking >> /var/log/tenis/ranking.log 2>&1
+
+# 3. Colector histórico semanal TML (lunes a las 05:00 UTC)
+0 5 * * 1 /app/apps/tenis/ops/colector.sh tml python -m tenis.captura.tml >> /var/log/tenis/tml.log 2>&1
+
+# 4. Motor programado de inferencia y sellado (cada 30 min a :15 y :45)
+15,45 * * * * flock -n /var/lock/tenis-motor.lock python -m tenis.motor >> /var/log/tenis/motor.log 2>&1
+
+# 5. Respaldo de tenis-db cada 6 horas (conserva 24 copias = 6 días)
+0 0,6,12,18 * * * /app/apps/tenis/ops/tenis-db/respaldar.sh >> /var/log/tenis/respaldo.log 2>&1
