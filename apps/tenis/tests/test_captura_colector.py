@@ -50,7 +50,10 @@ def test_candado_ocupado_sale_con_cero_sin_ejecutar(tmp_path):
     lock = tmp_path / "locks" / "tenis-sportsapipro.lock"
     (tmp_path / "locks").mkdir(exist_ok=True)
     marca = tmp_path / "ejecutado.txt"
-    tenedor = subprocess.Popen(["flock", "-x", str(lock), "sleep", "30"])
+    tenedor = subprocess.Popen([
+        sys.executable, "-c",
+        f"import fcntl, time; f = open(r'{lock}', 'w'); fcntl.flock(f.fileno(), fcntl.LOCK_EX); time.sleep(30)"
+    ])
     try:
         r = None
         for _ in range(50):  # esperar a que el tenedor tenga el candado
