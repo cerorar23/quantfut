@@ -19,6 +19,7 @@ class _Api extends QuantFutApi {
     paths.add(path);
     lastQuery = query;
     if (fail) throw const ApiFailure('sin red');
+    if (path.endsWith('/destacados')) return {'items': <JsonMap>[]};
     final now = DateTime.now().toUtc().toIso8601String();
     return {
       'items': [
@@ -119,6 +120,8 @@ void main() {
         'visitante': 'Leon',
         'prob': .78,
         'ref_price': 1.5,
+        'ref_book': 'bet365',
+        'match_id': 'm1',
         'kickoff_utc': DateTime.now()
             .add(const Duration(hours: 5))
             .toUtc()
@@ -127,8 +130,12 @@ void main() {
     ],
   };
 
-  Future<_Api> open(WidgetTester tester, {bool reduce = false}) async {
-    final api = _Api();
+  Future<_Api> open(
+    WidgetTester tester, {
+    bool reduce = false,
+    bool fail = false,
+  }) async {
+    final api = _Api()..fail = fail;
     tester.view.physicalSize = const Size(390, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -160,10 +167,14 @@ void main() {
     for (final family in football) {
       expect(find.text(family.title), findsOneWidget, reason: family.id);
     }
-    expect(find.text('${football.length}'), findsOneWidget);
-    expect(find.textContaining('89/114 publicados'), findsOneWidget);
-    expect(find.text('Publicado 24/30'), findsOneWidget);
-    expect(find.textContaining('no alertas en vivo'), findsNothing);   // nota retirada a pedido del titular
+    expect(find.text('${football.length + 1}'), findsOneWidget);
+    expect(find.text('Ambos marcan'), findsOneWidget);
+    expect(find.textContaining('2/3 publicados'), findsOneWidget);
+    expect(find.text('Publicado 1/2'), findsOneWidget);
+    expect(
+      find.textContaining('no alertas en vivo'),
+      findsNothing,
+    ); // nota retirada a pedido del titular
     expect(find.textContaining('Rendimiento registrado'), findsNothing);
   });
 
@@ -173,35 +184,38 @@ void main() {
     final api = await open(tester);
     await tester.tap(find.text('Goles del partido'));
     await advance(tester);
-    expect(api.paths, ['/mobile/v1/markets/history']);
-    expect(api.lastQuery!['market'], 'totals');
+    expect(api.paths, [
+      '/mobile/v1/markets/history',
+      '/mobile/v1/markets/destacados',
+    ]);
+    expect(api.lastQuery!['desde'], '2026-10-26');
     expect(find.text('Tasa de acierto'), findsOneWidget);
     expect(find.text('Hoy (2)'), findsOneWidget); // 1 abierto + 1 VIP
     expect(find.text('Cruz Azul'), findsOneWidget);
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
     expect(find.text('Otro'), findsNothing); // otro mercado (hándicap)
     expect(find.text('Más de 2,5 goles · Tigres - Leon'), findsOneWidget);
-    expect(find.text('24/30'), findsOneWidget); // General, del servidor
+    // La tarjeta lleva la cuota y la casa; sin escudo conocido, las iniciales del equipo.
+    expect(find.text('@1,50'), findsOneWidget);
+    expect(find.text('bet365'), findsOneWidget);
+    expect(find.text('TI'), findsOneWidget);
+    expect(find.text('1/2'), findsOneWidget); // General, del servidor
     expect(find.text('1/1'), findsOneWidget); // Hoy: el de hoy acertó
 
     await tester.tap(find.text('Anteriores'));
     await advance(tester);
-    expect(find.text('Acertó'), findsNWidgets(2));
+    expect(find.text('Acertó'), findsOneWidget);
     expect(find.text('Falló'), findsOneWidget);
     expect(find.text('2-1'), findsOneWidget);
     expect(find.text('Ayer'), findsOneWidget);
     // Mercado de córners: se muestran los córners reales, no los goles 4-4.
-    expect(find.text('6-3'), findsOneWidget);
-    expect(find.text('córners · total 9'), findsOneWidget);
+    expect(find.text('6-3'), findsNothing);
+    expect(find.text('córners · total 9'), findsNothing);
     expect(find.text('4-4'), findsNothing);
   });
 
   testWidgets('si falla el historial se ofrece reintentar', (tester) async {
-    final api = await open(tester);
-    api.fail = true;
-    await tester.tap(find.text('Tarjetas'));
-    await advance(tester);
-    await tester.tap(find.text('Anteriores'));
+    await open(tester, fail: true);
     await advance(tester);
     expect(find.text('Reintentar'), findsOneWidget);
   });

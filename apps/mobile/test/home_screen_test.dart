@@ -66,9 +66,13 @@ Map<String, dynamic> match(
   DateTime? unlock,
 }) => {
   'match_id': id,
-  'kickoff_utc': DateTime(day.year, day.month, day.day, hour, 30)
-      .toUtc()
-      .toIso8601String(),
+  'kickoff_utc': DateTime(
+    day.year,
+    day.month,
+    day.day,
+    hour,
+    30,
+  ).toUtc().toIso8601String(),
   'estado': 'scheduled',
   'local': {'nombre': home},
   'visitante': {'nombre': 'Rival de $home'},
@@ -115,7 +119,8 @@ Map<String, dynamic> homeData({
       ],
   'alta_probabilidad': {
     'proximos':
-        picks ?? [pick('a1', .78), pick('b1', .91), pick('b2', .85, locked: true)],
+        picks ??
+        [pick('a1', .78), pick('b1', .91), pick('b2', .85, locked: true)],
     'vip': <Map<String, dynamic>>[],
     if (history) 'historial': {'acierto_real': 78.2, 'n': 40, 'aciertos': 31},
   },
@@ -192,16 +197,22 @@ void main() {
       match('2', 'B', day(0), 7),
       {'match_id': 'x', 'kickoff_utc': 'no es una fecha'},
     ]);
-    expect(days.map((d) => d.matches.map((m) => m['match_id']).toList()).toList(), [
-      ['2', '1'],
-      ['3'],
-    ]);
+    expect(
+      days.map((d) => d.matches.map((m) => m['match_id']).toList()).toList(),
+      [
+        ['2', '1'],
+        ['3'],
+      ],
+    );
     expect(days.first.key, dateKey(day(0)));
   });
 
   testWidgets('arriba no hay atajos ni filtros de horas', (tester) async {
     await pump(tester);
-    expect(find.text('ALTA PROBABILIDAD'), findsOneWidget); // solo la tarjeta del boleto
+    expect(
+      find.text('ALTA PROBABILIDAD'),
+      findsOneWidget,
+    ); // solo la tarjeta del boleto
     expect(find.text('Alta probabilidad'), findsNothing);
     expect(find.text('Reto Escalera'), findsNothing);
     for (final chip in ['+48 h', '+1 h', '+3 h', '+6 h', '+12 h']) {
@@ -210,29 +221,42 @@ void main() {
     expect(find.byType(ChoiceChip), findsNothing);
   });
 
-  testWidgets('partidos por día, en orden cronológico y con su resultado más probable', (
+  testWidgets(
+    'partidos por día, en orden cronológico y con su resultado más probable',
+    (tester) async {
+      await pump(tester);
+      await tester.scrollUntilVisible(
+        find.text('Mañana A'),
+        200,
+        scrollable: scroller,
+      );
+      expect(find.textContaining('Hoy ·'), findsOneWidget);
+      expect(find.textContaining('Mañana ·'), findsOneWidget);
+      expect(find.text('Hoy Pronto'), findsOneWidget);
+      expect(find.text('Hoy Tarde'), findsOneWidget);
+      double y(String t) => tester.getTopLeft(find.text(t)).dy;
+      expect(y('Hoy Pronto'), lessThan(y('Hoy Tarde')));
+      expect(y('Hoy Tarde'), lessThan(y('Mañana A')));
+      expect(find.text('Local 43 %'), findsWidgets);
+      expect(find.text('2 enfrentamientos'), findsWidgets);
+    },
+  );
+
+  testWidgets('tocar un día de la tira salta a sus partidos; uno vacío avisa', (
     tester,
   ) async {
     await pump(tester);
-    await tester.scrollUntilVisible(find.text('Mañana A'), 200, scrollable: scroller);
-    expect(find.textContaining('Hoy ·'), findsOneWidget);
-    expect(find.textContaining('Mañana ·'), findsOneWidget);
-    expect(find.text('Hoy Pronto'), findsOneWidget);
-    expect(find.text('Hoy Tarde'), findsOneWidget);
-    double y(String t) => tester.getTopLeft(find.text(t)).dy;
-    expect(y('Hoy Pronto'), lessThan(y('Hoy Tarde')));
-    expect(y('Hoy Tarde'), lessThan(y('Mañana A')));
-    expect(find.text('Local 43 %'), findsWidgets);
-    expect(find.text('2 enfrentamientos'), findsWidgets);
-  });
-
-  testWidgets('tocar un día de la tira salta a sus partidos; uno vacío avisa', (tester) async {
-    await pump(tester);
-    expect(tester.widget<DayStrip>(find.byType(DayStrip)).active, dateKey(day(0)));
+    expect(
+      tester.widget<DayStrip>(find.byType(DayStrip)).active,
+      dateKey(day(0)),
+    );
     await tester.tap(find.byKey(ValueKey('day-${dateKey(day(3))}')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
-    expect(tester.widget<DayStrip>(find.byType(DayStrip)).active, dateKey(day(3)));
+    expect(
+      tester.widget<DayStrip>(find.byType(DayStrip)).active,
+      dateKey(day(3)),
+    );
     expect(find.text('Pasado'), findsOneWidget);
     // El día 2 no tiene partidos.
     await tester.tap(find.byKey(ValueKey('day-${dateKey(day(2))}')));
@@ -240,13 +264,22 @@ void main() {
     expect(find.text('No hay partidos este día.'), findsOneWidget);
   });
 
-  testWidgets('al desplazarse, el día activo de la tira sigue a la lista', (tester) async {
+  testWidgets('al desplazarse, el día activo de la tira sigue a la lista', (
+    tester,
+  ) async {
     await pump(tester);
-    await tester.scrollUntilVisible(find.text('Pasado'), 200, scrollable: scroller);
+    await tester.scrollUntilVisible(
+      find.text('Pasado'),
+      200,
+      scrollable: scroller,
+    );
     await tester.pump(const Duration(milliseconds: 300));
     final strip = tester.widget<DayStrip>(find.byType(DayStrip));
     expect(strip.active == dateKey(day(0)), isFalse);
-    expect(strip.counts.keys, containsAll([dateKey(day(0)), dateKey(day(1)), dateKey(day(3))]));
+    expect(
+      strip.counts.keys,
+      containsAll([dateKey(day(0)), dateKey(day(1)), dateKey(day(3))]),
+    );
   });
 
   testWidgets('el buscador filtra por equipo o liga', (tester) async {
@@ -256,115 +289,237 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.enterText(find.byKey(const ValueKey('home-search')), 'pasado');
     await tester.pump();
-    await tester.scrollUntilVisible(find.text('Pasado'), 200, scrollable: scroller);
+    await tester.scrollUntilVisible(
+      find.text('Pasado'),
+      200,
+      scrollable: scroller,
+    );
     expect(find.text('Hoy Pronto'), findsNothing);
     expect(find.text('Mañana A'), findsNothing);
     await tester.enterText(find.byKey(const ValueKey('home-search')), 'zzz');
     await tester.pump();
-    expect(find.text('No hay enfrentamientos para estos filtros.'), findsOneWidget);
+    expect(
+      find.text('No hay enfrentamientos para estos filtros.'),
+      findsOneWidget,
+    );
     // Cerrar la búsqueda la limpia y vuelven todos los partidos.
     await tester.tap(find.byKey(const ValueKey('day-search')));
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const ValueKey('home-search')), findsNothing);
-    expect(find.text('No hay enfrentamientos para estos filtros.'), findsNothing);
+    expect(
+      find.text('No hay enfrentamientos para estos filtros.'),
+      findsNothing,
+    );
   });
 
-  testWidgets('los días futuros enseñan el partido con candado hasta que se calcula', (
-    tester,
-  ) async {
-    final future = DateTime.utc(day(3).year, day(3).month, day(3).day, 9); // 03:00 MX
-    await pump(
-      tester,
-      data: homeData(
-        agenda: [
-          match('a1', 'Hoy Con', day(0), 15),
-          match('c1', 'Futuro Sin', day(3), 15, noForecast: true, unlock: future),
-          // Ya pasó su hora de cálculo y sigue sin probabilidad: no se finge un candado.
-          match(
-            'c2',
-            'Pasado Sin',
-            day(3),
-            17,
-            noForecast: true,
-            unlock: DateTime.now().subtract(const Duration(hours: 1)),
-          ),
-        ],
-        picks: [],
-      ),
-    );
-    await tester.scrollUntilVisible(find.text('Futuro Sin'), 200, scrollable: scroller);
-    expect(find.byIcon(Icons.lock_clock), findsNWidgets(2)); // icono + etiqueta
-    expect(find.textContaining('Pronóstico el '), findsOneWidget);
-    expect(find.textContaining('3:00 en México'), findsOneWidget);
-    Finder likely(String id) => find.descendant(
-      of: find.byKey(ValueKey('match-$id')),
-      matching: find.text('Local 43 %'),
-    );
-    expect(likely('c1'), findsNothing);
-    expect(likely('c2'), findsNothing);
-    expect(likely('a1'), findsOneWidget);
-  });
+  testWidgets(
+    'los días futuros enseñan el partido con candado hasta que se calcula',
+    (tester) async {
+      final future = DateTime.utc(
+        day(3).year,
+        day(3).month,
+        day(3).day,
+        9,
+      ); // 03:00 MX
+      await pump(
+        tester,
+        data: homeData(
+          agenda: [
+            match('a1', 'Hoy Con', day(0), 15),
+            match(
+              'c1',
+              'Futuro Sin',
+              day(3),
+              15,
+              noForecast: true,
+              unlock: future,
+            ),
+            // Ya pasó su hora de cálculo y sigue sin probabilidad: no se finge un candado.
+            match(
+              'c2',
+              'Pasado Sin',
+              day(3),
+              17,
+              noForecast: true,
+              unlock: DateTime.now().subtract(const Duration(hours: 1)),
+            ),
+          ],
+          picks: [],
+        ),
+      );
+      await tester.scrollUntilVisible(
+        find.text('Futuro Sin'),
+        200,
+        scrollable: scroller,
+      );
+      expect(
+        find.byIcon(Icons.lock_clock),
+        findsNWidgets(2),
+      ); // icono + etiqueta
+      expect(find.textContaining('Pronóstico el '), findsOneWidget);
+      expect(find.textContaining('3:00 en México'), findsOneWidget);
+      Finder likely(String id) => find.descendant(
+        of: find.byKey(ValueKey('match-$id')),
+        matching: find.text('Local 43 %'),
+      );
+      expect(likely('c1'), findsNothing);
+      expect(likely('c2'), findsNothing);
+      expect(likely('a1'), findsOneWidget);
+    },
+  );
 
   testWidgets('abre el partido al tocarlo', (tester) async {
     String? opened;
     await pump(tester, onMatch: (id) => opened = id);
-    await tester.scrollUntilVisible(find.text('Hoy Pronto'), 200, scrollable: scroller);
+    await tester.scrollUntilVisible(
+      find.text('Hoy Pronto'),
+      200,
+      scrollable: scroller,
+    );
     await tester.tap(find.text('Hoy Pronto'));
     expect(opened, 'a1');
   });
 
-  testWidgets('boletos del día: el pronóstico de mayor probabilidad y el parley', (tester) async {
-    String? stream;
-    String? opened;
-    await pump(tester, onPredictions: (s) => stream = s, onMatch: (id) => opened = id);
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Boletos del día'), findsOneWidget);
-    // De los abiertos gana el de 91 %, no el bloqueado ni el de 78 %.
-    Finder inTicket(String t) =>
-        find.descendant(of: find.byKey(const ValueKey('ticket-high')), matching: find.text(t));
-    expect(inTicket('91 %'), findsOneWidget);
-    expect(inTicket('Más de 1,5 goles'), findsOneWidget);
-    expect(find.text('Cuota 3,20'), findsOneWidget);
-    expect(find.text('2 selecciones'), findsOneWidget);
-    expect(find.text('Prob. conjunta 45 %'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('ticket-high')));
-    expect(opened, 'b1');
-    await tester.tap(find.byKey(const ValueKey('ticket-parley')));
-    expect(stream, 'parley');
-    await tester.tap(find.text('Ver todo'));
-    expect(stream, 'high');
-  });
+  testWidgets(
+    'boletos del día: el pronóstico de mayor probabilidad y el parley',
+    (tester) async {
+      String? stream;
+      String? opened;
+      await pump(
+        tester,
+        onPredictions: (s) => stream = s,
+        onMatch: (id) => opened = id,
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Boletos del día'), findsOneWidget);
+      // De los abiertos gana el de 91 %, no el bloqueado ni el de 78 %.
+      Finder inTicket(String t) => find.descendant(
+        of: find.byKey(const ValueKey('ticket-high')),
+        matching: find.text(t),
+      );
+      expect(inTicket('91 %'), findsOneWidget);
+      expect(inTicket('Más de 1,5 goles'), findsOneWidget);
+      expect(find.text('Cuota 3,20'), findsOneWidget);
+      expect(find.text('2 selecciones'), findsOneWidget);
+      expect(find.text('Prob. conjunta 45 %'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('ticket-high')));
+      expect(opened, 'b1');
+      await tester.tap(find.byKey(const ValueKey('ticket-parley')));
+      expect(stream, 'parley');
+      await tester.tap(find.text('Ver todo'));
+      expect(stream, 'high');
+    },
+  );
 
-  testWidgets('fútbol: el destacado del día es el mejor pronóstico abierto y abre su partido', (
+  testWidgets(
+    'fútbol: el destacado del día es el mejor pronóstico abierto y abre su partido',
+    (tester) async {
+      String? opened;
+      await pump(tester, onMatch: (id) => opened = id);
+      final hero = find.byType(HomeHero);
+      expect(hero, findsOneWidget);
+      expect(
+        find.descendant(of: hero, matching: find.text('91 %')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: hero,
+          matching: find.text('Destacado del día'.toUpperCase()),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(hero);
+      expect(opened, 'b1');
+    },
+  );
+
+  testWidgets(
+    'fútbol: el destacado del día es el más probable con cuota >= 1,20, no el de cuota más larga',
+    (tester) async {
+      String? opened;
+      Map<String, dynamic> priced(String id, double prob, double price) => {
+        ...pick(id, prob),
+        'ref_price': price,
+      };
+      await pump(
+        tester,
+        onMatch: (id) => opened = id,
+        data: homeData(
+          picks: [
+            priced(
+              'a1',
+              .75,
+              1.20,
+            ), // pasa el filtro, pero no es el más probable
+            priced('b1', .70, 1.80), // paga más, pero no llega al 75 %
+            priced('c1', .95, 1.08), // no llega a cuota 1,20
+            priced(
+              'd1',
+              .80,
+              1.45,
+            ), // gana: la mayor probabilidad que cumple el filtro
+          ],
+        ),
+      );
+      final hero = find.byType(HomeHero);
+      expect(hero, findsOneWidget);
+      expect(
+        find.descendant(of: hero, matching: find.text('80 %')),
+        findsOneWidget,
+      );
+      await tester.tap(hero);
+      expect(opened, 'd1');
+    },
+  );
+
+  testWidgets(
+    'fútbol: sin ningún pronóstico que cumpla la regla no hay destacado',
+    (tester) async {
+      await pump(
+        tester,
+        data: homeData(
+          picks: [
+            {...pick('a1', .95), 'ref_price': 1.05},
+            {...pick('b1', .70), 'ref_price': 2.5},
+          ],
+        ),
+      );
+      expect(find.byType(HomeHero), findsNothing);
+    },
+  );
+
+  testWidgets('fútbol: sin pronóstico abierto no hay destacado', (
     tester,
   ) async {
-    String? opened;
-    await pump(tester, onMatch: (id) => opened = id);
-    final hero = find.byType(HomeHero);
-    expect(hero, findsOneWidget);
-    expect(find.descendant(of: hero, matching: find.text('91 %')), findsOneWidget);
-    expect(find.descendant(of: hero, matching: find.text('Destacado del día'.toUpperCase())), findsOneWidget);
-    await tester.tap(hero);
-    expect(opened, 'b1');
-  });
-
-  testWidgets('fútbol: sin pronóstico abierto no hay destacado', (tester) async {
     await pump(tester, data: homeData(picks: [pick('b2', .85, locked: true)]));
     expect(find.byType(HomeHero), findsNothing);
   });
 
-  testWidgets('sin parley ni pronósticos las tarjetas lo dicen', (tester) async {
-    await pump(tester, api: _Api(parley: false), data: homeData(picks: [], history: false));
+  testWidgets('sin parley ni pronósticos las tarjetas lo dicen', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      api: _Api(parley: false),
+      data: homeData(picks: [], history: false),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Aún no hay boletos hoy'), findsNWidgets(2));
     // Sin historial liquidado no se enseña una tarjeta de acierto vacía.
     expect(find.byKey(const ValueKey('home-hit')), findsNothing);
   });
 
-  testWidgets('resumen: monedas reales y acierto histórico real', (tester) async {
+  testWidgets('resumen: monedas reales y acierto histórico real', (
+    tester,
+  ) async {
     var coins = 0;
     String? stream;
-    await pump(tester, onCoins: () => coins++, onPredictions: (s) => stream = s);
+    await pump(
+      tester,
+      onCoins: () => coins++,
+      onPredictions: (s) => stream = s,
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('240'), findsOneWidget);
     expect(find.text('78,2 %'), findsOneWidget);
@@ -375,28 +530,35 @@ void main() {
     expect(stream, 'high');
   });
 
-  testWidgets('el aviso de Remote Config se puede cerrar y el de mantenimiento se ve', (
+  testWidgets(
+    'el aviso de Remote Config se puede cerrar y el de mantenimiento se ve',
+    (tester) async {
+      await pump(tester, banner: 'Aviso real', maintenance: true);
+      expect(find.text('Aviso real'), findsOneWidget);
+      expect(find.byIcon(Icons.build_circle_outlined), findsOneWidget);
+      await tester.tap(find.byTooltip('Cerrar aviso'));
+      await tester.pump();
+      expect(find.text('Aviso real'), findsNothing);
+    },
+  );
+
+  testWidgets('el calendario completo entrega la fecha elegida', (
     tester,
   ) async {
-    await pump(tester, banner: 'Aviso real', maintenance: true);
-    expect(find.text('Aviso real'), findsOneWidget);
-    expect(find.byIcon(Icons.build_circle_outlined), findsOneWidget);
-    await tester.tap(find.byTooltip('Cerrar aviso'));
-    await tester.pump();
-    expect(find.text('Aviso real'), findsNothing);
-  });
-
-  testWidgets('el calendario completo entrega la fecha elegida', (tester) async {
     DateTime? picked;
     await pump(tester, onPickDate: (d) => picked = d);
     await tester.tap(find.byKey(const ValueKey('day-picker')));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining(RegExp('aceptar', caseSensitive: false)));
+    await tester.tap(
+      find.textContaining(RegExp('aceptar', caseSensitive: false)),
+    );
     await tester.pumpAndSettle();
     expect(picked, isNotNull);
   });
 
-  testWidgets('menú Más: guía, evaluar, compartir y documentos legales', (tester) async {
+  testWidgets('menú Más: guía, evaluar, compartir y documentos legales', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -431,19 +593,30 @@ void main() {
     }
     await tester.tap(find.byKey(const ValueKey('more-guide')));
     await tester.pumpAndSettle();
-    expect(find.text('Aprende a leer los datos antes de decidir.'), findsOneWidget);
+    expect(
+      find.text('Aprende a leer los datos antes de decidir.'),
+      findsOneWidget,
+    );
     expect(find.text('Una probabilidad no es una certeza'), findsOneWidget);
     // Acordeón: el primer tema abierto, el resto plegado hasta tocarlo.
     expect(find.textContaining('3 de cada 4'), findsOneWidget);
     expect(find.textContaining('no es una casa de apuestas'), findsNothing);
-    await tester.scrollUntilVisible(find.text('Es información y entretenimiento'), 300);
+    await tester.scrollUntilVisible(
+      find.text('Es información y entretenimiento'),
+      300,
+    );
     await tester.tap(find.text('Es información y entretenimiento'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.textContaining('no es una casa de apuestas'), 300);
+    await tester.scrollUntilVisible(
+      find.textContaining('no es una casa de apuestas'),
+      300,
+    );
     expect(find.textContaining('no es una casa de apuestas'), findsOneWidget);
     // La guía no promete ganancias: «garantiza» solo aparece negado («Ningún dato garantiza»).
     await tester.scrollUntilVisible(find.textContaining('3 de cada 4'), -300);
-    final matches = tester.widgetList<Text>(find.textContaining('garantiza')).toList();
+    final matches = tester
+        .widgetList<Text>(find.textContaining('garantiza'))
+        .toList();
     expect(matches, isNotEmpty);
     for (final t in matches) {
       expect(t.data, contains('Ningún dato garantiza'));
@@ -451,7 +624,9 @@ void main() {
   });
 
   for (final code in languages) {
-    testWidgets('Inicio se pinta en $code sin desbordes, también en 320 px', (tester) async {
+    testWidgets('Inicio se pinta en $code sin desbordes, también en 320 px', (
+      tester,
+    ) async {
       for (final size in const [Size(390, 844), Size(320, 640)]) {
         await pump(
           tester,
@@ -462,7 +637,11 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 300));
         expect(tester.takeException(), isNull, reason: '$code $size arriba');
-        await tester.scrollUntilVisible(find.text('Pasado'), 300, scrollable: scroller);
+        await tester.scrollUntilVisible(
+          find.text('Pasado'),
+          300,
+          scrollable: scroller,
+        );
         await tester.pump(const Duration(milliseconds: 300));
         expect(tester.takeException(), isNull, reason: '$code $size lista');
       }

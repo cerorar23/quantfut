@@ -74,6 +74,10 @@ class _ParleyTabState extends State<ParleyTab> {
       for (final t in (latest?['tickets'] as List? ?? const [])) jsonMap(t),
     ];
     final past = _lastParleys(days.skip(1), 7);
+    final v2days = [for (final x in (jsonMap(d['v2'])['dias'] as List? ?? const [])) jsonMap(x)];
+    final v2tickets = [
+      for (final t in (v2days.isEmpty ? const [] : (v2days.first['tickets'] as List? ?? const []))) jsonMap(t),
+    ];
     final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,6 +112,13 @@ class _ParleyTabState extends State<ParleyTab> {
             t['locked'] == true
                 ? _LockedTicket(ticket: t, onVip: widget.onVip)
                 : _TicketCard(key: ValueKey('parley-ticket-$i'), ticket: t),
+        ],
+        if (v2tickets.isNotEmpty) ...[
+          liveHeading(l10n.parleyV2Heading),
+          for (final (i, t) in v2tickets.indexed)
+            t['locked'] == true
+                ? _LockedTicket(ticket: t, onVip: widget.onVip)
+                : _TicketCard(key: ValueKey('parley-v2-ticket-$i'), ticket: t),
         ],
         if (past.isNotEmpty) ...[
           liveHeading(l10n.parleyPastDays),
@@ -351,10 +362,12 @@ class _TicketCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       liveText(
-                        context.l10n.parleyJointProb(
-                          realPercent(prob),
-                          legs.length,
-                        ),
+                        prob == null
+                            ? '${context.l10n.parleyV2SameGame}${ticket['estado'] == 'solo_referencia' ? ' · ${context.l10n.parleyV2Reference}' : ''}'
+                            : context.l10n.parleyJointProb(
+                                realPercent(prob),
+                                legs.length,
+                              ),
                         size: 12,
                         color: liveMuted,
                       ),

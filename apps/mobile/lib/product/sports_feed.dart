@@ -1,3 +1,4 @@
+import 'featured_rule.dart';
 import 'live_api.dart';
 import 'sports.dart';
 
@@ -18,6 +19,12 @@ class SportMarket {
     this.rowPlayerId,
     this.line,
     this.outcome,
+    this.side,
+    this.team,
+    this.price,
+    this.book,
+    this.quotedAt,
+    this.publishable,
   });
 
   final String id, label, selection;
@@ -37,6 +44,17 @@ class SportMarket {
 
   /// `win`, `loss`, `push` o null mientras no haya resultado válido.
   final String? outcome;
+
+  /// NBA v2: lado del pronóstico (`over`/`under` o `local`/`visit`) y equipo al que se refiere.
+  final String? side, team;
+
+  /// Cuota de la casa que ya viene con el mercado (NBA v2: recibida antes del sello) y su casa y hora de recepción.
+  final double? price;
+  final String? book;
+  final DateTime? quotedAt;
+
+  /// NBA v2: el servidor dice si el mercado cumple la regla de publicación (`publicable`); null = no lo dijo.
+  final bool? publishable;
 }
 
 class SportEvent {
@@ -55,6 +73,8 @@ class SportEvent {
     this.score,
     this.availability,
     this.plannedSeal,
+    this.serverFeatured = false,
+    this.featuredId,
   });
 
   final String id;
@@ -70,6 +90,35 @@ class SportEvent {
 
   /// Hora prevista del sellado del pronóstico (NBA v2); null si la API no la da.
   final DateTime? plannedSeal;
+
+  /// El servidor mandó el campo `destacado` (probabilidad máxima segura): `featuredId` es el id del mercado elegido o
+  /// null si ninguno cumple la regla. Si no lo mandó, el destacado se calcula en la app con la misma regla.
+  final bool serverFeatured;
+  final String? featuredId;
+
+  /// Mismo partido con otra lista de mercados (NBA: la v2 completa de `/nba/v1/partido/{id}/mercados`).
+  SportEvent withMarkets(
+    List<SportMarket> value, {
+    String? featured,
+    bool serverFeaturedField = false,
+  }) => SportEvent(
+    id: id,
+    sport: sport,
+    home: home,
+    away: away,
+    league: league,
+    start: start,
+    status: status,
+    seal: seal,
+    sealedAt: sealedAt,
+    markets: value,
+    surface: surface,
+    score: score,
+    availability: availability,
+    plannedSeal: plannedSeal,
+    serverFeatured: serverFeaturedField || serverFeatured,
+    featuredId: serverFeaturedField ? featured : featuredId,
+  );
 }
 
 class SportFeed {
@@ -205,7 +254,10 @@ List<SportEvent> nbaV2Events(Iterable<JsonMap> games) {
     final id = game['id'];
     final home = jsonMap(game['local']), away = jsonMap(game['visitante']);
     final start = _stamp(game['inicio_utc']);
-    if (id is! int || !_text(home['nombre']) || !_text(away['nombre']) || start == null) {
+    if (id is! int ||
+        !_text(home['nombre']) ||
+        !_text(away['nombre']) ||
+        start == null) {
       continue;
     }
     final pick = jsonMap(game['pronostico']);
@@ -260,11 +312,216 @@ List<SportEvent> nbaV2Events(Iterable<JsonMap> games) {
   return events.values.toList()..sort((a, b) => a.start.compareTo(b.start));
 }
 
-/// Pide la cartelera de la API v2 de tres días atrás a tres adelante. Un día que falla no tumba a los demás; solo si
+/// Banda de probabilidad de un pronóstico publicable en los mercados de NBA y tenis (la misma del radar NBA del
+/// servidor, `apps/nba/src/nba/api/mercados.py`). El modelo da probabilidad para los DOS lados de cada línea y para
+/// líneas muy lejanas (0,99 a cuota 26): fuera de esta banda no es un pronóstico útil.
+const sportBandMin = .60, sportBandMax = .95;
+
+bool inSportBand(double probability) =>
+    probability >= sportBandMin && probability <= sportBandMax;
+
+const _nbaGameFamilies = {
+  'winner',
+  'handicap',
+  'game_total',
+  'team_points',
+  'player_points',
+  'player_rebounds',
+  'player_assists',
+  'player_threes',
+};
+
+double? _finiteNum(Object? v) => v is num && v.isFinite ? v.toDouble() : null;
+
+/// Mercados de un partido de NBA de `/nba/v1/partido/{id}/mercados` (los 8 que el motor sella, con su cuota y casa).
+/// El servidor manda los DOS lados de cada línea: aquí queda el lado del pronóstico (el de mayor probabilidad) y,
+/// salvo el ganador y el destacado del servidor, solo lo que cae en [inSportBand]. Una fila mal formada se descarta;
+/// nunca se completa ni se inventa un dato. Lanza [FormatException] si la respuesta no es de ese partido.
+List<SportMarket> nbaGameMarkets(JsonMap data, SportEvent event) {
+  final raw = data['markets'];
+  if ('${data['partido_id']}' != event.id || raw is! List) {
+    throw const FormatException('NBA markets unavailable');
+  }
+  final featured = jsonMap(data['destacado'])['id'];
+  final scores = (event.score ?? '')
+      .split('–')
+      .map((x) => num.tryParse(x.trim()))
+      .toList();
+  final finished =
+      event.status == 'finished' &&
+      scores.length == 2 &&
+      scores.every((x) => x != null);
+  final best = <String, SportMarket>{};
+  for (final row in jsonRows(raw)) {
+    final market = row['market'], side = row['side'], id = row['id'];
+    final sealed = _stamp(row['sealed_at']);
+    final p = _finiteNum(row['probability']);
+    if (market is! String ||
+        !_nbaGameFamilies.contains(market) ||
+        side is! String ||
+        id is! String ||
+        sealed == null ||
+        p == null ||
+        p <= 0 ||
+        p >= 1) {
+      continue;
+    }
+    final team = row['team'] is String ? row['team'] as String : null;
+    final line = _finiteNum(row['line']);
+    final isPlayer = market.startsWith('player_');
+    final winner = market == 'winner';
+    final sides = winner || market == 'handicap'
+        ? const {'local', 'visit'}
+        : const {'over', 'under'};
+    if (!sides.contains(side) ||
+        (winner ? team == null : line == null) ||
+        (isPlayer && (row['player_id'] is! int || row['player'] is! String))) {
+      continue;
+    }
+    final eligible = sealed.isBefore(event.start);
+    var outcome =
+        eligible && const {'win', 'loss', 'push'}.contains(row['outcome'])
+        ? row['outcome'] as String
+        : null;
+    if (outcome == null && eligible && finished && line != null && !isPlayer) {
+      final home = scores[0]!, away = scores[1]!;
+      final num? value = switch (market) {
+        'handicap' => (team == event.home ? home - away : away - home) + line,
+        'game_total' => home + away,
+        'team_points' => team == event.home ? home : away,
+        _ => null,
+      };
+      if (value != null) {
+        final threshold = market == 'handicap' ? 0 : line;
+        outcome = value == threshold
+            ? 'push'
+            : ((side == 'under' ? value < threshold : value > threshold)
+                  ? 'win'
+                  : 'loss');
+      }
+    }
+    final priceRaw = _finiteNum(row['price']);
+    final bookRaw = row['book'];
+    final book = bookRaw is String && bookRaw.trim().isNotEmpty
+        ? bookRaw.trim()
+        : null;
+    final quoted = priceRaw != null && priceRaw > 1 && book != null;
+    final selection = winner
+        ? team!
+        : market == 'handicap'
+        ? '$team ${line! > 0 ? '+' : ''}$line'
+        : (team ?? 'Total'); // l10n-ignore
+    final pick = SportMarket(
+      id: id,
+      label: _nbaFamilyLabels[market]!,
+      selection: selection,
+      probability: p,
+      sealedAt: sealed,
+      eligible: eligible,
+      outcome: outcome,
+      market: market,
+      player: isPlayer ? row['player'] as String : null,
+      playerId: isPlayer ? '${row['player_id']}' : null,
+      rowPlayerId: row['player_id'] != null ? '${row['player_id']}' : null,
+      line: line,
+      side: side,
+      team: team,
+      price: quoted ? priceRaw : null,
+      book: quoted ? book : null,
+      quotedAt: quoted ? _stamp(row['odds_at']) : null,
+      publishable: row['publicable'] is bool ? row['publicable'] as bool : null,
+    );
+    // Un pronóstico por línea: el lado de mayor probabilidad (hándicap: `|línea|` junta al local y al visitante).
+    final key = winner
+        ? 'winner'
+        : '$market|${row['player_id'] ?? team}|${market == 'handicap' ? line!.abs() : line}';
+    final kept = best[key];
+    if (kept == null || p > kept.probability || id == featured) {
+      best[key] = pick;
+    }
+  }
+  return [
+    for (final m in best.values)
+      if (m.publishable == true ||
+          m.market == 'winner' ||
+          m.id == featured ||
+          inSportBand(m.probability))
+        m,
+  ];
+}
+
+// Nombre del mercado como dato; la interfaz lo traduce por `market` (`sportFamilyTitle`).
+const _nbaFamilyLabels = {
+  'winner': 'Ganador del partido', // l10n-ignore
+  'handicap': 'Hándicap', // l10n-ignore
+  'game_total': 'Total del partido', // l10n-ignore
+  'team_points': 'Puntos del equipo', // l10n-ignore
+  'player_points': 'Puntos del jugador', // l10n-ignore
+  'player_rebounds': 'Rebotes del jugador', // l10n-ignore
+  'player_assists': 'Asistencias del jugador', // l10n-ignore
+  'player_threes': 'Triples del jugador', // l10n-ignore
+};
+
+/// Completa los partidos de NBA con todos sus mercados. El feed base (cartelera) ya se mostró: esto lo enriquece
+/// partido a partido, primero los más cercanos a hoy, y avisa en cada tanda. Un partido que falla conserva su ganador.
+/// `current` dice si el feed base sigue vigente (un refresco posterior lo invalida).
+Future<void> enrichNbaFeed(
+  QuantFutApi api,
+  SportFeed base, {
+  required void Function(SportFeed feed) onUpdate,
+  required bool Function() current,
+  DateTime? now,
+  int parallel = 6,
+}) async {
+  final clock = (now ?? DateTime.now()).toUtc();
+  final events = List<SportEvent>.of(base.events);
+  final order =
+      [
+        for (var i = 0; i < events.length; i++)
+          if (events[i].markets.isNotEmpty) i,
+      ]..sort(
+        (a, b) => events[a].start
+            .difference(clock)
+            .abs()
+            .compareTo(events[b].start.difference(clock).abs()),
+      );
+  var next = 0, done = 0;
+  Future<void> worker() async {
+    while (next < order.length) {
+      final i = order[next++];
+      final e = events[i];
+      try {
+        final data = jsonMap(
+          await api.request('/nba/v1/partido/${e.id}/mercados'),
+        );
+        final rows = nbaGameMarkets(data, e);
+        if (rows.isNotEmpty) {
+          final id = jsonMap(data['destacado'])['id'];
+          events[i] = e.withMarkets(
+            rows,
+            featured: id is String ? id : null,
+            serverFeaturedField: data.containsKey('destacado'),
+          );
+        }
+      } catch (_) {
+        /* Ese partido se queda con su ganador. */
+      }
+      if (!current()) return;
+      done++;
+      if (done % 4 == 0 || done == order.length) {
+        onUpdate(SportFeed(ready: true, events: List.of(events)));
+      }
+    }
+  }
+
+  await Future.wait([for (var k = 0; k < parallel; k++) worker()]);
+}
+
+/// Pide la cartelera de la API v2 de cuatro días atrás a cuatro adelante, como la web. Un día que falla no tumba a los demás; solo si
 /// fallan todos el feed queda no listo.
 Future<SportFeed> _loadNba(QuantFutApi api, DateTime now) async {
   final days = [
-    for (var i = -3; i <= 3; i++)
+    for (var i = -4; i <= 4; i++)
       DateTime(
         now.year,
         now.month,
@@ -311,8 +568,8 @@ List<SportEvent> tennisEvents(JsonMap data) {
         event['markets'] is! List) {
       continue;
     }
-    // Si el feed no trae `sealed_at` válido se usa el inicio (el campo es obligatorio en la app).
-    final sealedAt = _stamp(event['sealed_at']) ?? start;
+    final sealTime = _stamp(event['sealed_at']);
+    final sealedAt = sealTime ?? start;
     final markets = [
       for (final m in jsonRows(event['markets']))
         if (_probability(m['probability']))
@@ -322,8 +579,7 @@ List<SportEvent> tennisEvents(JsonMap data) {
             selection: '${m['selection']}',
             probability: (m['probability'] as num).toDouble(),
             sealedAt: sealedAt,
-            // El feed solo publica pronósticos ya sellados.
-            eligible: true,
+            eligible: sealTime != null && sealTime.isBefore(start),
             outcome: m['outcome'] is String ? m['outcome'] as String : null,
           ),
     ];
@@ -342,6 +598,10 @@ List<SportEvent> tennisEvents(JsonMap data) {
         seal: event['seal'] as String,
         sealedAt: sealedAt,
         markets: markets,
+        serverFeatured: event.containsKey('destacado'),
+        featuredId: jsonMap(event['destacado'])['id'] is String
+            ? jsonMap(event['destacado'])['id'] as String
+            : null,
       ),
     );
   }
@@ -365,13 +625,19 @@ Future<SportFeed> loadSport(QuantFutApi api, SportKind sport) async {
   }
 }
 
-/// Mercado de mayor probabilidad entre los elegibles (sellados antes del inicio).
+/// Destacado de NBA y tenis entre los elegibles (sellados antes del inicio). Si el servidor mandó el suyo
+/// (probabilidad máxima segura) solo se localiza; si no, se aplica la misma regla con la cuota del modelo (1 ÷ prob.).
 SportMarket? featuredMarket(SportEvent e) {
-  SportMarket? best;
-  for (final m in e.markets) {
-    if (m.eligible && (best == null || m.probability > best.probability)) {
-      best = m;
+  final eligible = e.markets.where((m) => m.eligible);
+  if (e.serverFeatured) {
+    for (final m in eligible) {
+      if (m.id == e.featuredId) return m;
     }
+    return null;
   }
-  return best;
+  return bestBySafety<SportMarket>(
+    eligible,
+    (m) => m.probability,
+    (m) => modelPrice(m.probability),
+  );
 }

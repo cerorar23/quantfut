@@ -447,7 +447,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get detailNoFeatured =>
-      'Nenhum prognóstico deste jogo entra no destaque (odds de 1,20 a 1,60 e probabilidade de 74% a 85%). Os abertos estão na lista abaixo.';
+      'Nenhum prognóstico deste jogo entra no destaque (odds de 1,20 ou mais e probabilidade de 75% ou mais). Os abertos estão na lista abaixo.';
 
   @override
   String get detailNoH2h => 'Não há confrontos registrados para este jogo.';
@@ -862,6 +862,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get guideTopic6 => 'RESPONSABILIDADE';
 
   @override
+  String get historyWebSince => 'Histórico da web desde 26/10/2026';
+
+  @override
   String get homeBannerClose => 'Fechar aviso';
 
   @override
@@ -1189,6 +1192,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get marketResult1x2 => 'Resultado 1X2';
+
+  @override
+  String marketUnderLine(String line) {
+    return 'Menos de $line';
+  }
 
   @override
   String get marketUnknown => 'Mercado';
@@ -1602,6 +1610,15 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get parleyV2Heading => 'Parlay v2 · futebol, tênis e NBA';
+
+  @override
+  String get parleyV2Reference => 'Apenas referência';
+
+  @override
+  String get parleyV2SameGame => 'Um só jogo';
+
+  @override
   String pickOddsAtPublish(Object book) {
     return 'Odd na publicação · $book';
   }
@@ -1921,6 +1938,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileYourAccount => 'Sua conta QuantFut';
 
   @override
+  String get propStatAssists => 'assistências';
+
+  @override
+  String get propStatPoints => 'pontos';
+
+  @override
+  String get propStatRebounds => 'rebotes';
+
+  @override
+  String get propStatThrees => 'triplos';
+
+  @override
   String quoteBookAt(String book, String time) {
     return '$book · $time';
   }
@@ -2229,6 +2258,21 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String selGamesHandicap(String team, String line) {
+    return '$team $line games';
+  }
+
+  @override
+  String selGamesOver(String line) {
+    return 'Mais de $line games';
+  }
+
+  @override
+  String selGamesUnder(String line) {
+    return 'Menos de $line games';
+  }
+
+  @override
   String selGoals(String side, String line) {
     String _temp0 = intl.Intl.selectLogic(side, {
       'over': 'Mais de $line gols',
@@ -2259,6 +2303,31 @@ class AppLocalizationsPt extends AppLocalizations {
   String get selHtGoalYes => 'Haverá gol no 1T';
 
   @override
+  String selPlayerOver(String player, String line, String stat) {
+    return '$player: mais de $line $stat';
+  }
+
+  @override
+  String selPlayerUnder(String player, String line, String stat) {
+    return '$player: menos de $line $stat';
+  }
+
+  @override
+  String selPointsOver(String line) {
+    return 'Mais de $line pontos';
+  }
+
+  @override
+  String selPointsUnder(String line) {
+    return 'Menos de $line pontos';
+  }
+
+  @override
+  String selSpreadPoints(String team, String line) {
+    return '$team $line pontos';
+  }
+
+  @override
   String selTeamGoalsLine(String side, String line, String team) {
     String _temp0 = intl.Intl.selectLogic(side, {
       'over': 'Mais de $line gols de $team',
@@ -2281,6 +2350,53 @@ class AppLocalizationsPt extends AppLocalizations {
   String selWinToNil(String team) {
     return '$team vence sem sofrer gol';
   }
+
+  @override
+  String sfCounts(int open, int resolved) {
+    return 'Abertos $open · Resolvidos $resolved';
+  }
+
+  @override
+  String get sfNbaGameTotal => 'Total de pontos do jogo';
+
+  @override
+  String get sfNbaHandicap => 'Handicap do jogo';
+
+  @override
+  String get sfNbaPlayerAssists => 'Assistências do jogador';
+
+  @override
+  String get sfNbaPlayerPoints => 'Pontos do jogador';
+
+  @override
+  String get sfNbaPlayerRebounds => 'Rebotes do jogador';
+
+  @override
+  String get sfNbaPlayerThrees => 'Bolas de três do jogador';
+
+  @override
+  String get sfNbaTeamPoints => 'Pontos por equipe';
+
+  @override
+  String get sfRangeNote => 'Previsões com probabilidade de 60% a 95%';
+
+  @override
+  String get sfTennisGamesHandicap => 'Handicap de games';
+
+  @override
+  String get sfTennisGamesTotal => 'Total de games';
+
+  @override
+  String get sfTennisSetWinner => 'Vencedor do set';
+
+  @override
+  String get sfTennisSetsHandicap => 'Handicap de sets';
+
+  @override
+  String get sfTennisSetsTotal => 'Total de sets';
+
+  @override
+  String get sfTennisTiebreak => 'Tie-break';
 
   @override
   String get shellNeedCoinsBody =>

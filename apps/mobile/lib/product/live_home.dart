@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'home_agenda.dart';
+import 'featured_rule.dart';
 import 'home_hero.dart';
 import '../core/meta_events.dart';
 import 'live_api.dart';
@@ -182,10 +183,24 @@ class _HomeTabState extends State<HomeTab> {
     return pool.first;
   }
 
-  /// Destacado del día: el mejor pronóstico abierto (el bloqueado no se enseña aquí).
+  /// Destacado del día: entre los pronósticos abiertos (el bloqueado no se enseña aquí), el de mayor
+  /// probabilidad con cuota >= 1,20 y probabilidad >= 75 % (`featured_rule.dart`); si ninguno cumple la regla no hay tarjeta.
+  JsonMap? _featuredPick() {
+    final report = jsonMap(widget.data['alta_probabilidad']);
+    final open = [
+      ...jsonRows(report['proximos']),
+      ...jsonRows(report['vip']),
+    ].where((p) => p['locked'] != true);
+    return bestBySafety<JsonMap>(
+      open,
+      (p) => p['prob'],
+      (p) => p['ref_price'] ?? p['price'],
+    );
+  }
+
   Widget? _hero(BuildContext context) {
-    final pick = _topPick();
-    if (pick == null || pick['locked'] == true) return null;
+    final pick = _featuredPick();
+    if (pick == null) return null;
     final id = pick['match_id'];
     JsonMap? match;
     for (final m in jsonRows(widget.data['agenda'])) {

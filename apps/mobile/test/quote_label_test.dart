@@ -186,7 +186,7 @@ void main() {
   testWidgets('Predicciones NBA: cuota y casa solo en SU mercado; otro lado -> «—»', (tester) async {
     await pump(tester, predictions(SportKind.nba, [nbaEvent()], nbaOverlay()));
     expect(inCard('sport-pick-E1-w', find.text('@1,62')), findsOneWidget);
-    expect(inCard('sport-pick-E1-w', find.text('draftkings · ${hhmm()}')), findsOneWidget);
+    expect(inCard('sport-pick-E1-w', find.text('DraftKings · ${hhmm()}')), findsOneWidget);
     expect(inCard('sport-pick-E1-p', find.text('@1,90')), findsOneWidget);
     // El overlay solo trae `under` del total: «Más de» no recibe ese precio.
     expect(inCard('sport-pick-E1-t', find.text('—')), findsOneWidget);
@@ -212,7 +212,7 @@ void main() {
   testWidgets('tenis: cuota por id de mercado; el otro mercado queda en «—»', (tester) async {
     await pump(tester, predictions(SportKind.tennis, [tennisEvent()], tennisOverlay()));
     expect(inCard('sport-pick-E2-winner', find.text('@1,21')), findsOneWidget);
-    expect(inCard('sport-pick-E2-winner', find.text('pinnacle · ${hhmm()}')), findsOneWidget);
+    expect(inCard('sport-pick-E2-winner', find.text('Pinnacle · ${hhmm()}')), findsOneWidget);
     expect(inCard('sport-pick-E2-games_total-2', find.text('—')), findsOneWidget);
   });
 
@@ -246,7 +246,7 @@ void main() {
   testWidgets('Inicio NBA: la tarjeta de jugador muestra su cuota «Más de»', (tester) async {
     await pump(tester, home(nbaOverlay()));
     expect(find.text('@1,90'), findsOneWidget);
-    expect(find.text('fanduel · ${hhmm()}'), findsOneWidget);
+    expect(find.text('FanDuel · ${hhmm()}'), findsOneWidget);
   });
 
   test('fútbol: el overlay siempre queda vacío (no hay cuotas de referencia)', () {

@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createHistorialViews } from './historial-views.js?v=hist-limpio-20261028b';
-import { featuredSportMarket, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=nba-tarjetas-20261104';
+import { createHistorialViews } from './historial-views.js?v=hist-casa-20261105';
+import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=tenis-cuota-20261105';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -100,11 +100,12 @@ export function createHubViews(ctx) {
   const leagueLabel=e=>`${esc(e.league||'')}${e.sport==='tenis'&&e.surface?` · ${esc(surfaceName(e.surface))}`:''}`;
   const progress=value=>{const pct=Math.max(0,Math.min(100,Math.round(value*100)));return `<div class="cyber-progress cyber-progress--green cyber-progress--sm" data-value="${pct}" role="progressbar" aria-label="Probabilidad publicada ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="cyber-progress__bar"></div></div>`;};
   const teamsRow=(e,big=false)=>`<div class="win-pk-teams"><div class="win-pk-side">${avatar(e.home,e.sport,imageOf(e,'home'),big)}<strong>${esc(e.home)}</strong></div><span class="win-pk-vs ${e.score?'is-score':''}">${e.score?esc(e.score):'VS'}</span><div class="win-pk-side is-away">${avatar(e.away,e.sport,imageOf(e,'away'),big)}<strong>${esc(e.away)}</strong></div></div>`;
-  // Sin cuota publicada (NBA, tenis) no hay bloque de cuota: la probabilidad ya sale en su barra.
-  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.model?'Cuota del modelo':m.house?'Cuota de la casa':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
+  // Sin cuota (NBA y tenis sin referencia) no hay bloque de cuota: la probabilidad ya sale en su barra. `price_book` marca la referencia de
+  // PropLine de tenis (la mejor casa antes del sello, no sellada): se dice así.
+  const oddsBlock=m=>m.price?`<div class="win-pk-odds"><small>${m.price_book?'Cuota de referencia':m.model?'Cuota del modelo':m.house?'Cuota de la casa':'Cuota publicada'}</small><strong>${fmtOdds(m.price)}</strong><em>${esc(m.reference||'Casa registrada')}</em></div>`:'';
 
   // Pronóstico de la tarjeta de fútbol: el destacado del partido, el mismo que enseña su ficha (`mercados.destacado`, regla del
-  // servidor: de TODOS los mercados del partido, el de mayor probabilidad con cuota de 1,40 en adelante). Mientras se consulta no se enseña el pick sellado, para que la
+  // servidor: de TODOS los mercados del partido, la mayor probabilidad con cuota >= 1,20 y probabilidad >= 75 %). Mientras se consulta no se enseña el pick sellado, para que la
   // tarjeta no cambie de selección al llegar; si la consulta falla o el partido no tiene destacado, queda el pick sellado.
   function destacadoOf(event) {
     if(event.sport!=='futbol'||event.resolved||!ctx.ensureMatch)return null;
@@ -155,11 +156,9 @@ export function createHubViews(ctx) {
     return `<ul class="win-pk-stats" aria-label="Resumen del día">${tile('Publicados',source.home.status==='ready'||published.length?published.length:'—','pronósticos del día')}${tile('Próximos',source.home.status==='ready'||published.length?upcoming:'—','aún sin empezar')}${tile('Con Plus',plus,'análisis reservados')}${tile('Aciertos',resolved.length?`${wins}/${resolved.length}`:'—','últimos resueltos')}</ul>`;
   }
 
-  // Destacado del día: la regla de la web (`partido_mercados`: mayor probabilidad con cuota de 1,40 en adelante, sin tope) aplicada solo
+  // Destacado del día: la regla de la web (`destacado_valor`: cuota >= 1,20, probabilidad >= 75 %, gana la mayor probabilidad) aplicada solo
   // a los pronósticos ya publicados y abiertos. No genera nada: elige entre lo que envía el servidor.
-  const FEATURED_RANGE=[1.4,Infinity];
-  const featuredPick=picks=>picks.filter(p=>p&&p.locked!==true&&p.chain_sha256&&typeof p.ref_price==='number'&&Number.isFinite(p.ref_price)
-    &&p.ref_price>=FEATURED_RANGE[0]&&p.ref_price<=FEATURED_RANGE[1]).reduce((best,p)=>(!best||p.prob>best.prob?p:best),null);
+  const featuredPick=picks=>bestBySafety(picks.filter(p=>p&&p.locked!==true&&p.chain_sha256),p=>p.prob,p=>p.ref_price);
 
   function featuredCard(onDay,source,date) {
     if(source.home.status!=='ready')return '';
@@ -201,12 +200,17 @@ export function createHubViews(ctx) {
 
   // Historial: desde HISTORY_SINCE, solo los Destacados (fútbol, NBA y tenis) y Alta probabilidad (fútbol).
   function allResults(source) {
-    const rows=results(),row=(sport,r)=>({sport,home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,prob:r.prob,score:`${r.home_goals} – ${r.away_goals}`});
+    const rows=results(),row=(sport,r)=>({sport,home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,book:r.ref_book||null,prob:r.prob,score:`${r.home_goals} – ${r.away_goals}`});
     const items=[...(rows.items||[]),...(rows.featured||[])].map(r=>row('futbol',r));
     for(let e of source.events.filter(e=>e.sport!=='futbol')) {
       if(e.sport==='nba'&&e.v2) e=withNbaMarkets(e,ctx.ensureNbaMarkets?.(e));
       const m=featuredSportMarket(e);
-      if(m&&['win','loss'].includes(m.outcome))items.push({sport:e.sport,home:e.home,away:e.away,start:e.start,text:m.selection,outcome:m.outcome,price:m.price,prob:m.probability,score:e.score});
+      if(m&&['win','loss'].includes(m.outcome)) {
+        // La casa de la cuota va con ella: NBA la trae en `book` (nombre para mostrar vía marketQuote); en tenis, `price_book` (cuota de referencia previa al sello).
+        const quote=e.sport==='nba'&&e.v2?marketQuote(m):null,real=quote?!quote.model:Number.isFinite(m.price)&&m.price>1;
+        items.push({sport:e.sport,home:e.home,away:e.away,start:e.start,text:m.selection,outcome:m.outcome,price:real?(quote?quote.price:m.price):null,
+          book:real?(quote?quote.source:m.price_book||m.book||null):null,ref:Boolean(m.price_book),prob:m.probability,score:e.score});
+      }
     }
     return items.filter(r=>localDay(new Date(r.start))>=HISTORY_SINCE).sort((a,b)=>new Date(b.start)-new Date(a.start));
   }

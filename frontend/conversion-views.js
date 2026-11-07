@@ -208,6 +208,30 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       <p class="cv-ticket-meta">Probabilidad conjunta ${realNumber(t.prob_total * 100, 1)}% · sale 1 de cada ${realNumber(1 / t.prob_total, 1)}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><ul class="cv-legs">${t.patas.map(pata).join('')}</ul></article>`;
   }
 
+  // Parley v2 (lote propio, 03:35 México): objetivos de cuota 2,10 / 3,10 / 8,20 / 12,10, con tenis y NBA.
+  const V2_ESTADO = { publicado: ['Publicado', 'good'], solo_referencia: ['Solo referencia', 'warn'] };
+  function ticketV2(t) {
+    const [estadoTxt, tono] = V2_ESTADO[t.estado] ?? [t.estado, 'muted'];
+    const res = t.outcome ? PARLEY_ESTADO[t.outcome] ?? t.outcome : 'En juego';
+    const cls = t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open';
+    const prob = t.prob_total != null
+      ? `Probabilidad conjunta ${realNumber(t.prob_total * 100, 1)}%${t.incertidumbre ? ` (entre ${realNumber(t.incertidumbre[0] * 100, 1)}% y ${realNumber(t.incertidumbre[1] * 100, 1)}%)` : ''}`
+      : 'Un solo partido: sin probabilidad conjunta validada, no se multiplican probabilidades sueltas';
+    return `<article class="cv-ticket cyber-card ${t.gratis ? 'cyber-card--green' : ''} ${cls}"><div class="cv-ticket-head"><div><span class="cv-kicker">${t.gratis ? badge('Gratis', 'good') : ''} ${badge(estadoTxt, tono)} Objetivo ${realNumber(t.target, 2)} · ${realNumber(t.n_patas)} patas${t.tipo === 'same_game' ? ' · un partido' : ''}</span><h3>${esc(res)}</h3></div><div class="cv-ticket-odds"><span>Cuota total</span><strong>${realNumber(t.cuota_total, 2)}</strong></div></div>
+      <p class="cv-ticket-meta">${prob}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><ul class="cv-legs">${t.patas.map(pata).join('')}</ul></article>`;
+  }
+
+  function parleyV2Section(v2) {
+    const dias = v2?.dias ?? [];
+    if (!v2 || !dias.length) return '';
+    const [ultimo] = dias;
+    const huella = primeraHuella(ultimo?.chain_sha256);
+    const tarjetas = ultimo.tickets.map(t => t.locked
+      ? lockedCard({ kicker: `Objetivo ${realNumber((t.cuota_min + t.cuota_max) / 2, 2)}`, title: `Parley de cuota ≈${realNumber((t.cuota_min + t.cuota_max) / 2, 1)}`, sub: 'Las patas se abren con VIP.', cuotaLabel: 'Cuota', cuota: `${realNumber(t.cuota_min, 1)}–${realNumber(t.cuota_max, 1)}` })
+      : ticketV2(t)).join('');
+    return `<section class="cv-section" aria-label="Parley v2"><div class="cv-section-head"><p class="eyebrow">PARLEY v2 · FÚTBOL, TENIS Y NBA</p><h2>Cuatro objetivos de cuota, menos patas</h2></div><p class="cv-sub">${esc(String(ultimo.dia))}${huella ? ` · lote sellado <code>${hash(huella)}</code>` : ''}. Se elige después del lote diario y antes de los partidos; sin combinación válida no se publica.</p><div class="cv-list">${tarjetas}</div></section>`;
+  }
+
   function parleyView() {
     const source = getData()?.parley;
     if (!source) return status('Consultando el parley del día…', 'Un momento: cargamos los escalones y el historial.', false);
@@ -250,6 +274,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
 
     return `${heroCard}${racha}
       <section class="cv-section" aria-label="Parley de hoy"><div class="cv-section-head"><p class="eyebrow">LOS 5 ESCALONES DE HOY</p><h2>Elige hasta dónde subir</h2></div>${hoy}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>
+      ${parleyV2Section(source.data.v2)}
       ${ctaBand(bloqueados, 'Ves el escalón y su rango de cuota. Las patas del parley se abren con VIP.')}
       ${prueba}
       ${historial}

@@ -35,6 +35,20 @@ def desbloqueo(kickoff: datetime) -> datetime:
     return corrida.astimezone(timezone.utc)
 
 
+def dia_cerrado(kickoff, ahora: datetime | None = None) -> bool:
+    """
+    ¿Ya terminó el día (de México) en que se juega el partido? Desde entonces su pronóstico va abierto para
+    todos (decisión del titular, 2026-11-05): lo de ayer en adelante es historial, no VIP. Sin hora de inicio
+    válida no se abre nada.
+    """
+    if not isinstance(kickoff, datetime):
+        return False
+    if kickoff.tzinfo is None:
+        kickoff = kickoff.replace(tzinfo=timezone.utc)
+    ahora = ahora or datetime.now(timezone.utc)
+    return kickoff.astimezone(MEXICO).date() < ahora.astimezone(MEXICO).date()
+
+
 def proxima_corrida(now: datetime) -> datetime:
     """Primera corrida estrictamente posterior a `now`."""
     corrida = _corrida(now)

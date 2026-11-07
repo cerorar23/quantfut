@@ -63,6 +63,14 @@ def filtrar(opciones: list[Opcion], now: datetime) -> list[Opcion]:
             and (o.odds_as_of is None or o.odds_as_of <= now)]
 
 
+def filtrar_v2(opciones: list[Opcion], now: datetime) -> list[Opcion]:
+    """Como `filtrar` sin el rango 1,20-1,80: el parley v2 aplica su propia política de cuota por mercado."""
+    return [replace(o, price=round(o.price, 4)) for o in opciones
+            if o.cand.market in MERCADOS_PARLEY
+            and o.price > 1 and o.ev <= EV_ERRONEA
+            and (o.odds_as_of is None or o.odds_as_of <= now)]
+
+
 def sin_bloqueados(patas: list[Opcion], bloqueados) -> list[Opcion]:
     """
     Quita las patas de los mercados que el control de alta probabilidad tiene bloqueados

@@ -1,6 +1,8 @@
-// Un partido muestra UNA sola tarjeta destacada: la de mayor probabilidad; si empatan,
-// la de cuota más alta.
+// Un partido muestra UNA sola tarjeta destacada, «probabilidad máxima segura»: entre los de cuota
+// publicada >= 1,20 y probabilidad >= 75 %, la de mayor probabilidad; si empatan, la de mayor cuota
+// (misma regla que el servidor y la web). La cuota no multiplica nada.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gobet/product/featured_rule.dart';
 import 'package:gobet/product/live_forecast.dart';
 
 Map<String, dynamic> pick(String market, double? prob, [double? price]) => {
@@ -10,65 +12,75 @@ Map<String, dynamic> pick(String market, double? prob, [double? price]) => {
 };
 
 void main() {
-  test('gana la mayor probabilidad aunque otra tenga mejor cuota', () {
-    final best = featuredPick([
-      pick('totals', .70, 1.90),
-      pick('team_goals', .78, 1.25),
-      pick('corners', .66, 2.40),
-    ]);
-    expect(best?['market'], 'team_goals');
-  });
-
-  test('si empatan en probabilidad, gana la cuota más alta', () {
-    final best = featuredPick([
-      pick('a', .75, 1.30),
-      pick('b', .75, 1.45),
-      pick('c', .75, 1.20),
-    ]);
-    expect(best?['market'], 'b');
-  });
-
-  test('un empate sin cuota no desplaza al que sí la tiene', () {
-    final best = featuredPick([pick('a', .75), pick('b', .75, 1.2)]);
-    expect(best?['market'], 'b');
-  });
-
-  test('los que no traen probabilidad no compiten', () {
-    final best = featuredPick([pick('a', null, 1.3), pick('b', .74, 1.2)]);
-    expect(best?['market'], 'b');
-  });
-
-  test('sin probabilidad válida no hay destacado', () {
-    final best = featuredPick([pick('a', null), pick('b', null)]);
-    expect(best, isNull);
-  });
-
-  test('excluye la cuota 1.12 aunque tenga 85 por ciento', () {
-    final best = featuredPick([
-      pick('corners', .85, 1.12),
-      pick('goals', .80, 1.40),
-      pick('other', .86, 1.50),
-    ]);
-    expect(best?['market'], 'goals');
-  });
-
-  test('incluye extremos exactos de cuota y probabilidad', () {
-    for (final prob in [.74, .85]) {
-      for (final price in [1.20, 1.60]) {
-        expect(featuredPick([pick('valid', prob, price)]), isNotNull);
-      }
+  test('gana la mayor probabilidad aunque otra pague más', () {
+    final segura = pick('segura', .82, 1.22);
+    final rentable = pick('rentable', .81, 1.60);
+    for (final orden in [
+      [segura, rentable],
+      [rentable, segura],
+    ]) {
+      expect(featuredPick(orden)?['market'], 'segura');
     }
+  });
+
+  test('una cuota larga con menos de 75 % no es candidata', () {
+    expect(
+      featuredPick([
+        pick('valor', .70, 1.80),
+        pick('seguro', .75, 1.20),
+      ])?['market'],
+      'seguro',
+    );
+    expect(featuredPick([pick('valor', .70, 1.80)]), isNull);
+    expect(
+      featuredPick([pick('loteria', .20, 5.0), pick('segura', .90, 1.10)]),
+      isNull,
+    );
+  });
+
+  test('si empatan en probabilidad, gana la mayor cuota', () {
+    final a = pick('a', .80, 1.25), b = pick('b', .80, 1.45);
+    expect(featuredPick([a, b])?['market'], 'b');
+    expect(featuredPick([b, a])?['market'], 'b');
+  });
+
+  test('un empate total conserva el primero de la lista', () {
+    expect(
+      featuredPick([pick('x', .80, 1.30), pick('y', .80, 1.30)])?['market'],
+      'x',
+    );
+  });
+
+  test('incluye los extremos exactos: cuota 1,20 y probabilidad 75 %', () {
+    expect(featuredPick([pick('valid', .75, 1.20)]), isNotNull);
     for (final invalid in [
-      pick('a', .7399, 1.40),
-      pick('b', .8501, 1.40),
-      pick('c', .80, 1.1999),
-      pick('d', .80, 1.6001),
-      pick('e', double.nan, 1.40),
-      pick('f', .80, double.infinity),
-      pick('g', .80),
+      pick('a', .7499, 3.0),
+      pick('b', .80, 1.1999),
+      pick('c', double.nan, 1.40),
+      pick('d', .80, double.infinity),
+      pick('e', .80),
+      pick('f', null, 1.5),
+      pick('g', .55, 2.0),
     ]) {
       expect(featuredPick([invalid]), isNull);
     }
+  });
+
+  test('los que no traen probabilidad o cuota no compiten', () {
+    expect(
+      featuredPick([pick('a', null, 1.3), pick('b', .76, 1.2)])?['market'],
+      'b',
+    );
+    expect(featuredPick([pick('a', .80), pick('b', .78, 1.2)])?['market'], 'b');
+  });
+
+  test('con cuota del modelo el tope de 1,20 deja la franja 75 %-83,3 %', () {
+    final items = [
+      for (final p in [.95, .90, .84, .83, .78, .74])
+        pick('p$p', p, modelPrice(p)),
+    ];
+    expect(featuredPick(items)?['market'], 'p0.83');
+    expect(featuredPick(items.reversed.toList())?['market'], 'p0.83');
   });
 
   test('acepta price si no existe ref_price y no modifica la lista', () {

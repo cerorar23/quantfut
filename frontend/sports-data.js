@@ -97,12 +97,28 @@ export function marketQuote(m) {
     : { price: m?.probability > 0 ? 1 / m.probability : null, source: 'Del modelo', model: true };
 }
 
+// Orden de los mercados de un partido ya jugado (titular, 2026-11-05; fútbol, NBA y tenis): primero los acertados, de la cuota más alta
+// a la más baja; después lo que no tiene resultado (devoluciones, anulados) y al final los fallados, también de mayor a menor cuota.
+// Si el partido aún no tiene ningún mercado liquidado, la lista queda como vino (por probabilidad).
+export const hayLiquidado = (lista, resultado) => lista.some(x => ['win', 'loss'].includes(resultado(x)));
+export function ordenLiquidado(lista, { resultado, cuota, prob }) {
+  if (!hayLiquidado(lista, resultado)) return lista;
+  const rango = x => ({ win: 0, loss: 2 })[resultado(x)] ?? 1;
+  const precio = x => { const c = cuota(x); return Number.isFinite(c) ? c : -Infinity; };
+  return [...lista].sort((a, b) => rango(a) - rango(b) || precio(b) - precio(a) || (prob(b) || 0) - (prob(a) || 0));
+}
+
+// Destacado de NBA y tenis: lo elige el SERVIDOR (probabilidad máxima segura; `destacado` del evento, ver `destacado_valor.py`). Aquí solo se localiza
+// ese mercado entre los publicados; si es una revisión posterior al inicio no cuenta como pronóstico previo y no se sustituye por otro.
+// Solo si el servidor no mandó el campo (fuente antigua o mercados aún sin cargar) se aplica la misma regla a lo que hay en pantalla.
 export function featuredSportMarket(event) {
   const markets = event.markets.filter(m => !m.revised);
-  if (event.sport !== 'nba' || !event.v2) return featuredModelMarket(markets);
-  const quoted = markets.filter(m => !marketQuote(m).model);
-  if (!quoted.length) return featuredModelMarket(markets);
-  return quoted.reduce((best, m) => probability(m.probability) && m.price >= 1.4 && (!best || m.probability > best.probability) ? m : best, null);
+  if (event.destacado !== undefined) {
+    const id = typeof event.destacado === 'string' ? event.destacado : event.destacado?.id;
+    return id == null ? null : markets.find(m => m.id === id) || null;
+  }
+  const quoted = event.sport === 'nba' && event.v2 ? markets.filter(m => !marketQuote(m).model) : [];
+  return quoted.length ? bestBySafety(quoted, m => m.probability, m => m.price) : featuredModelMarket(markets);
 }
 
 export async function loadNbaMarkets(event, fetcher = fetch) {
@@ -141,7 +157,9 @@ export async function loadNbaMarkets(event, fetcher = fetch) {
       const quote = marketQuote(m);
       return { ...m, label, selection, eligible, revised: !eligible, outcome, reference: quote.model ? 'Probabilidad estadística' : quote.source };
     });
-    return { status: 'ready', markets, projections: data.projections };
+    // `destacado` lo calcula el servidor; se conserva solo su id (null = ningún mercado cumple la regla; undefined = el servidor no lo mandó).
+    const destacado = data.destacado === undefined ? undefined : typeof data.destacado?.id === 'string' ? data.destacado.id : null;
+    return { status: 'ready', markets, projections: data.projections, destacado };
   } catch { return { status: 'error', markets: [], projections: [] }; }
   finally { clearTimeout(timer); }
 }
@@ -149,7 +167,8 @@ export async function loadNbaMarkets(event, fetcher = fetch) {
 export function withNbaMarkets(event, entry) {
   if (event.sport !== 'nba' || !event.v2 || !entry) return event;
   return { ...event, markets_status: entry.status, markets: entry.status === 'ready' ? entry.markets : [],
-    projections: entry.status === 'ready' ? entry.projections : [] };
+    projections: entry.status === 'ready' ? entry.projections : [],
+    ...(entry.status === 'ready' && entry.destacado !== undefined ? { destacado: entry.destacado } : {}) };
 }
 
 async function loadNba(fetcher, now) {
@@ -178,6 +197,39 @@ export async function loadSport(sport, fetcher=fetch, now=new Date()) {
     return {status:'ready',events:tennisEvents(data)};
   } catch {return {status:'error',events:[]};}
   finally {clearTimeout(timer);}
+}
+
+// Cuota PropLine de tenis (`/web/deportes/tenis/cuotas`): la mejor casa que cotizaba el mercado cuando se selló el pronóstico. Es una referencia,
+// NO va dentro del sello. El servidor la calcula aparte y en frío tarda (hasta ~100 s tras reiniciar la API; mientras, responde `unavailable`),
+// así que la web pinta el tenis primero y la pide después (ver `ensureSport`).
+export async function loadTennisQuotes(fetcher=fetch) {
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),30000);
+  try {
+    const response=await fetcher('/web/deportes/tenis/cuotas',{signal:controller.signal,cache:'no-store'});
+    if(!response.ok)throw new Error('Fuente no disponible');
+    const data=await response.json();
+    if(!['ok','partial'].includes(data?.state)||!data.events||typeof data.events!=='object'||Array.isArray(data.events))return {status:'unavailable',events:{}};
+    return {status:'ready',events:data.events};
+  } catch {return {status:'error',events:{}};}
+  finally {clearTimeout(timer);}
+}
+
+const bookLabel = key => BOOK_NAMES[key] || String(key).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+// Pone precio y casa de referencia en los mercados de tenis que la tengan. Muta los eventos recibidos (son los de la caché de la web).
+// Nunca pisa un precio que ya trajera el feed ni inventa uno: sin precio válido y casa con nombre, el mercado se queda como estaba.
+export function applyTennisQuotes(events, quotes) {
+  for (const event of Array.isArray(events) ? events : []) {
+    const byMarket = quotes?.[event?.id];
+    if (!byMarket || typeof byMarket !== 'object') continue;
+    for (const m of event.markets || []) {
+      const q = byMarket[m.id];
+      if (!q || m.price != null || !(typeof q.price === 'number' && Number.isFinite(q.price) && q.price > 1) || typeof q.book !== 'string' || !q.book.trim()) continue;
+      const book = bookLabel(q.book.trim());
+      Object.assign(m, { price: q.price, book, price_book: book, quote_as_of: q.as_of || null, reference: `${book} · referencia previa al sello` });
+    }
+  }
+  return events;
 }
 
 // Estadísticas de jugadores de un partido de tenis (las resume el servidor a partir de API-Tennis).
@@ -261,12 +313,22 @@ export async function loadImages(fetcher=fetch) {
   finally {clearTimeout(timer);}
 }
 
-// Destacado de NBA y tenis: de los mercados publicados, el de mayor probabilidad con «cuota del modelo»
-// (1 ÷ probabilidad) de 1,40 en adelante, sin tope (titular, 2-nov-2026). Ninguna casa publica estas cuotas; no se inventa ninguna.
-export function featuredModelMarket(markets, range = [1.4, Infinity]) {
-  return (Array.isArray(markets) ? markets : []).reduce((best, m) => {
-    if (!m || !probability(m.probability)) return best;
-    const odds = 1 / m.probability;
-    return odds >= range[0] && odds <= range[1] && (!best || m.probability > best.probability) ? m : best;
-  }, null);
+// Regla del destacado «probabilidad máxima segura» (titular, 5-nov-2026; la misma del servidor, `destacado_valor.py`): cuota de referencia
+// >= 1,20 y probabilidad >= 75 %; gana la MAYOR PROBABILIDAD (la cuota no multiplica nada) y, en empate, la mayor cuota. Sin candidatos: null.
+export const FEATURED_MIN_PRICE = 1.2, FEATURED_MIN_PROB = .75;
+const isNum = v => typeof v === 'number' && Number.isFinite(v);
+export function bestBySafety(items, probOf, priceOf) {
+  let best = null, bestProb = 0, bestPrice = 0;
+  for (const item of Array.isArray(items) ? items : []) {
+    if (!item) continue;
+    const p = probOf(item), c = priceOf(item);
+    if (!isNum(p) || !isNum(c) || c < FEATURED_MIN_PRICE || p < FEATURED_MIN_PROB) continue;
+    if (!best || p > bestProb || (p === bestProb && c > bestPrice)) { best = item; bestProb = p; bestPrice = c; }
+  }
+  return best;
+}
+
+// Sin cuota de casa la de referencia es la del modelo (1 ÷ probabilidad): ninguna casa publica estas cuotas y no se inventa otra.
+export function featuredModelMarket(markets) {
+  return bestBySafety(markets, m => m.probability, m => probability(m.probability) ? 1 / m.probability : NaN);
 }

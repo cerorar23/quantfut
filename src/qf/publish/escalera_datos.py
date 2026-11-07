@@ -253,7 +253,8 @@ def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
 
 def opciones(m: dict, now: datetime, rho: float | None,
              modelos: "Modelos | None" = None,
-             incluir_doble: bool = False) -> list[es.Opcion] | None:
+             incluir_doble: bool = False,
+             consenso: bool = False) -> list[es.Opcion] | None:
     """
     Todos los candidatos de un partido con la mejor cuota de la lista. Los de
     Pinnacle (1X2, goles, ambos anotan, hándicap) necesitan su precio vigente;
@@ -264,20 +265,21 @@ def opciones(m: dict, now: datetime, rho: float | None,
     `incluir_doble`: añade la doble oportunidad (probabilidad = suma de las del 1X2 de
     Pinnacle sin margen; cuota REAL de API-Football, bet 12). Solo la usa el parley: la
     escalera no la considera, así que su selección no cambia.
+
+    `consenso` (solo el parley v2, 2026-11-06): la probabilidad de referencia sale del consenso de
+    las casas y Pinnacle deja de ser obligatorio. Por defecto no cambia nada.
     """
     match_id, kickoff = m["match_id"], m["kickoff_utc"]
     out = []
     filas_mercados = _cuotas_mercados(match_id, now)
-    snap = ad._snapshot(match_id, kickoff, now)
+    snap = ad._snapshot(match_id, kickoff, now, consenso)
     if snap is not None:
         totales, equipos = ad._referencias(match_id, snap, now)
-        q = snap.books[settings.sharp_book]
-        fair = devig([q[s] for s in ad.SEL], settings.devig_method)
-        p = {s: float(fair[i]) for i, s in enumerate(ad.SEL)}
+        p = ad.referencia_1x2(snap, consenso)
         cands = ap.candidatos_1x2(p)
         if incluir_doble:
             cands += ap.candidatos_doble(p)
-        linea = ad.linea_pinnacle(totales) if rho is not None else None
+        linea = ad.linea_pinnacle(totales, consenso) if rho is not None else None
         ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho) if linea else None
         cands += ap.candidatos_goles(ajuste, es.LINEAS_GOLES)
         cands += ap.candidatos_equipo(ajuste, ("home", "away"))

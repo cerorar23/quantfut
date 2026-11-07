@@ -372,7 +372,7 @@
   "detailInjuries": "Bajas reportadas",
   "detailLineups": "Alineaciones",
   "detailLineupsPending": "Alineaciones todavía no confirmadas.",
-  "detailNoFeatured": "Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 a 1,60 y probabilidad de 74 % a 85 %). Los abiertos están en la lista de abajo.",
+  "detailNoFeatured": "Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 75 % o más). Los abiertos están en la lista de abajo.",
   "detailNoH2h": "No hay enfrentamientos registrados para este partido.",
   "detailNoInjuries": "Sin bajas en el reporte disponible.",
   "detailNoInjuriesCheck": "No hay una comprobación de bajas disponible.",
@@ -691,6 +691,7 @@
   "@guideTopic6": {
     "description": "Tema 6 de la guía."
   },
+  "historyWebSince": "Historial web desde el 26/10/2026",
   "homeBannerClose": "Cerrar aviso",
   "@homeBannerClose": {
     "description": "Cierra el aviso de la parte superior."
@@ -1018,6 +1019,15 @@
     }
   },
   "marketResult1x2": "Resultado 1X2",
+  "marketUnderLine": "Menos de {line}",
+  "@marketUnderLine": {
+    "description": "Selección «menos de» de un mercado de línea (puntos, asistencias, total). {line} es la línea ya formateada, p. ej. 24,5.",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
   "marketUnknown": "Mercado",
   "marketWinToNil": "Gana a cero",
   "marketsAndResults": "Mercados y resultados",
@@ -1413,6 +1423,9 @@
       }
     }
   },
+  "parleyV2Heading": "Parley v2 · fútbol, tenis y NBA",
+  "parleyV2Reference": "Solo referencia",
+  "parleyV2SameGame": "Un solo partido",
   "pickOddsAtPublish": "Cuota al publicar · {book}",
   "@pickOddsAtPublish": {
     "placeholders": {
@@ -1654,6 +1667,10 @@
   "profileVerificationSent": "Correo de verificación enviado.",
   "profileVipActive": "Acceso VIP activo",
   "profileYourAccount": "Tu cuenta QuantFut",
+  "propStatAssists": "asistencias",
+  "propStatPoints": "puntos",
+  "propStatRebounds": "rebotes",
+  "propStatThrees": "triples",
   "quoteBookAt": "{book} · {time}",
   "@quoteBookAt": {
     "description": "Casa de apuestas y hora local de la cuota de referencia.",
@@ -1989,6 +2006,36 @@
       }
     }
   },
+  "selGamesHandicap": "{team} {line} juegos",
+  "@selGamesHandicap": {
+    "description": "Tenis: hándicap de juegos",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selGamesOver": "Más de {line} juegos",
+  "@selGamesOver": {
+    "description": "Tenis: total de juegos, más de",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selGamesUnder": "Menos de {line} juegos",
+  "@selGamesUnder": {
+    "description": "Tenis: total de juegos, menos de",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
   "selGoals": "{side, select, over{Más de {line} goles} other{Menos de {line} goles}}",
   "@selGoals": {
     "placeholders": {
@@ -2032,6 +2079,66 @@
   },
   "selHtBttsNo": "No marcan los dos en el 1T",
   "selHtGoalYes": "Habrá gol en el 1T",
+  "selPlayerOver": "{player}: más de {line} {stat}",
+  "@selPlayerOver": {
+    "description": "NBA: prop de jugador, más de",
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      },
+      "stat": {
+        "type": "String"
+      }
+    }
+  },
+  "selPlayerUnder": "{player}: menos de {line} {stat}",
+  "@selPlayerUnder": {
+    "description": "NBA: prop de jugador, menos de",
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      },
+      "stat": {
+        "type": "String"
+      }
+    }
+  },
+  "selPointsOver": "Más de {line} puntos",
+  "@selPointsOver": {
+    "description": "NBA: total de puntos del partido, más de",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selPointsUnder": "Menos de {line} puntos",
+  "@selPointsUnder": {
+    "description": "NBA: total de puntos del partido, menos de",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "selSpreadPoints": "{team} {line} puntos",
+  "@selSpreadPoints": {
+    "description": "NBA: hándicap de puntos",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "line": {
+        "type": "String"
+      }
+    }
+  },
   "selTeamGoalsLine": "{side, select, over{Más de {line} goles de {team}} other{Menos de {line} goles de {team}}}",
   "@selTeamGoalsLine": {
     "description": "Goles de un equipo con línea distinta de «marca» (más de 0,5).",
@@ -2071,6 +2178,32 @@
       }
     }
   },
+  "sfCounts": "Abiertos {open} · Resueltos {resolved}",
+  "@sfCounts": {
+    "description": "Tarjeta de familia de mercado de NBA o tenis: pronósticos aún abiertos y ya resueltos.",
+    "placeholders": {
+      "open": {
+        "type": "int"
+      },
+      "resolved": {
+        "type": "int"
+      }
+    }
+  },
+  "sfNbaGameTotal": "Total de puntos del partido",
+  "sfNbaHandicap": "Hándicap del partido",
+  "sfNbaPlayerAssists": "Asistencias del jugador",
+  "sfNbaPlayerPoints": "Puntos del jugador",
+  "sfNbaPlayerRebounds": "Rebotes del jugador",
+  "sfNbaPlayerThrees": "Triples del jugador",
+  "sfNbaTeamPoints": "Puntos por equipo",
+  "sfRangeNote": "Pronósticos con probabilidad del 60 % al 95 %",
+  "sfTennisGamesHandicap": "Hándicap de juegos",
+  "sfTennisGamesTotal": "Juegos totales",
+  "sfTennisSetWinner": "Ganador del set",
+  "sfTennisSetsHandicap": "Hándicap de sets",
+  "sfTennisSetsTotal": "Total de sets",
+  "sfTennisTiebreak": "Tie-break",
   "shellNeedCoinsBody": "Gana monedas con la asistencia diaria y las ofertas para desbloquear este pronóstico.",
   "@shellNeedCoinsBody": {
     "description": "Explica cómo conseguir monedas."

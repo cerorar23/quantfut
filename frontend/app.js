@@ -1,9 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=planes-20261027';
-import { createRealViews } from './real-views.js?v=nba-tarjetas-20261104';
-import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, featuredModelMarket, nbaCode } from './sports-data.js?v=nba-tarjetas-20261104';
-import { createSportWindow } from './sports-window.js?v=nba-tarjetas-20261104';
+import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
+import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
+import { createSportWindow } from './sports-window.js?v=tenis-cuota-20261105';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=sin-leyendas-20261028';
@@ -188,8 +188,17 @@ function ensureSport(sport) {
   if(sportsCache.has(sport))return sportsCache.get(sport);
   const entry={status:'loading',events:[]},generation=realGeneration;
   sportsCache.set(sport,entry);
-  loadSport(sport).then(result=>{if(generation!==realGeneration)return;sportsCache.set(sport,result);rerenderIfIdle();});
+  loadSport(sport).then(result=>{if(generation!==realGeneration)return;sportsCache.set(sport,result);if(sport==='tenis'&&result.status==='ready')ensureTennisQuotes(result,generation);rerenderIfIdle();});
   return entry;
+}
+// La cuota de referencia de tenis se pide DESPUÉS de pintar el tenis: el servidor la calcula aparte y en frío tarda. Si aún no está
+// (`unavailable`), se reintenta dos veces con pausa; si falla, el tenis sigue con la cuota justa del modelo, sin error visible.
+function ensureTennisQuotes(result,generation,attempt=0) {
+  loadTennisQuotes().then(quotes=>{
+    if(generation!==realGeneration)return;
+    if(quotes.status==='ready'){applyTennisQuotes(result.events,quotes.events);rerenderIfIdle();}
+    else if(quotes.status==='unavailable'&&attempt<2)setTimeout(()=>ensureTennisQuotes(result,generation,attempt+1),20000);
+  });
 }
 const tennisStatsCache = new Map();
 function ensureTennisStats(id) {
@@ -1050,16 +1059,18 @@ function winForecast(game, entry) {
   const { ficha, picks } = entry.data;
   const feat = featuredMarket(ficha.mercados);
   const sealed = feat?.pick_key ? picks.find(p => p.pick_key === feat.pick_key && p.chain_sha256) : null;
-  const rango = ficha.mercados?.rango || [1.4, null];
+  const rango = ficha.mercados?.rango || [1.2, null];
   const cuotaTxt = x => Number(x).toFixed(2).replace('.', ',');
   const range = rango[1] == null ? `${cuotaTxt(rango[0])} o más` : rango.map(cuotaTxt).join(' a ');
   const card = feat
     ? `<p class="eyebrow">PRONÓSTICO DESTACADO${sealed ? ` · LOTE ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(feat.seleccion)}</h2><p class="win-sub">${esc(feat.titulo || feat.grupo)} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : feat.cuota_tipo === 'casa' ? 'Cuota de la casa' : 'Cuota del modelo'}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || feat.casa || 'Casa registrada') : feat.cuota_tipo === 'casa' ? esc(feat.casa || 'Casa') : '1 ÷ probabilidad'}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${marketState(feat.resultado)}</p>${sealed ? `<details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(sealed.ref_book || 'No disponible')} · Cuota capturada ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>` : ''}`
-    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">Ningún mercado de este partido tiene cuota de ${range}.</p>`;
+    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">Ningún mercado de este partido cumple la regla del destacado: cuota de ${range} y probabilidad de 75 % o más.</p>`;
   const rows = ficha.mercados?.filas || [];
   const groups = [...new Set(rows.map(r => r.grupo))];
   const fam = groups.includes(state.winFam) ? state.winFam : 'Todos';
-  const shown = rows.filter(r => fam === 'Todos' || r.grupo === fam).sort((a, b) => Number(a.locked === true) - Number(b.locked === true));
+  // Abiertos primero; en un partido ya jugado, acertados por cuota de mayor a menor y al final los fallados (ver `ordenLiquidado`).
+  const delGrupo = rows.filter(r => fam === 'Todos' || r.grupo === fam);
+  const shown = [...ordenLiquidado(delGrupo.filter(r => r.locked !== true), { resultado: r => r.resultado, cuota: r => r.cuota, prob: r => r.prob }), ...delGrupo.filter(r => r.locked === true)];
   const locked = rows.filter(r => r.locked === true).length;
   const line = r => (r.locked
     ? `<tr class="win-lock"><td>${esc(r.grupo)}</td><td>Contenido reservado</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`

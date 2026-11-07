@@ -17,6 +17,7 @@ import math
 import time
 from datetime import date, datetime, timedelta, timezone
 
+from . import destacado_valor
 from ..db import query, query_one
 from ..eval.clv import _settle_outcome
 from ..model import estadisticas_mercado as em
@@ -130,8 +131,8 @@ def filas_complementarias(lam: float, mu: float, rho: float, local: str, visitan
     Opciones de los mercados de goles que `filas_goles` NO lista: `filas_goles` enseña solo el lado más
     probable de cada mercado, así que el otro lado (p. ej. «Menos de 1,5» cuando lo probable es «Más») y los
     otros resultados del 1X2 no podían ser nunca el destacado. Solo la web (`construir(web=True)`) las añade:
-    la regla del destacado es «de TODOS los mercados del partido, el de mayor probabilidad con cuota de 1,40 en
-    adelante» (titular, 2-nov-2026). Córners, tarjetas y 1ª mitad siguen con sus líneas validadas (no se añade
+    la regla del destacado es «de TODOS los mercados del partido, la mayor probabilidad con cuota >= 1,20 y
+    probabilidad >= 75 %» (titular, 5-nov-2026; antes 2-nov: la mayor probabilidad con cuota >= 1,40). Córners, tarjetas y 1ª mitad siguen con sus líneas validadas (no se añade
     ninguna sin prueba histórica). Se descartan las opciones por debajo de `PROB_MIN_OPCION` y las ya listadas.
     """
     m = pricing.score_matrix(lam, mu, rho)
@@ -397,14 +398,24 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
 
 # --- acceso de la WEB (independiente del de la app) -----------------------------------------
 
-# Cuota del modelo: 1/prob (o la publicada si el pick abierto la trae). Mínimo 1,40 y SIN tope (titular, 2026-11-02;
-# antes 1,40 a 1,80): el tope es None y viaja como null en `rango`.
-RANGO_DESTACADO = (1.40, None)
+# Destacado «probabilidad máxima segura» (titular, 2026-11-05; el valor esperado del mismo día bajó el acierto visible): cuota de
+# referencia >= 1,20, probabilidad >= 75 % y gana la mayor probabilidad (`destacado_valor`). Sin tope de cuota: viaja como null en `rango`.
+RANGO_DESTACADO = (destacado_valor.CUOTA_MIN, None)
 CUOTA_REAL = ('casa', 'publicada')      # `cuota_tipo` de una cuota que paga una casa (la otra es 'justa', del modelo)
 
 
 def en_rango_destacado(cuota) -> bool:
     return bool(cuota) and cuota >= RANGO_DESTACADO[0] and (RANGO_DESTACADO[1] is None or cuota <= RANGO_DESTACADO[1])
+
+
+def precio_referencia(fila: dict) -> float | None:
+    """Cuota de referencia de una fila: la de la casa si la hay; la del modelo es 1/prob exacta (la `cuota` va redondeada)."""
+    if fila.get('cuota_tipo') in CUOTA_REAL:
+        return fila.get('cuota')
+    prob = fila.get('prob')
+    return 1 / prob if isinstance(prob, (int, float)) and prob > 0 else None
+
+
 GRATIS_WEB = 3                   # mercados abiertos para quien no tiene VIP
 
 
@@ -412,10 +423,10 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
                        plus: bool) -> tuple[list[dict], list[dict] | None, dict | None]:
     """
     Regla de la web (decisión del titular, 2026-10-28), distinta de la de la app:
-    - Destacado: de TODOS los mercados del partido, también los que sin VIP salen con candado,
-      el de mayor probabilidad con cuota de 1,40 en adelante, sin tope. Se enseña abierto y gratis.
-    - Gratis: el destacado y los siguientes de mayor probabilidad dentro de ese rango hasta
-      sumar `GRATIS_WEB`; si el rango no da para tanto, se completa con los más probables.
+    - Destacado: de TODOS los mercados del partido, también los que sin VIP salen con candado, el de mayor
+      probabilidad (`destacado_valor`) entre los de cuota >= 1,20 y probabilidad >= 75 %. Abierto y gratis.
+    - Gratis: el destacado y los siguientes de mayor probabilidad que pasan ese filtro hasta sumar `GRATIS_WEB`;
+      si el filtro no da para tanto, se completa con los más probables.
     - El resto sigue con candado (solo categoría) y los picks sellados ya abiertos se conservan.
     Con VIP todo va abierto. Los marcadores no se regalan por esto: solo con VIP o con un pick abierto.
     """
@@ -423,18 +434,20 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     # Con cuotas reales en el partido, solo cuentan las opciones que una casa cotiza: el precio del modelo (1/prob) es
     # una cuota justa sin margen que ninguna casa paga y no se puede comparar con la de una casa (titular, 2-nov-2026).
     hay_casa = any(f.get('cuota_tipo') in CUOTA_REAL for f in efectivas.values())
-    en_rango = sorted((f for f in efectivas.values()
-                       if en_rango_destacado(f.get('cuota')) and (not hay_casa or f.get('cuota_tipo') in CUOTA_REAL)),
-                      key=lambda f: -f['prob'])
-    elegidas = [f['id'] for f in en_rango[:GRATIS_WEB]]
+    candidatas = [f for f in efectivas.values() if not hay_casa or f.get('cuota_tipo') in CUOTA_REAL]
+    ganador = destacado_valor.elegir_destacado(candidatas, prob='prob', precio=precio_referencia)
+    validas = sorted((f for f in candidatas if destacado_valor.cumple_filtro(f.get('prob'), precio_referencia(f))),
+                     key=lambda f: -f['prob'])
+    elegidas = ([ganador['id']] if ganador else []) + [f['id'] for f in validas if not ganador or f['id'] != ganador['id']]
+    elegidas = elegidas[:GRATIS_WEB]
     if len(elegidas) < GRATIS_WEB:
         resto = sorted((f for f in efectivas.values() if f['id'] not in elegidas), key=lambda f: -f['prob'])
         elegidas += [f['id'] for f in resto[:GRATIS_WEB - len(elegidas)]]
     gratis = {key: abiertas.get(key) or {} for key in elegidas}
     filas_out, marcadores_out = aplicar_acceso(filas, marcadores, {**abiertas, **{k: v for k, v in gratis.items() if k not in abiertas}}, plus)
     destacado = None
-    if en_rango:
-        destacado = dict(efectivas[en_rango[0]['id']], destacado=True, locked=False)
+    if ganador:
+        destacado = dict(efectivas[ganador['id']], destacado=True, locked=False)
         pick = abiertas.get(destacado['id'])
         if pick and pick.get('pick_key'):
             destacado['pick_key'] = pick['pick_key']

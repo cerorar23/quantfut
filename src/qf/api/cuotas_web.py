@@ -31,6 +31,7 @@ from qf.api.cuotas_nba import load_cohorts, nba_overlay
 from qf.api.cuotas_tenis import load_sealed, tennis_overlay
 from qf.config import settings
 from qf.ingest import cuotas_respaldo
+from qf.publish import regla_publicacion
 
 log = logging.getLogger(__name__)
 TTL = timedelta(seconds=60)
@@ -120,7 +121,10 @@ def _tenis() -> Cuerpo:
     ids = [e.get("id") for e in feed.get("events", []) if isinstance(e, dict)]
     sellos = load_sealed(settings.tennis_sealed_dir, [i for i in ids if i is not None])
     out = tennis_overlay(settings.propline_archive, feed, sealed=sellos, now=_ahora())
-    return _cuerpo(_poda_tenis(cuotas_respaldo.aplica_tenis(out, cuotas_respaldo.leer_cache(settings.cuotas_respaldo_cache))))
+    out = cuotas_respaldo.aplica_tenis(out, cuotas_respaldo.leer_cache(settings.cuotas_respaldo_cache))
+    # Regla de publicación (cuota de referencia mínima, banda, un pronóstico por familia): la decide el servidor.
+    out = dict(out, publicables=regla_publicacion.publicables_tenis(feed, out.get("events") or {}))
+    return _cuerpo(_poda_tenis(out))
 
 
 def _nba() -> Cuerpo:

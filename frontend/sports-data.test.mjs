@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {nbaEvents,nbaV2Events,tennisEvents,loadSport,loadResults,loadNbaMarkets,withNbaMarkets,featuredModelMarket,featuredSportMarket,marketQuote} from './sports-data.js';
+import {nbaEvents,nbaV2Events,tennisEvents,loadSport,loadResults,loadNbaMarkets,withNbaMarkets,featuredModelMarket,featuredSportMarket,bestBySafety,marketQuote} from './sports-data.js';
 import {createHubViews} from './ergonomic-views.js';
 const event={event_id:'1',tipoff_utc:'2026-10-27T20:00:00Z',home_team:'A',away_team:'B',status:'evaluated',final:{home:99,away:102}};
 const row={event_id:'1',player_id:'winner',market:'winner',market_label:'Ganador',probability_over:.3,probability_under:.7,sealed_at_utc:'2026-10-27T19:00:00Z',result:{status:'evaluated',actual:0}};
@@ -32,11 +32,11 @@ test('las fuentes fallan por separado y nunca fabrican cuotas ni publicaciones',
 const game=(id,fecha,home,away,iso,result,pick=null)=>({id,fecha,local:{codigo:home[0],nombre:home[1]},visitante:{codigo:away[0],nombre:away[1]},inicio_utc:iso,sello_previsto:new Date(Date.parse(iso)-36e5).toISOString(),resultado:result,pronostico:pick});
 const BOS=['BOS','Boston Celtics'],NYK=['NYK','New York Knicks'],MIA=['MIA','Miami Heat'];
 const fullMarket = (extra = {}) => ({ id: 'points-10-20.5-over', market: 'player_points', side: 'over', line: 20.5, player: 'Jugador <b>', player_id: 10,
-  team: 'Boston Celtics', probability: .65, push_probability: 0, conditional: true, sealed_at: '2026-11-04T23:00:00Z', seal: 'a'.repeat(64), estimate: 23, ...extra });
+  team: 'Boston Celtics', probability: .78, push_probability: 0, conditional: true, sealed_at: '2026-11-04T23:00:00Z', seal: 'a'.repeat(64), estimate: 23, ...extra });
 const fullEvent = { id: 99, sport: 'nba', v2: true, home: 'Boston Celtics', away: 'Milwaukee Bucks', start: '2026-11-05T00:00:00Z', status: 'scheduled', markets: [] };
 test('carga todos los mercados del partido y el destacado puede ser un jugador', async () => {
  let path;
- const data={partido_id:99,markets:[fullMarket({id:'winner',market:'winner',side:'local',line:null,player:null,player_id:null,probability:.896}),fullMarket(),fullMarket({id:'points-10-25.5-under',line:25.5,side:'under',probability:.7})],projections:[]};
+ const data={partido_id:99,markets:[fullMarket({id:'winner',market:'winner',side:'local',line:null,player:null,player_id:null,probability:.896}),fullMarket(),fullMarket({id:'points-10-25.5-under',line:25.5,side:'under',probability:.82})],projections:[]};
  const entry=await loadNbaMarkets(fullEvent,async p=>{path=p;return {ok:true,json:async()=>data};});
  assert.equal(path,'/nba/v1/partido/99/mercados');assert.equal(entry.status,'ready');assert.equal(entry.markets.length,3);
  const event=withNbaMarkets(fullEvent,entry);
@@ -51,14 +51,14 @@ test('una carga fallida o en curso no evalúa solo el ganador ni afirma que no h
  assert.equal((await loadNbaMarkets(fullEvent,async()=>{throw Error('red');})).status,'error');
 });
 test('los mercados posteriores al inicio se excluyen del destacado y los resultados de equipo se liquidan por lado',async()=>{
- const rows=[fullMarket({sealed_at:'2026-11-05T00:01:00Z'}),fullMarket({id:'total-under',market:'game_total',player:null,player_id:null,line:210,side:'under',probability:.6}),fullMarket({id:'spread-away',market:'handicap',team:'Milwaukee Bucks',line:5.5,side:'visit',player:null,player_id:null,probability:.6})];
+ const rows=[fullMarket({sealed_at:'2026-11-05T00:01:00Z'}),fullMarket({id:'total-under',market:'game_total',player:null,player_id:null,line:210,side:'under',probability:.8}),fullMarket({id:'spread-away',market:'handicap',team:'Milwaukee Bucks',line:5.5,side:'visit',player:null,player_id:null,probability:.8})];
  const entry=await loadNbaMarkets({...fullEvent,status:'finished',score:'110 – 100'},async()=>({ok:true,json:async()=>({partido_id:99,markets:rows,projections:[]})}));
  assert.equal(entry.markets[0].revised,true);assert.equal(entry.markets[0].outcome,null);
  assert.equal(entry.markets[1].outcome,'push');assert.equal(entry.markets[2].outcome,'loss');
  assert.notEqual(featuredModelMarket(entry.markets.filter(m=>!m.revised)).id,rows[0].id);
 });
 test('NBA elige el destacado por la cuota de la casa cuando existe y muestra su nombre',()=>{
- const markets=[fullMarket({id:'high-prob',probability:.8,price:1.44,book:'bovada'}),fullMarket({id:'too-short',probability:.9,price:1.12,book:'pinnacle'}),fullMarket({id:'model-only',probability:.7})];
+ const markets=[fullMarket({id:'high-prob',probability:.8,price:1.44,book:'bovada'}),fullMarket({id:'too-short',probability:.9,price:1.12,book:'pinnacle'}),fullMarket({id:'model-only',probability:.78})];
  assert.equal(featuredSportMarket({...fullEvent,markets}).id,'high-prob');
  assert.deepEqual(marketQuote(markets[0]),{price:1.44,source:'Bovada',model:false});
  assert.equal(featuredSportMarket({...fullEvent,markets:[markets[1],markets[2]]}),null);
@@ -114,22 +114,53 @@ test('la portada conserva el bloqueo aunque el payload traiga datos privados',()
 
 import { createSportWindow } from './sports-window.js';
 
-test('el destacado de NBA y tenis usa la cuota del modelo (1 ÷ prob.) de 1,40 en adelante, sin tope, y la mayor probabilidad', () => {
+test('el destacado sin cuota de casa usa la del modelo (1 ÷ prob.): la mayor probabilidad con cuota >= 1,20 y prob. >= 75 %', () => {
   const m = (id, probability) => ({ id, probability });
-  assert.equal(featuredModelMarket([m('a', .95), m('b', .70), m('c', .60), m('d', .30)]).id, 'b');
-  assert.equal(featuredModelMarket([m('lo', 1 / 1.4), m('hi', 1 / 1.8)]).id, 'lo');          // 1,40 incluido; gana la mayor probabilidad
-  assert.equal(featuredModelMarket([m('x', .75), m('y', .5)]).id, 'y');                         // 1,33 queda fuera; 2,00 ya cuenta (sin tope)
-  assert.equal(featuredModelMarket([m('x', .75), m('y', .9)]), null);                           // todas por debajo de 1,40
-  assert.equal(featuredModelMarket([m('largo', .05)]).id, 'largo');                             // cuota 20: sin tope
+  assert.equal(featuredModelMarket([m('a', .95), m('b', .82), m('c', .78), m('d', .30)]).id, 'b');   // .95 paga 1,05; .30 no llega al 75 %
+  assert.equal(featuredModelMarket([m('lo', 1 / 1.2), m('hi', .75)]).id, 'lo');                       // tope: 1,20 incluido (83,3 %); 75 % incluido
+  assert.equal(featuredModelMarket([m('x', .5), m('y', .74)]), null);                                  // ninguna llega al 75 %
+  assert.equal(featuredModelMarket([m('x', .85), m('y', .9)]), null);                                  // todas pagan menos de 1,20
+  assert.equal(featuredModelMarket([m('largo', .05)]), null);                                          // cuota 20, pero 5 %: no es probable
   assert.equal(featuredModelMarket([{ id: 'z', probability: 'alta' }, null]), null);
   assert.equal(featuredModelMarket(undefined), null);
+});
+
+test('probabilidad máxima segura: gana la más probable aunque otra pague más; el empate lo decide la mayor cuota', () => {
+  const rows = [{ id: 'segura', p: .82, c: 1.22 }, { id: 'rentable', p: .81, c: 1.6 }];
+  for (const list of [rows, [...rows].reverse()]) assert.equal(bestBySafety(list, r => r.p, r => r.c).id, 'segura');
+  const tie = [{ id: 'a', p: .8, c: 1.25 }, { id: 'b', p: .8, c: 1.45 }];
+  for (const list of [tie, [...tie].reverse()]) assert.equal(bestBySafety(list, r => r.p, r => r.c).id, 'b');
+  assert.equal(bestBySafety([{ p: .7, c: 1.8 }, { p: .9, c: 1.1 }], r => r.p, r => r.c), null);           // 70 % no basta; 1,10 < 1,20
+  assert.equal(bestBySafety([{ p: .8, c: 1.1999 }, { p: .7499, c: 3 }], r => r.p, r => r.c), null);
+  assert.equal(bestBySafety([{ p: .75, c: 1.2 }], r => r.p, r => r.c).p, .75);
+});
+
+test('el destacado de tenis y NBA lo manda el servidor: el cliente solo localiza ese mercado', async () => {
+  const m = (id, probability, extra = {}) => ({ id, probability, ...extra });
+  const markets = [m('a', .83), m('b', .78), m('c', .76)];
+  const tenis = { sport: 'tenis', markets };
+  assert.equal(featuredSportMarket({ ...tenis, destacado: { id: 'b' } }).id, 'b');   // el del servidor manda aunque 'a' sea más probable
+  assert.equal(featuredSportMarket({ ...tenis, destacado: null }), null);                                   // el servidor dice que no hay
+  assert.equal(featuredSportMarket({ ...tenis, destacado: { id: 'no-existe' } }), null);
+  assert.equal(featuredSportMarket({ ...tenis, markets: [m('a', .83, { revised: true }), m('c', .76)], destacado: { id: 'a' } }), null);   // revisión: no se sustituye
+  assert.equal(featuredSportMarket(tenis).id, 'a');                                                         // sin campo: misma regla en el cliente
+  const data = { partido_id: 99, markets: [fullMarket({ id: 'p1', probability: .8 }), fullMarket({ id: 'p2', probability: .76 })], projections: [] };
+  const load = extra => loadNbaMarkets(fullEvent, async () => ({ ok: true, json: async () => ({ ...data, ...extra }) }));
+  const con = await load({ destacado: { id: 'p2' } });
+  assert.equal(con.destacado, 'p2');
+  assert.equal(featuredSportMarket(withNbaMarkets(fullEvent, con)).id, 'p2');
+  assert.equal(featuredSportMarket(withNbaMarkets(fullEvent, await load({ destacado: null }))), null);
+  const sin = await load({});
+  assert.equal(sin.destacado, undefined);
+  assert.equal(featuredSportMarket(withNbaMarkets(fullEvent, sin)).id, 'p1');
+  assert.equal('destacado' in withNbaMarkets(fullEvent, { status: 'loading' }), false);
 });
 
 test('la ventana de tenis y NBA renderiza pronóstico y estadísticas sin cuotas inventadas', () => {
   const st = { sport: 'tenis', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false };
   const start = new Date().toISOString();
   const event = { id: 'e1', sport: 'tenis', home: 'Ana Perez', away: 'Bea <b>Luz</b>', start, league: 'WTA · Test', surface: 'Hard', status: 'scheduled', seal: 'abc123', sealed_at: start,
-    markets: [{ id: 'winner', label: 'Ganador del partido', selection: 'Ana Perez', probability: .65, price: null },
+    markets: [{ id: 'winner', label: 'Ganador del partido', selection: 'Ana Perez', probability: .78, price: null },
       { id: 'games_total-2', label: 'Juegos totales', selection: 'Más de 20.5', probability: .52, price: null }] };
   const rate = (won, lost) => ({ won, lost, rate: won / (won + lost) });
   const player = (name, rank, matches) => ({ key: 1, name, country: 'Peru', age: 21, rank, points: 1200, movement: 'up', season: { season: 2026, titles: 1, ...rate(20, 10) },
@@ -144,7 +175,7 @@ test('la ventana de tenis y NBA renderiza pronóstico y estadísticas sin cuotas
     realDate: pass, realTime: pass, dateFmt: pass, addDays: () => new Date(), localDay: d => new Date(d).toISOString().slice(0, 10),
     dayLabel: () => 'Hoy', ensureSport: () => ({ status: 'ready', events: [event] }), ensureTennisStats: () => ({ status: 'ready', data: stats }), featuredModelMarket });
   const html = w.view();
-  assert.ok(html.includes('Cuota del modelo') && html.includes('1.54'));                        // 1 ÷ 0,65
+  assert.ok(html.includes('Cuota del modelo') && html.includes('1.28'));                        // 1 ÷ 0,78
   assert.ok(html.includes('Resumen') && html.includes('Forma') && html.includes('Resultado'));
   assert.ok(!html.includes('Cuota publicada'));
   // pestañas de estadísticas de jugadores
@@ -212,8 +243,8 @@ test('el historial solo junta destacados (fútbol, NBA y tenis) y Alta probabili
   const m = (id, probability, outcome, extra = {}) => ({ id, selection: id, probability, outcome, price: null, ...extra });
   const tenis = (start, markets) => ({ sport: 'tenis', id: start, home: 'T1', away: 'T2', start, score: '2 - 0', markets });
   const events = [
-    tenis('2026-10-26T15:00:00Z', [m('winner', .9, 'win'), m('destacado', .7, 'loss'), m('revisado', .72, 'win', { revised: true })]),
-    tenis('2026-10-25T15:00:00Z', [m('viejo', .7, 'win')]),
+    tenis('2026-10-26T15:00:00Z', [m('winner', .9, 'win'), m('destacado', .78, 'loss'), m('revisado', .8, 'win', { revised: true })]),
+    tenis('2026-10-25T15:00:00Z', [m('viejo', .78, 'win')]),
     tenis('2026-10-27T15:00:00Z', [m('sin-rango', .95, 'win')]),
   ];
   const results = { status: 'ready',
@@ -226,4 +257,54 @@ test('el historial solo junta destacados (fútbol, NBA y tenis) y Alta probabili
   assert.match(html, /1 de 3 pronósticos acertados/);
   for (const fuera of ['vieja', 'viejo', 'winner', 'revisado', 'sin-rango']) assert.ok(!html.includes(fuera), fuera);
   for (const dentro of ['alta', 'dest', 'T1 vs T2', 'C vs D']) assert.ok(html.includes(dentro), dentro);
+});
+
+test('ordenLiquidado: acertados por cuota de mayor a menor, luego lo sin resultado y al final los fallados', async () => {
+  const { ordenLiquidado, hayLiquidado } = await import('./sports-data.js');
+  const o = { resultado: m => m.r, cuota: m => m.c, prob: m => m.p };
+  const lista = [{ id: 'f1', r: 'loss', c: 1.9, p: .5 }, { id: 'w1', r: 'win', c: 1.2, p: .8 }, { id: 'n', r: null, c: 3, p: .3 },
+    { id: 'w2', r: 'win', c: 1.8, p: .6 }, { id: 'f2', r: 'loss', c: 1.3, p: .7 }, { id: 'push', r: 'push', c: 2, p: .4 }, { id: 'w3', r: 'win', c: null, p: .9 }];
+  assert.deepEqual(ordenLiquidado(lista, o).map(m => m.id), ['w2', 'w1', 'w3', 'n', 'push', 'f1', 'f2']);
+  const ids = ordenLiquidado(lista, o).map(m => m.id);
+  assert.deepEqual(ids.slice(0, 3), ['w2', 'w1', 'w3'], 'acertados: cuota 1,8 > 1,2 > sin cuota');
+  assert.deepEqual(ids.slice(-2), ['f1', 'f2'], 'fallados al final, también de mayor a menor cuota (1,9 > 1,3)');
+  assert.deepEqual(ids.slice(3, 5).sort(), ['n', 'push'], 'sin resultado entre unos y otros');
+  const sinJugar = [{ id: 'a', r: null, c: 1.5, p: .6 }, { id: 'b', r: null, c: 2, p: .9 }];
+  assert.equal(ordenLiquidado(sinJugar, o), sinJugar, 'sin nada liquidado se deja el orden recibido');
+  assert.equal(hayLiquidado(sinJugar, o.resultado), false);
+  assert.equal(hayLiquidado(lista, o.resultado), true);
+  assert.equal(lista[0].id, 'f1', 'no muta la lista original');
+});
+
+test('loadTennisQuotes: solo «ok»/«partial» con eventos cuentan; unavailable y errores no inventan nada', async () => {
+  const { loadTennisQuotes } = await import('./sports-data.js');
+  const resp = (body, ok = true) => async url => { assert.equal(url, '/web/deportes/tenis/cuotas'); return { ok, json: async () => body }; };
+  const q = { '1': { winner: { price: 1.8, book: 'pinnacle' } } };
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'partial', events: q })), { status: 'ready', events: q });
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'ok', events: q })), { status: 'ready', events: q });
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'unavailable', events: {} })), { status: 'unavailable', events: {} });
+  assert.deepEqual(await loadTennisQuotes(resp({ state: 'ok', events: [] })), { status: 'unavailable', events: {} });
+  assert.deepEqual(await loadTennisQuotes(resp({}, false)), { status: 'error', events: {} });
+  assert.deepEqual(await loadTennisQuotes(async () => { throw new Error('red'); }), { status: 'error', events: {} });
+});
+
+test('applyTennisQuotes: precio y casa de referencia en el mercado, sin pisar ni inventar', async () => {
+  const { applyTennisQuotes, marketQuote } = await import('./sports-data.js');
+  const eventos = () => [{ id: '12175299', sport: 'tenis', markets: [
+    { id: 'winner', probability: .55, price: null, reference: 'Probabilidad del motor' },
+    { id: 'games_total-2', probability: .8, price: null }, { id: 'tiebreak-1', probability: .4, price: null },
+    { id: 'sets-3', probability: .6, price: 1.5, book: 'bovada' }, { id: 'sin-casa', probability: .5, price: null }, { id: 'baja', probability: .5, price: null }] }];
+  const quotes = { '12175299': { winner: { price: 1.83, book: 'betfair_ex', as_of: '2026-10-29T23:07:53+00:00' },
+    'games_total-2': { price: 1.36, book: 'draftkings' }, 'tiebreak-1': { price: 'x', book: 'pinnacle' }, 'sets-3': { price: 9, book: 'pinnacle' },
+    'sin-casa': { price: 2, book: '  ' }, baja: { price: 1, book: 'pinnacle' }, fantasma: { price: 3, book: 'pinnacle' } } };
+  const [e] = applyTennisQuotes(eventos(), quotes);
+  const m = id => e.markets.find(x => x.id === id);
+  assert.equal(m('winner').price, 1.83); assert.equal(m('winner').book, 'Betfair Ex'); assert.equal(m('winner').price_book, 'Betfair Ex');
+  assert.equal(m('winner').reference, 'Betfair Ex · referencia previa al sello'); assert.equal(m('winner').quote_as_of, '2026-10-29T23:07:53+00:00');
+  assert.equal(m('games_total-2').book, 'DraftKings', 'usa los nombres de casa conocidos');
+  assert.deepEqual(marketQuote(m('winner')), { price: 1.83, source: 'Betfair Ex', model: false }, 'la ventana la lee como cuota de casa');
+  for (const id of ['tiebreak-1', 'sin-casa', 'baja']) assert.equal(m(id).price, null, `${id}: precio inválido o sin casa, se queda sin cuota`);
+  assert.equal(m('sets-3').price, 1.5, 'un precio que ya traía el feed no se pisa'); assert.equal(m('sets-3').book, 'bovada');
+  assert.equal(e.markets.length, 6, 'no crea mercados que no existan');
+  assert.doesNotThrow(() => applyTennisQuotes(undefined, quotes) && applyTennisQuotes([{ id: 'z' }], null) && applyTennisQuotes([{ id: '12175299', markets: [] }], quotes));
 });
