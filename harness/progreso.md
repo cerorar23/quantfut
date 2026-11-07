@@ -7828,3 +7828,52 @@ Decision: Implementar y evaluar el modulo de mercado y precios de referencia pre
      * ATP (n = 17.340 partidos con cierre): Delta log-loss combinado = +0,02373 [IC95: +0,02089, +0,02657]. Bate por casi 14 milesimas la brecha de Elo recalibrado (+0,03766 vs cierre). En la reserva 2025–2026: Delta log-loss = +0,02292.
      * WTA (n = 15.330 partidos con cierre): Delta log-loss combinado = +0,02835 [IC95: +0,02510, +0,03159]. Bate por mas de 7 milesimas la brecha de Elo recalibrado (+0,03549 vs cierre). En la reserva 2025–2026: Delta log-loss = +0,02824.
    - **PropLine piloto**: 2.130 mercados de ganador evaluados en local con 33 casas. Artefacto: modelo_s5/evaluacion_mercado.json.
+
+
+## 2026-11-07 - Tenis v2, Sprint 6: Sellado criptografico, motor programado, alertas, salud, API v2 y localizacion
+
+Decision: Disenar, implementar y verificar los componentes operativos para la puesta en servicio y cartelera publica de tenis ATP/WTA v2 (§I.1, §I.2, §I.4, S6).
+
+1. **Sellado criptografico y contratos (`apps/tenis/src/tenis/sellado.py`)**:
+   - `json_canonico`: Normalizacion determinista de JSON alineada al 100% con PostgreSQL (claves ordenadas, separadores estrictos `",", ":"`, formato de coma flotante sin notacion cientifica redundante).
+   - `redondear_distribucion`: Redondeo estricto a 6 decimales de probabilidades en `DistribucionPartido`. Ajuste del residuo $1 - \sum p$ sobre el marcador de maxima verosimilitud (`argmax`) para garantizar suma identica a 1.0 (tolerancia $10^{-9}$) y recalculacion coherente de mercados derivados.
+   - `sellar_pronostico`: Insercion atomica en `tenis.pronostico` calculando hash SHA-256 encadenado al hash previo de la cadena del partido. Rechazo tajante de cortes posteriores al inicio programado o sellos tardios (`ahora >= T_ref`).
+   - `verificar_cadena`: Auditoria criptografica de integridad de la cadena SHA-256 sin roturas.
+   - Pruebas en `apps/tenis/tests/test_sellado.py`: 6/6 aprobadas.
+
+2. **Alertas operativas con deduplicacion estricta (`apps/tenis/src/tenis/alertas.py`)**:
+   - Envio asincrono/sincrono a Telegram (`TG_ALERT_CHAT`) deduplicado por clave `(tipo, partido_id, fecha)`. Maximo 1 alerta por tipo, partido y dia para evitar inundacion.
+   - Siembra inicial en memoria al arrancar el proceso.
+
+3. **Monitor de salud y compuertas operativas (`apps/tenis/src/tenis/salud.py`)**:
+   - Verificaciones automaticas: `comprobar_cadena` (integridad de la cadena SHA-256), `comprobar_frescura_capturas` (maximo 36 h sin capturas en `tenis_partido_historico`), `comprobar_tasa_sin_resolver` ($\le 2\%$ de partidos sin resolver a 48 h del inicio), y `comprobar_artefacto_activo` (existencia y frescura del modelo).
+   - Generador `informe_salud_completo`.
+
+4. **Motor programado de inferencia (`apps/tenis/src/tenis/motor.py`)**:
+   - Inferencia por lotes sobre partidos pendientes con corte $T_{\text{ref}} - 60\text{ min}$.
+   - Carga de hiperparametros congelados de `modelo_s3/hiperparametros.json` (incluyendo $c_{\text{inf}}$ de calibracion).
+   - Pre-comprobacion de inicio para no sellar despues de $T_{\text{ref}}$.
+   - Transaccion todo o nada por partido: si falla el sellado de un partido, se revierte sin afectar al resto.
+   - Pruebas en `apps/tenis/tests/test_motor_alertas_salud.py`: 4/4 aprobadas.
+
+5. **API v2 de Tenis (`src/qf/api/tenis_v2.py`) y registro en `src/qf/api/main.py`**:
+   - Endpoints:
+     * `GET /tenis/v2/cartelera?fecha=YYYY-MM-DD`: Cartelera diaria con partidos, cuotas de mercado de referencia, pronosticos sellados a tiempo, y metadatos de torneo y superficie.
+     * `GET /tenis/v2/partido/{id}`: Ficha completa del partido con desglose de mercados, estado de sellado y cadena criptografica.
+     * `GET /tenis/v2/metodologia`: Documentacion publica de la metodologia v2, hiperparametros congelados, sesgo IID declarado explicitamente (+0,736 ATP, +0,608 WTA) y compromiso de no-fuga y honestidad sin apuestas ficticias.
+   - Errores HTTP limpios (400, 404, 502) y fixtures probados con Redis desacoplado. Pruebas en `tests/test_api_tenis_v2.py`: 3/3 aprobadas.
+
+6. **Localizacion en 6 idiomas (`apps/tenis/src/tenis/l10n/`)**:
+   - Diccionario `i18n.json` con 21 claves de terminologia tenistica (ganador, handicap, juegos, sets, tiebreak, etc.) en **es, en, pt, fr, it, de**.
+   - Pruebas de paridad 100% simetrica de claves y placeholders en `apps/tenis/tests/test_mensajes_tenis.py`: 3/3 aprobadas.
+
+7. **Operaciones, despliegue y compuertas (`apps/tenis/ops/`)**:
+   - `Dockerfile.tenis-motor`: Imagen base Python 3.12 slim, usuario sin privilegios `qf`.
+   - `imagen_actual` e `imagen_actual.anterior`: Versionado canonico de contenedores (`tenis-motor:v2.0-d63b8d7a`).
+   - `cron_tenis.txt`: Tareas programadas de recoleccion (`flock -n`), motor programado a $T-60$ y comprobaciones de salud diarias.
+   - `ensayo_operativo.sh` y `ensayo_vuelta_atras.sh`: Scripts shell de verificacion operativa y reversion atomica de imagen.
+   - Auditoria `apps/tenis/ops/g_fuga.py` sobre 300 partidos estratificados:
+     * **G-fuga**: PASA (0 violaciones de fuga temporal o causal).
+     * **G-reproducibilidad**: PASA (0 discrepancias entre corridas independientes, hash 300 sellos idéntico: `3015ace3c087da4004c4e5c9cce1166167fc41088c04a9339f245647305e141d`).
+     * **G-cordura**: PASA (Brier score muestra 300 = 0,22267 $\ge 0,18$; ATP 0,21544, WTA 0,23954).
+     * Artefacto: `modelo_s6/g_fuga_resultado.json`.

@@ -3878,3 +3878,27 @@ ead_closing, quotes). Exclusión estricta de DFS, exchanges, apuestas en juego (
     - WTA ( = 15.330$ con cierre): Delta log-loss combinado = +0,02835 [IC95: +0,02510, +0,03159]. Bate a la línea base Elo recalibrado (+0,03549 vs cierre) reduciendo la brecha en más de 7 milésimas.
     - Reserva 2025–2026: ATP +0,02292; WTA +0,02824.
   - **PropLine piloto**: 2.130 mercados de ganador evaluados offline en local con 33 casas. Artefacto: modelo_s5/evaluacion_mercado.json.
+
+## Tenis: rediseno - Sprint 6: sellado, motor programado, API, alertas, salud y l10n (2026-11-07)
+
+- [x] **Sellado criptografico y contratos (`apps/tenis/src/tenis/sellado.py`)**:
+  - Implementacion de `json_canonico` alineado con JSONB de Postgres.
+  - `redondear_distribucion`: Redondeo estricto a 6 decimales de probabilidades con ajuste en argmax para suma 1.0 exacta y recalculo coherente de mercados.
+  - `sellar_pronostico` y `verificar_cadena` con SHA-256 encadenado y rechazo de sello tardio (`ahora >= T_ref`).
+  - 6/6 pruebas aprobadas en `apps/tenis/tests/test_sellado.py`.
+- [x] **Alertas operativas con deduplicacion (`apps/tenis/src/tenis/alertas.py`)**:
+  - Deduplicacion estricta en memoria por `(tipo, partido_id, fecha)` (maximo 1 alerta por tipo/partido/dia).
+- [x] **Monitor de salud (`apps/tenis/src/tenis/salud.py`)**:
+  - Chequeos de integridad de cadena SHA-256, frescura de capturas a 36 h, tasa sin resolver <= 2%, y existencia de artefacto activo.
+- [x] **Motor programado (`apps/tenis/src/tenis/motor.py`)**:
+  - Inferencia con parametros congelados, corte fijo T-60 min, pre-comprobacion de inicio y sellado transaccional todo o nada por partido.
+  - 4/4 pruebas aprobadas en `apps/tenis/tests/test_motor_alertas_salud.py`.
+- [x] **API v2 de Tenis (`src/qf/api/tenis_v2.py`) y registro en `src/qf/api/main.py`**:
+  - Endpoints `/tenis/v2/cartelera`, `/tenis/v2/partido/{id}`, `/tenis/v2/metodologia`.
+  - 3/3 pruebas aprobadas en `tests/test_api_tenis_v2.py`.
+- [x] **Localizacion en 6 idiomas (`apps/tenis/src/tenis/l10n/`)**:
+  - Glosario completo de 21 claves en `es`, `en`, `pt`, `fr`, `it`, `de`.
+  - 3/3 pruebas de paridad en `apps/tenis/tests/test_mensajes_tenis.py`.
+- [x] **Operaciones y compuertas (`apps/tenis/ops/`)**:
+  - `Dockerfile.tenis-motor`, `imagen_actual`, `imagen_actual.anterior`, `cron_tenis.txt`, `ensayo_operativo.sh`, `ensayo_vuelta_atras.sh`.
+  - Auditoria `g_fuga.py`: G-fuga pasa (0 violaciones), G-reproducibilidad pasa (0 discrepancias, hash identico), G-cordura pasa (Brier = 0.22267 >= 0.18). Artefacto: `modelo_s6/g_fuga_resultado.json`.
