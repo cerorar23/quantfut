@@ -99,11 +99,12 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
   }
 
   function hero({ eyebrow, title, lead, big, bigLabel, bigSub, chips, extra = '' }) {
+    const isNeg = String(big).startsWith('-');
     return `<section class="cv-hero cyber-card cyber-card--holo" aria-label="Resumen de resultados">
       <div class="cv-hero-copy"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1><p class="lead">${lead}</p>
         <div class="cv-chips">${chips.join('')}</div>
         <div class="cv-actions"><button type="button" class="primary-button" data-route="planes">Ver planes VIP</button><button type="button" class="text-link" data-action="cv-scroll" data-target="cv-historial">Ver cada resultado ↓</button></div></div>
-      <div class="cv-hero-proof"><span class="cv-big cyber-text-glow cyber-text-glow--green">${big}</span><span class="cv-big-label">${bigLabel}</span><p class="cv-big-sub">${bigSub}</p>${extra}</div>
+      <div class="cv-hero-proof"><span class="cv-big cyber-text-glow ${isNeg ? 'cv-neg' : 'cyber-text-glow--green'}">${big}</span><span class="cv-big-label">${bigLabel}</span><p class="cv-big-sub">${bigSub}</p>${extra}</div>
     </section>`;
   }
 
@@ -231,24 +232,34 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const tickets = ultimo?.tickets ?? [];
     const bloqueados = tickets.filter(t => t.locked).length;
 
-    const liquidados = dias.flatMap(d => d.tickets ?? []).filter(t => !t.locked && t.outcome);
-    const ganados = liquidados.filter(t => t.outcome === 'ganado').length;
-    const n = liquidados.length;
-    const pequena = n < MUESTRA_MIN;
+    const crono = [...dias].reverse().flatMap(d => [...(d.tickets ?? [])].filter(t => !t.locked && t.outcome));
+    const ganados = crono.filter(t => t.outcome === 'ganado').length;
+    const n = crono.length;
+
+    let acum = 0;
+    const serie = crono.map((t, idx) => {
+      const g = t.outcome === 'ganado'
+        ? (t.factor_pago != null ? Number(t.factor_pago) : Number(t.cuota_total ?? 1)) - 1
+        : t.outcome === 'perdido' ? -1 : 0;
+      acum += g;
+      return { acumulado: acum.toFixed(2), ticket_id: idx + 1 };
+    });
+    const totalGanancia = acum;
+    const roi = n > 0 ? (totalGanancia / n) * 100 : 0;
 
     const heroCard = hero({
       eyebrow: 'COMBINADAS · PARLEY DEL DÍA',
       title: n ? `<em>${realNumber(ganados)} de ${realNumber(n)}</em> parlays ganados, todos a la vista` : 'Parley v2.1 · Multideporte',
       lead: `Cuatro objetivos de cuota al día (${targets.map(t => realNumber(t, 2)).join(' · ')}) combinando fútbol, tenis y NBA con la menor cantidad de patas posible. Cada combinada se sella antes de los partidos y las perdidas se quedan en el historial.`,
-      big: n ? `${realNumber(ganados)}/${realNumber(n)}` : '—',
-      bigLabel: 'parlays ganados',
-      bigSub: n ? `${realNumber(n)} parlays liquidados · ${realPercent((ganados / n) * 100, 1)} acierto` : 'Lotes sellados al día · historial transparente',
+      big: n ? unidades(totalGanancia) : '—',
+      bigLabel: 'ganancia acumulada',
+      bigSub: n ? `sobre ${realNumber(n, 0)} u invertidas (1 u por parlay) · rendimiento ${realPercent(roi, 1)} · ${realPercent((ganados / n) * 100, 1)} acierto` : 'Lotes sellados al día · historial transparente',
       chips: [
         badge(v2?.activo ? 'Parley v2.1 activo' : 'Parley inactivo', v2?.activo ? 'good' : 'muted'),
         badge('Fútbol · Tenis · NBA', 'accent'),
-        pequena ? badge('Muestra en construcción', 'warn') : '',
         badge('Lote sellado', 'good'),
       ].filter(Boolean),
+      extra: curva(serie, 'parlays', 'La curva incluye las combinadas perdidas: cada bajada es un parley perdido.'),
     });
 
     const racha = dots(lista);
@@ -382,7 +393,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       <div class="cv-list">${[...pasos].reverse().map(escaleraPaso).join('')}${cerrados.join('')}</div>${!pasos.length && !cerrados.length ? '<p class="cv-ticket-meta">Esperando su primer escalón sellado.</p>' : ''}</article>`;
   }
 
-  function curva(serie) {
+  function curva(serie, unidadLabel = 'retos', nota = 'La curva incluye los retos fallidos: cada bajada es un reto perdido.') {
     if (!serie.length) return '';
     const values = [0, ...serie.map(r => Number(r.acumulado))];
     const min = Math.min(...values, 0);
@@ -392,7 +403,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const y = v => 72 - (v - min) / span * 60;
     const last = values.at(-1);
     const area = `8,${y(0).toFixed(1)} ${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')} ${x(values.length - 1).toFixed(1)},${y(0).toFixed(1)}`;
-    return `<figure class="cv-curve"><figcaption><span>Ganancia acumulada</span><strong class="${last < 0 ? 'cv-neg' : 'cv-pos'}">${unidades(last)}</strong></figcaption><svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Ganancia acumulada: ${realNumber(last, 2)} unidades tras ${serie.length} retos"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polygon class="area" points="${area}"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg><small>La curva incluye los retos fallidos: cada bajada es un reto perdido.</small></figure>`;
+    return `<figure class="cv-curve"><figcaption><span>Ganancia acumulada</span><strong class="${last < 0 ? 'cv-neg' : 'cv-pos'}">${unidades(last)}</strong></figcaption><svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Ganancia acumulada: ${realNumber(last, 2)} unidades tras ${serie.length} ${unidadLabel}"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polygon class="area" points="${area}"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg><small>${nota}</small></figure>`;
   }
 
   function escaleraView() {

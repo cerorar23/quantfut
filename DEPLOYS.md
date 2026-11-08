@@ -33,6 +33,20 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:15 UTC · Gráfica de rendimiento acumulado y métricas en Parley v2.1 · VPS y Local
+- Solicitud del titular: sustituir el cuadro vacío con texto plano `1/3 PARLAYS GANADOS` de la cabecera de la sección Parley del Día (`#parley`) por una gráfica visual de rendimiento acumulado idéntica a la de Reto Escalera.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - `hero()` soporta brillo negativo (`cv-neg`) o positivo (`cyber-text-glow--green`) dinámico según el signo de `big`.
+    - `curva(serie, unidadLabel, nota)` parametrizado para admitir etiqueta (`parlays`) y nota específica explicativa.
+    - `parleyV2View()` calcula cronológicamente la serie de unidades acumuladas (`acum`), `totalGanancia`, `roi` (%) y tasa de acierto, pasando la gráfica SVG `curva()` como bloque `extra`.
+    - Retirada la insignia «Muestra en construcción» de los chips de Parley.
+  - `frontend/conversion-views.test.mjs`: suite completa de 10 pruebas automatizadas pasando.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v10`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado. Verificado que `https://pronosticosdeportivos.pro/app.js?v=20261108v10` y `conversion-views.js` están activos y respondiendo 200 con la gráfica de parleys integrada.
+
 ### 2026-11-08 04:05 UTC · Retiro de la insignia «Muestra en construcción» de la cabecera de Escalera · VPS y Local
 - Solicitud del titular: retirar el badge amarillo `[MUESTRA EN CONSTRUCCIÓN]` de las insignias superiores de Reto Escalera, dejando exclusivamente `[RETO ACTIVO]` y `[DATOS DEL SERVIDOR]`.
 - Archivos modificados:

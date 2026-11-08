@@ -6,7 +6,7 @@ import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisSta
 import { createSportWindow } from './sports-window.js?v=tenis-cuota-20261105';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=20261108v9';
+import { createConversionViews } from './conversion-views.js?v=20261108v10';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();
