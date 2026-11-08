@@ -33,6 +33,18 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:05 UTC · Renovación del artefacto de equipo NBA v2.2 · VPS y Local (vigencia hasta 11-nov-2026 04:02 UTC)
+- Solicitud del titular («hazlo»). Causa: el artefacto de equipo `equipo=4b6f21c944da` caducó tras 72 h (el 7-nov a las 19:18 UTC), bloqueando el sellado automático de los partidos de la NBA por control de vigencia temporal (`ValueError: artefacto de equipo caducado: actualizarlo en local`).
+- Procedimiento estricto (D4):
+  1. Exportación de solo lectura `exportar_equipo.py` ejecutada contra `nba_datos` (6.773 partidos, corte `2026-11-08T03:59:57 UTC`).
+  2. Entrenamiento local con `ops/entrenar_equipo.py` (6.186 partidos válidos, 587 descartes por exposición no verificable).
+  3. Verificación retrospectiva local con `ops/evaluar_equipo_congelado.py` (Brier 0.2055, Log-loss 0.5980, 0 errores).
+  4. Nuevo artefacto generado: `apps/nba/src/nba/v2/parametros/equipo.json`, huella SHA-256 `bb8ed0f80516bca52b6e3f123a2c0340b69e27a1d5b2d8fc486e7d19225d0811`, datos hasta `2026-11-06`, vigencia 72 h hasta `2026-11-11 04:02 UTC`.
+  5. Desplegado en VPS en `/home/qf/nba-isolated/nba-captura/datos/equipo.json` y `/home/qf/nba-isolated/releases/auditoria-a491f225f34c59dc142be50220b76fa3bea89620/apps/nba/src/nba/v2/parametros/equipo.json`.
+  6. Configurado `NBA_ESTADO_EQUIPO_JSON=/datos/equipo.json` en `/home/qf/nba-isolated/nba-captura/motor.env`.
+  7. Ensayos en VPS: `--simulacro` con la fecha actual y simulación prospectiva para el primer partido del 8-nov (18220 Bulls vs 76ers) ejecutada con 0 errores y sellado válido.
+- Vuelta atrás: retirar `NBA_ESTADO_EQUIPO_JSON` de `motor.env` y restaurar `equipo.json` anterior.
+
 ### 2026-11-07 19:00 UTC · Tenis v2: Rediseño integral ATP/WTA (S0-S6: motor, simulador, calibración, sellado y API) · contenedor `tenis-db` e imagen `tenis-motor:78a3aa93` (PR #278, `main` `78a3aa93`)
 - Autorización explícita del titular en el chat («si»). Todos los flujos de CI (`frontend`, `mobile`, `arnes`, `nba`, `tenis`, `tenis_v2`) 100% en verde en GitHub Actions antes de fusionar.
 - **Base de datos (`tenis-db`):** contenedor `tenis-db` (`postgres:16`, sin puertos publicados al host, solo red interna `tenis-db_tenis-interna` y volumen `tenis-db-datos`); base `tenis`, usuario administrador `tenis_admin`. Ubicado en `~/tenis-isolated/tenis-db/` (`.env` con contraseña generada aleatoriamente y permisos 600).
