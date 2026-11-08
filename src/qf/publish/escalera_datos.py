@@ -86,10 +86,12 @@ def vencido(reto: dict, now: datetime | None = None) -> bool:
 
 
 def estado_reto(reto: dict, pasos: list[dict], now: datetime | None = None) -> dict:
+    t_cuota = reto.get("target_cuota")
     return es.estado(Decimal(str(reto["stake_inicial"])), int(reto["pasos_objetivo"]),
                      reto["freeroll_x"],
                      [es.Paso(int(p["paso"]), float(p["price"]), p["outcome"]) for p in pasos],
-                     vencido=vencido(reto, now))
+                     vencido=vencido(reto, now),
+                     target_cuota=float(t_cuota) if t_cuota is not None else None)
 
 
 # --------------------------------------------------------------------------
@@ -343,13 +345,16 @@ def prob_reto(pasos: list[dict]) -> float:
     return prob
 
 
-def _abierto(reto: dict, pasos: list[dict], ganados: int) -> es.Abierto:
+def _abierto(reto: dict, pasos: list[dict], ganados: int, saldo: Decimal | None = None) -> es.Abierto:
     """El reto tal como se creó: los de la regla anterior siguen con su rango de cuota."""
     objetivo = reto.get("prob_objetivo")
+    t_cuota = reto.get("target_cuota")
     return es.Abierto(reto["reto_id"], ganados, int(reto["pasos_objetivo"]),
                       prob_ganada=prob_reto(pasos),
                       prob_objetivo=None if objetivo is None else float(objetivo),
-                      cuota_min=float(reto["cuota_min"]), cuota_max=float(reto["cuota_max"]))
+                      cuota_min=float(reto["cuota_min"]), cuota_max=float(reto["cuota_max"]),
+                      target_cuota=float(t_cuota) if t_cuota is not None else None,
+                      saldo_actual=Decimal(str(saldo)) if saldo is not None else es.STAKE)
 
 
 def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> dict:
@@ -370,17 +375,20 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         st = estado_reto(reto, pasos, now)
         if st["estado"] in es.CERRADOS:
             continue
-        if reto.get("prob_objetivo") is not None:
-            abiertos.append(int(reto["pasos_objetivo"]))
+        # Solo los retos por objetivo de cobro ocupan un objetivo: un reto del 80 % de
+        # 2 pasos NO es el objetivo ×2,0 (el 2 entero y el 2,0 coincidirían).
+        if reto.get("target_cuota") is not None:
+            abiertos.append(float(reto["target_cuota"]))
         if st["estado"] == "en_curso":
-            en_curso.append(_abierto(reto, pasos, st["ganados"]))
+            # Con freeroll, lo cobrado cuenta: saldo vivo + inversión ya retirada.
+            en_curso.append(_abierto(reto, pasos, st["ganados"], st["saldo"] + st["retirado"]))
         ocupados |= {p["match_id"] for p in pasos if p["outcome"] is None}
 
     rho = ad._rho_activo()
     todas, sin_precio = [], 0
     modelos = Modelos(now)
     for m in _partidos(now):
-        res = opciones(m, now, rho, modelos)
+        res = opciones(m, now, rho, modelos, incluir_doble=True)
         if res is None:
             sin_precio += 1
             continue
@@ -390,8 +398,8 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     except Exception:   # un archivo de PropLine roto no debe dejar el fútbol sin escalón
         log.exception("Escalera: NBA y tenis sin candidatos")
     plan = es.planificar(en_curso, abiertos, todas, ocupados)
-    # Lo que sirve para abrir un reto de 2 hoy (umbral √PROB_RETO).
-    p_nuevo = es.umbral(es.PROB_RETO, 1.0, es.LONGITUDES[0])
+    # Lo que sirve para abrir un reto hoy: la probabilidad mínima por escalón.
+    p_nuevo = es.PROB_MIN
     en_rango = [o for o in todas if es.valida(o, prob_min=p_nuevo,
                                               prob_max=es.PROB_MAX_DEPORTE.get(o.deporte, es.PROB_MAX))]
     out = {"estado": "elegido" if plan else "sin_candidato",
@@ -409,12 +417,16 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
 
     for reto_id, nuevo_de, escalones in plan:
         if reto_id is None:
+            # `nuevo_de` es un objetivo de cobro de TARGETS (reto nuevo); un entero es la
+            # longitud de un reto de la regla del 80 % (ya no se abren).
+            t_cuota = float(nuevo_de) if float(nuevo_de) in es.TARGETS else None
+            pasos_obj = es.MAX_ESCALONES if t_cuota is not None else int(nuevo_de)
             reto_id = query_one(
                 """INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
-                                               ev_min, freeroll_x, prob_objetivo, dias_max)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING reto_id""",
-                (es.STAKE, nuevo_de, es.CUOTA_MIN, es.CUOTA_MAX, es.EV_MIN, es.FREEROLL_X,
-                 es.PROB_RETO, es.DIAS_MAX)
+                                               ev_min, freeroll_x, prob_objetivo, dias_max, target_cuota)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING reto_id""",
+                (es.STAKE, pasos_obj, es.CUOTA_MIN, es.CUOTA_MAX, es.EV_MIN, es.FREEROLL_X,
+                 es.PROB_RETO, es.DIAS_MAX, t_cuota)
             )["reto_id"]
         for o in escalones:
             _insertar_paso(reto_id, o)
@@ -537,7 +549,7 @@ def texto(market: str, selection: str, line, local: str, visitante: str) -> str:
         return es.texto_total(market, selection, float(line), local, visitante)
     if market == "btts":
         return es.texto_btts(selection)
-    return ap.texto(market, selection, line, local, visitante)
+    return ap.texto(market, selection, line, local, visitante)  # incluye double_chance
 
 
 def _paso_publico(p: dict) -> dict:
@@ -574,6 +586,7 @@ def informe_publico() -> dict:
         salida.append({"reto_id": reto["reto_id"], "inicio": reto["created_at"],
                        "stake_inicial": str(reto["stake_inicial"]),
                        "pasos_objetivo": reto["pasos_objetivo"],
+                       "target_cuota": reto.get("target_cuota"),
                        "cuota_min": reto["cuota_min"], "cuota_max": reto["cuota_max"],
                        "freeroll_x": reto["freeroll_x"],
                        # None: reto de la regla anterior. `prob_reto`: ∏ p de sus escalones,
@@ -595,10 +608,12 @@ def informe_publico() -> dict:
     return {
         "activo": settings.escalera_enabled,
         "reglas": {"cuota_min": es.CUOTA_MIN, "cuota_max": es.CUOTA_MAX,
-                   "longitudes": list(es.LONGITUDES), "prob_reto": es.PROB_RETO,
+                   "longitudes": list(es.LONGITUDES), "targets": list(es.TARGETS),
+                   "max_escalones": es.MAX_ESCALONES, "prob_reto": es.PROB_RETO,
+                   "prob_min": es.PROB_MIN,
                    "prob_max": es.PROB_MAX, "por_dia": es.POR_DIA, "dias_max": es.DIAS_MAX,
                    "umbrales": {str(n): round(es.umbral(es.PROB_RETO, 1.0, n), 4)
-                                for n in es.LONGITUDES},
+                                for n in (2, 3, 4, 5, 6, 7, 8, 9, 10)},
                    "stake": str(es.STAKE), "freeroll_x": es.FREEROLL_X, "ev_min": es.EV_MIN,
                    "lineas_handicap": list(es.LINEAS_HANDICAP)},
         "actuales": actuales,

@@ -157,7 +157,7 @@ def test_reto_sin_filtro_de_valor_y_escalon_de_corners_se_liquida_con_el_total()
     assert r["saldo"] == "13.30"
 
 
-def test_reto_al_80_se_crea_con_su_objetivo_y_publica_su_probabilidad(monkeypatch):
+def test_reto_nuevo_se_crea_con_objetivo_de_cobro_y_publica_su_regla(monkeypatch):
     from dataclasses import replace
     from qf.publish import alta_prob_datos as ad
     from qf.publish import escalera as es
@@ -169,21 +169,23 @@ def test_reto_al_80_se_crea_con_su_objetivo_y_publica_su_probabilidad(monkeypatc
     monkeypatch.setattr(ed, "_retos", lambda: [])
     monkeypatch.setattr(ed, "_partidos", lambda now: [{"match_id": mid}])
     monkeypatch.setattr(ad, "_rho_activo", lambda: None)
-    monkeypatch.setattr(ed, "opciones", lambda m, now, rho, modelos: [es.Opcion(
-        m["match_id"], Candidato("spreads", "home", 1.5, 0.95), 1.06, "betano", "propline",
+    monkeypatch.setattr(ed, "opciones", lambda m, now, rho, modelos, **kw: [es.Opcion(
+        m["match_id"], Candidato("spreads", "home", 1.5, 0.95), 1.30, "betano", "propline",
         now - timedelta(minutes=5))])
     out = ed.select_and_persist(ahora)
     (plan,) = out["plan"]
-    assert plan["nuevo_de"] == 2 and out["en_rango"] == 1
+    assert plan["nuevo_de"] == 2.0 and out["en_rango"] == 1
     reto = db.query_one("""SELECT r.* FROM escalera_retos r JOIN escalera_pasos p USING (reto_id)
                            WHERE p.match_id = %s""", (mid,))
-    assert reto["prob_objetivo"] == pytest.approx(0.80) and reto["freeroll_x"] is None
-    assert reto["dias_max"] == 7
+    assert reto["target_cuota"] == pytest.approx(2.0) and reto["pasos_objetivo"] == es.MAX_ESCALONES
+    assert reto["prob_objetivo"] == pytest.approx(es.PROB_RETO)
+    assert reto["freeroll_x"] == pytest.approx(2.5) and reto["dias_max"] == 10
     assert ed.prob_reto(ed._pasos(reto["reto_id"])) == pytest.approx(0.95)
     # El escalón aún no está sellado (decided_at es la hora real): no se enseña.
     r = _reto_publico(reto["reto_id"])
-    assert r["prob_objetivo"] == pytest.approx(0.80) and r["prob_reto"] is None
-    assert ed.informe_publico()["reglas"]["umbrales"] == {"2": 0.8944}
+    assert r["target_cuota"] == pytest.approx(2.0) and r["prob_reto"] is None
+    reglas = ed.informe_publico()["reglas"]
+    assert reglas["targets"] == list(es.TARGETS) and reglas["prob_min"] == es.PROB_MIN
 
 
 def test_reto_con_plazo_vencido_pasa_al_historial_como_expirado():
@@ -207,7 +209,7 @@ def test_escalon_de_tenis_se_guarda_sin_partido_de_futbol_y_se_liquida_con_propl
     ahora = _dia()
     evento = (uuid.uuid4().hex[:10], "tennis_atp_paris", ahora + timedelta(hours=2),
               "Jannik Sinner", "Qualifier X")
-    tenis = es.Opcion(f"tenis:{evento[0]}", Candidato("h2h", "home", None, 0.95), 1.06, "bovada",
+    tenis = es.Opcion(f"tenis:{evento[0]}", Candidato("h2h", "home", None, 0.95), 1.30, "bovada",
                       "propline", ahora - timedelta(minutes=20), "tenis", evento)
     monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
     monkeypatch.setattr(ed, "_retos", lambda: [])
@@ -239,3 +241,45 @@ def test_escalon_de_tenis_se_guarda_sin_partido_de_futbol_y_se_liquida_con_propl
         _paso(r, 1, mid, ahora)
         pid = db.query_one("SELECT paso_id FROM escalera_pasos WHERE reto_id = %s", (r,))["paso_id"]
         db.execute("INSERT INTO escalera_resultados (paso_id, outcome) VALUES (%s, 'win')", (pid,))
+
+
+def test_migracion_103_target_cuota_y_doble_oportunidad():
+    reto = db.query_one("""INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
+                                                       ev_min, freeroll_x, prob_objetivo, dias_max, target_cuota)
+                           VALUES (10, 6, 1.25, 2.10, NULL, 2.5, 0.4761, 10, 4.5) RETURNING *""")
+    assert reto["target_cuota"] == pytest.approx(4.5)
+    mid, *_ = _partido(status="scheduled", kickoff=_dia() + timedelta(hours=5))
+    db.execute("""INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, prob, fair_price,
+                                              price, book, odds_source, odds_as_of)
+                  VALUES (%s, 1, %s, 'double_chance', '1X', 0.9, 1.11, 1.30, 'bovada', 'propline', now())""",
+               (reto["reto_id"], mid))
+    with pytest.raises(psycopg.errors.CheckViolation):
+        db.execute("""INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
+                                                  ev_min, target_cuota)
+                      VALUES (10, 6, 1.25, 2.10, NULL, 0.5)""")
+
+
+def test_reto_del_80_abierto_no_ocupa_el_objetivo_2(monkeypatch):
+    from dataclasses import replace
+    from qf.publish import alta_prob_datos as ad
+    from qf.publish import escalera as es
+    from qf.publish.alta_prob import Candidato
+
+    ahora = _dia()
+    legado = db.query_one("""INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
+                                                         ev_min, prob_objetivo, dias_max)
+                             VALUES (10, 2, 1.03, 1.40, NULL, 0.8, 7) RETURNING *""")
+    m1, *_ = _partido(status="scheduled", kickoff=ahora + timedelta(hours=5))
+    m2, *_ = _partido(status="scheduled", kickoff=ahora + timedelta(hours=6))
+    opciones = {m1: es.Opcion(m1, Candidato("h2h", "home", None, 0.95), 1.30, "betano", "propline",
+                              ahora - timedelta(minutes=5)),
+                m2: es.Opcion(m2, Candidato("h2h", "home", None, 0.93), 1.30, "betano", "propline",
+                              ahora - timedelta(minutes=5))}
+    monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
+    monkeypatch.setattr(ed, "_retos", lambda: [legado])
+    monkeypatch.setattr(ed, "_partidos", lambda now: [{"match_id": m1}, {"match_id": m2}])
+    monkeypatch.setattr(ad, "_rho_activo", lambda: None)
+    monkeypatch.setattr(ed, "opciones", lambda m, now, rho, modelos, **kw: [opciones[m["match_id"]]])
+    out = ed.select_and_persist(ahora, dry_run=True)
+    assert out["retos_abiertos"] == 0 and out["necesitan_escalon"] == 1
+    assert 2.0 in [p["nuevo_de"] for p in out["plan"]]
