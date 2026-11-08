@@ -257,3 +257,29 @@ def test_migracion_103_target_cuota_y_doble_oportunidad():
         db.execute("""INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
                                                   ev_min, target_cuota)
                       VALUES (10, 6, 1.25, 2.10, NULL, 0.5)""")
+
+
+def test_reto_del_80_abierto_no_ocupa_el_objetivo_2(monkeypatch):
+    from dataclasses import replace
+    from qf.publish import alta_prob_datos as ad
+    from qf.publish import escalera as es
+    from qf.publish.alta_prob import Candidato
+
+    ahora = _dia()
+    legado = db.query_one("""INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
+                                                         ev_min, prob_objetivo, dias_max)
+                             VALUES (10, 2, 1.03, 1.40, NULL, 0.8, 7) RETURNING *""")
+    m1, *_ = _partido(status="scheduled", kickoff=ahora + timedelta(hours=5))
+    m2, *_ = _partido(status="scheduled", kickoff=ahora + timedelta(hours=6))
+    opciones = {m1: es.Opcion(m1, Candidato("h2h", "home", None, 0.95), 1.30, "betano", "propline",
+                              ahora - timedelta(minutes=5)),
+                m2: es.Opcion(m2, Candidato("h2h", "home", None, 0.93), 1.30, "betano", "propline",
+                              ahora - timedelta(minutes=5))}
+    monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
+    monkeypatch.setattr(ed, "_retos", lambda: [legado])
+    monkeypatch.setattr(ed, "_partidos", lambda now: [{"match_id": m1}, {"match_id": m2}])
+    monkeypatch.setattr(ad, "_rho_activo", lambda: None)
+    monkeypatch.setattr(ed, "opciones", lambda m, now, rho, modelos, **kw: [opciones[m["match_id"]]])
+    out = ed.select_and_persist(ahora, dry_run=True)
+    assert out["retos_abiertos"] == 0 and out["necesitan_escalon"] == 1
+    assert 2.0 in [p["nuevo_de"] for p in out["plan"]]

@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 17:45 UTC · Reto escalera: rediseño por objetivo de cobro, bien montado · worker + API + db/103 (commit `7108991a`, rama `escalera/rediseno-sobre-main`, SIN fusionar a `main`)
+- Contexto: el 8-nov 02:04/03:33 UTC se copiaron a mano al worker y a la API los `escalera*.py` de la rama `feature/escalera-redesign-2026`. Esa rama REEMPLAZÓ los archivos enteros con una versión antigua (quitaba `batch_kind='diario'`, NBA/tenis, las columnas de PropLine, `supremacia_modelo`, el filtro `result_recorded_at` y leía `af_odds_snapshots`). Resultado: el daily de las 09:00 falló en alta, alta ext., tarjetas, escalera y parley clásico, y `/escalera` repetía cada paso una vez por lote sellado (11 completados en vez de 7).
+- Paso 1 (16:15 UTC): restaurados los `escalera*.py` de las imágenes originales. Copia de lo que había: `~/quantfut/releases/restauro-escalera-20261108/hibrido-actual/`.
+- Paso 2 (17:40 UTC): las reglas del rediseño (TARGETS 2,0-20, cuota 1,25-2,10, prob ≥ 0,69, 1 escalón/día, 10 días, freeroll ×2,5, `double_chance`) PORTADAS sobre el código actual (`rediseno-worker/` y `rediseno-api/` de la misma carpeta: la imagen original + el parche). Conserva NBA/tenis, `batch_kind`, PropLine y el reto 21 con su regla del 80 %.
+- `db/103_escalera_targets.sql` aplicada con `lock_timeout 5s` (`target_cuota` ya existía por la 099 de la rama, ahora con el CHECK de mercados de `main` + `double_chance`). Respaldo previo: `escalera_tablas_antes_103.sql` en la misma carpeta.
+- Cambió también `tests/`: 44 pruebas de escalera con Postgres aislado OK; suite completa 1.925 OK y 43 fallos solo de cuentas/compras/Whop/Meta (el esquema local no tiene `citext`/`accounts`).
+- Verificado: `/escalera`, `/parley`, `/alta-probabilidad`, `/health` 200 en local y `/escalera` y `/parley` en el dominio; ensayo en seco del worker abre 6 retos (×2,0 a ×20) y da su escalón al reto 21. API reiniciada (`docker restart`), no recreada. Primer daily con la regla nueva: 9-nov 09:00 UTC.
+- NO desplegado: la web ya lleva el `conversion-views.js` de la rama (md5 `77f515dc`); no se tocó. Se descartó el filtro `es_evento_elegible` de la rama porque lee `matches.round`, que no existe.
+- Vuelta atrás: `docker cp` de `original-worker/` y `original-api/` a `/app/src/qf/publish/` y `docker restart quantfut-api-1`. La 103 no se revierte (columna nula y CHECK más amplio).
+
 ### 2026-11-08 04:16 UTC · Automatización bisemanal y ampliación de vigencia del artefacto NBA v2.2 · VPS y Local
 - Solicitud del titular («haz algo para que no pase de nuevo esto»). Se eliminó el riesgo de caducidad inesperada mediante dos capas de protección:
   1. **Ampliación de vigencia:** en `apps/nba/ops/entrenar_equipo.py`, `vigencia_horas` ampliada de 72 h (3 días) a 168 h (7 días). Artefacto regenerado (`equipo=6b7b0955ba27`), válido hasta el 15-nov-2026 04:16 UTC.

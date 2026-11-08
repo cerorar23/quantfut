@@ -375,10 +375,10 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         st = estado_reto(reto, pasos, now)
         if st["estado"] in es.CERRADOS:
             continue
+        # Solo los retos por objetivo de cobro ocupan un objetivo: un reto del 80 % de
+        # 2 pasos NO es el objetivo ×2,0 (el 2 entero y el 2,0 coincidirían).
         if reto.get("target_cuota") is not None:
             abiertos.append(float(reto["target_cuota"]))
-        elif reto.get("prob_objetivo") is not None:
-            abiertos.append(int(reto["pasos_objetivo"]))
         if st["estado"] == "en_curso":
             # Con freeroll, lo cobrado cuenta: saldo vivo + inversión ya retirada.
             en_curso.append(_abierto(reto, pasos, st["ganados"], st["saldo"] + st["retirado"]))
