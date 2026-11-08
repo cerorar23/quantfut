@@ -26,20 +26,25 @@ const files = new Map([
   ['/google-auth.js', ['google-auth.js', 'text/javascript; charset=utf-8']],
   ['/meta-pixel.js', ['meta-pixel.js', 'text/javascript; charset=utf-8']],
   ['/whop-checkout.js', ['whop-checkout.js', 'text/javascript; charset=utf-8']],
+  ['/rutas.js', ['rutas.js', 'text/javascript; charset=utf-8']],
 ]);
+// Secciones con URL propia (rutas.js): el servidor real las responde con su propio <head>; aquí basta el mismo index.html.
+const SECCIONES = new Set(['/partidos/', '/pronosticos/', '/historial/', '/pronosticos-alta-probabilidad/', '/parley-del-dia/', '/reto-escalera/', '/paquetes/', '/planes/']);
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || '127.0.0.1';
 
 createServer(async (request, response) => {
   const pathname = new URL(request.url || '/', 'http://localhost').pathname;
-  const file = files.get(pathname);
+  const file = files.get(SECCIONES.has(pathname) ? '/' : pathname);
   if (!file) {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     response.end('No encontrado');
     return;
   }
   try {
-    const body = await readFile(join(root, file[0]));
+    let body = await readFile(join(root, file[0]));
+    // Desde una ruta anidada, './styles.css' pediría '/historial/styles.css': como hace el servidor real, rutas absolutas.
+    if (file[0] === 'index.html') body = body.toString('utf8').replace(/(href|src)="\.\//g, '$1="/');
     response.writeHead(200, {
       'Content-Type': file[1],
       'Cache-Control': 'no-store',

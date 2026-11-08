@@ -27,9 +27,9 @@ NOINDEX_SEGMENTS = frozenset({
     # panel, cuentas y flujos con sesión o con código de un solo uso
     "control", "admin", "cuenta", "verificar", "restablecer", "i", "rewards", "webhooks",
     # API de la web, la app móvil y los motores
-    "app", "mobile", "nba", "tenis", "v1", "web", "static", "health",
+    "app", "mobile", "nba", "tenis", "v1", "web", "static", "vendor", "health",
     # JSON públicos de la raíz (no son páginas)
-    "calibration", "chain", "escalera", "leagues", "matches", "model-card", "parley", "picks",
+    "alta-probabilidad", "calibration", "chain", "escalera", "leagues", "matches", "model-card", "parley", "picks",
     "teams", "track-record",
 })
 
@@ -110,8 +110,8 @@ def sitemap_index() -> str:
 
 
 def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
-    from . import paginas   # import tardío: `paginas` importa este módulo
-    return PAGINAS + paginas.entradas_sitemap()
+    from . import paginas, rutas_web   # import tardío: ambos importan este módulo
+    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap()
 
 
 def sitemap_paginas() -> str:
