@@ -114,3 +114,11 @@ def resultado(paso: dict, now: datetime, root=None) -> tuple | None:
     if paso["evento_inicio"] < now - MARGEN_SIN_RESULTADO:
         return ("void", None, None, None)
     return None
+
+
+def sin_filas_de_resultado(paso: dict, now: datetime, root=None) -> bool:
+    """True si el archivo PropLine no trae NINGUNA fila de resultado del evento: un `void` en ese caso
+    es falta de dato, no un partido anulado (hay que avisar para revisarlo a mano)."""
+    root = root or settings.propline_archive
+    filas, _ = ps.read_results(root, DEPORTES[paso["deporte"]], paso["evento_id"], now)
+    return not filas

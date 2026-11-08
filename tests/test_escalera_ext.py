@@ -100,6 +100,13 @@ def test_sin_calificacion_espera_y_pasado_el_margen_es_nulo(tmp_path, ajustes):
     assert ext.resultado(viejo, NOW, tmp_path) == ("void", None, None, None)
 
 
+def test_void_sin_ninguna_fila_de_resultado_se_distingue_del_void_de_la_casa(tmp_path, ajustes):
+    # Sin archivo: falta de dato (se anula pero hay que avisar). Con la casa diciendo «void»: anulado de verdad.
+    assert ext.sin_filas_de_resultado(_paso(), NOW, tmp_path) is True
+    _resultados(tmp_path / "con_dato", bovada="void", pinnacle="won")
+    assert ext.sin_filas_de_resultado(_paso(), NOW, tmp_path / "con_dato") is False
+
+
 def test_un_reto_puede_mezclar_tenis_y_futbol_y_el_anterior_solo_futbol():
     # Regla del rediseño: cuota 1,25-2,10, probabilidad >= 0,69 y un escalón al día por reto.
     tenis = es.Opcion("tenis:t1", es.Candidato("h2h", "home", None, 0.92), 1.30, "bovada", deporte="tenis")
