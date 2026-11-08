@@ -33,7 +33,7 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
-### 2026-11-08 17:45 UTC · Reto escalera: rediseño por objetivo de cobro, bien montado · worker + API + db/103 (commit `7108991a`, rama `escalera/rediseno-sobre-main`, SIN fusionar a `main`)
+### 2026-11-08 17:45 UTC · Reto escalera: rediseño por objetivo de cobro, bien montado · worker + API + db/103 (PR #279, fusionado a `main` con squash `199d812d`; el código desplegado es el de ese commit)
 - Contexto: el 8-nov 02:04/03:33 UTC se copiaron a mano al worker y a la API los `escalera*.py` de la rama `feature/escalera-redesign-2026`. Esa rama REEMPLAZÓ los archivos enteros con una versión antigua (quitaba `batch_kind='diario'`, NBA/tenis, las columnas de PropLine, `supremacia_modelo`, el filtro `result_recorded_at` y leía `af_odds_snapshots`). Resultado: el daily de las 09:00 falló en alta, alta ext., tarjetas, escalera y parley clásico, y `/escalera` repetía cada paso una vez por lote sellado (11 completados en vez de 7).
 - Paso 1 (16:15 UTC): restaurados los `escalera*.py` de las imágenes originales. Copia de lo que había: `~/quantfut/releases/restauro-escalera-20261108/hibrido-actual/`.
 - Paso 2 (17:40 UTC): las reglas del rediseño (TARGETS 2,0-20, cuota 1,25-2,10, prob ≥ 0,69, 1 escalón/día, 10 días, freeroll ×2,5, `double_chance`) PORTADAS sobre el código actual (`rediseno-worker/` y `rediseno-api/` de la misma carpeta: la imagen original + el parche). Conserva NBA/tenis, `batch_kind`, PropLine y el reto 21 con su regla del 80 %.
