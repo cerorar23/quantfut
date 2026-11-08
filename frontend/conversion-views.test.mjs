@@ -224,4 +224,5 @@ test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 es
   assert.doesNotMatch(view, /Cómo se elige cada escalón/);
   assert.doesNotMatch(view, /LA REGLA/);
   assert.doesNotMatch(view, /no es una garantía/);
+  assert.doesNotMatch(view, /muestra pequeña/);
 });

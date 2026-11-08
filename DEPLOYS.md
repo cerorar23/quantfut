@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:00 UTC · Retiro de las etiquetas «muestra pequeña» en Reto Escalera y vistas públicas · VPS y Local
+- Solicitud del titular: suprimir por completo los badges/etiquetas `small.cv-flag` («muestra pequeña») de las filas estadísticas y preguntas frecuentes.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: retirada la etiqueta `muestra pequeña` de las filas de escalones/targets en `escaleraView`, de `altaView` y de `parleyView`. Las filas ahora muestran nombres limpios (`Objetivo ×2.0`, `Objetivo ×2.8`...).
+  - `frontend/conversion-views.test.mjs`: verificada ausencia total con `assert.doesNotMatch(view, /muestra pequeña/)` (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v8`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado. Verificado que `https://pronosticosdeportivos.pro/` sirve `v8` con 0 ocurrencias de `muestra pequeña`.
+
 ### 2026-11-08 03:55 UTC · Retiro del banner de advertencia «Un X% no es una garantía» en Reto Escalera · VPS y Local
 - Solicitud del titular: suprimir el cuadro amarillo de aviso (`cyber-alert--warning`: «Un X% no es una garantía, ni quita el margen de la casa...») de la vista `#escalera`.
 - Archivos modificados:
