@@ -193,6 +193,8 @@ test('parley v2.1 sustituye a v1 como vista principal con cuatro objetivos y mul
   assert.match(view, /cv-lock/);
   assert.doesNotMatch(view, /LOS 5 ESCALONES DE HOY/);
   assert.doesNotMatch(view, /Muestra en construcción/);
+  assert.doesNotMatch(view, /cadena · último lote/);
+  assert.doesNotMatch(view, /cv-terminal/);
 });
 
 test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 escalones', () => {

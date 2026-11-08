@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:45 UTC · Retiro del recuadro terminal «CADENA · ÚLTIMO LOTE» de las vistas · VPS y Local
+- Solicitud del titular: suprimir el bloque visual tipo terminal de desarrollador (`cyber-terminal` / «cadena · último lote» con las líneas «predecir ✓», «sellar ✓ sha256:...» y «publicar ✓»).
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado el elemento `log` (`.cyber-terminal.cv-terminal`) de la función `sealBlock()`. La sección «Cómo se comprueba» conserva limpiamente los 3 pasos explicativos sin el bloque de consola técnica.
+  - `frontend/conversion-views.test.mjs`: verificada ausencia con `assert.doesNotMatch(view, /cadena · último lote/)` y `assert.doesNotMatch(view, /cv-terminal/)` (30/30 pruebas pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v13`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y verificado en vivo.
+
 ### 2026-11-08 04:35 UTC · Agrupación por día y límite de últimos 10 parlays en el historial de Parley · VPS y Local
 - Solicitud del titular: agrupar el historial de Parley por día para que cuando haya 2 o 3 parlays en una misma fecha aparezcan en una sola fila (`.cv-day`), y limitar el historial a los últimos 10 parlays en total.
 - Archivos modificados:

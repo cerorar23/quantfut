@@ -136,13 +136,10 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       <div class="cv-lock-side"><span>${cuotaLabel}</span><strong>${cuota}</strong><button type="button" class="primary-button cv-unlock" data-route="planes">Desbloquear</button></div></article>`;
   }
 
-  function sealBlock(huella) {
+  function sealBlock() {
     const paso = (n, ic, titulo, texto) => `<li><span class="cv-step-n">${n}</span><span class="cv-step-ic">${ic}</span><div><strong>${titulo}</strong><p>${texto}</p></div></li>`;
-    const log = huella
-      ? `<div class="cyber-terminal cyber-terminal--sm cv-terminal"><div class="cyber-terminal__header"><span class="cyber-terminal__dot cyber-terminal__dot--red"></span><span class="cyber-terminal__dot cyber-terminal__dot--yellow"></span><span class="cyber-terminal__dot cyber-terminal__dot--green"></span><span class="cyber-terminal__title">cadena · último lote</span></div><div class="cyber-terminal__body"><div class="cyber-terminal__line cyber-terminal__line--output">predecir ✓ cuota registrada</div><div class="cyber-terminal__line cyber-terminal__line--success">sellar&nbsp; ✓ sha256:${hash(huella)}…</div><div class="cyber-terminal__line cyber-terminal__line--info">publicar ✓ antes del partido, sin ediciones</div></div></div>`
-      : '';
     return `<section class="cv-section" aria-label="Cómo se sella cada pronóstico"><div class="cv-section-head"><p class="eyebrow">CÓMO SE COMPRUEBA</p><h2>Nadie puede cambiar un pronóstico después</h2></div>
-      <ol class="cv-steps">${paso(1, ICON.predict, 'Se predice', 'El modelo calcula la probabilidad y se guarda la cuota del momento.')}${paso(2, ICON.seal, 'Se sella', 'El pronóstico entra en una cadena de huellas (hash). Cambiarlo rompería la cadena.')}${paso(3, ICON.publish, 'Se publica', 'Sale antes del partido. Después se liquida y el resultado se queda, sea bueno o malo.')}</ol>${log}</section>`;
+      <ol class="cv-steps">${paso(1, ICON.predict, 'Se predice', 'El modelo calcula la probabilidad y se guarda la cuota del momento.')}${paso(2, ICON.seal, 'Se sella', 'El pronóstico entra en una cadena de huellas (hash). Cambiarlo rompería la cadena.')}${paso(3, ICON.publish, 'Se publica', 'Sale antes del partido. Después se liquida y el resultado se queda, sea bueno o malo.')}</ol></section>`;
   }
 
   function faq(items) {
