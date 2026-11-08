@@ -95,24 +95,33 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from .alta_prob import Candidato
 
-CUOTA_MIN = 1.03
-CUOTA_MAX = 1.40
-# Probabilidad mínima de completar el reto entero (regla del 2026-10-28).
-PROB_RETO = 0.80
+# Rediseño del 2026-11-07/08 (decisión del usuario): el reto apunta a un MÚLTIPLO DE COBRO
+# (`TARGETS`), con hasta `MAX_ESCALONES` escalones de uno en uno, cuota 1,25-2,10 y
+# probabilidad mínima por escalón `PROB_MIN`. Los retos abiertos con la regla del 80 %
+# (`prob_objetivo` = 0,80, sin `target_cuota`) terminan con la suya.
+TARGETS: tuple[float, ...] = (2.0, 2.8, 4.5, 7.5, 12.0, 20.0)
+MAX_ESCALONES: int = 6
+CUOTA_MIN = 1.25
+CUOTA_MAX = 2.10
+# Probabilidad mínima por escalón.
+PROB_MIN = 0.69
+# Presupuesto de probabilidad que se guarda en los retos nuevos (PROB_MIN al cuadrado).
+PROB_RETO = 0.4761
 # Tope por escalón en esa regla: hasta aquí llegan los tramos de calibración
 # de hándicap y alta probabilidad (0,90-0,95); por encima no está medido.
 PROB_MAX = 0.95
 # Por deporte: el tenis está calibrado hasta 0,97 (Tennis-Data 2019-2026, Pinnacle
 # sin margen: 95-100 % prometido 95,8 %, real 98,0 %, n=201; eval/escalera_multideporte).
 PROB_MAX_DEPORTE = {"futbol": PROB_MAX, "nba": PROB_MAX, "tenis": 0.97}
-# Longitudes posibles, por orden de preferencia. Ver `longitud_nuevo`.
-LONGITUDES = (2,)
+# Objetivos posibles por orden (sustituye a las longitudes fijas de la regla anterior).
+LONGITUDES: tuple[float | int, ...] = TARGETS
 # Escalones de un mismo reto que se pueden elegir el mismo día (partidos distintos).
-POR_DIA = 2
+POR_DIA = 1
 # Días que un reto puede seguir abierto desde que se crea; luego, «expirado».
-DIAS_MAX = 7
+DIAS_MAX = 10
 STAKE = Decimal("10.00")
-FREEROLL_X: float | None = None
+# Al llegar a 2,5 veces el stake se retira la inversión y el resto sigue sin riesgo propio.
+FREEROLL_X: float | None = 2.5
 # None: sin filtro de valor (regla del 2026-10-08). Con 0.0 se vuelve a exigir
 # cuota ≥ precio justo.
 EV_MIN: float | None = None
@@ -121,7 +130,8 @@ HORIZONTE = timedelta(hours=36)
 # Líneas de goles candidatas: las validadas para alta probabilidad más la 2,5,
 # que es la línea que Pinnacle cotiza directamente (sin ajuste).
 LINEAS_GOLES: tuple[tuple[str, float], ...] = (
-    ("over", 1.5), ("under", 3.5), ("over", 2.5), ("under", 2.5))
+    ("over", 0.5), ("over", 1.5), ("under", 2.5), ("over", 2.5),
+    ("under", 3.5), ("under", 4.5), ("under", 5.5))
 # Hándicap asiático: solo líneas enteras y medias (las de cuarto liquidan
 # medias ganadas/perdidas). Prueba histórica del 2026-10-08
 # (eval/escalera_handicap.py, firma d5cbc3151164, rho −0,0613, criterio de
@@ -129,9 +139,11 @@ LINEAS_GOLES: tuple[tuple[str, float], ...] = (
 # se aciertan ~1 punto MÁS de lo prometido: +1 79,55→80,72; +1,5 79,94→80,98;
 # +2 81,87→82,97). −1,5 no pasa (66,69→64,21) y queda fuera. Añadir una
 # línea exige repetir la prueba.
-LINEAS_HANDICAP: tuple[float, ...] = (-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0)
+LINEAS_HANDICAP: tuple[float, ...] = (-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0)
 MERCADOS = ("h2h", "totals", "team_totals_home", "team_totals_away", "spreads",
             "btts", "corners", "cards", "corners_home", "corners_away")
+# El reto también acepta la doble oportunidad (rediseño 2026-11-08); el parley la suma aparte.
+MERCADOS_RETO = MERCADOS + ("double_chance",)
 # Mercados del modelo estadístico (se liquidan con la estadística del partido).
 ESTADISTICOS = ("corners", "cards", "corners_home", "corners_away")
 # Ambos anotan desde el ajuste de goles de Pinnacle. Prueba histórica del
@@ -205,13 +217,15 @@ def texto_handicap(selection: str, line: float, local: str, visitante: str) -> s
     return f"{equipo} {'+' if line > 0 else ''}{f'{line:g}'.replace('.', ',')} (hándicap asiático)"
 
 
-def longitud_nuevo(abiertos: list[int]) -> int | None:
-    """
-    Pasos del próximo reto, dados los pasos de los retos ABIERTOS con la regla
-    del 80 %: el primero de LONGITUDES que no esté abierto. Como mucho un reto
-    abierto de cada longitud.
-    """
-    return next((n for n in LONGITUDES if n not in abiertos), None)
+def target_nuevo(abiertos: list[float | int]) -> float | None:
+    """Próximo objetivo de `TARGETS` que no esté ya abierto (como mucho un reto abierto de cada uno)."""
+    abiertos_set = {float(x) for x in abiertos}
+    return next((t for t in TARGETS if t not in abiertos_set), None)
+
+
+def longitud_nuevo(abiertos: list[int | float]) -> float | int | None:
+    """Compatibilidad: el próximo objetivo de cobro disponible."""
+    return target_nuevo(abiertos)
 
 
 @dataclass(frozen=True)
@@ -219,25 +233,29 @@ class Abierto:
     """Un reto que necesita escalón (`reto_id` None: uno nuevo de `objetivo` pasos)."""
     reto_id: int | None
     ganados: int
-    objetivo: int
+    objetivo: int = MAX_ESCALONES
     prob_ganada: float = 1.0           # ∏ p de los escalones elegidos que cuentan
     prob_objetivo: float | None = PROB_RETO   # None: regla anterior (rango de cuota)
     cuota_min: float = CUOTA_MIN
     cuota_max: float = CUOTA_MAX
+    target_cuota: float | None = None
+    saldo_actual: Decimal = Decimal("10.00")
 
 
 def umbral(prob_objetivo: float, prob_ganada: float, restantes: int) -> float:
     """
     Probabilidad mínima del siguiente escalón para que el reto entero quede en
     ≥ `prob_objetivo`: lo que falta se reparte a partes iguales entre los
-    `restantes`. Más de 1 = ya no se puede (no pasa con escalones elegidos así).
+    `restantes`. No baja nunca de `PROB_MIN`.
     """
-    return (prob_objetivo / prob_ganada) ** (1.0 / restantes)
+    if restantes <= 0:
+        return PROB_MIN
+    return max(PROB_MIN, (prob_objetivo / prob_ganada) ** (1.0 / restantes))
 
 
 def valida(o: Opcion, cuota_min: float = CUOTA_MIN, cuota_max: float = CUOTA_MAX,
            ev_min: float | None = EV_MIN, prob_min: float = 0.0, prob_max: float = 1.0) -> bool:
-    return (o.cand.market in MERCADOS and cuota_min <= o.price <= cuota_max
+    return (o.cand.market in MERCADOS_RETO and cuota_min <= o.price <= cuota_max
             and prob_min <= o.cand.prob <= prob_max and (ev_min is None or o.ev >= ev_min))
 
 
@@ -253,8 +271,11 @@ def elegir(opciones: list[Opcion], reto: Abierto,
         # Regla anterior: solo fútbol, como cuando se abrió el reto.
         opciones = [o for o in opciones if o.deporte == "futbol"]
         prob_min = 0.0
+    elif reto.target_cuota is not None:
+        prob_min = PROB_MIN
     else:
-        prob_min = umbral(reto.prob_objetivo, reto.prob_ganada, reto.objetivo - reto.ganados)
+        # Reto del 80 % ya abierto: sigue con su presupuesto de probabilidad.
+        prob_min = umbral(reto.prob_objetivo, reto.prob_ganada, max(1, reto.objetivo - reto.ganados))
     dentro = [o for o in opciones if o.match_id not in usados
               and valida(o, reto.cuota_min, reto.cuota_max, prob_min=prob_min,
                          prob_max=PROB_MAX_DEPORTE.get(o.deporte, PROB_MAX)
@@ -270,24 +291,30 @@ def _del_dia(opciones: list[Opcion], reto: Abierto, usados: set[str]) -> list[Op
     """
     tope = POR_DIA if reto.prob_objetivo is not None else 1
     out: list[Opcion] = []
+    saldo = reto.saldo_actual
+    cobro = (Decimal("10.00") * Decimal(str(reto.target_cuota))) if reto.target_cuota is not None else None
     while len(out) < tope and reto.ganados < reto.objetivo:
+        if cobro is not None and saldo >= cobro:
+            break
         o = elegir(opciones, reto, usados)
         if o is None:
             break
         usados.add(o.match_id)
         out.append(o)
+        saldo = _q(saldo * Decimal(str(o.price)))
         reto = Abierto(reto.reto_id, reto.ganados + 1, reto.objetivo,
                        reto.prob_ganada * o.cand.prob, reto.prob_objetivo,
-                       reto.cuota_min, reto.cuota_max)
+                       reto.cuota_min, reto.cuota_max,
+                       target_cuota=reto.target_cuota, saldo_actual=saldo)
     return out
 
 
-def planificar(en_curso: list[Abierto], abiertos: list[int], opciones: list[Opcion],
+def planificar(en_curso: list[Abierto], abiertos: list[int | float], opciones: list[Opcion],
                ocupados: set[str] = frozenset()
-               ) -> list[tuple[int | None, int | None, list[Opcion]]]:
+               ) -> list[tuple[int | None, int | float | None, list[Opcion]]]:
     """
     Reparto del día: [(reto_id, None, escalones)] para los retos que necesitan
-    escalón y [(None, pasos, escalones)] para los retos nuevos.
+    escalón y [(None, target_o_pasos, escalones)] para los retos nuevos.
 
     - `en_curso`: los retos que esperan su siguiente escalón (no vencidos); se
       sirven primero, el más avanzado antes. Si alguno se queda sin escalón,
@@ -298,7 +325,7 @@ def planificar(en_curso: list[Abierto], abiertos: list[int], opciones: list[Opci
       liquidar (`ocupados`): dos retos no dependen del mismo resultado.
     """
     usados = set(ocupados)
-    plan: list[tuple[int | None, int | None, list[Opcion]]] = []
+    plan: list[tuple[int | None, int | float | None, list[Opcion]]] = []
     sin_escalon = False
     for reto in sorted(en_curso, key=lambda r: -r.ganados):
         escalones = _del_dia(opciones, reto, usados)
@@ -309,12 +336,12 @@ def planificar(en_curso: list[Abierto], abiertos: list[int], opciones: list[Opci
     if sin_escalon:
         return plan
     abiertos = list(abiertos)
-    while (n := longitud_nuevo(abiertos)) is not None:
-        escalones = _del_dia(opciones, Abierto(None, 0, n), usados)
+    while (t := target_nuevo(abiertos)) is not None:
+        escalones = _del_dia(opciones, Abierto(None, 0, MAX_ESCALONES, target_cuota=t), usados)
         if not escalones:
             break
-        plan.append((None, n, escalones))
-        abiertos.append(n)
+        plan.append((None, t, escalones))
+        abiertos.append(t)
     return plan
 
 
@@ -330,7 +357,8 @@ def _q(x: Decimal) -> Decimal:
 
 
 def estado(stake: Decimal, objetivo: int, freeroll_x: float | None,
-           pasos: list[Paso], vencido: bool = False) -> dict:
+           pasos: list[Paso], vencido: bool = False,
+           target_cuota: float | None = None) -> dict:
     """
     El estado de un reto a partir de sus escalones, sin guardar nada:
 
@@ -345,28 +373,32 @@ def estado(stake: Decimal, objetivo: int, freeroll_x: float | None,
     """
     stake = Decimal(stake)
     saldo, retirado, ganados = stake, Decimal("0"), 0
+    meta = _q(stake * Decimal(str(target_cuota))) if target_cuota is not None else None
+    extra = {"target_cuota": target_cuota}
     for p in sorted(pasos, key=lambda p: p.paso):
         if p.outcome is None:
             return {"estado": "esperando", "saldo": _q(saldo), "retirado": _q(retirado),
-                    "ganados": ganados, "en_juego": _q(saldo), "ganancia": None}
+                    "ganados": ganados, "en_juego": _q(saldo), "ganancia": None, **extra}
         if p.outcome in ("void", "push"):
             continue
         if p.outcome == "loss":
             return {"estado": "fallido", "saldo": Decimal("0.00"), "retirado": _q(retirado),
-                    "ganados": ganados, "en_juego": None, "ganancia": _q(retirado - stake)}
+                    "ganados": ganados, "en_juego": None, "ganancia": _q(retirado - stake), **extra}
         saldo = _q(saldo * Decimal(str(p.price)))
         ganados += 1
         if freeroll_x and retirado == 0 and saldo >= Decimal(str(freeroll_x)) * stake:
             retirado, saldo = stake, saldo - stake
-        if ganados >= objetivo:
+        # Reto de cobro objetivo: se cierra al alcanzar el múltiplo o al llegar al tope de escalones.
+        # Reto de la regla anterior: al ganar sus `objetivo` escalones.
+        if ganados >= objetivo or (meta is not None and saldo + retirado >= meta):
             return {"estado": "completado", "saldo": _q(saldo), "retirado": _q(retirado),
                     "ganados": ganados, "en_juego": None,
-                    "ganancia": _q(saldo + retirado - stake)}
+                    "ganancia": _q(saldo + retirado - stake), **extra}
     if vencido:
         return {"estado": "expirado", "saldo": _q(saldo), "retirado": _q(retirado),
-                "ganados": ganados, "en_juego": None, "ganancia": _q(saldo + retirado - stake)}
+                "ganados": ganados, "en_juego": None, "ganancia": _q(saldo + retirado - stake), **extra}
     return {"estado": "en_curso", "saldo": _q(saldo), "retirado": _q(retirado),
-            "ganados": ganados, "en_juego": None, "ganancia": None}
+            "ganados": ganados, "en_juego": None, "ganancia": None, **extra}
 
 
 CERRADOS = ("completado", "fallido", "expirado")
