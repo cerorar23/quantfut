@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calibracion, rachaParley, rachaEscalera, resumenRacha, primeraHuella, createConversionViews } from './conversion-views.js';
+import { calibracion, rachaParley, rachaEscalera, resumenRacha, primeraHuella, agruparHistorialPorDia, createConversionViews } from './conversion-views.js';
 
 test('calibracion no vende ventaja dentro del ruido', () => {
   assert.equal(calibracion({ n: 385, acierto_prometido: 82.3, acierto_real: 82.3, margen_ee: 1.9 }).estado, 'dentro');
@@ -53,7 +53,7 @@ const alta = {
   },
 };
 
-test('alta enseña lo gratis, el candado y el rendimiento negativo sin maquillar', () => {
+test('alta enseña lo gratis, el candado y la verificación matemática', () => {
   const view = createConversionViews(helpers({ alta })).altaView();
   assert.match(view, /82\.3%/);
   assert.match(view, /317 de 385/);
@@ -61,7 +61,8 @@ test('alta enseña lo gratis, el candado y el rendimiento negativo sin maquillar
   assert.match(view, /cv-lock/);
   assert.match(view, /cv-blur/);
   assert.doesNotMatch(view, /1\.33/, 'la cuota bloqueada no se pinta aunque llegue en los datos');
-  assert.match(view, /−3\.07%|-3\.07%/);
+  assert.doesNotMatch(view, /Acertar no es lo mismo que ganar dinero/);
+  assert.doesNotMatch(view, /cyber-alert--warning/);
   assert.match(view, /data-route="planes"/);
   assert.doesNotMatch(view, /\b(segura|seguro|certera|certero)\b|garantizad[oa]s? de ganar/i);
   assert.doesNotMatch(view, /style="/);
@@ -106,7 +107,7 @@ test('parley y escalera cuentan fallos y retos perdidos', () => {
   const views = createConversionViews(helpers({ parley, escalera }));
   const p = views.parleyView();
   assert.match(p, /24 de 48/);
-  assert.match(p, /Muestra en construcción/);
+  assert.doesNotMatch(p, /Muestra en construcción/);
   assert.match(p, /cv-lock/);
   assert.match(p, /Perdido/);
   const e = views.escaleraView();
@@ -132,13 +133,12 @@ test('escalera al 80 % en 7 días: umbral, plazo, expirados y sin freeroll', () 
   const e = createConversionViews(helpers({ escalera })).escaleraView();
   assert.match(e, /al menos el 80% de las veces/);
   assert.match(e, /Retos de 2 escalones en 7 días como máximo/);
-  assert.match(e, /89[.,]4% por escalón en un reto de 2\./);
-  assert.match(e, /hasta 2, de partidos distintos/);
   assert.match(e, /Expirado/);
   assert.match(e, /en 7 días no aparece el segundo escalón/);
   assert.match(e, /reto al 80% como mínimo/);
   assert.match(e, /Por qué un 80% paga tan poco/);
   assert.doesNotMatch(e, /Freeroll a|freeroll\?/);
+  assert.doesNotMatch(e, /Cómo se elige cada escalón/);
 });
 
 test('parley v2.1 sustituye a v1 como vista principal con cuatro objetivos y multideporte', () => {
@@ -193,4 +193,125 @@ test('parley v2.1 sustituye a v1 como vista principal con cuatro objetivos y mul
   assert.match(view, /f847dbf4c176/);
   assert.match(view, /cv-lock/);
   assert.doesNotMatch(view, /LOS 5 ESCALONES DE HOY/);
+  assert.doesNotMatch(view, /Muestra en construcción/);
+  assert.doesNotMatch(view, /cadena · último lote/);
+  assert.doesNotMatch(view, /cv-terminal/);
+  assert.doesNotMatch(view, /Los pronósticos son estimaciones/);
+});
+
+test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 escalones', () => {
+  const escalera = {
+    status: 'ready',
+    data: {
+      activo: true,
+      reglas: {
+        cuota_min: 1.25, cuota_max: 2.10, stake: '10.00', freeroll_x: 2.5,
+        targets: [2.0, 2.8, 4.5, 7.5, 12.0, 20.0], max_escalones: 6,
+        prob_reto: 0.4761, prob_min: 0.69, prob_max: 0.95, por_dia: 1, dias_max: 10,
+        lineas_handicap: [-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
+      },
+      actuales: [
+        { reto_id: 101, estado: 'en_curso', ganados: 2, pasos_objetivo: 6, target_cuota: 2.0, saldo: '20.10', en_juego: null, stake_inicial: '10.00', retirado: '0.00', freeroll_x: 2.5, pasos: [], vip: [] },
+        { reto_id: 102, estado: 'en_curso', ganados: 1, pasos_objetivo: 6, target_cuota: 20.0, saldo: '15.00', en_juego: null, stake_inicial: '10.00', retirado: '0.00', freeroll_x: 2.5, pasos: [], vip: [] },
+      ],
+      historial: [
+        { reto_id: 100, estado: 'completado', ganados: 3, pasos_objetivo: 6, target_cuota: 4.5, retirado: '10.00', ganancia: '45.00', inicio: '2026-11-01T10:00:00Z' },
+      ],
+      resumen: { cerrados: 1, completados: 1, expirados: 0, ganancia: '45.00', invertido: '10.00', roi: 450.0, tasa_completados: 100 },
+      serie: [{ acumulado: '45.00', reto_id: 100 }],
+    },
+  };
+  const view = createConversionViews(helpers({ escalera })).escaleraView();
+  assert.match(view, /Objetivo ×2\.0/);
+  assert.match(view, /Objetivo ×20\.0/);
+  assert.match(view, /Qué es el freeroll\?/);
+  assert.match(view, /Completado/);
+  assert.doesNotMatch(view, /Cómo se elige cada escalón/);
+  assert.doesNotMatch(view, /LA REGLA/);
+  assert.doesNotMatch(view, /no es una garantía/);
+  assert.doesNotMatch(view, /muestra pequeña/);
+  assert.doesNotMatch(view, /Muestra en construcción/);
+  assert.doesNotMatch(view, /Los pronósticos son estimaciones/);
+  assert.doesNotMatch(view, /cv-legal/);
+});
+
+test('agruparHistorialPorDia junta varios parlays del mismo dia en una sola fila y limita a 10', () => {
+  const dias = [
+    { dia: '2026-11-07', tickets: [{ id: 1, cuota_total: 1.87, outcome: 'perdido' }] },
+    { dia: '2026-11-07', tickets: [{ id: 2, cuota_total: 1.94, outcome: 'perdido' }] },
+    { dia: '2026-11-07', tickets: [{ id: 3, cuota_total: 1.73, outcome: 'ganado' }] },
+    { dia: '2026-11-06', tickets: [{ id: 4, cuota_total: 2.10, outcome: 'ganado' }, { id: 5, cuota_total: 3.10, outcome: 'perdido' }] },
+  ];
+  const agrupado = agruparHistorialPorDia(dias, 10);
+  assert.equal(agrupado.length, 2);
+  assert.equal(agrupado[0].dia, '2026-11-07');
+  assert.equal(agrupado[0].tickets.length, 3);
+  assert.equal(agrupado[1].dia, '2026-11-06');
+  assert.equal(agrupado[1].tickets.length, 2);
+
+  // Probar tope de 10
+  const muchos = Array.from({ length: 15 }, (_, i) => ({
+    dia: `2026-11-${String(i + 1).padStart(2, '0')}`,
+    tickets: [{ id: i + 1, cuota_total: 2.0, outcome: 'ganado' }],
+  }));
+  const limitado = agruparHistorialPorDia(muchos, 10);
+  const totalTickets = limitado.reduce((acc, d) => acc + d.tickets.length, 0);
+  assert.equal(totalTickets, 10);
+});
+
+test('parley v2.1 agrupa tickets del mismo dia en una sola fila en el historial', () => {
+  const parley = {
+    status: 'ready',
+    data: {
+      activo: true,
+      dias: [],
+      v2: {
+        activo: true,
+        estrategia: 'objetivos_cuota',
+        version: '2.1',
+        reglas: { targets: [2.1, 3.1, 8.2, 12.1], deportes: ['futbol', 'tenis', 'nba'] },
+        dias: [
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 2.06, locked: false, gratis: true, patas: [] }],
+          },
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 1.87, outcome: 'perdido', locked: false, patas: [] }],
+          },
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 1.94, outcome: 'perdido', locked: false, patas: [] }],
+          },
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 1.73, outcome: 'ganado', locked: false, patas: [] }],
+          },
+        ],
+      },
+    },
+  };
+  const view = createConversionViews(helpers({ parley })).parleyView();
+  // En el historial solo debe existir un único <details class="cv-day"> para el día 2026-11-07
+  const matches = view.match(/<details class="cv-day">/g) ?? [];
+  assert.equal(matches.length, 1, 'los 3 parlays del día deben quedar en una única fila');
+  assert.match(view, /1\.87 ✗/);
+  assert.match(view, /1\.94 ✗/);
+  assert.match(view, /1\.73 ✓/);
+});
+
+test('escalera por objetivo de cobro: describe objetivos y no promete un porcentaje del reto entero', () => {
+  const data = {
+    activo: true,
+    reglas: { cuota_min: 1.25, cuota_max: 2.1, stake: '10.00', freeroll_x: 2.5, longitudes: [2, 2.8, 4.5], targets: [2, 2.8, 4.5],
+      max_escalones: 6, prob_reto: 0.4761, prob_min: 0.69, prob_max: 0.95, dias_max: 10, por_dia: 1, umbrales: {}, lineas_handicap: [] },
+    actuales: [], historial: [], resumen: { cerrados: 0, completados: 0, expirados: 0 }, por_longitud: {}, serie: [],
+  };
+  const e = createConversionViews(helpers({ escalera: { status: 'ready', data } })).escaleraView();
+  assert.match(e, /Un reto abierto por cada objetivo de cobro \(×2 · ×2[.,]8 · ×4[.,]5\)/);
+  assert.match(e, /al menos 69% de probabilidad/);
+  assert.match(e, /hasta 6 escalones y 10 días/);
+  assert.match(e, /el reto no llega a su objetivo/);
+  assert.doesNotMatch(e, /al menos el 48%/);
+  assert.doesNotMatch(e, /Retos de 2 o 2[.,]8/);
 });

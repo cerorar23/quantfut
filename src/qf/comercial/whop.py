@@ -217,7 +217,7 @@ def apply_payment(c, data: dict) -> dict:
 
 def _ads_consent(c, account_id: int, checkout: dict | None) -> bool:
     """Decisión de medición de quien compró: la de su checkout, o la del último si el pago (una renovación)
-    no trae checkout. Sin ninguna fila (cuentas anteriores a db/103) se mantiene el comportamiento previo."""
+    no trae checkout. Sin ninguna fila (cuentas anteriores a db/104) se mantiene el comportamiento previo."""
     row = checkout
     if row is None:
         row = c.execute("SELECT ads_consent FROM whop_checkouts WHERE account_id = %s "

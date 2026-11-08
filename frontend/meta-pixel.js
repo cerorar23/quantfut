@@ -2,7 +2,7 @@
 // event_name + eventID. Coincidencia avanzada manual: datos en claro en `fbq('init', id, {...})` (el Pixel los
 // cifra), solo cuando hay sesión. No carga nada si no hay Pixel configurado o el navegador pide privacidad (GPC/DNT).
 //
-// Consentimiento (db/103, src/qf/comercial/meta_consent.py): el servidor dice el régimen según el país.
+// Consentimiento (db/104, src/qf/comercial/meta_consent.py): el servidor dice el régimen según el país.
 //   · opt-in  (EEE, Reino Unido, Suiza o país desconocido): el Pixel NO se carga hasta pulsar «Aceptar».
 //   · opt-out (resto): activo salvo «Rechazar» (decisión del titular, 15-oct).
 // La elección vive en la cookie propia `qf_ads` (si | no) para que el servidor también deje de enviar a Meta

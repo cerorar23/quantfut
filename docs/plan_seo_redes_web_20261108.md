@@ -292,7 +292,7 @@ Reglas:
 **Consentimiento (hecho en F0, rama `seo/f0-consentimiento`, sin desplegar):**
 - El servidor dice el régimen por el país de Cloudflare (`CF-IPCountry`): **opt-in** en EEE, Reino Unido, Suiza y país desconocido (el Pixel no carga hasta pulsar «Aceptar»); **opt-out** en el resto, respetando la decisión del 15-oct (activo salvo «Rechazar»). Países extra por `META_OPTIN_EXTRA`.
 - «Rechazar» y «Aceptar» con el mismo peso visual; GPC y Do Not Track cortan siempre; rechazar borra `_fbp`/`_fbc`.
-- La elección vive en la cookie propia `qf_ads` (`si`/`no`) para que también la lea el servidor: `meta_capi.enqueue` descarta los eventos web sin consentimiento, y el checkout de Whop guarda la decisión (`db/103`) para que el webhook de compra (Purchase/Subscribe) y las renovaciones la respeten.
+- La elección vive en la cookie propia `qf_ads` (`si`/`no`) para que también la lea el servidor: `meta_capi.enqueue` descarta los eventos web sin consentimiento, y el checkout de Whop guarda la decisión (`db/104`) para que el webhook de compra (Purchase/Subscribe) y las renovaciones la respeten.
 - Pendiente fuera del código: el texto de `/legal/privacidad` sigue diciendo que la medición «viene activada»; es un texto legal versionado y lo revisa el titular. Falta además un enlace «Preferencias de medición» en el pie (`openPreferences()` ya existe) y comprobar tras desplegar que Cloudflare envía `CF-IPCountry` (si no, todos serían opt-in).
 - Si se añade Google Analytics o Ads: Consent Mode v2.
 
@@ -344,7 +344,7 @@ No es asesoría legal: necesita la revisión de un profesional por país.
 
 | Fase | Qué | Terminado cuando |
 |---|---|---|
-| F0 | Consentimiento **hecho** (rama `seo/f0-consentimiento`, sin desplegar). Alinear `main` con producción: **hecho** en la misma rama, gana producción por decisión del titular (ver `harness/progreso.md` 8-nov). Decisiones de §13. | `main` = producción; Pixel solo con consentimiento donde la ley lo exige. |
+| F0 | Consentimiento **hecho** (rama `seo/f0-consentimiento`, sin desplegar). Alinear `main` con producción: **hecho** en `main` (#282), gana producción por decisión del titular (ver `harness/progreso.md` 8-nov). Decisiones de §13. | `main` = producción; Pixel solo con consentimiento donde la ley lo exige. |
 | F1 | Plantillas en el servidor + rutas reales + 404 HTML + redirección de `#` + `robots.txt` + índice de sitemaps + `noindex` de cuenta/panel/API. Primero las páginas estáticas: `/metodologia/`, `/sobre-nosotros/`, `/juego-responsable/`, `/historial/`, legal y portada. | Inspección de URLs muestra el contenido en el HTML; cero URLs con `#`; Search Console con el sitemap aceptado. |
 | F2 | Piloto NBA: pilares, equipos y partidos con ciclo de vida, `<head>` completo, imágenes OG por estado, JSON-LD, IndexNow (Bing). | Sharing Debugger, `@WebpageBot`, LinkedIn Post Inspector y un post de X muestran la tarjeta; Prueba de resultados enriquecidos sin errores; partidos indexados antes del inicio. |
 | F3 | Fútbol (13 competiciones, respetando competición ≠ liga del equipo) y tenis. Herramientas del día. | Igual que F2; umbral de equipos aplicado; sin crecimiento de «sin indexar». |

@@ -148,3 +148,21 @@ def test_informe_publico_v2_forma_acceso_y_textos(monkeypatch):
     libre = aplicar_acceso(inf, plus=False)["dias"][0]["tickets"]
     assert libre[0]["locked"] is False and libre[1]["locked"] is True and libre[2]["locked"] is False
     assert "patas" not in libre[1] and "cuota_total" not in libre[1]
+
+
+def test_resumen_publico_v2_solo_cuenta_parlays_publicados_y_liquidados():
+    from qf.publish.parley_v2_datos import resumen_publico_v2
+    info = {"dias": [
+        {"tickets": [
+            {"escalon": 1, "estado": "publicado", "outcome": "ganado", "factor_pago": 2.06, "prob_total": 0.48},
+            {"escalon": 3, "estado": "publicado", "outcome": "perdido", "factor_pago": 0.0, "prob_total": 0.12},
+            {"escalon": 2, "locked": True},
+            {"escalon": 4, "estado": "publicado", "outcome": None},
+            {"escalon": 0, "estado": "solo_referencia", "outcome": "ganado", "factor_pago": 1.73, "prob_total": None},
+            {"escalon": 1, "estado": "abstencion", "outcome": "perdido", "factor_pago": 0.0},
+        ]}]}
+    r = resumen_publico_v2(info)
+    assert r["total"] == {"n": 2, "aciertos": 1, "prob_media": 30.0, "acierto_real": 50.0,
+                          "unidades": 0.06, "roi": 3.0}
+    assert set(r["por_escalon"]) == {"1", "3"} and r["por_escalon"]["3"]["roi"] == -100.0
+    assert resumen_publico_v2({"dias": []})["total"]["n"] == 0

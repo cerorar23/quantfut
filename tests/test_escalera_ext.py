@@ -100,10 +100,18 @@ def test_sin_calificacion_espera_y_pasado_el_margen_es_nulo(tmp_path, ajustes):
     assert ext.resultado(viejo, NOW, tmp_path) == ("void", None, None, None)
 
 
+def test_void_sin_ninguna_fila_de_resultado_se_distingue_del_void_de_la_casa(tmp_path, ajustes):
+    # Sin archivo: falta de dato (se anula pero hay que avisar). Con la casa diciendo «void»: anulado de verdad.
+    assert ext.sin_filas_de_resultado(_paso(), NOW, tmp_path) is True
+    _resultados(tmp_path / "con_dato", bovada="void", pinnacle="won")
+    assert ext.sin_filas_de_resultado(_paso(), NOW, tmp_path / "con_dato") is False
+
+
 def test_un_reto_puede_mezclar_tenis_y_futbol_y_el_anterior_solo_futbol():
-    tenis = es.Opcion("tenis:t1", es.Candidato("h2h", "home", None, 0.96), 1.04, "bovada", deporte="tenis")
-    futbol = es.Opcion("eng.1:m1", es.Candidato("h2h", "home", None, 0.86), 1.12, "bet365")
+    # Regla del rediseño: cuota 1,25-2,10, probabilidad >= 0,69 y un escalón al día por reto.
+    tenis = es.Opcion("tenis:t1", es.Candidato("h2h", "home", None, 0.92), 1.30, "bovada", deporte="tenis")
+    futbol = es.Opcion("eng.1:m1", es.Candidato("h2h", "home", None, 0.86), 1.30, "bet365")
     plan = es.planificar([], [], [tenis, futbol])
-    assert [o.match_id for o in plan[0][2]] == ["tenis:t1", "eng.1:m1"]       # 0,96 · 0,86 ≥ 0,80
+    assert plan[0][2][0].match_id == "tenis:t1"            # el más probable primero
     anterior = es.Abierto(5, 1, 3, prob_objetivo=None, cuota_min=1.03, cuota_max=1.40)
-    assert es.elegir([tenis, futbol], anterior).match_id == "eng.1:m1"
+    assert es.elegir([tenis, futbol], anterior).match_id == "eng.1:m1"   # el reto anterior, solo fútbol

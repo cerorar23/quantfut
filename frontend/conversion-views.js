@@ -444,7 +444,9 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const heroCard = hero({
       eyebrow: 'RETOS · ESCALERA',
       title: r.cerrados ? `<em>${realNumber(r.completados)} de ${realNumber(r.cerrados)}</em> retos completados, y los fallidos también se ven` : 'Reto escalera',
-      lead: `Retos de ${(reglas.longitudes ?? [2]).map(n => realNumber(n)).join(' o ')} escalones${reglas.dias_max ? ` en ${realNumber(reglas.dias_max)} días como máximo` : ''} que empiezan con ${realNumber(reglas.stake, 0)} unidades: cada escalón juega todo el saldo${reglas.prob_reto ? ` y se elige para que el reto entero se complete al menos el ${realNumber(reglas.prob_reto * 100, 0)}% de las veces` : ` a un pronóstico de cuota ${realNumber(reglas.cuota_min, 2)}–${realNumber(reglas.cuota_max, 2)}`}. Ganarlos todos completa el reto; fallar uno lo cierra.`,
+      lead: reglas.targets?.length
+        ? `Un reto abierto por cada objetivo de cobro (${reglas.targets.map(t => `×${realNumber(t, t % 1 ? 1 : 0)}`).join(' · ')}), con ${realNumber(reglas.stake, 0)} unidades cada uno: cada escalón juega todo el saldo en un pronóstico de al menos ${realNumber((reglas.prob_min ?? 0.69) * 100, 0)}% de probabilidad y cuota ${realNumber(reglas.cuota_min, 2)}–${realNumber(reglas.cuota_max, 2)}. El reto se completa al llegar a su objetivo (hasta ${realNumber(reglas.max_escalones ?? 6)} escalones y ${realNumber(reglas.dias_max ?? 10)} días como máximo); fallar un escalón lo cierra.`
+        : `Retos de ${(reglas.longitudes ?? [2]).map(n => realNumber(n)).join(' o ')} escalones${reglas.dias_max ? ` en ${realNumber(reglas.dias_max)} días como máximo` : ''} que empiezan con ${realNumber(reglas.stake, 0)} unidades: cada escalón juega todo el saldo${reglas.prob_reto ? ` y se elige para que el reto entero se complete al menos el ${realNumber(reglas.prob_reto * 100, 0)}% de las veces` : ` a un pronóstico de cuota ${realNumber(reglas.cuota_min, 2)}–${realNumber(reglas.cuota_max, 2)}`}. Ganarlos todos completa el reto; fallar uno lo cierra.`,
       big: r.cerrados ? unidades(r.ganancia) : '—',
       bigLabel: 'ganancia acumulada',
       bigSub: r.cerrados ? `sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% completados` : 'Aún no se cerró ningún reto',
@@ -473,7 +475,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         reglas.freeroll_x
           ? ['¿Qué es el freeroll?', `Al llegar a ×${realNumber(reglas.freeroll_x, 1)} se retiran las unidades iniciales y se sigue con la ganancia: lo que queda va sin riesgo propio.`]
           : [`¿Por qué un ${objetivo80}% paga tan poco?`, `Porque la probabilidad de completar un reto es la de sus escalones multiplicadas, y la cuota también se multiplica. Si las cuotas son justas, probabilidad × cobro ≈ 1: un ${objetivo80}% cobra alrededor de ×1,2, menos el margen de la casa. No hay combinación de deportes ni de mercados que suba la probabilidad sin bajar el cobro.`],
-        [`¿Y si en ${realNumber(reglas.dias_max ?? 7)} días no aparece el segundo escalón?`, `El reto queda «Expirado»: conservas el saldo (lo ya ganado sigue ahí), pero no cuenta como cumplido. Por eso se publica cuántos expiran, igual que los fallidos.`],
+        [reglas.targets?.length ? `¿Y si en ${realNumber(reglas.dias_max ?? 10)} días el reto no llega a su objetivo?` : `¿Y si en ${realNumber(reglas.dias_max ?? 7)} días no aparece el segundo escalón?`, `El reto queda «Expirado»: conservas el saldo (lo ya ganado sigue ahí), pero no cuenta como cumplido. Por eso se publica cuántos expiran, igual que los fallidos.`],
         ['¿Pueden cambiar un escalón después?', 'No. Se sella en la cadena antes del partido; tocarlo rompería la cadena.'],
       ])}
       ${legal}`;
