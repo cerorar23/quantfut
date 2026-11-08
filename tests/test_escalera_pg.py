@@ -283,3 +283,25 @@ def test_reto_del_80_abierto_no_ocupa_el_objetivo_2(monkeypatch):
     out = ed.select_and_persist(ahora, dry_run=True)
     assert out["retos_abiertos"] == 0 and out["necesitan_escalon"] == 1
     assert 2.0 in [p["nuevo_de"] for p in out["plan"]]
+
+
+def test_escalon_externo_anulado_sin_resultado_avisa_por_telegram(monkeypatch):
+    from qf.publish import escalera_ext as ext
+    from qf.publish import telegram as tg
+
+    ahora = _dia()
+    inicio = ahora - timedelta(days=4)
+    evento = uuid.uuid4().hex[:10]
+    r = _reto()
+    db.execute("""INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, prob, fair_price,
+                                              price, book, odds_source, odds_as_of, deporte, evento_id,
+                                              evento_sport, evento_inicio, evento_local, evento_visitante)
+                  VALUES (%s, 1, NULL, 'h2h', 'home', 0.95, 1.05, 1.30, 'bovada', 'propline', now(),
+                          'tenis', %s, 'tennis_atp', %s, 'Jugador A', 'Jugador B')""", (r, evento, inicio))
+    avisos = []
+    monkeypatch.setattr(tg, "alert", lambda texto: avisos.append(texto))
+    monkeypatch.setattr(ext, "sin_filas_de_resultado", lambda paso, now, root=None: True)
+    ed.settle_pending(ahora)
+    res = db.query_one("""SELECT o.outcome FROM escalera_resultados o JOIN escalera_pasos p USING (paso_id)
+                          WHERE p.evento_id = %s""", (evento,))
+    assert res["outcome"] == "void" and len(avisos) == 1 and "SIN resultado" in avisos[0]
