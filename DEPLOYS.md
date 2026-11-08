@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 17:22 UTC · La web dejaba de verse cada 90 s («Consultando…») · VPS
+- Causa: el temporizador de `frontend/app.js` llamaba a `refreshPublicData()`, que vaciaba los datos y las cachés y repintaba antes de pedir nada; cada 90 s la página entera pasaba a «Consultando…» y perdía la posición.
+- Cambio: la consulta periódica es silenciosa (`refreshPublicData({ silent: true })`): mantiene lo visible, solo repinta si la respuesta cambió y un fallo puntual no reemplaza datos buenos. Sesión y botón «Actualizar» siguen vaciando todo.
+- Archivos: solo `app.js` (sha256 `088edbce…`) e `index.html` (`?v=20261108v17`, sha256 `ef2260de…`), generados desde el `app.js` de producción (`cac71809…`, idéntico al local) con únicamente este cambio. Sin reiniciar el contenedor.
+- Copiados a `/home/qf/quantfut/frontend/` y `quantfut-api-1:/app/frontend/`; hashes iguales en ambos y en `https://pronosticosdeportivos.pro/app.js?v=20261108v17`.
+- Vuelta atrás: respaldo en `~/respaldos/frontend_recarga_silenciosa_20261108/` (`app.js` `cac71809…`, `index.html` `0021f657…`); copiar ambos a las dos rutas de arriba con `cp` y `docker cp`.
+- Llevado a `main` en la rama `web/recarga-silenciosa` (mismos hashes que lo desplegado).
+
 ### 2026-11-08 · `main` alcanza a producción: frontend de la rama del rediseño y ruta `/parley` v2.1 (este PR; sin despliegue nuevo)
 - `frontend/`: `app.js`, `index.html` e `historial-views.js` quedan idénticos a producción (md5 `634d3a05`, `55d02c93`, `1e316114`); `conversion-views.js` es el desplegado (md5 `497b3b20`, con el texto de Escalera por objetivos). Las pruebas del frontend (148) pasan. Se descartan los cambios de `src/`, `db/` y `tests/` de `feature/escalera-redesign-2026` (el rediseño bueno es el PR #279).
 - `src/qf/api/main.py` y `parley_v2_datos.py`: `/parley` devuelve v2.1 como informe principal con el resumen real (`resumen_publico_v2`), como ya hace producción. El `main.py` de producción sigue difiriendo de `main` en otras rutas.

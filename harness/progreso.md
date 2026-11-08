@@ -8046,6 +8046,9 @@ Decision: Disenar, implementar y verificar los componentes operativos para la pu
      * **G-cordura**: PASA (Brier score muestra 300 = 0,22267 $\ge 0,18$; ATP 0,21544, WTA 0,23954).
      * Artefacto: `modelo_s6/g_fuga_resultado.json`.
 
+## 8-nov-2026 · La web «se recargaba» cada 90 s
+No era una recarga del navegador: el temporizador de `frontend/app.js` llamaba a `refreshPublicData()`, que vaciaba `publicData` y todas las cachés y repintaba antes de pedir nada, así que cada 90 s la página entera pasaba a «Consultando…», saltaba arriba y cerraba lo abierto. La consulta periódica ahora es silenciosa: deja lo que se ve, solo repinta si la respuesta cambió y un fallo puntual no tapa con error un dato que estaba bien. El vaciado completo se mantiene para el cambio de sesión y el botón «Actualizar», donde sí se espera. Medido en local contra los datos de producción: a los 83 s se piden los 8 recursos y no hay repintado.
+
 
 ## 8-nov-2026 · Plan SEO y consentimiento de la medición web (F0)
 La web es una SPA con rutas `#` y HTML vacío, así que para Google y para cualquier bot de redes solo existe `/`: el primer paso del plan es servir HTML completo desde el mismo FastAPI. Se descartan del plan original por contradecir la documentación: IndexNow para Google (no lo admite), la Indexing API (solo empleos y emisiones en directo), `lastmod` por minuto (solo cuenta si es verificable), la calculadora de Kelly con importes, los enlaces «dofollow» de plataformas de tipsters y traducir los 6 idiomas de golpe con un LLM. El contenido VIP no va nunca en el HTML público.
