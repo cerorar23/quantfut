@@ -3962,3 +3962,12 @@ ead_closing, quotes). Exclusión estricta de DFS, exchanges, apuestas en juego (
 - [x] **Operaciones y compuertas (`apps/tenis/ops/`)**:
   - `Dockerfile.tenis-motor`, `imagen_actual`, `imagen_actual.anterior`, `cron_tenis.txt`, `ensayo_operativo.sh`, `ensayo_vuelta_atras.sh`.
   - Auditoria `g_fuga.py`: G-fuga pasa (0 violaciones), G-reproducibilidad pasa (0 discrepancias, hash identico), G-cordura pasa (Brier = 0.22267 >= 0.18). Artefacto: `modelo_s6/g_fuga_resultado.json`.
+
+### Web: F1.1 base técnica del SEO, 2026-11-08
+Plan: `docs/plan_seo_redes_web_20261108.md` (F1). Rama `seo/f1-1-base-tecnica`.
+- [x] `src/qf/api/seo.py`: `robots.txt` (permite todo, `Content-Signal` «buscar y citar, no entrenar», línea `Sitemap:`), índice `/sitemap.xml` + `/sitemap-paginas.xml` (solo URLs reales, sin `lastmod` hasta que haya fecha verificable), `X-Robots-Tag: noindex` por primer segmento de ruta (panel, cuentas, API, JSON públicos) y para todo el host `api.`, `www.` → dominio sin www (301, 308 si no es lectura), 404 en HTML solo para quien navega (`Accept: text/html`, fuera de rutas privadas).
+- [x] `tests/test_seo_base.py` (59 pruebas sobre la `app` real, sin Redis ni base).
+- [ ] Desplegar (DEPLOYS.md): solo imagen de la API (`seo.py` + `main.py`); después comprobar en el dominio real `/robots.txt` (Cloudflare antepone su bloque de «content signals»: confirmar que no choca con el nuestro), `/sitemap.xml`, `X-Robots-Tag` en `/app/v1/...`, y `www.` → 301.
+- [ ] Dar de alta `https://pronosticosdeportivos.pro/sitemap.xml` en Search Console (propiedad de dominio) y comprobar `api.` y `www.`: mientras `api.` siga indexada hay que dejarla rastreable con `noindex`; el `Disallow` solo después de que desaparezca.
+- [ ] Avisar: tras la redirección de `www`, quien tenga la sesión iniciada en `www.` tendrá que entrar de nuevo (la cookie es del host).
+- [ ] F1.2: HTML desde el servidor con rutas reales (metodología, juego responsable, historial, portada); F1.3: sobre nosotros y legal.

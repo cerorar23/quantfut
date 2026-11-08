@@ -71,7 +71,7 @@ from .fichas import router as fichas_router
 from .panel import router as panel_router
 from .web import router as web_router
 from .mobile import member, router as mobile_router
-from . import mensajes
+from . import mensajes, seo
 from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
@@ -131,6 +131,9 @@ _client_key = ratelimit.client_key
 
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
+    # Un solo host público: www redirige al dominio sin www antes de gastar cupo ni tocar la app.
+    if (redireccion := seo.redireccion_www(request)) is not None:
+        return redireccion
     # /control lleva contador propio: con el global compartido, su tope se
     # comparaba contra las visitas a la web y a sus estáticos del mismo
     # minuto, y el panel devolvía 429 al operador. Desde 2026-10-07 el panel
@@ -150,6 +153,7 @@ async def security_middleware(request: Request, call_next):
                             status_code=429)
 
     response = await call_next(request)
+    seo.aplicar_cabeceras(request, response)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -163,6 +167,8 @@ async def security_middleware(request: Request, call_next):
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """Igual que el manejador por defecto de FastAPI, pero traduce los mensajes
     conocidos al idioma de `Accept-Language` (ver `mensajes.py`)."""
+    if exc.status_code == 404 and seo.quiere_html(request):
+        return seo.pagina_404()   # quien navega ve una página; la API y lo privado siguen en JSON
     lang = mensajes.idioma(request.headers.get("accept-language"))
     return JSONResponse({"detail": mensajes.traducir_detalle(exc.detail, lang)},
                         status_code=exc.status_code, headers=getattr(exc, "headers", None))
@@ -821,6 +827,7 @@ app.include_router(meta_router)
 app.include_router(compras_router)
 app.include_router(compras_store_router)
 app.include_router(legal_router)
+app.include_router(seo.router)
 app.include_router(tenis_v2_router)
 
 if os.path.isdir(STATIC_DIR):
