@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 17:47 UTC · Tarjeta de partido sin pronóstico destacado: texto nuevo · VPS
+- Solicitud del titular: en la ficha de un partido sin pronóstico destacado, decirle al usuario que no hay un pronóstico con probabilidad alta en vez de enseñar la regla (75 % y cuota).
+- Cambio: en `winForecast` de `frontend/app.js` el mensaje pasa a «Hoy no hay un pronóstico con probabilidad alta en este partido» y se retira el cálculo del rango de cuota, que solo servía a ese texto. No cambia la regla del destacado, que sigue decidiendo el servidor.
+- Archivos: solo `app.js` (sha256 `1b6519a7…`) e `index.html` (`?v=20261108v18`, sha256 `0aa475bd…`), generados desde `main` (`e111df5c`, idéntico a lo que corría). Sin reiniciar el contenedor.
+- Copiados a `/home/qf/quantfut/frontend/` y `quantfut-api-1:/app/frontend/`; hashes iguales en ambos y en `https://pronosticosdeportivos.pro/app.js?v=20261108v18`. Comprobada la web en vivo: carga 50 partidos sin errores de consola.
+- Vuelta atrás: respaldo en `~/respaldos/frontend_tarjeta_sin_destacado_20261108/` (`app.js` `088edbce…`, `index.html` `ef2260de…`); copiar ambos a las dos rutas de arriba con `cp` y `docker cp`.
+
 ### 2026-11-08 17:22 UTC · La web dejaba de verse cada 90 s («Consultando…») · VPS
 - Causa: el temporizador de `frontend/app.js` llamaba a `refreshPublicData()`, que vaciaba los datos y las cachés y repintaba antes de pedir nada; cada 90 s la página entera pasaba a «Consultando…» y perdía la posición.
 - Cambio: la consulta periódica es silenciosa (`refreshPublicData({ silent: true })`): mantiene lo visible, solo repinta si la respuesta cambió y un fallo puntual no reemplaza datos buenos. Sesión y botón «Actualizar» siguen vaciando todo.
