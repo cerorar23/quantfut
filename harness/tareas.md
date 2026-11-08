@@ -3962,3 +3962,12 @@ ead_closing, quotes). Exclusión estricta de DFS, exchanges, apuestas en juego (
 - [x] **Operaciones y compuertas (`apps/tenis/ops/`)**:
   - `Dockerfile.tenis-motor`, `imagen_actual`, `imagen_actual.anterior`, `cron_tenis.txt`, `ensayo_operativo.sh`, `ensayo_vuelta_atras.sh`.
   - Auditoria `g_fuga.py`: G-fuga pasa (0 violaciones), G-reproducibilidad pasa (0 discrepancias, hash identico), G-cordura pasa (Brier = 0.22267 >= 0.18). Artefacto: `modelo_s6/g_fuga_resultado.json`.
+
+### Web: SEO y redes sociales para todas las páginas, 2026-11-08
+Plan corregido en `docs/plan_seo_redes_web_20261108.md` (revisa el plan del titular contra la documentación de Google, Meta y X). No avanza de F0 sin las decisiones de su §13.
+- [x] Plan escrito: mapa de todas las páginas, ciclo de vida de la URL de partido, `<head>`, redes (WhatsApp, Facebook, Instagram, Telegram, X, LinkedIn), JSON-LD, texto desde datos, 6 idiomas, consentimiento, cabeceras y cumplimiento.
+- [x] F0 · consentimiento de la medición web (rama `seo/f0-consentimiento`): opt-in en EEE/Reino Unido/Suiza/país desconocido, opt-out en el resto, cookie `qf_ads` leída por el servidor, puerta única en `meta_capi.enqueue`, decisión guardada en `whop_checkouts.ads_consent` (`db/103`). Pruebas: `tests/test_meta_consent.py`, `frontend/meta-pixel.test.mjs`.
+- [ ] F0 · desplegar el consentimiento (DEPLOYS.md): aplicar `db/103` antes que la API, subir `meta-pixel.js`, `membership.js`, `app.js`, `index.html`, `conversion.css` con las versiones `?v=consentimiento-20261108`; comprobar que Cloudflare envía `CF-IPCountry`.
+- [ ] F0 · enlace «Preferencias de medición» en el pie (`openPreferences()` ya existe) y revisión del texto de `/legal/privacidad` («viene activada»).
+- [x] F0 · alinear `main` con producción (decisión del titular: gana producción): `conversion-views.js`, su prueba e `historial-views.js` son los del VPS (`?v=20261108v16`); `main` pierde `parleyV2Section`, `ligaEscalon` y las banderas «muestra pequeña». Frontend 148/148.
+- [ ] F1-F8: ver el plan (HTML desde el servidor con rutas reales, sitemaps, piloto NBA, fútbol, tenis, idiomas).

@@ -68,7 +68,7 @@ test('la vista enseña los fallos, la cuota real y marca la del modelo con ≈',
   assert.ok(html.includes('Fallado') && html.includes('Menos de 4,5 goles'));
   assert.ok(html.includes('1.28') && html.includes('1.21'));
   assert.ok(html.includes('≈ 1.47') && html.includes('Modelo · sin casa'));
-  assert.ok(html.includes('Muestra en construcción'), 'con 4 resultados la muestra es pequeña');
+  assert.ok(!html.includes('Muestra en construcción'), 'la etiqueta de muestra pequeña se retiró de producción el 8-nov');
   assert.ok(!html.includes('Metodología y registros de verificación'));
 });
 

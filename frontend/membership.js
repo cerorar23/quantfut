@@ -4,7 +4,7 @@
 // (catálogo público de cuenta-api.js, editable en el panel /control): aquí solo viven los textos.
 import * as cuenta from './cuenta-api.js?v=b298f1c04385';
 import { googleIdToken } from './google-auth.js?v=w2b3c4d5e6f7';
-import { init as initPixel, identify, track, browserIds } from './meta-pixel.js?v=m1';
+import { init as initPixel, identify, track, browserIds } from './meta-pixel.js?v=consentimiento-20261108';
 import { mount as mountCheckout, destroy as destroyCheckout } from './whop-checkout.js?v=w1a2b3c4d5e6';
 
 // Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
@@ -424,7 +424,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     try {
       const config = await cuenta.paymentConfig();
       state.payConfig = { status: 'ready', enabled: Boolean(config.enabled), pixelId: config.pixelId };
-      initPixel(config.pixelId, state.session);
+      initPixel(config.pixelId, state.session, config.consentRegime);
     } catch {
       state.payConfig = { status: 'ready', enabled: false };
     }

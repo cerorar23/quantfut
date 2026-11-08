@@ -44,6 +44,10 @@ def enqueue(c, account_id: int, event_name: str, event_id: str,
             web_context: dict | None = None) -> bool:
     if not enabled() or not allowed(c, account_id):
         return False
+    # Única puerta del consentimiento web: quien rechazó la medición (o no la aceptó donde se exige)
+    # no sale hacia Meta por ningún camino, ni siquiera con el correo cifrado. Ver meta_consent.py.
+    if web_context is not None and web_context.get("ads_consent") is False:
+        return False
     row = c.execute(
         """INSERT INTO meta_events (event_id, account_id, event_name, custom_data, action_source, web_context)
            VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (event_id) DO NOTHING RETURNING event_id""",

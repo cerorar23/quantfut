@@ -19,7 +19,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from . import mensajes, ratelimit
-from ..comercial import correo, cuentas, meta_datos, suscripciones
+from ..comercial import correo, cuentas, meta_consent, meta_datos, suscripciones
 from ..comercial.cuentas import CuentaError
 from ..comercial.entrega import picks_for_tiers
 from ..config import settings
@@ -170,11 +170,15 @@ def web_context(request: Request) -> dict | None:
     necesita para emparejar el evento de servidor (EMQ). Solo para peticiones de la web."""
     if not _is_web(request):
         return None
+    # Sin consentimiento no se guarda nada del navegador; el marcador basta para que `enqueue` descarte
+    # el evento (y para que no se encole como evento de app, que es lo que pasaría con None).
+    if not meta_consent.from_request(request):
+        return {"ads_consent": False}
     source = (request.headers.get("referer") or request.headers.get("origin") or "")[:1000]
     ctx = {"fbp": request.cookies.get("_fbp"), "fbc": request.cookies.get("_fbc"),
            "client_ip": ratelimit.client_ip(request), "user_agent": request.headers.get("user-agent"),
            "source_url": source or None}
-    return {k: v for k, v in ctx.items() if v} or None
+    return {**{k: v for k, v in ctx.items() if v}, "ads_consent": True}
 
 
 def _deliver(tokens: dict, request: Request, response: Response) -> dict:

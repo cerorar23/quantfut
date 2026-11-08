@@ -549,3 +549,7 @@
 @media (prefers-reduced-motion: no-preference) {
   .cv-hist-ring .fill { transition: stroke-dasharray 0.8s ease-out; }
 }
+
+/* Aviso de medición: «Rechazar» y «Aceptar» con el mismo peso visual (membership.css está congelado). */
+#qf-ads-notice button[data-ads=si],#qf-ads-notice button[data-ads=no]{min-height:36px;background:transparent;color:inherit;border:1px solid var(--text,#e6edf3)}
+#qf-ads-notice button[data-ads=si]:hover,#qf-ads-notice button[data-ads=no]:hover,#qf-ads-notice button[data-ads=si]:focus-visible,#qf-ads-notice button[data-ads=no]:focus-visible{background:var(--text,#e6edf3);color:#0a0e14}

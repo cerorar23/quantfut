@@ -3,20 +3,24 @@ from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from . import cuentas as api, ratelimit
-from ..comercial import whop
+from ..comercial import meta_consent, whop
 
 router = APIRouter(prefix="/app/v1/whop", tags=["whop"], dependencies=[Depends(api.require_enabled)])
 webhooks = APIRouter(tags=["whop"], include_in_schema=False)
 
 
 @router.get("/config")
-def config():
-    """Lo único que el navegador necesita saber: si hay pago en línea y qué Pixel de Meta cargar (público)."""
-    return {"enabled": whop.enabled(), "pixelId": os.getenv("META_PIXEL_ID") or None}
+def config(request: Request, response: Response):
+    """Lo único que el navegador necesita saber: si hay pago en línea, qué Pixel de Meta cargar y bajo qué
+    régimen de consentimiento (opt-in / opt-out, según el país). Varía por visita: nunca se cachea."""
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["Vary"] = "CF-IPCountry"
+    return {"enabled": whop.enabled(), "pixelId": os.getenv("META_PIXEL_ID") or None,
+            "consentRegime": meta_consent.regimen_from_request(request)}
 
 
 class CheckoutIn(BaseModel):
@@ -34,7 +38,7 @@ def checkout(body: CheckoutIn, request: Request, account: dict = Depends(api.cur
             account, body.plan_code, fbp=body.fbp or request.cookies.get('_fbp'),
             fbc=body.fbc or request.cookies.get('_fbc'),
             client_ip=ratelimit.client_ip(request), user_agent=request.headers.get("user-agent"),
-            source_url=body.source_url)
+            source_url=body.source_url, ads_consent=meta_consent.from_request(request))
     except whop.WhopError as error:
         status = {"pagos_deshabilitados": 503, "whop_no_disponible": 502}.get(error.code, 409)
         raise HTTPException(status, {"code": error.code, "message": error.message}) from None
