@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 03:50 UTC · Retiro de la sección «La Regla / Cómo se elige cada escalón» de la web · VPS y Local
+- Solicitud del titular: suprimir por completo la sección explicativa «La Regla / Cómo se elige cada escalón» de la vista de Reto Escalera (`#escalera`).
+- Archivos modificados:
+  - `frontend/conversion-views.js`: retirada la sección `${regla}` y markup asociado de `escaleraView()`.
+  - `frontend/conversion-views.test.mjs`: pruebas actualizadas con `assert.doesNotMatch(/Cómo se elige cada escalón/)` y `assert.doesNotMatch(/LA REGLA/)` (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v5`.
+- Despliegue en VPS:
+  - Sincronizados `conversion-views.js`, `app.js` e `index.html` en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Servicio `quantfut-api-1` reiniciado. Verificado que `https://pronosticosdeportivos.pro/` sirve `v5` sin rastro de la regla.
+
 ### 2026-11-08 03:30 UTC · Incorporación Reto Duplicador (×2.00) y Objetivos Cuantitativos Definitivos · VPS y Local
 - Solicitud del titular: añadir el "Reto Duplicador" (meta ×2.00) para dotar a la plataforma de una modalidad de alta frecuencia de victoria (47.0% de acierto y ROI positivo), completando la gama definitiva de 6 objetivos.
 - Gama de Objetivos Definitiva (`TARGETS`):

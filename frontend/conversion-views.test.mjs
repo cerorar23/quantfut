@@ -132,13 +132,12 @@ test('escalera al 80 % en 7 días: umbral, plazo, expirados y sin freeroll', () 
   const e = createConversionViews(helpers({ escalera })).escaleraView();
   assert.match(e, /al menos el 80% de las veces/);
   assert.match(e, /Retos de 2 escalones en 7 días como máximo/);
-  assert.match(e, /89[.,]4% por escalón en un reto de 2\./);
-  assert.match(e, /hasta 2, de partidos distintos/);
   assert.match(e, /Expirado/);
   assert.match(e, /en 7 días no aparece el segundo escalón/);
   assert.match(e, /reto al 80% como mínimo/);
   assert.match(e, /Por qué un 80% paga tan poco/);
   assert.doesNotMatch(e, /Freeroll a|freeroll\?/);
+  assert.doesNotMatch(e, /Cómo se elige cada escalón/);
 });
 
 test('parley v2.1 sustituye a v1 como vista principal con cuatro objetivos y multideporte', () => {
@@ -220,6 +219,8 @@ test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 es
   const view = createConversionViews(helpers({ escalera })).escaleraView();
   assert.match(view, /Objetivo ×2\.0/);
   assert.match(view, /Objetivo ×20\.0/);
-  assert.match(view, /Freeroll a ×2\.5/);
+  assert.match(view, /Qué es el freeroll\?/);
   assert.match(view, /Completado/);
+  assert.doesNotMatch(view, /Cómo se elige cada escalón/);
+  assert.doesNotMatch(view, /LA REGLA/);
 });
