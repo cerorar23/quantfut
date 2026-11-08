@@ -33,6 +33,20 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 05:05 UTC · Textos de alta conversión y badges atractivos en Alta Probabilidad · VPS y Local
+- Solicitud del titular: reescribir la descripción y elementos del área de Alta Probabilidad (`#alta`) con un enfoque persuasivo, atractivo y de alta conversión hacia usuarios VIP.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - `eyebrow`: actualizado a `ALTA PROBABILIDAD · MÁXIMA PRECISIÓN MATEMÁTICA`.
+    - `lead`: redactado a *«Filtramos miles de mercados para darte solo las selecciones con la mayor probabilidad matemática de victoria. Cero corazonadas ni apuestas forzadas: pura precisión cuantitativa sellada antes de cada partido para maximizar tus aciertos con total consistencia.»*
+    - `chips`: sustituida la etiqueta técnica `Real y prometido, dentro del margen de error` por `Acierto real comprobado` (con tono `good` verde brillante) y `Modelo cuantitativo` (accent).
+    - Estado vacío de hoy redactado con enfoque de protección de banca del apostador.
+  - `frontend/conversion-views.test.mjs`: 30/30 pruebas pasando.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v15`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
 ### 2026-11-08 04:55 UTC · Retiro del texto legal de advertencia al pie de las vistas · VPS y Local
 - Solicitud del titular: suprimir el pie legal de texto («Los pronósticos son estimaciones, no garantías: se pierde a menudo y ninguna racha asegura la siguiente...»).
 - Archivos modificados:

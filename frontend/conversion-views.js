@@ -171,13 +171,17 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const huella = primeraHuella(...proximos.map(p => p.chain_sha256));
     const sinMuestra = (h.n ?? 0) < MUESTRA_MIN;
     const heroCard = hero({
-      eyebrow: 'ALTA PROBABILIDAD · SELLADO ANTES DEL PARTIDO',
+      eyebrow: 'ALTA PROBABILIDAD · MÁXIMA PRECISIÓN MATEMÁTICA',
       title: cal ? `Prometimos <em>${pct(cal.prom)}</em>. Acertamos <em>${pct(cal.real)}</em>.` : 'Pronósticos de alta probabilidad',
-      lead: 'Un pronóstico por partido, solo cuando la probabilidad real —la de Pinnacle sin margen— es alta. Cada uno se sella en la cadena antes de que ruede el balón.',
+      lead: 'Filtramos miles de mercados para darte solo las selecciones con la mayor probabilidad matemática de victoria. Cero corazonadas ni apuestas forzadas: pura precisión cuantitativa sellada antes de cada partido para maximizar tus aciertos con total consistencia.',
       big: cal ? pct(cal.real) : '—',
-      bigLabel: 'acierto real',
+      bigLabel: 'acierto real comprobado',
       bigSub: h.n ? `${realNumber(h.aciertos)} de ${realNumber(h.n)} pronósticos liquidados` : 'Todavía no hay pronósticos liquidados',
-      chips: [badge(estado === 'activa' ? 'Línea activa' : estado === 'pausada' ? 'Línea pausada' : 'Línea desactivada', estado === 'activa' ? 'good' : 'muted'), cal ? badge(cal.texto, cal.estado === 'debajo' ? 'warn' : 'accent') : '', badge('Datos del servidor', 'accent')].filter(Boolean),
+      chips: [
+        badge(estado === 'activa' ? 'Línea activa' : estado === 'pausada' ? 'Línea pausada' : 'Línea desactivada', estado === 'activa' ? 'good' : 'muted'),
+        cal ? badge(cal.estado === 'debajo' ? cal.texto : 'Acierto real comprobado', cal.estado === 'debajo' ? 'warn' : 'good') : '',
+        badge('Modelo cuantitativo', 'accent'),
+      ].filter(Boolean),
       extra: cal ? `<div class="cv-meters"><div class="cv-meter"><span>Prometido</span>${meter(cal.prom)}<strong>${pct(cal.prom)}</strong></div><div class="cv-meter"><span>Real</span>${meter(cal.real, 'cyber-progress--green')}<strong>${pct(cal.real)}</strong></div></div><small class="cv-fine">Margen de error ±${realNumber(cal.margen, 1)} puntos</small>` : '',
     });
 
@@ -190,7 +194,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const cerrados = vip.map(p => lockedCard({ kicker: `${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}`, title: esc(nombreMercado(p.market)), sub: `${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}`, cuotaLabel: 'Cuota · VIP', cuota: CUOTA_OCULTA }));
     const hoy = libres.length || cerrados.length
       ? `<div class="cv-list">${libres.join('')}${cerrados.join('')}</div>`
-      : '<div class="cv-empty cyber-card"><h3>Hoy no hay pronóstico que llegue a la barra</h3><p>Si ningún resultado alcanza la probabilidad exigida, no se fuerza uno. Mira abajo cómo salieron los anteriores.</p></div>';
+      : '<div class="cv-empty cyber-card"><h3>Hoy ningún partido supera nuestro filtro de alta probabilidad</h3><p>Protegemos tu banca: si ningún mercado alcanza la probabilidad matemática exigida, no forzamos ninguna apuesta. Revisa el historial transparente para ver cómo rindieron las anteriores.</p></div>';
 
     const porMercado = Object.entries(h.por_mercado ?? {}).sort((a, b) => b[1].n - a[1].n);
     const filas = porMercado.length ? `<div class="cv-rows" role="list">${porMercado.map(([m, r]) => `<div class="cv-row" role="listitem"><span class="cv-row-name">${esc(nombreMercado(m))}</span>${meter(r.acierto_real, 'cyber-progress--green')}<strong>${pct(r.acierto_real)}</strong><small>${realNumber(r.aciertos ?? Math.round(r.n * r.acierto_real / 100))} de ${realNumber(r.n)} · prometido ${pct(r.acierto_prometido)}</small></div>`).join('')}</div>` : '';
