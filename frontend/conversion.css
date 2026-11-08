@@ -549,3 +549,15 @@
 @media (prefers-reduced-motion: no-preference) {
   .cv-hist-ring .fill { transition: stroke-dasharray 0.8s ease-out; }
 }
+
+/* Pie global de la SPA (app.js · siteFooter): aviso +18 y enlaces a las páginas de confianza. */
+.qf-pie { max-width: 1180px; margin: 0 auto; padding: 28px 20px 40px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.6; color: color-mix(in srgb, currentColor 72%, transparent); }
+.qf-pie p { margin: 0 0 12px; }
+.qf-pie nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.qf-pie a { display: inline-block; padding: 8px 0; color: inherit; text-decoration: underline; text-underline-offset: 3px; }   /* área táctil ≥ 36 px */
+.qf-pie a:hover, .qf-pie a:focus-visible { color: currentColor; }
+.qf-pie-18 { display: inline-block; width: 34px; height: 34px; margin-right: 10px; border: 2px solid currentColor; border-radius: 50%; line-height: 30px; text-align: center; font-weight: 700; vertical-align: middle; }
+@media (max-width: 760px) {
+  /* La barra de navegación inferior es fija: sin este hueco taparía los enlaces. */
+  .qf-pie { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
