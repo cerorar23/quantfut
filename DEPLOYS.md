@@ -33,6 +33,22 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:35 UTC · Agrupación por día y límite de últimos 10 parlays en el historial de Parley · VPS y Local
+- Solicitud del titular: agrupar el historial de Parley por día para que cuando haya 2 o 3 parlays en una misma fecha aparezcan en una sola fila (`.cv-day`), y limitar el historial a los últimos 10 parlays en total.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - Creada y exportada función `agruparHistorialPorDia(diasList, maxTickets = 10)`.
+    - Recorre los días y tickets anteriores desbloqueados, toma un máximo de 10 tickets y los agrupa en un `Map` por `dia`.
+    - Integrado en `parleyV2View` y en `parleyView` de respaldo: cada día tiene una única fila `<details class="cv-day">` con todos los badges de resultado (`1.87 ✗`, `1.94 ✗`, `1.73 ✓`...) juntos en el encabezado `summary`.
+  - `frontend/conversion-views.test.mjs`:
+    - Añadida prueba para `agruparHistorialPorDia` verificando agrupación por fecha y tope de 10 tickets.
+    - Añadida prueba para `parleyV2View` confirmando que 3 parlays del mismo día generan 1 único `<details class="cv-day">`.
+    - Suite de 30/30 pruebas pasando.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v12`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
 ### 2026-11-08 04:25 UTC · Retiro definitivo de la insignia «Muestra en construcción» en todas las vistas · VPS y Local
 - Solicitud del titular: suprimir por completo el badge amarillo `[MUESTRA EN CONSTRUCCIÓN]` de la cabecera de Parley del Día (`#parley`) y de todas las vistas de la web.
 - Archivos modificados:

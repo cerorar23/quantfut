@@ -67,6 +67,28 @@ export function primeraHuella(...fuentes) {
   return null;
 }
 
+export function agruparHistorialPorDia(diasList = [], maxTickets = 10) {
+  const recogidos = [];
+  for (const d of diasList) {
+    for (const t of (d.tickets ?? [])) {
+      if (!t.locked) {
+        recogidos.push({ ...t, _dia: d.dia });
+        if (recogidos.length >= maxTickets) break;
+      }
+    }
+    if (recogidos.length >= maxTickets) break;
+  }
+  const mapa = new Map();
+  for (const t of recogidos) {
+    const k = String(t._dia);
+    if (!mapa.has(k)) {
+      mapa.set(k, { dia: k, tickets: [] });
+    }
+    mapa.get(k).tickets.push(t);
+  }
+  return Array.from(mapa.values());
+}
+
 // ------------------------------------------------------------ vistas
 
 export function createConversionViews({ esc, realNumber, realPercent, realDate, realTime, badge, probabilityLabel, getData }) {
@@ -282,8 +304,9 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       ? `<p class="cv-sub">${esc(String(ultimo.dia))}${huella ? ` · lote sellado <code>${hash(huella)}</code>` : ''}. Se elige después del lote diario y antes de los partidos: fútbol, tenis y NBA. Una pata que falla lo pierde.</p><div class="cv-list">${tarjetasHoy}</div>`
       : `<div class="cv-empty cyber-card"><h3>${v2?.activo ? 'Hoy no hay combinaciones que cumplan la regla' : 'El parley del día todavía no está activo'}</h3><p>Sin combinaciones válidas, no se fuerza ninguna.</p></div>`;
 
+    const agrupados = agruparHistorialPorDia(anteriores, 10);
     const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${(d.tickets ?? []).filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${(d.tickets ?? []).filter(t => !t.locked).map(ticketV2).join('')}</div></details>`;
-    const historial = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${anteriores.length ? anteriores.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
+    const historial = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 
     return `${heroCard}${racha}
       <section class="cv-section" aria-label="Parley de hoy"><div class="cv-section-head"><p class="eyebrow">PARLEY DEL DÍA · FÚTBOL, TENIS Y NBA</p><h2>Cuatro objetivos de cuota, menos patas</h2></div>${hoy}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>
@@ -338,8 +361,9 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const filas = Object.entries(porEscalon).sort((a, b) => Number(a[0]) - Number(b[0])).map(([e, b]) => `<div class="cv-row" role="listitem"><span class="cv-row-name">Escalón ${esc(e)}</span>${meter(b.acierto_real, 'cyber-progress--green')}<strong>${realNumber(b.aciertos)} de ${realNumber(b.n)}</strong><small>real ${pct(b.acierto_real, 0)} · prometido ${pct(b.prob_media, 0)} · <span class="${Number(b.unidades) >= 0 ? 'cv-pos' : 'cv-neg'}">${unidades(b.unidades)}</span></small></div>`).join('');
     const prueba = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Historial del parley"><div class="cv-section-head"><p class="eyebrow">HISTORIAL PÚBLICO</p><h2>Prometido frente a real, escalón por escalón</h2></div>${filas ? `<div class="cv-rows" role="list">${filas}</div>` : '<p>El historial empieza con el primer día sellado.</p>'}<div class="cv-honest cyber-alert cyber-alert--warning"><strong>No todo escalón gana.</strong> Hay escalones en pérdida y todos tienen pocos casos. ${(control?.motivos ?? []).length ? `El control interno lo dice con estas palabras: ${esc((control.motivos ?? []).join(' · '))}.` : ''} Se elige por probabilidad, no por valor: el margen de la casa se paga en cada pata.</div></section>`;
 
-    const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${d.tickets.filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${d.tickets.filter(t => !t.locked).map(ticket).join('')}</div></details>`;
-    const historial = `<section class="cv-section" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${anteriores.length ? anteriores.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
+    const agrupados = agruparHistorialPorDia(anteriores, 10);
+    const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${(d.tickets ?? []).filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${(d.tickets ?? []).filter(t => !t.locked).map(ticket).join('')}</div></details>`;
+    const historial = `<section class="cv-section" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 
     return `${heroCard}${racha}
       <section class="cv-section" aria-label="Parley de hoy"><div class="cv-section-head"><p class="eyebrow">LOS 5 ESCALONES DE HOY</p><h2>Elige hasta dónde subir</h2></div>${hoy}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>

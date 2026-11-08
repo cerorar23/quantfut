@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calibracion, rachaParley, rachaEscalera, resumenRacha, primeraHuella, createConversionViews } from './conversion-views.js';
+import { calibracion, rachaParley, rachaEscalera, resumenRacha, primeraHuella, agruparHistorialPorDia, createConversionViews } from './conversion-views.js';
 
 test('calibracion no vende ventaja dentro del ruido', () => {
   assert.equal(calibracion({ n: 385, acierto_prometido: 82.3, acierto_real: 82.3, margen_ee: 1.9 }).estado, 'dentro');
@@ -227,4 +227,69 @@ test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 es
   assert.doesNotMatch(view, /no es una garantía/);
   assert.doesNotMatch(view, /muestra pequeña/);
   assert.doesNotMatch(view, /Muestra en construcción/);
+});
+
+test('agruparHistorialPorDia junta varios parlays del mismo dia en una sola fila y limita a 10', () => {
+  const dias = [
+    { dia: '2026-11-07', tickets: [{ id: 1, cuota_total: 1.87, outcome: 'perdido' }] },
+    { dia: '2026-11-07', tickets: [{ id: 2, cuota_total: 1.94, outcome: 'perdido' }] },
+    { dia: '2026-11-07', tickets: [{ id: 3, cuota_total: 1.73, outcome: 'ganado' }] },
+    { dia: '2026-11-06', tickets: [{ id: 4, cuota_total: 2.10, outcome: 'ganado' }, { id: 5, cuota_total: 3.10, outcome: 'perdido' }] },
+  ];
+  const agrupado = agruparHistorialPorDia(dias, 10);
+  assert.equal(agrupado.length, 2);
+  assert.equal(agrupado[0].dia, '2026-11-07');
+  assert.equal(agrupado[0].tickets.length, 3);
+  assert.equal(agrupado[1].dia, '2026-11-06');
+  assert.equal(agrupado[1].tickets.length, 2);
+
+  // Probar tope de 10
+  const muchos = Array.from({ length: 15 }, (_, i) => ({
+    dia: `2026-11-${String(i + 1).padStart(2, '0')}`,
+    tickets: [{ id: i + 1, cuota_total: 2.0, outcome: 'ganado' }],
+  }));
+  const limitado = agruparHistorialPorDia(muchos, 10);
+  const totalTickets = limitado.reduce((acc, d) => acc + d.tickets.length, 0);
+  assert.equal(totalTickets, 10);
+});
+
+test('parley v2.1 agrupa tickets del mismo dia en una sola fila en el historial', () => {
+  const parley = {
+    status: 'ready',
+    data: {
+      activo: true,
+      dias: [],
+      v2: {
+        activo: true,
+        estrategia: 'objetivos_cuota',
+        version: '2.1',
+        reglas: { targets: [2.1, 3.1, 8.2, 12.1], deportes: ['futbol', 'tenis', 'nba'] },
+        dias: [
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 2.06, locked: false, gratis: true, patas: [] }],
+          },
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 1.87, outcome: 'perdido', locked: false, patas: [] }],
+          },
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 1.94, outcome: 'perdido', locked: false, patas: [] }],
+          },
+          {
+            dia: '2026-11-07',
+            tickets: [{ escalon: 1, target: 2.1, cuota_total: 1.73, outcome: 'ganado', locked: false, patas: [] }],
+          },
+        ],
+      },
+    },
+  };
+  const view = createConversionViews(helpers({ parley })).parleyView();
+  // En el historial solo debe existir un único <details class="cv-day"> para el día 2026-11-07
+  const matches = view.match(/<details class="cv-day">/g) ?? [];
+  assert.equal(matches.length, 1, 'los 3 parlays del día deben quedar en una única fila');
+  assert.match(view, /1\.87 ✗/);
+  assert.match(view, /1\.94 ✗/);
+  assert.match(view, /1\.73 ✓/);
 });
