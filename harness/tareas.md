@@ -3971,3 +3971,5 @@ Plan corregido en `docs/plan_seo_redes_web_20261108.md` (revisa el plan del titu
 - [ ] F0 · enlace «Preferencias de medición» en el pie (`openPreferences()` ya existe) y revisión del texto de `/legal/privacidad` («viene activada»).
 - [x] F0 · alinear `main` con producción: resuelto en `main` por #282 (gana producción, decisión del titular); este PR conserva solo el consentimiento.
 - [ ] F1-F8: ver el plan (HTML desde el servidor con rutas reales, sitemaps, piloto NBA, fútbol, tenis, idiomas).
+- [x] F0 · decisiones del titular del 8-nov sobre el plan SEO (sección 13 de `docs/plan_seo_redes_web_20261108.md`): VIP se revela al terminar; firma la organización; casas por nombre; sin anuncios por ahora; idiomas en → pt-BR → resto tras revisión legal; texto IA más adelante; cuentas X, Instagram, Telegram y Facebook; robots IA «buscar y citar, no entrenar».
+- [ ] F2 · el titular debe dar los nombres de usuario de X, Instagram, Telegram y Facebook.

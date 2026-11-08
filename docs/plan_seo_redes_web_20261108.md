@@ -327,18 +327,20 @@ No es asesoría legal: necesita la revisión de un profesional por país.
 
 ---
 
-## 13. Decisiones que necesita el titular antes de empezar
+## 13. Decisiones del titular (8-nov-2026)
 
-1. ¿Se revela el pick VIP en el historial cuando termina el partido? (Recomendado: sí.)
-2. ¿Firma una persona real o solo la organización?
-3. ¿Habrá anuncios de pago en Meta o Google hacia la web? (Si sí: autorización de Meta y certificación de Google para juego.)
-4. Países y orden de idiomas tras el español (recomendado: en → pt-BR → resto tras revisión legal).
-5. ¿Se muestran nombres de casas de apuestas en la web pública o «cuota de referencia»?
-6. ¿Se permite texto generado por un LLM en las páginas de partido? ¿Con qué proveedor y presupuesto?
-7. Cuentas oficiales en X, Instagram, Telegram o Facebook (para `sameAs` y `twitter:site`).
-8. Content signals de IA en `robots.txt`.
+| # | Pregunta | Decisión | Consecuencia en el plan |
+|---|---|---|---|
+| 1 | ¿Se revela el pick VIP al terminar el partido? | **Sí** | La página de partido finalizado y `/historial/` muestran el pick que estaba oculto, con su resultado. Antes del final el VIP no sale en el HTML (§3.2). |
+| 2 | ¿Firma una persona real o la organización? | **Solo la organización QuantFut** | `Organization` en JSON-LD, sin `Person`; autoridad basada en metodología y cadena de hashes. Sin perfiles ficticios. |
+| 3 | ¿Anuncios de pago en Meta o Google? | **No por ahora** | El riesgo de autorización de Meta (§6) queda en espera: se retoma antes de cualquier campaña. |
+| 4 | Idiomas tras el español | **en → pt-BR → resto tras revisión legal** | F6 inglés y portugués; F7 francés, italiano y alemán solo con revisión legal (§9, §11). |
+| 5 | ¿Casas de apuestas por nombre? | **Mostrar el nombre de la casa** *(distinta de la recomendación)* | Se mantiene «Pinnacle» y similares. Riesgo asumido: en España, Italia, Francia, Alemania y Brasil puede contar como publicidad de juego (§11); se revisa por país antes de abrir cada versión y no hay enlaces de afiliado. |
+| 6 | ¿Texto generado por un modelo de lenguaje? | **Más adelante** | F4 arranca con plantillas fijas sobre los datos; el generador con comprobación de cifras (§8) se decide cuando F1 y F2 estén en marcha. |
+| 7 | Cuentas oficiales | **X, Instagram, Telegram y Facebook** | Las cuatro van en `sameAs` del `Organization`; `twitter:site` con la de X; `fb:app_id` si se usa Facebook Insights. Telegram: un canal público distinto de las alertas privadas; los canales de picks siguen vacíos. Falta que el titular dé los nombres exactos de usuario. |
+| 8 | Señales de contenido de IA en `robots.txt` | **Buscar y citar, no entrenar** | `search=yes, ai-input=yes, ai-train=no`. |
 
----
+Pendiente del titular: nombres de usuario de las cuatro cuentas (para F2).
 
 ## 14. Orden de ejecución y criterio de terminado
 
