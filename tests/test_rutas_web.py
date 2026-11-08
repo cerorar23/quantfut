@@ -262,3 +262,41 @@ def test_ninguna_pagina_publica_comparte_primer_segmento_con_una_ruta_de_api():
     # /alta-probabilidad (JSON) y /alta-probabilidad/ (página) no se pueden distinguir por prefijo.
     publicas = {p.slug for p in paginas.PAGINAS} | {s.path.strip("/") for s in rutas_web.SECCIONES} - {""}
     assert not publicas & seo.NOINDEX_SEGMENTS, publicas & seo.NOINDEX_SEGMENTS
+
+
+# --- pie global de la SPA (app.js · siteFooter) -----------------------------------------------------
+
+def _pie_de_la_spa() -> str:
+    app = (FRONTEND / "app.js").read_text(encoding="utf-8")
+    cuerpo = re.search(r"function siteFooter\(\) \{(.*?)\n\}\n", app, re.S)
+    assert cuerpo, "app.js ya no define siteFooter()"
+    assert "${siteFooter()}</div>" in app, "el shell no pinta el pie"
+    return cuerpo.group(1)
+
+
+def test_el_pie_de_la_spa_enlaza_a_todas_las_paginas_de_confianza_y_lo_legal():
+    hrefs = re.findall(r'<a href="([^"]+)"', _pie_de_la_spa())
+    esperados = [p.ruta for p in paginas.PAGINAS] + ["/legal/terminos", "/legal/privacidad"]
+    assert sorted(hrefs) == sorted(esperados), hrefs
+
+
+def test_los_enlaces_del_pie_existen_en_el_servidor(client):
+    for href in re.findall(r'<a href="([^"]+)"', _pie_de_la_spa()):
+        assert client.get(href, headers=HTML).status_code == 200, href
+
+
+def test_el_pie_usa_enlaces_reales_y_lleva_el_aviso_de_edad():
+    pie = _pie_de_la_spa()
+    assert "<button" not in pie and 'data-route' not in pie, "deben ser <a href> reales, que Google puede seguir"
+    assert "+18" in pie and "no una casa de apuestas" in pie and "no garantiza un resultado" in pie
+
+
+def test_la_spa_no_intercepta_los_enlaces_del_pie():
+    # El manejador global de clics solo recoge botones y a[data-sport]: un <a href> normal navega de verdad.
+    app = (FRONTEND / "app.js").read_text(encoding="utf-8")
+    assert "event.target.closest('button, a[data-sport]')" in app
+
+
+def test_el_pie_tiene_estilo_y_deja_hueco_a_la_barra_movil():
+    css = (FRONTEND / "conversion.css").read_text(encoding="utf-8")
+    assert ".qf-pie {" in css and "env(safe-area-inset-bottom)" in css.split(".qf-pie {", 1)[1]
