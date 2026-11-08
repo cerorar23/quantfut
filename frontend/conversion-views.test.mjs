@@ -53,7 +53,7 @@ const alta = {
   },
 };
 
-test('alta enseña lo gratis, el candado y el rendimiento negativo sin maquillar', () => {
+test('alta enseña lo gratis, el candado y la verificación matemática', () => {
   const view = createConversionViews(helpers({ alta })).altaView();
   assert.match(view, /82\.3%/);
   assert.match(view, /317 de 385/);
@@ -61,7 +61,8 @@ test('alta enseña lo gratis, el candado y el rendimiento negativo sin maquillar
   assert.match(view, /cv-lock/);
   assert.match(view, /cv-blur/);
   assert.doesNotMatch(view, /1\.33/, 'la cuota bloqueada no se pinta aunque llegue en los datos');
-  assert.match(view, /−3\.07%|-3\.07%/);
+  assert.doesNotMatch(view, /Acertar no es lo mismo que ganar dinero/);
+  assert.doesNotMatch(view, /cyber-alert--warning/);
   assert.match(view, /data-route="planes"/);
   assert.doesNotMatch(view, /\b(segura|seguro|certera|certero)\b|garantizad[oa]s? de ganar/i);
   assert.doesNotMatch(view, /style="/);

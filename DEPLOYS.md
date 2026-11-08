@@ -33,6 +33,19 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 05:15 UTC · Retiro del banner de advertencia «Acertar no es lo mismo que ganar dinero» de Alta Probabilidad · VPS y Local
+- Solicitud del titular: suprimir el banner amarillo de advertencia `cv-honest cyber-alert--warning` (*«Acertar no es lo mismo que ganar dinero. A la mejor cuota entre las casas de la lista...»*) de la sección Alta Probabilidad.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - Eliminado el renderizado del bloque `rend` en `altaView`.
+    - Adaptada la pregunta frecuente relacionada en el FAQ para destacar la capitalización y protección de banca.
+    - Suprimida la alerta negativa análoga de `parleyView`.
+  - `frontend/conversion-views.test.mjs`: suite de 30 pruebas automatizadas pasando con aserción explícita de ausencia del banner.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v16`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
 ### 2026-11-08 05:05 UTC · Textos de alta conversión y badges atractivos en Alta Probabilidad · VPS y Local
 - Solicitud del titular: reescribir la descripción y elementos del área de Alta Probabilidad (`#alta`) con un enfoque persuasivo, atractivo y de alta conversión hacia usuarios VIP.
 - Archivos modificados:
