@@ -158,7 +158,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       <div class="cv-sticky" role="complementary" aria-label="Acceso VIP"><span>${esc(String(bloqueados))} en VIP</span><button type="button" class="primary-button" data-route="planes">Desbloquear</button></div>`;
   }
 
-  const legal = '<p class="cv-legal">Los pronósticos son estimaciones, no garantías: se pierde a menudo y ninguna racha asegura la siguiente. Solo para mayores de 18 años. Juega con responsabilidad y solo con dinero que puedas perder.</p>';
+  const legal = '';
 
   // ------------------------------------------------------------ alta
   function altaView() {

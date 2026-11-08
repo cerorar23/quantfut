@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:55 UTC · Retiro del texto legal de advertencia al pie de las vistas · VPS y Local
+- Solicitud del titular: suprimir el pie legal de texto («Los pronósticos son estimaciones, no garantías: se pierde a menudo y ninguna racha asegura la siguiente...»).
+- Archivos modificados:
+  - `frontend/conversion-views.js`: limpiada la constante `legal = ''`, suprimiendo el párrafo `.cv-legal` de las vistas públicas (`altaView`, `parleyV2View`, `parleyView`, `escaleraView`).
+  - `frontend/conversion-views.test.mjs`: añadidas aserciones verificando que `Los pronósticos son estimaciones` y `cv-legal` no aparecen (30/30 pruebas pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v14`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y verificado en vivo.
+
 ### 2026-11-08 04:45 UTC · Retiro del recuadro terminal «CADENA · ÚLTIMO LOTE» de las vistas · VPS y Local
 - Solicitud del titular: suprimir el bloque visual tipo terminal de desarrollador (`cyber-terminal` / «cadena · último lote» con las líneas «predecir ✓», «sellar ✓ sha256:...» y «publicar ✓»).
 - Archivos modificados:

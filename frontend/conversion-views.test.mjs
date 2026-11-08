@@ -195,6 +195,7 @@ test('parley v2.1 sustituye a v1 como vista principal con cuatro objetivos y mul
   assert.doesNotMatch(view, /Muestra en construcción/);
   assert.doesNotMatch(view, /cadena · último lote/);
   assert.doesNotMatch(view, /cv-terminal/);
+  assert.doesNotMatch(view, /Los pronósticos son estimaciones/);
 });
 
 test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 escalones', () => {
@@ -229,6 +230,8 @@ test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 es
   assert.doesNotMatch(view, /no es una garantía/);
   assert.doesNotMatch(view, /muestra pequeña/);
   assert.doesNotMatch(view, /Muestra en construcción/);
+  assert.doesNotMatch(view, /Los pronósticos son estimaciones/);
+  assert.doesNotMatch(view, /cv-legal/);
 });
 
 test('agruparHistorialPorDia junta varios parlays del mismo dia en una sola fila y limita a 10', () => {
