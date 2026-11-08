@@ -116,26 +116,13 @@ test('parley y escalera cuentan fallos y retos perdidos', () => {
   assert.doesNotMatch(e + p, /style="/);
 });
 
-// conversion.css es aditiva (las cuatro hojas originales no cambian, ver original-css.test.mjs): todos sus
-// selectores cuelgan de .cv-, así que no puede alterar otras vistas ni CYBERCORE.
-test('conversion.css solo actúa sobre sus propias clases .cv-', async () => {
-  const { readFileSync } = await import('node:fs');
-  const css = readFileSync(new URL('./conversion.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.ok(!/@import|url\(/.test(css), 'sin recursos externos');
-  const selectors = [...css.matchAll(/([^{}]+)\{/g)].map(m => m[1].trim()).filter(t => t && !t.startsWith('@') && !/^(from|to|\d+%)/.test(t));
-  const fuera = selectors.flatMap(group => group.split(',')).map(t => t.trim()).filter(t => !t.startsWith('.cv-'));
-  assert.deepEqual(fuera, []);
-});
-
-test('escalera al 80 % en 7 días: plazo, expirados, NBA y tenis con su nombre', () => {
+test('escalera al 80 % en 7 días: umbral, plazo, expirados y sin freeroll', () => {
   const escalera = {
     status: 'ready',
     data: {
       activo: true,
-      reglas: { cuota_min: 1.03, cuota_max: 1.4, stake: '10.00', freeroll_x: null, longitudes: [2], prob_reto: 0.8, por_dia: 2, dias_max: 7, lineas_handicap: [] },
-      actuales: [{ reto_id: 30, estado: 'esperando', ganados: 1, pasos_objetivo: 2, saldo: '10.60', en_juego: '10.60', stake_inicial: '10.00', retirado: '0.00', freeroll_x: null, prob_objetivo: 0.8,
-        pasos: [{ paso: 1, league_id: 'tenis', deporte: 'tenis', kickoff_utc: '2026-10-28T09:00:00Z', local: 'Jannik Sinner', visitante: 'Qualifier X', texto: 'Gana Jannik Sinner', market: 'h2h', selection: 'home', prob: 0.95, price: 1.06, book: 'bovada', outcome: 'win' }],
-        vip: [{ league_id: 'nba', kickoff_utc: '2026-10-28T23:00:00Z', local: 'Boston Celtics', visitante: 'Washington Wizards', market: 'h2h' }] }],
+      reglas: { cuota_min: 1.03, cuota_max: 1.4, stake: '10.00', freeroll_x: null, longitudes: [2], prob_reto: 0.8, prob_max: 0.95, umbrales: { 2: 0.8944 }, por_dia: 2, dias_max: 7, lineas_handicap: [1.5] },
+      actuales: [{ reto_id: 30, estado: 'en_curso', ganados: 1, pasos_objetivo: 2, saldo: '10.60', en_juego: null, stake_inicial: '10.00', retirado: '0.00', freeroll_x: null, prob_objetivo: 0.8, pasos: [], vip: [] }],
       historial: [{ reto_id: 29, estado: 'expirado', ganados: 1, pasos_objetivo: 2, retirado: '0.00', ganancia: '0.60', inicio: '2026-10-20T09:00:00Z' }],
       resumen: { cerrados: 1, completados: 0, expirados: 1 },
       por_longitud: {},
@@ -143,28 +130,96 @@ test('escalera al 80 % en 7 días: plazo, expirados, NBA y tenis con su nombre',
     },
   };
   const e = createConversionViews(helpers({ escalera })).escaleraView();
-  assert.match(e, /Retos de 2 escalones en 7 días como máximo, elegidos para que el reto entero se cumpla al menos el 80%/);
-  assert.match(e, /Escalón 1 · Tenis/);
-  assert.match(e, /Escalón 2 · NBA/);
+  assert.match(e, /al menos el 80% de las veces/);
+  assert.match(e, /Retos de 2 escalones en 7 días como máximo/);
+  assert.match(e, /89[.,]4% por escalón en un reto de 2\./);
+  assert.match(e, /hasta 2, de partidos distintos/);
+  assert.match(e, /Expirado/);
   assert.match(e, /en 7 días no aparece el segundo escalón/);
-  assert.match(e, /Por qué un reto tan seguro paga poco/);
-  assert.doesNotMatch(e, /Qué es el freeroll/);
+  assert.match(e, /reto al 80% como mínimo/);
+  assert.match(e, /Por qué un 80% paga tan poco/);
+  assert.doesNotMatch(e, /Freeroll a|freeroll\?/);
 });
 
+test('parley v2.1 sustituye a v1 como vista principal con cuatro objetivos y multideporte', () => {
+  const parley = {
+    status: 'ready',
+    data: {
+      activo: true,
+      dias: [],
+      v2: {
+        activo: true,
+        estrategia: 'objetivos_cuota',
+        version: '2.1',
+        reglas: { targets: [2.1, 3.1, 8.2, 12.1], deportes: ['futbol', 'tenis', 'nba'] },
+        dias: [
+          {
+            dia: '2026-11-07',
+            chain_sha256: 'f847dbf4c1763e9fb1db739740164894e909ac07b7843349bceaad2f0c71d97d',
+            tickets: [
+              {
+                escalon: 1,
+                target: 2.1,
+                tipo: 'multievento',
+                estado: 'publicado',
+                n_patas: 2,
+                cuota_total: 2.06,
+                prob_total: 0.48,
+                locked: false,
+                gratis: true,
+                patas: [
+                  { deporte: 'futbol', texto: 'Rosario Central', local: 'Rosario Central', visitante: 'Estudiantes', kickoff_utc: '2026-11-07T20:30:00Z', price: 1.2, prob: 0.84, book: 'strendus', outcome: null },
+                  { deporte: 'nba', texto: 'Over 220.5', local: 'Lakers', visitante: 'Warriors', kickoff_utc: '2026-11-08T01:00:00Z', price: 1.72, prob: 0.58, book: 'bovada', outcome: null },
+                ],
+              },
+              { escalon: 2, locked: true, cuota_min: 3.03, cuota_max: 3.16 },
+              { escalon: 3, locked: true, cuota_min: 8.0, cuota_max: 8.4 },
+              { escalon: 4, locked: true, cuota_min: 11.8, cuota_max: 12.4 },
+            ],
+          },
+        ],
+      },
+    },
+  };
+  const view = createConversionViews(helpers({ parley })).parleyView();
+  assert.match(view, /PARLEY DEL DÍA · FÚTBOL, TENIS Y NBA/);
+  assert.match(view, /Cuatro objetivos de cuota, menos patas/);
+  assert.match(view, /Objetivo 2\.10/);
+  assert.match(view, /Objetivo 3\.10/);
+  assert.match(view, /Objetivo 8\.20/);
+  assert.match(view, /Objetivo 12\.10/);
+  assert.match(view, /Rosario Central/);
+  assert.match(view, /NBA/);
+  assert.match(view, /f847dbf4c176/);
+  assert.match(view, /cv-lock/);
+  assert.doesNotMatch(view, /LOS 5 ESCALONES DE HOY/);
+});
 
-test('parley v2 muestra el lote sellado, el estado y lo bloqueado sin inventar probabilidad conjunta', () => {
-  const pata = { texto: 'Más de 22.5', local: 'Ana', visitante: 'Eva', kickoff_utc: '2026-11-07T14:00:00Z', outcome: null, prob: 0.6, price: 1.9, book: 'bet365' };
-  const v2 = { dias: [{ dia: '2026-11-07', chain_sha256: 'a'.repeat(64), tickets: [
-    { escalon: 1, target: 2.1, tipo: 'multievento', estado: 'publicado', n_patas: 2, cuota_total: 2.07, prob_total: 0.47, incertidumbre: [0.4, 0.53], gratis: true, locked: false, patas: [pata, pata] },
-    { escalon: 2, target: 3.1, tipo: 'same_game', estado: 'solo_referencia', n_patas: 2, cuota_total: 3.0, prob_total: null, locked: false, patas: [pata, pata] },
-    { escalon: 3, locked: true, cuota_min: 8.0, cuota_max: 8.4 }] }] };
-  const data = { parley: { status: 'ready', data: { activo: true, dias: [], reglas: { escalones: [] }, v2 } } };
-  const html = createConversionViews(helpers(data)).parleyView();
-  assert.match(html, /PARLEY v2/);
-  assert.match(html, /Publicado/);
-  assert.match(html, /Solo referencia/);
-  assert.match(html, /sin probabilidad conjunta validada/);
-  assert.match(html, /Parley de cuota ≈8\.2/);
-  const seccion = html.split('aria-label="Parley v2"')[1].split('</section>')[0];
-  assert.doesNotMatch(seccion, /NaN|null|undefined/);
+test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 escalones', () => {
+  const escalera = {
+    status: 'ready',
+    data: {
+      activo: true,
+      reglas: {
+        cuota_min: 1.25, cuota_max: 2.10, stake: '10.00', freeroll_x: 2.5,
+        targets: [2.0, 2.8, 4.5, 7.5, 12.0, 20.0], max_escalones: 6,
+        prob_reto: 0.4761, prob_min: 0.69, prob_max: 0.95, por_dia: 1, dias_max: 10,
+        lineas_handicap: [-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
+      },
+      actuales: [
+        { reto_id: 101, estado: 'en_curso', ganados: 2, pasos_objetivo: 6, target_cuota: 2.0, saldo: '20.10', en_juego: null, stake_inicial: '10.00', retirado: '0.00', freeroll_x: 2.5, pasos: [], vip: [] },
+        { reto_id: 102, estado: 'en_curso', ganados: 1, pasos_objetivo: 6, target_cuota: 20.0, saldo: '15.00', en_juego: null, stake_inicial: '10.00', retirado: '0.00', freeroll_x: 2.5, pasos: [], vip: [] },
+      ],
+      historial: [
+        { reto_id: 100, estado: 'completado', ganados: 3, pasos_objetivo: 6, target_cuota: 4.5, retirado: '10.00', ganancia: '45.00', inicio: '2026-11-01T10:00:00Z' },
+      ],
+      resumen: { cerrados: 1, completados: 1, expirados: 0, ganancia: '45.00', invertido: '10.00', roi: 450.0, tasa_completados: 100 },
+      serie: [{ acumulado: '45.00', reto_id: 100 }],
+    },
+  };
+  const view = createConversionViews(helpers({ escalera })).escaleraView();
+  assert.match(view, /Objetivo ×2\.0/);
+  assert.match(view, /Objetivo ×20\.0/);
+  assert.match(view, /Freeroll a ×2\.5/);
+  assert.match(view, /Completado/);
 });

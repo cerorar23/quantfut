@@ -27,26 +27,29 @@ def test_umbral_reparte_el_presupuesto_entre_los_escalones_que_faltan():
     assert es.umbral(0.80, 1.0, 3) == pytest.approx(0.9283, abs=1e-4)
     # Un primer escalón muy seguro deja margen al segundo.
     assert es.umbral(0.80, 0.95, 1) == pytest.approx(0.8421, abs=1e-4)
+    # Regla del 69% para 2 escalones (prob_reto ≈ 0.4761):
+    assert es.umbral(es.PROB_RETO, 1.0, 2) == pytest.approx(0.6900, abs=1e-4)
 
 
-def test_regla_80_exige_el_umbral_y_elige_el_mas_probable():
-    ops = [_o(0.90, 1.10, match="a"),          # pasa
-           _o(0.95, 1.06, match="b"),          # pasa, el más probable
-           _o(0.89, 1.15, match="c"),          # 89 % < 89,4 %: no pasa
-           _o(0.94, 1.02, match="d"),          # cuota < 1,03: casi no paga
-           _o(0.96, 1.08, match="e")]          # > 95 %: fuera de lo calibrado
+def test_regla_69_exige_el_umbral_y_elige_el_mas_probable():
+    ops = [_o(0.75, 1.35, match="a"),          # pasa
+           _o(0.82, 1.25, match="b"),          # pasa, el más probable
+           _o(0.67, 1.60, match="c"),          # 67 % < 69 %: no pasa
+           _o(0.80, 1.15, match="d"),          # cuota < 1,20: fuera de rango
+           _o(0.96, 1.25, match="e")]          # > 95 %: fuera de lo calibrado
     assert es.elegir(ops, NUEVO_2).match_id == "b"
     assert es.elegir(ops, NUEVO_2, usados={"b"}).match_id == "a"
-    assert es.elegir([_o(0.95, 1.06, market="double_chance")], NUEVO_2) is None
+    assert es.elegir([_o(0.82, 1.25, market="mercado_invalido")], NUEVO_2) is None
+    assert es.elegir([_o(0.82, 1.25, market="double_chance")], NUEVO_2).cand.market == "double_chance"
 
 
-def test_el_reto_entero_queda_en_el_80_por_ciento():
-    segundo = es.Abierto(1, 1, 2, prob_ganada=0.95)
-    o = es.elegir([_o(0.84, 1.17, match="a"), _o(0.85, 1.15, match="b")], segundo)
-    assert o.match_id == "b" and 0.95 * o.cand.prob >= es.PROB_RETO
-    # Con un primer escalón justo en el umbral, el segundo también tiene que serlo.
-    justo = es.Abierto(1, 1, 2, prob_ganada=0.90)
-    assert es.elegir([_o(0.88, 1.12)], justo) is None
+def test_el_reto_entero_cumple_prob_minima():
+    segundo = es.Abierto(1, 1, 2, prob_ganada=0.75)
+    o = es.elegir([_o(0.68, 1.50, match="a"), _o(0.70, 1.40, match="b")], segundo)
+    assert o.match_id == "b" and o.cand.prob >= es.PROB_MIN
+    # Si no llega al 69 % mínimo, no entra.
+    justo = es.Abierto(1, 1, 2, prob_ganada=0.75)
+    assert es.elegir([_o(0.67, 1.50)], justo) is None
 
 
 def test_reto_de_la_regla_anterior_sigue_con_su_rango_y_el_mas_probable():
@@ -80,6 +83,15 @@ def test_fallar_despues_del_freeroll_no_pierde_la_inversion():
     assert st["estado"] == "fallido" and st["ganancia"] == Decimal("0.00")
     st = es.estado(Decimal("10"), 6, 2.5, _pasos((1.30, "win"), (1.30, "loss")))
     assert st["ganancia"] == Decimal("-10.00")
+
+
+def test_target_ladder_completa_al_alcanzar_meta_multiplicador():
+    # Target 2.8: stake 10 -> meta payout 28.00
+    pasos2 = _pasos((1.70, "win"), (1.70, "win"))
+    st2 = es.estado(Decimal("10"), 6, 2.5, pasos2, target_cuota=2.8)
+    assert st2["estado"] == "completado"
+    assert st2["ganados"] == 2
+    assert st2["retirado"] == Decimal("10.00")
 
 
 def test_sin_freeroll_todo_sigue_en_juego():
@@ -153,35 +165,33 @@ def _ids(plan):
     return [(r, n, [o.match_id for o in escalones]) for r, n, escalones in plan]
 
 
-def test_un_reto_de_2_abierto_a_la_vez():
-    assert es.longitud_nuevo([]) == 2
-    assert es.longitud_nuevo([2]) is None
+def test_un_reto_de_cada_target_abierto_a_la_vez():
+    assert es.target_nuevo([]) == 2.0
+    assert es.target_nuevo([2.0]) == 2.8
+    assert es.target_nuevo(list(es.TARGETS)) is None
 
 
-def test_dos_escalones_el_mismo_dia_si_juntos_llegan_al_80():
-    # 0,95 primero; el segundo necesita 0,80 / 0,95 = 84,2 %: entra el 0,90.
-    ops = [_o(0.95, 1.06, match="a"), _o(0.90, 1.10, match="b"), _o(0.88, 1.12, match="c")]
-    assert _ids(es.planificar([], [], ops)) == [(None, 2, ["a", "b"])]
-    # Con un primero justo en el umbral (0,90), el segundo necesita 88,9 %: hoy solo uno.
-    ops = [_o(0.90, 1.10, match="a"), _o(0.88, 1.12, match="b")]
-    assert _ids(es.planificar([], [], ops)) == [(None, 2, ["a"])]
+def test_un_escalon_al_dia_regla_dorada():
+    # Con POR_DIA = 1 cada reto abierto toma como máximo 1 escalón por día.
+    ops = [_o(0.75, 1.30, match="a"), _o(0.72, 1.40, match="b"), _o(0.68, 1.50, match="c")]
+    assert _ids(es.planificar([], [], ops)) == [(None, 2.0, ["a"]), (None, 2.8, ["b"])]
 
 
 def test_plan_sirve_primero_a_los_retos_abiertos_y_no_repite_partido():
-    ops = [_o(0.96, 1.07, match="a"), _o(0.93, 1.10, match="b"), _o(0.97, 1.06, match="c"),
-           _o(0.95, 1.09, match="a"),                         # otro mercado del mismo partido
+    ops = [_o(0.96, 1.25, match="a"), _o(0.85, 1.45, match="b"), _o(0.88, 1.35, match="c"),
+           _o(0.90, 1.28, match="a"),                         # otro mercado del mismo partido
            _o(0.76, 1.34, match="d")]
-    plan = es.planificar(en_curso=[es.Abierto(9, 1, 2, prob_ganada=0.95), ANTERIOR],
-                         abiertos=[2], opciones=ops, ocupados={"c"})
-    # El reto 9 recibe a (0,96 pasa del tope de 95 %: el de 0,95); c está ocupado por un
-    # escalón pendiente; el reto anterior, uno solo y en su rango 1,25-1,40 (d).
+    plan = es.planificar(en_curso=[es.Abierto(9, 1, 2, prob_ganada=0.75), ANTERIOR],
+                         abiertos=list(es.TARGETS), opciones=ops, ocupados={"c"})
+    # El reto 9 recibe a (0,96 pasa del tope de 95 %: el de 0,90); c está ocupado por un
+    # escalón pendiente; el reto anterior, uno solo y en su rango 1,25-1,40 (d: b tiene cuota 1,45).
     assert _ids(plan) == [(9, None, ["a"]), (5, None, ["d"])]
-    assert plan[0][2][0].cand.prob == 0.95
+    assert plan[0][2][0].cand.prob == 0.90
 
 
 def test_si_un_reto_se_queda_sin_escalon_no_se_abre_otro():
-    ops = [_o(0.95, 1.06, match=m) for m in "abc"]
-    sin = es.Abierto(4, 1, 2, prob_ganada=0.80001)            # necesitaría ~100 %
+    ops = [_o(0.75, 1.30, match=m) for m in "abc"]
+    sin = es.Abierto(4, 1, 2, prob_ganada=0.476101)            # necesitaría ~100 %
     assert es.planificar([sin], [], ops) == []
 
 

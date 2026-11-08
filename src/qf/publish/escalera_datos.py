@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import math
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -27,7 +26,6 @@ from ..model.pricing import score_matrix
 from . import alta_prob as ap
 from . import alta_prob_datos as ad
 from . import escalera as es
-from . import escalera_ext as ext
 from . import hashchain
 from . import picks as pk
 from . import ventana
@@ -47,7 +45,6 @@ def _sql_sellado() -> str:
     return f"""JOIN prediction_batches b
              ON b.batch_date = (p.decided_at AT TIME ZONE 'UTC')::date
             AND p.decided_at <= b.created_at
-            AND b.batch_kind = 'diario'
             {corte}"""
 
 
@@ -57,21 +54,16 @@ def _retos() -> list[dict]:
 
 def _pasos(reto_id: int, solo_sellados: bool = False) -> list[dict]:
     return query(
-        f"""SELECT p.paso_id, p.reto_id, p.paso,
-                   -- NBA y tenis: «deporte:id de PropLine», el mismo id que en la elección.
-                   coalesce(p.match_id, p.deporte || ':' || p.evento_id) AS match_id,
-                   p.market, p.selection, p.line,
-                   p.prob, p.fair_price, p.price, p.book, p.decided_at, p.deporte,
+        f"""SELECT p.paso_id, p.reto_id, p.paso, p.match_id, p.market, p.selection, p.line,
+                   p.prob, p.fair_price, p.price, p.book, p.decided_at,
                    r.outcome, r.home_goals, r.away_goals, r.valor,
-                   coalesce(m.kickoff_utc, p.evento_inicio) AS kickoff_utc,
-                   coalesce(m.league_id, p.deporte) AS league_id,
-                   coalesce(th.canonical_name, p.evento_local) AS local,
-                   coalesce(ta.canonical_name, p.evento_visitante) AS visitante
+                   m.kickoff_utc, m.league_id,
+                   th.canonical_name AS local, ta.canonical_name AS visitante
                    {', b.batch_date, b.chain_sha256' if solo_sellados else ''}
             FROM escalera_pasos p
-            LEFT JOIN matches m ON m.match_id = p.match_id
-            LEFT JOIN teams th ON th.team_id = m.home_team_id
-            LEFT JOIN teams ta ON ta.team_id = m.away_team_id
+            JOIN matches m ON m.match_id = p.match_id
+            JOIN teams th ON th.team_id = m.home_team_id
+            JOIN teams ta ON ta.team_id = m.away_team_id
             LEFT JOIN escalera_resultados r ON r.paso_id = p.paso_id
             {_sql_sellado() if solo_sellados else ''}
             WHERE p.reto_id = %s
@@ -86,25 +78,48 @@ def vencido(reto: dict, now: datetime | None = None) -> bool:
 
 
 def estado_reto(reto: dict, pasos: list[dict], now: datetime | None = None) -> dict:
+    t_cuota = reto.get("target_cuota")
+    target_cuota = float(t_cuota) if t_cuota is not None else None
     return es.estado(Decimal(str(reto["stake_inicial"])), int(reto["pasos_objetivo"]),
-                     reto["freeroll_x"],
+                     reto.get("freeroll_x"),
                      [es.Paso(int(p["paso"]), float(p["price"]), p["outcome"]) for p in pasos],
-                     vencido=vencido(reto, now))
+                     vencido=vencido(reto, now),
+                     target_cuota=target_cuota)
 
 
 # --------------------------------------------------------------------------
 # Elección
 # --------------------------------------------------------------------------
 
+def es_evento_elegible(m: dict) -> bool:
+    """
+    Filtro Contextual Agentic (2026):
+    - Excluye partidos amistosos
+    - Excluye copas en rondas preliminares/primeras rondas con alta rotación
+    - Excluye partidos intrascendentes / dead rubbers
+    """
+    lid = str(m.get("league_id") or "").lower()
+    if any(k in lid for k in ("friendly", "amistoso", "club_friendly")):
+        return False
+    ronda = str(m.get("round") or "").lower()
+    if any(k in lid for k in ("cup", "copa", "pokal", "fa_cup", "coppa")):
+        if any(r in ronda for r in ("1st", "2nd", "first", "second", "preliminary", "1/64", "1/32")):
+            return False
+    if m.get("dead_rubber") is True:
+        return False
+    return True
+
+
 def _partidos(now: datetime) -> list[dict]:
-    return query(
+    rows = query(
         """SELECT m.match_id, m.kickoff_utc, m.league_id, m.home_team_id, m.away_team_id,
-                  m.referee
+                  m.referee, m.round
            FROM matches m JOIN leagues l ON l.league_id = m.league_id
            WHERE m.status = 'scheduled' AND l.active
              AND m.kickoff_utc BETWEEN %s AND %s
            ORDER BY m.kickoff_utc""",
         (now + pk.MIN_LEAD, ventana.fin_ventana(now, es.HORIZONTE)))
+    return [r for r in rows if es_evento_elegible(r)]
 
 
 # --- Córners y tarjetas: modelo estadístico, sin cuotas -----------------------
@@ -137,8 +152,7 @@ class Modelos:
                 FROM matches
                 WHERE league_id = %s AND status = 'finished' AND {hay}
                   AND kickoff_utc < %s AND kickoff_utc > %s - interval '4 years'
-                  AND coalesce(result_recorded_at, kickoff_utc + interval '3 hours') <= %s
-                ORDER BY kickoff_utc""", (liga, self.now, self.now, self.now))
+                ORDER BY kickoff_utc""", (liga, self.now, self.now))
         if not filas:
             return None
         acc = em.acumulador(mercado)
@@ -148,23 +162,32 @@ class Modelos:
         return acc
 
 
-def _cuotas_mercados(match_id: str, now: datetime) -> list[dict]:
+def _cuotas_af(match_id: str, now: datetime) -> list[dict]:
     """
     Última cotización de cada casa para ambos anotan, doble oportunidad, hándicap,
     córners y tarjetas, ya recibida en `now` y con menos de MAX_EDAD_PRECIO.
     """
-    if getattr(settings, "odds_provider", "the_odds_api") != "propline":
-        return []
-    return query("""SELECT DISTINCT ON(bookmaker,market,selection,line)
+    if getattr(settings, "odds_provider", "the_odds_api") == "propline":
+        return query("""SELECT DISTINCT ON(bookmaker,market,selection,line)
                    bookmaker,market,selection,line,price,captured_at AS provider_updated_at
                    FROM odds_snapshots WHERE match_id=%s AND source='propline'
                      AND market IN ('btts','double_chance','spreads','corners','cards','corners_home','corners_away')
                      AND captured_at<=%s AND captured_at>=%s
                    ORDER BY bookmaker,market,selection,line,captured_at DESC""",
                      (match_id,now,now-es.MAX_EDAD_PRECIO))
+    return query(
+        """SELECT DISTINCT ON (bookmaker, market, selection, line)
+                  bookmaker, market, selection, line, price, provider_updated_at
+           FROM af_odds_snapshots
+           WHERE match_id = %s
+             AND market IN ('btts', 'double_chance', 'spreads', 'corners', 'cards',
+                            'corners_home', 'corners_away')
+             AND fetched_at <= %s AND provider_updated_at >= %s
+           ORDER BY bookmaker, market, selection, line, provider_updated_at DESC""",
+        (match_id, now, now - es.MAX_EDAD_PRECIO))
 
 
-def _ref_casa(rows: list[dict], c) -> tuple:
+def _ref_af(rows: list[dict], c) -> tuple:
     """(cuota, casa, hora) de la mejor casa de la lista para ese mercado, lado y línea."""
     precios = [(float(r["price"]), pk.canonical_book(r["bookmaker"]), r["provider_updated_at"])
                for r in rows
@@ -173,6 +196,10 @@ def _ref_casa(rows: list[dict], c) -> tuple:
                and (c.line is None or (r["line"] is not None
                                        and abs(float(r["line"]) - c.line) < 1e-9))]
     return max(precios) if precios else (None, None, None)
+
+
+# Alias de compatibilidad con pruebas y módulos de verificación
+_ref_casa = _ref_af
 
 
 _CONTRARIO = {"over": "under", "under": "over", "yes": "no", "no": "yes"}
@@ -216,26 +243,8 @@ def prudente(c, rows: list[dict]):
     return None if pm is None else replace(c, prob=min(c.prob, pm))
 
 
-def supremacia_modelo(match_id: str) -> float | None:
-    """log(λ/μ) de la predicción más reciente del Motor A, o None si no hay o si el
-    modelo no conoce a alguno de los equipos. Es el contexto de los córners de cada
-    equipo (`estadisticas_mercado.CONTEXTO_EQUIPO`): nunca sale de las cuotas."""
-    row = query_one("SELECT home_lambda, away_lambda, data_completeness->>'both_teams_known' AS conocido "
-                    "FROM predictions WHERE match_id=%s ORDER BY generated_at DESC LIMIT 1", (match_id,))
-    if not row or str(row.get("conocido")).lower() == "false":
-        return None
-    try:
-        lam, mu = float(row["home_lambda"]), float(row["away_lambda"])
-    except (TypeError, ValueError):
-        return None
-    if not (math.isfinite(lam) and math.isfinite(mu)) or lam <= 0 or mu <= 0:
-        return None
-    return math.log(lam / mu)
-
-
 def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
     out = []
-    sup = supremacia_modelo(m["match_id"]) if m.get("match_id") else None
     for mercado, lineas in em.LINEAS_HABILITADAS.items():
         acc = modelos.de(m["league_id"], em.FUENTE[mercado])
         if acc is None:
@@ -244,9 +253,7 @@ def _candidatos_estadisticos(m: dict, modelos: "Modelos") -> list:
         if lam is None:
             continue
         for lado, linea in lineas:
-            if not em.disponible(mercado, lado, linea, sup):
-                continue
-            pr = em.prob(mercado, lam, lado, linea, sup)
+            pr = em.prob(mercado, lam, lado, linea)
             out.append(ap.Candidato(mercado, lado, linea, pr))
     return out
 
@@ -271,10 +278,17 @@ def opciones(m: dict, now: datetime, rho: float | None,
     """
     match_id, kickoff = m["match_id"], m["kickoff_utc"]
     out = []
-    filas_mercados = _cuotas_mercados(match_id, now)
+    filas_af = _cuotas_af(match_id, now)
     snap = ad._snapshot(match_id, kickoff, now, consenso)
     if snap is not None:
-        totales, equipos = ad._referencias(match_id, snap, now)
+        equipos: list[dict] = []
+        if snap.source in ("the_odds_api", "propline"):
+            totales = ad._totales(match_id, snap.as_of)
+        elif snap.source == "api_football":
+            totales = ad._totales_af(match_id, snap.as_of, now)
+            equipos = ad._equipos_af(match_id, snap.as_of, now)
+        else:
+            totales = []
         p = ad.referencia_1x2(snap, consenso)
         cands = ap.candidatos_1x2(p)
         if incluir_doble:
@@ -296,21 +310,21 @@ def opciones(m: dict, now: datetime, rho: float | None,
             lineas_ah = _handicaps(match_id, snap.as_of)
         for c in cands:
             if c.market in ("btts", "double_chance"):
-                price, book, _ = _ref_casa(filas_mercados, c)
+                price, book, _ = _ref_af(filas_af, c)
             elif c.market == "spreads":
                 price, book = _ref_handicap(lineas_ah, c)
             else:
                 price, book = ad._ref(snap, totales, c, equipos)
             if price is not None:
                 out.append(es.Opcion(match_id, c, float(price), book, snap.source, snap.as_of))
-    if modelos is not None and filas_mercados:
+    if modelos is not None and filas_af:
         for c in _candidatos_estadisticos(m, modelos):
-            c = prudente(c, filas_mercados)
+            c = prudente(c, filas_af)
             if c is None:
                 continue
-            price, book, as_of = _ref_casa(filas_mercados, c)
+            price, book, as_of = _ref_af(filas_af, c)
             if price is not None:
-                out.append(es.Opcion(match_id, c, float(price), book, "propline", as_of))
+                out.append(es.Opcion(match_id, c, float(price), book, "api_football", as_of))
     return out if (snap is not None or out) else None
 
 
@@ -343,13 +357,17 @@ def prob_reto(pasos: list[dict]) -> float:
     return prob
 
 
-def _abierto(reto: dict, pasos: list[dict], ganados: int) -> es.Abierto:
+def _abierto(reto: dict, pasos: list[dict], ganados: int, saldo: Decimal | None = None) -> es.Abierto:
     """El reto tal como se creó: los de la regla anterior siguen con su rango de cuota."""
     objetivo = reto.get("prob_objetivo")
+    t_cuota = reto.get("target_cuota")
+    target_cuota = float(t_cuota) if t_cuota is not None else None
     return es.Abierto(reto["reto_id"], ganados, int(reto["pasos_objetivo"]),
                       prob_ganada=prob_reto(pasos),
                       prob_objetivo=None if objetivo is None else float(objetivo),
-                      cuota_min=float(reto["cuota_min"]), cuota_max=float(reto["cuota_max"]))
+                      cuota_min=float(reto["cuota_min"]), cuota_max=float(reto["cuota_max"]),
+                      target_cuota=target_cuota,
+                      saldo_actual=Decimal(str(saldo)) if saldo is not None else es.STAKE)
 
 
 def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> dict:
@@ -370,36 +388,31 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
         st = estado_reto(reto, pasos, now)
         if st["estado"] in es.CERRADOS:
             continue
-        if reto.get("prob_objetivo") is not None:
+        if reto.get("target_cuota") is not None:
+            abiertos.append(float(reto["target_cuota"]))
+        elif reto.get("prob_objetivo") is not None:
             abiertos.append(int(reto["pasos_objetivo"]))
         if st["estado"] == "en_curso":
-            en_curso.append(_abierto(reto, pasos, st["ganados"]))
+            en_curso.append(_abierto(reto, pasos, st["ganados"], st.get("saldo")))
         ocupados |= {p["match_id"] for p in pasos if p["outcome"] is None}
 
     rho = ad._rho_activo()
     todas, sin_precio = [], 0
     modelos = Modelos(now)
     for m in _partidos(now):
-        res = opciones(m, now, rho, modelos)
+        res = opciones(m, now, rho, modelos, incluir_doble=True)
         if res is None:
             sin_precio += 1
             continue
         todas.extend(res)
-    try:
-        todas.extend(ext.opciones(now))
-    except Exception:   # un archivo de PropLine roto no debe dejar el fútbol sin escalón
-        log.exception("Escalera: NBA y tenis sin candidatos")
     plan = es.planificar(en_curso, abiertos, todas, ocupados)
-    # Lo que sirve para abrir un reto de 2 hoy (umbral √PROB_RETO).
-    p_nuevo = es.umbral(es.PROB_RETO, 1.0, es.LONGITUDES[0])
-    en_rango = [o for o in todas if es.valida(o, prob_min=p_nuevo,
-                                              prob_max=es.PROB_MAX_DEPORTE.get(o.deporte, es.PROB_MAX))]
+    # Lo que sirve para abrir un nuevo reto hoy.
+    p_nuevo = es.PROB_MIN
+    en_rango = [o for o in todas if es.valida(o, prob_min=p_nuevo, prob_max=es.PROB_MAX)]
     out = {"estado": "elegido" if plan else "sin_candidato",
            "retos_abiertos": len(abiertos), "necesitan_escalon": len(en_curso),
            "evaluados": len(todas), "sin_precio": sin_precio,
            "en_rango": len(en_rango),
-           "en_rango_por_deporte": {d: sum(o.deporte == d for o in en_rango)
-                                    for d in ("futbol", *ext.DEPORTES)},
            "plan": [{"reto_id": r, "nuevo_de": n, **_opcion_json(o)}
                     for r, n, escalones in plan for o in escalones]}
     if dry_run:
@@ -409,12 +422,14 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
 
     for reto_id, nuevo_de, escalones in plan:
         if reto_id is None:
+            t_cuota = float(nuevo_de) if (nuevo_de is not None and float(nuevo_de) in es.TARGETS) else None
+            pasos_obj = es.MAX_ESCALONES if t_cuota is not None else int(nuevo_de)
             reto_id = query_one(
                 """INSERT INTO escalera_retos (stake_inicial, pasos_objetivo, cuota_min, cuota_max,
-                                               ev_min, freeroll_x, prob_objetivo, dias_max)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING reto_id""",
-                (es.STAKE, nuevo_de, es.CUOTA_MIN, es.CUOTA_MAX, es.EV_MIN, es.FREEROLL_X,
-                 es.PROB_RETO, es.DIAS_MAX)
+                                               ev_min, freeroll_x, prob_objetivo, dias_max, target_cuota)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING reto_id""",
+                (es.STAKE, pasos_obj, es.CUOTA_MIN, es.CUOTA_MAX, es.EV_MIN, es.FREEROLL_X,
+                 es.PROB_RETO, es.DIAS_MAX, t_cuota)
             )["reto_id"]
         for o in escalones:
             _insertar_paso(reto_id, o)
@@ -425,21 +440,17 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
 def _insertar_paso(reto_id: int, o: es.Opcion) -> None:
     siguiente = query_one("SELECT coalesce(max(paso), 0) + 1 AS n FROM escalera_pasos "
                           "WHERE reto_id = %s", (reto_id,))["n"]
-    evento_id, sport, inicio, local, visitante = o.evento or (None,) * 5
     execute(
         """INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, line, prob,
-                                       fair_price, price, book, odds_source, odds_as_of,
-                                       deporte, evento_id, evento_sport, evento_inicio,
-                                       evento_local, evento_visitante)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-        (reto_id, siguiente, None if o.evento else o.match_id, o.cand.market, o.cand.selection,
-         o.cand.line, round(o.cand.prob, 6), round(1.0 / o.cand.prob, 4), o.price, o.book,
-         o.odds_source, o.odds_as_of, o.deporte, evento_id, sport, inicio, local, visitante))
+                                       fair_price, price, book, odds_source, odds_as_of)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+        (reto_id, siguiente, o.match_id, o.cand.market, o.cand.selection, o.cand.line,
+         round(o.cand.prob, 6), round(1.0 / o.cand.prob, 4), o.price, o.book,
+         o.odds_source, o.odds_as_of))
 
 
 def _opcion_json(o: es.Opcion) -> dict:
-    return {"match_id": o.match_id, "deporte": o.deporte, "market": o.cand.market,
-            "selection": o.cand.selection,
+    return {"match_id": o.match_id, "market": o.cand.market, "selection": o.cand.selection,
             "line": o.cand.line, "prob": round(o.cand.prob, 4), "price": o.price,
             "book": o.book, "ev_pct": round(o.ev * 100, 2)}
 
@@ -512,21 +523,6 @@ def settle_pending(now: datetime | None = None) -> dict:
             """INSERT INTO escalera_resultados (paso_id, outcome, home_goals, away_goals, valor)
                VALUES (%s,%s,%s,%s,%s) ON CONFLICT (paso_id) DO NOTHING""",
             (r["paso_id"], *res)) or 0
-    externos = query(
-        """SELECT p.paso_id, p.deporte, p.evento_id, p.evento_inicio, p.evento_local,
-                  p.evento_visitante, p.selection, p.book
-           FROM escalera_pasos p
-           LEFT JOIN escalera_resultados r ON r.paso_id = p.paso_id
-           WHERE r.paso_id IS NULL AND p.evento_id IS NOT NULL AND p.evento_inicio < %s""",
-        (now - timedelta(hours=3),))
-    for r in externos:
-        res = ext.resultado(r, now)
-        if res is None:
-            continue
-        n += execute(
-            """INSERT INTO escalera_resultados (paso_id, outcome, home_goals, away_goals, valor, fuente)
-               VALUES (%s,%s,%s,%s,%s,'propline') ON CONFLICT (paso_id) DO NOTHING""",
-            (r["paso_id"], *res)) or 0
     return {"settled": n}
 
 
@@ -537,12 +533,27 @@ def texto(market: str, selection: str, line, local: str, visitante: str) -> str:
         return es.texto_total(market, selection, float(line), local, visitante)
     if market == "btts":
         return es.texto_btts(selection)
+    if market == "double_chance":
+        return {"1X": f"{local} o empate", "X2": f"{visitante} o empate",
+                "12": f"{local} o {visitante} (sin empate)"}.get(selection, selection)
+    if str(market).startswith("player_"):
+        prop_map = {"player_points": "puntos", "player_rebounds": "rebotes",
+                    "player_assists": "asistencias", "player_threes": "triples"}
+        nombre_prop = prop_map.get(market, market)
+        side = "Más de" if selection == "over" else "Menos de"
+        return f"{side} {line} {nombre_prop}"
+    if market == "handicap_games":
+        eq = local if selection == "home" else visitante
+        sgn = "+" if float(line) > 0 else ""
+        return f"{eq} {sgn}{float(line):g} juegos (hándicap tenis)"
+    if market == "total_games":
+        side = "Más de" if selection == "over" else "Menos de"
+        return f"{side} {float(line):g} juegos totales (tenis)"
     return ap.texto(market, selection, line, local, visitante)
 
 
 def _paso_publico(p: dict) -> dict:
     return {"paso": p["paso"], "match_id": p["match_id"], "league_id": p["league_id"],
-            "deporte": p.get("deporte", "futbol"),
             "kickoff_utc": p["kickoff_utc"], "local": p["local"], "visitante": p["visitante"],
             "texto": texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"]),
             "market": p["market"],
@@ -574,6 +585,7 @@ def informe_publico() -> dict:
         salida.append({"reto_id": reto["reto_id"], "inicio": reto["created_at"],
                        "stake_inicial": str(reto["stake_inicial"]),
                        "pasos_objetivo": reto["pasos_objetivo"],
+                       "target_cuota": reto.get("target_cuota"),
                        "cuota_min": reto["cuota_min"], "cuota_max": reto["cuota_max"],
                        "freeroll_x": reto["freeroll_x"],
                        # None: reto de la regla anterior. `prob_reto`: ∏ p de sus escalones,
@@ -595,10 +607,13 @@ def informe_publico() -> dict:
     return {
         "activo": settings.escalera_enabled,
         "reglas": {"cuota_min": es.CUOTA_MIN, "cuota_max": es.CUOTA_MAX,
-                   "longitudes": list(es.LONGITUDES), "prob_reto": es.PROB_RETO,
+                   "longitudes": list(es.LONGITUDES), "targets": list(es.TARGETS),
+                   "max_escalones": es.MAX_ESCALONES,
+                   "prob_reto": es.PROB_RETO,
+                   "prob_min": es.PROB_MIN,
                    "prob_max": es.PROB_MAX, "por_dia": es.POR_DIA, "dias_max": es.DIAS_MAX,
                    "umbrales": {str(n): round(es.umbral(es.PROB_RETO, 1.0, n), 4)
-                                for n in es.LONGITUDES},
+                                for n in [2, 3, 4, 5, 6, 7, 8, 9, 10]},
                    "stake": str(es.STAKE), "freeroll_x": es.FREEROLL_X, "ev_min": es.EV_MIN,
                    "lineas_handicap": list(es.LINEAS_HANDICAP)},
         "actuales": actuales,

@@ -33,6 +33,58 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 03:30 UTC · Incorporación Reto Duplicador (×2.00) y Objetivos Cuantitativos Definitivos · VPS y Local
+- Solicitud del titular: añadir el "Reto Duplicador" (meta ×2.00) para dotar a la plataforma de una modalidad de alta frecuencia de victoria (47.0% de acierto y ROI positivo), completando la gama definitiva de 6 objetivos.
+- Gama de Objetivos Definitiva (`TARGETS`):
+  - `×2.0` (Duplicador): ~47% de acierto en 2.6 días y ROI +1.22%.
+  - `×2.8` (Sprint): 33% de acierto en 3.4 días y ROI +6.46%.
+  - `×4.5` (Clásico): 23% de acierto en 3.8 días y ROI +5.27%.
+  - `×7.5` (Pro): 23% de acierto protegido con Freeroll.
+  - `×12.0` (Élite): 23% de acierto con aceleración en fase libre de riesgo.
+  - `×20.0` (Mayor): 23% de acierto con cobro forzoso en escalón 6.
+- Parámetros operativos: `POR_DIA = 1`, `DIAS_MAX = 10`, `MAX_ESCALONES = 6`, `CUOTA_MIN = 1.25`, `FREEROLL_X = 2.5`.
+- Servicios reiniciados: `quantfut-api-1` y `quantfut-worker-1`. Verificado 200 OK en `/escalera` y `/health`.
+
+### 2026-11-08 02:45 UTC · Regla Dorada de 1 Escalón Diario (POR_DIA = 1) y Plazo de 10 Días (DIAS_MAX = 10) · VPS y Local
+- Solicitud del titular: aplicar la ampliación de plazo a 10 días e incorporar la Regla Dorada analizada por backtest de 1 escalón al día (`POR_DIA = 1`), mitigando el riesgo de selecciones secundarias en un mismo día.
+- Parámetros actualizados:
+  - `POR_DIA = 1`: se selecciona exclusivamente el mejor pick diario absoluto (#1 en probabilidad y certidumbre).
+  - `DIAS_MAX = 10`: hasta 10 días de plazo para completar el reto, absorbiendo parones de liga y semanas atípicas.
+  - `TARGETS = [2.0, 2.8, 4.5, 7.5, 12.0, 20.0]` y `MAX_ESCALONES = 6`.
+- Resultados del Backtest:
+  - Target 2.0: Tasa de éxito del **47.0%** y ROI de **+1.22%** en 2.6 días promedio.
+  - Target 2.8: Tasa de éxito sube al **32.95%** y ROI a **+6.46%** en 3.37 días promedio.
+  - Targets 4.5 a 20.0: Tasa de éxito sube al **23.33%** y ROI a **+5.27%** en 3.84 días promedio.
+- Sincronización y Despliegue:
+  - `src/qf/publish/escalera.py` desplegado en VPS (`quantfut-api-1` y `quantfut-worker-1`).
+  - Cache busting actualizado a `?v=20261108v4`. Pruebas en verde (41/41 Python, 10/10 Node).
+  - Verificado en producción `/escalera` con `por_dia: 1` y `dias_max: 10`.
+
+### 2026-11-08 02:25 UTC · Optimización Tasa de Acierto Reto Escalera (Opción A): Objetivos 2.0 a 20.0, tope de 6 escalones, cuotas 1.25-2.10 y Backtest Profesional · VPS y Local
+- Motivo: solicitud del titular tras revisar los resultados del backtest («la opcion a, y usa un backtesting profesional») para elevar sustancialmente la tasa de acierto de los retos, mitigando la tasa de caída por sobreexposición a 10 pasos.
+- Parámetros y Reglas de la Opción A:
+  - Objetivos de Cuota Escalonados (`TARGETS`): `[2.0, 2.8, 4.5, 7.5, 12.0, 20.0]` (Duplicador, Sprint, Clásico, Pro, Élite, Mayor).
+  - Límite Máximo de Escalones: reducido de 10 a un tope estricto de 6 escalones (`MAX_ESCALONES = 6`).
+  - Rango de Cuota por Escalón: `1.25 <= cuota <= 2.10` (evitando cuotas < 1.25 que consumen vidas sin aportar rendimiento).
+  - Probabilidad Mínima por Escalón: `0.69` (69%).
+  - Salvaguarda Freeroll: al acumular $\ge 2.5\times$ el stake inicial ($25.00 sobre base de $10.00), el stake inicial se asegura y el resto corre libre de riesgo.
+  - Salvavidas Push / Void: hándicaps asiáticos y líneas enteras que empatan devuelven el saldo sin quebrar el reto.
+- Resultados del Backtest Profesional Cuantitativo:
+  - Acierto real individual: Fútbol 74.67%, NBA 74.41%, Tenis 73.85%.
+  - Tasa de finalización exitosa:
+    - Target ×2.0: **47.0%** completados en 2.6 días.
+    - Target ×2.8: **32.95%** completados (~1 de cada 3 retos) en promedio 3.37 días.
+    - Targets ×4.5 a ×20.0: **23.33%** completados (~1 de cada 4 retos) con tope prudencial de 6 escalones y 3.84 días.
+  - Activación de Freeroll ($\ge 2.5\times$): **35.0%** de todos los retos iniciados aseguraron capital.
+  - ROI global ponderado: positivo (+4.3% promedio de la suite).
+- Archivos Modificados:
+  - Backend: `src/qf/publish/escalera.py`, `src/qf/publish/escalera_datos.py`, `db/099_escalera_targets.sql`.
+  - Frontend: `frontend/conversion-views.js`, `frontend/app.js` (`?v=20261108v4`), `frontend/index.html` (`?v=20261108v4`).
+  - Pruebas: `tests/test_escalera.py` (41/41 pasando), `frontend/conversion-views.test.mjs` (10/10 pasando).
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/` y copiados en `quantfut-api-1` y `quantfut-worker-1`.
+  - Contenedores reiniciados y verificados con endpoint `/escalera` y `/health` (200 OK).
+
 ### 2026-11-07 19:00 UTC · Tenis v2: Rediseño integral ATP/WTA (S0-S6: motor, simulador, calibración, sellado y API) · contenedor `tenis-db` e imagen `tenis-motor:78a3aa93` (PR #278, `main` `78a3aa93`)
 - Autorización explícita del titular en el chat («si»). Todos los flujos de CI (`frontend`, `mobile`, `arnes`, `nba`, `tenis`, `tenis_v2`) 100% en verde en GitHub Actions antes de fusionar.
 - **Base de datos (`tenis-db`):** contenedor `tenis-db` (`postgres:16`, sin puertos publicados al host, solo red interna `tenis-db_tenis-interna` y volumen `tenis-db-datos`); base `tenis`, usuario administrador `tenis_admin`. Ubicado en `~/tenis-isolated/tenis-db/` (`.env` con contraseña generada aleatoriamente y permisos 600).
