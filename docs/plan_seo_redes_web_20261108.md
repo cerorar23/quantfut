@@ -85,6 +85,7 @@ Español en la raíz (`/`), sin prefijo. Otros idiomas con prefijo (`/en/…`) c
 | Panel | `/control/*` | **no** (`X-Robots-Tag: noindex` + login) | no | — | — |
 | API | `/app/v1/*`, `/mobile/v1/*`, `/nba/v1/*`, `/web/*` (JSON), `/escudos/*` | **no** (`X-Robots-Tag: noindex`) | no | — | — |
 | Errores | cualquier ruta desconocida | — | — | — | — |
+| Otros hosts | `www.` (301 al dominio sin www) y `api.` (todo `noindex`) | no | no | — | — |
 
 Reglas para todo el mapa:
 
@@ -347,7 +348,7 @@ Pendiente del titular: nombres de usuario de las cuatro cuentas (para F2).
 | Fase | Qué | Terminado cuando |
 |---|---|---|
 | F0 | Consentimiento **hecho** (rama `seo/f0-consentimiento`, sin desplegar). Alinear `main` con producción: **hecho** en `main` (#282), gana producción por decisión del titular (ver `harness/progreso.md` 8-nov). Decisiones de §13. | `main` = producción; Pixel solo con consentimiento donde la ley lo exige. |
-| F1 | Plantillas en el servidor + rutas reales + 404 HTML + redirección de `#` + `robots.txt` + índice de sitemaps + `noindex` de cuenta/panel/API. Primero las páginas estáticas: `/metodologia/`, `/sobre-nosotros/`, `/juego-responsable/`, `/historial/`, legal y portada. | Inspección de URLs muestra el contenido en el HTML; cero URLs con `#`; Search Console con el sitemap aceptado. |
+| F1 | **F1.1 hecha** (`src/qf/api/seo.py`, rama `seo/f1-1-base-tecnica`: `robots.txt`, índice de sitemaps, `noindex`, 404 HTML, un solo host). Pendiente F1.2/F1.3: plantillas en el servidor + rutas reales + redirección de `#`. Primero las páginas estáticas: `/metodologia/`, `/sobre-nosotros/`, `/juego-responsable/`, `/historial/`, legal y portada. | Inspección de URLs muestra el contenido en el HTML; cero URLs con `#`; Search Console con el sitemap aceptado. |
 | F2 | Piloto NBA: pilares, equipos y partidos con ciclo de vida, `<head>` completo, imágenes OG por estado, JSON-LD, IndexNow (Bing). | Sharing Debugger, `@WebpageBot`, LinkedIn Post Inspector y un post de X muestran la tarjeta; Prueba de resultados enriquecidos sin errores; partidos indexados antes del inicio. |
 | F3 | Fútbol (13 competiciones, respetando competición ≠ liga del equipo) y tenis. Herramientas del día. | Igual que F2; umbral de equipos aplicado; sin crecimiento de «sin indexar». |
 | F4 | Texto desde datos, enlazado interno, calculadora de cuota justa, gráficos de calibración. | 0 cifras del texto fuera del JSON en la prueba automática; aviso de automatización visible. |
