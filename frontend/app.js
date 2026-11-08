@@ -1471,14 +1471,22 @@ function syncPublicAuth() {
   publicAuthKey = key;
   refreshPublicData();
 }
-async function refreshPublicData() {
+// `silent`: la consulta periódica deja lo que ya se ve hasta tener la respuesta y solo repinta si algo cambió. Vaciarlo antes
+// hacía que cada 90 s la página entera pasara a «Consultando…», perdiera el desplazamiento y cerrara los días abiertos.
+async function refreshPublicData({ silent = false } = {}) {
   const request = ++publicRequest;
-  publicData = null;
-  if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
-  render();
+  if (!silent || !publicData) {
+    publicData = null;
+    if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
+    render();
+  }
   const result = await loadPublicData(publicFetch);
   if (request !== publicRequest) return;
-  publicData = result;
+  const previous = publicData;
+  // Un fallo puntual de la consulta silenciosa no tapa con un error lo que ya se veía bien.
+  const next = previous ? Object.fromEntries(Object.entries(result).map(([key, entry]) => [key, entry.status === 'ready' || previous[key]?.status !== 'ready' ? entry : previous[key]])) : result;
+  if (previous && JSON.stringify(next) === JSON.stringify(previous)) return;
+  publicData = next;
   if (!state.modal && !state.drawer && !state.mobileMenuOpen) render();
 }
 refreshPublicData();
@@ -1487,5 +1495,5 @@ refreshPublicData();
 setInterval(()=>{
   if(document.visibilityState==='visible' && !state.modal && !state.drawer && !state.authBusy
       && !['acceso','checkout','cuenta'].includes(state.route)
-      && !document.activeElement?.matches('input,textarea,select,[contenteditable="true"]'))refreshPublicData();
+      && !document.activeElement?.matches('input,textarea,select,[contenteditable="true"]'))refreshPublicData({ silent: true });
 },90000);

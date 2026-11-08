@@ -8045,3 +8045,6 @@ Decision: Disenar, implementar y verificar los componentes operativos para la pu
      * **G-reproducibilidad**: PASA (0 discrepancias entre corridas independientes, hash 300 sellos idÃ©ntico: `3015ace3c087da4004c4e5c9cce1166167fc41088c04a9339f245647305e141d`).
      * **G-cordura**: PASA (Brier score muestra 300 = 0,22267 $\ge 0,18$; ATP 0,21544, WTA 0,23954).
      * Artefacto: `modelo_s6/g_fuga_resultado.json`.
+
+## 8-nov-2026 · La web «se recargaba» cada 90 s
+No era una recarga del navegador: el temporizador de `frontend/app.js` llamaba a `refreshPublicData()`, que vaciaba `publicData` y todas las cachés y repintaba antes de pedir nada, así que cada 90 s la página entera pasaba a «Consultando…», saltaba arriba y cerraba lo abierto. La consulta periódica ahora es silenciosa: deja lo que se ve, solo repinta si la respuesta cambió y un fallo puntual no tapa con error un dato que estaba bien. El vaciado completo se mantiene para el cambio de sesión y el botón «Actualizar», donde sí se espera. Medido en local contra los datos de producción: a los 83 s se piden los 8 recursos y no hay repintado.
