@@ -78,7 +78,8 @@ def checkout_event_id(checkout_id: str) -> str:
 
 def create_checkout(account: dict, plan_code: str, *, fbp: str | None, fbc: str | None,
                     client_ip: str | None, user_agent: str | None, source_url: str | None,
-                    redirect_url: str | None = None, client: httpx.Client | None = None) -> dict:
+                    redirect_url: str | None = None, ads_consent: bool = True,
+                    client: httpx.Client | None = None) -> dict:
     if not enabled():
         raise WhopError("pagos_deshabilitados", "Los pagos todavía no están disponibles")
     with conn() as c:
@@ -103,17 +104,22 @@ def create_checkout(account: dict, plan_code: str, *, fbp: str | None, fbc: str 
         log.exception("whop: no se pudo crear la checkout_configuration")
         raise WhopError("whop_no_disponible", "No se pudo preparar el pago. Inténtalo de nuevo") from None
     event_id = checkout_event_id(checkout_id)
+    if not ads_consent:
+        # Sin consentimiento no se conserva nada del navegador (solo servía para Meta) y la decisión
+        # queda en la fila: el webhook de compra, que llega sin navegador, la respeta.
+        fbp = fbc = client_ip = user_agent = source_url = None
     with conn() as c:
         c.execute(
             """INSERT INTO whop_checkouts (checkout_id, account_id, plan_code, event_id, fbp, fbc,
-                                           client_ip, user_agent, source_url)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (checkout_id) DO NOTHING""",
+                                           client_ip, user_agent, source_url, ads_consent)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (checkout_id) DO NOTHING""",
             (checkout_id, account["account_id"], plan_code, event_id, fbp, fbc, client_ip,
-             user_agent, source_url))
+             user_agent, source_url, ads_consent))
         # InitiateCheckout también por servidor: si el Pixel se pierde (bloqueador, red), Meta lo recupera.
         # Mismo event_id que el que dispara el navegador al crear el pago (`ic:<ch>`).
         ctx = {k: v for k, v in (("fbp", fbp), ("fbc", fbc), ("client_ip", client_ip),
                                  ("user_agent", user_agent), ("source_url", source_url)) if v}
+        ctx["ads_consent"] = bool(ads_consent)
         price = c.execute("SELECT price_cents, currency FROM plans WHERE plan_code = %s", (plan_code,)).fetchone()
         meta_capi.enqueue(c, account["account_id"], "InitiateCheckout", f"ic:{checkout_id}",
                           {"currency": price["currency"], "value": price["price_cents"] / 100,
@@ -209,12 +215,24 @@ def apply_payment(c, data: dict) -> dict:
     return {"estado": "concedido", "account_id": account_id, "ends_at": end}
 
 
+def _ads_consent(c, account_id: int, checkout: dict | None) -> bool:
+    """Decisión de medición de quien compró: la de su checkout, o la del último si el pago (una renovación)
+    no trae checkout. Sin ninguna fila (cuentas anteriores a db/104) se mantiene el comportamiento previo."""
+    row = checkout
+    if row is None:
+        row = c.execute("SELECT ads_consent FROM whop_checkouts WHERE account_id = %s "
+                        "ORDER BY created_at DESC LIMIT 1", (account_id,)).fetchone()
+    return row is None or row.get("ads_consent") is not False
+
+
 def _enqueue_meta(c, account_id: int, plan_code: str, data: dict, checkout: dict | None,
                   amount: int, currency: str, is_renewal: bool) -> None:
     ctx = {k: checkout[k] for k in ("fbp", "fbc", "client_ip", "user_agent", "source_url")
            if checkout and checkout.get(k)}
     if data.get("ip_address") and "client_ip" not in ctx:
         ctx["client_ip"] = data["ip_address"]
+    if not _ads_consent(c, account_id, checkout):
+        ctx = {"ads_consent": False}
     billing = data.get("billing_address") or {}
     country = billing.get("country") or None
     custom = {"currency": currency, "value": amount / 100, "content_ids": [plan_code],

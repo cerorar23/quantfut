@@ -239,6 +239,37 @@ def test_checkout_lo_crea_el_servidor_y_el_purchase_comparte_event_id(pool, monk
 
 
 @pg
+def test_checkout_sin_consentimiento_no_guarda_datos_del_navegador_ni_envia_nada_a_meta(pool, monkeypatch):
+    from qf import db
+    monkeypatch.setenv("WHOP_API_KEY", "clave")
+    monkeypatch.setenv("WHOP_WEBHOOK_SECRET", SECRET)
+    monkeypatch.setenv("META_CAPI_ENABLED", "1")
+    acc, plan_id = _cuenta(), _plan()
+    out = whop.create_checkout(acc, "plus_1m", fbp="fb.1.1.2", fbc="fb.1.1.AbC", client_ip="203.0.113.9",
+                               user_agent="UA/1.0", source_url="https://x.test/#checkout", ads_consent=False,
+                               client=_Http())
+    with db.conn() as c:
+        fila = c.execute("SELECT ads_consent, fbp, fbc, client_ip, user_agent, source_url FROM whop_checkouts "
+                         "WHERE checkout_id = %s", (out["checkout_id"],)).fetchone()
+    assert fila == {"ads_consent": False, "fbp": None, "fbc": None, "client_ip": None,
+                    "user_agent": None, "source_url": None}
+    # El webhook llega sin navegador: la decisión del checkout es lo único que impide el Purchase.
+    whop.handle_event(*_evento("payment.succeeded", {
+        **_pago(plan_id, acc["account_id"], "pay_" + uuid.uuid4().hex[:8]),
+        "checkout_configuration_id": out["checkout_id"], "billing_address": {"country": "ES"}}))
+    # La renovación no trae checkout: hereda la decisión del último.
+    whop.handle_event(*_evento("payment.succeeded", {
+        **_pago(plan_id, acc["account_id"], "pay_" + uuid.uuid4().hex[:8], billing_reason="subscription_cycle")}))
+    with db.conn() as c:
+        nombres = {r["event_name"] for r in c.execute(
+            "SELECT event_name FROM meta_events WHERE account_id = %s", (acc["account_id"],)).fetchall()}
+        concedido = c.execute("SELECT count(*) AS n FROM subscriptions WHERE account_id = %s",
+                              (acc["account_id"],)).fetchone()["n"]
+    assert not nombres & {"InitiateCheckout", "Purchase", "Subscribe"}
+    assert concedido >= 1          # rechazar la medición no quita el acceso que se pagó
+
+
+@pg
 def test_checkout_rechaza_plan_sin_whop_y_pagos_apagados(pool, monkeypatch):
     acc = _cuenta()
     monkeypatch.delenv("WHOP_API_KEY", raising=False)
@@ -262,7 +293,9 @@ def _request(headers: dict, cookies: str | None = None):
 
 def test_contexto_web_sale_de_cookies_y_cabeceras_solo_en_la_web():
     from qf.api import cuentas as accounts_api
-    web = _request({"x-qf-client": "web", "user-agent": "UA/1.0", "referer": "https://pronosticosdeportivos.pro/#acceso"},
+    # cf-ipcountry: sin país la visita cuenta como europea y no mide hasta aceptar (test_meta_consent.py).
+    web = _request({"x-qf-client": "web", "user-agent": "UA/1.0", "cf-ipcountry": "MX",
+                    "referer": "https://pronosticosdeportivos.pro/#acceso"},
                    "_fbp=fb.1.1.2; _fbc=fb.1.1.AbC")
     ctx = accounts_api.web_context(web)
     assert ctx["fbp"] == "fb.1.1.2" and ctx["fbc"] == "fb.1.1.AbC" and ctx["user_agent"] == "UA/1.0"
