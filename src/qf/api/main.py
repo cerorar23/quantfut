@@ -279,20 +279,34 @@ def alta_probabilidad(response: Response, plus: bool = Depends(member)):
 @publico.get("/parley")
 def parley(response: Response, plus: bool = Depends(member)):
     """
-    Parley del día: 1 a 5 parlays sellados de cuota 1,90-5,00, el más probable
-    de cada escalón, y su historial prometido frente a real. Se elige por
-    probabilidad, no por valor. Uno gratis al día (el de menor escalón); el resto
-    es VIP y los ya liquidados se ven siempre (`parley_acceso`).
+    Parley del día: 4 objetivos de cuota (v2.1: fútbol, tenis y NBA, lote propio sellado).
+    Si v2 está activo se devuelve como informe principal y también en la clave `v2`; el informe
+    del parley anterior solo sale si v2 no estuviera disponible. Uno gratis al día (el de menor
+    escalón); el resto es VIP y los ya liquidados se ven siempre (`parley_acceso`).
     """
     from ..publish import parley_datos
     from .parley_acceso import aplicar_acceso
     response.headers['Cache-Control'] = 'no-store'
-    informe = aplicar_acceso(parley_datos.informe_publico(), plus)
-    try:   # parley v2 (lote propio): mismas reglas de acceso; si falla, el parley actual no se ve afectado
+    v2_info = None
+    try:
         from ..publish import parley_v2_datos
-        informe["v2"] = aplicar_acceso(parley_v2_datos.informe_publico_v2(), plus)
+        v2_info = aplicar_acceso(parley_v2_datos.informe_publico_v2(), plus)
+        if v2_info and v2_info.get("activo"):
+            return {
+                "activo": True,
+                "estrategia": v2_info.get("estrategia", "parley_objetivo"),
+                "version": v2_info.get("version", "v2.1"),
+                "reglas": v2_info.get("reglas", {}),
+                "control": {"motivos": []},
+                "resumen": parley_v2_datos.resumen_publico_v2(v2_info),
+                "dias": v2_info.get("dias", []),
+                "acceso": v2_info.get("acceso", "publico"),
+                "v2": v2_info,
+            }
     except Exception:  # noqa: BLE001
-        informe["v2"] = None
+        v2_info = None
+    informe = aplicar_acceso(parley_datos.informe_publico(), plus)
+    informe["v2"] = v2_info
     return informe
 
 

@@ -189,7 +189,7 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
     return `<section class="cv-hero cyber-card cyber-card--holo" aria-label="Resumen de resultados">
       <div class="cv-hero-copy"><p class="eyebrow">EVIDENCIA / REGISTRO REAL</p><h1>${titulo}</h1>
         <p class="lead">Esto es lo que pasó con los pronósticos que publicamos: cuál era, a qué cuota y cómo terminó. Cada uno se selló antes del partido, así que nadie puede cambiarlo después.</p>
-        <div class="cv-chips"><span class="cyber-badge cyber-badge--green">✓ ${num(r.aciertos)} acertados</span><span class="cyber-badge cyber-badge--magenta">✗ ${num(r.fallos)} fallados</span><span class="cyber-badge">${esc(corto(dia(r.desde)))} – ${esc(corto(dia(r.hasta)))}</span>${pequena ? '<span class="cyber-badge cyber-badge--yellow">Muestra en construcción</span>' : ''}</div>
+        <div class="cv-chips"><span class="cyber-badge cyber-badge--green">✓ ${num(r.aciertos)} acertados</span><span class="cyber-badge cyber-badge--magenta">✗ ${num(r.fallos)} fallados</span><span class="cyber-badge">${esc(corto(dia(r.desde)))} – ${esc(corto(dia(r.hasta)))}</span></div>
         <div class="cv-actions"><button type="button" class="primary-button" data-route="planes">Ver planes VIP</button><button type="button" class="text-link" data-action="cv-scroll" data-target="cv-hist-lista">Ver cada resultado ↓</button></div></div>
       <div class="cv-hero-proof"><div class="cv-hist-ringbox">${anillo}<span class="cv-hist-ringnum cyber-text-glow cyber-text-glow--green">${pct(r.acierto)}</span></div><span class="cv-big-label">Acierto real</span>
         <p class="cv-big-sub">${num(r.aciertos)} de ${num(r.n)} liquidados${e ? ` · rango probable ${pct(e.bajo)} – ${pct(e.alto)}` : ''}</p>
