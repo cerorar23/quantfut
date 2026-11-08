@@ -31,8 +31,8 @@
     "UTA": -3.89433774274256,
     "WAS": -2.2643525256039476
   },
-  "capturado_en_utc": "2026-11-08T03:59:57.367433+00:00",
-  "conocido_en_utc": "2026-11-08T04:02:00.585472+00:00",
+  "capturado_en_utc": "2026-11-08T04:15:21.636897+00:00",
+  "conocido_en_utc": "2026-11-08T04:16:11.593450+00:00",
   "datos_hasta": "2026-11-06",
   "defensa": {
     "ATL": -0.949617772350262,
@@ -76,14 +76,14 @@
   },
   "formato": "nba-equipo-congelado-1",
   "hashes_entradas": {
-    "exportacion_20261107.json": "392a82105e32d3c6cfee94f8e1522797f30755b41f831df63453b29ccabf402c"
+    "exportacion_auto.json": "7fbc09aed01faa3d7bcefdca51895f622fe9ef1eabc20d96e2350d540c63806d"
   },
   "liga": 225.52924198588764,
   "localia": 1.6095081598115255,
   "objetivo_simulacion": "regulacion_mas_prorroga",
   "ot": {
-    "abs_margen": -0.04663114142215886,
-    "intercepto": -2.650211596032968,
+    "abs_margen": -0.04663113545343798,
+    "intercepto": -2.650211646784942,
     "partidos": 4957,
     "prorroga_detectada_por": "duracion_validada_48_mas_5k",
     "tasa_observada": 0.05204760944119427
@@ -164,5 +164,5 @@
     "WAS": "2026-11-06"
   },
   "unidad_ratings": "puntos_por_100_posesiones",
-  "vigencia_horas": 72
+  "vigencia_horas": 168
 }

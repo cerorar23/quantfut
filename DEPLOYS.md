@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:16 UTC · Automatización bisemanal y ampliación de vigencia del artefacto NBA v2.2 · VPS y Local
+- Solicitud del titular («haz algo para que no pase de nuevo esto»). Se eliminó el riesgo de caducidad inesperada mediante dos capas de protección:
+  1. **Ampliación de vigencia:** en `apps/nba/ops/entrenar_equipo.py`, `vigencia_horas` ampliada de 72 h (3 días) a 168 h (7 días). Artefacto regenerado (`equipo=6b7b0955ba27`), válido hasta el 15-nov-2026 04:16 UTC.
+  2. **Automatización bisemanal con cron:** script `/home/qf/nba-isolated/nba-captura/renovar_equipo.sh` (`scripts/renovar_nba_vps.sh` en repo) instalado y programado en crontab de producción: `0 5 * * 0,3` (domingos y miércoles a las 05:00 UTC). Ejecuta de forma aislada e idempotente exportación SELECT, entrenamiento, evaluación retrospectiva temporal y sustitución atómica de `equipo.json`.
+  3. Verificado en producción con corrida de prueba (5/5 etapas exitosas, inferencia `--simulacro` OK con 0 errores).
+- Vuelta atrás: comentar la línea de cron en el servidor (`crontab -e`) y revertir `entrenar_equipo.py`.
+
 ### 2026-11-08 04:05 UTC · Renovación del artefacto de equipo NBA v2.2 · VPS y Local (vigencia hasta 11-nov-2026 04:02 UTC)
 - Solicitud del titular («hazlo»). Causa: el artefacto de equipo `equipo=4b6f21c944da` caducó tras 72 h (el 7-nov a las 19:18 UTC), bloqueando el sellado automático de los partidos de la NBA por control de vigencia temporal (`ValueError: artefacto de equipo caducado: actualizarlo en local`).
 - Procedimiento estricto (D4):

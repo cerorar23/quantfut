@@ -136,7 +136,7 @@ def entrenar(origen: Path, destino: Path):
     artefacto = dict(formato='nba-equipo-congelado-1', unidad_ratings='puntos_por_100_posesiones',
         objetivo_simulacion='regulacion_mas_prorroga', conocido_en_utc=max(datetime.now(UTC),datetime.fromisoformat(obj['captured_at_utc'])).isoformat(),
         capturado_en_utc=obj['captured_at_utc'],
-        datos_hasta=max(g['fecha'] for g in juegos), vigencia_horas=72,
+        datos_hasta=max(g['fecha'] for g in juegos), vigencia_horas=168,
         ataque=r.ataque, defensa=r.defensa, liga=r.liga, localia=r.localia, partidos=r.partidos,
         ritmo={t:float(np.mean(h)) for t,h in ritmo.items()},
         ultimos={t:f.isoformat() for t,f in ultimo.items()}, efecto_b2b=P.efecto_b2b,
