@@ -3971,3 +3971,13 @@ Plan: `docs/plan_seo_redes_web_20261108.md` (F1). Rama `seo/f1-1-base-tecnica`.
 - [ ] Dar de alta `https://pronosticosdeportivos.pro/sitemap.xml` en Search Console (propiedad de dominio) y comprobar `api.` y `www.`: mientras `api.` siga indexada hay que dejarla rastreable con `noindex`; el `Disallow` solo después de que desaparezca.
 - [ ] Avisar: tras la redirección de `www`, quien tenga la sesión iniciada en `www.` tendrá que entrar de nuevo (la cookie es del host).
 - [ ] F1.2: HTML desde el servidor con rutas reales (metodología, juego responsable, historial, portada); F1.3: sobre nosotros y legal.
+
+### Web: F1.2a páginas públicas con HTML desde el servidor, 2026-11-08
+Plan: `docs/plan_seo_redes_web_20261108.md` (F1). Rama `seo/f1-1-base-tecnica` (se amplía sobre F1.1; PR #286).
+- [x] `src/qf/api/paginas.py` + `src/qf/api/paginas/*.html` (Jinja2, que ya estaba en `requirements.txt`): `/metodologia/`, `/juego-responsable/`, `/sobre-nosotros/` con `<head>` completo (título, descripción, canonical, robots, Open Graph), BreadcrumbList y WebPage/AboutPage en JSON-LD, pie con +18, y `/slug` → 301 a `/slug/`. Entran en `/sitemap-paginas.xml` con `lastmod` = fecha de revisión visible en la página.
+- [x] `tests/test_paginas.py` (31 pruebas): cabeceras, fechas del mapa = fecha visible, enlaces internos que responden 200, escape de lo incrustado, y guardas de contenido (la limitación del registro externo no se puede borrar sin tocar la prueba).
+- [ ] **El registro externo de la cadena no existe**: `published_ref` es nulo en los 365 lotes de `/chain` (comprobado el 8-nov) y `/chain` y el README mandan a un repo público que no está. Publicarlo (`CHAIN_GIT_REMOTE`) o cambiar esos textos; mientras tanto la metodología lo declara como limitación. Al publicarlo, actualizar `metodologia.html` y `test_metodologia_declara_que_aun_no_hay_registro_externo`.
+- [ ] El titular debe revisar el texto de las tres páginas (es YMYL) antes de desplegar, sobre todo la frase de la metodología «no afirmamos superar al mercado» y la lista de recursos de ayuda.
+- [ ] Enlazar las tres páginas desde la web (la SPA aún no las enlaza: solo están en el sitemap y entre sí). Requiere tocar `app.js`; mejor hacerlo con F1.2b (portada con HTML desde el servidor).
+- [ ] F1.2b: historial y portada con HTML desde el servidor; redirección de las rutas viejas con `#`.
+- [ ] Juego responsable: Colombia, Argentina, Chile y Perú sin recurso verificado (solo la frase genérica); Reino Unido sin teléfono (la web de GambleAware no lo daba).

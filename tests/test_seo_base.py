@@ -57,27 +57,31 @@ def test_indice_de_sitemaps_lista_el_mapa_de_paginas_con_url_absoluta(client):
 
 def test_mapa_de_paginas_solo_tiene_urls_reales_absolutas_y_sin_fragmentos(client):
     r = client.get("/sitemap-paginas.xml")
-    locs = [e.text for e in ET.fromstring(r.text).findall("s:url/s:loc", NS)]
-    assert locs == ["https://pronosticosdeportivos.pro/", "https://pronosticosdeportivos.pro/legal/terminos",
-                    "https://pronosticosdeportivos.pro/legal/privacidad"]
-    assert all("#" not in u and u.startswith("https://") for u in locs)
-    assert "<lastmod>" not in r.text, "sin fecha de cambio verificable no se declara lastmod"
+    filas = {e.find("s:loc", NS).text: e.find("s:lastmod", NS) for e in ET.fromstring(r.text).findall("s:url", NS)}
+    base = "https://pronosticosdeportivos.pro"
+    assert set(filas) == {f"{base}{ruta}" for ruta, _ in seo.todas_las_paginas()}
+    assert {f"{base}/", f"{base}/legal/terminos", f"{base}/legal/privacidad", f"{base}/metodologia/"} <= set(filas)
+    assert all("#" not in u and u.startswith("https://") for u in filas)
+    # Sin fecha de cambio verificable no se declara lastmod: solo las páginas con revisión la llevan.
+    assert filas[f"{base}/"] is None and filas[f"{base}/legal/terminos"] is None
+    assert filas[f"{base}/metodologia/"] is not None
 
 
 def test_cada_url_del_mapa_responde_200_y_se_puede_indexar(client):
-    for ruta, _ in seo.PAGINAS:
+    for ruta, _ in seo.todas_las_paginas():
         r = client.get(ruta, headers=HTML)
         assert r.status_code == 200, ruta
         assert "x-robots-tag" not in r.headers, f"{ruta} está en el mapa pero lleva noindex"
 
 
 def test_el_mapa_cabe_en_los_limites_de_google():
-    assert len(seo.PAGINAS) <= 50_000
+    assert len(seo.todas_las_paginas()) <= 50_000
 
 
 def test_lastmod_solo_si_hay_fecha(monkeypatch, client):
     monkeypatch.setattr(seo, "PAGINAS", (("/", "2026-11-08T10:00:00+00:00"),))
-    assert "<lastmod>2026-11-08T10:00:00+00:00</lastmod>" in client.get("/sitemap-paginas.xml").text
+    texto = client.get("/sitemap-paginas.xml").text
+    assert "<loc>https://pronosticosdeportivos.pro/</loc><lastmod>2026-11-08T10:00:00+00:00</lastmod>" in texto
 
 
 def test_public_base_url_fuerza_el_origen(monkeypatch, client):

@@ -33,8 +33,8 @@ NOINDEX_SEGMENTS = frozenset({
     "teams", "track-record",
 })
 
-# URLs reales e indexables. (ruta, lastmod ISO o None). Mantener alineado con las rutas de
-# `web.py` / `legal.py`: la prueba tests/test_seo_base.py comprueba que ninguna lleve `noindex`.
+# URLs reales e indexables que no salen de `paginas.py`. (ruta, lastmod ISO o None). Mantener alineado
+# con `web.py` / `legal.py`: tests/test_seo_base.py comprueba que ninguna lleve `noindex`.
 PAGINAS: tuple[tuple[str, str | None], ...] = (
     ("/", None),
     ("/legal/terminos", None),
@@ -109,9 +109,14 @@ def sitemap_index() -> str:
             f'<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{items}</sitemapindex>\n')
 
 
+def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
+    from . import paginas   # import tardío: `paginas` importa este módulo
+    return PAGINAS + paginas.entradas_sitemap()
+
+
 def sitemap_paginas() -> str:
     filas = []
-    for ruta, lastmod in PAGINAS:
+    for ruta, lastmod in todas_las_paginas():
         mod = f"<lastmod>{xml_escape(lastmod)}</lastmod>" if lastmod else ""
         filas.append(f"<url><loc>{xml_escape(base_url() + ruta)}</loc>{mod}</url>")
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
