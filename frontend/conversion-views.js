@@ -158,7 +158,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       big: cal ? pct(cal.real) : '—',
       bigLabel: 'acierto real',
       bigSub: h.n ? `${realNumber(h.aciertos)} de ${realNumber(h.n)} pronósticos liquidados` : 'Todavía no hay pronósticos liquidados',
-      chips: [badge(estado === 'activa' ? 'Línea activa' : estado === 'pausada' ? 'Línea pausada' : 'Línea desactivada', estado === 'activa' ? 'good' : 'muted'), cal ? badge(cal.texto, cal.estado === 'debajo' ? 'warn' : 'accent') : '', sinMuestra ? badge('Muestra en construcción', 'warn') : '', badge('Datos del servidor', 'accent')].filter(Boolean),
+      chips: [badge(estado === 'activa' ? 'Línea activa' : estado === 'pausada' ? 'Línea pausada' : 'Línea desactivada', estado === 'activa' ? 'good' : 'muted'), cal ? badge(cal.texto, cal.estado === 'debajo' ? 'warn' : 'accent') : '', badge('Datos del servidor', 'accent')].filter(Boolean),
       extra: cal ? `<div class="cv-meters"><div class="cv-meter"><span>Prometido</span>${meter(cal.prom)}<strong>${pct(cal.prom)}</strong></div><div class="cv-meter"><span>Real</span>${meter(cal.real, 'cyber-progress--green')}<strong>${pct(cal.real)}</strong></div></div><small class="cv-fine">Margen de error ±${realNumber(cal.margen, 1)} puntos</small>` : '',
     });
 
@@ -323,7 +323,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       big: total ? unidades(total.unidades) : '—',
       bigLabel: 'resultado en unidades (1 u por parlay)',
       bigSub: total ? `${realNumber(total.n)} parlays liquidados · rendimiento ${realPercent(total.roi, 1)} · prometido medio ${pct(total.prob_media)}` : 'Todavía no hay parlays liquidados',
-      chips: [badge(activo ? 'Parley activo' : 'Parley inactivo', activo ? 'good' : 'muted'), pequena ? badge('Muestra en construcción', 'warn') : '', badge('Datos del servidor', 'accent')].filter(Boolean),
+      chips: [badge(activo ? 'Parley activo' : 'Parley inactivo', activo ? 'good' : 'muted'), badge('Datos del servidor', 'accent')].filter(Boolean),
     });
 
     const racha = dots(lista);
@@ -352,7 +352,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         ['¿Por qué una combinada si cada pata tiene margen?', 'Porque el margen se paga en cada pata y se multiplica. Por eso se elige la combinación más probable y se enseña el historial entero: no se vende como valor.'],
         ['¿Y si se pierde una pata?', 'Se pierde la combinada entera. Está en el historial con la pata que falló.'],
         ['¿Qué significa «1 de cada X»?', 'Es la probabilidad conjunta en frecuencia: 1 de cada 2 es 50 %. A cuota más alta, sale menos a menudo.'],
-        ['¿Hay garantía de ganancia?', 'No. Ninguna racha asegura la siguiente. Hay escalones en pérdida y muestras pequeñas, y se dice.'],
+        ['¿Hay garantía de ganancia?', 'No. Ninguna racha asegura la siguiente. Las apuestas combinadas tienen alta varianza y se muestran con total transparencia.'],
       ])}
       ${legal}`;
   }

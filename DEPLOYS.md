@@ -33,6 +33,17 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:25 UTC · Retiro definitivo de la insignia «Muestra en construcción» en todas las vistas · VPS y Local
+- Solicitud del titular: suprimir por completo el badge amarillo `[MUESTRA EN CONSTRUCCIÓN]` de la cabecera de Parley del Día (`#parley`) y de todas las vistas de la web.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado `sinMuestra ? badge('Muestra en construcción', 'warn') : ''` en `altaView`, eliminado en `parleyView` (y su FAQ) y asegurado en `parleyV2View`.
+  - `frontend/historial-views.js`: retirada la insignia `Muestra en construcción` de las fichas de `#historial`.
+  - `frontend/conversion-views.test.mjs` y `historial-views.test.mjs`: aserciones actualizadas para verificar ausencia total de la insignia (28/28 pruebas pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v11`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado. Verificado en vivo en `https://pronosticosdeportivos.pro/` con HTTP 200 y `Muestra en construcción: False`.
+
 ### 2026-11-08 04:15 UTC · Gráfica de rendimiento acumulado y métricas en Parley v2.1 · VPS y Local
 - Solicitud del titular: sustituir el cuadro vacío con texto plano `1/3 PARLAYS GANADOS` de la cabecera de la sección Parley del Día (`#parley`) por una gráfica visual de rendimiento acumulado idéntica a la de Reto Escalera.
 - Archivos modificados:

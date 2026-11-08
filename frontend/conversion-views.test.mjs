@@ -106,7 +106,7 @@ test('parley y escalera cuentan fallos y retos perdidos', () => {
   const views = createConversionViews(helpers({ parley, escalera }));
   const p = views.parleyView();
   assert.match(p, /24 de 48/);
-  assert.match(p, /Muestra en construcción/);
+  assert.doesNotMatch(p, /Muestra en construcción/);
   assert.match(p, /cv-lock/);
   assert.match(p, /Perdido/);
   const e = views.escaleraView();
@@ -192,6 +192,7 @@ test('parley v2.1 sustituye a v1 como vista principal con cuatro objetivos y mul
   assert.match(view, /f847dbf4c176/);
   assert.match(view, /cv-lock/);
   assert.doesNotMatch(view, /LOS 5 ESCALONES DE HOY/);
+  assert.doesNotMatch(view, /Muestra en construcción/);
 });
 
 test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 escalones', () => {
