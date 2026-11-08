@@ -257,6 +257,34 @@ def informe_publico_v2(dias: int = 30) -> dict:
             "dias": salida}
 
 
+def _bloque_resumen(ts: list[dict]) -> dict:
+    n = len(ts)
+    if not n:
+        return {"n": 0, "aciertos": 0, "prob_media": None, "acierto_real": None, "unidades": 0.0, "roi": None}
+    aciertos = sum(1 for t in ts if t["outcome"] == "ganado")
+    unidades = sum(float(t.get("factor_pago") or 0.0) - 1.0 for t in ts)
+    pm = [float(t["prob_total"]) for t in ts if t.get("prob_total") is not None]
+    return {"n": n, "aciertos": aciertos,
+            "prob_media": round(sum(pm) / len(pm) * 100, 1) if pm else None,
+            "acierto_real": round(aciertos / n * 100, 1),
+            "unidades": round(unidades, 2), "roi": round(unidades / n * 100, 1)}
+
+
+def resumen_publico_v2(info: dict) -> dict:
+    """
+    Resumen del informe v2 a 1 unidad por parlay. Cuenta SOLO los parlays `publicado` ya liquidados
+    (`ganado`/`perdido`): los `solo_referencia` (same game sin cuota real del paquete), las abstenciones
+    y los nulos no son apuestas y no entran.
+    """
+    liq = [t for d in info.get("dias", []) for t in d.get("tickets", [])
+           if not t.get("locked") and t.get("estado") == "publicado"
+           and t.get("outcome") in ("ganado", "perdido")]
+    escalones = sorted({int(t.get("escalon") or 0) for t in liq})
+    return {"total": _bloque_resumen(liq),
+            "por_escalon": {str(e): _bloque_resumen([t for t in liq if int(t.get("escalon") or 0) == e])
+                            for e in escalones}}
+
+
 # ------------------------------------------------------------------ orquestación
 def habilitado() -> bool:
     return os.getenv("PARLEY_V2_ENABLED", "0") == "1"
