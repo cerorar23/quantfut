@@ -68,6 +68,7 @@ const nav = [
 ];
 const MOBILE_PRIMARY = ['inicio', 'historial', 'planes', 'cuenta'];
 const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Análisis del partido', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
+const SERVER_TITLE = document.title;   // título que puso el servidor (rutas_web.py) para la sección servida
 const validRoute = route => Object.hasOwn(routeTitle, route);
 const ROUTE_ALIAS = { mercados: 'partidos', partido: 'partidos' };
 const canonicalRoute = route => ROUTE_ALIAS[route] || route;
@@ -1237,8 +1238,8 @@ function render() {
   const views = { inicio: realViews.home, partidos: windowView, mercados: windowView, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
-  // La primera sección conserva el título que el servidor le puso (más descriptivo); al navegar, el corto.
-  if (document.documentElement.dataset.ruta !== state.route) document.title = `${routeTitle[state.route]} · QuantFut`;
+  // La sección que el servidor sirvió conserva su título (más descriptivo), también al volver a ella con «atrás»; las demás, el corto.
+  document.title = document.documentElement.dataset.ruta === state.route ? SERVER_TITLE : `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   conversionViews.applyMeters(app);
