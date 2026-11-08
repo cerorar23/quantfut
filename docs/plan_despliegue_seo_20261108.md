@@ -20,7 +20,7 @@ de Python da **2.104 pasan, 126 omitidas, 0 fallos** y el frontend **157/157**. 
 
 ### Hallazgos que obligan a un método concreto (comprobados el 8-nov en el servidor, solo lectura)
 
-1. **El contenedor `quantfut-api-1` tiene 9 archivos que NO están en su imagen** (`docker diff`): `frontend/{app.js,
+1. **El contenedor `quantfut-api-1` tiene 8 archivos que NO están en su imagen** (`docker diff`): `frontend/{app.js,
    index.html, conversion-views.js, historial-views.js, conversion-views.test.mjs}`, `src/qf/api/main.py` y
    `src/qf/publish/{escalera.py, escalera_datos.py}`. Por tanto **no se recrea el contenedor ni se reconstruye la imagen**:
    se pierden esos cambios. Y **no se usa `docker commit`**: el contenedor lleva `/run/secrets/*.json` en su capa y
@@ -102,6 +102,30 @@ cp docs/despliegue_seo_20261108/main_py.patch /tmp/seo/
 (cd /tmp/seo && git apply --check main_py.patch && echo "el parche se aplica limpio")   # cualquier otra salida: PARAR
 ```
 
+## 4b. Resultado del pre-vuelo (8-nov, 22:18–22:25 UTC, solo lectura)
+
+| Comprobación | Resultado |
+|---|---|
+| `main` | `10188cd2` (los tres PR dentro); 0 commits nuevos desde la fusión |
+| Cerrojo de despliegue / otras sesiones | `deploy.lock` vacío (archivo del 6-nov, sin proceso); último despliegue anotado 17:47 UTC; **ningún PR abierto** |
+| Los 10 archivos a reemplazar, contenedor frente a `main` anterior a los PR (`06981ccd`) | **10 de 10 idénticos** |
+| Archivos nuevos (`seo.py`, `paginas.py`, `rutas_web.py`, `paginas/`, `meta_consent.py`, `rutas.js`) | no existen todavía en producción, como debe ser |
+| Cambios solo en el contenedor (`docker diff`) | **8** archivos, los esperados (corrige el «9» de la primera versión de este plan) |
+| `main.py` de producción | mismo sha256 (`d7647bc4…`) que cuando se preparó el parche; **se aplica limpio y compila** |
+| Salud | `/health` 200; el `main.py` actual se importa en un proceso nuevo (137 rutas); Python 3.12.15, `PYTHONPATH=/app/src:/app/apps/tenis/src` |
+| Espacio / memoria | 23 GB libres (77 % usado); 3,3 GB de RAM libres |
+| Base de datos | `whop_checkouts`: 10 columnas, **0 filas**, 24 kB, sin `ads_consent`; `pg_dump` 16.15 disponible; 1 conexión activa |
+| Eventos a Meta en 24 h | **ninguno** en `meta_events`: hoy el Pixel mide visitas pero no hay conversiones por servidor que filtrar |
+
+**Hallazgos del pre-vuelo**
+1. **La carpeta `~/quantfut/frontend` del servidor está desfasada** (le faltan `conversion.css` y `meta-pixel.js`, y su `membership.js` es una versión anterior) y no es un montaje del contenedor. No afecta al despliegue; solo hay que **no usarla como referencia** ni como vuelta atrás (la vuelta atrás sale de `~/respaldos/…`).
+2. **Nadie ha abierto nunca un pago en producción** (0 filas en `whop_checkouts`): el camino de cobro con consentimiento no se ha ejercitado con tráfico real. Por eso la prueba de pago (§6) es la única verificación que cubre esa parte.
+
+**Línea base pública antes del despliegue** (para comparar después): `/sitemap.xml`, `/sitemap-paginas.xml`, `/metodologia/`,
+`/juego-responsable/`, `/sobre-nosotros/`, `/historial/`, `/rutas.js` y `/no-existe-xyz/` dan **404 en JSON**; `robots.txt` solo trae el bloque de
+comentarios de Cloudflare (sin directivas); `/app/v1/plans` no lleva `X-Robots-Tag`; `/app/v1/whop/config` devuelve
+`{"enabled":true,"pixelId":"2253839992227148"}` sin `consentRegime`; `HEAD /` en `www.` y `api.` da 405.
+
 ## 5. Despliegue
 
 Todo con el servidor como `qf` (`ssh quantfut`). Sustituye `R` por la carpeta de respaldo.
@@ -139,7 +163,7 @@ scp /tmp/seo/src/qf/api/main.py quantfut:~/quantfut/releases/seo-f0-f1/src/qf/ap
 D=~/quantfut/releases/seo-f0-f1
 for f in $(cd $D && find src frontend -type f ! -path '*/paginas/*'); do docker cp $D/$f quantfut-api-1:/app/$f; done
 docker cp $D/src/qf/api/paginas quantfut-api-1:/app/src/qf/api/        # crea /app/src/qf/api/paginas
-cp -p $D/frontend/* ~/quantfut/frontend/                                  # copia del host, para que coincida
+cp -p $D/frontend/* ~/quantfut/frontend/     # carpeta del host: NO la usa el contenedor (no es un montaje) y está desfasada (ver §4b); se actualiza solo para que no engañe
 ```
 
 **5.5 Ensayo antes de reiniciar** (un proceso nuevo importa lo copiado; no toca al servidor en marcha):
@@ -203,7 +227,7 @@ docker restart quantfut-api-1
 
 ## 8. Riesgos conocidos y qué observar durante 48 h
 
-1. **Parches que solo viven en el contenedor** (los 9 de §1): cualquier `docker compose up --force-recreate` los
+1. **Parches que solo viven en el contenedor** (los 8 de §1): cualquier `docker compose up --force-recreate` los
    pierde, también estos. Es una deuda anterior a este despliegue; la salida es que `main` alcance a producción y se
    reconstruya la imagen entera (ver DEPLOYS.md, «lo que corre en producción es lo que dice `main`»).
 2. **Consentimiento**: vigilar en `meta_events` el volumen de eventos `website` (debe bajar solo para tráfico europeo) y
@@ -217,7 +241,7 @@ docker restart quantfut-api-1
 
 ```
 ### 2026-11-DD HH:MM UTC · SEO: robots/sitemaps/noindex, páginas públicas, secciones con URL propia y consentimiento de medición · API + db/104 (PR #283, #286, #287)
-- Método: archivos al contenedor en marcha (`docker cp`) + `docker restart`; NO recreado (9 archivos solo en el contenedor).
+- Método: archivos al contenedor en marcha (`docker cp`) + `docker restart`; NO recreado (8 archivos solo en el contenedor).
 - `main.py` = el de producción + parche de 11 líneas (docs/despliegue_seo_20261108/main_py.patch); el resto, idéntico a `main` (`<commit>`).
 - db/104 con lock_timeout 5s. Respaldo: ~/respaldos/seo_f0_f1_<fecha>/ (archivos + whop_checkouts).
 - Verificado: <resultados de §6>.
