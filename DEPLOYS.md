@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 04:05 UTC · Retiro de la insignia «Muestra en construcción» de la cabecera de Escalera · VPS y Local
+- Solicitud del titular: retirar el badge amarillo `[MUESTRA EN CONSTRUCCIÓN]` de las insignias superiores de Reto Escalera, dejando exclusivamente `[RETO ACTIVO]` y `[DATOS DEL SERVIDOR]`.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado `(r.cerrados ?? 0) < MUESTRA_MIN ? badge('Muestra en construcción', 'warn') : ''` de `chips` en `escaleraView`.
+  - `frontend/conversion-views.test.mjs`: añadida aserción `assert.doesNotMatch(view, /Muestra en construcción/)` en la suite de escalera (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v9`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
 ### 2026-11-08 04:00 UTC · Retiro de las etiquetas «muestra pequeña» en Reto Escalera y vistas públicas · VPS y Local
 - Solicitud del titular: suprimir por completo los badges/etiquetas `small.cv-flag` («muestra pequeña») de las filas estadísticas y preguntas frecuentes.
 - Archivos modificados:

@@ -412,7 +412,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       big: r.cerrados ? unidades(r.ganancia) : '—',
       bigLabel: 'ganancia acumulada',
       bigSub: r.cerrados ? `sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% completados` : 'Aún no se cerró ningún reto',
-      chips: [badge(activo ? 'Reto activo' : 'Reto inactivo', activo ? 'good' : 'muted'), (r.cerrados ?? 0) < MUESTRA_MIN ? badge('Muestra en construcción', 'warn') : '', badge('Datos del servidor', 'accent')].filter(Boolean),
+      chips: [badge(activo ? 'Reto activo' : 'Reto inactivo', activo ? 'good' : 'muted'), badge('Datos del servidor', 'accent')].filter(Boolean),
       extra: curva(serie),
     });
 
