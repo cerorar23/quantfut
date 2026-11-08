@@ -8,12 +8,15 @@ respalda, se verifica y se anota la entrada con su vuelta atrás.
 
 | PR | Contenido | CI en GitHub |
 |---|---|---|
-| #286 | `robots.txt`, sitemaps, `noindex`, `www`→dominio sin `www`, 404 en HTML, páginas `/metodologia/`, `/juego-responsable/`, `/sobre-nosotros/` | verde |
-| #287 | Secciones con URL propia (`/historial/`, `/pronosticos/`…), `rutas.js`, History API en `app.js`, pie global | verde al redactar esto (ver `gh pr checks 287`) |
+| #286 | `robots.txt`, sitemaps, `noindex`, `www`→dominio sin `www`, 404 en HTML, páginas `/metodologia/`, `/juego-responsable/`, `/sobre-nosotros/` | verde · **fusionado el 8-nov 22:02 UTC (`e54511b1`)** |
+| #287 | Secciones con URL propia (`/historial/`, `/pronosticos/`…), `rutas.js`, History API en `app.js`, pie global | verde · **fusionado el 8-nov 22:07 UTC (`dfad23c6`)** |
 | #283 | Consentimiento de la medición (opt-in en Europa), `db/104`, plan SEO | verde |
 
 **Prueba del conjunto** (worktree aparte, sin subir): fusionados #286+#287 y después #283 sobre `main`, la suite completa
 de Python da **2.104 pasan, 126 omitidas, 0 fallos** y el frontend **157/157**. Los conflictos reales entre PR están en §3.
+
+> **Estado (8-nov 22:10 UTC):** #286 y #287 ya están en `main` (por squash; `main` es idéntico al árbol que pasó el CI). 
+> Queda #283, al que se le aplicó la resolución de §3 al ponerlo al día con `main`. Sigue sin desplegarse nada.
 
 ### Hallazgos que obligan a un método concreto (comprobados el 8-nov en el servidor, solo lectura)
 

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block contenido %}
+<p class="entradilla">QuantFut calcula probabilidades, no promete resultados. Esta página explica de dónde salen los números, con qué los comparamos, cómo dejamos constancia de lo que publicamos antes de cada partido y qué límites tiene todo esto.</p>
+
+<div class="aviso">
+<p><strong>Los modelos estiman probabilidades, no garantizan resultados.</strong> Una probabilidad del 70 % significa que, en situaciones parecidas, se espera que ocurra unas siete de cada diez veces, no que vaya a ocurrir esta vez. Lo que sucedió en el pasado no asegura lo que sucederá.</p>
+</div>
+
+<h2>Qué estimamos</h2>
+<p>Para cada partido publicado calculamos la probabilidad de varios resultados y mercados: quién gana, cuántos goles o puntos habrá en total, quién cubre una línea, entre otros. Cubrimos fútbol (once ligas y dos competiciones europeas de clubes), baloncesto de la NBA y tenis. Cada deporte tiene su propio modelo, porque los deportes se juegan de forma distinta; todos pasan por el mismo sellado y por la misma medición.</p>
+
+<h2>Cómo calculamos</h2>
+<ul>
+<li><strong>Fútbol.</strong> Un modelo de goles de tipo Dixon-Coles: cada equipo tiene una fuerza de ataque y otra de defensa, se tiene en cuenta la ventaja de jugar en casa y se da más peso a los partidos recientes. Con ello se obtiene la probabilidad de cada marcador y, a partir de ahí, la de cada mercado. Los goles esperados (xG) de partidos anteriores entran como una señal más.</li>
+<li><strong>Competiciones con equipos de varias ligas.</strong> En Champions League y Europa League comparamos equipos que no se enfrentan a lo largo del año; el cálculo está construido para que añadirlas no altere lo ya medido en las ligas domésticas.</li>
+<li><strong>NBA y tenis.</strong> Modelos propios, construidos con las particularidades de cada deporte. Comparten el sellado, la medición y las limitaciones que se describen más abajo.</li>
+<li><strong>Datos.</strong> Calendarios y resultados, estadísticas de partido (tiros, goles esperados), alineaciones y bajas, y cuotas publicadas por casas de apuestas. Los datos de terceros pueden contener errores o llegar tarde, y los tratamos con esa cautela.</li>
+</ul>
+
+<h2>El mercado como referencia, no como rival</h2>
+<p>Las cuotas de cierre de las casas de apuestas son una estimación muy eficiente de la probabilidad real. Les quitamos el margen de la casa (lo que se llama «quitar el vig», con el método de Shin) para obtener la probabilidad que implican, y comparamos nuestra estimación con esa referencia.</p>
+<p><strong>No afirmamos superar al mercado.</strong> En las mediciones que hemos hecho hasta ahora, nuestro modelo de fútbol estima bien las probabilidades —está calibrado dentro de pequeños márgenes en los tramos con muestra suficiente—, pero no mejora de forma consistente el precio de cierre. Por eso no vendemos «ventaja garantizada»: ofrecemos probabilidades calibradas y trazables.</p>
+
+<h2>Calibración: lo que medimos</h2>
+<p>Una buena probabilidad es una probabilidad honesta: si decimos 70 % cien veces, debería cumplirse cerca de setenta. Eso se llama calibración y es lo que miramos primero. También medimos cuánto falla el modelo en conjunto (con métricas como el <em>log-loss</em> y el <em>Brier score</em>) y, cuando hay cuotas de cierre, qué tan bien se comparan nuestras probabilidades con ellas.</p>
+<p>Para que una medición cuente, usamos solo información disponible antes del partido: la base de datos rechaza cualquier dato de entrada del modelo con fecha posterior al inicio del partido, de modo que no pueda «ver el futuro» sin que nos demos cuenta.</p>
+
+<h2>Cómo sellamos cada pronóstico</h2>
+<ol>
+<li>Antes del partido se calculan las probabilidades y se guardan en un lote.</li>
+<li>El lote se convierte a un formato canónico y se calcula su huella digital (hash SHA-256).</li>
+<li>Cada huella se encadena con la anterior: <code>cadena = sha256(huella anterior + huella del lote)</code>. Si se cambiara un solo carácter de un pronóstico pasado, todas las huellas posteriores dejarían de cuadrar.</li>
+<li>La base de datos rechaza modificar o borrar pronósticos ya sellados; no existe un «arreglo rápido» posterior.</li>
+<li>Las huellas de los lotes están publicadas en <a href="/chain">/chain</a>, donde cualquiera puede comprobar que la cadena es consistente.</li>
+</ol>
+<p><strong>Limitación que preferimos decir.</strong> Hoy esas huellas viven en nuestra base de datos y en <code>/chain</code>; todavía no las publicamos en un registro externo independiente con marca de tiempo de un tercero. Hasta entonces, la cadena demuestra que no hemos alterado ningún pronóstico una vez sellado, pero quien quiera una garantía ajena a nosotros no la tiene todavía. Actualizaremos esta página cuando exista.</p>
+
+<h2>Historial completo, también lo que falla</h2>
+<p>Publicamos el historial de pronósticos liquidados con su resultado, acertado o no. Un porcentaje de acierto solo significa algo con muchos casos: con muestras pequeñas, cualquier cifra puede ser azar, y lo decimos cuando ocurre. Puedes consultarlo en el <a href="/#historial">historial de la portada</a>.</p>
+
+<h2>Límites y riesgos</h2>
+<ul>
+<li>Las lesiones, las alineaciones y los cambios de última hora pueden invalidar una estimación hecha horas antes.</li>
+<li>Al comienzo de una temporada hay menos información reciente y el modelo es más incierto; también puede tener sesgos en el nivel de goles que se corrigen con el tiempo.</li>
+<li>Las muestras pequeñas engañan, tanto para bien como para mal.</li>
+<li>Un pronóstico de alta probabilidad sigue pudiendo fallar. Si apuestas, hazlo solo con dinero que puedas perder: consulta <a href="/juego-responsable/">juego responsable</a>.</li>
+</ul>
+
+<h2>Quién lo hace y cómo corregirnos</h2>
+<p>QuantFut es el nombre comercial de un servicio de Saptain LTD (<a href="/sobre-nosotros/">más información</a>). Si encuentras un error en esta página o en un pronóstico publicado, escríbenos a <a href="mailto:admin@pronosticosdeportivos.pro">admin@pronosticosdeportivos.pro</a>: lo revisaremos y, si procede, lo corregiremos dejando constancia de la corrección.</p>
+{% endblock %}

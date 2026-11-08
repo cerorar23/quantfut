@@ -1,6 +1,7 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=consentimiento-20261108';
+import { routeFromLocation, cleanUrl, historyEntry } from './rutas.js?v=rutas-20261108';
 import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
 import { createSportWindow } from './sports-window.js?v=tenis-cuota-20261105';
@@ -67,6 +68,7 @@ const nav = [
 ];
 const MOBILE_PRIMARY = ['inicio', 'historial', 'planes', 'cuenta'];
 const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Análisis del partido', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
+const SERVER_TITLE = document.title;   // título que puso el servidor (rutas_web.py) para la sección servida
 const validRoute = route => Object.hasOwn(routeTitle, route);
 const ROUTE_ALIAS = { mercados: 'partidos', partido: 'partidos' };
 const canonicalRoute = route => ROUTE_ALIAS[route] || route;
@@ -367,7 +369,8 @@ function navigate(route) {
   state.modal = null;
   state.drawer = null;
   state.mobileMenuOpen = false;
-  location.hash = state.route;
+  const entry = historyEntry(location, state.route);   // URL limpia si la sección la tiene; si no, #ruta
+  if (entry) history.pushState(null, '', entry);
   render();
   app.querySelector('#main-content')?.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
@@ -1230,13 +1233,20 @@ function applyCybercoreTheme(root) {
 
 // ---------------------------------------------------------------- render
 
+// Pie global: enlaces REALES (<a href>) a las páginas de confianza y a lo legal. Las páginas las sirve el servidor
+// (paginas.py), no la SPA, así que el clic navega de verdad; el manejador de clics solo intercepta botones y a[data-sport].
+function siteFooter() {
+  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a></nav></footer>`;
+}
+
 function render() {
   if(state.mobileMenuOpen && window.matchMedia('(min-width:761px)').matches)state.mobileMenuOpen=false;
   const views = { inicio: realViews.home, partidos: windowView, mercados: windowView, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
-  document.title = `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main></div></div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  // La sección que el servidor sirvió conserva su título (más descriptivo), también al volver a ella con «atrás»; las demás, el corto.
+  document.title = document.documentElement.dataset.ruta === state.route ? SERVER_TITLE : `${routeTitle[state.route]} · QuantFut`;
+  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main></div>${siteFooter()}</div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   applyCybercoreTheme(app);
   conversionViews.applyMeters(app);
   membershipUI.afterRender();
@@ -1422,10 +1432,13 @@ app.addEventListener('submit', event => {
   membershipUI.handleSubmit(event.target);
 });
 
-window.addEventListener('hashchange', () => {
-  const route = canonicalRoute(location.hash.slice(1));
-  if (validRoute(route) && state.route !== route) { state.route = route; state.mobileMenuOpen = false; state.drawer = null; render(); app.querySelector('#main-content')?.focus({ preventScroll: true }); }
-});
+// Atrás/adelante y enlaces con hash: la barra de direcciones manda sobre el estado.
+function syncRouteFromLocation() {
+  const route = routeFromLocation(location, validRoute, canonicalRoute);
+  if (route && state.route !== route) { state.route = route; state.mobileMenuOpen = false; state.drawer = null; render(); app.querySelector('#main-content')?.focus({ preventScroll: true }); }
+}
+window.addEventListener('hashchange', syncRouteFromLocation);
+window.addEventListener('popstate', syncRouteFromLocation);
 
 function trapFocus(event, container) {
   const controls = [...app.querySelectorAll(`${container} button:not([disabled]):not([tabindex="-1"]), ${container} [tabindex="0"]`)];
@@ -1453,8 +1466,11 @@ window.addEventListener('keydown', event => {
   }
 });
 
-const initial = canonicalRoute(location.hash.slice(1));
-if (validRoute(initial)) state.route = initial;
+const initial = routeFromLocation(location, validRoute, canonicalRoute);
+if (initial) state.route = initial;
+// Un enlace antiguo (/#historial) pasa a su URL limpia (/historial/) sin añadir otra entrada al historial.
+const clean = initial && cleanUrl(location, initial);
+if (clean) history.replaceState(null, '', clean + location.search);
 window.addEventListener('resize',()=>{if(state.mobileMenuOpen && window.matchMedia('(min-width:761px)').matches){state.mobileMenuOpen=false;render();}});
 membershipUI.handleReturn();
 render();

@@ -10,6 +10,8 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi import Response
 
+from . import rutas_web
+
 
 router = APIRouter(include_in_schema=False)
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
@@ -100,9 +102,15 @@ def real_views_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "real-views.js", media_type="text/javascript")
 
 
-@router.get("/")
-def index() -> FileResponse:
-    return FileResponse(FRONTEND_DIR / "index.html", headers={"Cache-Control": "no-cache, must-revalidate"})
+@router.api_route("/", methods=["GET", "HEAD"])
+def index():
+    # La portada y las demás secciones con URL propia comparten index.html (ver rutas_web.py).
+    return rutas_web.responder(rutas_web.INICIO)
+
+
+@router.get("/rutas.js")
+def routes_script() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "rutas.js", media_type="text/javascript")
 
 
 @router.get("/styles.css")
