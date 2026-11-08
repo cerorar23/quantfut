@@ -1,6 +1,6 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createMembershipUI } from './membership.js?v=consentimiento-20261108';
+import { createMembershipUI } from './membership.js?v=preferencias-20261108';
 import { routeFromLocation, cleanUrl, historyEntry } from './rutas.js?v=rutas-20261108';
 import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
@@ -1236,7 +1236,7 @@ function applyCybercoreTheme(root) {
 // Pie global: enlaces REALES (<a href>) a las páginas de confianza y a lo legal. Las páginas las sirve el servidor
 // (paginas.py), no la SPA, así que el clic navega de verdad; el manejador de clics solo intercepta botones y a[data-sport].
 function siteFooter() {
-  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a></nav></footer>`;
+  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav></footer>`;
 }
 
 function render() {

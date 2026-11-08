@@ -287,8 +287,36 @@ def test_los_enlaces_del_pie_existen_en_el_servidor(client):
 
 def test_el_pie_usa_enlaces_reales_y_lleva_el_aviso_de_edad():
     pie = _pie_de_la_spa()
-    assert "<button" not in pie and 'data-route' not in pie, "deben ser <a href> reales, que Google puede seguir"
+    # Navegar es siempre un <a href> real (Google puede seguirlo); lo único que no navega es el botón de preferencias.
+    assert 'data-route' not in pie
+    botones = re.findall(r"<button\b[^>]*>", pie)
+    assert len(botones) == 1 and 'data-membership-action="ads-preferences"' in botones[0], botones
     assert "+18" in pie and "no una casa de apuestas" in pie and "no garantiza un resultado" in pie
+
+
+def test_el_boton_de_preferencias_esta_cableado_hasta_el_aviso_de_medicion():
+    membership = (FRONTEND / "membership.js").read_text(encoding="utf-8")
+    pixel = (FRONTEND / "meta-pixel.js").read_text(encoding="utf-8")
+    assert "export const openPreferences" in pixel
+    assert "openPreferences as openAdsPreferences" in membership
+    assert re.search(r"case 'ads-preferences':\s*openAdsPreferences\(\)", membership), "membership.js no atiende la acción del botón"
+    assert 'data-membership-action="ads-preferences"' in _pie_de_la_spa()
+
+
+def test_app_y_membership_cargan_el_pixel_con_versiones_nuevas_para_saltar_la_cache():
+    # El archivo cambió de contenido: si la versión no cambia, Cloudflare y los navegadores sirven la copia vieja.
+    app = (FRONTEND / "app.js").read_text(encoding="utf-8")
+    membership = (FRONTEND / "membership.js").read_text(encoding="utf-8")
+    index = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert re.search(r"meta-pixel\.js\?v=preferencias-20261108", membership)
+    assert "membership.js?v=preferencias-20261108" in app
+    assert "app.js?v=prefs-20261108" in index and "conversion.css?v=prefs-20261108" in index
+
+
+def test_el_boton_del_pie_tiene_estilo_de_enlace_y_area_tactil():
+    css = (FRONTEND / "conversion.css").read_text(encoding="utf-8")
+    bloque = css.split(".qf-pie-prefs {", 1)[1].split("}", 1)[0]
+    assert "text-decoration: underline" in bloque and "padding: 8px 0" in bloque
 
 
 def test_la_spa_no_intercepta_los_enlaces_del_pie():

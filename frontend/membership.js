@@ -4,7 +4,7 @@
 // (catálogo público de cuenta-api.js, editable en el panel /control): aquí solo viven los textos.
 import * as cuenta from './cuenta-api.js?v=b298f1c04385';
 import { googleIdToken } from './google-auth.js?v=w2b3c4d5e6f7';
-import { init as initPixel, identify, track, browserIds } from './meta-pixel.js?v=consentimiento-20261108';
+import { init as initPixel, identify, track, browserIds, openPreferences as openAdsPreferences } from './meta-pixel.js?v=preferencias-20261108';
 import { mount as mountCheckout, destroy as destroyCheckout } from './whop-checkout.js?v=w1a2b3c4d5e6';
 
 // Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
@@ -213,6 +213,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     if (data.removeDemoMatch) { state.savedDemoMatches = state.savedDemoMatches.filter(id => id !== data.removeDemoMatch); keepFocus('[data-save-demo-match]'); return true; }
     if (!data.membershipAction) return false;
     switch (data.membershipAction) {
+      case 'ads-preferences': openAdsPreferences(); break;   // pie global: reabre el aviso de medición
       case 'reload-plans': loadPlans(); break;
       case 'review-order': state.authReturn = 'checkout'; state.authMode = 'login'; state.authMessage = ''; navigate(state.session ? 'checkout' : 'acceso'); break;
       case 'show-password': {

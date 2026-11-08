@@ -171,3 +171,49 @@ test('sin Pixel configurado no se hace nada', async () => {
   assert.equal(px.init(null, null, 'opt-out'), false);
   assert.equal(env.nodes.size, 0);
 });
+
+// --- «Preferencias de medición» del pie: caminos que solo existen al poder reabrir el aviso ---------------------
+
+test('rechazar y luego aceptar desde preferencias reactiva el Pixel ya cargado, sin recargar', async () => {
+  const env = entorno();
+  const px = await cargar();
+  px.init('123', null, 'opt-out');                      // opt-out: carga el Pixel y ofrece rechazar
+  pulsar(env, 'no');
+  assert.ok(llamadasFbq().some(call => call[0] === 'consent' && call[1] === 'revoke'));
+  px.openPreferences();
+  assert.ok(env.nodes.has('qf-ads-notice'), 'el aviso se vuelve a mostrar');
+  pulsar(env, 'si');
+  assert.equal(env.jar.get('qf_ads'), 'si');
+  assert.ok(llamadasFbq().some(call => call[0] === 'consent' && call[1] === 'grant'), 'sin «grant» Meta seguiría revocado');
+  const antes = llamadasFbq().length;
+  px.track('Purchase', { value: 1 }, 'purchase:1');
+  assert.equal(llamadasFbq().length, antes + 1, 'y los eventos vuelven a salir');
+});
+
+test('quien rechazó al cargar y acepta después desde preferencias activa el Pixel en ese momento', async () => {
+  const env = entorno({ cookies: { qf_ads: 'no' } });
+  const px = await cargar();
+  assert.equal(px.init('123', null, 'opt-out'), false);
+  assert.equal(env.scripts.length, 0);
+  px.openPreferences();
+  pulsar(env, 'si');
+  assert.equal(env.jar.get('qf_ads'), 'si');
+  assert.equal(env.scripts.length, 1);
+  assert.deepEqual(llamadasFbq().find(call => call[0] === 'track'), ['track', 'PageView']);
+});
+
+test('con una señal de privacidad del navegador, preferencias no ofrece aceptar y no carga nada', async () => {
+  const env = entorno({ gpc: true });
+  const px = await cargar();
+  assert.equal(px.init('123', null, 'opt-out'), false);
+  px.openPreferences();
+  const aviso = env.nodes.get('qf-ads-notice');
+  assert.match(aviso.innerHTML, /señal de privacidad/);
+  assert.ok(!aviso.innerHTML.includes('data-ads="si"'), 'no se ofrece una elección que no se respetaría');
+  pulsar(env, 'cerrar');
+  assert.equal(env.nodes.has('qf-ads-notice'), false);
+  assert.equal(env.jar.has('qf_ads'), false, '«Entendido» no guarda ninguna elección');
+  px.decide('si');                                       // aunque algo llame a decide('si') directamente
+  assert.equal(env.scripts.length, 0);
+  assert.equal(px.consentGranted(), false);
+});

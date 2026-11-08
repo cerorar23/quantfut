@@ -72,10 +72,19 @@ export function showNotice(force = false) {
   const text = regime === 'opt-in'
     ? 'Con tu permiso usamos cookies y el Pixel de Meta para medir nuestros anuncios. Sin tu permiso no se activa nada.'
     : 'Usamos cookies y el Pixel de Meta para medir nuestros anuncios. Puedes rechazarlo cuando quieras.';
-  bar.innerHTML = `<p>${text} <a href="/legal/privacidad" target="_blank" rel="noopener">Privacidad</a></p>`
-    + '<div><button type="button" data-ads="no">Rechazar</button><button type="button" data-ads="si">Aceptar</button></div>';
+  const enlace = '<a href="/legal/privacidad" target="_blank" rel="noopener">Privacidad</a>';
+  if (privacySignal()) {
+    // Solo se llega aquí desde «Preferencias de medición»: la señal del navegador gana a cualquier «Aceptar»,
+    // igual que en el servidor (meta_consent.py), así que no se ofrece una elección que no se respetaría.
+    bar.innerHTML = `<p>Tu navegador envía una señal de privacidad (Global Privacy Control o No rastrear), así que no medimos tu visita, aceptes o no. ${enlace}</p>`
+      + '<div><button type="button" data-ads="cerrar">Entendido</button></div>';
+  } else {
+    bar.innerHTML = `<p>${text} ${enlace}</p>`
+      + '<div><button type="button" data-ads="no">Rechazar</button><button type="button" data-ads="si">Aceptar</button></div>';
+  }
   bar.addEventListener('click', event => {
     const choice = event.target?.dataset?.ads;
+    if (choice === 'cerrar') { bar.remove(); return; }
     if (choice !== 'si' && choice !== 'no') return;
     decide(choice);
     bar.remove();
@@ -91,10 +100,15 @@ export function decide(choice) {
     clearMetaCookies();
     return;
   }
-  if (!ready && pixelId) start(pixelId, pendingSession);
+  if (privacySignal()) return;   // la señal del navegador gana siempre, también a un «Aceptar» desde preferencias
+  if (ready) {                    // ya estaba cargado y se había revocado: se reactiva sin recargar la página
+    try { window.fbq?.('consent', 'grant'); } catch { /* sin Pixel */ }
+    return;
+  }
+  if (pixelId) start(pixelId, pendingSession);
 }
 
-/** Para un enlace «Preferencias de medición» del pie: vuelve a mostrar el aviso. */
+/** Botón «Preferencias de medición» del pie (app.js · siteFooter → membership.js): vuelve a mostrar el aviso. */
 export const openPreferences = () => showNotice(true);
 
 function loadSdk() {
