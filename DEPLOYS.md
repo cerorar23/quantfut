@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-08 03:55 UTC · Retiro del banner de advertencia «Un X% no es una garantía» en Reto Escalera · VPS y Local
+- Solicitud del titular: suprimir el cuadro amarillo de aviso (`cyber-alert--warning`: «Un X% no es una garantía, ni quita el margen de la casa...») de la vista `#escalera`.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado el `div.cv-honest.cyber-alert--warning` de `prueba`.
+  - `frontend/conversion-views.test.mjs`: aserción negativa `assert.doesNotMatch(view, /no es una garantía/)` (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v6`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Servicio `quantfut-api-1` reiniciado y verificado en `https://pronosticosdeportivos.pro/` (200 OK, `v6`).
+
 ### 2026-11-08 03:50 UTC · Retiro de la sección «La Regla / Cómo se elige cada escalón» de la web · VPS y Local
 - Solicitud del titular: suprimir por completo la sección explicativa «La Regla / Cómo se elige cada escalón» de la vista de Reto Escalera (`#escalera`).
 - Archivos modificados:
