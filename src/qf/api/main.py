@@ -71,7 +71,7 @@ from .fichas import router as fichas_router
 from .panel import router as panel_router
 from .web import router as web_router
 from .mobile import member, router as mobile_router
-from . import futbol_paginas, indexnow, mensajes, nba_paginas, og, paginas, rutas_web, seo, tenis_paginas
+from . import csp, futbol_paginas, indexnow, mensajes, nba_paginas, og, paginas, rutas_web, seo, tenis_paginas
 from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
@@ -154,6 +154,7 @@ async def security_middleware(request: Request, call_next):
 
     response = await call_next(request)
     seo.aplicar_cabeceras(request, response)
+    csp.aplicar_cabeceras(request, response)   # CSP en modo informe: avisa de lo que bloquearía, no bloquea nada
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -836,6 +837,7 @@ app.include_router(tenis_v2_router)
 # Después de tenis_v2: `/tenis/v2/metodologia` también encajaría en `/tenis/{torneo}/{slug}` y el motor debe ganar.
 app.include_router(tenis_paginas.router)
 app.include_router(og.router)
+app.include_router(csp.router)
 # Al final: `/{nombre}.txt` solo responde a la clave de IndexNow y no debe adelantarse a ninguna otra ruta.
 app.include_router(indexnow.router)
 

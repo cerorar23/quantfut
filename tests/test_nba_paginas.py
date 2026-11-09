@@ -283,3 +283,55 @@ def test_la_pagina_no_pierde_el_contenido_si_el_index_cambia(client, caplog):
         out = rutas_web.render_pagina(titulo="T", descripcion="d", path="/nba/", ruta="partidos", jsonld=[],
                                       principal="<h1>x</h1>", index=roto)
     assert out == roto and "no tiene las marcas esperadas" in caplog.text
+
+
+# --- caché: servir lo caducado al instante y renovar en segundo plano ------------------------------
+
+def test_lo_caducado_se_sirve_al_instante_y_se_renueva_aparte(monkeypatch):
+    nba_datos.vaciar_cache()
+    pendientes, llamadas = [], []
+    versiones = iter(["v1", "v2", "v3"])
+
+    def pedir(ruta, params=None):
+        llamadas.append(params)
+        return {"partidos": [next(versiones)]}
+    monkeypatch.setattr(nba_datos, "_pedir", pedir)
+    monkeypatch.setattr(nba_datos, "_lanzar", pendientes.append)
+    monkeypatch.setattr(nba_datos, "TTL_VIVO_S", 0)                      # todo caduca al instante
+    primera = nba_datos._con_cache("k", 0, "/x")
+    assert primera == {"partidos": ["v1"]} and len(llamadas) == 1        # sin copia: espera y pide
+    segunda = nba_datos._con_cache("k", 0, "/x")
+    assert segunda == {"partidos": ["v1"]} and len(llamadas) == 1        # caducada: se sirve YA, sin esperar a nba-api
+    assert len(pendientes) == 1
+    nba_datos._con_cache("k", 0, "/x")
+    assert len(pendientes) == 1                                          # una sola renovación a la vez por clave
+    pendientes[0]()                                                      # termina la renovación
+    assert nba_datos._cache["k"][1] == {"partidos": ["v2"]}              # la copia ya es la nueva
+    assert nba_datos._con_cache("k", 0, "/x") == {"partidos": ["v2"]} and len(pendientes) == 2   # se sirve la nueva y se vuelve a renovar
+    nba_datos.vaciar_cache()
+
+
+def test_una_renovacion_fallida_conserva_la_copia_y_se_reintenta(monkeypatch):
+    nba_datos.vaciar_cache()
+    pendientes = []
+    monkeypatch.setattr(nba_datos, "_lanzar", pendientes.append)
+    monkeypatch.setattr(nba_datos, "_pedir", lambda ruta, params=None: {"partidos": ["buena"]})
+    nba_datos._con_cache("k", 0, "/x")
+    monkeypatch.setattr(nba_datos, "_pedir", lambda ruta, params=None: (_ for _ in ()).throw(nba_datos.NbaNoDisponible("caído")))
+    assert nba_datos._con_cache("k", 0, "/x") == {"partidos": ["buena"]}
+    pendientes.pop()()                                                   # la renovación falla sin romper nada
+    assert nba_datos._cache["k"][1] == {"partidos": ["buena"]} and "k" not in nba_datos._renovando
+    assert nba_datos._con_cache("k", 0, "/x") == {"partidos": ["buena"]} and len(pendientes) == 1   # se reintenta
+    nba_datos.vaciar_cache()
+
+
+def test_pasada_una_hora_ya_no_se_sirve_lo_viejo_sin_esperar(monkeypatch):
+    nba_datos.vaciar_cache()
+    monkeypatch.setattr(nba_datos, "_lanzar", lambda t: pytest.fail("no debe renovar en segundo plano: la copia es demasiado vieja"))
+    versiones = iter(["viejo", "nuevo"])
+    monkeypatch.setattr(nba_datos, "_pedir", lambda ruta, params=None: {"partidos": [next(versiones)]})
+    nba_datos._con_cache("k", 0, "/x")
+    clave, (t, v) = next(iter(nba_datos._cache.items()))
+    nba_datos._cache[clave] = (t - nba_datos.STALE_MAX_S - 1, v)         # la copia tiene más de una hora
+    assert nba_datos._con_cache("k", 0, "/x") == {"partidos": ["nuevo"]}  # espera y trae lo nuevo
+    nba_datos.vaciar_cache()

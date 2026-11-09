@@ -27,7 +27,7 @@ NOINDEX_SEGMENTS = frozenset({
     # panel, cuentas y flujos con sesión o con código de un solo uso
     "control", "admin", "cuenta", "verificar", "restablecer", "i", "rewards", "webhooks",
     # API de la web, la app móvil y los motores
-    "app", "mobile", "og", "v1", "web", "static", "vendor", "health",
+    "app", "mobile", "og", "csp-report", "v1", "web", "static", "vendor", "health",
     # JSON públicos de la raíz (no son páginas)
     "alta-probabilidad", "calibration", "chain", "escalera", "leagues", "matches", "model-card", "parley", "picks",
     "teams", "track-record",
