@@ -18,7 +18,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import nba_datos, paginas, rutas_web, seo
+from . import nba_datos, og, paginas, rutas_web, seo
 from .nba_datos import NbaNoDisponible
 
 log = logging.getLogger("qf.nba_paginas")
@@ -147,7 +147,7 @@ def construir(p: dict, ahora: datetime | None = None) -> SimpleNamespace:
         p=SimpleNamespace(titulo=titulo, descripcion=descripcion, slug=slug, migas=f"{local} vs {visit}"),
         id=p["id"], slug=slug, url=url, local=local, visitante=visit, fecha=fecha, estado=st, veredicto=ver,
         inicio=inicio, sellado=sellado, resultado=p.get("resultado"),
-        p_local=pct(pl), p_visit=pct(1 - pl), mu_local=num(pr["mu"][0]), mu_visit=num(pr["mu"][1]),
+        prob_local=pl, p_local=pct(pl), p_visit=pct(1 - pl), mu_local=num(pr["mu"][0]), mu_visit=num(pr["mu"][1]),
         texto_margen=texto_margen,
         margen_rango=(f"{entero(a[0])} y {'+' if a[1] > 0 else ''}{entero(a[1])}"),
         total_mediana=entero(pr["mediana"]["total"]), total_rango=f"{entero(b[0])} y {entero(b[1])}",
@@ -173,6 +173,31 @@ def _jsonld_partido(c: SimpleNamespace, base: str) -> list[dict]:
         {"@type": "ListItem", "position": 1, "name": "Inicio", "item": f"{base}/"},
         {"@type": "ListItem", "position": 2, "name": "NBA", "item": f"{base}{RUTA_PILAR}"},
         {"@type": "ListItem", "position": 3, "name": c.p.migas, "item": c.url}]}, web]
+
+
+# --- tarjeta para redes ---------------------------------------------------------------------------
+
+def estado_imagen(c: SimpleNamespace) -> str:
+    return "final" if c.estado == "final" else "previa"
+
+
+def tarjeta(c: SimpleNamespace) -> "og.Tarjeta":
+    final = estado_imagen(c) == "final"
+    r = c.resultado
+    return og.Tarjeta("partido", etiqueta="NBA", local=c.local, visitante=c.visitante, contexto=f"NBA · {fecha_larga(c.fecha)}",
+                      barra=[(c.local, c.prob_local), (c.visitante, 1 - c.prob_local)], estado=estado_imagen(c),
+                      marcador=f"{int(r['local'])} – {int(r['visitante'])}" if final and r else "",
+                      veredicto=(("acerto" if c.veredicto["acerto"] else "fallo") if final and c.veredicto else None))
+
+
+def tarjeta_de_la_url(slug: str):
+    p = nba_datos.buscar_partido(slug)
+    return tarjeta(construir(p)) if p else None
+
+
+def _imagen_partido(c: SimpleNamespace):
+    url = og.url_partido(f"/nba/{c.slug}/", estado_imagen(c))
+    return (url, f"Pronóstico {c.local} vs {c.visitante}: probabilidades del modelo") if url else None
 
 
 # --- pilar ----------------------------------------------------------------------------------------
@@ -244,12 +269,12 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
 
 # --- rutas ----------------------------------------------------------------------------------------
 
-def _pagina(plantilla: str, path: str, p: SimpleNamespace, jsonld: list[dict], datos: dict, **ctx) -> HTMLResponse:
+def _pagina(plantilla: str, path: str, p: SimpleNamespace, jsonld: list[dict], datos: dict, imagen=None, **ctx) -> HTMLResponse:
     """La página dentro del shell de la SPA (mismo diseño que el resto de la web): el contenido en el HTML inicial es
     lo que leen Google y las redes; la persona ve la app, que arranca en este mismo partido (frontend/rutas.js)."""
     principal = _env.get_template(plantilla).render(p=p, **ctx)
     cuerpo = rutas_web.render_pagina(titulo=p.titulo, descripcion=p.descripcion, path=path, ruta="partidos",
-                                     jsonld=jsonld, principal=principal, datos={"deporte": "nba", **datos})
+                                     jsonld=jsonld, principal=principal, datos={"deporte": "nba", **datos}, imagen=imagen)
     return HTMLResponse(cuerpo, headers={"Cache-Control": "no-cache, must-revalidate"})
 
 
@@ -265,7 +290,8 @@ def pilar():
         c = construir_pilar()
     except NbaNoDisponible:
         raise _no_disponible()
-    return _pagina("nba_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, c=c)
+    url = og.url_pilar("nba")
+    return _pagina("nba_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, (url, "Pronósticos de NBA con probabilidades") if url else None, c=c)
 
 
 @router.api_route("/nba", methods=["GET", "HEAD"], name="nba_pilar_sin_barra")
@@ -287,7 +313,7 @@ def partido(slug: str):
     datos = {"evento": c.id}
     if c.inicio:
         datos["inicio"] = c.inicio.astimezone(timezone.utc).isoformat()
-    return _pagina("nba_partido.html", f"/nba/{c.slug}/", c.p, _jsonld_partido(c, seo.base_url()), datos, c=c)
+    return _pagina("nba_partido.html", f"/nba/{c.slug}/", c.p, _jsonld_partido(c, seo.base_url()), datos, _imagen_partido(c), c=c)
 
 
 @router.api_route("/nba/{slug}", methods=["GET", "HEAD"], name="nba_partido_sin_barra")

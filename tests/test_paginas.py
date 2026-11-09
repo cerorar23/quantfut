@@ -8,7 +8,7 @@ from html.parser import HTMLParser
 import pytest
 from fastapi.testclient import TestClient
 
-from qf.api import main, paginas, ratelimit
+from qf.api import main, og, paginas, ratelimit
 
 HTML = {"accept": "text/html,application/xhtml+xml"}
 BASE = "https://pronosticosdeportivos.pro"
@@ -87,7 +87,7 @@ def test_head_completo_y_correcto(client, pagina):
     assert robots.startswith("index, follow") and "max-image-preview:large" in robots and "noindex" not in robots
     assert d.meta("og:url", "property") == url and d.meta("og:type", "property") == "website"
     assert d.meta("og:title", "property") == pagina.titulo and d.meta("og:locale", "property") == "es_ES"
-    assert d.meta("twitter:card") == "summary"
+    assert d.meta("twitter:card") == ("summary_large_image" if og.disponible() else "summary")
     assert "x-robots-tag" not in r.headers
 
 

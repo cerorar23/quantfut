@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from qf.api import main, paginas, ratelimit, rutas_web, seo
+from qf.api import main, og, paginas, ratelimit, rutas_web, seo
 
 BASE = "https://pronosticosdeportivos.pro"
 HTML = {"accept": "text/html,application/xhtml+xml"}
@@ -92,7 +92,7 @@ def test_head_propio_completo_y_sin_duplicados(client, sec):
     robots = d.meta("robots")
     assert len(robots) == 1 and robots[0].startswith("index, follow") and "max-image-preview:large" in robots[0]
     assert d.meta("og:url", "property") == [url] and d.meta("og:title", "property") == [f"{sec.titulo} | QuantFut"]
-    assert d.meta("og:locale", "property") == ["es_ES"] and d.meta("twitter:card") == ["summary"]
+    assert d.meta("og:locale", "property") == ["es_ES"] and d.meta("twitter:card") == (["summary_large_image"] if og.disponible() else ["summary"])
     assert d.html_attrs["lang"] == "es" and d.html_attrs["data-ruta"] == sec.ruta
     assert "x-robots-tag" not in r.headers
 

@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import paginas, rutas_web, seo, tenis_datos
+from . import og, paginas, rutas_web, seo, tenis_datos
 from .tenis_datos import TenisNoDisponible
 
 log = logging.getLogger("qf.tenis_paginas")
@@ -139,7 +139,7 @@ def construir(ev: dict, ahora: datetime | None = None) -> SimpleNamespace:
         p=SimpleNamespace(titulo=titulo, descripcion=descripcion, slug=slug, migas=f"{home} vs {away}"),
         id=str(ev["id"]), slug=slug, ruta=ruta, url=seo.base_url() + ruta, home=home, away=away, torneo=torneo,
         superficie=ev.get("surface"), estado=st, resultado=res, veredicto=ver, inicio=ev["_inicio"], dia=dia, sellado=sellado,
-        hash=ev["seal"], favorito=ganador["selection"], otro=otro, p_fav=pct(p), p_otro=pct(1 - p),
+        hash=ev["seal"], favorito=ganador["selection"], otro=otro, prob_fav=p, p_fav=pct(p), p_otro=pct(1 - p),
         brier=num(ver["brier"], 3) if ver else None, mercados=_filas_mercados(ev, res))
 
 
@@ -157,6 +157,33 @@ def jsonld_partido(c: SimpleNamespace, base: str) -> list[dict]:
         {"@type": "ListItem", "position": 1, "name": "Inicio", "item": f"{base}/"},
         {"@type": "ListItem", "position": 2, "name": "Tenis", "item": f"{base}{RUTA_PILAR}"},
         {"@type": "ListItem", "position": 3, "name": c.p.migas, "item": c.url}]}, web]
+
+
+# --- tarjeta para redes ---------------------------------------------------------------------------
+
+def estado_imagen(c: SimpleNamespace) -> str:
+    # Solo hay tarjeta «final» con el resultado confirmado (ganador y sets coinciden): en revisión no se anuncia nada.
+    return "final" if c.estado == "final" and c.resultado["coherente"] else "previa"
+
+
+def tarjeta(c: SimpleNamespace) -> "og.Tarjeta":
+    final = estado_imagen(c) == "final"
+    a, b = (c.prob_fav, 1 - c.prob_fav) if c.favorito == c.home else (1 - c.prob_fav, c.prob_fav)
+    s = c.resultado["sets"]
+    return og.Tarjeta("partido", etiqueta="TENIS", local=c.home, visitante=c.away, contexto=f"{c.torneo} · {fecha_larga(c.dia)}",
+                      barra=[(c.home, a), (c.away, b)], estado=estado_imagen(c),
+                      marcador=f"{s[0]} – {s[1]} en sets" if final and s else "",
+                      veredicto=(("acerto" if c.veredicto["acerto"] else "fallo") if final and c.veredicto else None))
+
+
+def tarjeta_de_la_url(torneo: str, slug: str):
+    ev = tenis_datos.buscar_partido(torneo, slug)
+    return tarjeta(construir(ev)) if ev and mercado_ganador(ev) else None
+
+
+def _imagen_partido(c: SimpleNamespace):
+    url = og.url_partido(c.ruta, estado_imagen(c))
+    return (url, f"Pronóstico {c.home} vs {c.away}: probabilidades del modelo") if url else None
 
 
 # --- pilar ----------------------------------------------------------------------------------------
@@ -220,10 +247,10 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
 
 # --- rutas ----------------------------------------------------------------------------------------
 
-def _pagina(plantilla: str, path: str, p: SimpleNamespace, jsonld: list[dict], datos: dict, **ctx) -> HTMLResponse:
+def _pagina(plantilla: str, path: str, p: SimpleNamespace, jsonld: list[dict], datos: dict, imagen=None, **ctx) -> HTMLResponse:
     principal = _env.get_template(plantilla).render(p=p, **ctx)
     cuerpo = rutas_web.render_pagina(titulo=p.titulo, descripcion=p.descripcion, path=path, ruta="partidos",
-                                     jsonld=jsonld, principal=principal, datos={"deporte": "tenis", **datos})
+                                     jsonld=jsonld, principal=principal, datos={"deporte": "tenis", **datos}, imagen=imagen)
     return HTMLResponse(cuerpo, headers={"Cache-Control": "no-cache, must-revalidate"})
 
 
@@ -238,7 +265,8 @@ def pilar():
         c = construir_pilar()
     except TenisNoDisponible:
         raise _no_disponible()
-    return _pagina("tenis_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, c=c)
+    url = og.url_pilar("tenis")
+    return _pagina("tenis_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, (url, "Pronósticos de tenis con probabilidades") if url else None, c=c)
 
 
 @router.api_route("/tenis", methods=["GET", "HEAD"], name="tenis_pilar_sin_barra")
@@ -258,7 +286,7 @@ def partido(torneo: str, slug: str):
         raise HTTPException(404)
     c = construir(ev)
     return _pagina("tenis_partido.html", c.ruta, c.p, jsonld_partido(c, seo.base_url()),
-                   {"evento": c.id, "inicio": c.inicio.isoformat()}, c=c)
+                   {"evento": c.id, "inicio": c.inicio.isoformat()}, _imagen_partido(c), c=c)
 
 
 @router.api_route("/tenis/{torneo}/{slug}", methods=["GET", "HEAD"], name="tenis_partido_sin_barra")
