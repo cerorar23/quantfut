@@ -120,8 +120,7 @@ def test_filas_nba_ganador_y_total():
     w = crd.filas_item(e, "nba", dict(market="winner"), "Boston Celtics", "New York Knicks")
     assert {(f["side"], f["bookmaker"]) for f in w} >= {("home", "draftkings"), ("away", "fanduel")}
     t = crd.filas_item(e, "nba", dict(market="game_total", line=215.5), "Boston Celtics", "New York Knicks")
-    assert {(f["name"], f["point"]) for f in t} == {("Over", 215.5), ("Under", 215.5), ("Over", 217.5), ("Under", 217.5)}
-    # La línea 217.5 solo la cotiza una casa: best_quote exigirá la línea sellada.
+    assert {(f["name"], f["point"]) for f in t} == {("Over", 215.5), ("Under", 215.5)}   # la 217.5 no sirve: no se guarda
     from qf.ingest.cuotas_referencia import best_quote
     q = best_quote(t, line=215.5, side="over", sealed_at=NOW, received_at=NOW)
     assert q.book == "betmgm" and q.price == pytest.approx(1.9091, abs=1e-4) and q.books == 2    # -110 gana a -112
@@ -400,3 +399,75 @@ def test_futbol_cache_de_therundown_caduca_a_las_24_horas(tmp_path):
            "M3": dict(fuente="the-odds-api", captured_at=(ahora - timedelta(hours=30)).isoformat(), rows=[])}
     rf.escribir_cache(tmp_path / "c.json", ent, ahora)
     assert set(rf.leer_cache(tmp_path / "c.json")) == {"M2|rd", "M3"}
+
+
+def test_futbol_respuesta_real_epl_20261121():
+    """Respuesta REAL de TheRundown (EPL, 21-nov-2026, 2 eventos): el empate llega como participante `Draw` (id 3) y el
+    hándicap trae a veces líneas distintas por casa (la principal de cada una)."""
+    from pathlib import Path
+    doc = json.loads((Path(__file__).parent / "fixtures" / "therundown_epl_20261121.json").read_text(encoding="utf-8"))
+    ini = datetime(2026, 11, 21, 12, 30, tzinfo=UTC)
+    e = crd.busca_evento(doc["events"], "Manchester City", "Fulham", ini, tenis=False)
+    assert e is not None and e["event_id"].startswith("a416d9fe")
+    assert crd.busca_evento(doc["events"], "Manchester City", "Chelsea", ini, tenis=False) is None
+    filas = crd.filas_futbol(e, "Manchester City", "Fulham")
+    assert {(f["market"], f["selection"], f["line"]) for f in filas} == {
+        ("h2h", "home", None), ("h2h", "draw", None), ("h2h", "away", None),
+        ("spreads", "home", -1.5), ("spreads", "away", 1.5), ("totals", "over", 3.5), ("totals", "under", 3.5)}
+    mejor = {}
+    for f in filas:
+        k = (f["market"], f["selection"], f["line"])
+        mejor[k] = max(mejor.get(k, (0, "")), (f["price"], f["bookmaker"]))
+    assert mejor[("h2h", "draw", None)] == (4.8, "fanduel") and mejor[("h2h", "away", None)][0] == 6.0   # +500 en dos casas
+    assert mejor[("h2h", "home", None)][0] == pytest.approx(1.4348, abs=1e-4)
+    # El segundo evento tiene líneas de hándicap distintas por casa: cada una queda con su propia línea.
+    e2 = crd.busca_evento(doc["events"], "Aston Villa", "Sunderland", datetime(2026, 11, 21, 15, 0, tzinfo=UTC), tenis=False)
+    lineas_h = {(f["selection"], f["line"]) for f in crd.filas_futbol(e2, "Aston Villa", "Sunderland") if f["market"] == "spreads"}
+    assert lineas_h == {("home", -0.5), ("home", -1.5), ("away", 0.5), ("away", 1.5)}
+
+
+def test_interruptor_por_archivo_en_el_volumen(tmp_path, monkeypatch):
+    """Ocultar sin reiniciar: crear `cuotas_therundown_oculto` junto a la caché basta (la lectura se refresca cada 5 s)."""
+    monkeypatch.setenv("CUOTAS_RESPALDO_CACHE", str(tmp_path / "cuotas_respaldo.json"))
+    monkeypatch.delenv("CUOTAS_THERUNDOWN_MOSTRAR", raising=False)
+    monkeypatch.setattr(crd, "_oculto", [0.0, False])
+    assert crd.mostrar() is True
+    (tmp_path / crd.ARCHIVO_OCULTAR).write_text("", encoding="utf-8")
+    assert crd.mostrar() is True                       # aún dentro de la ventana de 5 s: usa la lectura anterior
+    monkeypatch.setattr(crd, "_oculto", [0.0, False])  # pasa la ventana
+    assert crd.mostrar() is False
+    (tmp_path / crd.ARCHIVO_OCULTAR).unlink()
+    monkeypatch.setattr(crd, "_oculto", [0.0, True])
+    assert crd.mostrar() is True
+    monkeypatch.setenv("CUOTAS_THERUNDOWN_MOSTRAR", "0")                # la variable sigue mandando
+    assert crd.mostrar() is False
+
+
+def test_no_se_guardan_entradas_de_otra_linea_caso_real_de_produccion(entorno):
+    """9-nov 16:30 UTC: el nivel 4 guardó 7 entradas de hándicap cuyas filas eran de otras líneas (la sellada +5.5 frente a
+    las ±1.5 que cotizan las casas): inútiles y, además, marcaban el hueco como resuelto durante 24 h."""
+    a, b = "Adrian Mannarino", "Aleksandr Shevchenko"
+    ini = datetime(2026, 11, 10, 12, 0, tzinfo=UTC)
+    sello = ini - timedelta(hours=3)
+    items = [dict(key=f"games_handicap-{i}", market="games_handicap", odds_market="spreads", line=l, selection="A")
+             for i, l in ((14, 0.0), (16, 3.5), (17, 5.5), (12, -1.5), (13, -2.5))]
+    items.append(dict(key="games_total-3", market="games_total", odds_market="totals", line=21.5, selection="over"))
+    h = cr.Hueco("tenis", "T1", None, a, b, ini, sello, items)
+    entries = {}
+    cli = crd.Cliente("k", call=RD({(38, "2026-11-10"): [evento_tenis(ini)]}), sleep=sin_pausa)
+    n = cr.nivel4_therundown(cli, [h], entries, {}, sello + timedelta(hours=1))
+    # El evento cotiza hándicap ±1.5 (betmgm/fanduel) y ±2.5 (draftkings) y el total 22.5: solo -1.5 y -2.5 existen.
+    assert n == 2 and set(entries) == {"T1|games_handicap-12", "T1|games_handicap-13"}
+    # Sin ninguna línea coincidente no hay entrada (y por tanto el hueco sigue abierto para un siguiente intento).
+    cli = crd.Cliente("k", call=RD({(38, "2026-11-10"): [evento_tenis(ini)]}), sleep=sin_pausa)
+    h2 = cr.Hueco("tenis", "T2", None, a, b, ini, sello, items[:3] + items[5:])
+    assert cr.nivel4_therundown(cli, [h2], {}, {}, sello + timedelta(hours=1)) == 0
+
+
+def test_sportsapipro_totales_solo_de_la_linea_sellada():
+    from qf.ingest import cuotas_sportsapipro as csp
+    ms = csp.mercados({"data": {"markets": [
+        dict(marketId=12, marketName="Total games won", choiceGroup="22.5", marketGroup="x", marketPeriod="Match",
+             choices=[dict(name="Over", fractionalValue="5/6"), dict(name="Under", fractionalValue="5/6")])]}})
+    assert csp.filas_item(ms, "tenis", dict(market="games_total", line=22.5), "a", "b")
+    assert csp.filas_item(ms, "tenis", dict(market="games_total", line=22.0), "a", "b") == []

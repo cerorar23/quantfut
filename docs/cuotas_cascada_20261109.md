@@ -97,8 +97,10 @@ Medido el 9-nov-2026 con la clave del titular:
 **Licencia** (docs.therundown.io/licensing-and-attribution): Free es «uso interno o personal», **no permite mostrar los datos a
 usuarios finales**, limita el almacenamiento a 24 h y excluye backtesting/entrenamiento. El titular decidió mostrarlas
 igualmente (9-nov-2026) y asumió el riesgo (TheRundown podría revocar la clave). Mitigaciones: no se archiva nada (ni
-originales) y las entradas caducan a las 24 h (se podan al escribir y no se sirven al leer); `CUOTAS_THERUNDOWN_MOSTRAR=0` las
-oculta sin reiniciar ni tocar la caché. Atribución («Data provided by TheRundown») solo la exige el plan que permite mostrar.
+originales) y las entradas caducan a las 24 h (se podan al escribir y no se sirven al leer); para ocultarlas sin
+reiniciar ni tocar la caché: crear el archivo `cuotas_therundown_oculto` en el volumen de la caché
+(`/srv/quantfut/artifacts/`; actúa en ≤5 s y se revierte borrándolo) o definir `CUOTAS_THERUNDOWN_MOSTRAR=0` (esto último exige
+recrear el contenedor de la API y perdería los archivos copiados con `docker cp`). Atribución («Data provided by TheRundown») solo la exige el plan que permite mostrar.
 
 Operación: la clave `THERUNDOWN_API_KEY` va en `~/quantfut/releases/cuotas-cascada-20261109/therundown.env` (modo 600), aparte
 del `.env` general; reserva `CUOTAS_THERUNDOWN_RESERVA` (2.000). Pausa del nivel 4: dejar la clave vacía en ese archivo.
