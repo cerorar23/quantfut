@@ -33,11 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
-### 2026-11-09 19:55 UTC · Correcciones de la cascada de cuotas tras la comprobación real · PARCIAL: ejecutor actualizado; la API espera la orden del titular (rama `cuotas/therundown`, PR #313)
+### 2026-11-09 19:58 UTC · Correcciones de la cascada de cuotas tras la comprobación real · API + ejecutor (rama `cuotas/therundown`, PR #313)
 - Hallazgo en producción (pasada de las 16:30 UTC): el nivel 4 (7 entradas) y el 3 (2) guardaron entradas con filas de **otras líneas** que la sellada (p. ej. hándicap +5.5 frente a las ±1.5 de las casas): no mostraban nada y marcaban el hueco como resuelto 24 h. Ahora solo se guardan filas de la línea sellada.
-- Hecho: `releases/cuotas-cascada-20261109/src/ingest/` con `cuotas_respaldo.py` (`d3516b9d0de8`), `cuotas_therundown.py` (`55c976719e1d`) y `cuotas_sportsapipro.py` (`2d9847b4e8fc`); copia previa en `antes_lineas/`. Lo monta la siguiente pasada del cron. Las 9 entradas inútiles caducan solas (TheRundown a las 24 h, SportsAPIPro a los 5 días).
-- Pendiente (el servidor bloqueó el despliegue de producción sin orden expresa): copiar esos 3 archivos a `quantfut-api-1` (`docker cp` + `docker restart`, base verificada por sha256: `7f8d8e714759`, `fe3ab4417b1c`, `f720c4d1906d`). Sin esto la API sigue con el interruptor solo por variable de entorno (el archivo `cuotas_therundown_oculto` aún no actúa) y sin el filtro de líneas; no es dañino.
-- Vuelta atrás: restaurar `antes_lineas/` en la carpeta del ejecutor; la API no se ha tocado.
+- **Ejecutor**: `releases/cuotas-cascada-20261109/src/ingest/` con `cuotas_respaldo.py` (`d3516b9d0de8`), `cuotas_therundown.py` (`55c976719e1d`) y `cuotas_sportsapipro.py` (`2d9847b4e8fc`); copia previa en `antes_lineas/`.
+- **API** (`quantfut-api-1`), orden del titular («Sí, despliega»): los mismos 3 archivos con `docker cp` + `docker restart` (19:57 UTC; `/health` 200 al 1.er intento; **no recreada**; base verificada por sha256 antes: `7f8d8e714759`, `fe3ab4417b1c`, `f720c4d1906d`). Respaldo en `~/respaldos/cuotas_cascada_20261109/api_antes_lineas/`.
+- Verificado tras desplegar: `/health`, `/web/deportes/nba/cuotas` y `/web/deportes/tenis/cuotas` 200 (el de tenis tardó ~190 s en dar `partial` tras el reinicio: cálculo en frío, igual que antes; ya sirve en 0,6 s). Interruptor por archivo comprobado en el contenedor real con un directorio temporal: con `cuotas_therundown_oculto` presente, `mostrar()` pasa a falso y no se sirve ninguna cuota de TheRundown; en el volumen de producción no se creó ningún archivo (sigue visible).
+- Apagar la visualización de TheRundown sin reiniciar: `docker run --rm -v quantfut_artifacts:/a alpine touch /a/cuotas_therundown_oculto` (revertir: `rm`). Las 9 entradas inútiles caducan solas (TheRundown a las 24 h, SportsAPIPro a los 5 días).
+- Vuelta atrás: restaurar `antes_lineas/` en la carpeta del ejecutor; API: copiar de `api_antes_lineas/` los 3 archivos y `docker restart quantfut-api-1`.
 
 ### 2026-11-09 18:51 UTC · TheRundown como cuarto nivel de la cascada de cuotas · API + ejecutor (rama `cuotas/therundown`, fuera de `main`)
 - Orden del titular («Inténtalo de nuevo» tras un primer bloqueo del servidor). Candado `deploy.lock`.
