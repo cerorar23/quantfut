@@ -187,7 +187,7 @@ curl -s $B/sitemap.xml; curl -s $B/sitemap-paginas.xml  # índice y 14 URLs (3 b
 curl -sI $B/app/v1/plans | grep -i x-robots-tag          # noindex
 curl -sI https://www.pronosticosdeportivos.pro/historial/ | grep -iE "^HTTP|location"      # 301 → dominio sin www
 curl -s -A "Mozilla/5.0" -H "Accept: text/html" $B/historial/ | grep -oE "<title>[^<]*|rel=\"canonical\"[^>]*"
-curl -s $B/rutas.js | head -2; curl -s -o /dev/null -w "%{http_code}\n" -H "Accept: text/html" $B/no-existe/   # 404 en HTML
+curl -s $B/rutas.js | head -2;   # OJO con los hashes de .js/.css servidos: usa SIEMPRE una consulta única (`?v=chequeo$(date +%s)`) o la URL exacta del HTML; una URL ya vista (`?v=x`) devuelve la copia en caché de Cloudflare (HIT, 4 h) curl -s -o /dev/null -w "%{http_code}\n" -H "Accept: text/html" $B/no-existe/   # 404 en HTML
 curl -s $B/app/v1/whop/config                            # incluye "consentRegime": "opt-out" desde un país no europeo (p. ej. México); "opt-in" = Cloudflare no envía CF-IPCountry
 for p in metodologia juego-responsable sobre-nosotros; do curl -s -o /dev/null -w "$p %{http_code}\n" $B/$p/; done
 ```
