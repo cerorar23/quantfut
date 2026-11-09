@@ -9,7 +9,7 @@
   y `over`/`ambos marcan` salen 3-9 puntos bajos. Pendiente de tarea propia antes de mostrarlos como alta probabilidad.
 - Publicadas el mismo día, con el visto bueno del titular: db/105, db/106 y db/107 (alias de PropLine que faltaban: sin ellos el
   Fenerbahçe y el Malmö no tenían partidos), modelo `2026.11.09-063559` activo. Registro y vuelta atrás en DEPLOYS.md. Primeros
-  pronósticos: job diario del 10-nov 09:00 UTC. Pendiente: scraper SofaScore del VPS para las 4 ligas.
+  pronósticos: job diario de 09:00 UTC del MISMO día de cada partido (LaLiga 2 desde el 13-nov; Turquía, Allsvenskan y Suiza desde el 21-nov; corregido el 9-nov: antes decía 10-nov). Pendiente: scraper SofaScore del VPS para las 4 ligas.
 - Backtest de mercados completado para las 21 competiciones y con «Gana a cero» (`backtest_mercados regenerar`): no cambia ninguna conclusión; hallazgo nuevo,
   la primera mitad sobrepromete 5-6 puntos en alta probabilidad en Liga MX y Champions (hoy publicadas) y 3 en LaLiga 2 y 2. Bundesliga. El titular
   (9-nov) aplicó el tope del 85 % (PR #324, desplegado) y, sobre Liga MX y Champions, decidió SOLO INFORMAR: no se excluye la 1ª mitad en ellas. Su exceso
