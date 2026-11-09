@@ -89,3 +89,14 @@ def test_el_ic_por_partido_es_mas_ancho_que_el_de_lineas_independientes():
 def test_franjas_sin_muestra_no_se_aprueban():
     f = b.bandas(_por_partido(20, 3, 0.95, 0.95, np.random.default_rng(9)), set())
     assert f[3]["estado"] == "SIN_MUESTRA" and f[0]["lineas"] == 0
+
+
+def test_gana_a_cero_suma_con_el_empate_a_cero_y_liquida_bien():
+    oos = pd.DataFrame({"match_id": ["a", "b", "c"], "lam": [1.6, 1.6, 1.6], "mu": [1.1, 1.1, 1.1], "rho": [-0.03] * 3,
+                        "home_goals": [2, 0, 1], "away_goals": [0, 0, 1]})
+    t = b.gana_a_cero(oos)
+    loc, vis = t[t["mercado"] == "gana_a_cero_local"], t[t["mercado"] == "gana_a_cero_visitante"]
+    assert loc["resultado"].tolist() == [1.0, 0.0, 0.0] and vis["resultado"].tolist() == [0.0, 0.0, 0.0]
+    assert ((loc["prob"] > 0) & (loc["prob"] < 0.5)).all()
+    # P(local a cero) + P(visitante a cero) + P(0-0) + P(ambos marcan) = 1 (con la corrección tau): se comprueba el orden de magnitud
+    assert 0.2 < float(loc["prob"].iloc[0]) + float(vis["prob"].iloc[0]) < 0.6

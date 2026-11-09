@@ -10,6 +10,8 @@
 - Publicadas el mismo día, con el visto bueno del titular: db/105, db/106 y db/107 (alias de PropLine que faltaban: sin ellos el
   Fenerbahçe y el Malmö no tenían partidos), modelo `2026.11.09-063559` activo. Registro y vuelta atrás en DEPLOYS.md. Primeros
   pronósticos: job diario del 10-nov 09:00 UTC. Pendiente: scraper SofaScore del VPS para las 4 ligas.
+- Backtest de mercados completado para las 21 competiciones y con «Gana a cero» (`backtest_mercados regenerar`): no cambia ninguna conclusión; hallazgo nuevo,
+  la primera mitad sobrepromete 5-6 puntos en alta probabilidad en Liga MX y Champions (hoy publicadas) y 3 en LaLiga 2 y 2. Bundesliga. Pendiente de decisión.
 - Sesgo de goles del Dixon-Coles: DECISIÓN DEL TITULAR (9-nov): dejar la corrección APAGADA. Se midieron dos candidatos con criterios fijados antes
   (A en muestra, B fuera de muestra) y ninguno cumple N1; el beneficio en Brier es ≈ 0 y la causa dominante es un cambio de régimen (arranque
   2026/27: +0,3 goles por partido), no un sesgo estructural. `DC_NIVEL_HALFLIFE_DAYS = 0`. Para no reabrirlo sin datos nuevos: si el sesgo

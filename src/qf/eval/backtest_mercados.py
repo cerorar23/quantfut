@@ -6,7 +6,7 @@ Backtest de TODOS los mercados de fútbol que se publican (9-nov-2026), por liga
 
 Familias (las que muestra la API en `partido_mercados`):
   goles     1X2, doble oportunidad, ambos marcan, más/menos total y por equipo, hándicap asiático, marcador exacto,
-            margen de victoria y goles esperados. Salen de las lambdas del Dixon-Coles del backtest `pit`
+            margen de victoria, goles esperados y «gana a cero» (local y visitante; es el mercado «Especiales» de la ficha). Salen de las lambdas del Dixon-Coles del backtest `pit`
             (`backtest_ligas_nuevas`), crudas como en producción (el calibrador rechazó su puerta).
   1t        gol en 1T, ambos anotan en 1T, más de 1,5 en 1T y ganador del 1T (`model/primer_tiempo`).
   corners   total, local y visitante por líneas (`model/estadisticas_mercado`).
@@ -146,6 +146,22 @@ def _evaluar(tabla: pd.DataFrame, excluyentes: set[str]) -> pd.DataFrame:
     return ModelEvaluator(tabla.drop(columns=["liga"], errors="ignore"), mercados_excluyentes=excluyentes).evaluar()
 
 
+def gana_a_cero(oos: pd.DataFrame) -> pd.DataFrame:
+    """«Gana a cero»: gana el equipo y el rival no marca. P sale de la matriz de marcadores del partido (lam, mu, rho)."""
+    from ..model.calibration import score_matrices
+    filas = []
+    for rho, g in oos.groupby(oos["rho"].round(6)):
+        m = score_matrices(g["lam"].to_numpy(), g["mu"].to_numpy(), float(rho), 10)
+        p_loc, p_vis = m[:, 1:, 0].sum(axis=1), m[:, 0, 1:].sum(axis=1)
+        hg, ag = g["home_goals"].to_numpy(int), g["away_goals"].to_numpy(int)
+        for ev, pl, pv, h, a in zip(g["match_id"], p_loc, p_vis, hg, ag):
+            filas.append({"evento": ev, "mercado": "gana_a_cero_local", "seleccion": "si", "prob": float(pl),
+                          "resultado": float(h > 0 and a == 0), "esperado": np.nan, "real": np.nan})
+            filas.append({"evento": ev, "mercado": "gana_a_cero_visitante", "seleccion": "si", "prob": float(pv),
+                          "resultado": float(a > 0 and h == 0), "esperado": np.nan, "real": np.nan})
+    return pd.DataFrame(filas, columns=["evento", "mercado", "seleccion", "prob", "resultado", "esperado", "real"])
+
+
 def tablas_goles_y_1t(oos: pd.DataFrame, ht: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     from .evaluacion_goles import tabla_goles
     from .evaluacion_primer_tiempo import tabla_primer_tiempo
@@ -153,7 +169,7 @@ def tablas_goles_y_1t(oos: pd.DataFrame, ht: pd.DataFrame) -> tuple[pd.DataFrame
     for liga, o in oos.groupby("league_id"):
         p = o.rename(columns={"match_id": "evento", "home_goals": "goles_local", "away_goals": "goles_visitante"})[
             ["evento", "lam", "mu", "rho", "goles_local", "goles_visitante"]]
-        g.append(tabla_goles(p).assign(liga=liga))
+        g.append(pd.concat([tabla_goles(p), gana_a_cero(o)], ignore_index=True).assign(liga=liga))
         q = p.merge(ht, left_on="evento", right_on="match_id", how="left").rename(
             columns={"home_goals_ht": "goles_1t_local", "away_goals_ht": "goles_1t_visitante"})
         t1.append(tabla_primer_tiempo(q[["evento", "lam", "mu", "goles_1t_local", "goles_1t_visitante"]]).assign(liga=liga))
@@ -213,7 +229,7 @@ def resumir(tablas: dict[str, pd.DataFrame], excluyentes: dict[str, set[str]], l
             a = alta_probabilidad(_grupo(tabla, ligas), ex)
             r["grupos"][nombre] = {**a, "veredicto": veredicto_familia(a), "mercados_fuera": mercados_fuera(a),
                                    "bandas": bandas(_grupo(tabla, ligas), ex)}
-        for liga in NUEVAS:
+        for liga in ligas_todas:
             a = alta_probabilidad(_grupo(tabla, [liga]), ex)
             r["ligas"][liga] = {k: a[k] for k in ("n_alta", "predicha", "real", "promesa")}
         res["familias"][fam] = r
@@ -267,15 +283,16 @@ def markdown(res: dict) -> str:
                 ic = f"[{_f(bd['ic_inf'])}, {_f(bd['ic_sup'])}]" if bd["ic_inf"] is not None else "-"
                 L.append(f"| {fam} | {g} | {bd['banda']} | {bd['lineas']} | {bd['partidos']} | {_f(bd['predicha'])} | "
                          f"{_f(bd['real'])} | {_f(bd['promesa'])} | {ic} | **{bd['estado']}** |")
-    L += ["", "## Por liga nueva (contexto; con n alta < 30 no se concluye)", "",
-          "| Familia | Liga | n alta | predicha | real | promesa − realidad |", "|---|---|---:|---:|---:|---:|"]
+    L += ["", "## Por liga, las 21 competiciones (contexto; con n alta < 30 no se concluye)", "",
+          "| Familia | Liga | Grupo | n alta | predicha | real | promesa − realidad |", "|---|---|---|---:|---:|---:|---:|"]
     for fam in FAMILIAS:
         r = res["familias"].get(fam)
         if not r:
             continue
-        for liga in NUEVAS:
+        for liga in sorted(r["ligas"], key=lambda l: (l not in NUEVAS, l)):
             a = r["ligas"][liga]
-            L.append(f"| {fam} | {liga} | {a['n_alta']} | {_f(a['predicha'])} | {_f(a['real'])} | {_f(a['promesa'])} |")
+            grupo = "aprobada" if liga in APROBADAS else "nueva" if liga in NUEVAS else "actual"
+            L.append(f"| {fam} | {liga} | {grupo} | {a['n_alta']} | {_f(a['predicha'])} | {_f(a['real'])} | {_f(a['promesa'])} |")
     L += ["", "## Mercados del grupo «aprobadas» con muestra en alta probabilidad", "",
           "| Familia | Mercado | Lado | n | predicha | real | promesa − realidad |", "|---|---|---|---:|---:|---:|---:|"]
     for fam in FAMILIAS:
@@ -315,6 +332,20 @@ def correr(oos_csv: Path, salida: Path) -> dict:
     return res
 
 
+def regenerar(salida: Path, oos_csv: Path) -> dict:
+    """Rehace `mercados.json` y `mercados.md` desde las `tabla_*.csv.gz` ya guardadas (sin recalcular los modelos)."""
+    from .evaluacion_goles import MERCADOS_EXCLUYENTES
+    oos = pd.read_csv(oos_csv, parse_dates=["kickoff_utc"])
+    ligas_todas = sorted(oos["league_id"].unique())
+    nombres = {"goles": "goles", "1t": "1t", "corners": "corners", "tarjetas": "tarjetas"}
+    tablas = {f: pd.read_csv(salida / f"tabla_{f}.csv.gz") for f in nombres if (salida / f"tabla_{f}.csv.gz").exists()}
+    ex = {"goles": set(MERCADOS_EXCLUYENTES), "1t": {"ganador_1t"}}
+    res = resumir(tablas, ex, ligas_todas)
+    (salida / "mercados.json").write_text(json.dumps(res, ensure_ascii=False, indent=1, default=float), encoding="utf-8")
+    (salida / "mercados.md").write_text(markdown(res), encoding="utf-8")
+    return res
+
+
 def main(argv=None) -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -322,8 +353,11 @@ def main(argv=None) -> None:
     c = sub.add_parser("correr")
     c.add_argument("--oos", default=".local/backtest_ligas_nuevas/pit_oos.csv")
     c.add_argument("--salida", default=".local/backtest_mercados")
+    r = sub.add_parser("regenerar")
+    r.add_argument("--oos", default=".local/backtest_ligas_nuevas/pit_oos.csv")
+    r.add_argument("--salida", default=".local/backtest_mercados")
     a = ap.parse_args(argv)
-    res = correr(Path(a.oos), Path(a.salida))
+    res = regenerar(Path(a.salida), Path(a.oos)) if a.cmd == "regenerar" else correr(Path(a.oos), Path(a.salida))
     print(json.dumps({f: {g: v["veredicto"] for g, v in r["grupos"].items()} for f, r in res["familias"].items()},
                      ensure_ascii=False, indent=1))
 

@@ -29,6 +29,12 @@ todas las ligas (goles, goles al descanso, córners, amarillas, rojas); no hay p
    goles del Dixon-Coles crudo (−0,10 a −0,29 goles por partido) se nota en la zona media (3-9 puntos bajos, ficha del partido), no en la
    alta probabilidad, que sale calibrada.
 
+6. **Las 21 competiciones, una a una (añadido después).** En goles y córners ninguna se aparta más de 0,03 de lo prometido en alta probabilidad. En
+   **primera mitad sobreprometen cuatro**: Champions (+6,2 puntos, 206 partidos), Liga MX (+5,4; 513), LaLiga 2 (+3,4; 659) y 2. Bundesliga (+3,1; 413). Liga MX y
+   Champions ya se publican hoy: es un hallazgo sobre lo existente, no solo sobre las ligas nuevas. En tarjetas, solo Allsvenskan se aparta (−3,0: es conservador).
+7. **«Gana a cero»** (el mercado «Especiales» de la ficha) también se midió: solo llega a alta probabilidad el lado «no gana a cero» y sale calibrado y algo
+   conservador (−1,1 a −1,7 puntos en las 4 aprobadas, n = 896 y 1.507; −1,1 a −1,4 en las 13 actuales).
+
 ## Alcance y límites
 
 - **Solo la probabilidad del modelo.** El job de alta probabilidad ancla las lambdas a Pinnacle (`market_anchor`) donde hay cuota y recorta
@@ -47,7 +53,10 @@ todas las ligas (goles, goles al descanso, córners, amarillas, rojas); no hay p
 2. Limitar la primera mitad a ≤ 0,85 en estas ligas, o dejar `gol en 1T: sí` y `más de 1,5 en 1T: no` fuera hasta tener más partidos.
 3. No mostrar hándicap ±0,75 ni −0,25 como alta probabilidad (hoy no se muestran).
 4. Presentar ambos marcan, más/menos y córners como probabilidad, no como señal: su skill sobre la base de la liga es ≈ 0.
-5. Corregir el nivel de goles del Dixon-Coles antes de promocionar más/menos y ambos marcan en la franja media.
+5. Revisar la primera mitad en Liga MX y Champions (hoy publicadas): sobreprometen 5-6 puntos en alta probabilidad. (El sesgo de goles del Dixon-Coles se midió y se dejó apagado; ver correccion_nivel_goles_20261109.md.)
+
+Walk-forward desde 2025-07-01. Alta probabilidad = lado con probabilidad >= 0.75.
+Criterios fijados antes de ejecutar: n_alta_min = 100; promesa_max = 0.03; mercado_n_min = 30; mercado_promesa_max = 0.05.
 
 Walk-forward desde 2025-07-01. Alta probabilidad = lado con probabilidad >= 0.75.
 Criterios fijados antes de ejecutar: n_alta_min = 100; promesa_max = 0.03; mercado_n_min = 30; mercado_promesa_max = 0.05.
@@ -56,9 +65,9 @@ Criterios fijados antes de ejecutar: n_alta_min = 100; promesa_max = 0.03; merca
 
 | Familia | Grupo | n alta | predicha | real | promesa − realidad | IC95 inf. real | Veredicto | Mercados fuera (A2) |
 |---|---|---:|---:|---:|---:|---:|---|---|
-| Goles (todas las líneas, hándicap, marcador, margen) | aprobadas | 31422 | 0.877 | 0.870 | 0.007 | 0.866 | **APRUEBA** | ah_0.75|directo, ah_-0.75|complemento, ah_-0.25|directo, ah_0.0|complemento |
-| Goles (todas las líneas, hándicap, marcador, margen) | nuevas | 62987 | 0.873 | 0.865 | 0.008 | 0.863 | **APRUEBA** | ah_0.75|directo, ah_-0.75|complemento, local_over_1.5|complemento, ah_-0.25|directo, local_over_1.5|directo, 1x2|directo … |
-| Goles (todas las líneas, hándicap, marcador, margen) | actuales | 110471 | 0.877 | 0.877 | 0.000 | 0.875 | **APRUEBA** | ah_-0.25|directo, ah_0.5|complemento |
+| Goles (todas las líneas, hándicap, marcador, margen) | aprobadas | 33825 | 0.874 | 0.869 | 0.006 | 0.865 | **APRUEBA** | ah_0.75|directo, ah_-0.75|complemento, ah_-0.25|directo, ah_0.0|complemento |
+| Goles (todas las líneas, hándicap, marcador, margen) | nuevas | 68112 | 0.871 | 0.864 | 0.007 | 0.861 | **APRUEBA** | ah_0.75|directo, ah_-0.75|complemento, local_over_1.5|complemento, ah_-0.25|directo, local_over_1.5|directo, 1x2|directo … |
+| Goles (todas las líneas, hándicap, marcador, margen) | actuales | 118739 | 0.875 | 0.875 | -0.001 | 0.874 | **APRUEBA** | ah_-0.25|directo, ah_0.5|complemento |
 | Primera mitad | aprobadas | 1975 | 0.810 | 0.793 | 0.017 | 0.775 | **APRUEBA** | - |
 | Primera mitad | nuevas | 3876 | 0.804 | 0.789 | 0.014 | 0.776 | **APRUEBA** | mas_1_5_1t|complemento |
 | Primera mitad | actuales | 7022 | 0.807 | 0.800 | 0.007 | 0.791 | **APRUEBA** | - |
@@ -73,14 +82,14 @@ Criterios fijados antes de ejecutar: n_alta_min = 100; promesa_max = 0.03; merca
 
 | Familia | Grupo | Franja | líneas | partidos | predicha | real | promesa − realidad | IC95 | Estado |
 |---|---|---|---:|---:|---:|---:|---:|---|---|
-| goles | aprobadas | 0.75-0.80 | 5964 | 1630 | 0.775 | 0.764 | 0.011 | [-0.001, 0.022] | **CUMPLE** |
-| goles | aprobadas | 0.80-0.85 | 5608 | 1668 | 0.825 | 0.815 | 0.010 | [-0.002, 0.023] | **CUMPLE** |
-| goles | aprobadas | 0.85-0.90 | 6429 | 1682 | 0.876 | 0.873 | 0.003 | [-0.007, 0.014] | **CUMPLE** |
-| goles | aprobadas | 0.90-1.00 | 13421 | 1682 | 0.945 | 0.939 | 0.006 | [-0.001, 0.014] | **CUMPLE** |
-| goles | actuales | 0.75-0.80 | 21138 | 5700 | 0.775 | 0.775 | -0.000 | [-0.007, 0.006] | **CUMPLE** |
-| goles | actuales | 0.80-0.85 | 20426 | 5807 | 0.825 | 0.823 | 0.002 | [-0.005, 0.008] | **CUMPLE** |
-| goles | actuales | 0.85-0.90 | 21887 | 5829 | 0.876 | 0.873 | 0.003 | [-0.003, 0.009] | **CUMPLE** |
-| goles | actuales | 0.90-1.00 | 47020 | 5841 | 0.946 | 0.947 | -0.001 | [-0.005, 0.002] | **CUMPLE** |
+| goles | aprobadas | 0.75-0.80 | 6633 | 1678 | 0.775 | 0.767 | 0.008 | [-0.003, 0.020] | **CUMPLE** |
+| goles | aprobadas | 0.80-0.85 | 6358 | 1674 | 0.825 | 0.819 | 0.006 | [-0.007, 0.017] | **CUMPLE** |
+| goles | aprobadas | 0.85-0.90 | 7054 | 1682 | 0.876 | 0.873 | 0.003 | [-0.007, 0.013] | **CUMPLE** |
+| goles | aprobadas | 0.90-1.00 | 13780 | 1682 | 0.944 | 0.938 | 0.006 | [-0.001, 0.013] | **CUMPLE** |
+| goles | actuales | 0.75-0.80 | 23082 | 5800 | 0.775 | 0.776 | -0.002 | [-0.007, 0.004] | **CUMPLE** |
+| goles | actuales | 0.80-0.85 | 22828 | 5816 | 0.825 | 0.825 | 0.000 | [-0.006, 0.006] | **CUMPLE** |
+| goles | actuales | 0.85-0.90 | 24099 | 5839 | 0.875 | 0.874 | 0.001 | [-0.005, 0.007] | **CUMPLE** |
+| goles | actuales | 0.90-1.00 | 48730 | 5841 | 0.945 | 0.947 | -0.001 | [-0.005, 0.002] | **CUMPLE** |
 | 1t | aprobadas | 0.75-0.80 | 828 | 740 | 0.775 | 0.767 | 0.008 | [-0.021, 0.037] | **CUMPLE** |
 | 1t | aprobadas | 0.80-0.85 | 812 | 812 | 0.824 | 0.813 | 0.011 | [-0.016, 0.038] | **CUMPLE** |
 | 1t | aprobadas | 0.85-0.90 | 331 | 331 | 0.866 | 0.810 | 0.056 | [0.018, 0.099] | **INCIERTO** |
@@ -106,42 +115,94 @@ Criterios fijados antes de ejecutar: n_alta_min = 100; promesa_max = 0.03; merca
 | tarjetas | actuales | 0.85-0.90 | 4996 | 4177 | 0.875 | 0.882 | -0.007 | [-0.016, 0.002] | **CUMPLE** |
 | tarjetas | actuales | 0.90-1.00 | 9980 | 5436 | 0.946 | 0.949 | -0.003 | [-0.008, 0.003] | **CUMPLE** |
 
-## Por liga nueva (contexto; con n alta < 30 no se concluye)
+## Por liga, las 21 competiciones (contexto; con n alta < 30 no se concluye)
 
-| Familia | Liga | n alta | predicha | real | promesa − realidad |
-|---|---|---:|---:|---:|---:|
-| goles | tr.super_lig | 7125 | 0.878 | 0.879 | -0.002 |
-| goles | es.laliga2 | 10299 | 0.876 | 0.865 | 0.011 |
-| goles | it.serie_b | 7923 | 0.878 | 0.882 | -0.003 |
-| goles | se.allsvenskan | 6075 | 0.875 | 0.851 | 0.024 |
-| goles | ch.super_league | 5036 | 0.863 | 0.843 | 0.021 |
-| goles | no.eliteserien | 6508 | 0.872 | 0.859 | 0.013 |
-| goles | gb.championship | 12978 | 0.876 | 0.870 | 0.006 |
-| goles | de.bundesliga2 | 7043 | 0.858 | 0.857 | 0.001 |
-| 1t | tr.super_lig | 469 | 0.803 | 0.808 | -0.005 |
-| 1t | es.laliga2 | 659 | 0.814 | 0.780 | 0.034 |
-| 1t | it.serie_b | 479 | 0.817 | 0.808 | 0.009 |
-| 1t | se.allsvenskan | 368 | 0.804 | 0.780 | 0.024 |
-| 1t | ch.super_league | 312 | 0.781 | 0.763 | 0.018 |
-| 1t | no.eliteserien | 399 | 0.793 | 0.815 | -0.021 |
-| 1t | gb.championship | 777 | 0.814 | 0.799 | 0.015 |
-| 1t | de.bundesliga2 | 413 | 0.779 | 0.748 | 0.031 |
-| corners | tr.super_lig | 3348 | 0.840 | 0.840 | 0.000 |
-| corners | es.laliga2 | 5108 | 0.840 | 0.842 | -0.002 |
-| corners | it.serie_b | 3954 | 0.838 | 0.834 | 0.005 |
-| corners | se.allsvenskan | 2881 | 0.850 | 0.853 | -0.003 |
-| corners | ch.super_league | 2700 | 0.834 | 0.857 | -0.023 |
-| corners | no.eliteserien | 3044 | 0.849 | 0.855 | -0.007 |
-| corners | gb.championship | 6614 | 0.838 | 0.849 | -0.010 |
-| corners | de.bundesliga2 | 3715 | 0.833 | 0.840 | -0.007 |
-| tarjetas | tr.super_lig | 1483 | 0.863 | 0.844 | 0.019 |
-| tarjetas | es.laliga2 | 2141 | 0.850 | 0.856 | -0.006 |
-| tarjetas | it.serie_b | 1725 | 0.863 | 0.876 | -0.013 |
-| tarjetas | se.allsvenskan | 1382 | 0.908 | 0.938 | -0.030 |
-| tarjetas | ch.super_league | 1143 | 0.868 | 0.891 | -0.022 |
-| tarjetas | no.eliteserien | 1523 | 0.923 | 0.925 | -0.002 |
-| tarjetas | gb.championship | 2974 | 0.907 | 0.899 | 0.008 |
-| tarjetas | de.bundesliga2 | 1492 | 0.865 | 0.875 | -0.010 |
+| Familia | Liga | Grupo | n alta | predicha | real | promesa − realidad |
+|---|---|---|---:|---:|---:|---:|
+| goles | ch.super_league | nueva | 5494 | 0.862 | 0.844 | 0.018 |
+| goles | de.bundesliga2 | nueva | 7743 | 0.856 | 0.854 | 0.002 |
+| goles | es.laliga2 | aprobada | 11100 | 0.873 | 0.864 | 0.009 |
+| goles | gb.championship | nueva | 14027 | 0.872 | 0.868 | 0.004 |
+| goles | it.serie_b | aprobada | 8537 | 0.875 | 0.879 | -0.004 |
+| goles | no.eliteserien | nueva | 7023 | 0.871 | 0.859 | 0.012 |
+| goles | se.allsvenskan | aprobada | 6536 | 0.874 | 0.852 | 0.022 |
+| goles | tr.super_lig | aprobada | 7652 | 0.876 | 0.878 | -0.002 |
+| goles | ar.primera | actual | 15431 | 0.887 | 0.889 | -0.002 |
+| goles | br.serie_a | actual | 11959 | 0.880 | 0.883 | -0.003 |
+| goles | de.bundesliga | actual | 7804 | 0.869 | 0.872 | -0.003 |
+| goles | es.laliga | actual | 10135 | 0.878 | 0.893 | -0.014 |
+| goles | eu.ucl | actual | 3634 | 0.865 | 0.853 | 0.013 |
+| goles | eu.uel | actual | 1912 | 0.873 | 0.871 | 0.002 |
+| goles | fr.ligue_1 | actual | 7653 | 0.873 | 0.860 | 0.012 |
+| goles | gb.premier_league | actual | 9655 | 0.868 | 0.872 | -0.004 |
+| goles | it.serie_a | actual | 9942 | 0.879 | 0.883 | -0.004 |
+| goles | mx.liga_mx | actual | 9460 | 0.872 | 0.860 | 0.012 |
+| goles | nl.eredivisie | actual | 8059 | 0.872 | 0.877 | -0.004 |
+| goles | pt.primeira | actual | 8050 | 0.886 | 0.890 | -0.004 |
+| goles | us.mls | actual | 15045 | 0.862 | 0.859 | 0.003 |
+| 1t | ch.super_league | nueva | 312 | 0.781 | 0.763 | 0.018 |
+| 1t | de.bundesliga2 | nueva | 413 | 0.779 | 0.748 | 0.031 |
+| 1t | es.laliga2 | aprobada | 659 | 0.814 | 0.780 | 0.034 |
+| 1t | gb.championship | nueva | 777 | 0.814 | 0.799 | 0.015 |
+| 1t | it.serie_b | aprobada | 479 | 0.817 | 0.808 | 0.009 |
+| 1t | no.eliteserien | nueva | 399 | 0.793 | 0.815 | -0.021 |
+| 1t | se.allsvenskan | aprobada | 368 | 0.804 | 0.780 | 0.024 |
+| 1t | tr.super_lig | aprobada | 469 | 0.803 | 0.808 | -0.005 |
+| 1t | ar.primera | actual | 1168 | 0.838 | 0.852 | -0.014 |
+| 1t | br.serie_a | actual | 662 | 0.821 | 0.799 | 0.022 |
+| 1t | de.bundesliga | actual | 462 | 0.786 | 0.764 | 0.022 |
+| 1t | es.laliga | actual | 625 | 0.811 | 0.819 | -0.008 |
+| 1t | eu.ucl | actual | 206 | 0.785 | 0.723 | 0.062 |
+| 1t | eu.uel | actual | 105 | 0.804 | 0.800 | 0.004 |
+| 1t | fr.ligue_1 | actual | 447 | 0.794 | 0.772 | 0.022 |
+| 1t | gb.premier_league | actual | 519 | 0.793 | 0.813 | -0.020 |
+| 1t | it.serie_a | actual | 542 | 0.822 | 0.819 | 0.003 |
+| 1t | mx.liga_mx | actual | 513 | 0.799 | 0.745 | 0.054 |
+| 1t | nl.eredivisie | actual | 474 | 0.788 | 0.774 | 0.014 |
+| 1t | pt.primeira | actual | 473 | 0.820 | 0.801 | 0.019 |
+| 1t | us.mls | actual | 826 | 0.783 | 0.797 | -0.013 |
+| corners | ch.super_league | nueva | 2700 | 0.834 | 0.857 | -0.023 |
+| corners | de.bundesliga2 | nueva | 3715 | 0.833 | 0.840 | -0.007 |
+| corners | es.laliga2 | aprobada | 5108 | 0.840 | 0.842 | -0.002 |
+| corners | gb.championship | nueva | 6614 | 0.838 | 0.849 | -0.010 |
+| corners | it.serie_b | aprobada | 3954 | 0.838 | 0.834 | 0.005 |
+| corners | no.eliteserien | nueva | 3044 | 0.849 | 0.855 | -0.007 |
+| corners | se.allsvenskan | aprobada | 2881 | 0.850 | 0.853 | -0.003 |
+| corners | tr.super_lig | aprobada | 3348 | 0.840 | 0.840 | 0.000 |
+| corners | ar.primera | actual | 7229 | 0.841 | 0.845 | -0.004 |
+| corners | br.serie_a | actual | 5409 | 0.838 | 0.845 | -0.008 |
+| corners | de.bundesliga | actual | 3247 | 0.842 | 0.854 | -0.012 |
+| corners | es.laliga | actual | 4233 | 0.842 | 0.845 | -0.003 |
+| corners | eu.ucl | actual | 948 | 0.846 | 0.818 | 0.028 |
+| corners | eu.uel | actual | 307 | 0.842 | 0.824 | 0.018 |
+| corners | fr.ligue_1 | actual | 3572 | 0.835 | 0.840 | -0.005 |
+| corners | gb.premier_league | actual | 4365 | 0.835 | 0.851 | -0.016 |
+| corners | it.serie_a | actual | 4724 | 0.837 | 0.835 | 0.002 |
+| corners | mx.liga_mx | actual | 4274 | 0.836 | 0.840 | -0.004 |
+| corners | nl.eredivisie | actual | 3720 | 0.840 | 0.854 | -0.014 |
+| corners | pt.primeira | actual | 3650 | 0.835 | 0.834 | 0.001 |
+| corners | us.mls | actual | 6684 | 0.840 | 0.839 | 0.001 |
+| tarjetas | ch.super_league | nueva | 1143 | 0.868 | 0.891 | -0.022 |
+| tarjetas | de.bundesliga2 | nueva | 1492 | 0.865 | 0.875 | -0.010 |
+| tarjetas | es.laliga2 | aprobada | 2141 | 0.850 | 0.856 | -0.006 |
+| tarjetas | gb.championship | nueva | 2974 | 0.907 | 0.899 | 0.008 |
+| tarjetas | it.serie_b | aprobada | 1725 | 0.863 | 0.876 | -0.013 |
+| tarjetas | no.eliteserien | nueva | 1523 | 0.923 | 0.925 | -0.002 |
+| tarjetas | se.allsvenskan | aprobada | 1382 | 0.908 | 0.938 | -0.030 |
+| tarjetas | tr.super_lig | aprobada | 1483 | 0.863 | 0.844 | 0.019 |
+| tarjetas | ar.primera | actual | 2795 | 0.850 | 0.871 | -0.021 |
+| tarjetas | br.serie_a | actual | 2233 | 0.858 | 0.863 | -0.005 |
+| tarjetas | de.bundesliga | actual | 1572 | 0.890 | 0.884 | 0.006 |
+| tarjetas | es.laliga | actual | 1924 | 0.868 | 0.850 | 0.018 |
+| tarjetas | eu.ucl | actual | 448 | 0.913 | 0.920 | -0.007 |
+| tarjetas | eu.uel | actual | 142 | 0.873 | 0.873 | -0.000 |
+| tarjetas | fr.ligue_1 | actual | 1645 | 0.890 | 0.911 | -0.021 |
+| tarjetas | gb.premier_league | actual | 1962 | 0.901 | 0.898 | 0.003 |
+| tarjetas | it.serie_a | actual | 2021 | 0.899 | 0.920 | -0.020 |
+| tarjetas | mx.liga_mx | actual | 1873 | 0.866 | 0.864 | 0.002 |
+| tarjetas | nl.eredivisie | actual | 1858 | 0.924 | 0.912 | 0.012 |
+| tarjetas | pt.primeira | actual | 1494 | 0.853 | 0.829 | 0.024 |
+| tarjetas | us.mls | actual | 3229 | 0.876 | 0.891 | -0.015 |
 
 ## Mercados del grupo «aprobadas» con muestra en alta probabilidad
 
@@ -156,6 +217,7 @@ Criterios fijados antes de ejecutar: n_alta_min = 100; promesa_max = 0.03; merca
 | goles | visitante_over_2.5 | complemento | 1567 | 0.894 | 0.884 | 0.011 |
 | goles | ah_1.5 | directo | 1539 | 0.886 | 0.886 | -0.000 |
 | goles | ah_2.0 | directo | 1514 | 0.953 | 0.951 | 0.002 |
+| goles | gana_a_cero_visitante | complemento | 1507 | 0.852 | 0.863 | -0.011 |
 | goles | ah_1.25 | directo | 1485 | 0.879 | 0.887 | -0.008 |
 | goles | ah_-1.75 | complemento | 1400 | 0.862 | 0.826 | 0.037 |
 | goles | ah_-2.0 | complemento | 1391 | 0.908 | 0.905 | 0.003 |
@@ -165,6 +227,7 @@ Criterios fijados antes de ejecutar: n_alta_min = 100; promesa_max = 0.03; merca
 | goles | ah_-1.5 | complemento | 1119 | 0.836 | 0.845 | -0.010 |
 | goles | ah_0.75 | directo | 1047 | 0.828 | 0.761 | 0.067 |
 | goles | ah_-1.25 | complemento | 939 | 0.832 | 0.850 | -0.018 |
+| goles | gana_a_cero_local | complemento | 896 | 0.818 | 0.835 | -0.017 |
 | goles | local_over_0.5 | directo | 877 | 0.817 | 0.815 | 0.002 |
 | goles | over_3.5 | complemento | 774 | 0.805 | 0.786 | 0.019 |
 | goles | over_1.5 | directo | 713 | 0.807 | 0.801 | 0.006 |
