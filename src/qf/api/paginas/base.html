@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="{% block lang %}es{% endblock %}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,10 +7,10 @@
 <title>{{ p.titulo }} | QuantFut</title>
 <meta name="description" content="{{ p.descripcion }}">
 <link rel="canonical" href="{{ url }}">
-<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="robots" content="{{ robots|default('index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1', true) }}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="QuantFut">
-<meta property="og:locale" content="es_ES">
+<meta property="og:locale" content="{% block og_locale %}es_ES{% endblock %}">
 <meta property="og:url" content="{{ url }}">
 <meta property="og:title" content="{{ p.titulo }}">
 <meta property="og:description" content="{{ p.descripcion }}">
@@ -19,7 +19,7 @@
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables">
+<meta property="og:image:alt" content="{% block og_alt %}QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables{% endblock %}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{{ og_imagen }}">
 {% else %}
@@ -58,11 +58,11 @@ footer ul{display:flex;gap:6px 18px;flex-wrap:wrap;list-style:none;padding:0;mar
 {% block cabecera %}{% endblock %}
 </head>
 <body>
-<a class="skip" href="#contenido">Saltar al contenido</a>
+<a class="skip" href="#contenido">{% block saltar %}Saltar al contenido{% endblock %}</a>
 <header>
 <a class="marca" href="/">QuantFut</a>
-<nav aria-label="Principal"><ul>
-<li><a href="/">Inicio</a></li>
+<nav aria-label="{% block nav_etiqueta %}Principal{% endblock %}"><ul>
+{% block nav %}<li><a href="/">Inicio</a></li>
 {% for q in paginas %}
 <li><a href="{{ q.ruta }}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.migas }}</a></li>
 {% endfor %}
@@ -71,22 +71,23 @@ footer ul{display:flex;gap:6px 18px;flex-wrap:wrap;list-style:none;padding:0;mar
 <li><a href="/futbol/">Fútbol</a></li>
 <li><a href="/nba/">NBA</a></li>
 <li><a href="/tenis/">Tenis</a></li>
+{% endblock %}{% for a in idiomas_alt|default([]) %}<li><a href="{{ a.ruta }}" hreflang="{{ a.codigo }}" lang="{{ a.codigo }}">{{ a.nombre }}</a></li>{% endfor %}
 </ul></nav>
 </header>
 <main id="contenido">
 <h1>{{ p.titulo }}</h1>
-<p class="revision">Última revisión: <time datetime="{{ revision_iso }}">{{ revision_larga }}</time></p>
+<p class="revision">{% block revision %}Última revisión{% endblock %}: <time datetime="{{ revision_iso }}">{{ revision_larga }}</time></p>
 {% block contenido %}{% endblock %}
 </main>
 <footer>
-<p><span class="mas18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado. Si el juego deja de ser un entretenimiento, <a href="/juego-responsable/">pide ayuda</a>.</p>
+{% block pie %}<p><span class="mas18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado. Si el juego deja de ser un entretenimiento, <a href="/juego-responsable/">pide ayuda</a>.</p>
 <ul>
 <li><a href="/legal/terminos">Términos</a></li>
 <li><a href="/legal/privacidad">Privacidad</a></li>
 <li><a href="/juego-responsable/">Juego responsable</a></li>
 <li><a href="mailto:admin@pronosticosdeportivos.pro">Contacto</a></li>
 </ul>
-</footer>
+{% endblock %}</footer>
 {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block lang %}en{% endblock %}
+{% block og_locale %}en_US{% endblock %}
+{% block og_alt %}QuantFut: football, NBA and tennis forecasts with verifiable probabilities{% endblock %}
+{% block saltar %}Skip to content{% endblock %}
+{% block nav_etiqueta %}Main{% endblock %}
+{% block nav %}{% for q in paginas %}
+<li><a href="{{ q.ruta }}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.migas }}</a></li>
+{% endfor %}{% endblock %}
+{% block revision %}Last reviewed{% endblock %}
+{% block pie %}
+<p><span class="mas18" aria-label="Adults only, 18 and over">+18</span>QuantFut is a statistical information service, not a bookmaker. Forecasts are for information and entertainment only: an estimated probability does not guarantee a result. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p>
+<ul>
+<li><a href="/legal/terminos" hreflang="es" lang="es">Terms (in Spanish)</a></li>
+<li><a href="/legal/privacidad" hreflang="es" lang="es">Privacy (in Spanish)</a></li>
+<li><a href="/en/responsible-gambling/">Responsible gambling</a></li>
+<li><a href="mailto:admin@pronosticosdeportivos.pro">Contact</a></li>
+</ul>
+{% endblock %}

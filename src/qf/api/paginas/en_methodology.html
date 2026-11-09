@@ -1,0 +1,51 @@
+{% extends "base_en.html" %}
+{% block contenido %}
+<p class="entradilla">QuantFut calculates probabilities; it does not promise results. This page explains where the numbers come from, what we compare them with, how we keep a record of what we publish before each match, and what limits all of this has.</p>
+
+<div class="aviso">
+<p><strong>Models estimate probabilities; they do not guarantee results.</strong> A probability of 70 % means that, in similar situations, it is expected to happen about seven times out of ten, not that it will happen this time. What happened in the past does not ensure what will happen.</p>
+</div>
+
+<h2>What we estimate</h2>
+<p>For every published match we calculate the probability of several results and markets: who wins, how many goals or points there will be in total, who covers a line, among others. We cover football (eleven leagues and two European club competitions), NBA basketball and tennis. Each sport has its own model, because sports are played differently; all of them go through the same sealing and the same measurement.</p>
+
+<h2>How we calculate</h2>
+<ul>
+<li><strong>Football.</strong> A Dixon-Coles-type goals model: each team has an attack strength and a defence strength, home advantage is taken into account and recent matches get more weight. This gives the probability of each scoreline and, from there, of each market. Expected goals (xG) from previous matches are used as one more signal.</li>
+<li><strong>Competitions with teams from several leagues.</strong> In the Champions League and the Europa League we compare teams that do not face each other during the year; the calculation is built so that adding them does not change what was already measured in the domestic leagues.</li>
+<li><strong>NBA and tennis.</strong> Their own models, built around the particulars of each sport. They share the sealing, the measurement and the limitations described below.</li>
+<li><strong>Data.</strong> Schedules and results, match statistics (shots, expected goals), line-ups and absences, and odds published by bookmakers. Third-party data can contain errors or arrive late, and we treat it with that caution.</li>
+</ul>
+
+<h2>The market as a reference, not a rival</h2>
+<p>The closing odds of bookmakers are a very efficient estimate of the true probability. We remove the bookmaker's margin (known as "removing the vig", using Shin's method) to obtain the probability they imply, and we compare our estimate with that reference. The margin and the conversion between odds and probabilities can be tried in the <a href="/calculadora-cuota-justa/" hreflang="es" lang="es">fair-odds calculator</a> (currently available only in Spanish).</p>
+<p><strong>We do not claim to beat the market.</strong> In the measurements we have made so far, our football model estimates probabilities well (it is calibrated within small margins in the bands with enough sample) but does not consistently improve on the closing price. That is why we do not sell a "guaranteed edge": we offer calibrated, traceable probabilities.</p>
+
+<h2>Calibration: what we measure</h2>
+<p>A good probability is an honest probability: if we say 70 % a hundred times, it should come true close to seventy times. That is called calibration and it is what we look at first. We also measure how much the model misses overall (with metrics such as <em>log-loss</em> and the <em>Brier score</em>) and, when closing odds are available, how well our probabilities compare with them.</p>
+<p>For a measurement to count, we use only information available before the match: the database rejects any model input dated after the start of the match, so that the model cannot "see the future" without our noticing.</p>
+
+<h2>How we seal each forecast</h2>
+<ol>
+<li>Before the match, the probabilities are calculated and stored in a batch.</li>
+<li>The batch is converted to a canonical format and its digital fingerprint (SHA-256 hash) is calculated.</li>
+<li>Each fingerprint is chained to the previous one: <code>chain = sha256(previous fingerprint + batch fingerprint)</code>. If a single character of a past forecast were changed, all later fingerprints would stop matching.</li>
+<li>The database refuses to modify or delete forecasts that have already been sealed; there is no later "quick fix".</li>
+<li>The batch fingerprints are published at <a href="/chain">/chain</a>, where anyone can check that the chain is consistent.</li>
+</ol>
+<p><strong>A limitation we prefer to state.</strong> Today those fingerprints live in our database and at <code>/chain</code>; we do not yet publish them in an independent external register with a third-party timestamp. Until then, the chain shows that we have not altered any forecast once sealed, but anyone who wants a guarantee from outside us does not have one yet. We will update this page when it exists.</p>
+
+<h2>Full record, including the misses</h2>
+<p>We publish the record of settled forecasts with their result, right or wrong. A hit rate only means something with many cases: with small samples, any figure can be chance, and we say so when that happens. You can see it in the <a href="/#historial" hreflang="es" lang="es">record on the home page</a> (currently available only in Spanish).</p>
+
+<h2>Limits and risks</h2>
+<ul>
+<li>Injuries, line-ups and last-minute changes can invalidate an estimate made hours earlier.</li>
+<li>At the start of a season there is less recent information and the model is more uncertain; it can also have biases in the level of goals that are corrected over time.</li>
+<li>Small samples mislead, for better or for worse.</li>
+<li>A high-probability forecast can still fail. If you bet, only do so with money you can afford to lose: see <a href="/en/responsible-gambling/">responsible gambling</a>.</li>
+</ul>
+
+<h2>Who is behind it and how to correct us</h2>
+<p>QuantFut is the trade name of a service of Saptain LTD (<a href="/en/about/">more information</a>). If you find an error on this page or in a published forecast, write to us at <a href="mailto:admin@pronosticosdeportivos.pro">admin@pronosticosdeportivos.pro</a>: we will review it and, if appropriate, correct it and leave a record of the correction.</p>
+{% endblock %}

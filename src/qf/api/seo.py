@@ -126,12 +126,16 @@ def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
 
 
 def sitemap_paginas() -> str:
+    from . import idiomas
     filas = []
     for ruta, lastmod in todas_las_paginas():
         mod = f"<lastmod>{xml_escape(lastmod)}</lastmod>" if lastmod else ""
-        filas.append(f"<url><loc>{xml_escape(base_url() + ruta)}</loc>{mod}</url>")
+        # hreflang recíproco: cada versión enumera todas (también a sí misma) y `x-default` → español (ver idiomas.py)
+        alternos = "".join(f'<xhtml:link rel="alternate" hreflang="{xml_escape(h)}" href="{xml_escape(base_url() + r)}"/>'
+                           for h, r in idiomas.hreflang(ruta))
+        filas.append(f"<url><loc>{xml_escape(base_url() + ruta)}</loc>{mod}{alternos}</url>")
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
-            f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(filas)}</urlset>\n')
+            f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">{"".join(filas)}</urlset>\n')
 
 
 def _texto(cuerpo: str, tipo: str, cache: str) -> Response:
