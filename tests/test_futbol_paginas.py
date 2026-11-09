@@ -221,7 +221,8 @@ def test_las_paginas_no_consultan_picks_alta_probabilidad_ni_escalera(client, mo
 
 def test_el_html_no_lleva_mercados_ni_cuotas(client):
     for ruta in (URL_FINAL, URL_PREVIA, URL_COPA, "/futbol/"):
-        t = client.get(ruta, headers=HTML).text.lower()
+        # El enlace de navegación a la calculadora de cuota justa (una herramienta educativa) no es un mercado ni una cuota del partido.
+        t = client.get(ruta, headers=HTML).text.lower().replace("/calculadora-cuota-justa/", "").replace(">cuota justa<", "><")
         for palabra in ("cuota", "más de 2,5", "más de 2.5", "ambos marcan", "suscripción vip", "candado"):
             assert palabra not in t.split('id="app"', 1)[-1], (ruta, palabra)
 
