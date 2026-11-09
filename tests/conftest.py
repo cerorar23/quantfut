@@ -33,5 +33,7 @@ def _sin_red_hacia_nba_api(monkeypatch):
     monkeypatch.setattr(futbol_datos, "secciones_activas", lambda: {"estadisticas": True, "h2h": True})
     monkeypatch.setattr(futbol_datos, "agenda_dia", lambda d: [])
     monkeypatch.setattr(futbol_datos, "pronosticos", lambda ids: {})
+    from qf.api import tenis_datos
+    monkeypatch.setattr(tenis_datos, "eventos", lambda: [])   # sin feed de tenis: no hay volumen en las pruebas
     yield
     nba_datos.vaciar_cache()
