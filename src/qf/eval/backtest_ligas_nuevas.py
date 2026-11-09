@@ -16,6 +16,8 @@ Variantes (misma tabla, distinta información de xG):
   goles           sin xG (`xg_blend = 0`): mide cuánto aporta el xG, sobre todo en Serie B y LaLiga 2 (xG parcial).
   sin_nuevas      el modelo con solo las 13 competiciones actuales: sirve de control para comprobar que añadir
                   las 8 ligas no empeora lo ya publicado.
+  nivel           como `pit` pero con la recalibración del nivel de goles por liga (`DixonColes._nivel_reciente`). Se activa con
+                  `DC_NIVEL_HALFLIFE_DAYS=90` en el entorno al ejecutar (ver docs/correccion_nivel_goles_20261109.md).
 
 CRITERIOS DE APROBACIÓN (fijados el 8-nov-2026 antes de medir; no se cambian después de ver los resultados):
   C1  n >= 150 partidos fuera de muestra con los dos equipos conocidos.
@@ -51,7 +53,7 @@ INICIO = "2025-07-01"
 PASO_DIAS = 30
 SEMIVIDA = 270.0   # igual que el worker (entorno.sh)
 MEZCLA_XG = 0.65
-VARIANTES = ("pit", "reconstruccion", "goles", "sin_nuevas")
+VARIANTES = ("pit", "reconstruccion", "goles", "sin_nuevas", "nivel", "nivel45", "nivel180")
 CRITERIOS = {"n_min": 150, "ece_max": 0.05, "sesgo_max": 0.05, "regresion_max": 0.005}
 EPS = 1e-12
 

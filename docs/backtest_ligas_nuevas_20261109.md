@@ -30,8 +30,8 @@ resultados crudos y reproducción: `.local/backtest_ligas_nuevas/` (4 variantes,
    Eredivisie −0,22, MLS −0,17, Champions −0,29; Championship −0,15, Noruega −0,26, Suiza −0,25). No cambia al quitar el xG. Consecuencia: `over`/`ambos marcan`
    salen 3-9 puntos por debajo de lo real en varias ligas (p. ej. over 2,5 en Suiza: 59,8 % predicho frente a 68,7 % real) y su
    skill de Brier sobre la frecuencia del periodo es negativo en la mayoría. Producción publica ese modelo sin calibrar (el
-   calibrador lo rechazó su puerta). Abre una tarea propia: medir el sesgo en las 13 actuales y decidir una corrección de nivel
-   (semivida corta para el nivel de goles o ajuste por temporada) antes de mostrar over/ambos marcan como alta probabilidad.
+   calibrador lo rechazó su puerta). Se probaron dos correcciones de nivel (en muestra y fuera de muestra) con criterios fijados antes de medir: ninguna cumple (la deriva de ago-nov 2026
+   es un cambio de régimen) y no se activan; ver [correccion_nivel_goles_20261109.md](correccion_nivel_goles_20261109.md).
 4. **xG recibido tarde**: el xG de las ligas nuevas con procedencia solo cuenta desde su recepción real (`pit`). Un backtest que
    lo trate como siempre disponible (`reconstruccion`) mejora Allsvenskan, Suiza y 2. Bundesliga hasta 0,01 de log-loss: ese
    número es optimista y no decide nada.

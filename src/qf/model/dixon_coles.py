@@ -185,7 +185,14 @@ class DixonColes:
 
     def __init__(self, halflife_days: float = 270.0, xg_blend: float = 0.65,
                  ridge: float = 0.0, max_goals: int = 12,
-                 ridge_partidos: float | None = None):
+                 ridge_partidos: float | None = None,
+                 nivel_halflife_days: float | None = None,
+                 nivel_prior_goles: float | None = None):
+        # Recalibración del nivel de goles por liga (0 / None = apagada). Ver `_nivel_reciente`.
+        self.nivel_halflife = (settings.dc_nivel_halflife_days if nivel_halflife_days is None
+                               else nivel_halflife_days)
+        self.nivel_prior = (settings.dc_nivel_prior_goles if nivel_prior_goles is None
+                            else nivel_prior_goles)
         self.halflife = halflife_days
         self.xg_blend = xg_blend
         self.ridge = ridge
@@ -202,6 +209,36 @@ class DixonColes:
         days = np.array([(as_of - k).total_seconds() / 86400.0 for k in kickoffs])
         xi = math.log(2.0) / self.halflife
         return np.exp(-xi * np.clip(days, 0, None))
+
+    NIVEL_R_MIN, NIVEL_R_MAX = 0.85, 1.20   # tope del factor de corrección por liga
+
+    def _nivel_reciente(self, base: np.ndarray, ci: np.ndarray, lam: np.ndarray, mu: np.ndarray,
+                        hg: np.ndarray, ag: np.ndarray, kickoffs, as_of: datetime) -> np.ndarray:
+        """
+        Corrige el nivel de goles de cada competición con memoria CORTA.
+
+        Dos fuentes de sesgo que el ajuste con semivida larga no ve: (1) el pooling parcial de `base` hacia la media
+        de todas las ligas, que deja bajas las ligas de muchos goles y altas las de pocos; (2) las derivas de nivel
+        (en el arranque de 2026/27 los goles subieron ≈ 10 % y el modelo tardó meses en reaccionar). Se compara,
+        con pesos de semivida `nivel_halflife`, los goles REALES con los esperados de las propias lambdas ajustadas:
+
+            r = (Σ w·goles + K) / (Σ w·(lam + mu) + K)         K = prior en goles ponderados, a razón 1
+            base_liga += log r                                 (multiplica lam y mu por r; la ventaja local no cambia)
+
+        Solo usa partidos del entrenamiento (anteriores al corte), así que es point-in-time. Es un cambio de
+        PARÁMETROS (`base`), no de código: el worker lo aplica sin saberlo. Con pocos partidos recientes r → 1.
+        """
+        dias = np.array([max((as_of - k).total_seconds() / 86400.0, 0.0) for k in kickoffs])
+        w = np.exp(-math.log(2.0) / self.nivel_halflife * dias)
+        real, esperado = w * (hg + ag), w * (lam + mu)
+        out = base.copy()
+        for j in range(len(base)):
+            m = ci == j
+            if not m.any():
+                continue
+            r = (float(real[m].sum()) + self.nivel_prior) / (float(esperado[m].sum()) + self.nivel_prior)
+            out[j] += math.log(min(max(r, self.NIVEL_R_MIN), self.NIVEL_R_MAX))
+        return out
 
     def fit(self, df, as_of: datetime | None = None):
         """
@@ -460,6 +497,11 @@ class DixonColes:
         mu_f = np.exp(base[ci] + (atk[ai] + stg[la]) - (dfn[hi] + stg[lh]))
         lam_f = np.clip(lam_f, 1e-6, 25.0)
         mu_f = np.clip(mu_f, 1e-6, 25.0)
+
+        # El nivel se corrige DESPUÉS de calcular las lambdas de la incertidumbre: esa precisión mide información de los
+        # datos, no el nivel, y no debe moverse con la corrección.
+        if self.nivel_halflife and self.nivel_halflife > 0:
+            base = self._nivel_reciente(base, ci, lam_f, mu_f, hg, ag, df["kickoff_utc"].to_numpy(), as_of)
 
         # Todo con pesos CRUDOS: así `I_prior` y `I_datos` hablan de lo mismo.
         I_prior = 2.0 * ridge * float(w_raw.mean())
