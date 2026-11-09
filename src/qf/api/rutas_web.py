@@ -27,7 +27,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import seo
+from . import og, seo
 
 log = logging.getLogger(__name__)
 router = APIRouter(include_in_schema=False)
@@ -180,10 +180,24 @@ def _jsonld(sec: Seccion, base: str) -> list[dict]:
 
 
 def _head(sec: Seccion, base: str) -> str:
-    return _head_de(f"{sec.titulo} | QuantFut", sec.descripcion, base + sec.path, _jsonld(sec, base))
+    marca = og.url_marca()
+    return _head_de(f"{sec.titulo} | QuantFut", sec.descripcion, base + sec.path, _jsonld(sec, base),
+                    (marca, "QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables") if marca else None)
 
 
-def _head_de(titulo: str, descripcion: str, url: str, jsonld: list[dict]) -> str:
+def _meta_imagen(imagen: tuple[str, str] | None) -> str:
+    """Etiquetas de la tarjeta para redes. Sin imagen (Pillow no instalado) queda la tarjeta `summary` de siempre."""
+    if not imagen:
+        return '<meta name="twitter:card" content="summary" />'
+    url, alt = imagen
+    return (f'<meta property="og:image" content="{escape(url)}" /><meta property="og:image:type" content="image/jpeg" />'
+            f'<meta property="og:image:width" content="{og.ANCHO}" /><meta property="og:image:height" content="{og.ALTO}" />'
+            f'<meta property="og:image:alt" content="{escape(alt)}" />'
+            f'<meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="{escape(url)}" />'
+            f'<meta name="twitter:image:alt" content="{escape(alt)}" />')
+
+
+def _head_de(titulo: str, descripcion: str, url: str, jsonld: list[dict], imagen: tuple[str, str] | None = None) -> str:
     ld = "".join(f'<script type="application/ld+json">{_script_seguro(b)}</script>' for b in jsonld)
     return (
         f'<meta name="description" content="{escape(descripcion)}" />'
@@ -193,7 +207,7 @@ def _head_de(titulo: str, descripcion: str, url: str, jsonld: list[dict]) -> str
         '<meta property="og:locale" content="es_ES" />'
         f'<meta property="og:url" content="{escape(url)}" /><meta property="og:title" content="{escape(titulo)}" />'
         f'<meta property="og:description" content="{escape(descripcion)}" />'
-        f'<meta name="twitter:card" content="summary" />{ld}{_ESTILO}')
+        f'{_meta_imagen(imagen)}{ld}{_ESTILO}')
 
 
 def _script_seguro(dato: dict) -> str:
@@ -244,7 +258,8 @@ def render(sec: Seccion, base: str | None = None, index: str | None = None) -> s
 
 
 def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld: list[dict], principal: str,
-                  datos: dict[str, str] | None = None, base: str | None = None, index: str | None = None) -> str:
+                  datos: dict[str, str] | None = None, base: str | None = None, index: str | None = None,
+                  imagen: tuple[str, str] | None = None) -> str:
     """Página con URL propia que no es una sección fija (p. ej. un partido de NBA): mismo shell de la SPA, con su
     `<head>`, su JSON-LD y su contenido en el HTML inicial. `datos` son atributos `data-*` del `<html>` que la SPA
     lee al arrancar (sin que el servidor decida nada del diseño)."""
@@ -252,7 +267,7 @@ def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld
     base = seo.base_url() if base is None else base
     atributos = "".join(f' data-{k}="{escape(str(v))}"' for k, v in (datos or {}).items())
     return _adaptar(html, titulo=f"{titulo} | QuantFut", ruta=ruta,
-                    head=_head_de(f"{titulo} | QuantFut", descripcion, base + path, jsonld),
+                    head=_head_de(f"{titulo} | QuantFut", descripcion, base + path, jsonld, imagen),
                     inicial=marco_inicial(principal), atributos=atributos)
 
 

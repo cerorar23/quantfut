@@ -18,7 +18,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import seo
+from . import og, seo
 
 router = APIRouter(include_in_schema=False)
 _env = Environment(loader=FileSystemLoader(str(Path(__file__).with_name("paginas"))),
@@ -92,7 +92,7 @@ def render(pagina: Pagina) -> str:
     return _env.get_template(pagina.plantilla).render(
         p=pagina, url=url, base=base, jsonld=_jsonld(pagina, url, base),
         revision_larga=fecha_larga(pagina.revision), revision_iso=pagina.revision.isoformat(),
-        paginas=PAGINAS)
+        paginas=PAGINAS, og_imagen=og.url_marca())
 
 
 def _responder(pagina: Pagina) -> HTMLResponse:

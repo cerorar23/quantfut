@@ -14,7 +14,17 @@
 <meta property="og:url" content="{{ url }}">
 <meta property="og:title" content="{{ p.titulo }}">
 <meta property="og:description" content="{{ p.descripcion }}">
+{% if og_imagen %}
+<meta property="og:image" content="{{ og_imagen }}">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ og_imagen }}">
+{% else %}
 <meta name="twitter:card" content="summary">
+{% endif %}
 {% for bloque in jsonld %}
 <script type="application/ld+json">{{ bloque | tojson }}</script>
 {% endfor %}

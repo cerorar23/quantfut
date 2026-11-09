@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import futbol_datos, paginas, rutas_web, seo
+from . import futbol_datos, og, paginas, rutas_web, seo
 from .futbol_datos import FutbolNoDisponible
 
 log = logging.getLogger("qf.futbol_paginas")
@@ -131,7 +131,7 @@ def construir(fila: dict, ficha: dict | None, secciones: dict[str, bool], ahora:
         p=SimpleNamespace(titulo=titulo, descripcion=descripcion, slug=slug, migas=f"{local} vs {visit}"),
         id=fila["match_id"], slug=slug, ruta=ruta, url=seo.base_url() + ruta, local=local, visitante=visit, liga=liga,
         pais=fila["liga"].get("pais"), estado=st, veredicto=ver, inicio=ko, dia=dia, marcador=fila.get("marcador"),
-        generada=pron["generada"], modelo=pron["modelo"],
+        generada=pron["generada"], modelo=pron["modelo"], probs=p,
         p_local=pct(p["home"]), p_empate=pct(p["draw"]), p_visit=pct(p["away"]),
         brier=num(ver["brier"], 3) if ver else None, ctx=contexto(ficha, secciones))
 
@@ -153,6 +153,30 @@ def jsonld_partido(c: SimpleNamespace, base: str) -> list[dict]:
         {"@type": "ListItem", "position": 1, "name": "Inicio", "item": f"{base}/"},
         {"@type": "ListItem", "position": 2, "name": "Fútbol", "item": f"{base}{RUTA_PILAR}"},
         {"@type": "ListItem", "position": 3, "name": c.p.migas, "item": c.url}]}, web]
+
+
+# --- tarjeta para redes ---------------------------------------------------------------------------
+
+def estado_imagen(c: SimpleNamespace) -> str:
+    return "final" if c.estado == "final" else "previa"
+
+
+def tarjeta(c: SimpleNamespace) -> "og.Tarjeta":
+    final = estado_imagen(c) == "final"
+    return og.Tarjeta("partido", etiqueta="FÚTBOL", local=c.local, visitante=c.visitante, contexto=f"{c.liga} · {fecha_larga(c.dia)}",
+                      barra=[(c.local, c.probs["home"]), ("Empate", c.probs["draw"]), (c.visitante, c.probs["away"])],
+                      estado=estado_imagen(c), marcador=f"{c.marcador[0]} – {c.marcador[1]}" if final and c.marcador else "",
+                      veredicto=(("acerto" if c.veredicto["acerto"] else "fallo") if final and c.veredicto else None))
+
+
+def tarjeta_de_la_url(comp: str, slug: str):
+    fila = futbol_datos.buscar_partido(comp, slug)
+    return tarjeta(construir(fila, None, {"estadisticas": False, "h2h": False})) if fila else None
+
+
+def _imagen_partido(c: SimpleNamespace):
+    url = og.url_partido(c.ruta, estado_imagen(c))
+    return (url, f"Pronóstico {c.local} vs {c.visitante}: probabilidades del modelo") if url else None
 
 
 # --- pilar ----------------------------------------------------------------------------------------
@@ -222,10 +246,10 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
 
 # --- rutas ----------------------------------------------------------------------------------------
 
-def _pagina(plantilla: str, path: str, p: SimpleNamespace, jsonld: list[dict], datos: dict, **ctx) -> HTMLResponse:
+def _pagina(plantilla: str, path: str, p: SimpleNamespace, jsonld: list[dict], datos: dict, imagen=None, **ctx) -> HTMLResponse:
     principal = _env.get_template(plantilla).render(p=p, **ctx)
     cuerpo = rutas_web.render_pagina(titulo=p.titulo, descripcion=p.descripcion, path=path, ruta="partidos",
-                                     jsonld=jsonld, principal=principal, datos={"deporte": "futbol", **datos})
+                                     jsonld=jsonld, principal=principal, datos={"deporte": "futbol", **datos}, imagen=imagen)
     return HTMLResponse(cuerpo, headers={"Cache-Control": "no-cache, must-revalidate"})
 
 
@@ -242,7 +266,8 @@ def pilar():
         c = construir_pilar()
     except FutbolNoDisponible:
         raise _no_disponible()
-    return _pagina("futbol_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, c=c)
+    url = og.url_pilar("futbol")
+    return _pagina("futbol_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, (url, "Pronósticos de fútbol con probabilidades") if url else None, c=c)
 
 
 @router.api_route("/futbol", methods=["GET", "HEAD"], name="futbol_pilar_sin_barra")
@@ -264,7 +289,7 @@ def partido(comp: str, slug: str):
         raise _no_disponible()
     c = construir(fila, ficha, secciones)
     return _pagina("futbol_partido.html", c.ruta, c.p, jsonld_partido(c, seo.base_url()),
-                   {"evento": c.id, "inicio": c.inicio.astimezone(timezone.utc).isoformat()}, c=c)
+                   {"evento": c.id, "inicio": c.inicio.astimezone(timezone.utc).isoformat()}, _imagen_partido(c), c=c)
 
 
 @router.api_route("/futbol/{comp}/{slug}", methods=["GET", "HEAD"], name="futbol_partido_sin_barra")

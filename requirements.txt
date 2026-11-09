@@ -16,6 +16,7 @@ python-multipart==0.0.20
 # plantillas del panel /control (autoescape de HTML).
 argon2-cffi==23.1.0
 jinja2==3.1.6
+pillow==11.3.0   # tarjetas de redes (`api/og.py`); sin él las páginas no declaran og:image
 firebase-admin==7.7.0
 # Verificacion de transacciones y notificaciones de App Store (JWS firmado por Apple).
 app-store-server-library==3.1.2
