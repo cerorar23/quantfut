@@ -76,7 +76,7 @@ footer ul{display:flex;gap:6px 18px;flex-wrap:wrap;list-style:none;padding:0;mar
 </header>
 <main id="contenido">
 <h1>{{ p.titulo }}</h1>
-<p class="revision">{% block revision %}Última revisión{% endblock %}: <time datetime="{{ revision_iso }}">{{ revision_larga }}</time></p>
+{% block revision_p %}<p class="revision">{% block revision %}Última revisión{% endblock %}: <time datetime="{{ revision_iso }}">{{ revision_larga }}</time></p>{% endblock %}
 {% block contenido %}{% endblock %}
 </main>
 <footer>

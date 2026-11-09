@@ -1,0 +1,50 @@
+{% extends "base_en.html" %}
+{% block revision_p %}<p class="revision">Forecast sealed <time datetime="{{ c.sellado.isoformat() if c.sellado else '' }}">{{ c.sellado_txt }}</time>{% if c.inicio %} · scheduled start <time datetime="{{ c.inicio.isoformat() }}">{{ c.inicio_txt }}</time>{% endif %}</p>{% endblock %}
+{% block contenido %}
+<p class="entradilla">The model gives {{ c.local }} a {{ c.p_local }} chance of winning and {{ c.visitante }} a {{ c.p_visit }} chance. {{ c.texto_margen }}</p>
+<div class="aviso estado">
+{% if c.estado == 'final' %}
+<p><strong>Final:</strong> {{ c.local }} {{ c.resultado.local | int }}, {{ c.visitante }} {{ c.resultado.visitante | int }}.
+{% if c.veredicto %}
+{% if c.veredicto.acerto %}The team with the higher probability ({{ c.veredicto.favorito }}) won.{% else %}<strong>The forecast missed:</strong> the team with the higher probability was {{ c.veredicto.favorito }} and {{ c.veredicto.ganador }} won.{% endif %}
+</p>
+<p>Probability error (Brier) in this game: {{ c.brier }}. The closer to 0 the better; 0.25 is what always saying 50% would give.</p>
+{% else %}</p>{% endif %}
+{% elif c.estado == 'curso' %}
+<p><strong>In play or just finished.</strong> No final score has been recorded yet. The page is updated when it arrives.</p>
+{% elif c.estado == 'pendiente' %}
+<p><strong>Result pending confirmation.</strong> The game time has passed and no final score has been recorded yet.</p>
+{% else %}
+<p><strong>Before the game.</strong> The forecast is already sealed and cannot be changed.</p>
+{% endif %}
+</div>
+
+<h2>Model probabilities</h2>
+<table>
+<thead><tr><th scope="col">Team</th><th scope="col">Win probability</th><th scope="col">Expected points (mean)</th></tr></thead>
+<tbody>
+<tr><th scope="row">{{ c.local }} (home)</th><td>{{ c.p_local }}</td><td>{{ c.mu_local }}</td></tr>
+<tr><th scope="row">{{ c.visitante }} (away)</th><td>{{ c.p_visit }}</td><td>{{ c.mu_visit }}</td></tr>
+</tbody>
+</table>
+<p>According to the model's distribution, the margin (home minus away) falls between {{ c.margen_rango }} points in 80% of cases, and total points between {{ c.total_rango }} (median {{ c.total_mediana }}). The probability includes the possibility of overtime.</p>
+
+{% if c.contexto %}
+<h2>Season context</h2>
+<table>
+<thead><tr><th scope="col">Team</th><th scope="col">Record</th><th scope="col">Last 6</th><th scope="col">Streak</th><th scope="col">Rest</th></tr></thead>
+<tbody>
+{% for f in c.contexto %}
+<tr><th scope="row">{{ f.nombre }}</th><td>{{ f.record }}</td><td>{{ f.ultimos6 }}</td><td>{{ f.racha }}</td><td>{{ f.descanso }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p>Data as of the game date (regular-season wins-losses).</p>
+{% endif %}
+
+<h2>Verifiable seal</h2>
+<p>This forecast was recorded before the start with the fingerprint <code>{{ c.hash }}</code>. Anyone can <a href="/nba/v1/sello/{{ c.hash }}" rel="nofollow">check the seal</a>: if a single figure were changed, the fingerprint would no longer match. Model version: {{ c.version }}.</p>
+
+<h2>How to read this page</h2>
+<p>This is a statistical estimate for information purposes, not a recommendation or a promise of profit. See the <a href="/en/methodology/">methodology</a> and the <a href="/en/nba/">NBA schedule</a>. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p>
+{% endblock %}

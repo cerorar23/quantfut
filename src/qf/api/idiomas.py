@@ -75,9 +75,33 @@ def estado(codigo: str) -> str:
 
 # --- registro de páginas con versión en varios idiomas -------------------------------------------------
 
+_traductores: list = []     # funciones ruta → {idioma: ruta} para familias dinámicas (partidos, torneos…)
+
+
 def registrar(grupo: str, codigo: str, ruta: str) -> None:
     _grupos.setdefault(grupo, {})[codigo] = ruta
     _por_ruta[ruta] = (grupo, codigo)
+
+
+def registrar_traductor(fn) -> None:
+    """Para páginas que no se enumeran de antemano (un partido, un torneo): `fn(ruta)` devuelve `{idioma: ruta}` con TODAS las versiones
+    de esa página, incluida la propia, o `None` si `ruta` no pertenece a su familia o la página no existe en todos los idiomas."""
+    _traductores.append(fn)
+
+
+def _equivalencias(ruta: str) -> dict[str, str] | None:
+    g = _por_ruta.get(ruta)
+    if g:
+        return _grupos[g[0]]
+    for fn in _traductores:
+        eq = fn(ruta)
+        if eq:
+            return eq
+    return None
+
+
+def _codigo(ruta: str, eq: dict[str, str]) -> str | None:
+    return next((c for c, r in eq.items() if r == ruta), None)
 
 
 def grupo_de(ruta: str) -> tuple[str, str] | None:
@@ -86,10 +110,10 @@ def grupo_de(ruta: str) -> tuple[str, str] | None:
 
 def versiones(ruta: str) -> list[tuple[str, str]]:
     """Las versiones INDEXABLES de la página de `ruta` (idioma, ruta): el español siempre y los idiomas en estado `on`."""
-    g = _por_ruta.get(ruta)
-    if not g:
+    eq = _equivalencias(ruta)
+    if not eq:
         return []
-    return [(c, r) for c, r in _grupos[g[0]].items() if estado(c) == "on"]
+    return [(c, r) for c, r in eq.items() if estado(c) == "on"]
 
 
 def hreflang(ruta: str) -> list[tuple[str, str]]:
@@ -104,13 +128,13 @@ def hreflang(ruta: str) -> list[tuple[str, str]]:
 def selector(ruta: str) -> list[dict]:
     """Enlaces del selector de idioma para la página `ruta`: los otros idiomas que existen para ella y están en `on`.
     Una página en `preview` solo enlaza de vuelta al español (nadie llega a ella desde fuera)."""
-    g = _por_ruta.get(ruta)
-    if not g:
+    eq = _equivalencias(ruta)
+    codigo = _codigo(ruta, eq) if eq else None
+    if not eq or not codigo:
         return []
-    grupo, codigo = g
     propio = estado(codigo)
     salida = []
-    for c, r in _grupos[grupo].items():
+    for c, r in eq.items():
         if c == codigo:
             continue
         if estado(c) == "on" or (propio != "on" and c == ESPANOL):
@@ -122,3 +146,13 @@ def robots_de(codigo: str) -> str | None:
     """`noindex` mientras el idioma no esté abierto; `None` = el valor normal de la plantilla."""
     return None if estado(codigo) == "on" else "noindex, follow"
 
+
+def puerta(codigo: str) -> dict[str, str]:
+    """Cabeceras de una página de `codigo`: 404 si el idioma está apagado; sin caché y `noindex` en vista previa."""
+    from fastapi import HTTPException
+    e = estado(codigo)
+    if e == "off":
+        raise HTTPException(404)
+    if e == "preview":
+        return {"Cache-Control": "no-store", "X-Robots-Tag": "noindex"}
+    return {}
