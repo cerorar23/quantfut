@@ -26,7 +26,9 @@ _env = Environment(loader=FileSystemLoader(str(Path(__file__).with_name("paginas
 
 MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
          "octubre", "noviembre", "diciembre")
-CSP = ("default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; "
+# `script-src 'self'`: Cloudflare ofusca los `mailto:` de estas páginas y su `email-decode.min.js` es del mismo origen; sin esto el texto del
+# enlace se vería como «[email protected]». Las páginas no llevan scripts en línea ni de terceros (el JSON-LD son datos, no se ejecutan).
+CSP = ("default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; "
        "frame-ancestors 'none'")
 
 
