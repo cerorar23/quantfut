@@ -23,11 +23,20 @@
 		path /admin /admin/* /control /control/*
 		not header Cf-Access-Jwt-Assertion *
 	}
+	@nba_v2 path /nba/v1/* /nba/v2 /nba/v2/*
 	@nba path /nba /nba/*
 	route {
 		respond @sin_access 404
+		# Verificación de propiedad de Google Search Console (8-nov-2026).
+		handle /google9eee6373623062a0.html {
+			header Content-Type "text/html; charset=utf-8"
+			respond "google-site-verification: google9eee6373623062a0.html" 200
+		}
+		handle @nba_v2 {
+			reverse_proxy nba-api:8000
+		}
 		handle @nba {
-			reverse_proxy nba-dashboard-run69:8080
+			redir * /nba/v2/ 302
 		}
 		handle {
 			# main.py limita por el primer elemento de X-Forwarded-For.
