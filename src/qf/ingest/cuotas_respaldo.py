@@ -66,6 +66,43 @@ NBA_MERCADOS = {"winner": "h2h", "game_total": "totals", "player_points": "playe
 TENIS_MERCADOS = {"winner": "h2h", "games_total": "totals", "games_handicap": "spreads"}
 
 
+ALERTA_CADA = timedelta(hours=6)
+
+
+def _enviar_alerta(texto: str) -> None:
+    """Telegram operativo (`TG_ALERT_CHAT`); sin canal configurado solo queda en el registro. Los tests lo sustituyen."""
+    from qf.publish import telegram
+    telegram.alert(texto)
+
+
+def avisa(clave: str, texto: str, now: datetime | None = None, cache_path=None) -> bool:
+    """Alerta de Telegram como mucho una vez cada 6 h por `clave` (estado en `<caché>.alertas.json`). NUNCA lanza: avisar
+    no puede tumbar el respaldo. Devuelve si envió."""
+    try:
+        now = now or datetime.now(timezone.utc)
+        base = cache_path if cache_path is not None else getattr(settings, "cuotas_respaldo_cache", None)
+        ruta = Path(str(base) + ".alertas.json") if base else None
+        estado: dict = {}
+        if ruta is not None:
+            try:
+                estado = json.loads(ruta.read_bytes())
+            except (OSError, ValueError):
+                estado = {}
+        previo = estado.get(clave)
+        if previo and now - pl.parse_time(previo) < ALERTA_CADA:
+            return False
+        _enviar_alerta(texto)
+        if ruta is not None:
+            estado[clave] = pl.stamp(now)
+            tmp = ruta.with_name(ruta.name + ".tmp")
+            tmp.write_text(json.dumps(estado, separators=(",", ":")), encoding="utf-8")
+            os.replace(tmp, ruta)
+        return True
+    except Exception:  # noqa: BLE001
+        log.exception("respaldo de cuotas: no se pudo avisar (ignorado)")
+        return False
+
+
 class Parar(Exception):
     """Presupuesto o saldo agotado: se escribe lo ya obtenido y se termina."""
 
@@ -508,6 +545,8 @@ def nivel3_sportsapipro(cli: csp.Cliente, huecos, entries: dict, intentos: dict,
                 recibido, doc = cli.get(f"{sport}/api/match/{evento['id']}/odds/pre-match", "cuotas", str(evento["id"]))
         except csp.SinCupo as e:
             salida(f"sportsapipro: {e}")
+            avisa("sportsapipro", f"Respaldo de cuotas: SportsAPIPro se detuvo ({e}). Los huecos sin cuota no se cubrirán "
+                                  f"con él hasta que se reinicie el cupo diario (00:00 UTC).", now)
             break
         for i in items:
             marca_intento(intentos, f"{h.eid}|{i['key']}", 3, now)
@@ -549,6 +588,8 @@ def nivel4_therundown(cli: crd.Cliente, huecos, entries: dict, intentos: dict, n
                     break
         except crd.SinCupo as e:
             salida(f"therundown: {e}")
+            avisa("therundown", f"Respaldo de cuotas: TheRundown se detuvo ({e}). 401/403 = clave rechazada o sin permiso; "
+                                f"429 o poca reserva = cupo diario de 20.000 puntos.", now)
             break
         for i in items:
             marca_intento(intentos, f"{h.eid}|{i['key']}", 4, now)

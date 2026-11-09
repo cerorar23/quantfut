@@ -9,9 +9,10 @@
 ## 9-nov-2026 · Cascada de cuotas PropLine → The Odds API → SportsAPIPro (rama `cuotas/cascada-respaldo`)
 - [x] `ingest/cuotas_sportsapipro.py` (cliente con archivo de originales y parada en 429, fracción → decimal, emparejamiento, traducción de mercados), nivel 3 en `ingest/cuotas_respaldo.py` con reintentos acotados (`<caché>.intentos.json`) y paso automático al nivel 3 si a The Odds API se le acaban los créditos, `ingest/cuotas_respaldo_futbol.py` (caché de consulta de fútbol) y lectura en `partido_mercados.cuotas_casas`. Pruebas: `tests/test_cuotas_cascada.py` (34).
 - [x] Regla: las cuotas de SportsAPIPro llevan `post_sello` y `regla_publicacion` las ignora; el destacado de fútbol no usa el respaldo.
-- [x] Verificados con respuestas reales (9-nov): «Game total» (baloncesto), 1X2/«Match goals»/BTTS/doble oportunidad/córners (fútbol) y «Total games won» (tenis). Corregido el periodo «Full-time» del fútbol. Falta traducir el hándicap de SportsAPIPro (el equipo va dentro del nombre de la opción).
+- [x] Verificados con respuestas reales (9-nov): «Game total» (baloncesto), 1X2/«Match goals»/BTTS/doble oportunidad/córners (fútbol) y «Total games won» (tenis). Corregido el periodo «Full-time» del fútbol. Hándicap asiático de fútbol traducido (9-nov, rama `cuotas/pulido-respaldo`); tenis no tiene hándicap en SportsAPIPro.
 - [ ] Decidir si el plan de SportsAPIPro sube: con «sin tope» el respaldo compite con el once de fútbol (40/día) y tenis por las 100 peticiones diarias gratuitas.
-- [ ] Hándicap, props NBA y mercados de córners/tarjetas siguen sin tercer nivel (SportsAPIPro no los devuelve de forma comprobable).
+- [x] Alertas de Telegram (como mucho cada 6 h) cuando SportsAPIPro o TheRundown se detienen.
+- [ ] Props NBA y tarjetas siguen sin respaldo adicional (SportsAPIPro/TheRundown Free no los devuelven).
 - [ ] Fusionar la rama a `main` (el servidor ya corre este código desde `releases/cuotas-cascada-20261109`; ver DEPLOYS.md).
 
 ## Historial web en Flutter y mercados vacíos — 5-nov-2026

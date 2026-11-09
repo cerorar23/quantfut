@@ -186,11 +186,12 @@ def nivel2(cli: "cr.Cliente", pend: list[dict], entries: dict, intentos: dict, n
     return nuevas
 
 
-def _filas_sportsapipro(ms: list[dict]) -> list[dict]:
-    return csp.filas_futbol(ms)
+def _filas_sportsapipro(ms: list[dict], home=None, away=None, igual=None) -> list[dict]:
+    return csp.filas_futbol(ms, home, away, igual)
 
 
-def nivel3(cli: "csp.Cliente", pend: list[dict], entries: dict, intentos: dict, now: datetime, db, salida=print) -> int:
+def nivel3(cli: "csp.Cliente", pend: list[dict], entries: dict, intentos: dict, now: datetime, db, salida=print,
+           meta: dict | None = None, igual=None) -> int:
     nuevas = 0
     for h in pend:
         k = f"fut|{h['match_id']}|{_bloque(now)}"
@@ -204,9 +205,12 @@ def nivel3(cli: "csp.Cliente", pend: list[dict], entries: dict, intentos: dict, 
             recibido, doc = cli.get(f"football/api/match/{eid}/odds/pre-match", "cuotas_futbol", str(eid))
         except csp.SinCupo as e:
             salida(f"sportsapipro (fútbol): {e}")
+            cr.avisa("sportsapipro", f"Respaldo de cuotas: SportsAPIPro se detuvo ({e}). Los huecos sin cuota no se cubrirán "
+                                     f"con él hasta que se reinicie el cupo diario (00:00 UTC).", now)
             break
         cr.marca_intento(intentos, k, 3, now)
-        filas = _filas_sportsapipro(csp.mercados(doc)) if doc else []
+        m = (meta or {}).get(h["match_id"]) or {}
+        filas = _filas_sportsapipro(csp.mercados(doc), m.get("home"), m.get("away"), igual) if doc else []
         if filas:
             entries[h["match_id"] + SUFIJO_SP] = dict(fuente=SRC_S, captured_at=recibido.isoformat(), rows=filas)
             nuevas += 1
@@ -249,6 +253,8 @@ def nivel4(cli: "crd.Cliente", pend: list[dict], entries: dict, intentos: dict, 
                 memo[(sid, fecha)] = cli.eventos(sid, fecha)
         except crd.SinCupo as e:
             salida(f"therundown (fútbol): {e}")
+            cr.avisa("therundown", f"Respaldo de cuotas: TheRundown se detuvo ({e}). 401/403 = clave rechazada o sin permiso; "
+                                   f"429 o poca reserva = cupo diario de 20.000 puntos.", now)
             break
         cr.marca_intento(intentos, k, 4, now)
         m = meta[h["match_id"]]
@@ -303,7 +309,15 @@ def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, 
             log.warning("respaldo fútbol: sin índice de calendario de SportsAPIPro")
         # Nivel 3: lo que, tras el nivel 2, la ficha seguiría sin poder mostrar (casas que no son de los suscriptores
         # no cuentan).
-        n3 = nivel3(cli3, [h for h in pend if not cubierto(h)], entries, intentos, now, db, salida)
+        cand3 = [h for h in pend if not cubierto(h)]
+        meta3 = {}
+        if cand3:
+            from qf.ingest import odds_worker as ow3
+            try:
+                meta3 = ow3.match_meta([h["match_id"] for h in cand3])   # nombres propios: hacen falta para el hándicap
+            except Exception:  # noqa: BLE001
+                log.warning("respaldo fútbol: sin nombres de equipos, el hándicap de SportsAPIPro no se traduce")
+        n3 = nivel3(cli3, cand3, entries, intentos, now, db, salida, meta3, resolutor or _resolutor_equipos())
     n4, cli4 = 0, None
     if rd_key:
         from qf.ingest import odds_worker as ow
