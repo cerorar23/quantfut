@@ -1,0 +1,53 @@
+{% extends "base_en.html" %}
+{% block revision_p %}<p class="revision">{{ c.liga }}{% if c.pais %} · {{ c.pais }}{% endif %} · scheduled kick-off <time datetime="{{ c.inicio.isoformat() }}">{{ c.inicio_txt }}</time>{% if c.generada %} · forecast generated <time datetime="{{ c.generada.isoformat() }}">{{ c.generada_txt }}</time>{% endif %}</p>{% endblock %}
+{% block contenido %}
+<p class="entradilla">{% if c.modelo %}The model gives {{ c.local }} a {{ c.p_local }} chance of winning, {{ c.p_empate }} of a draw and {{ c.p_visit }} of {{ c.visitante }} winning.{% else %}These probabilities come from the market consensus with the margin removed: our own model does not yet know one of the two teams, so we do not present them as our own forecast. {{ c.local }} {{ c.p_local }}, draw {{ c.p_empate }}, {{ c.visitante }} {{ c.p_visit }}.{% endif %}</p>
+<div class="aviso estado">
+{% if c.estado == 'final' %}
+<p><strong>Final:</strong> {{ c.local }} {{ c.marcador[0] }}, {{ c.visitante }} {{ c.marcador[1] }}.
+{% if c.veredicto %}
+{% if c.veredicto.acerto %}The most likely result ({{ c.veredicto.favorito }}) happened.{% else %}<span class="fallo">The forecast missed:</span> the most likely result was {{ c.veredicto.favorito }} and the result was {{ c.veredicto.resultado }}.{% endif %}
+</p>
+<p>Probability error (Brier score across the three outcomes) in this match: {{ c.brier }}. The closer to 0 the better; 0.667 is what always splitting the probability into thirds would give.</p>
+{% else %}</p>{% endif %}
+{% elif c.estado == 'aplazado' %}
+<p><strong>Postponed.</strong> The forecast generated does not change; it is re-evaluated when the match is played.</p>
+{% elif c.estado == 'curso' %}
+<p><strong>In play or just finished.</strong> No final score has been recorded yet. The page is updated when it arrives.</p>
+{% elif c.estado == 'pendiente' %}
+<p><strong>Result pending confirmation.</strong> The kick-off time has passed and no final score has been recorded yet.</p>
+{% else %}
+<p><strong>Before the match.</strong> The forecast is already generated and cannot be changed.</p>
+{% endif %}
+</div>
+
+<h2>Probabilities</h2>
+<table>
+<thead><tr><th scope="col">Outcome</th><th scope="col">Probability</th></tr></thead>
+<tbody>
+<tr><th scope="row">{{ c.local }} win (home)</th><td>{{ c.p_local }}</td></tr>
+<tr><th scope="row">Draw</th><td>{{ c.p_empate }}</td></tr>
+<tr><th scope="row">{{ c.visitante }} win (away)</th><td>{{ c.p_visit }}</td></tr>
+</tbody>
+</table>
+
+{% if c.ctx.lados %}
+<h2>Recent form and league position</h2>
+<table>
+<thead><tr><th scope="col">Team</th><th scope="col">Last {{ c.ctx.lados[0].n }}</th><th scope="col">Points</th><th scope="col">Goals</th><th scope="col">League position</th></tr></thead>
+<tbody>
+{% for l in c.ctx.lados %}
+<tr><th scope="row">{{ l.nombre }}</th><td>{{ l.racha }}</td><td>{{ l.puntos }}</td><td>{{ l.gf }}-{{ l.gc }}</td><td>{{ l.puesto or '—' }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p>W = win, D = draw, L = loss, from the most recent to the oldest. In cup competitions, the position is the team's domestic league table.</p>
+{% endif %}
+{% if c.ctx.h2h %}
+<h2>Head to head</h2>
+<p>In the last {{ c.ctx.h2h.n }} meetings: {{ c.ctx.h2h.local }} wins for {{ c.local }}, {{ c.ctx.h2h.empates }} draws and {{ c.ctx.h2h.visitante }} for {{ c.visitante }}, with {{ c.ctx.h2h.goles }} goals per match on average.</p>
+{% endif %}
+
+<h2>How to read this page</h2>
+<p>This is a statistical estimate for information purposes, not a recommendation or a promise of profit. See the <a href="/en/methodology/">methodology</a> and the <a href="/en/futbol/">football schedule</a>. Higher-probability picks and other markets are in the app, behind their own access. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p>
+{% endblock %}
