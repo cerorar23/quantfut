@@ -36,12 +36,21 @@ from pathlib import Path
 from qf.api import cuotas_nba as cn
 from qf.api import cuotas_tenis as ct
 from qf.config import settings
+from qf.ingest import cuotas_sportsapipro as csp
 from qf.ingest import propline_shared as pl
 from qf.ingest.cuotas_referencia import best_quote
 
 log = logging.getLogger(__name__)
 HOST = "https://api.the-odds-api.com"
 SRC = "the-odds-api"
+SRC_SP = "sportsapipro"             # tercer nivel: cuota de ahora, posterior al sello (ver cuotas_sportsapipro)
+# Cascada (decisión del titular, 9-nov-2026): PropLine -> The Odds API -> SportsAPIPro. Un hueco se intenta como
+# mucho INTENTOS_MAX veces por nivel, con ESPERA_REINTENTO entre una y otra: sin hueco resuelto, repetir cada 10 min
+# gastaría créditos (nivel 2) o el cupo diario del plan gratuito (nivel 3) sin ganar nada.
+INTENTOS_MAX = 2
+ESPERA_REINTENTO = timedelta(hours=1)
+SP_DEPORTE = {"nba": "basketball", "tenis": "tennis"}
+SP_MERCADOS = ("winner", "game_total", "games_total")
 SUELO = 500                         # no gastar si el saldo quedaría por debajo
 MAX_CREDITOS = 300
 TOLERANCIA = timedelta(minutes=30)  # comienzo del evento de The Odds API frente al sellado
@@ -75,6 +84,51 @@ def leer_cache(path) -> dict:
         return entries if isinstance(entries, dict) else {}
     except (OSError, ValueError):
         return {}
+
+
+def _ruta_intentos(cache_path) -> Path:
+    return Path(str(cache_path) + ".intentos.json")
+
+
+def leer_intentos(cache_path) -> dict:
+    """{clave: {n2, t2, n3, t3}}; ausente o ilegible -> {} (se repite el intento, nunca falla)."""
+    try:
+        d = json.loads(_ruta_intentos(cache_path).read_bytes())
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def escribir_intentos(cache_path, intentos: Mapping, now: datetime) -> None:
+    vivos = {}
+    for k, d in intentos.items():
+        try:
+            if max(pl.parse_time(d[t]) for t in ("t2", "t3") if d.get(t)) >= now - VIGENCIA:
+                vivos[k] = d
+        except (ValueError, TypeError, KeyError):
+            continue
+    destino = _ruta_intentos(cache_path)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    tmp = destino.with_name(destino.name + ".tmp")
+    tmp.write_text(json.dumps(vivos, separators=(",", ":")), encoding="utf-8")
+    os.replace(tmp, destino)
+
+
+def intento_permitido(intentos: Mapping, clave: str, nivel: int, now: datetime) -> bool:
+    d = intentos.get(clave) or {}
+    if int(d.get(f"n{nivel}", 0)) >= INTENTOS_MAX:
+        return False
+    t = d.get(f"t{nivel}")
+    try:
+        return not t or now - pl.parse_time(t) >= ESPERA_REINTENTO
+    except (ValueError, TypeError):
+        return True
+
+
+def marca_intento(intentos: dict, clave: str, nivel: int, now: datetime) -> None:
+    d = intentos.setdefault(clave, {})
+    d[f"n{nivel}"] = int(d.get(f"n{nivel}", 0)) + 1
+    d[f"t{nivel}"] = pl.stamp(now)
 
 
 def escribir_cache(path, entries: Mapping, now: datetime | None = None) -> None:
@@ -157,6 +211,16 @@ class Cliente:
     def eventos(self, sport_key, date):
         b = self._pide(f"/v4/historical/sports/{sport_key}/events", {"date": pl.stamp(date)}, 1)
         return (b or {}).get("data") if isinstance((b or {}).get("data"), list) else []
+
+    def eventos_actuales(self, sport_key, mercados: str, regiones: str, coste: int) -> list:
+        """Cuota ACTUAL de toda una competición (fútbol, `cuotas_respaldo_futbol`): mercados x regiones créditos."""
+        self.p.cobra(coste)
+        self.peticiones += 1
+        status, headers, body = self.get(f"/v4/sports/{sport_key}/odds",
+                                         {"regions": regiones, "markets": mercados, "oddsFormat": "decimal",
+                                          "dateFormat": "iso"})
+        self.p.registra(headers, coste)
+        return body if status == 200 and isinstance(body, list) else []
 
     def cuotas(self, sport_key, event_id, mercados, date):
         coste = 10 * len(self.regiones.split(",")) * len(mercados)
@@ -342,8 +406,15 @@ def _procesa(cli: Cliente, hueco: Hueco, claves_tenis, memo, entries) -> int:
 # --- overlay: solo lee ------------------------------------------------------------------------------------------
 
 def _quote(entrada, side, line, sealed):
-    q = best_quote(entrada["rows"], line=line, side=side, sealed_at=sealed,
-                   received_at=pl.parse_time(entrada["timestamp"]))
+    recibido = pl.parse_time(entrada["timestamp"])
+    if entrada.get("post_sello"):
+        # SportsAPIPro: solo existe la cuota de ahora, recibida DESPUÉS del sello. Se muestra con su hora real y la
+        # marca `post_sello`, que la regla de publicación ignora; el filtro punto-en-el-tiempo se evalúa contra la
+        # propia recepción, así que aquí no oculta nada.
+        q = best_quote(entrada["rows"], line=line, side=side, sealed_at=recibido, received_at=recibido)
+        return None if q is None else dict(price=q.price, book=q.book, as_of=q.as_of, books=q.books, side=side,
+                                           src=SRC_SP, post_sello=True)
+    q = best_quote(entrada["rows"], line=line, side=side, sealed_at=sealed, received_at=recibido)
     return None if q is None else dict(price=q.price, book=q.book, as_of=q.as_of, books=q.books, side=side, src=SRC)
 
 
@@ -382,12 +453,78 @@ def aplica_tenis(overlay: dict, cache: Mapping) -> dict:
 
 # --- comando -------------------------------------------------------------------------------------------------------
 
+def _sin_resolver(huecos, entries: Mapping) -> list[Hueco]:
+    """Copias de los huecos con solo los ítems que ningún nivel anterior resolvió."""
+    out = []
+    for h in huecos:
+        items = [i for i in h.items if f"{h.eid}|{i['key']}" not in entries]
+        if items:
+            out.append(Hueco(h.deporte, h.eid, h.sport_key, h.local, h.visitante, h.comienzo, h.sellado, items))
+    return out
+
+
+def _evento_sportsapipro(cli: csp.Cliente, sport: str, h: Hueco, memo: dict):
+    """(evento, invertido) del calendario de SportsAPIPro, o (None, False). Un calendario por deporte y fecha."""
+    for fecha in csp.fechas_calendario(h.comienzo):
+        if (sport, fecha) not in memo:
+            _, doc = cli.get(f"{sport}/schedule/{fecha}", "calendario", f"{sport}/{fecha}")
+            memo[(sport, fecha)] = csp._eventos_de(doc)
+        r = csp.busca_evento(memo[(sport, fecha)], h.local, h.visitante, h.comienzo, tenis=h.deporte == "tenis")
+        if r is not None:
+            return r
+    return None, False
+
+
+def nivel3_sportsapipro(cli: csp.Cliente, huecos, entries: dict, intentos: dict, now: datetime, salida=print) -> int:
+    """Tercer nivel: lo que ni PropLine ni The Odds API resolvieron. Prepartido de ahora, una casa, marcado
+    `post_sello`. Sin props de jugador ni hándicap (no se piden: SportsAPIPro no los devuelve de forma comprobable)."""
+    nuevas, memo = 0, {}
+    for h in huecos:
+        if h.comienzo <= now:
+            continue    # SportsAPIPro solo tiene el prepartido de ahora: de un partido ya empezado no hay nada que pedir
+        items = [i for i in h.items if i["market"] in SP_MERCADOS and f"{h.eid}|{i['key']}" not in entries
+                 and intento_permitido(intentos, f"{h.eid}|{i['key']}", 3, now)]
+        if not items:
+            continue
+        try:
+            sport = SP_DEPORTE[h.deporte]
+            evento, invertido = _evento_sportsapipro(cli, sport, h, memo)
+            doc, recibido = None, None
+            if evento is not None:
+                recibido, doc = cli.get(f"{sport}/api/match/{evento['id']}/odds/pre-match", "cuotas", str(evento["id"]))
+        except csp.SinCupo as e:
+            salida(f"sportsapipro: {e}")
+            break
+        for i in items:
+            marca_intento(intentos, f"{h.eid}|{i['key']}", 3, now)
+        if doc is None:
+            continue
+        ms = csp.mercados(doc)
+        for item in items:
+            filas = csp.filas_item(ms, h.deporte, item, h.local, h.visitante, invertido)
+            if filas:
+                e = _entrada(h, item, {"id": evento["id"]}, recibido, filas)
+                e.update(fuente=SRC_SP, post_sello=True)
+                entries[f"{h.eid}|{item['key']}"] = e
+                nuevas += 1
+    return nuevas
+
+
+def _cliente_sportsapipro(sp_key, sp_call, sp_raiz, now):
+    raiz = sp_raiz
+    if raiz is None and getattr(settings, "artifact_dir", None):
+        raiz = Path(settings.artifact_dir) / "sportsapipro_cuotas"
+    return csp.Cliente(sp_key, call=sp_call, clock=lambda: now, raiz=raiz,
+                       tope=int(getattr(settings, "cuotas_sportsapipro_diario", 0) or 0))
+
+
 def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", regiones="us", get=None, now=None,
-           salida=print, key=None, cache_path=None, info=None) -> int:
+           salida=print, key=None, cache_path=None, info=None, sp_key=None, sp_call=None, sp_raiz=None) -> int:
     key = key if key is not None else settings.odds_api_respaldo_key
+    sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
     cache_path = cache_path if cache_path is not None else settings.cuotas_respaldo_cache
-    if not key:
-        salida("sin ODDS_API_RESPALDO_KEY: no hay nada que hacer")
+    if not key and not sp_key:
+        salida("sin ODDS_API_RESPALDO_KEY ni SPORTSAPIPRO_KEY: no hay nada que hacer")
         return 0
     if not cache_path:
         salida("sin CUOTAS_RESPALDO_CACHE: no hay dónde guardar")
@@ -413,21 +550,44 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
         return 0
     if not huecos:
         return 0  # sin hueco no hay ni una petición (ni siquiera la lectura gratuita del saldo)
-    cli = Cliente(get or _transporte(key), Presupuesto(max_creditos), regiones)
-    claves_tenis = cli.saldo()  # lectura gratuita: fija el saldo y lista los torneos de tenis activos
-    memo, entries, nuevas, suelo = {}, dict(cache), 0, False
-    try:
-        for h in huecos:
-            nuevas += _procesa(cli, h, claves_tenis, memo, entries)
-    except Parar as e:
-        salida(f"parado: {e}")
-        suelo = "suelo" in str(e)
-    if nuevas:
+    intentos, entries, nuevas, suelo = leer_intentos(cache_path), dict(cache), 0, False
+    cli = Cliente(get or _transporte(key or ""), Presupuesto(max_creditos), regiones)
+    # Nivel 2: The Odds API (histórico a la hora del sello). Se salta sin clave, sin presupuesto o con los intentos
+    # agotados; lo que quede sin resolver pasa al nivel 3, también cuando el saldo cae bajo el suelo a mitad de pasada.
+    pend2 = []
+    for h in _sin_resolver(huecos, entries):
+        items = [i for i in h.items if intento_permitido(intentos, f"{h.eid}|{i['key']}", 2, now)]
+        if items:
+            pend2.append(Hueco(h.deporte, h.eid, h.sport_key, h.local, h.visitante, h.comienzo, h.sellado, items))
+    if key and max_creditos > 0 and pend2:
+        claves_tenis = cli.saldo()  # lectura gratuita: fija el saldo y lista los torneos de tenis activos
+        memo = {}
+        try:
+            for h in pend2:
+                nuevas += _procesa(cli, h, claves_tenis, memo, entries)
+                for i in h.items:
+                    marca_intento(intentos, f"{h.eid}|{i['key']}", 2, now)
+        except Parar as e:
+            salida(f"parado: {e} (lo que falte pasa a SportsAPIPro)")
+            suelo = "suelo" in str(e)
+    # Nivel 3: SportsAPIPro para todo lo que siga sin cuota.
+    n3, cli3 = 0, None
+    if sp_key:
+        cli3 = _cliente_sportsapipro(sp_key, sp_call, sp_raiz, now)
+        n3 = nivel3_sportsapipro(cli3, _sin_resolver(huecos, entries), entries, intentos, now, salida)
+    if nuevas or n3:
         escribir_cache(cache_path, entries, now)
+    if intentos:
+        try:
+            escribir_intentos(cache_path, intentos, now)
+        except OSError:
+            log.exception("respaldo de cuotas: no se pudo guardar el registro de intentos")
     if info is not None:
-        info.update(gastado=cli.p.gastado, saldo=cli.p.saldo, peticiones=cli.peticiones, nuevas=nuevas, suelo=suelo)
+        info.update(gastado=cli.p.gastado, saldo=cli.p.saldo, peticiones=cli.peticiones, nuevas=nuevas, suelo=suelo,
+                    nuevas_sportsapipro=n3, peticiones_sportsapipro=cli3.peticiones if cli3 else 0)
     salida(f"entradas nuevas: {nuevas}; peticiones de pago: {cli.peticiones}; créditos gastados: "
-           f"{cli.p.gastado}; saldo: {cli.p.saldo}")
+           f"{cli.p.gastado}; saldo: {cli.p.saldo}; SportsAPIPro: {n3} entradas en "
+           f"{cli3.peticiones if cli3 else 0} peticiones")
     return 0
 
 
@@ -441,7 +601,25 @@ def _gasto_hoy(path: Path, now: datetime) -> int:
         return 0
 
 
-def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None) -> dict:
+def _futbol(*, get, now, cache_path, key, sp_key, kw, tope, estado, hoy) -> dict:
+    """Fútbol (cuotas de consulta): comparte clave, suelo y tope diario con NBA/tenis. Nunca lanza."""
+    try:
+        from qf.ingest import cuotas_respaldo_futbol as rf
+        out = rf.correr(ejecutar=True, max_creditos=tope, get=get, now=now, salida=log.info, key=key, sp_key=sp_key,
+                        sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"), cache_path=cache_path,
+                        lista_huecos=kw.get("huecos_futbol"))
+        gastado = int(out.get("gastado", 0) or 0)
+        if gastado:
+            tmp = estado.with_name(estado.name + ".tmp")
+            tmp.write_text(json.dumps(dict(dia=now.date().isoformat(), gastado=hoy + gastado)), encoding="utf-8")
+            os.replace(tmp, estado)
+        return out
+    except Exception:  # noqa: BLE001
+        log.exception("respaldo de cuotas de fútbol: fallo (ignorado)")
+        return {"estado": "error"}
+
+
+def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None, **kw) -> dict:
     """Pasada automática: solo si CUOTAS_RESPALDO_AUTO=1. Pide únicamente los huecos de pronósticos ya sellados
     que PropLine dejó sin cuota; sin huecos no hay peticiones. Tope por corrida y tope diario (persistido junto a
     la caché) para que varias pasadas no lo superen. NUNCA lanza: un fallo se registra y no toca el sellado."""
@@ -456,11 +634,13 @@ def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None) -> dict:
         estado = Path(str(cache_path) + ".gasto.json")
         hoy = _gasto_hoy(estado, now)
         tope = min(settings.cuotas_respaldo_auto_max, settings.cuotas_respaldo_diario - hoy)
-        if tope <= 0:
+        sp_key = kw.get("sp_key") if kw.get("sp_key") is not None else getattr(settings, "sportsapipro_key", None)
+        if tope <= 0 and not sp_key:
             return {"estado": "tope_diario", "gastado_hoy": hoy}
+        # Con el tope de créditos agotado, The Odds API se salta y SportsAPIPro (nivel 3) sigue cubriendo huecos.
         run: dict = {}
-        correr(ejecutar=True, max_creditos=tope, get=get, now=now, salida=log.info, key=key,
-               cache_path=cache_path, info=run)
+        correr(ejecutar=True, max_creditos=max(tope, 0), get=get, now=now, salida=log.info, key=key,
+               cache_path=cache_path, info=run, sp_key=sp_key, sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"))
         gastado = int(run.get("gastado", 0))
         if gastado:
             tmp = estado.with_name(estado.name + ".tmp")
@@ -472,7 +652,9 @@ def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None) -> dict:
                 from qf.publish import telegram
                 alerta = telegram.alert
             alerta(f"Respaldo de cuotas: el saldo de The Odds API ({saldo}) cayó bajo el suelo {SUELO}")
-        return {"estado": "ok", **run, "gastado_hoy": hoy + gastado}
+        futbol = _futbol(get=get, now=now, cache_path=cache_path, key=key, sp_key=sp_key, kw=kw,
+                         tope=max(tope - gastado, 0), estado=estado, hoy=hoy + gastado)
+        return {"estado": "ok", **run, "gastado_hoy": hoy + gastado + int(futbol.get("gastado", 0)), "futbol": futbol}
     except Exception:  # noqa: BLE001 — el respaldo nunca rompe ni retrasa el sellado ni la publicación
         log.exception("respaldo de cuotas: fallo (ignorado)")
         return {"estado": "error"}

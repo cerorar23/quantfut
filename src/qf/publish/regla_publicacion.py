@@ -80,6 +80,14 @@ def elegir(candidatos, regla: Regla) -> set[str]:
     return out
 
 
+def _precio_publicable(q) -> float | None:
+    """Una cuota del tercer nivel del respaldo (SportsAPIPro) es de DESPUÉS del sello: se muestra, pero no decide
+    qué se publica (no se puede probar que existiera cuando se selló el pronóstico)."""
+    if not isinstance(q, dict) or q.get("post_sello"):
+        return None
+    return q.get("price")
+
+
 def publicables_tenis(feed: dict, eventos_cuota: dict, regla: Regla | None = None) -> dict[str, list[str]]:
     """{event_id: [market_id]} publicables del feed público de tenis. La cuota sale del overlay de PropLine
     (`eventos_cuota`: event_id -> market_id -> {price, ...}); un mercado sin cuota no es publicable."""
@@ -91,7 +99,7 @@ def publicables_tenis(feed: dict, eventos_cuota: dict, regla: Regla | None = Non
             cuotas = eventos_cuota.get(eid) or {}
             candidatos = [
                 {"id": m["id"], "familia": str(m["id"]).split("-")[0], "prob": m.get("probability"),
-                 "precio": (cuotas.get(m["id"]) or {}).get("price"), "linea_key": m["id"]}
+                 "precio": _precio_publicable(cuotas.get(m["id"])), "linea_key": m["id"]}
                 for m in event["markets"]]
         except (KeyError, TypeError, AttributeError):
             continue

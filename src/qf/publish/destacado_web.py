@@ -43,7 +43,7 @@ def congelar(partido: dict, lam: tuple[float, float, float], ahora=None) -> dict
     corners, cards = pm.lambdas_estadisticas(partido['match_id'])
     filas += pm.filas_estadisticas(corners, cards)
     filas += pm.filas_complementarias(*lam, partido['home_team'], partido['away_team'], {f['id'] for f in filas})
-    filas = pm.con_cuotas_casas(filas, pm.cuotas_casas(partido['match_id']))
+    filas = pm.con_cuotas_casas(filas, pm.cuotas_casas(partido['match_id'], con_respaldo=False))
     _, _, destacado = pm.aplicar_acceso_web(filas, marcadores, {}, False)
     ahora = ahora if reloj_explicito else datetime.now(timezone.utc)
     if ahora >= partido['kickoff_utc']:

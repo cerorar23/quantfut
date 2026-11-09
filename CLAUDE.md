@@ -14,6 +14,14 @@ Ver `docs/propline_compartido_20261023.md`. The Odds API queda para históricos
 ya autorizados/reproducción; no es fallback automático de las cuotas en vivo.
 Esto no sustituye estadísticas, lesiones o resultados oficiales.
 
+Actualización (2026-11-09, decisión del usuario): cascada de respaldo de cuotas
+PropLine → The Odds API → SportsAPIPro para fútbol, NBA y tenis, solo para los
+huecos que PropLine deja y solo en la capa de consulta (cachés JSON que la API lee;
+el motor, los picks y `odds_snapshots` siguen con PropLine puro). SportsAPIPro va
+sin tope diario propio; sus cuotas son posteriores al sello (`post_sello`) y la
+regla de publicación las ignora. Esto reemplaza la frase anterior sobre The Odds API
+como fallback. Ver `docs/cuotas_cascada_20261109.md`.
+
 Actualización (2026-09-23): un único FastAPI sirve también la web demo en
 `/` y el panel interno en `/control`; el BFF separado que figura en
 decisiones históricas fue descartado. No exponer tokens de servicio o
