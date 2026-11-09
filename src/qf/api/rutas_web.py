@@ -150,7 +150,10 @@ _ESTILO = (
     "<style>.qf-inicial{max-width:820px;margin:0 auto;padding:20px;color:#e6edf3;font:16px/1.7 system-ui,sans-serif}"
     ".qf-inicial a{color:#34d399}.qf-inicial nav ul,.qf-inicial footer ul{display:flex;flex-wrap:wrap;gap:6px 16px;"
     "list-style:none;padding:0}.qf-inicial h1{font-size:clamp(26px,5vw,36px);line-height:1.2}"
-    ".qf-inicial p{color:#d3dbe3}.qf-inicial .aviso{font-size:14px;color:#9aa7b4}</style>")
+    ".qf-inicial p{color:#d3dbe3}.qf-inicial .aviso{font-size:14px;color:#9aa7b4}"
+    ".qf-inicial table{border-collapse:collapse;width:100%;margin:12px 0}.qf-inicial th,.qf-inicial td{border:1px solid #2a3340;padding:8px 10px;text-align:left}"
+    ".qf-inicial .lista-partidos{list-style:none;padding:0}.qf-inicial .lista-partidos li{padding:8px 0;border-bottom:1px solid #2a3340}"
+    ".qf-inicial .fallo{color:#fbbf24}</style>")
 
 _leido: tuple[float, str] | None = None
 
@@ -177,17 +180,19 @@ def _jsonld(sec: Seccion, base: str) -> list[dict]:
 
 
 def _head(sec: Seccion, base: str) -> str:
-    url = base + sec.path
-    titulo = f"{sec.titulo} | QuantFut"
-    ld = "".join(f'<script type="application/ld+json">{_script_seguro(b)}</script>' for b in _jsonld(sec, base))
+    return _head_de(f"{sec.titulo} | QuantFut", sec.descripcion, base + sec.path, _jsonld(sec, base))
+
+
+def _head_de(titulo: str, descripcion: str, url: str, jsonld: list[dict]) -> str:
+    ld = "".join(f'<script type="application/ld+json">{_script_seguro(b)}</script>' for b in jsonld)
     return (
-        f'<meta name="description" content="{escape(sec.descripcion)}" />'
+        f'<meta name="description" content="{escape(descripcion)}" />'
         f'<link rel="canonical" href="{escape(url)}" />'
         '<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />'
         '<meta property="og:type" content="website" /><meta property="og:site_name" content="QuantFut" />'
         '<meta property="og:locale" content="es_ES" />'
         f'<meta property="og:url" content="{escape(url)}" /><meta property="og:title" content="{escape(titulo)}" />'
-        f'<meta property="og:description" content="{escape(sec.descripcion)}" />'
+        f'<meta property="og:description" content="{escape(descripcion)}" />'
         f'<meta name="twitter:card" content="summary" />{ld}{_ESTILO}')
 
 
@@ -197,32 +202,57 @@ def _script_seguro(dato: dict) -> str:
 
 
 def _inicial(sec: Seccion) -> str:
+    parrafos = "".join(f"<p>{escape(t)}</p>" for t in sec.texto)
+    return marco_inicial(f"<h1>{escape(sec.h1)}</h1>{parrafos}")
+
+
+def marco_inicial(principal: str) -> str:
+    """HTML inicial de `#app`: cabecera con enlaces, el contenido propio de la página y el pie. Lo ve quien no
+    ejecuta JavaScript y se pinta mientras carga el módulo; la SPA lo sustituye al arrancar."""
     from . import paginas
     secciones = "".join(f'<li><a href="{escape(s.path)}">{escape(s.migas)}</a></li>' for s in SECCIONES)
+    secciones += '<li><a href="/nba/">Pronósticos NBA</a></li>'   # páginas de NBA (nba_paginas.py), con la SPA de shell
     confianza = "".join(f'<li><a href="{escape(p.ruta)}">{escape(p.migas)}</a></li>' for p in paginas.PAGINAS)
-    parrafos = "".join(f"<p>{escape(t)}</p>" for t in sec.texto)
     return (f'<div class="qf-inicial" data-seo-inicial><header><a href="/">QuantFut</a>'
             f'<nav aria-label="Secciones"><ul>{secciones}</ul></nav></header>'
-            f'<main id="main-content" tabindex="-1"><h1>{escape(sec.h1)}</h1>{parrafos}'
+            f'<main id="main-content" tabindex="-1">{principal}'
             f'<p class="aviso">{escape(AVISO)}</p></main>'
             f'<footer><ul>{confianza}<li><a href="/legal/terminos">Términos</a></li>'
             '<li><a href="/legal/privacidad">Privacidad</a></li></ul></footer></div>')
 
 
-def render(sec: Seccion, base: str | None = None, index: str | None = None) -> str:
-    """index.html de la SPA adaptado a una sección. Si el archivo ya no tiene las marcas esperadas se devuelve
-    sin cambios (la web sigue funcionando) y se deja constancia en el log: nunca se rompe la SPA por el SEO."""
-    html = _index() if index is None else index
-    base = seo.base_url() if base is None else base
+def _adaptar(html: str, *, titulo: str, ruta: str, head: str, inicial: str, atributos: str = "") -> str:
+    """Sustituye en el index.html de la SPA título, descripción, `<html>` y `#app`. Si el archivo ya no tiene las
+    marcas esperadas se devuelve sin cambios (la web sigue funcionando) y se deja constancia en el log."""
     marcas = (_TITULO.search(html), _DESCRIPCION.search(html), _HTML.search(html), _APP in html)
     if not all(marcas):
         log.error("rutas_web: index.html no tiene las marcas esperadas (title, description, <html>, #app); se sirve sin adaptar")
         return html
-    html = _TITULO.sub(lambda _: f"<title>{escape(sec.titulo)} | QuantFut</title>", html, count=1)
-    html = _DESCRIPCION.sub(lambda _: _head(sec, base), html, count=1)
-    html = _HTML.sub(lambda m: f'<html{m.group(1)} data-ruta="{escape(sec.ruta)}">', html, count=1)
+    html = _TITULO.sub(lambda _: f"<title>{escape(titulo)}</title>", html, count=1)
+    html = _DESCRIPCION.sub(lambda _: head, html, count=1)
+    html = _HTML.sub(lambda m: f'<html{m.group(1)} data-ruta="{escape(ruta)}"{atributos}>', html, count=1)
     html = _RELATIVOS.sub(lambda m: f'{m.group(1)}="/', html)
-    return html.replace(_APP, f'<div id="app">{_inicial(sec)}</div>', 1)
+    return html.replace(_APP, f'<div id="app">{inicial}</div>', 1)
+
+
+def render(sec: Seccion, base: str | None = None, index: str | None = None) -> str:
+    """index.html de la SPA adaptado a una sección."""
+    html = _index() if index is None else index
+    base = seo.base_url() if base is None else base
+    return _adaptar(html, titulo=f"{sec.titulo} | QuantFut", ruta=sec.ruta, head=_head(sec, base), inicial=_inicial(sec))
+
+
+def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld: list[dict], principal: str,
+                  datos: dict[str, str] | None = None, base: str | None = None, index: str | None = None) -> str:
+    """Página con URL propia que no es una sección fija (p. ej. un partido de NBA): mismo shell de la SPA, con su
+    `<head>`, su JSON-LD y su contenido en el HTML inicial. `datos` son atributos `data-*` del `<html>` que la SPA
+    lee al arrancar (sin que el servidor decida nada del diseño)."""
+    html = _index() if index is None else index
+    base = seo.base_url() if base is None else base
+    atributos = "".join(f' data-{k}="{escape(str(v))}"' for k, v in (datos or {}).items())
+    return _adaptar(html, titulo=f"{titulo} | QuantFut", ruta=ruta,
+                    head=_head_de(f"{titulo} | QuantFut", descripcion, base + path, jsonld),
+                    inicial=marco_inicial(principal), atributos=atributos)
 
 
 def responder(sec: Seccion) -> HTMLResponse:

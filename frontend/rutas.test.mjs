@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ROUTE_PATH, urlFor, routeFromLocation, cleanUrl, historyEntry } from './rutas.js';
+import { ROUTE_PATH, urlFor, routeFromLocation, cleanUrl, historyEntry, isNbaPage, nbaBoot } from './rutas.js';
 
 // Las rutas válidas de app.js (routeTitle) y sus alias, para probar la resolución como en la SPA.
 const VALID = new Set(['inicio', 'partidos', 'picks', 'alta', 'escalera', 'parley', 'partido', 'historial', 'planes',
@@ -81,4 +81,37 @@ test('ida y vuelta: lo que navigate muestra es lo que routeFromLocation lee', ()
     const back = route(at(pathname, hash ? `#${hash}` : ''));
     assert.equal(back, canonical(name), `${name} → ${entry} → ${back}`);
   }
+});
+
+test('las páginas de NBA entran en la ventana de partidos y no se reescriben a /partidos/', () => {
+  for (const path of ['/nba/', '/nba', '/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/']) {
+    assert.equal(isNbaPage(at(path)), true, path);
+    assert.equal(route(at(path)), 'partidos', path);
+    assert.equal(cleanUrl(at(path), 'partidos'), null, path);
+  }
+  // los motores no son páginas
+  for (const path of ['/nba/v1/cartelera', '/nba/v2/', '/nba/v2', '/nba/v1/', '/nba/a/b/', '/nbax/']) {
+    assert.equal(isNbaPage(at(path)), false, path);
+  }
+  assert.equal(isNbaPage(at('/nba/v10-algo/')), true);
+  // un enlace con hash antiguo dentro de /nba/ sigue mandando el hash
+  assert.equal(route(at('/nba/', '#historial')), 'historial');
+});
+
+test('al entrar en una página de partido la app abre ese partido y su día', () => {
+  const loc = at('/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/');
+  const now = new Date(2026, 10, 8, 12, 0);   // 8-nov, hora local
+  const hoy = nbaBoot({ deporte: 'nba', nbaEvento: '18220', nbaInicio: new Date(2026, 10, 8, 15, 30).toISOString() }, loc, now);
+  assert.deepEqual(hoy, { sport: 'nba', winEvent: 'nba:18220', winDay: 0 });
+  const ayer = nbaBoot({ deporte: 'nba', nbaEvento: '18200', nbaInicio: new Date(2026, 10, 7, 20, 0).toISOString() }, loc, now);
+  assert.equal(ayer.winDay, -1);
+  const lejos = nbaBoot({ deporte: 'nba', nbaEvento: '1', nbaInicio: new Date(2026, 9, 1, 20, 0).toISOString() }, loc, now);
+  assert.equal(lejos.winDay, -3);   // fuera de la ventana de la app: se queda en el límite
+});
+
+test('el pilar abre NBA sin partido, y lo demás no arranca nada', () => {
+  assert.deepEqual(nbaBoot({ deporte: 'nba' }, at('/nba/')), { sport: 'nba', winEvent: '', winDay: 0 });
+  assert.equal(nbaBoot({ deporte: 'nba', nbaEvento: 'x;alert(1)' }, at('/nba/a-vs-b-2026-11-08/')).winEvent, '');   // id no numérico: se ignora
+  assert.equal(nbaBoot({}, at('/nba/')), null);                          // sin la marca del servidor
+  assert.equal(nbaBoot({ deporte: 'nba', nbaEvento: '1' }, at('/historial/')), null);   // otra ruta
 });
