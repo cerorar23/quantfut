@@ -71,7 +71,7 @@ from .fichas import router as fichas_router
 from .panel import router as panel_router
 from .web import router as web_router
 from .mobile import member, router as mobile_router
-from . import calibracion, csp, futbol_paginas, indexnow, mensajes, nba_equipos, nba_paginas, og, paginas, rutas_web, seo, tenis_paginas
+from . import calibracion, csp, cuota_justa, futbol_paginas, indexnow, mensajes, nba_equipos, nba_paginas, og, paginas, rutas_web, seo, tenis_paginas
 from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
@@ -833,6 +833,7 @@ app.include_router(paginas.router)
 app.include_router(nba_paginas.router)
 app.include_router(nba_equipos.router)
 app.include_router(calibracion.router)
+app.include_router(cuota_justa.router)
 app.include_router(futbol_paginas.router)
 app.include_router(rutas_web.router)
 app.include_router(tenis_v2_router)

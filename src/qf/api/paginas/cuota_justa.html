@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block cabecera %}
+<style>
+.cj-herr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
+.cj-herr h3{margin:0 0 6px;font-size:18px}
+.cj-herr p{margin:6px 0}
+.cj-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.cj-campo{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.cj-campo label,.cj-fila label{font-size:15px;color:var(--muted)}
+.cj-fila{display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0}.cj-fila>div{display:flex;flex-direction:column;gap:4px}
+input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:44px;max-width:100%}
+input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[aria-invalid=true]{border-color:#f59e0b}
+.cj-salida{min-height:1.7em;color:var(--text)}
+.cj-nota{color:var(--muted);font-size:14px}
+.cj-tabla{overflow-x:auto}
+</style>
+{% endblock %}
+{% block contenido %}
+<p class="entradilla">La cuota de una casa de apuestas no es una probabilidad: lleva incorporado el margen de la casa. Esta calculadora convierte cuotas en probabilidades y al revés, y te enseña cuánto margen lleva una cuota. Todo ocurre en tu navegador: no se envía ni se guarda nada.</p>
+<div class="aviso"><p><strong>Herramienta educativa.</strong> Solo convierte números; no te dice qué apostar, ni cuánto, ni si una cuota «tiene valor». Una probabilidad estimada no garantiza ningún resultado. Si el juego deja de ser un entretenimiento, <a href="/juego-responsable/">pide ayuda</a>.</p></div>
+
+<noscript><div class="aviso"><p>La calculadora interactiva necesita JavaScript. El ejemplo resuelto de más abajo se ve sin él.</p></div></noscript>
+
+<div class="cj-fila">
+<div><label for="cj-formato">Formato de las cuotas</label>
+<select id="cj-formato"><option value="decimal" selected>Decimal (2,10)</option><option value="fraccionaria">Fraccionaria (11/10)</option><option value="americana">Americana (+110)</option></select></div>
+<p class="cj-nota" style="align-self:end;margin:0">Al cambiar de formato, las cuotas escritas se convierten y se redondean.</p>
+</div>
+
+<section class="cj-herr" aria-labelledby="h-convertir">
+<h2 id="h-convertir" style="font-size:20px;margin-top:0">De cuota a probabilidad y de probabilidad a cuota</h2>
+<div class="cj-cols">
+<div>
+<div class="cj-campo"><label for="cj-cuota">Cuota de la casa</label><input id="cj-cuota" type="text" inputmode="text" autocomplete="off" value="2,10" placeholder="2,10" aria-describedby="cj-cuota-resultado"></div>
+<p id="cj-cuota-resultado" class="cj-salida" aria-live="polite"></p>
+</div>
+<div>
+<div class="cj-campo"><label for="cj-prob">Probabilidad estimada (%)</label><input id="cj-prob" type="text" inputmode="decimal" autocomplete="off" value="45" placeholder="45" aria-describedby="cj-prob-resultado"></div>
+<p id="cj-prob-resultado" class="cj-salida" aria-live="polite"></p>
+</div>
+</div>
+</section>
+
+<section class="cj-herr" aria-labelledby="h-margen">
+<h2 id="h-margen" style="font-size:20px;margin-top:0">Quita el margen de la casa</h2>
+<p>Escribe las cuotas de todos los resultados posibles de un mercado: tres para un 1X2 (local, empate, visitante) o dos para un mercado de dos resultados.</p>
+<div class="cj-fila">
+<div><label for="cj-n">Resultados del mercado</label><select id="cj-n"><option value="3" selected>3 (1X2)</option><option value="2">2</option></select></div>
+<div><label for="cj-metodo">Método</label><select id="cj-metodo"><option value="shin" selected>Shin (el que usa QuantFut)</option><option value="proporcional">Proporcional</option><option value="potencia">Potencia</option></select></div>
+</div>
+<div id="cj-campos">
+{% for nombre in ejemplo_nombres %}
+<div class="cj-campo"><label for="cj-o{{ loop.index0 }}">{{ nombre }}</label><input id="cj-o{{ loop.index0 }}" type="text" inputmode="text" autocomplete="off" value="{{ ejemplo_cuotas[loop.index0] }}"></div>
+{% endfor %}
+</div>
+<p id="cj-aviso" class="cj-salida" aria-live="polite"></p>
+<div class="cj-tabla" aria-live="polite">
+<table id="cj-tabla">
+<caption class="cj-nota">Resultado con las cuotas de los campos de arriba</caption>
+<thead><tr><th scope="col">Resultado</th><th scope="col">Cuota</th><th scope="col">Probabilidad implícita</th><th scope="col">Probabilidad sin margen</th><th scope="col">Cuota justa</th></tr></thead>
+<tbody>
+{% for f in ej.filas %}
+<tr><th scope="row">{{ f.nombre }}</th><td>{{ f.cuota }}</td><td>{{ f.implicita }}</td><td>{{ f.sin_margen }}</td><td>{{ f.justa }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p id="cj-pie" class="cj-nota">Las probabilidades implícitas suman {{ ej.suma }}: el margen de la casa es del {{ ej.margen }}. Sin margen suman {{ ej.suma_sin_margen }}.</p>
+</div>
+</section>
+
+<h2>Qué es una cuota justa</h2>
+<p>La cuota justa de un resultado es el inverso de su probabilidad: si un resultado tiene una probabilidad del 50 %, su cuota justa es 2,00; si tiene el 25 %, es 4,00. Es una cuenta, <code>cuota justa = 1 ÷ probabilidad</code>, y también al revés: <code>probabilidad = 1 ÷ cuota</code>. La palabra «justa» solo significa que no incluye ningún margen.</p>
+
+<h2>Por qué las cuotas de una casa no suman una probabilidad</h2>
+<p>Si conviertes con <code>1 ÷ cuota</code> todas las cuotas de un mercado y las sumas, el total supera el 100 %. Ese exceso es el margen de la casa (también llamado «vig» o sobreredondeo): es lo que cobra por ofrecer el mercado. Cuanto mayor es la suma, más margen lleva el mercado.</p>
+<p><strong>Ejemplo resuelto.</strong> Un 1X2 con cuotas {% for n in ejemplo_nombres %}{{ n | lower }} {{ ejemplo_cuotas[loop.index0] }}{{ ", " if not loop.last }}{% endfor %}: las probabilidades implícitas suman {{ ej.suma }}, es decir, un margen del {{ ej.margen }}. Para obtener probabilidades que sumen el 100 % hay que repartir ese margen entre los resultados; con el método de Shin salen {% for f in ej.filas %}{{ f.sin_margen }} ({{ f.nombre | lower }}){{ ", " if not loop.last }}{% endfor %}, y sus cuotas justas son {% for f in ej.filas %}{{ f.justa }}{{ ", " if not loop.last }}{% endfor %}.</p>
+
+<h2>Cómo se reparte el margen</h2>
+<ul>
+<li><strong>Proporcional.</strong> Divide cada probabilidad implícita entre la suma total. Es el método más simple y el que usa casi todo el mundo, pero tiende a sobrestimar a los resultados poco probables.</li>
+<li><strong>Shin.</strong> Parte de la idea de que parte del dinero apostado viene de personas mejor informadas y estima cuánto. Suele ajustar mejor que el proporcional en los resultados menos probables. Es el método que usa QuantFut para comparar sus probabilidades con las del mercado; lo explicamos en la <a href="/metodologia/">metodología</a>.</li>
+<li><strong>Potencia.</strong> Eleva cada probabilidad implícita a un mismo exponente, elegido para que la suma sea el 100 %.</li>
+</ul>
+<p>Ninguno de los métodos conoce la probabilidad «verdadera»: son maneras razonables de estimar qué probabilidad había detrás de la cuota. Por eso tampoco convierten una cuota en una recomendación. Para ver cuánto se parecen a la realidad las probabilidades de QuantFut, consulta la <a href="/calibracion/">calibración</a> y el <a href="/historial/">historial de aciertos y fallos</a>.</p>
+
+<h2>Qué no hace esta herramienta</h2>
+<p>No calcula importes ni rentabilidades, no compara casas de apuestas y no dice si una cuota merece la pena. Una probabilidad honesta puede ser peor que la del mercado, y entonces no hay nada que aprovechar. Si el juego te genera problemas, <a href="/juego-responsable/">hay ayuda</a>.</p>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ script }}"></script>
+{% endblock %}
