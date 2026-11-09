@@ -386,7 +386,7 @@ function openMatch(id, tab = 'resumen') {
 const sportActive = id => state.sport === id || (id === 'futbol' && state.sport === 'todos' && state.route === 'partidos');
 
 function sportNavMarkup() {
-  return `<nav class="sport-nav" aria-label="Deporte">${[['futbol','Fútbol'],['nba','NBA'],['tenis','Tenis']].map(([id,label])=>`<a href="#picks" data-sport="${id}" class="${sportActive(id)?'active':''}" ${sportActive(id)?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`;
+  return `<nav class="sport-nav" aria-label="Deporte">${[['futbol','Fútbol'],['nba','NBA'],['tenis','Tenis']].map(([id,label])=>`<a href="/${id}/" data-sport="${id}" class="${sportActive(id)?'active':''}" ${sportActive(id)?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`;
 }
 
 function navMarkup() {
@@ -1238,7 +1238,7 @@ function applyCybercoreTheme(root) {
 // Pie global: enlaces REALES (<a href>) a las páginas de confianza y a lo legal. Las páginas las sirve el servidor
 // (paginas.py), no la SPA, así que el clic navega de verdad; el manejador de clics solo intercepta botones y a[data-sport].
 function siteFooter() {
-  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav></footer>`;
+  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Pronósticos por deporte"><a href="/futbol/">Pronósticos de fútbol</a><a href="/nba/">Pronósticos NBA</a><a href="/tenis/">Pronósticos de tenis</a></nav><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav></footer>`;
 }
 
 function render() {
