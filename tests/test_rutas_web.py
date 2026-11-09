@@ -182,7 +182,7 @@ def test_las_rutas_de_las_secciones_existen_en_la_spa():
     titulos = set(re.findall(r"(\w+):\s*'", re.search(r"const routeTitle = \{(.*?)\};", app, re.S).group(1)))
     for s in rutas_web.SECCIONES:
         assert s.ruta in titulos, f"{s.ruta} no es una ruta de app.js"
-    assert "import { routeFromLocation, cleanUrl, historyEntry } from './rutas.js" in app
+    assert "import { routeFromLocation, cleanUrl, historyEntry, nbaBoot } from './rutas.js" in app
 
 
 def test_titulos_y_descripciones_unicos_en_todo_el_sitio():
@@ -246,7 +246,7 @@ def test_el_html_escapa_titulos_y_descripciones(monkeypatch):
 def test_toda_ruta_de_la_app_o_es_una_pagina_publica_o_lleva_noindex():
     """Recorre las rutas REALES de la app: una ruta nueva (p. ej. un JSON público) que nadie marque con noindex
     haría fallar esta prueba, en vez de quedar indexable sin que nadie lo note."""
-    publicas = {"", "legal"} | {p.slug for p in paginas.PAGINAS} | {s.path.strip("/") for s in rutas_web.SECCIONES}
+    publicas = {"", "legal", "nba"} | {p.slug for p in paginas.PAGINAS} | {s.path.strip("/") for s in rutas_web.SECCIONES}
     sueltas = []
     for r in main.app.routes:
         ruta = getattr(r, "path", "")
@@ -310,7 +310,9 @@ def test_app_y_membership_cargan_el_pixel_con_versiones_nuevas_para_saltar_la_ca
     index = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert re.search(r"meta-pixel\.js\?v=preferencias-20261108", membership)
     assert "membership.js?v=preferencias-20261108" in app
-    assert "app.js?v=prefs-20261108" in index and "conversion.css?v=prefs-20261108" in index
+    assert "app.js?v=nba-20261108" in index and "conversion.css?v=prefs-20261108" in index
+    assert "sports-window.js?v=nba-20261108" in app    # la ventana ya no pisa el partido pedido por la URL mientras carga
+    assert "rutas.js?v=nba-20261108" in app    # rutas.js cambió (páginas /nba/): otra versión para saltar la caché
 
 
 def test_el_boton_del_pie_tiene_estilo_de_enlace_y_area_tactil():

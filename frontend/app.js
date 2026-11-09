@@ -1,10 +1,10 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
-import { routeFromLocation, cleanUrl, historyEntry } from './rutas.js?v=rutas-20261108';
+import { routeFromLocation, cleanUrl, historyEntry, nbaBoot } from './rutas.js?v=nba-20261108';
 import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
-import { createSportWindow } from './sports-window.js?v=tenis-cuota-20261105';
+import { createSportWindow } from './sports-window.js?v=nba-20261108';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=20261108v16';
@@ -1468,6 +1468,12 @@ window.addEventListener('keydown', event => {
 
 const initial = routeFromLocation(location, validRoute, canonicalRoute);
 if (initial) state.route = initial;
+// Página de NBA con URL propia (/nba/, /nba/<partido>/): la app abre la ventana de NBA, y en ese partido si lo hay.
+const nbaEntrada = nbaBoot(document.documentElement.dataset, location);
+if (nbaEntrada) {
+  state.sport = nbaEntrada.sport;
+  if (nbaEntrada.winEvent) { state.winEvent = nbaEntrada.winEvent; state.winDay = nbaEntrada.winDay; state.winDayPinned = true; state.winSportTab = 'resumen'; state.winPane = 'pron'; }
+}
 // Un enlace antiguo (/#historial) pasa a su URL limpia (/historial/) sin añadir otra entrada al historial.
 const clean = initial && cleanUrl(location, initial);
 if (clean) history.replaceState(null, '', clean + location.search);

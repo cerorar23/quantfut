@@ -1,0 +1,28 @@
+<h1>{{ p.titulo }}</h1>
+<p class="entradilla">Probabilidad de victoria, marcador esperado y rango de márgenes de cada partido de la NBA. Cada pronóstico se sella con una huella digital antes del inicio y después se muestra si se cumplió, tanto si acertó como si falló.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>En los partidos de los últimos días con resultado, el equipo con más probabilidad ganó en <strong>{{ c.aciertos }} de {{ c.juzgados }}</strong> pronósticos. Son pocos partidos: no es una medida de calidad. El historial completo y la calibración están en <a href="/historial/">el historial</a>.</p></div>
+{% endif %}
+{% if not c.con_pronostico %}
+<div class="aviso"><p>Ahora mismo no hay partidos con pronóstico sellado. El pronóstico de cada partido se sella unos 60 minutos antes del inicio y la página del partido aparece en ese momento.</p></div>
+{% endif %}
+{% for dia in c.dias %}
+<h2>{{ 'Partidos del' if dia.proximo else 'Resultados del' }} <time datetime="{{ dia.iso }}">{{ dia.largo }}</time></h2>
+<ul class="lista-partidos">
+{% for f in dia.filas %}
+<li>
+{% if f.url %}<a href="{{ f.url }}">{{ f.local }} vs {{ f.visitante }}</a>{% else %}{{ f.local }} vs {{ f.visitante }}{% endif %}
+{% if f.resultado %}
+ — final {{ f.local }} {{ f.resultado.local | int }}, {{ f.visitante }} {{ f.resultado.visitante | int }}
+ {% if f.veredicto %}<span class="{{ '' if f.veredicto.acerto else 'fallo' }}">· {{ 'el favorito ganó' if f.veredicto.acerto else 'el favorito perdió' }}</span>{% endif %}
+{% elif f.url %}
+ — {{ f.local }} {{ f.p_local }}, {{ f.visitante }} {{ f.p_visit }}{% if f.inicio %} · inicio {{ f.inicio.strftime('%H:%M') }} UTC{% endif %}
+{% else %}
+ — pronóstico pendiente de sellar{% if f.inicio %} · inicio {{ f.inicio.strftime('%H:%M') }} UTC{% endif %}
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+<h2>Cómo se calculan</h2>
+<p>Las probabilidades salen de un modelo estadístico propio, no de las cuotas de una casa de apuestas. La <a href="/metodologia/">metodología</a> explica qué mide, qué no mide y cuánto ha acertado. Incluso con un 80 % de probabilidad, uno de cada cinco partidos sale al revés: ninguna cifra de esta página es una garantía.</p>

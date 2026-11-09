@@ -1,0 +1,48 @@
+<h1>{{ p.titulo }}</h1>
+<p class="revision">Pronóstico sellado el <time datetime="{{ c.sellado.isoformat() if c.sellado else '' }}">{{ c.sellado.strftime('%d/%m/%Y a las %H:%M') if c.sellado else '—' }} UTC</time>{% if c.inicio %} · inicio previsto <time datetime="{{ c.inicio.isoformat() }}">{{ c.inicio.strftime('%d/%m/%Y a las %H:%M') }} UTC</time>{% endif %}</p>
+<p class="entradilla">El modelo da a {{ c.local }} un {{ c.p_local }} de probabilidad de ganar y a {{ c.visitante }} un {{ c.p_visit }}. {{ c.texto_margen }}</p>
+<div class="aviso estado">
+{% if c.estado == 'final' %}
+<p><span>Final:</span> {{ c.local }} {{ c.resultado.local | int }}, {{ c.visitante }} {{ c.resultado.visitante | int }}.
+{% if c.veredicto %}
+{% if c.veredicto.acerto %}El equipo con más probabilidad ({{ c.veredicto.favorito }}) ganó.{% else %}<span class="fallo">El pronóstico falló:</span> el equipo con más probabilidad era {{ c.veredicto.favorito }} y ganó {{ c.veredicto.ganador }}.{% endif %}
+</p>
+<p>Error de la probabilidad (Brier) en este partido: {{ c.brier }}. Cuanto más cerca de 0, mejor; 0,25 es lo que daría decir siempre 50 %.</p>
+{% else %}</p>{% endif %}
+{% elif c.estado == 'curso' %}
+<p><span>En juego o recién terminado.</span> Todavía no hay marcador final registrado. La página se actualiza cuando llega.</p>
+{% elif c.estado == 'pendiente' %}
+<p><span>Resultado pendiente de confirmar.</span> Ya pasó la hora del partido y aún no hay marcador final registrado.</p>
+{% else %}
+<p><span>Antes del partido.</span> El pronóstico ya está sellado y no se puede cambiar.</p>
+{% endif %}
+</div>
+
+<h2>Probabilidades del modelo</h2>
+<table>
+<thead><tr><th scope="col">Equipo</th><th scope="col">Probabilidad de ganar</th><th scope="col">Puntos esperados (media)</th></tr></thead>
+<tbody>
+<tr><th scope="row">{{ c.local }} (local)</th><td>{{ c.p_local }}</td><td>{{ c.mu_local }}</td></tr>
+<tr><th scope="row">{{ c.visitante }} (visitante)</th><td>{{ c.p_visit }}</td><td>{{ c.mu_visit }}</td></tr>
+</tbody>
+</table>
+<p>Según la distribución del modelo, el margen (local menos visitante) queda entre {{ c.margen_rango }} puntos en el 80 % de los casos, y el total de puntos entre {{ c.total_rango }} (mediana {{ c.total_mediana }}). La probabilidad incluye la posibilidad de prórroga.</p>
+
+{% if c.contexto %}
+<h2>Contexto de la temporada</h2>
+<table>
+<thead><tr><th scope="col">Equipo</th><th scope="col">Récord</th><th scope="col">Últimos 6</th><th scope="col">Racha</th><th scope="col">Descanso</th></tr></thead>
+<tbody>
+{% for f in c.contexto %}
+<tr><th scope="row">{{ f.nombre }}</th><td>{{ f.record }}</td><td>{{ f.ultimos6 }}</td><td>{{ f.racha }}</td><td>{{ f.descanso }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p>Datos a la fecha del partido (victorias-derrotas de la temporada regular).</p>
+{% endif %}
+
+<h2>Sello verificable</h2>
+<p>Este pronóstico quedó registrado antes del inicio con la huella <code>{{ c.hash }}</code>. Cualquiera puede <a href="/nba/v1/sello/{{ c.hash }}" rel="nofollow">comprobar el sello</a>: si se cambiara una sola cifra, la huella dejaría de coincidir. Versión del modelo: {{ c.version }}.</p>
+
+<h2>Cómo leer esta página</h2>
+<p>Es una estimación estadística con fines informativos, no una recomendación ni una promesa de ganancia. Consulta la <a href="/metodologia/">metodología</a>, el <a href="/historial/">historial de aciertos y fallos</a> y la <a href="/nba/">cartelera de NBA</a>. Si el juego deja de ser un entretenimiento, <a href="/juego-responsable/">pide ayuda</a>.</p>

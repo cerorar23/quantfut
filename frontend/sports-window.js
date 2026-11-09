@@ -426,7 +426,8 @@ export function createSportWindow(ctx) {
       const near = [-1, 1, -2, 2, -3, 3].find(offset => dayEvents(events, offset).length);
       if (near !== undefined) { state.winDay = near; list = dayEvents(events); }
     }
-    if (!list.some(e => keyOf(e) === state.winEvent)) state.winEvent = keyOf(list.find(e => e.status !== 'finished') || list[0] || { sport, id: '' });
+    // Mientras cargan los eventos la lista está vacía: no se borra el partido que pidió la URL (/nba/<partido>/).
+    if (entry.status === 'ready' && !list.some(e => keyOf(e) === state.winEvent)) state.winEvent = keyOf(list.find(e => e.status !== 'finished') || list[0] || { sport, id: '' });
     const selected = list.find(e => keyOf(e) === state.winEvent);
     const event = selected?.sport === 'nba' && selected.v2 ? withNbaMarkets(selected, ctx.ensureNbaMarkets?.(selected)) : selected;
     state.winResetFlag = state.winLastEvent !== state.winEvent;
