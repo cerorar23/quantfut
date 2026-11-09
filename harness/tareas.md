@@ -1,5 +1,11 @@
 # Backlog — QuantFut
 
+## 9-nov-2026 · TheRundown, cuarto nivel de la cascada (rama `cuotas/therundown`, sobre `cuotas/cascada-respaldo`)
+- [x] `ingest/cuotas_therundown.py`, nivel 4 en `cuotas_respaldo.py` y `cuotas_respaldo_futbol.py`, caducidad de 24 h e interruptor `CUOTAS_THERUNDOWN_MOSTRAR`. Pruebas: `tests/test_cuotas_therundown.py` (24, con la forma real de NBA y tenis).
+- [x] Desplegado el 9-nov 18:51 UTC: API (3 archivos) y ejecutor con la clave en `therundown.env`; nivel 4 activo (ver DEPLOYS.md).
+- [ ] Verificar el 1X2 de fútbol de TheRundown con un partido real de EPL/LaLiga/Serie A (el empate como tercer participante está sin verificar).
+- [ ] Decidir si se pasa a Starter/Pro (histórico, props, casas europeas, licencia de visualización).
+
 ## 9-nov-2026 · Cascada de cuotas PropLine → The Odds API → SportsAPIPro (rama `cuotas/cascada-respaldo`)
 - [x] `ingest/cuotas_sportsapipro.py` (cliente con archivo de originales y parada en 429, fracción → decimal, emparejamiento, traducción de mercados), nivel 3 en `ingest/cuotas_respaldo.py` con reintentos acotados (`<caché>.intentos.json`) y paso automático al nivel 3 si a The Odds API se le acaban los créditos, `ingest/cuotas_respaldo_futbol.py` (caché de consulta de fútbol) y lectura en `partido_mercados.cuotas_casas`. Pruebas: `tests/test_cuotas_cascada.py` (34).
 - [x] Regla: las cuotas de SportsAPIPro llevan `post_sello` y `regla_publicacion` las ignora; el destacado de fútbol no usa el respaldo.

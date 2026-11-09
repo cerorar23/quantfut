@@ -37,6 +37,7 @@ from qf.api import cuotas_nba as cn
 from qf.api import cuotas_tenis as ct
 from qf.config import settings
 from qf.ingest import cuotas_sportsapipro as csp
+from qf.ingest import cuotas_therundown as crd
 from qf.ingest import propline_shared as pl
 from qf.ingest.cuotas_referencia import best_quote
 
@@ -44,6 +45,7 @@ log = logging.getLogger(__name__)
 HOST = "https://api.the-odds-api.com"
 SRC = "the-odds-api"
 SRC_SP = "sportsapipro"             # tercer nivel: cuota de ahora, posterior al sello (ver cuotas_sportsapipro)
+SRC_RD = "therundown"               # cuarto nivel: ídem, cuenta Free (ver cuotas_therundown)
 # Cascada (decisión del titular, 9-nov-2026): PropLine -> The Odds API -> SportsAPIPro. Un hueco se intenta como
 # mucho INTENTOS_MAX veces por nivel, con ESPERA_REINTENTO entre una y otra: sin hueco resuelto, repetir cada 10 min
 # gastaría créditos (nivel 2) o el cupo diario del plan gratuito (nivel 3) sin ganar nada.
@@ -51,6 +53,7 @@ INTENTOS_MAX = 2
 ESPERA_REINTENTO = timedelta(hours=1)
 SP_DEPORTE = {"nba": "basketball", "tenis": "tennis"}
 SP_MERCADOS = ("winner", "game_total", "games_total")
+RD_MERCADOS = ("winner", "game_total", "games_total", "games_handicap")
 SUELO = 500                         # no gastar si el saldo quedaría por debajo
 MAX_CREDITOS = 300
 TOLERANCIA = timedelta(minutes=30)  # comienzo del evento de The Odds API frente al sellado
@@ -103,7 +106,7 @@ def escribir_intentos(cache_path, intentos: Mapping, now: datetime) -> None:
     vivos = {}
     for k, d in intentos.items():
         try:
-            if max(pl.parse_time(d[t]) for t in ("t2", "t3") if d.get(t)) >= now - VIGENCIA:
+            if max(pl.parse_time(d[t]) for t in ("t2", "t3", "t4") if d.get(t)) >= now - VIGENCIA:
                 vivos[k] = d
         except (ValueError, TypeError, KeyError):
             continue
@@ -136,8 +139,12 @@ def escribir_cache(path, entries: Mapping, now: datetime | None = None) -> None:
     vivas = {}
     for k, e in entries.items():
         try:
-            if pl.parse_time(e["sealed_at"]) >= now - VIGENCIA:
-                vivas[k] = e
+            if pl.parse_time(e["sealed_at"]) < now - VIGENCIA:
+                continue
+            # Licencia de TheRundown Free: no se guardan sus datos más de 24 h.
+            if e.get("fuente") == SRC_RD and pl.parse_time(e["timestamp"]) < now - crd.TTL:
+                continue
+            vivas[k] = e
         except Exception:
             continue
     destino = Path(path)
@@ -405,15 +412,22 @@ def _procesa(cli: Cliente, hueco: Hueco, claves_tenis, memo, entries) -> int:
 
 # --- overlay: solo lee ------------------------------------------------------------------------------------------
 
+def _ahora() -> datetime:
+    return datetime.now(timezone.utc)      # los tests lo sustituyen
+
+
 def _quote(entrada, side, line, sealed):
     recibido = pl.parse_time(entrada["timestamp"])
     if entrada.get("post_sello"):
-        # SportsAPIPro: solo existe la cuota de ahora, recibida DESPUÉS del sello. Se muestra con su hora real y la
-        # marca `post_sello`, que la regla de publicación ignora; el filtro punto-en-el-tiempo se evalúa contra la
-        # propia recepción, así que aquí no oculta nada.
+        # SportsAPIPro y TheRundown: solo existe la cuota de ahora, recibida DESPUÉS del sello. Se muestra con su hora
+        # real y la marca `post_sello`, que la regla de publicación ignora; el filtro punto-en-el-tiempo se evalúa
+        # contra la propia recepción, así que aquí no oculta nada.
+        fuente = entrada.get("fuente") or SRC_SP
+        if fuente == SRC_RD and (not crd.mostrar() or _ahora() - recibido > crd.TTL):
+            return None   # interruptor apagado o más de 24 h (licencia)
         q = best_quote(entrada["rows"], line=line, side=side, sealed_at=recibido, received_at=recibido)
         return None if q is None else dict(price=q.price, book=q.book, as_of=q.as_of, books=q.books, side=side,
-                                           src=SRC_SP, post_sello=True)
+                                           src=fuente, post_sello=True)
     q = best_quote(entrada["rows"], line=line, side=side, sealed_at=sealed, received_at=recibido)
     return None if q is None else dict(price=q.price, book=q.book, as_of=q.as_of, books=q.books, side=side, src=SRC)
 
@@ -510,6 +524,46 @@ def nivel3_sportsapipro(cli: csp.Cliente, huecos, entries: dict, intentos: dict,
     return nuevas
 
 
+def nivel4_therundown(cli: crd.Cliente, huecos, entries: dict, intentos: dict, now: datetime, salida=print) -> int:
+    """Cuarto nivel: lo que ningún nivel anterior resolvió. TheRundown solo da el prepartido de ahora de tres casas
+    de EE. UU. (sin props de jugador): ganador, totales y, en tenis, hándicap de juegos; solo en la línea principal
+    de la casa. Un calendario por deporte y fecha UTC y pasada."""
+    nuevas, memo = 0, {}
+    for h in huecos:
+        if h.comienzo <= now:
+            continue
+        items = [i for i in h.items if i["market"] in RD_MERCADOS and f"{h.eid}|{i['key']}" not in entries
+                 and intento_permitido(intentos, f"{h.eid}|{i['key']}", 4, now)]
+        if not items:
+            continue
+        sports = (crd.SPORT_NBA,) if h.deporte == "nba" else crd.SPORT_TENIS
+        fecha = h.comienzo.astimezone(timezone.utc).date().isoformat()
+        evento = None
+        try:
+            for sid in sports:
+                if (sid, fecha) not in memo:
+                    memo[(sid, fecha)] = cli.eventos(sid, fecha)
+                evento = crd.busca_evento(memo[(sid, fecha)], h.local, h.visitante, h.comienzo,
+                                          tenis=h.deporte == "tenis")
+                if evento is not None:
+                    break
+        except crd.SinCupo as e:
+            salida(f"therundown: {e}")
+            break
+        for i in items:
+            marca_intento(intentos, f"{h.eid}|{i['key']}", 4, now)
+        if evento is None:
+            continue
+        for item in items:
+            filas = crd.filas_item(evento, h.deporte, item, h.local, h.visitante)
+            if filas:
+                e = _entrada(h, item, {"id": evento.get("event_id")}, now, filas)
+                e.update(fuente=SRC_RD, post_sello=True)
+                entries[f"{h.eid}|{item['key']}"] = e
+                nuevas += 1
+    return nuevas
+
+
 def _cliente_sportsapipro(sp_key, sp_call, sp_raiz, now):
     raiz = sp_raiz
     if raiz is None and getattr(settings, "artifact_dir", None):
@@ -519,12 +573,13 @@ def _cliente_sportsapipro(sp_key, sp_call, sp_raiz, now):
 
 
 def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", regiones="us", get=None, now=None,
-           salida=print, key=None, cache_path=None, info=None, sp_key=None, sp_call=None, sp_raiz=None) -> int:
+           salida=print, key=None, cache_path=None, info=None, sp_key=None, sp_call=None, sp_raiz=None, rd_key=None, rd_call=None, rd_sleep=None) -> int:
     key = key if key is not None else settings.odds_api_respaldo_key
     sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
+    rd_key = rd_key if rd_key is not None else getattr(settings, "therundown_key", None)
     cache_path = cache_path if cache_path is not None else settings.cuotas_respaldo_cache
-    if not key and not sp_key:
-        salida("sin ODDS_API_RESPALDO_KEY ni SPORTSAPIPRO_KEY: no hay nada que hacer")
+    if not key and not sp_key and not rd_key:
+        salida("sin ODDS_API_RESPALDO_KEY, SPORTSAPIPRO_KEY ni THERUNDOWN_API_KEY: no hay nada que hacer")
         return 0
     if not cache_path:
         salida("sin CUOTAS_RESPALDO_CACHE: no hay dónde guardar")
@@ -575,7 +630,13 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
     if sp_key:
         cli3 = _cliente_sportsapipro(sp_key, sp_call, sp_raiz, now)
         n3 = nivel3_sportsapipro(cli3, _sin_resolver(huecos, entries), entries, intentos, now, salida)
-    if nuevas or n3:
+    # Nivel 4: TheRundown (Free) para lo que siga sin cuota.
+    n4, cli4 = 0, None
+    if rd_key:
+        cli4 = crd.Cliente(rd_key, call=rd_call, reserva=int(getattr(settings, "cuotas_therundown_reserva", crd.RESERVA)),
+                           **({"sleep": rd_sleep} if rd_sleep else {}))
+        n4 = nivel4_therundown(cli4, _sin_resolver(huecos, entries), entries, intentos, now, salida)
+    if nuevas or n3 or n4:
         escribir_cache(cache_path, entries, now)
     if intentos:
         try:
@@ -584,10 +645,14 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
             log.exception("respaldo de cuotas: no se pudo guardar el registro de intentos")
     if info is not None:
         info.update(gastado=cli.p.gastado, saldo=cli.p.saldo, peticiones=cli.peticiones, nuevas=nuevas, suelo=suelo,
-                    nuevas_sportsapipro=n3, peticiones_sportsapipro=cli3.peticiones if cli3 else 0)
+                    nuevas_sportsapipro=n3, peticiones_sportsapipro=cli3.peticiones if cli3 else 0,
+                    nuevas_therundown=n4, peticiones_therundown=cli4.peticiones if cli4 else 0,
+                    puntos_therundown=cli4.puntos if cli4 else 0,
+                    restante_therundown=cli4.restante if cli4 else None)
     salida(f"entradas nuevas: {nuevas}; peticiones de pago: {cli.peticiones}; créditos gastados: "
            f"{cli.p.gastado}; saldo: {cli.p.saldo}; SportsAPIPro: {n3} entradas en "
-           f"{cli3.peticiones if cli3 else 0} peticiones")
+           f"{cli3.peticiones if cli3 else 0} peticiones; TheRundown: {n4} entradas en "
+           f"{cli4.peticiones if cli4 else 0} peticiones")
     return 0
 
 
@@ -601,13 +666,14 @@ def _gasto_hoy(path: Path, now: datetime) -> int:
         return 0
 
 
-def _futbol(*, get, now, cache_path, key, sp_key, kw, tope, estado, hoy) -> dict:
+def _futbol(*, get, now, cache_path, key, sp_key, rd_key=None, kw, tope, estado, hoy) -> dict:
     """Fútbol (cuotas de consulta): comparte clave, suelo y tope diario con NBA/tenis. Nunca lanza."""
     try:
         from qf.ingest import cuotas_respaldo_futbol as rf
         out = rf.correr(ejecutar=True, max_creditos=tope, get=get, now=now, salida=log.info, key=key, sp_key=sp_key,
                         sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"), cache_path=cache_path,
-                        lista_huecos=kw.get("huecos_futbol"))
+                        lista_huecos=kw.get("huecos_futbol"), rd_key=rd_key, rd_call=kw.get("rd_call"),
+                        rd_sleep=kw.get("rd_sleep"))
         gastado = int(out.get("gastado", 0) or 0)
         if gastado:
             tmp = estado.with_name(estado.name + ".tmp")
@@ -635,12 +701,14 @@ def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None, **kw) ->
         hoy = _gasto_hoy(estado, now)
         tope = min(settings.cuotas_respaldo_auto_max, settings.cuotas_respaldo_diario - hoy)
         sp_key = kw.get("sp_key") if kw.get("sp_key") is not None else getattr(settings, "sportsapipro_key", None)
-        if tope <= 0 and not sp_key:
+        rd_key = kw.get("rd_key") if kw.get("rd_key") is not None else getattr(settings, "therundown_key", None)
+        if tope <= 0 and not sp_key and not rd_key:
             return {"estado": "tope_diario", "gastado_hoy": hoy}
         # Con el tope de créditos agotado, The Odds API se salta y SportsAPIPro (nivel 3) sigue cubriendo huecos.
         run: dict = {}
         correr(ejecutar=True, max_creditos=max(tope, 0), get=get, now=now, salida=log.info, key=key,
-               cache_path=cache_path, info=run, sp_key=sp_key, sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"))
+               cache_path=cache_path, info=run, sp_key=sp_key, sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"),
+               rd_key=rd_key, rd_call=kw.get("rd_call"), rd_sleep=kw.get("rd_sleep"))
         gastado = int(run.get("gastado", 0))
         if gastado:
             tmp = estado.with_name(estado.name + ".tmp")
@@ -652,7 +720,7 @@ def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None, **kw) ->
                 from qf.publish import telegram
                 alerta = telegram.alert
             alerta(f"Respaldo de cuotas: el saldo de The Odds API ({saldo}) cayó bajo el suelo {SUELO}")
-        futbol = _futbol(get=get, now=now, cache_path=cache_path, key=key, sp_key=sp_key, kw=kw,
+        futbol = _futbol(get=get, now=now, cache_path=cache_path, key=key, sp_key=sp_key, rd_key=rd_key, kw=kw,
                          tope=max(tope - gastado, 0), estado=estado, hoy=hoy + gastado)
         return {"estado": "ok", **run, "gastado_hoy": hoy + gastado + int(futbol.get("gastado", 0)), "futbol": futbol}
     except Exception:  # noqa: BLE001 — el respaldo nunca rompe ni retrasa el sellado ni la publicación

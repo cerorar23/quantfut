@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-09 18:51 UTC · TheRundown como cuarto nivel de la cascada de cuotas · API + ejecutor (rama `cuotas/therundown`, fuera de `main`)
+- Orden del titular («Inténtalo de nuevo» tras un primer bloqueo del servidor). Candado `deploy.lock`.
+- **API** (`quantfut-api-1`): 3 archivos con `docker cp` + `docker restart` (18:51 UTC; `/health` 200 al 2.º intento; **no recreada**): `ingest/cuotas_respaldo.py` (`7f8d8e714759`), `ingest/cuotas_respaldo_futbol.py` (`7c3c136dacca`), `ingest/cuotas_therundown.py` (`fe3ab4417b1c`, nuevo). Antes, los dos existentes eran idénticos a lo desplegado del PR #312 (`b87b76ad624c`, `32aedc4d08e6`). Respaldo en `~/respaldos/cuotas_cascada_20261109/api_antes_therundown/`. Dominio público: `/health` 200 y `/web/deportes/nba/cuotas` 200.
+- **Ejecutor**: `releases/cuotas-cascada-20261109/` (copia previa en `antes_therundown/`) con `run.sh` y la clave en `therundown.env` (modo 600, fuera del repositorio y del `.env` general). Cron `*/10` sin cambios; la pasada de las 18:50 UTC ya ejecuta el código nuevo (0 huecos: 0 peticiones a TheRundown). Prueba real desde el VPS: 8 eventos NBA, Hawks–Lakers emparejado, 154 puntos (restante diario 16.034 de 20.000; mi sondeo gastó ~3.500 sin `main_line`).
+- Aviso de licencia: la cuenta Free no permite mostrar datos a usuarios finales; decisión y riesgo del titular (`docs/cuotas_cascada_20261109.md`). Apagar la visualización sin reiniciar: `CUOTAS_THERUNDOWN_MOSTRAR=0` (la API lo lee en cada llamada, pero el valor debe estar en su entorno: hoy no está, así que está encendido); pausar el nivel 4: dejar vacía la clave en `therundown.env`.
+- Vuelta atrás: clave vacía en `therundown.env`; API: copiar de `api_antes_therundown/` los dos archivos, borrar `cuotas_therundown.py` y `docker restart quantfut-api-1`.
+- Fuera de `main`: falta el PR de `cuotas/therundown` (apilado sobre #312).
+
 ### 2026-11-09 16:04 UTC · F4.2 calculadora de cuota justa con JavaScript propio · solo API (PR #310; `main` `d6ff0ef4`)
 - Método: `docker cp` + `docker restart quantfut-api-1` (16:03:59 UTC = 17:03:59 hora del servidor, **fuera de :11 y :41**; `/health` 200 en segundos; **NO recreado**). Sin frontend, red ni Caddy (`/static/*` ya iba a `api`). Blobs de `origin/main` (LF) en `~/respaldos/cuota_f42_202611091002/nuevo/` (la etiqueta lleva la hora local del PC, no la UTC), con los 7 sha256 iguales en el VPS y en local.
 - Pre-vuelo: `seo.py`, `rutas_web.py`, `base.html` y `metodologia.html` de producción eran idénticos por sha256 a los de `02af47a4`; `main.py` seguía en `0f009b92…`.
