@@ -29,12 +29,13 @@ from qf.config import settings
 from qf.db import query
 from qf.ingest import cuotas_respaldo as cr
 from qf.ingest import cuotas_sportsapipro as csp
+from qf.ingest import cuotas_therundown as crd
 
 log = logging.getLogger(__name__)
 VENTANA = timedelta(hours=36)
 EDAD_MAX = timedelta(hours=6)          # misma que `partido_mercados.EDAD_MAX_CUOTA`
 BLOQUE = timedelta(hours=6)
-SRC_O, SRC_S = "the-odds-api", "sportsapipro"
+SRC_O, SRC_S, SRC_R = "the-odds-api", "sportsapipro", "therundown"
 NOMBRE_CASA_SP = "sofascore"
 
 
@@ -75,7 +76,9 @@ def escribir_cache(path, entries: Mapping, now: datetime) -> None:
     vivas = {}
     for k, e in entries.items():
         try:
-            if pl_time(e["captured_at"]) >= now - timedelta(days=2):
+            # TheRundown Free: la licencia no permite guardar sus datos más de 24 h.
+            limite = timedelta(hours=24) if k.endswith(SUFIJO_RD) else timedelta(days=2)
+            if pl_time(e["captured_at"]) >= now - limite:
                 vivas[k] = e
         except Exception:  # noqa: BLE001
             continue
@@ -94,6 +97,7 @@ def pl_time(texto) -> datetime:
 
 
 SUFIJO_SP = "|sp"
+SUFIJO_RD = "|rd"
 CLAVES_1X2 = {"h2h:home:None", "h2h:draw:None", "h2h:away:None"}
 
 
@@ -104,11 +108,13 @@ def _mejores(e: Mapping, hasta: datetime, soft_books, canonical) -> dict:
         return {}
     if t > hasta or hasta - t > EDAD_MAX:
         return {}
+    if e.get("fuente") == SRC_R and not crd.mostrar():
+        return {}
     out: dict = {}
     for r in e.get("rows") or []:
         try:
             casa = canonical(str(r["bookmaker"]))
-            if e.get("fuente") != SRC_S and casa not in soft_books:
+            if e.get("fuente") not in (SRC_S, SRC_R) and casa not in soft_books:
                 continue
             clave = f"{r['market']}:{r['selection']}:{None if r.get('line') is None else float(r['line']) + 0.0}"
             cand = (float(r["price"]), casa, t)
@@ -125,8 +131,9 @@ def cuotas_de_cache(entradas: Mapping, match_id: str, hasta: datetime, soft_book
     `clave -> (cuota, casa, hora de captura)`. The Odds API respeta las casas de los suscriptores y gana donde
     cotiza; SportsAPIPro (entrada `<id>|sp`) trae una sola casa sin identificar y solo rellena lo que falte."""
     out = _mejores(entradas.get(match_id) or {}, hasta, soft_books, canonical)
-    for clave, cand in _mejores(entradas.get(match_id + SUFIJO_SP) or {}, hasta, soft_books, canonical).items():
-        out.setdefault(clave, cand)
+    for sufijo in (SUFIJO_SP, SUFIJO_RD):
+        for clave, cand in _mejores(entradas.get(match_id + sufijo) or {}, hasta, soft_books, canonical).items():
+            out.setdefault(clave, cand)
     return out
 
 
@@ -206,13 +213,62 @@ def nivel3(cli: "csp.Cliente", pend: list[dict], entries: dict, intentos: dict, 
     return nuevas
 
 
+def _resolutor_equipos():
+    """nombre de TheRundown -> nombre canónico propio, solo por alias EXACTO (no registra nada en `unresolved_names`)."""
+    from qf.db import query_one
+    from qf.normalize import match_team
+
+    def canon(nombre):
+        for fuente in ("odds_api", "propline", "fotmob", "sofascore"):
+            tid, _, score = match_team(nombre, fuente)
+            if tid and score >= 100.0:
+                fila = query_one("SELECT canonical_name FROM teams WHERE team_id = %s", (tid,))
+                if fila:
+                    return fila["canonical_name"]
+        return None
+
+    def igual(nombre_rd, canonico):
+        return crd.norm(nombre_rd) == crd.norm(canonico) or (canon(nombre_rd) or "") == canonico
+    return igual
+
+
+def nivel4(cli: "crd.Cliente", pend: list[dict], entries: dict, intentos: dict, now: datetime, meta: dict,
+           igual, salida=print) -> int:
+    """TheRundown: un calendario por liga y fecha UTC. Solo ligas de su catálogo; 1X2, hándicap y totales."""
+    nuevas, memo = 0, {}
+    for h in pend:
+        k = f"fut|{h['match_id']}|{_bloque(now)}"
+        sid = crd.SPORT_FUTBOL.get(h.get("odds_api_key") or "")
+        previa = entries.get(h["match_id"] + SUFIJO_RD)
+        if (sid is None or h["match_id"] not in meta or not cr.intento_permitido(intentos, k, 4, now)
+                or (previa and now - pl_time(previa["captured_at"]) <= EDAD_MAX)):
+            continue
+        fecha = h["kickoff_utc"].astimezone(timezone.utc).date().isoformat()
+        try:
+            if (sid, fecha) not in memo:
+                memo[(sid, fecha)] = cli.eventos(sid, fecha)
+        except crd.SinCupo as e:
+            salida(f"therundown (fútbol): {e}")
+            break
+        cr.marca_intento(intentos, k, 4, now)
+        m = meta[h["match_id"]]
+        ev = crd.busca_evento(memo[(sid, fecha)], m["home"], m["away"], h["kickoff_utc"], tenis=False, resuelve=igual)
+        filas = crd.filas_futbol(ev, m["home"], m["away"], igual) if ev else []
+        if filas:
+            entries[h["match_id"] + SUFIJO_RD] = dict(fuente=SRC_R, captured_at=now.isoformat(), rows=filas)
+            nuevas += 1
+    return nuevas
+
+
 def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, salida=print, key=None, sp_key=None,
-           sp_call=None, sp_raiz=None, cache_path=None, info=None, lista_huecos=None, regiones=None) -> dict:
+           sp_call=None, sp_raiz=None, cache_path=None, info=None, lista_huecos=None, regiones=None, rd_key=None,
+           rd_call=None, rd_sleep=None, resolutor=None) -> dict:
     now = now or datetime.now(timezone.utc)
     key = key if key is not None else getattr(settings, "odds_api_respaldo_key", None)
     sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
     cache = ruta_cache(cache_path if cache_path is not None else None)
-    if cache is None or not (key or sp_key):
+    rd_key = rd_key if rd_key is not None else getattr(settings, "therundown_key", None)
+    if cache is None or not (key or sp_key or rd_key):
         return {"estado": "sin_configuracion"}
     entries = dict(leer_cache(cache))
     from qf.publish.picks import canonical_book
@@ -248,15 +304,24 @@ def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, 
         # Nivel 3: lo que, tras el nivel 2, la ficha seguiría sin poder mostrar (casas que no son de los suscriptores
         # no cuentan).
         n3 = nivel3(cli3, [h for h in pend if not cubierto(h)], entries, intentos, now, db, salida)
-    if n2 or n3:
+    n4, cli4 = 0, None
+    if rd_key:
+        from qf.ingest import odds_worker as ow
+        cli4 = crd.Cliente(rd_key, call=rd_call, reserva=int(getattr(settings, "cuotas_therundown_reserva", crd.RESERVA)),
+                           **({"sleep": rd_sleep} if rd_sleep else {}))
+        candidatos = [h for h in pend if not cubierto(h)]
+        meta = ow.match_meta([h["match_id"] for h in candidatos]) if candidatos else {}
+        n4 = nivel4(cli4, candidatos, entries, intentos, now, meta, resolutor or _resolutor_equipos(), salida)
+    if n2 or n3 or n4:
         escribir_cache(cache, entries, now)
     if intentos:
         try:
             cr.escribir_intentos(cache, intentos, now)
         except OSError:
             log.exception("respaldo fútbol: no se pudo guardar el registro de intentos")
-    out = dict(estado="ok", huecos=len(pend), the_odds_api=n2, sportsapipro=n3, gastado=cli.p.gastado,
-               saldo=cli.p.saldo, peticiones_sportsapipro=cli3.peticiones if cli3 else 0)
+    out = dict(estado="ok", huecos=len(pend), the_odds_api=n2, sportsapipro=n3, therundown=n4, gastado=cli.p.gastado,
+               saldo=cli.p.saldo, peticiones_sportsapipro=cli3.peticiones if cli3 else 0,
+               peticiones_therundown=cli4.peticiones if cli4 else 0, puntos_therundown=cli4.puntos if cli4 else 0)
     if info is not None:
         info.update(out)
     salida(f"fútbol: The Odds API {n2} partidos, SportsAPIPro {n3}; créditos {cli.p.gastado}")
