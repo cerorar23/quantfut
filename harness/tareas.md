@@ -39,7 +39,7 @@ Simulacro de carga (sin escribir): se emparejan ≥ 98 % en las ligas; lo que qu
 - Criterios de aprobación fijados el 9-nov ANTES de medir (detalle en el docstring de `src/qf/eval/backtest_ligas_nuevas.py`): C1 n ≥ 150; C2 log-loss 1X2 mejor que la frecuencia de la liga previa a 2025-07 con IC 95 % por semana entero a favor; C3 ECE ≤ 0,05 y sesgo por resultado ≤ 0,05; C4 ninguna de las 13 competiciones actuales empeora > 0,005 (IC entero > 0). Decide la variante `pit` (xG solo desde su recepción real); `reconstruccion` y `goles` solo informan. Ganar a Pinnacle no es criterio.
 - [x] 5. (9-nov, `docs/backtest_ligas_nuevas_20261109.md`) Aprueban Turquía, LaLiga 2, Serie B y Allsvenskan. Backtest: walk-forward por jornada, `check_leakage()` antes de leer nada, tramo limpio desde 2025-07; log-loss/RPS/Brier frente a frecuencia y mercado sin margen, curvas de calibración, IC por bootstrap por liga y mercado, acierto del 10 % más probable con cuota ≥ 1,40. Informe en `docs/`.
 - [x] 6. (9-nov, db/105-107 aplicadas) Activar `model_enabled` solo en las ligas que pasen la puerta del paso 5; nombres de liga en los 6 idiomas si la app los muestra.
-- [x] 7. (9-nov, DEPLOYS.md) Desplegar según DEPLOYS.md y comprobar los pronósticos en el dominio real (modelo y `model-card` comprobados; los primeros pronósticos se sellan en el job diario del 10-nov 09:00 UTC).
+- [x] 7. (9-nov, DEPLOYS.md) Desplegar según DEPLOYS.md y comprobar los pronósticos en el dominio real (modelo y `model-card` comprobados). Los primeros pronósticos se sellan el día de cada partido en el job diario de las 09:00 UTC: LaLiga 2 desde el 13-nov y Turquía, Allsvenskan y Suiza desde el 21-nov (corregido el 9-nov: no son el 10-nov).
 
 ## Historial web en Flutter y mercados vacíos — 5-nov-2026
 
