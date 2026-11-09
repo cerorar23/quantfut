@@ -130,11 +130,21 @@ def test_nivel_boundaries():
 def test_first_half_publishes_only_the_two_validated_markets_inside_the_measured_range():
     filas = pm.filas_primer_tiempo(2.41, .76)
     assert {f['id'] for f in filas} == {pm.clave('ht_btts', 'no', None), pm.clave('ht_goal', 'yes', None)}
-    assert all(f['grupo'] == '1ª MITAD' and .62 <= f['prob'] <= .95 for f in filas)
-    # partido cerrado: «gol en 1T: sí» cae por debajo de lo medido -> no se publica; el «no» tampoco existe
-    assert [f['market'] for f in pm.filas_primer_tiempo(.9, .7)] == ['ht_btts']
-    # partido abierto: «ambos 1T: no» cae por debajo de lo medido -> solo «gol en 1T»
-    assert [f['market'] for f in pm.filas_primer_tiempo(3.2, 2.4)] == ['ht_goal']
+    assert all(f['grupo'] == '1ª MITAD' and .62 <= f['prob'] <= .85 for f in filas)
+    # partido cerrado: «gol en 1T: sí» cae por debajo de lo medido y «ambos 1T: no» (≈ 91 %) queda por ENCIMA del tope
+    # de 0,85 (decisión del 9-nov-2026: por encima de eso la 1ª mitad promete de más) -> no se publica nada
+    assert pm.filas_primer_tiempo(.9, .7) == []
+    # justo por debajo del tope sí se publica; justo por encima, no
+    from qf.model import primer_tiempo as m1t
+    dentro = [(l, u) for l in (1.0, 1.1, 1.2, 1.3, 1.4) for u in (.9,)
+              if .62 <= 1 - m1t.probs(l, u)['ambos_1t_si'] <= .85]
+    fuera = [(l, u) for l in (.6, .7, .8, .9) for u in (.5,) if 1 - m1t.probs(l, u)['ambos_1t_si'] > .85]
+    assert dentro and fuera
+    assert all(any(f['market'] == 'ht_btts' for f in pm.filas_primer_tiempo(*x)) for x in dentro)
+    assert all(not any(f['market'] == 'ht_btts' for f in pm.filas_primer_tiempo(*x)) for x in fuera)
+    assert m1t.PROB_MAX_VALIDADA == .85 and m1t.PROB_MAX_PRUEBA_ORIGINAL == .95
+    # partido abierto: «ambos 1T: no» (≈ 50 %) queda por debajo de lo medido y «gol en 1T: sí» (≈ 92 %) por encima del tope -> nada
+    assert pm.filas_primer_tiempo(3.2, 2.4) == []
     assert pm.GRUPOS.index('1ª MITAD') < pm.GRUPOS.index('CÓRNERS')
 
 
