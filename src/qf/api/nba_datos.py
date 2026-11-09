@@ -142,6 +142,14 @@ def cartelera_ventana(desde: date, hasta: date) -> dict[date, list[dict]]:
     return ok
 
 
+def calibracion() -> dict:
+    """Mediciones de calibración que publica `nba-api` (`/nba/v1/calibracion`); cambian pocas veces al día."""
+    datos = _con_cache("calibracion", 600, "/nba/v1/calibracion")
+    if not isinstance(datos, dict):
+        raise NbaNoDisponible("respuesta de calibración inválida")
+    return datos
+
+
 def estadisticas(partido_id: int, fecha: date) -> dict | None:
     """Récord y forma a la fecha del partido. Mejora el contenido, pero la página no depende de ello."""
     cerrado = fecha < hoy_et() - timedelta(days=1)
