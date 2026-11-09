@@ -310,6 +310,8 @@ def partido(slug: str):
     if p is None:
         raise HTTPException(404)
     c = construir(p)
+    from . import nba_equipos      # import tardío: nba_equipos importa este módulo
+    c.enlace_local, c.enlace_visitante = nba_equipos.enlace_si_indexable(c.local), nba_equipos.enlace_si_indexable(c.visitante)
     datos = {"evento": c.id}
     if c.inicio:
         datos["inicio"] = c.inicio.astimezone(timezone.utc).isoformat()

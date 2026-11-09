@@ -85,7 +85,7 @@ test('ida y vuelta: lo que navigate muestra es lo que routeFromLocation lee', ()
 
 test('las páginas de deporte entran en la ventana de partidos y no se reescriben a /partidos/', () => {
   const buenas = {
-    nba: ['/nba/', '/nba', '/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/', '/nba/v10-algo/'],
+    nba: ['/nba/', '/nba', '/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/', '/nba/v10-algo/', '/nba/equipos/boston-celtics/'],
     tenis: ['/tenis/', '/tenis', '/tenis/atp-finals/', '/tenis/atp-finals/sinner-vs-alcaraz-2026-11-12/'],
     futbol: ['/futbol/', '/futbol/liga-mx/', '/futbol/liga-mx/club-queretaro-vs-puebla-2026-11-09/'],
   };
@@ -99,7 +99,7 @@ test('las páginas de deporte entran en la ventana de partidos y no se reescribe
   }
   // los motores no son páginas
   for (const path of ['/nba/v1/cartelera', '/nba/v2/', '/nba/v2', '/nba/v1/', '/nba/a/b/', '/nbax/', '/tenis/v2/cartelera',
-    '/tenis/v2/', '/tenis/v2', '/futbol/a/b/c/', '/futbolx/', '/historial/']) {
+    '/tenis/v2/', '/tenis/v2', '/futbol/a/b/c/', '/futbolx/', '/historial/', '/nba/equipos/', '/nba/equipos/a/b/']) {
     assert.equal(isDeportePage(at(path)), false, path);
   }
   // un enlace con hash antiguo dentro de /nba/ sigue mandando el hash

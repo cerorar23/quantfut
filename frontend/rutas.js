@@ -18,7 +18,7 @@ const withSlash = path => (path.endsWith('/') ? path : `${path}/`);
 // `/nba/v1`, `/nba/v2` y `/tenis/v2` son los motores, no páginas.
 const SEG = '[a-z0-9]+(?:-[a-z0-9]+)*';
 const DEPORTE_PATH = {
-  nba: new RegExp(`^/nba/(?:(?!v[12]/)${SEG}/)?$`),
+  nba: new RegExp(`^/nba/(?:equipos/${SEG}/|(?!v[12]/|equipos/)${SEG}/)?$`),
   tenis: new RegExp(`^/tenis/(?:(?!v2/)${SEG}/(?:${SEG}/)?)?$`),
   futbol: new RegExp(`^/futbol/(?:${SEG}/(?:${SEG}/)?)?$`),
 };
