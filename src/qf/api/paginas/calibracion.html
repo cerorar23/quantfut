@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block contenido %}
+<p class="entradilla">Una probabilidad es honesta si se cumple: de los partidos a los que damos el 70 %, deberían ocurrir cerca de siete de cada diez. Aquí se mide con los datos que la web ya publica y se compara con el mercado de apuestas, tanto si el resultado nos favorece como si no.</p>
+<div class="aviso"><p><strong>Página generada automáticamente.</strong> Todas las cifras salen de las mediciones publicadas{% if revision_larga %} (última actualización: {{ revision_larga }}){% endif %}; ninguna se escribe a mano. La frase sobre si el modelo supera o no al mercado se calcula con esas mismas cifras. Cómo se obtienen las probabilidades: <a href="/metodologia/">metodología</a>.</p></div>
+
+<h2>Cómo leer los gráficos</h2>
+<p>Cada punto agrupa partidos a los que el modelo dio una probabilidad parecida (eje horizontal) y muestra con qué frecuencia ocurrieron de verdad (eje vertical). La línea discontinua es la calibración perfecta. Un punto más grande son más partidos; la barra vertical marca ±2 errores estándar, el margen normal de azar; en ámbar, los grupos que quedan fuera de ese margen. Debajo de cada gráfico está la misma información en una tabla.</p>
+
+{% for s in c.secciones %}
+<h2 id="{{ s.id }}">{{ s.titulo }}</h2>
+{% if s.id == 'futbol' %}
+<p>Ventana medida: del {{ s.desde.strftime('%d/%m/%Y') if s.desde else '—' }} al {{ s.hasta.strftime('%d/%m/%Y') if s.hasta else '—' }}, con {{ s.n }} partidos. Error de las probabilidades 1X2 (RPS; menor es mejor): <strong>modelo {{ s.rps }}</strong>, <strong>mercado {{ s.rps_mercado }}</strong>.
+{% if s.cmp.mejor == 'mercado' %}El mercado fue más preciso que el modelo por {{ s.diferencia }}: <strong>el modelo no supera al mercado</strong> en esta medición.
+{% elif s.cmp.mejor == 'modelo' %}El modelo fue más preciso que el mercado por {{ s.diferencia }} en esta medición.
+{% else %}El modelo y el mercado empataron en esta medición.{% endif %}</p>
+{% if s.logloss or s.brier %}<p>Otras medidas del modelo en la misma ventana{% if s.logloss %}: log-loss {{ s.logloss }}{% endif %}{% if s.brier %}{{ ',' if s.logloss else ':' }} Brier {{ s.brier }}{% endif %}.</p>{% endif %}
+{% if s.svg %}
+<figure>{{ s.svg | safe }}<figcaption>Tramos dentro de 2 errores estándar de la calibración perfecta: {{ s.dentro }} de {{ s.n_bins }}{% if s.fuera %} ({{ s.fuera }} fuera){% endif %}.</figcaption></figure>
+<table>
+<thead><tr><th scope="col">Tramo de probabilidad</th><th scope="col">Predicha (media)</th><th scope="col">Observada</th><th scope="col">Partidos</th><th scope="col">Dentro del margen</th></tr></thead>
+<tbody>
+{% for b in s.puntos %}
+<tr><th scope="row">{{ b.rango }}</th><td>{{ b.pred }}</td><td>{{ b.obs }}</td><td>{{ b.n }}</td><td{% if not b.dentro %} class="fallo"{% endif %}>{{ 'sí' if b.dentro else 'no' }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+{% if s.historial|length > 1 %}
+<h3>Últimas mediciones</h3>
+<table>
+<thead><tr><th scope="col">Hasta</th><th scope="col">Partidos</th><th scope="col">RPS del modelo</th><th scope="col">RPS del mercado</th></tr></thead>
+<tbody>
+{% for h in s.historial %}
+<tr><th scope="row">{{ h.hasta.strftime('%d/%m/%Y') if h.hasta else '—' }}</th><td>{{ h.n }}</td><td>{{ h.rps }}</td><td>{{ h.rps_mercado }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+{% elif s.id == 'nba' %}
+{% if s.hist %}
+<h3>Temporada {{ s.hist.temporada }}, medida «hacia adelante»</h3>
+<p>Los parámetros se ajustaron solo con temporadas anteriores y se compararon con el cierre del mercado{% if s.hist.n %}, en {{ s.hist.n }} partidos{% endif %}. Error del ganador (Brier; menor es mejor): <strong>modelo {{ s.hist.brier }}</strong>, <strong>mercado {{ s.hist.brier_mercado }}</strong>.
+{% if s.hist.cmp.mejor == 'mercado' %}El mercado fue más preciso por {{ s.hist.diferencia }}: <strong>el modelo no supera al mercado</strong> en esta medición.
+{% elif s.hist.cmp.mejor == 'modelo' %}El modelo fue más preciso por {{ s.hist.diferencia }} en esta medición.
+{% else %}Empataron en esta medición.{% endif %}
+{% if s.hist.pendiente %}La pendiente de calibración fue {{ s.hist.pendiente }} (1 sería perfecta).{% endif %}</p>
+{% endif %}
+{% if s.pro %}
+<h3>Desde que el motor sella sus pronósticos</h3>
+<p>Hay {{ s.pro.n }} partidos con pronóstico sellado y resultado. Error del ganador (Brier): {{ s.pro.brier }}{% if s.pro.logloss %}; log-loss {{ s.pro.logloss }}{% endif %}. Estado de la evidencia: <strong>{{ s.pro.evidencia }}</strong>; calibración <strong>{{ 'certificada' if s.pro.certificada else 'no certificada' }}</strong>.
+{% if not s.pro.certificada %}Todavía son pocos partidos para sacar conclusiones: estas cifras describen lo ocurrido, no prueban que el modelo esté bien calibrado.{% endif %}</p>
+{% if s.pro.svg %}
+<figure>{{ s.pro.svg | safe }}<figcaption>Ganador de NBA, por tramos de probabilidad, desde el sellado.</figcaption></figure>
+<table>
+<thead><tr><th scope="col">Tramo de probabilidad</th><th scope="col">Predicha (media)</th><th scope="col">Observada</th><th scope="col">Partidos</th></tr></thead>
+<tbody>
+{% for b in s.pro.puntos %}
+<tr><th scope="row">{{ b.rango }}</th><td>{{ b.pred }}</td><td>{{ b.obs }}</td><td>{{ b.n }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+<h2>Qué significa y qué no</h2>
+<p>Estar bien calibrado no es lo mismo que ganar dinero: una probabilidad honesta puede ser peor que la del mercado, y entonces no hay ventaja que aprovechar. Por eso no prometemos ganancias. Los pronósticos son estimaciones estadísticas con fines informativos; consulta el <a href="/historial/">historial de aciertos y fallos</a>, la <a href="/metodologia/">metodología</a> y, si el juego deja de ser un entretenimiento, <a href="/juego-responsable/">pide ayuda</a>.</p>
+{% endblock %}

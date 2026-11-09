@@ -35,5 +35,10 @@ def _sin_red_hacia_nba_api(monkeypatch):
     monkeypatch.setattr(futbol_datos, "pronosticos", lambda ids: {})
     from qf.api import tenis_datos
     monkeypatch.setattr(tenis_datos, "eventos", lambda: [])   # sin feed de tenis: no hay volumen en las pruebas
+    # Calibración: datos de ejemplo (sin base ni red) para que /calibracion/ responda 200 en las pruebas que recorren enlaces.
+    import datos_calibracion
+    from qf.api import calibracion
+    monkeypatch.setattr(calibracion, "carga_futbol", lambda: datos_calibracion.FUTBOL)
+    monkeypatch.setattr(calibracion, "carga_nba", lambda: datos_calibracion.NBA)
     yield
     nba_datos.vaciar_cache()

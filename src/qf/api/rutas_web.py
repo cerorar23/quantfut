@@ -230,7 +230,7 @@ def marco_inicial(principal: str) -> str:
     from . import paginas
     secciones = "".join(f'<li><a href="{escape(s.path)}">{escape(s.migas)}</a></li>' for s in SECCIONES)
     # páginas de deporte (nba_paginas.py, futbol_paginas.py), servidas con el shell de la SPA
-    secciones += '<li><a href="/futbol/">Pronósticos de fútbol</a></li><li><a href="/nba/">Pronósticos NBA</a></li><li><a href="/tenis/">Pronósticos de tenis</a></li>'
+    secciones += '<li><a href="/futbol/">Pronósticos de fútbol</a></li><li><a href="/nba/">Pronósticos NBA</a></li><li><a href="/tenis/">Pronósticos de tenis</a></li><li><a href="/calibracion/">Calibración</a></li>'
     confianza = "".join(f'<li><a href="{escape(p.ruta)}">{escape(p.migas)}</a></li>' for p in paginas.PAGINAS)
     return (f'<div class="qf-inicial" data-seo-inicial><header><a href="/">QuantFut</a>'
             f'<nav aria-label="Secciones"><ul>{secciones}</ul></nav></header>'

@@ -121,8 +121,8 @@ def sitemap_index() -> str:
 
 
 def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
-    from . import futbol_paginas, nba_equipos, nba_paginas, paginas, rutas_web, tenis_paginas   # import tardío: todos importan este módulo
-    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + nba_paginas.entradas_sitemap() + nba_equipos.entradas_sitemap() + futbol_paginas.entradas_sitemap() + tenis_paginas.entradas_sitemap()
+    from . import calibracion, futbol_paginas, nba_equipos, nba_paginas, paginas, rutas_web, tenis_paginas   # import tardío: todos importan este módulo
+    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + nba_paginas.entradas_sitemap() + calibracion.entradas_sitemap() + nba_equipos.entradas_sitemap() + futbol_paginas.entradas_sitemap() + tenis_paginas.entradas_sitemap()
 
 
 def sitemap_paginas() -> str:
