@@ -6,7 +6,9 @@
 {% block nav_etiqueta %}Main{% endblock %}
 {% block nav %}{% for q in paginas %}
 <li><a href="{{ q.ruta }}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.migas }}</a></li>
-{% endfor %}{% endblock %}
+{% endfor %}
+<li><a href="/en/nba/">NBA</a></li>
+{% endblock %}
 {% block revision %}Last reviewed{% endblock %}
 {% block pie %}
 <p><span class="mas18" aria-label="Adults only, 18 and over">+18</span>QuantFut is a statistical information service, not a bookmaker. Forecasts are for information and entertainment only: an estimated probability does not guarantee a result. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p>

@@ -1,0 +1,31 @@
+{% extends "base_en.html" %}
+{% block revision_p %}{% endblock %}
+{% block contenido %}
+<p class="entradilla">Win probability, expected score and margin range for every NBA game. Each forecast is sealed with a digital fingerprint before tip-off and then we show whether it came true, whether it hit or missed.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>In the games of the last few days with a result, the team with the higher probability won in <strong>{{ c.aciertos }} of {{ c.juzgados }}</strong> forecasts. That is a small number of games: it is not a measure of quality. The full record and the calibration are in <a href="/calibracion/" hreflang="es" lang="es">the calibration page</a> (currently available only in Spanish).</p></div>
+{% endif %}
+{% if not c.con_pronostico %}
+<div class="aviso"><p>There are no games with a sealed forecast right now. The forecast for each game is sealed about 60 minutes before tip-off and the game page appears at that moment.</p></div>
+{% endif %}
+{% for dia in c.dias %}
+<h2>{{ 'Games on' if dia.proximo else 'Results for' }} <time datetime="{{ dia.iso }}">{{ dia.largo }}</time></h2>
+<ul class="lista-partidos">
+{% for f in dia.filas %}
+<li>
+{% if f.url %}<a href="{{ f.url }}">{{ f.local }} vs {{ f.visitante }}</a>{% else %}{{ f.local }} vs {{ f.visitante }}{% endif %}
+{% if f.resultado %}
+ — final {{ f.local }} {{ f.resultado.local | int }}, {{ f.visitante }} {{ f.resultado.visitante | int }}
+ {% if f.veredicto %}<span class="{{ '' if f.veredicto.acerto else 'fallo' }}">· {{ 'the favorite won' if f.veredicto.acerto else 'the favorite lost' }}</span>{% endif %}
+{% elif f.url %}
+ — {{ f.local }} {{ f.p_local }}, {{ f.visitante }} {{ f.p_visit }}{% if f.inicio %} · tip-off {{ f.inicio.strftime('%H:%M') }} UTC{% endif %}
+{% else %}
+ — forecast pending seal{% if f.inicio %} · tip-off {{ f.inicio.strftime('%H:%M') }} UTC{% endif %}
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+<h2>How they are calculated</h2>
+<p>The probabilities come from our own statistical model, not from a bookmaker's odds. The <a href="/en/methodology/">methodology</a> explains what it measures, what it does not measure and how often it has been right. Even with an 80% probability, one game in five goes the other way: no figure on this page is a guarantee.</p>
+{% endblock %}
