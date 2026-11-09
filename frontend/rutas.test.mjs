@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ROUTE_PATH, urlFor, routeFromLocation, cleanUrl, historyEntry, isNbaPage, nbaBoot } from './rutas.js';
+import { ROUTE_PATH, urlFor, routeFromLocation, cleanUrl, historyEntry, deporteDeUrl, isDeportePage, deporteBoot } from './rutas.js';
 
 // Las rutas válidas de app.js (routeTitle) y sus alias, para probar la resolución como en la SPA.
 const VALID = new Set(['inicio', 'partidos', 'picks', 'alta', 'escalera', 'parley', 'partido', 'historial', 'planes',
@@ -83,35 +83,63 @@ test('ida y vuelta: lo que navigate muestra es lo que routeFromLocation lee', ()
   }
 });
 
-test('las páginas de NBA entran en la ventana de partidos y no se reescriben a /partidos/', () => {
-  for (const path of ['/nba/', '/nba', '/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/']) {
-    assert.equal(isNbaPage(at(path)), true, path);
-    assert.equal(route(at(path)), 'partidos', path);
-    assert.equal(cleanUrl(at(path), 'partidos'), null, path);
+test('las páginas de deporte entran en la ventana de partidos y no se reescriben a /partidos/', () => {
+  const buenas = {
+    nba: ['/nba/', '/nba', '/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/', '/nba/v10-algo/'],
+    tenis: ['/tenis/', '/tenis', '/tenis/atp-finals/', '/tenis/atp-finals/sinner-vs-alcaraz-2026-11-12/'],
+    futbol: ['/futbol/', '/futbol/liga-mx/', '/futbol/liga-mx/club-queretaro-vs-puebla-2026-11-09/'],
+  };
+  for (const [sport, paths] of Object.entries(buenas)) {
+    for (const path of paths) {
+      assert.equal(deporteDeUrl(at(path)), sport, path);
+      assert.equal(isDeportePage(at(path)), true, path);
+      assert.equal(route(at(path)), 'partidos', path);
+      assert.equal(cleanUrl(at(path), 'partidos'), null, path);
+    }
   }
   // los motores no son páginas
-  for (const path of ['/nba/v1/cartelera', '/nba/v2/', '/nba/v2', '/nba/v1/', '/nba/a/b/', '/nbax/']) {
-    assert.equal(isNbaPage(at(path)), false, path);
+  for (const path of ['/nba/v1/cartelera', '/nba/v2/', '/nba/v2', '/nba/v1/', '/nba/a/b/', '/nbax/', '/tenis/v2/cartelera',
+    '/tenis/v2/', '/tenis/v2', '/futbol/a/b/c/', '/futbolx/', '/historial/']) {
+    assert.equal(isDeportePage(at(path)), false, path);
   }
-  assert.equal(isNbaPage(at('/nba/v10-algo/')), true);
   // un enlace con hash antiguo dentro de /nba/ sigue mandando el hash
   assert.equal(route(at('/nba/', '#historial')), 'historial');
 });
 
-test('al entrar en una página de partido la app abre ese partido y su día', () => {
-  const loc = at('/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/');
-  const now = new Date(2026, 10, 8, 12, 0);   // 8-nov, hora local
-  const hoy = nbaBoot({ deporte: 'nba', nbaEvento: '18220', nbaInicio: new Date(2026, 10, 8, 15, 30).toISOString() }, loc, now);
-  assert.deepEqual(hoy, { sport: 'nba', winEvent: 'nba:18220', winDay: 0 });
-  const ayer = nbaBoot({ deporte: 'nba', nbaEvento: '18200', nbaInicio: new Date(2026, 10, 7, 20, 0).toISOString() }, loc, now);
-  assert.equal(ayer.winDay, -1);
-  const lejos = nbaBoot({ deporte: 'nba', nbaEvento: '1', nbaInicio: new Date(2026, 9, 1, 20, 0).toISOString() }, loc, now);
-  assert.equal(lejos.winDay, -3);   // fuera de la ventana de la app: se queda en el límite
+const hoyLocal = new Date(2026, 10, 8, 12, 0);   // 8-nov, hora local
+const iso = (d, h = 20) => new Date(2026, 10, d, h, 0).toISOString();
+
+test('NBA y tenis: al entrar en un partido la app abre ese evento y su día', () => {
+  const nba = at('/nba/chicago-bulls-vs-philadelphia-76ers-2026-11-08/');
+  const hoy = deporteBoot({ deporte: 'nba', evento: '18220', inicio: iso(8, 15) }, nba, hoyLocal);
+  assert.deepEqual(hoy, { sport: 'nba', patch: { sport: 'nba', winEvent: 'nba:18220', winDay: 0, winDayPinned: true, winSportTab: 'resumen', winPane: 'pron' } });
+  assert.equal(deporteBoot({ deporte: 'nba', evento: '18200', inicio: iso(7) }, nba, hoyLocal).patch.winDay, -1);
+  assert.equal(deporteBoot({ deporte: 'nba', evento: '1', inicio: new Date(2026, 9, 1, 20).toISOString() }, nba, hoyLocal).patch.winDay, -3);
+  const tenis = deporteBoot({ deporte: 'tenis', evento: '12176073', inicio: iso(9) }, at('/tenis/atp-finals/a-vs-b-2026-11-09/'), hoyLocal);
+  assert.equal(tenis.patch.winEvent, 'tenis:12176073');
+  assert.equal(tenis.patch.winDay, 1);
 });
 
-test('el pilar abre NBA sin partido, y lo demás no arranca nada', () => {
-  assert.deepEqual(nbaBoot({ deporte: 'nba' }, at('/nba/')), { sport: 'nba', winEvent: '', winDay: 0 });
-  assert.equal(nbaBoot({ deporte: 'nba', nbaEvento: 'x;alert(1)' }, at('/nba/a-vs-b-2026-11-08/')).winEvent, '');   // id no numérico: se ignora
-  assert.equal(nbaBoot({}, at('/nba/')), null);                          // sin la marca del servidor
-  assert.equal(nbaBoot({ deporte: 'nba', nbaEvento: '1' }, at('/historial/')), null);   // otra ruta
+test('compatibilidad: el HTML de F2.1 ya desplegado usaba nbaEvento y nbaInicio', () => {
+  const r = deporteBoot({ deporte: 'nba', nbaEvento: '18220', nbaInicio: iso(8, 15) }, at('/nba/x-vs-y-2026-11-08/'), hoyLocal);
+  assert.equal(r.patch.winEvent, 'nba:18220');
+});
+
+test('fútbol: al entrar en un partido la app fija statsMatch y statsDay dentro de la ventana -1..3', () => {
+  const loc = at('/futbol/liga-mx/club-queretaro-vs-puebla-2026-11-09/');
+  const id = 'mx.liga_mx:2627:queretaro-puebla:20261109';
+  assert.deepEqual(deporteBoot({ deporte: 'futbol', evento: id, inicio: iso(9) }, loc, hoyLocal),
+    { sport: 'futbol', patch: { sport: 'futbol', statsMatch: id, statsDay: 1, statsLeague: 'Todas', statsTab: 'resumen', winPane: 'pron' } });
+  assert.equal(deporteBoot({ deporte: 'futbol', evento: id, inicio: iso(5) }, loc, hoyLocal).patch.statsDay, -1);
+  assert.equal(deporteBoot({ deporte: 'futbol', evento: id, inicio: iso(20) }, loc, hoyLocal).patch.statsDay, 3);
+});
+
+test('el pilar abre el deporte sin partido, y lo demás no arranca nada', () => {
+  assert.deepEqual(deporteBoot({ deporte: 'nba' }, at('/nba/')), { sport: 'nba', patch: { sport: 'nba', winEvent: '', winDay: 0 } });
+  assert.deepEqual(deporteBoot({ deporte: 'futbol' }, at('/futbol/')), { sport: 'futbol', patch: { sport: 'futbol' } });
+  assert.equal(deporteBoot({ deporte: 'tenis', evento: 'x;alert(1)' }, at('/tenis/t/a-vs-b-2026-11-08/')).patch.winEvent, '');   // id no numérico
+  assert.deepEqual(deporteBoot({ deporte: 'futbol', evento: '<img src=x>' }, at('/futbol/l/a-vs-b-2026-11-08/')).patch, { sport: 'futbol' });
+  assert.equal(deporteBoot({}, at('/nba/')), null);                                   // sin la marca del servidor
+  assert.equal(deporteBoot({ deporte: 'nba', evento: '1' }, at('/historial/')), null); // otra ruta
+  assert.equal(deporteBoot({ deporte: 'tenis', evento: '1' }, at('/nba/')), null);     // la marca no coincide con la URL
 });

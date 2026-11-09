@@ -182,7 +182,7 @@ def test_las_rutas_de_las_secciones_existen_en_la_spa():
     titulos = set(re.findall(r"(\w+):\s*'", re.search(r"const routeTitle = \{(.*?)\};", app, re.S).group(1)))
     for s in rutas_web.SECCIONES:
         assert s.ruta in titulos, f"{s.ruta} no es una ruta de app.js"
-    assert "import { routeFromLocation, cleanUrl, historyEntry, nbaBoot } from './rutas.js" in app
+    assert "import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js" in app
 
 
 def test_titulos_y_descripciones_unicos_en_todo_el_sitio():
@@ -243,17 +243,26 @@ def test_el_html_escapa_titulos_y_descripciones(monkeypatch):
     assert ld and all("<" not in b for b in ld)
 
 
+DEPORTES = {"nba", "tenis", "futbol"}
+
+
 def test_toda_ruta_de_la_app_o_es_una_pagina_publica_o_lleva_noindex():
     """Recorre las rutas REALES de la app: una ruta nueva (p. ej. un JSON público) que nadie marque con noindex
     haría fallar esta prueba, en vez de quedar indexable sin que nadie lo note."""
-    publicas = {"", "legal", "nba"} | {p.slug for p in paginas.PAGINAS} | {s.path.strip("/") for s in rutas_web.SECCIONES}
+    publicas = {"", "legal"} | {p.slug for p in paginas.PAGINAS} | {s.path.strip("/") for s in rutas_web.SECCIONES}
     sueltas = []
     for r in main.app.routes:
         ruta = getattr(r, "path", "")
         primero = ruta.lstrip("/").split("/", 1)[0]
         if "." in primero or "{" in primero:        # archivos (app.js, robots.txt…) y rutas con parámetro en raíz
             continue
-        if primero not in publicas and primero not in seo.NOINDEX_SEGMENTS:
+        if primero in DEPORTES:
+            # Páginas de deporte y API del motor comparten primer segmento: manda el prefijo (`/nba/v1`, `/tenis/v2`…).
+            cubierta = any(seo._bajo_prefijo(ruta, q) for q in seo.NOINDEX_PREFIJOS)
+            pagina = getattr(r, "name", "").startswith(tuple(f"{d}_" for d in DEPORTES))
+            if not (cubierta or pagina):
+                sueltas.append(ruta)
+        elif primero not in publicas and primero not in seo.NOINDEX_SEGMENTS:
             sueltas.append(ruta)
     assert not sueltas, f"rutas sin noindex ni página pública: {sorted(set(sueltas))}"
 
@@ -310,9 +319,9 @@ def test_app_y_membership_cargan_el_pixel_con_versiones_nuevas_para_saltar_la_ca
     index = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert re.search(r"meta-pixel\.js\?v=preferencias-20261108", membership)
     assert "membership.js?v=preferencias-20261108" in app
-    assert "app.js?v=nba-20261108" in index and "conversion.css?v=prefs-20261108" in index
+    assert "app.js?v=deporte-20261109" in index and "conversion.css?v=prefs-20261108" in index
     assert "sports-window.js?v=nba-20261108" in app    # la ventana ya no pisa el partido pedido por la URL mientras carga
-    assert "rutas.js?v=nba-20261108" in app    # rutas.js cambió (páginas /nba/): otra versión para saltar la caché
+    assert "rutas.js?v=deporte-20261109" in app    # rutas.js cambió (páginas /nba/): otra versión para saltar la caché
 
 
 def test_el_boton_del_pie_tiene_estilo_de_enlace_y_area_tactil():
@@ -330,3 +339,16 @@ def test_la_spa_no_intercepta_los_enlaces_del_pie():
 def test_el_pie_tiene_estilo_y_deja_hueco_a_la_barra_movil():
     css = (FRONTEND / "conversion.css").read_text(encoding="utf-8")
     assert ".qf-pie {" in css and "env(safe-area-inset-bottom)" in css.split(".qf-pie {", 1)[1]
+
+
+def test_el_motor_de_cada_deporte_es_noindex_y_sus_paginas_no():
+    from starlette.requests import Request
+
+    def req(path):
+        return Request({"type": "http", "method": "GET", "path": path, "query_string": b"",
+                        "headers": [(b"host", b"pronosticosdeportivos.pro")]})
+    for privado in ("/tenis/v2/cartelera", "/tenis/v2/partido/1", "/tenis/v2", "/nba/v1/cartelera", "/nba/v2/"):
+        assert seo.noindex(req(privado)), privado
+    for publico in ("/tenis/", "/tenis/atp-finals/sinner-vs-alcaraz-2026-11-12/", "/futbol/",
+                    "/futbol/liga-mx/club-queretaro-vs-puebla-2026-11-09/", "/nba/"):
+        assert not seo.noindex(req(publico)), publico
