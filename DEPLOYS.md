@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-09 19:55 UTC · Correcciones de la cascada de cuotas tras la comprobación real · PARCIAL: ejecutor actualizado; la API espera la orden del titular (rama `cuotas/therundown`, PR #313)
+- Hallazgo en producción (pasada de las 16:30 UTC): el nivel 4 (7 entradas) y el 3 (2) guardaron entradas con filas de **otras líneas** que la sellada (p. ej. hándicap +5.5 frente a las ±1.5 de las casas): no mostraban nada y marcaban el hueco como resuelto 24 h. Ahora solo se guardan filas de la línea sellada.
+- Hecho: `releases/cuotas-cascada-20261109/src/ingest/` con `cuotas_respaldo.py` (`d3516b9d0de8`), `cuotas_therundown.py` (`55c976719e1d`) y `cuotas_sportsapipro.py` (`2d9847b4e8fc`); copia previa en `antes_lineas/`. Lo monta la siguiente pasada del cron. Las 9 entradas inútiles caducan solas (TheRundown a las 24 h, SportsAPIPro a los 5 días).
+- Pendiente (el servidor bloqueó el despliegue de producción sin orden expresa): copiar esos 3 archivos a `quantfut-api-1` (`docker cp` + `docker restart`, base verificada por sha256: `7f8d8e714759`, `fe3ab4417b1c`, `f720c4d1906d`). Sin esto la API sigue con el interruptor solo por variable de entorno (el archivo `cuotas_therundown_oculto` aún no actúa) y sin el filtro de líneas; no es dañino.
+- Vuelta atrás: restaurar `antes_lineas/` en la carpeta del ejecutor; la API no se ha tocado.
+
 ### 2026-11-09 18:51 UTC · TheRundown como cuarto nivel de la cascada de cuotas · API + ejecutor (rama `cuotas/therundown`, fuera de `main`)
 - Orden del titular («Inténtalo de nuevo» tras un primer bloqueo del servidor). Candado `deploy.lock`.
 - **API** (`quantfut-api-1`): 3 archivos con `docker cp` + `docker restart` (18:51 UTC; `/health` 200 al 2.º intento; **no recreada**): `ingest/cuotas_respaldo.py` (`7f8d8e714759`), `ingest/cuotas_respaldo_futbol.py` (`7c3c136dacca`), `ingest/cuotas_therundown.py` (`fe3ab4417b1c`, nuevo). Antes, los dos existentes eran idénticos a lo desplegado del PR #312 (`b87b76ad624c`, `32aedc4d08e6`). Respaldo en `~/respaldos/cuotas_cascada_20261109/api_antes_therundown/`. Dominio público: `/health` 200 y `/web/deportes/nba/cuotas` 200.
