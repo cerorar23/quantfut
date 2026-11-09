@@ -284,9 +284,9 @@ def partido(slug: str):
     if p is None:
         raise HTTPException(404)
     c = construir(p)
-    datos = {"nba-evento": c.id}
+    datos = {"evento": c.id}
     if c.inicio:
-        datos["nba-inicio"] = c.inicio.astimezone(timezone.utc).isoformat()
+        datos["inicio"] = c.inicio.astimezone(timezone.utc).isoformat()
     return _pagina("nba_partido.html", f"/nba/{c.slug}/", c.p, _jsonld_partido(c, seo.base_url()), datos, c=c)
 
 

@@ -211,7 +211,8 @@ def marco_inicial(principal: str) -> str:
     ejecuta JavaScript y se pinta mientras carga el módulo; la SPA lo sustituye al arrancar."""
     from . import paginas
     secciones = "".join(f'<li><a href="{escape(s.path)}">{escape(s.migas)}</a></li>' for s in SECCIONES)
-    secciones += '<li><a href="/nba/">Pronósticos NBA</a></li>'   # páginas de NBA (nba_paginas.py), con la SPA de shell
+    # páginas de deporte (nba_paginas.py, futbol_paginas.py), servidas con el shell de la SPA
+    secciones += '<li><a href="/futbol/">Pronósticos de fútbol</a></li><li><a href="/nba/">Pronósticos NBA</a></li>'
     confianza = "".join(f'<li><a href="{escape(p.ruta)}">{escape(p.migas)}</a></li>' for p in paginas.PAGINAS)
     return (f'<div class="qf-inicial" data-seo-inicial><header><a href="/">QuantFut</a>'
             f'<nav aria-label="Secciones"><ul>{secciones}</ul></nav></header>'

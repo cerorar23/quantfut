@@ -264,14 +264,14 @@ def test_la_portada_enlaza_al_pilar_de_nba(client):
 def test_el_partido_se_sirve_dentro_de_la_app_con_su_evento(client):
     t = client.get(f"/nba/{SLUG_PREVIA}/", headers=HTML).text
     assert '<html' in t and 'data-ruta="partidos"' in t and 'data-deporte="nba"' in t
-    assert 'data-nba-evento="18221"' in t and 'data-nba-inicio="2026-11-08T23:30:00+00:00"' in t
+    assert 'data-evento="18221"' in t and 'data-inicio="2026-11-08T23:30:00+00:00"' in t
     assert re.search(r'<script[^>]+type="module"[^>]+src="/app\.js\?v=', t)       # la app arranca, con ruta absoluta
     assert 'data-seo-inicial' in t and 'id="app"' in t
 
 
 def test_el_pilar_arranca_en_nba_sin_evento(client):
     t = client.get("/nba/", headers=HTML).text
-    assert 'data-ruta="partidos"' in t and 'data-deporte="nba"' in t and "data-nba-evento" not in t
+    assert 'data-ruta="partidos"' in t and 'data-deporte="nba"' in t and "data-evento" not in t
     assert re.search(r'<script[^>]+src="/app\.js\?v=', t)
 
 

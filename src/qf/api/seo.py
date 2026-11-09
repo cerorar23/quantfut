@@ -27,7 +27,7 @@ NOINDEX_SEGMENTS = frozenset({
     # panel, cuentas y flujos con sesión o con código de un solo uso
     "control", "admin", "cuenta", "verificar", "restablecer", "i", "rewards", "webhooks",
     # API de la web, la app móvil y los motores
-    "app", "mobile", "tenis", "v1", "web", "static", "vendor", "health",
+    "app", "mobile", "v1", "web", "static", "vendor", "health",
     # JSON públicos de la raíz (no son páginas)
     "alta-probabilidad", "calibration", "chain", "escalera", "leagues", "matches", "model-card", "parley", "picks",
     "teams", "track-record",
@@ -75,8 +75,9 @@ def primer_segmento(path: str) -> str:
     return path.lstrip("/").split("/", 1)[0].lower()
 
 
-# Prefijos que sí son API aunque su primer segmento también lo use una página pública (`/nba/` es página).
-NOINDEX_PREFIJOS = ("/nba/v1", "/nba/v2")
+# Prefijos que sí son API aunque su primer segmento también lo use una página pública (`/nba/`, `/tenis/` y `/futbol/`
+# son páginas de deporte; sus motores cuelgan de `/nba/v1`, `/nba/v2` y `/tenis/v2`).
+NOINDEX_PREFIJOS = ("/nba/v1", "/nba/v2", "/tenis/v2")
 
 
 def _bajo_prefijo(path: str, prefijo: str) -> bool:
@@ -120,8 +121,8 @@ def sitemap_index() -> str:
 
 
 def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
-    from . import nba_paginas, paginas, rutas_web   # import tardío: todos importan este módulo
-    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + nba_paginas.entradas_sitemap()
+    from . import futbol_paginas, nba_paginas, paginas, rutas_web   # import tardío: todos importan este módulo
+    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + nba_paginas.entradas_sitemap() + futbol_paginas.entradas_sitemap()
 
 
 def sitemap_paginas() -> str:
