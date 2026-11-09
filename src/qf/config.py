@@ -105,6 +105,11 @@ class Settings:
     # (ver `DixonColes`). 0,5 = un equipo con dos partidos queda a medio camino
     # de la media de su liga. Medido en la misma auditoría (0,5-1 lo mejor).
     ridge_partidos: float = _f("RIDGE_PARTIDOS", 0.5)
+    # Recalibración del NIVEL de goles por liga con memoria corta (9-nov-2026, `DixonColes._nivel_reciente`). 0 = apagada
+    # (comportamiento anterior). Es la semivida, en días, de la ventana con la que se compara los goles reales con las
+    # lambdas ajustadas; el prior son goles ponderados «a razón 1» que frenan el ruido en ligas con pocos partidos recientes.
+    dc_nivel_halflife_days: float = _f("DC_NIVEL_HALFLIFE_DAYS", 0.0)
+    dc_nivel_prior_goles: float = _f("DC_NIVEL_PRIOR_GOLES", 60.0)
     # Mezcla goles/xG para el objetivo del modelo de fuerza. 0 = solo goles, 1 = solo xG.
     xg_blend: float = _f("XG_BLEND", 0.65)
     max_goals_matrix: int = _i("MAX_GOALS_MATRIX", 12)

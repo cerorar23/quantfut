@@ -242,3 +242,18 @@ def test_partido_de_oro_genoa_lecce():
     assert len(row['absences']) == 4
     assert meta['slices']['pregame_form']['state'] == 'empty'
     assert len(raw) > 50_000 and row['raw_sha256'] == meta['sha256']
+
+
+def test_calendario_paginado_last_de_mls_y_copas(tmp_path):
+    folder = tmp_path / 'tournaments' / '242' / 'seasons' / '1' / 'schedule'
+    folder.mkdir(parents=True)
+
+    def write(name, events):
+        (folder / name).write_bytes(gzip.compress(json.dumps({'events': events}).encode()))
+
+    done = lambda i: {'id': i, 'startTimestamp': 1_700_000_000, 'status': {'type': 'finished'}}
+    write('last_0.json.gz', [done(10), done(11)])
+    write('last_1.json.gz', [done(11), done(12), {'id': 13, 'startTimestamp': 1, 'status': {'type': 'notstarted'}}])
+    write('next_0.json.gz', [done(99)])
+    assert finished_event_ids(tmp_path, 242) == [10, 11, 12]
+

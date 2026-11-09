@@ -14,6 +14,32 @@
 - [x] Alertas de Telegram (como mucho cada 6 h) cuando SportsAPIPro o TheRundown se detienen.
 - [ ] Props NBA y tarjetas siguen sin respaldo adicional (SportsAPIPro/TheRundown Free no los devuelven).
 - [ ] Fusionar la rama a `main` (el servidor ya corre este código desde `releases/cuotas-cascada-20261109`; ver DEPLOYS.md).
+## 8-nov-2026 · Ligas nuevas de SofaScore: integrar, entrenar, publicar y backtest (rama `futbol/ligas-nuevas`)
+
+Pedido del titular: integrar las ligas que descargó (≥4 temporadas cada una, más Champions y Europa League), entrenar el
+motor, mostrar sus pronósticos y hacer un backtest profesional. Inventario local medido el 8-nov
+(`SOFASCORE/data/v3`, partidos terminados, casi todos con estadísticas y mapa de tiros):
+
+| Grupo | Ligas | Partidos 23/24→26/27 | Estado en el motor |
+|---|---|---|---|
+| Activas, fuera de `futbol.dato` | MLS, Championship, 2. Bundesliga, Süper Lig, Eliteserien | 2.072 / 1.839 / 1.016 / 1.119 / 935 | `active`; solo MLS tiene `model_enabled` (Championship, 2. Bundesliga, Turquía y Noruega se capturan pero no se predicen) |
+| Copas (cross_league) | Champions, Europa League (21/22→26/27) | 1.362 / 1.217 | en el motor; previas sin estadísticas en SofaScore (~20-40 %) |
+| Retiradas el 25-oct (db/086, db/088, `league_policy.RETIRED_LEAGUES`) | Serie B, LaLiga 2, Ligue 2, Suiza, Dinamarca, Suecia | 1.270 / 1.536 / 1.101 / 762 / 659 / 945 | `active = FALSE`; el motivo «sin xG» lo cierra el mapa de tiros, el de «sin cuotas en PropLine» sigue en Ligue 2, Dinamarca y Suiza |
+
+Hueco: LaLiga 23/24 sigue sin descargar (la Premier ya está completa).
+
+Medido el 8-nov en `matches` (terminados desde 2023-07-01, con xG): Championship 1.849/1.849, 2. Bundesliga 1.013/1.017, Turquía 1.119/1.127, Noruega 830/842, Suecia 816/824, Suiza 749/752, MLS 1.799/1.814, **LaLiga 2 1.054/1.524 y Serie B 469/1.249** (hueco permanente: en los 469 y 777 partidos sin xG el mapa de tiros de SofaScore existe pero sin xG por tiro, medido el 9-nov en `futbol.dato`; donde sí hay, la suma de xG por tiro coincide con `matches`, corr. 0,99; NO se rellena nada), Champions 381/395, Europa League 222/234.
+Simulacro de carga (sin escribir): se emparejan ≥ 98 % en las ligas; lo que queda fuera es `local_archive_never_creates` (sin partido en `matches`) o `score_or_status_conflict`; no se fuerza. MLS y copas necesitaban leer `last_*` del calendario y, las copas, el snapshot con los equipos de todas las ligas (`sofascore_local.py`).
+
+- [x] 0. (9-nov) Reactivadas solo las 4 que PropLine cotiza (LaLiga 2, Serie B, Allsvenskan, Suiza); Ligue 2 y Dinamarca siguen fuera. Decisión del titular: ¿se reactivan las 6 retiradas? Sin cuota de PropLine se publican solo con el motor y tope 74,4 % (regla del 1-nov).
+- [x] 1. Subir el archivo nuevo al VPS (8-nov): 54.399 partidos, 6 conexiones; servidor con 65.112 al día, 0 corruptos.
+- [x] 2. (9-nov, 05:59 UTC) Cargadas en `futbol.dato` las 11 competiciones: MLS 2.063, Championship 1.824, 2. Bundesliga 1.007, Turquía 1.115, Noruega 922, LaLiga 2 1.522, Serie B 1.246, Suecia 920, Suiza 751, Champions 487, Europa League 279. Cargar `futbol.dato` liga a liga (`~/futbol_base_unica/correr_futbol.sh LIGA`, simulacro → `--aplicar`); copas solo con nombre EXACTO y lo no resuelto a `unresolved_names`, nunca altas bajo `eu.ucl`/`eu.uel`.
+- [x] 3. Ligas añadidas a la lista de `futbol_diario.sh` (copiado también al VPS el 9-nov). Pendiente: `recarga_ampliada.sh` y el scraper SofaScore del VPS para LaLiga 2, Serie B, Allsvenskan y Suiza.
+- [x] 4. (9-nov) Entrenado en local `2026.11.09-063559`, 21 competiciones, converge, ECE 0,011. Entrenar en local (`scripts/entrenamiento_local/`, configuración del worker) y comparar contra el modelo actual en los partidos fuera de muestra comunes; `tests/test_cross_league.py` a 1e-9.
+- Criterios de aprobación fijados el 9-nov ANTES de medir (detalle en el docstring de `src/qf/eval/backtest_ligas_nuevas.py`): C1 n ≥ 150; C2 log-loss 1X2 mejor que la frecuencia de la liga previa a 2025-07 con IC 95 % por semana entero a favor; C3 ECE ≤ 0,05 y sesgo por resultado ≤ 0,05; C4 ninguna de las 13 competiciones actuales empeora > 0,005 (IC entero > 0). Decide la variante `pit` (xG solo desde su recepción real); `reconstruccion` y `goles` solo informan. Ganar a Pinnacle no es criterio.
+- [x] 5. (9-nov, `docs/backtest_ligas_nuevas_20261109.md`) Aprueban Turquía, LaLiga 2, Serie B y Allsvenskan. Backtest: walk-forward por jornada, `check_leakage()` antes de leer nada, tramo limpio desde 2025-07; log-loss/RPS/Brier frente a frecuencia y mercado sin margen, curvas de calibración, IC por bootstrap por liga y mercado, acierto del 10 % más probable con cuota ≥ 1,40. Informe en `docs/`.
+- [x] 6. (9-nov, db/105-107 aplicadas) Activar `model_enabled` solo en las ligas que pasen la puerta del paso 5; nombres de liga en los 6 idiomas si la app los muestra.
+- [x] 7. (9-nov, DEPLOYS.md) Desplegar según DEPLOYS.md y comprobar los pronósticos en el dominio real (modelo y `model-card` comprobados; los primeros pronósticos se sellan en el job diario del 10-nov 09:00 UTC).
 
 ## Historial web en Flutter y mercados vacíos — 5-nov-2026
 
