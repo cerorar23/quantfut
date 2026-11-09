@@ -22,7 +22,7 @@ resultados crudos y reproducción: `.local/backtest_ligas_nuevas/` (4 variantes,
 
 ## Límites que hay que conocer
 
-1. **Solo 1X2 y cinco mercados de goles.** Córners, tarjetas, primera parte y props de jugador no están medidos aquí.
+1. **Solo 1X2 y cinco mercados de goles.** El resto de familias (goles completos, hándicap, marcador exacto, primera mitad, córners y tarjetas) se midió después en [backtest_mercados_ligas_nuevas_20261109.md](backtest_mercados_ligas_nuevas_20261109.md). No hay props de jugador de fútbol publicados.
 2. **La base del criterio C2 es débil** (frecuencia de local/empate/visitante de la liga): superarla no equivale a competir
    con un modelo de fuerza de equipos; por eso se informa también el mercado.
 3. **Sesgo de goles en todo el modelo, no solo en las ligas nuevas.** En el tramo medido el Dixon-Coles crudo predice menos
