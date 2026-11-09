@@ -31,7 +31,7 @@ from . import alta_prob_calibracion as ac
 from . import soft_vs_sharp as sv
 
 PROB_MIN = modelo_1t.PROB_MIN_VALIDADA
-PROB_MAX = modelo_1t.PROB_MAX_VALIDADA
+PROB_MAX = modelo_1t.PROB_MAX_PRUEBA_ORIGINAL   # la prueba original mide hasta 0,95; lo publicado llega a 0,85
 # Temporadas de ENTRENO de la proporción s; el resto es de medida.
 ENTRENO = ("1920", "2021", "2122")
 
