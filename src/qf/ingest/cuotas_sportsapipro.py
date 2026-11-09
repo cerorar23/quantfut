@@ -227,11 +227,22 @@ def _es_total(m: dict, deporte: str) -> bool:
     return n in TOTAL_FUTBOL and _periodo_completo(m)
 
 
-def filas_futbol(ms: list[dict]) -> list[dict]:
+_OPCION_HANDICAP = re.compile(r"^\(\s*([+-]?\d+(?:\.\d+)?)\s*\)\s*(.+?)\s*$")
+
+
+def opcion_handicap(nombre):
+    """«(-0.5) Plymouth Parkway» -> (-0.5, «Plymouth Parkway»); «(0.5) Berkhamsted Town» -> (0.5, ...). Ilegible: None."""
+    m = _OPCION_HANDICAP.match(str(nombre or ""))
+    return (float(m.group(1)), m.group(2)) if m else None
+
+
+def filas_futbol(ms: list[dict], home: str | None = None, away: str | None = None, igual=None) -> list[dict]:
     """Filas `{bookmaker, market, selection, line, price}` de fútbol, con los nombres de `odds_snapshots`:
     1X2 (`h2h`), totales de goles, ambos marcan (`btts`), doble oportunidad y córners totales. Verificados con una
-    respuesta real (FA Cup, 9-nov-2026). El hándicap asiático se ignora: viene como «(-0.5) Equipo» y el signo
-    depende del equipo, que aquí no se conoce."""
+    respuesta real (FA Cup, 9-nov-2026). El hándicap asiático («(-0.5) Equipo») solo se traduce si se conocen los
+    nombres de los dos equipos (`home`, `away`): la línea es la del propio equipo, igual que `spreads` en
+    `odds_snapshots`. `igual(nombre_proveedor, nombre_propio)` decide si dos nombres son el mismo equipo."""
+    igual = igual or (lambda a, b: norm(a) == norm(b))
     filas = []
 
     def anade(mercado, seleccion, linea, precio):
@@ -254,6 +265,16 @@ def filas_futbol(ms: list[dict]) -> list[dict]:
         elif m["nombre"].strip().lower() == "double chance" and {"1X", "X2", "12"} <= set(nombres):
             for k in ("1X", "X2", "12"):
                 anade("double_chance", k, None, nombres[k])
+        elif m["nombre"].strip().lower() == "asian handicap" and home and away:
+            for c in m["choices"]:
+                op = opcion_handicap(c["name"])
+                if op is None:
+                    continue
+                linea, equipo = op
+                if igual(equipo, home) and not igual(equipo, away):
+                    anade("spreads", "home", linea, c["price"])
+                elif igual(equipo, away) and not igual(equipo, home):
+                    anade("spreads", "away", linea, c["price"])
         elif m["nombre"].strip().lower() == "corners 2-way" and m["linea"] is not None:
             for c in m["choices"]:
                 if c["name"].strip().lower() in ("over", "under"):

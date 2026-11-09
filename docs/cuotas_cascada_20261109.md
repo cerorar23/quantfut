@@ -42,9 +42,12 @@ respaldo repetía la misma petición de pago cada 10 min mientras el hueco exist
 - Mercados traducidos (todos verificados con respuestas reales del 9-nov-2026): ganador (`marketId` 1; en fútbol 1X2
   con «1»/«X»/«2»); totales (tenis «Total games won» `marketId` 12, baloncesto «Game total» 18, fútbol «Match goals»
   `marketId` 9, una entrada por línea); en fútbol además «Both teams to score» (`btts`), «Double chance» y «Corners
-  2-Way» (`corners`). El periodo del fútbol llega como «Full-time» (con guion). SportsAPIPro también trae hándicap
-  («Point spread», «Asian handicap», con el equipo dentro del nombre de la opción), «Draw no bet», primera parte y
-  «First team to score»: **no se traducen todavía**. Sin props de jugador ni tarjetas.
+  2-Way» (`corners`). El periodo del fútbol llega como «Full-time» (con guion). En fútbol también se traduce el
+  «Asian handicap» (`spreads`; la opción llega como «(-0.5) Equipo», línea del propio equipo, igual que en
+  `odds_snapshots`; solo si se conocen los nombres de los dos equipos y el equipo se reconoce sin ambigüedad). **No hay
+  hándicap de juegos de tenis**: se comprobó en 3 partidos reales de ATP/WTA/Challenger (solo ganador, primer set y
+  total). «Point spread» de baloncesto existe pero la NBA no sella ese mercado. «Draw no bet», primera parte y
+  «First team to score» no se traducen. Sin props de jugador ni tarjetas.
 - Resolución de partido: NBA y tenis por el calendario `/schedule/{fecha}` (día de Nueva York; una petición por deporte
   y fecha por pasada), con equipos de nombre exacto y jugadores por apellido + inicial, comienzo a ±30 min y candidato
   único. Fútbol: id de SofaScore del calendario que ya archiva el módulo del once (cero peticiones extra).
@@ -52,6 +55,12 @@ respaldo repetía la misma petición de pago cada 10 min mientras el hueco exist
 - **Cupo:** el plan gratuito da 100 peticiones al día compartidas con el once de fútbol (40) y tenis. Con «sin tope» el
   respaldo puede consumirlas; el 429 o un `x-ratelimit-remaining` en 0 paran la pasada. Si se agota el cupo antes de las
   alineaciones, `CUOTAS_SPORTSAPIPRO_DIARIO` lo acota sin tocar código.
+
+## Alertas
+
+Telegram operativo (`TG_ALERT_CHAT`), como mucho una vez cada 6 h por fuente (estado en `<caché>.alertas.json`; nunca
+lanza): SportsAPIPro se detiene (429, tope propio o cupo agotado) y TheRundown se detiene (401/403 = clave rechazada o sin
+permiso; 429 o poca reserva = cupo diario de 20.000 puntos). `cuotas_respaldo.avisa()`.
 
 ## Qué no hace (límites honestos)
 
