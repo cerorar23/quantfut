@@ -24,6 +24,7 @@ log = logging.getLogger("qf.nba_datos")
 TIMEOUT_S = 4.0
 TTL_VIVO_S = 60          # día en curso o futuro: el sello y el marcador cambian
 TTL_PASADO_S = 600       # días ya cerrados
+STALE_MAX_S = 3600       # un dato caducado pero de menos de 1 h se sirve YA y se renueva en segundo plano
 MAX_ENTRADAS = 96
 ET = ZoneInfo("America/New_York")
 SLUG_PARTIDO = re.compile(r"^(?P<local>[a-z0-9]+(?:-[a-z0-9]+)*)-vs-(?P<visit>[a-z0-9]+(?:-[a-z0-9]+)*)-(?P<fecha>\d{4}-\d{2}-\d{2})$")
@@ -35,6 +36,12 @@ class NbaNoDisponible(Exception):
 
 _lock = threading.Lock()
 _cache: dict[str, tuple[float, object]] = {}
+_renovando: set[str] = set()
+
+
+def _lanzar(tarea) -> None:
+    """Ejecuta `tarea` en un hilo aparte (las pruebas lo sustituyen por una ejecución en línea)."""
+    threading.Thread(target=tarea, daemon=True, name="nba-datos-renovar").start()
 
 
 def base_api() -> str:
@@ -54,11 +61,38 @@ def _pedir(ruta: str, params: dict | None = None) -> object:
         raise NbaNoDisponible(str(e)) from e
 
 
+def _guardar(clave: str, valor: object, instante: float) -> None:
+    with _lock:
+        _cache[clave] = (instante, valor)
+        if len(_cache) > MAX_ENTRADAS:
+            for k in sorted(_cache, key=lambda k: _cache[k][0])[: len(_cache) - MAX_ENTRADAS]:
+                _cache.pop(k, None)
+
+
+def _renovar(clave: str, ruta: str, params: dict | None) -> None:
+    try:
+        _guardar(clave, _pedir(ruta, params), time.monotonic())
+    except NbaNoDisponible:
+        log.warning("nba-api no responde al renovar %s; se sigue sirviendo la copia guardada", clave)
+    finally:
+        with _lock:
+            _renovando.discard(clave)
+
+
 def _con_cache(clave: str, ttl: float, ruta: str, params: dict | None = None) -> object:
+    """Dato fresco si lo hay; si caducó hace menos de `STALE_MAX_S` se sirve al instante y se renueva en segundo plano (la primera
+    petición tras un rato en reposo tardaba ~5 s: la cartelera de cada día es lenta en `nba-api`); solo se espera cuando no hay copia."""
     ahora = time.monotonic()
     with _lock:
         previo = _cache.get(clave)
     if previo and ahora - previo[0] < ttl:
+        return previo[1]
+    if previo and ahora - previo[0] < STALE_MAX_S:
+        with _lock:
+            nueva = clave not in _renovando
+            _renovando.add(clave)
+        if nueva:
+            _lanzar(lambda: _renovar(clave, ruta, params))
         return previo[1]
     try:
         valor = _pedir(ruta, params)
@@ -67,17 +101,14 @@ def _con_cache(clave: str, ttl: float, ruta: str, params: dict | None = None) ->
             log.warning("nba-api no responde; se sirve la copia guardada de %s", clave)
             return previo[1]
         raise
-    with _lock:
-        _cache[clave] = (ahora, valor)
-        if len(_cache) > MAX_ENTRADAS:
-            for k in sorted(_cache, key=lambda k: _cache[k][0])[: len(_cache) - MAX_ENTRADAS]:
-                _cache.pop(k, None)
+    _guardar(clave, valor, ahora)
     return valor
 
 
 def vaciar_cache() -> None:
     with _lock:
         _cache.clear()
+        _renovando.clear()
 
 
 def cartelera(fecha: date, hoy: date | None = None) -> list[dict]:

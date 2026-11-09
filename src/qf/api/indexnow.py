@@ -25,6 +25,7 @@ import logging
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -129,7 +130,14 @@ def guardar_estado(estado: dict[str, dict]) -> None:
     d.mkdir(parents=True, exist_ok=True)
     tmp = d / f".estado.{os.getpid()}.tmp"
     tmp.write_text(json.dumps(estado, ensure_ascii=False, sort_keys=True), encoding="utf-8")
-    os.replace(tmp, d / "estado.json")
+    for intento in range(4):
+        try:
+            os.replace(tmp, d / "estado.json")
+            return
+        except PermissionError:          # Windows: un antivirus puede tener el archivo abierto un instante
+            if intento == 3:
+                raise
+            time.sleep(0.2)
 
 
 # --- red ------------------------------------------------------------------------------------------
