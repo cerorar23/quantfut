@@ -31,9 +31,9 @@ RUTA = "/calculadora-cuota-justa/"
 REVISION = date(2026, 11, 9)
 SCRIPT = "/static/cuota-justa.js"
 ARCHIVO_SCRIPT = Path(__file__).with_name("static") / "cuota-justa.js"
-# La política estricta de las páginas de confianza, más lo único que esta necesita: el script PROPIO. Sin 'unsafe-inline' en scripts,
-# sin conexiones (la calculadora no envía nada a ningún sitio), sin Pixel de Meta.
-CSP = paginas.CSP.replace("default-src 'none';", "default-src 'none'; script-src 'self';", 1)
+# La política de las páginas de confianza ya admite el script PROPIO (`script-src 'self'`): sin 'unsafe-inline' en scripts, sin conexiones
+# (la calculadora no envía nada a ningún sitio), sin Pixel de Meta.
+CSP = paginas.CSP
 
 # Ejemplo resuelto que se muestra sin JavaScript (cuotas típicas de un 1X2 con margen).
 EJEMPLO = (("Local", 2.10), ("Empate", 3.40), ("Visitante", 3.60))

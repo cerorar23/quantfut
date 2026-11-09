@@ -4089,3 +4089,4 @@ Plan de despliegue de la primera entrega: `docs/plan_despliegue_idiomas_f61_2026
 - [ ] **F6.3 · `/calibracion/` y la calculadora en inglés** (formato numérico, textos en Python y JS por idioma).
 - [ ] **F6.4 · Portugués (pt-BR)** con el mismo mecanismo; **F7** francés, italiano y alemán solo tras revisión legal (§11).
 - [ ] Decisión del titular pendiente: traducir términos y privacidad (solo existen en español; el pie inglés los marca «in Spanish») antes de abrir el inglés a público de EE. UU./Reino Unido.
+- [x] **Corrección: el correo de las páginas de confianza se veía como «[email protected]»** (9-nov): Cloudflare ofusca los `mailto:` y su `email-decode.min.js` (mismo origen) lo bloqueaba la CSP `default-src 'none'`. Se añade `script-src 'self'` a `paginas.CSP` (las páginas no llevan scripts en línea; prueba nueva). Código listo, sin desplegar.

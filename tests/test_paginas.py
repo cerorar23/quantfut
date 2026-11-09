@@ -136,6 +136,18 @@ def test_head_y_cabeceras_de_seguridad(client, pagina):
 
 
 @TODAS
+def test_la_politica_admite_solo_scripts_propios_y_la_pagina_no_trae_ninguno_en_linea(client, pagina):
+    """`script-src 'self'` deja pasar el `email-decode.min.js` de Cloudflare (mismo origen) para que el correo no se vea como «[email protected]»;
+    por eso la página no puede llevar scripts en línea ni de terceros: el JSON-LD (datos) es lo único."""
+    r = client.get(pagina.ruta)
+    csp = r.headers["content-security-policy"]
+    script = next(d for d in csp.split("; ") if d.startswith("script-src"))
+    assert script == "script-src 'self'"
+    for etiqueta in re.findall(r"<script([^>]*)>", r.text):
+        assert "application/ld+json" in etiqueta, etiqueta
+
+
+@TODAS
 def test_todos_los_enlaces_internos_existen(client, pagina):
     _, d = doc(client, pagina)
     internos = {h.split("#")[0] for h in d.hrefs if h.startswith("/")}
