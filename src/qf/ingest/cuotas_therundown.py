@@ -20,7 +20,8 @@ Qué es la cuenta Free (medido el 9-nov-2026 con la clave del titular; docs.ther
 Licencia (docs.therundown.io/licensing-and-attribution): Free es «uso interno o personal» y no permite mostrar los datos
 a usuarios finales; tampoco guardarlos más de 24 h ni entrenar con ellos. El titular decidió mostrarlas igualmente
 (9-nov-2026) y asumió el riesgo. Mitigaciones que sí se cumplen: nada se archiva (ni los originales) y las entradas
-caducan a las 24 h (`TTL`); `CUOTAS_THERUNDOWN_MOSTRAR=0` las oculta sin tocar código.
+caducan a las 24 h (`TTL`); `CUOTAS_THERUNDOWN_MOSTRAR=0` o el archivo `cuotas_therundown_oculto` en el volumen de la caché las
+oculta sin tocar código.
 """
 from __future__ import annotations
 
@@ -55,9 +56,22 @@ CASAS = {2: "bovada", 3: "pinnacle", 4: "sportsbetting", 6: "betonlineag", 7: "b
          31: "polymarket_us", 32: "circa", 33: "bet105", 34: "heritage", 35: "caesars"}
 
 
+_oculto: list = [0.0, False]            # [hora de la última lectura, ¿archivo de ocultar presente?]
+ARCHIVO_OCULTAR = "cuotas_therundown_oculto"
+
+
 def mostrar() -> bool:
-    """Interruptor de visualización (se lee en cada llamada: la API no necesita reiniciarse). Por defecto, visible."""
-    return os.getenv("CUOTAS_THERUNDOWN_MOSTRAR", "1").strip() not in ("0", "false", "no", "")
+    """¿Se muestran las cuotas de TheRundown? Apagado si `CUOTAS_THERUNDOWN_MOSTRAR` es 0/false/no, o si existe el archivo
+    `cuotas_therundown_oculto` junto a la caché del respaldo (el volumen compartido con la API): cambiar una variable de
+    entorno exige recrear el contenedor de la API y perder los archivos copiados con `docker cp`; crear o borrar ese
+    archivo actúa en segundos y sin reiniciar nada. Por defecto, visible."""
+    if os.getenv("CUOTAS_THERUNDOWN_MOSTRAR", "1").strip() in ("0", "false", "no", ""):
+        return False
+    ahora = time.monotonic()
+    if ahora - _oculto[0] > 5.0:
+        base = os.getenv("CUOTAS_RESPALDO_CACHE")
+        _oculto[:] = [ahora, bool(base) and os.path.exists(os.path.join(os.path.dirname(base), ARCHIVO_OCULTAR))]
+    return not _oculto[1]
 
 
 class SinCupo(Exception):
@@ -224,6 +238,12 @@ def _fila(casa, nombre, lado, punto, precio):
                 dfs_odds_type=None, payout_multiplier=None)
 
 
+def _es_linea(valor, linea) -> bool:
+    """TheRundown solo da la línea principal de cada casa: una fila de otra línea no sirve para el ítem sellado y no
+    se guarda (una entrada inútil marcaría el hueco como resuelto durante 24 h)."""
+    return valor is not None and linea is not None and math.isclose(float(valor), float(linea), abs_tol=1e-9)
+
+
 def filas_item(e: dict, deporte: str, item: dict, local: str, visitante: str) -> list[dict]:
     """Filas de un ítem sellado (winner / game_total / games_total / games_handicap) de NBA o tenis."""
     tenis = deporte == "tenis"
@@ -241,12 +261,14 @@ def filas_item(e: dict, deporte: str, item: dict, local: str, visitante: str) ->
                 out += [_fila(c, l["nombre"], lado, None, p) for c, p in l["precios"].items()]
     elif mercado in ("game_total", "games_total"):
         for l in lineas(e, 3):
-            if l["valor"] is not None and norm(l["nombre"]) in ("over", "under"):
+            if l["valor"] is not None and norm(l["nombre"]) in ("over", "under") and _es_linea(l["valor"], item.get("line")):
                 out += [_fila(c, l["nombre"], None, l["valor"], p) for c, p in l["precios"].items()]
     elif mercado == "games_handicap" and tenis:
         for l in lineas(e, 2):
             lado = lado_de(l["nombre"]) if l["tipo"] == "TYPE_TEAM" else None
-            if lado and l["valor"] is not None:
+            # La línea sellada y su opuesta (el otro jugador cotiza la línea con el signo cambiado).
+            if lado and l["valor"] is not None and (_es_linea(l["valor"], item.get("line"))
+                                                    or _es_linea(l["valor"], -item["line"] if item.get("line") is not None else None)):
                 out += [_fila(c, l["nombre"], lado, l["valor"], p) for c, p in l["precios"].items()]
     return out
 

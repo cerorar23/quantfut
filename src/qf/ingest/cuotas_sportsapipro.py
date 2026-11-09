@@ -280,6 +280,8 @@ def filas_item(ms: list[dict], deporte: str, item: dict, local: str, visitante: 
         for m in ms:
             if not _es_total(m, deporte) or m["linea"] is None:
                 continue
+            if item.get("line") is not None and abs(m["linea"] - float(item["line"])) > 1e-9:
+                continue    # otra línea: no sirve para el ítem sellado y no se guarda
             for c in m["choices"]:
                 if c["name"].strip().lower() in ("over", "under"):
                     out.append(fila(c["name"], None, m["linea"], c["price"]))

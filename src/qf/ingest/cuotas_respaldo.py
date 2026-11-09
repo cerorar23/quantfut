@@ -598,8 +598,13 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
     huecos = [h for h in huecos if h.sellado <= now]
     salida(f"huecos: {sum(len(h.items) for h in huecos)} filas en {len(huecos)} eventos; "
            f"coste estimado ~{coste_estimado(huecos, regiones)} créditos (tope {max_creditos}, suelo {SUELO})")
-    for h in huecos:
+    # En el modo seco se lista todo; en las pasadas reales (cron cada 10 min, sin rotación de registro) solo los 10 primeros,
+    # los partidos futuros antes, para que el registro no crezca ~1,7 MB al día.
+    visibles = huecos if not ejecutar else sorted(huecos, key=lambda h: (h.comienzo <= now, h.sellado))[:10]
+    for h in visibles:
         salida(f"  {h.deporte} {h.eid} {h.local} - {h.visitante}: {h.mercados} sello {pl.stamp(h.sellado)}")
+    if len(visibles) < len(huecos):
+        salida(f"  ... y {len(huecos) - len(visibles)} huecos más (modo seco para verlos todos)")
     if not ejecutar:
         salida("modo seco: no se hizo ninguna petición (use --ejecutar)")
         return 0

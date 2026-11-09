@@ -22,7 +22,7 @@ sin tope diario propio; sus cuotas son posteriores al sello (`post_sello`) y la
 regla de publicación las ignora. Esto reemplaza la frase anterior sobre The Odds API
 como fallback. Cuarto y último nivel: TheRundown (cuenta Free; sin cuota de entrada/salida, solo prepartido de tres
 casas de EE. UU.; la licencia Free no permite mostrar datos a usuarios finales y el titular asumió ese riesgo, con caducidad
-de 24 h e interruptor `CUOTAS_THERUNDOWN_MOSTRAR`). Ver `docs/cuotas_cascada_20261109.md`.
+de 24 h e interruptor: archivo `cuotas_therundown_oculto` junto a la caché o `CUOTAS_THERUNDOWN_MOSTRAR=0`). Ver `docs/cuotas_cascada_20261109.md`.
 
 Actualización (2026-09-23): un único FastAPI sirve también la web demo en
 `/` y el panel interno en `/control`; el BFF separado que figura en
