@@ -223,7 +223,7 @@ def test_sin_ninguna_clave_no_hace_nada(entorno, monkeypatch):
     archive, cs, cache = entorno
     out = []
     cr.correr(key="", cache_path=str(cache), salida=out.append, sp_key="", ejecutar=True)
-    assert out == ["sin ODDS_API_RESPALDO_KEY ni SPORTSAPIPRO_KEY: no hay nada que hacer"]
+    assert out == ["sin ODDS_API_RESPALDO_KEY, SPORTSAPIPRO_KEY ni THERUNDOWN_API_KEY: no hay nada que hacer"]
 
 
 def test_reintentos_acotados_no_queman_el_cupo(entorno):

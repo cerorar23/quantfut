@@ -71,3 +71,36 @@ Cron del usuario `qf`: `*/10`, con `flock`, `run.sh python -m qf.ingest.cuotas_r
 `run.sh python -m qf.ingest.cuotas_respaldo_futbol`.
 
 Vuelta atrás: quitar la línea de cron. La API deja de mostrar el respaldo borrando las dos cachés JSON.
+
+## Cuarto nivel: TheRundown (cuenta Free)
+
+Decisión del titular (9-nov-2026): último respaldo cuando PropLine, The Odds API y SportsAPIPro no encuentran la cuota,
+para fútbol, NBA y tenis. Código: `ingest/cuotas_therundown.py` (cliente y traductor), `nivel4_therundown` en
+`cuotas_respaldo.py` (NBA y tenis) y `nivel4` en `cuotas_respaldo_futbol.py`. Guía: https://docs.therundown.io.
+
+Medido el 9-nov-2026 con la clave del titular:
+- Base `https://therundown.io/api/v2`, cabecera `X-TheRundown-Key`. `GET /sports/{id}/events/{AAAA-MM-DD}?market_ids=1,2,3&main_line=true` (fecha UTC).
+- Plan Free: 20.000 puntos al día y 200.000 al mes, 1 petición por segundo, 5 minutos de retraso, **solo tres casas de
+  EE. UU.** (`betmgm,fanduel,draftkings`), **solo partido completo**, sin WebSocket.
+- **Sin cuota de entrada ni de salida**: `openers` y `closing` (y todo el histórico) responden 403 «requires a Starter plan
+  or higher». Tampoco hay props de jugador (Starter). Solo existe el prepartido de ahora, así que su recepción es
+  posterior al sello: `post_sello`, la regla de publicación la ignora.
+- Costes: 8 eventos NBA con `main_line=true` = 147 puntos; **sin `main_line` = 3.495** (todas las líneas alternativas). Por eso
+  solo se encuentra una línea si es la principal de la casa. Con la reserva de 2.000 puntos el nivel 4 se detiene.
+- Cuotas en formato americano (se convierten a decimal); `0.0001` es «fuera del tablero». Participantes: equipos
+  `TYPE_TEAM` con nombre completo; Over/Under como `TYPE_RESULT`; en fútbol el 1X2 es el mercado 1 con tres participantes
+  (la forma del empate NO está verificada: ese día no había partidos de las ligas del catálogo).
+- Sports: NBA 4; tenis ATP 38 y WTA 39 (se prueba ATP y luego WTA); fútbol por `leagues.odds_api_key` → 11 EPL, 12 Ligue 1,
+  13 Bundesliga, 14 LaLiga, 15 Serie A, 16 Champions, 17 Europa League, 34 Liga MX, 10 MLS. Resto de ligas: sin cobertura.
+- Mercados traducidos: ganador/1X2, totales, hándicap (tenis y fútbol). Sin BTTS, doble oportunidad, córners, tarjetas ni props.
+
+**Licencia** (docs.therundown.io/licensing-and-attribution): Free es «uso interno o personal», **no permite mostrar los datos a
+usuarios finales**, limita el almacenamiento a 24 h y excluye backtesting/entrenamiento. El titular decidió mostrarlas
+igualmente (9-nov-2026) y asumió el riesgo (TheRundown podría revocar la clave). Mitigaciones: no se archiva nada (ni
+originales) y las entradas caducan a las 24 h (se podan al escribir y no se sirven al leer); para ocultarlas sin
+reiniciar ni tocar la caché: crear el archivo `cuotas_therundown_oculto` en el volumen de la caché
+(`/srv/quantfut/artifacts/`; actúa en ≤5 s y se revierte borrándolo) o definir `CUOTAS_THERUNDOWN_MOSTRAR=0` (esto último exige
+recrear el contenedor de la API y perdería los archivos copiados con `docker cp`). Atribución («Data provided by TheRundown») solo la exige el plan que permite mostrar.
+
+Operación: la clave `THERUNDOWN_API_KEY` va en `~/quantfut/releases/cuotas-cascada-20261109/therundown.env` (modo 600), aparte
+del `.env` general; reserva `CUOTAS_THERUNDOWN_RESERVA` (2.000). Pausa del nivel 4: dejar la clave vacía en ese archivo.

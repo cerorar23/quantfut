@@ -91,6 +91,10 @@ class Settings:
     # el once de fútbol y tenis. 0 = sin tope propio (decisión del titular, 9-nov-2026); el 429 del proveedor lo para.
     sportsapipro_key: str | None = os.getenv("SPORTSAPIPRO_KEY") or None
     cuotas_sportsapipro_diario: int = int(os.getenv("CUOTAS_SPORTSAPIPRO_DIARIO", "0"))
+    # Cuarto nivel (cuotas_therundown.py): cuenta Free, 20.000 puntos/día. `therundown_key` solo la usa el ejecutor del
+    # respaldo; la reserva son los puntos diarios que no se tocan. Mostrar o no se lee de `CUOTAS_THERUNDOWN_MOSTRAR`.
+    therundown_key: str | None = os.getenv("THERUNDOWN_API_KEY") or None
+    cuotas_therundown_reserva: int = int(os.getenv("CUOTAS_THERUNDOWN_RESERVA", "2000"))
 
     # Media vida del decaimiento temporal, en días: un partido de hace 270 días
     # pesa la mitad que uno de hoy. Elegida por walk-forward en la auditoría del
