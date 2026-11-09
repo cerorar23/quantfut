@@ -28,5 +28,10 @@ def _sin_red_hacia_nba_api(monkeypatch):
 
     nba_datos.vaciar_cache()
     monkeypatch.setattr(nba_datos, "_pedir", vacio)
+    # Igual con la base en las páginas de fútbol: sin datos (agenda vacía) y sin tocar Postgres.
+    from qf.api import futbol_datos
+    monkeypatch.setattr(futbol_datos, "secciones_activas", lambda: {"estadisticas": True, "h2h": True})
+    monkeypatch.setattr(futbol_datos, "agenda_dia", lambda d: [])
+    monkeypatch.setattr(futbol_datos, "pronosticos", lambda ids: {})
     yield
     nba_datos.vaciar_cache()

@@ -1,0 +1,33 @@
+<h1>{{ p.titulo }}</h1>
+<p class="entradilla">Probabilidad de victoria local, empate y victoria visitante de cada partido de las ligas que seguimos. El pronóstico se genera antes del partido y después se muestra si se cumplió, tanto si acertó como si falló.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>En los partidos de los últimos días con resultado, el resultado más probable se cumplió en <strong>{{ c.aciertos }} de {{ c.juzgados }}</strong>. Son pocos partidos: no es una medida de calidad. El historial completo está en <a href="/historial/">el historial</a>.</p></div>
+{% endif %}
+{% if not c.con_pronostico %}
+<div class="aviso"><p>Ahora mismo no hay partidos con pronóstico generado. Cada partido tiene su pronóstico desde la corrida diaria de las 03:00 de México (09:00 UTC) del día en que se juega, y su página aparece en ese momento.</p></div>
+{% endif %}
+{% for dia in c.dias %}
+<h2>{{ 'Partidos del' if dia.proximo else 'Resultados del' }} <time datetime="{{ dia.iso }}">{{ dia.largo }}</time></h2>
+{% for liga, filas in dia.ligas %}
+<h3>{{ liga }}</h3>
+<ul class="lista-partidos">
+{% for f in filas %}
+<li>
+{% if f.url %}<a href="{{ f.url }}">{{ f.local }} vs {{ f.visitante }}</a>{% else %}{{ f.local }} vs {{ f.visitante }}{% endif %}
+{% if f.marcador %}
+ — final {{ f.local }} {{ f.marcador[0] }}, {{ f.visitante }} {{ f.marcador[1] }}
+ {% if f.veredicto %}<span class="{{ '' if f.veredicto.acerto else 'fallo' }}">· {{ 'el resultado más probable se cumplió' if f.veredicto.acerto else 'el resultado más probable no se cumplió' }}</span>{% endif %}
+{% elif f.estado == 'aplazado' %}
+ — aplazado
+{% elif f.url %}
+ — {{ f.local }} {{ f.p_local }}, empate {{ f.p_empate }}, {{ f.visitante }} {{ f.p_visit }}
+{% else %}
+ — pronóstico pendiente de generar
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+{% endfor %}
+<h2>Cómo se calculan</h2>
+<p>Las probabilidades salen de un modelo estadístico propio y se comparan con el mercado. La <a href="/metodologia/">metodología</a> explica qué mide, qué no mide y cuánto ha acertado. Incluso con un 80 % de probabilidad, uno de cada cinco partidos sale al revés: ninguna cifra de esta página es una garantía.</p>

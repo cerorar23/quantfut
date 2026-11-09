@@ -863,7 +863,9 @@ function estadoPartido(p) {
   return { main: timeLabel(kickoffOf(p)), tag: '', kind: '' };
 }
 
-function selectedAgendaMatch(list) {
+function selectedAgendaMatch(list, ready = true) {
+  // Mientras carga la agenda la lista está vacía: no se borra el partido que pidió la URL (/futbol/<liga>/<partido>/).
+  if (!ready) return state.statsMatch;
   if (list.some(p => p.match_id === state.statsMatch)) return state.statsMatch;
   const next = list.find(p => p.estado === 'scheduled' && kickoffOf(p) > now) || list[0];
   return next ? next.match_id : null;
@@ -1012,7 +1014,7 @@ function statsView() {
   const leagues = [...new Map(all.map(p => [p.liga.id, p.liga.nombre])).entries()];
   if (state.statsLeague !== 'Todas' && !leagues.some(([id]) => id === state.statsLeague)) state.statsLeague = 'Todas';
   const list = all.filter(p => state.statsLeague === 'Todas' || p.liga.id === state.statsLeague);
-  state.statsMatch = selectedAgendaMatch(list);
+  state.statsMatch = selectedAgendaMatch(list, agenda.status === 'ready');
   const dayIndex = STATS_DAYS.indexOf(state.statsDay);
   const byLeague = leagues.filter(([id]) => state.statsLeague === 'Todas' || id === state.statsLeague)
     .map(([id, name]) => [name, list.filter(p => p.liga.id === id)]);
@@ -1095,7 +1097,7 @@ function windowView() {
   const leagues = [...new Map(all.map(p => [p.liga.id, p.liga.nombre])).entries()];
   if (state.statsLeague !== 'Todas' && !leagues.some(([id]) => id === state.statsLeague)) state.statsLeague = 'Todas';
   const list = all.filter(p => state.statsLeague === 'Todas' || p.liga.id === state.statsLeague);
-  state.statsMatch = selectedAgendaMatch(list);
+  state.statsMatch = selectedAgendaMatch(list, agenda.status === 'ready');
   winResetScroll = state.winLast !== state.statsMatch;
   if (winResetScroll) state.winFam = 'Todos';
   state.winLast = state.statsMatch;
