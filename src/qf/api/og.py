@@ -13,6 +13,7 @@ Pillow no viene en la imagen actual de producción. Sin él, `disponible()` es F
 """
 from __future__ import annotations
 
+import importlib.util
 import io
 import logging
 import os
@@ -41,11 +42,12 @@ _ultima_limpieza = 0.0
 
 
 def disponible() -> bool:
+    """¿Hay Pillow y la fuente? Se mira en cada petición: instalar o desinstalar Pillow enciende o apaga las tarjetas."""
     try:
-        import PIL  # noqa: F401
-    except ImportError:
-        return False
-    return FUENTE.is_file()
+        hay = importlib.util.find_spec("PIL") is not None
+    except (ImportError, ValueError):
+        hay = False
+    return hay and FUENTE.is_file()
 
 
 @dataclass
@@ -134,7 +136,6 @@ def _barra(d, barra: list[tuple[str, float]]) -> None:
         ancho = (x1 - x0) * p / total
         d.rectangle((round(x), y0, round(x + ancho) - (3 if i < len(barra) - 1 else 0), y1), fill=colores[i % 3])
         x += ancho
-    f = _fuente(30)
     tam = len(barra)
     for i, (nombre, p) in enumerate(barra):
         texto = f"{nombre} {round(p / total * 100)} %"
