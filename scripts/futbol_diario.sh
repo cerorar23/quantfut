@@ -13,7 +13,7 @@ SINCE=$(date -u -d '4 days ago' +%F)
 echo "== $(date -u +%FT%TZ) inicio desde $SINCE"
 MODULO=qf.ingest.futbol_identidad nice -n 10 "$D/futbol_correr.sh" "" --aplicar 2>&1 | tail -1 | cut -c1-300
 docker exec -i quantfut-db-1 psql -U qf -d quantfut -X -At -F ' | '   -c "select 'fotmob', * from futbol.cargar_fotmob(now() - interval '3 days')"
-for LIGA in it.serie_a gb.premier_league es.laliga fr.ligue_1 de.bundesliga nl.eredivisie pt.primeira br.serie_a mx.liga_mx ar.primera; do
+for LIGA in it.serie_a gb.premier_league es.laliga fr.ligue_1 de.bundesliga nl.eredivisie pt.primeira br.serie_a mx.liga_mx ar.primera us.mls gb.championship de.bundesliga2 tr.super_lig no.eliteserien es.laliga2 it.serie_b se.allsvenskan ch.super_league eu.ucl eu.uel; do
   nice -n 10 "$D/futbol_correr.sh" $LIGA --since "$SINCE" --aplicar 2>&1 | tail -1 | cut -c1-400
 done
 docker exec -i quantfut-db-1 psql -U qf -d quantfut -X -At -F ' | '   -c "select 'clima', futbol.cargar_clima()" -c "select 'estadio', futbol.cargar_estadio()"

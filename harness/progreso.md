@@ -1,3 +1,16 @@
+## 9-nov-2026 · Ligas nuevas de SofaScore: carga, entrenamiento y backtest (rama `futbol/ligas-nuevas`, sin desplegar)
+
+- Subidas al VPS 54.399 partidos (6 conexiones) y cargadas en `futbol.dato` las 11 competiciones nuevas. Las copas necesitan el
+  snapshot con los equipos de todas las ligas y el calendario `last_*` (MLS y copas no tienen `round_*`).
+- Decisión: criterios de aprobación fijados antes de medir (docstring de `backtest_ligas_nuevas.py`) y decide la variante `pit`
+  (xG solo desde su recepción real). Aprueban Turquía, LaLiga 2, Serie B y Allsvenskan; Noruega y Suiza quedan en observación
+  (C3 por 0,003); Championship y 2. Bundesliga no mejoran a la frecuencia. El hueco permanente de xG de Serie B/LaLiga 2 no daña.
+- Hallazgo ajeno a las ligas nuevas: el Dixon-Coles crudo subestima goles (−0,10 a −0,29 por partido en 11 de 21 competiciones),
+  y `over`/`ambos marcan` salen 3-9 puntos bajos. Pendiente de tarea propia antes de mostrarlos como alta probabilidad.
+- Publicadas el mismo día, con el visto bueno del titular: db/105, db/106 y db/107 (alias de PropLine que faltaban: sin ellos el
+  Fenerbahçe y el Malmö no tenían partidos), modelo `2026.11.09-063559` activo. Registro y vuelta atrás en DEPLOYS.md. Primeros
+  pronósticos: job diario del 10-nov 09:00 UTC. Pendiente: scraper SofaScore del VPS para las 4 ligas y el sesgo de goles.
+
 ﻿# Registro de decisiones â€” QuantFut
 
 ## 2026-11-06 Â· Parley v2.1: tope por mercado, cuatro targets a la vez y Â«solo referenciaÂ» sin calibraciÃ³n

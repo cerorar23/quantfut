@@ -97,6 +97,14 @@ def test_consulta_de_snapshot_rechaza_ligas_raras():
         snapshot_sql("it.serie_a'; DROP TABLE matches; --", '2023-08-01')
 
 
+def test_snapshot_de_una_copa_trae_los_equipos_de_todas_las_ligas():
+    sql = snapshot_sql('eu.ucl', '2023-08-01')
+    assert "league_id = 'eu.ucl' OR (SELECT cross_league FROM leagues WHERE league_id = 'eu.ucl')" in sql
+    assert sql.count("OR (SELECT cross_league FROM leagues WHERE league_id = 'eu.ucl')") == 2
+    # los partidos siguen limitados a la propia competición
+    assert "FROM matches WHERE league_id = 'eu.ucl' AND" in sql
+
+
 def test_apply_import_de_apify_no_acepta_el_proveedor_local(tmp_path):
     normalized, _, out, _ = prepare(tmp_path, [row()], snapshot())
     with pytest.raises(ValueError, match='unsupported_provider'):

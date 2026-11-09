@@ -12,6 +12,8 @@ MONTAJES=""
 for f in futbol_sofascore futbol_identidad sofascore_local sofascore_history fotmob_import; do
   [ -f "$D/src/$f.py" ] && MONTAJES="$MONTAJES -v $D/src/$f.py:/app/src/qf/ingest/$f.py:ro"
 done
+# La política de ligas retiradas (8-nov-2026, db/105) cuelga de qf/, no de qf/ingest/.
+[ -f "$D/src/league_policy.py" ] && MONTAJES="$MONTAJES -v $D/src/league_policy.py:/app/src/qf/league_policy.py:ro"
 exec docker run --rm --network quantfut_default --entrypoint python -e PG_DSN \
   -v "$HOME/sofascore-scraper/data/v3:/archive:ro" -v "$D/work:/work" $MONTAJES \
   "$IMAGEN" -m "${MODULO:-qf.ingest.futbol_sofascore}" --archive /archive \

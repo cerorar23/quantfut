@@ -117,7 +117,9 @@ def finished_event_ids(root, tournaments, since=None):
     ids = []
     for tournament in ([tournaments] if isinstance(tournaments, int) else tournaments):
         seasons = Path(root) / 'tournaments' / str(tournament) / 'seasons'
-        for schedule in sorted(seasons.glob('*/schedule/round_*.json.gz')):
+        # Casi todas las ligas se guardan por jornada (`round_*`); MLS y las copas, paginadas hacia atrás (`last_*`).
+        # Un partido puede salir en ambos: el conjunto final no lo repite.
+        for schedule in sorted([*seasons.glob('*/schedule/round_*.json.gz'), *seasons.glob('*/schedule/last_*.json.gz')]):
             for event in json.loads(gzip.decompress(schedule.read_bytes())).get('events') or []:
                 if (event.get('status') or {}).get('type') != 'finished':
                     continue
@@ -159,9 +161,9 @@ SELECT json_build_object(
               FROM leagues WHERE league_id = '{league}'),
   'teams', (SELECT json_agg(json_build_object('team_id', team_id, 'league_id', league_id,
               'canonical_name', canonical_name, 'display_name', display_name))
-            FROM teams WHERE league_id = '{league}'),
+            FROM teams WHERE league_id = '{league}' OR {cross}),
   'aliases', (SELECT json_agg(json_build_object('team_id', a.team_id, 'alias', a.alias))
-              FROM team_aliases a JOIN teams t USING (team_id) WHERE t.league_id = '{league}'),
+              FROM team_aliases a JOIN teams t USING (team_id) WHERE t.league_id = '{league}' OR {cross}),
   'matches', (SELECT json_agg(json_build_object('match_id', match_id, 'league_id', league_id,
               'kickoff_utc', kickoff_utc, 'home_team_id', home_team_id, 'away_team_id', away_team_id,
               'status', status, 'home_goals', home_goals, 'away_goals', away_goals,
@@ -175,7 +177,10 @@ def snapshot_sql(league, since):
     if not league.replace('.', '').replace('_', '').isalnum():
         raise ValueError('invalid_league')
     timestamp(since + 'T00:00:00+00:00' if len(since) == 10 else since)  # valida la fecha
-    return SNAPSHOT_SQL.format(league=league, since=since).strip()
+    # En una copa (cross_league) los clubes pertenecen a su liga doméstica: se traen todos los equipos y alias; el
+    # emparejamiento sigue aceptando solo coincidencia exacta de nombre y nunca crea clubes.
+    cross = "(SELECT cross_league FROM leagues WHERE league_id = '%s')" % league
+    return SNAPSHOT_SQL.format(league=league, since=since, cross=cross).strip()
 
 
 def verify_plan(plan_path, normalized_path, snapshot_path):
