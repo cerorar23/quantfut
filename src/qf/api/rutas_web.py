@@ -197,12 +197,16 @@ def _meta_imagen(imagen: tuple[str, str] | None) -> str:
             f'<meta name="twitter:image:alt" content="{escape(alt)}" />')
 
 
-def _head_de(titulo: str, descripcion: str, url: str, jsonld: list[dict], imagen: tuple[str, str] | None = None) -> str:
+ROBOTS = "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+
+
+def _head_de(titulo: str, descripcion: str, url: str, jsonld: list[dict], imagen: tuple[str, str] | None = None,
+             robots: str = ROBOTS) -> str:
     ld = "".join(f'<script type="application/ld+json">{_script_seguro(b)}</script>' for b in jsonld)
     return (
         f'<meta name="description" content="{escape(descripcion)}" />'
         f'<link rel="canonical" href="{escape(url)}" />'
-        '<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />'
+        f'<meta name="robots" content="{escape(robots)}" />'
         '<meta property="og:type" content="website" /><meta property="og:site_name" content="QuantFut" />'
         '<meta property="og:locale" content="es_ES" />'
         f'<meta property="og:url" content="{escape(url)}" /><meta property="og:title" content="{escape(titulo)}" />'
@@ -259,7 +263,7 @@ def render(sec: Seccion, base: str | None = None, index: str | None = None) -> s
 
 def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld: list[dict], principal: str,
                   datos: dict[str, str] | None = None, base: str | None = None, index: str | None = None,
-                  imagen: tuple[str, str] | None = None) -> str:
+                  imagen: tuple[str, str] | None = None, robots: str = ROBOTS) -> str:
     """Página con URL propia que no es una sección fija (p. ej. un partido de NBA): mismo shell de la SPA, con su
     `<head>`, su JSON-LD y su contenido en el HTML inicial. `datos` son atributos `data-*` del `<html>` que la SPA
     lee al arrancar (sin que el servidor decida nada del diseño)."""
@@ -267,7 +271,7 @@ def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld
     base = seo.base_url() if base is None else base
     atributos = "".join(f' data-{k}="{escape(str(v))}"' for k, v in (datos or {}).items())
     return _adaptar(html, titulo=f"{titulo} | QuantFut", ruta=ruta,
-                    head=_head_de(f"{titulo} | QuantFut", descripcion, base + path, jsonld, imagen),
+                    head=_head_de(f"{titulo} | QuantFut", descripcion, base + path, jsonld, imagen, robots),
                     inicial=marco_inicial(principal), atributos=atributos)
 
 

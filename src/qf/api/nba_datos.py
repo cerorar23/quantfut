@@ -24,8 +24,9 @@ log = logging.getLogger("qf.nba_datos")
 TIMEOUT_S = 4.0
 TTL_VIVO_S = 60          # día en curso o futuro: el sello y el marcador cambian
 TTL_PASADO_S = 600       # días ya cerrados
+TTL_ANTIGUO_S = 6 * 3600  # días de hace más de 3: ya no cambian (la ventana de los equipos los pide todos)
 STALE_MAX_S = 3600       # un dato caducado pero de menos de 1 h se sirve YA y se renueva en segundo plano
-MAX_ENTRADAS = 96
+MAX_ENTRADAS = 192
 ET = ZoneInfo("America/New_York")
 SLUG_PARTIDO = re.compile(r"^(?P<local>[a-z0-9]+(?:-[a-z0-9]+)*)-vs-(?P<visit>[a-z0-9]+(?:-[a-z0-9]+)*)-(?P<fecha>\d{4}-\d{2}-\d{2})$")
 
@@ -113,9 +114,9 @@ def vaciar_cache() -> None:
 
 def cartelera(fecha: date, hoy: date | None = None) -> list[dict]:
     """Partidos de un día (fecha ET del partido). Días cerrados se guardan más tiempo."""
-    cerrado = fecha < (hoy or hoy_et()) - timedelta(days=1)
-    datos = _con_cache(f"cartelera:{fecha.isoformat()}", TTL_PASADO_S if cerrado else TTL_VIVO_S,
-                       "/nba/v1/cartelera", {"fecha": fecha.isoformat()})
+    hoy = hoy or hoy_et()
+    ttl = TTL_ANTIGUO_S if fecha < hoy - timedelta(days=3) else TTL_PASADO_S if fecha < hoy - timedelta(days=1) else TTL_VIVO_S
+    datos = _con_cache(f"cartelera:{fecha.isoformat()}", ttl, "/nba/v1/cartelera", {"fecha": fecha.isoformat()})
     partidos = datos.get("partidos") if isinstance(datos, dict) else None
     if not isinstance(partidos, list):
         raise NbaNoDisponible("respuesta de cartelera sin lista de partidos")
