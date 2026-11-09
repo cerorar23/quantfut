@@ -9,7 +9,11 @@
   y `over`/`ambos marcan` salen 3-9 puntos bajos. Pendiente de tarea propia antes de mostrarlos como alta probabilidad.
 - Publicadas el mismo día, con el visto bueno del titular: db/105, db/106 y db/107 (alias de PropLine que faltaban: sin ellos el
   Fenerbahçe y el Malmö no tenían partidos), modelo `2026.11.09-063559` activo. Registro y vuelta atrás en DEPLOYS.md. Primeros
-  pronósticos: job diario del 10-nov 09:00 UTC. Pendiente: scraper SofaScore del VPS para las 4 ligas y el sesgo de goles.
+  pronósticos: job diario del 10-nov 09:00 UTC. Pendiente: scraper SofaScore del VPS para las 4 ligas.
+- Sesgo de goles del Dixon-Coles: DECISIÓN DEL TITULAR (9-nov): dejar la corrección APAGADA. Se midieron dos candidatos con criterios fijados antes
+  (A en muestra, B fuera de muestra) y ninguno cumple N1; el beneficio en Brier es ≈ 0 y la causa dominante es un cambio de régimen (arranque
+  2026/27: +0,3 goles por partido), no un sesgo estructural. `DC_NIVEL_HALFLIFE_DAYS = 0`. Para no reabrirlo sin datos nuevos: si el sesgo
+  ago-nov se normaliza solo, el problema desaparece; si persiste meses, reevaluar con otra ventana. Detalle: docs/correccion_nivel_goles_20261109.md.
 
 ﻿# Registro de decisiones â€” QuantFut
 
