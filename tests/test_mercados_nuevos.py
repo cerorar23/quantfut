@@ -31,10 +31,22 @@ def test_la_cuota_sale_del_cierre_y_nunca_de_la_fila_calificada():
     res = [dict(campos, bookmaker="bet365", name="Over", price_american=-2000, resolution="won"),      # precio en juego
            dict(campos, bookmaker="bet365", name="Under", price_american=900, resolution="lost")]
     filas = mn.filas_evento(cierre, res)
-    assert {f["bookmaker"] for f in filas} == {"bet365", "pinnacle", "_calificacion"}
+    assert {f["bookmaker"] for f in filas} == {"bet365", "pinnacle"}
+    assert {(f["name"], f["resolution"]) for f in filas} == {("Over", "won"), ("Under", "lost")}
     a, b = _regs(filas)
     assert (a["gana"], b["gana"], a["casas"]) == (1, 0, 2) and abs(a["p"] - 0.5) < 1e-6
     assert a["cuota"] == a["cuota_todas"] == 1 + 100 / 110
+
+
+def test_las_variantes_del_nombre_de_un_equipo_son_el_mismo_contrato():
+    filas = []
+    for casa, loc, vis in (("bet365", "Los Angeles Lakers", "Detroit Pistons"), ("pinnacle", "Los Angeles Lakers", "Detroit Pistons"),
+                           ("betway", "LA Lakers", "DET Pistons"), ("codere", "Lakers", "Pistons")):
+        filas += [_f(casa, "spreads", loc, -110, "won", 7.5), _f(casa, "spreads", vis, -110, "lost", -7.5)]
+    c = mn.contratos(filas)
+    assert list(c) == [("spreads", "", "", "", "Detroit Pistons", -7.5)]
+    assert len(c[("spreads", "", "", "", "Detroit Pistons", -7.5)]["casas"]) == 4
+    assert [r["gana"] for r in _regs(filas)] == [0, 1]
 
 
 def test_registros_dan_los_dos_lados_con_probabilidades_que_suman_uno():

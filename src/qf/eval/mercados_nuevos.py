@@ -76,16 +76,30 @@ def _linea_media(pt: float | None) -> bool:
     return pt is None or abs(abs(pt) % 1 - 0.5) < 1e-9
 
 
+def _alias(filas: list[dict]) -> dict[str, str]:
+    """Variantes del nombre de un participante entre casas («LA Lakers», «Lakers») → el más usado."""
+    n = Counter(f["name"] for f in filas
+                if f.get("name") and not f.get("description") and f["name"] not in ("Over", "Under", "Yes", "No"))
+    if len(n) <= 2:
+        return {}
+    base = [x for x, _ in n.most_common(2)]
+    fin = lambda x: x.replace(".", "").split()[-1].lower() if x.replace(".", "").split() else ""
+    return {x: b for x in n if x not in base for b in base if fin(x) == fin(b)}
+
+
 def contratos(filas: list[dict], excluidas: frozenset[str] | set[str] = frozenset()) -> dict:
     """Agrupa las filas de un evento en contratos de dos lados.
 
     Clave: (mercado, periodo, equipo, sujeto, primer lado, línea del primer lado).
     Over/Under comparten línea; en un hándicap el segundo lado lleva la línea opuesta.
     """
+    alias = _alias(filas)
     grupos: dict[tuple, list[dict]] = defaultdict(list)
     for f in filas:
         if f.get("redacted") or f.get("bookmaker") in excluidas or not f.get("name"):
             continue
+        if f["name"] in alias and not f.get("description"):
+            f = dict(f, name=alias[f["name"]])
         grupos[(f["bookmaker"], f["market"], f.get("period") or "", f.get("team") or "",
                 f.get("description") or "")].append(f)
     out: dict[tuple, dict] = {}
@@ -116,14 +130,23 @@ MARCAS_FUERA = frozenset({"stale_close", "invalid_price", "pre_kickoff_capture",
 _CONTRATO = ("market", "period", "team", "name", "description", "point")
 
 
-def filas_evento(cierre: list[dict], resultados: list[dict], canonica=lambda casa: casa) -> list[dict]:
-    """Cuotas SOLO del cierre sin marcas; la calificación, de los resultados y sin su cuota."""
-    out = [dict({c: f.get(c) for c in _CONTRATO}, bookmaker=canonica(f["bookmaker"]),
-                price_american=f.get("price_american"), resolution=None)
-           for f in cierre if not MARCAS_FUERA & set(f.get("flags") or ())]
-    out += [dict({c: f.get(c) for c in _CONTRATO}, bookmaker="_calificacion", price_american=None,
-                 resolution=f["resolution"])
-            for f in resultados if f.get("resolution") and not f.get("redacted")]
+def filas_evento(cuotas: list[dict], resultados: list[dict], canonica=lambda casa: casa) -> list[dict]:
+    """Cuotas sin marcas, cada una con la calificación de ESE resultado exacto; nunca la cuota de ``resultados``.
+
+    La calificación se busca por el lado tal como lo escribe la casa (mercado, periodo, equipo,
+    nombre, sujeto, línea): PropLine devuelve los mismos nombres en cuotas y en resultados.
+    """
+    cal: dict[tuple, Counter] = defaultdict(Counter)
+    for f in resultados:
+        if f.get("resolution") and not f.get("redacted"):
+            cal[tuple(f.get(c) for c in _CONTRATO)][f["resolution"]] += 1
+    out = []
+    for f in cuotas:
+        if MARCAS_FUERA & set(f.get("flags") or ()):
+            continue
+        k = tuple(f.get(c) for c in _CONTRATO)
+        out.append(dict(zip(_CONTRATO, k), bookmaker=canonica(f["bookmaker"]), price_american=f.get("price_american"),
+                        resolution=cal[k].most_common(1)[0][0] if k in cal else None))
     return out
 
 
