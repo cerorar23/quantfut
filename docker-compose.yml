@@ -25,7 +25,10 @@ services:
   # credenciales del host, fuera del repo.
   api:
     build: .
-    image: quantfut-api-mobile:8db511e7-mime
+    image: quantfut-api-mobile:snap-20261109
+    # tenis_net: llegar a tenis-db (obligatoria, ver CLAUDE.md). nba_api_red: llegar a nba-api; antes se conectaba
+    # a mano con `docker network connect` y se perdía al recrear el contenedor (DEPLOYS.md, 9-nov).
+    networks: [default, tenis_net, nba_api_red]
     env_file: .env
     depends_on:
       db: {condition: service_healthy}
@@ -36,6 +39,8 @@ services:
       - escudos:/srv/quantfut/escudos:ro
       - /home/qf/.config/quantfut/firebase-backend.json:/run/secrets/quantfut-firebase.json:ro
       - /home/qf/.config/quantfut/google-play.json:/run/secrets/quantfut-play.json:ro
+      - /home/qf/nba-isolated/live13/cohorts:/srv/quantfut/nba_cohorts:ro
+      - /home/qf/quantfut-tenis/data/intake_v1:/srv/quantfut/tenis_sellos:ro
     environment:
       FIREBASE_PROJECT_ID: pronosticos-deportivos-85ffa
       FIREBASE_AUTH_ENABLED: '1'
@@ -46,6 +51,9 @@ services:
       PLAY_RTDN_AUDIENCE: https://pronosticosdeportivos.pro/app/v1/compras/google/rtdn
       PLAY_RTDN_SERVICE_ACCOUNT: quantfut-play@pronosticos-deportivos-85ffa.iam.gserviceaccount.com
       STORE_PURCHASES_ENABLED: '1'
+      NBA_COHORTS_DIR: /srv/quantfut/nba_cohorts
+      TENNIS_SEALED_DIR: /srv/quantfut/tenis_sellos
+      CUOTAS_RESPALDO_CACHE: /srv/quantfut/artifacts/cuotas_respaldo.json
     restart: unless-stopped
 
   worker:
@@ -159,3 +167,9 @@ networks:
   nba_dashboard:
     external: true
     name: nba-dashboard-run69
+  tenis_net:
+    external: true
+    name: tenis-db_tenis-interna
+  nba_api_red:
+    external: true
+    name: nba-api-red

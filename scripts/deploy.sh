@@ -81,7 +81,7 @@ servicio_valido() { case "${1:-}" in api|worker) ;; *) echo "servicio: api o wor
 construir() {  # $1 = servicio. Imagen: quantfut-<servicio>:<commit>. No toca ningún contenedor.
   servicio_valido "${1:-}"; exigir_main_limpio
   sha=$(git rev-parse --short HEAD); dir="releases/$1-$sha"
-  git archive HEAD Dockerfile requirements.txt src frontend | "${SSH[@]}" "mkdir -p ~/quantfut/$dir && tar -x -C ~/quantfut/$dir"
+  git archive HEAD Dockerfile requirements.txt src frontend apps/tenis/src apps/tenis/config | "${SSH[@]}" "mkdir -p ~/quantfut/$dir && tar -x -C ~/quantfut/$dir"
   "${SSH[@]}" "cd ~/quantfut/$dir && docker build -q -t quantfut-$1:$sha ." && echo "imagen quantfut-$1:$sha lista (ensayo y luego desplegar)"
 }
 
