@@ -60,3 +60,42 @@ def test_shadow_exige_clv_y_varias_ligas():
     approved = evaluate_shadow_promotion(report, complete, baseline)
     assert not pending.promote
     assert approved.promote
+
+
+def _datos_calibracion(n=3000, sesgo=0.0, seed=3):
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    p_real = rng.uniform(0.2, 0.8, n)
+    y = (rng.uniform(size=n) < p_real).astype(int)
+    base = np.clip(p_real + sesgo, 0.01, 0.99)
+    return y, p_real, base
+
+
+def test_puerta_calibracion_aprueba_candidato_mejor():
+    from qf.model.promotion import evaluate_calibration_gate
+    y, bueno, malo = _datos_calibracion(sesgo=0.12)
+    ok, motivos, m = evaluate_calibration_gate(y, bueno, malo, replicates=300)
+    assert ok, motivos
+    assert m["gain_ci95"][0] > 0
+
+
+def test_puerta_calibracion_rechaza_empate_y_muestra_corta():
+    from qf.model.promotion import evaluate_calibration_gate
+    y, p, _ = _datos_calibracion()
+    ok, motivos, _ = evaluate_calibration_gate(y, p, p, replicates=300)
+    assert not ok and motivos
+    ok, motivos, _ = evaluate_calibration_gate(y[:50], p[:50], p[:50])
+    assert not ok and "insuficiente" in motivos[0]
+
+
+def test_puerta_calibracion_rechaza_candidato_peor_y_acepta_grupos_y_multiclase():
+    import numpy as np
+    from qf.model.promotion import evaluate_calibration_gate
+    y, bueno, malo = _datos_calibracion(sesgo=0.12)
+    ok, _, _ = evaluate_calibration_gate(y, malo, bueno, groups=np.arange(len(y)) // 10,
+                                         replicates=300)
+    assert not ok
+    p3 = np.tile([0.5, 0.3, 0.2], (600, 1))
+    y3 = np.random.default_rng(1).choice(3, 600, p=[0.5, 0.3, 0.2])
+    _, _, m = evaluate_calibration_gate(y3, p3, np.full((600, 3), 1 / 3), replicates=200)
+    assert m["log_loss_gain"] > 0
