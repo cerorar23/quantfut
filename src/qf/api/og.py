@@ -48,6 +48,18 @@ TEXTOS = {
     "en": {"aviso": "+18 · Statistical estimate, not a guarantee", "pronostico": "FORECAST BEFORE THE MATCH",
            "final": "FINAL", "sep": " ", "acerto": "HIT", "fallo": "MISS", "pct": "{n}%"},
 }
+TEXTOS["pt"] = {"aviso": "+18 · Estimativa estatística, não uma garantia", "pronostico": "PREVISÃO ANTES DO JOGO",
+                "final": "FINAL", "sep": " ", "acerto": "ACERTO", "fallo": "ERRO", "pct": "{n}%"}
+DEPORTES_PT = {"nba": "NBA", "futbol": "FUTEBOL", "tenis": "TÊNIS"}
+TITULOS_PILAR_PT = {"nba": "Previsões da NBA", "futbol": "Previsões de futebol", "tenis": "Previsões de tênis"}
+SUBTITULO_PILAR["pt"] = "Probabilidade de cada jogo, selada antes de acontecer."
+# Segmento de la URL → clave interna del deporte (en portugués la URL dice «futebol»).
+SEGMENTO = {"en": {"nba": "nba", "futbol": "futbol", "tenis": "tenis"},
+            "pt": {"nba": "nba", "futebol": "futbol", "tenis": "tenis"}}
+SEGMENTO_INV = {idioma: {v: k for k, v in mapa.items()} for idioma, mapa in SEGMENTO.items()}
+DEPORTES_IDIOMA = {"en": DEPORTES_EN, "pt": DEPORTES_PT}
+TITULOS_IDIOMA = {"en": TITULOS_PILAR_EN, "pt": TITULOS_PILAR_PT}
+IDIOMAS_OG = ("en", "pt")
 VIDA_DISCO_S = 30 * 24 * 3600
 _ultima_limpieza = 0.0
 
@@ -236,8 +248,17 @@ def url_pilar(deporte: str) -> str | None:
     return f"{seo.base_url()}/og/{deporte}/pilar.jpg" if disponible() else None
 
 
+def url_pilar_idioma(idioma: str, deporte: str) -> str | None:
+    seg = {v: k for k, v in SEGMENTO[idioma].items()}[deporte]
+    return f"{seo.base_url()}/og/{idioma}/{seg}/pilar.jpg" if disponible() else None
+
+
 def url_pilar_en(deporte: str) -> str | None:
-    return f"{seo.base_url()}/og/en/{deporte}/pilar.jpg" if disponible() else None
+    return url_pilar_idioma("en", deporte)
+
+
+def url_pilar_pt(deporte: str) -> str | None:
+    return url_pilar_idioma("pt", deporte)
 
 
 def url_marca() -> str | None:
@@ -261,8 +282,8 @@ def og_marca():
 
 @router.get("/og/{deporte}/{resto:path}", name="og_tarjeta")
 def og_tarjeta(deporte: str, resto: str):
-    if deporte == "en":
-        return _tarjeta_en(resto)
+    if deporte in IDIOMAS_OG:
+        return _tarjeta_idioma(deporte, resto)
     if deporte not in DEPORTES or not disponible():
         raise HTTPException(404)
     if resto == "pilar.jpg":
@@ -289,32 +310,35 @@ def og_tarjeta(deporte: str, resto: str):
     return _respuesta(jpeg(f"{deporte}-{'-'.join(partes)}-{t.estado}", t), "public, max-age=31536000, immutable")
 
 
-def _tarjeta_en(resto: str):
-    """/og/en/{deporte}/… : las mismas tarjetas con textos en inglés. Sin inglés abierto o en apagado, 404."""
+def _tarjeta_idioma(idioma: str, resto: str):
+    """/og/{en|pt}/{deporte}/… : las mismas tarjetas con los textos de ese idioma. Idioma apagado o sin Pillow: 404."""
     from . import idiomas
-    if idiomas.estado("en") == "off" or not disponible():
+    if idiomas.estado(idioma) == "off" or not disponible():
         raise HTTPException(404)
-    dep, _, rest = resto.partition("/")
-    if dep not in DEPORTES_EN:
+    seg, _, rest = resto.partition("/")
+    dep = SEGMENTO[idioma].get(seg)
+    if dep is None:
         raise HTTPException(404)
     if rest == "pilar.jpg":
-        t = Tarjeta("pilar", etiqueta=DEPORTES_EN[dep], titulo=TITULOS_PILAR_EN[dep], subtitulo=SUBTITULO_PILAR["en"], idioma="en")
-        return _respuesta(jpeg(f"en-pilar-{dep}-v1", t), "public, max-age=86400")
+        t = Tarjeta("pilar", etiqueta=DEPORTES_IDIOMA[idioma][dep], titulo=TITULOS_IDIOMA[idioma][dep],
+                    subtitulo=SUBTITULO_PILAR[idioma], idioma=idioma)
+        return _respuesta(jpeg(f"{idioma}-pilar-{dep}-v1", t), "public, max-age=86400")
     m = re.fullmatch(r"(?P<ruta>[a-z0-9][a-z0-9/-]{3,160})-(?P<estado>previa|final)\.jpg", rest)
     if not m:
         raise HTTPException(404)
     partes = m["ruta"].split("/")
     if len(partes) != (1 if dep == "nba" else 2):
         raise HTTPException(404)
-    from . import futbol_en, nba_en, tenis_en
-    modulo = {"nba": nba_en, "futbol": futbol_en, "tenis": tenis_en}[dep]
+    from . import futbol_en, futbol_pt, nba_en, nba_pt, tenis_en, tenis_pt
+    modulo = {"en": {"nba": nba_en, "futbol": futbol_en, "tenis": tenis_en},
+              "pt": {"nba": nba_pt, "futbol": futbol_pt, "tenis": tenis_pt}}[idioma][dep]
     try:
         t = modulo.tarjeta_de_la_url(*partes)
     except HTTPException:
         raise
     except Exception as e:
-        log.warning("og en: datos no disponibles para %s: %s", resto, e)
+        log.warning("og %s: datos no disponibles para %s: %s", idioma, resto, e)
         raise HTTPException(503, headers={"Retry-After": "60", "Cache-Control": "no-store"})
     if t is None or t.estado != m["estado"]:
         raise HTTPException(404)
-    return _respuesta(jpeg(f"en-{dep}-{'-'.join(partes)}-{t.estado}", t), "public, max-age=31536000, immutable")
+    return _respuesta(jpeg(f"{idioma}-{dep}-{'-'.join(partes)}-{t.estado}", t), "public, max-age=31536000, immutable")

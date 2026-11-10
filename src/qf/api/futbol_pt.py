@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import futbol_datos, futbol_paginas, idiomas, paginas, seo
+from . import futbol_datos, futbol_paginas, idiomas, og, paginas, seo
 from .futbol_datos import FutbolNoDisponible
 
 log = logging.getLogger("qf.futbol_pt")
@@ -223,12 +223,12 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
 
 # --- rutas ----------------------------------------------------------------------------------------------
 
-def _responder(plantilla: str, p: SimpleNamespace, url: str, jsonld: list[dict], ruta: str, **ctx) -> HTMLResponse:
+def _responder(plantilla: str, p: SimpleNamespace, url: str, jsonld: list[dict], ruta: str, og_imagen: str | None = None, **ctx) -> HTMLResponse:
     cab = idiomas.puerta("pt")
     cab.setdefault("Cache-Control", "no-cache, must-revalidate")
     cab["Content-Security-Policy"] = paginas.CSP
     cuerpo = _env.get_template(plantilla).render(
-        p=p, url=url, base=seo.base_url(), jsonld=jsonld, paginas=paginas.PAGINAS_PT, og_imagen=None,
+        p=p, url=url, base=seo.base_url(), jsonld=jsonld, paginas=paginas.PAGINAS_PT, og_imagen=og_imagen,
         idiomas_alt=idiomas.selector(ruta), robots=idiomas.robots_de("pt"), **ctx)
     return HTMLResponse(cuerpo, headers=cab)
 
@@ -247,7 +247,7 @@ def pilar():
         c = construir_pilar()
     except FutbolNoDisponible:
         raise _no_disponible()
-    return _responder("pt_futbol_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR, c=c)
+    return _responder("pt_futbol_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR, og_imagen=og.url_pilar_pt("futbol"), c=c)
 
 
 @router.api_route(RUTA_PILAR.rstrip("/"), methods=["GET", "HEAD"], name="pt_futbol_pilar_sin_barra")
@@ -272,7 +272,8 @@ def partido(comp: str, slug: str):
     except FutbolNoDisponible:
         raise _no_disponible()
     c = construir(fila, ficha, secciones)
-    return _responder("pt_futbol_partido.html", c.p, c.url, jsonld_partido(c, seo.base_url()), c.ruta, c=c)
+    imagen = og.url_partido(c.ruta, futbol_paginas.estado_imagen(c))
+    return _responder("pt_futbol_partido.html", c.p, c.url, jsonld_partido(c, seo.base_url()), c.ruta, og_imagen=imagen, c=c)
 
 
 @router.api_route("/pt/futebol/{comp}/{slug}", methods=["GET", "HEAD"], name="pt_futbol_partido_sin_barra")
@@ -282,3 +283,21 @@ def partido_sin_barra(comp: str, slug: str, request: Request):
         raise HTTPException(404)
     return RedirectResponse(f"{seo.base_url()}/pt/futebol/{comp}/{slug}/" + (f"?{request.url.query}" if request.url.query else ""),
                             status_code=301)
+
+
+# --- tarjeta para redes (en portugués) -----------------------------------------------------------
+
+def tarjeta(c: SimpleNamespace) -> "og.Tarjeta":
+    final = futbol_paginas.estado_imagen(c) == "final"
+    return og.Tarjeta("partido", etiqueta="FUTEBOL", local=c.local, visitante=c.visitante,
+                      contexto=f"{c.liga} · {paginas.fecha_larga(c.dia, 'pt')}",
+                      barra=[(c.local, c.probs["home"]), ("Empate", c.probs["draw"]), (c.visitante, c.probs["away"])],
+                      estado=futbol_paginas.estado_imagen(c),
+                      marcador=f"{c.marcador[0]} – {c.marcador[1]}" if final and c.marcador else "",
+                      veredicto=(("acerto" if c.veredicto["acerto"] else "fallo") if final and c.veredicto else None), idioma="pt")
+
+
+def tarjeta_de_la_url(comp: str, slug: str):
+    fila = futbol_datos.buscar_partido(comp, slug)
+    return tarjeta(construir(fila, None, {"estadisticas": False, "h2h": False})) if fila else None
+
