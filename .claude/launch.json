@@ -2,10 +2,96 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "historial-casa-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/0c3550125aaadf4e/8db66685-3aba-4d57-a7ce-055bf339e88e/scratchpad/proxy_historial.mjs"
+      ],
+      "port": 5197
+    },
+    {
       "name": "frontend-demo",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["frontend/server.mjs"],
+      "runtimeArgs": [
+        "frontend/server.mjs"
+      ],
       "port": 5173
+    },
+    {
+      "name": "maqueta-ventana-unica",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5180",
+        "--directory",
+        "frontend"
+      ],
+      "port": 5180
+    },
+    {
+      "name": "ventana-unica-real",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/C--Users-huye-Documents-apuesta-proyec/5b3c7de4-cb23-4953-947d-a9b1c1ca222e/scratchpad/proxy_preview.mjs"
+      ],
+      "port": 5190
+    },
+    {
+      "name": "planes-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/C--Users-huye-Documents-apuesta-proyec/21e1e91a-4f16-4d40-9444-0391e831d5d1/scratchpad/proxy_planes.mjs"
+      ],
+      "port": 5196
+    },
+    {
+      "name": "encabezado-unico-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/Documents/qf-encabezado-unico/frontend/server.mjs"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "nba-estadisticas-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/C--Users-huye-Documents-apuesta-proyec/3436ccd3-d895-4e03-b37f-113c0a9848b2/scratchpad/preview_nba.mjs"
+      ],
+      "port": 5191
+    },
+    {
+      "name": "conversion-prod-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/C--Users-huye-Documents-apuesta-proyec/85b4cdad-218d-4837-99d8-3f80728c9203/scratchpad/proxy_conversion_prod.mjs"
+      ],
+      "port": 5202
+    },
+    {
+      "name": "conversion-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/C--Users-huye-Documents-apuesta-proyec/85b4cdad-218d-4837-99d8-3f80728c9203/scratchpad/proxy_conversion.mjs"
+      ],
+      "port": 5201
+    },
+    {
+      "name": "recarga-silenciosa-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/1aaf389a93e4c07f/7e5b6472-7280-4dbf-bfff-760447b4361e/scratchpad/proxy_recarga.mjs"
+      ],
+      "port": 5220
+    },
+    {
+      "name": "nba-v2-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/huye/AppData/Local/Temp/claude/C--Users-huye-Documents-apuesta-proyec/13fe0f6a-dbca-47ab-9ef1-f2d78dba2dc3/scratchpad/proxy_nba_v2.mjs"
+      ],
+      "port": 5210
     }
   ]
 }
