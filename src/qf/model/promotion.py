@@ -189,3 +189,88 @@ def evaluate_shadow_promotion(report: dict, clv: dict | None = None,
         reasons=tuple(reasons or ["Supera RPS, log-loss, calibración, ligas y CLV"]),
         checks=checks,
     )
+
+
+# --- Puerta de calibración (T2, 2026-11-09) -----------------------------------
+# Walsh y Joshi (2024) midieron que elegir por calibración rinde más que elegir
+# por acierto. Esta puerta sirve a los tres deportes: recibe probabilidades por
+# fila, no métricas ya agregadas, para poder poner un intervalo a la diferencia.
+CAL_MIN_N = 300
+CAL_BOOTSTRAP = 2000
+CAL_ECE_BINS = 10
+
+
+def _perdida_por_fila(y, p):
+    """-log p del resultado ocurrido. `p` (n,) es P(y=1); `p` (n,k), y = clase."""
+    import numpy as np
+    y = np.asarray(y)
+    p = np.clip(np.asarray(p, dtype=float), 1e-12, 1 - 1e-12)
+    if p.ndim == 1:
+        return -np.where(y == 1, np.log(p), np.log1p(-p))
+    return -np.log(p[np.arange(len(y)), y.astype(int)])
+
+
+def calibration_error(y, p, bins: int = CAL_ECE_BINS) -> float:
+    """ECE de la etiqueta más probable, en `bins` tramos de igual ancho."""
+    import numpy as np
+    y = np.asarray(y)
+    p = np.asarray(p, dtype=float)
+    if p.ndim == 1:
+        conf, hit = np.where(p >= 0.5, p, 1 - p), (y == 1) == (p >= 0.5)
+    else:
+        conf, hit = p.max(axis=1), p.argmax(axis=1) == y.astype(int)
+    idx = np.minimum((conf * bins).astype(int), bins - 1)
+    ece = 0.0
+    for b in range(bins):
+        m = idx == b
+        if m.any():
+            ece += m.mean() * abs(float(hit[m].mean()) - float(conf[m].mean()))
+    return float(ece)
+
+
+def evaluate_calibration_gate(y, p_candidate, p_baseline, groups=None, *,
+                              min_n: int = CAL_MIN_N, replicates: int = CAL_BOOTSTRAP,
+                              seed: int = 7) -> tuple[bool, list[str], dict]:
+    """
+    ¿El candidato calibra mejor que la base sobre las MISMAS filas?
+
+    Exige muestra mínima, log-loss con el intervalo del 95 % de la mejora
+    ENTERO por encima de cero y ECE no peor. Con `groups` (semana, jornada) el
+    bootstrap remuestrea grupos enteros, porque las filas de un día no son
+    independientes. Devuelve (aprobado, motivos, medidas).
+    """
+    import numpy as np
+    y = np.asarray(y)
+    n = len(y)
+    ll_c, ll_b = _perdida_por_fila(y, p_candidate), _perdida_por_fila(y, p_baseline)
+    mejora = ll_b - ll_c                       # > 0: el candidato pierde menos
+    ece_c = calibration_error(y, p_candidate)
+    ece_b = calibration_error(y, p_baseline)
+    medidas = {"n": n, "log_loss_candidate": float(ll_c.mean()),
+               "log_loss_baseline": float(ll_b.mean()),
+               "ece_candidate": ece_c, "ece_baseline": ece_b}
+    if n < min_n:
+        return False, [f"Muestra insuficiente para calibración ({n} < {min_n})"], medidas
+
+    rng = np.random.default_rng(seed)
+    if groups is None:
+        medias = [mejora[rng.integers(0, n, n)].mean() for _ in range(replicates)]
+    else:
+        _, inv = np.unique(np.asarray(groups), return_inverse=True)
+        k = inv.max() + 1
+        suma = np.bincount(inv, weights=mejora, minlength=k)
+        cuenta = np.bincount(inv, minlength=k)
+        medias = []
+        for _ in range(replicates):
+            s = rng.integers(0, k, k)
+            medias.append(suma[s].sum() / cuenta[s].sum())
+    lo, hi = (float(v) for v in np.percentile(medias, [2.5, 97.5]))
+    medidas.update({"log_loss_gain": float(mejora.mean()), "gain_ci95": [lo, hi]})
+
+    motivos = []
+    if lo <= 0.0:
+        motivos.append("La mejora de log-loss no está entera por encima de cero: "
+                       f"[{lo:.5f}, {hi:.5f}]")
+    if ece_c > ece_b:
+        motivos.append(f"Calibración peor que la base (ECE {ece_c:.4f} > {ece_b:.4f})")
+    return not motivos, motivos, medidas
