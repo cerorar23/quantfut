@@ -7,11 +7,13 @@ Actualizada el **2026-11-10**. Antes tenía 105 líneas con calendario y estados
 (decisión, credencial, pago) o de algo que aún no ha ocurrido (fecha, muestra). Responsable: **Tú** = titular; **Claude** = repo o servidor
 (con ensayo y registro en `DEPLOYS.md`). Fuentes vivas de fútbol: ver `CLAUDE.md` y la memoria del proyecto.
 
-## 0. Orden del repositorio (10-nov-2026) — en curso
-- [ ] **Tú:** revisar y fusionar el PR de rescate (CLAUDE.md, auditoría VPS, entradas de DEPLOYS del 8-nov, frontend alineado con producción) y el PR de tenis (`tenis/rediseno-f1`, solo medición).
-- [ ] **Claude:** pasar a `DEPLOYS.md` las entradas de `docs/rescate_deploys_pendientes_20261110.md` que sigan vigentes.
-- [ ] **Claude:** producción sirve `app.js`, `index.html` y `conversion-views.js` que `main` no tenía; tras fusionar el PR de rescate, `main` = producción. `parley_v2_datos.py` de `main` es más nuevo que el del servidor (trae `resumen_publico_v2`): desplegarlo con el flujo de `DEPLOYS.md`.
-- [ ] **Claude:** decidir qué hacer con 7 fotos de worktrees viejos (refs `rescate/wt-*`, base 15–31 oct; sus migraciones 085–089 chocan con las de `main`) y con las ramas locales `app/mercados-nba-seis`, `app/version-1-1-0-8`, `web/tenis-cuota-referencia`, `tarjetas-lineas-seguimiento` y `feature/escalera-redesign-2026` (frontend del 7-nov ya desplegado vía el PR de rescate). Respaldo: `qf-respaldo-carpeta-20261110/ramas_pendientes_20261110.bundle` (en Documents).
+## 0. Orden del repositorio (10-nov-2026) — hecho, con un resto
+- [x] Rescate fusionado (PR #341, #342, #343, #344): `main` = producción. API desplegada desde `main` con la imagen `quantfut-api:015f78c1`; entradas del 8-nov y del 10-nov pasadas a `DEPLOYS.md`.
+- [x] 279 ramas y 81 worktrees acumulados reducidos a `main` y la rama de trabajo; el resto está en `C:/Users/huye/Documents/qf-respaldo-carpeta-20261110/todo_pendiente_20261110.bundle` (45 MB, 25 referencias) y en las listas `ramas_borradas.txt` y `worktrees_quitados.txt` de esa carpeta. Copia el `.bundle` fuera de este disco si quieres una segunda copia.
+- [ ] **Tú:** decidir si se borran 7 worktrees viejos con cambios sin confirmar (`.claude/worktrees/{escalera-7dias,escalera-horas,fallos,futbol-base-unica}`, `qf-app-nba-tenis` y `.codex/worktrees/{datos-motor-fotmob,web-real-forecasts}`). Su contenido ya está guardado en las refs `rescate/wt-*` y en el `.bundle`; el borrado forzado necesita tu visto bueno expreso.
+- **Trabajo archivado que no está en `main`** (recuperable con `git fetch <bundle> <rama>`; todo parte de octubre o principios de noviembre y chocaría con lo nuevo): radar de seis familias NBA en la app (`app/mercados-nba-seis`, `nba_markets.dart`); cuota de casa de tenis como referencia (`web/tenis-cuota-referencia`, `tenis_cuotas.py`); scripts de backtest de escalera (`feature/escalera-redesign-2026`: `backtest_profesional_escalera.py`, `backtest_maestro_mercados_totales.py`, `escalera_targets_backtest.py`); cargadores FotMob de contexto y calendario (foto `wt-datos-motor-fotmob`). Si alguno interesa, se rehace sobre `main` en su propia rama.
+- Idiomas: inglés en `preview` y portugués en `off`; falta que leas el inglés y decidas pasarlos a `on` (no probado en producción).
+- `README.md` (1.571 líneas) no se ha auditado frente a lo que corre.
 
 ## 1. Depende de ti
 **Decisiones**
