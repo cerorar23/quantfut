@@ -392,8 +392,7 @@ def informe(r: dict) -> str:
             out.append(f"| {c['deporte']} | {c['familia']} | {c['filas']} | {c['eventos']} | {c['logloss_mercado']:.4f} | "
                        f"{c['ece_mercado']:.4f} | {d(c['beta'])} | {d(c['venn_abers'])} |")
     out += ["", f"Familias sin muestra para el walk-forward: {sum('beta' not in c for c in r['calibradores'])}."]
-    return "
-".join(out)
+    return chr(10).join(out)
 
 
 if __name__ == "__main__":
