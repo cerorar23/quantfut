@@ -526,7 +526,7 @@ def settle_pending(now: datetime | None = None) -> dict:
             (r["paso_id"], *res)) or 0
     externos = query(
         """SELECT p.paso_id, p.deporte, p.evento_id, p.evento_inicio, p.evento_local,
-                  p.evento_visitante, p.selection, p.book
+                  p.evento_visitante, p.selection, p.book, p.market, p.line
            FROM escalera_pasos p
            LEFT JOIN escalera_resultados r ON r.paso_id = p.paso_id
            WHERE r.paso_id IS NULL AND p.evento_id IS NOT NULL AND p.evento_inicio < %s""",
@@ -548,7 +548,22 @@ def settle_pending(now: datetime | None = None) -> dict:
     return {"settled": n}
 
 
-def texto(market: str, selection: str, line, local: str, visitante: str) -> str:
+def _texto_otro_deporte(market: str, selection: str, line, local: str, visitante: str, deporte: str) -> str | None:
+    """Hándicap y total de NBA (puntos) y tenis (juegos); None si el mercado no es de esos."""
+    if line is None or market not in ("totals", "spreads", "total_games", "handicap_games"):
+        return None
+    unidad = "puntos" if deporte == "nba" else "juegos"
+    if market in ("totals", "total_games"):
+        return f"{'Más' if selection == 'over' else 'Menos'} de {abs(float(line)):g} {unidad}".replace(".", ",")
+    equipo = local if selection == "home" else visitante
+    return f"{equipo} {float(line):+g} (hándicap de {unidad})".replace(".", ",")
+
+
+def texto(market: str, selection: str, line, local: str, visitante: str, deporte: str = "futbol") -> str:
+    if deporte != "futbol":
+        otro = _texto_otro_deporte(market, selection, line, local, visitante, deporte)
+        if otro is not None:
+            return otro
     if market == "spreads":
         return es.texto_handicap(selection, float(line), local, visitante)
     if market in es.ESTADISTICOS:
@@ -562,7 +577,8 @@ def _paso_publico(p: dict) -> dict:
     return {"paso": p["paso"], "match_id": p["match_id"], "league_id": p["league_id"],
             "deporte": p.get("deporte", "futbol"),
             "kickoff_utc": p["kickoff_utc"], "local": p["local"], "visitante": p["visitante"],
-            "texto": texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"]),
+            "texto": texto(p["market"], p["selection"], p["line"], p["local"], p["visitante"],
+                           p.get("deporte") or "futbol"),
             "market": p["market"],
             # La app reconstruye el texto en el idioma del usuario desde estos campos
             # (`pick_labels.dart`); `texto` sigue siendo el español.

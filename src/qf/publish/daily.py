@@ -599,7 +599,7 @@ def _alerta_sin_sellar(alta: dict, receipt: dict, escalera: dict | None = None,
     if not receipt and alta.get("elegidos"):
         tg.alert(f"{alta['elegidos']} pronósticos de alta probabilidad SIN SELLAR: "
                  "no se mostrarán nunca.")
-    if not receipt and (escalera or {}).get("paso"):
+    if not receipt and (escalera or {}).get("plan"):
         tg.alert("Escalón de la escalera SIN SELLAR: no se mostrará nunca y el reto "
                  "seguirá esperando su resultado.")
     if not receipt and (parley or {}).get("tickets"):
@@ -630,13 +630,29 @@ def _parley() -> dict:
         return {"estado": "error", "error": str(exc)}
 
 
+def _solo_escalera(resultado: dict) -> dict:
+    """Sin predicciones de fútbol (parón de ligas) el reto escalera sigue con NBA y tenis.
+
+    Se elige el escalón y, si hay uno, se sella el lote del día (el sello admite cero
+    predicciones cuando lleva escalones: `hashchain.seal`). Mismo orden que siempre:
+    elegir antes de sellar. Nunca rompe el job.
+    """
+    escalera = _escalera()
+    receipt = seal() if (escalera or {}).get("plan") else {}
+    _alerta_sin_sellar({}, receipt, escalera)
+    resultado = dict(resultado, escalera=escalera, sealed=bool(receipt),
+                     chain=receipt["chain_sha256"][:16] if receipt else None)
+    log.info("Job diario sin predicciones de fútbol: %s", resultado)
+    return resultado
+
+
 def run() -> dict:
     preds = generate_predictions()
     sharp_only = _sharp_only_upcoming()
     if not preds:
         tg.alert("El job diario no generó ninguna predicción. Revisa la ingesta.")
         if not sharp_only:
-            return {"predictions": 0}
+            return _solo_escalera({"predictions": 0})
 
     gate_ok, gate_reasons = (
         _shadow_gate_allows_publication() if settings.publish_picks_enabled
@@ -649,10 +665,10 @@ def run() -> dict:
         gate_ok, gate_reasons = False, ["los picks de valor se sellan por partido (sello_tardio)"]
     if not gate_ok and not preds:
         # Solo había partidos "solo sharp" y no se publica: nada que sellar.
-        return {"predictions": 0, "picks": 0,
-                "picks_publishing": ("gate_blocked" if settings.publish_picks_enabled
-                                     else "disabled"),
-                "gate_reasons": gate_reasons}
+        return _solo_escalera({"predictions": 0, "picks": 0,
+                               "picks_publishing": ("gate_blocked" if settings.publish_picks_enabled
+                                                    else "disabled"),
+                               "gate_reasons": gate_reasons})
     if not gate_ok:
         # Se sella igual: las predicciones del día quedan probadas aunque no
         # se publique ningún pick. El interruptor por sí solo no abre la
