@@ -6,7 +6,9 @@
 {% block nav_etiqueta %}Principal{% endblock %}
 {% block nav %}{% for q in paginas %}
 <li><a href="{{ q.ruta }}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.migas }}</a></li>
-{% endfor %}{% endblock %}
+{% endfor %}
+<li><a href="/pt/nba/">NBA</a></li>
+{% endblock %}
 {% block revision %}Última revisão{% endblock %}
 {% block pie %}
 <p><span class="mas18" aria-label="Apenas para maiores de 18 anos">+18</span>A QuantFut é um serviço de informação estatística, não uma casa de apostas. As previsões têm fins exclusivamente informativos e de entretenimento: uma probabilidade estimada não garante um resultado. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p>

@@ -1,0 +1,31 @@
+{% extends "base_pt.html" %}
+{% block revision_p %}{% endblock %}
+{% block contenido %}
+<p class="entradilla">Probabilidade de vitória, placar esperado e faixa de margens de cada jogo da NBA. Cada previsão é selada com uma impressão digital antes do início e depois mostramos se ela se cumpriu, tanto se acertou quanto se errou.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>Nos jogos dos últimos dias com resultado, a equipe com maior probabilidade venceu em <strong>{{ c.aciertos }} de {{ c.juzgados }}</strong> previsões. São poucos jogos: não é uma medida de qualidade. O histórico completo está na <a href="/historial/" hreflang="es" lang="es">página de histórico</a> (disponível apenas em espanhol).</p></div>
+{% endif %}
+{% if not c.con_pronostico %}
+<div class="aviso"><p>Agora não há jogos com previsão selada. A previsão de cada jogo é selada cerca de 60 minutos antes do início, e a página do jogo aparece nesse momento.</p></div>
+{% endif %}
+{% for dia in c.dias %}
+<h2>{{ 'Jogos de' if dia.proximo else 'Resultados de' }} <time datetime="{{ dia.iso }}">{{ dia.largo }}</time></h2>
+<ul class="lista-partidos">
+{% for f in dia.filas %}
+<li>
+{% if f.url %}<a href="{{ f.url }}">{{ f.local }} x {{ f.visitante }}</a>{% else %}{{ f.local }} x {{ f.visitante }}{% endif %}
+{% if f.resultado %}
+ — final {{ f.local }} {{ f.resultado.local | int }}, {{ f.visitante }} {{ f.resultado.visitante | int }}
+ {% if f.veredicto %}<span class="{{ '' if f.veredicto.acerto else 'fallo' }}">· {{ 'o favorito venceu' if f.veredicto.acerto else 'o favorito perdeu' }}</span>{% endif %}
+{% elif f.url %}
+ — {{ f.local }} {{ f.p_local }}, {{ f.visitante }} {{ f.p_visit }}{% if f.inicio %} · início às {{ f.inicio.strftime('%H:%M') }} UTC{% endif %}
+{% else %}
+ — previsão pendente de selo{% if f.inicio %} · início às {{ f.inicio.strftime('%H:%M') }} UTC{% endif %}
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+<h2>Como são calculadas</h2>
+<p>As probabilidades vêm de um modelo estatístico próprio, e não das odds de uma casa de apostas. A <a href="/pt/metodologia/">metodologia</a> explica o que ele mede, o que não mede e quanto já acertou. Mesmo com 80 % de probabilidade, um em cada cinco jogos sai ao contrário: nenhum número desta página é uma garantia.</p>
+{% endblock %}

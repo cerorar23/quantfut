@@ -1,0 +1,36 @@
+<h1>{{ c.nombre }}: previsões da NBA</h1>
+<p class="entradilla">O modelo selou {{ c.total }} previsão{{ '' if c.total == 1 else 'ões' }} de jogos do {{ c.nombre }} nos últimos {{ c.dias }} dias. Cada uma é registrada com uma impressão digital antes do jogo e depois mostramos se ela se cumpriu, tanto se acertou quanto se errou.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>Dos {{ c.juzgados }} jogo{{ '' if c.juzgados == 1 else 's' }} com resultado, a equipe com maior probabilidade venceu <strong>{{ c.aciertos }}</strong> vezes, e o {{ c.nombre }} venceu {{ c.victorias }}. {% if c.total < c.umbral %}São poucos jogos: os números ainda não dizem nada sobre a qualidade do modelo.{% else %}É um número pequeno de jogos: não é uma medida de qualidade. O histórico completo está na <a href="/historial/" hreflang="es" lang="es">página de histórico</a> (em espanhol).{% endif %}</p></div>
+{% endif %}
+{% if c.proximo %}
+<h2>Próximo jogo com previsão</h2>
+<p><a href="{{ c.proximo.url }}">{{ c.nombre }} {{ 'x' if c.proximo.local else '@' }} {{ c.proximo.rival }}</a> — {{ c.nombre }} com {{ c.proximo.p }} de probabilidade de vencer ({{ c.proximo.fecha_txt }}).</p>
+{% endif %}
+<h2>Últimos jogos com previsão selada</h2>
+<table>
+<thead><tr><th scope="col">Data</th><th scope="col">Jogo</th><th scope="col">Probabilidade do {{ c.nombre }}</th><th scope="col">Resultado</th><th scope="col">Previsão</th></tr></thead>
+<tbody>
+{% for f in c.filas %}
+<tr>
+<th scope="row"><time datetime="{{ f.fecha.isoformat() }}">{{ f.fecha_txt }}</time></th>
+<td><a href="{{ f.url }}">{{ c.nombre }} {{ 'x' if f.local else '@' }} {{ f.rival }}</a></td>
+<td>{{ f.p }}</td>
+<td>{% if f.resultado %}{{ f.resultado }} ({{ 'venceu' if f.gano else 'perdeu' }}){% elif f.estado == 'previa' %}ainda vai jogar{% else %}pendente{% endif %}</td>
+<td{% if f.acerto is sameas false %} class="fallo"{% endif %}>{% if f.acerto is sameas true %}acertou{% elif f.acerto is sameas false %}errou{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if c.hay_mas %}<p>Mostram-se os {{ c.filas|length }} mais recentes de {{ c.total }}.</p>{% endif %}
+<p>«Acertou» significa que venceu a equipe à qual o modelo dava mais de 50 %. A probabilidade mostrada é sempre a do {{ c.nombre }}.</p>
+{% if c.contexto %}
+<h2>Situação na data do último jogo</h2>
+<table>
+<thead><tr><th scope="col">Campanha</th><th scope="col">Últimos 6</th><th scope="col">Sequência</th></tr></thead>
+<tbody><tr><td>{{ c.contexto.record }}</td><td>{{ c.contexto.ultimos6 }}</td><td>{{ c.contexto.racha }}</td></tr></tbody>
+</table>
+<p>Vitórias-derrotas da temporada regular.</p>
+{% endif %}
+<h2>Mais previsões</h2>
+<p><a href="/pt/nba/">Agenda da NBA</a> · <a href="/pt/metodologia/">Metodologia</a> · <a href="/historial/" hreflang="es" lang="es">Histórico de acertos e erros (em espanhol)</a></p>
