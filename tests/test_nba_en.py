@@ -64,7 +64,7 @@ def test_partido_final_en_ingles_trae_todo_en_el_html(abierto):
     t = r.text
     assert '<html lang="en">' in t and 'property="og:locale" content="en_US"' in t
     assert f'<link rel="canonical" href="{BASE}/en/nba/{SLUG_FINAL}/">' in t
-    assert 'name="robots" content="index, follow' in t and "og:image" not in t
+    assert 'name="robots" content="index, follow' in t and 'property="og:image" content="' + BASE + "/og/en/" in t
     assert "<title>Chicago Bulls vs Philadelphia 76ers: prediction and result for Nov 8, 2026 | QuantFut</title>" in t
     assert t.count("<h1>") == 1
     txt = visible(t)
