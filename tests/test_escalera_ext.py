@@ -46,7 +46,7 @@ def test_tenis_y_nba_con_pinnacle_sin_margen_y_la_mejor_cuota_de_la_lista(tmp_pa
             _casa("pinnacle", "Jannik Sinner", "Qualifier X", -1600, 900),
             _casa("bovada", "Jannik Sinner", "Qualifier X", -1400, 750),
             _casa("strendus", "Jannik Sinner", "Qualifier X", -2000, 800),
-            _casa("unibet", "Jannik Sinner", "Qualifier X", -1000, 600)]),     # fuera de la lista
+            _casa("unibet", "Jannik Sinner", "Qualifier X", -1000, 600)]),     # cualquier casa cuenta
         _partido("t2", "tennis_wta", "A", "B", [_casa("bovada", "A", "B", -900, 500)])])  # sin Pinnacle
     _archivo(tmp_path, "/v1/sports/basketball_nba/odds", [
         _partido("n1", "basketball_nba", "Boston Celtics", "Washington Wizards", [
@@ -59,7 +59,7 @@ def test_tenis_y_nba_con_pinnacle_sin_margen_y_la_mejor_cuota_de_la_lista(tmp_pa
     assert set(ops) == {("tenis:t1", "home"), ("tenis:t1", "away"),
                         ("nba:n1", "home"), ("nba:n1", "away")}
     sinner = ops[("tenis:t1", "home")]
-    assert sinner.deporte == "tenis" and sinner.book == "bovada" and sinner.price == pytest.approx(1 + 100 / 1400)
+    assert sinner.deporte == "tenis" and sinner.book == "unibet" and sinner.price == pytest.approx(1 + 100 / 1000)
     assert 0.9 < sinner.cand.prob < 0.95 and sinner.evento[1:2] == ("tennis_atp_paris",)
     assert sinner.evento[3:] == ("Jannik Sinner", "Qualifier X") and sinner.odds_source == "propline"
     # Tope por deporte: el tenis llega a 97 %, la NBA no pasa de 95 %.

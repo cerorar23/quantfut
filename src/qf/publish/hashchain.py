@@ -267,7 +267,9 @@ def seal(batch_date: date | None = None, git_push: bool = True) -> dict:
         return existing
 
     payload = _collect(batch_date)
-    if payload["n_predictions"] == 0:
+    # Un día sin partidos de fútbol (parón de ligas) sigue sellando si trae escalones del reto
+    # (NBA y tenis): lo elegido ANTES de sellar tiene que quedar sellado o no se muestra nunca.
+    if payload["n_predictions"] == 0 and not (payload.get("escalera") or {}).get("pasos"):
         log.info("Sin predicciones para %s, no se sella nada.", batch_date)
         return {}
 

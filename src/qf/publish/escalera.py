@@ -143,7 +143,9 @@ LINEAS_HANDICAP: tuple[float, ...] = (-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 
 MERCADOS = ("h2h", "totals", "team_totals_home", "team_totals_away", "spreads",
             "btts", "corners", "cards", "corners_home", "corners_away")
 # El reto también acepta la doble oportunidad (rediseño 2026-11-08); el parley la suma aparte.
-MERCADOS_RETO = MERCADOS + ("double_chance",)
+# Desde 2026-11-10 también el total y el hándicap de juegos de tenis (`escalera_ext`; en NBA ya
+# valen `totals` y `spreads`).
+MERCADOS_RETO = MERCADOS + ("double_chance", "total_games", "handicap_games")
 # Mercados del modelo estadístico (se liquidan con la estadística del partido).
 ESTADISTICOS = ("corners", "cards", "corners_home", "corners_away")
 # Ambos anotan desde el ajuste de goles de Pinnacle. Prueba histórica del

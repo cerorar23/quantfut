@@ -1,6 +1,22 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 10-nov-2026 · Escalera con hándicap y total de NBA y tenis, y sin depender del fútbol (rama `escalera/mercados-nba-tenis-desacoplada`, sin desplegar)
+
+- Decisión del titular: cuenta como cobrable la mejor cuota de TODAS las casas del archivo (ya sin casas de fantasía ni intercambios
+  marcados) y la escalera deja de depender del fútbol. Medición que lo respalda: `docs/mercados_nuevos_medicion_20261110.md`.
+- Por qué líneas alternativas: la línea principal rara vez llega a p ≥ 0,69; con la foto horaria de hoy el ensayo en el VPS pasó de
+  26 candidatos válidos (1 de NBA) a 188 en 46 partidos, 20 de ellos solo por los mercados nuevos. Solo líneas .5 y probabilidad por
+  consenso (`referencia.probabilidades`), como el parley v2; el ganador sigue con Pinnacle.
+- Tenis se guarda como `total_games`/`handicap_games` (la app ya los traduce) y NBA como `totals`/`spreads`; el texto web sale en puntos o juegos.
+  Liquidación por línea exacta y nombre tolerante (casas escriben distinto un equipo); si ni la casa del escalón ni Pinnacle califican y las
+  demás coinciden, vale esa. Props de jugador no entran: ninguno llega a p ≥ 0,69.
+- Sin predicciones de fútbol (9 y 10-nov), `daily.run` ya no sale antes de la escalera: la elige y, si hay escalón, sella el lote del día
+  (`hashchain.seal` admite cero predicciones cuando el lote lleva escalones). Elegir antes de sellar se mantiene. Arreglado de paso
+  `_alerta_sin_sellar`, que miraba una clave `paso` que no existe (nunca avisaba).
+- No hecho: totales de equipo de NBA (cumplen en la medición, pero el archivo compartido solo los entrega por otro camino) ni calibración
+  (Beta/Venn-Abers no mejoran al mercado).
+
 ## 9-nov-2026 · Ligas nuevas de SofaScore: carga, entrenamiento y backtest (rama `futbol/ligas-nuevas`, sin desplegar)
 
 - Subidas al VPS 54.399 partidos (6 conexiones) y cargadas en `futbol.dato` las 11 competiciones nuevas. Las copas necesitan el
