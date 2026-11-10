@@ -90,14 +90,17 @@ def registrar_traductor(fn) -> None:
 
 
 def _equivalencias(ruta: str) -> dict[str, str] | None:
+    """Todas las versiones de `ruta` en todos los idiomas: la de su grupo y las que aportan los traductores (cada familia
+    de páginas aporta las suyas; con tres idiomas, el español, el inglés y el portugués se combinan aquí)."""
+    salida: dict[str, str] = {}
     g = _por_ruta.get(ruta)
     if g:
-        return _grupos[g[0]]
+        salida.update(_grupos[g[0]])
     for fn in _traductores:
         eq = fn(ruta)
-        if eq:
-            return eq
-    return None
+        for codigo, r in (eq or {}).items():
+            salida.setdefault(codigo, r)
+    return salida or None
 
 
 def _codigo(ruta: str, eq: dict[str, str]) -> str | None:

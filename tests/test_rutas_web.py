@@ -249,7 +249,7 @@ DEPORTES = {"nba", "tenis", "futbol"}
 def test_toda_ruta_de_la_app_o_es_una_pagina_publica_o_lleva_noindex():
     """Recorre las rutas REALES de la app: una ruta nueva (p. ej. un JSON público) que nadie marque con noindex
     haría fallar esta prueba, en vez de quedar indexable sin que nadie lo note."""
-    publicas = {"", "legal", "calibracion", "calculadora-cuota-justa", "en"} | {p.slug for p in paginas.PAGINAS} | {s.path.strip("/") for s in rutas_web.SECCIONES}
+    publicas = {"", "legal", "calibracion", "calculadora-cuota-justa", "en", "pt"} | {p.slug for p in paginas.PAGINAS} | {s.path.strip("/") for s in rutas_web.SECCIONES}
     sueltas = []
     for r in main.app.routes:
         ruta = getattr(r, "path", "")
