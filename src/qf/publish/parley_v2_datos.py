@@ -100,17 +100,24 @@ def barrera(now: datetime, recibos: dict[str, Recibo], lote_diario: str | None,
 
 # ------------------------------------------------------------------ lote
 def _pata(o: Opcion) -> dict:
-    evento = getattr(o, "evento", ())
-    jugador = getattr(o, "jugador", ())
-    deporte = getattr(o, "deporte", "") or "futbol"
+    evento = getattr(o, "evento", None) or ()
+    jugador = getattr(o, "jugador", None) or ()
+    deporte = getattr(o, "deporte", None) or "futbol"
     # El id de fútbol es el match_id completo (lleva ':'); en tenis y NBA el prefijo es el deporte.
     evento_id = o.match_id if deporte == "futbol" else o.match_id.split(":", 1)[-1]
+    inicio_utc = None
+    if len(evento) > 2 and evento[2]:
+        inicio_utc = evento[2].isoformat() if hasattr(evento[2], "isoformat") else str(evento[2])
+    elif deporte == "futbol":
+        fila = query_one("SELECT kickoff_utc FROM matches WHERE match_id = %s", (evento_id,))
+        if fila and fila.get("kickoff_utc"):
+            inicio_utc = fila["kickoff_utc"].isoformat()
     return {"deporte": deporte, "evento_id": evento_id,
             "match_id": o.match_id, "mercado": o.cand.market, "seleccion": o.cand.selection, "linea": o.cand.line,
             "jugador_id": jugador[0] if jugador else None, "jugador": jugador[1] if jugador else None,
             "prob": round(o.cand.prob, 6), "cuota": o.price, "casa": o.book, "fuente_cuota": o.odds_source,
             "cuota_en": o.odds_as_of.isoformat() if o.odds_as_of else None,
-            "inicio_utc": evento[2].isoformat() if len(evento) > 2 else None,
+            "inicio_utc": inicio_utc,
             "n_casas_ref": getattr(o, "n_casas_ref", 0) or None, "referencia": getattr(o, "referencia", "") or None,
             "evento": list(map(str, evento)) if evento else []}
 

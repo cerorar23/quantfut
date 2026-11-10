@@ -5,6 +5,13 @@ Sistema cuantitativo de predicción de fútbol (Dixon-Coles + de-vig de mercado
 FastAPI. Ver [README.md](README.md) para la arquitectura completa; este
 archivo es el arnés operativo, no repite esa documentación.
 
+Naturaleza del proyecto (decisión del usuario, 2026-10-27): QuantFut es **sin
+fines de lucro**. Esto prevalece sobre las palabras «negocio», «vende» y
+«comercial» de este archivo (cuentas, panel y planes describen cómo funciona la
+web, no un negocio con ánimo de lucro). Para licencias de datos e imágenes cuenta
+como uso no comercial; eso no cambia las marcas de equipos y ligas ni el derecho
+a la propia imagen de jugadores, que se siguen revisando aparte.
+
 Decisión del usuario (2026-10-23): PropLine es la fuente fija de **cuotas** para
 los motores y consultas nuevas. Un recolector compartido captura cada hora;
 los motores leen el archivo y no hacen peticiones duplicadas. Conservar las
@@ -40,11 +47,12 @@ pago (ver `harness/tareas.md`).
 
 1. Ejecuta `./scripts/harness_check.sh`. Si falla, tu única tarea es arreglar
    eso antes de continuar con cualquier otra cosa.
-2. Lee [PENDIENTES.md](PENDIENTES.md) (lista única: qué falta, quién y cuándo) y
-   [harness/tareas.md](harness/tareas.md) — backlog priorizado con el detalle técnico.
-3. Lee [harness/progreso.md](harness/progreso.md) — decisiones y estado de
-   sesiones anteriores, para no repetir trabajo ni deshacer decisiones ya
-   tomadas.
+2. Lee [PENDIENTES.md](PENDIENTES.md) (lista única, corta). Para el detalle técnico NO leas `harness/tareas.md` entero (~2.800 líneas):
+   busca el tema con `grep -n '^## ' harness/tareas.md` y lee solo esa sección. Lo cerrado vive en `harness/archivo/`.
+3. Lee solo las últimas entradas de [harness/progreso.md](harness/progreso.md) (`head -n 120`): son las decisiones desde el 1-nov-2026,
+   para no repetir trabajo ni deshacer decisiones. El diario anterior está en `harness/archivo/progreso_hasta_20261110.md` (solo con `grep`).
+4. Trabaja siempre en un `git worktree` nuevo desde `origin/main` (`git worktree add -b <rama> <carpeta> origin/main`), una rama por tarea
+   y PR a `main`. No dejes cambios sin confirmar ni ramas locales sin PR: el 10-nov hubo que limpiar 279 ramas y 81 worktrees acumulados.
 
 ## Despliegues (desde 2026-10-15)
 
@@ -53,6 +61,8 @@ solo despliega una sesión a la vez, se compara lo desplegado con `main` antes d
 se anota en DEPLOYS.md con su vuelta atrás. Cada sesión trabaja en su propio `git worktree` (el 15-oct dos sesiones
 compartieron carpeta y una comiteó en la rama de la otra) y despliega con `scripts/deploy.sh construir|ensayo|desplegar`. No reconstruyas imágenes desde `~/quantfut/src` del servidor:
 está desactualizada.
+- **Protección de frontend:** NUNCA copies `app.js` ni `index.html` a producción desde ramas secundarias desalineadas con `main`. Si solo modificas una vista (ej. `conversion-views.js`), despliega ÚNICAMENTE ese archivo específico o usa la imagen base de producción / `origin/main`.
+- **Redes del servicio API:** `api` en `docker-compose.yml` debe conservar siempre la red `tenis_net` (`tenis-db_tenis-interna`) declarada como externa para comunicarse con `tenis-db`.
 
 ## Alcance del negocio (decisión del usuario, 2026-09-21)
 

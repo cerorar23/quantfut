@@ -289,7 +289,17 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
 
     const tarjetasHoy = tickets.map(t => {
       if (t.locked) {
-        const targetVal = t.target ?? targets[t.escalon - 1] ?? ((t.cuota_min + t.cuota_max) / 2);
+        const targetVal = t.target ?? targets[t.escalon - 1];
+        if (targetVal == null) {
+          // Parley de un solo partido (escalón 0): su cuota no pertenece a ninguno de los cuatro objetivos.
+          return lockedCard({
+            kicker: 'Parley de un partido',
+            title: 'Parley de un partido',
+            sub: 'Las patas se abren con VIP.',
+            cuotaLabel: 'Cuota',
+            cuota: CUOTA_OCULTA,
+          });
+        }
         return lockedCard({
           kicker: `Objetivo ${realNumber(targetVal, 2)}`,
           title: `Parley de cuota ≈${realNumber(targetVal, 1)}`,
