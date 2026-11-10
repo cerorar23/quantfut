@@ -1,0 +1,43 @@
+{% extends "base_pt.html" %}
+{% block revision_p %}<p class="revision">{{ c.torneo }}{% if c.superficie %} · piso {{ c.superficie }}{% endif %} · início previsto <time datetime="{{ c.inicio.isoformat() }}">{{ c.inicio_txt }}</time>{% if c.sellado %} · previsão selada em <time datetime="{{ c.sellado.isoformat() }}">{{ c.sellado_txt }}</time>{% endif %}</p>{% endblock %}
+{% block contenido %}
+<p class="entradilla">O modelo dá a {{ c.favorito }} {{ c.p_fav }} de probabilidade de vencer contra {{ c.otro }}, que tem {{ c.p_otro }}.</p>
+<div class="aviso estado">
+{% if c.estado == 'final' and c.resultado.coherente %}
+<p><strong>Final:</strong> {{ c.resultado.ganador }} venceu por {{ c.resultado.sets[0] }}-{{ c.resultado.sets[1] }} em sets ({{ c.home }} {{ c.resultado.sets[0] }}, {{ c.away }} {{ c.resultado.sets[1] }}).
+{% if c.veredicto.acerto %}O jogador com maior probabilidade ({{ c.veredicto.favorito }}) venceu.{% else %}<span class="fallo">A previsão errou:</span> o jogador com maior probabilidade era {{ c.veredicto.favorito }} e venceu {{ c.veredicto.ganador }}.{% endif %}
+</p>
+<p>Erro da probabilidade (Brier) neste jogo: {{ c.brier }}. Quanto mais perto de 0, melhor; 0,25 é o que daria dizer sempre 50%.</p>
+{% elif c.estado == 'final' and c.resultado.devuelto %}
+<p><strong>Terminado sem resultado completo.</strong> Houve uma desistência ou um W.O.: os mercados sem resultado definitivo são reembolsados e não contam como acerto nem erro.</p>
+{% elif c.estado == 'final' %}
+<p><strong>Resultado em revisão.</strong> O vencedor e os sets publicados pela fonte não coincidem ou não bastam para confirmá-lo (por exemplo, após uma desistência), por isso não mostramos acerto nem erro até esclarecer. A previsão selada não muda.</p>
+{% elif c.estado == 'cancelado' %}
+<p><strong>Cancelado.</strong> A partida não foi disputada; a previsão selada não conta como acerto nem erro.</p>
+{% elif c.estado == 'sin_resultado' %}
+<p><strong>Sem resultado oficial.</strong> A fonte não encerrou a partida; não a contamos como acerto nem erro.</p>
+{% elif c.estado == 'pendiente' %}
+<p><strong>Em jogo ou com resultado pendente.</strong> Ainda não há resultado confirmado. A página é atualizada quando ele chegar.</p>
+{% else %}
+<p><strong>Antes da partida.</strong> A previsão já está selada e não pode ser alterada.</p>
+{% endif %}
+</div>
+
+<h2>Probabilidades do modelo</h2>
+<table>
+<thead><tr><th scope="col">Mercado</th><th scope="col">Seleção</th><th scope="col">Probabilidade</th>{% if c.mercados and c.mercados|selectattr('resultado')|list %}<th scope="col">Resultado</th>{% endif %}</tr></thead>
+<tbody>
+{% set hay_resultado = c.mercados|selectattr('resultado')|list|length > 0 %}
+{% for m in c.mercados %}
+<tr><th scope="row">{{ m.label }}</th><td>{{ m.seleccion }}</td><td>{{ m.prob }}</td>{% if hay_resultado %}<td{% if m.fallo %} class="fallo"{% endif %}>{{ m.resultado or '—' }}</td>{% endif %}</tr>
+{% endfor %}
+</tbody>
+</table>
+<p>Não há odds de casas de apostas publicadas para estes mercados: são probabilidades do modelo.</p>
+
+<h2>Selo verificável</h2>
+<p>Esta previsão foi registrada antes do início com a impressão digital <code>{{ c.hash }}</code>. Se um único número fosse alterado, a impressão digital deixaria de coincidir. Consulte a <a href="/pt/metodologia/">metodologia</a> para ver como é calculada e conferida.</p>
+
+<h2>Como ler esta página</h2>
+<p>É uma estimativa estatística com fins informativos, não uma recomendação nem uma promessa de ganho. Consulte a <a href="/pt/tenis/">agenda de tênis</a>. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p>
+{% endblock %}

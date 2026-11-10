@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block lang %}pt-BR{% endblock %}
+{% block og_locale %}pt_BR{% endblock %}
+{% block og_alt %}QuantFut: previsões de futebol, NBA e tênis com probabilidades verificáveis{% endblock %}
+{% block saltar %}Pular para o conteúdo{% endblock %}
+{% block nav_etiqueta %}Principal{% endblock %}
+{% block nav %}{% for q in paginas %}
+<li><a href="{{ q.ruta }}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.migas }}</a></li>
+{% endfor %}
+<li><a href="/pt/futebol/">Futebol</a></li>
+<li><a href="/pt/tenis/">Tênis</a></li>
+<li><a href="/pt/nba/">NBA</a></li>
+{% endblock %}
+{% block revision %}Última revisão{% endblock %}
+{% block pie %}
+<p><span class="mas18" aria-label="Apenas para maiores de 18 anos">+18</span>A QuantFut é um serviço de informação estatística, não uma casa de apostas. As previsões têm fins exclusivamente informativos e de entretenimento: uma probabilidade estimada não garante um resultado. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p>
+<ul>
+<li><a href="/legal/terminos" hreflang="es" lang="es">Termos (em espanhol)</a></li>
+<li><a href="/legal/privacidad" hreflang="es" lang="es">Privacidade (em espanhol)</a></li>
+<li><a href="/pt/jogo-responsavel/">Jogo responsável</a></li>
+<li><a href="mailto:admin@pronosticosdeportivos.pro">Contato</a></li>
+</ul>
+{% endblock %}

@@ -87,19 +87,41 @@ PAGINAS_EN: tuple[Pagina, ...] = (
            "and how to contact us.",
            "About", date(2026, 11, 9), "AboutPage", idioma="en", grupo="sobre-nosotros"),
 )
-TODAS_LAS_PAGINAS = PAGINAS + PAGINAS_EN
-EN_POR_IDIOMA = {"es": PAGINAS, "en": PAGINAS_EN}
-INICIO = {"es": "Inicio", "en": "Home"}
+# Portugués (F6.4, Brasil). Mismas tres páginas de confianza; slugs en portugués (`/pt/metodologia/`…). Igual que el inglés:
+# no se indexa hasta que el titular abra el idioma y lea el texto (ver `idiomas.py`).
+PAGINAS_PT: tuple[Pagina, ...] = (
+    Pagina("pt/metodologia", "pt_metodologia.html",
+           "Metodologia: como calculamos as probabilidades",
+           "Como a QuantFut estima probabilidades de futebol, NBA e tênis, compara-as com o mercado, as sela com hashes e mede "
+           "os próprios erros. Sem promessas de lucro.",
+           "Metodologia", date(2026, 11, 10), idioma="pt", grupo="metodologia"),
+    Pagina("pt/jogo-responsavel", "pt_jogo_responsavel.html",
+           "Jogo responsável: limites e onde pedir ajuda",
+           "A QuantFut não é uma casa de apostas nem garante resultados. Dicas para apostar dentro de limites, sinais de "
+           "alerta e onde buscar apoio.",
+           "Jogo responsável", date(2026, 11, 10), idioma="pt", grupo="juego-responsable"),
+    Pagina("pt/sobre-nos", "pt_sobre_nos.html",
+           "Sobre a QuantFut: quem está por trás e o que fazemos",
+           "A QuantFut é um serviço da Saptain LTD que publica probabilidades estatísticas de esportes. O que fazemos, o que não "
+           "fazemos e como nos contatar.",
+           "Sobre nós", date(2026, 11, 10), "AboutPage", idioma="pt", grupo="sobre-nosotros"),
+)
+TODAS_LAS_PAGINAS = PAGINAS + PAGINAS_EN + PAGINAS_PT
+EN_POR_IDIOMA = {"es": PAGINAS, "en": PAGINAS_EN, "pt": PAGINAS_PT}
+INICIO = {"es": "Inicio", "en": "Home", "pt": "Início"}
 for _q in TODAS_LAS_PAGINAS:
     idiomas.registrar(_q.grupo, _q.idioma, _q.ruta)
 
 
 MONTHS_EN = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+MONTHS_PT = ("janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro")
 
 
 def fecha_larga(d: date, idioma: str = "es") -> str:
     if idioma == "en":
         return f"{MONTHS_EN[d.month - 1]} {d.day}, {d.year}"
+    if idioma == "pt":
+        return f"{d.day} de {MONTHS_PT[d.month - 1]} de {d.year}"
     return f"{d.day} de {MESES[d.month - 1]} de {d.year}"
 
 

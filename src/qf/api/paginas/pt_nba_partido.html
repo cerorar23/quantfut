@@ -1,0 +1,50 @@
+{% extends "base_pt.html" %}
+{% block revision_p %}<p class="revision">Previsão selada <time datetime="{{ c.sellado.isoformat() if c.sellado else '' }}">{{ c.sellado_txt }}</time>{% if c.inicio %} · início previsto <time datetime="{{ c.inicio.isoformat() }}">{{ c.inicio_txt }}</time>{% endif %}</p>{% endblock %}
+{% block contenido %}
+<p class="entradilla">O modelo dá ao {{ c.local }} {{ c.p_local }} de probabilidade de vencer e ao {{ c.visitante }} {{ c.p_visit }}. {{ c.texto_margen }}</p>
+<div class="aviso estado">
+{% if c.estado == 'final' %}
+<p><strong>Final:</strong> {{ c.local }} {{ c.resultado.local | int }}, {{ c.visitante }} {{ c.resultado.visitante | int }}.
+{% if c.veredicto %}
+{% if c.veredicto.acerto %}A equipe com maior probabilidade ({{ c.veredicto.favorito }}) venceu.{% else %}<strong>A previsão errou:</strong> a equipe com maior probabilidade era o {{ c.veredicto.favorito }} e venceu o {{ c.veredicto.ganador }}.{% endif %}
+</p>
+<p>Erro da probabilidade (Brier) neste jogo: {{ c.brier }}. Quanto mais perto de 0, melhor; 0,25 é o que daria dizer sempre 50 %.</p>
+{% else %}</p>{% endif %}
+{% elif c.estado == 'curso' %}
+<p><strong>Em jogo ou recém-terminado.</strong> Ainda não há placar final registrado. A página é atualizada quando ele chegar.</p>
+{% elif c.estado == 'pendiente' %}
+<p><strong>Resultado pendente de confirmação.</strong> A hora do jogo já passou e ainda não há placar final registrado.</p>
+{% else %}
+<p><strong>Antes do jogo.</strong> A previsão já está selada e não pode ser alterada.</p>
+{% endif %}
+</div>
+
+<h2>Probabilidades do modelo</h2>
+<table>
+<thead><tr><th scope="col">Equipe</th><th scope="col">Probabilidade de vencer</th><th scope="col">Pontos esperados (média)</th></tr></thead>
+<tbody>
+<tr><th scope="row">{{ c.local }} (mandante)</th><td>{{ c.p_local }}</td><td>{{ c.mu_local }}</td></tr>
+<tr><th scope="row">{{ c.visitante }} (visitante)</th><td>{{ c.p_visit }}</td><td>{{ c.mu_visit }}</td></tr>
+</tbody>
+</table>
+<p>Segundo a distribuição do modelo, a margem (mandante menos visitante) fica entre {{ c.margen_rango }} pontos em 80 % dos casos, e o total de pontos entre {{ c.total_rango }} (mediana {{ c.total_mediana }}). A probabilidade inclui a possibilidade de prorrogação.</p>
+
+{% if c.contexto %}
+<h2>Contexto da temporada</h2>
+<table>
+<thead><tr><th scope="col">Equipe</th><th scope="col">Campanha</th><th scope="col">Últimos 6</th><th scope="col">Sequência</th><th scope="col">Descanso</th></tr></thead>
+<tbody>
+{% for f in c.contexto %}
+<tr><th scope="row">{{ f.nombre }}</th><td>{{ f.record }}</td><td>{{ f.ultimos6 }}</td><td>{{ f.racha }}</td><td>{{ f.descanso }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p>Dados na data do jogo (vitórias-derrotas da temporada regular).</p>
+{% endif %}
+
+<h2>Selo verificável</h2>
+<p>Esta previsão foi registrada antes do início com a impressão digital <code>{{ c.hash }}</code>. Qualquer pessoa pode <a href="/nba/v1/sello/{{ c.hash }}" rel="nofollow">conferir o selo</a>: se um único número fosse alterado, a impressão digital deixaria de coincidir. Versão do modelo: {{ c.version }}.</p>
+
+<h2>Como ler esta página</h2>
+<p>É uma estimativa estatística com fins informativos, não uma recomendação nem uma promessa de ganho. Consulte a <a href="/pt/metodologia/">metodologia</a>. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p>
+{% endblock %}

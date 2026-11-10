@@ -1,0 +1,43 @@
+{% extends "base_pt.html" %}
+{% block revision_p %}{% endblock %}
+{% block contenido %}
+<p class="entradilla">Probabilidade de vitória de cada jogador e dos totais de sets e games das partidas ATP e WTA. Cada previsão é selada com uma impressão digital antes da partida e depois mostramos se ela se cumpriu, tanto se acertou quanto se errou.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>Nas partidas dos últimos dias com resultado confirmado, o jogador com maior probabilidade venceu em <strong>{{ c.aciertos }} de {{ c.juzgados }}</strong>. Não é uma medida de qualidade. O histórico completo está na <a href="/historial/" hreflang="es" lang="es">página de histórico</a> (disponível apenas em espanhol).</p></div>
+{% endif %}
+{% if c.en_revision %}
+<div class="aviso"><p>{{ c.en_revision }} {{ 'partida da lista tem' if c.en_revision == 1 else 'partidas da lista têm' }} o resultado em revisão: o vencedor e os sets publicados pela fonte não coincidem ou não bastam para confirmá-lo (por exemplo, após uma desistência), e não mostramos acerto nem erro até esclarecer.</p></div>
+{% endif %}
+{% if not c.total %}
+<div class="aviso"><p>Agora não há partidas de tênis com previsão selada nos últimos nem nos próximos dias.</p></div>
+{% endif %}
+{% for dia in c.dias %}
+<h2>{{ 'Partidas de' if dia.proximo else 'Resultados de' }} <time datetime="{{ dia.iso }}">{{ dia.largo }}</time></h2>
+{% for torneo, filas in dia.torneos %}
+<h3>{{ torneo }}</h3>
+<ul class="lista-partidos">
+{% for f in filas %}
+<li>
+<a href="{{ f.url }}">{{ f.home }} x {{ f.away }}</a>
+{% if f.sets %}
+ — {{ f.ganador }} venceu por {{ f.sets[0] }}-{{ f.sets[1] }} em sets
+ {% if f.veredicto %}<span class="{{ '' if f.veredicto.acerto else 'fallo' }}">· {{ 'o favorito venceu' if f.veredicto.acerto else 'o favorito perdeu' }}</span>{% endif %}
+{% elif f.en_revision %}
+ — resultado em revisão
+{% elif f.estado == 'cancelado' %}
+ — cancelada
+{% elif f.estado == 'sin_resultado' %}
+ — sem resultado oficial
+{% elif f.estado == 'final' %}
+ — terminada, sem resultado completo (desistência ou W.O.)
+{% else %}
+ — {{ f.favorito }} {{ f.p_fav }}
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+{% endfor %}
+<h2>Como são calculadas</h2>
+<p>As probabilidades vêm de um modelo estatístico próprio. A <a href="/pt/metodologia/">metodologia</a> explica o que ele mede, o que não mede e quanto já acertou. Mesmo com 80 % de probabilidade, uma em cada cinco partidas sai ao contrário: nenhum número desta página é uma garantia.</p>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base_pt.html" %}
+{% block revision_p %}<p class="revision">{{ c.liga }}{% if c.pais %} · {{ c.pais }}{% endif %} · início previsto <time datetime="{{ c.inicio.isoformat() }}">{{ c.inicio_txt }}</time>{% if c.generada %} · previsão gerada em <time datetime="{{ c.generada.isoformat() }}">{{ c.generada_txt }}</time>{% endif %}</p>{% endblock %}
+{% block contenido %}
+<p class="entradilla">{% if c.modelo %}O modelo dá ao {{ c.local }} {{ c.p_local }} de probabilidade de vencer, {{ c.p_empate }} de empate e {{ c.p_visit }} de vitória de {{ c.visitante }}.{% else %}Estas probabilidades vêm do consenso do mercado sem a margem: o modelo próprio ainda não conhece uma das duas equipes, então não as apresentamos como previsão própria. {{ c.local }} {{ c.p_local }}, empate {{ c.p_empate }}, {{ c.visitante }} {{ c.p_visit }}.{% endif %}</p>
+<div class="aviso estado">
+{% if c.estado == 'final' %}
+<p><strong>Final:</strong> {{ c.local }} {{ c.marcador[0] }}, {{ c.visitante }} {{ c.marcador[1] }}.
+{% if c.veredicto %}
+{% if c.veredicto.acerto %}O resultado mais provável ({{ c.veredicto.favorito }}) se confirmou.{% else %}<strong>A previsão errou:</strong> o resultado mais provável era {{ c.veredicto.favorito }} e o resultado foi {{ c.veredicto.resultado }}.{% endif %}
+</p>
+<p>Erro das probabilidades (Brier dos três resultados) neste jogo: {{ c.brier }}. Quanto mais perto de 0, melhor; 0,667 é o que daria dividir sempre um terço para cada resultado.</p>
+{% else %}</p>{% endif %}
+{% elif c.estado == 'aplazado' %}
+<p><strong>Adiado.</strong> A previsão gerada não muda; ela é reavaliada quando o jogo for disputado.</p>
+{% elif c.estado == 'curso' %}
+<p><strong>Em jogo ou recém-terminado.</strong> Ainda não há placar final registrado. A página é atualizada quando ele chegar.</p>
+{% elif c.estado == 'pendiente' %}
+<p><strong>Resultado pendente de confirmação.</strong> A hora do jogo já passou e ainda não há placar final registrado.</p>
+{% else %}
+<p><strong>Antes do jogo.</strong> A previsão já está gerada e não pode ser alterada.</p>
+{% endif %}
+</div>
+
+<h2>Probabilidades</h2>
+<table>
+<thead><tr><th scope="col">Resultado</th><th scope="col">Probabilidade</th></tr></thead>
+<tbody>
+<tr><th scope="row">Vitória de {{ c.local }} (mandante)</th><td>{{ c.p_local }}</td></tr>
+<tr><th scope="row">Empate</th><td>{{ c.p_empate }}</td></tr>
+<tr><th scope="row">Vitória de {{ c.visitante }} (visitante)</th><td>{{ c.p_visit }}</td></tr>
+</tbody>
+</table>
+
+{% if c.ctx.lados %}
+<h2>Forma recente e classificação</h2>
+<table>
+<thead><tr><th scope="col">Equipe</th><th scope="col">Últimos {{ c.ctx.lados[0].n }}</th><th scope="col">Pontos</th><th scope="col">Gols</th><th scope="col">Classificação</th></tr></thead>
+<tbody>
+{% for l in c.ctx.lados %}
+<tr><th scope="row">{{ l.nombre }}</th><td>{{ l.racha }}</td><td>{{ l.puntos }}</td><td>{{ l.gf }}-{{ l.gc }}</td><td>{{ l.puesto or '—' }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p>V = vitória, E = empate, D = derrota, do mais recente ao mais antigo. Nas copas, a classificação é a da liga nacional da equipe.</p>
+{% endif %}
+{% if c.ctx.h2h %}
+<h2>Confronto direto</h2>
+<p>Nos últimos {{ c.ctx.h2h.n }} confrontos: {{ c.local }} venceu {{ c.ctx.h2h.local }} {{ 'vez' if c.ctx.h2h.local == 1 else 'vezes' }}, houve {{ c.ctx.h2h.empates }} {{ 'empate' if c.ctx.h2h.empates == 1 else 'empates' }} e {{ c.visitante }} venceu {{ c.ctx.h2h.visitante }} {{ 'vez' if c.ctx.h2h.visitante == 1 else 'vezes' }}, com {{ c.ctx.h2h.goles }} gols por jogo em média.</p>
+{% endif %}
+
+<h2>Como ler esta página</h2>
+<p>É uma estimativa estatística com fins informativos, não uma recomendação nem uma promessa de ganho. Consulte a <a href="/pt/metodologia/">metodologia</a> e a <a href="/futbol/" hreflang="es" lang="es">agenda de fútbol (em espanhol)</a>. As previsões de maior probabilidade e os demais mercados estão no aplicativo, com o acesso próprio. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p>
+{% endblock %}

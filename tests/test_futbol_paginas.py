@@ -60,6 +60,8 @@ def client(monkeypatch):
     monkeypatch.delenv("PUBLIC_BASE_URL", raising=False)
     monkeypatch.setattr(ratelimit, "rate_limited", lambda *a, **k: False)
     monkeypatch.setattr(futbol_paginas, "_ahora", lambda: AHORA)
+    # La agenda por defecto (la del sitemap) usa el día real: se fija al de AHORA para que los datos de prueba sigan en su ventana.
+    monkeypatch.setattr(futbol_datos, "hoy_mx", lambda ahora=None: AHORA.astimezone(futbol_datos.MEXICO).date())
     fichas._cache.clear()
     monkeypatch.setattr(futbol_datos, "agenda_dia", lambda d: FILAS.get(d.isoformat(), []))
     monkeypatch.setattr(futbol_datos, "pronosticos", lambda ids: {i: PRON[i] for i in ids if i in PRON})
