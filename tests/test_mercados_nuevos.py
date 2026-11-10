@@ -116,9 +116,11 @@ def test_medir_sobre_un_csv_pequeno(tmp_path):
                 p = float(rng.uniform(0.55, 0.9))
                 w.writerow(dict(deporte="nba", evento=f"e{e}", fecha=str(fecha), mercado="player_steals", periodo="",
                                 sujeto="x", linea=0.5, lado="Over", p=round(p, 5), casas=3, pinnacle=1,
-                                cuota=round(0.95 / p, 3), cuota_todas=round(0.97 / p, 3), gana=int(rng.random() < p)))
+                                cuota=round(0.95 / p, 3), cuota_todas=round(0.97 / p, 3), gana=int(rng.random() < p),
+                                captura="10utc" if e % 2 else "cierre"))
     r = mn.medir(str(ruta))
     esc = next(b for b in r["bandas"] if b["banda"] == "escalera")
     assert esc["eventos"] > 100 and abs(esc["hueco"]) < 0.05 and esc["hueco_ic"][0] < esc["hueco"] < esc["hueco_ic"][1]
+    assert mn.medir(str(ruta), "10utc")["resumen"][0]["eventos"] == 60
     cal = r["calibradores"][0]
     assert cal["familia"] == "player_steals" and abs(cal["beta"]["delta_logloss"]) < 0.02

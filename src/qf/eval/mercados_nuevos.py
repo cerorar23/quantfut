@@ -14,8 +14,10 @@ las marcadas como viejas o no válidas) y la calificación (won/lost/push/void) 
   las filas difiere del cierre y se mueve hacia lo que ocurrió (precios en
   juego). La primera pasada la usó y dio aciertos imposibles (+20 pp en la banda
   de escalera); ``filas_evento`` existe para que no vuelva a pasar;
-* es la cuota de cierre, no la de la hora en que el lote decide: el consenso al
-  cierre es más fino que el de la mañana;
+* dos capturas, en la columna ``captura``: ``cierre`` y la foto horaria de las
+  10 y las 22 UTC (``10utc``, ``22utc``) con los partidos que empiezan entre 30
+  min y 24 h después. La de las 10 es la información que tiene el lote diario y
+  es la que cuenta para decidir; el cierre es más fino y apenas trae props;
 * PropLine califica mal el ganador de tenis cuando gana quien hace menos juegos
   (medido el 29-oct): ``h2h`` de tenis NO se mide aquí;
 * son pocas semanas; por eso los intervalos remuestrean PARTIDOS, no filas: las
@@ -45,11 +47,13 @@ from datetime import datetime, timezone
 import numpy as np
 
 CAMPOS = ("deporte", "evento", "fecha", "mercado", "periodo", "sujeto", "linea", "lado",
-          "p", "casas", "pinnacle", "cuota", "cuota_todas", "gana")
+          "p", "casas", "pinnacle", "cuota", "cuota_todas", "gana", "captura")
 SPORTS = {"nba": "basketball_nba", "tenis": "tennis"}
 SIN_MEDIR = {("tenis", "h2h", "")}          # calificación de PropLine no fiable (ver docstring)
 PASO = 0.002                                 # rejilla de probabilidad para ajustar calibradores
 BLOQUES, EMBARGO_DIAS, DIAS_MIN_ENTRENO = 5, 1, 5
+HORAS_FOTO = (10, 22)                        # UTC: la del lote diario y unas horas antes de la jornada NBA
+ANTELACION_MIN, HORIZONTE_H = 30, 24
 MIN_EVENTOS, MIN_FILAS = 30, 300
 BOOTSTRAP = 500
 _EPS = 1e-4
@@ -137,7 +141,7 @@ def _gana(res: dict) -> tuple[int, int] | None:
 
 
 def registros(filas: list[dict], deporte: str, evento: str, fecha: str, *, soft_books, preferida: str,
-              probabilidades, excluidas=frozenset()) -> list[dict]:
+              probabilidades, excluidas=frozenset(), captura: str = "cierre") -> list[dict]:
     """Una fila por lado de cada contrato con referencia (≥ 2 casas) y calificación limpia."""
     out = []
     for (mk, per, team, desc, primero, linea), c in contratos(filas, excluidas).items():
@@ -159,13 +163,14 @@ def registros(filas: list[dict], deporte: str, evento: str, fecha: str, *, soft_
                             sujeto=desc or team, linea="" if linea is None else linea,
                             lado=primero if lado == "A" else "otro", p=round(p[lado], 5), casas=len(completas),
                             pinnacle=int(preferida in completas), cuota=max(soft) if soft else "",
-                            cuota_todas=max(todas), gana=gana[i]))
+                            cuota_todas=max(todas), gana=gana[i], captura=captura))
     return out
 
 
-def extraer(salida) -> dict:
+def extraer(salida, desde: str = "2026-10-24") -> dict:
     """Recorre el archivo compartido y escribe el CSV (gzip) en ``salida``. Solo lectura."""
     import sqlite3
+    from datetime import date, timedelta
     from pathlib import Path
 
     from qf.config import settings
@@ -175,29 +180,53 @@ def extraer(salida) -> dict:
     root = Path(settings.propline_archive)
     db = sqlite3.connect((root / "index.sqlite").resolve().as_uri() + "?mode=ro", uri=True)
     now = datetime.now(timezone.utc)
-    soft = frozenset(picks.canonical_book(b) for b in settings.soft_books)
-    preferida = picks.canonical_book(settings.sharp_book)
+    comun = dict(soft_books=frozenset(picks.canonical_book(b) for b in settings.soft_books),
+                 preferida=picks.canonical_book(settings.sharp_book), probabilidades=referencia.probabilidades)
     cuenta: Counter = Counter()
     with gzip.open(salida, "wt", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, CAMPOS)
         w.writeheader()
+
+        def escribir(deporte, evento, cuotas, resultados, captura):
+            regs = registros(filas_evento(cuotas, resultados, picks.canonical_book), deporte, evento,
+                             str(cuotas[0]["commence_time"])[:10], captura=captura, **comun)
+            w.writerows(regs)
+            cuenta[f"{deporte}_{captura}_eventos"] += 1
+            cuenta[f"{deporte}_{captura}_filas"] += len(regs)
+
         for deporte, sport in SPORTS.items():
-            eventos = [r[0].split("/")[5] for r in db.execute(
-                "SELECT DISTINCT q.path FROM receipts p JOIN requests q ON q.id=p.request_id "
-                "WHERE q.path LIKE ? AND p.status=200 AND p.error IS NULL",
-                (f"/v1/sports/{sport}/events/%/results",))]
-            for evento in eventos:
+            finales = set()
+            for (ruta,) in db.execute(
+                    "SELECT DISTINCT q.path FROM receipts p JOIN requests q ON q.id=p.request_id "
+                    "WHERE q.path LIKE ? AND p.status=200 AND p.error IS NULL",
+                    (f"/v1/sports/{sport}/events/%/results",)):
+                evento = ruta.split("/")[5]
                 resultados, _ = ps.read_results(root, sport, evento, now)
-                cierre, _ = ps.read_closing(root, sport, evento, now)
-                if not resultados or not cierre or resultados[0].get("status") != "final":
-                    cuenta[f"{deporte}_sin_cierre_o_no_final"] += 1
+                if not resultados or resultados[0].get("status") != "final":
                     continue
-                regs = registros(filas_evento(cierre, resultados, picks.canonical_book), deporte, evento,
-                                 str(cierre[0]["commence_time"])[:10], soft_books=soft, preferida=preferida,
-                                 probabilidades=referencia.probabilidades)
-                w.writerows(regs)
-                cuenta[f"{deporte}_eventos"] += 1
-                cuenta[f"{deporte}_filas"] += len(regs)
+                finales.add(evento)
+                cierre, _ = ps.read_closing(root, sport, evento, now)
+                if cierre:
+                    escribir(deporte, evento, cierre, resultados, "cierre")
+            dia = date.fromisoformat(desde)
+            while dia <= now.date():
+                for hora in HORAS_FOTO:
+                    as_of = datetime(dia.year, dia.month, dia.day, hora, 5, tzinfo=timezone.utc)
+                    eventos, recibo = ps.newest(root, f"/v1/sports/{sport}/odds", as_of) if as_of <= now else (None, None)
+                    if not eventos:
+                        cuenta[f"{deporte}_sin_foto"] += 1
+                        continue
+                    recibido = ps.parse_time(recibo["received_at"])
+                    por_evento: dict[str, list[dict]] = defaultdict(list)
+                    for q in ps.quotes(eventos, recibo["received_at"]):
+                        if q["flags"] or q["event_id"] not in finales:      # como los selectores: ninguna marca
+                            continue
+                        falta = ps.parse_time(q["commence_time"]) - recibido
+                        if timedelta(minutes=ANTELACION_MIN) < falta <= timedelta(hours=HORIZONTE_H):
+                            por_evento[q["event_id"]].append(q)
+                    for evento, cuotas in por_evento.items():
+                        escribir(deporte, evento, cuotas, ps.read_results(root, sport, evento, now)[0], f"{hora:02d}utc")
+                dia += timedelta(days=1)
     return dict(cuenta)
 
 
@@ -366,21 +395,21 @@ def medir_calibradores(df) -> list[dict]:
     return out
 
 
-def cargar(ruta: str):
+def cargar(ruta: str, captura: str | None = None):
     import pandas as pd
 
     df = pd.read_csv(ruta, dtype={"evento": str, "periodo": str, "sujeto": str}, keep_default_na=False,
                      na_values={"cuota": [""], "linea": [""]})
     df["familia"] = df.mercado + np.where(df.periodo != "", "@" + df.periodo, "")
-    return df
+    return df if captura is None else df[df.captura == captura].reset_index(drop=True)
 
 
-def medir(ruta: str) -> dict:
-    df = cargar(ruta)
+def medir(ruta: str, captura: str | None = None) -> dict:
+    df = cargar(ruta, captura)
     resumen = df.groupby("deporte").agg(filas=("gana", "size"), eventos=("evento", "nunique"),
                                         desde=("fecha", "min"), hasta=("fecha", "max"),
                                         con_cuota=("cuota", "count")).reset_index().to_dict("records")
-    return dict(creado=datetime.now(timezone.utc).isoformat(timespec="seconds"), resumen=resumen,
+    return dict(creado=datetime.now(timezone.utc).isoformat(timespec="seconds"), captura=captura, resumen=resumen,
                 parametros=dict(bloques=BLOQUES, embargo_dias=EMBARGO_DIAS, min_eventos=MIN_EVENTOS,
                                 min_filas=MIN_FILAS, bootstrap=BOOTSTRAP),
                 bandas=medir_bandas(df), calibradores=medir_calibradores(df))
@@ -412,9 +441,9 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["extraer"]:
         print(json.dumps(extraer(sys.argv[2])), file=sys.stderr)
     elif sys.argv[1:2] == ["medir"]:
-        json.dump(medir(sys.argv[2]), sys.stdout, indent=1, default=float)
+        json.dump(medir(sys.argv[2], *sys.argv[3:4]), sys.stdout, indent=1, default=float)
     elif sys.argv[1:2] == ["informe"]:
         sys.stdout.reconfigure(encoding="utf-8")
         print(informe(json.load(open(sys.argv[2], encoding="utf-8"))))
     else:
-        sys.exit("uso: python -m qf.eval.mercados_nuevos extraer <salida.csv.gz> | medir <entrada.csv.gz> | informe <medicion.json>")
+        sys.exit("uso: python -m qf.eval.mercados_nuevos extraer <salida.csv.gz> | medir <entrada.csv.gz> [cierre|10utc|22utc] | informe <medicion.json>")
