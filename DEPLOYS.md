@@ -43,6 +43,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Vuelta atrás (la imagen anterior sigue en el servidor): `cd ~/quantfut && sed -i 's#image: quantfut-api:015f78c1#image: quantfut-api-mobile:tenis-v2-65fb5b1a#' docker-compose.yml && docker compose up -d --no-deps --no-build --force-recreate api` (el compose ya conecta `nba-api-red`). Compose anterior a la sincronización: `releases/compose-antes-sync-20261110.yml` (sin `nba-api-red`; tras usarlo, `docker network connect nba-api-red quantfut-api-1`).
 - Atención: lo copiado con `docker cp` en la imagen anterior (p. ej. los registros del 9-nov y 10-nov) ya viene en `main`, así que no se pierde nada; si algo se parchea de nuevo con `docker cp`, anótalo aquí y llévalo a `main` el mismo día.
 
+### 2026-11-10 · Parley bloqueado de un partido ya no muestra «Objetivo 0.00» · VPS
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Causa: los lotes `partido` (NBA, un solo partido) llegan bloqueados con `escalon: 0` y sin `target` ni rango; `conversion-views.js` promediaba `(cuota_min + cuota_max) / 2` y `null + null` es 0.
+- Cambio: sin objetivo, la tarjeta bloqueada dice «Parley de un partido» con la cuota difuminada. Parche sobre la copia en producción (`conversion-views.js` `69d5bb38…` → `802131e9…`); `app.js` solo sube el `?v=` del import (`ff8b327d…` → `19cc9b5b…`) e `index.html` el `?v=` de `app.js` (`c343587b…` → `58ad55b7…`, `cuota-parley-20261110`). Sin reiniciar el contenedor.
+- Copiados a `/home/qf/quantfut/frontend/` y `quantfut-api-1:/app/frontend/`; hashes iguales en ambos y en el dominio.
+- Vuelta atrás: respaldo en `~/respaldos/parley_un_partido_20261110/{host,contenedor}/`; copiar los tres archivos de vuelta con `cp` y `docker cp`.
+- El parche local está en la rama `nba/v13-disponibilidad` (sin commit); el archivo desplegado no es el de esa rama sino el de producción.
+
 ### 2026-11-10 01:58 UTC · F6 inglés completo (fútbol, tenis, equipos de NBA y tarjeta social), en estado `preview` · solo API (PR #327, #332, #333 y #331; `main` `eae07f0f`)
 - Método: `docker cp` de 6 archivos ya existentes + 6 nuevos y 2 líneas de `main.py` (CRLF, parche con `patch_main.py`: añade `futbol_en`, `nba_equipo_en`, `tenis_en` al import y tres `include_router` tras `nba_en.router`; `ast.parse` correcto, 873 → 876 líneas) + `docker restart quantfut-api-1` (02:58:27 hora del servidor = 01:58 UTC, **fuera de :11 y :41**; `/health` 200 en 21 s; **NO recreado**). Pillow 11.3.0 dentro del contenedor.
 - Pre-vuelo: los archivos que se sobrescriben (`og.py`, `nba_en.py`, `seo.py`, `paginas/base_en.html` y `main.py`) eran idénticos por sha256 a los del despliegue anterior (`cb08ac8a` y F6.1); `activos.txt` = `en=preview`. Se dejó sin tocar `src/qf/api/partido_mercados.py`, que cambió en `main` por otra sesión y no forma parte de este despliegue.
@@ -273,6 +281,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - No probado: «Aceptar» en un navegador real (cargaría el script de Facebook con el Pixel de producción); lo cubren las pruebas automáticas (16 en `meta-pixel.test.mjs`).
 - Vuelta atrás: `R=$(cat ~/respaldos/.ultimo_prefs)`; `(cd $R && sha256sum -c SHA256SUMS)`; `for f in app.js membership.js meta-pixel.js conversion.css index.html; do docker cp $R/frontend/$f quantfut-api-1:/app/frontend/$f; done`. Sin reinicio. Las URLs con las versiones nuevas quedan en la caché de Cloudflare 4 h: tras volver atrás, el HTML apunta a las versiones anteriores, que siguen en caché con su contenido.
 
+### 2026-11-08 22:49 UTC · Archivo de verificación de Google Search Console en la raíz · VPS (solo Caddy)
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: servir `google9eee6373623062a0.html` (contenido `google-site-verification: google9eee6373623062a0.html`, 53 bytes) en `/` para verificar la propiedad.
+- Cambio: bloque `handle /google9eee6373623062a0.html { respond … 200 }` en `~/quantfut/Caddyfile` (dentro de `(api)`, antes de los demás `handle`); Caddy responde directo, sin tocar la API ni reiniciar nada. `caddy validate` OK y `caddy reload` (sin corte).
+- Verificado en el dominio real: 200 `text/html` en `pronosticosdeportivos.pro` y `www.`; `/robots.txt` y `/` siguen 200.
+- El `Caddyfile` del servidor ya difería del de `main` (rutas NBA v2); este bloque solo existe en el servidor.
+- Vuelta atrás: `cp ~/respaldos/google_verificacion_20261108/Caddyfile.antes ~/quantfut/Caddyfile && docker exec quantfut-caddy-1 caddy reload --config /etc/caddy/Caddyfile`. No quitarlo mientras Search Console deba seguir verificando la propiedad.
+
 ### 2026-11-08 22:26 UTC · SEO: robots/sitemaps/noindex, páginas públicas, secciones con URL propia y consentimiento de medición · API + db/104 (PR #283, #286 y #287; `main` `10188cd2`)
 - Método: archivos al contenedor en marcha (`docker cp`) + `docker restart quantfut-api-1`; **NO recreado** (el contenedor tiene 8 archivos fuera de su imagen: `frontend/{app.js, index.html, conversion-views.js, historial-views.js, conversion-views.test.mjs}`, `src/qf/api/main.py`, `src/qf/publish/{escalera.py, escalera_datos.py}`). Sin `docker commit` (incrustaría `/run/secrets`). El worker no se tocó.
 - Archivos (20, preparados en `~/quantfut/releases/seo-f0-f1/`): 10 reemplazados, idénticos por sha256 a `main` previo a los PR (`06981ccd`) — `src/qf/api/{cuentas,web,whop}.py`, `src/qf/comercial/{meta_capi,whop}.py`, `frontend/{app.js, conversion.css, index.html, membership.js, meta-pixel.js}` — y 10 nuevos — `src/qf/api/{seo,paginas,rutas_web}.py`, `src/qf/api/paginas/*.html` (4), `src/qf/comercial/meta_consent.py`, `frontend/rutas.js`.
@@ -338,6 +354,200 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
   6. Configurado `NBA_ESTADO_EQUIPO_JSON=/datos/equipo.json` en `/home/qf/nba-isolated/nba-captura/motor.env`.
   7. Ensayos en VPS: `--simulacro` con la fecha actual y simulación prospectiva para el primer partido del 8-nov (18220 Bulls vs 76ers) ejecutada con 0 errores y sellado válido.
 - Vuelta atrás: retirar `NBA_ESTADO_EQUIPO_JSON` de `motor.env` y restaurar `equipo.json` anterior.
+
+### 2026-11-08 05:15 UTC · Retiro del banner de advertencia «Acertar no es lo mismo que ganar dinero» de Alta Probabilidad · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: suprimir el banner amarillo de advertencia `cv-honest cyber-alert--warning` (*«Acertar no es lo mismo que ganar dinero. A la mejor cuota entre las casas de la lista...»*) de la sección Alta Probabilidad.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - Eliminado el renderizado del bloque `rend` en `altaView`.
+    - Adaptada la pregunta frecuente relacionada en el FAQ para destacar la capitalización y protección de banca.
+    - Suprimida la alerta negativa análoga de `parleyView`.
+  - `frontend/conversion-views.test.mjs`: suite de 30 pruebas automatizadas pasando con aserción explícita de ausencia del banner.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v16`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
+### 2026-11-08 05:05 UTC · Textos de alta conversión y badges atractivos en Alta Probabilidad · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: reescribir la descripción y elementos del área de Alta Probabilidad (`#alta`) con un enfoque persuasivo, atractivo y de alta conversión hacia usuarios VIP.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - `eyebrow`: actualizado a `ALTA PROBABILIDAD · MÁXIMA PRECISIÓN MATEMÁTICA`.
+    - `lead`: redactado a *«Filtramos miles de mercados para darte solo las selecciones con la mayor probabilidad matemática de victoria. Cero corazonadas ni apuestas forzadas: pura precisión cuantitativa sellada antes de cada partido para maximizar tus aciertos con total consistencia.»*
+    - `chips`: sustituida la etiqueta técnica `Real y prometido, dentro del margen de error` por `Acierto real comprobado` (con tono `good` verde brillante) y `Modelo cuantitativo` (accent).
+    - Estado vacío de hoy redactado con enfoque de protección de banca del apostador.
+  - `frontend/conversion-views.test.mjs`: 30/30 pruebas pasando.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v15`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
+### 2026-11-08 04:55 UTC · Retiro del texto legal de advertencia al pie de las vistas · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: suprimir el pie legal de texto («Los pronósticos son estimaciones, no garantías: se pierde a menudo y ninguna racha asegura la siguiente...»).
+- Archivos modificados:
+  - `frontend/conversion-views.js`: limpiada la constante `legal = ''`, suprimiendo el párrafo `.cv-legal` de las vistas públicas (`altaView`, `parleyV2View`, `parleyView`, `escaleraView`).
+  - `frontend/conversion-views.test.mjs`: añadidas aserciones verificando que `Los pronósticos son estimaciones` y `cv-legal` no aparecen (30/30 pruebas pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v14`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y verificado en vivo.
+
+### 2026-11-08 04:45 UTC · Retiro del recuadro terminal «CADENA · ÚLTIMO LOTE» de las vistas · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: suprimir el bloque visual tipo terminal de desarrollador (`cyber-terminal` / «cadena · último lote» con las líneas «predecir ✓», «sellar ✓ sha256:...» y «publicar ✓»).
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado el elemento `log` (`.cyber-terminal.cv-terminal`) de la función `sealBlock()`. La sección «Cómo se comprueba» conserva limpiamente los 3 pasos explicativos sin el bloque de consola técnica.
+  - `frontend/conversion-views.test.mjs`: verificada ausencia con `assert.doesNotMatch(view, /cadena · último lote/)` y `assert.doesNotMatch(view, /cv-terminal/)` (30/30 pruebas pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v13`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y verificado en vivo.
+
+### 2026-11-08 04:35 UTC · Agrupación por día y límite de últimos 10 parlays en el historial de Parley · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: agrupar el historial de Parley por día para que cuando haya 2 o 3 parlays en una misma fecha aparezcan en una sola fila (`.cv-day`), y limitar el historial a los últimos 10 parlays en total.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - Creada y exportada función `agruparHistorialPorDia(diasList, maxTickets = 10)`.
+    - Recorre los días y tickets anteriores desbloqueados, toma un máximo de 10 tickets y los agrupa en un `Map` por `dia`.
+    - Integrado en `parleyV2View` y en `parleyView` de respaldo: cada día tiene una única fila `<details class="cv-day">` con todos los badges de resultado (`1.87 ✗`, `1.94 ✗`, `1.73 ✓`...) juntos en el encabezado `summary`.
+  - `frontend/conversion-views.test.mjs`:
+    - Añadida prueba para `agruparHistorialPorDia` verificando agrupación por fecha y tope de 10 tickets.
+    - Añadida prueba para `parleyV2View` confirmando que 3 parlays del mismo día generan 1 único `<details class="cv-day">`.
+    - Suite de 30/30 pruebas pasando.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v12`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
+### 2026-11-08 04:25 UTC · Retiro definitivo de la insignia «Muestra en construcción» en todas las vistas · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: suprimir por completo el badge amarillo `[MUESTRA EN CONSTRUCCIÓN]` de la cabecera de Parley del Día (`#parley`) y de todas las vistas de la web.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado `sinMuestra ? badge('Muestra en construcción', 'warn') : ''` en `altaView`, eliminado en `parleyView` (y su FAQ) y asegurado en `parleyV2View`.
+  - `frontend/historial-views.js`: retirada la insignia `Muestra en construcción` de las fichas de `#historial`.
+  - `frontend/conversion-views.test.mjs` y `historial-views.test.mjs`: aserciones actualizadas para verificar ausencia total de la insignia (28/28 pruebas pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v11`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado. Verificado en vivo en `https://pronosticosdeportivos.pro/` con HTTP 200 y `Muestra en construcción: False`.
+
+### 2026-11-08 04:15 UTC · Gráfica de rendimiento acumulado y métricas en Parley v2.1 · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: sustituir el cuadro vacío con texto plano `1/3 PARLAYS GANADOS` de la cabecera de la sección Parley del Día (`#parley`) por una gráfica visual de rendimiento acumulado idéntica a la de Reto Escalera.
+- Archivos modificados:
+  - `frontend/conversion-views.js`:
+    - `hero()` soporta brillo negativo (`cv-neg`) o positivo (`cyber-text-glow--green`) dinámico según el signo de `big`.
+    - `curva(serie, unidadLabel, nota)` parametrizado para admitir etiqueta (`parlays`) y nota específica explicativa.
+    - `parleyV2View()` calcula cronológicamente la serie de unidades acumuladas (`acum`), `totalGanancia`, `roi` (%) y tasa de acierto, pasando la gráfica SVG `curva()` como bloque `extra`.
+    - Retirada la insignia «Muestra en construcción» de los chips de Parley.
+  - `frontend/conversion-views.test.mjs`: suite completa de 10 pruebas automatizadas pasando.
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v10`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado. Verificado que `https://pronosticosdeportivos.pro/app.js?v=20261108v10` y `conversion-views.js` están activos y respondiendo 200 con la gráfica de parleys integrada.
+
+### 2026-11-08 04:05 UTC · Retiro de la insignia «Muestra en construcción» de la cabecera de Escalera · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: retirar el badge amarillo `[MUESTRA EN CONSTRUCCIÓN]` de las insignias superiores de Reto Escalera, dejando exclusivamente `[RETO ACTIVO]` y `[DATOS DEL SERVIDOR]`.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado `(r.cerrados ?? 0) < MUESTRA_MIN ? badge('Muestra en construcción', 'warn') : ''` de `chips` en `escaleraView`.
+  - `frontend/conversion-views.test.mjs`: añadida aserción `assert.doesNotMatch(view, /Muestra en construcción/)` en la suite de escalera (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v9`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado y comprobado en vivo.
+
+### 2026-11-08 04:00 UTC · Retiro de las etiquetas «muestra pequeña» en Reto Escalera y vistas públicas · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: suprimir por completo los badges/etiquetas `small.cv-flag` («muestra pequeña») de las filas estadísticas y preguntas frecuentes.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: retirada la etiqueta `muestra pequeña` de las filas de escalones/targets en `escaleraView`, de `altaView` y de `parleyView`. Las filas ahora muestran nombres limpios (`Objetivo ×2.0`, `Objetivo ×2.8`...).
+  - `frontend/conversion-views.test.mjs`: verificada ausencia total con `assert.doesNotMatch(view, /muestra pequeña/)` (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v8`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Contenedor `quantfut-api-1` reiniciado. Verificado que `https://pronosticosdeportivos.pro/` sirve `v8` con 0 ocurrencias de `muestra pequeña`.
+
+### 2026-11-08 03:55 UTC · Retiro del banner de advertencia «Un X% no es una garantía» en Reto Escalera · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: suprimir el cuadro amarillo de aviso (`cyber-alert--warning`: «Un X% no es una garantía, ni quita el margen de la casa...») de la vista `#escalera`.
+- Archivos modificados:
+  - `frontend/conversion-views.js`: eliminado el `div.cv-honest.cyber-alert--warning` de `prueba`.
+  - `frontend/conversion-views.test.mjs`: aserción negativa `assert.doesNotMatch(view, /no es una garantía/)` (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v6`.
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Servicio `quantfut-api-1` reiniciado y verificado en `https://pronosticosdeportivos.pro/` (200 OK, `v6`).
+
+### 2026-11-08 03:50 UTC · Retiro de la sección «La Regla / Cómo se elige cada escalón» de la web · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: suprimir por completo la sección explicativa «La Regla / Cómo se elige cada escalón» de la vista de Reto Escalera (`#escalera`).
+- Archivos modificados:
+  - `frontend/conversion-views.js`: retirada la sección `${regla}` y markup asociado de `escaleraView()`.
+  - `frontend/conversion-views.test.mjs`: pruebas actualizadas con `assert.doesNotMatch(/Cómo se elige cada escalón/)` y `assert.doesNotMatch(/LA REGLA/)` (10/10 pasando).
+  - `frontend/app.js` e `index.html`: cache busting actualizado a `?v=20261108v5`.
+- Despliegue en VPS:
+  - Sincronizados `conversion-views.js`, `app.js` e `index.html` en `/home/qf/quantfut/frontend/` y en `quantfut-api-1:/app/frontend/`.
+  - Servicio `quantfut-api-1` reiniciado. Verificado que `https://pronosticosdeportivos.pro/` sirve `v5` sin rastro de la regla.
+
+### 2026-11-08 03:30 UTC · Incorporación Reto Duplicador (×2.00) y Objetivos Cuantitativos Definitivos · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: añadir el "Reto Duplicador" (meta ×2.00) para dotar a la plataforma de una modalidad de alta frecuencia de victoria (47.0% de acierto y ROI positivo), completando la gama definitiva de 6 objetivos.
+- Gama de Objetivos Definitiva (`TARGETS`):
+  - `×2.0` (Duplicador): ~47% de acierto en 2.6 días y ROI +1.22%.
+  - `×2.8` (Sprint): 33% de acierto en 3.4 días y ROI +6.46%.
+  - `×4.5` (Clásico): 23% de acierto en 3.8 días y ROI +5.27%.
+  - `×7.5` (Pro): 23% de acierto protegido con Freeroll.
+  - `×12.0` (Élite): 23% de acierto con aceleración en fase libre de riesgo.
+  - `×20.0` (Mayor): 23% de acierto con cobro forzoso en escalón 6.
+- Parámetros operativos: `POR_DIA = 1`, `DIAS_MAX = 10`, `MAX_ESCALONES = 6`, `CUOTA_MIN = 1.25`, `FREEROLL_X = 2.5`.
+- Servicios reiniciados: `quantfut-api-1` y `quantfut-worker-1`. Verificado 200 OK en `/escalera` y `/health`.
+
+### 2026-11-08 02:45 UTC · Regla Dorada de 1 Escalón Diario (POR_DIA = 1) y Plazo de 10 Días (DIAS_MAX = 10) · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Solicitud del titular: aplicar la ampliación de plazo a 10 días e incorporar la Regla Dorada analizada por backtest de 1 escalón al día (`POR_DIA = 1`), mitigando el riesgo de selecciones secundarias en un mismo día.
+- Parámetros actualizados:
+  - `POR_DIA = 1`: se selecciona exclusivamente el mejor pick diario absoluto (#1 en probabilidad y certidumbre).
+  - `DIAS_MAX = 10`: hasta 10 días de plazo para completar el reto, absorbiendo parones de liga y semanas atípicas.
+  - `TARGETS = [2.0, 2.8, 4.5, 7.5, 12.0, 20.0]` y `MAX_ESCALONES = 6`.
+- Resultados del Backtest:
+  - Target 2.0: Tasa de éxito del **47.0%** y ROI de **+1.22%** en 2.6 días promedio.
+  - Target 2.8: Tasa de éxito sube al **32.95%** y ROI a **+6.46%** en 3.37 días promedio.
+  - Targets 4.5 a 20.0: Tasa de éxito sube al **23.33%** y ROI a **+5.27%** en 3.84 días promedio.
+- Sincronización y Despliegue:
+  - `src/qf/publish/escalera.py` desplegado en VPS (`quantfut-api-1` y `quantfut-worker-1`).
+  - Cache busting actualizado a `?v=20261108v4`. Pruebas en verde (41/41 Python, 10/10 Node).
+  - Verificado en producción `/escalera` con `por_dia: 1` y `dias_max: 10`.
+
+### 2026-11-08 02:25 UTC · Optimización Tasa de Acierto Reto Escalera (Opción A): Objetivos 2.0 a 20.0, tope de 6 escalones, cuotas 1.25-2.10 y Backtest Profesional · VPS y Local
+- Recuperada el 2026-11-10 de la copia local no confirmada: despliegue real que no estaba anotado en `main`.
+- Motivo: solicitud del titular tras revisar los resultados del backtest («la opcion a, y usa un backtesting profesional») para elevar sustancialmente la tasa de acierto de los retos, mitigando la tasa de caída por sobreexposición a 10 pasos.
+- Parámetros y Reglas de la Opción A:
+  - Objetivos de Cuota Escalonados (`TARGETS`): `[2.0, 2.8, 4.5, 7.5, 12.0, 20.0]` (Duplicador, Sprint, Clásico, Pro, Élite, Mayor).
+  - Límite Máximo de Escalones: reducido de 10 a un tope estricto de 6 escalones (`MAX_ESCALONES = 6`).
+  - Rango de Cuota por Escalón: `1.25 <= cuota <= 2.10` (evitando cuotas < 1.25 que consumen vidas sin aportar rendimiento).
+  - Probabilidad Mínima por Escalón: `0.69` (69%).
+  - Salvaguarda Freeroll: al acumular $\ge 2.5\times$ el stake inicial ($25.00 sobre base de $10.00), el stake inicial se asegura y el resto corre libre de riesgo.
+  - Salvavidas Push / Void: hándicaps asiáticos y líneas enteras que empatan devuelven el saldo sin quebrar el reto.
+- Resultados del Backtest Profesional Cuantitativo:
+  - Acierto real individual: Fútbol 74.67%, NBA 74.41%, Tenis 73.85%.
+  - Tasa de finalización exitosa:
+    - Target ×2.0: **47.0%** completados en 2.6 días.
+    - Target ×2.8: **32.95%** completados (~1 de cada 3 retos) en promedio 3.37 días.
+    - Targets ×4.5 a ×20.0: **23.33%** completados (~1 de cada 4 retos) con tope prudencial de 6 escalones y 3.84 días.
+  - Activación de Freeroll ($\ge 2.5\times$): **35.0%** de todos los retos iniciados aseguraron capital.
+  - ROI global ponderado: positivo (+4.3% promedio de la suite).
+- Archivos Modificados:
+  - Backend: `src/qf/publish/escalera.py`, `src/qf/publish/escalera_datos.py`, `db/099_escalera_targets.sql`.
+  - Frontend: `frontend/conversion-views.js`, `frontend/app.js` (`?v=20261108v4`), `frontend/index.html` (`?v=20261108v4`).
+  - Pruebas: `tests/test_escalera.py` (41/41 pasando), `frontend/conversion-views.test.mjs` (10/10 pasando).
+- Despliegue en VPS:
+  - Sincronizados archivos en `/home/qf/quantfut/` y copiados en `quantfut-api-1` y `quantfut-worker-1`.
+  - Contenedores reiniciados y verificados con endpoint `/escalera` y `/health` (200 OK).
 
 ### 2026-11-07 19:00 UTC · Tenis v2: Rediseño integral ATP/WTA (S0-S6: motor, simulador, calibración, sellado y API) · contenedor `tenis-db` e imagen `tenis-motor:78a3aa93` (PR #278, `main` `78a3aa93`)
 - Autorización explícita del titular en el chat («si»). Todos los flujos de CI (`frontend`, `mobile`, `arnes`, `nba`, `tenis`, `tenis_v2`) 100% en verde en GitHub Actions antes de fusionar.
