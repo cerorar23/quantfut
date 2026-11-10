@@ -47,11 +47,12 @@ pago (ver `harness/tareas.md`).
 
 1. Ejecuta `./scripts/harness_check.sh`. Si falla, tu única tarea es arreglar
    eso antes de continuar con cualquier otra cosa.
-2. Lee [PENDIENTES.md](PENDIENTES.md) (lista única: qué falta, quién y cuándo) y
-   [harness/tareas.md](harness/tareas.md) — backlog priorizado con el detalle técnico.
-3. Lee [harness/progreso.md](harness/progreso.md) — decisiones y estado de
-   sesiones anteriores, para no repetir trabajo ni deshacer decisiones ya
-   tomadas.
+2. Lee [PENDIENTES.md](PENDIENTES.md) (lista única, corta). Para el detalle técnico NO leas `harness/tareas.md` entero (~2.800 líneas):
+   busca el tema con `grep -n '^## ' harness/tareas.md` y lee solo esa sección. Lo cerrado vive en `harness/archivo/`.
+3. Lee solo las últimas entradas de [harness/progreso.md](harness/progreso.md) (`head -n 120`): son las decisiones desde el 1-nov-2026,
+   para no repetir trabajo ni deshacer decisiones. El diario anterior está en `harness/archivo/progreso_hasta_20261110.md` (solo con `grep`).
+4. Trabaja siempre en un `git worktree` nuevo desde `origin/main` (`git worktree add -b <rama> <carpeta> origin/main`), una rama por tarea
+   y PR a `main`. No dejes cambios sin confirmar ni ramas locales sin PR: el 10-nov hubo que limpiar 279 ramas y 81 worktrees acumulados.
 
 ## Despliegues (desde 2026-10-15)
 
