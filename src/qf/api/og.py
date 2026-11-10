@@ -37,6 +37,17 @@ URL_MARCA = "/og/marca.jpg"
 ESTADOS = ("previa", "final")
 DEPORTES = {"nba": "NBA", "futbol": "FÚTBOL", "tenis": "TENIS"}
 TITULOS_PILAR = {"nba": "Pronósticos de NBA", "futbol": "Pronósticos de fútbol", "tenis": "Pronósticos de tenis"}
+# Inglés (F6): mismas tarjetas, textos en inglés. Las URLs van bajo /og/en/…; la página inglesa las declara como og:image.
+DEPORTES_EN = {"nba": "NBA", "futbol": "FOOTBALL", "tenis": "TENNIS"}
+TITULOS_PILAR_EN = {"nba": "NBA predictions", "futbol": "Football predictions", "tenis": "Tennis predictions"}
+SUBTITULO_PILAR = {"es": "Probabilidad de cada partido, sellada antes de jugarse.",
+                   "en": "Win probability for every match, sealed before it is played."}
+TEXTOS = {
+    "es": {"aviso": "+18 · Estimación estadística, no una garantía", "pronostico": "PRONÓSTICO ANTES DEL PARTIDO",
+           "final": "FINAL", "sep": "  ", "acerto": "ACERTÓ", "fallo": "FALLÓ", "pct": "{n} %"},
+    "en": {"aviso": "+18 · Statistical estimate, not a guarantee", "pronostico": "FORECAST BEFORE THE MATCH",
+           "final": "FINAL", "sep": " ", "acerto": "HIT", "fallo": "MISS", "pct": "{n}%"},
+}
 VIDA_DISCO_S = 30 * 24 * 3600
 _ultima_limpieza = 0.0
 
@@ -63,6 +74,7 @@ class Tarjeta:
     estado: str = "previa"                      # previa | final
     marcador: str = ""                          # solo en final
     veredicto: str | None = None                # acerto | fallo | None
+    idioma: str = "es"                         # es | en: textos de la imagen
 
 
 # --- dibujo ---------------------------------------------------------------------------------------
@@ -91,6 +103,7 @@ def _centrado(draw, xy, texto, fuente, color):
 
 def renderizar(t: Tarjeta) -> bytes:
     from PIL import Image, ImageDraw
+    T = TEXTOS[t.idioma]
     img = Image.new("RGB", (ANCHO, ALTO), FONDO)
     d = ImageDraw.Draw(img)
     d.rectangle((0, 0, 14, ALTO), fill=VERDE)
@@ -115,9 +128,9 @@ def renderizar(t: Tarjeta) -> bytes:
             f, nombre = _ajustar(d, nombre, ANCHO - 112, 84, 40)
             d.text((56, y), nombre, font=f, fill=TEXTO)
         d.text((56, 262), "vs", font=_fuente(34), fill=GRIS)
-        _barra(d, t.barra)
-        _pie_partido(d, t)
-    d.text((56, 592), "+18 · Estimación estadística, no una garantía", font=_fuente(22), fill=GRIS)
+        _barra(d, t.barra, T)
+        _pie_partido(d, t, T)
+    d.text((56, 592), T["aviso"], font=_fuente(22), fill=GRIS)
     web = "pronosticosdeportivos.pro"
     d.text((ANCHO - 56 - d.textlength(web, font=_fuente(26)), 586), web, font=_fuente(26), fill=GRIS)
     buf = io.BytesIO()
@@ -125,7 +138,7 @@ def renderizar(t: Tarjeta) -> bytes:
     return buf.getvalue()
 
 
-def _barra(d, barra: list[tuple[str, float]]) -> None:
+def _barra(d, barra: list[tuple[str, float]], T: dict) -> None:
     if not barra:
         return
     total = sum(p for _, p in barra) or 1.0
@@ -138,23 +151,23 @@ def _barra(d, barra: list[tuple[str, float]]) -> None:
         x += ancho
     tam = len(barra)
     for i, (nombre, p) in enumerate(barra):
-        texto = f"{nombre} {round(p / total * 100)} %"
+        texto = f"{nombre} {T['pct'].format(n=round(p / total * 100))}"
         ff, texto = _ajustar(d, texto, (x1 - x0) // tam - 10, 30, 20)
         ancho = d.textlength(texto, font=ff)
         px = x0 if i == 0 else (x1 - ancho if i == tam - 1 else (x0 + x1) / 2 - ancho / 2)
         d.text((px, 482), texto, font=ff, fill=colores[i % 3])
 
 
-def _pie_partido(d, t: Tarjeta) -> None:
+def _pie_partido(d, t: Tarjeta, T: dict) -> None:
     if t.estado == "final" and t.marcador:
-        texto, color = f"FINAL  {t.marcador}", TEXTO
+        texto, color = f"{T['final']}{T['sep']}{t.marcador}", TEXTO
     else:
-        texto, color = "PRONÓSTICO ANTES DEL PARTIDO", VERDE
+        texto, color = T["pronostico"], VERDE
     f = _fuente(34)
     d.text((56, 532), texto, font=f, fill=color)
     if t.estado == "final" and t.veredicto:
         x = 56 + d.textlength(texto, font=f) + 34
-        etiqueta, col = ("ACERTÓ", VERDE) if t.veredicto == "acerto" else ("FALLÓ", AMBAR)
+        etiqueta, col = (T["acerto"], VERDE) if t.veredicto == "acerto" else (T["fallo"], AMBAR)
         w = d.textlength(etiqueta, font=f)
         d.rounded_rectangle((x - 16, 526, x + w + 16, 576), radius=10, outline=col, width=3)
         d.text((x, 532), etiqueta, font=f, fill=col)
@@ -223,6 +236,10 @@ def url_pilar(deporte: str) -> str | None:
     return f"{seo.base_url()}/og/{deporte}/pilar.jpg" if disponible() else None
 
 
+def url_pilar_en(deporte: str) -> str | None:
+    return f"{seo.base_url()}/og/en/{deporte}/pilar.jpg" if disponible() else None
+
+
 def url_marca() -> str | None:
     return seo.base_url() + URL_MARCA if disponible() else None
 
@@ -244,6 +261,8 @@ def og_marca():
 
 @router.get("/og/{deporte}/{resto:path}", name="og_tarjeta")
 def og_tarjeta(deporte: str, resto: str):
+    if deporte == "en":
+        return _tarjeta_en(resto)
     if deporte not in DEPORTES or not disponible():
         raise HTTPException(404)
     if resto == "pilar.jpg":
@@ -268,3 +287,34 @@ def og_tarjeta(deporte: str, resto: str):
     if t is None or t.estado != m["estado"]:
         raise HTTPException(404)          # sin página, o un estado que el partido todavía no tiene
     return _respuesta(jpeg(f"{deporte}-{'-'.join(partes)}-{t.estado}", t), "public, max-age=31536000, immutable")
+
+
+def _tarjeta_en(resto: str):
+    """/og/en/{deporte}/… : las mismas tarjetas con textos en inglés. Sin inglés abierto o en apagado, 404."""
+    from . import idiomas
+    if idiomas.estado("en") == "off" or not disponible():
+        raise HTTPException(404)
+    dep, _, rest = resto.partition("/")
+    if dep not in DEPORTES_EN:
+        raise HTTPException(404)
+    if rest == "pilar.jpg":
+        t = Tarjeta("pilar", etiqueta=DEPORTES_EN[dep], titulo=TITULOS_PILAR_EN[dep], subtitulo=SUBTITULO_PILAR["en"], idioma="en")
+        return _respuesta(jpeg(f"en-pilar-{dep}-v1", t), "public, max-age=86400")
+    m = re.fullmatch(r"(?P<ruta>[a-z0-9][a-z0-9/-]{3,160})-(?P<estado>previa|final)\.jpg", rest)
+    if not m:
+        raise HTTPException(404)
+    partes = m["ruta"].split("/")
+    if len(partes) != (1 if dep == "nba" else 2):
+        raise HTTPException(404)
+    from . import futbol_en, nba_en, tenis_en
+    modulo = {"nba": nba_en, "futbol": futbol_en, "tenis": tenis_en}[dep]
+    try:
+        t = modulo.tarjeta_de_la_url(*partes)
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.warning("og en: datos no disponibles para %s: %s", resto, e)
+        raise HTTPException(503, headers={"Retry-After": "60", "Cache-Control": "no-store"})
+    if t is None or t.estado != m["estado"]:
+        raise HTTPException(404)
+    return _respuesta(jpeg(f"en-{dep}-{'-'.join(partes)}-{t.estado}", t), "public, max-age=31536000, immutable")

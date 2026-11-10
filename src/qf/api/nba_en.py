@@ -22,7 +22,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import idiomas, nba_datos, nba_paginas, paginas, seo
+from . import idiomas, nba_datos, nba_paginas, og, paginas, seo
 from .nba_datos import NbaNoDisponible
 
 log = logging.getLogger("qf.nba_en")
@@ -134,7 +134,7 @@ def construir(p: dict, ahora: datetime | None = None) -> SimpleNamespace:
         p=SimpleNamespace(titulo=titulo, descripcion=descripcion, slug=slug, migas=f"{local} vs {visit}"),
         id=p["id"], slug=slug, url=url, local=local, visitante=visit, fecha=fecha, estado=st, veredicto=ver,
         inicio=inicio, sellado=sellado, resultado=p.get("resultado"),
-        p_local=pct(pl), p_visit=pct(1 - pl), mu_local=num(pr["mu"][0]), mu_visit=num(pr["mu"][1]),
+        prob_local=pl, p_local=pct(pl), p_visit=pct(1 - pl), mu_local=num(pr["mu"][0]), mu_visit=num(pr["mu"][1]),
         texto_margen=texto_margen,
         margen_rango=f"{entero(a[0])} and {'+' if a[1] > 0 else ''}{entero(a[1])}",
         total_mediana=entero(pr["mediana"]["total"]), total_rango=f"{entero(b[0])} and {entero(b[1])}",
@@ -215,12 +215,12 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
 
 # --- rutas ----------------------------------------------------------------------------------------
 
-def _responder(plantilla: str, p: SimpleNamespace, url: str, jsonld: list[dict], ruta: str, **ctx) -> HTMLResponse:
+def _responder(plantilla: str, p: SimpleNamespace, url: str, jsonld: list[dict], ruta: str, og_imagen: str | None = None, **ctx) -> HTMLResponse:
     cab = idiomas.puerta("en")
     cab.setdefault("Cache-Control", "no-cache, must-revalidate")
     cab["Content-Security-Policy"] = paginas.CSP
     cuerpo = _env.get_template(plantilla).render(
-        p=p, url=url, base=seo.base_url(), jsonld=jsonld, paginas=paginas.PAGINAS_EN, og_imagen=None,
+        p=p, url=url, base=seo.base_url(), jsonld=jsonld, paginas=paginas.PAGINAS_EN, og_imagen=og_imagen,
         idiomas_alt=idiomas.selector(ruta), robots=idiomas.robots_de("en"), **ctx)
     return HTMLResponse(cuerpo, headers=cab)
 
@@ -237,7 +237,7 @@ def pilar():
         c = construir_pilar()
     except NbaNoDisponible:
         raise _no_disponible()
-    return _responder("en_nba_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR, c=c)
+    return _responder("en_nba_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR, og_imagen=og.url_pilar_en("nba"), c=c)
 
 
 @router.api_route(RUTA_PILAR.rstrip("/"), methods=["GET", "HEAD"], name="en_nba_pilar_sin_barra")
@@ -258,7 +258,9 @@ def partido(slug: str):
     if p is None:
         raise HTTPException(404)
     c = construir(p)
-    return _responder("en_nba_partido.html", c.p, c.url, _jsonld_partido(c, seo.base_url()), f"{PREFIJO}/nba/{c.slug}/", c=c)
+    imagen = og.url_partido(f"{PREFIJO}/nba/{c.slug}/", nba_paginas.estado_imagen(c))
+    return _responder("en_nba_partido.html", c.p, c.url, _jsonld_partido(c, seo.base_url()), f"{PREFIJO}/nba/{c.slug}/",
+                      og_imagen=imagen, c=c)
 
 
 @router.api_route("/en/nba/{slug}", methods=["GET", "HEAD"], name="en_nba_partido_sin_barra")
@@ -267,3 +269,19 @@ def partido_sin_barra(slug: str, request: Request):
     if not nba_datos.SLUG_PARTIDO.match(slug):
         raise HTTPException(404)
     return RedirectResponse(f"{seo.base_url()}/en/nba/{slug}/" + (f"?{request.url.query}" if request.url.query else ""), status_code=301)
+
+
+# --- tarjeta para redes (en inglés) -------------------------------------------------------------------
+
+def tarjeta(c: SimpleNamespace) -> "og.Tarjeta":
+    final = nba_paginas.estado_imagen(c) == "final"
+    r = c.resultado
+    return og.Tarjeta("partido", etiqueta="NBA", local=c.local, visitante=c.visitante, contexto=f"NBA · {fecha_corta(c.fecha)}",
+                      barra=[(c.local, c.prob_local), (c.visitante, 1 - c.prob_local)], estado=nba_paginas.estado_imagen(c),
+                      marcador=f"{int(r['local'])} – {int(r['visitante'])}" if final and r else "",
+                      veredicto=(("acerto" if c.veredicto["acerto"] else "fallo") if final and c.veredicto else None), idioma="en")
+
+
+def tarjeta_de_la_url(slug: str):
+    p = nba_datos.buscar_partido(slug)
+    return tarjeta(construir(p)) if p else None

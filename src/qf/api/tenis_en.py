@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import idiomas, paginas, seo, tenis_datos, tenis_paginas
+from . import idiomas, og, paginas, seo, tenis_datos, tenis_paginas
 from .tenis_datos import TenisNoDisponible
 
 log = logging.getLogger("qf.tenis_en")
@@ -200,12 +200,12 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
 
 # --- rutas ----------------------------------------------------------------------------------------
 
-def _responder(plantilla: str, p: SimpleNamespace, url: str, jsonld: list[dict], ruta: str, **ctx) -> HTMLResponse:
+def _responder(plantilla: str, p: SimpleNamespace, url: str, jsonld: list[dict], ruta: str, og_imagen: str | None = None, **ctx) -> HTMLResponse:
     cab = idiomas.puerta("en")
     cab.setdefault("Cache-Control", "no-cache, must-revalidate")
     cab["Content-Security-Policy"] = paginas.CSP
     cuerpo = _env.get_template(plantilla).render(
-        p=p, url=url, base=seo.base_url(), jsonld=jsonld, paginas=paginas.PAGINAS_EN, og_imagen=None,
+        p=p, url=url, base=seo.base_url(), jsonld=jsonld, paginas=paginas.PAGINAS_EN, og_imagen=og_imagen,
         idiomas_alt=idiomas.selector(ruta), robots=idiomas.robots_de("en"), **ctx)
     return HTMLResponse(cuerpo, headers=cab)
 
@@ -221,7 +221,7 @@ def pilar():
         c = construir_pilar()
     except TenisNoDisponible:
         raise _no_disponible()
-    return _responder("en_tenis_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR, c=c)
+    return _responder("en_tenis_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR, og_imagen=og.url_pilar_en("tenis"), c=c)
 
 
 @router.api_route(RUTA_PILAR.rstrip("/"), methods=["GET", "HEAD"], name="en_tenis_pilar_sin_barra")
@@ -242,7 +242,8 @@ def partido(torneo: str, slug: str):
     if ev is None or not tenis_paginas.mercado_ganador(ev):
         raise HTTPException(404)
     c = construir(ev)
-    return _responder("en_tenis_partido.html", c.p, c.url, jsonld_partido(c, seo.base_url()), c.ruta, c=c)
+    imagen = og.url_partido(c.ruta, tenis_paginas.estado_imagen(c))
+    return _responder("en_tenis_partido.html", c.p, c.url, jsonld_partido(c, seo.base_url()), c.ruta, og_imagen=imagen, c=c)
 
 
 @router.api_route("/en/tenis/{torneo}/{slug}", methods=["GET", "HEAD"], name="en_tenis_partido_sin_barra")
@@ -252,3 +253,20 @@ def partido_sin_barra(torneo: str, slug: str, request: Request):
         raise HTTPException(404)
     return RedirectResponse(f"{seo.base_url()}/en/tenis/{torneo}/{slug}/" + (f"?{request.url.query}" if request.url.query else ""),
                             status_code=301)
+
+
+# --- tarjeta para redes (en inglés) -------------------------------------------------------------------
+
+def tarjeta(c: SimpleNamespace) -> "og.Tarjeta":
+    final = tenis_paginas.estado_imagen(c) == "final"
+    a, b = (c.prob_fav, 1 - c.prob_fav) if c.favorito == c.home else (1 - c.prob_fav, c.prob_fav)
+    s = c.resultado["sets"]
+    return og.Tarjeta("partido", etiqueta="TENNIS", local=c.home, visitante=c.away, contexto=f"{c.torneo} · {fecha_corta(c.dia)}",
+                      barra=[(c.home, a), (c.away, b)], estado=tenis_paginas.estado_imagen(c),
+                      marcador=f"{s[0]} – {s[1]} in sets" if final and s else "",
+                      veredicto=(("acerto" if c.veredicto["acerto"] else "fallo") if final and c.veredicto else None), idioma="en")
+
+
+def tarjeta_de_la_url(torneo: str, slug: str):
+    ev = tenis_datos.buscar_partido(torneo, slug)
+    return tarjeta(construir(ev)) if ev and tenis_paginas.mercado_ganador(ev) else None
