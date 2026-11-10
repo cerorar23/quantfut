@@ -10,7 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ /app/src/
 COPY frontend/ /app/frontend/
-ENV PYTHONPATH=/app/src
+# Motor de tenis (la API importa `tenis.*`): solo src y config, como la imagen que corre en producción.
+COPY apps/tenis/src/ /app/apps/tenis/src/
+COPY apps/tenis/config/ /app/apps/tenis/config/
+ENV PYTHONPATH=/app/src:/app/apps/tenis/src
 RUN mkdir -p /srv/quantfut/chain /srv/quantfut/artifacts
 
 CMD ["uvicorn", "qf.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
