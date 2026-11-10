@@ -315,3 +315,22 @@ test('escalera por objetivo de cobro: describe objetivos y no promete un porcent
   assert.doesNotMatch(e, /al menos el 48%/);
   assert.doesNotMatch(e, /Retos de 2 o 2[.,]8/);
 });
+
+test('parley v2: un parley de un partido bloqueado (escalón 0) no muestra objetivo 0.00', () => {
+  const parley = {
+    status: 'ready',
+    data: {
+      activo: true,
+      dias: [],
+      v2: {
+        activo: true,
+        reglas: { escalones: [{ escalon: 1, target: 2.1, cuota_min: 2.058, cuota_max: 2.142 }] },
+        dias: [{ dia: '2026-11-10', chain_sha256: 'a'.repeat(64), tickets: [{ escalon: 0, locked: true, cuota_min: null, cuota_max: null }] }],
+      },
+    },
+  };
+  const view = createConversionViews(helpers({ parley })).parleyView();
+  assert.match(view, /Parley de un partido/);
+  assert.doesNotMatch(view, /0\.00/);
+  assert.doesNotMatch(view, /≈0\.0/);
+});
