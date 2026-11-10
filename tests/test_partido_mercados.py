@@ -504,3 +504,72 @@ def test_destacados_resueltos_guarda_cuota_y_casa_cuando_el_destacado_las_tiene(
     items = {i['match_id']: i for i in pm.destacados_resueltos(date(2026, 11, 1))}
     assert (items['con']['ref_price'], items['con']['ref_book']) == (1.47, 'bet365')
     assert (items['sin']['ref_price'], items['sin']['ref_book']) == (None, None)    # cuota del modelo: no se hace pasar por la de una casa
+
+
+# ---- ajuste por competición de la primera mitad (9-nov-2026) ----
+
+def test_sin_liga_o_con_liga_desconocida_la_primera_mitad_no_cambia():
+    from qf.model import primer_tiempo as m
+    base = m.probs(2.0, 1.6)
+    assert m.probs(2.0, 1.6, liga=None) == base
+    assert m.probs(2.0, 1.6, liga='zz.no_existe') == base
+    assert [f['prob'] for f in pm.filas_primer_tiempo(2.0, 1.6)] == [f['prob'] for f in pm.filas_primer_tiempo(2.0, 1.6, None)]
+
+
+def test_el_ajuste_por_liga_baja_las_probabilidades_altas_de_liga_mx_y_respeta_la_coherencia():
+    from qf.model import primer_tiempo as m
+    base, aj = m.probs(2.0, 1.6), m.probs(2.0, 1.6, liga='mx.liga_mx')
+    assert aj['gol_1t_si'] < base['gol_1t_si'] and 0 < aj['gol_1t_si'] < 1
+    assert aj['ambos_1t_si'] <= aj['gol_1t_si']
+    # no toca el resto de mercados
+    assert all(aj[k] == base[k] for k in ('ganador_1t_local', 'ganador_1t_empate', 'ganador_1t_visita', 'mas_1_5_1t'))
+    # la función es monótona: más goles esperados -> más probabilidad de gol en el 1T también con el ajuste
+    xs = [m.probs(l, l * .8, liga='mx.liga_mx')['gol_1t_si'] for l in (.8, 1.2, 1.6, 2.0, 2.6)]
+    assert xs == sorted(xs)
+
+
+def test_la_ficha_aplica_el_ajuste_de_la_liga_y_el_tope_actua_sobre_la_probabilidad_ajustada():
+    from qf.model import primer_tiempo as m
+    sin, con = pm.filas_primer_tiempo(2.0, 1.6), pm.filas_primer_tiempo(2.0, 1.6, 'mx.liga_mx')
+    esperada = m.probs(2.0, 1.6, liga='mx.liga_mx')['gol_1t_si']
+    fila = [f for f in con if f['market'] == 'ht_goal']
+    assert fila and fila[0]['prob'] == pytest.approx(esperada, abs=1e-3) and m.PROB_MIN_VALIDADA <= esperada <= m.PROB_MAX_VALIDADA
+    assert all(f['prob'] <= m.PROB_MAX_VALIDADA for f in con + sin)
+
+
+def test_el_modulo_generado_cubre_las_competiciones_con_los_dos_mercados():
+    from qf.model import ajuste_1t_datos as d
+    assert set(d.AJUSTE['pendiente']) == {'gol', 'ambos'} and all(0 < v < 1.5 for v in d.AJUSTE['pendiente'].values())
+    assert 'mx.liga_mx' in d.AJUSTE['intercepto'] and 'eu.ucl' in d.AJUSTE['intercepto']
+    assert all(set(v) == {'gol', 'ambos'} for v in d.AJUSTE['intercepto'].values())
+
+
+def test_el_ajuste_recupera_el_desplazamiento_de_una_liga():
+    import numpy as np
+    import pandas as pd
+    from qf.eval import ajuste_primer_tiempo as ap
+    rng = np.random.default_rng(3)
+    n = 2000
+    p = rng.uniform(.5, .9, n)
+    liga = np.where(np.arange(n) % 2, 'a', 'b')
+    verdad = np.where(liga == 'a', p - .08, p)          # la liga «a» promete 8 puntos de más
+    y = (rng.random(n) < verdad).astype(float)
+    f = pd.DataFrame({'league_id': liga, 'p_gol': p, 'p_ambos': p * .6, 'y_gol': y, 'y_ambos': (rng.random(n) < verdad * .6).astype(float),
+                      'kickoff_utc': pd.date_range('2025-01-01', periods=n, freq='6h', tz='UTC')})
+    aj = ap.ajustar(f, min_filas=100)
+    assert aj['intercepto']['a']['gol'] < aj['intercepto']['b']['gol'] - .15
+    assert aj['meta']['ligas'] == 2 and aj['meta']['filas'] == n
+    assert set(ap.ajustar(f.iloc[:50], min_filas=100)['intercepto']) == set()     # sin filas suficientes no se ajusta ninguna
+
+
+def test_liga_de_partido_es_tolerante_a_filas_incompletas_o_sin_base(monkeypatch):
+    monkeypatch.setattr(pm, 'query_one', lambda *a, **k: {'league_id': 'mx.liga_mx'})
+    assert pm.liga_de_partido('m1') == 'mx.liga_mx'
+    for raro in (None, {}, {'otra': 1}, {'league_id': None}):
+        monkeypatch.setattr(pm, 'query_one', lambda *a, _r=raro, **k: _r)
+        assert pm.liga_de_partido('m1') is None
+
+    def roto(*a, **k):
+        raise RuntimeError('sin base')
+    monkeypatch.setattr(pm, 'query_one', roto)
+    assert pm.liga_de_partido('m1') is None

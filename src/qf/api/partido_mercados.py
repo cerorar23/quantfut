@@ -195,13 +195,23 @@ def filas_complementarias(lam: float, mu: float, rho: float, local: str, visitan
     return nuevas
 
 
-def filas_primer_tiempo(lam: float, mu: float) -> list[dict]:
+def liga_de_partido(match_id: str) -> str | None:
+    """Competición del partido: la columna `league_id` (el prefijo del `match_id` no siempre coincide). None si no se puede saber."""
+    try:
+        fila = query_one('SELECT league_id FROM matches WHERE match_id=%s', (match_id,))
+    except Exception:  # noqa: BLE001 - sin base no hay ajuste por liga, no se cae el detalle
+        return None
+    liga = fila.get('league_id') if isinstance(fila, dict) else None
+    return liga if isinstance(liga, str) else None
+
+
+def filas_primer_tiempo(lam: float, mu: float, liga: str | None = None) -> list[dict]:
     """
     1ª mitad: SOLO los dos mercados que pasaron la prueba histórica y solo por el lado
     y en el tramo medido (`model/primer_tiempo`): «ambos anotan 1T: no» y «gol en 1T: sí».
-    Si la probabilidad cae fuera de lo medido no se publica nada.
+    Si la probabilidad cae fuera de lo medido no se publica nada. Con `liga`, las probabilidades llevan el ajuste por competición.
     """
-    p = modelo_1t.probs(lam, mu)
+    p = modelo_1t.probs(lam, mu, liga=liga)
     lo, hi = modelo_1t.PROB_MIN_VALIDADA, modelo_1t.PROB_MAX_VALIDADA
     filas: list[dict] = []
     no_ambos = 1 - p['ambos_1t_si']
@@ -615,7 +625,7 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     if lam is None:
         return None
     filas, marcadores = filas_goles(*lam, local, visitante)
-    filas += filas_primer_tiempo(lam[0], lam[1])
+    filas += filas_primer_tiempo(lam[0], lam[1], liga_de_partido(match_id))
     corners, tarjetas = lambdas_estadisticas(match_id)
     filas += filas_estadisticas(corners, tarjetas)
     if web:
