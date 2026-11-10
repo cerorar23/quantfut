@@ -1,0 +1,36 @@
+<h1>{{ c.nombre }}: NBA predictions</h1>
+<p class="entradilla">The model has sealed {{ c.total }} forecast{{ '' if c.total == 1 else 's' }} for {{ c.nombre }} games in the last {{ c.dias }} days. Each one is recorded with a digital fingerprint before the game, and afterwards we show whether it came true, whether it hit or missed.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>Of the {{ c.juzgados }} game{{ '' if c.juzgados == 1 else 's' }} with a result, the team with the higher probability won <strong>{{ c.aciertos }}</strong> times, and {{ c.nombre }} won {{ c.victorias }}. {% if c.total < c.umbral %}There are too few games: the figures do not yet say anything about the quality of the model.{% else %}That is a small number of games: it is not a measure of quality. The full record is on <a href="/historial/" hreflang="es" lang="es">the history page</a> (in Spanish).{% endif %}</p></div>
+{% endif %}
+{% if c.proximo %}
+<h2>Next game with a forecast</h2>
+<p><a href="{{ c.proximo.url }}">{{ c.nombre }} {{ 'vs' if c.proximo.local else '@' }} {{ c.proximo.rival }}</a> — {{ c.nombre }} {{ c.proximo.p }} chance of winning ({{ c.proximo.fecha_txt }}).</p>
+{% endif %}
+<h2>Latest games with a sealed forecast</h2>
+<table>
+<thead><tr><th scope="col">Date</th><th scope="col">Game</th><th scope="col">{{ c.nombre }} win probability</th><th scope="col">Result</th><th scope="col">Forecast</th></tr></thead>
+<tbody>
+{% for f in c.filas %}
+<tr>
+<th scope="row"><time datetime="{{ f.fecha.isoformat() }}">{{ f.fecha_txt }}</time></th>
+<td><a href="{{ f.url }}">{{ c.nombre }} {{ 'vs' if f.local else '@' }} {{ f.rival }}</a></td>
+<td>{{ f.p }}</td>
+<td>{% if f.resultado %}{{ f.resultado }} ({{ 'won' if f.gano else 'lost' }}){% elif f.estado == 'previa' %}yet to play{% else %}pending{% endif %}</td>
+<td{% if f.acerto is sameas false %} class="fallo"{% endif %}>{% if f.acerto is sameas true %}hit{% elif f.acerto is sameas false %}miss{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if c.hay_mas %}<p>Showing the {{ c.filas|length }} most recent of {{ c.total }}.</p>{% endif %}
+<p>“Hit” means that the team the model gave more than 50% won. The probability shown is always {{ c.nombre }}'s.</p>
+{% if c.contexto %}
+<h2>Situation at the last game</h2>
+<table>
+<thead><tr><th scope="col">Record</th><th scope="col">Last 6</th><th scope="col">Streak</th></tr></thead>
+<tbody><tr><td>{{ c.contexto.record }}</td><td>{{ c.contexto.ultimos6 }}</td><td>{{ c.contexto.racha }}</td></tr></tbody>
+</table>
+<p>Regular-season wins-losses.</p>
+{% endif %}
+<h2>More forecasts</h2>
+<p><a href="/en/nba/">NBA schedule</a> · <a href="/en/futbol/">Football predictions</a> · <a href="/en/tenis/">Tennis predictions</a> · <a href="/en/methodology/">Methodology</a> · <a href="/historial/" hreflang="es" lang="es">Track record (in Spanish)</a></p>
