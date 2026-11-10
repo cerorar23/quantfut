@@ -39,7 +39,7 @@ def congelar(partido: dict, lam: tuple[float, float, float], ahora=None) -> dict
     if anterior:
         return anterior
     filas, marcadores = pm.filas_goles(*lam, partido['home_team'], partido['away_team'])
-    filas += pm.filas_primer_tiempo(lam[0], lam[1])
+    filas += pm.filas_primer_tiempo(lam[0], lam[1], partido.get('league_id') or pm.liga_de_partido(partido['match_id']))
     corners, cards = pm.lambdas_estadisticas(partido['match_id'])
     filas += pm.filas_estadisticas(corners, cards)
     filas += pm.filas_complementarias(*lam, partido['home_team'], partido['away_team'], {f['id'] for f in filas})
