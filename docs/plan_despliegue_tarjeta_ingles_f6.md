@@ -26,7 +26,7 @@ Las páginas inglesas de partido y de pilar (NBA, fútbol y tenis) declaran ahor
 Solo API. Archivos: `og.py`, `nba_en.py`, `futbol_en.py`, `tenis_en.py`. Sin `main.py`, sin plantillas, sin `seo.py`.
 1. Pre-vuelo: sha256 de los cuatro archivos de producción = los del último despliegue de cada módulo; `/health` 200; respaldo con `SHA256SUMS`.
 2. `docker cp` de los cuatro; `docker restart quantfut-api-1` fuera de :11 y :41.
-3. Verificar: `/og/en/nba/pilar.jpg` → 404 con `en=preview`? No: con `preview` la imagen sí se sirve (la página ya es `noindex`); con `off`, 404. Comprobar también `/og/nba/…` español sin cambios.
+3. Verificar: con `en=preview`, `/og/en/nba/pilar.jpg` responde 200 (la página ya es `noindex`); con `en=off`, 404. Comprobar también que `/og/nba/…` en español no cambia.
 4. Los archivos JPEG se generan bajo demanda y se guardan en `/srv/quantfut/artifacts/og`; las claves nuevas (`en-…`) no pisan las españolas.
 
 ## Vuelta atrás
