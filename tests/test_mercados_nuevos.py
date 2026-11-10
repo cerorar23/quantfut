@@ -24,6 +24,19 @@ def test_el_handicap_empareja_lineas_opuestas_y_descarta_enteras_y_dfs():
     assert set(c[("spreads", "", "", "", "Hawks", -4.5)]["casas"]) == {"bet365", "pinnacle"}
 
 
+def test_la_cuota_sale_del_cierre_y_nunca_de_la_fila_calificada():
+    campos = dict(market="totals", period=None, team=None, description="", point=220.5)
+    cierre = [dict(campos, bookmaker=c, name=n, price_american=-110, flags=[]) for c in ("bet365", "pinnacle") for n in ("Over", "Under")]
+    cierre += [dict(campos, bookmaker="vieja", name=n, price_american=-300, flags=["stale_close"]) for n in ("Over", "Under")]
+    res = [dict(campos, bookmaker="bet365", name="Over", price_american=-2000, resolution="won"),      # precio en juego
+           dict(campos, bookmaker="bet365", name="Under", price_american=900, resolution="lost")]
+    filas = mn.filas_evento(cierre, res)
+    assert {f["bookmaker"] for f in filas} == {"bet365", "pinnacle", "_calificacion"}
+    a, b = _regs(filas)
+    assert (a["gana"], b["gana"], a["casas"]) == (1, 0, 2) and abs(a["p"] - 0.5) < 1e-6
+    assert a["cuota"] == a["cuota_todas"] == 1 + 100 / 110
+
+
 def test_registros_dan_los_dos_lados_con_probabilidades_que_suman_uno():
     filas = []
     for casa, over, under in (("bet365", -150, 120), ("pinnacle", -145, 125)):

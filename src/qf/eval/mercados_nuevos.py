@@ -5,14 +5,17 @@ Pregunta: ¿la probabilidad de referencia (consenso de casas sin margen,
 props de NBA y en juegos, sets y props de tenis, dentro de las bandas en las que
 escalera (p ≥ 0,69 y cuota 1,25–2,10) y parley (cuota 1,20–2,50) eligen?
 
-Datos: los documentos ``/events/{id}/results`` del archivo compartido de
-PropLine (desde el 24-oct-2026). Cada uno trae, por casa, la cuota y la
-calificación (won/lost/push/void) de cada resultado. Límites que hay que leer
-junto a cualquier cifra:
+Datos: el archivo compartido de PropLine (desde el 24-oct-2026). La cuota sale
+de ``/events/{id}/odds/closing`` (última foto de cada casa antes del inicio, sin
+las marcadas como viejas o no válidas) y la calificación (won/lost/push/void) de
+``/events/{id}/results``. Límites que hay que leer junto a cualquier cifra:
 
-* la cuota es la que PropLine guarda con la calificación (la última antes del
-  inicio), no la de la hora en que el lote decide: el consenso al cierre es más
-  fino que el de la mañana;
+* la cuota que ``results`` trae junto a la calificación NO se usa: en el 42 % de
+  las filas difiere del cierre y se mueve hacia lo que ocurrió (precios en
+  juego). La primera pasada la usó y dio aciertos imposibles (+20 pp en la banda
+  de escalera); ``filas_evento`` existe para que no vuelva a pasar;
+* es la cuota de cierre, no la de la hora en que el lote decide: el consenso al
+  cierre es más fino que el de la mañana;
 * PropLine califica mal el ganador de tenis cuando gana quien hace menos juegos
   (medido el 29-oct): ``h2h`` de tenis NO se mide aquí;
 * son pocas semanas; por eso los intervalos remuestrean PARTIDOS, no filas: las
@@ -104,6 +107,22 @@ def contratos(filas: list[dict], excluidas: frozenset[str] | set[str] = frozense
     return out
 
 
+MARCAS_FUERA = frozenset({"stale_close", "invalid_price", "pre_kickoff_capture", "dfs_not_single_bet",
+                          "exchange_contract_requires_rules", "redacted"})
+_CONTRATO = ("market", "period", "team", "name", "description", "point")
+
+
+def filas_evento(cierre: list[dict], resultados: list[dict], canonica=lambda casa: casa) -> list[dict]:
+    """Cuotas SOLO del cierre sin marcas; la calificación, de los resultados y sin su cuota."""
+    out = [dict({c: f.get(c) for c in _CONTRATO}, bookmaker=canonica(f["bookmaker"]),
+                price_american=f.get("price_american"), resolution=None)
+           for f in cierre if not MARCAS_FUERA & set(f.get("flags") or ())]
+    out += [dict({c: f.get(c) for c in _CONTRATO}, bookmaker="_calificacion", price_american=None,
+                 resolution=f["resolution"])
+            for f in resultados if f.get("resolution") and not f.get("redacted")]
+    return out
+
+
 def _gana(res: dict) -> tuple[int, int] | None:
     """(gana A, gana B) si la calificación es won/lost y coherente; None si se devuelve o no cuadra."""
     lados = []
@@ -118,7 +137,7 @@ def _gana(res: dict) -> tuple[int, int] | None:
 
 
 def registros(filas: list[dict], deporte: str, evento: str, fecha: str, *, soft_books, preferida: str,
-              excluidas, probabilidades) -> list[dict]:
+              probabilidades, excluidas=frozenset()) -> list[dict]:
     """Una fila por lado de cada contrato con referencia (≥ 2 casas) y calificación limpia."""
     out = []
     for (mk, per, team, desc, primero, linea), c in contratos(filas, excluidas).items():
@@ -151,36 +170,30 @@ def extraer(salida) -> dict:
 
     from qf.config import settings
     from qf.ingest import propline_shared as ps
-    from qf.publish import referencia
+    from qf.publish import picks, referencia
 
     root = Path(settings.propline_archive)
     db = sqlite3.connect((root / "index.sqlite").resolve().as_uri() + "?mode=ro", uri=True)
     now = datetime.now(timezone.utc)
-    excluidas = frozenset(ps.DFS_BOOKS | ps.EXCHANGES)
-    soft = frozenset(settings.soft_books)
+    soft = frozenset(picks.canonical_book(b) for b in settings.soft_books)
+    preferida = picks.canonical_book(settings.sharp_book)
     cuenta: Counter = Counter()
     with gzip.open(salida, "wt", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, CAMPOS)
         w.writeheader()
         for deporte, sport in SPORTS.items():
-            rutas = [r[0] for r in db.execute(
+            eventos = [r[0].split("/")[5] for r in db.execute(
                 "SELECT DISTINCT q.path FROM receipts p JOIN requests q ON q.id=p.request_id "
                 "WHERE q.path LIKE ? AND p.status=200 AND p.error IS NULL",
                 (f"/v1/sports/{sport}/events/%/results",))]
-            for ruta in rutas:
-                doc, recibo = ps.newest(root, ruta, now, max_age_seconds=ps.SETTLEMENT_MAX_AGE)
-                if not doc or doc.get("status") != "final":
-                    cuenta[f"{deporte}_no_final"] += 1
+            for evento in eventos:
+                resultados, _ = ps.read_results(root, sport, evento, now)
+                cierre, _ = ps.read_closing(root, sport, evento, now)
+                if not resultados or not cierre or resultados[0].get("status") != "final":
+                    cuenta[f"{deporte}_sin_cierre_o_no_final"] += 1
                     continue
-                filas = [dict(bookmaker=b["key"], market=m["key"], period=m.get("period"), team=m.get("team"),
-                              name=o.get("name"), description=o.get("description"), point=o.get("point"),
-                              price_american=o.get("price"), resolution=o.get("resolution"),
-                              redacted=o.get("redacted"))
-                         for b in doc.get("bookmakers", []) for m in b.get("markets", [])
-                         for o in m.get("outcomes", [])]
-                fecha = (doc.get("commence_time") or recibo["received_at"])[:10]
-                regs = registros(filas, deporte, ruta.split("/")[5], fecha, soft_books=soft,
-                                 preferida=settings.sharp_book, excluidas=excluidas,
+                regs = registros(filas_evento(cierre, resultados, picks.canonical_book), deporte, evento,
+                                 str(cierre[0]["commence_time"])[:10], soft_books=soft, preferida=preferida,
                                  probabilidades=referencia.probabilidades)
                 w.writerows(regs)
                 cuenta[f"{deporte}_eventos"] += 1
