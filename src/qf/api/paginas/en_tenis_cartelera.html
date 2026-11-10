@@ -1,0 +1,43 @@
+{% extends "base_en.html" %}
+{% block revision_p %}{% endblock %}
+{% block contenido %}
+<p class="entradilla">Win probability for each player and for the set and game totals of ATP and WTA matches. Each forecast is sealed with a digital fingerprint before the match and then we show whether it came true, whether it hit or missed.</p>
+{% if c.juzgados %}
+<div class="aviso"><p>In the matches of the last few days with a confirmed result, the player with the higher probability won in <strong>{{ c.aciertos }} of {{ c.juzgados }}</strong>. It is not a measure of quality. The full record is in <a href="/en/methodology/">the methodology</a> and the record on the home page (currently available only in Spanish).</p></div>
+{% endif %}
+{% if c.en_revision %}
+<div class="aviso"><p>{{ c.en_revision }} {{ 'match' if c.en_revision == 1 else 'matches' }} on this list {{ 'has' if c.en_revision == 1 else 'have' }} the result under review: the winner and the sets published by the source do not match or are not enough to confirm it (for example, after a retirement), and we show neither a hit nor a miss until it is clarified.</p></div>
+{% endif %}
+{% if not c.total %}
+<div class="aviso"><p>There are no tennis matches with a sealed forecast right now, in the last or the next few days.</p></div>
+{% endif %}
+{% for dia in c.dias %}
+<h2>{{ 'Matches on' if dia.proximo else 'Results for' }} <time datetime="{{ dia.iso }}">{{ dia.largo }}</time></h2>
+{% for torneo, filas in dia.torneos %}
+<h3>{{ torneo }}</h3>
+<ul class="lista-partidos">
+{% for f in filas %}
+<li>
+<a href="{{ f.url }}">{{ f.home }} vs {{ f.away }}</a>
+{% if f.sets %}
+ — {{ f.ganador }} won {{ f.sets[0] }}-{{ f.sets[1] }} in sets
+ {% if f.veredicto %}<span class="{{ '' if f.veredicto.acerto else 'fallo' }}">· {{ 'the favorite won' if f.veredicto.acerto else 'the favorite lost' }}</span>{% endif %}
+{% elif f.en_revision %}
+ — result under review
+{% elif f.estado == 'cancelado' %}
+ — cancelled
+{% elif f.estado == 'sin_resultado' %}
+ — no official result
+{% elif f.estado == 'final' %}
+ — finished without a complete result (retirement or walkover)
+{% else %}
+ — {{ f.favorito }} {{ f.p_fav }}
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+{% endfor %}
+<h2>How they are calculated</h2>
+<p>The probabilities come from our own statistical model. The <a href="/en/methodology/">methodology</a> explains what it measures, what it does not measure and how often it has been right. Even with an 80% probability, one match in five goes the other way: no figure on this page is a guarantee.</p>
+{% endblock %}
