@@ -1,0 +1,43 @@
+{% extends "base_en.html" %}
+{% block revision_p %}<p class="revision">{{ c.torneo }}{% if c.superficie %} · {{ c.superficie }}{% endif %} · scheduled start <time datetime="{{ c.inicio.isoformat() }}">{{ c.inicio_txt }}</time>{% if c.sellado %} · forecast sealed <time datetime="{{ c.sellado.isoformat() }}">{{ c.sellado_txt }}</time>{% endif %}</p>{% endblock %}
+{% block contenido %}
+<p class="entradilla">The model gives {{ c.favorito }} a {{ c.p_fav }} chance of winning against {{ c.otro }}, who has {{ c.p_otro }}.</p>
+<div class="aviso estado">
+{% if c.estado == 'final' and c.resultado.coherente %}
+<p><strong>Final:</strong> {{ c.resultado.ganador }} won {{ c.resultado.sets[0] }}-{{ c.resultado.sets[1] }} in sets ({{ c.home }} {{ c.resultado.sets[0] }}, {{ c.away }} {{ c.resultado.sets[1] }}).
+{% if c.veredicto.acerto %}The player with the higher probability ({{ c.veredicto.favorito }}) won.{% else %}<span class="fallo">The forecast missed:</span> the player with the higher probability was {{ c.veredicto.favorito }} and {{ c.veredicto.ganador }} won.{% endif %}
+</p>
+<p>Probability error (Brier) in this match: {{ c.brier }}. The closer to 0 the better; 0.25 is what always saying 50% would give.</p>
+{% elif c.estado == 'final' and c.resultado.devuelto %}
+<p><strong>Finished without a complete result.</strong> There was a retirement or a walkover: markets without a definitive result are refunded and count neither as a hit nor a miss.</p>
+{% elif c.estado == 'final' %}
+<p><strong>Result under review.</strong> The winner and the sets published by the source do not match or are not enough to confirm it (for example, after a retirement), so we show neither a hit nor a miss until it is clarified. The sealed forecast does not change.</p>
+{% elif c.estado == 'cancelado' %}
+<p><strong>Cancelled.</strong> The match was not played; the sealed forecast counts neither as a hit nor a miss.</p>
+{% elif c.estado == 'sin_resultado' %}
+<p><strong>No official result.</strong> The source did not close the match; we do not count it as a hit or a miss.</p>
+{% elif c.estado == 'pendiente' %}
+<p><strong>In play or result pending.</strong> No confirmed result yet. The page is updated when it arrives.</p>
+{% else %}
+<p><strong>Before the match.</strong> The forecast is already sealed and cannot be changed.</p>
+{% endif %}
+</div>
+
+<h2>Model probabilities</h2>
+<table>
+<thead><tr><th scope="col">Market</th><th scope="col">Selection</th><th scope="col">Probability</th>{% if c.mercados and c.mercados|selectattr('resultado')|list %}<th scope="col">Result</th>{% endif %}</tr></thead>
+<tbody>
+{% set hay_resultado = c.mercados|selectattr('resultado')|list|length > 0 %}
+{% for m in c.mercados %}
+<tr><th scope="row">{{ m.label }}</th><td>{{ m.seleccion }}</td><td>{{ m.prob }}</td>{% if hay_resultado %}<td{% if m.fallo %} class="fallo"{% endif %}>{{ m.resultado or '—' }}</td>{% endif %}</tr>
+{% endfor %}
+</tbody>
+</table>
+<p>No bookmaker odds are published for these markets: they are the model's probabilities.</p>
+
+<h2>Verifiable seal</h2>
+<p>This forecast was recorded before the start with the fingerprint <code>{{ c.hash }}</code>. If a single figure were changed, the fingerprint would no longer match. See the <a href="/en/methodology/">methodology</a> for how it is calculated and checked.</p>
+
+<h2>How to read this page</h2>
+<p>This is a statistical estimate for information purposes, not a recommendation or a promise of profit. See the <a href="/en/tenis/">tennis schedule</a>. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p>
+{% endblock %}
