@@ -27,6 +27,8 @@ Solo lee el archivo; las filas inmutables las escribe `escalera_datos`.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime, timedelta
 
 from ..config import settings
@@ -216,7 +218,28 @@ def _mismo_nombre(a, b, otro=None) -> bool:
     return parecido(a, b) and not (otro is not None and parecido(a, otro))
 
 
-def resultado(paso: dict, now: datetime, root=None) -> tuple | None:
+_RESPALDO_CORRIDA: ContextVar = ContextVar("escalera_respaldo_corrida", default=None)
+
+
+@contextmanager
+def respaldo_tenis_activo():
+    """Comparte una única sesión de respaldo de tenis entre todos los escalones de una corrida."""
+    from ..ingest import tenis_resultados as tr
+    with tr.RespaldoTenis() as respaldo:
+        tok = _RESPALDO_CORRIDA.set(respaldo.resolver_paso)
+        try:
+            yield respaldo
+        finally:
+            _RESPALDO_CORRIDA.reset(tok)
+
+
+def _resolver_respaldo_tenis(paso: dict, now: datetime) -> str | None:
+    from ..ingest import tenis_resultados as tr
+    with tr.RespaldoTenis() as respaldo:
+        return respaldo.resolver_paso(paso, now)
+
+
+def resultado(paso: dict, now: datetime, root=None, resolver_respaldo=None) -> tuple | None:
     """(outcome, None, None, None) del escalón externo, o None si aún no se puede liquidar."""
     root = root or settings.propline_archive
     sport = DEPORTES[paso["deporte"]]
@@ -238,14 +261,26 @@ def resultado(paso: dict, now: datetime, root=None) -> tuple | None:
     otras = {r for r in por_casa.values() if r}
     if len(otras) == 1:           # ni la casa del escalón ni Pinnacle lo calificaron y las demás coinciden
         return (otras.pop(), None, None, None)
+    if paso["deporte"] == "tenis":
+        respaldo = resolver_respaldo or _RESPALDO_CORRIDA.get() or _resolver_respaldo_tenis
+        out = respaldo(paso, now)
+        if out:
+            return (out, None, None, None)
     if paso["evento_inicio"] < now - MARGEN_SIN_RESULTADO:
         return ("void", None, None, None)
     return None
 
 
 def sin_filas_de_resultado(paso: dict, now: datetime, root=None) -> bool:
-    """True si el archivo PropLine no trae NINGUNA fila de resultado del evento: un `void` en ese caso
-    es falta de dato, no un partido anulado (hay que avisar para revisarlo a mano)."""
+    """True si el archivo PropLine no trae NINGUNA fila de resultado del evento y el respaldo tampoco confirmó void:
+    un `void` en ese caso es falta de dato, no un partido anulado (hay que avisar para revisarlo a mano)."""
     root = root or settings.propline_archive
     filas, _ = ps.read_results(root, DEPORTES[paso["deporte"]], paso["evento_id"], now)
-    return not filas
+    if filas:
+        return False
+    if paso["deporte"] == "tenis":
+        from ..ingest import tenis_resultados as tr
+        with tr.respaldo_solo_archivo() as respaldo:
+            if respaldo.resolver_paso(paso, now) == "void":
+                return False
+    return True

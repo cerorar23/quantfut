@@ -1,6 +1,13 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 11-nov-2026 · Respaldo SportsAPIPro para liquidación de tenis, cierre inmediato de tickets perdidos y protección anti-void (rama `fix/tenis-respaldo-liquidacion`, sin desplegar)
+
+- **Diagnóstico en producción (`parley-v2`):** PropLine pasaba partidos Challenger/ITF en `/v1/sports/tennis/scores` a `expired` entre lecturas de 3 h sin emitir `/results`, dejando patas pendientes de tenis hasta el margen de 72 h (`parley-v2-liquidacion` además corría cada 3 h y `parley_v2_liquidacion.liquidar_ticket` esperaba a todas las patas incluso con una ya perdida).
+- **Respaldo bajo demanda (`src/qf/ingest/tenis_resultados.py`):** consulta `/v2/tennis/schedule/{fecha}` de SportsAPIPro solo si PropLine no calificó y pasaron ≥ 2 h 30 min desde el inicio programado (0 peticiones sin patas vencidas), leyendo primero caché local archivada (`sportsapipro_tenis_resultados` y opcionalmente `TENIS_EQUIVALENCIAS_DIR`) con enfriamiento de 45 min por fecha, tolerancia ±36 h para aplazamientos y tope de 15 req/día. Liquida `Ended` (`h2h`, `total_games`, `handicap_games`, ignorando supertiebreaks a 10 pts > 7 juegos) y `Walkover`/`Canceled` -> `void`, sin adivinar retiradas (`Retired` -> `None`).
+- **Parley v2 (`src/qf/publish/parley_v2_liquidacion.py`) y Escalera (`src/qf/publish/escalera_ext.py`, `escalera_datos.py`):** integrados con el respaldo (`fuente='sportsapipro'` en `parley_v2_resultados_pata`; `escalera_ext.sin_filas_de_resultado` ya no alarma falsos missing si el respaldo confirmó `void`). En Parley v2, cualquier pata `loss` cierra de inmediato el ticket como `perdido` (`factor_pago=0.0`), y pasadas 72 h sin calificación en ninguna fuente ya NO anula silenciosamente: deja `None` y alerta por Telegram.
+- **Cadencia PropLine (`scripts/propline_shared_config.json`, `scripts/crontab`):** `scores_every_hours` `3 -> 1`, `settlement.min_hours_after_start` `6 -> 3`, y liquidación horaria en `scripts/crontab` (`20 * * * *`). Quedan pendientes los despliegues en VPS y el cierre retroactivo tras visto bueno explícito.
+
 ## 11-nov-2026 · Despliegue en producción de `/control/configuracion`, textos web en Postgres e integración APIMart (`quantfut-api:f73f7df2`, `DEPLOYS.md`)
 
 - Construida en el servidor desde `git archive origin/main` (`f73f7df2`) la imagen `quantfut-api:f73f7df2` (`e1fe95deeb03`), ensayada en aislado (`292` rutas, `0` errores de módulo, `tenis.sellado: OK`) y desplegada recreando únicamente `api` a las `21:05:29 UTC` (`compose` anterior respaldado en `releases/compose-antes-20261111-210458.yml`).

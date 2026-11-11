@@ -3,10 +3,13 @@
 * Fútbol: las mismas reglas que el parley actual (``escalera_datos.resultado`` contra la hora ORIGINAL
   del partido, nulo a las 48 h si no se jugó).
 * Tenis y NBA: la calificación de PropLine (``resolution``) para la casa de la pata; si esa casa no la
-  trae, la mayoría de las demás casas; sin acuerdo no se liquida. Pasadas ``MARGEN_SIN_RESULTADO`` desde
-  el inicio sin calificación, la pata se anula (``void``), como hace la escalera.
-* Un ticket se liquida cuando todas sus patas están liquidadas: pierde con una pata perdida; las
-  devueltas (push/void) pagan a cuota 1.
+  trae, la mayoría de las demás casas; sin acuerdo no se liquida. En tenis, si PropLine aún no calificó
+  y pasaron ≥2 h 30 min desde el inicio, consulta como respaldo SportsAPIPro (``Ended``, ``Canceled`` o
+  ``Walkover``; en retiradas espera la calificación por casa o revisión manual).
+* Pasadas ``MARGEN_SIN_RESULTADO`` sin resultado en ninguna fuente, NO anula silenciosamente: avisa por
+  Telegram para evitar convertir por error un parley perdido en ganador.
+* Un ticket se cierra de inmediato como ``perdido`` en cuanto alguna pata pierde (el resto de patas sigue
+  liquidándose por separado); si ninguna pierde, espera a todas y paga las devueltas (push/void) a cuota 1.
 
 Las filas inmutables las escribe esta función; el resolutor de PropLine es puro y se prueba aparte.
 """
@@ -73,7 +76,9 @@ def resolver_propline(pata: dict, filas: list[dict]) -> str | None:
 
 
 def resultado_pata(pata: dict, now: datetime, filas_propline: list[dict] | None = None,
-                   fila_futbol: dict | None = None) -> tuple[str, float | None, str] | None:
+                   fila_futbol: dict | None = None,
+                   resolver_respaldo: Callable[[dict, datetime], str | None] | None = None
+                   ) -> tuple[str, float | None, str] | None:
     """(outcome, valor, fuente) o None si aún no se puede liquidar."""
     if pata["deporte"] == "futbol":
         from . import parley_datos as pd_
@@ -85,13 +90,17 @@ def resultado_pata(pata: dict, now: datetime, filas_propline: list[dict] | None 
     outcome = resolver_propline(pata, filas_propline or [])
     if outcome:
         return outcome, None, "propline"
-    if pata["inicio_utc"] < now - MARGEN_SIN_RESULTADO:
-        return "void", None, "sin_calificacion"
+    if pata["deporte"] == "tenis" and resolver_respaldo is not None:
+        respaldo = resolver_respaldo(pata, now)
+        if respaldo:
+            return respaldo, None, "sportsapipro"
     return None
 
 
 def liquidar_ticket(patas: list[tuple[str | None, float]]) -> dict | None:
-    """[(outcome, cuota)] → {'outcome': ganado|perdido|nulo, 'factor_pago'} o None si falta una pata."""
+    """[(outcome, cuota)] → {'outcome': ganado|perdido|nulo, 'factor_pago'} o None si aún falta decidir."""
+    if patas and any(o == "loss" for o, _ in patas):
+        return {"outcome": "perdido", "factor_pago": 0.0}
     r = pl.liquidar([(o, p, 0.5) for o, p in patas])
     return None if r is None else {"outcome": r["outcome"], "factor_pago": r["factor_pago"]}
 
@@ -142,24 +151,56 @@ def leer_filas_propline(sport: str, evento_id: str, now: datetime) -> list[dict]
 _SPORT = {"tenis": "tennis", "nba": "basketball_nba"}
 
 
+def _utc(dt: datetime) -> datetime:
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
+
+
+def _alertar_pendientes(sin_calificar: list[dict], respaldo, now: datetime) -> None:
+    if not sin_calificar:
+        return
+    avisables = [r for r in sin_calificar if respaldo.debe_alertar(f"parley_v2:{r['pata_id']}", now)]
+    if not avisables:
+        return
+    from . import telegram as tg
+    lineas = []
+    for r in avisables[:5]:
+        ev = r.get("evento") or []
+        partido = f"{ev[3]} vs {ev[4]}" if len(ev) >= 5 else f"evento {r['evento_id']}"
+        lineas.append(f"- {r['deporte']}: {partido} ({r['evento_id']}, inicio {r['inicio_utc']:%Y-%m-%d %H:%M UTC})")
+    extra = f"\n(+{len(avisables) - 5} más)" if len(avisables) > 5 else ""
+    tg.alert("Parley v2: patas >72h sin resultado ni en PropLine ni en respaldo (NO anuladas):\n"
+             + "\n".join(lineas) + extra)
+
+
 def liquidar_pendientes(now: datetime | None = None,
-                        leer_filas: Callable[[str, str, datetime], list[dict]] = leer_filas_propline) -> dict:
-    """Liquida las patas con resultado y luego los tickets completos. Idempotente."""
+                        leer_filas: Callable[[str, str, datetime], list[dict]] = leer_filas_propline,
+                        resolver_respaldo: Callable[[dict, datetime], str | None] | None = None) -> dict:
+    """Liquida las patas con resultado y luego los tickets completos o ya perdidos. Idempotente."""
+    from ..ingest import tenis_resultados as tr
     now = now or datetime.now(timezone.utc)
+    now_utc = _utc(now)
     n_patas = 0
-    for r in _pendientes(now):
-        pata = {"deporte": r["deporte"], "mercado": r["mercado"], "seleccion": r["seleccion"], "linea": r["linea"],
-                "jugador_id": r["jugador_id"], "casa": r["casa"], "inicio_utc": r["inicio_utc"], "evento": r["evento"]}
-        try:
-            if r["deporte"] == "futbol":
-                res = resultado_pata(pata, now, fila_futbol=r)
-            else:
-                res = resultado_pata(pata, now, filas_propline=leer_filas(_SPORT[r["deporte"]], r["evento_id"], now))
-        except Exception:                      # un evento sin archivo no debe frenar a los demás
-            log.exception("Parley v2: no se pudo liquidar la pata %s", r["pata_id"])
-            continue
-        if res is not None:
-            n_patas += _guardar_pata(r["pata_id"], *res)
+    sin_calificar: list[dict] = []
+    with tr.RespaldoTenis() as respaldo:
+        fn_respaldo = resolver_respaldo or respaldo.resolver_pata
+        for r in _pendientes(now):
+            pata = {"deporte": r["deporte"], "mercado": r["mercado"], "seleccion": r["seleccion"], "linea": r["linea"],
+                    "jugador_id": r["jugador_id"], "casa": r["casa"], "inicio_utc": r["inicio_utc"],
+                    "evento": r["evento"]}
+            try:
+                if r["deporte"] == "futbol":
+                    res = resultado_pata(pata, now, fila_futbol=r)
+                else:
+                    res = resultado_pata(pata, now, filas_propline=leer_filas(_SPORT[r["deporte"]], r["evento_id"], now),
+                                         resolver_respaldo=fn_respaldo)
+            except Exception:                      # un evento sin archivo no debe frenar a los demás
+                log.exception("Parley v2: no se pudo liquidar la pata %s", r["pata_id"])
+                continue
+            if res is not None:
+                n_patas += _guardar_pata(r["pata_id"], *res)
+            elif _utc(r["inicio_utc"]) < now_utc - MARGEN_SIN_RESULTADO:
+                sin_calificar.append(r)
+        _alertar_pendientes(sin_calificar, respaldo, now)
     por_ticket: dict = {}
     for f in _tickets_pendientes():
         por_ticket.setdefault(f["ticket_id"], []).append((f["outcome"], float(f["price"])))
