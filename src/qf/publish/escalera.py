@@ -360,7 +360,8 @@ def _q(x: Decimal) -> Decimal:
 
 def estado(stake: Decimal, objetivo: int, freeroll_x: float | None,
            pasos: list[Paso], vencido: bool = False,
-           target_cuota: float | None = None) -> dict:
+           target_cuota: float | None = None,
+           cerrado: bool = False) -> dict:
     """
     El estado de un reto a partir de sus escalones, sin guardar nada:
 
@@ -379,6 +380,8 @@ def estado(stake: Decimal, objetivo: int, freeroll_x: float | None,
     extra = {"target_cuota": target_cuota}
     for p in sorted(pasos, key=lambda p: p.paso):
         if p.outcome is None:
+            if cerrado:
+                break
             return {"estado": "esperando", "saldo": _q(saldo), "retirado": _q(retirado),
                     "ganados": ganados, "en_juego": _q(saldo), "ganancia": None, **extra}
         if p.outcome in ("void", "push"):
@@ -396,7 +399,7 @@ def estado(stake: Decimal, objetivo: int, freeroll_x: float | None,
             return {"estado": "completado", "saldo": _q(saldo), "retirado": _q(retirado),
                     "ganados": ganados, "en_juego": None,
                     "ganancia": _q(saldo + retirado - stake), **extra}
-    if vencido:
+    if vencido or cerrado:
         return {"estado": "expirado", "saldo": _q(saldo), "retirado": _q(retirado),
                 "ganados": ganados, "en_juego": None, "ganancia": _q(saldo + retirado - stake), **extra}
     return {"estado": "en_curso", "saldo": _q(saldo), "retirado": _q(retirado),

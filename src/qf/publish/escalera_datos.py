@@ -56,7 +56,10 @@ def _sql_sellado() -> str:
 
 
 def _retos() -> list[dict]:
-    return query("SELECT * FROM escalera_retos ORDER BY reto_id")
+    return query(
+        "SELECT r.*, c.closed_at FROM escalera_retos r "
+        "LEFT JOIN escalera_cierres c USING (reto_id) ORDER BY r.reto_id"
+    )
 
 
 def _pasos(reto_id: int, solo_sellados: bool = False) -> list[dict]:
@@ -89,13 +92,15 @@ def vencido(reto: dict, now: datetime | None = None) -> bool:
     return dias is not None and now >= reto["created_at"] + timedelta(days=int(dias))
 
 
-def estado_reto(reto: dict, pasos: list[dict], now: datetime | None = None) -> dict:
+def estado_reto(reto: dict, pasos: list[dict], now: datetime | None = None,
+                cerrado: bool = False) -> dict:
     t_cuota = reto.get("target_cuota")
     return es.estado(Decimal(str(reto["stake_inicial"])), int(reto["pasos_objetivo"]),
                      reto["freeroll_x"],
                      [es.Paso(int(p["paso"]), float(p["price"]), p["outcome"]) for p in pasos],
                      vencido=vencido(reto, now),
-                     target_cuota=float(t_cuota) if t_cuota is not None else None)
+                     target_cuota=float(t_cuota) if t_cuota is not None else None,
+                     cerrado=bool(cerrado or reto.get("closed_at") is not None))
 
 
 # --------------------------------------------------------------------------
@@ -603,6 +608,7 @@ def settle_pending(now: datetime | None = None) -> dict:
            JOIN matches m ON m.match_id = p.match_id
            LEFT JOIN escalera_resultados r ON r.paso_id = p.paso_id
            WHERE r.paso_id IS NULL
+             AND NOT EXISTS (SELECT 1 FROM escalera_cierres c WHERE c.reto_id = p.reto_id)
              AND ((m.status = 'finished' AND m.home_goals IS NOT NULL)
                   OR coalesce(p.kickoff_utc, m.kickoff_utc) < %s)""",
         (now - ESCALERA_MARGEN_APLAZADO,))
@@ -620,7 +626,8 @@ def settle_pending(now: datetime | None = None) -> dict:
                   p.evento_visitante, p.selection, p.book, p.market, p.line
            FROM escalera_pasos p
            LEFT JOIN escalera_resultados r ON r.paso_id = p.paso_id
-           WHERE r.paso_id IS NULL AND p.evento_id IS NOT NULL AND p.evento_inicio < %s""",
+           WHERE r.paso_id IS NULL AND p.evento_id IS NOT NULL AND p.evento_inicio < %s
+             AND NOT EXISTS (SELECT 1 FROM escalera_cierres c WHERE c.reto_id = p.reto_id)""",
         (now - timedelta(hours=3),))
     for r in externos:
         res = ext.resultado(r, now)
@@ -690,7 +697,7 @@ def _json_estado(st: dict) -> dict:
 
 
 def informe_publico() -> dict:
-    retos = query("SELECT * FROM escalera_retos ORDER BY reto_id")
+    retos = _retos()
     salida, escalones = [], []
     for reto in retos:
         pasos = _pasos(reto["reto_id"], solo_sellados=True)

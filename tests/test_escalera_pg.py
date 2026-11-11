@@ -344,3 +344,31 @@ def test_escalon_externo_anulado_sin_resultado_avisa_por_telegram(monkeypatch):
     res = db.query_one("""SELECT o.outcome FROM escalera_resultados o JOIN escalera_pasos p USING (paso_id)
                           WHERE p.evento_id = %s""", (evento,))
     assert res["outcome"] == "void" and len(avisos) == 1 and "SIN resultado" in avisos[0]
+
+
+def test_cierre_manual_en_escalera_cierres_es_inmutable_y_no_liquida():
+    dia = _dia()
+    reto = _reto(objetivo=2)
+    mid, _, _ = _partido(hg=2, ag=0)
+    _paso(reto, 1, mid, dia)
+    _sellar(dia)
+
+    assert _reto_publico(reto)["estado"] == "esperando"
+
+    db.execute("INSERT INTO escalera_cierres (reto_id, motivo) VALUES (%s, %s)",
+               (reto, "Cierre manual por cambio de regla"))
+    with pytest.raises(psycopg.errors.RaiseException):
+        db.execute("UPDATE escalera_cierres SET motivo = 'otro' WHERE reto_id = %s", (reto,))
+    with pytest.raises(psycopg.errors.RaiseException):
+        db.execute("DELETE FROM escalera_cierres WHERE reto_id = %s", (reto,))
+
+    ed.settle_pending()
+    assert db.query_one("""SELECT count(*) AS n FROM escalera_resultados r
+                           JOIN escalera_pasos p USING (paso_id)
+                           WHERE p.reto_id = %s""", (reto,))["n"] == 0
+
+    assert all(r.reto_id != reto for r in ed._abierto())
+    pub = _reto_publico(reto)
+    inf = ed.informe_publico()
+    assert all(r["reto_id"] != reto for r in inf["actuales"])
+    assert pub["estado"] == "expirado" and pub["ganancia"] == "0.00" and pub["en_juego"] is None
