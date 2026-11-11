@@ -1,5 +1,12 @@
 # Backlog — QuantFut
 
+## 10-nov-2026 · Reto escalera: anular aplazados/nulos tras 6 h, ocultarlos en el reto vivo y reemplazar intradía (PR #349; `main` `e4552578`; desplegada 2026-11-11 02:34 UTC)
+- [x] `db/108_escalera_reemplazo.sql`: hora original `escalera_pasos.kickoff_utc`, enlace único 1 a 1 `reemplaza_paso_id` y `batch_kind = 'escalera'` en `prediction_batches` (sin relajar triggers de inmutabilidad).
+- [x] `src/qf/publish/hashchain.py`: `seal_escalera()`, `_collect_escalera()`, `revelables_escalera()`, verificación en `_recibos_en_orden()` / `verify()`, sin duplicar reemplazos en `_collect()` diario.
+- [x] `src/qf/publish/escalera_datos.py`, `src/qf/publish/escalera_ext.py` y `scripts/crontab`: margen de 6 h solo para Reto Escalera (`ESCALERA_MARGEN_APLAZADO` y `MARGEN_SIN_RESULTADO = 6 h`; `MARGEN_APLAZADO = 48 h` intacto para Parley/Tarjetas), `reemplazar_nulos()` con cron cada 5 min y ocultación de pasos `'void'` en retos vivos de `informe_publico()`.
+- [x] `frontend/conversion-views.js`: oculta escalones `'void'` en retos activos y renumera visibles sin alterar CSS.
+- [x] En CI PostgreSQL 16 (`arnes` verde) y producción (`2026-11-11 02:34 UTC`, ver `DEPLOYS.md`): migración `108` aplicada, `test_escalera_pg.py` en verde y API, frontend, worker/crontab desplegados con reemplazo vivo verificado en Reto #21 (`tenis:726965`, `hashchain verify` 386 lotes).
+
 ## 9-nov-2026 · TheRundown, cuarto nivel de la cascada (rama `cuotas/therundown`, sobre `cuotas/cascada-respaldo`)
 - [x] `ingest/cuotas_therundown.py`, nivel 4 en `cuotas_respaldo.py` y `cuotas_respaldo_futbol.py`, caducidad de 24 h e interruptor `CUOTAS_THERUNDOWN_MOSTRAR`. Pruebas: `tests/test_cuotas_therundown.py` (24, con la forma real de NBA y tenis).
 - [x] Desplegado el 9-nov 18:51 UTC: API (3 archivos) y ejecutor con la clave en `therundown.env`; nivel 4 activo (ver DEPLOYS.md).

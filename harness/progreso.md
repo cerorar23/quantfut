@@ -1,7 +1,7 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
-## 10-nov-2026 · Reto escalera: anular y reemplazar escalones aplazados/nulos tras 6 h (rama `feat/escalera-reemplazo-6h`, sin desplegar)
+## 10-nov-2026 · Reto escalera: anular y reemplazar escalones aplazados/nulos tras 6 h (PR #349 `e4552578`; desplegada 2026-11-11 02:34 UTC)
 
 - Alcance aclarado con el titular: solo aplica a **Reto Escalera** (`/reto-escalera/`), no al Parley del Día. Para no tocar Parley ni
   `tarjetas_seg`, `escalera_datos.MARGEN_APLAZADO` (48 h) permanece intacto y la escalera usa `ESCALERA_MARGEN_APLAZADO = 6 h` (fútbol) y
@@ -11,8 +11,9 @@
   escalón queda `'void'`, `informe_publico()` (y `conversion-views.js` como respaldo en UI) lo ocultan en los retos vivos (`actuales`) y
   lo conservan en `historial`; el reemplazo (`reemplazar_nulos()`, cron cada 5 min en `scripts/crontab`) elige un nuevo partido elegible
   y lo sella al instante con `batch_kind = 'escalera'` y `match_id = paso_id::text` (`hashchain.seal_escalera`).
-- Límite de entorno local: no hay `CREATEDB` para ejecutar `scripts/ci_aplicar_esquema.py` contra un Postgres desechable (`QF_TEST_PG_DSN`
-  ausente), por lo que los tests `_pg.py` y la migración 108 contra PostgreSQL quedan pendientes de ejecución en CI / servidor.
+- Validación y despliegue real: en CI (`arnes`, PostgreSQL 16) se corrigió el tipado explícito del parámetro `$19` (`kickoff_utc`) en
+  `escalera_datos._insertar_paso` (`f9a7f198`) pasando los 12 checks. Fusionado a `main` (`e4552578`) y desplegado en producción el
+  `2026-11-11 02:34 UTC` (`DEPLOYS.md`); la primera pasada del cron (`02:35 UTC`) reemplazó el paso 2 `'void'` del Reto #21 con `tenis:726965`.
 
 ## 10-nov-2026 · Escalera con hándicap y total de NBA y tenis, y sin depender del fútbol (rama `escalera/mercados-nba-tenis-desacoplada`, sin desplegar)
 
