@@ -278,7 +278,7 @@ def test_web_config_endpoint_no_expone_secretos_y_refleja_ajustes(aislado, monke
         "indexnow_enabled": False,
     }
     monkeypatch.setattr(web_config, "get_settings", lambda use_cache=True: custom)
-    monkeypatch.setattr(web_config, "get_apimart_runtime_config", lambda: {"api_key": FAKE_API_KEY, "origin": "db", "base_url": apimart.DEFAULT_BASE_URL, "model": apimart.DEFAULT_MODEL})
+    monkeypatch.setattr(web_config, "get_apimart_runtime_config", lambda: {"api_key": FAKE_API_KEY, "key_origin": "db", "base_url": apimart.DEFAULT_BASE_URL, "model": apimart.DEFAULT_MODEL})
 
     c = TestClient(main_app)
     r = c.get("/web/config")
@@ -523,7 +523,7 @@ def test_pg_crud_settings_cifrado_y_traduccion_auditada(pg_wc, monkeypatch):
         target_langs=["en", "pt"],
         actor="panel:test",
     )
-    assert rt["api_key"] == FAKE_API_KEY and rt["origin"] == "db"
+    assert rt["api_key"] == FAKE_API_KEY and rt["key_origin"] == "db"
     raw_db = pg_wc.execute("SELECT apimart_key_enc FROM web_site_settings WHERE id = 1").fetchone()["apimart_key_enc"]
     assert raw_db and FAKE_API_KEY not in raw_db
 
