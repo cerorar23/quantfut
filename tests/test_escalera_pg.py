@@ -130,6 +130,7 @@ def test_reemplazar_nulos_intradia_sella_y_expone_solo_el_nuevo(monkeypatch, tmp
         es.Opcion(mid_nuevo, Candidato("h2h", "home", None, 0.90), 1.30, "betano", "propline", now)
     ], 0))
 
+    prev_antes = hc._prev_chain_hash()
     res = ed.reemplazar_nulos(ahora, git_push=False)
     assert res["estado"] == "reemplazado" and res["reemplazados"] == 1
     pasos_bd = ed._pasos(reto)
@@ -138,6 +139,7 @@ def test_reemplazar_nulos_intradia_sella_y_expone_solo_el_nuevo(monkeypatch, tmp
 
     r = _reto_publico(reto)
     assert len(r["pasos"]) == 1 and r["pasos"][0]["match_id"] == mid_nuevo and r["pasos"][0]["chain_sha256"]
+    monkeypatch.setattr(hc, "GENESIS", prev_antes)
     ok, errores = hc.verify(str(tmp_path))
     assert ok and not errores, errores
     # Idempotente: mientras siga abierto no inserta ni sella otro.

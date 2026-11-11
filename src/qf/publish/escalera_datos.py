@@ -456,14 +456,13 @@ def _insertar_paso(reto_id: int, o: es.Opcion, reemplaza_paso_id: str | None = N
                                        evento_local, evento_visitante, kickoff_utc,
                                        reemplaza_paso_id)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
-                   CASE WHEN %s IS NULL THEN NULL
-                        ELSE (SELECT kickoff_utc FROM matches WHERE match_id = %s) END,
+                   (SELECT kickoff_utc FROM matches WHERE match_id = %s),
                    %s)
            RETURNING paso_id""",
         (reto_id, siguiente, match_id, o.cand.market, o.cand.selection,
          o.cand.line, round(o.cand.prob, 6), round(1.0 / o.cand.prob, 4), o.price, o.book,
          o.odds_source, o.odds_as_of, o.deporte, evento_id, sport, inicio, local, visitante,
-         match_id, match_id, reemplaza_paso_id))
+         match_id, reemplaza_paso_id))
     return str(row["paso_id"]) if row else ""
 
 
