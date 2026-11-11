@@ -99,12 +99,49 @@ def test_escalon_sin_sellar_no_se_ensena():
 def test_aplazado_pasado_el_margen_queda_nulo():
     dia = _dia()
     reto = _reto(objetivo=2)
-    mid, *_ = _partido(status="postponed", kickoff=datetime.now(timezone.utc) - timedelta(days=3))
+    mid, *_ = _partido(status="postponed", kickoff=datetime.now(timezone.utc) - timedelta(hours=7))
     _paso(reto, 1, mid, dia)
     _sellar(dia)
     ed.settle_pending()
+    # En la base permanece el escalón inmutable con outcome 'void'; en el reto vivo se oculta.
+    assert ed._pasos(reto)[0]["outcome"] == "void"
     r = _reto_publico(reto)
-    assert r["pasos"][0]["outcome"] == "void" and r["ganados"] == 0 and r["saldo"] == "10.00"
+    assert r["pasos"] == [] and r["ganados"] == 0 and r["saldo"] == "10.00"
+
+
+def test_reemplazar_nulos_intradia_sella_y_expone_solo_el_nuevo(monkeypatch, tmp_path):
+    from dataclasses import replace
+    from qf.publish import alta_prob_datos as ad
+    from qf.publish import escalera as es
+    from qf.publish import hashchain as hc
+    from qf.publish.alta_prob import Candidato
+
+    ahora = _dia() + timedelta(hours=7)   # pasado el lote diario y > 6 h del saque
+    mid_void, *_ = _partido(status="postponed", kickoff=ahora - timedelta(hours=7))
+    mid_nuevo, *_ = _partido(status="scheduled", kickoff=ahora + timedelta(hours=4))
+    reto = _reto(objetivo=2)
+    _paso(reto, 1, mid_void, _dia())
+    _sellar(_dia())
+
+    monkeypatch.setattr(hc, "settings", replace(hc.settings, chain_dir=str(tmp_path), chain_git_remote=""))
+    monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
+    monkeypatch.setattr(ed, "_retos", lambda: [db.query_one("SELECT * FROM escalera_retos WHERE reto_id = %s", (reto,))])
+    monkeypatch.setattr(ed, "_evaluar_opciones", lambda now: ([
+        es.Opcion(mid_nuevo, Candidato("h2h", "home", None, 0.90), 1.30, "betano", "propline", now)
+    ], 0))
+
+    res = ed.reemplazar_nulos(ahora, git_push=False)
+    assert res["estado"] == "reemplazado" and res["reemplazados"] == 1
+    pasos_bd = ed._pasos(reto)
+    assert [p["outcome"] for p in pasos_bd] == ["void", None]
+    assert str(pasos_bd[1]["reemplaza_paso_id"]) == str(pasos_bd[0]["paso_id"])
+
+    r = _reto_publico(reto)
+    assert len(r["pasos"]) == 1 and r["pasos"][0]["match_id"] == mid_nuevo and r["pasos"][0]["chain_sha256"]
+    ok, errores = hc.verify(str(tmp_path))
+    assert ok and not errores, errores
+    # Idempotente: mientras siga abierto no inserta ni sella otro.
+    assert ed.reemplazar_nulos(ahora, git_push=False)["estado"] == "sin_reemplazos"
 
 
 def test_perder_cierra_el_reto_y_las_filas_no_se_pueden_tocar():

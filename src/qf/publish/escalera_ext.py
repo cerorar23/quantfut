@@ -40,7 +40,9 @@ from .alta_prob import Candidato
 
 # Deporte de la escalera → deporte del archivo PropLine.
 DEPORTES = {"nba": "basketball_nba", "tenis": "tennis"}
-MARGEN_SIN_RESULTADO = timedelta(hours=72)
+# A las 6 h desde su inicio sin calificación de las casas, el escalón pasa a
+# 'void' para ocultarse en el reto vivo y permitir un reemplazo el mismo día.
+MARGEN_SIN_RESULTADO = timedelta(hours=6)
 RESOLUCION = {"won": "win", "win": "win", "lost": "loss", "loss": "loss",
               "push": "push", "void": "void", "cancelled": "void", "refund": "void"}
 

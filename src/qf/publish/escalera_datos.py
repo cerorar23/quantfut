@@ -34,9 +34,10 @@ from . import ventana
 
 log = logging.getLogger(__name__)
 
-# Un partido aplazado se da por nulo pasado este margen desde su hora original,
-# como hacen las casas. Si luego se juega, el escalón sigue nulo (inmutable).
+# `MARGEN_APLAZADO` (48 h) lo siguen importando parley y tarjetas_seg; el reto
+# escalera anula aplazados/reprogramados pasadas 6 h para cubrirlos el mismo día.
 MARGEN_APLAZADO = timedelta(hours=48)
+ESCALERA_MARGEN_APLAZADO = timedelta(hours=6)
 
 
 def _sql_sellado() -> str:
@@ -47,7 +48,10 @@ def _sql_sellado() -> str:
     return f"""JOIN prediction_batches b
              ON b.batch_date = (p.decided_at AT TIME ZONE 'UTC')::date
             AND p.decided_at <= b.created_at
-            AND b.batch_kind = 'diario'
+            AND (
+                 (b.batch_kind = 'diario' AND p.reemplaza_paso_id IS NULL)
+              OR (b.batch_kind = 'escalera' AND b.match_id = p.paso_id::text)
+            )
             {corte}"""
 
 
@@ -57,13 +61,13 @@ def _retos() -> list[dict]:
 
 def _pasos(reto_id: int, solo_sellados: bool = False) -> list[dict]:
     return query(
-        f"""SELECT p.paso_id, p.reto_id, p.paso,
+        f"""SELECT p.paso_id, p.reto_id, p.paso, p.reemplaza_paso_id,
                    -- NBA y tenis: «deporte:id de PropLine», el mismo id que en la elección.
                    coalesce(p.match_id, p.deporte || ':' || p.evento_id) AS match_id,
                    p.market, p.selection, p.line,
                    p.prob, p.fair_price, p.price, p.book, p.decided_at, p.deporte,
                    r.outcome, r.home_goals, r.away_goals, r.valor,
-                   coalesce(m.kickoff_utc, p.evento_inicio) AS kickoff_utc,
+                   coalesce(m.kickoff_utc, p.kickoff_utc, p.evento_inicio) AS kickoff_utc,
                    coalesce(m.league_id, p.deporte) AS league_id,
                    coalesce(th.canonical_name, p.evento_local) AS local,
                    coalesce(ta.canonical_name, p.evento_visitante) AS visitante
@@ -357,6 +361,24 @@ def _abierto(reto: dict, pasos: list[dict], ganados: int, saldo: Decimal | None 
                       saldo_actual=Decimal(str(saldo)) if saldo is not None else es.STAKE)
 
 
+def _evaluar_opciones(now: datetime) -> tuple[list[es.Opcion], int]:
+    """Evalúa los candidatos disponibles ahora (fútbol y otros deportes) para la escalera."""
+    rho = ad._rho_activo()
+    todas, sin_precio = [], 0
+    modelos = Modelos(now)
+    for m in _partidos(now):
+        res = opciones(m, now, rho, modelos, incluir_doble=True)
+        if res is None:
+            sin_precio += 1
+            continue
+        todas.extend(res)
+    try:
+        todas.extend(ext.opciones(now))
+    except Exception:   # un archivo de PropLine roto no debe dejar el fútbol sin escalón
+        log.exception("Escalera: NBA y tenis sin candidatos")
+    return todas, sin_precio
+
+
 def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> dict:
     now = now or datetime.now(timezone.utc)
     hoy = now.astimezone(timezone.utc).date()
@@ -384,19 +406,7 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
             en_curso.append(_abierto(reto, pasos, st["ganados"], st["saldo"] + st["retirado"]))
         ocupados |= {p["match_id"] for p in pasos if p["outcome"] is None}
 
-    rho = ad._rho_activo()
-    todas, sin_precio = [], 0
-    modelos = Modelos(now)
-    for m in _partidos(now):
-        res = opciones(m, now, rho, modelos, incluir_doble=True)
-        if res is None:
-            sin_precio += 1
-            continue
-        todas.extend(res)
-    try:
-        todas.extend(ext.opciones(now))
-    except Exception:   # un archivo de PropLine roto no debe dejar el fútbol sin escalón
-        log.exception("Escalera: NBA y tenis sin candidatos")
+    todas, sin_precio = _evaluar_opciones(now)
     plan = es.planificar(en_curso, abiertos, todas, ocupados)
     # Lo que sirve para abrir un reto hoy: la probabilidad mínima por escalón.
     p_nuevo = es.PROB_MIN
@@ -434,19 +444,96 @@ def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> di
     return out
 
 
-def _insertar_paso(reto_id: int, o: es.Opcion) -> None:
+def _insertar_paso(reto_id: int, o: es.Opcion, reemplaza_paso_id: str | None = None) -> str:
     siguiente = query_one("SELECT coalesce(max(paso), 0) + 1 AS n FROM escalera_pasos "
                           "WHERE reto_id = %s", (reto_id,))["n"]
     evento_id, sport, inicio, local, visitante = o.evento or (None,) * 5
-    execute(
+    match_id = None if o.evento else o.match_id
+    row = query_one(
         """INSERT INTO escalera_pasos (reto_id, paso, match_id, market, selection, line, prob,
                                        fair_price, price, book, odds_source, odds_as_of,
                                        deporte, evento_id, evento_sport, evento_inicio,
-                                       evento_local, evento_visitante)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-        (reto_id, siguiente, None if o.evento else o.match_id, o.cand.market, o.cand.selection,
+                                       evento_local, evento_visitante, kickoff_utc,
+                                       reemplaza_paso_id)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                   CASE WHEN %s IS NULL THEN NULL
+                        ELSE (SELECT kickoff_utc FROM matches WHERE match_id = %s) END,
+                   %s)
+           RETURNING paso_id""",
+        (reto_id, siguiente, match_id, o.cand.market, o.cand.selection,
          o.cand.line, round(o.cand.prob, 6), round(1.0 / o.cand.prob, 4), o.price, o.book,
-         o.odds_source, o.odds_as_of, o.deporte, evento_id, sport, inicio, local, visitante))
+         o.odds_source, o.odds_as_of, o.deporte, evento_id, sport, inicio, local, visitante,
+         match_id, match_id, reemplaza_paso_id))
+    return str(row["paso_id"]) if row else ""
+
+
+def reemplazar_nulos(now: datetime | None = None, dry_run: bool = False,
+                     seal: bool = True, git_push: bool = True) -> dict:
+    """Liquida pendientes y cubre al instante los retos activos cuyo último escalón quedó 'void'."""
+    now = now or datetime.now(timezone.utc)
+    hoy = now.astimezone(timezone.utc).date()
+    if not settings.escalera_enabled and not dry_run:
+        return {"estado": "desactivado"}
+    if not dry_run and not hashchain.lote_lleva_escalera(hoy):
+        return {"estado": "sin_corte",
+                "motivo": "LOTE_ESCALERA_DESDE no fijada o posterior a hoy: no se reemplaza nada"}
+
+    settled = settle_pending(now)["settled"] if not dry_run else 0
+    ocupados: set[str] = set()
+    candidatos_reto: list[tuple[dict, list[dict], dict, dict]] = []
+    for reto in _retos():
+        pasos = _pasos(reto["reto_id"])
+        st = estado_reto(reto, pasos, now)
+        if st["estado"] in es.CERRADOS:
+            continue
+        ocupados |= {p["match_id"] for p in pasos if p["outcome"] is None and p.get("match_id")}
+        if st["estado"] != "en_curso" or not pasos:
+            continue
+        ultimo = pasos[-1]
+        if ultimo["outcome"] == "void":
+            candidatos_reto.append((reto, pasos, st, ultimo))
+
+    if not candidatos_reto:
+        return {"estado": "sin_reemplazos", "settled": settled, "reemplazados": 0, "plan": []}
+
+    todas, sin_precio = _evaluar_opciones(now)
+    elegidos: list[tuple[dict, dict, es.Opcion]] = []
+    for reto, pasos, st, void_paso in sorted(candidatos_reto, key=lambda item: -item[2]["ganados"]):
+        abierto = _abierto(reto, pasos, st["ganados"], st["saldo"] + st["retirado"])
+        usados_reto = ocupados | {p["match_id"] for p in pasos if p.get("match_id")}
+        elegida = es.elegir(todas, abierto, usados_reto)
+        if elegida is None:
+            continue
+        ocupados.add(elegida.match_id)
+        elegidos.append((reto, void_paso, elegida))
+
+    out = {"estado": "reemplazado" if elegidos else "sin_candidato",
+           "settled": settled,
+           "retos_con_nulo": len(candidatos_reto),
+           "reemplazados": 0,
+           "evaluados": len(todas),
+           "sin_precio": sin_precio,
+           "plan": [{"reto_id": reto["reto_id"],
+                     "reemplaza_paso": void_paso["paso"],
+                     **_opcion_json(op)} for reto, void_paso, op in elegidos]}
+    if dry_run or not elegidos:
+        return out
+
+    sellados = []
+    for item, (reto, void_paso, op) in zip(out["plan"], elegidos):
+        nuevo_paso_id = _insertar_paso(reto["reto_id"], op, reemplaza_paso_id=str(void_paso["paso_id"]))
+        item["paso_id"] = nuevo_paso_id
+        if seal and nuevo_paso_id:
+            receipt = hashchain.seal_escalera(nuevo_paso_id, git_push=git_push)
+            if not receipt:
+                from . import telegram as tg
+                tg.alert(f"Escalera: escalón de reemplazo {nuevo_paso_id} (reto #{reto['reto_id']}) SIN SELLAR.")
+            else:
+                item["chain_sha256"] = receipt.get("chain_sha256")
+                sellados.append(nuevo_paso_id)
+        out["reemplazados"] += 1
+    log.info("Escalera reemplazo intradía: %s", out)
+    return out
 
 
 def _opcion_json(o: es.Opcion) -> dict:
@@ -483,13 +570,17 @@ def total_estadistico(market: str, r: dict) -> int | None:
 
 def resultado(r: dict, now: datetime) -> tuple | None:
     """(outcome, goles local, goles visitante, valor) o None si aún no se puede liquidar."""
+    ko_orig = r.get("kickoff_original") or r["kickoff_utc"]
+    movido = abs(r["kickoff_utc"] - ko_orig) > ESCALERA_MARGEN_APLAZADO
     if r["status"] == "postponed":
-        return ("void", None, None, None) if r["kickoff_utc"] < now - MARGEN_APLAZADO else None
+        return ("void", None, None, None) if ko_orig < now - ESCALERA_MARGEN_APLAZADO else None
+    if movido or r["status"] != "finished" or r["home_goals"] is None:
+        return ("void", None, None, None) if ko_orig < now - ESCALERA_MARGEN_APLAZADO else None
     hg, ag = int(r["home_goals"]), int(r["away_goals"])
     if r["market"] in es.ESTADISTICOS:
         total = total_estadistico(r["market"], r)
         if total is None:
-            if r["kickoff_utc"] < now - MARGEN_SIN_ESTADISTICAS:
+            if ko_orig < now - MARGEN_SIN_ESTADISTICAS:
                 return ("void", None, None, None)
             return None
         line = float(r["line"])
@@ -506,6 +597,7 @@ def settle_pending(now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     rows = query(
         """SELECT p.paso_id, p.market, p.selection, p.line, m.status, m.kickoff_utc,
+                  coalesce(p.kickoff_utc, m.kickoff_utc) AS kickoff_original,
                   m.home_goals, m.away_goals, m.home_corners, m.away_corners,
                   m.home_yellow, m.away_yellow, m.home_red, m.away_red
            FROM escalera_pasos p
@@ -513,8 +605,8 @@ def settle_pending(now: datetime | None = None) -> dict:
            LEFT JOIN escalera_resultados r ON r.paso_id = p.paso_id
            WHERE r.paso_id IS NULL
              AND ((m.status = 'finished' AND m.home_goals IS NOT NULL)
-                  OR (m.status = 'postponed' AND m.kickoff_utc < %s))""",
-        (now - MARGEN_APLAZADO,))
+                  OR coalesce(p.kickoff_utc, m.kickoff_utc) < %s)""",
+        (now - ESCALERA_MARGEN_APLAZADO,))
     n = 0
     for r in rows:
         res = resultado(r, now)
@@ -605,6 +697,7 @@ def informe_publico() -> dict:
         pasos = _pasos(reto["reto_id"], solo_sellados=True)
         st = estado_reto(reto, pasos)
         escalones += [p for p in pasos if p["outcome"] in ("win", "loss")]
+        visibles = pasos if st["estado"] in es.CERRADOS else [p for p in pasos if p["outcome"] != "void"]
         salida.append({"reto_id": reto["reto_id"], "inicio": reto["created_at"],
                        "stake_inicial": str(reto["stake_inicial"]),
                        "pasos_objetivo": reto["pasos_objetivo"],
@@ -618,7 +711,7 @@ def informe_publico() -> dict:
                                      if pasos and st["estado"] in es.CERRADOS else None),
                        "dias_max": reto.get("dias_max"),
                        **_json_estado(st),
-                       "pasos": [_paso_publico(p) for p in pasos]})
+                       "pasos": [_paso_publico(p) for p in visibles]})
     cerrados = [r for r in salida if r["estado"] in es.CERRADOS]
     actuales = [r for r in salida if r["estado"] not in es.CERRADOS]
     nuevos = [r for r in cerrados if r["prob_objetivo"] is not None]
@@ -657,9 +750,11 @@ def informe_publico() -> dict:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     a = argparse.ArgumentParser(description="Reto escalera")
-    a.add_argument("accion", choices=["preview", "settle", "informe"])
+    a.add_argument("accion", choices=["preview", "settle", "informe", "reemplazar"])
     accion = a.parse_args().accion
     out = {"preview": lambda: select_and_persist(dry_run=True),
-           "settle": settle_pending, "informe": informe_publico}[accion]()
+           "settle": settle_pending, "informe": informe_publico,
+           "reemplazar": reemplazar_nulos}[accion]()
     print(json.dumps(out, indent=2, ensure_ascii=False, default=str))

@@ -275,3 +275,73 @@ def test_un_paso_repetido_no_cuenta_dos_veces_en_el_informe():
     from pathlib import Path
     src = (Path(__file__).resolve().parents[1] / "src/qf/publish/escalera_datos.py").read_text(encoding="utf-8")
     assert "b.batch_kind = 'diario'" in src
+
+
+def test_escalera_aplazado_y_reprogramado_anulan_a_las_6_horas_sin_tocar_parley():
+    from datetime import datetime, timedelta, timezone
+    from qf.publish import escalera_datos as ed
+
+    assert ed.ESCALERA_MARGEN_APLAZADO == timedelta(hours=6)
+    # Parley y Tarjetas conservan su propio margen de 48 h intacto.
+    assert ed.MARGEN_APLAZADO == timedelta(hours=48)
+
+    ko = datetime(2026, 11, 10, 12, 0, tzinfo=timezone.utc)
+    aplazado = {"status": "postponed", "kickoff_utc": ko, "kickoff_original": ko,
+                "home_goals": None, "away_goals": None, "market": "h2h", "selection": "home", "line": None}
+    assert ed.resultado(aplazado, ko + timedelta(hours=5)) is None
+    assert ed.resultado(aplazado, ko + timedelta(hours=7)) == ("void", None, None, None)
+
+    reprogramado = {**aplazado, "status": "scheduled", "kickoff_utc": ko + timedelta(days=3)}
+    assert ed.resultado(reprogramado, ko + timedelta(hours=5)) is None
+    assert ed.resultado(reprogramado, ko + timedelta(hours=7)) == ("void", None, None, None)
+
+
+def test_reemplazar_nulos_cubre_reto_y_oculta_void_en_activos(monkeypatch):
+    from dataclasses import replace
+    from datetime import datetime, timedelta, timezone
+    from qf.publish import escalera_datos as ed, hashchain as hc
+
+    ahora = datetime(2026, 11, 10, 18, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
+    monkeypatch.setattr(hc, "LOTE_ESCALERA_DESDE", date(2026, 10, 9))
+    monkeypatch.setattr(ed, "settle_pending", lambda now=None: {"settled": 1})
+
+    reto = {"reto_id": 21, "stake_inicial": Decimal("10.00"), "pasos_objetivo": 2,
+            "target_cuota": None, "cuota_min": 1.03, "cuota_max": 1.40, "freeroll_x": None,
+            "prob_objetivo": 0.80, "dias_max": 7, "created_at": ahora - timedelta(days=5)}
+    p_void = {"paso_id": "11111111-1111-1111-1111-111111111111", "reto_id": 21, "paso": 1,
+              "match_id": "tenis:ev1", "league_id": "tenis", "deporte": "tenis",
+              "kickoff_utc": ahora - timedelta(hours=7), "local": "A", "visitante": "B",
+              "market": "h2h", "selection": "home", "line": None, "prob": 0.94, "price": 1.28,
+              "book": "bovada", "outcome": "void", "home_goals": None, "away_goals": None,
+              "valor": None, "batch_date": date(2026, 11, 10), "chain_sha256": "a" * 64}
+    reemplazo_op = es.Opcion("tenis:ev2", es.Candidato("h2h", "home", None, 0.93), 1.30, "bovada",
+                             "propline", ahora, "tenis", ("ev2", "tennis_atp", ahora + timedelta(hours=3), "C", "D"))
+
+    monkeypatch.setattr(ed, "_retos", lambda: [reto])
+    monkeypatch.setattr(ed, "_pasos", lambda rid, solo_sellados=False: [p_void])
+    # Si el partido viejo volviera a aparecer reprogramado, `ocupados` impide re-elegirlo.
+    mismo = es.Opcion("tenis:ev1", es.Candidato("h2h", "home", None, 0.96), 1.35, "bovada",
+                      "propline", ahora, "tenis", ("ev1", "tennis_atp", ahora + timedelta(hours=3), "A", "B"))
+    monkeypatch.setattr(ed, "_evaluar_opciones", lambda now: ([mismo, reemplazo_op], 0))
+    insertados, sellados = [], []
+    monkeypatch.setattr(ed, "_insertar_paso",
+                        lambda rid, op, reemplaza_paso_id=None: insertados.append((rid, op.match_id, reemplaza_paso_id))
+                        or "22222222-2222-2222-2222-222222222222")
+    monkeypatch.setattr(hc, "seal_escalera",
+                        lambda pid, git_push=True: sellados.append(pid) or {"chain_sha256": "b" * 64})
+
+    res = ed.reemplazar_nulos(ahora)
+    assert res["estado"] == "reemplazado" and res["reemplazados"] == 1
+    assert insertados == [(21, "tenis:ev2", "11111111-1111-1111-1111-111111111111")]
+    assert sellados == ["22222222-2222-2222-2222-222222222222"]
+
+    # En informe_publico: activo oculta el 'void'; cerrado lo conserva por trazabilidad.
+    monkeypatch.setattr(ed, "query", lambda sql, params=(): [reto])
+    monkeypatch.setattr(ed, "vencido", lambda r, now=None: False)
+    inf_vivo = ed.informe_publico()
+    assert inf_vivo["actuales"][0]["pasos"] == []
+    assert inf_vivo["actuales"][0]["estado"] == "en_curso"
+    monkeypatch.setattr(ed, "vencido", lambda r, now=None: True)
+    inf_hist = ed.informe_publico()
+    assert len(inf_hist["historial"][0]["pasos"]) == 1 and inf_hist["historial"][0]["pasos"][0]["outcome"] == "void"

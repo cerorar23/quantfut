@@ -404,17 +404,18 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
   }
 
   // ------------------------------------------------------------ escalera
-  function escaleraPaso(p) {
+  function escaleraPaso(p, numero = p.paso) {
     const est = p.outcome === 'win' ? ['win', 'Ganado'] : p.outcome === 'loss' ? ['loss', 'Perdido'] : p.outcome === 'push' ? ['push', 'Devuelto (no cuenta)'] : p.outcome === 'void' ? ['push', 'Nulo (aplazado)'] : ['open', 'Pendiente'];
     const prob = probabilityLabel(p.prob);
-    return `<article class="cv-pick cyber-card ${est[0]}"><div class="cv-pick-main"><span class="cv-kicker">${p.free ? badge('Gratis', 'good') : ''} Escalón ${realNumber(p.paso)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''}</p><small class="cv-prob">${prob ? `Probabilidad real ${esc(prob.pct)} · sale ${esc(prob.frequency)}` : 'Sin probabilidad'}</small></div>
+    return `<article class="cv-pick cyber-card ${est[0]}"><div class="cv-pick-main"><span class="cv-kicker">${p.free ? badge('Gratis', 'good') : ''} Escalón ${realNumber(numero)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''}</p><small class="cv-prob">${prob ? `Probabilidad real ${esc(prob.pct)} · sale ${esc(prob.frequency)}` : 'Sin probabilidad'}</small></div>
       <div class="cv-pick-side"><span>Cuota</span><strong>${realNumber(p.price, 2)}</strong><small>${esc(p.book ?? 'Casa')}</small><small class="cv-res ${est[0]}">${est[1]}</small><small>Sello ${hash(p.chain_sha256)}</small></div></article>`;
   }
 
   function reto(r) {
     const objetivo = r.pasos_objetivo;
     const ganados = r.ganados ?? 0;
-    const pasos = r.pasos ?? [];
+    const esCerrado = ['completado', 'fallido', 'expirado'].includes(r.estado);
+    const pasos = esCerrado ? (r.pasos ?? []) : (r.pasos ?? []).filter(p => p.outcome !== 'void');
     const enJuego = r.estado === 'esperando';
     const segmentos = Array.from({ length: objetivo }, (_, i) => `<span class="cyber-progress__segment ${i < ganados ? 'cyber-progress__segment--active' : ''} ${i === ganados && enJuego ? 'cv-seg-live' : ''}"></span>`).join('');
     const ultimo = pasos.at(-1);
@@ -422,10 +423,11 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const targetKicker = r.target_cuota ? ` · Objetivo ×${realNumber(r.target_cuota, 1)}` : '';
     const freeroll = r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : r.prob_objetivo ? `reto al ${realNumber(r.prob_objetivo * 100, 0)}% como mínimo` : 'reto sin freeroll';
     const cerrados = (r.vip ?? []).map(p => lockedCard({ kicker: `Escalón ${realNumber(ganados + 1)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}`, title: esc(nombreMercado(p.market)), sub: `${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}`, cuotaLabel: 'Cuota · VIP', cuota: CUOTA_OCULTA }));
+    const visibles = pasos.map((p, i) => escaleraPaso(p, esCerrado ? p.paso : i + 1)).reverse().join('');
     return `<article class="cv-reto cyber-card"><div class="cv-reto-head"><div><span class="cv-kicker">Reto #${realNumber(r.reto_id)}${targetKicker} · ${realNumber(objetivo)} escalones</span><h3>${esc(ESCALERA_ESTADO[r.estado] ?? r.estado)}</h3></div><div class="cv-ticket-odds"><span>Saldo</span><strong>${unidades(r.saldo).replace('+', '')}</strong></div></div>
       <div class="cyber-progress cyber-progress--green cyber-progress--segmented cv-stair" role="img" aria-label="${realNumber(ganados)} de ${realNumber(objetivo)} escalones ganados">${segmentos}</div>
       <p class="cv-ticket-meta">${enJuego ? `En juego ${realNumber(r.en_juego, 2)} u${potencial ? ` · si se acierta: ${realNumber(potencial, 2)} u` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${realNumber(r.stake_inicial, 2)} u · ${Number(r.retirado) > 0 ? `retirado ${realNumber(r.retirado, 2)} u: lo que queda va sin riesgo propio` : freeroll}</p>
-      <div class="cv-list">${[...pasos].reverse().map(escaleraPaso).join('')}${cerrados.join('')}</div>${!pasos.length && !cerrados.length ? '<p class="cv-ticket-meta">Esperando su primer escalón sellado.</p>' : ''}</article>`;
+      <div class="cv-list">${visibles}${cerrados.join('')}</div>${!pasos.length && !cerrados.length ? '<p class="cv-ticket-meta">Esperando su primer escalón sellado.</p>' : ''}</article>`;
   }
 
   function curva(serie, unidadLabel = 'retos', nota = 'La curva incluye los retos fallidos: cada bajada es un reto perdido.') {

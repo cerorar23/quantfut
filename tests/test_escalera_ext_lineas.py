@@ -109,7 +109,7 @@ def test_tenis_guarda_total_y_handicap_de_juegos_con_los_nombres_del_parley(tmp_
 
 def _paso(**kw):
     return {"deporte": "nba", "evento_id": "n1", "evento_local": "Los Angeles Lakers", "evento_visitante": "Detroit Pistons",
-            "evento_inicio": NOW - timedelta(hours=8), "book": "bovada", "market": "spreads", "selection": "home",
+            "evento_inicio": NOW - timedelta(hours=4), "book": "bovada", "market": "spreads", "selection": "home",
             "line": -7.5, **kw}
 
 

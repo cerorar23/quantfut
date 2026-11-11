@@ -74,7 +74,7 @@ def test_sin_archivo_no_hay_candidatos_ni_se_crea_nada(tmp_path):
 def _paso(**kw):
     return {"deporte": "tenis", "evento_id": "t1", "selection": "home", "book": "bovada",
             "evento_local": "Jannik Sinner", "evento_visitante": "Qualifier X",
-            "evento_inicio": NOW - timedelta(hours=8), **kw}
+            "evento_inicio": NOW - timedelta(hours=4), **kw}
 
 
 def _resultados(tmp_path, bovada="won", pinnacle="won", ahora=NOW):
@@ -95,9 +95,12 @@ def test_liquida_con_la_calificacion_de_la_casa_del_escalon(tmp_path, ajustes):
 
 
 def test_sin_calificacion_espera_y_pasado_el_margen_es_nulo(tmp_path, ajustes):
+    assert ext.MARGEN_SIN_RESULTADO == timedelta(hours=6)
     assert ext.resultado(_paso(), NOW, tmp_path) is None
-    viejo = _paso(evento_inicio=NOW - ext.MARGEN_SIN_RESULTADO - timedelta(hours=1))
-    assert ext.resultado(viejo, NOW, tmp_path) == ("void", None, None, None)
+    antes_6h = _paso(evento_inicio=NOW - timedelta(hours=5))
+    assert ext.resultado(antes_6h, NOW, tmp_path) is None
+    pasado_6h = _paso(evento_inicio=NOW - timedelta(hours=7))
+    assert ext.resultado(pasado_6h, NOW, tmp_path) == ("void", None, None, None)
 
 
 def test_void_sin_ninguna_fila_de_resultado_se_distingue_del_void_de_la_casa(tmp_path, ajustes):
