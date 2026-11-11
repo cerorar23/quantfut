@@ -1,6 +1,13 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 10-nov-2026 · F6.3 calibración y calculadora de cuota/odd justa en inglés y portugués (rama `seo/f63-calibracion-calculadora`, sin desplegar)
+
+- Alcance: cierra todo el código pendiente de F6 añadiendo `/en/calibration/`, `/pt/calibracao/`, `/en/fair-odds-calculator/` y `/pt/calculadora-odd-justa/` (con 301 sin barra, puerta `off`/`preview`/`on`, `hreflang` recíproco `es`/`en`/`pt` + `x-default` en `/sitemap-paginas.xml` y selector de idiomas).
+- Decisiones de diseño: se reutiliza un único módulo `static/cuota-justa.js` leyendo `<html lang>` (`document.documentElement.lang`) sin scripts en línea (`paginas.CSP`: `script-src 'self'`, sin `connect-src`) y manteniendo los formatos españoles por defecto al importar desde pruebas o fuera de navegador. En calibración se mantiene la derivación estricta de cifras desde `datos_calibracion` / base de datos y la traducción de `estado_evidencia` (`descriptive`/`descritiva`) y formatos locales (`0.2091` / `3,222` en EN; `0,2091` / `3.222` en PT).
+- Navegación y cruce interno: `base_en.html`, `base_pt.html`, `en_methodology.html` y `pt_metodologia.html` enlazan directamente a sus versiones locales de calibración y calculadora; los enlaces a `/historial/` y `/legal/*` conservan `hreflang="es" lang="es"`.
+- Bloques que siguen pendientes de aprobación/acción externa: F5 parte 2 (logs CSP hasta ~16-nov, regla Cloudflare y permiso explícito para `modulepreload` en `frontend/index.html`), F7 (`fr`/`it`/`de`, requiere revisión legal por Decreto Dignità / ANJ / GlüStV 2021) y F8 (autoridad externa / cuentas sociales).
+
 ## 10-nov-2026 · Reto escalera: anular y reemplazar escalones aplazados/nulos tras 6 h (PR #349 `e4552578`; desplegada 2026-11-11 02:34 UTC)
 
 - Alcance aclarado con el titular: solo aplica a **Reto Escalera** (`/reto-escalera/`), no al Parley del Día. Para no tocar Parley ni

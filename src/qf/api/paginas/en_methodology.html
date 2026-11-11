@@ -18,11 +18,11 @@
 </ul>
 
 <h2>The market as a reference, not a rival</h2>
-<p>The closing odds of bookmakers are a very efficient estimate of the true probability. We remove the bookmaker's margin (known as "removing the vig", using Shin's method) to obtain the probability they imply, and we compare our estimate with that reference. The margin and the conversion between odds and probabilities can be tried in the <a href="/calculadora-cuota-justa/" hreflang="es" lang="es">fair-odds calculator</a> (currently available only in Spanish).</p>
+<p>The closing odds of bookmakers are a very efficient estimate of the true probability. We remove the bookmaker's margin (known as "removing the vig", using Shin's method) to obtain the probability they imply, and we compare our estimate with that reference. The margin and the conversion between odds and probabilities can be tried in the <a href="/en/fair-odds-calculator/">fair-odds calculator</a>.</p>
 <p><strong>We do not claim to beat the market.</strong> In the measurements we have made so far, our football model estimates probabilities well (it is calibrated within small margins in the bands with enough sample) but does not consistently improve on the closing price. That is why we do not sell a "guaranteed edge": we offer calibrated, traceable probabilities.</p>
 
 <h2>Calibration: what we measure</h2>
-<p>A good probability is an honest probability: if we say 70 % a hundred times, it should come true close to seventy times. That is called calibration and it is what we look at first. We also measure how much the model misses overall (with metrics such as <em>log-loss</em> and the <em>Brier score</em>) and, when closing odds are available, how well our probabilities compare with them.</p>
+<p>A good probability is an honest probability: if we say 70 % a hundred times, it should come true close to seventy times. That is called <a href="/en/calibration/">calibration</a> and it is what we look at first. We also measure how much the model misses overall (with metrics such as <em>log-loss</em> and the <em>Brier score</em>) and, when closing odds are available, how well our probabilities compare with them.</p>
 <p>For a measurement to count, we use only information available before the match: the database rejects any model input dated after the start of the match, so that the model cannot "see the future" without our noticing.</p>
 
 <h2>How we seal each forecast</h2>

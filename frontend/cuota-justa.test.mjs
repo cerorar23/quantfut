@@ -84,3 +84,27 @@ test("formato de números en español", () => {
   assert.equal(cj.fmtNum(2.1), "2,10");
   assert.equal(cj.fmtPct(0.4587), "45,87 %");
 });
+
+test("formato de números y textos en inglés y portugués", () => {
+  assert.equal(cj.idiomaBase("en"), "en");
+  assert.equal(cj.idiomaBase("pt-BR"), "pt");
+  assert.equal(cj.idiomaBase("es-MX"), "es");
+
+  assert.equal(cj.fmtNum(2.1, "en"), "2.10");
+  assert.equal(cj.fmtPct(0.4587, "en"), "45.87%");
+  assert.equal(cj.formatear(2.1, "decimal", "en"), "2.10");
+
+  assert.equal(cj.fmtNum(2.1, "pt-BR"), "2,10");
+  assert.equal(cj.fmtPct(0.4587, "pt-BR"), "45,87%");
+  assert.equal(cj.formatear(2.1, "decimal", "pt-BR"), "2,10");
+
+  const en = cj.textosDe("en");
+  assert.deepEqual(en.nombres[3], ["Home", "Draw", "Away"]);
+  assert.match(en.pieMsg(1.048, 1.0), /bookmaker's margin is 4\.80%/);
+  assert.match(en.cuotaMsg(2.1, "decimal"), /Odds of 2\.10 imply a probability of 47\.62%/);
+
+  const pt = cj.textosDe("pt-BR");
+  assert.deepEqual(pt.nombres[3], ["Casa", "Empate", "Visitante"]);
+  assert.match(pt.pieMsg(1.048, 1.0), /margem da casa é de 4,80%/);
+  assert.match(pt.cuotaMsg(2.1, "decimal"), /Uma odd de 2,10 implica uma probabilidade de 47,62%/);
+});

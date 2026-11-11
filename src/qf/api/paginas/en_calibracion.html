@@ -1,0 +1,69 @@
+{% extends "base_en.html" %}
+{% block contenido %}
+<p class="entradilla">A probability is honest if it holds up: for matches we rate at 70%, the outcome should happen roughly seven times out of ten. Here it is measured using the data the site already publishes and compared against the betting market, whether the result favours us or not.</p>
+<div class="aviso"><p><strong>Automatically generated page.</strong> Every figure comes from published measurements{% if revision_larga %} (last updated: {{ revision_larga }}){% endif %}; none is written by hand. The statement on whether the model beats the market is derived from those same figures. How the probabilities are built: <a href="/en/methodology/">methodology</a>.</p></div>
+
+<h2>How to read the charts</h2>
+<p>Each dot groups matches given a similar probability by the model (horizontal axis) and shows how often they actually happened (vertical axis). The dashed line is perfect calibration. A larger dot means more matches; the vertical bar marks ±2 standard errors, the normal margin of chance; groups outside that margin are shown in amber. Below each chart is the same data in a table.</p>
+
+{% for s in c.secciones %}
+<h2 id="{{ s.id }}">{{ s.titulo }}</h2>
+{% if s.id == 'futbol' %}
+<p>Measured window: {{ s.desde_txt }} to {{ s.hasta_txt }}, across {{ s.n }} matches. Error of 1X2 probabilities (RPS; lower is better): <strong>model {{ s.rps }}</strong>, <strong>market {{ s.rps_mercado }}</strong>.
+{% if s.cmp.mejor == 'mercado' %}The market was more accurate than the model by {{ s.diferencia }}: <strong>the model does not beat the market</strong> in this measurement.
+{% elif s.cmp.mejor == 'modelo' %}The model was more accurate than the market by {{ s.diferencia }} in this measurement.
+{% else %}The model and the market tied in this measurement.{% endif %}</p>
+{% if s.logloss or s.brier %}<p>Other model metrics on the same window{% if s.logloss %}: log-loss {{ s.logloss }}{% endif %}{% if s.brier %}{{ ',' if s.logloss else ':' }} Brier {{ s.brier }}{% endif %}.</p>{% endif %}
+{% if s.svg %}
+<figure>{{ s.svg | safe }}<figcaption>Bins within 2 standard errors of perfect calibration: {{ s.dentro }} of {{ s.n_bins }}{% if s.fuera %} ({{ s.fuera }} outside){% endif %}.</figcaption></figure>
+<table>
+<thead><tr><th scope="col">Probability bin</th><th scope="col">Predicted (mean)</th><th scope="col">Observed</th><th scope="col">Matches</th><th scope="col">Within margin</th></tr></thead>
+<tbody>
+{% for b in s.puntos %}
+<tr><th scope="row">{{ b.rango }}</th><td>{{ b.pred }}</td><td>{{ b.obs }}</td><td>{{ b.n }}</td><td{% if not b.dentro %} class="fallo"{% endif %}>{{ 'yes' if b.dentro else 'no' }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+{% if s.historial|length > 1 %}
+<h3>Recent measurements</h3>
+<table>
+<thead><tr><th scope="col">Through</th><th scope="col">Matches</th><th scope="col">Model RPS</th><th scope="col">Market RPS</th></tr></thead>
+<tbody>
+{% for h in s.historial %}
+<tr><th scope="row">{{ h.hasta_txt }}</th><td>{{ h.n }}</td><td>{{ h.rps }}</td><td>{{ h.rps_mercado }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+{% elif s.id == 'nba' %}
+{% if s.hist %}
+<h3>{{ s.hist.temporada }} season, walk-forward evaluation</h3>
+<p>Parameters were fitted only on earlier seasons and compared against closing market odds{% if s.hist.n %}, across {{ s.hist.n }} games{% endif %}. Moneyline error (Brier; lower is better): <strong>model {{ s.hist.brier }}</strong>, <strong>market {{ s.hist.brier_mercado }}</strong>.
+{% if s.hist.cmp.mejor == 'mercado' %}The market was more accurate by {{ s.hist.diferencia }}: <strong>the model does not beat the market</strong> in this measurement.
+{% elif s.hist.cmp.mejor == 'modelo' %}The model was more accurate by {{ s.hist.diferencia }} in this measurement.
+{% else %}They tied in this measurement.{% endif %}
+{% if s.hist.pendiente %}The calibration slope was {{ s.hist.pendiente }} (1 would be perfect).{% endif %}</p>
+{% endif %}
+{% if s.pro %}
+<h3>Since the engine started sealing forecasts</h3>
+<p>There are {{ s.pro.n }} games with a sealed forecast and final score. Moneyline error (Brier): {{ s.pro.brier }}{% if s.pro.logloss %}; log-loss {{ s.pro.logloss }}{% endif %}. Evidence status: <strong>{{ s.pro.evidencia }}</strong>; calibration <strong>{{ 'certified' if s.pro.certificada else 'not certified' }}</strong>.
+{% if not s.pro.certificada %}There are still too few games to draw firm conclusions: these figures describe what happened so far, not proof that the model is well calibrated.{% endif %}</p>
+{% if s.pro.svg %}
+<figure>{{ s.pro.svg | safe }}<figcaption>NBA moneyline winner by probability bin since sealing.</figcaption></figure>
+<table>
+<thead><tr><th scope="col">Probability bin</th><th scope="col">Predicted (mean)</th><th scope="col">Observed</th><th scope="col">Games</th></tr></thead>
+<tbody>
+{% for b in s.pro.puntos %}
+<tr><th scope="row">{{ b.rango }}</th><td>{{ b.pred }}</td><td>{{ b.obs }}</td><td>{{ b.n }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+<h2>What it means and what it does not</h2>
+<p>Being well calibrated is not the same as making money: an honest probability can still be worse than the market, in which case there is no edge to use. That is why we do not promise profits. Forecasts are statistical estimates for information only; see the <a href="/historial/" hreflang="es" lang="es">record of hits and misses</a> (in Spanish), our <a href="/en/methodology/">methodology</a> and, if gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p>
+{% endblock %}

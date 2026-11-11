@@ -159,7 +159,7 @@ def test_hreflang_reciproco_absoluto_autorreferente_y_con_x_default(abierto):
             assert all(h.startswith("https://") for h in alt.values())
             assert loc in alt.values()
     # una página sin versión en inglés no lleva hreflang
-    assert mapa[BASE + "/calibracion/"] == {}
+    assert mapa[BASE + "/historial/"] == {}
 
 
 def test_selector_de_idioma_con_enlaces_normales_en_los_dos_sentidos(abierto):

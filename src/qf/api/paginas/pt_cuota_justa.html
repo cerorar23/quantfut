@@ -1,0 +1,92 @@
+{% extends "base_pt.html" %}
+{% block cabecera %}
+<style>
+.cj-herr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
+.cj-herr h3{margin:0 0 6px;font-size:18px}
+.cj-herr p{margin:6px 0}
+.cj-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.cj-campo{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.cj-campo label,.cj-fila label{font-size:15px;color:var(--muted)}
+.cj-fila{display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0}.cj-fila>div{display:flex;flex-direction:column;gap:4px}
+input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:44px;max-width:100%}
+input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[aria-invalid=true]{border-color:#f59e0b}
+.cj-salida{min-height:1.7em;color:var(--text)}
+.cj-nota{color:var(--muted);font-size:14px}
+.cj-tabla{overflow-x:auto}
+</style>
+{% endblock %}
+{% block contenido %}
+<p class="entradilla">A odd de uma casa de apostas não é uma probabilidade pura: ela inclui a margem da casa. Esta calculadora converte odds em probabilidades e vice-versa, e mostra quanta margem há em uma cotação. Tudo roda no seu navegador: nada é enviado nem guardado.</p>
+<div class="aviso"><p><strong>Ferramenta educativa.</strong> Apenas converte números; não diz no que apostar, quanto apostar nem se uma odd tem valor. Uma probabilidade estimada não garante nenhum resultado. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p></div>
+
+<noscript><div class="aviso"><p>A calculadora interativa precisa de JavaScript. O exemplo resolvido abaixo funciona sem ele.</p></div></noscript>
+
+<div class="cj-fila">
+<div><label for="cj-formato">Formato das odds</label>
+<select id="cj-formato"><option value="decimal" selected>Decimal (2,10)</option><option value="fraccionaria">Fracionária (11/10)</option><option value="americana">Americana (+110)</option></select></div>
+<p class="cj-nota" style="align-self:end;margin:0">Ao mudar de formato, as odds digitadas são convertidas e arredondadas.</p>
+</div>
+
+<section class="cj-herr" aria-labelledby="h-convertir">
+<h2 id="h-convertir" style="font-size:20px;margin-top:0">De odd para probabilidade e de probabilidade para odd</h2>
+<div class="cj-cols">
+<div>
+<div class="cj-campo"><label for="cj-cuota">Odd da casa</label><input id="cj-cuota" type="text" inputmode="text" autocomplete="off" value="2,10" placeholder="2,10" aria-describedby="cj-cuota-resultado"></div>
+<p id="cj-cuota-resultado" class="cj-salida" aria-live="polite"></p>
+</div>
+<div>
+<div class="cj-campo"><label for="cj-prob">Probabilidade estimada (%)</label><input id="cj-prob" type="text" inputmode="decimal" autocomplete="off" value="45" placeholder="45" aria-describedby="cj-prob-resultado"></div>
+<p id="cj-prob-resultado" class="cj-salida" aria-live="polite"></p>
+</div>
+</div>
+</section>
+
+<section class="cj-herr" aria-labelledby="h-margen">
+<h2 id="h-margen" style="font-size:20px;margin-top:0">Remova a margem da casa</h2>
+<p>Digite as odds de todos os resultados possíveis de um mercado: três para um 1X2 (casa, empate, visitante) ou duas para um mercado de dois resultados.</p>
+<div class="cj-fila">
+<div><label for="cj-n">Resultados do mercado</label><select id="cj-n"><option value="3" selected>3 (1X2)</option><option value="2">2</option></select></div>
+<div><label for="cj-metodo">Método</label><select id="cj-metodo"><option value="shin" selected>Shin (usado pela QuantFut)</option><option value="proporcional">Proporcional</option><option value="potencia">Potência</option></select></div>
+</div>
+<div id="cj-campos">
+{% for nombre in ejemplo_nombres %}
+<div class="cj-campo"><label for="cj-o{{ loop.index0 }}">{{ nombre }}</label><input id="cj-o{{ loop.index0 }}" type="text" inputmode="text" autocomplete="off" value="{{ ejemplo_cuotas[loop.index0] }}"></div>
+{% endfor %}
+</div>
+<p id="cj-aviso" class="cj-salida" aria-live="polite"></p>
+<div class="cj-tabla" aria-live="polite">
+<table id="cj-tabla">
+<caption class="cj-nota">Resultado com as odds dos campos acima</caption>
+<thead><tr><th scope="col">Resultado</th><th scope="col">Odd</th><th scope="col">Probabilidade implícita</th><th scope="col">Probabilidade sem margem</th><th scope="col">Odd justa</th></tr></thead>
+<tbody>
+{% for f in ej.filas %}
+<tr><th scope="row">{{ f.nombre }}</th><td>{{ f.cuota }}</td><td>{{ f.implicita }}</td><td>{{ f.sin_margen }}</td><td>{{ f.justa }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p id="cj-pie" class="cj-nota">As probabilidades implícitas somam {{ ej.suma }}: a margem da casa é de {{ ej.margen }}. Sem margem somam {{ ej.suma_sin_margen }}.</p>
+</div>
+</section>
+
+<h2>O que é uma odd justa</h2>
+<p>A odd justa de um resultado é o inverso da sua probabilidade: se um resultado tem probabilidade de 50%, sua odd justa é 2,00; se tem 25%, é 4,00. É uma conta simples: <code>odd justa = 1 ÷ probabilidade</code>, e ao contrário: <code>probabilidade = 1 ÷ odd</code>. «Justa» significa apenas que não inclui margem alguma.</p>
+
+<h2>Por que as odds de uma casa não somam 100%</h2>
+<p>Se você converter com <code>1 ÷ odd</code> todas as cotações de um mercado e somá-las, o total passa de 100%. Esse excesso é a margem da casa (também chamada de «vig» ou overround): é o que ela cobra por oferecer o mercado. Quanto maior a soma, maior a margem embutida.</p>
+<p><strong>Exemplo resolvido.</strong> Um 1X2 com odds {% for n in ejemplo_nombres %}{{ n | lower }} {{ ejemplo_cuotas[loop.index0] }}{{ ", " if not loop.last }}{% endfor %}: as probabilidades implícitas somam {{ ej.suma }}, ou seja, uma margem de {{ ej.margen }}. Para obter probabilidades que somem 100% é preciso distribuir essa margem entre os resultados; pelo método de Shin ficam em {% for f in ej.filas %}{{ f.sin_margen }} ({{ f.nombre | lower }}){{ ", " if not loop.last }}{% endfor %}, e suas odds justas são {% for f in ej.filas %}{{ f.justa }}{{ ", " if not loop.last }}{% endfor %}.</p>
+
+<h2>Como a margem é removida</h2>
+<ul>
+<li><strong>Proporcional.</strong> Divide cada probabilidade implícita pela soma total. É o método mais simples e comum, mas tende a superestimar resultados improváveis.</li>
+<li><strong>Shin.</strong> Parte da ideia de que parte do dinheiro apostado vem de participantes mais informados e estima essa parcela. Costuma ajustar melhor as zebras do que o método proporcional. É o método que a QuantFut usa para comparar suas probabilidades com as cotações de fechamento do mercado, como explicamos na <a href="/pt/metodologia/">metodologia</a>.</li>
+<li><strong>Potência.</strong> Eleva cada probabilidade implícita a um mesmo expoente, escolhido para que a soma feche em 100%.</li>
+</ul>
+<p>Nenhum dos métodos revela a probabilidade «verdadeira»: são formas razoáveis de estimar qual probabilidade estava por trás da cotação. Por isso também não transformam nenhuma odd em recomendação. Para ver o quanto as probabilidades da QuantFut se aproximam da realidade, consulte a <a href="/pt/calibracao/">calibração</a> e o <a href="/historial/" hreflang="es" lang="es">histórico de acertos e erros</a> (em espanhol).</p>
+
+<h2>O que esta ferramenta não faz</h2>
+<p>Não calcula valores de aposta nem retornos, não compara casas de apostas e não diz se uma cotação vale a pena. Uma probabilidade honesta pode ser pior do que a do mercado, e então não há vantagem a aproveitar. Se o jogo estiver causando problemas, <a href="/pt/jogo-responsavel/">existe ajuda</a>.</p>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ script }}"></script>
+{% endblock %}
