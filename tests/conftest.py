@@ -40,5 +40,7 @@ def _sin_red_hacia_nba_api(monkeypatch):
     from qf.api import calibracion
     monkeypatch.setattr(calibracion, "carga_futbol", lambda: datos_calibracion.FUTBOL)
     monkeypatch.setattr(calibracion, "carga_nba", lambda: datos_calibracion.NBA)
+    from qf.api import verificacion
+    monkeypatch.setattr(verificacion, "carga_lotes", lambda limite=90: None)
     yield
     nba_datos.vaciar_cache()

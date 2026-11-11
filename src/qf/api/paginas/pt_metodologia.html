@@ -31,7 +31,7 @@
 <li>O lote é convertido em um formato canônico e calcula-se sua impressão digital (hash SHA-256).</li>
 <li>Cada impressão digital é encadeada com a anterior: <code>cadeia = sha256(impressão anterior + impressão do lote)</code>. Se se alterasse um único caractere de uma previsão passada, todas as impressões seguintes deixariam de bater.</li>
 <li>O banco de dados recusa modificar ou apagar previsões já seladas; não existe um «conserto rápido» posterior.</li>
-<li>As impressões digitais dos lotes estão publicadas em <a href="/chain">/chain</a>, onde qualquer pessoa pode conferir se a cadeia é consistente.</li>
+<li>As impressões digitais dos lotes estão publicadas em <a href="/chain">/chain</a>, onde qualquer pessoa pode conferir se a cadeia é consistente. Você também pode conferir passo a passo no <a href="/pt/verificacao/">verificador público da cadeia</a>.</li>
 </ol>
 <p><strong>Uma limitação que preferimos declarar.</strong> Hoje essas impressões digitais ficam em nosso banco de dados e em <code>/chain</code>; ainda não as publicamos em um registro externo independente, com carimbo de tempo de terceiros. Até lá, a cadeia demonstra que não alteramos nenhuma previsão depois de selada, mas quem quiser uma garantia de fora de nós ainda não a tem. Atualizaremos esta página quando ela existir.</p>
 

@@ -31,7 +31,7 @@
 <li>El lote se convierte a un formato canónico y se calcula su huella digital (hash SHA-256).</li>
 <li>Cada huella se encadena con la anterior: <code>cadena = sha256(huella anterior + huella del lote)</code>. Si se cambiara un solo carácter de un pronóstico pasado, todas las huellas posteriores dejarían de cuadrar.</li>
 <li>La base de datos rechaza modificar o borrar pronósticos ya sellados; no existe un «arreglo rápido» posterior.</li>
-<li>Las huellas de los lotes están publicadas en <a href="/chain">/chain</a>, donde cualquiera puede comprobar que la cadena es consistente.</li>
+<li>Las huellas de los lotes están publicadas en <a href="/chain">/chain</a>, donde cualquiera puede comprobar que la cadena es consistente. Puedes hacerlo paso a paso desde el <a href="/verificacion/">verificador público de la cadena</a>.</li>
 </ol>
 <p><strong>Limitación que preferimos decir.</strong> Hoy esas huellas viven en nuestra base de datos y en <code>/chain</code>; todavía no las publicamos en un registro externo independiente con marca de tiempo de un tercero. Hasta entonces, la cadena demuestra que no hemos alterado ningún pronóstico una vez sellado, pero quien quiera una garantía ajena a nosotros no la tiene todavía. Actualizaremos esta página cuando exista.</p>
 

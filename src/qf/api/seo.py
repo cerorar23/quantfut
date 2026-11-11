@@ -121,8 +121,8 @@ def sitemap_index() -> str:
 
 
 def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
-    from . import calibracion, cuota_justa, futbol_en, futbol_pt, futbol_paginas, tenis_pt, nba_en, nba_equipo_en, nba_equipo_pt, nba_equipos, nba_paginas, nba_pt, paginas, rutas_web, tenis_en, tenis_paginas   # import tardío: todos importan este módulo
-    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + nba_paginas.entradas_sitemap() + calibracion.entradas_sitemap() + cuota_justa.entradas_sitemap() + nba_equipos.entradas_sitemap() + nba_en.entradas_sitemap() + futbol_en.entradas_sitemap() + tenis_en.entradas_sitemap() + nba_equipo_en.entradas_sitemap() + nba_pt.entradas_sitemap() + nba_equipo_pt.entradas_sitemap() + futbol_pt.entradas_sitemap() + tenis_pt.entradas_sitemap() + futbol_paginas.entradas_sitemap() + tenis_paginas.entradas_sitemap()
+    from . import calibracion, cuota_justa, futbol_en, futbol_pt, futbol_paginas, tenis_pt, nba_en, nba_equipo_en, nba_equipo_pt, nba_equipos, nba_paginas, nba_pt, paginas, rutas_web, tenis_en, tenis_paginas, verificacion   # import tardío: todos importan este módulo
+    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + nba_paginas.entradas_sitemap() + calibracion.entradas_sitemap() + cuota_justa.entradas_sitemap() + verificacion.entradas_sitemap() + nba_equipos.entradas_sitemap() + nba_en.entradas_sitemap() + futbol_en.entradas_sitemap() + tenis_en.entradas_sitemap() + nba_equipo_en.entradas_sitemap() + nba_pt.entradas_sitemap() + nba_equipo_pt.entradas_sitemap() + futbol_pt.entradas_sitemap() + tenis_pt.entradas_sitemap() + futbol_paginas.entradas_sitemap() + tenis_paginas.entradas_sitemap()
 
 
 def sitemap_paginas() -> str:

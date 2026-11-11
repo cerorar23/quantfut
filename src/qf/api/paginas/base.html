@@ -67,7 +67,8 @@ footer ul{display:flex;gap:6px 18px;flex-wrap:wrap;list-style:none;padding:0;mar
 <li><a href="{{ q.ruta }}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.migas }}</a></li>
 {% endfor %}
 <li><a href="/calibracion/">Calibración</a></li>
-<li><a href="/calculadora-cuota-justa/">Cuota justa</a></li>
+<li><a href="/calculadora-cuota-justa/"{% if p.slug == 'calculadora-cuota-justa' %} aria-current="page"{% endif %}>Cuota justa</a></li>
+<li><a href="/verificacion/"{% if p.slug == 'verificacion' %} aria-current="page"{% endif %}>Verificación</a></li>
 <li><a href="/futbol/">Fútbol</a></li>
 <li><a href="/nba/">NBA</a></li>
 <li><a href="/tenis/">Tenis</a></li>

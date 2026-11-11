@@ -31,7 +31,7 @@
 <li>The batch is converted to a canonical format and its digital fingerprint (SHA-256 hash) is calculated.</li>
 <li>Each fingerprint is chained to the previous one: <code>chain = sha256(previous fingerprint + batch fingerprint)</code>. If a single character of a past forecast were changed, all later fingerprints would stop matching.</li>
 <li>The database refuses to modify or delete forecasts that have already been sealed; there is no later "quick fix".</li>
-<li>The batch fingerprints are published at <a href="/chain">/chain</a>, where anyone can check that the chain is consistent.</li>
+<li>The batch fingerprints are published at <a href="/chain">/chain</a>, where anyone can check that the chain is consistent. You can also check it step by step in the <a href="/en/verification/">public chain verifier</a>.</li>
 </ol>
 <p><strong>A limitation we prefer to state.</strong> Today those fingerprints live in our database and at <code>/chain</code>; we do not yet publish them in an independent external register with a third-party timestamp. Until then, the chain shows that we have not altered any forecast once sealed, but anyone who wants a guarantee from outside us does not have one yet. We will update this page when it exists.</p>
 
