@@ -367,7 +367,9 @@ def test_cierre_manual_en_escalera_cierres_es_inmutable_y_no_liquida():
                            JOIN escalera_pasos p USING (paso_id)
                            WHERE p.reto_id = %s""", (reto,))["n"] == 0
 
-    assert all(r.reto_id != reto for r in ed._abierto())
+    reto_row = next(r for r in ed._retos() if r["reto_id"] == reto)
+    assert reto_row["closed_at"] is not None
+    assert ed.estado_reto(reto_row, ed._pasos(reto))["estado"] == "expirado"
     pub = _reto_publico(reto)
     inf = ed.informe_publico()
     assert all(r["reto_id"] != reto for r in inf["actuales"])

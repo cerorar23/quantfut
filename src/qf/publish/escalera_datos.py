@@ -55,11 +55,14 @@ def _sql_sellado() -> str:
             {corte}"""
 
 
+_SQL_RETOS = (
+    "SELECT r.*, c.closed_at FROM escalera_retos r "
+    "LEFT JOIN escalera_cierres c USING (reto_id) ORDER BY r.reto_id"
+)
+
+
 def _retos() -> list[dict]:
-    return query(
-        "SELECT r.*, c.closed_at FROM escalera_retos r "
-        "LEFT JOIN escalera_cierres c USING (reto_id) ORDER BY r.reto_id"
-    )
+    return query(_SQL_RETOS)
 
 
 def _pasos(reto_id: int, solo_sellados: bool = False) -> list[dict]:
@@ -697,7 +700,7 @@ def _json_estado(st: dict) -> dict:
 
 
 def informe_publico() -> dict:
-    retos = _retos()
+    retos = query(_SQL_RETOS)
     salida, escalones = [], []
     for reto in retos:
         pasos = _pasos(reto["reto_id"], solo_sellados=True)
