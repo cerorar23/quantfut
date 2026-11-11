@@ -1,7 +1,7 @@
 {% extends "base_en.html" %}
 {% block revision_p %}{% endblock %}
 {% block contenido %}
-<p class="entradilla">Win probability, expected score and margin range for every NBA game. Each forecast is sealed with a digital fingerprint before tip-off and then we show whether it came true, whether it hit or missed.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Win probability, expected score and margin range for every NBA game. Each forecast is sealed with a digital fingerprint before tip-off and then we show whether it came true, whether it hit or missed.</p>{% endif %}
 {% if c.juzgados %}
 <div class="aviso"><p>In the games of the last few days with a result, the team with the higher probability won in <strong>{{ c.aciertos }} of {{ c.juzgados }}</strong> forecasts. That is a small number of games: it is not a measure of quality. The full record and the calibration are in <a href="/calibracion/" hreflang="es" lang="es">the calibration page</a> (currently available only in Spanish).</p></div>
 {% endif %}

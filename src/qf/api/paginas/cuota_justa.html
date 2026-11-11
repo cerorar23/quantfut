@@ -17,7 +17,7 @@ input[aria-invalid=true]{border-color:#f59e0b}
 </style>
 {% endblock %}
 {% block contenido %}
-<p class="entradilla">La cuota de una casa de apuestas no es una probabilidad: lleva incorporado el margen de la casa. Esta calculadora convierte cuotas en probabilidades y al revés, y te enseña cuánto margen lleva una cuota. Todo ocurre en tu navegador: no se envía ni se guarda nada.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">La cuota de una casa de apuestas no es una probabilidad: lleva incorporado el margen de la casa. Esta calculadora convierte cuotas en probabilidades y al revés, y te enseña cuánto margen lleva una cuota. Todo ocurre en tu navegador: no se envía ni se guarda nada.</p>{% endif %}
 <div class="aviso"><p><strong>Herramienta educativa.</strong> Solo convierte números; no te dice qué apostar, ni cuánto, ni si una cuota «tiene valor». Una probabilidad estimada no garantiza ningún resultado. Si el juego deja de ser un entretenimiento, <a href="/juego-responsable/">pide ayuda</a>.</p></div>
 
 <noscript><div class="aviso"><p>La calculadora interactiva necesita JavaScript. El ejemplo resuelto de más abajo se ve sin él.</p></div></noscript>

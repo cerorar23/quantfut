@@ -60,7 +60,13 @@ def _leer() -> dict[str, str]:
 def estados() -> dict[str, str]:
     ahora = time.monotonic()
     if not _cache["datos"] or ahora - _cache["t"] > TTL_ESTADOS:
-        _cache.update(t=ahora, datos={"es": "on", **_leer()})
+        datos = _leer() if os.environ.get("IDIOMAS_ARCHIVO") else None
+        if datos is None:
+            from . import web_config
+
+            db_states = web_config.get_lang_states()
+            datos = db_states if db_states is not None else _leer()
+        _cache.update(t=ahora, datos={"es": "on", **datos})
     return _cache["datos"]
 
 
@@ -131,6 +137,10 @@ def hreflang(ruta: str) -> list[tuple[str, str]]:
 def selector(ruta: str) -> list[dict]:
     """Enlaces del selector de idioma para la página `ruta`: los otros idiomas que existen para ella y están en `on`.
     Una página en `preview` solo enlaza de vuelta al español (nadie llega a ella desde fuera)."""
+    from . import web_config
+
+    if not web_config.get_settings().get("lang_selector_enabled", True):
+        return []
     eq = _equivalencias(ruta)
     codigo = _codigo(ruta, eq) if eq else None
     if not eq or not codigo:

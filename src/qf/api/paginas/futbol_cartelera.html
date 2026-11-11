@@ -1,5 +1,5 @@
-<h1>{{ p.titulo }}</h1>
-<p class="entradilla">Probabilidad de victoria local, empate y victoria visitante de cada partido de las ligas que seguimos. El pronóstico se genera antes del partido y después se muestra si se cumplió, tanto si acertó como si falló.</p>
+<h1>{{ p.h1|default(p.titulo, true) }}</h1>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Probabilidad de victoria local, empate y victoria visitante de cada partido de las ligas que seguimos. El pronóstico se genera antes del partido y después se muestra si se cumplió, tanto si acertó como si falló.</p>{% endif %}
 {% if c.juzgados %}
 <div class="aviso"><p>En los partidos de los últimos días con resultado, el resultado más probable se cumplió en <strong>{{ c.aciertos }} de {{ c.juzgados }}</strong>. Son pocos partidos: no es una medida de calidad. El historial completo está en <a href="/historial/">el historial</a>.</p></div>
 {% endif %}

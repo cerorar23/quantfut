@@ -1,7 +1,7 @@
 {% extends "base_en.html" %}
 {% block revision_p %}{% endblock %}
 {% block contenido %}
-<p class="entradilla">Home win, draw and away win probabilities for every match in the leagues we follow. Each forecast is generated before the match and then we show whether it came true, whether it hit or missed.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Home win, draw and away win probabilities for every match in the leagues we follow. Each forecast is generated before the match and then we show whether it came true, whether it hit or missed.</p>{% endif %}
 {% if c.juzgados %}
 <div class="aviso"><p>In the matches of the last few days with a result, the most likely outcome came true in <strong>{{ c.aciertos }} of {{ c.juzgados }}</strong>. That is a small number of matches: it is not a measure of quality. The full record is in <a href="/en/methodology/">the methodology</a> and the record on the home page (currently available only in Spanish).</p></div>
 {% endif %}

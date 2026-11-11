@@ -208,15 +208,19 @@ def _jsonld(p: paginas.Pagina, url: str, base: str) -> list[dict[str, Any]]:
 
 
 def render(idioma: str = "es") -> str:
+    from . import web_config
+
     p = _PAGINAS[idioma]
+    p_eff, entradilla_override = web_config.apply_editorial_meta(p, "tool:verificacion", idioma)
     base = seo.base_url()
     url = base + p.ruta
     resumen = verificar_ventana(carga_lotes())
+    ctx = web_config.base_template_ctx(lang=idioma)
     return _env.get_template(p.plantilla).render(
-        p=p,
+        p=p_eff,
         url=url,
         base=base,
-        jsonld=_jsonld(p, url, base),
+        jsonld=web_config.apply_org_jsonld(_jsonld(p_eff, url, base), ctx["cfg"]),
         paginas=paginas.EN_POR_IDIOMA[idioma],
         og_imagen=og.url_marca() if idioma == "es" else None,
         idiomas_alt=idiomas.selector(p.ruta),
@@ -226,6 +230,8 @@ def render(idioma: str = "es") -> str:
         resumen=resumen,
         genesis=GENESIS,
         script=script_url(),
+        entradilla_override=entradilla_override,
+        **ctx,
     )
 
 

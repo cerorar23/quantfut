@@ -166,10 +166,15 @@ def enviar_lote(urls: list[str], dominio: str, clave: str, post=_post) -> int:
 
 def ejecutar(enviar: bool = False, ahora: datetime | None = None, leer=None, post=_post, dominio: str | None = None) -> dict:
     """Un pase: lee el sitemap, decide qué avisar y (solo con `enviar`) lo manda por lotes. Devuelve un resumen."""
+    from qf.api import web_config
+
     ahora = ahora or datetime.now(timezone.utc)
     dominio = dominio or host()
     clave = leer_clave()
     resumen = {"clave": bool(clave), "sitemap": 0, "pendientes": 0, "enviadas": 0, "fallidas": 0, "simulado": not enviar, "lotes": []}
+    if not web_config.get_settings().get("indexnow_enabled", True):
+        resumen["desactivado"] = True
+        return resumen
     if not clave:
         resumen["error"] = "sin clave en clave.txt: no se envía nada"
         return resumen

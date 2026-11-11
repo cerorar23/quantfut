@@ -24,10 +24,10 @@ from html import escape
 from json import dumps
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import og, seo
+from . import idiomas, og, seo, web_config
 
 log = logging.getLogger(__name__)
 router = APIRouter(include_in_schema=False)
@@ -132,10 +132,39 @@ SECCIONES: tuple[Seccion, ...] = (
 POR_PATH = {s.path: s for s in SECCIONES}
 INICIO = SECCIONES[0]
 
+_SPA_BY_PATH: dict[str, tuple[str, dict[str, str]]] = {}
+for _s in SECCIONES:
+    _paths = web_config.SPA_LOCALIZED_PATHS.get(_s.ruta, {})
+    for _p in _paths.values():
+        _SPA_BY_PATH[_p] = (_s.ruta, _paths)
+
+
+def _traductor_spa(ruta: str) -> dict[str, str] | None:
+    hit = _SPA_BY_PATH.get(ruta)
+    if not hit:
+        return None
+    sec_ruta, paths = hit
+    out = {"es": paths["es"]}
+    for lang in ("en", "pt"):
+        p = paths.get(lang)
+        if p and web_config.get_spa_section_override(sec_ruta, lang) is not None:
+            out[lang] = p
+    return out if len(out) >= 2 else None
+
+
+idiomas.registrar_traductor(_traductor_spa)
+
 
 def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
     # Sin lastmod: el contenido real de cada sección cambia a diario y el HTML inicial no es lo que cambia.
-    return tuple((s.path, None) for s in SECCIONES if s.path != "/")
+    out = [(s.path, None) for s in SECCIONES if s.path != "/"]
+    for lang in ("en", "pt"):
+        if idiomas.estado(lang) == "on":
+            for s in SECCIONES:
+                p = web_config.SPA_LOCALIZED_PATHS.get(s.ruta, {}).get(lang)
+                if p and web_config.get_spa_section_override(s.ruta, lang) is not None:
+                    out.append((p, None))
+    return tuple(out)
 
 
 # --- construcción del HTML ----------------------------------------------------------------------------
@@ -167,24 +196,62 @@ def _index() -> str:
     return _leido[1]
 
 
-def _jsonld(sec: Seccion, base: str) -> list[dict]:
+def _effective_section(sec: Seccion, lang: str = "es") -> Seccion:
+    path = web_config.SPA_LOCALIZED_PATHS.get(sec.ruta, {}).get(lang, sec.path)
+    ov = web_config.get_spa_section_override(sec.ruta, lang)
+    if not ov:
+        if lang == "es":
+            return sec
+        ui = web_config.get_ui_dict(lang)
+        nav_key = "nav_inicio" if sec.ruta == "inicio" else (f"nav_{sec.ruta}" if f"nav_{sec.ruta}" in ui else "")
+        migas = ui.get(nav_key) or sec.migas
+        return Seccion(sec.ruta, path, sec.titulo, sec.descripcion, sec.h1, sec.texto, migas)
+    return Seccion(
+        sec.ruta,
+        path,
+        ov.get("title") or sec.titulo,
+        ov.get("description") or sec.descripcion,
+        ov.get("h1") or sec.h1,
+        ov.get("parrafos") or sec.texto,
+        ov.get("migas") or sec.migas,
+    )
+
+
+def _jsonld(sec: Seccion, base: str, *, lang: str = "es", cfg: dict | None = None) -> list[dict]:
+    site = cfg or web_config.get_settings()
     url = base + sec.path
-    if sec.ruta == "inicio":
-        return [{"@context": "https://schema.org", "@type": "WebSite", "name": "QuantFut", "url": f"{base}/",
-                 "inLanguage": "es"},
-                {"@context": "https://schema.org", "@type": "Organization", "name": "QuantFut",
-                 "legalName": "Saptain LTD", "url": f"{base}/", "email": "admin@pronosticosdeportivos.pro",
-                 "contactPoint": {"@type": "ContactPoint", "contactType": "customer support",
-                                  "email": "admin@pronosticosdeportivos.pro"}}]
-    return [{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "Inicio", "item": f"{base}/"},
+    if sec.ruta == "inicio" and lang == "es":
+        blocks = [{"@context": "https://schema.org", "@type": "WebSite", "name": site["brand_name"], "url": f"{base}/",
+                   "inLanguage": "es"},
+                  {"@context": "https://schema.org", "@type": "Organization", "name": site["brand_name"],
+                   "legalName": site["legal_name"], "url": f"{base}/", "email": site["support_email"],
+                   "contactPoint": {"@type": "ContactPoint", "contactType": "customer support",
+                                    "email": site["support_email"]}}]
+        return web_config.apply_org_jsonld(blocks, site)
+    home_url = f"{base}/" if lang == "es" else f"{base}/{lang}/"
+    home_name = "Inicio" if lang == "es" else site["brand_name"]
+    blocks = [{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": home_name, "item": home_url},
         {"@type": "ListItem", "position": 2, "name": sec.migas, "item": url}]}]
+    return web_config.apply_org_jsonld(blocks, site)
 
 
-def _head(sec: Seccion, base: str) -> str:
-    marca = og.url_marca()
-    return _head_de(f"{sec.titulo} | QuantFut", sec.descripcion, base + sec.path, _jsonld(sec, base),
-                    (marca, "QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables") if marca else None)
+def _head(sec: Seccion, base: str, *, lang: str = "es", cfg: dict | None = None, robots: str | None = None) -> str:
+    site = cfg or web_config.get_settings()
+    marca = og.url_marca() if lang == "es" else None
+    locale = idiomas.LOCALES.get(lang, "es_ES")
+    eff_robots = robots or (site["default_robots"] if site.get("default_robots", "index,follow") != "index,follow" else ROBOTS)
+    return _head_de(
+        f"{sec.titulo} | {site['brand_name']}",
+        sec.descripcion,
+        base + sec.path,
+        _jsonld(sec, base, lang=lang, cfg=site),
+        (marca, f"{site['brand_name']}: pronósticos de fútbol, NBA y tenis con probabilidades verificables") if marca else None,
+        robots=eff_robots,
+        locale=locale,
+        brand=site["brand_name"],
+        twitter_site=web_config.twitter_site_handle(site),
+    )
 
 
 def _meta_imagen(imagen: tuple[str, str] | None) -> str:
@@ -203,17 +270,18 @@ ROBOTS = "index, follow, max-snippet:-1, max-image-preview:large, max-video-prev
 
 
 def _head_de(titulo: str, descripcion: str, url: str, jsonld: list[dict], imagen: tuple[str, str] | None = None,
-             robots: str = ROBOTS) -> str:
+             robots: str = ROBOTS, *, locale: str = "es_ES", brand: str = "QuantFut", twitter_site: str = "") -> str:
     ld = "".join(f'<script type="application/ld+json">{_script_seguro(b)}</script>' for b in jsonld)
+    tw_site = f'<meta name="twitter:site" content="{escape(twitter_site)}" />' if twitter_site else ""
     return (
         f'<meta name="description" content="{escape(descripcion)}" />'
         f'<link rel="canonical" href="{escape(url)}" />'
         f'<meta name="robots" content="{escape(robots)}" />'
-        '<meta property="og:type" content="website" /><meta property="og:site_name" content="QuantFut" />'
-        '<meta property="og:locale" content="es_ES" />'
+        f'<meta property="og:type" content="website" /><meta property="og:site_name" content="{escape(brand)}" />'
+        f'<meta property="og:locale" content="{escape(locale)}" />'
         f'<meta property="og:url" content="{escape(url)}" /><meta property="og:title" content="{escape(titulo)}" />'
         f'<meta property="og:description" content="{escape(descripcion)}" />'
-        f'{_meta_imagen(imagen)}{ld}{_ESTILO}')
+        f'{tw_site}{_meta_imagen(imagen)}{ld}{_ESTILO}')
 
 
 def _script_seguro(dato: dict) -> str:
@@ -221,28 +289,54 @@ def _script_seguro(dato: dict) -> str:
     return dumps(dato, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
-def _inicial(sec: Seccion) -> str:
+def _inicial(sec: Seccion, *, lang: str = "es", cfg: dict | None = None) -> str:
     parrafos = "".join(f"<p>{escape(t)}</p>" for t in sec.texto)
-    return marco_inicial(f"<h1>{escape(sec.h1)}</h1>{parrafos}")
+    return marco_inicial(f"<h1>{escape(sec.h1)}</h1>{parrafos}", lang=lang, cfg=cfg)
 
 
-def marco_inicial(principal: str) -> str:
+def marco_inicial(principal: str, *, lang: str = "es", cfg: dict | None = None) -> str:
     """HTML inicial de `#app`: cabecera con enlaces, el contenido propio de la página y el pie. Lo ve quien no
     ejecuta JavaScript y se pinta mientras carga el módulo; la SPA lo sustituye al arrancar."""
     from . import paginas
-    secciones = "".join(f'<li><a href="{escape(s.path)}">{escape(s.migas)}</a></li>' for s in SECCIONES)
-    # páginas de deporte (nba_paginas.py, futbol_paginas.py), servidas con el shell de la SPA
-    secciones += '<li><a href="/futbol/">Pronósticos de fútbol</a></li><li><a href="/nba/">Pronósticos NBA</a></li><li><a href="/tenis/">Pronósticos de tenis</a></li><li><a href="/calibracion/">Calibración</a></li><li><a href="/calculadora-cuota-justa/">Cuota justa</a></li>'
-    confianza = "".join(f'<li><a href="{escape(p.ruta)}">{escape(p.migas)}</a></li>' for p in paginas.PAGINAS)
-    return (f'<div class="qf-inicial" data-seo-inicial><header><a href="/">QuantFut</a>'
-            f'<nav aria-label="Secciones"><ul>{secciones}</ul></nav></header>'
-            f'<main id="main-content" tabindex="-1">{principal}'
-            f'<p class="aviso">{escape(AVISO)}</p></main>'
-            f'<footer><ul>{confianza}<li><a href="/legal/terminos">Términos</a></li>'
-            '<li><a href="/legal/privacidad">Privacidad</a></li></ul></footer></div>')
+    site = cfg or web_config.get_settings()
+    brand = site["brand_name"]
+    banner_html = f'<p class="aviso" role="status">{escape(site["maintenance_banner"])}</p>' if site.get("maintenance_banner") else ""
+    socials = web_config.social_links(site)
+    social_html = "".join(f'<li><a href="{escape(r["url"])}" rel="noopener noreferrer">{escape(r["label"])}</a></li>' for r in socials)
+    disclaimer = site["disclaimer_text"] if (lang == "es" and site["disclaimer_text"] != web_config.DEFAULT_SETTINGS["disclaimer_text"]) else AVISO
+
+    if lang == "es":
+        secciones = "".join(
+            f'<li><a href="{escape(s.path)}">{escape(_effective_section(s, "es").migas)}</a></li>'
+            for s in SECCIONES
+        )
+        secciones += '<li><a href="/futbol/">Pronósticos de fútbol</a></li><li><a href="/nba/">Pronósticos NBA</a></li><li><a href="/tenis/">Pronósticos de tenis</a></li><li><a href="/calibracion/">Calibración</a></li><li><a href="/calculadora-cuota-justa/">Cuota justa</a></li>'
+        confianza = "".join(f'<li><a href="{escape(p.ruta)}">{escape(p.migas)}</a></li>' for p in paginas.PAGINAS)
+        return (f'<div class="qf-inicial" data-seo-inicial><header><a href="/">{escape(brand)}</a>'
+                f'<nav aria-label="Secciones"><ul>{secciones}</ul></nav></header>'
+                f'<main id="main-content" tabindex="-1">{banner_html}{principal}'
+                f'<p class="aviso">{escape(disclaimer)}</p></main>'
+                f'<footer><ul>{confianza}<li><a href="/legal/terminos">Términos</a></li>'
+                f'<li><a href="/legal/privacidad">Privacidad</a></li>{social_html}</ul></footer></div>')
+
+    ui = web_config.get_ui_dict(lang)
+    secciones = "".join(
+        f'<li><a href="{escape(web_config.SPA_LOCALIZED_PATHS[s.ruta][lang])}">{escape(_effective_section(s, lang).migas)}</a></li>'
+        for s in SECCIONES
+    )
+    confianza = "".join(f'<li><a href="{escape(p.ruta)}">{escape(p.migas)}</a></li>' for p in paginas.EN_POR_IDIOMA[lang])
+    terms_path = web_config.LEGAL_SLUGS["legal:terminos"][lang]
+    priv_path = web_config.LEGAL_SLUGS["legal:privacidad"][lang]
+    home_url = f"/{lang}/"
+    return (f'<div class="qf-inicial" data-seo-inicial><header><a href="{home_url}">{escape(brand)}</a>'
+            f'<nav aria-label="{escape(ui.get("footer_sports", "Sections"))}"><ul>{secciones}</ul></nav></header>'
+            f'<main id="main-content" tabindex="-1">{banner_html}{principal}'
+            f'<p class="aviso">{escape(disclaimer)}</p></main>'
+            f'<footer><ul>{confianza}<li><a href="{terms_path}">{escape(ui.get("footer_terminos", "Terms"))}</a></li>'
+            f'<li><a href="{priv_path}">{escape(ui.get("footer_privacidad", "Privacy"))}</a></li>{social_html}</ul></footer></div>')
 
 
-def _adaptar(html: str, *, titulo: str, ruta: str, head: str, inicial: str, atributos: str = "") -> str:
+def _adaptar(html: str, *, titulo: str, ruta: str, head: str, inicial: str, atributos: str = "", lang: str = "es") -> str:
     """Sustituye en el index.html de la SPA título, descripción, `<html>` y `#app`. Si el archivo ya no tiene las
     marcas esperadas se devuelve sin cambios (la web sigue funcionando) y se deja constancia en el log."""
     marcas = (_TITULO.search(html), _DESCRIPCION.search(html), _HTML.search(html), _APP in html)
@@ -251,16 +345,34 @@ def _adaptar(html: str, *, titulo: str, ruta: str, head: str, inicial: str, atri
         return html
     html = _TITULO.sub(lambda _: f"<title>{escape(titulo)}</title>", html, count=1)
     html = _DESCRIPCION.sub(lambda _: head, html, count=1)
-    html = _HTML.sub(lambda m: f'<html{m.group(1)} data-ruta="{escape(ruta)}"{atributos}>', html, count=1)
+    lang_attr = f' lang="{"pt-BR" if lang == "pt" else lang}" data-lang="{escape(lang)}"' if lang != "es" else ""
+
+    def _sub_html(m):
+        attrs = m.group(1)
+        if lang != "es":
+            attrs = re.sub(r'\s+lang="[^"]*"', "", attrs)
+        return f'<html{attrs}{lang_attr} data-ruta="{escape(ruta)}"{atributos}>'
+
+    html = _HTML.sub(_sub_html, html, count=1)
     html = _RELATIVOS.sub(lambda m: f'{m.group(1)}="/', html)
     return html.replace(_APP, f'<div id="app">{inicial}</div>', 1)
 
 
-def render(sec: Seccion, base: str | None = None, index: str | None = None) -> str:
+def render(sec: Seccion, base: str | None = None, index: str | None = None, *, lang: str = "es") -> str:
     """index.html de la SPA adaptado a una sección."""
     html = _index() if index is None else index
     base = seo.base_url() if base is None else base
-    return _adaptar(html, titulo=f"{sec.titulo} | QuantFut", ruta=sec.ruta, head=_head(sec, base), inicial=_inicial(sec))
+    cfg = web_config.get_settings()
+    sec_eff = _effective_section(sec, lang)
+    robots = idiomas.robots_de(lang) if lang != "es" else None
+    return _adaptar(
+        html,
+        titulo=f"{sec_eff.titulo} | {cfg['brand_name']}",
+        ruta=sec_eff.ruta,
+        head=_head(sec_eff, base, lang=lang, cfg=cfg, robots=robots),
+        inicial=_inicial(sec_eff, lang=lang, cfg=cfg),
+        lang=lang,
+    )
 
 
 def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld: list[dict], principal: str,
@@ -271,27 +383,51 @@ def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld
     lee al arrancar (sin que el servidor decida nada del diseño)."""
     html = _index() if index is None else index
     base = seo.base_url() if base is None else base
+    cfg = web_config.get_settings()
+    patched_ld = web_config.apply_org_jsonld(jsonld, cfg)
+    eff_robots = cfg["default_robots"] if (robots == ROBOTS and cfg.get("default_robots", "index,follow") != "index,follow") else robots
     atributos = "".join(f' data-{k}="{escape(str(v))}"' for k, v in (datos or {}).items())
-    return _adaptar(html, titulo=f"{titulo} | QuantFut", ruta=ruta,
-                    head=_head_de(f"{titulo} | QuantFut", descripcion, base + path, jsonld, imagen, robots),
-                    inicial=marco_inicial(principal), atributos=atributos)
+    return _adaptar(html, titulo=f"{titulo} | {cfg['brand_name']}", ruta=ruta,
+                    head=_head_de(f"{titulo} | {cfg['brand_name']}", descripcion, base + path, patched_ld, imagen, eff_robots,
+                                  brand=cfg["brand_name"], twitter_site=web_config.twitter_site_handle(cfg)),
+                    inicial=marco_inicial(principal, cfg=cfg), atributos=atributos)
 
 
-def responder(sec: Seccion) -> HTMLResponse:
-    return HTMLResponse(render(sec), headers={"Cache-Control": "no-cache, must-revalidate"})
+def responder(sec: Seccion, *, lang: str = "es") -> HTMLResponse:
+    cab: dict[str, str] = {"Cache-Control": "no-cache, must-revalidate"}
+    if lang != "es":
+        cab.update(idiomas.puerta(lang))
+    return HTMLResponse(render(sec, lang=lang), headers=cab)
 
 
 def _registrar(sec: Seccion) -> None:
-    if sec.path == "/":
-        return        # la portada la sirve web.py (`/`) con esta misma función
-    @router.api_route(sec.path, methods=["GET", "HEAD"], name=f"seccion_{sec.ruta}")
-    def _seccion():
-        return responder(sec)
+    if sec.path != "/":
+        @router.api_route(sec.path, methods=["GET", "HEAD"], name=f"seccion_{sec.ruta}")
+        def _seccion():
+            return responder(sec, lang="es")
 
-    @router.api_route(sec.path.rstrip("/"), methods=["GET", "HEAD"], name=f"seccion_{sec.ruta}_sin_barra")
-    def _sin_barra(request: Request):
-        destino = seo.base_url() + sec.path + (f"?{request.url.query}" if request.url.query else "")
-        return RedirectResponse(destino, status_code=301)
+        @router.api_route(sec.path.rstrip("/"), methods=["GET", "HEAD"], name=f"seccion_{sec.ruta}_sin_barra")
+        def _sin_barra(request: Request):
+            destino = seo.base_url() + sec.path + (f"?{request.url.query}" if request.url.query else "")
+            return RedirectResponse(destino, status_code=301)
+
+    for _lang in ("en", "pt"):
+        _loc_path = web_config.SPA_LOCALIZED_PATHS.get(sec.ruta, {}).get(_lang)
+        if not _loc_path:
+            continue
+
+        @router.api_route(_loc_path, methods=["GET", "HEAD"], name=f"seccion_{sec.ruta}_{_lang}")
+        def _seccion_loc(_s=sec, _l=_lang):
+            return responder(_s, lang=_l)
+
+        _no_slash = _loc_path.rstrip("/")
+        if _no_slash:
+            @router.api_route(_no_slash, methods=["GET", "HEAD"], name=f"seccion_{sec.ruta}_{_lang}_sin_barra")
+            def _sin_barra_loc(request: Request, _p=_loc_path, _l=_lang):
+                if idiomas.estado(_l) == "off":
+                    raise HTTPException(404)
+                destino = seo.base_url() + _p + (f"?{request.url.query}" if request.url.query else "")
+                return RedirectResponse(destino, status_code=301)
 
 
 for _s in SECCIONES:

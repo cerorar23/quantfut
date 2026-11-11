@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_input %}
+{% block title %}Editar · {{ meta.label }}{% endblock %}
+{% block pretitle %}<a href="/control/configuracion">Configuración web</a> · {{ meta.page_key }}{% endblock %}
+{% block heading %}{{ meta.label }} ({{ lang|upper }}){% endblock %}
+
+{% block content %}
+{% if err %}
+<div class="alert alert-danger" role="alert">{{ err }}</div>
+{% endif %}
+{% if ok_detalle %}
+<div class="alert alert-info" role="status">{{ ok_detalle }}</div>
+{% endif %}
+{% if is_stale %}
+<div class="alert alert-warning" role="alert">
+  El texto base en español cambió después de generar esta traducción. Conviene revisarla o volver a traducir desde ES.
+</div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="btn-group" role="group" aria-label="Idioma a editar">
+      {% for l in langs %}
+      <a class="btn {% if l == lang %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+         href="/control/configuracion/pagina/{{ meta.page_key }}?lang={{ l }}">
+        {{ l|upper }}{% if l == 'es' %} (Base){% endif %}
+      </a>
+      {% endfor %}
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="small text-secondary">Ruta: <code>{{ page.route_path or routes[lang] or '/' }}</code></span>
+      {% for target in ('en', 'pt') %}
+      <form method="post" action="/control/configuracion/pagina/{{ meta.page_key }}/traducir">
+        {{ csrf_input(csrf) }}
+        <input type="hidden" name="target_lang" value="{{ target }}">
+        <input type="hidden" name="return_to" value="page">
+        <button class="btn btn-sm btn-outline-primary" type="submit">Traducir ES → {{ target|upper }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row row-cards">
+  <div class="{% if lang != 'es' %}col-lg-8{% else %}col-12{% endif %}">
+    <form class="card" method="post" action="/control/configuracion/pagina/{{ meta.page_key }}/guardar">
+      {{ csrf_input(csrf) }}
+      <input type="hidden" name="lang" value="{{ lang }}">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">Contenido en {{ lang|upper }}</h3>
+        <div>
+          {% if page.is_auto_translated %}
+          <span class="badge bg-azure-lt">Traducido con {{ page.translation_model or 'APIMart' }}</span>
+          {% elif has_db_row %}
+          <span class="badge bg-green-lt">Guardado en BD</span>
+          {% else %}
+          <span class="badge bg-secondary-lt">Semilla de plantilla</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label d-flex justify-content-between" for="id-page-title">
+              <span>Título SEO (<code>&lt;title&gt;</code>)</span>
+              <span class="small text-secondary qf-char-count" data-count-for="id-page-title" data-count-max="65"></span>
+            </label>
+            <input id="id-page-title" class="form-control" name="title" value="{{ page.title }}" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="id-page-migas">Miga / enlace corto</label>
+            <input id="id-page-migas" class="form-control" name="migas" value="{{ page.migas }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label d-flex justify-content-between" for="id-page-desc">
+              <span>Meta descripción SEO</span>
+              <span class="small text-secondary qf-char-count" data-count-for="id-page-desc" data-count-max="160"></span>
+            </label>
+            <textarea id="id-page-desc" class="form-control" rows="2" name="description">{{ page.description }}</textarea>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label" for="id-page-h1">Encabezado principal (<code>&lt;h1&gt;</code>)</label>
+            <input id="id-page-h1" class="form-control" name="h1" value="{{ page.h1 }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="id-page-rev">Fecha de revisión (opcional)</label>
+            <input id="id-page-rev" class="form-control" name="revision_date" value="{{ page.revision_date }}" placeholder="2026-10-16">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="id-page-body">
+              {% if meta.kind == 'ui' %}
+              Diccionario JSON de textos globales de la SPA
+              {% elif meta.kind in ('tool', 'sport') %}
+              Entradilla editorial (HTML seguro; las cifras y tablas dinámicas no se alteran)
+              {% else %}
+              Cuerpo principal (HTML semántico seguro: p, h2, h3, ul, li, strong, a, table)
+              {% endif %}
+            </label>
+            <textarea id="id-page-body" class="form-control font-monospace" rows="16" name="body_html">{{ page.body_html }}</textarea>
+            <div class="form-hint">Se sanitiza automáticamente: no se permiten etiquetas <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code> ni atributos <code>on*</code>.</div>
+          </div>
+          {% if lang != 'es' %}
+          <div class="col-12">
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" name="reviewed" value="1"{% if page.reviewed %} checked{% endif %}>
+              <span class="form-check-label">Marcar esta traducción como revisada manualmente</span>
+            </label>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a class="btn btn-link" href="/control/configuracion">← Volver</a>
+        <button class="btn btn-primary" type="submit">Guardar cambios ({{ lang|upper }})</button>
+      </div>
+    </form>
+
+    {% if has_default %}
+    <div class="mt-2 d-flex justify-content-end">
+      <form method="post" action="/control/configuracion/pagina/{{ meta.page_key }}/restaurar"
+            data-confirm="¿Restaurar el contenido inicial de la plantilla original para {{ meta.page_key }} ({{ lang|upper }})?">
+        {{ csrf_input(csrf) }}
+        <input type="hidden" name="lang" value="{{ lang }}">
+        <button class="btn btn-sm btn-outline-danger" type="submit">Restaurar plantilla inicial</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if lang != 'es' %}
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Referencia en Español (ES)</h3>
+      </div>
+      <div class="card-body small">
+        <div class="mb-2"><strong>Título:</strong> {{ es_ref.title }}</div>
+        <div class="mb-2"><strong>Descripción:</strong> {{ es_ref.description }}</div>
+        <div class="mb-2"><strong>H1:</strong> {{ es_ref.h1 }}</div>
+        <div class="mb-2"><strong>Miga:</strong> {{ es_ref.migas }}</div>
+        <div class="mb-1"><strong>Cuerpo / JSON:</strong></div>
+        <pre class="qf-ref-pre">{{ es_ref.body_html }}</pre>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

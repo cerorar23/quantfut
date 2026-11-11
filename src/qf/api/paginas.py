@@ -18,7 +18,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import idiomas, og, seo
+from . import idiomas, og, seo, web_config
 
 router = APIRouter(include_in_schema=False)
 _env = Environment(loader=FileSystemLoader(str(Path(__file__).with_name("paginas"))),
@@ -130,10 +130,10 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
     return tuple((p.ruta, p.revision.isoformat()) for p in TODAS_LAS_PAGINAS if idiomas.estado(p.idioma) == "on")
 
 
-def _jsonld(pagina: Pagina, url: str, base: str) -> list[dict]:
-    return [
+def _jsonld(pagina: Pagina, url: str, base: str, cfg: dict | None = None) -> list[dict]:
+    blocks = [
         {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
-            {"@type": "ListItem", "position": 1, "name": INICIO[pagina.idioma] if pagina.idioma == "es" else "QuantFut", "item": f"{base}/"},
+            {"@type": "ListItem", "position": 1, "name": INICIO[pagina.idioma] if pagina.idioma == "es" else (cfg or {}).get("brand_name", "QuantFut"), "item": f"{base}/"},
             {"@type": "ListItem", "position": 2, "name": pagina.migas, "item": url},
         ]},
         {"@context": "https://schema.org", "@type": pagina.tipo_schema, "name": pagina.titulo, "url": url,
@@ -141,23 +141,42 @@ def _jsonld(pagina: Pagina, url: str, base: str) -> list[dict]:
          "isPartOf": {"@type": "WebSite", "name": "QuantFut", "url": f"{base}/"},
          "publisher": {"@type": "Organization", "name": "QuantFut", "legalName": "Saptain LTD"}},
     ]
+    return web_config.apply_org_jsonld(blocks, cfg)
 
 
 def render(pagina: Pagina) -> str:
     base = seo.base_url()
     url = base + pagina.ruta
+    ctx = web_config.base_template_ctx(lang=pagina.idioma)
+    cfg = ctx["cfg"]
+    pk = f"pagina:{pagina.grupo}"
+    ov = web_config.get_page(pk, pagina.idioma)
+    p_eff, body_override = web_config.apply_editorial_meta(pagina, pk, pagina.idioma)
+    rev_date = pagina.revision
+    if ov and ov.get("revision_date"):
+        try:
+            rev_date = date.fromisoformat(str(ov["revision_date"]).strip())
+        except ValueError:
+            pass
+    robots = idiomas.robots_de(pagina.idioma)
+    if robots is None and cfg.get("default_robots", "index,follow") != "index,follow":
+        robots = cfg["default_robots"]
+    if ov and not (ov.get("body_html") or "").strip():
+        body_override = None
     return _env.get_template(pagina.plantilla).render(
-        p=pagina, url=url, base=base, jsonld=_jsonld(pagina, url, base),
-        revision_larga=fecha_larga(pagina.revision, pagina.idioma), revision_iso=pagina.revision.isoformat(),
+        p=p_eff, url=url, base=base, jsonld=_jsonld(p_eff, url, base, cfg),
+        revision_larga=fecha_larga(rev_date, pagina.idioma), revision_iso=rev_date.isoformat(),
         paginas=EN_POR_IDIOMA[pagina.idioma], og_imagen=og.url_marca() if pagina.idioma == "es" else None,   # la tarjeta de marca está en español
-        idiomas_alt=idiomas.selector(pagina.ruta), robots=idiomas.robots_de(pagina.idioma))
+        idiomas_alt=idiomas.selector(pagina.ruta), robots=robots,
+        body_override=body_override, **ctx)
 
 
 def _responder(pagina: Pagina) -> HTMLResponse:
     estado = idiomas.estado(pagina.idioma)
     if estado == "off":
         raise HTTPException(404)
-    cab = {"Cache-Control": "public, max-age=300", "Content-Security-Policy": CSP}
+    secs = web_config.get_settings().get("public_cache_seconds", 300)
+    cab = {"Cache-Control": f"public, max-age={secs}", "Content-Security-Policy": CSP}
     if estado == "preview":       # revisión del titular en producción: nada la indexa ni la guarda en caché compartida
         cab.update({"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
     return HTMLResponse(render(pagina), headers=cab)

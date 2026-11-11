@@ -69,3 +69,4 @@ body { background: #f3f5fa; }
 .qf-cuenta { background: var(--qf-noche); }
 .qf-brand-claro { color: #fff; }
 .qf-cuenta-icono svg { width: 48px; height: 48px; }
+.qf-ref-pre { max-height: 36rem; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .78rem; }

@@ -17,7 +17,7 @@ input[aria-invalid=true]{border-color:#f59e0b}
 </style>
 {% endblock %}
 {% block contenido %}
-<p class="entradilla">Bookmaker odds are not a pure probability: they include the bookmaker's margin. This calculator converts odds into probabilities and back, and shows how much margin is built into a price. Everything runs in your browser: nothing is sent or stored.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Bookmaker odds are not a pure probability: they include the bookmaker's margin. This calculator converts odds into probabilities and back, and shows how much margin is built into a price. Everything runs in your browser: nothing is sent or stored.</p>{% endif %}
 <div class="aviso"><p><strong>Educational tool.</strong> It only converts numbers; it does not tell you what to bet, how much to wager, or whether a price has value. An estimated probability does not guarantee any outcome. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p></div>
 
 <noscript><div class="aviso"><p>The interactive calculator requires JavaScript. The worked example below is shown without it.</p></div></noscript>

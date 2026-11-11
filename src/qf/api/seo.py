@@ -107,7 +107,10 @@ def aplicar_cabeceras(request: Request, response: Response) -> None:
 # --- robots.txt y mapas del sitio ---------------------------------------------------------------
 
 def robots_txt(request: Request) -> str:
-    lineas = ["User-agent: *", f"Content-Signal: {CONTENT_SIGNAL}", "Allow: /", ""]
+    from . import web_config
+
+    signal = web_config.get_settings().get("content_signal") or CONTENT_SIGNAL
+    lineas = ["User-agent: *", f"Content-Signal: {signal}", "Allow: /", ""]
     if not es_host_api(request):
         lineas.append(f"Sitemap: {base_url()}/sitemap.xml")
     return "\n".join(lineas) + "\n"
@@ -121,8 +124,8 @@ def sitemap_index() -> str:
 
 
 def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
-    from . import calibracion, cuota_justa, futbol_en, futbol_pt, futbol_paginas, tenis_pt, nba_en, nba_equipo_en, nba_equipo_pt, nba_equipos, nba_paginas, nba_pt, paginas, rutas_web, tenis_en, tenis_paginas, verificacion   # import tardío: todos importan este módulo
-    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + nba_paginas.entradas_sitemap() + calibracion.entradas_sitemap() + cuota_justa.entradas_sitemap() + verificacion.entradas_sitemap() + nba_equipos.entradas_sitemap() + nba_en.entradas_sitemap() + futbol_en.entradas_sitemap() + tenis_en.entradas_sitemap() + nba_equipo_en.entradas_sitemap() + nba_pt.entradas_sitemap() + nba_equipo_pt.entradas_sitemap() + futbol_pt.entradas_sitemap() + tenis_pt.entradas_sitemap() + futbol_paginas.entradas_sitemap() + tenis_paginas.entradas_sitemap()
+    from . import calibracion, cuota_justa, futbol_en, futbol_pt, futbol_paginas, legal, tenis_pt, nba_en, nba_equipo_en, nba_equipo_pt, nba_equipos, nba_paginas, nba_pt, paginas, rutas_web, tenis_en, tenis_paginas, verificacion   # import tardío: todos importan este módulo
+    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + legal.entradas_sitemap() + nba_paginas.entradas_sitemap() + calibracion.entradas_sitemap() + cuota_justa.entradas_sitemap() + verificacion.entradas_sitemap() + nba_equipos.entradas_sitemap() + nba_en.entradas_sitemap() + futbol_en.entradas_sitemap() + tenis_en.entradas_sitemap() + nba_equipo_en.entradas_sitemap() + nba_pt.entradas_sitemap() + nba_equipo_pt.entradas_sitemap() + futbol_pt.entradas_sitemap() + tenis_pt.entradas_sitemap() + futbol_paginas.entradas_sitemap() + tenis_paginas.entradas_sitemap()
 
 
 def sitemap_paginas() -> str:
@@ -149,12 +152,18 @@ def robots(request: Request):
 
 @router.api_route("/sitemap.xml", methods=["GET", "HEAD"])
 def sitemap():
-    return _texto(sitemap_index(), "application/xml; charset=utf-8", "public, max-age=300")
+    from . import web_config
+
+    secs = web_config.get_settings().get("public_cache_seconds", 300)
+    return _texto(sitemap_index(), "application/xml; charset=utf-8", f"public, max-age={secs}")
 
 
 @router.api_route("/sitemap-paginas.xml", methods=["GET", "HEAD"])
 def sitemap_de_paginas():
-    return _texto(sitemap_paginas(), "application/xml; charset=utf-8", "public, max-age=300")
+    from . import web_config
+
+    secs = web_config.get_settings().get("public_cache_seconds", 300)
+    return _texto(sitemap_paginas(), "application/xml; charset=utf-8", f"public, max-age={secs}")
 
 
 # --- 404 -----------------------------------------------------------------------------------------

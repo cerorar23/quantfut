@@ -181,3 +181,15 @@ test('index.html precarga exactamente todos los módulos ES estáticos de app.js
   assert.ok(preloads.every((href) => href.startsWith('./')), 'Los modulepreload deben usar ./ para que rutas_web los reescriba');
   assert.deepEqual(new Set(preloads), expected);
 });
+
+test('las rutas localizadas /en/ y /pt/ resuelven sección y deporte sin volver al español', () => {
+  assert.equal(route(at('/en/')), 'inicio');
+  assert.equal(route(at('/en/matches/')), 'partidos');
+  assert.equal(route(at('/pt/previsoes/')), 'picks');
+  assert.equal(cleanUrl(at('/en/matches/'), 'partidos'), null);
+  assert.equal(cleanUrl(at('/en/', '#historial'), 'historial'), '/en/history/');
+  assert.equal(historyEntry(at('/en/'), 'planes'), '/en/plans/');
+  assert.equal(historyEntry(at('/pt/'), 'planes'), '/pt/planos/');
+  assert.equal(deporteDeUrl(at('/en/nba/')), 'nba');
+  assert.equal(deporteDeUrl(at('/pt/futbol/')), 'futbol');
+});

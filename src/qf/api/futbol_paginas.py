@@ -260,14 +260,19 @@ def _no_disponible() -> HTTPException:
 
 @router.api_route("/futbol/", methods=["GET", "HEAD"], name="futbol_pilar")
 def pilar():
+    from . import web_config
+
     try:
         if not futbol_datos.secciones_activas()["estadisticas"]:
             raise HTTPException(404)
         c = construir_pilar()
     except FutbolNoDisponible:
         raise _no_disponible()
+    c.p, entradilla_override = web_config.apply_editorial_meta(c.p, "sport:futbol", "es")
     url = og.url_pilar("futbol")
-    return _pagina("futbol_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, (url, "Pronósticos de fútbol con probabilidades") if url else None, c=c)
+    return _pagina("futbol_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {},
+                   (url, "Pronósticos de fútbol con probabilidades") if url else None,
+                   c=c, entradilla_override=entradilla_override)
 
 
 @router.api_route("/futbol", methods=["GET", "HEAD"], name="futbol_pilar_sin_barra")

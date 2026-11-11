@@ -17,7 +17,7 @@ input[aria-invalid=true]{border-color:#f59e0b}
 </style>
 {% endblock %}
 {% block contenido %}
-<p class="entradilla">A odd de uma casa de apostas não é uma probabilidade pura: ela inclui a margem da casa. Esta calculadora converte odds em probabilidades e vice-versa, e mostra quanta margem há em uma cotação. Tudo roda no seu navegador: nada é enviado nem guardado.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">A odd de uma casa de apostas não é uma probabilidade pura: ela inclui a margem da casa. Esta calculadora converte odds em probabilidades e vice-versa, e mostra quanta margem há em uma cotação. Tudo roda no seu navegador: nada é enviado nem guardado.</p>{% endif %}
 <div class="aviso"><p><strong>Ferramenta educativa.</strong> Apenas converte números; não diz no que apostar, quanto apostar nem se uma odd tem valor. Uma probabilidade estimada não garante nenhum resultado. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p></div>
 
 <noscript><div class="aviso"><p>A calculadora interativa precisa de JavaScript. O exemplo resolvido abaixo funciona sem ele.</p></div></noscript>

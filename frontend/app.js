@@ -73,6 +73,150 @@ const validRoute = route => Object.hasOwn(routeTitle, route);
 const ROUTE_ALIAS = { mercados: 'partidos', partido: 'partidos' };
 const canonicalRoute = route => ROUTE_ALIAS[route] || route;
 routeTitle.analisis = 'Análisis deportivo';
+
+let webConfig = null;
+let webConfigStarted = false;
+
+const escWeb = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+function pageLang() {
+  const raw = document.documentElement?.dataset?.lang || '';
+  if (raw === 'en' || raw === 'pt') return raw;
+  const p = location.pathname || '/';
+  if (p === '/en' || p.startsWith('/en/')) return 'en';
+  if (p === '/pt' || p.startsWith('/pt/')) return 'pt';
+  return 'es';
+}
+
+function webFooterExtraMarkup() {
+  if (!webConfig) return '';
+  const lang = pageLang();
+  const ui = webConfig.ui?.[lang] || webConfig.ui?.es || {};
+  const socials = Array.isArray(webConfig.social) ? webConfig.social : [];
+  const activeLangs = ['es', 'en', 'pt'].filter(l => webConfig.languages?.[l] && webConfig.languages[l] !== 'off');
+  const socialHtml = socials.length
+    ? `<nav class="qf-redes" aria-label="${escWeb(ui.footer_social || 'Canales oficiales')}"><span class="qf-redes-label">${escWeb(ui.footer_social || 'Canales oficiales')}:</span>${socials.map(s => `<a href="${escWeb(s.url)}" target="_blank" rel="noopener noreferrer">${escWeb(s.label)}</a>`).join('')}</nav>`
+    : '';
+  const langHtml = (webConfig.lang_selector_enabled && activeLangs.length > 1)
+    ? `<nav class="qf-lang-bar" aria-label="Idioma">${activeLangs.map(l => {
+      const href = webConfig.sections?.[l]?.[state.route]?.path || (l === 'es' ? '/' : `/${l}/`);
+      const label = ui[`lang_${l}`] || ({ es: 'Español', en: 'English', pt: 'Português' }[l]);
+      return `<a href="${escWeb(href)}" hreflang="${l === 'pt' ? 'pt-BR' : l}"${l === lang ? ' aria-current="page"' : ''}>${escWeb(label)}</a>`;
+    }).join('')}</nav>`
+    : '';
+  return (socialHtml || langHtml) ? `<div class="qf-pie-extra">${socialHtml}${langHtml}</div>` : '';
+}
+
+function applyWebConfigToDom() {
+  if (!webConfig || !app) return;
+  const lang = pageLang();
+  const ui = webConfig.ui?.[lang] || webConfig.ui?.es || {};
+  const sec = webConfig.sections?.[lang]?.[state.route];
+  const brand = webConfig.brand_name || 'QuantFut';
+
+  const brandStrong = app.querySelector('.brand-text strong');
+  if (brandStrong) brandStrong.textContent = brand;
+  const badgeEl = app.querySelector('.brand-text small');
+  if (badgeEl && webConfig.hero_badge) badgeEl.textContent = webConfig.hero_badge;
+  const brandBtn = app.querySelector('.header-brand');
+  if (brandBtn) brandBtn.setAttribute('aria-label', brand);
+
+  if (sec?.title && document.documentElement?.dataset?.ruta !== state.route) {
+    document.title = sec.title;
+  }
+
+  const shell = app.querySelector('.app-shell');
+  if (shell && webConfig.maintenance_banner && !shell.querySelector('.qf-banner')) {
+    const banner = document.createElement('div');
+    banner.className = 'qf-banner';
+    banner.setAttribute('role', 'status');
+    const lbl = document.createElement('strong');
+    lbl.textContent = ui.aviso_banner_label || 'Aviso';
+    const msg = document.createElement('span');
+    msg.textContent = webConfig.maintenance_banner;
+    banner.append(lbl, msg);
+    shell.prepend(banner);
+  }
+
+  const navMap = {
+    inicio: ui.nav_inicio, partidos: ui.nav_partidos, picks: ui.nav_picks,
+    alta: ui.nav_alta, parley: ui.nav_parley, escalera: ui.nav_escalera,
+    paquetes: ui.nav_paquetes, historial: ui.nav_historial, planes: ui.nav_planes,
+  };
+  for (const [r, label] of Object.entries(navMap)) {
+    if (!label) continue;
+    app.querySelectorAll(`.top-link[data-route="${r}"] span:last-child`).forEach(el => { el.textContent = label; });
+    app.querySelectorAll(`.mobile-nav-link[data-route="${r}"] small, .mobile-drawer-link[data-route="${r}"] span:nth-child(2)`).forEach(el => { el.textContent = label; });
+  }
+
+  if (sec) {
+    const heroTitle = app.querySelector('#forecast-title');
+    if (heroTitle && sec.h1 && (lang !== 'es' || sec.h1 !== 'Pronósticos deportivos con cálculo estadístico y trazabilidad verificable.')) {
+      heroTitle.textContent = sec.h1;
+    }
+    const heroCopyPs = app.querySelectorAll('.forecast-copy p');
+    if (heroCopyPs.length > 1 && sec.paragraphs?.[0] && (lang !== 'es' || state.route !== 'inicio')) {
+      heroCopyPs[1].textContent = sec.paragraphs[0];
+    }
+  }
+
+  const pie = app.querySelector('.qf-pie');
+  if (!pie) return;
+  const discP = pie.querySelector('p');
+  if (discP && lang === 'es' && webConfig.disclaimer_text) {
+    const badge18 = discP.querySelector('.qf-pie-18');
+    if (badge18) {
+      discP.textContent = '';
+      discP.append(badge18, document.createTextNode(webConfig.disclaimer_text));
+    }
+  }
+  const navs = pie.querySelectorAll('nav');
+  if (navs[0] && ui.footer_sports) navs[0].setAttribute('aria-label', ui.footer_sports);
+  if (navs[1] && ui.footer_info) navs[1].setAttribute('aria-label', ui.footer_info);
+  const prefsBtn = pie.querySelector('.qf-pie-prefs');
+  if (prefsBtn && ui.footer_prefs) prefsBtn.textContent = ui.footer_prefs;
+  if (lang === 'en' || lang === 'pt') {
+    const hrefMap = {
+      en: {
+        '/futbol/': ['/en/futbol/', null], '/nba/': ['/en/nba/', null], '/tenis/': ['/en/tenis/', null],
+        '/metodologia/': ['/en/methodology/', ui.footer_metodologia],
+        '/juego-responsable/': ['/en/responsible-gambling/', ui.footer_juego],
+        '/sobre-nosotros/': ['/en/about/', ui.footer_sobre],
+        '/legal/terminos': ['/en/legal/terms', ui.footer_terminos],
+        '/legal/privacidad': ['/en/legal/privacy', ui.footer_privacidad],
+      },
+      pt: {
+        '/futbol/': ['/pt/futbol/', null], '/nba/': ['/pt/nba/', null], '/tenis/': ['/pt/tenis/', null],
+        '/metodologia/': ['/pt/metodologia/', ui.footer_metodologia],
+        '/juego-responsable/': ['/pt/jogo-responsavel/', ui.footer_juego],
+        '/sobre-nosotros/': ['/pt/sobre-nos/', ui.footer_sobre],
+        '/legal/terminos': ['/pt/legal/termos', ui.footer_terminos],
+        '/legal/privacidad': ['/pt/legal/privacidade', ui.footer_privacidad],
+      },
+    }[lang];
+    pie.querySelectorAll('nav:not(.qf-redes):not(.qf-lang-bar) a').forEach(a => {
+      const entry = hrefMap[a.getAttribute('href')];
+      if (!entry) return;
+      a.setAttribute('href', entry[0]);
+      if (entry[1]) a.textContent = entry[1];
+    });
+  }
+}
+
+function loadWebConfig() {
+  if (webConfigStarted || typeof fetch !== 'function') return;
+  webConfigStarted = true;
+  fetch('/web/config', { headers: { Accept: 'application/json' } })
+    .then(r => (r.ok ? r.json() : null))
+    .then(data => {
+      if (!data || typeof data !== 'object') return;
+      webConfig = data;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') applyWebConfigToDom();
+      else render();
+    })
+    .catch(() => {});
+}
 const FAMILIES = ['Todos', '1X2', 'Doble oportunidad', 'Goles', 'Ambos marcan', 'Por equipo', 'Hándicap'];
 // Accesos rápidos de la mesa. «Top probabilidad» y no «top confianza»: ordena
 // por probabilidad justa, que no dice nada de si la cuota compensa.
@@ -1238,7 +1382,7 @@ function applyCybercoreTheme(root) {
 // Pie global: enlaces REALES (<a href>) a las páginas de confianza y a lo legal. Las páginas las sirve el servidor
 // (paginas.py), no la SPA, así que el clic navega de verdad; el manejador de clics solo intercepta botones y a[data-sport].
 function siteFooter() {
-  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Pronósticos por deporte"><a href="/futbol/">Pronósticos de fútbol</a><a href="/nba/">Pronósticos NBA</a><a href="/tenis/">Pronósticos de tenis</a></nav><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav></footer>`;
+  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Pronósticos por deporte"><a href="/futbol/">Pronósticos de fútbol</a><a href="/nba/">Pronósticos NBA</a><a href="/tenis/">Pronósticos de tenis</a></nav><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav>${webFooterExtraMarkup()}</footer>`;
 }
 
 function render() {
@@ -1252,6 +1396,7 @@ function render() {
   applyCybercoreTheme(app);
   conversionViews.applyMeters(app);
   membershipUI.afterRender();
+  applyWebConfigToDom();
   app.querySelector('.app-shell').inert = overlay;
   syncPublicAuth();
   app.querySelector('.mobile-bottom-nav').inert = overlay;
@@ -1481,6 +1626,7 @@ membershipUI.handleReturn();
 render();
 membershipUI.restoreSession();
 membershipUI.loadPlans();
+loadWebConfig();
 membershipUI.loadPaymentConfig();
 function syncPublicAuth() {
   const s = state.session;

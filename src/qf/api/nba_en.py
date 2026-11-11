@@ -216,12 +216,16 @@ def entradas_sitemap() -> tuple[tuple[str, str | None], ...]:
 # --- rutas ----------------------------------------------------------------------------------------
 
 def _responder(plantilla: str, p: SimpleNamespace, url: str, jsonld: list[dict], ruta: str, og_imagen: str | None = None, **ctx) -> HTMLResponse:
+    from . import web_config
+
     cab = idiomas.puerta("en")
     cab.setdefault("Cache-Control", "no-cache, must-revalidate")
     cab["Content-Security-Policy"] = paginas.CSP
+    wctx = web_config.base_template_ctx(lang="en")
     cuerpo = _env.get_template(plantilla).render(
-        p=p, url=url, base=seo.base_url(), jsonld=jsonld, paginas=paginas.PAGINAS_EN, og_imagen=og_imagen,
-        idiomas_alt=idiomas.selector(ruta), robots=idiomas.robots_de("en"), **ctx)
+        p=p, url=url, base=seo.base_url(), jsonld=web_config.apply_org_jsonld(jsonld, wctx["cfg"]),
+        paginas=paginas.PAGINAS_EN, og_imagen=og_imagen,
+        idiomas_alt=idiomas.selector(ruta), robots=idiomas.robots_de("en"), **wctx, **ctx)
     return HTMLResponse(cuerpo, headers=cab)
 
 
@@ -232,12 +236,16 @@ def _no_disponible() -> HTTPException:
 
 @router.api_route(RUTA_PILAR, methods=["GET", "HEAD"], name="en_nba_pilar")
 def pilar():
+    from . import web_config
+
     idiomas.puerta("en")
     try:
         c = construir_pilar()
     except NbaNoDisponible:
         raise _no_disponible()
-    return _responder("en_nba_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR, og_imagen=og.url_pilar_en("nba"), c=c)
+    c.p, entradilla_override = web_config.apply_editorial_meta(c.p, "sport:nba", "en")
+    return _responder("en_nba_cartelera.html", c.p, c.url, c.jsonld, RUTA_PILAR,
+                      og_imagen=og.url_pilar_en("nba"), c=c, entradilla_override=entradilla_override)
 
 
 @router.api_route(RUTA_PILAR.rstrip("/"), methods=["GET", "HEAD"], name="en_nba_pilar_sin_barra")

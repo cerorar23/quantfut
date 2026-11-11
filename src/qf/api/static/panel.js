@@ -8,6 +8,19 @@
     });
   });
 
+  document.querySelectorAll("[data-count-for]").forEach(function (counter) {
+    var input = document.getElementById(counter.dataset.countFor);
+    if (!input) return;
+    var max = parseInt(counter.dataset.countMax || "0", 10);
+    var update = function () {
+      var len = (input.value || "").length;
+      counter.textContent = max > 0 ? len + " / " + max : String(len);
+      counter.classList.toggle("text-warning", max > 0 && len > max);
+    };
+    input.addEventListener("input", update);
+    update();
+  });
+
   var datos = document.getElementById("serie-datos");
   var lienzo = document.getElementById("grafico-serie");
   if (!datos || !lienzo || !window.Chart) return;

@@ -20,7 +20,7 @@ pre.vc-cli{background:var(--bg);border:1px solid var(--line);border-radius:8px;p
 </style>
 {% endblock %}
 {% block contenido %}
-<p class="entradilla">Cada lote diário e por partida publicado pela QuantFut recebe uma impressão digital SHA-256 encadeada com a anterior antes do início dos jogos. Nesta página você pode conferir no navegador ou pelo terminal se os hashes de <a href="/chain">/chain</a> estão íntegros.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Cada lote diário e por partida publicado pela QuantFut recebe uma impressão digital SHA-256 encadeada com a anterior antes do início dos jogos. Nesta página você pode conferir no navegador ou pelo terminal se os hashes de <a href="/chain">/chain</a> estão íntegros.</p>{% endif %}
 
 <div class="aviso">
 <p><strong>O que a cadeia comprova e qual é o limite hoje.</strong> Ela demonstra que nenhuma previsão publicada foi alterada depois de selada no banco de dados. Como informamos na <a href="/pt/metodologia/">metodologia</a>, esses registros continuam no nosso servidor e em <code>/chain</code>, ainda sem carimbo de tempo externo independente.</p>
