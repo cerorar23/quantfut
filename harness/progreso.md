@@ -1,6 +1,17 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 10-nov-2026 · Cierre técnico seguro de fases restantes: F5 (`modulepreload`), §7 (`contactPoint`), F8 verificador público y checklist legal F7 (rama `seo/f63-calibracion-calculadora`, sin desplegar)
+
+- Alcance ejecutado: tras F6.3, se completan exclusivamente las entregas de código seguras sin saltar bloqueos de calendario ni requisitos jurídicos:
+  - **F5 `modulepreload` (`frontend/index.html`):** se precargan los 15 módulos ES estáticos alcanzables desde `app.js` con sus `?v=` exactos (`rutas_web._RELATIVOS` y `frontend/server.mjs` reescriben `./` a `/` en subrutas) sin tocar ninguna hoja CSS ni `original-css.test.mjs`. Se añade prueba de sincronización 1:1 en `frontend/rutas.test.mjs` y comprobación de rutas absolutas en `tests/test_rutas_web.py`.
+  - **§7 `Organization.contactPoint` (`src/qf/api/rutas_web.py`):** se añade `ContactPoint` (`customer support`, `admin@pronosticosdeportivos.pro`) al JSON-LD de portada; no se inventa `sameAs`.
+  - **F8 verificador público (`scripts/verificar_cadena_publica.py` + `tests/test_f8_cadena_publica.py`):** script en Python estándar puro que valida `/chain` y directorios de recibos `*.receipt.json` + `.json` revelados con la misma regla `sha256(prev_sha256 + payload_sha256)` que `hashchain.py`.
+- Bloqueos respetados sin forzar cambios riesgosos:
+  - **F5 CSP coercitiva:** se mantiene `Content-Security-Policy-Report-Only` hasta acumular ≥ 7 días de informes desde el 9-nov (~16-nov-2026) según `docs/plan_despliegue_csp_f5_20261109.md`.
+  - **F7 (`fr`, `it`, `de`):** bloqueado por revisión legal previa (`docs/plan_seo_redes_web_20261108.md` §11/§14). Se documenta la lista de decisiones jurídicas en `docs/revision_legal_f7_20261110.md` sin publicar código ni traducir páginas legales no aprobadas.
+  - **F5/F6/F8 externos:** regla caché en Cloudflare, revisión humana `en`/`pt-BR` + red de ayuda Brasil, usuarios sociales reales, Search Console y Blogabet/Betstamp dependen del titular.
+
 ## 10-nov-2026 · F6.3 calibración y calculadora de cuota/odd justa en inglés y portugués (rama `seo/f63-calibracion-calculadora`, sin desplegar)
 
 - Alcance: cierra todo el código pendiente de F6 añadiendo `/en/calibration/`, `/pt/calibracao/`, `/en/fair-odds-calculator/` y `/pt/calculadora-odd-justa/` (con 301 sin barra, puerta `off`/`preview`/`on`, `hreflang` recíproco `es`/`en`/`pt` + `x-default` en `/sitemap-paginas.xml` y selector de idiomas).

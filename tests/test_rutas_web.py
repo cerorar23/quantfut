@@ -103,7 +103,13 @@ def test_datos_estructurados_validos(client, sec):
     tipos = [b["@type"] for b in d.ld]
     if sec.ruta == "inicio":
         assert tipos == ["WebSite", "Organization"]
-        assert next(b for b in d.ld if b["@type"] == "Organization")["legalName"] == "Saptain LTD"
+        org = next(b for b in d.ld if b["@type"] == "Organization")
+        assert org["legalName"] == "Saptain LTD"
+        assert org["contactPoint"] == {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "admin@pronosticosdeportivos.pro",
+        }
     else:
         migas = d.ld[0]["itemListElement"]
         assert tipos == ["BreadcrumbList"] and [i["position"] for i in migas] == [1, 2]
@@ -130,10 +136,13 @@ def test_recursos_con_ruta_absoluta_para_que_carguen_desde_una_ruta_anidada(clie
     assert 'href="./' not in r.text and 'src="./' not in r.text
     css = [l["href"] for l in d.links if l.get("rel") == "stylesheet"]
     assert css and all(h.startswith("/") and not h.startswith("//") for h in css), css
+    preloads = [l["href"] for l in d.links if l.get("rel") == "modulepreload"]
+    assert preloads and all(h.startswith("/") and not h.startswith("//") for h in preloads), preloads
     modulos = [s for s in d.srcs if s.startswith("/app.js")]
     assert len(modulos) == 1
     original = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert len(css) == len(re.findall(r'<link rel="stylesheet"', original)), "se perdió alguna hoja de estilo"
+    assert len(preloads) == len(re.findall(r'<link rel="modulepreload"', original)), "se perdió algún modulepreload"
 
 
 @SECCIONES

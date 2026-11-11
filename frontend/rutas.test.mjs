@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ROUTE_PATH, urlFor, routeFromLocation, cleanUrl, historyEntry, deporteDeUrl, isDeportePage, deporteBoot } from './rutas.js';
+
+const FRONTEND_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 // Las rutas válidas de app.js (routeTitle) y sus alias, para probar la resolución como en la SPA.
 const VALID = new Set(['inicio', 'partidos', 'picks', 'alta', 'escalera', 'parley', 'partido', 'historial', 'planes',
@@ -142,4 +147,37 @@ test('el pilar abre el deporte sin partido, y lo demás no arranca nada', () => 
   assert.equal(deporteBoot({}, at('/nba/')), null);                                   // sin la marca del servidor
   assert.equal(deporteBoot({ deporte: 'nba', evento: '1' }, at('/historial/')), null); // otra ruta
   assert.equal(deporteBoot({ deporte: 'tenis', evento: '1' }, at('/nba/')), null);     // la marca no coincide con la URL
+});
+
+function reachableStaticModules(entryFile) {
+  const seenSpecs = new Set();
+  const seenFiles = new Set();
+  const queue = [entryFile];
+  const importRe = /^\s*import\s+(?:[\s\S]*?\bfrom\s+)?['"](\.\/[^'"]+)['"]/gm;
+
+  while (queue.length > 0) {
+    const file = queue.shift();
+    if (seenFiles.has(file)) continue;
+    seenFiles.add(file);
+    const fullPath = path.join(FRONTEND_DIR, file);
+    assert.ok(fs.existsSync(fullPath), `Falta el módulo estático ${file}`);
+    const code = fs.readFileSync(fullPath, 'utf-8');
+    importRe.lastIndex = 0;
+    for (const match of code.matchAll(importRe)) {
+      const spec = match[1];
+      seenSpecs.add(spec);
+      const target = spec.slice(2).split('?')[0];
+      queue.push(target);
+    }
+  }
+  return seenSpecs;
+}
+
+test('index.html precarga exactamente todos los módulos ES estáticos de app.js sin versiones obsoletas', () => {
+  const expected = reachableStaticModules('app.js');
+  const html = fs.readFileSync(path.join(FRONTEND_DIR, 'index.html'), 'utf-8');
+  const preloads = [...html.matchAll(/<link\s+rel="modulepreload"\s+href="([^"]+)"\s*\/?>/g)].map((m) => m[1]);
+  assert.equal(new Set(preloads).size, preloads.length, 'Hay enlaces modulepreload duplicados en index.html');
+  assert.ok(preloads.every((href) => href.startsWith('./')), 'Los modulepreload deben usar ./ para que rutas_web los reescriba');
+  assert.deepEqual(new Set(preloads), expected);
 });

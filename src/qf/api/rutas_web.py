@@ -173,7 +173,9 @@ def _jsonld(sec: Seccion, base: str) -> list[dict]:
         return [{"@context": "https://schema.org", "@type": "WebSite", "name": "QuantFut", "url": f"{base}/",
                  "inLanguage": "es"},
                 {"@context": "https://schema.org", "@type": "Organization", "name": "QuantFut",
-                 "legalName": "Saptain LTD", "url": f"{base}/", "email": "admin@pronosticosdeportivos.pro"}]
+                 "legalName": "Saptain LTD", "url": f"{base}/", "email": "admin@pronosticosdeportivos.pro",
+                 "contactPoint": {"@type": "ContactPoint", "contactType": "customer support",
+                                  "email": "admin@pronosticosdeportivos.pro"}}]
     return [{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
         {"@type": "ListItem", "position": 1, "name": "Inicio", "item": f"{base}/"},
         {"@type": "ListItem", "position": 2, "name": sec.migas, "item": url}]}]
