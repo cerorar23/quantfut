@@ -261,12 +261,17 @@ def _no_disponible() -> HTTPException:
 
 @router.api_route("/tenis/", methods=["GET", "HEAD"], name="tenis_pilar")
 def pilar():
+    from . import web_config
+
     try:
         c = construir_pilar()
     except TenisNoDisponible:
         raise _no_disponible()
+    c.p, entradilla_override = web_config.apply_editorial_meta(c.p, "sport:tenis", "es")
     url = og.url_pilar("tenis")
-    return _pagina("tenis_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {}, (url, "Pronósticos de tenis con probabilidades") if url else None, c=c)
+    return _pagina("tenis_cartelera.html", RUTA_PILAR, c.p, c.jsonld, {},
+                   (url, "Pronósticos de tenis con probabilidades") if url else None,
+                   c=c, entradilla_override=entradilla_override)
 
 
 @router.api_route("/tenis", methods=["GET", "HEAD"], name="tenis_pilar_sin_barra")

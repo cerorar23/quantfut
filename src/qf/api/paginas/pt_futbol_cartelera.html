@@ -1,7 +1,7 @@
 {% extends "base_pt.html" %}
 {% block revision_p %}{% endblock %}
 {% block contenido %}
-<p class="entradilla">Probabilidade de vitória do mandante, de empate e de vitória do visitante em cada jogo das ligas que acompanhamos. A previsão é gerada antes do jogo e depois mostramos se ela se cumpriu, tanto se acertou quanto se errou.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Probabilidade de vitória do mandante, de empate e de vitória do visitante em cada jogo das ligas que acompanhamos. A previsão é gerada antes do jogo e depois mostramos se ela se cumpriu, tanto se acertou quanto se errou.</p>{% endif %}
 {% if c.juzgados %}
 <div class="aviso"><p>Nos jogos dos últimos dias com resultado, o resultado mais provável se confirmou em <strong>{{ c.aciertos }} de {{ c.juzgados }}</strong>. São poucos jogos: não é uma medida de qualidade. O histórico completo está na <a href="/historial/" hreflang="es" lang="es">página de histórico</a> (disponível apenas em espanhol).</p></div>
 {% endif %}

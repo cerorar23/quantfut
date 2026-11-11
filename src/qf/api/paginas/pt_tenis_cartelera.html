@@ -1,7 +1,7 @@
 {% extends "base_pt.html" %}
 {% block revision_p %}{% endblock %}
 {% block contenido %}
-<p class="entradilla">Probabilidade de vitória de cada jogador e dos totais de sets e games das partidas ATP e WTA. Cada previsão é selada com uma impressão digital antes da partida e depois mostramos se ela se cumpriu, tanto se acertou quanto se errou.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Probabilidade de vitória de cada jogador e dos totais de sets e games das partidas ATP e WTA. Cada previsão é selada com uma impressão digital antes da partida e depois mostramos se ela se cumpriu, tanto se acertou quanto se errou.</p>{% endif %}
 {% if c.juzgados %}
 <div class="aviso"><p>Nas partidas dos últimos dias com resultado confirmado, o jogador com maior probabilidade venceu em <strong>{{ c.aciertos }} de {{ c.juzgados }}</strong>. Não é uma medida de qualidade. O histórico completo está na <a href="/historial/" hreflang="es" lang="es">página de histórico</a> (disponível apenas em espanhol).</p></div>
 {% endif %}

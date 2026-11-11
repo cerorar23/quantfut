@@ -2837,18 +2837,16 @@ Plan de despliegue de la primera entrega: `docs/plan_despliegue_idiomas_f61_2026
 ### Corrección de estabilidad CI: ventana medianoche ET en `apps/nba/tests/v2/test_estres.py`, 2026-11-11
 - [x] Diagnosticado fallo intermitente observado en `main` (`42962886704` a las `05:06 UTC`): entre `04:00` y `06:29 UTC`, `reloj.astimezone(motor.ET).date()` ya pasó al nuevo día ET mientras `liga_completa()` dejaba `recibido_en` de la víspera a las `06:00 UTC` (en el futuro respecto a `corte = reloj - 30 min`), causando 15 falsos `sin_hora` en `CANDIDATOS`. Acotado `limite_final = reloj - timedelta(hours=1)` y añadido parámetro opcional `reloj` con prueba parametrizada de regresión para `05:15 UTC`, `06:15 UTC` (EST) y `04:15 UTC` (EDT).
 
-### Web · Panel `/control/configuracion` (páginas base, traducción vía API Market, ajustes web y redes sociales) — diseño propuesto, 2026-11-11
-Plan previo (sin código hasta aclarar dudas clave con el titular):
-- **Objetivo pedido por el titular (11-nov-2026):** añadir un área/menú de configuración en el backend web (`/control`) que permita:
-  1. Ver/editar las páginas principales en su idioma base (`es`) y traducirlas a los demás idiomas mediante la **API de API Market**.
-  2. Editar configuraciones de la web desde el panel (banderas/estado de idiomas, teléfonos de ayuda por país si aplica y textos editables definidos) junto con los **usuarios de redes sociales** (`X`, `Instagram`, `Telegram`, `Facebook`) reflejados en footer, `twitter:site` y JSON-LD `Organization.sameAs`.
-- **Arquitectura prevista (reutilizando patrones de `src/qf/api/`):**
-  - Menú lateral en `templates/base.html` apuntando a `/control/configuracion` (Tabler + `panel._render`/`_check_post` CSRF + `audit()` en `console` / PostgreSQL, igual que `/control/configuracion-app`, `/control/anuncios` y `/control/recompensas`).
-  - Cliente aislado para API Market con `API_MARKET_KEY` / clave escrita sin devolverse en claro (`key_hint`), tiempos límite explícitos, reintento acotado y validación HTML/placeholders antes de guardar traducciones.
-  - Idiomas con estado en `idiomas.py` (`es`, `en`, `pt`); los idiomas F7 (`fr`, `it`, `de`) permanecen desactivados/bloqueados hasta aprobación legal (`docs/revision_legal_f7_20261110.md`).
-  - Contenido YMYL / auditoría: registrar `actor`, fecha de revisión (`lastmod`) y evitar borrar advertencias obligatorias (`+18`, «no afirmamos superar al mercado») cubiertas por `tests/test_paginas.py` y `tests/test_calibracion.py`.
-- [ ] **Aclaraciones pendientes antes de implementar:**
-  1. Proveedor/endpoint exacto de **API Market** (`URL`, método HTTP, payload JSON/parámetros y cabecera/variable de entorno para la API key; hoy no existe ninguna referencia en el repositorio ni en `.env` del VPS).
-  2. Fuente de verdad y alcance de edición: si las páginas principales cubren `/metodologia/`, `/juego-responsable/`, `/sobre-nosotros/`, `/legal/*` y/o metadatos SEO de las 9 secciones SPA (`rutas_web.py`), y si se guardan en PostgreSQL con respaldo a las plantillas del código.
-  3. Idiomas destino en el menú (`en`, `pt-BR`) y confirmación de si `en` pasa de `preview` a `on` desde ahora o tras `/legal/privacidad` y el panel nuevo.
-  4. Lista exacta de campos de configuración web editables que desea aparte de redes sociales y estado de idiomas.
+### Web · Panel `/control/configuracion` (páginas base, traducción vía APIMart, ajustes web y redes sociales), 2026-11-11
+Implementado en `feat/control-configuracion-web`:
+- **Aclaraciones confirmadas (11-nov-2026):**
+  1. Proveedor **APIMart** (`https://docs.apimart.ai/es`, OpenAI-compatible `POST https://api.apimart.ai/v1/chat/completions`); clave nunca versionada en Git (AES-GCM en `web_site_settings.apimart_key_enc` con `QF_SECRETS_KEY` o variable de entorno `APIMART_API_KEY`). **Pendiente de seguridad del titular:** rotar la clave compartida en chat antes o al cargarla en el VPS.
+  2. «Páginas principales» = todo el frontend web (`ui:frontend`, 9 `spa:*`, 3 `pagina:*`, 3 `legal:*`, 3 `tool:*` y 3 `sport:*`), sembrado inicialmente desde las plantillas actuales y guardado en PostgreSQL (`db/110_web_config.sql`).
+  3. Idiomas destino `en` y `pt` (interruptor `off`/`preview`/`on` sincronizado en Postgres y `activos.txt`); `fr`/`it`/`de` permanecen bloqueados en F7.
+  4. Ajustes editables activos: marca, razón social, distintivo del hero, correo de soporte, aviso global `+18`, banner de aviso/mantenimiento, 6 redes sociales (`X`, `Instagram`, `Telegram`, `Facebook`, `YouTube`, `TikTok`), `default_robots`, `Content-Signal`, `Cache-Control` público, interruptor `IndexNow` y selector de idioma en el pie.
+- [x] **Implementación y pruebas locales (2026-11-11):**
+  - Esquema y módulos: `db/110_web_config.sql`, `src/qf/api/apimart.py`, `src/qf/api/web_config.py`, `src/qf/api/web_config_panel.py`, plantillas `web_config.html` y `web_config_page.html`, ajustes en `panel.py`, `base.html`, `panel.js`, `panel.css` y `main.py`.
+  - Integración SSR, SEO y frontend: `idiomas.py`, `seo.py`, `indexnow.py`, `legal.py`, `paginas.py`, `rutas_web.py`, `calibracion.py`, `cuota_justa.py`, `verificacion.py`, `futbol_*`, `nba_*`, `tenis_*` y `frontend/{conversion.css,rutas.js,app.js}`.
+  - Traductores dinámicos (`idiomas.registrar_traductor`) en `rutas_web.py` y `legal.py`: las páginas SPA o legales aún sin traducir no emiten `hreflang` ni entran en `sitemap-paginas.xml` hasta tener contenido en PostgreSQL.
+  - Pruebas locales: `npm --prefix frontend run check` (`238/238`), `tests/test_web_config.py` (`10 passed, 2 skipped` sin PG local) y `scripts/test_local_windows.ps1` (`2671 passed, 130 skipped`).
+- [ ] **Despliegue pendiente tras fusión a `main`:** aplicar `db/110_web_config.sql` en Postgres, definir `APIMART_API_KEY` (clave rotada) / verificar `QF_SECRETS_KEY` en `.env` del VPS y desplegar API + `frontend/` siguiendo `DEPLOYS.md`.

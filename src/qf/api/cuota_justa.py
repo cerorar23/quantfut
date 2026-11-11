@@ -209,21 +209,30 @@ def script_url() -> str:
 
 
 def render(idioma: str = "es") -> str:
+    from . import web_config
+
     p = _pagina(idioma)
+    p_eff, entradilla_override = web_config.apply_editorial_meta(p, "tool:cuota-justa", idioma)
     base = seo.base_url()
     url = base + p.ruta
     ej = ejemplo(idioma=idioma)
     cuotas = [c for _, c in EJEMPLO]
+    ctx = web_config.base_template_ctx(lang=idioma)
     return _env.get_template(p.plantilla).render(
-        p=p, url=url, base=base, jsonld=_jsonld(p, url, base), paginas=paginas.EN_POR_IDIOMA[idioma],
+        p=p_eff, url=url, base=base, jsonld=web_config.apply_org_jsonld(_jsonld(p_eff, url, base), ctx["cfg"]),
+        paginas=paginas.EN_POR_IDIOMA[idioma],
         og_imagen=og.url_marca() if idioma == "es" else None,
         idiomas_alt=idiomas.selector(p.ruta), robots=idiomas.robots_de(idioma),
         revision_iso=p.revision.isoformat(), revision_larga=paginas.fecha_larga(p.revision, idioma),
-        ej=ej, script=script_url(), ejemplo_nombres=list(_NOMBRES_EJEMPLO[idioma]), ejemplo_cuotas=[n2(c, idioma) for c in cuotas])
+        ej=ej, script=script_url(), ejemplo_nombres=list(_NOMBRES_EJEMPLO[idioma]), ejemplo_cuotas=[n2(c, idioma) for c in cuotas],
+        entradilla_override=entradilla_override, **ctx)
 
 
 def _servir(idioma: str) -> HTMLResponse:
-    cab = {"Cache-Control": "public, max-age=300", "Content-Security-Policy": CSP, **idiomas.puerta(idioma)}
+    from . import web_config
+
+    secs = web_config.get_settings().get("public_cache_seconds", 300)
+    cab = {"Cache-Control": f"public, max-age={secs}", "Content-Security-Policy": CSP, **idiomas.puerta(idioma)}
     return HTMLResponse(render(idioma), headers=cab)
 
 

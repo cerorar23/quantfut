@@ -1,7 +1,7 @@
 {% extends "base_en.html" %}
 {% block revision_p %}{% endblock %}
 {% block contenido %}
-<p class="entradilla">Win probability for each player and for the set and game totals of ATP and WTA matches. Each forecast is sealed with a digital fingerprint before the match and then we show whether it came true, whether it hit or missed.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Win probability for each player and for the set and game totals of ATP and WTA matches. Each forecast is sealed with a digital fingerprint before the match and then we show whether it came true, whether it hit or missed.</p>{% endif %}
 {% if c.juzgados %}
 <div class="aviso"><p>In the matches of the last few days with a confirmed result, the player with the higher probability won in <strong>{{ c.aciertos }} of {{ c.juzgados }}</strong>. It is not a measure of quality. The full record is in <a href="/en/methodology/">the methodology</a> and the record on the home page (currently available only in Spanish).</p></div>
 {% endif %}

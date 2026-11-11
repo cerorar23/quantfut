@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block contenido %}
-<p class="entradilla">Una probabilidad es honesta si se cumple: de los partidos a los que damos el 70 %, deberían ocurrir cerca de siete de cada diez. Aquí se mide con los datos que la web ya publica y se compara con el mercado de apuestas, tanto si el resultado nos favorece como si no.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Una probabilidad es honesta si se cumple: de los partidos a los que damos el 70 %, deberían ocurrir cerca de siete de cada diez. Aquí se mide con los datos que la web ya publica y se compara con el mercado de apuestas, tanto si el resultado nos favorece como si no.</p>{% endif %}
 <div class="aviso"><p><strong>Página generada automáticamente.</strong> Todas las cifras salen de las mediciones publicadas{% if revision_larga %} (última actualización: {{ revision_larga }}){% endif %}; ninguna se escribe a mano. La frase sobre si el modelo supera o no al mercado se calcula con esas mismas cifras. Cómo se obtienen las probabilidades: <a href="/metodologia/">metodología</a>.</p></div>
 
 <h2>Cómo leer los gráficos</h2>

@@ -569,3 +569,12 @@
 /* Botón «Preferencias de medición» del pie: se ve como los enlaces, pero abre el aviso en vez de navegar. */
 .qf-pie-prefs { display: inline-block; padding: 8px 0; border: 0; background: none; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .qf-pie-prefs:hover, .qf-pie-prefs:focus-visible { color: currentColor; }
+
+/* Banner de mantenimiento/aviso y canales oficiales + selector de idioma desde /web/config. */
+.qf-banner { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; padding: 10px 18px; background: color-mix(in srgb, var(--accent, #22c55e) 12%, transparent); border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.45; text-align: center; }
+.qf-banner strong { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.qf-pie-extra { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.qf-redes, .qf-lang-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.qf-redes-label { font-size: 12px; font-weight: 600; opacity: .78; }
+.qf-lang-bar a[aria-current="page"] { font-weight: 700; text-decoration: none; }
+

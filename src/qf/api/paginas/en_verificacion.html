@@ -20,7 +20,7 @@ pre.vc-cli{background:var(--bg);border:1px solid var(--line);border-radius:8px;p
 </style>
 {% endblock %}
 {% block contenido %}
-<p class="entradilla">Every daily and match batch published by QuantFut receives a SHA-256 fingerprint chained to the previous batch before matches start. Here you can verify in your browser or from the command line that the hashes at <a href="/chain">/chain</a> have no broken links.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Every daily and match batch published by QuantFut receives a SHA-256 fingerprint chained to the previous batch before matches start. Here you can verify in your browser or from the command line that the hashes at <a href="/chain">/chain</a> have no broken links.</p>{% endif %}
 
 <div class="aviso">
 <p><strong>What the chain proves and its current limit.</strong> It shows that no published forecast was altered after sealing inside our database. As stated on our <a href="/en/methodology/">methodology page</a>, these fingerprints currently reside in our database and at <code>/chain</code>, and do not yet carry an independent external third-party timestamp.</p>

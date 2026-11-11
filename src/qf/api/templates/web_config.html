@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_input %}
+{% block title %}Configuración web{% endblock %}
+{% block pretitle %}Frontend público, SEO, redes e idiomas{% endblock %}
+{% block heading %}Configuración web y traducciones{% endblock %}
+
+{% block content %}
+{% if err %}
+<div class="alert alert-danger" role="alert">{{ err }}</div>
+{% endif %}
+{% if ok_detalle %}
+<div class="alert alert-info" role="status">{{ ok_detalle }}</div>
+{% endif %}
+{% if not db_ok %}
+<div class="alert alert-warning" role="alert">
+  No hay conexión a PostgreSQL o falta aplicar la migración <code>db/110_web_config.sql</code>. Se muestran los valores base de las plantillas.
+</div>
+{% endif %}
+
+<div class="row row-cards">
+  <div class="col-lg-5">
+    <form class="card h-100" method="post" action="/control/configuracion/idiomas">
+      {{ csrf_input(csrf) }}
+      <div class="card-header">
+        <h3 class="card-title">Idiomas públicos</h3>
+      </div>
+      <div class="card-body">
+        <p class="text-secondary small">
+          Controla cuándo se publican <code>/en/</code> y <code>/pt/</code>. En <code>off</code> devuelven 404; en <code>preview</code> llevan <code>noindex</code> para revisión; en <code>on</code> entran al sitemap y al selector público.
+        </p>
+        <div class="mb-3">
+          <label class="form-label">Español (es)</label>
+          <div><span class="badge bg-green-lt">Base principal · siempre activa</span></div>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-sm-6">
+            <label class="form-label" for="id-en-state">Inglés (<code>/en/</code>)</label>
+            <select id="id-en-state" class="form-select" name="en_state">
+              {% for st in estados_idioma %}
+              <option value="{{ st }}"{% if cfg.lang_states.en == st %} selected{% endif %}>{{ st }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-hint"><a href="/en/methodology/" target="_blank" rel="noopener">Abrir vista /en/methodology/</a></div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="id-pt-state">Portugués BR (<code>/pt/</code>)</label>
+            <select id="id-pt-state" class="form-select" name="pt_state">
+              {% for st in estados_idioma %}
+              <option value="{{ st }}"{% if cfg.lang_states.pt == st %} selected{% endif %}>{{ st }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-hint"><a href="/pt/metodologia/" target="_blank" rel="noopener">Abrir vista /pt/metodologia/</a></div>
+          </div>
+        </div>
+        <div class="border-top pt-3">
+          <div class="text-secondary small fw-semibold mb-2">Idiomas bloqueados (F7)</div>
+          <ul class="list-unstyled m-0 small text-secondary">
+            {% for code, name, reason in idiomas_f7 %}
+            <li><span class="badge bg-secondary-lt me-1">{{ code }}</span> {{ name }} — {{ reason }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-end">
+        <button class="btn btn-primary" type="submit">Guardar idiomas</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h3 class="card-title">APIMart · Traducción automática</h3>
+        {% if key_origin == 'db' %}
+        <span class="badge bg-green-lt">Clave guardada (cifrada en BD)</span>
+        {% elif key_origin == 'env' %}
+        <span class="badge bg-azure-lt">Clave tomada de APIMART_API_KEY</span>
+        {% else %}
+        <span class="badge bg-red-lt">Sin clave API</span>
+        {% endif %}
+      </div>
+      <form method="post" action="/control/configuracion/apimart">
+        {{ csrf_input(csrf) }}
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-7">
+              <label class="form-label" for="id-apimart-url">URL base (OpenAI-compatible)</label>
+              <input id="id-apimart-url" class="form-control" type="url" name="apimart_base_url" value="{{ cfg.apimart_base_url }}" required>
+              <div class="form-hint">Documentación: <a href="https://docs.apimart.ai/es" target="_blank" rel="noopener">docs.apimart.ai/es</a></div>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label" for="id-apimart-model">Modelo</label>
+              <input id="id-apimart-model" class="form-control" name="apimart_model" list="apimart-models" value="{{ cfg.apimart_model }}" required>
+              <datalist id="apimart-models">
+                {% for m in modelos_sugeridos %}
+                <option value="{{ m }}"></option>
+                {% endfor %}
+              </datalist>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label" for="id-apimart-key">Nueva clave API de APIMart (opcional)</label>
+              <input id="id-apimart-key" class="form-control" type="password" name="apimart_api_key"
+                     autocomplete="new-password" placeholder="Pega sk-... solo para guardar o reemplazar; nunca se muestra">
+              <div class="form-hint">Se cifra con AES-GCM (<code>QF_SECRETS_KEY</code>). Si prefieres variable de entorno, déjala vacía y usa <code>APIMART_API_KEY</code>.</div>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <label class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="clear_api_key" value="1">
+                <span class="form-check-label text-danger">Borrar clave en BD</span>
+              </label>
+            </div>
+            <div class="col-12">
+              <span class="form-label d-block">Idiomas destino activos al traducir en lote</span>
+              <div class="d-flex gap-4">
+                <label class="form-check">
+                  <input class="form-check-input" type="checkbox" name="target_langs" value="en"{% if 'en' in cfg.translation_target_langs %} checked{% endif %}>
+                  <span class="form-check-label">Inglés (<code>en</code>)</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="checkbox" name="target_langs" value="pt"{% if 'pt' in cfg.translation_target_langs %} checked{% endif %}>
+                  <span class="form-check-label">Portugués BR (<code>pt</code>)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer d-flex flex-wrap gap-2 justify-content-between align-items-center">
+          <button class="btn btn-primary" type="submit">Guardar configuración APIMart</button>
+        </div>
+      </form>
+      <div class="card-footer bg-transparent border-top d-flex justify-content-between align-items-center">
+        <span class="small text-secondary">Prueba una petición mínima sin modificar textos.</span>
+        <form method="post" action="/control/configuracion/apimart/probar">
+          {{ csrf_input(csrf) }}
+          <button class="btn btn-outline-secondary btn-sm" type="submit">Probar conexión APIMart</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form class="card mt-3" method="post" action="/control/configuracion/general">
+  {{ csrf_input(csrf) }}
+  <div class="card-header">
+    <h3 class="card-title">Marca, avisos globales, redes sociales y SEO</h3>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label" for="id-brand">Nombre de marca</label>
+        <input id="id-brand" class="form-control" name="brand_name" value="{{ cfg.brand_name }}" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="id-legal-name">Razón social (JSON-LD)</label>
+        <input id="id-legal-name" class="form-control" name="legal_name" value="{{ cfg.legal_name }}" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="id-hero-badge">Etiqueta hero (kicker)</label>
+        <input id="id-hero-badge" class="form-control" name="hero_badge" value="{{ cfg.hero_badge }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="id-support-email">Correo de soporte y legal</label>
+        <input id="id-support-email" class="form-control" type="email" name="support_email" value="{{ cfg.support_email }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="id-disclaimer">Aviso legal +18 del pie (ES)</label>
+        <textarea id="id-disclaimer" class="form-control" rows="2" name="disclaimer_text">{{ cfg.disclaimer_text }}</textarea>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="id-banner">Banner global superior (vacío = oculto)</label>
+        <textarea id="id-banner" class="form-control" rows="2" name="maintenance_banner" placeholder="Ej. Ventana de mantenimiento o nota operativa visible arriba de la web">{{ cfg.maintenance_banner }}</textarea>
+      </div>
+    </div>
+
+    <div class="qf-section">Redes sociales oficiales (footer, OpenGraph/X y schema.org sameAs)</div>
+    <div class="row g-3">
+      {% for spec in social_specs %}
+      <div class="col-md-4">
+        <label class="form-label" for="id-{{ spec.field }}">{{ spec.label }}</label>
+        <input id="id-{{ spec.field }}" class="form-control" name="{{ spec.field }}"
+               value="{{ cfg[spec.field] }}" placeholder="{{ spec.placeholder }}">
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="qf-section">SEO, Indexación y Caché</div>
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label" for="id-robots">Robots por defecto</label>
+        <select id="id-robots" class="form-select" name="default_robots">
+          {% for rob in robots_options %}
+          <option value="{{ rob }}"{% if cfg.default_robots == rob %} selected{% endif %}>{{ rob }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="id-signal">Cabecera Content-Signal (robots.txt)</label>
+        <input id="id-signal" class="form-control" name="content_signal" value="{{ cfg.content_signal }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="id-cache-s">Caché pública (s)</label>
+        <input id="id-cache-s" class="form-control" type="number" min="0" max="86400" name="public_cache_seconds" value="{{ cfg.public_cache_seconds }}">
+      </div>
+      <div class="col-md-3 d-flex flex-column gap-2">
+        <label class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" name="indexnow_enabled" value="1"{% if cfg.indexnow_enabled %} checked{% endif %}>
+          <span class="form-check-label">IndexNow activo</span>
+        </label>
+        <label class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" name="lang_selector_enabled" value="1"{% if cfg.lang_selector_enabled %} checked{% endif %}>
+          <span class="form-check-label">Selector de idioma visible</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer d-flex justify-content-end">
+    <button class="btn btn-primary" type="submit">Guardar configuración general y redes</button>
+  </div>
+</form>
+
+<div class="card mt-3">
+  <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+    <div>
+      <h3 class="card-title">Páginas principales y traducciones</h3>
+      <div class="text-secondary small">Edita la base en español y traduce cada sección o el catálogo completo mediante APIMart.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <form method="post" action="/control/configuracion/traducir-lote"
+            data-confirm="¿Traducir con APIMart todas las páginas pendientes o desactualizadas en los idiomas seleccionados?">
+        {{ csrf_input(csrf) }}
+        <input type="hidden" name="mode" value="pending">
+        <button class="btn btn-primary btn-sm" type="submit">Traducir pendientes</button>
+      </form>
+      <form method="post" action="/control/configuracion/traducir-lote"
+            data-confirm="¿Sobrescribir TODAS las traducciones existentes regenerándolas desde el español con APIMart?">
+        {{ csrf_input(csrf) }}
+        <input type="hidden" name="mode" value="all">
+        <button class="btn btn-outline-warning btn-sm" type="submit">Re-traducir todo</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr>
+          <th>Página / Sección</th>
+          <th>Base ES</th>
+          <th>Inglés (EN)</th>
+          <th>Portugués (PT)</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for g in groups %}
+        <tr class="table-light">
+          <td colspan="4" class="fw-semibold text-uppercase small text-secondary">{{ g.label }}</td>
+        </tr>
+        {% for row in g['items'] %}
+        <tr>
+          <td>
+            <div class="fw-medium">{{ row.label }}</div>
+            <div class="small text-secondary"><code>{{ row.page_key }}</code> · <code>{{ row.langs.es.route_path }}</code></div>
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-green-lt">Base</span>
+              <a class="btn btn-sm btn-outline-secondary" href="/control/configuracion/pagina/{{ row.page_key }}?lang=es">Editar ES</a>
+            </div>
+          </td>
+          <td>
+            {% set en = row.langs.en %}
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              {% if not en.exists %}
+              <span class="badge bg-secondary-lt">Pendiente</span>
+              {% elif en.stale %}
+              <span class="badge bg-warning-lt">Desactualizada</span>
+              {% elif en.is_auto_translated and not en.reviewed %}
+              <span class="badge bg-azure-lt">IA · revisar</span>
+              {% else %}
+              <span class="badge bg-green-lt">Lista</span>
+              {% endif %}
+              <a class="btn btn-sm btn-outline-secondary" href="/control/configuracion/pagina/{{ row.page_key }}?lang=en">Editar</a>
+              <form method="post" action="/control/configuracion/pagina/{{ row.page_key }}/traducir">
+                {{ csrf_input(csrf) }}
+                <input type="hidden" name="target_lang" value="en">
+                <input type="hidden" name="return_to" value="home">
+                <button class="btn btn-sm btn-outline-primary" type="submit">Traducir EN</button>
+              </form>
+            </div>
+          </td>
+          <td>
+            {% set pt = row.langs.pt %}
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              {% if not pt.exists %}
+              <span class="badge bg-secondary-lt">Pendiente</span>
+              {% elif pt.stale %}
+              <span class="badge bg-warning-lt">Desactualizada</span>
+              {% elif pt.is_auto_translated and not pt.reviewed %}
+              <span class="badge bg-azure-lt">IA · revisar</span>
+              {% else %}
+              <span class="badge bg-green-lt">Lista</span>
+              {% endif %}
+              <a class="btn btn-sm btn-outline-secondary" href="/control/configuracion/pagina/{{ row.page_key }}?lang=pt">Editar</a>
+              <form method="post" action="/control/configuracion/pagina/{{ row.page_key }}/traducir">
+                {{ csrf_input(csrf) }}
+                <input type="hidden" name="target_lang" value="pt">
+                <input type="hidden" name="return_to" value="home">
+                <button class="btn btn-sm btn-outline-primary" type="submit">Traducir PT</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

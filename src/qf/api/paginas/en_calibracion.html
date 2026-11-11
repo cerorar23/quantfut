@@ -1,6 +1,6 @@
 {% extends "base_en.html" %}
 {% block contenido %}
-<p class="entradilla">A probability is honest if it holds up: for matches we rate at 70%, the outcome should happen roughly seven times out of ten. Here it is measured using the data the site already publishes and compared against the betting market, whether the result favours us or not.</p>
+{% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">A probability is honest if it holds up: for matches we rate at 70%, the outcome should happen roughly seven times out of ten. Here it is measured using the data the site already publishes and compared against the betting market, whether the result favours us or not.</p>{% endif %}
 <div class="aviso"><p><strong>Automatically generated page.</strong> Every figure comes from published measurements{% if revision_larga %} (last updated: {{ revision_larga }}){% endif %}; none is written by hand. The statement on whether the model beats the market is derived from those same figures. How the probabilities are built: <a href="/en/methodology/">methodology</a>.</p></div>
 
 <h2>How to read the charts</h2>

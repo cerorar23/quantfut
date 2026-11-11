@@ -10,11 +10,34 @@ export const ROUTE_PATH = {
   alta: '/pronosticos-alta-probabilidad/', parley: '/parley-del-dia/', escalera: '/reto-escalera/',
   paquetes: '/paquetes/', planes: '/planes/',
 };
+const LOCALIZED_ROUTE_PATH = {
+  en: {
+    inicio: '/en/', partidos: '/en/matches/', picks: '/en/predictions/', historial: '/en/history/',
+    alta: '/en/high-probability-picks/', parley: '/en/parlay-of-the-day/', escalera: '/en/ladder-challenge/',
+    paquetes: '/en/packages/', planes: '/en/plans/',
+  },
+  pt: {
+    inicio: '/pt/', partidos: '/pt/partidos/', picks: '/pt/previsoes/', historial: '/pt/historico/',
+    alta: '/pt/alta-probabilidade/', parley: '/pt/multipla-do-dia/', escalera: '/pt/desafio-escada/',
+    paquetes: '/pt/pacotes/', planes: '/pt/planos/',
+  },
+};
 const PATH_ROUTE = Object.fromEntries(Object.entries(ROUTE_PATH).map(([route, path]) => [path, route]));
+const LOCALIZED_PATH_ROUTE = Object.fromEntries(
+  Object.values(LOCALIZED_ROUTE_PATH).flatMap(map => Object.entries(map).map(([route, path]) => [path, route])),
+);
 const withSlash = path => (path.endsWith('/') ? path : `${path}/`);
 
+/** Idioma derivado del prefijo de URL ('en' | 'pt' | 'es'). */
+export function urlLang(loc) {
+  const path = withSlash(loc?.pathname || '/');
+  if (path.startsWith('/en/')) return 'en';
+  if (path.startsWith('/pt/')) return 'pt';
+  return 'es';
+}
+
 // Páginas de deporte con URL propia: /nba/<partido>/, /tenis/<torneo>/<partido>/ y /futbol/<competición>/<partido>/ (más sus
-// pilares /nba/, /tenis/, /futbol/). El servidor las responde con el mismo shell de la SPA y deja en <html> qué abrir.
+// pilares /nba/, /tenis/, /futbol/ y prefijos /en/, /pt/). El servidor las responde con el mismo shell de la SPA y deja en <html> qué abrir.
 // `/nba/v1`, `/nba/v2` y `/tenis/v2` son los motores, no páginas.
 const SEG = '[a-z0-9]+(?:-[a-z0-9]+)*';
 const DEPORTE_PATH = {
@@ -24,13 +47,14 @@ const DEPORTE_PATH = {
 };
 /** Deporte de una página con URL propia ('nba' | 'tenis' | 'futbol') o null. */
 export function deporteDeUrl(loc) {
-  const path = withSlash(loc.pathname || '/');
+  const path = withSlash(loc.pathname || '/').replace(/^\/(?:en|pt)(?=\/)/, '');
   return Object.keys(DEPORTE_PATH).find(sport => DEPORTE_PATH[sport].test(path)) ?? null;
 }
 export const isDeportePage = loc => deporteDeUrl(loc) !== null;
 
 /** URL que se muestra al entrar en una ruta: la limpia si la tiene, y si no `/#ruta`. */
-export const urlFor = route => ROUTE_PATH[route] ?? `/#${route}`;
+export const urlFor = (route, lang = 'es') =>
+  (LOCALIZED_ROUTE_PATH[lang]?.[route] ?? ROUTE_PATH[route] ?? `/#${route}`);
 
 /**
  * Ruta que pide una ubicación, o null si no pide ninguna conocida. Manda el hash —las rutas sin URL
@@ -40,20 +64,21 @@ export function routeFromLocation(loc, valid, canonical = route => route) {
   const hashed = canonical(String(loc.hash || '').slice(1));
   if (valid(hashed)) return hashed;
   if (isDeportePage(loc)) return 'partidos';
-  return PATH_ROUTE[withSlash(loc.pathname || '/')] ?? null;
+  const path = withSlash(loc.pathname || '/');
+  return PATH_ROUTE[path] ?? LOCALIZED_PATH_ROUTE[path] ?? null;
 }
 
 /** URL limpia a la que hay que llevar una ubicación con hash antiguo (`/#historial` → `/historial/`), o null. */
 export function cleanUrl(loc, route) {
   if (isDeportePage(loc) && !loc.hash) return null;   // /nba/…, /tenis/…, /futbol/… ya son URL limpias: no se reescriben a /partidos/
-  const path = ROUTE_PATH[route];
-  if (!path) return null;
+  if (!ROUTE_PATH[route]) return null;
+  const path = urlFor(route, urlLang(loc));
   return (withSlash(loc.pathname || '/') !== path || loc.hash) ? path : null;
 }
 
 /** Entrada que `navigate()` añade al historial, o null si la barra ya muestra esa ruta. */
-export function historyEntry(loc, route) {
-  const target = urlFor(route);
+export function historyEntry(loc, route, lang = urlLang(loc)) {
+  const target = urlFor(route, lang);
   const current = `${withSlash(loc.pathname || '/')}${loc.hash || ''}`;
   return current === target ? null : target;
 }
