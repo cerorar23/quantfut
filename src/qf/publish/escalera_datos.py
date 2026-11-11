@@ -633,10 +633,9 @@ def settle_pending(now: datetime | None = None) -> dict:
              AND NOT EXISTS (SELECT 1 FROM escalera_cierres c WHERE c.reto_id = p.reto_id)""",
         (now - timedelta(hours=3),))
     if externos:
-        from ..ingest import tenis_resultados as tr
-        with tr.RespaldoTenis() as respaldo:
+        with ext.respaldo_tenis_activo():
             for r in externos:
-                res = ext.resultado(r, now, resolver_respaldo=respaldo.resolver_paso)
+                res = ext.resultado(r, now)
                 if res is None:
                     continue
                 if res[0] == "void" and ext.sin_filas_de_resultado(r, now):

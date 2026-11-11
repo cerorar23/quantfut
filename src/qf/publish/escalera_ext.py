@@ -27,6 +27,8 @@ Solo lee el archivo; las filas inmutables las escribe `escalera_datos`.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime, timedelta
 
 from ..config import settings
@@ -216,6 +218,21 @@ def _mismo_nombre(a, b, otro=None) -> bool:
     return parecido(a, b) and not (otro is not None and parecido(a, otro))
 
 
+_RESPALDO_CORRIDA: ContextVar = ContextVar("escalera_respaldo_corrida", default=None)
+
+
+@contextmanager
+def respaldo_tenis_activo():
+    """Comparte una única sesión de respaldo de tenis entre todos los escalones de una corrida."""
+    from ..ingest import tenis_resultados as tr
+    with tr.RespaldoTenis() as respaldo:
+        tok = _RESPALDO_CORRIDA.set(respaldo.resolver_paso)
+        try:
+            yield respaldo
+        finally:
+            _RESPALDO_CORRIDA.reset(tok)
+
+
 def _resolver_respaldo_tenis(paso: dict, now: datetime) -> str | None:
     from ..ingest import tenis_resultados as tr
     with tr.RespaldoTenis() as respaldo:
@@ -245,7 +262,7 @@ def resultado(paso: dict, now: datetime, root=None, resolver_respaldo=None) -> t
     if len(otras) == 1:           # ni la casa del escalón ni Pinnacle lo calificaron y las demás coinciden
         return (otras.pop(), None, None, None)
     if paso["deporte"] == "tenis":
-        respaldo = resolver_respaldo or _resolver_respaldo_tenis
+        respaldo = resolver_respaldo or _RESPALDO_CORRIDA.get() or _resolver_respaldo_tenis
         out = respaldo(paso, now)
         if out:
             return (out, None, None, None)

@@ -149,3 +149,6 @@ def test_escalon_tenis_usa_respaldo_si_propline_no_trae_resultado_y_no_alarma_wa
     db.close()
     monkeypatch.setattr(tr, "settings", replace(tr.settings, artifact_dir=str(tmp_path)))
     assert ext.sin_filas_de_resultado(_paso(), NOW, tmp_path) is False
+    # `respaldo_tenis_activo` permite que `escalera_datos.settle_pending` llame `ext.resultado(r, now)` con 2 args.
+    with ext.respaldo_tenis_activo():
+        assert ext.resultado(_paso(), NOW, tmp_path) == ("void", None, None, None)
