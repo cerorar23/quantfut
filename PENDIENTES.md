@@ -13,7 +13,7 @@ Actualizada el **2026-11-10**. Antes tenía 105 líneas con calendario y estados
 - [ ] **Tú:** decidir si se borran 7 worktrees viejos con cambios sin confirmar (`.claude/worktrees/{escalera-7dias,escalera-horas,fallos,futbol-base-unica}`, `qf-app-nba-tenis` y `.codex/worktrees/{datos-motor-fotmob,web-real-forecasts}`). Su contenido ya está guardado en las refs `rescate/wt-*` y en el `.bundle`; el borrado forzado necesita tu visto bueno expreso.
 - **Trabajo archivado que no está en `main`** (recuperable con `git fetch <bundle> <rama>`; todo parte de octubre o principios de noviembre y chocaría con lo nuevo): radar de seis familias NBA en la app (`app/mercados-nba-seis`, `nba_markets.dart`); cuota de casa de tenis como referencia (`web/tenis-cuota-referencia`, `tenis_cuotas.py`); scripts de backtest de escalera (`feature/escalera-redesign-2026`: `backtest_profesional_escalera.py`, `backtest_maestro_mercados_totales.py`, `escalera_targets_backtest.py`); cargadores FotMob de contexto y calendario (foto `wt-datos-motor-fotmob`). Si alguno interesa, se rehace sobre `main` en su propia rama.
 - Idiomas: inglés en `preview` y portugués en `off`; falta que leas el inglés y decidas pasarlos a `on` (no probado en producción).
-- `README.md` (1.571 líneas) no se ha auditado frente a lo que corre.
+- `README.md` auditado el 10-nov-2026 frente al sistema en marcha (`CLAUDE.md`, `scripts/crontab`, `docker-compose.yml`, `Caddyfile`, `db/001..109` y `DEPLOYS.md`); las secciones históricas conservan su fecha. (`Caddyfile` del repo también alineado con F2.1 de producción: sin `302` en `/nba/*` y con `X-Robots-Tag: noindex` en `@nba_v2`.)
 
 ## 1. Depende de ti
 **Decisiones**

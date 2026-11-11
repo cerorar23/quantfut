@@ -1,11 +1,15 @@
 # QuantFut
 
-Sistema cuantitativo de predicción de fútbol para **11 ligas y 2 copas
-europeas**. Publica picks en una web propia y corre entero en un VPS de
-Contabo por ~$60/mes.
+Plataforma cuantitativa multi-deporte (**fútbol**, **NBA** y **tenis ATP/WTA**)
+con web pública en `pronosticosdeportivos.pro`, API FastAPI unificada, cadena de
+sellos criptográficos (`SHA-256`) y aplicaciones cliente en un VPS de Contabo.
 
 Sin MARL, sin tracking data, sin Transformer. El mercado como referencia y la
 infraestructura de credibilidad desde la primera línea.
+
+> **Auditado frente al sistema en marcha el 10-nov-2026** (código, `docker-compose.yml`,
+> `scripts/crontab`, `Caddyfile`, migraciones `db/001..109` y `DEPLOYS.md`). Las secciones
+> históricas de más abajo conservan mediciones y decisiones anteriores con su fecha.
 
 ---
 
@@ -31,29 +35,27 @@ con los partidos terminados de `matches` después.
 
 ## Estado de las fases
 
-| Fase | Qué es | Estado | Falta |
+| Fase | Qué es | Estado | Situación actual (auditada 10-nov-2026) |
 |---|---|---|---|
-| **0** Captura de cuotas | El activo del negocio | ✅ **100%** | — |
-| **1** Ingesta y modelo base | Datos + Dixon-Coles | 🟡 **95%** | xG reciente de FotMob (100 % de lo nuevo desde el 28-oct-2026); falta medir cobertura sostenida y obtener un candidato que supere Elo. El entrenamiento del 12-oct terminó y quedó inactivo: RPS 0,19873 frente a Elo 0,19657 en 1.051 partidos comunes (menor es mejor). Histórico previo sin primera recepción acreditada. 11 ligas + 2 copas en el modelo; 4 ligas adicionales solo sharp (Championship, 2. Bundesliga, Turquía, Noruega). El 25-oct se retiraron Serie B, LaLiga 2, Allsvenskan, Super League suiza, Ligue 2 y Superliga danesa (historial conservado). |
-| **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Muestra: 300 apuestas publicables en sombra liquidadas con el IC del CLV al cierre sin margen por encima de cero (puerta de 2.A); al 2026-10-08, 24 de 300 (IC [−0,11, +6,03] %, 0 de 3 ligas con muestra propia). Primer modelo activo desde el 2026-09-27 y sellado diario en marcha |
-| **3** Publicación y web | Lo que vendes | 🟡 **80%** | Cobros (elegir procesador). Hecho el 7-oct: cuentas, web conectada, correo Proton, panel `/control` |
-| **4** Alineaciones y GBM | Segunda generación | 🟡 **40%** | Usar el XI para ajustar lambda |
-| **5** Movimiento de línea | Producto defendible | ❌ **0%** | Todo (necesita 12 meses de datos) |
+| **0** Captura de cuotas | El activo del negocio | ✅ **100%** | PropLine primario + cascada de respaldo en `cuotas_respaldo` (The Odds API, SportsAPIPro, TheRundown). |
+| **1** Ingesta y motores | Fútbol + NBA + Tenis v2 | 🟡 **95%** | Fútbol reactivó LaLiga 2, Serie B, Allsvenskan y Superliga suiza (`db/105`); modelo habilitado para Turquía, LaLiga 2, Serie B y Allsvenskan (`db/106`, Noruega/Suiza/Championship/2. Bundesliga en espera). Entrenamiento local (`scripts/entrenamiento_local/`). NBA (`nba-api`) y Tenis v2 (`apps/tenis/` + `tenis-db`) en marcha. |
+| **2** Validación y calibración | ¿Funciona de verdad? | 🟡 **88%** | Puerta comercial de 2.A: ≥ 300 apuestas en sombra con IC95 de CLV sin margen > 0 y ≥ 3 ligas con muestra; publicación automática de picks apagada (`PUBLISH_PICKS_ENABLED=0`). Página automática `/calibracion/` y `/nba/v1/calibracion` publicadas. |
+| **3** Publicación y web | Web comercial, SEO y apps | 🟢 **Operativo (pendientes en `PENDIENTES.md`)** | Cuentas (`/app/v1`), correo Proton, panel `/control`, cobros web (**Whop**, `db/104`) y móvil (**Google Play** + Firebase), parley v2 y reto escalera multideporte (con reemplazo 6h en `db/108–109`). Web pública SSR con `/futbol/`, `/nba/`, `/tenis/`, `/nba/equipos/*`, `/metodologia/`, `/juego-responsable/`, `/sobre-nosotros/`, `/calibracion/`, `/calculadora-cuota-justa/`, `/verificacion/`, tarjetas OG (`src/qf/api/og.py`), `IndexNow`, `CSP` en Report-Only y multi-idioma (`es` activo, `en` en `preview`, `pt-BR` listo en `off`). |
+| **4** Alineaciones y señales | Segunda generación (`ajuste_xi`) | 🟡 **45%** | Ingesta activa con FotMob + SportsAPIPro + SofaScore; `qf.model.ajuste_xi` mide en sombra hasta reunir ≥ 150 partidos con efecto. |
+| **5** Movimiento de línea | Producto defendible | ❌ **0%** | Espera ≥ 12 meses de históricos continuos de snapshots. |
 
 El 13-oct-2026 el titular retiró Chile y Brasil B y autorizó borrar su historial
-protegido. Quedan 23 competiciones; Brasileirão Série A permanece. Se eliminaron
-sus datos operativos y los productos compuestos afectados, con respaldo y
-protecciones restauradas. Los lotes sellados originales conservan su evidencia.
+protegido. Se eliminaron sus datos operativos y los productos compuestos afectados,
+con respaldo y protecciones restauradas (`db/` conserva 23 competiciones en catálogo con
+Ligue 2 y Superliga danesa fuera por `db/086` y cuatro ligas reactivadas en `db/105`).
 Detalle: [eliminación verificada](docs/eliminacion_chile_brasil_b_20261013.md).
 
-**Las fases 2, 4 y 5 ya no están bloqueadas por los datos: están esperando
-MUESTRA.** Con el plan Pro de API-Football contratado (2026-09-22) el
-calendario de la temporada en curso se ingiere sin problema —173 partidos
-programados en 12 competiciones en la primera pasada— y de ahí cuelgan la
-captura de cuotas, las alineaciones a T-60 y el CLV. Lo que falta ahora es
-tiempo corriendo: los challengers no se pueden promover hasta acumular
-histórico point-in-time, y la fase 5 necesita 12 meses de snapshots. Eso no se
-acelera con código.
+**Las fases 2, 4 y 5 ya no están bloqueadas por infraestructura de ingesta: esperan
+muestra prospectiva y revisiones del titular** (ver `PENDIENTES.md`). Desde el
+25-oct-2026 API-Football quedó retirado; el calendario, los resultados, las bajas
+y los cierres en vivo corren con **PropLine + FotMob + SportsAPIPro + SofaScore**
+y los entrenamientos pesados corren en local, nunca en el cron del VPS. El código no
+acelera los plazos estadísticos ni las decisiones legales/comerciales pendientes.
 
 ### El edge del modelo no es cero: es NEGATIVO (2026-09-22)
 
@@ -651,27 +653,37 @@ no las haya.
 
 ## Calendario de procesos
 
-| Proceso | Frecuencia | Módulo |
+Resumen alineado con `scripts/crontab` (UTC; además el usuario `qf` del host ejecuta el respaldo de cuotas en contenedor efímero para cubrir montajes NBA/tenis según `DEPLOYS.md`):
+
+| Proceso | Frecuencia (UTC) | Módulo / Fuente |
 |---|---|---|
-| Captura de cuotas (desde 2026-10-03 guarda también `book_updated_at`, cuándo cambió cada casa su precio) | cada 10 min | `qf.ingest.odds_worker` |
-| Ráfagas 1X2 para medir la latencia de las casas blandas: T-6 h a T-15 min, ligas de `RAFAGAS_LIGAS`, tabla aparte `odds_rafagas`, tope `RAFAGAS_MAX_CREDITOS_MES` (3.000); se leen con `python -m qf.eval.latencia` | cada 5 min | `qf.ingest.rafagas` |
-| Cuotas de API-Football (Bet365, Betano, 1xBet, William Hill + Pinnacle), tabla `af_odds_snapshots` | retirado el 25-oct (API-Football) | `qf.ingest.af_odds` |
-| Sombra del criterio de picks: registra lo que se habría recomendado (no publica); se liquida con `qf.eval.clv` | cada hora, :25 | `qf.publish.shadow_sharp capture` |
-| Calendario de partidos | 05:15 y 17:15 | `qf.ingest.fixtures` |
-| Cierre de partidos + liquidación (guarda también `matches.stats` completo para las fichas, misma petición) | cada 3 h | `qf.ingest.results` |
-| Clasificación de cada liga para las fichas de la web, calculada con nuestros resultados (sin peticiones), y escudos nuevos (una vez por equipo, volumen `escudos`, servidos en `/web/escudos/{team_id}.png`) | cada hora, :50 | `qf.ingest.standings` |
-| Marcador en juego para la app: listado diario de FotMob, una petición por pasada y solo con partidos en ventana | cada 5 min | `qf.ingest.live` |
-| xG histórico | retirado el 25-oct | `qf.ingest.xg_worldfootball` |
-| Histórico de copas europeas | retirado el 25-oct | `qf.ingest.uefa_cups` |
-| Alineaciones a T-60 (API-Football; las sustituye `sofascore_alineaciones`) | retirado el 25-oct | `qf.ingest.lineups` |
-| Challenger de XI en sombra | cada 5 min, después de la captura | `qf.model.shadow` |
-| Chequeo de salud | 07:00 | `qf.ingest.health` |
-| Predicciones, picks, sellado, publicación (picks apagados con `PUBLISH_PICKS_ENABLED=0`: solo predice y sella) | 08:00 | `qf.publish.daily` |
-| CLV de respaldo | 02:30, 10:30, 18:30 | `qf.eval.clv` |
+| Captura de cuotas y tiempos de actualización | cada 10 min (`*/10`) | `qf.ingest.odds_worker` |
+| Rescate de cierre 1X2 desfasado | cada 10 min (`5-59/10`) | `qf.ingest.odds_worker --solo-cierre` |
+| Archivo de cierres de PropLine (`/odds/closing`) | cada 3 h (`:40`) | `qf.ingest.propline_cierres` |
+| Cascada de respaldo NBA/tenis/fútbol (si `CUOTAS_RESPALDO_AUTO=1`) | cada 10 min (`7-57/10`) | `qf.ingest.cuotas_respaldo --auto` |
+| Ráfagas 1X2 para medir latencia (`RAFAGAS_LIGAS`) | cada 5 min (`*/5`) | `qf.ingest.rafagas` |
+| Sombra del criterio sharp de picks | cada hora (`:25`) | `qf.publish.shadow_sharp capture` |
+| Calendario de partidos futuros | 05:15 y 17:15 | `qf.ingest.fixtures` |
+| Clasificación calculada y escudos nuevos | cada hora (`:50`) | `qf.ingest.standings` |
+| Marcador en vivo y cierre inmediato al pitido (FotMob) | cada 5 min (`*/5`) | `qf.ingest.live` |
+| Cierre de partidos + liquidación encadenada (PropLine) | cada 3 h (`:45`) | `qf.ingest.results` |
+| Captura FotMob (`referencias`, `previos`, `posteriores`, `completar`, `resultados`) | diario `05:50` / `*/5` / `:35` / `:50` / `:55` | `qf.ingest.fotmob_captura` |
+| Bajas y alineaciones (FotMob + respaldo SportsAPIPro T-30/T-22) | cada 5 min (`2-59/5`, `4-59/5`) | `qf.ingest.fotmob_alineaciones`, `qf.ingest.sportsapipro_alineaciones` |
+| Testigo de calendario/resultados (10 ligas) | 01:10 y 13:10 | `qf.ingest.fdorg_respaldo` |
+| Clima histórico ERA5 y sedes/altitud | 06:20 diario / `:50` cada hora | `qf.ingest.era5_clima`, `qf.ingest.sedes` |
+| Chequeo de salud operativo | 07:00 diario | `qf.ingest.health` |
+| Challenger de XI en sombra | cada 5 min (`1-56/5`) | `qf.model.shadow` |
+| Estado de fuerzas/onces y medición del ajuste XI | `:12` cada hora / 07:30 diario | `qf.model.ajuste_xi --estado` / `--medir --avisar` |
+| Predicciones, picks, sellado y publicación diaria | **09:00 UTC** diario | `qf.publish.daily` (`PUBLISH_PICKS_ENABLED=0` por defecto) |
+| Parley v2 en lote propio (multi-deporte si habilitado) | 09:35–10:00 diario | `qf.publish.parley_v2_datos` |
+| Sello tardío por partido (`LOTE_POR_PARTIDO_DESDE`) | cada 5 min (`*/5`) | `qf.publish.sello_tardio` |
+| Reemplazo intradía de reto escalera si un escalón supera 6 h nulo/aplazado | cada 5 min (`*/5`) | `qf.publish.escalera_datos reemplazar` |
+| Liquidación y CLV de respaldo | 02:30, 10:30, 18:30 | `qf.eval.clv` |
+| Cola Conversions API de Meta (`META_CAPI_ENABLED`) | cada 5 min (`*/5`) | `qf.comercial.meta_capi` |
 | Resumen semanal público | lunes 09:00 | `qf.publish.weekly` |
-| Verificación de la cadena | 06:00 | `qf.publish.hashchain verify` |
-| Reentrenamiento | día 1 del mes | `qf.model.train` |
-| Arranque sin modelo activo (sale en segundos si hay modelo o el mercado es viejo) | días 2-31, 01:05 | `qf.model.train --bootstrap` |
+| Verificación de cadena SHA-256 | 06:00 diario | `qf.publish.hashchain verify` |
+| Reentrenamiento del Motor A (`train` / `train --bootstrap`) | **retirado del cron del VPS el 26-oct-2026** | Se entrena en local (`scripts/entrenamiento_local/`) |
+| Cuotas `af_odds`, `xg_worldfootball`, `uefa_cups`, `lineups` (API-Football) | retirados el 25-oct-2026 | Histórico conservado en BD |
 
 El job diario tiene un orden estricto: predecir → seleccionar → **sellar** →
 publicar. Si el sellado falla no se publica nada ese día. Mejor no publicar que
@@ -1058,11 +1070,11 @@ los alias revisados.
 
 **Dos fallos del cron del contenedor corregidos antes del primer despliegue**,
 ambos mudos: el worker copiaba a `/etc/environment` solo ciertos prefijos y
-dejaba fuera `API_FOOTBALL_*` (calendario, resultados, alineaciones, lesiones
-y cuotas de API-Football habrían fallado siempre), y el crontab no fijaba
-`PATH`, con lo que cron no encontraba `python` en `/usr/local/bin`. Para
-comprobar que el cron funciona: `docker compose exec worker tail
-/var/log/af_odds.log` pasada la hora y 20.
+dejaba fuera variables de APIs en pasadas anteriores, y el crontab no fijaba
+`PATH`, con lo que cron no encontraba `python` en `/usr/local/bin`. Hoy `docker-compose.yml`
+vuelca el entorno completo y el worker activo registra la captura de cuotas en `/var/log/odds.log`
+(`docker compose exec worker tail /var/log/odds.log`). La API conecta con `default`, `tenis_net`
+y `nba_api_red` (`docker-compose.yml`).
 
 ### Proxy con TLS
 
@@ -1100,14 +1112,18 @@ Dos cosas que cambian por tener Cloudflare delante, ambas en el `Caddyfile`:
 
 ## APIs y costes
 
-| Servicio | Plan | Coste | Para qué |
+| Servicio | Plan / Uso actual | Coste | Para qué |
 |---|---|---|---|
-| The Odds API | 20K créditos | $30/mes | Cuotas, Pinnacle, Betfair Exchange |
-| Fuentes vigentes | ver «Fuentes de datos vigentes» | — | PropLine, FotMob, SportsAPIPro, SofaScore, ERA5 |
+| PropLine | Archivo compartido / recolector VPS | según licencia vigente | Fuente primaria de cuotas, cierres, calendario y resultados |
+| The Odds API | Créditos prepago por lotes (`cuotas_respaldo`) | por consumo | Respaldo automático de huecos tras PropLine e históricos puntuales |
+| FotMob + SportsAPIPro + TheRundown Free | API / web + claves locales | según plan vigente | Once, bajas, xG reciente, marcadores en vivo y último respaldo de cuotas |
 | football-data.org (v4) | `qf.ingest.fdorg_respaldo` | gratis, 10 peticiones/min | testigo de calendario y resultados en 10 ligas; solo avisa, nunca escribe en `matches` |
-| VPS Contabo | 4 vCPU / 8 GB | ~$9/mes | Todo |
-| Dominio + backups | — | ~$2/mes | — |
-| **Total** | | _pendiente de recalcular_ | Las fuentes de pago retiradas ya no cuentan |
+| Whop + Google Play + Firebase + Proton SMTP | Pasarela web / móvil / correo | comisión por cobro / plan | Cuentas, suscripciones, verificación y alertas |
+| VPS Contabo | 4 vCPU / 8 GB | según factura actual | Stack Docker (Postgres, Redis, API, worker, Grafana, Caddy, NBA, Tenis) |
+
+> Nota histórica (sep–oct 2026): los párrafos siguientes conservan los cálculos de créditos
+> de The Odds API y API-Football cuando eran las únicas fuentes en vivo (API-Football se retiró
+> el 25-oct-2026).
 
 **The Odds API cobra en créditos, no en llamadas**: cada llamada cuesta
 `n_mercados × n_regiones`.
@@ -1459,43 +1475,32 @@ con esas cuotas, coherente con un mercado real); quedan 697 huecos en las 13 lig
 ## Estructura
 
 ```
-db/              001 esquema · 002 ligas · 003 (tablas de la primera fuente de alineaciones) · 004 Grafana
-                 005 alias de FBref (revisados a mano, ver el propio archivo)
-                 006 estadísticas de remates
-                 007 MLS + copas europeas (competición != liga del equipo)
-                 008 alias de MLS · 009 alias de Argentina
-                 010 Bundesliga, Ligue 1, Primeira · 011 sus alias
-                 012 tablas de challengers en sombra
+db/              001..109 migraciones SQL incrementales (esquema, ligas/alias, inmutabilidad,
+                 copas, challengers en sombra, comercialización/Whop/consentimiento db/104,
+                 reactivación y habilitación de ligas db/105–107, escalera db/108–109)
+apps/tenis/      Motor v2 de tenis ATP/WTA (tenis-db, ingesta TML/SofaScore, modelo R+P,
+                 simulador analítico, sellado criptográfico, motor T-60, l10n, ops y tests)
+apps/mobile/     Cliente móvil Flutter (auth Firebase, compras Google Play, l10n en 6 idiomas)
+frontend/        Web SPA pública + estilos base + tests Node (`npm run check`)
 grafana/         provisioning + dashboard de operación
-scripts/         setup_fase1.sh · bootstrap_aliases.py · crontab
-                 evaluate_challengers.py (evaluación de solo lectura)
-                 harness_check.sh  (sintaxis + tests + compose, antes de tocar nada)
-tests/           casos sobre datos simulados: recuperación de parámetros,
-                 ausencia de fugas point-in-time, unidades del stake
+scripts/         setup_fase1.sh · restore_db.sh · crontab · harness_check.sh
+                 test_local_windows.ps1 (compatible con worktrees) · entrenamiento_local/
+                 verificar_cadena_publica.py (verificador público F8 sin dependencias)
+tests/           Suite Python (no-fuga PIT, modelos, APIs, SEO multi-idioma, OG, CSP, cadena)
 src/qf/
-  ingest/        odds_worker · fixtures · results · health
-                 propline_*         cuotas, cierres, resultados y calendario de PropLine
-                 fotmob_*           captura, alineaciones y resultados de FotMob
-                 sportsapipro_alineaciones  huecos de once y bajas
-                 sofascore_carga    escribe bajas y once con ids de SofaScore
-                 lineups            disponibilidad de titulares (`availability`)
-                 game_state         xG por estado del marcador (ver arriba)
-  model/         dixon_coles   efectos por liga + fuerza relativa entre ligas
-                 kalman        ratings dinámicos (estado latente)
-                 elo           baseline secuencial 1X2
-                 features      descanso, Elo, forma y tiros point-in-time
-                 multinomial   challengers deportivos y anclados a Pinnacle
-                 lineup_challenger · shadow · promotion
-                 structure     formas alternativas de la matriz (solo informe)
-                 calibration   corrección afín sobre las lambdas
-                 meta          peso óptimo modelo/mercado
-                 residual      GBM sobre el residuo (desactivado por defecto)
-                 pricing · devig · train
-  publish/       daily · picks · hashchain · telegram · weekly
-  eval/          clv · metrics · backtest · comparison
-  api/           main (público + servicio + admin) · cuentas (/app/v1, clientes)
-                 panel (/control, Jinja2 + Tabler) · console (auth y vista de sistema)
-  comercial/     cuentas y sesiones · suscripciones · métricas del panel · entrega de picks
+  ingest/        odds_worker · fixtures · results · health · rafagas · cuotas_respaldo*
+                 propline_* · fotmob_* · sportsapipro_alineaciones · sofascore_*
+                 era5_clima · sedes · estadios_altitud · lineups · game_state
+  model/         dixon_coles · kalman · elo · features · multinomial · ajuste · ajuste_xi
+                 lineup_challenger · shadow · promotion · primer_tiempo · score_driven
+                 calibration · meta · residual · pricing · devig · train
+  publish/       daily · picks · hashchain · seal/sello_tardio · alta_prob* · escalera*
+                 parley* · parley_v2* · destacado_web · telegram · weekly
+  eval/          clv · metrics · backtest · comparison · sharp_challengers · calibracion_*
+  api/           main · rutas_web · paginas · idiomas (es/en/pt) · seo · csp · og · indexnow
+                 nba_* · futbol_* · tenis_* · calibracion · cuota_justa · verificacion
+                 fichas · mobile · cuentas · cuenta_web · compras · whop · panel · console
+  comercial/     cuentas · sesiones · suscripciones · whop · entrega · correo · meta_* · metricas
   normalize.py   emparejamiento de nombres entre fuentes
 ```
 

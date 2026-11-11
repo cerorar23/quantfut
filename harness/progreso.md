@@ -1,6 +1,13 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 10-nov-2026 · Auditoría de `README.md`, alineación de `Caddyfile`, arnés en worktrees y limpieza de `tareas.md`/`PENDIENTES.md` (rama `seo/f63-calibracion-calculadora`)
+
+- **`Caddyfile` del repo alineado con producción F2.1:** F2.1 quitó `handle @nba { redir * /nba/v2/ 302 }` y añadió `header X-Robots-Tag noindex` en `@nba_v2` directamente en el servidor (`DEPLOYS.md`, 9-nov 01:26 UTC), dejando pendiente alinear el repo (`docs/plan_despliegue_nba_f21_20261108.md` §3). Sin este ajuste, recrear Caddy desde el repositorio devolvería 302 en todas las páginas públicas `/nba/*`.
+- **Auditoría de `README.md` (`PENDIENTES.md`):** actualizadas las secciones operativas de cabecera, fases, cron (`scripts/crontab`: `daily` 09:00 UTC, entrenamiento local en vez del cron del VPS, cascada de respaldo y `parley_v2`/`escalera`), pagos (`Whop` + `Google Play`), APIs y estructura (`db/001..109`, `apps/tenis/`, `apps/mobile/`) conservando las secciones históricas fechadas.
+- **`scripts/test_local_windows.ps1` en worktrees:** cuando no existe `.venv\Lib\site-packages` en el worktree, resuelve el directorio común de git (`git rev-parse --git-common-dir`) para localizar el `.venv` del repo principal sin copiar ni modificar el entorno, exige `import ctypes, ssl` al probar candidatos de Python 3.12 (evitando caer en un `.venv\Scripts\python.exe` con `_ctypes`/`_ssl` rotos) e incluye `apps/tenis/src` en `sys.path` para que `qf.api.main` resuelva `tenis.sellado`.
+- **Limpieza de `harness/tareas.md`:** marcados como `[x]` los hitos de diseño/planificación (F2.2, D5–D8, F3.3 y desglose F2–F8) ya completados en commits posteriores dentro del mismo archivo, dejando intactos los bloqueos reales (revisión legal F7, muestras estadísticas, fechas ~16-nov / ene-2027, 7 worktrees del titular y mejoras de app separadas).
+
 ## 10-nov-2026 · Cierre técnico seguro de fases restantes: F5 (`modulepreload`), §7 (`contactPoint`), F8 verificador público y checklist legal F7 (rama `seo/f63-calibracion-calculadora`, sin desplegar)
 
 - Alcance ejecutado: tras F6.3, se completan exclusivamente las entregas de código seguras sin saltar bloqueos de calendario ni requisitos jurídicos:
