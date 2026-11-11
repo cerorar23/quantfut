@@ -1,6 +1,11 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 11-nov-2026 · Despliegue en producción de `/control/configuracion`, textos web en Postgres e integración APIMart (`quantfut-api:f73f7df2`, `DEPLOYS.md`)
+
+- Construida en el servidor desde `git archive origin/main` (`f73f7df2`) la imagen `quantfut-api:f73f7df2` (`e1fe95deeb03`), ensayada en aislado (`292` rutas, `0` errores de módulo, `tenis.sellado: OK`) y desplegada recreando únicamente `api` a las `21:05:29 UTC` (`compose` anterior respaldado en `releases/compose-antes-20261111-210458.yml`).
+- Aplicada `db/110_web_config.sql` en PostgreSQL preservando explícitamente `lang_states = {"en": "preview", "pt": "off"}` en `web_site_settings` para no alterar la visibilidad previa de `activos.txt` (`en=preview`), con `web_page_contents` sembrada (`es=22`, `en=10`, `pt=10`) y textos en UTF-8 comprobados en `/web/config`. `QF_SECRETS_KEY` ya existe en `.env`; la clave compartida en chat no se subió ni se escribió en el VPS pendiente de rotación por el titular.
+
 ## 10-nov-2026 · Auditoría de `README.md`, alineación de `Caddyfile`, arnés en worktrees y limpieza de `tareas.md`/`PENDIENTES.md` (rama `seo/f63-calibracion-calculadora`)
 
 - **`Caddyfile` del repo alineado con producción F2.1:** F2.1 quitó `handle @nba { redir * /nba/v2/ 302 }` y añadió `header X-Robots-Tag noindex` en `@nba_v2` directamente en el servidor (`DEPLOYS.md`, 9-nov 01:26 UTC), dejando pendiente alinear el repo (`docs/plan_despliegue_nba_f21_20261108.md` §3). Sin este ajuste, recrear Caddy desde el repositorio devolvería 302 en todas las páginas públicas `/nba/*`.
