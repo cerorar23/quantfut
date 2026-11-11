@@ -345,3 +345,48 @@ def test_reemplazar_nulos_cubre_reto_y_oculta_void_en_activos(monkeypatch):
     monkeypatch.setattr(ed, "vencido", lambda r, now=None: True)
     inf_hist = ed.informe_publico()
     assert len(inf_hist["historial"][0]["pasos"]) == 1 and inf_hist["historial"][0]["pasos"][0]["outcome"] == "void"
+
+
+def test_cierre_manual_termina_reto_pendiente_con_saldo_realizado(monkeypatch):
+    from dataclasses import replace
+    from datetime import datetime, timedelta, timezone
+    from qf.publish import escalera_datos as ed
+
+    st = es.estado(Decimal("10"), 2, None, [es.Paso(1, 1.03, "void"), es.Paso(2, 1.03, None)], cerrado=True)
+    assert st["estado"] == "expirado" and st["saldo"] == Decimal("10.00")
+    assert st["ganancia"] == Decimal("0.00") and st["en_juego"] is None
+
+    st_win = es.estado(Decimal("10"), 2, None, [es.Paso(1, 1.30, "win"), es.Paso(2, 1.25, None)], cerrado=True)
+    assert st_win["estado"] == "expirado" and st_win["saldo"] == Decimal("13.00")
+    assert st_win["ganados"] == 1 and st_win["ganancia"] == Decimal("3.00")
+
+    assert es.estado(Decimal("10"), 2, None, _pasos((1.30, "loss")), cerrado=True)["estado"] == "fallido"
+    assert es.estado(Decimal("10"), 2, None, _pasos((1.30, "win"), (1.25, "win")), cerrado=True)["estado"] == "completado"
+
+    ahora = datetime(2026, 11, 11, 3, 15, tzinfo=timezone.utc)
+    reto = {"reto_id": 21, "stake_inicial": Decimal("10.00"), "pasos_objetivo": 2,
+            "freeroll_x": None, "dias_max": None, "target_cuota": None,
+            "prob_objetivo": Decimal("0.80"), "cuota_min": Decimal("1.03"),
+            "cuota_max": Decimal("1.40"), "created_at": ahora, "closed_at": ahora}
+    paso = {"paso_id": 99, "reto_id": 21, "paso": 3, "match_id": None,
+            "evento_id": "tenis:726965", "evento_inicio": ahora + timedelta(minutes=15),
+            "evento_deporte": "tenis", "evento_torneo": "ATP",
+            "evento_local": "A", "evento_visita": "B",
+            "market": "h2h", "selection": "home", "line": None,
+            "prob": Decimal("0.97"), "price": Decimal("1.03"), "book": "hardrock",
+            "decided_at": ahora, "lote_dia": date(2026, 11, 10), "outcome": None,
+            "home_goals": None, "away_goals": None, "local": None, "visitante": None,
+            "league_id": None, "kickoff_utc": None, "valor": None}
+    monkeypatch.setattr(ed, "settings", replace(ed.settings, escalera_enabled=True))
+    monkeypatch.setattr(ed, "query", lambda sql, params=(): [reto] if "escalera_retos" in sql else [paso])
+    assert ed.estado_reto(reto, [paso], ahora)["estado"] == "expirado"
+    paso_void = {**paso, "outcome": "void", "settled_at": ahora - timedelta(hours=7)}
+    monkeypatch.setattr(ed, "query", lambda sql, params=(): [reto] if "escalera_retos" in sql else [paso_void])
+    assert ed.reemplazar_nulos(ahora, dry_run=True) == {
+        "estado": "sin_reemplazos", "settled": 0, "reemplazados": 0, "plan": [],
+    }
+    monkeypatch.setattr(ed, "query", lambda sql, params=(): [reto] if "escalera_retos" in sql else [paso])
+    inf = ed.informe_publico()
+    assert inf["actuales"] == []
+    assert len(inf["historial"]) == 1
+    assert inf["historial"][0]["estado"] == "expirado" and inf["historial"][0]["ganancia"] == "0.00"
