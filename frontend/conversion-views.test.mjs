@@ -334,3 +334,47 @@ test('parley v2: un parley de un partido bloqueado (escalón 0) no muestra objet
   assert.doesNotMatch(view, /0\.00/);
   assert.doesNotMatch(view, /≈0\.0/);
 });
+
+test('escalera activa oculta escalones nulos o aplazados y renumera los visibles', () => {
+  const escalera = {
+    status: 'ready',
+    data: {
+      activo: true,
+      reglas: { cuota_min: 1.25, cuota_max: 2.1, stake: '10.00', targets: [2], max_escalones: 6,
+        prob_min: 0.69, prob_max: 0.95, dias_max: 10, por_dia: 1, lineas_handicap: [] },
+      actuales: [
+        {
+          reto_id: 21, estado: 'esperando', ganados: 0, pasos_objetivo: 2, saldo: '10.00', en_juego: '10.00',
+          stake_inicial: '10.00', retirado: '0.00', prob_objetivo: 0.8, vip: [],
+          pasos: [
+            { paso: 1, league_id: 'tenis', kickoff_utc: '2026-11-10T07:00:00Z', texto: 'Gana Jugador A',
+              local: 'Jugador A', visitante: 'Rival A', prob: 0.95, price: 1.03, book: 'bovada', outcome: 'void', chain_sha256: 'a'.repeat(64) },
+            { paso: 2, league_id: 'nba', kickoff_utc: '2026-11-10T22:00:00Z', texto: 'Más de 210,5 puntos',
+              local: 'Celtics', visitante: 'Wizards', prob: 0.91, price: 1.28, book: 'bovada', outcome: null, chain_sha256: 'b'.repeat(64) },
+          ],
+        },
+        {
+          reto_id: 22, estado: 'en_curso', ganados: 0, pasos_objetivo: 2, saldo: '10.00', en_juego: null,
+          stake_inicial: '10.00', retirado: '0.00', prob_objetivo: 0.8, vip: [],
+          pasos: [
+            { paso: 1, league_id: 'tenis', kickoff_utc: '2026-11-10T07:00:00Z', texto: 'Gana Pendiente',
+              local: 'P1', visitante: 'P2', prob: 0.95, price: 1.03, book: 'bovada', outcome: 'void', chain_sha256: 'e'.repeat(64) },
+          ],
+        },
+      ],
+      historial: [{
+        reto_id: 20, estado: 'completado', ganados: 2, pasos_objetivo: 2, saldo: '16.90', stake_inicial: '10.00',
+        retirado: '0.00', ganancia: '6.90', inicio: '2026-11-01T10:00:00Z', vip: [],
+      }],
+      resumen: { cerrados: 1, completados: 1, expirados: 0, ganancia: '6.90', invertido: '10.00', roi: 69.0, tasa_completados: 100 },
+      serie: [{ acumulado: '6.90', reto_id: 20 }],
+    },
+  };
+  const view = createConversionViews(helpers({ escalera })).escaleraView();
+  assert.doesNotMatch(view, /Gana Jugador A/);
+  assert.doesNotMatch(view, /Gana Pendiente/);
+  assert.doesNotMatch(view, /Nulo \(aplazado\)/);
+  assert.match(view, /Escalón 1 · nba/);
+  assert.match(view, /Más de 210,5 puntos/);
+  assert.match(view, /Esperando su primer escalón sellado/);
+});

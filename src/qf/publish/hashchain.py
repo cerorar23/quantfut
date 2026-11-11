@@ -195,6 +195,7 @@ def _collect(batch_date: date) -> dict:
                   deporte, evento_id, evento_sport, evento_inicio, evento_local, evento_visitante
            FROM escalera_pasos
            WHERE (decided_at AT TIME ZONE 'UTC')::date = %s
+             AND reemplaza_paso_id IS NULL
            ORDER BY decided_at, paso_id""",
         (batch_date,),
     ) if con_escalera else []
@@ -377,6 +378,43 @@ def _collect_partido(match_id: str) -> dict:
     }
 
 
+def _escribir_y_registrar(batch_kind: str, dia: date, match_id: str, ruta: str, payload: dict,
+                          n_predictions: int, n_picks: int, git_push: bool) -> dict:
+    """Serializa el lote, enlaza la cadena, graba recibo/LEDGER/BD y empuja el compromiso."""
+    body = canonical_json(payload)
+    payload_hash = sha256_hex(body)
+    prev = _prev_chain_hash()
+    chain_hash = sha256_hex(prev + payload_hash)
+
+    out_dir = Path(settings.chain_dir)
+    (out_dir / ruta).parent.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{ruta}.json").write_text(body, encoding="utf-8")
+    receipt = {
+        "batch_kind": batch_kind,
+        "batch_date": dia.isoformat(),
+        "match_id": match_id,
+        "payload_sha256": payload_hash,
+        "prev_sha256": prev,
+        "chain_sha256": chain_hash,
+        "n_predictions": n_predictions,
+        "n_picks": n_picks,
+        "sealed_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    (out_dir / f"{ruta}.receipt.json").write_text(canonical_json(receipt), encoding="utf-8")
+    _append_ledger(out_dir / "LEDGER.md", receipt)
+
+    execute(
+        """INSERT INTO prediction_batches
+             (batch_date, batch_kind, match_id, n_predictions, n_picks, payload_sha256, prev_sha256, chain_sha256)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+        (dia, batch_kind, match_id, n_predictions, n_picks, payload_hash, prev, chain_hash))
+
+    if git_push and settings.chain_git_remote:
+        _git_comprometer(out_dir, dia, chain_hash)
+    log.info("Lote %s %s sellado. chain=%s", batch_kind, match_id, chain_hash[:16])
+    return receipt
+
+
 def seal_partido(match_id: str, git_push: bool = True) -> dict:
     """Sella el lote de un partido. Idempotente por partido (índice único en la base). Requiere su predicción final."""
     existing = query_one(
@@ -391,40 +429,70 @@ def seal_partido(match_id: str, git_push: bool = True) -> dict:
         log.info("Sin predicción final para %s, no se sella nada.", match_id)
         return {}
     dia = payload["predictions"][0]["kickoff_utc"].astimezone(timezone.utc).date()
-    ruta = _ruta_partido(match_id, dia)
+    return _escribir_y_registrar("partido", dia, match_id, _ruta_partido(match_id, dia), payload,
+                                 payload["n_predictions"], payload["n_picks"], git_push)
 
-    body = canonical_json(payload)
-    payload_hash = sha256_hex(body)
-    prev = _prev_chain_hash()
-    chain_hash = sha256_hex(prev + payload_hash)
 
-    out_dir = Path(settings.chain_dir)
-    (out_dir / ruta).parent.mkdir(parents=True, exist_ok=True)
-    (out_dir / f"{ruta}.json").write_text(body, encoding="utf-8")
-    receipt = {
-        "batch_kind": "partido",
-        "batch_date": dia.isoformat(),
-        "match_id": match_id,
-        "payload_sha256": payload_hash,
-        "prev_sha256": prev,
-        "chain_sha256": chain_hash,
-        "n_predictions": payload["n_predictions"],
-        "n_picks": payload["n_picks"],
-        "sealed_at_utc": datetime.now(timezone.utc).isoformat(),
+def _ruta_escalera(paso_id: str, dia: date) -> str:
+    """Ruta relativa del lote intradía de un escalón de reemplazo de la escalera."""
+    seguro = str(paso_id or "")
+    if not seguro or not all(c.isalnum() or c in "-_" for c in seguro) or ".." in seguro:
+        raise ValueError(f"paso_id no apto como nombre de archivo: {paso_id!r}")
+    return f"escalera/{dia.isoformat()}/{seguro}"
+
+
+def _collect_escalera(paso_id: str) -> dict:
+    """Escalón de reemplazo de la escalera que se sella al instante fuera del lote diario."""
+    paso = query_one(
+        """SELECT p.paso_id, p.reto_id, p.paso, p.match_id, p.market, p.selection, p.line,
+                  p.prob, p.fair_price, p.price, p.book, p.odds_source, p.odds_as_of,
+                  p.decided_at, p.deporte, p.evento_id, p.evento_sport, p.evento_inicio,
+                  p.evento_local, p.evento_visitante, p.kickoff_utc, p.reemplaza_paso_id
+           FROM escalera_pasos p
+           WHERE p.paso_id = %s""",
+        (paso_id,),
+    )
+    if not paso:
+        return {}
+    return {
+        "batch_kind": "escalera",
+        "paso_id": str(paso_id),
+        "model_version": settings.model_version,
+        "fs_version": settings.fs_version,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "n_predictions": 0,
+        "n_picks": 1,
+        "escalera": {"retos": [], "pasos": [paso]},
     }
-    (out_dir / f"{ruta}.receipt.json").write_text(canonical_json(receipt), encoding="utf-8")
-    _append_ledger(out_dir / "LEDGER.md", receipt)
 
-    execute(
-        """INSERT INTO prediction_batches
-             (batch_date, batch_kind, match_id, n_predictions, n_picks, payload_sha256, prev_sha256, chain_sha256)
-           VALUES (%s, 'partido', %s, %s, %s, %s, %s, %s)""",
-        (dia, match_id, payload["n_predictions"], payload["n_picks"], payload_hash, prev, chain_hash))
 
+def seal_escalera(paso_id: str, git_push: bool = True) -> dict:
+    """Sella al instante un escalón de reemplazo de la escalera (intradía, idempotente por paso_id)."""
+    key = str(paso_id)
     if git_push and settings.chain_git_remote:
-        _git_comprometer(out_dir, dia, chain_hash)
-    log.info("Lote del partido %s sellado. chain=%s", match_id, chain_hash[:16])
-    return receipt
+        _git_revelar(Path(settings.chain_dir))
+
+    existing = query_one(
+        "SELECT batch_id, chain_sha256 FROM prediction_batches WHERE batch_kind = 'escalera' AND match_id = %s",
+        (key,),
+    )
+    if existing:
+        log.warning("El lote del escalón %s ya está sellado (%s).", key, existing["chain_sha256"][:16])
+        return existing
+
+    payload = _collect_escalera(key)
+    if not payload:
+        log.info("Sin escalón %s, no se sella nada.", key)
+        return {}
+    decided = payload["escalera"]["pasos"][0].get("decided_at")
+    if isinstance(decided, datetime):
+        if decided.tzinfo is None:
+            decided = decided.replace(tzinfo=timezone.utc)
+        dia = decided.astimezone(timezone.utc).date()
+    else:
+        dia = datetime.now(timezone.utc).date()
+    return _escribir_y_registrar("escalera", dia, key, _ruta_escalera(key, dia), payload,
+                                 0, 1, git_push)
 
 
 def _append_ledger(path: Path, r: dict) -> None:
@@ -454,6 +522,7 @@ def _git_comprometer(out_dir: Path, batch_date: date, chain_hash: str) -> None:
     try:
         recibos = sorted(p.name for p in out_dir.glob("????-??-??.receipt.json"))
         recibos += sorted(p.relative_to(out_dir).as_posix() for p in out_dir.glob("partido/????-??-??/*.receipt.json"))
+        recibos += sorted(p.relative_to(out_dir).as_posix() for p in out_dir.glob("escalera/????-??-??/*.receipt.json"))
         _git(out_dir, "add", "--", "LEDGER.md", *recibos)
         _git(out_dir, "commit", "-m",
              f"compromiso {batch_date.isoformat()} chain={chain_hash[:16]}")
@@ -506,24 +575,55 @@ def revelables(out_dir: Path, ahora: datetime, estado=_estado_partidos) -> list[
     return due
 
 
+def _jsons_de_subdirectorio(out_dir: Path, sub: str) -> list[Path]:
+    return sorted(f for f in out_dir.glob(f"{sub}/????-??-??/*.json") if not f.name.endswith(".receipt.json"))
+
+
 def _jsons_de_partido(out_dir: Path) -> list[Path]:
-    return sorted(f for f in out_dir.glob("partido/????-??-??/*.json") if not f.name.endswith(".receipt.json"))
+    return _jsons_de_subdirectorio(out_dir, "partido")
 
 
-def revelables_partido(out_dir: Path, ahora: datetime, estado=_estado_partidos) -> list[str]:
-    """Lotes de partido (ruta relativa) cuyo partido ya terminó y cuyo JSON aún no está en el repo."""
+def _jsons_de_escalera(out_dir: Path) -> list[Path]:
+    return _jsons_de_subdirectorio(out_dir, "escalera")
+
+
+def _inicio_externo_escalera(payload: dict) -> datetime | None:
+    pasos = (payload.get("escalera") or {}).get("pasos", [])
+    fechas = []
+    for p in pasos:
+        raw = p.get("evento_inicio")
+        if isinstance(raw, datetime):
+            dt = raw if raw.tzinfo else raw.replace(tzinfo=timezone.utc)
+            fechas.append(dt)
+        elif isinstance(raw, str) and raw:
+            dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            fechas.append(dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc))
+    return max(fechas) if fechas else None
+
+
+def _revelables_en(out_dir: Path, sub: str, ahora: datetime, estado=_estado_partidos) -> list[str]:
     try:
         subidos = set(subprocess.run(
-            ["git", "ls-files", "--", "partido"], cwd=out_dir, check=True,
+            ["git", "ls-files", "--", sub], cwd=out_dir, check=True,
             capture_output=True, timeout=60).stdout.decode().split())
     except (subprocess.CalledProcessError, OSError):
         return []
     due: list[str] = []
-    for f in _jsons_de_partido(out_dir):
+    for f in _jsons_de_subdirectorio(out_dir, sub):
         rel = f.relative_to(out_dir).as_posix()
         if rel in subidos:
             continue
-        ultimo, terminados = estado(_ids_de_partidos(json.loads(f.read_text(encoding="utf-8"))))
+        payload = json.loads(f.read_text(encoding="utf-8"))
+        ids = _ids_de_partidos(payload)
+        if ids:
+            ultimo, terminados = estado(ids)
+        elif sub == "escalera":
+            ultimo = _inicio_externo_escalera(payload)
+            paso_id = payload.get("paso_id")
+            terminados = bool(paso_id and query_one(
+                "SELECT 1 AS x FROM escalera_resultados WHERE paso_id = %s", (paso_id,)))
+        else:
+            ultimo, terminados = None, False
         if ultimo is None:
             continue
         pasado = ahora - ultimo
@@ -532,20 +632,32 @@ def revelables_partido(out_dir: Path, ahora: datetime, estado=_estado_partidos) 
     return due
 
 
+def revelables_partido(out_dir: Path, ahora: datetime, estado=_estado_partidos) -> list[str]:
+    """Lotes de partido (ruta relativa) cuyo partido ya terminó y cuyo JSON aún no está en el repo."""
+    return _revelables_en(out_dir, "partido", ahora, estado)
+
+
+def revelables_escalera(out_dir: Path, ahora: datetime, estado=_estado_partidos) -> list[str]:
+    """Lotes de escalón de reemplazo cuyo evento ya terminó y cuyo JSON aún no está en el repo."""
+    return _revelables_en(out_dir, "escalera", ahora, estado)
+
+
 def _git_revelar(out_dir: Path, ahora: datetime | None = None, estado=_estado_partidos) -> list[date]:
-    """Sube el JSON de los lotes (diarios y de partido) que ya se pueden revelar. Devuelve las fechas de los diarios."""
+    """Sube el JSON de los lotes (diarios, de partido y de escalera) que ya se pueden revelar."""
     ahora = ahora or datetime.now(timezone.utc)
     try:
         fechas = revelables(out_dir, ahora, estado)
         partidos = revelables_partido(out_dir, ahora, estado)
-        if not fechas and not partidos:
+        escaleras = revelables_escalera(out_dir, ahora, estado)
+        if not fechas and not partidos and not escaleras:
             return []
         for d in fechas:
             _git(out_dir, "add", "--", f"{d.isoformat()}.json")
-        for rel in partidos:
+        for rel in [*partidos, *escaleras]:
             _git(out_dir, "add", "--", rel)
         _git(out_dir, "commit", "-m",
-             "revelado " + ", ".join([d.isoformat() for d in fechas] + [r.removesuffix(".json") for r in partidos]))
+             "revelado " + ", ".join([d.isoformat() for d in fechas]
+                                     + [r.removesuffix(".json") for r in [*partidos, *escaleras]]))
         _git(out_dir, "push", "origin", "HEAD")
         log.info("Lotes revelados: %s", [d.isoformat() for d in fechas])
         return fechas
@@ -555,13 +667,17 @@ def _git_revelar(out_dir: Path, ahora: datetime | None = None, estado=_estado_pa
 
 
 def _recibos_en_orden(d: Path) -> list[tuple[Path, dict]]:
-    """Recibos (diarios y de partido) en el orden de la cadena.
+    """Recibos (diarios, de partido y de escalera) en el orden de la cadena.
 
-    Con lotes de partido entre los diarios el nombre ya no da el orden: se sigue el enlace `prev_sha256` desde el génesis.
+    Con lotes entre los diarios el nombre ya no da el orden: se sigue el enlace `prev_sha256` desde el génesis.
     Si el recorrido no cubre todos los recibos (cadena rota o bifurcada) se vuelve al orden por nombre, y las comprobaciones
     de `verify` señalan el enlace roto.
     """
-    archivos = [*sorted(d.glob("????-??-??.receipt.json")), *sorted(d.glob("partido/????-??-??/*.receipt.json"))]
+    archivos = [
+        *sorted(d.glob("????-??-??.receipt.json")),
+        *sorted(d.glob("partido/????-??-??/*.receipt.json")),
+        *sorted(d.glob("escalera/????-??-??/*.receipt.json")),
+    ]
     todos = [(f, json.loads(f.read_text(encoding="utf-8"))) for f in archivos]
     por_prev: dict[str, list] = {}
     for f, r in todos:
@@ -602,7 +718,7 @@ def verify(chain_dir: str | None = None) -> tuple[bool, list[str]]:
             errors.append(f"{rf.name}: hash de cadena inconsistente")
         prev = r["chain_sha256"]
 
-    for body in [*sorted(d.glob("????-??-??.json")), *_jsons_de_partido(d)]:
+    for body in [*sorted(d.glob("????-??-??.json")), *_jsons_de_partido(d), *_jsons_de_escalera(d)]:
         if not body.with_name(f"{body.stem}.receipt.json").exists():
             errors.append(f"{body.name}: falta el recibo")
 

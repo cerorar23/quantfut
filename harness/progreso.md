@@ -1,6 +1,19 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 10-nov-2026 · Reto escalera: anular y reemplazar escalones aplazados/nulos tras 6 h (rama `feat/escalera-reemplazo-6h`, sin desplegar)
+
+- Alcance aclarado con el titular: solo aplica a **Reto Escalera** (`/reto-escalera/`), no al Parley del Día. Para no tocar Parley ni
+  `tarjetas_seg`, `escalera_datos.MARGEN_APLAZADO` (48 h) permanece intacto y la escalera usa `ESCALERA_MARGEN_APLAZADO = 6 h` (fútbol) y
+  `escalera_ext.MARGEN_SIN_RESULTADO = 6 h` (NBA/tenis). Además `escalera_pasos.kickoff_utc` (`db/108_escalera_reemplazo.sql`) congela
+  la hora original del partido de fútbol para que una reprogramación en `matches` no eluda el corte de 6 h.
+- Inmutabilidad y sellado intradía: las filas `'void'` y los lotes ya sellados nunca se borran ni mutan (`deny_mutation`). Cuando un
+  escalón queda `'void'`, `informe_publico()` (y `conversion-views.js` como respaldo en UI) lo ocultan en los retos vivos (`actuales`) y
+  lo conservan en `historial`; el reemplazo (`reemplazar_nulos()`, cron cada 5 min en `scripts/crontab`) elige un nuevo partido elegible
+  y lo sella al instante con `batch_kind = 'escalera'` y `match_id = paso_id::text` (`hashchain.seal_escalera`).
+- Límite de entorno local: no hay `CREATEDB` para ejecutar `scripts/ci_aplicar_esquema.py` contra un Postgres desechable (`QF_TEST_PG_DSN`
+  ausente), por lo que los tests `_pg.py` y la migración 108 contra PostgreSQL quedan pendientes de ejecución en CI / servidor.
+
 ## 10-nov-2026 · Escalera con hándicap y total de NBA y tenis, y sin depender del fútbol (rama `escalera/mercados-nba-tenis-desacoplada`, sin desplegar)
 
 - Decisión del titular: cuenta como cobrable la mejor cuota de TODAS las casas del archivo (ya sin casas de fantasía ni intercambios

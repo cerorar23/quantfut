@@ -121,3 +121,36 @@ def test_seal_sin_remoto_no_toca_git(monkeypatch):
     monkeypatch.setattr(hc, "query_one", lambda *a, **k: {"batch_id": 1, "chain_sha256": "x" * 64})
     hc.seal(date(2026, 10, 20))
     assert llamado == []
+
+
+def test_lote_escalera_se_compromete_revela_y_verifica(repo):
+    import json
+    remoto, d = repo
+    ch1 = _sellar(d, date(2026, 11, 10), hc.GENESIS)
+    hc._git_comprometer(d, date(2026, 11, 10), ch1)
+
+    pid = "22222222-2222-2222-2222-222222222222"
+    ruta = hc._ruta_escalera(pid, date(2026, 11, 10))
+    payload = {"batch_kind": "escalera", "paso_id": pid, "n_predictions": 0, "n_picks": 1,
+               "escalera": {"retos": [], "pasos": [{"paso_id": pid, "match_id": "m_rep"}]}}
+    body = hc.canonical_json(payload)
+    ph = hc.sha256_hex(body)
+    ch2 = hc.sha256_hex(ch1 + ph)
+    (d / ruta).parent.mkdir(parents=True, exist_ok=True)
+    (d / f"{ruta}.json").write_text(body, encoding="utf-8")
+    (d / f"{ruta}.receipt.json").write_text(hc.canonical_json({
+        "batch_kind": "escalera", "batch_date": "2026-11-10", "match_id": pid,
+        "payload_sha256": ph, "prev_sha256": ch1, "chain_sha256": ch2,
+        "n_predictions": 0, "n_picks": 1}), encoding="utf-8")
+    hc._git_comprometer(d, date(2026, 11, 10), ch2)
+    assert f"escalera/2026-11-10/{pid}.receipt.json" in _archivos_remotos(remoto)
+    assert f"escalera/2026-11-10/{pid}.json" not in _archivos_remotos(remoto)
+
+    ahora = KO + hc.REVELAR_TRAS
+    assert hc.revelables_escalera(d, KO + timedelta(hours=1), _estado(KO, False)) == []
+    assert hc.revelables_escalera(d, ahora, _estado(KO, True)) == [f"escalera/2026-11-10/{pid}.json"]
+    hc._git_revelar(d, ahora, _estado(KO, True))
+    assert f"escalera/2026-11-10/{pid}.json" in _archivos_remotos(remoto)
+    ok, errores = hc.verify(str(d))
+    assert ok and not errores, errores
+    assert json.loads((d / f"{ruta}.json").read_text(encoding="utf-8"))["paso_id"] == pid
