@@ -25,7 +25,7 @@ services:
   # credenciales del host, fuera del repo.
   api:
     build: .
-    image: quantfut-api:5fa1ceae
+    image: quantfut-api:f73f7df2
     # tenis_net: llegar a tenis-db (obligatoria, ver CLAUDE.md). nba_api_red: llegar a nba-api; antes se conectaba
     # a mano con `docker network connect` y se perdía al recrear el contenedor (DEPLOYS.md, 9-nov).
     networks: [default, tenis_net, nba_api_red]
