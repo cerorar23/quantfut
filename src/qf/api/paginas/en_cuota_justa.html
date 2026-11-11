@@ -1,0 +1,92 @@
+{% extends "base_en.html" %}
+{% block cabecera %}
+<style>
+.cj-herr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
+.cj-herr h3{margin:0 0 6px;font-size:18px}
+.cj-herr p{margin:6px 0}
+.cj-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.cj-campo{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.cj-campo label,.cj-fila label{font-size:15px;color:var(--muted)}
+.cj-fila{display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0}.cj-fila>div{display:flex;flex-direction:column;gap:4px}
+input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:44px;max-width:100%}
+input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[aria-invalid=true]{border-color:#f59e0b}
+.cj-salida{min-height:1.7em;color:var(--text)}
+.cj-nota{color:var(--muted);font-size:14px}
+.cj-tabla{overflow-x:auto}
+</style>
+{% endblock %}
+{% block contenido %}
+<p class="entradilla">Bookmaker odds are not a pure probability: they include the bookmaker's margin. This calculator converts odds into probabilities and back, and shows how much margin is built into a price. Everything runs in your browser: nothing is sent or stored.</p>
+<div class="aviso"><p><strong>Educational tool.</strong> It only converts numbers; it does not tell you what to bet, how much to wager, or whether a price has value. An estimated probability does not guarantee any outcome. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p></div>
+
+<noscript><div class="aviso"><p>The interactive calculator requires JavaScript. The worked example below is shown without it.</p></div></noscript>
+
+<div class="cj-fila">
+<div><label for="cj-formato">Odds format</label>
+<select id="cj-formato"><option value="decimal" selected>Decimal (2.10)</option><option value="fraccionaria">Fractional (11/10)</option><option value="americana">American (+110)</option></select></div>
+<p class="cj-nota" style="align-self:end;margin:0">When you switch formats, entered odds are converted and rounded.</p>
+</div>
+
+<section class="cj-herr" aria-labelledby="h-convertir">
+<h2 id="h-convertir" style="font-size:20px;margin-top:0">From odds to probability and back</h2>
+<div class="cj-cols">
+<div>
+<div class="cj-campo"><label for="cj-cuota">Bookmaker odds</label><input id="cj-cuota" type="text" inputmode="text" autocomplete="off" value="2.10" placeholder="2.10" aria-describedby="cj-cuota-resultado"></div>
+<p id="cj-cuota-resultado" class="cj-salida" aria-live="polite"></p>
+</div>
+<div>
+<div class="cj-campo"><label for="cj-prob">Estimated probability (%)</label><input id="cj-prob" type="text" inputmode="decimal" autocomplete="off" value="45" placeholder="45" aria-describedby="cj-prob-resultado"></div>
+<p id="cj-prob-resultado" class="cj-salida" aria-live="polite"></p>
+</div>
+</div>
+</section>
+
+<section class="cj-herr" aria-labelledby="h-margen">
+<h2 id="h-margen" style="font-size:20px;margin-top:0">Remove the bookmaker's margin</h2>
+<p>Enter the odds for every possible outcome in a market: three for a 1X2 match market (home, draw, away) or two for a two-way market.</p>
+<div class="cj-fila">
+<div><label for="cj-n">Market outcomes</label><select id="cj-n"><option value="3" selected>3 (1X2)</option><option value="2">2</option></select></div>
+<div><label for="cj-metodo">Method</label><select id="cj-metodo"><option value="shin" selected>Shin (used by QuantFut)</option><option value="proporcional">Proportional</option><option value="potencia">Power</option></select></div>
+</div>
+<div id="cj-campos">
+{% for nombre in ejemplo_nombres %}
+<div class="cj-campo"><label for="cj-o{{ loop.index0 }}">{{ nombre }}</label><input id="cj-o{{ loop.index0 }}" type="text" inputmode="text" autocomplete="off" value="{{ ejemplo_cuotas[loop.index0] }}"></div>
+{% endfor %}
+</div>
+<p id="cj-aviso" class="cj-salida" aria-live="polite"></p>
+<div class="cj-tabla" aria-live="polite">
+<table id="cj-tabla">
+<caption class="cj-nota">Result for the odds in the fields above</caption>
+<thead><tr><th scope="col">Outcome</th><th scope="col">Odds</th><th scope="col">Implied probability</th><th scope="col">No-vig probability</th><th scope="col">Fair odds</th></tr></thead>
+<tbody>
+{% for f in ej.filas %}
+<tr><th scope="row">{{ f.nombre }}</th><td>{{ f.cuota }}</td><td>{{ f.implicita }}</td><td>{{ f.sin_margen }}</td><td>{{ f.justa }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<p id="cj-pie" class="cj-nota">The implied probabilities add up to {{ ej.suma }}: the bookmaker's margin is {{ ej.margen }}. Without margin they add up to {{ ej.suma_sin_margen }}.</p>
+</div>
+</section>
+
+<h2>What fair odds are</h2>
+<p>The fair odds for an outcome are the inverse of its probability: if an outcome has a probability of 50%, its fair odds are 2.00; if it has 25%, they are 4.00. It is plain arithmetic: <code>fair odds = 1 / probability</code>, and the reverse: <code>probability = 1 / odds</code>. "Fair" simply means there is no margin added.</p>
+
+<h2>Why bookmaker odds do not add up to 100%</h2>
+<p>If you convert every price in a market using <code>1 / odds</code> and add them up, the total is over 100%. That excess is the bookmaker's margin (also called the vig or overround): it is what the bookmaker charges for offering the market. The larger the sum, the wider the margin.</p>
+<p><strong>Worked example.</strong> A 1X2 market with odds {% for n in ejemplo_nombres %}{{ n | lower }} {{ ejemplo_cuotas[loop.index0] }}{{ ", " if not loop.last }}{% endfor %}: the implied probabilities sum to {{ ej.suma }}, which means a margin of {{ ej.margen }}. To obtain probabilities that sum to 100%, that margin must be distributed across the outcomes; Shin's method gives {% for f in ej.filas %}{{ f.sin_margen }} ({{ f.nombre | lower }}){{ ", " if not loop.last }}{% endfor %}, and their fair odds are {% for f in ej.filas %}{{ f.justa }}{{ ", " if not loop.last }}{% endfor %}.</p>
+
+<h2>How the margin is removed</h2>
+<ul>
+<li><strong>Proportional.</strong> Divides each implied probability by the total sum. It is the simplest and most common method, though it tends to overstate longshots.</li>
+<li><strong>Shin.</strong> Assumes part of the money wagered comes from better-informed bettors and estimates that share. It usually adjusts longshots better than proportional scaling. QuantFut uses Shin to compare its probabilities against closing market prices, as explained in our <a href="/en/methodology/">methodology</a>.</li>
+<li><strong>Power.</strong> Raises each implied probability to a common exponent chosen so that the probabilities sum to 100%.</li>
+</ul>
+<p>None of these methods reveals the "true" probability: they are practical ways to estimate the probability implied behind a price. Nor do they turn any price into a recommendation. To see how closely QuantFut's probabilities match actual results, check our <a href="/en/calibration/">calibration</a> and the <a href="/historial/" hreflang="es" lang="es">record of hits and misses</a> (in Spanish).</p>
+
+<h2>What this tool does not do</h2>
+<p>It does not calculate bet sizes or returns, does not compare bookmakers, and does not judge whether any price is worth taking. An honest probability can still be worse than the market, leaving nothing to exploit. If gambling causes problems, <a href="/en/responsible-gambling/">help is available</a>.</p>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ script }}"></script>
+{% endblock %}

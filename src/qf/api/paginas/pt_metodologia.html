@@ -18,11 +18,11 @@
 </ul>
 
 <h2>O mercado como referência, não como rival</h2>
-<p>As cotações de fechamento das casas de apostas são uma estimativa muito eficiente da probabilidade real. Tiramos a margem da casa (o que se chama de «remover o vig», com o método de Shin) para obter a probabilidade que elas implicam, e comparamos nossa estimativa com essa referência. Você pode testar o cálculo na <a href="/calculadora-cuota-justa/" hreflang="es" lang="es">calculadora de odd justa</a> (disponível apenas em espanhol).</p>
+<p>As cotações de fechamento das casas de apostas são uma estimativa muito eficiente da probabilidade real. Tiramos a margem da casa (o que se chama de «remover o vig», com o método de Shin) para obter a probabilidade que elas implicam, e comparamos nossa estimativa com essa referência. Você pode testar o cálculo na <a href="/pt/calculadora-odd-justa/">calculadora de odd justa</a>.</p>
 <p><strong>Não afirmamos superar o mercado.</strong> Nas medições que fizemos até agora, nosso modelo de futebol estima bem as probabilidades (está calibrado dentro de pequenas margens nas faixas com amostra suficiente), mas não melhora de forma consistente o preço de fechamento. Por isso não vendemos «vantagem garantida»: oferecemos probabilidades calibradas e rastreáveis.</p>
 
 <h2>Calibração: o que medimos</h2>
-<p>Uma boa probabilidade é uma probabilidade honesta: se dizemos 70 % cem vezes, deveria se cumprir perto de setenta. Isso se chama calibração, e é o que olhamos primeiro. Também medimos o quanto o modelo erra no conjunto (com métricas como o <em>log-loss</em> e o <em>Brier score</em>) e, quando há cotações de fechamento, o quão bem nossas probabilidades se comparam com elas.</p>
+<p>Uma boa probabilidade é uma probabilidade honesta: se dizemos 70 % cem vezes, deveria se cumprir perto de setenta. Isso se chama <a href="/pt/calibracao/">calibração</a>, e é o que olhamos primeiro. Também medimos o quanto o modelo erra no conjunto (com métricas como o <em>log-loss</em> e o <em>Brier score</em>) e, quando há cotações de fechamento, o quão bem nossas probabilidades se comparam com elas.</p>
 <p>Para que uma medição conte, usamos apenas informação disponível antes da partida: o banco de dados recusa qualquer dado de entrada do modelo com data posterior ao início da partida, para que o modelo não possa «ver o futuro» sem que percebamos.</p>
 
 <h2>Como selamos cada previsão</h2>
@@ -31,7 +31,7 @@
 <li>O lote é convertido em um formato canônico e calcula-se sua impressão digital (hash SHA-256).</li>
 <li>Cada impressão digital é encadeada com a anterior: <code>cadeia = sha256(impressão anterior + impressão do lote)</code>. Se se alterasse um único caractere de uma previsão passada, todas as impressões seguintes deixariam de bater.</li>
 <li>O banco de dados recusa modificar ou apagar previsões já seladas; não existe um «conserto rápido» posterior.</li>
-<li>As impressões digitais dos lotes estão publicadas em <a href="/chain">/chain</a>, onde qualquer pessoa pode conferir se a cadeia é consistente.</li>
+<li>As impressões digitais dos lotes estão publicadas em <a href="/chain">/chain</a>, onde qualquer pessoa pode conferir se a cadeia é consistente. Você também pode conferir passo a passo no <a href="/pt/verificacao/">verificador público da cadeia</a>.</li>
 </ol>
 <p><strong>Uma limitação que preferimos declarar.</strong> Hoje essas impressões digitais ficam em nosso banco de dados e em <code>/chain</code>; ainda não as publicamos em um registro externo independente, com carimbo de tempo de terceiros. Até lá, a cadeia demonstra que não alteramos nenhuma previsão depois de selada, mas quem quiser uma garantia de fora de nós ainda não a tem. Atualizaremos esta página quando ela existir.</p>
 

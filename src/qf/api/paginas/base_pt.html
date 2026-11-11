@@ -7,6 +7,9 @@
 {% block nav %}{% for q in paginas %}
 <li><a href="{{ q.ruta }}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.migas }}</a></li>
 {% endfor %}
+<li><a href="/pt/calibracao/"{% if p.slug == 'pt/calibracao' %} aria-current="page"{% endif %}>Calibração</a></li>
+<li><a href="/pt/calculadora-odd-justa/"{% if p.slug == 'pt/calculadora-odd-justa' %} aria-current="page"{% endif %}>Odd justa</a></li>
+<li><a href="/pt/verificacao/"{% if p.slug == 'pt/verificacao' %} aria-current="page"{% endif %}>Verificação</a></li>
 <li><a href="/pt/futebol/">Futebol</a></li>
 <li><a href="/pt/tenis/">Tênis</a></li>
 <li><a href="/pt/nba/">NBA</a></li>

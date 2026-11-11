@@ -1,6 +1,32 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 10-nov-2026 · Auditoría de `README.md`, alineación de `Caddyfile`, arnés en worktrees y limpieza de `tareas.md`/`PENDIENTES.md` (rama `seo/f63-calibracion-calculadora`)
+
+- **`Caddyfile` del repo alineado con producción F2.1:** F2.1 quitó `handle @nba { redir * /nba/v2/ 302 }` y añadió `header X-Robots-Tag noindex` en `@nba_v2` directamente en el servidor (`DEPLOYS.md`, 9-nov 01:26 UTC), dejando pendiente alinear el repo (`docs/plan_despliegue_nba_f21_20261108.md` §3). Sin este ajuste, recrear Caddy desde el repositorio devolvería 302 en todas las páginas públicas `/nba/*`.
+- **Auditoría de `README.md` (`PENDIENTES.md`):** actualizadas las secciones operativas de cabecera, fases, cron (`scripts/crontab`: `daily` 09:00 UTC, entrenamiento local en vez del cron del VPS, cascada de respaldo y `parley_v2`/`escalera`), pagos (`Whop` + `Google Play`), APIs y estructura (`db/001..109`, `apps/tenis/`, `apps/mobile/`) conservando las secciones históricas fechadas.
+- **`scripts/test_local_windows.ps1` en worktrees:** cuando no existe `.venv\Lib\site-packages` en el worktree, resuelve el directorio común de git (`git rev-parse --git-common-dir`) para localizar el `.venv` del repo principal sin copiar ni modificar el entorno, exige `import ctypes, ssl` al probar candidatos de Python 3.12 (evitando caer en un `.venv\Scripts\python.exe` con `_ctypes`/`_ssl` rotos) e incluye `apps/tenis/src` en `sys.path` para que `qf.api.main` resuelva `tenis.sellado`.
+- **Limpieza de `harness/tareas.md`:** marcados como `[x]` los hitos de diseño/planificación (F2.2, D5–D8, F3.3 y desglose F2–F8) ya completados en commits posteriores dentro del mismo archivo, dejando intactos los bloqueos reales (revisión legal F7, muestras estadísticas, fechas ~16-nov / ene-2027, 7 worktrees del titular y mejoras de app separadas).
+
+## 10-nov-2026 · Cierre técnico seguro de fases restantes: F5 (`modulepreload`), §7 (`contactPoint`), F8 verificador público y checklist legal F7 (rama `seo/f63-calibracion-calculadora`, sin desplegar)
+
+- Alcance ejecutado: tras F6.3, se completan exclusivamente las entregas de código seguras sin saltar bloqueos de calendario ni requisitos jurídicos:
+  - **F5 `modulepreload` (`frontend/index.html`):** se precargan los 15 módulos ES estáticos alcanzables desde `app.js` con sus `?v=` exactos (`rutas_web._RELATIVOS` y `frontend/server.mjs` reescriben `./` a `/` en subrutas) sin tocar ninguna hoja CSS ni `original-css.test.mjs`. Se añade prueba de sincronización 1:1 en `frontend/rutas.test.mjs` y comprobación de rutas absolutas en `tests/test_rutas_web.py`.
+  - **§7 `Organization.contactPoint` (`src/qf/api/rutas_web.py`):** se añade `ContactPoint` (`customer support`, `admin@pronosticosdeportivos.pro`) al JSON-LD de portada; no se inventa `sameAs`.
+  - **F8 verificador público (`scripts/verificar_cadena_publica.py` + `tests/test_f8_cadena_publica.py`):** script en Python estándar puro que valida `/chain` y directorios de recibos `*.receipt.json` + `.json` revelados con la misma regla `sha256(prev_sha256 + payload_sha256)` que `hashchain.py`.
+  - **F8 / §2 página `/verificacion/` (`src/qf/api/verificacion.py`, `static/verificar-cadena.js`, `/en/verification/`, `/pt/verificacao/`):** auditoría SSR desde `prediction_batches` (sin fabricar datos cuando no hay base) más verificador interactivo en navegador con Web Crypto SHA-256 y CSP estricta (`script-src 'self'`, `connect-src 'self'`), enlazada desde navegación y metodologías sin alterar la declaración honesta sobre ausencia de testigo externo (`docs/plan_despliegue_verificacion_f8_20261110.md`).
+- Bloqueos respetados sin forzar cambios riesgosos:
+  - **F5 CSP coercitiva:** se mantiene `Content-Security-Policy-Report-Only` hasta acumular ≥ 7 días de informes desde el 9-nov (~16-nov-2026) según `docs/plan_despliegue_csp_f5_20261109.md`.
+  - **F7 (`fr`, `it`, `de`):** bloqueado por revisión legal previa (`docs/plan_seo_redes_web_20261108.md` §11/§14). Se documenta la lista de decisiones jurídicas en `docs/revision_legal_f7_20261110.md` sin publicar código ni traducir páginas legales no aprobadas.
+  - **F5/F6/F8 externos:** regla caché en Cloudflare, revisión humana `en`/`pt-BR` + red de ayuda Brasil, usuarios sociales reales, Search Console y Blogabet/Betstamp dependen del titular.
+
+## 10-nov-2026 · F6.3 calibración y calculadora de cuota/odd justa en inglés y portugués (rama `seo/f63-calibracion-calculadora`, sin desplegar)
+
+- Alcance: cierra todo el código pendiente de F6 añadiendo `/en/calibration/`, `/pt/calibracao/`, `/en/fair-odds-calculator/` y `/pt/calculadora-odd-justa/` (con 301 sin barra, puerta `off`/`preview`/`on`, `hreflang` recíproco `es`/`en`/`pt` + `x-default` en `/sitemap-paginas.xml` y selector de idiomas).
+- Decisiones de diseño: se reutiliza un único módulo `static/cuota-justa.js` leyendo `<html lang>` (`document.documentElement.lang`) sin scripts en línea (`paginas.CSP`: `script-src 'self'`, sin `connect-src`) y manteniendo los formatos españoles por defecto al importar desde pruebas o fuera de navegador. En calibración se mantiene la derivación estricta de cifras desde `datos_calibracion` / base de datos y la traducción de `estado_evidencia` (`descriptive`/`descritiva`) y formatos locales (`0.2091` / `3,222` en EN; `0,2091` / `3.222` en PT).
+- Navegación y cruce interno: `base_en.html`, `base_pt.html`, `en_methodology.html` y `pt_metodologia.html` enlazan directamente a sus versiones locales de calibración y calculadora; los enlaces a `/historial/` y `/legal/*` conservan `hreflang="es" lang="es"`.
+- Bloques que siguen pendientes de aprobación/acción externa: F5 parte 2 (logs CSP hasta ~16-nov, regla Cloudflare y permiso explícito para `modulepreload` en `frontend/index.html`), F7 (`fr`/`it`/`de`, requiere revisión legal por Decreto Dignità / ANJ / GlüStV 2021) y F8 (autoridad externa / cuentas sociales).
+
 ## 10-nov-2026 · Reto escalera: anular y reemplazar escalones aplazados/nulos tras 6 h (PR #349 `e4552578`; desplegada 2026-11-11 02:34 UTC)
 
 - Alcance aclarado con el titular: solo aplica a **Reto Escalera** (`/reto-escalera/`), no al Parley del Día. Para no tocar Parley ni

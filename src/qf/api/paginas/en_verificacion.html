@@ -1,0 +1,102 @@
+{% extends "base_en.html" %}
+{% block cabecera %}
+<style>
+.vc-caja{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
+.vc-caja h2,.vc-caja h3{margin-top:0}
+.vc-controles{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin:12px 0}
+.vc-btn{font:inherit;font-weight:600;color:#0a0a0f;background:var(--accent);border:0;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer}
+.vc-btn-sec{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer}
+.vc-btn:focus-visible,.vc-btn-sec:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.vc-campo{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.vc-campo label{font-size:15px;color:var(--muted)}
+textarea,input[type=file]{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;min-height:130px;resize:vertical}
+.vc-salida{font-weight:600;margin:12px 0 6px}
+.vc-salida[data-estado=ok]{color:var(--accent)}
+.vc-salida[data-estado=fallo]{color:#f59e0b}
+.vc-tabla{overflow-x:auto}
+.vc-nota{color:var(--muted);font-size:14px}
+pre.vc-cli{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:13px}
+</style>
+{% endblock %}
+{% block contenido %}
+<p class="entradilla">Every daily and match batch published by QuantFut receives a SHA-256 fingerprint chained to the previous batch before matches start. Here you can verify in your browser or from the command line that the hashes at <a href="/chain">/chain</a> have no broken links.</p>
+
+<div class="aviso">
+<p><strong>What the chain proves and its current limit.</strong> It shows that no published forecast was altered after sealing inside our database. As stated on our <a href="/en/methodology/">methodology page</a>, these fingerprints currently reside in our database and at <code>/chain</code>, and do not yet carry an independent external third-party timestamp.</p>
+</div>
+
+<section class="vc-caja" aria-labelledby="h-estado-ssr">
+<h2 id="h-estado-ssr">Server-side snapshot status</h2>
+{% if resumen.estado == "ok" %}
+<p class="vc-salida" data-estado="ok">Chain intact: {{ resumen.total }} batch(es) checked{% if resumen.desde_genesis %} from genesis{% endif %}.</p>
+<p class="vc-nota">Latest chained hash: <code>{{ resumen.ultimo_hash[:16] }}…</code></p>
+{% elif resumen.estado == "fallo" %}
+<p class="vc-salida" data-estado="fallo">Issues detected across {{ resumen.total }} batch(es):</p>
+<ul>{% for err in resumen.errores[:8] %}<li>{{ err }}</li>{% endfor %}</ul>
+{% elif resumen.estado == "vacio" %}
+<p class="vc-nota">No batches were returned in the current query.</p>
+{% else %}
+<p class="vc-nota">Direct database snapshot is unavailable in this read; you can fetch <a href="/chain">/chain</a> directly or verify an exported JSON file below.</p>
+{% endif %}
+
+{% if resumen.filas %}
+<div class="vc-tabla">
+<table>
+<caption class="vc-nota">Latest sealed batches inspected when rendering this page</caption>
+<thead><tr><th scope="col">Date</th><th scope="col">Kind</th><th scope="col">Preds / Picks</th><th scope="col">Payload SHA-256</th><th scope="col">Chain SHA-256</th><th scope="col">Status</th></tr></thead>
+<tbody>
+{% for f in resumen.filas %}
+<tr><td>{{ f.fecha }}</td><td>{{ f.tipo }}</td><td>{{ f.n_predictions }} / {{ f.n_picks }}</td><td><code>{{ f.payload_corto }}</code></td><td><code>{{ f.chain_corto }}</code></td><td>{{ "OK" if f.valido else "FAIL" }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+</section>
+
+<section class="vc-caja" aria-labelledby="h-verificador-js">
+<h2 id="h-verificador-js">Verify now in your browser (Web Crypto SHA-256)</h2>
+<p>When you click the button, your browser fetches the public <code>/chain?limit=365</code> JSON, restores chronological order and recomputes <code>sha256(prev_sha256 + payload_sha256)</code> locally without sending data outside your device.</p>
+<noscript><div class="aviso"><p>The interactive browser checker requires JavaScript. You can rely on the server-side check above or the zero-dependency Python command below.</p></div></noscript>
+<div class="vc-controles">
+<button id="vc-cargar" class="vc-btn" type="button">Verify /chain in browser</button>
+<label><input id="vc-genesis" type="checkbox"> Require exact start at genesis (64 zeros)</label>
+</div>
+<div class="vc-campo">
+<label for="vc-archivo">Or open a saved JSON file locally (optional)</label>
+<input id="vc-archivo" type="file" accept=".json,application/json">
+</div>
+<div class="vc-campo">
+<label for="vc-json">/chain JSON (filled automatically or paste your own below)</label>
+<textarea id="vc-json" spellcheck="false" placeholder='{"lotes": [...]}'></textarea>
+</div>
+<div class="vc-controles">
+<button id="vc-verificar-json" class="vc-btn-sec" type="button">Verify pasted JSON</button>
+</div>
+<p id="vc-resultado" class="vc-salida" aria-live="polite"></p>
+<ul id="vc-errores" aria-live="polite"></ul>
+<div id="vc-tabla-env" class="vc-tabla" hidden aria-live="polite">
+<table id="vc-tabla-js">
+<caption class="vc-nota">Latest 20 batches verified in browser</caption>
+<thead><tr><th scope="col">Date</th><th scope="col">Kind</th><th scope="col">Payload SHA-256</th><th scope="col">Chain SHA-256</th><th scope="col">Status</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+
+<h2>Exact sealing formula</h2>
+<ol>
+<li>The genesis block is a 64-zero hexadecimal string: <code>{{ genesis[:16] }}…</code>.</li>
+<li>Each new batch takes its canonical JSON fingerprint <code>payload_sha256</code> (UTF-8 lowercase hex) and concatenates it immediately after the previous link: <code>chain_sha256 = sha256(prev_sha256 + payload_sha256)</code>.</li>
+<li>The database blocks updates or deletions on sealed rows, while <a href="/en/calibration/">calibration</a> and the <a href="/#historial" hreflang="es" lang="es">public record (in Spanish)</a> let readers inspect outcomes afterwards.</li>
+</ol>
+
+<h2>Zero-dependency terminal check</h2>
+<p>If you prefer auditing the chain outside the browser with pure Python 3 standard library (no third-party packages required), run the bundled script:</p>
+<pre class="vc-cli"><code>python3 scripts/verificar_cadena_publica.py --url https://pronosticosdeportivos.pro/chain?limit=365</code></pre>
+<p class="vc-nota">It also supports <code>--archivo chain.json</code> or <code>--dir ./receipts-dir</code> to validate <code>*.receipt.json</code> files and revealed payloads.</p>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ script }}"></script>
+{% endblock %}

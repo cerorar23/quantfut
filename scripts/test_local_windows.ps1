@@ -1,22 +1,38 @@
 param([string]$PythonPath = "")
 
 # El .venv conserva las dependencias, pero su python.exe puede apuntar a una
-# instalación de Python 3.12 retirada. Este arnés usa otro 3.12 compatible sin
-# modificar ni borrar el entorno existente.
+# instalación de Python 3.12 retirada o con DLLs rotas (_ctypes/_ssl). Este
+# arnés usa otro 3.12 compatible sin modificar ni borrar el entorno existente.
+# En un worktree de git, `.venv` suele vivir en la raíz principal del repo.
 $qfRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$qfVenvRoot = $qfRoot
 $qfPackages = Join-Path $qfRoot '.venv\Lib\site-packages'
+if (-not (Test-Path -LiteralPath $qfPackages -PathType Container)) {
+    $gitCommon = (& git -C $qfRoot rev-parse --git-common-dir 2>$null | Select-Object -First 1)
+    if ($gitCommon) {
+        if (-not [IO.Path]::IsPathRooted($gitCommon)) {
+            $gitCommon = [IO.Path]::GetFullPath((Join-Path $qfRoot $gitCommon))
+        }
+        $mainRoot = Split-Path $gitCommon -Parent
+        $candidatePackages = Join-Path $mainRoot '.venv\Lib\site-packages'
+        if (Test-Path -LiteralPath $candidatePackages -PathType Container) {
+            $qfVenvRoot = $mainRoot
+            $qfPackages = $candidatePackages
+        }
+    }
+}
 if (-not (Test-Path -LiteralPath $qfPackages -PathType Container)) {
     throw "No se encontraron dependencias en $qfPackages"
 }
 
 if (-not $PythonPath) {
     $qfCandidates = @(
-        (Join-Path $qfRoot '.venv\Scripts\python.exe'),
+        (Join-Path $qfVenvRoot '.venv\Scripts\python.exe'),
         (Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe')
     )
     foreach ($qfCandidate in $qfCandidates) {
         if (-not (Test-Path -LiteralPath $qfCandidate -PathType Leaf)) { continue }
-        & $qfCandidate -c 'import sys; raise SystemExit(sys.version_info[:2] != (3, 12))' 2>$null
+        & $qfCandidate -c 'import ctypes, ssl, sys; raise SystemExit(sys.version_info[:2] != (3, 12))' 2>$null
         if ($LASTEXITCODE -eq 0) { $PythonPath = $qfCandidate; break }
     }
     if (-not $PythonPath) {
@@ -45,6 +61,9 @@ site.addsitedir(packages)
 if packages in sys.path:
     sys.path.remove(packages)
 sys.path.insert(0, packages)
+tenis_src = os.path.join(root, "apps", "tenis", "src")
+if os.path.isdir(tenis_src):
+    sys.path.insert(0, tenis_src)
 sys.path.insert(0, os.path.join(root, "src"))
 import pytest
 raise SystemExit(pytest.main(["-p", "no:cacheprovider", "--basetemp", temp,

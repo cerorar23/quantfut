@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block cabecera %}
+<style>
+.vc-caja{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
+.vc-caja h2,.vc-caja h3{margin-top:0}
+.vc-controles{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin:12px 0}
+.vc-btn{font:inherit;font-weight:600;color:#0a0a0f;background:var(--accent);border:0;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer}
+.vc-btn-sec{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer}
+.vc-btn:focus-visible,.vc-btn-sec:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.vc-campo{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.vc-campo label{font-size:15px;color:var(--muted)}
+textarea,input[type=file]{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;min-height:130px;resize:vertical}
+.vc-salida{font-weight:600;margin:12px 0 6px}
+.vc-salida[data-estado=ok]{color:var(--accent)}
+.vc-salida[data-estado=fallo]{color:#f59e0b}
+.vc-tabla{overflow-x:auto}
+.vc-nota{color:var(--muted);font-size:14px}
+pre.vc-cli{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:13px}
+</style>
+{% endblock %}
+{% block contenido %}
+<p class="entradilla">Cada lote diario y por partido publicado por QuantFut recibe una huella digital SHA-256 encadenada con la anterior antes de que empiecen los encuentros. Aquí puedes comprobar en tu propio navegador o desde la línea de comandos que los hashes de <a href="/chain">/chain</a> no presentan roturas.</p>
+
+<div class="aviso">
+<p><strong>Qué demuestra la cadena y cuál es su límite hoy.</strong> Verifica que ningún pronóstico publicado ha sido modificado tras sellarse dentro de nuestra base de datos. Tal como explicamos en la <a href="/metodologia/">metodología</a>, los hashes todavía viven en nuestro servidor y en <code>/chain</code> y aún no cuentan con sello de tiempo externo independiente.</p>
+</div>
+
+<section class="vc-caja" aria-labelledby="h-estado-ssr">
+<h2 id="h-estado-ssr">Estado observado desde el servidor</h2>
+{% if resumen.estado == "ok" %}
+<p class="vc-salida" data-estado="ok">Cadena consistente: {{ resumen.total }} lote(s) revisados{% if resumen.desde_genesis %} desde el génesis{% endif %}.</p>
+<p class="vc-nota">Último hash encadenado: <code>{{ resumen.ultimo_hash[:16] }}…</code></p>
+{% elif resumen.estado == "fallo" %}
+<p class="vc-salida" data-estado="fallo">Incidencias detectadas en {{ resumen.total }} lote(s):</p>
+<ul>{% for err in resumen.errores[:8] %}<li>{{ err }}</li>{% endfor %}</ul>
+{% elif resumen.estado == "vacio" %}
+<p class="vc-nota">No hay lotes devueltos en la consulta actual.</p>
+{% else %}
+<p class="vc-nota">El resumen directo de base de datos no está disponible en esta lectura; puedes consultar <a href="/chain">/chain</a> directamente o verificar un archivo JSON abajo.</p>
+{% endif %}
+
+{% if resumen.filas %}
+<div class="vc-tabla">
+<table>
+<caption class="vc-nota">Últimos lotes sellados consultados al generar esta página</caption>
+<thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Preds / Picks</th><th scope="col">Payload SHA-256</th><th scope="col">Chain SHA-256</th><th scope="col">Estado</th></tr></thead>
+<tbody>
+{% for f in resumen.filas %}
+<tr><td>{{ f.fecha }}</td><td>{{ f.tipo }}</td><td>{{ f.n_predictions }} / {{ f.n_picks }}</td><td><code>{{ f.payload_corto }}</code></td><td><code>{{ f.chain_corto }}</code></td><td>{{ "OK" if f.valido else "FALLO" }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+</section>
+
+<section class="vc-caja" aria-labelledby="h-verificador-js">
+<h2 id="h-verificador-js">Comprobar ahora en tu navegador (Web Crypto SHA-256)</h2>
+<p>Al pulsar el botón, tu navegador descarga el JSON público de <code>/chain?limit=365</code>, invierte el orden a cronológico y recalcula localmente <code>sha256(prev_sha256 + payload_sha256)</code> sin enviar datos fuera de tu dispositivo.</p>
+<noscript><div class="aviso"><p>El verificador interactivo del navegador requiere JavaScript. Puedes usar la comprobación de servidor mostrada arriba o el script sin dependencias de abajo.</p></div></noscript>
+<div class="vc-controles">
+<button id="vc-cargar" class="vc-btn" type="button">Verificar /chain en este navegador</button>
+<label><input id="vc-genesis" type="checkbox"> Exigir inicio exacto en el génesis (64 ceros)</label>
+</div>
+<div class="vc-campo">
+<label for="vc-archivo">O abre un JSON guardado localmente (opcional)</label>
+<input id="vc-archivo" type="file" accept=".json,application/json">
+</div>
+<div class="vc-campo">
+<label for="vc-json">JSON de /chain (se rellena automáticamente o puedes pegarlo aquí)</label>
+<textarea id="vc-json" spellcheck="false" placeholder='{"lotes": [...]}'></textarea>
+</div>
+<div class="vc-controles">
+<button id="vc-verificar-json" class="vc-btn-sec" type="button">Verificar JSON pegado</button>
+</div>
+<p id="vc-resultado" class="vc-salida" aria-live="polite"></p>
+<ul id="vc-errores" aria-live="polite"></ul>
+<div id="vc-tabla-env" class="vc-tabla" hidden aria-live="polite">
+<table id="vc-tabla-js">
+<caption class="vc-nota">Últimos 20 lotes comprobados en el navegador</caption>
+<thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Payload SHA-256</th><th scope="col">Chain SHA-256</th><th scope="col">Estado</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+
+<h2>Fórmula exacta del sellado</h2>
+<ol>
+<li>El bloque de génesis es una cadena hexadecimal de 64 ceros: <code>{{ genesis[:16] }}…</code>.</li>
+<li>Cada lote nuevo toma su huella JSON canónica <code>payload_sha256</code> (UTF-8 en hexadecimal minúsculas) y la concatena sin separadores detrás del eslabón anterior: <code>chain_sha256 = sha256(prev_sha256 + payload_sha256)</code>.</li>
+<li>La base de datos impide modificar o borrar filas ya selladas, y los resultados se auditan después en el <a href="/historial/">historial</a> y en <a href="/calibracion/">calibración</a>.</li>
+</ol>
+
+<h2>Auditoría sin dependencias desde terminal</h2>
+<p>Si prefieres comprobar la cadena fuera del navegador con biblioteca estándar pura de Python 3 (sin instalar librerías externas), utiliza el script incluido en el proyecto:</p>
+<pre class="vc-cli"><code>python3 scripts/verificar_cadena_publica.py --url https://pronosticosdeportivos.pro/chain?limit=365</code></pre>
+<p class="vc-nota">También admite <code>--archivo chain.json</code> o <code>--dir ./ruta-recibos</code> para validar archivos <code>*.receipt.json</code> y lotes revelados.</p>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ script }}"></script>
+{% endblock %}
