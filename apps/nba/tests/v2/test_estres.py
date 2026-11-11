@@ -14,12 +14,14 @@ TRI = sorted(equipos.TRICODES)
 MINUTOS = [34, 32, 30, 28, 24, 20, 16, 10, 3]
 
 
-def liga_completa(db, dias=20, sin_hora=(), equipos_sin_datos=(), sin_puntos=None, minutos_corruptos=None):
+def liga_completa(db, dias=20, sin_hora=(), equipos_sin_datos=(), sin_puntos=None, minutos_corruptos=None, reloj=None):
     """30 equipos, 15 partidos por día durante `dias` días de historia y un día objetivo (el día `dias`) con 15 partidos."""
     ids = {t: identidad.equipo(db, t) for t in TRI}
     jug = {t: [identidad.jugador(db, "nba_oficial", f"{2000 + 20 * k + i}", f"{t} jugador {i}") for i in range(9)] for k, t in enumerate(TRI)}
     filas, objetivo, inicio = [], [], {}
-    reloj = datetime.now(UTC)
+    reloj = reloj or datetime.now(UTC)
+    # Tope <= corte - 30 min para que la víspera ya esté recibida aunque `reloj` caiga en 04:00-06:29 UTC.
+    limite_final = reloj - timedelta(hours=1)
     for d in range(dias + 1):
         rot = TRI[d % 29:] + TRI[:d % 29] if d else TRI
         for g in range(15):
@@ -39,10 +41,10 @@ def liga_completa(db, dias=20, sin_hora=(), equipos_sin_datos=(), sin_puntos=Non
             if (a in equipos_sin_datos or b in equipos_sin_datos) and d > dias - 12:
                 continue                                              # a esos equipos les faltan los resultados de los últimos 12 días
             pid = identidad.partido(db, "nba_oficial", f"00225{d:03d}{g:02d}", fecha, ids[a], ids[b], identidad.temporada(fecha))
+            recibido = min(datetime.combine(fecha + timedelta(days=1), datetime.min.time(), UTC) + timedelta(hours=6), limite_final)
             filas.append(DatoNuevo(partido_id=pid, entidad_id=pid, metrica="estado_partido", etiqueta="final", fase="final", fuente="nba_oficial",
-                                   recibido_en=datetime(fecha.year, fecha.month, fecha.day, 6, tzinfo=UTC) + timedelta(days=1), pit="reconstruido"))           # el partido ya terminó (así lo registra la captura real)
+                                   recibido_en=recibido, pit="reconstruido"))           # el partido ya terminó (así lo registra la captura real)
             for t, eq in ((a, ids[a]), (b, ids[b])):
-                recibido = datetime.combine(fecha + timedelta(days=1), datetime.min.time(), UTC) + timedelta(hours=6)
                 base = dict(partido_id=pid, fase="final", fuente="nba_oficial", recibido_en=recibido, pit="reconstruido")
                 filas.append(DatoNuevo(entidad_id=eq, metrica="puntos", valor=100.0 + (d * 7 + g) % 25, **base))
                 for i, j in enumerate(jug[t]):
@@ -133,3 +135,17 @@ def test_sin_ninguna_historia_no_se_sella_nada_y_no_hay_errores(base_migrada):
 def test_base_vacia_no_rompe_el_motor(base_migrada):
     r = motor.ejecutar(base_migrada, datetime(2026, 11, 3, 12, tzinfo=UTC))
     assert r["sellados"] == [] and r["errores"] == [] and r["omitidos"] == [] and r["sin_hora"] == []
+
+
+@pytest.mark.parametrize("reloj", [
+    datetime(2026, 11, 11, 5, 15, tzinfo=UTC),   # EST (UTC-5): 00:15 ET
+    datetime(2026, 11, 11, 6, 15, tzinfo=UTC),   # EST (UTC-5): corte a 05:45 UTC < 06:00 UTC
+    datetime(2026, 7, 15, 4, 15, tzinfo=UTC),    # EDT (UTC-4): 00:15 ET
+])
+def test_ventana_medianoche_et_en_cualquier_hora_utc(base_migrada, reloj):
+    """Regresión del fallo intermitente 04:00-06:29 UTC cuando hoy ET avanza antes de las 06:00 UTC."""
+    db = base_migrada
+    _, _, _, inicio = liga_completa(db, reloj=reloj)
+    ahora = min(inicio.values()) - timedelta(minutes=30)
+    r = motor.ejecutar(db, ahora, simulacro=True)
+    assert r["errores"] == [] and len(r["sellados"]) == 15 and len(r["props"]) == 15 and r["omitidos"] == [] and r["sin_hora"] == []

@@ -1,6 +1,6 @@
 # Pendientes de QuantFut — lista única
 
-Actualizada el **2026-11-10**. Antes tenía 105 líneas con calendario y estados de octubre; el original está en
+Actualizada el **2026-11-11**. Antes tenía 105 líneas con calendario y estados de octubre; el original está en
 `harness/archivo/PENDIENTES_hasta_20261110.md`. El detalle técnico vive en `harness/tareas.md` (búscalo con `grep -n '^## '`, no lo leas entero).
 
 **Reglas del titular:** un error al desplegar o probar se arregla en esa misma sesión, no se apunta. Aquí solo entra lo que depende de ti
@@ -10,15 +10,16 @@ Actualizada el **2026-11-10**. Antes tenía 105 líneas con calendario y estados
 ## 0. Orden del repositorio (10-nov-2026) — hecho, con un resto
 - [x] Rescate fusionado (PR #341, #342, #343, #344): `main` = producción. API desplegada desde `main` con la imagen `quantfut-api:015f78c1`; entradas del 8-nov y del 10-nov pasadas a `DEPLOYS.md`.
 - [x] 279 ramas y 81 worktrees acumulados reducidos a `main` y la rama de trabajo; el resto está en `C:/Users/huye/Documents/qf-respaldo-carpeta-20261110/todo_pendiente_20261110.bundle` (45 MB, 25 referencias) y en las listas `ramas_borradas.txt` y `worktrees_quitados.txt` de esa carpeta. Copia el `.bundle` fuera de este disco si quieres una segunda copia.
-- [ ] **Tú:** decidir si se borran 7 worktrees viejos con cambios sin confirmar (`.claude/worktrees/{escalera-7dias,escalera-horas,fallos,futbol-base-unica}`, `qf-app-nba-tenis` y `.codex/worktrees/{datos-motor-fotmob,web-real-forecasts}`). Su contenido ya está guardado en las refs `rescate/wt-*` y en el `.bundle`; el borrado forzado necesita tu visto bueno expreso.
+- [x] 7 worktrees viejos limpiados tras confirmación del titular (11-nov-2026: quitadas las carpetas y junctions `.venv` residuales en `.claude/worktrees/{escalera-7dias,escalera-horas,fallos,futbol-base-unica}`, `qf-app-nba-tenis` y `~/.codex/worktrees/{datos-motor-fotmob,web-real-forecasts}` sin tocar el `.venv` raíz; el respaldo se conserva en `rescate/wt-*` y `todo_pendiente_20261110.bundle`).
 - **Trabajo archivado que no está en `main`** (recuperable con `git fetch <bundle> <rama>`; todo parte de octubre o principios de noviembre y chocaría con lo nuevo): radar de seis familias NBA en la app (`app/mercados-nba-seis`, `nba_markets.dart`); cuota de casa de tenis como referencia (`web/tenis-cuota-referencia`, `tenis_cuotas.py`); scripts de backtest de escalera (`feature/escalera-redesign-2026`: `backtest_profesional_escalera.py`, `backtest_maestro_mercados_totales.py`, `escalera_targets_backtest.py`); cargadores FotMob de contexto y calendario (foto `wt-datos-motor-fotmob`). Si alguno interesa, se rehace sobre `main` en su propia rama.
-- Idiomas: inglés en `preview` y portugués en `off`; falta que leas el inglés y decidas pasarlos a `on` (no probado en producción).
+- Idiomas: textos aprobados por el titular (11-nov-2026). Inglés sigue en `preview` y portugués en `off` hasta confirmar si `en` pasa a `on` ya o tras `/legal/privacidad` y el nuevo menú `/control/configuracion`. (F7 `fr`/`it`/`de` bloqueado hasta revisión legal: `docs/revision_legal_f7_20261110.md`.)
 - `README.md` auditado el 10-nov-2026 frente al sistema en marcha (`CLAUDE.md`, `scripts/crontab`, `docker-compose.yml`, `Caddyfile`, `db/001..109` y `DEPLOYS.md`); las secciones históricas conservan su fecha. (`Caddyfile` del repo también alineado con F2.1 de producción: sin `302` en `/nba/*` y con `X-Robots-Tag: noindex` en `@nba_v2`.)
 
 ## 1. Depende de ti
 **Decisiones**
 - Encender `PUBLISH_PICKS_ENABLED` cuando se cumpla la puerta de CLV.
-- ¿Publicar el JSON de los 19 lotes históricos de la cadena? Hoy están apartados en `historico_sin_publicar/` (`docs/registro_publico_activacion_20261018.md`).
+- [x] Decisión cerrada (11-nov-2026): los 19 lotes históricos de la cadena se quedan apartados en `historico_sin_publicar/` (`docs/registro_publico_activacion_20261018.md`), sin subirse al registro público.
+- Nuevo módulo pedido en `/control` (11-nov-2026): menú de configuración web para gestionar páginas principales en idioma base, traducirlas vía **API Market**, editar ajustes de la web y capturar usuarios de redes sociales (`harness/tareas.md`; espera detalles de API Market y alcance antes de codificar).
 - Comprar, tras la renovación del 1-nov, los cierres históricos que faltan: 590 snapshots (~5.900 créditos) con `python -m qf.ingest.cierres_odds_api fetch --presupuesto 5900`. Los partidos nuevos ya traen su cierre de PropLine.
 - `SOFT_BOOKS` frente a las casas de PropLine: solo 1xbet coincide, así que la sombra sharp ve 0 ofertas de casas blandas.
 - Fuente del calendario de copas y de otras competiciones (descanso).
