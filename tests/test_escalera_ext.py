@@ -118,3 +118,34 @@ def test_un_reto_puede_mezclar_tenis_y_futbol_y_el_anterior_solo_futbol():
     assert plan[0][2][0].match_id == "tenis:t1"            # el más probable primero
     anterior = es.Abierto(5, 1, 3, prob_objetivo=None, cuota_min=1.03, cuota_max=1.40)
     assert es.elegir([tenis, futbol], anterior).match_id == "eng.1:m1"   # el reto anterior, solo fútbol
+
+
+def test_escalon_tenis_usa_respaldo_si_propline_no_trae_resultado_y_no_alarma_walkover(tmp_path, ajustes, monkeypatch):
+    import hashlib, gzip, sqlite3
+    from qf.ingest import tenis_resultados as tr
+
+    assert ext.resultado(_paso(), NOW, tmp_path, resolver_respaldo=lambda p, n: "win") == ("win", None, None, None)
+
+    # Si el archivo local de SportsAPIPro confirmó Walkover/Canceled, sin_filas_de_resultado devuelve False (no alerta).
+    res_dir = tmp_path / "sportsapipro_tenis_resultados"
+    res_dir.mkdir(parents=True)
+    body = json.dumps({"events": [{
+        "id": 99, "startTimestamp": int(_paso()["evento_inicio"].timestamp()),
+        "tournament": {"name": "ATP Paris", "category": {"name": "ATP"}},
+        "homeTeam": {"name": "Jannik Sinner"}, "awayTeam": {"name": "Qualifier X"},
+        "status": {"type": "canceled", "description": "Canceled"},
+        "winnerCode": None, "homeScore": {}, "awayScore": {},
+    }]}).encode()
+    sha = hashlib.sha256(body).hexdigest()
+    rel = "objects/%s/%s.json.gz" % (sha[:2], sha)
+    (res_dir / "objects" / sha[:2]).mkdir(parents=True)
+    (res_dir / rel).write_bytes(gzip.compress(body, mtime=0))
+    db = sqlite3.connect(res_dir / "index.sqlite")
+    db.executescript("""CREATE TABLE receipts (id INTEGER PRIMARY KEY, received_at TEXT NOT NULL, kind TEXT NOT NULL,
+                        ref TEXT NOT NULL, status INTEGER NOT NULL, sha256 TEXT NOT NULL, body_path TEXT NOT NULL);""")
+    with db:
+        db.execute("INSERT INTO receipts(received_at,kind,ref,status,sha256,body_path) VALUES(?,?,?,?,?,?)",
+                   (NOW.isoformat(), "calendario", "2026-10-28", 200, sha, rel))
+    db.close()
+    monkeypatch.setattr(tr, "settings", replace(tr.settings, artifact_dir=str(tmp_path)))
+    assert ext.sin_filas_de_resultado(_paso(), NOW, tmp_path) is False

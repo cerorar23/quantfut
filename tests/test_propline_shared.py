@@ -624,6 +624,8 @@ def test_shipped_config_keeps_settlement_inside_the_daily_cap():
     # server, 24-oct-2026: hourly odds, daily ids/futures/markets, scores; plus the hourly NBA injury report
     measured_daily = 129 * 24 + 110 + 4 * 33 + 24 * len(config.get("injuries_sports", []))
     assert measured_daily + sum(settle["daily_budget"].values()) <= config["daily_cap"]
+    assert config["scores_every_hours"] == 1
+    assert settle["min_hours_after_start"] <= 3
     assert all(len(keys) <= 50 for keys in families.values())  # one closing call per event
     assert {"player_aces", "player_double_faults", "player_games_won", "player_break_points_won",
             "total_aces"} <= set(families["tennis"])

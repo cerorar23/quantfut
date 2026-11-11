@@ -632,20 +632,23 @@ def settle_pending(now: datetime | None = None) -> dict:
            WHERE r.paso_id IS NULL AND p.evento_id IS NOT NULL AND p.evento_inicio < %s
              AND NOT EXISTS (SELECT 1 FROM escalera_cierres c WHERE c.reto_id = p.reto_id)""",
         (now - timedelta(hours=3),))
-    for r in externos:
-        res = ext.resultado(r, now)
-        if res is None:
-            continue
-        if res[0] == "void" and ext.sin_filas_de_resultado(r, now):
-            # Se anula igual (si no, el reto no expiraría nunca), pero se avisa: no es un partido
-            # anulado, es que PropLine no trajo el resultado y la fila es inmutable.
-            from . import telegram as tg
-            tg.alert(f"Escalera: escalón anulado SIN resultado en PropLine ({r['deporte']} {r['evento_local']} "
-                     f"vs {r['evento_visitante']}, evento {r['evento_id']}). Revisar el resultado real a mano.")
-        n += execute(
-            """INSERT INTO escalera_resultados (paso_id, outcome, home_goals, away_goals, valor, fuente)
-               VALUES (%s,%s,%s,%s,%s,'propline') ON CONFLICT (paso_id) DO NOTHING""",
-            (r["paso_id"], *res)) or 0
+    if externos:
+        from ..ingest import tenis_resultados as tr
+        with tr.RespaldoTenis() as respaldo:
+            for r in externos:
+                res = ext.resultado(r, now, resolver_respaldo=respaldo.resolver_paso)
+                if res is None:
+                    continue
+                if res[0] == "void" and ext.sin_filas_de_resultado(r, now):
+                    # Se anula igual (si no, el reto no expiraría nunca), pero se avisa: no es un partido
+                    # anulado, es que ni PropLine ni el respaldo trajeron resultado y la fila es inmutable.
+                    from . import telegram as tg
+                    tg.alert(f"Escalera: escalón anulado SIN resultado en PropLine ({r['deporte']} {r['evento_local']} "
+                             f"vs {r['evento_visitante']}, evento {r['evento_id']}). Revisar el resultado real a mano.")
+                n += execute(
+                    """INSERT INTO escalera_resultados (paso_id, outcome, home_goals, away_goals, valor, fuente)
+                       VALUES (%s,%s,%s,%s,%s,'propline') ON CONFLICT (paso_id) DO NOTHING""",
+                    (r["paso_id"], *res)) or 0
     return {"settled": n}
 
 

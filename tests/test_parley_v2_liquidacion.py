@@ -54,11 +54,14 @@ def test_prefiere_la_casa_de_la_pata_luego_la_mayoria_y_sin_acuerdo_no_liquida()
     assert liq.resolver_propline(pata(), [fila("h2h", "Local", None)]) is None              # sin calificar
 
 
-def test_pata_sin_calificacion_se_anula_pasado_el_margen():
+def test_pata_sin_calificacion_no_se_anula_silenciosamente_pasado_el_margen():
+    assert liq.MARGEN_SIN_RESULTADO == timedelta(hours=72)
     assert liq.resultado_pata(pata(), NOW, filas_propline=[]) is None
     tarde = NOW + timedelta(hours=100)
-    assert liq.resultado_pata(pata(), tarde, filas_propline=[]) == ("void", None, "sin_calificacion")
+    assert liq.resultado_pata(pata(), tarde, filas_propline=[]) is None
     assert liq.resultado_pata(pata(), NOW, filas_propline=[fila("h2h", "Local", "won")]) == ("win", None, "propline")
+    assert liq.resultado_pata(pata(), NOW, filas_propline=[], resolver_respaldo=lambda p, n: "loss") == (
+        "loss", None, "sportsapipro")
 
 
 def test_pata_de_futbol_usa_las_reglas_del_parley_actual():
@@ -69,32 +72,59 @@ def test_pata_de_futbol_usa_las_reglas_del_parley_actual():
     assert liq.resultado_pata(f, NOW) is None
 
 
-def test_ticket_pierde_con_una_perdida_paga_a_cuota_1_las_devueltas_y_espera_si_falta_alguna():
+def test_ticket_cierra_perdido_al_instante_si_falla_una_pata_y_espera_solo_si_ninguna_perdio():
     assert liq.liquidar_ticket([("win", 1.5), ("win", 1.4)]) == {"outcome": "ganado", "factor_pago": 2.1}
     assert liq.liquidar_ticket([("win", 1.5), ("loss", 1.4)])["outcome"] == "perdido"
+    assert liq.liquidar_ticket([("loss", 1.5), (None, 1.4)]) == {"outcome": "perdido", "factor_pago": 0.0}
+    assert liq.liquidar_ticket([(None, 1.5), ("loss", 1.4)]) == {"outcome": "perdido", "factor_pago": 0.0}
     assert liq.liquidar_ticket([("win", 1.5), ("void", 1.4)]) == {"outcome": "ganado", "factor_pago": 1.5}
     assert liq.liquidar_ticket([("void", 1.5), ("push", 1.4)])["outcome"] == "nulo"
     assert liq.liquidar_ticket([("win", 1.5), (None, 1.4)]) is None
 
 
-def test_liquidar_pendientes_guarda_patas_y_cierra_el_ticket(monkeypatch):
+def test_liquidar_pendientes_usa_respaldo_y_cierra_ticket_con_pata_perdida(monkeypatch):
     guardadas, cerrados = [], []
     pendientes = [dict(pata_id="p1", deporte="tenis", evento_id="77", mercado="h2h", seleccion="home", linea=None,
                        jugador_id=None, casa="bet365", inicio_utc=INICIO, evento=EVENTO),
                   dict(pata_id="p2", deporte="nba", evento_id="9", mercado="player_points", seleccion="over", linea=24.5,
-                       jugador_id="11", casa="bet365", inicio_utc=INICIO, evento=["9", "basketball_nba", "x", "L", "V"])]
+                       jugador_id="11", casa="bet365", inicio_utc=INICIO, evento=["9", "basketball_nba", "x", "L", "V"]),
+                  dict(pata_id="p3", deporte="tenis", evento_id="88", mercado="h2h", seleccion="away", linea=None,
+                       jugador_id=None, casa="bet365", inicio_utc=INICIO, evento=["88", "tennis", INICIO.isoformat(), "A", "B"])]
     monkeypatch.setattr(liq, "_pendientes", lambda now: pendientes)
     monkeypatch.setattr(liq, "_guardar_pata", lambda i, o, v, f: guardadas.append((i, o, f)) or 1)
     monkeypatch.setattr(liq, "_tickets_pendientes", lambda: [
         {"ticket_id": "t1", "price": 1.5, "outcome": "win"}, {"ticket_id": "t1", "price": 1.6, "outcome": "win"},
-        {"ticket_id": "t2", "price": 1.5, "outcome": "win"}, {"ticket_id": "t2", "price": 1.6, "outcome": None}])
+        {"ticket_id": "t2", "price": 1.5, "outcome": "loss"}, {"ticket_id": "t2", "price": 1.6, "outcome": None},
+        {"ticket_id": "t3", "price": 1.5, "outcome": "win"}, {"ticket_id": "t3", "price": 1.6, "outcome": None}])
     monkeypatch.setattr(liq, "_guardar_ticket", lambda i, o, f: cerrados.append((i, o, f)) or 1)
-    por_sport = {"tennis": [fila("h2h", "Local", "won")],
+    por_sport = {"tennis": [],
                  "basketball_nba": [fila("player_points", "Over", "lost", point=24.5, player_id=11)]}
-    r = liq.liquidar_pendientes(NOW, leer_filas=lambda sport, ev, now: por_sport[sport])
-    assert r == {"patas": 2, "tickets": 1}
-    assert guardadas == [("p1", "win", "propline"), ("p2", "loss", "propline")]
-    assert cerrados == [("t1", "ganado", 2.4)]
+    respaldo = {"77": "win", "88": "loss"}
+    r = liq.liquidar_pendientes(NOW, leer_filas=lambda sport, ev, now: por_sport[sport],
+                                resolver_respaldo=lambda p, n: respaldo.get(p["evento"][0]))
+    assert r == {"patas": 3, "tickets": 2}
+    assert guardadas == [("p1", "win", "sportsapipro"), ("p2", "loss", "propline"), ("p3", "loss", "sportsapipro")]
+    assert cerrados == [("t1", "ganado", 2.4), ("t2", "perdido", 0.0)]
+
+
+def test_liquidar_pendientes_alerta_sin_anular_cuando_supera_72h_sin_resultado(monkeypatch, tmp_path):
+    from dataclasses import replace
+    from qf.ingest import tenis_resultados as tr
+    from qf.publish import telegram as tg
+
+    avisos = []
+    guardadas = []
+    monkeypatch.setattr(tr, "settings", replace(tr.settings, sportsapipro_key="", artifact_dir=str(tmp_path)))
+    monkeypatch.setattr(tg, "alert", lambda msg: avisos.append(msg))
+    monkeypatch.setattr(liq, "_pendientes", lambda now: [dict(
+        pata_id="p_vieja", deporte="tenis", evento_id="999", mercado="h2h", seleccion="home", linea=None,
+        jugador_id=None, casa="bet365", inicio_utc=INICIO - timedelta(hours=80), evento=EVENTO)])
+    monkeypatch.setattr(liq, "_guardar_pata", lambda i, o, v, f: guardadas.append((i, o, f)) or 1)
+    monkeypatch.setattr(liq, "_tickets_pendientes", lambda: [])
+    r = liq.liquidar_pendientes(NOW, leer_filas=lambda s, e, n: [])
+    assert r == {"patas": 0, "tickets": 0}
+    assert guardadas == []
+    assert len(avisos) == 1 and "NO anuladas" in avisos[0] and "Local vs Visita" in avisos[0]
 
 
 def test_el_id_de_evento_de_futbol_conserva_el_match_id_completo():
