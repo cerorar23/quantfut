@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Acceso gratis y VIP{% endblock %}
+{% block heading %}Acceso gratis y VIP{% endblock %}
+{% macro pct(x) %}{{ (x * 100)|round(0)|int }} %{% endmacro %}
+{% block content %}
+{% if err %}<div class="alert alert-danger">{{ err }}</div>{% endif %}
+<div class="card mb-4"><div class="card-body">
+  <h3 class="card-title">Regla en vigor hoy (UTC)</h3>
+  <p class="mb-1">Probabilidad mostrada: <strong>{{ pct(en_vigor.prob_min) }} – {{ pct(en_vigor.prob_max) }}</strong>.
+     Gratis: <strong>{{ pct(en_vigor.free_fraction) }}</strong> de los pronósticos del lote, redondeado hacia arriba, los de mayor probabilidad.</p>
+  <p class="text-secondary mb-0">Desde {{ en_vigor.vigente_desde }}{% if en_vigor.nota %} · {{ en_vigor.nota }}{% endif %}.
+     Cada lote se rige por la regla de su día: un cambio nunca regala ni oculta pronósticos de lotes ya repartidos o sellados.
+     Durante 7 días conviven lotes de la regla vieja y de la nueva.</p>
+</div></div>
+
+<form class="card mb-4" method="post" action="/control/acceso/regla"><div class="card-body">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3 class="card-title">Nueva regla</h3>
+  <p>Solo vale desde el día UTC elegido (mañana o después). No se edita: para corregir una que aún no entró en vigor, crea otra con la misma fecha y gana la última. Rango permitido: 62 % – 95 %.</p>
+  <div class="row g-3">
+    <div class="col-md-3"><label class="form-label" for="prob_min">Probabilidad mínima (%)</label>
+      <input class="form-control" id="prob_min" name="prob_min" type="number" min="62" max="94" step="1" value="{{ (en_vigor.prob_min * 100)|round(0)|int }}" required></div>
+    <div class="col-md-3"><label class="form-label" for="prob_max">Probabilidad máxima (%)</label>
+      <input class="form-control" id="prob_max" name="prob_max" type="number" min="63" max="95" step="1" value="{{ (en_vigor.prob_max * 100)|round(0)|int }}" required></div>
+    <div class="col-md-3"><label class="form-label" for="free_pct">Gratis (% del lote)</label>
+      <input class="form-control" id="free_pct" name="free_pct" type="number" min="0" max="100" step="1" value="{{ (en_vigor.free_fraction * 100)|round(0)|int }}" required></div>
+    <div class="col-md-3"><label class="form-label" for="vigente_desde">Vigente desde (UTC)</label>
+      <input class="form-control" id="vigente_desde" name="vigente_desde" type="date" min="{{ manana }}" value="{{ manana }}" required></div>
+    <div class="col-12"><label class="form-label" for="nota">Nota (obligatoria)</label>
+      <input class="form-control" id="nota" name="nota" maxlength="500" placeholder="Por qué se cambia" required></div>
+  </div>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Programar regla</button></div></form>
+
+<h3>Reglas futuras</h3>
+<div class="table-responsive mb-4"><table class="table"><thead><tr><th>Desde (UTC)</th><th>Rango</th><th>Gratis</th><th>Nota</th><th>Creada por</th></tr></thead><tbody>
+{% for r in futuras %}<tr><td>{{ r.vigente_desde }}</td><td>{{ pct(r.prob_min) }} – {{ pct(r.prob_max) }}</td><td>{{ pct(r.free_fraction) }}</td><td>{{ r.nota }}</td><td>{{ r.creado_por }}</td></tr>
+{% else %}<tr><td colspan="5">No hay reglas programadas.</td></tr>{% endfor %}
+</tbody></table></div>
+
+<h3>Historial</h3>
+<div class="table-responsive mb-4"><table class="table"><thead><tr><th>Desde (UTC)</th><th>Rango</th><th>Gratis</th><th>Nota</th><th>Creada por</th><th>Creada</th></tr></thead><tbody>
+{% for r in historial %}<tr><td>{{ r.vigente_desde }}</td><td>{{ pct(r.prob_min) }} – {{ pct(r.prob_max) }}</td><td>{{ pct(r.free_fraction) }}</td><td>{{ r.nota }}</td><td>{{ r.creado_por }}</td><td>{{ r.creado_en|fecha }}</td></tr>{% endfor %}
+</tbody></table></div>
+
+<form class="card" method="post" action="/control/acceso/agenda"><div class="card-body">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3 class="card-title">Días de agenda en la app</h3>
+  <p>No afecta a nada sellado; el cambio es inmediato.</p>
+  <label class="form-label" for="dias">Días (1–14)</label>
+  <input class="form-control" id="dias" name="dias" type="number" min="1" max="14" value="{{ dias_agenda }}" required>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Guardar</button></div></form>
+{% endblock %}

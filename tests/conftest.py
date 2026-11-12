@@ -44,3 +44,19 @@ def _sin_red_hacia_nba_api(monkeypatch):
     monkeypatch.setattr(verificacion, "carga_lotes", lambda limite=90: None)
     yield
     nba_datos.vaciar_cache()
+
+
+@pytest.fixture(autouse=True)
+def _reglas_de_acceso_de_codigo(monkeypatch):
+    """Sin Postgres: las reglas de acceso (db/111) valen los valores de hoy y `dias_agenda` 7.
+    Las pruebas de tests/test_acceso_reglas.py sustituyen `_cargar` con las suyas."""
+    try:
+        from qf.comercial import acceso_reglas
+    except Exception:
+        yield
+        return
+    monkeypatch.setattr(acceso_reglas, "_cargar", lambda: [acceso_reglas.HOY])
+    monkeypatch.setattr(acceso_reglas, "_cargar_dias", lambda: acceso_reglas.DIAS_AGENDA_DEFECTO)
+    acceso_reglas.invalidar_cache()
+    yield
+    acceso_reglas.invalidar_cache()
