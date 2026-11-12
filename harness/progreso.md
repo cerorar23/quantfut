@@ -1,6 +1,23 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Diseño de la Fase 1 del menú «Web y App»: reglas de acceso versionadas y lista blanca (rama `plan/menu-web-y-app`, solo diseño)
+
+- **Por qué las reglas van versionadas por fecha de lote y no como un valor editable:** al leer `api/mobile.py` resultó que las constantes actúan hacia atrás. `top_up()` y `cap_free()` recalculan en cada lectura el cupo gratis de los lotes de los últimos 7 días, y `markets_history()` filtra todo el historial con el rango vigente. Con un control en el panel, estrechar el rango ocultaría a posteriori pronósticos sellados que fallaron: justo lo que el producto promete no hacer. La tabla `acceso_reglas` solo se añade y un trigger impide fechar una regla en hoy o antes; como `batch_date` es la fecha UTC de la decisión, ninguna regla puede alcanzar un lote ya sellado.
+- **Por qué no se guarda la regla en cada lote:** con inserción solo hacia el futuro, la regla de cualquier lote existente ya es inmutable y se deduce de su fecha; una columna extra en `mobile_allocation_batches` no añadiría garantía.
+- **Por qué el endpoint nuevo nace como `contrato: 0` y sin clientes:** la forma definitiva es la decisión de la Fase 2 y queda congelada en la app publicada. En la Fase 1 solo se asienta la maquinaria (lista blanca, `ETag`); `/web/config` y `/mobile/v1/config` no se reescriben.
+- **Por qué una prueba de clasificación de columnas:** la fuga probable no es la de hoy, sino una columna privada añadida más adelante a una tabla que el endpoint ya lee. La prueba falla hasta que alguien la declare pública o privada.
+- **Decisión del titular (12-nov-2026):** las reglas de acceso gratis serán editables desde el panel. Se aceptó porque la vigencia por lote quita el riesgo que tenía hacerlas editables; orden de ejecución: reglas → endpoint → menú, porque el endpoint informa la regla en vigor y el menú enlaza `/control/acceso`.
+
+## 11-nov-2026 · Plan del menú «Web y App»: configuración compartida para web y Flutter (rama `plan/menu-web-y-app`, solo plan)
+
+- **Por qué un catálogo en el servidor y no más interruptores:** lo que hoy obliga a publicar la app no son los textos ni los avisos (eso ya se edita en `/control`), sino que deportes y mercados están escritos en el código de cada cliente (`enum SportKind` en `sports.dart`, expresiones regulares por deporte en `rutas.js`) y que cada deporte tiene un contrato distinto. Mientras eso siga así, un deporte nuevo exige versión de tienda por mucho panel que haya.
+- **Por qué adaptadores y no reescribir los endpoints:** NBA lo sirve un servicio aparte (`apps/nba`) y fútbol y tenis tienen clientes instalados que dependen de la forma actual. El contrato común se monta encima y los endpoints viejos quedan como alias; así las versiones ya instaladas no se rompen y la actualización obligatoria no hace falta para esto.
+- **Por qué bloques con tipos cerrados y no interfaz libre desde el servidor:** el CSS anterior es obligatorio y las tiendas no permiten código descargado. Cada tipo de bloque corresponde a un componente que ya existe; el servidor decide cuáles, en qué orden y con qué datos, y un tipo desconocido se ignora.
+- **Límite fijado en el plan:** el panel gobierna presentación; no toca el orden `predecir → sellar → publicar` ni asignaciones gratis ya hechas. `fr/it/de` siguen bloqueados en la web (F7); los 6 idiomas solo aplican a textos de la app.
+- **Por qué cada tarea lleva modelo y esfuerzo:** el titular pidió ahorrar tokens. Solo piden Fable 5.2 alto las decisiones que quedan congeladas en versiones instaladas de la app (forma del endpoint y catálogo, contrato por deporte, bloques) o que tocan las asignaciones gratis, más la revisión de seguridad del endpoint público. Esas sesiones dejan la especificación escrita en `tareas.md` para que la ejecución, con modelos más baratos, no tenga que explorar ni decidir.
+- Detalle por fases y decisiones que esperan al titular: `harness/tareas.md`, sección del 11-nov.
+
 ## 11-nov-2026 · Páginas informativas y legales dentro del shell de la app (rama `web/paginas-info-en-shell`, sin desplegar)
 
 - **Decisión del titular:** Metodología, Juego responsable, Sobre nosotros, Términos y Privacidad (y Eliminar cuenta) tenían maqueta propia (fondo claro u oscuro distinto, otro menú y otro pie). Ahora se sirven con el mismo `index.html` que NBA, fútbol y tenis (`rutas_web.render_pagina`): mismo encabezado, selector de deportes, menú principal y pie global. En ES, EN y PT.
