@@ -46,7 +46,7 @@ SportMarket mk(
 SportEvent ev(
   String id,
   List<SportMarket> markets, {
-  SportKind sport = SportKind.nba,
+  SportId sport = kNba,
   DateTime? start,
   String? featuredId,
   bool serverFeatured = false,
@@ -55,7 +55,7 @@ SportEvent ev(
   sport: sport,
   home: 'Miami Heat',
   away: 'New York Knicks',
-  league: sport == SportKind.nba ? 'NBA' : 'ATP',
+  league: sport == kNba ? 'NBA' : 'ATP',
   start: (start ?? DateTime.utc(2026, 11, 2, 19)).toUtc(),
   status: 'scheduled',
   seal: 'abc',
@@ -84,7 +84,7 @@ Future<void> pump(WidgetTester tester, Widget body) async {
 }
 
 Widget predictions(
-  SportKind sport,
+  SportId sport,
   SportFeed feed, {
   ValueChanged<SportEvent>? onOpen,
   Future<void> Function()? onRetry,
@@ -99,7 +99,7 @@ Widget predictions(
 );
 
 Widget markets(
-  SportKind sport,
+  SportId sport,
   SportFeed feed, {
   Future<void> Function()? onRetry,
 }) => SportMarkets(
@@ -146,7 +146,7 @@ void main() {
           mk('winner', outcome: 'win'),
           mk('games_total-2', outcome: 'loss'),
           mk('games_total-3', outcome: 'win'),
-        ], sport: SportKind.tennis),
+        ], sport: kTennis),
       ]);
       expect(rates['winner'], (won: 2, resolved: 3));
       expect(rates['player_points'], (won: 1, resolved: 1));
@@ -160,10 +160,10 @@ void main() {
     'Predicciones y Mercados de NBA/tenis sin overlay: «—» y nunca un @ inventado',
     (tester) async {
       for (final (sport, file) in [
-        (SportKind.nba, 'nba_feed.json'),
-        (SportKind.tennis, 'tennis_feed.json'),
+        (kNba, 'nba_feed.json'),
+        (kTennis, 'tennis_feed.json'),
       ]) {
-        final events = sport == SportKind.nba
+        final events = sport == kNba
             ? nbaEvents(fixture(file))
             : tennisEvents(fixture(file));
         final feed = SportFeed(ready: true, events: events);
@@ -185,7 +185,7 @@ void main() {
         ev('1', [mk('a', market: 'winner')]),
       ],
     );
-    await pump(tester, predictions(SportKind.nba, none));
+    await pump(tester, predictions(kNba, none));
     expect(find.byKey(const ValueKey('sport-hit-rate')), findsNothing);
     final some = SportFeed(
       ready: true,
@@ -196,7 +196,7 @@ void main() {
         ]),
       ],
     );
-    await pump(tester, predictions(SportKind.nba, some));
+    await pump(tester, predictions(kNba, some));
     expect(find.byKey(const ValueKey('sport-hit-rate')), findsOneWidget);
     expect(find.text('1/1 publicados'), findsOneWidget);
   });
@@ -224,7 +224,7 @@ void main() {
           ]),
         ],
       );
-      await pump(tester, markets(SportKind.nba, feed));
+      await pump(tester, markets(kNba, feed));
       for (final title in [
         'Ganador del partido',
         'Hándicap del partido',
@@ -260,20 +260,20 @@ void main() {
               mk('games_total-2', label: 'Juegos totales', outcome: 'win'),
               mk('tiebreak-1', label: 'Tie-break', p: .3),
             ],
-            sport: SportKind.tennis,
+            sport: kTennis,
             serverFeatured: true,
             featuredId: 'games_total-2',
           ),
           ev(
             't2',
             [mk('winner', outcome: 'win')],
-            sport: SportKind.tennis,
+            sport: kTennis,
             serverFeatured: true,
             featuredId: 'winner',
           ),
         ],
       );
-      await pump(tester, markets(SportKind.tennis, feed));
+      await pump(tester, markets(kTennis, feed));
       for (final title in [
         'Ganador del partido',
         'Juegos totales',
@@ -309,7 +309,7 @@ void main() {
     await pump(
       tester,
       predictions(
-        SportKind.nba,
+        kNba,
         const SportFeed(ready: false, events: []),
         onRetry: () async => retries++,
       ),
@@ -323,7 +323,7 @@ void main() {
     await pump(
       tester,
       markets(
-        SportKind.nba,
+        kNba,
         const SportFeed(ready: false, events: []),
         onRetry: () async => retries++,
       ),
@@ -350,9 +350,9 @@ void main() {
           ),
         ],
       );
-      await pump(tester, predictions(SportKind.nba, feed));
+      await pump(tester, predictions(kNba, feed));
       expect(find.text('Sobre los últimos 3 resueltos'), findsOneWidget);
-      await pump(tester, markets(SportKind.nba, feed));
+      await pump(tester, markets(kNba, feed));
       expect(find.text('Sobre los últimos 1 resueltos'), findsOneWidget);
     },
   );
@@ -389,14 +389,14 @@ void main() {
     );
     final total = familyPicks(
       l10n,
-      SportKind.nba,
+      kNba,
       feed,
     ).firstWhere((f) => f.family == 'game_total');
     expect(total.settled.map((p) => p.$2.id), [
       'no',
     ]); // El historial conserva el destacado, independiente de la regla actual.
 
-    final quotes = QuotesOverlay.fromJson(SportKind.tennis, {
+    final quotes = QuotesOverlay.fromJson(kTennis, {
       'state': 'partial',
       'events': <String, dynamic>{},
       'publicables': {
@@ -413,13 +413,13 @@ void main() {
         ev(
           't',
           [mk('winner', outcome: 'win'), mk('games_total-2', outcome: 'win')],
-          sport: SportKind.tennis,
+          sport: kTennis,
           serverFeatured: true,
           featuredId: 'games_total-2',
         ),
       ],
     );
-    final games = familyPicks(l10n, SportKind.tennis, tennis, quotes);
+    final games = familyPicks(l10n, kTennis, tennis, quotes);
     expect(games.firstWhere((f) => f.family == 'games_total').resolved, 1);
     expect(games.firstWhere((f) => f.family == 'winner').resolved, 0);
   });

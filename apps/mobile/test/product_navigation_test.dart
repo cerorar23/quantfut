@@ -334,7 +334,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sport-tenis')));
     await tester.pumpAndSettle();
     expect(store.keys.where((k) => k.contains('last')), isEmpty);
-    expect(await memoryPrefs(store).initial(), SportKind.football);
+    expect(await memoryPrefs(store).initial(), kFootball);
     expect(find.byKey(const ValueKey('streams-switcher')), findsOneWidget);
     expect(selectedMark('tenis'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
@@ -386,14 +386,14 @@ void main() {
     testWidgets('a 360 dp las etiquetas del selector no se recortan ($code)', (tester) async {
       await AppLocale.instance.select(code);
       addTearDown(AppLocale.instance.reset);
-      for (final active in SportKind.values) {
+      for (final active in sportCatalog.ids) {
         await open(
           tester,
           Scaffold(
             body: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SportSelector(
-                sports: SportKind.values,
+                sports: sportCatalog.ids,
                 value: active,
                 onChanged: (_) {},
               ),
@@ -403,13 +403,13 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         tester.view.physicalSize = const Size(360, 640);
         await tester.pumpAndSettle();
-        for (final sport in SportKind.values) {
+        for (final sport in sportCatalog.ids) {
           final text = find.descendant(
-            of: find.byKey(ValueKey('sport-${sport.id}')),
+            of: find.byKey(ValueKey('sport-$sport')),
             matching: find.byType(Text),
           );
           final paragraph = tester.renderObject<RenderParagraph>(text.first);
-          expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active ${sport.id}');
+          expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active $sport');
         }
       }
     });
@@ -1016,6 +1016,65 @@ void main() {
     expect(find.text('Día 7'), findsOneWidget);
     await capture(tester, 'coins');
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  void installCatalog(List<(String, String)> sports) => sportCatalogNotifier.value = SportCatalog.fromJson({
+    'deportes': [
+      for (final (i, (id, icon)) in sports.indexed)
+        {
+          'id': id,
+          'orden': i + 1,
+          'estado': 'on',
+          'nombre': {'es': id, 'en': id},
+          'icono': icon,
+          'color': '#336699',
+          'secciones': ['high'],
+        },
+    ],
+  })!;
+
+  testWidgets('catálogo del servidor sin NBA: el shell no la ofrece', (tester) async {
+    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+    installCatalog([('futbol', 'futbol'), ('tenis', 'tenis')]);
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs({'sports_order': 'nba,futbol,tenis'})));
+    expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
+    expect(selectedMark('futbol'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+
+  testWidgets('si llega un catálogo nuevo con el shell abierto y el deporte actual desaparece, pasa al primero', (tester) async {
+    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pumpAndSettle();
+    expect(selectedMark('nba'), findsOneWidget);
+    installCatalog([('futbol', 'futbol'), ('tenis', 'tenis')]);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
+    expect(selectedMark('futbol'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+
+  testWidgets('un deporte nuevo del catálogo (golf, icono desconocido) se elige y no rompe Inicio, Predicciones ni Mercados', (tester) async {
+    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+    installCatalog([('futbol', 'futbol'), ('golf', 'icono_futuro'), ('nba', 'baloncesto')]);
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    await tester.tap(find.byKey(const ValueKey('sport-golf')));
+    await tester.pumpAndSettle();
+    expect(selectedMark('golf'), findsOneWidget);
+    for (final tab in ['Predicciones', 'Mercados', 'Inicio']) {
+      await navigate(tester, tab);
+      expect(tester.takeException(), isNull, reason: tab);
+      expect(selectedMark('golf'), findsOneWidget, reason: tab);
+    }
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

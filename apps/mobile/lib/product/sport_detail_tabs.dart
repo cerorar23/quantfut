@@ -169,7 +169,7 @@ class SportAnalysis extends StatelessWidget {
     empty: (l) => l.sportStatsUnavailable,
     builder: (data) {
       final l10n = context.l10n;
-      final nba = event.sport == SportKind.nba;
+      final nba = event.sport == kNba;
       final items = jsonRows(data[nba ? 'teams' : 'players']);
       if (items.isEmpty) return SportNote(l10n.sportStatsUnavailable);
       return Column(
@@ -314,7 +314,7 @@ class SportH2h extends StatelessWidget {
       final h2h = jsonMap(data['h2h']);
       if (jsonRows(h2h['matches']).isEmpty) return SportNote(l10n.detailNoH2h);
       return QfCard(
-        child: event.sport == SportKind.nba
+        child: event.sport == kNba
             ? nba(l10n, h2h)
             : tennis(l10n, data, h2h),
       );
@@ -331,7 +331,7 @@ class SportAlerts extends StatelessWidget {
     final l10n = context.l10n;
     final a = event.availability;
     // Tenis: las estadísticas no traen avisos; NBA sin reporte tampoco.
-    if (event.sport != SportKind.nba || a == null) {
+    if (event.sport != kNba || a == null) {
       return SportNote(l10n.sportAlertsNone);
     }
     final applied = a['state'] == 'reporte_aplicado';

@@ -153,8 +153,10 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
       usa la copia incrustada y se comporta igual que antes. Archivos de `frontend/` que cambian (desplegar solo estos, tras comparar hashes con el host):
       `app.js`, `index.html`, `rutas.js`, `real-views.js`, `ergonomic-views.js` (+ pruebas y `package.json`, que no se despliegan).
       Se despliega solo ese conjunto y solo si el host coincide con `main` (regla de `CLAUDE.md`).
-- [ ] `[Opus 5.5 · medio-alto]` Parte F (app): `SportKind` → `SportId` + catálogo cargado (copia de fábrica → disco → red); ver especificación.
+- [x] `[Opus 5.5 · medio-alto]` Parte F (app): `SportKind` → `SportId` + catálogo cargado (copia de fábrica → disco → red); ver especificación.
       Textos nuevos en los 6 idiomas con `apps/mobile/tool/l10n_add.py`, subir el código de versión y probar el release en `emulator-5556`.
+      Hecha el 12-nov-2026 (rama `claude/catalogo-app-flutter-b9eaf8`, PR a `main`; versión `1.1.1+11`; sin publicar). Qué hay y qué se verificó: ver
+      `harness/progreso.md` (entrada «Fase 2 parte F»). **Pendiente del titular:** decidir cuándo se publica la app.
 
 **Especificación de la Fase 2 (diseño del 12-nov-2026; quien ejecute NO rediseña, solo implementa esto)**
 

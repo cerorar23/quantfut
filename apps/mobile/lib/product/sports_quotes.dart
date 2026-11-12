@@ -61,7 +61,7 @@ class QuotesOverlay {
   const QuotesOverlay._(this._sport, this._events, [this._publishable]);
   static const empty = QuotesOverlay._(null, {});
 
-  final SportKind? _sport;
+  final SportId? _sport;
   final Map<String, _EventQuotes> _events;
 
   /// Tenis: lo que el servidor decidió publicar (`publicables`: partido -> mercados). Null si no lo mandó
@@ -75,9 +75,9 @@ class QuotesOverlay {
 
   /// Tolerante: JSON nulo, listas, tipos raros o `state` distinto de ok/partial -> `empty`; lo ilegible
   /// de una entrada solo descarta esa entrada.
-  factory QuotesOverlay.fromJson(SportKind sport, Object? json) {
+  factory QuotesOverlay.fromJson(SportId sport, Object? json) {
     try {
-      if (json is! Map || sport == SportKind.football) return empty;
+      if (json is! Map || sport == kFootball) return empty;
       if (!{'ok', 'partial'}.contains(json['state'])) return empty;
       final raw = json['events'];
       if (raw is! Map) return empty;
@@ -85,7 +85,7 @@ class QuotesOverlay {
       raw.forEach((id, value) {
         if (id is! String || value is! Map) return;
         final rows = <String, Map<String, SportQuote>>{};
-        if (sport == SportKind.nba) {
+        if (sport == kNba) {
           final quotes = value['quotes'];
           if (quotes is Map) {
             quotes.forEach((key, sides) {
@@ -144,7 +144,7 @@ SportQuote? quoteFor(SportEvent e, SportMarket m, QuotesOverlay overlay) {
   final entry = overlay._events[e.id];
   if (entry == null || overlay._sport != e.sport) return null;
   SportQuote? q;
-  if (e.sport == SportKind.nba) {
+  if (e.sport == kNba) {
     final market = m.market;
     if (market == null || entry.cohort != e.seal) return null;
     final key = switch (market) {
@@ -160,7 +160,7 @@ SportQuote? quoteFor(SportEvent e, SportMarket m, QuotesOverlay overlay) {
     }
     if (side == null) return null;
     q = entry.rows[key]?[side];
-  } else if (e.sport == SportKind.tennis) {
+  } else if (e.sport == kTennis) {
     q = entry.rows[m.id]?['-'];
   }
   if (q == null || q.asOf.isAfter(m.sealedAt)) return null;
@@ -168,12 +168,12 @@ SportQuote? quoteFor(SportEvent e, SportMarket m, QuotesOverlay overlay) {
 }
 
 /// Lee las cuotas del deporte; ante cualquier fallo devuelve `empty` (nunca lanza).
-Future<QuotesOverlay> loadQuotes(QuantFutApi api, SportKind sport) async {
+Future<QuotesOverlay> loadQuotes(QuantFutApi api, SportId sport) async {
   try {
     final path = switch (sport) {
-      SportKind.nba => '/web/deportes/nba/cuotas',
-      SportKind.tennis => '/web/deportes/tenis/cuotas',
-      SportKind.football => null,
+      kNba => '/web/deportes/nba/cuotas',
+      kTennis => '/web/deportes/tenis/cuotas',
+      _ => null,
     };
     if (path == null) return QuotesOverlay.empty;
     return QuotesOverlay.fromJson(sport, await api.request(path));

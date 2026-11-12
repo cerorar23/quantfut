@@ -54,7 +54,7 @@ SportMarket mk(
 
 SportEvent nbaEvent() => SportEvent(
   id: 'E1',
-  sport: SportKind.nba,
+  sport: kNba,
   home: 'Miami Heat',
   away: 'New York Knicks',
   league: 'NBA',
@@ -71,7 +71,7 @@ SportEvent nbaEvent() => SportEvent(
 
 SportEvent tennisEvent() => SportEvent(
   id: 'E2',
-  sport: SportKind.tennis,
+  sport: kTennis,
   home: 'Liudmila Samsonova',
   away: 'Heather Watson',
   league: 'WTA',
@@ -93,7 +93,7 @@ Map<String, Object> q(double price, String book) => {
 };
 
 /// Ganador local 1,62 (draftkings); total 224.5 SOLO el lado `under`; puntos de Ana 24.5 over 1,90.
-QuotesOverlay nbaOverlay() => QuotesOverlay.fromJson(SportKind.nba, {
+QuotesOverlay nbaOverlay() => QuotesOverlay.fromJson(kNba, {
   'state': 'ok',
   'events': {
     'E1': {
@@ -107,7 +107,7 @@ QuotesOverlay nbaOverlay() => QuotesOverlay.fromJson(SportKind.nba, {
   },
 });
 
-QuotesOverlay tennisOverlay() => QuotesOverlay.fromJson(SportKind.tennis, {
+QuotesOverlay tennisOverlay() => QuotesOverlay.fromJson(kTennis, {
   'state': 'ok',
   'events': {
     'E2': {'winner': q(1.21, 'pinnacle')},
@@ -139,7 +139,7 @@ Future<void> pump(
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-Widget predictions(SportKind sport, List<SportEvent> events, QuotesOverlay quotes) =>
+Widget predictions(SportId sport, List<SportEvent> events, QuotesOverlay quotes) =>
     SportPredictions(
       api: api,
       sport: sport,
@@ -155,7 +155,7 @@ Widget sheet(SportEvent e, QuotesOverlay quotes) =>
 
 Widget home(QuotesOverlay quotes) => HomeSport(
   api: api,
-  sport: SportKind.nba,
+  sport: kNba,
   feed: SportFeed(ready: true, events: [nbaEvent()]),
   images: ImageCatalog.empty,
   quotes: quotes,
@@ -184,7 +184,7 @@ void main() {
   tearDown(() => AppLocale.instance.reset());
 
   testWidgets('Predicciones NBA: cuota y casa solo en SU mercado; otro lado -> «—»', (tester) async {
-    await pump(tester, predictions(SportKind.nba, [nbaEvent()], nbaOverlay()));
+    await pump(tester, predictions(kNba, [nbaEvent()], nbaOverlay()));
     expect(inCard('sport-pick-E1-w', find.text('@1,62')), findsOneWidget);
     expect(inCard('sport-pick-E1-w', find.text('DraftKings · ${hhmm()}')), findsOneWidget);
     expect(inCard('sport-pick-E1-p', find.text('@1,90')), findsOneWidget);
@@ -201,23 +201,23 @@ void main() {
   });
 
   testWidgets('sin overlay: «—» y jamás un @ en NBA y tenis', (tester) async {
-    await pump(tester, predictions(SportKind.nba, [nbaEvent()], QuotesOverlay.empty));
+    await pump(tester, predictions(kNba, [nbaEvent()], QuotesOverlay.empty));
     expect(find.text('—'), findsNWidgets(3));
     expect(texts(tester).where((t) => t.contains('@')), isEmpty);
-    await pump(tester, predictions(SportKind.tennis, [tennisEvent()], QuotesOverlay.empty));
+    await pump(tester, predictions(kTennis, [tennisEvent()], QuotesOverlay.empty));
     expect(find.text('—'), findsNWidgets(2));
     expect(texts(tester).where((t) => t.contains('@')), isEmpty);
   });
 
   testWidgets('tenis: cuota por id de mercado; el otro mercado queda en «—»', (tester) async {
-    await pump(tester, predictions(SportKind.tennis, [tennisEvent()], tennisOverlay()));
+    await pump(tester, predictions(kTennis, [tennisEvent()], tennisOverlay()));
     expect(inCard('sport-pick-E2-winner', find.text('@1,21')), findsOneWidget);
     expect(inCard('sport-pick-E2-winner', find.text('Pinnacle · ${hhmm()}')), findsOneWidget);
     expect(inCard('sport-pick-E2-games_total-2', find.text('—')), findsOneWidget);
   });
 
   testWidgets('el formato decimal sigue el idioma: 1,62 en es y 1.62 en en', (tester) async {
-    await pump(tester, predictions(SportKind.nba, [nbaEvent()], nbaOverlay()), code: 'en');
+    await pump(tester, predictions(kNba, [nbaEvent()], nbaOverlay()), code: 'en');
     expect(find.text('@1.62'), findsOneWidget);
     expect(find.text('@1,62'), findsNothing);
   });
@@ -251,7 +251,7 @@ void main() {
 
   test('fútbol: el overlay siempre queda vacío (no hay cuotas de referencia)', () {
     expect(
-      QuotesOverlay.fromJson(SportKind.football, {
+      QuotesOverlay.fromJson(kFootball, {
         'state': 'ok',
         'events': {'E1': {}},
       }).isEmpty,
@@ -262,7 +262,7 @@ void main() {
   for (final code in ['es', 'en', 'pt', 'fr', 'it', 'de']) {
     testWidgets('cuotas sin desbordes a 320 dp ($code)', (tester) async {
       const size = Size(320, 2000);
-      final overlay = QuotesOverlay.fromJson(SportKind.nba, {
+      final overlay = QuotesOverlay.fromJson(kNba, {
         'state': 'ok',
         'events': {
           'E1': {
@@ -275,7 +275,7 @@ void main() {
           },
         },
       });
-      await pump(tester, predictions(SportKind.nba, [nbaEvent()], overlay), code: code, size: size);
+      await pump(tester, predictions(kNba, [nbaEvent()], overlay), code: code, size: size);
       expect(tester.takeException(), isNull, reason: 'predicciones $code');
       await pump(tester, sheet(nbaEvent(), overlay), code: code, size: size);
       expect(tester.takeException(), isNull, reason: 'ficha $code');

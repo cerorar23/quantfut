@@ -52,11 +52,11 @@ String sportPickText(AppLocalizations l10n, SportMarket m) {
 Widget sportAvatar(
   QuantFutApi api,
   ImageCatalog images,
-  SportKind sport,
+  SportId sport,
   String name, {
   double size = 30,
 }) {
-  if (sport == SportKind.nba) {
+  if (sport == kNba) {
     final code = nbaTricode(name);
     return QfAvatar(
       url: serverImageUrl(api, code == null ? null : images.nbaLogo(code)),
@@ -153,7 +153,7 @@ class HomeSport extends StatefulWidget {
   });
 
   final QuantFutApi api;
-  final SportKind sport;
+  final SportId sport;
   final SportFeed feed;
 
   /// Cuotas de referencia del deporte; vacías si no llegaron (la interfaz las pinta aparte).
@@ -249,7 +249,7 @@ class _HomeSportState extends State<HomeSport> {
       onRefresh: widget.onRetry,
       child: LayoutBuilder(
         builder: (context, box) => CustomScrollView(
-          key: ValueKey('sport-scroll-${widget.sport.id}'),
+          key: ValueKey('sport-scroll-${widget.sport}'),
           controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -305,7 +305,7 @@ class _HomeSportState extends State<HomeSport> {
                   ),
                 ),
             ],
-            if (widget.sport == SportKind.tennis)
+            if (widget.sport == kTennis)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -328,8 +328,8 @@ class _HomeSportState extends State<HomeSport> {
   Widget _top(BuildContext context, List<SportEvent> shown) {
     final l10n = context.l10n;
     final featured = featuredEvent(widget.feed.events, _today, now: widget.now ?? DateTime.now());
-    final players = widget.sport == SportKind.nba ? _players(shown) : const <(SportEvent, SportMarket)>[];
-    final nba = widget.sport == SportKind.nba;
+    final players = widget.sport == kNba ? _players(shown) : const <(SportEvent, SportMarket)>[];
+    final nba = widget.sport == kNba;
     Widget big(String name) => sportAvatar(
       widget.api,
       widget.images,
@@ -428,7 +428,7 @@ class _HomeSportState extends State<HomeSport> {
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
       child: Row(
         children: [
-          Container(width: 4, height: 18, color: sportSpecs[widget.sport]!.accent),
+          Container(width: 4, height: 18, color: sportCatalog.spec(widget.sport).accent),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -486,7 +486,7 @@ class _EventRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = event;
     final m = featuredMarket(e);
-    final nba = e.sport == SportKind.nba;
+    final nba = e.sport == kNba;
     final sides = nba ? [e.away, e.home] : [e.home, e.away];
     final finished = e.status == 'finished' && e.score != null;
     return Padding(

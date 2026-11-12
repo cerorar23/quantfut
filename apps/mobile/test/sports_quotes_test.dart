@@ -29,7 +29,7 @@ SportMarket _mk(SportEvent e, String market) =>
     e.markets.firstWhere((m) => m.market == market);
 
 QuotesOverlay _nbaOverlay() =>
-    QuotesOverlay.fromJson(SportKind.nba, _fx('quotes_nba.json'));
+    QuotesOverlay.fromJson(kNba, _fx('quotes_nba.json'));
 
 SportMarket _teamPoints(SportMarket base, String teamId) => SportMarket(
   id: 'tp-$teamId',
@@ -63,8 +63,8 @@ void main() {
         {'state': 'unavailable', 'events': {'a': {}}},
       ];
       for (final bad in malos) {
-        expect(QuotesOverlay.fromJson(SportKind.nba, bad).isEmpty, isTrue, reason: '$bad');
-        expect(QuotesOverlay.fromJson(SportKind.tennis, bad).isEmpty, isTrue, reason: '$bad');
+        expect(QuotesOverlay.fromJson(kNba, bad).isEmpty, isTrue, reason: '$bad');
+        expect(QuotesOverlay.fromJson(kTennis, bad).isEmpty, isTrue, reason: '$bad');
       }
     });
 
@@ -81,7 +81,7 @@ void main() {
         'as_of': '2026-10-23T10:00:00+00:00',
         'books': 2,
       };
-      expect(QuotesOverlay.fromJson(SportKind.tennis, one(ok)).isEmpty, isFalse);
+      expect(QuotesOverlay.fromJson(kTennis, one(ok)).isEmpty, isFalse);
       final malos = <Map<String, Object?>>[
         {...ok, 'price': 1.0},
         {...ok, 'price': 0.5},
@@ -96,7 +96,7 @@ void main() {
         {...ok}..remove('as_of'),
       ];
       for (final bad in malos) {
-        expect(QuotesOverlay.fromJson(SportKind.tennis, one(bad)).isEmpty, isTrue, reason: '$bad');
+        expect(QuotesOverlay.fromJson(kTennis, one(bad)).isEmpty, isTrue, reason: '$bad');
       }
     });
   });
@@ -147,7 +147,7 @@ void main() {
 
     test('as_of == sealedAt se acepta (limite inclusivo)', () {
       final w = _mk(e144, 'winner');
-      final igual = QuotesOverlay.fromJson(SportKind.nba, {
+      final igual = QuotesOverlay.fromJson(kNba, {
         'state': 'ok',
         'events': {
           e144.id: {
@@ -195,14 +195,14 @@ void main() {
 
     test('overlay vacio o de otro deporte: sin cuota', () {
       expect(quoteFor(e144, _mk(e144, 'winner'), QuotesOverlay.empty), isNull);
-      final tenis = QuotesOverlay.fromJson(SportKind.tennis, _fx('quotes_tennis.json'));
+      final tenis = QuotesOverlay.fromJson(kTennis, _fx('quotes_tennis.json'));
       expect(quoteFor(e144, _mk(e144, 'winner'), tenis), isNull);
     });
   });
 
   group('tenis', () {
     final events = _tennis();
-    final overlay = QuotesOverlay.fromJson(SportKind.tennis, _fx('quotes_tennis.json'));
+    final overlay = QuotesOverlay.fromJson(kTennis, _fx('quotes_tennis.json'));
     final e = _ev(events, '12173711');
 
     test('une por id de mercado', () {
@@ -215,7 +215,7 @@ void main() {
     });
 
     test('cuota recibida tras el sello del evento se descarta', () {
-      final tarde = QuotesOverlay.fromJson(SportKind.tennis, {
+      final tarde = QuotesOverlay.fromJson(kTennis, {
         'state': 'partial',
         'events': {
           '12173711': {
@@ -241,7 +241,7 @@ void main() {
           paths.add(p);
           return _fx('quotes_nba.json');
         }),
-        SportKind.nba,
+        kNba,
       );
       expect(paths, ['/web/deportes/nba/cuotas']);
       expect(ok.isEmpty, isFalse);
@@ -249,17 +249,17 @@ void main() {
         paths.add(p);
         throw const ApiFailure('caido');
       });
-      expect((await loadQuotes(caido, SportKind.tennis)).isEmpty, isTrue);
+      expect((await loadQuotes(caido, kTennis)).isEmpty, isTrue);
       expect(paths.last, '/web/deportes/tenis/cuotas');
-      expect((await loadQuotes(_Api((_) => 'basura'), SportKind.nba)).isEmpty, isTrue);
-      expect((await loadQuotes(_Api((_) => throw 1), SportKind.football)).isEmpty, isTrue);
+      expect((await loadQuotes(_Api((_) => 'basura'), kNba)).isEmpty, isTrue);
+      expect((await loadQuotes(_Api((_) => throw 1), kFootball)).isEmpty, isTrue);
     });
 
     test('un overlay fallido no pisa uno bueno', () {
       final good = _nbaOverlay();
       expect(identical(mergeQuotes(good, QuotesOverlay.empty), good), isTrue);
       expect(identical(mergeQuotes(null, QuotesOverlay.empty), QuotesOverlay.empty), isTrue);
-      final nuevo = QuotesOverlay.fromJson(SportKind.tennis, _fx('quotes_tennis.json'));
+      final nuevo = QuotesOverlay.fromJson(kTennis, _fx('quotes_tennis.json'));
       expect(identical(mergeQuotes(good, nuevo), nuevo), isTrue);
     });
 
@@ -288,8 +288,8 @@ void main() {
         }
         throw const ApiFailure('caido');
       });
-      final feed = await loadSport(api, SportKind.nba);
-      final q = await loadQuotes(api, SportKind.nba);
+      final feed = await loadSport(api, kNba);
+      final q = await loadQuotes(api, kNba);
       expect(feed.ready, isTrue);
       expect(feed.events.length, 1);
       expect(q.isEmpty, isTrue);

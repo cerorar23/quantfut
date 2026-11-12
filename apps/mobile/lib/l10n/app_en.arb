@@ -651,6 +651,7 @@
   "sportAvailMissingMinutes": "{team}: {minutes} min missing",
   "sportAvailNotSubmitted": "{team} did not submit a report",
   "sportAvailPending": "Injury report pending",
+  "sportBeta": "Beta",
   "sportFootball": "Football",
   "sportH2hRecord": "{home} {homeWins} – {awayWins} {away}",
   "sportHitWindow": "Based on the latest {n} resolved",

@@ -75,7 +75,7 @@ List<SportAgendaDay> groupSportAgenda(
     }
     final groups = days.last.groups;
     SportAgendaGroup? group;
-    if (e.sport == SportKind.tennis) {
+    if (e.sport == kTennis) {
       for (final g in groups) {
         if (g.tournament == e.league) group = g;
       }

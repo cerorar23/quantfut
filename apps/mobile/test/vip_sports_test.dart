@@ -20,8 +20,8 @@ SportMarket mk(String id, String? outcome, {bool eligible = true}) => SportMarke
   outcome: outcome,
 );
 
-SportEvent ev(SportKind sport, List<SportMarket> markets) => SportEvent(
-  id: 'e-${sport.id}',
+SportEvent ev(SportId sport, List<SportMarket> markets) => SportEvent(
+  id: 'e-$sport',
   sport: sport,
   home: 'A',
   away: 'B',
@@ -48,7 +48,7 @@ final data = <String, dynamic>{
   ],
 };
 
-Future<void> pump(WidgetTester tester, Map<SportKind, SportFeed> feeds) async {
+Future<void> pump(WidgetTester tester, Map<SportId, SportFeed> feeds) async {
   tester.view.physicalSize = const Size(390, 2600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -75,8 +75,8 @@ void main() {
 
   testWidgets('acierto por deporte: fútbol del servidor, NBA del feed y tenis sin resueltos', (tester) async {
     await pump(tester, {
-      SportKind.nba: SportFeed(ready: true, events: [
-        ev(SportKind.nba, [
+      kNba: SportFeed(ready: true, events: [
+        ev(kNba, [
           mk('1', 'win'),
           mk('2', 'win'),
           mk('3', 'loss'),
@@ -84,7 +84,7 @@ void main() {
           mk('5', 'push'),
         ]),
       ]),
-      SportKind.tennis: SportFeed(ready: true, events: [ev(SportKind.tennis, [mk('t', null)])]),
+      kTennis: SportFeed(ready: true, events: [ev(kTennis, [mk('t', null)])]),
     });
     expect(find.text('ACIERTO REGISTRADO POR DEPORTE'), findsOneWidget);
     expect(find.descendant(of: card('futbol'), matching: find.text('78,1 %')), findsOneWidget);
@@ -103,7 +103,7 @@ void main() {
 
   testWidgets('un feed sin cargar o caído no inventa acierto', (tester) async {
     await pump(tester, {
-      SportKind.nba: SportFeed(ready: false, events: [ev(SportKind.nba, [mk('1', 'win')])]),
+      kNba: SportFeed(ready: false, events: [ev(kNba, [mk('1', 'win')])]),
     });
     expect(find.descendant(of: card('nba'), matching: find.text('—')), findsOneWidget);
     expect(find.descendant(of: card('tenis'), matching: find.text('—')), findsOneWidget);
@@ -149,7 +149,7 @@ void main() {
     await AppLocale.instance.select('es');
     final api = QuantFutApi();
     addTearDown(api.dispose);
-    final live = ValueNotifier<Map<SportKind, SportFeed>>(const {});
+    final live = ValueNotifier<Map<SportId, SportFeed>>(const {});
     addTearDown(live.dispose);
     var requests = 0;
     await tester.pumpWidget(
@@ -170,8 +170,8 @@ void main() {
     expect(requests, 1);
     expect(find.descendant(of: card('nba'), matching: find.text('—')), findsOneWidget);
     live.value = {
-      SportKind.nba: SportFeed(ready: true, events: [
-        ev(SportKind.nba, [mk('1', 'win'), mk('2', 'loss')]),
+      kNba: SportFeed(ready: true, events: [
+        ev(kNba, [mk('1', 'win'), mk('2', 'loss')]),
       ]),
     };
     await tester.pumpAndSettle();

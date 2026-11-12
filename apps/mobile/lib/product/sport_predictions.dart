@@ -31,7 +31,7 @@ class SportPredictions extends StatelessWidget {
   });
 
   final QuantFutApi api;
-  final SportKind sport;
+  final SportId sport;
   final SportFeed feed;
 
   /// Cuotas de referencia del deporte; vacías si no llegaron.
@@ -86,7 +86,7 @@ class SportPredictions extends StatelessWidget {
             onOpen: () => onOpen(e),
           ),
       ],
-      if (sport == SportKind.tennis)
+      if (sport == kTennis)
         Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
@@ -98,7 +98,7 @@ class SportPredictions extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: retry,
       child: ListView.builder(
-        key: ValueKey('sport-predictions-${sport.id}'),
+        key: ValueKey('sport-predictions-$sport'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         itemCount: items.length,
@@ -174,14 +174,14 @@ class _DayHeader extends StatelessWidget {
   const _DayHeader({required this.day, required this.now, required this.sport});
 
   final DateTime day, now;
-  final SportKind sport;
+  final SportId sport;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: 10, bottom: 8),
     child: Row(
       children: [
-        Container(width: 4, height: 18, color: sportSpecs[sport]!.accent),
+        Container(width: 4, height: 18, color: sportCatalog.spec(sport).accent),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -222,7 +222,7 @@ class _PickCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final e = event;
-    final nba = e.sport == SportKind.nba;
+    final nba = e.sport == kNba;
     final sides = nba ? [e.away, e.home] : [e.home, e.away];
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

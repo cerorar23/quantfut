@@ -20,7 +20,7 @@ class HomeHero extends StatelessWidget {
     this.onTap,
   });
 
-  final SportKind sport;
+  final SportId sport;
 
   /// Avatares de 66 dp (local y visitante).
   final Widget left, right;
@@ -32,7 +32,7 @@ class HomeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = sportSpecs[sport]!.accent;
+    final accent = sportCatalog.spec(sport).accent;
     return Semantics(
       button: onTap != null,
       label: '$kicker. ${title ?? ''}. $pick $probability',
@@ -131,7 +131,7 @@ class HomeHero extends StatelessWidget {
 class CourtPainter extends CustomPainter {
   const CourtPainter(this.sport, this.color);
 
-  final SportKind sport;
+  final SportId sport;
   final Color color;
 
   @override
@@ -145,7 +145,7 @@ class CourtPainter extends CustomPainter {
     canvas.drawRect(r, p);
     final c = r.center;
     switch (sport) {
-      case SportKind.football:
+      case kFootball:
         canvas.drawLine(Offset(c.dx, r.top), Offset(c.dx, r.bottom), p);
         canvas.drawCircle(c, r.height * .2, p);
         for (final left in [true, false]) {
@@ -162,7 +162,7 @@ class CourtPainter extends CustomPainter {
           );
           canvas.drawCircle(Offset(x + dir * r.width * .1, c.dy), 1.5, p);
         }
-      case SportKind.nba:
+      case kNba:
         canvas.drawLine(Offset(c.dx, r.top), Offset(c.dx, r.bottom), p);
         canvas.drawCircle(c, r.height * .16, p);
         for (final left in [true, false]) {
@@ -178,7 +178,7 @@ class CourtPainter extends CustomPainter {
           );
           canvas.drawArc(arc, left ? -1.4 : 1.74, 2.8, false, p);
         }
-      case SportKind.tennis:
+      case kTennis:
         final alley = r.height * .12;
         canvas.drawLine(Offset(r.left, r.top + alley), Offset(r.right, r.top + alley), p);
         canvas.drawLine(Offset(r.left, r.bottom - alley), Offset(r.right, r.bottom - alley), p);

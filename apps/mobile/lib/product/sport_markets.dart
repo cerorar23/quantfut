@@ -39,8 +39,8 @@ Map<String, ({int won, int resolved})> hitRateByFamily(
 
 /// Familias de cada deporte, en el orden en que se ofrecen cuando aún no hay resueltos.
 /// Todas salen en la pestaña aunque no tengan pronósticos todavía («Sin publicaciones aún»).
-const sportFamilies = <SportKind, List<String>>{
-  SportKind.nba: [
+const sportFamilies = <SportId, List<String>>{
+  kNba: [
     'winner',
     'handicap',
     'game_total',
@@ -50,7 +50,7 @@ const sportFamilies = <SportKind, List<String>>{
     'player_assists',
     'player_threes',
   ],
-  SportKind.tennis: [
+  kTennis: [
     'winner',
     'games_total',
     'games_handicap',
@@ -102,7 +102,7 @@ class FamilyPicks {
 /// vacías) y las desconocidas que traiga el servidor; primero las de mayor acierto, luego el orden canónico.
 List<FamilyPicks> familyPicks(
   AppLocalizations l10n,
-  SportKind sport,
+  SportId sport,
   SportFeed feed, [
   QuotesOverlay quotes = QuotesOverlay.empty,
 ]) {
@@ -160,7 +160,7 @@ class SportMarkets extends StatelessWidget {
   });
 
   final QuantFutApi api;
-  final SportKind sport;
+  final SportId sport;
   final SportFeed feed;
   final ImageCatalog images;
   final QuotesOverlay quotes;
@@ -175,7 +175,7 @@ class SportMarkets extends StatelessWidget {
     if (!feed.ready) return SportFeedError(onRetry: retry);
     final l10n = context.l10n;
     final families = familyPicks(l10n, sport, feed, quotes);
-    final accent = sportSpecs[sport]!.accent;
+    final accent = sportCatalog.spec(sport).accent;
     final won = families.fold<int>(0, (s, f) => s + f.won);
     final resolved = families.fold<int>(0, (s, f) => s + f.resolved);
     final tiles = [
@@ -239,7 +239,7 @@ class SportMarkets extends StatelessWidget {
             key: const ValueKey('sport-range-note'),
             style: const TextStyle(fontSize: 11, color: QfColors.muted),
           ),
-          if (sport == SportKind.tennis) ...[
+          if (sport == kTennis) ...[
             const SizedBox(height: 6),
             Text(
               l10n.imageCredits,
@@ -267,7 +267,7 @@ class SportMarketDetailScreen extends StatelessWidget {
   });
 
   final QuantFutApi api;
-  final SportKind sport;
+  final SportId sport;
   final FamilyPicks picks;
   final Color color;
   final ImageCatalog images;
@@ -278,7 +278,7 @@ class SportMarketDetailScreen extends StatelessWidget {
   MarketPick _pick(BuildContext context, SportPick p) {
     final (e, m) = p;
     final l10n = context.l10n;
-    final nba = sport == SportKind.nba;
+    final nba = sport == kNba;
     final (first, second) = nba ? (e.away, e.home) : (e.home, e.away);
     Widget Function(double) avatar(String name) =>
         (size) => sportAvatar(api, images, sport, name, size: size);
@@ -293,7 +293,7 @@ class SportMarketDetailScreen extends StatelessWidget {
       homeAvatar: avatar(first),
       awayAvatar: avatar(second),
       kickoff: e.start,
-      league: sport == SportKind.tennis ? e.league : null,
+      league: sport == kTennis ? e.league : null,
       pick: sportPickText(l10n, m),
       probability: m.probability,
       price: quote?.price,

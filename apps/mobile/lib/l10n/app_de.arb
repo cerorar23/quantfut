@@ -651,6 +651,7 @@
   "sportAvailMissingMinutes": "{team}: {minutes} Min. Ausfall",
   "sportAvailNotSubmitted": "{team} hat keinen Bericht eingereicht",
   "sportAvailPending": "Verletztenbericht ausstehend",
+  "sportBeta": "Beta",
   "sportFootball": "Fußball",
   "sportH2hRecord": "{home} {homeWins} – {awayWins} {away}",
   "sportHitWindow": "Basierend auf den letzten {n} ausgewerteten",

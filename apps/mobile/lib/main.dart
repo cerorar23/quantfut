@@ -11,11 +11,14 @@ import 'l10n/app_locale.dart';
 import 'l10n/language_selection_screen.dart';
 import 'onbonding_screen/splesh_screen.dart';
 import 'product/live_widgets.dart';
+import 'product/sport_catalog_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
   await AppLocale.instance.load();
+  // Deportes: copia de fábrica y disco ya aplicados antes del primer fotograma; la red va en segundo plano.
+  await SportCatalogStore.instance.start();
   const app = QuantFutApp();
   runApp(firebaseEnabled ? const FirebaseStartup(child: app) : app);
 }

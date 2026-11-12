@@ -16,12 +16,12 @@ class SportSelector extends StatelessWidget {
     this.counts = const {},
   });
 
-  final List<SportKind> sports;
-  final SportKind value;
-  final ValueChanged<SportKind> onChanged;
+  final List<SportId> sports;
+  final SportId value;
+  final ValueChanged<SportId> onChanged;
 
   /// Contador por deporte (solo se pinta si es mayor que cero).
-  final Map<SportKind, int> counts;
+  final Map<SportId, int> counts;
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +30,10 @@ class SportSelector extends StatelessWidget {
     final chips = <Widget>[
       for (final sport in sports)
         _Chip(
-          key: ValueKey('sport-${sport.id}'),
-          icon: sportSpecs[sport]!.icon,
-          label: sportSpecs[sport]!.label(l10n),
-          accent: sportSpecs[sport]!.accent,
+          key: ValueKey('sport-$sport'),
+          icon: sportCatalog.spec(sport).icon,
+          label: sportCatalog.spec(sport).label(l10n),
+          accent: sportCatalog.spec(sport).accent,
           selected: sport == value,
           count: counts[sport] ?? 0,
           onTap: () => onChanged(sport),

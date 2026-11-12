@@ -651,6 +651,7 @@
   "sportAvailMissingMinutes": "{team}: {minutes} min de desfalques",
   "sportAvailNotSubmitted": "{team} não enviou o relatório",
   "sportAvailPending": "Relatório de lesões pendente",
+  "sportBeta": "Beta",
   "sportFootball": "Futebol",
   "sportH2hRecord": "{home} {homeWins} – {awayWins} {away}",
   "sportHitWindow": "Sobre os últimos {n} resolvidos",

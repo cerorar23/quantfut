@@ -137,7 +137,7 @@ List<SportMarket> nbaMarkets() => [
 SportEvent nbaEvent({JsonMap? availability, List<SportMarket>? markets}) =>
     SportEvent(
       id: '0022600021',
-      sport: SportKind.nba,
+      sport: kNba,
       home: 'Dallas Mavericks',
       away: 'Houston Rockets',
       league: 'NBA',
@@ -151,7 +151,7 @@ SportEvent nbaEvent({JsonMap? availability, List<SportMarket>? markets}) =>
 
 SportEvent tennisEvent() => SportEvent(
   id: '12173711',
-  sport: SportKind.tennis,
+  sport: kTennis,
   home: 'Liudmila Samsonova',
   away: 'Heather Watson',
   league: 'WTA · Tokyo',
@@ -245,7 +245,7 @@ void main() {
 
   SportEvent sinPronostico({required DateTime start, String status = 'scheduled', String? score}) => SportEvent(
     id: '11330',
-    sport: SportKind.nba,
+    sport: kNba,
     home: 'Detroit Pistons',
     away: 'Philadelphia 76ers',
     league: 'NBA',

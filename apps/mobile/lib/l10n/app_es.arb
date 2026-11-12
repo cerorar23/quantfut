@@ -2259,6 +2259,10 @@
     }
   },
   "sportAvailPending": "Reporte de lesiones pendiente",
+  "sportBeta": "Beta",
+  "@sportBeta": {
+    "description": "Etiqueta de un deporte en fase de prueba (estado preview del catálogo) en Perfil → Mis deportes."
+  },
   "sportFootball": "Fútbol",
   "@sportFootball": {
     "description": "Nombre del deporte fútbol en el selector"

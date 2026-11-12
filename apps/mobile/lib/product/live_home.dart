@@ -214,7 +214,7 @@ class _HomeTabState extends State<HomeTab> {
 
     return HomeHero(
       key: const ValueKey('home-hero'),
-      sport: SportKind.football,
+      sport: kFootball,
       left: TeamCrest(team: side('local'), api: widget.api, size: 66),
       right: TeamCrest(team: side('visitante'), api: widget.api, size: 66),
       title: '${pick['local'] ?? ''} · ${pick['visitante'] ?? ''}',

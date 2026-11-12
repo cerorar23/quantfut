@@ -20,8 +20,8 @@ class MySportsSection extends StatefulWidget {
 }
 
 class _MySportsSectionState extends State<MySportsSection> {
-  List<SportKind> order = SportKind.values;
-  Set<SportKind> hidden = {};
+  List<SportId> order = sportCatalog.ids;
+  Set<SportId> hidden = sportCatalog.defaultHidden;
   bool saving = false;
 
   @override
@@ -44,7 +44,7 @@ class _MySportsSectionState extends State<MySportsSection> {
     }
   }
 
-  Future<void> _save(List<SportKind> newOrder, Set<SportKind> newHidden) async {
+  Future<void> _save(List<SportId> newOrder, Set<SportId> newHidden) async {
     if (saving) return;
     final (oldOrder, oldHidden) = (order, hidden);
     setState(() {
@@ -81,7 +81,7 @@ class _MySportsSectionState extends State<MySportsSection> {
     _save(next, hidden);
   }
 
-  void _toggle(SportKind sport, bool show) {
+  void _toggle(SportId sport, bool show) {
     if (!show && order.where((k) => !hidden.contains(k)).length <= 1) {
       liveNotice(context, context.l10n.profileMySportsLastVisible);
       return;
@@ -102,7 +102,7 @@ class _MySportsSectionState extends State<MySportsSection> {
         const SizedBox(height: 4),
         for (final (i, sport) in order.indexed)
           _SportRow(
-            key: ValueKey('my-sport-${sport.id}'),
+            key: ValueKey('my-sport-$sport'),
             sport: sport,
             shown: !hidden.contains(sport),
             isDefault: sport == first,
@@ -126,7 +126,7 @@ class _SportRow extends StatelessWidget {
     required this.onToggle,
   });
 
-  final SportKind sport;
+  final SportId sport;
   final bool shown, isDefault;
   final VoidCallback? onUp, onDown;
   final ValueChanged<bool>? onToggle;
@@ -134,7 +134,7 @@ class _SportRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final spec = sportSpecs[sport]!;
+    final spec = sportCatalog.spec(sport);
     final name = spec.label(l10n);
     return Container(
       constraints: const BoxConstraints(minHeight: 52),
@@ -149,13 +149,14 @@ class _SportRow extends StatelessWidget {
               spacing: 6,
               children: [
                 Text(name, style: TextStyle(fontSize: 14, color: shown ? QfColors.text : QfColors.text2)),
+                if (spec.isBeta) QfBadge(l10n.sportBeta, key: ValueKey('my-sport-beta-$sport'), color: spec.accent),
                 if (isDefault)
                   Text(l10n.profileMySportsDefault, style: const TextStyle(fontSize: 11, color: QfColors.text2)),
               ],
             ),
           ),
           IconButton(
-            key: ValueKey('my-sport-up-${sport.id}'),
+            key: ValueKey('my-sport-up-$sport'),
             tooltip: l10n.profileMySportsUp(name),
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             color: QfColors.text2,
@@ -163,7 +164,7 @@ class _SportRow extends StatelessWidget {
             icon: const Icon(Icons.arrow_upward),
           ),
           IconButton(
-            key: ValueKey('my-sport-down-${sport.id}'),
+            key: ValueKey('my-sport-down-$sport'),
             tooltip: l10n.profileMySportsDown(name),
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             color: QfColors.text2,
@@ -173,7 +174,7 @@ class _SportRow extends StatelessWidget {
           Semantics(
             label: l10n.profileMySportsShow(name),
             child: Switch(
-              key: ValueKey('my-sport-switch-${sport.id}'),
+              key: ValueKey('my-sport-switch-$sport'),
               materialTapTargetSize: MaterialTapTargetSize.padded,
               value: shown,
               activeThumbColor: QfColors.onPrimary,

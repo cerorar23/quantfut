@@ -4018,6 +4018,12 @@ abstract class AppLocalizations {
   /// **'Reporte de lesiones pendiente'**
   String get sportAvailPending;
 
+  /// Etiqueta de un deporte en fase de prueba (estado preview del catálogo) en Perfil → Mis deportes.
+  ///
+  /// In es, this message translates to:
+  /// **'Beta'**
+  String get sportBeta;
+
   /// Nombre del deporte fútbol en el selector
   ///
   /// In es, this message translates to:

@@ -78,7 +78,7 @@ class SportEvent {
   });
 
   final String id;
-  final SportKind sport;
+  final SportId sport;
   final String home, away, league;
   final String? surface, score;
   final DateTime start;
@@ -221,7 +221,7 @@ List<SportEvent> nbaEvents(JsonMap data) {
       final id = '${game['event_id']}';
       events[id] = SportEvent(
         id: id,
-        sport: SportKind.nba,
+        sport: kNba,
         home: game['home_team'] as String,
         away: game['away_team'] as String,
         league: 'NBA',
@@ -292,7 +292,7 @@ List<SportEvent> nbaV2Events(Iterable<JsonMap> games) {
     final key = '$id';
     events[key] = SportEvent(
       id: key,
-      sport: SportKind.nba,
+      sport: kNba,
       home: home['nombre'] as String,
       away: away['nombre'] as String,
       league: 'NBA',
@@ -587,7 +587,7 @@ List<SportEvent> tennisEvents(JsonMap data) {
     out.add(
       SportEvent(
         id: '$id',
-        sport: SportKind.tennis,
+        sport: kTennis,
         home: event['home'] as String,
         away: event['away'] as String,
         league: '${event['league'] ?? ''}',
@@ -609,16 +609,11 @@ List<SportEvent> tennisEvents(JsonMap data) {
 }
 
 /// Lee el feed del deporte; ante cualquier fallo devuelve un feed no listo.
-Future<SportFeed> loadSport(QuantFutApi api, SportKind sport) async {
+Future<SportFeed> loadSport(QuantFutApi api, SportId sport) async {
   try {
-    if (sport == SportKind.nba) return await _loadNba(api, DateTime.now());
-    final data = jsonMap(
-      await api.request(switch (sport) {
-        SportKind.tennis => '/web/deportes/tenis',
-        SportKind.football ||
-        SportKind.nba => throw const FormatException('No public feed'),
-      }),
-    );
+    if (sport == kNba) return await _loadNba(api, DateTime.now());
+    if (sport != kTennis) throw const FormatException('No public feed');
+    final data = jsonMap(await api.request('/web/deportes/tenis'));
     return SportFeed(ready: true, events: tennisEvents(data));
   } catch (_) {
     return const SportFeed(ready: false, events: []);

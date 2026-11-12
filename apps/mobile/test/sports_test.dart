@@ -13,51 +13,51 @@ SportPrefs prefsOn(Map<String, String> store) => SportPrefs(
 
 void main() {
   test('id desconocido o orden corrupto vuelve a fútbol', () async {
-    expect(await prefsOn({'sports_order': 'baloncesto,???'}).initial(), SportKind.football);
-    expect(await prefsOn({}).initial(), SportKind.football);
-    expect(SportKind.fromId('nba'), SportKind.nba);
-    expect(SportKind.fromId(null), isNull);
+    expect(await prefsOn({'sports_order': 'baloncesto,???'}).initial(), kFootball);
+    expect(await prefsOn({}).initial(), kFootball);
+    expect(sportCatalog.find('nba')?.id, kNba);
+    expect(sportCatalog.find(null), isNull);
   });
 
   test('abre el primer deporte del orden, no el último usado', () async {
     final store = {'sports_last': 'tenis'};
     final prefs = prefsOn(store);
     await prefs.save(
-      order: [SportKind.nba, SportKind.football, SportKind.tennis],
+      order: [kNba, kFootball, kTennis],
       hidden: {},
     );
-    expect(await prefs.initial(), SportKind.nba);
+    expect(await prefs.initial(), kNba);
   });
 
   test('no se pueden ocultar todos', () async {
     final prefs = prefsOn({});
     await prefs.save(
-      order: SportKind.values,
-      hidden: SportKind.values.toSet(),
+      order: sportCatalog.ids,
+      hidden: sportCatalog.ids.toSet(),
     );
     final hidden = await prefs.hidden();
     expect(hidden.length, 2);
-    expect(hidden.contains(SportKind.values.first), isFalse);
+    expect(hidden.contains(sportCatalog.ids.first), isFalse);
   });
 
   test('si el por defecto está oculto, abre el primero visible', () async {
     final prefs = prefsOn({});
     await prefs.save(
-      order: [SportKind.nba, SportKind.football, SportKind.tennis],
-      hidden: {SportKind.nba},
+      order: [kNba, kFootball, kTennis],
+      hidden: {kNba},
     );
-    expect(await prefs.initial(), SportKind.football);
+    expect(await prefs.initial(), kFootball);
     await prefs.save(
-      order: [SportKind.nba, SportKind.football, SportKind.tennis],
-      hidden: {SportKind.nba, SportKind.football},
+      order: [kNba, kFootball, kTennis],
+      hidden: {kNba, kFootball},
     );
-    expect(await prefs.initial(), SportKind.tennis);
+    expect(await prefs.initial(), kTennis);
   });
 
   testWidgets('SportSelector marca el seleccionado y avisa al tocar', (
     tester,
   ) async {
-    SportKind? tapped;
+    SportId? tapped;
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -65,8 +65,8 @@ void main() {
         locale: const Locale('es'),
         home: Scaffold(
           body: SportSelector(
-            sports: SportKind.values,
-            value: SportKind.nba,
+            sports: sportCatalog.ids,
+            value: kNba,
             onChanged: (s) => tapped = s,
           ),
         ),
@@ -75,16 +75,16 @@ void main() {
     final semantics = tester.getSemantics(find.bySemanticsLabel(RegExp('NBA')));
     expect(semantics.flagsCollection.isSelected, Tristate.isTrue);
     await tester.tap(find.text('TENIS'));
-    expect(tapped, SportKind.tennis);
+    expect(tapped, kTennis);
   });
 
-  Widget host(SportKind value, ValueChanged<SportKind> on) => MaterialApp(
+  Widget host(SportId value, ValueChanged<SportId> on) => MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('es'),
     home: Scaffold(
       body: SportSelector(
-        sports: SportKind.values,
+        sports: sportCatalog.ids,
         value: value,
         onChanged: on,
       ),
@@ -95,17 +95,17 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
-    SportKind? tapped;
-    await tester.pumpWidget(host(SportKind.nba, (s) => tapped = s));
+    SportId? tapped;
+    await tester.pumpWidget(host(kNba, (s) => tapped = s));
     tester.semantics.tap(find.semantics.byLabel(RegExp('Tenis')));
-    expect(tapped, SportKind.tennis);
+    expect(tapped, kTennis);
     handle.dispose();
   });
 
   testWidgets('la marca no cromática existe solo en el chip activo', (
     tester,
   ) async {
-    await tester.pumpWidget(host(SportKind.nba, (_) {}));
+    await tester.pumpWidget(host(kNba, (_) {}));
     final mark = find.byKey(const ValueKey('sport-selected-mark'));
     expect(mark, findsOneWidget);
     expect(

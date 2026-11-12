@@ -65,8 +65,8 @@ class _SportDetailState extends State<SportDetail> {
   }
 
   SportEvent get e => widget.event;
-  bool get nba => e.sport == SportKind.nba;
-  Color get accent => sportSpecs[e.sport]!.accent;
+  bool get nba => e.sport == kNba;
+  Color get accent => sportCatalog.spec(e.sport).accent;
 
   /// Estadísticas públicas del partido; cualquier fallo (404 incluido) es «no hay».
   Future<JsonMap?> _loadStats() async {
@@ -224,8 +224,8 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final nba = event.sport == SportKind.nba;
-    final accent = sportSpecs[event.sport]!.accent;
+    final nba = event.sport == kNba;
+    final accent = sportCatalog.spec(event.sport).accent;
     final pHome = _homeWinProbability(event);
     final homeCode = nba ? nbaTricode(event.home) : null;
     final awayCode = nba ? nbaTricode(event.away) : null;
@@ -378,7 +378,7 @@ class _Predictions extends StatelessWidget {
         if (m.eligible) m,
     ];
     if (all.isEmpty) {
-      return event.sport == SportKind.nba && event.markets.isEmpty
+      return event.sport == kNba && event.markets.isEmpty
           ? _SealCard(event: event, accent: accent)
           : SportNote(l10n.detailNoPicks);
     }
