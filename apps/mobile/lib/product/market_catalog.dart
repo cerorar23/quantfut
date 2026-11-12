@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart' show localDate, percentText;
+import 'sports.dart';
 
 /// Identificador del deporte en `market_evidence.json` (dato, no texto visible).
 const sportFootball = 'Fútbol'; // l10n-ignore
+const sportNbaEvidence = 'NBA'; // l10n-ignore
 
 class MarketLine {
   MarketLine.fromJson(Map<String, dynamic> json)
@@ -123,8 +125,15 @@ class MarketFamily {
   final PublishedRecord published;
   final List<MarketLine> lines;
 
-  /// Título y subtítulo en el idioma actual, por identificador de familia.
+  /// Familia equivalente del catálogo del servidor (nombre y subtítulo editables en el panel), si la hay.
+  SportFamilySpec? get _catalogFamily =>
+      sportCatalog.find(sport == sportNbaEvidence ? kNba : kFootball)?.family(id);
+
+  /// Título y subtítulo en el idioma actual: catálogo del servidor → texto de la app por identificador → el del
+  /// archivo de evidencia.
   String get localTitle {
+    final fromCatalog = _catalogFamily?.name(AppLocale.instance.code);
+    if (fromCatalog != null) return fromCatalog;
     final l10n = AppLocale.instance.l10n;
     return switch (id) {
       'corners_team' => l10n.famCornersTeamTitle,
@@ -143,6 +152,8 @@ class MarketFamily {
   }
 
   String get localSubtitle {
+    final fromCatalog = _catalogFamily?.subtitle(AppLocale.instance.code);
+    if (fromCatalog != null) return fromCatalog;
     final l10n = AppLocale.instance.l10n;
     return switch (id) {
       'corners_team' => l10n.famCornersTeamSubtitle,
