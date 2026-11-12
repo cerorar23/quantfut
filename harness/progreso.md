@@ -7,7 +7,7 @@
 - **Por qué no se guarda la regla en cada lote:** con inserción solo hacia el futuro, la regla de cualquier lote existente ya es inmutable y se deduce de su fecha; una columna extra en `mobile_allocation_batches` no añadiría garantía.
 - **Por qué el endpoint nuevo nace como `contrato: 0` y sin clientes:** la forma definitiva es la decisión de la Fase 2 y queda congelada en la app publicada. En la Fase 1 solo se asienta la maquinaria (lista blanca, `ETag`); `/web/config` y `/mobile/v1/config` no se reescriben.
 - **Por qué una prueba de clasificación de columnas:** la fuga probable no es la de hoy, sino una columna privada añadida más adelante a una tabla que el endpoint ya lee. La prueba falla hasta que alguien la declare pública o privada.
-- **Corrección a lo dicho el 11-nov:** la Fase 1 sí depende en una parte del titular: las reglas editables esperan su respuesta. Menú y endpoint, no.
+- **Decisión del titular (12-nov-2026):** las reglas de acceso gratis serán editables desde el panel. Se aceptó porque la vigencia por lote quita el riesgo que tenía hacerlas editables; orden de ejecución: reglas → endpoint → menú, porque el endpoint informa la regla en vigor y el menú enlaza `/control/acceso`.
 
 ## 11-nov-2026 · Plan del menú «Web y App»: configuración compartida para web y Flutter (rama `plan/menu-web-y-app`, solo plan)
 

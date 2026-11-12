@@ -48,7 +48,7 @@ parte de lo que muestran; un menú único en `/control` que gobierne ambos clien
 - [ ] `[Sonnet 5.5 · medio]` `GET /cliente/v1/config?cliente=web|app&lang=` según la parte B de la especificación. `/web/config` y
       `/mobile/v1/config` se quedan como están, para las versiones instaladas.
 - [ ] `[Sonnet 5.5 · medio]` Reglas de acceso versionadas por fecha de lote y `/control/acceso`, según la parte A de la especificación
-      (`HIGH_MIN/HIGH_MAX`, `FREE_FRACTION`, `DIAS_AGENDA`). **Espera la respuesta del titular** sobre si deben ser editables.
+      (`HIGH_MIN/HIGH_MAX`, `FREE_FRACTION`, `DIAS_AGENDA`). El titular confirmó el 12-nov-2026 que deben ser editables. Va PRIMERO: el endpoint y el menú dependen de ella.
 - [ ] `[Sonnet 5.5 · medio]` Pruebas de clasificación de columnas y de centinelas de la parte B; `tests/test_mobile_delivery.py` pasa sin tocarse.
 - [ ] `[Fable 5.2 · alto]` Revisión de seguridad del endpoint público antes de desplegar (el cambio a revisar es pequeño).
 
@@ -59,7 +59,7 @@ cada lectura el cupo de los lotes de los últimos 7 días, así que subir la fra
 pondría candado a gratis ya mostrados. Y `markets_history()` filtra TODO el historial con el rango vigente: estrechar el rango desde un
 panel ocultaría a posteriori pronósticos sellados que fallaron. Por eso las reglas van versionadas por fecha de lote, no como un valor suelto.
 
-*A. Reglas de acceso versionadas (solo si el titular confirma que deben ser editables; si no, esta parte no se construye)*
+*A. Reglas de acceso versionadas (el titular confirmó el 12-nov-2026 que deben ser editables desde el panel)*
 - Tabla `acceso_reglas`, solo se añade (trigger que rechaza `UPDATE`/`DELETE`, como `admin_audit`):
   `regla_id BIGSERIAL PK`, `stream TEXT CHECK (stream = 'alta_probabilidad')`, `vigente_desde DATE`, `prob_min NUMERIC(3,2)`,
   `prob_max NUMERIC(3,2)`, `free_fraction NUMERIC(3,2)`, `creado_por TEXT`, `creado_en TIMESTAMPTZ DEFAULT now()`, `nota TEXT NOT NULL`.
@@ -165,7 +165,7 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 
 **Decisiones que esperan al titular antes de empezar la Fase 2:**
 - Si «las dos web» son la SPA de `/` y las páginas públicas de SEO (supuesto de este plan) u otro sitio distinto.
-- Si las reglas de acceso (fracción gratis, rango de probabilidad) deben ser editables desde el panel o seguir como decisión fijada en código.
+- ~~Si las reglas de acceso deben ser editables desde el panel.~~ Resuelto el 12-nov-2026: sí, editables, con la vigencia por lote de la especificación de la Fase 1.
 - Cuándo se publica la versión de la app que lee el catálogo: hasta entonces las fases 2–4 solo se notan en la web.
 
 ## 9-nov-2026 · TheRundown, cuarto nivel de la cascada (rama `cuotas/therundown`, sobre `cuotas/cascada-respaldo`)
