@@ -149,6 +149,7 @@ class _SportRow extends StatelessWidget {
               spacing: 6,
               children: [
                 Text(name, style: TextStyle(fontSize: 14, color: shown ? QfColors.text : QfColors.text2)),
+                if (spec.isBeta) QfBadge(l10n.sportBeta, key: ValueKey('my-sport-beta-$sport'), color: spec.accent),
                 if (isDefault)
                   Text(l10n.profileMySportsDefault, style: const TextStyle(fontSize: 11, color: QfColors.text2)),
               ],

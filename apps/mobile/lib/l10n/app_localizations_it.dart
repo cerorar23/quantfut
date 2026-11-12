@@ -2462,6 +2462,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sportAvailPending => 'Report infortuni in attesa';
 
   @override
+  String get sportBeta => 'Beta';
+
+  @override
   String get sportFootball => 'Calcio';
 
   @override

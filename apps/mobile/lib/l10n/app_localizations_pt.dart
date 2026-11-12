@@ -2460,6 +2460,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sportAvailPending => 'Relatório de lesões pendente';
 
   @override
+  String get sportBeta => 'Beta';
+
+  @override
   String get sportFootball => 'Futebol';
 
   @override

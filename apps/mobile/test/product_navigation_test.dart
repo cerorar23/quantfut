@@ -1019,6 +1019,65 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
+  void installCatalog(List<(String, String)> sports) => sportCatalogNotifier.value = SportCatalog.fromJson({
+    'deportes': [
+      for (final (i, (id, icon)) in sports.indexed)
+        {
+          'id': id,
+          'orden': i + 1,
+          'estado': 'on',
+          'nombre': {'es': id, 'en': id},
+          'icono': icon,
+          'color': '#336699',
+          'secciones': ['high'],
+        },
+    ],
+  })!;
+
+  testWidgets('catálogo del servidor sin NBA: el shell no la ofrece', (tester) async {
+    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+    installCatalog([('futbol', 'futbol'), ('tenis', 'tenis')]);
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs({'sports_order': 'nba,futbol,tenis'})));
+    expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
+    expect(selectedMark('futbol'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+
+  testWidgets('si llega un catálogo nuevo con el shell abierto y el deporte actual desaparece, pasa al primero', (tester) async {
+    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    await tester.tap(find.byKey(const ValueKey('sport-nba')));
+    await tester.pumpAndSettle();
+    expect(selectedMark('nba'), findsOneWidget);
+    installCatalog([('futbol', 'futbol'), ('tenis', 'tenis')]);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
+    expect(selectedMark('futbol'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+
+  testWidgets('un deporte nuevo del catálogo (golf, icono desconocido) se elige y no rompe Inicio, Predicciones ni Mercados', (tester) async {
+    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+    installCatalog([('futbol', 'futbol'), ('golf', 'icono_futuro'), ('nba', 'baloncesto')]);
+    final api = FixtureApi();
+    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+    await tester.tap(find.byKey(const ValueKey('sport-golf')));
+    await tester.pumpAndSettle();
+    expect(selectedMark('golf'), findsOneWidget);
+    for (final tab in ['Predicciones', 'Mercados', 'Inicio']) {
+      await navigate(tester, tab);
+      expect(tester.takeException(), isNull, reason: tab);
+      expect(selectedMark('golf'), findsOneWidget, reason: tab);
+    }
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
   testWidgets('navigation tolerates larger text', (tester) async {
     final api = FixtureApi();
     await open(tester, ProductShell(api: api), scale: 1.3);
