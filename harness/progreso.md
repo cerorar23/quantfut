@@ -1,6 +1,12 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Contrato 1 de `/cliente/v1/config` (Fase 2, parte B; sin desplegar)
+
+- **`lang` de la app no mira el archivo de idiomas:** los 6 idiomas valen siempre (el archivo `activos.txt` solo gobierna la web); un idioma desconocido cae a `es`. La web conserva su regla (es/en/pt, apagado → `es`).
+- **`Deporte.estado` es `Literal['preview','on']`:** `deportes_para` ya quita los `off`, y si algún día llegara uno el modelo estricto fallaría en voz alta en vez de publicarlo.
+- **`catalogo.py` no se tocó:** `deportes_para` bastó tal cual. `contrato` fuera de 1 → 422 (`Query(1, ge=1, le=1)`).
+
 ## 12-nov-2026 · Fase 2 parte E: la web lee los deportes del catálogo (sin desplegar; falta el servidor B)
 
 - **Lógica pura en `rutas.js` (no en `app.js`, no en un archivo nuevo):** el filtrado se prueba en Node sin DOM, y como cada archivo de `frontend/` se sirve con una ruta explícita en Python, un módulo nuevo exigiría tocar `web.py`; así la parte E sigue siendo solo copiar archivos.
