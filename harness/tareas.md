@@ -31,43 +31,62 @@ parte de lo que muestran; un menú único en `/control` que gobierne ambos clien
 - El endpoint de configuración es público: ningún token, clave ni dato interno. `apimart_key_enc` no sale nunca.
 - `fr/it/de` en la **web** siguen bloqueados por la revisión legal F7; los 6 idiomas de este plan son solo para textos de la **app**.
 
+**Modelo y esfuerzo por tarea (estimación del 11-nov, pedida por el titular para ahorrar tokens):** cada tarea lleva su etiqueta
+`[modelo · esfuerzo]`. Reglas de uso:
+- Una sesión nueva por tarea, con el brief de su línea; no continuar en una conversación larga.
+- Las tareas `[Fable 5.2 · alto]` son de diseño y terminan en una especificación escrita AQUÍ (tablas con columnas, un ejemplo de JSON,
+  lista de archivos a tocar). Las tareas de ejecución de esa fase no empiezan hasta que esa especificación exista.
+- En cada sesión solo las pruebas del módulo tocado; la batería completa la corre el CI del PR.
+- Despliegues: `[Opus 5.5 · medio]`, siempre con `DEPLOYS.md`. Documentación (`tareas.md`, `progreso.md`, `DEPLOYS.md`): `[Haiku 5.5 · bajo]`.
+
 **Fase 1 · Menú único y endpoint común (sin publicar la app)**
-- [ ] Agrupar el menú lateral de `templates/base.html` en «Web y App» con apartados: General, Deportes, Mercados, Pantallas, Textos e
+- [ ] `[Fable 5.2 · alto]` Diseño: regla de vigencia de las reglas de acceso (fracción gratis, rango de probabilidad, días de agenda)
+      frente a `mobile_free_allocations` y `mobile_allocation_batches`, y lista blanca de campos del endpoint público.
+- [ ] `[Haiku 5.5 · bajo]` Agrupar el menú lateral de `templates/base.html` en «Web y App» con apartados: General, Deportes, Mercados, Pantallas, Textos e
       idiomas, Versiones de la app, Acceso gratis y VIP; enlazar ahí Publicidad AdMob y Monedas, sin moverlas de módulo.
-- [ ] `GET /cliente/v1/config?cliente=web|app&build=&lang=` que compone lo que ya existe (`web_config.get_settings()`,
+- [ ] `[Sonnet 5.5 · medio]` `GET /cliente/v1/config?cliente=web|app&build=&lang=` que compone lo que ya existe (`web_config.get_settings()`,
       `mobile.config()`), con `ETag` y `Cache-Control` desde `public_cache_seconds`. `/web/config` y `/mobile/v1/config` quedan como
       alias con la forma actual, para las versiones instaladas.
-- [ ] Pasar `HIGH_MIN/HIGH_MAX`, `FREE_FRACTION` y `DIAS_AGENDA` a una tabla editable (migración con el siguiente número libre de `db/`),
+- [ ] `[Sonnet 5.5 · medio]` Pasar `HIGH_MIN/HIGH_MAX`, `FREE_FRACTION` y `DIAS_AGENDA` a una tabla editable (migración con el siguiente número libre de `db/`),
       con los valores actuales por defecto, vigencia «desde el lote siguiente» y registro en `admin_audit`.
-- [ ] Pruebas: los alias devuelven byte a byte lo de hoy; el endpoint nuevo no expone columnas fuera de una lista blanca.
+- [ ] `[Sonnet 5.5 · medio]` Pruebas: los alias devuelven byte a byte lo de hoy; el endpoint nuevo no expone columnas fuera de una lista blanca.
+- [ ] `[Fable 5.2 · alto]` Revisión de seguridad del endpoint público antes de desplegar (el cambio a revisar es pequeño).
 
 **Fase 2 · Catálogo de deportes y mercados (una publicación de la app)**
-- [ ] Tablas `deportes` (id, nombre por idioma, icono, color, orden, secciones, estado `off/preview/on` por cliente) y
-      `deporte_mercados` (deporte, clave, familia, etiqueta por idioma, orden, visible en web/app). Sembradas con fútbol, NBA y tenis
-      tal como están hoy en `sports.dart`, `market_catalog.dart` y `sports-data.js`.
-- [ ] El endpoint común entrega el catálogo. La app sustituye el `enum SportKind` por la lista recibida, guarda la última respuesta en
-      disco y lleva una copia de fábrica para abrir sin red. La web deja de tener una expresión regular por deporte en `rutas.js`.
-- [ ] Iconos y colores salen de un conjunto cerrado que ambos clientes ya conocen (clave → icono); una clave desconocida cae en el genérico.
-- [ ] Panel «Deportes» y «Mercados»: alta, orden, estado por cliente y vista previa.
+- [ ] `[Fable 5.2 · alto]` Diseño: forma definitiva de la respuesta de `/cliente/v1/config` (con versión de contrato) y esquema de
+      `deportes` (id, nombre por idioma, icono, color, orden, secciones, estado `off/preview/on` por cliente) y `deporte_mercados`
+      (deporte, clave, familia, etiqueta por idioma, orden, visible en web/app). Queda congelada en las versiones de la app instaladas.
+- [ ] `[Sonnet 5.5 · bajo]` Migración con esas tablas. `[Haiku 5.5 · bajo]` Siembra de fútbol, NBA y tenis tal como están hoy en
+      `sports.dart`, `market_catalog.dart` y `sports-data.js`.
+- [ ] `[Sonnet 5.5 · medio]` El endpoint común entrega el catálogo.
+- [ ] `[Opus 5.5 · medio-alto]` La app sustituye el `enum SportKind` por la lista recibida, guarda la última respuesta en disco y lleva
+      una copia de fábrica para abrir sin red (cambio ancho: `switch` exhaustivos en muchos archivos Dart; un fallo llega a la tienda).
+- [ ] `[Sonnet 5.5 · medio]` La web deja de tener una expresión regular por deporte en `rutas.js` (`frontend/rutas.test.mjs`).
+- [ ] `[Sonnet 5.5 · bajo]` Iconos y colores salen de un conjunto cerrado que ambos clientes ya conocen (clave → icono); una clave desconocida cae en el genérico.
+- [ ] `[Sonnet 5.5 · bajo-medio]` Panel «Deportes» y «Mercados»: alta, orden, estado por cliente y vista previa.
 
 **Fase 3 · Contrato común por deporte**
-- [ ] `/deportes/{deporte}/cartelera`, `/deportes/{deporte}/partido/{id}` y `/deportes/{deporte}/partido/{id}/mercados` con la misma
-      forma, como adaptadores en la API principal sobre `mobile.py` (fútbol), `nba_datos.py` (NBA, que ya lee del servicio `nba-api`) y
-      `tenis_publico.py` (tenis). Los endpoints actuales y el servicio de NBA no se tocan ni se retiran en esta fase.
-- [ ] Un deporte futuro = filas en `deportes`/`deporte_mercados` + su adaptador. Criterio de hecho: dar de alta un deporte de prueba en
+- [ ] `[Fable 5.2 · alto]` Diseño: la forma común de cartelera, partido y mercados que encaje fútbol, NBA y tenis y aguante un deporte
+      que aún no existe.
+- [ ] `[Sonnet 5.5 · medio]` (una sesión por deporte) `/deportes/{deporte}/cartelera`, `/deportes/{deporte}/partido/{id}` y
+      `/deportes/{deporte}/partido/{id}/mercados` con esa forma, como adaptadores en la API principal sobre `mobile.py` (fútbol),
+      `nba_datos.py` (NBA, que ya lee del servicio `nba-api`) y `tenis_publico.py` (tenis). Los endpoints actuales y el servicio de NBA no se tocan ni se retiran en esta fase.
+- [ ] `[Sonnet 5.5 · medio]` Un deporte futuro = filas en `deportes`/`deporte_mercados` + su adaptador. Criterio de hecho: dar de alta un deporte de prueba en
       `preview` y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`.
-- [ ] Va en la misma versión de la app que la Fase 2 si se agrupan.
+- Va en la misma versión de la app que la Fase 2 si se agrupan (una publicación y una ronda de pruebas en vez de dos).
 
 **Fase 4 · Pantallas por bloques (una publicación de la app)**
-- [ ] Tabla `pantalla_bloques` (pantalla, deporte, cliente, orden, tipo, parámetros, build mínimo). Tipos iniciales, uno por componente
-      que ya existe: cabecera, lista de partidos, tarjeta de mercado, tabla, curva por línea, banner, llamada a VIP.
-- [ ] Inicio y detalle de partido se pintan desde la lista recibida; un tipo desconocido se ignora, así una app vieja no se rompe.
-- [ ] Panel «Pantallas»: ordenar, ocultar y parametrizar bloques, con borrador → publicado y vuelta atrás a la versión anterior.
+- [ ] `[Fable 5.2 · alto]` Diseño: tabla `pantalla_bloques` (pantalla, deporte, cliente, orden, tipo, parámetros, build mínimo), tipos
+      iniciales (uno por componente que ya existe: cabecera, lista de partidos, tarjeta de mercado, tabla, curva por línea, banner,
+      llamada a VIP), parámetros de cada tipo y qué hace una app vieja ante un tipo nuevo.
+- [ ] `[Sonnet 5.5 · medio]` (una sesión por cliente) Inicio y detalle de partido se pintan desde la lista recibida; un tipo desconocido
+      se ignora, así una app vieja no se rompe.
+- [ ] `[Sonnet 5.5 · medio]` Panel «Pantallas»: ordenar, ocultar y parametrizar bloques, con borrador → publicado y vuelta atrás a la versión anterior.
 
 **Fase 5 · Textos de la app editables**
-- [ ] Sobrescritura remota de claves de `app_*.arb` (la copia empaquetada sigue siendo el valor por defecto). El panel no deja guardar
+- [ ] `[Sonnet 5.5 · medio]` Sobrescritura remota de claves de `app_*.arb` (la copia empaquetada sigue siendo el valor por defecto). El panel no deja guardar
       una clave sin sus 6 idiomas; la traducción automática de APIMart se amplía a `fr/it/de` solo para estos textos de la app.
-- [ ] `tests/test_mensajes.py` y `test/l10n_test.dart` siguen exigiendo los 6 idiomas.
+- [ ] `[Sonnet 5.5 · bajo]` `tests/test_mensajes.py` y `test/l10n_test.dart` siguen exigiendo los 6 idiomas.
 
 **Decisiones que esperan al titular antes de empezar la Fase 2:**
 - Si «las dos web» son la SPA de `/` y las páginas públicas de SEO (supuesto de este plan) u otro sitio distinto.
