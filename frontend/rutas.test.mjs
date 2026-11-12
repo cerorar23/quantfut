@@ -205,3 +205,54 @@ test('las páginas informativas y legales con URL propia abren la ruta `info` (t
   }
   assert.equal(route({ pathname: '/historial/', hash: '' }), 'historial');   // las secciones de siempre no cambian
 });
+
+// ---- Catálogo de deportes (Fase 2 · E): DEPORTE_PATH se construye desde los slug recibidos ----
+import { fijarDeportes } from './rutas.js';
+import { DEPORTES_RESPALDO } from './rutas.js';
+
+test('con la copia incrustada las URL de deporte son las de siempre, también en /en/ y /pt/', () => {
+  for (const p of ['/nba/', '/nba/equipos/boston-celtics/', '/tenis/atp-finals/a-vs-b-2026-11-09/', '/futbol/liga-mx/', '/en/nba/', '/pt/futbol/'])
+    assert.ok(isDeportePage(at(p)), p);
+  for (const p of ['/nba/v1/', '/nba/v2/', '/tenis/v2/', '/baloncesto/', '/historial/', '/'])
+    assert.equal(isDeportePage(at(p)), false, p);
+});
+
+test('fijarDeportes: un slug distinto sustituye al anterior y una lista inválida no cambia nada', () => {
+  try {
+    fijarDeportes([{ id: 'nba', slug: { es: 'baloncesto', en: 'basketball', pt: 'basquete' } }, { id: 'futbol', slug: { es: 'futbol', en: 'futbol', pt: 'futbol' } }]);
+    assert.equal(deporteDeUrl(at('/baloncesto/')), 'nba');
+    assert.equal(deporteDeUrl(at('/baloncesto/equipos/boston-celtics/')), 'nba');   // conserva la estructura de NBA
+    assert.equal(deporteDeUrl(at('/baloncesto/v2/')), null);
+    assert.equal(deporteDeUrl(at('/en/basketball/')), 'nba');
+    assert.equal(deporteDeUrl(at('/pt/basquete/')), 'nba');
+    assert.equal(deporteDeUrl(at('/nba/')), null);                                  // el slug viejo ya no es página de deporte
+    assert.equal(deporteDeUrl(at('/tenis/')), null);                                // tenis salió del catálogo
+    assert.equal(route(at('/baloncesto/')), 'partidos');
+    fijarDeportes(null); fijarDeportes([]); fijarDeportes('x');
+    assert.equal(deporteDeUrl(at('/baloncesto/')), 'nba');
+  } finally {
+    fijarDeportes(DEPORTES_RESPALDO);
+  }
+  assert.equal(deporteDeUrl(at('/nba/')), 'nba');
+});
+
+test('un deporte nuevo del catálogo usa la estructura genérica', () => {
+  try {
+    fijarDeportes([{ id: 'beisbol', slug: { es: 'beisbol', en: 'baseball', pt: 'beisebol' } }]);
+    assert.equal(deporteDeUrl(at('/beisbol/')), 'beisbol');
+    assert.equal(deporteDeUrl(at('/beisbol/mlb/a-vs-b-2026-11-09/')), 'beisbol');
+    assert.equal(deporteDeUrl(at('/en/baseball/')), 'beisbol');
+    assert.deepEqual(deporteBoot({ deporte: 'beisbol' }, at('/beisbol/')), { sport: 'beisbol', patch: { sport: 'beisbol', winEvent: '', winDay: 0 } });
+  } finally {
+    fijarDeportes(DEPORTES_RESPALDO);
+  }
+});
+
+test('fútbol se reconoce con el slug de cualquier idioma: /pt/futebol/ y /futbol/', () => {
+  for (const p of ['/pt/futebol/', '/pt/futebol/liga-mx/', '/pt/futebol/liga-mx/a-vs-b-2026-11-09/', '/futbol/', '/futbol/liga-mx/a-vs-b-2026-11-09/', '/en/futbol/', '/pt/futbol/'])
+    assert.equal(deporteDeUrl(at(p)), 'futbol', p);
+  assert.equal(route(at('/pt/futebol/liga-mx/a-vs-b-2026-11-09/')), 'partidos');
+  assert.equal(cleanUrl(at('/pt/futebol/liga-mx/'), 'partidos'), null);   // no se reescribe a /pt/partidos/
+  assert.equal(deporteDeUrl(at('/pt/futebol/a/b/c/')), null);
+  assert.equal(deporteDeUrl(at('/pt/futebolx/')), null);
+});

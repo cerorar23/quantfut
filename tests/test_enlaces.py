@@ -31,7 +31,7 @@ def test_el_selector_de_deporte_de_la_app_lleva_enlaces_reales():
     """Antes apuntaba a `#picks` para los tres deportes: Google no podía seguirlos. El clic sigue interceptado (preventDefault)."""
     app = (FRONTEND / "app.js").read_text(encoding="utf-8")
     nav = re.search(r'<nav class="sport-nav".*?</nav>`', app, re.S).group(0)
-    assert 'href="/${id}/"' in nav and 'href="#picks"' not in nav
+    assert 'href="/${slug}/" data-sport="${id}"' in nav and 'href="#picks"' not in nav
     assert "button?.matches('a[data-sport]'))event.preventDefault()" in app
 
 
