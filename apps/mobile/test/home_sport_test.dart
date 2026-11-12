@@ -98,7 +98,7 @@ SportEvent event(
   String id,
   DateTime start,
   List<SportMarket> markets, {
-  SportKind sport = SportKind.nba,
+  SportId sport = kNba,
   String home = 'Miami Heat',
   String away = 'New York Knicks',
   String league = 'NBA',
@@ -118,7 +118,7 @@ SportEvent event(
 
 Future<void> pump(
   WidgetTester tester, {
-  required SportKind sport,
+  required SportId sport,
   required SportFeed feed,
   ImageCatalog images = ImageCatalog.empty,
   ValueChanged<SportEvent>? onOpen,
@@ -214,7 +214,7 @@ void main() {
       });
       await pump(
         tester,
-        sport: SportKind.nba,
+        sport: kNba,
         feed: SportFeed(ready: true, events: [...real, knicks]),
         images: images,
         now: DateTime(2026, 10, 29),
@@ -243,7 +243,7 @@ void main() {
       });
       await pump(
         tester,
-        sport: SportKind.tennis,
+        sport: kTennis,
         feed: SportFeed(ready: true, events: events),
         images: images,
         now: DateTime(2026, 10, 23),
@@ -270,7 +270,7 @@ void main() {
     var retries = 0;
     await pump(
       tester,
-      sport: SportKind.nba,
+      sport: kNba,
       feed: const SportFeed(ready: false, events: []),
       onRetry: () async => retries++,
     );
@@ -314,7 +314,7 @@ void main() {
   ) async {
     await pump(
       tester,
-      sport: SportKind.nba,
+      sport: kNba,
       feed: SportFeed(
         ready: true,
         events: [event('late', DateTime(2026, 10, 30, 23, 30), [market('w', .6)])],
@@ -327,11 +327,11 @@ void main() {
 
   test('tenis se agrupa por torneo dentro del día', () {
     final a = event('a', DateTime(2026, 10, 30, 10), [market('w', .6)],
-        sport: SportKind.tennis, league: 'ATP Paris');
+        sport: kTennis, league: 'ATP Paris');
     final b = event('b', DateTime(2026, 10, 30, 11), [market('w', .6)],
-        sport: SportKind.tennis, league: 'WTA Tokyo');
+        sport: kTennis, league: 'WTA Tokyo');
     final c = event('c', DateTime(2026, 10, 30, 12), [market('w', .6)],
-        sport: SportKind.tennis, league: 'ATP Paris');
+        sport: kTennis, league: 'ATP Paris');
     final days = groupSportAgenda([a, b, c]);
     expect(days.single.groups.map((g) => g.tournament), ['ATP Paris', 'WTA Tokyo']);
     expect(days.single.groups.first.events.map((e) => e.id), ['a', 'c']);
@@ -352,7 +352,7 @@ void main() {
         status: 'live');
     await pump(
       tester,
-      sport: SportKind.nba,
+      sport: kNba,
       feed: SportFeed(ready: true, events: [low, best, done, live]),
       now: now,
       onOpen: (e) => opened = e,
@@ -373,7 +373,7 @@ void main() {
     testWidgets('Inicio NBA y tenis sin desbordes a 320 px ($code)', (tester) async {
       final nba = nbaEvents(fixture('nba_feed.json'));
       final tennis = tennisEvents(fixture('tennis_feed.json'));
-      for (final (sport, events) in [(SportKind.nba, nba), (SportKind.tennis, tennis)]) {
+      for (final (sport, events) in [(kNba, nba), (kTennis, tennis)]) {
         await pump(
           tester,
           sport: sport,
@@ -396,7 +396,7 @@ void main() {
     final next = event('next', DateTime(2026, 10, 30, 22), [market('w', .78)]);
     await pump(
       tester,
-      sport: SportKind.nba,
+      sport: kNba,
       feed: SportFeed(ready: true, events: [started, next]),
       now: now,
     );

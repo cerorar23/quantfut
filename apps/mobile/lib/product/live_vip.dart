@@ -32,10 +32,10 @@ class LiveVipScreen extends StatefulWidget {
   final StoreController? store;
 
   /// Feeds de NBA y tenis ya cargados por el shell: de ahí sale su acierto (sin pedir nada).
-  final Map<SportKind, SportFeed> sportFeeds;
+  final Map<SportId, SportFeed> sportFeeds;
 
   /// Feeds vivos del shell: si viene, manda sobre `sportFeeds` y la pantalla se redibuja al llegar.
-  final ValueListenable<Map<SportKind, SportFeed>>? feedsListenable;
+  final ValueListenable<Map<SportId, SportFeed>>? feedsListenable;
 
   /// Al abrir la pantalla pide los feeds de NBA y tenis que el usuario aún no abrió.
   final VoidCallback? onNeedFeeds;
@@ -70,7 +70,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
     if (mounted) setState(() {});
   }
 
-  Map<SportKind, SportFeed> get _feeds => widget.feedsListenable?.value ?? widget.sportFeeds;
+  Map<SportId, SportFeed> get _feeds => widget.feedsListenable?.value ?? widget.sportFeeds;
 
   @override
   void dispose() {
@@ -162,11 +162,11 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
   }
 
   /// Tarjeta pequeña con el acento del deporte y la cifra en azul (o «—» sin datos).
-  Widget _sportCard(SportKind sport, String value, String? count, {int? window}) {
-    final spec = sportSpecs[sport]!;
+  Widget _sportCard(SportId sport, String value, String? count, {int? window}) {
+    final spec = sportCatalog.spec(sport);
     return Expanded(
       child: QfCard(
-        key: ValueKey('vip-sport-${sport.id}'),
+        key: ValueKey('vip-sport-$sport'),
         accent: spec.accent,
         padding: const EdgeInsets.all(10),
         child: Column(
@@ -191,7 +191,7 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
             if (window != null)
               Text(
                 context.l10n.sportHitWindow(window),
-                key: ValueKey('vip-window-${sport.id}'),
+                key: ValueKey('vip-window-$sport'),
                 style: const TextStyle(fontSize: 10, color: QfColors.muted),
               ),
           ],
@@ -316,8 +316,8 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
     final min = ((config['probability_min'] as num?) ?? .73) * 100;
     final max = ((config['probability_max'] as num?) ?? .95) * 100;
     final real = history['acierto_real'];
-    final nba = _feedRate(_feeds[SportKind.nba]);
-    final tennis = _feedRate(_feeds[SportKind.tennis]);
+    final nba = _feedRate(_feeds[kNba]);
+    final tennis = _feedRate(_feeds[kTennis]);
     String? count(({int won, int resolved})? r) => r == null ? null : '${r.won}/${r.resolved}';
     String rate(({int won, int resolved})? r) =>
         r == null ? '—' : percentText(r.won * 100 / r.resolved);
@@ -352,15 +352,22 @@ class _LiveVipScreenState extends State<LiveVipScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sportCard(
-                      SportKind.football,
-                      real is num ? '${decimalText(real, 1)} %' : '—',
-                      history['n'] == null ? null : '${history['aciertos'] ?? '—'}/${history['n']}',
-                    ),
-                    const SizedBox(width: 6),
-                    _sportCard(SportKind.nba, rate(nba), count(nba), window: nba?.resolved),
-                    const SizedBox(width: 6),
-                    _sportCard(SportKind.tennis, rate(tennis), count(tennis), window: tennis?.resolved),
+                    // Solo los deportes que el catálogo ofrece (uno apagado no tiene tarjeta).
+                    for (final (i, card) in [
+                      if (sportCatalog.contains(kFootball))
+                        _sportCard(
+                          kFootball,
+                          real is num ? '${decimalText(real, 1)} %' : '—',
+                          history['n'] == null ? null : '${history['aciertos'] ?? '—'}/${history['n']}',
+                        ),
+                      if (sportCatalog.contains(kNba))
+                        _sportCard(kNba, rate(nba), count(nba), window: nba?.resolved),
+                      if (sportCatalog.contains(kTennis))
+                        _sportCard(kTennis, rate(tennis), count(tennis), window: tennis?.resolved),
+                    ].indexed) ...[
+                      if (i > 0) const SizedBox(width: 6),
+                      card,
+                    ],
                   ],
                 ),
                 const SizedBox(height: 6),

@@ -61,6 +61,7 @@ flutter:
   assets:
     - image/
     - assets/model/market_evidence.json
+    - assets/model/cliente_config_defecto.json
   fonts:
     - family: Rajdhani
       fonts:

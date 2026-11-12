@@ -334,7 +334,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sport-tenis')));
     await tester.pumpAndSettle();
     expect(store.keys.where((k) => k.contains('last')), isEmpty);
-    expect(await memoryPrefs(store).initial(), SportKind.football);
+    expect(await memoryPrefs(store).initial(), kFootball);
     expect(find.byKey(const ValueKey('streams-switcher')), findsOneWidget);
     expect(selectedMark('tenis'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
@@ -386,14 +386,14 @@ void main() {
     testWidgets('a 360 dp las etiquetas del selector no se recortan ($code)', (tester) async {
       await AppLocale.instance.select(code);
       addTearDown(AppLocale.instance.reset);
-      for (final active in SportKind.values) {
+      for (final active in sportCatalog.ids) {
         await open(
           tester,
           Scaffold(
             body: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SportSelector(
-                sports: SportKind.values,
+                sports: sportCatalog.ids,
                 value: active,
                 onChanged: (_) {},
               ),
@@ -403,13 +403,13 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         tester.view.physicalSize = const Size(360, 640);
         await tester.pumpAndSettle();
-        for (final sport in SportKind.values) {
+        for (final sport in sportCatalog.ids) {
           final text = find.descendant(
-            of: find.byKey(ValueKey('sport-${sport.id}')),
+            of: find.byKey(ValueKey('sport-$sport')),
             matching: find.byType(Text),
           );
           final paragraph = tester.renderObject<RenderParagraph>(text.first);
-          expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active ${sport.id}');
+          expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active $sport');
         }
       }
     });

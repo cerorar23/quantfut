@@ -69,7 +69,7 @@ void main() {
       expect(m.probability, .7);
       expect(m.outcome, 'win');
       expect(m.eligible, isTrue);
-      expect(e.sport, SportKind.nba);
+      expect(e.sport, kNba);
       expect(e.score, '99 – 102');
       expect(e.status, 'finished');
       expect(e.seal, 'real');
@@ -248,8 +248,8 @@ void main() {
       '/nba/v1/cartelera': () => throw Exception('red'),
       '/web/deportes/tenis': () => _fixture('tennis_feed.json'),
     });
-    final nba = await loadSport(api, SportKind.nba);
-    final tennis = await loadSport(api, SportKind.tennis);
+    final nba = await loadSport(api, kNba);
+    final tennis = await loadSport(api, kTennis);
     expect(nba.ready, isFalse);
     expect(nba.events, isEmpty);
     expect(tennis.ready, isTrue);
@@ -373,7 +373,7 @@ void main() {
           };
         },
       });
-      final feed = await loadSport(api, SportKind.nba);
+      final feed = await loadSport(api, kNba);
       expect(feed.ready, isTrue);
       expect(feed.events.map((e) => e.id), ['2']);
       expect(feed.events.single.markets, isNotEmpty);
@@ -381,7 +381,7 @@ void main() {
       final broken = _Api({
         '/nba/v1/cartelera': () => {'otro': 1},
       });
-      expect((await loadSport(broken, SportKind.nba)).ready, isFalse);
+      expect((await loadSport(broken, kNba)).ready, isFalse);
     });
   });
 
@@ -389,8 +389,8 @@ void main() {
     final api = _Api({
       '/web/deportes/tenis': () => {'state': 'unavailable', 'events': []},
     });
-    expect((await loadSport(api, SportKind.tennis)).ready, isFalse);
-    expect((await loadSport(api, SportKind.football)).ready, isFalse);
+    expect((await loadSport(api, kTennis)).ready, isFalse);
+    expect((await loadSport(api, kFootball)).ready, isFalse);
   });
 
   test('fixtures reales se leen sin errores', () {
@@ -451,7 +451,7 @@ void main() {
         String status = 'finished',
       }) => SportEvent(
         id: '11330',
-        sport: SportKind.nba,
+        sport: kNba,
         home: 'Detroit Pistons',
         away: 'Philadelphia 76ers',
         league: 'NBA',
@@ -718,7 +718,7 @@ void main() {
             ]),
             SportEvent(
               id: '999',
-              sport: SportKind.nba,
+              sport: kNba,
               home: 'A',
               away: 'B',
               league: 'NBA',

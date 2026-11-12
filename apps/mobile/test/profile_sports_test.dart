@@ -78,7 +78,7 @@ void main() {
     expect(find.descendant(of: row('nba'), matching: find.text('por defecto')), findsOneWidget);
     expect(find.text('por defecto'), findsOneWidget);
     // Lo que se guardó es lo que abrirá la app la próxima vez.
-    expect(await prefsOn(store).initial(), SportKind.nba);
+    expect(await prefsOn(store).initial(), kNba);
     // La fila de NBA queda arriba.
     expect(tester.getTopLeft(row('nba')).dy, lessThan(tester.getTopLeft(row('futbol')).dy));
     await tester.tap(find.byKey(const ValueKey('my-sport-up-tenis')));

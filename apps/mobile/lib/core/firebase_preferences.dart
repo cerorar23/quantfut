@@ -287,8 +287,8 @@ class _InboxRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unread = row['read_at'] == null;
-    final sport = SportKind.fromId(row['sport']?.toString());
-    final spec = sport == null ? null : sportSpecs[sport]!;
+    // Un deporte que el catálogo no tiene (apagado o futuro) no lleva etiqueta: no se inventa.
+    final spec = sportCatalog.find(row['sport']?.toString());
     return InkWell(
       key: ValueKey('inbox-${row['notification_id']}'),
       onTap: onTap,
@@ -318,7 +318,7 @@ class _InboxRow extends StatelessWidget {
                         excludeSemantics: true,
                         child: QfBadge(
                           spec.label(context.l10n),
-                          key: ValueKey('inbox-sport-${sport!.id}'),
+                          key: ValueKey('inbox-sport-${spec.id}'),
                           color: spec.accent,
                           icon: spec.icon,
                         ),

@@ -63,16 +63,16 @@ class _ProductShellState extends State<ProductShell>
   // Identificadores estables de la pestaña Predicciones (no son texto visible).
   String stream = 'high';
   // Deporte global: lo comparten Inicio, Predicciones y Mercados.
-  SportKind sport = SportKind.football;
-  List<SportKind> visibleSports = SportKind.values;
+  SportId sport = kFootball;
+  List<SportId> visibleSports = sportCatalog.ids;
   // Feeds de NBA y tenis: se piden la primera vez que se elige el deporte. Cada uno tiene su
   // propio estado; un fallo solo se ve en su hueco.
-  final feeds = <SportKind, SportFeed>{};
+  final feeds = <SportId, SportFeed>{};
   // La pantalla VIP lo escucha para pintar el acierto cuando llegan los feeds.
-  final _feedsNotifier = ValueNotifier<Map<SportKind, SportFeed>>(const {});
+  final _feedsNotifier = ValueNotifier<Map<SportId, SportFeed>>(const {});
   // Cuotas de referencia por deporte: overlay aparte del feed; sin ellas todo se ve igual.
-  final quotes = <SportKind, QuotesOverlay>{};
-  final _feedLoading = <SportKind>{};
+  final quotes = <SportId, QuotesOverlay>{};
+  final _feedLoading = <SportId>{};
   // Cada recarga de NBA invalida el enriquecimiento anterior.
   int _nbaGeneration = 0;
   ImageCatalog images = ImageCatalog.empty;
@@ -139,12 +139,12 @@ class _ProductShellState extends State<ProductShell>
 
   /// Si la sección actual no existe en el deporte, vuelve a Alta probabilidad.
   void _fitStream() {
-    if (!sportSpecs[sport]!.streams.contains(stream)) stream = 'high';
+    if (!sportCatalog.spec(sport).streams.contains(stream)) stream = 'high';
   }
 
   bool sportChosen = false;
 
-  void changeSport(SportKind value) {
+  void changeSport(SportId value) {
     sportChosen = true;
     if (value == sport) return;
     setState(() {
@@ -154,13 +154,13 @@ class _ProductShellState extends State<ProductShell>
     _ensureFeed(value);
   }
 
-  void _ensureFeed(SportKind kind) {
+  void _ensureFeed(SportId kind) {
     if (!feeds.containsKey(kind)) unawaited(loadFeed(kind));
   }
 
   /// Pide el feed del deporte y, de paso, el catálogo de imágenes (una vez, con caché).
-  Future<void> loadFeed(SportKind kind) async {
-    if (kind == SportKind.football || !_feedLoading.add(kind)) return;
+  Future<void> loadFeed(SportId kind) async {
+    if (kind == kFootball || !_feedLoading.add(kind)) return;
     try {
       final (feed, catalog, overlay) = await (
         loadSport(api, kind),
@@ -178,7 +178,7 @@ class _ProductShellState extends State<ProductShell>
       });
       // NBA: la cartelera solo trae el ganador; el resto de mercados (con su cuota y casa) se pide partido a
       // partido y se va sumando al feed sin bloquear la pantalla.
-      if (kind == SportKind.nba && feed.ready) {
+      if (kind == kNba && feed.ready) {
         final generation = ++_nbaGeneration;
         unawaited(
           enrichNbaFeed(
@@ -212,7 +212,7 @@ class _ProductShellState extends State<ProductShell>
 
   List<String> get sportStreams => [
     for (final s in PredictionsSwitcher.order)
-      if (sportSpecs[sport]!.streams.contains(s)) s,
+      if (sportCatalog.spec(sport).streams.contains(s)) s,
   ];
 
   @override
@@ -372,8 +372,8 @@ class _ProductShellState extends State<ProductShell>
               sportFeeds: Map.of(feeds),
               feedsListenable: _feedsNotifier,
               onNeedFeeds: () {
-                _ensureFeed(SportKind.nba);
-                _ensureFeed(SportKind.tennis);
+                if (sportCatalog.contains(kNba)) _ensureFeed(kNba);
+                if (sportCatalog.contains(kTennis)) _ensureFeed(kTennis);
               },
             ),
           ),
@@ -622,7 +622,7 @@ class _ProductShellState extends State<ProductShell>
 
   /// El selector va siempre; la carga o el error del fútbol solo afectan a su hueco.
   Widget mainBody() => withSelector(
-    sport == SportKind.football ? footballGate(footballBody) : sportBody(),
+    sport == kFootball ? footballGate(footballBody) : sportBody(),
   );
 
   /// Cargando / error con reintento / contenido del fútbol (`data` ya cargado).
@@ -663,7 +663,7 @@ class _ProductShellState extends State<ProductShell>
             child: feed == null
                 ? loading
                 : SportPredictions(
-                    key: ValueKey('sport-predictions-${sport.id}'),
+                    key: ValueKey('sport-predictions-$sport'),
                     api: api,
                     sport: sport,
                     feed: feed,
@@ -679,7 +679,7 @@ class _ProductShellState extends State<ProductShell>
     return feed == null
         ? loading
         : SportMarkets(
-            key: ValueKey('sport-markets-${sport.id}'),
+            key: ValueKey('sport-markets-$sport'),
             api: api,
             sport: sport,
             feed: feed,
@@ -694,11 +694,11 @@ class _ProductShellState extends State<ProductShell>
   Widget sportHome() {
     final feed = feeds[sport];
     return KeyedSubtree(
-      key: ValueKey('sport-home-${sport.id}'),
+      key: ValueKey('sport-home-$sport'),
       child: feed == null
           ? const Center(child: CircularProgressIndicator())
           : HomeSport(
-              key: ValueKey('home-sport-${sport.id}'),
+              key: ValueKey('home-sport-$sport'),
               api: api,
               sport: sport,
               feed: feed,
@@ -716,7 +716,7 @@ class _ProductShellState extends State<ProductShell>
       value: stream,
       onChanged: (value) => setState(() => stream = value),
       streams: sportStreams,
-      badges: sport == SportKind.football
+      badges: sport == kFootball
           ? {
               'high': jsonRows(jsonMap(data!['alta_probabilidad'])['proximos']).length,
               'ladder': jsonRows(jsonMap(data!['escalera'])['actuales']).length,
