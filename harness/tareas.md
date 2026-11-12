@@ -40,17 +40,92 @@ parte de lo que muestran; un menú único en `/control` que gobierne ambos clien
 - Despliegues: `[Opus 5.5 · medio]`, siempre con `DEPLOYS.md`. Documentación (`tareas.md`, `progreso.md`, `DEPLOYS.md`): `[Haiku 5.5 · bajo]`.
 
 **Fase 1 · Menú único y endpoint común (sin publicar la app)**
-- [ ] `[Fable 5.2 · alto]` Diseño: regla de vigencia de las reglas de acceso (fracción gratis, rango de probabilidad, días de agenda)
+- [x] `[Fable 5.2 · alto]` Diseño: regla de vigencia de las reglas de acceso (fracción gratis, rango de probabilidad, días de agenda)
       frente a `mobile_free_allocations` y `mobile_allocation_batches`, y lista blanca de campos del endpoint público.
-- [ ] `[Haiku 5.5 · bajo]` Agrupar el menú lateral de `templates/base.html` en «Web y App» con apartados: General, Deportes, Mercados, Pantallas, Textos e
-      idiomas, Versiones de la app, Acceso gratis y VIP; enlazar ahí Publicidad AdMob y Monedas, sin moverlas de módulo.
-- [ ] `[Sonnet 5.5 · medio]` `GET /cliente/v1/config?cliente=web|app&build=&lang=` que compone lo que ya existe (`web_config.get_settings()`,
-      `mobile.config()`), con `ETag` y `Cache-Control` desde `public_cache_seconds`. `/web/config` y `/mobile/v1/config` quedan como
-      alias con la forma actual, para las versiones instaladas.
-- [ ] `[Sonnet 5.5 · medio]` Pasar `HIGH_MIN/HIGH_MAX`, `FREE_FRACTION` y `DIAS_AGENDA` a una tabla editable (migración con el siguiente número libre de `db/`),
-      con los valores actuales por defecto, vigencia «desde el lote siguiente» y registro en `admin_audit`.
-- [ ] `[Sonnet 5.5 · medio]` Pruebas: los alias devuelven byte a byte lo de hoy; el endpoint nuevo no expone columnas fuera de una lista blanca.
+      Hecho el 12-nov-2026: ver «Especificación de la Fase 1» más abajo.
+- [ ] `[Haiku 5.5 · bajo]` Agrupar el menú lateral de `templates/base.html` en «Web y App» según la parte C de la especificación
+      (solo enlaces a lo que existe; Publicidad AdMob y Monedas se enlazan sin moverlas de módulo).
+- [ ] `[Sonnet 5.5 · medio]` `GET /cliente/v1/config?cliente=web|app&lang=` según la parte B de la especificación. `/web/config` y
+      `/mobile/v1/config` se quedan como están, para las versiones instaladas.
+- [ ] `[Sonnet 5.5 · medio]` Reglas de acceso versionadas por fecha de lote y `/control/acceso`, según la parte A de la especificación
+      (`HIGH_MIN/HIGH_MAX`, `FREE_FRACTION`, `DIAS_AGENDA`). **Espera la respuesta del titular** sobre si deben ser editables.
+- [ ] `[Sonnet 5.5 · medio]` Pruebas de clasificación de columnas y de centinelas de la parte B; `tests/test_mobile_delivery.py` pasa sin tocarse.
 - [ ] `[Fable 5.2 · alto]` Revisión de seguridad del endpoint público antes de desplegar (el cambio a revisar es pequeño).
+
+**Especificación de la Fase 1 (diseño del 12-nov-2026; quien ejecute NO rediseña, solo implementa esto)**
+
+*Hallazgo que la motiva (leído en `api/mobile.py`):* hoy un cambio de constantes es retroactivo. `top_up()` y `cap_free()` recalculan en
+cada lectura el cupo de los lotes de los últimos 7 días, así que subir la fracción regalaría pronósticos de lotes ya repartidos y bajarla
+pondría candado a gratis ya mostrados. Y `markets_history()` filtra TODO el historial con el rango vigente: estrechar el rango desde un
+panel ocultaría a posteriori pronósticos sellados que fallaron. Por eso las reglas van versionadas por fecha de lote, no como un valor suelto.
+
+*A. Reglas de acceso versionadas (solo si el titular confirma que deben ser editables; si no, esta parte no se construye)*
+- Tabla `acceso_reglas`, solo se añade (trigger que rechaza `UPDATE`/`DELETE`, como `admin_audit`):
+  `regla_id BIGSERIAL PK`, `stream TEXT CHECK (stream = 'alta_probabilidad')`, `vigente_desde DATE`, `prob_min NUMERIC(3,2)`,
+  `prob_max NUMERIC(3,2)`, `free_fraction NUMERIC(3,2)`, `creado_por TEXT`, `creado_en TIMESTAMPTZ DEFAULT now()`, `nota TEXT NOT NULL`.
+  `CHECK`: `0.62 <= prob_min < prob_max <= 0.95` (es lo que sella `publish/alta_prob.py`: `PROB_MIN_EXT`–`PROB_MAX`; fuera de ahí no hay
+  filas que mostrar) y `0 <= free_fraction <= 1`.
+- Vigencia: a un lote le aplica la fila de mayor `(vigente_desde, regla_id)` con `vigente_desde <= batch_date`. Un trigger rechaza
+  cualquier `INSERT` con `vigente_desde <= (now() AT TIME ZONE 'UTC')::date`: `batch_date` es la fecha UTC de la decisión
+  (`alta_prob_datos._sql_sellado()`), así que nunca existe un lote con fecha futura y ninguna regla puede alcanzar un lote ya sellado.
+  Corregir una regla que aún no entró en vigor = otra fila con la misma fecha; gana la de `regla_id` mayor.
+- Siembra en la migración, antes de crear el trigger: una fila `vigente_desde = '2000-01-01'`, `0.73 / 0.95 / 0.10`, `creado_por = 'migracion'`.
+  Con solo esa fila el comportamiento es idéntico al de hoy.
+- `src/qf/comercial/acceso_reglas.py`: `vigente(batch_date) -> Regla`, `todas()`, `crear(..., actor)` (misma transacción que `audit()`,
+  acción `acceso:regla`), caché en proceso de 60 s e `invalidar_cache()`. Si la tabla no existe (`UndefinedTable`, despliegue antes de
+  migrar) devuelve los valores de hoy, igual que hace `mobile_updates.configuration()`.
+- Cambios en `api/mobile.py` (nada más se toca): `free_quota(published, fraction)`; `choose_free`, `top_up` y `cap_free` usan la regla
+  DEL LOTE que procesan (ya van por lote con `_by_batch`); `high_rows()` y `markets_history()` cambian `a.prob BETWEEN %s AND %s` por un
+  `JOIN LATERAL` a la regla vigente para `b.batch_date`; `config()` informa la regla vigente para la fecha UTC de hoy. `top_up` se conserva:
+  sigue completando el cupo dentro de la misma regla cuando una cuota publicada llega tarde.
+- Fuera de alcance, se queda en código: el rango de la Escalera (`PROB_MIN, PROB_MAX = .75, .97`) y `ladder_free_count = 1`.
+- `DIAS_AGENDA` no afecta a nada sellado: tabla de una fila `cliente_ajustes (id = 1, dias_agenda SMALLINT CHECK 1..14 DEFAULT 7,
+  updated_by, updated_at)`, efecto inmediato, con `audit()`.
+- Panel `/control/acceso` (`api/acceso_panel.py`, `templates/acceso.html`, `console.require_console` + CSRF como `panel.py`): regla en
+  vigor, reglas futuras, historial y formulario con rango, porcentaje gratis, fecha (por defecto mañana UTC) y nota obligatoria.
+- Efecto conocido y aceptado: durante 7 días tras un cambio conviven lotes de la regla vieja y la nueva; la app muestra el rango de hoy
+  como texto, aunque en la lista quede algún pronóstico del rango anterior.
+- Pruebas (`tests/test_acceso_reglas.py`; `tests/test_mobile_delivery.py` debe pasar sin tocarse): (1) con una regla nueva desde D+1 que
+  SUBE la fracción, el lote D no gana gratis y el D+1 sí; (2) con una que la BAJA, los gratis abiertos del lote D siguen gratis;
+  (3) con un rango más estrecho desde D+1, el historial sigue devolviendo los pronósticos de D que quedan fuera del rango nuevo;
+  (4) el trigger rechaza fecha de hoy o pasada, `UPDATE` y `DELETE`; (5) dos filas con la misma fecha: gana la última; (6) `config()`.
+
+*B. Endpoint común y lista blanca*
+- `GET /cliente/v1/config?cliente=web|app&lang=xx` en `src/qf/api/cliente_config.py`. Sin parámetro `build` hasta la Fase 4 (hoy nada
+  depende de él y multiplicaría las entradas de caché). `cliente` es un enumerado; `lang` con formato inválido → 422, idioma apagado → `es`.
+- Lleva `"contrato": 0`: es provisional y ningún cliente lo consume hasta la Fase 2, cuyo diseño puede cambiar la forma. `/web/config` y
+  `/mobile/v1/config` NO se reescriben: siguen llamando a sus funciones de hoy (que solo cambian el origen de los tres valores de A).
+- Forma: `{"contrato": 0, "cliente", "lang", "general": {brand_name, legal_name, hero_badge, support_email, disclaimer_text,
+  maintenance_banner, social[]}, "idiomas": {selector, estados}, "acceso": {probability_min, probability_max,
+  high_probability_free_fraction, ladder_free_count, dias_agenda}, "app": {versiones{7 campos de mobile_update_settings},
+  secciones{clave: {enabled, message}}} (solo `cliente=app`), "web": {ui, sections} (solo `cliente=web`, del idioma pedido)}`.
+- Sin `server_time` en el cuerpo (la app no lo usa; rompería el `ETag`). `ETag` débil = sha256 del JSON canónico; con `If-None-Match`
+  igual → 304. `Cache-Control`: `public, max-age=<public_cache_seconds>` para web; `no-cache` para app, para que la actualización
+  obligatoria y el aviso de mantenimiento sigan llegando al momento (hoy `/mobile/v1/config` es `no-store`).
+- La respuesta es la misma para todo el mundo: ignora `Authorization` y cookies.
+- Lista blanca por tabla (todo lo que no esté aquí es privado):
+  - `web_site_settings`: `brand_name, legal_name, hero_badge, support_email, disclaimer_text, maintenance_banner, social_*` (ya
+    normalizadas por `social_links()`), `lang_selector_enabled, lang_states`. Privadas: `apimart_base_url, apimart_model,
+    apimart_key_enc, translation_target_langs, default_robots, content_signal, public_cache_seconds, indexnow_enabled, updated_by, updated_at, id`.
+  - `mobile_update_settings`: los 7 campos de versión y enlaces. Privadas: `id, updated_at`.
+  - `mobile_features`: `section, enabled, message`. Privada en el endpoint nuevo: `updated_at`.
+  - `acceso_reglas`: solo `prob_min, prob_max, free_fraction` de la regla en vigor HOY. Privadas: reglas futuras, `nota, creado_por, creado_en, regla_id`.
+  - `cliente_ajustes`: `dias_agenda`. Privadas: `updated_by, updated_at`.
+  - `web_page_contents`: solo lo que ya entregan `get_ui_dict()` y `get_spa_section_override()` para idiomas que no estén en `off`.
+- Cómo se garantiza: (1) el cuerpo se construye campo a campo, nunca volcando una fila (`**row`); (2) `response_model` de Pydantic con
+  `extra='forbid'`; (3) prueba de clasificación: lee las columnas reales de esas tablas (`information_schema`, se omite sin Postgres
+  local y corre en CI) y falla si alguna no está en `PUBLICAS` o `PRIVADAS`, de modo que una columna nueva obliga a decidir;
+  (4) prueba de centinelas: rellena cada columna privada de texto con un valor único y comprueba que no aparece en el cuerpo de
+  `/cliente/v1/config`, `/web/config` ni `/mobile/v1/config`.
+
+*C. Menú* — en `templates/base.html`, un grupo «Web y App» con enlaces solo a lo que existe: Textos, idiomas y ajustes web
+(`/control/configuracion`), Versiones y secciones de la app (`/control/configuracion-app`), Acceso gratis y VIP (`/control/acceso`),
+Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añaden cuando llegue su fase, no como enlaces vacíos.
+
+*Archivos:* `db/<siguiente número libre>_acceso_reglas.sql`, `src/qf/comercial/acceso_reglas.py`, `src/qf/api/acceso_panel.py`,
+`src/qf/api/cliente_config.py`, `src/qf/api/mobile.py`, `src/qf/api/main.py` (dos `include_router`), `templates/acceso.html`,
+`templates/base.html`, `tests/test_acceso_reglas.py`, `tests/test_cliente_config.py`. No se toca `frontend/` ni `apps/mobile/`
+(por eso la Fase 1 no necesita traducciones ni publicar la app).
 
 **Fase 2 · Catálogo de deportes y mercados (una publicación de la app)**
 - [ ] `[Fable 5.2 · alto]` Diseño: forma definitiva de la respuesta de `/cliente/v1/config` (con versión de contrato) y esquema de

@@ -1,6 +1,14 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Diseño de la Fase 1 del menú «Web y App»: reglas de acceso versionadas y lista blanca (rama `plan/menu-web-y-app`, solo diseño)
+
+- **Por qué las reglas van versionadas por fecha de lote y no como un valor editable:** al leer `api/mobile.py` resultó que las constantes actúan hacia atrás. `top_up()` y `cap_free()` recalculan en cada lectura el cupo gratis de los lotes de los últimos 7 días, y `markets_history()` filtra todo el historial con el rango vigente. Con un control en el panel, estrechar el rango ocultaría a posteriori pronósticos sellados que fallaron: justo lo que el producto promete no hacer. La tabla `acceso_reglas` solo se añade y un trigger impide fechar una regla en hoy o antes; como `batch_date` es la fecha UTC de la decisión, ninguna regla puede alcanzar un lote ya sellado.
+- **Por qué no se guarda la regla en cada lote:** con inserción solo hacia el futuro, la regla de cualquier lote existente ya es inmutable y se deduce de su fecha; una columna extra en `mobile_allocation_batches` no añadiría garantía.
+- **Por qué el endpoint nuevo nace como `contrato: 0` y sin clientes:** la forma definitiva es la decisión de la Fase 2 y queda congelada en la app publicada. En la Fase 1 solo se asienta la maquinaria (lista blanca, `ETag`); `/web/config` y `/mobile/v1/config` no se reescriben.
+- **Por qué una prueba de clasificación de columnas:** la fuga probable no es la de hoy, sino una columna privada añadida más adelante a una tabla que el endpoint ya lee. La prueba falla hasta que alguien la declare pública o privada.
+- **Corrección a lo dicho el 11-nov:** la Fase 1 sí depende en una parte del titular: las reglas editables esperan su respuesta. Menú y endpoint, no.
+
 ## 11-nov-2026 · Plan del menú «Web y App»: configuración compartida para web y Flutter (rama `plan/menu-web-y-app`, solo plan)
 
 - **Por qué un catálogo en el servidor y no más interruptores:** lo que hoy obliga a publicar la app no son los textos ni los avisos (eso ya se edita en `/control`), sino que deportes y mercados están escritos en el código de cada cliente (`enum SportKind` en `sports.dart`, expresiones regulares por deporte en `rutas.js`) y que cada deporte tiene un contrato distinto. Mientras eso siga así, un deporte nuevo exige versión de tienda por mucho panel que haya.
