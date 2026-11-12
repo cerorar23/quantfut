@@ -3,6 +3,77 @@
 > Recortado el 2026-11-10: aquí solo quedan las secciones con alguna tarea abierta. El backlog completo, con lo cerrado, está en
 > `harness/archivo/tareas_hasta_20261110.md`. Al cerrar la última tarea de una sección, muévela allí.
 
+## 11-nov-2026 · Menú «Web y App» en `/control`: una sola configuración para web y Flutter (plan, rama `plan/menu-web-y-app`, nada implementado)
+
+**Objetivo (pedido del titular, 11-nov-2026):** que la web y la app se publiquen lo menos posible y que el servidor entregue la mayor
+parte de lo que muestran; un menú único en `/control` que gobierne ambos clientes, válido para fútbol, NBA, tenis y deportes futuros.
+
+**Punto de partida, comprobado en el código el 11-nov:**
+- Dos menús separados: «Configuración web» (`/control/configuracion`, `api/web_config*.py`, `db/110`) y «Configuración de la app»
+  (`/control/configuracion-app`, `api/mobile.py`, tablas `mobile_features` de `db/054` y `mobile_update_settings` de `db/072`).
+- Dos lecturas separadas que no comparten nada: `GET /web/config` (la pide `frontend/app.js`) y `GET /mobile/v1/config`
+  (la piden `core/app_update.dart` y `product/live_api.dart`).
+- Fijo en el código, y por tanto obliga a publicar o desplegar:
+  - App: `SportKind` es un `enum` con tres deportes y sus secciones (`apps/mobile/lib/product/sports.dart`); catálogo de mercados en `market_catalog.dart`.
+  - Web: una expresión regular por deporte en `frontend/rutas.js`; datos de deporte en `frontend/sports-data.js`.
+  - API: `HIGH_MIN/HIGH_MAX` (73–95 %), `FREE_FRACTION` (10 %), `DIAS_AGENDA` (7) y la lista `SECTIONS` son constantes de `api/mobile.py`.
+  - Tres contratos distintos por deporte: fútbol en `/mobile/v1/*` (`api/mobile.py`); NBA en `/nba/v1/*`, que sirve un servicio
+    aparte (`apps/nba/src/nba/api/app.py`) y que la API principal solo lee (`api/nba_datos.py`); tenis en `/web/deportes/tenis*`
+    (`api/web.py` → `api/tenis_publico.py`).
+  - Idiomas: `web_page_contents.lang` admite `es/en/pt`; la app lleva 6 (`apps/mobile/lib/l10n/app_*.arb`).
+
+**Límites que el plan no intenta saltar:**
+- Un tipo de bloque visual nuevo se programa una vez en cada cliente; AdMob, Firebase, compras de tienda, acceso con Google, permisos,
+  icono y ficha de tienda siguen exigiendo versión. Las tiendas prohíben descargar código ejecutable: solo viajan datos y configuración.
+- El panel gobierna la presentación. No toca `predecir → seleccionar → sellar → publicar` ni `picks.assign_tiers()`; un cambio en la
+  fracción gratis vale desde el lote siguiente, nunca sobre `mobile_free_allocations` ya asignadas.
+- CSS anterior obligatorio: los bloques reutilizan los componentes actuales, sin hoja nueva (`frontend/original-css.test.mjs`).
+- El endpoint de configuración es público: ningún token, clave ni dato interno. `apimart_key_enc` no sale nunca.
+- `fr/it/de` en la **web** siguen bloqueados por la revisión legal F7; los 6 idiomas de este plan son solo para textos de la **app**.
+
+**Fase 1 · Menú único y endpoint común (sin publicar la app)**
+- [ ] Agrupar el menú lateral de `templates/base.html` en «Web y App» con apartados: General, Deportes, Mercados, Pantallas, Textos e
+      idiomas, Versiones de la app, Acceso gratis y VIP; enlazar ahí Publicidad AdMob y Monedas, sin moverlas de módulo.
+- [ ] `GET /cliente/v1/config?cliente=web|app&build=&lang=` que compone lo que ya existe (`web_config.get_settings()`,
+      `mobile.config()`), con `ETag` y `Cache-Control` desde `public_cache_seconds`. `/web/config` y `/mobile/v1/config` quedan como
+      alias con la forma actual, para las versiones instaladas.
+- [ ] Pasar `HIGH_MIN/HIGH_MAX`, `FREE_FRACTION` y `DIAS_AGENDA` a una tabla editable (migración con el siguiente número libre de `db/`),
+      con los valores actuales por defecto, vigencia «desde el lote siguiente» y registro en `admin_audit`.
+- [ ] Pruebas: los alias devuelven byte a byte lo de hoy; el endpoint nuevo no expone columnas fuera de una lista blanca.
+
+**Fase 2 · Catálogo de deportes y mercados (una publicación de la app)**
+- [ ] Tablas `deportes` (id, nombre por idioma, icono, color, orden, secciones, estado `off/preview/on` por cliente) y
+      `deporte_mercados` (deporte, clave, familia, etiqueta por idioma, orden, visible en web/app). Sembradas con fútbol, NBA y tenis
+      tal como están hoy en `sports.dart`, `market_catalog.dart` y `sports-data.js`.
+- [ ] El endpoint común entrega el catálogo. La app sustituye el `enum SportKind` por la lista recibida, guarda la última respuesta en
+      disco y lleva una copia de fábrica para abrir sin red. La web deja de tener una expresión regular por deporte en `rutas.js`.
+- [ ] Iconos y colores salen de un conjunto cerrado que ambos clientes ya conocen (clave → icono); una clave desconocida cae en el genérico.
+- [ ] Panel «Deportes» y «Mercados»: alta, orden, estado por cliente y vista previa.
+
+**Fase 3 · Contrato común por deporte**
+- [ ] `/deportes/{deporte}/cartelera`, `/deportes/{deporte}/partido/{id}` y `/deportes/{deporte}/partido/{id}/mercados` con la misma
+      forma, como adaptadores en la API principal sobre `mobile.py` (fútbol), `nba_datos.py` (NBA, que ya lee del servicio `nba-api`) y
+      `tenis_publico.py` (tenis). Los endpoints actuales y el servicio de NBA no se tocan ni se retiran en esta fase.
+- [ ] Un deporte futuro = filas en `deportes`/`deporte_mercados` + su adaptador. Criterio de hecho: dar de alta un deporte de prueba en
+      `preview` y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`.
+- [ ] Va en la misma versión de la app que la Fase 2 si se agrupan.
+
+**Fase 4 · Pantallas por bloques (una publicación de la app)**
+- [ ] Tabla `pantalla_bloques` (pantalla, deporte, cliente, orden, tipo, parámetros, build mínimo). Tipos iniciales, uno por componente
+      que ya existe: cabecera, lista de partidos, tarjeta de mercado, tabla, curva por línea, banner, llamada a VIP.
+- [ ] Inicio y detalle de partido se pintan desde la lista recibida; un tipo desconocido se ignora, así una app vieja no se rompe.
+- [ ] Panel «Pantallas»: ordenar, ocultar y parametrizar bloques, con borrador → publicado y vuelta atrás a la versión anterior.
+
+**Fase 5 · Textos de la app editables**
+- [ ] Sobrescritura remota de claves de `app_*.arb` (la copia empaquetada sigue siendo el valor por defecto). El panel no deja guardar
+      una clave sin sus 6 idiomas; la traducción automática de APIMart se amplía a `fr/it/de` solo para estos textos de la app.
+- [ ] `tests/test_mensajes.py` y `test/l10n_test.dart` siguen exigiendo los 6 idiomas.
+
+**Decisiones que esperan al titular antes de empezar la Fase 2:**
+- Si «las dos web» son la SPA de `/` y las páginas públicas de SEO (supuesto de este plan) u otro sitio distinto.
+- Si las reglas de acceso (fracción gratis, rango de probabilidad) deben ser editables desde el panel o seguir como decisión fijada en código.
+- Cuándo se publica la versión de la app que lee el catálogo: hasta entonces las fases 2–4 solo se notan en la web.
+
 ## 9-nov-2026 · TheRundown, cuarto nivel de la cascada (rama `cuotas/therundown`, sobre `cuotas/cascada-respaldo`)
 - [x] `ingest/cuotas_therundown.py`, nivel 4 en `cuotas_respaldo.py` y `cuotas_respaldo_futbol.py`, caducidad de 24 h e interruptor `CUOTAS_THERUNDOWN_MOSTRAR`. Pruebas: `tests/test_cuotas_therundown.py` (24, con la forma real de NBA y tenis).
 - [x] Desplegado el 9-nov 18:51 UTC: API (3 archivos) y ejecutor con la clave en `therundown.env`; nivel 4 activo (ver DEPLOYS.md).

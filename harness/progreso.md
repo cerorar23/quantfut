@@ -1,6 +1,14 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 11-nov-2026 · Plan del menú «Web y App»: configuración compartida para web y Flutter (rama `plan/menu-web-y-app`, solo plan)
+
+- **Por qué un catálogo en el servidor y no más interruptores:** lo que hoy obliga a publicar la app no son los textos ni los avisos (eso ya se edita en `/control`), sino que deportes y mercados están escritos en el código de cada cliente (`enum SportKind` en `sports.dart`, expresiones regulares por deporte en `rutas.js`) y que cada deporte tiene un contrato distinto. Mientras eso siga así, un deporte nuevo exige versión de tienda por mucho panel que haya.
+- **Por qué adaptadores y no reescribir los endpoints:** NBA lo sirve un servicio aparte (`apps/nba`) y fútbol y tenis tienen clientes instalados que dependen de la forma actual. El contrato común se monta encima y los endpoints viejos quedan como alias; así las versiones ya instaladas no se rompen y la actualización obligatoria no hace falta para esto.
+- **Por qué bloques con tipos cerrados y no interfaz libre desde el servidor:** el CSS anterior es obligatorio y las tiendas no permiten código descargado. Cada tipo de bloque corresponde a un componente que ya existe; el servidor decide cuáles, en qué orden y con qué datos, y un tipo desconocido se ignora.
+- **Límite fijado en el plan:** el panel gobierna presentación; no toca el orden `predecir → sellar → publicar` ni asignaciones gratis ya hechas. `fr/it/de` siguen bloqueados en la web (F7); los 6 idiomas solo aplican a textos de la app.
+- Detalle por fases y decisiones que esperan al titular: `harness/tareas.md`, sección del 11-nov.
+
 ## 11-nov-2026 · Respaldo SportsAPIPro para liquidación de tenis, cierre inmediato de tickets perdidos y protección anti-void (rama `fix/tenis-respaldo-liquidacion`, sin desplegar)
 
 - **Diagnóstico en producción (`parley-v2`):** PropLine pasaba partidos Challenger/ITF en `/v1/sports/tennis/scores` a `expired` entre lecturas de 3 h sin emitir `/results`, dejando patas pendientes de tenis hasta el margen de 72 h (`parley-v2-liquidacion` además corría cada 3 h y `parley_v2_liquidacion.liquidar_ticket` esperaba a todas las patas incluso con una ya perdida).
