@@ -128,6 +128,8 @@ def validar(prob_min, prob_max, free_fraction, vigente_desde: date, nota: str) -
     except Exception:
         raise ValueError('Rango o porcentaje no válidos.') from None
     for v in (lo, hi, fr):
+        if not v.is_finite():
+            raise ValueError('Rango o porcentaje no válidos: usa números finitos.')
         if v != v.quantize(Decimal('0.01')):
             raise ValueError('Usa como máximo dos decimales (0,01 = 1 %).')
     if not (PROB_MIN_ABS <= lo < hi <= PROB_MAX_ABS):
