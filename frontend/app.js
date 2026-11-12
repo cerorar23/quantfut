@@ -1,8 +1,8 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
-import { routeFromLocation, cleanUrl, historyEntry, deporteBoot, fijarDeportes } from './rutas.js?v=catalogo-20261112';
-import { normalizarDeportes, deportesNavegacion, urlCatalogo } from './deportes-catalogo.js?v=catalogo-20261112';
+import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=catalogo-20261112';
+import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo } from './rutas.js?v=catalogo-20261112';
 import { createRealViews } from './real-views.js?v=catalogo-20261112';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
 import { createSportWindow } from './sports-window.js?v=nba-20261108';
@@ -233,7 +233,7 @@ function loadWebConfig() {
     })
     .catch(() => {});
 }
-// Catálogo de deportes de /cliente/v1/config (Fase 2 · E). null = copia incrustada de deportes-catalogo.js.
+// Catálogo de deportes de /cliente/v1/config (Fase 2 · E). null = copia incrustada de rutas.js.
 let webDeportes = null;
 const sportList = () => deportesNavegacion(webDeportes, pageLang());
 function loadDeportesCatalogo() {

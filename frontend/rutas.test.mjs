@@ -208,7 +208,7 @@ test('las páginas informativas y legales con URL propia abren la ruta `info` (t
 
 // ---- Catálogo de deportes (Fase 2 · E): DEPORTE_PATH se construye desde los slug recibidos ----
 import { fijarDeportes } from './rutas.js';
-import { DEPORTES_RESPALDO } from './deportes-catalogo.js';
+import { DEPORTES_RESPALDO } from './rutas.js';
 
 test('con la copia incrustada las URL de deporte son las de siempre, también en /en/ y /pt/', () => {
   for (const p of ['/nba/', '/nba/equipos/boston-celtics/', '/tenis/atp-finals/a-vs-b-2026-11-09/', '/futbol/liga-mx/', '/en/nba/', '/pt/futbol/'])

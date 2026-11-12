@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEPORTES_RESPALDO, normalizarDeportes, deportesNavegacion, nombreDeporte, urlCatalogo } from './deportes-catalogo.js';
+import { DEPORTES_RESPALDO, normalizarDeportes, deportesNavegacion, nombreDeporte, urlCatalogo } from './rutas.js';
 
 const dep = (id, orden, extra = {}) => ({
   id, orden, estado: 'on', nombre: { es: id.toUpperCase(), en: `${id}-en`, pt: `${id}-pt` }, slug: { es: id, en: id, pt: id }, ...extra,
