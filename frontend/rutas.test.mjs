@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ROUTE_PATH, urlFor, routeFromLocation, cleanUrl, historyEntry, deporteDeUrl, isDeportePage, deporteBoot } from './rutas.js';
+import { ROUTE_PATH, INFO_PATHS, urlFor, routeFromLocation, cleanUrl, historyEntry, deporteDeUrl, isDeportePage, deporteBoot } from './rutas.js';
 
 const FRONTEND_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -192,4 +192,16 @@ test('las rutas localizadas /en/ y /pt/ resuelven sección y deporte sin volver 
   assert.equal(historyEntry(at('/pt/'), 'planes'), '/pt/planos/');
   assert.equal(deporteDeUrl(at('/en/nba/')), 'nba');
   assert.equal(deporteDeUrl(at('/pt/futbol/')), 'futbol');
+});
+
+test('las páginas informativas y legales con URL propia abren la ruta `info` (también con y sin barra final y en otros idiomas)', () => {
+  for (const path of INFO_PATHS) {
+    assert.equal(route({ pathname: path, hash: '' }), 'info', path);
+    assert.equal(route({ pathname: path.slice(0, -1), hash: '' }), 'info', path);
+    assert.equal(cleanUrl({ pathname: path, hash: '' }, 'info'), null, path);   // no se reescribe a /#info
+  }
+  for (const path of ['/metodologia/', '/legal/terminos', '/legal/privacidad', '/en/legal/terms', '/pt/legal/privacidade', '/pt/jogo-responsavel/']) {
+    assert.ok(INFO_PATHS.has(path.endsWith('/') ? path : `${path}/`), path);
+  }
+  assert.equal(route({ pathname: '/historial/', hash: '' }), 'historial');   // las secciones de siempre no cambian
 });

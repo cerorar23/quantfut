@@ -578,3 +578,53 @@
 .qf-redes-label { font-size: 12px; font-weight: 600; opacity: .78; }
 .qf-lang-bar a[aria-current="page"] { font-weight: 700; text-decoration: none; }
 
+
+/* Páginas informativas y legales dentro del shell de la app (ruta `info`): solo tipografía del texto; el marco es el de siempre. */
+.qf-info { max-width: 860px; margin: 0 auto; line-height: 1.7; overflow-wrap: anywhere; }
+.qf-info h1 { font-size: clamp(26px, 5vw, 36px); line-height: 1.2; margin: 0 0 12px; }
+.qf-info h2 { font-size: 22px; line-height: 1.3; margin: 32px 0 8px; }
+.qf-info p, .qf-info li { color: color-mix(in srgb, currentColor 88%, transparent); }
+.qf-info ul, .qf-info ol { padding-left: 22px; }
+.qf-info li + li { margin-top: 6px; }
+.qf-info .entradilla { font-size: 18px; color: inherit; }
+.qf-info .revision { font-size: 14px; opacity: .75; margin: 0 0 24px; }
+.qf-info a { color: var(--green); text-underline-offset: 3px; }
+.qf-info .aviso { border: 1px solid var(--border); border-left: 4px solid var(--green); background: var(--panel); padding: 14px 18px; border-radius: 8px; margin: 24px 0; }
+.qf-info .aviso p { margin: 0; }
+.qf-info .aviso p + p { margin-top: 8px; }
+.qf-info table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 15px; display: block; overflow-x: auto; }
+.qf-info th, .qf-info td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+.qf-info th { background: var(--panel); }
+.qf-info code { background: var(--panel); padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+
+/* Herramientas de las páginas de contenido (calculadora de cuota justa y verificador de la cadena), antes en <style> de cada página. */
+.qf-info .cj-herr { border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0 }
+.qf-info .cj-herr h3 { margin:0 0 6px;font-size:18px }
+.qf-info .cj-herr p { margin:6px 0 }
+.qf-info .cj-cols { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px }
+.qf-info .cj-campo { display:flex;flex-direction:column;gap:4px;margin:10px 0 }
+.qf-info .cj-campo label, .qf-info .cj-fila label { font-size:15px;color:var(--muted) }
+.qf-info .cj-fila { display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0 }
+.qf-info .cj-fila>div { display:flex;flex-direction:column;gap:4px }
+.qf-info input, .qf-info select { font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:44px;max-width:100% }
+.qf-info input:focus-visible, .qf-info select:focus-visible { outline:2px solid var(--green);outline-offset:2px }
+.qf-info input[aria-invalid=true] { border-color:#f59e0b }
+.qf-info .cj-salida { min-height:1.7em;color:var(--text) }
+.qf-info .cj-nota { color:var(--muted);font-size:14px }
+.qf-info .cj-tabla { overflow-x:auto }
+.qf-info .vc-caja { border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0 }
+.qf-info .vc-caja h2, .qf-info .vc-caja h3 { margin-top:0 }
+.qf-info .vc-controles { display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin:12px 0 }
+.qf-info .vc-btn { font:inherit;font-weight:600;color:#0a0a0f;background:var(--green);border:0;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer }
+.qf-info .vc-btn-sec { font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer }
+.qf-info .vc-btn:focus-visible, .qf-info .vc-btn-sec:focus-visible, .qf-info textarea:focus-visible, .qf-info input:focus-visible { outline:2px solid var(--green);outline-offset:2px }
+.qf-info .vc-campo { display:flex;flex-direction:column;gap:6px;margin:12px 0 }
+.qf-info .vc-campo label { font-size:15px;color:var(--muted) }
+.qf-info textarea, .qf-info input[type=file] { font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100% }
+.qf-info textarea { font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;min-height:130px;resize:vertical }
+.qf-info .vc-salida { font-weight:600;margin:12px 0 6px }
+.qf-info .vc-salida[data-estado=ok] { color:var(--green) }
+.qf-info .vc-salida[data-estado=fallo] { color:#f59e0b }
+.qf-info .vc-tabla { overflow-x:auto }
+.qf-info .vc-nota { color:var(--muted);font-size:14px }
+.qf-info pre.vc-cli { background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:13px }

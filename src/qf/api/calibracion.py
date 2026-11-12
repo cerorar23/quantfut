@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import fichas, idiomas, nba_datos, og, paginas, seo
+from . import fichas, idiomas, nba_datos, paginas, seo
 from .nba_datos import NbaNoDisponible
 
 log = logging.getLogger("qf.calibracion")
@@ -339,17 +339,14 @@ def _servir(idioma: str) -> HTMLResponse:
     tx = _TEXTOS[idioma]
     p_eff, entradilla_override = web_config.apply_editorial_meta(c.p, "tool:calibracion", idioma)
     ctx = web_config.base_template_ctx(lang=idioma)
-    cuerpo = _env.get_template(tx["plantilla"]).render(
-        p=p_eff, c=c, url=c.url, base=seo.base_url(),
-        jsonld=web_config.apply_org_jsonld(c.jsonld, ctx["cfg"]),
-        paginas=tx["paginas"],
-        og_imagen=og.url_marca() if idioma == "es" else None,
-        idiomas_alt=idiomas.selector(c.ruta), robots=idiomas.robots_de(idioma),
+    cuerpo = paginas.envolver(
+        _env.get_template(tx["plantilla"]), p_eff, c.ruta, idioma, c=c, url=c.url, base=seo.base_url(),
+        jsonld=web_config.apply_org_jsonld(c.jsonld, ctx["cfg"]), robots=idiomas.robots_de(idioma),
         revision_iso=c.actualizada.isoformat() if c.actualizada else None,
         revision_larga=paginas.fecha_larga(c.actualizada, idioma) if c.actualizada else None,
         entradilla_override=entradilla_override, **ctx)
     secs = ctx["cfg"].get("public_cache_seconds", 300)
-    cab = {"Cache-Control": f"public, max-age={secs}", "Content-Security-Policy": paginas.CSP, **cab_idioma}
+    cab = {"Cache-Control": f"public, max-age={secs}", "Content-Security-Policy": paginas.CSP_SHELL, **cab_idioma}
     return HTMLResponse(cuerpo, headers=cab)
 
 

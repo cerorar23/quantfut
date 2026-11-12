@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import idiomas, og, paginas, seo
+from . import idiomas, paginas, seo
 
 log = logging.getLogger("qf.cuota_justa")
 router = APIRouter(include_in_schema=False)
@@ -32,9 +32,8 @@ REVISION = date(2026, 11, 9)
 REVISION_NUEVOS = date(2026, 11, 10)
 SCRIPT = "/static/cuota-justa.js"
 ARCHIVO_SCRIPT = Path(__file__).with_name("static") / "cuota-justa.js"
-# La política de las páginas de confianza ya admite el script PROPIO (`script-src 'self'`): sin 'unsafe-inline' en scripts, sin conexiones
-# (la calculadora no envía nada a ningún sitio), sin Pixel de Meta.
-CSP = paginas.CSP
+# Va dentro del shell de la app (como NBA): el script de la calculadora lo importa la app y no envía nada a ningún sitio.
+CSP = paginas.CSP_SHELL
 
 # Ejemplo resuelto que se muestra sin JavaScript (cuotas típicas de un 1X2 con margen).
 EJEMPLO = (("Local", 2.10), ("Empate", 3.40), ("Visitante", 3.60))
@@ -218,13 +217,12 @@ def render(idioma: str = "es") -> str:
     ej = ejemplo(idioma=idioma)
     cuotas = [c for _, c in EJEMPLO]
     ctx = web_config.base_template_ctx(lang=idioma)
-    return _env.get_template(p.plantilla).render(
-        p=p_eff, url=url, base=base, jsonld=web_config.apply_org_jsonld(_jsonld(p_eff, url, base), ctx["cfg"]),
-        paginas=paginas.EN_POR_IDIOMA[idioma],
-        og_imagen=og.url_marca() if idioma == "es" else None,
-        idiomas_alt=idiomas.selector(p.ruta), robots=idiomas.robots_de(idioma),
+    return paginas.envolver(
+        _env.get_template(p.plantilla), p_eff, p.ruta, idioma, url=url, base=base,
+        jsonld=web_config.apply_org_jsonld(_jsonld(p_eff, url, base), ctx["cfg"]), robots=idiomas.robots_de(idioma),
+        modulo=script_url(),
         revision_iso=p.revision.isoformat(), revision_larga=paginas.fecha_larga(p.revision, idioma),
-        ej=ej, script=script_url(), ejemplo_nombres=list(_NOMBRES_EJEMPLO[idioma]), ejemplo_cuotas=[n2(c, idioma) for c in cuotas],
+        ej=ej, ejemplo_nombres=list(_NOMBRES_EJEMPLO[idioma]), ejemplo_cuotas=[n2(c, idioma) for c in cuotas],
         entradilla_override=entradilla_override, **ctx)
 
 

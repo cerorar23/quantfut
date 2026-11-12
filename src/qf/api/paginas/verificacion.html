@@ -1,24 +1,4 @@
 {% extends "base.html" %}
-{% block cabecera %}
-<style>
-.vc-caja{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
-.vc-caja h2,.vc-caja h3{margin-top:0}
-.vc-controles{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin:12px 0}
-.vc-btn{font:inherit;font-weight:600;color:#0a0a0f;background:var(--accent);border:0;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer}
-.vc-btn-sec{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer}
-.vc-btn:focus-visible,.vc-btn-sec:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.vc-campo{display:flex;flex-direction:column;gap:6px;margin:12px 0}
-.vc-campo label{font-size:15px;color:var(--muted)}
-textarea,input[type=file]{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
-textarea{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;min-height:130px;resize:vertical}
-.vc-salida{font-weight:600;margin:12px 0 6px}
-.vc-salida[data-estado=ok]{color:var(--accent)}
-.vc-salida[data-estado=fallo]{color:#f59e0b}
-.vc-tabla{overflow-x:auto}
-.vc-nota{color:var(--muted);font-size:14px}
-pre.vc-cli{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:13px}
-</style>
-{% endblock %}
 {% block contenido %}
 {% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Cada lote diario y por partido publicado por QuantFut recibe una huella digital SHA-256 encadenada con la anterior antes de que empiecen los encuentros. Aquí puedes comprobar en tu propio navegador o desde la línea de comandos que los hashes de <a href="/chain">/chain</a> no presentan roturas.</p>{% endif %}
 
@@ -96,7 +76,4 @@ pre.vc-cli{background:var(--bg);border:1px solid var(--line);border-radius:8px;p
 <p>Si prefieres comprobar la cadena fuera del navegador con biblioteca estándar pura de Python 3 (sin instalar librerías externas), utiliza el script incluido en el proyecto:</p>
 <pre class="vc-cli"><code>python3 scripts/verificar_cadena_publica.py --url https://pronosticosdeportivos.pro/chain?limit=365</code></pre>
 <p class="vc-nota">También admite <code>--archivo chain.json</code> o <code>--dir ./ruta-recibos</code> para validar archivos <code>*.receipt.json</code> y lotes revelados.</p>
-{% endblock %}
-{% block scripts %}
-<script type="module" src="{{ script }}"></script>
 {% endblock %}

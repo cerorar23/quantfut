@@ -1,7 +1,7 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
-import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=equipos-20261109';
+import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=info-20261111';
 import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
 import { createSportWindow } from './sports-window.js?v=nba-20261108';
@@ -69,6 +69,12 @@ const nav = [
 const MOBILE_PRIMARY = ['inicio', 'historial', 'planes', 'cuenta'];
 const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Análisis del partido', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
 const SERVER_TITLE = document.title;   // título que puso el servidor (rutas_web.py) para la sección servida
+// Página informativa o legal servida dentro del shell: el texto llega en [data-info-contenido] y la ruta `info` lo conserva.
+// Se guarda el NODO, no su texto: la app repinta todo su HTML varias veces y así el contenido conserva sus escuchas y lo que la
+// persona haya escrito en las herramientas (calculadora, verificador).
+const INFO_NODE = document.documentElement.dataset.pagina === 'info' ? document.querySelector('[data-info-contenido]') : null;
+const INFO_MODULO = document.documentElement.dataset.modulo || '';
+if (INFO_NODE) routeTitle.info = 'Información';
 const validRoute = route => Object.hasOwn(routeTitle, route);
 const ROUTE_ALIAS = { mercados: 'partidos', partido: 'partidos' };
 const canonicalRoute = route => ROUTE_ALIAS[route] || route;
@@ -106,6 +112,11 @@ function webFooterExtraMarkup() {
     : '';
   return (socialHtml || langHtml) ? `<div class="qf-pie-extra">${socialHtml}${langHtml}</div>` : '';
 }
+
+const FOOTER_AVISO = {
+  en: 'QuantFut is a statistical information service, not a bookmaker. Forecasts are for information and entertainment purposes only: an estimated probability does not guarantee a result.',
+  pt: 'A QuantFut é um serviço de informação estatística, não uma casa de apostas. As previsões têm fins exclusivamente informativos e de entretenimento: uma probabilidade estimada não garante um resultado.',
+};
 
 function applyWebConfigToDom() {
   if (!webConfig || !app) return;
@@ -163,6 +174,10 @@ function applyWebConfigToDom() {
   const pie = app.querySelector('.qf-pie');
   if (!pie) return;
   const discP = pie.querySelector('p');
+  if (discP && FOOTER_AVISO[lang]) {
+    const badge18 = discP.querySelector('.qf-pie-18');
+    if (badge18) { discP.textContent = ''; discP.append(badge18, document.createTextNode(FOOTER_AVISO[lang])); }
+  }
   if (discP && lang === 'es' && webConfig.disclaimer_text) {
     const badge18 = discP.querySelector('.qf-pie-18');
     if (badge18) {
@@ -1387,12 +1402,13 @@ function siteFooter() {
 
 function render() {
   if(state.mobileMenuOpen && window.matchMedia('(min-width:761px)').matches)state.mobileMenuOpen=false;
-  const views = { inicio: realViews.home, partidos: windowView, mercados: windowView, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
+  const views = { info: () => '<article class="qf-info"></article>', inicio: realViews.home, partidos: windowView, mercados: windowView, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
   // La sección que el servidor sirvió conserva su título (más descriptivo), también al volver a ella con «atrás»; las demás, el corto.
   document.title = document.documentElement.dataset.ruta === state.route ? SERVER_TITLE : `${routeTitle[state.route]} · QuantFut`;
   app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main></div>${siteFooter()}</div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  if (INFO_NODE) app.querySelector('.qf-info')?.replaceChildren(INFO_NODE);
   applyCybercoreTheme(app);
   conversionViews.applyMeters(app);
   membershipUI.afterRender();
@@ -1582,6 +1598,7 @@ app.addEventListener('submit', event => {
 // Atrás/adelante y enlaces con hash: la barra de direcciones manda sobre el estado.
 function syncRouteFromLocation() {
   const route = routeFromLocation(location, validRoute, canonicalRoute);
+  if (route === 'info' && !INFO_NODE) return;   // otra página informativa: la carga completa la hace el navegador
   if (route && state.route !== route) { state.route = route; state.mobileMenuOpen = false; state.drawer = null; render(); app.querySelector('#main-content')?.focus({ preventScroll: true }); }
 }
 window.addEventListener('hashchange', syncRouteFromLocation);
@@ -1624,6 +1641,8 @@ if (clean) history.replaceState(null, '', clean + location.search);
 window.addEventListener('resize',()=>{if(state.mobileMenuOpen && window.matchMedia('(min-width:761px)').matches){state.mobileMenuOpen=false;render();}});
 membershipUI.handleReturn();
 render();
+// Herramienta propia de la página (calculadora, verificador): se importa una vez, con su contenido ya en el documento.
+if (INFO_NODE && INFO_MODULO.startsWith('/static/')) import(INFO_MODULO).catch(() => {});
 membershipUI.restoreSession();
 membershipUI.loadPlans();
 loadWebConfig();

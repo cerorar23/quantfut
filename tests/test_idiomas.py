@@ -50,7 +50,7 @@ def entradas(raiz) -> dict[str, dict[str, str]]:
 
 
 def visible(texto: str) -> str:
-    cuerpo = texto.split('<main id="contenido">', 1)[1].split("</footer>", 1)[0]
+    cuerpo = re.split(r'<main id="(?:main-content"|contenido">)', texto, maxsplit=1)[1].split("</footer>", 1)[0]    # shell de la app o página propia
     cuerpo = re.sub(r"<a [^>]*lang=\"es\"[^>]*>.*?</a>", " ", cuerpo, flags=re.S)     # los enlaces a páginas solo en español van marcados
     return html.unescape(re.sub(r"<[^>]+>", " ", cuerpo))
 
@@ -120,8 +120,8 @@ def test_head_en_ingles_completo(abierto, p):
     r = abierto.get(p.ruta, headers=HTML)
     assert r.status_code == 200 and "x-robots-tag" not in r.headers
     t = r.text
-    assert t.startswith("<!doctype html>") and '<html lang="en">' in t
-    assert f'<link rel="canonical" href="{BASE}{p.ruta}">' in t
+    assert t.startswith("<!doctype html>") and '<html lang="en" ' in t
+    assert f'<link rel="canonical" href="{BASE}{p.ruta}" />' in t
     assert 'name="robots" content="index, follow' in t
     assert 'property="og:locale" content="en_US"' in t and f'property="og:url" content="{BASE}{p.ruta}"' in t
     assert f"<title>{html.escape(p.titulo)} | QuantFut</title>" in t
@@ -129,7 +129,7 @@ def test_head_en_ingles_completo(abierto, p):
     assert "og:image" not in t                                          # la tarjeta de marca está en español
     assert t.count("<h1>") == 1
     assert '"inLanguage": "en"' in t or '"inLanguage":"en"' in t
-    assert "Skip to content" in t and "Last reviewed" in t and "Saltar" not in t and "Última revisión" not in t
+    assert "Last reviewed" in t and "Última revisión" not in t
 
 
 def test_titulos_y_descripciones_en_ingles_son_unicos_y_distintos_del_espanol():

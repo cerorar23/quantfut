@@ -1,21 +1,4 @@
 {% extends "base_pt.html" %}
-{% block cabecera %}
-<style>
-.cj-herr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
-.cj-herr h3{margin:0 0 6px;font-size:18px}
-.cj-herr p{margin:6px 0}
-.cj-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.cj-campo{display:flex;flex-direction:column;gap:4px;margin:10px 0}
-.cj-campo label,.cj-fila label{font-size:15px;color:var(--muted)}
-.cj-fila{display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0}.cj-fila>div{display:flex;flex-direction:column;gap:4px}
-input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:44px;max-width:100%}
-input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input[aria-invalid=true]{border-color:#f59e0b}
-.cj-salida{min-height:1.7em;color:var(--text)}
-.cj-nota{color:var(--muted);font-size:14px}
-.cj-tabla{overflow-x:auto}
-</style>
-{% endblock %}
 {% block contenido %}
 {% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">A odd de uma casa de apostas não é uma probabilidade pura: ela inclui a margem da casa. Esta calculadora converte odds em probabilidades e vice-versa, e mostra quanta margem há em uma cotação. Tudo roda no seu navegador: nada é enviado nem guardado.</p>{% endif %}
 <div class="aviso"><p><strong>Ferramenta educativa.</strong> Apenas converte números; não diz no que apostar, quanto apostar nem se uma odd tem valor. Uma probabilidade estimada não garante nenhum resultado. Se o jogo deixar de ser entretenimento, <a href="/pt/jogo-responsavel/">peça ajuda</a>.</p></div>
@@ -86,7 +69,4 @@ input[aria-invalid=true]{border-color:#f59e0b}
 
 <h2>O que esta ferramenta não faz</h2>
 <p>Não calcula valores de aposta nem retornos, não compara casas de apostas e não diz se uma cotação vale a pena. Uma probabilidade honesta pode ser pior do que a do mercado, e então não há vantagem a aproveitar. Se o jogo estiver causando problemas, <a href="/pt/jogo-responsavel/">existe ajuda</a>.</p>
-{% endblock %}
-{% block scripts %}
-<script type="module" src="{{ script }}"></script>
 {% endblock %}
