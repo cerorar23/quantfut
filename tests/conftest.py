@@ -60,3 +60,18 @@ def _reglas_de_acceso_de_codigo(monkeypatch):
     acceso_reglas.invalidar_cache()
     yield
     acceso_reglas.invalidar_cache()
+
+
+@pytest.fixture(autouse=True)
+def _catalogo_de_codigo(monkeypatch):
+    """Sin Postgres: el catálogo de deportes (db/112) vale la semilla del código.
+    Las pruebas de tests/test_catalogo.py sustituyen `_cargar` con las suyas."""
+    try:
+        from qf.comercial import catalogo
+    except Exception:
+        yield
+        return
+    monkeypatch.setattr(catalogo, "_cargar", catalogo._de_semilla)
+    catalogo.invalidar_cache()
+    yield
+    catalogo.invalidar_cache()

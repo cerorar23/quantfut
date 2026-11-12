@@ -1,6 +1,16 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Catálogo de deportes y mercados, parte A de la Fase 2 (db/112, `comercial/catalogo.py`; sin desplegar ni migrar)
+
+- **Semilla fusionada con la parte A:** `ensure_seeded()` la necesita, así que `catalogo_semilla.py` y `scripts/generar_catalogo_defecto.py` salen en el mismo PR. Los textos son copia literal de los `app_*.arb`; todos caben en los 40 caracteres.
+- **Tenis sin `winner`:** sus familias son las 6 de `sportFamilyTitle`; no se inventó «ganador» para tenis. Si el titular lo quiere, se añade con `guardar_familia` sin tocar código.
+- **Semilla = lo que ve la app hoy, no el contenido de `market_evidence.json`:** de ahí salen solo los 8 ids de fútbol; los `nba_*` de ese archivo son evidencia exploratoria y no son familias. NBA y tenis no llevan subtítulo.
+- **Una sola lectura cacheada (30 s) del catálogo completo:** `deportes_para`, `web_estado` y `exigir_web` la proyectan; `_cargar_real` es la lectura de Postgres y `_cargar` el punto que parchean las pruebas. `tests/conftest.py` gana un autouse que sirve la semilla sin base, como el de `acceso_reglas`.
+- **Guardas dentro de la transacción:** `guardar_deporte` bloquea las filas (`FOR UPDATE`) y comprueba «cada cliente conserva un deporte `on`» sobre el conjunto resultante; el `CHECK` de SQL cubre «sin adaptador solo `off`». `deporte_id` no se puede editar y `adaptador` sí (es un dato de código, no de URL).
+- **`exigir_web(id)` es una fábrica** (`Depends(exigir_web('nba'))`): FastAPI mezcla el `X-Robots-Tag` de la dependencia con cualquier `Response` que devuelva el endpoint. Un id fuera del catálogo cuenta como `off` (404).
+- **Pendiente:** aplicar `db/112` en el servidor antes de la API; las pruebas de Postgres (6) no se corrieron en local (sin Postgres) y quedan para CI. Siguen B (endpoint), C (páginas web), D (panel); `pubspec.yaml` aún no declara `cliente_config_defecto.json`.
+
 ## 12-nov-2026 · `GET /cliente/v1/config` y su lista blanca (parte B de la Fase 1; sin desplegar)
 
 - **Por qué el cuerpo se arma campo a campo y no desde `configuration()`:** `mobile_updates.configuration()` filtra columnas con su propio `SELECT`; si alguien le añade `*` o una columna, `/mobile/v1/config` la expondría. El endpoint nuevo no depende de eso: los 7 campos de versión se copian por nombre a un modelo Pydantic con `extra='forbid'`.
