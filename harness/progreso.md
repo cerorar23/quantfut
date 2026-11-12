@@ -9,6 +9,15 @@
 - **Las secciones SPA de `web` se recomponen en `cliente_config.py` en vez de extraerlas de `public_web_config()`:** reescribir `/web/config` estaba prohibido; cuando la Fase 2 decida la forma definitiva conviene unificar.
 - **Arreglo de la parte A:** `acceso_reglas.validar()` rechaza `inf`/`nan` con `ValueError('…finitos')`; antes `Decimal.quantize` lanzaba `InvalidOperation` y `/control/acceso` daba 500.
 
+## 12-nov-2026 · Diseño de la Fase 2 del menú «Web y App»: catálogo de deportes y mercados (rama `docs/dos-web-confirmadas`, solo diseño)
+
+- **Hecho con Sonnet 5.5, no con Fable 5.2 alto como decía el plan:** el titular eligió Sonnet 5.5 para ahorrar tokens. Es la parte que queda congelada en las apps instaladas; la especificación lo dice y deja abierta una revisión de Fable antes de ejecutar la parte F (app).
+- **Por qué el catálogo gobierna presentación y no evidencia:** `market_evidence.json` es dato medido con fecha de corte empaquetado en la app; moverlo al servidor mezclaría presentación con evidencia y obligaría a versionar ambas. La app ya sabe mostrar una familia sin evidencia (`publishedOnly`) y usar el `title` del archivo si no conoce el id, así que el catálogo se apoya en eso.
+- **Por qué un deporte nuevo no puede estar `on` en la Fase 2:** cada deporte tiene pantallas propias en código (parley y Escalera solo en fútbol, detalle de partido). Sin adaptador (Fase 3) un deporte `on` sería una pantalla vacía; por eso `adaptador` es obligatorio para encenderlo. Lo que sí se gana ya es apagar o reordenar fútbol, NBA y tenis por cliente sin publicar.
+- **Por qué `preview` no lleva llave en el cliente:** el endpoint es público y no puede haber tokens de administración en JavaScript ni Flutter. `preview` promete solo «no indexado» (web) y «oculto por defecto con etiqueta Beta» (app), igual que el inglés.
+- **Por qué un contrato versionado por parámetro (`?contrato=`):** lo que se publique en la app no se puede cambiar. Dentro de un contrato solo se añaden campos; romper uno es otro contrato y el anterior sigue servido hasta que `min_build_*` lo jubile.
+- **Riesgo señalado:** apagar un deporte en la web afecta a SEO (404 y `sitemap`); se aplica con una dependencia única y una prueba por deporte, y el panel avisa antes de guardar.
+
 ## 12-nov-2026 · Diseño de la Fase 1 del menú «Web y App»: reglas de acceso versionadas y lista blanca (rama `plan/menu-web-y-app`, solo diseño)
 
 - **Por qué las reglas van versionadas por fecha de lote y no como un valor editable:** al leer `api/mobile.py` resultó que las constantes actúan hacia atrás. `top_up()` y `cap_free()` recalculan en cada lectura el cupo gratis de los lotes de los últimos 7 días, y `markets_history()` filtra todo el historial con el rango vigente. Con un control en el panel, estrechar el rango ocultaría a posteriori pronósticos sellados que fallaron: justo lo que el producto promete no hacer. La tabla `acceso_reglas` solo se añade y un trigger impide fechar una regla en hoy o antes; como `batch_date` es la fecha UTC de la decisión, ninguna regla puede alcanzar un lote ya sellado.
