@@ -170,7 +170,7 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 - [ ] `[Sonnet 5.5 · bajo]` `tests/test_mensajes.py` y `test/l10n_test.dart` siguen exigiendo los 6 idiomas.
 
 **Decisiones que esperan al titular antes de empezar la Fase 2:**
-- Si «las dos web» son la SPA de `/` y las páginas públicas de SEO (supuesto de este plan) u otro sitio distinto.
+- ~~Si «las dos web» son la SPA de `/` y las páginas públicas de SEO.~~ Resuelto el 12-nov-2026: sí, esas dos. La Fase 2 trata ambas con el mismo catálogo.
 - ~~Si las reglas de acceso deben ser editables desde el panel.~~ Resuelto el 12-nov-2026: sí, editables, con la vigencia por lote de la especificación de la Fase 1.
 - Cuándo se publica la versión de la app que lee el catálogo: hasta entonces las fases 2–4 solo se notan en la web.
 
