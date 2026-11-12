@@ -78,17 +78,15 @@ def test_verificacion_espanol_csp_head_accesible_y_301(client):
     r = client.get("/verificacion/", headers=HTML)
     assert r.status_code == 200 and "x-robots-tag" not in r.headers
     csp = r.headers["content-security-policy"]
-    assert "default-src 'none'" in csp and "script-src 'self'" in csp and "connect-src 'self'" in csp
-    script = next(d for d in csp.split("; ") if d.startswith("script-src"))
-    assert "unsafe-inline" not in script and "unsafe-eval" not in script and "http" not in script
+    assert csp == "frame-ancestors 'none'"        # dentro del shell de la app; el verificador consulta /chain del mismo origen
 
     t = r.text
-    assert f'<link rel="canonical" href="{BASE}/verificacion/">' in t
+    assert f'<link rel="canonical" href="{BASE}/verificacion/" />' in t
     assert 'name="robots" content="index, follow' in t
     assert '"@type": "BreadcrumbList"' in t and '"@type": "WebPage"' in t
     etiquetas = re.findall(r"<script\b([^>]*)>", t)
-    propios = [e for e in etiquetas if "application/ld+json" not in e]
-    assert len(propios) == 1 and re.search(r'src="/static/verificar-cadena\.js\?v=[0-9a-f]{10}"', propios[0])
+    assert all("src=" in e for e in etiquetas if "application/ld+json" not in e)       # solo el módulo de la app, nada en línea
+    assert re.search(r'data-modulo="/static/verificar-cadena\.js\?v=[0-9a-f]{10}"', t)
     assert "onclick" not in t and "onchange" not in t and "javascript:" not in t
     assert '<label for="vc-archivo"' in t and '<label for="vc-json"' in t
     assert "no está disponible" in t or "no hay lotes" in t.lower()
@@ -158,15 +156,15 @@ def test_puertas_en_y_pt_hreflang_y_metodologia_enlazada(client, estado):
 def test_textos_en_y_pt_sin_espanol_ni_promesas_falsas(client, estado):
     estado("en=on\npt=on")
     t_en = client.get("/en/verification/", headers=HTML).text
-    assert '<html lang="en">' in t_en and 'property="og:locale" content="en_US"' in t_en
+    assert '<html lang="en" ' in t_en and 'property="og:locale" content="en_US"' in t_en
     vis_en = visible(t_en)
     assert PALABRAS_ES_EN.findall(vis_en.lower()) == []
     assert not re.search(r"[áéíóúñ¿¡]", vis_en.lower())
     assert "independent external third-party timestamp" in vis_en.lower()
 
     t_pt = client.get("/pt/verificacao/", headers=HTML).text
-    assert '<html lang="pt-BR">' in t_pt and 'property="og:locale" content="pt_BR"' in t_pt
-    vis_pt = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", t_pt.split('<main id="contenido">', 1)[1].split("</footer>", 1)[0])))
+    assert '<html lang="pt-BR" ' in t_pt and 'property="og:locale" content="pt_BR"' in t_pt
+    vis_pt = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", re.split(r'<main id="(?:main-content"[^>]*|contenido")>', t_pt, maxsplit=1)[1].split("</footer>", 1)[0].split('<nav aria-label="Idioma">', 1)[0].split('<p class="aviso">', 1)[0])))
     assert PALABRAS_ES_PT.findall(vis_pt.lower()) == []
     assert not re.search(r"[ñ¿¡]", vis_pt.lower())
     assert "carimbo de tempo externo independente" in vis_pt.lower()

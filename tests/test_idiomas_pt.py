@@ -21,7 +21,7 @@ PALABRAS_ES = re.compile(r"\b(los|del|pero|cuando|también|nosotros|pronóstico|
 
 
 def visible(texto: str) -> str:
-    cuerpo = texto.split('<main id="contenido">', 1)[1].split("</footer>", 1)[0]
+    cuerpo = texto.split('<main id="main-content"', 1)[1].split("</footer>", 1)[0]
     cuerpo = re.sub(r"<a [^>]*lang=\"es\"[^>]*>.*?</a>", " ", cuerpo, flags=re.S)
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", cuerpo))).strip()
 
@@ -62,14 +62,14 @@ def test_cabeza_en_portugues(abierto, p):
     r = abierto.get(p.ruta, headers=HTML)
     assert r.status_code == 200 and "x-robots-tag" not in r.headers
     t = r.text
-    assert '<html lang="pt-BR">' in t and 'property="og:locale" content="pt_BR"' in t
-    assert f'<link rel="canonical" href="{BASE}{p.ruta}">' in t
+    assert '<html lang="pt-BR" ' in t and 'property="og:locale" content="pt_BR"' in t
+    assert f'<link rel="canonical" href="{BASE}{p.ruta}" />' in t
     assert 'name="robots" content="index, follow' in t and "og:image" not in t
     assert f"<title>{html.escape(p.titulo)} | QuantFut</title>" in t
     assert 120 <= len(p.descripcion) <= 165, len(p.descripcion)
     assert t.count("<h1>") == 1
     assert '"inLanguage": "pt"' in t or '"inLanguage":"pt"' in t
-    assert "Pular para o conteúdo" in t and "Última revisão" in t
+    assert "Última revisão" in t
 
 
 def test_fecha_en_portugues_es_la_del_mapa(abierto):

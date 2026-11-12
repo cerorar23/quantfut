@@ -86,7 +86,7 @@ def test_head_completo_y_correcto(client, pagina):
     robots = d.meta("robots")
     assert robots.startswith("index, follow") and "max-image-preview:large" in robots and "noindex" not in robots
     assert d.meta("og:url", "property") == url and d.meta("og:type", "property") == "website"
-    assert d.meta("og:title", "property") == pagina.titulo and d.meta("og:locale", "property") == "es_ES"
+    assert d.meta("og:title", "property") == f"{pagina.titulo} | QuantFut" and d.meta("og:locale", "property") == "es_ES"
     assert d.meta("twitter:card") == ("summary_large_image" if og.disponible() else "summary")
     assert "x-robots-tag" not in r.headers
 
@@ -96,7 +96,7 @@ def test_un_solo_h1_y_estructura_navegable(client, pagina):
     r, d = doc(client, pagina)
     assert d.h1 == [pagina.titulo]
     assert len(re.findall(r"<h2", r.text)) >= 3
-    assert 'id="contenido"' in r.text and 'href="#contenido"' in r.text      # saltar al contenido
+    assert 'id="main-content"' in r.text and "data-info-contenido" in r.text    # mismo shell que NBA: la app conserva este contenido
 
 
 @TODAS
@@ -131,20 +131,19 @@ def test_la_version_sin_barra_redirige_con_301_a_la_canonica(client, pagina):
 def test_head_y_cabeceras_de_seguridad(client, pagina):
     assert client.head(pagina.ruta).status_code == 200
     r = client.get(pagina.ruta)
-    assert "frame-ancestors 'none'" in r.headers["content-security-policy"]
+    assert r.headers["content-security-policy"] == "frame-ancestors 'none'"
     assert r.headers["cache-control"] == "public, max-age=300"
 
 
 @TODAS
-def test_la_politica_admite_solo_scripts_propios_y_la_pagina_no_trae_ninguno_en_linea(client, pagina):
-    """`script-src 'self'` deja pasar el `email-decode.min.js` de Cloudflare (mismo origen) para que el correo no se vea como «[email protected]»;
-    por eso la página no puede llevar scripts en línea ni de terceros: el JSON-LD (datos) es lo único."""
+def test_la_pagina_va_en_el_shell_de_la_app_y_no_trae_scripts_en_linea(client, pagina):
+    """Mismo `index.html` que fútbol, NBA y tenis: la app (módulo propio) pinta encabezado, menú y pie y conserva el texto
+    de `data-info-contenido`. Lo único en línea permitido es el JSON-LD (datos)."""
     r = client.get(pagina.ruta)
-    csp = r.headers["content-security-policy"]
-    script = next(d for d in csp.split("; ") if d.startswith("script-src"))
-    assert script == "script-src 'self'"
-    for etiqueta in re.findall(r"<script([^>]*)>", r.text):
-        assert "application/ld+json" in etiqueta, etiqueta
+    assert 'data-pagina="info"' in r.text and 'data-ruta="info"' in r.text
+    assert 'id="app"' in r.text and 'src="/app.js' in r.text
+    for etiqueta in re.findall(r"<script([^>]*)>", r.text):
+        assert "application/ld+json" in etiqueta or "src=" in etiqueta, etiqueta
 
 
 @TODAS
@@ -164,7 +163,7 @@ def test_todos_los_enlaces_internos_existen(client, pagina):
 @TODAS
 def test_pie_con_aviso_de_edad_y_sin_promesas(client, pagina):
     r, _ = doc(client, pagina)
-    assert "+18" in r.text and "no una casa de apuestas" in r.text and "no garantiza un resultado" in r.text
+    assert "mayores de 18" in r.text and "no una casa de apuestas" in r.text and "no garantiza un resultado" in r.text
     assert not re.search(r"dinero fácil|ganancias? garantizadas?|sin riesgo|apuesta segura|100 ?% de acierto", r.text, re.I)
 
 

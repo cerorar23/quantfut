@@ -18,7 +18,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import idiomas, og, paginas, seo
+from . import idiomas, paginas, seo
 
 log = logging.getLogger("qf.verificacion")
 router = APIRouter(include_in_schema=False)
@@ -31,10 +31,7 @@ RUTA = "/verificacion/"
 REVISION = date(2026, 11, 10)
 SCRIPT = "/static/verificar-cadena.js"
 ARCHIVO_SCRIPT = Path(__file__).with_name("static") / "verificar-cadena.js"
-CSP = (
-    "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; "
-    "connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
-)
+CSP = paginas.CSP_SHELL     # dentro del shell de la app; el verificador consulta /chain del mismo origen
 
 _PAGINAS: dict[str, paginas.Pagina] = {
     "es": paginas.Pagina(
@@ -216,20 +213,20 @@ def render(idioma: str = "es") -> str:
     url = base + p.ruta
     resumen = verificar_ventana(carga_lotes())
     ctx = web_config.base_template_ctx(lang=idioma)
-    return _env.get_template(p.plantilla).render(
-        p=p_eff,
+    return paginas.envolver(
+        _env.get_template(p.plantilla),
+        p_eff,
+        p.ruta,
+        idioma,
         url=url,
         base=base,
         jsonld=web_config.apply_org_jsonld(_jsonld(p_eff, url, base), ctx["cfg"]),
-        paginas=paginas.EN_POR_IDIOMA[idioma],
-        og_imagen=og.url_marca() if idioma == "es" else None,
-        idiomas_alt=idiomas.selector(p.ruta),
         robots=idiomas.robots_de(idioma),
+        modulo=script_url(),
         revision_iso=p.revision.isoformat(),
         revision_larga=paginas.fecha_larga(p.revision, idioma),
         resumen=resumen,
         genesis=GENESIS,
-        script=script_url(),
         entradilla_override=entradilla_override,
         **ctx,
     )

@@ -28,6 +28,18 @@ const LOCALIZED_PATH_ROUTE = Object.fromEntries(
 );
 const withSlash = path => (path.endsWith('/') ? path : `${path}/`);
 
+// Páginas informativas, legales y de herramientas (src/qf/api/paginas.py, legal.py, calibracion.py, cuota_justa.py, verificacion.py): el servidor las responde dentro del mismo shell que
+// fútbol, NBA y tenis y deja su texto en [data-info-contenido]; la ruta `info` de la app lo conserva en su <main>.
+export const INFO_PATHS = new Set([
+  '/metodologia/', '/juego-responsable/', '/sobre-nosotros/', '/legal/terminos/', '/legal/privacidad/',
+  '/en/methodology/', '/en/responsible-gambling/', '/en/about/', '/en/legal/terms/', '/en/legal/privacy/',
+  '/pt/metodologia/', '/pt/jogo-responsavel/', '/pt/sobre-nos/', '/pt/legal/termos/', '/pt/legal/privacidade/',
+  '/legal/eliminar-cuenta/', '/en/legal/delete-account/', '/pt/legal/excluir-conta/',
+  '/calibracion/', '/calculadora-cuota-justa/', '/verificacion/',
+  '/en/calibration/', '/en/fair-odds-calculator/', '/en/verification/',
+  '/pt/calibracao/', '/pt/calculadora-odd-justa/', '/pt/verificacao/',
+]);
+
 /** Idioma derivado del prefijo de URL ('en' | 'pt' | 'es'). */
 export function urlLang(loc) {
   const path = withSlash(loc?.pathname || '/');
@@ -65,6 +77,7 @@ export function routeFromLocation(loc, valid, canonical = route => route) {
   if (valid(hashed)) return hashed;
   if (isDeportePage(loc)) return 'partidos';
   const path = withSlash(loc.pathname || '/');
+  if (INFO_PATHS.has(path)) return 'info';
   return PATH_ROUTE[path] ?? LOCALIZED_PATH_ROUTE[path] ?? null;
 }
 

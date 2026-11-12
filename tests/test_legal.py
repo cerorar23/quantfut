@@ -1,3 +1,5 @@
+import re
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -16,6 +18,9 @@ def test_anonymous_legal_pages_match_consent_and_have_no_tracking():
         assert "admin@pronosticosdeportivos.pro" in response.text
         assert "admin@pronosticosdeportivos.com" not in response.text
         assert "[CONFIRMAR" not in response.text and "Borrador" not in response.text
-        assert "<script" not in response.text
-        assert "default-src 'none'" in response.headers["Content-Security-Policy"]
+        # Mismo shell que NBA, fútbol y tenis: solo el módulo propio de la app (sin scripts en línea ni de terceros).
+        assert 'data-pagina="info"' in response.text and "data-info-contenido" in response.text
+        for etiqueta in re.findall(r"<script([^>]*)>", response.text):
+            assert re.search(r'src="/[^/]', etiqueta), etiqueta
+        assert response.headers["Content-Security-Policy"] == "frame-ancestors 'none'"
     assert client.get("/legal/arbitrary-file").status_code == 404

@@ -1,21 +1,4 @@
 {% extends "base_en.html" %}
-{% block cabecera %}
-<style>
-.cj-herr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
-.cj-herr h3{margin:0 0 6px;font-size:18px}
-.cj-herr p{margin:6px 0}
-.cj-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.cj-campo{display:flex;flex-direction:column;gap:4px;margin:10px 0}
-.cj-campo label,.cj-fila label{font-size:15px;color:var(--muted)}
-.cj-fila{display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0}.cj-fila>div{display:flex;flex-direction:column;gap:4px}
-input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:44px;max-width:100%}
-input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input[aria-invalid=true]{border-color:#f59e0b}
-.cj-salida{min-height:1.7em;color:var(--text)}
-.cj-nota{color:var(--muted);font-size:14px}
-.cj-tabla{overflow-x:auto}
-</style>
-{% endblock %}
 {% block contenido %}
 {% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">Bookmaker odds are not a pure probability: they include the bookmaker's margin. This calculator converts odds into probabilities and back, and shows how much margin is built into a price. Everything runs in your browser: nothing is sent or stored.</p>{% endif %}
 <div class="aviso"><p><strong>Educational tool.</strong> It only converts numbers; it does not tell you what to bet, how much to wager, or whether a price has value. An estimated probability does not guarantee any outcome. If gambling stops being entertainment, <a href="/en/responsible-gambling/">get help</a>.</p></div>
@@ -86,7 +69,4 @@ input[aria-invalid=true]{border-color:#f59e0b}
 
 <h2>What this tool does not do</h2>
 <p>It does not calculate bet sizes or returns, does not compare bookmakers, and does not judge whether any price is worth taking. An honest probability can still be worse than the market, leaving nothing to exploit. If gambling causes problems, <a href="/en/responsible-gambling/">help is available</a>.</p>
-{% endblock %}
-{% block scripts %}
-<script type="module" src="{{ script }}"></script>
 {% endblock %}

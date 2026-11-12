@@ -1,21 +1,4 @@
 {% extends "base.html" %}
-{% block cabecera %}
-<style>
-.cj-herr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px 20px;margin:16px 0}
-.cj-herr h3{margin:0 0 6px;font-size:18px}
-.cj-herr p{margin:6px 0}
-.cj-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.cj-campo{display:flex;flex-direction:column;gap:4px;margin:10px 0}
-.cj-campo label,.cj-fila label{font-size:15px;color:var(--muted)}
-.cj-fila{display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0}.cj-fila>div{display:flex;flex-direction:column;gap:4px}
-input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:44px;max-width:100%}
-input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input[aria-invalid=true]{border-color:#f59e0b}
-.cj-salida{min-height:1.7em;color:var(--text)}
-.cj-nota{color:var(--muted);font-size:14px}
-.cj-tabla{overflow-x:auto}
-</style>
-{% endblock %}
 {% block contenido %}
 {% if entradilla_override %}{{ entradilla_override | safe }}{% else %}<p class="entradilla">La cuota de una casa de apuestas no es una probabilidad: lleva incorporado el margen de la casa. Esta calculadora convierte cuotas en probabilidades y al revés, y te enseña cuánto margen lleva una cuota. Todo ocurre en tu navegador: no se envía ni se guarda nada.</p>{% endif %}
 <div class="aviso"><p><strong>Herramienta educativa.</strong> Solo convierte números; no te dice qué apostar, ni cuánto, ni si una cuota «tiene valor». Una probabilidad estimada no garantiza ningún resultado. Si el juego deja de ser un entretenimiento, <a href="/juego-responsable/">pide ayuda</a>.</p></div>
@@ -86,7 +69,4 @@ input[aria-invalid=true]{border-color:#f59e0b}
 
 <h2>Qué no hace esta herramienta</h2>
 <p>No calcula importes ni rentabilidades, no compara casas de apuestas y no dice si una cuota merece la pena. Una probabilidad honesta puede ser peor que la del mercado, y entonces no hay nada que aprovechar. Si el juego te genera problemas, <a href="/juego-responsable/">hay ayuda</a>.</p>
-{% endblock %}
-{% block scripts %}
-<script type="module" src="{{ script }}"></script>
 {% endblock %}

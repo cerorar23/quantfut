@@ -29,7 +29,7 @@ def client(monkeypatch):
 
 
 def principal(texto: str) -> str:
-    return texto.split('<main id="contenido">', 1)[1].split("</main>", 1)[0]
+    return re.split(r'<main id="(?:main-content"[^>]*|contenido")>', texto, maxsplit=1)[1].split("</main>", 1)[0].split('<nav aria-label="Idioma">', 1)[0].split('<p class="aviso">', 1)[0]
 
 
 def texto_visible(texto: str) -> str:
@@ -194,7 +194,7 @@ def test_json_ld_y_cabeceras(client):
     d = Doc(r.text)
     tipos = {b["@type"]: b for b in d.ld}
     assert set(tipos) == {"BreadcrumbList", "WebPage"} and tipos["WebPage"]["dateModified"] == "2026-11-09"
-    assert r.headers["content-security-policy"].startswith("default-src 'none'") and "x-robots-tag" not in r.headers
+    assert r.headers["content-security-policy"] == "frame-ancestors 'none'" and "x-robots-tag" not in r.headers
 
 
 def test_la_fecha_de_los_datos_manda_sobre_el_reloj(client, monkeypatch):
