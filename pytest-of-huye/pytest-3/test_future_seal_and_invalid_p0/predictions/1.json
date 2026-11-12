@@ -1,1 +1,0 @@
-{"schema": "tennis-intake-sealed-v1", "event_key": "1", "circuit": "ATP", "tournament": "Paris", "rules": {"surface": "Hard"}, "provider_start": "2026-10-27T14:00:00Z", "sealed_at": "2026-10-27T11:00:00Z", "forecast": {"players": ["A", "B"], "winner": {"final_winner": null}}, "payload_sha256": "704f7fe9ed4798b62c7f96244ae5de521790e1cda5b47857c83b337416a937ac"}

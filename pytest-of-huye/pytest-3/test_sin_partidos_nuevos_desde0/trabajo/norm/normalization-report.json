@@ -1,8 +1,0 @@
-{
-  "provider": "sofascore_local",
-  "league_id": "it.serie_a",
-  "since": "2026-10-31",
-  "valid": 0,
-  "errors": [],
-  "normalized_sha256": "e4ca0e88070b502cafb6306b5a7d4257b9e4d991a70de67681d8e40d35c23d92"
-}

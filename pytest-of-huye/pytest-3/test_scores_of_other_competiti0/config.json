@@ -1,1 +1,0 @@
-{"sports": ["soccer_epl", "soccer_japan_j_league"], "daily_cap": 4500, "account_reserve": 500, "scores": true, "scores_every_hours": 1, "markets_by_family": {"default": ["h2h"], "basketball_": ["h2h", "spreads", "totals", "player_points", "player_rebounds"]}, "priority_sports": ["soccer_epl"], "other_sports_every_hours": 3}
