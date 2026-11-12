@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Deportes y mercados{% endblock %}
+{% block heading %}Deportes y mercados{% endblock %}
+{% macro badge(e) %}<span class="badge {{ 'bg-green-lt' if e == 'on' else ('bg-yellow-lt' if e == 'preview' else 'bg-secondary-lt') }}">{{ e }}</span>{% endmacro %}
+{% block content %}
+{% if err %}<div class="alert alert-danger">{{ err }}</div>{% endif %}
+<p class="text-secondary">Gobierna el orden, los nombres y la visibilidad de cada deporte en la web y en la app. Los cambios llegan a la web en hasta 5 minutos; la app los revalida al abrirse. Un deporte sin adaptador solo puede estar «off».</p>
+<div class="card"><div class="table-responsive"><table class="table card-table">
+<thead><tr><th>Orden</th><th>Deporte</th><th>Adaptador</th><th>Web</th><th>App</th><th></th></tr></thead><tbody>
+{% for d in deportes %}
+<tr>
+  <td>
+    <form class="d-inline" method="post" action="/control/deportes/{{ d.deporte_id }}/orden">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="sentido" value="subir">
+      <button class="btn btn-sm" type="submit" aria-label="Subir {{ d.nombre.es }}"{% if loop.first %} disabled{% endif %}>▲</button></form>
+    <form class="d-inline" method="post" action="/control/deportes/{{ d.deporte_id }}/orden">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="sentido" value="bajar">
+      <button class="btn btn-sm" type="submit" aria-label="Bajar {{ d.nombre.es }}"{% if loop.last %} disabled{% endif %}>▼</button></form>
+    <span class="ms-2">{{ d.orden }}</span>
+  </td>
+  <td><strong>{{ d.nombre.es }}</strong> <span class="text-secondary">({{ d.deporte_id }})</span></td>
+  <td>{{ d.adaptador or '—' }}</td>
+  <td>{{ badge(d.estado_web) }}</td>
+  <td>{{ badge(d.estado_app) }}</td>
+  <td class="text-end"><a class="btn btn-sm btn-primary" href="/control/deportes/{{ d.deporte_id }}">Editar</a>
+    <a class="btn btn-sm" href="/control/deportes/{{ d.deporte_id }}/mercados">Mercados ({{ d.familias|length }})</a></td>
+</tr>
+{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

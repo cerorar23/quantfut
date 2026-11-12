@@ -108,6 +108,9 @@ _MENSAJES = {
     "acceso_guardado": ("success", "Regla programada. Rige desde el día indicado, nunca sobre lotes ya repartidos."),
     "acceso_agenda_guardada": ("success", "Días de agenda guardados."),
     "acceso_error": ("danger", "No se pudo guardar; revisa el mensaje."),
+    "catalogo_guardado": ("success", "Guardado. La web lo ve en hasta 5 minutos; la app, al revalidar."),
+    "catalogo_traducido": ("success", "Nombre traducido con APIMart (fr, it, de). Revísalo."),
+    "catalogo_error": ("danger", "No se pudo guardar; revisa el mensaje."),
     "cuenta_suspendida": ("warning", "La cuenta está suspendida: no se envía enlace de acceso."),
 }
 

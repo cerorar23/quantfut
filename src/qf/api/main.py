@@ -77,7 +77,7 @@ from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
 from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
-from . import acceso_panel, cliente_config, web_config, web_config_panel
+from . import acceso_panel, catalogo_panel, cliente_config, web_config, web_config_panel
 from .tenis_v2 import router as tenis_v2_router
 from .meta import router as meta_router
 from .compras import router as compras_router, store_router as compras_store_router
@@ -812,6 +812,7 @@ app.include_router(admin)
 app.include_router(panel_router)
 app.include_router(web_config_panel.router)
 app.include_router(acceso_panel.router)
+app.include_router(catalogo_panel.router)
 app.include_router(cuentas_router)
 app.include_router(cuentas_openapi_router)
 app.include_router(cuentas_public_router)

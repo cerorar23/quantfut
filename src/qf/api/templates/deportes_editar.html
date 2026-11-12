@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Editar {{ d.nombre.es }}{% endblock %}
+{% block heading %}Editar {{ d.nombre.es }} <span class="text-secondary">({{ d.deporte_id }})</span>{% endblock %}
+{% block content %}
+{% if err %}<div class="alert alert-danger">{{ err }}</div>{% endif %}
+<form class="card mb-4" method="post" action="/control/deportes/{{ d.deporte_id }}"><div class="card-body">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3 class="card-title">Nombres (máximo 40 caracteres)</h3>
+  <div class="row g-3 mb-4">
+    {% for lg in idiomas %}<div class="col-md-4"><label class="form-label" for="nombre_{{ lg }}">{{ lg }}</label>
+      <input class="form-control" id="nombre_{{ lg }}" name="nombre_{{ lg }}" maxlength="40" value="{{ d.nombre.get(lg, '') }}" required></div>{% endfor %}
+  </div>
+  <h3 class="card-title">Direcciones (slug)</h3>
+  <div class="row g-3 mb-4">
+    {% for lg in idiomas_web %}<div class="col-md-4"><label class="form-label" for="slug_{{ lg }}">{{ lg }}</label>
+      <input class="form-control" id="slug_{{ lg }}" name="slug_{{ lg }}" maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" value="{{ d.slug.get(lg, '') }}" required></div>{% endfor %}
+  </div>
+  <h3 class="card-title">Apariencia y secciones</h3>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><label class="form-label" for="icono">Icono</label>
+      <select class="form-select" id="icono" name="icono">{% for i in iconos %}<option value="{{ i }}"{% if i == d.icono %} selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
+    <div class="col-md-4"><label class="form-label" for="color">Color (#rrggbb)</label>
+      <input class="form-control" id="color" name="color" pattern="#[0-9a-fA-F]{6}" maxlength="7" value="{{ d.color }}" required></div>
+    <div class="col-md-4"><span class="form-label d-block">Secciones</span>
+      {% for s in secciones %}<label class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="secciones" value="{{ s }}"{% if s in d.secciones %} checked{% endif %}><span class="form-check-label">{{ s }}</span></label>{% endfor %}</div>
+  </div>
+  <h3 class="card-title">Estado por cliente</h3>
+  {% if not d.adaptador %}<div class="alert alert-warning">Este deporte no tiene adaptador: solo admite «off».</div>{% endif %}
+  <div class="row g-3">
+    <div class="col-md-6"><label class="form-label" for="estado_web">Web</label>
+      <select class="form-select" id="estado_web" name="estado_web">{% for e in estados %}<option value="{{ e }}"{% if e == d.estado_web %} selected{% endif %}>{{ e }}</option>{% endfor %}</select>
+      <div class="form-hint text-warning">Apagarlo en la web: los buscadores verán un 404 y sale del sitemap. «preview»: funciona por URL, con noindex.</div></div>
+    <div class="col-md-6"><label class="form-label" for="estado_app">App</label>
+      <select class="form-select" id="estado_app" name="estado_app">{% for e in estados %}<option value="{{ e }}"{% if e == d.estado_app %} selected{% endif %}>{{ e }}</option>{% endfor %}</select>
+      <div class="form-hint">«preview»: sale con etiqueta Beta y oculto por defecto.</div></div>
+  </div>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Guardar</button>
+  <a class="btn" href="/control/deportes">Volver</a></div></form>
+
+<form class="card" method="post" action="/control/deportes/{{ d.deporte_id }}/traducir"><div class="card-body">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3 class="card-title">Traducir con APIMart</h3>
+  <p class="mb-0">Sustituye el nombre en fr, it y de por una traducción automática del español (solo el nombre corto). Requiere la clave de APIMart de Configuración web.</p>
+</div><div class="card-footer"><button class="btn" type="submit">Traducir con APIMart</button></div></form>
+{% endblock %}
