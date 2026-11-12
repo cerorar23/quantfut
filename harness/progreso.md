@@ -1,6 +1,14 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Fase 2, parte C: `off` y `preview` gobiernan páginas SSR, `sitemap` y `hreflang` (sin desplegar)
+
+- **Dependencia por router, no por ruta:** `catalogo.exigir_web('<deporte>')` va en `APIRouter(dependencies=...)` de los 12 routers de páginas (`futbol_*`, `nba_*`, `tenis_*`). Las API de los motores viven en otros routers y no se tocan; una prueba lo comprueba.
+- **`X-Robots-Tag` en `preview` sale del middleware, no de la dependencia:** las páginas devuelven su propia `HTMLResponse` y FastAPI descarta las cabeceras que una dependencia añade a una respuesta ya construida. `seo.aplicar_cabeceras` ahora también marca `noindex` bajo `/<es>`, `/en/<en>` y `/pt/<pt>` de un deporte en `preview` (con `try/except`: corre en toda respuesta y una caída del catálogo no debe tumbar la API). Sin cambio en `catalogo.py`.
+- **`sitemap`/`hreflang`:** `seo.todas_las_paginas` filtra por deporte con `_si_on`; los `hreflang` salen del mapa, así que desaparecen con él. Con todo `on` la lista es idéntica (prueba). La navegación de `rutas_web.marco_inicial` solo enlaza deportes `on`.
+- **Ruta genérica `/{slug}/` registrada (última) como `Route` con `matches` propio** (`deporte_generico.py`): un `/{slug}/` ordinario habría convertido todo `/desconocido` en 307 → 404 por la redirección de barra final de Starlette. Solo acepta el slug es de un deporte del catálogo no `off`; siempre `noindex`, fuera del `sitemap`. Los tres actuales tienen SSR antes, nunca la alcanzan.
+- **Pendiente:** los enlaces cruzados fijos entre pilares viven en las plantillas `paginas/*.html` (p. ej. `nba_cartelera.html`, `base.html`) y siguen enlazando a un deporte `off`/`preview`; hay que pasarlos a Jinja con el catálogo (afecta HTML de todas las páginas, por eso no se hizo aquí). `indexnow.PILARES` también es fijo.
+
 ## 12-nov-2026 · Contrato 1 de `/cliente/v1/config` (Fase 2, parte B; sin desplegar)
 
 - **`lang` de la app no mira el archivo de idiomas:** los 6 idiomas valen siempre (el archivo `activos.txt` solo gobierna la web); un idioma desconocido cae a `es`. La web conserva su regla (es/en/pt, apagado → `es`).
