@@ -71,6 +71,13 @@ def test_forma_web(cliente):
     assert r.headers['cache-control'] == f'public, max-age={max_age}'
 
 
+def test_la_respuesta_sale_con_noindex(cliente):
+    from qf.api import seo
+    assert 'cliente' in seo.NOINDEX_SEGMENTS
+    for k in ('app', 'web'):
+        assert 'noindex' in cliente[0].get(RUTA, params={'cliente': k}).headers.get('x-robots-tag', '')
+
+
 def test_cliente_obligatorio_y_enumerado(cliente):
     c = cliente[0]
     assert c.get(RUTA).status_code == 422
