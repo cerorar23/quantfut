@@ -147,8 +147,11 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 - [ ] `[Sonnet 5.5 · medio]` Parte C (servidor, web): `off`/`preview` de un deporte gobiernan sus páginas SSR, el `sitemap` y los `hreflang`;
       ruta `/{slug}/` genérica registrada la última. Ver la especificación: es el punto con más riesgo de SEO.
 - [ ] `[Sonnet 5.5 · bajo-medio]` Parte D (panel): `/control/deportes` y `/control/deportes/{id}/mercados`, con el enlace en `templates/base.html`.
-- [ ] `[Sonnet 5.5 · medio]` Parte E (web): `frontend/rutas.js` y `frontend/app.js` leen los deportes de la configuración; sin CSS nuevo.
-      Se despliega solo ese par de archivos y solo si el host coincide con `main` (regla de `CLAUDE.md`).
+- [x] `[Sonnet 5.5 · medio]` Parte E (web): `frontend/rutas.js` y `frontend/app.js` leen los deportes de la configuración; sin CSS nuevo.
+      Hecha el 12-nov-2026 (rama `claude/catalogo-deportes-web-ab4ee4`). **Falta el servidor B**: hasta que `/cliente/v1/config` mande `deportes`, la web
+      usa la copia incrustada y se comporta igual que antes. Archivos de `frontend/` que cambian (desplegar solo estos, tras comparar hashes con el host):
+      `app.js`, `index.html`, `rutas.js`, `real-views.js`, `ergonomic-views.js` (+ pruebas y `package.json`, que no se despliegan).
+      Se despliega solo ese conjunto y solo si el host coincide con `main` (regla de `CLAUDE.md`).
 - [ ] `[Opus 5.5 · medio-alto]` Parte F (app): `SportKind` → `SportId` + catálogo cargado (copia de fábrica → disco → red); ver especificación.
       Textos nuevos en los 6 idiomas con `apps/mobile/tool/l10n_add.py`, subir el código de versión y probar el release en `emulator-5556`.
 
