@@ -1,8 +1,9 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
-import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=info-20261111';
-import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
+import { routeFromLocation, cleanUrl, historyEntry, deporteBoot, fijarDeportes } from './rutas.js?v=catalogo-20261112';
+import { normalizarDeportes, deportesNavegacion, urlCatalogo } from './deportes-catalogo.js?v=catalogo-20261112';
+import { createRealViews } from './real-views.js?v=catalogo-20261112';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
 import { createSportWindow } from './sports-window.js?v=nba-20261108';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
@@ -229,6 +230,25 @@ function loadWebConfig() {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') applyWebConfigToDom();
       else render();
+    })
+    .catch(() => {});
+}
+// Catálogo de deportes de /cliente/v1/config (Fase 2 · E). null = copia incrustada de deportes-catalogo.js.
+let webDeportes = null;
+const sportList = () => deportesNavegacion(webDeportes, pageLang());
+function loadDeportesCatalogo() {
+  if (typeof fetch !== 'function') return;
+  fetch(urlCatalogo(pageLang()), { headers: { Accept: 'application/json' } })
+    .then(r => (r.ok ? r.json() : null))
+    .then(data => {
+      const lista = normalizarDeportes(data);
+      if (!lista) return;   // fallo, sin `deportes` o inválido: se conserva lo que hay
+      webDeportes = lista;
+      fijarDeportes(lista);
+      const visibles = sportList().map(d => d.id);
+      if (state.sport !== 'todos' && !visibles.includes(state.sport)) state.sport = 'todos';
+      const tag = document.activeElement?.tagName;
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') render();
     })
     .catch(() => {});
 }
@@ -545,7 +565,7 @@ function openMatch(id, tab = 'resumen') {
 const sportActive = id => state.sport === id || (id === 'futbol' && state.sport === 'todos' && state.route === 'partidos');
 
 function sportNavMarkup() {
-  return `<nav class="sport-nav" aria-label="Deporte">${[['futbol','Fútbol'],['nba','NBA'],['tenis','Tenis']].map(([id,label])=>`<a href="/${id}/" data-sport="${id}" class="${sportActive(id)?'active':''}" ${sportActive(id)?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`;
+  return `<nav class="sport-nav" aria-label="Deporte">${sportList().map(({id,label,slug})=>`<a href="/${slug}/" data-sport="${id}" class="${sportActive(id)?'active':''}" ${sportActive(id)?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`;
 }
 
 function navMarkup() {
@@ -1292,7 +1312,7 @@ const membershipUI = createMembershipUI({
   },
 });
 
-const realViews = createRealViews({ state, esc, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
+const realViews = createRealViews({ state, esc, sportList, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
   ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
 
@@ -1646,6 +1666,7 @@ if (INFO_NODE && INFO_MODULO.startsWith('/static/')) import(INFO_MODULO).catch((
 membershipUI.restoreSession();
 membershipUI.loadPlans();
 loadWebConfig();
+loadDeportesCatalogo();
 membershipUI.loadPaymentConfig();
 function syncPublicAuth() {
   const s = state.session;

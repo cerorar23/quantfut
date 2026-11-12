@@ -1,3 +1,5 @@
+import { DEPORTES_RESPALDO } from './deportes-catalogo.js?v=catalogo-20261112';
+
 // Rutas de la SPA con URL propia (F1.2b de docs/plan_seo_redes_web_20261108.md).
 //
 // Las secciones públicas tienen una URL limpia (/historial/) que el servidor responde con su propio <head> y
@@ -52,15 +54,35 @@ export function urlLang(loc) {
 // pilares /nba/, /tenis/, /futbol/ y prefijos /en/, /pt/). El servidor las responde con el mismo shell de la SPA y deja en <html> qué abrir.
 // `/nba/v1`, `/nba/v2` y `/tenis/v2` son los motores, no páginas.
 const SEG = '[a-z0-9]+(?:-[a-z0-9]+)*';
-const DEPORTE_PATH = {
-  nba: new RegExp(`^/nba/(?:equipos/${SEG}/|(?!v[12]/|equipos/)${SEG}/)?$`),
-  tenis: new RegExp(`^/tenis/(?:(?!v2/)${SEG}/(?:${SEG}/)?)?$`),
-  futbol: new RegExp(`^/futbol/(?:${SEG}/(?:${SEG}/)?)?$`),
+// Los slugs por idioma llegan de la configuración (deportes-catalogo.js); la copia incrustada es el respaldo.
+// La estructura del camino depende del deporte: nba, tenis y fútbol tienen la suya; uno nuevo usa la genérica.
+const ESTRUCTURA = {
+  nba: slug => new RegExp(`^/${slug}/(?:equipos/${SEG}/|(?!v[12]/|equipos/)${SEG}/)?$`),
+  tenis: slug => new RegExp(`^/${slug}/(?:(?!v2/)${SEG}/(?:${SEG}/)?)?$`),
+  futbol: slug => new RegExp(`^/${slug}/(?:${SEG}/(?:${SEG}/)?)?$`),
 };
-/** Deporte de una página con URL propia ('nba' | 'tenis' | 'futbol') o null. */
+const genericaPath = slug => new RegExp(`^/${slug}/(?:${SEG}/(?:${SEG}/)?)?$`);
+function construirDeportePath(deportes) {
+  const porIdioma = { es: {}, en: {}, pt: {} };
+  for (const d of deportes) {
+    for (const lang of Object.keys(porIdioma)) {
+      porIdioma[lang][d.id] = (ESTRUCTURA[d.id] || genericaPath)(d.slug?.[lang] || d.slug?.es);
+    }
+  }
+  return porIdioma;
+}
+let DEPORTE_PATH = construirDeportePath(DEPORTES_RESPALDO);
+/** Fija los deportes de la configuración; sin lista válida conserva los que hay (nunca se queda sin deportes). */
+export function fijarDeportes(catalogo) {
+  if (Array.isArray(catalogo) && catalogo.length) DEPORTE_PATH = construirDeportePath(catalogo);
+}
+/** Deporte de una página con URL propia (su `id` en el catálogo: 'nba' | 'tenis' | 'futbol'…) o null. */
 export function deporteDeUrl(loc) {
-  const path = withSlash(loc.pathname || '/').replace(/^\/(?:en|pt)(?=\/)/, '');
-  return Object.keys(DEPORTE_PATH).find(sport => DEPORTE_PATH[sport].test(path)) ?? null;
+  const full = withSlash(loc.pathname || '/');
+  const lang = urlLang(loc);
+  const path = full.replace(/^\/(?:en|pt)(?=\/)/, '');
+  const mapa = DEPORTE_PATH[lang];
+  return Object.keys(mapa).find(sport => mapa[sport].test(path)) ?? null;
 }
 export const isDeportePage = loc => deporteDeUrl(loc) !== null;
 

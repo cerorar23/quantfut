@@ -1,6 +1,16 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Fase 2 parte E: la web lee los deportes del catálogo (sin desplegar; falta el servidor B)
+
+- **Lógica pura en `deportes-catalogo.js`, no dentro de `app.js`:** así el filtrado (validar, ordenar, quitar `preview`, nombre con caída a `es`) se prueba en Node sin DOM. `rutas.js` solo importa la copia incrustada y expone `fijarDeportes()`.
+- **Copia incrustada = comportamiento de hoy:** slugs `futbol/nba/tenis` iguales en es/en/pt (en `/en/` y `/pt/` la URL de deporte conserva el mismo slug), y la navegación sigue mostrando «Fútbol, NBA, Tenis» en español en todos los idiomas; solo con datos del servidor se usa `nombre[idioma]` (cae a `es`).
+- **La estructura de la URL depende del `id`, no del slug:** `nba` (equipos, excluye `v1/v2`), `tenis` (excluye `v2`) y `futbol` conservan la suya aunque cambie el slug; un `id` nuevo usa la genérica `/<slug>/<a>/<b>/`. El catálogo público no trae `adaptador`, así que no hay otra señal.
+- **Respuesta inválida o sin `deportes` → se conserva lo anterior:** `normalizarDeportes` devuelve `null` si no queda ninguno válido; entradas sueltas inválidas o repetidas se descartan; `estado` distinto de `on|preview` se ignora; slug en/pt malo cae al `es`. `preview` sale de la navegación (pestañas, filtros de historial, grupos de «Pronósticos de hoy») pero `fijarDeportes` lo recibe, así que su URL sigue funcionando. Si la navegación quedara vacía se conserva el primer deporte.
+- **Límite conocido:** `deporteBoot` se calcula una sola vez al cargar con los slugs que haya entonces; una página SSR de un slug nuevo (solo posible tras el servidor B) arrancaría sin abrir el partido hasta recargar con la caché del navegador caliente. Con los tres slugs actuales no ocurre.
+- **Fuera de alcance, sigue fijo:** `historial-views.js` (`DEPORTE`), `sports-window.js` y los datos por deporte; esta parte solo gobierna navegación, pestañas y grupos.
+- **Efectos colaterales necesarios:** `index.html` (preload del módulo nuevo y versiones `catalogo-20261112`) y dos aserciones de versión en `tests/test_rutas_web.py`, porque esa prueba fija las versiones de `app.js` y `rutas.js`. `frontend` pasa de 238 a 250 pruebas.
+
 ## 12-nov-2026 · `GET /cliente/v1/config` y su lista blanca (parte B de la Fase 1; sin desplegar)
 
 - **Por qué el cuerpo se arma campo a campo y no desde `configuration()`:** `mobile_updates.configuration()` filtra columnas con su propio `SELECT`; si alguien le añade `*` o una columna, `/mobile/v1/config` la expondría. El endpoint nuevo no depende de eso: los 7 campos de versión se copian por nombre a un modelo Pydantic con `extra='forbid'`.
