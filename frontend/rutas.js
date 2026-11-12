@@ -8,11 +8,10 @@
 // Catálogo de deportes de la web (Fase 2 del menú «Web y App», parte E de harness/tareas.md).
 //
 // El servidor (GET /cliente/v1/config, contrato 1) manda `deportes: [{id, orden, estado, nombre{}, slug{}, ...}]`.
-// Esta copia incrustada es lo que hay hoy (mismos slugs que las URL de src/qf/api/rutas_web.py: en /en/ y /pt/ el
-// slug es el mismo) y es el respaldo: mientras la configuración no llega, o si llega sin `deportes` o inválida,
+// Esta copia incrustada es lo que hay hoy (mismos slugs que las URL reales: en /pt/ el fútbol es «futebol», src/qf/api/futbol_pt.py) y es el respaldo: mientras la configuración no llega, o si llega sin `deportes` o inválida,
 // la web se comporta exactamente como antes. Nunca se devuelve una lista vacía.
 export const DEPORTES_RESPALDO = [
-  { id: 'futbol', orden: 1, estado: 'on', nombre: { es: 'Fútbol', en: 'Football', pt: 'Futebol' }, slug: { es: 'futbol', en: 'futbol', pt: 'futbol' } },
+  { id: 'futbol', orden: 1, estado: 'on', nombre: { es: 'Fútbol', en: 'Football', pt: 'Futebol' }, slug: { es: 'futbol', en: 'futbol', pt: 'futebol' } },
   { id: 'nba', orden: 2, estado: 'on', nombre: { es: 'NBA', en: 'NBA', pt: 'NBA' }, slug: { es: 'nba', en: 'nba', pt: 'nba' } },
   { id: 'tenis', orden: 3, estado: 'on', nombre: { es: 'Tenis', en: 'Tennis', pt: 'Tênis' }, slug: { es: 'tenis', en: 'tenis', pt: 'tenis' } },
 ];
@@ -70,7 +69,7 @@ export function deportesNavegacion(catalogo, lang = 'es') {
   return nav.map(d => ({
     id: d.id,
     label: delServidor ? nombreDeporte(d, lang) : NOMBRE_RESPALDO_ES[d.id],
-    slug: d.slug[LANGS.includes(lang) ? lang : 'es'] || d.slug.es,
+    slug: d.slug.es,   // el href no lleva prefijo de idioma (como el `/${id}/` de antes): siempre el slug en español
   }));
 }
 
@@ -124,22 +123,22 @@ export function urlLang(loc) {
 // pilares /nba/, /tenis/, /futbol/ y prefijos /en/, /pt/). El servidor las responde con el mismo shell de la SPA y deja en <html> qué abrir.
 // `/nba/v1`, `/nba/v2` y `/tenis/v2` son los motores, no páginas.
 const SEG = '[a-z0-9]+(?:-[a-z0-9]+)*';
-// Los slugs por idioma llegan de la configuración (abajo); la copia incrustada es el respaldo.
-// La estructura del camino depende del deporte: nba, tenis y fútbol tienen la suya; uno nuevo usa la genérica.
+// Los slugs llegan de la configuración (abajo); la copia incrustada es el respaldo. Tras quitar el prefijo /en o /pt se
+// acepta el slug de CUALQUIER idioma del deporte (p. ej. /pt/futebol/ y /futbol/). La estructura del camino depende del
+// deporte: nba, tenis y fútbol tienen la suya; uno nuevo usa la genérica.
 const ESTRUCTURA = {
-  nba: slug => new RegExp(`^/${slug}/(?:equipos/${SEG}/|(?!v[12]/|equipos/)${SEG}/)?$`),
-  tenis: slug => new RegExp(`^/${slug}/(?:(?!v2/)${SEG}/(?:${SEG}/)?)?$`),
-  futbol: slug => new RegExp(`^/${slug}/(?:${SEG}/(?:${SEG}/)?)?$`),
+  nba: slugs => new RegExp(`^/${slugs}/(?:equipos/${SEG}/|(?!v[12]/|equipos/)${SEG}/)?$`),
+  tenis: slugs => new RegExp(`^/${slugs}/(?:(?!v2/)${SEG}/(?:${SEG}/)?)?$`),
+  futbol: slugs => new RegExp(`^/${slugs}/(?:${SEG}/(?:${SEG}/)?)?$`),
 };
-const genericaPath = slug => new RegExp(`^/${slug}/(?:${SEG}/(?:${SEG}/)?)?$`);
+const genericaPath = slugs => new RegExp(`^/${slugs}/(?:${SEG}/(?:${SEG}/)?)?$`);
 function construirDeportePath(deportes) {
-  const porIdioma = { es: {}, en: {}, pt: {} };
+  const mapa = {};
   for (const d of deportes) {
-    for (const lang of Object.keys(porIdioma)) {
-      porIdioma[lang][d.id] = (ESTRUCTURA[d.id] || genericaPath)(d.slug?.[lang] || d.slug?.es);
-    }
+    const slugs = [...new Set(['es', 'en', 'pt'].map(l => d.slug?.[l]).filter(Boolean))];
+    mapa[d.id] = (ESTRUCTURA[d.id] || genericaPath)(`(?:${slugs.join('|')})`);
   }
-  return porIdioma;
+  return mapa;
 }
 let DEPORTE_PATH = construirDeportePath(DEPORTES_RESPALDO);
 /** Fija los deportes de la configuración; sin lista válida conserva los que hay (nunca se queda sin deportes). */
@@ -148,11 +147,8 @@ export function fijarDeportes(catalogo) {
 }
 /** Deporte de una página con URL propia (su `id` en el catálogo: 'nba' | 'tenis' | 'futbol'…) o null. */
 export function deporteDeUrl(loc) {
-  const full = withSlash(loc.pathname || '/');
-  const lang = urlLang(loc);
-  const path = full.replace(/^\/(?:en|pt)(?=\/)/, '');
-  const mapa = DEPORTE_PATH[lang];
-  return Object.keys(mapa).find(sport => mapa[sport].test(path)) ?? null;
+  const path = withSlash(loc.pathname || '/').replace(/^\/(?:en|pt)(?=\/)/, '');
+  return Object.keys(DEPORTE_PATH).find(sport => DEPORTE_PATH[sport].test(path)) ?? null;
 }
 export const isDeportePage = loc => deporteDeUrl(loc) !== null;
 

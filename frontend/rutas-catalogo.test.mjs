@@ -54,11 +54,13 @@ test('se descartan solo las entradas inválidas y los repetidos; un slug en/pt m
   assert.deepEqual(cat[1].slug, { es: 'nba', en: 'nba', pt: 'nba-pt' });
 });
 
-test('con un deporte de slug distinto, la navegación apunta a su slug por idioma', () => {
+test('con un deporte de slug distinto, el href de la navegación usa siempre el slug es (sin prefijo de idioma)', () => {
   const cat = normalizarDeportes({ deportes: [dep('nba', 1, { slug: { es: 'baloncesto', en: 'basketball', pt: 'basquete' } })] });
-  assert.deepEqual(deportesNavegacion(cat, 'en').map(d => d.slug), ['basketball']);
-  assert.deepEqual(deportesNavegacion(cat, 'pt').map(d => d.slug), ['basquete']);
-  assert.deepEqual(deportesNavegacion(cat, 'es').map(d => d.slug), ['baloncesto']);
+  for (const lang of ['es', 'en', 'pt']) assert.deepEqual(deportesNavegacion(cat, lang).map(d => d.slug), ['baloncesto']);
+});
+
+test('el respaldo lleva futebol como slug pt de fútbol', () => {
+  assert.deepEqual(DEPORTES_RESPALDO[0].slug, { es: 'futbol', en: 'futbol', pt: 'futebol' });
 });
 
 test('la URL del catálogo pide contrato 1 como cliente web y solo con idiomas conocidos', () => {

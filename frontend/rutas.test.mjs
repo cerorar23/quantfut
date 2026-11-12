@@ -247,3 +247,12 @@ test('un deporte nuevo del catálogo usa la estructura genérica', () => {
     fijarDeportes(DEPORTES_RESPALDO);
   }
 });
+
+test('fútbol se reconoce con el slug de cualquier idioma: /pt/futebol/ y /futbol/', () => {
+  for (const p of ['/pt/futebol/', '/pt/futebol/liga-mx/', '/pt/futebol/liga-mx/a-vs-b-2026-11-09/', '/futbol/', '/futbol/liga-mx/a-vs-b-2026-11-09/', '/en/futbol/', '/pt/futbol/'])
+    assert.equal(deporteDeUrl(at(p)), 'futbol', p);
+  assert.equal(route(at('/pt/futebol/liga-mx/a-vs-b-2026-11-09/')), 'partidos');
+  assert.equal(cleanUrl(at('/pt/futebol/liga-mx/'), 'partidos'), null);   // no se reescribe a /pt/partidos/
+  assert.equal(deporteDeUrl(at('/pt/futebol/a/b/c/')), null);
+  assert.equal(deporteDeUrl(at('/pt/futebolx/')), null);
+});
