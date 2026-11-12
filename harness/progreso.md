@@ -1,6 +1,13 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Panel de deportes y mercados, parte D de la Fase 2 (`api/catalogo_panel.py`; sin desplegar)
+
+- **El panel no duplica reglas:** captura el `ValueError` de `catalogo.guardar_*` y lo muestra (`m=catalogo_error&err=`). Lo único propio es la lista cerrada de iconos, porque el catálogo solo exige el formato. `deporte_id` y `familia_id` van en la URL, nunca en el formulario; el campo `deporte_id` enviado a mano se ignora.
+- **Subir/bajar = intercambio de `orden` con el vecino** (dos guardados, cada uno con su `audit()`); si hay empate, solo se mueve el elegido a `orden` del vecino ±1. No es atómico entre los dos guardados: `orden` no es único, así que un fallo a medias no rompe nada.
+- **«Traducir con APIMart» incluido** (≈20 líneas, reutiliza `apimart._chat_completion` y la clave de `web_config`): sobrescribe fr/it/de del nombre con la traducción del español y avisa de que hay que revisarla. Sin clave, muestra el mensaje de APIMart.
+- **Sin alta de deportes**, como pide la tarea. Las pruebas usan un catálogo en memoria que aplica las validaciones reales de `catalogo.py`, sin Postgres.
+
 ## 12-nov-2026 · Fase 2, parte C: `off` y `preview` gobiernan páginas SSR, `sitemap` y `hreflang` (sin desplegar)
 
 - **Dependencia por router, no por ruta:** `catalogo.exigir_web('<deporte>')` va en `APIRouter(dependencies=...)` de los 12 routers de páginas (`futbol_*`, `nba_*`, `tenis_*`). Las API de los motores viven en otros routers y no se tocan; una prueba lo comprueba.

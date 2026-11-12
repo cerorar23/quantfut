@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Mercados de {{ d.nombre.es }}{% endblock %}
+{% block heading %}Mercados de {{ d.nombre.es }}{% endblock %}
+{% block content %}
+{% if err %}<div class="alert alert-danger">{{ err }}</div>{% endif %}
+<p class="text-secondary">Orden, nombres y subtítulo de cada familia, y si se ve en la web y en la app. Las etiquetas de cada línea y la evidencia medida no se tocan desde aquí. <a href="/control/deportes">Volver a deportes</a></p>
+{% for f in d.familias %}
+<form class="card mb-3" method="post" action="/control/deportes/{{ d.deporte_id }}/mercados/{{ f.familia_id }}"><div class="card-body">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h3 class="card-title">{{ f.nombre.es }} <span class="text-secondary">({{ f.familia_id }})</span></h3>
+  <div class="row g-3">
+    <div class="col-md-2"><label class="form-label" for="orden_{{ f.familia_id }}">Orden</label>
+      <input class="form-control" id="orden_{{ f.familia_id }}" name="orden" type="number" step="1" value="{{ f.orden }}" required></div>
+    <div class="col-md-10 d-flex align-items-end gap-4">
+      <label class="form-check"><input class="form-check-input" type="checkbox" name="visible_web" value="1"{% if f.visible_web %} checked{% endif %}><span class="form-check-label">Visible en la web</span></label>
+      <label class="form-check"><input class="form-check-input" type="checkbox" name="visible_app" value="1"{% if f.visible_app %} checked{% endif %}><span class="form-check-label">Visible en la app</span></label>
+    </div>
+    {% for lg in idiomas %}
+    <div class="col-md-4"><label class="form-label" for="nombre_{{ f.familia_id }}_{{ lg }}">Nombre {{ lg }}</label>
+      <input class="form-control" id="nombre_{{ f.familia_id }}_{{ lg }}" name="nombre_{{ lg }}" maxlength="40" value="{{ f.nombre.get(lg, '') }}" required></div>
+    {% endfor %}
+    {% for lg in idiomas %}
+    <div class="col-md-4"><label class="form-label" for="subtitulo_{{ f.familia_id }}_{{ lg }}">Subtítulo {{ lg }}</label>
+      <input class="form-control" id="subtitulo_{{ f.familia_id }}_{{ lg }}" name="subtitulo_{{ lg }}" maxlength="120" value="{{ (f.subtitulo or {}).get(lg, '') }}"></div>
+    {% endfor %}
+  </div>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Guardar {{ f.familia_id }}</button></div></form>
+{% else %}<div class="alert alert-info">Este deporte no tiene familias de mercados.</div>{% endfor %}
+{% endblock %}
