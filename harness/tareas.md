@@ -137,9 +137,9 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 - [x] `[Fable 5.2 · alto]` Diseño: forma definitiva de `/cliente/v1/config` (`contrato: 1`) y esquema de `deportes` y `deporte_mercados`.
       Hecho el 12-nov-2026 con Sonnet 5.5 (el titular lo pidió así): ver «Especificación de la Fase 2» más abajo. Es lo que queda congelado en las
       apps instaladas: si se quiere una segunda opinión, que Fable 5.2 alto la revise antes de ejecutar la parte F.
-- [ ] `[Sonnet 5.5 · medio]` Parte A (servidor, sin clientes): migración `db/<siguiente libre>_catalogo.sql`, `src/qf/comercial/catalogo.py`
+- [x] `[Sonnet 5.5 · medio]` Parte A (servidor, sin clientes): migración `db/<siguiente libre>_catalogo.sql`, `src/qf/comercial/catalogo.py`
       (lectura con caché de 30 s, validación, guardado con `audit()`), `src/qf/comercial/catalogo_semilla.py` y `ensure_seeded()`.
-- [ ] `[Haiku 5.5 · bajo]` Generar la semilla a partir de lo que hay hoy (nombres en 6 idiomas desde `apps/mobile/lib/l10n/app_*.arb`, ids de
+- [x] `[Haiku 5.5 · bajo]` Generar la semilla a partir de lo que hay hoy (nombres en 6 idiomas desde `apps/mobile/lib/l10n/app_*.arb`, ids de
       familias de NBA desde `NBA_LABELS` de `frontend/sports-data.js`, de tenis desde `sportFamilyTitle` de `sports.dart`, de fútbol desde
       `assets/model/market_evidence.json`) y `scripts/generar_catalogo_defecto.py`, que escribe `apps/mobile/assets/model/cliente_config_defecto.json`.
 - [ ] `[Sonnet 5.5 · medio]` Parte B (servidor): `/cliente/v1/config` sube a `contrato: 1` con `deportes`; `lang` del cliente app admite los 6 idiomas;
