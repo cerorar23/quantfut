@@ -43,7 +43,7 @@ parte de lo que muestran; un menú único en `/control` que gobierne ambos clien
 - [x] `[Fable 5.2 · alto]` Diseño: regla de vigencia de las reglas de acceso (fracción gratis, rango de probabilidad, días de agenda)
       frente a `mobile_free_allocations` y `mobile_allocation_batches`, y lista blanca de campos del endpoint público.
       Hecho el 12-nov-2026: ver «Especificación de la Fase 1» más abajo.
-- [ ] `[Haiku 5.5 · bajo]` Agrupar el menú lateral de `templates/base.html` en «Web y App» según la parte C de la especificación
+- [x] `[Haiku 5.5 · bajo]` Agrupar el menú lateral de `templates/base.html` en «Web y App» según la parte C de la especificación
       (solo enlaces a lo que existe; Publicidad AdMob y Monedas se enlazan sin moverlas de módulo).
 - [x] `[Sonnet 5.5 · medio]` `GET /cliente/v1/config?cliente=web|app&lang=` según la parte B de la especificación. `/web/config` y
       `/mobile/v1/config` se quedan como están, para las versiones instaladas.
