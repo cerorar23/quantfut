@@ -1,6 +1,12 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Contrato 1 de `/cliente/v1/config` (Fase 2, parte B; sin desplegar)
+
+- **`lang` de la app no mira el archivo de idiomas:** los 6 idiomas valen siempre (el archivo `activos.txt` solo gobierna la web); un idioma desconocido cae a `es`. La web conserva su regla (es/en/pt, apagado → `es`).
+- **`Deporte.estado` es `Literal['preview','on']`:** `deportes_para` ya quita los `off`, y si algún día llegara uno el modelo estricto fallaría en voz alta en vez de publicarlo.
+- **`catalogo.py` no se tocó:** `deportes_para` bastó tal cual. `contrato` fuera de 1 → 422 (`Query(1, ge=1, le=1)`).
+
 ## 12-nov-2026 · Catálogo de deportes y mercados, parte A de la Fase 2 (db/112, `comercial/catalogo.py`; sin desplegar ni migrar)
 
 - **Semilla fusionada con la parte A:** `ensure_seeded()` la necesita, así que `catalogo_semilla.py` y `scripts/generar_catalogo_defecto.py` salen en el mismo PR. Los textos son copia literal de los `app_*.arb`; todos caben en los 40 caracteres.

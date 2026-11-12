@@ -21,6 +21,9 @@ DSN = os.getenv('QF_TEST_PG_DSN')
 pg = pytest.mark.skipif(not DSN, reason='sin QF_TEST_PG_DSN')
 RUTA = '/cliente/v1/config'
 
+DEPORTE_CLAVES = {'id', 'orden', 'estado', 'nombre', 'slug', 'icono', 'color', 'secciones', 'familias'}
+ES6 = {'es': 'Uno', 'en': 'One', 'pt': 'Um', 'fr': 'Un', 'it': 'Uno', 'de': 'Eins'}
+
 FEATURES = {k: {'section': k, 'enabled': True, 'message': f'msg {k}', 'updated_at': 'PRIV_FEAT_UPDATED'}
             for k in mobile.SECTIONS}
 
@@ -47,8 +50,11 @@ def test_forma_app(cliente):
     r = cliente[0].get(RUTA, params={'cliente': 'app'})
     assert r.status_code == 200
     b = r.json()
-    assert set(b) == {'contrato', 'cliente', 'lang', 'general', 'idiomas', 'acceso', 'app'}
-    assert b['contrato'] == 0 and b['cliente'] == 'app' and b['lang'] == 'es'
+    assert set(b) == {'contrato', 'cliente', 'lang', 'general', 'idiomas', 'acceso', 'deportes', 'app'}
+    assert b['contrato'] == 1 and b['cliente'] == 'app' and b['lang'] == 'es'
+    assert [d['id'] for d in b['deportes']] == ['futbol', 'nba', 'tenis']
+    assert all(set(d) == DEPORTE_CLAVES and d['estado'] == 'on' for d in b['deportes'])
+    assert all(set(f) == {'id', 'orden', 'nombre', 'subtitulo'} for d in b['deportes'] for f in d['familias'])
     assert set(b['app']) == {'versiones', 'secciones'}
     assert set(b['app']['versiones']) == set(mobile_updates.DEFAULTS) and len(b['app']['versiones']) == 7
     assert set(b['app']['secciones']) == set(mobile.SECTIONS)
@@ -65,7 +71,9 @@ def test_forma_app(cliente):
 def test_forma_web(cliente):
     r = cliente[0].get(RUTA, params={'cliente': 'web'})
     b = r.json()
-    assert set(b) == {'contrato', 'cliente', 'lang', 'general', 'idiomas', 'acceso', 'web'}
+    assert set(b) == {'contrato', 'cliente', 'lang', 'general', 'idiomas', 'acceso', 'deportes', 'web'}
+    assert b['contrato'] == 1 and [d['id'] for d in b['deportes']] == ['futbol', 'nba', 'tenis']
+    assert all(set(d) == DEPORTE_CLAVES for d in b['deportes'])
     assert set(b['web']) == {'ui', 'sections'} and b['web']['ui']
     max_age = web_config.get_settings()['public_cache_seconds']
     assert r.headers['cache-control'] == f'public, max-age={max_age}'
@@ -219,9 +227,83 @@ def test_toda_columna_real_esta_clasificada():
             assert not fantasma, f'{tabla}: clasificadas pero inexistentes: {sorted(fantasma)}'
 
 
-def test_las_listas_cubren_las_cinco_tablas():
+def test_las_listas_cubren_las_siete_tablas():
     assert set(cc.PUBLICAS) == set(cc.PRIVADAS) == {
-        'web_site_settings', 'mobile_update_settings', 'mobile_features', 'acceso_reglas', 'cliente_ajustes'}
+        'web_site_settings', 'mobile_update_settings', 'mobile_features', 'acceso_reglas', 'cliente_ajustes',
+        'deportes', 'deporte_mercados'}
+
+
+# --- contrato 1: deportes del catálogo -----------------------------------------------------------------
+
+def _catalogo(monkeypatch, deportes):
+    from qf.comercial import catalogo
+    monkeypatch.setattr(catalogo, '_cargar', lambda: catalogo._ordenar(copy.deepcopy(deportes)))
+    catalogo.invalidar_cache()
+
+
+def _dep(i, orden, web='on', app='on', **kw):
+    d = {'deporte_id': i, 'adaptador': f'PRIV_adaptador_{i}', 'orden': orden, 'icono': 'x', 'color': '#aabbcc',
+         'secciones': ['high'], 'nombre': dict(ES6), 'slug': {'es': i, 'en': i, 'pt': i},
+         'estado_web': web, 'estado_app': app, 'updated_by': f'PRIV_updated_by_{i}', 'updated_at': 'PRIV_upd',
+         'familias': [{'familia_id': 'winner', 'orden': 1, 'nombre': dict(ES6), 'subtitulo': {'es': 's'},
+                       'visible_web': True, 'visible_app': False,
+                       'updated_by': 'PRIV_fam_by', 'updated_at': 'PRIV_fam_at'}]}
+    d.update(kw)
+    return d
+
+
+def test_deportes_off_no_sale_y_preview_sale_con_su_estado(cliente, monkeypatch):
+    _catalogo(monkeypatch, [_dep('a', 1), _dep('b', 2, web='off', app='preview'), _dep('c', 3, web='preview', app='off')])
+    c = cliente[0]
+    web = c.get(RUTA, params={'cliente': 'web'}).json()['deportes']
+    app = c.get(RUTA, params={'cliente': 'app'}).json()['deportes']
+    assert [(d['id'], d['estado']) for d in web] == [('a', 'on'), ('c', 'preview')]
+    assert [(d['id'], d['estado']) for d in app] == [('a', 'on'), ('b', 'preview')]
+    # familias: visible_web sí, visible_app no
+    assert [f['id'] for f in web[0]['familias']] == ['winner'] and app[0]['familias'] == []
+
+
+def test_nombres_web_tres_idiomas_y_app_seis(cliente, monkeypatch):
+    _catalogo(monkeypatch, [_dep('a', 1)])
+    c = cliente[0]
+    web = c.get(RUTA, params={'cliente': 'web'}).json()['deportes'][0]
+    app = c.get(RUTA, params={'cliente': 'app'}).json()['deportes'][0]
+    assert set(web['nombre']) == {'es', 'en', 'pt'} and set(app['nombre']) == set(ES6)
+    assert set(web['familias'][0]['nombre']) == {'es', 'en', 'pt'}
+
+
+def test_lang_de_la_app_admite_los_seis_idiomas(cliente):
+    c = cliente[0]
+    for lg in ('es', 'en', 'pt', 'fr', 'it', 'de'):
+        assert c.get(RUTA, params={'cliente': 'app', 'lang': lg}).json()['lang'] == lg
+    assert c.get(RUTA, params={'cliente': 'app', 'lang': 'ja'}).json()['lang'] == 'es'
+    assert c.get(RUTA, params={'cliente': 'web', 'lang': 'fr'}).json()['lang'] == 'es'
+
+
+def test_centinelas_del_catalogo_no_salen(cliente, monkeypatch):
+    _catalogo(monkeypatch, [_dep('a', 1)])
+    c = cliente[0]
+    for url in (f'{RUTA}?cliente=app', f'{RUTA}?cliente=web', '/web/config', '/mobile/v1/config'):
+        t = c.get(url).text
+        assert not any(x in t for x in ('PRIV_adaptador', 'PRIV_updated_by', 'PRIV_upd', 'PRIV_fam')), url
+        assert '"adaptador"' not in t and '"updated_by"' not in t, url
+
+
+def test_contrato_desconocido_da_422_y_uno_explicito_es_igual(cliente):
+    c = cliente[0]
+    for v in ('2', '0', 'x'):
+        assert c.get(RUTA, params={'cliente': 'app', 'contrato': v}).status_code == 422
+    base = c.get(RUTA, params={'cliente': 'app'})
+    uno = c.get(RUTA, params={'cliente': 'app', 'contrato': 1})
+    assert uno.status_code == 200 and uno.content == base.content and uno.headers['etag'] == base.headers['etag']
+
+
+def test_deportes_iguales_con_o_sin_authorization(cliente):
+    c = cliente[0]
+    for k in ('app', 'web'):
+        a = c.get(RUTA, params={'cliente': k})
+        b = c.get(RUTA, params={'cliente': k}, headers={'Authorization': 'Bearer algo'})
+        assert a.content == b.content and a.json()['deportes']
 
 
 # --- arreglo de la parte A: valores no finitos ---------------------------------------------------------

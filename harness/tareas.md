@@ -142,7 +142,7 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 - [x] `[Haiku 5.5 · bajo]` Generar la semilla a partir de lo que hay hoy (nombres en 6 idiomas desde `apps/mobile/lib/l10n/app_*.arb`, ids de
       familias de NBA desde `NBA_LABELS` de `frontend/sports-data.js`, de tenis desde `sportFamilyTitle` de `sports.dart`, de fútbol desde
       `assets/model/market_evidence.json`) y `scripts/generar_catalogo_defecto.py`, que escribe `apps/mobile/assets/model/cliente_config_defecto.json`.
-- [ ] `[Sonnet 5.5 · medio]` Parte B (servidor): `/cliente/v1/config` sube a `contrato: 1` con `deportes`; `lang` del cliente app admite los 6 idiomas;
+- [x] `[Sonnet 5.5 · medio]` Parte B (servidor): `/cliente/v1/config` sube a `contrato: 1` con `deportes`; `lang` del cliente app admite los 6 idiomas;
       actualizar `PUBLICAS`/`PRIVADAS` y sus pruebas; prueba de que el asset de la app coincide con la semilla.
 - [ ] `[Sonnet 5.5 · medio]` Parte C (servidor, web): `off`/`preview` de un deporte gobiernan sus páginas SSR, el `sitemap` y los `hreflang`;
       ruta `/{slug}/` genérica registrada la última. Ver la especificación: es el punto con más riesgo de SEO.

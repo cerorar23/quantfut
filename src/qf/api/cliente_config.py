@@ -1,7 +1,8 @@
-"""Configuración común para web y app: `GET /cliente/v1/config` (provisional, `contrato: 0`).
+"""Configuración común para web y app: `GET /cliente/v1/config` (`contrato: 1`, Fase 2 parte B).
 
-Ningún cliente lo consume todavía; la forma definitiva se decide en la Fase 2. Lo que queda asentado aquí es la
-lista blanca de campos (PUBLICAS / PRIVADAS por tabla) y la maquinaria de `ETag`.
+Dentro de un contrato solo se añaden campos; quitar o cambiar uno exige `contrato: 2` (hoy `?contrato=2` da 422).
+`deportes` viene de `comercial/catalogo.py` (`deportes_para`), que ya filtra `off`, familias ocultas y campos privados.
+Aquí vive la lista blanca de campos (PUBLICAS / PRIVADAS por tabla) y la maquinaria de `ETag`.
 
 Garantías: (1) el cuerpo se construye campo a campo, nunca volcando una fila; (2) el modelo de respuesta rechaza
 campos que no declara (`extra='forbid'`); (3) `tests/test_cliente_config.py` compara las columnas reales de cada tabla
@@ -18,7 +19,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, ConfigDict
 
-from ..comercial import acceso_reglas, mobile_updates
+from ..comercial import acceso_reglas, catalogo, mobile_updates
 from . import idiomas, mobile, web_config
 
 router = APIRouter(tags=['cliente'])
@@ -35,6 +36,10 @@ PUBLICAS: dict[str, frozenset[str]] = {
     'mobile_features': frozenset({'section', 'enabled', 'message'}),
     'acceso_reglas': frozenset({'prob_min', 'prob_max', 'free_fraction'}),
     'cliente_ajustes': frozenset({'dias_agenda'}),
+    'deportes': frozenset({'deporte_id', 'orden', 'icono', 'color', 'secciones', 'nombre', 'slug', 'estado_web',
+                           'estado_app'}),
+    'deporte_mercados': frozenset({'deporte_id', 'familia_id', 'orden', 'nombre', 'subtitulo', 'visible_web',
+                                   'visible_app'}),
 }
 PRIVADAS: dict[str, frozenset[str]] = {
     'web_site_settings': frozenset({
@@ -44,6 +49,8 @@ PRIVADAS: dict[str, frozenset[str]] = {
     'mobile_features': frozenset({'updated_at'}),
     'acceso_reglas': frozenset({'regla_id', 'stream', 'vigente_desde', 'creado_por', 'creado_en', 'nota'}),
     'cliente_ajustes': frozenset({'id', 'updated_by', 'updated_at'}),
+    'deportes': frozenset({'adaptador', 'updated_by', 'updated_at'}),
+    'deporte_mercados': frozenset({'updated_by', 'updated_at'}),
 }
 
 _LANG_RE = re.compile(r'^[a-z]{2}$')
@@ -121,18 +128,40 @@ class Web(_Modelo):
     sections: dict[str, SeccionWeb]
 
 
+class Familia(_Modelo):
+    id: str
+    orden: int
+    nombre: dict[str, str]
+    subtitulo: dict[str, str]
+
+
+class Deporte(_Modelo):
+    id: str
+    orden: int
+    estado: Literal['preview', 'on']
+    nombre: dict[str, str]
+    slug: dict[str, str]
+    icono: str
+    color: str
+    secciones: list[str]
+    familias: list[Familia]
+
+
 class Respuesta(_Modelo):
-    contrato: Literal[0] = 0
+    contrato: Literal[1] = 1
     cliente: Cliente
     lang: str
     general: General
     idiomas: Idiomas
     acceso: Acceso
+    deportes: list[Deporte]
     app: App | None = None
     web: Web | None = None
 
 
-def _idioma(lang: str) -> str:
+def _idioma(lang: str, cliente: Cliente) -> str:
+    if cliente is Cliente.app:
+        return lang if lang in catalogo.IDIOMAS_APP else 'es'
     return lang if lang in web_config.IDIOMAS_VALIDOS and idiomas.estado(lang) != 'off' else 'es'
 
 
@@ -164,7 +193,8 @@ def componer(cliente: Cliente, lang: str) -> Respuesta:
                         estados={c: idiomas.estado(c) for c in web_config.IDIOMAS_VALIDOS}),
         acceso=Acceso(probability_min=regla.prob_min, probability_max=regla.prob_max,
                       high_probability_free_fraction=regla.free_fraction, ladder_free_count=1,
-                      dias_agenda=acceso_reglas.dias_agenda()))
+                      dias_agenda=acceso_reglas.dias_agenda()),
+        deportes=[Deporte(**d) for d in catalogo.deportes_para(cliente.value)])
     if cliente is Cliente.app:
         v = mobile_updates.configuration()
         resp.app = App(
@@ -192,8 +222,9 @@ def _coincide(cabecera: str | None, etag: str) -> bool:
 
 @router.get('/cliente/v1/config', response_model=Respuesta, response_model_exclude_none=True)
 def cliente_config(request: Request, cliente: Cliente = Query(...),
-                   lang: str = Query('es', pattern=_LANG_RE.pattern)):
-    lang = _idioma(lang)
+                   lang: str = Query('es', pattern=_LANG_RE.pattern),
+                   contrato: int = Query(1, ge=1, le=1)):
+    lang = _idioma(lang, cliente)
     cuerpo = componer(cliente, lang).model_dump(mode='json', exclude_none=True)
     etag = _etag(cuerpo)
     if cliente is Cliente.web:
