@@ -11,6 +11,7 @@ medición del proyecto. Al cambiar un texto, actualiza `revision` y deja constan
 from __future__ import annotations
 
 from dataclasses import dataclass
+from html import escape
 from datetime import date
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from . import idiomas, og, seo, web_config
+from . import idiomas, og, rutas_web, seo, web_config
 
 router = APIRouter(include_in_schema=False)
 _env = Environment(loader=FileSystemLoader(str(Path(__file__).with_name("paginas"))),
@@ -30,6 +31,9 @@ MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto
 # enlace se vería como «[email protected]». Las páginas no llevan scripts en línea ni de terceros (el JSON-LD son datos, no se ejecutan).
 CSP = ("default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; "
        "frame-ancestors 'none'")
+# Las páginas del shell de la app (confianza y legal) cargan el módulo y las hojas de la app, así que no admiten una política
+# cerrada como la de arriba; se conserva solo la protección contra incrustarlas en otro sitio.
+CSP_SHELL = "frame-ancestors 'none'"
 
 
 @dataclass(frozen=True)
@@ -144,6 +148,15 @@ def _jsonld(pagina: Pagina, url: str, base: str, cfg: dict | None = None) -> lis
     return web_config.apply_org_jsonld(blocks, cfg)
 
 
+def _enlaces_idioma(alt: list[dict]) -> str:
+    """Enlaces a la misma página en otros idiomas: los lee quien no ejecuta JavaScript (la app pinta su propio selector en el pie)."""
+    if not alt:
+        return ""
+    enlaces = " · ".join(f'<a href="{escape(a["ruta"])}" hreflang="{escape(a["codigo"])}" lang="{escape(a["codigo"])}">{escape(a["nombre"])}</a>'
+                         for a in alt)
+    return f'<nav aria-label="Idioma">{enlaces}</nav>'
+
+
 def render(pagina: Pagina) -> str:
     base = seo.base_url()
     url = base + pagina.ruta
@@ -163,12 +176,20 @@ def render(pagina: Pagina) -> str:
         robots = cfg["default_robots"]
     if ov and not (ov.get("body_html") or "").strip():
         body_override = None
-    return _env.get_template(pagina.plantilla).render(
-        p=p_eff, url=url, base=base, jsonld=_jsonld(p_eff, url, base, cfg),
+    ctx.pop("banner", None)      # el aviso de mantenimiento lo pinta la propia app (applyWebConfigToDom)
+    principal = _env.get_template(pagina.plantilla).render(
+        p=p_eff, url=url, base=base, solo_contenido=True,
         revision_larga=fecha_larga(rev_date, pagina.idioma), revision_iso=rev_date.isoformat(),
-        paginas=EN_POR_IDIOMA[pagina.idioma], og_imagen=og.url_marca() if pagina.idioma == "es" else None,   # la tarjeta de marca está en español
-        idiomas_alt=idiomas.selector(pagina.ruta), robots=robots,
+        paginas=EN_POR_IDIOMA[pagina.idioma], idiomas_alt=idiomas.selector(pagina.ruta),
         body_override=body_override, **ctx)
+    principal += _enlaces_idioma(idiomas.selector(pagina.ruta))
+    # Mismo shell que fútbol, NBA y tenis (encabezado, menú y pie de la app); el contenido viaja dentro de
+    # `data-info-contenido` y la app lo conserva al pintar (frontend/app.js, ruta `info`).
+    return rutas_web.render_pagina(
+        titulo=p_eff.titulo, descripcion=p_eff.descripcion, path=pagina.ruta, ruta="info",
+        jsonld=_jsonld(p_eff, url, base, cfg), principal=principal, datos={"pagina": "info"},
+        imagen=(og.url_marca(), "QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables") if pagina.idioma == "es" and og.url_marca() else None,
+        robots=robots or rutas_web.ROBOTS, lang=pagina.idioma)
 
 
 def _responder(pagina: Pagina) -> HTMLResponse:
@@ -176,7 +197,7 @@ def _responder(pagina: Pagina) -> HTMLResponse:
     if estado == "off":
         raise HTTPException(404)
     secs = web_config.get_settings().get("public_cache_seconds", 300)
-    cab = {"Cache-Control": f"public, max-age={secs}", "Content-Security-Policy": CSP}
+    cab = {"Cache-Control": f"public, max-age={secs}", "Content-Security-Policy": CSP_SHELL}
     if estado == "preview":       # revisión del titular en producción: nada la indexa ni la guarda en caché compartida
         cab.update({"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
     return HTMLResponse(render(pagina), headers=cab)

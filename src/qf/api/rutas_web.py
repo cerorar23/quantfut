@@ -35,6 +35,13 @@ INDEX = Path(__file__).resolve().parents[3] / "frontend" / "index.html"
 
 AVISO = ("QuantFut es un servicio de información estadística, no una casa de apuestas. Solo para mayores de 18 "
          "años. Una probabilidad estimada no garantiza un resultado.")
+AVISOS = {
+    "es": AVISO,
+    "en": ("QuantFut is a statistical information service, not a bookmaker. For adults aged 18 and over only. "
+           "An estimated probability does not guarantee a result."),
+    "pt": ("A QuantFut é um serviço de informação estatística, não uma casa de apostas. Apenas para maiores de 18 anos. "
+           "Uma probabilidade estimada não garante um resultado."),
+}
 
 
 @dataclass(frozen=True)
@@ -303,7 +310,7 @@ def marco_inicial(principal: str, *, lang: str = "es", cfg: dict | None = None) 
     banner_html = f'<p class="aviso" role="status">{escape(site["maintenance_banner"])}</p>' if site.get("maintenance_banner") else ""
     socials = web_config.social_links(site)
     social_html = "".join(f'<li><a href="{escape(r["url"])}" rel="noopener noreferrer">{escape(r["label"])}</a></li>' for r in socials)
-    disclaimer = site["disclaimer_text"] if (lang == "es" and site["disclaimer_text"] != web_config.DEFAULT_SETTINGS["disclaimer_text"]) else AVISO
+    disclaimer = site["disclaimer_text"] if (lang == "es" and site["disclaimer_text"] != web_config.DEFAULT_SETTINGS["disclaimer_text"]) else AVISOS.get(lang, AVISO)
 
     if lang == "es":
         secciones = "".join(
@@ -377,7 +384,7 @@ def render(sec: Seccion, base: str | None = None, index: str | None = None, *, l
 
 def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld: list[dict], principal: str,
                   datos: dict[str, str] | None = None, base: str | None = None, index: str | None = None,
-                  imagen: tuple[str, str] | None = None, robots: str = ROBOTS) -> str:
+                  imagen: tuple[str, str] | None = None, robots: str = ROBOTS, lang: str = "es") -> str:
     """Página con URL propia que no es una sección fija (p. ej. un partido de NBA): mismo shell de la SPA, con su
     `<head>`, su JSON-LD y su contenido en el HTML inicial. `datos` son atributos `data-*` del `<html>` que la SPA
     lee al arrancar (sin que el servidor decida nada del diseño)."""
@@ -389,8 +396,9 @@ def render_pagina(*, titulo: str, descripcion: str, path: str, ruta: str, jsonld
     atributos = "".join(f' data-{k}="{escape(str(v))}"' for k, v in (datos or {}).items())
     return _adaptar(html, titulo=f"{titulo} | {cfg['brand_name']}", ruta=ruta,
                     head=_head_de(f"{titulo} | {cfg['brand_name']}", descripcion, base + path, patched_ld, imagen, eff_robots,
-                                  brand=cfg["brand_name"], twitter_site=web_config.twitter_site_handle(cfg)),
-                    inicial=marco_inicial(principal, cfg=cfg), atributos=atributos)
+                                  locale=idiomas.LOCALES.get(lang, "es_ES"), brand=cfg["brand_name"],
+                                  twitter_site=web_config.twitter_site_handle(cfg)),
+                    inicial=marco_inicial(principal, lang=lang, cfg=cfg), atributos=atributos, lang=lang)
 
 
 def responder(sec: Seccion, *, lang: str = "es") -> HTMLResponse:

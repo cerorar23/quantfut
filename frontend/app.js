@@ -1,7 +1,7 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
-import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=equipos-20261109';
+import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=info-20261111';
 import { createRealViews } from './real-views.js?v=tenis-cuota-20261105';
 import { loadSport, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=tenis-cuota-20261105';
 import { createSportWindow } from './sports-window.js?v=nba-20261108';
@@ -69,6 +69,9 @@ const nav = [
 const MOBILE_PRIMARY = ['inicio', 'historial', 'planes', 'cuenta'];
 const routeTitle = { inicio: 'Portada', partidos: 'Partidos y estadísticas', mercados: 'Mesa de mercados', picks: 'Picks', alta: 'Alta probabilidad', escalera: 'Reto escalera', parley: 'Parley del día', partido: 'Análisis del partido', historial: 'Historial', planes: 'Suscripciones', cuenta: 'Mi cuenta', paquetes: 'Paquetes de picks', acceso: 'Acceso', checkout: 'Revisar pedido' };
 const SERVER_TITLE = document.title;   // título que puso el servidor (rutas_web.py) para la sección servida
+// Página informativa o legal servida dentro del shell: el texto llega en [data-info-contenido] y la ruta `info` lo conserva.
+const INFO_HTML = document.documentElement.dataset.pagina === 'info' ? (document.querySelector('[data-info-contenido]')?.innerHTML ?? '') : '';
+if (INFO_HTML) routeTitle.info = 'Información';
 const validRoute = route => Object.hasOwn(routeTitle, route);
 const ROUTE_ALIAS = { mercados: 'partidos', partido: 'partidos' };
 const canonicalRoute = route => ROUTE_ALIAS[route] || route;
@@ -106,6 +109,11 @@ function webFooterExtraMarkup() {
     : '';
   return (socialHtml || langHtml) ? `<div class="qf-pie-extra">${socialHtml}${langHtml}</div>` : '';
 }
+
+const FOOTER_AVISO = {
+  en: 'QuantFut is a statistical information service, not a bookmaker. Forecasts are for information and entertainment purposes only: an estimated probability does not guarantee a result.',
+  pt: 'A QuantFut é um serviço de informação estatística, não uma casa de apostas. As previsões têm fins exclusivamente informativos e de entretenimento: uma probabilidade estimada não garante um resultado.',
+};
 
 function applyWebConfigToDom() {
   if (!webConfig || !app) return;
@@ -163,6 +171,10 @@ function applyWebConfigToDom() {
   const pie = app.querySelector('.qf-pie');
   if (!pie) return;
   const discP = pie.querySelector('p');
+  if (discP && FOOTER_AVISO[lang]) {
+    const badge18 = discP.querySelector('.qf-pie-18');
+    if (badge18) { discP.textContent = ''; discP.append(badge18, document.createTextNode(FOOTER_AVISO[lang])); }
+  }
   if (discP && lang === 'es' && webConfig.disclaimer_text) {
     const badge18 = discP.querySelector('.qf-pie-18');
     if (badge18) {
@@ -1387,7 +1399,7 @@ function siteFooter() {
 
 function render() {
   if(state.mobileMenuOpen && window.matchMedia('(min-width:761px)').matches)state.mobileMenuOpen=false;
-  const views = { inicio: realViews.home, partidos: windowView, mercados: windowView, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
+  const views = { info: () => `<article class="qf-info">${INFO_HTML}</article>`, inicio: realViews.home, partidos: windowView, mercados: windowView, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
   // La sección que el servidor sirvió conserva su título (más descriptivo), también al volver a ella con «atrás»; las demás, el corto.
@@ -1582,6 +1594,7 @@ app.addEventListener('submit', event => {
 // Atrás/adelante y enlaces con hash: la barra de direcciones manda sobre el estado.
 function syncRouteFromLocation() {
   const route = routeFromLocation(location, validRoute, canonicalRoute);
+  if (route === 'info' && !INFO_HTML) return;   // otra página informativa: la carga completa la hace el navegador
   if (route && state.route !== route) { state.route = route; state.mobileMenuOpen = false; state.drawer = null; render(); app.querySelector('#main-content')?.focus({ preventScroll: true }); }
 }
 window.addEventListener('hashchange', syncRouteFromLocation);
