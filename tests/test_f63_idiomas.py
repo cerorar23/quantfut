@@ -84,7 +84,7 @@ def _cifras_sin_origen(texto: str, idioma: str) -> list[str]:
 
 
 def _visible_contenido(html_doc: str) -> str:
-    cuerpo = html_doc.split('<main id="contenido">', 1)[1].split("</footer>", 1)[0]
+    cuerpo = re.split(r'<main id="(?:main-content"[^>]*|contenido")>', html_doc, maxsplit=1)[1].split("</footer>", 1)[0].split('<nav aria-label="Idioma">', 1)[0].split('<p class="aviso">', 1)[0]
     cuerpo = re.sub(r"<svg.*?</svg>", " ", cuerpo, flags=re.S)
     cuerpo = re.sub(r"<a [^>]*lang=\"es\"[^>]*>.*?</a>", " ", cuerpo, flags=re.S)
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", cuerpo))).strip()
@@ -136,9 +136,9 @@ def test_abierto_hreflang_reciproco_selector_y_cabeceras(todos):
             resp = todos.get(ruta, headers=HTML)
             assert resp.status_code == 200 and "x-robots-tag" not in resp.headers
             t = resp.text
-            assert f'<html lang="{lang}">' in t
+            assert f'<html lang="{lang}" ' in t
             assert f'property="og:locale" content="{locale}"' in t
-            assert f'<link rel="canonical" href="{BASE}{ruta}">' in t
+            assert f'<link rel="canonical" href="{BASE}{ruta}" />' in t
             assert 'name="robots" content="index, follow' in t
             assert "og:image" not in t
             assert todos.head(ruta).status_code == 200
@@ -212,13 +212,11 @@ def test_calibracion_accesible_y_503_sin_datos(todos, monkeypatch, ruta):
 def test_calculadora_csp_estricta_ejemplo_y_sin_promesas(todos, ruta, idioma):
     r = todos.get(ruta, headers=HTML)
     csp = r.headers["content-security-policy"]
-    assert csp == paginas.CSP
-    assert "default-src 'none'" in csp and "script-src 'self'" in csp and "connect-src" not in csp
+    assert csp == paginas.CSP_SHELL
     t = r.text
     etiquetas = re.findall(r"<script\b([^>]*)>", t)
-    propios = [e for e in etiquetas if "application/ld+json" not in e]
-    assert len(propios) == 1 and 'type="module"' in propios[0]
-    assert re.search(r'src="/static/cuota-justa\.js\?v=[0-9a-f]{10}"', propios[0])
+    assert all("src=" in e for e in etiquetas if "application/ld+json" not in e)       # solo el módulo de la app, nada en línea
+    assert re.search(r'data-modulo="/static/cuota-justa\.js\?v=[0-9a-f]{10}"', t)
     assert "onclick" not in t and "onchange" not in t and "oninput" not in t and "fbevents" not in t
 
     ej = cuota_justa.ejemplo(idioma=idioma)

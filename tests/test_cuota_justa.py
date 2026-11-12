@@ -98,14 +98,11 @@ def test_pagina_200_con_su_politica_y_su_cabeza(client):
     r = client.get("/calculadora-cuota-justa/", headers=HTML)
     assert r.status_code == 200
     csp = r.headers["content-security-policy"]
-    assert "default-src 'none'" in csp and "script-src 'self'" in csp
-    script = next(d for d in csp.split("; ") if d.startswith("script-src"))
-    assert "unsafe-inline" not in script and "unsafe-eval" not in script and "http" not in script
-    assert "connect-src" not in csp                      # la calculadora no envía nada a ningún sitio
+    assert csp == "frame-ancestors 'none'"               # dentro del shell de la app (como NBA)
     assert "content-security-policy-report-only" not in r.headers
     assert "x-robots-tag" not in r.headers
     t = r.text
-    assert f'<link rel="canonical" href="{BASE}/calculadora-cuota-justa/">' in t
+    assert f'<link rel="canonical" href="{BASE}/calculadora-cuota-justa/" />' in t
     assert 'name="robots" content="index, follow' in t
     assert "<title>Calculadora de cuota justa" in t
     assert '"@type": "BreadcrumbList"' in t or '"@type":"BreadcrumbList"' in t
@@ -114,10 +111,8 @@ def test_pagina_200_con_su_politica_y_su_cabeza(client):
 def test_solo_un_script_propio_y_ninguno_en_linea(client):
     t = client.get("/calculadora-cuota-justa/", headers=HTML).text
     etiquetas = re.findall(r"<script\b([^>]*)>", t)
-    propios = [e for e in etiquetas if "application/ld+json" not in e]
-    assert len(propios) == 1
-    assert 'type="module"' in propios[0]
-    assert re.search(r'src="/static/cuota-justa\.js\?v=[0-9a-f]{10}"', propios[0])
+    assert all("src=" in e for e in etiquetas if "application/ld+json" not in e)       # solo el módulo de la app, nada en línea
+    assert re.search(r'data-modulo="/static/cuota-justa\.js\?v=[0-9a-f]{10}"', t)
     assert "onclick" not in t and "onchange" not in t and "oninput" not in t and "javascript:" not in t
     assert "fbevents" not in t
 

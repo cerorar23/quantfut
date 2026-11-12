@@ -157,6 +157,22 @@ def _enlaces_idioma(alt: list[dict]) -> str:
     return f'<nav aria-label="Idioma">{enlaces}</nav>'
 
 
+def envolver(plantilla, p, ruta: str, idioma: str, *, jsonld: list[dict], robots: str | None, modulo: str | None = None, **ctx) -> str:
+    """Una página de contenido (confianza, calibración, calculadora, verificador) dentro del shell de la app: el mismo `index.html`
+    que fútbol, NBA y tenis, con su encabezado, menú y pie. El texto viaja dentro de `data-info-contenido` y la app lo conserva al pintar
+    (frontend/app.js, ruta `info`); `modulo` es un script propio de la página (una herramienta interactiva) que la app importa una vez
+    pintado ese contenido."""
+    ctx.pop("banner", None)      # el aviso de mantenimiento lo pinta la propia app (applyWebConfigToDom)
+    principal = plantilla.render(p=p, solo_contenido=True, paginas=EN_POR_IDIOMA[idioma], idiomas_alt=idiomas.selector(ruta), **ctx)
+    principal += _enlaces_idioma(idiomas.selector(ruta))
+    datos = {"pagina": "info", **({"modulo": modulo} if modulo else {})}
+    marca = og.url_marca() if idioma == "es" else None
+    return rutas_web.render_pagina(
+        titulo=p.titulo, descripcion=p.descripcion, path=ruta, ruta="info", jsonld=jsonld, principal=principal, datos=datos,
+        imagen=(marca, "QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables") if marca else None,
+        robots=robots or rutas_web.ROBOTS, lang=idioma)
+
+
 def render(pagina: Pagina) -> str:
     base = seo.base_url()
     url = base + pagina.ruta
@@ -176,20 +192,9 @@ def render(pagina: Pagina) -> str:
         robots = cfg["default_robots"]
     if ov and not (ov.get("body_html") or "").strip():
         body_override = None
-    ctx.pop("banner", None)      # el aviso de mantenimiento lo pinta la propia app (applyWebConfigToDom)
-    principal = _env.get_template(pagina.plantilla).render(
-        p=p_eff, url=url, base=base, solo_contenido=True,
-        revision_larga=fecha_larga(rev_date, pagina.idioma), revision_iso=rev_date.isoformat(),
-        paginas=EN_POR_IDIOMA[pagina.idioma], idiomas_alt=idiomas.selector(pagina.ruta),
-        body_override=body_override, **ctx)
-    principal += _enlaces_idioma(idiomas.selector(pagina.ruta))
-    # Mismo shell que fútbol, NBA y tenis (encabezado, menú y pie de la app); el contenido viaja dentro de
-    # `data-info-contenido` y la app lo conserva al pintar (frontend/app.js, ruta `info`).
-    return rutas_web.render_pagina(
-        titulo=p_eff.titulo, descripcion=p_eff.descripcion, path=pagina.ruta, ruta="info",
-        jsonld=_jsonld(p_eff, url, base, cfg), principal=principal, datos={"pagina": "info"},
-        imagen=(og.url_marca(), "QuantFut: pronósticos de fútbol, NBA y tenis con probabilidades verificables") if pagina.idioma == "es" and og.url_marca() else None,
-        robots=robots or rutas_web.ROBOTS, lang=pagina.idioma)
+    return envolver(_env.get_template(pagina.plantilla), p_eff, pagina.ruta, pagina.idioma, jsonld=_jsonld(p_eff, url, base, cfg), robots=robots,
+                    url=url, base=base, revision_larga=fecha_larga(rev_date, pagina.idioma), revision_iso=rev_date.isoformat(),
+                    body_override=body_override, **ctx)
 
 
 def _responder(pagina: Pagina) -> HTMLResponse:
