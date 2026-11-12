@@ -134,17 +134,119 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 (por eso la Fase 1 no necesita traducciones ni publicar la app).
 
 **Fase 2 · Catálogo de deportes y mercados (una publicación de la app)**
-- [ ] `[Fable 5.2 · alto]` Diseño: forma definitiva de la respuesta de `/cliente/v1/config` (con versión de contrato) y esquema de
-      `deportes` (id, nombre por idioma, icono, color, orden, secciones, estado `off/preview/on` por cliente) y `deporte_mercados`
-      (deporte, clave, familia, etiqueta por idioma, orden, visible en web/app). Queda congelada en las versiones de la app instaladas.
-- [ ] `[Sonnet 5.5 · bajo]` Migración con esas tablas. `[Haiku 5.5 · bajo]` Siembra de fútbol, NBA y tenis tal como están hoy en
-      `sports.dart`, `market_catalog.dart` y `sports-data.js`.
-- [ ] `[Sonnet 5.5 · medio]` El endpoint común entrega el catálogo.
-- [ ] `[Opus 5.5 · medio-alto]` La app sustituye el `enum SportKind` por la lista recibida, guarda la última respuesta en disco y lleva
-      una copia de fábrica para abrir sin red (cambio ancho: `switch` exhaustivos en muchos archivos Dart; un fallo llega a la tienda).
-- [ ] `[Sonnet 5.5 · medio]` La web deja de tener una expresión regular por deporte en `rutas.js` (`frontend/rutas.test.mjs`).
-- [ ] `[Sonnet 5.5 · bajo]` Iconos y colores salen de un conjunto cerrado que ambos clientes ya conocen (clave → icono); una clave desconocida cae en el genérico.
-- [ ] `[Sonnet 5.5 · bajo-medio]` Panel «Deportes» y «Mercados»: alta, orden, estado por cliente y vista previa.
+- [x] `[Fable 5.2 · alto]` Diseño: forma definitiva de `/cliente/v1/config` (`contrato: 1`) y esquema de `deportes` y `deporte_mercados`.
+      Hecho el 12-nov-2026 con Sonnet 5.5 (el titular lo pidió así): ver «Especificación de la Fase 2» más abajo. Es lo que queda congelado en las
+      apps instaladas: si se quiere una segunda opinión, que Fable 5.2 alto la revise antes de ejecutar la parte F.
+- [ ] `[Sonnet 5.5 · medio]` Parte A (servidor, sin clientes): migración `db/<siguiente libre>_catalogo.sql`, `src/qf/comercial/catalogo.py`
+      (lectura con caché de 30 s, validación, guardado con `audit()`), `src/qf/comercial/catalogo_semilla.py` y `ensure_seeded()`.
+- [ ] `[Haiku 5.5 · bajo]` Generar la semilla a partir de lo que hay hoy (nombres en 6 idiomas desde `apps/mobile/lib/l10n/app_*.arb`, ids de
+      familias de NBA desde `NBA_LABELS` de `frontend/sports-data.js`, de tenis desde `sportFamilyTitle` de `sports.dart`, de fútbol desde
+      `assets/model/market_evidence.json`) y `scripts/generar_catalogo_defecto.py`, que escribe `apps/mobile/assets/model/cliente_config_defecto.json`.
+- [ ] `[Sonnet 5.5 · medio]` Parte B (servidor): `/cliente/v1/config` sube a `contrato: 1` con `deportes`; `lang` del cliente app admite los 6 idiomas;
+      actualizar `PUBLICAS`/`PRIVADAS` y sus pruebas; prueba de que el asset de la app coincide con la semilla.
+- [ ] `[Sonnet 5.5 · medio]` Parte C (servidor, web): `off`/`preview` de un deporte gobiernan sus páginas SSR, el `sitemap` y los `hreflang`;
+      ruta `/{slug}/` genérica registrada la última. Ver la especificación: es el punto con más riesgo de SEO.
+- [ ] `[Sonnet 5.5 · bajo-medio]` Parte D (panel): `/control/deportes` y `/control/deportes/{id}/mercados`, con el enlace en `templates/base.html`.
+- [ ] `[Sonnet 5.5 · medio]` Parte E (web): `frontend/rutas.js` y `frontend/app.js` leen los deportes de la configuración; sin CSS nuevo.
+      Se despliega solo ese par de archivos y solo si el host coincide con `main` (regla de `CLAUDE.md`).
+- [ ] `[Opus 5.5 · medio-alto]` Parte F (app): `SportKind` → `SportId` + catálogo cargado (copia de fábrica → disco → red); ver especificación.
+      Textos nuevos en los 6 idiomas con `apps/mobile/tool/l10n_add.py`, subir el código de versión y probar el release en `emulator-5556`.
+
+**Especificación de la Fase 2 (diseño del 12-nov-2026; quien ejecute NO rediseña, solo implementa esto)**
+
+*Hallazgos que la motivan (leídos el 12-nov en el código):*
+- La app ya tolera lo desconocido en los nombres: `MarketFamily.localTitle` usa el `title` del archivo si el id no está en su `switch`, y existe
+  `MarketFamily.publishedOnly`. El catálogo del servidor se apoya en eso, no lo inventa.
+- Lo que NO tolera: `SportKind` es un `enum` y `SportPrefs._parse` descarta en silencio cualquier id que no conozca; 16 archivos Dart (~120
+  referencias) hacen `switch` sobre él. Por eso el cambio es ancho y va con el modelo más fuerte.
+- `market_evidence.json` (casos, aciertos, corte de fecha) es dato medido y empaquetado en la app. **Queda fuera de la Fase 2**: el catálogo
+  gobierna presentación (nombre, orden, visibilidad), no evidencia. Una familia sin evidencia se muestra como `publishedOnly`, que ya existe.
+- Cada deporte sigue teniendo pantallas propias en código (parley y Escalera solo en fútbol, detalle de partido, etc.). El catálogo gobierna lo que
+  comparten: orden, nombre, icono, color, secciones, visibilidad por cliente. Un deporte **nuevo** no puede estar `on` hasta que exista su
+  adaptador (Fase 3); por eso `deportes.adaptador` es obligatorio para encenderlo.
+- Lo que SÍ se gana ya: apagar o reordenar fútbol, NBA o tenis, por cliente y sin publicar (p. ej. NBA apagada en la app y encendida en la web).
+
+*A. Tablas (una migración, sin trigger de inmutabilidad: es presentación, no datos sellados; cada cambio queda en `admin_audit`)*
+- `deportes`: `deporte_id TEXT PK CHECK (deporte_id ~ '^[a-z][a-z0-9_]{1,23}$')` (inmutable: lo guardan las preferencias de la app y las URL),
+  `adaptador TEXT NULL` (se valida en Python contra `ADAPTADORES = ('futbol','nba','tenis')`, no en SQL, porque vive en código),
+  `orden SMALLINT NOT NULL`, `icono TEXT NOT NULL DEFAULT 'generico'`, `color TEXT NOT NULL CHECK (color ~ '^#[0-9a-f]{6}$')`,
+  `secciones TEXT[] NOT NULL DEFAULT '{}'` (subconjunto de `high`, `ladder`, `parley`), `nombre JSONB NOT NULL` (`es,en,pt,fr,it,de`, todos
+  no vacíos, ≤ 40 caracteres), `slug JSONB NOT NULL` (`es,en,pt`, formato `^[a-z0-9]+(-[a-z0-9]+)*$`), `estado_web` y `estado_app`
+  (`off|preview|on`, por defecto `off`), `updated_by`, `updated_at`. `CHECK (adaptador IS NOT NULL OR (estado_web='off' AND estado_app='off'))`.
+- `deporte_mercados`: `PK (deporte_id, familia_id)` con `FOREIGN KEY ... ON DELETE RESTRICT`, `familia_id ~ '^[a-z][a-z0-9_]{1,31}$'`,
+  `orden SMALLINT`, `nombre JSONB` (6 idiomas), `subtitulo JSONB DEFAULT '{}'`, `visible_web` y `visible_app BOOLEAN DEFAULT TRUE`, `updated_by`, `updated_at`.
+  `familia_id` es el identificador que los motores ya emiten (`winner`, `handicap`, `game_total`, `games_total`…); la etiqueta de cada LÍNEA
+  (`localLabel` de la app) sigue en el código del cliente.
+- Nunca se borran filas: un deporte o familia se apaga. `GRANT SELECT` a `qf_readonly` solo de las columnas públicas, como `db/110`.
+- Semilla en `catalogo_semilla.py` (no en el SQL), cargada con `ensure_seeded()` solo si `deportes` está vacía: tres deportes con `estado_web` y
+  `estado_app` en `on`, `adaptador` igual al id, `orden` 1-2-3 (futbol, nba, tenis), colores y secciones iguales a `sports.dart` hoy
+  (`futbol`: `high,ladder,parley`; `nba` y `tenis`: `high`) y los `slug` es/en/pt iguales a las URL actuales (copiarlos de `rutas_web`, no de memoria).
+
+*B. Contrato 1 de `GET /cliente/v1/config`*
+- Parámetro nuevo `contrato` (entero). Sin él, o `contrato=1`, se sirve el 1. Regla de versiones: dentro de un contrato solo se AÑADEN campos;
+  quitar o cambiar el sentido de uno exige `contrato: 2`, que se pide con `?contrato=2` y deja el 1 servido mientras `min_build_*` no lo
+  jubile. Un `contrato` desconocido → 422. Las apps de la Fase 2 piden `contrato=1` explícitamente.
+- Se añade a la forma de la Fase 1: `deportes: [ {id, orden, estado, nombre{lang:texto}, slug{lang:texto}, icono, color, secciones[], familias:[{id, orden, nombre{}, subtitulo{}}]} ]`.
+  `estado` es el del cliente pedido (`estado_web` o `estado_app`); los `off` no salen; las familias con `visible_<cliente>` falso no salen;
+  ordenado por `orden`. **Privadas:** `adaptador`, `updated_by`, `updated_at` y el estado del otro cliente. El `nombre` del cliente web solo
+  lleva `es,en,pt`; el de la app, los 6.
+- `lang` de `cliente=app` admite los 6 idiomas (corrige el límite que dejó la Fase 1); el cuerpo ya lleva todos los nombres, así que el cliente
+  elige y cae a `es`.
+- Si la tabla no existe (`UndefinedTable`) o está vacía, el endpoint sirve la semilla del código, nunca una lista vacía.
+- Se mantienen `ETag`, `Cache-Control` y `noindex`. Cambiar un estado tarda hasta `public_cache_seconds` (300 s) en llegar a la web; la app
+  revalida siempre.
+- `PUBLICAS` y `PRIVADAS` ganan `deportes` y `deporte_mercados` (reparto de arriba) y la prueba de clasificación las cubre.
+
+*C. Qué hacen `off` y `preview` (misma semántica que el inglés, sin llaves en el cliente)*
+- Web `off`: las páginas SSR del deporte responden 404, salen del `sitemap` y de los `hreflang`, y la SPA no lo muestra. El panel avisa de que
+  los buscadores verán un 404. Web `preview`: la página funciona por URL, con `X-Robots-Tag: noindex`, fuera del `sitemap` y de la navegación.
+- App `off`: no sale. App `preview`: sale en «Mis deportes» con una etiqueta «Beta» y **oculto por defecto**; el usuario puede activarlo.
+  No hay llave de administrador en el cliente porque el endpoint es público; `preview` solo promete «no indexado» y «no destacado».
+- Se aplica con una dependencia única `catalogo.exigir_web(deporte_id)` en los routers de páginas de deporte (`futbol_paginas`, `nba_paginas`,
+  `nba_equipos`, `tenis_paginas` y sus variantes `*_en` y `*_pt`) y en el generador del `sitemap` de `seo.py`. Si existe un punto común que ya los
+  agrupa, se usa; si no, se añade la dependencia en cada uno. Una prueba por deporte: `off` → 404 y fuera del `sitemap`; `preview` → `noindex`.
+- La ruta genérica `/{slug}/` (SPA para un deporte del catálogo sin página SSR) se registra **la última** y devuelve 404 si el primer segmento
+  no es un `slug` del catálogo con estado distinto de `off`. Comprobar que `tests/test_rutas_web.py::test_toda_ruta_de_la_app_...` sigue en
+  verde (salta las rutas con `{` en el primer segmento) y que no pisa `/en/…`, `/pt/…`, `/legal/…` ni ninguna ruta de API.
+- Un deporte SIN página SSR (cualquiera nuevo) se sirve solo como SPA: sin SEO propio hasta que la Fase 3 o 4 genere páginas genéricas. Queda anotado.
+
+*D. Panel (`/control/deportes`, `api/catalogo_panel.py`, `console.require_console` y CSRF como `acceso_panel.py`)*
+- Lista con orden (subir/bajar), estado web y app, y enlace a editar; edición con los 6 nombres, los 3 slugs, icono, color y secciones; página
+  de mercados por deporte con orden, nombres, subtítulo y visibilidad por cliente. Con los componentes Tabler del panel, sin CSS nuevo.
+- Guardas de servidor (no solo del formulario): no se puede dejar a un cliente sin ningún deporte `on` (el primero del orden queda siempre
+  visible, como la regla actual de «Mis deportes»); un deporte sin `adaptador` solo admite `off`; el `deporte_id` no se edita; los 6 nombres son
+  obligatorios. Un botón «Traducir con APIMart» rellena `fr/it/de` solo de los nombres cortos, reutilizando `api/apimart.py` (la revisión legal
+  F7 bloquea esos idiomas en las PÁGINAS web, no en las etiquetas de la app).
+- Cada guardado: `audit()` con antes y después, en la misma transacción, y `invalidar_cache()`.
+
+*E. Web*
+- `rutas.js`: `DEPORTE_PATH` se construye desde los `slug` recibidos (una expresión por idioma) en lugar de tres fijas; si la configuración no
+  ha llegado, usa la copia incrustada con los tres deportes de hoy. `frontend/rutas.test.mjs` cubre ambos caminos.
+- `app.js`: pide `/cliente/v1/config?cliente=web&contrato=1&lang=<idioma>` además de `/web/config` (que no se toca) y filtra la navegación.
+- Regla de `CLAUDE.md`: `app.js` e `index.html` solo salen de `origin/main`; se despliegan solo los archivos tocados y tras comparar sus
+  hashes con el host.
+
+*F. App Flutter*
+- Commits dentro de un solo PR, cada uno con las pruebas en verde: (1) **sin cambio de comportamiento**: `SportKind` pasa a `typedef SportId = String`
+  con constantes `kFootball`, `kNba`, `kTennis` solo donde el código de verdad distingue deporte (parley, Escalera, pestañas de detalle) y
+  `SportSpec` se busca por id en un `SportCatalog` cargado de `assets/model/cliente_config_defecto.json`; (2) `SportPrefs` acepta ids del
+  catálogo y conserva los desconocidos sin descartarlos; (3) carga en red con `If-None-Match`, última respuesta guardada en
+  `shared_preferences` y orden de preferencia **red → disco → copia de fábrica**; (4) familias: `localTitle` y `localSubtitle` usan el nombre del
+  catálogo si existe, si no el `switch` actual y si no `title`.
+- Tolerancia obligatoria, con prueba: icono o sección desconocidos → genérico o ignorada; `estado` desconocido → `off`; campos nuevos → ignorados;
+  respuesta inválida o vacía → se conserva lo anterior; nunca una app sin ningún deporte.
+- Iconos: la app lleva un conjunto cerrado de claves → `Icons.*` (`futbol, baloncesto, tenis, beisbol, hockey, rugby, futbol_americano, voleibol,
+  golf, mma, motor, generico`) para que un deporte futuro no necesite versión; una app anterior cae en `generico`.
+- Color: `#rrggbb` del catálogo; si no se puede leer, el acento neutro del tema.
+- La app sigue leyendo versiones y secciones de `/mobile/v1/config` (`app_update.dart`, `live_api.dart`): en la Fase 2 solo se lee `deportes` del
+  endpoint nuevo; unificar las dos lecturas es una mejora posterior.
+- Textos visibles nuevos («Beta», estados vacíos) en los 6 idiomas en el mismo cambio. `firebase_preferences.dart` usa `SportKind.fromId`
+  para las etiquetas de los avisos: pasarlo al catálogo y probar un aviso de un deporte desconocido.
+- Probar el release en el emulador (`emulator-5556`) sin red, con red y NBA apagada, y con un deporte en `preview`.
+
+*Despliegue de la Fase 2:* servidor primero (A a D, compatible hacia atrás: las apps instaladas ignoran el endpoint nuevo), luego la web (E, solo
+sus archivos) y la app cuando el titular decida (F). La migración va antes que la API, como en la Fase 1. El titular aún no ha dicho cuándo se
+publica la versión de la app: A a E no dependen de esa fecha.
 
 **Fase 3 · Contrato común por deporte**
 - [ ] `[Fable 5.2 · alto]` Diseño: la forma común de cartelera, partido y mercados que encaje fútbol, NBA y tenis y aguante un deporte
@@ -170,7 +272,7 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 - [ ] `[Sonnet 5.5 · bajo]` `tests/test_mensajes.py` y `test/l10n_test.dart` siguen exigiendo los 6 idiomas.
 
 **Decisiones que esperan al titular antes de empezar la Fase 2:**
-- Si «las dos web» son la SPA de `/` y las páginas públicas de SEO (supuesto de este plan) u otro sitio distinto.
+- ~~Si «las dos web» son la SPA de `/` y las páginas públicas de SEO.~~ Resuelto el 12-nov-2026: sí, esas dos. La Fase 2 trata ambas con el mismo catálogo.
 - ~~Si las reglas de acceso deben ser editables desde el panel.~~ Resuelto el 12-nov-2026: sí, editables, con la vigencia por lote de la especificación de la Fase 1.
 - Cuándo se publica la versión de la app que lee el catálogo: hasta entonces las fases 2–4 solo se notan en la web.
 
