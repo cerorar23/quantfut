@@ -317,7 +317,13 @@ def marco_inicial(principal: str, *, lang: str = "es", cfg: dict | None = None) 
             f'<li><a href="{escape(s.path)}">{escape(_effective_section(s, "es").migas)}</a></li>'
             for s in SECCIONES
         )
-        secciones += '<li><a href="/futbol/">Pronósticos de fútbol</a></li><li><a href="/nba/">Pronósticos NBA</a></li><li><a href="/tenis/">Pronósticos de tenis</a></li><li><a href="/calibracion/">Calibración</a></li><li><a href="/calculadora-cuota-justa/">Cuota justa</a></li>'
+        from ..comercial import catalogo
+        for _dep, _li in (("futbol", '<li><a href="/futbol/">Pronósticos de fútbol</a></li>'),
+                          ("nba", '<li><a href="/nba/">Pronósticos NBA</a></li>'),
+                          ("tenis", '<li><a href="/tenis/">Pronósticos de tenis</a></li>')):
+            if catalogo.web_estado(_dep) == "on":      # `off` y `preview` no se enlazan desde la navegación
+                secciones += _li
+        secciones += '<li><a href="/calibracion/">Calibración</a></li><li><a href="/calculadora-cuota-justa/">Cuota justa</a></li>'
         confianza = "".join(f'<li><a href="{escape(p.ruta)}">{escape(p.migas)}</a></li>' for p in paginas.PAGINAS)
         return (f'<div class="qf-inicial" data-seo-inicial><header><a href="/">{escape(brand)}</a>'
                 f'<nav aria-label="Secciones"><ul>{secciones}</ul></nav></header>'

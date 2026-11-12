@@ -1,0 +1,2 @@
+en=on
+pt=on

@@ -1,0 +1,5 @@
+{"t": "2026-11-12T17:07:47+00:00", "directiva": "script-src-elem", "bloqueado": "inline", "ruta": "/nba/x-vs-y-2026-11-09/", "disposicion": "report"}
+{"t": "2026-11-12T17:07:47+00:00", "directiva": "script-src-elem", "bloqueado": "eval", "ruta": "/nba/x-vs-y-2026-11-09/", "disposicion": "report"}
+{"t": "2026-11-12T17:07:47+00:00", "directiva": "script-src-elem", "bloqueado": "data", "ruta": "/nba/x-vs-y-2026-11-09/", "disposicion": "report"}
+{"t": "2026-11-12T17:07:47+00:00", "directiva": "script-src-elem", "bloqueado": "blob", "ruta": "/nba/x-vs-y-2026-11-09/", "disposicion": "report"}
+{"t": "2026-11-12T17:07:47+00:00", "directiva": "script-src-elem", "bloqueado": "(vacío)", "ruta": "/nba/x-vs-y-2026-11-09/", "disposicion": "report"}

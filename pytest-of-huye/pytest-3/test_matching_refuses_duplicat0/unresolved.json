@@ -1,0 +1,28 @@
+[
+  {
+    "row": {
+      "match_id": "m",
+      "league_id": "gb.premier_league",
+      "kickoff_utc": "2026-09-13T15:30:00Z",
+      "local": "Home",
+      "visita": "Away"
+    },
+    "reason": "ambiguous",
+    "home_team_id": 1,
+    "away_team_id": 2,
+    "nearby": [
+      {
+        "fixtureId": "one",
+        "startTime": "2026-09-13T15:30:00Z",
+        "participant1Name": "Home",
+        "participant2Name": "Away"
+      },
+      {
+        "fixtureId": "two",
+        "startTime": "2026-09-13T15:30:00Z",
+        "participant1Name": "Home",
+        "participant2Name": "Away"
+      }
+    ]
+  }
+]

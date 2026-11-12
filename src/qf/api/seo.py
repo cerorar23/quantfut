@@ -99,8 +99,26 @@ def redireccion_www(request: Request) -> Response | None:
     return RedirectResponse(destino, status_code=301 if request.method in ("GET", "HEAD") else 308)
 
 
+def _en_preview_web(path: str) -> bool:
+    """¿La ruta cuelga de un deporte con estado web `preview`? (`/<es>`, `/en/<en>`, `/pt/<pt>` según su `slug` del catálogo.)
+    La dependencia `catalogo.exigir_web` no basta: las páginas devuelven su propia `HTMLResponse` y FastAPI descarta las
+    cabeceras que una dependencia añade a una respuesta ya construida."""
+    from ..comercial import catalogo
+    try:
+        deportes = catalogo.todos()
+    except Exception:          # este middleware corre en TODA respuesta: una caída del catálogo no debe tumbar la API
+        return False
+    for d in deportes:
+        if d["estado_web"] != "preview":
+            continue
+        slug = d["slug"]
+        if any(_bajo_prefijo(path, pre + slug[lang]) for lang, pre in (("es", "/"), ("en", "/en/"), ("pt", "/pt/")) if slug.get(lang)):
+            return True
+    return False
+
+
 def aplicar_cabeceras(request: Request, response: Response) -> None:
-    if noindex(request):
+    if noindex(request) or _en_preview_web(request.url.path):
         response.headers["X-Robots-Tag"] = "noindex"
 
 
@@ -123,9 +141,22 @@ def sitemap_index() -> str:
             f'<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{items}</sitemapindex>\n')
 
 
+def _si_on(deporte: str, entradas):
+    """Un deporte con estado web `off` o `preview` no entra en el mapa del sitio (ni, por tanto, en sus `hreflang`)."""
+    from ..comercial import catalogo
+    return entradas() if catalogo.web_estado(deporte) == "on" else ()
+
+
 def todas_las_paginas() -> tuple[tuple[str, str | None], ...]:
     from . import calibracion, cuota_justa, futbol_en, futbol_pt, futbol_paginas, legal, tenis_pt, nba_en, nba_equipo_en, nba_equipo_pt, nba_equipos, nba_paginas, nba_pt, paginas, rutas_web, tenis_en, tenis_paginas, verificacion   # import tardío: todos importan este módulo
-    return PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + legal.entradas_sitemap() + nba_paginas.entradas_sitemap() + calibracion.entradas_sitemap() + cuota_justa.entradas_sitemap() + verificacion.entradas_sitemap() + nba_equipos.entradas_sitemap() + nba_en.entradas_sitemap() + futbol_en.entradas_sitemap() + tenis_en.entradas_sitemap() + nba_equipo_en.entradas_sitemap() + nba_pt.entradas_sitemap() + nba_equipo_pt.entradas_sitemap() + futbol_pt.entradas_sitemap() + tenis_pt.entradas_sitemap() + futbol_paginas.entradas_sitemap() + tenis_paginas.entradas_sitemap()
+    return (PAGINAS + rutas_web.entradas_sitemap() + paginas.entradas_sitemap() + legal.entradas_sitemap()
+            + _si_on("nba", nba_paginas.entradas_sitemap) + calibracion.entradas_sitemap() + cuota_justa.entradas_sitemap()
+            + verificacion.entradas_sitemap() + _si_on("nba", nba_equipos.entradas_sitemap) + _si_on("nba", nba_en.entradas_sitemap)
+            + _si_on("futbol", futbol_en.entradas_sitemap) + _si_on("tenis", tenis_en.entradas_sitemap)
+            + _si_on("nba", nba_equipo_en.entradas_sitemap) + _si_on("nba", nba_pt.entradas_sitemap)
+            + _si_on("nba", nba_equipo_pt.entradas_sitemap) + _si_on("futbol", futbol_pt.entradas_sitemap)
+            + _si_on("tenis", tenis_pt.entradas_sitemap) + _si_on("futbol", futbol_paginas.entradas_sitemap)
+            + _si_on("tenis", tenis_paginas.entradas_sitemap))
 
 
 def sitemap_paginas() -> str:

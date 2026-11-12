@@ -1,0 +1,23 @@
+{
+  "provider": "sofascore_local",
+  "decisions": {
+    "555": {
+      "mapping_status": "conflict",
+      "mapping_reason": "different_source_id",
+      "match_id": null
+    }
+  },
+  "totals": {
+    "conflict": 1
+  },
+  "by_league": {
+    "it.serie_a": {
+      "conflict": 1
+    }
+  },
+  "unresolved_profiles": [],
+  "overrides": {},
+  "snapshot_sha256": "16765072ee6a43f898e688c2227ad0896adcf0c7af09520feaaade8f852ee0bc",
+  "normalized_sha256": "f8196417ffd63ea9a6494c293c336c313de127734248e3ede805fdadf584afe2",
+  "new_teams": {}
+}

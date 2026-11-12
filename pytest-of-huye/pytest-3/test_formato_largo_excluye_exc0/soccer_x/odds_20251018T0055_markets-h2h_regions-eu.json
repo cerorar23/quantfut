@@ -1,0 +1,1 @@
+{"timestamp": "2025-10-18T00:55:00Z", "data": [{"id": "e1", "home_team": "Puebla", "away_team": "Tijuana", "commence_time": "2025-10-18T01:00:00Z", "bookmakers": [{"key": "pinnacle", "markets": [{"key": "h2h", "last_update": "2025-10-18T00:53:00Z", "outcomes": [{"name": "Puebla", "price": 2.2}, {"name": "Tijuana", "price": 3.3}, {"name": "Draw", "price": 3.4}]}]}]}]}

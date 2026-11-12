@@ -1,0 +1,1 @@
+{"sports": ["soccer_epl"], "daily_cap": 4500, "account_reserve": 500, "scores": true, "scores_every_hours": 1, "markets_by_family": {"default": ["h2h"], "soccer_": ["h2h", "spreads", "totals", "corners_a", "corners_b"]}, "soccer_markets_per_request": 1, "extended_horizon_hours": 48, "extended_far_every_hours": 3}

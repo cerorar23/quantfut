@@ -16,15 +16,16 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from ..comercial import catalogo
 from . import og, paginas, rutas_web, seo, tenis_datos
 from .tenis_datos import TenisNoDisponible
 
 log = logging.getLogger("qf.tenis_paginas")
-router = APIRouter(include_in_schema=False)
+router = APIRouter(include_in_schema=False, dependencies=[Depends(catalogo.exigir_web('tenis'))])
 _env = Environment(loader=FileSystemLoader(str(Path(__file__).with_name("paginas"))),
                    autoescape=select_autoescape(["html"]), trim_blocks=True, lstrip_blocks=True)
 

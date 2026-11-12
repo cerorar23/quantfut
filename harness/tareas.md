@@ -144,7 +144,7 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
       `assets/model/market_evidence.json`) y `scripts/generar_catalogo_defecto.py`, que escribe `apps/mobile/assets/model/cliente_config_defecto.json`.
 - [ ] `[Sonnet 5.5 · medio]` Parte B (servidor): `/cliente/v1/config` sube a `contrato: 1` con `deportes`; `lang` del cliente app admite los 6 idiomas;
       actualizar `PUBLICAS`/`PRIVADAS` y sus pruebas; prueba de que el asset de la app coincide con la semilla.
-- [ ] `[Sonnet 5.5 · medio]` Parte C (servidor, web): `off`/`preview` de un deporte gobiernan sus páginas SSR, el `sitemap` y los `hreflang`;
+- [x] `[Sonnet 5.5 · medio]` Parte C (servidor, web): `off`/`preview` de un deporte gobiernan sus páginas SSR, el `sitemap` y los `hreflang`;
       ruta `/{slug}/` genérica registrada la última. Ver la especificación: es el punto con más riesgo de SEO.
 - [ ] `[Sonnet 5.5 · bajo-medio]` Parte D (panel): `/control/deportes` y `/control/deportes/{id}/mercados`, con el enlace en `templates/base.html`.
 - [ ] `[Sonnet 5.5 · medio]` Parte E (web): `frontend/rutas.js` y `frontend/app.js` leen los deportes de la configuración; sin CSS nuevo.

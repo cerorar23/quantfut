@@ -71,7 +71,7 @@ from .fichas import router as fichas_router
 from .panel import router as panel_router
 from .web import router as web_router
 from .mobile import member, router as mobile_router
-from . import calibracion, csp, cuota_justa, futbol_en, futbol_paginas, indexnow, mensajes, futbol_pt, tenis_pt, nba_en, nba_equipo_en, nba_equipo_pt, nba_pt, tenis_en, nba_equipos, nba_paginas, og, paginas, rutas_web, seo, tenis_paginas, verificacion
+from . import calibracion, csp, deporte_generico, cuota_justa, futbol_en, futbol_paginas, indexnow, mensajes, futbol_pt, tenis_pt, nba_en, nba_equipo_en, nba_equipo_pt, nba_pt, tenis_en, nba_equipos, nba_paginas, og, paginas, rutas_web, seo, tenis_paginas, verificacion
 from .rewards import router as rewards_router
 from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
@@ -860,3 +860,6 @@ app.include_router(indexnow.router)
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Siempre la última: deporte del catálogo sin página SSR propia (solo SPA, noindex). Ver deporte_generico.py.
+deporte_generico.registrar(app)
