@@ -251,6 +251,7 @@ Publicidad AdMob y Monedas y referidos. Deportes, Mercados y Pantallas se añade
 *Despliegue de la Fase 2:* servidor primero (A a D, compatible hacia atrás: las apps instaladas ignoran el endpoint nuevo), luego la web (E, solo
 sus archivos) y la app cuando el titular decida (F). La migración va antes que la API, como en la Fase 1. El titular aún no ha dicho cuándo se
 publica la versión de la app: A a E no dependen de esa fecha.
+**Desplegadas A a E el 12-nov-2026 21:22 UTC** (`db/112` + `quantfut-api:f2454a2f` + `app.js`, `rutas.js` e `index.html` del host; ver `DEPLOYS.md`). Falta la parte F (app) y probar con sesión iniciada los formularios de `/control/deportes`.
 
 **Fase 3 · Contrato común por deporte**
 - [ ] `[Fable 5.2 · alto]` Diseño: la forma común de cartelera, partido y mercados que encaje fútbol, NBA y tenis y aguante un deporte
