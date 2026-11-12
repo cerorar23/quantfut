@@ -105,6 +105,9 @@ _MENSAJES = {
     "correo_enviado": ("success", "Correo enviado."),
     "correo_fallo": ("danger", "No se pudo enviar el correo; revisa los logs y la configuración SMTP."),
     "correo_no_configurado": ("warning", "El envío de correo no está configurado (SMTP_HOST / SMTP_FROM)."),
+    "acceso_guardado": ("success", "Regla programada. Rige desde el día indicado, nunca sobre lotes ya repartidos."),
+    "acceso_agenda_guardada": ("success", "Días de agenda guardados."),
+    "acceso_error": ("danger", "No se pudo guardar; revisa el mensaje."),
     "cuenta_suspendida": ("warning", "La cuenta está suspendida: no se envía enlace de acceso."),
 }
 

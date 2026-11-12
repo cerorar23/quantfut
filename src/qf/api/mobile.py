@@ -16,7 +16,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from psycopg.errors import UndefinedTable
 
 from . import console, cuentas, fichas, panel, partido_mercados, rewards
-from ..comercial import suscripciones, mobile_updates
+from ..comercial import acceso_reglas, suscripciones, mobile_updates
 from ..comercial.auditoria import audit
 from ..db import conn, query, query_one
 from ..config import settings
@@ -60,8 +60,9 @@ def features() -> dict:
 
 
 def config() -> dict:
-    return {**mobile_updates.configuration(), 'features': features(), 'probability_min': HIGH_MIN,
-            'probability_max': HIGH_MAX, 'high_probability_free_fraction': FREE_FRACTION,
+    regla = acceso_reglas.vigente()   # la de hoy (UTC); los lotes ya repartidos conservan la suya
+    return {**mobile_updates.configuration(), 'features': features(), 'probability_min': regla.prob_min,
+            'probability_max': regla.prob_max, 'high_probability_free_fraction': regla.free_fraction,
             'ladder_free_count': 1, 'server_time': datetime.now(timezone.utc)}
 
 
@@ -86,9 +87,14 @@ def probability(row: dict) -> float:
     return float(row.get('_prob_exact', row.get('prob')) or 0)
 
 
-def free_quota(published: int) -> int:
-    """Cuántos gratis le tocan a un lote de `published` pronósticos: el 10 %, hacia arriba."""
-    return math.ceil(round(published * FREE_FRACTION, 9))
+def free_quota(published: int, fraction: float = FREE_FRACTION) -> int:
+    """Cuántos gratis le tocan a un lote de `published` pronósticos: la fracción de su regla, hacia arriba."""
+    return math.ceil(round(published * fraction, 9))
+
+
+def _regla_del_lote(rows: list[dict]) -> acceso_reglas.Regla:
+    """La regla del lote que se procesa (`rows` es un lote completo)."""
+    return acceso_reglas.vigente(rows[0].get('batch_date') if rows else None)
 
 
 def free_eligible(row: dict) -> bool:
@@ -103,10 +109,14 @@ def _free_rank(row: dict) -> tuple:
 
 def choose_free(rows: list[dict], stream: str) -> list[dict]:
     """Only sealed eligible rows enter. Odds are publication quotes, not live."""
-    lo, hi = (HIGH_MIN, HIGH_MAX) if stream == 'alta_probabilidad' else (PROB_MIN, PROB_MAX)
-    valid = [r for r in rows if lo <= probability(r) <= hi]
     if stream == 'alta_probabilidad':
-        return sorted(filter(free_eligible, valid), key=_free_rank)[:free_quota(len(valid))]
+        chosen = []
+        for batch in _by_batch(rows).values():
+            regla = _regla_del_lote(batch)
+            valid = [r for r in batch if regla.prob_min <= probability(r) <= regla.prob_max]
+            chosen += sorted(filter(free_eligible, valid), key=_free_rank)[:free_quota(len(valid), regla.free_fraction)]
+        return chosen
+    valid = [r for r in rows if PROB_MIN <= probability(r) <= PROB_MAX]
     if stream == 'escalera':
         valid.sort(key=lambda r: (-probability(r), -float(r.get('price') or 0), pick_key(r)))
         return valid[:1]
@@ -127,10 +137,11 @@ def top_up(rows: list[dict], free_keys: set[str], now: datetime) -> list[dict]:
     repartido con la regla anterior): cuentan los gratis que ya empezaron y los abiertos
     que cumplen la regla. Solo AÑADE y no toca los que ya empezaron.
     """
-    valid = [r for r in rows if HIGH_MIN <= probability(r) <= HIGH_MAX]
+    regla = _regla_del_lote(rows)
+    valid = [r for r in rows if regla.prob_min <= probability(r) <= regla.prob_max]
     held = sum(1 for r in valid if pick_key(r) in free_keys
                and (r['kickoff_utc'] <= now or free_eligible(r)))
-    missing = free_quota(len(valid)) - held
+    missing = free_quota(len(valid), regla.free_fraction) - held
     if missing <= 0:
         return []
     pending = [r for r in valid if r['kickoff_utc'] > now and pick_key(r) not in free_keys
@@ -149,7 +160,7 @@ def cap_free(rows: list[dict], free: set[str], now: datetime) -> set[str]:
         begun = {pick_key(r) for r in batch if pick_key(r) in free and r['kickoff_utc'] <= now}
         pending = sorted((r for r in batch if pick_key(r) in free and r['kickoff_utc'] > now
                           and free_eligible(r)), key=_free_rank)
-        room = max(free_quota(len(batch)) - len(begun), 0)
+        room = max(free_quota(len(batch), _regla_del_lote(batch).free_fraction) - len(begun), 0)
         kept |= begun | {pick_key(r) for r in pending[:room]}
     return kept
 
@@ -221,8 +232,9 @@ def high_rows() -> list[dict]:
         FROM alta_prob_picks a JOIN matches m ON m.match_id=a.match_id
         JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
         {alta_prob_datos._sql_sellado()}
+        {acceso_reglas.RANGO_SQL}
         LEFT JOIN alta_prob_results r ON r.alta_id=a.alta_id
-        WHERE a.prob BETWEEN %s AND %s AND b.batch_date >= current_date - 7
+        WHERE {acceso_reglas.RANGO_WHERE} AND b.batch_date >= current_date - 7
         ORDER BY m.kickoff_utc,a.match_id''', (HIGH_MIN, HIGH_MAX))
     if settings.alta_prob_ext_enabled:
         # Un pronóstico por partido y mercado: si la línea de 80-95 % ya lo publicó,
@@ -234,8 +246,9 @@ def high_rows() -> list[dict]:
                 FROM alta_prob_ext a JOIN matches m ON m.match_id=a.match_id
                 JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
                 {alta_prob_ext.sql_sellado()}
+                {acceso_reglas.RANGO_SQL}
                 LEFT JOIN alta_prob_ext_results r ON r.ext_id=a.ext_id
-                WHERE a.prob BETWEEN %s AND %s AND b.batch_date >= current_date - 7
+                WHERE {acceso_reglas.RANGO_WHERE} AND b.batch_date >= current_date - 7
                 ORDER BY m.kickoff_utc,a.match_id''', (HIGH_MIN, HIGH_MAX))
         except UndefinedTable:
             extra = []
@@ -360,7 +373,7 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
     cfg = config()
     flags = cfg['features']
     try:
-        start, end = fichas.ventana(fecha, tz, DIAS_AGENDA)
+        start, end = fichas.ventana(fecha, tz, acceso_reglas.dias_agenda())
     except ValueError:
         raise HTTPException(422, 'Fecha inválida') from None
     agenda = visible_agenda(fichas._agenda(start, end, None)) if flags['agenda']['enabled'] else []
@@ -490,8 +503,9 @@ def markets_history(response: Response,
         FROM {table} a JOIN matches m ON m.match_id=a.match_id
         JOIN teams th ON th.team_id=m.home_team_id JOIN teams ta ON ta.team_id=m.away_team_id
         {sealed}
+        {acceso_reglas.RANGO_SQL}
         JOIN {results} r ON r.{key}=a.{key}
-        WHERE r.outcome IN ('win','loss') AND a.prob BETWEEN %s AND %s
+        WHERE r.outcome IN ('win','loss') AND {acceso_reglas.RANGO_WHERE}
           AND (%s::text[] IS NULL OR a.market = ANY(%s))
         ORDER BY m.kickoff_utc DESC, a.match_id LIMIT %s''', (HIGH_MIN, HIGH_MAX, markets, markets, limit))
     rows = history('alta_prob_picks', 'alta_prob_results', 'alta_id', alta_prob_datos._sql_sellado())
