@@ -8,6 +8,31 @@
 - **«Traducir con APIMart» incluido** (≈20 líneas, reutiliza `apimart._chat_completion` y la clave de `web_config`): sobrescribe fr/it/de del nombre con la traducción del español y avisa de que hay que revisarla. Sin clave, muestra el mensaje de APIMart.
 - **Sin alta de deportes**, como pide la tarea. Las pruebas usan un catálogo en memoria que aplica las validaciones reales de `catalogo.py`, sin Postgres.
 
+## 12-nov-2026 · Fase 2, parte C: `off` y `preview` gobiernan páginas SSR, `sitemap` y `hreflang` (sin desplegar)
+
+- **Dependencia por router, no por ruta:** `catalogo.exigir_web('<deporte>')` va en `APIRouter(dependencies=...)` de los 12 routers de páginas (`futbol_*`, `nba_*`, `tenis_*`). Las API de los motores viven en otros routers y no se tocan; una prueba lo comprueba.
+- **`X-Robots-Tag` en `preview` sale del middleware, no de la dependencia:** las páginas devuelven su propia `HTMLResponse` y FastAPI descarta las cabeceras que una dependencia añade a una respuesta ya construida. `seo.aplicar_cabeceras` ahora también marca `noindex` bajo `/<es>`, `/en/<en>` y `/pt/<pt>` de un deporte en `preview` (con `try/except`: corre en toda respuesta y una caída del catálogo no debe tumbar la API). Sin cambio en `catalogo.py`.
+- **`sitemap`/`hreflang`:** `seo.todas_las_paginas` filtra por deporte con `_si_on`; los `hreflang` salen del mapa, así que desaparecen con él. Con todo `on` la lista es idéntica (prueba). La navegación de `rutas_web.marco_inicial` solo enlaza deportes `on`.
+- **Ruta genérica `/{slug}/` registrada (última) como `Route` con `matches` propio** (`deporte_generico.py`): un `/{slug}/` ordinario habría convertido todo `/desconocido` en 307 → 404 por la redirección de barra final de Starlette. Solo acepta el slug es de un deporte del catálogo no `off`; siempre `noindex`, fuera del `sitemap`. Los tres actuales tienen SSR antes, nunca la alcanzan.
+- **Pendiente:** los enlaces cruzados fijos entre pilares viven en las plantillas `paginas/*.html` (p. ej. `nba_cartelera.html`, `base.html`) y siguen enlazando a un deporte `off`/`preview`; hay que pasarlos a Jinja con el catálogo (afecta HTML de todas las páginas, por eso no se hizo aquí). `indexnow.PILARES` también es fijo.
+
+## 12-nov-2026 · Contrato 1 de `/cliente/v1/config` (Fase 2, parte B; sin desplegar)
+
+- **`lang` de la app no mira el archivo de idiomas:** los 6 idiomas valen siempre (el archivo `activos.txt` solo gobierna la web); un idioma desconocido cae a `es`. La web conserva su regla (es/en/pt, apagado → `es`).
+- **`Deporte.estado` es `Literal['preview','on']`:** `deportes_para` ya quita los `off`, y si algún día llegara uno el modelo estricto fallaría en voz alta en vez de publicarlo.
+- **`catalogo.py` no se tocó:** `deportes_para` bastó tal cual. `contrato` fuera de 1 → 422 (`Query(1, ge=1, le=1)`).
+
+## 12-nov-2026 · Fase 2 parte E: la web lee los deportes del catálogo (sin desplegar; falta el servidor B)
+
+- **Lógica pura en `rutas.js` (no en `app.js`, no en un archivo nuevo):** el filtrado se prueba en Node sin DOM, y como cada archivo de `frontend/` se sirve con una ruta explícita en Python, un módulo nuevo exigiría tocar `web.py`; así la parte E sigue siendo solo copiar archivos.
+- **Copia incrustada = comportamiento de hoy:** slugs `futbol/nba/tenis` iguales en es/en/pt (en `/en/` y `/pt/` la URL de deporte conserva el mismo slug), y la navegación sigue mostrando «Fútbol, NBA, Tenis» en español en todos los idiomas; solo con datos del servidor se usa `nombre[idioma]` (cae a `es`).
+- **La estructura de la URL depende del `id`, no del slug:** `nba` (equipos, excluye `v1/v2`), `tenis` (excluye `v2`) y `futbol` conservan la suya aunque cambie el slug; un `id` nuevo usa la genérica `/<slug>/<a>/<b>/`. El catálogo público no trae `adaptador`, así que no hay otra señal.
+- **Respuesta inválida o sin `deportes` → se conserva lo anterior:** `normalizarDeportes` devuelve `null` si no queda ninguno válido; entradas sueltas inválidas o repetidas se descartan; `estado` distinto de `on|preview` se ignora; slug en/pt malo cae al `es`. `preview` sale de la navegación (pestañas, filtros de historial, grupos de «Pronósticos de hoy») pero `fijarDeportes` lo recibe, así que su URL sigue funcionando. Si la navegación quedara vacía se conserva el primer deporte.
+- **Slug pt de fútbol = `futebol`** (`futbol_pt.py`, `RUTA_PILAR`); `deporteDeUrl` acepta, tras quitar `/en` o `/pt`, el slug de cualquier idioma del deporte. El `href` del menú usa siempre `slug.es` (sin prefijo de idioma), como el `/${id}/` de antes.
+- **Límite conocido:** `deporteBoot` se calcula una sola vez al cargar con los slugs que haya entonces; una página SSR de un slug nuevo (solo posible tras el servidor B) arrancaría sin abrir el partido hasta recargar con la caché del navegador caliente. Con los tres slugs actuales no ocurre.
+- **Fuera de alcance, sigue fijo:** `historial-views.js` (`DEPORTE`), `sports-window.js` y los datos por deporte; esta parte solo gobierna navegación, pestañas y grupos.
+- **Efectos colaterales necesarios:** `index.html` (versiones `catalogo-20261112`), dos aserciones de versión en `tests/test_rutas_web.py` y una de marcado en `tests/test_enlaces.py` (`href="/${slug}/" data-sport="${id}"`). `frontend` pasa de 238 a 250 pruebas.
+
 ## 12-nov-2026 · Catálogo de deportes y mercados, parte A de la Fase 2 (db/112, `comercial/catalogo.py`; sin desplegar ni migrar)
 
 - **Semilla fusionada con la parte A:** `ensure_seeded()` la necesita, así que `catalogo_semilla.py` y `scripts/generar_catalogo_defecto.py` salen en el mismo PR. Los textos son copia literal de los `app_*.arb`; todos caben en los 40 caracteres.

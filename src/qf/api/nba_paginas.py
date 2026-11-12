@@ -14,15 +14,16 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from ..comercial import catalogo
 from . import nba_datos, og, paginas, rutas_web, seo
 from .nba_datos import NbaNoDisponible
 
 log = logging.getLogger("qf.nba_paginas")
-router = APIRouter(include_in_schema=False)
+router = APIRouter(include_in_schema=False, dependencies=[Depends(catalogo.exigir_web('nba'))])
 _env = Environment(loader=FileSystemLoader(str(Path(__file__).with_name("paginas"))),
                    autoescape=select_autoescape(["html"]), trim_blocks=True, lstrip_blocks=True)
 
