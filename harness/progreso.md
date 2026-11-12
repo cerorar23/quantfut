@@ -1,6 +1,14 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · `GET /cliente/v1/config` y su lista blanca (parte B de la Fase 1; sin desplegar)
+
+- **Por qué el cuerpo se arma campo a campo y no desde `configuration()`:** `mobile_updates.configuration()` filtra columnas con su propio `SELECT`; si alguien le añade `*` o una columna, `/mobile/v1/config` la expondría. El endpoint nuevo no depende de eso: los 7 campos de versión se copian por nombre a un modelo Pydantic con `extra='forbid'`.
+- **Por qué `/mobile/v1/config` queda fuera de los centinelas de `updated_at`:** su salida actual ya lleva `updated_at` en `features` y no se cambia (límite de la tarea). La prueba de centinelas lo excluye a propósito y lo cubre con Postgres real para `configuration()`.
+- **Por qué `lang` solo acepta `^[a-z]{2}$` y un idioma válido pero apagado o no soportado (`fr`) responde como `es`:** así no se multiplican entradas de caché por texto libre y un idioma en `off` nunca se filtra.
+- **Las secciones SPA de `web` se recomponen en `cliente_config.py` en vez de extraerlas de `public_web_config()`:** reescribir `/web/config` estaba prohibido; cuando la Fase 2 decida la forma definitiva conviene unificar.
+- **Arreglo de la parte A:** `acceso_reglas.validar()` rechaza `inf`/`nan` con `ValueError('…finitos')`; antes `Decimal.quantize` lanzaba `InvalidOperation` y `/control/acceso` daba 500.
+
 ## 12-nov-2026 · Diseño de la Fase 1 del menú «Web y App»: reglas de acceso versionadas y lista blanca (rama `plan/menu-web-y-app`, solo diseño)
 
 - **Por qué las reglas van versionadas por fecha de lote y no como un valor editable:** al leer `api/mobile.py` resultó que las constantes actúan hacia atrás. `top_up()` y `cap_free()` recalculan en cada lectura el cupo gratis de los lotes de los últimos 7 días, y `markets_history()` filtra todo el historial con el rango vigente. Con un control en el panel, estrechar el rango ocultaría a posteriori pronósticos sellados que fallaron: justo lo que el producto promete no hacer. La tabla `acceso_reglas` solo se añade y un trigger impide fechar una regla en hoy o antes; como `batch_date` es la fecha UTC de la decisión, ninguna regla puede alcanzar un lote ya sellado.

@@ -45,12 +45,14 @@ parte de lo que muestran; un menú único en `/control` que gobierne ambos clien
       Hecho el 12-nov-2026: ver «Especificación de la Fase 1» más abajo.
 - [x] `[Haiku 5.5 · bajo]` Agrupar el menú lateral de `templates/base.html` en «Web y App» según la parte C de la especificación
       (solo enlaces a lo que existe; Publicidad AdMob y Monedas se enlazan sin moverlas de módulo).
-- [ ] `[Sonnet 5.5 · medio]` `GET /cliente/v1/config?cliente=web|app&lang=` según la parte B de la especificación. `/web/config` y
+- [x] `[Sonnet 5.5 · medio]` `GET /cliente/v1/config?cliente=web|app&lang=` según la parte B de la especificación. `/web/config` y
       `/mobile/v1/config` se quedan como están, para las versiones instaladas.
+      Hecho el 12-nov-2026: `src/qf/api/cliente_config.py`, registrado en `main.py`. Sin desplegar.
 - [x] `[Sonnet 5.5 · medio]` Reglas de acceso versionadas por fecha de lote y `/control/acceso`, según la parte A de la especificación
       (`HIGH_MIN/HIGH_MAX`, `FREE_FRACTION`, `DIAS_AGENDA`). El titular confirmó el 12-nov-2026 que deben ser editables. Va PRIMERO: el endpoint y el menú dependen de ella.
       Hecho el 12-nov-2026 (rama `claude/nostalgic-northcutt-044001`): `db/111_acceso_reglas.sql`, `comercial/acceso_reglas.py`, `api/acceso_panel.py`. Falta aplicar la migración y desplegar.
-- [ ] `[Sonnet 5.5 · medio]` Pruebas de clasificación de columnas y de centinelas de la parte B; `tests/test_mobile_delivery.py` pasa sin tocarse.
+- [x] `[Sonnet 5.5 · medio]` Pruebas de clasificación de columnas y de centinelas de la parte B; `tests/test_mobile_delivery.py` pasa sin tocarse.
+      Hecho el 12-nov-2026: `tests/test_cliente_config.py` (la clasificación corre solo en CI con `QF_TEST_PG_DSN`).
 - [ ] `[Fable 5.2 · alto]` Revisión de seguridad del endpoint público antes de desplegar (el cambio a revisar es pequeño).
 
 **Especificación de la Fase 1 (diseño del 12-nov-2026; quien ejecute NO rediseña, solo implementa esto)**
