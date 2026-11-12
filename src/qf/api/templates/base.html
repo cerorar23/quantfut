@@ -27,11 +27,13 @@
           ('suscripciones', '/control/suscripciones', 'crown', 'Suscripciones'),
           ('planes', '/control/planes', 'tags', 'Planes y precios'),
           ('auditoria', '/control/auditoria', 'history', 'Auditoría'),
-          ('mobile', '/control/configuracion-app', 'device-desktop-analytics', 'Configuración de la app'),
-          ('web_config', '/control/configuracion', 'list-check', 'Configuración web'),
-          ('rewards', '/control/recompensas', 'coins', 'Monedas y referidos'),
+        ] %}
+        {% set grupo_web_app = [
+          ('web_config', '/control/configuracion', 'list-check', 'Textos, idiomas y ajustes web'),
+          ('mobile', '/control/configuracion-app', 'device-desktop-analytics', 'Versiones y secciones de la app'),
+          ('acceso', '/control/acceso', 'key', 'Acceso gratis y VIP'),
           ('anuncios', '/control/anuncios', 'ad', 'Publicidad AdMob'),
-          ('sistema', '/control/sistema', 'server', 'Sistema y modelo'),
+          ('rewards', '/control/recompensas', 'coins', 'Monedas y referidos'),
         ] %}
         <ul class="navbar-nav pt-lg-3">
           {% for key, href, ico, label in menu %}
@@ -42,6 +44,23 @@
             </a>
           </li>
           {% endfor %}
+          <li class="nav-item mt-lg-3">
+            <span class="nav-link disabled text-uppercase small fw-bold">Web y App</span>
+          </li>
+          {% for key, href, ico, label in grupo_web_app %}
+          <li class="nav-item{% if active == key %} active{% endif %}">
+            <a class="nav-link ps-4" href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>
+              <span class="nav-link-icon">{{ icon(ico) }}</span>
+              <span class="nav-link-title">{{ label }}</span>
+            </a>
+          </li>
+          {% endfor %}
+          <li class="nav-item{% if active == 'sistema' %} active{% endif %}">
+            <a class="nav-link" href="/control/sistema"{% if active == 'sistema' %} aria-current="page"{% endif %}>
+              <span class="nav-link-icon">{{ icon('server') }}</span>
+              <span class="nav-link-title">Sistema y modelo</span>
+            </a>
+          </li>
           <li class="nav-item mt-lg-4">
             <a class="nav-link" href="/">
               <span class="nav-link-icon">{{ icon('arrow-left') }}</span>
