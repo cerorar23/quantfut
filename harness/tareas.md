@@ -53,7 +53,10 @@ parte de lo que muestran; un menú único en `/control` que gobierne ambos clien
       Hecho el 12-nov-2026 (rama `claude/nostalgic-northcutt-044001`): `db/111_acceso_reglas.sql`, `comercial/acceso_reglas.py`, `api/acceso_panel.py`. Falta aplicar la migración y desplegar.
 - [x] `[Sonnet 5.5 · medio]` Pruebas de clasificación de columnas y de centinelas de la parte B; `tests/test_mobile_delivery.py` pasa sin tocarse.
       Hecho el 12-nov-2026: `tests/test_cliente_config.py` (la clasificación corre solo en CI con `QF_TEST_PG_DSN`).
-- [ ] `[Fable 5.2 · alto]` Revisión de seguridad del endpoint público antes de desplegar (el cambio a revisar es pequeño).
+- [x] `[Fable 5.2 · alto]` Revisión de seguridad del endpoint público antes de desplegar (el cambio a revisar es pequeño).
+      Hecha el 12-nov-2026 sobre el PR #365: sin fugas. Pendiente para el diseño de la Fase 2: `cliente=app` solo reconoce `es/en/pt`.
+- [x] Fase 1 desplegada el 12-nov-2026 14:52 UTC (`db/111` + `quantfut-api:bb456947`; ver `DEPLOYS.md`). Falta probar el formulario de
+      `/control/acceso` con sesión iniciada.
 
 **Especificación de la Fase 1 (diseño del 12-nov-2026; quien ejecute NO rediseña, solo implementa esto)**
 
