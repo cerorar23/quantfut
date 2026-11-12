@@ -189,6 +189,28 @@ class QuantFutApi extends ChangeNotifier {
     }
   }
 
+  /// GET público con `If-None-Match`, para endpoints con ETag. Devuelve el estado (200 o 304), el cuerpo y el ETag
+  /// recibido; lanza ante cualquier otro estado, un cuerpo que no es JSON o un fallo de red. No lleva sesión.
+  Future<({int status, dynamic data, String? etag})> requestConditional(
+    String path, {
+    JsonMap? query,
+    String? etag,
+  }) async {
+    final uri = base
+        .resolve(path)
+        .replace(queryParameters: query?.map((key, value) => MapEntry(key, '$value')));
+    final req = await _client.openUrl('GET', uri).timeout(const Duration(seconds: 20));
+    req.headers.set(HttpHeaders.acceptHeader, 'application/json');
+    req.headers.set(HttpHeaders.acceptLanguageHeader, AppLocale.instance.code);
+    if (etag != null && etag.isNotEmpty) req.headers.set(HttpHeaders.ifNoneMatchHeader, etag);
+    final response = await req.close().timeout(const Duration(seconds: 25));
+    final text = await response.transform(utf8.decoder).join().timeout(const Duration(seconds: 25));
+    final received = response.headers.value(HttpHeaders.etagHeader);
+    if (response.statusCode == 304) return (status: 304, data: null, etag: received ?? etag);
+    if (response.statusCode != 200) throw ApiFailure.kind(ApiError.loadFailed, response.statusCode);
+    return (status: 200, data: jsonDecode(text), etag: received);
+  }
+
   Future<JsonMap> home(DateTime date) async => jsonMap(
     await request(
       '/mobile/v1/home',

@@ -17,7 +17,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
   await AppLocale.instance.load();
-  await installFactorySportCatalog();
+  // Deportes: copia de fábrica y disco ya aplicados antes del primer fotograma; la red va en segundo plano.
+  await SportCatalogStore.instance.start();
   const app = QuantFutApp();
   runApp(firebaseEnabled ? const FirebaseStartup(child: app) : app);
 }
