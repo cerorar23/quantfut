@@ -63,8 +63,8 @@ class _ProductShellState extends State<ProductShell>
   // Identificadores estables de la pestaña Predicciones (no son texto visible).
   String stream = 'high';
   // Deporte global: lo comparten Inicio, Predicciones y Mercados.
-  SportId sport = kFootball;
-  List<SportId> visibleSports = sportCatalog.ids;
+  SportId sport = sportCatalog.defaultVisible.first;
+  List<SportId> visibleSports = sportCatalog.defaultVisible;
   // Feeds de NBA y tenis: se piden la primera vez que se elige el deporte. Cada uno tiene su
   // propio estado; un fallo solo se ve en su hueco.
   final feeds = <SportId, SportFeed>{};
@@ -127,6 +127,10 @@ class _ProductShellState extends State<ProductShell>
     });
     _ensureFeed(sport);
   }
+
+  /// El catálogo de deportes cambió (llegó el del servidor o el del disco): relee orden y ocultos. Un fallo
+  /// aquí no debe romper la pantalla; se queda con lo que ya se ve.
+  void _catalogChanged() => unawaited(sportsChanged().catchError((Object _) {}));
 
   /// Petición pendiente del menú «Mis deportes». El Perfil la consume una vez (la retira con
   /// `onFocusHandled`), así que volver luego a Perfil lo abre arriba.
@@ -219,6 +223,7 @@ class _ProductShellState extends State<ProductShell>
   void initState() {
     super.initState();
     unawaited(loadSports());
+    sportCatalogNotifier.addListener(_catalogChanged);
     WidgetsBinding.instance.addObserver(this);
     services?.openedMatch.addListener(openNotification);
     services?.foregroundMessage.addListener(showNotification);
@@ -276,6 +281,7 @@ class _ProductShellState extends State<ProductShell>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    sportCatalogNotifier.removeListener(_catalogChanged);
     services?.openedMatch.removeListener(openNotification);
     services?.foregroundMessage.removeListener(showNotification);
     services?.removeListener(configurationChanged);

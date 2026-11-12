@@ -21,7 +21,7 @@ class MySportsSection extends StatefulWidget {
 
 class _MySportsSectionState extends State<MySportsSection> {
   List<SportId> order = sportCatalog.ids;
-  Set<SportId> hidden = {};
+  Set<SportId> hidden = sportCatalog.defaultHidden;
   bool saving = false;
 
   @override

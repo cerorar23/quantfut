@@ -238,6 +238,9 @@ final ValueNotifier<SportCatalog> sportCatalogNotifier = ValueNotifier(SportCata
 SportCatalog get sportCatalog => sportCatalogNotifier.value;
 
 /// Orden y ocultos. No conoce el almacenamiento: recibe `read`/`write`.
+///
+/// Tolerante con el catálogo: los ids que ya no están (deporte apagado o futuro) se CONSERVAN al guardar,
+/// los deportes nuevos van al final del orden y siempre queda uno visible (el primero del orden).
 class SportPrefs {
   SportPrefs({required this.read, required this.write, SportCatalog Function()? catalog})
     : _catalog = catalog ?? (() => sportCatalog);
@@ -251,24 +254,35 @@ class SportPrefs {
 
   List<SportId> _parse(String? raw) => [
     for (final id in (raw ?? '').split(','))
-      if (_catalog().contains(id.trim())) id.trim(),
+      if (id.trim().isNotEmpty) id.trim(),
   ];
 
-  /// Orden guardado, sin repetidos y con los deportes nuevos al final.
+  /// Orden guardado (solo deportes del catálogo, sin repetidos) y, al final, los que no estaban guardados.
   Future<List<SportId>> order() async {
-    final saved = _parse(await read(orderKey)).toSet().toList();
+    final catalog = _catalog();
+    final saved = [
+      for (final id in _parse(await read(orderKey)).toSet())
+        if (catalog.contains(id)) id,
+    ];
     return [
       ...saved,
-      for (final k in _catalog().ids)
-        if (!saved.contains(k)) k,
+      for (final id in catalog.ids)
+        if (!saved.contains(id)) id,
     ];
   }
 
-  /// Ocultos; nunca todos: el primero del orden siempre queda visible.
+  /// Ocultos; nunca todos: el primero del orden siempre queda visible. Un deporte en `preview` que la persona
+  /// aún no ha tocado (no está en el orden guardado) nace oculto.
   Future<Set<SportId>> hidden() async {
-    final hidden = _parse(await read(hiddenKey)).toSet();
-    final first = (await order()).first;
-    if (hidden.length >= _catalog().ids.length) hidden.remove(first);
+    final catalog = _catalog();
+    final savedOrder = _parse(await read(orderKey)).toSet();
+    final hidden = {
+      for (final id in _parse(await read(hiddenKey)))
+        if (catalog.contains(id)) id,
+      for (final s in catalog.sports)
+        if (s.isBeta && !savedOrder.contains(s.id)) s.id,
+    };
+    if (hidden.length >= catalog.sports.length) hidden.remove((await order()).first);
     return hidden;
   }
 
@@ -279,8 +293,18 @@ class SportPrefs {
   }
 
   Future<void> save({required List<SportId> order, required Set<SportId> hidden}) async {
-    await write(orderKey, order.join(','));
-    await write(hiddenKey, hidden.join(','));
+    final catalog = _catalog();
+    // Lo que ya estaba guardado y el catálogo de hoy no conoce se conserva detrás de lo visible.
+    final keptOrder = [
+      for (final id in _parse(await read(orderKey)).toSet())
+        if (!catalog.contains(id) && !order.contains(id)) id,
+    ];
+    final keptHidden = [
+      for (final id in _parse(await read(hiddenKey)).toSet())
+        if (!catalog.contains(id) && !hidden.contains(id)) id,
+    ];
+    await write(orderKey, [...order, ...keptOrder].join(','));
+    await write(hiddenKey, [...hidden, ...keptHidden].join(','));
   }
 }
 
