@@ -11,9 +11,10 @@ Endpoints (públicos, anónimos, cacheables; no miran `Authorization` ni cookies
         Orden por `start` y luego `id`. En la cartelera cada evento lleva solo el mercado destacado y los que el adaptador
         marca como `principal` (el mercado que da nombre al partido, p. ej. el ganador de NBA, aunque no sea destacado
         ni elegible: así un partido con el ganador en revisión sigue saliendo con su mercado). Sin ninguno, `markets: []`.
-    GET /deportes/v1/{deporte}/partido/{id}?cliente=…
-        -> {contrato, deporte, evento: Evento, bloques: []}         Cache-Control: public, max-age=60
-        `bloques` está reservado y siempre vacío (lo rellena la Fase 4).
+    GET /deportes/v1/{deporte}/partido/{id}?cliente=…&lang=xx
+        -> {contrato, deporte, evento: Evento, bloques: [Bloque]}   Cache-Control: public, max-age=60
+        `lang` (aditivo, `^[a-z]{2}$`, por omisión `es`): idioma de los textos de los bloques, con la regla de
+        `/cliente/v1/config`: `web` sirve `es,en,pt` (un idioma apagado o desconocido sale como `es`), `app` los 6.
     GET /deportes/v1/{deporte}/partido/{id}/mercados?cliente=…
         -> {contrato, deporte, evento_id, familias: [{id, mercados: [Mercado]}]}      max-age=60
         Familias en el orden del catálogo (`deporte_mercados`), solo las visibles para ese cliente y con mercados; lo
@@ -31,6 +32,24 @@ Dentro de `contrato: 1` solo se AÑADEN campos opcionales (nada se quita ni camb
 Fallos: partido inexistente o de otro deporte -> 404. Un adaptador que lanza, o que devuelve algo que no cumple los
 modelos, -> 503 `{"detail": ...}` (nunca un 200 con lista vacía que parezca «sin partidos»). Deporte encendido sin
 adaptador registrado -> 503 «adaptador no disponible».
+
+── Bloques de contenido (`partido.bloques`, Fase 4 tarea 4.1) ───────────────────────────────────────────────────
+
+Estadísticas ya descritas que el cliente pinta sin conocer el deporte. Cuatro tipos cerrados (`extra='forbid'`), todos con
+`id` (`^[a-z0-9_]{1,40}$`, único en el partido), `tipo` y `titulo`:
+
+    tabla   {columnas: [texto] (1–12), filas: [[texto|número|null]] (≤100, cada fila del ancho de `columnas`)}
+    barras  {items: [{etiqueta, valor 0–1, nota?}]}   (≤20)
+    pares   {items: [{etiqueta, valor texto|número|null}]}   (≤30)
+    texto   {cuerpo}   (1–600 caracteres)
+
+Ningún texto lleva HTML (`<` ni `>`). Un bloque que no valide, un tipo desconocido, ids repetidos, una clave inexistente o un
+título/cuerpo que no sea clave -> 503 (igual que un evento fuera de contrato). Nada que dependa del usuario ni del motor interno.
+Idioma: el adaptador escribe CLAVES de `bloques_textos.TEXTOS` con prefijo `@` (`'@forma'`) en `titulo`, `cuerpo`, columnas,
+etiquetas, notas y celdas de texto; el router las resuelve a `lang` con caída a `es`. Lo que no lleva `@` (equipos, jugadores)
+y los números salen tal cual. `titulo` y `cuerpo` SIEMPRE son claves.
+Cómo los entrega el adaptador: método OPCIONAL `bloques(self, id: str) -> list[Bloque | dict]` (fuera del `Protocol`, para no
+romper a los adaptadores que no lo tienen: sin él, `bloques: []`). Se llama tras `partido(id)`, solo en este endpoint.
 
 ── Cómo añadir un adaptador (tenis, NBA, fútbol, …) ─────────────────────────────────────────────────────────────
 
@@ -67,11 +86,12 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import (AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, StrictFloat, StrictInt,
+                      TypeAdapter, ValidationError, field_validator, model_validator)
 
 from ..comercial import catalogo
-from . import fichas
-from .cliente_config import Cliente, _coincide, _etag
+from . import bloques_textos, fichas
+from .cliente_config import Cliente, _coincide, _etag, _idioma
 
 log = logging.getLogger(__name__)
 router = APIRouter(tags=['deportes'])
@@ -151,11 +171,77 @@ class Cartelera(_Modelo):
     eventos: list[Evento]
 
 
+def _sin_html(v: str) -> str:
+    if '<' in v or '>' in v:
+        raise ValueError('el texto de un bloque no lleva HTML')
+    return v
+
+
+Texto = Annotated[str, AfterValidator(_sin_html)]
+Numero = Annotated[StrictInt | StrictFloat, Field(allow_inf_nan=False)]
+Celda = Numero | Texto | None
+_ID_BLOQUE = r'^[a-z0-9_]{1,40}$'
+
+
+class _BloqueBase(_Modelo):
+    id: str = Field(pattern=_ID_BLOQUE)
+    titulo: Texto = Field(min_length=1, max_length=120)
+
+
+class BloqueTabla(_BloqueBase):
+    tipo: Literal['tabla'] = 'tabla'
+    columnas: list[Texto] = Field(min_length=1, max_length=12)
+    filas: list[list[Celda]] = Field(max_length=100)
+
+    @model_validator(mode='after')
+    def _filas_del_ancho_de_las_columnas(self):
+        if any(len(f) != len(self.columnas) for f in self.filas):
+            raise ValueError('cada fila debe tener tantas celdas como columnas')
+        return self
+
+
+class ItemBarra(_Modelo):
+    etiqueta: Texto
+    valor: float = Field(ge=0, le=1)
+    nota: Texto | None = None
+
+
+class BloqueBarras(_BloqueBase):
+    tipo: Literal['barras'] = 'barras'
+    items: list[ItemBarra] = Field(max_length=20)
+
+
+class ItemPar(_Modelo):
+    etiqueta: Texto
+    valor: Celda
+
+
+class BloquePares(_BloqueBase):
+    tipo: Literal['pares'] = 'pares'
+    items: list[ItemPar] = Field(max_length=30)
+
+
+class BloqueTexto(_BloqueBase):
+    tipo: Literal['texto'] = 'texto'
+    cuerpo: Texto = Field(min_length=1, max_length=600)
+
+
+Bloque = Annotated[BloqueTabla | BloqueBarras | BloquePares | BloqueTexto, Field(discriminator='tipo')]
+_BLOQUES = TypeAdapter(list[Bloque])
+
+
 class Partido(_Modelo):
     contrato: Literal[1] = 1
     deporte: str
     evento: Evento
-    bloques: list[dict] = Field(default_factory=list)   # reservado para la Fase 4
+    bloques: list[Bloque] = Field(default_factory=list)
+
+    @model_validator(mode='after')
+    def _ids_unicos(self):
+        ids = [b.id for b in self.bloques]
+        if len(set(ids)) != len(ids):
+            raise ValueError('los ids de los bloques deben ser únicos en el partido')
+        return self
 
 
 class FamiliaMercados(_Modelo):
@@ -267,6 +353,41 @@ def cartelera(request: Request, deporte: str = _PATH_DEPORTE, cliente: Cliente =
     return _responder(request, cuerpo, 30)
 
 
+def _resolver_bloque(b: dict, lang: str) -> dict:
+    """Pasa las claves `@…` de un bloque (ya validado) a texto en `lang`. Título y cuerpo SOLO pueden ser claves."""
+    r = bloques_textos.resolver
+    for campo in ('titulo', 'cuerpo'):
+        if campo in b:
+            if not b[campo].startswith(bloques_textos.PREFIJO):
+                raise ValueError(f'{campo} del bloque {b["id"]} debe ser una clave de bloques_textos')
+            b[campo] = r(b[campo], lang)
+
+    def txt(v):                       # las cifras y el None pasan igual
+        return r(v, lang) if isinstance(v, str) else v
+    if b['tipo'] == 'tabla':
+        b['columnas'] = [txt(c) for c in b['columnas']]
+        b['filas'] = [[txt(c) for c in f] for f in b['filas']]
+    elif b['tipo'] in ('barras', 'pares'):
+        for it in b['items']:
+            for k in ('etiqueta', 'nota', 'valor'):
+                if k in it:
+                    it[k] = txt(it[k])
+    return b
+
+
+def _bloques(ctx: _Ctx, id: str, lang: str) -> list[dict]:
+    """Bloques de contenido del adaptador (método OPCIONAL `bloques(id)`; sin él, ninguno), validados y en `lang`."""
+    fn = getattr(ctx.adaptador, 'bloques', None)
+    if fn is None:
+        return []
+    bruto = _llamar(ctx, fn, id)
+    try:
+        validados = _BLOQUES.validate_python([b.model_dump() if isinstance(b, BaseModel) else b for b in (bruto or [])])
+        return [_resolver_bloque(b.model_dump(), lang) for b in validados]
+    except (ValidationError, ValueError, KeyError, TypeError) as e:
+        raise _fallo(ctx.id, e)
+
+
 def _partido(ctx: _Ctx, id: str) -> Evento:
     bruto = _llamar(ctx, ctx.adaptador.partido, id)
     if bruto is None:
@@ -279,9 +400,15 @@ def _partido(ctx: _Ctx, id: str) -> Evento:
 
 @router.get('/deportes/v1/{deporte}/partido/{id}', response_model=Partido)
 def partido(request: Request, deporte: str = _PATH_DEPORTE, id: str = _PATH_ID, cliente: Cliente = Query(...),
-            contrato: int = Query(CONTRATO, ge=1, le=1)):
+            contrato: int = Query(CONTRATO, ge=1, le=1), lang: str = Query('es', pattern=r'^[a-z]{2}$')):
     ctx = _Ctx(deporte, cliente)
-    return _responder(request, Partido(deporte=deporte, evento=_partido(ctx, id)), 60)
+    ev = _partido(ctx, id)
+    bloques = _bloques(ctx, id, _idioma(lang, cliente))
+    try:
+        cuerpo = Partido(deporte=deporte, evento=ev, bloques=bloques)
+    except ValidationError as e:
+        raise _fallo(deporte, e)
+    return _responder(request, cuerpo, 60)
 
 
 @router.get('/deportes/v1/{deporte}/partido/{id}/mercados', response_model=Mercados)

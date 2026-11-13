@@ -386,8 +386,9 @@ publica la versión de la app: A a E no dependen de esa fecha.
 **Fase 4 · Pantallas genéricas y por bloques**
 - [x] `[Fable 5.2 · alto]` Diseño. Hecho el 13-nov-2026 con Opus 5.5: ver «Especificación de la Fase 4» más abajo. Cambia el alcance del plan
       original: primero la pantalla genérica de deporte (sin ella ningún deporte nuevo se ve) y después los bloques.
-- [ ] `[Sonnet 5.5 · medio]` 4.1 · Servidor, bloques de contenido: `bloques` de `/deportes/v1/{deporte}/partido/{id}` deja de ir siempre vacío
+- [x] `[Sonnet 5.5 · medio]` 4.1 · Servidor, bloques de contenido: `bloques` de `/deportes/v1/{deporte}/partido/{id}` deja de ir siempre vacío
       (tipos `tabla`, `barras`, `pares`, `texto`), con `lang` aditivo y etiquetas en 6 idiomas desde `src/qf/api/bloques_textos.py`.
+      Hecho el 13-nov-2026 (rama `claude/f4-bloques-contenido-1e0fd5`, sin desplegar): modelos en `deportes_v1.py`, textos en `bloques_textos.py`, pruebas en `tests/test_deportes_bloques.py` y `tests/test_bloques_textos.py`.
 - [ ] `[Sonnet 5.5 · medio]` 4.2 · Servidor, definición de pantallas: migración con `pantalla_borradores` y `pantalla_publicaciones` (solo
       inserción), validación cerrada, entrega aditiva en `/cliente/v1/config` (`pantallas`, parámetro `build`).
 - [ ] `[Sonnet 5.5 · medio]` 4.3 · Panel `/control/pantallas`: borrador, validar, publicar y volver a una versión anterior.
