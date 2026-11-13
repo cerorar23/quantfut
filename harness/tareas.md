@@ -261,7 +261,7 @@ publica la versión de la app: A a E no dependen de esa fecha.
 - [x] `[Sonnet 5.5 · medio]` Parte A (base común, sin deportes): `src/qf/api/deportes_v1.py` con el router `/deportes/v1/{deporte}/…`, los modelos
       Pydantic del contrato, el registro `ADAPTADORES` y la suite de pruebas de contrato parametrizada por adaptador; `deportes` en
       `seo.NOINDEX_SEGMENTS`; ids y slugs reservados en `catalogo.validar_deporte`.
-- [ ] `[Sonnet 5.5 · medio]` Parte B (adaptador de tenis): el más simple, porque el servidor ya emite eventos casi en la forma común
+- [x] `[Sonnet 5.5 · medio]` Parte B (adaptador de tenis): el más simple, porque el servidor ya emite eventos casi en la forma común
       (`tenis_publico.read_public_feed`). Va primero para fijar el patrón.
 - [ ] `[Sonnet 5.5 · medio]` Parte C (adaptador de NBA): sobre `nba_datos.py`; resuelve en el servidor la ventana de días que hoy la web pide con 9
       llamadas a `/nba/v1/cartelera`.
