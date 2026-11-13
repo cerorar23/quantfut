@@ -272,6 +272,11 @@ publica la versión de la app: A a E no dependen de esa fecha.
       necesita una fila en el catálogo y un adaptador, y nada más en el servidor.
 - [x] `[Sonnet 5.5 · bajo]` Despliegue: solo la API (sin migración); tras él, los clientes pueden empezar a leer el contrato.
       Hecho el 13-nov-2026 01:11 UTC (`quantfut-api:cdbd7379`, ver `DEPLOYS.md`). La parte E la cubre el adaptador de prueba que ya trae la suite de `tests/test_deportes_v1.py`.
+- [ ] `[Sonnet 5.5 · medio]` Contrato aditivo para la cartelera de NBA (descubierto por el PR #385, que deja la web lista con el interruptor
+      `CONTRATO_WEB.nba` apagado): `Evento.team_projection` (`[mu_local, mu_visitante]` o `null`), el mercado ganador en la cartelera también
+      cuando es revisión (`eligible=false`), y `destacado` con la misma regla que `featuredSportMarket` de la web (75 %). Después, encender
+      `CONTRATO_WEB.nba` en la web: la portada pasa de 9 peticiones de NBA a 1. Tenis se queda con su endpoint (no hay ahorro: ya es 1)
+      y el detalle de NBA también (le faltan proyecciones de jugadores, `estimate`, `conditional` y los dos lados del ganador).
 - Después (no es de esta fase, requiere decisión del titular): que la web y la app lean NBA y tenis por el contrato en lugar de sus endpoints
   propios. Es lo que reduce las ~35 peticiones a la API de la portada, pero cambia clientes ya publicados.
 - **Criterio de hecho corregido:** el plan decía «dar de alta un deporte de prueba y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`».
@@ -360,13 +365,96 @@ publica la versión de la app: A a E no dependen de esa fecha.
 - Solo la API, sin migración ni cambios de frontend ni de app: nadie consume el contrato hasta que un cliente se cambie (decisión posterior).
   Como en las fases anteriores: pre-vuelo con `scripts/deploy.sh estado`, huella pública antes y después, construir, ensayar y recrear solo `api`.
 
-**Fase 4 · Pantallas por bloques (una publicación de la app)**
-- [ ] `[Fable 5.2 · alto]` Diseño: tabla `pantalla_bloques` (pantalla, deporte, cliente, orden, tipo, parámetros, build mínimo), tipos
-      iniciales (uno por componente que ya existe: cabecera, lista de partidos, tarjeta de mercado, tabla, curva por línea, banner,
-      llamada a VIP), parámetros de cada tipo y qué hace una app vieja ante un tipo nuevo.
-- [ ] `[Sonnet 5.5 · medio]` (una sesión por cliente) Inicio y detalle de partido se pintan desde la lista recibida; un tipo desconocido
-      se ignora, así una app vieja no se rompe.
-- [ ] `[Sonnet 5.5 · medio]` Panel «Pantallas»: ordenar, ocultar y parametrizar bloques, con borrador → publicado y vuelta atrás a la versión anterior.
+**Fase 4 · Pantallas genéricas y por bloques**
+- [x] `[Fable 5.2 · alto]` Diseño. Hecho el 13-nov-2026 con Opus 5.5: ver «Especificación de la Fase 4» más abajo. Cambia el alcance del plan
+      original: primero la pantalla genérica de deporte (sin ella ningún deporte nuevo se ve) y después los bloques.
+- [ ] `[Sonnet 5.5 · medio]` 4.1 · Servidor, bloques de contenido: `bloques` de `/deportes/v1/{deporte}/partido/{id}` deja de ir siempre vacío
+      (tipos `tabla`, `barras`, `pares`, `texto`), con `lang` aditivo y etiquetas en 6 idiomas desde `src/qf/api/bloques_textos.py`.
+- [ ] `[Sonnet 5.5 · medio]` 4.2 · Servidor, definición de pantallas: migración con `pantalla_borradores` y `pantalla_publicaciones` (solo
+      inserción), validación cerrada, entrega aditiva en `/cliente/v1/config` (`pantallas`, parámetro `build`).
+- [ ] `[Sonnet 5.5 · medio]` 4.3 · Panel `/control/pantallas`: borrador, validar, publicar y volver a una versión anterior.
+- [ ] `[Sonnet 5.5 · medio-alto]` 4.4 · Web: pantalla genérica de deporte (lista y detalle) para cualquier deporte del catálogo, por el contrato;
+      pinta las secciones según `pantallas` y los bloques de contenido. Después de que la web lea NBA y tenis por el contrato (PR en curso).
+- [ ] `[Opus 5.5 · medio-alto]` 4.5 · App: lo mismo en Flutter, con la app leyendo el contrato para los deportes sin pantalla propia.
+      Textos nuevos en 6 idiomas, subir el código de versión y probar el release. Es una publicación de tienda.
+      Decidido por el titular el 13-nov-2026: va en la publicación SIGUIENTE a la `1.1.1+11`, que se publica sin esperar a esta fase.
+- [ ] `[Sonnet 5.5 · bajo]` 4.6 · Despliegues: servidor (4.1–4.3) primero, luego la web (4.4); la app cuando el titular decida.
+- **Criterio de hecho de la fase** (el que la Fase 3 no podía cumplir): en producción, un deporte de prueba en `preview` (p. ej. `tenis_prueba`
+  con `adaptador = tenis`) se ve en la web y en la app con su lista, su detalle, sus mercados por familia y sus bloques de contenido, sin tocar
+  `frontend/` ni `apps/mobile/` después de 4.4 y 4.5; y apagar o reordenar una sección desde `/control/pantallas` cambia lo que se ve sin
+  publicar nada.
+
+**Especificación de la Fase 4 (diseño del 13-nov-2026; quien ejecute NO rediseña, solo implementa esto)**
+
+*Hallazgos que la motivan (leídos el 13-nov en el código):*
+- **La pantalla genérica casi existe.** NBA y tenis ya se pintan con pantallas comunes que trabajan sobre la forma de evento del contrato: en la
+  web, la tarjeta y la lista del hub (`card`, `board`, `sportTabs` de `ergonomic-views.js`) y la ventana de deporte (`duel`, `forecast`,
+  tabla de mercados por familia, `bar`, `kv` de `sports-window.js`); en la app, `HomeSport` (`_EventRow`), `SportDetail` (`_Header`,
+  `_Predictions`, `_SealCard`, `_MarketRow`) y `SportMarkets`. Solo ramifican por deporte para extras (jugadores y proyecciones de NBA,
+  superficie y fotos de tenis, pestañas de estadísticas, H2H y alertas). Un deporte nuevo puede usar esas mismas pantallas si los extras se
+  vuelven opcionales y los datos llegan por `/deportes/v1`.
+- **El fútbol no es genérico** (agenda, VIP, desbloqueos, Escalera, parley, ficha de partido propia) y no se migra en esta fase.
+- Lo que una pantalla genérica no puede saber de un deporte que no conoce son sus estadísticas: tienen que llegar del servidor ya descritas
+  (de ahí los bloques de contenido).
+- La app `1.1.1+11` (Fase 2) está fusionada pero sin publicar; la parte de app de esta fase es otra publicación.
+
+*A. Dos clases de bloque (no se mezclan)*
+- **Bloques de contenido**: datos ya descritos que manda un ADAPTADOR dentro de `partido.bloques` del contrato. El cliente los pinta sin conocer el
+  deporte. Sirven para que un deporte nuevo tenga estadísticas sin código de cliente.
+- **Bloques de pantalla**: el orden, la visibilidad y los parámetros de las secciones de una pantalla, decididos en el PANEL y entregados en
+  `/cliente/v1/config`. No traen datos: dicen qué secciones se pintan y en qué orden.
+
+*B. Bloques de contenido (servidor, 4.1)*
+- `partido.bloques: [Bloque]`, cada uno `{id, tipo, titulo, ...}` con `extra='forbid'`. Tipos cerrados, cada uno con su componente existente:
+  - `tabla`: `{columnas: [texto], filas: [[texto|número|null]]}` (máximo 12 columnas y 100 filas) → web: la tabla de mercados `win-table`;
+    app: la tabla de `SportAnalysis`/`_StatLine`.
+  - `barras`: `{items: [{etiqueta, valor (0–1), nota?}]}` (máximo 20) → web `bar` (`win-bar`); app `probabilityBars`.
+  - `pares`: `{items: [{etiqueta, valor}]}` (máximo 30) → web `kv` (`win-kv`); app `_StatLine`.
+  - `texto`: `{cuerpo}` (máximo 600 caracteres, sin HTML) → web párrafo de `empty-state`/`cyber-alert`; app `SportNote`.
+- **Idioma:** `GET …/partido/{id}?cliente=…&lang=xx` (aditivo; mismo formato que `/cliente/v1/config`: web `es,en,pt`, app los 6). Los títulos y
+  etiquetas salen de un diccionario único `src/qf/api/bloques_textos.py` con los 6 idiomas por clave (como `mensajes.py`), nunca texto libre del
+  adaptador; una prueba exige los 6 idiomas en cada clave. Los nombres propios (equipos, jugadores) y los números no se traducen.
+- Ningún bloque lleva datos del motor que no sean públicos (sin `fit`, sin proyecciones internas) ni nada que dependa del usuario.
+- Los adaptadores actuales pueden dejar `bloques` vacío; tenis y NBA lo rellenan en una tarea aparte si se decide. El adaptador de prueba de la
+  suite añade un bloque de cada tipo y la suite de contrato los valida (tipo cerrado, límites, 6 idiomas, sin centinelas).
+
+*C. Bloques de pantalla (servidor, 4.2)*
+- Pantallas y secciones cerradas (las que ya existen en ambos clientes; el id es el contrato):
+  - `deporte` (lista de un deporte): `dias` (tira de días), `resumen` (cifras del día), `destacado` (tarjeta destacada), `partidos` (lista).
+  - `partido` (detalle de un evento): `cabecera`, `pronostico` (mercado destacado y probabilidades), `mercados` (por familia), `contenido`
+    (los bloques de contenido del servidor), `sello` (registro de la cadena), `estadisticas`, `h2h`, `alertas` (las tres últimas solo existen donde
+    el cliente ya tiene esa pieza para ese deporte; en un deporte nuevo se ignoran).
+  - Más dos tipos insertables en cualquier posición: `aviso` `{texto: {6 idiomas}, tono: info|exito|aviso|peligro, enlace?: ruta relativa}` →
+    web `cyber-alert`, app `liveCard`; y `vip` (llamada a los planes) → los componentes de planes que ya existen. Sin CSS nuevo.
+- Forma de un bloque de pantalla: `{id (^[a-z0-9_]{1,40}$, único en la pantalla), tipo (seccion|aviso|vip), seccion? (de la lista de esa pantalla),
+  visible (bool), params ({} o los del tipo), build_min_app (entero o null)}`.
+- Clave de una definición: `(pantalla, deporte ('*' = todos), cliente (web|app))`. Se usa la del deporte si existe; si no, la de `'*'`.
+- **Sin definición publicada, cada cliente usa su orden actual en código.** Así, desplegar 4.2 no cambia nada hasta que alguien publique.
+- Tablas (una migración): `pantalla_borradores` (una fila por clave, editable, con `updated_by/at`) y `pantalla_publicaciones` (solo inserción, con el
+  trigger `deny_mutation` como `acceso_reglas`: `clave`, `version` creciente por clave, `bloques jsonb`, `publicado_por`, `publicado_en`, `nota` no vacía).
+  La publicada vigente es la de mayor `version` de cada clave. Volver atrás = publicar de nuevo el contenido de una versión anterior (nueva fila).
+- Validación en servidor (no solo en el panel): tipos y secciones de la lista cerrada, ids únicos, textos de `aviso` en los 6 idiomas (la web solo usa
+  `es,en,pt`), `enlace` relativo a una ruta existente, como mucho 20 bloques por pantalla, y al menos una sección visible.
+- Entrega aditiva en `/cliente/v1/config` (sigue `contrato: 1`): `pantallas: {deporte: {'*': [...], 'nba': [...]}, partido: {...}}` solo del cliente
+  pedido; la app añade `build=<número tras el + de su versión>` y el servidor quita los bloques con `build_min_app` mayor. `build` entra en la clave
+  de caché y del `ETag`. `PUBLICAS`/`PRIVADAS` ganan las dos tablas (privadas: `publicado_por`, `nota`, `updated_by`, `updated_at` y todo el borrador).
+- Cliente ante lo desconocido: tipo, sección o parámetro desconocidos se ignoran; una lista sin secciones visibles se trata como «sin definición».
+
+*D. Pantalla genérica de deporte (clientes, 4.4 y 4.5)*
+- Cualquier deporte del catálogo con estado distinto de `off` para ese cliente y sin pantalla propia se pinta con las pantallas comunes de NBA y
+  tenis, alimentadas por `/deportes/v1/{deporte}/cartelera` (lista) y `/partido/{id}` (detalle). Los extras de NBA y tenis se quedan atados a su
+  `id` y, para un deporte nuevo, desaparecen; en su lugar se pinta la sección `contenido`.
+- Web: entrada por la ruta genérica `/{slug}/` que ya existe en el servidor (Fase 2, parte C) y por la navegación que ya sale del catálogo.
+- App: el selector y «Mis deportes» ya listan los deportes del catálogo (Fase 2, parte F); falta que la pantalla de un deporte desconocido no
+  esté vacía. Para NBA y tenis la app sigue con sus endpoints actuales salvo que se decida pasarla al contrato (no es parte de esta fase).
+- Ambos clientes aplican `pantallas` (orden, visibilidad, avisos y llamada VIP) a las pantallas `deporte` y `partido` de cualquier deporte no
+  futbolístico; sin definición, el orden de hoy.
+
+*E. Límites*
+- Nada de esta fase toca el fútbol, la publicación, el modelo, el VIP ni la cadena de sellos.
+- Ningún tipo nuevo de bloque sin una versión de cliente que lo pinte: el servidor rechaza tipos fuera de la lista y los clientes ignoran los que
+  no conocen. Un tipo nuevo = añadirlo a la lista cerrada del servidor + una versión de cliente con `build_min_app`.
+- Sin CSS nuevo: cada tipo usa un componente que ya existe; si alguno exigiera estilo nuevo, se descarta el tipo, no se añade la hoja.
 
 **Fase 5 · Textos de la app editables**
 - [ ] `[Sonnet 5.5 · medio]` Sobrescritura remota de claves de `app_*.arb` (la copia empaquetada sigue siendo el valor por defecto). El panel no deja guardar
