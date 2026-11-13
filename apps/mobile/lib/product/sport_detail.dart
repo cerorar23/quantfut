@@ -762,8 +762,8 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
         if (event.seal.isEmpty) return const [];
         return [
           const SizedBox(height: 4),
-          const QuoteReferenceCaption(),
-          const SizedBox(height: 8),
+          // El pie de «cuota de referencia» solo tiene sentido si algún mercado trae cuota.
+          if (event.markets.any((m) => m.price != null)) ...[const QuoteReferenceCaption(), const SizedBox(height: 8)],
           SealLine(seal: event.seal, publishedAt: event.sealedAt),
           const SizedBox(height: 12),
         ];

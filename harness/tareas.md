@@ -399,9 +399,10 @@ publica la versión de la app: A a E no dependen de esa fecha.
       pinta las secciones según `pantallas` y los bloques de contenido. Después de que la web lea NBA y tenis por el contrato (PR en curso).
       Hecho el 13-nov-2026 (rama `claude/f4-web-generica-a403e6`, sin desplegar): `sports-window.js` (pantalla genérica), `sports-data.js` (evento, detalle y bloques), `rutas.js` (pantallas y entrada); pruebas `pantalla-generica.test.mjs` y `paridad-generica.test.mjs`.
       Desplegada el 13-nov-2026 13:44 UTC (`quantfut-api:fe43075e`, ver `DEPLOYS.md`). El adaptador de prueba parametrizado por id (`api/deportes_demo.py`, adaptador `prueba`) está hecho el 13-nov-2026 (rama `claude/adaptador-demo-30d1d9`, sin desplegar).
-- [ ] `[Opus 5.5 · medio-alto]` 4.5 · App: lo mismo en Flutter, con la app leyendo el contrato para los deportes sin pantalla propia.
+- [x] `[Opus 5.5 · medio-alto]` 4.5 · App: lo mismo en Flutter, con la app leyendo el contrato para los deportes sin pantalla propia.
       Textos nuevos en 6 idiomas, subir el código de versión y probar el release. Es una publicación de tienda.
       Decidido por el titular el 13-nov-2026: va en la publicación SIGUIENTE a la `1.1.1+11`, que se publica sin esperar a esta fase.
+      Hecho el 13-nov-2026 (rama `claude/f4-app-generica-d02a8c`, sin desplegar ni publicar; versión `1.1.1+12`): `sport_contract.dart` (contrato, familias y bloques), `screen_definition.dart` (`pantallas`), `sport_screen_blocks.dart` (aviso y VIP) y la ficha `GenericSportDetail`; pruebas `sport_contract_test`, `screen_definition_test`, `generic_sport_ui_test`. Prueba local: `apps/mobile/docs/PRUEBA_LOCAL_CONTRATO.md`.
 - [ ] `[Sonnet 5.5 · bajo]` 4.6 · Despliegues: servidor (4.1–4.3) primero, luego la web (4.4); la app cuando el titular decida.
 - **Criterio de hecho de la fase** (el que la Fase 3 no podía cumplir): en producción, un deporte de prueba en `preview` (p. ej. `tenis_prueba`
   con `adaptador = tenis`) se ve en la web y en la app con su lista, su detalle, sus mercados por familia y sus bloques de contenido, sin tocar
