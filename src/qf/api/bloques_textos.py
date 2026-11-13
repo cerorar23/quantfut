@@ -45,6 +45,26 @@ TEXTOS: dict[str, tuple[str, str, str, str, str, str]] = {
         "L'échantillon est petit : à prendre comme une indication, pas comme une certitude.",
         'Il campione è piccolo: consideralo un’indicazione, non una certezza.',
         'Die Stichprobe ist klein: als Orientierung verstehen, nicht als Gewissheit.'),
+    'demo_titulo': ('Datos de demostración', 'Demo data', 'Dados de demonstração', 'Données de démonstration',
+                    'Dati dimostrativi', 'Demodaten'),
+    'demo_liga': ('Demostración', 'Demonstration', 'Demonstração', 'Démonstration', 'Dimostrazione', 'Demonstration'),
+    'demo_tabla': ('Tabla de demostración', 'Demo table', 'Tabela de demonstração', 'Tableau de démonstration',
+                   'Tabella dimostrativa', 'Demotabelle'),
+    'demo_barras': ('Barras de demostración', 'Demo bars', 'Barras de demonstração', 'Barres de démonstration',
+                    'Barre dimostrative', 'Demobalken'),
+    'demo_pares': ('Pares de demostración', 'Demo pairs', 'Pares de demonstração', 'Paires de démonstration',
+                   'Coppie dimostrative', 'Demopaare'),
+    'demo_dato_a': ('Dato A', 'Item A', 'Dado A', 'Donnée A', 'Dato A', 'Wert A'),
+    'demo_dato_b': ('Dato B', 'Item B', 'Dado B', 'Donnée B', 'Dato B', 'Wert B'),
+    'demo_dato_c': ('Dato C', 'Item C', 'Dado C', 'Donnée C', 'Dato C', 'Wert C'),
+    'demo_valor': ('Valor', 'Value', 'Valor', 'Valeur', 'Valore', 'Wert'),
+    'demo_aviso': (
+        'Son datos de demostración sin valor de pronóstico: no los uses para decidir nada.',
+        'This is demo data with no forecasting value: do not use it to decide anything.',
+        'São dados de demonstração sem valor de prognóstico: não os use para decidir nada.',
+        'Ce sont des données de démonstration sans valeur de pronostic : ne les utilisez pas pour décider.',
+        'Sono dati dimostrativi senza valore di pronostico: non usarli per decidere nulla.',
+        'Dies sind Demodaten ohne Prognosewert: nicht zum Entscheiden verwenden.'),
 }
 
 

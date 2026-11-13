@@ -283,6 +283,8 @@ class _Ctx:
         adaptador = ADAPTADORES.get(fila['adaptador'] or '')
         if adaptador is None:
             raise HTTPException(503, 'Adaptador no disponible')
+        if hasattr(adaptador, 'para'):          # adaptador parametrizado por id (demostración): se liga al deporte pedido
+            adaptador = adaptador.para(deporte)
         self.adaptador = adaptador
 
 
