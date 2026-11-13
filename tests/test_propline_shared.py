@@ -741,3 +741,57 @@ def test_team_stats_refuses_when_both_names_fit_one_side_or_none_fits():
     doc = dict(home_team="Palmeiras-SP", away_team="Fluminense-RJ", stats=team_rows(("Alpha", "corners", 1.0),
                                                                                      ("Beta", "corners", 2.0)))
     assert pl.team_stats(doc) == {}
+
+
+# --- doble oportunidad: PropLine la nombra distinto según la casa y la liga (13-nov-2026) -----------------------------------
+# LaLiga 2 y Serie B llegaban con «Leganés / Draw», «Burgos / Draw», «Leganés / Burgos»: el ingesto solo conocía «1X»/«X2»/«12» y
+# «<local> or Draw», así que no guardaba ni una fila de doble oportunidad en esas ligas (y en Bundesliga 2, Eliteserien…).
+
+def _doble(home, away, nombres, book="pinnacle"):
+    e = event()
+    e["home_team"], e["away_team"] = home, away
+    e["bookmakers"] = [dict(key=book, markets=[dict(key="double_chance", period=None, team=None, line_type="main",
+        outcomes=[dict(name=n, side=None, price=p, point=None, player_id=None, book_updated_at=None,
+                       last_seen_at="2026-10-23T21:29:00Z") for n, p in nombres])])]
+    return e
+
+
+def _selecciones(e, book="pinnacle"):
+    from qf.ingest.propline_ingest import football_rows
+    rows = football_rows(e, "match", NOW, pl.parse_time(e["commence_time"]), "hourly:1")
+    return {r[3]: r[5] for r in rows if r[2] == "double_chance" and r[1] == book}
+
+
+def test_doble_oportunidad_con_barra_y_empate_de_laliga_2():
+    e = _doble("Leganés", "Burgos", [("Leganés / Draw", -260), ("Burgos / Draw", -193), ("Leganés / Burgos", -290)], "bovada")
+    assert _selecciones(e, "bovada") == {"1X": 1.3846153846153846, "X2": 1.5181347150259068, "12": 1.3448275862068966}
+
+
+def test_doble_oportunidad_con_otro_nombre_de_equipo_que_el_evento():
+    # Bovada escribe «Hellas Verona» y el evento dice «Verona»; el empate puede ir delante o detrás y sin espacios.
+    e = _doble("Verona", "Cesena", [("Cesena / Draw", 104), ("Hellas Verona / Cesena", -385), ("Hellas Verona / Draw", -500)], "bovada")
+    assert set(_selecciones(e, "bovada")) == {"1X", "X2", "12"}
+    assert _selecciones(e, "bovada")["X2"] == pytest.approx(2.04) and _selecciones(e, "bovada")["1X"] == pytest.approx(1.2)
+    e = _doble("Mirassol SP", "Atletico MG", [("Draw/Atletico Mineiro MG", -200), ("Mirassol SP/Draw", -150), ("Mirassol SP/Atletico Mineiro MG", -300)], "rebet")
+    assert set(_selecciones(e, "rebet")) == {"1X", "X2", "12"}
+
+
+def test_doble_oportunidad_de_pinnacle_con_or_y_nombre_largo():
+    e = _doble("Mirassol SP", "Atletico MG", [("Draw Or Atletico Mineiro", -250), ("Mirassol SP Or Draw", -140), ("Mirassol SP Or Atletico Mineiro", -320)])
+    s = _selecciones(e)
+    assert s["X2"] == pytest.approx(1.4) and s["1X"] == pytest.approx(1.714285714, rel=1e-6) and "12" in s
+
+
+def test_doble_oportunidad_con_nombres_conocidos_sigue_igual():
+    e = _doble("Arsenal", "Chelsea", [("Arsenal or Draw", -250), ("Draw or Chelsea", -140), ("Arsenal or Chelsea", -320)])
+    assert set(_selecciones(e)) == {"1X", "X2", "12"}
+    e = _doble("Arsenal", "Chelsea", [("1X", -250), ("X2", -140), ("12", -320)])
+    assert set(_selecciones(e)) == {"1X", "X2", "12"}
+
+
+def test_doble_oportunidad_ambigua_no_se_adivina():
+    # Nombres que no se parecen a ningún equipo del evento, o un mercado que no trae los tres resultados: ninguna fila.
+    e = _doble("Arsenal", "Chelsea", [("Foo FC / Draw", -250), ("Bar FC / Draw", -140), ("Foo FC / Bar FC", -320)])
+    assert _selecciones(e) == {}
+    e = _doble("Arsenal", "Chelsea", [("Arsenal / Draw", -250), ("Draw / Chelsea", -140)])
+    assert _selecciones(e) == {}

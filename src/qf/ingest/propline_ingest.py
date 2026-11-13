@@ -3,10 +3,14 @@
 Hourly observations remain hourly: never manufacture close/post-XI timestamps.
 The original archive preserves every other market for future adapters/training.
 """
+import re
 from datetime import datetime, timezone
+
+from rapidfuzz import fuzz
 
 from ..config import settings
 from ..db import query, conn
+from ..normalize import slugify
 from .propline_shared import newest, football_feed, parse_time, quotes
 
 ALIASES = {
@@ -43,9 +47,65 @@ def soft_allowed(observed, kickoff):
     return allowed
 
 
+# Doble oportunidad: PropLine nombra los tres resultados con el texto de cada casa, y varía por casa y por liga: «Leganés / Draw»,
+# «Draw Or Atletico Mineiro», «Mirassol SP/Draw», «Hellas Verona / Cesena» (el evento dice «Verona»). Los códigos «1X», «X2» y «12» y
+# «<local> or Draw» exactos ya se conocían; el resto llegaba sin leer y LaLiga 2, Serie B y Bundesliga 2 se quedaban sin ninguna fila.
+_EMPATE = {"draw", "empate", "tie", "x"}
+_SEPARADOR = re.compile(r"\s*(?:/|\bor\b)\s*", re.IGNORECASE)
+_MARGEN_AMBIGUO = 10   # puntos de similitud (sobre 200) entre las dos asignaciones posibles de equipo
+_PARECIDO_MINIMO = 45  # similitud (sobre 100) mínima de cada nombre con el equipo del evento al que se asigna
+
+
+def _partes_doble(nombre):
+    partes = [p.strip() for p in _SEPARADOR.split(str(nombre)) if p.strip()]
+    return partes if len(partes) == 2 else None
+
+
+def _similitud(a, b):
+    # token_set cubre el nombre abreviado («Remo» frente a «Clube Do Remo PA»); la asignación sigue exigiendo margen entre lados.
+    a, b = slugify(a), slugify(b)
+    return max(fuzz.token_sort_ratio(a, b), fuzz.token_set_ratio(a, b))
+
+
+def doble_oportunidad(event, market):
+    """
+    {nombre del resultado: '1X' | 'X2' | '12'} de un mercado de doble oportunidad, o {} si no se puede leer sin adivinar.
+
+    Exige exactamente tres resultados: uno sin empate («12») y dos con empate. Cuál de los dos con empate es el local sale de comparar
+    su equipo con el local y el visitante del evento; si las dos asignaciones puntúan casi igual, no se lee (mejor sin fila que al revés).
+    """
+    nombres = [o.get("name") for o in market.get("outcomes", [])]
+    if len(nombres) != 3 or len(set(nombres)) != 3:
+        return {}
+    partes = {n: _partes_doble(n) for n in nombres}
+    if any(p is None for p in partes.values()):
+        return {}
+    con_empate = [n for n in nombres if any(x.lower() in _EMPATE for x in partes[n])]
+    sin_empate = [n for n in nombres if n not in con_empate]
+    if len(con_empate) != 2 or len(sin_empate) != 1:
+        return {}
+    equipo = {n: [x for x in partes[n] if x.lower() not in _EMPATE] for n in con_empate}
+    if any(len(v) != 1 for v in equipo.values()):
+        return {}
+    a, b = con_empate
+    local, visitante = event["home_team"], event["away_team"]
+    directo = (_similitud(equipo[a][0], local), _similitud(equipo[b][0], visitante))
+    cruzado = (_similitud(equipo[a][0], visitante), _similitud(equipo[b][0], local))
+    if abs(sum(directo) - sum(cruzado)) < _MARGEN_AMBIGUO:
+        return {}
+    elegido = directo if sum(directo) > sum(cruzado) else cruzado
+    if min(elegido) < _PARECIDO_MINIMO:   # un nombre que no se parece a ningún equipo del evento: no se adivina
+        return {}
+    uno_x, x_dos = (a, b) if elegido is directo else (b, a)
+    return {uno_x: "1X", x_dos: "X2", sin_empate[0]: "12"}
+
+
 def football_rows(event, match_id, observed, kickoff, tag, allowed_books=None):
     from ..publish.picks import canonical_book
     rows = []
+    doble = {(b["key"], nombre): codigo for b in event.get("bookmakers", []) for m in b.get("markets", [])
+             if m.get("key") == "double_chance" and m.get("period") is None
+             for nombre, codigo in doble_oportunidad(event, m).items()}
     for q in quotes([event], observed.isoformat()):
         if allowed_books is not None and canonical_book(q["bookmaker"]) not in allowed_books:
             continue
@@ -79,7 +139,7 @@ def football_rows(event, match_id, observed, kickoff, tag, allowed_books=None):
         elif market == "double_chance":
             selection = {"1X": "1X", "X2": "X2", "12": "12",
                 event["home_team"] + " or Draw": "1X", "Draw or " + event["away_team"]: "X2",
-                event["home_team"] + " or " + event["away_team"]: "12"}.get(q["name"])
+                event["home_team"] + " or " + event["away_team"]: "12"}.get(q["name"]) or doble.get((q["bookmaker"], q["name"]))
         if selection is None:
             continue
         updated = parse_time(q["book_updated_at"]) if q["book_updated_at"] else None
