@@ -64,7 +64,8 @@ function hub(sport = 'todos', extra = {}) {
 
 async function peticiones(sport, contrato) {
   const urls = [];
-  const fetcher = async url => { urls.push(String(url)); return { ok: false, status: 503, json: async () => ({}) }; };
+  // el desfase horario (tz=) depende de la zona de quien corre la prueba: se normaliza
+  const fetcher = async url => { urls.push(String(url).replace(/tz=-?\d+/, 'tz=N')); return { ok: false, status: 503, json: async () => ({}) }; };
   const aviso = console.warn; console.warn = () => {};
   try { await loadSportWeb(sport, fetcher, new Date(2026, 10, 12, 12), contrato ? { contrato } : undefined); } finally { console.warn = aviso; }
   return urls;
