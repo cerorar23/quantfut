@@ -1,6 +1,15 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Fase 3 parte A: base común del contrato `/deportes/v1/{deporte}/…` (`api/deportes_v1.py`; sin adaptadores, sin desplegar)
+
+- **El router no conoce deportes:** catálogo → campo `adaptador` → `ADAPTADORES[adaptador]` (vacío en la base). Deporte encendido sin adaptador → 503 «Adaptador no disponible», no 500. La interfaz es un `Protocol` (`cartelera(inicio, fin)`, `partido(id)`, `familia_de(market)`); el docstring del módulo y el del archivo de pruebas explican cómo añadir uno.
+- **503 por fuente rota o dato fuera de contrato:** las excepciones del adaptador y los `ValidationError` al construir `Evento`/`Mercado` dan 503 con detalle genérico (el texto de la excepción solo va al log, no a la respuesta). El router revalida cada evento, descarta los fuera de ventana, recorta la cartelera al destacado y ordena por `(start, id)`: un adaptador descuidado no rompe el contrato. Un evento de otro deporte es 404 en `partido` y 503 en la cartelera (es un fallo del adaptador).
+- **Familias:** se agrupa con `familia_de`; lo que no cae en una familia visible del catálogo va a `otros` (al final). Decisión mía: los mercados de una familia que el catálogo OCULTA a ese cliente no salen en `/mercados` (ni se mandan a `otros`); `partido` sí los lleva todos. Las familias vacías no se emiten.
+- **Fechas:** `AwareDatetime` y siempre UTC con `Z`; `desde` de la respuesta es la fecha local de la ventana. `imagenes` solo admite rutas del propio servidor (`/x`, no `//host` ni URL absolutas).
+- **Reservados en `catalogo.validar_deporte`:** `RESERVADOS` más cualquier primer segmento literal de las rutas de `qf.api.main` (si ya está cargado; si no, solo la lista fija). Se exceptúa lo que es de ese mismo deporte en la semilla (`futbol`, `nba`, `tenis`), así la semilla sigue validando; el slug `nba` en otro deporte sí se rechaza.
+- **La suite es de datos genéricos:** cada `Caso` aporta datos fijos y la suite deduce las expectativas (ventana, orden, `eligible`, familias) de la propia respuesta; así los adaptadores reales solo añaden su `Caso` y su paridad.
+
 ## 12-nov-2026 · Diseño de la Fase 3 del menú «Web y App»: contrato común por deporte (rama `docs/fase3-diseno`, solo diseño)
 
 - **Hecho con Sonnet 5.5, no con Fable 5.2 alto como decía el plan:** el titular lo pidió así en la Fase 2 para ahorrar tokens y se mantuvo. El contrato no queda congelado en apps publicadas hasta que un cliente lo consuma, así que el riesgo de equivocarse es menor que en la Fase 2.

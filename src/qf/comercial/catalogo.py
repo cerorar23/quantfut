@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import copy
 import re
+import sys
 import threading
 import time
 
@@ -59,6 +60,10 @@ _RE_SLUG = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$')
 _RE_COLOR = re.compile(r'^#[0-9a-f]{6}$')
 _RE_ICONO = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
 _TTL = 30.0
+
+# Ids y slugs que ningún deporte nuevo puede usar: son prefijos de la API, de la web o de los estáticos (Fase 3).
+RESERVADOS = frozenset({'deportes', 'cliente', 'mobile', 'web', 'app', 'control', 'static', 'vendor', 'nba', 'health',
+                        'og', 'v1', 'en', 'pt'})
 
 _lock = threading.Lock()
 _cache: dict = {}
@@ -202,10 +207,34 @@ def _nombres(valor, idiomas, etiqueta: str, *, obligatorio: bool, maximo: int) -
     return out
 
 
+def _segmentos_de_rutas() -> set[str]:
+    """Primer segmento literal de cada ruta de la app (si `qf.api.main` ya está cargado; si no, solo vale `RESERVADOS`)."""
+    main = sys.modules.get('qf.api.main')
+    out: set[str] = set()
+    for r in getattr(getattr(main, 'app', None), 'routes', []):
+        seg = (getattr(r, 'path', '') or '').lstrip('/').split('/', 1)[0].lower()
+        if seg and '{' not in seg and not seg.endswith('.txt'):
+            out.add(seg)
+    return out
+
+
+def _validar_reservados(d: dict) -> None:
+    """El id y los slugs no pueden pisar una ruta existente. Se exceptúa lo que ya es de ese mismo deporte en la semilla
+    (`futbol`, `nba` y `tenis` tienen sus páginas en `/futbol/`, `/nba/` y `/tenis/`)."""
+    propio = next((s for s in SEMILLA if s['deporte_id'] == d.get('deporte_id')), None)
+    permitidos = {propio['deporte_id'], *propio['slug'].values()} if propio else set()
+    prohibidos = (RESERVADOS | _segmentos_de_rutas()) - permitidos
+    slug = d.get('slug') if isinstance(d.get('slug'), dict) else {}
+    for valor in (d['deporte_id'], *[v for v in slug.values() if isinstance(v, str)]):
+        if valor.lower() in prohibidos:
+            raise ValueError(f'«{valor}» está reservado: coincide con una ruta de la web o de la API.')
+
+
 def validar_deporte(d: dict) -> dict:
     """Valida un deporte completo; devuelve la versión normalizada."""
     if not isinstance(d.get('deporte_id'), str) or not _RE_DEPORTE.match(d['deporte_id']):
         raise ValueError('El id del deporte debe ser minúsculas, dígitos o «_» (2 a 24, empieza por letra).')
+    _validar_reservados(d)
     ad = d.get('adaptador')
     if ad is not None and ad not in ADAPTADORES:
         raise ValueError(f'Adaptador desconocido: {ad}.')

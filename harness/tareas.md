@@ -258,7 +258,7 @@ publica la versión de la app: A a E no dependen de esa fecha.
 **Fase 3 · Contrato común por deporte**
 - [x] `[Fable 5.2 · alto]` Diseño: la forma común de cartelera, partido y mercados que encaje fútbol, NBA y tenis y aguante un deporte
       que aún no existe. Hecho el 12-nov-2026 con Sonnet 5.5 (como en la Fase 2): ver «Especificación de la Fase 3» más abajo.
-- [ ] `[Sonnet 5.5 · medio]` Parte A (base común, sin deportes): `src/qf/api/deportes_v1.py` con el router `/deportes/v1/{deporte}/…`, los modelos
+- [x] `[Sonnet 5.5 · medio]` Parte A (base común, sin deportes): `src/qf/api/deportes_v1.py` con el router `/deportes/v1/{deporte}/…`, los modelos
       Pydantic del contrato, el registro `ADAPTADORES` y la suite de pruebas de contrato parametrizada por adaptador; `deportes` en
       `seo.NOINDEX_SEGMENTS`; ids y slugs reservados en `catalogo.validar_deporte`.
 - [ ] `[Sonnet 5.5 · medio]` Parte B (adaptador de tenis): el más simple, porque el servidor ya emite eventos casi en la forma común
