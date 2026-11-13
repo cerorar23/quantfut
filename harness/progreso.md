@@ -1,6 +1,14 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · Worker reconstruido desde `main` (`quantfut-worker:a54955d2`): escalera y parley fallaban con fútbol
+
+- **Causa:** mezcla de versiones en el worker. Sobre la imagen del 6-nov se habían copiado archivos sueltos; `escalera_datos.py` (nuevo) llamaba a `alta_prob_datos._snapshot()` con un cuarto argumento que el `alta_prob_datos.py` del 31-oct no acepta. Fallaban el reto escalera y el parley del día en el job de las 09:00 y, cada 5 minutos, el reemplazo intradía. Solo con partidos de fútbol en la ventana: la pausa de selecciones lo tapó del 9 al 12.
+- **Decisión clave:** imagen completa desde `main`, no otro parche de archivo. Copiar archivos sueltos al worker es exactamente lo que creó el fallo: dos archivos que cambian juntos en un commit quedan desparejados sin que nada avise. Antes de recrear se congeló el contenedor (`quantfut-worker:en-ejecucion-20261113`), porque la imagen vieja a secas ya no reproducía lo que corría.
+- **Cómo se ensayó sin tocar producción:** contenedor efímero de la imagen nueva con la red, el entorno y los volúmenes (solo lectura) del worker, llamando a las rutas en seco. Predicciones con la misma huella que el worker anterior; la receta queda en DEPLOYS.md.
+- **Leganés–Burgos sin pronóstico (13-nov):** no era un fallo. Único partido de la ventana, 1X2 sin margen 38,6 / 30,7 / 30,8 %, y ningún mercado con cuota de referencia llegó al umbral (80 % la línea normal, 62 % la ampliada). La web solo pinta partidos con pick sellado.
+- **Sin verificar:** el job diario de las 09:00 UTC del 14-nov (primera pasada real con fútbol). Pendiente: mover los ejecutores `parley-v2` y `cuotas-cascada` del host a la imagen de `main` y alinear `scripts/crontab` con el del host.
+
 ## 13-nov-2026 · /pronosticos/ ocultaba los pronósticos ya iniciados (rama `fix/pronosticos-filtro-iniciados`)
 
 - **Causa:** el filtro por defecto «Próximos» del hub exigía `start > ahora`: el pronóstico sellado de Fritz–Musetti (empezado, `awaiting_result`) desaparecía de `/pronosticos/` mientras el recuadro «Publicados» (que no filtra) decía 2. Las pestañas contaban sobre la lista ya filtrada y mostraban 0. Medido en producción el 13-nov 16:30 UTC con Chrome.
