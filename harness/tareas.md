@@ -256,14 +256,107 @@ publica la versión de la app: A a E no dependen de esa fecha.
 **Desplegadas A a E el 12-nov-2026 21:22 UTC** (`db/112` + `quantfut-api:f2454a2f` + `app.js`, `rutas.js` e `index.html` del host; ver `DEPLOYS.md`). Falta la parte F (app) y probar con sesión iniciada los formularios de `/control/deportes`.
 
 **Fase 3 · Contrato común por deporte**
-- [ ] `[Fable 5.2 · alto]` Diseño: la forma común de cartelera, partido y mercados que encaje fútbol, NBA y tenis y aguante un deporte
-      que aún no existe.
-- [ ] `[Sonnet 5.5 · medio]` (una sesión por deporte) `/deportes/{deporte}/cartelera`, `/deportes/{deporte}/partido/{id}` y
-      `/deportes/{deporte}/partido/{id}/mercados` con esa forma, como adaptadores en la API principal sobre `mobile.py` (fútbol),
-      `nba_datos.py` (NBA, que ya lee del servicio `nba-api`) y `tenis_publico.py` (tenis). Los endpoints actuales y el servicio de NBA no se tocan ni se retiran en esta fase.
-- [ ] `[Sonnet 5.5 · medio]` Un deporte futuro = filas en `deportes`/`deporte_mercados` + su adaptador. Criterio de hecho: dar de alta un deporte de prueba en
-      `preview` y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`.
-- Va en la misma versión de la app que la Fase 2 si se agrupan (una publicación y una ronda de pruebas en vez de dos).
+- [x] `[Fable 5.2 · alto]` Diseño: la forma común de cartelera, partido y mercados que encaje fútbol, NBA y tenis y aguante un deporte
+      que aún no existe. Hecho el 12-nov-2026 con Sonnet 5.5 (como en la Fase 2): ver «Especificación de la Fase 3» más abajo.
+- [ ] `[Sonnet 5.5 · medio]` Parte A (base común, sin deportes): `src/qf/api/deportes_v1.py` con el router `/deportes/v1/{deporte}/…`, los modelos
+      Pydantic del contrato, el registro `ADAPTADORES` y la suite de pruebas de contrato parametrizada por adaptador; `deportes` en
+      `seo.NOINDEX_SEGMENTS`; ids y slugs reservados en `catalogo.validar_deporte`.
+- [ ] `[Sonnet 5.5 · medio]` Parte B (adaptador de tenis): el más simple, porque el servidor ya emite eventos casi en la forma común
+      (`tenis_publico.read_public_feed`). Va primero para fijar el patrón.
+- [ ] `[Sonnet 5.5 · medio]` Parte C (adaptador de NBA): sobre `nba_datos.py`; resuelve en el servidor la ventana de días que hoy la web pide con 9
+      llamadas a `/nba/v1/cartelera`.
+- [ ] `[Sonnet 5.5 · medio-alto]` Parte D (adaptador de fútbol): sobre `fichas._agenda` y las filas públicas de `mobile.py`; es el más ancho
+      (liga distinta de competición, escudos, mercados públicos, bloqueados solo como recuento).
+- [ ] `[Sonnet 5.5 · medio]` Parte E (adaptador de prueba): un cuarto adaptador `prueba` solo en las pruebas, que demuestra que un deporte nuevo
+      necesita una fila en el catálogo y un adaptador, y nada más en el servidor.
+- [ ] `[Sonnet 5.5 · bajo]` Despliegue: solo la API (sin migración); tras él, los clientes pueden empezar a leer el contrato.
+- Después (no es de esta fase, requiere decisión del titular): que la web y la app lean NBA y tenis por el contrato en lugar de sus endpoints
+  propios. Es lo que reduce las ~35 peticiones a la API de la portada, pero cambia clientes ya publicados.
+- **Criterio de hecho corregido:** el plan decía «dar de alta un deporte de prueba y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`».
+  La Fase 3 NO lo consigue sola: da el servidor, pero ni la web ni la app tienen todavía una pantalla genérica de lista y detalle para un deporte
+  que no conocen. Esa pantalla genérica es lo primero de la Fase 4 (bloques `lista de partidos` y `tarjeta de mercado`). Lo que sí cumple la Fase 3:
+  un deporte nuevo se sirve por el contrato con solo una fila de catálogo y un adaptador, y pasa la misma suite de contrato que los tres de hoy.
+
+**Especificación de la Fase 3 (diseño del 12-nov-2026; quien ejecute NO rediseña, solo implementa esto)**
+
+*Hallazgos que la motivan (leídos el 12-nov en el código):*
+- La web y la app ya convierten los tres deportes a **la misma forma de evento**, cada una por su lado y partiendo de fuentes distintas:
+  web `nbaV2Events`, `tennisEvents` y `football()` en `ergonomic-views.js`; app `SportEvent` y `SportMarket` de `sports_feed.dart`. Campos comunes:
+  `id, sport, home, away, league, start, status, seal, sealed_at, markets[]` (+ `surface, score, availability, planned_seal`) y por mercado
+  `id, label, selection, probability, sealed_at, eligible, market, player, player_id, line, outcome, price, reference`. El tenis ya sale del servidor
+  casi así (`tenis_publico.read_public_feed`). **El contrato común es esa forma**, no una nueva: así los clientes cambian de fuente sin cambiar de modelo.
+- Cada deporte tiene hoy un contrato distinto: NBA entrega `partidos[]` con `local{nombre}`, `visitante{nombre}`, `inicio_utc`, `pronostico{p_local…}` y los
+  mercados en otra llamada; tenis entrega `events[]` de golpe; fútbol reparte agenda, filas públicas, bloqueados y destacados entre `home`,
+  `markets/*` y `matches/{id}`.
+- La portada de la web hace unas 35 peticiones a la API (9 solo de `/nba/v1/cartelera`, una por día, porque esa cartelera es por fecha del Este). Una
+  ventana de días resuelta en el servidor es la mejora de rendimiento más clara de esta fase.
+- Lo que hay detrás de VIP, Escalera y parley de fútbol depende del usuario (`member`, `unlocks`) y no puede ir en una respuesta pública y cacheable.
+
+*A. Alcance y límites del contrato (decisiones)*
+- **Público, anónimo y cacheable.** No mira `Authorization` ni cookies. Lo que hoy está detrás de membresía (VIP, desbloqueos, Escalera, parley) NO entra:
+  el evento lleva solo `bloqueados: n` (cuántos mercados de pago tiene, sin su contenido), como `locked_count` en la web. Esos flujos siguen en sus
+  endpoints actuales hasta una fase posterior.
+- **Aditivo y versionado como `/cliente/v1/config`:** `contrato` (entero, por defecto 1; otro valor → 422). Dentro de un contrato solo se añaden
+  campos; quitar o cambiar uno es `contrato: 2`.
+- **Los endpoints actuales no se tocan ni se retiran.** El servicio `apps/nba` no cambia.
+- **Claves en inglés para evento y mercado** (las que los clientes ya usan: cero traducción de modelo) y **en español para el sobre**
+  (`contrato, deporte, desde, dias, eventos`), igual que el catálogo.
+- **Nada interno sale.** Cada modelo Pydantic lleva `extra='forbid'` y se construye campo a campo: sin `fit`, sin proyecciones del motor, sin
+  columnas crudas. Lo que hoy expone NBA como `team_projection` queda fuera de la Fase 3 (se añade después, si se decide, como campo nuevo).
+
+*B. Endpoints (`src/qf/api/deportes_v1.py`)*
+- `GET /deportes/v1/{deporte}/cartelera?cliente=web|app&desde=AAAA-MM-DD&dias=1..7&tz=-720..840&contrato=1` → `{contrato, deporte, desde, dias, eventos: [Evento]}`.
+  La ventana es `[desde 00:00, desde+dias 00:00)` en la zona de `tz` (minutos respecto a UTC, como `mobile/v1/home`; reutiliza `fichas.ventana`). Ordenada por
+  `start` y luego `id`. Sin partidos → `eventos: []` con 200. `dias` por defecto 1, tope 7.
+- `GET /deportes/v1/{deporte}/partido/{id}?cliente=…` → `{contrato, deporte, evento: Evento, bloques: []}` con TODOS los mercados públicos del
+  partido. `bloques` queda reservado y vacío (la Fase 4 lo rellena); está para no tener que subir de contrato.
+- `GET /deportes/v1/{deporte}/partido/{id}/mercados?cliente=…` → `{contrato, deporte, evento_id, familias: [{id, mercados: [Mercado]}]}`, agrupado por
+  la familia del catálogo (`deporte_mercados.familia_id`) y en su orden; los mercados cuya clave no tenga familia van a una familia final `otros`.
+- `cliente` es obligatorio y aplica el estado del catálogo: deporte `off` para ese cliente o inexistente → 404; `preview` → responde con
+  `X-Robots-Tag: noindex`. `deporte` es el `deporte_id` del catálogo, no el slug.
+- Partido inexistente o de otro deporte → 404. Adaptador que falla (fuente caída) → 503 con `{"detail": ...}`, nunca un 200 con lista vacía que
+  parezca «sin partidos».
+- `Cache-Control: public, max-age=30` para cartelera y `public, max-age=60` para partido y mercados, con `ETag` débil del JSON canónico y 304 con
+  `If-None-Match`, como `/cliente/v1/config`. `X-Robots-Tag: noindex` siempre (JSON).
+
+*C. Forma de `Evento` y `Mercado`*
+- `Evento`: `id` (texto), `sport` (el `deporte_id`), `home`, `away`, `league`, `start` (ISO UTC), `status` (cerrado: `scheduled | live | awaiting_result |
+  finished | cancelled`), `seal` (sha256 del sello o `null`), `sealed_at` (ISO o `null`), `planned_seal` (ISO o `null`: hora prevista cuando aún no hay
+  pronóstico), `score` (texto `«2 – 1»` o `null`), `surface` (tenis, o `null`), `bloqueados` (entero ≥ 0), `imagenes` (`{home, away}` con rutas relativas del
+  propio servidor o `null`), `markets` (lista de `Mercado`; en la cartelera solo el destacado o ninguno, y todos en `partido`), `destacado`
+  (`id` del mercado destacado o `null`).
+- `Mercado`: `id`, `label`, `selection`, `probability` (0–1 exclusivo), `sealed_at` (ISO o `null`), `eligible` (bool), `market` (clave del motor), `family`
+  (id de familia del catálogo), `line` (número o `null`), `player` y `player_id` (o `null`), `price` (decimal o `null`), `reference` (casa o texto, o `null`),
+  `outcome` (cerrado: `win | loss | push | void | null`), `push_probability` (o `null`).
+- Un cliente debe tolerar valores de `status` y `outcome` desconocidos (tratarlos como `scheduled` y `null`) y campos nuevos.
+- **Regla de lo ya sellado:** un mercado con `eligible=false` (sello posterior al inicio) no es pronóstico previo ni cuenta como acierto, igual que hoy
+  en `nbaPickMarkets` y `SportMarket.eligible`. El adaptador lo calcula, no el cliente.
+
+*D. Adaptadores (`ADAPTADORES`, clave = `adaptador` del catálogo)*
+- Interfaz: `cartelera(desde, hasta) -> list[Evento]`, `partido(id) -> Evento | None`, `familia_de(market) -> str`. El router no conoce ningún deporte.
+- **Tenis** (`tenis_publico.public_data`): ya trae `id, sport, home, away, start, league, surface, sealed_at, seal, status, score, markets[]`; el adaptador
+  filtra por ventana, completa `family`, `eligible` y `bloqueados = 0`.
+- **NBA** (`nba_datos.py`, que ya lee de `nba-api`): la cartelera es por fecha del Este, así que el adaptador pide los días del Este que cubren la ventana
+  (uno de margen por lado) y filtra por `start`; mapea `local.nombre`, `visitante.nombre`, `inicio_utc`, `pronostico`, `resultado` y `sello_previsto`; los mercados
+  completos salen de `/nba/v1/partido/{id}/mercados`. Reutiliza la caché de `nba_datos` (no llama a `nba-api` más que hoy).
+- **Fútbol** (`fichas._agenda` y las filas públicas de `mobile.py`): `league` es la COMPETICIÓN (`matches.league_id`), no la liga doméstica del equipo;
+  `bloqueados` sale del recuento de `alta_probabilidad.vip` (solo el número); los mercados son los públicos (`proximos` con `free`/públicos y destacados
+  resueltos). Escudos por `/web/escudos/…`. Nada de Escalera, parley ni desbloqueos.
+- **Adaptador de prueba** (solo en `tests/`): datos fijos, registrado con `ADAPTADORES['prueba']` mediante `monkeypatch`.
+- Cada adaptador pasa la misma **suite de contrato** (parametrizada): forma exacta (`extra='forbid'`), ventana y `tz`, orden, `eligible`, `status` y
+  `outcome` cerrados, 404 de partido ajeno, 503 si la fuente falla, `ETag`/304, `noindex`, sin `Authorization`, y que ninguna clave privada de la fuente
+  sale (centinelas, como en `tests/test_cliente_config.py`). Además, una prueba de **paridad por deporte**: con los mismos datos de entrada, los eventos
+  del contrato coinciden con lo que hoy construyen `nbaV2Events` / `tennisEvents` / `football()` (mismos ids, `home`, `away`, `start`, `probability`).
+
+*E. Seguridad y SEO*
+- `deportes` entra en `seo.NOINDEX_SEGMENTS` (si no, `tests/test_rutas_web.py::test_toda_ruta_...` falla, como ocurrió con `cliente`).
+- `catalogo.validar_deporte` rechaza ids y slugs reservados (`deportes, cliente, mobile, web, app, control, static, vendor, nba, health, og, v1, en, pt` y
+  cualquier primer segmento de ruta existente) para que ningún deporte futuro pise una ruta; con prueba.
+- El tope de peticiones por IP (60/min) sigue aplicando; la ventana de días existe precisamente para gastar menos.
+
+*F. Despliegue*
+- Solo la API, sin migración ni cambios de frontend ni de app: nadie consume el contrato hasta que un cliente se cambie (decisión posterior).
+  Como en las fases anteriores: pre-vuelo con `scripts/deploy.sh estado`, huella pública antes y después, construir, ensayar y recrear solo `api`.
 
 **Fase 4 · Pantallas por bloques (una publicación de la app)**
 - [ ] `[Fable 5.2 · alto]` Diseño: tabla `pantalla_bloques` (pantalla, deporte, cliente, orden, tipo, parámetros, build mínimo), tipos

@@ -1,6 +1,16 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Diseño de la Fase 3 del menú «Web y App»: contrato común por deporte (rama `docs/fase3-diseno`, solo diseño)
+
+- **Hecho con Sonnet 5.5, no con Fable 5.2 alto como decía el plan:** el titular lo pidió así en la Fase 2 para ahorrar tokens y se mantuvo. El contrato no queda congelado en apps publicadas hasta que un cliente lo consuma, así que el riesgo de equivocarse es menor que en la Fase 2.
+- **Por qué la forma común es la que ya usan los clientes y no una nueva:** la web (`nbaV2Events`, `tennisEvents`, `football()`) y la app (`SportEvent`, `SportMarket`) ya convierten los tres deportes a la misma forma de evento, cada una por su lado. Si el servidor emite esa forma, los clientes cambian de fuente sin cambiar de modelo, y el tenis ya sale del servidor casi así.
+- **Por qué es público y anónimo (el recuento `bloqueados`, no el contenido):** lo que hay tras VIP, Escalera y parley de fútbol depende del usuario y no puede ir en una respuesta cacheable. Se queda en sus endpoints hasta una fase posterior; el contrato solo dice cuántos mercados de pago tiene un partido.
+- **Por qué una ventana de días en el servidor:** la portada de la web hace unas 35 peticiones a la API, 9 de ellas a `/nba/v1/cartelera` (una por día, porque esa cartelera es por fecha del Este) frente a un tope de 60 por minuto y IP. Resolver la ventana en el servidor es la mejora de rendimiento más clara, pero solo se obtiene cuando un cliente lea el contrato.
+- **Corrección al criterio de hecho del plan:** «un deporte de prueba visible en web y app sin tocar `frontend/` ni `apps/mobile/`» no lo cumple la Fase 3 sola: ni la web ni la app tienen una pantalla genérica de lista y detalle. Esa pantalla es lo primero de la Fase 4. La Fase 3 cumple: un deporte nuevo se sirve por el contrato con una fila de catálogo y un adaptador, y pasa la misma suite de contrato.
+- **Ids y slugs reservados:** sin ellos un deporte futuro con slug `deportes` o `control` pisaría una ruta; la validación del catálogo los rechaza.
+- Detalle por partes y límites: `harness/tareas.md`, «Especificación de la Fase 3».
+
 ## 12-nov-2026 · Fase 2 parte F: la app lee los deportes del catálogo (sin publicar; versión `1.1.1+11`)
 
 - **`SportKind` → `SportId = String`** con `kFootball/kNba/kTennis` solo donde el código de verdad distingue deporte (parley y Escalera, endpoints de NBA y tenis, ficha de partido, enriquecimiento de NBA, cancha del héroe). Acento, icono, secciones y nombre salen de un `SportCatalog` (`product/sports.dart`); el valor vigente vive en `sportCatalogNotifier` y arranca con `SportCatalog.builtIn` (tres deportes en código, último recurso si el asset no carga; una prueba exige que coincida con la copia de fábrica). El shell y «Mis deportes» escuchan el notificador, así que un catálogo nuevo se aplica sin reiniciar.
