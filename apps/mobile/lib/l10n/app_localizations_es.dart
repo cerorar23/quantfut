@@ -2457,6 +2457,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sportBeta => 'Beta';
 
   @override
+  String get sportDetailError => 'No se pudo cargar el detalle del partido.';
+
+  @override
+  String get sportFamilyOthers => 'Otros';
+
+  @override
   String get sportFootball => 'Fútbol';
 
   @override
@@ -2474,6 +2480,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sportNba => 'NBA';
+
+  @override
+  String get sportNoticeMore => 'Ver más';
 
   @override
   String sportPhotoCredit(String name, String author, String license) {
@@ -2543,6 +2552,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sportTennis => 'Tenis';
+
+  @override
+  String get sportVipCall => 'Conoce los planes para ver más análisis.';
 
   @override
   String get startupFailed =>

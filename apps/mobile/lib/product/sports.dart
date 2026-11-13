@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
 import 'qf_theme.dart';
+import 'screen_definition.dart';
 
 /// Identificador estable de un deporte (el `deporte_id` del catálogo del servidor). Es el que se guarda en
 /// preferencias y viaja a la API. Texto y no `enum`: un deporte nuevo del catálogo no necesita versión de app.
@@ -163,7 +164,7 @@ class SportSpec {
 /// Deportes que ofrece la app, en el orden del servidor. Nunca está vacío: sin catálogo del servidor ni del
 /// disco vale la copia de fábrica (`assets/model/cliente_config_defecto.json`) y, si ni el asset carga, [builtIn].
 class SportCatalog {
-  SportCatalog._(this.sports) : assert(sports.isNotEmpty);
+  SportCatalog._(this.sports, [this.screens]) : assert(sports.isNotEmpty);
 
   /// Los tres deportes de fábrica, para el primer fotograma y las pruebas. Debe coincidir con el asset
   /// (`test/sport_catalog_test.dart` lo comprueba).
@@ -196,10 +197,14 @@ class SportCatalog {
         final byOrder = a.$2.order.compareTo(b.$2.order);
         return byOrder != 0 ? byOrder : a.$1.compareTo(b.$1);
       });
-    return SportCatalog._([for (final e in indexed) e.$2]);
+    return SportCatalog._([for (final e in indexed) e.$2], ScreenDefinitions.fromJson(json['pantallas']));
   }
 
   final List<SportSpec> sports;
+
+  /// Definición de pantallas del servidor (`pantallas`); `null` mientras no haya ninguna publicada: cada pantalla
+  /// conserva entonces su orden en código.
+  final ScreenDefinitions? screens;
 
   List<SportId> get ids => [for (final s in sports) s.id];
 

@@ -212,6 +212,7 @@ class _ProductShellState extends State<ProductShell>
         event: event,
         images: images,
         quotes: quotes[event.sport] ?? QuotesOverlay.empty,
+        onVip: vip,
       );
 
   List<String> get sportStreams => [
@@ -712,6 +713,7 @@ class _ProductShellState extends State<ProductShell>
               images: images,
               onOpen: openSportEvent,
               onRetry: () => loadFeed(sport),
+              onVip: vip,
             ),
     );
   }

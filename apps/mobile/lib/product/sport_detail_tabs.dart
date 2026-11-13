@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
 import 'live_api.dart';
+import 'live_widgets.dart' show valueBars;
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
+import 'sport_contract.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
 
@@ -27,6 +29,81 @@ class SportNote extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Bloque de contenido de un partido de un deporte del catálogo sin pantalla propia (`partido.bloques`). Cada tipo usa
+/// una pieza que ya existe: `tabla` → filas en columnas con el estilo de [_StatLine]; `barras` → [valueBars] (la fila
+/// de `probabilityBars`); `pares` → [_StatLine]; `texto` → [SportNote]. Todo es texto plano.
+class SportContentBlock extends StatelessWidget {
+  const SportContentBlock(this.block, {super.key});
+  final ContentBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = block;
+    if (b is TextBlock) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: QfCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [_title(b.title), Text(b.body, style: const TextStyle(color: QfColors.text2))],
+          ),
+        ),
+      );
+    }
+    final Widget body = switch (b) {
+      TableBlock() => _table(b),
+      BarsBlock() => valueBars(b.items),
+      PairsBlock() => Column(children: [for (final i in b.items) _StatLine(i.label, i.value)]),
+      TextBlock() => const SizedBox.shrink(),
+    };
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: QfCard(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [_title(b.title), body]),
+      ),
+    );
+  }
+
+  static Widget _title(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontFamily: qfDisplay,
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
+        letterSpacing: .8,
+        color: QfColors.text,
+      ),
+    ),
+  );
+
+  static Widget _table(TableBlock t) {
+    final columns = t.columns.length;
+    Widget cell(String text, {bool head = false, bool first = false}) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      child: Text(
+        text,
+        textAlign: first ? TextAlign.start : TextAlign.end,
+        style: TextStyle(
+          fontFamily: head || first ? null : qfMono,
+          fontSize: 12,
+          fontWeight: head ? FontWeight.bold : FontWeight.normal,
+          color: head ? QfColors.text2 : QfColors.text,
+        ),
+      ),
+    );
+    return Table(
+      defaultColumnWidth: const FlexColumnWidth(),
+      columnWidths: columns > 1 ? {0: const FlexColumnWidth(2)} : null,
+      children: [
+        TableRow(children: [for (final (i, c) in t.columns.indexed) cell(c, head: true, first: i == 0)]),
+        for (final r in t.rows) TableRow(children: [for (final (i, c) in r.indexed) cell(c, first: i == 0)]),
+      ],
+    );
+  }
 }
 
 /// Espera las estadísticas; sin ellas, el mensaje neutro vive solo en esta pestaña.

@@ -6,6 +6,7 @@ import 'live_api.dart';
 import 'market_catalog.dart' show PublishedRecord;
 import 'market_hub.dart';
 import 'published_history.dart';
+import 'sport_contract.dart';
 import 'qf_theme.dart';
 import 'sport_images.dart';
 import 'sports.dart';
@@ -14,7 +15,7 @@ import 'sports_quotes.dart';
 
 /// Clave de la familia de un mercado: `market` en NBA; en tenis el prefijo del `id`
 /// anterior al «-» (`games_total-3` → `games_total`).
-String marketFamily(SportMarket m) => m.market ?? m.id.split('-').first;
+String marketFamily(SportMarket m) => m.family ?? m.market ?? m.id.split('-').first;
 
 /// Aciertos y resueltos por familia. Solo cuentan los `eligible` (sellados antes del inicio)
 /// con resultado `win` o `loss`; `push` y sin resultado no cuentan. Toda familia con algún
@@ -108,11 +109,17 @@ List<FamilyPicks> familyPicks(
 ]) {
   final labels = <String, String>{};
   final byFamily = <String, FamilyPicks>{};
+  final generic = isGenericSport(sport);
+  // Deporte del catálogo sin pantalla propia: familias y nombres del catálogo (`otros` al final).
+  final catalogOrder = generic ? catalogFamilyIds(sport) : const <String>[];
   FamilyPicks of(String key, [String? label]) => byFamily.putIfAbsent(
     key,
-    () => FamilyPicks(key, sportFamilyTitle(l10n, key, fallback: label)),
+    () => FamilyPicks(
+      key,
+      generic ? contractFamilyTitle(l10n, sport, key) : sportFamilyTitle(l10n, key, fallback: label),
+    ),
   );
-  for (final key in sportFamilies[sport] ?? const <String>[]) {
+  for (final key in sportFamilies[sport] ?? catalogOrder) {
     of(key);
   }
   for (final e in feed.events) {
@@ -133,13 +140,16 @@ List<FamilyPicks> familyPicks(
       }
     }
   }
-  final order = sportFamilies[sport] ?? const <String>[];
+  final order = sportFamilies[sport] ?? catalogOrder;
   int canon(FamilyPicks f) {
     final i = order.indexOf(f.family);
     return i < 0 ? order.length : i;
   }
 
+  // `otros` va siempre al final de un deporte nuevo, tenga o no acierto registrado.
+  int tail(FamilyPicks f) => generic && f.family == otherFamily ? 1 : 0;
   return byFamily.values.toList()..sort((a, b) {
+    if (tail(a) != tail(b)) return tail(a).compareTo(tail(b));
     final ra = a.percentValue ?? -1, rb = b.percentValue ?? -1;
     return ra != rb ? rb.compareTo(ra) : canon(a).compareTo(canon(b));
   });
@@ -281,7 +291,7 @@ class SportMarketDetailScreen extends StatelessWidget {
     final nba = sport == kNba;
     final (first, second) = nba ? (e.away, e.home) : (e.home, e.away);
     Widget Function(double) avatar(String name) =>
-        (size) => sportAvatar(api, images, sport, name, size: size);
+        (size) => eventAvatar(api, images, e, name, size: size);
     final quote = quoteFor(e, m, quotes);
     final parts = (e.score ?? '').split(RegExp(r'\s*[–-]\s*'));
     final score = parts.length == 2 && e.status == 'finished'

@@ -2439,6 +2439,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sportBeta => 'Beta';
 
   @override
+  String get sportDetailError => 'The match details could not be loaded.';
+
+  @override
+  String get sportFamilyOthers => 'Other';
+
+  @override
   String get sportFootball => 'Football';
 
   @override
@@ -2456,6 +2462,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sportNba => 'NBA';
+
+  @override
+  String get sportNoticeMore => 'Learn more';
 
   @override
   String sportPhotoCredit(String name, String author, String license) {
@@ -2525,6 +2534,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sportTennis => 'Tennis';
+
+  @override
+  String get sportVipCall => 'See the plans to unlock more analysis.';
 
   @override
   String get startupFailed => 'We could not start QuantFut. Please try again.';

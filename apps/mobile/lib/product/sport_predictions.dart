@@ -236,7 +236,7 @@ class _PickCard extends StatelessWidget {
                 for (final name in sides)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: sportAvatar(api, images, e.sport, name, size: 30),
+                    child: eventAvatar(api, images, e, name, size: 30),
                   ),
               ],
             ),

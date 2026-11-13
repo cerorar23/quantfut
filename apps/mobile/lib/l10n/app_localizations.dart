@@ -4024,6 +4024,18 @@ abstract class AppLocalizations {
   /// **'Beta'**
   String get sportBeta;
 
+  /// No description provided for @sportDetailError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cargar el detalle del partido.'**
+  String get sportDetailError;
+
+  /// No description provided for @sportFamilyOthers.
+  ///
+  /// In es, this message translates to:
+  /// **'Otros'**
+  String get sportFamilyOthers;
+
   /// Nombre del deporte fútbol en el selector
   ///
   /// In es, this message translates to:
@@ -4053,6 +4065,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'NBA'**
   String get sportNba;
+
+  /// No description provided for @sportNoticeMore.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver más'**
+  String get sportNoticeMore;
 
   /// No description provided for @sportPhotoCredit.
   ///
@@ -4185,6 +4203,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Tenis'**
   String get sportTennis;
+
+  /// No description provided for @sportVipCall.
+  ///
+  /// In es, this message translates to:
+  /// **'Conoce los planes para ver más análisis.'**
+  String get sportVipCall;
 
   /// No description provided for @startupFailed.
   ///

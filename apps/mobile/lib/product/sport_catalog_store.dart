@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_locale.dart';
@@ -33,21 +34,37 @@ class SportCatalogReply {
 
 typedef SportCatalogFetch = Future<SportCatalogReply> Function({required String lang, String? etag});
 
-/// `GET /cliente/v1/config?cliente=app&contrato=1&lang=…` con `If-None-Match`. Lanza si no hay red o el
-/// servidor falla; quien llama ([SportCatalogStore.refresh]) lo trata como «no hay novedades».
-Future<SportCatalogReply> fetchSportCatalogFromApi({required String lang, String? etag}) async {
-  final api = QuantFutApi();
+/// Número de compilación de la app (lo que va tras el `+` de la versión). El servidor quita de `pantallas` los
+/// bloques con `build_min_app` mayor. `null` si no se puede leer: el parámetro se omite.
+Future<int?> appBuildNumber() async {
   try {
-    final reply = await api
+    return int.tryParse((await PackageInfo.fromPlatform()).buildNumber);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// `GET /cliente/v1/config?cliente=app&contrato=1&lang=…&build=…` con `If-None-Match`. Lanza si no hay red o el
+/// servidor falla; quien llama ([SportCatalogStore.refresh]) lo trata como «no hay novedades».
+Future<SportCatalogReply> fetchSportCatalogFromApi({
+  required String lang,
+  String? etag,
+  Future<int?> Function()? build,
+  QuantFutApi? api,
+}) async {
+  final client = api ?? QuantFutApi();
+  try {
+    final number = await (build ?? appBuildNumber)();
+    final reply = await client
         .requestConditional(
           '/cliente/v1/config',
-          query: {'cliente': 'app', 'contrato': 1, 'lang': lang},
+          query: {'cliente': 'app', 'contrato': 1, 'lang': lang, 'build': ?number},
           etag: etag,
         )
         .timeout(const Duration(seconds: 8));
     return SportCatalogReply(reply.status, body: reply.data, etag: reply.etag);
   } finally {
-    api.dispose();
+    if (api == null) client.dispose();
   }
 }
 

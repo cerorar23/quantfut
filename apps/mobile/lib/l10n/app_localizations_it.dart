@@ -2465,6 +2465,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sportBeta => 'Beta';
 
   @override
+  String get sportDetailError =>
+      'Impossibile caricare i dettagli della partita.';
+
+  @override
+  String get sportFamilyOthers => 'Altri';
+
+  @override
   String get sportFootball => 'Calcio';
 
   @override
@@ -2482,6 +2489,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sportNba => 'NBA';
+
+  @override
+  String get sportNoticeMore => 'Scopri di più';
 
   @override
   String sportPhotoCredit(String name, String author, String license) {
@@ -2551,6 +2561,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sportTennis => 'Tennis';
+
+  @override
+  String get sportVipCall => 'Scopri i piani per vedere più analisi.';
 
   @override
   String get startupFailed => 'Impossibile avviare QuantFut. Riprova.';

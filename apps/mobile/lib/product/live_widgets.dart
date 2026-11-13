@@ -266,6 +266,37 @@ Widget probabilityBars(JsonMap values) => Builder(
   ),
 );
 
+/// Barras con etiqueta y porcentaje: la misma fila de [probabilityBars] (etiqueta a la izquierda, barra de 4 dp y
+/// porcentaje real) para las barras de contenido de un partido. `note` va debajo, en pequeño.
+Widget valueBars(List<({String label, double value, String? note})> items) => Column(
+  children: [
+    for (final item in items)
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: liveText(item.label, size: 12, color: liveMuted)),
+                const SizedBox(width: 8),
+                liveText(realPercent(item.value), size: 11),
+              ],
+            ),
+            const SizedBox(height: 3),
+            LinearProgressIndicator(
+              value: item.value.clamp(0, 1),
+              color: liveGreen,
+              backgroundColor: Colors.white12,
+              minHeight: 4,
+            ),
+            if (item.note != null) liveText(item.note!, size: 10, color: liveMuted),
+          ],
+        ),
+      ),
+  ],
+);
+
 /// Franja difuminada donde iría el pronóstico de un candado. Son bloques, no un texto real: el servidor no envía
 /// la selección ni la probabilidad de un pronóstico bloqueado, así que quitar el filtro no revela nada.
 class LockedBlur extends StatelessWidget {

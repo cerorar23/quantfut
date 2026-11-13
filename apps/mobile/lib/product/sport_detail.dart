@@ -9,8 +9,11 @@ import 'live_widgets.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'quote_label.dart';
+import 'screen_definition.dart';
+import 'sport_contract.dart';
 import 'sport_detail_tabs.dart';
 import 'sport_images.dart';
+import 'sport_screen_blocks.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
 import 'sports_quotes.dart';
@@ -22,6 +25,7 @@ Future<void> showSportDetail(
   required SportEvent event,
   required ImageCatalog images,
   QuotesOverlay quotes = QuotesOverlay.empty,
+  VoidCallback? onVip,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -31,7 +35,10 @@ Future<void> showSportDetail(
     heightFactor: .96,
     child: Theme(
       data: liveTheme(),
-      child: SportDetail(api: api, event: event, images: images, quotes: quotes),
+      // Un deporte del catálogo sin pantalla propia (llegó por el contrato) usa la ficha genérica.
+      child: event.generic
+          ? GenericSportDetail(api: api, event: event, images: images, onVip: onVip)
+          : SportDetail(api: api, event: event, images: images, quotes: quotes),
     ),
   ),
 );
@@ -233,7 +240,7 @@ class _Header extends StatelessWidget {
     final awayLabel = awayCode ?? event.away;
     final surface = event.surface;
     final credits = <(String, TennisPhoto)>[];
-    if (!nba) {
+    if (!nba && !event.generic) {
       for (final name in [event.home, event.away]) {
         final p = images.tennisPhoto(name);
         if (p != null) credits.add((name, p));
@@ -242,7 +249,7 @@ class _Header extends StatelessWidget {
     Widget side(String name) => Expanded(
       child: Column(
         children: [
-          sportAvatar(api, images, event.sport, name, size: nba ? 48 : 56),
+          eventAvatar(api, images, event, name, size: nba ? 48 : 56),
           const SizedBox(height: 6),
           Text(
             name,
@@ -483,9 +490,13 @@ class _MarketRow extends StatelessWidget {
     required this.quote,
     required this.l10n,
     this.big = false,
+    this.title,
   });
   final QuantFutApi api;
   final SportMarket market;
+
+  /// Título de la familia ya resuelto (deportes del catálogo sin pantalla propia); null = el de siempre.
+  final String? title;
   final SportQuote? quote;
   final AppLocalizations l10n;
   final bool big;
@@ -510,15 +521,18 @@ class _MarketRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                sportFamilyTitle(
-                  l10n,
-                  m.market ?? m.id.split('-').first,
-                  fallback: m.label,
+              if (title != '') ...[
+                Text(
+                  title ??
+                      sportFamilyTitle(
+                        l10n,
+                        m.market ?? m.id.split('-').first,
+                        fallback: m.label,
+                      ),
+                  style: const TextStyle(fontSize: 11, color: QfColors.text2),
                 ),
-                style: const TextStyle(fontSize: 11, color: QfColors.text2),
-              ),
-              const SizedBox(height: 2),
+                const SizedBox(height: 2),
+              ],
               Text(
                 sportPickText(l10n, m),
                 style: TextStyle(
@@ -557,4 +571,236 @@ class _MarketRow extends StatelessWidget {
       ],
     );
   }
+}
+
+// ---- Ficha genérica (deportes del catálogo sin pantalla propia) -------------------------------
+
+/// Secciones de la pantalla `partido` que la ficha genérica sabe pintar (`estadisticas`, `h2h` y `alertas` solo
+/// existen para NBA y tenis y se ignoran aquí).
+const genericMatchSections = {'cabecera', 'pronostico', 'mercados', 'contenido', 'sello'};
+
+typedef ContractDetailLoader = Future<ContractDetail> Function(SportEvent event, String lang);
+
+/// Ficha de un partido de un deporte del catálogo: cabecera, pronóstico, mercados por familia, bloques de contenido y
+/// sello, en el orden y con la visibilidad de la pantalla `partido` (sin definición, el orden de hoy). Reutiliza
+/// [_Header], [_MarketRow], [SportNote] y [SealLine]; nada de lo atado a NBA o tenis (jugadores, pestañas de
+/// estadísticas, H2H, alertas). El evento de la lista se pinta de inmediato y el detalle llega del contrato.
+class GenericSportDetail extends StatefulWidget {
+  const GenericSportDetail({
+    super.key,
+    required this.api,
+    required this.event,
+    required this.images,
+    this.onVip,
+    this.loader,
+  });
+
+  final QuantFutApi api;
+  final SportEvent event;
+  final ImageCatalog images;
+
+  /// Abre los planes (bloque `vip`).
+  final VoidCallback? onVip;
+
+  /// Para pruebas: sustituye la lectura del contrato.
+  final ContractDetailLoader? loader;
+
+  @override
+  State<GenericSportDetail> createState() => _GenericSportDetailState();
+}
+
+class _GenericSportDetailState extends State<GenericSportDetail> {
+  Future<ContractDetail>? _detail;
+  String? _lang;
+
+  void _load(String lang) {
+    _lang = lang;
+    final loader = widget.loader;
+    _detail = loader != null
+        ? loader(widget.event, lang)
+        : loadContractDetail(widget.api, widget.event.sport, widget.event.id, lang: lang);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    if (_lang != l10n.localeName) _load(l10n.localeName);
+    final e = widget.event;
+    final accent = sportCatalog.spec(e.sport).accent;
+    final screen = effectiveScreen(sportCatalog.screens, 'partido', e.sport, defaultMatchSections, genericMatchSections);
+    return Material(
+      color: QfColors.bg,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              tooltip: l10n.commonClose,
+              onPressed: () => Navigator.maybePop(context),
+              icon: const Icon(Icons.close, color: QfColors.text2),
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<ContractDetail>(
+              future: _detail,
+              builder: (context, snap) {
+                final done = snap.connectionState == ConnectionState.done;
+                final detail = snap.data;
+                final event = detail?.event ?? e;
+                return ListView(
+                  key: ValueKey('generic-detail-${e.sport}-${e.id}'),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  children: [
+                    for (final block in screen)
+                      ..._block(context, block, event, detail, accent, loading: !done, failed: done && snap.hasError),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _block(
+    BuildContext context,
+    ScreenBlock block,
+    SportEvent event,
+    ContractDetail? detail,
+    Color accent, {
+    required bool loading,
+    required bool failed,
+  }) {
+    if (!block.isSection) {
+      final extra = screenExtra(block, api: widget.api, onVip: widget.onVip);
+      return extra == null ? const [] : [extra];
+    }
+    final l10n = context.l10n;
+    final eligible = [for (final m in event.markets) if (m.eligible) m];
+    switch (block.section) {
+      case 'cabecera':
+        return [_Header(api: widget.api, event: event, images: widget.images), const SizedBox(height: 16)];
+      case 'pronostico':
+        final featured = featuredMarket(event);
+        if (eligible.isEmpty) {
+          return loading ? const [] : [SportNote(l10n.detailNoPicks), const SizedBox(height: 12)];
+        }
+        final principals = [
+          for (final m in eligible)
+            if (m.principal && !identical(m, featured)) m,
+        ];
+        return [
+          if (featured != null) ...[
+            QfCard(
+              accent: accent,
+              child: _MarketRow(
+                api: widget.api,
+                market: featured,
+                quote: quoteFor(event, featured, QuotesOverlay.empty),
+                l10n: l10n,
+                big: true,
+                title: contractFamilyTitle(l10n, event.sport, featured.family ?? otherFamily),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          for (final m in principals)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: QfCard(
+                child: _MarketRow(
+                  api: widget.api,
+                  market: m,
+                  quote: quoteFor(event, m, QuotesOverlay.empty),
+                  l10n: l10n,
+                  title: contractFamilyTitle(l10n, event.sport, m.family ?? otherFamily),
+                ),
+              ),
+            ),
+        ];
+      case 'mercados':
+        if (loading) return const [Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))];
+        if (failed) return [_DetailError(onRetry: () => setState(() => _load(l10n.localeName)))];
+        final families = detail?.families ?? contractFamilies(event.markets, catalogFamilyIds(event.sport));
+        return [
+          for (final f in families)
+            if (f.markets.any((m) => m.eligible)) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(2, 8, 2, 6),
+                child: Text(
+                  contractFamilyTitle(l10n, event.sport, f.id).toUpperCase(),
+                  key: ValueKey('generic-family-${f.id}'),
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    letterSpacing: .8,
+                    color: QfColors.text2,
+                  ),
+                ),
+              ),
+              for (final m in f.markets)
+                if (m.eligible)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: QfCard(
+                      child: _MarketRow(
+                        api: widget.api,
+                        market: m,
+                        quote: quoteFor(event, m, QuotesOverlay.empty),
+                        l10n: l10n,
+                        title: '', // la familia ya está en el encabezado del grupo
+                      ),
+                    ),
+                  ),
+            ],
+        ];
+      case 'contenido':
+        return [for (final b in detail?.blocks ?? const <ContentBlock>[]) SportContentBlock(b, key: ValueKey('content-${b.id}'))];
+      case 'sello':
+        if (event.seal.isEmpty) return const [];
+        return [
+          const SizedBox(height: 4),
+          const QuoteReferenceCaption(),
+          const SizedBox(height: 8),
+          SealLine(seal: event.seal, publishedAt: event.sealedAt),
+          const SizedBox(height: 12),
+        ];
+    }
+    return const [];
+  }
+}
+
+/// Error del detalle con «Reintentar» (nunca una ficha en blanco).
+class _DetailError extends StatelessWidget {
+  const _DetailError({required this.onRetry});
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    child: Column(
+      children: [
+        const Icon(Icons.cloud_off, color: QfColors.muted, size: 32),
+        const SizedBox(height: 8),
+        Text(
+          context.l10n.sportDetailError,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: QfColors.text2, fontSize: 14),
+        ),
+        const SizedBox(height: 12),
+        FilledButton(
+          key: const ValueKey('sport-detail-retry'),
+          style: FilledButton.styleFrom(
+            backgroundColor: QfColors.primary,
+            foregroundColor: QfColors.onPrimary,
+            minimumSize: const Size(120, 44),
+          ),
+          onPressed: onRetry,
+          child: Text(context.l10n.commonRetry),
+        ),
+      ],
+    ),
+  );
 }
