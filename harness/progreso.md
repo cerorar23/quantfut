@@ -1,6 +1,13 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · Bloques de contenido de `partido.bloques` (Fase 4, tarea 4.1; sin desplegar)
+
+- **El adaptador entrega los bloques con un método OPCIONAL `bloques(id)`, fuera del `Protocol`:** así tenis, NBA y fútbol no cambian ni se rompe `isinstance(…, Adaptador)`; sin el método, `bloques: []`. Se llama tras `partido(id)` y solo en ese endpoint (`/mercados` no lleva texto, no recibe `lang`).
+- **Texto = clave `@x` de `bloques_textos.TEXTOS`, nunca libre:** lo sin `@` (equipos, jugadores) y las cifras salen tal cual; `titulo` y `cuerpo` SIEMPRE son clave (si no, 503), igual que una clave inexistente o un bloque que no valida. El `@` evita confundir un nombre propio con una clave.
+- `lang` usa `cliente_config._idioma` (misma regla que `/cliente/v1/config`); formato `^[a-z]{2}$`, si no 422. Los límites se validan dos veces: con las claves y con el texto ya resuelto.
+- Los tres adaptadores reales no rellenan bloques todavía; el de la suite añade uno de cada tipo.
+
 ## 13-nov-2026 · Cartelera de NBA completa en el contrato y `CONTRATO_WEB.nba` encendido (la portada pasa de 9 peticiones de NBA a 1; sin desplegar)
 
 - **Decisión clave:** el servidor se adapta a la web, no al revés (regla de igualdad: lo que ve el usuario no cambia). Tres campos aditivos opcionales, sin tocar `contrato: 1`:
