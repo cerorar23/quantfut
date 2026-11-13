@@ -10,6 +10,13 @@
 - **`partido(id)` busca el id en los días ET hoy-4…hoy+4** (los que navega la web; sale al encontrarlo) porque la fuente no tiene búsqueda por id; un partido fuera de ese rango da 404. Se añadió `nba_datos.mercados()` para reutilizar su caché.
 - **`imagenes=None`:** no hay en Python la correspondencia equipo → logo (`nbaCode` vive solo en `frontend/sports-data.js`).
 
+## 12-nov-2026 · Fase 3 parte B: adaptador de tenis de `/deportes/v1` (`api/deportes_tenis.py`; sin desplegar)
+
+- Decisión clave, `status`: el exportador de tenis emite `scheduled`, `awaiting_result`, `no_result`, `finished`, `cancelled`. `no_result` (36 h sin resultado oficial) no está en el enumerado cerrado del contrato y se publica como `awaiting_result` (sigue sin resultado; la web ya lo trata así). Un estado que no esté en la tabla lanza `ValueError` → 503: no se adivina ni se esconde el evento.
+- Fuente caducada o no disponible (`state` ≠ `ok`/`partial`, que `read_public_feed` devuelve como lista vacía sin lanzar) se convierte en `RuntimeError` → 503, para no servir una cartelera vacía que parezca «sin partidos».
+- `eligible = sealed_at < start` y, si no es elegible, `outcome = None` (la web/app lo pasan siempre; la fuente real nunca da sellos posteriores, no hay diferencia observable). `imagenes = None`: el feed no trae ids de jugador y las fotos se resuelven en el cliente por nombre. `winner` no es familia del catálogo de tenis (solo las seis de la semilla): cae en `otros` hasta que el titular la añada.
+- Paridad: `tests/test_deportes_tenis_paridad.py` ejecuta `tennisEvents` real con `node` sobre los mismos datos. Sin cambios en la base `deportes_v1.py`.
+
 ## 12-nov-2026 · Fase 3 parte A: base común del contrato `/deportes/v1/{deporte}/…` (`api/deportes_v1.py`; sin adaptadores, sin desplegar)
 
 - **El router no conoce deportes:** catálogo → campo `adaptador` → `ADAPTADORES[adaptador]` (vacío en la base). Deporte encendido sin adaptador → 503 «Adaptador no disponible», no 500. La interfaz es un `Protocol` (`cartelera(inicio, fin)`, `partido(id)`, `familia_de(market)`); el docstring del módulo y el del archivo de pruebas explican cómo añadir uno.
