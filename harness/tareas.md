@@ -268,9 +268,10 @@ publica la versión de la app: A a E no dependen de esa fecha.
       Hecho el 12-nov-2026: `api/deportes_nba.py` (`ADAPTADORES['nba']`), suite de contrato y paridad con `nbaV2Events`. Sin desplegar.
 - [x] `[Sonnet 5.5 · medio-alto]` Parte D (adaptador de fútbol): sobre `fichas._agenda` y las filas públicas de `mobile.py`; es el más ancho
       (liga distinta de competición, escudos, mercados públicos, bloqueados solo como recuento).
-- [ ] `[Sonnet 5.5 · medio]` Parte E (adaptador de prueba): un cuarto adaptador `prueba` solo en las pruebas, que demuestra que un deporte nuevo
+- [x] `[Sonnet 5.5 · medio]` Parte E (adaptador de prueba): un cuarto adaptador `prueba` solo en las pruebas, que demuestra que un deporte nuevo
       necesita una fila en el catálogo y un adaptador, y nada más en el servidor.
-- [ ] `[Sonnet 5.5 · bajo]` Despliegue: solo la API (sin migración); tras él, los clientes pueden empezar a leer el contrato.
+- [x] `[Sonnet 5.5 · bajo]` Despliegue: solo la API (sin migración); tras él, los clientes pueden empezar a leer el contrato.
+      Hecho el 13-nov-2026 01:11 UTC (`quantfut-api:cdbd7379`, ver `DEPLOYS.md`). La parte E la cubre el adaptador de prueba que ya trae la suite de `tests/test_deportes_v1.py`.
 - Después (no es de esta fase, requiere decisión del titular): que la web y la app lean NBA y tenis por el contrato en lugar de sus endpoints
   propios. Es lo que reduce las ~35 peticiones a la API de la portada, pero cambia clientes ya publicados.
 - **Criterio de hecho corregido:** el plan decía «dar de alta un deporte de prueba y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`».
