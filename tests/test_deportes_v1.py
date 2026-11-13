@@ -89,6 +89,23 @@ class AdaptadorPrueba:
     def familia_de(self, market):
         return FAMILIAS[market]
 
+    def bloques(self, id):
+        """Un bloque de cada tipo; títulos y etiquetas son CLAVES de `bloques_textos` (prefijo @), los nombres propios no."""
+        if self.roto:
+            raise RuntimeError('fuente caída: CENTINELA_ERROR')
+        return BLOQUES_PRUEBA
+
+
+BLOQUES_PRUEBA = [
+    {'id': 'forma', 'tipo': 'tabla', 'titulo': '@forma', 'columnas': ['@equipo', '@victorias', '@promedio'],
+     'filas': [['Local', 3, 0.5], ['Visitante', 2, None]]},
+    {'id': 'prob', 'tipo': 'barras', 'titulo': '@probabilidades',
+     'items': [{'etiqueta': '@local', 'valor': 0.6, 'nota': '@muestra_pequena'}, {'etiqueta': 'Visitante', 'valor': 0.4}]},
+    {'id': 'resumen', 'tipo': 'pares', 'titulo': '@resumen',
+     'items': [{'etiqueta': '@total', 'valor': 12}, {'etiqueta': '@rival', 'valor': 'Visitante'}]},
+    {'id': 'aviso', 'tipo': 'texto', 'titulo': '@estadisticas', 'cuerpo': '@muestra_pequena'},
+]
+
 
 @dataclass
 class Caso:
@@ -235,7 +252,7 @@ def test_forma_exacta(c, caso):
         for m in ev['markets']:
             assert set(m) == MERCADO_CLAVES
     p = c.get(f'{base(caso)}/partido/{caso.partido_id}', params={'cliente': 'web'}).json()
-    assert set(p) == {'contrato', 'deporte', 'evento', 'bloques'} and p['bloques'] == []
+    assert set(p) == {'contrato', 'deporte', 'evento', 'bloques'} and isinstance(p['bloques'], list)
     assert set(p['evento']) == EVENTO_CLAVES
     assert len(p['evento']['markets']) >= 2
     for m in p['evento']['markets']:
