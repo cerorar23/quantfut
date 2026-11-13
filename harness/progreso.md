@@ -1,6 +1,17 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · La web lee NBA y tenis por el contrato `/deportes/v1`, pero con los interruptores apagados (solo `frontend/`; sin desplegar)
+
+- **Decisión clave:** la regla de igualdad manda sobre el ahorro de peticiones. Comparado campo a campo, el contrato 1 no basta para ninguno de los dos deportes sin
+  cambiar lo que ve el usuario (lista de huecos en `harness/tareas.md`, «Web lee el contrato»). Por eso el código existe, está probado y cae solo al cargador de siempre si el contrato falla,
+  pero `CONTRATO_WEB = {nba: false, tenis: false}`: con ellos apagados la web hace exactamente las mismas peticiones que antes.
+- **El hueco que más pesa en NBA:** la cartelera cuesta 9 peticiones (1 por día ET) y bajaría a 1, pero «Puntos esperados» sale de `pronostico.mu` y el contrato no lo lleva. Alternativa
+  descartada por cambiar lo que se ve: pedir `/nba/v1/cartelera?fecha=` del día del partido solo al abrirlo (1 petición bajo demanda, con un estado «cargando» que hoy no existe).
+- **Tenis no gana peticiones** con el contrato (hoy 1 para toda la lista): solo se justifica cuando la cartelera pueda traer todos los mercados.
+- **El código vive en `sports-data.js`, no en un módulo nuevo:** `src/qf/api/web.py` sirve cada `.js` con una ruta propia, y un archivo nuevo exigía tocar Python y reconstruir la API.
+- **Trampa evitada:** `id` de NBA debe volver a número (`loadNbaMarkets` compara `partido_id !== event.id` con igualdad estricta); el contrato lo da como texto.
+
 ## 12-nov-2026 · Fase 3 parte D: adaptador de fútbol del contrato (`api/deportes_futbol.py`; sin migración, sin desplegar)
 
 - **Solo reutiliza, no extrae nada:** `fichas._agenda`, `fichas.escudo` (vía la agenda), `mobile.high_probability(plus=False)`, `mobile.mercados_partido(..., plus=False, web=True)`, `mobile.pronostico_desde`, `partido_mercados.destacados_resueltos`, `partido_mercados.clave/nombre_casa/CUOTA_REAL`. `mobile.py` y `fichas.py` quedan intactos (por eso `test_mobile_delivery.py` pasa sin tocarse). Lo único nuevo contra la base es `SELECT kickoff_utc FROM matches WHERE match_id` en `partido(id)`, para pedir a la agenda el partido por su hora sin cargar la ficha completa (forma, promedios, cara a cara).

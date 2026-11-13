@@ -332,3 +332,81 @@ export function bestBySafety(items, probOf, priceOf) {
 export function featuredModelMarket(markets) {
   return bestBySafety(markets, m => m.probability, m => probability(m.probability) ? 1 / m.probability : NaN);
 }
+
+// ---- NBA y tenis de la web por el contrato común `GET /deportes/v1/{deporte}/cartelera` (Fase 3 de «Web y App»).
+// Convierte `Evento`/`Mercado` del contrato al objeto que la web ya pinta (el que construyen `nbaV2Events` y `tennisEvents`), sin cambiar ninguna vista.
+//
+// REGLA DE IGUALDAD (titular, 12-nov-2026): la web no puede mostrar nada distinto de lo de hoy. Por eso cada deporte tiene un interruptor propio
+// (`CONTRATO_WEB`) y SOLO se enciende cuando el contrato trae todo lo que la web usa de ese deporte. Hoy los dos están apagados: faltan campos en el
+// servidor (lista en `harness/tareas.md`, «Web lee el contrato»). Con el interruptor apagado `loadSportWeb` es exactamente `loadSport`: ni una
+// petición más. Encendido, cualquier fallo del contrato (red, estado distinto de 200/304 o respuesta ilegible) cae al cargador actual con un aviso.
+export const CONTRATO_WEB = { nba: false, tenis: false };
+
+const BACK_DAYS = 3, AHEAD_DAYS = 3;     // los 7 días que navega la ventana (-3…+3 en hora local)
+
+const day = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const utcDay = iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+
+// Ventana de la petición: primer día visible (hora local), nº de días y desfase local con el signo del contrato (UTC+1 = 60; `getTimezoneOffset` lo da al revés).
+export function ventanaContrato(sport, now = new Date()) {
+  const at = offset => new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+  let desde = day(at(-BACK_DAYS));
+  if (sport === 'nba' && desde < NBA_SEASON_START) desde = NBA_SEASON_START;
+  const ultimo = day(at(AHEAD_DAYS));
+  const dias = Math.max(1, Math.min(7, Math.round((utcDay(ultimo) - utcDay(desde)) / 864e5) + 1));
+  return { desde, dias, tz: -now.getTimezoneOffset() || 0 };
+}
+
+export function mercadoDesdeContrato(m) {
+  if (!m || typeof m.id !== 'string' || typeof m.label !== 'string' || typeof m.selection !== 'string' || !probability(m.probability)
+    || typeof m.eligible !== 'boolean') throw new TypeError('Mercado del contrato inválido');
+  return { id: m.id, label: m.label, selection: m.selection, probability: m.probability, price: typeof m.price === 'number' ? m.price : null,
+    reference: m.reference ?? null, estimate: null, sealed_at: m.sealed_at ?? null, eligible: m.eligible, revised: !m.eligible,
+    outcome: m.outcome ?? null, conditional: false, market: m.market, player: m.player ?? null, player_id: m.player_id ?? null,
+    line: typeof m.line === 'number' ? m.line : null, ...(typeof m.push_probability === 'number' ? { push_probability: m.push_probability } : {}) };
+}
+
+export function eventoDesdeContrato(ev, sport) {
+  if (!ev || typeof ev.id !== 'string' || typeof ev.home !== 'string' || typeof ev.away !== 'string' || !stamp(ev.start)
+    || !Array.isArray(ev.markets)) throw new TypeError('Evento del contrato inválido');
+  const markets = ev.markets.map(mercadoDesdeContrato);
+  if (sport === 'nba') {
+    const id = Number(ev.id);
+    if (!Number.isInteger(id)) throw new TypeError('Identificador de NBA inválido');
+    // La web solo conoce estos tres estados de NBA; un valor nuevo del contrato se trata como programado (el contrato lo exige a los clientes).
+    const status = ['finished', 'awaiting_result'].includes(ev.status) ? ev.status : 'scheduled';
+    const projection = Array.isArray(ev.team_projection) && ev.team_projection.length === 2 && ev.team_projection.every(Number.isFinite) ? ev.team_projection : null;
+    return { id, sport: 'nba', home: ev.home, away: ev.away, start: ev.start, league: 'NBA', status, markets, sealed_at: ev.sealed_at ?? null,
+      seal: ev.seal ?? null, planned_seal: ev.planned_seal ?? null, actionable: false, score: ev.score ?? null, availability: null, official_url: null,
+      team_projection: projection, v2: true };
+  }
+  return { id: ev.id, sport: 'tenis', home: ev.home, away: ev.away, start: ev.start, league: ev.league, surface: ev.surface ?? null, status: ev.status,
+    markets, sealed_at: ev.sealed_at ?? null, seal: ev.seal ?? null, score: ev.score ?? null, actionable: false, destacado: ev.destacado ?? null };
+}
+
+export function eventosDesdeContrato(data, sport) {
+  if (data?.contrato !== 1 || data.deporte !== sport || !Array.isArray(data.eventos)) throw new TypeError('Respuesta del contrato inválida');
+  const events = data.eventos.map(ev => eventoDesdeContrato(ev, sport));
+  // Mismos filtros que hoy: tenis exige sello y mercados; NBA se queda con todos los partidos (los sin pronóstico los filtra `sources()`).
+  return (sport === 'tenis' ? events.filter(e => e.seal && e.markets.length) : events).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+}
+
+// UNA petición por deporte para los 7 días de la ventana. Lanza si el contrato no responde bien: `loadSportWeb` decide el respaldo.
+export async function loadSportContrato(sport, fetcher = fetch, now = new Date()) {
+  const { desde, dias, tz } = ventanaContrato(sport, now);
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`/deportes/v1/${sport}/cartelera?cliente=web&contrato=1&desde=${desde}&dias=${dias}&tz=${tz}`, { signal: controller.signal });
+    if (response.status !== 200 && response.status !== 304) throw new Error(`estado ${response.status}`);
+    return { status: 'ready', events: eventosDesdeContrato(await response.json(), sport) };
+  } finally { clearTimeout(timer); }
+}
+
+// Cargador de la web: el contrato si el deporte lo tiene encendido y, si falla, el cargador de siempre (nunca se queda sin NBA ni tenis).
+export async function loadSportWeb(sport, fetcher = fetch, now = new Date(), { contrato = CONTRATO_WEB } = {}) {
+  if (contrato?.[sport]) {
+    try { return await loadSportContrato(sport, fetcher, now); }
+    catch (error) { console.warn(`Contrato /deportes/v1/${sport} no disponible (${error?.message || error}); se usa el cargador actual.`); }
+  }
+  return loadSport(sport, fetcher, now);
+}
