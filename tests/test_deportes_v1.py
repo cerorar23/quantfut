@@ -111,7 +111,20 @@ def _caso_prueba() -> Caso:
                 ('CENTINELA_FIT', 'CENTINELA_MERCADO', 'CENTINELA_ERROR'), instalar, romper)
 
 
-CASOS = [pytest.param(_caso_prueba(), id='prueba')]   # ← los adaptadores reales añaden aquí su Caso
+def _caso_futbol() -> Caso:
+    import datos_deportes_futbol as datos      # datos fijos y parches de fuentes: tests/datos_deportes_futbol.py
+    estado = {}
+
+    def instalar(mp):
+        estado['fuentes'] = datos.instalar_para_suite(mp)
+
+    def romper(mp):
+        estado['fuentes'].roto = True
+    return Caso('futbol', 'futbol', datos.DESDE, 'eu.ucl:m1', datos.CENTINELAS, instalar, romper)
+
+
+CASOS = [pytest.param(_caso_prueba(), id='prueba'),
+         pytest.param(_caso_futbol(), id='futbol')]   # ← los adaptadores reales añaden aquí su Caso
 
 
 # ── catálogo y cliente ───────────────────────────────────────────────────────

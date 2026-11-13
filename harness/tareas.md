@@ -265,7 +265,7 @@ publica la versión de la app: A a E no dependen de esa fecha.
       (`tenis_publico.read_public_feed`). Va primero para fijar el patrón.
 - [ ] `[Sonnet 5.5 · medio]` Parte C (adaptador de NBA): sobre `nba_datos.py`; resuelve en el servidor la ventana de días que hoy la web pide con 9
       llamadas a `/nba/v1/cartelera`.
-- [ ] `[Sonnet 5.5 · medio-alto]` Parte D (adaptador de fútbol): sobre `fichas._agenda` y las filas públicas de `mobile.py`; es el más ancho
+- [x] `[Sonnet 5.5 · medio-alto]` Parte D (adaptador de fútbol): sobre `fichas._agenda` y las filas públicas de `mobile.py`; es el más ancho
       (liga distinta de competición, escudos, mercados públicos, bloqueados solo como recuento).
 - [ ] `[Sonnet 5.5 · medio]` Parte E (adaptador de prueba): un cuarto adaptador `prueba` solo en las pruebas, que demuestra que un deporte nuevo
       necesita una fila en el catálogo y un adaptador, y nada más en el servidor.
