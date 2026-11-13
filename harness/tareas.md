@@ -272,6 +272,11 @@ publica la versión de la app: A a E no dependen de esa fecha.
       necesita una fila en el catálogo y un adaptador, y nada más en el servidor.
 - [x] `[Sonnet 5.5 · bajo]` Despliegue: solo la API (sin migración); tras él, los clientes pueden empezar a leer el contrato.
       Hecho el 13-nov-2026 01:11 UTC (`quantfut-api:cdbd7379`, ver `DEPLOYS.md`). La parte E la cubre el adaptador de prueba que ya trae la suite de `tests/test_deportes_v1.py`.
+- [ ] `[Sonnet 5.5 · medio]` Contrato aditivo para la cartelera de NBA (descubierto por el PR #385, que deja la web lista con el interruptor
+      `CONTRATO_WEB.nba` apagado): `Evento.team_projection` (`[mu_local, mu_visitante]` o `null`), el mercado ganador en la cartelera también
+      cuando es revisión (`eligible=false`), y `destacado` con la misma regla que `featuredSportMarket` de la web (75 %). Después, encender
+      `CONTRATO_WEB.nba` en la web: la portada pasa de 9 peticiones de NBA a 1. Tenis se queda con su endpoint (no hay ahorro: ya es 1)
+      y el detalle de NBA también (le faltan proyecciones de jugadores, `estimate`, `conditional` y los dos lados del ganador).
 - Después (no es de esta fase, requiere decisión del titular): que la web y la app lean NBA y tenis por el contrato en lugar de sus endpoints
   propios. Es lo que reduce las ~35 peticiones a la API de la portada, pero cambia clientes ya publicados.
 - **Criterio de hecho corregido:** el plan decía «dar de alta un deporte de prueba y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`».
@@ -372,6 +377,7 @@ publica la versión de la app: A a E no dependen de esa fecha.
       pinta las secciones según `pantallas` y los bloques de contenido. Después de que la web lea NBA y tenis por el contrato (PR en curso).
 - [ ] `[Opus 5.5 · medio-alto]` 4.5 · App: lo mismo en Flutter, con la app leyendo el contrato para los deportes sin pantalla propia.
       Textos nuevos en 6 idiomas, subir el código de versión y probar el release. Es una publicación de tienda.
+      Decidido por el titular el 13-nov-2026: va en la publicación SIGUIENTE a la `1.1.1+11`, que se publica sin esperar a esta fase.
 - [ ] `[Sonnet 5.5 · bajo]` 4.6 · Despliegues: servidor (4.1–4.3) primero, luego la web (4.4); la app cuando el titular decida.
 - **Criterio de hecho de la fase** (el que la Fase 3 no podía cumplir): en producción, un deporte de prueba en `preview` (p. ej. `tenis_prueba`
   con `adaptador = tenis`) se ve en la web y en la app con su lista, su detalle, sus mercados por familia y sus bloques de contenido, sin tocar
