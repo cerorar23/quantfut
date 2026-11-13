@@ -272,11 +272,15 @@ publica la versión de la app: A a E no dependen de esa fecha.
       necesita una fila en el catálogo y un adaptador, y nada más en el servidor.
 - [x] `[Sonnet 5.5 · bajo]` Despliegue: solo la API (sin migración); tras él, los clientes pueden empezar a leer el contrato.
       Hecho el 13-nov-2026 01:11 UTC (`quantfut-api:cdbd7379`, ver `DEPLOYS.md`). La parte E la cubre el adaptador de prueba que ya trae la suite de `tests/test_deportes_v1.py`.
-- [ ] `[Sonnet 5.5 · medio]` Contrato aditivo para la cartelera de NBA (descubierto por el PR #385, que deja la web lista con el interruptor
+- [x] `[Sonnet 5.5 · medio]` Contrato aditivo para la cartelera de NBA (descubierto por el PR #385, que deja la web lista con el interruptor
       `CONTRATO_WEB.nba` apagado): `Evento.team_projection` (`[mu_local, mu_visitante]` o `null`), el mercado ganador en la cartelera también
       cuando es revisión (`eligible=false`), y `destacado` con la misma regla que `featuredSportMarket` de la web (75 %). Después, encender
       `CONTRATO_WEB.nba` en la web: la portada pasa de 9 peticiones de NBA a 1. Tenis se queda con su endpoint (no hay ahorro: ya es 1)
       y el detalle de NBA también (le faltan proyecciones de jugadores, `estimate`, `conditional` y los dos lados del ganador).
+      Hecho el 13-nov-2026 (sin desplegar): `Mercado.principal` y `Evento.team_projection` (aditivos, `contrato: 1` intacto); el router conserva en la cartelera el destacado
+      y los `principal`; el adaptador de NBA marca el ganador como `principal`, rellena `team_projection` desde `pronostico.mu` y pone `destacado` con la regla de la web
+      (ganador no revisado con probabilidad entre 75 % y 83,3 %: cuota de referencia 1 ÷ prob >= 1,20). `CONTRATO_WEB.nba = true`. El detalle de NBA conserva su `destacado`.
+      Queda para encender tenis y el detalle de NBA lo que lista «Web lee el contrato» (más arriba), que NO cambia.
 - Después (no es de esta fase, requiere decisión del titular): que la web y la app lean NBA y tenis por el contrato en lugar de sus endpoints
   propios. Es lo que reduce las ~35 peticiones a la API de la portada, pero cambia clientes ya publicados.
 - [x] `[Sonnet 5.5 · medio]` **Web lee el contrato (NBA y tenis)**, 13-nov-2026: `loadSportWeb` y los convertidores `eventoDesdeContrato` en `frontend/sports-data.js`,

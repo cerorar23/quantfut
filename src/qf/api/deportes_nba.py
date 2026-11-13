@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 
 from . import nba_datos
+from .destacado_valor import cumple_filtro
 from .deportes_v1 import ADAPTADORES, Evento, Mercado
 
 SEASON_START = date(2026, 10, 20)      # la API trae también la pretemporada; la web (NBA_SEASON_START) muestra desde el estreno
@@ -97,7 +98,23 @@ def _mercado_ganador(p: dict, inicio: datetime, final) -> Mercado | None:
     return Mercado(id=f'winner-{p["id"]}', label=_ETIQUETAS['winner'], market='winner', family='winner',
                    selection=p['local']['nombre'] if local else p['visitante']['nombre'],
                    probability=prob if local else 1 - prob, sealed_at=sello, eligible=elegible,
-                   reference=REFERENCIA_MODELO, outcome=resultado)
+                   reference=REFERENCIA_MODELO, outcome=resultado, principal=True)
+
+
+def _destacado_cartelera(ganador: Mercado | None) -> str | None:
+    """Destacado de la cartelera: la misma regla que aplica la web (`featuredSportMarket` sobre el ganador del modelo, sin cuota
+    de casa): no revisado, probabilidad >= 75 % y cuota de referencia 1 ÷ probabilidad >= 1,20 (franja 75 %–83,3 %)."""
+    if ganador is None or not ganador.eligible:
+        return None
+    return ganador.id if cumple_filtro(ganador.probability, 1 / ganador.probability) else None
+
+
+def _proyeccion(pron: dict) -> list[float] | None:
+    """`[mu_local, mu_visitante]` como la lee la web (`nbaV2Events`): exactamente dos números finitos."""
+    mu = pron.get('mu')
+    if isinstance(mu, list) and len(mu) == 2 and all(_num(x) is not None for x in mu):
+        return [float(x) for x in mu]
+    return None
 
 
 def _evento(p: dict, ahora: datetime) -> Evento:
@@ -111,7 +128,7 @@ def _evento(p: dict, ahora: datetime) -> Evento:
                   start=inicio, status=estado, seal=hash_ if isinstance(hash_, str) and _RE_SELLO.match(hash_) else None,
                   sealed_at=_fecha(pron.get('sellado_en')), planned_seal=_fecha(p.get('sello_previsto')),
                   score=f'{_pts(final[0])} – {_pts(final[1])}' if final else None, markets=[ganador] if ganador else [],
-                  destacado=ganador.id if ganador and ganador.eligible else None)
+                  destacado=ganador.id if ganador and ganador.eligible else None, team_projection=_proyeccion(pron))
 
 
 def _mercado_publico(m: dict, p: dict, inicio: datetime, final) -> Mercado | None:
@@ -162,6 +179,8 @@ class AdaptadorNba:
                     vistos.setdefault(p['id'], p)
         ahora = _ahora()
         eventos = [_evento(p, ahora) for p in vistos.values()]
+        for e in eventos:       # en la cartelera el destacado sigue la regla de la web; el detalle conserva el suyo
+            e.destacado = _destacado_cartelera(e.markets[0] if e.markets else None)
         return [e for e in eventos if inicio <= e.start < fin]
 
     def _buscar(self, id: str) -> dict | None:

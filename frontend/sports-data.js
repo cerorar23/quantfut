@@ -337,10 +337,12 @@ export function featuredModelMarket(markets) {
 // Convierte `Evento`/`Mercado` del contrato al objeto que la web ya pinta (el que construyen `nbaV2Events` y `tennisEvents`), sin cambiar ninguna vista.
 //
 // REGLA DE IGUALDAD (titular, 12-nov-2026): la web no puede mostrar nada distinto de lo de hoy. Por eso cada deporte tiene un interruptor propio
-// (`CONTRATO_WEB`) y SOLO se enciende cuando el contrato trae todo lo que la web usa de ese deporte. Hoy los dos están apagados: faltan campos en el
-// servidor (lista en `harness/tareas.md`, «Web lee el contrato»). Con el interruptor apagado `loadSportWeb` es exactamente `loadSport`: ni una
-// petición más. Encendido, cualquier fallo del contrato (red, estado distinto de 200/304 o respuesta ilegible) cae al cargador actual con un aviso.
-export const CONTRATO_WEB = { nba: false, tenis: false };
+// (`CONTRATO_WEB`) y SOLO se enciende cuando el contrato trae todo lo que la web usa de ese deporte. NBA (cartelera) está encendido desde que el contrato
+// trae `team_projection`, el ganador también en revisión (`principal`) y el `destacado` con la regla de la web; tenis sigue apagado (le faltan mercados
+// en la cartelera y `no_result`; lista en `harness/tareas.md`, «Web lee el contrato»). Con el interruptor apagado `loadSportWeb` es exactamente
+// `loadSport`: ni una petición más. Encendido, cualquier fallo del contrato (red, estado distinto de 200/304 o respuesta ilegible) cae al cargador
+// actual con un aviso. El detalle de NBA (`loadNbaMarkets`) sigue en `/nba/v1/partido/{id}/mercados`.
+export const CONTRATO_WEB = { nba: true, tenis: false };
 
 const BACK_DAYS = 3, AHEAD_DAYS = 3;     // los 7 días que navega la ventana (-3…+3 en hora local)
 
