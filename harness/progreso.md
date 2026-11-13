@@ -1,6 +1,16 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · Diseño de la Fase 4 del menú «Web y App»: pantallas genéricas y por bloques (rama `docs/fase4-diseno`, solo diseño)
+
+- **Hecho con Opus 5.5** (el titular cambió de modelo para este diseño).
+- **Por qué primero la pantalla genérica y no los bloques:** sin ella ningún deporte nuevo se ve en web ni en app, que era el criterio que la Fase 3 no podía cumplir. Y casi existe: NBA y tenis ya se pintan con pantallas comunes (hub y ventana de deporte en la web; `HomeSport`, `SportDetail` y `SportMarkets` en la app) que trabajan sobre la forma de evento del contrato y solo ramifican por deporte para extras. Hacer opcionales esos extras sale mucho más barato que reescribir pantallas.
+- **Por qué dos clases de bloque:** lo que una pantalla genérica no puede saber de un deporte desconocido son sus estadísticas, y eso solo puede describirlo el servidor (bloques de contenido dentro del contrato). El orden y la visibilidad de las secciones es otra cosa, la decide el titular desde el panel (bloques de pantalla). Mezclarlos obligaría a publicar datos desde el panel o a configurar pantallas desde un adaptador.
+- **Por qué los textos de los bloques salen de un diccionario y no del adaptador:** la regla del titular exige los 6 idiomas en todo texto que muestre la app, incluidos los mensajes del servidor. Un diccionario con prueba de completitud (como `mensajes.py`) lo garantiza; texto libre del adaptador no.
+- **Por qué «sin definición publicada, el orden de hoy»:** desplegar la parte de servidor no cambia nada hasta que alguien publique; el riesgo de la fase queda en manos del panel y es reversible publicando la versión anterior (tabla de publicaciones solo de inserción, como `acceso_reglas`).
+- **El fútbol queda fuera** de las pantallas genéricas: depende del usuario (VIP, desbloqueos, Escalera, parley) y tiene ficha propia.
+- Detalle por partes: `harness/tareas.md`, «Especificación de la Fase 4».
+
 ## 12-nov-2026 · Fase 3 parte D: adaptador de fútbol del contrato (`api/deportes_futbol.py`; sin migración, sin desplegar)
 
 - **Solo reutiliza, no extrae nada:** `fichas._agenda`, `fichas.escudo` (vía la agenda), `mobile.high_probability(plus=False)`, `mobile.mercados_partido(..., plus=False, web=True)`, `mobile.pronostico_desde`, `partido_mercados.destacados_resueltos`, `partido_mercados.clave/nombre_casa/CUOTA_REAL`. `mobile.py` y `fichas.py` quedan intactos (por eso `test_mobile_delivery.py` pasa sin tocarse). Lo único nuevo contra la base es `SELECT kickoff_utc FROM matches WHERE match_id` en `partido(id)`, para pedir a la agenda el partido por su hora sin cargar la ficha completa (forma, promedios, cara a cara).
