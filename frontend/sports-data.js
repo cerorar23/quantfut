@@ -359,18 +359,26 @@ export function ventanaContrato(sport, now = new Date()) {
   return { desde, dias, tz: -now.getTimezoneOffset() || 0 };
 }
 
-export function mercadoDesdeContrato(m) {
+// Deportes con pantalla propia en la web (el fútbol tiene la suya y no usa este contrato). Todo lo demás del catálogo se pinta con la pantalla genérica.
+export const DEPORTES_PROPIOS = ['futbol', 'nba', 'tenis'];
+export const esDeporteGenerico = sport => typeof sport === 'string' && /^[a-z][a-z0-9_]{1,23}$/.test(sport) && !DEPORTES_PROPIOS.includes(sport);
+
+export function mercadoDesdeContrato(m, generico = false) {
   if (!m || typeof m.id !== 'string' || typeof m.label !== 'string' || typeof m.selection !== 'string' || !probability(m.probability)
     || typeof m.eligible !== 'boolean') throw new TypeError('Mercado del contrato inválido');
   return { id: m.id, label: m.label, selection: m.selection, probability: m.probability, price: typeof m.price === 'number' ? m.price : null,
     reference: m.reference ?? null, estimate: null, sealed_at: m.sealed_at ?? null, eligible: m.eligible, revised: !m.eligible,
     outcome: m.outcome ?? null, conditional: false, market: m.market, player: m.player ?? null, player_id: m.player_id ?? null,
-    line: typeof m.line === 'number' ? m.line : null, ...(typeof m.push_probability === 'number' ? { push_probability: m.push_probability } : {}) };
+    line: typeof m.line === 'number' ? m.line : null, ...(typeof m.push_probability === 'number' ? { push_probability: m.push_probability } : {}),
+    // En un deporte nuevo la cuota viene con su origen en `reference` (el contrato no trae `book`): sin origen no hay cuota de casa y se muestra la del modelo.
+    ...(generico ? { family: typeof m.family === 'string' ? m.family : 'otros', principal: m.principal === true,
+      ...(typeof m.price === 'number' && m.price > 1 && typeof m.reference === 'string' && m.reference.trim() ? { book: m.reference.trim() } : {}) } : {}) };
 }
 
 export function eventoDesdeContrato(ev, sport) {
   if (!ev || typeof ev.id !== 'string' || typeof ev.home !== 'string' || typeof ev.away !== 'string' || !stamp(ev.start)
     || !Array.isArray(ev.markets)) throw new TypeError('Evento del contrato inválido');
+  if (esDeporteGenerico(sport)) return eventoGenerico(ev, sport);
   const markets = ev.markets.map(mercadoDesdeContrato);
   if (sport === 'nba') {
     const id = Number(ev.id);
@@ -384,6 +392,17 @@ export function eventoDesdeContrato(ev, sport) {
   }
   return { id: ev.id, sport: 'tenis', home: ev.home, away: ev.away, start: ev.start, league: ev.league, surface: ev.surface ?? null, status: ev.status,
     markets, sealed_at: ev.sealed_at ?? null, seal: ev.seal ?? null, score: ev.score ?? null, actionable: false, destacado: ev.destacado ?? null };
+}
+
+// Imagen del evento: solo rutas del propio servidor (`/web/…`), como `ownImage` del hub; cualquier otra cosa se descarta.
+const imagenPropia = src => (typeof src === 'string' && /^\/web\/[\w./-]+\.(png|jpe?g|webp|svg)$/i.test(src) ? src : null);
+
+// Evento de un deporte SIN pantalla propia: la misma forma que usa la ventana de deporte, más `generico: true` (los extras atados a nba/tenis no se pintan).
+function eventoGenerico(ev, sport) {
+  const markets = ev.markets.map(m => mercadoDesdeContrato(m, true));
+  return { id: ev.id, sport, home: ev.home, away: ev.away, start: ev.start, league: ev.league, surface: ev.surface ?? null, status: ev.status, markets,
+    sealed_at: ev.sealed_at ?? null, seal: ev.seal ?? null, planned_seal: ev.planned_seal ?? null, score: ev.score ?? null, actionable: false,
+    destacado: ev.destacado ?? null, home_img: imagenPropia(ev.imagenes?.home), away_img: imagenPropia(ev.imagenes?.away), generico: true, bloques: [] };
 }
 
 export function eventosDesdeContrato(data, sport) {
@@ -406,9 +425,100 @@ export async function loadSportContrato(sport, fetcher = fetch, now = new Date()
 
 // Cargador de la web: el contrato si el deporte lo tiene encendido y, si falla, el cargador de siempre (nunca se queda sin NBA ni tenis).
 export async function loadSportWeb(sport, fetcher = fetch, now = new Date(), { contrato = CONTRATO_WEB } = {}) {
+  // Un deporte del catálogo sin pantalla propia no tiene cargador anterior al que volver: solo el contrato; si falla, `error` (la vista ofrece reintentar).
+  if (esDeporteGenerico(sport)) {
+    try { return await loadSportContrato(sport, fetcher, now); }
+    catch (error) { console.warn(`Contrato /deportes/v1/${sport} no disponible (${error?.message || error}).`); return { status: 'error', events: [] }; }
+  }
   if (contrato?.[sport]) {
     try { return await loadSportContrato(sport, fetcher, now); }
     catch (error) { console.warn(`Contrato /deportes/v1/${sport} no disponible (${error?.message || error}); se usa el cargador actual.`); }
   }
   return loadSport(sport, fetcher, now);
+}
+
+// ---- Deportes del catálogo SIN pantalla propia (Fase 4 · 4.4): detalle, mercados por familia y bloques de contenido.
+// Todo llega por el contrato; nada de `/web/deportes/nba|tenis/…`. Un bloque con tipo desconocido se ignora sin ruido (un cliente más viejo que el
+// servidor no debe romperse); uno mal formado se ignora con un `console.warn` corto. Lo que sale de aquí ya está validado: la vista lo escapa al pintar.
+const ID_BLOQUE = /^[a-z0-9_]{1,40}$/;
+const texto = (v, max = 600) => typeof v === 'string' && v.length > 0 && v.length <= max;
+const celda = v => v === null || typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v));
+const BLOQUES = {
+  tabla: b => Array.isArray(b.columnas) && b.columnas.length >= 1 && b.columnas.length <= 12 && b.columnas.every(c => typeof c === 'string')
+    && Array.isArray(b.filas) && b.filas.length <= 100 && b.filas.every(f => Array.isArray(f) && f.length === b.columnas.length && f.every(celda))
+    && { columnas: b.columnas, filas: b.filas },
+  barras: b => Array.isArray(b.items) && b.items.length <= 20
+    && b.items.every(i => i && typeof i.etiqueta === 'string' && typeof i.valor === 'number' && i.valor >= 0 && i.valor <= 1 && (i.nota == null || typeof i.nota === 'string'))
+    && { items: b.items.map(i => ({ etiqueta: i.etiqueta, valor: i.valor, nota: i.nota ?? '' })) },
+  pares: b => Array.isArray(b.items) && b.items.length <= 30 && b.items.every(i => i && typeof i.etiqueta === 'string' && celda(i.valor ?? null))
+    && { items: b.items.map(i => ({ etiqueta: i.etiqueta, valor: i.valor ?? null })) },
+  texto: b => texto(b.cuerpo) && { cuerpo: b.cuerpo },
+};
+export function bloquesDesdeContrato(lista) {
+  const out = [], vistos = new Set();
+  for (const b of Array.isArray(lista) ? lista : []) {
+    const construir = BLOQUES[b?.tipo];
+    if (!construir) continue;                                                   // tipo desconocido: se ignora sin error
+    const cuerpo = typeof b.id === 'string' && ID_BLOQUE.test(b.id) && !vistos.has(b.id) && texto(b.titulo, 120) ? construir(b) : false;
+    if (!cuerpo) { console.warn(`Bloque de contenido ignorado (mal formado): ${String(b?.id).slice(0, 40)}`); continue; }
+    vistos.add(b.id);
+    out.push({ id: b.id, tipo: b.tipo, titulo: b.titulo, ...cuerpo });
+  }
+  return out;
+}
+
+// Familias de mercados de un evento en el orden del catálogo (`orden`: ids de familia), con `otros` siempre al final. Usa las del endpoint de mercados
+// si llegaron (`event.familias`); si no, agrupa los mercados del evento por su `family`. Una familia sin mercados no sale.
+export function familiasDeEvento(event, orden = []) {
+  let grupos = event.familias;
+  if (!Array.isArray(grupos)) {
+    const mapa = new Map();
+    for (const m of event.markets || []) { const id = m.family || 'otros'; if (!mapa.has(id)) mapa.set(id, []); mapa.get(id).push(m); }
+    grupos = [...mapa].map(([id, markets]) => ({ id, markets }));
+  }
+  const rango = id => { const i = orden.indexOf(id); return i < 0 ? orden.length : i; };
+  const normales = grupos.filter(g => g.id !== 'otros').map((g, i) => [g, i]).sort((a, b) => rango(a[0].id) - rango(b[0].id) || a[1] - b[1]).map(([g]) => g);
+  return [...normales, ...grupos.filter(g => g.id === 'otros')].filter(g => g.markets.length);
+}
+
+// Detalle de un partido: `/partido/{id}` (evento completo + bloques en el idioma de la página) y `/partido/{id}/mercados` (familias del catálogo).
+// Si solo falla `/mercados`, el detalle sigue con las familias que traen los propios mercados; si falla `/partido/{id}`, `error`.
+export async function loadPartidoContrato(sport, id, lang = 'es', fetcher = fetch) {
+  const base = `/deportes/v1/${encodeURIComponent(sport)}/partido/${encodeURIComponent(id)}`;
+  const pull = async url => {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetcher(url, { signal: controller.signal });
+      if (response.status !== 200 && response.status !== 304) throw new Error(`estado ${response.status}`);
+      return await response.json();
+    } finally { clearTimeout(timer); }
+  };
+  try {
+    const [partido, mercados] = await Promise.allSettled([pull(`${base}?cliente=web&lang=${['es', 'en', 'pt'].includes(lang) ? lang : 'es'}`), pull(`${base}/mercados?cliente=web`)]);
+    if (partido.status !== 'fulfilled') throw partido.reason;
+    const data = partido.value;
+    if (data?.contrato !== 1 || data.deporte !== sport) throw new TypeError('Respuesta del contrato inválida');
+    const event = eventoDesdeContrato(data.evento, sport);
+    let familias = null;
+    const grupos = mercados.status === 'fulfilled' && mercados.value?.contrato === 1 && String(mercados.value.evento_id) === event.id ? mercados.value.familias : null;
+    if (Array.isArray(grupos)) {
+      const porId = new Map(event.markets.map(m => [m.id, m]));
+      const colocados = new Set();
+      familias = grupos.filter(g => g && typeof g.id === 'string' && Array.isArray(g.mercados)).map(g => ({ id: g.id,
+        markets: g.mercados.map(m => porId.get(m?.id)).filter(m => m && !colocados.has(m.id) && colocados.add(m.id)) }));
+      const sueltos = event.markets.filter(m => !colocados.has(m.id));
+      if (sueltos.length) familias.push({ id: 'otros', markets: sueltos });
+    }
+    return { status: 'ready', event: { ...event, familias, bloques: bloquesDesdeContrato(data.bloques) } };
+  } catch (error) {
+    console.warn(`Detalle /deportes/v1/${sport}/partido no disponible (${error?.message || error}).`);
+    return { status: 'error', event: null };
+  }
+}
+
+// El evento de la lista con el detalle encima (mercados completos, familias y bloques). Mientras carga o si falla, el de la lista más `markets_status`.
+export function withDetalle(event, entry) {
+  if (!event?.generico || !entry) return event;
+  if (entry.status !== 'ready') return { ...event, markets_status: entry.status };
+  return { ...event, ...entry.event, markets_status: 'ready' };
 }

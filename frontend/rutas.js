@@ -23,6 +23,20 @@ const ID_RE = /^[a-z][a-z0-9_]{1,23}$/;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ESTADOS = new Set(['on', 'preview']);   // `off` no sale del servidor; cualquier otro valor se ignora
 
+// Familias de mercados del deporte (`deportes[].familias`): `[{id, orden, nombre{}}]`. Las que no cumplen se ignoran; sin ninguna válida, no hay campo.
+const FAMILIA_ID_RE = /^[a-z][a-z0-9_]{0,39}$/;
+function familiasValidas(lista) {
+  if (!Array.isArray(lista)) return null;
+  const vistas = new Set();
+  const out = [];
+  for (const f of lista) {
+    if (!f || typeof f !== 'object' || typeof f.id !== 'string' || !FAMILIA_ID_RE.test(f.id) || vistas.has(f.id)) continue;
+    vistas.add(f.id);
+    out.push({ id: f.id, orden: Number.isFinite(f.orden) ? f.orden : 9999, nombre: f.nombre && typeof f.nombre === 'object' ? f.nombre : {} });
+  }
+  return out.length ? out.map((f, i) => [f, i]).sort((a, b) => a[0].orden - b[0].orden || a[1] - b[1]).map(([f]) => f) : null;
+}
+
 /**
  * Valida la respuesta del servidor. Devuelve la lista de deportes (solo los válidos, ordenados por `orden`) o
  * null si la respuesta no trae `deportes`, no es una lista o no queda ninguno válido: quien llama conserva lo que tiene.
@@ -42,7 +56,8 @@ export function normalizarDeportes(respuesta) {
     const nombre = d.nombre && typeof d.nombre === 'object' ? d.nombre : {};
     const orden = Number.isFinite(d.orden) ? d.orden : 9999;
     vistos.add(d.id);
-    validos.push({ id: d.id, orden, estado: d.estado, nombre, slug: slugs });
+    const familias = familiasValidas(d.familias);
+    validos.push({ id: d.id, orden, estado: d.estado, nombre, slug: slugs, ...(familias ? { familias } : {}) });
   }
   if (!validos.length) return null;
   return validos.map((d, i) => [d, i]).sort((a, b) => a[0].orden - b[0].orden || a[1] - b[1]).map(([d]) => d);
@@ -71,6 +86,64 @@ export function deportesNavegacion(catalogo, lang = 'es') {
     label: delServidor ? nombreDeporte(d, lang) : NOMBRE_RESPALDO_ES[d.id],
     slug: d.slug.es,   // el href no lleva prefijo de idioma (como el `/${id}/` de antes): siempre el slug en español
   }));
+}
+
+/** Nombre de una familia de mercados en el idioma pedido (`deportes[].familias[].nombre`); cae a `es` y, sin nombre, al id legible. `otros` no viene del catálogo. */
+export function nombreFamilia(deporte, familiaId, lang = 'es') {
+  const f = deporte?.familias?.find(x => x.id === familiaId);
+  const pick = v => (typeof v === 'string' && v.trim() ? v.trim() : '');
+  return pick(f?.nombre?.[lang]) || pick(f?.nombre?.es) || (familiaId === 'otros' ? 'Otros' : String(familiaId).replace(/_/g, ' ').replace(/^./, c => c.toUpperCase()));
+}
+
+// ── Definición de pantallas (Fase 4 · 4.2/4.4): `/cliente/v1/config` puede traer `pantallas: {deporte|partido: {'*'|<deporte>: [bloque]}}`.
+// Sin ella (hoy), cada pantalla conserva su orden en código. Tipo, sección o parámetro desconocidos se IGNORAN; una lista sin secciones visibles
+// (después de ignorar lo desconocido) equivale a «sin definición». Los bloques `build_min_app` son cosa de la app: la web no los lee.
+export const PANTALLA_SECCIONES = {
+  deporte: ['dias', 'resumen', 'destacado', 'partidos'],
+  partido: ['cabecera', 'pronostico', 'mercados', 'contenido', 'sello', 'estadisticas', 'h2h', 'alertas'],
+};
+const BLOQUE_ID_RE = /^[a-z0-9_]{1,40}$/;
+const TONOS = new Set(['info', 'exito', 'aviso', 'peligro']);
+const MAX_BLOQUES_PANTALLA = 20;
+function bloquePantalla(pantalla, b) {
+  if (!b || typeof b !== 'object' || typeof b.id !== 'string' || !BLOQUE_ID_RE.test(b.id)) return null;
+  const visible = b.visible !== false;
+  const params = b.params && typeof b.params === 'object' && !Array.isArray(b.params) ? b.params : {};
+  if (b.tipo === 'seccion') return PANTALLA_SECCIONES[pantalla].includes(b.seccion) ? { id: b.id, tipo: 'seccion', seccion: b.seccion, visible } : null;
+  if (b.tipo === 'aviso') return params.texto && typeof params.texto === 'object' ? { id: b.id, tipo: 'aviso', visible, params } : null;
+  if (b.tipo === 'vip') return { id: b.id, tipo: 'vip', visible, params };
+  return null;
+}
+/** `pantallas` de la respuesta de configuración, validadas y sin repetir secciones; null si no hay ninguna definición utilizable. */
+export function normalizarPantallas(respuesta) {
+  const origen = respuesta?.pantallas;
+  if (!origen || typeof origen !== 'object' || Array.isArray(origen)) return null;
+  const out = {};
+  for (const pantalla of Object.keys(PANTALLA_SECCIONES)) {
+    const porDeporte = origen[pantalla];
+    if (!porDeporte || typeof porDeporte !== 'object' || Array.isArray(porDeporte)) continue;
+    for (const [clave, lista] of Object.entries(porDeporte)) {
+      if ((clave !== '*' && !ID_RE.test(clave)) || !Array.isArray(lista)) continue;
+      const vistas = new Set();
+      const bloques = lista.slice(0, MAX_BLOQUES_PANTALLA).map(b => bloquePantalla(pantalla, b))
+        .filter(b => b && (b.tipo !== 'seccion' || !vistas.has(b.seccion) && vistas.add(b.seccion)));
+      if (!bloques.some(b => b.tipo === 'seccion' && b.visible)) continue;
+      (out[pantalla] ??= {})[clave] = bloques;
+    }
+  }
+  return out.deporte || out.partido ? out : null;
+}
+/** Definición vigente de una pantalla para un deporte: la del deporte concreto gana sobre `'*'`; sin ninguna, null (orden en código). */
+export const pantallaResuelta = (pantallas, pantalla, deporte) => pantallas?.[pantalla]?.[deporte] ?? pantallas?.[pantalla]?.['*'] ?? null;
+/** Datos de un bloque `aviso`: texto en el idioma (cae a `es`), tono (info|exito|aviso|peligro; otro valor = info) y enlace relativo opcional. Null si no tiene texto. */
+export function datosAviso(bloque, lang = 'es') {
+  const t = bloque?.params?.texto;
+  const pick = v => (typeof v === 'string' && v.trim() ? v.trim() : '');
+  const texto = pick(t?.[lang]) || pick(t?.es);
+  if (!texto) return null;
+  const enlace = bloque.params.enlace;
+  return { texto, tono: TONOS.has(bloque.params.tono) ? bloque.params.tono : 'info',
+    enlace: typeof enlace === 'string' && /^\/[^/\s]\S*$/.test(enlace) ? enlace : null };
 }
 
 /** URL de la petición al catálogo para un idioma. */
@@ -145,10 +218,18 @@ let DEPORTE_PATH = construirDeportePath(DEPORTES_RESPALDO);
 export function fijarDeportes(catalogo) {
   if (Array.isArray(catalogo) && catalogo.length) DEPORTE_PATH = construirDeportePath(catalogo);
 }
+// La página `/{slug}/` de un deporte del catálogo sin página propia (src/qf/api/deporte_generico.py) llega con `<html data-deporte=…>` ANTES de que el catálogo
+// se descargue: sin esto su URL no se reconocería hasta entonces. Solo vale para esa misma ruta (`ruta`), no para otra de un solo segmento.
+let PAGINA_DEPORTE = null;
+/** Registra el deporte que el servidor puso en esta página (`dataset.deporte`) si su URL es `/{slug}/`. Llamar antes de calcular la ruta inicial. */
+export function fijarPaginaDeporte(data, loc) {
+  const id = data?.deporte, ruta = withSlash(loc?.pathname || '/');
+  PAGINA_DEPORTE = typeof id === 'string' && ID_RE.test(id) && new RegExp(`^/${SEG}/$`).test(ruta) ? { id, ruta } : null;
+}
 /** Deporte de una página con URL propia (su `id` en el catálogo: 'nba' | 'tenis' | 'futbol'…) o null. */
 export function deporteDeUrl(loc) {
   const path = withSlash(loc.pathname || '/').replace(/^\/(?:en|pt)(?=\/)/, '');
-  return Object.keys(DEPORTE_PATH).find(sport => DEPORTE_PATH[sport].test(path)) ?? null;
+  return Object.keys(DEPORTE_PATH).find(sport => DEPORTE_PATH[sport].test(path)) ?? (PAGINA_DEPORTE?.ruta === path ? PAGINA_DEPORTE.id : null);
 }
 export const isDeportePage = loc => deporteDeUrl(loc) !== null;
 
@@ -210,7 +291,8 @@ export function deporteBoot(data, loc, now = new Date()) {
     const day = dayOffset(inicio, now, STATS_DAYS[0], STATS_DAYS[STATS_DAYS.length - 1]);
     return { sport, patch: { sport, statsMatch: id, statsDay: day, statsLeague: 'Todas', statsTab: 'resumen', winPane: 'pron' } };
   }
-  if (!/^[0-9]+$/.test(id)) return { sport, patch: { sport, winEvent: '', winDay: 0 } };
+  // nba y tenis tienen ids numéricos; un deporte nuevo del catálogo, cualquier id seguro del contrato.
+  if (!(ESTRUCTURA[sport] ? /^[0-9]+$/ : /^[A-Za-z0-9._:-]{1,120}$/).test(id)) return { sport, patch: { sport, winEvent: '', winDay: 0 } };
   return { sport, patch: { sport, winEvent: `${sport}:${id}`, winDay: dayOffset(inicio, now, -3, 3), winDayPinned: true,
     winSportTab: 'resumen', winPane: 'pron' } };
 }

@@ -395,8 +395,9 @@ publica la versión de la app: A a E no dependen de esa fecha.
 - [x] `[Sonnet 5.5 · medio]` 4.3 · Panel `/control/pantallas`: borrador, validar, publicar y volver a una versión anterior.
       Hecho el 13-nov-2026 (`api/pantallas_panel.py`, plantillas `pantallas*.html`, menú «Web y App»).
       Desplegadas 4.1, 4.2 y 4.3 el 13-nov-2026 03:18 UTC (`db/113` + `quantfut-api:f5e5939f`, ver `DEPLOYS.md`); cambio visible cero hasta publicar una pantalla.
-- [ ] `[Sonnet 5.5 · medio-alto]` 4.4 · Web: pantalla genérica de deporte (lista y detalle) para cualquier deporte del catálogo, por el contrato;
+- [x] `[Sonnet 5.5 · medio-alto]` 4.4 · Web: pantalla genérica de deporte (lista y detalle) para cualquier deporte del catálogo, por el contrato;
       pinta las secciones según `pantallas` y los bloques de contenido. Después de que la web lea NBA y tenis por el contrato (PR en curso).
+      Hecho el 13-nov-2026 (rama `claude/f4-web-generica-a403e6`, sin desplegar): `sports-window.js` (pantalla genérica), `sports-data.js` (evento, detalle y bloques), `rutas.js` (pantallas y entrada); pruebas `pantalla-generica.test.mjs` y `paridad-generica.test.mjs`.
 - [ ] `[Opus 5.5 · medio-alto]` 4.5 · App: lo mismo en Flutter, con la app leyendo el contrato para los deportes sin pantalla propia.
       Textos nuevos en 6 idiomas, subir el código de versión y probar el release. Es una publicación de tienda.
       Decidido por el titular el 13-nov-2026: va en la publicación SIGUIENTE a la `1.1.1+11`, que se publica sin esperar a esta fase.

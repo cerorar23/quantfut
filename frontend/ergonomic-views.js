@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-casa-20261105';
-import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=nba-20261113';
+import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=generica-20261113';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -48,12 +48,15 @@ export function createHubViews(ctx) {
     }
     return [...events.values()];
   }
+  // Deportes del catálogo sin pantalla propia (Fase 4 · 4.4): llegan por el contrato, igual que NBA. Sin ninguno en la navegación no se pide nada más.
+  const genericIds=()=>sportIds().filter(id=>!['futbol','nba','tenis'].includes(id));
   function sources(offset=state.dayOffset) {
     const home=ensureHome(offset), nba=ensureSport('nba'),tenis=ensureSport('tenis');
-    return {home,nba,tenis,events:[...football(home),...(nba.events||[]).filter(e=>e.markets.length),...(tenis.events||[])]};
+    const generic=Object.fromEntries(genericIds().map(id=>[id,ensureSport(id)]));
+    return {home,nba,tenis,generic,events:[...football(home),...(nba.events||[]).filter(e=>e.markets.length),...(tenis.events||[]),...Object.values(generic).flatMap(g=>(g.events||[]).filter(e=>e.markets.length))]};
   }
   const eventKey=e=>`${e.sport}:${e.id}`;
-  const featured=e=>e.sport==='nba'&&e.v2?featuredSportMarket(e):e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];
+  const featured=e=>e.sport==='nba'&&e.v2?featuredSportMarket(e):e.generico?(featuredSportMarket(e)||e.markets.find(m=>m.principal)||e.markets[0]):e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];
   const timing=e=>e.status==='finished'?'Finalizado':e.status==='awaiting_result'?'Esperando resultado':new Date(e.start)<=new Date()?'Hora prevista superada':'Próximo';
   const action=e=>e.sport==='futbol'?`data-real-match="${esc(e.id)}"`:`data-sport-event="${esc(eventKey(e))}"`;
 
@@ -66,6 +69,7 @@ export function createHubViews(ctx) {
     tenis:svg('<circle cx="12" cy="12" r="9"/><path d="M5.2 5.5c4.2 2.2 4.2 10.8 0 13M18.8 5.5c-4.2 2.2-4.2 10.8 0 13"/>'),
     todos:svg('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>')
   };
+  const iconOf=id=>sportIcon[id]||sportIcon.todos;
   const lockIcon=svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>');
   const words=name=>String(name||'?').replace(/[.()]/g,' ').split(/\s+/).filter(Boolean);
   const monogram=(name,sport)=>{
@@ -131,10 +135,10 @@ export function createHubViews(ctx) {
     const quote=selected&&event.sport==='nba'&&event.v2?marketQuote(selected):null;
     const m=quote?{...selected,featured:true,price:quote.price,model:quote.model,house:!quote.model,reference:quote.source}:selected,locked=!m;
     const extra=event.locked_count?`<button type="button" class="text-link win-pk-more" data-route="planes">+${event.locked_count} análisis con Plus ↗</button>`:'';
-    const head=`<header class="win-pk-top"><span class="win-pk-sport">${sportIcon[event.sport]}<b>${sportLabel(event)}</b></span><span class="win-pk-league">${leagueLabel(event)}</span><span class="win-pk-when"><time class="win-pk-time" datetime="${esc(event.start)}">${realDate(event.start)} · ${realTime(event.start)}</time>${resultBadge(m)}</span></header>`;
-    if(event.sport==='nba'&&event.v2&&!m) {
+    const head=`<header class="win-pk-top"><span class="win-pk-sport">${iconOf(event.sport)}<b>${sportLabel(event)}</b></span><span class="win-pk-league">${leagueLabel(event)}</span><span class="win-pk-when"><time class="win-pk-time" datetime="${esc(event.start)}">${realDate(event.start)} · ${realTime(event.start)}</time>${resultBadge(m)}</span></header>`;
+    if((event.sport==='nba'&&event.v2||event.generico)&&!m) {
       const note=event.markets_status==='loading'?'Consultando mercados…':event.markets_status==='error'?'No se pudieron cargar los mercados.':event.markets.length?'Sin pronóstico destacado':'Todavía no hay mercados publicados.';
-      return `<article class="cyber-card win-pk-card is-nba">${head}${teamsRow(event)}<p class="win-sub" role="status">${note}</p><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer></article>`;
+      return `<article class="cyber-card win-pk-card is-${event.sport}">${head}${teamsRow(event)}<p class="win-sub" role="status">${note}</p><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer></article>`;
     }
     if(locked)return `<article class="cyber-card cyber-card--yellow win-pk-card is-locked is-${event.sport}">${head}${teamsRow(event)}<div class="win-pk-pick"><div class="win-pk-sel"><small>Pronóstico</small><strong class="win-pk-masked">${lockIcon}<span>Contenido reservado</span></strong></div><div class="win-pk-odds is-prob"><small>Acceso</small><strong>Plus</strong><em>Selección y cuota privadas</em></div></div><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--yellow" data-route="planes">Consultar acceso Plus ↗</button></footer></article>`;
     const seal=(m.featured&&!m.seal)||dest?.loading?'':`<details class="win-pk-seal"><summary>Registro del pronóstico</summary><p>Publicación: ${realDate(event.sealed_at)} ${realTime(event.sealed_at)}.</p><code>${esc(m.seal||event.seal||'Registro del motor')}</code>${m.odds_at?`<p>Cuota capturada: ${realDate(m.odds_at)} ${realTime(m.odds_at)}. Puede haber cambiado.</p>`:''}<p>${esc(m.reference||'Probabilidad estadística del motor')}</p></details>`;
@@ -145,7 +149,7 @@ export function createHubViews(ctx) {
     const current=state.sport||'todos';
     return `<div class="cyber-tabs cyber-tabs--pills win-pk-tabs" role="group" aria-label="Filtrar pronósticos por deporte">${Object.entries(nameMap()).map(([id,label])=>{
       const count=id==='todos'?events.length:events.filter(e=>e.sport===id).length;
-      return `<button type="button" data-sport="${id}" class="cyber-tab ${current===id?'cyber-tab--active':''}" aria-pressed="${current===id}">${sportIcon[id]||sportIcon.todos}<span>${esc(label)}</span><b class="win-pk-count">${count}</b></button>`;
+      return `<button type="button" data-sport="${id}" class="cyber-tab ${current===id?'cyber-tab--active':''}" aria-pressed="${current===id}">${iconOf(id)}<span>${esc(label)}</span><b class="win-pk-count">${count}</b></button>`;
     }).join('')}</div>`;
   }
 
@@ -184,12 +188,12 @@ export function createHubViews(ctx) {
     const sport=state.sport||'todos',query=norm(state.homeSearch);
     const rows=byStatus.filter(e=>sportIds().includes(e.sport)&&(sport==='todos'||e.sport===sport)&&(!query||norm(`${e.home} ${e.away} ${e.league}`).includes(query)))
       .sort((a,b)=>new Date(a.start)-new Date(b.start));
-    const shown=[['futbol',source.home],['nba',source.nba],['tenis',source.tenis]].filter(([id])=>sportIds().includes(id)&&(sport==='todos'||sport===id));
+    const shown=[['futbol',source.home],['nba',source.nba],['tenis',source.tenis],...Object.entries(source.generic||{})].filter(([id])=>sportIds().includes(id)&&(sport==='todos'||sport===id));
     const errors=shown.filter(([,e])=>e.status==='error');
     const loading=shown.some(([,e])=>e.status==='loading');
     const latest=source.events.filter(e=>sport==='todos'||e.sport===sport).sort((a,b)=>new Date(b.start)-new Date(a.start))[0];
     const groups=sport==='todos'?sportIds().map(id=>[id,rows.filter(e=>e.sport===id)]).filter(([,list])=>list.length):[[sport,rows]];
-    const list=groups.map(([id,items])=>`<section class="win-pk-group" aria-label="${esc(nameMap()[id])}">${sport==='todos'?`<h3 class="win-pk-group-title">${sportIcon[id]}<span>${esc(nameMap()[id])}</span><b class="win-pk-count">${items.length}</b></h3>`:''}<div class="win-pk-grid">${items.map(card).join('')}</div></section>`).join('');
+    const list=groups.map(([id,items])=>`<section class="win-pk-group" aria-label="${esc(nameMap()[id])}">${sport==='todos'?`<h3 class="win-pk-group-title">${iconOf(id)}<span>${esc(nameMap()[id])}</span><b class="win-pk-count">${items.length}</b></h3>`:''}<div class="win-pk-grid">${items.map(card).join('')}</div></section>`).join('');
     const body=rows.length?list:loading?skeleton():empty('Sin pronósticos para esta búsqueda','Prueba otro deporte o fecha. Los análisis aparecen cuando el motor los publica.');
     return `<section class="win-pk-board" id="pronosticos-hoy" aria-labelledby="hub-picks-title"><div class="win-pk-bar"><div class="win-pk-bar-row">${sportTabs(byStatus)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--ghost win-pk-refresh" data-action="refresh-public">Actualizar ↻</button></div>${ctx.dayRail()}</div><div class="win-pk-heading"><h2 id="hub-picks-title">Pronósticos ${esc(dayLabel(state.dayOffset).toLowerCase())}</h2><div class="win-pk-filters"><div class="chip-row" role="group" aria-label="Estado de los partidos">${[['proximos','Próximos'],['todos','Todos'],['cerrados','Finalizados']].map(([id,label])=>`<button type="button" class="chip ${status===id?'selected':''}" data-home-status="${id}" aria-pressed="${status===id}">${label}</button>`).join('')}</div><label class="search-field"><span class="sr-only">Buscar equipo, jugador o torneo</span><input type="search" id="home-search" data-input="home-search" value="${esc(state.homeSearch||'')}" placeholder="Equipo, jugador o torneo" /></label></div></div>${errors.map(([id])=>`<p class="bottom-note" role="status">${nameMap()[id]}: no se pudieron consultar los pronósticos. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p>`).join('')}${body}</section>`;
   }
@@ -205,7 +209,7 @@ export function createHubViews(ctx) {
   function allResults(source) {
     const rows=results(),row=(sport,r)=>({sport,home:r.local,away:r.visitante,start:r.kickoff_utc,text:r.texto,outcome:r.outcome,price:r.ref_price,book:r.ref_book||null,prob:r.prob,score:`${r.home_goals} – ${r.away_goals}`});
     const items=[...(rows.items||[]),...(rows.featured||[])].map(r=>row('futbol',r));
-    for(let e of source.events.filter(e=>e.sport!=='futbol')) {
+    for(let e of source.events.filter(e=>e.sport==='nba'||e.sport==='tenis')) {
       if(e.sport==='nba'&&e.v2) e=withNbaMarkets(e,ctx.ensureNbaMarkets?.(e));
       const m=featuredSportMarket(e);
       if(m&&['win','loss'].includes(m.outcome)) {
