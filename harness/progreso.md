@@ -1,6 +1,13 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · /pronosticos/ ocultaba los pronósticos ya iniciados (rama `fix/pronosticos-filtro-iniciados`)
+
+- **Causa:** el filtro por defecto «Próximos» del hub exigía `start > ahora`: el pronóstico sellado de Fritz–Musetti (empezado, `awaiting_result`) desaparecía de `/pronosticos/` mientras el recuadro «Publicados» (que no filtra) decía 2. Las pestañas contaban sobre la lista ya filtrada y mostraban 0. Medido en producción el 13-nov 16:30 UTC con Chrome.
+- **Decisión clave:** «Próximos» pasa a significar «pendientes» (todo lo que no está `finished`), la misma regla que ya usa la agenda de Inicio (`visible_agenda`: «por jugarse o en juego»). Un pronóstico no se esconde mientras espera su resultado; solo sale al terminar. Si el día tiene pronósticos pero todos terminaron, el vacío lo dice y manda a «Todos»/«Finalizados».
+- **Huella dorada:** `hub:home:proximos` de `paridad-generica.golden.json` cambia a propósito (las fixtures tienen partidos pasados sin terminar, que ahora se muestran). Es la única huella que se movió.
+- **Sin confirmar:** por qué el motor no eligió ningún pick de fútbol hoy (`alta_prob_picks`, Leganés–Burgos sin pick); el acceso SSH a producción no se pudo usar en esta sesión.
+
 ## 13-nov-2026 · Fase 4.5: pantalla genérica de deporte en la app (rama `claude/f4-app-generica-d02a8c`; `1.1.1+12`, sin publicar)
 
 - **Decisión clave:** la app no gana un widget de deporte nuevo: un deporte del catálogo que no es fútbol, NBA ni tenis llega por `/deportes/v1` convertido al `SportEvent`/`SportMarket` de siempre (`sport_contract.dart`) y pasa por `HomeSport`, `SportMarkets` y `SportPredictions` sin más cambio que ramificar por `isGenericSport`. NBA y tenis conservan sus cargadores; sus 498 pruebas pasan sin tocarse. La ficha es la única pieza nueva (`GenericSportDetail`, en `sport_detail.dart` para reutilizar `_Header` y `_MarketRow` sin hacerlos públicos).

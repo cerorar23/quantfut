@@ -184,7 +184,7 @@ export function createHubViews(ctx) {
     const date=localDay(addDays(state.dayOffset,12));
     const onDay=source.events.filter(e=>localDay(new Date(e.start))===date);
     const status=state.homeStatus||'proximos';
-    const byStatus=onDay.filter(e=>status==='todos'||(status==='cerrados'?e.status==='finished':new Date(e.start)>new Date()&&e.status!=='finished'));
+    const byStatus=onDay.filter(e=>status==='todos'||(status==='cerrados'?e.status==='finished':e.status!=='finished'));   // «Próximos» = pendientes: por jugarse, en juego o esperando resultado (como la agenda de Inicio); solo se va el finalizado
     const sport=state.sport||'todos',query=norm(state.homeSearch);
     const rows=byStatus.filter(e=>sportIds().includes(e.sport)&&(sport==='todos'||e.sport===sport)&&(!query||norm(`${e.home} ${e.away} ${e.league}`).includes(query)))
       .sort((a,b)=>new Date(a.start)-new Date(b.start));
@@ -194,7 +194,7 @@ export function createHubViews(ctx) {
     const latest=source.events.filter(e=>sport==='todos'||e.sport===sport).sort((a,b)=>new Date(b.start)-new Date(a.start))[0];
     const groups=sport==='todos'?sportIds().map(id=>[id,rows.filter(e=>e.sport===id)]).filter(([,list])=>list.length):[[sport,rows]];
     const list=groups.map(([id,items])=>`<section class="win-pk-group" aria-label="${esc(nameMap()[id])}">${sport==='todos'?`<h3 class="win-pk-group-title">${iconOf(id)}<span>${esc(nameMap()[id])}</span><b class="win-pk-count">${items.length}</b></h3>`:''}<div class="win-pk-grid">${items.map(card).join('')}</div></section>`).join('');
-    const body=rows.length?list:loading?skeleton():empty('Sin pronósticos para esta búsqueda','Prueba otro deporte o fecha. Los análisis aparecen cuando el motor los publica.');
+    const body=rows.length?list:loading?skeleton():empty('Sin pronósticos para esta búsqueda',onDay.length&&!byStatus.length&&status==='proximos'?'Los pronósticos de este día ya terminaron. Pulsa «Todos» o «Finalizados» para verlos.':'Prueba otro deporte o fecha. Los análisis aparecen cuando el motor los publica.');
     return `<section class="win-pk-board" id="pronosticos-hoy" aria-labelledby="hub-picks-title"><div class="win-pk-bar"><div class="win-pk-bar-row">${sportTabs(byStatus)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--ghost win-pk-refresh" data-action="refresh-public">Actualizar ↻</button></div>${ctx.dayRail()}</div><div class="win-pk-heading"><h2 id="hub-picks-title">Pronósticos ${esc(dayLabel(state.dayOffset).toLowerCase())}</h2><div class="win-pk-filters"><div class="chip-row" role="group" aria-label="Estado de los partidos">${[['proximos','Próximos'],['todos','Todos'],['cerrados','Finalizados']].map(([id,label])=>`<button type="button" class="chip ${status===id?'selected':''}" data-home-status="${id}" aria-pressed="${status===id}">${label}</button>`).join('')}</div><label class="search-field"><span class="sr-only">Buscar equipo, jugador o torneo</span><input type="search" id="home-search" data-input="home-search" value="${esc(state.homeSearch||'')}" placeholder="Equipo, jugador o torneo" /></label></div></div>${errors.map(([id])=>`<p class="bottom-note" role="status">${nameMap()[id]}: no se pudieron consultar los pronósticos. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p>`).join('')}${body}</section>`;
   }
 

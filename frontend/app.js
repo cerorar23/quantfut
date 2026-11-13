@@ -3,7 +3,7 @@ import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, f
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
 import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=generica-20261113';
 import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo, fijarPaginaDeporte, normalizarPantallas, pantallaResuelta, datosAviso, nombreDeporte, nombreFamilia } from './rutas.js?v=generica-20261113';
-import { createRealViews } from './real-views.js?v=generica-20261113';
+import { createRealViews } from './real-views.js?v=generica-20261113b';
 import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=generica-20261113';
 import { createSportWindow } from './sports-window.js?v=generica-20261113';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';

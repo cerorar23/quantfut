@@ -181,3 +181,19 @@ test('el destacado del día es el más probable con cuota >= 1,20, no el de mayo
   assert.ok(featured.includes('Alto FC'), 'el destacado debía ser el de 80 % con cuota 1,45');
   assert.ok(!featured.includes('Seguro FC') && !featured.includes('Corto FC') && !featured.includes('Valor FC'));
 });
+
+// --- «Próximos» no esconde el pronóstico de un partido que ya empezó pero aún no termina -------------------------------------
+// 13-nov-2026: Fritz–Musetti (sellado, empezado, esperando resultado) desaparecía de /pronosticos/ mientras «Publicados» decía 2.
+
+test('el filtro Próximos conserva un partido ya iniciado y sin terminar, y solo oculta los finalizados', () => {
+  const vistas = (agenda, homeStatus) => createHubViews({ state: { dayOffset: 0, sport: 'todos', homeSearch: '', homeStatus }, esc: x => String(x ?? ''),
+    ensureHome: () => ({ status: 'ready', data: { agenda, alta_probabilidad: { proximos: [pick], vip: [] } } }),
+    addDays: () => date, localDay: d => d.toISOString().slice(0, 10), dayLabel: () => 'Hoy', realDate: () => '30 oct', realTime: () => '17:30', fmtOdds: String, fmtPct: String,
+    dayRail: () => '', liveEvidence: () => '', ensureMatch: () => ({ status: 'loading' }) });
+  const juego = estado => [{ match_id: 'm1', estado, kickoff_utc: kickoff, liga: { nombre: 'Ligue 1' }, local: { nombre: 'Le Havre' }, visitante: { nombre: 'PSG' } }];
+  const tarjetas = html => (html.match(/win-pk-card /g) || []).length;
+  // El kickoff de la fixture ya quedó atrás respecto al reloj real: el partido «empezó», pero el servidor no lo da por terminado.
+  assert.equal(tarjetas(vistas(juego('scheduled'), 'proximos').picks()), 1, 'iniciado y sin terminar: visible en Próximos');
+  assert.equal(tarjetas(vistas(juego('finished'), 'proximos').picks()), 0, 'finalizado: fuera de Próximos');
+  assert.equal(tarjetas(vistas(juego('finished'), 'todos').picks()), 1, 'finalizado: sigue en Todos');
+});
