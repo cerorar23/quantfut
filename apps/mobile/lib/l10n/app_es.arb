@@ -2263,6 +2263,8 @@
   "@sportBeta": {
     "description": "Etiqueta de un deporte en fase de prueba (estado preview del catálogo) en Perfil → Mis deportes."
   },
+  "sportDetailError": "No se pudo cargar el detalle del partido.",
+  "sportFamilyOthers": "Otros",
   "sportFootball": "Fútbol",
   "@sportFootball": {
     "description": "Nombre del deporte fútbol en el selector"
@@ -2301,6 +2303,7 @@
   "@sportNba": {
     "description": "Nombre del deporte baloncesto (NBA) en el selector"
   },
+  "sportNoticeMore": "Ver más",
   "sportPhotoCredit": "Foto de {name}: {author} · {license}",
   "@sportPhotoCredit": {
     "placeholders": {
@@ -2342,6 +2345,7 @@
   "@sportTennis": {
     "description": "Nombre del deporte tenis en el selector"
   },
+  "sportVipCall": "Conoce los planes para ver más análisis.",
   "startupFailed": "No pudimos iniciar QuantFut. Inténtalo de nuevo.",
   "startupLoading": "Iniciando QuantFut",
   "statAveragesNote": "Promedios de {homeN} partidos del local y {awayN} del visitante. La cobertura de remates, córners y xG puede ser parcial.",

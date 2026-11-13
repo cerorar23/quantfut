@@ -1,5 +1,6 @@
 import 'featured_rule.dart';
 import 'live_api.dart';
+import 'sport_contract.dart';
 import 'sports.dart';
 
 /// Adaptadores de los feeds públicos de NBA y tenis. No calculan ni completan
@@ -25,6 +26,8 @@ class SportMarket {
     this.book,
     this.quotedAt,
     this.publishable,
+    this.family,
+    this.principal = false,
   });
 
   final String id, label, selection;
@@ -55,6 +58,13 @@ class SportMarket {
 
   /// NBA v2: el servidor dice si el mercado cumple la regla de publicación (`publicable`); null = no lo dijo.
   final bool? publishable;
+
+  /// Deportes del catálogo sin pantalla propia (contrato `/deportes/v1`): id de la familia del catálogo (`otros` si el
+  /// servidor no la nombra). Null en NBA y tenis, que agrupan por `market`.
+  final String? family;
+
+  /// Contrato: el servidor lo marca como mercado principal del partido.
+  final bool principal;
 }
 
 class SportEvent {
@@ -75,6 +85,9 @@ class SportEvent {
     this.plannedSeal,
     this.serverFeatured = false,
     this.featuredId,
+    this.imageHome,
+    this.imageAway,
+    this.generic = false,
   });
 
   final String id;
@@ -95,6 +108,12 @@ class SportEvent {
   /// null si ninguno cumple la regla. Si no lo mandó, el destacado se calcula en la app con la misma regla.
   final bool serverFeatured;
   final String? featuredId;
+
+  /// Contrato: rutas de imagen propias del servidor para cada lado (solo `/web/…`).
+  final String? imageHome, imageAway;
+
+  /// Evento de un deporte del catálogo sin pantalla propia (llegó por `/deportes/v1`): no tiene extras de NBA ni de tenis.
+  final bool generic;
 
   /// Mismo partido con otra lista de mercados (NBA: la v2 completa de `/nba/v1/partido/{id}/mercados`).
   SportEvent withMarkets(
@@ -118,6 +137,9 @@ class SportEvent {
     plannedSeal: plannedSeal,
     serverFeatured: serverFeaturedField || serverFeatured,
     featuredId: serverFeaturedField ? featured : featuredId,
+    imageHome: imageHome,
+    imageAway: imageAway,
+    generic: generic,
   );
 }
 
@@ -612,6 +634,7 @@ List<SportEvent> tennisEvents(JsonMap data) {
 Future<SportFeed> loadSport(QuantFutApi api, SportId sport) async {
   try {
     if (sport == kNba) return await _loadNba(api, DateTime.now());
+    if (isGenericSport(sport)) return await loadContractSport(api, sport);
     if (sport != kTennis) throw const FormatException('No public feed');
     final data = jsonMap(await api.request('/web/deportes/tenis'));
     return SportFeed(ready: true, events: tennisEvents(data));

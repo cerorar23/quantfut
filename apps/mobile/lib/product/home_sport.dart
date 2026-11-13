@@ -12,7 +12,10 @@ import 'live_widgets.dart';
 import 'qf_shapes.dart';
 import 'quote_label.dart';
 import 'qf_theme.dart';
+import 'screen_definition.dart';
+import 'sport_contract.dart';
 import 'sport_images.dart';
+import 'sport_screen_blocks.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
 import 'sports_quotes.dart';
@@ -23,6 +26,8 @@ const _stripHeight = 136.0;
 /// El feed no trae el texto de la línea: se compone aquí con l10n.
 String sportPickText(AppLocalizations l10n, SportMarket m) {
   final line = m.line;
+  // Deporte del catálogo sin pantalla propia: el contrato ya trae el texto del mercado.
+  if (m.family != null) return m.label;
   if (m.market == null) {
     // Tenis: el ganador es el nombre; el resto lleva el nombre de su familia y la selección que manda el feed
     // («Más de 18.5» se reescribe en el idioma actual; un nombre o un hándicap se dejan tal cual).
@@ -66,6 +71,25 @@ Widget sportAvatar(
   }
   return QfAvatar(
     url: serverImageUrl(api, images.tennisPhoto(name)?.path),
+    name: name,
+    size: size,
+    shape: AvatarShape.circle,
+  );
+}
+
+/// Avatar de un lado de un evento. En un deporte del catálogo sin pantalla propia solo vale la imagen que el servidor
+/// manda para ese lado; sin ella, iniciales. NBA y tenis siguen con [sportAvatar].
+Widget eventAvatar(
+  QuantFutApi api,
+  ImageCatalog images,
+  SportEvent event,
+  String name, {
+  double size = 30,
+}) {
+  if (!event.generic) return sportAvatar(api, images, event.sport, name, size: size);
+  final path = name == event.home ? event.imageHome : (name == event.away ? event.imageAway : null);
+  return QfAvatar(
+    url: serverImageUrl(api, path),
     name: name,
     size: size,
     shape: AvatarShape.circle,
@@ -150,6 +174,7 @@ class HomeSport extends StatefulWidget {
     required this.onRetry,
     this.quotes = QuotesOverlay.empty,
     this.now,
+    this.onVip,
   });
 
   final QuantFutApi api;
@@ -164,6 +189,9 @@ class HomeSport extends StatefulWidget {
 
   /// Reloj inyectable para pruebas; por defecto, ahora.
   final DateTime? now;
+
+  /// Abre los planes (bloque `vip` de la definición de pantallas de un deporte nuevo).
+  final VoidCallback? onVip;
 
   @override
   State<HomeSport> createState() => _HomeSportState();
@@ -252,88 +280,139 @@ class _HomeSportState extends State<HomeSport> {
           key: ValueKey('sport-scroll-${widget.sport}'),
           controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: _top(context, shown)),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _PinnedStrip(
-                height: _stripHeight,
-                child: DayStrip(
-                  start: _first,
-                  active: _active ?? dateKey(_first),
-                  counts: counts,
-                  onDay: (date) => _jump(date, counts, box.maxHeight),
-                  onPick: () => _pick(counts, box.maxHeight),
-                  searching: _searching,
-                  onSearch: () => setState(() {
-                    _searching = !_searching;
-                    if (!_searching) search = '';
-                  }),
-                ),
-              ),
-            ),
-            if (days.isEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: training(context.l10n.calendarEmpty),
-                ),
-              ),
-            for (final day in days) ...[
-              SliverToBoxAdapter(
-                child: KeyedSubtree(key: _key(day.key), child: _dayHeader(day)),
-              ),
-              for (final group in day.groups)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList.list(
-                    children: [
-                      _groupHeader(group),
-                      for (final e in group.events)
-                        _EventRow(
-                          key: ValueKey('sport-event-${e.id}'),
-                          event: e,
-                          avatar: (name) => sportAvatar(
-                            widget.api,
-                            widget.images,
-                            widget.sport,
-                            name,
-                          ),
-                          onOpen: () => widget.onOpen(e),
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-            if (widget.sport == kTennis)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Text(
-                    context.l10n.imageCredits,
-                    style: const TextStyle(color: QfColors.muted, fontSize: 11),
-                  ),
-                ),
-              ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
+          slivers: _slivers(context, shown, days, counts, box.maxHeight),
         ),
       ),
     );
   }
 
+  /// Piezas de la pantalla en su orden. NBA y tenis: el de siempre. Un deporte del catálogo sin pantalla propia: el de
+  /// la definición `deporte` (secciones `destacado`, `dias`, `resumen`, `partidos` más avisos y llamada VIP); sin
+  /// definición, ese mismo orden de hoy.
+  List<Widget> _slivers(
+    BuildContext context,
+    List<SportEvent> shown,
+    List<SportAgendaDay> days,
+    Map<String, int> counts,
+    double viewport,
+  ) {
+    Widget strip() => SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedStrip(
+        height: _stripHeight,
+        child: DayStrip(
+          start: _first,
+          active: _active ?? dateKey(_first),
+          counts: counts,
+          onDay: (date) => _jump(date, counts, viewport),
+          onPick: () => _pick(counts, viewport),
+          searching: _searching,
+          onSearch: () => setState(() {
+            _searching = !_searching;
+            if (!_searching) search = '';
+          }),
+        ),
+      ),
+    );
+    List<Widget> list({bool headers = true}) => [
+      if (days.isEmpty)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: training(context.l10n.calendarEmpty),
+          ),
+        ),
+      for (final day in days) ...[
+        SliverToBoxAdapter(
+          child: KeyedSubtree(
+            key: _key(day.key),
+            child: headers ? _dayHeader(day) : const SizedBox.shrink(),
+          ),
+        ),
+        for (final group in day.groups)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList.list(
+              children: [
+                _groupHeader(group),
+                for (final e in group.events)
+                  _EventRow(
+                    key: ValueKey('sport-event-${e.id}'),
+                    event: e,
+                    avatar: (name) => eventAvatar(widget.api, widget.images, e, name),
+                    onOpen: () => widget.onOpen(e),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    ];
+    const tail = SliverToBoxAdapter(child: SizedBox(height: 24));
+    if (!isGenericSport(widget.sport)) {
+      return [
+        SliverToBoxAdapter(child: _top(context, shown)),
+        strip(),
+        ...list(),
+        if (widget.sport == kTennis)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Text(
+                context.l10n.imageCredits,
+                style: const TextStyle(color: QfColors.muted, fontSize: 11),
+              ),
+            ),
+          ),
+        tail,
+      ];
+    }
+    final screen = effectiveScreen(
+      sportCatalog.screens,
+      'deporte',
+      widget.sport,
+      defaultSportSections,
+      genericSportSections,
+    );
+    bool shows(String section) => screen.any((b) => b.isSection && b.section == section);
+    final headers = shows('resumen');
+    final out = <Widget>[
+      // La búsqueda se abre desde la tira de días; si el destacado no se pinta, su campo va igualmente arriba.
+      if (_searching && !shows('destacado')) SliverToBoxAdapter(child: _top(context, shown, hero: false)),
+    ];
+    var listed = false;
+    for (final b in screen) {
+      if (!b.isSection) {
+        final extra = screenExtra(b, api: widget.api, onVip: widget.onVip);
+        if (extra != null) {
+          out.add(SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 0), child: extra)));
+        }
+        continue;
+      }
+      switch (b.section) {
+        case 'destacado':
+          out.add(SliverToBoxAdapter(child: _top(context, shown)));
+        case 'dias':
+          out.add(strip());
+        case 'partidos':
+          if (!listed) out.addAll(list(headers: headers));
+          listed = true;
+      }
+    }
+    return [...out, tail];
+  }
+
   Widget _error(BuildContext context) =>
       SportFeedError(onRetry: widget.onRetry);
 
-  Widget _top(BuildContext context, List<SportEvent> shown) {
+  Widget _top(BuildContext context, List<SportEvent> shown, {bool hero = true}) {
     final l10n = context.l10n;
     final featured = featuredEvent(widget.feed.events, _today, now: widget.now ?? DateTime.now());
     final players = widget.sport == kNba ? _players(shown) : const <(SportEvent, SportMarket)>[];
     final nba = widget.sport == kNba;
-    Widget big(String name) => sportAvatar(
+    Widget big(SportEvent e, String name) => eventAvatar(
       widget.api,
       widget.images,
-      widget.sport,
+      e,
       name,
       size: 66,
     );
@@ -342,12 +421,12 @@ class _HomeSportState extends State<HomeSport> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (featured case (final e, final m))
+          if (featured case (final e, final m) when hero)
             HomeHero(
               sport: widget.sport,
               // NBA: visitante @ local.
-              left: big(nba ? e.away : e.home),
-              right: big(nba ? e.home : e.away),
+              left: big(e, nba ? e.away : e.home),
+              right: big(e, nba ? e.home : e.away),
               title: nba ? '${e.away} @ ${e.home}' : '${e.home} · ${e.away}',
               probability: realPercent(m.probability),
               pick: sportPickText(l10n, m),
