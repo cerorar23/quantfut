@@ -12,6 +12,13 @@
 - **Cartelera y detalle piden distinto:** la cartelera usa `high_probability(plus=False)` (lo mismo que `/mobile/v1/home`, y por tanto que `football()`); `partido(id)` usa `started=True`, como `/mobile/v1/matches/{id}`, para enseñar lo gratis de un partido ya empezado o terminado. `allocations()` escribe filas de reparto la primera vez que ve un lote, igual que ya hace `/home` de forma anónima: el adaptador no añade ninguna escritura propia.
 - **Pruebas:** el catálogo de la suite de contrato usa familias de prueba (`fam_a`, `fam_b`, `fam_oculta`), así que el `Caso` de fútbol envuelve el adaptador real solo para traducir su familia a esas (`ConFamiliasDelCatalogoDePrueba` en `tests/datos_deportes_futbol.py`); la traducción real a las 8 familias de la semilla se prueba aparte, también contra el catálogo real. La paridad ejecuta el `football()` REAL con Node (extrae su texto de `ergonomic-views.js`, sin tocar `frontend/`) y se salta sin Node.
 
+## 12-nov-2026 · Fase 3 parte B: adaptador de tenis de `/deportes/v1` (`api/deportes_tenis.py`; sin desplegar)
+
+- Decisión clave, `status`: el exportador de tenis emite `scheduled`, `awaiting_result`, `no_result`, `finished`, `cancelled`. `no_result` (36 h sin resultado oficial) no está en el enumerado cerrado del contrato y se publica como `awaiting_result` (sigue sin resultado; la web ya lo trata así). Un estado que no esté en la tabla lanza `ValueError` → 503: no se adivina ni se esconde el evento.
+- Fuente caducada o no disponible (`state` ≠ `ok`/`partial`, que `read_public_feed` devuelve como lista vacía sin lanzar) se convierte en `RuntimeError` → 503, para no servir una cartelera vacía que parezca «sin partidos».
+- `eligible = sealed_at < start` y, si no es elegible, `outcome = None` (la web/app lo pasan siempre; la fuente real nunca da sellos posteriores, no hay diferencia observable). `imagenes = None`: el feed no trae ids de jugador y las fotos se resuelven en el cliente por nombre. `winner` no es familia del catálogo de tenis (solo las seis de la semilla): cae en `otros` hasta que el titular la añada.
+- Paridad: `tests/test_deportes_tenis_paridad.py` ejecuta `tennisEvents` real con `node` sobre los mismos datos. Sin cambios en la base `deportes_v1.py`.
+
 ## 12-nov-2026 · Fase 3 parte A: base común del contrato `/deportes/v1/{deporte}/…` (`api/deportes_v1.py`; sin adaptadores, sin desplegar)
 
 - **El router no conoce deportes:** catálogo → campo `adaptador` → `ADAPTADORES[adaptador]` (vacío en la base). Deporte encendido sin adaptador → 503 «Adaptador no disponible», no 500. La interfaz es un `Protocol` (`cartelera(inicio, fin)`, `partido(id)`, `familia_de(market)`); el docstring del módulo y el del archivo de pruebas explican cómo añadir uno.
