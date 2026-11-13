@@ -279,6 +279,19 @@ publica la versión de la app: A a E no dependen de esa fecha.
       y el detalle de NBA también (le faltan proyecciones de jugadores, `estimate`, `conditional` y los dos lados del ganador).
 - Después (no es de esta fase, requiere decisión del titular): que la web y la app lean NBA y tenis por el contrato en lugar de sus endpoints
   propios. Es lo que reduce las ~35 peticiones a la API de la portada, pero cambia clientes ya publicados.
+- [x] `[Sonnet 5.5 · medio]` **Web lee el contrato (NBA y tenis)**, 13-nov-2026: `loadSportWeb` y los convertidores `eventoDesdeContrato` en `frontend/sports-data.js`,
+      con respaldo al cargador actual y un interruptor por deporte (`CONTRATO_WEB`). **Ambos interruptores quedan APAGADOS** por la regla de igualdad (la web no puede
+      mostrar nada distinto de hoy): el contrato 1 no trae todo lo que la web usa. Para encenderlos, añadir al servidor de forma aditiva:
+      - *NBA cartelera* (9 → 1 petición): `team_projection` del evento (`[mu_local, mu_visit]`, hoy `pronostico.mu`; alimenta «Puntos esperados»); que la cartelera lleve el
+        mercado ganador también cuando es revisión (sello posterior al inicio), porque hoy el recorte «solo el destacado» lo vuelve `markets: []` y el partido desaparece de la lista
+        (`sources()` filtra por `markets.length`); `destacado` del ganador con la regla del 75 % (hoy es el ganador elegible sea cual sea su probabilidad).
+      - *NBA mercados* (`/deportes/v1/nba/partido/{id}` en lugar de `/nba/v1/partido/{id}/mercados`): `projections[]` de jugadores (p10/p50/p90/p_juega), `estimate` y
+        `conditional` por mercado, `team`/`side`, `seal` y `odds_at` por mercado, los dos lados del ganador y el ganador con cuota de casa (hoy se excluye `winner`
+        y el ganador sale una vez con id `winner-{id}`, no `winner-{id}-local|visit`), y el `destacado` del servicio con su cuota.
+      - *Tenis*: que la cartelera pueda traer TODOS los mercados (la tarjeta usa `winner||markets[0]`, la ventana totales, sets y tie-break; con solo el destacado serían
+        N peticiones de detalle más); que `no_result` no se aplane a `awaiting_result` (la web muestra «Esperando resultado» solo con `awaiting_result`; `no_result` cae en «En curso o por confirmar» / «Hora prevista superada»); y la ventana
+        de 7 días recorta el feed completo que hoy sirve `/web/deportes/tenis`.
+      Al cerrarse cada hueco: encender el interruptor, comprobar la paridad con datos reales y desplegar solo los archivos de `frontend/` tocados.
 - **Criterio de hecho corregido:** el plan decía «dar de alta un deporte de prueba y verlo en web y app sin tocar `frontend/` ni `apps/mobile/`».
   La Fase 3 NO lo consigue sola: da el servidor, pero ni la web ni la app tienen todavía una pantalla genérica de lista y detalle para un deporte
   que no conocen. Esa pantalla genérica es lo primero de la Fase 4 (bloques `lista de partidos` y `tarjeta de mercado`). Lo que sí cumple la Fase 3:

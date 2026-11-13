@@ -1,6 +1,17 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · La web lee NBA y tenis por el contrato `/deportes/v1`, pero con los interruptores apagados (solo `frontend/`; sin desplegar)
+
+- **Decisión clave:** la regla de igualdad manda sobre el ahorro de peticiones. Comparado campo a campo, el contrato 1 no basta para ninguno de los dos deportes sin
+  cambiar lo que ve el usuario (lista de huecos en `harness/tareas.md`, «Web lee el contrato»). Por eso el código existe, está probado y cae solo al cargador de siempre si el contrato falla,
+  pero `CONTRATO_WEB = {nba: false, tenis: false}`: con ellos apagados la web hace exactamente las mismas peticiones que antes.
+- **El hueco que más pesa en NBA:** la cartelera cuesta 9 peticiones (1 por día ET) y bajaría a 1, pero «Puntos esperados» sale de `pronostico.mu` y el contrato no lo lleva. Alternativa
+  descartada por cambiar lo que se ve: pedir `/nba/v1/cartelera?fecha=` del día del partido solo al abrirlo (1 petición bajo demanda, con un estado «cargando» que hoy no existe).
+- **Tenis no gana peticiones** con el contrato (hoy 1 para toda la lista): solo se justifica cuando la cartelera pueda traer todos los mercados.
+- **El código vive en `sports-data.js`, no en un módulo nuevo:** `src/qf/api/web.py` sirve cada `.js` con una ruta propia, y un archivo nuevo exigía tocar Python y reconstruir la API.
+- **Trampa evitada:** `id` de NBA debe volver a número (`loadNbaMarkets` compara `partido_id !== event.id` con igualdad estricta); el contrato lo da como texto.
+
 ## 13-nov-2026 · Diseño de la Fase 4 del menú «Web y App»: pantallas genéricas y por bloques (rama `docs/fase4-diseno`, solo diseño)
 
 - **Hecho con Opus 5.5** (el titular cambió de modelo para este diseño).
