@@ -111,6 +111,9 @@ _MENSAJES = {
     "catalogo_guardado": ("success", "Guardado. La web lo ve en hasta 5 minutos; la app, al revalidar."),
     "catalogo_traducido": ("success", "Nombre traducido con APIMart (fr, it, de). Revísalo."),
     "catalogo_error": ("danger", "No se pudo guardar; revisa el mensaje."),
+    "pantallas_guardada": ("success", "Borrador guardado. Aún no lo ve nadie: publícalo cuando esté listo."),
+    "pantallas_publicada": ("success", "Publicado como versión nueva. Los clientes lo ven al revalidar la configuración."),
+    "pantallas_vuelta": ("success", "Se publicó de nuevo esa versión como versión nueva. El borrador no cambió."),
     "cuenta_suspendida": ("warning", "La cuenta está suspendida: no se envía enlace de acceso."),
 }
 

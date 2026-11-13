@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Pantalla {{ clave[0] }} · {{ clave[1] }} · {{ clave[2] }}{% endblock %}
+{% block heading %}Pantalla «{{ clave[0] }}» <span class="text-secondary">({{ 'todos los deportes' if clave[1] == '*' else clave[1] }} · {{ clave[2] }})</span>{% endblock %}
+{% macro campos_clave() %}
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="pantalla" value="{{ clave[0] }}">
+  <input type="hidden" name="deporte" value="{{ clave[1] }}">
+  <input type="hidden" name="cliente" value="{{ clave[2] }}">
+{% endmacro %}
+{% macro fila(i, f) %}
+<tr>
+  <td><input class="form-control" name="b{{ i }}_orden" type="number" step="1" value="{{ i + 1 }}" aria-label="Orden"></td>
+  <td><select class="form-select" name="b{{ i }}_tipo" aria-label="Tipo">
+      <option value=""{% if not f.tipo %} selected{% endif %}>—</option>
+      {% for t in tipos %}<option value="{{ t }}"{% if t == f.tipo %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></td>
+  <td><select class="form-select" name="b{{ i }}_seccion" aria-label="Sección">
+      <option value=""{% if not f.seccion %} selected{% endif %}>—</option>
+      {% for s in secciones %}<option value="{{ s }}"{% if s == f.seccion %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></td>
+  <td><input class="form-control" name="b{{ i }}_id" maxlength="40" pattern="[a-z0-9_]{1,40}" value="{{ f.id }}" aria-label="Id" placeholder="id"></td>
+  <td class="text-center"><input class="form-check-input" type="checkbox" name="b{{ i }}_visible" value="1"{% if f.visible %} checked{% endif %} aria-label="Visible"></td>
+  <td><input class="form-control" name="b{{ i }}_build" type="number" min="0" step="1" value="{{ f.build }}" aria-label="Build mínimo de la app"></td>
+  <td class="text-center">{% if f.tipo %}<input class="form-check-input" type="checkbox" name="b{{ i }}_quitar" value="1" aria-label="Quitar">{% endif %}</td>
+</tr>
+<tr><td></td><td colspan="6">
+  <details{% if f.tipo == 'aviso' %} open{% endif %}><summary class="text-secondary">Aviso: textos en 6 idiomas, tono y enlace (solo para bloques de tipo aviso)</summary>
+    <div class="row g-2 mt-1">
+      {% for lg in idiomas %}<div class="col-md-4"><label class="form-label" for="b{{ i }}_t_{{ lg }}">{{ lg }}</label>
+        <input class="form-control" id="b{{ i }}_t_{{ lg }}" name="b{{ i }}_t_{{ lg }}" maxlength="300" value="{{ f.texto.get(lg, '') }}"></div>{% endfor %}
+      <div class="col-md-4"><label class="form-label" for="b{{ i }}_tono">Tono</label>
+        <select class="form-select" id="b{{ i }}_tono" name="b{{ i }}_tono">{% for t in tonos %}<option value="{{ t }}"{% if t == f.tono %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+      <div class="col-md-8"><label class="form-label" for="b{{ i }}_enlace">Enlace (ruta de la app, opcional)</label>
+        <input class="form-control" id="b{{ i }}_enlace" name="b{{ i }}_enlace" maxlength="80" placeholder="/planes/" value="{{ f.enlace }}"></div>
+    </div>
+  </details></td></tr>
+{% endmacro %}
+{% block content %}
+{% if err %}<div class="alert alert-danger" role="alert">{{ err }}</div>{% endif %}
+{% if ok %}<div class="alert alert-success" role="alert">{{ ok }}</div>{% endif %}
+<p class="text-secondary">
+  {% if origen == 'borrador' %}Se muestra el borrador guardado.{% elif origen == 'publicada' %}No hay borrador: se muestra la última versión publicada.{% elif origen == 'nueva' %}Definición nueva: parte del orden natural de las secciones.{% else %}Se muestra lo que enviaste, sin guardar.{% endif %}
+  Máximo {{ max_bloques }} bloques y al menos una sección visible. Los cambios no llegan a nadie hasta publicar.
+  <a href="/control/pantallas">Volver a la lista</a></p>
+
+<form class="card mb-4" method="post" action="/control/pantallas/guardar"><div class="card-body">
+  {{ campos_clave() }}
+  <input type="hidden" name="n" value="{{ filas|length + vacias }}">
+  <div class="table-responsive"><table class="table"><thead><tr>
+    <th>Orden</th><th>Tipo</th><th>Sección</th><th>Id</th><th>Visible</th><th>Build mínimo app</th><th>Quitar</th></tr></thead><tbody>
+  {% for f in filas %}{{ fila(loop.index0, f) }}{% endfor %}
+  {% for k in range(vacias) %}{{ fila(filas|length + k, {'id': '', 'tipo': '', 'seccion': '', 'visible': True, 'build': '', 'tono': 'info', 'enlace': '', 'texto': {}}) }}{% endfor %}
+  </tbody></table></div>
+  <p class="text-secondary mb-3">Las filas en blanco sirven para añadir bloques: elige el tipo (y la sección si es «seccion»). El orden se lee de la columna «Orden».</p>
+  <label class="form-label" for="nota">Nota (obligatoria solo para publicar)</label>
+  <input class="form-control" id="nota" name="nota" maxlength="500" placeholder="Qué cambia y por qué">
+</div><div class="card-footer">
+  <button class="btn" type="submit" formaction="/control/pantallas/validar">Validar</button>
+  <button class="btn btn-primary" type="submit">Guardar borrador</button>
+  <button class="btn btn-success" type="submit" formaction="/control/pantallas/publicar">Publicar</button>
+</div></form>
+
+<h3>Historial</h3>
+<div class="table-responsive"><table class="table"><thead><tr><th>Versión</th><th>Publicada</th><th>Por</th><th>Nota</th><th>Bloques</th><th></th></tr></thead><tbody>
+{% for v in versiones %}<tr>
+  <td>{{ v.version }}{% if loop.first %} <span class="badge bg-green-lt">vigente</span>{% endif %}</td>
+  <td>{{ v.publicado_en|fecha }}</td><td>{{ v.publicado_por }}</td><td>{{ v.nota }}</td><td>{{ v.bloques|length }}</td>
+  <td><form class="d-flex gap-2" method="post" action="/control/pantallas/volver">
+    {{ campos_clave() }}
+    <input type="hidden" name="version" value="{{ v.version }}">
+    <input class="form-control form-control-sm" name="nota" maxlength="500" placeholder="Nota (obligatoria)" aria-label="Nota" required>
+    <button class="btn btn-sm" type="submit">Volver a esta versión</button></form></td>
+</tr>
+{% else %}<tr><td colspan="6">Todavía no se ha publicado nada: los clientes usan su orden de siempre.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

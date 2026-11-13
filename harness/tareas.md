@@ -389,9 +389,11 @@ publica la versión de la app: A a E no dependen de esa fecha.
 - [x] `[Sonnet 5.5 · medio]` 4.1 · Servidor, bloques de contenido: `bloques` de `/deportes/v1/{deporte}/partido/{id}` deja de ir siempre vacío
       (tipos `tabla`, `barras`, `pares`, `texto`), con `lang` aditivo y etiquetas en 6 idiomas desde `src/qf/api/bloques_textos.py`.
       Hecho el 13-nov-2026 (rama `claude/f4-bloques-contenido-1e0fd5`, sin desplegar): modelos en `deportes_v1.py`, textos en `bloques_textos.py`, pruebas en `tests/test_deportes_bloques.py` y `tests/test_bloques_textos.py`.
-- [ ] `[Sonnet 5.5 · medio]` 4.2 · Servidor, definición de pantallas: migración con `pantalla_borradores` y `pantalla_publicaciones` (solo
+- [x] `[Sonnet 5.5 · medio]` 4.2 · Servidor, definición de pantallas: migración con `pantalla_borradores` y `pantalla_publicaciones` (solo
       inserción), validación cerrada, entrega aditiva en `/cliente/v1/config` (`pantallas`, parámetro `build`).
-- [ ] `[Sonnet 5.5 · medio]` 4.3 · Panel `/control/pantallas`: borrador, validar, publicar y volver a una versión anterior.
+      Hecho el 13-nov-2026 (`db/113_pantallas.sql`, `comercial/pantallas.py`): falta aplicar la migración y desplegar (4.6).
+- [x] `[Sonnet 5.5 · medio]` 4.3 · Panel `/control/pantallas`: borrador, validar, publicar y volver a una versión anterior.
+      Hecho el 13-nov-2026 (`api/pantallas_panel.py`, plantillas `pantallas*.html`, menú «Web y App»).
 - [ ] `[Sonnet 5.5 · medio-alto]` 4.4 · Web: pantalla genérica de deporte (lista y detalle) para cualquier deporte del catálogo, por el contrato;
       pinta las secciones según `pantallas` y los bloques de contenido. Después de que la web lea NBA y tenis por el contrato (PR en curso).
 - [ ] `[Opus 5.5 · medio-alto]` 4.5 · App: lo mismo en Flutter, con la app leyendo el contrato para los deportes sin pantalla propia.

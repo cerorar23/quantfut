@@ -1,6 +1,8 @@
 """Configuración común para web y app: `GET /cliente/v1/config` (`contrato: 1`, Fase 2 parte B).
 
 Dentro de un contrato solo se añaden campos; quitar o cambiar uno exige `contrato: 2` (hoy `?contrato=2` da 422).
+`pantallas` (Fase 4, `comercial/pantallas.py`) solo sale si hay algo publicado; `?build=N` quita los bloques con
+`build_min_app` mayor y, al cambiar el cuerpo, cambia el `ETag` (que es el hash del cuerpo).
 `deportes` viene de `comercial/catalogo.py` (`deportes_para`), que ya filtra `off`, familias ocultas y campos privados.
 Aquí vive la lista blanca de campos (PUBLICAS / PRIVADAS por tabla) y la maquinaria de `ETag`.
 
@@ -19,7 +21,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, ConfigDict
 
-from ..comercial import acceso_reglas, catalogo, mobile_updates
+from ..comercial import acceso_reglas, catalogo, mobile_updates, pantallas
 from . import idiomas, mobile, web_config
 
 router = APIRouter(tags=['cliente'])
@@ -40,6 +42,8 @@ PUBLICAS: dict[str, frozenset[str]] = {
                            'estado_app'}),
     'deporte_mercados': frozenset({'deporte_id', 'familia_id', 'orden', 'nombre', 'subtitulo', 'visible_web',
                                    'visible_app'}),
+    'pantalla_publicaciones': frozenset({'pantalla', 'deporte', 'cliente', 'version', 'bloques', 'publicado_en'}),
+    'pantalla_borradores': frozenset(),   # el borrador entero es privado
 }
 PRIVADAS: dict[str, frozenset[str]] = {
     'web_site_settings': frozenset({
@@ -51,6 +55,8 @@ PRIVADAS: dict[str, frozenset[str]] = {
     'cliente_ajustes': frozenset({'id', 'updated_by', 'updated_at'}),
     'deportes': frozenset({'adaptador', 'updated_by', 'updated_at'}),
     'deporte_mercados': frozenset({'updated_by', 'updated_at'}),
+    'pantalla_publicaciones': frozenset({'publicado_por', 'nota'}),
+    'pantalla_borradores': frozenset({'pantalla', 'deporte', 'cliente', 'bloques', 'updated_by', 'updated_at'}),
 }
 
 _LANG_RE = re.compile(r'^[a-z]{2}$')
@@ -147,6 +153,15 @@ class Deporte(_Modelo):
     familias: list[Familia]
 
 
+class BloquePantalla(_Modelo):
+    id: str
+    tipo: Literal['seccion', 'aviso', 'vip']
+    seccion: str | None = None
+    visible: bool
+    params: dict[str, Any]
+    build_min_app: int | None = None
+
+
 class Respuesta(_Modelo):
     contrato: Literal[1] = 1
     cliente: Cliente
@@ -157,6 +172,8 @@ class Respuesta(_Modelo):
     deportes: list[Deporte]
     app: App | None = None
     web: Web | None = None
+    # {pantalla: {deporte|'*': [bloque]}}; ausente mientras no haya nada publicado (la respuesta es la de siempre).
+    pantallas: dict[str, dict[str, list[BloquePantalla]]] | None = None
 
 
 def _idioma(lang: str, cliente: Cliente) -> str:
@@ -179,7 +196,24 @@ def _secciones_web(lang: str) -> dict[str, SeccionWeb]:
     return out
 
 
-def componer(cliente: Cliente, lang: str) -> Respuesta:
+def _pantallas(cliente: Cliente, lang: str, build: int | None) -> dict[str, dict[str, list[BloquePantalla]]] | None:
+    idiomas_cliente = pantallas.IDIOMAS_APP if cliente is Cliente.app else pantallas.IDIOMAS_WEB
+    salida: dict[str, dict[str, list[BloquePantalla]]] = {}
+    for pantalla, por_deporte in pantallas.para_entrega(cliente.value, build).items():
+        for deporte, bloques in por_deporte.items():
+            lista = []
+            for b in bloques:
+                params = b.get('params') or {}
+                if b['tipo'] == 'aviso':   # la web solo usa es, en y pt
+                    params = {**params, 'texto': {lg: params['texto'][lg] for lg in idiomas_cliente}}
+                lista.append(BloquePantalla(id=b['id'], tipo=b['tipo'], seccion=b.get('seccion'),
+                                            visible=b['visible'], params=params,
+                                            build_min_app=b.get('build_min_app')))
+            salida.setdefault(pantalla, {})[deporte] = lista
+    return salida or None
+
+
+def componer(cliente: Cliente, lang: str, build: int | None = None) -> Respuesta:
     cfg = web_config.get_settings()
     regla = acceso_reglas.vigente()   # la de hoy (UTC)
     resp = Respuesta(
@@ -194,7 +228,8 @@ def componer(cliente: Cliente, lang: str) -> Respuesta:
         acceso=Acceso(probability_min=regla.prob_min, probability_max=regla.prob_max,
                       high_probability_free_fraction=regla.free_fraction, ladder_free_count=1,
                       dias_agenda=acceso_reglas.dias_agenda()),
-        deportes=[Deporte(**d) for d in catalogo.deportes_para(cliente.value)])
+        deportes=[Deporte(**d) for d in catalogo.deportes_para(cliente.value)],
+        pantallas=_pantallas(cliente, lang, build))
     if cliente is Cliente.app:
         v = mobile_updates.configuration()
         resp.app = App(
@@ -223,9 +258,9 @@ def _coincide(cabecera: str | None, etag: str) -> bool:
 @router.get('/cliente/v1/config', response_model=Respuesta, response_model_exclude_none=True)
 def cliente_config(request: Request, cliente: Cliente = Query(...),
                    lang: str = Query('es', pattern=_LANG_RE.pattern),
-                   contrato: int = Query(1, ge=1, le=1)):
+                   contrato: int = Query(1, ge=1, le=1), build: int | None = Query(None, ge=0)):
     lang = _idioma(lang, cliente)
-    cuerpo = componer(cliente, lang).model_dump(mode='json', exclude_none=True)
+    cuerpo = componer(cliente, lang, build).model_dump(mode='json', exclude_none=True)
     etag = _etag(cuerpo)
     if cliente is Cliente.web:
         cache = f"public, max-age={int(web_config.get_settings()['public_cache_seconds'])}"

@@ -1,6 +1,16 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · Fase 4.2 + 4.3: definición de pantallas por bloques y panel `/control/pantallas` (rama `claude/f4-pantallas-097379`; sin desplegar ni aplicar `db/113`)
+
+- **Decisión clave:** la validación vive SOLO en `comercial/pantallas.py` (el panel muestra su mensaje tal cual, con 422 y el formulario conservado) y la publicación es solo inserción con trigger `deny_mutation`, como `acceso_reglas`. Desplegar no cambia nada visible: sin publicación (o sin la tabla, `UndefinedTable`) `pantallas` ni aparece en `/cliente/v1/config`.
+- **`pantallas` se OMITE cuando está vacío, en vez de ir `{}`:** el encargo pedía a la vez `{}` y «mismo `ETag` que hoy si no hay pantallas»; el `ETag` es el hash del cuerpo, así que solo se cumple omitiendo el campo. Los clientes deben leer `config.pantallas ?? {}` (también lo exige hablar con un servidor anterior).
+- **`build` entra en el `ETag` por el cuerpo:** el `ETag` ya es el hash del cuerpo servido, de modo que cambia exactamente cuando el filtro por `build` cambia lo entregado (y no cambia si no quita nada). Sin `build` no se quita ningún bloque; las claves que se quedan sin bloques tras el filtro se omiten.
+- **Reglas que no estaban literales en la especificación y añadí:** una sección solo puede aparecer una vez por pantalla (pintarla dos veces no tiene sentido); texto de aviso ≤ 300 caracteres; nota ≤ 500; `params` vacío en `seccion` y `vip`, y campos desconocidos rechazados. `enlace` vale para las rutas web fijas de `rutas_web.SECCIONES` más `/<slug>/` de cada deporte del catálogo.
+- **La web recibe los avisos solo en es/en/pt** (como los nombres del catálogo); la app, los seis.
+- **«Volver a esta versión» no toca el borrador** (publica de nuevo el contenido como versión nueva, con su nota); así no se pierde trabajo en curso. El panel arma las filas en el servidor (sin JavaScript ni CSS nuevo): filas en blanco para añadir, columna «Orden» para ordenar, casilla «Quitar».
+- Probado con Postgres real en esquema aislado (`qf_pantallas_test`): trigger, versiones, auditoría, columnas clasificadas y recorrido completo del panel.
+
 ## 13-nov-2026 · Bloques de contenido de `partido.bloques` (Fase 4, tarea 4.1; sin desplegar)
 
 - **El adaptador entrega los bloques con un método OPCIONAL `bloques(id)`, fuera del `Protocol`:** así tenis, NBA y fútbol no cambian ni se rompe `isinstance(…, Adaptador)`; sin el método, `bloques: []`. Se llama tras `partido(id)` y solo en ese endpoint (`/mercados` no lleva texto, no recibe `lang`).

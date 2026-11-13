@@ -75,3 +75,18 @@ def _catalogo_de_codigo(monkeypatch):
     catalogo.invalidar_cache()
     yield
     catalogo.invalidar_cache()
+
+
+@pytest.fixture(autouse=True)
+def _pantallas_de_codigo(monkeypatch):
+    """Sin Postgres: sin pantallas publicadas (db/113), cada cliente usa su orden de hoy.
+    Las pruebas de tests/test_pantallas.py sustituyen `_cargar` con las suyas."""
+    try:
+        from qf.comercial import pantallas
+    except Exception:
+        yield
+        return
+    monkeypatch.setattr(pantallas, "_cargar", lambda: {})
+    pantallas.invalidar_cache()
+    yield
+    pantallas.invalidar_cache()
