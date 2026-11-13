@@ -45,7 +45,7 @@ from ..db import conn, query
 from .auditoria import audit
 from .catalogo_semilla import SEMILLA
 
-ADAPTADORES = ('futbol', 'nba', 'tenis')
+ADAPTADORES = ('futbol', 'nba', 'tenis', 'prueba')
 IDIOMAS_APP = ('es', 'en', 'pt', 'fr', 'it', 'de')
 IDIOMAS_WEB = ('es', 'en', 'pt')
 SECCIONES = ('high', 'ladder', 'parley')

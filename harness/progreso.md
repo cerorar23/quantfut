@@ -1,6 +1,11 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · Adaptador de demostración `prueba` (rama `claude/adaptador-demo-30d1d9`; sin desplegar)
+
+- **Decisión clave:** gancho mínimo `para(deporte_id)` en `deportes_v1._Ctx`: si el adaptador registrado lo tiene, el router lo liga al id pedido; sin él, todo igual. Así un único `ADAPTADORES['prueba']` sirve datos bajo cualquier deporte del catálogo sin el 503 por `sport` distinto.
+- Los datos son sintéticos fijos y se marcan como demostración (liga «Demostración», etiquetas «Demo ·» y bloque de texto en 6 idiomas) para que no se confundan con pronósticos reales. Familias: `demo_resultado`, `demo_totales`, `demo_especiales`.
+
 ## 13-nov-2026 · Fase 4.4: pantalla genérica de deporte en la web y definición de pantallas (rama `claude/f4-web-generica-a403e6`; sin desplegar)
 
 - **Decisión clave:** un deporte del catálogo que no sea fútbol, NBA ni tenis se pinta con la MISMA ventana (`sportWindow`) y el MISMO hub, alimentado solo por `/deportes/v1`. Para no tocar el marcado de NBA y tenis, `forecast` se partió en piezas (`pickCard`, `marketLine`, `tablaMercados`, `masMercados`) que devuelven el mismo HTML; la pantalla genérica las reutiliza. `frontend/paridad-generica.test.mjs` fija con huellas SHA-256 (generadas con el código previo) 39 salidas de NBA, tenis y hub y las peticiones de sus cargadores: cambiarlas a propósito exige regenerar el golden.
