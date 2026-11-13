@@ -1,0 +1,195 @@
+{
+  "start": "2024-01-01",
+  "end": "2026-10-13",
+  "updated_at": "2026-11-13T02:20:28.543657+00:00",
+  "inventory_complete": true,
+  "inventory_errors": [],
+  "download_complete": true,
+  "matches": 0,
+  "coverage": [
+    {
+      "league_id": "gb.premier_league",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "es.laliga",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "it.serie_a",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "mx.liga_mx",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "br.serie_a",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "ar.primera",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "nl.eredivisie",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "us.mls",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "de.bundesliga",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "fr.ligue_1",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "pt.primeira",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "es.laliga2",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "it.serie_b",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "tr.super_lig",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "ch.super_league",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "dk.superliga",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "no.eliteserien",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "se.allsvenskan",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "gb.championship",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "fr.ligue_2",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "de.bundesliga2",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "eu.ucl",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    },
+    {
+      "league_id": "eu.uel",
+      "matches": 0,
+      "with_xg": 0,
+      "missing_xg": 0,
+      "error": 0,
+      "pending": 0
+    }
+  ]
+}

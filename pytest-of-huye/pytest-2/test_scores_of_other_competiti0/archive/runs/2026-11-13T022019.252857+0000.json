@@ -1,0 +1,1 @@
+{"event_observations":2,"failures":0,"finished_at":"2026-11-13T02:20:19.285737+00:00","outcome_observations":0,"provider":"propline","quota":{"x-daily-remaining":"4900","x-daily-reset":"1792800000"},"receipts":3,"requests":3,"sports":["soccer_epl","soccer_japan_j_league"],"started_at":"2026-11-13T02:20:19.252857+00:00","stop":null,"version":"propline-shared-1"}

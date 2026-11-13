@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { nbaV2Events, tennisEvents, loadSport, CONTRATO_WEB, ventanaContrato, eventoDesdeContrato, eventosDesdeContrato, loadSportContrato, loadSportWeb } from './sports-data.js';
+import { nbaV2Events, tennisEvents, loadSport, featuredSportMarket, CONTRATO_WEB, ventanaContrato, eventoDesdeContrato, eventosDesdeContrato, loadSportContrato, loadSportWeb } from './sports-data.js';
 
 const SELLO = 'a'.repeat(64);
 const NOW = new Date(2026, 10, 5, 12);               // 5-nov-2026 12:00, hora local del que corre la prueba
@@ -14,17 +14,23 @@ const PARTIDOS = [
   game(2, '2026-11-03', '2026-11-04T00:00:00Z', { local: 90, visitante: 99 }, pick(0.4, '2026-11-03T22:00:00Z')),         // visitante, acertado
   game(3, '2026-11-04', '2026-11-05T00:00:00Z', null, null),                                                              // sin pronóstico, aún sin resultado
   game(4, '2026-11-04', '2026-11-05T01:00:00Z', null, pick(0.62, '2026-11-04T22:00:00Z')),                                 // con pronóstico, sin resultado (4 h pasadas)
+  game(5, '2026-11-04', '2026-11-05T02:00:00Z', null, pick(0.6, '2026-11-05T03:00:00Z', [112, 105])),                      // revisión: sello posterior al inicio
+  game(6, '2026-11-04', '2026-11-05T03:00:00Z', null, pick(0.78, '2026-11-05T01:00:00Z', [118.5, 109.25])),                // dentro de la franja del destacado (75 %–83,3 %)
 ];
 const mercadoGanador = (id, seleccion, prob, outcome, sellado) => ({ id: `winner-${id}`, label: 'Ganador del partido', selection: seleccion, probability: prob, sealed_at: sellado,
-  eligible: true, market: 'winner', family: 'winner', line: null, player: null, player_id: null, price: null, reference: 'Probabilidad estadística', outcome, push_probability: null });
+  eligible: true, market: 'winner', family: 'winner', line: null, player: null, player_id: null, price: null, reference: 'Probabilidad estadística', outcome, push_probability: null, principal: true });
 const eventoNba = (id, inicio, estado, score, mercados, extra = {}) => ({ id: String(id), sport: 'nba', home: 'Boston Celtics', away: 'New York Knicks', league: 'NBA', start: inicio,
   status: estado, seal: SELLO, sealed_at: mercados[0]?.sealed_at ?? null, planned_seal: new Date(Date.parse(inicio) - 36e5).toISOString().replace('.000Z', 'Z'),
-  score, surface: null, bloqueados: 0, imagenes: null, markets: mercados, destacado: mercados[0]?.id ?? null, ...extra });
+  score, surface: null, bloqueados: 0, imagenes: null, markets: mercados, destacado: null, team_projection: null, ...extra });
 const CONTRATO_NBA = { contrato: 1, deporte: 'nba', desde: '2026-11-02', dias: 7, eventos: [
   eventoNba(1, '2026-11-03T00:00:00Z', 'finished', '110 – 100', [mercadoGanador(1, 'Boston Celtics', 0.7, 'win', '2026-11-02T22:00:00Z')]),
   eventoNba(2, '2026-11-04T00:00:00Z', 'finished', '90 – 99', [mercadoGanador(2, 'New York Knicks', 0.6, 'win', '2026-11-03T22:00:00Z')]),
   { ...eventoNba(3, '2026-11-05T00:00:00Z', 'awaiting_result', null, []), seal: null, sealed_at: null },
   eventoNba(4, '2026-11-05T01:00:00Z', 'awaiting_result', null, [mercadoGanador(4, 'Boston Celtics', 0.62, null, '2026-11-04T22:00:00Z')]),
+  eventoNba(5, '2026-11-05T02:00:00Z', 'scheduled', null, [{ ...mercadoGanador(5, 'Boston Celtics', 0.6, null, '2026-11-05T03:00:00Z'), eligible: false }],
+    { team_projection: [112, 105] }),                                       // el ganador revisado SÍ llega a la cartelera (principal) y no es destacado
+  eventoNba(6, '2026-11-05T03:00:00Z', 'scheduled', null, [mercadoGanador(6, 'Boston Celtics', 0.78, null, '2026-11-05T01:00:00Z')],
+    { team_projection: [118.5, 109.25], destacado: 'winner-6' }),
 ] };
 
 const mercadoTenis = (id, label, seleccion, prob, outcome = null) => ({ id, label, selection: seleccion, probability: prob, sealed_at: '2026-11-05T06:00:00Z', eligible: true,
@@ -44,7 +50,11 @@ const eventoTenis = (e, soloDestacado = false) => ({ id: e.id, sport: 'tenis', h
 const CONTRATO_TENIS = { contrato: 1, deporte: 'tenis', desde: '2026-11-02', dias: 7, eventos: FEED_TENIS.events.map(e => eventoTenis(e)) };
 
 const respuesta = (cuerpo, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => cuerpo });
+// Todo lo que la web pinta de un evento: si dos cargadores dan el mismo `resumen`, las vistas no pueden distinguirlos.
 const resumen = events => events.map(e => ({ id: String(e.id), home: e.home, away: e.away, start: Date.parse(e.start), status: e.status, score: e.score,
+  seal: e.seal, sealed_at: e.sealed_at, planned_seal: e.planned_seal ? Date.parse(e.planned_seal) : null, team_projection: e.team_projection ?? null,
+  destacado: featuredSportMarket(e)?.id ?? null, markets: e.markets }));
+const resumenTenis = events => events.map(e => ({ id: String(e.id), home: e.home, away: e.away, start: Date.parse(e.start), status: e.status, score: e.score,
   markets: e.markets.map(m => [m.id, m.probability, m.outcome]) }));
 const sinAviso = async fn => { const original = console.warn, avisos = []; console.warn = (...a) => avisos.push(a.join(' ')); try { return [await fn(), avisos]; } finally { console.warn = original; } };
 
@@ -88,17 +98,29 @@ test('una respuesta que no cumple el contrato se rechaza entera', () => {
 // ── paridad con el cargador actual ───────────────────────────────────────────────────────────────────────────────────
 test('paridad NBA: el contrato y nbaV2Events dan los mismos eventos', () => {
   const ahora = new Date('2026-11-05T06:00:00Z');
-  assert.deepEqual(resumen(eventosDesdeContrato(CONTRATO_NBA, 'nba')), resumen(nbaV2Events(PARTIDOS, ahora)));
   const [c, w] = [eventosDesdeContrato(CONTRATO_NBA, 'nba'), nbaV2Events(PARTIDOS, ahora)];
-  c.forEach((e, i) => assert.deepEqual([e.seal, e.sealed_at, Date.parse(e.planned_seal)], [w[i].seal, w[i].sealed_at, Date.parse(w[i].planned_seal)]));
+  assert.deepEqual(resumen(c), resumen(w));                                // eventos, mercados completos, sellos, «Puntos esperados» y destacado: SIN huecos
+  assert.equal(c.length, 6);
+  // Los casos que antes eran huecos: ganador revisado (sigue en la lista), «Puntos esperados» y destacado en la franja 75 %–83,3 %.
+  const por = id => c.find(e => e.id === id);
+  assert.deepEqual([por(5).markets.length, por(5).markets[0].revised, por(5).team_projection, featuredSportMarket(por(5))], [1, true, [112, 105], null]);
+  assert.deepEqual([featuredSportMarket(por(6))?.id, por(6).team_projection], ['winner-6', [118.5, 109.25]]);
+  assert.equal(featuredSportMarket(por(1)), null);                         // 70 %: no llega al 75 %
+  assert.equal(por(3).markets.length, 0);                                  // sin pronóstico: sin mercados, como hoy (`sources()` lo filtra)
+});
+test('el `destacado` del contrato coincide con la regla de la web en cada evento de NBA', () => {
+  for (const e of CONTRATO_NBA.eventos) {
+    const web = featuredSportMarket(eventoDesdeContrato({ ...e, destacado: undefined }, 'nba'));
+    assert.equal(e.destacado, web?.id ?? null, `evento ${e.id}`);
+  }
 });
 test('paridad tenis: el contrato con todos los mercados y tennisEvents dan los mismos eventos', () => {
-  assert.deepEqual(resumen(eventosDesdeContrato(CONTRATO_TENIS, 'tenis')), resumen(tennisEvents(FEED_TENIS)));
+  assert.deepEqual(resumenTenis(eventosDesdeContrato(CONTRATO_TENIS, 'tenis')), resumenTenis(tennisEvents(FEED_TENIS)));
 });
 
-// ── brechas conocidas: lo que el contrato 1 NO trae y por lo que los interruptores siguen apagados ─────────────────────
-test('brechas: la cartelera del contrato no trae todo lo que la web usa hoy', () => {
-  assert.deepEqual(CONTRATO_WEB, { nba: false, tenis: false });
+// ── brechas conocidas de TENIS: lo que el contrato 1 aún NO trae y por lo que su interruptor sigue apagado ───────────────
+test('interruptores: NBA encendido; tenis apagado porque la cartelera del contrato no trae todo lo que la web usa de tenis', () => {
+  assert.deepEqual(CONTRATO_WEB, { nba: true, tenis: false });
   // Tenis: en la cartelera cada evento solo lleva el destacado; la web pinta totales, sets y tie-break de TODOS los mercados.
   const soloDestacado = { ...CONTRATO_TENIS, eventos: FEED_TENIS.events.map(e => eventoTenis(e, true)) };
   const hoy = tennisEvents(FEED_TENIS), contrato = eventosDesdeContrato(soloDestacado, 'tenis');
@@ -106,14 +128,6 @@ test('brechas: la cartelera del contrato no trae todo lo que la web usa hoy', ()
   assert.equal(contrato.find(e => e.id === 't-1').markets.length, 1);
   assert.deepEqual(hoy.map(e => e.id), ['t-1', 't-2']);
   assert.deepEqual(contrato.map(e => e.id), ['t-1']);                      // sin destacado no hay ningún mercado y el partido desaparece de la cartelera
-  // NBA: un pronóstico revisado (sello posterior al inicio) no es destacado y la cartelera lo recorta: la web hoy lo conserva como mercado revisado.
-  const tarde = game(9, '2026-11-04', '2026-11-05T00:00:00Z', null, pick(0.6, '2026-11-05T00:30:00Z', [112, 105]));
-  const [hoyNba] = nbaV2Events([tarde], new Date('2026-11-05T01:00:00Z'));
-  const [contratoNba] = eventosDesdeContrato({ ...CONTRATO_NBA, eventos: [eventoNba(9, '2026-11-05T00:00:00Z', 'scheduled', null, [], { sealed_at: '2026-11-05T00:30:00Z' })] }, 'nba');
-  assert.equal(hoyNba.markets.length, 1);
-  assert.equal(contratoNba.markets.length, 0);
-  assert.deepEqual(hoyNba.team_projection, [112, 105]);                    // y `team_projection` («Puntos esperados») no existe en el contrato
-  assert.equal(contratoNba.team_projection, null);
 });
 
 // ── peticiones y respaldo ────────────────────────────────────────────────────────────────────────────────────────────
@@ -122,13 +136,13 @@ test('la cartelera de NBA del contrato es UNA petición para la ventana de 7 dí
   const { status, events } = await loadSportContrato('nba', async url => { llamadas.push(url); return respuesta(CONTRATO_NBA); }, NOW);
   const v = ventanaContrato('nba', NOW);
   assert.deepEqual(llamadas, [`/deportes/v1/nba/cartelera?cliente=web&contrato=1&desde=2026-11-02&dias=7&tz=${v.tz}`]);
-  assert.equal(status, 'ready'); assert.equal(events.length, 4);
+  assert.equal(status, 'ready'); assert.equal(events.length, 6);
   const antes = []; await loadSport('nba', async url => { antes.push(url); return respuesta({ partidos: [] }); }, NOW);
   assert.equal(antes.length, 9);
 });
 test('con el interruptor apagado la web usa el cargador actual sin tocar el contrato', async () => {
   const llamadas = [];
-  const [r, avisos] = await sinAviso(() => loadSportWeb('nba', async url => { llamadas.push(url); return respuesta({ partidos: [] }); }, NOW));
+  const [r, avisos] = await sinAviso(() => loadSportWeb('nba', async url => { llamadas.push(url); return respuesta({ partidos: [] }); }, NOW, { contrato: { nba: false } }));
   assert.equal(r.status, 'ready'); assert.equal(llamadas.length, 9);
   assert.ok(llamadas.every(u => u.startsWith('/nba/v1/cartelera?fecha=')) && !avisos.length);
   const [t] = await sinAviso(() => loadSportWeb('tenis', async url => { llamadas.push(url); return respuesta(FEED_TENIS); }, NOW));
@@ -137,7 +151,22 @@ test('con el interruptor apagado la web usa el cargador actual sin tocar el cont
 test('con el interruptor encendido el contrato manda y no se pide nada más', async () => {
   const llamadas = [];
   const [r, avisos] = await sinAviso(() => loadSportWeb('nba', async url => { llamadas.push(url); return respuesta(CONTRATO_NBA); }, NOW, { contrato: { nba: true } }));
-  assert.equal(r.events.length, 4); assert.equal(llamadas.length, 1); assert.deepEqual(avisos, []);
+  assert.equal(r.events.length, 6); assert.equal(llamadas.length, 1); assert.deepEqual(avisos, []);
+});
+test('con la configuración de producción: NBA por el contrato (1 petición) y tenis por su endpoint, y la web recibe lo mismo que con el cargador actual', async () => {
+  const llamadas = [];
+  const fetcher = async url => { llamadas.push(url); return url.startsWith('/deportes/') ? respuesta(CONTRATO_NBA) : url.startsWith('/nba/') ? respuesta({ partidos: PARTIDOS.filter(p => url.endsWith(p.fecha)) }) : respuesta(FEED_TENIS); };
+  const [nba, avisos] = await sinAviso(() => loadSportWeb('nba', fetcher, NOW));
+  assert.equal(llamadas.length, 1); assert.match(llamadas[0], /^\/deportes\/v1\/nba\/cartelera\?/); assert.deepEqual(avisos, []);
+  llamadas.length = 0;
+  const antes = await loadSport('nba', fetcher, NOW);
+  assert.equal(llamadas.length, 9); assert.ok(llamadas.every(u => u.startsWith('/nba/v1/cartelera?fecha=')));
+  // Las vistas leen `nba.events`: salvo el estado de los partidos en curso (calculado con el reloj de cada cargador), todo coincide.
+  const sinReloj = events => resumen(events).map(({ status, ...resto }) => resto);
+  assert.deepEqual(sinReloj(nba.events), sinReloj(antes.events));
+  llamadas.length = 0;
+  const [tenis] = await sinAviso(() => loadSportWeb('tenis', fetcher, NOW));
+  assert.deepEqual(llamadas, ['/web/deportes/tenis']); assert.equal(tenis.events.length, 2);
 });
 test('si el contrato falla (503, 304 sin cuerpo, red, JSON roto o forma inválida) la web usa el cargador actual y avisa', async () => {
   const actual = url => url.startsWith('/deportes/') ? null : url.startsWith('/nba/') ? respuesta({ partidos: PARTIDOS }) : respuesta(FEED_TENIS);

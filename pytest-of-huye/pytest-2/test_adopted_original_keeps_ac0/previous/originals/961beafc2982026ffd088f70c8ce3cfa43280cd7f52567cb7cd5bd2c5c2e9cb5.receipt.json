@@ -1,0 +1,7 @@
+{
+  "url": "https://www.sofascore.com/api/v1/event/1/lineups",
+  "received_at": "2026-10-03T10:00:00Z",
+  "sha256": "592bf07eeb8e5647414e70316d8e5dd2638a6ce7216df4f54e9cd9f44ead32e1",
+  "provider_error": false,
+  "requested_url": "https://www.sofascore.com/api/v1/event/1/lineups"
+}

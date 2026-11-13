@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-casa-20261105';
-import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=contrato-20261112';
+import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=nba-20261113';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;

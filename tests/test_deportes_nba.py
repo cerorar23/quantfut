@@ -108,7 +108,8 @@ def test_ganador_mercado_destacado_y_resultado(falsa):
     assert (g100.id, g100.selection, g100.probability, g100.outcome, g100.eligible) == ('winner-100', 'Denver Nuggets', 0.62, None, True)
     # p_local .30 -> favorito el visitante con .70; ganó el visitante
     assert (g101.selection, round(g101.probability, 6), g101.outcome) == ('Los Angeles Lakers', 0.7, 'win')
-    assert por_id['101'].destacado == 'winner-101'
+    assert por_id['101'].destacado is None      # .70 no llega al 75 %: la cartelera sigue la regla de la web
+    assert por_id['100'].markets[0].principal is True
 
 
 def test_sello_posterior_al_inicio_no_es_elegible_ni_tiene_resultado(falsa):
@@ -159,3 +160,47 @@ def test_fuente_caida_lanza(monkeypatch):
         AdaptadorNba().cartelera(utc('2026-11-12T00:00:00'), utc('2026-11-19T00:00:00'))
     with pytest.raises(nba_datos.NbaNoDisponible):
         AdaptadorNba().partido('103')
+
+
+# ── cartelera completa para la web: destacado (regla 75 %–83,3 %), ganador revisado y puntos esperados ───────────────
+
+def _una_cartelera(monkeypatch, p_local, sellado='antes', mu=True, inicio='2026-11-13T00:00:00+00:00'):
+    p = partido(500, 'Denver Nuggets', 'Utah Jazz', '2026-11-12', inicio, p_local=p_local, sellado=sellado)
+    if not mu:
+        p['pronostico'].pop('mu')
+    instalar(monkeypatch, NbaApiFalsa(dias={'2026-11-12': [p]}))
+    return AdaptadorNba().cartelera(utc('2026-11-12T00:00:00'), utc('2026-11-15T00:00:00'))[0]
+
+
+# Los mismos casos que `featuredSportMarket` (frontend/sports-data.js) resuelve sobre el ganador del modelo: cuota = 1 ÷ probabilidad >= 1,20 y prob >= 75 %.
+@pytest.mark.parametrize('p_local, destacado', [
+    (0.75, True), (0.7499, False), (0.80, True), (0.83, True), (0.8333, True), (0.8334, False),
+    (0.84, False), (0.95, False), (0.62, False), (0.25, True), (0.20, True), (0.17, True), (0.16, False), (0.30, False)])
+def test_destacado_de_la_cartelera_sigue_la_regla_de_la_web(monkeypatch, p_local, destacado):
+    e = _una_cartelera(monkeypatch, p_local)
+    assert e.destacado == ('winner-500' if destacado else None)
+    assert [m.id for m in e.markets] == ['winner-500']              # el ganador va siempre, sea o no el destacado
+
+
+def test_ganador_revisado_no_es_destacado_pero_sigue_en_el_evento(monkeypatch):
+    e = _una_cartelera(monkeypatch, 0.78, sellado='despues')
+    assert e.destacado is None and [m.id for m in e.markets] == ['winner-500']
+    assert e.markets[0].eligible is False and e.markets[0].principal is True
+
+
+def test_sin_pronostico_no_hay_mercados_ni_destacado(monkeypatch):
+    e = _una_cartelera(monkeypatch, 0.5, sellado=None)
+    assert e.markets == [] and e.destacado is None and e.team_projection is None
+
+
+def test_team_projection_es_mu_local_y_visitante(monkeypatch):
+    assert _una_cartelera(monkeypatch, 0.6).team_projection == [111.7, 116.4]
+    assert _una_cartelera(monkeypatch, 0.6, mu=False).team_projection is None
+
+
+@pytest.mark.parametrize('mu', [[111.7], [1, 2, 3], ['a', 2], [float('nan'), 2], [True, 2], 'x', None])
+def test_team_projection_invalida_se_omite(monkeypatch, mu):
+    p = partido(500, 'Denver Nuggets', 'Utah Jazz', '2026-11-12', '2026-11-13T00:00:00+00:00')
+    p['pronostico']['mu'] = mu
+    instalar(monkeypatch, NbaApiFalsa(dias={'2026-11-12': [p]}))
+    assert AdaptadorNba().cartelera(utc('2026-11-12T00:00:00'), utc('2026-11-15T00:00:00'))[0].team_projection is None

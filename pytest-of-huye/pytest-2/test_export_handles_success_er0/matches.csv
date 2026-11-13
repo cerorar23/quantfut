@@ -1,0 +1,4 @@
+﻿league_id,fotmob_league_id,season,fotmob_match_id,kickoff_utc,home_team_id,away_team_id,home_team,away_team,download_status,error,source,captured_at,home_xg,away_xg,home_xgot,away_xgot,home_shots,away_shots,home_shots_target,away_shots_target,home_corners,away_corners,home_possession,away_possession,home_yellow_cards,away_yellow_cards,home_red_cards,away_red_cards,home_big_chances,away_big_chances,home_big_chances_missed,away_big_chances_missed,stats_json,shot_count
+gb.premier_league,47,2023/2024,123,2024-01-02T02:00:00+00:00,1,2,A,B,with_xg,,fotmob,2026-10-03T12:00:00Z,1.234,0.0,,,,,,,7.0,0.0,,,,,,,,,,,"{""expected_goals"":[1.234,0.0],""corners"":[7.0,0.0]}",1
+gb.premier_league,47,2023/2024,124,2024-01-02T02:00:00+00:00,1,2,A,B,error,HTTP 404,,,,,,,,,,,,,,,,,,,,,,,,
+gb.premier_league,47,2023/2024,125,2024-01-02T02:00:00+00:00,1,2,A,B,pending,,,,,,,,,,,,,,,,,,,,,,,,,

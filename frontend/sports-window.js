@@ -1,5 +1,5 @@
 import { imageMarkup, playerPhoto } from './sport-images.js?v=imagenes-20261028b';
-import { withNbaMarkets, marketQuote, featuredSportMarket, hayLiquidado, ordenLiquidado } from './sports-data.js?v=contrato-20261112';
+import { withNbaMarkets, marketQuote, featuredSportMarket, hayLiquidado, ordenLiquidado } from './sports-data.js?v=nba-20261113';
 // Ventana única de NBA y tenis: pronóstico y estadísticas del mismo evento, con el diseño de la de fútbol.
 // Solo presenta lo que publican los motores; no calcula probabilidades ni inventa cuotas.
 // La «cuota del modelo» es 1 ÷ probabilidad y se rotula como tal: ninguna casa publica estos mercados.

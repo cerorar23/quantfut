@@ -1,6 +1,18 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 13-nov-2026 · Cartelera de NBA completa en el contrato y `CONTRATO_WEB.nba` encendido (la portada pasa de 9 peticiones de NBA a 1; sin desplegar)
+
+- **Decisión clave:** el servidor se adapta a la web, no al revés (regla de igualdad: lo que ve el usuario no cambia). Tres campos aditivos opcionales, sin tocar `contrato: 1`:
+  `Evento.team_projection` (`[mu_local, mu_visit]`, el dato que ya sirve `/nba/v1/cartelera` y la web pinta como «Puntos esperados»), `Mercado.principal` y el `destacado` con la regla de la web.
+- **`principal` en vez de «el router sabe que NBA quiere el ganador»:** el recorte de la cartelera dejaba solo `id == destacado`; con el ganador en revisión (sello posterior al inicio) no hay destacado
+  y el partido llegaba sin mercados, y `sources()` de la web lo saca de la lista. El router conserva ahora destacado + `principal` y no conoce ningún deporte; cada adaptador decide qué es principal.
+- **Regla del destacado de NBA en la cartelera:** la de `featuredSportMarket` sobre el ganador del modelo (sin cuota de casa): no revisado, probabilidad >= 75 % y 1 ÷ prob >= 1,20, es decir la franja 75 %–83,3 %
+  (se reutiliza `destacado_valor.cumple_filtro`). Antes el adaptador marcaba destacado a todo ganador elegible. Solo cambia en la cartelera: el detalle conserva su `destacado` (el del servicio) porque no entra en esta tarea.
+- **La web no usa `destacado` ni `principal` de NBA:** sigue calculando el destacado sobre los mercados que recibe (como antes), así que su salida es idéntica por construcción; la paridad la comprueban
+  `frontend/contrato-deportes.test.mjs` (`resumen` completo, sin huecos) y `tests/test_deportes_nba_paridad.py` (mismos casos de borde contra `featuredSportMarket` real con node).
+- **Se despliega junto:** `sports-data.js` lo sirve la API desde su imagen; el servidor y el interruptor salen en la misma imagen. Tenis sigue con su endpoint.
+
 ## 13-nov-2026 · La web lee NBA y tenis por el contrato `/deportes/v1`, pero con los interruptores apagados (solo `frontend/`; sin desplegar)
 
 - **Decisión clave:** la regla de igualdad manda sobre el ahorro de peticiones. Comparado campo a campo, el contrato 1 no basta para ninguno de los dos deportes sin

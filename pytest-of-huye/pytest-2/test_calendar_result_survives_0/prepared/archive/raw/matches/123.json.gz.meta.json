@@ -1,0 +1,15 @@
+{
+  "provider": "sofascore",
+  "reader": "soccerdata 1.9.1 HistoricalSofascore",
+  "captured_at": "2026-10-03T10:00:00Z",
+  "sha256": "7a51852b6b7d681a9cbfd5d7eb4331ac922be6922f344a7d6b307cb05b4a8bd3",
+  "receipts": [
+    {
+      "url": "https://www.sofascore.com/api/v1/unique-tournament/18/season/1/events/last/0",
+      "sha256": "d1b7f89efb41327853bb65d5dc2081ee1ff7eda624ade7a70e4c8477ee5f6d0d",
+      "received_at": "2026-10-03T10:00:00Z",
+      "provider_error": false,
+      "requested_url": "https://www.sofascore.com/api/v1/unique-tournament/18/season/1/events/last/0"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"event_observations":1,"failures":0,"finished_at":"2026-11-13T02:20:18.974650+00:00","outcome_observations":0,"provider":"propline","quota":{"x-daily-remaining":"4900","x-daily-reset":"1792800000"},"receipts":3,"requests":3,"sports":["basketball_nba"],"started_at":"2026-11-13T02:20:18.914707+00:00","stop":null,"version":"propline-shared-1"}

@@ -1,0 +1,25 @@
+{
+  "provider": "sofascore_local",
+  "decisions": {
+    "555": {
+      "mapping_status": "matched",
+      "mapping_reason": "exact_teams_time_score",
+      "match_id": "it.serie_a:2526:genoa-lecce:20250823",
+      "home_team_id": 1,
+      "away_team_id": 2
+    }
+  },
+  "totals": {
+    "matched": 1
+  },
+  "by_league": {
+    "it.serie_a": {
+      "matched": 1
+    }
+  },
+  "unresolved_profiles": [],
+  "overrides": {},
+  "snapshot_sha256": "63535b962cc5b485f26972914e04f323f7e1163a9cf32c0d0d782643cedf4359",
+  "normalized_sha256": "259615ebeecdecb9be72479adf45efe35293c8fc4805b51f22391d5d60567227",
+  "new_teams": {}
+}

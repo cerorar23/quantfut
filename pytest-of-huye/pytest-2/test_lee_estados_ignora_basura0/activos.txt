@@ -1,0 +1,7 @@
+# comentario
+en = Preview  # revisión
+xx=on
+pt=raro
+es=off
+
+basura
