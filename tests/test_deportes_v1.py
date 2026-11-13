@@ -114,6 +114,32 @@ def _caso_prueba() -> Caso:
 CASOS = [pytest.param(_caso_prueba(), id='prueba')]   # ← los adaptadores reales añaden aquí su Caso
 
 
+class _FamiliasDePrueba:
+    """El catálogo de prueba solo tiene fam_a/fam_b/fam_oculta: mapea ahí tres familias reales de NBA y deja el resto a `otros`."""
+    def __init__(self, real):
+        self._real = real
+
+    def __getattr__(self, nombre):
+        return getattr(self._real, nombre)
+
+    def familia_de(self, market):
+        return {'winner': 'fam_a', 'handicap': 'fam_b', 'game_total': 'fam_oculta'}.get(market, self._real.familia_de(market))
+
+
+def _caso_nba() -> Caso:
+    from nba_contrato_datos import PARTIDO_ID, instalar as datos, romper as caida
+    from qf.api import deportes_nba
+
+    def instalar(mp):
+        datos(mp)
+        mp.setitem(dv.ADAPTADORES, 'nba', _FamiliasDePrueba(deportes_nba.AdaptadorNba()))
+    return Caso('nba', 'nba', '2026-11-12', PARTIDO_ID, ('CENTINELA_FIT', 'CENTINELA_MERCADO', 'CENTINELA_ERROR'), instalar, caida)
+
+
+CASOS.append(pytest.param(_caso_nba(), id='nba'))
+
+
+
 # ── catálogo y cliente ───────────────────────────────────────────────────────
 
 def _familia(id, orden, visible_web=True):

@@ -142,6 +142,16 @@ def cartelera_ventana(desde: date, hasta: date) -> dict[date, list[dict]]:
     return ok
 
 
+def mercados(partido_id: int, fecha: date) -> dict:
+    """Mercados públicos de un partido (`/nba/v1/partido/{id}/mercados`), con la misma caché que la cartelera. Lo usa el contrato /deportes/v1."""
+    cerrado = fecha < hoy_et() - timedelta(days=1)
+    datos = _con_cache(f"mercados:{int(partido_id)}", TTL_PASADO_S if cerrado else TTL_VIVO_S,
+                       f"/nba/v1/partido/{int(partido_id)}/mercados")
+    if not isinstance(datos, dict) or not isinstance(datos.get("markets"), list):
+        raise NbaNoDisponible("respuesta de mercados inválida")
+    return datos
+
+
 def calibracion() -> dict:
     """Mediciones de calibración que publica `nba-api` (`/nba/v1/calibracion`); cambian pocas veces al día."""
     datos = _con_cache("calibracion", 600, "/nba/v1/calibracion")
