@@ -1,5 +1,5 @@
 import { imageMarkup, playerPhoto } from './sport-images.js?v=imagenes-20261028b';
-import { withNbaMarkets, marketQuote, featuredSportMarket, hayLiquidado, ordenLiquidado } from './sports-data.js?v=nba-20261113';
+import { withNbaMarkets, marketQuote, featuredSportMarket, hayLiquidado, ordenLiquidado, withDetalle, familiasDeEvento } from './sports-data.js?v=generica-20261113';
 // Ventana única de NBA y tenis: pronóstico y estadísticas del mismo evento, con el diseño de la de fútbol.
 // Solo presenta lo que publican los motores; no calcula probabilidades ni inventa cuotas.
 // La «cuota del modelo» es 1 ÷ probabilidad y se rotula como tal: ninguna casa publica estos mercados.
@@ -9,12 +9,22 @@ export function createSportWindow(ctx) {
     ensureSport, ensureImages, nbaCode } = ctx;
   const ROW_LIMIT = 24;
   const SPORT_NAME = { nba: 'NBA', tenis: 'Tenis' };
+  // Deporte del catálogo sin pantalla propia (Fase 4 · 4.4): todo lo que no es nba ni tenis (el fútbol no llega a esta ventana). `ctx.generico(id)` lo da app.js:
+  // {nombre, orden: [id de familia], nombreFamilia(id), pantallaDeporte, pantallaPartido (listas de bloques o null)}.
+  const isGeneric = sport => !SPORT_NAME[sport];
+  const genericInfo = sport => ctx.generico?.(sport) || {};
+  const nameOf = sport => SPORT_NAME[sport] ?? genericInfo(sport).nombre ?? String(sport);
   const keyOf = event => `${event.sport}:${event.id}`;
   const portrait = (event, player) => playerPhoto('nba', event.v2 ? player.photo_id : player.player_id);
   const num = (value, digits = 1) => (Number.isFinite(value) ? Number(value).toLocaleString('es-MX', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—');
   const marks = name => esc(String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || '?');
   // Imágenes del manifiesto para NBA y tenis, tanto en la lista como en el encabezado.
-  const mark = (name, sport) => {
+  const ownImage = src => (typeof src === 'string' && /^\/web\/[\w./-]+\.(png|jpe?g|webp|svg)$/i.test(src) ? src : null);
+  const mark = (name, sport, img) => {
+    if (isGeneric(sport)) {
+      const src = ownImage(img);
+      return src ? `<img class="win-crest is-logo" src="${esc(src)}" alt="" data-image-name="${esc(name)}" loading="lazy" decoding="async">` : `<span class="win-crest is-initial" aria-hidden="true">${marks(name)}</span>`;
+    }
     const index = ensureImages?.();
     const key = sport === 'nba' ? nbaCode?.(name) : String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const hit = sport === 'nba' ? index?.nba?.[key] : index?.tenis?.[key];
@@ -23,8 +33,8 @@ export function createSportWindow(ctx) {
     return file ? `<img class="win-crest ${sport === 'tenis' ? 'is-photo' : 'is-logo'}" src="/web/imagenes/${sport}/${esc(file)}" alt="" data-image-name="${esc(name)}" loading="lazy" decoding="async"${credit}>`
       : `<span class="win-crest is-initial" aria-hidden="true">${marks(name)}</span>`;
   };
-  const statusText = event => (event.status === 'finished' ? 'Final' : event.status === 'awaiting_result' ? 'Esperando resultado' : new Date(event.start) <= new Date() ? 'En curso o por confirmar' : 'Programado');
-  const statusKind = event => (event.status === 'finished' ? 'muted' : event.status === 'awaiting_result' ? 'warn' : '');
+  const statusText = event => (event.generico && event.status === 'live' ? 'En vivo' : event.generico && event.status === 'cancelled' ? 'Cancelado' : event.status === 'finished' ? 'Final' : event.status === 'awaiting_result' ? 'Esperando resultado' : new Date(event.start) <= new Date() ? 'En curso o por confirmar' : 'Programado');
+  const statusKind = event => (event.generico && event.status === 'cancelled' ? 'warn' : event.status === 'finished' ? 'muted' : event.status === 'awaiting_result' ? 'warn' : '');
 
   function family(event, m) {
     if (event.sport === 'tenis') {
@@ -65,16 +75,33 @@ export function createSportWindow(ctx) {
     return `<div class="win-panel-box"><p class="eyebrow">PROBABILIDAD DE GANAR</p>${bar(event.home, home)}${bar(event.away, 1 - home)}</div>`;
   }
 
+  // Piezas compartidas con la pantalla genérica (mismo marcado que siempre para NBA y tenis).
+  function pickCard(event, feat) {
+    const quote = feat ? marketQuote(feat) : null;
+    const rule = 'cuota de 1,20 o más y probabilidad de 75 % o más';
+    return feat
+      ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(portrait(event, feat), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>${quote.model ? 'Cuota del modelo' : feat.price_book ? 'Cuota de referencia' : 'Cuota de la casa'}</small><strong>${fmtOdds(quote.price)}</strong><em>${quote.model ? '1 ÷ probabilidad' : esc(quote.source)}</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
+      : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado publicado de este evento cumple la regla del destacado: ${rule}.`}</p>`;
+  }
+  function marketLine(event, feat) {
+    return m => {
+      const q = marketQuote(m);
+      return `<tr${m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${m.player ? imageMarkup(portrait(event, m), m.player, esc) : ""}${esc(m.selection)}${m === feat ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${q.price != null ? `${fmtOdds(q.price)}<small class="win-cell-note">${esc(q.source)}</small>` : '—'}</td><td>${outcomeBadge(m)}</td></tr>`;
+    };
+  }
+  function masMercados(all, criterio) {
+    return all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, ${criterio}.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
+  }
+  function tablaMercados(shown, line, nba) {
+    return `<div class="win-table ${nba ? 'win-nba-table' : ''}" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>`;
+  }
+
   // ---- pronóstico (izquierda)
   function forecast(event) {
     if (event.markets_status === 'loading') return '<p class="win-sub" role="status">Cargando mercados del partido y de los jugadores…</p>';
     if (event.markets_status === 'error') return '<p class="win-sub" role="status">No se pudieron cargar los mercados. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p>';
     const feat = featuredSportMarket(event);
-    const quote = feat ? marketQuote(feat) : null;
-    const rule = 'cuota de 1,20 o más y probabilidad de 75 % o más';
-    const card = feat
-      ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(portrait(event, feat), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>${quote.model ? 'Cuota del modelo' : feat.price_book ? 'Cuota de referencia' : 'Cuota de la casa'}</small><strong>${fmtOdds(quote.price)}</strong><em>${quote.model ? '1 ÷ probabilidad' : esc(quote.source)}</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
-      : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado publicado de este evento cumple la regla del destacado: ${rule}.`}</p>`;
+    const card = pickCard(event, feat);
     const families = [...new Set(event.markets.map(m => family(event, m)))].sort((a, b) => FAMILY_ORDER.indexOf(a) - FAMILY_ORDER.indexOf(b));
     const fam = families.includes(state.winSportFam) ? state.winSportFam : families[0];
     const nba = event.sport === 'nba' && event.v2;
@@ -84,22 +111,18 @@ export function createSportWindow(ctx) {
     const all = ordenLiquidado(porProbabilidad, { resultado: m => m.outcome, cuota: m => marketQuote(m).price, prob: m => m.probability });
     const criterio = liquidado ? 'acertados primero, de mayor a menor cuota' : 'de mayor a menor probabilidad';
     const shown = state.winAll ? all : all.slice(0, ROW_LIMIT);
-    const line = m => {
-      const q = marketQuote(m);
-      return `<tr${m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${m.player ? imageMarkup(portrait(event, m), m.player, esc) : ""}${esc(m.selection)}${m === feat ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${q.price != null ? `${fmtOdds(q.price)}<small class="win-cell-note">${esc(q.source)}</small>` : '—'}</td><td>${outcomeBadge(m)}</td></tr>`;
-    };
-    const more = all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, ${criterio}.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
+    const line = marketLine(event, feat);
+    const more = masMercados(all, criterio);
     const projections = playerProjections(event);
     if (event.v2 && !event.markets.length) return projections || (event.markets_status === 'ready' ? '<p class="win-sub">Todavía no hay mercados publicados para este partido.</p>' : '');
     const controls = nba ? `<div class="win-market-tools"><div class="win-chips" role="group" aria-label="Filtrar por cuota"><button type="button" class="chip ${!state.winAllOdds ? 'selected' : ''}" data-win-odds="min" aria-pressed="${!state.winAllOdds}">Cuotas ≥ 1,20</button><button type="button" class="chip ${state.winAllOdds ? 'selected' : ''}" data-win-odds="all" aria-pressed="${Boolean(state.winAllOdds)}">Todas las cuotas</button></div><p class="win-sub">${liquidado ? 'Acertados primero, de mayor a menor cuota' : 'De mayor a menor probabilidad'}</p></div>` : '';
     const markets = nba && fam !== 'Partido' ? playerMarkets(event, all, feat, fam)
-      : all.length ? `<div class="win-table ${nba ? 'win-nba-table' : ''}" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${more}`
+      : all.length ? `${tablaMercados(shown, line, nba)}${more}`
       : '<p class="win-sub" role="status">No hay mercados con la cuota seleccionada en esta categoría.</p>';
     return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>
       <section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${families.map(f => `<button type="button" class="chip ${fam === f ? 'selected' : ''}" data-win-sport-fam="${esc(f)}" aria-pressed="${fam === f}">${esc(f)}</button>`).join('')}</div></div>
       ${controls}${markets}</section>${projections}`;
   }
-
   function playerMarkets(event, markets, feat, fam) {
     const normalize = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const query = normalize(state.winPlayerSearch);
@@ -415,6 +438,123 @@ export function createSportWindow(ctx) {
     return `<div class="win-tabs-wrap"><div class="cyber-tabs cyber-tabs--pills cyber-tabs--scrollable" role="tablist" aria-label="Secciones de estadísticas">${tabs.map(([id, label]) => `<button type="button" role="tab" id="win-stab-${id}" aria-controls="win-stats-panel" aria-selected="${tab === id}" class="cyber-tab ${tab === id ? 'cyber-tab--active' : ''}" data-win-sport-tab="${id}">${label}</button>`).join('')}</div></div><div id="win-stats-panel" role="tabpanel" aria-labelledby="win-stab-${tab}" class="win-panel">${body}</div>`;
   }
 
+
+  // ===== Pantalla genérica de un deporte del catálogo (Fase 4 · 4.4) =====
+  // Reutiliza las piezas de arriba (tarjeta del pronóstico, tabla de mercados, `bar`, `kv`, `registry`) con los datos del contrato. NO pinta nada atado
+  // a nba o tenis: ni jugadores, ni proyecciones, ni superficie, ni pestañas de estadísticas, ni cuotas de casas por `/web/deportes/…`.
+  const SECCIONES_DEPORTE = ['dias', 'resumen', 'partidos'];                       // el orden de hoy; `destacado` solo si la definición lo pide
+  const SECCIONES_PARTIDO = ['cabecera', 'pronostico', 'mercados', 'contenido', 'sello'];
+  const porDefecto = lista => lista.map(seccion => ({ id: seccion, tipo: 'seccion', seccion, visible: true }));
+  const hayCelda = v => (v == null ? '—' : typeof v === 'number' ? Number(v).toLocaleString('es-MX', { maximumFractionDigits: 3 }) : esc(v));
+
+  function avisoMarkup(bloque) {
+    const aviso = ctx.aviso?.(bloque);
+    if (!aviso) return '';
+    const variante = { exito: ' cyber-alert--success', aviso: ' cyber-alert--warning', peligro: ' cyber-alert--error' }[aviso.tono] || '';
+    return `<div class="cyber-alert${variante}" role="status"><p>${esc(aviso.texto)}</p>${aviso.enlace ? `<a class="text-link" href="${esc(aviso.enlace)}">Ver más ↗</a>` : ''}</div>`;
+  }
+  const vipMarkup = () => '<div class="win-vipbar"><p><strong>Acceso VIP</strong>Conoce los planes para ver más análisis.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>';
+
+  // Bloques de contenido del servidor (`partido.bloques`): cada tipo con un componente que ya existe. Todo texto se escapa.
+  function bloqueContenido(b) {
+    const titulo = `<p class="eyebrow">${esc(b.titulo)}</p>`;
+    if (b.tipo === 'tabla') {
+      const numerica = i => b.filas.length > 0 && b.filas.every(f => f[i] == null || typeof f[i] === 'number');
+      return `<div class="win-panel-box">${titulo}<div class="win-table" tabindex="0" role="region" aria-label="${esc(b.titulo)}"><table class="cyber-table cyber-table--compact"><thead><tr>${b.columnas.map((c, i) => `<th scope="col"${numerica(i) ? ' class="n"' : ''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${b.filas.map(f => `<tr>${f.map((c, i) => `<td${numerica(i) ? ' class="n"' : ''}>${hayCelda(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+    }
+    if (b.tipo === 'barras') return `<div class="win-panel-box">${titulo}${b.items.map(i => bar(i.etiqueta, i.valor, i.nota)).join('')}</div>`;
+    if (b.tipo === 'pares') return `<div class="win-panel-box">${titulo}${b.items.map(i => kv(i.etiqueta, hayCelda(i.valor))).join('')}</div>`;
+    return `<div class="cyber-alert" role="note"><p class="cyber-alert__title">${esc(b.titulo)}</p><p>${esc(b.cuerpo)}</p></div>`;
+  }
+  function contenido(event) {
+    if (event.markets_status === 'loading') return '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS</p><p class="win-sub" role="status">Consultando las estadísticas del partido…</p></div>';
+    if (event.markets_status === 'error') return '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS</p><p class="win-sub" role="status">No se pudieron cargar las estadísticas. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p></div>';
+    return event.bloques?.length ? event.bloques.map(bloqueContenido).join('') : '<div class="win-panel-box"><p class="eyebrow">ESTADÍSTICAS</p><p class="win-sub">Este partido no tiene estadísticas publicadas.</p></div>';
+  }
+
+  // Mercados por familia del catálogo (nombre en el idioma de la página; `otros` al final), con la misma tabla y el mismo límite de filas que NBA y tenis.
+  function mercadosGenerico(event) {
+    const info = genericInfo(event.sport);
+    const name = id => info.nombreFamilia?.(id) ?? id;
+    const cabecera = '<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3></div>';
+    if (event.markets_status === 'loading') return `${cabecera}<p class="win-sub" role="status">Cargando mercados del partido…</p></section>`;
+    if (event.markets_status === 'error') return `${cabecera}<p class="win-sub" role="status">No se pudieron cargar los mercados. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p></section>`;
+    const familias = familiasDeEvento(event, info.orden || []);
+    if (!familias.length) return `${cabecera}<p class="win-sub">Todavía no hay mercados publicados para este partido.</p></section>`;
+    const feat = featuredSportMarket(event);
+    const actual = familias.find(f => f.id === state.winSportFam) || familias[0];
+    const porProbabilidad = [...actual.markets].sort((a, b) => b.probability - a.probability || (marketQuote(b).price || 0) - (marketQuote(a).price || 0));
+    const liquidado = hayLiquidado(porProbabilidad, m => m.outcome);
+    const all = ordenLiquidado(porProbabilidad, { resultado: m => m.outcome, cuota: m => marketQuote(m).price, prob: m => m.probability });
+    const shown = state.winAll ? all : all.slice(0, ROW_LIMIT);
+    const chips = familias.length > 1 ? `<div class="win-chips" role="group" aria-label="Familia de mercado">${familias.map(f => `<button type="button" class="chip ${actual.id === f.id ? 'selected' : ''}" data-win-sport-fam="${esc(f.id)}" aria-pressed="${actual.id === f.id}">${esc(name(f.id))}</button>`).join('')}</div>` : '';
+    return `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3>${chips}</div>${tablaMercados(shown, marketLine(event, feat), false)}${masMercados(all, liquidado ? 'acertados primero, de mayor a menor cuota' : 'de mayor a menor probabilidad')}</section>`;
+  }
+  function pronosticoGenerico(event) {
+    return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${pickCard(event, featuredSportMarket(event))}</article>`;
+  }
+
+  // Destacado del día: entre los eventos del día, el pronóstico que ya marcó el servidor como destacado con mayor probabilidad. No calcula nada nuevo.
+  function destacadoDia(list) {
+    let mejor = null;
+    for (const e of list) { const m = featuredSportMarket(e); if (m && (!mejor || m.probability > mejor.m.probability)) mejor = { e, m }; }
+    if (!mejor) return '';
+    const { e, m } = mejor, pct = (m.probability * 100).toFixed(1);
+    return `<aside class="cyber-card cyber-card--green win-pk-featured" aria-label="Pronóstico destacado del día"><p class="eyebrow">Pronóstico destacado</p><span class="win-pk-league">${esc(e.league)} · ${realDate(e.start)} ${realTime(e.start)}</span><div class="win-pk-pick is-single"><div class="win-pk-sel"><small>${esc(e.home)} vs ${esc(e.away)}</small><strong>${esc(m.selection)}</strong></div></div><div class="win-pk-prob"><span>Probabilidad del modelo</span><b>${fmtPct(m.probability)}</b><div class="cyber-progress cyber-progress--green cyber-progress--sm" data-value="${pct}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div class="cyber-progress__bar"></div></div></div><button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" data-win-event="${esc(keyOf(e))}">Ver análisis y mercados ↗</button></aside>`;
+  }
+
+  // Panel del partido según la pantalla `partido`: pronóstico y mercados a la izquierda; contenido y sello a la derecha. Un aviso o la llamada VIP van con la
+  // sección anterior (o con la siguiente si abren la lista). `estadisticas`, `h2h` y `alertas` no existen en un deporte nuevo y se ignoran.
+  function panesGenerico(event, bloques) {
+    const donde = { pronostico: 'pron', mercados: 'pron', contenido: 'stats', sello: 'stats' };
+    const pieza = { pronostico: () => pronosticoGenerico(event), mercados: () => mercadosGenerico(event), contenido: () => contenido(event), sello: () => registry(event) };
+    const items = bloques.filter(b => b.visible && (b.tipo !== 'seccion' || donde[b.seccion])).map(b => ({ b, pane: b.tipo === 'seccion' ? donde[b.seccion] : null }));
+    let previo = null;
+    for (const it of items) { if (it.pane) previo = it.pane; else it.pane = previo; }
+    const primero = items.find(it => it.pane)?.pane || 'pron';
+    for (const it of items) if (!it.pane) it.pane = primero;
+    const out = { pron: [], stats: [] };
+    for (const { b, pane } of items) out[pane].push(b.tipo === 'seccion' ? pieza[b.seccion]() : b.tipo === 'aviso' ? avisoMarkup(b) : vipMarkup());
+    const vacio = '<p class="win-sub">Sin contenido en esta vista.</p>';
+    return { pron: out.pron.join('') || vacio, stats: out.stats.join('') || vacio };
+  }
+
+  // Montaje de la ventana de un deporte genérico: las mismas zonas que NBA y tenis, ordenadas y filtradas por la pantalla `deporte`.
+  function layoutGenerico({ sport, list, entry, event, dayNav, chipsDia, rail, matchbar }) {
+    const info = genericInfo(sport);
+    const deporte = info.pantallaDeporte?.length ? info.pantallaDeporte : porDefecto(SECCIONES_DEPORTE);
+    const partido = info.pantallaPartido?.length ? info.pantallaPartido : porDefecto(SECCIONES_PARTIDO);
+    const visible = nombre => deporte.some(b => b.tipo === 'seccion' && b.seccion === nombre && b.visible);
+    const cabecera = partido.find(b => b.tipo === 'seccion' && b.seccion === 'cabecera');
+    const conLista = visible('partidos');
+    const panes = event ? panesGenerico(event, partido) : null;
+    let cuerpo;
+    if (event) {
+      cuerpo = `<div class="win-switch" role="tablist" aria-label="Vista del evento"><button type="button" role="tab" aria-selected="${state.winPane === 'pron'}" data-win-pane="pron">Pronóstico</button><button type="button" role="tab" aria-selected="${state.winPane === 'stats'}" data-win-pane="stats">Estadísticas</button></div><div class="win-split"><div class="win-pane" id="win-pane-pron" aria-label="Pronóstico">${panes.pron}</div><div class="win-pane" id="win-pane-stats" aria-label="Estadísticas">${panes.stats}</div></div>`;
+    } else if (entry.status === 'error') {
+      cuerpo = '<div class="empty-state"><span aria-hidden="true">◎</span><h3>No se pudo consultar este deporte</h3><p>El servidor no respondió con la cartelera.</p><button type="button" class="text-link" data-action="refresh-public">Volver a consultar ↻</button></div>';
+    } else {
+      cuerpo = `<div class="empty-state"><span class="empty-symbol">◷</span><h3>${entry.status === 'loading' ? 'Cargando eventos…' : 'Sin eventos este día'}</h3><p>${entry.status === 'loading' ? 'Consultando la publicación del motor.' : 'Prueba con otro día.'}</p></div>`;
+    }
+    const work = `<div class="win-work"${conLista ? '' : ' style="grid-template-columns:minmax(0,1fr)"'}>${conLista ? `<aside class="win-rail" aria-label="Eventos del día">${rail}</aside>` : ''}<section class="win-main" aria-label="Evento seleccionado"><div class="win-matchbar">${cabecera && !cabecera.visible ? matchbar.split('<div class="win-team">')[0] : matchbar}</div>${cuerpo}</section></div>`;
+    const piezas = [];
+    let tira = '';
+    const vaciarTira = () => { if (tira) piezas.push(`<div class="win-strip" role="toolbar" aria-label="Fecha">${tira}</div>`); tira = ''; };
+    let puesta = false;
+    for (const b of deporte) {
+      if (!b.visible) continue;
+      if (b.tipo === 'seccion' && (b.seccion === 'dias' || b.seccion === 'resumen')) { tira += b.seccion === 'dias' ? dayNav : chipsDia; continue; }
+      vaciarTira();
+      if (b.tipo === 'aviso') piezas.push(avisoMarkup(b));
+      else if (b.tipo === 'vip') piezas.push(vipMarkup());
+      else if (b.seccion === 'destacado') piezas.push(destacadoDia(list));
+      else if (b.seccion === 'partidos' && !puesta) { piezas.push(work); puesta = true; }
+    }
+    vaciarTira();
+    if (!puesta) piezas.push(work);          // sin la lista visible el detalle se pinta igual, a todo el ancho
+    return `<div class="win" data-pane="${state.winPane}">${piezas.join('')}</div>`;
+  }
+
   // ---- ventana completa
   function view() {
     const sport = state.sport;
@@ -429,7 +569,8 @@ export function createSportWindow(ctx) {
     // Mientras cargan los eventos la lista está vacía: no se borra el partido que pidió la URL (/nba/<partido>/).
     if (entry.status === 'ready' && !list.some(e => keyOf(e) === state.winEvent)) state.winEvent = keyOf(list.find(e => e.status !== 'finished') || list[0] || { sport, id: '' });
     const selected = list.find(e => keyOf(e) === state.winEvent);
-    const event = selected?.sport === 'nba' && selected.v2 ? withNbaMarkets(selected, ctx.ensureNbaMarkets?.(selected)) : selected;
+    const event = selected?.sport === 'nba' && selected.v2 ? withNbaMarkets(selected, ctx.ensureNbaMarkets?.(selected))
+      : selected?.generico ? withDetalle(selected, ctx.ensureDetalle?.(selected.sport, selected.id)) : selected;
     state.winResetFlag = state.winLastEvent !== state.winEvent;
     if (state.winResetFlag) { state.winSportFam = ''; state.winAll = false; state.winPlayerSearch = ''; }
     state.winLastEvent = state.winEvent;
@@ -440,12 +581,15 @@ export function createSportWindow(ctx) {
     if (entry.status === 'loading') rail = '<p class="rail-empty">Cargando eventos…</p>';
     else if (entry.status !== 'ready') rail = '<p class="rail-empty">No se pudo cargar la fuente. <button type="button" class="text-link" data-action="refresh-public">Reintentar ↻</button></p>';
     else if (!list.length) rail = '<p class="rail-empty">No hay eventos publicados este día.</p>';
-    else rail = leagues.map(league => `<h3 class="win-league">${esc(league)}</h3>${list.filter(e => e.league === league).map(e => `<button type="button" class="win-row" data-win-event="${esc(keyOf(e))}" aria-pressed="${keyOf(e) === state.winEvent}" ${keyOf(e) === state.winEvent ? 'aria-current="true"' : ''}><span class="win-when"><b>${realTime(e.start)}</b>${e.status === 'finished' ? '<small>Final</small>' : ''}</span><span class="win-names"><span>${mark(e.home, e.sport)}<span>${esc(e.home)}</span></span><span>${mark(e.away, e.sport)}<span>${esc(e.away)}</span></span></span></button>`).join('')}`).join('');
+    else rail = leagues.map(league => `<h3 class="win-league">${esc(league)}</h3>${list.filter(e => e.league === league).map(e => `<button type="button" class="win-row" data-win-event="${esc(keyOf(e))}" aria-pressed="${keyOf(e) === state.winEvent}" ${keyOf(e) === state.winEvent ? 'aria-current="true"' : ''}><span class="win-when"><b>${realTime(e.start)}</b>${e.status === 'finished' ? '<small>Final</small>' : ''}</span><span class="win-names"><span>${mark(e.home, e.sport, e.home_img)}<span>${esc(e.home)}</span></span><span>${mark(e.away, e.sport, e.away_img)}<span>${esc(e.away)}</span></span></span></button>`).join('')}`).join('');
     const days = [-3, -2, -1, 0, 1, 2, 3];
-    const strip = `<div class="win-day"><button type="button" data-win-day="${Math.max(-3, state.winDay - 1)}" aria-label="Día anterior" ${state.winDay <= -3 ? 'disabled' : ''}>‹</button><strong>${esc(dayLabel(state.winDay))} · ${dateFmt(addDays(state.winDay), { day: 'numeric', month: 'short' })}</strong><button type="button" data-win-day="${Math.min(3, state.winDay + 1)}" aria-label="Día siguiente" ${state.winDay >= 3 ? 'disabled' : ''}>›</button></div><div class="win-chips" role="group" aria-label="${SPORT_NAME[sport]}: eventos del día"><span class="chip selected" aria-hidden="true">${SPORT_NAME[sport]} <b>${list.length}</b></span></div>`;
+    const dayNav = `<div class="win-day"><button type="button" data-win-day="${Math.max(-3, state.winDay - 1)}" aria-label="Día anterior" ${state.winDay <= -3 ? 'disabled' : ''}>‹</button><strong>${esc(dayLabel(state.winDay))} · ${dateFmt(addDays(state.winDay), { day: 'numeric', month: 'short' })}</strong><button type="button" data-win-day="${Math.min(3, state.winDay + 1)}" aria-label="Día siguiente" ${state.winDay >= 3 ? 'disabled' : ''}>›</button></div>`;
+    const chipsDia = `<div class="win-chips" role="group" aria-label="${nameOf(sport)}: eventos del día"><span class="chip selected" aria-hidden="true">${nameOf(sport)} <b>${list.length}</b></span></div>`;
+    const strip = dayNav + chipsDia;
     const bar0 = event
       ? `<div class="win-picker"><button type="button" data-win-ev-step="-1" aria-label="Evento anterior" ${index <= 0 ? 'disabled' : ''}>‹</button><label class="win-select"><span class="sr-only">Elegir evento</span><select id="win-event-select">${list.map(e => `<option value="${esc(keyOf(e))}" ${keyOf(e) === state.winEvent ? 'selected' : ''}>${realTime(e.start)} · ${esc(e.home)} vs ${esc(e.away)}</option>`).join('')}</select></label><button type="button" data-win-ev-step="1" aria-label="Evento siguiente" ${index >= list.length - 1 ? 'disabled' : ''}>›</button></div><div class="win-team">${mark(event.home, event.sport)}<div><strong>${esc(event.home)}</strong><small>${sport === 'tenis' ? esc(event.league) : 'Local'}</small></div></div><span class="win-vs ${event.score ? 'score' : ''}">${event.score ? esc(event.score) : 'VS'}</span><div class="win-team is-away">${mark(event.away, event.sport)}<div><strong>${esc(event.away)}</strong><small>${sport === 'tenis' ? esc(event.surface || 'Individual') : 'Visitante'}</small></div></div><div class="win-meta"><span>${esc(event.league)} · ${dateFmt(new Date(event.start), { weekday: 'short', day: 'numeric', month: 'short' })} ${realTime(event.start)}</span>${badge(statusText(event), statusKind(event))}</div>`
       : '';
+    if (isGeneric(sport)) return { markup: layoutGenerico({ sport, list, entry, event, dayNav, chipsDia, rail, matchbar: bar0 }), days };
     const body = event
       ? `<div class="win-switch" role="tablist" aria-label="Vista del evento"><button type="button" role="tab" aria-selected="${state.winPane === 'pron'}" data-win-pane="pron">Pronóstico</button><button type="button" role="tab" aria-selected="${state.winPane === 'stats'}" data-win-pane="stats">Estadísticas</button></div><div class="win-split"><div class="win-pane" id="win-pane-pron" aria-label="Pronóstico">${forecast(event)}</div><div class="win-pane" id="win-pane-stats" aria-label="Estadísticas">${stats(event)}</div></div>`
       : `<div class="empty-state"><span class="empty-symbol">◷</span><h3>${entry.status === 'loading' ? 'Cargando eventos…' : 'Sin eventos este día'}</h3><p>${entry.status === 'loading' ? 'Consultando la publicación del motor.' : 'Prueba con otro día.'}</p></div>`;

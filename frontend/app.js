@@ -1,11 +1,11 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
-import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=catalogo-20261112';
-import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo } from './rutas.js?v=catalogo-20261112';
-import { createRealViews } from './real-views.js?v=nba-20261113';
-import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=nba-20261113';
-import { createSportWindow } from './sports-window.js?v=nba-20261113';
+import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=generica-20261113';
+import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo, fijarPaginaDeporte, normalizarPantallas, pantallaResuelta, datosAviso, nombreDeporte, nombreFamilia } from './rutas.js?v=generica-20261113';
+import { createRealViews } from './real-views.js?v=generica-20261113';
+import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=generica-20261113';
+import { createSportWindow } from './sports-window.js?v=generica-20261113';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=20261110v17';
@@ -235,18 +235,31 @@ function loadWebConfig() {
 }
 // Catálogo de deportes de /cliente/v1/config (Fase 2 · E). null = copia incrustada de rutas.js.
 let webDeportes = null;
+// Definición de pantallas de /cliente/v1/config (Fase 4 · 4.4). null = sin definición publicada: cada pantalla conserva su orden en código.
+let webPantallas = null;
+// Deporte que el servidor puso en la página (`<html data-deporte>`, ruta genérica `/{slug}/`): se reconoce antes de que llegue el catálogo.
+let deporteArranque = null;
 const sportList = () => deportesNavegacion(webDeportes, pageLang());
+// Un deporte del catálogo sin pantalla propia (ni fútbol, ni NBA, ni tenis) se pinta con la ventana genérica; el catálogo (o la página de arranque) debe conocerlo.
+const deporteGenericoActivo = id => esDeporteGenerico(id) && (Boolean(webDeportes?.some(d => d.id === id)) || deporteArranque?.sport === id);
+function datosDeporteGenerico(id) {
+  const deporte = webDeportes?.find(d => d.id === id) || null, lang = pageLang();
+  return { nombre: deporte ? nombreDeporte(deporte, lang) : id, orden: (deporte?.familias || []).map(f => f.id), nombreFamilia: familia => nombreFamilia(deporte, familia, lang),
+    pantallaDeporte: pantallaResuelta(webPantallas, 'deporte', id), pantallaPartido: pantallaResuelta(webPantallas, 'partido', id) };
+}
 function loadDeportesCatalogo() {
   if (typeof fetch !== 'function') return;
   fetch(urlCatalogo(pageLang()), { headers: { Accept: 'application/json' } })
     .then(r => (r.ok ? r.json() : null))
     .then(data => {
+      webPantallas = normalizarPantallas(data);   // ausente, inválida o sin secciones visibles: null (el orden de hoy)
       const lista = normalizarDeportes(data);
-      if (!lista) return;   // fallo, sin `deportes` o inválido: se conserva lo que hay
+      if (!lista) { if (webPantallas) rerenderIfIdle(); return; }   // fallo, sin `deportes` o inválido: se conserva lo que hay
       webDeportes = lista;
       fijarDeportes(lista);
       const visibles = sportList().map(d => d.id);
-      if (state.sport !== 'todos' && !visibles.includes(state.sport)) state.sport = 'todos';
+      // Un deporte `preview` abierto por su URL no sale de la navegación pero sigue siendo el de la página.
+      if (state.sport !== 'todos' && !visibles.includes(state.sport) && !(state.sport === deporteArranque?.sport && lista.some(d => d.id === state.sport))) state.sport = 'todos';
       const tag = document.activeElement?.tagName;
       if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') render();
     })
@@ -380,6 +393,16 @@ function ensureTennisQuotes(result,generation,attempt=0) {
     if(quotes.status==='ready'){applyTennisQuotes(result.events,quotes.events);rerenderIfIdle();}
     else if(quotes.status==='unavailable'&&attempt<2)setTimeout(()=>ensureTennisQuotes(result,generation,attempt+1),20000);
   });
+}
+// Detalle (mercados completos, familias y bloques) de un partido de un deporte genérico, por el contrato. Se vacía con el resto en `refreshPublicData`.
+const detalleCache = new Map();
+function ensureDetalle(sport, id) {
+  const key = `${sport}:${id}`;
+  if (detalleCache.has(key)) return detalleCache.get(key);
+  const entry = { status: 'loading', event: null }, generation = realGeneration;
+  detalleCache.set(key, entry);
+  loadPartidoContrato(sport, id, pageLang()).then(result => { if (generation !== realGeneration) return; detalleCache.set(key, result); rerenderIfIdle(); });
+  return entry;
 }
 const tennisStatsCache = new Map();
 function ensureTennisStats(id) {
@@ -1270,7 +1293,7 @@ function winStats(entry) {
 }
 
 function windowView() {
-  if (state.sport === 'nba' || state.sport === 'tenis') { const markup = sportWindow.view(); winResetScroll = state.winResetFlag; return markup; }
+  if (state.sport === 'nba' || state.sport === 'tenis' || deporteGenericoActivo(state.sport)) { const markup = sportWindow.view(); winResetScroll = state.winResetFlag; return markup; }
   const agenda = ensureAgenda(state.statsDay);
   const all = agenda.status === 'ready' ? agenda.data.partidos : [];
   const leagues = [...new Map(all.map(p => [p.liga.id, p.liga.nombre])).entries()];
@@ -1316,7 +1339,8 @@ const realViews = createRealViews({ state, esc, sportList, badge, ensureHome:ens
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
   ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
 
-const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, ensureNbaMarkets, featuredModelMarket, ensureImages, nbaCode });
+const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, ensureNbaMarkets, featuredModelMarket, ensureImages, nbaCode,
+  ensureDetalle, generico: datosDeporteGenerico, aviso: bloque => datosAviso(bloque, pageLang()) });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1650,11 +1674,12 @@ window.addEventListener('keydown', event => {
   }
 });
 
+fijarPaginaDeporte(document.documentElement.dataset, location);   // /{slug}/ de un deporte nuevo: se reconoce antes de que llegue el catálogo
 const initial = routeFromLocation(location, validRoute, canonicalRoute);
 if (initial) state.route = initial;
 // Página de deporte con URL propia (/nba/…, /tenis/…, /futbol/…): la app abre la ventana de ese deporte y, si lo hay, ese partido.
 const deporteEntrada = deporteBoot(document.documentElement.dataset, location);
-if (deporteEntrada) Object.assign(state, deporteEntrada.patch);
+if (deporteEntrada) { Object.assign(state, deporteEntrada.patch); deporteArranque = deporteEntrada; }
 // Un enlace antiguo (/#historial) pasa a su URL limpia (/historial/) sin añadir otra entrada al historial.
 const clean = initial && cleanUrl(location, initial);
 if (clean) history.replaceState(null, '', clean + location.search);
@@ -1681,7 +1706,7 @@ async function refreshPublicData({ silent = false } = {}) {
   const request = ++publicRequest;
   if (!silent || !publicData) {
     publicData = null;
-    if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
+    if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); detalleCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
     render();
   }
   const result = await loadPublicData(publicFetch);
