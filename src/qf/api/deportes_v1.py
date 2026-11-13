@@ -8,7 +8,9 @@ Endpoints (públicos, anónimos, cacheables; no miran `Authorization` ni cookies
     GET /deportes/v1/{deporte}/cartelera?cliente=web|app&desde=AAAA-MM-DD&dias=1..7&tz=-720..840&contrato=1
         -> {contrato, deporte, desde, dias, eventos: [Evento]}      Cache-Control: public, max-age=30
         Ventana [desde 00:00, desde+dias 00:00) en la zona de `tz` (`fichas.ventana`); sin `desde`, hoy en esa zona.
-        Orden por `start` y luego `id`. En la cartelera cada evento lleva solo el mercado destacado (o ninguno).
+        Orden por `start` y luego `id`. En la cartelera cada evento lleva solo el mercado destacado y los que el adaptador
+        marca como `principal` (el mercado que da nombre al partido, p. ej. el ganador de NBA, aunque no sea destacado
+        ni elegible: así un partido con el ganador en revisión sigue saliendo con su mercado). Sin ninguno, `markets: []`.
     GET /deportes/v1/{deporte}/partido/{id}?cliente=…
         -> {contrato, deporte, evento: Evento, bloques: []}         Cache-Control: public, max-age=60
         `bloques` está reservado y siempre vacío (lo rellena la Fase 4).
@@ -21,6 +23,10 @@ Endpoints (públicos, anónimos, cacheables; no miran `Authorization` ni cookies
 `deporte` es el `deporte_id` del catálogo. `cliente` es obligatorio y aplica su estado: `off` o inexistente -> 404;
 `preview` -> igual de accesible (todo este JSON sale ya con `X-Robots-Tag: noindex`). `contrato` distinto de 1 -> 422.
 Todas las respuestas llevan `ETag` débil del JSON canónico (304 con `If-None-Match`) y `X-Robots-Tag: noindex`.
+
+Dentro de `contrato: 1` solo se AÑADEN campos opcionales (nada se quita ni cambia de sentido). Añadidos hasta hoy:
+`Mercado.principal` (False por omisión: el router lo conserva en la cartelera junto al destacado) y
+`Evento.team_projection` (`[local, visitante]` o None; hoy solo NBA, con los puntos esperados de cada equipo).
 
 Fallos: partido inexistente o de otro deporte -> 404. Un adaptador que lanza, o que devuelve algo que no cumple los
 modelos, -> 503 `{"detail": ...}` (nunca un 200 con lista vacía que parezca «sin partidos»). Deporte encendido sin
@@ -58,7 +64,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, datetime, timedelta, timezone
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -104,6 +110,7 @@ class Mercado(_Modelo):
     reference: str | None = None
     outcome: Resultado | None = None
     push_probability: float | None = Field(default=None, ge=0, le=1)
+    principal: bool = False        # aditivo: la cartelera lo conserva junto al destacado (ver docstring del módulo)
 
     _a_utc = field_validator('sealed_at')(_utc)
 
@@ -130,6 +137,8 @@ class Evento(_Modelo):
     imagenes: Imagenes | None = None
     markets: list[Mercado] = Field(default_factory=list)
     destacado: str | None = None
+    team_projection: list[Annotated[float, Field(allow_inf_nan=False)]] | None = Field(default=None, min_length=2, max_length=2)
+    # aditivo: [puntos esperados del local, del visitante]; None si el deporte no los publica
 
     _a_utc = field_validator('start', 'sealed_at', 'planned_seal')(_utc)
 
@@ -250,7 +259,7 @@ def cartelera(request: Request, deporte: str = _PATH_DEPORTE, cliente: Cliente =
             raise _fallo(deporte, ValueError(f'evento {ev.id} es de {ev.sport}'))
         if not inicio <= ev.start < fin:
             continue
-        ev.markets = [m for m in ev.markets if m.id == ev.destacado]     # cartelera: solo el destacado
+        ev.markets = [m for m in ev.markets if m.id == ev.destacado or m.principal]     # cartelera: destacado y principal
         salida.append(ev)
     salida.sort(key=lambda e: (e.start, e.id))
     cuerpo = Cartelera(deporte=deporte, desde=(inicio + timedelta(minutes=tz)).strftime('%Y-%m-%d'), dias=dias,

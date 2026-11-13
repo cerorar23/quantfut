@@ -211,9 +211,9 @@ def cartelera(c, k, **kw):
 
 
 EVENTO_CLAVES = {'id', 'sport', 'home', 'away', 'league', 'start', 'status', 'seal', 'sealed_at', 'planned_seal',
-                 'score', 'surface', 'bloqueados', 'imagenes', 'markets', 'destacado'}
+                 'score', 'surface', 'bloqueados', 'imagenes', 'markets', 'destacado', 'team_projection'}
 MERCADO_CLAVES = {'id', 'label', 'selection', 'probability', 'sealed_at', 'eligible', 'market', 'family', 'line',
-                  'player', 'player_id', 'price', 'reference', 'outcome', 'push_probability'}
+                  'player', 'player_id', 'price', 'reference', 'outcome', 'push_probability', 'principal'}
 ESTADOS = {'scheduled', 'live', 'awaiting_result', 'finished', 'cancelled'}
 
 
@@ -271,12 +271,38 @@ def test_sin_partidos_es_200_con_lista_vacia(c, caso):
     assert r.status_code == 200 and r.json()['eventos'] == []
 
 
-def test_cartelera_solo_trae_el_destacado_y_partido_trae_todos(c, caso):
+def test_cartelera_solo_trae_el_destacado_y_los_principales_y_partido_trae_todos(c, caso):
     for e in cartelera(c, caso).json()['eventos']:
-        assert [m['id'] for m in e['markets']] in ([], [e['destacado']])
+        assert all(m['id'] == e['destacado'] or m['principal'] for m in e['markets'])     # nada más que destacado y principal
+        assert e['destacado'] is None or e['destacado'] in [m['id'] for m in e['markets']]
         p = c.get(f'{base(caso)}/partido/{e["id"]}', params={'cliente': 'web'}).json()['evento']
         assert (p['id'], p['start'], p['home'], p['away']) == (e['id'], e['start'], e['home'], e['away'])
         assert {m['id'] for m in e['markets']} <= {m['id'] for m in p['markets']}
+
+
+def test_cartelera_conserva_el_principal_aunque_sea_revision_y_team_projection_viaja(c, monkeypatch):
+    """Regla genérica del router: destacado + `principal`; el resto se recorta. Sin conocer ningún deporte."""
+    def mk(id, principal, eligible=True):
+        return Mercado(id=id, label=id, selection='Sí', probability=0.6, sealed_at=_utc('2026-11-12T06:00:00Z'), eligible=eligible,
+                       market='alfa', family='fam_a', principal=principal)
+    ev = Evento(id='x1', sport='prueba', home='L', away='V', league='Liga', start=_utc('2026-11-12T08:00:00Z'), status='scheduled',
+                markets=[mk('revision', True, eligible=False), mk('otro', False), mk('dest', False)], destacado='dest',
+                team_projection=[110.5, 104.25])
+    sin = Evento(id='x2', sport='prueba', home='L', away='V', league='Liga', start=_utc('2026-11-12T09:00:00Z'), status='scheduled',
+                 markets=[mk('otro2', False)])
+    monkeypatch.setitem(dv.ADAPTADORES, 'prueba', type('A', (), {'cartelera': lambda self, i, f: [ev, sin], 'partido': lambda self, id: None,
+                                                                  'familia_de': lambda self, m: 'fam_a'})())
+    fijar_catalogo(monkeypatch, 'prueba', 'prueba')
+    r = c.get('/deportes/v1/prueba/cartelera', params={'cliente': 'web', 'desde': '2026-11-12', 'dias': 1}).json()['eventos']
+    assert [(e['id'], [m['id'] for m in e['markets']]) for e in r] == [('x1', ['revision', 'dest']), ('x2', [])]
+    assert r[0]['team_projection'] == [110.5, 104.25] and r[1]['team_projection'] is None
+    assert r[0]['markets'][0]['principal'] is True and r[0]['markets'][1]['principal'] is False
+
+
+@pytest.mark.parametrize('malo', [[1.0], [1.0, 2.0, 3.0], [float('nan'), 1.0], [float('inf'), 1.0]])
+def test_team_projection_mal_formado_no_cumple_el_modelo(malo):
+    with pytest.raises(ValidationError):
+        Evento(id='x', sport='s', home='L', away='V', league='L', start=_utc('2026-11-12T08:00:00Z'), status='scheduled', team_projection=malo)
 
 
 def test_eligible_false_si_el_sello_es_posterior_al_inicio(c, caso):

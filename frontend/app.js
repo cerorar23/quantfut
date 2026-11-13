@@ -3,9 +3,9 @@ import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, f
 import { createMembershipUI } from './membership.js?v=preferencias-20261108';
 import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=catalogo-20261112';
 import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo } from './rutas.js?v=catalogo-20261112';
-import { createRealViews } from './real-views.js?v=contrato-20261112';
-import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=contrato-20261112';
-import { createSportWindow } from './sports-window.js?v=contrato-20261112';
+import { createRealViews } from './real-views.js?v=nba-20261113';
+import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado } from './sports-data.js?v=nba-20261113';
+import { createSportWindow } from './sports-window.js?v=nba-20261113';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=20261110v17';
