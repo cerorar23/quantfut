@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Pantallas{% endblock %}
+{% block heading %}Pantallas{% endblock %}
+{% block content %}
+<div class="card mb-4"><div class="card-body">
+  <p class="mb-1">Orden, visibilidad y avisos de la lista de un deporte (<strong>deporte</strong>) y del detalle de un evento (<strong>partido</strong>).
+     La clave es pantalla + deporte + cliente; «*» vale para todos los deportes y el deporte concreto gana sobre «*».</p>
+  <p class="text-secondary mb-0">Sin nada publicado, cada cliente usa su orden de siempre. Lo publicado no se edita: volver atrás publica una versión nueva.</p>
+</div></div>
+
+<form class="card mb-4" method="get" action="/control/pantallas/editar"><div class="card-body">
+  <h3 class="card-title">Abrir o crear una definición</h3>
+  <div class="row g-3">
+    <div class="col-md-4"><label class="form-label" for="pantalla">Pantalla</label>
+      <select class="form-select" id="pantalla" name="pantalla">{% for p in pantallas_cerradas %}<option value="{{ p }}">{{ p }}</option>{% endfor %}</select></div>
+    <div class="col-md-4"><label class="form-label" for="deporte">Deporte</label>
+      <select class="form-select" id="deporte" name="deporte">{% for d in deportes %}<option value="{{ d }}">{{ 'Todos (*)' if d == '*' else d }}</option>{% endfor %}</select></div>
+    <div class="col-md-4"><label class="form-label" for="cliente">Cliente</label>
+      <select class="form-select" id="cliente" name="cliente">{% for c in clientes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select></div>
+  </div>
+</div><div class="card-footer"><button class="btn btn-primary" type="submit">Abrir</button></div></form>
+
+<h3>Definiciones</h3>
+<div class="table-responsive"><table class="table"><thead><tr><th>Pantalla</th><th>Deporte</th><th>Cliente</th><th>Publicada</th><th>Borrador</th><th></th></tr></thead><tbody>
+{% for k in claves %}<tr>
+  <td>{{ k.pantalla }}</td><td>{{ k.deporte }}</td><td>{{ k.cliente }}</td>
+  <td>{% if k.version %}versión {{ k.version }} · {{ k.publicado_en|fecha }}{% else %}<span class="text-secondary">sin publicar</span>{% endif %}</td>
+  <td>{% if not k.tiene_borrador %}<span class="text-secondary">—</span>{% elif k.difiere %}<span class="badge bg-yellow-lt">difiere de lo publicado</span>{% else %}<span class="badge bg-green-lt">igual a lo publicado</span>{% endif %}</td>
+  <td class="text-end"><a class="btn btn-sm" href="/control/pantallas/editar?pantalla={{ k.pantalla }}&amp;deporte={{ k.deporte | urlencode }}&amp;cliente={{ k.cliente }}">Editar</a></td>
+</tr>
+{% else %}<tr><td colspan="6">Todavía no hay definiciones.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

@@ -227,10 +227,10 @@ def test_toda_columna_real_esta_clasificada():
             assert not fantasma, f'{tabla}: clasificadas pero inexistentes: {sorted(fantasma)}'
 
 
-def test_las_listas_cubren_las_siete_tablas():
+def test_las_listas_cubren_las_nueve_tablas():
     assert set(cc.PUBLICAS) == set(cc.PRIVADAS) == {
         'web_site_settings', 'mobile_update_settings', 'mobile_features', 'acceso_reglas', 'cliente_ajustes',
-        'deportes', 'deporte_mercados'}
+        'deportes', 'deporte_mercados', 'pantalla_publicaciones', 'pantalla_borradores'}
 
 
 # --- contrato 1: deportes del catálogo -----------------------------------------------------------------
@@ -314,3 +314,94 @@ def test_validar_rechaza_no_finitos_con_mensaje_claro(valor):
     for args in [(valor, '0.95', '0.10'), ('0.73', valor, '0.10'), ('0.73', '0.95', valor)]:
         with pytest.raises(ValueError, match='finitos'):
             ar.validar(*args, manana, 'ok')
+
+
+# --- contrato 1: pantallas por bloques (Fase 4, db/113) -----------------------------------------------------
+
+def _publicar_pantallas(monkeypatch, tabla):
+    from qf.comercial import pantallas
+    monkeypatch.setattr(pantallas, '_cargar', lambda: copy.deepcopy(tabla))
+    pantallas.invalidar_cache()
+
+
+def _bl(i, seccion=None, **kw):
+    b = {'id': i, 'tipo': 'seccion' if seccion else 'vip', 'seccion': seccion, 'visible': True, 'params': {},
+         'build_min_app': None}
+    b.update(kw)
+    return b
+
+
+AVISO = {'id': 'mant', 'tipo': 'aviso', 'seccion': None, 'visible': True, 'build_min_app': None,
+         'params': {'texto': {'es': 'Hola', 'en': 'Hi', 'pt': 'Oi', 'fr': 'Salut', 'it': 'Ciao', 'de': 'Hallo'},
+                    'tono': 'info', 'enlace': '/planes/'}}
+
+
+def test_sin_pantallas_la_respuesta_es_la_de_hoy(cliente, monkeypatch):
+    c, _ = cliente
+    antes = {u: c.get(RUTA, params=p) for u, p in (('app', {'cliente': 'app'}), ('web', {'cliente': 'web'}))}
+    _publicar_pantallas(monkeypatch, {})
+    for k, p in (('app', {'cliente': 'app'}), ('web', {'cliente': 'web'})):
+        r = c.get(RUTA, params=p)
+        assert 'pantallas' not in r.json()
+        assert r.content == antes[k].content and r.headers['etag'] == antes[k].headers['etag']
+        assert c.get(RUTA, params={**p, 'build': 5}).headers['etag'] == r.headers['etag']
+
+
+def test_pantallas_solo_del_cliente_pedido_y_con_el_deporte(cliente, monkeypatch):
+    c, _ = cliente
+    _publicar_pantallas(monkeypatch, {
+        ('deporte', '*', 'app'): [_bl('partidos', 'partidos'), AVISO],
+        ('deporte', 'nba', 'app'): [_bl('dias', 'dias'), _bl('partidos', 'partidos')],
+        ('partido', '*', 'web'): [_bl('cabecera', 'cabecera')]})
+    app_ = c.get(RUTA, params={'cliente': 'app'}).json()['pantallas']
+    assert set(app_) == {'deporte'} and set(app_['deporte']) == {'*', 'nba'}
+    assert app_['deporte']['*'][1]['params']['texto'].keys() == {'es', 'en', 'pt', 'fr', 'it', 'de'}
+    web = c.get(RUTA, params={'cliente': 'web'}).json()['pantallas']
+    assert set(web) == {'partido'} and web['partido']['*'][0]['seccion'] == 'cabecera'
+
+
+def test_la_web_recibe_avisos_solo_en_es_en_pt(cliente, monkeypatch):
+    c, _ = cliente
+    _publicar_pantallas(monkeypatch, {('deporte', '*', 'web'): [_bl('partidos', 'partidos'), AVISO],
+                                      ('deporte', '*', 'app'): [_bl('partidos', 'partidos'), AVISO]})
+    web = c.get(RUTA, params={'cliente': 'web'}).json()['pantallas']['deporte']['*'][1]['params']
+    assert set(web['texto']) == {'es', 'en', 'pt'} and web['enlace'] == '/planes/'
+    app_ = c.get(RUTA, params={'cliente': 'app'}).json()['pantallas']['deporte']['*'][1]['params']
+    assert len(app_['texto']) == 6
+
+
+def test_build_quita_bloques_y_cambia_el_etag(cliente, monkeypatch):
+    c, _ = cliente
+    _publicar_pantallas(monkeypatch, {('deporte', '*', 'app'): [
+        _bl('partidos', 'partidos'), _bl('resumen', 'resumen', build_min_app=12), _bl('vip', build_min_app=20)]})
+    ids = lambda r: [b['id'] for b in r.json()['pantallas']['deporte']['*']]   # noqa: E731
+    sin = c.get(RUTA, params={'cliente': 'app'})
+    b11 = c.get(RUTA, params={'cliente': 'app', 'build': 11})
+    b12 = c.get(RUTA, params={'cliente': 'app', 'build': 12})
+    b20 = c.get(RUTA, params={'cliente': 'app', 'build': 20})
+    assert ids(sin) == ['partidos', 'resumen', 'vip']          # sin build no se quita nada
+    assert ids(b11) == ['partidos'] and ids(b12) == ['partidos', 'resumen'] and ids(b20) == ids(sin)
+    assert len({sin.headers['etag'], b11.headers['etag'], b12.headers['etag']}) == 3
+    assert b20.headers['etag'] == sin.headers['etag']
+    # el ETag por build también responde 304 a su propia versión y no a la de otro build
+    assert c.get(RUTA, params={'cliente': 'app', 'build': 11},
+                 headers={'If-None-Match': b11.headers['etag']}).status_code == 304
+    assert c.get(RUTA, params={'cliente': 'app', 'build': 11},
+                 headers={'If-None-Match': b12.headers['etag']}).status_code == 200
+
+
+def test_build_invalido_da_422_y_clave_sin_bloques_se_omite(cliente, monkeypatch):
+    c, _ = cliente
+    assert c.get(RUTA, params={'cliente': 'app', 'build': -1}).status_code == 422
+    assert c.get(RUTA, params={'cliente': 'app', 'build': 'x'}).status_code == 422
+    _publicar_pantallas(monkeypatch, {('deporte', 'nba', 'app'): [_bl('partidos', 'partidos', build_min_app=50)]})
+    assert 'pantallas' not in c.get(RUTA, params={'cliente': 'app', 'build': 3}).json()
+
+
+def test_centinelas_de_pantallas_no_salen(cliente, monkeypatch):
+    c, _ = cliente
+    monkeypatch.setattr(cc.pantallas, '_cargar', lambda: {('deporte', '*', 'app'): [_bl('partidos', 'partidos')]})
+    cc.pantallas.invalidar_cache()
+    texto = c.get(RUTA, params={'cliente': 'app'}).text
+    for privado in ('publicado_por', 'nota', 'updated_by', 'updated_at', 'publicado_en'):
+        assert privado not in texto
