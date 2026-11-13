@@ -77,7 +77,7 @@ from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
 from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
-from . import acceso_panel, catalogo_panel, cliente_config, web_config, web_config_panel
+from . import acceso_panel, catalogo_panel, cliente_config, deportes_v1, web_config, web_config_panel
 from .tenis_v2 import router as tenis_v2_router
 from .meta import router as meta_router
 from .compras import router as compras_router, store_router as compras_store_router
@@ -821,6 +821,7 @@ app.include_router(invitacion_router)
 app.include_router(web_router)
 app.include_router(web_config.router)
 app.include_router(cliente_config.router)
+app.include_router(deportes_v1.router)
 app.include_router(fichas_router)
 app.include_router(mobile_router)
 # anuncios va ANTES: su `/rewards/callback/admob` es más específico que
