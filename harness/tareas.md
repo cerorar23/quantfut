@@ -263,8 +263,9 @@ publica la versión de la app: A a E no dependen de esa fecha.
       `seo.NOINDEX_SEGMENTS`; ids y slugs reservados en `catalogo.validar_deporte`.
 - [x] `[Sonnet 5.5 · medio]` Parte B (adaptador de tenis): el más simple, porque el servidor ya emite eventos casi en la forma común
       (`tenis_publico.read_public_feed`). Va primero para fijar el patrón.
-- [ ] `[Sonnet 5.5 · medio]` Parte C (adaptador de NBA): sobre `nba_datos.py`; resuelve en el servidor la ventana de días que hoy la web pide con 9
+- [x] `[Sonnet 5.5 · medio]` Parte C (adaptador de NBA): sobre `nba_datos.py`; resuelve en el servidor la ventana de días que hoy la web pide con 9
       llamadas a `/nba/v1/cartelera`.
+      Hecho el 12-nov-2026: `api/deportes_nba.py` (`ADAPTADORES['nba']`), suite de contrato y paridad con `nbaV2Events`. Sin desplegar.
 - [ ] `[Sonnet 5.5 · medio-alto]` Parte D (adaptador de fútbol): sobre `fichas._agenda` y las filas públicas de `mobile.py`; es el más ancho
       (liga distinta de competición, escudos, mercados públicos, bloqueados solo como recuento).
 - [ ] `[Sonnet 5.5 · medio]` Parte E (adaptador de prueba): un cuarto adaptador `prueba` solo en las pruebas, que demuestra que un deporte nuevo

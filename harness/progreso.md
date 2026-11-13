@@ -1,6 +1,15 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 12-nov-2026 · Fase 3 parte C: adaptador de NBA del contrato (`api/deportes_nba.py`; sin desplegar)
+
+- **Días ET:** la cartelera de `nba-api` es por fecha del Este. Para la ventana UTC `[inicio, fin)` se piden los días ET de `inicio` a `fin-1µs` con 1 día de margen por lado (como la web), desde el estreno (20-oct-2026, `SEASON_START`; constante duplicada de `NBA_SEASON_START`), se unen por `id` y se filtra por `start`. Una ventana de 7 días UTC son 10 días ET (8 que toca + 2 de margen), todos por la caché de `nba_datos`; la web hacía 9 llamadas por cada pantalla y por cliente.
+- **Un día que falla hace fallar todo (503):** a diferencia de `cartelera_ventana` (que omite días), una lista parcial parecería «sin partidos».
+- **`status`:** `finished` si hay marcador; `awaiting_result` si pasaron 4 h del inicio; si no `scheduled`. Nunca `live` (la fuente no lo da). `score` imprime 101 y no 101.0, como JS (lo encontró la prueba de paridad).
+- **Mercados:** el ganador sale del pronóstico (id `winner-{id}`, regla de `nbaPickMarkets`). En `partido()` se suman los de `/mercados`, salvo los `winner` de la fuente (ya cubiertos por el pronóstico); se descarta lo que la fuente publica con probabilidad 0/1 o sin línea (el modelo exige 0<p<1). `reference` = casa si hay cuota, si no «Probabilidad estadística». `destacado`: el ganador si es elegible; en `partido()` el que eligió el servidor (como la web).
+- **`partido(id)` busca el id en los días ET hoy-4…hoy+4** (los que navega la web; sale al encontrarlo) porque la fuente no tiene búsqueda por id; un partido fuera de ese rango da 404. Se añadió `nba_datos.mercados()` para reutilizar su caché.
+- **`imagenes=None`:** no hay en Python la correspondencia equipo → logo (`nbaCode` vive solo en `frontend/sports-data.js`).
+
 ## 12-nov-2026 · Fase 3 parte B: adaptador de tenis de `/deportes/v1` (`api/deportes_tenis.py`; sin desplegar)
 
 - Decisión clave, `status`: el exportador de tenis emite `scheduled`, `awaiting_result`, `no_result`, `finished`, `cancelled`. `no_result` (36 h sin resultado oficial) no está en el enumerado cerrado del contrato y se publica como `awaiting_result` (sigue sin resultado; la web ya lo trata así). Un estado que no esté en la tabla lanza `ValueError` → 503: no se adivina ni se esconde el evento.
