@@ -78,6 +78,7 @@ from .firebase import router as firebase_router
 from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
 from . import acceso_panel, catalogo_panel, cliente_config, deportes_v1, web_config, web_config_panel
+from . import deportes_futbol  # noqa: F401  (se registra en deportes_v1.ADAPTADORES['futbol'])
 from . import deportes_nba  # noqa: F401  (registra ADAPTADORES["nba"])
 from .tenis_v2 import router as tenis_v2_router
 from .meta import router as meta_router

@@ -111,6 +111,18 @@ def _caso_prueba() -> Caso:
                 ('CENTINELA_FIT', 'CENTINELA_MERCADO', 'CENTINELA_ERROR'), instalar, romper)
 
 
+def _caso_futbol() -> Caso:
+    import datos_deportes_futbol as datos      # datos fijos y parches de fuentes: tests/datos_deportes_futbol.py
+    estado = {}
+
+    def instalar(mp):
+        estado['fuentes'] = datos.instalar_para_suite(mp)
+
+    def romper(mp):
+        estado['fuentes'].roto = True
+    return Caso('futbol', 'futbol', datos.DESDE, 'eu.ucl:m1', datos.CENTINELAS, instalar, romper)
+
+
 def _caso_tenis() -> Caso:
     # Datos fijos y centinelas de `test_deportes_tenis_paridad`. Familias del catálogo de prueba: fam_a / fam_b / oculta.
     def instalar(mp):
@@ -129,7 +141,8 @@ def _caso_tenis() -> Caso:
 
 
 CASOS = [pytest.param(_caso_prueba(), id='prueba'),
-         pytest.param(_caso_tenis(), id='tenis')]   # ← los adaptadores reales añaden aquí su Caso
+         pytest.param(_caso_tenis(), id='tenis'),
+         pytest.param(_caso_futbol(), id='futbol')]   # ← los adaptadores reales añaden aquí su Caso
 
 
 class _FamiliasDePrueba:
