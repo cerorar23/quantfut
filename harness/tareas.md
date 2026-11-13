@@ -281,6 +281,7 @@ publica la versión de la app: A a E no dependen de esa fecha.
       y los `principal`; el adaptador de NBA marca el ganador como `principal`, rellena `team_projection` desde `pronostico.mu` y pone `destacado` con la regla de la web
       (ganador no revisado con probabilidad entre 75 % y 83,3 %: cuota de referencia 1 ÷ prob >= 1,20). `CONTRATO_WEB.nba = true`. El detalle de NBA conserva su `destacado`.
       Queda para encender tenis y el detalle de NBA lo que lista «Web lee el contrato» (más arriba), que NO cambia.
+      Desplegado el 13-nov-2026 02:35 UTC (`quantfut-api:0ae5cf73`, ver `DEPLOYS.md`): la portada hace 1 petición de NBA en vez de 9.
 - Después (no es de esta fase, requiere decisión del titular): que la web y la app lean NBA y tenis por el contrato en lugar de sus endpoints
   propios. Es lo que reduce las ~35 peticiones a la API de la portada, pero cambia clientes ya publicados.
 - [x] `[Sonnet 5.5 · medio]` **Web lee el contrato (NBA y tenis)**, 13-nov-2026: `loadSportWeb` y los convertidores `eventoDesdeContrato` en `frontend/sports-data.js`,
