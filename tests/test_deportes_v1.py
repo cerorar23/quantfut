@@ -111,7 +111,25 @@ def _caso_prueba() -> Caso:
                 ('CENTINELA_FIT', 'CENTINELA_MERCADO', 'CENTINELA_ERROR'), instalar, romper)
 
 
-CASOS = [pytest.param(_caso_prueba(), id='prueba')]   # ← los adaptadores reales añaden aquí su Caso
+def _caso_tenis() -> Caso:
+    # Datos fijos y centinelas de `test_deportes_tenis_paridad`. Familias del catálogo de prueba: fam_a / fam_b / oculta.
+    def instalar(mp):
+        from test_deportes_tenis_paridad import fijar_fuente
+        from qf.api import deportes_tenis
+        fijar_fuente(mp)
+        mp.setattr(deportes_tenis, 'FAMILIAS', {'games_total': 'fam_a', 'sets_total': 'fam_b', 'tiebreak': 'fam_oculta'})
+        mp.setitem(dv.ADAPTADORES, 'tenis', deportes_tenis.AdaptadorTenis())
+
+    def romper(mp):
+        def falla():
+            raise RuntimeError('fuente caída: CENTINELA_ERROR')
+        mp.setattr('qf.api.tenis_publico.public_data', falla)
+    return Caso('tenis', 'tenis', '2026-11-12', 't-c', ('CENTINELA_FIT', 'CENTINELA_MERCADO', 'CENTINELA_ERROR'),
+                instalar, romper)
+
+
+CASOS = [pytest.param(_caso_prueba(), id='prueba'),
+         pytest.param(_caso_tenis(), id='tenis')]   # ← los adaptadores reales añaden aquí su Caso
 
 
 # ── catálogo y cliente ───────────────────────────────────────────────────────
