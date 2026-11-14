@@ -231,6 +231,117 @@ def crear_app(dsn: str | None = None) -> FastAPI:
         orden = sorted(por_jugador.values(), key=lambda j: -(j["minutos_esperados"] or 0))
         return {"partido_id": partido_id, "jugadores": orden}
 
+    @app.get("/nba/v1/partido/{partido_id}/disponibilidad")
+    def disponibilidad(partido_id: int):
+        with conexion() as db:
+            fila = db.execute(PARTIDOS + " AND e.entidad_id = %s", (partido_id,)).fetchone()
+            if fila is None:
+                raise HTTPException(404, {"codigo": "partido_inexistente"})
+            pid, fecha, id_local, id_visitante, nombre_local, nombre_visitante, cod_local, cod_visitante = fila
+
+            captura = db.execute(
+                "SELECT c.objetivo, c.recibido_en FROM nba.captura c "
+                "JOIN nba.dato d USING (captura_id) "
+                "WHERE d.partido_id = %s AND d.fuente = 'nba_oficial' "
+                "ORDER BY d.recibido_en DESC, d.dato_id DESC LIMIT 1", (pid,)).fetchone()
+            reporte_url = captura[0] if captura else None
+            reporte_fecha = captura[1].isoformat() if captura and captura[1] else None
+
+            no_env = db.execute(
+                "SELECT d.entidad_id FROM nba.dato d JOIN nba.metrica m USING (metrica_id) "
+                "WHERE d.partido_id = %s AND m.nombre = 'reporte_no_enviado' AND d.valor = 1.0 "
+                "AND d.recibido_en = (SELECT max(recibido_en) FROM nba.dato WHERE partido_id = %s AND fuente = 'nba_oficial')",
+                (pid, pid)).fetchall()
+            no_enviados = {r[0] for r in no_env}
+
+            filas_jug = db.execute(
+                "SELECT DISTINCT ON (d.entidad_id) "
+                "  d.entidad_id, j.nombre, j.id_en_fuente, d.etiqueta, dm.etiqueta, d.recibido_en "
+                "FROM nba.dato d "
+                "JOIN nba.metrica m ON m.metrica_id = d.metrica_id AND m.nombre = 'estado_disponibilidad' "
+                "JOIN nba.entidad j ON j.entidad_id = d.entidad_id "
+                "LEFT JOIN LATERAL ( "
+                "  SELECT dm.etiqueta FROM nba.dato dm JOIN nba.metrica mm ON mm.metrica_id = dm.metrica_id AND mm.nombre = 'motivo_disponibilidad' "
+                "  WHERE dm.partido_id = d.partido_id AND dm.entidad_id = d.entidad_id "
+                "  ORDER BY dm.recibido_en DESC, dm.dato_id DESC LIMIT 1 "
+                ") dm ON true "
+                "WHERE d.partido_id = %s AND d.fuente = 'nba_oficial' "
+                "ORDER BY d.entidad_id, d.recibido_en DESC, d.dato_id DESC", (pid,)).fetchall()
+
+            jug_ids = [r[0] for r in filas_jug]
+            lados_pron = {}
+            equipos_jug = {}
+            if jug_ids:
+                eq_filas = db.execute(
+                    "SELECT DISTINCT ON (t.entidad_id) t.entidad_id, t.valor::bigint "
+                    "FROM nba.dato t JOIN nba.metrica mt ON mt.metrica_id = t.metrica_id AND mt.nombre = 'equipo_del_jugador' "
+                    "JOIN nba.entidad e ON e.entidad_id = t.partido_id "
+                    "WHERE t.entidad_id = ANY(%s) AND e.fecha_juego_et <= %s "
+                    "ORDER BY t.entidad_id, e.fecha_juego_et DESC, t.dato_id DESC",
+                    (jug_ids, fecha)).fetchall()
+                equipos_jug = dict(eq_filas)
+
+                lados_filas = db.execute(
+                    "SELECT DISTINCT ON (entidad_id) entidad_id, escenarios->>'lado' "
+                    "FROM nba.pronostico WHERE partido_id = %s AND entidad_id = ANY(%s) "
+                    "AND escenarios->>'lado' IS NOT NULL", (pid, jug_ids)).fetchall()
+                lados_pron = dict(lados_filas)
+
+            jugadores_local = []
+            jugadores_visitante = []
+            for jid, jnombre, jid_fuente, jestado, jmotivo, _ in filas_jug:
+                lado = lados_pron.get(jid)
+                eq_id = equipos_jug.get(jid)
+                es_local = (lado == 'local') if lado else (eq_id == id_local) if eq_id else None
+                item = {
+                    "id": jid,
+                    "nba_id": int(jid_fuente) if (jid_fuente and jid_fuente.isdigit()) else None,
+                    "nombre": jnombre,
+                    "estado": jestado,
+                    "motivo": jmotivo or "Sin motivo detallado"
+                }
+                if es_local is True:
+                    jugadores_local.append(item)
+                elif es_local is False:
+                    jugadores_visitante.append(item)
+                else:
+                    if len(jugadores_local) <= len(jugadores_visitante):
+                        jugadores_local.append(item)
+                    else:
+                        jugadores_visitante.append(item)
+
+            p = ultimo_pronostico(db, pid)
+            metricas_bajas = None
+            if p and isinstance(p[7], dict):
+                metricas_bajas = p[7].get("availability")
+
+            return {
+                "partido_id": pid,
+                "estado": "reporte_aplicado" if (filas_jug or reporte_url) else "sin_reporte",
+                "reporte_url": reporte_url,
+                "reporte_timestamp_utc": reporte_fecha,
+                "local": {
+                    "id": id_local,
+                    "nombre": nombre_local,
+                    "codigo": cod_local,
+                    "reporte_no_enviado": id_local in no_enviados,
+                    "jugadores": jugadores_local
+                },
+                "visitante": {
+                    "id": id_visitante,
+                    "nombre": nombre_visitante,
+                    "codigo": cod_visitante,
+                    "reporte_no_enviado": id_visitante in no_enviados,
+                    "jugadores": jugadores_visitante
+                },
+                "metricas_bajas": metricas_bajas,
+                "resumen": {
+                    "total_local": len(jugadores_local),
+                    "total_visitante": len(jugadores_visitante),
+                    "total_jugadores": len(filas_jug)
+                }
+            }
+
     @app.get("/nba/v1/partido/{partido_id}/jugador/{jugador_id}/linea")
     def linea_jugador(partido_id: int, jugador_id: int, mercado: str = Query(...), valor: float = Query(..., allow_inf_nan=False)):
         if mercado not in props.ESTADISTICAS:

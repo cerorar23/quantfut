@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadNbaStats, featuredModelMarket } from './sports-data.js';
+import { loadNbaStats, loadNbaAvailability, featuredModelMarket } from './sports-data.js';
 import { createSportWindow } from './sports-window.js';
 
 const rec = (won, lost) => ({ won, lost, rate: won + lost ? won / (won + lost) : null });
@@ -79,15 +79,18 @@ test('sin estadísticas la ventana lo dice y no inventa cifras', () => {
   assert.ok(windowFor(null, {}, 'error')('clasificacion').includes('Todavía no hay estadísticas'));
 });
 
-function v2Window(event, entry, marketsEntry, stateExtra = {}) {
+function v2Window(event, entry, marketsEntry, stateExtra = {}, avEntry = null) {
   const st = { sport: 'nba', winDay: 0, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen', winSportFam: '', winAll: false, winDayPinned: false, winFormScope: 'all', ...stateExtra };
   const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const pass = v => String(v);
   const asked = [];
+  const askedAv = [];
   const w = createSportWindow({ state: st, esc, badge: t => `<i>${t}</i>`, fmtPct: p => `${(p * 100).toFixed(1)}%`, fmtOdds: o => o.toFixed(2), realDate: pass, realTime: pass, dateFmt: pass,
     addDays: () => new Date(event.start), localDay: d => new Date(d).toISOString().slice(0, 10), dayLabel: () => 'Hoy', ensureSport: () => ({ status: 'ready', events: [event] }),
-    ensureTennisStats: () => ({ status: 'loading', data: null }), ensureNbaStats: id => { asked.push(id); return entry; }, ensureNbaMarkets: () => marketsEntry, featuredModelMarket });
-  return { view: tab => { st.winSportTab = tab; return w.view(); }, asked };
+    ensureTennisStats: () => ({ status: 'loading', data: null }), ensureNbaStats: id => { asked.push(id); return entry; },
+    ensureNbaAvailability: id => { askedAv.push(id); return avEntry; },
+    ensureNbaMarkets: () => marketsEntry, featuredModelMarket });
+  return { view: tab => { st.winSportTab = tab; return w.view(); }, asked, askedAv };
 }
 
 test('un partido v2 sin pronóstico omite la tarjeta de sellado y pide estadísticas solo al abrir esa pestaña', () => {
@@ -167,4 +170,94 @@ test('los mercados de jugadores agrupan líneas, usan el id oficial de foto y pe
   assert.ok(html.includes('Ver 1 línea más') && html.includes('Más de 4 puntos') && html.includes('Buscar jugador o equipo'));
   const search = v2Window(event, { status: 'ready', data: stats }, entry, { ...extra, winPlayerSearch: 'lébron' }).view('resumen');
   assert.ok(search.includes('<h4>LeBron James</h4>') && !search.includes('<h4>Otro Jugador</h4>'));
+});
+
+test('loadNbaAvailability valida la respuesta de disponibilidad de la API', async () => {
+  const fakeData = { partido_id: 101, estado: 'reporte_aplicado', local: { nombre: 'Boston Celtics', jugadores: [] }, visitante: { nombre: 'Brooklyn Nets', jugadores: [] } };
+  let path;
+  assert.equal((await loadNbaAvailability(101, async p => { path = p; return { ok: true, json: async () => fakeData }; })).status, 'ready');
+  assert.equal(path, '/nba/v1/partido/101/disponibilidad');
+  assert.equal((await loadNbaAvailability(101, async () => ({ ok: false, status: 404 }))).status, 'error');
+  assert.equal((await loadNbaAvailability(101, async () => ({ ok: true, json: async () => ({ partido_id: 999 }) }))).status, 'error');
+  assert.equal((await loadNbaAvailability(101, async () => { throw new Error('red'); })).status, 'error');
+});
+
+test('la pestaña de disponibilidad muestra lesiones, suspensiones, motivos y enlace al PDF oficial', () => {
+  const start = new Date().toISOString();
+  const event = { id: 42, v2: true, sport: 'nba', home: 'San Antonio Spurs', away: 'Golden State Warriors', start, league: 'NBA', status: 'scheduled', markets: [] };
+  const avData = {
+    partido_id: 42,
+    estado: 'reporte_aplicado',
+    reporte_url: 'https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-13_05PM.pdf',
+    reporte_timestamp_utc: '2026-11-13T22:30:00Z',
+    local: {
+      nombre: 'San Antonio Spurs',
+      codigo: 'SAS',
+      reporte_no_enviado: false,
+      jugadores: [
+        { id: 1, nba_id: 1630170, nombre: 'Devin Vassell', estado: 'Doubtful', motivo: 'Injury/Illness - Right Foot; Injury Management' },
+        { id: 2, nba_id: 1629640, nombre: 'Charles Bassey', estado: 'Questionable', motivo: 'Injury/Illness - Left Knee; Soreness' }
+      ]
+    },
+    visitante: {
+      nombre: 'Golden State Warriors',
+      codigo: 'GSW',
+      reporte_no_enviado: false,
+      jugadores: [
+        { id: 3, nba_id: 201939, nombre: 'Stephen Curry', estado: 'Out', motivo: 'Injury/Illness - Left Ankle; Sprain' },
+        { id: 4, nba_id: 1630541, nombre: 'Moses Moody', estado: 'Out', motivo: 'Suspension - League Suspension' }
+      ]
+    },
+    metricas_bajas: { missing_points_home: 4.5, missing_points_away: 14.2, missing_minutes_home: 22, missing_minutes_away: 36 }
+  };
+
+  const html = v2Window(event, { status: 'ready', data: stats }, { status: 'ready', markets: [] }, { winPane: 'stats' }, { status: 'ready', data: avData }).view('disponibilidad');
+
+  // Encabezado y enlace al PDF
+  assert.ok(html.includes('LESIONES Y SUSPENSIONES'));
+  assert.ok(html.includes('https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-13_05PM.pdf'));
+  assert.ok(html.includes('Parte oficial NBA (PDF)'));
+
+  // Nombres formateados tipo inicial + apellido (como en la captura del usuario)
+  assert.ok(html.includes('S. Curry') && html.includes('D. Vassell') && html.includes('C. Bassey') && html.includes('M. Moody'));
+
+  // Badges de estado con el icono +
+  assert.ok(html.includes('+</span><span>Lesionado</span>'));
+  assert.ok(html.includes('+</span><span>Poco probable</span>'));
+  assert.ok(html.includes('+</span><span>En duda</span>'));
+  assert.ok(html.includes('+</span><span>Suspendido</span>'));
+
+  // Motivos traducidos al español
+  assert.ok(html.includes('Tobillo izq. · esguince'));
+  assert.ok(html.includes('Suspensión de la liga'));
+  assert.ok(html.includes('Pie der. · gestión de carga'));
+  assert.ok(html.includes('Rodilla izq. · molestias'));
+
+  // Headshots oficiales CDN de la NBA
+  assert.ok(html.includes('https://cdn.nba.com/headshots/nba/latest/260x190/201939.png'));
+  assert.ok(html.includes('https://cdn.nba.com/headshots/nba/latest/260x190/1630170.png'));
+
+  // Impacto en el modelo
+  assert.ok(html.includes('IMPACTO ESTIMADO EN EL MODELO POR BAJAS'));
+  assert.ok(html.includes('14.2'));
+});
+
+test('la pestaña de disponibilidad muestra estado de carga y mensaje cuando un equipo está limpio', () => {
+  const start = new Date().toISOString();
+  const event = { id: 43, v2: true, sport: 'nba', home: 'Boston Celtics', away: 'Brooklyn Nets', start, league: 'NBA', status: 'scheduled', markets: [] };
+
+  // Mientras carga
+  const loadingHtml = v2Window(event, { status: 'ready', data: stats }, { status: 'ready', markets: [] }, { winPane: 'stats' }, { status: 'loading', data: null }).view('disponibilidad');
+  assert.ok(loadingHtml.includes('Consultando el reporte oficial de lesiones de la NBA'));
+
+  // Plantilla limpia sin bajas
+  const cleanData = {
+    partido_id: 43,
+    estado: 'reporte_aplicado',
+    local: { nombre: 'Boston Celtics', jugadores: [] },
+    visitante: { nombre: 'Brooklyn Nets', jugadores: [] }
+  };
+  const cleanHtml = v2Window(event, { status: 'ready', data: stats }, { status: 'ready', markets: [] }, { winPane: 'stats' }, { status: 'ready', data: cleanData }).view('disponibilidad');
+  assert.ok(cleanHtml.includes('Sin suspensiones ni bajas por lesión en el reporte oficial'));
+  assert.ok(cleanHtml.includes('Plantilla completa'));
 });
